@@ -23,7 +23,7 @@ Boston, MA 02111-1307, USA.  */
 /* Authorship:
 
    Written by Kevin Gallo for FSF Emacs.
-   Rewritten for mswindows by Jonathan Harris, December 1997 for 20.4.
+   Rewritten for mswindows by Jonathan Harris, December 1997 for 21.0.
  */
 
 

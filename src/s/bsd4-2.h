@@ -70,10 +70,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define LDAV_SYMBOL "_avenrun"
 
-/* Send signals to subprocesses by "typing" special chars at them.  */
-
-/* #define SIGNALS_VIA_CHARACTERS */ /* mrb */
-
 /* Formerly "BSD_PGRPS" */
 
 #define SIGIO_REQUIRES_SEPARATE_PROCESS_GROUP

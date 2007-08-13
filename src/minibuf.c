@@ -351,7 +351,7 @@ The argument given to PREDICATE is the alist element or the symbol from the obar
 
   bestmatch = Qnil;
   blength = 0;
-  slength = string_char_length (XSTRING (string));
+  slength = XSTRING_CHAR_LENGTH (string);
 
   /* If ALIST is not a list, set TAIL just for gc pro.  */
   tail = alist;
@@ -414,7 +414,7 @@ The argument given to PREDICATE is the alist element or the symbol from the obar
 
       if (STRINGP (eltstring))
 	{
-	  Charcount eltlength = string_char_length (XSTRING (eltstring));
+	  Charcount eltlength = XSTRING_CHAR_LENGTH (eltstring);
 	  if (slength <= eltlength
 	      && (0 > scmp (XSTRING_DATA (eltstring),
                             XSTRING_DATA (string),
@@ -554,7 +554,7 @@ the symbol from the obarray.
     return call3 (alist, string, pred, Qt);
 
   allmatches = Qnil;
-  slength = string_char_length (XSTRING (string));
+  slength = XSTRING_CHAR_LENGTH (string);
 
   /* If ALIST is not a list, set TAIL just for gc pro.  */
   tail = alist;
@@ -610,10 +610,10 @@ the symbol from the obarray.
       /* Is this element a possible completion? */
 
       if (STRINGP (eltstring)
-          && (slength <= string_char_length (XSTRING (eltstring)))
+          && (slength <= XSTRING_CHAR_LENGTH (eltstring))
 	  /* Reject alternatives that start with space
 	     unless the input starts with space.  */
-	  && ((string_char_length (XSTRING (string)) > 0 &&
+	  && ((XSTRING_CHAR_LENGTH (string) > 0 &&
 	       string_char (XSTRING (string), 0) == ' ')
 	      || string_char (XSTRING (eltstring), 0) != ' ')
           && (0 > scmp (XSTRING_DATA (eltstring),

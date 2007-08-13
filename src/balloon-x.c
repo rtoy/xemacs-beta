@@ -1,4 +1,4 @@
-/* 
+/*
    Copyright (c) 1997 Douglas Keller
 
 This file is part of XEmacs.

@@ -22,7 +22,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Written by Leonard N. Zubkoff.  */
 
-#include "config.h"
+#include <config.h>
 #include <fcntl.h>
 
 

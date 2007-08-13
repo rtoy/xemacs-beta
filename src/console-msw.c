@@ -23,7 +23,7 @@ Boston, MA 02111-1307, USA.  */
 /* Authorship:
 
    Ben Wing: January 1996, for 19.14.
-   Rewritten for mswindows by Jonathan Harris, November 1997 for 20.4.
+   Rewritten for mswindows by Jonathan Harris, November 1997 for 21.0
  */
 
 #include <config.h>

@@ -187,10 +187,8 @@ static void
 update_one_scrollbar_bs (struct frame *f, Widget sb_widget)
 {
   Boolean use_backing_store;
-  Arg al [1];
 
-  XtSetArg (al [0], XtNuseBackingStore, &use_backing_store);
-  XtGetValues (FRAME_X_TEXT_WIDGET (f), al, 1);
+  Xt_GET_VALUE (FRAME_X_TEXT_WIDGET (f), XtNuseBackingStore, &use_backing_store);
 
   if (use_backing_store && sb_widget)
     {
@@ -313,11 +311,7 @@ x_scrollbar_width_changed_in_frame (Lisp_Object specifier, struct frame *f,
   /* mirror the value in the frame resources, unless it was already
      done. */
   if (!in_resource_setting)
-    {
-      Arg al [1];
-      XtSetArg (al [0], XtNscrollBarWidth, XINT (newval));
-      XtSetValues (FRAME_X_TEXT_WIDGET (f), al, 1);
-    }
+    Xt_SET_VALUE (FRAME_X_TEXT_WIDGET (f), XtNscrollBarWidth, XINT (newval));
 
   if (XtIsRealized (FRAME_X_CONTAINER_WIDGET (f)))
     {
@@ -358,11 +352,7 @@ x_scrollbar_height_changed_in_frame (Lisp_Object specifier, struct frame *f,
        did, we wouldn't want to overwrite the resource information
        (which might specify a user preference). */
   if (!in_resource_setting)
-    {
-      Arg al [1];
-      XtSetArg (al [0], XtNscrollBarHeight, XINT (newval));
-      XtSetValues (FRAME_X_TEXT_WIDGET (f), al, 1);
-    }
+    Xt_SET_VALUE (FRAME_X_TEXT_WIDGET (f), XtNscrollBarHeight, XINT (newval));
 
   if (XtIsRealized (FRAME_X_CONTAINER_WIDGET (f)))
     {
@@ -401,25 +391,14 @@ x_scrollbar_loop (enum x_scrollbar_loop type, Lisp_Object window,
   while (mir)
     {
       struct scrollbar_instance *vinstance = mir->scrollbar_vertical_instance;
-      struct scrollbar_instance *hinstance =
-	mir->scrollbar_horizontal_instance;
-      struct frame *f;
-
-      assert (!NILP (window));
-      f = XFRAME (XWINDOW (window)->frame);
+      struct scrollbar_instance *hinstance = mir->scrollbar_horizontal_instance;
+      struct window *w = XWINDOW (window);
 
       if (mir->vchild)
-	{
-	  retval = x_scrollbar_loop (type, XWINDOW (window)->vchild,
-				     mir->vchild, id, x_win);
-	}
+	retval = x_scrollbar_loop (type, w->vchild, mir->vchild, id, x_win);
       else if (mir->hchild)
-	{
-	  retval = x_scrollbar_loop (type, XWINDOW (window)->hchild,
-				     mir->hchild, id, x_win);
-	}
-
-      if (retval != NULL)
+	retval = x_scrollbar_loop (type, w->hchild, mir->hchild, id, x_win);
+      if (retval)
 	return retval;
 
       if (hinstance || vinstance)
@@ -427,58 +406,42 @@ x_scrollbar_loop (enum x_scrollbar_loop type, Lisp_Object window,
 	  switch (type)
 	    {
 	    case X_FIND_SCROLLBAR_WINDOW_MIRROR:
-	      if ((vinstance && SCROLLBAR_X_ID (vinstance) == id)
-		  || (hinstance && SCROLLBAR_X_ID (hinstance) == id))
-		{
-		  return mir;
-		}
+	      if ((vinstance && SCROLLBAR_X_ID (vinstance) == id) ||
+		  (hinstance && SCROLLBAR_X_ID (hinstance) == id))
+		return mir;
 	      break;
 	    case X_UPDATE_FRAME_SCROLLBARS:
 	      if (!mir->vchild && !mir->hchild)
-		update_window_scrollbars (XWINDOW (window), mir, 1, 0);
+		update_window_scrollbars (w, mir, 1, 0);
 	      break;
 	    case X_SET_SCROLLBAR_POINTER:
 	      if (!mir->vchild && !mir->hchild)
 		{
-		  int loop;
+                  Widget widget;
 
-		  for (loop = 0; loop < 2; loop++)
-		    {
-		      Widget widget;
+		  widget = SCROLLBAR_X_WIDGET (hinstance);
+		  if (widget && XtIsManaged (widget))
+		    update_one_widget_scrollbar_pointer (w, widget);
 
-		      if (loop)
-			widget = SCROLLBAR_X_WIDGET (vinstance);
-		      else
-			widget = SCROLLBAR_X_WIDGET (hinstance);
-
-		      if (widget && XtIsManaged (widget))
-			{
-			  update_one_widget_scrollbar_pointer
-			    (XWINDOW (window), widget);
-			}
-		    }
+		  widget = SCROLLBAR_X_WIDGET (vinstance);
+		  if (widget && XtIsManaged (widget))
+		    update_one_widget_scrollbar_pointer (w, widget);
 		}
 	      break;
 	    case X_WINDOW_IS_SCROLLBAR:
 	      if (!mir->vchild && !mir->hchild)
 		{
-		  int loop;
+		  Widget widget;
 
-		  for (loop = 0; loop < 2; loop++)
-		    {
-		      Widget widget;
+		  widget = SCROLLBAR_X_WIDGET (hinstance);
+		  if (widget && XtIsManaged (widget) &&
+		      XtWindow (widget) == x_win)
+		    return (struct window_mirror *) 1;
 
-		      if (loop)
-			widget = SCROLLBAR_X_WIDGET (vinstance);
-		      else
-			widget = SCROLLBAR_X_WIDGET (hinstance);
-
-		      if (widget && XtIsManaged (widget))
-			{
-			  if (XtWindow (widget) == x_win)
-			    return (struct window_mirror *) 1;
-			}
-		    }
+		  widget = SCROLLBAR_X_WIDGET (vinstance);
+		  if (widget && XtIsManaged (widget) &&
+		      XtWindow (widget) == x_win)
+		    return (struct window_mirror *) 1;
 		}
 	      break;
 	    default:
@@ -487,7 +450,7 @@ x_scrollbar_loop (enum x_scrollbar_loop type, Lisp_Object window,
 	}
 
       mir = mir->next;
-      window = XWINDOW (window)->next;
+      window = w->next;
     }
 
   return NULL;
@@ -652,14 +615,15 @@ x_update_vertical_scrollbar_callback (Widget widget, LWLIB_ID id,
 	      }
 	    else
 	      {
-		value = (SCROLLBAR_X_POS_DATA (instance).minimum
-			 + (((double)
-			     (SCROLLBAR_X_VDRAG_ORIG_WINDOW_START (instance)
-			      - SCROLLBAR_X_POS_DATA (instance).minimum)
-			     * (data->slider_value -
-				SCROLLBAR_X_POS_DATA (instance).minimum))
-			    / (SCROLLBAR_X_VDRAG_ORIG_VALUE (instance)
-			       - SCROLLBAR_X_POS_DATA (instance).minimum)));
+		value = (int)
+		  (SCROLLBAR_X_POS_DATA (instance).minimum
+		   + (((double)
+		       (SCROLLBAR_X_VDRAG_ORIG_WINDOW_START (instance)
+			- SCROLLBAR_X_POS_DATA (instance).minimum)
+		       * (data->slider_value -
+			  SCROLLBAR_X_POS_DATA (instance).minimum))
+		      / (SCROLLBAR_X_VDRAG_ORIG_VALUE (instance)
+			 - SCROLLBAR_X_POS_DATA (instance).minimum)));
 	      }
 	  }
 	else
@@ -676,14 +640,16 @@ x_update_vertical_scrollbar_callback (Widget widget, LWLIB_ID id,
 	      }
 	    else
 	      {
-		value = (SCROLLBAR_X_VDRAG_ORIG_WINDOW_START (instance)
-			 + (((double) (SCROLLBAR_X_POS_DATA (instance).maximum
-				       - SCROLLBAR_X_VDRAG_ORIG_WINDOW_START (instance))
-			     * (data->slider_value
-				- SCROLLBAR_X_VDRAG_ORIG_VALUE (instance)))
-			    / (SCROLLBAR_X_POS_DATA (instance).maximum
-			       - SCROLLBAR_X_POS_DATA (instance).slider_size
-			       - SCROLLBAR_X_VDRAG_ORIG_VALUE (instance))));
+		value = (int)
+		  (SCROLLBAR_X_VDRAG_ORIG_WINDOW_START (instance)
+		   + (((double)
+		       (SCROLLBAR_X_POS_DATA (instance).maximum
+			- SCROLLBAR_X_VDRAG_ORIG_WINDOW_START (instance))
+		       * (data->slider_value
+			  - SCROLLBAR_X_VDRAG_ORIG_VALUE (instance)))
+		      / (SCROLLBAR_X_POS_DATA (instance).maximum
+			 - SCROLLBAR_X_POS_DATA (instance).slider_size
+			 - SCROLLBAR_X_VDRAG_ORIG_VALUE (instance))));
 	      }
 	  }
 #else
@@ -778,7 +744,7 @@ x_update_horizontal_scrollbar_callback (Widget widget, LWLIB_ID id,
 static void
 x_scrollbar_pointer_changed_in_window (struct window *w)
 {
-  Lisp_Object window = Qnil;
+  Lisp_Object window;
 
   XSETWINDOW (window, w);
   x_scrollbar_loop (X_SET_SCROLLBAR_POINTER, window, find_window_mirror (w),

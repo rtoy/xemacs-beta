@@ -159,19 +159,18 @@ Any vector of 256 elements will do.
 */
        (obj))
 {
-  if (CHAR_TABLEP (obj) && XCHAR_TABLE_TYPE (obj) == CHAR_TABLE_TYPE_SYNTAX)
-    return Qt;
-  return Qnil;
+  return CHAR_TABLEP (obj) && XCHAR_TABLE_TYPE (obj) == CHAR_TABLE_TYPE_SYNTAX
+    ? Qt : Qnil;
 }
 
 static Lisp_Object
-check_syntax_table (Lisp_Object obj, Lisp_Object def)
+check_syntax_table (Lisp_Object obj, Lisp_Object default_)
 {
   if (NILP (obj))
-    obj = def;
+    obj = default_;
   while (NILP (Fsyntax_table_p (obj)))
     obj = wrong_type_argument (Qsyntax_table_p, obj);
-  return (obj);
+  return obj;
 }
 
 DEFUN ("syntax-table", Fsyntax_table, 0, 1, 0, /*
@@ -305,10 +304,8 @@ syntax_match (Lisp_Object table, Emchar ch)
   if (SYNTAX_FROM_CODE (XINT (code2)) == Sinherit)
     code = CHAR_TABLE_VALUE_UNSAFE (XCHAR_TABLE (Vstandard_syntax_table),
 				    ch);
-  if (CONSP (code))
-    return XCDR (code);
-  else
-    return Qnil;
+
+  return CONSP (code) ? XCDR (code) : Qnil;
 }
 
 DEFUN ("matching-paren", Fmatching_paren, 1, 2, 0, /*
@@ -1489,6 +1486,7 @@ Sixth arg COMMENTSTOP non-nil means stop at the start of a comment.
   int target;
   Bufpos start, end;
   struct buffer *buf = decode_buffer (buffer, 0);
+  Lisp_Object val;
 
   if (!NILP (targetdepth))
     {
@@ -1505,26 +1503,18 @@ Sixth arg COMMENTSTOP non-nil means stop at the start of a comment.
 
   BUF_SET_PT (buf, state.location);
 
-  {
-    /*
-     * This junk is necessary because of a bug in SparcWorks cc 2.0.1.  It
-     * doesn't handle functions as arguments to other functions very well.
-     */
-    Lisp_Object retval[8];
+  /* reverse order */
+  val = Qnil;
+  val = Fcons (state.comstyle  ? Qt : Qnil, val);
+  val = Fcons (make_int (state.mindepth),   val);
+  val = Fcons (state.quoted    ? Qt : Qnil, val);
+  val = Fcons (state.incomment ? Qt : Qnil, val);
+  val = Fcons (state.instring       < 0 ? Qnil : make_int (state.instring),       val);
+  val = Fcons (state.thislevelstart < 0 ? Qnil : make_int (state.thislevelstart), val);
+  val = Fcons (state.prevlevelstart < 0 ? Qnil : make_int (state.prevlevelstart), val);
+  val = Fcons (make_int (state.depth), val);
 
-    retval[0] = make_int (state.depth);
-    retval[1] = ((state.prevlevelstart < 0) ? Qnil :
-		 make_int (state.prevlevelstart));
-    retval[2] = ((state.thislevelstart < 0) ? Qnil :
-		 make_int (state.thislevelstart));
-    retval[3] = ((state.instring >= 0) ? make_int (state.instring) : Qnil);
-    retval[4] = ((state.incomment) ? Qt : Qnil);
-    retval[5] = ((state.quoted) ? Qt : Qnil);
-    retval[6] = make_int (state.mindepth);
-    retval[7] = ((state.comstyle) ? Qt : Qnil);
-
-    return (Flist (8, retval));
-  }
+  return val;
 }
 
 

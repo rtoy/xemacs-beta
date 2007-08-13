@@ -53,20 +53,19 @@ Lisp_Object Qtranslate_table;
 
 static void compute_trt_inverse (Lisp_Object trt, Lisp_Object inverse);
 
-#define STRING256_P(obj) \
-  (STRINGP (obj) && string_char_length (XSTRING (obj)) == 256)
+#define STRING256_P(obj) (STRINGP (obj) && XSTRING_CHAR_LENGTH (obj) == 256)
 
 DEFUN ("case-table-p", Fcase_table_p, 1, 1, 0, /*
-Return t iff ARG is a case table.
+Return t if ARG is a case table.
 See `set-case-table' for more information on these data structures.
 */
        (table))
 {
   Lisp_Object down, up, canon, eqv;
-  down = Fcar_safe (table);
-  up = Fcar_safe (Fcdr_safe (table));
-  canon = Fcar_safe (Fcdr_safe (Fcdr_safe (table)));
-  eqv = Fcar_safe (Fcdr_safe (Fcdr_safe (Fcdr_safe (table))));
+  if (!CONSP (table)) return Qnil; down  = XCAR (table); table = XCDR (table);
+  if (!CONSP (table)) return Qnil; up    = XCAR (table); table = XCDR (table);
+  if (!CONSP (table)) return Qnil; canon = XCAR (table); table = XCDR (table);
+  if (!CONSP (table)) return Qnil; eqv   = XCAR (table);
 
   return (STRING256_P (down)
 	  && (NILP (up) || STRING256_P (up))
@@ -91,15 +90,12 @@ Return the case table of BUFFER, which defaults to the current buffer.
 */
        (buffer))
 {
-  Lisp_Object down, up, canon, eqv;
   struct buffer *buf = decode_buffer (buffer, 0);
 
-  down = buf->downcase_table;
-  up = buf->upcase_table;
-  canon = buf->case_canon_table;
-  eqv = buf->case_eqv_table;
-
-  return Fcons (down, Fcons (up, Fcons (canon, Fcons (eqv, Qnil))));
+  return list4 (buf->downcase_table,
+		buf->upcase_table,
+		buf->case_canon_table,
+		buf->case_eqv_table);
 }
 
 DEFUN ("standard-case-table", Fstandard_case_table, 0, 0, 0, /*
@@ -108,11 +104,10 @@ This is the one used for new buffers.
 */
        ())
 {
-  return Fcons (Vascii_downcase_table,
-		Fcons (Vascii_upcase_table,
-		       Fcons (Vascii_canon_table,
-			      Fcons (Vascii_eqv_table,
-				     Qnil))));
+  return list4 (Vascii_downcase_table,
+		Vascii_upcase_table,
+		Vascii_canon_table,
+		Vascii_eqv_table);
 }
 
 static Lisp_Object set_case_table (Lisp_Object table, int standard);
@@ -194,15 +189,15 @@ make_mirror_trt_table (Lisp_Object table)
 static Lisp_Object
 set_case_table (Lisp_Object table, int standard)
 {
-  Lisp_Object down, up, canon, eqv;
+  Lisp_Object down, up, canon, eqv, tail = table;
   struct buffer *buf = current_buffer;
 
   check_case_table (table);
 
-  down = Fcar_safe (table);
-  up = Fcar_safe (Fcdr_safe (table));
-  canon = Fcar_safe (Fcdr_safe (Fcdr_safe (table)));
-  eqv = Fcar_safe (Fcdr_safe (Fcdr_safe (Fcdr_safe (table))));
+  down  = XCAR (tail); tail = XCDR (tail);
+  up    = XCAR (tail); tail = XCDR (tail);
+  canon = XCAR (tail); tail = XCDR (tail);
+  eqv   = XCAR (tail);
 
   if (NILP (up))
     {

@@ -222,28 +222,30 @@ DECLARE_LRECORD (device, struct device);
 #define CHECK_DEVICE(x) CHECK_RECORD (x, device)
 #define CONCHECK_DEVICE(x) CONCHECK_RECORD (x, device)
 
-#define CHECK_LIVE_DEVICE(x)						\
-  do { CHECK_DEVICE (x);						\
-       if (! DEVICEP (x)						\
-	   || ! DEVICE_LIVE_P (XDEVICE (x)))				\
-         dead_wrong_type_argument (Qdevice_live_p, (x)); } while (0)
-#define CONCHECK_LIVE_DEVICE(x)						\
-  do { CONCHECK_DEVICE (x);						\
-       if (! DEVICEP (x)						\
-	   || ! DEVICE_LIVE_P (XDEVICE (x)))				\
-         x = wrong_type_argument (Qdevice_live_p, (x)); } while (0)
+#define CHECK_LIVE_DEVICE(x) do {			\
+  CHECK_DEVICE (x);					\
+  if (! DEVICE_LIVE_P (XDEVICE (x)))			\
+    dead_wrong_type_argument (Qdevice_live_p, (x));	\
+} while (0)
+#define CONCHECK_LIVE_DEVICE(x) do {			\
+  CONCHECK_DEVICE (x);					\
+  if (! DEVICE_LIVE_P (XDEVICE (x)))			\
+    x = wrong_type_argument (Qdevice_live_p, (x));	\
+} while (0)
 
 #define DEVICE_TYPE_P(d, type)	EQ (DEVICE_TYPE (d), Q##type)
 
 #ifdef ERROR_CHECK_TYPECHECK
-MAC_DECLARE_EXTERN (struct device *, MTdevice_data)
+INLINE struct device *
+error_check_device_type (struct device *d, Lisp_Object sym);
+INLINE struct device *
+error_check_device_type (struct device *d, Lisp_Object sym)
+{
+  assert (EQ (DEVICE_TYPE (d), sym));
+  return d;
+}
 # define DEVICE_TYPE_DATA(d, type)			\
-MAC_BEGIN						\
-  MAC_DECLARE (struct device *, MTdevice_data, d)	\
-  assert (DEVICE_TYPE_P (MTdevice_data, type))		\
-  MAC_SEP						\
-  (struct type##_device *) MTdevice_data->device_data	\
-MAC_END
+  ((struct type##_device *) (error_check_device_type (d, Q##type))->device_data)
 #else
 # define DEVICE_TYPE_DATA(d, type)			\
   ((struct type##_device *) (d)->device_data)
@@ -288,13 +290,15 @@ MAC_END
 
 #define DEVICE_WIN_P(dev) CONSOLE_TYPESYM_WIN_P (DEVICE_TYPE (dev))
 
-extern Lisp_Object Vdefault_device;
-extern Lisp_Object Qdelete_device;
-extern Lisp_Object Qdevice_live_p;
+EXFUN (Fdevice_console, 1);
+EXFUN (Fdevice_name, 1);
+EXFUN (Fmake_device, 3);
+EXFUN (Fselected_device, 1);
 
+extern Lisp_Object Qcreate_device_hook, Qdelete_device_hook, Qgrayscale;
+extern Lisp_Object Qinit_post_tty_win, Qmono, Vdefault_x_device;
 extern Lisp_Object Vdevice_class_list;
 
-extern Lisp_Object Qcolor, Qgrayscale, Qmono;
 int valid_device_class_p (Lisp_Object class);
 
 #define DEVICE_LIVE_P(d) (!EQ (DEVICE_TYPE (d), Qdead))
@@ -321,51 +325,46 @@ int valid_device_class_p (Lisp_Object class);
 #define DEVICE_ON_CONSOLE_P(d) ((d)->on_console_p)
 #define DEVICE_CONNECTED_TO_NAS_P(d) ((d)->connected_to_nas_p)
 
-#define LOCK_DEVICE(d) do { (d)->locked = 1; } while (0)
-#define UNLOCK_DEVICE(d) do { (d)->locked = 0; } while (0)
+#define LOCK_DEVICE(d) ((void) ((d)->locked = 1))
+#define UNLOCK_DEVICE(d) ((void) ((d)->locked = 0))
 
 #define INVALIDATE_DEVICE_PIXEL_TO_GLYPH_CACHE(d)			\
-  (d)->pixel_to_glyph_cache.valid = 0
+  ((void) ((d)->pixel_to_glyph_cache.valid = 0))
 
 #define INVALIDATE_PIXEL_TO_GLYPH_CACHE do {				\
   Lisp_Object _devcons_, _concons_;					\
   DEVICE_LOOP_NO_BREAK (_devcons_, _concons_)				\
-    INVALIDATE_DEVICE_PIXEL_TO_GLYPH_CACHE (XDEVICE (XCONS (_devcons_)->car));\
+    INVALIDATE_DEVICE_PIXEL_TO_GLYPH_CACHE (XDEVICE (XCAR (_devcons_)));\
   } while (0)
 
-#define MARK_DEVICE_FACES_CHANGED(d) do {				\
-  faces_changed = 1;							\
-  (d)->faces_changed = 1; } while (0)
+#define MARK_DEVICE_FACES_CHANGED(d)			\
+  ((void) (faces_changed = (d)->faces_changed = 1))
 
-#define MARK_DEVICE_GLYPHS_CHANGED(d) do {				\
-  glyphs_changed = 1;							\
-  (d)->glyphs_changed = 1; } while (0)
+#define MARK_DEVICE_GLYPHS_CHANGED(d)			\
+  ((void) (glyphs_changed = (d)->glyphs_changed = 1))
 
-#define MARK_DEVICE_TOOLBARS_CHANGED(d) do {				\
-  toolbar_changed = 1;							\
-  (d)->toolbar_changed = 1; } while (0)
+#define MARK_DEVICE_TOOLBARS_CHANGED(d)			\
+  ((void) (toolbar_changed = (d)->toolbar_changed = 1))
 
-#define MARK_DEVICE_SIZE_CHANGED(d) do {				\
-  size_changed = 1;							\
-  (d)->size_changed = 1; } while (0)
+#define MARK_DEVICE_SIZE_CHANGED(d)			\
+  ((void) (size_changed = (d)->size_changed = 1))
 
-#define MARK_DEVICE_FRAMES_FACES_CHANGED(d) do {			\
-  Lisp_Object frmcons;							\
-  DEVICE_FRAME_LOOP (frmcons, d)					\
-    XFRAME (XCONS (frmcons)->car)->faces_changed = 1;			\
-  MARK_DEVICE_FACES_CHANGED (d); } while (0)
+#define MARK_DEVICE_FRAMES_FACES_CHANGED(d) do {	\
+  struct device *mdffc_d = (d);				\
+  Lisp_Object frmcons;					\
+  DEVICE_FRAME_LOOP (frmcons, mdffc_d)			\
+    XFRAME (XCAR (frmcons))->faces_changed = 1;		\
+  MARK_DEVICE_FACES_CHANGED (mdffc_d);			\
+} while (0)
 
-#define MARK_DEVICE_FRAME_CHANGED(d) do {				\
-  frame_changed = 1;							\
-  (d)->frame_changed = 1; } while (0)
+#define MARK_DEVICE_FRAME_CHANGED(d)			\
+  ((void) (frame_changed = (d)->frame_changed = 1))
 
-#define MARK_DEVICE_WINDOWS_CHANGED(d) do {				\
-  windows_changed = 1;							\
-  (d)->windows_changed = 1; } while (0)
+#define MARK_DEVICE_WINDOWS_CHANGED(d)			\
+  ((void) (windows_changed = (d)->windows_changed = 1))
 
-#define MARK_DEVICE_WINDOWS_STRUCTURE_CHANGED(d) do {			\
-  windows_structure_changed = 1;					\
-  (d)->windows_structure_changed = 1; } while (0)
+#define MARK_DEVICE_WINDOWS_STRUCTURE_CHANGED(d)	\
+  ((void) (windows_structure_changed = (d)->windows_structure_changed = 1))
 
 /* This turns out to be used heavily so we make it a macro to make it
    inline.  Also, the majority of the time the object will turn out to
@@ -390,7 +389,6 @@ int valid_device_class_p (Lisp_Object class);
 
 void select_device_1 (Lisp_Object);
 struct device *decode_device (Lisp_Object);
-Lisp_Object make_device (struct device *d);
 void handle_asynch_device_change (void);
 void call_critical_lisp_code (struct device *d, Lisp_Object function,
 			      Lisp_Object object);

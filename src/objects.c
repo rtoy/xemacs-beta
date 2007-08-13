@@ -55,16 +55,6 @@ finalose (void *ptr)
  ****************************************************************************/
 
 Lisp_Object Qcolor_instancep;
-static Lisp_Object mark_color_instance (Lisp_Object, void (*) (Lisp_Object));
-static void print_color_instance (Lisp_Object, Lisp_Object, int);
-static void finalize_color_instance (void *, int);
-static int color_instance_equal (Lisp_Object, Lisp_Object, int depth);
-static unsigned long color_instance_hash (Lisp_Object obj, int depth);
-DEFINE_LRECORD_IMPLEMENTATION ("color-instance", color_instance,
-			       mark_color_instance, print_color_instance,
-			       finalize_color_instance, color_instance_equal,
-			       color_instance_hash,
-			       struct Lisp_Color_Instance);
 
 static Lisp_Object
 mark_color_instance (Lisp_Object obj, void (*markobj) (Lisp_Object))
@@ -136,12 +126,22 @@ color_instance_hash (Lisp_Object obj, int depth)
 				    LISP_HASH (obj)));
 }
 
+DEFINE_LRECORD_IMPLEMENTATION ("color-instance", color_instance,
+			       mark_color_instance, print_color_instance,
+			       finalize_color_instance, color_instance_equal,
+			       color_instance_hash,
+			       struct Lisp_Color_Instance);
+
 DEFUN ("make-color-instance", Fmake_color_instance, 1, 3, 0, /*
-Creates a new `color-instance' object of the specified color.
-DEVICE specifies the device this object applies to and defaults to the
-selected device.  An error is signalled if the color is unknown or cannot
-be allocated; however, if NOERROR is non-nil, nil is simply returned in
-this case. (And if NOERROR is other than t, a warning may be issued.)
+Return a new `color-instance' object named NAME (a string).
+
+Optional argument DEVICE specifies the device this object applies to
+and defaults to the selected device.
+
+An error is signaled if the color is unknown or cannot be allocated;
+however, if optional argument NO-ERROR is non-nil, nil is simply
+returned in this case. (And if NO-ERROR is other than t, a warning may
+be issued.)
 
 The returned object is a normal, first-class lisp object.  The way you
 `deallocate' the color is the way you deallocate any other lisp object:
@@ -153,7 +153,7 @@ is deallocated as well.
 {
   struct Lisp_Color_Instance *c;
   Lisp_Object val;
-  int retval = 0;
+  int retval;
 
   CHECK_STRING (name);
   XSETDEVICE (device, decode_device (device));
@@ -161,13 +161,11 @@ is deallocated as well.
   c = alloc_lcrecord_type (struct Lisp_Color_Instance, lrecord_color_instance);
   c->name = name;
   c->device = device;
-
   c->data = 0;
 
   retval = MAYBE_INT_DEVMETH (XDEVICE (device), initialize_color_instance,
 			      (c, name, device,
 			       decode_error_behavior_flag (no_error)));
-
   if (!retval)
     return Qnil;
 
@@ -195,7 +193,7 @@ Return the name used to allocate COLOR-INSTANCE.
 DEFUN ("color-instance-rgb-components", Fcolor_instance_rgb_components, 1, 1, 0, /*
 Return a three element list containing the red, green, and blue
 color components of COLOR-INSTANCE, or nil if unknown.
-Component values range from 0-65535.
+Component values range from 0 to 65535.
 */
        (color_instance))
 {
@@ -206,10 +204,10 @@ Component values range from 0-65535.
 
   if (NILP (c->device))
     return Qnil;
-  else
-    return MAYBE_LISP_DEVMETH (XDEVICE (c->device),
-			       color_instance_rgb_components,
-			       (c));
+
+  return MAYBE_LISP_DEVMETH (XDEVICE (c->device),
+			     color_instance_rgb_components,
+			     (c));
 }
 
 DEFUN ("valid-color-name-p", Fvalid_color_name_p, 1, 2, 0, /*
@@ -236,15 +234,6 @@ such as `blink'.
  ***************************************************************************/
 
 Lisp_Object Qfont_instancep;
-static Lisp_Object mark_font_instance (Lisp_Object, void (*) (Lisp_Object));
-static void print_font_instance (Lisp_Object, Lisp_Object, int);
-static void finalize_font_instance (void *, int);
-static int font_instance_equal (Lisp_Object o1, Lisp_Object o2, int depth);
-static unsigned long font_instance_hash (Lisp_Object obj, int depth);
-DEFINE_LRECORD_IMPLEMENTATION ("font-instance", font_instance,
-			       mark_font_instance, print_font_instance,
-			       finalize_font_instance, font_instance_equal,
-			       font_instance_hash, struct Lisp_Font_Instance);
 
 static Lisp_Object font_instance_truename_internal (Lisp_Object xfont,
 						    Error_behavior errb);
@@ -310,8 +299,13 @@ font_instance_hash (Lisp_Object obj, int depth)
 			depth + 1);
 }
 
+DEFINE_LRECORD_IMPLEMENTATION ("font-instance", font_instance,
+			       mark_font_instance, print_font_instance,
+			       finalize_font_instance, font_instance_equal,
+			       font_instance_hash, struct Lisp_Font_Instance);
+
 DEFUN ("make-font-instance", Fmake_font_instance, 1, 3, 0, /*
-Creates a new `font-instance' object of the specified name.
+Return a new `font-instance' object named NAME.
 DEVICE specifies the device this object applies to and defaults to the
 selected device.  An error is signalled if the font is unknown or cannot
 be allocated; however, if NOERROR is non-nil, nil is simply returned in
@@ -391,7 +385,7 @@ DEFUN ("font-instance-descent", Ffont_instance_descent, 1, 1, 0, /*
 Return the descent in pixels of FONT-INSTANCE.
 The returned value is the maximum descent for all characters in the font,
 where a character's descent is the number of pixels below the baseline.
-(Many characters to do not have any descent.  Typical characters with a
+\(Many characters to do not have any descent.  Typical characters with a
 descent are lowercase p and lowercase g.)
 */
        (font_instance))
@@ -425,15 +419,15 @@ font_instance_truename_internal (Lisp_Object font_instance,
 				 Error_behavior errb)
 {
   struct Lisp_Font_Instance *f = XFONT_INSTANCE (font_instance);
-  return DEVMETH_OR_GIVEN (XDEVICE (f->device), font_instance_truename,
-			   (f, errb), f->name);
+  struct device *d = XDEVICE (f->device);
+  return DEVMETH_OR_GIVEN (d, font_instance_truename, (f, errb), f->name);
 }
 
 DEFUN ("font-instance-truename", Ffont_instance_truename, 1, 1, 0, /*
 Return the canonical name of FONT-INSTANCE.
 Font names are patterns which may match any number of fonts, of which
 the first found is used.  This returns an unambiguous name for that font
-(but not necessarily its only unambiguous name).
+\(but not necessarily its only unambiguous name).
 */
        (font_instance))
 {
@@ -625,7 +619,7 @@ set_color_attached_to (Lisp_Object obj, Lisp_Object face, Lisp_Object property)
 }
 
 DEFUN ("color-specifier-p", Fcolor_specifier_p, 1, 1, 0, /*
-Return non-nil if OBJECT is a color specifier.
+Return t if OBJECT is a color specifier.
 
 Valid instantiators for color specifiers are:
 

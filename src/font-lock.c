@@ -432,7 +432,7 @@ find_context (struct buffer *buf, Bufpos pt)
       if (context_cache.needs_its_head_reexamined)
 	{
 	  if (context_cache.depth == 0
-	      && context_cache.context == ccontext_none)
+	      && context_cache.context == context_none)
 	    {
 	      /* We've found an anchor spot.
 		 Try to put the start of defun within 6000 chars of
@@ -628,13 +628,12 @@ context_to_symbol (enum syntactic_context context)
 {
   switch (context)
     {
-    case context_none:		return (Qnil);
-    case context_string:	return (Qstring);
-    case context_comment:	return (Qcomment);
-    case context_block_comment:	return (Qblock_comment);
-    default: abort ();
+    case context_none:		return Qnil;
+    case context_string:	return Qstring;
+    case context_comment:	return Qcomment;
+    case context_block_comment:	return Qblock_comment;
+    default: abort (); return Qnil; /* suppress compiler warning */
     }
-  return Qnil;	/* suppress compiler warning */
 }
 
 DEFUN ("buffer-syntactic-context", Fbuffer_syntactic_context, 0, 1, 0, /*
@@ -678,8 +677,8 @@ WARNING: this may alter match-data.
 
 
 DEFUN ("syntactically-sectionize", Fsyntactically_sectionize, 3, 4, 0, /*
-Calls FUNCTION for each contiguous syntactic context in the region.
-Calls the given function with four arguments: the start and end of the
+Call FUNCTION for each contiguous syntactic context in the region.
+Call the given function with four arguments: the start and end of the
 region, a symbol representing the syntactic context, and the current
 depth (as returned by the functions `buffer-syntactic-context' and
 `buffer-syntactic-context-depth').  When this function is called, the
@@ -772,6 +771,6 @@ syms_of_font_lock (void)
 void
 vars_of_font_lock (void)
 {
-  memset (&context_cache, 0, sizeof (context_cache));
-  memset (&bol_context_cache, 0, sizeof (bol_context_cache));
+  xzero (context_cache);
+  xzero (bol_context_cache);
 }

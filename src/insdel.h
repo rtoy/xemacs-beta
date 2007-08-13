@@ -29,9 +29,8 @@ Boston, MA 02111-1307, USA.  */
 /*                        changing a buffer's text                      */
 /************************************************************************/
 
-extern int begin_multiple_change (struct buffer *buf, Bufpos start,
-				  Bufpos end);
-extern void end_multiple_change (struct buffer *buf, int count);
+int begin_multiple_change (struct buffer *buf, Bufpos start, Bufpos end);
+void end_multiple_change (struct buffer *buf, int count);
 
 /* flags for functions below */
 
@@ -75,12 +74,10 @@ Charcount buffer_insert_from_buffer_1 (struct buffer *buf, Bufpos pos,
 #define buffer_insert_from_buffer(buf, b, index, length) \
   buffer_insert_from_buffer_1 (buf, -1, b, index, length, 0)
 
-extern void buffer_delete_range (struct buffer *buf, Bufpos from, Bufpos to,
-				 int flags);
-extern void buffer_replace_char (struct buffer *b, Bufpos pos, Emchar ch,
-				 int not_real_change, int force_lock_check);
-
-
+void buffer_delete_range (struct buffer *buf, Bufpos from, Bufpos to,
+			  int flags);
+void buffer_replace_char (struct buffer *b, Bufpos pos, Emchar ch,
+			  int not_real_change, int force_lock_check);
 
 
 /************************************************************************/
@@ -131,11 +128,10 @@ struct each_buffer_change_data
 #define BUF_NEWLINE_WAS_DELETED(buf) \
   ((buf)->changes->newline_was_deleted)
 
-extern void buffer_extent_signal_changed_region (struct buffer *buf,
-						 Bufpos start,
-						 Bufpos end);
-extern void buffer_reset_changes (struct buffer *buf);
-
+void buffer_extent_signal_changed_region (struct buffer *buf,
+					  Bufpos start,
+					  Bufpos end);
+void buffer_reset_changes (struct buffer *buf);
 
 
 
@@ -143,32 +139,24 @@ extern void buffer_reset_changes (struct buffer *buf);
 /*                        other related functions                       */
 /************************************************************************/
 
-extern Memind do_marker_adjustment (Memind mpos, Memind from,
-				    Memind to, int amount);
+Memind do_marker_adjustment (Memind mpos, Memind from,
+			     Memind to, int amount);
 
-extern void fixup_internal_substring (CONST Bufbyte *nonreloc,
-				      Lisp_Object reloc,
-				      int offset, int *len);
+void fixup_internal_substring (CONST Bufbyte *nonreloc,
+			       Lisp_Object reloc,
+			       int offset, int *len);
 
 /* In font-lock.c */
-extern void font_lock_maybe_update_syntactic_caches (struct buffer *buf,
-						     Bufpos start,
-						     Bufpos orig_end,
-						     Bufpos new_end);
-extern void font_lock_buffer_was_killed (struct buffer *buf);
+void font_lock_maybe_update_syntactic_caches (struct buffer *buf,
+					      Bufpos start,
+					      Bufpos orig_end,
+					      Bufpos new_end);
+void font_lock_buffer_was_killed (struct buffer *buf);
 
-extern void barf_if_buffer_read_only (struct buffer *buf, Bufpos from,
-				      Bufpos to);
+void barf_if_buffer_read_only (struct buffer *buf, Bufpos from,
+			       Bufpos to);
 
-/* In marker.c */
-void init_buffer_markers (struct buffer *b);
-void uninit_buffer_markers (struct buffer *b);
-
-extern Lisp_Object make_string_from_buffer (struct buffer *buf, Bufpos pos,
-					    Charcount length);
-extern void init_buffer_text (struct buffer *b, int indirect_p);
-extern void uninit_buffer_text (struct buffer *b, int indirect_p);
-
-
+void init_buffer_text (struct buffer *b, int indirect_p);
+void uninit_buffer_text (struct buffer *b, int indirect_p);
 
 #endif /* _XEMACS_INSDEL_H_ */

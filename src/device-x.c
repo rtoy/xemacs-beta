@@ -95,8 +95,6 @@ static XrmOptionDescRec emacs_options[] =
   {"-fontset",  "*FontSet",                     XrmoptionSepArg, NULL},
 };
 
-static void validify_resource_string (char *str);
-
 /* Functions to synchronize mirroring resources and specifiers */
 int in_resource_setting;
 int in_specifier_change_function;
@@ -149,7 +147,7 @@ decode_x_device (Lisp_Object device)
   return XDEVICE (device);
 }
 
-Display *
+static Display *
 get_x_display (Lisp_Object device)
 {
   return DEVICE_X_DISPLAY (decode_x_device (device));
@@ -202,7 +200,7 @@ sanity_check_geometry_resource (Display *dpy)
 "You should always use \".geometry\" or \"*EmacsFrame.geometry\" instead.\n",
 		  app_name, (char *) value.addr,
 		  app_class, (char *) value.addr);
-      suppress_early_backtrace = 1;
+      suppress_early_error_handler_backtrace = 1;
       error ("Invalid geometry resource");
     }
 }
@@ -227,7 +225,7 @@ x_init_device_class (struct device *d)
 }
 
 static int
-have_xemacs_resources_in_xrdb(char *disp_name)
+have_xemacs_resources_in_xrdb (CONST char *disp_name)
 {
   Display *dpy;
   char *xdefs, *key;
@@ -248,7 +246,7 @@ have_xemacs_resources_in_xrdb(char *disp_name)
   dpy = XOpenDisplay(disp_name);
 
   if (!dpy) return 0;
-  
+
   xdefs = XResourceManagerString(dpy);       /* don't free - owned by X */
   for (found = 0; xdefs && *xdefs; ) {
     if (strncmp(xdefs, key, len) == 0  &&
@@ -260,9 +258,30 @@ have_xemacs_resources_in_xrdb(char *disp_name)
     while (*xdefs && *xdefs++ != '\n')       /* find start of next entry.. */
       ;
   }
-  
+
   XCloseDisplay(dpy);
   return found;
+}
+
+/* Only the characters [-_A-Za-z0-9] are allowed in the individual
+   components of a resource.  Convert invalid characters to `-' */
+
+static char valid_resource_char_p[256];
+
+static void
+validify_resource_component (char *str, size_t len)
+{
+  for (; len; len--, str++)
+    if (!valid_resource_char_p[(unsigned char) (*str)])
+      *str = '-';
+}
+
+static void
+Dynarr_add_validified_lisp_string (char_dynarr *cda, Lisp_Object str)
+{
+  Bytecount len = XSTRING_LENGTH (str);
+  Dynarr_add_many (cda, (char *) XSTRING_DATA (str), len);
+  validify_resource_component (Dynarr_atp (cda, Dynarr_length (cda) - len), len);
 }
 
 static void
@@ -274,7 +293,8 @@ x_init_device (struct device *d, Lisp_Object props)
   Widget app_shell;
   int argc;
   char **argv;
-  CONST char *app_class, *app_name;
+  CONST char *app_class;
+  CONST char *app_name;
   CONST char *disp_name;
   Arg xargs[6];
   Cardinal numargs;
@@ -296,12 +316,12 @@ x_init_device (struct device *d, Lisp_Object props)
       XSTRING_LENGTH (Vx_emacs_application_class) > 0)
     GET_C_STRING_CTEXT_DATA_ALLOCA (Vx_emacs_application_class, app_class);
   else {
-    app_class = (NILP(Vx_emacs_application_class)  &&
-                 have_xemacs_resources_in_xrdb(disp_name))
+    app_class = (NILP (Vx_emacs_application_class)  &&
+                 have_xemacs_resources_in_xrdb (disp_name))
                 ? "XEmacs"
                 : "Emacs";
     /* need to update Vx_emacs_application_class: */
-    Vx_emacs_application_class = build_string(app_class);
+    Vx_emacs_application_class = build_string (app_class);
   }
 
   slow_down_interrupts ();
@@ -313,7 +333,7 @@ x_init_device (struct device *d, Lisp_Object props)
 
   if (dpy == 0)
     {
-      suppress_early_backtrace = 1;
+      suppress_early_error_handler_backtrace = 1;
       signal_simple_error ("X server not responding\n", display);
     }
 
@@ -362,7 +382,7 @@ x_init_device (struct device *d, Lisp_Object props)
   /* colons and periods can't appear in individual elements of resource
      strings */
 
-  XtGetApplicationNameAndClass (dpy, &app_name, &app_class);
+  XtGetApplicationNameAndClass (dpy, (char **) &app_name, (char **) &app_class);
   /* search for a matching visual if requested by the user, or setup the display default */
   numargs = 0;
   {
@@ -447,7 +467,8 @@ x_init_device (struct device *d, Lisp_Object props)
   DEVICE_X_COLORMAP (d) = cmap;
   DEVICE_X_DEPTH (d) = depth;
 
-  validify_resource_string ((char *) XSTRING_DATA (DEVICE_NAME (d)));
+  validify_resource_component ((char *) XSTRING_DATA (DEVICE_NAME (d)),
+			       XSTRING_LENGTH (DEVICE_NAME (d)));
   app_shell = XtAppCreateShell (NULL, app_class,
 				applicationShellWidgetClass,
 				dpy, xargs, numargs);
@@ -457,7 +478,7 @@ x_init_device (struct device *d, Lisp_Object props)
   XIM_init_device(d);
 #endif /* HAVE_XIM */
 
-  /* Realize the app_shell so that it's window exists for GC creation purposes,
+  /* Realize the app_shell so that its window exists for GC creation purposes,
      and set it to the size of the root window for child placement purposes */
   {
     Screen *scrn = ScreenOfDisplay(dpy, screen);
@@ -598,51 +619,51 @@ x_delete_device (struct device *d)
 /*				handle X errors				*/
 /************************************************************************/
 
-static CONST char *events[] =
-{
-   "0: ERROR!",
-   "1: REPLY",
-   "KeyPress",
-   "KeyRelease",
-   "ButtonPress",
-   "ButtonRelease",
-   "MotionNotify",
-   "EnterNotify",
-   "LeaveNotify",
-   "FocusIn",
-   "FocusOut",
-   "KeymapNotify",
-   "Expose",
-   "GraphicsExpose",
-   "NoExpose",
-   "VisibilityNotify",
-   "CreateNotify",
-   "DestroyNotify",
-   "UnmapNotify",
-   "MapNotify",
-   "MapRequest",
-   "ReparentNotify",
-   "ConfigureNotify",
-   "ConfigureRequest",
-   "GravityNotify",
-   "ResizeRequest",
-   "CirculateNotify",
-   "CirculateRequest",
-   "PropertyNotify",
-   "SelectionClear",
-   "SelectionRequest",
-   "SelectionNotify",
-   "ColormapNotify",
-   "ClientMessage",
-   "MappingNotify",
-   "LASTEvent"
-};
-
 CONST char *
 x_event_name (int event_type)
 {
-  if (event_type < 0) return 0;
-  if (event_type >= countof (events)) return 0;
+  static CONST char *events[] =
+  {
+    "0: ERROR!",
+    "1: REPLY",
+    "KeyPress",
+    "KeyRelease",
+    "ButtonPress",
+    "ButtonRelease",
+    "MotionNotify",
+    "EnterNotify",
+    "LeaveNotify",
+    "FocusIn",
+    "FocusOut",
+    "KeymapNotify",
+    "Expose",
+    "GraphicsExpose",
+    "NoExpose",
+    "VisibilityNotify",
+    "CreateNotify",
+    "DestroyNotify",
+    "UnmapNotify",
+    "MapNotify",
+    "MapRequest",
+    "ReparentNotify",
+    "ConfigureNotify",
+    "ConfigureRequest",
+    "GravityNotify",
+    "ResizeRequest",
+    "CirculateNotify",
+    "CirculateRequest",
+    "PropertyNotify",
+    "SelectionClear",
+    "SelectionRequest",
+    "SelectionNotify",
+    "ColormapNotify",
+    "ClientMessage",
+    "MappingNotify",
+    "LASTEvent"
+  };
+
+  if (event_type < 0 || event_type >= countof (events))
+    return NULL;
   return events [event_type];
 }
 
@@ -953,21 +974,8 @@ construct_name_list (Display *display, Widget widget, char *fake_name,
 
 #endif /* 0 */
 
-/* Only the characters [-_A-Za-z0-9] are allowed in the individual
-   sections of a resource.  Convert invalid characters to -. */
-
-static void
-validify_resource_string (char *str)
-{
-  while (*str)
-    {
-      if (!strchr ("ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-		   "abcdefghijklmnopqrstuvwxyz"
-		   "0123456789-_", *str))
-	*str = '-';
-      str++;
-    }
-}
+static char_dynarr *name_char_dynarr;
+static char_dynarr *class_char_dynarr;
 
 /* Given a locale and device specification from x-get-resource or
 x-get-resource-prefix, return the resource prefix and display to
@@ -975,11 +983,9 @@ fetch the resource on. */
 
 static void
 x_get_resource_prefix (Lisp_Object locale, Lisp_Object device,
-		       Display **display_out, char *name_out,
-		       char *class_out)
+		       Display **display_out, char_dynarr *name,
+		       char_dynarr *class)
 {
-  char *appname, *appclass;
-
   if (NILP (locale))
     locale = Qglobal;
   if (NILP (Fvalid_specifier_locale_p (locale)))
@@ -1011,35 +1017,41 @@ x_get_resource_prefix (Lisp_Object locale, Lisp_Object device,
 
   *display_out = DEVICE_X_DISPLAY (XDEVICE (device));
 
-  XtGetApplicationNameAndClass (*display_out, &appname, &appclass);
-  strcpy (name_out, appname);
-  strcpy (class_out, appclass);
-  validify_resource_string (name_out);
-  validify_resource_string (class_out);
+  {
+    char *appname, *appclass;
+    int name_len, class_len;
+    XtGetApplicationNameAndClass (*display_out, &appname, &appclass);
+    name_len  = strlen (appname);
+    class_len = strlen (appclass);
+    Dynarr_add_many (name , appname,  name_len);
+    Dynarr_add_many (class, appclass, class_len);
+    validify_resource_component (Dynarr_atp (name,  0), name_len);
+    validify_resource_component (Dynarr_atp (class, 0), class_len);
+  }
 
   if (EQ (locale, Qglobal))
     return;
   if (BUFFERP (locale))
     {
-      strcat (name_out, ".buffer.");
+      Dynarr_add_literal_string (name, ".buffer.");
       /* we know buffer is live; otherwise we got an error above. */
-      strcat (name_out, (CONST char *) XSTRING_DATA (Fbuffer_name (locale)));
-      strcat (class_out, ".EmacsLocaleType.EmacsBuffer");
+      Dynarr_add_validified_lisp_string (name, Fbuffer_name (locale));
+      Dynarr_add_literal_string (class, ".EmacsLocaleType.EmacsBuffer");
     }
   else if (FRAMEP (locale))
     {
-      strcat (name_out, ".frame.");
+      Dynarr_add_literal_string (name, ".frame.");
       /* we know frame is live; otherwise we got an error above. */
-      strcat (name_out, (CONST char *) XSTRING_DATA (Fframe_name (locale)));
-      strcat (class_out, ".EmacsLocaleType.EmacsFrame");
+      Dynarr_add_validified_lisp_string (name, Fframe_name (locale));
+      Dynarr_add_literal_string (class, ".EmacsLocaleType.EmacsFrame");
     }
   else
     {
       assert (DEVICEP (locale));
-      strcat (name_out, ".device.");
+      Dynarr_add_literal_string (name, ".device.");
       /* we know device is live; otherwise we got an error above. */
-      strcat (name_out, (CONST char *) XSTRING_DATA (Fdevice_name (locale)));
-      strcat (class_out, ".EmacsLocaleType.EmacsDevice");
+      Dynarr_add_validified_lisp_string (name, Fdevice_name (locale));
+      Dynarr_add_literal_string (class, ".EmacsLocaleType.EmacsDevice");
     }
   return;
 }
@@ -1048,11 +1060,11 @@ DEFUN ("x-get-resource", Fx_get_resource, 3, 6, 0, /*
 Retrieve an X resource from the resource manager.
 
 The first arg is the name of the resource to retrieve, such as "font".
-The second arg is the class of the resource to retrieve, like "Font".
-The third arg should be one of the symbols 'string, 'integer, 'natnum, or
+The second arg is the class of the resource to retrieve, such as "Font".
+The third arg must be one of the symbols 'string, 'integer, 'natnum, or
   'boolean, specifying the type of object that the database is searched for.
 The fourth arg is the locale to search for the resources on, and can
-  currently be a a buffer, a frame, a device, or 'global.  If omitted, it
+  currently be a buffer, a frame, a device, or 'global.  If omitted, it
   defaults to 'global.
 The fifth arg is the device to search for the resources on. (The resource
   database for a particular device is constructed by combining non-device-
@@ -1128,8 +1140,7 @@ mean ``unspecified.''
 */
        (name, class, type, locale, device, no_error))
 {
-  /* #### fixed limit, could be overflowed */
-  char name_string[2048], class_string[2048];
+  char* name_string, *class_string;
   char *raw_result;
   XrmDatabase db;
   Display *display;
@@ -1139,28 +1150,25 @@ mean ``unspecified.''
   CHECK_STRING (class);
   CHECK_SYMBOL (type);
 
-  if (!EQ (type, Qstring)  &&
-      !EQ (type, Qboolean) &&
-      !EQ (type, Qinteger) &&
-      !EQ (type, Qnatnum))
-    return maybe_signal_continuable_error
-      (Qwrong_type_argument,
-       list2 (build_translated_string
-	      ("should be string, integer, natnum or boolean"),
-	      type),
-       Qresource, errb);
+  Dynarr_reset (name_char_dynarr);
+  Dynarr_reset (class_char_dynarr);
 
-  x_get_resource_prefix (locale, device, &display, name_string,
-			 class_string);
+  x_get_resource_prefix (locale, device, &display,
+			 name_char_dynarr, class_char_dynarr);
   if (!display)
     return Qnil;
 
   db = XtDatabase (display);
 
-  strcat (name_string, ".");
-  strcat (name_string, (CONST char *) XSTRING_DATA (name));
-  strcat (class_string, ".");
-  strcat (class_string, (CONST char *) XSTRING_DATA (class));
+  Dynarr_add (name_char_dynarr, '.');
+  Dynarr_add_lisp_string (name_char_dynarr, name);
+  Dynarr_add (class_char_dynarr, '.');
+  Dynarr_add_lisp_string (class_char_dynarr, class);
+  Dynarr_add (name_char_dynarr,  '\0');
+  Dynarr_add (class_char_dynarr, '\0');
+
+  name_string  = Dynarr_atp (name_char_dynarr,  0);
+  class_string = Dynarr_atp (class_char_dynarr, 0);
 
   {
     XrmValue xrm_value;
@@ -1196,14 +1204,13 @@ mean ``unspecified.''
 	  !strcasecmp (raw_result, "false") ||
 	  !strcasecmp (raw_result, "no"))
 	return Fcons (Qnil, Qnil);
-      else if (!strcasecmp (raw_result, "on")   ||
-	       !strcasecmp (raw_result, "true") ||
-	       !strcasecmp (raw_result, "yes"))
+      if (!strcasecmp (raw_result, "on")   ||
+	  !strcasecmp (raw_result, "true") ||
+	  !strcasecmp (raw_result, "yes"))
 	return Fcons (Qt, Qnil);
-      else
-	return maybe_continuable_error (Qresource, errb,
-					"can't convert %s: %s to a Boolean",
-					name_string, raw_result);
+      return maybe_continuable_error
+	(Qresource, errb,
+	 "can't convert %s: %s to a Boolean", name_string, raw_result);
     }
   else if (EQ (type, Qinteger) || EQ (type, Qnatnum))
     {
@@ -1212,21 +1219,23 @@ mean ``unspecified.''
       if (1 != sscanf (raw_result, "%d%c", &i, &c))
 	return maybe_continuable_error
 	  (Qresource, errb,
-	   "can't convert %s: %s to an integer",
-	   name_string, raw_result);
+	   "can't convert %s: %s to an integer", name_string, raw_result);
       else if (EQ (type, Qnatnum) && i < 0)
 	return maybe_continuable_error
 	  (Qresource, errb,
-	   "invalid numerical value %d for resource %s",
-	   i, name_string);
+	   "invalid numerical value %d for resource %s", i, name_string);
       else
 	return make_int (i);
     }
   else
-    abort ();
-
-  /* Can't get here. */
-  return Qnil;	/* shut up compiler */
+    {
+      return maybe_signal_continuable_error
+	(Qwrong_type_argument,
+	 list2 (build_translated_string
+		("should be string, integer, natnum or boolean"),
+		type),
+	 Qresource, errb);
+    }
 }
 
 DEFUN ("x-get-resource-prefix", Fx_get_resource_prefix, 1, 2, 0, /*
@@ -1241,14 +1250,20 @@ returns nil. (In such a case, `x-get-resource' would always return nil.)
 */
        (locale, device))
 {
-  /* #### fixed limit, could be overflowed */
-  char name[1024], class[1024];
   Display *display;
 
-  x_get_resource_prefix (locale, device, &display, name, class);
+  Dynarr_reset (name_char_dynarr );
+  Dynarr_reset (class_char_dynarr);
+
+  x_get_resource_prefix (locale, device, &display,
+			 name_char_dynarr, class_char_dynarr);
   if (!display)
     return Qnil;
-  return Fcons (build_string (name), build_string (class));
+
+  return Fcons (make_string ((Bufbyte *) Dynarr_atp (name_char_dynarr, 0),
+			     Dynarr_length (name_char_dynarr)),
+		make_string ((Bufbyte *) Dynarr_atp (class_char_dynarr, 0),
+			     Dynarr_length (class_char_dynarr)));
 }
 
 DEFUN ("x-put-resource", Fx_put_resource, 1, 2, 0, /*
@@ -1269,7 +1284,8 @@ standard resource specification.
   if (strspn (str,
 	      /* Only the following chars are allowed before the colon */
 	      " \t.*?abcdefghijklmnopqrstuvwxyz"
-	      "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-") != colon_pos - str)
+	      "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-")
+      != (size_t) (colon_pos - str))
     goto invalid;
 
   if (DEVICE_X_P (d))
@@ -1314,9 +1330,8 @@ The returned value will be one of the symbols `static-gray', `gray-scale',
     case DirectColor: return intern ("direct-color");
     default:
       error ("display has an unknown visual class");
+      return Qnil;	/* suppress compiler warning */
     }
-
-  return Qnil;	/* suppress compiler warning */
 }
 
 DEFUN ("x-display-visual-depth", Fx_display_visual_depth, 0, 1, 0, /*
@@ -1649,6 +1664,17 @@ console_type_create_device_x (void)
   CONSOLE_HAS_METHOD (x, device_mm_height);
   CONSOLE_HAS_METHOD (x, device_bitplanes);
   CONSOLE_HAS_METHOD (x, device_color_cells);
+
+  {
+    /* Initialize variables to speed up X resource interactions */
+    CONST char *valid_resource_chars =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+    while (*valid_resource_chars)
+      valid_resource_char_p[(unsigned int) (*valid_resource_chars++)] = 1;
+
+    name_char_dynarr  = Dynarr_new (char);
+    class_char_dynarr = Dynarr_new (char);
+  }
 }
 
 void
@@ -1667,7 +1693,7 @@ initialized (which it is by default), the X resource database will be
 consulted and the value will be set according to whether any resources
 are found for the application class `XEmacs'.  If the user has set any
 resources for the XEmacs application class, the XEmacs process will use
-the application class `XEmacs'.  Otherwise, the XEmacs process will use 
+the application class `XEmacs'.  Otherwise, the XEmacs process will use
 the application class `Emacs' which is backwards compatible to previous
 XEmacs versions but may conflict with resources intended for GNU Emacs.
 */ );

@@ -436,7 +436,7 @@ Filesz      Memsz       Flags       Align
 #define fatal(a, b, c) fprintf (stderr, a, b, c), exit (1)
 #else
 #include <config.h>
-extern void fatal (char *, ...);
+extern void fatal (CONST char *, ...);
 #endif
 
 #ifndef ELF_BSS_SECTION_NAME
@@ -446,7 +446,7 @@ extern void fatal (char *, ...);
 /* Get the address of a particular section or program header entry,
  * accounting for the size of the entries.
  */
-/* 
+/*
    On PPC Reference Platform running Solaris 2.5.1
    the plt section is also of type NOBI like the bss section.
    (not really stored) and therefore sections after the bss
@@ -455,7 +455,7 @@ extern void fatal (char *, ...);
    Thus, we modify the test from
       if (NEW_SECTION_H (nn).sh_offset >= new_data2_offset)
    to
-      if (NEW_SECTION_H (nn).sh_offset >= 
+      if (NEW_SECTION_H (nn).sh_offset >=
                OLD_SECTION_H (old_bss_index-1).sh_offset)
    This is just a hack. We should put the new data section
    before the .plt section.
@@ -670,7 +670,7 @@ unexec (char *new_name, char *old_name, unsigned int data_start,
   for (n = new_file_h->e_phnum - 1; n >= 0; n--)
     {
       /* Compute maximum of all requirements for alignment of section.  */
-      int alignment = (NEW_PROGRAM_H (n)).p_align;
+      ElfW(Word) alignment = (NEW_PROGRAM_H (n)).p_align;
       if ((OLD_SECTION_H (old_bss_index)).sh_addralign > alignment)
 	alignment = OLD_SECTION_H (old_bss_index).sh_addralign;
 

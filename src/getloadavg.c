@@ -80,7 +80,8 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #ifdef XEMACS
-#include "lisp.h" /* for encapsulated open, close, read, write */
+#include "lisp.h"
+#include "sysfile.h" /* for encapsulated open, close, read, write */
 #endif /* XEMACS */
 
 /* Exclude all the code except the test program at the end

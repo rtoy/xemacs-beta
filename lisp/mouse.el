@@ -20,7 +20,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; along with XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -148,8 +148,8 @@ location."
   (funcall mouse-yank-function))
 
 (defun click-inside-extent-p (click extent)
-  "Returns non-nil if the button event is within the bounds of the primary
-selection-extent, nil otherwise."
+  "Return non-nil if the button event is within the primary selection-extent.
+Return nil otherwise."
   ;; stig@hackvan.com
   (let ((ewin (event-window click))
 	(epnt (event-point click)))
@@ -168,11 +168,12 @@ selection-extent, nil otherwise."
       ))
 
 (defun point-inside-extent-p (extent)
-  "Returns non-nil if the point is within or just after the bounds of the
-primary selection-extent, nil otherwise."
+  "Return t if point is within the bounds of the primary selection extent.
+Return t is point is at the end position of the extent.
+Return nil otherwise."
   ;; stig@hackvan.com
   (and extent
-       (eq (current-buffer) 
+       (eq (current-buffer)
 	   (extent-object extent))
        (> (point) (extent-start-position extent))
        (>= (extent-end-position extent) (point))))
@@ -183,10 +184,10 @@ primary selection-extent, nil otherwise."
       (point-inside-extent-p zmacs-region-extent)))
 
 (defun mouse-drag-or-yank (event)
-  "Either drag or paste the current selection.  If the variable
- `mouse-yank-at-point' is non-nil, then moves the cursor to the location of
- the click before pasting.
- This functions has to be improved. Until now it is just a (working) test."
+  "Either drag or paste the current selection.
+If the variable `mouse-yank-at-point' is non-nil,
+move the cursor to the location of the click before pasting.
+This functions has to be improved.  Currently it is just a (working) test."
   ;; by Oliver Graf <ograf@fga.de>
   (interactive "e")
   (if (click-inside-extent-p event zmacs-region-extent)
@@ -208,9 +209,9 @@ primary selection-extent, nil otherwise."
   )
 
 (defun mouse-offix-drop (event)
-  "Do something with an OffiX drop event. Inserts Text drops and
- executes appropriate commands for specific drops.
- Text drops follow the `mouse-yank-at-point' variable."
+  "Do something with an OffiX drop event.
+Insert Text drops and execute appropriate commands for specific drops.
+Text drops follow the `mouse-yank-at-point' variable."
   ;; by Oliver Graf <ograf@fga.de>
   (interactive "e")
   (let ((type (car (event-drag-and-drop-data event)))
@@ -253,9 +254,9 @@ primary selection-extent, nil otherwise."
     (undo-boundary)))
 
 (defun mouse-mswindows-drop (event)
-  "Do something with a drop event. Inserts Text drops and
- executes appropriate commands for specific drops.
- Text drops follow the `mouse-yank-at-point' variable."
+  "Do something with a drop event.
+Insert Text drops and execute appropriate commands for specific drops.
+Text drops follow the `mouse-yank-at-point' variable."
   (interactive "e")
   (let* ((type (car (event-drag-and-drop-data event)))
 	(data (cadr (event-drag-and-drop-data event)))
@@ -307,7 +308,7 @@ It's also fantastic for debugging regular expressions."
   (interactive "e\nP")
   (let (exp val result-str)
     (setq exp (save-window-excursion
-		(save-excursion 
+		(save-excursion
 		  (mouse-set-point click)
 		  (save-excursion
 		    (or (looking-at "(") (forward-sexp -1))
@@ -383,7 +384,7 @@ Display cursor at that position for a second."
   (save-selected-window
     (select-window (event-window event))
     (bury-buffer)))
-  
+
 (defun mouse-unbury-buffer (event)
   "Unbury and select the most recently buried buffer."
   (interactive "e")
@@ -644,7 +645,7 @@ behavior.  You can explicitly request this default behavior, and override
 any custom-supplied handlers, by using the function `mouse-track-default'
 instead of `mouse-track'.
 
-Default behavior is as follows: 
+Default behavior is as follows:
 
 If you click-and-drag, the selection will be set to the region between the
 point of the initial click and the point at which you release the button.
@@ -746,7 +747,7 @@ at the initial click position."
 (defvar default-mouse-track-down-event nil)
 
 ;; D. Verna Feb. 17 1998
-;; This function used to assume that when (event-window event) differs from 
+;; This function used to assume that when (event-window event) differs from
 ;; window, we have to scroll. This is WRONG, for instance when there are
 ;; toolbars on the side, in which case window-event returns nil.
 (defun default-mouse-track-set-point-in-window (event window)
@@ -760,21 +761,21 @@ at the initial click position."
 	    (mouse-set-point event)
 	    t))
       ;; Not over a modeline, not the same window. Check if the Y position
-      ;; is still overlapping the original window. 
+      ;; is still overlapping the original window.
       (let* ((edges (window-pixel-edges window))
 	     (row (event-y-pixel event))
 	     (text-start (nth 1 edges))
 	     (text-end (+ (nth 3 edges))))
-	(if (or (< row text-start) 
+	(if (or (< row text-start)
 		(> row text-end))
 	    nil ;; Scroll
 	  ;; The Y pos in overlapping the original window. Check however if
-	  ;; the position is really visible, because there could be a 
+	  ;; the position is really visible, because there could be a
 	  ;; scrollbar or a modeline at this place.
 	  ;; Find the mean line height (height / lines nb), and approximate
 	  ;; the line number for Y pos.
 	  (select-window window)
-	  (let ((line (/ (* (- row text-start) (window-height)) 
+	  (let ((line (/ (* (- row text-start) (window-height))
 			 (- text-end text-start))))
 	    (if (not (save-excursion
 		       (goto-char (window-start))
@@ -817,10 +818,10 @@ at the initial click position."
 	       ;; window-end reports the end of the clipped line, even if
 	       ;; scroll-on-clipped-lines is t.  compensate.
 	       ;; (If window-end gets fixed this can be removed.)
-	       (if (not (pos-visible-in-window-p (max (1- (point)) 
+	       (if (not (pos-visible-in-window-p (max (1- (point))
 						      (point-min))))
 		   (vertical-motion -1))
-	       (condition-case () (backward-char 1) 
+	       (condition-case () (backward-char 1)
 		 (error (end-of-line)))))))))
 
 
@@ -1081,7 +1082,7 @@ at the initial click position."
 			  (let ((p (event-closest-point event)))
 			    (and p (min (max p (point-min)) (point-max))))))
 	    extent previous-point)
-	
+
 	(if (not (event-window event))
 	    (error "not over window?"))
 	(setq default-mouse-track-type
@@ -1106,7 +1107,7 @@ at the initial click position."
 	(if mouse-track-rectangle-p
 	    (setq default-mouse-track-extent
 		  (list default-mouse-track-extent)))
-	
+
 	(setq previous-point
 	      (if (and adjust
 		       (markerp default-mouse-track-previous-point)
@@ -1307,7 +1308,7 @@ custom mouse-track handlers that the user may have installed."
 (defun mouse-track-insert-drag-up-hook (event click-count)
   (setq mouse-track-insert-selected-region
 	(default-mouse-track-return-dragged-selection event)))
-  
+
 (defun mouse-track-insert (event &optional delete)
   "Make a selection with the mouse and insert it at point.
 This is exactly the same as the `mouse-track' command on \\[mouse-track],

@@ -79,6 +79,7 @@ Boston, MA 02111-1307, USA.  */
 #include "sysdir.h"
 
 #include <windows.h>
+#include <limits.h>
 
 #if ROUND_FILE_SIZES > 0
 #include <math.h>		/* for floor() */

@@ -126,7 +126,7 @@ get_display_arg_connection (void)
 	    {
 	      if (elt + 1 == argc)
 		{
-		  suppress_early_backtrace = 1;
+		  suppress_early_error_handler_backtrace = 1;
 		  error ("-display specified with no arg");
 		}
 	      else

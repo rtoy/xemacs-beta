@@ -33,6 +33,9 @@ Boston, MA 02111-1307, USA.  */
 #include "opaque.h"
 #include "systime.h"
 
+int lisp_to_time (Lisp_Object, time_t *);
+Lisp_Object time_to_lisp (time_t);
+
 #ifdef LWLIB_USES_MOTIF
 # define MOTIF_CLIPBOARDS
 #endif
@@ -51,11 +54,6 @@ static void hack_motif_clipboard_selection (Atom selection_atom,
 Lisp_Object QPRIMARY, QSECONDARY, QSTRING, QINTEGER, QCLIPBOARD, QTIMESTAMP,
   QTEXT, QDELETE, QMULTIPLE, QINCR, QEMACS_TMP, QTARGETS, QATOM, QNULL,
   QATOM_PAIR, QCOMPOUND_TEXT;
-
-#ifdef EPOCH
-Lisp_Object QARC, QBITMAP, QCARDINAL, QCURSOR, QDRAWABLE, QFONT, QINTEGER,
-  QPIXMAP, QPOINT, QRECTANGLE, QWINDOW, QWM_HINTS, QWM_SIZE_HINTS;
-#endif /* EPOCH */
 
 #ifdef CUT_BUFFER_SUPPORT
 Lisp_Object QCUT_BUFFER0, QCUT_BUFFER1, QCUT_BUFFER2, QCUT_BUFFER3,
@@ -117,7 +115,7 @@ static void lisp_data_to_selection_data (struct device *,
 					 int *format_ret);
 static Lisp_Object selection_data_to_lisp_data (struct device *,
 						unsigned char *data,
-						int size,
+						size_t size,
 						Atom type,
 						int format);
 static Lisp_Object x_get_window_property_as_lisp_data (Display *,
@@ -134,61 +132,44 @@ static int waiting_for_other_props_on_window (Display *, Window);
 /* This converts a Lisp symbol to a server Atom, avoiding a server
    roundtrip whenever possible.
  */
-Atom
+static Atom
 symbol_to_x_atom (struct device *d, Lisp_Object sym, int only_if_exists)
 {
   Display *display = DEVICE_X_DISPLAY (d);
 
-  if (NILP (sym))	    return XA_PRIMARY;
-  if (EQ (sym, Qt))	    return XA_SECONDARY;
-  if (EQ (sym, QPRIMARY))   return XA_PRIMARY;
-  if (EQ (sym, QSECONDARY)) return XA_SECONDARY;
-  if (EQ (sym, QSTRING))    return XA_STRING;
-  if (EQ (sym, QINTEGER))   return XA_INTEGER;
-  if (EQ (sym, QATOM))	    return XA_ATOM;
-  if (EQ (sym, QCLIPBOARD)) return DEVICE_XATOM_CLIPBOARD (d);
-  if (EQ (sym, QTIMESTAMP)) return DEVICE_XATOM_TIMESTAMP (d);
-  if (EQ (sym, QTEXT))	    return DEVICE_XATOM_TEXT      (d);
-  if (EQ (sym, QDELETE))    return DEVICE_XATOM_DELETE    (d);
-  if (EQ (sym, QMULTIPLE))  return DEVICE_XATOM_MULTIPLE  (d);
-  if (EQ (sym, QINCR))	    return DEVICE_XATOM_INCR      (d);
-  if (EQ (sym, QEMACS_TMP)) return DEVICE_XATOM_EMACS_TMP (d);
-  if (EQ (sym, QTARGETS))   return DEVICE_XATOM_TARGETS   (d);
-  if (EQ (sym, QNULL))	    return DEVICE_XATOM_NULL      (d);
-  if (EQ (sym, QATOM_PAIR)) return DEVICE_XATOM_ATOM_PAIR (d);
+  if (NILP (sym))		return XA_PRIMARY;
+  if (EQ (sym, Qt))		return XA_SECONDARY;
+  if (EQ (sym, QPRIMARY))	return XA_PRIMARY;
+  if (EQ (sym, QSECONDARY))	return XA_SECONDARY;
+  if (EQ (sym, QSTRING))	return XA_STRING;
+  if (EQ (sym, QINTEGER))	return XA_INTEGER;
+  if (EQ (sym, QATOM))		return XA_ATOM;
+  if (EQ (sym, QCLIPBOARD))	return DEVICE_XATOM_CLIPBOARD (d);
+  if (EQ (sym, QTIMESTAMP))	return DEVICE_XATOM_TIMESTAMP (d);
+  if (EQ (sym, QTEXT))		return DEVICE_XATOM_TEXT      (d);
+  if (EQ (sym, QDELETE))	return DEVICE_XATOM_DELETE    (d);
+  if (EQ (sym, QMULTIPLE))	return DEVICE_XATOM_MULTIPLE  (d);
+  if (EQ (sym, QINCR))		return DEVICE_XATOM_INCR      (d);
+  if (EQ (sym, QEMACS_TMP))	return DEVICE_XATOM_EMACS_TMP (d);
+  if (EQ (sym, QTARGETS))	return DEVICE_XATOM_TARGETS   (d);
+  if (EQ (sym, QNULL))		return DEVICE_XATOM_NULL      (d);
+  if (EQ (sym, QATOM_PAIR))	return DEVICE_XATOM_ATOM_PAIR (d);
   if (EQ (sym, QCOMPOUND_TEXT)) return DEVICE_XATOM_COMPOUND_TEXT (d);
-#ifdef EPOCH
-  if (EQ (sym, QARC))       return XA_ARC;
-  if (EQ (sym, QBITMAP))    return XA_BITMAP;
-  if (EQ (sym, QCARDINAL))  return XA_CARDINAL;
-  if (EQ (sym, QCURSOR))    return XA_CURSOR;
-  if (EQ (sym, QDRAWABLE))  return XA_DRAWABLE;
-  if (EQ (sym, QFONT))      return XA_FONT;
-  if (EQ (sym, QINTEGER))   return XA_INTEGER;
-  if (EQ (sym, QPIXMAP))    return XA_PIXMAP;
-  if (EQ (sym, QPOINT))     return XA_POINT;
-  if (EQ (sym, QRECTANGLE)) return XA_RECTANGLE;
-  if (EQ (sym, QWINDOW))    return XA_WINDOW;
-  if (EQ (sym, QWM_HINTS))  return XA_WM_HINTS;
-  if (EQ (sym, QWM_SIZE_HINTS)) return XA_WM_SIZE_HINTS;
-#endif /* EPOCH */
 
 #ifdef CUT_BUFFER_SUPPORT
-  if (EQ (sym, QCUT_BUFFER0)) return XA_CUT_BUFFER0;
-  if (EQ (sym, QCUT_BUFFER1)) return XA_CUT_BUFFER1;
-  if (EQ (sym, QCUT_BUFFER2)) return XA_CUT_BUFFER2;
-  if (EQ (sym, QCUT_BUFFER3)) return XA_CUT_BUFFER3;
-  if (EQ (sym, QCUT_BUFFER4)) return XA_CUT_BUFFER4;
-  if (EQ (sym, QCUT_BUFFER5)) return XA_CUT_BUFFER5;
-  if (EQ (sym, QCUT_BUFFER6)) return XA_CUT_BUFFER6;
-  if (EQ (sym, QCUT_BUFFER7)) return XA_CUT_BUFFER7;
+  if (EQ (sym, QCUT_BUFFER0))	return XA_CUT_BUFFER0;
+  if (EQ (sym, QCUT_BUFFER1))	return XA_CUT_BUFFER1;
+  if (EQ (sym, QCUT_BUFFER2))	return XA_CUT_BUFFER2;
+  if (EQ (sym, QCUT_BUFFER3))	return XA_CUT_BUFFER3;
+  if (EQ (sym, QCUT_BUFFER4))	return XA_CUT_BUFFER4;
+  if (EQ (sym, QCUT_BUFFER5))	return XA_CUT_BUFFER5;
+  if (EQ (sym, QCUT_BUFFER6))	return XA_CUT_BUFFER6;
+  if (EQ (sym, QCUT_BUFFER7))	return XA_CUT_BUFFER7;
 #endif /* CUT_BUFFER_SUPPORT */
 
   {
     CONST char *nameext;
-    Lisp_Object namesym;
-    XSETSTRING (namesym, XSYMBOL (sym)->name);
-    GET_C_STRING_CTEXT_DATA_ALLOCA (namesym, nameext);
+    GET_C_STRING_CTEXT_DATA_ALLOCA (Fsymbol_name (sym), nameext);
     return XInternAtom (display, nameext, only_if_exists ? True : False);
   }
 }
@@ -197,17 +178,17 @@ symbol_to_x_atom (struct device *d, Lisp_Object sym, int only_if_exists)
 /* This converts a server Atom to a Lisp symbol, avoiding server roundtrips
    and calls to intern whenever possible.
  */
-Lisp_Object
+static Lisp_Object
 x_atom_to_symbol (struct device *d, Atom atom)
 {
   Display *display = DEVICE_X_DISPLAY (d);
 
   if (! atom) return Qnil;
-  if (atom == XA_PRIMARY)      return QPRIMARY;
-  if (atom == XA_SECONDARY)    return QSECONDARY;
-  if (atom == XA_STRING)       return QSTRING;
-  if (atom == XA_INTEGER)      return QINTEGER;
-  if (atom == XA_ATOM)	       return QATOM;
+  if (atom == XA_PRIMARY)	return QPRIMARY;
+  if (atom == XA_SECONDARY)	return QSECONDARY;
+  if (atom == XA_STRING)	return QSTRING;
+  if (atom == XA_INTEGER)	return QINTEGER;
+  if (atom == XA_ATOM)		return QATOM;
   if (atom == DEVICE_XATOM_CLIPBOARD (d)) return QCLIPBOARD;
   if (atom == DEVICE_XATOM_TIMESTAMP (d)) return QTIMESTAMP;
   if (atom == DEVICE_XATOM_TEXT      (d)) return QTEXT;
@@ -220,41 +201,26 @@ x_atom_to_symbol (struct device *d, Atom atom)
   if (atom == DEVICE_XATOM_ATOM_PAIR (d)) return QATOM_PAIR;
   if (atom == DEVICE_XATOM_COMPOUND_TEXT (d)) return QCOMPOUND_TEXT;
 
-#ifdef EPOCH
-  if (atom == XA_ARC)          return QARC;
-  if (atom == XA_BITMAP)       return QBITMAP;
-  if (atom == XA_CARDINAL)     return QCARDINAL;
-  if (atom == XA_CURSOR)       return QCURSOR;
-  if (atom == XA_DRAWABLE)     return QDRAWABLE;
-  if (atom == XA_FONT)         return QFONT;
-  if (atom == XA_INTEGER)      return QINTEGER;
-  if (atom == XA_PIXMAP)       return QPIXMAP;
-  if (atom == XA_POINT)        return QPOINT;
-  if (atom == XA_RECTANGLE)    return QRECTANGLE;
-  if (atom == XA_WINDOW)       return QWINDOW;
-  if (atom == XA_WM_HINTS)     return QWM_HINTS;
-  if (atom == XA_WM_SIZE_HINTS) return QWM_SIZE_HINTS;
-#endif /* EPOCH */
 #ifdef CUT_BUFFER_SUPPORT
-  if (atom == XA_CUT_BUFFER0) return QCUT_BUFFER0;
-  if (atom == XA_CUT_BUFFER1) return QCUT_BUFFER1;
-  if (atom == XA_CUT_BUFFER2) return QCUT_BUFFER2;
-  if (atom == XA_CUT_BUFFER3) return QCUT_BUFFER3;
-  if (atom == XA_CUT_BUFFER4) return QCUT_BUFFER4;
-  if (atom == XA_CUT_BUFFER5) return QCUT_BUFFER5;
-  if (atom == XA_CUT_BUFFER6) return QCUT_BUFFER6;
-  if (atom == XA_CUT_BUFFER7) return QCUT_BUFFER7;
+  if (atom == XA_CUT_BUFFER0)	return QCUT_BUFFER0;
+  if (atom == XA_CUT_BUFFER1)	return QCUT_BUFFER1;
+  if (atom == XA_CUT_BUFFER2)	return QCUT_BUFFER2;
+  if (atom == XA_CUT_BUFFER3)	return QCUT_BUFFER3;
+  if (atom == XA_CUT_BUFFER4)	return QCUT_BUFFER4;
+  if (atom == XA_CUT_BUFFER5)	return QCUT_BUFFER5;
+  if (atom == XA_CUT_BUFFER6)	return QCUT_BUFFER6;
+  if (atom == XA_CUT_BUFFER7)	return QCUT_BUFFER7;
 #endif
 
   {
     Lisp_Object newsym;
-    CONST char *intstr;
+    CONST Bufbyte *intstr;
     char *str = XGetAtomName (display, atom);
 
     if (! str) return Qnil;
 
     GET_C_CHARPTR_INT_CTEXT_DATA_ALLOCA (str, intstr);
-    newsym = intern (intstr);
+    newsym = intern ((char *) intstr);
     XFree (str);
     return newsym;
   }
@@ -296,9 +262,9 @@ x_own_selection (Lisp_Object selection_name, Lisp_Object selection_value)
        Opaque pointers are the clean way to go here.
      */
     Lisp_Object selection_time = make_opaque (sizeof (thyme), (void *) &thyme);
-    Lisp_Object selection_data = Fcons (selection_name,
-					Fcons (selection_value,
-					       Fcons (selection_time, Qnil)));
+    Lisp_Object selection_data = list3 (selection_name,
+					selection_value,
+					selection_time);
     Lisp_Object prev_value = assq_no_quit (selection_name, Vselection_alist);
     Vselection_alist = Fcons (selection_data, Vselection_alist);
 
@@ -371,7 +337,7 @@ hack_motif_clipboard_selection (Atom selection_atom,
 #endif
       XmString fmh;
       String encoding = "STRING";
-      Extbyte *data  = XSTRING_DATA   (selection_value);
+      CONST Extbyte *data  = XSTRING_DATA (selection_value);
       Extcount bytes = XSTRING_LENGTH (selection_value);
 
 #ifdef MULE
@@ -1068,10 +1034,10 @@ copy_multiple_data (Lisp_Object obj)
   return vec;
 }
 
-#endif
+#endif /* 0 */
 
 
-static int reading_selection_reply;
+static Window reading_selection_reply;
 static Atom reading_which_selection;
 static int selection_reply_timed_out;
 
@@ -1117,7 +1083,7 @@ x_get_foreign_selection (Lisp_Object selection_symbol, Lisp_Object target_type)
 		     requestor_window, requestor_time);
 
   /* Block until the reply has been read. */
-  reading_selection_reply = (int) requestor_window;
+  reading_selection_reply = requestor_window;
   reading_which_selection = selection_atom;
   selection_reply_timed_out = 0;
 
@@ -1379,7 +1345,7 @@ x_get_window_property_as_lisp_data (Display *display,
 static Lisp_Object
 selection_data_to_lisp_data (struct device *d,
 			     unsigned char *data,
-			     int size,
+			     size_t size,
 			     Atom type,
 			     int format)
 {
@@ -1398,16 +1364,15 @@ selection_data_to_lisp_data (struct device *d,
    */
   else if (type == XA_ATOM)
     {
-      int i;
       if (size == sizeof (Atom))
 	return x_atom_to_symbol (d, *((Atom *) data));
       else
 	{
-	  Lisp_Object v = Fmake_vector (make_int (size / sizeof (Atom)),
-					Qzero);
-	  for (i = 0; i < size / sizeof (Atom); i++)
-	    Faset (v, make_int (i),
-		   x_atom_to_symbol (d, ((Atom *) data) [i]));
+	  int i;
+	  int len = size / sizeof (Atom);
+	  Lisp_Object v = Fmake_vector (make_int (len), Qzero);
+	  for (i = 0; i < len; i++)
+	    Faset (v, make_int (i), x_atom_to_symbol (d, ((Atom *) data) [i]));
 	  return v;
 	}
     }
@@ -1441,7 +1406,7 @@ selection_data_to_lisp_data (struct device *d,
     {
       int i;
       Lisp_Object v = make_vector (size / 4, Qzero);
-      for (i = 0; i < size / 4; i++)
+      for (i = 0; i < (int) size / 4; i++)
 	{
 	  int j = (int) ((unsigned short *) data) [i];
 	  Faset (v, make_int (i), make_int (j));
@@ -1452,7 +1417,7 @@ selection_data_to_lisp_data (struct device *d,
     {
       int i;
       Lisp_Object v = make_vector (size / 4, Qzero);
-      for (i = 0; i < size / 4; i++)
+      for (i = 0; i < (int) size / 4; i++)
 	{
 	  unsigned long j = ((unsigned long *) data) [i];
 	  Faset (v, make_int (i), word_to_lisp (j));
@@ -1489,7 +1454,7 @@ lisp_data_to_selection_data (struct device *d,
     }
   else if (STRINGP (obj))
     {
-      Extbyte *extval;
+      CONST Extbyte *extval;
       Extcount extvallen;
 
       if (NILP (type))
@@ -1569,7 +1534,7 @@ lisp_data_to_selection_data (struct device *d,
 	  *size_ret = XVECTOR_LENGTH (obj);
 	  *format_ret = 32;
 	  *data_ret = (unsigned char *) xmalloc ((*size_ret) * sizeof (Atom));
-	  for (i = 0; i < *size_ret; i++)
+	  for (i = 0; i < (int) (*size_ret); i++)
 	    if (SYMBOLP (XVECTOR_DATA (obj) [i]))
 	      (*(Atom **) data_ret) [i] =
 		symbol_to_x_atom (d, XVECTOR_DATA (obj) [i], 0);
@@ -1616,7 +1581,7 @@ lisp_data_to_selection_data (struct device *d,
 	  *size_ret = XVECTOR_LENGTH (obj);
 	  if (NILP (type)) type = QINTEGER;
 	  *format_ret = 16;
-	  for (i = 0; i < *size_ret; i++)
+	  for (i = 0; i < (int) (*size_ret); i++)
 	    if (CONSP (XVECTOR_DATA (obj) [i]))
 	      *format_ret = 32;
 	    else if (!INTP (XVECTOR_DATA (obj) [i]))
@@ -1626,7 +1591,7 @@ lisp_data_to_selection_data (struct device *d,
                                    obj));
 
 	  *data_ret = (unsigned char *) xmalloc (*size_ret * (*format_ret/8));
-	  for (i = 0; i < *size_ret; i++)
+	  for (i = 0; i < (int) (*size_ret); i++)
 	    if (*format_ret == 32)
 	      (*((unsigned long **) data_ret)) [i] =
 		lisp_to_word (XVECTOR_DATA (obj) [i]);
@@ -1810,7 +1775,7 @@ If we own the named selection, then disown it (make there be no selection).
 
 
 DEFUN ("x-selection-owner-p", Fx_selection_owner_p, 0, 1, 0, /*
-Whether the current emacs process owns the given X Selection.
+Return t if current emacs process owns the given X Selection.
 The arg should be the name of the selection in question, typically one of
 the symbols PRIMARY, SECONDARY, or CLIPBOARD.  (For convenience, the symbol
 nil is the same as PRIMARY, and t is the same as SECONDARY.)
@@ -1818,10 +1783,10 @@ nil is the same as PRIMARY, and t is the same as SECONDARY.)
        (selection))
 {
   CHECK_SYMBOL (selection);
-  if (EQ (selection, Qnil)) selection = QPRIMARY;
-  if (EQ (selection, Qt))   selection = QSECONDARY;
+  if      (EQ (selection, Qnil)) selection = QPRIMARY;
+  else if (EQ (selection, Qt))   selection = QSECONDARY;
 
-  return NILP (Fassq (selection, Vselection_alist)) ? Qnil: Qt;
+  return NILP (Fassq (selection, Vselection_alist)) ? Qnil : Qt;
 }
 
 DEFUN ("x-selection-exists-p", Fx_selection_exists_p, 0, 1, 0, /*
@@ -1926,7 +1891,7 @@ Set the value of the named CUTBUFFER (typically CUT_BUFFER0) to STRING.
   Display *display = DEVICE_X_DISPLAY (d);
   Window window = RootWindow (display, 0); /* Cutbuffers are on frame 0 */
   Atom cut_buffer_atom;
-  Extbyte *data  = XSTRING_DATA   (string);
+  CONST Extbyte *data  = XSTRING_DATA (string);
   Extcount bytes = XSTRING_LENGTH (string);
   Extcount bytes_remaining;
   int max_bytes = SELECTION_QUANTUM (display);
@@ -2057,7 +2022,6 @@ syms_of_xselect (void)
   defsymbol (&QCLIPBOARD, "CLIPBOARD");
   defsymbol (&QTIMESTAMP, "TIMESTAMP");
   defsymbol (&QTEXT, "TEXT");
-  defsymbol (&QTIMESTAMP, "TIMESTAMP");
   defsymbol (&QDELETE, "DELETE");
   defsymbol (&QMULTIPLE, "MULTIPLE");
   defsymbol (&QINCR, "INCR");
@@ -2067,22 +2031,6 @@ syms_of_xselect (void)
   defsymbol (&QATOM_PAIR, "ATOM_PAIR");
   defsymbol (&QCOMPOUND_TEXT, "COMPOUND_TEXT");
   defsymbol (&QNULL, "NULL");
-
-#ifdef EPOCH
-  defsymbol (&QARC, "ARC");
-  defsymbol (&QBITMAP, "BITMAP");
-  defsymbol (&QCARDINAL, "CARDINAL");
-  defsymbol (&QCURSOR, "CURSOR");
-  defsymbol (&QDRAWABLE, "DRAWABLE");
-  defsymbol (&QFONT, "FONT");
-  defsymbol (&QINTEGER, "INTEGER");
-  defsymbol (&QPIXMAP, "PIXMAP");
-  defsymbol (&QPOINT, "POINT");
-  defsymbol (&QRECTANGLE, "RECTANGLE");
-  defsymbol (&QWINDOW, "WINDOW");
-  defsymbol (&QWM_HINTS, "WM_HINTS");
-  defsymbol (&QWM_SIZE_HINTS, "WM_SIZE_HINTS");
-#endif /* EPOCH */
 
 #ifdef CUT_BUFFER_SUPPORT
   defsymbol (&QCUT_BUFFER0, "CUT_BUFFER0");

@@ -92,10 +92,8 @@ XIM_init_device (struct device *d)
 void
 XIM_init_frame (struct frame *f)
 {
-  struct device *d = XDEVICE (FRAME_DEVICE (f));
   Widget w = FRAME_X_TEXT_WIDGET (f);
   XPoint spot = {0,0};
-  XFontSet fontset;
   XmFontList fontlist;
   XmFontListEntry fontlistEntry;
 

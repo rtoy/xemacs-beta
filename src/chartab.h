@@ -186,6 +186,11 @@ int map_char_table (struct Lisp_Char_Table *ct,
 			       Lisp_Object val, void *arg),
 		    void *arg);
 void prune_syntax_tables (int (*obj_marked_p) (Lisp_Object));
+
+EXFUN (Fcopy_char_table, 1);
+EXFUN (Fmake_char_table, 1);
+EXFUN (Fput_char_table, 3);
+
 extern Lisp_Object Vall_syntax_tables;
 
 
@@ -194,32 +199,33 @@ extern Lisp_Object Vall_syntax_tables;
 int check_category_char(Emchar ch, Lisp_Object ctbl,
 		        unsigned int designator, unsigned int not);
 
-extern Lisp_Object Qcategory_table_p, Qcategory_designator_p;
-extern Lisp_Object Qcategory_table_value_p;
-
 extern Lisp_Object Vstandard_category_table;
 
 #define CATEGORY_DESIGNATORP(x) \
  (CHARP (x) && XCHAR (x) >= 32 && XCHAR (x) <= 126)
 
-#define CHECK_CATEGORY_DESIGNATOR(x)					\
-  do { if (!CATEGORY_DESIGNATORP (x))					\
-         dead_wrong_type_argument (Qcategory_designator_p, (x)); } while (0)
-#define CONCHECK_CATEGORY_DESIGNATOR(x)					\
-  do { if (!CATEGORY_DESIGNATORP (x))					\
-         x = wrong_type_argument (Qcategory_designator_p, (x)); } while (0)
+#define CHECK_CATEGORY_DESIGNATOR(x) do {			\
+  if (!CATEGORY_DESIGNATORP (x))				\
+    dead_wrong_type_argument (Qcategory_designator_p, x);	\
+} while (0)
+
+#define CONCHECK_CATEGORY_DESIGNATOR(x) do {			\
+  if (!CATEGORY_DESIGNATORP (x))				\
+    x = wrong_type_argument (Qcategory_designator_p, x);	\
+} while (0)
 
 #define CATEGORY_TABLE_VALUEP(x) \
  (NILP (x) || (BIT_VECTORP (x) && (bit_vector_length (XBIT_VECTOR (x)) == 95)))
 
-#define CHECK_CATEGORY_TABLE_VALUE(x)					\
-  do { if (!CATEGORY_TABLE_VALUEP (x))					\
-         dead_wrong_type_argument (Qcategory_table_value_p, (x)); }	\
-  while (0)
-#define CONCHECK_CATEGORY_TABLE_VALUE(x)				\
-  do { if (!CATEGORY_TABLE_VALUEP (x))					\
-         x = wrong_type_argument (Qcategory_table_value_p, (x)); }	\
-  while (0)
+#define CHECK_CATEGORY_TABLE_VALUE(x) do {			\
+  if (!CATEGORY_TABLE_VALUEP (x))				\
+    dead_wrong_type_argument (Qcategory_table_value_p, x);	\
+} while (0)
+
+#define CONCHECK_CATEGORY_TABLE_VALUE(x) do {			\
+  if (!CATEGORY_TABLE_VALUEP (x))				\
+    x = wrong_type_argument (Qcategory_table_value_p, x);	\
+} while (0)
 
 #endif /* MULE */
 

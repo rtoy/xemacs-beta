@@ -20,7 +20,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; along with XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -35,7 +35,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; font specifiers
 
 (defun make-image-specifier (spec-list)
-  "Create a new `image' specifier object with the given specification list.
+  "Return a new `image' specifier object with the specification list SPEC-LIST.
 SPEC-LIST can be a list of specifications (each of which is a cons of a
 locale and a list of instantiators), a single instantiator, or a list
 of instantiators.  See `make-specifier' for more information about
@@ -49,7 +49,7 @@ specifiers."
   "A list of the built-in face properties that are specifiers.")
 
 (defun glyph-property (glyph property &optional locale)
-  "Return GLYPH's value of the given PROPERTY.
+  "Return GLYPH's value of PROPERTY in LOCALE.
 
 If LOCALE is omitted, the GLYPH's actual value for PROPERTY will be
   returned.  For built-in properties, this will be a specifier object
@@ -106,7 +106,7 @@ See `set-glyph-property' for the built-in property-names."
   (check-argument-type 'glyphp glyph)
   (let ((specifier (get glyph property)))
     ;; if a user-property does not have a specifier but a
-    ;; locale was specified, put a specifier there.  
+    ;; locale was specified, put a specifier there.
     ;; If there was already a value there, convert it to a
     ;; specifier with the value as its 'global instantiator.
     (if (not (specifierp specifier))
@@ -218,15 +218,15 @@ If PROPERTY is not a built-in property, then this function will
 
 The following symbols have predefined meanings:
 
- image			The image used to display the glyph.
+ image		The image used to display the glyph.
 
- baseline		Percent above baseline that glyph is to be
-			displayed.
+ baseline	Percent above baseline that glyph is to be
+		displayed.
 
- contrib-p		Whether the glyph contributes to the
-			height of the line it's on.
+ contrib-p	Whether the glyph contributes to the
+		height of the line it's on.
 
- face			Face of this glyph (*not* a specifier)."
+ face		Face of this glyph (*not* a specifier)."
   (check-argument-type 'glyphp glyph)
   (if (memq property built-in-glyph-specifiers)
       (set-specifier (get glyph property) value locale tag-set how-to-add)
@@ -263,7 +263,7 @@ See `remove-specifier' for the meaning of the LOCALE, TAG-SET, and EXACT-P
   (set-glyph-property glyph 'face face))
 
 (defun glyph-image (glyph &optional locale)
-  "Return the image of the given glyph, or nil if it is unspecified.
+  "Return the image of GLYPH in LOCALE, or nil if it is unspecified.
 
 LOCALE may be a locale (the instantiators for that particular locale
   will be returned), a locale type (the specifications for all locales
@@ -274,7 +274,7 @@ See `glyph-property' for more information."
   (glyph-property glyph 'image locale))
 
 (defun glyph-image-instance (glyph &optional domain default no-fallback)
-  "Return the instance of the given glyph's image in the given domain.
+  "Return the instance of GLYPH's image in DOMAIN.
 
 Normally DOMAIN will be a window or nil (meaning the selected window),
   and an instance object describing how the image appears in that
@@ -284,7 +284,7 @@ See `glyph-property-instance' for more information."
   (glyph-property-instance glyph 'image domain default no-fallback))
 
 (defun set-glyph-image (glyph spec &optional locale tag-set how-to-add)
-  "Change the image of the given glyph.
+  "Change the image of GLYPH in LOCALE.
 
 SPEC should be an instantiator (a string or vector; see
   `image-specifier-p' for a description of possible values here),
@@ -314,7 +314,7 @@ See `glyph-property' for more information."
   (glyph-property glyph 'contrib-p locale))
 
 (defun glyph-contrib-p-instance (glyph &optional domain default no-fallback)
-  "Return the instance of the GLYPH's 'contrib-p property in the given domain.
+  "Return the instance of GLYPH's 'contrib-p property in DOMAIN.
 
 Normally DOMAIN will be a window or nil (meaning the selected window),
   and an instance object describing what the 'contrib-p property is in
@@ -324,7 +324,7 @@ See `glyph-property-instance' for more information."
   (glyph-property-instance glyph 'contrib-p domain default no-fallback))
 
 (defun set-glyph-contrib-p (glyph spec &optional locale tag-set how-to-add)
-  "Change the contrib-p of the given glyph.
+  "Change the contrib-p property of GLYPH in LOCALE.
 
 SPEC should be an instantiator (t or nil), a list of (possibly
   tagged) instantiators, an alist of specifications (each mapping a
@@ -341,7 +341,7 @@ See `set-glyph-property' for more information."
   (set-glyph-property glyph 'contrib-p spec locale tag-set how-to-add))
 
 (defun glyph-baseline (glyph &optional locale)
-  "Return the baseline of the given glyph, or nil if it is unspecified.
+  "Return the baseline of GLYPH in LOCALE, or nil if it is unspecified.
 
 LOCALE may be a locale (the instantiators for that particular locale
   will be returned), a locale type (the specifications for all locales
@@ -352,7 +352,7 @@ See `glyph-property' for more information."
   (glyph-property glyph 'baseline locale))
 
 (defun glyph-baseline-instance (glyph &optional domain default no-fallback)
-  "Return the instance of the given glyph's baseline in the given domain.
+  "Return the instance of GLYPH's baseline in DOMAIN.
 
 Normally DOMAIN will be a window or nil (meaning the selected window),
   and an integer or nil (specifying the baseline in that particular
@@ -362,7 +362,7 @@ See `glyph-property-instance' for more information."
   (glyph-property-instance glyph 'baseline domain default no-fallback))
 
 (defun set-glyph-baseline (glyph spec &optional locale tag-set how-to-add)
-  "Change the baseline of the given glyph.
+  "Change the baseline of GLYPH to SPEC in LOCALE.
 
 SPEC should be an instantiator (an integer [a percentage above the
   baseline of the line the glyph is on] or nil), a list of (possibly
@@ -380,7 +380,7 @@ See `set-glyph-property' for more information."
   (set-glyph-property glyph 'baseline spec locale tag-set how-to-add))
 
 (defun make-glyph (&optional spec-list type)
-  "Create a new `glyph' object of type TYPE.
+  "Return a new `glyph' object of type TYPE.
 
 TYPE should be one of `buffer' (used for glyphs in an extent, the modeline,
 the toolbar, or elsewhere in a buffer), `pointer' (used for the mouse-pointer),
@@ -399,22 +399,21 @@ about specifiers."
     glyph))
 
 (defun buffer-glyph-p (object)
-  "t if OBJECT is a glyph of type `buffer'."
+  "Return t if OBJECT is a glyph of type `buffer'."
   (and (glyphp object) (eq 'buffer (glyph-type object))))
 
 (defun pointer-glyph-p (object)
-  "t if OBJECT is a glyph of type `pointer'."
+  "Return t if OBJECT is a glyph of type `pointer'."
   (and (glyphp object) (eq 'pointer (glyph-type object))))
 
 (defun icon-glyph-p (object)
-  "t if OBJECT is a glyph of type `icon'."
+  "Return t if OBJECT is a glyph of type `icon'."
   (and (glyphp object) (eq 'icon (glyph-type object))))
 
 (defun make-pointer-glyph (&optional spec-list)
-  "Create a new `pointer-glyph' object with the given specification list.
+  "Return a new `pointer-glyph' object with the specification list SPEC-LIST.
 
-This is equivalent to calling `make-glyph' and specifying a type of
-`pointer'.
+This is equivalent to calling `make-glyph', specifying a type of `pointer'.
 
 SPEC-LIST is used to initialize the glyph's image.  It is typically an
 image instantiator (a string or a vector; see `image-specifier-p' for
@@ -430,10 +429,9 @@ instantiators afterwards using `set-glyph-image'."
   (make-glyph spec-list 'pointer))
 
 (defun make-icon-glyph (&optional spec-list)
-  "Create a new `icon-glyph' object with the given specification list.
+  "Return a new `icon-glyph' object with the specification list SPEC-LIST.
 
-This is equivalent to calling `make-glyph' and specifying a type of
-`icon'.
+This is equivalent to calling `make-glyph', specifying a type of `icon'.
 
 SPEC-LIST is used to initialize the glyph's image.  It is typically an
 image instantiator (a string or a vector; see `image-specifier-p' for
@@ -449,29 +447,29 @@ instantiators afterwards using `set-glyph-image'."
   (make-glyph spec-list 'icon))
 
 (defun nothing-image-instance-p (object)
-  "t if OBJECT is an image instance of type `nothing'."
+  "Return t if OBJECT is an image instance of type `nothing'."
   (and (image-instance-p object) (eq 'nothing (image-instance-type object))))
 
 (defun text-image-instance-p (object)
-  "t if OBJECT is an image instance of type `text'."
+  "Return t if OBJECT is an image instance of type `text'."
   (and (image-instance-p object) (eq 'text (image-instance-type object))))
 
 (defun mono-pixmap-image-instance-p (object)
-  "t if OBJECT is an image instance of type `mono-pixmap'."
+  "Return t if OBJECT is an image instance of type `mono-pixmap'."
   (and (image-instance-p object) (eq 'mono-pixmap
 				     (image-instance-type object))))
 
 (defun color-pixmap-image-instance-p (object)
-  "t if OBJECT is an image instance of type `color-pixmap'."
+  "Return t if OBJECT is an image instance of type `color-pixmap'."
   (and (image-instance-p object) (eq 'color-pixmap
 				     (image-instance-type object))))
 
 (defun pointer-image-instance-p (object)
-  "t if OBJECT is an image instance of type `pointer'."
+  "Return t if OBJECT is an image instance of type `pointer'."
   (and (image-instance-p object) (eq 'pointer (image-instance-type object))))
 
 (defun subwindow-image-instance-p (object)
-  "t if OBJECT is an image instance of type `subwindow'.
+  "Return t if OBJECT is an image instance of type `subwindow'.
 Subwindows are not implemented in this version of XEmacs."
   (and (image-instance-p object) (eq 'subwindow (image-instance-type object))))
 
@@ -659,7 +657,7 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
   ;; has a built-in bitmap
   (if (featurep 'xpm)
       (set-glyph-image xemacs-logo
-		       (concat "../etc/" 
+		       (concat "../etc/"
 			       (if emacs-beta-version
 				   "xemacs-beta.xpm"
 				 "xemacs.xpm"))

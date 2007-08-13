@@ -3,14 +3,6 @@
 
 #include <X11/Intrinsic.h>
 
-/* To eliminate use of `const' in the lwlib sources, define CONST_IS_LOSING. */
-#undef CONST
-#ifdef CONST_IS_LOSING
-# define CONST
-#else
-# define CONST const
-#endif
-
 #if defined (LWLIB_MENUBARS_LUCID) || defined (LWLIB_MENUBARS_MOTIF) || defined (LWLIB_MENUBARS_ATHENA)
 #define NEED_MENUBARS
 #endif
@@ -23,14 +15,14 @@
 
 /*
 ** Widget values depend on the Widget type:
-** 
+**
 ** widget:   (name    value   key enabled data contents/selected)
 **
 ** label:    ("name" "string" NULL  NULL NULL NULL)
 ** BUTTON:   ("name" "string" "key" T/F  data <default-button-p>)
-** CASCADE (button w/menu): 
+** CASCADE (button w/menu):
 **           ("name" "string" "key" T/F  data (label|button|button w/menu...))
-** INCREMENTAL (button w/menu construction callback): 
+** INCREMENTAL (button w/menu construction callback):
 **           ("name" "string" NULL  T/F  <opaque pointer>)
 ** menubar:  ("name" NULL     NULL  T/F  data (button w/menu))
 ** scrollbar:("name" NULL     NULL  T/F  NULL NULL)
@@ -43,7 +35,7 @@
 **
 ** Note that the above is EXTREMELY bogus.  The "type" of the various entities
 ** that a widget_value structure can represent is implicit in the contents of
-** half a dozen slots, instead of there simply being a type field.  This 
+** half a dozen slots, instead of there simply being a type field.  This
 ** should all be rethunk.  I've added a type field, but for now it's only used
 ** by the new xlwmenu code.
 */
@@ -114,7 +106,7 @@ typedef struct _widget_value
   char*		name;
   /* value (meaning BOGUSLY depend on widget type) */
   char*		value;
-  /* keyboard equivalent. no implications for XtTranslations */ 
+  /* keyboard equivalent. no implications for XtTranslations */
   char*		key;
   /* accelerator key.  For XEmacs, this should be a Lisp_Object holding a
      char or symbol suitable for passing to event_matches_key_specifier_p.

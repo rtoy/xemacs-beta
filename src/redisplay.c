@@ -40,6 +40,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
+#include <limits.h>
 
 #include "buffer.h"
 #include "commands.h"
@@ -63,7 +64,10 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_TTY
 #include "console-tty.h"
+#ifdef HAVE_UNISTD_H
+#include <unistd.h> /* for isatty() */
 #endif
+#endif /* HAVE_TTY */
 
 /* Note: We have to be careful throughout this code to properly handle
    and differentiate between Bufbytes and Emchars.
@@ -205,26 +209,26 @@ struct prop_block
   enum prop_type type;
 
   union data
+  {
+    struct
     {
-      struct
-	{
-	  Bufbyte *str;
-	  Bytecount len; /* length of the string. */
-	} p_string;
+      Bufbyte *str;
+      Bytecount len; /* length of the string. */
+    } p_string;
 
-      struct
-	{
-	  Emchar ch;
-	  Bytind bi_cursor_bufpos; /* NOTE: is in Bytinds */
-	  unsigned int cursor_type :3;
-	} p_char;
+    struct
+    {
+      Emchar ch;
+      Bytind bi_cursor_bufpos; /* NOTE: is in Bytinds */
+      unsigned int cursor_type :3;
+    } p_char;
 
-      struct
-	{
-	  int width;
-	  face_index findex;
-	} p_blank;
-    } data;
+    struct
+    {
+      int width;
+      face_index findex;
+    } p_blank;
+  } data;
 };
 
 typedef struct
@@ -233,70 +237,30 @@ typedef struct
 } prop_block_dynarr;
 
 
-/*
- * Prototypes for all functions defined in redisplay.c.
- */
-struct display_block *get_display_block_from_line (struct display_line *dl,
-						   enum display_type type);
-layout_bounds calculate_display_line_boundaries (struct window *w,
-						 int modeline);
-static Bufpos generate_display_line (struct window *w, struct display_line *dl,
-				     int bounds, Bufpos start_pos,
-				     int start_col, prop_block_dynarr **prop,
-				     int type);
-static void generate_modeline (struct window *w, struct display_line *dl,
-			       int type);
-static int ensure_modeline_generated (struct window *w, int type);
-#ifdef MODELINE_IS_SCROLLABLE
 static void generate_formatted_string_db (Lisp_Object format_str,
 					  Lisp_Object result_str,
 					  struct window *w,
 					  struct display_line *dl,
 					  struct display_block *db,
 					  face_index findex, int min_pixpos,
-					  int max_pixpos, int type, 
-					  int modeline);
+					  int max_pixpos, int type
+#ifdef MODELINE_IS_SCROLLABLE
+					  ,int modeline
+#endif
+					  );
 static Charcount generate_fstring_runes (struct window *w, pos_data *data,
 					 Charcount pos, Charcount min_pos,
-					 Charcount max_pos, int no_limit,
+					 Charcount max_pos,
+#ifdef MODELINE_IS_SCROLLABLE
+					 int no_limit,
+#endif
 					 Lisp_Object elt,
 					 int depth, int max_pixsize,
 					 face_index findex, int type);
-#else /* MODELINE_IS_SCROLLABLE */
-static void generate_formatted_string_db (Lisp_Object format_str,
-					  Lisp_Object result_str,
-					  struct window *w,
-					  struct display_line *dl,
-					  struct display_block *db,
-					  face_index findex, int min_pixpos,
-					  int max_pixpos, int type);
-static Charcount generate_fstring_runes (struct window *w, pos_data *data,
-					 Charcount pos, Charcount min_pos,
-					 Charcount max_pos, Lisp_Object elt,
-					 int depth, int max_pixsize,
-					 face_index findex, int type);
-#endif /* not MODELINE_IS_SCROLLABLE */
-static prop_block_dynarr *add_emchar_rune (pos_data *data);
-static prop_block_dynarr *add_bufbyte_string_runes (pos_data *data,
-						    Bufbyte *c_string,
-						    Bytecount c_length,
-						    int no_prop);
-static prop_block_dynarr *add_blank_rune (pos_data *data, struct window *w,
-					  int char_tab_width);
-static prop_block_dynarr *add_octal_runes (pos_data *data);
-static prop_block_dynarr *add_control_char_runes (pos_data *data,
-						  struct buffer *b);
-static prop_block_dynarr *add_disp_table_entry_runes (pos_data *data,
-						      Lisp_Object entry);
-static prop_block_dynarr *add_propagation_runes (prop_block_dynarr **prop,
-						 pos_data *data);
 static prop_block_dynarr *add_glyph_rune (pos_data *data,
 					  struct glyph_block *gb,
 					  int pos_type, int allow_cursor,
 					  struct glyph_cachel *cachel);
-static prop_block_dynarr *add_glyph_runes (pos_data *data,
-					   int pos_type);
-/* NOTE: Bytinds not Bufpos's here. */
 static Bytind create_text_block (struct window *w, struct display_line *dl,
 				 Bytind bi_start_pos, int start_col,
 				 prop_block_dynarr **prop, int type);
@@ -307,40 +271,23 @@ static void create_left_glyph_block (struct window *w,
 				     int overlay_width);
 static void create_right_glyph_block (struct window *w,
 				      struct display_line *dl);
-static void regenerate_window (struct window *w, Bufpos start_pos,
-			       Bufpos point, int type);
-static Bufpos regenerate_window_point_center (struct window *w, Bufpos point,
-					      int type);
-int window_half_pixpos (struct window *w);
-int line_at_center (struct window *w, int type, Bufpos start, Bufpos point);
-Bufpos point_at_center (struct window *w, int type, Bufpos start,
-			Bufpos point);
-static void redisplay_window (Lisp_Object window, int skip_selected);
 static void redisplay_windows (Lisp_Object window, int skip_selected);
-static int redisplay_frame (struct frame *f, int preemption_check);
-void redisplay (void);
 static void decode_mode_spec (struct window *w, Emchar spec, int type);
 static void free_display_line (struct display_line *dl);
-void free_display_structs (struct window_mirror *mir);
-static int point_visible (struct window *w, Bufpos point, int type);
 static void update_line_start_cache (struct window *w, Bufpos from, Bufpos to,
 				     Bufpos point, int no_regen);
-static Bufpos line_start_cache_start (struct window *w);
-static Bufpos line_start_cache_end (struct window *w);
+static int point_visible (struct window *w, Bufpos point, int type);
 
 /* This used to be 10 but 30 seems to give much better performance. */
 #define INIT_MAX_PREEMPTS	30
 static int max_preempts;
 
-#define REDISPLAY_PREEMPTION_CHECK				\
-  do {								\
-    preempted = 0;						\
-    if (!disable_preemption &&					\
-	((preemption_count < max_preempts) || !NILP (Vexecuting_macro))) \
-      if (!INTERACTIVE || detect_input_pending ()) {		\
-        preempted = 1;						\
-      }								\
-  } while (0)
+#define REDISPLAY_PREEMPTION_CHECK					\
+((void)									\
+ (preempted =								\
+  (!disable_preemption &&						\
+   ((preemption_count < max_preempts) || !NILP (Vexecuting_macro)) &&	\
+   (!INTERACTIVE || detect_input_pending ()))))
 
 /*
  * Redisplay global variables.
@@ -530,7 +477,7 @@ redisplay_text_width_emchar_string (struct window *w, int findex,
 				    Emchar *str, Charcount len)
 {
   unsigned char charsets[NUM_LEADING_BYTES];
-  Lisp_Object window = Qnil;
+  Lisp_Object window;
 
   find_charsets_in_emchar_string (charsets, str, len);
   XSETWINDOW (window, w);
@@ -567,7 +514,7 @@ redisplay_frame_text_width_string (struct frame *f, Lisp_Object face,
 				   Bytecount offset, Bytecount len)
 {
   unsigned char charsets[NUM_LEADING_BYTES];
-  Lisp_Object frame = Qnil;
+  Lisp_Object frame;
   struct face_cachel cachel;
 
   if (!rtw_emchar_dynarr)
@@ -631,7 +578,7 @@ get_display_block_from_line (struct display_line *dl, enum display_type type)
 
   /* The line doesn't have a block of the desired type so go ahead and create
      one and add it to the line. */
-  memset (&db, 0, sizeof (struct display_block));
+  xzero (db);
   db.type = type;
   db.runes = Dynarr_new (rune);
   Dynarr_add (dl->display_blocks, db);
@@ -1902,7 +1849,7 @@ create_text_block (struct window *w, struct display_line *dl,
   dl->used_prop_data = 0;
   dl->num_chars = 0;
 
-  memset (&data, 0, sizeof (data));
+  xzero (data);
   data.ef = extent_fragment_new (w->buffer, f);
 
   /* These values are used by all of the rune addition routines.  We add
@@ -2671,7 +2618,7 @@ create_overlay_glyph_block (struct window *w, struct display_line *dl)
   if (!STRINGP (Voverlay_arrow_string) && !GLYPHP (Voverlay_arrow_string))
     return 0;
 
-  memset (&data, 0, sizeof (data));
+  xzero (data);
   data.ef = NULL;
   data.d = d;
   XSETWINDOW (data.window, w);
@@ -2730,7 +2677,7 @@ create_overlay_glyph_block (struct window *w, struct display_line *dl)
 
 static int
 add_margin_runes (struct display_line *dl, struct display_block *db, int start,
-		  int count, int glyph_type, int side, Lisp_Object window)
+		  int count, enum glyph_layout layout, int side, Lisp_Object window)
 {
   glyph_block_dynarr *gbd = (side == LEFT_GLYPHS
 			     ? dl->left_glyphs
@@ -2739,8 +2686,8 @@ add_margin_runes (struct display_line *dl, struct display_block *db, int start,
   int xpos = start;
   int reverse;
 
-  if ((glyph_type == GL_WHITESPACE && side == LEFT_GLYPHS)
-      || (glyph_type == GL_INSIDE_MARGIN && side == RIGHT_GLYPHS))
+  if ((layout == GL_WHITESPACE && side == LEFT_GLYPHS)
+      || (layout == GL_INSIDE_MARGIN && side == RIGHT_GLYPHS))
     {
       reverse = 1;
       elt = Dynarr_length (gbd) - 1;
@@ -2762,9 +2709,9 @@ add_margin_runes (struct display_line *dl, struct display_block *db, int start,
 
       if (gb->active &&
 	  ((side == LEFT_GLYPHS &&
-	    extent_begin_glyph_layout (XEXTENT (gb->extent)) == glyph_type)
+	    extent_begin_glyph_layout (XEXTENT (gb->extent)) == layout)
 	   || (side == RIGHT_GLYPHS &&
-	       extent_end_glyph_layout (XEXTENT (gb->extent)) == glyph_type)))
+	       extent_end_glyph_layout (XEXTENT (gb->extent)) == layout)))
 	{
 	  struct rune rb;
 
@@ -3580,16 +3527,13 @@ generate_modeline (struct window *w, struct display_line *dl, int type)
   else
     ypos_adj = 0;
 
-#ifdef MODELINE_IS_SCROLLABLE
   generate_formatted_string_db (b->modeline_format,
 				b->generated_modeline_string, w, dl, db,
-				MODELINE_INDEX, min_pixpos, max_pixpos, type,
-				1 /* generate a modeline */);
-#else
-  generate_formatted_string_db (b->modeline_format,
-                                b->generated_modeline_string, w, dl, db,
-                                MODELINE_INDEX, min_pixpos, max_pixpos, type);
+				MODELINE_INDEX, min_pixpos, max_pixpos, type
+#ifdef MODELINE_IS_SCROLLABLE
+				, 1 /* generate a modeline */
 #endif /* not MODELINE_IS_SCROLLABLE */
+				);
 
   /* The modeline is at the bottom of the gutters.  We have to wait to
      set this until we've generated teh modeline in order to account
@@ -3598,13 +3542,13 @@ generate_modeline (struct window *w, struct display_line *dl, int type)
 }
 
 /* This define is for the experimental horizontal modeline scrolling. It's not
-   functionnal for 20.5, but might be for 21.1 */
+   functional for 21.0, but might be for 21.1 */
 #ifdef MODELINE_IS_SCROLLABLE
 static void
 generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
 			      struct window *w, struct display_line *dl,
 			      struct display_block *db, face_index findex,
-			      int min_pixpos, int max_pixpos, int type, 
+			      int min_pixpos, int max_pixpos, int type,
 			      int modeline)
 {
   struct frame *f = XFRAME (w->frame);
@@ -3613,7 +3557,7 @@ generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
   pos_data data;
   int c_pixpos;
 
-  memset (&data, 0, sizeof (data));
+  xzero (data);
   data.d = d;
   data.db = db;
   data.dl = dl;
@@ -3635,13 +3579,13 @@ generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
      This recursively builds up the modeline or the title/icon string.
      In case of a modeline, we use a negative start position to indicate
      the current modeline horizontal scroll. */
-  generate_fstring_runes 
-    (w, &data, 
+  generate_fstring_runes
+    (w, &data,
      (modeline && WINDOW_HAS_MODELINE_P (w)) ? - w->modeline_hscroll : 0,
      (modeline && WINDOW_HAS_MODELINE_P (w)) ? - w->modeline_hscroll : 0,
-     0, /* no limit */ 1, format_str, 0, max_pixpos - min_pixpos, findex, 
+     0, /* no limit */ 1, format_str, 0, max_pixpos - min_pixpos, findex,
      type);
-  
+
   if (Dynarr_length (db->runes))
     {
       struct rune *rb =
@@ -3691,7 +3635,7 @@ generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
       for (elt = 0; elt < Dynarr_length (formatted_string_extent_dynarr);
 	   elt++)
 	{
-	  Lisp_Object extent = Qnil;
+	  Lisp_Object extent;
 	  Lisp_Object child;
 
 	  XSETEXTENT (extent, Dynarr_at (formatted_string_extent_dynarr, elt));
@@ -3711,7 +3655,7 @@ generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
     }
 }
 
-/* D. Verna Feb. 1998. Rewrote this function to handle the case of a 
+/* D. Verna Feb. 1998. Rewrote this function to handle the case of a
    scrolled modeline */
 static Charcount
 add_string_to_fstring_db_runes (pos_data *data, CONST Bufbyte *str,
@@ -3723,9 +3667,9 @@ add_string_to_fstring_db_runes (pos_data *data, CONST Bufbyte *str,
   CONST Bufbyte *cur_pos = str;
   struct display_block *db = data->db;
   int add_something;
-  
+
   data->blank_width = space_width (XWINDOW (data->window));
-  add_something = ((pos < min_pos) 
+  add_something = ((pos < min_pos)
 		   || ((*cur_pos) && no_limit)
 		   || ((*cur_pos) && (pos < max_pos)));
   while (add_something)
@@ -3733,7 +3677,7 @@ add_string_to_fstring_db_runes (pos_data *data, CONST Bufbyte *str,
       if ((initial_pos >= 0) && (pos == initial_pos))
 	while (Dynarr_length (db->runes) < pos)
 	  add_blank_rune (data, NULL, 0);
-      
+
       if (pos < 0) /* just pretend we're adding something */
 	{
 	  if (*cur_pos)
@@ -3746,7 +3690,7 @@ add_string_to_fstring_db_runes (pos_data *data, CONST Bufbyte *str,
 	    {
 	      CONST Bufbyte *old_cur_pos = cur_pos;
 	      int succeeded;
-	      
+
 	      data->ch = charptr_emchar (cur_pos);
 	      succeeded = (add_emchar_rune (data) != ADD_FAILED);
 	      INC_CHARPTR (cur_pos);
@@ -3772,7 +3716,7 @@ add_string_to_fstring_db_runes (pos_data *data, CONST Bufbyte *str,
 	      pos += 1;
 	    }
 	}
-      add_something = ((pos < min_pos) 
+      add_something = ((pos < min_pos)
 		       || ((*cur_pos) && no_limit)
 		       || ((*cur_pos) && (pos < max_pos)));
     }
@@ -3784,7 +3728,7 @@ add_string_to_fstring_db_runes (pos_data *data, CONST Bufbyte *str,
    modeline extents. */
 static Charcount
 add_glyph_to_fstring_db_runes (pos_data *data, Lisp_Object glyph,
-			       Charcount pos, Charcount min_pos, 
+			       Charcount pos, Charcount min_pos,
 			       Charcount max_pos, int no_limit)
 {
   /* This function has been Mule-ized. */
@@ -3793,19 +3737,19 @@ add_glyph_to_fstring_db_runes (pos_data *data, Lisp_Object glyph,
   struct glyph_block gb;
 
   /* D. Verna Feb. 1998.
-     If pos < 0, we're building a scrolled modeline. 
+     If pos < 0, we're building a scrolled modeline.
      The glyph should be hidden. So just skip it. */
   if (pos < 0)
     return (pos + 1);
-  
+
   data->blank_width = space_width (XWINDOW (data->window));
   while (Dynarr_length (db->runes) < pos)
     add_blank_rune (data, NULL, 0);
-  
+
   end = Dynarr_length (db->runes) + 1;
   if (!no_limit)
     end = min (max_pos, end);
-  
+
   gb.glyph = glyph;
   gb.extent = Qnil;
   add_glyph_rune (data, &gb, BEGIN_GLYPHS, 0, 0);
@@ -3854,23 +3798,23 @@ tail_recurse:
     {
       /* A string.  Add to the display line and check for %-constructs
          within it. */
-      
+
       Bufbyte *this = XSTRING_DATA (elt);
-      
+
       while ((no_limit || pos < max_pos) && *this)
 	{
 	  Bufbyte *last = this;
-	  
+
 	  while (*this && *this != '%')
 	    this++;
-	  
+
 	  if (this != last)
 	    {
 	      /* The string is just a string. */
 	      Charcount size =
 		bytecount_to_charcount (last, this - last) + pos;
 	      Charcount tmp_max = (no_limit ? size : min (size, max_pos));
-	      
+
 	      pos = add_string_to_fstring_db_runes (data, last, pos, pos,
 						    tmp_max, /* limit */0);
 	    }
@@ -3925,7 +3869,7 @@ tail_recurse:
 
 		  while (num_to_add--)
 		    pos = add_string_to_fstring_db_runes
-		      (data, (CONST Bufbyte *) "-", 
+		      (data, (CONST Bufbyte *) "-",
 		       pos, pos, max_pos, no_limit);
 		}
 	      else if (*this != 0)
@@ -4067,7 +4011,7 @@ tail_recurse:
           /* LIMIT is to protect against circular lists.  */
           while (CONSP (elt) && --limit > 0 && (no_limit || pos < max_pos))
             {
-	      pos = generate_fstring_runes (w, data, pos, pos, max_pos, 
+	      pos = generate_fstring_runes (w, data, pos, pos, max_pos,
 					    no_limit,
 					    XCAR (elt), depth,
 					    max_pixsize, findex, type);
@@ -4107,7 +4051,7 @@ tail_recurse:
 		new_findex = old_findex;
 
 	      data->findex = new_findex;
-	      pos = generate_fstring_runes (w, data, pos, pos, max_pos, 
+	      pos = generate_fstring_runes (w, data, pos, pos, max_pos,
 					    no_limit,
 					    XCDR (elt), depth - 1,
 					    max_pixsize, new_findex, type);
@@ -4120,7 +4064,7 @@ tail_recurse:
     }
   else if (GLYPHP (elt))
     {
-      pos = add_glyph_to_fstring_db_runes 
+      pos = add_glyph_to_fstring_db_runes
 	(data, elt, pos, pos, max_pos, no_limit);
     }
   else
@@ -4153,7 +4097,7 @@ generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
   pos_data data;
   int c_pixpos;
 
-  memset (&data, 0, sizeof (data));
+  xzero (data);
   data.d = d;
   data.db = db;
   data.dl = dl;
@@ -4650,7 +4594,7 @@ generate_formatted_string (struct window *w, Lisp_Object format_str,
 
 #ifdef MODELINE_IS_SCROLLABLE
   /* D. Verna Feb. 1998.
-     Currently, only update_frame_title can make us come here. This is not 
+     Currently, only update_frame_title can make us come here. This is not
      to build a modeline */
   generate_formatted_string_db (format_str, result_str, w, dl, db, findex, 0,
 				-1, type, 0 /* not a modeline */);
@@ -4731,7 +4675,7 @@ ensure_modeline_generated (struct window *w, int type)
 	  else
 	    {
 	      struct display_line modeline;
-	      memset (&modeline, 0, sizeof (struct display_line));
+	      xzero (modeline);
 	      Dynarr_add (dla, modeline);
 	    }
 	}
@@ -4852,8 +4796,8 @@ regenerate_window (struct window *w, Bufpos start_pos, Bufpos point, int type)
 	}
       else
 	{
+	  xzero (dl);
 	  dlp = &dl;
-	  memset (dlp, 0, sizeof (struct display_line));
 	  local = 1;
 	}
 
@@ -5907,7 +5851,7 @@ call_redisplay_end_triggers (struct window *w, void *closure)
 
       if (lrpos >= pos)
 	{
-	  Lisp_Object window = Qnil;
+	  Lisp_Object window;
 	  XSETWINDOW (window, w);
 	  va_run_hook_with_args_in_buffer (XBUFFER (w->buffer),
 					   Qredisplay_end_trigger_functions,
@@ -6388,8 +6332,9 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
 	struct frame *f = XFRAME (w->frame);
 	if (FRAME_TTY_P (f) && f->order_count > 1)
 	  {
-	    str = (CONST char *) alloca (10);
-	    sprintf (str, "-%d", f->order_count);
+	    char * writable_str = alloca_array (char, 10);
+	    sprintf (writable_str, "-%d", f->order_count);
+	    str = writable_str;
 	  }
       }
 #endif /* HAVE_TTY */
@@ -7394,7 +7339,7 @@ start_with_point_on_display_line (struct window *w, Bufpos point, int line)
 	  /* Hit the bottom of the buffer. */
 	  int adjustment =
 	    (cur_elt + new_line) - Dynarr_length (w->line_start_cache) + 1;
-	  Lisp_Object window = Qnil;
+	  Lisp_Object window;
 	  int defheight;
 
 	  XSETWINDOW (window, w);
@@ -7603,6 +7548,7 @@ update_line_start_cache (struct window *w, Bufpos from, Bufpos to,
       while (startp < old_lb || low_bound == -1)
 	{
 	  int ic_elt;
+          Bufpos new_startp;
 
 	  regenerate_window (w, startp, point, CMOTION_DISP);
 	  update_internal_cache_list (w, CMOTION_DISP);
@@ -7640,13 +7586,34 @@ update_line_start_cache (struct window *w, Bufpos from, Bufpos to,
 	    }
 	  assert (ic_elt >= 0);
 
-	  Dynarr_insert_many (cache, Dynarr_atp (internal_cache, 0),
-			      ic_elt + 1, marker);
-	  marker += (ic_elt + 1);
+	  new_startp = Dynarr_atp (internal_cache, ic_elt)->end + 1;
+
+          /*
+           * Handle invisible text properly:
+           * If the last line we're inserting has the same end as the 
+           * line before which it will be added, merge the two lines.
+           */
+          if (Dynarr_length (cache)  &&
+              Dynarr_atp (internal_cache, ic_elt)->end ==
+              Dynarr_atp (cache, marker)->end)
+            {
+              Dynarr_atp (cache, marker)->start
+                = Dynarr_atp (internal_cache, ic_elt)->start;
+              Dynarr_atp (cache, marker)->height
+                = Dynarr_atp (internal_cache, ic_elt)->height;
+              ic_elt--;
+            }
+
+          if (ic_elt >= 0)       /* we still have lines to add.. */
+            {
+              Dynarr_insert_many (cache, Dynarr_atp (internal_cache, 0),
+                                  ic_elt + 1, marker);
+              marker += (ic_elt + 1);
+            }
 
 	  if (startp < low_bound || low_bound == -1)
 	    low_bound = startp;
-	  startp = Dynarr_atp (internal_cache, ic_elt)->end + 1;
+	  startp = new_startp;
 	  if (startp > BUF_ZV (b))
 	    {
 	      updating_line_start_cache = 0;
@@ -7703,7 +7670,7 @@ glyph_to_pixel_translation (struct window *w, int char_x, int char_y,
 {
   display_line_dynarr *dla = window_display_lines (w, CURRENT_DISP);
   int num_disp_lines, modeline;
-  Lisp_Object window = Qnil;
+  Lisp_Object window;
   int defheight, defwidth;
 
   XSETWINDOW (window, w);
@@ -8356,7 +8323,7 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
 	{
 	  struct display_line *dl = Dynarr_atp (dla, bot_elt);
 	  int adj_area = y_coord - (dl->ypos + dl->descent);
-	  Lisp_Object lwin = Qnil;
+	  Lisp_Object lwin;
 	  int defheight;
 
 	  XSETWINDOW (lwin, *w);
@@ -8734,7 +8701,7 @@ init_redisplay (void)
       formatted_string_extent_start_dynarr = Dynarr_new (Bytecount);
       formatted_string_extent_end_dynarr = Dynarr_new (Bytecount);
       internal_cache = Dynarr_new (line_start_cache);
-      memset (&formatted_string_display_line, 0, sizeof (struct display_line));
+      xzero (formatted_string_display_line);
     }
 
   /* window system is nil when in -batch mode */
@@ -8832,7 +8799,7 @@ vars_of_redisplay (void)
 
   /* #### Probably temporary */
   DEFVAR_INT ("redisplay-cache-adjustment", &cache_adjustment /*
-(Temporary) Setting this will impact the performance of the internal
+\(Temporary) Setting this will impact the performance of the internal
 line start cache.
 */ );
   cache_adjustment = 2;

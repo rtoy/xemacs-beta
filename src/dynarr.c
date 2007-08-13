@@ -133,7 +133,7 @@ Dynarr_resize (void *d, int size)
     multiplier = 1.5;
 
   for (newsize = dy->max; newsize < size;)
-    newsize = max (Dynarr_min_size, multiplier * newsize);
+    newsize = max (Dynarr_min_size, (int) (multiplier * newsize));
 
   /* Don't do anything if the array is already big enough. */
   if (newsize > dy->max)
@@ -201,10 +201,10 @@ Dynarr_free (void *d)
    what was requested of it is returned in MALLOC_OVERHEAD in STATS.
    See the comment above the definition of this structure. */
 
-int
+size_t
 Dynarr_memory_usage (void *d, struct overhead_stats *stats)
 {
-  int total = 0;
+  size_t total = 0;
   Dynarr *dy = (Dynarr *) d;
 
   /* We have to be a bit tricky here because not all of the
@@ -213,8 +213,8 @@ Dynarr_memory_usage (void *d, struct overhead_stats *stats)
 
   if (dy->base)
     {
-      int malloc_used = malloced_storage_size (dy->base,
-					       dy->elsize * dy->max, 0);
+      size_t malloc_used = malloced_storage_size (dy->base,
+						  dy->elsize * dy->max, 0);
       /* #### This may or may not be correct.  Some Dynarrs would
 	 prefer that we use dy->cur instead of dy->largest here. */
       int was_requested = dy->elsize * dy->largest;

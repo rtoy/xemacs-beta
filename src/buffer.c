@@ -80,7 +80,6 @@ Boston, MA 02111-1307, USA.  */
 #ifdef REGION_CACHE_NEEDS_WORK
 #include "region-cache.h"
 #endif
-#include "symeval.h"
 #include "syntax.h"
 #include "sysdep.h"	/* for getwd */
 #include "window.h"
@@ -98,7 +97,7 @@ struct buffer *current_buffer;	/* the current buffer */
 Lisp_Object Vbuffer_defaults;
 
 /* This structure marks which slots in a buffer have corresponding
-   default values in buffer_defaults.
+   default values in Vbuffer_defaults.
    Each such slot has a nonzero value in this structure.
    The value has only one nonzero bit.
 
@@ -108,7 +107,7 @@ Lisp_Object Vbuffer_defaults;
 
    If a slot in this structure is 0, then there is a DEFVAR_BUFFER_LOCAL
    for the slot, but there is no default value for it; the corresponding
-   slot in buffer_defaults is not used except to initialize newly-created
+   slot in Vbuffer_defaults is not used except to initialize newly-created
    buffers.
 
    If a slot is -1, then there is a DEFVAR_BUFFER_LOCAL for it
@@ -121,10 +120,7 @@ Lisp_Object Vbuffer_defaults;
 
    If a slot is -3, then there is no DEFVAR_BUFFER_LOCAL for it but
    there is a default which is used to initialize newly-creation
-   buffers and as a reset-value when local-vars are killed.
-
-
-   */
+   buffers and as a reset-value when local-vars are killed.  */
 struct buffer buffer_local_flags;
 
 /* This structure holds the names of symbols whose values may be
@@ -207,14 +203,6 @@ int find_file_use_truenames;
 
 static void reset_buffer_local_variables (struct buffer *, int first_time);
 static void nuke_all_buffer_slots (struct buffer *b, Lisp_Object zap);
-static Lisp_Object mark_buffer (Lisp_Object, void (*) (Lisp_Object));
-static void print_buffer (Lisp_Object, Lisp_Object, int);
-/* We do not need a finalize method to handle a buffer's children list
-   because all buffers have `kill-buffer' applied to them before
-   they disappear, and the children removal happens then. */
-DEFINE_LRECORD_IMPLEMENTATION ("buffer", buffer,
-                               mark_buffer, print_buffer, 0, 0, 0,
-			       struct buffer);
 
 Lisp_Object
 make_buffer (struct buffer *buf)
@@ -241,20 +229,11 @@ mark_buffer (Lisp_Object obj, void (*markobj) (Lisp_Object))
   ((markobj) (buf->extent_info));
 
   /* Don't mark normally through the children slot.
-     (Actually, in this case, it doesn't matter.)
-   */
+     (Actually, in this case, it doesn't matter.)  */
   if (! EQ (buf->indirect_children, Qnull_pointer))
     mark_conses_in_list (buf->indirect_children);
 
-  if (buf->base_buffer)
-    {
-      Lisp_Object base_buf_obj = Qnil;
-
-      XSETBUFFER (base_buf_obj, buf->base_buffer);
-      return base_buf_obj;
-    }
-  else
-    return Qnil;
+  return buf->base_buffer ? make_buffer (buf->base_buffer) : Qnil;
 }
 
 static void
@@ -284,25 +263,27 @@ print_buffer (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     }
 }
 
+/* We do not need a finalize method to handle a buffer's children list
+   because all buffers have `kill-buffer' applied to them before
+   they disappear, and the children removal happens then. */
+DEFINE_LRECORD_IMPLEMENTATION ("buffer", buffer,
+                               mark_buffer, print_buffer, 0, 0, 0,
+			       struct buffer);
 
 DEFUN ("bufferp", Fbufferp, 1, 1, 0, /*
-T if OBJECT is an editor buffer.
+Return t if OBJECT is an editor buffer.
 */
        (object))
 {
-  if (BUFFERP (object))
-    return Qt;
-  return Qnil;
+  return BUFFERP (object) ? Qt : Qnil;
 }
 
 DEFUN ("buffer-live-p", Fbuffer_live_p, 1, 1, 0, /*
-T if OBJECT is an editor buffer that has not been deleted.
+Return t if OBJECT is an editor buffer that has not been deleted.
 */
        (object))
 {
-  if (BUFFERP (object) && BUFFER_LIVE_P (XBUFFER (object)))
-    return Qt;
-  return Qnil;
+  return BUFFERP (object) && BUFFER_LIVE_P (XBUFFER (object)) ? Qt : Qnil;
 }
 
 static void
@@ -333,8 +314,6 @@ returned instead.
 Lisp_Object
 get_buffer (Lisp_Object name, int error_if_deleted_or_does_not_exist)
 {
-  Lisp_Object buf;
-
   if (BUFFERP (name))
     {
       if (!BUFFER_LIVE_P (XBUFFER (name)))
@@ -347,6 +326,7 @@ get_buffer (Lisp_Object name, int error_if_deleted_or_does_not_exist)
     }
   else
     {
+      Lisp_Object buf;
       struct gcpro gcpro1;
 
       CHECK_STRING (name);
@@ -707,7 +687,7 @@ reset_buffer_local_variables (struct buffer *b, int first_time)
 #undef MARKED_SLOT
 #if 0
 #define STRING256_P(obj) \
-  (STRINGP (obj) && string_char_length (XSTRING (obj)) == 256)
+  (STRINGP (obj) && XSTRING_CHAR_LENGTH (obj) == 256)
   /* If the standard case table has been altered and invalidated,
      fix up its insides first.  */
   if (!(STRING256_P(Vascii_upcase_table) &&
@@ -813,13 +793,8 @@ If BUFFER is not indirect, return nil.
        (buffer))
 {
   struct buffer *buf = decode_buffer (buffer, 0);
-  struct buffer *base = buf->base_buffer;
-  Lisp_Object base_buffer = Qnil;
 
-  if (! base)
-    return Qnil;
-  XSETBUFFER (base_buffer, base);
-  return base_buffer;
+  return buf->base_buffer ? make_buffer (buf->base_buffer) : Qnil;
 }
 
 DEFUN ("buffer-indirect-children", Fbuffer_indirect_children, 0, 1, 0, /*
@@ -1595,17 +1570,16 @@ set_buffer_internal (struct buffer *b)
 }
 
 DEFUN ("set-buffer", Fset_buffer, 1, 1, 0, /*
-Make the buffer BUFNAME current for editing operations.
-BUFNAME may be a buffer or the name of an existing buffer.
+Make the buffer BUFFER current for editing operations.
+BUFFER may be a buffer or the name of an existing buffer.
 See also `save-excursion' when you want to make a buffer current temporarily.
 This function does not display the buffer, so its effect ends
 when the current command terminates.
 Use `switch-to-buffer' or `pop-to-buffer' to switch buffers permanently.
 */
-       (bufname))
+       (buffer))
 {
-  Lisp_Object buffer;
-  buffer = get_buffer (bufname, 0);
+  buffer = get_buffer (buffer, 0);
   if (NILP (buffer))
     error ("Selecting deleted or non-existent buffer");
   set_buffer_internal (XBUFFER (buffer));
@@ -1624,7 +1598,7 @@ however, are not checked.) END defaults to the value of START.
 
 If START and END are equal, the range checked is [START, END] (i.e.
 closed on both ends); otherwise, the range checked is (START, END)
-(open on both ends), except that extents that lie completely within
+\(open on both ends), except that extents that lie completely within
 [START, END] are not checked.  See `extent-in-region-p' for a fuller
 discussion.
 */
@@ -1729,7 +1703,7 @@ BUFFER defaults to the current buffer if omitted.
   /* Prevent warnings, or suspension of auto saving, that would happen
      if future size is less than past size.  Use of erase-buffer
      implies that the future text is not really related to the past text.  */
-  b->save_length = Qzero;
+  b->saved_size = Qzero;
 
   zmacs_region_stays = 0;
   return Qnil;
@@ -1784,18 +1758,15 @@ struct buffer_stats
   int other;
 };
 
-static int
+static size_t
 compute_buffer_text_usage (struct buffer *b, struct overhead_stats *ovstats)
 {
-  int malloc_use;
-  int was_requested;
-  int gap;
+  int was_requested = b->text->z - 1;
+  size_t gap = b->text->gap_size + b->text->end_gap_size;
+  size_t malloc_use = malloced_storage_size (b->text->beg, was_requested + gap, 0);
 
-  was_requested = b->text->z - 1;
-  gap = b->text->gap_size + b->text->end_gap_size;
-  malloc_use = malloced_storage_size (b->text->beg, was_requested + gap, 0);
-  ovstats->gap_overhead += gap;
-  ovstats->was_requested += was_requested;
+  ovstats->gap_overhead    += gap;
+  ovstats->was_requested   += was_requested;
   ovstats->malloc_overhead += malloc_use - (was_requested + gap);
   return malloc_use;
 }
@@ -1804,22 +1775,22 @@ static void
 compute_buffer_usage (struct buffer *b, struct buffer_stats *stats,
 		      struct overhead_stats *ovstats)
 {
-  memset (stats, 0, sizeof (*stats));
-  stats->other += malloced_storage_size (b, sizeof (struct buffer), ovstats);
-  stats->text += compute_buffer_text_usage (b, ovstats);
+  xzero (*stats);
+  stats->other   += malloced_storage_size (b, sizeof (*b), ovstats);
+  stats->text    += compute_buffer_text_usage   (b, ovstats);
   stats->markers += compute_buffer_marker_usage (b, ovstats);
   stats->extents += compute_buffer_extent_usage (b, ovstats);
 }
 
 DEFUN ("buffer-memory-usage", Fbuffer_memory_usage, 1, 1, 0, /*
 Return stats about the memory usage of buffer BUFFER.
-The values returned are in the form an alist of usage types and byte
+The values returned are in the form of an alist of usage types and byte
 counts.  The byte counts attempt to encompass all the memory used
 by the buffer (separate from the memory logically associated with a
 buffer or frame), including internal structures and any malloc()
 overhead associated with them.  In practice, the byte counts are
 underestimated because certain memory usage is very hard to determine
-(e.g. the amount of memory used inside the Xt library or inside the
+\(e.g. the amount of memory used inside the Xt library or inside the
 X server) and because there is other stuff that might logically
 be associated with a window, buffer, or frame (e.g. window configurations,
 glyphs) but should not obviously be included in the usage counts.
@@ -1834,24 +1805,23 @@ represents all the memory concerned.
 {
   struct buffer_stats stats;
   struct overhead_stats ovstats;
+  Lisp_Object val = Qnil;
 
   CHECK_BUFFER (buffer); /* dead buffers should be allowed, no? */
-  memset (&ovstats, 0, sizeof (ovstats));
+  xzero (ovstats);
   compute_buffer_usage (XBUFFER (buffer), &stats, &ovstats);
 
-  return nconc2 (list4 (Fcons (Qtext, make_int (stats.text)),
-			Fcons (Qmarkers, make_int (stats.markers)),
-			Fcons (Qextents, make_int (stats.extents)),
-			Fcons (Qother, make_int (stats.other))),
-		 list5 (Qnil,
-			Fcons (Qactually_requested,
-			       make_int (ovstats.was_requested)),
-			Fcons (Qmalloc_overhead,
-			       make_int (ovstats.malloc_overhead)),
-			Fcons (Qgap_overhead,
-			       make_int (ovstats.malloc_overhead)),
-			Fcons (Qdynarr_overhead,
-			       make_int (ovstats.dynarr_overhead))));
+  val = acons (Qtext,    make_int (stats.text),    val);
+  val = acons (Qmarkers, make_int (stats.markers), val);
+  val = acons (Qextents, make_int (stats.extents), val);
+  val = acons (Qother,   make_int (stats.other),   val);
+  val = Fcons (Qnil, val);
+  val = acons (Qactually_requested, make_int (ovstats.was_requested),   val);
+  val = acons (Qmalloc_overhead,    make_int (ovstats.malloc_overhead), val);
+  val = acons (Qgap_overhead,       make_int (ovstats.gap_overhead),    val);
+  val = acons (Qdynarr_overhead,    make_int (ovstats.dynarr_overhead), val);
+
+  return Fnreverse (val);
 }
 
 #endif /* MEMORY_USAGE_STATS */
@@ -2186,13 +2156,11 @@ complex_vars_of_buffer (void)
   defs->mirror_upcase_table = Vmirror_ascii_upcase_table;
   defs->mirror_case_canon_table = Vmirror_ascii_canon_table;
   defs->mirror_case_eqv_table = Vmirror_ascii_eqv_table;
+  defs->category_table = Vstandard_category_table;
 #endif /* MULE */
   defs->syntax_table = Vstandard_syntax_table;
   defs->mirror_syntax_table =
     XCHAR_TABLE (Vstandard_syntax_table)->mirror_table;
-#ifdef MULE
-  defs->category_table = Vstandard_category_table;
-#endif
   defs->modeline_format = build_string ("%-");  /* reset in loaddefs.el */
   defs->case_fold_search = Qt;
   defs->selective_display_ellipses = Qt;
@@ -2200,7 +2168,7 @@ complex_vars_of_buffer (void)
   defs->ctl_arrow = Qt;
   defs->fill_column = make_int (70);
   defs->left_margin = Qzero;
-  defs->save_length = Qzero;       /* lisp code wants int-or-nil */
+  defs->saved_size = Qzero;	/* lisp code wants int-or-nil */
   defs->modtime = 0;
   defs->auto_save_modified = 0;
   defs->auto_save_failure_time = -1;
@@ -2233,7 +2201,7 @@ complex_vars_of_buffer (void)
     buffer_local_flags.filename = always_local_no_default;
     buffer_local_flags.directory = always_local_no_default;
     buffer_local_flags.backed_up = always_local_no_default;
-    buffer_local_flags.save_length = always_local_no_default;
+    buffer_local_flags.saved_size = always_local_no_default;
     buffer_local_flags.auto_save_file_name = always_local_no_default;
     buffer_local_flags.read_only = always_local_no_default;
 
@@ -2583,7 +2551,7 @@ Backing up is done before the first time the file is saved.
 Each buffer has its own value of this variable.
 */ );
 
-  DEFVAR_BUFFER_LOCAL ("buffer-saved-size", save_length /*
+  DEFVAR_BUFFER_LOCAL ("buffer-saved-size", saved_size /*
 Length of current buffer when last read in, saved or auto-saved.
 0 initially.
 Each buffer has its own value of this variable.
@@ -2770,15 +2738,15 @@ handled:
      DEFVAR_BUFFER_LOCAL() calls. */
 #define MARKED_SLOT(slot)					\
   if ((XINT (buffer_local_flags.slot) != -2 &&			\
-         XINT (buffer_local_flags.slot) != -3)			\
+       XINT (buffer_local_flags.slot) != -3)			\
       != !(NILP (XBUFFER (Vbuffer_local_symbols)->slot)))	\
   abort ()
 #include "bufslots.h"
 #undef MARKED_SLOT
 
   {
-    Lisp_Object scratch =
-      Fset_buffer (Fget_buffer_create (QSscratch));
+    Lisp_Object scratch = Fget_buffer_create (QSscratch);
+    Fset_buffer (scratch);
     /* Want no undo records for *scratch* until after Emacs is dumped */
     Fbuffer_disable_undo (scratch);
   }
@@ -2825,7 +2793,7 @@ init_buffer (void)
   do { if ('/' == DIRECTORY_SEP) dostounix_filename (s); \
        else unixtodos_filename (s); \
   } while (0)
-    
+
   CORRECT_DIR_SEPS(buf);
 #endif
   current_buffer->directory = build_string (buf);

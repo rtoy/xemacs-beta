@@ -32,7 +32,6 @@ int always_gc;
 #include "commands.h"
 #endif
 
-#include "symeval.h"
 #include "backtrace.h"
 #include "bytecode.h"
 #include "buffer.h"
@@ -50,9 +49,6 @@ struct backtrace *backtrace_list;
 
 #define POP_BACKTRACE(bt) \
   do { backtrace_list = (bt).next; } while (0)
-
-extern int profiling_active;
-void profile_increase_call_count (Lisp_Object);
 
 /* This is the list of current catches (and also condition-cases).
    This is a stack: the most recent catch is at the head of the
@@ -79,16 +75,12 @@ Lisp_Object Qautoload, Qmacro, Qexit;
 Lisp_Object Qinteractive, Qcommandp, Qdefun, Qprogn, Qvalues;
 Lisp_Object Vquit_flag, Vinhibit_quit;
 Lisp_Object Qand_rest, Qand_optional;
-Lisp_Object Qdebug_on_error;
-Lisp_Object Qstack_trace_on_error;
-Lisp_Object Qdebug_on_signal;
-Lisp_Object Qstack_trace_on_signal;
+Lisp_Object Qdebug_on_error, Qstack_trace_on_error;
+Lisp_Object Qdebug_on_signal, Qstack_trace_on_signal;
 Lisp_Object Qdebugger;
 Lisp_Object Qinhibit_quit;
 Lisp_Object Qrun_hooks;
-
 Lisp_Object Qsetq;
-
 Lisp_Object Qdisplay_warning;
 Lisp_Object Vpending_warnings, Vpending_warnings_tail;
 
@@ -243,11 +235,6 @@ static Lisp_Object primitive_funcall (lisp_fn_t fn, int nargs,
 /*                 The subr and compiled-function types               */
 /**********************************************************************/
 
-static void print_subr (Lisp_Object, Lisp_Object, int);
-DEFINE_LRECORD_IMPLEMENTATION ("subr", subr,
-                               this_one_is_unmarkable, print_subr, 0, 0, 0,
-			       struct Lisp_Subr);
-
 static void
 print_subr (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
@@ -267,19 +254,10 @@ print_subr (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
                   printcharfun);
 }
 
+DEFINE_LRECORD_IMPLEMENTATION ("subr", subr,
+                               this_one_is_unmarkable, print_subr, 0, 0, 0,
+			       struct Lisp_Subr);
 
-static Lisp_Object mark_compiled_function (Lisp_Object,
-					   void (*) (Lisp_Object));
-extern void print_compiled_function (Lisp_Object, Lisp_Object, int);
-static int compiled_function_equal (Lisp_Object, Lisp_Object, int);
-static unsigned long compiled_function_hash (Lisp_Object obj, int depth);
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("compiled-function", compiled_function,
-				     mark_compiled_function,
-				     print_compiled_function, 0,
-				     compiled_function_equal,
-				     compiled_function_hash,
-				     struct Lisp_Compiled_Function);
-
 static Lisp_Object
 mark_compiled_function (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
@@ -300,14 +278,15 @@ compiled_function_equal (Lisp_Object o1, Lisp_Object o2, int depth)
 {
   struct Lisp_Compiled_Function *b1 = XCOMPILED_FUNCTION (o1);
   struct Lisp_Compiled_Function *b2 = XCOMPILED_FUNCTION (o2);
-  return (b1->flags.documentationp == b2->flags.documentationp
-	  && b1->flags.interactivep == b2->flags.interactivep
-	  && b1->flags.domainp == b2->flags.domainp /* I18N3 */
-	  && internal_equal (b1->bytecodes, b2->bytecodes, depth + 1)
-	  && internal_equal (b1->constants, b2->constants, depth + 1)
-	  && internal_equal (b1->arglist, b2->arglist, depth + 1)
-	  && internal_equal (b1->doc_and_interactive,
-			     b2->doc_and_interactive, depth + 1));
+  return
+    (b1->flags.documentationp == b2->flags.documentationp &&
+     b1->flags.interactivep   == b2->flags.interactivep   &&
+     b1->flags.domainp        == b2->flags.domainp        && /* I18N3 */
+     internal_equal (b1->bytecodes, b2->bytecodes, depth + 1) &&
+     internal_equal (b1->constants, b2->constants, depth + 1) &&
+     internal_equal (b1->arglist,   b2->arglist,   depth + 1) &&
+     internal_equal (b1->doc_and_interactive,
+		     b2->doc_and_interactive, depth + 1));
 }
 
 static unsigned long
@@ -321,6 +300,12 @@ compiled_function_hash (Lisp_Object obj, int depth)
 		internal_hash (b->constants, depth + 1));
 }
 
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("compiled-function", compiled_function,
+				     mark_compiled_function,
+				     print_compiled_function, 0,
+				     compiled_function_equal,
+				     compiled_function_hash,
+				     struct Lisp_Compiled_Function);
 
 /**********************************************************************/
 /*                       Entering the debugger                        */
@@ -521,7 +506,7 @@ backtrace_259 (Lisp_Object stream)
   return Fbacktrace (stream, Qt);
 }
 
-/* An error was signalled.  Maybe call the debugger, if the `debug-on-error'
+/* An error was signaled.  Maybe call the debugger, if the `debug-on-error'
    etc. variables call for this.  CONDITIONS is the list of conditions
    associated with the error being signalled.  SIG is the actual error
    being signalled, and DATA is the associated data (these are exactly
@@ -654,21 +639,23 @@ If all args return nil, return nil.
        (args))
 {
   /* This function can GC */
-  Lisp_Object val = Qnil;
+  REGISTER Lisp_Object tail;
   struct gcpro gcpro1;
 
   GCPRO1 (args);
 
-  while (!NILP (args))
+  LIST_LOOP (tail, args)
     {
-      val = Feval (XCAR (args));
+      Lisp_Object val = Feval (XCAR (tail));
       if (!NILP (val))
-	break;
-      args = XCDR (args);
+	{
+	  UNGCPRO;
+	  return val;
+	}
     }
 
   UNGCPRO;
-  return val;
+  return Qnil;
 }
 
 DEFUN ("and", Fand, 0, UNEVALLED, 0, /*
@@ -679,17 +666,16 @@ If no arg yields nil, return the last arg's value.
        (args))
 {
   /* This function can GC */
-  Lisp_Object val = Qt;
+  REGISTER Lisp_Object tail, val = Qt;
   struct gcpro gcpro1;
 
   GCPRO1 (args);
 
-  while (!NILP (args))
+  LIST_LOOP (tail, args)
     {
-      val = Feval (XCAR (args));
+      val = Feval (XCAR (tail));
       if (NILP (val))
 	break;
-      args = XCDR (args);
     }
 
   UNGCPRO;
@@ -697,26 +683,26 @@ If no arg yields nil, return the last arg's value.
 }
 
 DEFUN ("if", Fif, 2, UNEVALLED, 0, /*
-(if COND THEN ELSE...): if COND yields non-nil, do THEN, else do ELSE...
+\(if COND THEN ELSE...): if COND yields non-nil, do THEN, else do ELSE...
 Returns the value of THEN or the value of the last of the ELSE's.
 THEN must be one expression, but ELSE... can be zero or more expressions.
 If COND yields nil, and there are no ELSE's, the value is nil.
 */
-  (args))
+       (args))
 {
   /* This function can GC */
-  Lisp_Object cond;
+  Lisp_Object val;
   struct gcpro gcpro1;
 
   GCPRO1 (args);
-  cond = Feval (XCAR (args));
+
+  if (!NILP (Feval (XCAR (args))))
+    val = Feval (XCAR (XCDR ((args))));
+  else
+    val = Fprogn (XCDR (XCDR (args)));
+
   UNGCPRO;
-
-  args = XCDR (args);
-
-  if (!NILP (cond))
-    return Feval (XCAR (args));
-  return Fprogn (XCDR (args));
+  return val;
 }
 
 DEFUN ("cond", Fcond, 0, UNEVALLED, 0, /*
@@ -732,104 +718,102 @@ CONDITION's value if non-nil is returned from the cond-form.
        (args))
 {
   /* This function can GC */
-  Lisp_Object val = Qnil;
+  REGISTER Lisp_Object tail;
   struct gcpro gcpro1;
 
   GCPRO1 (args);
-  while (!NILP (args))
+
+  LIST_LOOP (tail, args)
     {
-      Lisp_Object clause = XCAR (args);
+      Lisp_Object val;
+      Lisp_Object clause = XCAR (tail);
+      CHECK_CONS (clause);
       val = Feval (XCAR (clause));
       if (!NILP (val))
 	{
-	  if (!EQ (XCDR (clause), Qnil))
-	    val = Fprogn (XCDR (clause));
-	  break;
+	  Lisp_Object clause_tail = XCDR (clause);
+	  if (!NILP (clause_tail))
+	    {
+	      CHECK_TRUE_LIST (clause_tail);
+	      val = Fprogn (clause_tail);
+	    }
+	  UNGCPRO;
+	  return val;
 	}
-      args = XCDR (args);
     }
   UNGCPRO;
 
-  return val;
+  return Qnil;
 }
 
 DEFUN ("progn", Fprogn, 0, UNEVALLED, 0, /*
-(progn BODY...): eval BODY forms sequentially and return value of last one.
+\(progn BODY...): eval BODY forms sequentially and return value of last one.
 */
        (args))
 {
   /* This function can GC */
-  Lisp_Object val = Qnil;
+  REGISTER Lisp_Object tail, val = Qnil;
   struct gcpro gcpro1;
 
   GCPRO1 (args);
 
-  while (!NILP (args))
-    {
-      val = Feval (XCAR (args));
-      args = XCDR (args);
-    }
+  LIST_LOOP (tail, args)
+    val = Feval (XCAR (tail));
 
   UNGCPRO;
   return val;
 }
 
 DEFUN ("prog1", Fprog1, 1, UNEVALLED, 0, /*
-(prog1 FIRST BODY...): eval FIRST and BODY sequentially; value from FIRST.
+\(prog1 FIRST BODY...): eval FIRST and BODY sequentially; value from FIRST.
 The value of FIRST is saved during the evaluation of the remaining args,
 whose values are discarded.
 */
        (args))
 {
   /* This function can GC */
+  REGISTER Lisp_Object tail = args;
   Lisp_Object val = Qnil;
   struct gcpro gcpro1, gcpro2;
 
   GCPRO2 (args, val);
 
-  val = Feval (XCAR (args));
-  args = XCDR (args);
+  val = Feval (XCAR (tail));
 
-  while (!NILP (args))
-    {
-      Feval (XCAR (args));
-      args = XCDR (args);
-    }
+  LIST_LOOP (tail, XCDR (tail))
+    Feval (XCAR (tail));
 
   UNGCPRO;
   return val;
 }
 
 DEFUN ("prog2", Fprog2, 2, UNEVALLED, 0, /*
-(prog2 X Y BODY...): eval X, Y and BODY sequentially; value from Y.
+\(prog2 X Y BODY...): eval X, Y and BODY sequentially; value from Y.
 The value of Y is saved during the evaluation of the remaining args,
 whose values are discarded.
 */
        (args))
 {
   /* This function can GC */
+  REGISTER Lisp_Object tail = args;
   Lisp_Object val = Qnil;
   struct gcpro gcpro1, gcpro2;
 
   GCPRO2 (args, val);
 
-  Feval (XCAR (args));
-  args = XCDR (args);
-  val = Feval (XCAR (args));
-  args = XCDR (args);
+  Feval (XCAR (tail));
+  tail = XCDR (tail);
+  val = Feval (XCAR (tail));
 
-  while (!NILP (args))
-    {
-      Feval (XCAR (args));
-      args = XCDR (args);
-    }
+  LIST_LOOP (tail, XCDR (tail))
+    Feval (XCAR (tail));
 
   UNGCPRO;
   return val;
 }
 
 DEFUN ("let*", FletX, 1, UNEVALLED, 0, /*
-(let* VARLIST BODY...): bind variables according to VARLIST then eval BODY.
+\(let* VARLIST BODY...): bind variables according to VARLIST then eval BODY.
 The value of the last form in BODY is returned.
 Each element of VARLIST is a symbol (which is bound to nil)
 or a list (SYMBOL VALUEFORM) (which binds SYMBOL to the value of VALUEFORM).
@@ -838,36 +822,46 @@ Each VALUEFORM can refer to the symbols already bound by this VARLIST.
        (args))
 {
   /* This function can GC */
-  Lisp_Object varlist, val, elt;
+  Lisp_Object varlist = XCAR (args);
+  Lisp_Object tail;
   int speccount = specpdl_depth_counter;
-  struct gcpro gcpro1, gcpro2, gcpro3;
+  struct gcpro gcpro1;
 
-  GCPRO3 (args, elt, varlist);
+  GCPRO1 (args);
 
-  varlist = Fcar (args);
-  while (!NILP (varlist))
+  EXTERNAL_LIST_LOOP (tail, varlist)
     {
+      Lisp_Object elt = XCAR (tail);
       QUIT;
-      elt = Fcar (varlist);
       if (SYMBOLP (elt))
 	specbind (elt, Qnil);
-      else if (! NILP (Fcdr (Fcdr (elt))))
-	signal_simple_error ("`let' bindings can have only one value-form",
-                             elt);
       else
 	{
-	  val = Feval (Fcar (Fcdr (elt)));
-	  specbind (Fcar (elt), val);
+	  Lisp_Object sym, form;
+	  CHECK_CONS (elt);
+	  sym = XCAR (elt);
+	  elt = XCDR (elt);
+	  if (NILP (elt))
+	    form = Qnil;
+	  else
+	    {
+	      CHECK_CONS (elt);
+	      form = XCAR (elt);
+	      elt  = XCDR (elt);
+	      if (!NILP (elt))
+		signal_simple_error
+		  ("`let' bindings can have only one value-form",
+		   XCAR (tail));
+	    }
+	  specbind (sym, Feval (form));
 	}
-      varlist = Fcdr (varlist);
     }
   UNGCPRO;
-  val = Fprogn (Fcdr (args));
-  return unbind_to (speccount, val);
+  return unbind_to (speccount, Fprogn (XCDR (args)));
 }
 
 DEFUN ("let", Flet, 1, UNEVALLED, 0, /*
-(let VARLIST BODY...): bind variables according to VARLIST then eval BODY.
+\(let VARLIST BODY...): bind variables according to VARLIST then eval BODY.
 The value of the last form in BODY is returned.
 Each element of VARLIST is a symbol (which is bound to nil)
 or a list (SYMBOL VALUEFORM) (which binds SYMBOL to the value of VALUEFORM).
@@ -876,68 +870,78 @@ All the VALUEFORMs are evalled before any symbols are bound.
        (args))
 {
   /* This function can GC */
-  Lisp_Object *temps, tem;
-  REGISTER Lisp_Object elt, varlist;
+  Lisp_Object varlist = XCAR (args);
+  REGISTER Lisp_Object tail;
+  Lisp_Object *temps;
   int speccount = specpdl_depth_counter;
-  REGISTER int argnum;
+  REGISTER int argnum = 0;
   struct gcpro gcpro1, gcpro2;
 
-  varlist = Fcar (args);
-
-  /* Make space to hold the values to give the bound variables */
-  elt = Flength (varlist);
-  temps = alloca_array (Lisp_Object, XINT (elt));
+  /* Make space to hold the values to give the bound variables. */
+  {
+    int varcount = 0;
+    EXTERNAL_LIST_LOOP (tail, varlist)
+      varcount++;
+    temps = alloca_array (Lisp_Object, varcount);
+  }
 
   /* Compute the values and store them in `temps' */
 
   GCPRO2 (args, *temps);
   gcpro2.nvars = 0;
 
-  for (argnum = 0; !NILP (varlist); varlist = Fcdr (varlist))
+  LIST_LOOP (tail, varlist)
     {
+      Lisp_Object elt = XCAR (tail);
       QUIT;
-      elt = Fcar (varlist);
       if (SYMBOLP (elt))
-	temps [argnum++] = Qnil;
-      else if (! NILP (Fcdr (Fcdr (elt))))
-	signal_simple_error ("`let' bindings can have only one value-form",
-                             elt);
+	temps[argnum++] = Qnil;
       else
-	temps [argnum++] = Feval (Fcar (Fcdr (elt)));
-      gcpro2.nvars = argnum;
+	{
+	  CHECK_CONS (elt);
+	  elt = XCDR (elt);
+	  if (NILP (elt))
+	    temps[argnum++] = Qnil;
+	  else
+	    {
+	      CHECK_CONS (elt);
+	      temps[argnum++] = Feval (XCAR (elt));
+	      gcpro2.nvars = argnum;
+
+	      if (!NILP (XCDR (elt)))
+		signal_simple_error
+		  ("`let' bindings can have only one value-form",
+		   XCAR (tail));
+	    }
+	}
     }
   UNGCPRO;
 
-  varlist = Fcar (args);
-  for (argnum = 0; !NILP (varlist); varlist = Fcdr (varlist))
+  argnum = 0;
+  LIST_LOOP (tail, varlist)
     {
-      elt = Fcar (varlist);
-      tem = temps[argnum++];
-      if (SYMBOLP (elt))
-	specbind (elt, tem);
-      else
-	specbind (Fcar (elt), tem);
+      Lisp_Object elt = XCAR (tail);
+      specbind (SYMBOLP (elt) ? elt : XCAR (elt), temps[argnum++]);
     }
 
-  elt = Fprogn (Fcdr (args));
-  return unbind_to (speccount, elt);
+  return unbind_to (speccount, Fprogn (XCDR (args)));
 }
 
 DEFUN ("while", Fwhile, 1, UNEVALLED, 0, /*
-(while TEST BODY...): if TEST yields non-nil, eval BODY... and repeat.
+\(while TEST BODY...): if TEST yields non-nil, eval BODY... and repeat.
 The order of execution is thus TEST, BODY, TEST, BODY and so on
 until TEST returns nil.
 */
        (args))
 {
   /* This function can GC */
-  Lisp_Object test, body, tem;
+  Lisp_Object tem;
+  Lisp_Object test = XCAR (args);
+  Lisp_Object body = XCDR (args);
   struct gcpro gcpro1, gcpro2;
 
   GCPRO2 (test, body);
 
-  test = Fcar (args);
-  body = Fcdr (args);
   while (tem = Feval (test), !NILP (tem))
     {
       QUIT;
@@ -949,7 +953,7 @@ until TEST returns nil.
 }
 
 DEFUN ("setq", Fsetq, 0, UNEVALLED, 0, /*
-(setq SYM VAL SYM VAL ...): set each SYM to the value of its VAL.
+\(setq SYM VAL SYM VAL ...): set each SYM to the value of its VAL.
 The symbols SYM are variables; they are literal (not evaluated).
 The values VAL are expressions; they are evaluated.
 Thus, (setq x (1+ y)) sets `x' to the value of `(1+ y)'.
@@ -960,16 +964,15 @@ The return value of the `setq' form is the value of the last VAL.
        (args))
 {
   /* This function can GC */
-  REGISTER Lisp_Object args_left;
-  REGISTER Lisp_Object val, sym;
   struct gcpro gcpro1;
+  Lisp_Object val = Qnil;
 
-  if (NILP (args))
-    return Qnil;
+  GCPRO1 (args);
 
   {
-    REGISTER int i;
-    for (i = 0, val = args ; CONSP (val); val = XCDR (val))
+    REGISTER int i = 0;
+    Lisp_Object args2;
+    for (args2 = args; !NILP (args2); args2 = XCDR (args2))
       {
 	i++;
 	/*
@@ -983,17 +986,13 @@ The return value of the `setq' form is the value of the last VAL.
       Fsignal (Qwrong_number_of_arguments, list2 (Qsetq, make_int(i)));
   }
 
-  args_left = args;
-  GCPRO1 (args);
-
-  do
+  while (!NILP (args))
     {
-      val = Feval (XCAR (XCDR (args_left)));
-      sym = XCAR (args_left);
+      Lisp_Object sym = XCAR (args);
+      val = Feval (XCAR (XCDR (args)));
       Fset (sym, val);
-      args_left = XCDR (XCDR (args_left));
+      args = XCDR (XCDR (args));
     }
-  while (CONSP (args_left));
 
   UNGCPRO;
   return val;
@@ -1004,7 +1003,7 @@ Return the argument, without evaluating it.  `(quote x)' yields `x'.
 */
        (args))
 {
-  return Fcar (args);
+  return XCAR (args);
 }
 
 DEFUN ("function", Ffunction, 1, UNEVALLED, 0, /*
@@ -1014,7 +1013,7 @@ In byte compilation, `function' causes its argument to be compiled.
 */
        (args))
 {
-  return Fcar (args);
+  return XCAR (args);
 }
 
 
@@ -1023,18 +1022,16 @@ In byte compilation, `function' causes its argument to be compiled.
 /**********************************************************************/
 
 DEFUN ("defun", Fdefun, 2, UNEVALLED, 0, /*
-(defun NAME ARGLIST [DOCSTRING] BODY...): define NAME as a function.
+\(defun NAME ARGLIST [DOCSTRING] BODY...): define NAME as a function.
 The definition is (lambda ARGLIST [DOCSTRING] BODY...).
 See also the function `interactive'.
 */
        (args))
 {
   /* This function can GC */
-  Lisp_Object fn_name;
-  Lisp_Object defn;
+  Lisp_Object fn_name = XCAR (args);
+  Lisp_Object defn = Fcons (Qlambda, XCDR (args));
 
-  fn_name = Fcar (args);
-  defn = Fcons (Qlambda, Fcdr (args));
   if (purify_flag)
     defn = Fpurecopy (defn);
   Ffset (fn_name, defn);
@@ -1043,7 +1040,7 @@ See also the function `interactive'.
 }
 
 DEFUN ("defmacro", Fdefmacro, 2, UNEVALLED, 0, /*
-(defmacro NAME ARGLIST [DOCSTRING] BODY...): define NAME as a macro.
+\(defmacro NAME ARGLIST [DOCSTRING] BODY...): define NAME as a macro.
 The definition is (macro lambda ARGLIST [DOCSTRING] BODY...).
 When the macro is called, as in (NAME ARGS...),
 the function (lambda ARGLIST BODY...) is applied to
@@ -1053,11 +1050,9 @@ and the result should be a form to be evaluated instead of the original.
        (args))
 {
   /* This function can GC */
-  Lisp_Object fn_name;
-  Lisp_Object defn;
+  Lisp_Object fn_name = XCAR (args);
+  Lisp_Object defn = Fcons (Qmacro, Fcons (Qlambda, XCDR (args)));
 
-  fn_name = Fcar (args);
-  defn = Fcons (Qmacro, Fcons (Qlambda, Fcdr (args)));
   if (purify_flag)
     defn = Fpurecopy (defn);
   Ffset (fn_name, defn);
@@ -1066,7 +1061,7 @@ and the result should be a form to be evaluated instead of the original.
 }
 
 DEFUN ("defvar", Fdefvar, 1, UNEVALLED, 0, /*
-(defvar SYMBOL INITVALUE DOCSTRING): define SYMBOL as a variable.
+\(defvar SYMBOL INITVALUE DOCSTRING): define SYMBOL as a variable.
 You are not required to define a variable in order to use it,
  but the definition can supply documentation and an initial value
  in a way that tags can recognize.
@@ -1087,18 +1082,29 @@ In lisp-interaction-mode defvar is treated as defconst.
        (args))
 {
   /* This function can GC */
-  REGISTER Lisp_Object sym, tem, tail;
+  Lisp_Object sym = XCAR (args);
 
-  sym = Fcar (args);
-  tail = Fcdr (args);
-  if (!NILP (Fcdr (Fcdr (tail))))
-    error ("too many arguments");
-
-  if (!NILP (tail))
+  if (!NILP (args = XCDR (args)))
     {
-      tem = Fdefault_boundp (sym);
-      if (NILP (tem))
-	Fset_default (sym, Feval (Fcar (Fcdr (args))));
+      Lisp_Object val = XCAR (args);
+
+      if (NILP (Fdefault_boundp (sym)))
+	Fset_default (sym, Feval (val));
+
+      if (!NILP (args = XCDR (args)))
+	{
+	  Lisp_Object doc = XCAR (args);
+#if 0 /* FSFmacs */
+	  /* #### We should probably do this but it might be dangerous */
+	  if (purify_flag)
+	    doc = Fpurecopy (doc);
+	  Fput (sym, Qvariable_documentation, doc);
+#else
+	  pure_put (sym, Qvariable_documentation, doc);
+#endif
+	  if (!NILP (args = XCDR (args)))
+	    error ("too many arguments");
+	}
     }
 
 #ifdef I18N3
@@ -1106,26 +1112,12 @@ In lisp-interaction-mode defvar is treated as defconst.
     pure_put (sym, Qvariable_domain, Vfile_domain);
 #endif
 
-  tail = Fcdr (Fcdr (args));
-  if (!NILP (Fcar (tail)))
-    {
-      tem = Fcar (tail);
-#if 0 /* FSFmacs */
-      /* #### We should probably do this but it might be dangerous */
-      if (purify_flag)
-	tem = Fpurecopy (tem);
-      Fput (sym, Qvariable_documentation, tem);
-#else
-      pure_put (sym, Qvariable_documentation, tem);
-#endif
-    }
-
   LOADHIST_ATTACH (sym);
   return sym;
 }
 
 DEFUN ("defconst", Fdefconst, 2, UNEVALLED, 0, /*
-(defconst SYMBOL INITVALUE DOCSTRING): define SYMBOL as a constant
+\(defconst SYMBOL INITVALUE DOCSTRING): define SYMBOL as a constant
 variable.
 The intent is that programs do not change this value, but users may.
 Always sets the value of SYMBOL to the result of evalling INITVALUE.
@@ -1144,31 +1136,29 @@ Since `defconst' unconditionally assigns the variable,
        (args))
 {
   /* This function can GC */
-  REGISTER Lisp_Object sym, tem;
+  Lisp_Object sym = XCAR (args);
+  Lisp_Object val = XCAR (args = XCDR (args));
 
-  sym = Fcar (args);
-  if (!NILP (Fcdr (Fcdr (Fcdr (args)))))
-    error ("too many arguments");
+  Fset_default (sym, Feval (val));
 
-  Fset_default (sym, Feval (Fcar (Fcdr (args))));
+  if (!NILP (args = XCDR (args)))
+    {
+      Lisp_Object doc = XCAR (args);
+#if 0 /* FSFmacs */
+      /* #### We should probably do this but it might be dangerous */
+      if (purify_flag)
+	doc = Fpurecopy (doc);
+      Fput (sym, Qvariable_documentation, doc);
+#else
+      pure_put (sym, Qvariable_documentation, doc);
+#endif
+      if (!NILP (args = XCDR (args)))
+	error ("too many arguments");
+    }
 
 #ifdef I18N3
   if (!NILP (Vfile_domain))
     pure_put (sym, Qvariable_domain, Vfile_domain);
-#endif
-
-  tem = Fcar (Fcdr (Fcdr (args)));
-
-  if (!NILP (tem))
-#if 0 /* FSFmacs */
-    /* #### We should probably do this but it might be dangerous */
-    {
-      if (purify_flag)
-	tem = Fpurecopy (tem);
-      Fput (sym, Qvariable_documentation, tem);
-    }
-#else
-    pure_put (sym, Qvariable_documentation, tem);
 #endif
 
   LOADHIST_ATTACH (sym);
@@ -1283,7 +1273,7 @@ definitions to shadow the loaded ones for use in file byte-compilation.
 /**********************************************************************/
 
 DEFUN ("catch", Fcatch, 1, UNEVALLED, 0, /*
-(catch TAG BODY...): eval BODY allowing nonlocal exits using `throw'.
+\(catch TAG BODY...): eval BODY allowing nonlocal exits using `throw'.
 TAG is evalled to get the tag to use.  Then the BODY is executed.
 Within BODY, (throw TAG) with same tag exits BODY and exits this `catch'.
 If no throw happens, `catch' returns the value of the last BODY form.
@@ -1296,9 +1286,9 @@ If a throw happens, it specifies the value to return from `catch'.
   struct gcpro gcpro1;
 
   GCPRO1 (args);
-  tag = Feval (Fcar (args));
+  tag = Feval (XCAR (args));
   UNGCPRO;
-  return internal_catch (tag, Fprogn, Fcdr (args), 0);
+  return internal_catch (tag, Fprogn, XCDR (args), 0);
 }
 
 /* Set up a catch, then call C function FUNC on argument ARG.
@@ -1309,7 +1299,7 @@ Lisp_Object
 internal_catch (Lisp_Object tag,
                 Lisp_Object (*func) (Lisp_Object arg),
                 Lisp_Object arg,
-                int *threw)
+                int * volatile threw)
 {
   /* This structure is made part of the chain `catchlist'.  */
   struct catchtag c;
@@ -1484,7 +1474,7 @@ throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
 */
 
 DEFUN ("throw", Fthrow, 2, 2, 0, /*
-(throw TAG VALUE): throw to the catch for TAG and return VALUE from it.
+\(throw TAG VALUE): throw to the catch for TAG and return VALUE from it.
 Both TAG and VALUE are evalled.
 */
        (tag, val))
@@ -1506,8 +1496,8 @@ If BODYFORM exits nonlocally, the UNWINDFORMS are executed anyway.
   Lisp_Object val;
   int speccount = specpdl_depth_counter;
 
-  record_unwind_protect (Fprogn, Fcdr (args));
-  val = Feval (Fcar (args));
+  record_unwind_protect (Fprogn, XCDR (args));
+  val = Feval (XCAR (args));
   return unbind_to (speccount, val);
 }
 
@@ -1708,8 +1698,7 @@ run_condition_case_handlers (Lisp_Object val, Lisp_Object var)
    condition-case except that it takes three arguments rather
    than a single list of arguments. */
 Lisp_Object
-Fcondition_case_3 (Lisp_Object bodyform,
-                   Lisp_Object var, Lisp_Object handlers)
+condition_case_3 (Lisp_Object bodyform, Lisp_Object var, Lisp_Object handlers)
 {
   /* This function can GC */
   Lisp_Object val;
@@ -1743,7 +1732,7 @@ A handler is applicable to an error if CONDITION-NAME is one of the
 error's condition names.  If an error happens, the first applicable
 handler is run.  As a special case, a CONDITION-NAME of t matches
 all errors, even those without the `error' condition name on them
-(e.g. `quit').
+\(e.g. `quit').
 
 The car of a handler may be a list of condition names
 instead of a single condition name.
@@ -1769,9 +1758,9 @@ rather than when the handler was set, use `call-with-condition-handler'.
      (args))
 {
   /* This function can GC */
-  return Fcondition_case_3 (Fcar (Fcdr (args)),
-                            Fcar (args),
-                            Fcdr (Fcdr (args)));
+  return condition_case_3 (XCAR (XCDR (args)),
+			   XCAR (args),
+			   XCDR (XCDR (args)));
 }
 
 DEFUN ("call-with-condition-handler", Fcall_with_condition_handler, 2, MANY, 0, /*
@@ -1783,14 +1772,14 @@ that was current when `signal' was called, rather than when the handler
 was established.
 
 HANDLER should be a function of one argument, which is a cons of the args
-(SIG . DATA) that were passed to `signal'.  It is invoked whenever
+\(SIG . DATA) that were passed to `signal'.  It is invoked whenever
 `signal' is called (this differs from `condition-case', which allows
 you to specify which errors are trapped).  If the handler function
 returns, `signal' continues as if the handler were never invoked.
-(It continues to look for handlers established earlier than this one,
+\(It continues to look for handlers established earlier than this one,
 and invokes the standard error-handler if none is found.)
 */
-(int nargs, Lisp_Object *args)) /* Note!  Args side-effected! */
+       (int nargs, Lisp_Object *args)) /* Note!  Args side-effected! */
 {
   /* This function can GC */
   int speccount = specpdl_depth_counter;
@@ -1854,7 +1843,6 @@ return_from_signal (Lisp_Object value)
 }
 
 extern int in_display;
-extern int gc_in_progress;
 
 
 /****************** the workhorse error-signaling function ******************/
@@ -2151,7 +2139,7 @@ call_with_suspended_errors (lisp_fn_t fun, volatile Lisp_Object retval,
   if (ERRB_EQ (errb, ERROR_ME))
     return primitive_funcall (fun, nargs, args);
 
-  speccount = specpdl_depth ();
+  speccount = specpdl_depth_counter;
   if (NILP (class) || NILP (Vcurrent_warning_class))
     {
       /* If we're currently calling for no warnings, then make it so.
@@ -2187,9 +2175,9 @@ call_with_suspended_errors (lisp_fn_t fun, volatile Lisp_Object retval,
     UNGCPRO;
     /* Use the returned value except in non-local exit, when
        RETVAL applies. */
-    if (!threw)
-      retval = the_retval;
-    return unbind_to (speccount, retval);
+    /* Some perverse compilers require the perverse cast below.  */
+    return unbind_to (speccount,
+		      threw ? *((Lisp_Object*) &(retval)) : the_retval);
   }
 }
 
@@ -2499,7 +2487,7 @@ signal_quit (void)
 /**********************************************************************/
 
 DEFUN ("commandp", Fcommandp, 1, 1, 0, /*
-T if FUNCTION makes provisions for interactive calling.
+Return t if FUNCTION makes provisions for interactive calling.
 This means it contains a description for how to read arguments to give it.
 The value is nil for an invalid function or a symbol with no function
 definition.
@@ -2518,12 +2506,8 @@ Also, a symbol satisfies `commandp' if its function definition does so.
 */
        (function))
 {
-  REGISTER Lisp_Object fun;
-  REGISTER Lisp_Object funcar;
+  Lisp_Object fun = indirect_function (function, 0);
 
-  fun = function;
-
-  fun = indirect_function (fun, 0);
   if (UNBOUNDP (fun))
     return Qnil;
 
@@ -2542,15 +2526,17 @@ Also, a symbol satisfies `commandp' if its function definition does so.
   /* Lists may represent commands.  */
   if (!CONSP (fun))
     return Qnil;
-  funcar = Fcar (fun);
-  if (!SYMBOLP (funcar))
-    return Fsignal (Qinvalid_function, list1 (fun));
-  if (EQ (funcar, Qlambda))
-    return Fassq (Qinteractive, Fcdr (Fcdr (fun)));
-  if (EQ (funcar, Qautoload))
-    return Fcar (Fcdr (Fcdr (Fcdr (fun))));
-  else
-    return Qnil;
+  {
+    Lisp_Object funcar = XCAR (fun);
+    if (!SYMBOLP (funcar))
+      return Fsignal (Qinvalid_function, list1 (fun));
+    if (EQ (funcar, Qlambda))
+      return Fassq (Qinteractive, Fcdr (Fcdr (fun)));
+    if (EQ (funcar, Qautoload))
+      return Fcar (Fcdr (Fcdr (Fcdr (fun))));
+    else
+      return Qnil;
+  }
 }
 
 DEFUN ("command-execute", Fcommand_execute, 1, 3, 0, /*
@@ -2594,7 +2580,7 @@ when reading the arguments.
       backtrace.args = &cmd;
       backtrace.nargs = 1;
       backtrace.evalargs = 0;
-      backtrace.pdlcount = specpdl_depth ();
+      backtrace.pdlcount = specpdl_depth_counter;
       backtrace.debug_on_exit = 0;
       PUSH_BACKTRACE (backtrace);
 
@@ -2826,10 +2812,6 @@ static Lisp_Object funcall_lambda (Lisp_Object fun,
                                    int nargs, Lisp_Object args[]);
 static Lisp_Object apply_lambda (Lisp_Object fun,
                                  int nargs, Lisp_Object args);
-#if 0 /* #### Not called anymore */
-static Lisp_Object funcall_subr (struct Lisp_Subr *sub, Lisp_Object args[]);
-#endif
-
 static int in_warnings;
 
 static Lisp_Object
@@ -2839,46 +2821,50 @@ in_warnings_restore (Lisp_Object minimus)
   return Qnil;
 }
 
-#define inline_funcall_subr(rv, subr, av) \
-  do { \
-    switch (subr->max_args) { \
-      case  0: rv = (subr_function(subr))(); \
-	       break; \
-      case  1: rv = (subr_function(subr))(av[0]); \
-	       break; \
-      case  2: rv = (subr_function(subr))(av[0], av[1]); \
-	       break; \
-      case  3: rv = (subr_function(subr))(av[0], av[1], av[2]); \
-	       break; \
-      case  4: rv = (subr_function(subr))(av[0], av[1], av[2], av[3]); \
-	       break; \
-      case  5: rv = (subr_function(subr))(av[0], av[1], av[2], av[3], av[4]); \
-	       break; \
-      case  6: rv = (subr_function(subr))(av[0], av[1], av[2], av[3], av[4], \
-					  av[5]); \
-	       break; \
-      case  7: rv = (subr_function(subr))(av[0], av[1], av[2], av[3], av[4], \
-					  av[5], av[6]); \
-	       break; \
-      case  8: rv = (subr_function(subr))(av[0], av[1], av[2], av[3], av[4], \
-					  av[5], av[6], av[7]); \
-	       break; \
-      case  9: rv = (subr_function(subr))(av[0], av[1], av[2], av[3], av[4], \
-					  av[5], av[6], av[7], av[8]); \
-	       break; \
-      case 10: rv = (subr_function(subr))(av[0], av[1], av[2], av[3], av[4], \
-					  av[5], av[6], av[7], av[8], av[9]); \
-	       break; \
-      case 11: rv = (subr_function(subr))(av[0], av[1], av[2], av[3], av[4], \
-					  av[5], av[6], av[7], av[8], av[9], \
-					  av[10]); \
-	       break; \
-      case 12: rv = (subr_function(subr))(av[0], av[1], av[2], av[3], av[4], \
-					  av[5], av[6], av[7], av[8], av[9], \
-					  av[10], av[11]); \
-	       break; \
-    } \
-  } while (0)
+#define AV_0(av)
+#define AV_1(av) av[0]
+#define AV_2(av) AV_1(av), av[1]
+#define AV_3(av) AV_2(av), av[2]
+#define AV_4(av) AV_3(av), av[3]
+#define AV_5(av) AV_4(av), av[4]
+#define AV_6(av) AV_5(av), av[5]
+#define AV_7(av) AV_6(av), av[6]
+#define AV_8(av) AV_7(av), av[7]
+
+#define PRIMITIVE_FUNCALL(fn, av, ac) \
+(((Lisp_Object (*)(EXFUN_##ac)) (fn)) (AV_##ac (av)))
+
+/* If subr's take more than 8 arguments, more cases need to be added
+   to this switch.  (But don't do it - if you really need a SUBR with
+   more than 8 arguments, use max_args == MANY.
+   See the DEFUN macro in lisp.h)  */
+#define inline_funcall_fn(rv, fn, av, ac) do {		\
+  switch (ac) {						\
+  case 0: rv = PRIMITIVE_FUNCALL(fn, av, 0); break;	\
+  case 1: rv = PRIMITIVE_FUNCALL(fn, av, 1); break;	\
+  case 2: rv = PRIMITIVE_FUNCALL(fn, av, 2); break;	\
+  case 3: rv = PRIMITIVE_FUNCALL(fn, av, 3); break;	\
+  case 4: rv = PRIMITIVE_FUNCALL(fn, av, 4); break;	\
+  case 5: rv = PRIMITIVE_FUNCALL(fn, av, 5); break;	\
+  case 6: rv = PRIMITIVE_FUNCALL(fn, av, 6); break;	\
+  case 7: rv = PRIMITIVE_FUNCALL(fn, av, 7); break;	\
+  case 8: rv = PRIMITIVE_FUNCALL(fn, av, 8); break;	\
+  default: abort(); rv = Qnil; break;			\
+  }							\
+} while (0)
+
+#define inline_funcall_subr(rv, subr, av) do {		\
+  void (*fn)() = (void (*)()) (subr_function(subr));	\
+  inline_funcall_fn (rv, fn, av, subr->max_args);	\
+} while (0)
+
+static Lisp_Object
+primitive_funcall (lisp_fn_t fn, int nargs, Lisp_Object args[])
+{
+  Lisp_Object rv;
+  inline_funcall_fn (rv, fn, args, nargs);
+  return rv;
+}
 
 DEFUN ("eval", Feval, 1, 1, 0, /*
 Evaluate FORM and return its value.
@@ -2894,7 +2880,7 @@ Evaluate FORM and return its value.
   while (!in_warnings && !NILP (Vpending_warnings))
     {
       struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
-      int speccount = specpdl_depth ();
+      int speccount = specpdl_depth_counter;
       Lisp_Object this_warning_cons, this_warning, class, level, messij;
 
       record_unwind_protect (in_warnings_restore, Qnil);
@@ -2922,15 +2908,11 @@ Evaluate FORM and return its value.
       unbind_to (speccount, Qnil);
     }
 
+  if (SYMBOLP (form))
+    return Fsymbol_value (form);
+
   if (!CONSP (form))
-    {
-      if (!SYMBOLP (form))
-	return form;
-
-      val = Fsymbol_value (form);
-
-      return val;
-    }
+    return form;
 
   QUIT;
   if ((consing_since_gc > gc_cons_threshold) || always_gc)
@@ -3015,7 +2997,7 @@ Evaluate FORM and return its value.
       if (max_args == UNEVALLED)
 	{
 	  backtrace.evalargs = 0;
-	  val = ((subr_function (subr)) (args_left));
+	  val = ((Lisp_Object (*) (Lisp_Object)) (subr_function (subr))) (args_left);
 	}
 
       else if (max_args == MANY)
@@ -3081,7 +3063,7 @@ Evaluate FORM and return its value.
           backtrace.nargs = nargs;
 
           /* val = funcall_subr (subr, argvals); */
-	  inline_funcall_subr(val, subr, argvals);
+	  inline_funcall_subr (val, subr, argvals);
         }
     }
   else if (COMPILED_FUNCTIONP (fun))
@@ -3211,11 +3193,11 @@ funcall_recording_as (Lisp_Object recorded_as, int nargs,
 	    argvals[i] = Qnil;
 
           /* val = funcall_subr (subr, argvals); */
-	  inline_funcall_subr(val, subr, argvals);
+	  inline_funcall_subr (val, subr, argvals);
 	}
       else
         /* val = funcall_subr (subr, args + 1); */
-        inline_funcall_subr(val, subr, (&args[1]));
+        inline_funcall_subr (val, subr, (&args[1]));
     }
   else if (COMPILED_FUNCTIONP (fun))
     val = funcall_lambda (fun, nargs, args + 1);
@@ -3285,13 +3267,13 @@ form, or any macro.
 
   if (CONSP (function))
     {
-      Lisp_Object funcar = Fcar (function);
+      Lisp_Object funcar = XCAR (function);
 
       if (!SYMBOLP (funcar))
         goto invalid_function;
       if (EQ (funcar, Qmacro))
 	{
-	  function = Fcdr (function);
+	  function = XCDR (function);
 	  goto retry;
 	}
       if (EQ (funcar, Qautoload))
@@ -3300,7 +3282,7 @@ form, or any macro.
 	  goto retry;
 	}
       if (EQ (funcar, Qlambda))
-	arglist = Fcar (Fcdr (function));
+	arglist = Fcar (XCDR (function));
       else
 	goto invalid_function;
     }
@@ -3348,13 +3330,13 @@ be passed to `funcall', any special form, or any macro.
 
   if (CONSP (function))
     {
-      Lisp_Object funcar = Fcar (function);
+      Lisp_Object funcar = XCAR (function);
 
       if (!SYMBOLP (funcar))
         goto invalid_function;
       if (EQ (funcar, Qmacro))
 	{
-	  function = Fcdr (function);
+	  function = XCDR (function);
 	  goto retry;
 	}
       if (EQ (funcar, Qautoload))
@@ -3363,7 +3345,7 @@ be passed to `funcall', any special form, or any macro.
 	  goto retry;
 	}
       if (EQ (funcar, Qlambda))
-	arglist = Fcar (Fcdr (function));
+	arglist = Fcar (XCDR (function));
       else
 	goto invalid_function;
     }
@@ -3486,58 +3468,6 @@ Thus, (apply '+ 1 2 '(3 4)) returns 10.
 }
 
 
-/* Define proper types and argument lists simultaneously */
-#define PRIMITIVE_FUNCALL(n) ((Lisp_Object (*) (PRIMITIVE_FUNCALL_##n)
-#define PRIMITIVE_FUNCALL_0  void)) (fn)) (
-#define PRIMITIVE_FUNCALL_1  Lisp_Object)) (fn)) (args[0]
-#define PRIMITIVE_FUNCALL_2  Lisp_Object, PRIMITIVE_FUNCALL_1,  args[1]
-#define PRIMITIVE_FUNCALL_3  Lisp_Object, PRIMITIVE_FUNCALL_2,  args[2]
-#define PRIMITIVE_FUNCALL_4  Lisp_Object, PRIMITIVE_FUNCALL_3,  args[3]
-#define PRIMITIVE_FUNCALL_5  Lisp_Object, PRIMITIVE_FUNCALL_4,  args[4]
-#define PRIMITIVE_FUNCALL_6  Lisp_Object, PRIMITIVE_FUNCALL_5,  args[5]
-#define PRIMITIVE_FUNCALL_7  Lisp_Object, PRIMITIVE_FUNCALL_6,  args[6]
-#define PRIMITIVE_FUNCALL_8  Lisp_Object, PRIMITIVE_FUNCALL_7,  args[7]
-#define PRIMITIVE_FUNCALL_9  Lisp_Object, PRIMITIVE_FUNCALL_8,  args[8]
-#define PRIMITIVE_FUNCALL_10 Lisp_Object, PRIMITIVE_FUNCALL_9,  args[9]
-#define PRIMITIVE_FUNCALL_11 Lisp_Object, PRIMITIVE_FUNCALL_10, args[10]
-#define PRIMITIVE_FUNCALL_12 Lisp_Object, PRIMITIVE_FUNCALL_11, args[11]
-
-static Lisp_Object
-primitive_funcall (lisp_fn_t fn, int nargs, Lisp_Object args[])
-{
-  switch (nargs)
-    {
-    case 0:  return PRIMITIVE_FUNCALL(0);
-    case 1:  return PRIMITIVE_FUNCALL(1);
-    case 2:  return PRIMITIVE_FUNCALL(2);
-    case 3:  return PRIMITIVE_FUNCALL(3);
-    case 4:  return PRIMITIVE_FUNCALL(4);
-    case 5:  return PRIMITIVE_FUNCALL(5);
-    case 6:  return PRIMITIVE_FUNCALL(6);
-    case 7:  return PRIMITIVE_FUNCALL(7);
-    case 8:  return PRIMITIVE_FUNCALL(8);
-    case 9:  return PRIMITIVE_FUNCALL(9);
-    case 10: return PRIMITIVE_FUNCALL(10);
-    case 11: return PRIMITIVE_FUNCALL(11);
-    case 12: return PRIMITIVE_FUNCALL(12);
-    }
-
-  /* Someone has created a subr that takes more arguments than is
-     supported by this code.  We need to either rewrite the subr to
-     use a different argument protocol, or add more cases to this
-     switch.  */
-  abort ();
-  return Qnil;	/* suppress compiler warning */
-}
-
-#if 0 /* #### Not called anymore */
-static Lisp_Object
-funcall_subr (struct Lisp_Subr *subr, Lisp_Object args[])
-{
-  return primitive_funcall (subr_function (subr), subr->max_args, args);
-}
-#endif
-
 /* FSFmacs has an extra arg EVAL_FLAG.  If false, some of
    the statements below are not done.  But it's always true
    in all the calls to apply_lambda(). */
@@ -3579,6 +3509,30 @@ apply_lambda (Lisp_Object fun, int numargs, Lisp_Object unevalled_args)
   /* Don't do it again when we return to eval.  */
   backtrace_list->debug_on_exit = 0;
   return tem;
+}
+
+DEFUN ("fetch-bytecode", Ffetch_bytecode, 1, 1, 0, /*
+If byte-compiled OBJECT is lazy-loaded, fetch it now.
+*/
+       (object))
+{
+  if (COMPILED_FUNCTIONP (object)
+      && CONSP (XCOMPILED_FUNCTION (object)->bytecodes))
+    {
+      Lisp_Object tem =
+	read_doc_string (XCOMPILED_FUNCTION (object)->bytecodes);
+      if (!CONSP (tem))
+	signal_simple_error ("invalid lazy-loaded byte code", tem);
+      /* v18 or v19 bytecode file.  Need to Ebolify. */
+      if (XCOMPILED_FUNCTION (object)->flags.ebolified
+	  && VECTORP (XCDR (tem)))
+	ebolify_bytecode_constants (XCDR (tem));
+      /* VERY IMPORTANT to purecopy here!!!!!
+	 See load_force_doc_string_unwind. */
+      XCOMPILED_FUNCTION (object)->bytecodes = Fpurecopy (XCAR (tem));
+      XCOMPILED_FUNCTION (object)->constants = Fpurecopy (XCDR (tem));
+    }
+  return object;
 }
 
 /* Apply a Lisp function FUN to the NARGS evaluated arguments in ARG_VECTOR
@@ -3649,32 +3603,6 @@ funcall_lambda (Lisp_Object fun, int nargs, Lisp_Object arg_vector[])
     }
   return unbind_to (speccount, val);
 }
-
-DEFUN ("fetch-bytecode", Ffetch_bytecode, 1, 1, 0, /*
-If byte-compiled OBJECT is lazy-loaded, fetch it now.
-*/
-       (object))
-{
-  Lisp_Object tem;
-
-  if (COMPILED_FUNCTIONP (object)
-      && CONSP (XCOMPILED_FUNCTION (object)->bytecodes))
-    {
-      tem = read_doc_string (XCOMPILED_FUNCTION (object)->bytecodes);
-      if (!CONSP (tem))
-	signal_simple_error ("invalid lazy-loaded byte code", tem);
-      /* v18 or v19 bytecode file.  Need to Ebolify. */
-      if (XCOMPILED_FUNCTION (object)->flags.ebolified
-	  && VECTORP (XCDR (tem)))
-	ebolify_bytecode_constants (XCDR (tem));
-      /* VERY IMPORTANT to purecopy here!!!!!
-	 See load_force_doc_string_unwind. */
-      XCOMPILED_FUNCTION (object)->bytecodes = Fpurecopy (XCAR (tem));
-      XCOMPILED_FUNCTION (object)->constants = Fpurecopy (XCDR (tem));
-    }
-  return object;
-}
-
 
 /**********************************************************************/
 /*                   Run hook variables in various ways.              */
@@ -4127,68 +4055,72 @@ call8 (Lisp_Object fn,
 Lisp_Object
 call0_in_buffer (struct buffer *buf, Lisp_Object fn)
 {
-  int speccount = specpdl_depth ();
-  Lisp_Object val;
-
-  if (current_buffer != buf)
+  if (current_buffer == buf)
+    return call0 (fn);
+  else
     {
+      Lisp_Object val;
+      int speccount = specpdl_depth_counter;
       record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
       set_buffer_internal (buf);
+      val = call0 (fn);
+      unbind_to (speccount, Qnil);
+      return val;
     }
-  val = call0 (fn);
-  unbind_to (speccount, Qnil);
-  return val;
 }
 
 Lisp_Object
 call1_in_buffer (struct buffer *buf, Lisp_Object fn,
 		 Lisp_Object arg0)
 {
-  int speccount = specpdl_depth ();
-  Lisp_Object val;
-
-  if (current_buffer != buf)
+  if (current_buffer == buf)
+    return call1 (fn, arg0);
+  else
     {
+      Lisp_Object val;
+      int speccount = specpdl_depth_counter;
       record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
       set_buffer_internal (buf);
+      val = call1 (fn, arg0);
+      unbind_to (speccount, Qnil);
+      return val;
     }
-  val = call1 (fn, arg0);
-  unbind_to (speccount, Qnil);
-  return val;
 }
 
 Lisp_Object
 call2_in_buffer (struct buffer *buf, Lisp_Object fn,
 		 Lisp_Object arg0, Lisp_Object arg1)
 {
-  int speccount = specpdl_depth ();
-  Lisp_Object val;
-
-  if (current_buffer != buf)
+  if (current_buffer == buf)
+    return call2 (fn, arg0, arg1);
+  else
     {
+      Lisp_Object val;
+      int speccount = specpdl_depth_counter;
       record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
       set_buffer_internal (buf);
+      val = call2 (fn, arg0, arg1);
+      unbind_to (speccount, Qnil);
+      return val;
     }
-  val = call2 (fn, arg0, arg1);
-  unbind_to (speccount, Qnil);
-  return val;
 }
 
 Lisp_Object
 call3_in_buffer (struct buffer *buf, Lisp_Object fn,
 		 Lisp_Object arg0, Lisp_Object arg1, Lisp_Object arg2)
 {
-  int speccount = specpdl_depth ();
-  Lisp_Object val;
-
-  if (current_buffer != buf)
+  if (current_buffer == buf)
+    return call3 (fn, arg0, arg1, arg2);
+  else
     {
+      Lisp_Object val;
+      int speccount = specpdl_depth_counter;
       record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
       set_buffer_internal (buf);
+      val = call3 (fn, arg0, arg1, arg2);
+      unbind_to (speccount, Qnil);
+      return val;
     }
-  val = call3 (fn, arg0, arg1, arg2);
-  unbind_to (speccount, Qnil);
-  return val;
 }
 
 Lisp_Object
@@ -4196,69 +4128,35 @@ call4_in_buffer (struct buffer *buf, Lisp_Object fn,
 		 Lisp_Object arg0, Lisp_Object arg1, Lisp_Object arg2,
 		 Lisp_Object arg3)
 {
-  int speccount = specpdl_depth ();
-  Lisp_Object val;
-
-  if (current_buffer != buf)
+  if (current_buffer == buf)
+    return call4 (fn, arg0, arg1, arg2, arg3);
+  else
     {
+      Lisp_Object val;
+      int speccount = specpdl_depth_counter;
       record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
       set_buffer_internal (buf);
+      val = call4 (fn, arg0, arg1, arg2, arg3);
+      unbind_to (speccount, Qnil);
+      return val;
     }
-  val = call4 (fn, arg0, arg1, arg2, arg3);
-  unbind_to (speccount, Qnil);
-  return val;
-}
-
-Lisp_Object
-call5_in_buffer (struct buffer *buf, Lisp_Object fn,
-		 Lisp_Object arg0, Lisp_Object arg1, Lisp_Object arg2,
-		 Lisp_Object arg3, Lisp_Object arg4)
-{
-  int speccount = specpdl_depth ();
-  Lisp_Object val;
-
-  if (current_buffer != buf)
-    {
-      record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
-      set_buffer_internal (buf);
-    }
-  val = call5 (fn, arg0, arg1, arg2, arg3, arg4);
-  unbind_to (speccount, Qnil);
-  return val;
-}
-
-Lisp_Object
-call6_in_buffer (struct buffer *buf, Lisp_Object fn,
-		 Lisp_Object arg0, Lisp_Object arg1, Lisp_Object arg2,
-		 Lisp_Object arg3, Lisp_Object arg4, Lisp_Object arg5)
-{
-  int speccount = specpdl_depth ();
-  Lisp_Object val;
-
-  if (current_buffer != buf)
-    {
-      record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
-      set_buffer_internal (buf);
-    }
-  val = call6 (fn, arg0, arg1, arg2, arg3, arg4, arg5);
-  unbind_to (speccount, Qnil);
-  return val;
 }
 
 Lisp_Object
 eval_in_buffer (struct buffer *buf, Lisp_Object form)
 {
-  int speccount = specpdl_depth ();
-  Lisp_Object val;
-
-  if (current_buffer != buf)
+  if (current_buffer == buf)
+    return Feval (form);
+  else
     {
+      Lisp_Object val;
+      int speccount = specpdl_depth_counter;
       record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
       set_buffer_internal (buf);
+      val = Feval (form);
+      unbind_to (speccount, Qnil);
+      return val;
     }
-  val = Feval (form);
-  unbind_to (speccount, Qnil);
-  return val;
 }
 
 
@@ -4375,9 +4273,9 @@ Lisp_Object
 eval_in_buffer_trapping_errors (CONST char *warning_string,
 				struct buffer *buf, Lisp_Object form)
 {
-  int speccount = specpdl_depth ();
+  int speccount = specpdl_depth_counter;
   Lisp_Object tem;
-  Lisp_Object buffer = Qnil;
+  Lisp_Object buffer;
   Lisp_Object cons;
   Lisp_Object opaque;
   struct gcpro gcpro1, gcpro2;
@@ -4414,7 +4312,7 @@ catch_them_squirmers_run_hook (Lisp_Object hook_symbol)
 Lisp_Object
 run_hook_trapping_errors (CONST char *warning_string, Lisp_Object hook_symbol)
 {
-  int speccount = specpdl_depth ();
+  int speccount;
   Lisp_Object tem;
   Lisp_Object opaque;
   struct gcpro gcpro1;
@@ -4425,6 +4323,7 @@ run_hook_trapping_errors (CONST char *warning_string, Lisp_Object hook_symbol)
   if (NILP (tem) || UNBOUNDP (tem))
     return Qnil;
 
+  speccount = specpdl_depth_counter;
   specbind (Qinhibit_quit, Qt);
 
   opaque = (warning_string ? make_opaque_ptr (warning_string) : Qnil);
@@ -4448,7 +4347,7 @@ safe_run_hook_trapping_errors (CONST char *warning_string,
 			       Lisp_Object hook_symbol,
 			       int allow_quit)
 {
-  int speccount = specpdl_depth ();
+  int speccount = specpdl_depth_counter;
   Lisp_Object tem;
   Lisp_Object cons = Qnil;
   struct gcpro gcpro1;
@@ -4492,7 +4391,7 @@ catch_them_squirmers_call0 (Lisp_Object function)
 Lisp_Object
 call0_trapping_errors (CONST char *warning_string, Lisp_Object function)
 {
-  int speccount = specpdl_depth ();
+  int speccount;
   Lisp_Object tem;
   Lisp_Object opaque = Qnil;
   struct gcpro gcpro1, gcpro2;
@@ -4505,6 +4404,7 @@ call0_trapping_errors (CONST char *warning_string, Lisp_Object function)
     }
 
   GCPRO2 (opaque, function);
+  speccount = specpdl_depth_counter;
   specbind (Qinhibit_quit, Qt);
   /* gc_currently_forbidden = 1; Currently no reason to do this; */
 
@@ -4539,7 +4439,7 @@ Lisp_Object
 call1_trapping_errors (CONST char *warning_string, Lisp_Object function,
 		       Lisp_Object object)
 {
-  int speccount = specpdl_depth ();
+  int speccount = specpdl_depth_counter;
   Lisp_Object tem;
   Lisp_Object cons = Qnil;
   Lisp_Object opaque = Qnil;
@@ -4576,7 +4476,7 @@ Lisp_Object
 call2_trapping_errors (CONST char *warning_string, Lisp_Object function,
 		       Lisp_Object object1, Lisp_Object object2)
 {
-  int speccount = specpdl_depth ();
+  int speccount = specpdl_depth_counter;
   Lisp_Object tem;
   Lisp_Object cons = Qnil;
   Lisp_Object opaque = Qnil;
@@ -4710,9 +4610,6 @@ specbind_unwind_wasnt_local (Lisp_Object buffer)
   return symbol;
 }
 
-
-/* Don't want to include buffer.h just for this */
-extern struct buffer *current_buffer;
 
 void
 specbind (Lisp_Object symbol, Lisp_Object value)

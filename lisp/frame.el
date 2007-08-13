@@ -19,7 +19,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; along with XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -246,7 +246,7 @@ The format of this can also be an alist for backward compatibility."
 
 	;; The initial frame we create above always has a minibuffer.
 	;; If the user wants to remove it, or make it a minibuffer-only
-	;; frame, then we'll have to delete the current frame and make a
+	;; frame, then we'll have to delete the selected frame and make a
 	;; new one; you can't remove or add a root window to/from an
 	;; existing frame.
 	;;
@@ -412,7 +412,7 @@ The format of this can also be an alist for backward compatibility."
 ;;;; Creation of additional frames, and other frame miscellanea
 
 (defun get-other-frame ()
- "Return some frame other than the current frame, creating one if necessary."
+ "Return some frame other than the selected frame, creating one if necessary."
   (let* ((this (selected-frame))
 	 ;; search visible frames first
 	 (next (next-frame this 'visible-nomini)))
@@ -693,7 +693,7 @@ configuration."
 ;;; emacs is in this globally-iconified state, de-iconifying any emacs icon
 ;;; will uniconify all frames that were visible, and iconify all frames
 ;;; that were not.  This is done by temporarily changing the value of
-;;; `map-frame-hook' to `deiconify-emacs' (which should never be called 
+;;; `map-frame-hook' to `deiconify-emacs' (which should never be called
 ;;; except from the map-frame-hook while emacs is iconified).
 ;;;
 ;;; The title of the icon representing all emacs frames is controlled by
@@ -757,11 +757,11 @@ all frames that were visible, and iconify all frames that were not."
     (setq iconification-data (cdr iconification-data))))
 
 (defun suspend-or-iconify-emacs ()
-  "Calls iconify-emacs if frame is an X frame, otherwise calls suspend-emacs"
+  "Call iconify-emacs if using a window system, otherwise call suspend-emacs."
   (interactive)
   (cond ((device-on-window-system-p)
 	 (iconify-emacs))
-	((and (eq (frame-type) 'tty)
+	((and (eq (device-type) 'tty)
 	      (console-tty-controlling-process (selected-console)))
 	 (suspend-console (selected-console)))
 	(t
@@ -772,7 +772,7 @@ all frames that were visible, and iconify all frames that were not."
 ;; different things depending on window-system.  We can't do the same,
 ;; because we allow simultaneous X and TTY consoles.
 (defun suspend-emacs-or-iconify-frame ()
-  "Iconify current frame if it is an X frame, otherwise suspend Emacs."
+  "Iconify the selected frame if using a window system, otherwise suspend Emacs."
   (interactive)
   (cond ((device-on-window-system-p)
 	 (iconify-frame))
@@ -800,12 +800,12 @@ for you, but this variable is provided in case you're using a broken WM."
   :group 'frames)
 
 (defun default-select-frame-hook ()
-  "Implements the `auto-raise-frame' variable.
+  "Implement the `auto-raise-frame' variable.
 For use as the value of `select-frame-hook'."
   (if auto-raise-frame (raise-frame (selected-frame))))
 
 (defun default-deselect-frame-hook ()
-  "Implements the `auto-lower-frame' variable.
+  "Implement the `auto-lower-frame' variable.
 For use as the value of `deselect-frame-hook'."
   (if auto-lower-frame (lower-frame (selected-frame)))
   (highlight-extent nil nil))
@@ -817,7 +817,7 @@ For use as the value of `deselect-frame-hook'."
     (add-hook 'deselect-frame-hook 'default-deselect-frame-hook))
 
 (defun default-drag-and-drop-functions (frame filepath &optional data)
-  "Implements the `drag-and-drop-functions' variable.
+  "Implement the `drag-and-drop-functions' variable.
 For use as the value of `drag-and-drop-functions'.
 A file is popped up in a new buffer, some data without
 is inserted at point."
@@ -836,7 +836,7 @@ is inserted at point."
 	 (add-hook 'drag-and-drop-functions 'default-drag-and-drop-functions)))
 
 (defun cde-start-drag (begin end)
-  "Implements the CDE drag operation.
+  "Implement the CDE drag operation.
 Calls the internal function cde-start-drag-internal to do the actual work."
   (interactive "_r")
   (if (featurep 'cde)
@@ -849,7 +849,7 @@ Calls the internal function cde-start-drag-internal to do the actual work."
 ;; the OffiX drag stuff will soon move also (perhaps mouse.el)
 ;; if the drag event is done
 (defun offix-start-drag (event data &optional type)
-  "Implements the OffiX drag operation.
+  "Implement the OffiX drag operation.
 Calls the internal function offix-start-drag-internal to do the actual work.
 If type is not given, DndText is assumed."
   ;; Oliver Graf <ograf@fga.de>
@@ -859,7 +859,7 @@ If type is not given, DndText is assumed."
     (error "OffiX functionality not compiled in.")))
 
 (defun offix-start-drag-region (event begin end)
-  "Implements the OffiX drag operation for a region.
+  "Implement the OffiX drag operation for a region.
 Calls the internal function offix-start-drag-internal to do the actual work.
 This always assumes DndText as type."
   ;; Oliver Graf <ograf@fga.de>
@@ -905,7 +905,7 @@ This always assumes DndText as type."
     fr))
 
 (defcustom get-frame-for-buffer-default-to-current nil
-  "*When non-nil, `get-frame-for-buffer' will default to the current frame."
+  "*When non-nil, `get-frame-for-buffer' will default to the selected frame."
   :type 'boolean
   :group 'frames)
 
@@ -949,7 +949,7 @@ This is a subroutine of `get-frame-for-buffer' (which see)."
 	;; to minimize thrashing.
 	(setq frames (cons (selected-frame)
 			   (delq (selected-frame) frames)))
-	
+
 	(setq name (symbol-name name))
 	(while frames
 	  (setq frame (car frames))
@@ -1042,7 +1042,7 @@ This is a subroutine of `get-frame-for-buffer' (which see)."
       ;;
       ;; This buffer's mode did not express a preference for a frame of a
       ;; particular name.  So try to find a frame already displaying this
-      ;; buffer.  
+      ;; buffer.
       ;;
       (let ((w (or (get-buffer-window buffer nil)	; check current first
 		   (get-buffer-window buffer 'visible)	; then visible
@@ -1061,11 +1061,11 @@ This is a subroutine of `get-frame-for-buffer' (which see)."
 ;; changes to the selected frame.
 (defun get-frame-for-buffer (buffer &optional not-this-window-p on-frame)
   "Select and return a frame in which to display BUFFER.
-Normally, the buffer will simply be displayed in the current frame.
+Normally, the buffer will simply be displayed in the selected frame.
 But if the symbol naming the major-mode of the buffer has a 'frame-name
 property (which should be a symbol), then the buffer will be displayed in
 a frame of that name.  If there is no frame of that name, then one is
-created.  
+created.
 
 If the major-mode doesn't have a 'frame-name property, then the frame
 named by `get-frame-for-buffer-default-frame-name' will be used.  If
@@ -1076,14 +1076,14 @@ then each time a buffer of the mode in question is displayed, a new frame
 with that name will be created, until there are `instance-limit' of them.
 If instance-limit is 0, then a new frame will be created each time.
 
-If a buffer is already displayed in a frame, then `instance-limit' is 
+If a buffer is already displayed in a frame, then `instance-limit' is
 ignored, and that frame is used.
 
 If the frame-name symbol has a 'frame-defaults property, then that is
 prepended to the `default-frame-plist' when creating a frame for the
 first time.
 
-This function may be used as the value of `pre-display-buffer-function', 
+This function may be used as the value of `pre-display-buffer-function',
 to cause the display-buffer function and its callers to exhibit the above
 behavior."
   (let ((frame (get-frame-for-buffer-noselect
@@ -1112,7 +1112,7 @@ is first in the list.  VISIBLE-ONLY will only list non-iconified frames."
 	  nil
 	(if (eq cur-frame next-frame)
 	    (setq save-frame next-frame)
-	  (and 
+	  (and
 	   (or (not visible-only)
 	       (frame-visible-p next-frame))
 	   (setq frames (append frames (list next-frame))))))
@@ -1134,7 +1134,7 @@ is first in the list.  VISIBLE-ONLY will only list non-iconified frames."
 
 (defun show-temp-buffer-in-current-frame (buffer)
   "For use as the value of temp-buffer-show-function:
-always displays the buffer in the current frame, regardless of the behavior
+always displays the buffer in the selected frame, regardless of the behavior
 that would otherwise be introduced by the `pre-display-buffer-function', which
 is normally set to `get-frame-for-buffer' (which see)."
   (let ((pre-display-buffer-function nil)) ; turn it off, whatever it is

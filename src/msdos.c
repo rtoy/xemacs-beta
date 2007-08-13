@@ -785,7 +785,7 @@ dos_set_keyboard (int code, int always)
   keyboard_map_all = always;
   dos_keyboard_layout = 1;
 
-  for (i = 0; i < (sizeof (keyboard_layout_list)/sizeof (struct keyboard_layout_list)); i++)
+  for (i = 0; i < countof (keyboard_layout_list); i++)
     if (code == keyboard_layout_list[i].country_code)
       {
 	keyboard = keyboard_layout_list[i].keyboard_map;
@@ -1217,7 +1217,7 @@ dos_rawgetc (void)
 	}
       else
 	{
-	  if (sc >= (sizeof (ibmpc_translate_map) / sizeof (short)))
+	  if (sc >= countof (ibmpc_translate_map))
 	    continue;
 	  if ((code = ibmpc_translate_map[sc]) == Ignore)
 	    continue;

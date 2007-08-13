@@ -497,11 +497,11 @@ t if it is locked by you, else a string of the name of the locker.
 
   owner = current_lock_owner (lfname);
   if (owner <= 0)
-    return (Qnil);
+    return Qnil;
   else if (owner == getpid ())
-    return (Qt);
+    return Qt;
 
-  return (lock_file_owner_name (lfname));
+  return lock_file_owner_name (lfname);
 }
 
 void

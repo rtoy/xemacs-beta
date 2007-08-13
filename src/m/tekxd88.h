@@ -90,7 +90,6 @@ Boston, MA 02111-1307, USA.  */
 #undef LIB_X11_LIB	/* Don't use shared libraries defined in usg5-3.h */
 #undef LIBX11_SYSTEM
 
-/* #define NO_TERMIO */ /* mrb */
 #define HAVE_PTYS	/* XD88 SysV has PTYs. */
 #define SYSV_PTYS	/* Requires <termios.h> */
 

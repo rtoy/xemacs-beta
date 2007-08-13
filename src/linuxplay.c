@@ -77,10 +77,11 @@
 #else
 #include "lisp.h"
 #include "syssignal.h"
+#include "sysfile.h"
 #define perror(str) message("audio: %s, %s ",str,strerror(errno))
 #define warn(str)   message("audio: %s ",GETTEXT(str))
 #endif
- 
+
 #ifdef __GNUC__
 #define UNUSED(x) ((void)(x))
 #else
@@ -95,11 +96,20 @@ static  void (*sigint_handler)(int);
    is set to zero before the first invocation of the parser. The use of a
    global variable prevents multiple concurrent executions of this code, but
    this does not happen anyways... */
+enum wvState
+{ wvMain,
+  wvSubchunk,
+  wvOutOfBlock,
+  wvSkipChunk,
+  wvSoundChunk,
+  wvFatal,
+  wvFatalNotify
+};
+
 static union {
   struct {
     int           align;
-    enum {wvMain,wvSubchunk,wvOutOfBlock,wvSkipChunk,
-	  wvSoundChunk,wvFatal,wvFatalNotify} state;
+    enum wvState state;
     size_t        left;
     unsigned char leftover[HEADERSZ];
     signed long   chunklength;
@@ -186,9 +196,9 @@ static __inline__ int waverequire(void **data,size_t *sz,size_t rq)
   if (rq > *sz) {rq = *sz; rc = 0;}
   memcpy(parsestate.wave.leftover+parsestate.wave.left,
 	 *data,rq);
-  parsestate.wave.left     += rq;
-  ((unsigned char *)*data) += rq;
-  *sz                      -= rq;
+  parsestate.wave.left      += rq;
+  (*(unsigned char **)data) += rq;
+  *sz                       -= rq;
   return(rc);
 }
 
@@ -258,7 +268,7 @@ static size_t parsewave(void **data,size_t *sz,void **outbuf)
       else {
 	if (parsestate.wave.chunklength > 0 && *sz > 0) {
 	  *sz -= parsestate.wave.chunklength;
-	  ((unsigned char *)*data) += parsestate.wave.chunklength; }
+	  (*(unsigned char **)data) += parsestate.wave.chunklength; }
 	parsestate.wave.state = wvOutOfBlock; }
       break;
     case wvSoundChunk: {
@@ -267,7 +277,7 @@ static size_t parsewave(void **data,size_t *sz,void **outbuf)
 				     alignment operation */
 	count = parsestate.wave.left;
 	rq    = HEADERSZ-count;
-	if (rq > parsestate.wave.chunklength)
+	if (rq > (size_t) parsestate.wave.chunklength)
 	  rq = parsestate.wave.chunklength;
 	if (!waverequire(data,sz,rq)) {
 	  parsestate.wave.chunklength -= parsestate.wave.left - count;
@@ -276,15 +286,15 @@ static size_t parsewave(void **data,size_t *sz,void **outbuf)
 	*outbuf                      = parsestate.wave.leftover;
 	parsestate.wave.left         = 0;
 	return(rq); }
-      if (*sz >= parsestate.wave.chunklength) {
+      if (*sz >= (size_t) parsestate.wave.chunklength) {
 	count  = parsestate.wave.chunklength;
 	rq     = 0; }
       else {
 	count  = *sz;
 	count -= rq = count % parsestate.wave.align; }
       *outbuf                   = *data;
-      ((unsigned char *)*data) += count;
-      *sz                      -= count;
+      (*(unsigned char **)data) += count;
+      *sz                       -= count;
       if ((parsestate.wave.chunklength -= count) < parsestate.wave.align) {
 	parsestate.wave.state = wvOutOfBlock;
 	/* Some broken software (e.g. SOX) attaches junk to the end of a sound
@@ -317,7 +327,7 @@ static size_t parsesundecaudio(void **data,size_t *sz,void **outbuf)
      it with the new data and return a sound chunk that is as big as a
      single entry */
   if (parsestate.audio.left) {
-    if (parsestate.audio.left + *sz > parsestate.audio.align) {
+    if (parsestate.audio.left + *sz > (size_t) parsestate.audio.align) {
       int  count;
       memmove(parsestate.audio.leftover + parsestate.audio.left,
 	      *data,
@@ -354,7 +364,7 @@ static size_t parsesundecaudio(void **data,size_t *sz,void **outbuf)
      header information and determine how many bytes we need to skip until
      the start of the sound chunk */
   if (!parsestate.audio.skipping) {
-    unsigned char *header = *data;
+    unsigned char *header = (unsigned char *) *data;
     if (*sz < 8) {
       warn("Irrecoverable error while parsing Sun/DEC audio file");
       return(0); }
@@ -373,7 +383,7 @@ static size_t parsesundecaudio(void **data,size_t *sz,void **outbuf)
      creation date. Make sure that we do not return less than one single sound
      sample entry to the caller; if this happens, rather decide to move those
      few bytes into the leftover buffer and deal with it later */
-  if (*sz >= parsestate.audio.skipping) {
+  if (*sz >= (size_t) parsestate.audio.skipping) {
     /* Skip just the header information and return the sound chunk */
     int rc = *sz - parsestate.audio.skipping;
     *outbuf = (char *)*data + parsestate.audio.skipping;
@@ -415,12 +425,12 @@ static size_t sndcnv8U_2mono(void **data,size_t *sz,void **outbuf)
   if (count > SNDBUFSZ) { *sz  -= 2*SNDBUFSZ; count = SNDBUFSZ; }
   else                    *sz   = 0;
   rc      = count;
-  src     = *data;
+  src     = (unsigned char *) *data;
   *outbuf =
   dest    = linuxplay_sndbuf;
   while (count--)
-    *dest++ = (unsigned char)(((int)*((unsigned char *)src)++ +
-			       (int)*((unsigned char *)src)++) / 2);
+    *dest++ = (unsigned char)(((int)*(src)++ +
+			       (int)*(src)++) / 2);
   *data   = src;
   return(rc);
 }
@@ -430,18 +440,18 @@ static size_t sndcnv8S_2mono(void **data,size_t *sz,void **outbuf)
 {
   REGISTER unsigned char *src;
   REGISTER unsigned char *dest;
-  int rc,count;
+  int rc, count;
 
   count = *sz / 2;
   if (count > SNDBUFSZ) { *sz  -= 2*SNDBUFSZ; count = SNDBUFSZ; }
   else                    *sz   = 0;
   rc      = count;
-  src     = *data;
+  src     = (unsigned char *) *data;
   *outbuf =
   dest    = linuxplay_sndbuf;
   while (count--)
-    *dest++ = (unsigned char)(((int)*((signed char *)src)++ +
-			       (int)*((signed char *)src)++) / 2);
+    *dest++ = (unsigned char)(((int)*((signed char *)(src++)) +
+			       (int)*((signed char *)(src++))) / 2);
   *data   = src;
   return(rc);
 }
@@ -457,12 +467,12 @@ static size_t sndcnv2monounsigned(void **data,size_t *sz,void **outbuf)
   if (count > SNDBUFSZ) { *sz  -= 2*SNDBUFSZ; count = SNDBUFSZ; }
   else                    *sz   = 0;
   rc      = count;
-  src     = *data;
+  src     = (unsigned char *) *data;
   *outbuf =
   dest    = linuxplay_sndbuf;
   while (count--)
-    *dest++ = (unsigned char)(((int)*((signed char *)src)++ +
-			       (int)*((signed char *)src)++) / 2) ^ 0x80;
+    *dest++ = (unsigned char)(((int)*((signed char *)(src++)) +
+			       (int)*((signed char *)(src++))) / 2) ^ 0x80;
   *data   = src;
   return(rc);
 }
@@ -478,11 +488,11 @@ static size_t sndcnv2unsigned(void **data,size_t *sz,void **outbuf)
   if (count > SNDBUFSZ) { *sz  -= SNDBUFSZ; count = SNDBUFSZ; }
   else                    *sz   = 0;
   rc      = count;
-  src     = *data;
+  src     = (unsigned char *) *data;
   *outbuf =
   dest    = linuxplay_sndbuf;
   while (count--)
-    *dest++ = *((unsigned char *)src)++ ^ 0x80;
+    *dest++ = *(src)++ ^ 0x80;
   *data   = src;
   return(rc);
 }
@@ -557,16 +567,16 @@ static size_t sndcnvULaw_2mono(void **data,size_t *sz,void **outbuf)
   if (count > SNDBUFSZ) { *sz  -= 2*SNDBUFSZ; count = SNDBUFSZ; }
   else                    *sz   = 0;
   rc      = count;
-  src     = *data;
+  src     = (unsigned char *) *data;
   *outbuf =
   dest    = linuxplay_sndbuf;
   while (count--)
     /* it is not possible to directly interpolate between two ulaw encoded
        data bytes, thus we need to convert to linear format first and later
        we convert back to ulaw format */
-    *dest++ = int2ulaw(ulaw2int[*((unsigned char *)src)++] +
-		       ulaw2int[*((unsigned char *)src)++]);
-  *data   = src;
+    *dest++ = int2ulaw(ulaw2int[*(src)++] +
+		       ulaw2int[*(src)++]);
+  *data = src;
   return(rc);
 }
 
@@ -583,18 +593,18 @@ static size_t sndcnv16_2monoLE(void **data,size_t *sz,void **outbuf)
   if (count > SNDBUFSZ) { *sz  -= 2*SNDBUFSZ; count = SNDBUFSZ; }
   else                    *sz   = 0;
   rc      = count;
-  src     = *data;
+  src     = (unsigned char *) *data;
   *outbuf =
   dest    = linuxplay_sndbuf;
   for (count /= 2; count--; ) {
-    i = ((int)(((unsigned char *)src)[0]) +
-        256*(int)(((unsigned char *)src)[1]) +
-	(int)(((unsigned char *)src)[2]) +
-	256*(int)(((unsigned char *)src)[3])) / 2;
+    i = ((int)(src[0]) +
+        256*(int)(src[1]) +
+	(int)(src[2]) +
+	256*(int)(src[3])) / 2;
     src += 4;
     *dest++ = (unsigned char)(i & 0xFF);
     *dest++ = (unsigned char)((i / 256) & 0xFF); }
-  *data   = src;
+  *data = src;
   return(rc);
 }
 
@@ -611,18 +621,18 @@ static size_t sndcnv16_2monoBE(void **data,size_t *sz,void **outbuf)
   if (count > SNDBUFSZ) { *sz  -= 2*SNDBUFSZ; count = SNDBUFSZ; }
   else                    *sz   = 0;
   rc      = count;
-  src     = *data;
+  src     = (unsigned char *) *data;
   *outbuf =
   dest    = linuxplay_sndbuf;
   for (count /= 2; count--; ) {
-    i = ((int)(((unsigned char *)src)[1]) +
-        256*(int)(((unsigned char *)src)[0]) +
-	(int)(((unsigned char *)src)[3]) +
-	256*(int)(((unsigned char *)src)[2])) / 2;
+    i = ((int)(src[1]) +
+        256*(int)(src[0]) +
+	(int)(src[3]) +
+	256*(int)(src[2])) / 2;
     src += 4;
     *dest++ = (unsigned char)((i / 256) & 0xFF);
     *dest++ = (unsigned char)(i & 0xFF); }
-  *data   = src;
+  *data = src;
   return(rc);
 }
 
@@ -637,13 +647,14 @@ static size_t sndcnv2byteLE(void **data,size_t *sz,void **outbuf)
   if (count > SNDBUFSZ) { *sz  -= 2*SNDBUFSZ; count = SNDBUFSZ; }
   else                    *sz   = 0;
   rc      = count;
-  src     = *data;
+  src     = (unsigned char *) *data;
   *outbuf =
   dest    = linuxplay_sndbuf;
   while (count--) {
     *dest++ = (unsigned char)(((signed char *)src)[1] ^ (signed char)0x80);
-    ((char *)src) += 2; }
-  *data   = src;
+    src += 2;
+  }
+  *data = src;
   return(rc);
 }
 
@@ -658,13 +669,14 @@ static size_t sndcnv2byteBE(void **data,size_t *sz,void **outbuf)
   if (count > SNDBUFSZ) { *sz  -= 2*SNDBUFSZ; count = SNDBUFSZ; }
   else                    *sz   = 0;
   rc      = count;
-  src     = *data;
+  src     = (unsigned char *) *data;
   *outbuf =
   dest    = linuxplay_sndbuf;
   while (count--) {
     *dest++ = (unsigned char)(((signed char *)src)[0] ^ (signed char)0x80);
-    ((char *)src) += 2; }
-  *data   = src;
+    src += 2;
+  }
+  *data = src;
   return(rc);
 }
 
@@ -680,14 +692,15 @@ static size_t sndcnv2monobyteLE(void **data,size_t *sz,void **outbuf)
   if (count > SNDBUFSZ) { *sz  -= 4*SNDBUFSZ; count = SNDBUFSZ; }
   else                    *sz   = 0;
   rc      = count;
-  src     = *data;
+  src     = (unsigned char *) *data;
   *outbuf =
   dest    = linuxplay_sndbuf;
   while (count--) {
     *dest++ = (unsigned char)(((int)((signed char *)src)[1] +
 			       (int)((signed char *)src)[3]) / 2 ^ 0x80);
-    ((char *)src) += 4; }
-  *data   = src;
+    src += 4;
+  }
+  *data = src;
   return(rc);
 }
 
@@ -703,14 +716,15 @@ static size_t sndcnv2monobyteBE(void **data,size_t *sz,void **outbuf)
   if (count > SNDBUFSZ) { *sz  -= 4*SNDBUFSZ; count = SNDBUFSZ; }
   else                    *sz   = 0;
   rc      = count;
-  src     = *data;
+  src     = (unsigned char *) *data;
   *outbuf =
   dest    = linuxplay_sndbuf;
   while (count--) {
     *dest++ = (unsigned char)(((int)((signed char *)src)[0] +
 			       (int)((signed char *)src)[2]) / 2 ^ 0x80);
-    ((char *)src) += 4; }
-  *data   = src;
+    src += 4;
+  }
+  *data = src;
   return(rc);
 }
 
@@ -807,7 +821,7 @@ static int audio_init(int mixx_fd, int auddio_fd, int fmt, int speed,
     return(0); }
 
   /* Initialize sound hardware with prefered parameters */
-  
+
   /* If the sound hardware cannot support 16 bit format or requires a
      different byte sex then try to drop to 8 bit format */
 
@@ -839,7 +853,7 @@ static int audio_init(int mixx_fd, int auddio_fd, int fmt, int speed,
       return(0); } }
 
   /* The PCSP driver does not support reading of the sampling rate via the
-     SOUND_PCM_READ_RATE ioctl; determine "the_speed" here */     
+     SOUND_PCM_READ_RATE ioctl; determine "the_speed" here */
   the_speed = speed; ioctl(audio_fd,SNDCTL_DSP_SPEED,&the_speed);
   /* The PCSP driver does not support reading of the mono/stereo flag, thus
      we assume, that failure to change this mode means we are in mono mode  */
@@ -905,7 +919,7 @@ static int audio_init(int mixx_fd, int auddio_fd, int fmt, int speed,
     sprintf(buffer,"SNDCTL_DSP_SPEED (req: %d, rtn: %d)",speed,the_speed);
     perror(buffer);
     return(0); }
-  
+
   /* Use the mixer device for setting the playback volume */
   if (mixx_fd > 0) {
     int vol = *volume & 0xFF;
@@ -1005,9 +1019,9 @@ static void linux_play_data_or_file(int fd,unsigned char *data,
                device; repeat until all data has been processed */
   rrtn = length;
   do {
-    for (pptr = data; (prtn = parsesndfile((void **)&pptr,&rrtn,
+    for (pptr = data; (prtn = parsesndfile((void **)&pptr,(size_t *)&rrtn,
 					   (void **)&optr)) > 0; )
-      for (cptr = optr; (crtn = sndcnv((void **)&cptr,&prtn,
+      for (cptr = optr; (crtn = sndcnv((void **)&cptr,(size_t *) &prtn,
 				       (void **)&sptr)) > 0; ) {
 	for (;;) {
 	  if ((wrtn = write(audio_fd,sptr,crtn)) < 0) {

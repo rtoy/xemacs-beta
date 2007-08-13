@@ -421,16 +421,7 @@ Boston, MA 02111-1307, USA.  */
    compiling-running-crashing. */
 #undef NO_DOC_FILE
 
-  /* To eliminate use of `const' in the XEmacs sources,
-     do `#define CONST_IS_LOSING' */
-/* #define CONST_IS_LOSING hell, const works with VC! - kkm */
-
-# undef CONST
-# ifdef CONST_IS_LOSING
-#  define CONST
-# else
-#  define CONST const
-# endif /* CONST */
+#define CONST const
 
 /* If not defined, use unions instead of ints.  A few systems (DEC Alpha)
    seem to require this, probably because something with the int
@@ -631,15 +622,14 @@ on various systems. */
 #define listen Rlisten
 #endif /* HAVE_SOCKS && !DO_NOT_SOCKSIFY */
 
-#ifndef SHORTBITS
-#define SHORTBITS (8 * SIZEOF_SHORT)
+#ifndef BITS_PER_CHAR
+#define BITS_PER_CHAR 8
 #endif
-#ifndef INTBITS
-#define INTBITS (8 * SIZEOF_INT)
-#endif
-#ifndef LONGBITS
-#define LONGBITS (8 * SIZEOF_LONG)
-#endif
+#define SHORTBITS (SIZEOF_SHORT * BITS_PER_CHAR)
+#define INTBITS (SIZEOF_INT * BITS_PER_CHAR)
+#define LONGBITS (SIZEOF_LONG * BITS_PER_CHAR)
+#define LONG_LONG_BITS (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+#define VOID_P_BITS (SIZEOF_VOID_P * BITS_PER_CHAR)
 
 /* MSVC version >= 2.x without /Za supports __inline */
 #if (_MSC_VER < 900) || defined(__STDC__)

@@ -22,7 +22,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include <stdio.h>
 #include "lisp.h"
 #include <stddef.h>
-#include "sheap-adjust.h"
+#include <sheap-adjust.h>
 
 #define STATIC_HEAP_BASE	0x600000
 #define STATIC_HEAP_SLOP	0x40000
@@ -44,7 +44,7 @@ void* more_static_core ( ptrdiff_t increment )
 {
   int size = (int) increment;
   void *result;
-  
+
   if (!static_heap_initialized)
     {
       if (((unsigned long) static_heap_base & ~VALMASK) != 0)
@@ -54,26 +54,26 @@ void* more_static_core ( ptrdiff_t increment )
 	}
       static_heap_base=(char*)ALIGN_ALLOC(static_heap_buffer);
       static_heap_ptr=static_heap_base;
-      static_heap_size=STATIC_HEAP_SIZE - 
+      static_heap_size=STATIC_HEAP_SIZE -
 	(static_heap_base-static_heap_buffer);
 #ifdef __CYGWIN32__
       sbrk(BLOCKSIZE);		/* force space for fork to work */
 #endif
       static_heap_initialized=1;
     }
-  
+
   result = static_heap_ptr;
 
   /* we don't need to align - handled by gmalloc.  */
 
-  if (size < 0) 
+  if (size < 0)
     {
       if (static_heap_ptr + size < static_heap_base)
 	{
 	  return 0;
 	}
     }
-  else 
+  else
     {
       if (static_heap_ptr + size >= static_heap_base + static_heap_size)
 	{
@@ -91,7 +91,7 @@ static_heap_base, static_heap_ptr);
 	}
     }
   static_heap_ptr += size;
-  
+
   return result;
 }
 

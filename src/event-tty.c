@@ -25,7 +25,6 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "blocktype.h"
 #include "device.h"
 #include "console-tty.h"
 #include "events.h"
@@ -39,8 +38,6 @@ Boston, MA 02111-1307, USA.  */
 /* Mask of bits indicating the descriptors that we wait for input on */
 extern SELECT_TYPE input_wait_mask, non_fake_input_wait_mask;
 extern SELECT_TYPE process_only_mask, tty_only_mask;
-
-extern Lisp_Object Qdelete_device;
 
 static struct event_stream *tty_event_stream;
 

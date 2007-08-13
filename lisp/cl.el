@@ -149,7 +149,7 @@ a future Emacs interpreter will be able to use it.")
 ;;; Predicates.
 
 (defun eql (a b)    ; See compiler macro in cl-macs.el
-  "T if the two args are the same Lisp object.
+  "Return t if the two args are the same Lisp object.
 Floating-point numbers of equal value are `eql', but they may not be `eq'."
   (if (floatp a)
       (equal a b)
@@ -332,7 +332,7 @@ definitions to shadow the loaded ones for use in file byte-compilation."
 ;;; Numbers.
 
 (defun floatp-safe (x)
-  "T if OBJECT is a floating point number.
+  "Return t if OBJECT is a floating point number.
 On Emacs versions that lack floating-point support, this function
 always returns nil."
   ;;(and (numberp x) (not (integerp x)))
@@ -341,19 +341,19 @@ always returns nil."
   (floatp x))
 
 (defun plusp (x)
-  "T if NUMBER is positive."
+  "Return t if NUMBER is positive."
   (> x 0))
 
 (defun minusp (x)
-  "T if NUMBER is negative."
+  "Return t if NUMBER is negative."
   (< x 0))
 
 (defun oddp (x)
-  "T if INTEGER is odd."
+  "Return t if INTEGER is odd."
   (eq (logand x 1) 1))
 
 (defun evenp (x)
-  "T if INTEGER is even."
+  "Return t if INTEGER is even."
   (eq (logand x 1) 0))
 
 (defun cl-abs (x)
@@ -553,8 +553,8 @@ SEQ, this is like `mapcar'.  With several, it is like the Common Lisp
   (cdr (cdr (cdr (cdr x)))))
 
 (defun last (x &optional n)
-  "Returns the last link in the list LIST.
-With optional argument N, returns Nth-to-last link (default 1)."
+  "Return the last link in the list LIST.
+With optional argument N, return Nth-to-last link (default 1)."
   (if n
       (let ((m 0) (p x))
 	(while (consp p) (incf m) (pop p))
@@ -564,12 +564,12 @@ With optional argument N, returns Nth-to-last link (default 1)."
     x))
 
 (defun butlast (x &optional n)
-  "Returns a copy of LIST with the last N elements removed."
+  "Return a copy of LIST with the last N elements removed."
   (if (and n (<= n 0)) x
     (nbutlast (copy-sequence x) n)))
 
 (defun nbutlast (x &optional n)
-  "Modifies LIST to remove the last N elements."
+  "Modify LIST to remove the last N elements."
   (let ((m (length x)))
     (or n (setq n 1))
     (and (< n m)
@@ -648,7 +648,10 @@ Keywords supported:  :test :test-not :key"
 	       cl-tree (cons a d))))
 	(t cl-tree)))
 
-(defun acons (a b c) (cons (cons a b) c))
+(defun acons (a b c)
+  "Return a new alist created by adding (KEY . VALUE) to ALIST."
+  (cons (cons a b) c))
+
 (defun pairlis (a b &optional c) (nconc (mapcar* 'cons a b) c))
 
 

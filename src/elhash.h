@@ -49,15 +49,9 @@ enum hashtable_test_fun
   HASHTABLE_EQUAL
 };
 
-Lisp_Object Fmake_hashtable (Lisp_Object size, Lisp_Object test_fun);
-Lisp_Object Fmake_weak_hashtable(Lisp_Object size, Lisp_Object test);
-Lisp_Object Fmake_key_weak_hashtable(Lisp_Object size, Lisp_Object test);
-Lisp_Object Fmake_value_weak_hashtable(Lisp_Object size, Lisp_Object test);
-Lisp_Object Fcopy_hashtable (Lisp_Object old_table);
-Lisp_Object Fgethash (Lisp_Object obj, Lisp_Object table, Lisp_Object default_);
-Lisp_Object Fputhash (Lisp_Object obj, Lisp_Object val, Lisp_Object table);
-Lisp_Object Fremhash (Lisp_Object obj, Lisp_Object table);
-Lisp_Object Fhashtable_fullness (Lisp_Object table);
+EXFUN (Fcopy_hashtable, 1);
+EXFUN (Fhashtable_fullness, 1);
+EXFUN (Fremhash, 2);
 
 Lisp_Object make_lisp_hashtable (int size,
 				 enum hashtable_type type,

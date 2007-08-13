@@ -96,8 +96,7 @@ typedef SIGTYPE (*signal_handler_t) (int);
 
 /* The POSIX way (sigaction, sigprocmask, sigpending, sigsuspend) */
 
-extern signal_handler_t sys_do_signal (int signal_number,
-				       signal_handler_t action);
+signal_handler_t sys_do_signal (int signal_number, signal_handler_t action);
 /* Provide our own version of signal(), that calls sigaction().  The
    name is not sys_signal() because a function of that name exists in
    libenergize.a */
@@ -225,7 +224,7 @@ extern CONST char *sys_siglist[];
 #endif
 
 #ifdef SIGDANGER
-extern SIGTYPE memory_warning_signal (int sig);
+SIGTYPE memory_warning_signal (int sig);
 #endif
 
 #ifdef _WIN32

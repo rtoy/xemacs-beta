@@ -27,7 +27,7 @@ Boston, MA 02111-1307, USA.  */
 
    Ultimately based on FSF.
    Rewritten by Ben Wing.
-   Rewritten for mswindows by Jonathan Harris, November 1997 for 20.4.
+   Rewritten for mswindows by Jonathan Harris, November 1997 for 21.0.
  */
 
 #include <config.h>
@@ -44,7 +44,6 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #include "device.h"
-#include "emacsfns.h"
 #include "events.h"
 #include "frame.h"
 #include "process.h"
@@ -113,9 +112,9 @@ int mswindows_quit_chars_count = 0;
 /* These are Lisp integers; see DEFVARS in this file for description. */
 int mswindows_dynamic_frame_resize;
 int mswindows_num_mouse_buttons;
-int mswindows_button2_max_skew_x;
-int mswindows_button2_max_skew_y;
-int mswindows_button2_chord_time;
+int mswindows_mouse_button_max_skew_x;
+int mswindows_mouse_button_max_skew_y;
+int mswindows_mouse_button_tolerance;
 
 /* Number of wait handles */
 static int mswindows_waitable_count=0;
@@ -1276,10 +1275,10 @@ mswindows_set_chord_timer (HWND hwnd)
   int interval;
 
   /* We get one third half system double click threshold */
-  if (mswindows_button2_chord_time <= 0)
+  if (mswindows_mouse_button_tolerance <= 0)
     interval = GetDoubleClickTime () / 3;
   else
-    interval = mswindows_button2_chord_time;
+    interval = mswindows_mouse_button_tolerance;
 
   SetTimer (hwnd, BUTTON_2_TIMER_ID, interval, 0);
 }
@@ -1288,15 +1287,15 @@ static int
 mswindows_button2_near_enough (POINTS p1, POINTS p2)
 {
   int dx, dy;
-  if (mswindows_button2_max_skew_x <= 0)
+  if (mswindows_mouse_button_max_skew_x <= 0)
     dx = GetSystemMetrics (SM_CXDOUBLECLK) / 2;
   else
-    dx = mswindows_button2_max_skew_x;
+    dx = mswindows_mouse_button_max_skew_x;
 
-  if (mswindows_button2_max_skew_y <= 0)
+  if (mswindows_mouse_button_max_skew_y <= 0)
     dy = GetSystemMetrics (SM_CYDOUBLECLK) / 2;
   else
-    dy = mswindows_button2_max_skew_y;
+    dy = mswindows_mouse_button_max_skew_y;
 
   return abs (p1.x - p2.x) < dx && abs (p1.y- p2.y)< dy;
 }
@@ -1703,7 +1702,7 @@ Default is t on fast machines, nil on slow.
 */ );
 
 /* The description copied verbatim from nt-emacs. (C) Geoff Voelker */
-  DEFVAR_INT ("mswindows-mouse-button-tolerance", &mswindows_button2_chord_time /*
+  DEFVAR_INT ("mswindows-mouse-button-tolerance", &mswindows_mouse_button_tolerance /*
 *Analogue of double click interval for faking middle mouse events.
 The value is the minimum time in milliseconds that must elapse between
 left/right button down events before they are considered distinct events.
@@ -1717,25 +1716,25 @@ If negative or zero, currently set system default is used instead.
 Number of physical mouse buttons.
 */ );
 
-  DEFVAR_INT ("mswindows-mouse-button-max-skew-x", &mswindows_button2_max_skew_x /*
+  DEFVAR_INT ("mswindows-mouse-button-max-skew-x", &mswindows_mouse_button_max_skew_x /*
 *Maximum horizontal distance in pixels between points in which left and
 right button clicks occured for them to be translated into single
 middle button event. Clicks must occur in time not longer than defined
-by the variable mswindows-mouse-button-tolerance.
+by the variable `mswindows-mouse-button-tolerance'.
 If negative or zero, currently set system default is used instead.
 */ );
 
-  DEFVAR_INT ("mswindows-mouse-button-max-skew-y", &mswindows_button2_max_skew_y /*
+  DEFVAR_INT ("mswindows-mouse-button-max-skew-y", &mswindows_mouse_button_max_skew_y /*
 *Maximum vertical distance in pixels between points in which left and
 right button clicks occured for them to be translated into single
 middle button event. Clicks must occur in time not longer than defined
-by the variable mswindows-mouse-button-tolerance.
+by the variable `mswindows-mouse-button-tolerance'.
 If negative or zero, currently set system default is used instead.
 */ );
 
-  mswindows_button2_max_skew_x = 0;
-  mswindows_button2_max_skew_y = 0;
-  mswindows_button2_chord_time = 0;
+  mswindows_mouse_button_max_skew_x = 0;
+  mswindows_mouse_button_max_skew_y = 0;
+  mswindows_mouse_button_tolerance = 0;
 }
 
 void

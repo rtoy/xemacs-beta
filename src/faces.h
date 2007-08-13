@@ -24,7 +24,6 @@ Boston, MA 02111-1307, USA.  */
 #ifndef _XEMACS_FACES_H_
 #define _XEMACS_FACES_H_
 
-#include "dynarr.h"
 #include "buffer.h" /* for NUM_LEADING_BYTES */
 
 /* a struct Lisp_Face is the C object corresponding to a face.  There
@@ -255,14 +254,20 @@ int compute_face_cachel_usage (face_cachel_dynarr *face_cachels,
 			       struct overhead_stats *ovstats);
 #endif /* MEMORY_USAGE_STATS */
 
+EXFUN (Fface_name, 1);
+EXFUN (Ffind_face, 1);
+EXFUN (Fget_face, 1);
+
+extern Lisp_Object Qstrikethru, Vbuilt_in_face_specifiers, Vdefault_face;
+extern Lisp_Object Vleft_margin_face, Vpointer_face, Vright_margin_face;
+extern Lisp_Object Vtext_cursor_face;
+
 void mark_all_faces_as_clean (void);
 void init_frame_faces (struct frame *f);
 void init_device_faces (struct device *d);
 void init_global_faces (struct device *d);
 face_index get_extent_fragment_face_cache_index (struct window *w,
 						 struct extent_fragment *ef);
-Lisp_Object Ffind_face (Lisp_Object face_or_name);
-Lisp_Object Fget_face (Lisp_Object face_or_name);
 void update_frame_face_values (struct frame *f);
 void face_property_was_changed (Lisp_Object face, Lisp_Object property,
 				Lisp_Object locale);
@@ -273,14 +278,6 @@ void default_face_height_and_width (Lisp_Object domain,
 				    int *height, int *width);
 void default_face_height_and_width_1 (Lisp_Object domain,
 				      int *height, int *width);
-
-extern Lisp_Object Qforeground, Qbackground, Qfont, Qdisplay_table;
-extern Lisp_Object Qbackground_pixmap, Qunderline, Qhighlight, Qdim;
-extern Lisp_Object Qstrikethru,Qblinking, Qreverse;
-
-extern Lisp_Object Vdefault_face, Vmodeline_face;
-extern Lisp_Object Vleft_margin_face, Vright_margin_face, Vtext_cursor_face;
-extern Lisp_Object Vpointer_face;
 
 #define FACE_CACHEL_FONT(cachel, charset) \
   (cachel->font[XCHARSET_LEADING_BYTE (charset) - 128])

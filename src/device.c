@@ -63,15 +63,7 @@ Lisp_Object Qdelete_device_hook;
 
 Lisp_Object Vdevice_class_list;
 
-MAC_DEFINE (struct device *, MTdevice_data)
-
 
-static Lisp_Object mark_device (Lisp_Object, void (*) (Lisp_Object));
-static void print_device (Lisp_Object, Lisp_Object, int);
-DEFINE_LRECORD_IMPLEMENTATION ("device", device,
-			       mark_device, print_device, 0, 0, 0,
-			       struct device);
-
 static Lisp_Object
 mark_device (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
@@ -128,6 +120,9 @@ print_device (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   write_c_string (buf, printcharfun);
 }
 
+DEFINE_LRECORD_IMPLEMENTATION ("device", device,
+			       mark_device, print_device, 0, 0, 0,
+			       struct device);
 
 int
 valid_device_class_p (Lisp_Object class)
@@ -214,14 +209,6 @@ decode_device (Lisp_Object device)
   return XDEVICE (device);
 }
 
-Lisp_Object
-make_device (struct device *d)
-{
-  Lisp_Object device = Qnil;
-  XSETDEVICE (device, d);
-  return device;
-}
-
 DEFUN ("dfw-device", Fdfw_device, 1, 1, 0, /*
 Given a device, frame, or window, return the associated device.
 Return nil otherwise.
@@ -296,9 +283,7 @@ If DEVICE is the selected device, this makes FRAME the selected frame.
 */
        (device, frame))
 {
-  struct device *d = decode_device (device);
-
-  XSETDEVICE (device, d);
+  XSETDEVICE (device, decode_device (device));
   CHECK_LIVE_FRAME (frame);
 
   if (! EQ (device, FRAME_DEVICE (XFRAME (frame))))
@@ -353,10 +338,6 @@ DEVICE defaults to the selected device if omitted.
 {
   return DEVICE_CONSOLE (decode_device (device));
 }
-
-#ifdef HAVE_X_WINDOWS
-extern Lisp_Object Vdefault_x_device;
-#endif
 
 #ifdef HAVE_WINDOW_SYSTEM
 
@@ -491,7 +472,7 @@ name; in such a case, the first device found is returned.)
 }
 
 static Lisp_Object
-delete_deviceless_console(Lisp_Object console)
+delete_deviceless_console (Lisp_Object console)
 {
   if (NILP (XCONSOLE (console)->device_list))
     Fdelete_console (console, Qnil);
@@ -499,7 +480,7 @@ delete_deviceless_console(Lisp_Object console)
 }
 
 DEFUN ("make-device", Fmake_device, 2, 3, 0, /*
-Create a new device of type TYPE, attached to connection CONNECTION.
+Return a new device of type TYPE, attached to connection CONNECTION.
 
 The valid values for CONNECTION are device-specific; however,
 CONNECTION is generally a string. (Specifically, for X devices,
@@ -560,10 +541,10 @@ have no effect.
 
   {
     Lisp_Object conconnect =
-      CONTYPE_METH_OR_GIVEN (conmeths,
-			     device_to_console_connection,
-			     (connection, ERROR_ME),
-			     connection);
+      (HAS_CONTYPE_METH_P (conmeths, device_to_console_connection)) ?
+      CONTYPE_METH (conmeths, device_to_console_connection,
+		    (connection, ERROR_ME)) :
+      connection;
     console = create_console (name, type, conconnect, props);
   }
 
@@ -576,12 +557,10 @@ have no effect.
   d->devmeths = con->conmeths;
 
   DEVICE_NAME (d) = name;
-  DEVICE_CONNECTION (d) = semi_canonicalize_device_connection (conmeths,
-							       connection,
-							       ERROR_ME);
-  DEVICE_CANON_CONNECTION (d) = canonicalize_device_connection (conmeths,
-								connection,
-								ERROR_ME);
+  DEVICE_CONNECTION (d) =
+    semi_canonicalize_device_connection (conmeths, connection, ERROR_ME);
+  DEVICE_CANON_CONNECTION (d) =
+    canonicalize_device_connection (conmeths, connection, ERROR_ME);
 
   MAYBE_DEVMETH (d, init_device, (d, props));
 
@@ -618,7 +597,7 @@ have no effect.
 static Lisp_Object
 find_other_device (Lisp_Object device, int on_same_console)
 {
-  Lisp_Object devcons = Qnil, concons = Qnil;
+  Lisp_Object devcons = Qnil, concons;
   Lisp_Object console = DEVICE_CONSOLE (XDEVICE (device));
 
   /* look for a non-stream device */
@@ -695,7 +674,7 @@ delete_device_internal (struct device *d, int force,
 {
   /* This function can GC */
   struct console *c;
-  Lisp_Object device = Qnil;
+  Lisp_Object device;
   struct gcpro gcpro1;
 
   /* OK to delete an already-deleted device. */
@@ -873,7 +852,21 @@ behavior cannot necessarily be determined automatically.
     signal_simple_error ("Cannot change the class of this device", device);
   if (!EQ (class, Qcolor) && !EQ (class, Qmono) && !EQ (class, Qgrayscale))
     signal_simple_error ("Must be color, mono, or grayscale", class);
-  DEVICE_CLASS (d) = class;
+  if (! EQ (DEVICE_CLASS (d), class))
+    {
+      Lisp_Object frmcons;
+      DEVICE_CLASS (d) = class;
+      DEVICE_FRAME_LOOP (frmcons, d)
+	{
+	  struct frame *f = XFRAME (XCAR (frmcons));
+
+	  recompute_all_cached_specifiers_in_frame (f);
+	  MARK_FRAME_FACES_CHANGED (f);
+	  MARK_FRAME_GLYPHS_CHANGED (f);
+	  MARK_FRAME_TOOLBARS_CHANGED (f);
+	  f->menubar_changed = 1;
+	}
+    }
   return Qnil;
 }
 

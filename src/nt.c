@@ -638,7 +638,7 @@ init_environment ()
       "TERM",
     };
 
-    for (i = 0; i < (sizeof (env_vars) / sizeof (env_vars[0])); i++) 
+    for (i = 0; i < countof (env_vars); i++) 
       {
 	if (!getenv (env_vars[i]) &&
 	    (lpval = nt_get_resource (env_vars[i], &dwType)) != NULL)
@@ -1248,13 +1248,13 @@ sys_chdir (const char * path)
 }
 
 int
-sys_chmod (const char * path, int mode)
+sys_chmod (const char * path, mode_t mode)
 {
   return _chmod (map_win32_filename (path, NULL), mode);
 }
 
 int
-sys_creat (const char * path, int mode)
+sys_creat (const char * path, mode_t mode)
 {
   return _creat (map_win32_filename (path, NULL), mode);
 }
@@ -2428,7 +2428,7 @@ _sys_read_ahead (int fd)
 }
 
 int
-sys_read (int fd, char * buffer, unsigned int count)
+sys_read (int fd, char * buffer, size_t count)
 {
   int nchars;
   int to_read;
@@ -2576,7 +2576,7 @@ sys_read (int fd, char * buffer, unsigned int count)
 
 /* For now, don't bother with a non-blocking mode */
 int
-sys_write (int fd, const void * buffer, unsigned int count)
+sys_write (int fd, const void * buffer, size_t count)
 {
   int nchars;
 

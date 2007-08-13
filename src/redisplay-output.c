@@ -44,7 +44,6 @@ static int compare_runes (struct window *w, struct rune *crb,
 			  struct rune *drb);
 static void redraw_cursor_in_window (struct window *w,
 				     int run_end_begin_glyphs);
-void redisplay_output_window (struct window *w);
 
 /*****************************************************************************
  sync_rune_structs
@@ -274,7 +273,7 @@ get_cursor_size_and_location (struct window *w, struct display_block *db,
 			      int *cursor_height)
 {
   struct rune *rb;
-  Lisp_Object window = Qnil;
+  Lisp_Object window;
   int defheight, defwidth;
 
   if (Dynarr_length (db->runes) <= cursor_location)
@@ -748,8 +747,6 @@ redisplay_move_cursor (struct window *w, Bufpos new_point, int no_output_end)
   int x = w->last_point_x[CURRENT_DISP];
   int y = w->last_point_y[CURRENT_DISP];
 
-  extern int cursor_in_echo_area;
-
   /*
    * Bail if cursor_in_echo_area is non-zero and we're fiddling with
    * the cursor in a non-active minibuffer window, since that is a
@@ -928,7 +925,6 @@ redraw_cursor_in_window (struct window *w, int run_end_begin_meths)
   struct display_line *dl;
   struct display_block *db;
   struct rune *rb;
-  extern int cursor_in_echo_area;
 
   int x = w->last_point_x[CURRENT_DISP];
   int y = w->last_point_y[CURRENT_DISP];
@@ -980,21 +976,16 @@ redraw_cursor_in_window (struct window *w, int run_end_begin_meths)
 void
 redisplay_redraw_cursor (struct frame *f, int run_end_begin_meths)
 {
-  struct window *w = XWINDOW (FRAME_SELECTED_WINDOW (f));
-  extern int cursor_in_echo_area; 
- 
-  if (cursor_in_echo_area)
-    {
-    if (FRAME_HAS_MINIBUF_P (f)) 
-      { 
-	w = XWINDOW (FRAME_MINIBUF_WINDOW (f)); 
-      }
-    else
-      {
-      return;
-      }
-    }
-  redraw_cursor_in_window (w, run_end_begin_meths);
+  Lisp_Object window;
+
+  if (!cursor_in_echo_area)
+    window = FRAME_SELECTED_WINDOW (f);
+  else if (FRAME_HAS_MINIBUF_P (f))
+    window = FRAME_MINIBUF_WINDOW (f);
+  else
+    return;
+
+  redraw_cursor_in_window (XWINDOW (window), run_end_begin_meths);
 }
 
 /*****************************************************************************

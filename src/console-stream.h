@@ -36,14 +36,14 @@ struct stream_console
   int needs_newline;
 };
 
-#define CONSOLE_STREAM_DATA(d) CONSOLE_TYPE_DATA (d, stream)
+#define CONSOLE_STREAM_DATA(con) CONSOLE_TYPE_DATA (con, stream)
 
-extern Lisp_Object stream_semi_canonicalize_console_connection(Lisp_Object,
-							       Error_behavior);
-extern Lisp_Object stream_canonicalize_console_connection(Lisp_Object,
-							  Error_behavior);
-extern Lisp_Object stream_semi_canonicalize_device_connection(Lisp_Object,
-							       Error_behavior);
-extern Lisp_Object stream_canonicalize_device_connection(Lisp_Object,
-							  Error_behavior);
+Lisp_Object stream_semi_canonicalize_console_connection(Lisp_Object,
+							Error_behavior);
+Lisp_Object stream_canonicalize_console_connection(Lisp_Object,
+						   Error_behavior);
+Lisp_Object stream_semi_canonicalize_device_connection(Lisp_Object,
+						       Error_behavior);
+Lisp_Object stream_canonicalize_device_connection(Lisp_Object,
+						  Error_behavior);
 #endif /* _XEMACS_CONSOLE_STREAM_H_ */

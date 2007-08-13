@@ -44,6 +44,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include <stddef.h>
+#include <stdlib.h>
 
 /* ------------------------------- */
 /*          basic includes         */
@@ -946,7 +947,7 @@ init_baud_rate (struct device *d)
   }
 
   DEVICE_BAUD_RATE (d) =
-    (DEVICE_TTY_DATA (d)->ospeed < sizeof baud_convert / sizeof baud_convert[0]
+    (DEVICE_TTY_DATA (d)->ospeed < countof (baud_convert)
      ? baud_convert[DEVICE_TTY_DATA (d)->ospeed]
      : 9600);
 
@@ -2166,6 +2167,10 @@ start_of_text (void)
  *
  */
 
+#ifdef ORDINARY_LINK
+extern char **environ;
+#endif
+
 void *
 start_of_data (void)
 {
@@ -2179,7 +2184,6 @@ start_of_data (void)
    * is known to live at or near the start of the system crt0.c, and
    * we don't sweat the handful of bytes that might lose.
    */
-  extern char **environ;
 #ifdef HEAP_IN_DATA
   extern char* static_heap_base;
   if (!initialized)
@@ -2281,7 +2285,7 @@ init_system_name (void)
   if (initialized)
 #  endif /* not CANNOT_DUMP */
     {
-      struct hostent *hp;
+      struct hostent *hp = NULL;
       int count;
 #  ifdef TRY_AGAIN
       for (count = 0; count < 10; count++)
@@ -2569,7 +2573,7 @@ mswindows_set_last_errno (void)
 /************************************************************************/
 
 #define PATHNAME_CONVERT_OUT(path) \
-  GET_C_CHARPTR_EXT_FILENAME_DATA_ALLOCA (path, path)
+  GET_C_CHARPTR_EXT_FILENAME_DATA_ALLOCA ((CONST Bufbyte *) path, path)
 
 /***** MSDOS versions are in msdos.c *****/
 
@@ -2637,8 +2641,7 @@ interruptible_open (CONST char *path, int oflag, int mode)
      which could be relocated by GC when checking for QUIT.  */
   memcpy (nonreloc, path, len + 1);
 
-  /* The same as PATHNAME_CONVERT_OUT in sysdep.c.  */
-  GET_C_CHARPTR_EXT_FILENAME_DATA_ALLOCA (nonreloc, nonreloc);
+  PATHNAME_CONVERT_OUT (nonreloc);
 
   for (;;)
     {
@@ -2676,7 +2679,7 @@ sys_close (int fd)
 #endif /* ENCAPSULATE_CLOSE */
 
 int
-sys_read_1 (int fildes, void *buf, unsigned int nbyte, int allow_quit)
+sys_read_1 (int fildes, void *buf, size_t nbyte, int allow_quit)
 {
   int rtnval;
 
@@ -2692,14 +2695,14 @@ sys_read_1 (int fildes, void *buf, unsigned int nbyte, int allow_quit)
 
 #ifdef ENCAPSULATE_READ
 int
-sys_read (int fildes, void *buf, unsigned int nbyte)
+sys_read (int fildes, void *buf, size_t nbyte)
 {
   return sys_read_1 (fildes, buf, nbyte, 0);
 }
 #endif /* ENCAPSULATE_READ */
 
 int
-sys_write_1 (int fildes, CONST void *buf, unsigned int nbyte, int allow_quit)
+sys_write_1 (int fildes, CONST void *buf, size_t nbyte, int allow_quit)
 {
   int rtnval;
   int bytes_written = 0;
@@ -2729,7 +2732,7 @@ sys_write_1 (int fildes, CONST void *buf, unsigned int nbyte, int allow_quit)
 
 #ifdef ENCAPSULATE_WRITE
 int
-sys_write (int fildes, CONST void *buf, unsigned int nbyte)
+sys_write (int fildes, CONST void *buf, size_t nbyte)
 {
   return sys_write_1 (fildes, buf, nbyte, 0);
 }
@@ -2861,7 +2864,7 @@ sys_chdir (CONST char *path)
 
 #ifdef ENCAPSULATE_MKDIR
 int
-sys_mkdir (CONST char *path, int mode)
+sys_mkdir (CONST char *path, mode_t mode)
 {
   PATHNAME_CONVERT_OUT (path);
   return mkdir (path, mode);
@@ -3000,7 +3003,7 @@ sys_lstat (CONST char *path, struct stat *buf)
 
 #ifdef ENCAPSULATE_READLINK
 int
-sys_readlink (CONST char *path, char *buf, int bufsiz)
+sys_readlink (CONST char *path, char *buf, size_t bufsiz)
 {
   PATHNAME_CONVERT_OUT (path);
   /* #### currently we don't do conversions on the incoming data */
@@ -3023,7 +3026,7 @@ sys_stat (CONST char *path, struct stat *buf)
 
 #ifdef ENCAPSULATE_CHMOD
 int
-sys_chmod (CONST char *path, int mode)
+sys_chmod (CONST char *path, mode_t mode)
 {
   PATHNAME_CONVERT_OUT (path);
   return chmod (path, mode);
@@ -3033,7 +3036,7 @@ sys_chmod (CONST char *path, int mode)
 
 #ifdef ENCAPSULATE_CREAT
 int
-sys_creat (CONST char *path, int mode)
+sys_creat (CONST char *path, mode_t mode)
 {
   PATHNAME_CONVERT_OUT (path);
   return creat (path, mode);
@@ -3089,16 +3092,19 @@ int
 sys_execvp (CONST char *path, char * CONST * argv)
 {
   int i, argc;
-  CONST char ** new_argv;
+  char ** new_argv;
 
   PATHNAME_CONVERT_OUT (path);
   for (argc = 0; argv[argc]; argc++)
     ;
-  new_argv = alloca_array (CONST char *, argc + 1);
+  new_argv = alloca_array (char *, argc + 1);
   for (i = 0; i < argc; i++)
-    GET_C_CHARPTR_EXT_FILENAME_DATA_ALLOCA (argv[i], new_argv[i]);
+    {
+      new_argv[i] = argv[i];
+      PATHNAME_CONVERT_OUT (new_argv[i]);
+    }
   new_argv[argc] = NULL;
-  return execvp (path, (char **) new_argv);
+  return execvp (path, new_argv);
 }
 #endif /* ENCAPSULATE_EXECVP */
 
@@ -3403,16 +3409,6 @@ get_random (void)
 #endif /* need at least 2 */
   return val & ((1L << VALBITS) - 1);
 }
-
-#ifdef WRONG_NAME_INSQUE
-
-void
-insque (caddr_t q, caddr_t p)
-{
-  _insque (q,p);
-}
-
-#endif
 
 
 /************************************************************************/

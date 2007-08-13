@@ -125,15 +125,9 @@ Lisp_Object Qframe_being_created;
 
 static void store_minibuf_frame_prop (struct frame *f, Lisp_Object val);
 
-MAC_DEFINE (struct frame *, MTframe_data)
+EXFUN (Fset_frame_properties, 2);
 
 
-static Lisp_Object mark_frame (Lisp_Object, void (*) (Lisp_Object));
-static void print_frame (Lisp_Object, Lisp_Object, int);
-DEFINE_LRECORD_IMPLEMENTATION ("frame", frame,
-                               mark_frame, print_frame, 0, 0, 0,
-			       struct frame);
-
 static Lisp_Object
 mark_frame (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
@@ -184,6 +178,9 @@ print_frame (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   write_c_string (buf, printcharfun);
 }
 
+DEFINE_LRECORD_IMPLEMENTATION ("frame", frame,
+                               mark_frame, print_frame, 0, 0, 0,
+			       struct frame);
 
 static void
 nuke_all_frame_slots (struct frame *f)
@@ -218,7 +215,7 @@ static struct frame *
 allocate_frame_core (Lisp_Object device)
 {
   /* This function can GC */
-  Lisp_Object frame = Qnil;
+  Lisp_Object frame;
   Lisp_Object root_window;
   struct frame *f = alloc_lcrecord_type (struct frame, lrecord_frame);
 
@@ -369,7 +366,7 @@ make_sure_its_a_fresh_plist (Lisp_Object foolist)
 }
 
 DEFUN ("make-frame", Fmake_frame, 0, 2, "", /*
-Create a new frame, displaying the current buffer.
+Create and return a new frame, displaying the current buffer.
 Runs the functions listed in `create-frame-hook' after frame creation.
 
 Optional argument PROPS is a property list (a list of alternating
@@ -587,7 +584,7 @@ decode_frame_or_selected (Lisp_Object cdf)
 Lisp_Object
 make_frame (struct frame *f)
 {
-  Lisp_Object frame = Qnil;
+  Lisp_Object frame;
   XSETFRAME (frame, f);
   return frame;
 }
@@ -819,7 +816,8 @@ If omitted, FRAME defaults to the currently selected frame.
 */
        (frame))
 {
-  return FRAME_ROOT_WINDOW (decode_frame (frame));
+  struct frame *f = decode_frame (frame);
+  return FRAME_ROOT_WINDOW (f);
 }
 
 DEFUN ("frame-selected-window", Fframe_selected_window, 0, 1, 0, /*
@@ -828,7 +826,8 @@ If omitted, FRAME defaults to the currently selected frame.
 */
        (frame))
 {
-  return FRAME_SELECTED_WINDOW (decode_frame (frame));
+  struct frame *f = decode_frame (frame);
+  return FRAME_SELECTED_WINDOW (f);
 }
 
 void
@@ -1181,8 +1180,7 @@ find_some_frame (int (*predicate) (Lisp_Object, void *),
 
 
 
-extern void free_window_mirror (struct window_mirror *mir);
-extern void free_line_insertion_deletion_costs (struct frame *f);
+/* extern void free_line_insertion_deletion_costs (struct frame *f); */
 
 /* Return 1 if it is ok to delete frame F;
    0 if all frames aside from F are invisible.
@@ -1302,15 +1300,15 @@ delete_frame_internal (struct frame *f, int force,
 	Lisp_Object this = XCAR (frmcons);
 
 
-	if (! EQ (this, frame)
-	    && EQ (frame, DEVMETH_OR_GIVEN(XDEVICE(XCAR(devcons)),
-					   get_frame_parent,
-					   (XFRAME(this)),
-					   Qnil)))
+	if (! EQ (this, frame))
 	  {
-	    /* We've found a popup frame whose parent is this frame. */
-	    signal_simple_error
-	      ("Attempt to delete a frame with live popups", frame);
+	    struct device *devcons_d = XDEVICE (XCAR (devcons));
+	    if (EQ (frame, DEVMETH_OR_GIVEN (devcons_d, get_frame_parent,
+					     (XFRAME (this)),
+					     Qnil)))
+	      /* We've found a popup frame whose parent is this frame. */
+	      signal_simple_error
+		("Attempt to delete a frame with live popups", frame);
 	  }
       }
   }
@@ -1621,6 +1619,77 @@ will automatically call `save-buffers-kill-emacs'.)
 
 /* Return mouse position in character cell units.  */
 
+static int
+mouse_pixel_position_1 (struct device *d, Lisp_Object *frame,
+			int *x, int *y)
+{
+  switch (DEVMETH_OR_GIVEN (d, get_mouse_position, (d, frame, x, y), -1))
+    {
+    case 1:
+      return 1;
+
+    case 0:
+      *frame = Qnil;
+      break;
+
+    case -1:
+      *frame = DEVICE_SELECTED_FRAME (d);
+      break;
+
+    default:
+      abort (); /* method is incorrectly written */
+    }
+
+  return 0;
+}
+
+DEFUN ("mouse-pixel-position", Fmouse_pixel_position, 0, 1, 0, /*
+Return a list (WINDOW X . Y) giving the current mouse window and position.
+The position is given in pixel units, where (0, 0) is the
+upper-left corner.
+
+DEVICE specifies the device on which to read the mouse position, and
+defaults to the selected device.  If the device is a mouseless terminal
+or Emacs hasn't been programmed to read its mouse position, it returns
+the device's selected window for WINDOW and nil for X and Y.
+*/
+       (device))
+{
+  struct device *d = decode_device (device);
+  Lisp_Object frame;
+  Lisp_Object window;
+  Lisp_Object x = Qnil;
+  Lisp_Object y = Qnil;
+  int intx, inty;
+
+  if (mouse_pixel_position_1 (d, &frame, &intx, &inty))
+    {
+      struct window *w =
+	find_window_by_pixel_pos (intx, inty, XFRAME (frame)->root_window);
+      if (!w)
+	window = Qnil;
+      else
+	{
+	  XSETWINDOW (window, w);
+
+	  /* Adjust the position to be relative to the window. */
+	  intx -= w->pixel_left;
+	  inty -= w->pixel_top;
+	  XSETINT (x, intx);
+	  XSETINT (y, inty);
+	}
+    }
+  else
+    {
+      if (FRAMEP (frame))
+	window = FRAME_SELECTED_WINDOW (XFRAME (frame));
+      else
+	window = Qnil;
+    }
+
+  return Fcons (window, Fcons (x, y));
+}
+
 DEFUN ("mouse-position", Fmouse_position, 0, 1, 0, /*
 Return a list (WINDOW X . Y) giving the current mouse window and position.
 The position is given in character cells, where (0, 0) is the
@@ -1668,78 +1737,6 @@ the device's selected window for WINDOW and nil for X and Y.
   return val;
 }
 
-static int
-mouse_pixel_position_1 (struct device *d, Lisp_Object *frame,
-			int *x, int *y)
-{
-  switch (DEVMETH_OR_GIVEN (d, get_mouse_position, (d, frame, x, y), -1))
-    {
-    case 1:
-      return 1;
-
-    case 0:
-      *frame = Qnil;
-      break;
-
-    case -1:
-      *frame = DEVICE_SELECTED_FRAME (d);
-      break;
-
-    default:
-      abort (); /* method is incorrectly written */
-    }
-
-  return 0;
-}
-
-DEFUN ("mouse-pixel-position", Fmouse_pixel_position, 0, 1, 0, /*
-Return a list (WINDOW X . Y) giving the current mouse window and position.
-The position is given in pixel units, where (0, 0) is the
-upper-left corner.
-
-DEVICE specifies the device on which to read the mouse position, and
-defaults to the selected device.  If the device is a mouseless terminal
-or Emacs hasn't been programmed to read its mouse position, it returns
-the device's selected window for WINDOW and nil for X and Y.
-*/
-       (device))
-{
-  struct device *d = decode_device (device);
-  Lisp_Object frame;
-  Lisp_Object window;
-  Lisp_Object x, y;
-  int intx, inty;
-
-  x = y = Qnil;
-
-  if (mouse_pixel_position_1 (d, &frame, &intx, &inty))
-    {
-      struct window *w =
-	find_window_by_pixel_pos (intx, inty, XFRAME (frame)->root_window);
-      if (!w)
-	window = Qnil;
-      else
-	{
-	  XSETWINDOW (window, w);
-
-	  /* Adjust the position to be relative to the window. */
-	  intx -= w->pixel_left;
-	  inty -= w->pixel_top;
-	  XSETINT (x, intx);
-	  XSETINT (y, inty);
-	}
-    }
-  else
-    {
-      if (FRAMEP (frame))
-	window = FRAME_SELECTED_WINDOW (XFRAME (frame));
-      else
-	window = Qnil;
-    }
-
-  return Fcons (window, Fcons (x, y));
-}
-
 DEFUN ("mouse-position-as-motion-event", Fmouse_position_as_motion_event, 0, 1, 0, /*
 Return the current mouse position as a motion event.
 This allows you to call the standard event functions such as
@@ -1747,7 +1744,7 @@ This allows you to call the standard event functions such as
 
 DEVICE specifies the device on which to read the mouse position, and
 defaults to the selected device.  If the mouse position can't be determined
-(e.g. DEVICE is a TTY device), nil is returned instead of an event.
+\(e.g. DEVICE is a TTY device), nil is returned instead of an event.
 */
        (device))
 {
@@ -1918,7 +1915,7 @@ actually visible on screen then frame_visible returns 'hidden.
 }
 
 DEFUN ("frame-totally-visible-p", Fframe_totally_visible_p, 0, 1, 0, /*
-Return T if frame is not obscured by any other X windows, NIL otherwise.
+Return t if frame is not obscured by any other window system windows.
 Always returns t for tty frames.
 */
        (frame))
@@ -2147,7 +2144,7 @@ Frame properties can be retrieved using `frame-property' or `frame-properties'.
 
 The following symbols etc. have predefined meanings:
 
- name		Name of the frame, used with X resources.
+ name		Name of the frame.  Used with X resources.
 		Unchangeable after creation.
 
  height		Height of the frame, in lines.
@@ -2297,55 +2294,56 @@ See `set-frame-properties' for the built-in property names.
        (frame, property, default_))
 {
   struct frame *f = decode_frame (frame);
-  int width, height;
+  Lisp_Object value;
 
   XSETFRAME (frame, f);
 
   property = get_property_alias (property);
 
-#define FROB(propprop, value) 	\
-do {				\
-  if (EQ (property, propprop))	\
-      return value;		\
-} while (0)
+  if (EQ (Qname, property)) return f->name;
 
-  FROB (Qname, f->name);
-
-  if (window_system_pixelated_geometry (frame))
+  if (EQ (Qheight, property) || EQ (Qwidth, property))
     {
-      pixel_to_real_char_size (f, FRAME_PIXWIDTH (f), FRAME_PIXHEIGHT (f),
-			       &width, &height);
+      if (window_system_pixelated_geometry (frame))
+	{
+	  int width, height;
+	  pixel_to_real_char_size (f, FRAME_PIXWIDTH (f), FRAME_PIXHEIGHT (f),
+				   &width, &height);
+	  return make_int (EQ (Qheight, property) ? height: width);
+	}
+      else
+	return make_int (EQ (Qheight, property) ?
+			 FRAME_HEIGHT (f) :
+			 FRAME_WIDTH  (f));
     }
-  else
-    {
-      height = FRAME_HEIGHT (f);
-      width = FRAME_WIDTH (f);
-    }
-  FROB (Qheight, make_int (height));
-  FROB (Qwidth,  make_int (width));
 
   /* NOTE: FSF returns Qnil instead of Qt for FRAME_HAS_MINIBUF_P.
      This is over-the-top bogosity, because it's inconsistent with
      the semantics of `minibuffer' when passed to `make-frame'.
      Returning Qt makes things consistent. */
-  FROB (Qminibuffer, (FRAME_MINIBUF_ONLY_P (f) ? Qonly :
-		      FRAME_HAS_MINIBUF_P  (f) ? Qt    :
-		      FRAME_MINIBUF_WINDOW (f)));
-  FROB (Qunsplittable, FRAME_NO_SPLIT_P (f) ? Qt : Qnil);
-  FROB (Qbuffer_predicate, f->buffer_predicate);
+  if (EQ (Qminibuffer, property))
+    return (FRAME_MINIBUF_ONLY_P (f) ? Qonly :
+	    FRAME_HAS_MINIBUF_P  (f) ? Qt    :
+	    FRAME_MINIBUF_WINDOW (f));
+  if (EQ (Qunsplittable, property))
+    return FRAME_NO_SPLIT_P (f) ? Qt : Qnil;
+  if (EQ (Qbuffer_predicate, property))
+    return f->buffer_predicate;
 
-#undef FROB
-
-  if (SYMBOLP (property) && EQ (Fbuilt_in_variable_type (property),
-				Qconst_specifier))
-    return Fspecifier_instance (Fsymbol_value (property), frame, default_, Qnil);
-  if (SYMBOLP (property) && !NILP (Fget (property, Qconst_glyph_variable,
-					 Qnil)))
+  if (SYMBOLP (property))
     {
-      Lisp_Object glyph = Fsymbol_value (property);
-      CHECK_GLYPH (glyph);
-      return Fspecifier_instance (XGLYPH_IMAGE (glyph), frame, default_, Qnil);
+      if (EQ (Fbuilt_in_variable_type (property), Qconst_specifier))
+	return Fspecifier_instance (Fsymbol_value (property),
+				    frame, default_, Qnil);
+      if (!NILP (Fget (property, Qconst_glyph_variable, Qnil)))
+	{
+	  Lisp_Object glyph = Fsymbol_value (property);
+	  CHECK_GLYPH (glyph);
+	  return Fspecifier_instance (XGLYPH_IMAGE (glyph),
+				      frame, default_, Qnil);
+	}
     }
+
   if (VECTORP (property) && XVECTOR_LENGTH (property) == 2)
     {
       Lisp_Object face_prop = XVECTOR_DATA (property)[1];
@@ -2355,18 +2353,14 @@ do {				\
 		    face_prop, frame);
     }
 
-  {
-    Lisp_Object value;
-
-    value = FRAMEMETH_OR_GIVEN (f, frame_property, (f, property), Qunbound);
-    if (!UNBOUNDP (value))
+  if (HAS_FRAMEMETH_P (f, frame_property))
+    if (!UNBOUNDP (value = FRAMEMETH (f, frame_property, (f, property))))
       return value;
 
-    value = external_plist_get (&f->plist, property, 1, ERROR_ME);
-    if (!UNBOUNDP (value))
-      return value;
-    return default_;
-  }
+  if (!UNBOUNDP (value = external_plist_get (&f->plist, property, 1, ERROR_ME)))
+    return value;
+
+  return default_;
 }
 
 DEFUN ("frame-properties", Fframe_properties, 0, 1, 0, /*
@@ -2378,62 +2372,59 @@ Do not modify this list; use `set-frame-property' instead.
   struct frame *f = decode_frame (frame);
   Lisp_Object result = Qnil;
   struct gcpro gcpro1;
-  int width, height;
 
   GCPRO1 (result);
 
   XSETFRAME (frame, f);
 
-#define FROB(propprop, value)				\
-do {							\
-  Lisp_Object temtem = (value);				\
-  if (!NILP (temtem))					\
-    /* backwards order; we reverse it below */		\
-    result = Fcons (temtem, Fcons (propprop, result));	\
-} while (0)
-
-  FROB (Qname, f->name);
-
-  if (window_system_pixelated_geometry (frame))
-    {
-      pixel_to_real_char_size (f, FRAME_PIXWIDTH (f), FRAME_PIXHEIGHT (f),
-			       &width, &height);
-    }
-  else
-    {
-      height = FRAME_HEIGHT (f);
-      width = FRAME_WIDTH (f);
-    }
-  FROB (Qheight, make_int (height));
-  FROB (Qwidth,  make_int (width));
-
- /* NOTE: FSF returns Qnil instead of Qt for FRAME_HAS_MINIBUF_P.
-     This is over-the-top bogosity, because it's inconsistent with
-     the semantics of `minibuffer' when passed to `make-frame'.
-     Returning Qt makes things consistent. */
-  FROB (Qminibuffer, (FRAME_MINIBUF_ONLY_P (f) ? Qonly :
-		      FRAME_HAS_MINIBUF_P  (f) ? Qt    :
-		      FRAME_MINIBUF_WINDOW (f)));
-  FROB (Qunsplittable, FRAME_NO_SPLIT_P (f) ? Qt : Qnil);
-  FROB (Qbuffer_predicate, f->buffer_predicate);
-
-#undef FROB
+  /* #### for the moment (since old code uses `frame-parameters'),
+     we call `copy-sequence' on f->plist.  That allows frame-parameters
+     to destructively convert the plist into an alist, which is more
+     efficient than doing it non-destructively.  At some point we
+     should remove the call to copy-sequence. */
+  result = Fcopy_sequence (f->plist);
 
   /* #### should we be adding all the specifiers and glyphs?
      That would entail having a list of them all. */
-  {
-    Lisp_Object value;
+  if (HAS_FRAMEMETH_P (f, frame_properties))
+    result = nconc2 (FRAMEMETH (f, frame_properties, (f)), result);
 
-    value = FRAMEMETH_OR_GIVEN (f, frame_properties, (f), Qnil);
-    result = nconc2 (value, result);
-    /* #### for the moment (since old code uses `frame-parameters'),
-       we call `copy-sequence' on f->plist.  That allows frame-parameters
-       to destructively convert the plist into an alist, which is more
-       efficient than doing it non-destructively.  At some point we
-       should remove the call to copy-sequence. */
-    result = nconc2 (Fnreverse (result), Fcopy_sequence (f->plist));
-    RETURN_UNGCPRO (result);
+  if (!NILP (f->buffer_predicate))
+    result = cons3 (Qbuffer_predicate, f->buffer_predicate, result);
+
+  if (FRAME_NO_SPLIT_P (f))
+    result = cons3 (Qunsplittable, Qt, result);
+
+  /* NOTE: FSF returns Qnil instead of Qt for FRAME_HAS_MINIBUF_P.
+     This is over-the-top bogosity, because it's inconsistent with
+     the semantics of `minibuffer' when passed to `make-frame'.
+     Returning Qt makes things consistent. */
+  result = cons3 (Qminibuffer,
+		  (FRAME_MINIBUF_ONLY_P (f) ? Qonly :
+		   FRAME_HAS_MINIBUF_P  (f) ? Qt    :
+		   FRAME_MINIBUF_WINDOW (f)),
+		  result);
+  {
+    int width, height;
+
+    if (window_system_pixelated_geometry (frame))
+      {
+	pixel_to_real_char_size (f, FRAME_PIXWIDTH (f), FRAME_PIXHEIGHT (f),
+				 &width, &height);
+      }
+    else
+      {
+	height = FRAME_HEIGHT (f);
+	width = FRAME_WIDTH (f);
+      }
+    result = cons3 (Qwidth , make_int (width),  result);
+    result = cons3 (Qheight, make_int (height), result);
   }
+
+  result = cons3 (Qname, f->name, result);
+
+  UNGCPRO;
+  return result;
 }
 
 
@@ -2442,8 +2433,7 @@ Return the height in pixels of FRAME.
 */
        (frame))
 {
-  struct frame *f = decode_frame (frame);
-  return make_int (f->pixheight);
+  return make_int (decode_frame (frame)->pixheight);
 }
 
 DEFUN ("frame-pixel-width", Fframe_pixel_width, 0, 1, 0, /*
@@ -2451,8 +2441,7 @@ Return the width in pixels of FRAME.
 */
        (frame))
 {
-  struct frame *f = decode_frame (frame);
-  return make_int (f->pixwidth);
+  return make_int (decode_frame (frame)->pixwidth);
 }
 
 DEFUN ("frame-name", Fframe_name, 0, 1, 0, /*
@@ -2542,7 +2531,7 @@ but that the idea of the actual width of the frame should not be changed.
 }
 
 DEFUN ("set-frame-size", Fset_frame_size, 3, 4, 0, /*
-Sets size of FRAME to COLS by ROWS.
+Set the size of FRAME to COLS by ROWS.
 Optional fourth arg non-nil means that redisplay should use COLS by ROWS
 but that the idea of the actual size of the frame should not be changed.
 */
@@ -2567,7 +2556,7 @@ but that the idea of the actual size of the frame should not be changed.
 }
 
 DEFUN ("set-frame-position", Fset_frame_position, 3, 3, 0, /*
-Sets position of FRAME in pixels to XOFFSET by YOFFSET.
+Set position of FRAME in pixels to XOFFSET by YOFFSET.
 This is actually the position of the upper left corner of the frame.
 Negative values for XOFFSET or YOFFSET are interpreted relative to
 the rightmost or bottommost possible position (that stays within the screen).
@@ -2953,7 +2942,7 @@ update_frame_icon (struct frame *f)
 {
   if (f->icon_changed || f->windows_changed)
     {
-      Lisp_Object frame = Qnil;
+      Lisp_Object frame;
       Lisp_Object new_icon;
 
       XSETFRAME (frame, f);
@@ -3221,7 +3210,11 @@ The default name to assign to newly-created frames.
 This can be overridden by arguments to `make-frame'.
 This must be a string.
 */ );
+#ifndef INFODOCK
   Vdefault_frame_name = Fpurecopy (build_string ("emacs"));
+#else
+  Vdefault_frame_name = Fpurecopy (build_string ("InfoDock"));
+#endif
 
   DEFVAR_LISP ("default-frame-plist", &Vdefault_frame_plist /*
 Plist of default values for frame creation, other than the first one.

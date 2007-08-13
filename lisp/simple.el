@@ -34,7 +34,7 @@
 
 ;; Changes for zmacs-style active-regions:
 ;;
-;; beginning-of-buffer, end-of-buffer, count-lines-region, 
+;; beginning-of-buffer, end-of-buffer, count-lines-region,
 ;; count-lines-buffer, what-line, what-cursor-position, set-goal-column,
 ;; set-fill-column, prefix-arg-internal, and line-move (which is used by
 ;; next-line and previous-line) set zmacs-region-stays to t, so that they
@@ -43,12 +43,12 @@
 ;; mark-whole-buffer, mark-word, exchange-point-and-mark, and
 ;; set-mark-command (without an argument) call zmacs-activate-region.
 ;;
-;; mark takes an optional arg like the new Fmark_marker() does.  When 
+;; mark takes an optional arg like the new Fmark_marker() does.  When
 ;; the region is not active, mark returns nil unless the optional arg is true.
 ;;
 ;; push-mark, pop-mark, exchange-point-and-mark, and set-marker, and
 ;; set-mark-command use (mark t) so that they can access the mark whether
-;; the region is active or not.  
+;; the region is active or not.
 ;;
 ;; shell-command, shell-command-on-region, yank, and yank-pop (which all
 ;; push a mark) have been altered to call exchange-point-and-mark with an
@@ -106,7 +106,7 @@ In Auto Fill mode, if no numeric arg, break the preceding line if it's long."
   ;; result is the same.  So, if we're at beginning of line, pretend to be at
   ;; the end of the previous line.
   ;; #### Does this have any relevance in XEmacs?
-  (let ((flag (and (not (bobp)) 
+  (let ((flag (and (not (bobp))
 		   (bolp)
 		   ;; Make sure the newline before point isn't intangible.
 		   (not (get-char-property (1- (point)) 'intangible))
@@ -119,7 +119,7 @@ In Auto Fill mode, if no numeric arg, break the preceding line if it's long."
 		   (not (get-char-property (1- (point)) 'end-open))
 		   ;; Make sure the newline before point has the same
 		   ;; properties as the char before it (if any).
-		   (< (or (previous-extent-change (point)) -2) 
+		   (< (or (previous-extent-change (point)) -2)
 		      (- (point) 2))))
 	(was-page-start (and (bolp)
 			     (looking-at page-delimiter)))
@@ -1047,7 +1047,7 @@ when given no argument at the beginning of a line."
 (defcustom kill-hooks nil
   "*Functions run when something is added to the XEmacs kill ring.
 These functions are called with one argument, the string most recently
-cut or copied.  You can use this to, for example, make the most recent 
+cut or copied.  You can use this to, for example, make the most recent
 kill become the X Clipboard selection."
   :type 'hook
   :group 'killing)
@@ -1144,7 +1144,7 @@ Run `kill-hooks'."
 If N is zero, `interprogram-paste-function' is set, and calling it
 returns a string, then that string is added to the front of the
 kill ring and returned as the latest kill.
-If optional arg DO-NOT-MOVE is non-nil, then don't actually move the 
+If optional arg DO-NOT-MOVE is non-nil, then don't actually move the
 yanking point\; just return the Nth kill forward."
   (let ((interprogram-paste (and (= n 0)
 				 interprogram-paste-function
@@ -1396,7 +1396,7 @@ BUFFER may be a buffer or a buffer name."
    (list
     (progn
       (barf-if-buffer-read-only)
-      (read-buffer "Insert buffer: " 
+      (read-buffer "Insert buffer: "
 		   ;; XEmacs: we have different args
 		   (other-buffer (current-buffer) nil t)
 		   t))))
@@ -2170,10 +2170,10 @@ the comment's starting delimiter.")
 
 (defconst comment-indent-function
   ;; XEmacs - add at least one space after the end of the text on the
-  ;; current line...  
+  ;; current line...
   (lambda ()
-    (save-excursion 
-      (beginning-of-line) 
+    (save-excursion
+      (beginning-of-line)
       (let ((eol (save-excursion (end-of-line) (point))))
 	(and comment-start-skip
 	     (re-search-forward comment-start-skip eol t)
@@ -2238,7 +2238,7 @@ If nil, use `comment-end' instead."
 	  (delete-region (point) begpos)
 	  (indent-to indent))
 	;; An existing comment?
-	(if cpos 
+	(if cpos
 	    (progn (goto-char cpos)
 		   (set-marker cpos nil))
 	  ;; No, insert one.
@@ -2594,7 +2594,7 @@ indicating whether soft newlines should be inserted.")
 ;	    (null (setq fc (current-fill-column)))
 ;	    (and (eq justify 'left)
 ;		 (<= (current-column) fc))
-;	    (save-excursion (beginning-of-line) 
+;	    (save-excursion (beginning-of-line)
 ;			    ;; (setq bol (point))
 ;			    (and auto-fill-inhibit-regexp
 ;				 (looking-at auto-fill-inhibit-regexp))))
@@ -2665,7 +2665,7 @@ indicating whether soft newlines should be inserted.")
 ;		    (funcall comment-line-break-function t)))
 ;		;; Now do justification, if required
 ;		(if (not (eq justify 'left))
-;		    (save-excursion 
+;		    (save-excursion
 ;		      (end-of-line 0)
 ;		      (justify-current-line justify nil t)))
 ;		;; If making the new line didn't reduce the hpos of
@@ -2742,7 +2742,7 @@ If you want to continue one comment across several lines, use \\[newline-and-ind
 If a fill column is specified, it overrides the use of the comment column
 or comment indentation.
 
-The inserted newline is marked hard if `use-hard-newlines' is true, 
+The inserted newline is marked hard if `use-hard-newlines' is true,
 unless optional argument SOFT is non-nil."
   (interactive)
   (let (comcol comstart)
@@ -2761,7 +2761,7 @@ unless optional argument SOFT is non-nil."
     ;; #### - Eric Eide reverts to v18 semantics for this function in
     ;; fa-extras, which I'm not gonna do.  His changes are to (1) execute
     ;; the save-excursion below unconditionally, and (2) uncomment the check
-    ;; for (not comment-multi-line) further below.  --Stig 
+    ;; for (not comment-multi-line) further below.  --Stig
       ;;### jhod: probably need to fix this for kinsoku processing
       (if (not comment-multi-line)
 	  (save-excursion
@@ -2840,8 +2840,8 @@ The variable `selective-display' has a separate value for each buffer."
 ;; XEmacs
 (defun nuke-selective-display ()
   "Ensure that the buffer is not in selective-display mode.
-If `selective-display' is t, then restore the buffer text to it's original
-state before disabling selective display." 
+If `selective-display' is t, then restore the buffer text to its original
+state before disabling selective display."
   ;; by Stig@hackvan.com
   (interactive)
   (and (eq t selective-display)
@@ -3221,7 +3221,7 @@ it were the arg to `interactive' (which see) to interactively read the value."
   (interactive
    (let* ((var (read-variable "Set variable: "))
 	  ;; #### - yucky code replication here.  This should use something
-	  ;; from help.el or hyper-apropos.el 
+	  ;; from help.el or hyper-apropos.el
 	  (minibuffer-help-form
 	   '(funcall myhelp))
 	  (myhelp
@@ -3248,7 +3248,7 @@ it were the arg to `interactive' (which see) to interactively read the value."
 					   (list 'interactive prop)
 					   'arg))
 	       (eval-minibuffer (format "Set %s to value: " var)))))))
-  (if (specifierp (symbol-value var))
+  (if (and (boundp var) (specifierp (symbol-value var)))
       (set-specifier (symbol-value var) val)
     (set var val)))
 
@@ -3262,7 +3262,7 @@ This function has no effect if `zmacs-regions' is false."
 
 ;; XEmacs
 (defsubst region-exists-p ()
-  "Non-nil iff the region exists.
+  "Return t if the region exists.
 If active regions are in use (i.e. `zmacs-regions' is true), this means that
  the region is active.  Otherwise, this means that the user has pushed
  a mark in this buffer at some point in the past.
@@ -3272,7 +3272,7 @@ The functions `region-beginning' and `region-end' can be used to find the
 
 ;; XEmacs
 (defun region-active-p ()
-  "Non-nil iff the region is active.
+  "Return non-nil if the region is active.
 If `zmacs-regions' is true, this is equivalent to `region-exists-p'.
 Otherwise, this function always returns false."
   (and zmacs-regions zmacs-region-extent))
@@ -3497,7 +3497,7 @@ when appropriate.  Calling this function will call the hook
 (defvar message-stack nil
   "An alist of label/string pairs representing active echo-area messages.
 The first element in the list is currently displayed in the echo area.
-Do not modify this directly--use the `message' or 
+Do not modify this directly--use the `message' or
 `display-message'/`clear-message' functions.")
 
 (defvar remove-message-hook 'log-message
@@ -3551,15 +3551,15 @@ as the second argument.")
     ;; "^Parsed [0-9]+ of [0-9]+ ([0-9]+%)"
     )
   "List of regular expressions matching messages which shouldn't be logged.
-See `log-message'.  
+See `log-message'.
 
 Ideally, packages which generate messages which might need to be ignored
-should label them with 'progress, 'prompt, or 'no-log, so they can be 
+should label them with 'progress, 'prompt, or 'no-log, so they can be
 filtered by the log-message-ignore-labels."
   :type '(repeat regexp)
   :group 'log-message)
 
-(defcustom log-message-ignore-labels 
+(defcustom log-message-ignore-labels
   '(help-echo command progress prompt no-log garbage-collecting auto-saving)
   "List of symbols indicating labels of messages which shouldn't be logged.
 See `display-message' for some common labels.  See also `log-message'."
@@ -3574,7 +3574,7 @@ See `display-message' for some common labels.  See also `log-message'."
   (pop-to-buffer (get-buffer-create " *Message-Log*")))
 
 (defvar log-message-filter-function 'log-message-filter
-  "Value must be a function of two arguments: a symbol (label) and 
+  "Value must be a function of two arguments: a symbol (label) and
 a string (message).  It should return non-nil to indicate a message
 should be logged.  Possible values include 'log-message-filter and
 'log-message-filter-errors-only.")
@@ -3738,7 +3738,7 @@ by default--see the `log-message-ignore-labels' variable):
   (append-message label message frame stdout-p))
 
 (defun current-message (&optional frame)
-  "Returns the current message in the echo area, or nil.
+  "Return the current message in the echo area, or nil.
 The FRAME argument is currently unused."
   (cdr (car message-stack)))
 

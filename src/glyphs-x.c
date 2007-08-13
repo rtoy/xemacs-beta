@@ -149,27 +149,28 @@ static void cursor_font_instantiate (Lisp_Object image_instance,
 /************************************************************************/
 /*                      image instance methods                          */
 /************************************************************************/
-DOESNT_RETURN
-signal_image_error(CONST char *reason, Lisp_Object frob)
+static DOESNT_RETURN
+signal_image_error (CONST char *reason, Lisp_Object frob)
 {
-  signal_error (Qimage_conversion_error, list2 (build_translated_string (reason), frob));
+  signal_error (Qimage_conversion_error,
+		list2 (build_translated_string (reason), frob));
 }
 
-DOESNT_RETURN
-signal_image_error_2 (CONST char *reason,
-                       Lisp_Object frob0, Lisp_Object frob1)
+static DOESNT_RETURN
+signal_image_error_2 (CONST char *reason, Lisp_Object frob0, Lisp_Object frob1)
 {
-  signal_error (Qimage_conversion_error, list3 (build_translated_string (reason), frob0,
-			       frob1));
+  signal_error (Qimage_conversion_error,
+		list3 (build_translated_string (reason), frob0, frob1));
 }
 
 /************************************************************************/
 /* convert from a series of RGB triples to an XImage formated for the   */
 /* proper display 							*/
 /************************************************************************/
-XImage *
-convert_EImage_to_XImage(Lisp_Object device, int width, int height, unsigned char *pic,
-	      unsigned long **pixtbl, int *pixcount, int *npixels)
+static XImage *
+convert_EImage_to_XImage (Lisp_Object device, int width, int height,
+			  unsigned char *pic, unsigned long **pixtbl,
+			  int *pixcount, int *npixels)
 {
   Display *dpy;
   Colormap cmap;
@@ -210,10 +211,10 @@ convert_EImage_to_XImage(Lisp_Object device, int width, int height, unsigned cha
   data = (unsigned char *) xmalloc (outimg->bytes_per_line * height);
   if (!data)
     {
-      XDestroyImage(outimg);
+      XDestroyImage (outimg);
       return NULL;
     }
-  outimg->data = data;
+  outimg->data = (char *) data;
   
   if (vis->class == PseudoColor)
     {
@@ -736,7 +737,7 @@ write_lisp_string_to_temp_file (Lisp_Object string, char *filename_out)
   Lstream_close (costr);
 #endif
   Lstream_close (ostr);
-  
+
   UNGCPRO;
   Lstream_delete (istr);
   Lstream_delete (ostr);
@@ -748,7 +749,7 @@ write_lisp_string_to_temp_file (Lisp_Object string, char *filename_out)
     report_file_error ("Writing temp file",
 		       list1 (build_string (filename_out)));
 }
-#endif
+#endif /* 0 */
 
 
 /************************************************************************/
@@ -921,28 +922,26 @@ check_valid_xbm_inline (Lisp_Object data)
 {
   Lisp_Object width, height, bits;
 
-  CHECK_CONS (data);
-  if (!CONSP (XCDR (data)) || !CONSP (XCDR (XCDR (data))) ||
+  if (!CONSP (data) ||
+      !CONSP (XCDR (data)) ||
+      !CONSP (XCDR (XCDR (data))) ||
       !NILP (XCDR (XCDR (XCDR (data)))))
     signal_simple_error ("Must be list of 3 elements", data);
 
-  width = XCAR (data);
+  width  = XCAR (data);
   height = XCAR (XCDR (data));
-  bits = XCAR (XCDR (XCDR (data)));
+  bits   = XCAR (XCDR (XCDR (data)));
 
-  if (!INTP (width) || !INTP (height) || !STRINGP (bits))
-    signal_simple_error ("Must be (width height bits)",
-			 vector3 (width, height, bits));
+  CHECK_STRING (bits);
 
-  if (XINT (width) <= 0)
-    signal_simple_error ("Width must be > 0", width);
+  if (!NATNUMP (width))
+    signal_simple_error ("Width must be a natural number", width);
 
-  if (XINT (height) <= 0)
-    signal_simple_error ("Height must be > 0", height);
+  if (!NATNUMP (height))
+    signal_simple_error ("Height must be a natural number", height);
 
-  if (((unsigned) (XINT (width) * XINT (height)) / 8)
-      > string_char_length (XSTRING (bits)))
-    signal_simple_error ("data is too short for W and H",
+  if (((XINT (width) * XINT (height)) / 8) > XSTRING_CHAR_LENGTH (bits))
+    signal_simple_error ("data is too short for width and height",
 			 vector3 (width, height, bits));
 }
 
@@ -1705,7 +1704,7 @@ xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
  retry:
 
-  memset (&xpmattrs, 0, sizeof (xpmattrs)); /* want XpmInitAttributes() */
+  xzero (xpmattrs); /* want XpmInitAttributes() */
   xpmattrs.valuemask = XpmReturnPixels;
   if (force_mono)
     {
@@ -2119,7 +2118,7 @@ METHODDEF boolean
 our_fill_input_buffer (j_decompress_ptr cinfo)
 {
   /* Insert a fake EOI marker */
-  struct jpeg_source_mgr *src = (struct jpeg_source_mgr *) cinfo->src;
+  struct jpeg_source_mgr *src = cinfo->src;
   static JOCTET buffer[2];
 
   buffer[0] = (JOCTET) 0xFF;
@@ -2163,14 +2162,15 @@ our_term_source (j_decompress_ptr cinfo)
 {
 }
 
-typedef struct {
+typedef struct
+{
   struct jpeg_source_mgr pub;
 } our_jpeg_source_mgr;
 
 static void
 jpeg_memory_src (j_decompress_ptr cinfo, JOCTET *data, unsigned int len)
 {
-  struct jpeg_source_mgr *src = NULL;
+  struct jpeg_source_mgr *src;
 
   if (cinfo->src == NULL)
     {	/* first time for this JPEG object? */
@@ -2256,7 +2256,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   /* Step -1: First record our unwind-protect, which will clean up after
      any exit, normal or not */
 
-  memset (&unwind, 0, sizeof (unwind));
+  xzero (unwind);
   unwind.dpy = dpy;
   unwind.cmap = cmap;
   record_unwind_protect (jpeg_instantiate_unwind, make_opaque_ptr (&unwind));
@@ -2330,7 +2330,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
        stack data it might allocate.  Need to be able to convert and
        write out to a file. */
     GET_STRING_BINARY_DATA_ALLOCA (data, bytes, len);
-    jpeg_memory_src (&cinfo, bytes, len);
+    jpeg_memory_src (&cinfo, (JOCTET *) bytes, len);
   }
 #endif
 
@@ -2476,9 +2476,9 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	 * Here the array is only one element long, but you could ask for
 	 * more than one scanline at a time if that's more convenient.
 	 */
-	(void) jpeg_read_scanlines (&cinfo, row_buffer, 1);
+	jpeg_read_scanlines (&cinfo, row_buffer, 1);
 
-	for (i = 0; i < cinfo.output_width; i++)
+	for (i = 0; i < (int) cinfo.output_width; i++)
 	  XPutPixel (unwind.ximage, i, scanline,
 		     /* Let's make sure we avoid getting bit like
 			what happened for GIF's.  It's probably the
@@ -2738,7 +2738,7 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   cmap = DEVICE_X_COLORMAP (XDEVICE(device));
   vis = DEVICE_X_VISUAL (XDEVICE(device));
 
-  memset (&unwind, 0, sizeof (unwind));
+  xzero (unwind);
   unwind.dpy = dpy;
   unwind.cmap = cmap;
   record_unwind_protect (gif_instantiate_unwind, make_opaque_ptr (&unwind));
@@ -2803,9 +2803,9 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	int res;
 	XColor color;
 
-	color.red = cmo->Colors[i].Red << 8;
+	color.red   = cmo->Colors[i].Red   << 8;
 	color.green = cmo->Colors[i].Green << 8;
-	color.blue = cmo->Colors[i].Blue << 8;
+	color.blue  = cmo->Colors[i].Blue  << 8;
 	color.flags = DoRed | DoGreen | DoBlue;
 
 	res = allocate_nearest_color (dpy, cmap, vis, &color);
@@ -2983,7 +2983,7 @@ png_possible_dest_types (void)
 #ifndef USE_TEMP_FILES_FOR_PNG_IMAGES
 struct png_memory_storage
 {
-  Extbyte *bytes;		/* The data       */
+  CONST Extbyte *bytes;		/* The data       */
   Extcount len;			/* How big is it? */
   int index;			/* Where are we?  */
 };
@@ -3017,16 +3017,16 @@ struct png_error_struct
 static struct png_error_struct png_err_stct;
 
 static void
-png_error_func(png_structp png_ptr, png_const_charp message)
+png_error_func (png_structp png_ptr, png_const_charp msg)
 {
-  png_err_stct.err_str = message;
+  png_err_stct.err_str = msg;
   longjmp (png_err_stct.setjmp_buffer, 1);
 }
 
 static void
-png_warning_func(png_structp png_ptr, png_const_charp message)
+png_warning_func (png_structp png_ptr, png_const_charp msg)
 {
-  warn_when_safe (Qpng, Qinfo, "%s", message);
+  warn_when_safe (Qpng, Qinfo, "%s", msg);
 }
 
 struct png_unwind_data
@@ -3116,7 +3116,7 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       signal_image_error ("Error obtaining memory for png_read", instantiator);
     }
   
-  memset (&unwind, 0, sizeof (unwind));
+  xzero (unwind);
   unwind.png_ptr = png_ptr;
   unwind.info_ptr = info_ptr;
   unwind.dpy = dpy;
@@ -3145,7 +3145,7 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   /* Initialize the IO layer and read in header information */
   {
     Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
-    Extbyte *bytes;
+    CONST Extbyte *bytes;
     Extcount len;
     struct png_memory_storage tbr; /* Data to be read */
 
@@ -3219,9 +3219,9 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	  {
 	    for (y = 0; y < 216; y++)
 	      {
-		static_color_cube[y].red = (y % 6) * 255.0 / 5;
-		static_color_cube[y].green = ((y / 6) % 6) * 255.0 / 5;
-		static_color_cube[y].blue = (y / 36) * 255.0 / 5;
+		static_color_cube[y].red   = (png_byte) ((y % 6) * 255.0 / 5);
+		static_color_cube[y].green = (png_byte) (((y / 6) % 6) * 255.0 / 5);
+		static_color_cube[y].blue  = (png_byte) ((y / 36) * 255.0 / 5);
 	      }
 	    png_set_dither (png_ptr, static_color_cube, 216, 216, NULL, 1);
 	  }
@@ -3242,9 +3242,9 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	for (y = 0; y < info_ptr->num_palette; y++)
 	  {
 	    int res;
-	    color.red = info_ptr->palette[y].red << 8;
+	    color.red   = info_ptr->palette[y].red   << 8;
 	    color.green = info_ptr->palette[y].green << 8;
-	    color.blue = info_ptr->palette[y].blue << 8;
+	    color.blue  = info_ptr->palette[y].blue  << 8;
 	    color.flags = DoRed | DoGreen | DoBlue;
 	    res = allocate_nearest_color (dpy, cmap, vis, &color);
 	    if (res > 0 && res < 3)
@@ -3261,9 +3261,9 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	for (y = 0; y < 216; y++)
 	  {
 	    int res;
-	    color.red = static_color_cube[y].red << 8;
+	    color.red   = static_color_cube[y].red   << 8;
 	    color.green = static_color_cube[y].green << 8;
-	    color.blue = static_color_cube[y].blue << 8;
+	    color.blue  = static_color_cube[y].blue  << 8;
 	    color.flags = DoRed|DoGreen|DoBlue;
 	    res = allocate_nearest_color (dpy, cmap, vis, &color);
 	    if (res > 0 && res < 3)
@@ -3385,9 +3385,9 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       png_color_16 my_background, *image_background;
     
       /* ### how do I get the background of the current frame? */
-      my_background.red = 0x7fff;
+      my_background.red   = 0x7fff;
       my_background.green = 0x7fff;
-      my_background.blue = 0x7fff;
+      my_background.blue  = 0x7fff;
 
       if (png_get_bKGD (png_ptr, info_ptr, &image_background))
 	png_set_background (png_ptr, image_background,
@@ -3526,7 +3526,7 @@ tiff_memory_read(thandle_t data, tdata_t buf, tsize_t size)
   tiff_memory_storage *mem = (tiff_memory_storage*)data;
 
   if (size > (mem->len - mem->index))
-    return -1;
+    return (size_t) -1;
   memcpy(buf, mem->bytes + mem->index, size);
   mem->index = mem->index + size;
   return size;
@@ -3664,7 +3664,7 @@ tiff_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   dpy = DEVICE_X_DISPLAY (XDEVICE (device));
   cmap = DEVICE_X_COLORMAP (XDEVICE(device));
 
-  memset (&unwind, 0, sizeof (unwind));
+  xzero (unwind);
   unwind.dpy = dpy;
   unwind.cmap = cmap;
   record_unwind_protect (tiff_instantiate_unwind, make_opaque_ptr (&unwind));
@@ -3708,7 +3708,7 @@ tiff_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
     TIFFGetField (unwind.tiff, TIFFTAG_IMAGEWIDTH, &width);
     TIFFGetField (unwind.tiff, TIFFTAG_IMAGELENGTH, &height);
-    unwind.eimage = xmalloc (width * height * 3);
+    unwind.eimage = (unsigned char *) xmalloc (width * height * 3);
 
     /* ### This is little more than proof-of-concept/function testing.
        It needs to be reimplimented via scanline reads for both memory
@@ -4307,15 +4307,6 @@ x_colorize_image_instance (Lisp_Object image_instance,
 /************************************************************************/
 
 Lisp_Object Qsubwindowp;
-static Lisp_Object mark_subwindow (Lisp_Object, void (*) (Lisp_Object));
-static void print_subwindow (Lisp_Object, Lisp_Object, int);
-static void finalize_subwindow (void *, int);
-static int subwindow_equal (Lisp_Object o1, Lisp_Object o2, int depth);
-static unsigned long subwindow_hash (Lisp_Object obj, int depth);
-DEFINE_LRECORD_IMPLEMENTATION ("subwindow", subwindow,
-			       mark_subwindow, print_subwindow,
-			       finalize_subwindow, subwindow_equal,
-			       subwindow_hash, struct Lisp_Subwindow);
 
 static Lisp_Object
 mark_subwindow (Lisp_Object obj, void (*markobj) (Lisp_Object))
@@ -4386,6 +4377,11 @@ subwindow_hash (Lisp_Object obj, int depth)
   return XSUBWINDOW (obj)->subwindow;
 }
 
+DEFINE_LRECORD_IMPLEMENTATION ("subwindow", subwindow,
+			       mark_subwindow, print_subwindow,
+			       finalize_subwindow, subwindow_equal,
+			       subwindow_hash, struct Lisp_Subwindow);
+
 /* #### PROBLEM: The display routines assume that the glyph is only
  being displayed in one buffer.  If it is in two different buffers
  which are both being displayed simultaneously you will lose big time.
@@ -4491,7 +4487,7 @@ Subwindows are not currently implemented.
 		   XSTRING_DATA   (data),
 		   XSTRING_LENGTH (data));
 
-  return (property);
+  return property;
 }
 
 DEFUN ("subwindowp", Fsubwindowp, 1, 1, 0, /*
@@ -4500,7 +4496,7 @@ Subwindows are not currently implemented.
 */
        (object))
 {
-  return (SUBWINDOWP (object) ? Qt : Qnil);
+  return SUBWINDOWP (object) ? Qt : Qnil;
 }
 
 DEFUN ("subwindow-width", Fsubwindow_width, 1, 1, 0, /*
@@ -4510,7 +4506,7 @@ Subwindows are not currently implemented.
        (subwindow))
 {
   CHECK_SUBWINDOW (subwindow);
-  return (make_int (XSUBWINDOW (subwindow)->width));
+  return make_int (XSUBWINDOW (subwindow)->width);
 }
 
 DEFUN ("subwindow-height", Fsubwindow_height, 1, 1, 0, /*
@@ -4520,7 +4516,7 @@ Subwindows are not currently implemented.
        (subwindow))
 {
   CHECK_SUBWINDOW (subwindow);
-  return (make_int (XSUBWINDOW (subwindow)->height));
+  return make_int (XSUBWINDOW (subwindow)->height);
 }
 
 DEFUN ("subwindow-xid", Fsubwindow_xid, 1, 1, 0, /*
@@ -4530,7 +4526,7 @@ Subwindows are not currently implemented.
        (subwindow))
 {
   CHECK_SUBWINDOW (subwindow);
-  return (make_int (XSUBWINDOW (subwindow)->subwindow));
+  return make_int (XSUBWINDOW (subwindow)->subwindow);
 }
 
 DEFUN ("resize-subwindow", Fresize_subwindow, 1, 3, 0, /*

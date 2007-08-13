@@ -36,7 +36,7 @@ Boston, MA 02111-1307, USA.  */
      directory of the audio software delivered on our machines. The path I
      found it under was /usr/audio/examples/player.c
      This file contained no credits and no copyrights. The original fileheader
-     is given below. 
+     is given below.
    HISTORY
      lynbech - Feb 10, 1993: Created.
 ***/
@@ -48,9 +48,11 @@ Boston, MA 02111-1307, USA.  */
  *     (well, only two are unsung)
  */
 
+#include <config.h>
+#include "lisp.h"
+
 #include <stdlib.h>
 #include <stdio.h>
-#include <config.h>		/* to get system rev level. */
 #ifdef HPUX10
 #include <Alib.h>
 #include <CUlib.h>
@@ -58,10 +60,6 @@ Boston, MA 02111-1307, USA.  */
 #include <audio/Alib.h>
 #include <audio/CUlib.h>
 #endif /* !HPUX 10 */
-
-/* New Symbols */
-#include <config.h>
-#include "lisp.h"
 
 Lisp_Object Vhp_play_server;
 Lisp_Object Vhp_play_speaker;
@@ -113,7 +111,7 @@ play_bucket_internal(audio, pSBucket, volume)
     if (SYMBOLP (Vhp_play_speaker))
     {
 	speaker = (char *) (string_data (XSYMBOL (Vhp_play_speaker)->name));
-    
+
 	/*
 	 * setup the playback parameters
 	 */
@@ -153,7 +151,7 @@ play_bucket_internal(audio, pSBucket, volume)
     xid = APlaySBucket( audio, pSBucket, &playParams, NULL );
 
     /*
-     * set close mode to prevent playback from stopping 
+     * set close mode to prevent playback from stopping
      *  when we close audio connection
      */
     ASetCloseDownMode( audio, AKeepTransactions, &status );
@@ -291,6 +289,6 @@ not make your functions depend on it.
 void
 init_hpplay (void)
 {
-  if (getenv ("SPEAKER")) 
+  if (getenv ("SPEAKER"))
     Vhp_play_speaker = intern (getenv ("SPEAKER"));
 }

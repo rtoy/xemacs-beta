@@ -377,7 +377,7 @@ ${SUBDIR}: ${SUBDIR_MAKEFILES} ${GENERATED_HEADERS} FRC
 Makefile: ${srcdir}/Makefile.in config.status
 	./config.status
 
-src/Makefile: ${srcdir}/src/Makefile.in.in config.status
+src/Makefile: ${srcdir}/src/Makefile.in.in ${srcdir}/src/depend config.status
 	./config.status
 
 lib-src/Makefile: ${srcdir}/lib-src/Makefile.in.in config.status
@@ -658,12 +658,12 @@ TAGS tags: FRC.tags
 	done ; \
 	etags -a lwlib/*.[ch]
 
-check:
-	@echo "We don't have any automated tests for XEmacs yet."
+## We have automated tests!
+testdir = ${srcdir}/tests
+tests   = ${testdir}/basic-lisp.el ${testdir}/database.el
 
-## Is this something Chuck used and doesn't work with CVS?  -slb
-## dist:
-##	cd ${srcdir} && make-dist
+check:
+	src/xemacs -batch -l ${testdir}/test-emacs.el -f batch-test-emacs ${tests}
 
 info: FRC.info
 	cd ${srcdir}/man && $(RECURSIVE_MAKE) $@

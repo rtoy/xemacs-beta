@@ -20,7 +20,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; along with XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -54,7 +54,7 @@ as provided for compatibility only."
 (defsubst define-obsolete-variable-alias (oldvar newvar)
   "Define OLDVAR as an obsolete alias for variable NEWVAR.
 This makes referencing or setting OLDVAR equivalent to referencing or
-setting NEWVAR and marks OLDVAR as obsolete. 
+setting NEWVAR and marks OLDVAR as obsolete.
 If OLDVAR was bound and NEWVAR was not, Set NEWVAR to OLDVAR.
 
 Note: Use this before any other references (defvar/defcustom) to NEWVAR"
@@ -78,7 +78,7 @@ setting NEWVAR and marks OLDVAR as provided for compatibility only."
 			"use the `set-input-mode' function instead.")
 
 (defun x-display-color-p (&optional device)
-  "Returns non-nil if DEVICE is a color device."
+  "Return t if DEVICE is a color device."
   (eq 'color (device-class device)))
 (make-compatible 'x-display-color-p 'device-class)
 
@@ -86,7 +86,7 @@ setting NEWVAR and marks OLDVAR as provided for compatibility only."
 (make-compatible 'x-display-color-p 'device-class)
 
 (defun x-display-grayscale-p (&optional device)
-  "Returns non-nil if DEVICE is a grayscale device."
+  "Return t if DEVICE is a grayscale device."
   (eq 'grayscale (device-class device)))
 (make-compatible 'x-display-grayscale-p 'device-class)
 
@@ -110,12 +110,12 @@ setting NEWVAR and marks OLDVAR as provided for compatibility only."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; extents
 
 (defun extent-data (extent)
-  "Obsolete.  Returns the `data' property of the given extent."
+  "Obsolete.  Return the `data' property of EXTENT."
   (extent-property extent 'data))
 (make-obsolete 'set-window-dot 'set-window-point)
 
 (defun set-extent-data (extent data)
-  "Obsolete.  Sets the `data' property of the given extent."
+  "Obsolete.  Set the `data' property of EXTENT."
   (set-extent-property extent 'data data))
 (make-obsolete 'set-extent-data 'set-extent-property)
 
@@ -253,7 +253,7 @@ setting NEWVAR and marks OLDVAR as provided for compatibility only."
 (make-obsolete 'x-create-screen 'make-frame)
 
 (defun frame-first-window (frame)
-  "Returns the topmost, leftmost window of FRAME.
+  "Return the topmost, leftmost window of FRAME.
 If omitted, FRAME defaults to the currently selected frame."
   (frame-highest-window frame 0))
 (make-compatible 'frame-first-window 'frame-highest-window)
@@ -340,12 +340,12 @@ See `set-frame-properties' for built-in property names."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; keymaps
 
 (defun keymap-parent (keymap)
-  "Returns the first parent of the given keymap."
+  "Return the first parent of the given keymap."
   (car (keymap-parents keymap)))
 (make-compatible 'keymap-parent 'keymap-parents)
 
 (defun set-keymap-parent (keymap parent)
-  "Makes the given keymap have (only) the given parent."
+  "Make the given keymap have (only) the given parent."
   (set-keymap-parents keymap (if parent (list parent) '()))
   parent)
 (make-compatible 'set-keymap-parent 'set-keymap-parents)

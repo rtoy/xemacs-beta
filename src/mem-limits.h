@@ -61,7 +61,7 @@ extern int etext, __data_start; weak_symbol (__data_start)
 #include <sys/resource.h>
 #endif
 
-#if defined(__bsdi__) || defined(__NetBSD__)
+#if defined(__bsdi__) || defined(__NetBSD__) || defined(__linux__)
 #define BSD4_2
 #endif
 
@@ -94,11 +94,6 @@ typedef char *POINTER;
 typedef unsigned long SIZE;
 #endif
 
-#ifdef NULL
-#undef NULL
-#endif
-#define NULL ((POINTER) 0)
-
 extern POINTER start_of_data ();
 #ifdef DATA_SEG_BITS
 #define EXCEEDS_LISP_PTR(ptr) \
@@ -114,14 +109,14 @@ extern int etext;
 #endif
 #endif
 
-#else  /* not emacs */ 
+#else  /* not emacs */
 extern char etext;
 #define start_of_data() &etext
 #endif /* not emacs */
 
 #endif /* not _LIBC */
 
-  
+
 
 /* start of data space; can be changed by calling malloc_init */
 static POINTER data_space_start;
@@ -137,11 +132,11 @@ get_lim_data (void)
 {
   if (!initialized)
     {
-      lim_data = -1; /* static_heap_size; */
+      lim_data = (unsigned int) -1; /* static_heap_size; */
     }
   else
     {
-      lim_data = -1;
+      lim_data = (unsigned int) -1;
     }
 }
 #else
@@ -149,7 +144,7 @@ get_lim_data (void)
 static void
 get_lim_data (void)
 {
-  lim_data = -1;
+  lim_data = (unsigned int) -1;
 }
 #else /* not NO_LIM_DATA */
 
@@ -158,7 +153,7 @@ get_lim_data (void)
 static void
 get_lim_data (void)
 {
-  lim_data = -1;
+  lim_data = (unsigned int) -1;
 
   /* Use the ulimit call, if we seem to have it.  */
 #if !defined (ULIMIT_BREAK_VALUE) || defined (LINUX)
@@ -167,7 +162,7 @@ get_lim_data (void)
 
   /* If that didn't work, just use the macro's value.  */
 #ifdef ULIMIT_BREAK_VALUE
-  if (lim_data == -1)
+  if (lim_data == (unsigned int) -1)
     lim_data = ULIMIT_BREAK_VALUE;
 #endif
 

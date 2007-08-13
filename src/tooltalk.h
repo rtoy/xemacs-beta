@@ -24,6 +24,7 @@ Boston, MA 02111-1307, USA.
 
 #ifndef _XEMACS_TOOLTALK_H_
 #define _XEMACS_TOOLTALK_H_
+#include TT_C_H_PATH
 
 struct Lisp_Tooltalk_Message;
 DECLARE_LRECORD (tooltalk_message, struct Lisp_Tooltalk_Message);
@@ -44,8 +45,10 @@ DECLARE_LRECORD (tooltalk_pattern, struct Lisp_Tooltalk_Pattern);
 #define TOOLTALK_MESSAGE_KEY 100
 #define TOOLTALK_PATTERN_KEY 101
 
-#define CHECK_TOOLTALK_CONSTANT(x) \
-  { if ((!INTP (x)) && (!SYMBOLP (x))) x = wrong_type_argument (Qsymbolp, (x)); }
+#define CHECK_TOOLTALK_CONSTANT(x) do {		\
+  if (!(INTP (x) || SYMBOLP (x)))		\
+    dead_wrong_type_argument (Qsymbolp, (x));	\
+} while (0)
 
 #define VALID_TOOLTALK_MESSAGEP(m) \
    (m && (tt_ptr_error (m) == TT_OK))
@@ -53,8 +56,8 @@ DECLARE_LRECORD (tooltalk_pattern, struct Lisp_Tooltalk_Pattern);
 #define VALID_TOOLTALK_PATTERNP(p) \
    (p && (tt_ptr_error (p) == TT_OK))
 
-extern Lisp_Object box_tooltalk_message (Tt_message m);
-extern Tt_message unbox_tooltalk_message (Lisp_Object msg);
+Lisp_Object box_tooltalk_message (Tt_message m);
+Tt_message unbox_tooltalk_message (Lisp_Object msg);
 
 extern Lisp_Object Qtooltalk_error;
 

@@ -1,3 +1,103 @@
+1998-04-04  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* isearch-mode.el (isearch-just-started): New variable.
+	(isearch-mode): Set it.
+	(isearch-repeat): Advance one character forward only if the search 
+	was successful, and was not just started.
+	(isearch-repeat): Clear isearch-just-started.
+
+1998-04-02  SL Baur  <steve@altair.xemacs.org>
+
+	* finder.el (finder-compile-keywords): Don't eval new finder-inf
+	if running -batch.
+
+1998-03-26  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* subr.el (listify-key-sequence): Removed.
+
+1998-03-31  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* bytecomp.el (byte-compile-print-gensym): New option.
+	(byte-compile-output-file-form): Use it.
+	(byte-compile-output-docform): Ditto.
+	(byte-compile-compiled-obj-to-list): Ditto.
+
+Sun Mar 29 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* msw-glyphs.el: set frame icon if xpm support.
+
+1998-03-30  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* help.el: Code that pretty prints variable values
+	  removed.
+
+1998-04-02  SL Baur  <steve@altair.xemacs.org>
+
+	* find-paths.el (paths-emacs-root-p): Correct test for installation
+	directory.
+	From Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+1998-03-30  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* loaddefs.el: Don't set debug-ignored-errors; leave 
+	  its default value set to nil.
+
+1998-03-29  Damon Lipparelli  <lipp@primus.com>
+
+	* info.el (Info-rebuild-dir): fixed mis-spelling.
+
+1998-03-29  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* info.el (Info-rebuild-outdated-dir): New custom var
+	(Info-insert-node): Create/update dir file when needed, ie when it 
+	does not exist or is older than some info files in directory
+
+1998-04-01  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* setup-paths.el, dump-paths.el, startup.el, packages.el: Allowed
+	for last packages, mainly for using a 20.4 package base.
+
+	* packages.el (late-packages): Typo fix.  It was called
+	early-packages.
+
+	* find-paths.el (paths-find-emacs-root): Bug fix: it now chases
+	relative symlinks correctly.
+	(paths-find-emacs-roots): More rigorous checking for plausible
+	configuration-time root.
+
+	* startup.el (normal-top-level): Added a warning if XEmacs cannot
+	find its roots.
+
+1998-03-27  Martin Buchholz  <martin@xemacs.org>
+
+	* faces.el: Fix docstrings.
+	* glyphs.el: Fix docstrings.
+	* mouse.el: Fix docstrings.
+
+	* frame.el: Change phrase `current frame' to `selected frame'.
+
+	* faces.el (face-spec-set-match-display): Make FRAME arg optional.
+
+	* bytecomp.el (displaying-byte-compile-warnings): Rewrite some
+	macros using backquote to make them infinitely more readable.
+
+1998-03-30  SL Baur  <steve@altair.xemacs.org>
+
+	* packages.el (packages-find-package-path): Hardcoded specialized
+	InfoDock support until we can clean this up.
+
+	* help.el (describe-bindings-1): Return the value of the bindings
+	help buffer created.
+	(describe-bindings): Ditto.
+
+	* simple.el (set-variable): Restore previous behavior of not
+	bombing if the variable to set is not boundp.
+
+1998-03-30  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* packages.el (packages-handle-package-dumped-lisps): Allow for
+	non-local files to be loaded off the package-lisp variable.
+
 1998-03-27  Kyle Jones  <kyle_jones@wonderworks.com>
 
 	* x-faces.el: Global X resources should override

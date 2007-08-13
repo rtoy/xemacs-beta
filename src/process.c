@@ -68,7 +68,7 @@ struct process_methods the_process_methods;
    (name of name of port we are connected to . foreign host name) */
 
 /* Valid values of process->status_symbol */
-Lisp_Object Qrun, Qstop; /* Qexit from eval.c, Qsignal from data.c. */
+Lisp_Object Qrun, Qstop;
 /* Qrun => Qopen, Qexit => Qclosed for "network connection" processes */
 Lisp_Object Qopen, Qclosed;
 /* Protocol families */
@@ -105,12 +105,6 @@ c_hashtable usid_to_process;
 Lisp_Object Vprocess_list;
 
 
-static Lisp_Object mark_process (Lisp_Object, void (*) (Lisp_Object));
-static void print_process (Lisp_Object, Lisp_Object, int);
-static void finalize_process (void *, int);
-DEFINE_LRECORD_IMPLEMENTATION ("process", process,
-                               mark_process, print_process, finalize_process,
-                               0, 0, struct Lisp_Process);
 
 static Lisp_Object
 mark_process (Lisp_Object obj, void (*markobj) (Lisp_Object))
@@ -186,6 +180,9 @@ finalize_process (void *header, int for_disksave)
     }
 }
 
+DEFINE_LRECORD_IMPLEMENTATION ("process", process,
+                               mark_process, print_process, finalize_process,
+                               0, 0, struct Lisp_Process);
 
 /************************************************************************/
 /*                       basic process accessors                        */
@@ -471,7 +468,7 @@ init_process_io_handles (struct Lisp_Process *p, void* in, void* out, int flags)
 
   if (usid == USID_ERROR)
     report_file_error ("Setting up communication with subprocess", Qnil);
-  
+
   if (usid != USID_DONTHASH)
     {
       Lisp_Object proc = Qnil;
@@ -657,7 +654,7 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
    generalized connection function.
 
    Both UNIX ans Win32 support BSD sockets, and there are many extensions
-   availalble (Sockets 2 spec). 
+   availalble (Sockets 2 spec).
 
    A todo is define a consistent set of properties abstracting a
    network connection.   -kkm
@@ -685,7 +682,7 @@ Third arg is name of the host to connect to, or its IP address.
 Fourth arg SERVICE is name of the service desired, or an integer
  specifying a port number to connect to.
 Fifth argument FAMILY is a protocol family. When omitted, 'tcp/ip
-(Internet protocol family TCP/IP) is assumed.
+\(Internet protocol family TCP/IP) is assumed.
 */
        (name, buffer, host, service, family))
 {
@@ -707,7 +704,7 @@ Fifth argument FAMILY is a protocol family. When omitted, 'tcp/ip
      open_network_stream is mandatory */
   PROCMETH (open_network_stream, (name, host, service, family,
 				  &inch, &outch));
-  
+
   if (!NILP (buffer))
     buffer = Fget_buffer_create (buffer);
   proc = make_process_internal (name);
@@ -756,7 +753,7 @@ Third, fourth and fifth args are the multicast destination group, port and ttl.
      open_network_stream is mandatory */
   PROCMETH (open_multicast_group, (name, dest, port, ttl,
 				   &inch, &outch));
-  
+
   if (!NILP (buffer))
     buffer = Fget_buffer_create (buffer);
 
@@ -766,9 +763,9 @@ Third, fourth and fifth args are the multicast destination group, port and ttl.
   XPROCESS (proc)->pid = Fcons (port, dest);
   XPROCESS (proc)->buffer = buffer;
   init_process_io_handles (XPROCESS (proc), (void*)inch, (void*)outch, 0);
-  
+
   event_stream_select_process (XPROCESS (proc));
-  
+
   UNGCPRO;
   return proc;
 }
@@ -1929,10 +1926,6 @@ syms_of_process (void)
   defsymbol (&Qprocessp, "processp");
   defsymbol (&Qrun, "run");
   defsymbol (&Qstop, "stop");
-  defsymbol (&Qsignal, "signal");
-  /* Qexit is already defined by syms_of_eval
-   * defsymbol (&Qexit, "exit");
-   */
   defsymbol (&Qopen, "open");
   defsymbol (&Qclosed, "closed");
 

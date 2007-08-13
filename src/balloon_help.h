@@ -28,7 +28,6 @@ Boston, MA 02111-1307, USA.  */
 void balloon_help_create (Display* dpy,
 			  Pixel fg, Pixel bg, Pixel shine, Pixel shadow,
 			  XFontStruct* font);
-void balloon_help_destroy (void);
 void balloon_help_set_delay (unsigned long milliseconds);
 void balloon_help_show (CONST char* text);
 void balloon_help_hide (void);

@@ -20,7 +20,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.31. */
 
-/* The following line tells the configuration script what sort of 
+/* The following line tells the configuration script what sort of
    operating system this machine is likely to run.
    USUAL-OPSYS="aix3-1"  */
 
@@ -136,30 +136,3 @@ Boston, MA 02111-1307, USA.  */
 #undef NEED_PTEM_H
 
 #define ORDINARY_LINK
-
-#if 0 /* mrb */
-#ifndef USG5_4
-/* XEmacs change -- automatically add the correct path for smt.exp if
-   it exists. */
-/* marc@sti.com (Marc Pawliger) says ibmrs6000.inp is needed to avoid
-   linker error for updated X11R5 libraries, which references pthread library
-   which most machines don't have.  We use the name .inp instead of .imp
-   because .inp is a better convention to use in make-dist for naming
-   random input files.  */
-/* Avoid gcc 2.7.x collect2 bug by using /bin/ld instead.  */
-#if __GNUC__ == 2 && __GNUC_MINOR__ == 7
-#ifdef AIX_SMT_EXP
-#define LD_SWITCH_MACHINE "-B/bin/ -Wl,-bnso,-bnodelcsect,-bI:/lib/syscalls.exp,-bI:$(srcdir)/m/ibmrs6000.inp,AIX_SMT_EXP"
-#else
-#define LD_SWITCH_MACHINE "-B/bin/ -Wl,-bnso,-bnodelcsect,-bI:/lib/syscalls.exp,-bI:$(srcdir)/m/ibmrs6000.inp"
-#endif
-#else /* not gcc 2.7.x */
-#ifdef AIX_SMT_EXP
-#define LD_SWITCH_MACHINE "-Wl,-bnso,-bnodelcsect,-bI:/lib/syscalls.exp,-bI:$(srcdir)/m/ibmrs6000.inp,AIX_SMT_EXP"
-#else
-#define LD_SWITCH_MACHINE "-Wl,-bnso,-bnodelcsect,-bI:/lib/syscalls.exp,-bI:$(srcdir)/m/ibmrs6000.inp"
-#endif
-#endif /* __GNUC__ == 2 && __GNUC_MINOR__ == 7 */
-
-#endif /* USG5_4 */
-#endif /* mrb */

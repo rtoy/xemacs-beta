@@ -120,7 +120,6 @@ typedef unsigned short mode_t;
 #undef BSD_TERMIOS
 #undef HAVE_TERMIOS
 #undef HAVE_TERMIO
-/* #define NO_TERMIO */ /* mrb */
 #define TAB3 XTABS
 #define C_OPTIMIZE_SWITCH "-pipe"
 #undef HAVE_SETITIMER

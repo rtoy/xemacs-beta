@@ -28,7 +28,7 @@ Boston, MA 02111-1307, USA.  */
 
 widget_value *xmalloc_widget_value (void);
 
-extern LWLIB_ID new_lwlib_id (void);
+LWLIB_ID new_lwlib_id (void);
 
 #ifdef HAVE_POPUPS
 

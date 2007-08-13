@@ -142,8 +142,7 @@ struct iso2022_decoder
   unsigned int output_direction_sequence :1;
 };
 
-Lisp_Object Fcopy_coding_system (Lisp_Object old_coding_system,
-				 Lisp_Object new_name);
+EXFUN (Fcopy_coding_system, 2);
 struct detection_state;
 static int detect_coding_sjis (struct detection_state *st,
 			       CONST unsigned char *src,
@@ -215,15 +214,6 @@ enum codesys_prop_enum
 /************************************************************************/
 /*                       Coding system functions                        */
 /************************************************************************/
-
-static Lisp_Object mark_coding_system (Lisp_Object, void (*) (Lisp_Object));
-static void print_coding_system (Lisp_Object, Lisp_Object, int);
-static void finalize_coding_system (void *header, int for_disksave);
-
-DEFINE_LRECORD_IMPLEMENTATION ("coding-system", coding_system,
-			       mark_coding_system, print_coding_system,
-			       finalize_coding_system,
-			       0, 0, struct Lisp_Coding_System);
 
 static Lisp_Object
 mark_coding_system (Lisp_Object obj, void (*markobj) (Lisp_Object))
@@ -321,6 +311,11 @@ finalize_coding_system (void *header, int for_disksave)
     }
 }
 
+DEFINE_LRECORD_IMPLEMENTATION ("coding-system", coding_system,
+			       mark_coding_system, print_coding_system,
+			       finalize_coding_system,
+			       0, 0, struct Lisp_Coding_System);
+
 static enum eol_type
 symbol_to_eol_type (Lisp_Object symbol)
 {
@@ -350,7 +345,7 @@ eol_type_to_symbol (enum eol_type type)
 static void
 setup_eol_coding_systems (struct Lisp_Coding_System *codesys)
 {
-  Lisp_Object codesys_obj = Qnil;
+  Lisp_Object codesys_obj;
   int len = string_length (XSYMBOL (CODING_SYSTEM_NAME (codesys))->name);
   char *codesys_name = (char *) alloca (len + 7);
   Lisp_Object codesys_name_sym, sub_codesys_obj;
@@ -376,7 +371,7 @@ setup_eol_coding_systems (struct Lisp_Coding_System *codesys)
 }
 
 DEFUN ("coding-system-p", Fcoding_system_p, 1, 1, 0, /*
-T if OBJECT is a coding system.
+Return t if OBJECT is a coding system.
 A coding system is an object that defines how text containing multiple
 character sets is encoded into a stream of (typically 8-bit) bytes.
 The coding system is used to decode the stream into a series of
@@ -969,13 +964,8 @@ Lisp_Object coding_system_charset (Lisp_Object coding_system, int gnum)
 {
   Lisp_Object cs
     = XCODING_SYSTEM_ISO2022_INITIAL_CHARSET (coding_system, gnum);
-  
-  if (CHARSETP(cs)){
-    return XCHARSET_NAME(cs);
-  }
-  else {
-    return Qnil;
-  }
+
+  return CHARSETP (cs) ? XCHARSET_NAME (cs) : Qnil;
 }
 
 DEFUN ("coding-system-charset", Fcoding_system_charset, 2, 2, 0, /*
@@ -987,7 +977,7 @@ GNUM allows 0 .. 3.
   coding_system = Fget_coding_system (coding_system);
   CHECK_INT (gnum);
 
-  return coding_system_charset(coding_system, XINT (gnum));
+  return coding_system_charset (coding_system, XINT (gnum));
 }
 
 DEFUN ("coding-system-property", Fcoding_system_property, 2, 2, 0, /*
@@ -1242,35 +1232,35 @@ struct detection_state
   int mask;
 
   struct
-    {
-      int mask;
-      int in_second_byte;
-    }
+  {
+    int mask;
+    int in_second_byte;
+  }
   big5;
 
   struct
-    {
-      int mask;
-      int in_second_byte;
-    }
+  {
+    int mask;
+    int in_second_byte;
+  }
   shift_jis;
 
   struct
-    {
-      int mask;
-      int initted;
-      struct iso2022_decoder iso;
-      unsigned int flags;
-      int high_byte_count;
-      unsigned int saw_single_shift:1;
-    }
+  {
+    int mask;
+    int initted;
+    struct iso2022_decoder iso;
+    unsigned int flags;
+    int high_byte_count;
+    unsigned int saw_single_shift:1;
+  }
   iso2022;
 
   struct
-    {
-      int seen_anything;
-      int just_saw_cr;
-    }
+  {
+    int seen_anything;
+    int just_saw_cr;
+  }
   eol;
 };
 
@@ -1463,7 +1453,7 @@ determine_real_coding_system (Lstream *stream, Lisp_Object *codesys_in_out,
   if (*eol_type_in_out == EOL_AUTODETECT)
     *eol_type_in_out = XCODING_SYSTEM_EOL_TYPE (*codesys_in_out);
 
-  memset (&decst, 0, sizeof (decst));
+  xzero (decst);
   decst.eol_type = *eol_type_in_out;
   decst.mask = ~0;
 
@@ -1521,7 +1511,7 @@ type.  Optional arg BUFFER defaults to the current buffer.
   instream = make_encoding_input_stream (lb_istr, Fget_coding_system (Qbinary));
   istr = XLSTREAM (instream);
   GCPRO2 (instream, lb_instream);
-  memset (&decst, 0, sizeof (decst));
+  xzero (decst);
   decst.eol_type = EOL_AUTODETECT;
   decst.mask = ~0;
   while (1)
@@ -1689,8 +1679,8 @@ struct decoding_stream
   struct detection_state decst;
 };
 
-static int decoding_reader     (Lstream *stream,       unsigned char *data, int size);
-static int decoding_writer     (Lstream *stream, CONST unsigned char *data, int size);
+static int decoding_reader     (Lstream *stream,       unsigned char *data, size_t size);
+static int decoding_writer     (Lstream *stream, CONST unsigned char *data, size_t size);
 static int decoding_rewinder   (Lstream *stream);
 static int decoding_seekable_p (Lstream *stream);
 static int decoding_flusher    (Lstream *stream);
@@ -1723,7 +1713,7 @@ decoding_marker (Lisp_Object stream, void (*markobj) (Lisp_Object))
    so we read data from the other end, decode it, and store it into DATA. */
 
 static int
-decoding_reader (Lstream *stream, unsigned char *data, int size)
+decoding_reader (Lstream *stream, unsigned char *data, size_t size)
 {
   struct decoding_stream *str = DECODING_STREAM_DATA (stream);
   unsigned char *orig_data = data;
@@ -1743,7 +1733,7 @@ decoding_reader (Lstream *stream, unsigned char *data, int size)
 	 most SIZE bytes, and delete the data from the runoff. */
       if (Dynarr_length (str->runoff) > 0)
 	{
-	  int chunk = min (size, Dynarr_length (str->runoff));
+	  size_t chunk = min (size, (size_t) Dynarr_length (str->runoff));
 	  memcpy (data, Dynarr_atp (str->runoff, 0), chunk);
 	  Dynarr_delete_many (str->runoff, 0, chunk);
 	  data += chunk;
@@ -1785,7 +1775,7 @@ decoding_reader (Lstream *stream, unsigned char *data, int size)
 }
 
 static int
-decoding_writer (Lstream *stream, CONST unsigned char *data, int size)
+decoding_writer (Lstream *stream, CONST unsigned char *data, size_t size)
 {
   struct decoding_stream *str = DECODING_STREAM_DATA (stream);
   int retval;
@@ -1809,7 +1799,7 @@ reset_decoding_stream (struct decoding_stream *str)
 {
   if (CODING_SYSTEM_TYPE (str->codesys) == CODESYS_ISO2022)
     {
-      Lisp_Object coding_system = Qnil;
+      Lisp_Object coding_system;
       XSETCODING_SYSTEM (coding_system, str->codesys);
       reset_iso2022 (coding_system, &str->iso2022);
     }
@@ -1862,7 +1852,7 @@ decoding_closer (Lstream *stream)
 Lisp_Object
 decoding_stream_coding_system (Lstream *stream)
 {
-  Lisp_Object coding_system = Qnil;
+  Lisp_Object coding_system;
   struct decoding_stream *str = DECODING_STREAM_DATA (stream);
 
   XSETCODING_SYSTEM (coding_system, str->codesys);
@@ -1895,7 +1885,7 @@ make_decoding_stream_1 (Lstream *stream, Lisp_Object codesys,
   struct decoding_stream *str = DECODING_STREAM_DATA (lstr);
   Lisp_Object obj;
 
-  memset (str, 0, sizeof (*str));
+  xzero (*str);
   str->other_end = stream;
   str->runoff = (unsigned_char_dynarr *) Dynarr_new (unsigned_char);
   str->eol_type = EOL_AUTODETECT;
@@ -1945,7 +1935,7 @@ mule_decode (Lstream *decoding, CONST unsigned char *src,
   if (CODING_SYSTEM_TYPE (str->codesys) == CODESYS_AUTODETECT ||
       str->eol_type == EOL_AUTODETECT)
     {
-      Lisp_Object codesys = Qnil;
+      Lisp_Object codesys;
 
       XSETCODING_SYSTEM (codesys, str->codesys);
       detect_coding_type (&str->decst, src, n,
@@ -2127,9 +2117,9 @@ struct encoding_stream
   struct ccl_program ccl;
 };
 
-static int encoding_reader (Lstream *stream, unsigned char *data, int size);
+static int encoding_reader (Lstream *stream, unsigned char *data, size_t size);
 static int encoding_writer (Lstream *stream, CONST unsigned char *data,
-			    int size);
+			    size_t size);
 static int encoding_rewinder   (Lstream *stream);
 static int encoding_seekable_p (Lstream *stream);
 static int encoding_flusher    (Lstream *stream);
@@ -2162,7 +2152,7 @@ encoding_marker (Lisp_Object stream, void (*markobj) (Lisp_Object))
    so we read data from the other end, encode it, and store it into DATA. */
 
 static int
-encoding_reader (Lstream *stream, unsigned char *data, int size)
+encoding_reader (Lstream *stream, unsigned char *data, size_t size)
 {
   struct encoding_stream *str = ENCODING_STREAM_DATA (stream);
   unsigned char *orig_data = data;
@@ -2182,7 +2172,7 @@ encoding_reader (Lstream *stream, unsigned char *data, int size)
 	 most SIZE bytes, and delete the data from the runoff. */
       if (Dynarr_length (str->runoff) > 0)
 	{
-	  int chunk = min (size, Dynarr_length (str->runoff));
+	  int chunk = min ((int) size, Dynarr_length (str->runoff));
 	  memcpy (data, Dynarr_atp (str->runoff, 0), chunk);
 	  Dynarr_delete_many (str->runoff, 0, chunk);
 	  data += chunk;
@@ -2224,7 +2214,7 @@ encoding_reader (Lstream *stream, unsigned char *data, int size)
 }
 
 static int
-encoding_writer (Lstream *stream, CONST unsigned char *data, int size)
+encoding_writer (Lstream *stream, CONST unsigned char *data, size_t size)
 {
   struct encoding_stream *str = ENCODING_STREAM_DATA (stream);
   int retval;
@@ -2315,7 +2305,7 @@ encoding_closer (Lstream *stream)
 Lisp_Object
 encoding_stream_coding_system (Lstream *stream)
 {
-  Lisp_Object coding_system = Qnil;
+  Lisp_Object coding_system;
   struct encoding_stream *str = ENCODING_STREAM_DATA (stream);
 
   XSETCODING_SYSTEM (coding_system, str->codesys);
@@ -2339,7 +2329,7 @@ make_encoding_stream_1 (Lstream *stream, Lisp_Object codesys,
   struct encoding_stream *str = ENCODING_STREAM_DATA (lstr);
   Lisp_Object obj;
 
-  memset (str, 0, sizeof (*str));
+  xzero (*str);
   str->runoff = Dynarr_new (unsigned_char);
   str->other_end = stream;
   set_encoding_stream_coding_system (lstr, codesys);
@@ -3738,7 +3728,7 @@ decode_coding_iso2022 (Lstream *decoding, CONST unsigned char *src,
   unsigned int flags, ch;
   enum eol_type eol_type;
   struct decoding_stream *str = DECODING_STREAM_DATA (decoding);
-  Lisp_Object coding_system = Qnil;
+  Lisp_Object coding_system;
   unsigned_char_dynarr *real_dst = dst;
 
   CODING_STREAM_DECOMPOSE (str, flags, ch);
@@ -3967,7 +3957,7 @@ iso2022_designate (Lisp_Object charset, unsigned char reg,
 		   struct encoding_stream *str, unsigned_char_dynarr *dst)
 {
   CONST char *inter94 = "()*+", *inter96= ",-./";
-  int type;
+  unsigned int type;
   unsigned char final;
   Lisp_Object old_charset = str->iso2022.charset[reg];
 
@@ -4450,7 +4440,7 @@ static Bufbyte_dynarr *conversion_in_dynarr;
   ((fmt) == FORMAT_TERMINAL) ? FILE_NAME_CODING_SYSTEM     :	\
   Qnil)
 
-extern CONST Extbyte *
+CONST Extbyte *
 convert_to_external_format (CONST Bufbyte *ptr,
 			    Bytecount len,
 			    Extcount *len_out,
@@ -4518,7 +4508,7 @@ convert_to_external_format (CONST Bufbyte *ptr,
   return Dynarr_atp (conversion_out_dynarr, 0);
 }
 
-extern CONST Bufbyte *
+CONST Bufbyte *
 convert_from_external_format (CONST Extbyte *ptr,
 			      Extcount len,
 			      Bytecount *len_out,

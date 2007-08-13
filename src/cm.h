@@ -174,12 +174,11 @@ extern char PC;			/* Pad character */
 #define losecursor()	(curX = -1, curY = -1)
 
 extern int cost;
-extern void evalcost (int c);
-extern void cmputc (int c);
+void cmputc (int c);
 void cmcheckmagic (void);
-extern void cm_cost_init (struct console *c);
-extern void cmgoto (int, int);
-extern void Wcm_clear (void);
-extern int Wcm_init (void);
+void cm_cost_init (struct console *c);
+void cmgoto (int, int);
+void Wcm_clear (void);
+int Wcm_init (void);
 
 #endif /* _XEMACS_CM_H_ */

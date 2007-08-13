@@ -59,7 +59,7 @@
 ;; partition a buffer (that is, change some attribute of a range from one
 ;; value to another without disturbing the properties outside of that range)
 ;; then an interface that deals with properties of characters may be most
-;; natural.  
+;; natural.
 
 ;; Another way of thinking of it is, do you care where the endpoints of the
 ;; region are?  If you do, then you should use extents.  If it's ok for the
@@ -200,10 +200,10 @@ is the string or buffer containing the text."
     props))
 
 (defun extent-properties-at (position &optional object)
-  "Returns the properties of the character at the given position
-in OBJECT (a string or buffer) by merging the properties of overlapping
-extents.  The returned value is a property list, some of which may be
-shared with other structures.  You must not modify it.
+  "Return the properties of the character at the given position in OBJECT.
+OBJECT is either a string or a buffer. The properties of overlapping
+extents are merged.  The returned value is a property list, some of
+which may be shared with other structures.  You must not modify it.
 
 If POSITION is at the end of OBJECT, the value is nil.
 
@@ -212,10 +212,10 @@ See also `text-properties-at'."
   (extent-properties-at-1 position object nil))
 
 (defun text-properties-at (position &optional object)
-  "Returns the properties of the character at the given position
-in OBJECT (a string or buffer) by merging the properties of overlapping
-extents.  The returned value is a property list, some of which may be
-shared with other structures.  You must not modify it.
+  "Return the properties of the character at the given position in OBJECT.
+OBJECT is either a string or a buffer. The properties of overlapping
+extents are merged.  The returned value is a property list, some of
+which may be shared with other structures.  You must not modify it.
 
 If POSITION is at the end of OBJECT, the value is nil.
 

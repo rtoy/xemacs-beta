@@ -94,7 +94,7 @@
 time_t mktime ();
 #endif
 
-#if defined(WINDOWSNT)
+#if defined(WINDOWSNT) || defined(__CYGWIN32__)
 #include <time.h>
 #else
 #if defined(HAVE_TZNAME)

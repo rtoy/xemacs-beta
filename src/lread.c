@@ -70,7 +70,7 @@ Lisp_Object Qload, Qload_file_name;
 Lisp_Object Qlocate_file_hash_table;
 Lisp_Object Qfset;
 
-int puke_on_fsf_keys;
+int fail_on_bucky_bit_character_escapes;
 
 /* This symbol is also used in fns.c */
 #define FEATUREP_SYNTAX
@@ -206,6 +206,8 @@ static int saved_doc_string_length;
 /* This is the file position that string came from.  */
 static int saved_doc_string_position;
 #endif
+
+EXFUN (Fread_from_string, 3);
 
 /* When errors are signaled, the actual readcharfun should not be used
    as an argument if it is an lstream, so that lstreams don't escape
@@ -573,7 +575,7 @@ encoding detection or end-of-line detection.
   int message_p = NILP (nomessage);
 /*#ifdef DEBUG_XEMACS*/
   static Lisp_Object last_file_loaded;
-  int pure_usage = 0;
+  size_t pure_usage = 0;
 /*#endif*/
   struct stat s1, s2;
   GCPRO3 (file, newer, found);
@@ -857,11 +859,10 @@ for details.
 
   CHECK_STRING (filename);
   if (!NILP (suffixes))
-    {
-      CHECK_STRING (suffixes);
-    }
-  if (!(NILP (mode) || (INTP (mode) && XINT (mode) >= 0)))
-    mode = wrong_type_argument (Qnatnump, mode);
+    CHECK_STRING (suffixes);
+  if (!NILP (mode))
+    CHECK_NATNUM (mode);
+
   locate_file (path_list, filename,
                ((NILP (suffixes)) ? "" :
 		(char *) (XSTRING_DATA (suffixes))),
@@ -1063,6 +1064,33 @@ locate_file_construct_suffixed_files (Lisp_Object str, CONST char *suffix)
   return Fnreverse (suffixtab);
 }
 
+DEFUN ("locate-file-clear-hashing", Flocate_file_clear_hashing, 1, 1, 0, /*
+Clear the hash records for the specified list of directories.
+`locate-file' uses a hashing scheme to speed lookup, and will correctly
+track the following environmental changes:
+
+-- changes of any sort to the list of directories to be searched.
+-- addition and deletion of non-shadowing files (see below) from the
+   directories in the list.
+-- byte-compilation of a .el file into a .elc file.
+
+`locate-file' will primarily get confused if you add a file that shadows
+\(i.e. has the same name as) another file further down in the directory list.
+In this case, you must call `locate-file-clear-hashing'.
+*/
+       (path))
+{
+  Lisp_Object pathtail;
+
+  for (pathtail = path; !NILP (pathtail); pathtail = Fcdr (pathtail))
+    {
+      Lisp_Object pathel = Fcar (pathtail);
+      if (!purified (pathel))
+	Fput (pathel, Qlocate_file_hash_table, Qnil);
+    }
+  return Qnil;
+}
+
 /* Search for a file whose name is STR, looking in directories
    in the Lisp list PATH, and trying suffixes from SUFFIX.
    SUFFIX is a string containing possible suffixes separated by colons.
@@ -1166,32 +1194,6 @@ locate_file (Lisp_Object path, Lisp_Object str, CONST char *suffix,
   return val;
 }
 
-DEFUN ("locate-file-clear-hashing", Flocate_file_clear_hashing, 1, 1, 0, /*
-Clear the hash records for the specified list of directories.
-`locate-file' uses a hashing scheme to speed lookup, and will correctly
-track the following environmental changes:
-
--- changes of any sort to the list of directories to be searched.
--- addition and deletion of non-shadowing files (see below) from the
-   directories in the list.
--- byte-compilation of a .el file into a .elc file.
-
-`locate-file' will primarily get confused if you add a file that shadows
-\(i.e. has the same name as) another file further down in the directory list.
-In this case, you must call `locate-file-clear-hashing'.
-*/
-       (path))
-{
-  Lisp_Object pathtail;
-
-  for (pathtail = path; !NILP (pathtail); pathtail = Fcdr (pathtail))
-    {
-      Lisp_Object pathel = Fcar (pathtail);
-      if (!purified (pathel))
-	Fput (pathel, Qlocate_file_hash_table, Qnil);
-    }
-  return Qnil;
-}
 
 #ifdef LOADHIST
 
@@ -1627,7 +1629,8 @@ read_escape (Lisp_Object readcharfun)
    #define meta_modifier  (0x800000)
 */
 #define FSF_LOSSAGE(mask)							\
-      if (puke_on_fsf_keys || ((c = readchar (readcharfun)) != '-'))		\
+      if (fail_on_bucky_bit_character_escapes ||				\
+	  ((c = readchar (readcharfun)) != '-'))				\
 	error ("Invalid escape character syntax");				\
       c = readchar (readcharfun);						\
       if (c < 0)								\
@@ -1862,7 +1865,7 @@ parse_integer (CONST Bufbyte *buf, Bytecount len, int base)
 {
   CONST Bufbyte *lim = buf + len;
   CONST Bufbyte *p = buf;
-  unsigned EMACS_INT num = 0;
+  EMACS_UINT num = 0;
   int negativland = 0;
 
   if (*p == '-')
@@ -1881,7 +1884,7 @@ parse_integer (CONST Bufbyte *buf, Bytecount len, int base)
   for (; (p < lim) && (*p != '\0'); p++)
     {
       int c = *p;
-      unsigned EMACS_INT onum;
+      EMACS_UINT onum;
 
       if (isdigit (c))
 	c = c - '0';
@@ -1902,7 +1905,7 @@ parse_integer (CONST Bufbyte *buf, Bytecount len, int base)
     }
 
   {
-    int int_result = negativland ? -(int)num : (int)num;
+    EMACS_INT int_result = negativland ? -num : num;
     Lisp_Object result = make_int (int_result);
     if (num && ((XINT (result) < 0) != negativland))
       goto overflow;
@@ -2217,7 +2220,7 @@ retry:
 		       list1 (build_string ("Comma outside of backquote")));
 #else
 		  /* #### - yuck....but this is reverse compatible. */
-		  /* mostly this is required by edebug, which does it's own
+		  /* mostly this is required by edebug, which does its own
 		     annotated reading.  We need to have an annotated_read
 		     function that records (with markers) the buffer
 		     positions of the elements that make up lists, then that
@@ -2567,7 +2570,7 @@ retry:
 	/* If purifying, and string starts with \ newline,
 	   return zero instead.  This is for doc strings
 	   that we are really going to find in lib-src/DOC.nn.nn  */
-	if (purify_flag && NILP (Vdoc_file_name) && cancel)
+	if (purify_flag && NILP (Vinternal_doc_file_name) && cancel)
 	  return Qzero;
 
 	Lstream_flush (XLSTREAM (Vread_buffer_stream));
@@ -2843,7 +2846,7 @@ read_list (Lisp_Object readcharfun,
 	    {
 	      if (purify_flag)
 		{
-		  if (NILP (Vdoc_file_name))
+		  if (NILP (Vinternal_doc_file_name))
 		    /* We have not yet called Snarf-documentation, so
 		       assume this file is described in the DOC file
 		       and Snarf-documentation will fill in the right
@@ -2958,7 +2961,7 @@ read_compiled_function (Lisp_Object readcharfun, Emchar terminator)
 	  if (purify_flag && iii == COMPILED_DOC_STRING)
 	    {
 	      /* same as in read_list(). */
-	      if (NILP (Vdoc_file_name))
+	      if (NILP (Vinternal_doc_file_name))
 		make_byte_code_args[iii] = Qzero;
 	      else
 		XCAR (make_byte_code_args[iii]) =
@@ -3166,11 +3169,13 @@ You cannot count on them to still be there!
 */ );
   Vsource_directory = Qnil;
 
-  DEFVAR_BOOL ("fail-on-bucky-bit-character-escapes", &puke_on_fsf_keys /*
+  /* Used to be named `puke-on-fsf-keys' */
+  DEFVAR_BOOL ("fail-on-bucky-bit-character-escapes",
+	       &fail_on_bucky_bit_character_escapes /*
 Whether `read' should signal an error when it encounters unsupported
 character escape syntaxes or just read them incorrectly.
 */ );
-  puke_on_fsf_keys = 0;
+  fail_on_bucky_bit_character_escapes = 0;
 
   /* This must be initialized in init_lread otherwise it may start out
      with values saved when the image is dumped. */

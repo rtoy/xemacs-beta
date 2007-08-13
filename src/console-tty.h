@@ -103,7 +103,7 @@ struct tty_console
     CONST char *home;			/* home, ho */
     CONST char *low_left;		/* ll, ll */
     CONST char *car_return;		/* cr, cr */
-    
+
     /* parameterized local cursor movement */
     CONST char *multi_up;		/* cuu, UP */
     CONST char *multi_down;		/* cud, DO */
@@ -160,7 +160,7 @@ struct tty_console
     CONST char *end_underline;		/* rmul, ue */
     CONST char *begin_alternate;	/* smacs, as */
     CONST char *end_alternate;		/* rmacs, ae */
-    
+
     CONST char *turn_on_reverse;	/* rev, mr */
     CONST char *turn_on_blinking;	/* blink, mb */
     CONST char *turn_on_bold;		/* bold, md */
@@ -179,7 +179,7 @@ struct tty_console
 
     CONST char *orig_pair;		/* op, op */
   } sd;
-  
+
   /* costs of various operations */
   struct
   {
@@ -255,23 +255,18 @@ extern short ospeed;            /* Output speed (from sg_ospeed) */
 
 extern FILE *termscript;
 
+EXFUN (Fconsole_tty_controlling_process, 1);
 
 /******************     Prototypes from cm.c     *******************/
 
 /* #### Verify that all of these are still needed. */
 
-extern void cm_cost_init (struct console *c);
-extern void cmputc (int c);
-extern void cmgoto (struct frame *f, int row, int col);
+void cm_cost_init (struct console *c);
+void cmputc (int c);
+void cmgoto (struct frame *f, int row, int col);
 extern struct console *cmputc_console;
 void send_string_to_tty_console (struct console *c, unsigned char *str,
 				 int len);
-
-
-/***************     Prototypes from event-tty.c     ****************/
-
-extern void init_event_tty_late (void);
-
 
 
 /***************     Prototypes from redisplay-tty.c     ****************/
@@ -285,13 +280,13 @@ enum term_init_status
   TTY_INIT_SUCCESS
 };
 
-extern int init_tty_for_redisplay (struct device *d, char *terminal_type);
+int init_tty_for_redisplay (struct device *d, char *terminal_type);
 /* #### These should probably be methods. */
 void set_tty_modes (struct console *c);
 void reset_tty_modes (struct console *c);
 
 /* Used in sysdep.c to properly clear and position the cursor when exiting. */
-extern void tty_redisplay_shutdown (struct console *c);
+void tty_redisplay_shutdown (struct console *c);
 
 /* called from console-stream.c */
 Lisp_Object tty_semi_canonicalize_console_connection (Lisp_Object connection,

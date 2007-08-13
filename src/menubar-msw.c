@@ -77,11 +77,11 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
+#include <limits.h>
 
 #include "buffer.h"
 #include "commands.h"
 #include "console-msw.h"
-#include "emacsfns.h"
 #include "elhash.h"
 #include "events.h"
 #include "frame.h"

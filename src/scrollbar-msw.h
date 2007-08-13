@@ -51,9 +51,9 @@ struct mswindows_scrollbar_data
 #define SCROLLBAR_MSW_HEIGHT(i) (SCROLLBAR_MSW_DATA (i)->height)
 #define SCROLLBAR_MSW_SIZE(i) (SCROLLBAR_MSW_DATA (i)->size)
      /*
-extern void mswindows_update_frame_scrollbars (struct frame *f);
-extern void mswindows_set_scrollbar_pointer (struct frame *f, Lisp_Object cursor);
-extern EMACS_INT mswindows_window_is_scrollbar (struct frame *f, Window win);
+void mswindows_update_frame_scrollbars (struct frame *f);
+void mswindows_set_scrollbar_pointer (struct frame *f, Lisp_Object cursor);
+EMACS_INT mswindows_window_is_scrollbar (struct frame *f, Window win);
      */
 
 void mswindows_handle_scrollbar_event (HWND hwnd, int code, int pos);

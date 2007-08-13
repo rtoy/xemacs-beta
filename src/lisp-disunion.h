@@ -20,211 +20,143 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.30.  Split out from lisp.h. */
 /* This file has diverged greatly from FSF Emacs.  Syncing is no
-   longer desired or possible */
+   longer desirable or possible */
 
 /*
- * Format of a non-union-type Lisp Object
- *
- *   For the USE_MINIMAL_TAGBITS implementation:
- *
- *             3         2         1         0
- *       bit  10987654321098765432109876543210
- *            --------------------------------
- *            VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTT
- *
- *   For the non-USE_MINIMAL_TAGBITS implementation:
- *
- *             3         2         1         0
- *       bit  10987654321098765432109876543210
- *            --------------------------------
- *            TTTMVVVVVVVVVVVVVVVVVVVVVVVVVVVV
- *
- *    V = value bits
- *    T = type bits
- *    M = mark bits
- *
- * For integral Lisp types, i.e. integers and characters, the value
- * bits are the Lisp object.
- *
- *     The object is obtained by masking off the type and mark
- *     bits.  In the USE_MINIMAL_TAGBITS implementation, bit 1 is
- *     used as a value bit by splitting the Lisp integer type into
- *     two subtypes, Lisp_Type_Int_Even and Lisp_Type_Int_Odd.  By
- *     this trickery we get 31 bits for integers instead of 30.
- *
- *     In the non-USE_MINIMAL_TAGBITS world, Lisp integers are 28
- *     bits, or more properly (LONGBITS - GCTYPEBITS - 1) bits.
- *
- * For non-integral types, the value bits of Lisp_Object contain a
- * pointer to structure containing the object.  The pointer is
- * obtained by masking off the type and mark bits.
- *
- *     In the USE_MINIMAL_TAGBITS implementation, all
- *     pointer-based types are coalesced under a single type called
- *     Lisp_Type_Record.  The type bits for this type are required
- *     by the implementation to be 00, just like the least
- *     significant bits of word-aligned struct pointers on 32-bit
- *     hardware.  Because of this, Lisp_Object pointers don't have
- *     to be masked and are full-sized.
- *
- *     In the non-USE_MINIMAL_TAGBITS implementation, the type and
- *     mark bits must be masked off and pointers are limited to 28
- *     bits (really LONGBITS - GCTYPEBITS - 1 bits).
- */
+ Format of a non-union-type Lisp Object
 
-#ifdef USE_MINIMAL_TAGBITS
-# define Qzero Lisp_Type_Int_Even
-# define VALMASK (((1UL << (VALBITS)) - 1L) << (GCTYPEBITS))
-#else
-# define Qzero Lisp_Type_Int
-# define VALMASK ((1L << (VALBITS)) - 1L)
-# define GCTYPEMASK ((1L << (GCTYPEBITS)) - 1L)
-#endif
+   For the USE_MINIMAL_TAGBITS implementation:
+
+             3         2         1         0
+       bit  10987654321098765432109876543210
+            --------------------------------
+            VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVTT
+
+   Integers are treated specially, and look like this:
+
+             3         2         1         0
+       bit  10987654321098765432109876543210
+            --------------------------------
+            VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVT
+
+   For the non-USE_MINIMAL_TAGBITS implementation:
+
+             3         2         1         0
+       bit  10987654321098765432109876543210
+            --------------------------------
+            TTTMVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+
+    V = value bits
+    T = type bits
+    M = mark bits
+
+ For integral Lisp types, i.e. integers and characters, the value
+ bits are the Lisp object.
+
+     The object is obtained by masking off the type and mark
+     bits.  In the USE_MINIMAL_TAGBITS implementation, bit 1 is
+     used as a value bit by splitting the Lisp integer type into
+     two subtypes, Lisp_Type_Int_Even and Lisp_Type_Int_Odd.  By
+     this trickery we get 31 bits for integers instead of 30.
+
+     In the non-USE_MINIMAL_TAGBITS world, Lisp integers are 28 bits,
+     or more properly (BITS_PER_EMACS_INT - GCTYPEBITS - 1) bits.
+
+ For non-integral types, the value bits of a Lisp_Object contain
+ a pointer to a structure containing the object.  The pointer is
+ obtained by masking off the type and mark bits.
+
+     In the USE_MINIMAL_TAGBITS implementation, all
+     pointer-based types are coalesced under a single type called
+     Lisp_Type_Record.  The type bits for this type are required
+     by the implementation to be 00, just like the least
+     significant bits of word-aligned struct pointers on 32-bit
+     hardware.  Because of this, Lisp_Object pointers don't have
+     to be masked and are full-sized.
+
+     In the non-USE_MINIMAL_TAGBITS implementation, the type and
+     mark bits must be masked off and pointers are limited to 28
+     bits (really BITS_PER_EMACS_INT - GCTYPEBITS - 1 bits).
+
+ There are no mark bits in the USE_MINIMAL_TAGBITS implementation.
+ Integers and characters don't need to be marked.  All other types
+ are lrecord-based, which means they get marked by incrementing
+ their ->implementation pointer.
+
+ In the non-USE_MINIMAL_TAGBITS implementation, the markbit is stored
+ in the Lisp_Object itself.  It is stored in the middle so that the
+ type bits can be obtained by simply shifting them.
+
+ Outside of garbage collection, all mark bits are always zero.
+
+ Here is a brief description of the following macros:
+
+ XMARKBIT  Extract the mark bit (non-USE_MINIMAL_TAGBITS)
+ XMARK     Set the mark bit of this Lisp_Object (non-USE_MINIMAL_TAGBITS)
+ XUNMARK   Clear the mark bit of this Lisp_Object (non-USE_MINIMAL_TAGBITS)
+ XTYPE     The type bits of a Lisp_Object
+ XPNTRVAL  The value bits of a Lisp_Object storing a pointer
+ XCHARVAL  The value bits of a Lisp_Object storing a Emchar
+ XREALINT  The value bits of a Lisp_Object storing an integer, signed
+ XUINT     The value bits of a Lisp_Object storing an integer, unsigned
+ INTP      Non-zero if this Lisp_Object an integer?
+ Qzero     Lisp Integer 0
+ EQ        Non-zero if two Lisp_Objects are identical
+ GC_EQ     Version of EQ used during garbage collection
+*/
 
 typedef EMACS_INT Lisp_Object;
 
+#ifdef USE_MINIMAL_TAGBITS
+
+# define XUNMARK(x) DO_NOTHING
+# define make_obj(vartype, x) ((Lisp_Object) (x))
+# define make_int(x) ((Lisp_Object) (((x) << INT_GCBITS) + 1))
+# define make_char(x) ((Lisp_Object) (((x) << GCBITS) + Lisp_Type_Char))
+# define VALMASK (((1UL << VALBITS) - 1UL) << GCTYPEBITS)
+# define XTYPE(x) ((enum Lisp_Type) (((EMACS_UINT)(x)) & ~VALMASK))
+# define XPNTRVAL(x) (x) /* This depends on Lisp_Type_Record == 0 */
+# define XCHARVAL(x) ((x) >> GCBITS)
+# define GC_EQ(x,y) EQ (x,y)
+# define XREALINT(x) ((x) >> INT_GCBITS)
+# define XUINT(x) ((EMACS_UINT)(x) >> INT_GCBITS)
+# define INTP(x) ((EMACS_UINT)(x) & 1)
+# define Qzero ((Lisp_Object) 1UL)
+
+#else /* !USE_MINIMAL_TAGBITS */
+
+# define MARKBIT (1UL << VALBITS)
+# define XMARKBIT(x) ((x) & MARKBIT)
+# define XMARK(x) ((void) ((x) |= MARKBIT))
+# define XUNMARK(x) ((void) ((x) &= ~MARKBIT))
+# define make_obj(vartype, value) \
+  ((Lisp_Object) (((EMACS_UINT) (vartype) << (VALBITS + GCMARKBITS)) \
+		  + ((EMACS_UINT) (value) & VALMASK)))
+# define make_int(value) make_obj (Lisp_Type_Int, value)
+# define make_char(value) make_obj (Lisp_Type_Char, value)
+# define VALMASK ((1UL << VALBITS) - 1UL)
+# define XTYPE(x) ((enum Lisp_Type) (((EMACS_UINT)(x)) >> (VALBITS + GCMARKBITS)))
+# define XPNTRVAL(x) ((x) & VALMASK)
+# define XCHARVAL(x) XPNTRVAL(x)
+# define GC_EQ(x,y) (((x) & ~MARKBIT) == ((y) & ~MARKBIT))
+# define XREALINT(x) (((x) << INT_GCBITS) >> INT_GCBITS)
+# define XUINT(x) ((EMACS_UINT) ((x) & VALMASK))
+# define INTP(x) (XTYPE (x) == Lisp_Type_Int)
+# define Qzero ((Lisp_Object) Lisp_Type_Int)
+
+#endif /* !USE_MINIMAL_TAGBITS */
+
 #define Qnull_pointer 0
-
-/*
- * There are no mark bits in the USE_MINIMAL_TAGBITS implementation.
- * Integers and characters don't need to be marked.  All other types 
- * are lrecord-based, which means they get marked by incrementing
- * their ->implementation pointer.
- */
-#if GCMARKBITS > 0
- /*
-  * XMARKBIT accesses the markbit.  Markbits are used only in particular
-  * slots of particular structure types.  Other markbits are always
-  * zero.  Outside of garbage collection, all mark bits are always zero.
-  */
-# define MARKBIT (1UL << (VALBITS))
-# define XMARKBIT(a) ((a) & (MARKBIT))
-
-# define XMARK(a) ((void) ((a) |= (MARKBIT)))
-# define XUNMARK(a) ((void) ((a) &= (~(MARKBIT))))
-#else
-# define XUNMARK(a) DO_NOTHING
-#endif
-
-/*
- * Extract the type bits from a Lisp_Object.  If using USE_MINIMAL_TAGBITS, 
- * the least significant two bits are the type bits.  Otherwise the
- * most significant GCTYPEBITS bits are the type bits. 
- *
- * In the non-USE_MINIMAL_TAGBITS case, one needs to override this
- * if there must be high bits set in data space.  Masking the bits
- * (doing the result of the below & ((1 << (GCTYPEBITS)) - 1) would
- * work on all machines, but would penalize machines which don't
- * need it)
- */
-#ifdef USE_MINIMAL_TAGBITS
-# define XTYPE(a) ((enum Lisp_Type) (((EMACS_UINT)(a)) & ~(VALMASK)))
-#else
-# define XTYPE(a) ((enum Lisp_Type) (((EMACS_UINT)(a)) >> ((VALBITS) + 1)))
-#endif
-
-/*
- * This applies only to the non-USE_MINIMAL_TAGBITS Lisp_Object.
- *
- * In the past, during garbage collection, XGCTYPE needed to be used
- * for extracting types so that the mark bit was ignored.  XGCTYPE
- * did and exatr & operation to remove the mark bit.  But the mark
- * bit has been since moved so that the type bits could be extracted
- * with a single shift operation, making XGCTYPE no more expensive
- * than XTYPE, so the two operations are now equivalent.	
- */
-#ifndef XGCTYPE
-# define XGCTYPE(a) XTYPE(a)
-#endif
-
+#define XGCTYPE(x) XTYPE(x)
 #define EQ(x,y) ((x) == (y))
+#define XSETINT(var,  value) ((void) ((var) = make_int (value)))
+#define XSETCHAR(var, value) ((void) ((var) = make_char (value)))
+#define XSETOBJ(var, vartype, value) ((void) ((var) = make_obj (vartype, value)))
 
-#ifdef USE_MINIMAL_TAGBITS
-# define GC_EQ(x,y) EQ(x,y)
-#else
-# define GC_EQ(x,y) (XGCTYPE (x) == XGCTYPE (y) && XPNTR (x) == XPNTR (y))
-#endif
-
-/*
- * Extract the value of a Lisp_Object as a signed integer.
- *
- * The right shifts below are non-portable because >> is allowed to
- * sign extend or not signed extend signed integers depending on the
- * compiler implementors preference.  But this right-shifting of
- * signed ints has been here forever, so the apparently reality is
- * that all compilers of any consequence do sign extension, which is
- * what is needed here.
- */
-#ifndef XREALINT   /* Some machines need to do this differently.  */
-# ifdef USE_MINIMAL_TAGBITS
-#  define XREALINT(a) ((a) >> (LONGBITS-VALBITS-1))
-# else
-#  define XREALINT(a) (((a) << (LONGBITS-VALBITS)) >> (LONGBITS-VALBITS))
-# endif
-#endif
-
-/* Extract the value of a Lisp integer as an unsigned integer. */
-#ifdef USE_MINIMAL_TAGBITS
-# define XUINT(a) ((EMACS_UINT)(a) >> (LONGBITS-VALBITS-1))
-#else
-# define XUINT(a) XPNTRVAL(a)
-#endif
-
-/*
- * Extract the pointer value bits of a pointer based type.
- */
-#ifdef USE_MINIMAL_TAGBITS
-# define XPNTRVAL(a) (a) /* This depends on Lisp_Type_Record == 0 */
-# define XCHARVAL(a) ((a) >> (LONGBITS-VALBITS))
-#else
-# define XPNTRVAL(a) ((a) & VALMASK)
-# define XCHARVAL(a) XPNTRVAL(a)
-#endif
-
-#ifdef HAVE_SHM
-/* In this representation, data is found in two widely separated segments.  */
-extern int pure_size;
-#  define XPNTR(a) \
-  (XPNTRVAL (a) | (XPNTRVAL (a) > pure_size ? DATA_SEG_BITS : PURE_SEG_BITS))
-# else /* not HAVE_SHM */
-#  ifdef DATA_SEG_BITS
-/* This case is used for the rt-pc.
-   In the diffs I was given, it checked for ptr = 0
-   and did not adjust it in that case.
-   But I don't think that zero should ever be found
-   in a Lisp object whose data type says it points to something. */
-#   define XPNTR(a) (XPNTRVAL (a) | DATA_SEG_BITS)
-#  else
-#   define XPNTR(a) XPNTRVAL (a)
-#  endif
-#endif /* not HAVE_SHM */
-
-#ifdef USE_MINIMAL_TAGBITS
-
-/* XSETINT depends on Lisp_Type_Int_Even == 1 and Lisp_Type_Int_Odd == 3 */
-# define XSETINT(var, value) \
-  ((void) ((var) = ((value) << (LONGBITS-VALBITS-1)) + 1))
-# define XSETCHAR(var, value) \
-  ((void) ((var) = ((value) << (LONGBITS-VALBITS)) + Lisp_Type_Char))
-# define XSETOBJ(var, type_tag, value) \
-  ((void) ((var) = ((EMACS_UINT) (value))))
-
-#else
-
-# define XSETINT(a, b) XSETOBJ (a, Lisp_Type_Int, b)
-# define XSETCHAR(var, value) XSETOBJ (var, Lisp_Type_Char, value)
-# define XSETOBJ(var, type_tag, value)			\
-  ((void) ((var) = (((EMACS_UINT) (type_tag) << ((VALBITS) + 1))	\
-                   + ((EMACS_INT) (value) & VALMASK))))
-#endif
-
-/* Use this for turning a (void *) into a Lisp_Object, as when the
-  Lisp_Object is passed into a toolkit callback function */
+/* Convert between a (void *) and a Lisp_Object, as when the
+   Lisp_Object is passed to a toolkit callback function */
 #define VOID_TO_LISP(larg,varg) ((void) ((larg) = ((Lisp_Object) (varg))))
 #define CVOID_TO_LISP VOID_TO_LISP
-
-/* Use this for turning a Lisp_Object into a (void *), as when the
-   Lisp_Object is passed into a toolkit callback function */
 #define LISP_TO_VOID(larg) ((void *) (larg))
 #define LISP_TO_CVOID(varg) ((CONST void *) (larg))
 

@@ -220,7 +220,7 @@ check_free (void *ptr)
 #endif
 
       EMACS_INT present = (EMACS_INT) gethash (ptr, pointer_table,
-					       (void **) &size);
+					       (CONST void **) &size);
 
       if (!present)
 	{
@@ -230,9 +230,7 @@ check_free (void *ptr)
 	  /* I originally wrote:  "There's really no need to drop core."
 	     I have seen the error of my ways. -slb */
 	  if (strict_free_check)
-	    {
-	      abort ();
-	    }
+	    abort ();
 #endif
 	  printf("Freeing unmalloc'ed memory at %p\n", ptr);
 	  __free_hook = check_free;
@@ -246,9 +244,7 @@ check_free (void *ptr)
 #if !defined(__linux__)
 	  /* See above comment. */
 	  if (strict_free_check)
-	    {
-	      abort ();
-	    }
+	    abort ();
 #endif
 	  printf("Freeing %p twice\n", ptr);
 	  __free_hook = check_free;
@@ -353,7 +349,7 @@ check_realloc (void * ptr, unsigned long size)
   void *result = malloc (size);
 
   if (!ptr) return result;
-  present = (EMACS_INT) gethash (ptr, pointer_table, (void **) &old_size);
+  present = (EMACS_INT) gethash (ptr, pointer_table, (CONST void **) &old_size);
   if (!present)
     {
     /* This can only happen by reallocing a pointer that didn't

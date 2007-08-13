@@ -249,7 +249,7 @@ for dialog box buttons is `:active'.
   struct frame *f = selected_frame ();
   widget_value *data;
   Widget parent, dbox;
-  Lisp_Object frame = Qnil;
+  Lisp_Object frame;
 
   XSETFRAME (frame, f);
 

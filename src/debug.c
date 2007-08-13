@@ -42,8 +42,6 @@ Boston, MA 02111-1307, USA.  */
 Lisp_Object Qredisplay, Qbuffers, Qfaces;
 Lisp_Object Qwindows, Qframes, Qdevices;
 
-/* Lisp_Object Qbyte_code; in bytecode.c */
-
 struct debug_classes active_debug_classes;
 
 enum debug_loop
@@ -218,4 +216,3 @@ vars_of_debug (void)
      to emacs.c. */
   xemacs_debug_loop (INIT, Qnil, Qnil);
 }
-

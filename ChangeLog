@@ -1,3 +1,81 @@
+1998-04-04  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-beta34 is released.
+
+1998-04-03  Martin Buchholz  <martin@xemacs.org>
+
+	* configure.in:
+	checking whether gettimeofday accepts one or two arguments... two
+
+1998-04-03  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* configure.in: Fixed magic to handle AIX and MIT X11R6.
+
+1998-04-02  Martin Buchholz  <martin@xemacs.org>
+
+	* configure.in: Add magic -T $srcdir/ppc.ldscript on Linux powerpc
+
+1998-04-01  Martin Buchholz  <martin@xemacs.org>
+
+	* tests/database.el (test-database): Temporary files (the databases
+	that were created) should be deleted.
+
+	* Makefile.in (testdir): Remove gnumake-specific syntax.
+	(src/Makefile): src/Makefile depends on src/depend.
+
+1998-03-29  Martin Buchholz  <martin@xemacs.org>
+
+	* configure.in: Check for -lz, -lgz unconditionally.  Too many
+	system linkers don't properly die when there are cascaded link
+	dependencies, so we can't rely on the linker for that.  The only
+	downside is that we might link with an extra unneeded library.  If 
+	you really really care about this, you can go fix it.
+
+	* configure.in: Enhance PANIC msg to make it clear that
+	--with-FEATURE is going to die if FEATURE is not installed.
+
+1998-03-27  Martin Buchholz  <martin@xemacs.org>
+
+	* configure.in: $debug was not properly dependent on $beta
+	
+	* configure.in: Move offix configuration out of src/Makefile.in.in 
+	into configure.in.
+
+	* configure.in: Reorganize xpm detection code.
+
+	* configure.in: XIM default to ON if Motif which is not Lesstif is 
+	found.
+
+	* configure.in: Keep auto-generated makefile dependencies out of
+	src/Makefile.in.in by using AC_OUTPUT file concatenation support.
+
+1998-03-26  Martin Buchholz  <martin@xemacs.org>
+
+	* configure.in: Fix up cflags handling.  Specifically, configure
+	--cflags='' would fail to be recognized.
+
+	* configure.in: Fix up png detection.  Link with png_read_image to
+	make sure -lz is required.  Test for png >- 0.96 via header file.
+
+1998-03-21  Martin Buchholz  <martin@xemacs.org>
+
+	* configure.in (XE_GCC_WRAP_LDFLAGS)
+	Rename to XE_PROTECT_LINKER_FLAGS.  Rewrite.
+
+	* configure.in: Make sure BSD always links in libz.a
+	BSD's stupid linker can't detect cascaded lib dependencies
+
+	* configure.in: Autodetect lesstif.  define have_lesstif.
+	Don't use motif-xim with lesstif, at least by default.
+
+1998-03-30  SL Baur  <steve@altair.xemacs.org>
+
+	* version.sh: Add InfoDock version number variables.
+
+1998-03-30  Amir J. Katz  <amir@ndsoft.com>
+
+	* info/dir: Replaced string '20.5' with '21.0'
+
 1998-03-24  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-beta33 is released.

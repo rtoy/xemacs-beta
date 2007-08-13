@@ -14,8 +14,6 @@
 #define C_OPTIMIZE_SWITCH "-O"
 #endif
 
-/* Perry Smith <pedz@ddivt1.austin.ibm.com> says these are correct.  */
-/* #define SIGNALS_VIA_CHARACTERS */ /* mrb */
 #define MAIL_USE_LOCKF
 
 /* XEmacs: from dkeller@VNET.IBM.COM */

@@ -420,9 +420,8 @@ internal_self_insert (Emchar c1, int noautofill)
   if (!NILP (Vself_insert_face)
       && EQ (Vlast_command, Vself_insert_face_command))
     {
-      Lisp_Object before, after;
-      XSETINT (before, BUF_PT (buf) - 1);
-      XSETINT (after, BUF_PT (buf));
+      Lisp_Object before = make_int (BUF_PT (buf) - 1);
+      Lisp_Object after  = make_int (BUF_PT (buf));
       Fput_text_property (before, after, Qface, Vself_insert_face, Qnil);
       Fput_text_property (before, after, Qstart_open, Qt, Qnil);
       Fput_text_property (before, after, Qend_open, Qnil, Qnil);

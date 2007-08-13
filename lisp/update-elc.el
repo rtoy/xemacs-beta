@@ -92,8 +92,6 @@
 (let (preloaded-file-list site-load-packages)
   (load (concat default-directory "../lisp/dumped-lisp.el"))
 
-  (print (format "%S" package-path))
-
   ;; Path setup
   (let ((package-preloaded-file-list
 	 (packages-collect-package-dumped-lisps late-package-load-path)))
@@ -120,6 +118,9 @@
 		(progn
 		  (print (format "Error: Library file %s not found"
 				 (car preloaded-file-list)))
+		  ;; Uncomment in case of trouble
+		  ;;(print (format "late-packages: %S" late-packages))
+		  ;;(print (format "guessed-roots: %S" (paths-find-emacs-roots invocation-directory invocation-name)))
 		  (kill-emacs)))
 	    (if (string-match "\\.elc?\\'" arg)
 		(setq arg (substring arg 0 (match-beginning 0))))

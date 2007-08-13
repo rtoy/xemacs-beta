@@ -70,6 +70,7 @@ Boston, MA 02111-1307, USA.  */
 #define lw_menu_active	0
 #endif
 
+#include "blocktype.h"
 #include "buffer.h"
 #include "commands.h"
 #include "device.h"
@@ -136,6 +137,8 @@ Lisp_Object Qdeferred_action_function;
 /* Non-nil disable property on a command means
    do not execute it; call disabled-command-hook's value instead. */
 Lisp_Object Qdisabled, Vdisabled_command_hook;
+
+EXFUN (Fnext_command_event, 2);
 
 static void pre_command_hook (void);
 static void post_command_hook (void);
@@ -382,14 +385,6 @@ static Lisp_Object recursive_sit_for;
 #define GC_COMMAND_BUILDERP(x) GC_RECORDP (x, command_builder)
 #define CHECK_COMMAND_BUILDER(x) CHECK_RECORD (x, command_builder)
 
-static Lisp_Object mark_command_builder (Lisp_Object obj,
-					  void (*markobj) (Lisp_Object));
-static void finalize_command_builder (void *header, int for_disksave);
-DEFINE_LRECORD_IMPLEMENTATION ("command-builder", command_builder,
-                               mark_command_builder, internal_object_printer,
-			       finalize_command_builder, 0, 0,
-			       struct command_builder);
-
 static Lisp_Object
 mark_command_builder (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
@@ -413,6 +408,11 @@ finalize_command_builder (void *header, int for_disksave)
     }
 }
 
+DEFINE_LRECORD_IMPLEMENTATION ("command-builder", command_builder,
+                               mark_command_builder, internal_object_printer,
+			       finalize_command_builder, 0, 0,
+			       struct command_builder);
+
 static void
 reset_command_builder_event_chain (struct command_builder *builder)
 {
@@ -427,7 +427,7 @@ reset_command_builder_event_chain (struct command_builder *builder)
 Lisp_Object
 allocate_command_builder (Lisp_Object console)
 {
-  Lisp_Object builder_obj = Qnil;
+  Lisp_Object builder_obj;
   struct command_builder *builder =
     alloc_lcrecord_type (struct command_builder, lrecord_command_builder);
 
@@ -500,12 +500,10 @@ check_event_stream_ok (enum event_stream_operation op)
     }
 }
 
-int
+static int
 event_stream_event_pending_p (int user)
 {
-  if (!event_stream)
-    return 0;
-  return event_stream->event_pending_p (user);
+  return event_stream && event_stream->event_pending_p (user);
 }
 
 static int
@@ -538,7 +536,7 @@ maybe_read_quit_event (struct Lisp_Event *event)
 void
 event_stream_next_event (struct Lisp_Event *event)
 {
-  Lisp_Object event_obj = Qnil;
+  Lisp_Object event_obj;
 
   check_event_stream_ok (EVENT_STREAM_READ);
 
@@ -909,7 +907,8 @@ execute_help_form (struct command_builder *command_builder,
     Lisp_Object frmcons, devcons, concons;
     FRAME_LOOP_NO_BREAK (frmcons, devcons, concons)
       {
-	MARK_FRAME_WINDOWS_STRUCTURE_CHANGED (XFRAME (XCAR (frmcons)));
+        struct frame *f = XFRAME (XCAR (frmcons));
+	MARK_FRAME_WINDOWS_STRUCTURE_CHANGED (f);
       }
   }
 
@@ -959,7 +958,7 @@ detect_input_pending (void)
 }
 
 DEFUN ("input-pending-p", Finput_pending_p, 0, 0, 0, /*
-T if command input is currently available with no waiting.
+Return t if command input is currently available with no waiting.
 Actually, the value is nil only if we can be sure that no input is available.
 */
   ())
@@ -1263,7 +1262,7 @@ void
 event_stream_disable_wakeup (int id, int async_p)
 {
   struct timeout *timeout = 0;
-  Lisp_Object rest = Qnil;
+  Lisp_Object rest;
   Lisp_Object *timeout_list;
 
   if (async_p)
@@ -1298,7 +1297,7 @@ static int
 event_stream_wakeup_pending_p (int id, int async_p)
 {
   struct timeout *timeout;
-  Lisp_Object rest = Qnil;
+  Lisp_Object rest;
   Lisp_Object timeout_list;
   int found = 0;
 
@@ -1371,17 +1370,15 @@ event_stream_deal_with_async_timeout (int interval_id)
 static unsigned long
 lisp_number_to_milliseconds (Lisp_Object secs, int allow_0)
 {
-  unsigned long msecs;
 #ifdef LISP_FLOAT_TYPE
   double fsecs;
   CHECK_INT_OR_FLOAT (secs);
   fsecs = XFLOATINT (secs);
 #else
   long fsecs;
-  CHECK_INT_OR_FLOAT (secs);
+  CHECK_INT (secs);
   fsecs = XINT (secs);
 #endif
-  msecs = 1000 * fsecs;
   if (fsecs < 0)
     signal_simple_error ("timeout is negative", secs);
   if (!allow_0 && fsecs == 0)
@@ -1389,7 +1386,8 @@ lisp_number_to_milliseconds (Lisp_Object secs, int allow_0)
   if (fsecs >= (((unsigned int) 0xFFFFFFFF) / 1000))
     signal_simple_error
       ("timeout would exceed 32 bits when represented in milliseconds", secs);
-  return msecs;
+
+  return (unsigned long) (1000 * fsecs);
 }
 
 DEFUN ("add-timeout", Fadd_timeout, 3, 4, 0, /*
@@ -1543,13 +1541,13 @@ It will not work to call this function on an id number returned by
    event read after all pending events.   This only works on keyboard,
    mouse-click, misc-user, and eval events.
  */
-void
+static void
 enqueue_command_event (Lisp_Object event)
 {
   enqueue_event (event, &command_event_queue, &command_event_queue_tail);
 }
 
-Lisp_Object
+static Lisp_Object
 dequeue_command_event (void)
 {
   return dequeue_event (&command_event_queue, &command_event_queue_tail);
@@ -1799,7 +1797,10 @@ emacs_handle_focus_change_preliminary (Lisp_Object frame_inp_and_dev)
 
       /* Mark the minibuffer as changed to make sure it gets updated
          properly if the echo area is active. */
-      MARK_WINDOWS_CHANGED (XWINDOW (FRAME_MINIBUF_WINDOW (XFRAME (frame))));
+      {
+        struct window *w = XWINDOW (FRAME_MINIBUF_WINDOW (XFRAME (frame)));
+	MARK_WINDOWS_CHANGED (w);
+      }
 
       if (FRAMEP (focus_frame) && !EQ (frame, focus_frame))
 	{
@@ -3516,7 +3517,7 @@ or by actions defined in menu-accelerator-map.
 
   if (NILP (f->menubar_data))
     error ("Frame has no menubar.");
-    
+
   id = XPOPUP_DATA (f->menubar_data)->id;
   val = lw_get_all_values (id);
   val = val->contents;
@@ -5183,8 +5184,8 @@ you should *bind* this, not set it.
     Vretry_undefined_key_binding_unshifted = Qt;
 
 #ifdef HAVE_XIM
-  DEFVAR_LISP ("Vcomposed_character_default_binding",
-               &Vretry_undefined_key_binding_unshifted /*
+  DEFVAR_LISP ("composed-character-default-binding",
+               &Vcomposed_character_default_binding /*
 The default keybinding to use for key events from composed input.
 Window systems frequently have ways to allow the user to compose
 single characters in a language using multiple keystrokes.

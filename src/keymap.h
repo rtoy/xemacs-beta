@@ -32,38 +32,31 @@ DECLARE_LRECORD (keymap, struct keymap);
 #define CHECK_KEYMAP(x) CHECK_RECORD (x, keymap)
 #define CONCHECK_KEYMAP(x) CONCHECK_RECORD (x, keymap)
 
-extern Lisp_Object get_keymap (Lisp_Object object, int errorp, int autoload);
-extern Lisp_Object event_binding (Lisp_Object event0, int accept_default);
-extern Lisp_Object event_binding_in (Lisp_Object event0, Lisp_Object keymap,
-				     int accept_default);
-extern Lisp_Object munging_key_map_event_binding (Lisp_Object event0,
-						  enum munge_me_out_the_door
-						  munge);
+EXFUN (Fkeymap_prompt, 2);
+EXFUN (Fkeymapp, 1);
+EXFUN (Fmake_keymap, 1);
+EXFUN (Fwhere_is_internal, 5);
 
-extern Lisp_Object Fkey_description (Lisp_Object keys);
-extern Lisp_Object Fsingle_key_description (Lisp_Object key);
-extern Lisp_Object Fwhere_is_internal (Lisp_Object definition,
-                                       Lisp_Object keymaps,
-                                       Lisp_Object firstonly,
-                                       Lisp_Object noindirect,
-				       Lisp_Object event_or_keys);
-
-extern Lisp_Object Fkeymap_name (Lisp_Object keymap);
-extern Lisp_Object Fset_keymap_name (Lisp_Object keymap, Lisp_Object name);
-extern Lisp_Object Fkeymap_prompt (Lisp_Object keymap, Lisp_Object inherit);
-extern Lisp_Object Fset_keymap_prompt (Lisp_Object keymap, Lisp_Object prompt);
-
-extern int relevant_keymaps_to_search (Lisp_Object keys,
-                                       int max_maps, Lisp_Object maps[]);
-extern void describe_map_tree (Lisp_Object startmap, int partial,
-                               Lisp_Object shadow, Lisp_Object prefix,
-                               int mice_only_p, Lisp_Object buffer);
-
-extern void key_desc_list_to_event (Lisp_Object list, Lisp_Object event,
-				    int allow_menu_events);
-
+extern Lisp_Object Qalt, Qcontrol, Qhyper, Qmeta, Qshift, Qsuper;
 extern Lisp_Object Vmeta_prefix_char;
-extern int event_matches_key_specifier_p (struct Lisp_Event *event,
-					  Lisp_Object key_specifier);
+
+Lisp_Object get_keymap (Lisp_Object object, int errorp, int autoload);
+Lisp_Object event_binding (Lisp_Object event0, int accept_default);
+Lisp_Object event_binding_in (Lisp_Object event0, Lisp_Object keymap,
+			      int accept_default);
+
+Lisp_Object munging_key_map_event_binding (Lisp_Object event0,
+					   enum munge_me_out_the_door munge);
+int relevant_keymaps_to_search (Lisp_Object keys,
+				int max_maps, Lisp_Object maps[]);
+void describe_map_tree (Lisp_Object startmap, int partial,
+			Lisp_Object shadow, Lisp_Object prefix,
+			int mice_only_p, Lisp_Object buffer);
+
+void key_desc_list_to_event (Lisp_Object list, Lisp_Object event,
+			     int allow_menu_events);
+
+int event_matches_key_specifier_p (struct Lisp_Event *event,
+				   Lisp_Object key_specifier);
 
 #endif /* _XEMACS_KEYMAP_H_ */

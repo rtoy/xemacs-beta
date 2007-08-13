@@ -90,15 +90,6 @@ Lisp_Object Vstandard_category_table;
 
 #ifdef MULE
 
-static Lisp_Object mark_char_table_entry (Lisp_Object, void (*) (Lisp_Object));
-static int char_table_entry_equal (Lisp_Object, Lisp_Object, int depth);
-static unsigned long char_table_entry_hash (Lisp_Object obj, int depth);
-DEFINE_LRECORD_IMPLEMENTATION ("char-table-entry", char_table_entry,
-                               mark_char_table_entry, internal_object_printer,
-			       0, char_table_entry_equal,
-			       char_table_entry_hash,
-			       struct Lisp_Char_Table_Entry);
-
 static Lisp_Object
 mark_char_table_entry (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
@@ -134,16 +125,12 @@ char_table_entry_hash (Lisp_Object obj, int depth)
   return internal_array_hash (cte->level2, 96, depth);
 }
 
+DEFINE_LRECORD_IMPLEMENTATION ("char-table-entry", char_table_entry,
+                               mark_char_table_entry, internal_object_printer,
+			       0, char_table_entry_equal,
+			       char_table_entry_hash,
+			       struct Lisp_Char_Table_Entry);
 #endif /* MULE */
-
-static Lisp_Object mark_char_table (Lisp_Object, void (*) (Lisp_Object));
-static void print_char_table (Lisp_Object, Lisp_Object, int);
-static int char_table_equal (Lisp_Object, Lisp_Object, int depth);
-static unsigned long char_table_hash (Lisp_Object obj, int depth);
-DEFINE_LRECORD_IMPLEMENTATION ("char-table", char_table,
-                               mark_char_table, print_char_table, 0,
-			       char_table_equal, char_table_hash,
-			       struct Lisp_Char_Table);
 
 static Lisp_Object
 mark_char_table (Lisp_Object obj, void (*markobj) (Lisp_Object))
@@ -431,6 +418,11 @@ char_table_hash (Lisp_Object obj, int depth)
   return hashval;
 }
 
+DEFINE_LRECORD_IMPLEMENTATION ("char-table", char_table,
+                               mark_char_table, print_char_table, 0,
+			       char_table_equal, char_table_hash,
+			       struct Lisp_Char_Table);
+
 DEFUN ("char-table-p", Fchar_table_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a char table.
 
@@ -580,14 +572,14 @@ Reset a char table to its default state.
 }
 
 DEFUN ("make-char-table", Fmake_char_table, 1, 1, 0, /*
-Make a new, empty char table of type TYPE.
+Return a new, empty char table of type TYPE.
 Currently recognized types are 'char, 'category, 'display, 'generic,
 and 'syntax.  See `valid-char-table-type-p'.
 */
        (type))
 {
   struct Lisp_Char_Table *ct;
-  Lisp_Object obj = Qnil;
+  Lisp_Object obj;
   enum char_table_type ty = symbol_to_char_table_type (type);
 
   ct = alloc_lcrecord_type (struct Lisp_Char_Table, lrecord_char_table);
@@ -595,8 +587,8 @@ and 'syntax.  See `valid-char-table-type-p'.
   if (ty == CHAR_TABLE_TYPE_SYNTAX)
     {
       ct->mirror_table = Fmake_char_table (Qgeneric);
-      fill_char_table (XCHAR_TABLE (ct->mirror_table), 
-                       make_int (Spunct)); 
+      fill_char_table (XCHAR_TABLE (ct->mirror_table),
+                       make_int (Spunct));
     }
   else
     ct->mirror_table = Qnil;
@@ -616,14 +608,15 @@ and 'syntax.  See `valid-char-table-type-p'.
 static Lisp_Object
 make_char_table_entry (Lisp_Object initval)
 {
-  struct Lisp_Char_Table_Entry *cte;
-  Lisp_Object obj = Qnil;
+  Lisp_Object obj;
   int i;
+  struct Lisp_Char_Table_Entry *cte =
+    alloc_lcrecord_type (struct Lisp_Char_Table_Entry,
+			 lrecord_char_table_entry);
 
-  cte = alloc_lcrecord_type (struct Lisp_Char_Table_Entry,
-			     lrecord_char_table_entry);
   for (i = 0; i < 96; i++)
     cte->level2[i] = initval;
+
   XSETCHAR_TABLE_ENTRY (obj, cte);
   return obj;
 }
@@ -632,7 +625,7 @@ static Lisp_Object
 copy_char_table_entry (Lisp_Object entry)
 {
   struct Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (entry);
-  Lisp_Object obj = Qnil;
+  Lisp_Object obj;
   int i;
   struct Lisp_Char_Table_Entry *ctenew =
     alloc_lcrecord_type (struct Lisp_Char_Table_Entry,
@@ -661,7 +654,7 @@ as OLD-TABLE.  The values will not themselves be copied.
        (old_table))
 {
   struct Lisp_Char_Table *ct, *ctnew;
-  Lisp_Object obj = Qnil;
+  Lisp_Object obj;
   int i;
 
   CHECK_CHAR_TABLE (old_table);
@@ -1602,7 +1595,8 @@ check_category_char (Emchar ch, Lisp_Object table,
 #endif
   ctbl = XCHAR_TABLE (table);
   temp = get_char_table (ch, ctbl);
-  if (EQ (temp, Qnil)) return not;
+  if (NILP (temp))
+    return not;
 
   designator -= ' ';
   return bit_vector_bit (XBIT_VECTOR (temp), designator) ? !not : not;
@@ -1611,8 +1605,8 @@ check_category_char (Emchar ch, Lisp_Object table,
 DEFUN ("check-category-at", Fcheck_category_at, 2, 4, 0, /*
 Return t if category of a character at POS includes DESIGNATOR,
 else return nil. Optional third arg specifies which buffer
-(defaulting to current), and fourth specifies the CATEGORY-TABLE,
-(defaulting to the buffer's category table).
+\(defaulting to current), and fourth specifies the CATEGORY-TABLE,
+\(defaulting to the buffer's category table).
 */
        (pos, designator, buffer, category_table))
 {

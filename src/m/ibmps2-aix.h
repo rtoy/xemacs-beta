@@ -98,10 +98,6 @@ so disable it for them.  */
 #define C_DEBUG_SWITCH "-O"
 #endif
 
-/* Send signals to subprocesses by "typing" special chars at them.  */
-
-/* #define SIGNALS_VIA_CHARACTERS */ /* mrb */
-
 /* AIX utimes allegedly causes SIGSEGV.  */
 #undef HAVE_UTIMES /* override configuration decision */
 

@@ -41,42 +41,31 @@ Boston, MA 02111-1307, USA.  */
 Lisp_Object Qimage_conversion_error;
 
 Lisp_Object Qglyphp, Qcontrib_p, Qbaseline;
-
 Lisp_Object Qbuffer_glyph_p, Qpointer_glyph_p, Qicon_glyph_p;
-
 Lisp_Object Qnothing_image_instance_p, Qtext_image_instance_p;
 Lisp_Object Qmono_pixmap_image_instance_p;
 Lisp_Object Qcolor_pixmap_image_instance_p;
 Lisp_Object Qpointer_image_instance_p;
 Lisp_Object Qsubwindow_image_instance_p;
-
 Lisp_Object Qconst_glyph_variable;
-
-/* Qtext, Qpointer defined in general.c */
 Lisp_Object Qmono_pixmap, Qcolor_pixmap, Qsubwindow;
+Lisp_Object Q_file, Q_data, Q_face;
+Lisp_Object Qicon;
+Lisp_Object Qformatted_string;
 
 Lisp_Object Vcurrent_display_table;
-/* Declared in faces.c */
-extern Lisp_Object Qdisplay_table;
-
 Lisp_Object Vtruncation_glyph, Vcontinuation_glyph, Voctal_escape_glyph;
 Lisp_Object Vcontrol_arrow_glyph, Vinvisible_text_glyph, Vhscroll_glyph;
 Lisp_Object Vxemacs_logo;
-
 Lisp_Object Vthe_nothing_vector;
+Lisp_Object Vimage_instantiator_format_list;
+Lisp_Object Vimage_instance_type_list;
+Lisp_Object Vglyph_type_list;
 
-Lisp_Object Q_file, Q_data, Q_face;
-
-Lisp_Object Qicon;
-
-/* Qnothing, Qstring, Qinherit in general.c */
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (nothing);
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (inherit);
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (string);
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (formatted_string);
-Lisp_Object Qformatted_string;
-
-MAC_DEFINE (struct image_instantiator_methods *, MTiiformat_meth_or_given)
 
 typedef struct image_instantiator_format_entry image_instantiator_format_entry;
 struct image_instantiator_format_entry
@@ -93,17 +82,13 @@ typedef struct
 image_instantiator_format_entry_dynarr *
   the_image_instantiator_format_entry_dynarr;
 
-Lisp_Object Vimage_instantiator_format_list;
-
-Lisp_Object Vimage_instance_type_list;
-
-Lisp_Object Vglyph_type_list;
-
 static Lisp_Object allocate_image_instance (Lisp_Object device);
 static void image_validate (Lisp_Object instantiator);
 static void glyph_property_was_changed (Lisp_Object glyph,
 					Lisp_Object property,
 					Lisp_Object locale);
+EXFUN (Fimage_instance_type, 1);
+EXFUN (Fglyph_type, 1);
 
 
 /****************************************************************************
@@ -140,9 +125,7 @@ decode_image_instantiator_format (Lisp_Object format, Error_behavior errb)
 static int
 valid_image_instantiator_format_p (Lisp_Object format)
 {
-  if (decode_image_instantiator_format (format, ERROR_ME_NOT))
-    return 1;
-  return 0;
+  return (decode_image_instantiator_format (format, ERROR_ME_NOT) != 0);
 }
 
 DEFUN ("valid-image-instantiator-format-p",
@@ -150,15 +133,12 @@ DEFUN ("valid-image-instantiator-format-p",
 Given an IMAGE-INSTANTIATOR-FORMAT, return non-nil if it is valid.
 Valid formats are some subset of 'nothing, 'string, 'formatted-string,
 'xpm, 'xbm, 'xface, 'gif, 'jpeg, 'png, 'tiff, 'cursor-font, 'font,
-'autodetect, and 'subwindow, depending on how XEmacs was
-compiled.
+'autodetect, and 'subwindow, depending on how XEmacs was compiled.
 */
        (image_instantiator_format))
 {
-  if (valid_image_instantiator_format_p (image_instantiator_format))
-    return Qt;
-  else
-    return Qnil;
+  return valid_image_instantiator_format_p (image_instantiator_format) ?
+    Qt : Qnil;
 }
 
 DEFUN ("image-instantiator-format-list",
@@ -476,12 +456,14 @@ normalize_image_instantiator (Lisp_Object instantiator,
      instantiate a new instance of the pixmap and the file will no
      longer exist (e.g. w3 pixmaps are almost always from temporary
      files). */
-  instantiator = IIFORMAT_METH_OR_GIVEN
-    (decode_image_instantiator_format (XVECTOR_DATA (instantiator)[0],
-				       ERROR_ME),
-     normalize, (instantiator, contype), instantiator);
-
-  return instantiator;
+  {
+    struct image_instantiator_methods * meths =
+      decode_image_instantiator_format (XVECTOR_DATA (instantiator)[0],
+					ERROR_ME);
+    return IIFORMAT_METH_OR_GIVEN (meths, normalize,
+				   (instantiator, contype),
+				   instantiator);
+  }
 }
 
 static Lisp_Object
@@ -490,24 +472,19 @@ instantiate_image_instantiator (Lisp_Object device, Lisp_Object domain,
 				Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 				int dest_mask)
 {
-  Lisp_Object ii;
+  Lisp_Object ii = allocate_image_instance (device);
+  struct image_instantiator_methods *meths;
   struct gcpro gcpro1;
 
-  ii = allocate_image_instance (device);
-
   GCPRO1 (ii);
-  {
-    struct image_instantiator_methods *meths =
-      decode_image_instantiator_format (XVECTOR_DATA (instantiator)[0],
-					ERROR_ME);
-
-    if (!HAS_IIFORMAT_METH_P (meths, instantiate))
-      signal_simple_error
-	("Don't know how to instantiate this image instantiator?",
-	 instantiator);
-    IIFORMAT_METH (meths, instantiate, (ii, instantiator, pointer_fg,
-					pointer_bg, dest_mask, domain));
-  }
+  meths = decode_image_instantiator_format (XVECTOR_DATA (instantiator)[0],
+					    ERROR_ME);
+  if (!HAS_IIFORMAT_METH_P (meths, instantiate))
+    signal_simple_error
+      ("Don't know how to instantiate this image instantiator?",
+       instantiator);
+  IIFORMAT_METH (meths, instantiate, (ii, instantiator, pointer_fg,
+				      pointer_bg, dest_mask, domain));
   UNGCPRO;
 
   return ii;
@@ -519,16 +496,7 @@ instantiate_image_instantiator (Lisp_Object device, Lisp_Object domain,
  ****************************************************************************/
 
 Lisp_Object Qimage_instancep;
-static Lisp_Object mark_image_instance (Lisp_Object, void (*) (Lisp_Object));
-static void print_image_instance (Lisp_Object, Lisp_Object, int);
-static void finalize_image_instance (void *, int);
-static int image_instance_equal (Lisp_Object o1, Lisp_Object o2, int depth);
-static unsigned long image_instance_hash (Lisp_Object obj, int depth);
-DEFINE_LRECORD_IMPLEMENTATION ("image-instance", image_instance,
-			       mark_image_instance, print_image_instance,
-			       finalize_image_instance, image_instance_equal,
-			       image_instance_hash,
-			       struct Lisp_Image_Instance);
+
 static Lisp_Object
 mark_image_instance (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
@@ -782,12 +750,18 @@ image_instance_hash (Lisp_Object obj, int depth)
 					0));
 }
 
+DEFINE_LRECORD_IMPLEMENTATION ("image-instance", image_instance,
+			       mark_image_instance, print_image_instance,
+			       finalize_image_instance, image_instance_equal,
+			       image_instance_hash,
+			       struct Lisp_Image_Instance);
+
 static Lisp_Object
 allocate_image_instance (Lisp_Object device)
 {
   struct Lisp_Image_Instance *lp =
     alloc_lcrecord_type (struct Lisp_Image_Instance, lrecord_image_instance);
-  Lisp_Object val = Qnil;
+  Lisp_Object val;
 
   zero_lcrecord (lp);
   lp->device = device;
@@ -976,7 +950,7 @@ make_image_instance_1 (Lisp_Object data, Lisp_Object device,
 }
 
 DEFUN ("make-image-instance", Fmake_image_instance, 1, 4, 0, /*
-Create a new `image-instance' object.
+Return a new `image-instance' object.
 
 Image-instance objects encapsulate the way a particular image (pixmap,
 etc.) is displayed on a particular device.  In most circumstances, you
@@ -1468,10 +1442,8 @@ image_mark (Lisp_Object obj, void (*markobj) (Lisp_Object))
 static Lisp_Object
 image_instantiate_cache_result (Lisp_Object locative)
 {
-  Lisp_Object instance = Fcar (locative);
-  Lisp_Object instantiator = Fcar (Fcdr (locative));
-  Lisp_Object subtable = Fcdr (Fcdr (locative));
-  Fputhash (instantiator, instance, subtable);
+  /* locative = (instance instantiator . subtable) */
+  Fputhash (XCAR (XCDR (locative)), XCAR (locative), XCDR (XCDR (locative)));
   free_cons (XCONS (XCDR (locative)));
   free_cons (XCONS (locative));
   return Qnil;
@@ -1718,10 +1690,8 @@ image_going_to_add (Lisp_Object specifier, Lisp_Object locale,
 
   LIST_LOOP (rest, possible_console_types)
     {
-      Lisp_Object newinst;
       Lisp_Object contype = XCAR (rest);
-
-      newinst = call_with_suspended_errors
+      Lisp_Object newinst = call_with_suspended_errors
 	((lisp_fn_t) normalize_image_instantiator,
 	 Qnil, Qimage, ERROR_ME_NOT, 3, instantiator, contype,
 	 make_int (XIMAGE_SPECIFIER_ALLOWED (specifier)));
@@ -1913,26 +1883,10 @@ file).
  *                             Glyph Object                                 *
  ****************************************************************************/
 
-static Lisp_Object mark_glyph (Lisp_Object, void (*) (Lisp_Object));
-static void print_glyph (Lisp_Object, Lisp_Object, int);
-static int glyph_equal (Lisp_Object, Lisp_Object, int depth);
-static unsigned long glyph_hash (Lisp_Object obj, int depth);
-static Lisp_Object glyph_getprop (Lisp_Object obj, Lisp_Object prop);
-static int glyph_putprop (Lisp_Object obj, Lisp_Object prop,
-			  Lisp_Object value);
-static int glyph_remprop (Lisp_Object obj, Lisp_Object prop);
-static Lisp_Object glyph_plist (Lisp_Object obj);
-DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("glyph", glyph,
-					  mark_glyph, print_glyph, 0,
-					  glyph_equal, glyph_hash,
-					  glyph_getprop, glyph_putprop,
-					  glyph_remprop, glyph_plist,
-					  struct Lisp_Glyph);
-
 static Lisp_Object
 mark_glyph (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
-  struct Lisp_Glyph *glyph =  XGLYPH (obj);
+  struct Lisp_Glyph *glyph = XGLYPH (obj);
 
   ((markobj) (glyph->image));
   ((markobj) (glyph->contrib_p));
@@ -1995,7 +1949,7 @@ static Lisp_Object
 glyph_getprop (Lisp_Object obj, Lisp_Object prop)
 {
   struct Lisp_Glyph *g = XGLYPH (obj);
-  
+
   if (EQ (prop, Qimage))     return g->image;
   if (EQ (prop, Qcontrib_p)) return g->contrib_p;
   if (EQ (prop, Qbaseline))  return g->baseline;
@@ -2042,18 +1996,24 @@ glyph_remprop (Lisp_Object obj, Lisp_Object prop)
 static Lisp_Object
 glyph_plist (Lisp_Object obj)
 {
-  struct Lisp_Glyph *g = XGLYPH (obj);
-  Lisp_Object result = Qnil;
+  struct Lisp_Glyph *glyph = XGLYPH (obj);
+  Lisp_Object result = glyph->plist;
 
-  /* backwards order; we reverse it below */
-  result = Fcons (g->image,     Fcons (Qimage,     result));
-  result = Fcons (g->contrib_p, Fcons (Qcontrib_p, result));
-  result = Fcons (g->baseline,  Fcons (Qbaseline,  result));
-  result = Fcons (g->face,      Fcons (Qface,      result));
+  result = cons3 (Qface,      glyph->face,      result);
+  result = cons3 (Qbaseline,  glyph->baseline,  result);
+  result = cons3 (Qcontrib_p, glyph->contrib_p, result);
+  result = cons3 (Qimage,     glyph->image,     result);
 
-  return nconc2 (Fnreverse (result), g->plist);
+  return result;
 }
 
+DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("glyph", glyph,
+					  mark_glyph, print_glyph, 0,
+					  glyph_equal, glyph_hash,
+					  glyph_getprop, glyph_putprop,
+					  glyph_remprop, glyph_plist,
+					  struct Lisp_Glyph);
+
 Lisp_Object
 allocate_glyph (enum glyph_type type,
 		void (*after_change) (Lisp_Object glyph, Lisp_Object property,
@@ -2156,7 +2116,7 @@ Return a list of valid glyph types.
 }
 
 DEFUN ("make-glyph-internal", Fmake_glyph_internal, 0, 1, 0, /*
-Create a new, uninitialized glyph.
+Create and return a new uninitialized glyph or type TYPE.
 
 TYPE specifies the type of the glyph; this should be one of `buffer',
 `pointer', or `icon', and defaults to `buffer'.  The type of the glyph
@@ -2539,7 +2499,7 @@ update_glyph_cachel_data (struct window *w, Lisp_Object glyph,
   /* #### This should be || !cachel->updated */
   if (NILP (cachel->glyph) || !EQ (cachel->glyph, glyph))
     {
-      Lisp_Object window = Qnil;
+      Lisp_Object window;
 
       XSETWINDOW (window, w);
 
@@ -2559,7 +2519,7 @@ add_glyph_cachel (struct window *w, Lisp_Object glyph)
 {
   struct glyph_cachel new_cachel;
 
-  memset (&new_cachel, 0, sizeof (struct glyph_cachel));
+  xzero (new_cachel);
   new_cachel.glyph = Qnil;
 
   update_glyph_cachel_data (w, glyph, &new_cachel);
@@ -2661,7 +2621,7 @@ compute_glyph_cachel_usage (glyph_cachel_dynarr *glyph_cachels,
 struct Lisp_Vector *
 get_display_table (struct window *w, face_index findex)
 {
-  Lisp_Object tem = Qnil;
+  Lisp_Object tem;
 
   tem = WINDOW_FACE_CACHEL_DISPLAY_TABLE (w, findex);
   if (VECTORP (tem) && XVECTOR_LENGTH (tem) == DISP_TABLE_SIZE)

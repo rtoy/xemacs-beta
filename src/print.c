@@ -36,11 +36,17 @@ Boston, MA 02111-1307, USA.  */
 #include "console-stream.h"
 #include "extents.h"
 #include "frame.h"
-#include "emacsfns.h"
 #include "insdel.h"
 #include "lstream.h"
+#include "sysfile.h"
 
 #endif /* not standalone */
+
+#include <float.h>
+/* Define if not in float.h */
+#ifndef DBL_DIG
+#define DBL_DIG 16
+#endif
 
 static void print_error_message (Lisp_Object data, Lisp_Object stream);
 
@@ -258,7 +264,7 @@ make_print_output_stream (FILE *file, Lisp_Object fun)
 {
   Lstream *str = Lstream_new (lstream_print, "w");
   struct print_stream *ps = get_print_stream (str);
-  Lisp_Object val = Qnil;
+  Lisp_Object val;
 
   Lstream_set_character_mode (str);
   ps->file = file;
@@ -288,7 +294,7 @@ print_marker (Lisp_Object obj, void (*markobj) (Lisp_Object))
 }
 
 static int
-print_writer (Lstream *stream, CONST unsigned char *data, int size)
+print_writer (Lstream *stream, CONST unsigned char *data, size_t size)
 {
   struct print_stream *ps = get_print_stream (stream);
 
@@ -331,7 +337,7 @@ print_prepare (Lisp_Object printcharfun)
     return Qnil;
 
   printcharfun = canonicalize_printcharfun (printcharfun);
-  if (EQ (printcharfun, Qnil))
+  if (NILP (printcharfun))
     {
       stdio_stream = stdout;
     }
@@ -475,23 +481,22 @@ to get the buffer displayed.  It gets one argument, the buffer to display.
   struct gcpro gcpro1;
   Lisp_Object name;
   int speccount = specpdl_depth ();
-  Lisp_Object buf, val;
+  Lisp_Object val;
 
 #ifdef I18N3
   /* #### should set the buffer to be translating.  See print_internal(). */
 #endif
 
   GCPRO1 (args);
-  name = Feval (Fcar (args));
+  name = Feval (XCAR (args));
   UNGCPRO;
 
   CHECK_STRING (name);
   temp_output_buffer_setup ((char *) XSTRING_DATA (name));
-  buf = Vstandard_output;
 
-  val = Fprogn (Fcdr (args));
+  val = Fprogn (XCDR (args));
 
-  temp_output_buffer_show (buf, Qnil);
+  temp_output_buffer_show (Vstandard_output, Qnil);
 
   return unbind_to (speccount, val);
 }
@@ -610,7 +615,6 @@ Output stream is STREAM, or value of `standard-output' (which see).
   return obj;
 }
 
-#include "emacsfns.h"
 
 /* Synched with Emacs 19.34 -- underlying implementation (incarnated
    in print_error_message) is completely divergent, though.  */
@@ -908,7 +912,7 @@ print_cons (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	obj = XCDR (obj);
       }
   }
-  if (!NILP (obj) && !CONSP (obj))
+  if (!LISTP (obj))
     {
       write_c_string (" . ", printcharfun);
       print_internal (obj, printcharfun, escapeflag);
@@ -1548,8 +1552,8 @@ FILE = nil means just close any termscript file currently open.
 static int debug_print_length = 50;
 static int debug_print_level = 15;
 Lisp_Object debug_temp;
-void debug_print_no_newline (Lisp_Object debug_print_obj);
-void
+
+static void
 debug_print_no_newline (Lisp_Object debug_print_obj)
 {
   /* This function can GC */
@@ -1582,16 +1586,17 @@ debug_print_no_newline (Lisp_Object debug_print_obj)
   UNGCPRO;
 }
 
-void debug_print (Lisp_Object debug_print_obj);
 void
 debug_print (Lisp_Object debug_print_obj)
 {
   debug_print_no_newline (debug_print_obj);
-  stderr_out ("\r\n");
+  stderr_out ("\n");
   fflush (stderr);
 }
 
 /* Debugging kludge -- unbuffered */
+/* This function provided for the benefit of the debugger.  */
+void debug_backtrace (void);
 void
 debug_backtrace (void)
 {

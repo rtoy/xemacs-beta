@@ -158,16 +158,7 @@ in_float_error (void)
   }
 }
 
-
 
-static Lisp_Object mark_float (Lisp_Object, void (*) (Lisp_Object));
-extern void print_float (Lisp_Object, Lisp_Object, int);
-static int float_equal (Lisp_Object o1, Lisp_Object o2, int depth);
-static unsigned long float_hash (Lisp_Object obj, int depth);
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("float", float,
-				     mark_float, print_float, 0, float_equal,
-				     float_hash, struct Lisp_Float);
-
 static Lisp_Object
 mark_float (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
@@ -188,6 +179,9 @@ float_hash (Lisp_Object obj, int depth)
   return (unsigned long) fmod (extract_float (obj), 4e9);
 }
 
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("float", float,
+				     mark_float, print_float, 0, float_equal,
+				     float_hash, struct Lisp_Float);
 
 /* Extract a Lisp number as a `double', or signal an error.  */
 
@@ -456,7 +450,7 @@ Return the exponential ARG1 ** ARG2.
 	      if (y & 1)
 		acc *= x;
 	      x *= x;
-	      y = (unsigned EMACS_INT) y >> 1;
+	      y = (EMACS_UINT) y >> 1;
 	    }
 	}
       return (make_int (acc));
@@ -704,7 +698,7 @@ This is the same as the exponent of a float.
 #ifdef HAVE_LOGB
   {
     Lisp_Object val;
-    IN_FLOAT (val = make_int (logb (f)), "logb", arg);
+    IN_FLOAT (val = make_int ((int) logb (f)), "logb", arg);
     return (val);
   }
 #else
@@ -935,7 +929,7 @@ float_error (int signo)
 
 #endif /* FLOAT_CATCH_SIGILL */
 
-#ifdef HAVE_MATHERR
+#if defined (HAVE_MATHERR) && !defined(__cplusplus)
 int
 matherr (struct exception *x)
 {
@@ -959,7 +953,7 @@ matherr (struct exception *x)
     case UNDERFLOW:	Fsignal (Qunderflow_error, args);	break;
     default:		Fsignal (Qarith_error, args);		break;
     }
-  return (1);	/* don't set errno or print a message */
+  return 1;	/* don't set errno or print a message */
 }
 #endif /* HAVE_MATHERR */
 #endif /* LISP_FLOAT_TYPE */

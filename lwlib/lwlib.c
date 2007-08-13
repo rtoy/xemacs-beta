@@ -885,22 +885,18 @@ lw_register_widget (CONST char *type, CONST char *name,
 Widget
 lw_get_widget (LWLIB_ID id, Widget parent, Boolean pop_up_p)
 {
-  widget_instance *instance;
-
-  instance = find_instance (id, parent, pop_up_p);
+  widget_instance *instance = find_instance (id, parent, pop_up_p);
   return instance ? instance->widget : NULL;
 }
 
 Widget
 lw_make_widget (LWLIB_ID id, Widget parent, Boolean pop_up_p)
 {
-  widget_instance *instance;
-  widget_info *info;
+  widget_instance *instance = find_instance (id, parent, pop_up_p);
 
-  instance = find_instance (id, parent, pop_up_p);
   if (!instance)
     {
-      info = get_widget_info (id, False);
+      widget_info *info = get_widget_info (id, False);
       if (!info)
 	return NULL;
       instance = allocate_widget_instance (info, parent, pop_up_p);

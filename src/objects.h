@@ -44,7 +44,6 @@ struct color_specifier
   (COLOR_SPECIFIER_DATA (g)->face_property)
 
 DECLARE_SPECIFIER_TYPE (color);
-extern Lisp_Object Qcolor;
 #define XCOLOR_SPECIFIER(x) XSPECIFIER_TYPE (x, color)
 #define XSETCOLOR_SPECIFIER(x, p) XSETSPECIFIER_TYPE (x, p, color)
 #define COLOR_SPECIFIERP(x) SPECIFIER_TYPEP (x, color)
@@ -70,7 +69,6 @@ struct font_specifier
   (FONT_SPECIFIER_DATA (g)->face_property)
 
 DECLARE_SPECIFIER_TYPE (font);
-extern Lisp_Object Qfont;
 #define XFONT_SPECIFIER(x) XSPECIFIER_TYPE (x, font)
 #define XSETFONT_SPECIFIER(x, p) XSETSPECIFIER_TYPE (x, p, font)
 #define FONT_SPECIFIERP(x) SPECIFIER_TYPEP (x, font)
@@ -122,10 +120,7 @@ DECLARE_LRECORD (color_instance, struct Lisp_Color_Instance);
 #define CHECK_COLOR_INSTANCE(x) CHECK_RECORD (x, color_instance)
 #define CONCHECK_COLOR_INSTANCE(x) CONCHECK_RECORD (x, color_instance)
 
-Lisp_Object Fmake_color_instance (Lisp_Object name, Lisp_Object device,
-				  Lisp_Object no_error);
-Lisp_Object Fcolor_instance_p (Lisp_Object obj);
-Lisp_Object Fcolor_instance_name (Lisp_Object obj);
+EXFUN (Fmake_color_instance, 3);
 
 extern Lisp_Object Vthe_null_color_instance;
 
@@ -161,11 +156,10 @@ int font_spec_matches_charset (struct device *d, Lisp_Object charset,
 			       Bytecount length);
 #endif
 
-Lisp_Object Fmake_font_instance (Lisp_Object name, Lisp_Object device,
-				 Lisp_Object no_error);
-Lisp_Object Ffont_instance_p        (Lisp_Object obj);
-Lisp_Object Ffont_instance_name     (Lisp_Object obj);
-Lisp_Object Ffont_instance_truename (Lisp_Object obj);
+EXFUN (Fmake_font_instance, 3);
+EXFUN (Ffont_instance_name, 1);
+EXFUN (Ffont_instance_p, 1);
+EXFUN (Ffont_instance_truename, 1);
 
 extern Lisp_Object Vthe_null_font_instance;
 

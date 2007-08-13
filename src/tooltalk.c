@@ -28,7 +28,6 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include <X11/Xlib.h>
-#include TT_C_H_PATH
 
 #include "buffer.h"
 #include "elhash.h"
@@ -151,13 +150,6 @@ struct Lisp_Tooltalk_Message
   Tt_message m;
 };
 
-static Lisp_Object mark_tooltalk_message (Lisp_Object, void (*) (Lisp_Object));
-static void print_tooltalk_message (Lisp_Object, Lisp_Object, int);
-DEFINE_LRECORD_IMPLEMENTATION ("tooltalk-message", tooltalk_message,
-                               mark_tooltalk_message, print_tooltalk_message,
-                               0, 0, 0,
-			       struct Lisp_Tooltalk_Message);
-
 static Lisp_Object
 mark_tooltalk_message (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
@@ -181,13 +173,18 @@ print_tooltalk_message (Lisp_Object obj, Lisp_Object printcharfun,
   write_c_string (buf, printcharfun);
 }
 
+DEFINE_LRECORD_IMPLEMENTATION ("tooltalk-message", tooltalk_message,
+                               mark_tooltalk_message, print_tooltalk_message,
+                               0, 0, 0,
+			       struct Lisp_Tooltalk_Message);
+
 static Lisp_Object
 make_tooltalk_message (Tt_message m)
 {
+  Lisp_Object val;
   struct Lisp_Tooltalk_Message *msg =
     alloc_lcrecord_type (struct Lisp_Tooltalk_Message,
 			 lrecord_tooltalk_message);
-  Lisp_Object val;
 
   msg->m = m;
   msg->callback = Qnil;
@@ -227,13 +224,6 @@ struct Lisp_Tooltalk_Pattern
   Tt_pattern p;
 };
 
-static Lisp_Object mark_tooltalk_pattern (Lisp_Object, void (*) (Lisp_Object));
-static void print_tooltalk_pattern (Lisp_Object, Lisp_Object, int);
-DEFINE_LRECORD_IMPLEMENTATION ("tooltalk-pattern", tooltalk_pattern,
-                               mark_tooltalk_pattern, print_tooltalk_pattern,
-                               0, 0, 0,
-			       struct Lisp_Tooltalk_Pattern);
-
 static Lisp_Object
 mark_tooltalk_pattern (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
@@ -257,6 +247,11 @@ print_tooltalk_pattern (Lisp_Object obj, Lisp_Object printcharfun,
   write_c_string (buf, printcharfun);
 }
 
+DEFINE_LRECORD_IMPLEMENTATION ("tooltalk-pattern", tooltalk_pattern,
+                               mark_tooltalk_pattern, print_tooltalk_pattern,
+                               0, 0, 0,
+			       struct Lisp_Tooltalk_Pattern);
+
 static Lisp_Object
 make_tooltalk_pattern (Tt_pattern p)
 {

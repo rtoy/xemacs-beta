@@ -28,6 +28,9 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #include "buffer.h"
 #include "commands.h"
@@ -59,9 +62,9 @@ Lisp_Object Vuser_login_name;	/* user name from LOGNAME or USER.  */
 /* It's useful to be able to set this as user customization, so we'll
    keep it. */
 Lisp_Object Vuser_full_name;
-Lisp_Object Fuser_full_name (Lisp_Object);
+EXFUN (Fuser_full_name, 1);
 
-extern char *get_system_name (void);
+char *get_system_name (void);
 
 Lisp_Object Qformat;
 
@@ -76,7 +79,7 @@ void
 init_editfns (void)
 {
 /* Only used in removed code below. */
-  Bufbyte *p;
+  char *p;
 
   environbuf = 0;
 
@@ -88,7 +91,7 @@ init_editfns (void)
     return;
 #endif
 
-  if ((p = (Bufbyte *) getenv ("NAME")))
+  if ((p = getenv ("NAME")))
     /* I don't think it's the right thing to do the ampersand
        modification on NAME.  Not that it matters anymore...  -hniksic */
     Vuser_full_name = build_ext_string (p, FORMAT_OS);
@@ -142,8 +145,7 @@ An empty string will return the constant `nil'.
 static Lisp_Object
 buildmark (Bufpos val, Lisp_Object buffer)
 {
-  Lisp_Object mark;
-  mark = Fmake_marker ();
+  Lisp_Object mark = Fmake_marker ();
   Fset_marker (mark, make_int (val), buffer);
   return mark;
 }
@@ -182,23 +184,17 @@ If BUFFER is nil, the current buffer is assumed.
 Bufpos
 bufpos_clip_to_bounds (Bufpos lower, Bufpos num, Bufpos upper)
 {
-  if (num < lower)
-    return lower;
-  else if (num > upper)
-    return upper;
-  else
-    return num;
+  return (num < lower ? lower :
+	  num > upper ? upper :
+	  num);
 }
 
 Bytind
 bytind_clip_to_bounds (Bytind lower, Bytind num, Bytind upper)
 {
-  if (num < lower)
-    return lower;
-  else if (num > upper)
-    return upper;
-  else
-    return num;
+  return (num < lower ? lower :
+	  num > upper ? upper :
+	  num);
 }
 
 /*
@@ -411,9 +407,8 @@ save_current_buffer_restore (Lisp_Object buffer)
   struct buffer *buf = XBUFFER (buffer);
   /* Avoid signaling an error if the buffer is no longer alive.  This
      is for consistency with save-excursion.  */
-  if (!BUFFER_LIVE_P (buf))
-    return Qnil;
-  set_buffer_internal (buf);
+  if (BUFFER_LIVE_P (buf))
+    set_buffer_internal (buf);
   return Qnil;
 }
 
@@ -431,7 +426,7 @@ Executes BODY just like `progn'.
   return unbind_to (speccount, Fprogn (args));
 }
 
-DEFUN ("buffer-size", Fbufsize, 0, 1, 0, /*
+DEFUN ("buffer-size", Fbuffer_size, 0, 1, 0, /*
 Return the number of characters in BUFFER.
 If BUFFER is nil, the current buffer is assumed.
 */
@@ -516,7 +511,7 @@ If BUFFER is nil, the current buffer is assumed.
 }
 
 DEFUN ("bobp", Fbobp, 0, 1, 0, /*
-Return T if point is at the beginning of the buffer.
+Return t if point is at the beginning of the buffer.
 If the buffer is narrowed, this means the beginning of the narrowed part.
 If BUFFER is nil, the current buffer is assumed.
 */
@@ -527,7 +522,7 @@ If BUFFER is nil, the current buffer is assumed.
 }
 
 DEFUN ("eobp", Feobp, 0, 1, 0, /*
-Return T if point is at the end of the buffer.
+Return t if point is at the end of the buffer.
 If the buffer is narrowed, this means the end of the narrowed part.
 If BUFFER is nil, the current buffer is assumed.
 */
@@ -540,14 +535,12 @@ If BUFFER is nil, the current buffer is assumed.
 int
 beginning_of_line_p (struct buffer *b, Bufpos pt)
 {
-  if (pt <= BUF_BEGV (b))
-    return 1;
-  return BUF_FETCH_CHAR (b, pt - 1) == '\n';
+  return pt <= BUF_BEGV (b) || BUF_FETCH_CHAR (b, pt - 1) == '\n';
 }
 
 
 DEFUN ("bolp", Fbolp, 0, 1, 0, /*
-Return T if point is at the beginning of a line.
+Return t if point is at the beginning of a line.
 If BUFFER is nil, the current buffer is assumed.
 */
        (buffer))
@@ -558,16 +551,15 @@ If BUFFER is nil, the current buffer is assumed.
 }
 
 DEFUN ("eolp", Feolp, 0, 1, 0, /*
-Return T if point is at the end of a line.
+Return t if point is at the end of a line.
 `End of a line' includes point being at the end of the buffer.
 If BUFFER is nil, the current buffer is assumed.
 */
        (buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  if (BUF_PT (b) == BUF_ZV (b) || BUF_FETCH_CHAR (b, BUF_PT (b)) == '\n')
-    return Qt;
-  return Qnil;
+  return (BUF_PT (b) == BUF_ZV (b) || BUF_FETCH_CHAR (b, BUF_PT (b)) == '\n')
+    ? Qt : Qnil;
 }
 
 DEFUN ("char-after", Fchar_after, 0, 2, 0, /*
@@ -618,17 +610,16 @@ On Unix it is obtained from TMPDIR, with /tmp as the default
        ())
 {
   char *tmpdir;
-
 #if defined(WINDOWSNT) || defined(MSDOS)
-  tmpdir = (char *) getenv ("TEMP");
+  tmpdir = getenv ("TEMP");
   if (!tmpdir)
-    tmpdir = (char *) getenv ("TMP");
+    tmpdir = getenv ("TMP");
   if (!tmpdir)
-    tmpdir = "/";	/* what should this be on NT/MSDOS ? */
+    tmpdir = "/";
 #else /* WINDOWSNT || MSDOS */
-  tmpdir = (char *) getenv ("TMPDIR");
-  if (!tmpdir)
-    tmpdir = "/tmp";
+ tmpdir = getenv ("TMPDIR");
+ if (!tmpdir)
+   tmpdir = "/tmp";
 #endif
 
   return build_ext_string (tmpdir, FORMAT_FILENAME);
@@ -649,25 +640,26 @@ ignored and this function returns the login name for that UID, or nil.
   if (!NILP (uid))
     {
       CHECK_INT (uid);
-      pw = (struct passwd *) getpwuid (XINT (uid));
+      pw = getpwuid (XINT (uid));
     }
   else
     {
-      char *user_name;
       /* #### - when euid != uid, then LOGNAME and USER are leftovers from the
 	 old environment (I site observed behavior on sunos and linux), so the
 	 environment variables should be disregarded in that case.  --Stig */
-      user_name = getenv ("LOGNAME");
+      char *user_name = getenv ("LOGNAME");
       if (!user_name)
+	user_name = getenv (
 #ifdef WINDOWSNT
-        user_name = (char *) getenv ("USERNAME"); /* it's USERNAME on NT */
-#else  /* WINDOWSNT */
-        user_name = (char *) getenv ("USER");
-#endif /* WINDOWSNT */
+			    "USERNAME" /* it's USERNAME on NT */
+#else
+			    "USER"
+#endif
+			    );
       if (user_name)
 	return build_string (user_name);
       else
-	pw = (struct passwd *) getpwuid (geteuid ());
+	pw = getpwuid (geteuid ());
     }
   /* #### - I believe this should return nil instead of "unknown" when pw==0 */
   return pw ? build_string (pw->pw_name) : Qnil;
@@ -680,7 +672,7 @@ This ignores the environment variables LOGNAME and USER, so it differs from
 */
        ())
 {
-  struct passwd *pw = (struct passwd *) getpwuid (getuid ());
+  struct passwd *pw = getpwuid (getuid ());
   /* #### - I believe this should return nil instead of "unknown" when pw==0 */
 
 #ifdef MSDOS
@@ -744,15 +736,15 @@ value of `user-full-name' is returned.
   /* #### - Stig sez: this should return nil instead of "unknown" when pw==0 */
   /* Ben sez: bad idea because it's likely to break something */
 #ifndef AMPERSAND_FULL_NAME
-  p = (char *) ((pw) ? USER_FULL_NAME : "unknown"); /* don't gettext */
-  q = (char *) strchr ((char *) p, ',');
+  p = ((pw) ? USER_FULL_NAME : "unknown"); /* don't gettext */
+  q = strchr (p, ',');
 #else
-  p = (char *) ((pw) ? USER_FULL_NAME : "unknown"); /* don't gettext */
-  q = (char *) strchr ((char *) p, ',');
+  p = ((pw) ? USER_FULL_NAME : "unknown"); /* don't gettext */
+  q = strchr (p, ',');
 #endif
   tem = ((!NILP (user) && !pw)
 	 ? Qnil
-	 : make_ext_string ((unsigned char *) p, (q ? q - p : strlen (p)),
+	 : make_ext_string ((Extbyte *) p, (q ? q - p : strlen (p)),
 			    FORMAT_OS));
 
 #ifdef AMPERSAND_FULL_NAME
@@ -815,14 +807,11 @@ resolution finer than a second.
        ())
 {
   EMACS_TIME t;
-  Lisp_Object result[3];
 
   EMACS_GET_TIME (t);
-  XSETINT (result[0], (EMACS_SECS (t) >> 16) & 0xffff);
-  XSETINT (result[1], (EMACS_SECS (t) >> 0)  & 0xffff);
-  XSETINT (result[2], EMACS_USECS (t));
-
-  return Flist (3, result);
+  return list3 (make_int ((EMACS_SECS (t) >> 16) & 0xffff),
+		make_int ((EMACS_SECS (t) >> 0)  & 0xffff),
+		make_int (EMACS_USECS (t)));
 }
 
 DEFUN ("current-process-time", Fcurrent_process_time, 0, 0, 0, /*
@@ -857,25 +846,27 @@ time will be 0.
 }
 
 
+int lisp_to_time (Lisp_Object specified_time, time_t *result);
 int
 lisp_to_time (Lisp_Object specified_time, time_t *result)
 {
+  Lisp_Object high, low;
+
   if (NILP (specified_time))
     return time (result) != -1;
-  else
-    {
-      Lisp_Object high, low;
-      high = Fcar (specified_time);
-      CHECK_INT (high);
-      low = Fcdr (specified_time);
-      if (CONSP (low))
-	low = XCAR (low);
-      CHECK_INT (low);
-      *result = (XINT (high) << 16) + (XINT (low) & 0xffff);
-      return *result >> 16 == XINT (high);
-    }
+
+  CHECK_CONS (specified_time);
+  high = XCAR (specified_time);
+  low  = XCDR (specified_time);
+  if (CONSP (low))
+    low = XCAR (low);
+  CHECK_INT (high);
+  CHECK_INT (low);
+  *result = (XINT (high) << 16) + (XINT (low) & 0xffff);
+  return *result >> 16 == XINT (high);
 }
 
+Lisp_Object time_to_lisp (time_t the_time);
 Lisp_Object
 time_to_lisp (time_t the_time)
 {
@@ -935,7 +926,7 @@ characters appearing in the day and month names may be incorrect.
        (format_string, _time))
 {
   time_t value;
-  int size;
+  size_t size;
 
   CHECK_STRING (format_string);
 
@@ -1010,7 +1001,7 @@ DEFUN ("encode-time", Fencode_time, 6, MANY, 0, /*
 This is the reverse operation of `decode-time', which see.
 ZONE defaults to the current time zone rule.  This can
 be a string (as from `set-time-zone-rule'), or it can be a list
-(as from `current-time-zone') or an integer (as from `decode-time')
+\(as from `current-time-zone') or an integer (as from `decode-time')
 applied without consideration for daylight savings time.
 
 You can pass more than 7 arguments; then the first six arguments
@@ -1155,16 +1146,15 @@ the data it can't find.
        (specified_time))
 {
   time_t value;
-  struct tm *t;
+  struct tm *t = NULL;
 
   if (lisp_to_time (specified_time, &value)
       && (t = gmtime (&value)) != 0)
     {
-      struct tm gmt;
+      struct tm gmt = *t;	/* Make a copy, in case localtime modifies *t.  */
       long offset;
       char *s, buf[6];
 
-      gmt = *t;		/* Make a copy, in case localtime modifies *t.  */
       t = localtime (&value);
       offset = difftm (t, &gmt);
       s = 0;
@@ -1195,7 +1185,7 @@ the data it can't find.
 /* These two values are known to load tz files in buggy implementations,
    i.e. Solaris 1 executables running under either Solaris 1 or Solaris 2.
    Their values shouldn't matter in non-buggy implementations.
-   We don't use string literals for these strings, 
+   We don't use string literals for these strings,
    since if a string in the environment is in readonly
    storage, it runs afoul of bugs in SVR4 and Solaris 2.3.
    See Sun bugs 1113095 and 1114114, ``Timezone routines
@@ -1673,7 +1663,7 @@ for the character with code N.  Returns the number of characters changed.
   get_buffer_range_char (buf, start, end, &pos, &stop, 0);
   CHECK_STRING (table);
 
-  size = string_char_length (XSTRING (table));
+  size = XSTRING_CHAR_LENGTH (table);
 
   cnt = 0;
   mc_count = begin_multiple_change (buf, pos, stop);
@@ -2020,7 +2010,6 @@ void
 transpose_markers (Bufpos start1, Bufpos end1, Bufpos start2, Bufpos end2)
 {
   Charcount amt1, amt2, diff;
-  Bufpos mpos;
   Lisp_Object marker;
   struct buffer *buf = current_buffer;
 
@@ -2054,7 +2043,7 @@ transpose_markers (Bufpos start1, Bufpos end1, Bufpos start2, Bufpos end2)
   for (marker = BUF_MARKERS (buf); !NILP (marker);
        marker = XMARKER (marker)->chain)
     {
-      mpos = marker_position (marker);
+      Bufpos mpos = marker_position (marker);
       if (mpos >= start1 && mpos < end2)
 	{
 	  if (mpos < end1)
@@ -2143,7 +2132,7 @@ syms_of_editfns (void)
   DEFSUBR (Fsave_excursion);
   DEFSUBR (Fsave_current_buffer);
 
-  DEFSUBR (Fbufsize);
+  DEFSUBR (Fbuffer_size);
   DEFSUBR (Fpoint_max);
   DEFSUBR (Fpoint_min);
   DEFSUBR (Fpoint_min_marker);

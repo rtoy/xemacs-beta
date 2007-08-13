@@ -46,8 +46,7 @@ static void cmgoto_for_real (struct console *c, int row, int col);
 
 static int cm_cost_counter;		/* sums up costs */
 
-void evalcost (int c);
-void
+static void
 evalcost (int c)
 {
   cm_cost_counter++;
@@ -459,7 +458,7 @@ cmgoto (struct frame *f, int row, int col)
 void
 Wcm_clear (void)
 {
-  memset (&Wcm, 0, sizeof Wcm);
+  xzero (Wcm);
   UP = 0;
   BC = 0;
 }

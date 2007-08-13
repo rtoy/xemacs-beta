@@ -119,13 +119,13 @@ new_child (void)
   
   for (cp = child_procs+(child_proc_count-1); cp >= child_procs; cp--)
     if (!CHILD_ACTIVE (cp))
-      goto Initialise;
+      goto Initialize;
   if (child_proc_count == MAX_CHILDREN)
     return NULL;
   cp = &child_procs[child_proc_count++];
 
- Initialise:
-  memset (cp, 0, sizeof(*cp));
+ Initialize:
+  xzero (*cp);
   cp->fd = -1;
   cp->pid = -1;
   cp->procinfo.hProcess = NULL;
@@ -284,7 +284,7 @@ create_child (char *exe, char *cmdline, char *env,
   
   if (cp == NULL) abort ();
   
-  memset (&start, 0, sizeof (start));
+  xzero (start);
   start.cb = sizeof (start);
   
 #ifdef HAVE_NTGUI

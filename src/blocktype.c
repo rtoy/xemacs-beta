@@ -77,7 +77,7 @@ struct block_internal
 };
 
 void *
-Blocktype_newf (int elsize)
+Blocktype_newf (size_t elsize)
 {
   Blocktype *b = xnew (Blocktype);
   b->elsize = max (elsize, sizeof (void *));

@@ -50,7 +50,7 @@
 ;; You can manually translate a buffer into or out of a particular format
 ;; with the functions `format-encode-buffer' and `format-decode-buffer'.
 ;; To translate just the region use the functions `format-encode-region'
-;; and `format-decode-region'.  
+;; and `format-decode-region'.
 ;;
 ;; You can define a new format by writing the encoding and decoding
 ;; functions, and adding an entry to `format-alist'.  See enriched.el for
@@ -94,37 +94,37 @@
 	   ;; Plain only exists so that there is an obvious neutral choice in
 	   ;; the completion list.
 	   nil nil nil nil nil)
-    ;; (ibm   "IBM Code Page 850 (DOS)" 
+    ;; (ibm   "IBM Code Page 850 (DOS)"
     ;;        "1\\(^\\)"
     ;;        "recode ibm-pc:latin1" "recode latin1:ibm-pc" t nil)
-    ;; (mac   "Apple Macintosh" 
+    ;; (mac   "Apple Macintosh"
     ;;        "1\\(^\\)"
     ;;        "recode mac:latin1" "recode latin1:mac" t nil)
-    ;; (hp    "HP Roman8" 
+    ;; (hp    "HP Roman8"
     ;;        "1\\(^\\)"
     ;;        "recode roman8:latin1" "recode latin1:roman8" t nil)
-    ;; (TeX   "TeX (encoding)"  
+    ;; (TeX   "TeX (encoding)"
     ;;        "1\\(^\\)"
     ;;        iso-tex2iso iso-iso2tex t nil)
-    ;; (gtex  "German TeX (encoding)" 
+    ;; (gtex  "German TeX (encoding)"
     ;;        "1\\(^\\)"
     ;;        iso-gtex2iso iso-iso2gtex t nil)
-    ;; (html  "HTML (encoding)" 
+    ;; (html  "HTML (encoding)"
     ;;        "1\\(^\\)"
     ;;        "recode html:latin1" "recode latin1:html" t nil)
-    ;; (rot13 "rot13" 
+    ;; (rot13 "rot13"
     ;;        "1\\(^\\)"
     ;;        "tr a-mn-z n-za-m" "tr a-mn-z n-za-m" t nil)
-    ;; (duden "Duden Ersatzdarstellung" 
+    ;; (duden "Duden Ersatzdarstellung"
     ;;        "1\\(^\\)"
-    ;;        "diac" iso-iso2duden t nil) 
-    ;; (de646 "German ASCII (ISO 646)" 
+    ;;        "diac" iso-iso2duden t nil)
+    ;; (de646 "German ASCII (ISO 646)"
     ;;        "1\\(^\\)"
     ;;        "recode iso646-ge:latin1" "recode latin1:iso646-ge" t nil)
-    ;; (denet "net German" 
+    ;; (denet "net German"
     ;;        "1\\(^\\)"
     ;;        iso-german iso-cvt-read-only t nil)
-    ;; (esnet "net Spanish" 
+    ;; (esnet "net Spanish"
     ;;        "1\\(^\\)"
     ;;        iso-spanish iso-cvt-read-only t nil)
     )
@@ -140,7 +140,7 @@ DOC-STR should be a single line providing more information about the
 REGEXP  is a regular expression to match against the beginning of the file;
         it should match only files in that format.
 
-FROM-FN is called to decode files in that format; it gets two args, BEGIN 
+FROM-FN is called to decode files in that format; it gets two args, BEGIN
         and END, and can make any modifications it likes, returning the new
         end.  It must make sure that the beginning of the file no longer
         matches REGEXP, or else it will get called again.
@@ -158,7 +158,7 @@ TO-FN   is called to encode a region into that format; it is passed three
 
 MODIFY, if non-nil, means the TO-FN wants to modify the region.  If nil,
         TO-FN will not make any changes but will instead return a list of
-        annotations. 
+        annotations.
 
 MODE-FN, if specified, is called when visiting a file with that format.")
 
@@ -189,7 +189,7 @@ otherwise, it should be a Lisp function."
     (funcall method from to)))
 
 (defun format-annotate-function (format from to orig-buf)
-  "Returns annotations for writing region as FORMAT.
+  "Return annotations for writing region as FORMAT.
 FORMAT is a symbol naming one of the formats defined in `format-alist',
 it must be a single symbol, not a list like `buffer-file-format'.
 FROM and TO delimit the region to be operated on in the current buffer.
@@ -199,7 +199,7 @@ it either returns a list of annotations, or returns with a different buffer
 current, which contains the modified text to write.
 
 For most purposes, consider using `format-encode-region' instead."
-  ;; This function is called by write-region (actually build-annotations) 
+  ;; This function is called by write-region (actually build-annotations)
   ;; for each element of buffer-file-format.
   (let* ((info (assq format format-alist))
 	 (to-fn  (nth 4 info))
@@ -218,7 +218,7 @@ For most purposes, consider using `format-encode-region' instead."
 
 (defun format-decode (format length &optional visit-flag)
   "Decode text from any known FORMAT.
-FORMAT is a symbol appearing in `format-alist' or a list of such symbols, 
+FORMAT is a symbol appearing in `format-alist' or a list of such symbols,
 or nil, in which case this function tries to guess the format of the data by
 matching against the regular expressions in `format-alist'.  After a match is
 found and the region decoded, the alist is searched again from the beginning
@@ -283,7 +283,7 @@ This function is called by insert-file-contents whenever a file is read."
 (defun format-decode-buffer (&optional format)
   "Translate the buffer from some FORMAT.
 If the format is not specified, this function attempts to guess.
-`buffer-file-format' is set to the format used, and any mode-functions 
+`buffer-file-format' is set to the format used, and any mode-functions
 for the format are called."
   (interactive
    (list (format-read "Translate buffer from format (default: guess): ")))
@@ -296,7 +296,7 @@ for the format are called."
 Arg FORMAT is optional; if omitted the format will be determined by looking
 for identifying regular expressions at the beginning of the region."
   (interactive
-   (list (region-beginning) (region-end) 
+   (list (region-beginning) (region-end)
 	 (format-read "Translate region from format (default: guess): ")))
   (save-excursion
     (goto-char from)
@@ -325,7 +325,7 @@ one of the formats defined in `format-alist', or a list of such symbols."
    (goto-char end)
    (let ( ; (cur-buf (current-buffer))
 	 (end (point-marker)))
-     (while format 
+     (while format
        (let* ((info (assq (car format) format-alist))
 	      (to-fn  (nth 4 info))
 	      (modify (nth 5 info))
@@ -353,7 +353,7 @@ name as FILE, to write a file of the same old name in that directory."
 				  (cdr (assq 'default-directory
 					     (buffer-local-variables)))
 				  nil nil (buffer-name))))
-	  (fmt (format-read (format "Write file `%s' in format: " 
+	  (fmt (format-read (format "Write file `%s' in format: "
 				    (file-name-nondirectory file)))))
      (list file fmt)))
   (setq buffer-file-format format)
@@ -365,7 +365,7 @@ If FORMAT is nil then do not do any format conversion."
   (interactive
    ;; Same interactive spec as write-file, plus format question.
    (let* ((file (read-file-name "Find file: "))
-	  (fmt (format-read (format "Read file `%s' in format: " 
+	  (fmt (format-read (format "Read file `%s' in format: "
 				    (file-name-nondirectory file)))))
      (list file fmt)))
   (let ((format-alist nil))
@@ -384,7 +384,7 @@ a list (ABSOLUTE-FILE-NAME . SIZE)."
   (interactive
    ;; Same interactive spec as write-file, plus format question.
    (let* ((file (read-file-name "Find file: "))
-	  (fmt (format-read (format "Read file `%s' in format: " 
+	  (fmt (format-read (format "Read file `%s' in format: "
 				    (file-name-nondirectory file)))))
      (list file fmt)))
   (let (value size)
@@ -417,7 +417,7 @@ ALIST is a list of (from . to) pairs, which should be proper arguments to
 `search-forward' and `replace-match' respectively.
 Optional 2nd arg REVERSE, if non-nil, means the pairs are (to . from), so that
 you can use the same list in both directions if it contains only literal
-strings. 
+strings.
 Optional args BEGIN and END specify a region of the buffer to operate on."
   (save-excursion
     (save-restriction
@@ -440,8 +440,8 @@ Optional args BEGIN and END specify a region of the buffer to operate on."
 
 (defun format-delq-cons (cons list)
   "Remove the given CONS from LIST by side effect,
-and return the new LIST.  Since CONS could be the first element 
-of LIST, write `\(setq foo \(format-delq-cons element foo))' to be sure of 
+and return the new LIST.  Since CONS could be the first element
+of LIST, write `\(setq foo \(format-delq-cons element foo))' to be sure of
 changing the value of `foo'."
   (if (eq cons list)
       (cdr list)
@@ -452,7 +452,7 @@ changing the value of `foo'."
       ;; Now (cdr p) is the cons to delete
       (setcdr p (cdr cons))
       list)))
-    
+
 (defun format-make-relatively-unique (a b)
   "Delete common elements of lists A and B, return as pair.
 Compares using `equal'."
@@ -475,7 +475,7 @@ returns nil."
   (let ((la (length a))
 	(lb (length b)))
     ;; Make sure they are the same length
-    (if (> la lb) 
+    (if (> la lb)
 	(setq a (nthcdr (- la lb) a))
       (setq b (nthcdr (- lb la) b))))
   (while (not (equal a b))
@@ -490,7 +490,7 @@ ORDER.  Unmatched items will go last."
   (if order
       (let ((item (member (car order) items)))
 	(if item
-	    (cons (car item) 
+	    (cons (car item)
 		  (format-reorder (format-delq-cons item items)
 			   (cdr order)))
 	  (format-reorder items (cdr order))))
@@ -508,7 +508,7 @@ ORDER.  Unmatched items will go last."
 
 (defun format-deannotate-region (from to translations next-fn)
   "Translate annotations in the region into text properties.
-This sets text properties between FROM to TO as directed by the 
+This sets text properties between FROM to TO as directed by the
 TRANSLATIONS and NEXT-FN arguments.
 
 NEXT-FN is a function that searches forward from point for an annotation.
@@ -710,7 +710,7 @@ the end of that region is not yet known."
 	 (s (car subtrahend))
 	 results)
     (while (and minuend subtrahend)
-      (cond 
+      (cond
        ;; The minuend starts after the subtrahend ends; keep it.
        ((> (car m) (cdr s))
 	(setq results (cons m results)
@@ -758,7 +758,7 @@ appropriate place.  Use second arg OFFSET if the annotations' locations are
 not relative to the beginning of the buffer: annotations will be inserted
 at their location-OFFSET+1 \(ie, the offset is treated as the character number
 of the first character in the buffer)."
-  (if (not offset) 
+  (if (not offset)
       (setq offset 0)
     (setq offset (1- offset)))
   (let ((l (reverse list)))
@@ -792,7 +792,7 @@ ANNOTATIONS.  Whenever the property takes on that value, the annotations
 \(as formatted by FORMAT-FN) are inserted into the file.
 When the property stops having that value, the matching negated annotation
 will be inserted \(it may actually be closed earlier and reopened, if
-necessary, to keep proper nesting). 
+necessary, to keep proper nesting).
 
 If the property's value is a list, then each element of the list is dealt with
 separately.
@@ -834,14 +834,14 @@ lists of annotations like `format-annotate-location' does.
 	      ;; To close anno. N, need to first close ans 1 to N-1,
 	      ;; remembering to re-open them later.
 	      (setq pos-ans (cons (car open-ans) pos-ans))
-	      (setq all-ans 
+	      (setq all-ans
 		    (cons (cons loc (funcall format-fn (car open-ans) nil))
 			  all-ans))
 	      (setq open-ans (cdr open-ans)))
 	    ;; Now remove the one we're really interested in from open list.
 	    (setq open-ans (cdr open-ans))
 	    ;; And put the closing annotation here.
-	    (setq all-ans 
+	    (setq all-ans
 		  (cons (cons loc (funcall format-fn (car neg-ans) nil))
 			all-ans)))
 	  (setq neg-ans (cdr neg-ans)))
@@ -850,14 +850,14 @@ lists of annotations like `format-annotate-location' does.
 	      )
 	  (while pos-ans
 	    (setq open-ans (cons (car pos-ans) open-ans))
-	    (setq all-ans 
+	    (setq all-ans
 		  (cons (cons loc (funcall format-fn (car pos-ans) t))
 			all-ans))
 	    (setq pos-ans (cdr pos-ans))))))
 
     ;; Close any annotations still open
     (while open-ans
-      (setq all-ans 
+      (setq all-ans
 	    (cons (cons to (funcall format-fn (car open-ans) nil))
 		  all-ans))
       (setq open-ans (cdr open-ans)))
@@ -930,13 +930,13 @@ Annotations to open and to close are returned as a dotted pair."
 		 ;; (tail (format-common-tail old new))
 		 close open)
 	    (while old
-	      (setq close 
+	      (setq close
 		    (append (car (format-annotate-atomic-property-change
 				  prop-alist (car old) nil))
 			    close)
 		    old (cdr old)))
 	    (while new
-	      (setq open 
+	      (setq open
 		    (append (cdr (format-annotate-atomic-property-change
 				  prop-alist nil (car new)))
 			    open)

@@ -232,10 +232,8 @@ defining others, use \\[name-last-kbd-macro].
 static Lisp_Object
 pop_kbd_macro (Lisp_Object info)
 {
-  Lisp_Object tem;
   Vexecuting_macro = Fcar (info);
-  tem = Fcdr (info);
-  executing_macro_index = XINT (tem);
+  executing_macro_index = XINT (Fcdr (info));
   return Qnil;
 }
 

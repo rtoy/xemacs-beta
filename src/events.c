@@ -71,6 +71,9 @@ Lisp_Object Qdnd_drop_event_p;
 Lisp_Object Qdnd_drop;
 #endif
 
+EXFUN (Fevent_x_pixel, 1);
+EXFUN (Fevent_y_pixel, 1);
+
 /* #### Ad-hoc hack.  Should be part of define_lrecord_implementation */
 void
 clear_event_resource (void)
@@ -85,7 +88,7 @@ deinitialize_event (Lisp_Object ev)
   int i;
   struct Lisp_Event *event = XEVENT (ev);
 
-  for (i = 0; i < ((sizeof (struct Lisp_Event)) / sizeof (int)); i++)
+  for (i = 0; i < (int) (sizeof (struct Lisp_Event) / sizeof (int)); i++)
     ((int *) event) [i] = 0xdeadbeef;
   event->event_type = dead_event;
   event->channel = Qnil;
@@ -97,7 +100,7 @@ deinitialize_event (Lisp_Object ev)
 void
 zero_event (struct Lisp_Event *e)
 {
-  memset (e, 0, sizeof (*e));
+  xzero (*e);
   set_lheader_implementation (&(e->lheader), lrecord_event);
   e->event_type = empty_event;
   e->next = Qnil;
@@ -390,7 +393,7 @@ DEFINE_BASIC_LRECORD_IMPLEMENTATION ("event", event,
 
 
 DEFUN ("make-event", Fmake_event, 0, 2, 0, /*
-Create a new event of type TYPE, with properties described by PLIST.
+Return a new event of type TYPE, with properties described by PLIST.
 
 TYPE is a symbol, either `empty', `key-press', `button-press',
  `button-release', `motion' or `dnd-drop'.  If TYPE is nil, it
@@ -505,23 +508,22 @@ WARNING: the event object returned may be a reused one; see the function
   plist = Fcopy_sequence (plist);
   Fcanonicalize_plist (plist, Qnil);
 
-#define WRONG_EVENT_TYPE_FOR_PROPERTY(prop)				\
-  error_with_frob (type, "Invalid event type for `%s' property",	\
-		   string_data (symbol_name (XSYMBOL (keyword))))
+#define WRONG_EVENT_TYPE_FOR_PROPERTY(type, prop)			\
+  error_with_frob (prop, "Invalid property for %s event",		\
+		   string_data (symbol_name (XSYMBOL (type))))
 
   EXTERNAL_PROPERTY_LIST_LOOP (tail, keyword, value, plist)
     {
-      CHECK_SYMBOL (keyword);
       if (EQ (keyword, Qchannel))
 	{
 	  if (e->event_type == key_press_event)
 	    {
-	      while (!CONSOLEP (value))
+	      if (!CONSOLEP (value))
 		value = wrong_type_argument (Qconsolep, value);
 	    }
 	  else if (e->event_type != misc_user_event)
 	    {
-	      while (!FRAMEP (value))
+	      if (!FRAMEP (value))
 		value = wrong_type_argument (Qframep, value);
 	    }
 	  EVENT_CHANNEL (e) = value;
@@ -529,20 +531,20 @@ WARNING: the event object returned may be a reused one; see the function
       else if (EQ (keyword, Qkey))
 	{
 	  if (e->event_type != key_press_event)
-	    WRONG_EVENT_TYPE_FOR_PROPERTY (keyword);
+	    WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
 	  if (!SYMBOLP (value) && !CHARP (value))
 	    signal_simple_error ("Invalid event key", value);
 	  e->event.key.keysym = value;
 	}
       else if (EQ (keyword, Qbutton))
 	{
-	  CHECK_NATNUM (value);
-	  check_int_range (XINT (value), 0, 7);
 	  if (e->event_type != button_press_event
 	      && e->event_type != button_release_event)
 	    {
-	      WRONG_EVENT_TYPE_FOR_PROPERTY (keyword);
+	      WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
 	    }
+	  CHECK_NATNUM (value);
+	  check_int_range (XINT (value), 0, 7);
 	  e->event.button.button = XINT (value);
 	}
       else if (EQ (keyword, Qmodifiers))
@@ -554,7 +556,9 @@ WARNING: the event object returned may be a reused one; see the function
 	      && e->event_type != button_press_event
 	      && e->event_type != button_release_event
 	      && e->event_type != pointer_motion_event)
-	    WRONG_EVENT_TYPE_FOR_PROPERTY (keyword);
+	    {
+	      WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
+	    }
 
 	  EXTERNAL_LIST_LOOP (modtail, value)
 	    {
@@ -579,27 +583,27 @@ WARNING: the event object returned may be a reused one; see the function
 	}
       else if (EQ (keyword, Qx))
 	{
-	  /* Allow negative values, so we can specify toolbar
-             positions.  */
-	  CHECK_INT (value);
 	  if (e->event_type != pointer_motion_event
 	      && e->event_type != button_press_event
 	      && e->event_type != button_release_event)
 	    {
-	      WRONG_EVENT_TYPE_FOR_PROPERTY (keyword);
+	      WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
 	    }
+	  /* Allow negative values, so we can specify toolbar
+             positions.  */
+	  CHECK_INT (value);
 	  coord_x = XINT (value);
 	}
       else if (EQ (keyword, Qy))
 	{
-	  /* Allow negative values; see above. */
-	  CHECK_INT (value);
 	  if (e->event_type != pointer_motion_event
 	      && e->event_type != button_press_event
 	      && e->event_type != button_release_event)
 	    {
-	      WRONG_EVENT_TYPE_FOR_PROPERTY (keyword);
+	      WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
 	    }
+	  /* Allow negative values; see above. */
+	  CHECK_INT (value);
 	  coord_y = XINT (value);
 	}
       else if (EQ (keyword, Qtimestamp))
@@ -610,36 +614,39 @@ WARNING: the event object returned may be a reused one; see the function
       else if (EQ (keyword, Qfunction))
 	{
 	  if (e->event_type != misc_user_event)
-	    WRONG_EVENT_TYPE_FOR_PROPERTY (keyword);
+	    WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
 	  e->event.eval.function = value;
 	}
       else if (EQ (keyword, Qobject))
 	{
 	  if (e->event_type != misc_user_event)
-	    WRONG_EVENT_TYPE_FOR_PROPERTY (keyword);
+	    WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
 	  e->event.eval.object = value;
 	}
 #if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
       else if (EQ (keyword, Qdnd_data))
 	{
-	  Lisp_Object dnd_tail;
+	  if (e->event_type != dnd_drop_event)
+	    WRONG_EVENT_TYPE_FOR_PROPERTY (type, keyword);
+
 	  /* Value is either nil, or a list of (TYPE DATA).  TYPE is
              an integer.  DATA is a list. */
 	  if (!NILP (value))
 	    {
+	      Lisp_Object dnd_tail;
 	      CHECK_CONS (value);
 	      /* To be changed to CHECK_SYMBOL. */
 	      CHECK_NATNUM (XCAR (value));
 	      CHECK_CONS (XCDR (value));
 	      if (XINT (Flength (value)) != 2)
-		signal_simple_error ("should be a two-element list", value);
-	      /* Check validity of DATA. */
+		signal_simple_error ("Data should be a two-element list", value);
+	      /* Check validity of DATA.  */
 	      EXTERNAL_LIST_LOOP (dnd_tail, XCAR (XCDR (value)))
 		{
 		  /* Every element must be a string. */
 		  CHECK_STRING (XCAR (dnd_tail));
 		}
-	      /* And now, copy it all. */
+	      /* And now, copy it all to avoid corruption later.  */
 	      e->event.dnd_drop.data = Fcopy_tree (value, Qnil);
 	    }
 	}
@@ -653,7 +660,7 @@ WARNING: the event object returned may be a reused one; see the function
     {
       if (e->event_type == key_press_event)
 	EVENT_CHANNEL (e) = Vselected_console;
-      else if (e->event_type != misc_user_event)
+      else
 	EVENT_CHANNEL (e) = Fselected_frame (Qnil);
     }
 
@@ -741,9 +748,6 @@ that it is safe to do so.
 #if 0
   {
     int i, len;
-    extern Lisp_Object Vlast_command_event;
-    extern Lisp_Object Vlast_input_event, Vunread_command_event;
-    extern Lisp_Object Vthis_command_keys, Vrecent_keys_ring;
 
     if (EQ (event, Vlast_command_event) ||
 	EQ (event, Vlast_input_event)   ||
@@ -1152,8 +1156,8 @@ Note that specifying both ALLOW-META and ALLOW-NON-ASCII is ambiguous, as
 }
 
 DEFUN ("character-to-event", Fcharacter_to_event, 1, 4, 0, /*
-Converts a keystroke specifier into an event structure, replete with
-bucky bits.  The keystroke is the first argument, and the event to fill
+Convert keystroke CH into an event structure ,replete with bucky bits.
+The keystroke is the first argument, and the event to fill
 in is the second.  This function contains knowledge about what the codes
 ``mean'' -- for example, the number 9 is converted to the character ``Tab'',
 not the distinct character ``Control-I''.
@@ -1747,7 +1751,7 @@ event_pixel_translation (Lisp_Object event, int *char_x, int *char_y,
   int pix_x = 0;
   int pix_y = 0;
   int result;
-  Lisp_Object frame = Qnil;
+  Lisp_Object frame;
 
   int ret_x, ret_y, ret_obj_x, ret_obj_y;
   struct window *ret_w;
@@ -2069,7 +2073,7 @@ If the event did not occur over a toolbar button, nil is returned.
 
   return result == OVER_TOOLBAR && TOOLBAR_BUTTONP (button) ? button : Qnil;
 #else
-	return Qnil;
+  return Qnil;
 #endif
 }
 
@@ -2088,6 +2092,7 @@ EVENT should be a timeout, misc-user, or eval event.
 */
        (event))
 {
+ again:
   CHECK_LIVE_EVENT (event);
   switch (XEVENT (event)->event_type)
     {
@@ -2097,7 +2102,8 @@ EVENT should be a timeout, misc-user, or eval event.
     case eval_event:
       return XEVENT (event)->event.eval.function;
     default:
-      return wrong_type_argument (intern ("timeout-or-eval-event-p"), event);
+      event = wrong_type_argument (intern ("timeout-or-eval-event-p"), event);
+      goto again;
     }
 }
 
@@ -2158,53 +2164,52 @@ This is in the form of a property list (alternating keyword/value pairs).
   e = XEVENT (event);
   GCPRO1 (props);
 
-  props = Fcons (Qtimestamp, Fcons (Fevent_timestamp (event), props));
+  props = cons3 (Qtimestamp, Fevent_timestamp (event), props);
 
   switch (e->event_type)
     {
     case process_event:
-      props = Fcons (Qprocess, Fcons (e->event.process.process, props));
+      props = cons3 (Qprocess, e->event.process.process, props);
       break;
 
     case timeout_event:
-      props = Fcons (Qobject, Fcons (Fevent_object (event), props));
-      props = Fcons (Qfunction, Fcons (Fevent_function (event), props));
-      props = Fcons (Qid, Fcons (make_int (e->event.timeout.id_number),
-				 props));
+      props = cons3 (Qobject,	Fevent_object	(event), props);
+      props = cons3 (Qfunction, Fevent_function (event), props);
+      props = cons3 (Qid, make_int (e->event.timeout.id_number), props);
       break;
 
     case key_press_event:
-      props = Fcons (Qmodifiers, Fcons (Fevent_modifiers (event), props));
-      props = Fcons (Qkey, Fcons (Fevent_key (event), props));
+      props = cons3 (Qmodifiers, Fevent_modifiers (event), props);
+      props = cons3 (Qkey,	 Fevent_key	  (event), props);
       break;
 
     case button_press_event:
     case button_release_event:
-      props = Fcons (Qy, Fcons (Fevent_y_pixel (event), props));
-      props = Fcons (Qx, Fcons (Fevent_x_pixel (event), props));
-      props = Fcons (Qmodifiers, Fcons (Fevent_modifiers (event), props));
-      props = Fcons (Qbutton, Fcons (Fevent_button (event), props));
+      props = cons3 (Qy,	 Fevent_y_pixel	  (event), props);
+      props = cons3 (Qx,	 Fevent_x_pixel	  (event), props);
+      props = cons3 (Qmodifiers, Fevent_modifiers (event), props);
+      props = cons3 (Qbutton,	 Fevent_button	  (event), props);
       break;
 
     case pointer_motion_event:
-      props = Fcons (Qmodifiers, Fcons (Fevent_modifiers (event), props));
-      props = Fcons (Qy, Fcons (Fevent_y_pixel (event), props));
-      props = Fcons (Qx, Fcons (Fevent_x_pixel (event), props));
+      props = cons3 (Qmodifiers, Fevent_modifiers (event), props);
+      props = cons3 (Qy,         Fevent_y_pixel   (event), props);
+      props = cons3 (Qx,         Fevent_x_pixel   (event), props);
       break;
 
     case misc_user_event:
     case eval_event:
-      props = Fcons (Qobject, Fcons (Fevent_object (event), props));
-      props = Fcons (Qfunction, Fcons (Fevent_function (event), props));
+      props = cons3 (Qobject,	Fevent_object	(event), props);
+      props = cons3 (Qfunction, Fevent_function (event), props);
       break;
 
 #if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
     case dnd_drop_event:
-      props = Fcons (Qy, Fcons (Fevent_y_pixel (event), props));
-      props = Fcons (Qx, Fcons (Fevent_x_pixel (event), props));
-      props = Fcons (Qmodifiers, Fcons (Fevent_modifiers (event), props));
-      props = Fcons (Qbutton, Fcons (Fevent_button (event), props));
-      props = Fcons (Qdnd_data, Fcons (Fevent_drag_and_drop_data (event), props));
+      props = cons3 (Qy,	 Fevent_y_pixel	  (event),	    props);
+      props = cons3 (Qx,	 Fevent_x_pixel	  (event),	    props);
+      props = cons3 (Qmodifiers, Fevent_modifiers (event),	    props);
+      props = cons3 (Qbutton,	 Fevent_button	  (event),	    props);
+      props = cons3 (Qdnd_data,	 Fevent_drag_and_drop_data (event), props);
       break;
 #endif
 
@@ -2221,7 +2226,7 @@ This is in the form of a property list (alternating keyword/value pairs).
       break;                 /* not reached; warning suppression */
     }
 
-  props = Fcons (Qchannel, Fcons (Fevent_channel (event), props));
+  props = cons3 (Qchannel, Fevent_channel (event), props);
   UNGCPRO;
 
   return props;

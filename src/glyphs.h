@@ -26,33 +26,32 @@ Boston, MA 02111-1307, USA.  */
 
 #include "specifier.h"
 
-/*****************************************************************************
- *                            Image Instantiators                            *
- *****************************************************************************/
+/************************************************************************/
+/*			Image Instantiators				*/
+/************************************************************************/
 
 struct image_instantiator_methods;
 
 /* Remember the distinction between image instantiator formats and
    image instance types.  Here's an approximate mapping:
 
-  image instantiator format		image instance type
-  -------------------------		-------------------
-  nothing				nothing
-  string				text
-  formatted-string			text
-  xbm					mono-pixmap, color-pixmap, pointer
-  xpm					color-pixmap, mono-pixmap, pointer
-  xface					mono-pixmap, color-pixmap, pointer
-  gif					color-pixmap
-  jpeg					color-pixmap
-  png					color-pixmap
-  tiff					color-pixmap
-  cursor-font				pointer
-  font					pointer
-  subwindow				subwindow
-  inherit				mono-pixmap
-  autodetect				mono-pixmap, color-pixmap, pointer,
-					text
+  image instantiator format	image instance type
+  -------------------------	-------------------
+  nothing			nothing
+  string			text
+  formatted-string		text
+  xbm				mono-pixmap, color-pixmap, pointer
+  xpm				color-pixmap, mono-pixmap, pointer
+  xface				mono-pixmap, color-pixmap, pointer
+  gif				color-pixmap
+  jpeg				color-pixmap
+  png				color-pixmap
+  tiff				color-pixmap
+  cursor-font			pointer
+  font				pointer
+  subwindow			subwindow
+  inherit			mono-pixmap
+  autodetect			mono-pixmap, color-pixmap, pointer, text
 */
 
 /* These are methods specific to a particular format of image instantiator
@@ -120,19 +119,12 @@ do {									     \
     IIFORMAT_METH (_maybe_iiformat_meth_mstruc, m, args);		     \
 } while (0)
 
-MAC_DECLARE_EXTERN (struct image_instantiator_methods *,
-		    MTiiformat_meth_or_given)
-
 /* Call a specifier method, if it exists; otherwise return
    the specified value */
 
-#define IIFORMAT_METH_OR_GIVEN(mstruc, m, args, given)		\
-MAC_BEGIN							\
-  MAC_DECLARE (struct image_instantiator_methods *,		\
-	       MTiiformat_meth_or_given, mstruc)		\
-  HAS_IIFORMAT_METH_P (MTiiformat_meth_or_given, m) ?		\
-    IIFORMAT_METH (MTiiformat_meth_or_given, m, args) : (given)	\
-MAC_END
+#define IIFORMAT_METH_OR_GIVEN(mstruc, m, args, given)	\
+  (HAS_IIFORMAT_METH_P (mstruc, m) ?			\
+   IIFORMAT_METH (mstruc, m, args) : (given))
 
 /***** Defining new image-instantiator types *****/
 
@@ -145,7 +137,7 @@ struct image_instantiator_methods *format##_image_instantiator_methods
 #define INITIALIZE_IMAGE_INSTANTIATOR_FORMAT(format, obj_name)	\
 do {								\
   format##_image_instantiator_methods =				\
-    xnew_and_zero (struct image_instantiator_methods);	\
+    xnew_and_zero (struct image_instantiator_methods);		\
   defsymbol (&Q##format, obj_name);				\
   format##_image_instantiator_methods->symbol = Q##format;	\
   format##_image_instantiator_methods->keywords =		\
@@ -186,10 +178,6 @@ do {								\
 		entry);							\
   } while (0)
 
-extern Lisp_Object Qimage_conversion_error;
-
-extern Lisp_Object Q_data, Q_file;
-
 void add_entry_to_image_instantiator_format_list (Lisp_Object symbol,
 			struct image_instantiator_methods *meths);
 Lisp_Object find_keyword_in_vector (Lisp_Object vector,
@@ -203,12 +191,11 @@ DECLARE_DOESNT_RETURN (incompatible_image_types (Lisp_Object instantiator,
                                                  int given_dest_mask,
                                                  int desired_dest_mask));
 
-/*****************************************************************************
- *                          Image Specifier Object                           *
- *****************************************************************************/
+/************************************************************************/
+/*			Image Specifier Object				*/
+/************************************************************************/
 
 DECLARE_SPECIFIER_TYPE (image);
-extern Lisp_Object Qimage;
 #define XIMAGE_SPECIFIER(x) XSPECIFIER_TYPE (x, image)
 #define XSETIMAGE_SPECIFIER(x, p) XSETSPECIFIER_TYPE (x, p, image)
 #define IMAGE_SPECIFIERP(x) SPECIFIER_TYPEP (x, image)
@@ -234,9 +221,9 @@ struct image_specifier
 #define XIMAGE_SPECIFIER_ALLOWED(g) \
   IMAGE_SPECIFIER_ALLOWED (XIMAGE_SPECIFIER (g))
 
-/*****************************************************************************
- *                           Image Instance Object                           *
- *****************************************************************************/
+/************************************************************************/
+/*			Image Instance Object				*/
+/************************************************************************/
 
 DECLARE_LRECORD (image_instance, struct Lisp_Image_Instance);
 #define XIMAGE_INSTANCE(x) \
@@ -264,12 +251,6 @@ enum image_instance_type
 #define IMAGE_COLOR_PIXMAP_MASK (1 << 3)
 #define IMAGE_POINTER_MASK (1 << 4)
 #define IMAGE_SUBWINDOW_MASK (1 << 5)
-
-extern Lisp_Object Qnothing_image_instance_p, Qtext_image_instance_p;
-extern Lisp_Object Qmono_pixmap_image_instance_p;
-extern Lisp_Object Qcolor_pixmap_image_instance_p;
-extern Lisp_Object Qpointer_image_instance_p;
-extern Lisp_Object Qsubwindow_image_instance_p;
 
 #define IMAGE_INSTANCE_TYPE_P(ii, type) \
 (IMAGE_INSTANCEP (ii) && XIMAGE_INSTANCE_TYPE (ii) == type)
@@ -406,9 +387,9 @@ struct Lisp_Image_Instance
 #define XIMAGE_INSTANCE_PIXMAP_BG(i) \
   IMAGE_INSTANCE_PIXMAP_BG (XIMAGE_INSTANCE (i))
 
-/*****************************************************************************
- *                              Glyph Object                                 *
- *****************************************************************************/
+/************************************************************************/
+/*				Glyph Object				*/
+/************************************************************************/
 
 enum glyph_type
 {
@@ -444,8 +425,6 @@ DECLARE_LRECORD (glyph, struct Lisp_Glyph);
 #define CHECK_GLYPH(x) CHECK_RECORD (x, glyph)
 #define CONCHECK_GLYPH(x) CONCHECK_RECORD (x, glyph)
 
-extern Lisp_Object Qbuffer_glyph_p, Qpointer_glyph_p, Qicon_glyph_p;
-
 #define CHECK_BUFFER_GLYPH(x) do {			\
   CHECK_GLYPH (x);					\
   if (XGLYPH (x)->type != GLYPH_BUFFER)			\
@@ -476,8 +455,10 @@ extern Lisp_Object Qbuffer_glyph_p, Qpointer_glyph_p, Qicon_glyph_p;
 #define XGLYPH_BASELINE(g) GLYPH_BASELINE (XGLYPH (g))
 #define XGLYPH_FACE(g) GLYPH_FACE (XGLYPH (g))
 
-extern Lisp_Object Vtruncation_glyph, Vcontinuation_glyph, Voctal_escape_glyph;
-extern Lisp_Object Vcontrol_arrow_glyph, Vinvisible_text_glyph, Vhscroll_glyph;
+extern Lisp_Object Q_data, Q_file, Qconst_glyph_variable;
+extern Lisp_Object Qimage_conversion_error;
+extern Lisp_Object Vcontinuation_glyph, Vcontrol_arrow_glyph, Vhscroll_glyph;
+extern Lisp_Object Vinvisible_text_glyph, Voctal_escape_glyph, Vtruncation_glyph;
 extern Lisp_Object Vxemacs_logo;
 
 unsigned short glyph_width (Lisp_Object glyph, Lisp_Object frame_face,
@@ -512,9 +493,9 @@ Lisp_Object allocate_glyph (enum glyph_type type,
 						  Lisp_Object property,
 						  Lisp_Object locale));
 
-/*****************************************************************************
- *                          Glyph Cachels                             	     *
- *****************************************************************************/
+/************************************************************************/
+/*				Glyph Cachels				*/
+/************************************************************************/
 
 typedef struct glyph_cachel glyph_cachel;
 struct glyph_cachel
@@ -534,15 +515,15 @@ struct glyph_cachel
 #define OCT_ESC_GLYPH_INDEX	(glyph_index) 4
 #define INVIS_GLYPH_INDEX	(glyph_index) 5
 
-#define GLYPH_CACHEL(window, index)				\
+#define GLYPH_CACHEL(window, index)			\
   Dynarr_atp (window->glyph_cachels, index)
-#define GLYPH_CACHEL_GLYPH(window, index)			\
+#define GLYPH_CACHEL_GLYPH(window, index)		\
   Dynarr_atp (window->glyph_cachels, index)->glyph
-#define GLYPH_CACHEL_WIDTH(window, index)			\
+#define GLYPH_CACHEL_WIDTH(window, index)		\
   Dynarr_atp (window->glyph_cachels, index)->width
-#define GLYPH_CACHEL_ASCENT(window, index)			\
+#define GLYPH_CACHEL_ASCENT(window, index)		\
   Dynarr_atp (window->glyph_cachels, index)->ascent
-#define GLYPH_CACHEL_DESCENT(window, index)			\
+#define GLYPH_CACHEL_DESCENT(window, index)		\
   Dynarr_atp (window->glyph_cachels, index)->descent
 
 void mark_glyph_cachels (glyph_cachel_dynarr *elements,
@@ -554,9 +535,9 @@ int compute_glyph_cachel_usage (glyph_cachel_dynarr *glyph_cachels,
 				struct overhead_stats *ovstats);
 #endif /* MEMORY_USAGE_STATS */
 
-/*****************************************************************************
- *                             Display Tables                                *
- *****************************************************************************/
+/************************************************************************/
+/*				Display Tables				*/
+/************************************************************************/
 
 #define DISP_TABLE_SIZE	256
 #define DISP_CHAR_ENTRY(dp, c) ((c < (dp)->size) ? (dp)->contents[c] : Qnil)

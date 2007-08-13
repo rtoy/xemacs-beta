@@ -23,16 +23,16 @@ Boston, MA 02111-1307, USA.  */
 #ifndef _XEMACS_MACROS_H_
 #define _XEMACS_MACROS_H_
 
-/* Kbd macro currently being executed (a string or vector) */
-
-extern Lisp_Object Vexecuting_macro;
-
 /* Index of next character to fetch from that macro */
 
 extern int executing_macro_index;
 
-extern void store_kbd_macro_event (Lisp_Object event);
-extern void pop_kbd_macro_event (Lisp_Object event);
-extern void finalize_kbd_macro_chars (struct console *con);
+void store_kbd_macro_event (Lisp_Object event);
+void pop_kbd_macro_event (Lisp_Object event);
+void finalize_kbd_macro_chars (struct console *con);
+
+EXFUN (Fexecute_kbd_macro, 2);
+
+extern Lisp_Object Vexecuting_macro;
 
 #endif /* _XEMACS_MACROS_H_ */

@@ -79,7 +79,7 @@ BITMAPINFO* EImage2DIBitmap (Lisp_Object device, int width, int height,
        * we start paletizing this is no longer true. The X versions of
        * this function quantises to 256 colours or bit masks down to a
        * long. Windows can actually handle rgb triples in the raw so I
-       * don't see much point trying to optimise down to the best
+       * don't see much point trying to optimize down to the best
        * structure - unless it has memory / color allocation implications
        * .... */
       bmp_info=xnew_and_zero (BITMAPINFO);
@@ -95,26 +95,29 @@ BITMAPINFO* EImage2DIBitmap (Lisp_Object device, int width, int height,
 
       /* bitmap data needs to be in blue, green, red triples - in that
 	 order, eimage is in RGB format so we need to convert */
-      *bmp_data = xnew_array_and_zero (unsigned char, width * height * 3);
+      *bmp_data = xnew_array_and_zero (unsigned char, bpline * height);
       *bit_count = width * height * 3;
 
       if (!bmp_data)
 	{
-	  xfree(bmp_info);
+	  xfree (bmp_info);
 	  return NULL;
 	}
-      for (i=0; i<width*height; i++)
-	{
-	  (*bmp_data)[2]=*pic;
-	  (*bmp_data)[1]= pic[1];
-	  **bmp_data    = pic[2];
-	  (*bmp_data) += 3;
+
+      ip = pic;
+      for (i = height-1; i >= 0; i--) {
+	dp = (*bmp_data) + (i * bpline);
+	for (j = 0; j < width; j++) {
+	  dp[2] =*ip++;
+	  dp[1] =*ip++;
+	  *dp   =*ip++;
+	  dp += 3;
 	}
+      }
     }
   else				/* scale to 256 colors */
     {
-      int rd,gr,bl, j;
-      unsigned char *ip, *dp;
+      int rd,gr,bl;
       quant_table *qtable;
       int bpline= (int)(~3UL & (unsigned long)(width +3));
       /* Quantize the image and get a histogram while we're at it.
@@ -124,11 +127,11 @@ BITMAPINFO* EImage2DIBitmap (Lisp_Object device, int width, int height,
 
       /* use our quantize table to allocate the colors */
       ncolors = qtable->num_active_colors;
-      bmp_info=(BITMAPINFO*)xmalloc_and_zero(sizeof(BITMAPINFOHEADER) + 
+      bmp_info=(BITMAPINFO*)xmalloc_and_zero (sizeof(BITMAPINFOHEADER) + 
 					     sizeof(RGBQUAD) * ncolors);
       if (!bmp_info)
 	{
-	  xfree(qtable);
+	  xfree (qtable);
 	  return NULL;
 	}
 
@@ -357,6 +360,7 @@ init_image_instance_from_dibitmap (struct Lisp_Image_Instance *ii,
     find_keyword_in_vector (instantiator, Q_file);
 
   IMAGE_INSTANCE_MSWINDOWS_BITMAP (ii) = bitmap;
+  IMAGE_INSTANCE_MSWINDOWS_MASK (ii) = bitmap;
   IMAGE_INSTANCE_PIXMAP_WIDTH (ii) = bmp_info->bmiHeader.biWidth;
   IMAGE_INSTANCE_PIXMAP_HEIGHT (ii) = bmp_info->bmiHeader.biHeight;
   IMAGE_INSTANCE_PIXMAP_DEPTH (ii) = bmp_info->bmiHeader.biBitCount;
@@ -380,8 +384,8 @@ static int xpm_to_eimage (Lisp_Object image, CONST Extbyte *buffer,
   COLORREF color; /* the american spelling virus hits again .. */
   COLORREF* colortbl; 
 
-  memset (&xpmimage, 0, sizeof (xpmimage));
-  memset (&xpminfo, 0, sizeof (xpmimage));
+  xzero (xpmimage);
+  xzero (xpminfo);
   
   result = XpmCreateXpmImageFromBuffer ((char*)buffer,
 				       &xpmimage,
@@ -621,6 +625,12 @@ mswindows_finalize_image_instance (struct Lisp_Image_Instance *p)
       if (IMAGE_INSTANCE_MSWINDOWS_BITMAP (p))
 	DeleteObject (IMAGE_INSTANCE_MSWINDOWS_BITMAP (p));
       IMAGE_INSTANCE_MSWINDOWS_BITMAP (p) = 0;
+      if (IMAGE_INSTANCE_MSWINDOWS_MASK (p))
+	DeleteObject (IMAGE_INSTANCE_MSWINDOWS_MASK (p));
+      IMAGE_INSTANCE_MSWINDOWS_MASK (p) = 0;
+      if (IMAGE_INSTANCE_MSWINDOWS_ICON (p))
+	DestroyIcon (IMAGE_INSTANCE_MSWINDOWS_ICON (p));
+      IMAGE_INSTANCE_MSWINDOWS_ICON (p) = 0;
     }
 
   xfree (p->data);

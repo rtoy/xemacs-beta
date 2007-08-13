@@ -34,6 +34,7 @@ Boston, MA 02111-1307, USA.  */
 #include "frame.h"
 #include "redisplay.h"
 #include "sysdep.h"
+#include "sysfile.h"
 #include "window.h"
 
 DEFINE_CONSOLE_TYPE (stream);
@@ -47,14 +48,10 @@ Lisp_Object Vstdio_str;
 static void
 allocate_stream_console_struct (struct console *con)
 {
-  if (!con->console_data)
-    {
-      con->console_data = xnew_and_zero (struct stream_console);
-    }
+  if (!CONSOLE_STREAM_DATA (con))
+    CONSOLE_STREAM_DATA (con) = xnew_and_zero (struct stream_console);
   else
-    {
-      memset(con->console_data, 0, sizeof (struct stream_console));
-    }
+    xzero (*CONSOLE_STREAM_DATA (con));
 }
 
 static void
@@ -67,7 +64,7 @@ stream_init_console (struct console *con, Lisp_Object params)
 
   if (NILP (tty) || internal_equal (tty, Vstdio_str, 0))
     {
-      infd = stdin;
+      infd  = stdin;
       outfd = stdout;
       errfd = stderr;
     }
@@ -81,7 +78,7 @@ stream_init_console (struct console *con, Lisp_Object params)
     }
 
   allocate_stream_console_struct (con);
-  CONSOLE_STREAM_DATA (con)->infd = infd;
+  CONSOLE_STREAM_DATA (con)->infd  = infd;
   CONSOLE_STREAM_DATA (con)->outfd = outfd;
   CONSOLE_STREAM_DATA (con)->errfd = errfd;
 }
@@ -91,7 +88,7 @@ stream_init_device (struct device *d, Lisp_Object params)
 {
   struct console *con = XCONSOLE (DEVICE_CONSOLE (d));
 
-  DEVICE_INFD (d) = fileno (CONSOLE_STREAM_DATA (con)->infd);
+  DEVICE_INFD  (d) = fileno (CONSOLE_STREAM_DATA (con)->infd);
   DEVICE_OUTFD (d) = fileno (CONSOLE_STREAM_DATA (con)->outfd);
   init_baud_rate (d);
   init_one_device (d);
@@ -106,11 +103,10 @@ stream_initially_selected_for_input (struct console *con)
 static void
 free_stream_console_struct (struct console *con)
 {
-  struct stream_console *tcon = (struct stream_console *) con->console_data;
-  if (tcon)
+  if (CONSOLE_STREAM_DATA (con))
     {
-      xfree (tcon);
-      con->console_data = NULL;
+      xfree (CONSOLE_STREAM_DATA (con));
+      CONSOLE_STREAM_DATA (con) = NULL;
     }
 }
 
@@ -134,10 +130,7 @@ Lisp_Object
 stream_semi_canonicalize_console_connection (Lisp_Object connection,
 					     Error_behavior errb)
 {
-  if (NILP (connection))
-    return Vstdio_str;
-
-  return connection;
+  return NILP (connection) ? Vstdio_str : connection;
 }
 
 Lisp_Object
@@ -176,8 +169,8 @@ stream_canonicalize_device_connection (Lisp_Object connection,
 static void
 stream_init_frame_1 (struct frame *f, Lisp_Object props)
 {
-  struct device *d = XDEVICE (FRAME_DEVICE (f));
 #if 0
+  struct device *d = XDEVICE (FRAME_DEVICE (f));
   if (!NILP (DEVICE_FRAME_LIST (d)))
     error ("Only one frame allowed on stream devices");
 #endif
@@ -355,10 +348,11 @@ init_console_stream (void)
       Vterminal_frame = Fmake_frame (Qnil, Vterminal_device);
       minibuf_window = XFRAME (Vterminal_frame)->minibuffer_window;
     }
-  else {
-    /* Re-initialize the FILE fields of the console. */
-    stream_init_console (XCONSOLE (Vterminal_console), Qnil);
-    if (noninteractive)
-      event_stream_select_console (XCONSOLE (Vterminal_console));
-  }
+  else
+    {
+      /* Re-initialize the FILE fields of the console. */
+      stream_init_console (XCONSOLE (Vterminal_console), Qnil);
+      if (noninteractive)
+        event_stream_select_console (XCONSOLE (Vterminal_console));
+    }
 }

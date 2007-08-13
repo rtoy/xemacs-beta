@@ -19,7 +19,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; along with XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -34,13 +34,13 @@
 ;;;; Window tree functions.
 
 (defun one-window-p (&optional nomini all-frames device)
-  "Returns non-nil if the selected window is the only window (in its frame).
+  "Return non-nil if the selected window is the only window (in its frame).
 Optional arg NOMINI non-nil means don't count the minibuffer
 even if it is active.
 
 The optional arg ALL-FRAMES t means count windows on all frames.
 If it is `visible', count windows on all visible frames.
-ALL-FRAMES nil or omitted means count only the selected frame, 
+ALL-FRAMES nil or omitted means count only the selected frame,
 plus the minibuffer it uses (which may be on another frame).
 ALL-FRAMES = 0 means count windows on all visible and iconified frames.
 If ALL-FRAMES is any other value, count only the selected frame.
@@ -87,7 +87,7 @@ Otherwise, include frames only on the selected device."
   ;; If we start from the minibuffer window, don't fail to come back to it.
   (if (window-minibuffer-p (selected-window))
       (setq minibuf t))
-  ;; Note that, like next-window & previous-window, this behaves a little 
+  ;; Note that, like next-window & previous-window, this behaves a little
   ;; strangely if the selected window is on an invisible frame: it hits
   ;; some of the windows on that frame, and all windows on visible frames.
   (let* ((walk-windows-start (selected-window))
@@ -129,7 +129,7 @@ Otherwise, include frames only on the selected device."
 		    (list 'select-window 'save-selected-window-window)))))
 
 (defun count-windows (&optional minibuf)
-   "Returns the number of visible windows.
+   "Return the number of visible windows.
 Optional arg MINIBUF non-nil means count the minibuffer
 even if it is inactive."
    (let ((count 0))
@@ -139,7 +139,7 @@ even if it is inactive."
      count))
 
 (defun balance-windows ()
-  "Makes all visible windows the same height (approximately)."
+  "Make all visible windows the same height (approximately)."
   (interactive)
   (let ((count -1) levels newsizes size)
         ;FSFmacs

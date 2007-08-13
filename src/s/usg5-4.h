@@ -106,12 +106,6 @@ Boston, MA 02111-1307, USA.  */
 #undef BROKEN_TIOCGWINSZ
 #undef BROKEN_TIOCGETC
 
-/* TIOCGPGRP is broken in SysVr4, so we can't send signals to PTY
-   subprocesses the usual way.  But TIOCSIGNAL does work for PTYs, and
-   this is all we need.  */
-
-#define TIOCSIGSEND TIOCSIGNAL
-
 /* This change means that we don't loop through allocate_pty too many
    times in the (rare) event of a failure. */
 

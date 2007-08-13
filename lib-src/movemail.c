@@ -207,10 +207,8 @@ main (int argc, char *argv[])
 #ifdef MAIL_USE_POP
   if (!strncmp (inname, "po:", 3))
     {
-      int status;
-
-      status = popmail (inname + 3, outname, argc > 3 ? argv[3] : NULL);
-      exit (status);
+      int retcode = popmail (inname + 3, outname, argc > 3 ? argv[3] : NULL);
+      exit (retcode);
     }
 
   setuid (getuid ());
@@ -504,9 +502,7 @@ popmail (char *user, char *outfile, char *password)
   register int i;
   int mbfi;
   FILE *mbf;
-  char *getenv ();
   popserver server;
-  extern char *strerror ();
 
   server = pop_open (0, user, password, POP_NO_GETPASS);
   if (! server)

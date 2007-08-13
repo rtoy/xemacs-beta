@@ -26,7 +26,7 @@ Boston, MA 02111-1307, USA.  */
 
    Ultimately based on FSF, then later on JWZ work for Lemacs.
    Rewritten over time by Ben Wing and Chuck Thompson.
-   Rewritten for mswindows by Jonathan Harris, November 1997 for 20.4.
+   Rewritten for mswindows by Jonathan Harris, November 1997 for 21.0.
  */
 
 #ifndef _XEMACS_CONSOLE_MSW_H_
@@ -143,6 +143,7 @@ struct mswindows_frame
 
 #define FRAME_MSWINDOWS_HANDLE(f)	  (FRAME_MSWINDOWS_DATA (f)->hwnd)
 #define FRAME_MSWINDOWS_DC(f)		  (FRAME_MSWINDOWS_DATA (f)->hdc)
+#define FRAME_MSWINDOWS_CDC(f)		  (FRAME_MSWINDOWS_DATA (f)->cdc)
 #define FRAME_MSWINDOWS_MENU_HASHTABLE(f) (FRAME_MSWINDOWS_DATA (f)->menu_hashtable)
 #define FRAME_MSWINDOWS_MENU_CHECKSUM(f)  (FRAME_MSWINDOWS_DATA (f)->menu_checksum)
 #define MSWINDOWS_FRAME_CHARWIDTH(f)	  (FRAME_MSWINDOWS_DATA (f)->charwidth)

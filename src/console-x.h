@@ -238,6 +238,18 @@ struct x_device
 #define DEVICE_XATOM_CHARSET_REGISTRY(d) (DEVICE_X_DATA (d)->Xatom_CHARSET_REGISTRY)
 #define DEVICE_XATOM_CHARSET_ENCODING(d) (DEVICE_X_DATA (d)->Xatom_CHARSET_ENCODING)
 
+#define Xt_SET_VALUE(widget, resource, value) do {	\
+  Arg al;						\
+  XtSetArg (al, resource, value);			\
+  XtSetValues (widget, &al, 1);				\
+} while (0)
+
+#define Xt_GET_VALUE(widget, resource, location) do {	\
+  Arg al;						\
+  XtSetArg (al, resource, location);			\
+  XtGetValues (widget, &al, 1);				\
+} while (0)
+
 /* The maximum number of widgets that can be displayed above the text
    area at one time.  Currently no more than 3 will ever actually be
    displayed (menubar, psheet, debugger panel). */
@@ -373,7 +385,6 @@ struct frame *x_any_window_to_frame (struct device *d, Window);
 struct frame *x_any_widget_or_parent_to_frame (struct device *d,
 					       Widget widget);
 struct frame *decode_x_frame (Lisp_Object);
-Display *get_x_display (Lisp_Object);
 struct frame *x_window_to_frame (struct device *d, Window);
 struct device *get_device_from_display (Display *dpy);
 struct device *decode_x_device (Lisp_Object);
@@ -428,10 +439,6 @@ void x_init_modifier_mapping (struct device *d);
 
 #define HANDLING_X_ERROR(dpy, body)	\
      ( expect_x_error ((dpy)), (body), signal_if_x_error ((dpy), 0))
-
-Lisp_Object x_atom_to_symbol (struct device *d, Atom atom);
-Atom symbol_to_x_atom (struct device *d, Lisp_Object sym,
-		       int only_if_exists);
 
 #ifdef HAVE_XIM
 /* Locale */

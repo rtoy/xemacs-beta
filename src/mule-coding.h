@@ -437,20 +437,14 @@ do {							\
     sj2 = I2 - 2;					\
 } while (0)
 
-extern Lisp_Object make_decoding_input_stream (Lstream *stream,
-					       Lisp_Object codesys);
-extern Lisp_Object make_encoding_input_stream (Lstream *stream,
-					       Lisp_Object codesys);
-extern Lisp_Object make_decoding_output_stream (Lstream *stream,
-						Lisp_Object codesys);
-extern Lisp_Object make_encoding_output_stream (Lstream *stream,
-						Lisp_Object codesys);
-extern Lisp_Object decoding_stream_coding_system (Lstream *stream);
-extern Lisp_Object encoding_stream_coding_system (Lstream *stream);
-extern void set_decoding_stream_coding_system (Lstream *stream,
-					       Lisp_Object codesys);
-extern void set_encoding_stream_coding_system (Lstream *stream,
-					       Lisp_Object codesys);
-extern void determine_real_coding_system (Lstream *stream, Lisp_Object *codesys_in_out,
-					  enum eol_type *eol_type_in_out);
+Lisp_Object make_decoding_input_stream  (Lstream *stream, Lisp_Object codesys);
+Lisp_Object make_encoding_input_stream  (Lstream *stream, Lisp_Object codesys);
+Lisp_Object make_decoding_output_stream (Lstream *stream, Lisp_Object codesys);
+Lisp_Object make_encoding_output_stream (Lstream *stream, Lisp_Object codesys);
+Lisp_Object decoding_stream_coding_system (Lstream *stream);
+Lisp_Object encoding_stream_coding_system (Lstream *stream);
+void set_decoding_stream_coding_system (Lstream *stream, Lisp_Object codesys);
+void set_encoding_stream_coding_system (Lstream *stream, Lisp_Object codesys);
+void determine_real_coding_system (Lstream *stream, Lisp_Object *codesys_in_out,
+				   enum eol_type *eol_type_in_out);
 #endif /* _XEMACS_MULE_CODING_H_ */

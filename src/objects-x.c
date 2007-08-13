@@ -36,7 +36,7 @@ Boston, MA 02111-1307, USA.  */
 #include "device.h"
 #include "insdel.h"
 
-int handle_nonfull_spec_fonts;
+int x_handle_non_fully_specified_fonts;
 
 
 /************************************************************************/
@@ -152,7 +152,7 @@ allocate_nearest_color (Display *display, Colormap colormap, Visual *visual,
 	  /* JH: I can't believe there's no way to go backwards from a
 	     colormap ID and get its visual and number of entries, but X
 	     apparently isn't built that way... */
-	  int no_cells = visual->map_entries; 
+	  int no_cells = visual->map_entries;
 	  int nearest;
 	  long nearest_delta, trial_delta;
 	  int x;
@@ -161,7 +161,7 @@ allocate_nearest_color (Display *display, Colormap colormap, Visual *visual,
 
 	  for (x = 0; x < no_cells; x++)
 	    cells[x].pixel = x;
- 
+
 	  /* read the current colormap */
 	  XQueryColors (display, colormap, cells, no_cells);
 	  nearest = 0;
@@ -219,7 +219,7 @@ x_parse_nearest_color (struct device *d, XColor *color, Bufbyte *name,
   cmap = DEVICE_X_COLORMAP(d);
   visual = DEVICE_X_VISUAL (d);
 
-  memset (color, 0, sizeof (*color));
+  xzero (*color);
   {
     CONST Extbyte *extname;
     Extcount extnamelen;
@@ -262,7 +262,7 @@ x_initialize_color_instance (struct Lisp_Color_Instance *c, Lisp_Object name,
   /* Don't allocate the data until we're sure that we will succeed,
      or the finalize method may get fucked. */
   c->data = xnew (struct x_color_instance_data);
-  if (result == 3) 
+  if (result == 3)
     COLOR_INSTANCE_X_DEALLOC (c) = 0;
   else
     COLOR_INSTANCE_X_DEALLOC (c) = 1;
@@ -289,7 +289,7 @@ x_finalize_color_instance (struct Lisp_Color_Instance *c)
     {
       if (DEVICE_LIVE_P (XDEVICE (c->device)))
 	{
-	  if (COLOR_INSTANCE_X_DEALLOC (c)) 
+	  if (COLOR_INSTANCE_X_DEALLOC (c))
 	    {
 	      XFreeColors (DEVICE_X_DISPLAY (XDEVICE (c->device)), DEVICE_X_COLORMAP (XDEVICE (c->device)),
 			   &COLOR_INSTANCE_X_COLOR (c).pixel, 1, 0);
@@ -392,7 +392,7 @@ x_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object name,
   {
     /* following change suggested by Ted Phelps <phelps@dstc.edu.au> */
     unsigned int def_char = 'n'; /*xf->default_char;*/
-    int byte1, byte2;
+    unsigned int byte1, byte2;
 
   once_more:
     byte1 = def_char >> 8;
@@ -402,8 +402,10 @@ x_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object name,
       {
 	/* Old versions of the R5 font server have garbage (>63k) as
 	   def_char. 'n' might not be a valid character. */
-	if (byte1 < xf->min_byte1 || byte1 > xf->max_byte1 ||
-	    byte2 < xf->min_char_or_byte2 || byte2 > xf->max_char_or_byte2)
+	if (byte1 < xf->min_byte1         ||
+	    byte1 > xf->max_byte1         ||
+	    byte2 < xf->min_char_or_byte2 ||
+	    byte2 > xf->max_char_or_byte2)
 	  f->width = 0;
 	else
 	  f->width = xf->per_char[(byte1 - xf->min_byte1) *
@@ -440,7 +442,7 @@ x_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object name,
      defined that we could almost just get rid of this damn flag and
      make it an assertion. */
   f->proportional_p = (xf->min_bounds.width != xf->max_bounds.width ||
-		       (handle_nonfull_spec_fonts &&
+		       (x_handle_non_fully_specified_fonts &&
 			!xf->all_chars_exist));
 
   return 1;
@@ -778,7 +780,7 @@ x_font_instance_truename (struct Lisp_Font_Instance *f, Error_behavior errb)
       }
       if (NILP (FONT_INSTANCE_X_TRUENAME (f)))
 	{
-	  Lisp_Object font_instance = Qnil;
+	  Lisp_Object font_instance;
 	  XSETFONT_INSTANCE (font_instance, f);
 
 	  maybe_signal_simple_error ("couldn't determine font truename",
@@ -917,8 +919,7 @@ x_font_spec_matches_charset (struct device *d, Lisp_Object charset,
 /* find a font spec that matches font spec FONT and also matches
    (the registry of) CHARSET. */
 static Lisp_Object
-x_find_charset_font (Lisp_Object device, Lisp_Object font,
-		     Lisp_Object charset)
+x_find_charset_font (Lisp_Object device, Lisp_Object font, Lisp_Object charset)
 {
   char **names;
   int count = 0;
@@ -930,16 +931,16 @@ x_find_charset_font (Lisp_Object device, Lisp_Object font,
 
   names = XListFonts (DEVICE_X_DISPLAY (XDEVICE (device)),
 		      patternext, MAX_FONT_COUNT, &count);
+  /* ### This code seems awfully bogus -- mrb */
   for (i = 0; i < count; i ++)
     {
-      CONST char *intname;
+      CONST Bufbyte *intname;
 
       GET_C_CHARPTR_INT_BINARY_DATA_ALLOCA (names[i], intname);
       if (x_font_spec_matches_charset (XDEVICE (device), charset,
-				       (unsigned char *) intname,
-				       Qnil, 0, -1))
+				       intname, Qnil, 0, -1))
 	{
-	  result = build_string (intname);
+	  result = build_string ((char *) intname);
 	  break;
 	}
     }
@@ -997,7 +998,8 @@ console_type_create_objects_x (void)
 void
 vars_of_objects_x (void)
 {
-  DEFVAR_BOOL ("x-handle-non-fully-specified-fonts",&handle_nonfull_spec_fonts /*
+  DEFVAR_BOOL ("x-handle-non-fully-specified-fonts",
+	       &x_handle_non_fully_specified_fonts /*
 If this is true then fonts which do not have all characters specified
 will be considered to be proportional width even if they are actually
 fixed-width.  If this is not done then characters which are supposed to
@@ -1008,7 +1010,7 @@ circumstances, it also causes a noticeable performance hit when using
 fixed-width fonts.  Since most people don't use characters which could
 cause problems this is set to nil by default.
 */ );
-  handle_nonfull_spec_fonts = 0;
+  x_handle_non_fully_specified_fonts = 0;
 }
 
 void

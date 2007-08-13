@@ -273,24 +273,17 @@ struct console_methods
 #define CONTYPE_METH(meth, m, args) (((meth)->m##_method) args)
 
 /* Call a void-returning console method, if it exists */
-#define MAYBE_CONTYPE_METH(meth, m, args)			\
-do {								\
+#define MAYBE_CONTYPE_METH(meth, m, args) do {			\
   struct console_methods *_maybe_contype_meth_meth = (meth);	\
   if (HAS_CONTYPE_METH_P (_maybe_contype_meth_meth, m))		\
     CONTYPE_METH (_maybe_contype_meth_meth, m, args);		\
 } while (0)
 
-MAC_DECLARE_EXTERN (struct console_methods *, MTcontype_meth_or_given)
-
 /* Call a console method, if it exists; otherwise return
-   the specified value */
-#define CONTYPE_METH_OR_GIVEN(meth, m, args, given)		\
-MAC_BEGIN							\
-  MAC_DECLARE (struct console_methods *,			\
-	       MTcontype_meth_or_given, meth)			\
-  HAS_CONTYPE_METH_P (MTcontype_meth_or_given, m) ?		\
-    CONTYPE_METH (MTcontype_meth_or_given, m, args) : (given)	\
-MAC_END
+   the specified value - meth is multiply evaluated.  */
+#define CONTYPE_METH_OR_GIVEN(meth, m, args, given)	\
+  (HAS_CONTYPE_METH_P (meth, m) ?			\
+   CONTYPE_METH (meth, m, args) : (given))
 
 /* Call an int-returning console method, if it exists; otherwise
    return 0 */
@@ -394,49 +387,49 @@ DECLARE_LRECORD (console, struct console);
 #define CHECK_CONSOLE(x) CHECK_RECORD (x, console)
 #define CONCHECK_CONSOLE(x) CONCHECK_RECORD (x, console)
 
-#define CHECK_LIVE_CONSOLE(x)						\
-  do { CHECK_CONSOLE (x);						\
-       if (! CONSOLEP (x)						\
-	   || ! CONSOLE_LIVE_P (XCONSOLE (x)))				\
-         dead_wrong_type_argument (Qconsole_live_p, (x)); } while (0)
-#define CONCHECK_LIVE_CONSOLE(x)					\
-  do { CONCHECK_CONSOLE (x);						\
-       if (! CONSOLEP (x)						\
-	   || ! CONSOLE_LIVE_P (XCONSOLE (x)))				\
-         x = wrong_type_argument (Qconsole_live_p, (x)); } while (0)
+#define CHECK_LIVE_CONSOLE(x) do {			\
+  CHECK_CONSOLE (x);					\
+  if (! CONSOLE_LIVE_P (XCONSOLE (x)))			\
+    dead_wrong_type_argument (Qconsole_live_p, (x));	\
+} while (0)
+#define CONCHECK_LIVE_CONSOLE(x) do {			\
+  CONCHECK_CONSOLE (x);					\
+  if (! CONSOLE_LIVE_P (XCONSOLE (x)))			\
+    x = wrong_type_argument (Qconsole_live_p, (x));	\
+} while (0)
 
 #define CONSOLE_TYPE_P(con, type) EQ (CONSOLE_TYPE (con), Q##type)
 
 #ifdef ERROR_CHECK_TYPECHECK
-MAC_DECLARE_EXTERN (struct console *, MTconsole_data)
-# define CONSOLE_TYPE_DATA(con, type)				\
-MAC_BEGIN							\
-  MAC_DECLARE (struct console *, MTconsole_data, con)		\
-  assert (CONSOLE_TYPE_P (MTconsole_data, type))		\
-  MAC_SEP							\
-  (struct type##_console *) MTconsole_data->console_data	\
-MAC_END
+INLINE struct console *
+error_check_console_type (struct console *con, Lisp_Object sym);
+INLINE struct console *
+error_check_console_type (struct console *con, Lisp_Object sym)
+{
+  assert (EQ (CONSOLE_TYPE (con), sym));
+  return con;
+}
+# define CONSOLE_TYPE_DATA(con, type)			\
+  (*(struct type##_console **)				\
+   &(error_check_console_type (con, Q##type))->console_data)
 #else
-# define CONSOLE_TYPE_DATA(con, type)				\
-  ((struct type##_console *) (con)->console_data)
+# define CONSOLE_TYPE_DATA(con, type)			\
+  (*(struct type##_console **) &((con)->console_data))
 #endif
 
-#define CHECK_CONSOLE_TYPE(x, type)				\
-  do {								\
-    CHECK_CONSOLE (x);						\
-    if (!(CONSOLEP (x) && CONSOLE_TYPE_P (XCONSOLE (x),		\
-					 type)))		\
-      dead_wrong_type_argument					\
-	(type##_console_methods->predicate_symbol, x);		\
-  } while (0)
-#define CONCHECK_CONSOLE_TYPE(x, type)				\
-  do {								\
-    CONCHECK_CONSOLE (x);					\
-    if (!(CONSOLEP (x) && CONSOLE_TYPE_P (XCONSOLE (x),		\
-					 type)))		\
-      x = wrong_type_argument					\
-	(type##_console_methods->predicate_symbol, x);		\
-  } while (0)
+#define CHECK_CONSOLE_TYPE(x, type) do {		\
+  CHECK_CONSOLE (x);					\
+  if (! CONSOLE_TYPE_P (XCONSOLE (x), type))		\
+    dead_wrong_type_argument				\
+      (type##_console_methods->predicate_symbol, x);	\
+} while (0)
+#define CONCHECK_CONSOLE_TYPE(x, type) do {		\
+  CONCHECK_CONSOLE (x);					\
+  if (!(CONSOLEP (x) &&					\
+	CONSOLE_TYPE_P (XCONSOLE (x), type)))		\
+    x = wrong_type_argument				\
+      (type##_console_methods->predicate_symbol, x);	\
+} while (0)
 
 /* #### These should be in the console-*.h files but there are
    too many places where the abstraction is broken.  Need to
@@ -480,18 +473,13 @@ MAC_END
 
 #define CONSOLE_WIN_P(con) CONSOLE_TYPESYM_WIN_P (CONSOLE_TYPE (con))
 
-extern Lisp_Object Vconsole_list, Vselected_console, Vdefault_console;
-extern Lisp_Object Qconsole_live_p;
+EXFUN (Fconsole_disable_input, 1);
+EXFUN (Fdelete_console, 2);
+EXFUN (Fselect_console, 1);
+EXFUN (Fselected_console, 0);
 
-/* This structure holds the default values of the console-local
-   variables defined with DEFVAR_CONSOLE_LOCAL, that have special
-   slots in each console.  The default value occupies the same slot
-   in this structure as an individual console's value occupies in
-   that console.  Setting the default value also goes through the
-   list of consoles and stores into each console that does not say
-   it has a local value.  */
-
-extern Lisp_Object Vconsole_defaults;
+extern Lisp_Object Qcreate_console_hook, Qdelete_console_hook;
+extern Lisp_Object Vconsole_defaults, Vconsole_type_list, Vselected_console;
 
 /* This structure marks which slots in a console have corresponding
    default values in console_defaults.
@@ -507,16 +495,6 @@ extern Lisp_Object Vconsole_defaults;
    and the corresponding slot in console_defaults is not used.  */
 
 extern struct console console_local_flags;
-
-extern Lisp_Object Vconsole_type_list;
-
-extern Lisp_Object Qtty, Qstream, Qdead;
-#ifdef HAVE_X_WINDOWS
-extern Lisp_Object Qx;
-#endif /* HAVE_X_WINDOWS */
-#ifdef HAVE_MS_WINDOWS
-extern Lisp_Object Qmswindows;
-#endif /* HAVE_MS_WINDOWS */
 
 int valid_console_type_p (Lisp_Object type);
 

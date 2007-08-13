@@ -19,7 +19,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; along with XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -46,7 +46,7 @@ This is just like calling `other-window' with the arg negated."
   (other-window (- arg) all-frames device))
 
 (defun windows-of-buffer (&optional buffer)
-  "Returns a list of windows that have BUFFER in them.
+  "Return a list of windows that have BUFFER in them.
 If BUFFER is not specified, the current buffer will be used."
   (or (bufferp buffer)
       (if (stringp buffer)
@@ -54,7 +54,7 @@ If BUFFER is not specified, the current buffer will be used."
 			   (get-file-buffer buffer)))
 	(setq buffer (current-buffer))))
   (let* ((firstwin (next-window nil nil t))
-	 (wind firstwin) 
+	 (wind firstwin)
 	 (done nil)
 	 window-list)
     (while (not done)
@@ -75,7 +75,7 @@ If BUFFER is not specified, the current buffer will be used."
 
 (defun window-list (&optional frame minibuf window)
   "Return a list of windows on FRAME, beginning with WINDOW.
-FRAME and WINDOW default to the selected ones.  
+FRAME and WINDOW default to the selected ones.
 Optional second arg MINIBUF t means count the minibuffer window
 even if not active.  If MINIBUF is neither t nor nil it means
 not to count the minibuffer even if it is active."
@@ -419,7 +419,7 @@ Returns the window displaying BUFFER."
 	     ;; so it's a fine candidate for display.
 	     (if (not (eq old-frame target-frame))
 		 (setq not-this-window-p nil))
-	
+
 	     ;; if it's in the selected window, and that's ok, then we're done.
 	     (if (and (not not-this-window-p)
 		      (eq buffer (window-buffer (selected-window))))
@@ -427,16 +427,16 @@ Returns the window displaying BUFFER."
 
 	     ;; See if the user has specified this buffer should appear
 	     ;; in the selected window.
-	
+
 	     (if not-this-window-p
 		 nil
-	  
+
 	       (if (or (member (buffer-name buffer) same-window-buffer-names)
 		       (assoc (buffer-name buffer) same-window-buffer-names))
 		   (progn
 		     (switch-to-buffer buffer)
 		     (throw 'done (display-buffer-1 (selected-window)))))
-	  
+
 	       (let ((tem same-window-regexps))
 		 (while tem
 		   (let ((car (car tem)))
@@ -450,14 +450,14 @@ Returns the window displaying BUFFER."
 			   (throw 'done (display-buffer-1
 					 (selected-window))))))
 		   (setq tem (cdr tem)))))
-	
+
 	     ;; If pop-up-frames, look for a window showing BUFFER on
 	     ;; any visible or iconified frame.  Otherwise search only
 	     ;; the current frame.
 	     (if (and (not explicit-frame)
 		      (or pop-up-frames (not (last-nonminibuf-frame))))
 		 (setq target-frame 0))
-	
+
 	     ;; Otherwise, find some window that it's already in, and
 	     ;; return that, unless that window is the selected window
 	     ;; and that isn't ok.  What a contorted mess!
@@ -566,7 +566,7 @@ Returns the window displaying BUFFER."
 		       ;; If the LRU window is selected, and big enough,
 		       ;; and can be split, split it.
 		       (if (and window
-				(not (frame-property (window-frame window) 
+				(not (frame-property (window-frame window)
 						     'unsplittable))
 				(or (eq window (selected-window))
 				    (not (window-parent window)))

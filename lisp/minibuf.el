@@ -3,7 +3,7 @@
 ;; Copyright (C) 1992, 1993, 1994, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems
 ;; Copyright (C) 1995, 1996 Ben Wing
- 
+
 ;; Author: Richard Mlynarik
 ;; Created: 2-Oct-92
 ;; Maintainer: XEmacs Development Team
@@ -22,7 +22,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; along with XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -159,7 +159,7 @@ minibuffer is reinvoked while it is the selected window."
 (define-key minibuffer-local-map '[prior] "\M-p")
 (define-key minibuffer-local-map "\M-r" 'previous-matching-history-element)
 (define-key minibuffer-local-map "\M-s" 'next-matching-history-element)
-(define-key minibuffer-local-must-match-map [next] 
+(define-key minibuffer-local-must-match-map [next]
   'next-complete-history-element)
 (define-key minibuffer-local-must-match-map [prior]
   'previous-complete-history-element)
@@ -397,7 +397,7 @@ See also the variable completion-highlight-first-word-only for control over
 		   (get-buffer-create (format " *Minibuf-%d"
 					      (minibuffer-depth)))))
          (frame (window-frame window))
-         (mconfig (if (eq frame (selected-frame)) 
+         (mconfig (if (eq frame (selected-frame))
                       nil (current-window-configuration frame)))
          (oconfig (current-window-configuration))
 	 ;; dynamic scope sucks sucks sucks sucks sucks sucks.
@@ -549,7 +549,7 @@ See also the variable completion-highlight-first-word-only for control over
   ;; complaint, like `disabled' commands do, since it's likely that non-novice
   ;; users will be annoyed by this change, so we give them an easy way to get
   ;; rid of it forever.
-  ;; 
+  ;;
   (beep t 'minibuffer-limit-exceeded)
   (message
    "Minibuffer already active: abort it with `^]', enable new one with `n': ")
@@ -567,7 +567,7 @@ See also the variable completion-highlight-first-word-only for control over
 	   (find-file-noselect
 	    (substitute-in-file-name custom-file)))
 	  (goto-char (point-min))
-	  (if (re-search-forward 
+	  (if (re-search-forward
 	       "^(setq minibuffer-max-depth \\([0-9]+\\|'?nil\\|'?()\\))\n"
 	       nil t)
 	      (delete-region (match-beginning 0 ) (match-end 0))
@@ -598,8 +598,8 @@ See also the variable completion-highlight-first-word-only for control over
     (let ((inhibit-quit t))
       (sit-for 2)
       (delete-region savemax (point-max))
-      ;;  If the user types a ^G while we're in sit-for, then quit-flag 
-      ;;  gets set. In this case, we want that ^G to be interpreted 
+      ;;  If the user types a ^G while we're in sit-for, then quit-flag
+      ;;  gets set. In this case, we want that ^G to be interpreted
       ;;  as a normal character, and act just like typeahead.
       (if (and quit-flag (not unread-command-event))
           (setq unread-command-event (character-to-event (quit-char))
@@ -658,7 +658,7 @@ See also the variable completion-highlight-first-word-only for control over
 ;; 0 'none                 no possible completion
 ;; 1 'unique               was already an exact and unique completion
 ;; 3 'exact                was already an exact (but nonunique) completion
-;; NOT USED 'completed-exact-unique completed to an exact and completion 
+;; NOT USED 'completed-exact-unique completed to an exact and completion
 ;; 4 'completed-exact      completed to an exact (but nonunique) completion
 ;; 5 'completed            some completion happened
 ;; 6 'uncompleted          no completion happened
@@ -936,7 +936,7 @@ Return nil if there is no valid completion, else t."
                         (and (not (eq char ?\-))
                              (funcall foo "-"))
                         (progn
-                          (if completion-auto-help 
+                          (if completion-auto-help
                               (minibuffer-completion-help)
                               ;; New message, only in this new Lisp code
 			    ;; rewritten for I18N3 snarfing
@@ -1316,7 +1316,7 @@ If N is negative, find the previous or Nth previous match."
 	(goto-char (point-max))))))
 
 (defun previous-history-element (n)
-  "Inserts the previous element of the minibuffer history into the minibuffer."
+  "Insert the previous element of the minibuffer history into the minibuffer."
   (interactive "p")
   (next-history-element (- n)))
 
@@ -1415,7 +1415,7 @@ A user variable is one whose documentation starts with a `*' character."
 Prompts with PROMPT.  Optional second arg DEFAULT is value to return if user
 enters an empty line.  If optional third arg REQUIRE-MATCH is non-nil,
 only existing buffer names are allowed."
-  (let ((prompt (if default 
+  (let ((prompt (if default
                     (format "%s(default %s) "
                             (gettext prompt) (if (bufferp default)
 						 (buffer-name default)
@@ -1444,7 +1444,7 @@ only existing buffer names are allowed."
       result)))
 
 (defun read-number (prompt &optional integers-only)
-  "Reads a number from the minibuffer."
+  "Read a number from the minibuffer."
   (let ((pred (if integers-only 'integerp 'numberp))
 	num)
     (while (not (funcall pred num))
@@ -1492,8 +1492,8 @@ only existing buffer names are allowed."
                  ;; already aset by make-string initial-value
                  (setq n (1+ n))))
            new))))
-  
-(defun read-file-name-2 (history prompt dir default 
+
+(defun read-file-name-2 (history prompt dir default
 				 must-match initial-contents
 				 completer)
   (if (not dir)
@@ -1587,7 +1587,7 @@ only existing buffer names are allowed."
 	 :activate-callback 'read-file-name-activate-callback)
 	(goto-char (point-min) completion-buf)))))
 
-(defun read-file-name-1 (history prompt dir default 
+(defun read-file-name-1 (history prompt dir default
 				 must-match initial-contents
 				 completer)
   (if (should-use-dialog-box-p)
@@ -1660,7 +1660,7 @@ Fifth arg INITIAL-CONTENTS specifies text to start with.
 Sixth arg HISTORY specifies the history list to use.  Default is
  `file-name-history'.
 DIR defaults to current buffer's directory default."
-  (read-file-name-1 
+  (read-file-name-1
     (or history 'file-name-history)
     prompt dir (or default default-directory) must-match initial-contents
     'read-directory-name-internal))
@@ -1675,16 +1675,16 @@ DIR defaults to current buffer's directory default."
       (let* ((orig (if (equal string "") nil string))
              (sstring (if orig (substitute-in-file-name string) string))
              (specdir (if orig (file-name-directory sstring) nil)))
-        (funcall completer 
-                 action 
-                 orig 
-                 sstring 
+        (funcall completer
+                 action
+                 orig
+                 sstring
                  specdir
                  (if specdir (expand-file-name specdir dir) dir)
                  (if orig (file-name-nondirectory sstring) string)))
       ;; An odd number of trailing $'s
       (let* ((start (match-beginning 3))
-             (env (substring string 
+             (env (substring string
                              (cond ((= start (length string))
                                     ;; "...$"
                                     start)
@@ -1699,7 +1699,7 @@ DIR defaults to current buffer's directory default."
                                     (cons (substring x 0 (string-match "=" x))
                                           'nil))
                                 process-environment))))
-        
+
 	(cond ((eq action 'lambda)
                nil)
               ((eq action 't)
@@ -1731,13 +1731,13 @@ DIR defaults to current buffer's directory default."
 
 
 (defun read-file-name-internal (string dir action)
-  (read-file-name-internal-1 
+  (read-file-name-internal-1
    string dir action
    #'(lambda (action orig string specdir dir name)
       (cond ((eq action 'lambda)
              (if (not orig)
                  nil
-               (let ((sstring (condition-case nil 
+               (let ((sstring (condition-case nil
                                   (expand-file-name string)
                                 (error nil))))
                  (if (not sstring)
@@ -1771,7 +1771,7 @@ DIR defaults to current buffer's directory default."
                          val)))))))))
 
 (defun read-directory-name-internal (string dir action)
-  (read-file-name-internal-1 
+  (read-file-name-internal-1
    string dir action
    #'(lambda (action orig string specdir dir name)
       (let* ((dirs #'(lambda (fn)
@@ -1784,7 +1784,7 @@ DIR defaults to current buffer's directory default."
 				     'directories)
 				  (directory-files
 				   dir
-				   nil 
+				   nil
 				   (concat "\\`" (regexp-quote name))
 				   nil
 				   'directories))))
@@ -1802,7 +1802,7 @@ DIR defaults to current buffer's directory default."
               ((eq action 't)
                ;; all completions
                (funcall dirs #'(lambda (n)
-				 (un-substitute-in-file-name 
+				 (un-substitute-in-file-name
 				  (file-name-as-directory n)))))
               (t
                ;; complete
@@ -1824,13 +1824,13 @@ DIR defaults to current buffer's directory default."
 
 (defun append-expand-filename (file-string string)
   "Append STRING to FILE-STRING differently depending on whether STRING
-is a username (~string), an environment variable ($string), 
-or a filename (/string).  The resultant string is returned with the 
-environment variable or username expanded and resolved to indicate 
+is a username (~string), an environment variable ($string),
+or a filename (/string).  The resultant string is returned with the
+environment variable or username expanded and resolved to indicate
 whether it is a file(/result) or a directory (/result/)."
-  (let ((file 
+  (let ((file
 	 (cond ((string-match "\\([~$]\\)\\([^~$/]*\\)$" file-string)
-		(cond ((string= (substring file-string 
+		(cond ((string= (substring file-string
 					   (match-beginning 1)
 					   (match-end 1)) "~")
 		       (concat (substring file-string 0 (match-end 1))
@@ -1838,12 +1838,12 @@ whether it is a file(/result) or a directory (/result/)."
 		      (t (substitute-in-file-name
 			  (concat (substring file-string 0 (match-end 1))
 				  string)))))
-	       (t (concat (file-name-directory 
+	       (t (concat (file-name-directory
 			   (substitute-in-file-name file-string)) string))))
 	result)
-    
+
     (cond ((stringp (setq result (and (file-exists-p (expand-file-name file))
-				      (read-file-name-internal 
+				      (read-file-name-internal
 				       (condition-case nil
 					   (expand-file-name file)
 					 (error file))
@@ -1854,7 +1854,7 @@ whether it is a file(/result) or a directory (/result/)."
 (defun mouse-file-display-completion-list (window dir minibuf user-data)
   (let ((standard-output (window-buffer window)))
     (condition-case nil
-	(display-completion-list 
+	(display-completion-list
 	 (directory-files dir nil nil nil t)
 	 :window-width (* 2 (window-width window))
 	 :activate-callback
@@ -1902,7 +1902,7 @@ whether it is a file(/result) or a directory (/result/)."
 						 user-data)))))
 
 ;; this is rather cheesified but gets the job done.
-(defun mouse-read-file-name-1 (history prompt dir default 
+(defun mouse-read-file-name-1 (history prompt dir default
 				 must-match initial-contents
 				 completer)
   (let* ((file-p (eq 'read-file-name-internal completer))
@@ -1939,7 +1939,7 @@ whether it is a file(/result) or a directory (/result/)."
 	  (when (featurep 'scrollbar)
 	    (set-specifier scrollbar-width 0 butbuff))
 	  (insert "                 ")
-	  (insert-gui-button (make-gui-button "OK" 
+	  (insert-gui-button (make-gui-button "OK"
 					      (lambda (foo)
 						(exit-minibuffer))))
 	  (insert "                 ")
@@ -1982,7 +1982,7 @@ whether it is a file(/result) or a directory (/result/)."
 		(progn
 		  (add-hook 'minibuffer-setup-hook rfhookfun)
 		  (add-hook 'completion-setup-hook rfcshookfun)
-		  (read-file-name-2 history prompt dir default 
+		  (read-file-name-2 history prompt dir default
 				    must-match initial-contents
 				    completer))
 	      (remove-hook 'minibuffer-setup-hook rfhookfun)
@@ -2003,7 +2003,7 @@ whether it is a file(/result) or a directory (/result/)."
 
 ;; Ben wanted all of the possibilities from the `configure' script used
 ;; here, but I think this is way too many.  I already trimmed the R4 variants
-;; and a few obvious losers from the list.  --Stig  
+;; and a few obvious losers from the list.  --Stig
 (defvar x-library-search-path '("/usr/X11R6/lib/X11/"
 				"/usr/X11R5/lib/X11/"
 				"/usr/lib/X11R6/X11/"

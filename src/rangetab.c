@@ -66,15 +66,6 @@ Lisp_Object Qrange_table;
    #### We should be using the gap array stuff from extents.c.  This
    is not hard but just requires moving that stuff out of that file. */
 
-static Lisp_Object mark_range_table (Lisp_Object, void (*) (Lisp_Object));
-static void print_range_table (Lisp_Object, Lisp_Object, int);
-static int range_table_equal (Lisp_Object, Lisp_Object, int depth);
-static unsigned long range_table_hash (Lisp_Object obj, int depth);
-DEFINE_LRECORD_IMPLEMENTATION ("range-table", range_table,
-                               mark_range_table, print_range_table, 0,
-			       range_table_equal, range_table_hash,
-			       struct Lisp_Range_Table);
-
 static Lisp_Object
 mark_range_table (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
@@ -164,10 +155,13 @@ range_table_hash (Lisp_Object obj, int depth)
     hash = HASH2 (hash, range_table_entry_hash (Dynarr_atp (rt->entries,
 							    i*size/5),
 						depth));
-
   return hash;
 }
 
+DEFINE_LRECORD_IMPLEMENTATION ("range-table", range_table,
+                               mark_range_table, print_range_table, 0,
+			       range_table_equal, range_table_hash,
+			       struct Lisp_Range_Table);
 
 /************************************************************************/
 /*                        Range table operations                        */
@@ -232,7 +226,7 @@ Return non-nil if OBJECT is a range table.
 }
 
 DEFUN ("make-range-table", Fmake_range_table, 0, 0, 0, /*
-Make a new, empty range table.
+Return a new, empty range table.
 You can manipulate it using `put-range-table', `get-range-table',
 `remove-range-table', and `clear-range-table'.
 */
@@ -253,7 +247,7 @@ ranges as the given table.  The values will not themselves be copied.
        (old_table))
 {
   struct Lisp_Range_Table *rt, *rtnew;
-  Lisp_Object obj = Qnil;
+  Lisp_Object obj;
 
   CHECK_RANGE_TABLE (old_table);
   rt = XRANGE_TABLE (old_table);

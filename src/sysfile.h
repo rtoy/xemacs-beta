@@ -26,6 +26,15 @@ Boston, MA 02111-1307, USA.  */
 #include <sys/errno.h>          /* <errno.h> does not always imply this */
 #endif
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#ifndef INCLUDED_FCNTL
+# define INCLUDED_FCNTL
+# include <fcntl.h>
+#endif /* INCLUDED_FCNTL */
+
 /* Load sys/types.h if not already loaded.
    In some systems loading it twice is suicidal.  */
 #ifndef makedev
@@ -36,7 +45,7 @@ Boston, MA 02111-1307, USA.  */
 #include <sys/param.h>
 
 #if defined (NeXT) || defined(__CYGWIN32__)
-/* what is needed from here?  Do others need it too? 
+/* what is needed from here?  Do others need it too?
  O_BINARY is in here under cygwin. */
 # include <sys/fcntl.h>
 #endif /* NeXT */
@@ -211,10 +220,124 @@ Boston, MA 02111-1307, USA.  */
 # define FD_CLOEXEC 1
 #endif
 
+/* Emacs needs to use its own definitions of certain system calls on
+   some systems (like SunOS 4.1 and USG systems, where the read system
+   call is interruptible but Emacs expects it not to be; and under
+   MULE, where all filenames need to be converted to external format).
+   To do this, we #define read to be sys_read, which is defined in
+   sysdep.c.  We first #undef read, in case some system file defines
+   read as a macro.  sysdep.c doesn't encapsulate read, so the call to
+   read inside of sys_read will do the right thing.
+
+   DONT_ENCAPSULATE is used in files such as sysdep.c that want to
+   call the actual system calls rather than the encapsulated versions.
+   Those files can call sys_read to get the (possibly) encapsulated
+   versions.
+
+   IMPORTANT: the redefinition of the system call must occur *after* the
+   inclusion of any header files that declare or define the system call;
+   otherwise lots of unfriendly things can happen.  This goes for all
+   encapsulated system calls.
+
+   We encapsulate the most common system calls here; we assume their
+   declarations are in one of the standard header files included above.
+   Other encapsulations are declared in the appropriate sys*.h file. */
+
+#ifdef ENCAPSULATE_READ
+int sys_read (int, void *, size_t);
+#endif
+#if defined (ENCAPSULATE_READ) && !defined (DONT_ENCAPSULATE)
+# undef read
+# define read sys_read
+#endif
+#if !defined (ENCAPSULATE_READ) && defined (DONT_ENCAPSULATE)
+# define sys_read read
+#endif
+
+#ifdef ENCAPSULATE_WRITE
+int sys_write (int, CONST void *, size_t);
+#endif
+#if defined (ENCAPSULATE_WRITE) && !defined (DONT_ENCAPSULATE)
+# undef write
+# define write sys_write
+#endif
+#if !defined (ENCAPSULATE_WRITE) && defined (DONT_ENCAPSULATE)
+# define sys_write write
+#endif
+
+#ifdef ENCAPSULATE_OPEN
+int sys_open (CONST char *, int, ...);
+#endif
+#if defined (ENCAPSULATE_OPEN) && !defined (DONT_ENCAPSULATE)
+# undef open
+# define open sys_open
+#endif
+#if !defined (ENCAPSULATE_OPEN) && defined (DONT_ENCAPSULATE)
+# define sys_open open
+#endif
+
+#ifdef ENCAPSULATE_CLOSE
+int sys_close (int);
+#endif
+#if defined (ENCAPSULATE_CLOSE) && !defined (DONT_ENCAPSULATE)
+# undef close
+# define close sys_close
+#endif
+#if !defined (ENCAPSULATE_CLOSE) && defined (DONT_ENCAPSULATE)
+# define sys_close close
+#endif
+
+/* Now the stdio versions ... */
+
+#ifdef ENCAPSULATE_FREAD
+size_t sys_fread (void *, size_t, size_t, FILE *);
+#endif
+#if defined (ENCAPSULATE_FREAD) && !defined (DONT_ENCAPSULATE)
+# undef fread
+# define fread sys_fread
+#endif
+#if !defined (ENCAPSULATE_FREAD) && defined (DONT_ENCAPSULATE)
+# define sys_fread fread
+#endif
+
+#ifdef ENCAPSULATE_FWRITE
+size_t sys_fwrite (CONST void *, size_t, size_t, FILE *);
+#endif
+#if defined (ENCAPSULATE_FWRITE) && !defined (DONT_ENCAPSULATE)
+# undef fwrite
+# define fwrite sys_fwrite
+#endif
+#if !defined (ENCAPSULATE_FWRITE) && defined (DONT_ENCAPSULATE)
+# define sys_fwrite fwrite
+#endif
+
+#ifdef ENCAPSULATE_FOPEN
+FILE *sys_fopen (CONST char *, CONST char *);
+#endif
+#if defined (ENCAPSULATE_FOPEN) && !defined (DONT_ENCAPSULATE)
+# undef fopen
+# define fopen sys_fopen
+#endif
+#if !defined (ENCAPSULATE_FOPEN) && defined (DONT_ENCAPSULATE)
+# define sys_fopen fopen
+#endif
+
+#ifdef ENCAPSULATE_FCLOSE
+int sys_fclose (FILE *);
+#endif
+#if defined (ENCAPSULATE_FCLOSE) && !defined (DONT_ENCAPSULATE)
+# undef fclose
+# define fclose sys_fclose
+#endif
+#if !defined (ENCAPSULATE_FCLOSE) && defined (DONT_ENCAPSULATE)
+# define sys_fclose fclose
+#endif
+
+
 /* encapsulations: file-information calls */
 
 #ifdef ENCAPSULATE_ACCESS
-extern int sys_access (CONST char *path, int mode);
+int sys_access (CONST char *path, int mode);
 #endif
 #if defined (ENCAPSULATE_ACCESS) && !defined (DONT_ENCAPSULATE)
 # undef access
@@ -225,7 +348,7 @@ extern int sys_access (CONST char *path, int mode);
 #endif
 
 #ifdef ENCAPSULATE_EACCESS
-extern int sys_eaccess (CONST char *path, int mode);
+int sys_eaccess (CONST char *path, int mode);
 #endif
 #if defined (ENCAPSULATE_EACCESS) && !defined (DONT_ENCAPSULATE)
 # undef eaccess
@@ -236,7 +359,7 @@ extern int sys_eaccess (CONST char *path, int mode);
 #endif
 
 #ifdef ENCAPSULATE_LSTAT
-extern int sys_lstat (CONST char *path, struct stat *buf);
+int sys_lstat (CONST char *path, struct stat *buf);
 #endif
 #if defined (ENCAPSULATE_LSTAT) && !defined (DONT_ENCAPSULATE)
 # undef lstat
@@ -247,7 +370,7 @@ extern int sys_lstat (CONST char *path, struct stat *buf);
 #endif
 
 #ifdef ENCAPSULATE_READLINK
-extern int sys_readlink (CONST char *path, char *buf, int bufsiz);
+int sys_readlink (CONST char *path, char *buf, size_t bufsiz);
 #endif
 #if defined (ENCAPSULATE_READLINK) && !defined (DONT_ENCAPSULATE)
 # undef readlink
@@ -258,7 +381,7 @@ extern int sys_readlink (CONST char *path, char *buf, int bufsiz);
 #endif
 
 #ifdef ENCAPSULATE_STAT
-extern int sys_stat (CONST char *path, struct stat *buf);
+int sys_stat (CONST char *path, struct stat *buf);
 #endif
 #if defined (ENCAPSULATE_STAT) && !defined (DONT_ENCAPSULATE)
 # undef stat
@@ -272,7 +395,7 @@ extern int sys_stat (CONST char *path, struct stat *buf);
 /* encapsulations: file-manipulation calls */
 
 #ifdef ENCAPSULATE_CHMOD
-extern int sys_chmod (CONST char *path, int mode);
+int sys_chmod (CONST char *path, mode_t mode);
 #endif
 #if defined (ENCAPSULATE_CHMOD) && !defined (DONT_ENCAPSULATE)
 # undef chmod
@@ -283,7 +406,7 @@ extern int sys_chmod (CONST char *path, int mode);
 #endif
 
 #ifdef ENCAPSULATE_CREAT
-extern int sys_creat (CONST char *path, int mode);
+int sys_creat (CONST char *path, mode_t mode);
 #endif
 #if defined (ENCAPSULATE_CREAT) && !defined (DONT_ENCAPSULATE)
 # undef creat
@@ -294,7 +417,7 @@ extern int sys_creat (CONST char *path, int mode);
 #endif
 
 #ifdef ENCAPSULATE_LINK
-extern int sys_link (CONST char *existing, CONST char *new);
+int sys_link (CONST char *existing, CONST char *new);
 #endif
 #if defined (ENCAPSULATE_LINK) && !defined (DONT_ENCAPSULATE)
 # undef link
@@ -305,7 +428,7 @@ extern int sys_link (CONST char *existing, CONST char *new);
 #endif
 
 #ifdef ENCAPSULATE_RENAME
-extern int sys_rename (CONST char *old, CONST char *new);
+int sys_rename (CONST char *old, CONST char *new);
 #endif
 #if defined (ENCAPSULATE_RENAME) && !defined (DONT_ENCAPSULATE)
 # undef rename
@@ -316,7 +439,7 @@ extern int sys_rename (CONST char *old, CONST char *new);
 #endif
 
 #ifdef ENCAPSULATE_SYMLINK
-extern int sys_symlink (CONST char *name1, CONST char *name2);
+int sys_symlink (CONST char *name1, CONST char *name2);
 #endif
 #if defined (ENCAPSULATE_SYMLINK) && !defined (DONT_ENCAPSULATE)
 # undef symlink
@@ -327,7 +450,7 @@ extern int sys_symlink (CONST char *name1, CONST char *name2);
 #endif
 
 #ifdef ENCAPSULATE_UNLINK
-extern int sys_unlink (CONST char *path);
+int sys_unlink (CONST char *path);
 #endif
 #if defined (ENCAPSULATE_UNLINK) && !defined (DONT_ENCAPSULATE)
 # undef unlink
@@ -338,7 +461,7 @@ extern int sys_unlink (CONST char *path);
 #endif
 
 #ifdef ENCAPSULATE_EXECVP
-extern int sys_execvp (CONST char *, char * CONST *);
+int sys_execvp (CONST char *, char * CONST *);
 #endif
 #if defined (ENCAPSULATE_EXECVP) && !defined (DONT_ENCAPSULATE)
 # undef execvp

@@ -63,7 +63,10 @@ Lisp_Object Qreally_early_error_handler;
 /* Variable defined in Lisp. */
 Lisp_Object Qerrors_deactivate_region;
 
+Lisp_Object Qtop_level;
+
 static Lisp_Object command_loop_1 (Lisp_Object dummy);
+EXFUN (Fcommand_loop_1, 0);
 
 /* There are two possible command loops -- one written entirely in
    C and one written mostly in Lisp, except stuff written in C for

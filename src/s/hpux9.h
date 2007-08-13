@@ -42,9 +42,6 @@
 */
 #endif
 
-/* neal@ctd.comsat.com */
-/* #define NO_TERMIO */ /* mrb */
-
 /* According to ngorelic@speclab.cr.usgs.gov,
    references to the X11R4 directories in these variables
    (inherited from hpux8.h)

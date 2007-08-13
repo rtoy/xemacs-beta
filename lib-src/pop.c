@@ -92,12 +92,6 @@ extern struct servent *hes_getservbyname (/* char *, char * */);
 #endif /* KRB5 */
 #endif /* KERBEROS */
 
-extern char *getenv (/* char * */);
-extern char *getlogin (/* void */);
-extern char *getpass (/* char * */);
-extern char *strerror (/* int */);
-extern char *index ();
-
 #ifdef KERBEROS
 #ifndef KRB5
 extern int krb_sendauth (/* long, int, KTEXT, char *, char *, char *,
@@ -114,16 +108,16 @@ extern int h_errno;
 #endif
 #endif
 
-static int socket_connection (/* char *, int */);
-static char *getline (/* popserver */);
-static int sendline (/* popserver, char * */);
-static int fullwrite (/* int, char *, int */);
-static int getok (/* popserver */);
+static int socket_connection (char *, int);
+static char *pop_getline (popserver);
+static int sendline (popserver, char *);
+static int fullwrite (int, char *, int);
+static int getok (popserver);
 #if 0
-static int gettermination (/* popserver */);
+static int gettermination (popserver);
 #endif
-static void pop_trash (/* popserver */);
-static char *find_crlf (/* char * */);
+static void pop_trash (popserver);
+static char *find_crlf (char *);
 
 #define ERROR_MAX 80		/* a pretty arbitrary size */
 #define POP_PORT 110
@@ -178,11 +172,7 @@ int pop_debug = 0;
  * 	explanation of the error.
  */
 popserver
-pop_open (host, username, password, flags)
-     char *host;
-     char *username;
-     char *password;
-     int flags;
+pop_open (char *host, char *username, char *password, int flags)
 {
   int sock;
   popserver server;
@@ -348,10 +338,7 @@ pop_open (host, username, password, flags)
  * 	connection impossible.
  */
 int
-pop_stat (server, count, size)
-     popserver server;
-     int *count;
-     int *size;
+pop_stat (popserver server, int *count, int *size)
 {
   char *fromserver;
 
@@ -361,7 +348,7 @@ pop_stat (server, count, size)
       return (-1);
     }
      
-  if (sendline (server, "STAT") || (! (fromserver = getline (server))))
+  if (sendline (server, "STAT") || (! (fromserver = pop_getline (server))))
     return (-1);
 
   if (strncmp (fromserver, "+OK ", 4))
@@ -381,7 +368,7 @@ pop_stat (server, count, size)
 
   *count = atoi (&fromserver[4]);
      
-  fromserver = index (&fromserver[4], ' ');
+  fromserver = strchr (&fromserver[4], ' ');
   if (! fromserver)
     {
       strcpy (pop_error,
@@ -415,11 +402,7 @@ pop_stat (server, count, size)
  * 	connection impossible.
  */
 int
-pop_list (server, message, IDs, sizes)
-     popserver server;
-     int message;
-     int **IDs;
-     int **sizes;
+pop_list (popserver server, int message, int **IDs, int **sizes)
 {
   int how_many, i;
   char *fromserver;
@@ -457,7 +440,7 @@ pop_list (server, message, IDs, sizes)
 	  free ((char *) *sizes);
 	  return (-1);
 	}
-      if (! (fromserver = getline (server)))
+      if (! (fromserver = pop_getline (server)))
 	{
 	  free ((char *) *IDs);
 	  free ((char *) *sizes);
@@ -478,7 +461,7 @@ pop_list (server, message, IDs, sizes)
 	  return (-1);
 	}
       (*IDs)[0] = atoi (&fromserver[4]);
-      fromserver = index (&fromserver[4], ' ');
+      fromserver = strchr (&fromserver[4], ' ');
       if (! fromserver)
 	{
 	  strcpy (pop_error,
@@ -509,7 +492,7 @@ pop_list (server, message, IDs, sizes)
 	      return (-1);
 	    }
 	  (*IDs)[i] = atoi (fromserver);
-	  fromserver = index (fromserver, ' ');
+	  fromserver = strchr (fromserver, ' ');
 	  if (! fromserver)
 	    {
 	      strcpy (pop_error,
@@ -558,10 +541,7 @@ pop_list (server, message, IDs, sizes)
  * Side effects: May kill connection on error.
  */
 char *
-pop_retrieve (server, message, markfrom)
-     popserver server;
-     int message;
-     int markfrom;
+pop_retrieve (popserver server, int message, int markfrom)
 {
   int *IDs, *sizes, bufsize, fromcount = 0, cp = 0;
   char *ptr, *fromserver;
@@ -627,7 +607,7 @@ pop_retrieve (server, message, markfrom)
 	  ptr[cp++] = '>';
 	}
       linesize = strlen (fromserver);
-      bcopy (fromserver, &ptr[cp], linesize);
+      memcpy (&ptr[cp], fromserver, linesize);
       cp += linesize;
       ptr[cp++] = '\n';
     }
@@ -642,60 +622,45 @@ pop_retrieve (server, message, markfrom)
 }     
 
 int
-pop_retrieve_first (server, message, response)
-     popserver server;
-     int message;
-     char **response;
+pop_retrieve_first (popserver server, int message, char **response)
 {
   sprintf (pop_error, "RETR %d", message);
   return (pop_multi_first (server, pop_error, response));
 }
 
 int
-pop_retrieve_next (server, line)
-     popserver server;
-     char **line;
+pop_retrieve_next (popserver server, char **line)
 {
   return (pop_multi_next (server, line));
 }
 
 int
-pop_retrieve_flush (server)
-     popserver server;
+pop_retrieve_flush (popserver server)
 {
   return (pop_multi_flush (server));
 }
 
 int
-pop_top_first (server, message, lines, response)
-     popserver server;
-     int message, lines;
-     char **response;
+pop_top_first (popserver server, int message, int lines, char **response)
 {
   sprintf (pop_error, "TOP %d %d", message, lines);
   return (pop_multi_first (server, pop_error, response));
 }
 
 int
-pop_top_next (server, line)
-     popserver server;
-     char **line;
+pop_top_next (popserver server, char **line)
 {
   return (pop_multi_next (server, line));
 }
 
 int
-pop_top_flush (server)
-     popserver server;
+pop_top_flush (popserver server)
 {
   return (pop_multi_flush (server));
 }
 
 int
-pop_multi_first (server, command, response)
-     popserver server;
-     char *command;
-     char **response;
+pop_multi_first (popserver server, char *command, char **response)
 {
   if (server->in_multi)
     {
@@ -704,7 +669,7 @@ pop_multi_first (server, command, response)
       return (-1);
     }
 
-  if (sendline (server, command) || (! (*response = getline (server))))
+  if (sendline (server, command) || (! (*response = pop_getline (server))))
     {
       return (-1);
     }
@@ -729,9 +694,7 @@ pop_multi_first (server, command, response)
 }
 
 int
-pop_multi_next (server, line)
-     popserver server;
-     char **line;
+pop_multi_next (popserver server, char **line)
 {
   char *fromserver;
 
@@ -741,7 +704,7 @@ pop_multi_next (server, line)
       return (-1);
     }
 
-  fromserver = getline (server);
+  fromserver = pop_getline (server);
   if (! fromserver)
     {
       return (-1);
@@ -769,8 +732,7 @@ pop_multi_next (server, line)
 }
 
 int
-pop_multi_flush (server)
-     popserver server;
+pop_multi_flush (popserver server)
 {
   char *line;
 
@@ -802,9 +764,7 @@ pop_multi_flush (server)
  * 	otherwise.
  */
 int
-pop_delete (server, message)
-     popserver server;
-     int message;
+pop_delete (popserver server, int message)
 {
   if (server->in_multi)
     {
@@ -834,8 +794,7 @@ pop_delete (server, message)
  * Side effects: Closes connection on error.
  */
 int
-pop_noop (server)
-     popserver server;
+pop_noop (popserver server)
 {
   if (server->in_multi)
     {
@@ -864,8 +823,7 @@ pop_noop (server)
  * Side effects: Closes the connection on error.
  */
 int
-pop_last (server)
-     popserver server;
+pop_last (popserver server)
 {
   char *fromserver;
      
@@ -878,7 +836,7 @@ pop_last (server)
   if (sendline (server, "LAST"))
     return (-1);
 
-  if (! (fromserver = getline (server)))
+  if (! (fromserver = pop_getline (server)))
     return (-1);
 
   if (! strncmp (fromserver, "-ERR", 4))
@@ -912,8 +870,7 @@ pop_last (server)
  * Side effects: Closes the connection on error.
  */
 int
-pop_reset (server)
-     popserver server;
+pop_reset (popserver server)
 {
   if (pop_retrieve_flush (server))
     {
@@ -941,8 +898,7 @@ pop_reset (server)
  * 	function is called, even if an error occurs.
  */
 int
-pop_quit (server)
-     popserver server;
+pop_quit (popserver server)
 {
   int ret = 0;
 
@@ -987,9 +943,7 @@ static int have_winsock = 0;
  * 	into pop_error.
  */
 static int
-socket_connection (host, flags)
-     char *host;
-     int flags;
+socket_connection (char *host, int flags)
 {
   struct hostent *hostent;
   struct servent *servent;
@@ -1038,7 +992,7 @@ socket_connection (host, flags)
 	}
     } while (! hostent);
 
-  bzero ((char *) &addr, sizeof (addr));
+  memset (&addr, 0, sizeof (addr));
   addr.sin_family = AF_INET;
 
 #ifdef KERBEROS
@@ -1090,8 +1044,7 @@ socket_connection (host, flags)
 
   while (*hostent->h_addr_list)
     {
-      bcopy (*hostent->h_addr_list, (char *) &addr.sin_addr,
-	     hostent->h_length);
+      memcpy (&addr.sin_addr, *hostent->h_addr_list, hostent->h_length);
       if (! connect (sock, (struct sockaddr *) &addr, sizeof (addr)))
 	break;
       hostent->h_addr_list++;
@@ -1207,7 +1160,7 @@ socket_connection (host, flags)
 } /* socket_connection */
 
 /*
- * Function: getline
+ * Function: pop_getline
  *
  * Purpose: Get a line of text from the connection and return a
  * 	pointer to it.  The carriage return and linefeed at the end of
@@ -1220,13 +1173,12 @@ socket_connection (host, flags)
  * Returns: A non-null pointer if successful, or a null pointer on any
  * 	error, with an error message copied into pop_error.
  *
- * Notes: The line returned is overwritten with each call to getline.
+ * Notes: The line returned is overwritten with each call to pop_getline.
  *
  * Side effects: Closes the connection on error.
  */
 static char *
-getline (server)
-     popserver server;
+pop_getline (popserver server)
 {
 #define GETLINE_ERROR "Error reading from server: "
 
@@ -1254,8 +1206,9 @@ getline (server)
 	}
       else
 	{
-	  bcopy (server->buffer + server->buffer_index,
-		 server->buffer, server->data);
+	  memcpy (server->buffer,
+		  server->buffer + server->buffer_index,
+		  server->data);
 	  /* Record the fact that we've searched the data already in
              the buffer for a CRLF, so that when we search below, we
              don't have to search the same data twice.  There's a "-
@@ -1283,7 +1236,7 @@ getline (server)
 	  server->buffer = (char *)realloc (server->buffer, server->buffer_size);
 	  if (! server->buffer)
 	    {
-	      strcpy (pop_error, "Out of memory in getline");
+	      strcpy (pop_error, "Out of memory in pop_getline");
 	      pop_trash (server);
 	      return (0);
 	    }
@@ -1300,7 +1253,7 @@ getline (server)
 	}
       else if (ret == 0)
 	{
-	  strcpy (pop_error, "Unexpected EOF from server in getline");
+	  strcpy (pop_error, "Unexpected EOF from server in pop_getline");
 	  pop_trash (server);
 	  return (0);
 	}
@@ -1348,9 +1301,7 @@ getline (server)
  * Side effects: Closes the connection on error.
  */
 static int
-sendline (server, line)
-     popserver server;
-     char *line;
+sendline (popserver server, char *line)
 {
 #define SENDLINE_ERROR "Error writing to POP server: "
   int ret;
@@ -1385,10 +1336,7 @@ sendline (server, line)
  * Return value: Same as write.  Pop_error is not set.
  */
 static int
-fullwrite (fd, buf, nbytes)
-     int fd;
-     char *buf;
-     int nbytes;
+fullwrite (int fd, char *buf, int nbytes)
 {
   char *cp;
   int ret;
@@ -1418,12 +1366,11 @@ fullwrite (fd, buf, nbytes)
  * Side effects: On failure, may make the connection unusable.
  */
 static int
-getok (server)
-     popserver server;
+getok (popserver server)
 {
   char *fromline;
 
-  if (! (fromline = getline (server)))
+  if (! (fromline = pop_getline (server)))
     {
       return (-1);
     }
@@ -1457,12 +1404,11 @@ getok (server)
  * Side effects: Closes the connection on error.
  */
 static int
-gettermination (server)
-     popserver server;
+gettermination (popserver server)
 {
   char *fromserver;
 
-  fromserver = getline (server);
+  fromserver = pop_getline (server);
   if (! fromserver)
     return (-1);
 
@@ -1491,8 +1437,7 @@ gettermination (server)
  * 	since the last pop_reset) may be lost.
  */
 void 
-pop_close (server)
-     popserver server;
+pop_close (popserver server)
 {
   pop_trash (server);
   free ((char *) server);
@@ -1508,8 +1453,7 @@ pop_close (server)
  * 	pop_close or pop_quit after this function has been called.
  */
 static void
-pop_trash (server)
-     popserver server;
+pop_trash (popserver server)
 {
   if (server->file >= 0)
     {
@@ -1540,8 +1484,7 @@ pop_trash (server)
    or 0 if it does not contain one.  */
 
 static char *
-find_crlf (in_string)
-     char *in_string;
+find_crlf (char *in_string)
 {
   while (1)
     {

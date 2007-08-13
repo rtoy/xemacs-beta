@@ -56,41 +56,11 @@ Boston, MA 02111-1307, USA.  */
 
 #define LOAD_AVE_CVT(x) (int) (((double) (x)) * 100.0 / FSCALE)
 #else /* mklinux */
-#if 0
-/* The following line tells the configuration script what sort of 
-   operating system this machine is likely to run.
-   USUAL-OPSYS="linux"  */
-
-/* Define WORDS_BIG_ENDIAN iff lowest-numbered byte in a word
-   is the most significant byte.  */
-
-#define WORDS_BIG_ENDIAN
-#endif
 
 /* Define NO_ARG_ARRAY if you cannot take the address of the first of a
  * group of arguments and treat it as an array of the arguments.  */
 
 #define NO_ARG_ARRAY
-
-#if 0
-/* Now define a symbol for the cpu type, if your compiler
-   does not define it automatically.  */
-
-/* #define IBMR2AIX */
-
-/* Use type int rather than a union, to represent Lisp_Object */
-/* This is desirable for most machines.	 */
-
-/* #define NO_UNION_TYPE */
-
-/* Define CANNOT_DUMP on machines where unexec does not work.
-   Then the function dump-emacs will not be defined
-   and temacs will do (load "loadup") automatically unless told otherwise.  */
-
-/* #define CANNOT_DUMP */
-
-#define UNEXEC unexelf.o
-#endif
 
 /* Define addresses, macros, change some setup for dump */
 
@@ -160,5 +130,5 @@ Boston, MA 02111-1307, USA.  */
 #undef NEED_PTEM_H
 
 #define ORDINARY_LINK
-#define LD_SWITCH_MACHINE -T ${srcdir}/src/ppc.ldscript
+/*#define LD_SWITCH_MACHINE -T ${srcdir}/src/ppc.ldscript*/
 #endif

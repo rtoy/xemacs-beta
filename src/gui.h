@@ -56,7 +56,7 @@ struct gui_item
  * Rather than build a long chain of individual gcpro structs
  * that protect the slots individually, we protect all the
  * member slots by pretending the struct is an array.  ANSI C
- * requires tihs hack to work, ugly though it is.
+ * requires this hack to work, ugly though it is.
  */
 #define GCPRO_GUI_ITEM(pgui_item)					\
 	do {								\
@@ -65,6 +65,9 @@ struct gui_item
 	  gcpro1.nvars = GUI_ITEM_GCPRO_COUNT;				\
 	} while (0);
 
+extern Lisp_Object Q_accelerator, Q_active, Q_config, Q_filter, Q_included;
+extern Lisp_Object Q_keys, Q_selected, Q_suffix, Qradio, Qtoggle;
+
 void gui_item_init (struct gui_item *pgui_item);
 void gui_item_add_keyval_pair (struct gui_item *pgui_item,
 			       Lisp_Object key, Lisp_Object val);
@@ -72,9 +75,9 @@ void gui_parse_item_keywords (Lisp_Object item, struct gui_item *pgui_item);
 int  gui_item_active_p (CONST struct gui_item *pgui_item);
 int  gui_item_included_p (CONST struct gui_item *pgui_item, Lisp_Object into);
 unsigned int gui_item_display_flush_left  (CONST struct gui_item *pgui_item,
-					   char* buf, unsigned int buf_len);
+					   char* buf, Bytecount buf_len);
 unsigned int gui_item_display_flush_right (CONST struct gui_item *pgui_item,
-					   char* buf, unsigned int buf_len);
+					   char* buf, Bytecount buf_len);
 
 #endif /* HAVE_POPUPS */
 

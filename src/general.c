@@ -119,6 +119,7 @@ Lisp_Object Qor;
 Lisp_Object Qother;
 Lisp_Object Qpath;
 Lisp_Object Qpointer;
+Lisp_Object Qpopup;
 Lisp_Object Qprint;
 Lisp_Object Qprocess;
 Lisp_Object Qprovide;
@@ -135,6 +136,7 @@ Lisp_Object Qold_delq;
 Lisp_Object Qold_rassoc;
 Lisp_Object Qold_rassq;
 Lisp_Object Qsearch;
+Lisp_Object Qsignal;
 Lisp_Object Qsimple;
 Lisp_Object Qsize;
 Lisp_Object Qspace;
@@ -166,7 +168,6 @@ Lisp_Object Qy;
 void
 syms_of_general (void)
 {
-  defsymbol (&Qminus, "-");
   defsymbol (&Qactually_requested, "actually-requested");
   defsymbol (&Qafter, "after");
   defsymbol (&Qall, "all");
@@ -255,6 +256,7 @@ syms_of_general (void)
   defsymbol (&Qother, "other");
   defsymbol (&Qpath, "path");
   defsymbol (&Qpointer, "pointer");
+  defsymbol (&Qpopup, "popup");
   defsymbol (&Qprint, "print");
   defsymbol (&Qprocess, "process");
   defsymbol (&Qprovide, "provide");
@@ -270,6 +272,7 @@ syms_of_general (void)
   defsymbol (&Qold_rassoc, "old-rassoc");
   defsymbol (&Qold_rassq, "old-rassq");
   defsymbol (&Qsearch, "search");
+  defsymbol (&Qsignal, "signal");
   defsymbol (&Qsimple, "simple");
   defsymbol (&Qsize, "size");
   defsymbol (&Qspace, "space");

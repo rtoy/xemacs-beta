@@ -127,8 +127,6 @@ Boston, MA 02111-1307, USA.  */
 #define LIBS_SYSTEM "-lbsd -lg"
 #endif /* USG5_4 */
 
-/* #define NO_TERMIO */ /* mrb */
-
 #define NO_SIOCTL_H
 
 /* XEmacs change -- removed crap about random and bstring */

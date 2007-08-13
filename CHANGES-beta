@@ -1,4 +1,16 @@
 							-*- indented-text -*-
+to 21.0 beta34 "Oberhasli"
+-- defsymbol cleanup from Martin Buchholz
+-- miscellaneous patches from Martin Buchholz
+-- MS Windows fixes from Andy Piper
+-- various motion changes from Greg Klanderman
+-- dynamic info dir/localdir courtesy of Oscar Figueiredo
+-- Various patches from Kyle Jones and Hrvoje Niksic
+-- package path startup fixes from Michael Sperber
+-- Speed fix/MS Windows cleanup patches from Kirill Katsnelson
+-- Martin patches
+-- miscellaneous bug fixes
+
 to 21.0 beta33 "Nigerian Dwarf"
 -- Various MS Windows patches from Kirill Katsnelson, Andy Piper and
    Jonathon Harris

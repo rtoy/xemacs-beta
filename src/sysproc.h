@@ -96,11 +96,11 @@ Boston, MA 02111-1307, USA.  */
 #endif /* no FD_SET */
 
 #ifdef EMACS_BTL
-extern int cadillac_stop_logging ();
-extern int cadillac_start_logging ();
+int cadillac_stop_logging ();
+int cadillac_start_logging ();
 #endif
 
-extern int poll_fds_for_input (SELECT_TYPE mask);
+int poll_fds_for_input (SELECT_TYPE mask);
 
 #ifdef MSDOS
 /* #include <process.h> */

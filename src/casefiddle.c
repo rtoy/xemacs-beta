@@ -56,7 +56,7 @@ casify_object (enum case_action flag, Lisp_Object obj, Lisp_Object buffer)
       if (STRINGP (obj))
 	{
 	  Charcount i;
-	  Charcount len = string_char_length (XSTRING (obj));
+	  Charcount len = XSTRING_CHAR_LENGTH (obj);
 	  obj = Fcopy_sequence (obj);
 	  for (i = 0; i < len; i++)
 	    {

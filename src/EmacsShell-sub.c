@@ -352,7 +352,7 @@ ChangeManaged (Widget wid)
   if (!XtIsRealized (wid))
     {
       Widget child = NULL;
-      int i;
+      Cardinal i;
 
       /* the managed child indicates what our size is */
       for (i = 0; i < w->composite.num_children; i++) {

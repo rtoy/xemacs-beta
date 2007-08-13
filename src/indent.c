@@ -529,16 +529,39 @@ visible section of the buffer, and pass LINE and COL as TOPOS.
 
 #endif /* 0 */
 
+/* Helper for vmotion_1 - compute vertical pixel motion between
+   START and END in the line start cache CACHE.  This just sums
+   the line heights, including both the starting and ending lines.
+*/
+static int
+vpix_motion (line_start_cache_dynarr *cache, int start, int end)
+{
+  int i, vpix;
+
+  assert (start <= end);
+  assert (start >= 0);
+  assert (end < Dynarr_length (cache));
+  
+  vpix = 0;
+  for (i = start; i <= end; i++)
+    vpix += Dynarr_atp (cache, i)->height;
+
+  return vpix;
+}
+
 /*****************************************************************************
- vmotion
+ vmotion_1
 
  Given a starting position ORIG, move point VTARGET lines in WINDOW.
  Returns the new value for point.  If the arg ret_vpos is not nil, it is
  taken to be a pointer to an int and the number of lines actually moved is
- returned in it.
+ returned in it.  If the arg ret_vpix is not nil, it is taken to be a
+ pointer to an int and the vertical pixel height of the motion which
+ took place is returned in it.
  ****************************************************************************/
-Bufpos
-vmotion (struct window *w, Bufpos orig, int vtarget, int *ret_vpos)
+static Bufpos
+vmotion_1 (struct window *w, Bufpos orig, int vtarget,
+           int *ret_vpos, int *ret_vpix)
 {
   struct buffer *b = XBUFFER (w->buffer);
   int elt;
@@ -576,6 +599,8 @@ vmotion (struct window *w, Bufpos orig, int vtarget, int *ret_vpos)
 	}
 
       if (ret_vpos) *ret_vpos = cur_line;
+      if (ret_vpix)
+        *ret_vpix = vpix_motion (w->line_start_cache, elt, cur_line + elt);
       return ret_pt;
     }
   else if (vtarget < 0)
@@ -583,12 +608,16 @@ vmotion (struct window *w, Bufpos orig, int vtarget, int *ret_vpos)
       if (elt < -vtarget)
 	{
 	  if (ret_vpos) *ret_vpos = -elt;
+          if (ret_vpix)
+            *ret_vpix = vpix_motion (w->line_start_cache, 0, elt);
 	  /* #### This should be BUF_BEGV (b), right? */
 	  return Dynarr_atp (w->line_start_cache, 0)->start;
 	}
       else
 	{
 	  if (ret_vpos) *ret_vpos = vtarget;
+          if (ret_vpix)
+            *ret_vpix = vpix_motion (w->line_start_cache, elt + vtarget, elt);
 	  return Dynarr_atp (w->line_start_cache, elt + vtarget)->start;
 	}
     }
@@ -597,11 +626,27 @@ vmotion (struct window *w, Bufpos orig, int vtarget, int *ret_vpos)
       /* No vertical motion requested so we just return the position
          of the beginning of the current line. */
       if (ret_vpos) *ret_vpos = 0;
+      if (ret_vpix)
+        *ret_vpix = vpix_motion (w->line_start_cache, elt, elt);
 
       return Dynarr_atp (w->line_start_cache, elt)->start;
     }
 
   RETURN_NOT_REACHED(0)	/* shut up compiler */
+}
+
+/*****************************************************************************
+ vmotion
+
+ Given a starting position ORIG, move point VTARGET lines in WINDOW.
+ Returns the new value for point.  If the arg ret_vpos is not nil, it is
+ taken to be a pointer to an int and the number of lines actually moved is
+ returned in it.
+ ****************************************************************************/
+Bufpos
+vmotion (struct window *w, Bufpos orig, int vtarget, int *ret_vpos)
+{
+  return vmotion_1 (w, orig, vtarget, ret_vpos, NULL);
 }
 
 DEFUN ("vertical-motion", Fvertical_motion, 1, 2, 0, /*
@@ -643,6 +688,43 @@ Optional second argument is WINDOW to move in.
   }
 }
 
+DEFUN ("vertical-motion-pixels", Fvertical_motion_pixels, 1, 2, 0, /*
+Move to start of frame line LINES lines down.
+If LINES is negative, this is moving up.
+
+This function is identical in behavior to `vertical-motion'
+except that the vertical pixel height of the motion which
+took place is returned instead of the actual number of lines
+moved.  A motion of zero lines returns the height of the
+current line.
+
+The optional second argument WINDOW specifies the window to use 
+for parameters such as width, horizontal scrolling, and so on.  
+The default is the selected window.  Note that this function
+sets WINDOW's buffer's point, not WINDOW's point.
+*/
+       (lines, window))
+{
+  if (NILP (window))
+    window = Fselected_window (Qnil);
+  CHECK_WINDOW (window);
+  {
+    Bufpos bufpos;
+    int vpix;
+    struct window *w  = XWINDOW (window);
+
+    CHECK_INT (lines);
+
+    bufpos = vmotion_1 (XWINDOW (window), BUF_PT (XBUFFER (w->buffer)),
+		      XINT (lines), NULL, &vpix);
+
+    /* Note that the buffer's point is set, not the window's point. */
+    BUF_SET_PT (XBUFFER (w->buffer), bufpos);
+
+    return make_int (vpix);
+  }
+}
+
 
 void
 syms_of_indent (void)
@@ -655,6 +737,7 @@ syms_of_indent (void)
   DEFSUBR (Fcompute_motion);
 #endif
   DEFSUBR (Fvertical_motion);
+  DEFSUBR (Fvertical_motion_pixels);
 }
 
 void

@@ -48,7 +48,7 @@ accept a pattern compiled by 'regexp-compile' with word-option t.
     error ("Too complicated regular expression for word!");
   for (i = 0; i < len; i++)
     {
-      temp =XCONS (pattern)->car;
+      temp = XCAR (pattern);
       CHECK_VECTOR (temp);
       CHECK_STRING (XVECTOR_DATA (temp)[0]);
       s = XSTRING (XVECTOR_DATA (temp)[0]);
@@ -80,7 +80,7 @@ accept a pattern compiled by 'regexp-compile' with word-option t.
       wordbuf[i]->syntax = 0;
       wordbuf[i]->not_bol = wordbuf[i]->not_eol = 0;
 #endif /* EMACS19_REGEXP */
-      pattern = XCONS (pattern)->cdr;
+      pattern = XCDR (pattern);
     }
   for (; i < MAXWORDBUF && wordbuf[i]; i++)
     {

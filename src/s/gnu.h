@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
-  
+
 /* Synched up with: FSF 19.31. */
 
 /* Get most of the stuff from bsd4.3 */
@@ -31,10 +31,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* XXX should getloadavg be in libc?  Should we have a libutil?
 #define HAVE_GETLOADAVG */
-
-/* #define SIGNALS_VIA_CHARACTERS */ /* mrb */
-
-/* #define NO_TERMIO */ /* mrb */
 
 #define LIBS_DEBUG
 

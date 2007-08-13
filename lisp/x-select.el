@@ -19,7 +19,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; along with XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -45,7 +45,7 @@ there is a successful conversion.")
 
 (defun x-get-selection (&optional type data-type)
   "Return the value of an X Windows selection.
-The argument TYPE (default `PRIMARY') says which selection, 
+The argument TYPE (default `PRIMARY') says which selection,
 and the argument DATA-TYPE (default `STRING', or `COMPOUND_TEXT' under Mule)
 says how to convert the data."
   (or type (setq type 'PRIMARY))
@@ -149,12 +149,12 @@ says how to convert the data."
 ;; arguments (duh ...).  This order is more logical.
 (defun x-own-selection (data &optional type)
   "Make an X Windows selection of type TYPE and value DATA.
-The argument TYPE (default `PRIMARY') says which selection, 
+The argument TYPE (default `PRIMARY') says which selection,
 and DATA specifies the contents.  DATA may be a string,
 a symbol, an integer (or a cons of two integers or list of two integers).
 
 The selection may also be a cons of two markers pointing to the same buffer,
-or an overlay.  In these cases, the selection is considered to be the text 
+or an overlay.  In these cases, the selection is considered to be the text
 between the markers *at whatever time the selection is examined*.
 Thus, editing done in the buffer after you specify the selection
 can alter the effective value of the selection.
@@ -215,7 +215,7 @@ Interactively, the text of the region is used as the selection value."
 	   (buffer-live-p (marker-buffer (cdr data))))))
 
 (defun x-own-secondary-selection (selection &optional type)
-  "Make a secondary X Selection of the given argument.  The argument may be a 
+  "Make a secondary X Selection of the given argument.  The argument may be a
 string or a cons of two markers (in which case the selection is considered to
 be the text between those markers)."
   (interactive (if (not current-prefix-arg)
@@ -275,7 +275,7 @@ secondary selection instead of the primary selection."
 
 
 ;;; Selections in killed buffers
-;;; this function is called by kill-buffer as if it were on the 
+;;; this function is called by kill-buffer as if it were on the
 ;;; kill-buffer-hook (though it isn't really).
 
 (defun xselect-kill-buffer-hook ()
@@ -308,9 +308,9 @@ secondary selection instead of the primary selection."
 
 ;;; FSF name x-get-cut-buffer
 (defun x-get-cutbuffer (&optional which-one)
-  "Returns the value of one of the 8 X server cut buffers.  Optional arg
-WHICH-ONE should be a number from 0 to 7, defaulting to 0.
-Cut buffers are considered obsolete\; you should use selections instead.
+  "Return the value of one of the 8 X server cut buffers.
+Optional arg WHICH-ONE should be a number from 0 to 7, defaulting to 0.
+Cut buffers are considered obsolete; you should use selections instead.
 This function does nothing if support for cut buffers was not compiled
 into Emacs."
   (and (fboundp 'x-get-cutbuffer-internal)

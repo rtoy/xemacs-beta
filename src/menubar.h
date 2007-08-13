@@ -33,7 +33,7 @@ Lisp_Object menu_parse_submenu_keywords (Lisp_Object desc,
 					 struct gui_item* pgui_item);
 Lisp_Object current_frame_menubar (CONST struct frame* f);
 
-Lisp_Object Fmenu_find_real_submenu (Lisp_Object desc, Lisp_Object path);
+EXFUN (Fmenu_find_real_submenu, 2);
 
 #endif /* HAVE_MENUBARS */
 

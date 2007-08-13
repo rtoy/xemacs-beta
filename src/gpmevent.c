@@ -2,14 +2,12 @@
 
 #include <config.h>
 #include "lisp.h"
+#include "console.h"
 #include "console-tty.h"
 #include "device.h"
 #include "events.h"
 #include "events-mod.h"
-#include "process.h"
 #include "sysdep.h"
-#include "sysproc.h"		/* select stuff */
-#include "systime.h"
 
 #ifdef HAVE_GPM
 #include "gpmevent.h"
@@ -20,23 +18,23 @@
 #define KG_CTRL		2
 #define KG_ALT		3
 #else
-#include <linux/keyboard.h> 
+#include <linux/keyboard.h>
 #endif
 
-int handle_gpm_read(struct Lisp_Event *event, struct console *con, int fd)
+int
+handle_gpm_read (struct Lisp_Event *event, struct console *con, int fd)
 {
   Gpm_Event ev;
-  int modifiers,type,button;
-
-  type = -1;
-  button = 1;
+  int modifiers = 0;
+  int type = -1;
+  int button = 1;
 
   if (!Gpm_GetEvent(&ev))
-    return(0);
-  
-  event->timestamp       = 0;
-  event->channel         = CONSOLE_SELECTED_FRAME (con);
-  
+    return 0;
+
+  event->timestamp = 0;
+  event->channel   = CONSOLE_SELECTED_FRAME (con);
+
   /* Whow, wouldn't named defines be NICE!?!?! */
   modifiers = 0;
 
@@ -64,9 +62,8 @@ int handle_gpm_read(struct Lisp_Event *event, struct console *con, int fd)
   switch (type) {
   case GPM_DOWN:
   case GPM_UP:
-    if (type == GPM_DOWN)
-      event->event_type           = button_press_event;
-    else event->event_type        = button_release_event;
+    event->event_type =
+      type == GPM_DOWN ? button_press_event : button_release_event;
     event->event.button.x         = ev.x;
     event->event.button.y         = ev.y;
     event->event.button.button    = button;
@@ -78,12 +75,13 @@ int handle_gpm_read(struct Lisp_Event *event, struct console *con, int fd)
     event->event.motion.y         = ev.y;
     event->event.motion.modifiers = modifiers;
   default:
-    return (0);
+    return 0;
   }
-  return (1);
+  return 1;
 }
 
-void connect_to_gpm(struct console *con)
+void
+connect_to_gpm (struct console *con)
 {
   /* Only do this if we are running after dumping and really interactive */
   if (!noninteractive && initialized) {

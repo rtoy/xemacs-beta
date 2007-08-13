@@ -138,19 +138,6 @@ Boston, MA 02111-1307, USA.  */
 #define	TERMINFO
 
 /*
- *      Send signals to subprocesses using characters.
- *
- */
-
-/* #define SIGNALS_VIA_CHARACTERS */ /* mrb */
-
-/*
- *	Prevent redundant inclusion of termio.h.
- */
-
-/* #define NO_TERMIO */ /* mrb */
-
-/*
  *	Use a Berkeley style sys/wait.h.
  *      This makes WIF* macros operate on structures instead of ints.
  */

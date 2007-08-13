@@ -70,14 +70,14 @@ Slows them down more or less.  Set this non-nil if you have a fast machine.")
 (defvar apropos-symbol-face (if (boundp 'font-lock-keyword-face)
 				font-lock-keyword-face
 			      'bold)
-  "*Face for symbol name in apropos output or `nil'.  
+  "*Face for symbol name in apropos output or `nil'.
 This looks good, but slows down the commands several times.")
 
 ;; XEmacs addition
 (defvar apropos-keybinding-face (if (boundp 'font-lock-string-face)
 				    font-lock-string-face
 				  'underline)
-  "*Face for keybinding display in apropos output or `nil'.  
+  "*Face for keybinding display in apropos output or `nil'.
 This looks good, but slows down the commands several times.")
 
 ;; XEmacs addition
@@ -94,11 +94,11 @@ text-property list for efficiency.")
 (defvar apropos-property-face (if (boundp 'font-lock-variable-name-face)
 				  font-lock-variable-name-face
 				'bold-italic)
-  "*Face for property name in apropos output or `nil'.  
+  "*Face for property name in apropos output or `nil'.
 This looks good, but slows down the commands several times.")
 
 (defvar apropos-match-face 'secondary-selection
-  "*Face for matching part in apropos-documentation/value output or `nil'.  
+  "*Face for matching part in apropos-documentation/value output or `nil'.
 This looks good, but slows down the commands several times.")
 
 
@@ -594,7 +594,7 @@ found."
 
 
 (defun apropos-macrop (symbol)
-  "T if SYMBOL is a Lisp macro."
+  "Return t if SYMBOL is a Lisp macro."
   (and (fboundp symbol)
        (consp (setq symbol
 		    (symbol-function symbol)))

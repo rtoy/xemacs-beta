@@ -4,13 +4,13 @@
 
 This file is part of the Lucid Widget Library.
 
-The Lucid Widget Library is free software; you can redistribute it and/or 
+The Lucid Widget Library is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2, or (at your option)
 any later version.
 
 The Lucid Widget Library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
+but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
@@ -613,9 +613,9 @@ make_shadow_pixels (XlwScrollBarWidget w)
     {
       botc.pixel = bg;
       XQueryColor (dpy, cmap, &botc);
-      botc.red   *= 0.6;
-      botc.green *= 0.6;
-      botc.blue  *= 0.6;
+      botc.red   = (botc.red   * 3) / 5;
+      botc.green = (botc.green * 3) / 5;
+      botc.blue  = (botc.blue  * 3) / 5;
       if (allocate_nearest_color (dpy, cmap, &botc))
 	{
 	  if (botc.pixel == bg)
@@ -698,9 +698,9 @@ make_trough_pixel (XlwScrollBarWidget w)
     {
       troughC.pixel = w->core.background_pixel;
       XQueryColor (dpy, cmap, &troughC);
-      troughC.red   *= 0.8;
-      troughC.green *= 0.8;
-      troughC.blue  *= 0.8;
+      troughC.red   = (troughC.red   * 4) / 5;
+      troughC.green = (troughC.green * 4) / 5;
+      troughC.blue  = (troughC.blue  * 4) / 5;
       if (allocate_nearest_color (dpy, cmap, &troughC))
 	w->sb.troughColor = troughC.pixel;
     }
@@ -944,10 +944,9 @@ seg_pixel_sizes (XlwScrollBarWidget w, int *above_return,
 		 int *ss_return, int *below_return)
 {
   float total, height, fuz;
-  int value;
-  int above, ss, below;
+  int value, above, ss, below;
 
-  height= widget_h (w);
+  height = widget_h (w);
   if (w->sb.showArrows) height -= (2 * arrow_h (w));
 
   value = w->sb.value - w->sb.minimum;
@@ -955,9 +954,9 @@ seg_pixel_sizes (XlwScrollBarWidget w, int *above_return,
   total = w->sb.maximum - w->sb.minimum;
   fuz   = total / 2;
 
-  ss    = ((height * w->sb.sliderSize + fuz) / total);
-  above = ((height * value + fuz) / total);
-  below = ((height) - (ss + above));
+  ss    = (int) ((height * w->sb.sliderSize + fuz) / total);
+  above = (int) ((height * value + fuz) / total);
+  below = (int) ((height) - (ss + above));
 
   /* Don't let slider get smaller than SS_MIN */
   if (ss < SS_MIN)
@@ -967,22 +966,22 @@ seg_pixel_sizes (XlwScrollBarWidget w, int *above_return,
 
       above -= (int) tmp;
       ss = SS_MIN;
-      below = ((height) - (ss + above));
+      below = (int) ((height) - (ss + above));
 
       if (above < 0)
 	{
 	  above = 0;
-	  below = height - ss;
+	  below = (int) (height - ss);
 	}
       if (below < 0)
 	{
-	  above = height - ss;
+	  above = (int) (height - ss);
 	  below = 0;
 	}
       if (ss > height)
 	{
 	  above = 0;
-	  ss    = height;
+	  ss    = (int) height;
 	  below = 0;
 	}
     }
@@ -1031,12 +1030,12 @@ value_from_pixel (XlwScrollBarWidget w, int above)
   total = w->sb.maximum - w->sb.minimum;
   fuz = height / 2;
 
-  ss = ((height * w->sb.sliderSize + (total / 2)) / total);
+  ss = (int) ((height * w->sb.sliderSize + (total / 2)) / total);
 
   if (ss < SS_MIN)
     {
       /* add a percent amount for integer rounding */
-      above += ((((SS_MIN - ss) * above) + fuz) / height);
+      above += (int) ((((SS_MIN - ss) * above) + fuz) / height);
     }
 
   {
@@ -1047,7 +1046,7 @@ value_from_pixel (XlwScrollBarWidget w, int above)
     else if (floatval <= (float) INT_MIN)
       value = INT_MIN;
     else
-      value = floatval;
+      value = (int) floatval;
   }
 
   return value;

@@ -24,6 +24,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
+#include <limits.h>
 
 #include "buffer.h"
 #include "events.h"
@@ -72,6 +73,9 @@ Boston, MA 02111-1307, USA.  */
    `expand-file-name' doesn't always down-case the drive letter.  */
 #define DRIVE_LETTER(x) (tolower (x))
 #endif /* WINDOWSNT */
+
+int lisp_to_time (Lisp_Object, time_t *);
+Lisp_Object time_to_lisp (time_t);
 
 /* Nonzero during writing of auto-save files */
 static int auto_saving;
@@ -290,23 +294,17 @@ restore_point_unwind (Lisp_Object point_marker)
    Solaris include files declare the return value as ssize_t.
    Is that standard? */
 int
-read_allowing_quit (int fildes, void *buf, unsigned int nbyte)
+read_allowing_quit (int fildes, void *buf, size_t size)
 {
-  int nread;
   QUIT;
-
-  nread = sys_read_1 (fildes, buf, nbyte, 1);
-  return nread;
+  return sys_read_1 (fildes, buf, size, 1);
 }
 
 int
-write_allowing_quit (int fildes, CONST void *buf, unsigned int nbyte)
+write_allowing_quit (int fildes, CONST void *buf, size_t size)
 {
-  int nread;
-
   QUIT;
-  nread = sys_write_1 (fildes, buf, nbyte, 1);
-  return nread;
+  return sys_write_1 (fildes, buf, size, 1);
 }
 
 
@@ -512,7 +510,7 @@ Return a directly usable directory name somehow associated with FILENAME.
 A `directly usable' directory name is one that may be used without the
 intervention of any file handler.
 If FILENAME is a directly usable file itself, return
-(file-name-directory FILENAME).
+\(file-name-directory FILENAME).
 The `call-process' and `start-process' functions use this function to
 get a current directory to run processes in.
 */
@@ -871,7 +869,7 @@ See also the function `substitute-in-file-name'.
 #else /* not WINDOWSNT */
 	  if (nm == XSTRING_DATA (name))
 	    return name;
-	  return build_string (nm);
+	  return build_string ((char *) nm);
 #endif /* not WINDOWSNT */
 	}
     }
@@ -1056,7 +1054,7 @@ See also the function `substitute-in-file-name'.
     {
       /* Get rid of any slash at the end of newdir, unless newdir is
 	 just // (an incomplete UNC name).  */
-      length = strlen (newdir);
+      length = strlen ((char *) newdir);
       if (length > 0 && IS_DIRECTORY_SEP (newdir[length - 1])
 #ifdef WINDOWSNT
 	  && !(length == 2 && IS_DIRECTORY_SEP (newdir[0]))
@@ -1074,7 +1072,7 @@ See also the function `substitute-in-file-name'.
     tlen = 0;
 
   /* Now concatenate the directory and name to new space in the stack frame */
-  tlen += strlen (nm) + 1;
+  tlen += strlen ((char *) nm) + 1;
 #ifdef WINDOWSNT
   /* Add reserved space for drive name.  (The Microsoft x86 compiler
      produces incorrect code if the following two lines are combined.)  */
@@ -1088,12 +1086,12 @@ See also the function `substitute-in-file-name'.
   if (newdir)
     {
       if (nm[0] == 0 || IS_DIRECTORY_SEP (nm[0]))
-	strcpy (target, newdir);
+	strcpy ((char *) target, (char *) newdir);
       else
-	file_name_as_directory (target, newdir);
+	file_name_as_directory ((char *) target, (char *) newdir);
     }
 
-  strcat (target, nm);
+  strcat ((char *) target, (char *) nm);
 
   /* ASSERT (IS_DIRECTORY_SEP (target[0])) if not VMS */
 
@@ -1728,7 +1726,7 @@ Create a directory.  One argument, a file name string.
   if (!NILP (handler))
     return (call2 (handler, Qmake_directory_internal, dirname_));
 
-  if (XSTRING_LENGTH (dirname_) > (sizeof (dir) - 1))
+  if (XSTRING_LENGTH (dirname_) > (Bytecount) (sizeof (dir) - 1))
     {
       return Fsignal (Qfile_error,
 		      list3 (build_translated_string ("Creating directory"),
@@ -2063,14 +2061,11 @@ On Unix, this is a name starting with a `/' or a `~'.
 
   CHECK_STRING (filename);
   ptr = XSTRING_DATA (filename);
-  if (IS_DIRECTORY_SEP (*ptr) || *ptr == '~'
+  return (IS_DIRECTORY_SEP (*ptr) || *ptr == '~'
 #ifdef WINDOWSNT
-      || (IS_DRIVE (*ptr) && ptr[1] == ':' && IS_DIRECTORY_SEP (ptr[2]))
+	  || (IS_DRIVE (*ptr) && ptr[1] == ':' && IS_DIRECTORY_SEP (ptr[2]))
 #endif
-      )
-    return Qt;
-  else
-    return Qnil;
+	  ) ? Qt : Qnil;
 }
 
 /* Return nonzero if file FILENAME exists and can be executed.  */
@@ -2135,10 +2130,7 @@ See also `file-readable-p' and `file-attributes'.
   if (!NILP (handler))
     return call2 (handler, Qfile_exists_p, abspath);
 
-  if (stat ((char *) XSTRING_DATA (abspath), &statbuf) >= 0)
-    return (Qt);
-  else
-    return (Qnil);
+  return stat ((char *) XSTRING_DATA (abspath), &statbuf) >= 0 ? Qt : Qnil;
 }
 
 DEFUN ("file-executable-p", Ffile_executable_p, 1, 1, 0, /*
@@ -2164,8 +2156,7 @@ For a directory, this means you can access files in that directory.
   if (!NILP (handler))
     return call2 (handler, Qfile_executable_p, abspath);
 
-  return (check_executable ((char *) XSTRING_DATA (abspath))
-	  ? Qt : Qnil);
+  return check_executable ((char *) XSTRING_DATA (abspath)) ? Qt : Qnil;
 }
 
 DEFUN ("file-readable-p", Ffile_readable_p, 1, 1, 0, /*
@@ -2786,7 +2777,7 @@ positions), even in Mule. (Fixing this is very difficult.)
 	  if (curpos == 0)
 	    break;
 	  /* How much can we scan in the next step?  */
-	  trial = min (curpos, sizeof buffer);
+	  trial = min (curpos, (Bufpos) sizeof (buffer));
 	  if (lseek (fd, curpos - trial, 0) < 0)
 	    report_file_error ("Setting file position", list1 (filename));
 
@@ -2949,7 +2940,7 @@ positions), even in Mule. (Fixing this is very difficult.)
 	}
       BUF_SAVE_MODIFF (buf) = BUF_MODIFF (buf);
       buf->auto_save_modified = BUF_MODIFF (buf);
-      buf->save_length = make_int (BUF_SIZE (buf));
+      buf->saved_size = make_int (BUF_SIZE (buf));
 #ifdef CLASH_DETECTION
       if (NILP (handler))
 	{
@@ -3100,8 +3091,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
 	if (visiting)
 	  {
 	    BUF_SAVE_MODIFF (current_buffer) = BUF_MODIFF (current_buffer);
-	    current_buffer->save_length =
-	      make_int (BUF_SIZE (current_buffer));
+	    current_buffer->saved_size = make_int (BUF_SIZE (current_buffer));
 	    current_buffer->filename = visit_file;
 	    MARK_MODELINE_CHANGED;
 	  }
@@ -3291,7 +3281,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
   if (visiting)
     {
       BUF_SAVE_MODIFF (current_buffer) = BUF_MODIFF (current_buffer);
-      current_buffer->save_length = make_int (BUF_SIZE (current_buffer));
+      current_buffer->saved_size = make_int (BUF_SIZE (current_buffer));
       current_buffer->filename = visit_file;
       MARK_MODELINE_CHANGED;
     }
@@ -3436,7 +3426,7 @@ a_write (Lisp_Object outstream, Lisp_Object instream, int pos,
   Lstream *instr = XLSTREAM (instream);
   Lstream *outstr = XLSTREAM (outstream);
 
-  while (NILP (*annot) || CONSP (*annot))
+  while (LISTP (*annot))
     {
       tem = Fcar_safe (Fcar (*annot));
       if (INTP (tem))
@@ -3625,8 +3615,8 @@ Update buffer's recorded modification time from the visited file's time.
 Useful if the buffer was not read from the file normally
 or if the file itself has been changed for some known benign reason.
 An argument specifies the modification time value to use
-(instead of that of the visited file), in the form of a list
-(HIGH . LOW) or (HIGH LOW).
+\(instead of that of the visited file), in the form of a list
+\(HIGH . LOW) or (HIGH LOW).
 */
        (time_list))
 {
@@ -3841,7 +3831,7 @@ Non-nil second argument means save only current buffer.
 	      && BUF_SAVE_MODIFF (b) < BUF_MODIFF (b)
 	      && b->auto_save_modified < BUF_MODIFF (b)
 	      /* -1 means we've turned off autosaving for a while--see below.  */
-	      && XINT (b->save_length) >= 0
+	      && XINT (b->saved_size) >= 0
 	      && (do_handled_files
 		  || NILP (Ffind_file_name_handler (b->auto_save_file_name,
 						    Qwrite_region))))
@@ -3857,13 +3847,13 @@ Non-nil second argument means save only current buffer.
 		continue;
 
 	      if (!preparing_for_armageddon &&
-		  (XINT (b->save_length) * 10
+		  (XINT (b->saved_size) * 10
 		   > (BUF_Z (b) - BUF_BEG (b)) * 13)
 		  /* A short file is likely to change a large fraction;
 		     spare the user annoying messages.  */
-		  && XINT (b->save_length) > 5000
+		  && XINT (b->saved_size) > 5000
 		  /* These messages are frequent and annoying for `*mail*'.  */
-		  && !EQ (b->filename, Qnil)
+		  && !NILP (b->filename)
 		  && NILP (no_message)
 		  && disable_auto_save_when_buffer_shrinks)
 		{
@@ -3876,7 +3866,7 @@ Non-nil second argument means save only current buffer.
 		     XSTRING_DATA (b->name));
 		  /* Turn off auto-saving until there's a real save,
 		     and prevent any more warnings.  */
-		  b->save_length = make_int (-1);
+		  b->saved_size = make_int (-1);
 		  if (!gc_in_progress)
 		    Fsleep_for (make_int (1));
 		  continue;
@@ -3965,7 +3955,7 @@ Non-nil second argument means save only current buffer.
 		continue;
 
 	      b->auto_save_modified = BUF_MODIFF (b);
-	      b->save_length = make_int (BUF_SIZE (b));
+	      b->saved_size = make_int (BUF_SIZE (b));
 	      EMACS_GET_TIME (after_time);
 	      /* If auto-save took more than 60 seconds,
 		 assume it was an NFS failure that got a timeout.  */
@@ -4008,7 +3998,7 @@ No auto-save file will be written until the buffer changes again.
        ())
 {
   current_buffer->auto_save_modified = BUF_MODIFF (current_buffer);
-  current_buffer->save_length = make_int (BUF_SIZE (current_buffer));
+  current_buffer->saved_size = make_int (BUF_SIZE (current_buffer));
   current_buffer->auto_save_failure_time = -1;
   return Qnil;
 }

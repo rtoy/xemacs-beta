@@ -38,10 +38,6 @@ Boston, MA 02111-1307, USA.  */
   MAYBE_CONTYPE_METH ((f)->framemeths, m, args)
 #define FRAMEMETH_OR_GIVEN(f, m, args, given) \
   CONTYPE_METH_OR_GIVEN((f)->framemeths, m, args, given)
-#define MAYBE_INT_FRAMEMETH(f, m, args) \
-  MAYBE_INT_CONTYPE_METH ((f)->framemeths, m, args)
-#define MAYBE_LISP_FRAMEMETH(f, m, args) \
-  MAYBE_LISP_CONTYPE_METH ((f)->framemeths, m, args)
 
 struct frame
 {
@@ -188,12 +184,35 @@ Value : Emacs meaning                           :f-v-p : X meaning
   unsigned int subwindows_being_displayed :1;
 };
 
-/* If this is non-nil, it is the frame that make-frame is currently
-   creating.  We can't set the current frame to this in case the
-   debugger goes off because it would try and display to it.  However,
-   there are some places which need to reference it which have no
-   other way of getting it if it isn't the selected frame. */
-extern Lisp_Object Vframe_being_created;
+EXFUN (Fdelete_frame, 2);
+EXFUN (Fframe_iconified_p, 1);
+EXFUN (Fframe_name, 1);
+EXFUN (Fframe_property, 3);
+EXFUN (Fmake_frame, 2);
+EXFUN (Fmake_frame_visible, 1);
+EXFUN (Fraise_frame, 1);
+EXFUN (Fselect_frame, 1);
+EXFUN (Fset_frame_pointer, 2);
+EXFUN (Fset_frame_position, 3);
+EXFUN (Fset_frame_size, 4);
+
+extern Lisp_Object Qbackground_toolbar_color, Qbell_volume, Qborder_color;
+extern Lisp_Object Qborder_width, Qbottom_toolbar_shadow_color;
+extern Lisp_Object Qbottom_toolbar_shadow_pixmap, Qdelete_frame;
+extern Lisp_Object Qdeselect_frame_hook, Qdrag_and_drop_functions, Qgc_pointer;
+extern Lisp_Object Qiconic, Qinitially_unmapped, Qinter_line_space;
+extern Lisp_Object Qinternal_border_width, Qinvisible, Qmap_frame_hook;
+extern Lisp_Object Qminibuffer, Qmodeline_pointer, Qmouse_enter_frame_hook;
+extern Lisp_Object Qmouse_leave_frame_hook, Qpointer_background;
+extern Lisp_Object Qpointer_color, Qpopup, Qscrollbar_placement;
+extern Lisp_Object Qselect_frame_hook, Qspace_pointer;
+extern Lisp_Object Qsynchronize_minibuffers, Qtext_pointer;
+extern Lisp_Object Qtoolbar_shadow_thickness, Qtop_toolbar_shadow_color;
+extern Lisp_Object Qtop_toolbar_shadow_pixmap, Qunmap_frame_hook;
+extern Lisp_Object Qunsplittable, Quse_backing_store, Qvisible, Qvisual_bell;
+extern Lisp_Object Vframe_icon_title_format, Vframe_title_format;
+extern Lisp_Object Vmouse_motion_handler;
+
 
 DECLARE_LRECORD (frame, struct frame);
 #define XFRAME(x) XRECORD (x, frame, struct frame)
@@ -203,28 +222,30 @@ DECLARE_LRECORD (frame, struct frame);
 #define CHECK_FRAME(x) CHECK_RECORD (x, frame)
 #define CONCHECK_FRAME(x) CONCHECK_RECORD (x, frame)
 
-#define CHECK_LIVE_FRAME(x)						\
-  do { CHECK_FRAME (x);							\
-       if (! FRAMEP (x)							\
-	   || ! FRAME_LIVE_P (XFRAME (x)))				\
-         dead_wrong_type_argument (Qframe_live_p, (x)); } while (0)
-#define CONCHECK_LIVE_FRAME(x)						\
-  do { CONCHECK_FRAME (x);						\
-       if (! FRAMEP (x)							\
-	   || ! FRAME_LIVE_P (XFRAME (x)))				\
-         x = wrong_type_argument (Qframe_live_p, (x)); } while (0)
+#define CHECK_LIVE_FRAME(x) do {			\
+  CHECK_FRAME (x);					\
+  if (! FRAME_LIVE_P (XFRAME (x)))			\
+    dead_wrong_type_argument (Qframe_live_p, (x));	\
+} while (0)
+#define CONCHECK_LIVE_FRAME(x) do {			\
+  CONCHECK_FRAME (x);					\
+  if (! FRAME_LIVE_P (XFRAME (x)))			\
+    x = wrong_type_argument (Qframe_live_p, (x));	\
+} while (0)
 
 #define FRAME_TYPE_P(f, type)	EQ (FRAME_TYPE (f), Q##type)
 
 #ifdef ERROR_CHECK_TYPECHECK
-MAC_DECLARE_EXTERN (struct frame *, MTframe_data)
+INLINE struct frame *
+error_check_frame_type (struct frame * f, Lisp_Object sym);
+INLINE struct frame *
+error_check_frame_type (struct frame * f, Lisp_Object sym)
+{
+  assert (EQ (FRAME_TYPE (f), sym));
+  return f;
+}
 # define FRAME_TYPE_DATA(f, type)			\
-MAC_BEGIN						\
-  MAC_DECLARE (struct frame *, MTframe_data, f)		\
-  assert (FRAME_TYPE_P (MTframe_data, type))		\
-  MAC_SEP						\
-  (struct type##_frame *) MTframe_data->frame_data	\
-MAC_END
+ ((struct type##_frame *) (error_check_frame_type (f, Q##type))->frame_data)
 #else
 # define FRAME_TYPE_DATA(f, type)			\
   ((struct type##_frame *) (f)->frame_data)
@@ -263,69 +284,99 @@ MAC_END
 
 #define FRAME_WIN_P(frm) CONSOLE_TYPESYM_WIN_P (FRAME_TYPE (frm))
 
-extern Lisp_Object Qframe_live_p;
-extern Lisp_Object Qframe_x_p, Qframe_tty_p;
-extern Lisp_Object Vframe_title_format, Vframe_icon_title_format;
-
 extern int frame_changed;
 
-#define MARK_FRAME_FACES_CHANGED(f) do {				\
-  (f)->faces_changed = 1;						\
-  (f)->modiff++;							\
-  if (!NILP ((f)->device))						\
-    MARK_DEVICE_FACES_CHANGED (XDEVICE ((f)->device));			\
-  else									\
-    faces_changed = 1; } while (0)
+#define MARK_FRAME_FACES_CHANGED(f) do {		\
+  struct frame *mffc_f = (f);				\
+  mffc_f->faces_changed = 1;				\
+  mffc_f->modiff++;					\
+  if (!NILP (mffc_f->device))				\
+    {							\
+      struct device *mffc_d = XDEVICE (mffc_f->device);	\
+      MARK_DEVICE_FACES_CHANGED (mffc_d);		\
+    }							\
+  else							\
+    faces_changed = 1;					\
+} while (0)
 
-#define MARK_FRAME_GLYPHS_CHANGED(f) do {				\
-  (f)->glyphs_changed = 1;						\
-  (f)->modiff++;							\
-  if (!NILP ((f)->device))						\
-    MARK_DEVICE_GLYPHS_CHANGED (XDEVICE ((f)->device));			\
-  else									\
-    glyphs_changed = 1; } while (0)
+#define MARK_FRAME_GLYPHS_CHANGED(f) do {		\
+  struct frame *mfgc_f = (f);				\
+  mfgc_f->glyphs_changed = 1;				\
+  mfgc_f->modiff++;					\
+  if (!NILP (mfgc_f->device))				\
+    {							\
+      struct device *mfgc_d = XDEVICE (mfgc_f->device);	\
+      MARK_DEVICE_GLYPHS_CHANGED (mfgc_d);		\
+    }							\
+  else							\
+    glyphs_changed = 1;					\
+} while (0)
 
-#define MARK_FRAME_TOOLBARS_CHANGED(f) do {				\
-  (f)->toolbar_changed = 1;						\
-  (f)->modiff++;							\
-  if (!NILP ((f)->device))						\
-    MARK_DEVICE_TOOLBARS_CHANGED (XDEVICE ((f)->device));		\
-  else									\
-    toolbar_changed = 1; } while (0)
+#define MARK_FRAME_TOOLBARS_CHANGED(f) do {		\
+  struct frame *mftc_f = (f);				\
+  mftc_f->toolbar_changed = 1;				\
+  mftc_f->modiff++;					\
+  if (!NILP (mftc_f->device))				\
+    {							\
+      struct device *mftc_d = XDEVICE (mftc_f->device);	\
+      MARK_DEVICE_TOOLBARS_CHANGED (mftc_d);		\
+    }							\
+  else							\
+    toolbar_changed = 1;				\
+} while (0)
 
-#define MARK_FRAME_SIZE_CHANGED(f) do {					\
-  (f)->size_changed = 1;						\
-  (f)->size_change_pending = 1;						\
-  (f)->modiff++;							\
-  if (!NILP ((f)->device))						\
-    MARK_DEVICE_SIZE_CHANGED (XDEVICE ((f)->device));			\
-  else									\
-    size_changed = 1; } while (0)
+#define MARK_FRAME_SIZE_CHANGED(f) do {			\
+  struct frame *mfsc_f = (f);				\
+  mfsc_f->size_changed = 1;				\
+  mfsc_f->size_change_pending = 1;			\
+  mfsc_f->modiff++;					\
+  if (!NILP (mfsc_f->device))				\
+    {							\
+      struct device *mfsc_d = XDEVICE (mfsc_f->device);	\
+      MARK_DEVICE_SIZE_CHANGED (mfsc_d);		\
+    }							\
+  else							\
+    size_changed = 1;					\
+} while (0)
 
-#define MARK_FRAME_CHANGED(f) do {					\
-  (f)->frame_changed = 1;						\
-  (f)->modiff++;							\
-  if (!NILP ((f)->device))						\
-    MARK_DEVICE_FRAME_CHANGED (XDEVICE ((f)->device));			\
-  else									\
-    frame_changed = 1; } while (0)
+#define MARK_FRAME_CHANGED(f) do {			\
+  struct frame *mfc_f = (f);				\
+  mfc_f->frame_changed = 1;				\
+  mfc_f->modiff++;					\
+  if (!NILP (mfc_f->device))				\
+    {							\
+      struct device *mfc_d = XDEVICE (mfc_f->device);	\
+      MARK_DEVICE_FRAME_CHANGED (mfc_d);		\
+    }							\
+  else							\
+    frame_changed = 1;					\
+} while (0)
 
-#define MARK_FRAME_WINDOWS_CHANGED(f) do {				\
-  (f)->windows_changed = 1;						\
-  (f)->modiff++;							\
-  if (!NILP ((f)->device))						\
-    MARK_DEVICE_WINDOWS_CHANGED (XDEVICE ((f)->device));		\
-  else									\
-    windows_changed = 1; } while (0)
+#define MARK_FRAME_WINDOWS_CHANGED(f) do {		\
+  struct frame *mfwc_f = (f);				\
+  mfwc_f->windows_changed = 1;				\
+  mfwc_f->modiff++;					\
+  if (!NILP (mfwc_f->device))				\
+    {							\
+      struct device *mfwc_d = XDEVICE (mfwc_f->device);	\
+      MARK_DEVICE_WINDOWS_CHANGED (mfwc_d);		\
+    }							\
+  else							\
+    windows_changed = 1;				\
+} while (0)
 
-#define MARK_FRAME_WINDOWS_STRUCTURE_CHANGED(f) do {			\
-  (f)->windows_structure_changed = 1;					\
-  (f)->modiff++;							\
-  if (!NILP ((f)->device))						\
-    MARK_DEVICE_WINDOWS_STRUCTURE_CHANGED (XDEVICE ((f)->device));	\
-  else									\
-    windows_structure_changed = 1; } while (0)
-
+#define MARK_FRAME_WINDOWS_STRUCTURE_CHANGED(f) do {	\
+  struct frame *fwsc_f = (f);				\
+  fwsc_f->windows_structure_changed = 1;		\
+  fwsc_f->modiff++;					\
+  if (!NILP (fwsc_f->device))				\
+    {							\
+      struct device *fwsc_d = XDEVICE (fwsc_f->device);	\
+      MARK_DEVICE_WINDOWS_STRUCTURE_CHANGED (fwsc_d);	\
+    }							\
+  else							\
+    windows_structure_changed = 1;			\
+} while (0)
 
 #define SET_FRAME_CLEAR(f) MARK_FRAME_CHANGED (f); (f)->clear = 1
 #define FRAME_DEVICE(f) ((f)->device)
@@ -585,8 +636,6 @@ extern int frame_changed;
 #define FRAME_LOOP_NO_BREAK(frmcons, devcons, concons)		\
   DEVICE_LOOP_NO_BREAK (devcons, concons)			\
     DEVICE_FRAME_LOOP (frmcons, XDEVICE (XCAR (devcons)))
-
-extern Lisp_Object Vdefault_frame_name;
 
 void update_frame_title (struct frame *f);
 Lisp_Object next_frame (Lisp_Object f, Lisp_Object frametype,

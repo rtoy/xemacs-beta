@@ -69,22 +69,22 @@ tty_init_device (struct device *d, Lisp_Object props)
     {
 #if 0
     case TTY_UNABLE_OPEN_DATABASE:
-      suppress_early_backtrace = 1;
+      suppress_early_error_handler_backtrace = 1;
       error ("Can't access terminal information database");
       break;
 #endif
     case TTY_TYPE_UNDEFINED:
-      suppress_early_backtrace = 1;
+      suppress_early_error_handler_backtrace = 1;
       error ("Terminal type `%s' undefined (or can't access database?)",
 	     XSTRING_DATA (terminal_type));
       break;
     case TTY_TYPE_INSUFFICIENT:
-      suppress_early_backtrace = 1;
+      suppress_early_error_handler_backtrace = 1;
       error ("Terminal type `%s' not powerful enough to run Emacs",
 	     XSTRING_DATA (terminal_type));
       break;
     case TTY_SIZE_UNSPECIFIED:
-      suppress_early_backtrace = 1;
+      suppress_early_error_handler_backtrace = 1;
       error ("Can't determine window size of terminal");
       break;
     case TTY_INIT_SUCCESS:

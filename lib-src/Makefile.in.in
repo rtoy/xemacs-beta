@@ -25,7 +25,7 @@
 
 ## For performance and consistency, no built-in rules
 .SUFFIXES:
-.SUFFIXES: .c .o .i .h
+.SUFFIXES: .c .h .o
 ## ==================== Things "configure" will edit ====================
 
 @SET_MAKE@
@@ -122,21 +122,16 @@ VPATH=@srcdir@
 #endif
 
 c_switch_general=@c_switch_general@
-c_switch_window_system=@c_switch_window_system@
 c_switch_all=@c_switch_all@
 ld_switch_general=@ld_switch_general@
-ld_switch_window_system=@ld_switch_window_system@
 ld_switch_all=@ld_switch_all@
 ld_libs_general=@ld_libs_general@
-ld_libs_window_system=@ld_libs_window_system@
-ld_libs_all=@ld_libs_all@
 
 ## We need to #define emacs to get the right versions of some files.
 
-lib_src_cppflags = -Demacs -I../src -I${srcdir} -I${srcdir}/../src $(CPPFLAGS)
-lib_src_cppflags = -Demacs -I../src $(CPPFLAGS)
-cflags  = $(CFLAGS) $(lib_src_cppflags) $(c_switch_all)
-ldflags = $(LDFLAGS) $(ld_switch_all) $(ld_libs_general)
+cppflags = -Demacs -I../src $(CPPFLAGS)
+cflags   = $(CFLAGS) $(cppflags) $(c_switch_general)
+ldflags  = $(LDFLAGS) $(ld_switch_general) $(ld_libs_general)
 
 ## This is the default compilation command.
 ## But we should never rely on it, because some make version
@@ -166,7 +161,7 @@ blessmail:
 maybe-blessmail: $(blessmail)
 #ifdef MOVEMAIL_NEEDS_BLESSING
 ## Do not charge ahead and do it!  Let the installer decide.
-##	  ./blessmail ${archlibdir}/movemail  
+##	  ./blessmail ${archlibdir}/movemail
 	@if test `wc -l <blessmail` != 2; then \
 	  dir=`sed -n -e 's/echo mail directory = \(.*\)/\1/p' blessmail`; \
 	  echo "*************************************************************";\
@@ -181,7 +176,7 @@ maybe-blessmail: $(blessmail)
 
 do-blessmail: $(blessmail)
 #ifdef MOVEMAIL_NEEDS_BLESSING
-	./blessmail ${archlibdir}/movemail  
+	./blessmail ${archlibdir}/movemail
 #endif
 
 ## Install the internal utilities.  Until they are installed, we can
@@ -254,10 +249,10 @@ alloca.o: ${srcdir}/../src/alloca.c
 	${CC} -c $(cflags) ${srcdir}/../src/alloca.c
 
 regex.o: ${srcdir}/../src/regex.c ${srcdir}/../src/regex.h
-	$(CC) -c `echo ${cflags} | sed 's/-Demacs/ /'` \
+	$(CC) -c `echo $(cflags) | sed 's/-Demacs/ /'` \
 		-DINHIBIT_STRING_HEADER ${srcdir}/../src/regex.c
 
-etags_args = -I. ${cflags} -I${srcdir} -I${srcdir}/../src \
+etags_args = -I. $(cflags) -I${srcdir} -I${srcdir}/../src \
 	-DVERSION='"${version}"' ${srcdir}/etags.c \
 	$(GETOPTOBJS) regex.o $(ldflags)
 etags_deps   = ${srcdir}/etags.c $(GETOPTDEPS) regex.o ../src/config.h
@@ -270,37 +265,37 @@ ctags: ${etags_deps} etags
 	$(CC) -DCTAGS ${etags_args} -o $@
 
 wakeup: ${srcdir}/wakeup.c
-	$(CC) ${cflags} ${srcdir}/wakeup.c $(ldflags) -o $@
+	$(CC) $(cflags) ${srcdir}/wakeup.c $(ldflags) -o $@
 
 profile: ${srcdir}/profile.c
-	$(CC) ${cflags} ${srcdir}/profile.c $(ldflags) -o $@
+	$(CC) $(cflags) ${srcdir}/profile.c $(ldflags) -o $@
 
 make-docfile: ${srcdir}/make-docfile.c
-	$(CC) ${cflags} ${srcdir}/make-docfile.c $(ldflags) -o $@
+	$(CC) $(cflags) ${srcdir}/make-docfile.c $(ldflags) -o $@
 
 digest-doc: ${srcdir}/digest-doc.c
-	$(CC) ${cflags} ${srcdir}/digest-doc.c $(ldflags) -o $@
+	$(CC) $(cflags) ${srcdir}/digest-doc.c $(ldflags) -o $@
 
 sorted-doc: ${srcdir}/sorted-doc.c
-	$(CC) ${cflags} ${srcdir}/sorted-doc.c $(ldflags) -o $@
+	$(CC) $(cflags) ${srcdir}/sorted-doc.c $(ldflags) -o $@
 
 b2m: ${srcdir}/b2m.c ../src/config.h
-	$(CC) ${cflags} ${srcdir}/b2m.c $(ldflags) -o $@
+	$(CC) $(cflags) ${srcdir}/b2m.c $(ldflags) -o $@
 
 movemail: ${srcdir}/movemail.c ${srcdir}/pop.c ${srcdir}/pop.h ../src/config.h
-	$(CC) ${cflags} ${MOVE_FLAGS} ${srcdir}/movemail.c ${srcdir}/pop.c $(ldflags) ${MOVE_LIBS} -o $@
+	$(CC) $(cflags) ${MOVE_FLAGS} ${srcdir}/movemail.c ${srcdir}/pop.c $(ldflags) ${MOVE_LIBS} -o $@
 
 cvtmail: ${srcdir}/cvtmail.c
-	$(CC) ${cflags} ${srcdir}/cvtmail.c $(ldflags) -o $@
+	$(CC) $(cflags) ${srcdir}/cvtmail.c $(ldflags) -o $@
 
 fakemail: ${srcdir}/fakemail.c ../src/config.h
-	$(CC) ${cflags} ${srcdir}/fakemail.c $(ldflags) -o $@
+	$(CC) $(cflags) ${srcdir}/fakemail.c $(ldflags) -o $@
 
 yow: ${srcdir}/yow.c ../src/paths.h
-	$(CC) ${cflags} ${srcdir}/yow.c $(ldflags) -o $@
+	$(CC) $(cflags) ${srcdir}/yow.c $(ldflags) -o $@
 
 hexl: ${srcdir}/hexl.c
-	$(CC) ${cflags} ${srcdir}/hexl.c $(ldflags) -o $@
+	$(CC) $(cflags) ${srcdir}/hexl.c $(ldflags) -o $@
 
 make-msgfile: ${srcdir}/make-msgfile.c
 	$(CC) $(cflags) ${srcdir}/make-msgfile.c $(ldflags) -o $@
@@ -308,20 +303,19 @@ make-msgfile: ${srcdir}/make-msgfile.c
 make-po: ${srcdir}/make-po.c
 	$(CC) $(cflags) ${srcdir}/make-po.c $(ldflags) -o $@
 
-## Why oh why does HP not include half of the standard X distribution?
-
+cflags_gnuserv  = $(CFLAGS) $(cppflags) $(c_switch_all)
 ldflags_gnuserv = $(LDFLAGS) $(ld_switch_all) @libs_xauth@ $(ld_libs_general)
 gnuslib.o: ${srcdir}/gnuslib.c ${srcdir}/gnuserv.h ../src/config.h
-	$(CC) -c ${cflags} ${srcdir}/gnuslib.c
+	$(CC) -c $(cflags_gnuserv) ${srcdir}/gnuslib.c
 gnuclient: ${srcdir}/gnuclient.c gnuslib.o ${srcdir}/gnuserv.h
-	$(CC) ${cflags} ${srcdir}/$@.c gnuslib.o ${ldflags_gnuserv} -o $@
+	$(CC) $(cflags_gnuserv) ${srcdir}/$@.c gnuslib.o ${ldflags_gnuserv} -o $@
 gnuserv: ${srcdir}/gnuserv.c gnuslib.o ${srcdir}/gnuserv.h
-	$(CC) ${cflags} ${srcdir}/$@.c gnuslib.o ${ldflags_gnuserv} -o $@
+	$(CC) $(cflags_gnuserv) ${srcdir}/$@.c gnuslib.o ${ldflags_gnuserv} -o $@
 
 ## mmencode binary is used by tm - but is really part of the metamail package
 ## mmencode.c was merged copy of mmencode.c and codes.c of metamail
 mmencode : ${srcdir}/mmencode.c
-	$(CC) ${cflags} ${srcdir}/mmencode.c -o $@
+	$(CC) $(cflags) ${srcdir}/mmencode.c -o $@
 
 
 ## The timer utility (timer.c, getdate.y) is not used in XEmacs

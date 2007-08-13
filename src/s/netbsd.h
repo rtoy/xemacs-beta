@@ -19,8 +19,6 @@
 #undef LDAV_SYMBOL
 #define HAVE_GETLOADAVG
 
-/* #define SIGNALS_VIA_CHARACTERS */ /* mrb */
-
 #define PENDING_OUTPUT_COUNT(FILE) ((FILE)->_p - (FILE)->_bf._base)
 
 /* netbsd uses OXTABS instead of the expected TAB3.  */
@@ -29,8 +27,6 @@
 
 #define A_TEXT_OFFSET(x) (sizeof (struct exec))
 #define A_TEXT_SEEK(hdr) (N_TXTOFF(hdr) + A_TEXT_OFFSET(hdr))
-
-/* #define NO_TERMIO */ /* mrb */
 
 #define LIBS_DEBUG
 /* -lutil is not needed for NetBSD >0.9.  */
@@ -44,7 +40,7 @@
 #ifndef NO_SHARED_LIBS
 /* These definitions should work for either dynamic or static linking,
    whichever is the default for `cc -nostdlib'.  */
-/* but they probably don't, and life's too short - jrg@doc.ic.ac.uk 
+/* but they probably don't, and life's too short - jrg@doc.ic.ac.uk
    ask for no shared libs if you have 0.9 */
 /* mrb -- ORDINARY_LINK works just fine... */
 #define LD_SWITCH_SYSTEM "-e start"

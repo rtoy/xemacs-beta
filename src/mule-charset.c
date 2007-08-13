@@ -386,12 +386,6 @@ Lstream_funget_emchar (Lstream *stream, Emchar ch)
 /*                            charset object                            */
 /************************************************************************/
 
-static Lisp_Object mark_charset (Lisp_Object, void (*) (Lisp_Object));
-static void print_charset (Lisp_Object, Lisp_Object, int);
-DEFINE_LRECORD_IMPLEMENTATION ("charset", charset,
-                               mark_charset, print_charset, 0, 0, 0,
-			       struct Lisp_Charset);
-
 static Lisp_Object
 mark_charset (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
@@ -433,6 +427,9 @@ print_charset (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   write_c_string (buf, printcharfun);
 }
 
+DEFINE_LRECORD_IMPLEMENTATION ("charset", charset,
+                               mark_charset, print_charset, 0, 0, 0,
+			       struct Lisp_Charset);
 /* Make a new charset. */
 
 static Lisp_Object
@@ -441,10 +438,9 @@ make_charset (int id, Lisp_Object name, Bufbyte leading_byte, unsigned char rep_
 	      Bufbyte final, unsigned char direction, Lisp_Object doc,
 	      Lisp_Object reg)
 {
-  struct Lisp_Charset *cs;
-  Lisp_Object obj = Qnil;
-
-  cs = alloc_lcrecord_type (struct Lisp_Charset, lrecord_charset);
+  Lisp_Object obj;
+  struct Lisp_Charset *cs =
+    alloc_lcrecord_type (struct Lisp_Charset, lrecord_charset);
   XSETCHARSET (obj, cs);
 
   CHARSET_ID		(cs) = id;
@@ -521,7 +517,7 @@ Return non-nil if OBJECT is a charset.
 */
        (object))
 {
-  return (CHARSETP (object) ? Qt : Qnil);
+  return CHARSETP (object) ? Qt : Qnil;
 }
 
 DEFUN ("find-charset", Ffind_charset, 1, 1, 0, /*
@@ -534,8 +530,8 @@ nil is returned.  Otherwise the associated charset object is returned.
 {
   if (CHARSETP (charset_or_name))
     return charset_or_name;
-  CHECK_SYMBOL (charset_or_name);
 
+  CHECK_SYMBOL (charset_or_name);
   return Fgethash (charset_or_name, Vcharset_hashtable, Qnil);
 }
 
@@ -601,7 +597,7 @@ Return the name of the given charset.
 */
        (charset))
 {
-  return (XCHARSET_NAME (Fget_charset (charset)));
+  return XCHARSET_NAME (Fget_charset (charset));
 }
 
 DEFUN ("make-charset", Fmake_charset, 3, 3, 0, /*
@@ -927,7 +923,7 @@ Recognized properties are those listed in `make-charset', as well as
   if (EQ (prop, Qregistry))    return CHARSET_REGISTRY (cs);
   if (EQ (prop, Qccl_program)) return CHARSET_CCL_PROGRAM (cs);
   if (EQ (prop, Qdirection))
-    return (CHARSET_DIRECTION (cs) == CHARSET_LEFT_TO_RIGHT ? Ql2r : Qr2l);
+    return CHARSET_DIRECTION (cs) == CHARSET_LEFT_TO_RIGHT ? Ql2r : Qr2l;
   if (EQ (prop, Qreverse_direction_charset))
     {
       Lisp_Object obj = CHARSET_REVERSE_DIRECTION_CHARSET (cs);

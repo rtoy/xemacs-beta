@@ -29,12 +29,12 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-tty.h"
 #include "console-stream.h"
-#include "events.h" /* for Vcontrolling_terminal */
 #include "faces.h"
 #include "frame.h"
 #include "lstream.h"
 #include "redisplay.h"
 #include "sysdep.h"
+#include "sysfile.h"
 #ifdef FILE_CODING
 #include "file-coding.h"
 #endif
@@ -47,13 +47,12 @@ DEFINE_CONSOLE_TYPE (tty);
 Lisp_Object Qterminal_type;
 Lisp_Object Qcontrolling_process;
 
-extern Lisp_Object Vstdio_str; /* in console-stream.c */
 
 static void
 allocate_tty_console_struct (struct console *con)
 {
   /* zero out all slots except the lisp ones ... */
-  con->console_data = xnew_and_zero (struct tty_console);
+  CONSOLE_TTY_DATA (con) = xnew_and_zero (struct tty_console);
   CONSOLE_TTY_DATA (con)->terminal_type = Qnil;
   CONSOLE_TTY_DATA (con)->instream = Qnil;
   CONSOLE_TTY_DATA (con)->outstream = Qnil;
@@ -63,14 +62,15 @@ static void
 tty_init_console (struct console *con, Lisp_Object props)
 {
   Lisp_Object tty = CONSOLE_CONNECTION (con);
-  Lisp_Object terminal_type = Qnil, controlling_process = Qnil;
-  int infd, outfd;
+  Lisp_Object terminal_type = Qnil;
+  Lisp_Object controlling_process = Qnil;
+  struct tty_console *tty_con;
   struct gcpro gcpro1, gcpro2;
 
   GCPRO2 (terminal_type, controlling_process);
 
   terminal_type = Fplist_get (props, Qterminal_type, Qnil);
-  controlling_process = Fplist_get(props, Qcontrolling_process, Qnil);
+  controlling_process = Fplist_get (props, Qcontrolling_process, Qnil);
 
   /* Determine the terminal type */
 
@@ -78,7 +78,7 @@ tty_init_console (struct console *con, Lisp_Object props)
     CHECK_STRING (terminal_type);
   else
     {
-      char *temp_type = (char *) getenv ("TERM");
+      char *temp_type = getenv ("TERM");
 
       if (!temp_type)
 	{
@@ -95,40 +95,39 @@ tty_init_console (struct console *con, Lisp_Object props)
   /* Open the specified console */
 
   allocate_tty_console_struct (con);
+  tty_con = CONSOLE_TTY_DATA (con);
+
   if (internal_equal (tty, Vstdio_str, 0))
     {
-      infd = fileno (stdin);
-      outfd = fileno (stdout);
-      CONSOLE_TTY_DATA (con)->is_stdio = 1;
+      tty_con->infd  = fileno (stdin);
+      tty_con->outfd = fileno (stdout);
+      tty_con->is_stdio = 1;
     }
   else
     {
-      infd = outfd = open ((char *) XSTRING_DATA (tty), O_RDWR);
-      if (infd < 0)
+      tty_con->infd = tty_con->outfd =
+	open ((char *) XSTRING_DATA (tty), O_RDWR);
+      if (tty_con->infd < 0)
 	error ("Unable to open tty %s", XSTRING_DATA (tty));
-      CONSOLE_TTY_DATA (con)->is_stdio = 0;
+      tty_con->is_stdio = 0;
     }
 
-  CONSOLE_TTY_DATA (con)->infd  = infd;
-  CONSOLE_TTY_DATA (con)->outfd = outfd;
-  CONSOLE_TTY_DATA (con)->instream  = make_filedesc_input_stream  (infd, 0,
-								   -1, 0);
-  CONSOLE_TTY_DATA (con)->outstream = make_filedesc_output_stream (outfd, 0,
-								   -1, 0);
+  tty_con->instream  = make_filedesc_input_stream  (tty_con->infd,  0, -1, 0);
+  tty_con->outstream = make_filedesc_output_stream (tty_con->outfd, 0, -1, 0);
 #ifdef MULE
-  CONSOLE_TTY_DATA (con)->instream =
-    make_decoding_input_stream (XLSTREAM (CONSOLE_TTY_DATA (con)->instream),
+  tty_con->instream =
+    make_decoding_input_stream (XLSTREAM (tty_con->instream),
 				Fget_coding_system (Vkeyboard_coding_system));
-  Lstream_set_character_mode (XLSTREAM (CONSOLE_TTY_DATA (con)->instream));
-  CONSOLE_TTY_DATA (con)->outstream =
-    make_encoding_output_stream (XLSTREAM (CONSOLE_TTY_DATA (con)->outstream),
+  Lstream_set_character_mode (XLSTREAM (tty_con->instream));
+  tty_con->outstream =
+    make_encoding_output_stream (XLSTREAM (tty_con->outstream),
 				 Fget_coding_system (Vterminal_coding_system));
 #endif /* MULE */
-  CONSOLE_TTY_DATA (con)->terminal_type = terminal_type;
-  CONSOLE_TTY_DATA (con)->controlling_process = controlling_process;
+  tty_con->terminal_type = terminal_type;
+  tty_con->controlling_process = controlling_process;
 
 #ifdef HAVE_GPM
-  connect_to_gpm(con);
+  connect_to_gpm (con);
 #endif
 
   if (NILP (CONSOLE_NAME (con)))
@@ -145,18 +144,18 @@ tty_init_console (struct console *con, Lisp_Object props)
        be the foreground process group of two TTY's (in that case it
        would have two controlling TTY's, which is not allowed). */
 
-    EMACS_GET_TTY_PROCESS_GROUP (infd, &tty_pg);
+    EMACS_GET_TTY_PROCESS_GROUP (tty_con->infd, &tty_pg);
     cfd = open ("/dev/tty", O_RDWR, 0);
     EMACS_GET_TTY_PROCESS_GROUP (cfd, &controlling_tty_pg);
     close (cfd);
     if (tty_pg == controlling_tty_pg)
       {
-	CONSOLE_TTY_DATA (con)->controlling_terminal = 1;
+	tty_con->controlling_terminal = 1;
 	XSETCONSOLE (Vcontrolling_terminal, con);
 	munge_tty_process_group ();
       }
     else
-      CONSOLE_TTY_DATA (con)->controlling_terminal = 0;
+      tty_con->controlling_terminal = 0;
   }
 
   UNGCPRO;
@@ -165,9 +164,10 @@ tty_init_console (struct console *con, Lisp_Object props)
 static void
 tty_mark_console (struct console *con, void (*markobj) (Lisp_Object))
 {
-  ((markobj) (CONSOLE_TTY_DATA (con)->terminal_type));
-  ((markobj) (CONSOLE_TTY_DATA (con)->instream));
-  ((markobj) (CONSOLE_TTY_DATA (con)->outstream));
+  struct tty_console *tty_con = CONSOLE_TTY_DATA (con);
+  ((markobj) (tty_con->terminal_type));
+  ((markobj) (tty_con->instream));
+  ((markobj) (tty_con->outstream));
 }
 
 static int
@@ -179,16 +179,16 @@ tty_initially_selected_for_input (struct console *con)
 static void
 free_tty_console_struct (struct console *con)
 {
-  struct tty_console *tcon = (struct tty_console *) con->console_data;
-  if (tcon && tcon->term_entry_buffer) /* allocated in term_init () */
+  struct tty_console *tty_con = CONSOLE_TTY_DATA (con);
+  if (tty_con)
     {
-      xfree (tcon->term_entry_buffer);
-      tcon->term_entry_buffer = NULL;
-    }
-  if (tcon)
-    {
-      xfree (tcon);
-      con->console_data = NULL;
+      if (tty_con->term_entry_buffer) /* allocated in term_init () */
+	{
+	  xfree (tty_con->term_entry_buffer);
+	  tty_con->term_entry_buffer = NULL;
+	}
+      xfree (tty_con);
+      CONSOLE_TTY_DATA (con) = NULL;
     }
 }
 
@@ -224,8 +224,9 @@ Return the terminal type of TTY console CONSOLE.
   return CONSOLE_TTY_DATA (decode_tty_console (console))->terminal_type;
 }
 
-DEFUN ("console-tty-controlling-process", Fconsole_tty_controlling_process, 0, 1, 0, /*
-Return the controlling process of TTY console CONSOLE.
+DEFUN ("console-tty-controlling-process",
+       Fconsole_tty_controlling_process, 0, 1, 0, /*
+Return the controlling process of tty console CONSOLE.
 */
        (console))
 {
@@ -233,84 +234,70 @@ Return the controlling process of TTY console CONSOLE.
 }
 
 #ifdef MULE
-DEFUN ("set-console-tty-coding-system", Fset_console_tty_coding_system, 0, 2, 0, /*
-Set the coding system of tty console CONSOLE to CODESYS.
-CONSOLE defaults to the selected console.
-CODESYS defaults to the value of `terminal-coding-system'.
-*/
-	(console, codesys))
-{
-  struct console *con = decode_tty_console (console);
-  codesys = NILP (codesys) ?
-    Vterminal_coding_system :
-    Fget_coding_system (codesys);
-  if (!NILP(codesys)) {
-    set_encoding_stream_coding_system (XLSTREAM (CONSOLE_TTY_DATA (con)->outstream),
-	codesys);
-  }
-  return Qnil;
-}
-#endif /* MULE */
-
 
-/* redefine coding system for console tty */
-#ifdef MULE
-DEFUN ("console-tty-input-coding-system", Fconsole_tty_input_coding_system, 1, 1, 0, /*
-Return TTY CONSOLE's input coding system.
+DEFUN ("console-tty-input-coding-system",
+       Fconsole_tty_input_coding_system, 0, 1, 0, /*
+Return the input coding system of tty console CONSOLE.
 */
        (console))
 {
-  struct console *con = decode_tty_console (console);
-  return decoding_stream_coding_system (XLSTREAM (CONSOLE_TTY_DATA (con)->instream));
+  return decoding_stream_coding_system
+    (XLSTREAM (CONSOLE_TTY_DATA (decode_tty_console (console))->instream));
 }
 
-DEFUN ("set-console-tty-input-coding-system", Fset_console_tty_input_coding_system, 0, 2, 0, /*
-Set the coding system of tty input of console CONSOLE to CODESYS.
+DEFUN ("set-console-tty-input-coding-system",
+       Fset_console_tty_input_coding_system, 0, 2, 0, /*
+Set the input coding system of tty console CONSOLE to CODESYS.
 CONSOLE defaults to the selected console.
 CODESYS defaults to the value of `keyboard-coding-system'.
 */
 	(console, codesys))
 {
-  struct console *con;
-  if (!NILP(console)) {
-    con = decode_tty_console (console);
-    codesys = NILP (codesys) ?
-      Vkeyboard_coding_system :
-      Fget_coding_system (codesys);
-    set_encoding_stream_coding_system (XLSTREAM (CONSOLE_TTY_DATA (con)->instream),
-                                       codesys);
-  }
+  set_decoding_stream_coding_system
+    (XLSTREAM (CONSOLE_TTY_DATA (decode_tty_console (console))->instream),
+     Fget_coding_system (NILP (codesys) ? Vkeyboard_coding_system : codesys));
   return Qnil;
 }
 
-DEFUN ("console-tty-output-coding-system", Fconsole_tty_output_coding_system, 1, 1, 0, /*
+DEFUN ("console-tty-output-coding-system",
+       Fconsole_tty_output_coding_system, 0, 1, 0, /*
 Return TTY CONSOLE's output coding system.
 */
        (console))
 {
-  struct console *con = decode_tty_console (console);
-  return encoding_stream_coding_system (XLSTREAM (CONSOLE_TTY_DATA (con)->outstream) );
+  return encoding_stream_coding_system
+    (XLSTREAM (CONSOLE_TTY_DATA (decode_tty_console (console))->outstream));
 }
 
-DEFUN ("set-console-tty-output-coding-system", Fset_console_tty_output_coding_system, 0, 2, 0, /*
+DEFUN ("set-console-tty-output-coding-system",
+       Fset_console_tty_output_coding_system, 0, 2, 0, /*
 Set the coding system of tty output of console CONSOLE to CODESYS.
 CONSOLE defaults to the selected console.
 CODESYS defaults to the value of `terminal-coding-system'.
 */
 	(console, codesys))
 {
-  struct console *con;
-  if (!NILP(console)) {
-    con = decode_tty_console (console);
-    codesys = NILP (codesys) ?
-      Vterminal_coding_system :
-      Fget_coding_system (codesys);
-    set_encoding_stream_coding_system (XLSTREAM (CONSOLE_TTY_DATA (con)->outstream),
-                                       codesys);
-  }
+  set_encoding_stream_coding_system
+    (XLSTREAM (CONSOLE_TTY_DATA (decode_tty_console (console))->outstream),
+     Fget_coding_system (NILP (codesys) ? Vterminal_coding_system : codesys));
   return Qnil;
 }
 
+/* ### Move this function to lisp */
+DEFUN ("set-console-tty-coding-system",
+       Fset_console_tty_coding_system, 0, 2, 0, /*
+Set the input and output coding systems of tty console CONSOLE to CODESYS.
+CONSOLE defaults to the selected console.
+If CODESYS is nil, the values of `keyboard-coding-system' and
+`terminal-coding-system' will be used for the input and
+output coding systems of CONSOLE.
+*/
+	(console, codesys))
+{
+  Fset_console_tty_input_coding_system (console, codesys);
+  Fset_console_tty_output_coding_system (console, codesys);
+  return Qnil;
+}
 #endif /* MULE */
 
 
@@ -360,7 +347,7 @@ syms_of_console_tty (void)
   DEFSUBR (Fconsole_tty_input_coding_system);
   DEFSUBR (Fset_console_tty_input_coding_system);
   DEFSUBR (Fset_console_tty_coding_system);
-#endif
+#endif /* MULE */
 }
 
 void

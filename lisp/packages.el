@@ -63,11 +63,17 @@
 (defvar early-package-load-path nil
   "Load path for packages early in the load path.")
 
-(defvar early-packages nil
+(defvar late-packages nil
   "Packages late in the load path.")
 
 (defvar late-package-load-path nil
   "Load path for packages late in the load path.")
+
+(defvar last-packages nil
+  "Packages last in the load path.")
+
+(defvar last-package-load-path nil
+  "Load path for packages last in the load path.")
 
 (defun package-get-key-1 (info key)
   "Locate keyword `key' in list."
@@ -307,9 +313,24 @@ This function is basically a wrapper over `locate-file'."
 		  (version-mule-directory
 		   (and (featurep 'mule)
 			(paths-find-version-directory roots
-						      "mule-packages"))))
+						      "mule-packages")))
+		  ;; There needs to be a cleverer way of doing this
+		  (site-infodock-directory
+		   (and (featurep 'infodock)
+			(paths-find-site-directory roots
+						   "infodock-packages")))
+		  (version-infodock-directory
+		   (and (featurep 'infodock)
+			(paths-find-version-directory roots
+						      "infodock-packages"))))
 	      (append '("~/.xemacs/")
 		      '(nil)
+		      (and version-infodock-directory
+			   (null (string-equal version-infodock-directory
+					       site-infodock-directory))
+			   (list version-infodock-directory))
+		      (and site-infodock-directory
+			   (list site-infodock-directory))
 		      (and version-mule-directory
 			   (null (string-equal version-mule-directory
 					      site-mule-directory))
@@ -336,27 +357,33 @@ This function is basically a wrapper over `locate-file'."
 (defun packages-split-path (path)
   "Split PATH at NIL, return pair with two components.
 The second component is shared with PATH."
-  (let ((reverse-tail '()))
-    (while (and path (null (null (car path))))
-      (setq reverse-tail (cons (car path) reverse-tail))
-      (setq path (cdr path)))
-    (if (null path)
-	(cons nil (nreverse reverse-tail))
-      (cons (nreverse reverse-tail) (cdr path)))))
+  (let ((reverse-tail '())
+	(rest path))
+    (while (and rest (null (null (car rest))))
+      (setq reverse-tail (cons (car rest) reverse-tail))
+      (setq rest (cdr rest)))
+    (if (null rest)
+	(cons path nil)
+      (cons (nreverse reverse-tail) (cdr rest)))))
 
 (defun packages-find-packages (package-path &optional inhibit)
   "Search for all packages in PACKAGE-PATH.
-PACKAGE-PATH may distinguish (by NIL-separation) between early
-and late packages.
+PACKAGE-PATH may distinguish (by NIL-separation) between early,
+late and last packages.
 If INHIBIT is non-NIL, return empty paths.
-This returns (CONS EARLY-PACKAGES LATE-PACKAGES)."
+This returns (LIST EARLY-PACKAGES LATE-PACKAGES LAST-PACKAGES)."
   (if inhibit
-      (cons '() '())
+      (list '() '() '())
+    ;; When in doubt, it's late
     (let* ((stuff (packages-split-path package-path))
-	   (early (car stuff))
-	   (late (cdr stuff)))
-      (cons (packages-find-packages-in-directories early)
-	    (packages-find-packages-in-directories late)))))
+	   (early (and (cdr stuff) (car stuff)))
+	   (late+last (or (cdr stuff) (car stuff)))
+	   (stuff (packages-split-path late+last))
+	   (late (car stuff))
+	   (last (cdr stuff)))
+      (list (packages-find-packages-in-directories early)
+	    (packages-find-packages-in-directories late)
+	    (packages-find-packages-in-directories last)))))
 
 (defun packages-find-package-library-path (packages suffixes)
   "Construct a path into a component of the packages hierarchy.
@@ -424,7 +451,7 @@ Call HANDLE on each file off definitions of PACKAGE-LISP there."
 		    ;; dumped-lisp.el could have set this ...
 		    (if package-lisp
 			(mapc #'(lambda (base)
-				  (funcall handle (expand-file-name base dir)))
+				  (funcall handle base))
 			      package-lisp))))))
 	  package-load-path))
 
@@ -439,8 +466,7 @@ Return list of files off PACKAGE-LISP definitions there"
   (let ((*files* '()))
     (packages-handle-package-dumped-lisps
      #'(lambda (file)
-	 (setq *files* (cons (file-name-nondirectory file)
-			     *files*)))
+	 (setq *files* (cons file *files*)))
      package-load-path)
     (reverse *files*)))
 

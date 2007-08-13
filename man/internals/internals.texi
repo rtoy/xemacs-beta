@@ -984,23 +984,31 @@ would be impossible to pre-determine and pre-specify the information for
 all possible configurations.
 
   When configure is done running, it generates @file{Makefile}s and the
-file @file{config.h} (which describes the features of your system) from
-template files.  You then run @file{make}, which compiles the auxiliary
-code and programs in @file{lib-src/} and @file{lwlib/} and the main
-XEmacs executable in @file{src/}.  The result of this is an executable
-called @file{temacs}, which is @emph{not} the XEmacs executable.
-@file{temacs} by itself cannot function as an editor or even display any
-windows on the screen, and if you simply run it, it will exit
-immediately.  The Makefile runs @file{temacs} with certain options that
-cause it to initialize itself, read in a number of basic Lisp files, and
-then dump itself out into a new executable called @file{xemacs}.  This
-new executable has been pre-initialized and contains pre-digested Lisp
-code that is necessary for the editor to function (this includes most
-basic Lisp functions, e.g. @code{not}, that can be defined in terms of
-other Lisp primitives; some initialization code that is called when
-certain objects, such as frames, are created; and all of the standard
-keybindings and code for the actions they result in).  This executable,
-@file{xemacs}, is the executable that you run to use the XEmacs editor.
+file @file{src/config.h} (which describes the features of your system)
+from template files.  You then run @file{make}, which compiles the
+auxiliary code and programs in @file{lib-src/} and @file{lwlib/} and the
+main XEmacs executable in @file{src/}.  The result of compiling and
+linking is an executable called @file{temacs}, which is @emph{not} the
+final XEmacs executable.  @file{temacs} by itself is not intended to
+function as an editor or even display any windows on the screen, and if
+you simply run it, it will exit immediately.  The @file{Makefile} runs
+@file{temacs} with certain options that cause it to initialize itself,
+read in a number of basic Lisp files, and then dump itself out into a
+new executable called @file{xemacs}.  This new executable has been
+pre-initialized and contains pre-digested Lisp code that is necessary
+for the editor to function (this includes most basic Lisp functions,
+e.g. @code{not}, that can be defined in terms of other Lisp primitives;
+some initialization code that is called when certain objects, such as
+frames, are created; and all of the standard keybindings and code for
+the actions they result in).  This executable, @file{xemacs}, is the
+executable that you run to use the XEmacs editor.
+
+Although @file{temacs} is not intended to be run as an editor, it can,
+by using the incantation @code{temacs -batch -l loadup.el run-temacs}.
+This is useful when the dumping procedure described above is broken, or
+when using certain program debugging tools such as Purify.  These tools
+get mighty confused by the tricks played by the XEmacs build process,
+such as allocation memory in one process, and freeing it in the next.
 
 @node XEmacs From the Inside, The XEmacs Object System (Abstractly Speaking), XEmacs From the Perspective of Building, Top
 @chapter XEmacs From the Inside
@@ -1451,8 +1459,8 @@ converts to a symbol whose name is @code{"foobar"}.  This is done by
 looking up the string equivalent in the global variable
 @code{obarray}, whose contents should be an obarray.  If no symbol
 is found, a new symbol with the name @code{"foobar"} is automatically
-created and adding it to @code{obarray}; this process is called
-@dfn{interning} the symbol.
+created and added to @code{obarray}; this process is called
+@dfn{interning} the symbol. 
 @cindex interning
 
 @example
@@ -1552,18 +1560,17 @@ mark bit of the ones that are marked.)
   Lisp objects use the typedef @code{Lisp_Object}, but the actual C type
 used for the Lisp object can vary.  It can be either a simple type
 (@code{long} on the DEC Alpha, @code{int} on other machines) or a
-structure whose fields are bit fields that line up properly (actually,
-it's a union of structures that's used).  Generally the simple integral
-type is preferable because it ensures that the compiler will actually
-use a machine word to represent the object (some compilers will use more
+structure whose fields are bit fields that line up properly (actually, a
+union of structures that's used).  Generally the simple integral type is
+preferable because it ensures that the compiler will actually use a
+machine word to represent the object (some compilers will use more
 general and less efficient code for unions and structs even if they can
 fit in a machine word).  The union type, however, has the advantage of
 stricter type checking (if you accidentally pass an integer where a Lisp
 object is desired, you get a compile error), and it makes it easier to
 decode Lisp objects when debugging.  The choice of which type to use is
 determined by the presence or absence of the preprocessor constant
-@code{NO_UNION_TYPE}.  (Shouldn't it be @code{USE_UNION_TYPE}, with
-opposite semantics?  ``Hysterical reasons'', of course.)
+@code{USE_UNION_TYPE}.
 
 @cindex record type
   Note that there are only eight types that the tag can represent,
@@ -1627,7 +1634,7 @@ i.e. they have to be a statement rather than just used in an expression.
 The reason for this is that standard C doesn't let you ``construct'' a
 structure (but GCC does).  Granted, this sometimes isn't too convenient;
 for the case of integers, at least, you can use the function
-@code{make_number()}, which constructs and @emph{returns} an integer
+@code{make_int()}, which constructs and @emph{returns} an integer
 Lisp object.  Note that the @code{XSET@var{TYPE}()} macros are also
 affected by @code{ERROR_CHECK_TYPECHECK} and make sure that the
 structure is of the right type in the case of record types, where the
@@ -2310,7 +2317,7 @@ and constructor macros for the basic Lisp objects and various other
 basic definitions for the Lisp environment, as well as some
 general-purpose definitions (e.g. @code{min()} and @code{max()}).
 @file{lisp.h} includes either @file{lisp-disunion.h} or
-@file{lisp-union.h}, depending on whether @code{NO_UNION_TYPE} is
+@file{lisp-union.h}, depending on whether @code{USE_UNION_TYPE} is
 defined.  These files define the typedef of the Lisp object itself (as
 described above) and the low-level macros that hide the actual
 implementation of the Lisp object.  All extractor and constructor macros
@@ -3991,7 +3998,7 @@ internal lists and such things.)
 Note that @code{obarray} is one of the @code{staticpro()}d things.
 Therefore, all functions and variables get marked through this.
 @item
-Any shadowed bindings that are sitting on the specpdl stack.
+Any shadowed bindings that are sitting on the @code{specpdl} stack.
 @item
 Any objects sitting in currently active (Lisp) stack frames,
 catches, and condition cases.
@@ -4038,7 +4045,7 @@ the @code{GCPRO}s and @code{UNGCPRO}s -- you will end up with
 It is actually possible for a single @code{struct gcpro} to
 protect a contiguous array of any number of values, rather than
 just a single lvalue.  To effect this, call @code{GCPRO@var{n}} as usual on
-the first object in the array and then set @code{gcpron.nvars}.
+the first object in the array and then set @code{gcpro@var{n}.nvars}.
 
 @item
 @strong{Strings are relocated.}  What this means in practice is that the
@@ -5086,7 +5093,7 @@ x2) (quote x3) ...))}.  @code{Ffuncall()} contains its own code to do
 the evaluation, however, and is almost identical to eval.
 
   @code{Fapply()} implements Lisp @code{apply}, which is very similar to
-funcall except that if the last argument is a list, the result is the
+@code{funcall} except that if the last argument is a list, the result is the
 same as if each of the arguments in the list had been passed separately.
 @code{Fapply()} does some business to expand the last argument if it's a
 list, then calls @code{Ffuncall()} to do the work.
@@ -5114,9 +5121,9 @@ unwind-protects.  @code{specpdl} holds an array of @code{struct specbinding}'s,
 array, @code{specpdl_size} specifies the total number of binding slots
 in the array, and @code{max_specpdl_size} specifies the maximum number
 of bindings the array can be expanded to hold.  @code{grow_specpdl()}
-increases the size of the specpdl array, multiplying its size by 2 but
-never exceeding max_specpdl_size (except that if this number is less
-than 400, it is first set to 400).
+increases the size of the @code{specpdl} array, multiplying its size by
+2 but never exceeding @code{max_specpdl_size} (except that if this
+number is less than 400, it is first set to 400).
 
   @code{specbind()} binds a symbol to a value and is used for local
 variables and @code{let} forms.  The symbol and its old value (which
@@ -5127,14 +5134,14 @@ specpdl array, and @code{specpdl_size} is increased by 1.
 which, when placed around a section of code, ensures that some specified
 cleanup routine will be executed even if the code exits abnormally
 (e.g. through a @code{throw} or quit).  @code{record_unwind_protect()}
-simply adds a new specbinding to the specpdl array and stores the
+simply adds a new specbinding to the @code{specpdl} array and stores the
 appropriate information in it.  The cleanup routine can either be a C
 function, which is stored in the @code{func} field, or a @code{progn}
 form, which is stored in the @code{old_value} field.
 
-  @code{unbind_to()} removes specbindings from the specpdl array until
-the specified position is reached.  Each specbinding can be one of three
-types:
+  @code{unbind_to()} removes specbindings from the @code{specpdl} array
+until the specified position is reached.  Each specbinding can be one of
+three types:
 
 @enumerate
 @item
@@ -5200,7 +5207,7 @@ instance that created the catch.
   @code{internal_catch()} is fairly straightforward.  It stores into the
 @code{struct catchtag} the tag name and the current values of
 @code{backtrace_list}, @code{lisp_eval_depth}, @code{gcprolist}, and the
-offset into the specpdl array, sets a jump point with @code{_setjmp()}
+offset into the @code{specpdl} array, sets a jump point with @code{_setjmp()}
 (storing the jump point into the @code{struct catchtag}), and calls the
 function.  Control will return to @code{internal_catch()} either when
 the function exits normally or through a @code{_longjmp()} to this jump

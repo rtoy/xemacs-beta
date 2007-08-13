@@ -47,13 +47,17 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
-#include "emacsfns.h"
 #include "buffer.h"
-
-#include <stdio.h>
 #include "sysdll.h"
 #include <errno.h>
 
+static void
+maybe_call_library_function (dll_handle *handle, CONST char *funcname)
+{
+  void (*function)(void) = (void (*)(void)) dll_function (handle, funcname);
+  if (function)
+    (*function) ();
+}
 
 DEFUN ("dll-open", Fdll_open, 1, 1, "FShared object: ", /*
 Load LIBRARY as a shared object file.
@@ -72,17 +76,14 @@ available for use.
 {
   /* This function can GC */
   dll_handle *handle;
-  char *file;
-  void (*function)();
+  CONST char *filename;
 
   CHECK_STRING (library);
   library = Fexpand_file_name (library, Qnil);
 
-  file = XSTRING_DATA (library);
-  /* #### Is this right? */
-  GET_C_CHARPTR_EXT_FILENAME_DATA_ALLOCA (file, file);
+  GET_C_CHARPTR_EXT_FILENAME_DATA_ALLOCA (XSTRING_DATA (library), filename);
 
-  handle = dll_open (file);
+  handle = (dll_handle *) dll_open (filename);
   if (handle == NULL)
     {
       signal_error (Qerror,
@@ -104,17 +105,9 @@ available for use.
      Should we take care to execute the other two?  My fingers are
      getting itchy!  */
 
-  function = dll_function (handle, "syms_of");
-  if (function)
-    (*function) ();
-
-  function = dll_function (handle, "vars_of");
-  if (function)
-    (*function) ();
-
-  function = dll_function (handle, "complex_vars_of");
-  if (function)
-    (*function) ();
+  maybe_call_library_function (handle, "syms_of");
+  maybe_call_library_function (handle, "vars_of");
+  maybe_call_library_function (handle, "complex_vars_of");
 
   return Qnil;
 }

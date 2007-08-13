@@ -35,23 +35,17 @@
 
 /* libaudio.h includes a header which defines CONST.  We temporarily
    undefine it in order to eliminate a compiler warning.  Yes, this is
-   a hack. */
+   a gross hack. */
 #undef CONST
 #include <multimedia/libaudio.h>
 #include <multimedia/audio_device.h>
-
 #undef CONST
-#ifdef CONST_IS_LOSING
-# define CONST
-#else
-# define CONST const
-#endif /* CONST */
+#define CONST const
 
 #ifdef emacs
 # include <config.h>
 # include "lisp.h"
 # include "sysdep.h"
-# include "emacsfns.h"
 # include <errno.h>
 #include "syssignal.h"
 # define perror(string) \

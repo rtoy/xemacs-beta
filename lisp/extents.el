@@ -17,7 +17,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; along with XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -32,7 +32,7 @@
 ;; an alternative to map-extents.
 (defun mapcar-extents (function &optional predicate buffer-or-string from to
 				flags property value)
-  "Applies FUNCTION to all extents which overlap a region in BUFFER-OR-STRING.
+  "Apply FUNCTION to all extents which overlap a region in BUFFER-OR-STRING.
 The region is delimited by FROM and TO.  FUNCTION is called with
 one argument, the extent.  A list of the values returned by FUNCTION
 is returned.  An optional PREDICATE may be used to further limit the

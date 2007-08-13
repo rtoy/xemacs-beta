@@ -37,7 +37,7 @@
 
 ;;;###autoload
 (defun config-value-hash-table ()
-  "Returns hashtable of configuration parameters and their values."
+  "Return hashtable of configuration parameters and their values."
   (when (null config-value-hash-table)
     (setq config-value-hash-table (make-hashtable 300))
     (save-excursion
@@ -65,6 +65,6 @@
 (defun config-value (config-symbol)
   "Return the value of the configuration parameter CONFIG_SYMBOL."
   (gethash config-symbol (config-value-hash-table)))
-      
+
 (provide 'config)
 ;;; config.el ends here

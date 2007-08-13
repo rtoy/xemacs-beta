@@ -186,26 +186,20 @@ static char re_syntax_table[CHAR_SET_SIZE];
 static void
 init_syntax_once (void)
 {
-   REGISTER int c;
-   static int done = 0;
+  static int done = 0;
 
-   if (done)
-     return;
+  if (!done)
+    {
+      CONST char *word_syntax_chars =
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_";
 
-   memset (re_syntax_table, 0, sizeof (re_syntax_table));
+      memset (re_syntax_table, 0, sizeof (re_syntax_table));
 
-   for (c = 'a'; c <= 'z'; c++)
-     re_syntax_table[c] = Sword;
+      while (*word_syntax_chars)
+	re_syntax_table[(unsigned int)(*word_syntax_chars++)] = Sword;
 
-   for (c = 'A'; c <= 'Z'; c++)
-     re_syntax_table[c] = Sword;
-
-   for (c = '0'; c <= '9'; c++)
-     re_syntax_table[c] = Sword;
-
-   re_syntax_table['_'] = Sword;
-
-   done = 1;
+      done = 1;
+    }
 }
 
 #endif /* not SYNTAX_TABLE */
@@ -249,7 +243,7 @@ init_syntax_once (void)
 /* The IS*() macros can be passed any character, including an extended
    one.  We need to make sure there are no crashes, which would occur
    otherwise due to out-of-bounds array references. */
-#define ISASCII(c) (((unsigned EMACS_INT) (c)) < 0x100 && ISASCII_1 (c))
+#define ISASCII(c) (((EMACS_UINT) (c)) < 0x100 && ISASCII_1 (c))
 #else
 #define ISASCII(c) ISASCII_1 (c)
 #endif /* MULE */
@@ -679,7 +673,7 @@ print_fastmap (char *fastmap)
             }
 	  if (was_a_range)
             {
-              printf ("-");
+              putchar ('-');
               putchar (i - 1);
             }
         }
@@ -700,7 +694,7 @@ print_partial_compiled_pattern (unsigned char *start, unsigned char *end)
 
   if (start == NULL)
     {
-      printf ("(null)\n");
+      puts ("(null)");
       return;
     }
 
@@ -1003,12 +997,12 @@ static void
 print_double_string (CONST char *where, CONST char *string1, int size1,
 		     CONST char *string2, int size2)
 {
-  unsigned this_char;
-
   if (where == NULL)
     printf ("(null)");
   else
     {
+      unsigned int this_char;
+
       if (FIRST_STRING_P (where))
         {
           for (this_char = where - string1; this_char < size1; this_char++)
@@ -1067,31 +1061,32 @@ re_set_syntax (reg_syntax_t syntax)
    but why not be nice?  */
 
 static CONST char *re_error_msgid[] =
-  { "Success",					/* REG_NOERROR */
-    "No match",					/* REG_NOMATCH */
-    "Invalid regular expression",		/* REG_BADPAT */
-    "Invalid collation character",		/* REG_ECOLLATE */
-    "Invalid character class name",		/* REG_ECTYPE */
-    "Trailing backslash",			/* REG_EESCAPE */
-    "Invalid back reference",			/* REG_ESUBREG */
-    "Unmatched [ or [^",			/* REG_EBRACK */
-    "Unmatched ( or \\(",			/* REG_EPAREN */
-    "Unmatched \\{",				/* REG_EBRACE */
-    "Invalid content of \\{\\}",		/* REG_BADBR */
-    "Invalid range end",			/* REG_ERANGE */
-    "Memory exhausted",				/* REG_ESPACE */
-    "Invalid preceding regular expression",	/* REG_BADRPT */
-    "Premature end of regular expression",	/* REG_EEND */
-    "Regular expression too big",		/* REG_ESIZE */
-    "Unmatched ) or \\)",			/* REG_ERPAREN */
+{
+  "Success",					/* REG_NOERROR */
+  "No match",					/* REG_NOMATCH */
+  "Invalid regular expression",			/* REG_BADPAT */
+  "Invalid collation character",		/* REG_ECOLLATE */
+  "Invalid character class name",		/* REG_ECTYPE */
+  "Trailing backslash",				/* REG_EESCAPE */
+  "Invalid back reference",			/* REG_ESUBREG */
+  "Unmatched [ or [^",				/* REG_EBRACK */
+  "Unmatched ( or \\(",				/* REG_EPAREN */
+  "Unmatched \\{",				/* REG_EBRACE */
+  "Invalid content of \\{\\}",			/* REG_BADBR */
+  "Invalid range end",				/* REG_ERANGE */
+  "Memory exhausted",				/* REG_ESPACE */
+  "Invalid preceding regular expression",	/* REG_BADRPT */
+  "Premature end of regular expression",	/* REG_EEND */
+  "Regular expression too big",			/* REG_ESIZE */
+  "Unmatched ) or \\)",				/* REG_ERPAREN */
 #ifdef emacs
-    "Invalid syntax designator",		/* REG_ESYNTAX */
+  "Invalid syntax designator",			/* REG_ESYNTAX */
 #endif
 #ifdef MULE
-    "Ranges may not span charsets",		/* REG_ERANGESPAN */
-    "Invalid category designator",		/* REG_ECATEGORY */
+  "Ranges may not span charsets",		/* REG_ERANGESPAN */
+  "Invalid category designator",		/* REG_ECATEGORY */
 #endif
-  };
+};
 
 /* Avoiding alloca during matching, to placate r_alloc.  */
 
@@ -4062,11 +4057,11 @@ re_search_2 (struct re_pattern_buffer *bufp, CONST char *string1,
               /* Written out as an if-else to avoid testing `translate'
                  inside the loop.  */
 	      if (translate)
+                while (range > lim &&
 #ifdef MULE
-                while (range > lim && *d < 0x80 && !fastmap[translate[*d]])
-#else
-                while (range > lim && !fastmap[(unsigned char)translate[*d]])
+		       *d < 0x80 &&
 #endif
+		       !fastmap[(unsigned char)translate[*d]])
 		  {
 		    d_size = charcount_to_bytecount (d, 1);
 		    range -= d_size;
@@ -5328,7 +5323,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
                `pop_failure_point'.  */
             unsigned dummy_low_reg, dummy_high_reg;
             unsigned char *pdummy;
-            CONST char *sdummy;
+            CONST char *sdummy = NULL;
 
             DEBUG_PRINT1 ("EXECUTING pop_failure_jump.\n");
             POP_FAILURE_POINT (sdummy, pdummy,

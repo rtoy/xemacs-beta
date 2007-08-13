@@ -35,7 +35,7 @@ Boston, MA 02111-1307, USA.  */
 #include "hash.h"
 #include "elhash.h"
 
-static CONST int
+static CONST unsigned int
 primes []={
   13,
   29, 37, 47, 59, 71, 89, 107, 131, 163, 197, 239, 293, 353, 431, 521, 631,
@@ -53,13 +53,13 @@ unsigned long
 string_hash (CONST void *xv)
 {
   unsigned int h = 0;
-  unsigned int g;
   unsigned CONST char *x = (unsigned CONST char *) xv;
 
   if (!x) return 0;
 
   while (*x != 0)
     {
+      unsigned int g;
       h = (h << 4) + *x++;
       if ((g = h & 0xf0000000) != 0)
 	h = (h ^ (g >> 24)) ^ g;
@@ -69,16 +69,16 @@ string_hash (CONST void *xv)
 }
 
 unsigned long
-memory_hash (CONST void *xv, int size)
+memory_hash (CONST void *xv, size_t size)
 {
   unsigned int h = 0;
-  unsigned int g;
   unsigned CONST char *x = (unsigned CONST char *) xv;
 
   if (!x) return 0;
 
   while (size > 0)
     {
+      unsigned int g;
       h = (h << 4) + *x++;
       if ((g = h & 0xf0000000) != 0)
 	h = (h ^ (g >> 24)) ^ g;
@@ -100,14 +100,15 @@ string_eq (CONST void *st1, CONST void *st2)
 }
 
 
+/* ### Ever heard of binary search? */
 static unsigned int
 prime_size (unsigned int size)
 {
-  unsigned int i;
-  CONST int lim = countof (primes);
-  for (i = 0; i < lim; i++)
-    if (size <= primes [i]) return primes [i];
-  return primes [lim - 1];
+  int i;
+  for (i = 0; i < countof (primes); i++)
+    if (size <= primes [i])
+      return primes [i];
+  return primes [countof (primes) - 1];
 }
 
 static void rehash (hentry *harray, c_hashtable ht, unsigned int size);
@@ -307,8 +308,8 @@ grow_hashtable (c_hashtable hash, unsigned int new_size)
 void
 expand_hashtable (c_hashtable hash, unsigned int needed_size)
 {
-  unsigned int hsize = hash->size;
-  int comfortable_size = (13 * needed_size) / 10;
+  size_t hsize = hash->size;
+  size_t comfortable_size = (13 * needed_size) / 10;
   if (hsize < comfortable_size)
     grow_hashtable (hash, comfortable_size + 1);
 }

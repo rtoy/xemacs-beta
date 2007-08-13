@@ -21,19 +21,6 @@
 #undef SETUP_SLAVE_PTY
 #endif
 
-/* thomas@mathematik.uni-bremen.de says this is needed.  */
-/* Make process_send_signal work by "typing" a signal character on the pty.  */
-/* #define SIGNALS_VIA_CHARACTERS */ /* mrb */
-
-/* SGI has all the fancy wait stuff, but we can't include sys/wait.h
-   because it defines BIG_ENDIAN and LITTLE_ENDIAN (ugh!.)  Instead
-   we'll just define WNOHANG right here.
-   (An implicit decl is good enough for wait3.)  */
-/* [XEmacs: Now that we don't use BIG_ENDIAN/LITTLE_ENDIAN, it's safe
-   to include wait.h.  Should something change here?] */
-
-/* #define WNOHANG		0x1 */
-
 /* No need to use sprintf to get the tty name--we get that from _getpty.  */
 #ifdef PTY_TTY_NAME_SPRINTF
 #undef PTY_TTY_NAME_SPRINTF

@@ -920,7 +920,7 @@ Keywords supported:  :test :test-not :key"
 	(setq cl-tree (cdr cl-tree))))))
 
 (defun tree-equal (cl-x cl-y &rest cl-keys)
-  "T if trees X and Y have `eql' leaves.
+  "Return t if trees X and Y have `eql' leaves.
 Atoms are compared by `eql'; cons cells are compared recursively.
 Keywords supported:  :test :test-not :key"
   (cl-parsing-keywords (:test :test-not :key) ()

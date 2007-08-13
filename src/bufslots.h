@@ -50,7 +50,7 @@ Boston, MA 02111-1307, USA.  */
     /* Length of file when last read or saved.
        This is not in the  struct buffer_text
        because it's not used in indirect buffers at all.  */
-    MARKED_SLOT (save_length);
+    MARKED_SLOT (saved_size);
 
     /* File name used for auto-saving this buffer.
        This is not in the  struct buffer_text

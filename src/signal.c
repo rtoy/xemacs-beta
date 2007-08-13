@@ -21,9 +21,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not synched with FSF.  Split out of keyboard.c. */
 
-/* Just to make sure we don't use any global vars below */
-#define DONT_DECLARE_MAC_VARS
-
 #include <config.h>
 #include "lisp.h"
 
@@ -34,6 +31,9 @@ Boston, MA 02111-1307, USA.  */
 #include "syssignal.h"
 #include "systime.h"
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 #include <errno.h>
 
 /* Set to 1 when a quit-check signal (either a SIGIO interrupt or
@@ -309,7 +309,7 @@ handle_alarm_going_off (void)
 
      #### This is a bit inefficient because there will be function call
      overhead each time QUIT occurs. */
-     
+
   if (!NILP (Vinhibit_quit))
     {
       something_happened = 1;
@@ -359,7 +359,7 @@ an asynchronout timeout or process callback.
 */
        ())
 {
-  return ((waiting_for_user_input_p) ? Qt : Qnil);
+  return waiting_for_user_input_p ? Qt : Qnil;
 }
 
 
@@ -471,7 +471,7 @@ begin_dont_check_for_quit (void)
 
 /* The effect of this function is to set Vquit_flag if the user pressed
    ^G and discard the ^G, so as to not notice the same ^G again. */
-int 
+int
 check_quit (void)
 {
   /* dont_check_for_quit is set in two circumstances:
@@ -520,7 +520,7 @@ check_what_happened (void)		/* called from QUIT when
   return check_quit ();
 }
 
-  
+
 
 void
 init_poll_for_quit (void)

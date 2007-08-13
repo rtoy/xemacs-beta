@@ -26,11 +26,12 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
+#include "sysfile.h"
 #include <errno.h>
 
 #ifndef HAVE_DATABASE
-#error database.c being compiled, but HAVE_DATABASE not defined!
-#endif /* HAVE_DATABASE */
+#error HAVE_DATABASE not defined!!
+#endif
 
 #include "database.h"         /* Our include file */
 
@@ -56,9 +57,7 @@ typedef uint64_t u_int64_t;
 # define DB_VERSION_MAJOR 1
 #endif /* DB_VERSION_MAJOR */
 Lisp_Object Qberkeley_db;
-Lisp_Object Qhash;
-Lisp_Object Qbtree;
-Lisp_Object Qrecno;
+Lisp_Object Qhash, Qbtree, Qrecno, Qunknown;
 #endif /* HAVE_BERKELEY_DB */
 
 #ifdef HAVE_DBM
@@ -70,23 +69,21 @@ Lisp_Object Qdatabasep;
 
 typedef enum { DB_DBM, DB_BERKELEY, DB_IS_UNKNOWN } XEMACS_DB_TYPE;
 
-struct database;
-typedef struct database database;
+struct Lisp_Database;
 
 typedef struct
 {
-  CONST char * (*get_subtype) (struct database *);
-  CONST char * (*get_type) (struct database *);
-  Lisp_Object (*get) (struct database *, Lisp_Object);
-  int (*put) (struct database *, Lisp_Object, Lisp_Object, Lisp_Object);
-  int (*rem) (struct database *, Lisp_Object);
-  void (*map) (struct database *, Lisp_Object);
-  Lisp_Object (*get_lisp_type) (struct database *);
-  void (*close) (struct database *);
-  Lisp_Object (*last_error) (struct database *);
+  Lisp_Object (*get_subtype) (struct Lisp_Database *);
+  Lisp_Object (*get_type) (struct Lisp_Database *);
+  Lisp_Object (*get) (struct Lisp_Database *, Lisp_Object);
+  int (*put) (struct Lisp_Database *, Lisp_Object, Lisp_Object, Lisp_Object);
+  int (*rem) (struct Lisp_Database *, Lisp_Object);
+  void (*map) (struct Lisp_Database *, Lisp_Object);
+  void (*close) (struct Lisp_Database *);
+  Lisp_Object (*last_error) (struct Lisp_Database *);
 } DB_FUNCS;
 
-struct database
+struct Lisp_Database
 {
   struct lcrecord_header header;
   Lisp_Object fname;
@@ -107,58 +104,51 @@ struct database
 #endif
 };
 
-#define XDATABASE(x) XRECORD (x, database, struct database)
+#define XDATABASE(x) XRECORD (x, database, struct Lisp_Database)
 #define XSETDATABASE(x, p) XSETRECORD (x, p, database)
 #define DATABASEP(x) RECORDP (x, database)
 #define GC_DATABASEP(x) GC_RECORDP (x, database)
 #define CHECK_DATABASE(x) CHECK_RECORD (x, database)
 #define CONCHECK_DATABASE(x) CONCHECK_RECORD (x, database)
 #define DATABASE_LIVE_P(x) (x->live_p)
-static Lisp_Object mark_database (Lisp_Object, void (*) (Lisp_Object));
-static void print_database (Lisp_Object, Lisp_Object, int);
-static void finalize_database (void *, int);
-DEFINE_LRECORD_IMPLEMENTATION ("database", database,
-                               mark_database, print_database,
-			       finalize_database, 0, 0,
-			       struct database);
 
 #define CHECK_LIVE_DATABASE(db) do {					\
-  CHECK_DATABASE(db);							\
+  CHECK_DATABASE (db);							\
   if (!DATABASE_LIVE_P (XDATABASE(db)))					\
     signal_simple_error ("Attempting to access closed database", db);	\
 } while (0)
 
 
-static struct database *
+static struct Lisp_Database *
 allocate_database (void)
 {
-  struct database *dbase =
-    alloc_lcrecord_type (struct database, lrecord_database);
+  struct Lisp_Database *db =
+    alloc_lcrecord_type (struct Lisp_Database, lrecord_database);
 
-  dbase->fname = Qnil;
-  dbase->live_p = 0;
+  db->fname = Qnil;
+  db->live_p = 0;
 #ifdef HAVE_BERKELEY_DB
-  dbase->db_handle = NULL;
+  db->db_handle = NULL;
 #endif
 #ifdef HAVE_DBM
-  dbase->dbm_handle = NULL;
+  db->dbm_handle = NULL;
 #endif
-  dbase->access_ = 0;
-  dbase->mode = 0;
-  dbase->dberrno = 0;
-  dbase->type = DB_IS_UNKNOWN;
+  db->access_ = 0;
+  db->mode = 0;
+  db->dberrno = 0;
+  db->type = DB_IS_UNKNOWN;
 #ifdef MULE
-  dbase->coding_system = Fget_coding_system (Qbinary);
+  db->coding_system = Fget_coding_system (Qbinary);
 #endif
-  return dbase;
+  return db;
 }
 
 static Lisp_Object
 mark_database (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
-  struct database *dbase = XDATABASE (obj);
+  struct Lisp_Database *db = XDATABASE (obj);
 
-  ((markobj) (dbase->fname));
+  ((markobj) (db->fname));
   return Qnil;
 }
 
@@ -166,27 +156,27 @@ static void
 print_database (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   char buf[64];
-  struct database *dbase = XDATABASE (obj);
+  struct Lisp_Database *db = XDATABASE (obj);
 
   if (print_readably)
-    error ("printing unreadable object #<database 0x%x>", dbase->header.uid);
+    error ("printing unreadable object #<database 0x%x>", db->header.uid);
 
   write_c_string ("#<database \"", printcharfun);
-  print_internal (dbase->fname, printcharfun, 0);
+  print_internal (db->fname, printcharfun, 0);
   sprintf (buf, "\" (%s/%s/%s) 0x%x>",
-	   dbase->funcs->get_type (dbase),
-	   dbase->funcs->get_subtype (dbase),
-	   (!DATABASE_LIVE_P (dbase)    ? "closed"    :
-	    (dbase->access_ & O_WRONLY) ? "writeonly" :
-	    (dbase->access_ & O_RDWR)   ? "readwrite" : "readonly"),
-	   dbase->header.uid);
+	   (char *) string_data (XSYMBOL (db->funcs->get_type (db))->name),
+	   (char *) string_data (XSYMBOL (db->funcs->get_subtype (db))->name),
+	   (!DATABASE_LIVE_P (db)    ? "closed"    :
+	    (db->access_ & O_WRONLY) ? "writeonly" :
+	    (db->access_ & O_RDWR)   ? "readwrite" : "readonly"),
+	   db->header.uid);
   write_c_string (buf, printcharfun);
 }
 
 static void
 finalize_database (void *header, int for_disksave)
 {
-  struct database *db = (struct database *) header;
+  struct Lisp_Database *db = (struct Lisp_Database *) header;
 
   if (for_disksave)
     {
@@ -194,64 +184,69 @@ finalize_database (void *header, int for_disksave)
       XSETOBJ (obj, Lisp_Type_Record, (void *) db);
 
       signal_simple_error
-	("Can't dump an emacs containing window system objects", obj);
+	("Can't dump an emacs containing database objects", obj);
     }
   db->funcs->close (db);
 }
 
+DEFINE_LRECORD_IMPLEMENTATION ("database", database,
+                               mark_database, print_database,
+			       finalize_database, 0, 0,
+			       struct Lisp_Database);
+
 DEFUN ("close-database", Fclose_database, 1, 1, 0, /*
-Close database OBJ.
+Close database DATABASE.
 */
-       (obj))
+       (database))
 {
-  CHECK_LIVE_DATABASE (obj);
-  XDATABASE (obj)->funcs->close (XDATABASE (obj));
-  XDATABASE (obj)->live_p = 0;
+  struct Lisp_Database *db;
+  CHECK_LIVE_DATABASE (database);
+  db = XDATABASE (database);
+  db->funcs->close (db);
+  db->live_p = 0;
   return Qnil;
 }
 
 DEFUN ("database-type", Fdatabase_type, 1, 1, 0, /*
-Return the type of database OBJ.
+Return the type of database DATABASE.
 */
-       (obj))
+       (database))
 {
-  CHECK_DATABASE (obj);
+  CHECK_DATABASE (database);
 
-  return XDATABASE (obj)->funcs->get_lisp_type (XDATABASE (obj));
+  return XDATABASE (database)->funcs->get_type (XDATABASE (database));
 }
 
 DEFUN ("database-subtype", Fdatabase_subtype, 1, 1, 0, /*
-Return the subtype of database OBJ, if any.
+Return the subtype of database DATABASE, if any.
 */
-       (obj))
+       (database))
 {
-  CHECK_DATABASE (obj);
+  CHECK_DATABASE (database);
 
-  return intern (XDATABASE (obj)->funcs->get_subtype (XDATABASE (obj)));
+  return XDATABASE (database)->funcs->get_subtype (XDATABASE (database));
 }
 
 DEFUN ("database-live-p", Fdatabase_live_p, 1, 1, 0, /*
-Return t iff OBJ is an active database, else nil.
+Return t if OBJ is an active database.
 */
        (obj))
 {
-  CHECK_DATABASE (obj);
-
-  return DATABASE_LIVE_P (XDATABASE (obj)) ? Qt : Qnil;
+  return DATABASEP (obj) && DATABASE_LIVE_P (XDATABASE (obj)) ? Qt : Qnil;
 }
 
 DEFUN ("database-file-name", Fdatabase_file_name, 1, 1, 0, /*
-Return the filename associated with the database OBJ.
+Return the filename associated with the database DATABASE.
 */
-       (obj))
+       (database))
 {
-  CHECK_DATABASE (obj);
+  CHECK_DATABASE (database);
 
-  return XDATABASE (obj)->fname;
+  return XDATABASE (database)->fname;
 }
 
 DEFUN ("databasep", Fdatabasep, 1, 1, 0, /*
-Return t iff OBJ is a database, else nil.
+Return t if OBJ is a database.
 */
        (obj))
 {
@@ -260,7 +255,7 @@ Return t iff OBJ is a database, else nil.
 
 #ifdef HAVE_DBM
 static void
-dbm_map (struct database *db, Lisp_Object func)
+dbm_map (struct Lisp_Database *db, Lisp_Object func)
 {
   datum keydatum, valdatum;
   Lisp_Object key, val;
@@ -277,7 +272,7 @@ dbm_map (struct database *db, Lisp_Object func)
 }
 
 static Lisp_Object
-dbm_get (struct database *db, Lisp_Object key)
+dbm_get (struct Lisp_Database *db, Lisp_Object key)
 {
   datum keydatum, valdatum;
 
@@ -291,7 +286,7 @@ dbm_get (struct database *db, Lisp_Object key)
 }
 
 static int
-dbm_put (struct database *db,
+dbm_put (struct Lisp_Database *db,
 	 Lisp_Object key, Lisp_Object val, Lisp_Object replace)
 {
   datum keydatum, valdatum;
@@ -306,7 +301,7 @@ dbm_put (struct database *db,
 }
 
 static int
-dbm_remove (struct database *db, Lisp_Object key)
+dbm_remove (struct Lisp_Database *db, Lisp_Object key)
 {
   datum keydatum;
 
@@ -317,31 +312,25 @@ dbm_remove (struct database *db, Lisp_Object key)
 }
 
 static Lisp_Object
-dbm_lisp_type (struct database *db)
+dbm_type (struct Lisp_Database *db)
 {
   return Qdbm;
 }
 
-static CONST char *
-dbm_type (struct database *db)
+static Lisp_Object
+dbm_subtype (struct Lisp_Database *db)
 {
-  return "dbm";
-}
-
-static CONST char *
-dbm_subtype (struct database *db)
-{
-  return "nil";
+  return Qnil;
 }
 
 static Lisp_Object
-dbm_lasterr (struct database *dbp)
+dbm_lasterr (struct Lisp_Database *db)
 {
-  return lisp_strerror (dbp->dberrno);
+  return lisp_strerror (db->dberrno);
 }
 
 static void
-dbm_closeit (struct database *db)
+dbm_closeit (struct Lisp_Database *db)
 {
   if (db->dbm_handle)
     {
@@ -358,7 +347,6 @@ static DB_FUNCS ndbm_func_block =
   dbm_put,
   dbm_remove,
   dbm_map,
-  dbm_lisp_type,
   dbm_closeit,
   dbm_lasterr
 };
@@ -366,40 +354,34 @@ static DB_FUNCS ndbm_func_block =
 
 #ifdef HAVE_BERKELEY_DB
 static Lisp_Object
-berkdb_lisp_type (struct database *db)
+berkdb_type (struct Lisp_Database *db)
 {
   return Qberkeley_db;
 }
 
-static CONST char *
-berkdb_type (struct database *db)
-{
-  return "berkeley";
-}
-
-static CONST char *
-berkdb_subtype (struct database *db)
+static Lisp_Object
+berkdb_subtype (struct Lisp_Database *db)
 {
   if (!db->db_handle)
-    return "nil";
+    return Qnil;
 
   switch (db->db_handle->type)
     {
-    case DB_BTREE: return "btree";
-    case DB_HASH:  return "hash";
-    case DB_RECNO: return "recno";
-    default:       return "unknown";
+    case DB_BTREE: return Qbtree;
+    case DB_HASH:  return Qhash;
+    case DB_RECNO: return Qrecno;
+    default:       return Qunknown;
     }
 }
 
 static Lisp_Object
-berkdb_lasterr (struct database *dbp)
+berkdb_lasterr (struct Lisp_Database *db)
 {
-  return lisp_strerror (dbp->dberrno);
+  return lisp_strerror (db->dberrno);
 }
 
 static Lisp_Object
-berkdb_get (struct database *db, Lisp_Object key)
+berkdb_get (struct Lisp_Database *db, Lisp_Object key)
 {
   /* #### Needs mule-izing */
   DBT keydatum, valdatum;
@@ -407,8 +389,8 @@ berkdb_get (struct database *db, Lisp_Object key)
 
 #if DB_VERSION_MAJOR == 2
   /* Always initialize keydatum, valdatum. */
-  memset(&keydatum, 0, sizeof(keydatum));
-  memset(&valdatum, 0, sizeof(valdatum));
+  xzero (keydatum);
+  xzero (valdatum);
 #endif /* DV_VERSION_MAJOR = 2 */
 
   keydatum.data = XSTRING_DATA (key);
@@ -433,7 +415,7 @@ berkdb_get (struct database *db, Lisp_Object key)
 }
 
 static int
-berkdb_put (struct database *db,
+berkdb_put (struct Lisp_Database *db,
 	    Lisp_Object key,
 	    Lisp_Object val,
 	    Lisp_Object replace)
@@ -443,8 +425,8 @@ berkdb_put (struct database *db,
 
 #if DB_VERSION_MAJOR == 2
   /* Always initalize keydatum, valdatum. */
-  memset(&keydatum, 0, sizeof(keydatum));
-  memset(&valdatum, 0, sizeof(valdatum));
+  xzero (keydatum);
+  xzero (valdatum);
 #endif /* DV_VERSION_MAJOR = 2 */
 
   keydatum.data = XSTRING_DATA   (key);
@@ -465,14 +447,14 @@ berkdb_put (struct database *db,
 }
 
 static int
-berkdb_remove (struct database *db, Lisp_Object key)
+berkdb_remove (struct Lisp_Database *db, Lisp_Object key)
 {
   DBT keydatum;
   int status;
 
 #if DB_VERSION_MAJOR == 2
   /* Always initialize keydatum. */
-  memset(&keydatum, 0, sizeof(keydatum));
+  xzero (keydatum);
 #endif /* DV_VERSION_MAJOR = 2 */
 
   keydatum.data = XSTRING_DATA   (key);
@@ -497,7 +479,7 @@ berkdb_remove (struct database *db, Lisp_Object key)
 }
 
 static void
-berkdb_map (struct database *db, Lisp_Object func)
+berkdb_map (struct Lisp_Database *db, Lisp_Object func)
 {
   DBT keydatum, valdatum;
   Lisp_Object key, val;
@@ -517,8 +499,8 @@ berkdb_map (struct database *db, Lisp_Object func)
 #else
   DBC *dbcp;
   /* Initialize the key/data pair so the flags aren't set. */
-  memset(&keydatum, 0, sizeof(keydatum));
-  memset(&valdatum, 0, sizeof(valdatum));
+  xzero (keydatum);
+  xzero (valdatum);
 
   status = dbp->cursor (dbp, NULL, &dbcp);
   for (status = dbcp->c_get (dbcp, &keydatum, &valdatum, DB_FIRST);
@@ -535,7 +517,7 @@ berkdb_map (struct database *db, Lisp_Object func)
 }
 
 static void
-berkdb_close (struct database *db)
+berkdb_close (struct Lisp_Database *db)
 {
   if (db->db_handle)
     {
@@ -558,37 +540,38 @@ static DB_FUNCS berk_func_block =
   berkdb_put,
   berkdb_remove,
   berkdb_map,
-  berkdb_lisp_type,
   berkdb_close,
   berkdb_lasterr
 };
 #endif /* HAVE_BERKELEY_DB */
 
 DEFUN ("database-last-error", Fdatabase_last_error, 0, 1, 0, /*
-Return the last error associated with database OBJ.
+Return the last error associated with DATABASE.
 */
-       (obj))
+       (database))
 {
-  if (NILP (obj))
+  if (NILP (database))
     return lisp_strerror (errno);
 
-  CHECK_DATABASE (obj);
+  CHECK_DATABASE (database);
 
-  return XDATABASE (obj)->funcs->last_error (XDATABASE (obj));
+  return XDATABASE (database)->funcs->last_error (XDATABASE (database));
 }
 
 DEFUN ("open-database", Fopen_database, 1, 5, 0, /*
-Open database FILE, using database method TYPE and SUBTYPE, with
-access rights ACCESS and permissions MODE.  ACCESS can be any
+Return a new database object opened on FILE.
+Optional arguments TYPE and SUBTYPE specify the database type.
+Optional argument ACCESS specifies the access rights, which may be any
 combination of 'r' 'w' and '+', for read, write, and creation flags.
+Optional argument MODE gives the permissions to use when opening FILE,
+and defaults to 0755.
 */
        (file, type, subtype, access_, mode))
 {
   /* This function can GC */
-  Lisp_Object retval = Qnil;
   int modemask;
   int accessmask = 0;
-  struct database *dbase = NULL;
+  struct Lisp_Database *db = NULL;
   char *filename;
   struct gcpro gcpro1, gcpro2;
 
@@ -611,12 +594,13 @@ combination of 'r' 'w' and '+', for read, write, and creation flags.
       if (strchr (acc, '+'))
 	accessmask |= O_CREAT;
 
-      if (strchr (acc, 'r') && strchr (acc, 'w'))
-	  accessmask |= O_RDWR;
-      else if (strchr (acc, 'w'))
-	  accessmask |= O_WRONLY;
-      else
-	  accessmask |= O_RDONLY;
+      {
+	char *rp = strchr (acc, 'r');
+	char *wp = strchr (acc, 'w');
+	if (rp && wp) accessmask |= O_RDWR;
+	else if (wp)  accessmask |= O_WRONLY;
+	else          accessmask |= O_RDONLY;
+      }
     }
 
   if (NILP (mode))
@@ -632,14 +616,14 @@ combination of 'r' 'w' and '+', for read, write, and creation flags.
 #ifdef HAVE_DBM
   if (NILP (type) || EQ (type, Qdbm))
     {
-      DBM *dbm = dbm_open (filename, accessmask, modemask);
-      if (!dbm)
+      DBM *dbase = dbm_open (filename, accessmask, modemask);
+      if (!dbase)
 	return Qnil;
 
-      dbase = allocate_database ();
-      dbase->dbm_handle = dbm;
-      dbase->type = DB_DBM;
-      dbase->funcs = &ndbm_func_block;
+      db = allocate_database ();
+      db->dbm_handle = dbase;
+      db->type = DB_DBM;
+      db->funcs = &ndbm_func_block;
       goto db_done;
     }
 #endif /* HAVE_DBM */
@@ -648,7 +632,7 @@ combination of 'r' 'w' and '+', for read, write, and creation flags.
   if (NILP (type) || EQ (type, Qberkeley_db))
     {
       DBTYPE real_subtype;
-      DB *db;
+      DB *dbase;
 #if DB_VERSION_MAJOR != 1
       int status;
 #endif
@@ -663,38 +647,37 @@ combination of 'r' 'w' and '+', for read, write, and creation flags.
 	signal_simple_error ("Unsupported subtype", subtype);
 
 #if DB_VERSION_MAJOR == 1
-      db = dbopen (filename, accessmask, modemask, real_subtype, NULL);
-      if (!db)
+      dbase = dbopen (filename, accessmask, modemask, real_subtype, NULL);
+      if (!dbase)
 	return Qnil;
 #else
       /* Berkeley DB Version 2 has only the accessmask DB_CREATE and DB_RDONLY,
 	 other flags shouldn't be set */
       if (NILP (access_))
-	{
-	  accessmask = DB_CREATE;
-	}
+	accessmask = DB_CREATE;
       else
 	{
 	  char *acc;
 	  CHECK_STRING (access_);
 	  acc = (char *) XSTRING_DATA (access_);
 	  accessmask = 0;
-	  
+
 	  if (strchr (acc, '+'))
 	    accessmask |= DB_CREATE;
 
 	  if (strchr (acc, 'r') && !strchr (acc, 'w'))
 	    accessmask |= DB_RDONLY;
 	}
-      status = db_open (filename, real_subtype, accessmask, modemask, NULL , NULL, &db);
+      status = db_open (filename, real_subtype, accessmask,
+			modemask, NULL , NULL, &dbase);
       if (status)
 	return Qnil;
 #endif /* DB_VERSION_MAJOR */
-   
-      dbase = allocate_database ();
-      dbase->db_handle = db;
-      dbase->type = DB_BERKELEY;
-      dbase->funcs = &berk_func_block;
+
+      db = allocate_database ();
+      db->db_handle = dbase;
+      db->type = DB_BERKELEY;
+      db->funcs = &berk_func_block;
       goto db_done;
     }
 #endif /* HAVE_BERKELEY_DB */
@@ -703,28 +686,31 @@ combination of 'r' 'w' and '+', for read, write, and creation flags.
   return Qnil;
 
  db_done:
-  dbase->live_p = 1;
-  dbase->fname = file;
-  dbase->mode = modemask;
-  dbase->access_ = accessmask;
-  XSETDATABASE (retval, dbase);
+  db->live_p = 1;
+  db->fname = file;
+  db->mode = modemask;
+  db->access_ = accessmask;
 
-  return retval;
+  {
+    Lisp_Object retval;
+    XSETDATABASE (retval, db);
+    return retval;
+  }
 }
 
 DEFUN ("put-database", Fput_database, 3, 4, 0, /*
-Store KEY and VAL in DATABASE.  If optional fourth arg REPLACE is
-non-nil, replace any existing entry in the database.
+Store KEY and VALUE in DATABASE.
+If optional fourth arg REPLACE is non-nil,
+replace any existing entry in the database.
 */
-       (key, val, dbase, replace))
+       (key, value, database, replace))
 {
-  CHECK_LIVE_DATABASE (dbase);
+  CHECK_LIVE_DATABASE (database);
   CHECK_STRING (key);
-  CHECK_STRING (val);
-
+  CHECK_STRING (value);
   {
-    int status =
-      XDATABASE (dbase)->funcs->put (XDATABASE (dbase), key, val, replace);
+    struct Lisp_Database *db = XDATABASE (database);
+    int status = db->funcs->put (db, key, value, replace);
     return status ? Qt : Qnil;
   }
 }
@@ -732,27 +718,28 @@ non-nil, replace any existing entry in the database.
 DEFUN ("remove-database", Fremove_database, 2, 2, 0, /*
 Remove KEY from DATABASE.
 */
-       (key, dbase))
+       (key, database))
 {
-  CHECK_LIVE_DATABASE (dbase);
+  CHECK_LIVE_DATABASE (database);
   CHECK_STRING (key);
-
-  return XDATABASE (dbase)->funcs->rem (XDATABASE (dbase), key) ? Qt : Qnil;
+  {
+    struct Lisp_Database *db = XDATABASE (database);
+    int status = db->funcs->rem (db, key);
+    return status ? Qt : Qnil;
+  }
 }
 
 DEFUN ("get-database", Fget_database, 2, 3, 0, /*
-Find value for KEY in DATABASE.
+Return value for KEY in DATABASE.
 If there is no corresponding value, return DEFAULT (defaults to nil).
 */
-       (key, dbase, default_))
+       (key, database, default_))
 {
-
-  CHECK_LIVE_DATABASE (dbase);
+  CHECK_LIVE_DATABASE (database);
   CHECK_STRING (key);
-
   {
-    Lisp_Object retval =
-      XDATABASE (dbase)->funcs->get (XDATABASE (dbase), key);
+    struct Lisp_Database *db = XDATABASE (database);
+    Lisp_Object retval = db->funcs->get (db, key);
     return NILP (retval) ? default_ : retval;
   }
 }
@@ -761,17 +748,17 @@ DEFUN ("map-database", Fmapdatabase, 2, 2, 0, /*
 Map FUNCTION over entries in DATABASE, calling it with two args,
 each key and value in the database.
 */
-       (function, dbase))
+       (function, database))
 {
-  CHECK_LIVE_DATABASE (dbase);
+  CHECK_LIVE_DATABASE (database);
 
-  XDATABASE (dbase)->funcs->map (XDATABASE (dbase), function);
+  XDATABASE (database)->funcs->map (XDATABASE (database), function);
 
   return Qnil;
 }
 
 void
-syms_of_dbm (void)
+syms_of_database (void)
 {
   defsymbol (&Qdatabasep, "databasep");
 #ifdef HAVE_DBM
@@ -782,6 +769,7 @@ syms_of_dbm (void)
   defsymbol (&Qhash, "hash");
   defsymbol (&Qbtree, "btree");
   defsymbol (&Qrecno, "recno");
+  defsymbol (&Qunknown, "unknown");
 #endif
 
   DEFSUBR (Fopen_database);
@@ -799,7 +787,7 @@ syms_of_dbm (void)
 }
 
 void
-vars_of_dbm (void)
+vars_of_database (void)
 {
 #ifdef HAVE_DBM
   Fprovide (Qdbm);

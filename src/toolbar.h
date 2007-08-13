@@ -100,11 +100,11 @@ DECLARE_LRECORD (toolbar_button, struct toolbar_button);
 #define CHECK_TOOLBAR_BUTTON(x) CHECK_RECORD (x, toolbar_button)
 #define CONCHECK_TOOLBAR_BUTTON(x) CONCHECK_RECORD (x, toolbar_button)
 
-extern void get_toolbar_coords (struct frame *f, enum toolbar_pos pos, int *x,
-				int *y, int *width, int *height, int *vert,
-				int for_layout);
-extern Lisp_Object toolbar_button_at_pixpos (struct frame *f, int x_coord,
-					     int y_coord);
+void get_toolbar_coords (struct frame *f, enum toolbar_pos pos, int *x,
+			 int *y, int *width, int *height, int *vert,
+			 int for_layout);
+Lisp_Object toolbar_button_at_pixpos (struct frame *f, int x_coord,
+				      int y_coord);
 DECLARE_SPECIFIER_TYPE (toolbar);
 #define XTOOLBAR_SPECIFIER(x) XSPECIFIER_TYPE (x, toolbar)
 #define XSETTOOLBAR_SPECIFIER(x, p) XSETSPECIFIER_TYPE (x, p, toolbar)

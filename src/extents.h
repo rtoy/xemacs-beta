@@ -31,6 +31,15 @@ DECLARE_LRECORD (extent, struct extent);
 #define CHECK_EXTENT(x) CHECK_RECORD (x, extent)
 #define CONCHECK_EXTENT(x) CONCHECK_RECORD (x, extent)
 
+/* the layouts for glyphs (extent->flags.glyph_layout).  Must fit in 2 bits. */
+typedef enum glyph_layout
+{
+  GL_TEXT,
+  GL_OUTSIDE_MARGIN,
+  GL_INSIDE_MARGIN,
+  GL_WHITESPACE
+} glyph_layout;
+
 struct extent
 {
   struct lrecord_header lheader;
@@ -41,53 +50,54 @@ struct extent
 			 buffer), Qt (destroyed extent) */
 
   /* Extent properties are conceptually a plist, but the most common
-     props are implemented as bits instead of conses.
-   */
+     props are implemented as bits instead of conses.  */
   struct
-    {
-      Lisp_Object face;
+  {
+    Lisp_Object face;
 
-      /* These flags are simply an optimization for common boolean properties
-	 which go onto the extent's property list.  Any of them would work if
-	 done in the normal way, but the space savings of doing these in this
-	 way is significant.  Note that if you add a flag, there are numerous
-	 places in extents.c that need to know about it.
+    /* These flags are simply an optimization for common boolean properties
+       which go onto the extent's property list.  Any of them would work if
+       done in the normal way, but the space savings of doing these in this
+       way is significant.  Note that if you add a flag, there are numerous
+       places in extents.c that need to know about it.
 
-	 Another consideration is that some of these properties are accessed
-	 during redisplay, so it's good for access to them to be fast (a bit
-	 reference instead of a search down a plist).
+       Another consideration is that some of these properties are accessed
+       during redisplay, so it's good for access to them to be fast (a bit
+       reference instead of a search down a plist).
 
-	 `begin_glyph_layout' and `end_glyph_layout' are unusual in
-	 that they have 4 states instead of 2.
+       `begin_glyph_layout' and `end_glyph_layout' are unusual in that
+       they have 4 states instead of 2.
 
-	 Other special extent properties are stored in an auxiliary
-	 structure that sits at the beginning of the plist.  The has_aux
-	 flag indicates whether this structure exists.  The has_parent
-	 flag is an optimization indicating whether the extent has a parent
-	 (this could also be determined by looking in the aux structure). */
+       Other special extent properties are stored in an auxiliary
+       structure that sits at the beginning of the plist.  The has_aux
+       flag indicates whether this structure exists.  The has_parent
+       flag is an optimization indicating whether the extent has a parent
+       (this could also be determined by looking in the aux structure). */
 
-      unsigned int begin_glyph_layout :2;  /* 2 text, margins, or whitespace */
-      unsigned int end_glyph_layout :2;    /* 4 text, margins, or whitespace */
-      unsigned int has_parent	: 1;  /* 5   extent has a parent             */
-      unsigned int has_aux	: 1;  /* 6   extent has an aux. structure    */
-      unsigned int start_open	: 1;  /* 7   insertion behavior at start     */
-      unsigned int end_open	: 1;  /* 8   insertion behavior at end       */
-      unsigned int unused9	: 1;  /* 9   unused                          */
-      unsigned int unique	: 1;  /* 10  there may be only one attached  */
-      unsigned int duplicable	: 1;  /* 11  copied to strings by kill/undo  */
-      unsigned int REPLICATING	: 1;  /* 12  invoke old extent-replica behav.*/
-				      /* Not used any more */
-      unsigned int detachable	: 1;  /* 13  extent detaches if text deleted */
-      unsigned int internal	: 1;  /* 14  used by map-extents etc.        */
-      unsigned int in_red_event  : 1;  /* 15  An event has been spawned for
-					  initial redisplay. Not exported to
-					  the lisp level */
-      unsigned int unused16	: 1;  /* 16  unused			     */
-      /* --- Adding more flags will cause the extent struct grow by another
-	 word.  It's not clear that this would make a difference, however,
-	 because on 32-bit machines things tend to get allocated in chunks
-	 of 4 bytes. */
-    } flags;
+    enum_field (glyph_layout) begin_glyph_layout :2;
+				        /*  2 text, margins, or whitespace */
+    enum_field (glyph_layout) end_glyph_layout   :2;
+				        /*  4 text, margins, or whitespace */
+    unsigned int has_parent	    :1; /*  5 extent has a parent          */
+    unsigned int has_aux	    :1; /*  6 extent has an aux. structure */
+    unsigned int start_open	    :1; /*  7 insertion behavior at start  */
+    unsigned int end_open	    :1; /*  8 insertion behavior at end    */
+    unsigned int unused9	    :1; /*  9 unused                       */
+    unsigned int unique	            :1; /* 10 there may be only one attached  */
+    unsigned int duplicable	    :1; /* 11 copied to strings by kill/undo  */
+    unsigned int REPLICATING	    :1; /* 12 invoke old extent-replica behav.*/
+				        /*    Not used any more */
+    unsigned int detachable	    :1; /* 13 extent detaches if text deleted */
+    unsigned int internal	    :1; /* 14 used by map-extents etc.        */
+    unsigned int in_red_event       :1; /* 15 An event has been spawned for
+					      initial redisplay.
+					      Not exported to the lisp level */
+    unsigned int unused16	    :1;  /* 16 unused			     */
+    /* --- Adding more flags will cause the extent struct to grow by another
+       word.  It's not clear that this would make a difference, however,
+       because on 32-bit machines things tend to get allocated in chunks
+       of 4 bytes. */
+  } flags;
   /* The plist may have an auxiliary structure as its first element */
   Lisp_Object plist;
 };
@@ -102,12 +112,6 @@ struct extent
 #define set_extent_endpoint(e, val, endp) \
   ((endp) ? set_extent_end (e, val) : set_extent_start (e, val))
 #define extent_detached_p(e) (extent_start (e) < 0)
-
-/* the layouts for glyphs (extent->flags.glyph_layout).  Must fit in 2 bits. */
-#define GL_TEXT			0
-#define GL_OUTSIDE_MARGIN	1
-#define GL_INSIDE_MARGIN	2
-#define GL_WHITESPACE		3
 
 /* Additional information that may be present in an extent.  The idea is
    that fast access is provided to this information, but since (hopefully)
@@ -158,8 +162,7 @@ struct extent_info
 };
 
 DECLARE_LRECORD (extent_info, struct extent_info);
-#define XEXTENT_INFO(x) \
-  XRECORD (x, extent_info, struct extent_info)
+#define XEXTENT_INFO(x) XRECORD (x, extent_info, struct extent_info)
 #define XSETEXTENT_INFO(x, p) XSETRECORD (x, p, extent_info)
 #define EXTENT_INFOP(x) RECORDP (x, extent_info)
 #define GC_EXTENT_INFOP(x) GC_RECORDP (x, extent_info)
@@ -168,29 +171,7 @@ DECLARE_LRECORD (extent_info, struct extent_info);
 
 void flush_cached_extent_info (Lisp_Object extent_info);
 
-/* Note that we take pains in all the macros below never to evaluate
-   the extent argument more than once.  This may not be necessary
-   but is much less likely to introduce subtle bugs. */
-
-MAC_DECLARE_EXTERN (EXTENT, MTancestor_extent)
-MAC_DECLARE_EXTERN (EXTENT, MTaux_extent)
-MAC_DECLARE_EXTERN (EXTENT, MTplist_extent)
-MAC_DECLARE_EXTERN (EXTENT, MTensure_extent)
-MAC_DECLARE_EXTERN (EXTENT, MTset_extent)
-
-/* extent_ancestor() chases all the parent links until there aren't any
-   more.  extent_ancestor_1() does the same thing but it a function;
-   the following macro optimizes the most common case. */
-
-#define extent_ancestor(e)			\
-MAC_BEGIN					\
-  MAC_DECLARE (EXTENT, MTancestor_extent, e)	\
-  (MTancestor_extent->flags.has_parent ?	\
-   extent_ancestor_1 (MTancestor_extent) :	\
-   MTancestor_extent)				\
-MAC_END
-
-/* a "normal" field is one that is stored in the `struct flags' structure
+/* A "normal" field is one that is stored in the `struct flags' structure
    in an extent.  an "aux" field is one that is stored in the extent's
    auxiliary structure.
 
@@ -201,13 +182,16 @@ MAC_END
 
 #define extent_no_chase_normal_field(e, field) ((e)->flags.field)
 
-#define extent_no_chase_aux_field(e, field)			\
-MAC_BEGIN							\
-  MAC_DECLARE (EXTENT, MTaux_extent, e)				\
-  (MTaux_extent->flags.has_aux ?				\
-   XEXTENT_AUXILIARY (XCONS (MTaux_extent->plist)->car)->field	\
-    : extent_auxiliary_defaults.field)				\
-MAC_END
+INLINE struct extent_auxiliary *extent_aux_or_default (EXTENT e);
+INLINE struct extent_auxiliary *
+extent_aux_or_default (EXTENT e)
+{
+  return e->flags.has_aux ?
+    XEXTENT_AUXILIARY (XCAR (e->plist)) :
+    & extent_auxiliary_defaults;
+}
+
+#define extent_no_chase_aux_field(e, field) (extent_aux_or_default(e)->field)
 
 #define extent_normal_field(e, field)				\
   extent_no_chase_normal_field (extent_ancestor (e), field)
@@ -215,29 +199,20 @@ MAC_END
 #define extent_aux_field(e, field)				\
   extent_no_chase_aux_field (extent_ancestor (e), field)
 
-#define ensure_extent_has_auxiliary(e)			\
-MAC_BEGIN						\
-  MAC_DECLARE (EXTENT, MTensure_extent, e)		\
-  (MTensure_extent->flags.has_aux ? (void) 0 :		\
-    allocate_extent_auxiliary (MTensure_extent))	\
-MAC_END
-
-#define set_extent_no_chase_aux_field(e, field, value)		\
-MAC_BEGIN							\
-  MAC_DECLARE (EXTENT, MTset_extent, e)				\
-  ensure_extent_has_auxiliary (MTset_extent)			\
-  MAC_SEP							\
-  XEXTENT_AUXILIARY (XCONS (MTset_extent->plist)->car)->field =	\
-    (value)							\
-MAC_END
+#define set_extent_no_chase_aux_field(e, field, value) do {	\
+  EXTENT sencaf_e = (e);					\
+  if (! sencaf_e->flags.has_aux)				\
+    allocate_extent_auxiliary (sencaf_e);			\
+  XEXTENT_AUXILIARY (XCAR (sencaf_e->plist))->field = (value);\
+} while (0)
 
 #define set_extent_no_chase_normal_field(e, field, value)	\
   extent_no_chase_normal_field (e, field) = (value)
 
-#define set_extent_aux_field(e, field, value)				\
+#define set_extent_aux_field(e, field, value)			\
   set_extent_no_chase_aux_field (extent_ancestor (e), field, value)
 
-#define set_extent_normal_field(e, field, value)			\
+#define set_extent_normal_field(e, field, value)		\
   set_extent_ancestor_normal_field (extent_no_chase (e), field, value)
 
 /* The `parent' and `children' fields are not affected by any
@@ -256,41 +231,40 @@ MAC_END
 #define extent_mouse_face(e)	extent_aux_field (e, mouse_face)
 #define extent_initial_redisplay_function(e)	extent_aux_field (e, initial_redisplay_function)
 
-#define set_extent_begin_glyph(e, value)				\
+#define set_extent_begin_glyph(e, value)	\
   set_extent_aux_field (e, begin_glyph, value)
-#define set_extent_end_glyph(e, value)					\
+#define set_extent_end_glyph(e, value)		\
   set_extent_aux_field (e, end_glyph, value)
-#define set_extent_priority(e, value)					\
+#define set_extent_priority(e, value)		\
   set_extent_aux_field (e, priority, value)
-#define set_extent_invisible_1(e, value)				\
+#define set_extent_invisible_1(e, value)	\
   set_extent_aux_field (e, invisible, value)
-#define set_extent_read_only(e, value)					\
+#define set_extent_read_only(e, value)		\
   set_extent_aux_field (e, read_only, value)
-#define set_extent_mouse_face(e, value)					\
+#define set_extent_mouse_face(e, value)		\
   set_extent_aux_field (e, mouse_face, value)
-/* Use Fset_extent_initial_redisplay_function unless you know what you are ding */
-#define set_extent_initial_redisplay_function(e, value)			         \
+/* Use Fset_extent_initial_redisplay_function unless you know what you're doing */
+#define set_extent_initial_redisplay_function(e, value) \
   set_extent_aux_field (e, initial_redisplay_function, value)
 
-#define extent_face(e)		extent_normal_field (e, face)
-#define extent_begin_glyph_layout(e) \
-  extent_normal_field (e, begin_glyph_layout)
-#define extent_end_glyph_layout(e) extent_normal_field (e, end_glyph_layout)
-#define extent_start_open_p(e)	extent_normal_field (e, start_open)
-#define extent_end_open_p(e)	extent_normal_field (e, end_open)
-#define extent_unique_p(e)	extent_normal_field (e, unique)
-#define extent_duplicable_p(e)	extent_normal_field (e, duplicable)
-#define extent_detachable_p(e)	extent_normal_field (e, detachable)
-#define extent_internal_p(e)	extent_normal_field (e, internal)
-#define extent_in_red_event_p(e)	extent_normal_field (e, in_red_event)
+#define extent_face(e)		     extent_normal_field (e, face)
+#define extent_begin_glyph_layout(e) extent_normal_field (e, begin_glyph_layout)
+#define extent_end_glyph_layout(e)   extent_normal_field (e, end_glyph_layout)
+#define extent_start_open_p(e)	     extent_normal_field (e, start_open)
+#define extent_end_open_p(e)	     extent_normal_field (e, end_open)
+#define extent_unique_p(e)	     extent_normal_field (e, unique)
+#define extent_duplicable_p(e)	     extent_normal_field (e, duplicable)
+#define extent_detachable_p(e)	     extent_normal_field (e, detachable)
+#define extent_internal_p(e)	     extent_normal_field (e, internal)
+#define extent_in_red_event_p(e)     extent_normal_field (e, in_red_event)
 
-#define extent_no_chase_plist_addr(e)		\
-MAC_BEGIN					\
-  MAC_DECLARE (EXTENT, MTplist_extent, e)	\
-  (MTplist_extent->flags.has_aux ?		\
-   &XCONS (MTplist_extent->plist)->cdr :	\
-   &MTplist_extent->plist)			\
-MAC_END
+INLINE Lisp_Object * extent_no_chase_plist_addr (EXTENT e);
+INLINE Lisp_Object *
+extent_no_chase_plist_addr (EXTENT e)
+{
+  return e->flags.has_aux ? &XCDR (e->plist) : &e->plist;
+}
+
 #define extent_no_chase_plist(e) (*extent_no_chase_plist_addr (e))
 
 #define extent_plist_addr(e) extent_no_chase_plist_addr (extent_ancestor (e))
@@ -322,16 +296,25 @@ MAC_END
 
 #define EXTENT_LIVE_P(e)	(!EQ (extent_object (e), Qt))
 
-#define CHECK_LIVE_EXTENT(x)						\
-  do { CHECK_EXTENT (x);						\
-       if (!EXTENT_LIVE_P (XEXTENT (x))) 				\
-         dead_wrong_type_argument (Qextent_live_p, (x)); } while (0)
-#define CONCHECK_LIVE_EXTENT(x)						\
-  do { CONCHECK_EXTENT (x);						\
-       if (!EXTENT_LIVE_P (XEXTENT (x))) 				\
-         x = wrong_type_argument (Qextent_live_p, (x)); } while (0)
+#define CHECK_LIVE_EXTENT(x) do {			\
+  CHECK_EXTENT (x);					\
+  if (!EXTENT_LIVE_P (XEXTENT (x)))			\
+    dead_wrong_type_argument (Qextent_live_p, (x));	\
+} while (0)
+#define CONCHECK_LIVE_EXTENT(x) do {			\
+  CONCHECK_EXTENT (x);					\
+  if (!EXTENT_LIVE_P (XEXTENT (x)))			\
+    x = wrong_type_argument (Qextent_live_p, (x));	\
+} while (0)
 
-extern Lisp_Object Qextent_live_p;
+EXFUN (Fdetach_extent, 1);
+EXFUN (Fextent_end_position, 1);
+EXFUN (Fextent_object, 1);
+EXFUN (Fextent_start_position, 1);
+EXFUN (Fmake_extent, 3);
+EXFUN (Fprevious_single_property_change, 4);
+EXFUN (Fset_extent_endpoints, 4);
+EXFUN (Fset_extent_parent, 2);
 
 extern int inside_undo;
 
@@ -343,8 +326,6 @@ face_index extent_fragment_update (struct window *w,
 				   Bytind pos);
 void extent_fragment_delete (struct extent_fragment *ef);
 
-extern Lisp_Object Vlast_highlighted_extent;
-
 
 #ifdef emacs	/* things other than emacs want the structs */
 
@@ -353,11 +334,22 @@ struct extent *allocate_extent (void);
 
 /* from extents.c */
 EXTENT extent_ancestor_1 (EXTENT e);
+
+/* extent_ancestor() chases all the parent links until there aren't any
+   more.  extent_ancestor_1() does the same thing but it a function;
+   the following optimizes the most common case. */
+INLINE EXTENT extent_ancestor (EXTENT e);
+INLINE EXTENT
+extent_ancestor (EXTENT e)
+{
+  return e->flags.has_parent ? extent_ancestor_1 (e) : e;
+}
+
 void allocate_extent_auxiliary (EXTENT ext);
 void init_buffer_extents (struct buffer *b);
 void uninit_buffer_extents (struct buffer *b);
-void map_extents (Bufpos from, Bufpos to, int (*fn) (EXTENT extent,
-						     void * arg),
+typedef int (*map_extents_fun) (EXTENT extent, void *arg);
+void map_extents (Bufpos from, Bufpos to, map_extents_fun fn,
 		  void *arg, Lisp_Object obj, EXTENT after,
 		  unsigned int flags);
 
@@ -376,7 +368,7 @@ void process_extents_for_deletion (Lisp_Object object, Bytind from,
 				   Bytind to, int destroy_them);
 
 void set_extent_glyph (EXTENT extent, Lisp_Object glyph, int endp,
-		       unsigned int layout);
+		       glyph_layout layout);
 
 void add_string_extents (Lisp_Object string, struct buffer *buf,
 			 Bytind opoint, Bytecount length);

@@ -1,3 +1,565 @@
+1998-04-04  Martin Buchholz  <martin@xemacs.org>
+
+	* emacs.c: #include <paths.h>, not "paths.h"
+	This is a standard bug.  It manifests if you configure in the
+	source tree, then configure elsewhere with --srcdir.
+	Remove misleading PATH_EXEC comment; PATH_PACKAGEPATH is also used.
+
+1998-04-04  Olivier Galibert  <galibert@pobox.com>
+
+	* s/386bsd.h: Removed obsolete define.
+
+1998-04-04  Olivier Galibert  <galibert@pobox.com>
+
+	* s/386-ix.h: Removed useless define.
+
+	* sysdep.c (insque): Removed. Not used anywhere in the code.
+
+1998-04-04  Olivier Galibert  <galibert@pobox.com>
+
+	* process-unix.c (unix_kill_child_process): Use TIOCSIGSEND or
+	TIOCSIGNAL as needed.
+
+	* s/usg5-4.h: Remove kludgy TIOCSIGSEND #define which breaks on
+	irix 6.5.
+
+1998-03-28  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* insdel.c (emchar_string_displayed_columns): Simplify for
+	non-Mule case.
+
+	* events.c (WRONG_EVENT_TYPE_FOR_PROPERTY): Issue nicer output.
+
+1998-04-01  Martin Buchholz  <martin@xemacs.org>
+
+	* sysdir.h (sys_mkdir):
+	* sysfile.h (sys_read):
+	(sys_write):
+	(sys_chmod):
+	(sys_creat):
+
+	* sysdep.c (sys_read_1): 
+	(sys_read): 
+	(sys_write_1): 
+	(sys_write): 
+	(sys_mkdir): 
+	(sys_readlink): 
+	(sys_chmod): 
+	(sys_creat): 
+
+	* nt.c (sys_read): 
+	(sys_chmod): 
+	(sys_creat): 
+	(sys_write): Change types of sys_* in accordance with published
+	standards. Use size_t and mode_t instead of unsigned int and int.
+
+1998-04-03  Martin Buchholz  <martin@xemacs.org>
+
+	* config.h.in (enum_field): 
+	* lisp-union.h:
+	* extents.h:
+	* redisplay.c (add_margin_runes):
+	Prefer enums for use as bitfields in preference to unsigned int,
+	but allow the possibility to suppress it if a compiler disallows
+	it or emits annoying warnings.  Currently only __SUNPRO_C cc -Xc
+	used unsigned ints.
+
+	* event-stream.c: Fixup DEFVAR for
+	Vcomposed_character_default_binding; Real bug!
+	* event-msw.c: Rename mswindows_button2* to mswindows_mouse_button*
+	* emacs.c: Rename suppress_early_backtrace to
+	suppress_early_error_handler_backtrace
+	* objects-x.c: Rename handle_nonfull_spec_fonts to
+	x_handle_non_fully_specified_fonts
+	* lread.c: Rename puke_on_fsf_keys to
+	fail-on-bucky-bit-character-escapes
+	* lread.c:
+	* doc.c: Rename Vdoc_file_name to Vinternal_doc_file_name
+	* fileio.c:
+	* bufslots.h:
+	* buffer.c: Rename save_length to saved_size
+	* alloc.c: Rename pureptr to pure_bytes_used
+	* abbrev.c: Rename last_abbrev_point to last_abbrev_location
+	* lisp.h:
+	DEFVAR_* are supposed to be named following a standard convention.
+
+1998-04-03  Martin Buchholz  <martin@xemacs.org>
+
+	* callint.c:
+	* ralloc.c:
+	* data.c:
+	* eldap.c:
+	* extents.c:
+	* frame-msw.c:
+	* frame-x.c:
+	* general.c:
+	* process.c:
+	* xselect.c:
+	Rationalize defsymbol handling.
+	defsymbols are supposed to have equivalent C and Lisp names, for
+	consistency.  At least one real bug (end-glyph-layout) fixed.
+	Move multiply defsymbol'ed stuff into general.c.
+
+1998-04-03  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* m/ibmrs6000.inp: Removed; obsoleted by configure.in changes.
+
+1998-04-03  Martin Buchholz  <martin@xemacs.org>
+
+	* console-tty.c (Fset_console_tty_input_coding_system):
+	(Fset_console_tty_output_coding_system):
+	Input/Output and encoding/decoding were reversed.
+
+1998-04-02  SL Baur  <steve@altair.xemacs.org>
+
+	* m/powerpc.h: Remove LD_SWITCH_MACHINE for Linux.
+
+1998-04-02  Greg Klanderman  <greg@alphatech.com>
+
+	* window.c (set_window_pixsize): Move up call to
+	check_min_window_sizes.
+
+	* indent.c (vmotion_1): renamed from vmotion() and added 
+	additional argument to optionally return the pixel motion.
+	(vpix_motion): Helper for vmotion_1.
+	(vmotion): Wrapper - just call vmotion_1() with the right args.
+	(Fvertical_motion_pixels): New function.
+	(syms_of_indent): DEFSUBR it.
+
+1998-04-02  Martin Buchholz  <martin@xemacs.org>
+
+	* xselect.c: 
+	* event-Xt.c: 
+	* emacs.c: 
+	Remove last vestiges of #ifdef EPOCH code.  It had no chance of
+	working anyways.  In honour of seeing Marc Andreesen in person for 
+	the first time today.
+
+1998-04-01  Martin Buchholz  <martin@xemacs.org>
+
+	* extents.h: 
+	* lisp-union.h: 
+	Don't use enums as bitfields - only unsigned ints.
+	Fixes: warning: nonportable bit-field type
+
+	* eval.c (call_with_suspended_errors): More volatilizing to
+	appease Sunpro cc.
+
+	* mem-limits.h: 
+	* ralloc.c: Remove #undef NULL; they're not even used!
+
+	* process-unix.c (unix_send_process): send_process is a method, so 
+	we can't include volatile in the prototype.  We make the argument
+	non-volatile, make a volatile copy, and then use that instead. 
+
+	* frame-x.c (x_delete_frame): The `frame' variable is initialized 
+	but not actually used.
+
+	* Makefile.in.in (xselect.o): The last line of b34-pre2's
+	src/Makefile.in.in contains a dependency that should have been
+	patched away.  
+	(mostlyclean): Remove the removal of depend.* - no such files
+	exist anymore
+
+	* make-src-depend: include a dependency on only one of
+	lisp-union.h or lisp-disunion.h.
+
+1998-04-01  Martin Buchholz  <martin@xemacs.org>
+
+	* specifier.c (specifier_instance_from_inst_list): A nanosecond
+	saved is a nanosecond earned.
+
+1998-03-31  Greg Klanderman  <greg@alphatech.com>
+
+	* redisplay.c (update_line_start_cache): Fix bug involving
+	invisible text in which the line_start_cache gets hosed.
+
+Sun Mar 29 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* console-msw.h: define FRAME_MSWINDOWS_CDC.
+
+	* frame-msw.c: (mswindows_set_frame_icon) new function. Works but
+	no masks as yet.
+
+	* glyphs-msw.c: GNUize the code. Fix 24bpp display and make the
+	default. Add managment of icons.
+
+	* glyphs-msw.h: add icon attributes.
+
+	* redisplay-msw.c: (mswindows_output_pixmap) remove unused cursor
+	code.
+
+	* objects-msw.c: eliminate char subscript warning.
+
+1998-04-01  SL Baur  <steve@altair.xemacs.org>
+
+	* sysdll.c (dll_close): fix typo.
+	Suggested by Marcus Thiessel <marcus_thiessel@hp.com>
+
+
+1998-03-28  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* device.c (Fset_device_class): Recompute cached
+	  specifiers everywhere if device class is changed.
+	  Set various redisplay flags so that the device's
+	  various frames are redisplayed.
+
+1998-03-31  SL Baur  <steve@altair.xemacs.org>
+
+	* lrecord.h (DECLARE_NONRECORD): Remove redundant paren.
+	Suggested by Martin Buchholz <martin@xemacs.org>
+
+1998-04-01  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* gui.c (gui_item_display_flush_left): Fix suffix length.
+
+1998-04-01  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* s/windowsnt.h: Defined SIZEOF_LONG_LONG and SIZEOF_VOID_P
+
+	* dired-msw.c: Included <limits.h>
+
+	* config.h.in (VOID_P_BITS): Fixed so that uses SIZEOF_VOID_P
+
+1998-03-31  SL Baur  <steve@altair.xemacs.org>
+
+	* glyphs.c (image_instantiate_cache_result): Correct order of
+	parameters to Fputhash.
+	Suggested by Kirill M. Katsnelson <kkm@kis.ru>
+
+1998-03-30  Martin Buchholz  <martin@xemacs.org>
+
+	* redisplay.c (create_right_glyph_block): glyph_type should really 
+	be glyph_layout.
+
+1998-03-29  Martin Buchholz  <martin@xemacs.org>
+
+	* sysfile.h: Move all encapsulations from lisp.h/emacsfns.h into
+	sysfile.h.  Users of the functionality herein will have to
+	#include sysfile.h.
+	Check all .o files for missing #includes.
+	* config.h.in:
+	Discovered that config.h.in was missing ENCAPSULATE_CLOSEDIR, as a 
+	result of fixing the above.
+
+	* gui.c (gui_item_add_keyval_pair): We should not use the idiom
+	error ("%S", lisp_object) in C code.
+	I converted the code to use signal_simple_error_2 instead.
+	(signal_too_long_error): Ditto.
+
+	* glyphs.c (image_instantiate_cache_result): Use XC[AD]R instead
+	of Fc[ad]r.  This is always called with valid conses, and in fact, 
+	already assumed it.
+
+	* font-lock.c (find_context): Use context_none with context
+	instead of ccontext_none.
+
+	* fns.c (Flength): The CONSP and NILP code can be combined.
+	Change the name of the arg to SEQUENCE from OBJ.
+	(Fnthcdr): CHECK_NATNUM instead of CHECK_INT.  Optimize out Fcdr calls.
+	(Felt): Change argument from seq to sequence to match docstring.
+
+1998-03-28  Martin Buchholz  <martin@xemacs.org>
+
+	* fns.c (string_putprop): 
+	(string_getprop): Make method functions static.
+
+	* window.c (find_window_by_pixel_pos): Warning suppression.
+
+	* imgproc.c (splitbox): Warning suppression.
+
+	* redisplay-x.c (x_output_eol_cursor): Remove redundant XSETWINDOW.
+
+	* glyphs-x.c (signal_image_error): 
+	(signal_image_error_2):
+	(convert_EImage_to_XImage):  Make functions static.
+
+	* editfns.c (Fbuffer_size): Rename the `F' function to
+	Fbuffer_size in accordance with coding standards.
+
+	* dll.c (Fdll_open): Fix up data conversion.
+	Provide auxiliary function maybe_call_library_function().
+
+	* device-x.c (get_x_display): make function static.
+
+	* data.c (Fcar): Should generate listp, not consp error.
+	(Fcdr): Should generate listp, not consp error.
+
+1998-03-27  Martin Buchholz  <martin@xemacs.org>
+
+	* console-tty.c (free_tty_console_struct): 
+	Replace con->console_data with CONSOLE_type_DATA (con)
+
+	* *.[ch]:  C++ compilability of xemacs, on Linux and Solaris.
+
+	* casetab.c (Fcase_table_p): Optimize.
+
+	* eval.c:
+	* bytecode.c:
+	Rename Fcondition_case_3 to condition_case_3 - it's not a DEFUN.
+	
+	* buffer.h:
+	Remove all *BUFFER_OR_STRING* macros - unused.
+	(memind_to_bytind): Merge two versions of function by moving
+	#ifdef ERROR_CHECK_BUFPOS into the function body.
+	(*_DATA_ALLOCA*): get types correct.  rewrite for clarity.
+
+	* balloon_help.c (balloon_help_destroy): rearrange order of
+	functions, and remove prototype from header file.
+
+	* alloc.c (deadbeef_memory): Rewrite. Use size_t for clarity.
+	Don't bother with the left-over bytes, since in practice we will
+	always get called with a size multiple of 4.
+	(Fmake_list): CHECK_NATNUM instead of CHECK_INT
+	(vector[4567]): Currently unused; ifdef out.
+	(make_pure_float): make function static.
+	(garbage_collect_1): Optimize.
+
+1998-03-23  Martin Buchholz  <martin@xemacs.org>
+
+	* marker.c (print_marker): Fix compiler warning, real bug!
+
+	* device.h (MARK_DEVICE_FRAMES_FACES_CHANGED): 
+	* frame.h (MARK_FRAME_FACES_CHANGED): 
+	(MARK_FRAME_TOOLBARS_CHANGED): 
+	(MARK_FRAME_SIZE_CHANGED): 
+	(MARK_FRAME_CHANGED): 
+	(MARK_FRAME_WINDOWS_CHANGED): 
+	(MARK_FRAME_WINDOWS_STRUCTURE_CHANGED): 
+	Fix multiple evaluation of macro arguments.
+	Macros are a fact of life.  Callers have to use temp variables to
+	avoid multiple evaluation of arguments.
+
+	* data.c (Ftrue_list_p): New function, with obvious meaning.
+	This is terminology from Cltl2.  
+	Also define a corresponding macro TRUE_LIST_P.
+
+	* device-x.c (validify_resource_component): Optimize. Rename.
+	Use the standard technique of using a precomputed table of valid chars.
+	
+	(x_get_resource_prefix): 
+	(Fx_get_resource): 
+	(Fx_get_resource_prefix): 
+	Avoid fixed buffer sizes.  Use a char_dynarr.
+	Run validify_resource_component on all computed components.
+
+	* lisp.h: Define a char_dynarr type.
+
+1998-03-22  Martin Buchholz  <martin@xemacs.org>
+
+	* fns.c (Fcopy_alist): Optimize.
+
+	* alloc.c (acons): New function.  Now used in the C code.
+	Definition in cl.el is commented out.  Add docstring.
+	Use acons in functions which create alists.
+	* lisp/cl.el (acons): Add docstring.  Really otta be a macro, tho.
+
+	* buffer.c (Fbuffer_memory_usage): 
+	* window.c (Fwindow_memory_usage):
+	Clean up horrible consing code using new acons function.
+	Fix incorrect value reported for gap-overhead.
+	
+	* fns.c (Fmember):
+	(Fold_member): 
+	(Fmemq): 
+	(Fold_memq): 
+	(memq_no_quit): 
+	(Fassoc): 
+	(Fold_assoc): 
+	(Fassq): 
+	(Fold_assq): 
+	(assq_no_quit): 
+	(Frassoc): 
+	(Fold_rassoc): 
+	(Frassq): 
+	(Fold_rassq): 
+	(rassq_no_quit): 
+	(Fdelete): 
+	(Fold_delete): 
+	(Fdelq): 
+	(Fold_delq): 
+	(delq_no_quit): 
+	(delq_no_quit_and_free_cons): 
+	(Fremassoc): 
+	(Fremassq): 
+	(remassq_no_quit): 
+	(Fremrassoc): 
+	(Fremrassq): 
+	(remrassq_no_quit): 
+	(Fnreverse): 
+	(Freverse): 
+	(Fnthcdr): 
+	Optimize.  
+	Replace calls to Fcar, Fcdr, Fsetcar with XCAR and XCDR. 
+	Simplify logic.
+	Many of these functions wouldn't QUIT if called on cyclic lists.
+	e.g. try (progn (setq x '(nil)) (setcdr x x) (reverse x))
+	One benchmark of delq showed it to be 3 times faster.
+
+	* emacs.c:
+	* database.c: 
+	Cleanup of database functions.
+	Make the get_subtype and get_type methods return Lisp_Objects,
+	instead of C strings.  No more need for both dbm_type and dbm_lisp_type.
+	Rewrite the doc strings to be consistent with XEmacs tradition.
+	Replace old `dbm' names with `database'.
+	Rename struct database to struct Lisp_Database.
+	Rename DEFUN arguments to `database', when applicable.
+	
+	* buffer.c:
+	* chartab.c:
+	* console.c:
+	* data.c:
+	* database.c:
+	* device.c:
+	* elhash.c:
+	* eval.c:
+	* event-stream.c:
+	* extents.c:
+	* faces.c:
+	* frame.c:
+	* glyphs.c:
+	* keymap.c:
+	* lstream.c:
+	* mule-charset.c:
+	* mule-coding.c:
+	* objects.c:
+	* opaque.c:
+	* process.c:
+	* rangetab.c:
+	* specifier.c:
+	* symbols.c:
+	* tooltalk.c:
+	* window.c:
+	Place DEFINE_LRECORD_* after definition of static object methods, to
+	avoid redundant declarations.
+	
+	* console.c:
+	* console.h:
+	* device.c:
+	* device.h:
+	* extents.c:
+	* extents.h:
+	* frame.c:
+	* frame.h:
+	* glyphs.c:
+	* glyphs.h:
+	* lisp.h:
+	* lstream.c:
+	* lstream.h:
+	* signal.c:
+	* specifier.c:
+	* specifier.h:
+	Eliminate MAC_* macros.
+	The MAC_ macros use non-standard comiler extenstions which cause
+	gcc to generate bad code on Sparc/Solaris.  Attractive though the
+	idea of using those compiler extensions is, they are just not
+	robust enough to use in the real world.  So we eliminate them.
+	We put up with some sub-optimalities, like macros with multiple
+	evaluation.  Such is life with C.  The MAC_ macros were pretty
+	darn ugly anyways.  We CAN use inline functions, since the advent
+	of C++ means that compilers must support those anyways.
+
+1998-03-21  Martin Buchholz  <martin@xemacs.org>
+
+	* alloc.c (list*): Optimize recursion levels.
+	
+	* alloc.c: Add debugger support via enum dbg_constants.
+	* gdbinit: Complete rewrite.
+	* gdbinit.union: Remove
+	* gdbinit.pre-4.14: Remove
+	* dbxrc: Complete rewrite.
+	* man/xemacs-faq.texi:
+	Proper robust debugger support for gdb and Sun's dbx.
+	Support all combinations of Kylish DEFINEs.
+	Work out of the box with no user customizations.
+	See the updated faq for details.
+	
+	* emacsfns.h: Remove.  Move declarations to lisp.h
+	* dynarr.h: Remove.  Move declarations to lisp.h
+	* lisp.h.
+	Optimize header file handling to improve compile time over a network.
+	Introduce EXFUN macro for external declaration to correspond to DEFUN.
+	Include header files only when necessary, i.e. not from lisp.h:
+	- unistd.h, limits.h, fnctl.h, blocktype.h, dynarr.h, emacsfns.h
+	
+	
+	* lisp.h:
+	* lisp-union.h:
+	* lisp-disunion.h:
+	Rewrite low level object frobbing.
+	Make it safe to use XSETOBJ on uninitialized Lisp_Objects.
+	(markbit might have been set otherwise)
+	Move XPRNTRVAL->XPNTR computation out of lisp-*union.h, since it
+	is union-type-independent.
+
+	* EmacsFrame.c:
+	* alloc.c:
+	* chartab.c:
+	* console.c:
+	* dialog-x.c:
+	* doc.c:
+	* elhash.c:
+	* eval.c:
+	* event-Xt.c:
+	* event-stream.c:
+	* event-unixoid.c:
+	* extents.c:
+	* faces.c:
+	* file-coding.c:
+	* frame.c:
+	* glyphs.c:
+	* insdel.c:
+	* keymap.c:
+	* lstream.c:
+	* marker.c:
+	* menubar-x.c:
+	* mule-coding.c:
+	* opaque.c:
+	* ralloc.c:
+	* rangetab.c:
+	* redisplay-msw.c:
+	* redisplay-output.c:
+	* redisplay-tty.c:
+	* redisplay-x.c:
+	* redisplay.c:
+	* scrollbar-x.c:
+	* scrollbar.c:
+	* specifier.c:
+	* symbols.c:
+	* toolbar-x.c:
+	* toolbar.c:
+	* window.c:
+	As a result of the above lisp*.h changes, we can now safely remove
+	initializations of Lisp_Objects before calling XSETOBJ on them.
+	This was only being done half the time, anyways.
+
+	* Makefile.in.in (depend): New target. calls make-src-depend.
+	* depend: New file. Generated by make-src-depend
+	* make-src-depend: New file. generates up-to-date dependencies.
+	Makefile dependencies are now automagically maintained, and
+	CORRECT.  lisp.h and friends are now included in the dependencies, 
+	since this complies with the principle of least astonishment.
+
+	* symbols.c (symbol_is_constant): Optimize.
+
+1998-03-30  SL Baur  <steve@altair.xemacs.org>
+
+	* frame.c (vars_of_frame): Default frame name should be InfoDock
+	for InfoDock.
+
+1998-03-29  SL Baur  <steve@altair.xemacs.org>
+
+	* emacs.c (voodoo_free_hook): ELF libraries built with newer
+	versions of GCC do horrible things in dumped binaries after exit() 
+	is called.
+	(Fkill_emacs): Use it.
+
+1998-03-28  SL Baur  <steve@altair.xemacs.org>
+
+	* s/linux.h: For simplicity, do not use standard linking because
+	it is deadly with new GCC.
+
 Sat Mar 28 10:16:29 1998  Andy Piper  <andyp@parallax.co.uk>
 
 	* Makefile.in.in: fix fastdump target

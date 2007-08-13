@@ -1,6 +1,6 @@
 /* Synched up with: FSF 19.31. */
 
-#define AIX4_1 
+#define AIX4_1
 
 #include "aix4.h"
 

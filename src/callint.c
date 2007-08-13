@@ -149,7 +149,7 @@ You may use any of `@', `*' and `_' at the beginning of the string;
    garden-variety version, so why not make it a subr?  */
 /* #### Move it to another file! */
 DEFUN ("quote-maybe", Fquote_maybe, 1, 1, 0, /*
-Quote EXPR iff it is not self quoting.
+Quote EXPR if it is not self quoting.
 */
        (expr))
 {
@@ -162,7 +162,7 @@ Quote EXPR iff it is not self quoting.
 	   || VECTORP (expr)
 	   || KEYWORDP (expr)
 	   || BIT_VECTORP (expr)
-	   || (CONSP (expr) && EQ(XCAR (expr), Qlambda)))
+	   || (CONSP (expr) && EQ (XCAR (expr), Qlambda)))
 	  ? expr : list2 (Qquote, expr));
 }
 
@@ -981,7 +981,6 @@ syms_of_callint (void)
   defsymbol (&Qevents_to_keys, "events-to-keys");
   defsymbol (&Qcommand_debug_status, "command-debug-status");
   defsymbol (&Qenable_recursive_minibuffers, "enable-recursive-minibuffers");
-  defsymbol (&Qcommand_debug_status, "command-debug-status");
   defsymbol (&Quser_variable_p, "user-variable-p");
   defsymbol (&Qcurrent_prefix_arg, "current-prefix-arg");
 

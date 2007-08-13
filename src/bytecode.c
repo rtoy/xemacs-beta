@@ -308,8 +308,7 @@ If the third argument is incorrect, Emacs may crash.
 
   /* Initialize the pc-register and convert the string into a fixed-width
      format for easier processing.  */
-  massaged_code = alloca_array (Emchar,
-				1 + string_char_length (XSTRING (bytestr)));
+  massaged_code = alloca_array (Emchar, 1 + XSTRING_CHAR_LENGTH (bytestr));
   massaged_code_len =
     convert_bufbyte_string_into_emchar_string (XSTRING_DATA (bytestr),
 				      XSTRING_LENGTH (bytestr),
@@ -577,7 +576,7 @@ If the third argument is incorrect, Emacs may crash.
 	case Bcondition_case:
           v1 = POP;           /* handlers */
           v2 = POP;           /* bodyform */
-          TOP = Fcondition_case_3 (v2, TOP, v1);
+          TOP = condition_case_3 (v2, TOP, v1);
 	  break;
 
 	case Btemp_output_buffer_setup:
@@ -614,29 +613,29 @@ If the third argument is incorrect, Emacs may crash.
 	  goto docar;
 
 	case Bsymbolp:
-	  TOP = ((SYMBOLP (TOP)) ? Qt : Qnil);
+	  TOP = SYMBOLP (TOP) ? Qt : Qnil;
 	  break;
 
 	case Bconsp:
-	  TOP = ((CONSP (TOP)) ? Qt : Qnil);
+	  TOP = CONSP (TOP) ? Qt : Qnil;
 	  break;
 
 	case Bstringp:
-	  TOP = ((STRINGP (TOP)) ? Qt : Qnil);
+	  TOP = STRINGP (TOP) ? Qt : Qnil;
 	  break;
 
 	case Blistp:
-	  TOP = CONSP (TOP) || NILP (TOP) ? Qt : Qnil;
+	  TOP = LISTP (TOP) ? Qt : Qnil;
 	  break;
 
 	case Beq:
 	  v1 = POP;
-	  TOP = ((EQ_WITH_EBOLA_NOTICE (v1, TOP)) ? Qt : Qnil);
+	  TOP = EQ_WITH_EBOLA_NOTICE (v1, TOP) ? Qt : Qnil;
 	  break;
 
 	case Bold_eq:
 	  v1 = POP;
-	  TOP = ((HACKEQ_UNSAFE (v1, TOP)) ? Qt : Qnil);
+	  TOP = HACKEQ_UNSAFE (v1, TOP) ? Qt : Qnil;
 	  break;
 
 	case Bmemq:
@@ -790,10 +789,8 @@ If the third argument is incorrect, Emacs may crash.
 #ifdef LISP_FLOAT_TYPE
 	  if (FLOATP (v1) || FLOATP (v2))
 	    {
-	      double f1, f2;
-
-	      f1 = (FLOATP (v1) ? float_data (XFLOAT (v1)) : XINT (v1));
-	      f2 = (FLOATP (v2) ? float_data (XFLOAT (v2)) : XINT (v2));
+	      double f1 = (FLOATP (v1) ? float_data (XFLOAT (v1)) : XINT (v1));
+	      double f2 = (FLOATP (v2) ? float_data (XFLOAT (v2)) : XINT (v2));
 	      TOP = (f1 == f2 ? Qt : Qnil);
 	    }
 	  else
@@ -1130,11 +1127,11 @@ If the third argument is incorrect, Emacs may crash.
 	  break;
 
 	case Bnumberp:
-	  TOP = ((INT_OR_FLOATP (TOP)) ? Qt : Qnil);
+	  TOP = INT_OR_FLOATP (TOP) ? Qt : Qnil;
 	  break;
 
 	case Bintegerp:
-	  TOP = ((INTP (TOP)) ? Qt : Qnil);
+	  TOP = INTP (TOP) ? Qt : Qnil;
 	  break;
 
 	default:
@@ -1176,9 +1173,9 @@ vars_of_bytecode (void)
 
   DEFVAR_LISP ("byte-code-meter", &Vbyte_code_meter /*
 A vector of vectors which holds a histogram of byte-code usage.
-(aref (aref byte-code-meter 0) CODE) indicates how many times the byte
+\(aref (aref byte-code-meter 0) CODE) indicates how many times the byte
 opcode CODE has been executed.
-(aref (aref byte-code-meter CODE1) CODE2), where CODE1 is not 0,
+\(aref (aref byte-code-meter CODE1) CODE2), where CODE1 is not 0,
 indicates how many times the byte opcodes CODE1 and CODE2 have been
 executed in succession.
 */ );

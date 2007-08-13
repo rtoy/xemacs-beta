@@ -224,6 +224,7 @@ Boston, MA 02111-1307, USA.  */
 #include "glyphs.h"
 #include "hash.h"
 #include "insdel.h"
+#include "keymap.h"
 #include "opaque.h"
 #include "process.h"
 #include "redisplay.h"
@@ -350,12 +351,6 @@ Extent_List_Marker *extent_list_marker_freelist;
 
 struct extent_auxiliary extent_auxiliary_defaults;
 
-MAC_DEFINE (EXTENT, MTancestor_extent)
-MAC_DEFINE (EXTENT, MTaux_extent)
-MAC_DEFINE (EXTENT, MTplist_extent)
-MAC_DEFINE (EXTENT, MTensure_extent)
-MAC_DEFINE (EXTENT, MTset_extent)
-
 /* ------------------------------- */
 /*     buffer-extent primitives    */
 /* ------------------------------- */
@@ -469,6 +464,10 @@ Lisp_Object Vextent_face_reverse_memoize_hash_table;
 Lisp_Object Vextent_face_reusable_list;
 /* FSFmacs bogosity */
 Lisp_Object Vdefault_text_properties;
+
+
+EXFUN (Fextent_properties, 1);
+EXFUN (Fset_extent_property, 3);
 
 
 /************************************************************************/
@@ -732,14 +731,13 @@ extent_list_locate (Extent_List *el, EXTENT extent, int endp, int *foundp)
   int left = 0, right = GAP_ARRAY_NUM_ELS (ga);
   int oldfoundpos, foundpos;
   int found;
-  EXTENT e;
 
   while (left != right)
     {
       /* RIGHT might not point to a valid extent (i.e. it's at the end
 	 of the list), so NEWPOS must round down. */
       unsigned int newpos = (left + right) >> 1;
-      e = EXTENT_GAP_ARRAY_AT (ga, newpos);
+      EXTENT e = EXTENT_GAP_ARRAY_AT (ga, (int) newpos);
 
       if (endp ? EXTENT_E_LESS (e, extent) : EXTENT_LESS (e, extent))
 	left = newpos+1;
@@ -752,7 +750,7 @@ extent_list_locate (Extent_List *el, EXTENT extent, int endp, int *foundp)
   oldfoundpos = foundpos = left;
   while (foundpos < GAP_ARRAY_NUM_ELS (ga))
     {
-      e = EXTENT_GAP_ARRAY_AT (ga, foundpos);
+      EXTENT e = EXTENT_GAP_ARRAY_AT (ga, foundpos);
       if (e == extent)
 	{
 	  found = 1;
@@ -912,12 +910,6 @@ free_extent_list (Extent_List *el)
 /*                       Auxiliary extent structure                     */
 /************************************************************************/
 
-static Lisp_Object mark_extent_auxiliary (Lisp_Object obj,
-					  void (*markobj) (Lisp_Object));
-DEFINE_LRECORD_IMPLEMENTATION ("extent-auxiliary", extent_auxiliary,
-                               mark_extent_auxiliary, internal_object_printer,
-			       0, 0, 0, struct extent_auxiliary);
-
 static Lisp_Object
 mark_extent_auxiliary (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
@@ -932,10 +924,14 @@ mark_extent_auxiliary (Lisp_Object obj, void (*markobj) (Lisp_Object))
   return data->parent;
 }
 
+DEFINE_LRECORD_IMPLEMENTATION ("extent-auxiliary", extent_auxiliary,
+                               mark_extent_auxiliary, internal_object_printer,
+			       0, 0, 0, struct extent_auxiliary);
+
 void
 allocate_extent_auxiliary (EXTENT ext)
 {
-  Lisp_Object extent_aux = Qnil;
+  Lisp_Object extent_aux;
   struct extent_auxiliary *data =
     alloc_lcrecord_type (struct extent_auxiliary, lrecord_extent_auxiliary);
 
@@ -975,14 +971,6 @@ static struct stack_of_extents *allocate_soe (void);
 static void free_soe (struct stack_of_extents *soe);
 static void soe_invalidate (Lisp_Object obj);
 
-static Lisp_Object mark_extent_info (Lisp_Object obj,
-				     void (*markobj) (Lisp_Object));
-static void finalize_extent_info (void *header, int for_disksave);
-DEFINE_LRECORD_IMPLEMENTATION ("extent-info", extent_info,
-                               mark_extent_info, internal_object_printer,
-			       finalize_extent_info, 0, 0,
-			       struct extent_info);
-
 static Lisp_Object
 mark_extent_info (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
@@ -1006,7 +994,7 @@ mark_extent_info (Lisp_Object obj, void (*markobj) (Lisp_Object))
       for (i = 0; i < extent_list_num_els (list); i++)
 	{
 	  struct extent *extent = extent_list_at (list, i, 0);
-	  Lisp_Object exobj = Qnil;
+	  Lisp_Object exobj;
 
 	  XSETEXTENT (exobj, extent);
 	  ((markobj) (exobj));
@@ -1036,10 +1024,15 @@ finalize_extent_info (void *header, int for_disksave)
     }
 }
 
+DEFINE_LRECORD_IMPLEMENTATION ("extent-info", extent_info,
+                               mark_extent_info, internal_object_printer,
+			       finalize_extent_info, 0, 0,
+			       struct extent_info);
+
 static Lisp_Object
 allocate_extent_info (void)
 {
-  Lisp_Object extent_info = Qnil;
+  Lisp_Object extent_info;
   struct extent_info *data =
     alloc_lcrecord_type (struct extent_info, lrecord_extent_info);
 
@@ -1082,8 +1075,13 @@ decode_buffer_or_string (Lisp_Object object)
 {
   if (NILP (object))
     XSETBUFFER (object, current_buffer);
+  else if (BUFFERP (object))
+    CHECK_LIVE_BUFFER (object);
+  else if (STRINGP (object))
+    ;
   else
-    CHECK_LIVE_BUFFER_OR_STRING (object);
+    dead_wrong_type_argument (Qbuffer_or_string_p, object);
+
   return object;
 }
 
@@ -1099,8 +1097,8 @@ extent_ancestor_1 (EXTENT e)
   return e;
 }
 
-/* Given an extent object (string or buffer or nil), return its extent info.  This may be
-   0 for a string. */
+/* Given an extent object (string or buffer or nil), return its extent info.
+   This may be 0 for a string. */
 
 static struct extent_info *
 buffer_or_string_extent_info (Lisp_Object object)
@@ -1283,7 +1281,7 @@ print_extent_2 (EXTENT e)
 
   XSETEXTENT (extent, e);
   print_extent_1 (buf, extent);
-  printf ("%s", buf);
+  fputs (buf, stdout);
 }
 
 static void
@@ -1310,12 +1308,12 @@ soe_dump (Lisp_Object obj)
       for (i = 0; i < extent_list_num_els (sel); i++)
 	{
 	  EXTENT e = extent_list_at (sel, i, endp);
-	  printf ("\t");
+	  putchar ('\t');
 	  print_extent_2 (e);
 	}
-      printf ("\n");
+      putchar ('\n');
     }
-  printf ("\n");
+  putchar ('\n');
 }
 
 #endif
@@ -1330,7 +1328,7 @@ soe_insert (Lisp_Object obj, EXTENT extent)
 #ifdef SOE_DEBUG
   printf ("Inserting into SOE: ");
   print_extent_2 (extent);
-  printf ("\n");
+  putchar ('\n');
 #endif
   if (!soe || soe->pos < extent_start (extent) ||
       soe->pos > extent_end (extent))
@@ -1342,7 +1340,7 @@ soe_insert (Lisp_Object obj, EXTENT extent)
     }
   extent_list_insert (soe->extents, extent);
 #ifdef SOE_DEBUG
-  printf ("SOE afterwards is:\n");
+  puts ("SOE afterwards is:");
   soe_dump (obj);
 #endif
 }
@@ -1357,19 +1355,19 @@ soe_delete (Lisp_Object obj, EXTENT extent)
 #ifdef SOE_DEBUG
   printf ("Deleting from SOE: ");
   print_extent_2 (extent);
-  printf ("\n");
+  putchar ('\n');
 #endif
   if (!soe || soe->pos < extent_start (extent) ||
       soe->pos > extent_end (extent))
     {
 #ifdef SOE_DEBUG
-      printf ("(not needed)\n\n");
+      puts ("(not needed)\n");
 #endif
       return;
     }
   extent_list_delete (soe->extents, extent);
 #ifdef SOE_DEBUG
-  printf ("SOE afterwards is:\n");
+  puts ("SOE afterwards is:");
   soe_dump (obj);
 #endif
 }
@@ -1409,7 +1407,7 @@ soe_move (Lisp_Object obj, Memind pos)
   else
     {
 #ifdef SOE_DEBUG
-      printf ("(not needed)\n\n");
+      puts ("(not needed)\n");
 #endif
       return;
     }
@@ -1495,7 +1493,7 @@ soe_move (Lisp_Object obj, Memind pos)
 
   soe->pos = pos;
 #ifdef SOE_DEBUG
-  printf ("SOE afterwards is:\n");
+  puts ("SOE afterwards is:");
   soe_dump (obj);
 #endif
 }
@@ -1642,7 +1640,7 @@ extent_maybe_changed_for_redisplay (EXTENT extent, int descendants_too,
       !NILP (extent_end_glyph   (anc)) ||
       !NILP (extent_mouse_face  (anc)) ||
       !NILP (extent_invisible   (anc)) ||
-      !NILP (extent_initial_redisplay_function (anc)) ||     
+      !NILP (extent_initial_redisplay_function (anc)) ||
       invisibility_change)
     extent_changed_for_redisplay (extent, descendants_too,
 				  invisibility_change);
@@ -1716,9 +1714,7 @@ extent_next (EXTENT e)
 {
   Extent_List *el = extent_extent_list (e);
   int foundp;
-  int pos;
-
-  pos = extent_list_locate (el, e, 0, &foundp);
+  int pos = extent_list_locate (el, e, 0, &foundp);
   assert (foundp);
   return real_extent_at_forward (el, pos+1, 0);
 }
@@ -1729,9 +1725,7 @@ extent_e_next (EXTENT e)
 {
   Extent_List *el = extent_extent_list (e);
   int foundp;
-  int pos;
-
-  pos = extent_list_locate (el, e, 1, &foundp);
+  int pos = extent_list_locate (el, e, 1, &foundp);
   assert (foundp);
   return real_extent_at_forward (el, pos+1, 1);
 }
@@ -1764,9 +1758,7 @@ extent_previous (EXTENT e)
 {
   Extent_List *el = extent_extent_list (e);
   int foundp;
-  int pos;
-
-  pos = extent_list_locate (el, e, 0, &foundp);
+  int pos = extent_list_locate (el, e, 0, &foundp);
   assert (foundp);
   return real_extent_at_backward (el, pos-1, 0);
 }
@@ -1777,9 +1769,7 @@ extent_e_previous (EXTENT e)
 {
   Extent_List *el = extent_extent_list (e);
   int foundp;
-  int pos;
-
-  pos = extent_list_locate (el, e, 1, &foundp);
+  int pos = extent_list_locate (el, e, 1, &foundp);
   assert (foundp);
   return real_extent_at_backward (el, pos-1, 1);
 }
@@ -1942,8 +1932,7 @@ map_extents_unwind (Lisp_Object obj)
 
 
 static void
-map_extents_bytind (Bytind from, Bytind to,
-		    int (*fn) (EXTENT extent, void *arg), void *arg,
+map_extents_bytind (Bytind from, Bytind to, map_extents_fun fn, void *arg,
 		    Lisp_Object obj, EXTENT after, unsigned int flags)
 {
   Memind st, en; /* range we're mapping over */
@@ -2276,7 +2265,7 @@ map_extents_bytind (Bytind from, Bytind to,
 }
 
 void
-map_extents (Bufpos from, Bufpos to, int (*fn) (EXTENT extent, void *arg),
+map_extents (Bufpos from, Bufpos to, map_extents_fun fn,
 	     void *arg, Lisp_Object obj, EXTENT after, unsigned int flags)
 {
   map_extents_bytind (buffer_or_string_bufpos_to_bytind (obj, from),
@@ -2796,7 +2785,6 @@ extent_fragment_update (struct window *w, struct extent_fragment *ef,
 	  struct glyph_block gb;
 
 	  gb.glyph = glyph;
-	  gb.extent = Qnil;
 	  XSETEXTENT (gb.extent, e);
 	  Dynarr_add (ef->begin_glyphs, gb);
 	}
@@ -2812,7 +2800,6 @@ extent_fragment_update (struct window *w, struct extent_fragment *ef,
 	  struct glyph_block gb;
 
 	  gb.glyph = glyph;
-	  gb.extent = Qnil;
 	  XSETEXTENT (gb.extent, e);
 	  Dynarr_add (ef->end_glyphs, gb);
 	}
@@ -2872,9 +2859,9 @@ extent_fragment_update (struct window *w, struct extent_fragment *ef,
 	  if (e == lhe)
 	    {
 	      Lisp_Object f;
-	      /* memset isn't really necessary; we only deref `priority'
+	      /* zeroing isn't really necessary; we only deref `priority'
 		 and `face' */
-	      memset (&dummy_lhe_extent, 0, sizeof (dummy_lhe_extent));
+	      xzero (dummy_lhe_extent);
 	      set_extent_priority (&dummy_lhe_extent,
 				   mouse_highlight_priority);
 	      /* Need to break up thefollowing expression, due to an */
@@ -2891,15 +2878,15 @@ extent_fragment_update (struct window *w, struct extent_fragment *ef,
 	      Lisp_Object function = extent_initial_redisplay_function (e);
 	      Lisp_Object obj;
 
-	      /* printf("initial redisplay function called!\n "); */
-	      
-	      /* print_extent_2(e);
-	         printf("\n"); */
-	      
+	      /* printf ("initial redisplay function called!\n "); */
+
+	      /* print_extent_2 (e);
+	         printf ("\n"); */
+
 	      /* FIXME: One should probably inhibit the displaying of
 		 this extent to reduce flicker */
 	      extent_in_red_event_p(e) = 1;
-	      
+
 	      /* call the function */
 	      XSETEXTENT(obj,e);
 	      if(!NILP(function))
@@ -2971,7 +2958,7 @@ print_extent_1 (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   if (!NILP (extent_begin_glyph (anc))) *bp++ = '*';
   *bp++ = (extent_start_open_p (anc) ? '(': '[');
   if (extent_detached_p (ext))
-    sprintf (bp, "detached");
+    strcpy (bp, "detached");
   else
     {
       Bufpos from = XINT (Fextent_start_position (obj));
@@ -3272,37 +3259,31 @@ extent_endpoint_external (Lisp_Object extent_obj, int endp)
 }
 
 DEFUN ("extentp", Fextentp, 1, 1, 0, /*
-T if OBJECT is an extent.
+Return t if OBJECT is an extent.
 */
        (object))
 {
-  if (EXTENTP (object))
-    return Qt;
-  return Qnil;
+  return EXTENTP (object) ? Qt : Qnil;
 }
 
 DEFUN ("extent-live-p", Fextent_live_p, 1, 1, 0, /*
-T if OBJECT is an extent and the extent has not been destroyed.
+Return t if OBJECT is an extent that has not been destroyed.
 */
        (object))
 {
-  if (EXTENTP (object) && EXTENT_LIVE_P (XEXTENT (object)))
-    return Qt;
-  return Qnil;
+  return EXTENTP (object) && EXTENT_LIVE_P (XEXTENT (object)) ? Qt : Qnil;
 }
 
 DEFUN ("extent-detached-p", Fextent_detached_p, 1, 1, 0, /*
-T if EXTENT is detached.
+Return t if EXTENT is detached.
 */
        (extent))
 {
-  if (extent_detached_p (decode_extent (extent, 0)))
-    return Qt;
-  return Qnil;
+  return extent_detached_p (decode_extent (extent, 0)) ? Qt : Qnil;
 }
 
 DEFUN ("extent-object", Fextent_object, 1, 1, 0, /*
-Return object (buffer or string) EXTENT refers to.
+Return object (buffer or string) that EXTENT refers to.
 */
        (extent))
 {
@@ -3650,12 +3631,10 @@ set_extent_endpoints (EXTENT extent, Bytind s, Bytind e, Lisp_Object object)
 static void
 set_extent_openness (EXTENT extent, int start_open, int end_open)
 {
-  if (start_open == -1)
-    start_open = extent_start_open_p (extent);
-  if (end_open == -1)
-    end_open = extent_end_open_p (extent);
-  extent_start_open_p (extent) = start_open;
-  extent_end_open_p (extent) = end_open;
+  if (start_open != -1)
+    extent_start_open_p (extent) = start_open;
+  if (end_open != -1)
+    extent_end_open_p (extent) = end_open;
   /* changing the open/closedness of an extent does not affect
      redisplay. */
 }
@@ -3712,7 +3691,7 @@ static void
 destroy_extent (EXTENT extent)
 {
   Lisp_Object rest, nextrest, children;
-  Lisp_Object extent_obj = Qnil;
+  Lisp_Object extent_obj;
 
   if (!extent_detached_p (extent))
     extent_detach (extent);
@@ -3741,7 +3720,7 @@ meaning the extent is in no buffer and no string.
 */
        (from, to, buffer_or_string))
 {
-  Lisp_Object extent_obj = Qnil;
+  Lisp_Object extent_obj;
   Lisp_Object obj;
 
   obj = decode_buffer_or_string (buffer_or_string);
@@ -3902,17 +3881,17 @@ decode_map_extents_flags (Lisp_Object flags)
 
       /* I do so love that conditional operator ... */
       retval |=
-	EQ (sym, Qend_closed) ? ME_END_CLOSED :
-	EQ (sym, Qstart_open) ? ME_START_OPEN :
-	EQ (sym, Qall_extents_closed) ? ME_ALL_EXTENTS_CLOSED :
-	EQ (sym, Qall_extents_open) ? ME_ALL_EXTENTS_OPEN :
+	EQ (sym, Qend_closed)		   ? ME_END_CLOSED :
+	EQ (sym, Qstart_open)		   ? ME_START_OPEN :
+	EQ (sym, Qall_extents_closed)	   ? ME_ALL_EXTENTS_CLOSED :
+	EQ (sym, Qall_extents_open)	   ? ME_ALL_EXTENTS_OPEN :
 	EQ (sym, Qall_extents_closed_open) ? ME_ALL_EXTENTS_CLOSED_OPEN :
 	EQ (sym, Qall_extents_open_closed) ? ME_ALL_EXTENTS_OPEN_CLOSED :
-	EQ (sym, Qstart_in_region) ? ME_START_IN_REGION :
-	EQ (sym, Qend_in_region) ? ME_END_IN_REGION :
+	EQ (sym, Qstart_in_region)	   ? ME_START_IN_REGION :
+	EQ (sym, Qend_in_region)	   ? ME_END_IN_REGION :
 	EQ (sym, Qstart_and_end_in_region) ? ME_START_AND_END_IN_REGION :
-	EQ (sym, Qstart_or_end_in_region) ? ME_START_OR_END_IN_REGION :
-	EQ (sym, Qnegate_in_region) ? ME_NEGATE_IN_REGION :
+	EQ (sym, Qstart_or_end_in_region)  ? ME_START_OR_END_IN_REGION :
+	EQ (sym, Qnegate_in_region)	   ? ME_NEGATE_IN_REGION :
 	(signal_simple_error ("Invalid `map-extents' flag", sym), 0);
 
       flags = XCDR (flags);
@@ -3927,18 +3906,15 @@ with these args.
 */
        (extent, from, to, flags))
 {
-  EXTENT ext;
-  Lisp_Object obj;
   Bytind start, end;
+  EXTENT ext = decode_extent (extent, DE_MUST_BE_ATTACHED);
+  Lisp_Object obj = extent_object (ext);
 
-  ext = decode_extent (extent, DE_MUST_BE_ATTACHED);
-  obj = extent_object (ext);
   get_buffer_or_string_range_byte (obj, from, to, &start, &end, GB_ALLOW_NIL |
 				   GB_ALLOW_PAST_ACCESSIBLE);
 
-  if (extent_in_region_p (ext, start, end, decode_map_extents_flags (flags)))
-    return Qt;
-  return Qnil;
+  return extent_in_region_p (ext, start, end, decode_map_extents_flags (flags)) ?
+    Qt : Qnil;
 }
 
 struct slow_map_extents_arg
@@ -3973,10 +3949,7 @@ slow_map_extents_function (EXTENT extent, void *arg)
 
   closure->result = call2 (closure->map_routine, extent_obj,
 			   closure->map_arg);
-  if (NILP (closure->result))
-    return 0;
-  else
-    return 1;
+  return !NILP (closure->result);
 }
 
 DEFUN ("map-extents", Fmap_extents, 1, 8, 0, /*
@@ -4176,10 +4149,7 @@ slow_map_extent_children_function (EXTENT extent, void *arg)
   closure->prev_start = extent_endpoint_bytind (extent, 0);
   closure->prev_end = extent_endpoint_bytind (extent, 1);
 
-  if (NILP (closure->result))
-    return 0;
-  else
-    return 1;
+  return !NILP (closure->result);
 }
 
 DEFUN ("map-extent-children", Fmap_extent_children, 1, 8, 0, /*
@@ -4277,24 +4247,16 @@ enum extent_at_flag
 static enum extent_at_flag
 decode_extent_at_flag (Lisp_Object at_flag)
 {
-  enum extent_at_flag fl;
-
   if (NILP (at_flag))
-    fl = EXTENT_AT_AFTER;
-  else
-    {
-      CHECK_SYMBOL (at_flag);
-      if (EQ (at_flag, Qafter))
-	fl = EXTENT_AT_AFTER;
-      else if (EQ (at_flag, Qbefore))
-	fl = EXTENT_AT_BEFORE;
-      else if (EQ (at_flag, Qat))
-	fl = EXTENT_AT_AT;
-      else
-	signal_simple_error ("Invalid AT-FLAG in `extent-at'", at_flag);
-    }
+    return EXTENT_AT_AFTER;
 
-  return fl;
+  CHECK_SYMBOL (at_flag);
+  if (EQ (at_flag, Qafter))  return EXTENT_AT_AFTER;
+  if (EQ (at_flag, Qbefore)) return EXTENT_AT_BEFORE;
+  if (EQ (at_flag, Qat))     return EXTENT_AT_AT;
+
+  signal_simple_error ("Invalid AT-FLAG in `extent-at'", at_flag);
+  return EXTENT_AT_AFTER; /* unreached */
 }
 
 static int
@@ -4347,7 +4309,7 @@ extent_at_bytind (Bytind position, Lisp_Object object, Lisp_Object property,
 		  EXTENT before, enum extent_at_flag at_flag)
 {
   struct extent_at_arg closure;
-  Lisp_Object extent_obj = Qnil;
+  Lisp_Object extent_obj;
 
   /* it might be argued that invalid positions should cause
      errors, but the principle of least surprise dictates that
@@ -4790,36 +4752,33 @@ canonicalize_extent_property (Lisp_Object prop, Lisp_Object value)
 }
 
 /* Do we need a lisp-level function ? */
-DEFUN ("set-extent-initial-redisplay-function", Fset_extent_initial_redisplay_function, 
-       2,2,0,/* 
+DEFUN ("set-extent-initial-redisplay-function",
+       Fset_extent_initial_redisplay_function, 2,2,0,/*
 Note: This feature is experimental!
-		
+
 Set initial-redisplay-function of EXTENT to the function
 FUNCTION.
 
 The first time the EXTENT is (re)displayed, an eval event will be
-dispatched calling FUNCTION with EXTENT as its only argument.  
+dispatched calling FUNCTION with EXTENT as its only argument.
 */
-       (extent, function))     
+       (extent, function))
 {
   EXTENT e = decode_extent(extent, DE_MUST_BE_ATTACHED);
 
   e = extent_ancestor (e);  /* Is this needed? Macro also does chasing!*/
   set_extent_initial_redisplay_function(e,function);
   extent_in_red_event_p(e) = 0;  /* If the function changed we can spawn
-				new events */
+				    new events */
   extent_changed_for_redisplay(e,1,0); /* Do we need to mark children too ?*/
-  
+
   return function;
 }
-  
-
-  
 
 DEFUN ("extent-face", Fextent_face, 1, 1, 0, /*
 Return the name of the face in which EXTENT is displayed, or nil
 if the extent's face is unspecified.  This might also return a list
-of face names. 
+of face names.
 */
        (extent))
 {
@@ -4895,7 +4854,7 @@ list.
 
 void
 set_extent_glyph (EXTENT extent, Lisp_Object glyph, int endp,
-		  unsigned int layout)
+		  glyph_layout layout)
 {
   extent = extent_ancestor (extent);
 
@@ -4914,41 +4873,34 @@ set_extent_glyph (EXTENT extent, Lisp_Object glyph, int endp,
 }
 
 static Lisp_Object
-glyph_layout_to_symbol (unsigned int layout)
+glyph_layout_to_symbol (glyph_layout layout)
 {
   switch (layout)
     {
-    case GL_TEXT: return Qtext;
+    case GL_TEXT:	    return Qtext;
     case GL_OUTSIDE_MARGIN: return Qoutside_margin;
-    case GL_INSIDE_MARGIN: return Qinside_margin;
-    case GL_WHITESPACE: return Qwhitespace;
-    default: abort ();
+    case GL_INSIDE_MARGIN:  return Qinside_margin;
+    case GL_WHITESPACE:	    return Qwhitespace;
+    default:
+      abort ();
+      return Qnil; /* unreached */
     }
-  return Qnil;	/* shut up compiler */
 }
 
-static unsigned int
+static glyph_layout
 symbol_to_glyph_layout (Lisp_Object layout_obj)
 {
-  unsigned int layout = 0;
-
   if (NILP (layout_obj))
-    layout = GL_TEXT;
-  else
-    {
-      CHECK_SYMBOL (layout_obj);
-      if (EQ (Qoutside_margin, layout_obj))
-	layout = GL_OUTSIDE_MARGIN;
-      else if (EQ (Qinside_margin, layout_obj))
-	layout = GL_INSIDE_MARGIN;
-      else if (EQ (Qwhitespace, layout_obj))
-	layout = GL_WHITESPACE;
-      else if (EQ (Qtext, layout_obj))
-	layout = GL_TEXT;
-      else
-	signal_simple_error ("unknown glyph layout type", layout_obj);
-    }
-  return layout;
+    return GL_TEXT;
+
+  CHECK_SYMBOL (layout_obj);
+  if (EQ (layout_obj, Qoutside_margin)) return GL_OUTSIDE_MARGIN;
+  if (EQ (layout_obj, Qinside_margin))	return GL_INSIDE_MARGIN;
+  if (EQ (layout_obj, Qwhitespace))	return GL_WHITESPACE;
+  if (EQ (layout_obj, Qtext))		return GL_TEXT;
+
+  signal_simple_error ("unknown glyph layout type", layout_obj);
+  return GL_TEXT; /* unreached */
 }
 
 static Lisp_Object
@@ -4956,7 +4908,7 @@ set_extent_glyph_1 (Lisp_Object extent_obj, Lisp_Object glyph, int endp,
 		    Lisp_Object layout_obj)
 {
   EXTENT extent = decode_extent (extent_obj, DE_MUST_HAVE_BUFFER);
-  unsigned int layout = symbol_to_glyph_layout (layout_obj);
+  glyph_layout layout = symbol_to_glyph_layout (layout_obj);
 
   /* Make sure we've actually been given a glyph or it's nil (meaning
      we're deleting a glyph from an extent). */
@@ -5050,22 +5002,22 @@ Set this using the `set-extent-end-glyph-layout' function.
 }
 
 DEFUN ("set-extent-priority", Fset_extent_priority, 2, 2, 0, /*
-Changes the display priority of EXTENT.
+Set the display priority of EXTENT to PRIORITY (an integer).
 When the extent attributes are being merged for display, the priority
 is used to determine which extent takes precedence in the event of a
 conflict (two extents whose faces both specify font, for example: the
 font of the extent with the higher priority will be used).
 Extents are created with priority 0; priorities may be negative.
 */
-       (extent, pri))
+       (extent, priority))
 {
   EXTENT e = decode_extent (extent, 0);
 
-  CHECK_INT (pri);
+  CHECK_INT (priority);
   e = extent_ancestor (e);
-  set_extent_priority (e, XINT (pri));
+  set_extent_priority (e, XINT (priority));
   extent_maybe_changed_for_redisplay (e, 1, 0);
-  return pri;
+  return priority;
 }
 
 DEFUN ("extent-priority", Fextent_priority, 1, 1, 0, /*
@@ -5316,9 +5268,8 @@ For a list of built-in properties, see `set-extent-property'.
 
   while (!NILP (plist))
     {
-      property = Fcar (plist);
-      value = Fcar (Fcdr (plist));
-      plist = Fcdr (Fcdr (plist));
+      property = Fcar (plist); plist = Fcdr (plist);
+      value    = Fcar (plist); plist = Fcdr (plist);
       Fset_extent_property (extent, property, value);
     }
   UNGCPRO;
@@ -5378,13 +5329,9 @@ See `set-extent-property' for the built-in property names.
     return extent_end_glyph (e);
   else
     {
-      Lisp_Object value;
-
-      value = external_plist_get (extent_plist_addr (e), property, 0,
-				  ERROR_ME);
-      if (UNBOUNDP (value))
-	return default_;
-      return value;
+      Lisp_Object value = external_plist_get (extent_plist_addr (e),
+					      property, 0, ERROR_ME);
+      return UNBOUNDP (value) ? default_ : value;
     }
 }
 
@@ -5395,12 +5342,13 @@ Do not modify this list; use `set-extent-property' instead.
        (extent))
 {
   EXTENT e, anc;
-  Lisp_Object result, face, anc_obj = Qnil;
+  Lisp_Object result, face, anc_obj;
+  enum glyph_layout layout;
 
   CHECK_EXTENT (extent);
   e = XEXTENT (extent);
   if (!EXTENT_LIVE_P (e))
-    return Fcons (Qdestroyed, Fcons (Qt, Qnil));
+    return cons3 (Qdestroyed, Qt, Qnil);
 
   anc = extent_ancestor (e);
   XSETEXTENT (anc_obj, anc);
@@ -5408,55 +5356,60 @@ Do not modify this list; use `set-extent-property' instead.
   /* For efficiency, use the ancestor for all properties except detached */
 
   result = extent_plist_slot (anc);
-  face = Fextent_face (anc_obj);
-  if (!NILP (face))
-    result = Fcons (Qface, Fcons (face, result));
-  face = Fextent_mouse_face (anc_obj);
-  if (!NILP (face))
-    result = Fcons (Qmouse_face, Fcons (face, result));
 
-  /* For now continue to include this for backwards compatibility. */
-  if (extent_begin_glyph_layout (anc) != GL_TEXT)
-    result = Fcons (Qglyph_layout,
-		    glyph_layout_to_symbol (extent_begin_glyph_layout (anc)));
+  if (!NILP (face = Fextent_face (anc_obj)))
+    result = cons3 (Qface, face, result);
 
-  if (extent_begin_glyph_layout (anc) != GL_TEXT)
-    result = Fcons (Qbegin_glyph_layout,
-		    glyph_layout_to_symbol (extent_begin_glyph_layout (anc)));
-  if (extent_end_glyph_layout (anc) != GL_TEXT)
-    result = Fcons (Qend_glyph_layout,
-		    glyph_layout_to_symbol (extent_end_glyph_layout (anc)));
+  if (!NILP (face = Fextent_mouse_face (anc_obj)))
+    result = cons3 (Qmouse_face, face, result);
+
+  if ((layout = extent_begin_glyph_layout (anc)) != GL_TEXT)
+    {
+      Lisp_Object sym = glyph_layout_to_symbol (layout);
+      result = cons3 (Qglyph_layout,       sym, result); /* compatibility */
+      result = cons3 (Qbegin_glyph_layout, sym, result);
+    }
+
+  if ((layout = extent_end_glyph_layout (anc)) != GL_TEXT)
+    result = cons3 (Qend_glyph_layout, glyph_layout_to_symbol (layout), result);
 
   if (!NILP (extent_end_glyph (anc)))
-    result = Fcons (Qend_glyph, Fcons (extent_end_glyph (anc), result));
+    result = cons3 (Qend_glyph, extent_end_glyph (anc), result);
+
   if (!NILP (extent_begin_glyph (anc)))
-    result = Fcons (Qbegin_glyph, Fcons (extent_begin_glyph (anc), result));
+    result = cons3 (Qbegin_glyph, extent_begin_glyph (anc), result);
 
   if (extent_priority (anc) != 0)
-    result = Fcons (Qpriority, Fcons (make_int (extent_priority (anc)),
-				      result));
+    result = cons3 (Qpriority, make_int (extent_priority (anc)), result);
 
   if (!NILP (extent_initial_redisplay_function (anc)))
-    result = Fcons (Qinitial_redisplay_function, Fcons (extent_initial_redisplay_function (anc), result));
+    result = cons3 (Qinitial_redisplay_function,
+		    extent_initial_redisplay_function (anc), result);
 
   if (!NILP (extent_invisible (anc)))
-    result = Fcons (Qinvisible, Fcons (extent_invisible (anc), result));
+    result = cons3 (Qinvisible, extent_invisible (anc), result);
 
   if (!NILP (extent_read_only (anc)))
-    result = Fcons (Qread_only, Fcons (extent_read_only (anc), result));
+    result = cons3 (Qread_only, extent_read_only (anc), result);
 
-#define CONS_FLAG(flag, sym) if (extent_normal_field (anc, flag)) \
-  result = Fcons (sym, Fcons (Qt, result))
-  CONS_FLAG (end_open, Qend_open);
-  CONS_FLAG (start_open, Qstart_open);
-  CONS_FLAG (detachable, Qdetachable);
-  CONS_FLAG (duplicable, Qduplicable);
-  CONS_FLAG (unique, Qunique);
-#undef CONS_FLAG
+  if  (extent_normal_field (anc, end_open))
+    result = cons3 (Qend_open, Qt, result);
+
+  if  (extent_normal_field (anc, start_open))
+    result = cons3 (Qstart_open, Qt, result);
+
+  if  (extent_normal_field (anc, detachable))
+    result = cons3 (Qdetachable, Qt, result);
+
+  if  (extent_normal_field (anc, duplicable))
+    result = cons3 (Qduplicable, Qt, result);
+
+  if  (extent_normal_field (anc, unique))
+    result = cons3 (Qunique, Qt, result);
 
   /* detached is not an inherited property */
   if (extent_detached_p (e))
-    result = Fcons (Qdetached, Fcons (Qt, result));
+    result = cons3 (Qdetached, Qt, result);
 
   return result;
 }
@@ -5968,7 +5921,7 @@ get_text_property_1 (Lisp_Object pos, Lisp_Object prop, Lisp_Object object,
 }
 
 DEFUN ("get-text-property", Fget_text_property, 2, 4, 0, /*
-Returns the value of the PROP property at the given position.
+Return the value of the PROP property at the given position.
 Optional arg OBJECT specifies the buffer or string to look in, and
  defaults to the current buffer.
 Optional arg AT-FLAG controls what it means for a property to be "at"
@@ -5982,7 +5935,7 @@ See also `get-char-property'.
 }
 
 DEFUN ("get-char-property", Fget_char_property, 2, 4, 0, /*
-Returns the value of the PROP property at the given position.
+Return the value of the PROP property at the given position.
 Optional arg OBJECT specifies the buffer or string to look in, and
  defaults to the current buffer.
 Optional arg AT-FLAG controls what it means for a property to be "at"
@@ -6141,9 +6094,9 @@ put_text_prop_mapper (EXTENT e, void *arg)
 	     (the invariant mentioned above) that extent has the
 	     proper endpoint setting, so we just use it. */
 	  set_extent_openness (te, new_start != e_start ?
-			       extent_start_open_p (e) : -1,
+			       (int) extent_start_open_p (e) : -1,
 			       new_end != e_end ?
-			       extent_end_open_p (e) : -1);
+			       (int) extent_end_open_p (e) : -1);
 	  closure->changed_p = 1;
 	}
       extent_detach (e);
@@ -6274,7 +6227,7 @@ put_text_prop (Bytind start, Bytind end, Lisp_Object object,
    */
   if (!NILP (value) && NILP (closure.the_extent))
     {
-      Lisp_Object extent = Qnil;
+      Lisp_Object extent;
 
       XSETEXTENT (extent, make_extent_internal (object, start, end));
       closure.changed_p = 1;
@@ -6375,7 +6328,7 @@ any property was changed, nil otherwise.
 DEFUN ("add-nonduplicable-text-properties",
        Fadd_nonduplicable_text_properties, 3, 4, 0, /*
 Add nonduplicable properties to the characters from START to END.
-(The properties will not be copied when the characters are copied.)
+\(The properties will not be copied when the characters are copied.)
 The third argument PROPS is a property list specifying the property values
 to add.  The optional fourth argument, OBJECT, is the buffer or string
 containing the text and defaults to the current buffer.  Returns t if
@@ -6621,8 +6574,6 @@ syms_of_extents (void)
   defsymbol (&Qextentp, "extentp");
   defsymbol (&Qextent_live_p, "extent-live-p");
 
-  defsymbol (&Qend_closed, "end-closed");
-  defsymbol (&Qstart_open, "start-open");
   defsymbol (&Qall_extents_closed, "all-extents-closed");
   defsymbol (&Qall_extents_open, "all-extents-open");
   defsymbol (&Qall_extents_closed_open, "all-extents-closed-open");
@@ -6649,11 +6600,11 @@ syms_of_extents (void)
   defsymbol (&Qpriority, "priority");
   defsymbol (&Qmouse_face, "mouse-face");
   defsymbol (&Qinitial_redisplay_function,"initial-redisplay-function");
-  
+
 
   defsymbol (&Qglyph_layout, "glyph-layout");	/* backwards compatibility */
   defsymbol (&Qbegin_glyph_layout, "begin-glyph-layout");
-  defsymbol (&Qbegin_glyph_layout, "end-glyph-layout");
+  defsymbol (&Qend_glyph_layout, "end-glyph-layout");
   defsymbol (&Qoutside_margin, "outside-margin");
   defsymbol (&Qinside_margin, "inside-margin");
   defsymbol (&Qwhitespace, "whitespace");
@@ -6675,9 +6626,6 @@ syms_of_extents (void)
   DEFSUBR (Fextent_end_position);
   DEFSUBR (Fextent_object);
   DEFSUBR (Fextent_length);
-#if 0
-  DEFSUBR (Fstack_of_extents);
-#endif
 
   DEFSUBR (Fmake_extent);
   DEFSUBR (Fcopy_extent);

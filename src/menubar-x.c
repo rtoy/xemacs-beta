@@ -750,7 +750,7 @@ x_popup_menu (Lisp_Object menu_desc, Lisp_Object event)
   Widget menu;
   struct Lisp_Event *eev = NULL;
   XEvent xev;
-  Lisp_Object frame = Qnil;
+  Lisp_Object frame;
 
   XSETFRAME (frame, f);
   CHECK_X_FRAME (frame);
@@ -830,7 +830,7 @@ console_type_create_menubar_x (void)
 void
 vars_of_menubar_x (void)
 {
-  last_popup_menu_selection_callback_id = -1;
+  last_popup_menu_selection_callback_id = (LWLIB_ID) -1;
 
 #if defined (LWLIB_MENUBARS_LUCID)
   Fprovide (intern ("lucid-menubars"));

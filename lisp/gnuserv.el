@@ -21,14 +21,14 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; along with XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: Not in FSF.
 
 ;;; Commentary:
- 
+
 ;; Gnuserv is run when Emacs needs to operate as a server for other
 ;; processes.  Specifically, any number of files can be attached for
 ;; editing to a running XEmacs process using the `gnuclient' program.
@@ -141,7 +141,7 @@ only argument, and its return value will be interpreted as above."
   :group 'gnuserv
   :group 'frames)
 
-(defcustom gnuserv-done-function 'kill-buffer 
+(defcustom gnuserv-done-function 'kill-buffer
   "*Function used to remove a buffer after editing.
 It is called with one BUFFER argument.  Functions such as `kill-buffer' and
 `bury-buffer' are good values. See also `gnuserv-done-temp-file-function'."
@@ -239,7 +239,7 @@ All the slots default to nil."
   (device nil)
   (frame nil))
 
-(defvar gnuserv-process nil 
+(defvar gnuserv-process nil
   "The current gnuserv process.")
 
 (defvar gnuserv-string ""
@@ -269,13 +269,13 @@ Each element is a gnuclient structure that identifies a client.")
 ;; Sample gnuserv-frame functions
 
 (defun gnuserv-main-frame-function (type)
-  "Returns a sensible value for the main Emacs frame."
+  "Return a sensible value for the main Emacs frame."
   (if (eq type 'x)
       (car (frame-list))
     nil))
 
 (defun gnuserv-visible-frame-function (type)
-  "Returns a frame if there is a frame that is truly visible, nil otherwise.
+  "Return a frame if there is a frame that is truly visible, nil otherwise.
 This is meant in the X sense, so it will not return frames that are on another
 visual screen.  Totally visible frames are preferred.  If none found, return nil."
   (if (eq type 'x)
@@ -288,7 +288,7 @@ visual screen.  Totally visible frames are preferred.  If none found, return nil
     nil))
 
 (defun gnuserv-special-frame-function (type)
-  "Creates a special frame for Gnuserv and returns it on later invocations."
+  "Create a special frame for Gnuserv and return it on later invocations."
   (unless (frame-live-p gnuserv-special-frame)
     (setq gnuserv-special-frame (make-frame gnuserv-frame-plist)))
   gnuserv-special-frame)
@@ -499,7 +499,7 @@ If a flag is `view', view the files read-only."
 ;; possible, because it is slow, and conses a list.  Use
 ;; `gnuserv-buffer-p' when appropriate, for instance.
 (defun gnuserv-buffer-clients (buffer)
-  "Returns a list of clients to which BUFFER belongs."
+  "Return a list of clients to which BUFFER belongs."
   (let (res)
     (dolist (client gnuserv-clients)
       (when (memq buffer (gnuclient-buffers client))
@@ -728,7 +728,7 @@ All the clients will be disposed of via the normal methods."
 (defun gnuserv-start (&optional leave-dead)
   "Allow this Emacs process to be a server for client processes.
 This starts a gnuserv communications subprocess through which
-client \"editors\" (gnuclient and gnudoit) can send editing commands to 
+client \"editors\" (gnuclient and gnudoit) can send editing commands to
 this Emacs job.  See the gnuserv(1) manual page for more details.
 
 Prefix arg means just kill any existing server communications subprocess."

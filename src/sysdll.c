@@ -108,7 +108,7 @@ dll_handle dll_open(CONST char *fname) {
 }
 
 int dll_close(dll_handle h) {
-  shl_t h = *((shl_t *)hp);
+  shl_t hp = *((shl_t *)h);
   free(hp);
   return (shl_unload(h));
 }

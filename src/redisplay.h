@@ -394,10 +394,10 @@ extern int windows_structure_changed;
     DEVICE_LOOP_NO_BREAK (_devcons_, _concons_)				\
       {									\
         Lisp_Object _frmcons_;						\
-        struct device *_d_ = XDEVICE (XCONS (_devcons_)->car);		\
+        struct device *_d_ = XDEVICE (XCAR (_devcons_));		\
         DEVICE_FRAME_LOOP (_frmcons_, _d_)				\
 	  {								\
-	    struct frame *_f_ = XFRAME (XCONS (_frmcons_)->car);	\
+	    struct frame *_f_ = XFRAME (XCAR (_frmcons_));		\
             _f_->object##_changed = 1;					\
 	    _f_->modiff++;						\
 	  }    								\
@@ -440,11 +440,6 @@ extern int windows_structure_changed;
 /* redisplay structre used by various utility routines. */
 extern display_line_dynarr *cmotion_display_lines;
 
-/* nil or a symbol naming the window system
-   under which emacs is running
-   ('x is the only current possibility) */
-extern Lisp_Object Vwindow_system;
-
 /* Nonzero means truncate lines in all windows less wide than the frame. */
 extern int truncate_partial_width_windows;
 
@@ -479,10 +474,18 @@ extern int display_arg;
 /* Type of display specified.  Defined in emacs.c. */
 extern char *display_use;
 
+/* Nonzero means reading single-character input with prompt
+   so put cursor on minibuffer after the prompt.  */
+
+extern int cursor_in_echo_area;
+
+extern Lisp_Object Qbar_cursor, Qcursor_in_echo_area, Vwindow_system;
+
 
 /*************************************************************************/
 /*                     redisplay exported functions                      */
 /*************************************************************************/
+EXFUN (Fredraw_frame, 2);
 
 int redisplay_text_width_string (struct window *w, int findex,
 				 Bufbyte *nonreloc, Lisp_Object reloc,

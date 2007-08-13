@@ -43,6 +43,10 @@ Boston, MA 02111-1307, USA.  */
 #include "sysfile.h"
 #include "systime.h"
 
+#ifdef HAVE_SHLIB
+#include "sysdll.h"
+#endif
+
 #if defined (HAVE_LOCALE_H) && \
    (defined (I18N2) || defined (I18N3) || defined (I18N4))
 #include <locale.h>
@@ -63,9 +67,7 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 /* For PATH_EXEC */
-#include "paths.h"
-
-extern void memory_warnings (void *, void (*warnfun) (CONST char *));
+#include <paths.h>
 
 #if !defined SYSTEM_MALLOC && !defined DOUG_LEA_MALLOC
 extern void *(*__malloc_hook)(size_t);
@@ -85,8 +87,12 @@ int initialized;
 # include <malloc.h>
 /* Preserves a pointer to the memory allocated that copies that
    static data inside glibc's malloc.  */
-void *malloc_state_ptr;
-#endif
+static void *malloc_state_ptr;
+#endif /* DOUG_LEA_MALLOC */
+
+# ifdef REL_ALLOC
+void r_alloc_reinit (void);
+# endif
 
 /* Variable whose value is symbol giving operating system type. */
 Lisp_Object Vsystem_type;
@@ -154,7 +160,7 @@ CONST char *display_use;
 
 /* If non-zero, then the early error handler will only print the error
    message and exit. */
-int suppress_early_backtrace;
+int suppress_early_error_handler_backtrace;
 
 /* An address near the bottom of the stack.
    Tells GC how to save a copy of the stack.  */
@@ -537,9 +543,8 @@ main_1 (int argc, char **argv, char **envp, int restart)
    * unexnext.c are both completely undocumented, even in NS header files!
    * But hey, it solves all NS related memory problems, so who's
    * complaining? */
-  if (initialized)
-    if (malloc_jumpstart (malloc_cookie) != 0)
-      printf ("malloc jumpstart failed!\n");
+  if (initialized && malloc_jumpstart (malloc_cookie) != 0)
+    fprintf (stderr, "malloc jumpstart failed!\n");
 #endif /* NeXT */
 
   /*
@@ -895,7 +900,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       syms_of_marker ();
       syms_of_md5 ();
 #ifdef HAVE_DATABASE
-      syms_of_dbm ();
+      syms_of_database ();
 #endif
 #ifdef HAVE_MENUBARS
       syms_of_menubar ();
@@ -946,9 +951,6 @@ main_1 (int argc, char **argv, char **envp, int restart)
       syms_of_menubar_x ();
 #endif
       syms_of_xselect ();
-#ifdef EPOCH
-      syms_of_epoch ();
-#endif
 #if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_DIALOGS) || defined (HAVE_TOOLBARS)
       syms_of_gui_x ();
 #endif
@@ -1261,7 +1263,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       vars_of_macros ();
       vars_of_md5 ();
 #ifdef HAVE_DATABASE
-      vars_of_dbm ();
+      vars_of_database ();
 #endif
 #ifdef HAVE_MENUBARS
       vars_of_menubar ();
@@ -1319,9 +1321,6 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #endif
       vars_of_objects_x ();
       vars_of_xselect ();
-#ifdef EPOCH
-      vars_of_epoch ();
-#endif
 #ifdef HAVE_SCROLLBARS
       vars_of_scrollbar_x ();
 #endif
@@ -1862,10 +1861,8 @@ static JMP_BUF run_temacs_catch;
 static int run_temacs_argc;
 static char **run_temacs_argv;
 static char *run_temacs_args;
-static int run_temacs_argv_size;
-static int run_temacs_args_size;
-
-extern int gc_in_progress;
+static size_t run_temacs_argv_size;
+static size_t run_temacs_args_size;
 
 DEFUN ("running-temacs-p", Frunning_temacs_p, 0, 0, 0, /*
 True if running temacs.  This means we are in the dumping stage.
@@ -1982,7 +1979,7 @@ main (int argc, char **argv, char **envp)
   quantify_clear_data ();
 #endif /* QUANTIFY */
 
-  suppress_early_backtrace = 0;
+  suppress_early_error_handler_backtrace = 0;
   lim_data = 0; /* force reinitialization of this variable */
 
   /* Lisp_Object must fit in a word; check VALBITS and GCTYPEBITS */
@@ -2028,17 +2025,22 @@ main (int argc, char **argv, char **envp)
 #endif /* _SCO_DS */
       vol_envp = environ;
     }
-#ifdef RUN_TIME_REMAP		
-  else 
-    /* obviously no-one uses this because where it was before initalized was 
-     *always* true */  
+#ifdef RUN_TIME_REMAP
+  else
+    /* obviously no-one uses this because where it was before initalized was
+     *always* true */
     run_time_remap (argv[0]);
 #endif
 
 #ifdef DOUG_LEA_MALLOC
   if (initialized && (malloc_state_ptr != NULL))
     {
-      malloc_set_state (malloc_state_ptr);
+      int rc = malloc_set_state (malloc_state_ptr);
+      if (rc != 0)
+	{
+	  fprintf (stderr, "malloc_set_state failed, rc = %d\n", rc);
+	  abort ();
+	}
 #if 0
       free (malloc_state_ptr);
 #endif
@@ -2053,7 +2055,7 @@ main (int argc, char **argv, char **envp)
       r_alloc_reinit ();
 #endif
     }
-#endif
+#endif /* DOUG_LEA_MALLOC */
 
   run_temacs_argc = -1;
 
@@ -2062,6 +2064,20 @@ main (int argc, char **argv, char **envp)
 }
 
 
+/* Dumping apparently isn't supported by versions of GCC >= 2.8. */
+/* The following needs conditionalization on whether either XEmacs or */
+/* various system shared libraries have been built and linked with */
+/* GCC >= 2.8.  -slb */
+#if defined(GNU_MALLOC)
+static void
+voodoo_free_hook(void *mem)
+{
+  /* Disable all calls to free() when XEmacs is exiting and it doesn't */
+  /* matter. */
+  __free_hook = voodoo_free_hook;
+}
+#endif
+
 DEFUN ("kill-emacs", Fkill_emacs, 0, 1, "P", /*
 Exit the XEmacs job and kill it.  Ask for confirmation, without argument.
 If ARG is an integer, return ARG as the exit program code.
@@ -2115,6 +2131,10 @@ all of which are called before XEmacs is actually killed.
   UNGCPRO;
 
   shut_down_emacs (0, ((STRINGP (arg)) ? arg : Qnil));
+
+#if defined(GNU_MALLOC)
+  __free_hook = voodoo_free_hook;
+#endif
 
   exit ((INTP (arg)) ? XINT (arg) : 0);
   /* NOTREACHED */
@@ -2282,6 +2302,7 @@ This function exists on systems that use HAVE_SHM.
 }
 
 #else /* not HAVE_SHM */
+extern void disable_free_hook (void);
 
 DEFUN ("dump-emacs", Fdump_emacs, 2, 2, 0, /*
 Dump current state of XEmacs into executable file FILENAME.
@@ -2305,7 +2326,8 @@ and announce itself normally when it is run.
 
   /* When we're dumping, we can't use the debugging free() */
 
-  disable_free_hook ();
+#endif
+#if 1 /* martin */
 #endif
 
   CHECK_STRING (intoname);
@@ -2355,26 +2377,29 @@ and announce itself normally when it is run.
   }
 #else /* not MSDOS and EMX */
   {
-    CONST char *intoname_ext;
-    CONST char *symname_ext;
+    char *intoname_ext;
+    char *symname_ext;
 
     GET_C_STRING_FILENAME_DATA_ALLOCA (intoname, intoname_ext);
     if (STRINGP (symname))
       GET_C_STRING_FILENAME_DATA_ALLOCA (symname, symname_ext);
     else
       symname_ext = 0;
+
+    garbage_collect_1 ();
 #ifdef DOUG_LEA_MALLOC
-  malloc_state_ptr = malloc_get_state ();
+    malloc_state_ptr = malloc_get_state ();
 #endif
-    /* here we break our rule that the filename conversion should
-       be performed at the actual time that the system call is made.
-       It's a whole lot easier to do the conversion here than to
-       modify all the unexec routines to ensure that filename
-       conversion is applied everywhere.  Don't worry about memory
-       leakage because this call only happens once. */
-    unexec ((char *) intoname_ext, (char *) symname_ext,
-	    (uintptr_t) my_edata,
-	    0, 0);
+#ifdef ERROR_CHECK_MALLOC
+    disable_free_hook ();
+#endif
+  /* here we break our rule that the filename conversion should
+     be performed at the actual time that the system call is made.
+     It's a whole lot easier to do the conversion here than to
+     modify all the unexec routines to ensure that filename
+     conversion is applied everywhere.  Don't worry about memory
+     leakage because this call only happens once. */ 
+ unexec (intoname_ext, symname_ext, (uintptr_t) my_edata, 0, 0);
 #ifdef DOUG_LEA_MALLOC
   free (malloc_state_ptr);
 #endif
@@ -2395,19 +2420,18 @@ and announce itself normally when it is run.
 #endif
 
 DEFUN ("decode-path-internal", Fdecode_path_internal, 1, 1, 0, /*
-Explode a colon-separated list of paths into a string list.
+Explode a colon-separated list of paths into a list of strings.
 */
        (cd_path))
 {
-  if (NILP(cd_path))
-    {
-      return Qnil;
-    }
+  if (NILP (cd_path))
+    return Qnil;
+
   CHECK_STRING (cd_path);
 
-  return (!XSTRING_LENGTH(cd_path)) ?
-    list1(Qnil) :
-    decode_path(XSTRING_DATA(cd_path));
+  return !XSTRING_LENGTH (cd_path) ?
+    list1 (Qnil) :
+    decode_path ((char *) XSTRING_DATA (cd_path));
 }
 
 Lisp_Object
@@ -2416,7 +2440,7 @@ decode_path (CONST char *path)
   REGISTER CONST char *p;
   Lisp_Object lpath = Qnil;
 
-  if (!path || !strlen(path)) return Qnil;
+  if (!path || !strlen (path)) return Qnil;
 
 #if defined (MSDOS) || defined (WIN32)
   dostounix_filename (path);
@@ -2478,7 +2502,7 @@ assert_failed (CONST char *file, int line, CONST char *expr)
   stderr_out ("Fatal error: assertion failed, file %s, line %d, %s\n",
 	      file, line, expr);
 #undef abort	/* avoid infinite #define loop... */
-#if defined (_WIN32) && defined (DEBUG_XEMACS)
+#if defined (WINDOWSNT) && defined (DEBUG_XEMACS)
   DebugBreak ();
 #elif !defined (ASSERTIONS_DONT_ABORT)
   abort ();
@@ -2551,8 +2575,8 @@ void
 vars_of_emacs (void)
 {
   DEFVAR_BOOL ("suppress-early-error-handler-backtrace",
-	       &suppress_early_backtrace /*
-Non-nil means early error handler shouldn't print a backtrace
+	       &suppress_early_error_handler_backtrace /*
+Non-nil means early error handler shouldn't print a backtrace.
 */ );
 
   DEFVAR_LISP ("command-line-args", &Vcommand_line_args /*
@@ -2584,7 +2608,7 @@ if XEmacs was found there.
 #endif
 
   DEFVAR_LISP ("system-type", &Vsystem_type /*
-Value is symbol indicating type of operating system you are using.
+Symbol indicating type of operating system you are using.
 */ );
   Vsystem_type = intern (SYSTEM_TYPE);
   Fprovide (intern(SYSTEM_TYPE));
@@ -2593,7 +2617,7 @@ Value is symbol indicating type of operating system you are using.
 # define EMACS_CONFIGURATION "UNKNOWN"
 #endif
   DEFVAR_LISP ("system-configuration", &Vsystem_configuration /*
-Value is string indicating configuration XEmacs was built for.
+String naming the configuration XEmacs was built for.
 */ );
   Vsystem_configuration = Fpurecopy (build_string (EMACS_CONFIGURATION));
 

@@ -39,30 +39,65 @@ Boston, MA 02111-1307, USA.  */
 #include <stdio.h>		/* NULL, etc. */
 #include <ctype.h>
 #include <stdarg.h>
-#include <limits.h>
-
-/* Define INT_MAX, DBL_DIG if not in limits.h */
-#ifndef INT_MAX
-#define INT_MAX ((int) ((1U << (INTBITS - 1)) - 1))
-#endif
-#ifndef DBL_DIG
-#define DBL_DIG 16
-#endif
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#ifndef INCLUDED_FCNTL
-# define INCLUDED_FCNTL
-# include <fcntl.h>
-#endif /* INCLUDED_FCNTL */
 
 #ifdef __lucid
 # include <sysent.h>
 #endif
 
-#include "blocktype.h"		/* A generally useful include */
-#include "dynarr.h"		/* A generally useful include */
+/* ---- Dynamic arrays ---- */
+
+#define Dynarr_declare(type)	\
+  type *base;			\
+  int elsize;			\
+  int cur;			\
+  int largest;			\
+  int max
+
+typedef struct dynarr
+{
+  Dynarr_declare (void);
+} Dynarr;
+
+void *Dynarr_newf (int elsize);
+void Dynarr_resize (void *dy, int size);
+void Dynarr_insert_many (void *d, CONST void *el, int len, int start);
+void Dynarr_delete_many (void *d, int start, int len);
+void Dynarr_free (void *d);
+
+#define Dynarr_new(type) ((type##_dynarr *) Dynarr_newf (sizeof(type)))
+#define Dynarr_at(d, pos) ((d)->base[pos])
+#define Dynarr_atp(d, pos) (&Dynarr_at (d, pos))
+#define Dynarr_length(d) ((d)->cur)
+#define Dynarr_largest(d) ((d)->largest)
+#define Dynarr_reset(d) ((d)->cur = 0)
+#define Dynarr_add_many(d, el, len) Dynarr_insert_many (d, el, len, (d)->cur)
+#define Dynarr_insert_many_at_start(d, el, len)	\
+  Dynarr_insert_many (d, el, len, 0)
+#define Dynarr_add_literal_string(d, s) Dynarr_add_many (d, s, sizeof(s) - 1)
+#define Dynarr_add_lisp_string(d, s) do {		\
+  struct Lisp_String *dyna_ls_s = XSTRING (s);		\
+  Dynarr_add_many (d, (char *) string_data (dyna_ls_s),	\
+		   string_length (dyna_ls_s));		\
+} while (0)
+
+#define Dynarr_add(d, el) (						\
+  (d)->cur >= (d)->max ? Dynarr_resize ((d), (d)->cur+1) : (void) 0,	\
+  ((d)->base)[(d)->cur++] = (el),					\
+  (d)->cur > (d)->largest ? (d)->largest = (d)->cur : (int) 0)
+
+/* The following defines will get you into real trouble if you aren't
+   careful.  But they can save a lot of execution time when used wisely. */
+#define Dynarr_increment(d) ((d)->cur++)
+#define Dynarr_set_size(d, n) ((d)->cur = n)
+
+/* Minimum size in elements for dynamic array when resized; default is 32 */
+extern int Dynarr_min_size;
+
+#ifdef MEMORY_USAGE_STATS
+struct overhead_stats;
+size_t Dynarr_memory_usage (void *d, struct overhead_stats *stats);
+#endif
+
 #include "symsinit.h"		/* compiler warning suppression */
 
 /* Also define min() and max(). (Some compilers put them in strange
@@ -76,95 +111,6 @@ Boston, MA 02111-1307, USA.  */
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 #endif
 
-/* Emacs needs to use its own definitions of certain system calls on
-   some systems (like SunOS 4.1 and USG systems, where the read system
-   call is interruptible but Emacs expects it not to be; and under
-   MULE, where all filenames need to be converted to external format).
-   To do this, we #define read to be sys_read, which is defined in
-   sysdep.c.  We first #undef read, in case some system file defines
-   read as a macro.  sysdep.c doesn't encapsulate read, so the call to
-   read inside of sys_read will do the right thing.
-
-   DONT_ENCAPSULATE is used in files such as sysdep.c that want to
-   call the actual system calls rather than the encapsulated versions.
-   Those files can call sys_read to get the (possibly) encapsulated
-   versions.
-
-   IMPORTANT: the redefinition of the system call must occur *after* the
-   inclusion of any header files that declare or define the system call;
-   otherwise lots of unfriendly things can happen.  This goes for all
-   encapsulated system calls.
-
-   We encapsulate the most common system calls here; we assume their
-   declarations are in one of the standard header files included above.
-   Other encapsulations are declared in the appropriate sys*.h file. */
-
-#if defined (ENCAPSULATE_READ) && !defined (DONT_ENCAPSULATE)
-# undef read
-# define read sys_read
-#endif
-#if !defined (ENCAPSULATE_READ) && defined (DONT_ENCAPSULATE)
-# define sys_read read
-#endif
-
-#if defined (ENCAPSULATE_WRITE) && !defined (DONT_ENCAPSULATE)
-# undef write
-# define write sys_write
-#endif
-#if !defined (ENCAPSULATE_WRITE) && defined (DONT_ENCAPSULATE)
-# define sys_write write
-#endif
-
-#if defined (ENCAPSULATE_OPEN) && !defined (DONT_ENCAPSULATE)
-# undef open
-# define open sys_open
-#endif
-#if !defined (ENCAPSULATE_OPEN) && defined (DONT_ENCAPSULATE)
-# define sys_open open
-#endif
-
-#if defined (ENCAPSULATE_CLOSE) && !defined (DONT_ENCAPSULATE)
-# undef close
-# define close sys_close
-#endif
-#if !defined (ENCAPSULATE_CLOSE) && defined (DONT_ENCAPSULATE)
-# define sys_close close
-#endif
-
-/* Now the stdio versions ... */
-
-#if defined (ENCAPSULATE_FREAD) && !defined (DONT_ENCAPSULATE)
-# undef fread
-# define fread sys_fread
-#endif
-#if !defined (ENCAPSULATE_FREAD) && defined (DONT_ENCAPSULATE)
-# define sys_fread fread
-#endif
-
-#if defined (ENCAPSULATE_FWRITE) && !defined (DONT_ENCAPSULATE)
-# undef fwrite
-# define fwrite sys_fwrite
-#endif
-#if !defined (ENCAPSULATE_FWRITE) && defined (DONT_ENCAPSULATE)
-# define sys_fwrite fwrite
-#endif
-
-#if defined (ENCAPSULATE_FOPEN) && !defined (DONT_ENCAPSULATE)
-# undef fopen
-# define fopen sys_fopen
-#endif
-#if !defined (ENCAPSULATE_FOPEN) && defined (DONT_ENCAPSULATE)
-# define sys_fopen fopen
-#endif
-
-#if defined (ENCAPSULATE_FCLOSE) && !defined (DONT_ENCAPSULATE)
-# undef fclose
-# define fclose sys_fclose
-#endif
-#if !defined (ENCAPSULATE_FCLOSE) && defined (DONT_ENCAPSULATE)
-# define sys_fclose fclose
-#endif
-
 /* Memory allocation */
 void malloc_warning (CONST char *);
 void *xmalloc (size_t size);
@@ -172,12 +118,13 @@ void *xmalloc_and_zero (size_t size);
 void *xrealloc (void *, size_t size);
 char *xstrdup (CONST char *);
 /* generally useful */
-#define countof(x) (sizeof(x)/sizeof(x[0]))
+#define countof(x) ((int) (sizeof(x)/sizeof(x[0])))
 #define slot_offset(type, slot_name) \
   ((unsigned) (((char *) (&(((type *)0)->slot_name))) - ((char *)0)))
 #define xnew(type) ((type *) xmalloc (sizeof (type)))
 #define xnew_array(type, len) ((type *) xmalloc ((len) * sizeof (type)))
 #define xnew_and_zero(type) ((type *) xmalloc_and_zero (sizeof (type)))
+#define xzero(lvalue) ((void) memset (&(lvalue), 0, sizeof (lvalue)))
 #define xnew_array_and_zero(type, len) ((type *) xmalloc_and_zero ((len) * sizeof (type)))
 #define XREALLOC_ARRAY(ptr, type, len) ((void) (ptr = (type *) xrealloc (ptr, (len) * sizeof (type))))
 #define alloca_array(type, len) ((type *) alloca ((len) * sizeof (type)))
@@ -194,8 +141,8 @@ char *xstrdup (CONST char *);
   /* Avoid side-effectualness. */				\
   /* Dammit! Macros suffer from dynamic scope! */		\
   /* We demand inline functions! */				\
-  int do_realloc_needed_size = (needed_size);			\
-  int do_realloc_newsize = 0;					\
+  size_t do_realloc_needed_size = (needed_size);		\
+  size_t do_realloc_newsize = 0;				\
   while ((sizevar) < (do_realloc_needed_size)) {		\
     do_realloc_newsize = 2*(sizevar);				\
     if (do_realloc_newsize < 32)				\
@@ -208,11 +155,11 @@ char *xstrdup (CONST char *);
 
 #ifdef ERROR_CHECK_MALLOC
 void xfree_1 (void *);
-#define xfree(lvalue) do		\
-{					\
-  void **ptr = (void **) &(lvalue);	\
-  xfree_1 (*ptr);			\
-  *ptr = (void *) 0xDEADBEEF;		\
+#define xfree(lvalue) do			\
+{						\
+  void **xfree_ptr = (void **) &(lvalue);	\
+  xfree_1 (*xfree_ptr);				\
+  *xfree_ptr = (void *) 0xDEADBEEF;		\
 } while (0)
 #else
 void xfree (void *);
@@ -223,7 +170,7 @@ void xfree (void *);
 /*  (This definition is here because system header file macros may want
  *   to call bzero (eg FD_ZERO) */
 #ifndef bzero
-# define bzero(m, l) memset ((m), 0, (l))
+# define bzero(m, l) memset (m, 0, l)
 #endif
 
 #ifndef PRINTF_ARGS
@@ -288,10 +235,14 @@ void xfree (void *);
 #define DO_NOTHING do {} while (0)
 #endif
 
+#ifndef DECLARE_NOTHING
+#define DECLARE_NOTHING struct nosuchstruct
+#endif
+
 /* We define assert iff USE_ASSERTIONS or DEBUG_XEMACS is defined.
-   Otherwise we it to NULL.  Quantify has shown that the time the
-   assert checks take is measurable so let's not include them in
-   production binaries. */
+   Otherwise we define it to be empty.  Quantify has shown that the
+   time the assert checks take is measurable so let's not include them
+   in production binaries. */
 
 #ifdef USE_ASSERTIONS
 /* Highly dubious kludge */
@@ -313,84 +264,6 @@ DECLARE_DOESNT_RETURN (assert_failed (CONST char *, int, CONST char *));
 /*#else*/
 /*#define REGISTER register*/
 /*#endif*/
-
-#if defined (__GNUC__) && (__GNUC__ >= 2)
-/* Entomological studies have revealed that the following junk is
-   necessary under GCC.  GCC has a compiler bug where incorrect
-   code will be generated if you use a global temporary variable
-   in a macro and the macro occurs twice in the same expression.
-   As it happens, we can avoid this problem using a GCC language
-   extension.  Thus we play weird games with syntax to avoid having
-   to provide two definitions for lots of macros.
-
-   The approximate way this works is as follows:
-
-   1. Use these macros whenever you want to avoid evaluating an
-      argument more than once in a macro. (It's almost always a
-      good idea to make your macros safe like this.)
-   2. Choose a name for the temporary variable you will store
-      the parameter in.  It should begin with `MT' and
-      be distinguishing, since it will (or may) be a global
-      variable.
-   3. In the same header file as the macro, put in a
-      MAC_DECLARE_EXTERN for the temporary variable.  This
-      resolves to an external variable declaration for some
-      compilers.
-   4. Put a MAC_DEFINE for the variable in a C file somewhere.
-      This resolves to a variable definition for some compilers.
-   5. Write your macro with no semicolons or commas in it.
-      Remember to use parentheses to surround macro arguments,
-      but you do not need to surround each separate statement
-      or the temporary variable with parentheses.
-   6. Write your macro like this:
-
-#define foo(bar,baz)						\
-MAC_BEGIN							\
-  MAC_DECLARE (struct frobozz *, MTfoobar, bar)			\
-  SOME_EXPRESSION						\
-  MAC_SEP							\
-  SOME OTHER EXPRESSION						\
-MAC_END
-
-   7. You only need to use MAC_SEP if you have more than one
-      expression in the macro, not counting any MAC_DECLARE
-      statements.
-
-  DONT_DECLARE_MAC_VARS is used in signal.c, for asynchronous signals.
-  All functions that may be called from within an asynchronous signal
-  handler must declare local variables (with MAC_DECLARE_LOCAL) for
-  the (normally global) variables used in these sorts of macros.
-  Otherwise, a signal could occur in the middle of processing one
-  of these macros and the signal handler could use the same macro,
-  resulting in the global variable getting overwritten and yielding
-  nasty evil crashes that are very difficult to track down.
-*/
-# define MAC_BEGIN ({
-# define MAC_DECLARE(type, var, value) type var = (value);
-# define MAC_SEP ;
-# define MAC_END ; })
-# define MAC_DECLARE_EXTERN(type, var)
-# define MAC_DECLARE_LOCAL(type, var)
-# define MAC_DEFINE(type, var)
-#else
-# define MAC_BEGIN (
-# define MAC_DECLARE(type, var, value) var = (value),
-# define MAC_SEP ,
-# define MAC_END )
-# ifdef DONT_DECLARE_MAC_VARS
-#  define MAC_DECLARE_EXTERN(type, var)
-# else
-#  define MAC_DECLARE_EXTERN(type, var) extern type var;
-# endif
-# define MAC_DECLARE_LOCAL(type, var) type var;
-# define MAC_DEFINE(type, var) type var;
-#endif
-
-/* For Lo, the Lord didst appear and look upon the face of the code,
-   and the Lord was unhappy with the strange syntax that had come
-   into vogue with the cryptic name of "C".  And so the Lord didst
-   decree, that from now on all programmers shall use Pascal syntax,
-   a syntax truly and in sooth ordained in heaven.  Amen. */
 
 
 /************************************************************************/
@@ -449,7 +322,7 @@ typedef struct
 
 typedef unsigned int glyph_index;
 
-/* This is shared by process.h, events.h and others in future. 
+/* This is shared by process.h, events.h and others in future.
    See events.h for description */
 typedef unsigned int USID;
 
@@ -495,6 +368,11 @@ typedef struct
 {
   Dynarr_declare (Emchar);
 } Emchar_dynarr;
+
+typedef struct
+{
+  Dynarr_declare (char);
+} char_dynarr;
 
 typedef unsigned char unsigned_char;
 typedef struct
@@ -689,7 +567,7 @@ enum Lisp_Type
 # define POINTER_TYPE_P(type) \
   ((type) != Lisp_Type_Int && (type) != Lisp_Type_Char)
 
-#else
+#else /* USE_MINIMAL_TAGBITS */
 
 enum Lisp_Type
 {
@@ -701,7 +579,7 @@ enum Lisp_Type
 
 #define POINTER_TYPE_P(type) ((type) == Lisp_Type_Record)
 
-#endif
+#endif /* USE_MINIMAL_TAGBITS */
 
 /* This should be the underlying type into which a Lisp_Object must fit.
    In a strict ANSI world, this must be `int', since ANSI says you can't
@@ -710,44 +588,65 @@ enum Lisp_Type
    longer of the two.  (This also must be something into which a pointer
    to an arbitrary object will fit, modulo any DATA_SEG_BITS cruft.)
  */
+/* ### We should be using uintptr_t and SIZEOF_VOID_P here */
 #if (LONGBITS > INTBITS)
 # define EMACS_INT long
 # define EMACS_UINT unsigned long
+# define SIZEOF_EMACS_INT SIZEOF_LONG
 #else
 # define EMACS_INT int
 # define EMACS_UINT unsigned int
+# define SIZEOF_EMACS_INT SIZEOF_INT
 #endif
+
+#define BITS_PER_EMACS_INT (SIZEOF_EMACS_INT * BITS_PER_CHAR)
 
 /* Overridden by m/next.h */
 #ifndef ASSERT_VALID_POINTER
 # define ASSERT_VALID_POINTER(pnt) (assert ((((EMACS_UINT) pnt) & 3) == 0))
 #endif
 
-/* These values are overridden by the m- file on some machines.  */
-#ifndef GCTYPEBITS
-# ifdef USE_MINIMAL_TAGBITS
-#  define GCTYPEBITS 2L
-# else
-#  define GCTYPEBITS 3L
-# endif
-#endif
-
-/* Valid values for GCMARKBITS are 0 and 1. */
 #ifdef USE_MINIMAL_TAGBITS
-# define GCMARKBITS 0L
+# define GCMARKBITS  0
+# define GCTYPEBITS  2
+# define GCBITS      2
+# define INT_GCBITS  1
 #else
-# define GCMARKBITS 1L
+# define GCMARKBITS  1
+# define GCTYPEBITS  3
+# define GCBITS      4
+# define INT_GCBITS  GCBITS
 #endif
 
-#ifndef VALBITS
-# define VALBITS ((LONGBITS)-(GCTYPEBITS)-(GCMARKBITS))
-#endif
+#define INT_VALBITS (BITS_PER_EMACS_INT - INT_GCBITS)
+#define VALBITS (BITS_PER_EMACS_INT - GCBITS)
+#define EMACS_INT_MAX ((1UL << INT_VALBITS) -1UL)
 
-#ifdef NO_UNION_TYPE
-# include "lisp-disunion.h"
-#else /* !NO_UNION_TYPE */
+#ifdef USE_UNION_TYPE
 # include "lisp-union.h"
-#endif /* !NO_UNION_TYPE */
+#else /* !USE_UNION_TYPE */
+# include "lisp-disunion.h"
+#endif /* !USE_UNION_TYPE */
+
+#ifdef HAVE_SHM
+/* In this representation, data is found in two widely separated segments.  */
+extern int pure_size;
+# define XPNTR(x) \
+  ((void *)(XPNTRVAL(x)) | (XPNTRVAL(x) > pure_size ? DATA_SEG_BITS : PURE_SEG_BITS)))
+#else /* not HAVE_SHM */
+# ifdef DATA_SEG_BITS
+/* This case is used for the rt-pc and hp-pa.
+   In the diffs I was given, it checked for ptr = 0
+   and did not adjust it in that case.
+   But I don't think that zero should ever be found
+   in a Lisp object whose data type says it points to something.
+ */
+#  define XPNTR(x) ((void *)((XPNTRVAL(x)) | DATA_SEG_BITS))
+# else /* not DATA_SEG_BITS */
+#  define XPNTR(x) ((void *) (XPNTRVAL(x)))
+# endif /* not DATA_SEG_BITS */
+#endif /* not HAVE_SHM */
+
 
 /* WARNING WARNING WARNING.  You must ensure on your own that proper
    GC protection is provided for the elements in this array. */
@@ -774,6 +673,7 @@ int eq_with_ebola_notice (Lisp_Object, Lisp_Object);
 #endif
 
 /* OK, you can open them again */
+
 
 /************************************************************************/
 /*                   Definitions of basic Lisp objects                  */
@@ -847,12 +747,19 @@ DECLARE_NONRECORD (cons, Lisp_Type_Cons, struct Lisp_Cons);
 
 #define NILP(x)  EQ (x, Qnil)
 #define GC_NILP(x)  GC_EQ (x, Qnil)
-#define CHECK_LIST(x) \
-  do { if ((!CONSP (x)) && !NILP (x)) dead_wrong_type_argument (Qlistp, x); } while (0)
-#define CONCHECK_LIST(x) \
-  do { if ((!CONSP (x)) && !NILP (x)) x = wrong_type_argument (Qlistp, x); } while (0)
 #define XCAR(a) (XCONS (a)->car)
 #define XCDR(a) (XCONS (a)->cdr)
+#define LISTP(x) (CONSP(x) || NILP(x))
+
+#define CHECK_LIST(x) do {			\
+  if (!LISTP (x))				\
+    dead_wrong_type_argument (Qlistp, x);	\
+} while (0)
+
+#define CONCHECK_LIST(x) do {			\
+  if (!LISTP (x))				\
+    x = wrong_type_argument (Qlistp, x);	\
+} while (0)
 
 /* For a list that's known to be in valid list format --
    will abort() if the list is not in valid format */
@@ -874,6 +781,22 @@ DECLARE_NONRECORD (cons, Lisp_Type_Cons, struct Lisp_Cons);
      if (!CONSP (consvar))						\
        signal_simple_error ("Invalid list format", listp);		\
      else
+
+extern Lisp_Object Qnil;
+
+INLINE int TRUE_LIST_P (Lisp_Object object);
+INLINE int
+TRUE_LIST_P (Lisp_Object object)
+{
+  while (CONSP (object))
+    object = XCDR (object);
+  return NILP (object);
+}
+
+#define CHECK_TRUE_LIST(object) do {			\
+  if (!TRUE_LIST_P (object))				\
+    dead_wrong_type_argument (Qtrue_list_p, object);	\
+} while (0)
 
 /* For a property list (alternating keywords/values) that may not be
    in valid list format -- will signal an error if the list is not in
@@ -944,6 +867,7 @@ Bytecount charcount_to_bytecount (CONST Bufbyte *ptr, Charcount len);
 
 #define string_length(s) ((s)->_size)
 #define XSTRING_LENGTH(s) string_length (XSTRING (s))
+#define XSTRING_CHAR_LENGTH(s) string_char_length (XSTRING (s))
 #define string_data(s) ((s)->_data + 0)
 #define XSTRING_DATA(s) string_data (XSTRING (s))
 #define string_byte(s, i) ((s)->_data[i] + 0)
@@ -1057,10 +981,15 @@ DECLARE_LRECORD (bit_vector, struct Lisp_Bit_Vector);
 #define BITP(x) (INTP (x) && (XINT (x) == 0 || XINT (x) == 1))
 #define GC_BITP(x) (GC_INTP (x) && (XINT (x) == 0 || XINT (x) == 1))
 
-#define CHECK_BIT(x) \
-  do { if (!BITP (x)) dead_wrong_type_argument (Qbitp, x); } while (0)
-#define CONCHECK_BIT(x) \
-  do { if (!BITP (x)) x = wrong_type_argument (Qbitp, x); } while (0)
+#define CHECK_BIT(x) do {		\
+  if (!BITP (x))			\
+    dead_wrong_type_argument (Qbitp, x);\
+} while (0)
+
+#define CONCHECK_BIT(x) do {		\
+  if (!BITP (x))			\
+    x = wrong_type_argument (Qbitp, x);	\
+} while (0)
 
 #define bit_vector_length(v) ((v)->size)
 #define bit_vector_next(v) ((v)->next)
@@ -1239,18 +1168,21 @@ DECLARE_LRECORD (float, struct Lisp_Float);
 
 #define XFLOATINT(n) extract_float (n)
 
-#define CHECK_INT_OR_FLOAT(x)					\
-  do { if ( !INTP (x) && !FLOATP (x))				\
-       dead_wrong_type_argument (Qnumberp, (x)); } while (0)
-#define CONCHECK_INT_OR_FLOAT(x)				\
-  do { if ( !INTP (x) && !FLOATP (x))				\
-       x = wrong_type_argument (Qnumberp, (x)); } while (0)
+#define CHECK_INT_OR_FLOAT(x) do {		\
+  if (!INT_OR_FLOATP (x))			\
+    dead_wrong_type_argument (Qnumberp, x);	\
+} while (0)
+
+#define CONCHECK_INT_OR_FLOAT(x) do {		\
+  if (!INT_OR_FLOATP (x))			\
+    x = wrong_type_argument (Qnumberp, x);	\
+} while (0)
 
 /* These are always continuable because they change their arguments
    even when no error is signalled. */
 
-#define CHECK_INT_OR_FLOAT_COERCE_MARKER(x) do		\
-{ if (INTP (x) || FLOATP (x))				\
+#define CHECK_INT_OR_FLOAT_COERCE_MARKER(x) do {	\
+  if (INT_OR_FLOATP (x))				\
     ;							\
   else if (MARKERP (x))					\
     x = make_int (marker_position (x));			\
@@ -1258,8 +1190,8 @@ DECLARE_LRECORD (float, struct Lisp_Float);
     x = wrong_type_argument (Qnumber_or_marker_p, x);	\
 } while (0)
 
-#define CHECK_INT_OR_FLOAT_COERCE_CHAR_OR_MARKER(x) do		\
-{ if (INTP (x) || FLOATP (x))					\
+#define CHECK_INT_OR_FLOAT_COERCE_CHAR_OR_MARKER(x) do {	\
+  if (INT_OR_FLOATP (x))					\
     ;								\
   else if (CHARP (x))						\
     x = make_int (XCHAR (x));					\
@@ -1292,15 +1224,9 @@ DECLARE_LRECORD (float, struct Lisp_Float);
 
 #endif /* not LISP_FLOAT_TYPE */
 
-#ifdef USE_MINIMAL_TAGBITS
-# define INTP(x) \
-  (XTYPE (x) == Lisp_Type_Int_Even || XTYPE(x) == Lisp_Type_Int_Odd)
-# define GC_INTP(x) \
-  (XGCTYPE (x) == Lisp_Type_Int_Even || XGCTYPE(x) == Lisp_Type_Int_Odd)
-#else
-# define INTP(x) (XTYPE (x) == Lisp_Type_Int)
-# define GC_INTP(x) (XGCTYPE (x) == Lisp_Type_Int)
-#endif
+/*********** int ***********/
+
+#define GC_INTP(x) INTP (x)
 
 #define ZEROP(x) EQ (x, Qzero)
 #define GC_ZEROP(x) GC_EQ (x, Qzero)
@@ -1315,14 +1241,6 @@ XINT (Lisp_Object obj)
   return XREALINT (obj);
 }
 
-#else
-
-#define XINT(obj) XREALINT (obj)
-
-#endif
-
-#ifdef ERROR_CHECK_TYPECHECK
-
 INLINE EMACS_INT XCHAR_OR_INT (Lisp_Object obj);
 INLINE EMACS_INT
 XCHAR_OR_INT (Lisp_Object obj)
@@ -1331,41 +1249,39 @@ XCHAR_OR_INT (Lisp_Object obj)
   return CHARP (obj) ? XCHAR (obj) : XINT (obj);
 }
 
-#else
+#else /* no error checking */
 
-#define XCHAR_OR_INT(obj) (CHARP ((obj)) ? XCHAR ((obj)) : XINT ((obj)))
+#define XINT(obj) XREALINT (obj)
+#define XCHAR_OR_INT(obj) (CHARP (obj) ? XCHAR (obj) : XINT (obj))
 
-#endif
+#endif /* no error checking */
 
-#ifdef USE_MINIMAL_TAGBITS
-/*
- * can't use CHECK_NONRECORD and CONCHECK_NONRECORD here because in
- * the USE_MINIMAL_TAGBITS implementation Lisp integers have two types.
- */
-# define CHECK_INT(x)				do {	\
- if (! INTP (x))					\
-   dead_wrong_type_argument (Qintegerp, x);		\
- } while (0)
-# define CONCHECK_INT(x)			do {	\
- if (! INTP (x))					\
-   x = wrong_type_argument (Qintegerp, x);		\
- } while (0)
-#else
-# define CHECK_INT(x) CHECK_NONRECORD (x, Lisp_Type_Int, Qintegerp)
-# define CONCHECK_INT(x) CONCHECK_NONRECORD (x, Lisp_Type_Int, Qintegerp)
-#endif
+#define CHECK_INT(x) do {			\
+  if (!INTP (x))				\
+    dead_wrong_type_argument (Qintegerp, x);	\
+} while (0)
+
+#define CONCHECK_INT(x) do {			\
+  if (!INTP (x))				\
+    x = wrong_type_argument (Qintegerp, x);	\
+} while (0)
 
 #define NATNUMP(x) (INTP (x) && XINT (x) >= 0)
 #define GC_NATNUMP(x) (GC_INTP (x) && XINT (x) >= 0)
 
-#define CHECK_NATNUM(x) \
-  do { if (!NATNUMP (x)) dead_wrong_type_argument (Qnatnump, x); } while (0)
-#define CONCHECK_NATNUM(x) \
-  do { if (!NATNUMP (x)) x = wrong_type_argument (Qnatnump, x); } while (0)
+#define CHECK_NATNUM(x) do {			\
+  if (!NATNUMP (x))				\
+    dead_wrong_type_argument (Qnatnump, x);	\
+} while (0)
+
+#define CONCHECK_NATNUM(x) do {			\
+  if (!NATNUMP (x))				\
+    x = wrong_type_argument (Qnatnump, x);	\
+} while (0)
 
 /* next three always continuable because they coerce their arguments. */
-#define CHECK_INT_COERCE_CHAR(x) do			\
-{ if (INTP (x))						\
+#define CHECK_INT_COERCE_CHAR(x) do {			\
+  if (INTP (x))						\
     ;							\
   else if (CHARP (x))					\
     x = make_int (XCHAR (x));				\
@@ -1373,8 +1289,8 @@ XCHAR_OR_INT (Lisp_Object obj)
     x = wrong_type_argument (Qinteger_or_char_p, x);	\
 } while (0)
 
-#define CHECK_INT_COERCE_MARKER(x) do			\
-{ if (INTP (x))						\
+#define CHECK_INT_COERCE_MARKER(x) do {			\
+  if (INTP (x))						\
     ;							\
   else if (MARKERP (x))					\
     x = make_int (marker_position (x));			\
@@ -1382,8 +1298,8 @@ XCHAR_OR_INT (Lisp_Object obj)
     x = wrong_type_argument (Qinteger_or_marker_p, x);	\
 } while (0)
 
-#define CHECK_INT_COERCE_CHAR_OR_MARKER(x) do			\
-{ if (INTP (x))							\
+#define CHECK_INT_COERCE_CHAR_OR_MARKER(x) do {			\
+  if (INTP (x))							\
     ;								\
   else if (CHARP (x))						\
     x = make_int (XCHAR (x));					\
@@ -1485,7 +1401,7 @@ struct lcrecord_list
 {
   struct lcrecord_header header;
   Lisp_Object free;
-  int size;
+  size_t size;
   CONST struct lrecord_implementation *implementation;
 };
 
@@ -1498,7 +1414,7 @@ DECLARE_LRECORD (lcrecord_list, struct lcrecord_list);
    Lcrecord lists should never escape to the Lisp level, so
    functions should not be doing this. */
 
-Lisp_Object make_lcrecord_list (int size,
+Lisp_Object make_lcrecord_list (size_t size,
 				CONST struct lrecord_implementation
 				*implementation);
 Lisp_Object allocate_managed_lcrecord (Lisp_Object lcrecord_list);
@@ -1532,10 +1448,26 @@ void free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord);
     the function.
   The docstring for the function is placed as a "C" comment between
     the prompt and the `args' argument.  make-docfile reads the
-    comment and creates the DOC file form it.
+    comment and creates the DOC file from it.
 */
 
-#define SUBR_MAX_ARGS 12
+#define EXFUN_0 void
+#define EXFUN_1 Lisp_Object
+#define EXFUN_2 Lisp_Object,Lisp_Object
+#define EXFUN_3 Lisp_Object,Lisp_Object,Lisp_Object
+#define EXFUN_4 Lisp_Object,Lisp_Object,Lisp_Object,Lisp_Object
+#define EXFUN_5 Lisp_Object,Lisp_Object,Lisp_Object,Lisp_Object,Lisp_Object
+#define EXFUN_6 Lisp_Object,Lisp_Object,Lisp_Object,Lisp_Object,Lisp_Object, \
+Lisp_Object
+#define EXFUN_7 Lisp_Object,Lisp_Object,Lisp_Object,Lisp_Object,Lisp_Object, \
+Lisp_Object,Lisp_Object
+#define EXFUN_8 Lisp_Object,Lisp_Object,Lisp_Object,Lisp_Object,Lisp_Object, \
+Lisp_Object,Lisp_Object,Lisp_Object
+#define EXFUN_MANY int, Lisp_Object*
+#define EXFUN_UNEVALLED Lisp_Object
+#define EXFUN(sym, maxargs) Lisp_Object sym (EXFUN_##maxargs)
+
+#define SUBR_MAX_ARGS 8
 #define MANY -2
 #define UNEVALLED -1
 
@@ -1549,7 +1481,7 @@ void free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord);
 #endif
 
 #define DEFUN(lname, Fname, minargs, maxargs, prompt, arglist)		\
-  Lisp_Object Fname (DEFUN_##maxargs arglist) ; /* See below */	\
+  Lisp_Object Fname (EXFUN_##maxargs);					\
   static struct Lisp_Subr S##Fname = { subr_lheader_initializer,	\
 	minargs, maxargs, prompt, 0, lname, (lisp_fn_t) Fname };	\
   Lisp_Object Fname (DEFUN_##maxargs arglist)
@@ -1561,21 +1493,17 @@ void free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord);
 #define DEFUN_MANY(named_int, named_Lisp_Object) named_int, named_Lisp_Object
 #define DEFUN_UNEVALLED(args) Lisp_Object args
 #define DEFUN_0() void
-#define DEFUN_1(a)									Lisp_Object a
-#define DEFUN_2(a,b)				DEFUN_1(a),				Lisp_Object b
-#define DEFUN_3(a,b,c)				DEFUN_2(a,b),				Lisp_Object c
-#define DEFUN_4(a,b,c,d)			DEFUN_3(a,b,c),				Lisp_Object d
-#define DEFUN_5(a,b,c,d,e)			DEFUN_4(a,b,c,d),			Lisp_Object e
-#define DEFUN_6(a,b,c,d,e,f)			DEFUN_5(a,b,c,d,e),			Lisp_Object f
-#define DEFUN_7(a,b,c,d,e,f,g)			DEFUN_6(a,b,c,d,e,f),			Lisp_Object g
-#define DEFUN_8(a,b,c,d,e,f,g,h)		DEFUN_7(a,b,c,d,e,f,g),			Lisp_Object h
-#define DEFUN_9(a,b,c,d,e,f,g,h,i)		DEFUN_8(a,b,c,d,e,f,g,h),		Lisp_Object i
-#define DEFUN_10(a,b,c,d,e,f,g,h,i,j)		DEFUN_9(a,b,c,d,e,f,g,h,i),		Lisp_Object j
-#define DEFUN_11(a,b,c,d,e,f,g,h,i,j,k)		DEFUN_10(a,b,c,d,e,f,g,h,i,j),		Lisp_Object k
-#define DEFUN_12(a,b,c,d,e,f,g,h,i,j,k,l)	DEFUN_11(a,b,c,d,e,f,g,h,i,j,k),	Lisp_Object l
+#define DEFUN_1(a)					Lisp_Object a
+#define DEFUN_2(a,b)		 DEFUN_1(a),		Lisp_Object b
+#define DEFUN_3(a,b,c)		 DEFUN_2(a,b),		Lisp_Object c
+#define DEFUN_4(a,b,c,d)	 DEFUN_3(a,b,c),	Lisp_Object d
+#define DEFUN_5(a,b,c,d,e)	 DEFUN_4(a,b,c,d),	Lisp_Object e
+#define DEFUN_6(a,b,c,d,e,f)	 DEFUN_5(a,b,c,d,e),	Lisp_Object f
+#define DEFUN_7(a,b,c,d,e,f,g)	 DEFUN_6(a,b,c,d,e,f),	Lisp_Object g
+#define DEFUN_8(a,b,c,d,e,f,g,h) DEFUN_7(a,b,c,d,e,f,g),Lisp_Object h
 
 /* WARNING: If you add defines here for higher values of maxargs,
-   make sure to also fix the clauses in primitive_funcall(),
+   make sure to also fix the clauses in inline_funcall_fn(),
    and change the define of SUBR_MAX_ARGS above.  */
 
 #include "symeval.h"
@@ -1602,23 +1530,23 @@ int check_quit (void);
 void signal_quit (void);
 
 /* Nonzero if ought to quit now.  */
-#define QUITP								\
-  ((quit_check_signal_happened ? check_quit () : 0),			\
-   (!NILP (Vquit_flag) && (NILP (Vinhibit_quit)				\
+#define QUITP							\
+  ((quit_check_signal_happened ? check_quit () : 0),		\
+   (!NILP (Vquit_flag) && (NILP (Vinhibit_quit)			\
 			   || EQ (Vquit_flag, Qcritical))))
 
 /* QUIT used to call QUITP, but there are some places where QUITP
    is called directly, and check_what_happened() should only be called
    when Emacs is actually ready to quit because it could do things
    like switch threads. */
-#define INTERNAL_QUITP							\
-  ((something_happened ? check_what_happened () : 0),			\
-   (!NILP (Vquit_flag) &&						\
+#define INTERNAL_QUITP						\
+  ((something_happened ? check_what_happened () : 0),		\
+   (!NILP (Vquit_flag) &&					\
     (NILP (Vinhibit_quit) || EQ (Vquit_flag, Qcritical))))
 
-#define INTERNAL_REALLY_QUITP						\
-  (check_what_happened (),						\
-   (!NILP (Vquit_flag) &&						\
+#define INTERNAL_REALLY_QUITP					\
+  (check_what_happened (),					\
+   (!NILP (Vquit_flag) &&					\
     (NILP (Vinhibit_quit) || EQ (Vquit_flag, Qcritical))))
 
 /* Check quit-flag and quit if it is non-nil.  Also do any other things
@@ -1647,7 +1575,7 @@ void signal_quit (void);
 
 #define LISP_HASH(obj) ((unsigned long) LISP_TO_VOID (obj))
 unsigned long string_hash (CONST void *xv);
-unsigned long memory_hash (CONST void *xv, int size);
+unsigned long memory_hash (CONST void *xv, size_t size);
 unsigned long internal_hash (Lisp_Object obj, int depth);
 unsigned long internal_array_hash (Lisp_Object *arr, int size, int depth);
 
@@ -1723,12 +1651,18 @@ struct gcpro
 
 #ifdef DEBUG_GCPRO
 
-void debug_gcpro1 ();
-void debug_gcpro2 ();
-void debug_gcpro3 ();
-void debug_gcpro4 ();
-void debug_gcpro5 ();
-void debug_ungcpro();
+void debug_gcpro1 (char *, int, struct gcpro *, Lisp_Object *);
+void debug_gcpro2 (char *, int, struct gcpro *, struct gcpro *,
+		   Lisp_Object *, Lisp_Object *);
+void debug_gcpro3 (char *, int, struct gcpro *, struct gcpro *, struct gcpro *,
+		   Lisp_Object *, Lisp_Object *, Lisp_Object *);
+void debug_gcpro4 (char *, int, struct gcpro *, struct gcpro *, struct gcpro *,
+		   struct gcpro *, Lisp_Object *, Lisp_Object *, Lisp_Object *,
+		   Lisp_Object *);
+void debug_gcpro5 (char *, int, struct gcpro *, struct gcpro *, struct gcpro *,
+		   struct gcpro *, struct gcpro *, Lisp_Object *, Lisp_Object *,
+		   Lisp_Object *, Lisp_Object *, Lisp_Object *);
+void debug_ungcpro(char *, int, struct gcpro *);
 
 #define GCPRO1(v) \
  debug_gcpro1 (__FILE__, __LINE__,&gcpro1,&v)
@@ -1887,39 +1821,39 @@ void debug_ungcpro();
 #endif
 
 /* Evaluate expr, UNGCPRO, and then return the value of expr.  */
-#define RETURN_UNGCPRO(expr) do			\
-{						\
-  Lisp_Object ret_ungc_val = (expr);		\
-  UNGCPRO;					\
-  RETURN__ ret_ungc_val;			\
+#define RETURN_UNGCPRO(expr) do		\
+{					\
+  Lisp_Object ret_ungc_val = (expr);	\
+  UNGCPRO;				\
+  RETURN__ ret_ungc_val;		\
 } while (0)
 
 /* Evaluate expr, NUNGCPRO, UNGCPRO, and then return the value of expr.  */
-#define RETURN_NUNGCPRO(expr) do		\
-{						\
-  Lisp_Object ret_ungc_val = (expr);		\
-  NUNGCPRO;					\
-  UNGCPRO;					\
-  RETURN__ ret_ungc_val;			\
+#define RETURN_NUNGCPRO(expr) do	\
+{					\
+  Lisp_Object ret_ungc_val = (expr);	\
+  NUNGCPRO;				\
+  UNGCPRO;				\
+  RETURN__ ret_ungc_val;		\
 } while (0)
 
 /* Evaluate expr, NNUNGCPRO, NUNGCPRO, UNGCPRO, and then return the
    value of expr.  */
-#define RETURN_NNUNGCPRO(expr) do		\
-{						\
-  Lisp_Object ret_ungc_val = (expr);		\
-  NNUNGCPRO;					\
-  NUNGCPRO;					\
-  UNGCPRO;					\
-  RETURN__ ret_ungc_val;			\
+#define RETURN_NNUNGCPRO(expr) do	\
+{					\
+  Lisp_Object ret_ungc_val = (expr);	\
+  NNUNGCPRO;				\
+  NUNGCPRO;				\
+  UNGCPRO;				\
+  RETURN__ ret_ungc_val;		\
 } while (0)
 
 /* Evaluate expr, return it if it's not Qunbound. */
-#define RETURN_IF_NOT_UNBOUND(expr) do		\
-{						\
-  Lisp_Object ret_nunb_val = (expr);		\
-  if (!UNBOUNDP (ret_nunb_val))			\
-    RETURN__ ret_nunb_val;			\
+#define RETURN_IF_NOT_UNBOUND(expr) do	\
+{					\
+  Lisp_Object ret_nunb_val = (expr);	\
+  if (!UNBOUNDP (ret_nunb_val))		\
+    RETURN__ ret_nunb_val;		\
 } while (0)
 
 /* Call staticpro (&var) to protect static variable `var'. */
@@ -1998,10 +1932,877 @@ typedef long long intptr_t;
 typedef unsigned long long uintptr_t;
 #else
 /* Just pray. May break, may not. */
-typedef char *intptr_t;
-typedef char *uintptr_t;
+typedef long intptr_t;
+typedef unsigned long uintptr_t;
 #endif
 
-#include "emacsfns.h"
+/* Defined in alloc.c */
+void release_breathing_space (void);
+Lisp_Object noseeum_cons (Lisp_Object, Lisp_Object);
+Lisp_Object make_vector (EMACS_INT, Lisp_Object);
+Lisp_Object vector1 (Lisp_Object);
+Lisp_Object vector2 (Lisp_Object, Lisp_Object);
+Lisp_Object vector3 (Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object make_bit_vector (EMACS_INT, Lisp_Object);
+Lisp_Object make_bit_vector_from_byte_vector (unsigned char *, EMACS_INT);
+Lisp_Object noseeum_make_marker (void);
+void garbage_collect_1 (void);
+Lisp_Object acons (Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object cons3 (Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object list1 (Lisp_Object);
+Lisp_Object list2 (Lisp_Object, Lisp_Object);
+Lisp_Object list3 (Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object list4 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object list5 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
+		   Lisp_Object);
+Lisp_Object list6 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
+		   Lisp_Object, Lisp_Object);
+DECLARE_DOESNT_RETURN (memory_full (void));
+void disksave_object_finalization (void);
+extern int purify_flag;
+extern int gc_currently_forbidden;
+Lisp_Object restore_gc_inhibit (Lisp_Object);
+extern EMACS_INT gc_generation_number[1];
+int purified (Lisp_Object);
+Lisp_Object build_string (CONST char *);
+Lisp_Object build_ext_string (CONST char *, enum external_data_format);
+Lisp_Object build_translated_string (CONST char *);
+Lisp_Object make_string (CONST Bufbyte *, Bytecount);
+Lisp_Object make_ext_string (CONST Extbyte *, EMACS_INT,
+			     enum external_data_format);
+Lisp_Object make_uninit_string (Bytecount);
+Lisp_Object make_float (double);
+size_t purespace_usage (void);
+void report_pure_usage (int, int);
+Lisp_Object make_pure_string (CONST Bufbyte *, Bytecount, Lisp_Object, int);
+Lisp_Object make_pure_pname (CONST Bufbyte *, Bytecount, int);
+Lisp_Object pure_cons (Lisp_Object, Lisp_Object);
+Lisp_Object pure_list (int, Lisp_Object *);
+Lisp_Object make_pure_vector (size_t, Lisp_Object);
+void free_cons (struct Lisp_Cons *);
+void free_list (Lisp_Object);
+void free_alist (Lisp_Object);
+void mark_conses_in_list (Lisp_Object);
+void free_marker (struct Lisp_Marker *);
+int object_dead_p (Lisp_Object);
+
+#ifdef MEMORY_USAGE_STATS
+size_t malloced_storage_size (void *, size_t, struct overhead_stats *);
+size_t fixed_type_block_overhead (size_t);
+#endif
+
+/* Defined in buffer.c */
+Lisp_Object make_buffer (struct buffer *);
+Lisp_Object get_truename_buffer (Lisp_Object);
+void switch_to_buffer (Lisp_Object, Lisp_Object);
+extern int find_file_compare_truenames;
+extern int find_file_use_truenames;
+
+/* Defined in callproc.c */
+char *egetenv (CONST char *);
+
+/* Defined in console.c */
+void stuff_buffered_input (Lisp_Object);
+
+/* Defined in data.c */
+DECLARE_DOESNT_RETURN (pure_write_error (void));
+DECLARE_DOESNT_RETURN (args_out_of_range (Lisp_Object, Lisp_Object));
+DECLARE_DOESNT_RETURN (args_out_of_range_3 (Lisp_Object, Lisp_Object,
+					    Lisp_Object));
+Lisp_Object wrong_type_argument (Lisp_Object, Lisp_Object);
+DECLARE_DOESNT_RETURN (dead_wrong_type_argument (Lisp_Object, Lisp_Object));
+void check_int_range (int, int, int);
+Lisp_Object word_to_lisp (unsigned int);
+unsigned int lisp_to_word (Lisp_Object);
+
+/* Defined in dired.c */
+Lisp_Object make_directory_hash_table (char *);
+Lisp_Object wasteful_word_to_lisp (unsigned int);
+
+/* Defined in doc.c */
+Lisp_Object unparesseuxify_doc_string (int, EMACS_INT, char *, Lisp_Object);
+Lisp_Object read_doc_string (Lisp_Object);
+
+/* Defined in doprnt.c */
+Bytecount emacs_doprnt_c (Lisp_Object, CONST Bufbyte *, Lisp_Object,
+			  Bytecount, ...);
+Bytecount emacs_doprnt_va (Lisp_Object, CONST Bufbyte *, Lisp_Object,
+			   Bytecount, va_list);
+Bytecount emacs_doprnt_lisp (Lisp_Object, CONST Bufbyte *, Lisp_Object,
+			     Bytecount, int, CONST Lisp_Object *);
+Bytecount emacs_doprnt_lisp_2 (Lisp_Object, CONST Bufbyte *, Lisp_Object,
+			       Bytecount, int, ...);
+Lisp_Object emacs_doprnt_string_c (CONST Bufbyte *, Lisp_Object,
+				   Bytecount, ...);
+Lisp_Object emacs_doprnt_string_va (CONST Bufbyte *, Lisp_Object,
+				    Bytecount, va_list);
+Lisp_Object emacs_doprnt_string_lisp (CONST Bufbyte *, Lisp_Object,
+				      Bytecount, int, CONST Lisp_Object *);
+Lisp_Object emacs_doprnt_string_lisp_2 (CONST Bufbyte *, Lisp_Object,
+					Bytecount, int, ...);
+
+/* Defined in editfns.c */
+Bufpos bufpos_clip_to_bounds (Bufpos, Bufpos, Bufpos);
+Bytind bytind_clip_to_bounds (Bytind, Bytind, Bytind);
+void buffer_insert1 (struct buffer *, Lisp_Object);
+Lisp_Object make_string_from_buffer (struct buffer *, int, int);
+Lisp_Object save_excursion_save (void);
+Lisp_Object save_restriction_save (void);
+Lisp_Object save_excursion_restore (Lisp_Object);
+Lisp_Object save_restriction_restore (Lisp_Object);
+
+/* Defined in emacsfns.c */
+Lisp_Object save_current_buffer_restore (Lisp_Object);
+
+/* Defined in emacs.c */
+DECLARE_DOESNT_RETURN_GCC__ATTRIBUTE__SYNTAX_SUCKS (fatal (CONST char *,
+							   ...), 1, 2);
+int stderr_out (CONST char *, ...) PRINTF_ARGS (1, 2);
+int stdout_out (CONST char *, ...) PRINTF_ARGS (1, 2);
+SIGTYPE fatal_error_signal (int);
+Lisp_Object make_arg_list (int, char **);
+void make_argc_argv (Lisp_Object, int *, char ***);
+void free_argc_argv (char **);
+Lisp_Object decode_env_path (CONST char *, CONST char *);
+Lisp_Object decode_path (CONST char *);
+/* Nonzero means don't do interactive redisplay and don't change tty modes */
+extern int noninteractive;
+extern int preparing_for_armageddon;
+extern int emacs_priority;
+extern int running_asynch_code;
+extern int suppress_early_error_handler_backtrace;
+
+/* Defined in eval.c */
+DECLARE_DOESNT_RETURN (signal_error (Lisp_Object, Lisp_Object));
+void maybe_signal_error (Lisp_Object, Lisp_Object, Lisp_Object, Error_behavior);
+Lisp_Object maybe_signal_continuable_error (Lisp_Object, Lisp_Object,
+					    Lisp_Object, Error_behavior);
+DECLARE_DOESNT_RETURN_GCC__ATTRIBUTE__SYNTAX_SUCKS (error (CONST char *,
+							   ...), 1, 2);
+void maybe_error (Lisp_Object, Error_behavior, CONST char *,
+		  ...) PRINTF_ARGS (3, 4);
+Lisp_Object continuable_error (CONST char *, ...) PRINTF_ARGS (1, 2);
+Lisp_Object maybe_continuable_error (Lisp_Object, Error_behavior,
+				     CONST char *, ...) PRINTF_ARGS (3, 4);
+DECLARE_DOESNT_RETURN (signal_simple_error (CONST char *, Lisp_Object));
+void maybe_signal_simple_error (CONST char *, Lisp_Object,
+				Lisp_Object, Error_behavior);
+Lisp_Object signal_simple_continuable_error (CONST char *, Lisp_Object);
+Lisp_Object maybe_signal_simple_continuable_error (CONST char *, Lisp_Object,
+						   Lisp_Object, Error_behavior);
+DECLARE_DOESNT_RETURN_GCC__ATTRIBUTE__SYNTAX_SUCKS (error_with_frob
+						    (Lisp_Object, CONST char *,
+						     ...), 2, 3);
+void maybe_error_with_frob (Lisp_Object, Lisp_Object, Error_behavior,
+			    CONST char *, ...) PRINTF_ARGS (4, 5);
+Lisp_Object continuable_error_with_frob (Lisp_Object, CONST char *,
+					 ...) PRINTF_ARGS (2, 3);
+Lisp_Object maybe_continuable_error_with_frob
+(Lisp_Object, Lisp_Object, Error_behavior, CONST char *, ...) PRINTF_ARGS (4, 5);
+DECLARE_DOESNT_RETURN (signal_simple_error_2 (CONST char *,
+					      Lisp_Object, Lisp_Object));
+void maybe_signal_simple_error_2 (CONST char *, Lisp_Object, Lisp_Object,
+				  Lisp_Object, Error_behavior);
+Lisp_Object signal_simple_continuable_error_2 (CONST char *,
+					       Lisp_Object, Lisp_Object);
+Lisp_Object maybe_signal_simple_continuable_error_2 (CONST char *, Lisp_Object,
+						     Lisp_Object, Lisp_Object,
+						     Error_behavior);
+Lisp_Object funcall_recording_as (Lisp_Object, int, Lisp_Object *);
+Lisp_Object run_hook_with_args_in_buffer (struct buffer *, int, Lisp_Object *,
+					  enum run_hooks_condition);
+Lisp_Object run_hook_with_args (int, Lisp_Object *, enum run_hooks_condition);
+void va_run_hook_with_args (Lisp_Object, int, ...);
+void va_run_hook_with_args_in_buffer (struct buffer *, Lisp_Object, int, ...);
+Lisp_Object run_hook (Lisp_Object);
+Lisp_Object apply1 (Lisp_Object, Lisp_Object);
+Lisp_Object call0 (Lisp_Object);
+Lisp_Object call1 (Lisp_Object, Lisp_Object);
+Lisp_Object call2 (Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object call3 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object call4 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
+		   Lisp_Object);
+Lisp_Object call5 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
+		   Lisp_Object, Lisp_Object);
+Lisp_Object call6 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
+		   Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object call7 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
+		   Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object call8 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
+		   Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
+		   Lisp_Object);
+Lisp_Object call0_in_buffer (struct buffer *, Lisp_Object);
+Lisp_Object call1_in_buffer (struct buffer *, Lisp_Object, Lisp_Object);
+Lisp_Object call2_in_buffer (struct buffer *, Lisp_Object, Lisp_Object,
+			     Lisp_Object);
+Lisp_Object call3_in_buffer (struct buffer *, Lisp_Object, Lisp_Object,
+			     Lisp_Object, Lisp_Object);
+Lisp_Object call4_in_buffer (struct buffer *, Lisp_Object, Lisp_Object,
+			     Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object call5_in_buffer (struct buffer *, Lisp_Object, Lisp_Object,
+			     Lisp_Object, Lisp_Object, Lisp_Object,
+			     Lisp_Object);
+Lisp_Object call6_in_buffer (struct buffer *, Lisp_Object, Lisp_Object,
+			     Lisp_Object, Lisp_Object, Lisp_Object,
+			     Lisp_Object, Lisp_Object);
+Lisp_Object eval_in_buffer (struct buffer *, Lisp_Object);
+Lisp_Object call0_with_handler (Lisp_Object, Lisp_Object);
+Lisp_Object call1_with_handler (Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object eval_in_buffer_trapping_errors (CONST char *, struct buffer *,
+					    Lisp_Object);
+Lisp_Object run_hook_trapping_errors (CONST char *, Lisp_Object);
+Lisp_Object safe_run_hook_trapping_errors (CONST char *, Lisp_Object, int);
+Lisp_Object call0_trapping_errors (CONST char *, Lisp_Object);
+Lisp_Object call1_trapping_errors (CONST char *, Lisp_Object, Lisp_Object);
+Lisp_Object call2_trapping_errors (CONST char *,
+				   Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object call_with_suspended_errors (lisp_fn_t, volatile Lisp_Object, Lisp_Object,
+					Error_behavior, int, ...);
+/* C Code should be using internal_catch, record_unwind_p, condition_case_1 */
+Lisp_Object internal_catch (Lisp_Object, Lisp_Object (*) (Lisp_Object),
+			    Lisp_Object, int * volatile);
+Lisp_Object condition_case_1 (Lisp_Object,
+			      Lisp_Object (*) (Lisp_Object),
+			      Lisp_Object,
+			      Lisp_Object (*) (Lisp_Object, Lisp_Object),
+			      Lisp_Object);
+Lisp_Object condition_case_3 (Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object unbind_to (int, Lisp_Object);
+void specbind (Lisp_Object, Lisp_Object);
+void record_unwind_protect (Lisp_Object (*) (Lisp_Object), Lisp_Object);
+void do_autoload (Lisp_Object, Lisp_Object);
+Lisp_Object un_autoload (Lisp_Object);
+void warn_when_safe_lispobj (Lisp_Object, Lisp_Object, Lisp_Object);
+void warn_when_safe (Lisp_Object, Lisp_Object, CONST char *,
+		     ...) PRINTF_ARGS (3, 4);
+
+
+/* Defined in event-stream.c */
+void wait_delaying_user_input (int (*) (void *), void *);
+int detect_input_pending (void);
+void reset_this_command_keys (Lisp_Object, int);
+Lisp_Object enqueue_misc_user_event (Lisp_Object, Lisp_Object, Lisp_Object);
+
+/* Defined in event-Xt.c */
+void signal_special_Xt_user_event (Lisp_Object, Lisp_Object, Lisp_Object);
+
+
+/* Defined in events.c */
+void clear_event_resource (void);
+Lisp_Object allocate_event (void);
+int event_to_character (struct Lisp_Event *, int, int, int);
+
+/* Defined in fileio.c */
+void record_auto_save (void);
+void force_auto_save_soon (void);
+DECLARE_DOESNT_RETURN (report_file_error (CONST char *, Lisp_Object));
+void maybe_report_file_error (CONST char *, Lisp_Object,
+			      Lisp_Object, Error_behavior);
+DECLARE_DOESNT_RETURN (signal_file_error (CONST char *, Lisp_Object));
+void maybe_signal_file_error (CONST char *, Lisp_Object,
+			      Lisp_Object, Error_behavior);
+DECLARE_DOESNT_RETURN (signal_double_file_error (CONST char *, CONST char *,
+						 Lisp_Object));
+void maybe_signal_double_file_error (CONST char *, CONST char *,
+				     Lisp_Object, Lisp_Object, Error_behavior);
+DECLARE_DOESNT_RETURN (signal_double_file_error_2 (CONST char *, CONST char *,
+						   Lisp_Object, Lisp_Object));
+void maybe_signal_double_file_error_2 (CONST char *, CONST char *,
+				       Lisp_Object, Lisp_Object, Lisp_Object,
+				       Error_behavior);
+Lisp_Object lisp_strerror (int);
+Lisp_Object expand_and_dir_to_file (Lisp_Object, Lisp_Object);
+int read_allowing_quit (int, void *, size_t);
+int write_allowing_quit (int, CONST void *, size_t);
+int internal_delete_file (Lisp_Object);
+
+/* Defined in filelock.c */
+void lock_file (Lisp_Object);
+void unlock_file (Lisp_Object);
+void unlock_all_files (void);
+void unlock_buffer (struct buffer *);
+
+/* Defined in filemode.c */
+void filemodestring (struct stat *, char *);
+
+/* Defined in floatfns.c */
+double extract_float (Lisp_Object);
+
+/* Defined in fns.c */
+Lisp_Object list_sort (Lisp_Object, Lisp_Object,
+		       int (*) (Lisp_Object, Lisp_Object, Lisp_Object));
+Lisp_Object merge (Lisp_Object, Lisp_Object, Lisp_Object);
+
+void bump_string_modiff (Lisp_Object);
+Lisp_Object memq_no_quit (Lisp_Object, Lisp_Object);
+Lisp_Object assoc_no_quit (Lisp_Object, Lisp_Object);
+Lisp_Object assq_no_quit (Lisp_Object, Lisp_Object);
+Lisp_Object rassq_no_quit (Lisp_Object, Lisp_Object);
+Lisp_Object delq_no_quit (Lisp_Object, Lisp_Object);
+Lisp_Object delq_no_quit_and_free_cons (Lisp_Object, Lisp_Object);
+Lisp_Object remassoc_no_quit (Lisp_Object, Lisp_Object);
+Lisp_Object remassq_no_quit (Lisp_Object, Lisp_Object);
+Lisp_Object remrassq_no_quit (Lisp_Object, Lisp_Object);
+
+void pure_put (Lisp_Object, Lisp_Object, Lisp_Object);
+int plists_differ (Lisp_Object, Lisp_Object, int, int, int);
+Lisp_Object internal_plist_get (Lisp_Object, Lisp_Object);
+void internal_plist_put (Lisp_Object *, Lisp_Object, Lisp_Object);
+int internal_remprop (Lisp_Object *, Lisp_Object);
+Lisp_Object external_plist_get (Lisp_Object *, Lisp_Object,
+				int, Error_behavior);
+void external_plist_put (Lisp_Object *, Lisp_Object,
+			 Lisp_Object, int, Error_behavior);
+int external_remprop (Lisp_Object *, Lisp_Object, int, Error_behavior);
+int internal_equal (Lisp_Object, Lisp_Object, int);
+Lisp_Object concat2 (Lisp_Object, Lisp_Object);
+Lisp_Object concat3 (Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object vconcat2 (Lisp_Object, Lisp_Object);
+Lisp_Object vconcat3 (Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object nconc2 (Lisp_Object, Lisp_Object);
+void check_losing_bytecode (CONST char *, Lisp_Object);
+
+/* Defined in getloadavg.c */
+int getloadavg (double[], int);
+
+/* Defined in glyphs.c */
+Error_behavior decode_error_behavior_flag (Lisp_Object);
+Lisp_Object encode_error_behavior_flag (Error_behavior);
+
+/* Defined in indent.c */
+int bi_spaces_at_point (struct buffer *, Bytind);
+int column_at_point (struct buffer *, Bufpos, int);
+int current_column (struct buffer *);
+void invalidate_current_column (void);
+Bufpos vmotion (struct window *, Bufpos, int, int *);
+
+/* Defined in keymap.c */
+void where_is_to_char (Lisp_Object, char *);
+
+/* Defined in lread.c */
+void ebolify_bytecode_constants (Lisp_Object);
+void close_load_descs (void);
+int locate_file (Lisp_Object, Lisp_Object, CONST char *, Lisp_Object *, int);
+int isfloat_string (CONST char *);
+
+/* Well, I've decided to enable this. -- ben */
+/* And I've decided to make it work right.  -- sb */
+#define LOADHIST
+/* Define the following symbol to enable load history of dumped files */
+#define LOADHIST_DUMPED
+/* Define the following symbol to enable load history of C source */
+#define LOADHIST_BUILTIN
+
+#ifdef LOADHIST /* this is just a stupid idea */
+#define LOADHIST_ATTACH(x) \
+ do { if (initialized) Vcurrent_load_list = Fcons (x, Vcurrent_load_list); } \
+ while (0)
+#else /*! LOADHIST */
+# define LOADHIST_ATTACH(x)
+#endif /*! LOADHIST */
+
+/* Defined in marker.c */
+Bytind bi_marker_position (Lisp_Object);
+Bufpos marker_position (Lisp_Object);
+void set_bi_marker_position (Lisp_Object, Bytind);
+void set_marker_position (Lisp_Object, Bufpos);
+void unchain_marker (Lisp_Object);
+Lisp_Object noseeum_copy_marker (Lisp_Object, Lisp_Object);
+Lisp_Object set_marker_restricted (Lisp_Object, Lisp_Object, Lisp_Object);
+#ifdef MEMORY_USAGE_STATS
+int compute_buffer_marker_usage (struct buffer *, struct overhead_stats *);
+#endif
+
+/* Defined in menubar.c */
+extern int popup_menu_up_p;
+extern int menubar_show_keybindings;
+extern int popup_menu_titles;
+
+/* Defined in minibuf.c */
+extern int minibuf_level;
+Charcount scmp_1 (CONST Bufbyte *, CONST Bufbyte *, Charcount, int);
+#define scmp(s1, s2, len) scmp_1 (s1, s2, len, completion_ignore_case)
+extern int completion_ignore_case;
+int regexp_ignore_completion_p (CONST Bufbyte *, Lisp_Object,
+				Bytecount, Bytecount);
+Lisp_Object clear_echo_area (struct frame *, Lisp_Object, int);
+Lisp_Object clear_echo_area_from_print (struct frame *, Lisp_Object, int);
+void echo_area_append (struct frame *, CONST Bufbyte *, Lisp_Object,
+		       Bytecount, Bytecount, Lisp_Object);
+void echo_area_message (struct frame *, CONST Bufbyte *, Lisp_Object,
+			Bytecount, Bytecount, Lisp_Object);
+Lisp_Object echo_area_status (struct frame *);
+int echo_area_active (struct frame *);
+Lisp_Object echo_area_contents (struct frame *);
+void message_internal (CONST Bufbyte *, Lisp_Object, Bytecount, Bytecount);
+void message_append_internal (CONST Bufbyte *, Lisp_Object,
+			      Bytecount, Bytecount);
+void message (CONST char *, ...) PRINTF_ARGS (1, 2);
+void message_append (CONST char *, ...) PRINTF_ARGS (1, 2);
+void message_no_translate (CONST char *, ...) PRINTF_ARGS (1, 2);
+void clear_message (void);
+
+/* Defined in print.c */
+void write_string_to_stdio_stream (FILE *, struct console *,
+				   CONST Bufbyte *, Bytecount, Bytecount,
+				   enum external_data_format);
+void debug_print (Lisp_Object);
+void debug_short_backtrace (int);
+void temp_output_buffer_setup (CONST char *);
+void temp_output_buffer_show (Lisp_Object, Lisp_Object);
+/* NOTE: Do not call this with the data of a Lisp_String.  Use princ.
+ * Note: stream should be defaulted before calling
+ *  (eg Qnil means stdout, not Vstandard_output, etc) */
+void write_c_string (CONST char *, Lisp_Object);
+/* Same goes for this function. */
+void write_string_1 (CONST Bufbyte *, Bytecount, Lisp_Object);
+void print_cons (Lisp_Object, Lisp_Object, int);
+void print_vector (Lisp_Object, Lisp_Object, int);
+void print_string (Lisp_Object, Lisp_Object, int);
+void print_internal (Lisp_Object, Lisp_Object, int);
+void print_symbol (Lisp_Object, Lisp_Object, int);
+void print_float (Lisp_Object, Lisp_Object, int);
+void print_compiled_function (Lisp_Object, Lisp_Object, int);
+extern int print_escape_newlines;
+extern int print_readably;
+Lisp_Object internal_with_output_to_temp_buffer (CONST char *,
+						 Lisp_Object (*) (Lisp_Object),
+						 Lisp_Object, Lisp_Object);
+void float_to_string (char *, double);
+void internal_object_printer (Lisp_Object, Lisp_Object, int);
+
+/* Defined in profile.c */
+void mark_profiling_info (void (*) (Lisp_Object));
+void profile_increase_call_count (Lisp_Object);
+extern int profiling_active;
+extern int profiling_redisplay_flag;
+
+/* Defined in rangetab.c */
+void put_range_table (Lisp_Object, EMACS_INT, EMACS_INT, Lisp_Object);
+int unified_range_table_bytes_needed (Lisp_Object);
+int unified_range_table_bytes_used (void *);
+void unified_range_table_copy_data (Lisp_Object, void *);
+Lisp_Object unified_range_table_lookup (void *, EMACS_INT, Lisp_Object);
+int unified_range_table_nentries (void *);
+void unified_range_table_get_range (void *, int, EMACS_INT *, EMACS_INT *,
+				    Lisp_Object *);
+
+/* Defined in search.c */
+struct re_pattern_buffer;
+struct re_registers;
+Bufpos scan_buffer (struct buffer *, Emchar, Bufpos, Bufpos, int, int *, int);
+Bufpos find_next_newline (struct buffer *, Bufpos, int);
+Bufpos find_next_newline_no_quit (struct buffer *, Bufpos, int);
+Bytind bi_find_next_newline_no_quit (struct buffer *, Bytind, int);
+Bufpos find_before_next_newline (struct buffer *, Bufpos, Bufpos, int);
+struct re_pattern_buffer *compile_pattern (Lisp_Object, struct re_registers *,
+					   char *, int, Error_behavior);
+Bytecount fast_string_match (Lisp_Object,  CONST Bufbyte *,
+			     Lisp_Object, Bytecount,
+			     Bytecount, int, Error_behavior, int);
+Bytecount fast_lisp_string_match (Lisp_Object, Lisp_Object);
+void restore_match_data (void);
+
+/* Defined in signal.c */
+void init_interrupts_late (void);
+extern int dont_check_for_quit;
+void begin_dont_check_for_quit (void);
+void emacs_sleep (int);
+
+/* Defined in sound.c */
+void init_device_sound (struct device *);
+
+/* Defined in specifier.c */
+Lisp_Object specifier_instance (Lisp_Object, Lisp_Object, Lisp_Object,
+				Error_behavior, int, int, Lisp_Object);
+Lisp_Object specifier_instance_no_quit (Lisp_Object, Lisp_Object, Lisp_Object,
+					Error_behavior, int, Lisp_Object);
+
+/* Defined in symbols.c */
+int hash_string (CONST Bufbyte *, Bytecount);
+Lisp_Object intern (CONST char *);
+Lisp_Object oblookup (Lisp_Object, CONST Bufbyte *, Bytecount);
+void map_obarray (Lisp_Object, int (*) (Lisp_Object, void *), void *);
+Lisp_Object indirect_function (Lisp_Object, int);
+Lisp_Object symbol_value_in_buffer (Lisp_Object, Lisp_Object);
+void kill_buffer_local_variables (struct buffer *);
+int symbol_value_buffer_local_info (Lisp_Object, struct buffer *);
+Lisp_Object find_symbol_value (Lisp_Object);
+Lisp_Object find_symbol_value_quickly (Lisp_Object, int);
+Lisp_Object top_level_value (Lisp_Object);
+
+/* Defined in syntax.c */
+int scan_words (struct buffer *, int, int);
+
+/* Defined in undo.c */
+Lisp_Object truncate_undo_list (Lisp_Object, int, int);
+void record_extent (Lisp_Object, int);
+void record_insert (struct buffer *, Bufpos, Charcount);
+void record_delete (struct buffer *, Bufpos, Charcount);
+void record_change (struct buffer *, Bufpos, Charcount);
+
+/* Defined in unex*.c */
+int unexec (char *, char *, uintptr_t, uintptr_t, uintptr_t);
+#ifdef RUN_TIME_REMAP
+int run_time_remap (char *);
+#endif
+
+/* Defined in vm-limit.c */
+void memory_warnings (void *, void (*) (CONST char *));
+
+/* Defined in window.c */
+Lisp_Object save_window_excursion_unwind (Lisp_Object);
+Lisp_Object display_buffer (Lisp_Object, Lisp_Object, Lisp_Object);
+
+/* The following were machine generated 19980312 */
+
+
+EXFUN (Faccept_process_output, 3);
+EXFUN (Fadd1, 1);
+EXFUN (Fadd_spec_to_specifier, 5);
+EXFUN (Fadd_timeout, 4);
+EXFUN (Fappend, MANY);
+EXFUN (Fapply, MANY);
+EXFUN (Faref, 2);
+EXFUN (Faset, 3);
+EXFUN (Fassoc, 2);
+EXFUN (Fassq, 2);
+EXFUN (Fbacktrace, 2);
+EXFUN (Fbeginning_of_line, 2);
+EXFUN (Fbobp, 1);
+EXFUN (Fbolp, 1);
+EXFUN (Fboundp, 1);
+EXFUN (Fbuffer_substring, 3);
+EXFUN (Fbuilt_in_variable_type, 1);
+EXFUN (Fbyte_code, 3);
+EXFUN (Fcall_interactively, 3);
+EXFUN (Fcanonicalize_lax_plist, 2);
+EXFUN (Fcanonicalize_plist, 2);
+EXFUN (Fcar, 1);
+EXFUN (Fcar_safe, 1);
+EXFUN (Fcdr, 1);
+EXFUN (Fchar_after, 2);
+EXFUN (Fchar_to_string, 1);
+EXFUN (Fcheck_valid_plist, 1);
+EXFUN (Fclear_range_table, 1);
+EXFUN (Fclrhash, 1);
+EXFUN (Fcoding_category_list, 0);
+EXFUN (Fcoding_category_system, 1);
+EXFUN (Fcoding_priority_list, 0);
+EXFUN (Fcoding_system_charset, 2);
+EXFUN (Fcoding_system_doc_string, 1);
+EXFUN (Fcoding_system_list, 0);
+EXFUN (Fcoding_system_name, 1);
+EXFUN (Fcoding_system_p, 1);
+EXFUN (Fcoding_system_property, 2);
+EXFUN (Fcoding_system_type, 1);
+EXFUN (Fcommand_execute, 3);
+EXFUN (Fcommandp, 1);
+EXFUN (Fcompiled_function_domain, 1);
+EXFUN (Fconcat, MANY);
+EXFUN (Fcons, 2);
+EXFUN (Fcopy_alist, 1);
+EXFUN (Fcopy_coding_system, 2);
+EXFUN (Fcopy_event, 2);
+EXFUN (Fcopy_marker, 2);
+EXFUN (Fcopy_sequence, 1);
+EXFUN (Fcopy_tree, 2);
+EXFUN (Fcurrent_window_configuration, 1);
+EXFUN (Fdecode_big5_char, 1);
+EXFUN (Fdecode_coding_region, 4);
+EXFUN (Fdecode_shift_jis_char, 1);
+EXFUN (Fdefault_boundp, 1);
+EXFUN (Fdefault_value, 1);
+EXFUN (Fdefine_key, 3);
+EXFUN (Fdelete_region, 3);
+EXFUN (Fdelq, 2);
+EXFUN (Fdestructive_alist_to_plist, 1);
+EXFUN (Fdetect_coding_region, 3);
+EXFUN (Fdgettext, 2);
+EXFUN (Fding, 3);
+EXFUN (Fdirectory_file_name, 1);
+EXFUN (Fdisable_timeout, 1);
+EXFUN (Fdiscard_input, 0);
+EXFUN (Fdispatch_event, 1);
+EXFUN (Fdisplay_error, 2);
+EXFUN (Fdo_auto_save, 2);
+EXFUN (Fdowncase, 2);
+EXFUN (Felt, 2);
+EXFUN (Fencode_big5_char, 1);
+EXFUN (Fencode_coding_region, 4);
+EXFUN (Fencode_shift_jis_char, 1);
+EXFUN (Fend_of_line, 2);
+EXFUN (Fenqueue_eval_event, 2);
+EXFUN (Feobp, 1);
+EXFUN (Feolp, 1);
+EXFUN (Fequal, 2);
+EXFUN (Ferror_message_string, 1);
+EXFUN (Feval, 1);
+EXFUN (Fevent_to_character, 4);
+EXFUN (Fexecute_kbd_macro, 2);
+EXFUN (Fexpand_abbrev, 0);
+EXFUN (Fexpand_file_name, 2);
+EXFUN (Fextent_at, 5);
+EXFUN (Fextent_property, 3);
+EXFUN (Ffboundp, 1);
+EXFUN (Ffile_accessible_directory_p, 1);
+EXFUN (Ffile_directory_p, 1);
+EXFUN (Ffile_executable_p, 1);
+EXFUN (Ffile_exists_p, 1);
+EXFUN (Ffile_name_absolute_p, 1);
+EXFUN (Ffile_name_as_directory, 1);
+EXFUN (Ffile_name_directory, 1);
+EXFUN (Ffile_name_nondirectory, 1);
+EXFUN (Ffile_readable_p, 1);
+EXFUN (Ffile_symlink_p, 1);
+EXFUN (Ffile_truename, 2);
+EXFUN (Ffind_coding_system, 1);
+EXFUN (Ffind_file_name_handler, 2);
+EXFUN (Ffollowing_char, 1);
+EXFUN (Fformat, MANY);
+EXFUN (Fforward_char, 2);
+EXFUN (Fforward_line, 2);
+EXFUN (Ffset, 2);
+EXFUN (Ffuncall, MANY);
+EXFUN (Fgeq, 2);
+EXFUN (Fget, 3);
+EXFUN (Fget_buffer_process, 1);
+EXFUN (Fget_coding_system, 1);
+EXFUN (Fget_process, 1);
+EXFUN (Fget_range_table, 3);
+EXFUN (Fgethash, 3);
+EXFUN (Fgettext, 1);
+EXFUN (Fgoto_char, 2);
+EXFUN (Fgtr, 2);
+EXFUN (Fhashtablep, 1);
+EXFUN (Findent_to, 3);
+EXFUN (Findirect_function, 1);
+EXFUN (Finsert, MANY);
+EXFUN (Finsert_buffer_substring, 3);
+EXFUN (Finsert_char, 4);
+EXFUN (Finsert_file_contents_internal, 7);
+EXFUN (Finteractive_p, 0);
+EXFUN (Fintern, 2);
+EXFUN (Fintern_soft, 2);
+EXFUN (Fkey_description, 1);
+EXFUN (Fkill_emacs, 1);
+EXFUN (Fkill_local_variable, 1);
+EXFUN (Flax_plist_get, 3);
+EXFUN (Flax_plist_remprop, 2);
+EXFUN (Flength, 1);
+EXFUN (Fleq, 2);
+EXFUN (Flist, MANY);
+EXFUN (Flistp, 1);
+EXFUN (Flss, 2);
+EXFUN (Fmake_byte_code, MANY);
+EXFUN (Fmake_coding_system, 4);
+EXFUN (Fmake_glyph_internal, 1);
+EXFUN (Fmake_hashtable, 2);
+EXFUN (Fmake_list, 2);
+EXFUN (Fmake_marker, 0);
+EXFUN (Fmake_range_table, 0);
+EXFUN (Fmake_sparse_keymap, 1);
+EXFUN (Fmake_string, 2);
+EXFUN (Fmake_symbol, 1);
+EXFUN (Fmake_vector, 2);
+EXFUN (Fmapcar, 2);
+EXFUN (Fmarker_buffer, 1);
+EXFUN (Fmarker_position, 1);
+EXFUN (Fmatch_beginning, 1);
+EXFUN (Fmatch_end, 1);
+EXFUN (Fmax, MANY);
+EXFUN (Fmember, 2);
+EXFUN (Fmemq, 2);
+EXFUN (Fmin, MANY);
+EXFUN (Fminus, MANY);
+EXFUN (Fnarrow_to_region, 3);
+EXFUN (Fnconc, MANY);
+EXFUN (Fnext_event, 2);
+EXFUN (Fnreverse, 1);
+EXFUN (Fnthcdr, 2);
+EXFUN (Fnumber_to_string, 1);
+EXFUN (Fold_assq, 2);
+EXFUN (Fold_equal, 2);
+EXFUN (Fold_member, 2);
+EXFUN (Fold_memq, 2);
+EXFUN (Fplist_get, 3);
+EXFUN (Fplist_put, 3);
+EXFUN (Fplus, MANY);
+EXFUN (Fpoint, 1);
+EXFUN (Fpoint_marker, 2);
+EXFUN (Fpoint_max, 1);
+EXFUN (Fpoint_min, 1);
+EXFUN (Fpreceding_char, 1);
+EXFUN (Fprefix_numeric_value, 1);
+EXFUN (Fprin1, 2);
+EXFUN (Fprin1_to_string, 2);
+EXFUN (Fprinc, 2);
+EXFUN (Fprint, 2);
+EXFUN (Fprocess_status, 1);
+EXFUN (Fprogn, UNEVALLED);
+EXFUN (Fprovide, 1);
+EXFUN (Fpurecopy, 1);
+EXFUN (Fput, 3);
+EXFUN (Fput_range_table, 4);
+EXFUN (Fput_text_property, 5);
+EXFUN (Fputhash, 3);
+EXFUN (Fquo, MANY);
+EXFUN (Frassq, 2);
+EXFUN (Fread, 1);
+EXFUN (Fread_key_sequence, 3);
+EXFUN (Freally_free, 1);
+EXFUN (Frem, 2);
+EXFUN (Fremassq, 2);
+EXFUN (Fselected_frame, 1);
+EXFUN (Fset, 2);
+EXFUN (Fset_coding_category_system, 2);
+EXFUN (Fset_coding_priority_list, 1);
+EXFUN (Fset_default, 2);
+EXFUN (Fset_marker, 3);
+EXFUN (Fset_standard_case_table, 1);
+EXFUN (Fsetcar, 2);
+EXFUN (Fsetcdr, 2);
+EXFUN (Fsignal, 2);
+EXFUN (Fsit_for, 2);
+EXFUN (Fskip_chars_backward, 3);
+EXFUN (Fskip_chars_forward, 3);
+EXFUN (Fsleep_for, 1);
+EXFUN (Fsort, 2);
+EXFUN (Fspecifier_spec_list, 4);
+EXFUN (Fstring_equal, 2);
+EXFUN (Fstring_lessp, 2);
+EXFUN (Fstring_match, 4);
+EXFUN (Fsub1, 1);
+EXFUN (Fsubr_max_args, 1);
+EXFUN (Fsubr_min_args, 1);
+EXFUN (Fsubsidiary_coding_system, 2);
+EXFUN (Fsubstitute_command_keys, 1);
+EXFUN (Fsubstitute_in_file_name, 1);
+EXFUN (Fsubstring, 3);
+EXFUN (Fsymbol_function, 1);
+EXFUN (Fsymbol_name, 1);
+EXFUN (Fsymbol_plist, 1);
+EXFUN (Fsymbol_value, 1);
+EXFUN (Fthrow, 2);
+EXFUN (Ftimes, MANY);
+EXFUN (Ftruncate, 1);
+EXFUN (Fundo_boundary, 0);
+EXFUN (Funhandled_file_name_directory, 1);
+EXFUN (Funlock_buffer, 0);
+EXFUN (Fupcase, 2);
+EXFUN (Fupcase_initials, 2);
+EXFUN (Fupcase_initials_region, 3);
+EXFUN (Fupcase_region, 3);
+EXFUN (Fuser_login_name, 1);
+EXFUN (Fvector, MANY);
+EXFUN (Fverify_visited_file_modtime, 1);
+EXFUN (Fvertical_motion, 2);
+EXFUN (Fwiden, 1);
+
+
+extern Lisp_Object Q_style, Qactually_requested, Qafter, Qall, Qand;
+extern Lisp_Object Qarith_error, Qarrayp, Qassoc, Qat, Qautodetect, Qautoload;
+extern Lisp_Object Qbackground, Qbackground_pixmap, Qbad_variable, Qbefore;
+extern Lisp_Object Qbeginning_of_buffer, Qbig5, Qbinary, Qbitp, Qblinking;
+extern Lisp_Object Qboolean, Qbottom, Qbuffer, Qbuffer_file_coding_system;
+extern Lisp_Object Qbuffer_glyph_p, Qbuffer_live_p, Qbuffer_read_only, Qbutton;
+extern Lisp_Object Qbyte_code, Qcall_interactively, Qcategory;
+extern Lisp_Object Qcategory_designator_p, Qcategory_table_value_p, Qccl, Qcdr;
+extern Lisp_Object Qchannel, Qchar, Qchar_or_string_p, Qcharacter, Qcharacterp;
+extern Lisp_Object Qchars, Qcharset_g0, Qcharset_g1, Qcharset_g2, Qcharset_g3;
+extern Lisp_Object Qcircular_property_list, Qcoding_system_error;
+extern Lisp_Object Qcoding_system_p, Qcolor, Qcolor_pixmap_image_instance_p;
+extern Lisp_Object Qcolumns, Qcommand, Qcommandp, Qcompletion_ignore_case;
+extern Lisp_Object Qconsole, Qconsole_live_p, Qconst_specifier, Qcr, Qcritical;
+extern Lisp_Object Qcrlf, Qctext, Qcurrent_menubar;
+extern Lisp_Object Qcyclic_variable_indirection, Qdata, Qdead, Qdecode;
+extern Lisp_Object Qdefault, Qdefun, Qdelete, Qdelq, Qdevice, Qdevice_live_p;
+extern Lisp_Object Qdim, Qdimension, Qdisabled, Qdisplay, Qdisplay_table;
+extern Lisp_Object Qdnd_data, Qdoc_string, Qdomain_error, Qdynarr_overhead;
+extern Lisp_Object Qempty, Qencode, Qend_of_buffer, Qend_of_file, Qend_open;
+extern Lisp_Object Qeol_cr, Qeol_crlf, Qeol_lf, Qeol_type, Qeq, Qeql, Qequal;
+extern Lisp_Object Qerror, Qerror_conditions, Qerror_message, Qescape_quoted;
+extern Lisp_Object Qeval, Qevent_live_p, Qexit, Qextent_live_p, Qextents;
+extern Lisp_Object Qexternal_debugging_output, Qface, Qfeaturep, Qfile_error;
+extern Lisp_Object Qfont, Qforce_g0_on_output, Qforce_g1_on_output;
+extern Lisp_Object Qforce_g2_on_output, Qforce_g3_on_output, Qforeground;
+extern Lisp_Object Qformat, Qframe, Qframe_live_p, Qfunction, Qgap_overhead;
+extern Lisp_Object Qgeneric, Qgeometry, Qglobal, Qheight, Qhighlight;
+extern Lisp_Object Qicon_glyph_p, Qid, Qidentity, Qimage, Qinfo, Qinherit;
+extern Lisp_Object Qinhibit_quit, Qinhibit_read_only;
+extern Lisp_Object Qinput_charset_conversion, Qinteger;
+extern Lisp_Object Qinteger_char_or_marker_p, Qinteger_or_char_p;
+extern Lisp_Object Qinteger_or_marker_p, Qintegerp, Qinteractive, Qinternal;
+extern Lisp_Object Qinvalid_function, Qinvalid_read_syntax, Qio_error;
+extern Lisp_Object Qiso2022, Qkey, Qkey_assoc, Qkeymap, Qlambda, Qleft, Qlf;
+extern Lisp_Object Qlist, Qlistp, Qload, Qlock_shift, Qmacro, Qmagic;
+extern Lisp_Object Qmalformed_property_list, Qmalloc_overhead, Qmark, Qmarkers;
+extern Lisp_Object Qmax, Qmemory, Qmessage, Qminus, Qmnemonic, Qmodifiers;
+extern Lisp_Object Qmono_pixmap_image_instance_p, Qmotion;
+extern Lisp_Object Qmouse_leave_buffer_hook, Qmswindows, Qname, Qnas, Qnatnump;
+extern Lisp_Object Qnil, Qno_ascii_cntl, Qno_ascii_eol, Qno_catch;
+extern Lisp_Object Qno_conversion, Qno_iso6429, Qnone, Qnot, Qnothing;
+extern Lisp_Object Qnothing_image_instance_p, Qnotice;
+extern Lisp_Object Qnumber_char_or_marker_p, Qnumber_or_marker_p, Qnumberp;
+extern Lisp_Object Qobject, Qold_assoc, Qold_delete, Qold_delq, Qold_rassoc;
+extern Lisp_Object Qold_rassq, Qonly, Qor, Qother, Qoutput_charset_conversion;
+extern Lisp_Object Qoverflow_error, Qpath, Qpoint, Qpointer, Qpointer_glyph_p;
+extern Lisp_Object Qpointer_image_instance_p, Qpost_read_conversion;
+extern Lisp_Object Qpre_write_conversion, Qprint, Qprint_length;
+extern Lisp_Object Qprint_string_length, Qprocess, Qprogn, Qprovide, Qquit;
+extern Lisp_Object Qquote, Qrange_error, Qrassoc, Qrassq, Qread_char;
+extern Lisp_Object Qread_from_minibuffer, Qreally_early_error_handler;
+extern Lisp_Object Qregion_beginning, Qregion_end, Qrequire, Qresource;
+extern Lisp_Object Qreturn, Qreverse, Qright, Qrun_hooks, Qsans_modifiers;
+extern Lisp_Object Qsave_buffers_kill_emacs, Qsearch, Qself_insert_command;
+extern Lisp_Object Qsequencep, Qsetting_constant, Qseven, Qshift_jis, Qshort;
+extern Lisp_Object Qsignal, Qsimple, Qsingularity_error, Qsize, Qspace;
+extern Lisp_Object Qspecifier, Qstandard_input, Qstandard_output, Qstart_open;
+extern Lisp_Object Qstream, Qstring, Qstring_lessp;
+extern Lisp_Object Qsubwindow_image_instance_p, Qsymbol, Qsyntax, Qt, Qtest;
+extern Lisp_Object Qtext, Qtext_image_instance_p, Qtimeout, Qtimestamp;
+extern Lisp_Object Qtoolbar, Qtop, Qtop_level, Qtrue_list_p, Qtty, Qtype;
+extern Lisp_Object Qunbound, Qundecided, Qundefined, Qunderflow_error;
+extern Lisp_Object Qunderline, Qunimplemented, Qvalue_assoc, Qvalues;
+extern Lisp_Object Qvariable_documentation, Qvariable_domain, Qvector;
+extern Lisp_Object Qvoid_function, Qvoid_variable, Qwarning, Qwidth, Qwindow;
+extern Lisp_Object Qwindow_live_p, Qwindow_system, Qwrong_number_of_arguments;
+extern Lisp_Object Qwrong_type_argument, Qx, Qy, Qyes_or_no_p;
+extern Lisp_Object Vactivate_menubar_hook, Vascii_canon_table;
+extern Lisp_Object Vascii_downcase_table, Vascii_eqv_table;
+extern Lisp_Object Vascii_upcase_table, Vautoload_queue, Vbinary_process_input;
+extern Lisp_Object Vbinary_process_output, Vblank_menubar;
+extern Lisp_Object Vcharset_ascii, Vcharset_composite, Vcharset_control_1;
+extern Lisp_Object Vcoding_system_for_read, Vcoding_system_for_write;
+extern Lisp_Object Vcoding_system_hashtable, Vcommand_history;
+extern Lisp_Object Vcommand_line_args, Vconfigure_info_directory;
+extern Lisp_Object Vconsole_list, Vcontrolling_terminal;
+extern Lisp_Object Vcurrent_compiled_function_annotation, Vcurrent_load_list;
+extern Lisp_Object Vcurrent_mouse_event, Vcurrent_prefix_arg, Vdata_directory;
+extern Lisp_Object Vdisabled_command_hook, Vdoc_directory, Vinternal_doc_file_name;
+extern Lisp_Object Vecho_area_buffer, Vemacs_major_version;
+extern Lisp_Object Vemacs_minor_version, Vexec_directory, Vexec_path;
+extern Lisp_Object Vexecuting_macro, Vfeatures, Vfile_domain;
+extern Lisp_Object Vfile_name_coding_system, Vinhibit_quit;
+extern Lisp_Object Vinvocation_directory, Vinvocation_name;
+extern Lisp_Object Vkeyboard_coding_system, Vlast_command, Vlast_command_char;
+extern Lisp_Object Vlast_command_event, Vlast_input_event;
+extern Lisp_Object Vload_file_name_internal;
+extern Lisp_Object Vload_file_name_internal_the_purecopy, Vload_history;
+extern Lisp_Object Vload_path, Vmark_even_if_inactive, Vmenubar_configuration;
+extern Lisp_Object Vminibuf_preprompt, Vminibuf_prompt, Vminibuffer_zero;
+extern Lisp_Object Vmirror_ascii_canon_table, Vmirror_ascii_downcase_table;
+extern Lisp_Object Vmirror_ascii_eqv_table, Vmirror_ascii_upcase_table;
+extern Lisp_Object Vmswindows_downcase_file_names;
+extern Lisp_Object Vmswindows_get_true_file_attributes, Vobarray;
+extern Lisp_Object Vprint_length, Vprint_level, Vprocess_environment;
+extern Lisp_Object Vpure_uninterned_symbol_table, Vquit_flag;
+extern Lisp_Object Vrecent_keys_ring, Vshell_file_name, Vsite_directory;
+extern Lisp_Object Vstandard_input, Vstandard_output, Vstdio_str;
+extern Lisp_Object Vsynchronous_sounds, Vsystem_name, Vterminal_coding_system;
+extern Lisp_Object Vthis_command_keys, Vunread_command_event;
+extern Lisp_Object Vwin32_generate_fake_inodes, Vwin32_pipe_read_delay;
+extern Lisp_Object Vx_initial_argv_list;
+
 
 #endif /* _XEMACS_LISP_H_ */

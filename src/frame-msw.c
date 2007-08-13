@@ -25,7 +25,7 @@ Boston, MA 02111-1307, USA.  */
 
    Ultimately based on FSF.
    Substantially rewritten for XEmacs by Ben Wing.
-   Rewritten for mswindows by Jonathan Harris, November 1997 for 20.4.
+   Rewritten for mswindows by Jonathan Harris, November 1997 for 21.0.
  */
 
 #include <config.h>
@@ -33,6 +33,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "buffer.h"
 #include "console-msw.h"
+#include "glyphs-msw.h"
 #include "events.h"
 #include "faces.h"
 #include "frame.h"
@@ -325,6 +326,42 @@ mswindows_frame_iconified_p (struct frame *f)
 }
 
 static void
+mswindows_set_frame_icon (struct frame *f)
+{
+  if (IMAGE_INSTANCEP (f->icon)
+      && IMAGE_INSTANCE_PIXMAP_TYPE_P (XIMAGE_INSTANCE (f->icon)))
+    {
+      if (!XIMAGE_INSTANCE_MSWINDOWS_ICON (f->icon))
+	{
+	  ICONINFO x_icon;
+
+	  x_icon.fIcon=TRUE;
+	  x_icon.xHotspot=XIMAGE_INSTANCE_PIXMAP_HOTSPOT_X (f->icon);
+	  x_icon.yHotspot=XIMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (f->icon);
+	  x_icon.hbmMask=XIMAGE_INSTANCE_MSWINDOWS_BITMAP (f->icon);
+	  x_icon.hbmColor=XIMAGE_INSTANCE_MSWINDOWS_MASK (f->icon);
+
+	  XIMAGE_INSTANCE_MSWINDOWS_ICON (f->icon)=
+	    CreateIconIndirect (&x_icon);
+	}
+      
+      SetClassLong (FRAME_MSWINDOWS_HANDLE (f), GCL_HICON, 
+		    (LONG) XIMAGE_INSTANCE_MSWINDOWS_ICON (f->icon));
+    }
+}
+
+static void
+mswindows_set_frame_pointer (struct frame *f)
+{
+#if 0
+  XDefineCursor (XtDisplay (FRAME_X_TEXT_WIDGET (f)),
+		 XtWindow (FRAME_X_TEXT_WIDGET (f)),
+		 XIMAGE_INSTANCE_X_CURSOR (f->pointer));
+  XSync (XtDisplay (FRAME_X_TEXT_WIDGET (f)), 0);
+#endif
+}
+
+static void
 mswindows_raise_frame (struct frame *f)
 {
   BringWindowToTop (FRAME_MSWINDOWS_HANDLE(f));
@@ -530,8 +567,8 @@ console_type_create_frame_mswindows (void)
   CONSOLE_HAS_METHOD (mswindows, frame_visible_p);
 /*  CONSOLE_HAS_METHOD (mswindows, frame_totally_visible_p); */
   CONSOLE_HAS_METHOD (mswindows, frame_iconified_p);
-/*  CONSOLE_HAS_METHOD (mswindows, set_frame_pointer); */
-/*  CONSOLE_HAS_METHOD (mswindows, set_frame_icon); */
+  CONSOLE_HAS_METHOD (mswindows, set_frame_pointer); 
+  CONSOLE_HAS_METHOD (mswindows, set_frame_icon); 
   CONSOLE_HAS_METHOD (mswindows, get_frame_parent);
   CONSOLE_HAS_METHOD (mswindows, update_frame_external_traits);
 }
@@ -539,15 +576,6 @@ console_type_create_frame_mswindows (void)
 void
 syms_of_frame_mswindows (void)
 {
-#if 0	/* XXX these are in general.c */
-  defsymbol (&Qname, "name");
-  defsymbol (&Qheight, "height");
-  defsymbol (&Qwidth, "width");
-  defsymbol (&Qtop, "top");
-  defsymbol (&Qleft, "left");
-#endif
-  defsymbol (&Qinitially_unmapped, "initially-unmapped");
-  defsymbol (&Qpopup, "popup");
 }
 
 void

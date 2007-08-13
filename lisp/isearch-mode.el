@@ -283,6 +283,7 @@ thing searched for.")
 (defvar isearch-other-end nil)	; Start (end) of match if forward (backward).
 (defvar isearch-wrapped nil)	; Searching restarted from the top (bottom).
 (defvar isearch-barrier 0)
+(defvar isearch-just-started nil)
 (defvar isearch-buffer nil)	; the buffer we've frobbed the keymap of
 
 (defvar isearch-case-fold-search nil)
@@ -453,6 +454,7 @@ is treated as a regexp.  See \\[isearch-forward] for more info."
 					     (* 4 search-slow-window-lines)))
 	  isearch-other-end nil
 	  isearch-small-window nil
+	  isearch-just-started t
 
 	  isearch-opoint (point)
 	  isearch-window-configuration (current-window-configuration)
@@ -802,22 +804,24 @@ Use `isearch-exit' to quit without signalling."
     (setq isearch-forward (not isearch-forward)))
 
   (setq isearch-barrier (point)) ; For subsequent \| if regexp.
-  (setq isearch-success t)
-  (or (equal isearch-string "")
+  (if (equal isearch-string "")
+      (setq isearch-success t)
+    (if (and (equal (match-end 0) (match-beginning 0))
+	     isearch-success
+	     (not isearch-just-started))
 	;; If repeating a search that found
 	;; an empty string, ensure we advance.
-	(if (equal (match-end 0) (match-beginning 0))
-	    (if (if isearch-forward (eobp) (bobp))
-		;; nowhere to advance to, so fail (and wrap next time)
-		(progn
-		  (setq isearch-success nil)
-		  (and executing-kbd-macro
-		       (not defining-kbd-macro)
-		       (isearch-done))
-		  (ding nil 'isearch-failed))
-	      (forward-char (if isearch-forward 1 -1))
-	      (isearch-search))
-	  (isearch-search)))
+	(if (if isearch-forward (eobp) (bobp))
+	    ;; nowhere to advance to, so fail (and wrap next time)
+	    (progn
+	      (setq isearch-success nil)
+	      (and executing-kbd-macro
+		   (not defining-kbd-macro)
+		   (isearch-done))
+	      (ding nil 'isearch-failed))
+	  (forward-char (if isearch-forward 1 -1))
+	  (isearch-search))
+      (isearch-search)))
   (isearch-push-state)
   (isearch-update))
 
@@ -1509,6 +1513,7 @@ currently matches the search-string.")
 		     (t
 		      (if isearch-forward 'search-forward 'search-backward)))
 	       isearch-string nil t))
+	(setq isearch-just-started nil)
 	(if isearch-success
 	    (setq isearch-other-end
 		  (if isearch-forward (match-beginning 0) (match-end 0)))))

@@ -220,15 +220,45 @@ DECLARE_LRECORD (coding_system, struct Lisp_Coding_System);
   CODING_SYSTEM_CCL_ENCODE (XCODING_SYSTEM (codesys))
 #endif /* MULE */
 
-extern Lisp_Object Qbuffer_file_coding_system, Qcoding_system_error;
+EXFUN (Fcoding_category_list, 0);
+EXFUN (Fcoding_category_system, 1);
+EXFUN (Fcoding_priority_list, 0);
+EXFUN (Fcoding_system_charset, 2);
+EXFUN (Fcoding_system_doc_string, 1);
+EXFUN (Fcoding_system_list, 0);
+EXFUN (Fcoding_system_name, 1);
+EXFUN (Fcoding_system_p, 1);
+EXFUN (Fcoding_system_property, 2);
+EXFUN (Fcoding_system_type, 1);
+EXFUN (Fcopy_coding_system, 2);
+EXFUN (Fdecode_big5_char, 1);
+EXFUN (Fdecode_coding_region, 4);
+EXFUN (Fdecode_shift_jis_char, 1);
+EXFUN (Fdetect_coding_region, 3);
+EXFUN (Fencode_big5_char, 1);
+EXFUN (Fencode_coding_region, 4);
+EXFUN (Fencode_shift_jis_char, 1);
+EXFUN (Ffind_coding_system, 1);
+EXFUN (Fget_coding_system, 1);
+EXFUN (Fmake_coding_system, 4);
+EXFUN (Fset_coding_category_system, 2);
+EXFUN (Fset_coding_priority_list, 1);
+EXFUN (Fsubsidiary_coding_system, 2);
 
-extern Lisp_Object Vkeyboard_coding_system;
+extern Lisp_Object Qbig5, Qbuffer_file_coding_system, Qccl, Qcharset_g0;
+extern Lisp_Object Qcharset_g1, Qcharset_g2, Qcharset_g3, Qcoding_system_error;
+extern Lisp_Object Qcoding_system_p, Qcr, Qcrlf, Qctext, Qdecode, Qencode;
+extern Lisp_Object Qeol_cr, Qeol_crlf, Qeol_lf, Qeol_type, Qescape_quoted;
+extern Lisp_Object Qforce_g0_on_output, Qforce_g1_on_output;
+extern Lisp_Object Qforce_g2_on_output, Qforce_g3_on_output;
+extern Lisp_Object Qinput_charset_conversion, Qiso2022, Qlf, Qlock_shift;
+extern Lisp_Object Qmnemonic, Qno_ascii_cntl, Qno_ascii_eol, Qno_conversion;
+extern Lisp_Object Qno_iso6429, Qoutput_charset_conversion;
+extern Lisp_Object Qpost_read_conversion, Qpre_write_conversion, Qseven;
+extern Lisp_Object Qshift_jis, Qshort, Vcoding_system_for_read;
+extern Lisp_Object Vcoding_system_for_write, Vcoding_system_hashtable;
+extern Lisp_Object Vfile_name_coding_system, Vkeyboard_coding_system;
 extern Lisp_Object Vterminal_coding_system;
-extern Lisp_Object Vcoding_system_for_read;
-extern Lisp_Object Vcoding_system_for_write;
-extern Lisp_Object Vpathname_coding_system;
-
-extern Lisp_Object Qescape_quoted;
 
 /* Flags indicating current state while converting code. */
 
@@ -454,22 +484,22 @@ do {							\
 } while (0)
 #endif /* MULE */
 
-extern Lisp_Object make_decoding_input_stream (Lstream *stream,
-					       Lisp_Object codesys);
-extern Lisp_Object make_encoding_input_stream (Lstream *stream,
-					       Lisp_Object codesys);
-extern Lisp_Object make_decoding_output_stream (Lstream *stream,
-						Lisp_Object codesys);
-extern Lisp_Object make_encoding_output_stream (Lstream *stream,
-						Lisp_Object codesys);
-extern Lisp_Object decoding_stream_coding_system (Lstream *stream);
-extern Lisp_Object encoding_stream_coding_system (Lstream *stream);
-extern void set_decoding_stream_coding_system (Lstream *stream,
-					       Lisp_Object codesys);
-extern void set_encoding_stream_coding_system (Lstream *stream,
-					       Lisp_Object codesys);
-extern void determine_real_coding_system (Lstream *stream, Lisp_Object *codesys_in_out,
-					  enum eol_type *eol_type_in_out);
+Lisp_Object make_decoding_input_stream (Lstream *stream,
+					Lisp_Object codesys);
+Lisp_Object make_encoding_input_stream (Lstream *stream,
+					Lisp_Object codesys);
+Lisp_Object make_decoding_output_stream (Lstream *stream,
+					 Lisp_Object codesys);
+Lisp_Object make_encoding_output_stream (Lstream *stream,
+					 Lisp_Object codesys);
+Lisp_Object decoding_stream_coding_system (Lstream *stream);
+Lisp_Object encoding_stream_coding_system (Lstream *stream);
+void set_decoding_stream_coding_system (Lstream *stream,
+					Lisp_Object codesys);
+void set_encoding_stream_coding_system (Lstream *stream,
+					Lisp_Object codesys);
+void determine_real_coding_system (Lstream *stream, Lisp_Object *codesys_in_out,
+				   enum eol_type *eol_type_in_out);
 
 
 #ifndef MULE

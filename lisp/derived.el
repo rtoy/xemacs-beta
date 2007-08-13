@@ -216,7 +216,7 @@ Use the `derived-mode-parent' property of the symbol to trace backwards."
 
 ;; XEmacs -- don't autoload
 (defun derived-mode-init-mode-variables (mode)
-  "Initialise variables for a new mode. 
+  "Initialize variables for a new mode. 
 Right now, if they don't already exist, set up a blank keymap, an
 empty syntax table, and an empty abbrev table -- these will be merged
 the first time the mode is used."

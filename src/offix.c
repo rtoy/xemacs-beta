@@ -51,10 +51,10 @@ static XColor	        Black,White;    /* For the cursors              */
 #include "offix-cursors.h"
 
 /*=============================================================== CursorData
- * CursorData contains all the data for the cursors bitmaps 
- *==========================================================================*/ 
+ * CursorData contains all the data for the cursors bitmaps
+ *==========================================================================*/
 typedef struct
-{	
+{
   int	Width,Height;
   unsigned char	*ImageData,*MaskData;
   int	HotSpotX,HotSpotY;
@@ -81,11 +81,11 @@ static CursorData DndCursor[DndEND]={
   { url_width,url_height,url_bits,url_mask_bits,
     url_x_hot,url_y_hot },
   { mime_width,mime_height,mime_bits,mime_mask_bits,
-    mime_x_hot,mime_y_hot }  
+    mime_x_hot,mime_y_hot }
 };
 
 /* Local prototypes */
-int  DndIsDragging(void);
+int DndIsDragging(void);
 void DndStartAction(Widget widget,
 		    XtPointer data,
 		    XEvent *event,
@@ -101,7 +101,8 @@ void DndPropertyHandler(Widget widget,
  * released. After that send a Drag And Drop ClientMessage event. Returns
  * non-zero if a drop did take place.
  *===========================================================================*/
-int DndHandleDragging(Widget widget,XEvent *event)
+int
+DndHandleDragging(Widget widget,XEvent *event)
 {
   XEvent Event;
   Window root	= RootWindowOfScreen(XtScreenOfObject(widget));
@@ -118,7 +119,7 @@ int DndHandleDragging(Widget widget,XEvent *event)
 	       GrabModeSync,GrabModeAsync,root,
 	       DndCursor[DataType].CursorID,
 	       CurrentTime);
-  
+
   /* Wait for button release */
   Dragging=1; RootFlag=0;
   while(Dragging)
@@ -153,7 +154,7 @@ int DndHandleDragging(Widget widget,XEvent *event)
     }
   else
     Target=DispatchWindow=XtWindow(MainWidget);
-  
+
   /* Now build the event structure */
   DropX=Event.xbutton.x_root;
   DropY=Event.xbutton.y_root;
@@ -167,13 +168,13 @@ int DndHandleDragging(Widget widget,XEvent *event)
   Event.xclient.data.l[2]      	= (long)XtWindow(widget);
   Event.xclient.data.l[3]      	= DropX + 65536L*(long)DropY;
   Event.xclient.data.l[4]      	= 1;
-  
+
   /* Send the drop message */
   XSendEvent(dpy,DispatchWindow,True,NoEventMask,&Event);
   /* Send an old style version of the message just in case */
   Event.xclient.message_type = OldDndProtocol;
   XSendEvent(dpy,DispatchWindow,True,NoEventMask,&Event);
-  
+
 #ifdef DEBUG
   fprintf(stderr,"ClientMessage sent to 0x%x(0x%x).\n",
 	  DispatchWindow,Target);
@@ -193,7 +194,7 @@ DndIsIcon(Widget widget)
     int JunkInt;
     unsigned long WinState,JunkLong;
     unsigned char *Property;
-		
+
     XGetWindowProperty(dpy,XtWindow(widget),WM_STATE,
 		       0L,2L,False,AnyPropertyType,
 		       &JunkAtom,&JunkInt,&WinState,&JunkLong,
@@ -218,23 +219,23 @@ DndInitialize(Widget shell)
     screen	= DefaultScreen(dpy);
     colormap= DefaultColormap(dpy,screen);
     root	= DefaultRootWindow(dpy);
-		
+
 
     Black.pixel=BlackPixel(dpy,screen);
     White.pixel=WhitePixel(dpy,screen);
     XQueryColor(dpy,colormap,&Black);
     XQueryColor(dpy,colormap,&White);
-	
+
     for(i=1;i!=DndEND;i++)
     {
 	DndCursor[i].ImagePixmap=
 	    XCreateBitmapFromData(dpy,root,
-				  DndCursor[i].ImageData,
+				  (char *) DndCursor[i].ImageData,
 				  DndCursor[i].Width,
 				  DndCursor[i].Height);
 	DndCursor[i].MaskPixmap=
 	    XCreateBitmapFromData(dpy,root,
-				  DndCursor[i].MaskData,
+				  (char *) DndCursor[i].MaskData,
 				  DndCursor[i].Width,
 				  DndCursor[i].Height);
 	DndCursor[i].CursorID=
@@ -244,16 +245,16 @@ DndInitialize(Widget shell)
 				DndCursor[i].HotSpotX,
 				DndCursor[i].HotSpotY);
     }
-	
+
     DndCursor[0].CursorID=XCreateFontCursor(dpy,XC_question_arrow);
-	
+
     /* These two are for older versions */
     OldDndProtocol=XInternAtom(dpy,"DndProtocol",FALSE);
     OldDndSelection=XInternAtom(dpy,"DndSelection",FALSE);
     /* Now the correct stuff */
     DndProtocol=XInternAtom(dpy,"_DND_PROTOCOL",FALSE);
     DndSelection=XInternAtom(dpy,"_DND_SELECTION",FALSE);
-    
+
     WM_STATE=XInternAtom(dpy,"WM_STATE",True);
     Dragging=0;
     DragPrecision=10;
@@ -261,26 +262,31 @@ DndInitialize(Widget shell)
     MainWidget=shell;
 }
 
-int DndIsDragging(void) { return Dragging; }
+int
+DndIsDragging(void)
+{
+  return Dragging;
+}
 
 /*================================================================= DndSetData
  * Updates the selection data.
  *===========================================================================*/
-void DndSetData(int Type,unsigned char *Data,unsigned long Size)
+void
+DndSetData(int Type,unsigned char *Data,unsigned long Size)
 {
   Window root = DefaultRootWindow(dpy);
   int AuxSize;
   unsigned char *AuxData;
   unsigned long BackSize=Size;
-  
+
   if (DataOK) return;
-  
+
   /* Set the data type -- allow any type */
   DataType = Type;
-  
+
   /* Set the data */
   AuxData = Data;
-  AuxSize = ( Size <= INT_MAX ? (int)Size : INT_MAX ); 
+  AuxSize = ( Size <= INT_MAX ? (int)Size : INT_MAX );
   XChangeProperty(dpy,root,DndSelection,XA_STRING,8,
 		  PropModeReplace,Data,AuxSize);
   for(Size-=(unsigned long)AuxSize;Size;Size-=(unsigned long)AuxSize)
@@ -290,11 +296,11 @@ void DndSetData(int Type,unsigned char *Data,unsigned long Size)
 	XChangeProperty(dpy,root,DndSelection,XA_STRING,8,
 			PropModeAppend,Data,AuxSize);
     }
-  
+
   /* Set the data for old DND version */
   Size = BackSize;
   AuxData = Data;
-  AuxSize = ( Size <= INT_MAX ? (int)Size : INT_MAX ); 
+  AuxSize = ( Size <= INT_MAX ? (int)Size : INT_MAX );
   XChangeProperty(dpy,root,OldDndSelection,XA_STRING,8,
 		  PropModeReplace,Data,AuxSize);
   for(Size-=(unsigned long)AuxSize;Size;Size-=(unsigned long)AuxSize)
@@ -304,7 +310,7 @@ void DndSetData(int Type,unsigned char *Data,unsigned long Size)
       XChangeProperty(dpy,root,OldDndSelection,XA_STRING,8,
 		      PropModeAppend,Data,AuxSize);
     }
-  
+
   /* Everything is now ok */
   DataOK=1;
 }
@@ -312,18 +318,19 @@ void DndSetData(int Type,unsigned char *Data,unsigned long Size)
 /*================================================================== DndGetData
  * Return a pointer to the current data. Se HOWTO for more details.
  *===========================================================================*/
-void DndGetData(XEvent *event, unsigned char **Data,unsigned long *Size)
+void
+DndGetData(XEvent *event, unsigned char **Data,unsigned long *Size)
 {
   Window root	= DefaultRootWindow(dpy);
-  
+
   Atom ActualType,ActualDndSelection;
   int	ActualFormat;
   unsigned long RemainingBytes;
-  
+
   ActualDndSelection=(DndProtocolVersion(event) == 0L ?
 		      OldDndSelection :
 		      DndSelection );
-  
+
   XGetWindowProperty(dpy,root,ActualDndSelection,
 		     0L,1000000L,
 		     FALSE,AnyPropertyType,
@@ -333,28 +340,31 @@ void DndGetData(XEvent *event, unsigned char **Data,unsigned long *Size)
 }
 
 /*================================== DndDataType DndDragButtons DndSourceWidget
- * 
+ *
  * Return information about the Dnd event received. If a non-dnd event is
  * passed, the function DndDataType returns DndNotDnd, and the others
  * return zero.
  *===========================================================================*/
-int DndDataType(XEvent *event)
+int
+DndDataType(XEvent *event)
 {
   int Type;
-  
+
   if(!DndIsDropMessage(event)) return DndNotDnd;
   Type=(int)(event->xclient.data.l[0]);
   if(Type>=DndEND) Type=DndUnknown;
   return Type;
 }
 
-unsigned int DndDragButtons(XEvent *event)
+unsigned int
+DndDragButtons(XEvent *event)
 {
   if(!DndIsDropMessage(event)) return 0;
   return (unsigned int)(event->xclient.data.l[1]);
 }
 
-Window DndSourceWindow(XEvent *event)
+Window
+DndSourceWindow(XEvent *event)
 {
   if(!DndIsDropMessage(event)) return 0;
   if(DndProtocolVersion(event)<__DragAndDropH__)
@@ -363,14 +373,15 @@ Window DndSourceWindow(XEvent *event)
   return (Window)(event->xclient.data.l[2]);
 }
 
-void DndDropRootCoordinates(XEvent *event,int *x,int *y)
+void
+DndDropRootCoordinates(XEvent *event,int *x,int *y)
 {
   if(!DndIsDropMessage(event))
     {
       *x=0; *y=0;
       return;
     }
-  
+
   /* If it is an old protocol version we try to get the coordinates
      using the current pointer position. Of course, the pointer may have
      moved since the drop, but there's nothing we can do about it.
@@ -380,7 +391,7 @@ void DndDropRootCoordinates(XEvent *event,int *x,int *y)
       Window root_return,child_return;
       int win_x_return,win_y_return;
       unsigned int mask_return;
-      
+
       XQueryPointer(dpy,DefaultRootWindow(dpy),
 		    &root_return,&child_return,x,y,
 		    &win_x_return,&win_y_return,&mask_return);
@@ -391,11 +402,12 @@ void DndDropRootCoordinates(XEvent *event,int *x,int *y)
   *y=(int)((long)(event->xclient.data.l[3])/65536);
 }
 
-void DndDropCoordinates(Widget widget,XEvent *event,int *x,int *y)
+void
+DndDropCoordinates(Widget widget,XEvent *event,int *x,int *y)
 {
   int root_x,root_y;
   Window child_return;
-  
+
   DndDropRootCoordinates(event,&root_x,&root_y);
   XTranslateCoordinates(dpy,DefaultRootWindow(dpy),
 			XtWindow(widget),
@@ -404,13 +416,15 @@ void DndDropCoordinates(Widget widget,XEvent *event,int *x,int *y)
 			&child_return);
 }
 
-long DndProtocolVersion(XEvent *event)
+long
+DndProtocolVersion(XEvent *event)
 {
   if(!DndIsDropMessage(event)) return -1L;
   return event->xclient.data.l[4];
 }
 
-int DndIsDropMessage(XEvent *event)
+int
+DndIsDropMessage(XEvent *event)
 {
   if(event->xclient.type != ClientMessage) return 0;
   if(event->xclient.message_type == OldDndProtocol &&
@@ -419,8 +433,9 @@ int DndIsDropMessage(XEvent *event)
   return 0;
 }
 
-void DndChangeCursor(int Type,int width,int height,char *image,char *mask,
-		     int hot_x,int hot_y)
+void
+DndChangeCursor(int Type,int width,int height,char *image,char *mask,
+		int hot_x,int hot_y)
 {
   DndCursor[Type].ImagePixmap=
     XCreateBitmapFromData(dpy,DefaultRootWindow(dpy),

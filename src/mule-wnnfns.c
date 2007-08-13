@@ -582,7 +582,7 @@ Translate YOMI string to kanji. Retuen the number of bunsetsu.
 }
 
 DEFUN ("wnn-server-zenkouho", Fwnn_zenkouho, 2, 2, 0, /*
-Get zenkouho at BUNSETSU-NUMBER. Second argument DAI is T
+Get zenkouho at BUNSETSU-NUMBER. Second argument DAI is t.
 if dai-bunsetsu, NIL if sho-bunsetsu. Return the current offset of zenkouho.
 */
      (bunNo, dai))
@@ -614,7 +614,7 @@ if dai-bunsetsu, NIL if sho-bunsetsu. Return the current offset of zenkouho.
 
 
 DEFUN ("wnn-server-get-zenkouho", Fwnn_get_zenkouho, 1, 1, 0, /*
-Get kanji string of KOUHO-NUMBER
+Get kanji string of KOUHO-NUMBER.
 */
      (kouhoNo))
 {
@@ -642,7 +642,7 @@ For Wnn.
 }
 
 DEFUN ("wnn-server-zenkouho-suu", Fwnn_zenkouho_suu, 0, 0, 0, /*
-Return the number of zen kouho
+Return the number of zen kouho.
 */
      ())
 {
@@ -652,7 +652,7 @@ Return the number of zen kouho
 }
 
 DEFUN ("wnn-server-dai-top", Fwnn_dai_top, 1, 1, 0, /*
-Return T if bunsetsu BUN-NUMBER is dai-bunsetsu.
+Return t if bunsetsu BUN-NUMBER is dai-bunsetsu.
 */
      (bunNo))
 {

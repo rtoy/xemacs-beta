@@ -584,31 +584,6 @@ REP_BYTES_BY_FIRST_BYTE (int fb)
 #define REP_BYTES_BY_FIRST_BYTE(fb) (rep_bytes_by_first_byte[fb])
 #endif
 
-extern Lisp_Object Vcharset_ascii;
-extern Lisp_Object Vcharset_control_1;
-extern Lisp_Object Vcharset_latin_iso8859_1;
-extern Lisp_Object Vcharset_latin_iso8859_2;
-extern Lisp_Object Vcharset_latin_iso8859_3;
-extern Lisp_Object Vcharset_latin_iso8859_4;
-extern Lisp_Object Vcharset_cyrillic_iso8859_5;
-extern Lisp_Object Vcharset_arabic_iso8859_6;
-extern Lisp_Object Vcharset_greek_iso8859_7;
-extern Lisp_Object Vcharset_hebrew_iso8859_8;
-extern Lisp_Object Vcharset_latin_iso8859_9;
-extern Lisp_Object Vcharset_thai_tis620;
-extern Lisp_Object Vcharset_katakana_jisx0201;
-extern Lisp_Object Vcharset_latin_jisx0201;
-extern Lisp_Object Vcharset_japanese_jisx0208_1978;
-extern Lisp_Object Vcharset_japanese_jisx0208;
-extern Lisp_Object Vcharset_japanese_jisx0212;
-extern Lisp_Object Vcharset_korean_ksc5601;
-extern Lisp_Object Vcharset_chinese_gb2312;
-extern Lisp_Object Vcharset_chinese_big5_1;
-extern Lisp_Object Vcharset_chinese_big5_2;
-extern Lisp_Object Vcharset_chinese_cns11643_1;
-extern Lisp_Object Vcharset_chinese_cns11643_2;
-extern Lisp_Object Vcharset_composite;
-
 
 /************************************************************************/
 /*                        Dealing with characters                       */
@@ -763,20 +738,24 @@ breakup_char_1 (Emchar c, Lisp_Object *charset, int *c1, int *c2)
 /*                           Composite characters                       */
 /************************************************************************/
 
-extern Lisp_Object Vcomposite_char_int2string_hashtable;
-extern Lisp_Object Vcomposite_char_string2int_hashtable;
-
 Emchar lookup_composite_char (Bufbyte *str, int len);
 Lisp_Object composite_char_string (Emchar ch);
-
 
 
 /************************************************************************/
 /*                            Exported functions                        */
 /************************************************************************/
 
-Lisp_Object Fget_charset (Lisp_Object);
-Lisp_Object Ffind_charset (Lisp_Object);
+EXFUN (Ffind_charset, 1);
+EXFUN (Fget_charset, 1);
+
+extern Lisp_Object Vcharset_chinese_big5_1;
+extern Lisp_Object Vcharset_chinese_big5_2;
+extern Lisp_Object Vcharset_japanese_jisx0208;
+
+Emchar Lstream_get_emchar_1 (Lstream *stream, int first_char);
+int Lstream_fput_emchar (Lstream *stream, Emchar ch);
+void Lstream_funget_emchar (Lstream *stream, Emchar ch);
 
 int copy_internal_to_external (CONST Bufbyte *internal, Bytecount len,
 			       unsigned char *external);

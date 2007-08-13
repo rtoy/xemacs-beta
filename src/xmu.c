@@ -31,9 +31,6 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <X11/cursorfont.h>
-#if 0 /* mrb */
-#include <X11/Xos.h>
-#endif
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Intrinsic.h>

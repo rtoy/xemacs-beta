@@ -26,6 +26,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
+#include <limits.h>
 
 #include "buffer.h"
 #include "insdel.h"
@@ -94,17 +95,17 @@ int Lstream_fgetc (Lstream *stream)
 void Lstream_fungetc (Lstream *stream, int c)
 	Function equivalents of the above macros.
 
-int Lstream_read (Lstream *stream, void *data, int size)
+int Lstream_read (Lstream *stream, void *data, size_t size)
 	Read SIZE bytes of DATA from the stream.  Return the number of
 	bytes read.  0 means EOF. -1 means an error occurred and no
 	bytes were read.
 
-int Lstream_write (Lstream *stream, void *data, int size)
+int Lstream_write (Lstream *stream, void *data, size_t size)
 	Write SIZE bytes of DATA to the stream.  Return the number of
 	bytes written.  -1 means an error occurred and no bytes were
 	written.
 
-void Lstream_unread (Lstream *stream, void *data, int size)
+void Lstream_unread (Lstream *stream, void *data, size_t size)
 	Push back SIZE bytes of DATA onto the input queue.  The
 	next call to Lstream_read() with the same size will read the
 	same bytes back.  Note that this will be the case even if
@@ -129,23 +130,6 @@ void Lstream_rewind (Lstream *stream)
 	Rewind the stream to the beginning.
 */
 
-#ifdef MULE
-MAC_DEFINE (Emchar, MTlstream_emchar)
-MAC_DEFINE (int, MTlstream_emcint)
-#endif
-
-MAC_DEFINE (struct lstream *, MTlstream_data)
-
-static Lisp_Object mark_lstream (Lisp_Object, void (*) (Lisp_Object));
-static void print_lstream (Lisp_Object obj, Lisp_Object printcharfun,
-			   int escapeflag);
-static void finalize_lstream (void *header, int for_disksave);
-static unsigned int sizeof_lstream (CONST void *header);
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("stream", lstream,
-					mark_lstream, print_lstream,
-					finalize_lstream, 0, 0,
-					sizeof_lstream, Lstream);
-
 #define DEFAULT_BLOCK_BUFFERING_SIZE 512
 #define MAX_READ_SIZE 512
 
@@ -153,10 +137,7 @@ static Lisp_Object
 mark_lstream (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
   Lstream *lstr = XLSTREAM (obj);
-  if (lstr->imp->marker)
-    return (lstr->imp->marker) (obj, markobj);
-  else
-    return Qnil;
+  return lstr->imp->marker ? (lstr->imp->marker) (obj, markobj) : Qnil;
 }
 
 static void
@@ -198,13 +179,18 @@ finalize_lstream (void *header, int for_disksave)
     }
 }
 
-static unsigned int
+static size_t
 sizeof_lstream (CONST void *header)
 {
   CONST Lstream *lstr = (CONST Lstream *) header;
   return sizeof (*lstr) + lstr->imp->size - 1;
 }
 
+DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("stream", lstream,
+					mark_lstream, print_lstream,
+					finalize_lstream, 0, 0,
+					sizeof_lstream, Lstream);
+
 void
 Lstream_set_buffering (Lstream *lstr, Lstream_buffering buffering,
 		       int buffering_size)
@@ -278,7 +264,7 @@ void
 Lstream_delete (Lstream *lstr)
 {
   int i;
-  Lisp_Object val = Qnil;
+  Lisp_Object val;
 
   XSETLSTREAM (val, lstr);
   for (i = 0; i < lstream_type_count; i++)
@@ -293,9 +279,13 @@ Lstream_delete (Lstream *lstr)
   abort ();
 }
 
-static void
-signal_simple_internal_error (CONST char *reason, Lisp_Object obj)
+#define Lstream_internal_error(reason, lstr) \
+  Lstream_signal_simple_error ("Internal error: " reason, lstr)
+
+static void Lstream_signal_simple_error (CONST char *reason, Lstream *lstr)
 {
+  Lisp_Object obj;
+  XSETLSTREAM (obj, lstr);
   signal_simple_error (reason, obj);
 }
 
@@ -303,12 +293,7 @@ void
 Lstream_reopen (Lstream *lstr)
 {
   if (lstr->flags & LSTREAM_FL_IS_OPEN)
-    {
-      Lisp_Object obj = Qnil;
-      XSETLSTREAM (obj, lstr);
-      signal_simple_internal_error
-	("Internal error: lstream already open", obj);
-    }
+    Lstream_internal_error ("lstream already open", lstr);
   lstr->flags |= LSTREAM_FL_IS_OPEN;
 }
 
@@ -323,26 +308,11 @@ Lstream_flush_out (Lstream *lstr)
     {
       int size = lstr->out_buffer_ind;
       if (! (lstr->flags & LSTREAM_FL_IS_OPEN))
-	{
-	  Lisp_Object obj = Qnil;
-	  XSETLSTREAM (obj, lstr);
-	  signal_simple_internal_error
-	    ("Internal error: lstream not open", obj);
-	}
+	Lstream_internal_error ("lstream not open", lstr);
       if (! (lstr->flags & LSTREAM_FL_WRITE))
-	{
-	  Lisp_Object obj = Qnil;
-	  XSETLSTREAM (obj, lstr);
-	  signal_simple_internal_error
-	    ("Internal error: lstream not open for writing", obj);
-	}
+	Lstream_internal_error ("lstream not open for writing", lstr);
       if (!lstr->imp->writer)
-	{
-	  Lisp_Object obj = Qnil;
-	  XSETLSTREAM (obj, lstr);
-	  signal_simple_internal_error
-	    ("Internal error: lstream has no writer", obj);
-	}
+	Lstream_internal_error ("lstream has no writer", lstr);
 
       if (lstr->flags & LSTREAM_FL_NO_PARTIAL_CHARS)
 	/* It's quite possible for us to get passed an incomplete
@@ -370,15 +340,14 @@ Lstream_flush_out (Lstream *lstr)
 	    }
 	}
 
-      num_written =
-	(lstr->imp->writer) (lstr, lstr->out_buffer, size);
+      num_written = (lstr->imp->writer) (lstr, lstr->out_buffer, size);
       if (num_written == 0)
 	/* If nothing got written, then just hold the data.  This may
 	   occur, for example, if this stream does non-blocking I/O;
 	   the attempt to write the data might have resulted in an
 	   EWOULDBLOCK error. */
 	return 0;
-      else if (num_written >= lstr->out_buffer_ind)
+      else if (num_written >= (int) lstr->out_buffer_ind)
 	lstr->out_buffer_ind = 0;
       else if (num_written > 0)
 	{
@@ -421,12 +390,12 @@ Lstream_flush (Lstream *lstr)
    up until they can be written, so as to avoid losing data. */
 
 static int
-Lstream_adding (Lstream *lstr, int num, int force)
+Lstream_adding (Lstream *lstr, size_t num, int force)
 {
   /* Compute the size that the outbuffer needs to be after the
      chars are added. */
-  int size_needed = max (lstr->out_buffer_size,
-			 num + lstr->out_buffer_ind);
+  size_t size_needed = max (lstr->out_buffer_size,
+			    num + lstr->out_buffer_ind);
   /* Maybe chop it down so that we don't buffer more characters
      than our advertised buffering size. */
   if (!force)
@@ -441,24 +410,14 @@ Lstream_adding (Lstream *lstr, int num, int force)
 /* Like Lstream_write(), but does not handle line-buffering correctly. */
 
 static int
-Lstream_write_1 (Lstream *lstr, CONST void *data, int size)
+Lstream_write_1 (Lstream *lstr, CONST void *data, size_t size)
 {
   CONST unsigned char *p = (CONST unsigned char *) data;
   int off = 0;
   if (! (lstr->flags & LSTREAM_FL_IS_OPEN))
-    {
-      Lisp_Object obj = Qnil;
-      XSETLSTREAM (obj, lstr);
-      signal_simple_internal_error
-	("Internal error: lstream not open", obj);
-    }
+    Lstream_internal_error ("lstream not open", lstr);
   if (! (lstr->flags & LSTREAM_FL_WRITE))
-    {
-      Lisp_Object obj = Qnil;
-      XSETLSTREAM (obj, lstr);
-      signal_simple_internal_error
-	("Internal error: lstream not open for writing", obj);
-    }
+    Lstream_internal_error ("lstream not open for writing", lstr);
   {
     int couldnt_write_last_time = 0;
 
@@ -511,17 +470,16 @@ Lstream_write_1 (Lstream *lstr, CONST void *data, int size)
    line buffering. */
 
 int
-Lstream_write (Lstream *lstr, CONST void *data, int size)
+Lstream_write (Lstream *lstr, CONST void *data, size_t size)
 {
   int i;
   CONST unsigned char *p = (CONST unsigned char *) data;
 
-  assert (size >= 0);
   if (size == 0)
     return size;
   if (lstr->buffering != LSTREAM_LINE_BUFFERED)
     return Lstream_write_1 (lstr, data, size);
-  for (i = 0; i < size; i++)
+  for (i = 0; i < (int) size; i++)
     {
       if (Lstream_putc (lstr, p[i]) < 0)
 	break;
@@ -539,29 +497,14 @@ Lstream_was_blocked_p (Lstream *lstr)
 }
 
 static int
-Lstream_raw_read (Lstream *lstr, unsigned char *buffer, int size)
+Lstream_raw_read (Lstream *lstr, unsigned char *buffer, size_t size)
 {
   if (! (lstr->flags & LSTREAM_FL_IS_OPEN))
-    {
-      Lisp_Object obj = Qnil;
-      XSETLSTREAM (obj, lstr);
-      signal_simple_internal_error
-	("Internal error: lstream not open", obj);
-    }
+    Lstream_internal_error ("lstream not open", lstr);
   if (! (lstr->flags & LSTREAM_FL_READ))
-    {
-      Lisp_Object obj = Qnil;
-      XSETLSTREAM (obj, lstr);
-      signal_simple_internal_error
-	("Internal error: lstream not open for reading", obj);
-    }
+    Lstream_internal_error ("lstream not open for reading", lstr);
   if (!lstr->imp->reader)
-    {
-      Lisp_Object obj = Qnil;
-      XSETLSTREAM (obj, lstr);
-      signal_simple_internal_error
-	("Internal error: lstream has no reader", obj);
-    }
+    Lstream_internal_error ("lstream has no reader", lstr);
 
   return (lstr->imp->reader) (lstr, buffer, size);
 }
@@ -588,14 +531,13 @@ Lstream_read_more (Lstream *lstr)
 }
 
 int
-Lstream_read (Lstream *lstr, void *data, int size)
+Lstream_read (Lstream *lstr, void *data, size_t size)
 {
   unsigned char *p = (unsigned char *) data;
   int off = 0;
-  int chunk;
+  size_t chunk;
   int error_occurred = 0;
 
-  assert (size >= 0);
   if (size == 0)
     return 0;
 
@@ -604,7 +546,7 @@ Lstream_read (Lstream *lstr, void *data, int size)
   if (chunk > 0)
     {
       /* The bytes come back in reverse order. */
-      for (; off < chunk; off++)
+      for (; off < (int) chunk; off++)
 	p[off] = lstr->unget_buffer[--lstr->unget_buffer_ind];
       lstr->byte_count += chunk;
       size -= chunk;
@@ -663,7 +605,7 @@ Lstream_read (Lstream *lstr, void *data, int size)
 }
 
 void
-Lstream_unread (Lstream *lstr, CONST void *data, int size)
+Lstream_unread (Lstream *lstr, CONST void *data, size_t size)
 {
   int i;
   unsigned char *p = (unsigned char *) data;
@@ -684,12 +626,7 @@ int
 Lstream_rewind (Lstream *lstr)
 {
   if (!lstr->imp->rewinder)
-    {
-      Lisp_Object obj = Qnil;
-      XSETLSTREAM (obj, lstr);
-      signal_simple_internal_error
-	("Internal error: lstream has no rewinder", obj);
-    }
+    Lstream_internal_error ("lstream has no rewinder", lstr);
   if (Lstream_flush (lstr) < 0)
     return -1;
   lstr->byte_count = 0;
@@ -712,12 +649,7 @@ Lstream_pseudo_close (Lstream *lstr)
   int rc;
 
   if (!lstr->flags & LSTREAM_FL_IS_OPEN)
-    {
-      Lisp_Object obj = Qnil;
-      XSETLSTREAM (obj, lstr);
-      signal_simple_internal_error
-	("Internal error: lstream is not open", obj);
-    }
+    Lstream_internal_error ("lstream is not open", lstr);
 
   /* don't check errors here -- best not to risk file descriptor loss */
   rc = Lstream_flush (lstr);
@@ -838,7 +770,7 @@ DEFINE_LSTREAM_IMPLEMENTATION ("stdio", lstream_stdio,
 static Lisp_Object
 make_stdio_stream_1 (FILE *stream, int flags, CONST char *mode)
 {
-  Lisp_Object obj = Qnil;
+  Lisp_Object obj;
   Lstream *lstr = Lstream_new (lstream_stdio, mode);
   struct stdio_stream *str = STDIO_STREAM_DATA (lstr);
   str->file = stream;
@@ -861,7 +793,7 @@ make_stdio_output_stream (FILE *stream, int flags)
 }
 
 static int
-stdio_reader (Lstream *stream, unsigned char *data, int size)
+stdio_reader (Lstream *stream, unsigned char *data, size_t size)
 {
   struct stdio_stream *str = STDIO_STREAM_DATA (stream);
   size_t val = fread (data, 1, (size_t) size, str->file);
@@ -871,10 +803,10 @@ stdio_reader (Lstream *stream, unsigned char *data, int size)
 }
 
 static int
-stdio_writer (Lstream *stream, CONST unsigned char *data, int size)
+stdio_writer (Lstream *stream, CONST unsigned char *data, size_t size)
 {
   struct stdio_stream *str = STDIO_STREAM_DATA (stream);
-  size_t val = fwrite (data, 1, (size_t) size, str->file);
+  size_t val = fwrite (data, 1, size, str->file);
   if (!val && ferror (str->file))
     return -1;
   return (int) val;
@@ -890,14 +822,12 @@ stdio_rewinder (Lstream *stream)
 static int
 stdio_seekable_p (Lstream *stream)
 {
+  struct stat lestat;
   struct stdio_stream *str = STDIO_STREAM_DATA (stream);
-  {
-    struct stat lestat;
 
-    if (fstat (fileno (str->file), &lestat) < 0)
-      return 0;
-    return S_ISREG (lestat.st_mode);
-  }
+  if (fstat (fileno (str->file), &lestat) < 0)
+    return 0;
+  return S_ISREG (lestat.st_mode);
 }
 
 static int
@@ -958,21 +888,18 @@ static Lisp_Object
 make_filedesc_stream_1 (int filedesc, int offset, int count, int flags,
 			CONST char *mode)
 {
-  Lisp_Object obj = Qnil;
+  Lisp_Object obj;
   Lstream *lstr = Lstream_new (lstream_filedesc, mode);
   struct filedesc_stream *fstr = FILEDESC_STREAM_DATA (lstr);
   fstr->fd = filedesc;
-  fstr->closing = !!(flags & LSTR_CLOSING);
-  fstr->allow_quit = !!(flags & LSTR_ALLOW_QUIT);
-  fstr->blocked_ok = !!(flags & LSTR_BLOCKED_OK);
+  fstr->closing      = !!(flags & LSTR_CLOSING);
+  fstr->allow_quit   = !!(flags & LSTR_ALLOW_QUIT);
+  fstr->blocked_ok   = !!(flags & LSTR_BLOCKED_OK);
   fstr->pty_flushing = !!(flags & LSTR_PTY_FLUSHING);
   fstr->blocking_error_p = 0;
   fstr->chars_sans_newline = 0;
   fstr->starting_pos = lseek (filedesc, offset, SEEK_CUR);
-  if (fstr->starting_pos < 0)
-    fstr->current_pos = 0;
-  else
-    fstr->current_pos = fstr->starting_pos;
+  fstr->current_pos = max (fstr->current_pos, 0);
   if (count < 0)
     fstr->end_pos = -1;
   else
@@ -995,15 +922,16 @@ make_filedesc_output_stream (int filedesc, int offset, int count, int flags)
 }
 
 static int
-filedesc_reader (Lstream *stream, unsigned char *data, int size)
+filedesc_reader (Lstream *stream, unsigned char *data, size_t size)
 {
+  int nread;
   struct filedesc_stream *str = FILEDESC_STREAM_DATA (stream);
   if (str->end_pos >= 0)
-    size = min (size, str->end_pos - str->current_pos);
-  size = (str->allow_quit ? read_allowing_quit : read) (str->fd, data, size);
-  if (size > 0)
-    str->current_pos += size;
-  return size;
+    size = min (size, (size_t) (str->end_pos - str->current_pos));
+  nread = (str->allow_quit ? read_allowing_quit : read) (str->fd, data, size);
+  if (nread > 0)
+    str->current_pos += nread;
+  return nread;
 }
 
 static int
@@ -1021,7 +949,7 @@ errno_would_block_p (int val)
 }
 
 static int
-filedesc_writer (Lstream *stream, CONST unsigned char *data, int size)
+filedesc_writer (Lstream *stream, CONST unsigned char *data, size_t size)
 {
   struct filedesc_stream *str = FILEDESC_STREAM_DATA (stream);
   int retval;
@@ -1221,7 +1149,7 @@ Lisp_Object
 make_lisp_string_input_stream (Lisp_Object string, Bytecount offset,
 			       Bytecount len)
 {
-  Lisp_Object obj = Qnil;
+  Lisp_Object obj;
   Lstream *lstr;
   struct lisp_string_stream *str;
 
@@ -1243,7 +1171,7 @@ make_lisp_string_input_stream (Lisp_Object string, Bytecount offset,
 }
 
 static int
-lisp_string_reader (Lstream *stream, unsigned char *data, int size)
+lisp_string_reader (Lstream *stream, unsigned char *data, size_t size)
 {
   struct lisp_string_stream *str = LISP_STRING_STREAM_DATA (stream);
   /* Don't lose if the string shrank past us ... */
@@ -1258,8 +1186,7 @@ lisp_string_reader (Lstream *stream, unsigned char *data, int size)
   if (stream->flags & LSTREAM_FL_NO_PARTIAL_CHARS)
     VALIDATE_CHARPTR_BACKWARD (start);
   offset = start - strstart;
-  size = min (size, str->end - offset);
-  assert (size >= 0); /* paranoia */
+  size = min (size, (size_t) (str->end - offset));
   memcpy (data, start, size);
   str->offset = offset + size;
   return size;
@@ -1302,22 +1229,19 @@ struct fixed_buffer_stream
 {
   CONST unsigned char *inbuf;
   unsigned char *outbuf;
-  int size;
-  int offset;
+  size_t size;
+  size_t offset;
 };
 
 DEFINE_LSTREAM_IMPLEMENTATION ("fixed-buffer", lstream_fixed_buffer,
 			       sizeof (struct fixed_buffer_stream));
 
 Lisp_Object
-make_fixed_buffer_input_stream (CONST unsigned char *buf, int size)
+make_fixed_buffer_input_stream (CONST unsigned char *buf, size_t size)
 {
-  Lisp_Object obj = Qnil;
-  Lstream *lstr;
-  struct fixed_buffer_stream *str;
-
-  lstr = Lstream_new (lstream_fixed_buffer, "r");
-  str = FIXED_BUFFER_STREAM_DATA (lstr);
+  Lisp_Object obj;
+  Lstream *lstr = Lstream_new (lstream_fixed_buffer, "r");
+  struct fixed_buffer_stream *str = FIXED_BUFFER_STREAM_DATA (lstr);
   str->inbuf = buf;
   str->size = size;
   XSETLSTREAM (obj, lstr);
@@ -1325,14 +1249,11 @@ make_fixed_buffer_input_stream (CONST unsigned char *buf, int size)
 }
 
 Lisp_Object
-make_fixed_buffer_output_stream (unsigned char *buf, int size)
+make_fixed_buffer_output_stream (unsigned char *buf, size_t size)
 {
-  Lisp_Object obj = Qnil;
-  Lstream *lstr;
-  struct fixed_buffer_stream *str;
-
-  lstr = Lstream_new (lstream_fixed_buffer, "w");
-  str = FIXED_BUFFER_STREAM_DATA (lstr);
+  Lisp_Object obj;
+  Lstream *lstr = Lstream_new (lstream_fixed_buffer, "w");
+  struct fixed_buffer_stream *str = FIXED_BUFFER_STREAM_DATA (lstr);
   str->outbuf = buf;
   str->size = size;
   XSETLSTREAM (obj, lstr);
@@ -1340,7 +1261,7 @@ make_fixed_buffer_output_stream (unsigned char *buf, int size)
 }
 
 static int
-fixed_buffer_reader (Lstream *stream, unsigned char *data, int size)
+fixed_buffer_reader (Lstream *stream, unsigned char *data, size_t size)
 {
   struct fixed_buffer_stream *str = FIXED_BUFFER_STREAM_DATA (stream);
   size = min (size, str->size - str->offset);
@@ -1350,7 +1271,7 @@ fixed_buffer_reader (Lstream *stream, unsigned char *data, int size)
 }
 
 static int
-fixed_buffer_writer (Lstream *stream, CONST unsigned char *data, int size)
+fixed_buffer_writer (Lstream *stream, CONST unsigned char *data, size_t size)
 {
   struct fixed_buffer_stream *str = FIXED_BUFFER_STREAM_DATA (stream);
   if (str->offset == str->size)
@@ -1395,7 +1316,7 @@ fixed_buffer_output_stream_ptr (Lstream *stream)
 struct resizing_buffer_stream
 {
   unsigned char *buf;
-  int allocked;
+  size_t allocked;
   int max_stored;
   int stored;
 };
@@ -1406,13 +1327,13 @@ DEFINE_LSTREAM_IMPLEMENTATION ("resizing-buffer", lstream_resizing_buffer,
 Lisp_Object
 make_resizing_buffer_output_stream (void)
 {
-  Lisp_Object obj = Qnil;
+  Lisp_Object obj;
   XSETLSTREAM (obj, Lstream_new (lstream_resizing_buffer, "w"));
   return obj;
 }
 
 static int
-resizing_buffer_writer (Lstream *stream, CONST unsigned char *data, int size)
+resizing_buffer_writer (Lstream *stream, CONST unsigned char *data, size_t size)
 {
   struct resizing_buffer_stream *str = RESIZING_BUFFER_STREAM_DATA (stream);
   DO_REALLOC (str->buf, str->allocked, str->stored + size, unsigned char);
@@ -1467,14 +1388,14 @@ DEFINE_LSTREAM_IMPLEMENTATION ("dynarr", lstream_dynarr,
 Lisp_Object
 make_dynarr_output_stream (unsigned_char_dynarr *dyn)
 {
-  Lisp_Object obj = Qnil;
+  Lisp_Object obj;
   XSETLSTREAM (obj, Lstream_new (lstream_dynarr, "w"));
   DYNARR_STREAM_DATA (XLSTREAM (obj))->dyn = dyn;
   return obj;
 }
 
 static int
-dynarr_writer (Lstream *stream, CONST unsigned char *data, int size)
+dynarr_writer (Lstream *stream, CONST unsigned char *data, size_t size)
 {
   struct dynarr_stream *str = DYNARR_STREAM_DATA (stream);
   Dynarr_add_many (str->dyn, data, size);
@@ -1519,7 +1440,7 @@ static Lisp_Object
 make_lisp_buffer_stream_1 (struct buffer *buf, Bufpos start, Bufpos end,
 			   int flags, CONST char *mode)
 {
-  Lisp_Object obj = Qnil;
+  Lisp_Object obj;
   Lstream *lstr;
   struct lisp_buffer_stream *str;
   Bufpos bmin, bmax;
@@ -1557,7 +1478,7 @@ make_lisp_buffer_stream_1 (struct buffer *buf, Bufpos start, Bufpos end,
   str = LISP_BUFFER_STREAM_DATA (lstr);
   {
     Lisp_Object marker;
-    Lisp_Object buffer = Qnil;
+    Lisp_Object buffer;
 
     XSETBUFFER (buffer, buf);
     marker = Fmake_marker ();
@@ -1598,7 +1519,7 @@ make_lisp_buffer_output_stream (struct buffer *buf, Bufpos pos, int flags)
 }
 
 static int
-lisp_buffer_reader (Lstream *stream, unsigned char *data, int size)
+lisp_buffer_reader (Lstream *stream, unsigned char *data, size_t size)
 {
   struct lisp_buffer_stream *str = LISP_BUFFER_STREAM_DATA (stream);
   unsigned char *orig_data = data;
@@ -1622,7 +1543,7 @@ lisp_buffer_reader (Lstream *stream, unsigned char *data, int size)
 				   BI_BUF_ZV (buf));
     }
 
-  size = min (size, end - start);
+  size = min (size, (size_t) (end - start));
   end = start + size;
   /* We cannot return a partial character. */
   VALIDATE_BYTIND_BACKWARD (buf, end);
@@ -1656,7 +1577,7 @@ lisp_buffer_reader (Lstream *stream, unsigned char *data, int size)
 }
 
 static int
-lisp_buffer_writer (Lstream *stream, CONST unsigned char *data, int size)
+lisp_buffer_writer (Lstream *stream, CONST unsigned char *data, size_t size)
 {
   struct lisp_buffer_stream *str = LISP_BUFFER_STREAM_DATA (stream);
   Bufpos pos;

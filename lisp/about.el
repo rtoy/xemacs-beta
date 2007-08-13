@@ -19,7 +19,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; along with XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -75,7 +75,7 @@
     (mcook    "Michael R. Cook"   "mcook@cognex.com")
     (mly      "Richard Mlynarik"  "mly@adoc.xerox.com")
     (morioka  "MORIOKA Tomohiko"  "morioka@jaist.ac.jp")
-    (mrb      "Martin Buchholz"   "mrb@sun.eng.com")
+    (martin   "Martin Buchholz"   "martin@xemacs.org")
     (ograf    "Oliver Graf"       "ograf@fga.de")
     (pez      "Peter Pezaris"	  "pez@dwwc.com")
     (piper    "Andy Piper"        "andyp@parallax.co.uk")
@@ -276,7 +276,7 @@ developers responsible for this release are:\n\n")
 			     :value who)
 	      (widget-insert (format "  <%s>\n" address)))))
       ;; Setup persons responsible for this release.
-      (mapc 'setup-person '(slb hniksic kyle mrb))
+      (mapc 'setup-person '(slb hniksic kyle martin))
       (widget-insert "\n\t* ")
       (widget-create 'link :help-echo "A legion of XEmacs hackers"
 		     :action 'about-hackers
@@ -588,9 +588,9 @@ Inc. a small, but growing ISP in California.
 My main hobby while not maintaining XEmacs or working is ...
 you have got to be kidding ...")
      (widget-insert ".\n"))
-    (mrb
+    (martin
      (widget-insert "\
-Martin is the XEmacs guy at DevPro, a part of Sun Microsystems.
+Martin was the XEmacs guy at DevPro, a part of Sun Microsystems.
 Martin used to do XEmacs as a `hobby' while at IBM, and was crazy
 enough to try to make a living doing it at Sun.
 
@@ -600,8 +600,8 @@ buffer, and use `xterm -e vi' to edit files.  But then he saw the
 light.  He dreams of rewriting shell mode from scratch.  Stderr should
 show up in red!!
 
-Martin is currently working mostly on Internationalization.  He spends
-most of his waking hours inside a Japanized XEmacs.\n"))
+Martin is no longer doing XEmacs for a living, and is Just Another
+Volunteer.\n"))
     (hniksic
      (widget-insert "\
 Hrvoje is currently a student at the Faculty of Electrical
@@ -691,7 +691,7 @@ say, the north rim of the Grand Canyon or the midst of Baja.\n"))
      (widget-insert "\
 Currently studying computer science in Trondheim, Norway.  Full time
 Linux user and proud of it.  XEmacs hacker light.  Maintainer of the
-RPM package.  
+RPM package.
 
 See:\t")
      (about-url-link 'stigb "Visit Stig's home page"))
@@ -849,7 +849,7 @@ stable XEmacs.  (Actually, he does it 'cause it's fun and he's been
 using emacs for a long, long time.)  Vin also contributed the detached
 minibuffer code as well as a few minor enhancements to the menubar
 options.
- 
+
 I own and operate my own consulting firm, EtherSoft.  Shhh, don't
 tell anyone, but it's named after an Ultimate team I used to play
 with in Austin, Texas - the Ether Bunnies.  I'm getting too old
@@ -893,8 +893,8 @@ See also:")
      (widget-insert ".\n"))
     (dkindred
      (widget-insert "\
-Darrell tends to come out of the woodwork a couple of weeks 
-before a new release with a flurry of fixes for bugs that 
+Darrell tends to come out of the woodwork a couple of weeks
+before a new release with a flurry of fixes for bugs that
 annoy him.  He hopes he's spared you from a core dump or two.
 
 Darrell is currently a doctoral student in computer science at
@@ -916,7 +916,7 @@ a software development firm.  See ")
      (widget-insert "\
 I'm currently working (Ph.D.) on the cognitive aspects of
 Human-Machine Interaction in Virtual Environments, and especialy on
-the possibility of adding (artificial) intelligence between the system 
+the possibility of adding (artificial) intelligence between the system
 and the operator, in order to detect the intentions of the latter.
 
 Otherwise, I'm, say, 35.82% professional Jazz guitar player,
@@ -939,8 +939,8 @@ I'm a student of computer sciences at the University of Koblenz. My
 major is computational linguistics (human language generation and
 analysis).
 
-I make my living as a managing director of a small but fine company 
-which I started two years ago with one of my friends. We provide 
+I make my living as a managing director of a small but fine company
+which I started two years ago with one of my friends. We provide
 business network solutions based on linux servers and various other
 networking products.
 
@@ -972,10 +972,10 @@ My homepage is ")
      (widget-insert ".\n"))
     (jason
      (widget-insert "\
-Beta tester and manager of the various XEmacs mailing lists. 
-Originator and maintainer of the gnus.org domain.   
+Beta tester and manager of the various XEmacs mailing lists.
+Originator and maintainer of the gnus.org domain.
 
-Jason resides in Albuquerque, New Mexico where he keeps himself 
+Jason resides in Albuquerque, New Mexico where he keeps himself
 busy with studies at the university and consulting work.
 
 See: ")
@@ -1043,7 +1043,7 @@ Peripatetic uninominal Emacs hacker.  Stig sometimes operates out of a
 big white van set up for nomadic living and hacking.  Implemented the
 faster stay-up Lucid menus and hyper-apropos.  Contributor of many
 dispersed improvements in the core Lisp code, and back-seat
-contributor for several of it's major packages.\n")
+contributor for several of its major packages.\n")
     (about-show-linked-info 'baw "\
 Author of CC Mode for C, C++, Objective-C and Java editing, and
 Supercite for mail and news citing.  Also various and sundry other
@@ -1142,8 +1142,8 @@ hair various colours.\n")
 IENAGA Kazuyuki is the XEmacs technical lead on BSD, particularly
 FreeBSD.\n")
     (about-show-linked-info 'dkindred "\
-Darrell tends to come out of the woodwork a couple of weeks 
-before a new release with a flurry of fixes for bugs that 
+Darrell tends to come out of the woodwork a couple of weeks
+before a new release with a flurry of fixes for bugs that
 annoy him.  He hopes he's spared you from a core dump or two.
 
 Darrell is currently a doctoral student in computer science at
@@ -1152,7 +1152,7 @@ habit.\n")
     (about-show-linked-info 'dv "\
 I'm currently working (Ph.D.) on the cognitive aspects of
 Human-Machine Interaction in Virtual Environments, and especialy on
-the possibility of adding (artificial) intelligence between the system 
+the possibility of adding (artificial) intelligence between the system
 and the operator, in order to detect the intentions of the latter.
 
 Otherwise, I'm, say, 35.82% professional Jazz guitar player,
@@ -1275,6 +1275,7 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Richard Cognot" "cognot@ensg.u-nancy.fr")
        (print-short "Andy Cohen" "cohen@andy.bu.edu")
        (print-short "Richard Coleman" "coleman@math.gatech.edu")
+       (print-short "Mauro Condarelli" "MC5686@mclink.it")
        (print-short "Andrew J Cosgriff" "ajc@bing.wattle.id.au")
        (print-short "Nick J. Crabtree" "nickc@scopic.com")
        (print-short "Christopher Davis" "ckd@kei.com")

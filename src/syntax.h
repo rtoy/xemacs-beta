@@ -25,10 +25,6 @@ Boston, MA 02111-1307, USA.  */
 
 #include "chartab.h"
 
-/* The standard syntax table is stored where it will automatically
-   be used in all new buffers.  */
-extern Lisp_Object Vstandard_syntax_table;
-
 /* A syntax table is a type of char table.
 
 The low 7 bits of the integer is a code, as follows. The 8th bit is
@@ -68,10 +64,6 @@ enum syntaxcode
   Smax	 /* Upper bound on codes that are meaningful */
 };
 
-extern Lisp_Object Qsyntax_table_p;
-Lisp_Object Fsyntax_table_p (Lisp_Object);
-Lisp_Object Fsyntax_table   (Lisp_Object);
-Lisp_Object Fset_syntax_table (Lisp_Object, Lisp_Object);
 enum syntaxcode charset_syntax (struct buffer *buf, Lisp_Object charset,
 				int *multi_p_out);
 
@@ -86,7 +78,7 @@ SYNTAX_CODE (struct Lisp_Char_Table *table, Emchar c)
 {
   return SYNTAX_CODE_UNSAFE (table, c);
 }
-      
+
 #define SYNTAX_UNSAFE(table, c) \
   ((enum syntaxcode) (SYNTAX_CODE_UNSAFE (table, c) & 0177))
 
@@ -229,6 +221,13 @@ WORD_SYNTAX_P (struct Lisp_Char_Table *table, Emchar c)
    : (STYLE_FOUND_1CHAR_P (table, a, SYNTAX_COMMENT_STYLE_B)	\
       ? SYNTAX_COMMENT_STYLE_B					\
 	 : 0)))
+
+EXFUN (Fchar_syntax, 2);
+EXFUN (Fforward_word, 2);
+
+/* The standard syntax table is stored where it will automatically
+   be used in all new buffers.  */
+extern Lisp_Object Vstandard_syntax_table;
 
 /* This array, indexed by a character, contains the syntax code which
    that character signifies (as a char).

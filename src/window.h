@@ -297,8 +297,6 @@ DECLARE_LRECORD (window, struct window);
 #define CHECK_WINDOW(x) CHECK_RECORD (x, window)
 #define CONCHECK_WINDOW(x) CONCHECK_RECORD (x, window)
 
-extern Lisp_Object Qwindow_live_p;
-
 #define WINDOW_LIVE_P(x) (!(x)->dead)
 #define CHECK_LIVE_WINDOW(x) do {			\
   CHECK_WINDOW (x);					\
@@ -312,7 +310,7 @@ extern Lisp_Object Qwindow_live_p;
 } while (0)
 
 /* 1 if W is a minibuffer window.  */
-#define MINI_WINDOW_P(W)  (!EQ ((W)->mini_p, Qnil))
+#define MINI_WINDOW_P(W)  (!NILP ((W)->mini_p))
 
 /* 1 if we are dealing with a parentless window (this includes the
    root window on a frame and the minibuffer window; both of these
@@ -323,7 +321,10 @@ extern Lisp_Object Qwindow_live_p;
 #define MARK_WINDOWS_CHANGED(w) do {			\
   (w)->windows_changed = 1;				\
   if (!NILP (w->frame))					\
-    MARK_FRAME_WINDOWS_CHANGED (XFRAME (w->frame));	\
+    {							\
+      struct frame *mwc_frame = XFRAME (w->frame);	\
+      MARK_FRAME_WINDOWS_CHANGED (mwc_frame);		\
+    }							\
   else							\
     windows_changed = 1;				\
 } while (0)
@@ -335,23 +336,31 @@ extern Lisp_Object Qwindow_live_p;
 
 DECLARE_LRECORD (window_configuration, struct window_config);
 
+EXFUN (Fget_buffer_window, 3);
+EXFUN (Fmove_to_window_line, 2);
+EXFUN (Frecenter, 2);
+EXFUN (Freplace_buffer_in_windows, 1);
+EXFUN (Fselect_window, 1);
+EXFUN (Fselected_window, 1);
+EXFUN (Fset_window_buffer, 2);
+EXFUN (Fset_window_hscroll, 2);
+EXFUN (Fset_window_point, 2);
+EXFUN (Fset_window_start, 3);
+EXFUN (Fwindow_buffer, 1);
+EXFUN (Fwindow_highest_p, 1);
+EXFUN (Fwindow_point, 1);
+EXFUN (Fwindow_start, 1);
+
 /* The minibuffer window of the selected frame.
    Note that you cannot test for minibufferness of an arbitrary window
    by comparing against this; but you can test for minibufferness of
    the selected window or of any window that is displayed.  */
 extern Lisp_Object minibuf_window;
 
-/* Non-nil => window to for C-M-v to scroll
-   when the minibuffer is selected.  */
-extern Lisp_Object Vminibuf_scroll_window;
-
 /* Prompt to display in front of the minibuffer contents, or nil */
 extern Lisp_Object Vminibuf_prompt;
 /* Prompt to display in front of the minibuffer prompt, or nil */
 extern Lisp_Object Vminibuf_preprompt;
-
-/* Depth in minibuffer invocations */
-extern int minibuf_level;
 
 Lisp_Object allocate_window (void);
 int window_char_width (struct window *, int include_margins_p);
@@ -383,9 +392,7 @@ int buffer_window_count (struct buffer *b, struct frame *f);
 int buffer_window_mru (struct window *w);
 void check_frame_size (struct frame *frame, int *rows, int *cols);
 struct window *decode_window (Lisp_Object window);
-struct window *find_window_by_pixel_pos (unsigned int pix_x,
-					 unsigned int pix_y,
-					 Lisp_Object win);
+struct window *find_window_by_pixel_pos (int pix_x, int pix_y, Lisp_Object win);
 
 /* new functions to handle the window mirror */
 void free_window_mirror (struct window_mirror *mir);

@@ -265,8 +265,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 	    || EQ (buffer, Qt)
 	    || ZEROP (buffer)))
 	{
-	  Lisp_Object spec_buffer;
-	  spec_buffer = buffer;
+	  Lisp_Object spec_buffer = buffer;
 	  buffer = Fget_buffer (buffer);
 	  /* Mention the buffer name for a better error message.  */
 	  if (NILP (buffer))
@@ -345,15 +344,15 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
       fd_error = open (NULL_DEVICE, O_WRONLY | OPEN_BINARY);
     else if (STRINGP (error_file))
       {
+	fd_error = open ((CONST char *) XSTRING_DATA (error_file),
 #ifdef DOS_NT
-	fd_error = open (XSTRING_DATA (error_file),
 			 O_WRONLY | O_TRUNC | O_CREAT | O_TEXT,
-			 S_IREAD | S_IWRITE);
+			 S_IREAD | S_IWRITE
 #else  /* not DOS_NT */
-	fd_error = open (XSTRING_DATA (error_file),
 			 O_WRONLY | O_TRUNC | O_CREAT | OPEN_BINARY,
-			 CREAT_MODE);
+			 CREAT_MODE
 #endif /* not DOS_NT */
+			 );
       }
 
     if (fd_error < 0)
@@ -625,9 +624,8 @@ child_setup (int in, int out, int err, char **new_argv,
   {
     REGISTER Lisp_Object tem;
     REGISTER char **new_env;
-    REGISTER int new_length;
+    REGISTER int new_length = 0;
 
-    new_length = 0;
     for (tem = Vprocess_environment;
 	 (CONSP (tem)
 	  && STRINGP (XCAR (tem)));
@@ -855,7 +853,6 @@ init_callproc (void)
 {
   /* This function can GC */
   REGISTER char *sh;
-  Lisp_Object tempdir;
 
   Vprocess_environment = Qnil;
   /* jwz: always initialize Vprocess_environment, so that egetenv() works
@@ -877,25 +874,25 @@ init_callproc (void)
   sh = egetenv ("COMSPEC");
   {
     char *tem;
-	/*
-	** If COMSPEC has been set, then convert the
-	** DOS formatted name into a UNIX format. Then
-	** create a LISP object.
-	*/
+    /*
+    ** If COMSPEC has been set, then convert the
+    ** DOS formatted name into a UNIX format. Then
+    ** create a LISP object.
+    */
     if (sh)
-    {
-		tem = (char *) alloca (strlen (sh) + 1);
-		dostounix_filename (strcpy (tem, sh));
-		Vshell_file_name = build_string (tem);
-	}
-	/*
-	** Odd, no COMSPEC, so let's default to our
-	** best guess for NT.
-	*/
-	else
-	{
-		Vshell_file_name = build_string ("/WINNT/system32/cmd.exe");
-	}
+      {
+	tem = (char *) alloca (strlen (sh) + 1);
+	dostounix_filename (strcpy (tem, sh));
+	Vshell_file_name = build_string (tem);
+      }
+    /*
+    ** Odd, no COMSPEC, so let's default to our
+    ** best guess for NT.
+    */
+    else
+      {
+	Vshell_file_name = build_string ("/WINNT/system32/cmd.exe");
+      }
   }
 #else /* not WINDOWSNT */
   sh = (char *) egetenv ("SHELL");

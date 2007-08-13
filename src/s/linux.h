@@ -103,14 +103,14 @@ Boston, MA 02111-1307, USA.  */
 #ifndef __ELF__
 #define LIB_STANDARD "-lc" /* avoid -lPW */
 #else
-#undef LIB_GCC
-#define LIB_GCC
+/*#undef LIB_GCC
+  #define LIB_GCC*/
 #define LIB_STANDARD "-lgcc -lc -lgcc /usr/lib/crtn.o"
+#define LINKER "$(CC) -nostdlib"
 #endif
 
 #ifdef TERM
 #define LIBS_SYSTEM "-lclient"
-     /* #define C_SWITCH_SYSTEM "-D_BSD_SOURCE -I/usr/src/term" - mrb */
 #define C_SWITCH_SYSTEM "-I/usr/src/term"
 #else
 /* alane@wozzle.linet.org says that -lipc is not a separate library,
@@ -121,11 +121,14 @@ Boston, MA 02111-1307, USA.  */
 #ifdef __ELF__
 #define UNEXEC "unexelf.o"
 #define UNEXEC_USE_MAP_PRIVATE
+#if 0
 /* mrb - Ordinary link is simple and effective */
+/* slb - Not any more ... :-( */
 #define ORDINARY_LINK
 #undef LIB_STANDARD
 #undef START_FILES
 #undef LIB_GCC
+#endif
 #endif /* __ELF__ */
 
 #ifdef LINUX_QMAGIC

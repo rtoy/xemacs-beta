@@ -313,9 +313,9 @@ See also `write-file-hooks' and `continue-save-buffer'.")
 ;;  a write-file-hook which returns non-nil.
 (put 'write-file-data-hooks 'permanent-local t)
 (defvar write-file-data-hooks nil
-  "List of functions to be called to put the bytes on disk.  
+  "List of functions to be called to put the bytes on disk.
 These functions receive the name of the file to write to as argument.
-The default behavior is to call 
+The default behavior is to call
   (write-region (point-min) (point-max) filename nil t)
 If one of them returns non-nil, the file is considered already written
 and the rest are not called.
@@ -579,7 +579,7 @@ accessible."
 ;; XEmacs addition.  Called from `insert-file-contents-internal'
 ;; at the appropriate time.
 (defun compute-buffer-file-truename (&optional buffer)
-  "Recomputes BUFFER's value of `buffer-file-truename'
+  "Recompute BUFFER's value of `buffer-file-truename'
 based on the current value of `buffer-file-name'.
 BUFFER defaults to the current buffer if unspecified."
   (save-excursion
@@ -890,7 +890,7 @@ If optional argument HACK-HOMEDIR is non-nil, then this also substitutes
 		     ;; If the home dir is just /, don't change it.
 		     (not (and (= (match-end 0) 1) ;#### unix-specific
 			       (= (aref filename 0) ?/)))
-		     (not (and (or (eq system-type 'ms-dos) 
+		     (not (and (or (eq system-type 'ms-dos)
 				   (eq system-type 'windows-nt))
 			       (save-match-data
 				 (string-match "^[a-zA-Z]:/$" filename)))))
@@ -956,7 +956,7 @@ find-file-hooks, etc.
   (let ((file-name-handler-alist nil)
 	(format-alist nil)
 	(after-insert-file-functions nil)
-	(find-buffer-file-type-function 
+	(find-buffer-file-type-function
 	 (if (fboundp 'find-buffer-file-type)
 	     (symbol-function 'find-buffer-file-type)
 	   nil)))
@@ -1094,7 +1094,7 @@ problems will be suppressed."
 	       ;; This should be in C.  Put pathname abbreviations that have
 	       ;; been explicitly requested back into the pathname.  Most
 	       ;; importantly, strip out automounter /tmp_mnt directories so
-	       ;; that auto-save will work 
+	       ;; that auto-save will work
 	       (setq buffer-file-name (abbreviate-file-name buffer-file-name)))
 	  ;; Set buffer's default directory to that of the file.
 	  (setq default-directory (file-name-directory buffer-file-name))
@@ -1356,7 +1356,7 @@ If `enable-local-variables' is nil, this function does not check for a
             (let ((alist auto-mode-alist)
                   (mode nil))
               ;; Find first matching alist entry.
-	      (let ((case-fold-search 
+	      (let ((case-fold-search
 		     (memq system-type '(vax-vms windows-nt))))
 		(while (and (not mode) alist)
 		  (if (string-match (car (car alist)) name)
@@ -1447,8 +1447,8 @@ for current buffer."
 ;;;   end:
 ;;;
 ;;; The lines may begin with a common prefix, like ";;;   " in the above
-;;; example.  They may also have a common suffix (" */" for example).  In 
-;;; this form, the local variable "mode" can be used to change the major 
+;;; example.  They may also have a common suffix (" */" for example).  In
+;;; this form, the local variable "mode" can be used to change the major
 ;;; mode, and the local variable "eval" can be used to evaluate an arbitrary
 ;;; form.
 ;;;
@@ -1554,7 +1554,7 @@ for current buffer."
     (save-excursion
       (goto-char (point-min))
       (skip-chars-forward " \t\n\r")
-      (let ((end (save-excursion 
+      (let ((end (save-excursion
 		   ;; If the file begins with "#!"
 		   ;; (un*x exec interpreter magic), look
 		   ;; for mode frobs in the first two
@@ -1602,7 +1602,7 @@ for current buffer."
 		   (setq result (cons (cons key val) result))
 		   (skip-chars-forward " \t;")))
 	       (setq result (nreverse result))))))
-	
+
     (let ((set-any-p (or force
 			 ;; It's OK to force null specifications.
 			 (null result)
@@ -1662,7 +1662,7 @@ for current buffer."
 ;; Don't wait for outline.el to be loaded, for the sake of outline-minor-mode.
 (put 'outline-level 'risky-local-variable t)
 (put 'rmail-output-file-alist 'risky-local-variable t)
-	    
+
 ;; This one is safe because the user gets to check it before it is used.
 (put 'compile-command 'safe-local-variable t)
 
@@ -1970,7 +1970,7 @@ we do not remove backup version numbers, only true file version numbers."
 			 (length name))))))))
 
 (defun file-ownership-preserved-p (file)
-  "Returns t if deleting FILE and rewriting it would preserve the owner."
+  "Return t if deleting FILE and rewriting it would preserve the owner."
   (let ((handler (find-file-name-handler file 'file-ownership-preserved-p)))
     (if handler
 	(funcall handler 'file-ownership-preserved-p file)
@@ -2167,7 +2167,7 @@ So this list is cleared if you change the visited file name.")
     (if (memq t localval)
 	(setq localval (append (delq t localval) (delq t globalval))))
     localval))
-  
+
 (defun basic-save-buffer ()
   "Save the current buffer in its visited file, if it has been modified.
 After saving the buffer, run `after-save-hook'."
@@ -2280,7 +2280,7 @@ After saving the buffer, run `after-save-hook'."
 		 "Attempt to save to a file which you aren't allowed to write"))))))
     (or buffer-backed-up
 	(setq setmodes (backup-buffer)))
-    (let ((dir (file-name-directory buffer-file-name))) 
+    (let ((dir (file-name-directory buffer-file-name)))
       (if (and file-precious-flag
 	       (file-writable-p dir))
 	  ;; If file is precious, write temp name, then rename it.
@@ -2304,7 +2304,7 @@ After saving the buffer, run `after-save-hook'."
 		       (setq succeed t))
 	      ;; If writing the temp file fails,
 	      ;; delete the temp file.
-	      (or succeed 
+	      (or succeed
 		  (progn
 		    (delete-file tempname)
 		    (set-visited-file-modtime old-modtime))))
@@ -2713,7 +2713,7 @@ beginning and `after-revert-hook' at the end."
   (interactive "FRecover file: ")
   (setq file (expand-file-name file))
   (let ((handler (or (find-file-name-handler file 'recover-file)
-		    (find-file-name-handler 
+		    (find-file-name-handler
 		     (let ((buffer-file-name file))
 		       (make-auto-save-file-name))
 		     'recover-file))))
@@ -2831,7 +2831,7 @@ This command is used in the special Dired buffer created by
 			     (lambda (file)
 			       (condition-case nil
 				   (save-excursion (recover-file file))
-				 (error 
+				 (error
 				  "Failed to recover `%s'" file)))
 			     files
 			     '("file" "files" "recover"))
@@ -2911,7 +2911,7 @@ See also `auto-save-file-name-p'."
 
 	    ;; Deal with buffers that don't have any associated files.  (Mail
 	    ;; mode tends to create a good number of these.)
- 
+
 	    (let ((buffer-name (buffer-name))
 		  (limit 0))
 	      ;; Use technique from Sebastian Kremer's auto-save
@@ -2922,7 +2922,7 @@ See also `auto-save-file-name-p'."
 	      ;; somewhere else and make the name translation customizable.
 	      ;; Using "\!" as part of a filename on a UNIX filesystem is nearly
 	      ;; IMPOSSIBLE to get past a shell parser.  -stig
-	      
+
 	      (while (string-match "[/\\]" buffer-name limit)
 		(setq buffer-name
 		      (concat (substring buffer-name 0 (match-beginning 0))
@@ -2945,7 +2945,7 @@ See also `auto-save-file-name-p'."
 	      ;; mail came from a previous emacs process (far and away
 	      ;; the most likely case) then this can never succeed as
 	      ;; the pid differs.
-	      
+
 	      (expand-file-name (format "#%s#" buffer-name)))
 	    ))
     ;; don't try to write auto-save files in unwritable places.  Unless
@@ -3115,7 +3115,7 @@ If WILDCARD, it also runs the shell specified by `shell-file-name'."
        (t
 	(if wildcard
 	    ;; Run ls in the directory of the file pattern we asked for.
-	    (let ((default-directory 
+	    (let ((default-directory
                       (if (file-name-absolute-p file)
                           (file-name-directory file)
                           (file-name-directory (expand-file-name file))))

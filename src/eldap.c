@@ -29,18 +29,10 @@ Boston, MA 02111-1307, USA.  */
    - Netscape's LDAP SDK 1.0 (http://developer.netscape.com) */
 
 
-
 #include <config.h>
-
-#if defined (HAVE_LDAP)
-
-/* The entire file is within this conditional */
-
 #include "lisp.h"
 
 #include <errno.h>
-
-#include "eldap.h"
 #include <lber.h>
 #include <ldap.h>
 
@@ -429,7 +421,6 @@ syms_of_eldap (void)
   defsymbol (&Qderef, "deref");
   defsymbol (&Qtimelimit, "timelimit");
   defsymbol (&Qsizelimit, "sizelimit");
-  defsymbol (&Qbase, "base");
   defsymbol (&Qonelevel, "onelevel");
   defsymbol (&Qsubtree, "subtree");
 #ifdef LDAP_AUTH_KRBV41
@@ -462,5 +453,3 @@ Acme organization in the United States.
   Vldap_default_host =  Qnil;
   Vldap_default_base =  Qnil;
 }
-
-#endif /* HAVE_LDAP */

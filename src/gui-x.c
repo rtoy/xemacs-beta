@@ -44,7 +44,6 @@ Lisp_Object Qmenu_no_selection_hook;
 /* we need a unique id for each popup menu, dialog box, and scrollbar */
 static unsigned int lwlib_id_tick;
 
-LWLIB_ID new_lwlib_id (void);
 LWLIB_ID
 new_lwlib_id (void)
 {
@@ -61,11 +60,6 @@ xmalloc_widget_value (void)
 
 
 #ifdef HAVE_POPUPS
-static Lisp_Object mark_popup_data (Lisp_Object obj,
-				      void (*markobj) (Lisp_Object));
-DEFINE_LRECORD_IMPLEMENTATION ("popup-data", popup_data,
-                               mark_popup_data, internal_object_printer,
-			       0, 0, 0, struct popup_data);
 
 struct mark_widget_value_closure
 {
@@ -112,6 +106,10 @@ mark_popup_data (Lisp_Object obj, void (*markobj) (Lisp_Object))
   return data->last_menubar_buffer;
 }
 
+DEFINE_LRECORD_IMPLEMENTATION ("popup-data", popup_data,
+                               mark_popup_data, internal_object_printer,
+			       0, 0, 0, struct popup_data);
+
 /* This is like FRAME_MENUBAR_DATA (f), but contains an alist of
    (id . popup-data) for GCPRO'ing the callbacks of the popup menus
    and dialog boxes. */
@@ -122,7 +120,7 @@ gcpro_popup_callbacks (LWLIB_ID id)
 {
   struct popup_data *pdata;
   Lisp_Object lid = make_int (id);
-  Lisp_Object lpdata = Qnil;
+  Lisp_Object lpdata;
 
   assert (NILP (assq_no_quit (lid, Vpopup_callbacks)));
   pdata = alloc_lcrecord_type (struct popup_data, lrecord_popup_data);
@@ -229,7 +227,7 @@ popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
 {
   Lisp_Object fn, arg;
   Lisp_Object data;
-  Lisp_Object frame = Qnil;
+  Lisp_Object frame;
   struct device *d = get_device_from_display (XtDisplay (widget));
   struct frame *f = x_any_widget_or_parent_to_frame (d, widget);
 
@@ -325,7 +323,7 @@ menu_separator_style (CONST char *s)
      using "===" in menubars to get double-etched lines */
   if (*p == '!' || *p == '\0')
     return ((first == '-')
-	    ? NULL		/* single etched is the default */
+	    ? NULL			/* single etched is the default */
 	    : xstrdup ("shadowDoubleEtchedIn"));
   else if (*p == ':')
     return xstrdup (p+1);
@@ -456,7 +454,7 @@ button_item_to_widget_value (Lisp_Object desc, widget_value *wv,
     {
       CONST char *const_bogosity;
       Lisp_Object suffix2;
-      
+
       /* Shortcut to avoid evaluating suffix each time */
       if (STRINGP (suffix))
 	suffix2 = suffix;

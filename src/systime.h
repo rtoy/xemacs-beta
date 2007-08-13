@@ -141,7 +141,7 @@ do {						\
 
 #if !defined (HAVE_GETTIMEOFDAY)
 struct timezone;
-extern int gettimeofday (struct timeval *, struct timezone *);
+int gettimeofday (struct timeval *, struct timezone *);
 #endif
 
 /* On SVR4, the compiler may complain if given this extra BSD arg.  */
@@ -149,7 +149,7 @@ extern int gettimeofday (struct timeval *, struct timezone *);
 # ifdef SOLARIS2
 /* Solaris (at least) omits this prototype.  IRIX5 has it and chokes if we
    declare it here. */
-extern int gettimeofday (struct timeval *);
+int gettimeofday (struct timeval *);
 # endif
 /* According to the Xt sources, some NTP daemons on some systems may
    return non-normalized values. */
@@ -162,7 +162,7 @@ do {								\
 # ifdef SOLARIS2
 /* Solaris doesn't provide any prototype of this unless a bunch of
    crap we don't define are defined. */
-extern int gettimeofday (struct timeval *, void *dummy);
+int gettimeofday (struct timeval *, void *dummy);
 # endif
 #define EMACS_GET_TIME(time)					\
 do {								\
@@ -219,10 +219,10 @@ do {								\
 #define EMACS_SET_SECS_USECS(time, secs, usecs) 		\
   (EMACS_SET_SECS (time, secs), EMACS_SET_USECS (time, usecs))
 
-extern int set_file_times (char *filename, EMACS_TIME atime, EMACS_TIME mtime);
+int set_file_times (char *filename, EMACS_TIME atime, EMACS_TIME mtime);
 
-extern void get_process_times (double *user_time, double *system_time,
-			       double *real_time);
+void get_process_times (double *user_time, double *system_time,
+			double *real_time);
 
 #if defined(WINDOWSNT) || defined(BROKEN_CYGWIN)
 

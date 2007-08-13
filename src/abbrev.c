@@ -69,9 +69,7 @@ Lisp_Object Vlast_abbrev;
 Lisp_Object Vlast_abbrev_text;
 
 /* Character address of start of last abbrev expanded */
-int last_abbrev_point;
-
-Lisp_Object oblookup (Lisp_Object, CONST Bufbyte *, Bytecount);
+int last_abbrev_location;
 
 /* Hook to run before expanding any abbrev.  */
 Lisp_Object Vpre_abbrev_expand_hook, Qpre_abbrev_expand_hook;
@@ -355,7 +353,7 @@ If no abbrev matched, but `pre-abbrev-expand-hook' changed the buffer,
   XSETSYMBOL (Vlast_abbrev, abbrev_symbol);
   Vlast_abbrev_text =
     make_string_from_buffer (buf, abbrev_start, abbrev_length);
-  last_abbrev_point = abbrev_start;
+  last_abbrev_location = abbrev_start;
 
   /* Add an undo boundary, in case we are doing this for a
      self-inserting command which has avoided making one so far.  */
@@ -435,13 +433,13 @@ The exact text of the last abbrev expanded.
 nil if the abbrev has already been unexpanded.
 */ );
 
-  DEFVAR_INT ("last-abbrev-location", &last_abbrev_point /*
+  DEFVAR_INT ("last-abbrev-location", &last_abbrev_location /*
 The location of the start of the last abbrev expanded.
 */ );
 
   Vlast_abbrev = Qnil;
   Vlast_abbrev_text = Qnil;
-  last_abbrev_point = 0;
+  last_abbrev_location = 0;
 
   DEFVAR_LISP ("abbrev-start-location", &Vabbrev_start_location /*
 Buffer position for `expand-abbrev' to use as the start of the abbrev.

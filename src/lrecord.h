@@ -34,14 +34,13 @@ Boston, MA 02111-1307, USA.  */
    to process this object, or an index into an array of pointers
    to struct lrecord_implementations plus some other data bits.
 
-   lrecords are of two types: straight lrecords, and lcrecords.
-   Straight lrecords are used for those types of objects that
-   have their own allocation routines (typically allocated out of
-   2K chunks of memory).  These objects have a `struct
-   lrecord_header' at the top, containing only the bits needed to
-   find the lrecord_implementation for the object.  There are
-   special routines in alloc.c to deal with each such object
-   type.
+   Lrecords are of two types: straight lrecords, and lcrecords.
+   Straight lrecords are used for those types of objects that have
+   their own allocation routines (typically allocated out of 2K chunks
+   of memory called `frob blocks').  These objects have a `struct
+   lrecord_header' at the top, containing only the bits needed to find
+   the lrecord_implementation for the object.  There are special
+   routines in alloc.c to deal with each such object type.
 
    Lcrecords are used for less common sorts of objects that don't
    do their own allocation.  Each such object is malloc()ed
@@ -93,24 +92,26 @@ struct lrecord_header
   unsigned type:8;
   /* 1 if the object is marked during GC, 0 otherwise. */
   unsigned mark:1;
-  /* 1 if the object was resides in pure (read-only) space */
+  /* 1 if the object resides in pure (read-only) space */
   unsigned pure:1;
 #else
   CONST struct lrecord_implementation *implementation;
 #endif
 };
 
-
-#ifdef USE_INDEXED_LRECORD_IMPLEMENTATION
 struct lrecord_implementation;
 int lrecord_type_index (CONST struct lrecord_implementation *implementation);
-# define set_lheader_implementation(header,imp) \
-	do { (header)->type = lrecord_type_index((imp)); \
-	     (header)->mark = 0;			\
-	     (header)->pure = 0;			\
-	} while (0)
+
+#ifdef USE_INDEXED_LRECORD_IMPLEMENTATION
+# define set_lheader_implementation(header,imp) do	\
+{							\
+  (header)->type = lrecord_type_index (imp);		\
+  (header)->mark = 0;					\
+  (header)->pure = 0;					\
+} while (0)
 #else
-# define set_lheader_implementation(header,imp) (header)->implementation=(imp)
+# define set_lheader_implementation(header,imp) \
+  ((void) ((header)->implementation = (imp)))
 #endif
 
 struct lcrecord_header
@@ -149,11 +150,11 @@ struct free_lcrecord_header
 
 /* This as the value of lheader->implementation->finalizer
  *  means that this record is already marked */
-extern void this_marks_a_marked_record (void *, int);
+void this_marks_a_marked_record (void *, int);
 
 /* see alloc.c for an explanation */
-extern Lisp_Object this_one_is_unmarkable (Lisp_Object obj,
-					   void (*markobj) (Lisp_Object));
+Lisp_Object this_one_is_unmarkable (Lisp_Object obj,
+				    void (*markobj) (Lisp_Object));
 
 struct lrecord_implementation
 {
@@ -194,8 +195,8 @@ struct lrecord_implementation
 
   /* Only one of these is non-0.  If both are 0, it means that this type
      is not instantiable by alloc_lcrecord(). */
-  unsigned int static_size;
-  unsigned int (*size_in_bytes_method) (CONST void *header);
+  size_t static_size;
+  size_t (*size_in_bytes_method) (CONST void *header);
   /* A unique subtag-code (dynamically) assigned to this datatype. */
   /* (This is a pointer so the rest of this structure can be read-only.) */
   int *lrecord_type_index;
@@ -207,9 +208,9 @@ struct lrecord_implementation
   int basic_p;
 };
 
+#ifdef USE_INDEXED_LRECORD_IMPLEMENTATION
 extern CONST struct lrecord_implementation *lrecord_implementations_table[];
 
-#ifdef USE_INDEXED_LRECORD_IMPLEMENTATION
 # define XRECORD_LHEADER_IMPLEMENTATION(obj) \
    (lrecord_implementations_table[XRECORD_LHEADER (obj)->type])
 # define LHEADER_IMPLEMENTATION(lh) (lrecord_implementations_table[(lh)->type])
@@ -224,8 +225,8 @@ extern int gc_in_progress;
 #ifdef USE_INDEXED_LRECORD_IMPLEMENTATION
 # define MARKED_RECORD_P(obj) (gc_in_progress && XRECORD_LHEADER (obj)->mark)
 #else
-# define MARKED_RECORD_P(obj) (gc_in_progress &&			\
-  XRECORD_LHEADER (obj)->implementation->finalizer ==			\
+# define MARKED_RECORD_P(obj) (gc_in_progress &&	\
+  XRECORD_LHEADER (obj)->implementation->finalizer ==	\
   this_marks_a_marked_record)
 #endif
 
@@ -272,58 +273,31 @@ extern int gc_in_progress;
 #endif
 
 #define DEFINE_BASIC_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,structtype) \
-DECLARE_ERROR_CHECK_TYPECHECK(c_name, structtype)			\
-static int lrecord_##c_name##_lrecord_type_index; 			\
-CONST_IF_NOT_DEBUG struct lrecord_implementation lrecord_##c_name[2] =	\
-  { { name, marker, printer, nuker, equal, hash,			\
-      0, 0, 0, 0, sizeof (structtype), 0,				\
-      &(lrecord_##c_name##_lrecord_type_index), 1 }, 			\
-    { 0, 0, 0, this_marks_a_marked_record, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 } }
+DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,0,0,0,0,structtype)
 
 #define DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,getprop,putprop,remprop,props,structtype) \
-DECLARE_ERROR_CHECK_TYPECHECK(c_name, structtype)			\
-static int lrecord_##c_name##_lrecord_type_index; 			\
-CONST_IF_NOT_DEBUG struct lrecord_implementation lrecord_##c_name[2] =	\
-  { { name, marker, printer, nuker, equal, hash,			\
-      getprop, putprop, remprop, props, sizeof (structtype), 0,		\
-      &(lrecord_##c_name##_lrecord_type_index), 1 }, 			\
-    { 0, 0, 0, this_marks_a_marked_record, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 } }
+MAKE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,getprop,putprop,remprop,props,sizeof(structtype),0,1,structtype)
 
 #define DEFINE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,structtype) \
-DECLARE_ERROR_CHECK_TYPECHECK(c_name, structtype)			\
-static int lrecord_##c_name##_lrecord_type_index; 			\
-CONST_IF_NOT_DEBUG struct lrecord_implementation lrecord_##c_name[2] =	\
-  { { name, marker, printer, nuker, equal, hash,			\
-      0, 0, 0, 0, sizeof (structtype), 0,				\
-      &(lrecord_##c_name##_lrecord_type_index), 0 }, 			\
-    { 0, 0, 0, this_marks_a_marked_record, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } }
+DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,0,0,0,0,structtype)
 
 #define DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,getprop,putprop,remprop,props,structtype) \
-DECLARE_ERROR_CHECK_TYPECHECK(c_name, structtype)			\
-static int lrecord_##c_name##_lrecord_type_index; 			\
-CONST_IF_NOT_DEBUG struct lrecord_implementation lrecord_##c_name[2] =	\
-  { { name, marker, printer, nuker, equal, hash,			\
-      getprop, putprop, remprop, props, sizeof (structtype), 0,		\
-      &(lrecord_##c_name##_lrecord_type_index), 0 }, 			\
-    { 0, 0, 0, this_marks_a_marked_record, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } }
+MAKE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,getprop,putprop,remprop,props,sizeof (structtype),0,0,structtype)
 
 #define DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,sizer,structtype) \
-DECLARE_ERROR_CHECK_TYPECHECK(c_name, structtype)			\
-static int lrecord_##c_name##_lrecord_type_index;			\
-CONST_IF_NOT_DEBUG struct lrecord_implementation lrecord_##c_name[2] =	\
-  { { name, marker, printer, nuker, equal, hash,			\
-      0, 0, 0, 0, 0, sizer,						\
-      &(lrecord_##c_name##_lrecord_type_index), 0 },			\
-    { 0, 0, 0, this_marks_a_marked_record, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } }
+DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,0,0,0,0,sizer,structtype)
 
 #define DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION_WITH_PROPS(name,c_name,marker,printer,nuker,equal,hash,getprop,putprop,remprop,props,sizer,structtype) \
+MAKE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,getprop,putprop,remprop,props,0,sizer,0,structtype) \
+
+#define MAKE_LRECORD_IMPLEMENTATION(name,c_name,marker,printer,nuker,equal,hash,getprop,putprop,remprop,props,size,sizer,basic_p,structtype) \
 DECLARE_ERROR_CHECK_TYPECHECK(c_name, structtype)			\
 static int lrecord_##c_name##_lrecord_type_index;			\
 CONST_IF_NOT_DEBUG struct lrecord_implementation lrecord_##c_name[2] =	\
   { { name, marker, printer, nuker, equal, hash,			\
-      getprop, putprop, remprop, props, 0, sizer,			\
-      &(lrecord_##c_name##_lrecord_type_index), 0 },			\
-    { 0, 0, 0, this_marks_a_marked_record, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } }
+      getprop, putprop, remprop, props, size, sizer,			\
+      &(lrecord_##c_name##_lrecord_type_index), basic_p },		\
+    { 0, 0, 0, this_marks_a_marked_record, 0, 0, 0, 0, 0, 0, 0, 0, 0, basic_p } }
 
 #define LRECORDP(a) (XTYPE ((a)) == Lisp_Type_Record)
 #define XRECORD_LHEADER(a) ((struct lrecord_header *) XPNTR (a))
@@ -441,7 +415,7 @@ extern Lisp_Object Q##c_name##p
    dead_wrong_type_argument (predicate, x);		\
  } while (0)
 
-void *alloc_lcrecord (int size, CONST struct lrecord_implementation *);
+void *alloc_lcrecord (size_t size, CONST struct lrecord_implementation *);
 
 #define alloc_lcrecord_type(type, lrecord_implementation) \
   ((type *) alloc_lcrecord (sizeof (type), lrecord_implementation))

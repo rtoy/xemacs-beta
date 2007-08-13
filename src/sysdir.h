@@ -20,6 +20,10 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not really in FSF. */
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #ifdef SYSV_SYSTEM_DIR
 # include <dirent.h>
 #elif defined (NONSYSTEM_DIR_LIBRARY)
@@ -60,7 +64,7 @@ Boston, MA 02111-1307, USA.  */
 /* encapsulation: directory calls */
 
 #ifdef ENCAPSULATE_CHDIR
-extern int sys_chdir (CONST char *path);
+int sys_chdir (CONST char *path);
 #endif
 #if defined (ENCAPSULATE_CHDIR) && !defined (DONT_ENCAPSULATE)
 # undef chdir
@@ -71,7 +75,7 @@ extern int sys_chdir (CONST char *path);
 #endif
 
 #ifdef ENCAPSULATE_MKDIR
-extern int sys_mkdir (CONST char *path, int mode);
+int sys_mkdir (CONST char *path, mode_t mode);
 #endif
 #if defined (ENCAPSULATE_MKDIR) && !defined (DONT_ENCAPSULATE)
 # undef mkdir
@@ -82,7 +86,7 @@ extern int sys_mkdir (CONST char *path, int mode);
 #endif
 
 #ifdef ENCAPSULATE_OPENDIR
-extern DIR *sys_opendir (CONST char *filename);
+DIR *sys_opendir (CONST char *filename);
 #endif
 #if defined (ENCAPSULATE_OPENDIR) && !defined (DONT_ENCAPSULATE)
 # undef opendir
@@ -93,7 +97,7 @@ extern DIR *sys_opendir (CONST char *filename);
 #endif
 
 #ifdef ENCAPSULATE_READDIR
-extern DIRENTRY *sys_readdir (DIR *dirp);
+DIRENTRY *sys_readdir (DIR *dirp);
 #endif
 #if defined (ENCAPSULATE_READDIR) && !defined (DONT_ENCAPSULATE)
 # undef readdir
@@ -104,7 +108,7 @@ extern DIRENTRY *sys_readdir (DIR *dirp);
 #endif
 
 #ifdef ENCAPSULATE_CLOSEDIR
-extern int sys_closedir (DIR *dirp);
+int sys_closedir (DIR *dirp);
 #endif
 #if defined (ENCAPSULATE_CLOSEDIR) && !defined (DONT_ENCAPSULATE)
 # undef closedir
@@ -115,7 +119,7 @@ extern int sys_closedir (DIR *dirp);
 #endif
 
 #ifdef ENCAPSULATE_RMDIR
-extern int sys_rmdir (CONST char *path);
+int sys_rmdir (CONST char *path);
 #endif
 #if defined (ENCAPSULATE_RMDIR) && !defined (DONT_ENCAPSULATE)
 # undef rmdir

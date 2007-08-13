@@ -28,12 +28,10 @@ Boston, MA 02111-1307, USA.  */
 #include "elhash.h"
 #include "regex.h"
 #include "opaque.h"
-
 #include "sysfile.h"
 #include "sysdir.h"
 
 Lisp_Object Vcompletion_ignored_extensions;
-
 Lisp_Object Qdirectory_files;
 Lisp_Object Qfile_name_completion;
 Lisp_Object Qfile_name_all_completions;
@@ -335,7 +333,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
   file = FILE_SYSTEM_CASE (file);
 #endif
   dirname = Fexpand_file_name (dirname, Qnil);
-  file_name_length = string_char_length (XSTRING (file));
+  file_name_length = XSTRING_CHAR_LENGTH (file);
 
   /* With passcount = 0, ignore files that end in an ignored extension.
      If nothing found then try again with passcount = 1, don't ignore them.
@@ -418,12 +416,12 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
 
 		      CHECK_STRING (elt);
 
-		      skip = cclen - string_char_length (XSTRING (elt));
+		      skip = cclen - XSTRING_CHAR_LENGTH (elt);
 		      if (skip < 0) continue;
 
 		      if (0 > scmp (charptr_n_addr (d_name, skip),
 				    XSTRING_DATA (elt),
-				    string_char_length (XSTRING (elt))))
+				    XSTRING_CHAR_LENGTH (elt)))
 			{
 			  ignored_extension_p = 1;
 			  break;
@@ -459,7 +457,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
               else
                 {
                   bestmatch = name;
-                  bestmatchsize = string_char_length (XSTRING (name));
+                  bestmatchsize = XSTRING_CHAR_LENGTH (name);
                 }
               NUNGCPRO;
             }
@@ -480,7 +478,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
                      of the actual match.  */
                   if ((matchsize == cclen
                        && matchsize + !!directoryp
-                       < string_char_length (XSTRING (bestmatch)))
+                       < XSTRING_CHAR_LENGTH (bestmatch))
                       ||
                       /* If there is no exact match ignoring case,
                          prefer a match that does not change the case
@@ -488,7 +486,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, int all_flag,
                       (((matchsize == cclen)
                         ==
                         (matchsize + !!directoryp
-                         == string_char_length (XSTRING (bestmatch))))
+                         == XSTRING_CHAR_LENGTH (bestmatch)))
                        /* If there is more than one exact match aside from
                           case, and one of them is exact including case,
                           prefer that one.  */
@@ -654,7 +652,7 @@ If file does not exist, returns nil.
   /* If the size is out of range, give back -1.  */
   /* #### Fix when Emacs gets bignums! */
   if (XINT (values[7]) != s.st_size)
-    XSETINT (values[7], -1);
+    values[7] = make_int (-1);
   filemodestring (&s, modes);
   values[8] = make_string ((Bufbyte *) modes, 10);
 #if defined (BSD4_2) || defined (BSD4_3)	/* file gid will be dir gid */

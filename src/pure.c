@@ -18,25 +18,19 @@ Boston, MA 02111-1307, USA.  */
 /* Synched up with: FSF 19.30.  Split out of alloc.c. */
 
 #include <config.h>
-#include "puresize.h"
 #include "lisp.h"
+#include "puresize.h"
 
 /* Moved from puresize.h to here so alloc.c does not get recompiled */
 
 # include <puresize-adjust.h>
 #define PURESIZE ((RAW_PURESIZE) + (PURESIZE_ADJUSTMENT))
 
-long int
-get_PURESIZE(void)
+size_t
+get_PURESIZE (void)
 {
   return PURESIZE;
 }
 
-Lisp_Object pure[PURESIZE / sizeof (Lisp_Object)]
-     /* Force linker to put it into data space! */
-#ifdef NO_UNION_TYPE
-     = {0};
-#else
-     /* Need this many braces to convince GCC not to complain */
-     = {{{0}}};
-#endif
+/* Force linker to put it into data space! */
+EMACS_INT pure[PURESIZE / sizeof (EMACS_INT)] = { (EMACS_INT) 0};

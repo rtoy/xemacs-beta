@@ -35,9 +35,6 @@
    contrary!). */
 #define MEMMOVE_MISSING
 
-/* Send a signal to a subprocess by "typing" a signal character. */
-/* #define SIGNALS_VIA_CHARACTERS */ /* mrb */
-
 /* -lPW is only needed if not using Gcc.  We used to include -lcposix here
    for the rename function, but some people say ISC's rename doesn't
    work correctly with Emacs so we use Emacs' emulation instead. */

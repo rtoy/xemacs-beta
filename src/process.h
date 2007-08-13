@@ -33,7 +33,7 @@ Boston, MA 02111-1307, USA.  */
 #define kill_buffer_processes(x) 0
 #define close_process_descs() 0
 #define init_xemacs_process() 0
-extern void wait_without_blocking (void);
+void wait_without_blocking (void);
 
 #else /* not NO_SUBPROCESSES */
 
@@ -50,24 +50,7 @@ DECLARE_LRECORD (process, struct Lisp_Process);
 
 #ifdef emacs
 
-Lisp_Object Fget_process (Lisp_Object name);
-Lisp_Object Fget_buffer_process (Lisp_Object name);
-Lisp_Object Fprocessp (Lisp_Object object);
-Lisp_Object Fprocess_status (Lisp_Object process);
-Lisp_Object Fkill_process (Lisp_Object process,
-			   Lisp_Object current_group);
-Lisp_Object Fdelete_process (Lisp_Object process);
-Lisp_Object Fopen_network_stream_internal (Lisp_Object name,
-					   Lisp_Object buffer,
-					   Lisp_Object host,
-					   Lisp_Object service,
-					   Lisp_Object family);
-Lisp_Object Fopen_multicast_group_internal (Lisp_Object name,
-					    Lisp_Object buffer,
-					    Lisp_Object dest,
-					    Lisp_Object port,
-					    Lisp_Object ttl);
-Lisp_Object Fprocess_kill_without_query (Lisp_Object, Lisp_Object);
+EXFUN (Fprocess_kill_without_query, 2);
 
 Lisp_Object connect_to_file_descriptor (Lisp_Object name,
 					Lisp_Object buffer,
@@ -109,7 +92,8 @@ int network_connection_p (Lisp_Object process);
 #define network_connection_p(x) 0
 #endif
 
-extern Lisp_Object Qrun, Qexit, Qopen, Qclosed;
+extern Lisp_Object Qclosed, Qmulticast, Qopen, Qrun, Qstop, Qtcpip;
+extern Lisp_Object Vprocess_connection_type, Vprocess_list;
 
 /* Report all recent events of a change in process status
    (either run the sentinel or output a message).

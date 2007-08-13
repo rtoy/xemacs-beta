@@ -166,7 +166,7 @@ gc_cache_lookup (struct gc_cache *cache, XGCValues *gcv, unsigned long mask)
 
 #ifdef GCCACHE_HASH
 
-  if (gethash (&gcvm, cache->table, (void **) &cell))
+  if (gethash (&gcvm, cache->table, (CONST void **) &cell))
 
 #else /* !GCCACHE_HASH */
 

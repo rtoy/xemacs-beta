@@ -32,9 +32,6 @@ Boston, MA 02111-1307, USA.  */
 #include <unistd.h>
 #endif
 
-#if 0 /* mrb */
-#include <X11/Xos.h>
-#endif
 #include <X11/IntrinsicP.h>
 #include <X11/ShellP.h>
 #include <X11/StringDefs.h>
@@ -345,7 +342,7 @@ make_old_stack_space (XlwMenuWidget mw, int n)
 }
 
 static Boolean
-close_to_reference_time(Widget w, Time reference_time, XEvent *ev)
+close_to_reference_time (Widget w, Time reference_time, XEvent *ev)
 {
   return
     reference_time &&
@@ -383,10 +380,10 @@ string_width (XlwMenuWidget mw,
 static char massaged_resource_char[256];
 
 static void
-Initialize_massaged_resource_char (void)
+initialize_massaged_resource_char (void)
 {
   int j;
-  for (j = 0; j < sizeof (massaged_resource_char); j++)
+  for (j = 0; j < (int) sizeof (massaged_resource_char); j++)
     {
       if ((j >= 'a' && j <= 'z') ||
 	  (j >= 'A' && j <= 'Z') ||
@@ -433,7 +430,7 @@ string_width_u (XlwMenuWidget mw,
   chars = string;
 #endif
 
-  for (i = j = 0; chars[i] && (j < sizeof (newchars)); i++)
+  for (i = j = 0; chars[i] && (j < (int) sizeof (newchars)); i++)
     if (chars[i]=='%'&&chars[i+1]=='_')
 	    i++;
     else
@@ -443,11 +440,11 @@ string_width_u (XlwMenuWidget mw,
 #ifdef NEED_MOTIF
   newstring = XmStringLtoRCreate (newchars, XmFONTLIST_DEFAULT_TAG);
   XmStringExtent (mw->menu.font_list, newstring, &width, &height);
-  XmStringFree(newstring);
+  XmStringFree (newstring);
   return width;
 #else
 # ifdef USE_XFONTSET
-  XmbTextExtents(mw->menu.font_set, newchars, j, &ri, &rl);
+  XmbTextExtents (mw->menu.font_set, newchars, j, &ri, &rl);
   return rl.width;
 # else /* ! USE_XFONTSET */
   XTextExtents (mw->menu.font, newchars, j, &drop, &drop, &drop, &xcs);
@@ -493,8 +490,8 @@ massage_resource_name (CONST char *in, char *out)
   *out = 0;
 
 #ifdef PRINT_XLWMENU_RESOURCE_CONVERSIONS
-  printf("! Emacs*XlwMenu.%s.labelString:\t%s\n", save_out, save_in);
-  printf(  "Emacs*XlwMenu.%s.labelString:\n",     save_out);
+  printf ("! Emacs*XlwMenu.%s.labelString:\t%s\n", save_out, save_in);
+  printf (  "Emacs*XlwMenu.%s.labelString:\n",     save_out);
 #endif
 }
 
@@ -523,8 +520,8 @@ parameterize_string (CONST char *string, CONST char *value)
 {
   char *percent;
   char *result;
-  unsigned done = 0;
-  unsigned ntimes;
+  unsigned int done = 0;
+  unsigned int ntimes;
 
   if (!string)
     {
@@ -545,13 +542,13 @@ parameterize_string (CONST char *string, CONST char *value)
 
   while ((percent = strchr(string, '%')))
     {
-      unsigned left_pad;
-      unsigned right_pad;
+      unsigned int left_pad;
+      unsigned int right_pad;
       char *p;
 
       if (percent[1] == '%')
 	{	/* it's a real % */
-	  strncat(result, string, 1 + percent - string); /* incl % */
+	  strncat (result, string, 1 + percent - string); /* incl % */
 	  string = &percent[2];	/* after the second '%' */
 	  continue;		/* with the while() loop */
 	}
@@ -571,15 +568,15 @@ parameterize_string (CONST char *string, CONST char *value)
 	    }
 	  else if (*p == '1')
 	    {			/* param and terminator */
-	      strncat(result, string, percent - string);
+	      strncat (result, string, percent - string);
 	      if (value[0] != '\0')
 		{
-		  unsigned i;
+		  unsigned int i;
 		  for (i = 0; i < left_pad; i++)
-		    strcat(result, " ");
-		  strcat(result, value);
+		    strcat (result, " ");
+		  strcat (result, value);
 		  for (i = 0; i < right_pad; i++)
-		    strcat(result, " ");
+		    strcat (result, " ");
 		}
 	      string = &p[1];	/* after the '1' */
 	      done++;		/* no need to do old way */
@@ -588,25 +585,21 @@ parameterize_string (CONST char *string, CONST char *value)
 	  else
 	    {			/* bogus, copy the format as is */
 				/* out of for() loop */
-	      strncat(result, string, 1 + p - string);
-	      string= (*p ? &p[1] : p);
+	      strncat (result, string, 1 + p - string);
+	      string = (*p ? &p[1] : p);
 	      break;
 	    }
 	}
     }
 
-  /*
-   *    Copy the tail of the string
-   */
-  strcat(result, string);
+  /* Copy the tail of the string */
+  strcat (result, string);
 
-  /*
-   *    If we have not processed a % string, and we have a value, tail it.
-   */
+  /* If we have not processed a % string, and we have a value, tail it. */
   if (!done && value[0] != '\0')
     {
-      strcat(result, " ");
-      strcat(result, value);
+      strcat (result, " ");
+      strcat (result, value);
     }
 
   return result;
@@ -635,7 +628,7 @@ resource_widget_value (XlwMenuWidget mw, widget_value *val)
 	  if (val->value)
 	    {
 	      char named_name[1024];
-	      sprintf(named_name, "%sNamed", massaged_name);
+	      sprintf (named_name, "%sNamed", massaged_name);
 	      XtGetSubresources ((Widget) mw,
 				 (XtPointer) &resourced_name,
 				 named_name, named_name,
@@ -657,7 +650,7 @@ resource_widget_value (XlwMenuWidget mw, widget_value *val)
 	resourced_name = val->name;
 
       /* Parameterize the string. */
-      converted_name = parameterize_string(resourced_name, val->value);
+      converted_name = parameterize_string (resourced_name, val->value);
 
       /* nuke newline characters to prevent menubar screwups */
       for ( str = converted_name ; *str ; str++ )
@@ -682,14 +675,12 @@ resource_widget_value (XlwMenuWidget mw, widget_value *val)
 
 /* Unused */
 #if 0
-/*
- *    These two routines should be a seperate file..djw
- */
+/* These two routines should be a seperate file..djw */
 static char *
 xlw_create_localized_string (Widget w,
 			     char *name,
 			     char **args,
-			     unsigned nargs)
+			     unsigned int nargs)
 {
   char *string = NULL;
   char *arg = NULL;
@@ -714,11 +705,11 @@ static XmString
 xlw_create_localized_xmstring (Widget w,
 			       char *name,
 			       char **args,
-			       unsigned nargs)
+			       unsigned int nargs)
 {
   char *   string = xlw_create_localized_string (w, name, args, nargs);
   XmString xm_string = XmStringCreateLtoR (string, XmSTRING_DEFAULT_CHARSET);
-  XtFree(string);
+  XtFree (string);
   return xm_string;
 }
 #endif /* 0 */
@@ -746,7 +737,7 @@ resource_widget_value (XlwMenuWidget mw, widget_value *val)
       if (!resourced_name)
 	resourced_name = val->name;
 
-      complete_name = parameterize_string(resourced_name, val->value);
+      complete_name = parameterize_string (resourced_name, val->value);
 
       val->toolkit_data = complete_name;
       /* nuke newline characters to prevent menubar screwups */
@@ -762,18 +753,16 @@ resource_widget_value (XlwMenuWidget mw, widget_value *val)
 
 #endif /* !Motif */
 
-/*
- *    Code for drawing strings.
- */
+/* Code for drawing strings. */
 static void
-string_draw(XlwMenuWidget mw,
-	    Window window,
-	    int x, int y,
-	    GC gc,
+string_draw (XlwMenuWidget mw,
+	     Window window,
+	     int x, int y,
+	     GC gc,
 #ifdef NEED_MOTIF
-	    XmString string
+	     XmString string
 #else
-	    char *string
+	     char *string
 #endif
 )
 {
@@ -913,16 +902,16 @@ binding_draw (XlwMenuWidget mw, Window w, int x, int y, GC gc, char *value)
 #endif
 }
 
-/*
- *    Low level code for drawing 3-D edges.
- */
+/* Low level code for drawing 3-D edges. */
 static void
 shadow_rectangle_draw (Display *dpy,
 		       Window window,
 		       GC top_gc,
 		       GC bottom_gc,
-		       int x, int y, unsigned width, unsigned height,
-		       unsigned thickness)
+		       int x, int y,
+		       unsigned int width,
+		       unsigned int height,
+		       unsigned int thickness)
 {
   XPoint points [4];
 
@@ -992,7 +981,9 @@ typedef enum e_shadow_type
 static void
 shadow_draw (XlwMenuWidget mw,
 	     Window window,
-	     int x, int y, unsigned width, unsigned height,
+	     int x, int y,
+	     unsigned int width,
+	     unsigned int height,
 	     shadow_type type)
 {
   Display *dpy = XtDisplay (mw);
@@ -1032,7 +1023,7 @@ shadow_draw (XlwMenuWidget mw,
 
   if (etched)
     {
-      unsigned half = thickness/2;
+      unsigned int half = thickness/2;
       shadow_rectangle_draw (dpy,
 			     window,
 			     top_gc,
@@ -1064,7 +1055,7 @@ static void
 arrow_decoration_draw (XlwMenuWidget mw,
 		       Window window,
 		       int x, int y,
-		       unsigned width,
+		       unsigned int width,
 		       Boolean raised)
 {
   Display *dpy = XtDisplay (mw);
@@ -1095,10 +1086,8 @@ arrow_decoration_draw (XlwMenuWidget mw,
       bottom_gc = mw->menu.shadow_bottom_gc;
     }
 
-  /*
-   *    Fill internal area, we do this first so that the borders
-   *    have a nice sharp edge.
-   */
+  /* Fill internal area.  We do this first so that the borders have a
+     nice sharp edge.  */
   points [0].x = x + thickness;
   points [0].y = y + thickness;
   points [1].x = x + length - thickness;
@@ -1157,7 +1146,7 @@ static void
 toggle_decoration_draw (XlwMenuWidget mw,
 			Window window,
 			int x, int y,
-			unsigned width,
+			unsigned int width,
 			Boolean set)
 {
   Display *dpy = XtDisplay (mw);
@@ -1170,9 +1159,7 @@ toggle_decoration_draw (XlwMenuWidget mw,
   else
     type = SHADOW_OUT;
 
-  /*
-   *    Fill internal area.
-   */
+  /* Fill internal area. */
   if (set)
     XFillRectangle (dpy,
 		    window,
@@ -1182,14 +1169,14 @@ toggle_decoration_draw (XlwMenuWidget mw,
 		    width - (2*thickness),
 		    width - (2*thickness));
 
-  shadow_draw(mw, window, x, y, width, width, type);
+  shadow_draw (mw, window, x, y, width, width, type);
 }
 
 static void
 radio_decoration_draw (XlwMenuWidget mw,
 		       Window window,
 		       int x, int y,
-		       unsigned width,
+		       unsigned int width,
 		       Boolean enabled)
 {
   Display *dpy = XtDisplay (mw);
@@ -1220,10 +1207,8 @@ radio_decoration_draw (XlwMenuWidget mw,
     }
 
 #if 1
-  /*
-   *    Draw the bottom first, just incase the regions overlap.
-   *    The top should cast the longer shadow.
-   */
+  /*  Draw the bottom first, just in case the regions overlap.
+      The top should cast the longer shadow. */
   points [0].x = x; /* left corner */
   points [0].y = y + half_width;
   points [1].x = x + half_width; /* bottom corner */
@@ -1268,10 +1253,8 @@ radio_decoration_draw (XlwMenuWidget mw,
 
   XFillPolygon (dpy, window, top_gc, points, 4, Convex, CoordModeOrigin);
 #else
-  /*
-   *    Draw the bottom first, just incase the regions overlap.
-   *    The top should cast the longer shadow.
-   */
+  /* Draw the bottom first, just in case the regions overlap.
+     The top should cast the longer shadow. */
   npoints = 0;
   points [npoints].x = x; /* left corner */
   points [npoints++].y = y + half_width;
@@ -1309,9 +1292,7 @@ radio_decoration_draw (XlwMenuWidget mw,
 #endif
 
 
-  /*
-   *    Fill internal area.
-   */
+  /* Fill internal area. */
   if (enabled)
     {
       points [0].x = x + thickness;
@@ -1336,19 +1317,18 @@ static void
 separator_decoration_draw (XlwMenuWidget mw,
 			   Window window,
 			   int x, int y,
-			   unsigned width,
+			   unsigned int width,
 			   Boolean vertical,
 			   shadow_type type)
 {
   Display *dpy = XtDisplay (mw);
   GC top_gc;
   GC bottom_gc;
-  unsigned offset = 0;
-  unsigned num_separators = 1;
-  unsigned top_line_thickness = 0;
-  unsigned bottom_line_thickness = 0;
+  unsigned int offset = 0;
+  unsigned int num_separators = 1;
+  unsigned int top_line_thickness = 0;
+  unsigned int bottom_line_thickness = 0;
   Boolean dashed = False;
-  int i;
 
   switch (type)
     {
@@ -1416,6 +1396,7 @@ separator_decoration_draw (XlwMenuWidget mw,
 
   while (num_separators--)
     {
+      unsigned int i;
       for (i = 0; i < top_line_thickness; i++)
 	XDrawLine (dpy, window, top_gc, x, y + i, x + width, y + i);
 
@@ -1459,7 +1440,8 @@ print_widget_value (widget_value *wv, int just_one, int depth)
 {
   char d [200];
   int i;
-  for (i = 0; i < depth; i++) d[i] = ' ';
+  for (i = 0; i < depth; i++)
+    d[i] = ' ';
   d[depth]=0;
   if (!wv)
     {
@@ -1510,7 +1492,7 @@ menu_item_type (widget_value *val)
   else
     {
 #if SLOPPY_TYPES
-      if (all_dashes_p(val->name))
+      if (all_dashes_p (val->name))
 	return SEPARATOR_TYPE;
       else if (val->name && val->name[0] == '\0') /* push right */
 	return PUSHRIGHT_TYPE;
@@ -1530,10 +1512,10 @@ static void
 label_button_size (XlwMenuWidget mw,
 		   widget_value *val,
 		   Boolean in_menubar,
-		   unsigned *toggle_width,
-		   unsigned *label_width,
-		   unsigned *bindings_width,
-		   unsigned *height)
+		   unsigned int *toggle_width,
+		   unsigned int *label_width,
+		   unsigned int *bindings_width,
+		   unsigned int *height)
 {
   *height = (mw->menu.font_ascent + mw->menu.font_descent +
 	     2 * mw->menu.vertical_margin +
@@ -1552,10 +1534,10 @@ label_button_draw (XlwMenuWidget mw,
 		   Boolean       highlighted,
 		   Window        window,
 		   int x, int y,
-		   unsigned width,
-		   unsigned height,
-		   unsigned label_offset,
-		   unsigned binding_tab)
+		   unsigned int width,
+		   unsigned int height,
+		   unsigned int label_offset,
+		   unsigned int binding_tab)
 {
   int y_offset = mw->menu.shadow_thickness + mw->menu.vertical_margin;
   GC gc;
@@ -1570,9 +1552,7 @@ label_button_draw (XlwMenuWidget mw,
   else
     gc = mw->menu.title_gc;
 
-  /*
-   *    Draw the label string.
-   */
+  /*  Draw the label string. */
   string_draw_u (mw,
 	       window,
 	       x + label_offset, y + y_offset,
@@ -1584,10 +1564,10 @@ static void
 push_button_size (XlwMenuWidget mw,
 		  widget_value *val,
 		  Boolean in_menubar,
-		  unsigned *toggle_width,
-		  unsigned *label_width,
-		  unsigned *bindings_width,
-		  unsigned *height)
+		  unsigned int *toggle_width,
+		  unsigned int *label_width,
+		  unsigned int *bindings_width,
+		  unsigned int *height)
 {
   /* inherit */
   label_button_size (mw, val, in_menubar,
@@ -1600,7 +1580,7 @@ push_button_size (XlwMenuWidget mw,
       int w;
 #ifdef NEED_MOTIF
       XmString key = XmStringCreateLtoR (val->key, XmSTRING_DEFAULT_CHARSET);
-      w = string_width(mw, key);
+      w = string_width (mw, key);
       XmStringFree (key);
 #else
       char *key = val->key;
@@ -1617,18 +1597,17 @@ push_button_draw (XlwMenuWidget mw,
 		  Boolean       highlighted,
 		  Window        window,
 		  int x, int y,
-		  unsigned width, unsigned height,
-		  unsigned      label_offset,
-		  unsigned      binding_offset)
+		  unsigned int width,
+		  unsigned int height,
+		  unsigned int label_offset,
+		  unsigned int binding_offset)
 {
   int y_offset = mw->menu.shadow_thickness + mw->menu.vertical_margin;
   GC gc;
   shadow_type type;
   Boolean menu_pb = in_menubar && (menu_item_type (val) == BUTTON_TYPE);
 
-  /*
-   *    Draw the label string.
-   */
+  /* Draw the label string. */
   if (!label_offset)
     label_offset = mw->menu.shadow_thickness + mw->menu.horizontal_margin;
 
@@ -1658,16 +1637,15 @@ push_button_draw (XlwMenuWidget mw,
 	       window,
 	       x + label_offset, y + y_offset,
 	       gc,
-	       resource_widget_value(mw, val));
+	       resource_widget_value (mw, val));
 
-  /*
-   *    Draw the keybindings
-   */
+  /* Draw the keybindings */
   if (val->key)
     {
       if (!binding_offset)
 	{
-	  unsigned s_width = string_width (mw, resource_widget_value(mw, val));
+	  unsigned int s_width =
+	    string_width (mw, resource_widget_value (mw, val));
 	  binding_offset = label_offset + s_width +  mw->menu.shadow_thickness;
 	}
       binding_draw (mw, window,
@@ -1675,9 +1653,7 @@ push_button_draw (XlwMenuWidget mw,
 		    y + y_offset, gc, val->key);
     }
 
-  /*
-   *    Draw the shadow
-   */
+  /* Draw the shadow */
   if (menu_pb)
     {
       if (highlighted)
@@ -1699,8 +1675,7 @@ push_button_draw (XlwMenuWidget mw,
 static unsigned int
 arrow_decoration_height (XlwMenuWidget mw)
 {
-  unsigned int result =
-    (mw->menu.font_ascent + mw->menu.font_descent) / (unsigned int)2;
+  int result = (mw->menu.font_ascent + mw->menu.font_descent) / 2;
 
   result += 2 * mw->menu.shadow_thickness;
 
@@ -1714,10 +1689,10 @@ static void
 cascade_button_size (XlwMenuWidget mw,
 		     widget_value *val,
 		     Boolean in_menubar,
-		     unsigned *toggle_width,
-		     unsigned *label_width,
-		     unsigned *arrow_width,
-		     unsigned *height)
+		     unsigned int *toggle_width,
+		     unsigned int *label_width,
+		     unsigned int *arrow_width,
+		     unsigned int *height)
 {
   /* inherit */
   label_button_size (mw, val, in_menubar,
@@ -1726,7 +1701,7 @@ cascade_button_size (XlwMenuWidget mw,
   /* we have a pull aside arrow */
   if (!in_menubar)
     {
-      *arrow_width += arrow_decoration_height(mw) + mw->menu.column_spacing;
+      *arrow_width += arrow_decoration_height (mw) + mw->menu.column_spacing;
     }
 }
 
@@ -1737,33 +1712,31 @@ cascade_button_draw (XlwMenuWidget mw,
 		     Boolean       highlighted,
 		     Window        window,
 		     int x, int y,
-		     unsigned width, unsigned height,
-		     unsigned      label_offset,
-		     unsigned      binding_offset)
+		     unsigned int  width,
+		     unsigned int  height,
+		     unsigned int  label_offset,
+		     unsigned int  binding_offset)
 {
   shadow_type type;
 
-  /*
-   *    Draw the label string.
-   */
+  /* Draw the label string. */
   label_button_draw (mw, val, in_menubar, highlighted,
 		     window, x, y, width, height, label_offset,
 		     binding_offset);
 
-  /*
-   *    Draw the pull aside arrow
-   */
+  /* Draw the pull aside arrow */
   if (!in_menubar && val->contents)
     {
       int y_offset;
-      unsigned arrow_height = arrow_decoration_height (mw);
+      unsigned int arrow_height = arrow_decoration_height (mw);
 
       y_offset = mw->menu.shadow_thickness + mw->menu.vertical_margin +
 	(mw->menu.font_ascent+mw->menu.font_descent - arrow_height)/2;
 
       if (!binding_offset)
 	{
-	  unsigned s_width = string_width(mw, resource_widget_value (mw, val));
+	  unsigned int s_width =
+	    string_width (mw, resource_widget_value (mw, val));
 
 	  if (!label_offset)
 	    label_offset = mw->menu.shadow_thickness +
@@ -1780,33 +1753,29 @@ cascade_button_draw (XlwMenuWidget mw,
 			     highlighted);
     }
 
-  /*
-   *    Draw the shadow
-   */
+  /* Draw the shadow */
   if (highlighted)
     type = SHADOW_OUT;
   else
     type = SHADOW_BACKGROUND;
 
-  shadow_draw(mw, window, x, y, width, height, type);
+  shadow_draw (mw, window, x, y, width, height, type);
 }
 
-static unsigned
-toggle_decoration_height(XlwMenuWidget mw)
+static unsigned int
+toggle_decoration_height (XlwMenuWidget mw)
 {
-  unsigned rv;
+  int rv;
   if (mw->menu.indicator_size > 0)
     rv = mw->menu.indicator_size;
   else
     rv = mw->menu.font_ascent;
 
-  if (rv > (mw->menu.font_ascent+mw->menu.font_descent))
-    rv = mw->menu.font_ascent+mw->menu.font_descent;
+  if (rv > (mw->menu.font_ascent + mw->menu.font_descent))
+    rv = mw->menu.font_ascent + mw->menu.font_descent;
 
-  /*
-   * radio button can't be smaller than its border or a filling
-   * error will occur. 
-   */
+  /* radio button can't be smaller than its border or a filling
+     error will occur. */
   if (rv < 2 * mw->menu.shadow_thickness)
     rv = 2 * mw->menu.shadow_thickness;
 
@@ -1817,17 +1786,17 @@ static void
 toggle_button_size (XlwMenuWidget mw,
 		    widget_value *val,
 		    Boolean in_menubar,
-		    unsigned *toggle_width,
-		    unsigned *label_width,
-		    unsigned *bindings_width,
-		    unsigned *height)
+		    unsigned int *toggle_width,
+		    unsigned int *label_width,
+		    unsigned int *bindings_width,
+		    unsigned int *height)
 {
   /* inherit */
   push_button_size (mw, val, in_menubar,
 		    toggle_width, label_width, bindings_width,
 		    height);
   /* we have a toggle */
-  *toggle_width += toggle_decoration_height(mw) + mw->menu.column_spacing;
+  *toggle_width += toggle_decoration_height (mw) + mw->menu.column_spacing;
 }
 
 static void
@@ -1837,17 +1806,16 @@ toggle_button_draw (XlwMenuWidget mw,
 		    Boolean highlighted,
 		    Window        window,
 		    int x, int y,
-		    unsigned width, unsigned height,
-		    unsigned      label_tab,
-		    unsigned      binding_tab)
+		    unsigned int  width,
+		    unsigned int  height,
+		    unsigned int  label_tab,
+		    unsigned int  binding_tab)
 {
   int x_offset;
   int y_offset;
-  unsigned t_height = toggle_decoration_height(mw);
+  unsigned int t_height = toggle_decoration_height (mw);
 
-  /*
-   *    Draw a toggle.
-   */
+  /* Draw a toggle. */
   x_offset = mw->menu.shadow_thickness + mw->menu.horizontal_margin;
   y_offset = mw->menu.shadow_thickness + mw->menu.vertical_margin;
   y_offset += (mw->menu.font_ascent + mw->menu.font_descent - t_height)/2;
@@ -1855,17 +1823,15 @@ toggle_button_draw (XlwMenuWidget mw,
   toggle_decoration_draw (mw, window, x + x_offset, y + y_offset,
 			  t_height, val->selected);
 
-  /*
-   *    Draw the pushbutton parts.
-   */
+  /* Draw the pushbutton parts. */
   push_button_draw (mw, val, in_menubar, highlighted, window, x, y, width,
 		    height, label_tab, binding_tab);
 }
 
-static unsigned
-radio_decoration_height(XlwMenuWidget mw)
+static unsigned int
+radio_decoration_height (XlwMenuWidget mw)
 {
-  return toggle_decoration_height(mw);
+  return toggle_decoration_height (mw);
 }
 
 static void
@@ -1875,17 +1841,16 @@ radio_button_draw (XlwMenuWidget mw,
 		   Boolean       highlighted,
 		   Window        window,
 		   int x, int y,
-		   unsigned width, unsigned height,
-		   unsigned      label_tab,
-		   unsigned      binding_tab)
+		   unsigned int  width,
+		   unsigned int  height,
+		   unsigned int  label_tab,
+		   unsigned int  binding_tab)
 {
   int x_offset;
   int y_offset;
-  unsigned r_height = radio_decoration_height(mw);
+  unsigned int r_height = radio_decoration_height (mw);
 
-  /*
-   *    Draw a toggle.
-   */
+  /* Draw a toggle. */
   x_offset = mw->menu.shadow_thickness + mw->menu.horizontal_margin;
   y_offset = mw->menu.shadow_thickness + mw->menu.vertical_margin;
   y_offset += (mw->menu.font_ascent + mw->menu.font_descent - r_height)/2;
@@ -1893,9 +1858,7 @@ radio_button_draw (XlwMenuWidget mw,
   radio_decoration_draw (mw, window, x + x_offset, y + y_offset, r_height,
 			 val->selected);
 
-  /*
-   *    Draw the pushbutton parts.
-   */
+  /* Draw the pushbutton parts. */
   push_button_draw (mw, val, in_menubar, highlighted, window, x, y, width,
 		    height, label_tab, binding_tab);
 }
@@ -1926,11 +1889,10 @@ static struct _shadow_names
 static shadow_type
 separator_type (char *name)
 {
-  int i;
-
   if (name)
     {
-      for (i = 0; i < XtNumber(shadow_names); i++ )
+      int i;
+      for (i = 0; i < (int) (XtNumber (shadow_names)); i++ )
 	{
 	  if (strcmp (name, shadow_names[i].name) == 0)
 	    return shadow_names[i].type;
@@ -1939,11 +1901,11 @@ separator_type (char *name)
   return SHADOW_BACKGROUND;
 }
 
-static unsigned
+static unsigned int
 separator_decoration_height (XlwMenuWidget mw, widget_value *val)
 {
 
-  switch (separator_type(val->value))
+  switch (separator_type (val->value))
     {
     case SHADOW_NO_LINE:
     case SHADOW_SINGLE_LINE:
@@ -1968,10 +1930,10 @@ static void
 separator_size (XlwMenuWidget mw,
 		widget_value *val,
 		Boolean in_menubar,
-		unsigned *toggle_width,
-		unsigned *label_width,
-		unsigned *rest_width,
-		unsigned *height)
+		unsigned int *toggle_width,
+		unsigned int *label_width,
+		unsigned int *rest_width,
+		unsigned int *height)
 {
   *height = separator_decoration_height (mw, val);
   *label_width = 1;
@@ -1985,11 +1947,12 @@ separator_draw (XlwMenuWidget mw,
 		Boolean       highlighted,
 		Window        window,
 		int x, int y,
-		unsigned width, unsigned height,
-		unsigned      label_tab,
-		unsigned      binding_tab)
+		unsigned int  width,
+		unsigned int  height,
+		unsigned int  label_tab,
+		unsigned int  binding_tab)
 {
-  unsigned sep_width;
+  unsigned int sep_width;
 
   if (in_menubar)
     sep_width = height;
@@ -2009,11 +1972,10 @@ static void
 pushright_size (XlwMenuWidget mw,
 		widget_value *val,
 		Boolean in_menubar,
-		unsigned *toggle_width,
-		unsigned *label_width,
-		unsigned *rest_width,
-		unsigned *height
-)
+		unsigned int *toggle_width,
+		unsigned int *label_width,
+		unsigned int *rest_width,
+		unsigned int *height)
 {
   *height = *label_width = *toggle_width = *rest_width = 0;
 }
@@ -2022,19 +1984,18 @@ static void
 size_menu_item (XlwMenuWidget mw,
 		widget_value *val,
 		int horizontal,
-		unsigned *toggle_width,
-		unsigned *label_width,
-		unsigned *rest_width,
-		unsigned *height
-)
+		unsigned int *toggle_width,
+		unsigned int *label_width,
+		unsigned int *rest_width,
+		unsigned int *height)
 {
   void (*function_ptr) (XlwMenuWidget _mw,
 			widget_value *_val,
 			Boolean _in_menubar,
-			unsigned *_toggle_width,
-			unsigned *_label_width,
-			unsigned *_rest_width,
-			unsigned *_height);
+			unsigned int *_toggle_width,
+			unsigned int *_label_width,
+			unsigned int *_rest_width,
+			unsigned int *_height);
 
   switch (menu_item_type (val))
     {
@@ -2082,22 +2043,23 @@ display_menu_item (XlwMenuWidget mw,
 
   int x = where->x /* + mw->menu.shadow_thickness */ ;
   int y = where->y /* + mw->menu.shadow_thickness */ ;
-  unsigned toggle_width;
-  unsigned label_width;
-  unsigned binding_width;
-  unsigned width;
-  unsigned height;
-  unsigned label_tab;
-  unsigned binding_tab;
+  unsigned int toggle_width;
+  unsigned int label_width;
+  unsigned int binding_width;
+  unsigned int width;
+  unsigned int height;
+  unsigned int label_tab;
+  unsigned int binding_tab;
   void (*function_ptr) (XlwMenuWidget _mw,
 			widget_value *_val,
 			Boolean _in_menubar,
 			Boolean _highlighted,
 			Window        _window,
 			int _x, int _y,
-			unsigned _width, unsigned _height,
-			unsigned      _label_tab,
-			unsigned      _binding_tab);
+			unsigned int _width,
+			unsigned int _height,
+			unsigned int _label_tab,
+			unsigned int  _binding_tab);
 
   size_menu_item (mw, val, horizontal,
 		  &toggle_width, &label_width, &binding_width, &height);
@@ -2162,14 +2124,14 @@ display_menu_item (XlwMenuWidget mw,
 static void
 size_menu (XlwMenuWidget mw, int level)
 {
-  unsigned      toggle_width;
-  unsigned	label_width;
-  unsigned	rest_width;
-  unsigned	height;
-  unsigned	max_toggle_width = 0;
-  unsigned	max_label_width  = 0;
-  unsigned	max_rest_width   = 0;
-  unsigned	max_height = 0;
+  unsigned int	toggle_width;
+  unsigned int	label_width;
+  unsigned int	rest_width;
+  unsigned int	height;
+  unsigned int	max_toggle_width = 0;
+  unsigned int	max_label_width  = 0;
+  unsigned int	max_rest_width   = 0;
+  unsigned int	max_height = 0;
   int		horizontal_p = mw->menu.horizontal && (level == 0);
   widget_value*	val;
   window_state*	ws;
@@ -2643,11 +2605,11 @@ make_drawing_gcs (XlwMenuWidget mw)
 
   xgcv.foreground = mw->core.background_pixel;
   xgcv.background = mw->menu.foreground;
-  mw->menu.background_gc = XtGetGC ((Widget)mw, flags, &xgcv);
+  mw->menu.background_gc = XtGetGC ((Widget) mw, flags, &xgcv);
 
   xgcv.foreground = mw->menu.foreground;
   xgcv.background = mw->core.background_pixel;
-  mw->menu.foreground_gc = XtGetGC ((Widget)mw, flags, &xgcv);
+  mw->menu.foreground_gc = XtGetGC ((Widget) mw, flags, &xgcv);
 
   if (mw->menu.select_color != (Pixel)-1)
     {
@@ -2666,9 +2628,9 @@ make_drawing_gcs (XlwMenuWidget mw)
 	  Colormap cmap = mw->core.colormap;
 	  xcolor.pixel = mw->core.background_pixel;
 	  XQueryColor (dpy, cmap, &xcolor);
-	  xcolor.red   *= 0.85;
-	  xcolor.green *= 0.85;
-	  xcolor.blue  *= 0.85;
+	  xcolor.red   = (xcolor.red   * 17) / 20;
+	  xcolor.green = (xcolor.green * 17) / 20;
+	  xcolor.blue  = (xcolor.blue  * 17) / 20;
 	  if (allocate_nearest_color (dpy, cmap, &xcolor))
 	    xgcv.foreground = xcolor.pixel;
 	}
@@ -2738,9 +2700,9 @@ make_shadow_gcs (XlwMenuWidget mw)
   XColor topc, botc;
   int top_frobbed = 0, bottom_frobbed = 0;
 
-  if (mw->menu.top_shadow_color == -1)
+  if (mw->menu.top_shadow_color == (Pixel) (-1))
       mw->menu.top_shadow_color = mw->core.background_pixel;
-  if (mw->menu.bottom_shadow_color == -1)
+  if (mw->menu.bottom_shadow_color == (Pixel) (-1))
       mw->menu.bottom_shadow_color = mw->menu.foreground;
 
   if (mw->menu.top_shadow_color == mw->core.background_pixel ||
@@ -2778,9 +2740,9 @@ make_shadow_gcs (XlwMenuWidget mw)
     {
       botc.pixel = mw->core.background_pixel;
       XQueryColor (dpy, cmap, &botc);
-      botc.red   *= 0.6;
-      botc.green *= 0.6;
-      botc.blue  *= 0.6;
+      botc.red   = (botc.red   * 3) / 5;
+      botc.green = (botc.green * 3) / 5;
+      botc.blue  = (botc.blue  * 3) / 5;
       if (allocate_nearest_color (dpy, cmap, &botc))
 	{
 	  if (botc.pixel == mw->core.background_pixel)
@@ -3084,7 +3046,7 @@ XlwMenuInitialize (Widget request, Widget new, ArgList args,
 static void
 XlwMenuClassInitialize (void)
 {
-  Initialize_massaged_resource_char();
+  initialize_massaged_resource_char();
 }
 
 static void
@@ -3292,7 +3254,7 @@ handle_motion_event (XlwMenuWidget mw, XMotionEvent *ev,
 {
   int x = ev->x_root;
   int y = ev->y_root;
-  int state = ev->state;
+  unsigned int state = ev->state;
   XMotionEvent *event= ev, dummy;
 
   /* allow motion events to be generated again */

@@ -36,7 +36,7 @@ DndHandleDragging(Widget widget,
 
 void DndSetData(int Type, unsigned char *Data, unsigned long Size);
 void DndGetData(XEvent *event, unsigned char **Data, unsigned long *Size);
-		
+
 int		DndIsIcon(Widget widget);
 int		DndDataType(XEvent *event);
 unsigned int	DndDragButtons(XEvent *event);
@@ -47,7 +47,7 @@ DndDropCoordinates(Widget widget,
 		   XEvent *event,
 		   int *x,
 		   int *y);
-void            
+void
 DndDropRootCoordinates(XEvent *event,
 		       int *x,
 		       int *y);

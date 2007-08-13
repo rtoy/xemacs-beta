@@ -27,11 +27,11 @@ for instructions on building under Microsoft Windows):
    insufficient, you will get an error in the command `temacs -batch
    -l loadup dump', found in `./src/Makefile.in.in', or possibly when
    running the final dumped XEmacs.
- 
+
 Building XEmacs requires about 41 Mb of disk space (including the
 XEmacs sources).  Once installed, XEmacs occupies about 16 Mb in the
 file system where it is installed; this includes the executable files,
-Lisp libraries, miscellaneous data files, and on-line documentation. 
+Lisp libraries, miscellaneous data files, and on-line documentation.
 The amount of storage of the Lisp directories may be reduced by
 compressing the .el files. If the building and installation take place
 in different directories, then the installation procedure temporarily
@@ -51,8 +51,8 @@ software packages that XEmacs can use.  If these are not yet available
 on your system, obtain, build and install those external packages
 before building XEmacs.  The packages XEmacs can use are:
 
-   Xaw3d, XPM, JPEG, compface, PNG, zlib, OffiX, GNU DBM, Berkeley DB,
-   socks, term, NAS, Canna, Kinput2, SJ3, Wnn.
+   Xaw3d, XPM, JPEG, compface, PNG, zlib, GNU DBM, Berkeley DB, socks,
+   term, NAS, Canna, Kinput2, SJ3, Wnn.
 
 You can get (most of) them from the XEmacs ftp site at
 ftp://ftp.xemacs.org/pub/xemacs/aux
@@ -62,7 +62,7 @@ have built, try to build those packages so that the generated
 libraries are statically linked.
 
 Use the --site-includes and --site-libraries options when building
-XEmacs to allow configure to find the external software packages. 
+XEmacs to allow configure to find the external software packages.
 If you link with dynamic (``.so'') external package libraries, which
 is not recommended, you will also need to add the library directories
 to the --site-runtime-libraries option.
@@ -101,7 +101,7 @@ See config.guess and configure.in for valid values for MACHINE,
 VENDOR, and OPSYS.  Also check `./etc/MACHINES' for advice on building
 on particular machines.
 
-If you don't want X support, specify `--with-x=no'.  If you omit this
+If you don't want X support, specify `--without-x'.  If you omit this
 option, `configure' will try to autodetect whether your system has X,
 and arrange to use it if present.
 
@@ -115,7 +115,7 @@ The `--site-includes=DIR' and `--site-libraries=DIR' options allow you
 to specify additional places the compiler should look for include
 files and object libraries.  You may specify multiple DIR's by
 enclosing the list in quotes.  All the external packages you want to
-use with XEmacs (e.g. xpm, wnn, ...) described later should have their 
+use with XEmacs (e.g. xpm, wnn, ...) described later should have their
 include and library directories defined using these options.
 
 The `--site-runtime-libraries=DIR' option specifies directories to
@@ -166,7 +166,7 @@ The `--dynamic' option specifies that configure should try to link
 emacs dynamically rather than statically.
 
 The `--const-is-losing' option is for use if you have trouble
-compiling due to the `const' storage class in C.  This is defined by 
+compiling due to the `const' storage class in C.  This is defined by
 default.  Most users should have no need to change this.
 
 You can build XEmacs for several different machine types from a single
@@ -253,22 +253,23 @@ installed prior to building XEmacs.
 The `--with-sparcworks' option specifies that XEmacs should be built
 with support for Sun Sparcworks 3.0.1 and up (including Sun WorkShop).
 This functionality is only of use on SunOS 4.1.x and Solaris 2.x
-systems.  If you use this option, you should have the Sun package (see 
+systems.  If you use this option, you should have the Sun package (see
 etc/PACKAGES) installed prior to building XEmacs.
 
 The `--with-cde' option allows you to enable or disable CDE drag and
 drop support.  `configure' will attempt to detect this option and
 define `--with-cde' for you.
 
-The `--with-offix' option allows you to enable or disable OffiX drag and
-drop support.  `configure' will attempt to detect this option and
-define `--with-offix' for you.
+The `--with-offix' option allows you to enable or disable OffiX drag
+and drop support.  This requires no external library support, so if
+X11 support is available, then this option defaults to `yes'.  OffiX
+support can be explicitly disabled via the `--without-offix' option.
 
 The `--external-widget' option specifies that XEmacs should be built
 with support for being used as a widget by other X11 applications.
 This functionality should be considered beta.
 
-The `--with-xmu=no' option can be used if your vendor doesn't ship
+The `--without-xmu' option can be used if your vendor doesn't ship
 the Xmu library.
 
 The `--puresize' option can be used to change the amount of purespace
@@ -342,9 +343,9 @@ v0.82.  If you enable this option, you will probably wish to install
 the `locale' package which contains localized Splash screens and
 Menubars.
 
-The `--with-xfs' option enables use of a multilingual Menubar.  At the 
+The `--with-xfs' option enables use of a multilingual Menubar.  At the
 present time, only Japanese and French locales are supported.  In
-order to use a multilingual Menubar you must have the `locale' package 
+order to use a multilingual Menubar you must have the `locale' package
 installed.  The `locale' package does not have to be installed when
 building XEmacs.
 
@@ -356,7 +357,7 @@ considered most stable than version 3.5b2.  If Canna is already
 installed, configure will autodetect it, so you never need to
 explicitly use this option unless your Canna libraries are somewhere
 strange.  Canna run time support is currently bundled with the
-`mule-base' package so there is nothing additional to install in order 
+`mule-base' package so there is nothing additional to install in order
 to use it.
 
 The `--with-wnn' and `--with-wnn6' options are for compiling with the Wnn

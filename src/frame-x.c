@@ -60,8 +60,9 @@ Boston, MA 02111-1307, USA.  */
 Lisp_Object Vdefault_x_frame_plist;
 
 Lisp_Object Qwindow_id;
-Lisp_Object Qpopup;
 Lisp_Object Qx_resource_name;
+
+EXFUN (Fx_window_id, 1);
 
 
 /************************************************************************/
@@ -201,14 +202,12 @@ x_wm_mark_shell_position_user_specified (Widget wmshell)
 void
 x_wm_set_shell_iconic_p (Widget shell, int iconic_p)
 {
-  Arg al [1];
   if (! XtIsWMShell (shell)) abort ();
 
   /* Because of questionable logic in Shell.c, this sequence can't work:
 
        w = XtCreatePopupShell (...);
-       XtSetArg (al, XtNiconic, True);
-       XtSetValues (w, al, 1);
+       Xt_SET_VALUE (w, XtNiconic, True);
        XtRealizeWidget (w);
 
      The iconic resource is only consulted at initialization time (when
@@ -223,8 +222,7 @@ x_wm_set_shell_iconic_p (Widget shell, int iconic_p)
      realization.  This is true of MIT X11R5 patch level 25, at least.
      (Apparently some other versions of Xt don't have this bug?)
    */
-  XtSetArg(al [0], XtNiconic, iconic_p);
-  XtSetValues (shell, al, 1);
+  Xt_SET_VALUE (shell, XtNiconic, iconic_p);
   EmacsShellSmashIconicHint (shell, iconic_p);
 }
 
@@ -526,47 +524,35 @@ x_frame_property (struct frame *f, Lisp_Object property)
   EmacsFrame w = (EmacsFrame) FRAME_X_TEXT_WIDGET (f);
   Widget gw = (Widget) w;
 
-#define FROB(propprop, value) 	\
-do {				\
-  if (EQ (property, propprop))	\
-    return (value);		\
-} while (0)
-
-#if 0
-  if (EQ (property, Qleft) || EQ (property, Qtop))
-    x_smash_bastardly_shell_position (shell);
-#endif
-  if (EQ (property, Qleft) || EQ (property, Qtop))
+  if (EQ (Qleft, property) || EQ (Qtop, property))
     {
       Position x, y;
       if (!XtWindow(shell))
 	return Qzero;
       x_get_top_level_position (XtDisplay (shell), XtWindow (shell), &x, &y);
-      FROB (Qleft, make_int (x));
-      FROB (Qtop,  make_int (y));
+      if (EQ (Qleft, property)) return make_int (x);
+      if (EQ (Qtop,  property)) return make_int (y);
     }
-#if 0
-  FROB (Qleft, make_int (shell->core.x));
-  FROB (Qtop, make_int (shell->core.y));
-#endif
-  FROB (Qborder_width, make_int (w->core.border_width));
-  FROB (Qinternal_border_width,
-	make_int (w->emacs_frame.internal_border_width));
-  FROB (Qborder_color, color_to_string (gw, w->core.border_pixel));
+  if (EQ (Qborder_width, property))
+    return make_int (w->core.border_width);
+  if (EQ (Qinternal_border_width, property))
+    return make_int (w->emacs_frame.internal_border_width);
+  if (EQ (Qborder_color, property))
+    return color_to_string (gw, w->core.border_pixel);
 #ifdef HAVE_TOOLBARS
-  FROB (Qtop_toolbar_shadow_color,
-	color_to_string (gw, w->emacs_frame.top_toolbar_shadow_pixel));
-  FROB (Qbottom_toolbar_shadow_color,
-	color_to_string (gw, w->emacs_frame.bottom_toolbar_shadow_pixel));
-  FROB (Qbackground_toolbar_color,
-	color_to_string (gw, w->emacs_frame.background_toolbar_pixel));
-  FROB (Qtoolbar_shadow_thickness,
-	make_int (w->emacs_frame.toolbar_shadow_thickness));
+  if (EQ (Qtop_toolbar_shadow_color, property))
+    return color_to_string (gw, w->emacs_frame.top_toolbar_shadow_pixel);
+  if (EQ (Qbottom_toolbar_shadow_color, property))
+    return color_to_string (gw, w->emacs_frame.bottom_toolbar_shadow_pixel);
+  if (EQ (Qbackground_toolbar_color, property))
+    return color_to_string (gw, w->emacs_frame.background_toolbar_pixel);
+  if (EQ (Qtoolbar_shadow_thickness, property))
+    return make_int (w->emacs_frame.toolbar_shadow_thickness);
 #endif /* HAVE_TOOLBARS */
-  FROB (Qinter_line_space, make_int (w->emacs_frame.interline));
-  FROB (Qwindow_id, Fx_window_id (make_frame (f)));
-
-#undef FROB
+  if (EQ (Qinter_line_space, property))
+    return make_int (w->emacs_frame.interline);
+  if (EQ (Qwindow_id, property))
+    return Fx_window_id (make_frame (f));
 
   return Qunbound;
 }
@@ -593,53 +579,45 @@ x_internal_frame_property_p (struct frame *f, Lisp_Object property)
 static Lisp_Object
 x_frame_properties (struct frame *f)
 {
-  Lisp_Object result = Qnil;
+  Lisp_Object props = Qnil;
   Widget shell = FRAME_X_SHELL_WIDGET (f);
   EmacsFrame w = (EmacsFrame) FRAME_X_TEXT_WIDGET (f);
   Widget gw = (Widget) w;
   Position x, y;
 
-#define FROB(propprop, value)				\
-do {							\
-  Lisp_Object temtem = (value);				\
-  if (!NILP (temtem))					\
-    /* backwards order; we reverse it below */		\
-    result = Fcons (temtem, Fcons (propprop, result));	\
-} while (0)
+  props = cons3 (Qwindow_id, Fx_window_id (make_frame (f)), props);
+  props = cons3 (Qinter_line_space, make_int (w->emacs_frame.interline), props);
 
-#if 0
-  x_smash_bastardly_shell_position (shell);
-  FROB (Qleft, make_int (shell->core.x));
-  FROB (Qtop, make_int (shell->core.y));
-#endif
+#ifdef HAVE_TOOLBARS
+  props = cons3 (Qtoolbar_shadow_thickness,
+		 make_int (w->emacs_frame.toolbar_shadow_thickness),
+		 props);
+  props = cons3 (Qbackground_toolbar_color,
+		 color_to_string (gw, w->emacs_frame.background_toolbar_pixel),
+		 props);
+  props = cons3 (Qbottom_toolbar_shadow_color,
+		 color_to_string (gw, w->emacs_frame.bottom_toolbar_shadow_pixel),
+		 props);
+  props = cons3 (Qtop_toolbar_shadow_color,
+		 color_to_string (gw, w->emacs_frame.top_toolbar_shadow_pixel),
+		 props);
+#endif /* HAVE_TOOLBARS */
+
+  props = cons3 (Qborder_color,
+		 color_to_string (gw, w->core.border_pixel), props);
+  props = cons3 (Qinternal_border_width,
+		 make_int (w->emacs_frame.internal_border_width), props);
+  props = cons3 (Qborder_width, make_int (w->core.border_width), props);
+
   if (!XtWindow(shell))
     x = y = 0;
   else
     x_get_top_level_position (XtDisplay (shell), XtWindow (shell), &x, &y);
 
-  FROB (Qleft, make_int (x));
-  FROB (Qtop,  make_int (y));
+  props = cons3 (Qtop,  make_int (y), props);
+  props = cons3 (Qleft, make_int (x), props);
 
-  FROB (Qborder_width, make_int (w->core.border_width));
-  FROB (Qinternal_border_width,
-	make_int (w->emacs_frame.internal_border_width));
-  FROB (Qborder_color, color_to_string (gw, w->core.border_pixel));
-#ifdef HAVE_TOOLBARS
-  FROB (Qtop_toolbar_shadow_color,
-	color_to_string (gw, w->emacs_frame.top_toolbar_shadow_pixel));
-  FROB (Qbottom_toolbar_shadow_color,
-	color_to_string (gw, w->emacs_frame.bottom_toolbar_shadow_pixel));
-  FROB (Qbackground_toolbar_color,
-	color_to_string (gw, w->emacs_frame.background_toolbar_pixel));
-  FROB (Qtoolbar_shadow_thickness,
-	make_int (w->emacs_frame.toolbar_shadow_thickness));
-#endif /* HAVE_TOOLBARS */
-  FROB (Qinter_line_space, make_int (w->emacs_frame.interline));
-  FROB (Qwindow_id, Fx_window_id (make_frame (f)));
-
-#undef FROB
-
-  return result;
+  return props;
 }
 
 
@@ -654,7 +632,6 @@ x_set_frame_text_value (struct frame *f, Bufbyte *value,
   Atom encoding = XA_STRING;
   String new_XtValue = (String) value;
   String old_XtValue = NULL;
-  Arg al[2];
 
 #ifdef MULE
   Bufbyte *ptr;
@@ -671,10 +648,10 @@ x_set_frame_text_value (struct frame *f, Bufbyte *value,
 #endif /* MULE */
 
   /* ### Caching is device-independent - belongs in update_frame_title. */
-  XtSetArg (al[0], Xt_resource_name, &old_XtValue);
-  XtGetValues (FRAME_X_SHELL_WIDGET (f), al, 1);
+  Xt_GET_VALUE (FRAME_X_SHELL_WIDGET (f), Xt_resource_name, &old_XtValue);
   if (!old_XtValue || strcmp (new_XtValue, old_XtValue))
     {
+      Arg al[2];
       XtSetArg (al[0], Xt_resource_name, new_XtValue);
       XtSetArg (al[1], Xt_resource_encoding_name, encoding);
       XtSetValues (FRAME_X_SHELL_WIDGET (f), al, 2);
@@ -710,7 +687,6 @@ x_set_initial_frame_size (struct frame *f, int flags, int x, int y,
   char uspos = !!(flags & (XValue | YValue));
   char ussize = !!(flags & (WidthValue | HeightValue));
   char *temp;
-  Arg al [1];
 
   /* assign the correct size to the EmacsFrame widget ... */
   EmacsFrameSetCharSize (FRAME_X_TEXT_WIDGET (f), w, h);
@@ -735,8 +711,7 @@ x_set_initial_frame_size (struct frame *f, int flags, int x, int y,
   else
     temp = NULL;
 
-  XtSetArg (al [0], XtNgeometry, temp);
-  XtSetValues (FRAME_X_SHELL_WIDGET (f), al, 1);
+  Xt_SET_VALUE (FRAME_X_SHELL_WIDGET (f), XtNgeometry, temp);
 }
 
 /* Report to X that a frame property of frame S is being set or changed.
@@ -755,7 +730,6 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
   Bool internal_border_width_specified = False;
   Lisp_Object tail;
   Widget w = FRAME_X_TEXT_WIDGET (f);
-  Arg al [10];
 
   for (tail = plist; !NILP (tail); tail = Fcdr (Fcdr (tail)))
     {
@@ -772,7 +746,7 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 	  GET_C_STRING_CTEXT_DATA_ALLOCA (prop, extprop);
 	  if (STRINGP (val))
 	    {
-	      Extbyte *extval;
+	      CONST Extbyte *extval;
 	      Extcount extvallen;
 
 	      GET_STRING_CTEXT_DATA_ALLOCA (val, extval, extvallen);
@@ -856,18 +830,15 @@ x_set_frame_properties (struct frame *f, Lisp_Object plist)
 	  if (int_p)
 	    {
 	      CHECK_INT (val);
-	      XtSetArg (al [0], (char *) XSTRING_DATA (str), XINT (val));
-	      XtSetValues (w, al, 1);
+	      Xt_SET_VALUE (w, (char *) XSTRING_DATA (str), XINT (val));
 	    }
 	  else if (EQ (val, Qt))
 	    {
-	      XtSetArg (al [0], (char *) XSTRING_DATA (str), True); /* XtN...*/
-	      XtSetValues (w, al, 1);
+	      Xt_SET_VALUE (w, (char *) XSTRING_DATA (str), True); /* XtN...*/
 	    }
 	  else if (EQ (val, Qnil))
 	    {
-	      XtSetArg (al [0], (char *) XSTRING_DATA (str), False); /* XtN...*/
-	      XtSetValues (w, al, 1);
+	      Xt_SET_VALUE (w, (char *) XSTRING_DATA (str), False); /* XtN...*/
 	    }
 	  else
 	    {
@@ -1223,12 +1194,12 @@ Start a OffiX drag from a buffer.
 		  return Qnil;
 		}
 	      len = XSTRING_LENGTH (XCAR (run)) + 1;
-	      dnd_data = xrealloc (dnd_data, dnd_len + len);
+	      dnd_data = (char *) xrealloc (dnd_data, dnd_len + len);
 	      strcpy (dnd_data + dnd_len - 1, (CONST char *)XSTRING_DATA (XCAR (run)));
 	      dnd_len += len;
 	      run = XCDR (run);
 	    }
-	  
+
 	  dnd_data[dnd_len - 1] = 0; /* the list-ending zero */
 	  dnd_dealloc = 1;
 
@@ -1355,7 +1326,7 @@ first_x_frame_p (struct frame *f)
 	 (f == XFRAME (XCAR (rest)) ||
 	  !FRAME_X_P (XFRAME (XCAR (rest)))))
     rest = XCDR (rest);
-  return (NILP (rest));
+  return NILP (rest);
 }
 
 /* Figure out what size the EmacsFrame widget should initially be,
@@ -1388,7 +1359,6 @@ x_initialize_frame_size (struct frame *f)
 
   char *geom = 0, *ew_geom = 0;
   Boolean iconic_p = False, ew_iconic_p = False;
-  Arg al [2];
 
   Widget wmshell = FRAME_X_SHELL_WIDGET (f);
   /* #### This may not be an ApplicationShell any more, with the 'popup
@@ -1443,14 +1413,14 @@ x_initialize_frame_size (struct frame *f)
 
   if (!FRAME_X_TOP_LEVEL_FRAME_P (f))
     {
-      XtSetArg (al [0], XtNgeometry, &ew_geom);
-      XtGetValues (ew, al, 1);
+      Xt_GET_VALUE (ew, XtNgeometry, &ew_geom);
       if (ew_geom)
 	frame_flags = XParseGeometry (ew_geom,
 				      &frame_x, &frame_y,
 				      &frame_w, &frame_h);
       if (! (frame_flags & (WidthValue | HeightValue)))
 	{
+          Arg al[2];
 	  XtSetArg (al [0], XtNwidth,  &frame_w);
 	  XtSetArg (al [1], XtNheight, &frame_h);
 	  XtGetValues (ew, al, 2);
@@ -1465,6 +1435,7 @@ x_initialize_frame_size (struct frame *f)
 	EmacsFrameSetCharSize (ew, frame_w, frame_h);
       if (frame_flags & (XValue | YValue))
 	{
+          Arg al[2];
 	  XtSetArg (al [0], XtNwidth,  &frame_w);
 	  XtSetArg (al [1], XtNheight, &frame_h);
 	  XtGetValues (ew, al, 2);
@@ -1491,38 +1462,31 @@ x_initialize_frame_size (struct frame *f)
      treat that as the geometry of the frame.
      (Is this bogus? I'm not sure.) */
 
-  XtSetArg (al [0], XtNgeometry, &ew_geom);
-  XtGetValues (ew, al, 1);
+  Xt_GET_VALUE (ew, XtNgeometry, &ew_geom);
   if (!ew_geom)
     {
-      XtSetArg (al [0], XtNgeometry, &geom);
-      XtGetValues (wmshell, al, 1);
+      Xt_GET_VALUE (wmshell, XtNgeometry, &geom);
       if (geom)
 	{
 	  ew_geom = geom;
-	  XtSetArg (al [0], XtNgeometry, ew_geom);
-	  XtSetValues (ew, al, 1);
+	  Xt_SET_VALUE (ew, XtNgeometry, ew_geom);
 	}
     }
 
   /* If the Shell is iconic, then the EmacsFrame is iconic.
      (Is this bogus? I'm not sure.) */
-  XtSetArg (al [0], XtNiconic, &ew_iconic_p);
-  XtGetValues (ew, al, 1);
+  Xt_GET_VALUE (ew, XtNiconic, &ew_iconic_p);
   if (!ew_iconic_p)
     {
-      XtSetArg (al [0], XtNiconic, &iconic_p);
-      XtGetValues (wmshell, al, 1);
+      Xt_GET_VALUE (wmshell, XtNiconic, &iconic_p);
       if (iconic_p)
 	{
 	  ew_iconic_p = iconic_p;
-	  XtSetArg (al [0], XtNiconic, iconic_p);
-	  XtSetValues (ew, al, 1);
+	  Xt_SET_VALUE (ew, XtNiconic, iconic_p);
 	}
     }
 
-  XtSetArg (al [0], XtNgeometry, &geom);
-  XtGetValues (app_shell, al, 1);
+  Xt_GET_VALUE (app_shell, XtNgeometry, &geom);
   if (geom)
     app_flags = XParseGeometry (geom, &app_x, &app_y, &app_w, &app_h);
 
@@ -1572,13 +1536,11 @@ x_initialize_frame_size (struct frame *f)
       /* If the AppShell is iconic, then the EmacsFrame is iconic. */
       if (!ew_iconic_p)
 	{
-	  XtSetArg (al [0], XtNiconic, &iconic_p);
-	  XtGetValues (app_shell, al, 1);
+          Xt_GET_VALUE (app_shell, XtNiconic, &iconic_p);
 	  if (iconic_p)
 	    {
 	      ew_iconic_p = iconic_p;
-	      XtSetArg (al [0], XtNiconic, iconic_p);
-	      XtSetValues (ew, al, 1);
+	      Xt_SET_VALUE (ew, XtNiconic, iconic_p);
 	    }
 	}
     }
@@ -1668,14 +1630,19 @@ x_layout_widgets (Widget w, XtPointer client_data, XtPointer call_data)
     /* The scrollbar positioning is completely handled by redisplay.  We
        just need to know which sides they are supposed to go on. */
     unsigned char scrollbar_placement;
-    Arg al [1];
 
-    XtSetArg (al [0], XtNscrollBarPlacement, &scrollbar_placement);
-    XtGetValues (text, al, 1);
-    f->scrollbar_on_left = (scrollbar_placement == XtTOP_LEFT ||
-                            scrollbar_placement == XtBOTTOM_LEFT);
-    f->scrollbar_on_top  = (scrollbar_placement == XtTOP_LEFT ||
-                            scrollbar_placement == XtTOP_RIGHT);
+    Xt_GET_VALUE (text, XtNscrollBarPlacement, &scrollbar_placement);
+    switch (scrollbar_placement)
+      {
+      case XtTOP_LEFT:
+	f->scrollbar_on_left = 1, f->scrollbar_on_top = 1; break;
+      case XtBOTTOM_LEFT:
+	f->scrollbar_on_left = 1, f->scrollbar_on_top = 0; break;
+      case XtTOP_RIGHT:
+	f->scrollbar_on_left = 0, f->scrollbar_on_top = 1; break;
+      case XtBOTTOM_RIGHT:
+	f->scrollbar_on_left = 0, f->scrollbar_on_top = 0; break;
+      }
     f->scrollbar_y_offset = topbreadth + textbord;
   }
 #endif /* HAVE_SCROLLBARS */
@@ -1843,7 +1810,7 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
   XtSetArg (al[ac], XtNvisual, visual); ac++;
   XtSetArg (al[ac], XtNdepth, depth); ac++;
   XtSetArg (al[ac], XtNcolormap, cmap); ac++;
-  
+
   container = XtCreateWidget ("container",
 			      emacsManagerWidgetClass, shell, al, ac);
   FRAME_X_CONTAINER_WIDGET (f) = container;
@@ -1894,7 +1861,6 @@ xemacs_XtPopup (Widget widget)
 {
   ShellWidget shell_widget = (ShellWidget) widget;
   XtGrabKind call_data = XtGrabNone;
-  Arg al [1];
 
   XtCallCallbacks (widget, XtNpopupCallback, (XtPointer)&call_data);
 
@@ -1907,11 +1873,9 @@ xemacs_XtPopup (Widget widget)
 
   /* The XtSetValues below are not in XtPopup menu.  We just want to
      make absolutely sure... */
-  XtSetArg (al [0], XtNmappedWhenManaged, False);
-  XtSetValues (widget, al, 1);
+  Xt_SET_VALUE (widget, XtNmappedWhenManaged, False);
   XtRealizeWidget (widget);
-  XtSetArg (al [0], XtNmappedWhenManaged, True);
-  XtSetValues (widget, al, 1);
+  Xt_SET_VALUE (widget, XtNmappedWhenManaged, True);
 }
 
 #ifdef HAVE_CDE
@@ -2133,10 +2097,8 @@ static Lisp_Object
 x_get_frame_parent (struct frame *f)
 {
   Widget parentwid = 0;
-  Arg al[1];
 
-  XtSetArg (al[0], XtNtransientFor, &parentwid);
-  XtGetValues (FRAME_X_SHELL_WIDGET (f), al, 1);
+  Xt_GET_VALUE (FRAME_X_SHELL_WIDGET (f), XtNtransientFor, &parentwid);
   /* find the frame whose wid is parentwid */
   if (parentwid)
     {
@@ -2526,14 +2488,11 @@ static void
 x_delete_frame (struct frame *f)
 {
   Widget w = FRAME_X_SHELL_WIDGET (f);
-  Lisp_Object frame;
 
 #ifndef HAVE_SESSION
   if (FRAME_X_TOP_LEVEL_FRAME_P (f))
     x_wm_maybe_move_wm_command (f);
 #endif /* HAVE_SESSION */
-
-  XSETFRAME (frame, f);
 
 #ifdef EXTERNAL_WIDGET
   {
@@ -2640,7 +2599,6 @@ void
 syms_of_frame_x (void)
 {
   defsymbol (&Qwindow_id, "window-id");
-  defsymbol (&Qpopup, "popup");
   defsymbol (&Qx_resource_name, "x-resource-name");
 
   DEFSUBR (Fx_window_id);

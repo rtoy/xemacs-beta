@@ -21,8 +21,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with : FSF Emacs 20.2 */
 
-#include <stdio.h>
-
 #ifdef emacs
 
 #include <config.h>
@@ -34,6 +32,7 @@ Boston, MA 02111-1307, USA.  */
 
 #else  /* not emacs */
 
+#include <stdio.h>
 #include "mulelib.h"
 
 #endif /* not emacs */
@@ -538,7 +537,7 @@ ccl_driver (struct ccl_program *ccl, CONST unsigned char *source, unsigned_char_
 
   int i, j, op;
   int stack_idx = 0;
-  /* For the moment, we only support depth 256 of stack.  */ 
+  /* For the moment, we only support depth 256 of stack.  */
   struct ccl_prog_stack ccl_prog_stack_struct[256];
 
   if (ic >= ccl->eof_ic)
@@ -728,7 +727,7 @@ ccl_driver (struct ccl_program *ccl, CONST unsigned char *source, unsigned_char_
 		  }
 		CCL_INVALID_CMD;
 	      }
-	    
+
 	    ccl_prog_stack_struct[stack_idx].ccl_prog = ccl_prog;
 	    ccl_prog_stack_struct[stack_idx].ic = ic;
 	    stack_idx++;
@@ -1062,7 +1061,7 @@ Return index number of the registered CCL program.
   CHECK_SYMBOL (name);
   if (!NILP (ccl_prog))
     CHECK_VECTOR (ccl_prog);
-  
+
   for (i = 0; i < len; i++)
     {
       Lisp_Object slot = XVECTOR_DATA (Vccl_program_table)[i];

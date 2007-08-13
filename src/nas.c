@@ -51,6 +51,11 @@
  *			be sure all play has finished.
  */
 
+#ifdef emacs
+#include <config.h>
+#include "lisp.h"
+#endif
+
 #if __STDC__ || defined (STDC_HEADERS)
 #    include <stdlib.h>
 #    include <stdarg.h>
@@ -62,18 +67,16 @@
 #endif
 
 #include <stdio.h>
-#include <config.h> /* for CONST in syssignal.h (neal@ctd.comsat.com) */
 #include "syssignal.h"
 
+#undef LITTLE_ENDIAN
+#undef BIG_ENDIAN
 #include <audio/audiolib.h>
 #include <audio/soundlib.h>
 #include <audio/snd.h>
 #include <audio/fileutil.h>
 
 #ifdef emacs
-
-#    include <config.h>
-#    include "lisp.h"
 
 #    define XTOOLKIT
 #    define XTEVENTS

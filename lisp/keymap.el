@@ -19,7 +19,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; along with XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -76,7 +76,7 @@ KEYMAP are redefined.  See also `accessible-keymaps'."
       (map-keymap #'(lambda (key binding)
 		      (if (eq binding olddef)
 			  ;; The new bindings always go in KEYMAP even if we
-			  ;; found them in OLDMAP or one of it's children.
+			  ;; found them in OLDMAP or one of its children.
 			  ;; If KEYMAP will be shadowing OLDMAP, then do not
 			  ;; redefine the key if there is another binding
 			  ;; in KEYMAP that will shadow OLDDEF.
@@ -84,7 +84,7 @@ KEYMAP are redefined.  See also `accessible-keymaps'."
 				   (lookup-key keymap key))
 			      ;; define-key will give an error if a prefix
 			      ;; of the key is already defined.  Otherwise
-			      ;; it will define the key in the map. 
+			      ;; it will define the key in the map.
 			      ;; #### - Perhaps this should be protected?
 			      (define-key
 				keymap
@@ -295,7 +295,7 @@ Optional arg NO-MICE means that button events are not allowed."
             ;; By passing t for the `allow-meta' arg we could get kbd macros
             ;; with meta in them to translate to the string form instead of
             ;; the list/symbol form; but I expect that would cause confusion,
-            ;; so let's use the list/symbol form whenever there's 
+            ;; so let's use the list/symbol form whenever there's
             ;; any ambiguity.
             (setq c (event-to-character ce))
             (if (and c
@@ -342,7 +342,7 @@ Optional arg NO-MICE means that button events are not allowed."
                   ((or (button-press-event-p event)
                        (button-release-event-p event))
                    (if no-mice
-                       (error 
+                       (error
                          "Mouse events can't be saved in keyboard macros."))
                    (setq mods (event-modifiers event)
                          key (intern (concat "button"

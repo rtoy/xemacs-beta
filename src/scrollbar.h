@@ -47,18 +47,18 @@ struct scrollbar_instance
 
 #define SCROLLBAR_INSTANCE_FRAME(inst) (inst->mirror->frame)
 
-extern void init_frame_scrollbars (struct frame *f);
-extern void init_device_scrollbars (struct device *d);
-extern void init_global_scrollbars (struct device *d);
-extern void free_frame_scrollbars (struct frame *f);
-extern void release_window_mirror_scrollbars (struct window_mirror *mir);
-extern void update_window_scrollbars (struct window *w,
-				      struct window_mirror *mirror,
-				      int active, int horiz_only);
+void init_frame_scrollbars (struct frame *f);
+void init_device_scrollbars (struct device *d);
+void init_global_scrollbars (struct device *d);
+void free_frame_scrollbars (struct frame *f);
+void release_window_mirror_scrollbars (struct window_mirror *mir);
+void update_window_scrollbars (struct window *w,
+			       struct window_mirror *mirror,
+			       int active, int horiz_only);
 #ifdef MEMORY_USAGE_STATS
-extern int compute_scrollbar_instance_usage (struct device *d,
-					     struct scrollbar_instance *inst,
-					     struct overhead_stats *ovstats);
+int compute_scrollbar_instance_usage (struct device *d,
+				      struct scrollbar_instance *inst,
+				      struct overhead_stats *ovstats);
 #endif
 
 extern Lisp_Object Vscrollbar_width, Vscrollbar_height;

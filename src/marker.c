@@ -35,15 +35,6 @@ Boston, MA 02111-1307, USA.  */
 
 #include "buffer.h"
 
-static Lisp_Object mark_marker (Lisp_Object, void (*) (Lisp_Object));
-static void print_marker (Lisp_Object, Lisp_Object, int);
-static int marker_equal (Lisp_Object, Lisp_Object, int);
-static unsigned long marker_hash (Lisp_Object obj, int depth);
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("marker", marker,
-				     mark_marker, print_marker, 0,
-				     marker_equal, marker_hash,
-				     struct Lisp_Marker);
-
 static Lisp_Object
 mark_marker (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
@@ -68,7 +59,7 @@ print_marker (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   char buf[200];
 
   if (print_readably)
-    error ("printing unreadable object #<marker 0x%x>", marker);
+    error ("printing unreadable object #<marker 0x%lx>", (long) marker);
 
   write_c_string (GETTEXT ("#<marker "), printcharfun);
   if (!marker->buffer)
@@ -79,7 +70,7 @@ print_marker (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       write_c_string (buf, printcharfun);
       print_internal (marker->buffer->name, printcharfun, 0);
     }
-  sprintf (buf, " 0x%x>", marker);
+  sprintf (buf, " 0x%lx>", (long) marker);
   write_c_string (buf, printcharfun);
 }
 
@@ -105,39 +96,39 @@ marker_hash (Lisp_Object obj, int depth)
   return hash;
 }
 
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("marker", marker,
+				     mark_marker, print_marker, 0,
+				     marker_equal, marker_hash,
+				     struct Lisp_Marker);
 
 /* Operations on markers. */
 
 DEFUN ("marker-buffer", Fmarker_buffer, 1, 1, 0, /*
 Return the buffer that MARKER points into, or nil if none.
-Returns nil if MARKER points into a dead buffer.
+Return nil if MARKER points into a dead buffer or doesn't point anywhere.
 */
        (marker))
 {
-  Lisp_Object buf;
+  struct buffer *buf;
   CHECK_MARKER (marker);
-  if (XMARKER (marker)->buffer)
+  /* Return marker's buffer only if it is not dead.  */
+  if ((buf = XMARKER (marker)->buffer) && BUFFER_LIVE_P (buf))
     {
-      XSETBUFFER (buf, XMARKER (marker)->buffer);
-      /* Return marker's buffer only if it is not dead.  */
-      if (BUFFER_LIVE_P (XBUFFER (buf)))
-	return buf;
+      Lisp_Object buffer;
+      XSETBUFFER (buffer, buf);
+      return buffer;
     }
   return Qnil;
 }
 
 DEFUN ("marker-position", Fmarker_position, 1, 1, 0, /*
 Return the position MARKER points at, as a character number.
-Returns `nil' if marker doesn't point anywhere.
+Return `nil' if marker doesn't point anywhere.
 */
        (marker))
 {
   CHECK_MARKER (marker);
-  if (XMARKER (marker)->buffer)
-    {
-      return (make_int (marker_position (marker)));
-    }
-  return Qnil;
+  return XMARKER (marker)->buffer ? make_int (marker_position (marker)) : Qnil;
 }
 
 #if 0 /* useful debugging function */
@@ -278,7 +269,7 @@ Returns MARKER.
 
 /* This version of Fset_marker won't let the position
    be outside the visible part.  */
-Lisp_Object 
+Lisp_Object
 set_marker_restricted (Lisp_Object marker, Lisp_Object pos, Lisp_Object buffer)
 {
   return set_marker_internal (marker, pos, buffer, 1);
@@ -523,11 +514,10 @@ syms_of_marker (void)
 #endif
 }
 
-void init_buffer_markers (struct buffer *b);
 void
 init_buffer_markers (struct buffer *b)
 {
-  Lisp_Object buf = Qnil;
+  Lisp_Object buf;
 
   XSETBUFFER (buf, b);
   b->mark = Fmake_marker ();
@@ -536,7 +526,6 @@ init_buffer_markers (struct buffer *b)
   Fset_marker (b->point_marker, make_int (1), buf);
 }
 
-void uninit_buffer_markers (struct buffer *b);
 void
 uninit_buffer_markers (struct buffer *b)
 {

@@ -42,7 +42,7 @@
 ;;   - nixed support for |,.| because
 ;;	(a) it's not in CLtl2
 ;;	(b) ",.foo" is the same as ". ,foo"
-;;	(c) because RMS isn't interested in using this version of backquote.el 
+;;	(c) because RMS isn't interested in using this version of backquote.el
 ;;
 ;; wing@666.com; added ,. support back in:
 ;;     (a) yes, it is in CLtl2.  Read closely on page 529.
@@ -66,22 +66,22 @@
 ;;      T: [a] => a		;the T flag is used when a is self-evaluating
 ;;  QUOTE: [a] => (QUOTE a)
 ;; APPEND: [a] => (APPEND . a)
-;;  NCONC: [a] => (NCONC . a) 
+;;  NCONC: [a] => (NCONC . a)
 ;;   LIST: [a] => (LIST . a)
 ;;  LIST*: [a] => (LIST* . a)
 ;;
 ;; The flags are combined according to the following set of rules:
 ;;  ([a] means that a should be converted according to the previous table)
 ;;
-;;   \ car  ||   otherwise    |   QUOTE or     |    |`,@|      |    |`,.|     
-;;cdr \     ||                |   T or NIL     |               |              
+;;   \ car  ||   otherwise    |   QUOTE or     |    |`,@|      |    |`,.|
+;;cdr \     ||                |   T or NIL     |               |
 ;;============================================================================
 ;;  |`,|    ||LIST* ([a] [d]) |LIST* ([a] [d]) |APPEND (a [d]) |NCONC  (a [d])
-;;  NIL     ||LIST    ([a])   |QUOTE    (a)    |<hair>    a    |<hair>    a   
-;;QUOTE or T||LIST* ([a] [d]) |QUOTE  (a . d)  |APPEND (a [d]) |NCONC (a [d]) 
-;; APPEND   ||LIST* ([a] [d]) |LIST* ([a] [d]) |APPEND (a . d) |NCONC (a [d]) 
-;; NCONC    ||LIST* ([a] [d]) |LIST* ([a] [d]) |APPEND (a [d]) |NCONC (a . d) 
-;;  LIST    ||LIST  ([a] . d) |LIST  ([a] . d) |APPEND (a [d]) |NCONC (a [d]) 
+;;  NIL     ||LIST    ([a])   |QUOTE    (a)    |<hair>    a    |<hair>    a
+;;QUOTE or T||LIST* ([a] [d]) |QUOTE  (a . d)  |APPEND (a [d]) |NCONC (a [d])
+;; APPEND   ||LIST* ([a] [d]) |LIST* ([a] [d]) |APPEND (a . d) |NCONC (a [d])
+;; NCONC    ||LIST* ([a] [d]) |LIST* ([a] [d]) |APPEND (a [d]) |NCONC (a . d)
+;;  LIST    ||LIST  ([a] . d) |LIST  ([a] . d) |APPEND (a [d]) |NCONC (a [d])
 ;;  LIST*   ||LIST* ([a] . d) |LIST* ([a] . d) |APPEND (a [d]) |NCONC  (a [d])
 ;;
 ;;<hair> involves starting over again pretending you had read ".,a)" instead
@@ -92,7 +92,7 @@
 
 ;;; Code:
 
-(defconst bq-backquote-marker 'backquote) 
+(defconst bq-backquote-marker 'backquote)
 (defconst bq-backtick-marker '\`)	; remnant of the old lossage
 (defconst bq-comma-marker '\,)
 (defconst bq-at-marker '\,@)
@@ -130,8 +130,8 @@ Examples:
 Note that this is very slow in interpreted code, but fast if you compile.
 TEMPLATE is one or more nested lists or vectors, which are `almost quoted'.
 They are copied recursively, with elements preceded by comma evaluated.
- (backquote (a b))     == (list 'a 'b)  
- (backquote (a [b c])) == (list 'a (vector 'b 'c)) 
+ (backquote (a b))     == (list 'a 'b)
+ (backquote (a [b c])) == (list 'a (vector 'b 'c))
 
 However, certain special lists are not copied.  They specify substitution.
 Lists that look like (\\, EXP) are evaluated and the result is substituted.
@@ -197,7 +197,7 @@ This is an extremely rare thing to need to do in lisp."
   (cond ((vectorp code)
 	 (let* ((dflag-d
 		 (bq-process-2 (bq-vector-contents code))))
-	   (cons 'vector (bq-process-1 (car dflag-d) (cdr dflag-d)))))  
+	   (cons 'vector (bq-process-1 (car dflag-d) (cdr dflag-d)))))
 	((atom code)
 	 (cond ((null code) (cons nil nil))
 	       ((or (numberp code) (eq code t))
@@ -253,7 +253,7 @@ This is an extremely rare thing to need to do in lisp."
 		       (cons 'list*
 			     (list a (bq-process-1 dflag d)))))))))))
 
-;;; This handles the <hair> cases 
+;;; This handles the <hair> cases
 (defun bq-comma (code)
   (cond ((atom code)
 	 (cond ((null code)
@@ -290,7 +290,7 @@ This is an extremely rare thing to need to do in lisp."
 ;;; ----------------------------------------------------------------
 
 (defmacro bq-list* (&rest args)
-  "Returns a list of its arguments with last cons a dotted pair."
+  "Return a list of its arguments with last cons a dotted pair."
   (setq args (reverse args))
   (let ((result (car args)))
     (setq args (cdr args))

@@ -26,7 +26,7 @@ static size_t getpagesize() { return( 4096 ); }
 #define HAVE_GETPAGESIZE
 #endif
 #endif
-  
+
 #ifndef HAVE_GETPAGESIZE
 
 #ifdef HAVE_UNISTD_H

@@ -121,10 +121,6 @@ void debug_process_finalization (struct Lisp_Process *p);
 void emacs_Xt_event_handler (Widget wid, XtPointer closure, XEvent *event,
 			     Boolean *continue_to_dispatch);
 
-#ifdef EPOCH
-void dispatch_epoch_event (struct frame *f, XEvent *event, Lisp_Object type);
-#endif
-
 static int last_quit_check_signal_tick_count;
 
 Lisp_Object Qkey_mapping;
@@ -712,7 +708,7 @@ x_keysym_to_emacs_keysym (KeySym keysym, int simple_p)
 
 	   Let's hard-code in some knowledge of common keysyms introduced
 	   in recent X11 releases.  Snarfed from X11/keysymdef.h
-	   
+
 	   Probably we should add some stuff here for X11R6. */
 	switch (keysym)
 	  {
@@ -1120,7 +1116,7 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 	    Lisp_Object l_type = Qnil, l_data = Qnil;
 	    Lisp_Object l_dndlist = Qnil, l_item = Qnil;
 	    struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
-	    
+
 	    GCPRO4 (l_type, l_data, l_dndlist, l_item);
 
 	    if (! frame)
@@ -1144,11 +1140,11 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 	    if (state & Button3Mask)    button = Button3;
 	    if (state & Button2Mask)    button = Button2;
 	    if (state & Button1Mask)    button = Button1;
-	    
+
 	    emacs_event->event.dnd_drop.modifiers = modifiers;
 	    emacs_event->event.dnd_drop.button	  = button;
 
-	    DndDropCoordinates(FRAME_X_TEXT_WIDGET(frame), x_event, 
+	    DndDropCoordinates(FRAME_X_TEXT_WIDGET(frame), x_event,
 			       &(emacs_event->event.dnd_drop.x),
 			       &(emacs_event->event.dnd_drop.y) );
 
@@ -1199,10 +1195,10 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 
 	    break;
 	  }
-#endif
+#endif /* HAVE_OFFIX_DND */
         if (ev->message_type == DEVICE_XATOM_WM_PROTOCOLS (d)
-            && ev->data.l[0] == DEVICE_XATOM_WM_TAKE_FOCUS (d)
-            && ev->data.l[1] == 0)
+            && (Atom) (ev->data.l[0]) == DEVICE_XATOM_WM_TAKE_FOCUS (d)
+            && (Atom) (ev->data.l[1]) == 0)
           {
             ev->data.l[1] = DEVICE_X_LAST_SERVER_TIMESTAMP (d);
           }
@@ -1322,7 +1318,7 @@ emacs_Xt_handle_focus_event (XEvent *event)
 static void
 change_frame_visibility (struct frame *f, int is_visible)
 {
-  Lisp_Object frame = Qnil;
+  Lisp_Object frame;
 
   XSETFRAME (frame, f);
 
@@ -1335,17 +1331,11 @@ change_frame_visibility (struct frame *f, int is_visible)
 	 the good 'ol double redisplay structure. */
       MARK_FRAME_WINDOWS_STRUCTURE_CHANGED (f);
       va_run_hook_with_args (Qmap_frame_hook, 1, frame);
-#ifdef EPOCH
-      dispatch_epoch_event (f, event, Qx_map);
-#endif
     }
   else if (FRAME_VISIBLE_P (f) && !is_visible)
     {
       FRAME_VISIBLE_P (f) = 0;
       va_run_hook_with_args (Qunmap_frame_hook, 1, frame);
-#ifdef EPOCH
-      dispatch_epoch_event (f, event, Qx_unmap);
-#endif
     }
   else if (FRAME_VISIBLE_P (f) * is_visible < 0)
     {
@@ -1353,16 +1343,13 @@ change_frame_visibility (struct frame *f, int is_visible)
       if (FRAME_REPAINT_P(f))
 	      MARK_FRAME_WINDOWS_STRUCTURE_CHANGED (f);
       va_run_hook_with_args (Qmap_frame_hook, 1, frame);
-#ifdef EPOCH
-      dispatch_epoch_event (f, event, Qx_map);
-#endif
     }
 }
 
 static void
 handle_map_event (struct frame *f, XEvent *event)
 {
-  Lisp_Object frame = Qnil;
+  Lisp_Object frame;
 
   XSETFRAME (frame, f);
   if (event->type == MapNotify)
@@ -1433,12 +1420,12 @@ static void
 handle_client_message (struct frame *f, XEvent *event)
 {
   struct device *d = XDEVICE (FRAME_DEVICE (f));
-  Lisp_Object frame = Qnil;
+  Lisp_Object frame;
 
   XSETFRAME (frame, f);
 
   if (event->xclient.message_type == DEVICE_XATOM_WM_PROTOCOLS (d) &&
-      event->xclient.data.l[0] == DEVICE_XATOM_WM_DELETE_WINDOW (d))
+      (Atom) (event->xclient.data.l[0]) == DEVICE_XATOM_WM_DELETE_WINDOW (d))
     {
       /* WM_DELETE_WINDOW is a misc-user event, but other ClientMessages,
 	 such as WM_TAKE_FOCUS, are eval events.  That's because delete-window
@@ -1453,7 +1440,7 @@ handle_client_message (struct frame *f, XEvent *event)
 			       list3 (Qdelete_frame, frame, Qt));
     }
   else if (event->xclient.message_type == DEVICE_XATOM_WM_PROTOCOLS (d) &&
-	   event->xclient.data.l[0] == DEVICE_XATOM_WM_TAKE_FOCUS (d))
+	   (Atom) event->xclient.data.l[0] == DEVICE_XATOM_WM_TAKE_FOCUS (d))
     {
       handle_focus_event_1 (f, 1);
 #if 0
@@ -1476,9 +1463,6 @@ handle_client_message (struct frame *f, XEvent *event)
 	}
 #endif
     }
-#ifdef EPOCH
-  dispatch_epoch_event (f, event, Qx_client_message);
-#endif
 }
 
 static void
@@ -1507,9 +1491,6 @@ emacs_Xt_handle_magic_event (struct Lisp_Event *emacs_event)
 
     case PropertyNotify:
       x_handle_property_notify (&event->xproperty);
-#ifdef EPOCH
-      dispatch_epoch_event (f, event, Qx_property_change);
-#endif
       break;
 
     case Expose:
@@ -1938,7 +1919,7 @@ Xt_process_to_emacs_event (struct Lisp_Event *emacs_event)
 static void
 emacs_Xt_select_console (struct console *con)
 {
-  Lisp_Object console = Qnil;
+  Lisp_Object console;
   int infd;
 #ifdef HAVE_GPM
   int mousefd;
@@ -1971,7 +1952,7 @@ emacs_Xt_select_console (struct console *con)
 static void
 emacs_Xt_unselect_console (struct console *con)
 {
-  Lisp_Object console = Qnil;
+  Lisp_Object console;
   int infd;
 #ifdef HAVE_GPM
   int mousefd;
@@ -2046,7 +2027,7 @@ describe_event_window (Window window, Display *display)
   f = x_any_window_to_frame (get_device_from_display (display), window);
   if (f)
     {
-      char *buf = alloca (XSTRING_LENGTH (f->name) + 4);
+      char *buf = alloca_array (char, XSTRING_LENGTH (f->name) + 4);
       sprintf (buf, " \"%s\"", XSTRING_DATA (f->name));
       write_string_to_stdio_stream (stderr, 0, (Bufbyte *) buf, 0,
 				    strlen (buf), FORMAT_TERMINAL);

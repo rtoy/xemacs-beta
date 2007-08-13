@@ -51,7 +51,7 @@
 				configure-lisp-directory))
 
 (defun paths-construct-load-path
-  (roots early-package-load-path late-package-load-path
+  (roots early-package-load-path late-package-load-path last-package-load-path
 	 &optional inhibit-site-lisp)
   "Construct the load path."
   (let* ((envvar-value (getenv "EMACSLOADPATH"))
@@ -65,14 +65,16 @@
 	       (paths-find-recursive-load-path (list site-lisp-directory))))
 	 (lisp-directory (paths-find-lisp-directory roots))
 	 (lisp-load-path
-	  (paths-find-recursive-load-path (list lisp-directory))))
+	  (and lisp-directory
+	       (paths-find-recursive-load-path (list lisp-directory)))))
     (append env-load-path
 	    early-package-load-path
 	    site-lisp-load-path
 	    late-package-load-path
-	    lisp-load-path)))
+	    lisp-load-path
+	    last-package-load-path)))
 
-(defun paths-construct-info-path (roots early-packages late-packages)
+(defun paths-construct-info-path (roots early-packages late-packages last-packages)
   "Construct the info path."
   (append
    (packages-find-package-info-path early-packages)
@@ -83,6 +85,7 @@
 					configure-info-directory)))
      (and info-directory
 	  (list info-directory)))
+   (packages-find-package-info-path last-packages)
    (let ((info-path-envval (getenv "INFOPATH")))
      (if info-path-envval
 	 (decode-path-internal info-path-envval)
@@ -111,7 +114,8 @@
   "Find the binary directory."
   (paths-find-architecture-directory roots "lib-src"))
 
-(defun paths-construct-exec-path (roots exec-directory early-packages late-packages)
+(defun paths-construct-exec-path (roots exec-directory
+				  early-packages late-packages last-packages)
   "Find the binary path."
   (append
    (let ((path-envval (getenv "PATH")))
@@ -119,6 +123,7 @@
 	 (decode-path-internal path-envval)))
    (packages-find-package-exec-path early-packages)
    (packages-find-package-exec-path late-packages)
+   (packages-find-package-exec-path last-packages)
    (let ((emacspath-envval (getenv "EMACSPATH")))
      (if emacspath-envval
 	 (decode-path-internal emacspath-envval)
@@ -130,11 +135,13 @@
   "Find the data directory."
   (paths-find-version-directory roots "etc" "EMACSDATA" configure-data-directory))
 
-(defun paths-construct-data-directory-list (data-directory early-packages late-packages)
+(defun paths-construct-data-directory-list (data-directory
+					    early-packages late-packages last-packages)
   "Find the data path."
   (append
    (packages-find-package-data-path early-packages)
    (packages-find-package-data-path late-packages)
+   (packages-find-package-data-path last-packages)
    (list data-directory)))
 
 ;;; setup-paths.el ends here

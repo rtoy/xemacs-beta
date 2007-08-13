@@ -28,6 +28,10 @@ Boston, MA 02111-1307, USA.  */
 #include "elhash.h"
 #include "bytecode.h"
 
+EXFUN (Fmake_weak_hashtable, 2);
+EXFUN (Fmake_key_weak_hashtable, 2);
+EXFUN (Fmake_value_weak_hashtable, 2);
+
 Lisp_Object Qhashtablep, Qhashtable;
 Lisp_Object Qweak, Qkey_weak, Qvalue_weak, Qnon_weak;
 
@@ -47,15 +51,6 @@ struct hashtable
 };
 
 static Lisp_Object Vall_weak_hashtables;
-
-static Lisp_Object mark_hashtable (Lisp_Object, void (*) (Lisp_Object));
-static void print_hashtable (Lisp_Object, Lisp_Object, int);
-static int hashtable_equal (Lisp_Object t1, Lisp_Object t2, int depth);
-DEFINE_LRECORD_IMPLEMENTATION ("hashtable", hashtable,
-                               mark_hashtable, print_hashtable, 0,
-			       /* #### Implement hashtable_hash()! */
-			       hashtable_equal, 0,
-			       struct hashtable);
 
 static Lisp_Object
 mark_hashtable (Lisp_Object obj, void (*markobj) (Lisp_Object))
@@ -257,6 +252,11 @@ print_hashtable (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     }
 }
 
+DEFINE_LRECORD_IMPLEMENTATION ("hashtable", hashtable,
+                               mark_hashtable, print_hashtable, 0,
+			       /* #### Implement hashtable_hash()! */
+			       hashtable_equal, 0,
+			       struct hashtable);
 
 /* Pretty reading of hashtables.
 
@@ -350,34 +350,29 @@ hashtable_instantiate (Lisp_Object plist)
   /* I'm not sure whether this can GC, but better safe than sorry.  */
   Lisp_Object hashtab = Qnil;
   Lisp_Object type = Qnil, test = Qnil, size = Qnil, data = Qnil;
-  Lisp_Object key, value;
   struct gcpro gcpro1;
   GCPRO1 (hashtab);
 
   while (!NILP (plist))
     {
-      key = XCAR (plist);
-      plist = XCDR (plist);
-      value = XCAR (plist);
-      plist = XCDR (plist);
-      if (EQ (key, Qtype))
-	type = value;
-      else if (EQ (key, Qtest))
-	test = value;
-      else if (EQ (key, Qsize))
-	size = value;
-      else if (EQ (key, Qdata))
-	data = value;
+      Lisp_Object key, value;
+      key   = XCAR (plist); plist = XCDR (plist);
+      value = XCAR (plist); plist = XCDR (plist);
+
+      if      (EQ (key, Qtype)) type = value;
+      else if (EQ (key, Qtest)) test = value;
+      else if (EQ (key, Qsize)) size = value;
+      else if (EQ (key, Qdata)) data = value;
       else
 	abort ();
     }
+
   if (NILP (type))
     type = Qnon_weak;
+
   if (NILP (size))
-    {
-      /* Divide by two, because data is a plist. */
-      XSETINT (size, XINT (Flength (data)) / 2);
-    }
+    /* Divide by two, because data is a plist. */
+    size = make_int (XINT (Flength (data)) / 2);
 
   /* Create the hashtable.  */
   if (EQ (type, Qnon_weak))
@@ -394,10 +389,9 @@ hashtable_instantiate (Lisp_Object plist)
   /* And fill it with data.  */
   while (!NILP (data))
     {
-      key = XCAR (data);
-      data = XCDR (data);
-      value = XCAR (data);
-      data = XCDR (data);
+      Lisp_Object key, value;
+      key   = XCAR (data); data = XCDR (data);
+      value = XCAR (data); data = XCDR (data);
       Fputhash (key, value, hashtab);
     }
 
@@ -637,7 +631,7 @@ decode_hashtable_test_fun (Lisp_Object sym)
 }
 
 DEFUN ("make-hashtable", Fmake_hashtable, 1, 2, 0, /*
-Make a hashtable of initial size SIZE.
+Return a new hashtable object of initial size SIZE.
 Comparison between keys is done with TEST-FUN, which must be one of
 `eq', `eql', or `equal'.  The default is `eql'; i.e. two keys must
 be the same object (or have the same floating-point value, for floats)
@@ -654,10 +648,10 @@ See also `make-weak-hashtable', `make-key-weak-hashtable', and
 }
 
 DEFUN ("copy-hashtable", Fcopy_hashtable, 1, 1, 0, /*
-Make a new hashtable which contains the same keys and values
-as the given table.  The keys and values will not themselves be copied.
+Return a new hashtable containing the same keys and values as HASHTABLE.
+The keys and values will not themselves be copied.
 */
-       (old_table))
+       (hashtable))
 {
   struct _C_hashtable old_htbl;
   struct _C_hashtable new_htbl;
@@ -665,8 +659,8 @@ as the given table.  The keys and values will not themselves be copied.
   struct hashtable *new_ht;
   Lisp_Object result;
 
-  CHECK_HASHTABLE (old_table);
-  old_ht = XHASHTABLE (old_table);
+  CHECK_HASHTABLE (hashtable);
+  old_ht = XHASHTABLE (hashtable);
   ht_copy_to_c (old_ht, &old_htbl);
 
   /* we can't just call Fmake_hashtable() here because that will make a
@@ -793,17 +787,10 @@ This can be one of `non-weak', `weak', `key-weak' and `value-weak'.
 
   switch (XHASHTABLE (hashtable)->type)
     {
-    case HASHTABLE_WEAK:
-      return Qweak;
-      break;
-    case HASHTABLE_KEY_WEAK:
-      return Qkey_weak;
-      break;
-    case HASHTABLE_VALUE_WEAK:
-      return Qvalue_weak;
-      break;
-    default:
-      return Qnon_weak;
+    case HASHTABLE_WEAK:	return Qweak;
+    case HASHTABLE_KEY_WEAK:	return Qkey_weak;
+    case HASHTABLE_VALUE_WEAK:	return Qvalue_weak;
+    default:			return Qnon_weak;
     }
 }
 
@@ -832,21 +819,21 @@ verify_function (Lisp_Object function, CONST char *description)
 {
   /* #### Unused DESCRIPTION?  */
   if (SYMBOLP (function))
-  {
-    if (NILP (function))
-      return;
-    else
-      function = indirect_function (function, 1);
-  }
+    {
+      if (NILP (function))
+	return;
+      else
+	function = indirect_function (function, 1);
+    }
   if (SUBRP (function) || COMPILED_FUNCTIONP (function))
     return;
   else if (CONSP (function))
-  {
-    Lisp_Object funcar = XCAR (function);
-    if ((SYMBOLP (funcar)) && (EQ (funcar, Qlambda) ||
-			       EQ (funcar, Qautoload)))
-      return;
-  }
+    {
+      Lisp_Object funcar = XCAR (function);
+      if ((SYMBOLP (funcar)) && (EQ (funcar, Qlambda) ||
+				 EQ (funcar, Qautoload)))
+	return;
+    }
   signal_error (Qinvalid_function, list1 (function));
 }
 
@@ -900,10 +887,7 @@ elisp_maphash (int (*function) (CONST void *key, void *contents,
 }
 
 void
-elisp_map_remhash (int (*function) (CONST void *key,
-				    CONST void *contents,
-				    void *extra_arg),
-		   Lisp_Object hashtable,
+elisp_map_remhash (remhash_predicate function, Lisp_Object hashtable,
 		   void *closure)
 {
   struct _C_hashtable htbl;
@@ -930,7 +914,7 @@ elisp_table_op (Lisp_Object table, generic_hashtable_op op, void *arg1,
 
 
 DEFUN ("make-weak-hashtable", Fmake_weak_hashtable, 1, 2, 0, /*
-Make a fully weak hashtable of initial size SIZE.
+Return a new fully weak hashtable object of initial size SIZE.
 A weak hashtable is one whose pointers do not count as GC referents:
 for any key-value pair in the hashtable, if the only remaining pointer
 to either the key or the value is in a weak hash table, then the pair
@@ -949,7 +933,7 @@ and `make-value-weak-hashtable'.
 }
 
 DEFUN ("make-key-weak-hashtable", Fmake_key_weak_hashtable, 1, 2, 0, /*
-Make a key-weak hashtable of initial size SIZE.
+Return a new key-weak hashtable object of initial size SIZE.
 A key-weak hashtable is similar to a fully-weak hashtable (see
 `make-weak-hashtable') except that a key-value pair will be removed
 only if the key remains unmarked outside of weak hashtables.  The pair
@@ -964,7 +948,7 @@ than a weak hashtable, even if the value is not.
 }
 
 DEFUN ("make-value-weak-hashtable", Fmake_value_weak_hashtable, 1, 2, 0, /*
-Make a value-weak hashtable of initial size SIZE.
+Return a new value-weak hashtable object of initial size SIZE.
 A value-weak hashtable is similar to a fully-weak hashtable (see
 `make-weak-hashtable') except that a key-value pair will be removed only
 if the value remains unmarked outside of weak hashtables.  The pair will

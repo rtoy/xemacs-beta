@@ -10,7 +10,6 @@
 #define C_SWITCH_SYSTEM "-systype bsd43"
 #define LD_SWITCH_SYSTEM "-systype bsd43"
 #undef LIBS_SYSTEM
-/* #define LIBS_SYSTEM "-lmld" */ /* mrb */
 #define LIBS_DEBUG
 #define START_FILES "pre-crt0.o /lib/crt1.o"
 #define LIB_STANDARD "-lc /usr/lib/crtn.o"
@@ -25,7 +24,6 @@
 #include "usg5-2-2.h"
 
 #undef LIBS_SYSTEM
-/* #define LIBS_SYSTEM "-lmld" */ /* mrb */
 #define LIBS_DEBUG
 #define START_FILES "pre-crt0.o /usr/lib/crt1.o"
 #define LIB_STANDARD "-lbsd -lc /usr/lib/crtn.o"

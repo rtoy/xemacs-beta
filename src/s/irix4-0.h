@@ -7,9 +7,6 @@
 
 #undef NEED_SIOCTL
 
-/* Make process_send_signal work by "typing" a signal character on the pty.  */
-/* #define SIGNALS_VIA_CHARACTERS */ /* mrb */
-
 /* use K&R C */
 /* XEmacs change -- use ANSI, not K&R */
 #ifndef __GNUC__

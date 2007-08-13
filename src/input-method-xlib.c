@@ -245,8 +245,8 @@ XIM_init_frame (struct frame *f)
 
   if (style & XIMPreeditPosition)
     { /* Init spot to invalid values */
-      XPoint *spot = &(FRAME_X_XIC_SPOT (f));
-      spot->x = spot->y = -1;
+      XPoint *frame_spot = &(FRAME_X_XIC_SPOT (f));
+      frame_spot->x = frame_spot->y = -1;
     }
 
   XIM_SetGeometry (f);
@@ -475,8 +475,8 @@ EmacsXtCvtStringToXIMStyles (
   };
 #undef STYLE_INFO
 
-  CONST char *s   = (char *) fromVal->addr;
-  CONST char *end = s + fromVal->size;
+  char *s   = (char *) fromVal->addr;
+  char *end = s + fromVal->size;
   XIMStyles * CONST p = (XIMStyles *) toVal->addr;
   CONST char * CONST delimiter = " \t\n\r:;," ;
   CONST int  max_styles = XtNumber(emacs_XIMStyleInfo);

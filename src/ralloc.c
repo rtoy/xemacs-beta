@@ -27,12 +27,18 @@ Synched Up with:  FSF 20.2 (non-mmap portion only)
    rather than all of them.  This means allowing for a possible
    hole between the first bloc and the end of malloc storage. */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>  /* for getpagesize() */
+#endif
+
 #ifdef emacs
 
-#include <config.h>
-#include "lisp.h"		/* Needed for VALBITS.  */
-
-#undef NULL
+#include "lisp.h"
+#include <malloc.h>
 
 /* The important properties of this type are that 1) it's a pointer, and
    2) arithmetic on it should work as if the size of the object pointed
@@ -51,13 +57,13 @@ typedef unsigned char *POINTER;
 typedef unsigned long SIZE;
 
 #ifdef DOUG_LEA_MALLOC
-#define M_TOP_PAD           -2 
-extern int mallopt ();
+#define M_TOP_PAD -2
 #endif
 
 #include "getpagesize.h"
 
 #include <string.h>
+void refill_memory_reserve (void);
 
 #else	/* Not emacs.  */
 
@@ -72,6 +78,7 @@ typedef void *POINTER;
 
 #endif	/* emacs.  */
 
+void init_ralloc (void);
 #define safe_bcopy(x, y, z) memmove (y, x, z)
 
 #define NIL ((POINTER) 0)
@@ -91,16 +98,13 @@ static int r_alloc_initialized = 0;
 /* Declarations for working with the malloc, ralloc, and system breaks.  */
 
 /* Function to set the real break value. */
-static POINTER (*real_morecore) ();
+static POINTER (*real_morecore) (long size);
 
 /* The break value, as seen by malloc (). */
 static POINTER virtual_break_value;
 
 /* The break value, viewed by the relocatable blocs. */
 static POINTER break_value;
-
-/* The REAL (i.e., page aligned) break value of the process. */
-static POINTER page_break_value;
 
 /* This is the size of a page.  We round memory requests to this boundary.  */
 static int page_size;
@@ -135,7 +139,7 @@ static int extra_bytes;
    We try to make just one heap and make it larger as necessary.
    But sometimes we can't do that, because we can't get contiguous
    space to add onto the heap.  When that happens, we start a new heap.  */
-   
+
 typedef struct heap
 {
   struct heap *next;
@@ -209,8 +213,7 @@ static int r_alloc_freeze_level;
 /* Find the heap that ADDRESS falls within.  */
 
 static heap_ptr
-find_heap (address)
-    POINTER address;
+find_heap (POINTER address)
 {
   heap_ptr heap;
 
@@ -383,6 +386,7 @@ relinquish ()
 /* Return the total size in use by relocating allocator,
    above where malloc gets space.  */
 
+long r_alloc_size_in_use (void);
 long
 r_alloc_size_in_use ()
 {
@@ -466,21 +470,18 @@ get_bloc (SIZE size)
 /* Calculate new locations of blocs in the list beginning with BLOC,
    relocating it to start at ADDRESS, in heap HEAP.  If enough space is
    not presently available in our reserve, call obtain for
-   more space. 
-   
+   more space.
+
    Store the new location of each bloc in its new_data field.
    Do not touch the contents of blocs or break_value.  */
 
 static int
-relocate_blocs (bloc, heap, address)
-    bloc_ptr bloc;
-    heap_ptr heap;
-    POINTER address;
+relocate_blocs (bloc_ptr bloc, heap_ptr heap, POINTER address)
 {
   register bloc_ptr b = bloc;
 
   /* No need to ever call this if arena is frozen, bug somewhere!  */
-  if (r_alloc_freeze_level) 
+  if (r_alloc_freeze_level)
     abort();
 
   while (b)
@@ -505,7 +506,7 @@ relocate_blocs (bloc, heap, address)
 	  /* Add up the size of all the following blocs.  */
 	  while (tb != NIL_BLOC)
 	    {
-	      if (tb->variable) 
+	      if (tb->variable)
 		s += tb->size;
 
 	      tb = tb->next;
@@ -522,7 +523,7 @@ relocate_blocs (bloc, heap, address)
       /* Record the new address of this bloc
 	 and update where the next bloc can start.  */
       b->new_data = address;
-      if (b->variable) 
+      if (b->variable)
 	address += b->size;
       b = b->next;
     }
@@ -530,13 +531,13 @@ relocate_blocs (bloc, heap, address)
   return 1;
 }
 
+#if 0 /* unused */
 /* Reorder the bloc BLOC to go before bloc BEFORE in the doubly linked list.
    This is necessary if we put the memory of space of BLOC
    before that of BEFORE.  */
 
 static void
-reorder_bloc (bloc, before)
-     bloc_ptr bloc, before;
+reorder_bloc (bloc_ptr bloc, bloc_ptr before)
 {
   bloc_ptr prev, next;
 
@@ -559,14 +560,13 @@ reorder_bloc (bloc, before)
   before->prev = bloc;
   bloc->next = before;
 }
+#endif /* unused */
 
 /* Update the records of which heaps contain which blocs, starting
    with heap HEAP and bloc BLOC.  */
 
 static void
-update_heap_bloc_correspondence (bloc, heap)
-     bloc_ptr bloc;
-     heap_ptr heap;
+update_heap_bloc_correspondence (bloc_ptr bloc, heap_ptr heap)
 {
   register bloc_ptr b;
 
@@ -628,9 +628,7 @@ update_heap_bloc_correspondence (bloc, heap)
    that come after BLOC in memory.  */
 
 static int
-resize_bloc (bloc, size)
-    bloc_ptr bloc;
-    SIZE size;
+resize_bloc (bloc_ptr bloc, SIZE size)
 {
   register bloc_ptr b;
   heap_ptr heap;
@@ -638,7 +636,7 @@ resize_bloc (bloc, size)
   SIZE old_size;
 
   /* No need to ever call this if arena is frozen, bug somewhere!  */
-  if (r_alloc_freeze_level) 
+  if (r_alloc_freeze_level)
     abort();
 
   if (bloc == NIL_BLOC || size == bloc->size)
@@ -680,8 +678,8 @@ resize_bloc (bloc, size)
 	    {
 	      b->size = 0;
 	      b->data = b->new_data;
-            } 
-	  else 
+            }
+	  else
 	    {
 	      safe_bcopy (b->data, b->new_data, b->size);
 	      *b->variable = b->data = b->new_data;
@@ -707,8 +705,8 @@ resize_bloc (bloc, size)
 	    {
 	      b->size = 0;
 	      b->data = b->new_data;
-            } 
-	  else 
+            }
+	  else
 	    {
 	      safe_bcopy (b->data, b->new_data, b->size);
 	      *b->variable = b->data = b->new_data;
@@ -736,7 +734,7 @@ free_bloc (bloc_ptr bloc)
       bloc->variable = (POINTER *) NIL;
       return;
     }
-  
+
   resize_bloc (bloc, 0);
 
   if (bloc == first_bloc && bloc == last_bloc)
@@ -792,6 +790,7 @@ free_bloc (bloc_ptr bloc)
    __morecore hook values - in particular, __default_morecore in the
    GNU malloc package.  */
 
+POINTER r_alloc_sbrk (long size);
 POINTER
 r_alloc_sbrk (long size)
 {
@@ -847,7 +846,7 @@ r_alloc_sbrk (long size)
       if (first_heap->bloc_start < new_bloc_start)
 	{
 	  /* This is no clean solution - no idea how to do it better.  */
-	  if (r_alloc_freeze_level) 
+	  if (r_alloc_freeze_level)
 	    return NIL;
 
 	  /* There is a bug here: if the above obtain call succeeded, but the
@@ -942,6 +941,7 @@ r_alloc_sbrk (long size)
    If we can't allocate the necessary memory, set *PTR to zero, and
    return zero.  */
 
+POINTER r_alloc (POINTER *ptr, SIZE size);
 POINTER
 r_alloc (POINTER *ptr, SIZE size)
 {
@@ -965,6 +965,7 @@ r_alloc (POINTER *ptr, SIZE size)
 /* Free a bloc of relocatable storage whose data is pointed to by PTR.
    Store 0 in *PTR to show there's no block allocated.  */
 
+void r_alloc_free (POINTER *ptr);
 void
 r_alloc_free (POINTER *ptr)
 {
@@ -999,6 +1000,7 @@ r_alloc_free (POINTER *ptr)
    If more memory cannot be allocated, then leave *PTR unchanged, and
    return zero.  */
 
+POINTER r_re_alloc (POINTER *ptr, SIZE size);
 POINTER
 r_re_alloc (POINTER *ptr, SIZE size)
 {
@@ -1009,7 +1011,7 @@ r_re_alloc (POINTER *ptr, SIZE size)
 
   if (!*ptr)
     return r_alloc (ptr, size);
-  if (!size) 
+  if (!size)
     {
       r_alloc_free (ptr);
       return r_alloc (ptr, 0);
@@ -1019,12 +1021,12 @@ r_re_alloc (POINTER *ptr, SIZE size)
   if (bloc == NIL_BLOC)
     abort ();
 
-  if (size < bloc->size) 
+  if (size < bloc->size)
     {
       /* Wouldn't it be useful to actually resize the bloc here?  */
       /* I think so too, but not if it's too expensive...  */
-      if ((bloc->size - MEM_ROUNDUP (size) >= page_size) 
-          && r_alloc_freeze_level == 0) 
+      if ((bloc->size - MEM_ROUNDUP (size) >= page_size)
+          && r_alloc_freeze_level == 0)
 	{
 	  resize_bloc (bloc, MEM_ROUNDUP (size));
 	  /* Never mind if this fails, just do nothing...  */
@@ -1046,7 +1048,7 @@ r_re_alloc (POINTER *ptr, SIZE size)
           else
 	    return NIL;
 	}
-      else 
+      else
 	{
 	  if (! resize_bloc (bloc, MEM_ROUNDUP (size)))
 	    return NIL;
@@ -1060,9 +1062,9 @@ r_re_alloc (POINTER *ptr, SIZE size)
    guaranteed to hold still until thawed, even if this means that
    malloc must return a null pointer.  */
 
+void r_alloc_freeze (long size);
 void
-r_alloc_freeze (size)
-     long size;
+r_alloc_freeze (long size)
 {
   if (! r_alloc_initialized)
     init_ralloc ();
@@ -1078,26 +1080,27 @@ r_alloc_freeze (size)
     r_alloc_sbrk (-size);
 }
 
+void r_alloc_thaw (void);
 void
 r_alloc_thaw ()
 {
 
-  if (! r_alloc_initialized) 
+  if (! r_alloc_initialized)
     init_ralloc ();
 
   if (--r_alloc_freeze_level < 0)
     abort ();
 
-  /* This frees all unused blocs.  It is not too inefficient, as the resize 
-     and bcopy is done only once.  Afterwards, all unreferenced blocs are 
+  /* This frees all unused blocs.  It is not too inefficient, as the resize
+     and bcopy is done only once.  Afterwards, all unreferenced blocs are
      already shrunk to zero size.  */
-  if (!r_alloc_freeze_level) 
+  if (!r_alloc_freeze_level)
     {
       bloc_ptr *b = &first_bloc;
-      while (*b) 
-	if (!(*b)->variable) 
-	  free_bloc (*b); 
-	else 
+      while (*b)
+	if (!(*b)->variable)
+	  free_bloc (*b);
+	else
 	  b = &(*b)->next;
     }
 }
@@ -1105,9 +1108,12 @@ r_alloc_thaw ()
 
 /* The hook `malloc' uses for the function which gets more space
    from the system.  */
-extern POINTER (*__morecore) ();
+/* extern POINTER (*__morecore) (long size); */
 
 /* Initialize various things for memory allocation. */
+
+#define SET_FUN_PTR(fun_ptr, fun_val) \
+  (*((void **) (&fun_ptr)) = ((void *) (fun_val)))
 
 void
 init_ralloc (void)
@@ -1116,8 +1122,8 @@ init_ralloc (void)
     return;
 
   r_alloc_initialized = 1;
-  real_morecore = __morecore;
-  __morecore = r_alloc_sbrk;
+  SET_FUN_PTR (real_morecore, __morecore);
+  SET_FUN_PTR (__morecore, r_alloc_sbrk);
 
   first_heap = last_heap = &heap_base;
   first_heap->next = first_heap->prev = NIL_HEAP;
@@ -1162,15 +1168,16 @@ init_ralloc (void)
 
 /* Reinitialize the morecore hook variables after restarting a dumped
    Emacs.  This is needed when using Doug Lea's malloc from GNU libc.  */
+void r_alloc_reinit (void);
 void
 r_alloc_reinit ()
 {
   /* Only do this if the hook has been reset, so that we don't get an
      infinite loop, in case Emacs was linked statically.  */
-  if (__morecore != r_alloc_sbrk)
+  if ( ((void*) __morecore) !=  (void *) (r_alloc_sbrk))
     {
-      real_morecore = __morecore;
-      __morecore = r_alloc_sbrk;
+      SET_FUN_PTR (real_morecore, __morecore);
+      SET_FUN_PTR (__morecore, r_alloc_sbrk);
     }
 }
 #if 0
@@ -1411,7 +1418,7 @@ static int DEV_ZERO_FD = -1;
 /* We settle for a standard doubly-linked-list.  The dynarr type isn't
    very amenable to deletion of items in the middle, so we conjure up
    yet another stupid datastructure.  The structure is maintained as a
-   ring, and the singleton ring has the sole element as it's left and
+   ring, and the singleton ring has the sole element as its left and
    right neighbours. */
 
 static void init_MHASH_table (void); /* Forward reference */
@@ -1498,7 +1505,7 @@ free_mmap_handle (MMAP_HANDLE h)
 struct {
   int n_hits;			/* How many addresses map to this? */
   MMAP_HANDLE handle;		/* What is the current handle? */
-  VM_ADDR addr;			/* What is it's VM address? */
+  VM_ADDR addr;			/* What is its VM address? */
 } MHASH_HITS[ MHASH_PRIME ];
 
 static void
@@ -1527,7 +1534,7 @@ MHASH (VM_ADDR addr)
   return ((hval >= 0) ? hval : MHASH_PRIME + hval);
 }
 
-/* Add a VM address with it's corresponding handle to the table. */
+/* Add a VM address with its corresponding handle to the table. */
 static void
 MHASH_ADD (VM_ADDR addr, MMAP_HANDLE h)
 {
@@ -1559,18 +1566,18 @@ MHASH_DEL (VM_ADDR addr)
 /* If we're metering, we introduce some extra symbols to aid the noble
    cause of bloating XEmacs core size. */
 
-Lisp_Object Qmm_times_mapped;
-Lisp_Object Qmm_pages_mapped;
-Lisp_Object Qmm_times_unmapped;
-Lisp_Object Qmm_times_remapped;
-Lisp_Object Qmm_didnt_copy;
-Lisp_Object Qmm_pages_copied;
-Lisp_Object Qmm_average_bumpval;
-Lisp_Object Qmm_wastage;
-Lisp_Object Qmm_live_pages;
-Lisp_Object Qmm_addr_looked_up;
-Lisp_Object Qmm_hash_worked;
-Lisp_Object Qmm_addrlist_size;
+static Lisp_Object Qmmap_times_mapped;
+static Lisp_Object Qmmap_pages_mapped;
+static Lisp_Object Qmmap_times_unmapped;
+static Lisp_Object Qmmap_times_remapped;
+static Lisp_Object Qmmap_didnt_copy;
+static Lisp_Object Qmmap_pages_copied;
+static Lisp_Object Qmmap_average_bumpval;
+static Lisp_Object Qmmap_wastage;
+static Lisp_Object Qmmap_live_pages;
+static Lisp_Object Qmmap_addr_looked_up;
+static Lisp_Object Qmmap_hash_worked;
+static Lisp_Object Qmmap_addrlist_size;
 
 #define M_Map 0			/* How many times allocated? */
 #define M_Pages_Map 1		/* How many pages allocated? */
@@ -1594,34 +1601,35 @@ static int meter[N_Meterables];
 DEFUN ("mmap-allocator-status", Fmmap_allocator_status, 0, 0, 0, /*
 Return some information about mmap-based allocator.
 
-  mmap-addrlist-size: number of entries in address picking list.
-  mmap-times-mapped: number of times r_alloc was called.
-  mmap-pages-mapped: number of pages mapped by r_alloc calls only.
-  mmap-times-unmapped: number of times r_free was called.
-  mmap-times-remapped: number of times r_re_alloc was called.
-  mmap-didnt-copy: number of times  re-alloc didn\'t have to move the block.
-  mmap-pages-copied: total number of pages copied.
-  mmap-average-bumpval: average increase in size demanded to re-alloc.
-  mmap-wastage: total number of bytes allocated, but not currently in use.
-  mmap-live-pages: total number of pages live.
+mmap-times-mapped:    number of times r_alloc was called.
+mmap-pages-mapped:    number of pages mapped by r_alloc calls only.
+mmap-times-unmapped:  number of times r_free was called.
+mmap-times-remapped:  number of times r_re_alloc was called.
+mmap-didnt-copy:      number of times re-alloc did NOT have to move the block.
+mmap-pages-copied:    total number of pages copied.
+mmap-average-bumpval: average increase in size demanded to re-alloc.
+mmap-wastage:         total number of bytes allocated, but not currently in use.
+mmap-live-pages:      total number of pages live.
+mmap-addr-looked-up:  total number of times needed to check if addr is in block.
+mmap-hash-worked:     total number of times the simple hash check worked.
+mmap-addrlist-size:   number of entries in address picking list.
 */
        ())
 {
-  Lisp_Object result;
+  Lisp_Object result = Qnil;
 
-  result = Fcons (Fcons (Qmm_addrlist_size, MLVAL (M_Addrlist_Size)), Qnil);
-  result = Fcons (Fcons (Qmm_hash_worked, MLVAL (M_Hash_Worked)), result);
-  result = Fcons (Fcons (Qmm_addr_looked_up, MLVAL (M_Address_Lookup)), result);
-  result = Fcons (Fcons (Qmm_live_pages, MLVAL (M_Live_Pages)), result);
-  result = Fcons (Fcons (Qmm_wastage, MLVAL (M_Wastage)), result);
-  result = Fcons (Fcons (Qmm_average_bumpval, MLVAL (M_Average_Bumpval)),
-		  result);
-  result = Fcons (Fcons (Qmm_pages_copied, MLVAL (M_Copy_Pages)), result);
-  result = Fcons (Fcons (Qmm_didnt_copy, MLVAL (M_Didnt_Copy)), result);
-  result = Fcons (Fcons (Qmm_times_remapped, MLVAL (M_Remap)), result);
-  result = Fcons (Fcons (Qmm_times_unmapped, MLVAL (M_Unmap)), result);
-  result = Fcons (Fcons (Qmm_pages_mapped, MLVAL (M_Pages_Map)), result);
-  result = Fcons (Fcons (Qmm_times_mapped, MLVAL (M_Map)), result);
+  result = cons3 (Qmmap_addrlist_size,	MLVAL (M_Addrlist_Size),   result);
+  result = cons3 (Qmmap_hash_worked,	MLVAL (M_Hash_Worked),	   result);
+  result = cons3 (Qmmap_addr_looked_up,	MLVAL (M_Address_Lookup),  result);
+  result = cons3 (Qmmap_live_pages,	MLVAL (M_Live_Pages),	   result);
+  result = cons3 (Qmmap_wastage,	MLVAL (M_Wastage),	   result);
+  result = cons3 (Qmmap_average_bumpval,MLVAL (M_Average_Bumpval), result);
+  result = cons3 (Qmmap_pages_copied,	MLVAL (M_Copy_Pages),	   result);
+  result = cons3 (Qmmap_didnt_copy,	MLVAL (M_Didnt_Copy),	   result);
+  result = cons3 (Qmmap_times_remapped,	MLVAL (M_Remap),	   result);
+  result = cons3 (Qmmap_times_unmapped,	MLVAL (M_Unmap),	   result);
+  result = cons3 (Qmmap_pages_mapped,	MLVAL (M_Pages_Map),	   result);
+  result = cons3 (Qmmap_times_mapped,	MLVAL (M_Map),		   result);
 
   return result;
 }
@@ -1671,7 +1679,7 @@ find_mmap_handle (POINTER *alias)
    which can be successfully mmapped, or until there are no free
    blocks of the given size left.
 
-   Note that this scheme, given it's first-fit strategy, is prone to
+   Note that this scheme, given its first-fit strategy, is prone to
    fragmentation of the first part of memory earmarked for this
    purpose. [ACP Vol I].  We can't use the workaround of using a
    randomized first fit because we don't want to presume too much
@@ -2030,18 +2038,18 @@ void
 syms_of_ralloc (void)
 {
 #ifdef MMAP_METERING
-  defsymbol (&Qmm_times_mapped, "mmap-times-mapped");
-  defsymbol (&Qmm_pages_mapped, "mmap-pages-mapped");
-  defsymbol (&Qmm_times_unmapped, "mmap-times-unmapped");
-  defsymbol (&Qmm_times_remapped, "mmap-times-remapped");
-  defsymbol (&Qmm_didnt_copy, "mmap-didnt-copy");
-  defsymbol (&Qmm_pages_copied, "mmap-pages-copied");
-  defsymbol (&Qmm_average_bumpval, "mmap-average-bumpval");
-  defsymbol (&Qmm_wastage, "mmap-wastage");
-  defsymbol (&Qmm_live_pages, "mmap-live-pages");
-  defsymbol (&Qmm_addr_looked_up, "mmap-had-to-look-up-address");
-  defsymbol (&Qmm_hash_worked, "mmap-hash-table-worked");
-  defsymbol (&Qmm_addrlist_size, "mmap-addrlist-size");
+  defsymbol (&Qmmap_times_mapped, "mmap-times-mapped");
+  defsymbol (&Qmmap_pages_mapped, "mmap-pages-mapped");
+  defsymbol (&Qmmap_times_unmapped, "mmap-times-unmapped");
+  defsymbol (&Qmmap_times_remapped, "mmap-times-remapped");
+  defsymbol (&Qmmap_didnt_copy, "mmap-didnt-copy");
+  defsymbol (&Qmmap_pages_copied, "mmap-pages-copied");
+  defsymbol (&Qmmap_average_bumpval, "mmap-average-bumpval");
+  defsymbol (&Qmmap_wastage, "mmap-wastage");
+  defsymbol (&Qmmap_live_pages, "mmap-live-pages");
+  defsymbol (&Qmmap_addr_looked_up, "mmap-addr-looked-up");
+  defsymbol (&Qmmap_hash_worked, "mmap-hash-worked");
+  defsymbol (&Qmmap_addrlist_size, "mmap-addrlist-size");
   DEFSUBR (Fmmap_allocator_status);
 #endif /* MMAP_METERING */
 }

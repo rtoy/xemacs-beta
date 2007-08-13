@@ -23,7 +23,7 @@
 
 ## For performance and consistency, no built-in rules
 .SUFFIXES:
-.SUFFIXES: .c .o .i .h
+.SUFFIXES: .c .h .o .i .s
 
 srcdir=@srcdir@
 
@@ -35,7 +35,6 @@ AR = ar cq
 CC=@CC@
 CPP=@CPP@
 CFLAGS=@CFLAGS@
-LDFLAGS=@LDFLAGS@
 CPPFLAGS=@CPPFLAGS@
 RANLIB=@RANLIB@
 
@@ -53,20 +52,11 @@ objs = lwlib.o lwlib-utils.o lwlib-config.o @lwlib_objs@
 
 all: liblw.a
 
-c_switch_general=@c_switch_general@
-c_switch_window_system=@c_switch_window_system@
 c_switch_all=@c_switch_all@
-ld_switch_general=@ld_switch_general@
-ld_switch_window_system=@ld_switch_window_system@
-ld_switch_all=@ld_switch_all@
-ld_libs_general=@ld_libs_general@
-ld_libs_window_system=@ld_libs_window_system@
-ld_libs_all=@ld_libs_all@
 
-cppflags = $(CPPFLAGS) -I. $(c_switch_all) 
+cppflags = $(CPPFLAGS) -I. $(c_switch_all)
 cflags = $(CFLAGS) $(cppflags)
 
-ALL_CFLAGS= $(CFLAGS) $(CPPFLAGS) -I. $(c_switch_all) 
 #ifdef SOLARIS2
 %.o : %.c
 #else
@@ -76,7 +66,15 @@ ALL_CFLAGS= $(CFLAGS) $(CPPFLAGS) -I. $(c_switch_all)
 
 ## Create preprocessor output (debugging purposes only)
 .c.i:
+#ifdef __GNUC__
+	$(CC) -E $(cppflags) -o $@ $<
+#else /* works on Solaris; what about other systems? */
 	$(CC) -P $(cppflags) $<
+#endif /* compiler */
+
+## Create assembler output (debugging purposes only)
+.c.s:
+	$(CC) -S -c $(cflags) $<
 
 liblw.a: $(objs)
 	$(RM) $@
@@ -95,13 +93,13 @@ extraclean: distclean
 
 CONFIG_H = ../src/config.h config.h
 
-lwlib-config.o:	lwlib.h $(CONFIG_H)
-lwlib-Xaw.o:	lwlib.h lwlib-internal.h lwlib-Xaw.h $(CONFIG_H)
-lwlib-Xlw.o:	lwlib.h lwlib-internal.h lwlib-Xlw.h xlwmenu.h $(CONFIG_H)
-lwlib-Xm.o:	lwlib.h lwlib-internal.h lwlib-utils.h lwlib-Xm.h $(CONFIG_H)
-lwlib-Xm.o:	$(CONFIG_H)
-lwlib-utils.o:	lwlib-utils.h $(CONFIG_H)
-lwlib.o:	lwlib.h lwlib-internal.h lwlib-utils.h $(CONFIG_H)
-lwlib.o:	lwlib-Xlw.h lwlib-Xm.h lwlib-Xaw.h $(CONFIG_H)
-xlwmenu.o:	lwlib.h xlwmenu.h xlwmenuP.h $(CONFIG_H)
-xlwscrollbar.o:	lwlib.h xlwscrollbar.h xlwscrollbarP.h $(CONFIG_H)
+## Following correct as of 19980312
+
+lwlib-Xaw.o:	$(CONFIG_H) lwlib-Xaw.h lwlib-internal.h lwlib.h xlwmenu.h
+lwlib-Xlw.o:	$(CONFIG_H) lwlib-Xlw.h lwlib-internal.h lwlib.h xlwmenu.h xlwscrollbar.h
+lwlib-Xm.o:	$(CONFIG_H) lwlib-Xm.h lwlib-internal.h lwlib-utils.h lwlib.h xlwmenu.h
+lwlib-config.o:	$(CONFIG_H) lwlib.h xlwmenu.h
+lwlib-utils.o:	$(CONFIG_H) lwlib-utils.h
+lwlib.o:	$(CONFIG_H) lwlib-Xaw.h lwlib-Xlw.h lwlib-Xm.h lwlib-internal.h lwlib-utils.h lwlib.h xlwmenu.h
+xlwmenu.o:	$(CONFIG_H) lwlib.h xlwmenu.h xlwmenuP.h
+xlwscrollbar.o:	$(CONFIG_H) xlwscrollbar.h xlwscrollbarP.h

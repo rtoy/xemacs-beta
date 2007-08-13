@@ -22,7 +22,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with Xmacs; see the file COPYING.  If not, write to the 
+;; along with Xmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -86,7 +86,7 @@
       "-----"
       ["Exit XEmacs" save-buffers-kill-emacs]
       )
-     
+
      ("Edit"
       ["Undo" advertised-undo
        :active (and (not (eq buffer-undo-list t))
@@ -140,7 +140,7 @@
       "----"
       ["Show Message Log" show-message-log]
       )
-     
+
      ,@(if (featurep 'mule)
 	   '(("Mule"
 	      ("Describe language support")
@@ -168,7 +168,7 @@
 	      ;; not implemented yet
 	      ["Show diagnosis for MULE" mule-diag :active nil]
 	      ["Show many languages" view-hello-file])))
-     
+
      ("Apps"
       ["Read Mail (VM)..." vm
        :active (fboundp 'vm)]
@@ -200,7 +200,7 @@
 	:active (fboundp 'phases-of-moon)]
        ["Sunrise/Sunset" sunrise-sunset
 	:active (fboundp 'sunrise-sunset)])
-      
+
       ("Games"
        ["Mine Game" xmine
 	:active (fboundp 'xmine)]
@@ -418,7 +418,7 @@
        )
 
       "-----"
-      ("Syntax Highlighting" 
+      ("Syntax Highlighting"
        ["In This Buffer" (font-lock-mode)
 	:style toggle :selected (and (boundp 'font-lock-mode) font-lock-mode)
 	:active (fboundp 'font-lock-mode)]
@@ -444,7 +444,7 @@
 	:active (fboundp 'font-lock-mode)]
        ["Colors" (progn (require 'font-lock)
 			(font-lock-use-default-colors)
-			(setq font-lock-use-colors t 
+			(setq font-lock-use-colors t
 			      font-lock-use-fonts nil)
 			(font-lock-mode 1))
 	:style radio
@@ -743,13 +743,13 @@
       "-----"
       ["Save Options" save-options-menu-settings]
       )
-     
+
      ("Buffers"
       :filter buffers-menu-filter
       ["List All Buffers" list-buffers]
       "--"
       )
-     
+
      ("Tools"
       ["Grep..." grep
        :active (fboundp 'grep)]
@@ -798,15 +798,15 @@
 	      (while lang
 		(and (setq tut (assq 'tutorial (car lang)))
 		     (not (string= (caar lang) "ASCII"))
-		     (setq 
-		      submenu 
-		      (cons 
+		     (setq
+		      submenu
+		      (cons
 		       `[,(caar lang) (help-with-tutorial nil ,(cdr tut))]
 		       submenu)))
 		(setq lang (cdr lang)))
-	      (append `("Tutorials" 
+	      (append `("Tutorials"
 			:filter tutorials-menu-filter
-			["Default" help-with-tutorial t 
+			["Default" help-with-tutorial t
 			 ,(concat "(" current-language-environment ")")])
 		      submenu))
 	  ;; Non mule tutorials.
@@ -814,8 +814,8 @@
 		submenu)
 	    (while lang
 	      (setq submenu
-		    (cons 
-		     `[,(caar lang) 
+		    (cons
+		     `[,(caar lang)
 		       (help-with-tutorial ,(format "TUTORIAL.%s"
 						    (cadr (car lang))))]
 		     submenu))
@@ -875,12 +875,12 @@ Adds `Load .emacs' button to menubar when starting up with -q."
   ;; by Stig@hackvan.com
   (cond
    (init-file-user nil)
-   ((file-exists-p (cond 
+   ((file-exists-p (cond
 		    ((eq system-type 'ms-dos)
 		     (concat "~" (user-login-name) "/_emacs"))
-		    ((eq system-type 'vax-vms) 
+		    ((eq system-type 'vax-vms)
 		     "sys$login:.emacs")
-		    (t 
+		    (t
 		     (concat "~" (user-login-name) "/.emacs"))))
     (add-menu-button nil
 		     ["Load .emacs"
@@ -1341,7 +1341,7 @@ be discontinued in a future release.")
 
      ;; Now save all faces.
 
-     ;; Setting this in lisp conflicts with X resources.  Bad move.  --Stig 
+     ;; Setting this in lisp conflicts with X resources.  Bad move.  --Stig
      ;; (list 'set-face-font ''default (face-font-name 'default))
      ;; (list 'set-face-font ''modeline (face-font-name 'modeline))
      (if options-save-faces
@@ -1379,8 +1379,7 @@ This is used by `save-options-menu-settings' and should mirror the
 options listed in the Options menu.")
 
 (defun save-options-non-customized-face-list ()
-  "This function will return a list of all faces that have not been
-'customized'."
+  "Return a list of all faces that have not been 'customized'."
   (delq nil (mapcar '(lambda (face)
 		       (unless (get face 'saved-face)
 			 face))
@@ -1415,7 +1414,7 @@ If this is a relative filename, it is put into the same directory as your
 .emacs file.")
 
 (defun save-options-menu-settings ()
-  "Saves the current settings of the `Options' menu to your `.emacs' file."
+  "Save the current settings of the `Options' menu to your `.emacs' file."
   (interactive)
   ;; we compute the actual filenames now because x-menubar is loaded
   ;; at dump time, when the identity of the user running XEmacs is not known.
@@ -1541,13 +1540,13 @@ If this is a relative filename, it is put into the same directory as your
       ;; appear first as the default one. Otherwise, use the english one.
       (let* ((menu menu-items)
 	     (item (pop menu-items)))
-	(aset 
-	 item 3 
-	 (concat "(" 
-		 (if (assoc 
-		      'tutorial 
+	(aset
+	 item 3
+	 (concat "("
+		 (if (assoc
+		      'tutorial
 		      (assoc current-language-environment language-info-alist))
-		     current-language-environment 
+		     current-language-environment
 		   "English")
 		 ")"))
 	menu)))
@@ -1636,7 +1635,7 @@ The menu is computed by combining `global-popup-menu' and `mode-popup-menu'."
 	      global-popup-menu
 	      (error "No menu here."))))))
 
-(defun popup-buffer-menu (event) 
+(defun popup-buffer-menu (event)
   "Pop up a copy of the Buffers menu (from the menubar) where the mouse is clicked."
   (interactive "e")
   (let ((window (and (event-over-text-area-p event) (event-window event)))
@@ -1652,7 +1651,7 @@ The menu is computed by combining `global-popup-menu' and `mode-popup-menu'."
 	(error "Can't find the Buffers menu"))
     (popup-menu bmenu)))
 
-(defun popup-menubar-menu (event) 
+(defun popup-menubar-menu (event)
   "Pop up a copy of menu that also appears in the menubar"
   ;; by Stig@hackvan.com
   (interactive "e")

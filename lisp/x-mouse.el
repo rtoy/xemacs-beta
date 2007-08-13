@@ -19,7 +19,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; along with XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -135,8 +135,7 @@ A mark is pushed, so that the inserted text lies between point and mark."
 (defvar x-pointers-initialized nil)
 
 (defun x-init-pointer-shape (device)
-  "Initializes the mouse-pointers of the given device from the resource
-database."
+  "Initialize the mouse-pointers of DEVICE from the X resource database."
   (if x-pointers-initialized  ; only do it when the first device is created
       nil
     (set-glyph-image text-pointer-glyph

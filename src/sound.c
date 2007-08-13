@@ -37,6 +37,10 @@ Boston, MA 02111-1307, USA.  */
 #include "redisplay.h"
 #include "sysdep.h"
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #ifdef HAVE_NATIVE_SOUND
 # include <netdb.h>
 #endif
@@ -64,7 +68,7 @@ Lisp_Object Qnas;
 
 DEFUN ("play-sound-file", Fplay_sound_file, 1, 3, "fSound file name: ", /*
 Play the named sound file on DEVICE's speaker at the specified volume
-(0-100, default specified by the `bell-volume' variable).
+\(0-100, default specified by the `bell-volume' variable).
 The sound file must be in the Sun/NeXT U-LAW format except under Linux
 where WAV files are also supported.
   DEVICE defaults to the selected device.
@@ -275,10 +279,10 @@ See the variable `sound-alist'.
       goto try_it_again;
     }
 
-  
-  vol = (INT_OR_FLOATP (volume) ? XFLOATINT (volume) : bell_volume);
-  pit = (INT_OR_FLOATP (pitch) ? XFLOATINT (pitch) : -1);
-  dur = (INT_OR_FLOATP (duration) ? XFLOATINT (duration) : -1);
+
+  vol = (INT_OR_FLOATP (volume)   ? (int) XFLOATINT (volume)   : bell_volume);
+  pit = (INT_OR_FLOATP (pitch)    ? (int) XFLOATINT (pitch)    : -1);
+  dur = (INT_OR_FLOATP (duration) ? (int) XFLOATINT (duration) : -1);
 
   /* If the sound is a string, and we're connected to Nas, do that.
      Else if the sound is a string, and we're on console, play it natively.
@@ -291,7 +295,7 @@ See the variable `sound-alist'.
       Extcount soundextlen;
 
       GET_STRING_BINARY_DATA_ALLOCA (sound, soundext, soundextlen);
-      if (nas_play_sound_data ((char*)soundext, soundextlen, vol))
+      if (nas_play_sound_data ((unsigned char*)soundext, soundextlen, vol))
 	return Qnil;
     }
 #endif /* HAVE_NAS_SOUND */
@@ -306,7 +310,7 @@ See the variable `sound-alist'.
       GET_STRING_BINARY_DATA_ALLOCA (sound, soundext, soundextlen);
       /* The sound code doesn't like getting SIGIO interrupts. Unix sucks! */
       stop_interrupts ();
-      play_sound_data ((char*)soundext, soundextlen, vol);
+      play_sound_data ((unsigned char*)soundext, soundextlen, vol);
       start_interrupts ();
       QUIT;
       return Qnil;
@@ -318,19 +322,19 @@ See the variable `sound-alist'.
 }
 
 DEFUN ("device-sound-enabled-p", Fdevice_sound_enabled_p, 0, 1, 0, /*
-Return T iff DEVICE is able to play sound.  Defaults to selected device.
+Return t if DEVICE is able to play sound.  Defaults to selected device.
 */
        (device))
 {
   struct device *d = decode_device(device);
 
 #ifdef HAVE_NAS_SOUND
-  if ( DEVICE_CONNECTED_TO_NAS_P (d) )
-    return (Qt);
+  if (DEVICE_CONNECTED_TO_NAS_P (d))
+    return Qt;
 #endif
 #ifdef HAVE_NATIVE_SOUND
-  if ( DEVICE_ON_CONSOLE_P (d) )
-    return (Qt);
+  if (DEVICE_ON_CONSOLE_P (d))
+    return Qt;
 #endif
   return Qnil;
 }
@@ -384,16 +388,12 @@ Wait for all sounds to finish playing on DEVICE.
 }
 
 DEFUN ("connected-to-nas-p", Fconnected_to_nas_p, 0, 1, 0, /*
-t if connected to NAS server for sounds on DEVICE.
+Return t if connected to NAS server for sounds on DEVICE.
 */
        (device))
 {
 #ifdef HAVE_NAS_SOUND
-  struct device *d = decode_device (device);
-  if (DEVICE_CONNECTED_TO_NAS_P (d))
-    return Qt;
-  else
-    return Qnil;
+  return DEVICE_CONNECTED_TO_NAS_P (decode_device (device)) ? Qt : Qnil;
 #else
   return Qnil;
 #endif
@@ -460,7 +460,7 @@ init_native_sound (struct device *d)
 		 same host: on some losing systems, one is a FQDN and the other
 		 is not.  Here in the wide wonderful world of Unix it's rocket
 		 science to obtain the local hostname in a portable fashion.
-		 
+
 		 And don't forget, gethostbyname() reuses the structure it
 		 returns, so we have to copy the fucker before calling it
 		 again.

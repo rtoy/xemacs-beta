@@ -374,15 +374,18 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
 
     (let ((roots (paths-find-emacs-roots invocation-directory
 					 invocation-name)))
-      (startup-setup-paths roots
-			   inhibit-package-init
-			   inhibit-site-lisp)
+      (if (null roots)
+	  (startup-find-roots-warning)
+	(startup-setup-paths roots
+			     inhibit-package-init
+			     inhibit-site-lisp))
       (startup-setup-paths-warning))
 
     (if (not inhibit-package-init)
 	(progn
-	  (packages-load-package-auto-autoloads early-package-load-path)
-	  (packages-load-package-auto-autoloads late-package-load-path)))
+	  (packages-load-package-auto-autoloads last-package-load-path)
+	  (packages-load-package-auto-autoloads late-package-load-path)
+	  (packages-load-package-auto-autoloads early-package-load-path)))
 
     (unwind-protect
 	(command-line)
@@ -1015,20 +1018,25 @@ It's idempotent, so call this as often as you like!"
 
   (setq package-path (packages-find-package-path roots))
 
-  (let ((stuff (packages-find-packages package-path inhibit-packages)))
-    (setq early-packages (car stuff))
-    (setq late-packages (cdr stuff)))
+  (apply #'(lambda (early late last)
+	     (setq early-packages early)
+	     (setq late-packages late)
+	     (setq last-packages last))
+	 (packages-find-packages package-path inhibit-packages))
 
   (setq early-package-load-path (packages-find-package-load-path early-packages))
   (setq late-package-load-path (packages-find-package-load-path late-packages))
+  (setq last-package-load-path (packages-find-package-load-path last-packages))
 
   (setq load-path (paths-construct-load-path roots
 					     early-package-load-path
 					     late-package-load-path
+					     last-package-load-path
 					     inhibit-site-lisp))
 
   (setq Info-directory-list
-	(paths-construct-info-path roots early-packages late-packages))
+	(paths-construct-info-path roots
+				   early-packages late-packages last-packages))
 
   (if (boundp 'lock-directory)
       (progn
@@ -1037,16 +1045,33 @@ It's idempotent, so call this as often as you like!"
 
   (setq exec-directory (paths-find-exec-directory roots))
 
-  (setq exec-path (paths-construct-exec-path roots exec-directory
-					     early-packages late-packages))
-
+  (setq exec-path
+	(paths-construct-exec-path roots exec-directory
+				   early-packages late-packages last-packages))
+  
   (setq doc-directory (paths-find-doc-directory roots))
 
   (setq data-directory (paths-find-data-directory roots))
 
   (setq data-directory-list (paths-construct-data-directory-list data-directory
 								 early-packages
-								 late-packages)))
+								 late-packages
+								 last-packages)))
+
+(defun startup-find-roots-warning ()
+  (save-excursion
+    (set-buffer (get-buffer-create " *warning-tmp*"))
+    (erase-buffer)
+    (buffer-disable-undo (current-buffer))
+
+    (insert "Couldn't find an obvious default for the root of the "
+	    "XEmacs hierarchy.")
+
+    (let ((fill-column 76))
+      (fill-region (point-min) (point-max)))
+
+    (princ "\nWARNING:\n" 'external-debugging-output)
+    (princ (buffer-string) 'external-debugging-output)))
 
 (defun startup-setup-paths-warning ()
   (let ((lock (if (boundp 'lock-directory) lock-directory 't))
@@ -1076,11 +1101,9 @@ It's idempotent, so call this as often as you like!"
 						     invocation-name)
 		" is in a strange place?")
 
-	(if (fboundp 'fill-region)
-	    ;; Might not be bound in the cold load environment...
-	    (let ((fill-column 76))
-	      (fill-region (point-min) (point-max))))
-	(goto-char (point-min))
+	(let ((fill-column 76))
+	  (fill-region (point-min) (point-max)))
+
 	(princ "\nWARNING:\n" 'external-debugging-output)
 	(princ (buffer-string) 'external-debugging-output)
 	(erase-buffer)

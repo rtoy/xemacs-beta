@@ -106,7 +106,7 @@ menu_parse_submenu_keywords (Lisp_Object desc, struct gui_item* pgui_item)
 {
   /* Menu descriptor should be a list */
   CHECK_CONS (desc);
-  
+
   /* First element may be menu name, although can be omitted.
      Let's think that if stuff begins with anything than a keyword
      or a list (submenu), this is a menu name, expected to be a stirng */
@@ -146,7 +146,7 @@ PATH using :filter functions. Return value is a descriptor for the
 submenu, NOT expanded and NOT checked against :config and :included.
 Also, individual menu items are not looked for, only submenus.
 
-See also 'find-menu-item'
+See also 'find-menu-item'.
 */
        (desc, path))
 {
@@ -188,7 +188,7 @@ See also 'find-menu-item'
 	}
       /* Submenu not found */
       RETURN_UNGCPRO (Qnil);
-			  
+
     descend:
       /* Prepare for the next iteration */
       gui_item_init (&gui_item);
@@ -288,7 +288,7 @@ See menubar.el for many more examples.
 }
 
 DEFUN ("normalize-menu-item-name", Fnormalize_menu_item_name, 1, 2, 0, /*
-Convert a menu item name string into normal form.  Returns a new string.
+Convert a menu item name string into normal form, and return the new string.
 Menu item names should be converted to normal form before being compared.
 */
        (name, buffer))

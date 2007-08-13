@@ -32,26 +32,26 @@ Boston, MA 02111-1307, USA.  */
 	/* NOTE:  MAXNAMLEN must be one less than a multiple of 4 */
 
 struct direct				/* data from readdir() */
-	{
-	long		d_ino;		/* inode number of entry */
-	unsigned short	d_reclen;	/* length of this record */
-	unsigned short	d_namlen;	/* length of string in d_name */
-	char		d_name[MAXNAMLEN+1];	/* name of file */
-	};
+{
+  long			d_ino;		/* inode number of entry */
+  unsigned short	d_reclen;	/* length of this record */
+  unsigned short	d_namlen;	/* length of string in d_name */
+  char			d_name[MAXNAMLEN+1];	/* name of file */
+};
 
 typedef struct
-	{
-	int	dd_fd;			/* file descriptor */
-	int	dd_loc;			/* offset in block */
-	int	dd_size;		/* amount of valid data */
-	char	dd_buf[DIRBLKSIZ];	/* directory block */
-	}	DIR;			/* stream data from opendir() */
+{
+  int	dd_fd;			/* file descriptor */
+  int	dd_loc;			/* offset in block */
+  int	dd_size;		/* amount of valid data */
+  char	dd_buf[DIRBLKSIZ];	/* directory block */
+}	DIR;			/* stream data from opendir() */
 
-extern DIR *opendir (CONST char *filename);
-extern int closedir (DIR *dirp);
-extern struct direct *readdir (DIR *dirp);
-extern struct direct *readdirver (DIR *dirp);
-extern long telldir (DIR *dirp);
-extern void seekdir (DIR *dirp, long loc);
+DIR *opendir (CONST char *filename);
+int closedir (DIR *dirp);
+struct direct *readdir (DIR *dirp);
+struct direct *readdirver (DIR *dirp);
+long telldir (DIR *dirp);
+void seekdir (DIR *dirp, long loc);
 
 #define rewinddir( dirp )	seekdir( dirp, 0L )

@@ -149,7 +149,7 @@ parse_off_posnum (CONST Bufbyte *start, CONST Bufbyte *end, int *returned_num)
   *returned_num = -1;
   while (start != end && isdigit (*start))
     {
-      if (arg_ptr - arg_convert >= sizeof (arg_convert) - 1)
+      if ((size_t) (arg_ptr - arg_convert) >= sizeof (arg_convert) - 1)
 	error ("Format converter number too large");
       *arg_ptr++ = *start++;
     }
@@ -191,7 +191,7 @@ parse_doprnt_spec (CONST Bufbyte *format, Bytecount format_length)
       CONST Bufbyte *text_end;
       Bufbyte ch;
 
-      memset (&spec, 0, sizeof (spec));
+      xzero (spec);
       if (fmt == fmt_end)
 	return specs;
       text_end = (Bufbyte *) memchr (fmt, '%', fmt_end - fmt);
@@ -261,7 +261,7 @@ parse_doprnt_spec (CONST Bufbyte *format, Bytecount format_length)
 	      spec.converter = '*';
 	      RESOLVE_FLAG_CONFLICTS(spec);
 	      Dynarr_add (specs, spec);
-	      memset (&spec, 0, sizeof (spec));
+	      xzero (spec);
 	      spec.argnum = ++prev_argnum;
 	      fmt++;
 	    }
@@ -289,7 +289,7 @@ parse_doprnt_spec (CONST Bufbyte *format, Bytecount format_length)
 		  spec.forwarding_precision = 1;
 		  RESOLVE_FLAG_CONFLICTS(spec);
 		  Dynarr_add (specs, spec);
-		  memset (&spec, 0, sizeof (spec));
+		  xzero (spec);
 		  spec.argnum = ++prev_argnum;
 		  fmt++;
 		}
@@ -361,7 +361,7 @@ get_doprnt_args (printf_spec_dynarr *specs, va_list vargs)
   REGISTER int i;
   int args_needed = get_args_needed (specs);
 
-  memset (&arg, 0, sizeof (union printf_arg));
+  xzero (arg);
   for (i = 1; i <= args_needed; i++)
     {
       int j;
@@ -480,11 +480,9 @@ emacs_doprnt_1 (Lisp_Object stream, CONST Bufbyte *format_nonreloc,
 	  continue;
 	}
 
-      /*
-       * * as converter means the field width, precision was specified
-       * as an argument.  Extract the data and forward it to the
-       * next spec, to which it will apply.
-       */
+      /* The char '*' as converter means the field width, precision
+         was specified as an argument.  Extract the data and forward
+         it to the next spec, to which it will apply.  */
       if (ch == '*')
 	{
 	  struct printf_spec *nextspec = Dynarr_atp (specs, i + 1);
@@ -530,7 +528,7 @@ emacs_doprnt_1 (Lisp_Object stream, CONST Bufbyte *format_nonreloc,
 		 E.g., in fileio.c, the return value of strerror()
 		 is never checked.  We'll print (null), like some
 		 printf implementations do.  Would it be better (and safe)
-		 to signal an error instead?  Or should we just use the 
+		 to signal an error instead?  Or should we just use the
                  empty string?  -dkindred@cs.cmu.edu 8/1997
 	      */
 	      if (!string)

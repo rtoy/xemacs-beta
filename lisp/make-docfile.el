@@ -108,7 +108,12 @@
 	  arg)
       (setq arg (locate-library arg0))
       (if (null arg)
+	  (progn
 	  (princ (format "Error:  dumped file %s does not exist\n" arg0))
+	  ;; Uncomment in case of difficulties
+	  ;;(print (format "late-packages: %S" late-packages))
+	  ;;(print (format "guessed-roots: %S" (paths-find-emacs-roots invocation-directory invocation-name)))
+	  )
 	(if (null (member arg processed))
 	    (progn
 	      (if (and (null docfile-out-of-date)

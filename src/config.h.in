@@ -32,19 +32,20 @@ Boston, MA 02111-1307, USA.  */
 
 #ifndef NOT_C_CODE
 #ifdef __GNUC__
-#undef  alloca
 #define alloca __builtin_alloca
-#elif defined(_AIX)
-#pragma alloca
 #elif HAVE_ALLOCA_H
 #include <alloca.h>
+#elif defined(_AIX)
+#pragma alloca
+#elif ! defined (alloca)
+char *alloca();
 #endif
-#endif /* NOT C */
+#endif /* C code */
 
 
 /* Use this to add code in a structured way to FSF-maintained source
    files so as to make it obvious where XEmacs changes are. */
-#define XEMACS
+#define XEMACS 1
 
 /* Allow s&m files to differentiate OS versions without having
    multiple files to maintain. */
@@ -240,12 +241,6 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_GETPGRP
 #undef GETPGRP_VOID
 
-#undef SIZEOF_SHORT
-#undef SIZEOF_INT
-#undef SIZEOF_LONG
-#undef SIZEOF_LONG_LONG
-#undef SIZEOF_VOID_P
-
 #undef HAVE_INVERSE_HYPERBOLIC
 
 #undef HAVE_CBRT
@@ -363,8 +358,6 @@ Boston, MA 02111-1307, USA.  */
 #undef CURSES_H_PATH
 #undef TERM_H_PATH
 
-#define LOWTAGS
-
 /* Define USE_ASSERTIONS if you want the abort() to be changed to assert().
    If the assertion fails, assert_failed() will be called.  This is
    recommended for general use because it gives more info about the crash
@@ -469,31 +462,23 @@ Boston, MA 02111-1307, USA.  */
    compiling-running-crashing. */
 #undef NO_DOC_FILE
 
-/* To eliminate use of `const' in the XEmacs sources,
-   do `#define CONST_IS_LOSING' */
-#undef CONST_IS_LOSING
+/* Defined by AC_C_CONST in configure.in */
+#undef const
 
-# undef CONST
-# ifdef CONST_IS_LOSING
-#  define CONST
-# else
-#  define CONST const
-# endif /* CONST */
+#define CONST const
 
-/* If not defined, use unions instead of ints.  A few systems (DEC Alpha)
+/* If defined, use unions instead of ints.  A few systems (DEC Alpha)
    seem to require this, probably because something with the int
-   definitions isn't right with 64-bit systems.
+   definitions isn't right with 64-bit systems.  */
+#undef USE_UNION_TYPE
 
-   (It's NO_UNION_TYPE instead of USE_UNION_TYPE for historical reasons.) */
-#undef NO_UNION_TYPE
-
-/* The next two options are turned on by --with-gung=yes */
 /* If defined, use a minimal number of tagbits.  This allows usage of more
    advanced versions of malloc (like the Doug Lea new GNU malloc) and larger
    integers. */
+/* --use-minimal-tagbits  */
 #undef USE_MINIMAL_TAGBITS
 
-/* #### Document me. */
+/* --use-indexed-lrecord-implementation  */
 #undef USE_INDEXED_LRECORD_IMPLEMENTATION
 
 /* The configuration script defines opsysfile to be the name of the
@@ -510,9 +495,6 @@ extern "C" {
 #endif
 #undef config_opsysfile
 #include config_opsysfile
-#if defined (__cplusplus) && !defined (NOT_C_CODE)
-}
-#endif
 
 /* The configuration script defines machfile to be the name of the
    m/...h file that describes the machine you are using.  The file is
@@ -524,6 +506,9 @@ extern "C" {
    See m/template.h for documentation on writing m/...h files. */
 #undef config_machfile
 #include config_machfile
+#if defined (__cplusplus) && !defined (NOT_C_CODE)
+}
+#endif
 
 #if defined (USE_SYSTEM_MALLOC) && !defined (SYSTEM_MALLOC)
 #define SYSTEM_MALLOC
@@ -657,6 +642,7 @@ on various systems. */
 # define ENCAPSULATE_CHDIR
 # define ENCAPSULATE_MKDIR
 # define ENCAPSULATE_OPENDIR
+# define ENCAPSULATE_CLOSEDIR
 # define ENCAPSULATE_READDIR
 # define ENCAPSULATE_RMDIR
 
@@ -701,17 +687,26 @@ on various systems. */
 #define listen Rlisten
 #endif /* HAVE_SOCKS && !DO_NOT_SOCKSIFY */
 
-#ifndef SHORTBITS
-#define SHORTBITS (8 * SIZEOF_SHORT)
+#undef SIZEOF_SHORT
+#undef SIZEOF_INT
+#undef SIZEOF_LONG
+#undef SIZEOF_LONG_LONG
+#undef SIZEOF_VOID_P
+
+#ifndef BITS_PER_CHAR
+#define BITS_PER_CHAR 8
 #endif
-#ifndef INTBITS
-#define INTBITS (8 * SIZEOF_INT)
-#endif
-#ifndef LONGBITS
-#define LONGBITS (8 * SIZEOF_LONG)
-#endif
+#define SHORTBITS (SIZEOF_SHORT * BITS_PER_CHAR)
+#define INTBITS (SIZEOF_INT * BITS_PER_CHAR)
+#define LONGBITS (SIZEOF_LONG * BITS_PER_CHAR)
+#define LONG_LONG_BITS (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+#define VOID_P_BITS (SIZEOF_VOID_P * BITS_PER_CHAR)
 
 #ifndef NOT_C_CODE
+#ifdef __cplusplus
+#define HAVE_INLINE 1
+#define INLINE inline
+#else /* not C++ */
 /* Does the keyword `inline' exist?  */
 #undef HAVE_INLINE
 #undef inline
@@ -729,7 +724,26 @@ on various systems. */
 # else
 #  define INLINE static
 # endif /* HAVE_INLINE */
+#endif /* not C++ */
 #endif /* C code */
+
+#if defined (__cplusplus) && !defined (NOT_C_CODE)
+/* Avoid C++ keywords used as ordinary C identifiers */
+#define class c_class
+#define new   c_new
+#define this  c_this
+#define catch c_catch
+#endif /* C++ */
+
+/* Strictly speaking, only int or unsigned int are valid types in a
+   bitfield.  In practice, we would like to use enums as bitfields.
+   The following should just result in warning avoidance:
+   warning: nonportable bit-field type */
+#if !(defined (__SUNPRO_C) && __STDC__ == 1)
+#define enum_field(enumeration_type) enum enumeration_type
+#else
+#define enum_field(enumeration_type) unsigned int
+#endif
 
 /* We want to avoid saving the signal mask if possible, because
    that necessitates a system call. */

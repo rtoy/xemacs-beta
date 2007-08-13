@@ -375,7 +375,7 @@ EmacsFrameSetValues (Widget cur_widget, Widget req_widget, Widget new_widget,
 {
   EmacsFrame cur = (EmacsFrame) cur_widget;
   EmacsFrame new = (EmacsFrame) new_widget;
-  Lisp_Object frame = Qnil;
+  Lisp_Object frame;
 
   XSETFRAME (frame, new->emacs_frame.frame);
   in_resource_setting++;

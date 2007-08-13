@@ -798,7 +798,7 @@ DEFUN ("canna-henkan-next", Fcanna_henkan_next, 1, 1, 0, /*
 	}
       else
 	{
-	  endp = XCONS (endp)->cdr = Fcons (make_string (p, slen), Qnil);
+	  endp = XCDR (endp) = Fcons (make_string (p, slen), Qnil);
 	}
       p += slen + 1;
     }

@@ -41,10 +41,8 @@ Boston, MA 02111-1307, USA.  */
 #include "specifier.h"
 #include "window.h"
 
-/* Qfont, Qdoc_string, Qface defined in general.c */
 Lisp_Object Qfacep;
 Lisp_Object Qforeground, Qbackground, Qdisplay_table;
-/* Qhighlight, Qreverse defined in general.c */
 Lisp_Object Qbackground_pixmap, Qunderline, Qdim;
 Lisp_Object Qblinking, Qstrikethru;
 
@@ -73,19 +71,6 @@ Lisp_Object Vtemporary_faces_cache;
 Lisp_Object Vbuilt_in_face_specifiers;
 
 
-static Lisp_Object mark_face (Lisp_Object, void (*) (Lisp_Object));
-static void print_face (Lisp_Object, Lisp_Object, int);
-static int face_equal (Lisp_Object, Lisp_Object, int depth);
-static unsigned long face_hash (Lisp_Object obj, int depth);
-static Lisp_Object face_getprop (Lisp_Object obj, Lisp_Object prop);
-static int face_putprop (Lisp_Object obj, Lisp_Object prop, Lisp_Object value);
-static int face_remprop (Lisp_Object obj, Lisp_Object prop);
-static Lisp_Object face_plist (Lisp_Object obj);
-DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("face", face,
-					  mark_face, print_face, 0, face_equal,
-					  face_hash, face_getprop,
-					  face_putprop, face_remprop,
-					  face_plist, struct Lisp_Face);
 
 static Lisp_Object
 mark_face (Lisp_Object obj, void (*markobj) (Lisp_Object))
@@ -261,25 +246,29 @@ face_remprop (Lisp_Object obj, Lisp_Object prop)
 static Lisp_Object
 face_plist (Lisp_Object obj)
 {
-  struct Lisp_Face *f = XFACE (obj);
-  Lisp_Object result = Qnil;
+  struct Lisp_Face *face = XFACE (obj);
+  Lisp_Object result = face->plist;
 
-  /* backwards order; we reverse it below */
-  result = Fcons (f->foreground,        Fcons (Qforeground,        result));
-  result = Fcons (f->background,        Fcons (Qbackground,        result));
-  result = Fcons (f->font,              Fcons (Qfont,              result));
-  result = Fcons (f->display_table,     Fcons (Qdisplay_table,     result));
-  result = Fcons (f->background_pixmap, Fcons (Qbackground_pixmap, result));
-  result = Fcons (f->underline,         Fcons (Qunderline,         result));
-  result = Fcons (f->strikethru,        Fcons (Qstrikethru,        result));
-  result = Fcons (f->highlight,         Fcons (Qhighlight,         result));
-  result = Fcons (f->dim,               Fcons (Qdim,               result));
-  result = Fcons (f->blinking,          Fcons (Qblinking,          result));
-  result = Fcons (f->reverse,           Fcons (Qreverse,           result));
+  result = cons3 (Qreverse,	      face->reverse,	       result);
+  result = cons3 (Qblinking,	      face->blinking,	       result);
+  result = cons3 (Qdim,		      face->dim,	       result);
+  result = cons3 (Qhighlight,	      face->highlight,	       result);
+  result = cons3 (Qstrikethru,	      face->strikethru,	       result);
+  result = cons3 (Qunderline,	      face->underline,	       result);
+  result = cons3 (Qbackground_pixmap, face->background_pixmap, result);
+  result = cons3 (Qdisplay_table,     face->display_table,     result);
+  result = cons3 (Qfont,	      face->font,	       result);
+  result = cons3 (Qbackground,	      face->background,	       result);
+  result = cons3 (Qforeground,	      face->foreground,	       result);
 
-  return nconc2 (Fnreverse (result), f->plist);
+  return result;
 }
 
+DEFINE_LRECORD_IMPLEMENTATION_WITH_PROPS ("face", face,
+					  mark_face, print_face, 0, face_equal,
+					  face_hash, face_getprop,
+					  face_putprop, face_remprop,
+					  face_plist, struct Lisp_Face);
 
 /************************************************************************/
 /*                             face read syntax                         */
@@ -435,7 +424,7 @@ mark_face_as_clean_mapper (CONST void *hash_key, void *hash_contents,
 {
   /* This function can GC */
   Lisp_Object key, contents;
-  int *flag = flag_closure;
+  int *flag = (int *) flag_closure;
   CVOID_TO_LISP (key, hash_key);
   VOID_TO_LISP (contents, hash_contents);
   XFACE (contents)->dirty = *flag;
@@ -764,8 +753,8 @@ other non-nil value both permanent and temporary are included.
 }
 
 DEFUN ("make-face", Fmake_face, 1, 3, 0, /*
-Defines and returns a new FACE described by DOC-STRING.
-You can modify the font, color, etc of a face with the set-face- functions.
+Define and return a new FACE described by DOC-STRING.
+You can modify the font, color, etc of a face with the set-face-* functions.
 If the face already exists, it is unmodified.
 If TEMPORARY is non-nil, this face will cease to exist if not in use.
 */
@@ -1224,7 +1213,7 @@ update_face_cachel_data (struct face_cachel *cachel,
     Lisp_Object new_val =						     \
       FACE_PROPERTY_INSTANCE (face, Q##field, domain, 1, Qzero);	     \
     int bound = 1;							     \
-    int new_val_int;							     \
+    unsigned int new_val_int;						     \
     if (UNBOUNDP (new_val))						     \
       {									     \
 	bound = 0;							     \
@@ -1304,7 +1293,7 @@ merge_face_cachel_data (struct window *w, face_index findex,
 void
 reset_face_cachel (struct face_cachel *cachel)
 {
-  memset (cachel, 0, sizeof (struct face_cachel));
+  xzero (*cachel);
   cachel->face = Qunbound;
   cachel->nfaces = 0;
   cachel->merged_faces = 0;
@@ -1352,7 +1341,7 @@ get_builtin_face_cache_index (struct window *w, Lisp_Object face)
 
       if (EQ (cachel->face, face))
 	{
-	  Lisp_Object window = Qnil;
+	  Lisp_Object window;
 	  XSETWINDOW (window, w);
 	  if (!cachel->updated)
 	    update_face_cachel_data (cachel, window, face);
@@ -1509,7 +1498,7 @@ get_extent_fragment_face_cache_index (struct window *w,
   struct face_cachel cachel;
   int len = Dynarr_length (ef->extents);
   face_index findex = 0;
-  Lisp_Object window = Qnil;
+  Lisp_Object window;
   XSETWINDOW (window, w);
 
   /* Optimize the default case. */
@@ -1620,7 +1609,7 @@ update_EmacsFrames (Lisp_Object locale, Lisp_Object name)
 void
 update_frame_face_values (struct frame *f)
 {
-  Lisp_Object frm = Qnil;
+  Lisp_Object frm;
 
   XSETFRAME (frm, f);
   update_EmacsFrame (frm, Qforeground);
@@ -1644,15 +1633,18 @@ face_property_was_changed (Lisp_Object face, Lisp_Object property,
 
   if (WINDOWP (locale))
     {
-      MARK_FRAME_FACES_CHANGED (XFRAME (XWINDOW (locale)->frame));
+      struct frame *f = XFRAME (XWINDOW (locale)->frame);
+      MARK_FRAME_FACES_CHANGED (f);
     }
   else if (FRAMEP (locale))
     {
-      MARK_FRAME_FACES_CHANGED (XFRAME (locale));
+      struct frame *f = XFRAME (locale);
+      MARK_FRAME_FACES_CHANGED (f);
     }
   else if (DEVICEP (locale))
     {
-      MARK_DEVICE_FRAMES_FACES_CHANGED (XDEVICE (locale));
+      struct device *d = XDEVICE (locale);
+      MARK_DEVICE_FRAMES_FACES_CHANGED (d);
     }
   else
     {
@@ -1684,9 +1676,9 @@ face_property_was_changed (Lisp_Object face, Lisp_Object property,
 }
 
 DEFUN ("copy-face", Fcopy_face, 2, 6, 0, /*
-Defines and returns a new face which is a copy of an existing one,
-or makes an already-existing face be exactly like another. LOCALE,
-TAG-SET, EXACT-P, and HOW-TO-ADD are as in `copy-specifier'.
+Define and return a new face which is a copy of an existing one,
+or makes an already-existing face be exactly like another.
+LOCALE, TAG-SET, EXACT-P, and HOW-TO-ADD are as in `copy-specifier'.
 */
        (old_face, new_name, locale, tag_set, exact_p, how_to_add))
 {
@@ -1857,30 +1849,22 @@ complex_vars_of_faces (void)
      someone provides invalid values for the global specifications. */
 
   {
-    Lisp_Object fg_inst_list = Qnil, bg_inst_list = Qnil;
+    Lisp_Object fg_fb = Qnil, bg_fb = Qnil;
 
 #ifdef HAVE_X_WINDOWS
-    fg_inst_list = Fcons (Fcons (list1 (Qx), build_string ("black")),
-			  fg_inst_list);
-    bg_inst_list = Fcons (Fcons (list1 (Qx), build_string ("white")),
-			  bg_inst_list);
+    fg_fb = acons (list1 (Qx), build_string ("black"), fg_fb);
+    bg_fb = acons (list1 (Qx), build_string ("white"), bg_fb);
 #endif
 #ifdef HAVE_TTY
-    fg_inst_list = Fcons (Fcons (list1 (Qtty), Fvector (0, 0)),
-			  fg_inst_list);
-    bg_inst_list = Fcons (Fcons (list1 (Qtty), Fvector (0, 0)),
-			  bg_inst_list);
+    fg_fb = acons (list1 (Qtty), Fvector (0, 0), fg_fb);
+    bg_fb = acons (list1 (Qtty), Fvector (0, 0), bg_fb);
 #endif
 #ifdef HAVE_MS_WINDOWS
-    fg_inst_list = Fcons (Fcons (list1 (Qmswindows), build_string ("black")),
-			  fg_inst_list);
-    bg_inst_list = Fcons (Fcons (list1 (Qmswindows), build_string ("white")),
-			  bg_inst_list);
+    fg_fb = acons (list1 (Qmswindows), build_string ("black"), fg_fb);
+    bg_fb = acons (list1 (Qmswindows), build_string ("white"), bg_fb);
 #endif
-    set_specifier_fallback (Fget (Vdefault_face, Qforeground, Qnil),
-			    fg_inst_list);
-    set_specifier_fallback (Fget (Vdefault_face, Qbackground, Qnil),
-			    bg_inst_list);
+    set_specifier_fallback (Fget (Vdefault_face, Qforeground, Qnil), fg_fb);
+    set_specifier_fallback (Fget (Vdefault_face, Qbackground, Qnil), bg_fb);
   }
 
   /* #### We may want to have different fallback values if NeXTstep

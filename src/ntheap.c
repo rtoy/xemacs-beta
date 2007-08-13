@@ -23,13 +23,12 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 /* Adapted for XEmacs by David Hobley <david@spook-le0.cia.com.au> */
 /* Synced with FSF Emacs 19.34.6 by Marc Paquette <marcpa@cam.org> */
 
-#include "config.h"
+#include <config.h>
+#include "lisp.h"  /* for VALMASK */
 
 #include <stdlib.h>
-#include <stdio.h>
 
 #include "ntheap.h"
-#include "lisp.h"  /* for VALMASK */
 
 /* This gives us the page size and the size of the allocation unit on NT.  */
 SYSTEM_INFO sysinfo_cache;

@@ -52,18 +52,6 @@ static int in_opaque_list_marking;
    create GC junk. */
 Lisp_Object Vopaque_ptr_free_list;
 
-static Lisp_Object mark_opaque (Lisp_Object, void (*) (Lisp_Object));
-static unsigned int sizeof_opaque (CONST void *header);
-static void print_opaque (Lisp_Object obj, Lisp_Object printcharfun,
-			  int escapeflag);
-static int equal_opaque (Lisp_Object obj1, Lisp_Object obj2, int depth);
-static unsigned long hash_opaque (Lisp_Object obj, int depth);
-
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("opaque", opaque,
-					mark_opaque, print_opaque, 0, 
-					equal_opaque, hash_opaque,
-					sizeof_opaque, struct Lisp_Opaque);
-
 static Lisp_Object
 mark_opaque (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
@@ -99,7 +87,7 @@ print_opaque (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   write_c_string (buf, printcharfun);
 }
 
-static unsigned int
+static size_t
 sizeof_opaque (CONST void *header)
 {
   CONST struct Lisp_Opaque *p = (CONST struct Lisp_Opaque *) header;
@@ -158,10 +146,10 @@ hash_opaque (Lisp_Object obj, int depth)
     return memory_hash (XOPAQUE_DATA(obj), XOPAQUE_SIZE(obj));
 }
 
-static Lisp_Object mark_opaque_list (Lisp_Object, void (*) (Lisp_Object));
-DEFINE_LRECORD_IMPLEMENTATION ("opaque-list", opaque_list,
-			       mark_opaque_list, internal_object_printer,
-			       0, 0, 0, struct Lisp_Opaque_List);
+DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("opaque", opaque,
+					mark_opaque, print_opaque, 0,
+					equal_opaque, hash_opaque,
+					sizeof_opaque, struct Lisp_Opaque);
 
 static Lisp_Object
 mark_opaque_list (Lisp_Object obj, void (*markobj) (Lisp_Object))
@@ -177,7 +165,7 @@ make_opaque_list (int size,
 		  Lisp_Object (*markfun) (Lisp_Object obj,
 					  void (*markobj) (Lisp_Object)))
 {
-  Lisp_Object val = Qnil;
+  Lisp_Object val;
   struct Lisp_Opaque_List *p =
     alloc_lcrecord_type (struct Lisp_Opaque_List, lrecord_opaque_list);
 
@@ -187,6 +175,10 @@ make_opaque_list (int size,
   XSETOPAQUE_LIST (val, p);
   return val;
 }
+
+DEFINE_LRECORD_IMPLEMENTATION ("opaque-list", opaque_list,
+			       mark_opaque_list, internal_object_printer,
+			       0, 0, 0, struct Lisp_Opaque_List);
 
 Lisp_Object
 allocate_managed_opaque (Lisp_Object opaque_list, CONST void *data)

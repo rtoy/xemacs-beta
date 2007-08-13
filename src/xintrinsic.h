@@ -23,8 +23,4 @@ Boston, MA 02111-1307, USA.  */
 
 #include <X11/Intrinsic.h>
 
-#ifdef CONST_IS_LOSING
-# define CONST
-#else
-# define CONST const
-#endif
+#define CONST const

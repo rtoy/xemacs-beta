@@ -31,7 +31,7 @@ struct _C_hashtable
   hentry	*harray;
   long		zero_set;
   void		*zero_entry;
-  unsigned int	size;		/* size of the hasharray */
+  size_t	size;		/* size of the hasharray */
   unsigned int	fullness;	/* number of entries in the hashtable */
   unsigned long (*hash_function) (CONST void *);
   int		(*test_function) (CONST void *, CONST void *);

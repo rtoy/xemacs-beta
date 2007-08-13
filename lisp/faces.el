@@ -146,7 +146,7 @@ See `set-face-property' for the built-in property-names."
   (setq face (get-face face))
   (let ((specifier (get face property)))
     ;; if a user-property does not have a specifier but a
-    ;; locale was specified, put a specifier there.  
+    ;; locale was specified, put a specifier there.
     ;; If there was already a value there, convert it to a
     ;; specifier with the value as its 'global instantiator.
     (unless (specifierp specifier)
@@ -231,7 +231,7 @@ matching process."
 
 (defun set-face-property (face property value &optional locale tag-set
 			       how-to-add)
-  "Change a property of a FACE.
+  "Change a property of FACE.
 
 NOTE: If you want to remove a property from a face, use `remove-face-property'
   rather than attempting to set a value of nil for the property.
@@ -293,16 +293,16 @@ The following symbols have predefined meanings:
 
  foreground         The foreground color of the face.
                     For valid instantiators, see `color-specifier-p'.
-		    
+
  background         The background color of the face.
                     For valid instantiators, see `color-specifier-p'.
-		    
+
  font               The font used to display text covered by this face.
                     For valid instantiators, see `font-specifier-p'.
-		    
+
  display-table      The display table of the face.
                     This should be a vector of 256 elements.
-		    
+
  background-pixmap  The pixmap displayed in the background of the face.
                     Only used by faces on X devices.
                     For valid instantiators, see `image-specifier-p'.
@@ -316,19 +316,19 @@ The following symbols have predefined meanings:
  highlight          Highlight all text covered by this face.
                     Only used by faces on TTY devices.
                     For valid instantiators, see `face-boolean-specifier-p'.
-		    
+
  dim                Dim all text covered by this face.
                     Only used by faces on TTY devices.
                     For valid instantiators, see `face-boolean-specifier-p'.
-		    
+
  blinking           Blink all text covered by this face.
                     Only used by faces on TTY devices.
                     For valid instantiators, see `face-boolean-specifier-p'.
-		    
+
  reverse            Reverse the foreground and background colors.
                     Only used by faces on TTY devices.
                     For valid instantiators, see `face-boolean-specifier-p'.
-		    
+
  doc-string         Description of what the face's normal use is.
                     NOTE: This is not a specifier, unlike all
                     the other built-in properties, and cannot
@@ -347,7 +347,7 @@ The following symbols have predefined meanings:
   value)
 
 (defun remove-face-property (face property &optional locale tag-set exact-p)
-  "Remove a property from a face.
+  "Remove a property from FACE.
 For built-in properties, this is analogous to `remove-specifier'.
 See `remove-specifier' for the meaning of the LOCALE, TAG-SET, and EXACT-P
 arguments."
@@ -397,13 +397,13 @@ This makes all properties of FACE inherit from PARENT."
   (set-face-property face 'doc-string doc-string))
 
 (defun face-font-name (face &optional domain charset)
-  "Return the font name of the given face, or nil if it is unspecified.
+  "Return the font name of FACE in DOMAIN, or nil if it is unspecified.
 DOMAIN is as in `face-font-instance'."
   (let ((f (face-font-instance face domain charset)))
     (and f (font-instance-name f))))
 
 (defun face-font (face &optional locale tag-set exact-p)
-  "Return the font of the given face, or nil if it is unspecified.
+  "Return the font of FACE in LOCALE, or nil if it is unspecified.
 
 FACE may be either a face object or a symbol representing a face.
 
@@ -416,7 +416,7 @@ See `face-property' for more information."
   (face-property face 'font locale tag-set exact-p))
 
 (defun face-font-instance (face &optional domain charset)
-  "Return the instance of the given face's font in the given domain.
+  "Return the instance of FACE's font in DOMAIN.
 
 FACE may be either a face object or a symbol representing a face.
 
@@ -430,7 +430,7 @@ See `face-property-instance' for more information."
     (face-property-instance face 'font domain)))
 
 (defun set-face-font (face font &optional locale tag-set how-to-add)
-  "Change the font of the given face.
+  "Change the font of FACE to FONT in LOCALE.
 
 FACE may be either a face object or a symbol representing a face.
 
@@ -449,7 +449,7 @@ See `set-face-property' for more information."
   (set-face-property face 'font font locale tag-set how-to-add))
 
 (defun face-foreground (face &optional locale tag-set exact-p)
-  "Return the foreground of the given face, or nil if it is unspecified.
+  "Return the foreground of FACE in LOCALE, or nil if it is unspecified.
 
 FACE may be either a face object or a symbol representing a face.
 
@@ -462,7 +462,7 @@ See `face-property' for more information."
   (face-property face 'foreground locale tag-set exact-p))
 
 (defun face-foreground-instance (face &optional domain default no-fallback)
-  "Return the instance of the given face's foreground in the given domain.
+  "Return the instance of FACE's foreground in DOMAIN.
 
 FACE may be either a face object or a symbol representing a face.
 
@@ -474,7 +474,7 @@ See `face-property-instance' for more information."
   (face-property-instance face 'foreground domain default no-fallback))
 
 (defun face-foreground-name (face &optional domain default no-fallback)
-  "Return the name of the given face's foreground color in the given domain.
+  "Return the name of FACE's foreground color in DOMAIN.
 
 FACE may be either a face object or a symbol representing a face.
 
@@ -487,7 +487,7 @@ See `face-property-instance' for more information."
 			face domain default no-fallback)))
 
 (defun set-face-foreground (face color &optional locale tag-set how-to-add)
-  "Change the foreground of the given face.
+  "Change the foreground color of FACE to COLOR in LOCALE.
 
 FACE may be either a face object or a symbol representing a face.
 
@@ -506,7 +506,7 @@ See `set-face-property' for more information."
   (set-face-property face 'foreground color locale tag-set how-to-add))
 
 (defun face-background (face &optional locale tag-set exact-p)
-  "Return the background of the given face, or nil if it is unspecified.
+  "Return the background color of FACE in LOCALE, or nil if it is unspecified.
 
 FACE may be either a face object or a symbol representing a face.
 
@@ -519,7 +519,7 @@ See `face-property' for more information."
   (face-property face 'background locale tag-set exact-p))
 
 (defun face-background-instance (face &optional domain default no-fallback)
-  "Return the instance of the given face's background in the given domain.
+  "Return the instance of FACE's background in DOMAIN.
 
 FACE may be either a face object or a symbol representing a face.
 
@@ -531,7 +531,7 @@ See `face-property-instance' for more information."
   (face-property-instance face 'background domain default no-fallback))
 
 (defun face-background-name (face &optional domain default no-fallback)
-  "Return the name of the given face's background color in the given domain.
+  "Return the name of FACE's background color in DOMAIN.
 
 FACE may be either a face object or a symbol representing a face.
 
@@ -544,7 +544,7 @@ See `face-property-instance' for more information."
 			face domain default no-fallback)))
 
 (defun set-face-background (face color &optional locale tag-set how-to-add)
-  "Change the background of the given face.
+  "Change the background color of FACE to COLOR in LOCALE.
 
 FACE may be either a face object or a symbol representing a face.
 
@@ -563,8 +563,8 @@ See `set-face-property' for more information."
   (set-face-property face 'background color locale tag-set how-to-add))
 
 (defun face-background-pixmap (face &optional locale tag-set exact-p)
-  "Return the background pixmap of the given face, or nil if it is unspecified.
-This property is only used on X devices.
+  "Return the background pixmap of FACE in LOCALE, or nil if it is unspecified.
+This property is only used on window system devices.
 
 FACE may be either a face object or a symbol representing a face.
 
@@ -578,7 +578,7 @@ See `face-property' for more information."
 
 (defun face-background-pixmap-instance (face &optional domain default
 					     no-fallback)
-  "Return the instance of the given face's background pixmap in the given domain.
+  "Return the instance of FACE's background pixmap in DOMAIN.
 
 FACE may be either a face object or a symbol representing a face.
 
@@ -591,8 +591,8 @@ See `face-property-instance' for more information."
 
 (defun set-face-background-pixmap (face pixmap &optional locale tag-set
 					how-to-add)
-  "Change the background pixmap of the given face.
-This property is only used on X devices.
+  "Change the background pixmap of FACE to PIXMAP in LOCALE.
+This property is only used on window system devices.
 
 FACE may be either a face object or a symbol representing a face.
 
@@ -611,7 +611,7 @@ See `set-face-property' for more information."
   (set-face-property face 'background-pixmap pixmap locale tag-set how-to-add))
 
 (defun face-display-table (face &optional locale tag-set exact-p)
-  "Return the display table of the given face.
+  "Return the display table of FACE in LOCALE.
 
 A vector (as returned by `make-display-table') will be returned.
 
@@ -632,7 +632,7 @@ See `face-property-instance' for the semantics of the DOMAIN argument."
 
 (defun set-face-display-table (face display-table &optional locale tag-set
 				    how-to-add)
-  "Change the display table of the given face.
+  "Change the display table of FACE to DISPLAY-TABLE in LOCALE.
 DISPLAY-TABLE should be a vector as returned by `make-display-table'.
 
 See `set-face-property' for the semantics of the LOCALE, TAG-SET, and
@@ -645,13 +645,13 @@ See `set-face-property' for the semantics of the LOCALE, TAG-SET, and
 ;; implementation.  Cf. with `make-face-bold'.
 
 (defun face-underline-p (face &optional domain default no-fallback)
-  "Return whether the given face is underlined.
+  "Return t if FACE is underlined in DOMAIN.
 See `face-property-instance' for the semantics of the DOMAIN argument."
   (face-property-instance face 'underline domain default no-fallback))
 
 (defun set-face-underline-p (face underline-p &optional locale tag-set
 				  how-to-add)
-  "Change whether the given face is underlined.
+  "Change the underline property of FACE to UNDERLINE-P.
 UNDERLINE-P is normally a face-boolean instantiator; see
  `face-boolean-specifier-p'.
 See `set-face-property' for the semantics of the LOCALE, TAG-SET, and
@@ -660,13 +660,13 @@ See `set-face-property' for the semantics of the LOCALE, TAG-SET, and
   (set-face-property face 'underline underline-p locale tag-set how-to-add))
 
 (defun face-strikethru-p (face &optional domain default no-fallback)
-  "Return whether the given face is strikethru-d (i.e. struck through).
+  "Return t if FACE is strikethru-d (i.e. struck through) in DOMAIN.
 See `face-property-instance' for the semantics of the DOMAIN argument."
   (face-property-instance face 'strikethru domain default no-fallback))
 
 (defun set-face-strikethru-p (face strikethru-p &optional locale tag-set
 				  how-to-add)
-  "Change whether the given face is strikethru-d (i.e. struck through).
+  "Change whether FACE is strikethru-d (i.e. struck through) in LOCALE.
 STRIKETHRU-P is normally a face-boolean instantiator; see
  `face-boolean-specifier-p'.
 See `set-face-property' for the semantics of the LOCALE, TAG-SET, and
@@ -675,13 +675,13 @@ See `set-face-property' for the semantics of the LOCALE, TAG-SET, and
   (set-face-property face 'strikethru strikethru-p locale tag-set how-to-add))
 
 (defun face-highlight-p (face &optional domain default no-fallback)
-  "Return whether the given face is highlighted (TTY domains only).
+  "Return t if FACE is highlighted in DOMAIN (TTY domains only).
 See `face-property-instance' for the semantics of the DOMAIN argument."
   (face-property-instance face 'highlight domain default no-fallback))
 
 (defun set-face-highlight-p (face highlight-p &optional locale tag-set
 				  how-to-add)
-  "Change whether the given face is highlighted (TTY locales only).
+  "Change whether FACE is highlighted in LOCALE (TTY locales only).
 HIGHLIGHT-P is normally a face-boolean instantiator; see
  `face-boolean-specifier-p'.
 See `set-face-property' for the semantics of the LOCALE, TAG-SET, and
@@ -690,12 +690,12 @@ See `set-face-property' for the semantics of the LOCALE, TAG-SET, and
   (set-face-property face 'highlight highlight-p locale tag-set how-to-add))
 
 (defun face-dim-p (face &optional domain default no-fallback)
-  "Return whether the given face is dimmed (TTY domains only).
+  "Return t if FACE is dimmed in DOMAIN (TTY domains only).
 See `face-property-instance' for the semantics of the DOMAIN argument."
   (face-property-instance face 'dim domain default no-fallback))
 
 (defun set-face-dim-p (face dim-p &optional locale tag-set how-to-add)
-  "Change whether the given face is dimmed (TTY locales only).
+  "Change whether FACE is dimmed in LOCALE (TTY locales only).
 DIM-P is normally a face-boolean instantiator; see
  `face-boolean-specifier-p'.
 See `set-face-property' for the semantics of the LOCALE, TAG-SET, and
@@ -704,13 +704,13 @@ See `set-face-property' for the semantics of the LOCALE, TAG-SET, and
   (set-face-property face 'dim dim-p locale tag-set how-to-add))
 
 (defun face-blinking-p (face &optional domain default no-fallback)
-  "Return whether the given face is blinking (TTY domains only).
+  "Return t if FACE is blinking in DOMAIN (TTY domains only).
 See `face-property-instance' for the semantics of the DOMAIN argument."
   (face-property-instance face 'blinking domain default no-fallback))
 
 (defun set-face-blinking-p (face blinking-p &optional locale tag-set
 				 how-to-add)
-  "Change whether the given face is blinking (TTY locales only).
+  "Change whether FACE is blinking in LOCALE (TTY locales only).
 BLINKING-P is normally a face-boolean instantiator; see
  `face-boolean-specifier-p'.
 See `set-face-property' for the semantics of the LOCALE, TAG-SET, and
@@ -719,12 +719,12 @@ See `set-face-property' for the semantics of the LOCALE, TAG-SET, and
   (set-face-property face 'blinking blinking-p locale tag-set how-to-add))
 
 (defun face-reverse-p (face &optional domain default no-fallback)
-  "Return whether the given face is reversed (TTY domains only).
+  "Return t if FACE is reversed in DOMAIN (TTY domains only).
 See `face-property-instance' for the semantics of the DOMAIN argument."
   (face-property-instance face 'reverse domain default no-fallback))
 
 (defun set-face-reverse-p (face reverse-p &optional locale tag-set how-to-add)
-  "Change whether the given face is reversed (TTY locales only).
+  "Change whether FACE is reversed in LOCALE (TTY locales only).
 REVERSE-P is normally a face-boolean instantiator; see
  `face-boolean-specifier-p'.
 See `set-face-property' for the semantics of the LOCALE, TAG-SET, and
@@ -744,7 +744,7 @@ See `set-face-property' for the semantics of the LOCALE, TAG-SET, and
   (null props))
 
 (defun face-equal (face1 face2 &optional domain)
-  "True if the given faces will display in the same way.
+  "Return t if FACE1 and FACE2 will display in the same way in DOMAIN.
 See `face-property-instance' for the semantics of the DOMAIN argument."
   (if (null domain) (setq domain (selected-window)))
   (if (not (valid-specifier-domain-p domain))
@@ -765,7 +765,7 @@ See `face-property-instance' for the semantics of the DOMAIN argument."
 	       (t t)))))
 
 (defun face-differs-from-default-p (face &optional domain)
-  "True if the given face will display differently from the default face.
+  "Return t if FACE will display differently from the default face in DOMAIN.
 See `face-property-instance' for the semantics of the DOMAIN argument."
   (not (face-equal face 'default domain)))
 
@@ -931,7 +931,7 @@ substituted for the specification."
 			       the-locale))))))
 
 (defun make-face-bold (face &optional locale)
-  "Make the face bold, if possible.
+  "Make FACE bold in LOCALE, if possible.
 This will attempt to make the font bold for X locales and will set the
 highlight flag for TTY locales.
 
@@ -977,7 +977,7 @@ circumstances."
      ([bold-italic] . t))))
 
 (defun make-face-italic (face &optional locale)
-  "Make the face italic, if possible.
+  "Make FACE italic in LOCALE, if possible.
 This will attempt to make the font italic for X locales and will set
 the underline flag for TTY locales.
 See `make-face-bold' for the semantics of the LOCALE argument and
@@ -1002,7 +1002,7 @@ for more specifics on exactly how this function works."
      ([bold-italic] . t))))
 
 (defun make-face-bold-italic (face &optional locale)
-  "Make the face bold and italic, if possible.
+  "Make FACE bold and italic in LOCALE, if possible.
 This will attempt to make the font bold-italic for X locales and will
 set the highlight and underline flags for TTY locales.
 See `make-face-bold' for the semantics of the LOCALE argument and
@@ -1028,7 +1028,7 @@ for more specifics on exactly how this function works."
      ([bold-italic] . t))))
 
 (defun make-face-unbold (face &optional locale)
-  "Make the face non-bold, if possible.
+  "Make FACE non-bold in LOCALE, if possible.
 This will attempt to make the font non-bold for X locales and will
 unset the highlight flag for TTY locales.
 See `make-face-bold' for the semantics of the LOCALE argument and
@@ -1053,7 +1053,7 @@ for more specifics on exactly how this function works."
      ([bold-italic] . [italic]))))
 
 (defun make-face-unitalic (face &optional locale)
-  "Make the face non-italic, if possible.
+  "Make FACE non-italic in LOCALE, if possible.
 This will attempt to make the font non-italic for X locales and will
 unset the underline flag for TTY locales.
 See `make-face-bold' for the semantics of the LOCALE argument and
@@ -1082,7 +1082,7 @@ for more specifics on exactly how this function works."
 ;; circumstances?
 
 (defun make-face-smaller (face &optional locale)
-  "Make the font of the given face be smaller, if possible.
+  "Make the font of FACE be smaller, if possible.
 LOCALE works as in `make-face-bold' et al., but the ``inheriting-
 from-the-bold-face'' operations described there are not done
 because they don't make sense in this context."
@@ -1094,7 +1094,7 @@ because they don't make sense in this context."
     (frob-face-property face 'font 'mswindows-find-smaller-font locale)))
 
 (defun make-face-larger (face &optional locale)
-  "Make the font of the given face be larger, if possible.
+  "Make the font of FACE be larger, if possible.
 See `make-face-smaller' for the semantics of the LOCALE argument."
   (interactive (list (read-face-name "Enlarge which face: ")))
   ;; handle X specific entries
@@ -1119,27 +1119,27 @@ See `make-face-smaller' for the semantics of the LOCALE argument."
 ;;; Convenience functions
 
 (defun face-ascent (face &optional domain charset)
-  "Return the ascent of a face.
+  "Return the ascent of FACE in DOMAIN.
 See `face-property-instance' for the semantics of the DOMAIN argument."
   (font-ascent (face-font face) domain charset))
 
 (defun face-descent (face &optional domain charset)
-  "Return the descent of a face.
+  "Return the descent of FACE in DOMAIN.
 See `face-property-instance' for the semantics of the DOMAIN argument."
   (font-descent (face-font face) domain charset))
 
 (defun face-width (face &optional domain charset)
-  "Return the width of a face.
+  "Return the width of FACE in DOMAIN.
 See `face-property-instance' for the semantics of the DOMAIN argument."
   (font-width (face-font face) domain charset))
 
 (defun face-height (face &optional domain charset)
-  "Return the height of a face.
+  "Return the height of FACE in DOMAIN.
 See `face-property-instance' for the semantics of the DOMAIN argument."
   (+ (face-ascent face domain charset) (face-descent face domain charset)))
 
 (defun face-proportional-p (face &optional domain charset)
-  "Return whether FACE is proportional.
+  "Return t if FACE is proportional in DOMAIN.
 See `face-property-instance' for the semantics of the DOMAIN argument."
   (font-proportional-p (face-font face) domain charset))
 
@@ -1152,7 +1152,7 @@ Set this to the symbol dark if your background color is dark, light if
 your background is light, or nil (default) if you want Emacs to
 examine the brightness for you."
   :group 'faces
-  :type '(choice (choice-item dark) 
+  :type '(choice (choice-item dark)
 		 (choice-item light)
 		 (choice-item :tag "Auto" nil)))
 
@@ -1228,7 +1228,7 @@ See `defface' for information about SPEC."
 (defvar default-custom-frame-properties nil
   "The frame properties used for the global faces.
 Frames not matching these propertiess should have frame local faces.
-The value should be nil, if uninitialized, or a plist otherwise.  
+The value should be nil, if uninitialized, or a plist otherwise.
 See `defface' for a list of valid keys and values for the plist.")
 
 (defun get-custom-frame-properties (&optional frame)
@@ -1250,10 +1250,10 @@ If FRAME is nil, return the default frame properties."
 	 (setq default-custom-frame-properties
 	       (extract-custom-frame-properties (selected-frame))))))
 
-(defun face-spec-set-match-display (display frame)
-  "Non-nil iff DISPLAY matches FRAME.
+(defun face-spec-set-match-display (display &optional frame)
+  "Return non-nil if DISPLAY matches FRAME.
 DISPLAY is part of a spec such as can be used in `defface'.
-If FRAME is nil, the current FRAME is used."
+If FRAME is nil or omitted, the selected frame is used."
   (if (eq display t)
       t
     (let* ((props (get-custom-frame-properties frame))
@@ -1304,7 +1304,7 @@ If FRAME is nil or omitted, initialize them for all frames."
 
 (defun custom-initialize-frame (frame)
   "Initialize frame-local custom faces for FRAME if necessary."
-  (unless (equal (get-custom-frame-properties) 
+  (unless (equal (get-custom-frame-properties)
 		 (get-custom-frame-properties frame))
     (initialize-custom-faces frame)))
 
@@ -1449,7 +1449,7 @@ Emacs.%s.attributeForeground: hotpink\n"
 ;; make sure that everything works properly.
 
 (defun init-other-random-faces (device)
-  "Initializes the colors and fonts of the bold, italic, bold-italic,
+  "Initialize the colors and fonts of the bold, italic, bold-italic,
 zmacs-region, list-mode-item-selected, highlight, primary-selection,
 secondary-selection, and isearch faces when each device is created.  If
 you want to add code to do stuff like this, use the create-device-hook."
@@ -1469,7 +1469,7 @@ you want to add code to do stuff like this, use the create-device-hook."
   ;; the time.  For many languages, italic is an alien concept.
   ;; Basically, because italic is not a globally meaningful concept,
   ;; the use of the italic face should really be oboleted.
-  
+
   ;; I disagree with above.  In many languages, the concept of capital
   ;; letters is just as alien, and yet we use them.  Italic is here to
   ;; stay.  -hniksic
@@ -1520,7 +1520,7 @@ you want to add code to do stuff like this, use the create-device-hook."
 
 ;; New function with 20.1, suggested by Per Abrahamsen, coded by Kyle Jones.
 (defun set-face-stipple (face pixmap &optional frame)
-  "Change the stipple pixmap of face FACE to PIXMAP.
+  "Change the stipple pixmap of FACE to PIXMAP.
 This is an Emacs compatibility function; consider using
 set-face-background-pixmap instead.
 

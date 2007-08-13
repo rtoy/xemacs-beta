@@ -18,7 +18,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; along with XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -37,7 +37,7 @@
   "Location of standard toolbar icon bitmaps.")
 
 (defun toolbar-make-button-list (up &optional down disabled cap-up cap-down cap-disabled)
-  "Calls make-glyph on each arg and returns a list of the results."
+  "Call make-glyph on each arg and return a list of the results."
   (if (featurep 'x)
       (let ((up-glyph (make-glyph up))
 	    (down-glyph (and down (make-glyph down)))

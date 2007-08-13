@@ -206,7 +206,8 @@ arguments compiles from `load-path'."
        dirs)
       (insert "))\n\n(provide 'finder-inf)\n\n;;; finder-inf.el ends here\n")
       (kill-buffer "*finder-scratch*")
-      (eval-current-buffer) ;; So we get the new keyword list immediately
+      (unless noninteractive
+	(eval-current-buffer)) ; So we get the new keyword list immediately
       (basic-save-buffer))))
 
 (defun finder-compile-keywords-make-dist ()

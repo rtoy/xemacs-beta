@@ -218,13 +218,14 @@ int keymap_tick;
 Lisp_Object Vmeta_prefix_char;
 
 Lisp_Object Qkeymapp;
-
 Lisp_Object Vsingle_space_string;
-
 Lisp_Object Qsuppress_keymap;
-
 Lisp_Object Qmodeline_map;
 Lisp_Object Qtoolbar_map;
+
+EXFUN (Fkeymap_fullness, 1);
+EXFUN (Fset_keymap_name, 2);
+EXFUN (Fsingle_key_description, 1);
 
 static void describe_command (Lisp_Object definition, Lisp_Object buffer);
 static void describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
@@ -233,12 +234,13 @@ static void describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 			  Lisp_Object shadow,
 			  int mice_only_p,
 			  Lisp_Object buffer);
+
 Lisp_Object Qcontrol, Qctrl, Qmeta, Qsuper, Qhyper, Qalt, Qshift;
-/* Lisp_Object Qsymbol;	defined in general.c */
-Lisp_Object Qbutton0, Qbutton1, Qbutton2, Qbutton3, Qbutton4, Qbutton5,
-  Qbutton6, Qbutton7;
-Lisp_Object Qbutton0up, Qbutton1up, Qbutton2up, Qbutton3up, Qbutton4up,
-  Qbutton5up, Qbutton6up, Qbutton7up;
+Lisp_Object Qbutton0, Qbutton1, Qbutton2, Qbutton3;
+Lisp_Object Qbutton4, Qbutton5, Qbutton6, Qbutton7;
+Lisp_Object Qbutton0up, Qbutton1up, Qbutton2up, Qbutton3up;
+Lisp_Object Qbutton4up, Qbutton5up, Qbutton6up, Qbutton7up;
+
 #if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
 Lisp_Object Qdrop0, Qdrop1, Qdrop2, Qdrop3, Qdrop4, Qdrop5, Qdrop6, Qdrop7;
 #endif
@@ -256,12 +258,6 @@ Lisp_Object QLFD, QTAB, QRET, QESC, QDEL, QSPC, QBS;
 /*                     The keymap Lisp object                           */
 /************************************************************************/
 
-static Lisp_Object mark_keymap (Lisp_Object, void (*) (Lisp_Object));
-static void print_keymap (Lisp_Object, Lisp_Object, int);
-/* No need for keymap_equal #### Why not? */
-DEFINE_LRECORD_IMPLEMENTATION ("keymap", keymap,
-                               mark_keymap, print_keymap, 0, 0, 0,
-			       struct keymap);
 static Lisp_Object
 mark_keymap (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
@@ -296,6 +292,10 @@ print_keymap (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   write_c_string (buf, printcharfun);
 }
 
+/* No need for keymap_equal #### Why not? */
+DEFINE_LRECORD_IMPLEMENTATION ("keymap", keymap,
+                               mark_keymap, print_keymap, 0, 0, 0,
+			       struct keymap);
 
 /************************************************************************/
 /*                Traversing keymaps and their parents                  */
@@ -753,7 +753,7 @@ keymap_submaps (Lisp_Object keymap)
 static Lisp_Object
 make_keymap (int size)
 {
-  Lisp_Object result = Qnil;
+  Lisp_Object result;
   struct keymap *keymap = alloc_lcrecord_type (struct keymap, lrecord_keymap);
 
   XSETKEYMAP (result, keymap);
@@ -812,7 +812,7 @@ it is not used except when printing the keymap.
 }
 
 DEFUN ("keymap-parents", Fkeymap_parents, 1, 1, 0, /*
-Return the `parent' keymaps of the given keymap, or nil.
+Return the `parent' keymaps of KEYMAP, or nil.
 The parents of a keymap are searched for keybindings when a key sequence
 isn't bound in this one.  `(current-global-map)' is the default parent
 of all keymaps.
@@ -832,7 +832,7 @@ traverse_keymaps_noop (Lisp_Object keymap, void *arg)
 }
 
 DEFUN ("set-keymap-parents", Fset_keymap_parents, 2, 2, 0, /*
-Sets the `parent' keymaps of the given keymap.
+Set the `parent' keymaps of KEYMAP to PARENTS.
 The parents of a keymap are searched for keybindings when a key sequence
 isn't bound in this one.  `(current-global-map)' is the default parent
 of all keymaps.
@@ -897,7 +897,7 @@ when printing the keymap.
 }
 
 DEFUN ("set-keymap-prompt", Fset_keymap_prompt, 2, 2, 0, /*
-Sets the `prompt' of KEYMAP to string NEW-PROMPT, or `nil'
+Set the `prompt' of KEYMAP to string NEW-PROMPT, or `nil'
 if no prompt is desired.  The prompt is shown in the echo-area
 when reading a key-sequence to be looked-up in this keymap.
 */
@@ -920,7 +920,7 @@ keymap_prompt_mapper (Lisp_Object keymap, void *arg)
 
 
 DEFUN ("keymap-prompt", Fkeymap_prompt, 1, 2, 0, /*
-Return the `prompt' of the given keymap.
+Return the `prompt' of KEYMAP.
 If non-nil, the prompt is shown in the echo-area
 when reading a key-sequence to be looked-up in this keymap.
 */
@@ -1875,7 +1875,7 @@ these features.
   if (VECTORP (keys))
     len = XVECTOR_LENGTH (keys);
   else if (STRINGP (keys))
-    len = string_char_length (XSTRING (keys));
+    len = XSTRING_CHAR_LENGTH (keys);
   else if (CHAR_OR_CHAR_INTP (keys) || SYMBOLP (keys) || CONSP (keys))
     {
       if (!CONSP (keys)) keys = list1 (keys);
@@ -2225,25 +2225,15 @@ it takes to reach a non-prefix command.
 {
   /* This function can GC */
   if (VECTORP (keys))
-    {
-      return lookup_keys (keymap,
-			  XVECTOR_LENGTH (keys),
-                          XVECTOR_DATA (keys),
-                          !NILP (accept_default));
-    }
+    return lookup_keys (keymap,
+			XVECTOR_LENGTH (keys),
+			XVECTOR_DATA (keys),
+			!NILP (accept_default));
   else if (SYMBOLP (keys) || CHAR_OR_CHAR_INTP (keys) || CONSP (keys))
+    return lookup_keys (keymap, 1, &keys, !NILP (accept_default));
+  else if (STRINGP (keys))
     {
-      return lookup_keys (keymap, 1, &keys,
-			  !NILP (accept_default));
-    }
-  else if (!STRINGP (keys))
-    {
-      keys = wrong_type_argument (Qsequencep, keys);
-      return Flookup_key (keymap, keys, accept_default);
-    }
-  else /* STRINGP (keys) */
-    {
-      int length = string_char_length (XSTRING (keys));
+      int length = XSTRING_CHAR_LENGTH (keys);
       int i;
       struct key_data *raw_keys = alloca_array (struct key_data, length);
       if (length == 0)
@@ -2256,6 +2246,11 @@ it takes to reach a non-prefix command.
 	}
       return raw_lookup_key (keymap, raw_keys, length, 0,
 			     !NILP (accept_default));
+    }
+  else
+    {
+      keys = wrong_type_argument (Qsequencep, keys);
+      return Flookup_key (keymap, keys, accept_default);
     }
 }
 
@@ -3007,7 +3002,7 @@ the keymap, it may or may not be called with them later.  No element of
 the keymap will ever be passed to the function more than once.
 
 The function will not be called on elements of this keymap's parents
-(see the function `keymap-parents') or upon keymaps which are contained
+\(see the function `keymap-parents') or upon keymaps which are contained
 within this keymap (multi-character definitions).
 It will be called on "meta" characters since they are not really
 two-character sequences.
@@ -3321,7 +3316,7 @@ of a character from a buffer rather than a key read from the user.
 {
   Bufbyte buf[200];
   Bufbyte *p;
-  unsigned int c;
+  Emchar c;
   Lisp_Object ctl_arrow = current_buffer->ctl_arrow;
   int ctl_p = !NILP (ctl_arrow);
   Emchar printable_min = (CHAR_OR_CHAR_INTP (ctl_arrow)
@@ -3941,9 +3936,9 @@ describe_map_mapper_shadow_search (Lisp_Object map, void *arg)
   if (EQ (map, c->self))
     return Qzero;		/* Not shadowed; terminate search */
 
-  return (!NILP (keymap_lookup_directly (map,
-					 c->raw_key->keysym,
-					 c->raw_key->modifiers)))
+  return !NILP (keymap_lookup_directly (map,
+					c->raw_key->keysym,
+					c->raw_key->modifiers))
     ? Qt : Qnil;
 }
 

@@ -77,7 +77,7 @@
 ;  ;; set this to your local server
 ;  "The name of the host running an NNTP server.
 ;If it is a string such as \":DIRECTORY\", then ~/DIRECTORY
-;is used as a news spool.  `gnus-nntp-server' is initialised from NNTPSERVER
+;is used as a news spool.  `gnus-nntp-server' is initialized from NNTPSERVER
 ;environment variable or, if none, this value.")
 
 ;(defvar gnus-nntp-service "nntp"

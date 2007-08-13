@@ -49,9 +49,9 @@ Lisp_Object Qsuspend_resume_hook;
    variables defined with DEFVAR_CONSOLE_LOCAL, that have special
    slots in each console.  The default value occupies the same slot
    in this structure as an individual console's value occupies in
-   that console.  Setting the default value also goes through the alist
-   of consoles and stores into each console that does not say it has a
-   local value.  */
+   that console.  Setting the default value also goes through the
+   list of consoles and stores into each console that does not say
+   it has a local value.  */
 Lisp_Object Vconsole_defaults;
 
 /* This structure marks which slots in a console have corresponding
@@ -92,18 +92,9 @@ DEFINE_CONSOLE_TYPE (dead);
 
 Lisp_Object Vconsole_type_list;
 
-MAC_DEFINE (struct console *, MTconsole_data)
-MAC_DEFINE (struct console_methods *, MTcontype_meth_or_given)
-
 console_type_entry_dynarr *the_console_type_entry_dynarr;
 
 
-static Lisp_Object mark_console (Lisp_Object, void (*) (Lisp_Object));
-static void print_console (Lisp_Object, Lisp_Object, int);
-DEFINE_LRECORD_IMPLEMENTATION ("console", console,
-			       mark_console, print_console, 0, 0, 0,
-			       struct console);
-
 static Lisp_Object
 mark_console (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
@@ -145,11 +136,14 @@ print_console (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   write_c_string (buf, printcharfun);
 }
 
+DEFINE_LRECORD_IMPLEMENTATION ("console", console,
+			       mark_console, print_console, 0, 0, 0,
+			       struct console);
 
 static struct console *
 allocate_console (void)
 {
-  Lisp_Object console = Qnil;
+  Lisp_Object console;
   struct console *con = alloc_lcrecord_type (struct console, lrecord_console);
   struct gcpro gcpro1;
 
@@ -185,10 +179,8 @@ decode_console_type (Lisp_Object type, Error_behavior errb)
   int i;
 
   for (i = 0; i < Dynarr_length (the_console_type_entry_dynarr); i++)
-    {
-      if (EQ (type, Dynarr_at (the_console_type_entry_dynarr, i).symbol))
-	return Dynarr_at (the_console_type_entry_dynarr, i).meths;
-    }
+    if (EQ (type, Dynarr_at (the_console_type_entry_dynarr, i).symbol))
+      return Dynarr_at (the_console_type_entry_dynarr, i).meths;
 
   maybe_signal_simple_error ("Invalid console type", type, Qconsole, errb);
 
@@ -198,9 +190,7 @@ decode_console_type (Lisp_Object type, Error_behavior errb)
 int
 valid_console_type_p (Lisp_Object type)
 {
-  if (decode_console_type (type, ERROR_ME_NOT))
-    return 1;
-  return 0;
+  return decode_console_type (type, ERROR_ME_NOT) != 0;
 }
 
 DEFUN ("valid-console-type-p", Fvalid_console_type_p, 1, 1, 0, /*
@@ -209,10 +199,7 @@ Valid types are 'x, 'tty, and 'stream.
 */
        (console_type))
 {
-  if (valid_console_type_p (console_type))
-    return Qt;
-  else
-    return Qnil;
+  return valid_console_type_p (console_type) ? Qt : Qnil;
 }
 
 DEFUN ("console-type-list", Fconsole_type_list, 0, 0, 0, /*
@@ -306,9 +293,7 @@ Return non-nil if OBJECT is a console.
 */
        (object))
 {
-  if (!CONSOLEP (object))
-    return Qnil;
-  return Qt;
+  return CONSOLEP (object) ? Qt : Qnil;
 }
 
 DEFUN ("console-live-p", Fconsole_live_p, 1, 1, 0, /*
@@ -316,9 +301,7 @@ Return non-nil if OBJECT is a console that has not been deleted.
 */
        (object))
 {
-  if (!CONSOLEP (object) || !CONSOLE_LIVE_P (XCONSOLE (object)))
-    return Qnil;
-  return Qt;
+  return CONSOLEP (object) && CONSOLE_LIVE_P (XCONSOLE (object)) ? Qt : Qnil;
 }
 
 DEFUN ("console-type", Fconsole_type, 0, 1, 0, /*
@@ -359,10 +342,10 @@ CONSOLE defaults to the selected console if omitted.
 }
 
 Lisp_Object
-make_console (struct console *c)
+make_console (struct console *con)
 {
-  Lisp_Object console = Qnil;
-  XSETCONSOLE (console, c);
+  Lisp_Object console;
+  XSETCONSOLE (console, con);
   return console;
 }
 
@@ -418,8 +401,7 @@ name; in such a case, the first console found is returned.)
 
   if (!NILP (type))
     {
-      struct console_methods *conmeths = decode_console_type (type,
-							      ERROR_ME);
+      struct console_methods *conmeths = decode_console_type (type, ERROR_ME);
       canon = canonicalize_console_connection (conmeths, connection,
 					       ERROR_ME_NOT);
       if (UNBOUNDP (canon))
@@ -477,17 +459,17 @@ create_console (Lisp_Object name, Lisp_Object type, Lisp_Object connection,
 {
   /* This function can GC */
   struct console *con;
-  Lisp_Object console = Qnil;
+  Lisp_Object console;
   struct gcpro gcpro1;
-
-  GCPRO1 (console);
 
   console = Ffind_console (connection, type);
   if (!NILP (console))
-    RETURN_UNGCPRO (console);
+    return console;
 
   con = allocate_console ();
   XSETCONSOLE (console, con);
+
+  GCPRO1 (console);
 
   con->conmeths = decode_console_type (type, ERROR_ME);
 
@@ -601,7 +583,7 @@ delete_console_internal (struct console *con, int force,
 			 int called_from_kill_emacs, int from_io_error)
 {
   /* This function can GC */
-  Lisp_Object console = Qnil;
+  Lisp_Object console;
   struct gcpro gcpro1;
 
   /* OK to delete an already-deleted console. */
@@ -794,11 +776,9 @@ the toolbar, glyphs, etc.
 */
        (console))
 {
-  struct console *con = decode_console (console);
+  Lisp_Object type = CONSOLE_TYPE (decode_console (console));
 
-  if (EQ (CONSOLE_TYPE (con), Qtty) || EQ (CONSOLE_TYPE (con), Qstream))
-    return Qnil;
-  return Qt;
+  return !EQ (type, Qtty) && !EQ (type, Qstream) ? Qt : Qnil;
 }
 
 
@@ -812,12 +792,14 @@ unwind_init_sys_modes (Lisp_Object console)
 {
   reinit_initial_console ();
 
-  if (!no_redraw_on_reenter)
+  if (!no_redraw_on_reenter &&
+      CONSOLEP (console) &&
+      CONSOLE_LIVE_P (XCONSOLE (console)))
     {
-      if (CONSOLEP (console) && CONSOLE_LIVE_P (XCONSOLE (console)))
-	MARK_FRAME_CHANGED
-	  (XFRAME (DEVICE_SELECTED_FRAME
-		   (XDEVICE (CONSOLE_SELECTED_DEVICE (XCONSOLE (console))))));
+      struct frame *f =
+	XFRAME (DEVICE_SELECTED_FRAME
+		(XDEVICE (CONSOLE_SELECTED_DEVICE (XCONSOLE (console)))));
+      MARK_FRAME_CHANGED (f);
     }
   return Qnil;
 }
@@ -910,9 +892,6 @@ stuff_buffered_input (Lisp_Object stuffstring)
 # endif
 #endif /* BSD */
 }
-#ifdef HAVE_TTY
-extern Lisp_Object Fconsole_tty_controlling_process(Lisp_Object console);
-#endif
 
 DEFUN ("suspend-console", Fsuspend_console, 0, 1, "", /*
 Suspend a console.  For tty consoles, it sends a signal to suspend
@@ -928,75 +907,71 @@ On such systems, who knows what will happen.
        (console))
 {
 #ifdef HAVE_TTY
-  struct console *c;
+  struct console *con = decode_console (console);
 
-  c = decode_console (console);
+  if (CONSOLE_TTY_P (con))
+    {
+      /*
+       * hide all the unhidden frames so the display code won't update
+       * them while the console is suspended.
+       */
+      Lisp_Object device = CONSOLE_SELECTED_DEVICE (con);
+      if (!NILP (device))
+	{
+	  struct device *d = XDEVICE (device);
+	  Lisp_Object frame_list = DEVICE_FRAME_LIST (d);
+	  while (CONSP (frame_list))
+	    {
+	      struct frame *f = XFRAME (XCAR (frame_list));
+	      if (FRAME_REPAINT_P (f))
+		f->visible = -1;
+	      frame_list = XCDR (frame_list);
+	    }
+	}
+      reset_one_console (con);
+      event_stream_unselect_console (con);
+      sys_suspend_process (XINT (Fconsole_tty_controlling_process (console)));
+    }
+#endif /* HAVE_TTY */
 
-  if (CONSOLE_TTY_P (c))
-  {
-    /*
-     * hide all the unhidden frames so the display code won't update
-     * them while the console is suspended.
-     */
-    Lisp_Object device = CONSOLE_SELECTED_DEVICE (c);
-    if (!NILP (device))
-      {
-	struct device *d = XDEVICE (device);
-	Lisp_Object frame_list = DEVICE_FRAME_LIST (d);
-	while (CONSP (frame_list))
-	  {
-	    struct frame *f = XFRAME (XCAR (frame_list));
-	    if (FRAME_REPAINT_P (f))
-	      f->visible = -1;
-	    frame_list = XCDR (frame_list);
-	  }
-      }
-    reset_one_console (c);
-    event_stream_unselect_console (c);
-    sys_suspend_process(XINT(Fconsole_tty_controlling_process(console)));
-  }
-
-#endif
   return Qnil;
 }
 
 DEFUN ("resume-console", Fresume_console, 1, 1, "", /*
-Re-initialize a previously suspended console.  For tty consoles,
-do stuff to the tty to make it sane again.
+Re-initialize a previously suspended console.
+For tty consoles, do stuff to the tty to make it sane again.
 */
        (console))
 {
 #ifdef HAVE_TTY
-  struct console *c;
+  struct console *con = decode_console (console);
 
-  c = decode_console (console);
-
-  if (CONSOLE_TTY_P (c))
-  {
-    /* raise the selected frame */
-    Lisp_Object device = CONSOLE_SELECTED_DEVICE (c);
-    if (!NILP (device))
-      {
-	struct device *d = XDEVICE (device);
-	Lisp_Object frame = DEVICE_SELECTED_FRAME (d);
-	if (!NILP (frame))
-	  {
-	    /* force the frame to be cleared */
-	    SET_FRAME_CLEAR (XFRAME (frame));
-	    Fraise_frame (frame);
-	  }
-      }
-    init_one_console (c);
-    event_stream_select_console (c);
+  if (CONSOLE_TTY_P (con))
+    {
+      /* raise the selected frame */
+      Lisp_Object device = CONSOLE_SELECTED_DEVICE (con);
+      if (!NILP (device))
+	{
+	  struct device *d = XDEVICE (device);
+	  Lisp_Object frame = DEVICE_SELECTED_FRAME (d);
+	  if (!NILP (frame))
+	    {
+	      /* force the frame to be cleared */
+	      SET_FRAME_CLEAR (XFRAME (frame));
+	      Fraise_frame (frame);
+	    }
+	}
+      init_one_console (con);
+      event_stream_select_console (con);
 #ifdef SIGWINCH
-    /* The same as in Fsuspend_emacs: it is possible that a size
-       change occurred while we were suspended.  Assume one did just
-       to be safe.  It won't hurt anything if one didn't. */
-    asynch_device_change_pending++;
+      /* The same as in Fsuspend_emacs: it is possible that a size
+	 change occurred while we were suspended.  Assume one did just
+	 to be safe.  It won't hurt anything if one didn't. */
+      asynch_device_change_pending++;
 #endif
-  }
+    }
+#endif /* HAVE_TTY */
 
-#endif
   return Qnil;
 }
 
@@ -1017,17 +992,10 @@ See also `current-input-mode'.
      (ignored, flow, meta, quit, console))
 {
   struct console *con = decode_console (console);
-  int meta_key = 1;
-
-  if (CONSOLE_TTY_P (con))
-    {
-      if (NILP (meta))
-	meta_key = 0;
-      else if (EQ (meta, Qt))
-	meta_key = 1;
-      else
-	meta_key = 2;
-    }
+  int meta_key = (!CONSOLE_TTY_P (con) ? 1 :
+		  EQ (meta, Qnil)      ? 0 :
+		  EQ (meta, Qt)        ? 1 :
+		  2);
 
   if (!NILP (quit))
     {
@@ -1036,6 +1004,7 @@ See also `current-input-mode'.
 	((unsigned int) XCHAR (quit)) & (meta_key ? 0377 : 0177);
     }
 
+#ifdef HAVE_TTY
   if (CONSOLE_TTY_P (con))
     {
       reset_one_console (con);
@@ -1043,6 +1012,7 @@ See also `current-input-mode'.
       TTY_FLAGS (con).meta_key = meta_key;
       init_one_console (con);
     }
+#endif
 
   return Qnil;
 }
@@ -1065,16 +1035,22 @@ The elements of this list correspond to the arguments of
 */
        (console))
 {
-  Lisp_Object val[4];
   struct console *con = decode_console (console);
+  Lisp_Object flow, meta, quit;
 
-  val[0] = Qnil;
-  val[1] = CONSOLE_TTY_P (con) && TTY_FLAGS (con).flow_control ? Qt : Qnil;
-  val[2] = (!CONSOLE_TTY_P (con) || TTY_FLAGS (con).meta_key == 1) ?
-    Qt : TTY_FLAGS (con).meta_key == 2 ? Qzero : Qnil;
-  val[3] = make_char (CONSOLE_QUIT_CHAR (con));
+#ifdef HAVE_TTY
+  flow = CONSOLE_TTY_P (con) && TTY_FLAGS (con).flow_control ? Qt : Qnil;
+  meta = (!CONSOLE_TTY_P (con) ? Qt :
+	  TTY_FLAGS (con).meta_key == 1 ? Qt :
+	  TTY_FLAGS (con).meta_key == 2 ? Qzero :
+	  Qnil);
+#else
+  flow = Qnil;
+  meta = Qt;
+#endif
+  quit = make_char (CONSOLE_QUIT_CHAR (con));
 
-  return Flist (sizeof (val) / sizeof (val[0]), val);
+  return list4 (Qnil, flow, meta, quit);
 }
 
 
@@ -1199,7 +1175,7 @@ static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
   = { { { symbol_value_forward_lheader_initializer,			\
     (struct lcrecord_header *) &(console_local_flags.field_name), 69 },	\
      SYMVAL_CONST_SELECTED_CONSOLE_FORWARD }, magicfun };		\
-     defvar_console_local ((lname), &I_hate_C);			\
+     defvar_console_local ((lname), &I_hate_C);				\
 } while (0)
 
 #define DEFVAR_CONSOLE_DEFAULTS(lname, field_name) do {			\

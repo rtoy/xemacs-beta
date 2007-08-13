@@ -46,4 +46,7 @@ struct tty_font_instance_data
 
 #define FONT_INSTANCE_TTY_CHARSET(c) (TTY_FONT_INSTANCE_DATA (c)->charset)
 
+extern Lisp_Object Vtty_color_alist, Vtty_dynamic_color_bg;
+extern Lisp_Object Vtty_dynamic_color_fg;
+
 #endif /* _XEMACS_OBJECTS_TTY_H_ */

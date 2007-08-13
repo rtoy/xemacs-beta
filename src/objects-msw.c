@@ -28,7 +28,7 @@ Boston, MA 02111-1307, USA.  */
 /* Authorship:
 
    Jamie Zawinski, Chuck Thompson, Ben Wing
-   Rewritten for mswindows by Jonathan Harris, November 1997 for 20.4.
+   Rewritten for mswindows by Jonathan Harris, November 1997 for 21.0.
  */
 
 
@@ -36,6 +36,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
+#include "hash.h"
 
 #include "console-msw.h"
 #include "objects-msw.h"
@@ -744,7 +745,7 @@ mswindows_string_to_color(CONST char *name)
   
       for (i=1; i<strlen(name); i++)
 	{
-	  if (!isxdigit (name[i]))
+	  if (!isxdigit ((int)name[i]))
 	    return(-1);
 	}
       if (strlen(name)==7)
@@ -780,7 +781,7 @@ mswindows_string_to_color(CONST char *name)
 	  name++;
       *c = '\0';
 
-      for(i=0; i<(sizeof (mswindows_X_color_map) / sizeof (colormap_t)); i++)
+      for (i=0; i< countof (mswindows_X_color_map); i++)
 	if (!stricmp (nospaces, mswindows_X_color_map[i].name))
 	  return (mswindows_X_color_map[i].colorref);
     }

@@ -181,9 +181,6 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_CLOSEDIR
 #endif
 
-/* Send signals to subprocesses by "typing" signal chars at them.  */
-/* #define SIGNALS_VIA_CHARACTERS */ /* mrb */
-
 /* This is to prevent memory clobbering on the DPX/2 200.  */
 #define LD_SWITCH_MACHINE "-N -T32"
 

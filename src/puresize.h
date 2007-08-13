@@ -163,6 +163,7 @@ Boston, MA 02111-1307, USA.  */
 
 #endif /* !RAW_PURESIZE */
 
-extern long int get_PURESIZE(void);
+size_t get_PURESIZE (void);
+extern EMACS_INT pure[];
 
 #endif /* PURESIZE_H */

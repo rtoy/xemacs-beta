@@ -34,16 +34,21 @@ Boston, MA 02111-1307, USA.  */
    `extern inline' business, so on those we just do `static inline'.
    */
 
+/* Note to maintainers: This file contains a list of all header files
+   that use the INLINE macro, either directly, or by using DECLARE_LRECORD.
+   i.e. the output of ``grep -l -w 'DECLARE_LRECORD|INLINE' *.h'' */
+
 #define DONT_EXTERN_INLINE_FUNCTIONS
 
 #include <config.h>
 #include "lisp.h"
 #include "buffer.h"
 #include "bytecode.h"
+#include "chartab.h"
 #include "console.h"
 #include "device.h"
-#include "events.h"
 #include "elhash.h"
+#include "events.h"
 #include "extents.h"
 #include "faces.h"
 #include "frame.h"
@@ -55,27 +60,29 @@ Boston, MA 02111-1307, USA.  */
 #include "process.h"
 #include "specifier.h"
 #include "syntax.h"
-#include "toolbar.h"
 #include "window.h"
+
+#ifdef HAVE_TOOLBARS
+#include "toolbar.h"
+#endif
 
 #ifdef HAVE_DATABASE
 #include "database.h"
 #endif
 
+
 #ifdef HAVE_X_WINDOWS
-#include "console-x.h"
 #include "glyphs-x.h"
 #include "gui-x.h"
 #endif
+
 #ifdef FILE_CODING
 #include "file-coding.h"
 #endif
+
 
 #ifdef TOOLTALK
 #include TT_C_H_PATH
 #include "tooltalk.h"
 #endif
 
-#ifdef HAVE_LDAP
-#include "eldap.h"
-#endif

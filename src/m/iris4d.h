@@ -118,7 +118,6 @@ Boston, MA 02111-1307, USA.  */
 
 #undef LIBS_MACHINE
 /* -lsun in case using Yellow Pages for passwords.  */
-/* #define LIBS_MACHINE "-lmld" */ /* mrb */
 #define LIBS_DEBUG
 
 /* Define this if you have a fairly recent system,

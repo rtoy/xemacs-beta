@@ -220,41 +220,18 @@ DECLARE_LRECORD (buffer, struct buffer);
 #define CONCHECK_BUFFER(x) CONCHECK_RECORD (x, buffer)
 
 #define BUFFER_LIVE_P(b) (!NILP ((b)->name))
-extern Lisp_Object Qbuffer_live_p;
-#define CHECK_LIVE_BUFFER(x) 					\
-  do { CHECK_BUFFER (x);					\
-       if (!BUFFER_LIVE_P (XBUFFER (x)))			\
-	 dead_wrong_type_argument (Qbuffer_live_p, (x));	\
-     } while (0)
-#define CONCHECK_LIVE_BUFFER(x) 				\
-  do { CONCHECK_BUFFER (x);					\
-       if (!BUFFER_LIVE_P (XBUFFER (x)))			\
-	 x = wrong_type_argument (Qbuffer_live_p, (x));		\
-     } while (0)
 
-#define BUFFER_OR_STRING_P(x) (BUFFERP (x) || STRINGP (x))
+#define CHECK_LIVE_BUFFER(x) do {			\
+  CHECK_BUFFER (x);					\
+  if (!BUFFER_LIVE_P (XBUFFER (x)))			\
+    dead_wrong_type_argument (Qbuffer_live_p, (x));	\
+} while (0)
 
-extern Lisp_Object Qbuffer_or_string_p;
-#define CHECK_BUFFER_OR_STRING(x)				\
-  do { if (!BUFFER_OR_STRING_P (x))				\
-	 dead_wrong_type_argument (Qbuffer_or_string_p, (x));	\
-     } while (0)
-#define CONCHECK_BUFFER_OR_STRING(x)				\
-  do { if (!BUFFER_OR_STRING_P (x))				\
-	 x = wrong_type_argument (Qbuffer_or_string_p, (x));	\
-     } while (0)
-
-#define CHECK_LIVE_BUFFER_OR_STRING(x)				\
-  do { CHECK_BUFFER_OR_STRING (x);				\
-       if (BUFFERP (x))						\
-	 CHECK_LIVE_BUFFER (x);					\
-     } while (0)
-#define CONCHECK_LIVE_BUFFER_OR_STRING(x)			\
-  do { CONCHECK_BUFFER_OR_STRING (x);				\
-       if (BUFFERP (x))						\
-	 CONCHECK_LIVE_BUFFER (x);				\
-     } while (0)
-
+#define CONCHECK_LIVE_BUFFER(x) do {			\
+  CONCHECK_BUFFER (x);					\
+  if (!BUFFER_LIVE_P (XBUFFER (x)))			\
+    x = wrong_type_argument (Qbuffer_live_p, (x));	\
+} while (0)
 
 
 /* NOTE: In all the following macros, we follow these rules concerning
@@ -265,20 +242,19 @@ extern Lisp_Object Qbuffer_or_string_p;
       This should probably be changed, but this follows the way
       that all the macros in lisp.h do things.
    3) 'struct buffer *' arguments can be evaluated more than once.
-   4) Nothing else can be evaluated more than once.  Use MTxx
-      variables to prevent multiple evaluation.
+   4) Nothing else can be evaluated more than once.  Use inline
+      functions, if necessary, to prevent multiple evaluation.
    5) An exception to (4) is that there are some macros below that
       may evaluate their arguments more than once.  They are all
       denoted with the word "unsafe" in their name and are generally
       meant to be called only by other macros that have already
       stored the calling values in temporary variables.
-
  */
 
 /************************************************************************/
-/*                                                                      */
-/*                 working with raw internal-format data                */
-/*                                                                      */
+/*									*/
+/*		   working with raw internal-format data		*/
+/*									*/
 /************************************************************************/
 
 /* Use these on contiguous strings of data.  If the text you're
@@ -431,25 +407,19 @@ extern Lisp_Object Qbuffer_or_string_p;
 #define inc_charptr_fun(ptr) real_inc_charptr_fun (ptr)
 #endif
 
-#define REAL_INC_CHARPTR(ptr) do		\
-{						\
-  real_inc_charptr_fun (ptr);			\
+#define REAL_INC_CHARPTR(ptr) ((void) (real_inc_charptr_fun (ptr)))
+
+#define INC_CHARPTR(ptr) do {		\
+  ASSERT_VALID_CHARPTR (ptr);		\
+  REAL_INC_CHARPTR (ptr);		\
 } while (0)
 
-#define INC_CHARPTR(ptr) do			\
-{						\
-  ASSERT_VALID_CHARPTR (ptr);			\
-  REAL_INC_CHARPTR (ptr);			\
-} while (0)
-
-#define REAL_DEC_CHARPTR(ptr) do		\
-{						\
-  (ptr)--;					\
+#define REAL_DEC_CHARPTR(ptr) do {	\
+  (ptr)--;				\
 } while (!VALID_CHARPTR_P (ptr))
 
 #ifdef ERROR_CHECK_BUFPOS
-#define DEC_CHARPTR(ptr) do			  \
-{						  \
+#define DEC_CHARPTR(ptr) do {			  \
   CONST Bufbyte *__dcptr__ = (ptr);		  \
   CONST Bufbyte *__dcptr2__ = __dcptr__;	  \
   REAL_DEC_CHARPTR (__dcptr2__);		  \
@@ -463,16 +433,14 @@ extern Lisp_Object Qbuffer_or_string_p;
 
 #ifdef MULE
 
-#define VALIDATE_CHARPTR_BACKWARD(ptr) do	\
-{						\
+#define VALIDATE_CHARPTR_BACKWARD(ptr) do {	\
   while (!VALID_CHARPTR_P (ptr)) ptr--;		\
 } while (0)
 
 /* This needs to be trickier to avoid the possibility of running off
    the end of the string. */
 
-#define VALIDATE_CHARPTR_FORWARD(ptr) do	\
-{						\
+#define VALIDATE_CHARPTR_FORWARD(ptr) do {	\
   Bufbyte *__vcfptr__ = (ptr);			\
   VALIDATE_CHARPTR_BACKWARD (__vcfptr__);	\
   if (__vcfptr__ != (ptr))			\
@@ -608,7 +576,7 @@ XCHAR_OR_CHAR_INT (Lisp_Object obj)
     x = make_char (XINT (x));			\
   else						\
     x = wrong_type_argument (Qcharacterp, x);	\
-  } while (0)
+} while (0)
 
 #ifdef MULE
 # define MAX_EMCHAR_LEN 4
@@ -618,7 +586,7 @@ XCHAR_OR_CHAR_INT (Lisp_Object obj)
 
 
 /*----------------------------------------------------------------------*/
-/*          Accessor macros for important positions in a buffer         */
+/*	    Accessor macros for important positions in a buffer		*/
 /*----------------------------------------------------------------------*/
 
 /* We put them here because some stuff below wants them before the
@@ -648,7 +616,7 @@ XCHAR_OR_CHAR_INT (Lisp_Object obj)
 #define BUF_PT(buf) ((buf)->bufpt + 0)
 
 /*----------------------------------------------------------------------*/
-/*              Converting between positions and addresses              */
+/*		Converting between positions and addresses		*/
 /*----------------------------------------------------------------------*/
 
 /* Convert the address of a byte in the buffer into a position.  */
@@ -691,7 +659,7 @@ BI_BUF_BYTE_ADDRESS_BEFORE (struct buffer *buf, Bytind pos)
   BI_BUF_BYTE_ADDRESS_BEFORE (buf, bufpos_to_bytind (buf, pos))
 
 /*----------------------------------------------------------------------*/
-/*          Converting between byte indices and memory indices          */
+/*	    Converting between byte indices and memory indices		*/
 /*----------------------------------------------------------------------*/
 
 INLINE int valid_memind_p (struct buffer *buf, Memind x);
@@ -710,34 +678,22 @@ bytind_to_memind (struct buffer *buf, Bytind x)
   return (Memind) ((x > (buf)->text->gpt) ? (x + (buf)->text->gap_size) : x);
 }
 
+
+INLINE Bytind memind_to_bytind (struct buffer *buf, Memind x);
+INLINE Bytind
+memind_to_bytind (struct buffer *buf, Memind x)
+{
 #ifdef ERROR_CHECK_BUFPOS
-
-INLINE Bytind memind_to_bytind (struct buffer *buf, Memind x);
-INLINE Bytind
-memind_to_bytind (struct buffer *buf, Memind x)
-{
   assert (valid_memind_p (buf, x));
-  return (Bytind) ((x > (Memind) (buf)->text->gpt) ?
-		   x - (buf)->text->gap_size :
-		   x);
-}
-
-#else
-
-INLINE Bytind memind_to_bytind (struct buffer *buf, Memind x);
-INLINE Bytind
-memind_to_bytind (struct buffer *buf, Memind x)
-{
-  return (Bytind) ((x > (Memind) (buf)->text->gpt) ?
-		   x - (buf)->text->gap_size :
-		   x);
-}
-
 #endif
+  return (Bytind) ((x > (Memind) (buf)->text->gpt) ?
+		   x - (buf)->text->gap_size :
+		   x);
+}
 
-#define memind_to_bufpos(buf, x)					\
+#define memind_to_bufpos(buf, x) \
   bytind_to_bufpos (buf, memind_to_bytind (buf, x))
-#define bufpos_to_memind(buf, x)					\
+#define bufpos_to_memind(buf, x) \
   bytind_to_memind (buf, bufpos_to_bytind (buf, x))
 
 /* These macros generalize many standard buffer-position functions to
@@ -756,22 +712,22 @@ memind_to_bytind (struct buffer *buf, Memind x)
 /* Converting between Bufpos's and Bytinds, for a buffer-or-string.
    For strings, this maps to the bytecount<->charcount converters. */
 
-#define buffer_or_string_bufpos_to_bytind(obj, pos) 			\
-  (BUFFERP (obj) ? bufpos_to_bytind (XBUFFER (obj), pos) :		\
+#define buffer_or_string_bufpos_to_bytind(obj, pos)		\
+  (BUFFERP (obj) ? bufpos_to_bytind (XBUFFER (obj), pos) :	\
    (Bytind) charcount_to_bytecount (XSTRING_DATA (obj), pos))
 
-#define buffer_or_string_bytind_to_bufpos(obj, ind) 			\
-  (BUFFERP (obj) ? bytind_to_bufpos (XBUFFER (obj), ind) :		\
+#define buffer_or_string_bytind_to_bufpos(obj, ind)		\
+  (BUFFERP (obj) ? bytind_to_bufpos (XBUFFER (obj), ind) :	\
    (Bufpos) bytecount_to_charcount (XSTRING_DATA (obj), ind))
 
 /* Similar for Bufpos's and Meminds. */
 
-#define buffer_or_string_bufpos_to_memind(obj, pos) 			\
-  (BUFFERP (obj) ? bufpos_to_memind (XBUFFER (obj), pos) :		\
+#define buffer_or_string_bufpos_to_memind(obj, pos)		\
+  (BUFFERP (obj) ? bufpos_to_memind (XBUFFER (obj), pos) :	\
    (Memind) charcount_to_bytecount (XSTRING_DATA (obj), pos))
 
-#define buffer_or_string_memind_to_bufpos(obj, ind) 			\
-  (BUFFERP (obj) ? memind_to_bufpos (XBUFFER (obj), ind) :		\
+#define buffer_or_string_memind_to_bufpos(obj, ind)		\
+  (BUFFERP (obj) ? memind_to_bufpos (XBUFFER (obj), ind) :	\
    (Bufpos) bytecount_to_charcount (XSTRING_DATA (obj), ind))
 
 /************************************************************************/
@@ -851,7 +807,7 @@ memind_to_bytind (struct buffer *buf, Memind x)
 
 
 /*----------------------------------------------------------------------*/
-/*                       working with byte indices                      */
+/*			 working with byte indices			*/
 /*----------------------------------------------------------------------*/
 
 #ifdef MULE
@@ -863,20 +819,17 @@ memind_to_bytind (struct buffer *buf, Memind x)
 
 #ifdef ERROR_CHECK_BUFPOS
 
-# define ASSERT_VALID_BYTIND_UNSAFE(buf, x) do			\
-{								\
+# define ASSERT_VALID_BYTIND_UNSAFE(buf, x) do {		\
   assert (BUFFER_LIVE_P (buf));					\
   assert ((x) >= BI_BUF_BEG (buf) && x <= BI_BUF_Z (buf));	\
   assert (VALID_BYTIND_P (buf, x));				\
 } while (0)
-# define ASSERT_VALID_BYTIND_BACKWARD_UNSAFE(buf, x) do		\
-{								\
+# define ASSERT_VALID_BYTIND_BACKWARD_UNSAFE(buf, x) do {	\
   assert (BUFFER_LIVE_P (buf));					\
   assert ((x) > BI_BUF_BEG (buf) && x <= BI_BUF_Z (buf));	\
   assert (VALID_BYTIND_P (buf, x));				\
 } while (0)
-# define ASSERT_VALID_BYTIND_FORWARD_UNSAFE(buf, x) do		\
-{								\
+# define ASSERT_VALID_BYTIND_FORWARD_UNSAFE(buf, x) do {	\
   assert (BUFFER_LIVE_P (buf));					\
   assert ((x) >= BI_BUF_BEG (buf) && x < BI_BUF_Z (buf));	\
   assert (VALID_BYTIND_P (buf, x));				\
@@ -968,7 +921,7 @@ next_bytind (struct buffer *buf, Bytind x)
 #define BYTIND_INVALID ((Bytind) -1)
 
 /*----------------------------------------------------------------------*/
-/*         Converting between buffer positions and byte indices         */
+/*	   Converting between buffer positions and byte indices		*/
 /*----------------------------------------------------------------------*/
 
 #ifdef MULE
@@ -1089,9 +1042,9 @@ Bufpos bytind_to_bufpos (struct buffer *buf, Bytind x);
 
 
 /************************************************************************/
-/*                                                                      */
-/*                  working with externally-formatted data              */
-/*                                                                      */
+/*									*/
+/*		    working with externally-formatted data		*/
+/*									*/
 /************************************************************************/
 
 /* Sometimes strings need to be converted into one or another
@@ -1109,21 +1062,21 @@ Bufpos bytind_to_bufpos (struct buffer *buf, Bytind x);
    circumstances, do not call these functions; call the front ends
    below. */
 
-CONST Extbyte *convert_to_external_format (CONST Bufbyte *ptr,
-					   Bytecount len,
-					   Extcount *len_out,
-					   enum external_data_format fmt);
-CONST Bufbyte *convert_from_external_format (CONST Extbyte *ptr,
-					     Extcount len,
-					     Bytecount *len_out,
-					     enum external_data_format fmt);
+Extbyte *convert_to_external_format (CONST Bufbyte *ptr,
+				     Bytecount len,
+				     Extcount *len_out,
+				     enum external_data_format fmt);
+Bufbyte *convert_from_external_format (CONST Extbyte *ptr,
+				       Extcount len,
+				       Bytecount *len_out,
+				       enum external_data_format fmt);
 
 #else /* ! MULE */
 
 #define convert_to_external_format(ptr, len, len_out, fmt) \
-     (*(len_out) = (int) (len), (CONST Extbyte *) (ptr))
+     (*(len_out) = (int) (len), (Extbyte *) (ptr))
 #define convert_from_external_format(ptr, len, len_out, fmt) \
-     (*(len_out) = (Bytecount) (len), (CONST Bufbyte *) (ptr))
+     (*(len_out) = (Bytecount) (len), (Bufbyte *) (ptr))
 
 #endif /* ! MULE */
 
@@ -1147,6 +1100,8 @@ CONST Bufbyte *convert_from_external_format (CONST Extbyte *ptr,
 	 as you are liable to lose embedded nulls and such.  This could
 	 be a big problem for routines that want Unicode-formatted data,
 	 which is likely to have lots of embedded nulls in it.
+	 (In the real world, though, external Unicode data will be UTF-8,
+	 which will not have embedded nulls and is ASCII-compatible - martin)
 
    -- Functions that work with Lisp strings accept strings as Lisp Objects
       (as opposed to the `struct Lisp_String *' for some of the other
@@ -1180,80 +1135,71 @@ CONST Bufbyte *convert_from_external_format (CONST Extbyte *ptr,
 
 #ifdef MULE
 
-#define GET_CHARPTR_EXT_DATA_ALLOCA(ptr, len, fmt, stick_value_here, stick_len_here) \
-do									\
+#define GET_CHARPTR_EXT_DATA_ALLOCA(ptr, len, fmt, ptr_out, len_out) do	\
 {									\
-  Bytecount __gceda_len_in__ = (len);					\
-  Extcount  __gceda_len_out__;						\
-  CONST Bufbyte *__gceda_ptr_in__ = (ptr);				\
-  CONST Extbyte *__gceda_ptr_out__;					\
-									\
-  __gceda_ptr_out__ =							\
-     convert_to_external_format (__gceda_ptr_in__, __gceda_len_in__,	\
-				&__gceda_len_out__, fmt);		\
+  Bytecount gceda_len_in = (Bytecount) (len);				\
+  Extcount  gceda_len_out;						\
+  CONST Bufbyte *gceda_ptr_in = (ptr);					\
+  Extbyte *gceda_ptr_out =						\
+     convert_to_external_format (gceda_ptr_in, gceda_len_in,		\
+				&gceda_len_out, fmt);			\
   /* If the new string is identical to the old (will be the case most	\
      of the time), just return the same string back.  This saves	\
      on alloca()ing, which can be useful on C alloca() machines and	\
      on stack-space-challenged environments. */				\
-     									\
-  if (__gceda_len_in__ == __gceda_len_out__ &&				\
-      !memcmp (__gceda_ptr_in__, __gceda_ptr_out__, __gceda_len_out__))	\
+									\
+  if (gceda_len_in == gceda_len_out &&					\
+      !memcmp (gceda_ptr_in, gceda_ptr_out, gceda_len_out))		\
     {									\
-      (stick_value_here) = (CONST Extbyte *) __gceda_ptr_in__;		\
-      (stick_len_here) = (Extcount) __gceda_len_in__;			\
+      (ptr_out) = (Extbyte *) gceda_ptr_in;				\
+      (len_out) = (Extcount) gceda_len_in;				\
     }									\
   else									\
     {									\
-      (stick_value_here) = (CONST Extbyte *) alloca(1 + __gceda_len_out__);\
-      memcpy ((Extbyte *) stick_value_here, __gceda_ptr_out__,		\
-	      1 + __gceda_len_out__);					\
-      (stick_len_here) = (Extcount) __gceda_len_out__;			\
+      (ptr_out) = (Extbyte *) alloca (1 + gceda_len_out);		\
+      memcpy ((void *) ptr_out, gceda_ptr_out, 1 + gceda_len_out);	\
+      (len_out) = (Extcount) gceda_len_out;				\
     }									\
 } while (0)
 
 #else /* ! MULE */
 
-#define GET_CHARPTR_EXT_DATA_ALLOCA(ptr, len, fmt, stick_value_here, stick_len_here)\
-do								\
-{								\
-  (stick_value_here) = (CONST Extbyte *) (ptr);			\
-  (stick_len_here) = (Extcount) (len);				\
+#define GET_CHARPTR_EXT_DATA_ALLOCA(ptr, len, fmt, ptr_out, len_out) do	\
+{					\
+  (ptr_out) = (Extbyte *) (ptr);	\
+  (len_out) = (Extcount) (len);		\
 } while (0)
 
 #endif /* ! MULE */
 
-#define GET_C_CHARPTR_EXT_DATA_ALLOCA(ptr, fmt, stick_value_here)	\
-do									\
-{									\
-  Extcount __gcceda_ignored_len__;					\
-  CONST char *__gcceda_ptr_in__;					\
-  CONST Extbyte *__gcceda_ptr_out__;					\
-									\
-  __gcceda_ptr_in__ = ptr;						\
-  GET_CHARPTR_EXT_DATA_ALLOCA ((CONST Extbyte *) __gcceda_ptr_in__,	\
-			       strlen (__gcceda_ptr_in__), fmt,		\
-			       __gcceda_ptr_out__,			\
-				__gcceda_ignored_len__);		\
-  (stick_value_here) = (CONST char *) __gcceda_ptr_out__;		\
+#define GET_C_CHARPTR_EXT_DATA_ALLOCA(ptr, fmt, ptr_out) do	\
+{								\
+  Extcount gcceda_ignored_len;					\
+  CONST Bufbyte *gcceda_ptr_in = (CONST Bufbyte *) (ptr);	\
+  Extbyte *gcceda_ptr_out;					\
+								\
+  GET_CHARPTR_EXT_DATA_ALLOCA (gcceda_ptr_in,			\
+			       strlen ((char *) gcceda_ptr_in),	\
+			       fmt,				\
+			       gcceda_ptr_out,			\
+			       gcceda_ignored_len);		\
+  (ptr_out) = (char *) gcceda_ptr_out;				\
 } while (0)
 
-#define GET_C_CHARPTR_EXT_BINARY_DATA_ALLOCA(ptr, stick_value_here) \
-  GET_C_CHARPTR_EXT_DATA_ALLOCA (ptr, FORMAT_BINARY, stick_value_here)
-#define GET_CHARPTR_EXT_BINARY_DATA_ALLOCA(ptr, len, stick_value_here, stick_len_here) \
-  GET_CHARPTR_EXT_DATA_ALLOCA (ptr, len, FORMAT_BINARY, stick_value_here, \
-			       stick_len_here)
+#define GET_C_CHARPTR_EXT_BINARY_DATA_ALLOCA(ptr, ptr_out) \
+  GET_C_CHARPTR_EXT_DATA_ALLOCA (ptr, FORMAT_BINARY, ptr_out)
+#define GET_CHARPTR_EXT_BINARY_DATA_ALLOCA(ptr, len, ptr_out, len_out) \
+  GET_CHARPTR_EXT_DATA_ALLOCA (ptr, len, FORMAT_BINARY, ptr_out, len_out)
 
-#define GET_C_CHARPTR_EXT_FILENAME_DATA_ALLOCA(ptr, stick_value_here) \
-  GET_C_CHARPTR_EXT_DATA_ALLOCA (ptr, FORMAT_FILENAME, stick_value_here)
-#define GET_CHARPTR_EXT_FILENAME_DATA_ALLOCA(ptr, len, stick_value_here, stick_len_here) \
-  GET_CHARPTR_EXT_DATA_ALLOCA (ptr, len, FORMAT_FILENAME, stick_value_here, \
-			       stick_len_here)
+#define GET_C_CHARPTR_EXT_FILENAME_DATA_ALLOCA(ptr, ptr_out) \
+  GET_C_CHARPTR_EXT_DATA_ALLOCA (ptr, FORMAT_FILENAME, ptr_out)
+#define GET_CHARPTR_EXT_FILENAME_DATA_ALLOCA(ptr, len, ptr_out, len_out) \
+  GET_CHARPTR_EXT_DATA_ALLOCA (ptr, len, FORMAT_FILENAME, ptr_out, len_out)
 
-#define GET_C_CHARPTR_EXT_CTEXT_DATA_ALLOCA(ptr, stick_value_here) \
-  GET_C_CHARPTR_EXT_DATA_ALLOCA (ptr, FORMAT_CTEXT, stick_value_here)
-#define GET_CHARPTR_EXT_CTEXT_DATA_ALLOCA(ptr, len, stick_value_here, stick_len_here) \
-  GET_CHARPTR_EXT_DATA_ALLOCA (ptr, len, FORMAT_CTEXT, stick_value_here, \
-			       stick_len_here)
+#define GET_C_CHARPTR_EXT_CTEXT_DATA_ALLOCA(ptr, ptr_out) \
+  GET_C_CHARPTR_EXT_DATA_ALLOCA (ptr, FORMAT_CTEXT, ptr_out)
+#define GET_CHARPTR_EXT_CTEXT_DATA_ALLOCA(ptr, len, ptr_out, len_out) \
+  GET_CHARPTR_EXT_DATA_ALLOCA (ptr, len, FORMAT_CTEXT, ptr_out, len_out)
 
 /* Maybe convert external charptr's data into internal format and store
    the result in alloca()'ed space.
@@ -1269,80 +1215,71 @@ do									\
 
 #ifdef MULE
 
-#define GET_CHARPTR_INT_DATA_ALLOCA(ptr, len, fmt, stick_value_here, stick_len_here)\
-do									\
+#define GET_CHARPTR_INT_DATA_ALLOCA(ptr, len, fmt, ptr_out, len_out) do	\
 {									\
-  Extcount __gcida_len_in__ = (len);					\
-  Bytecount __gcida_len_out__;						\
-  CONST Extbyte *__gcida_ptr_in__ = (ptr);				\
-  CONST Bufbyte *__gcida_ptr_out__;					\
-									\
-  __gcida_ptr_out__ =							\
-     convert_from_external_format (__gcida_ptr_in__, __gcida_len_in__,	\
-				  &__gcida_len_out__, fmt);		\
+  Extcount gcida_len_in = (Extcount) (len);				\
+  Bytecount gcida_len_out;						\
+  CONST Extbyte *gcida_ptr_in  = (ptr);					\
+  Bufbyte *gcida_ptr_out =						\
+     convert_from_external_format (gcida_ptr_in, gcida_len_in,		\
+				  &gcida_len_out, fmt);			\
   /* If the new string is identical to the old (will be the case most	\
      of the time), just return the same string back.  This saves	\
      on alloca()ing, which can be useful on C alloca() machines and	\
      on stack-space-challenged environments. */				\
-     									\
-  if (__gcida_len_in__ == __gcida_len_out__ &&				\
-      !memcmp (__gcida_ptr_in__, __gcida_ptr_out__, __gcida_len_out__))	\
+									\
+  if (gcida_len_in == gcida_len_out &&					\
+      !memcmp (gcida_ptr_in, gcida_ptr_out, gcida_len_out))		\
     {									\
-      (stick_value_here) = (CONST Bufbyte *) __gcida_ptr_in__;		\
-      (stick_len_here) = (Bytecount) __gcida_len_in__;			\
+      (ptr_out) = (Bufbyte *) gcida_ptr_in;				\
+      (len_out) = (Bytecount) gcida_len_in;				\
     }									\
   else									\
     {									\
-      (stick_value_here) = (CONST Extbyte *) alloca (1 + __gcida_len_out__);		\
-      memcpy ((Bufbyte *) stick_value_here, __gcida_ptr_out__,		\
-	      1 + __gcida_len_out__); 					\
-      (stick_len_here) = __gcida_len_out__;				\
+      (ptr_out) = (Extbyte *) alloca (1 + gcida_len_out);		\
+      memcpy ((void *) ptr_out, gcida_ptr_out, 1 + gcida_len_out);	\
+      (len_out) = gcida_len_out;					\
     }									\
 } while (0)
 
 #else /* ! MULE */
 
-#define GET_CHARPTR_INT_DATA_ALLOCA(ptr, len, fmt, stick_value_here, stick_len_here)\
-do						\
-{						\
-  (stick_value_here) = (CONST Bufbyte *) (ptr);	\
-  (stick_len_here) = (Bytecount) (len);		\
+#define GET_CHARPTR_INT_DATA_ALLOCA(ptr, len, fmt, ptr_out, len_out) do \
+{					\
+  (ptr_out) = (Bufbyte *) (ptr);	\
+  (len_out) = (Bytecount) (len);	\
 } while (0)
 
 #endif /* ! MULE */
 
-#define GET_C_CHARPTR_INT_DATA_ALLOCA(ptr, fmt, stick_value_here)	\
-do									\
-{									\
-  Bytecount __gccida_ignored_len__;					\
-  CONST char *__gccida_ptr_in__;					\
-  CONST Bufbyte *__gccida_ptr_out__;					\
-									\
-  __gccida_ptr_in__ = ptr;						\
-  GET_CHARPTR_INT_DATA_ALLOCA ((CONST Extbyte *) __gccida_ptr_in__,	\
-			       strlen (__gccida_ptr_in__), fmt,		\
-			       __gccida_ptr_out__,			\
-				__gccida_ignored_len__);		\
-  (stick_value_here) = (CONST char *) __gccida_ptr_out__;		\
+#define GET_C_CHARPTR_INT_DATA_ALLOCA(ptr, fmt, ptr_out) do	\
+{								\
+  Bytecount gccida_ignored_len;					\
+  CONST Extbyte *gccida_ptr_in = (CONST Extbyte *) (ptr);	\
+  Bufbyte *gccida_ptr_out;					\
+								\
+  GET_CHARPTR_INT_DATA_ALLOCA (gccida_ptr_in,			\
+			       strlen ((char *) gccida_ptr_in),	\
+			       fmt,				\
+			       gccida_ptr_out,			\
+			       gccida_ignored_len);		\
+  (ptr_out) = gccida_ptr_out;					\
 } while (0)
 
-#define GET_C_CHARPTR_INT_BINARY_DATA_ALLOCA(ptr, stick_value_here) \
-  GET_C_CHARPTR_INT_DATA_ALLOCA (ptr, FORMAT_BINARY, stick_value_here)
-#define GET_CHARPTR_INT_BINARY_DATA_ALLOCA(ptr, len, stick_value_here, stick_len_here) \
-  GET_CHARPTR_INT_DATA_ALLOCA (ptr, len, FORMAT_BINARY, stick_value_here, \
-			       stick_len_here)
+#define GET_C_CHARPTR_INT_BINARY_DATA_ALLOCA(ptr, ptr_out)	\
+  GET_C_CHARPTR_INT_DATA_ALLOCA (ptr, FORMAT_BINARY, ptr_out)
+#define GET_CHARPTR_INT_BINARY_DATA_ALLOCA(ptr, len, ptr_out, len_out) \
+  GET_CHARPTR_INT_DATA_ALLOCA (ptr, len, FORMAT_BINARY, ptr_out, len_out)
 
-#define GET_C_CHARPTR_INT_FILENAME_DATA_ALLOCA(ptr, stick_value_here) \
-  GET_C_CHARPTR_INT_DATA_ALLOCA (ptr, FORMAT_FILENAME, stick_value_here)
-#define GET_CHARPTR_INT_FILENAME_DATA_ALLOCA(ptr, len, stick_value_here, stick_len_here) \
-  GET_CHARPTR_INT_DATA_ALLOCA (ptr, len, FORMAT_FILENAME, stick_value_here, \
-			       stick_len_here)
+#define GET_C_CHARPTR_INT_FILENAME_DATA_ALLOCA(ptr, ptr_out)	\
+  GET_C_CHARPTR_INT_DATA_ALLOCA (ptr, FORMAT_FILENAME, ptr_out)
+#define GET_CHARPTR_INT_FILENAME_DATA_ALLOCA(ptr, len, ptr_out, len_out) \
+  GET_CHARPTR_INT_DATA_ALLOCA (ptr, len, FORMAT_FILENAME, ptr_out, len_out)
 
-#define GET_C_CHARPTR_INT_CTEXT_DATA_ALLOCA(ptr, stick_value_here) \
-  GET_C_CHARPTR_INT_DATA_ALLOCA (ptr, FORMAT_CTEXT, stick_value_here)
-#define GET_CHARPTR_INT_CTEXT_DATA_ALLOCA(ptr, len, stick_value_here, stick_len_here) \
-  GET_CHARPTR_INT_DATA_ALLOCA (ptr, len, FORMAT_CTEXT, stick_value_here, \
-			       stick_len_here)
+#define GET_C_CHARPTR_INT_CTEXT_DATA_ALLOCA(ptr, ptr_out)	\
+  GET_C_CHARPTR_INT_DATA_ALLOCA (ptr, FORMAT_CTEXT, ptr_out)
+#define GET_CHARPTR_INT_CTEXT_DATA_ALLOCA(ptr, len, ptr_out, len_out) \
+  GET_CHARPTR_INT_DATA_ALLOCA (ptr, len, FORMAT_CTEXT, ptr_out, len_out)
 
 
 /* Maybe convert Lisp string's data into ext-format and store the result in
@@ -1357,56 +1294,49 @@ do									\
    middle of the arguments to the function call and you are unbelievably
    hosed.) */
 
-#define GET_STRING_EXT_DATA_ALLOCA(s, fmt, stick_value_here, stick_len_here)\
-do									   \
-{									   \
-  Extcount __gseda_len__;						   \
-  CONST Extbyte *__gseda_ptr__;						   \
-  struct Lisp_String *__gseda_s__ = XSTRING (s);			   \
-									   \
-  __gseda_ptr__ = convert_to_external_format (string_data (__gseda_s__),   \
-					      string_length (__gseda_s__), \
-					      &__gseda_len__, fmt);	   \
-  (stick_value_here) = (CONST Extbyte *) alloca (1 + __gseda_len__);	   \
-  memcpy ((Extbyte *) stick_value_here, __gseda_ptr__, 1 + __gseda_len__); \
-  (stick_len_here) = __gseda_len__;					   \
-} while (0)
-
-
-#define GET_C_STRING_EXT_DATA_ALLOCA(s, fmt, stick_value_here)	\
-do								\
+#define GET_STRING_EXT_DATA_ALLOCA(s, fmt, ptr_out, len_out) do	\
 {								\
-  Extcount __gcseda_ignored_len__;				\
-  CONST Extbyte *__gcseda_ptr__;				\
-								\
-  GET_STRING_EXT_DATA_ALLOCA (s, fmt, __gcseda_ptr__,		\
-			      __gcseda_ignored_len__);		\
-  (stick_value_here) = (CONST char *) __gcseda_ptr__;		\
+  Extcount gseda_len_out;					\
+  struct Lisp_String *gseda_s = XSTRING (s);			\
+  Extbyte * gseda_ptr_out =					\
+    convert_to_external_format (string_data (gseda_s),		\
+				string_length (gseda_s),	\
+				&gseda_len_out, fmt);		\
+  (ptr_out) = (Extbyte *) alloca (1 + gseda_len_out);		\
+  memcpy ((void *) ptr_out, gseda_ptr_out, 1 + gseda_len_out);	\
+  (len_out) = gseda_len_out;					\
 } while (0)
 
-#define GET_STRING_BINARY_DATA_ALLOCA(s, stick_value_here, stick_len_here) \
-  GET_STRING_EXT_DATA_ALLOCA (s, FORMAT_BINARY, stick_value_here,	   \
-			      stick_len_here)
-#define GET_C_STRING_BINARY_DATA_ALLOCA(s, stick_value_here) \
-  GET_C_STRING_EXT_DATA_ALLOCA (s, FORMAT_BINARY, stick_value_here)
 
-#define GET_STRING_FILENAME_DATA_ALLOCA(s, stick_value_here, stick_len_here) \
-  GET_STRING_EXT_DATA_ALLOCA (s, FORMAT_FILENAME, stick_value_here,	     \
-			      stick_len_here)
-#define GET_C_STRING_FILENAME_DATA_ALLOCA(s, stick_value_here) \
-  GET_C_STRING_EXT_DATA_ALLOCA (s, FORMAT_FILENAME, stick_value_here)
+#define GET_C_STRING_EXT_DATA_ALLOCA(s, fmt, ptr_out) do	\
+{								\
+  Extcount gcseda_ignored_len;					\
+  Extbyte *gcseda_ptr_out;					\
+								\
+  GET_STRING_EXT_DATA_ALLOCA (s, fmt, gcseda_ptr_out,		\
+			      gcseda_ignored_len);		\
+  (ptr_out) = (char *) gcseda_ptr_out;				\
+} while (0)
 
-#define GET_STRING_OS_DATA_ALLOCA(s, stick_value_here, stick_len_here) \
-  GET_STRING_EXT_DATA_ALLOCA (s, FORMAT_OS, stick_value_here,	       \
-			      stick_len_here)
-#define GET_C_STRING_OS_DATA_ALLOCA(s, stick_value_here) \
-  GET_C_STRING_EXT_DATA_ALLOCA (s, FORMAT_OS, stick_value_here)
+#define GET_STRING_BINARY_DATA_ALLOCA(s, ptr_out, len_out)	\
+  GET_STRING_EXT_DATA_ALLOCA (s, FORMAT_BINARY, ptr_out, len_out)
+#define GET_C_STRING_BINARY_DATA_ALLOCA(s, ptr_out)		\
+  GET_C_STRING_EXT_DATA_ALLOCA (s, FORMAT_BINARY, ptr_out)
 
-#define GET_STRING_CTEXT_DATA_ALLOCA(s, stick_value_here, stick_len_here) \
-  GET_STRING_EXT_DATA_ALLOCA (s, FORMAT_CTEXT, stick_value_here,	  \
-			      stick_len_here)
-#define GET_C_STRING_CTEXT_DATA_ALLOCA(s, stick_value_here) \
-  GET_C_STRING_EXT_DATA_ALLOCA (s, FORMAT_CTEXT, stick_value_here)
+#define GET_STRING_FILENAME_DATA_ALLOCA(s, ptr_out, len_out)	\
+  GET_STRING_EXT_DATA_ALLOCA (s, FORMAT_FILENAME, ptr_out, len_out)
+#define GET_C_STRING_FILENAME_DATA_ALLOCA(s, ptr_out)		\
+  GET_C_STRING_EXT_DATA_ALLOCA (s, FORMAT_FILENAME, ptr_out)
+
+#define GET_STRING_OS_DATA_ALLOCA(s, ptr_out, len_out)		\
+  GET_STRING_EXT_DATA_ALLOCA (s, FORMAT_OS, ptr_out, len_out)
+#define GET_C_STRING_OS_DATA_ALLOCA(s, ptr_out)			\
+  GET_C_STRING_EXT_DATA_ALLOCA (s, FORMAT_OS, ptr_out)
+
+#define GET_STRING_CTEXT_DATA_ALLOCA(s, ptr_out, len_out)	\
+  GET_STRING_EXT_DATA_ALLOCA (s, FORMAT_CTEXT, ptr_out, len_out)
+#define GET_C_STRING_CTEXT_DATA_ALLOCA(s, ptr_out)		\
+  GET_C_STRING_EXT_DATA_ALLOCA (s, FORMAT_CTEXT, ptr_out)
 
 
 
@@ -1435,12 +1365,10 @@ do								\
 #define XCHARSET_COLUMNS(cs) 1
 #define XCHARSET_DIMENSION(cs) 1
 #define REP_BYTES_BY_FIRST_BYTE(fb) 1
-#define BREAKUP_CHAR(ch, charset, byte1, byte2)\
-do						\
-{						\
-  (charset) = Vcharset_ascii;			\
-  (byte1) = (ch);				\
-  (byte2) = 0;					\
+#define BREAKUP_CHAR(ch, charset, byte1, byte2) do {	\
+  (charset) = Vcharset_ascii;				\
+  (byte1) = (ch);					\
+  (byte2) = 0;						\
 } while (0)
 #define BYTE_ASCII_P(byte) 1
 
@@ -1591,21 +1519,32 @@ do						\
    (b, BI_BUF_FLOOR_OF_IGNORE_ACCESSIBLE (b, bufpos_to_bytind (b, n)))
 
 
-
-
 extern struct buffer *current_buffer;
 
-/* This structure holds the default values of the buffer-local variables
-   defined with DEFVAR_BUFFER_LOCAL, that have special slots in each buffer.
-   The default value occupies the same slot in this structure
-   as an individual buffer's value occupies in that buffer.
-   Setting the default value also goes through the alist of buffers
-   and stores into each buffer that does not say it has a local value.  */
+EXFUN (Fbuffer_disable_undo, 1);
+EXFUN (Fbuffer_modified_p, 1);
+EXFUN (Fbuffer_name, 1);
+EXFUN (Fcurrent_buffer, 0);
+EXFUN (Ferase_buffer, 1);
+EXFUN (Fget_buffer, 1);
+EXFUN (Fget_buffer_create, 1);
+EXFUN (Fget_file_buffer, 1);
+EXFUN (Fkill_buffer, 1);
+EXFUN (Fother_buffer, 3);
+EXFUN (Frecord_buffer, 1);
+EXFUN (Fset_buffer, 1);
+EXFUN (Fset_buffer_modified_p, 2);
 
-extern Lisp_Object Vbuffer_defaults;
+extern Lisp_Object QSscratch, Qafter_change_function, Qafter_change_functions;
+extern Lisp_Object Qbefore_change_function, Qbefore_change_functions;
+extern Lisp_Object Qbuffer_or_string_p, Qdefault_directory, Qfirst_change_hook;
+extern Lisp_Object Qpermanent_local, Vafter_change_function;
+extern Lisp_Object Vafter_change_functions, Vbefore_change_function;
+extern Lisp_Object Vbefore_change_functions, Vbuffer_alist, Vbuffer_defaults;
+extern Lisp_Object Vinhibit_read_only, Vtransient_mark_mode;
 
 /* This structure marks which slots in a buffer have corresponding
-   default values in buffer_defaults.
+   default values in Vbuffer_defaults.
    Each such slot has a nonzero value in this structure.
    The value has only one nonzero bit.
 
@@ -1615,7 +1554,7 @@ extern Lisp_Object Vbuffer_defaults;
 
    If a slot in this structure is zero, then even though there may
    be a DEFVAR_BUFFER_LOCAL for the slot, there is no default value for it;
-   and the corresponding slot in buffer_defaults is not used.  */
+   and the corresponding slot in Vbuffer_defaults is not used.  */
 
 extern struct buffer buffer_local_flags;
 
@@ -1675,6 +1614,9 @@ void convert_emchar_string_into_bufbyte_dynarr (Emchar *arr, int nels,
 						Bufbyte_dynarr *dyn);
 Bufbyte *convert_emchar_string_into_malloced_string (Emchar *arr, int nels,
 						    Bytecount *len_out);
+/* from marker.c */
+void init_buffer_markers (struct buffer *b);
+void uninit_buffer_markers (struct buffer *b);
 
 /* flags for get_buffer_pos_char(), get_buffer_range_char(), etc. */
 /* At most one of GB_COERCE_RANGE and GB_NO_ERROR_IF_BAD should be
@@ -1769,7 +1711,7 @@ int map_over_sharing_buffers (struct buffer *buf,
   (MIRROR_TRT_TABLE_AS_STRING (table)[ch1] = (Bufbyte) (ch2))
 #endif
 
-# define IN_TRT_TABLE_DOMAIN(c) (((unsigned EMACS_INT) (c)) <= 255)
+# define IN_TRT_TABLE_DOMAIN(c) (((EMACS_UINT) (c)) <= 255)
 
 #ifdef MULE
 #define MIRROR_DOWNCASE_TABLE_AS_STRING(buf) \

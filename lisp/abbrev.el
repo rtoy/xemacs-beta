@@ -57,7 +57,7 @@ Makes the commands to define mode-specific abbrevs define global ones instead."
 This causes `save-some-buffers' to offer to save the abbrevs.")
 
 (defun make-abbrev-table ()
-  "Create a new, empty abbrev table object."
+  "Return a new, empty abbrev table object."
   (make-vector 59 0)) ; 59 is prime
 
 (defun clear-abbrev-table (table)
@@ -125,7 +125,7 @@ To undefine an abbrev, define it with an expansion of `nil'."
             (setq abbrev-table-name-list (delq fixup abbrev-table-name-list))
             (define-abbrev-table (car fixup) (cdr fixup))))
       (setq l (cdr l))))
-  ;; These are no longer initialised by C code
+  ;; These are no longer initialized by C code
   (if (not global-abbrev-table)
       (progn
         (setq global-abbrev-table (make-abbrev-table))
@@ -186,7 +186,7 @@ then ABBREV is looked up in that table only."
   "Undo the expansion of the last abbrev that expanded.
 This differs from ordinary undo in that other editing done since then
 is not undone."
-  (interactive) 
+  (interactive)
   (if (or (< last-abbrev-location (point-min))
           (> last-abbrev-location (point-max))
           (not (stringp last-abbrev-text)))
@@ -216,7 +216,7 @@ a call to `define-abbrev-table', which would
 define the abbrev table NAME exactly as it is currently defined."
   (let ((table (symbol-value name))
         (stream (current-buffer)))
-    (message "Abbrev-table %s..." name) 
+    (message "Abbrev-table %s..." name)
     (if human-readable
         (progn
           (prin1 (list name) stream)
@@ -431,7 +431,7 @@ Don't use this function in a Lisp program; use `define-abbrev' instead."
   (interactive "P")
   (add-abbrev
    (if only-global-abbrevs
-       global-abbrev-table 
+       global-abbrev-table
      (or local-abbrev-table
 	 (error "No per-mode abbrev table")))
    "Mode" arg))
@@ -468,7 +468,7 @@ Don't use this function in a Lisp program; use `define-abbrev' instead."
 	    (y-or-n-p (format "%s expands to \"%s\"; redefine? "
 			      name (abbrev-expansion name table))))
 	(define-abbrev table (downcase name) exp))))
-	
+
 (defun inverse-add-mode-abbrev (arg)
   "Define last word before point as a mode-specific abbrev.
 With prefix argument N, defines the Nth word before point.
@@ -477,7 +477,7 @@ Expands the abbreviation after defining it."
   (interactive "p")
   (inverse-add-abbrev
    (if only-global-abbrevs
-       global-abbrev-table 
+       global-abbrev-table
      (or local-abbrev-table
 	 (error "No per-mode abbrev table")))
    "Mode" arg))

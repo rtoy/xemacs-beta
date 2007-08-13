@@ -74,8 +74,7 @@ The returned list is sorted by pre-order and lexicographically."
   "Check if DIRECTORY is a plausible installation root for XEmacs."
   (or
    ;; installed
-   (file-directory-p
-    (concat directory "lib/xemacs-" (construct-emacs-version)))
+   (file-directory-p (concat directory "lib/xemacs"))
    ;; in-place
    (and 
     (file-directory-p (concat directory "lib-src"))
@@ -98,7 +97,8 @@ The returned list is sorted by pre-order and lexicographically."
       (let ((maybe-symlink (file-symlink-p (concat invocation-directory
 						   invocation-name))))
 	(if maybe-symlink
-	    (let ((directory (file-name-directory maybe-symlink)))
+	    (let* ((symlink (expand-file-name maybe-symlink invocation-directory))
+		   (directory (file-name-directory symlink)))
 	      (paths-find-emacs-root directory invocation-name))
 	  nil))))))
 
@@ -230,12 +230,13 @@ DEFAULT is a fall-back value."
   (let ((invocation-root
 	 (paths-find-emacs-root invocation-directory invocation-name))
 	(installation-root
-	 (if (and configure-prefix-directory
-		  (file-directory-p configure-prefix-directory))
-	     configure-prefix-directory)))
+	 (and configure-prefix-directory
+	      (file-directory-p configure-prefix-directory)
+	      (file-name-as-directory configure-prefix-directory))))
     (append (and invocation-root
 		 (list invocation-root))
 	    (and installation-root
+		 (paths-emacs-root-p installation-root)
 		 (list installation-root)))))
 
 ;;; find-paths.el ends here

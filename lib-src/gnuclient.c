@@ -21,7 +21,7 @@ along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 
- Author: Andy Norman (ange@hplb.hpl.hp.com), based on 
+ Author: Andy Norman (ange@hplb.hpl.hp.com), based on
          'etc/emacsclient.c' from the GNU Emacs 18.52 distribution.
 
  Please mail bugs and suggestions to the author at the above address.
@@ -89,7 +89,7 @@ tell_emacs_to_resume (int sig)
 
   /* Why is SYSV so retarded? */
   /* We want emacs to realize that we are resuming */
-  signal(SIGCONT, tell_emacs_to_resume); 
+  signal(SIGCONT, tell_emacs_to_resume);
 
   connect_type = make_connection (NULL, (u_short) 0, &s);
 
@@ -154,7 +154,7 @@ get_current_working_directory (void)
 		   progname);
 	  exit (1);
 	} /* if */
-    
+
       /* on some systems, cwd can look like '@machine/' ... */
       /* ignore everything before the first '/' */
       for (cp = cwd; *cp && *cp != '/'; ++cp)
@@ -179,7 +179,7 @@ filename_expand (char *fullpath, char *filename)
   int len;
 
   fullpath[0] = '\0';
-  
+
   if (filename[0] && filename[0] != '/')
     {	/* relative filename */
       strcat (fullpath, get_current_working_directory ());
@@ -203,14 +203,18 @@ clean_string (CONST char *s)
   int i = 0;
   char *p, *res;
 
-  for (p = s; *p; p++, i++)
-    {
-      if (*p == '\\' || *p == '\"')
-	++i;
-      else if (*p == '\004')
-	i += 3;
-    }
-  p = res = (char *)malloc (i + 2 + 1);
+  {
+    CONST char *const_p;
+    for (const_p = s; *const_p; const_p++, i++)
+      {
+	if (*const_p == '\\' || *const_p == '\"')
+	  ++i;
+	else if (*const_p == '\004')
+	  i += 3;
+      }
+  }
+
+  p = res = (char *) malloc (i + 2 + 1);
   *p++ = '\"';
   for (; *s; p++, s++)
     {
@@ -523,7 +527,7 @@ main (int argc, char *argv[])
 	  char *ptr;
 	  gethostname (thishost, HOSTNAMSZ);
 	  if (!rflg)
-	    {				/* attempt to generate a path 
+	    {				/* attempt to generate a path
 					 * to this machine */
 	      if ((ptr = getenv ("GNU_NODE")) != NULL)
 		/* user specified a path */
@@ -533,7 +537,7 @@ main (int argc, char *argv[])
 #if defined (hp9000s300) || defined (hp9000s800)
 	  else if (strcmp (thishost,hostarg))
 	    {	/* try /net/thishost */
-	      strcpy (remotepath, "/net/");		/* (this fails using internet 
+	      strcpy (remotepath, "/net/");		/* (this fails using internet
 							   addresses) */
 	      strcat (remotepath, thishost);
 	    }
@@ -547,7 +551,7 @@ main (int argc, char *argv[])
 #endif /* INTERNET_DOMAIN_SOCKETS */
 
 #ifdef SYSV_IPC
-      if ((msgp = (struct msgbuf *) 
+      if ((msgp = (struct msgbuf *)
 	   malloc (sizeof *msgp + GSERV_BUFSZ)) == NULL)
 	{
 	  fprintf (stderr, "%s: not enough memory for message buffer\n", progname);

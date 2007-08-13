@@ -658,8 +658,6 @@ x_bevel_modeline (struct window *w, struct display_line *dl)
 		    background_gc, shadow_thickness);
 }
 
-void debug_print (Lisp_Object); /* kludge! */
-
 /*****************************************************************************
  x_get_gc
 
@@ -785,8 +783,8 @@ x_output_string (struct window *w, struct display_line *dl,
   /* General variables */
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
-  Lisp_Object device = Qnil;
-  Lisp_Object window = Qnil;
+  Lisp_Object device;
+  Lisp_Object window;
   Display *dpy = DEVICE_X_DISPLAY (d);
   Window x_win = XtWindow (FRAME_X_TEXT_WIDGET (f));
 
@@ -2091,12 +2089,7 @@ x_output_eol_cursor (struct window *w, struct display_line *dl, int xpos,
 
   gc = x_get_gc (d, Qnil, cursor_cachel->background, Qnil, Qnil, Qnil);
 
-  {
-    Lisp_Object window = Qnil;
-
-    XSETWINDOW (window, w);
-    default_face_font_info (window, &defascent, 0, &defheight, 0, 0);
-  }
+  default_face_font_info (window, &defascent, 0, &defheight, 0, 0);
 
   /* make sure the cursor is entirely contained between y and y+height */
   cursor_height = min (defheight, height);

@@ -541,8 +541,7 @@ init_frame_scrollbars (struct frame *f)
 
   if (HAS_DEVMETH_P (d, create_scrollbar_instance))
     {
-      Lisp_Object frame = Qnil;
-
+      Lisp_Object frame;
       XSETFRAME (frame, f);
       call_critical_lisp_code (XDEVICE (FRAME_DEVICE (f)),
 			       Qinit_scrollbar_from_resources,
@@ -555,8 +554,7 @@ init_device_scrollbars (struct device *d)
 {
   if (HAS_DEVMETH_P (d, create_scrollbar_instance))
     {
-      Lisp_Object device = Qnil;
-
+      Lisp_Object device;
       XSETDEVICE (device, d);
       call_critical_lisp_code (d,
 			       Qinit_scrollbar_from_resources,
@@ -705,7 +703,7 @@ behavior.
 
 DEFUN ("scrollbar-page-up", Fscrollbar_page_up, 1, 1, 0, /*
 Function called when the user gives the "page-up" scrollbar action.
-(The way this is done can vary from scrollbar to scrollbar.) One argument,
+\(The way this is done can vary from scrollbar to scrollbar.) One argument,
 a cons containing the scrollbar's window and a value (#### document me!
 This value is nil for Motif/Lucid scrollbars and a number for Athena
 scrollbars).  You can advise this function to change the scrollbar
@@ -746,7 +744,7 @@ behavior.
 
 DEFUN ("scrollbar-page-down", Fscrollbar_page_down, 1, 1, 0, /*
 Function called when the user gives the "page-down" scrollbar action.
-(The way this is done can vary from scrollbar to scrollbar.) One argument,
+\(The way this is done can vary from scrollbar to scrollbar.) One argument,
 a cons containing the scrollbar's window and a value (#### document me!
 This value is nil for Motif/Lucid scrollbars and a number for Athena
 scrollbars).  You can advise this function to change the scrollbar
@@ -834,7 +832,7 @@ change the scrollbar behavior.
 }
 
 DEFUN ("scrollbar-set-hscroll", Fscrollbar_set_hscroll, 2, 2, 0, /*
-Sets WINDOW's hscroll position to VALUE.
+Set WINDOW's hscroll position to VALUE.
 This ensures that VALUE is in the proper range for the horizontal scrollbar.
 */
        (window, value))

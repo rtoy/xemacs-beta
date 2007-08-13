@@ -26,7 +26,7 @@ Boston, MA 02111-1307, USA.  */
 
    Chuck Thompson
    Lots of work done by Ben Wing for Mule
-   Partially rewritten for mswindows by Jonathan Harris, November 1997 for 20.4.
+   Partially rewritten for mswindows by Jonathan Harris, November 1997 for 21.0.
  */
 
 #include <config.h>
@@ -427,7 +427,7 @@ mswindows_output_string (struct window *w, struct display_line *dl,
 {
   struct frame *f = XFRAME (w->frame);
   /* struct device *d = XDEVICE (f->device);*/
-  Lisp_Object window = Qnil;
+  Lisp_Object window;
   HDC hdc = FRAME_MSWINDOWS_DC (f);
   int clip_end;
   Lisp_Object bg_pmap;
@@ -554,7 +554,6 @@ mswindows_output_pixmap (struct window *w, struct display_line *dl,
 			 int cursor_start, int cursor_width, int cursor_height)
 {
   struct frame *f = XFRAME (w->frame);
-  struct device *d = XDEVICE (f->device);
   HDC hdc = FRAME_MSWINDOWS_DC (f);
   struct Lisp_Image_Instance *p = XIMAGE_INSTANCE (image_instance);
   Lisp_Object window;
@@ -659,41 +658,6 @@ mswindows_output_pixmap (struct window *w, struct display_line *dl,
 			       clip_x, clip_y, clip_width, clip_height,
 			       pwidth, pheight, pixmap_offset);
   }
-
-#if 0
-  /* Draw a cursor over top of the pixmap. */
-  if (cursor_width && cursor_height && (cursor_start >= xpos)
-      && !NILP (w->text_cursor_visible_p)
-      && (cursor_start < xpos + pwidth))
-    {
-      int focus = EQ (w->frame, DEVICE_FRAME_WITH_FOCUS_REAL (d));
-      int y = dl->ypos - dl->ascent;
-      struct face_cachel *cursor_cachel =
-	WINDOW_FACE_CACHEL (w,
-			    get_builtin_face_cache_index
-			    (w, Vtext_cursor_face));
-      
-      mswindows_update_dc(hdc, Qnil, cursor_cachel->background, Qnil, 
-			  Qnil);
-
-      if (cursor_width > xpos + pwidth - cursor_start)
-	cursor_width = xpos + pwidth - cursor_start;
-
-      if (focus)
-	{
-	  RECT rect={cursor_start, y + cursor_height,
-		     cursor_start + cursor_width, y};
-	  FrameRect(hdc, &rect, 
-		    COLOR_INSTANCE_MSWINDOWS_BRUSH 
-		    (XCOLOR_INSTANCE(cursor_cachel->background)));
-	}
-      else
-	{
-	  Rectangle (hdc, cursor_start, y, cursor_width,
-		     cursor_height);
-	}
-    }
-#endif
 }
 
 #ifdef HAVE_SCROLLBARS

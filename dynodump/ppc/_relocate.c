@@ -18,9 +18,9 @@
  * NO EVENT SHALL SUN MICROSYSTEMS, INC. BE LIABLE FOR ANY SPECIAL, INDIRECT,
  * INCIDENTAL, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
  * FROM USE OF SUCH SOURCE CODE, REGARDLESS OF THE THEORY OF LIABILITY.
- * 
+ *
  * This source code is provided with no support and without any obligation on
- * the part of Sun Microsystems, Inc. to assist in its use, correction, 
+ * the part of Sun Microsystems, Inc. to assist in its use, correction,
  * modification or enhancement.
  *
  * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
@@ -32,7 +32,7 @@
  * Mountain View, California 94043
  */
 
-#pragma ident "@(#) $Id: _relocate.c,v 1.3 1997/05/29 04:23:20 steve Exp $ - SMI"
+#pragma ident "@(#) $Id: _relocate.c,v 1.4 1998/03/31 20:10:55 steve Exp $ - SMI"
 
 /* LINTLIBRARY */
 
@@ -256,7 +256,7 @@ update_reloc(Cache *ocache, Cache *_ocache, Cache *icache, Cache *_icache, Half 
 
 	    /*
 	     * If we are required to restore the relocation location
-	     * to it's value prior to relocation, then read the
+	     * to its value prior to relocation, then read the
 	     * locations original contents from the input image and
 	     * copy it to the output image.
 	     */

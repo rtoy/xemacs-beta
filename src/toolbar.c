@@ -52,7 +52,6 @@ Lisp_Object Vtoolbar_buttons_captioned_p;
 Lisp_Object Qtoolbar_buttonp;
 Lisp_Object Q2D, Q3D, Q2d, Q3d;
 Lisp_Object Q_size;
-extern Lisp_Object Q_style;	/* defined in menubar.c */
 
 Lisp_Object Qinit_toolbar_from_resources;
 
@@ -834,7 +833,7 @@ init_frame_toolbars (struct frame *f)
      support toolbars. */
   if (HAS_DEVMETH_P (d, output_frame_toolbars))
     {
-      Lisp_Object frame = Qnil;
+      Lisp_Object frame;
 
       compute_frame_toolbars_data (f, 1);
       XSETFRAME (frame, f);
@@ -848,7 +847,7 @@ init_frame_toolbars (struct frame *f)
 void
 init_device_toolbars (struct device *d)
 {
-  Lisp_Object device = Qnil;
+  Lisp_Object device;
 
   XSETDEVICE (device, d);
   if (HAS_DEVMETH_P (d, output_frame_toolbars))
@@ -1405,7 +1404,7 @@ specifier_type_create_toolbar (void)
 void
 specifier_vars_of_toolbar (void)
 {
-  Lisp_Object elt;
+  Lisp_Object fb;
 
   DEFVAR_SPECIFIER ("default-toolbar", &Vdefault_toolbar /*
 Specifier for a fallback toolbar.
@@ -1593,12 +1592,12 @@ displayed even if you provide a value for `right-toolbar'.
 
   /* initially, top inherits from default; this can be
      changed with `set-default-toolbar-position'. */
-  elt = list1 (Fcons (Qnil, Qnil));
-  set_specifier_fallback (Vdefault_toolbar, elt);
+  fb = list1 (Fcons (Qnil, Qnil));
+  set_specifier_fallback (Vdefault_toolbar, fb);
   set_specifier_fallback (Vtoolbar[TOP_TOOLBAR], Vdefault_toolbar);
-  set_specifier_fallback (Vtoolbar[BOTTOM_TOOLBAR], elt);
-  set_specifier_fallback (Vtoolbar[LEFT_TOOLBAR], elt);
-  set_specifier_fallback (Vtoolbar[RIGHT_TOOLBAR], elt);
+  set_specifier_fallback (Vtoolbar[BOTTOM_TOOLBAR], fb);
+  set_specifier_fallback (Vtoolbar[LEFT_TOOLBAR],   fb);
+  set_specifier_fallback (Vtoolbar[RIGHT_TOOLBAR],  fb);
 
   DEFVAR_SPECIFIER ("default-toolbar-height", &Vdefault_toolbar_height /*
 *Height of the default toolbar, if it's oriented horizontally.
@@ -1727,39 +1726,31 @@ See `default-toolbar-height' for more information.
 				      toolbar_size[RIGHT_TOOLBAR]),
 			 toolbar_size_changed_in_frame);
 
-  /* #### this is ugly. */
-  /* sb - even uglier to make this work without console tty support, ugh. */
-  elt = Qnil;
+  fb = Qnil;
 #ifdef HAVE_TTY
-  elt = list1 (Fcons (list1 (Qtty), Qzero));
+  fb = Fcons (Fcons (list1 (Qtty), Qzero), fb);
 #endif
 #ifdef HAVE_X_WINDOWS
-  if (!EQ(elt, Qnil))
-    elt = Fcons (Fcons (list1 (Qx), make_int (DEFAULT_TOOLBAR_HEIGHT)), elt);
-  else
-    elt = list1 (Fcons (list1 (Qx), make_int (DEFAULT_TOOLBAR_HEIGHT)));
+  fb = Fcons (Fcons (list1 (Qx), make_int (DEFAULT_TOOLBAR_HEIGHT)), fb);
 #endif
-  if (!EQ(elt, Qnil))
-    set_specifier_fallback (Vdefault_toolbar_height, elt);
+  if (!NILP (fb))
+    set_specifier_fallback (Vdefault_toolbar_height, fb);
 
-  elt = Qnil;
+  fb = Qnil;
 #ifdef HAVE_TTY
-  elt = list1 (Fcons (list1 (Qtty), Qzero));
+  fb = Fcons (Fcons (list1 (Qtty), Qzero), fb);
 #endif
 #ifdef HAVE_X_WINDOWS
-  if (!EQ(elt, Qnil))
-    elt = Fcons (Fcons (list1 (Qx), make_int (DEFAULT_TOOLBAR_WIDTH)), elt);
-  else
-    elt = list1 (Fcons (list1 (Qx), make_int (DEFAULT_TOOLBAR_WIDTH)));
+  fb = Fcons (Fcons (list1 (Qx), make_int (DEFAULT_TOOLBAR_WIDTH)), fb);
 #endif
-  if (!EQ(elt, Qnil))
-    set_specifier_fallback (Vdefault_toolbar_width, elt);
+  if (!NILP (fb))
+    set_specifier_fallback (Vdefault_toolbar_width, fb);
 
   set_specifier_fallback (Vtoolbar_size[TOP_TOOLBAR], Vdefault_toolbar_height);
-  elt = list1 (Fcons (Qnil, Qzero));
-  set_specifier_fallback (Vtoolbar_size[BOTTOM_TOOLBAR], elt);
-  set_specifier_fallback (Vtoolbar_size[LEFT_TOOLBAR], elt);
-  set_specifier_fallback (Vtoolbar_size[RIGHT_TOOLBAR], elt);
+  fb = list1 (Fcons (Qnil, Qzero));
+  set_specifier_fallback (Vtoolbar_size[BOTTOM_TOOLBAR], fb);
+  set_specifier_fallback (Vtoolbar_size[LEFT_TOOLBAR],   fb);
+  set_specifier_fallback (Vtoolbar_size[RIGHT_TOOLBAR],  fb);
 
   DEFVAR_SPECIFIER ("default-toolbar-border-width",
 		    &Vdefault_toolbar_border_width /*
@@ -1856,27 +1847,21 @@ See `default-toolbar-height' for more information.
 				      toolbar_border_width[RIGHT_TOOLBAR]),
 			 toolbar_border_width_changed_in_frame);
 
-  /* #### this is ugly. */
-  /* sb - even uglier to make this work without console tty support, ugh. */
-  /* not if you get to copy it instead of writing it from scratch. --kyle */
-  elt = Qnil;
+  fb = Qnil;
 #ifdef HAVE_TTY
-  elt = list1 (Fcons (list1 (Qtty), Qzero));
+  fb = Fcons (Fcons (list1 (Qtty), Qzero), fb);
 #endif
 #ifdef HAVE_X_WINDOWS
-  if (!EQ(elt, Qnil))
-    elt = Fcons (Fcons (list1 (Qx), make_int (DEFAULT_TOOLBAR_BORDER_WIDTH)), elt);
-  else
-    elt = list1 (Fcons (list1 (Qx), make_int (DEFAULT_TOOLBAR_BORDER_WIDTH)));
+  fb = Fcons (Fcons (list1 (Qx), make_int (DEFAULT_TOOLBAR_BORDER_WIDTH)), fb);
 #endif
-  if (!EQ(elt, Qnil))
-    set_specifier_fallback (Vdefault_toolbar_border_width, elt);
+  if (!NILP (fb))
+    set_specifier_fallback (Vdefault_toolbar_border_width, fb);
 
   set_specifier_fallback (Vtoolbar_border_width[TOP_TOOLBAR], Vdefault_toolbar_border_width);
-  elt = list1 (Fcons (Qnil, Qzero));
-  set_specifier_fallback (Vtoolbar_border_width[BOTTOM_TOOLBAR], elt);
-  set_specifier_fallback (Vtoolbar_border_width[LEFT_TOOLBAR], elt);
-  set_specifier_fallback (Vtoolbar_border_width[RIGHT_TOOLBAR], elt);
+  fb = list1 (Fcons (Qnil, Qzero));
+  set_specifier_fallback (Vtoolbar_border_width[BOTTOM_TOOLBAR], fb);
+  set_specifier_fallback (Vtoolbar_border_width[LEFT_TOOLBAR],   fb);
+  set_specifier_fallback (Vtoolbar_border_width[RIGHT_TOOLBAR],  fb);
 
   DEFVAR_SPECIFIER ("default-toolbar-visible-p", &Vdefault_toolbar_visible_p /*
 *Whether the default toolbar is visible.
@@ -1973,13 +1958,13 @@ See `default-toolbar-visible-p' for more information.
 
   /* initially, top inherits from default; this can be
      changed with `set-default-toolbar-position'. */
-  elt = list1 (Fcons (Qnil, Qt));
-  set_specifier_fallback (Vdefault_toolbar_visible_p, elt);
+  fb = list1 (Fcons (Qnil, Qt));
+  set_specifier_fallback (Vdefault_toolbar_visible_p, fb);
   set_specifier_fallback (Vtoolbar_visible_p[TOP_TOOLBAR],
 			  Vdefault_toolbar_visible_p);
-  set_specifier_fallback (Vtoolbar_visible_p[BOTTOM_TOOLBAR], elt);
-  set_specifier_fallback (Vtoolbar_visible_p[LEFT_TOOLBAR], elt);
-  set_specifier_fallback (Vtoolbar_visible_p[RIGHT_TOOLBAR], elt);
+  set_specifier_fallback (Vtoolbar_visible_p[BOTTOM_TOOLBAR], fb);
+  set_specifier_fallback (Vtoolbar_visible_p[LEFT_TOOLBAR],   fb);
+  set_specifier_fallback (Vtoolbar_visible_p[RIGHT_TOOLBAR],  fb);
 
   DEFVAR_SPECIFIER ("toolbar-buttons-captioned-p",
 		    &Vtoolbar_buttons_captioned_p /*

@@ -101,8 +101,10 @@ static void term_get_fkeys (Lisp_Object keymap, char **address);
 /*****************************************************************************
  tty_text_width
 
- tty's don't have fonts (that we use at least), so everything is
- considered to be fixed width.  In other words, we just return len.
+ Non-Mule tty's don't have fonts (that we use at least), so everything
+ is considered to be fixed width -- in other words, we return LEN.
+ Under Mule, however, a character can still cover more than one
+ column, so we use emchar_string_displayed_columns().
  ****************************************************************************/
 static int
 tty_text_width (struct frame *f, struct face_cachel *cachel, CONST Emchar *str,
@@ -809,7 +811,7 @@ tty_turn_on_face (struct window *w, face_index findex)
 
  Turn off all set properties of the given face (revert to default
  face).  We assume that tty_turn_on_face has been called for the given
- face so that it's properties are actually active.
+ face so that its properties are actually active.
  ****************************************************************************/
 static void
 tty_turn_off_face (struct window *w, face_index findex)
@@ -855,7 +857,7 @@ tty_turn_off_face (struct window *w, face_index findex)
 static void
 tty_turn_on_frame_face (struct frame *f, Lisp_Object face)
 {
-  Lisp_Object frame = Qnil;
+  Lisp_Object frame;
   struct console *c = XCONSOLE (FRAME_CONSOLE (f));
 
   XSETFRAME (frame, f);
@@ -874,12 +876,12 @@ tty_turn_on_frame_face (struct frame *f, Lisp_Object face)
 
  Turn off all set properties of the given face (revert to default
  face).  We assume that tty_turn_on_face has been called for the given
- face so that it's properties are actually active.
+ face so that its properties are actually active.
  ****************************************************************************/
 static void
 tty_turn_off_frame_face (struct frame *f, Lisp_Object face)
 {
-  Lisp_Object frame = Qnil;
+  Lisp_Object frame;
   struct console *c = XCONSOLE (FRAME_CONSOLE (f));
 
   XSETFRAME (frame, f);
@@ -1284,7 +1286,7 @@ init_tty_for_redisplay (struct device *d, char *terminal_type)
   attributes_on = 0;
 
   /*
-   * Attempt to initialise the function_key_map to
+   * Attempt to initialize the function_key_map to
    * some kind of sensible value
    */
 

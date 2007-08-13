@@ -21,7 +21,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; along with XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -42,7 +42,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; font specifiers
 
 (defun make-font-specifier (spec-list)
-  "Create a new `font' specifier object with the given specification list.
+  "Return a new `font' specifier object with the given specification list.
 SPEC-LIST can be a list of specifications (each of which is a cons of a
 locale and a list of instantiators), a single instantiator, or a list
 of instantiators.  See `make-specifier' for more information about
@@ -123,7 +123,7 @@ and is equivalent to the sum of the font instance's ascent and descent."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; color specifiers
 
 (defun make-color-specifier (spec-list)
-  "Create a new `color' specifier object with the given specification list.
+  "Return a new `color' specifier object with the given specification list.
 SPEC-LIST can be a list of specifications (each of which is a cons of a
 locale and a list of instantiators), a single instantiator, or a list
 of instantiators.  See `make-specifier' for a detailed description of

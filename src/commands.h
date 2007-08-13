@@ -92,8 +92,6 @@ extern Lisp_Object last_point_position_buffer;
    achieving the same functionality (e.g. use select()). */
 /* extern int immediate_quit;	    Nonzero means ^G can quit instantly */
 
-extern Lisp_Object Vexecuting_macro;
-
 /* Nonzero if input is coming from the keyboard */
 
 #define INTERACTIVE (NILP (Vexecuting_macro) && !noninteractive)
@@ -101,11 +99,6 @@ extern Lisp_Object Vexecuting_macro;
 /* Set this nonzero to force reconsideration of modeline. */
 
 extern int modeline_changed;
-
-/* Nonzero means reading single-character input with prompt
-   so put cursor on minibuffer after the prompt.  */
-
-extern int cursor_in_echo_area;
 
 extern Lisp_Object recent_keys_ring;
 extern int recent_keys_ring_index;
@@ -116,7 +109,6 @@ extern Lisp_Object Vtop_level;
 extern Lisp_Object Vcommand_loop;
 /* #endif */
 DECLARE_DOESNT_RETURN (initial_command_loop (Lisp_Object));
-DOESNT_RETURN initial_command_loop (Lisp_Object);
 Lisp_Object call_command_loop (Lisp_Object catch_errors);
 extern int command_loop_level;
 

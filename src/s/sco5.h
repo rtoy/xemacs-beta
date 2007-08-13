@@ -107,9 +107,6 @@ could #define sco and I think everything would work. rjl */
 #endif
 #define LIB_STANDARD "-lc"
 
-/* Send signals to subprocesses by "typing" signal chars at them.  */
-/* #define SIGNALS_VIA_CHARACTERS */ /* mrb */
-
 /* Specify program for etc/fakemail to run.  Define SMAIL if you are
    using smail, don't for MMDF.  */
 

@@ -90,6 +90,9 @@
 		  '(garbage-collect))
 	      (external-debugging-output (format "\nLoad file %s: not found\n"
 						 file))
+	      ;; Uncomment in case of trouble
+	      ;;(print (format "late-packages: %S" late-packages))
+	      ;;(print (format "guessed-roots: %S" (paths-find-emacs-roots invocation-directory invocation-name)))
 	      nil)))
 
 	(load (concat default-directory "../lisp/dumped-lisp.el"))

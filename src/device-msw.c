@@ -25,7 +25,7 @@ Boston, MA 02111-1307, USA.  */
 
    Original authors: Jamie Zawinski and the FSF
    Rewritten by Ben Wing and Chuck Thompson.
-   Rewritten for mswindows by Jonathan Harris, November 1997 for 20.4.
+   Rewritten for mswindows by Jonathan Harris, November 1997 for 21.0.
 */
 
 

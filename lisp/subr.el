@@ -75,27 +75,13 @@ Used for compatibility among different emacs variants."
 ;;;; Keymap support.
 ;; XEmacs: removed to keymap.el
 
-;;;; The global keymap tree.  
+;;;; The global keymap tree.
 
 ;;; global-map, esc-map, and ctl-x-map have their values set up in
 ;;; keymap.c; we just give them docstrings here.
 
 ;;;; Event manipulation functions.
 
-;; The call to `read' is to ensure that the value is computed at load time
-;; and not compiled into the .elc file.  The value is negative on most
-;; machines, but not on all!
-(defconst listify-key-sequence-1 (logior 128 (read "?\\M-\\^@")))
-
-(defun listify-key-sequence (key)
-  "Convert a key sequence to a list of events."
-  (if (vectorp key)
-      (append key nil)
-    (mapcar (function (lambda (c)
-			(if (> c 127)
-			    (logxor c listify-key-sequence-1)
-			  c)))
-	    (append key nil))))
 ;; XEmacs: This stuff is done in C Code.
 
 ;;;; Obsolescent names for functions.
@@ -172,7 +158,7 @@ function, it is changed to a list of functions."
       (or (if (consp function)
 	      (member function (symbol-value hook))
 	    (memq function (symbol-value hook)))
-	  (set hook 
+	  (set hook
 	       (if append
 		   (append (symbol-value hook) (list function))
 		 (cons function (symbol-value hook)))))
@@ -181,7 +167,7 @@ function, it is changed to a list of functions."
     (or (if (consp function)
 	    (member function (default-value hook))
 	  (memq function (default-value hook)))
-	(set-default hook 
+	(set-default hook
 		     (if append
 			 (append (default-value hook) (list function))
 		       (cons function (default-value hook)))))))
@@ -260,7 +246,7 @@ just before emacs is actually killed.")
 
 ;; XEmacs
 (defun replace-in-string (str regexp newtext &optional literal)
-  "Replaces all matches in STR for REGEXP with NEWTEXT string,
+  "Replace all matches in STR for REGEXP with NEWTEXT string,
  and returns the new string.
 Optional LITERAL non-nil means do a literal replacement.
 Otherwise treat \\ in NEWTEXT string as special:
@@ -389,7 +375,7 @@ The original current buffer is restored afterwards."
 	 (erase-buffer tempbuf)))))
 
 (defun insert-face (string face)
-  "Insert STRING and highlight with FACE.  Returns the extent created."
+  "Insert STRING and highlight with FACE.  Return the extent created."
   (let ((p (point)) ext)
     (insert string)
     (setq ext (make-extent p (point)))
@@ -592,7 +578,7 @@ This function accepts any number of arguments, but ignores them."
 
 
 (defun function-interactive (function)
-  "Returns the interactive specification of FUNCTION.
+  "Return the interactive specification of FUNCTION.
 FUNCTION can be any funcallable object.
 The specification will be returned as the list of the symbol `interactive'
  and the specs.

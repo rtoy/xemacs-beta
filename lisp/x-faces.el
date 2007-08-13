@@ -20,7 +20,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; along with XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -46,7 +46,7 @@
 ;;	 Emacs.bold.attributeUnderline:		true/false
 ;;	 Emacs.bold.attributeStrikethru:	true/false
 
-;;  You can specify the properties of a face on a per-frame basis.  For 
+;;  You can specify the properties of a face on a per-frame basis.  For
 ;;  example, to have the "isearch" face use a red foreground on frames
 ;;  named "emacs" (the default) but use a blue foreground on frames that
 ;;  you create named "debugger", you could do
@@ -101,7 +101,7 @@
       (encoding	"[^-]+")		; false!
       )
   (setq x-font-regexp
-	(purecopy 
+	(purecopy
 	 (concat "\\`\\*?[-?*]"
 		 foundry - family - weight\? - slant\? - swidth - adstyle -
 		 pixelsize - pointsize - resx - resy - spacing - avgwidth -
@@ -340,14 +340,14 @@ X fonts can be specified (by the user) in either pixels or 10ths of points,
 	(nth 2 result))))))
 
 (defun x-find-smaller-font (font &optional device)
-  "Loads a new, slightly smaller version of the given font (or font name).
+  "Load a new, slightly smaller version of the given font (or font name).
 Returns the font if it succeeds, nil otherwise.
 If scalable fonts are available, this returns a font which is 1 point smaller.
 Otherwise, it returns the next smaller version of this font that is defined."
   (x-frob-font-size font nil device))
 
 (defun x-find-larger-font (font &optional device)
-  "Loads a new, slightly larger version of the given font (or font name).
+  "Load a new, slightly larger version of the given font (or font name).
 Returns the font if it succeeds, nil otherwise.
 If scalable fonts are available, this returns a font which is 1 point larger.
 Otherwise, it returns the next larger version of this font that is defined."
@@ -561,7 +561,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 							 face 'underline)
 							locale
 							tty-tag-set)
-	(remove-specifier (face-propery face 'underline) locale
+	(remove-specifier (face-property face 'underline) locale
 			  tty-tag-set nil))
       (set-face-underline-p face ulp locale nil append))
     (when stp
@@ -570,7 +570,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 							 face 'strikethru)
 							locale
 							tty-tag-set)
-	(remove-specifier (face-propery face 'strikethru)
+	(remove-specifier (face-property face 'strikethru)
 			  locale tty-tag-set nil))
       (set-face-strikethru-p face stp locale nil append))
     (when hp
@@ -579,7 +579,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 							 face 'highlight)
 							locale
 							tty-tag-set)
-	(remove-specifier (face-propery face 'highlight)
+	(remove-specifier (face-property face 'highlight)
 			  locale tty-tag-set nil))
       (set-face-highlight-p face hp locale nil append))
     (when dp
@@ -596,7 +596,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 							 face 'blinking)
 							locale
 							tty-tag-set)
-	(remove-specifier (face-propery face 'blinking) locale
+	(remove-specifier (face-property face 'blinking) locale
 			  tty-tag-set nil))
       (set-face-blinking-p face bp locale nil append))
     (when rp
@@ -702,7 +702,7 @@ Otherwise, it returns the next larger version of this font that is defined."
        (set-face-font 'default new-x-font device))))
   ;;
   ;; If the "default" face didn't have both colors specified, then pick
-  ;; some, taking into account whether one of the colors was specified.  
+  ;; some, taking into account whether one of the colors was specified.
   ;;
   (let ((fg (face-foreground-instance 'default device))
 	(bg (face-background-instance 'default device)))
@@ -727,7 +727,7 @@ Otherwise, it returns the next larger version of this font that is defined."
   (x-init-pointer-shape device)  ; from x-mouse.el
     )
 
-;;; This is called from `init-frame-faces', which is called from 
+;;; This is called from `init-frame-faces', which is called from
 ;;; init_frame_faces() which is called from Fmake_frame(), to perform
 ;;; any device-specific initialization.
 ;;;

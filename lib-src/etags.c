@@ -33,6 +33,30 @@ Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 char pot_etags_version[] = "@(#) pot revision number is 12.28";
 
+/* Prototyping magic snarfed from gmalloc.c */
+#if defined (__cplusplus) || defined (__STDC__)
+#undef	PP
+#define	PP(args)	args
+#undef	__ptr_t
+#define	__ptr_t		void *
+#else /* Not C++ or ANSI C.  */
+#undef	PP
+#define	PP(args)	()
+#undef	const
+#define	const
+#undef	__ptr_t
+#define	__ptr_t		char *
+#endif /* C++ or ANSI C.  */
+
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+  /* On some systems, Emacs defines static as nothing for the sake
+     of unexec.  We don't want that here since we don't use unexec. */
+# undef static
+# define ETAGS_REGEXPS		/* use the regexp features */
+# define LONG_OPTIONS		/* accept long options */
+#endif /* HAVE_CONFIG_H */
+
 #define	TRUE	1
 #define	FALSE	0
 
@@ -63,31 +87,6 @@ char pot_etags_version[] = "@(#) pot revision number is 12.28";
 #   define HAVE_GETCWD
 # endif /* not HAVE_CONFIG_H */
 #endif /* WINDOWSNT */
-
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-  /* On some systems, Emacs defines static as nothing for the sake
-     of unexec.  We don't want that here since we don't use unexec. */
-# undef static
-# define ETAGS_REGEXPS		/* use the regexp features */
-# define LONG_OPTIONS		/* accept long options */
-#endif /* HAVE_CONFIG_H */
-
-/* Prototyping magic snarfed from gmalloc.c */
-#if defined (__cplusplus) || (defined (__STDC__) && __STDC__) || defined (__SUNPRO_C)
-#undef	PP
-#define	PP(args)	args
-#undef	__ptr_t
-#define	__ptr_t		void *
-#else /* Not C++ or ANSI C.  */
-#undef	PP
-#define	PP(args)	()
-#undef	const
-#define	const
-#undef	__ptr_t
-#define	__ptr_t		char *
-#endif /* C++ or ANSI C.  */
-
 
 #if !defined (WINDOWSNT) && defined (STDC_HEADERS)
 #include <stdlib.h>

@@ -71,6 +71,9 @@
   (set-glyph-image invisible-text-glyph " ...")
 
   (cond ((featurep 'xpm)
+	 (set-glyph-image frame-icon-glyph
+			  (concat "../etc/" "xemacs-icon.xpm")
+			  'global 'mswindows)
 	 (set-glyph-image xemacs-logo
 			  (concat "../etc/"
 				  (if emacs-beta-version

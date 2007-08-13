@@ -34,9 +34,7 @@ Boston, MA 02111-1307, USA.  */
  */
 #include <../src/config.h>
 #include <stdio.h>
-#if __STDC__ || defined(STDC_HEADERS)
 #include <stdlib.h>
-#endif
 #include "../src/systime.h"
 
 static struct timeval TV1, TV2;

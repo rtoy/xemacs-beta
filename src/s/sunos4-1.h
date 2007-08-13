@@ -46,11 +46,5 @@ care of it properly?
 /* Define dlopen, dlclose, dlsym.  */
 #define USE_DL_STUBS
 
-#if 0 /* mrb */
-#if !defined(HAVE_STRERROR) && defined(__SUNPRO_C)
-#define HAVE_STRERROR
-#endif
-#endif
-
 /* This appears to be broken on SunOS4.1.[123] */
 #define BROKEN_SIGIO

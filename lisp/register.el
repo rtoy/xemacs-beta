@@ -49,7 +49,7 @@ A list of the form (file-query NAME POSITION) represents position POSITION
   (cdr (assq reg register-alist)))
 
 (defun set-register (register value)
-  "Set contents of Emacs register named REGISTER to VALUE.  Returns VALUE.
+  "Set contents of Emacs register named REGISTER to VALUE.  Return VALUE.
 See the documentation of the variable `register-alist' for possible VALUE."
   (let ((aelt (assq register register-alist)))
     (if aelt
@@ -138,7 +138,7 @@ delete any existing frames that the frame configuration doesn't mention.
 ;to get the number to store.
 ;Interactively, NUMBER is the prefix arg (none means nil)."
 ;  (interactive "P\ncNumber to register: ")
-;  (set-register char 
+;  (set-register char
 ;		(if arg
 ;		    (prefix-numeric-value arg)
 ;		  (if (looking-at "[0-9][0-9]*")
@@ -153,7 +153,7 @@ delete any existing frames that the frame configuration doesn't mention.
 
 ;(defun increment-register (arg char)
 ;  "Add NUMBER to the contents of register REGISTER.
-;Interactively, NUMBER is the prefix arg (none means nil)." 
+;Interactively, NUMBER is the prefix arg (none means nil)."
 ;  (interactive "p\ncNumber to register: ")
 ;  (or (integerp (get-register char))
 ;      (error "Register does not contain a number"))

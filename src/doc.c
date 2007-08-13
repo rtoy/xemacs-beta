@@ -30,11 +30,9 @@ Boston, MA 02111-1307, USA.  */
 #include "bytecode.h"
 #include "insdel.h"
 #include "keymap.h"
-
 #include "sysfile.h"
 
-
-Lisp_Object Vdoc_file_name;
+Lisp_Object Vinternal_doc_file_name;
 
 Lisp_Object QSsubstitute;
 
@@ -177,7 +175,7 @@ get_doc_string (Lisp_Object filepos)
 
   if (INTP (filepos))
     {
-      file = Vdoc_file_name;
+      file = Vinternal_doc_file_name;
       position = XINT (filepos);
     }
   else if (CONSP (filepos) && INTP (XCDR (filepos)))
@@ -450,7 +448,7 @@ when doc strings are referred to in the dumped Emacs.
   if (fd < 0)
     report_file_error ("Opening doc string file",
 		       Fcons (build_string (name), Qnil));
-  Vdoc_file_name = filename;
+  Vinternal_doc_file_name = filename;
   filled = 0;
   pos = 0;
   while (1)
@@ -642,8 +640,9 @@ static int
 kludgily_ignore_lost_doc_p (Lisp_Object sym)
 {
 # define kludge_prefix "ad-Orig-"
-  return (string_length (XSYMBOL (sym)->name) > sizeof (kludge_prefix) &&
-	  !strncmp ((char *) string_data (XSYMBOL (sym)->name), kludge_prefix,
+  struct Lisp_String *name = XSYMBOL (sym)->name;
+  return (string_length (name) > (Bytecount) (sizeof (kludge_prefix)) &&
+	  !strncmp ((char *) string_data (name), kludge_prefix,
 		    sizeof (kludge_prefix) - 1));
 # undef kludge_prefix
 }
@@ -758,7 +757,7 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
   Bytecount idx;
   Bytecount bsize;
   Bufbyte *new;
-  Lisp_Object tem = Qnil;
+  Lisp_Object tem;
   Lisp_Object keymap;
   Bufbyte *start;
   Bytecount length;
@@ -790,9 +789,11 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
      an overriding-local-map, `where-is-internal' will correctly note
      this, so there's no reason to do it here.  Maybe FSFmacs
      `where-is-internal' is broken. */
+  /*
   keymap = current_kboard->Voverriding_terminal_local_map;
   if (NILP (keymap))
     keymap = Voverriding_local_map;
+  */
 #endif
 
   strlength = XSTRING_LENGTH (str);
@@ -885,8 +886,13 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
 	case '{':
 	case '<':
 	  {
-	    Lisp_Object buffer = Fget_buffer_create (QSsubstitute);
-	    struct buffer *buf_ = XBUFFER (buffer);
+	    /* ### jump to label `subst_string|subst' crosses
+               initialization of `buffer|_buf' */
+	    Lisp_Object buffer;
+	    struct buffer *buf_;
+
+	    buffer = Fget_buffer_create (QSsubstitute);
+	    buf_ = XBUFFER (buffer);
 
 	    Fbuffer_disable_undo (buffer);
 	    Ferase_buffer (buffer);
@@ -990,10 +996,10 @@ syms_of_doc (void)
 void
 vars_of_doc (void)
 {
-  DEFVAR_LISP ("internal-doc-file-name", &Vdoc_file_name /*
+  DEFVAR_LISP ("internal-doc-file-name", &Vinternal_doc_file_name /*
 Name of file containing documentation strings of built-in symbols.
 */ );
-  Vdoc_file_name = Qnil;
+  Vinternal_doc_file_name = Qnil;
 
   QSsubstitute = build_string (" *substitute*");
   staticpro (&QSsubstitute);

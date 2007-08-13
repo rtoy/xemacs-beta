@@ -488,6 +488,24 @@ show_help (XtPointer data, XtIntervalId* id)
 
 ============================================================================*/
 
+static void
+balloon_help_destroy (void)
+{
+  assert (b_dpy != NULL);
+  b_dpy = NULL;
+
+  destroy_window (b_dpy, b_win);
+  destroy_gc (b_dpy, b_gc);
+
+  destroy_gc (b_dpy, b_shineGC);
+  destroy_gc (b_dpy, b_shadowGC);
+
+  destroy_pixmap_mask ();
+  destroy_gc (b_dpy, b_maskGC);
+
+  if (b_timer) XtRemoveTimeOut (b_timer);
+}
+
 void
 balloon_help_create (Display* dpy,
 		     Pixel fg, Pixel bg, Pixel shine, Pixel shadow,
@@ -516,24 +534,6 @@ balloon_help_create (Display* dpy,
   b_screenHeight = DisplayHeight (b_dpy, DefaultScreen(b_dpy));
 
   b_lastShape = SHAPE_CONE_FREE;
-}
-
-void
-balloon_help_destroy (void)
-{
-  assert (b_dpy != NULL);
-  b_dpy = NULL;
-
-  destroy_window (b_dpy, b_win);
-  destroy_gc (b_dpy, b_gc);
-
-  destroy_gc (b_dpy, b_shineGC);
-  destroy_gc (b_dpy, b_shadowGC);
-
-  destroy_pixmap_mask ();
-  destroy_gc (b_dpy, b_maskGC);
-
-  if (b_timer) XtRemoveTimeOut (b_timer);
 }
 
 void

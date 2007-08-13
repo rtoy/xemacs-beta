@@ -150,17 +150,7 @@ NOTE-END */
 #define LIB_STANDARD "/lib/386/Slibcfp.a /lib/386/Slibc.a"
 #else /* not XENIX */
 
-/* this brings in alloca() if we're using cc */
 #ifdef USG
-#if 0 /* mrb: -lPW is now autodetected, anyways */
-#ifndef LIB_STANDARD
-#ifdef USG5_4
-#define LIB_STANDARD "-lc"
-#else /* not USG5_4 */
-#define LIB_STANDARD "-lPW -lc"
-#endif /* not USG5_4 */
-#endif /* LIB_STANDARD */
-#endif /* 0 */
 
 #if 0 /* ALLOCA is now autodetected */
 #define HAVE_ALLOCA

@@ -78,11 +78,7 @@ Boston, MA 02111-1307, USA.
 #endif
 #endif
 
-#if	defined(__GNU_LIBRARY__) || defined(__STDC__)
 #include <limits.h>
-#else
-#define	CHAR_BIT	8
-#endif
 
 #ifdef	HAVE_UNISTD_H
 #include <unistd.h>
@@ -96,32 +92,13 @@ extern "C"
 {
 #endif
 
-/* #### XEmacs change for Solaris */
-#if defined (__cplusplus) || (defined (__STDC__) && __STDC__) || \
-    (defined (__STDC__) && defined (SOLARIS2)) || defined (WINDOWSNT)
 #undef	__P
 #define	__P(args)	args
 #undef	__ptr_t
 #define	__ptr_t		void *
-#else /* Not C++ or ANSI C.  */
-#undef	__P
-#define	__P(args)	()
-#undef	const
-#define	const
-#undef	__ptr_t
-#define	__ptr_t		char *
-#endif /* C++ or ANSI C.  */
 
-#ifdef	__STDC__
 #include <stddef.h>
 #define	__malloc_size_t	size_t
-#else
-#ifdef OSF1		/* from grunwald@foobar.cs.colorado.edu */
-#define __malloc_size_t unsigned long
-#else
-#define	__malloc_size_t	unsigned int
-#endif
-#endif
 
 #ifndef	NULL
 #define	NULL	0

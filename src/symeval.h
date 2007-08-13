@@ -81,7 +81,7 @@ struct symbol_value_magic
 #define XSYMBOL_VALUE_MAGIC_TYPE(v) \
 	(((struct symbol_value_magic *) XPNTR (v))->type)
 #define XSETSYMBOL_VALUE_MAGIC(s, p) XSETOBJ (s, Lisp_Type_Record, p)
-extern void print_symbol_value_magic (Lisp_Object, Lisp_Object, int);
+void print_symbol_value_magic (Lisp_Object, Lisp_Object, int);
 
 /********** The various different symbol-value-magic types ***********/
 
@@ -96,8 +96,6 @@ extern void print_symbol_value_magic (Lisp_Object, Lisp_Object, int);
    whose CURRENT-VALUE field then contains a symbol-value-forward.
  */
 
-extern CONST_IF_NOT_DEBUG struct lrecord_implementation
-  lrecord_symbol_value_forward[];
 struct symbol_value_forward
 {
   struct symbol_value_magic magic;
@@ -141,15 +139,14 @@ struct symbol_value_forward
   int (*magicfun) (Lisp_Object sym, Lisp_Object *val, Lisp_Object in_object,
 		   int flags);
 };
-#define XSYMBOL_VALUE_FORWARD(v) \
-	((CONST struct symbol_value_forward *) XPNTR(v))
+DECLARE_LRECORD (symbol_value_forward, struct symbol_value_forward);
+#define XSYMBOL_VALUE_FORWARD(x) \
+	XRECORD (x, symbol_value_forward, struct symbol_value_forward)
 #define symbol_value_forward_forward(m) ((void *)((m)->magic.lcheader.next))
 #define symbol_value_forward_magicfun(m) ((m)->magicfun)
 
 /* 2. symbol-value-buffer-local */
 
-extern CONST_IF_NOT_DEBUG struct lrecord_implementation
-  lrecord_symbol_value_buffer_local[];
 struct symbol_value_buffer_local
 {
   struct symbol_value_magic magic;
@@ -184,7 +181,7 @@ struct symbol_value_buffer_local
      setting a value, there will always be an entry in the buffer's
      local_var_alist to set.)
 
-     However, these operation is potentially slow.  To speed it up,
+     However, this operation is potentially slow.  To speed it up,
      we cache the value in one buffer in this structure.
 
      NOTE: This is *not* a write-through cache.  I.e. when setting
@@ -229,17 +226,13 @@ struct symbol_value_buffer_local
   Lisp_Object current_buffer;
   Lisp_Object current_alist_element;
 };
-#define XSYMBOL_VALUE_BUFFER_LOCAL(v) \
-	((struct symbol_value_buffer_local *) XPNTR(v))
-#define SYMBOL_VALUE_BUFFER_LOCAL_P(v)			\
-  (SYMBOL_VALUE_MAGIC_P (v) &&				\
-   (XSYMBOL_VALUE_MAGIC_TYPE (v) == SYMVAL_BUFFER_LOCAL \
-    || XSYMBOL_VALUE_MAGIC_TYPE (v) == SYMVAL_SOME_BUFFER_LOCAL))
+DECLARE_LRECORD (symbol_value_buffer_local, struct symbol_value_buffer_local);
+#define XSYMBOL_VALUE_BUFFER_LOCAL(x) \
+	XRECORD (x, symbol_value_buffer_local, struct symbol_value_buffer_local)
+#define SYMBOL_VALUE_BUFFER_LOCAL_P(x) RECORDP (x, symbol_value_buffer_local)
 
 /* 3. symbol-value-lisp-magic */
 
-extern CONST_IF_NOT_DEBUG struct lrecord_implementation
-  lrecord_symbol_value_lisp_magic[];
 enum lisp_magic_handler
 {
   MAGIC_HANDLER_GET_VALUE,
@@ -258,47 +251,42 @@ struct symbol_value_lisp_magic
   Lisp_Object harg[MAGIC_HANDLER_MAX];
   Lisp_Object shadowed;
 };
-#define XSYMBOL_VALUE_LISP_MAGIC(v)			\
-	((struct symbol_value_lisp_magic *) XPNTR (v))
-#define SYMBOL_VALUE_LISP_MAGIC_P(v)			\
-  (SYMBOL_VALUE_MAGIC_P (v) &&				\
-   XSYMBOL_VALUE_MAGIC_TYPE (v) == SYMVAL_LISP_MAGIC)
+DECLARE_LRECORD (symbol_value_lisp_magic, struct symbol_value_lisp_magic);
+#define XSYMBOL_VALUE_LISP_MAGIC(x) \
+	XRECORD (x, symbol_value_lisp_magic, struct symbol_value_lisp_magic)
+#define SYMBOL_VALUE_LISP_MAGIC_P(x) RECORDP (x, symbol_value_lisp_magic)
 
 /* 4. symbol-value-varalias */
 
-extern CONST_IF_NOT_DEBUG struct lrecord_implementation
-  lrecord_symbol_value_varalias[];
 struct symbol_value_varalias
 {
   struct symbol_value_magic magic;
   Lisp_Object aliasee;
   Lisp_Object shadowed;
 };
-#define XSYMBOL_VALUE_VARALIAS(v)			\
-	((struct symbol_value_varalias *) XPNTR (v))
-#define SYMBOL_VALUE_VARALIAS_P(v)			\
-  (SYMBOL_VALUE_MAGIC_P (v) &&				\
-   XSYMBOL_VALUE_MAGIC_TYPE (v) == SYMVAL_VARALIAS)
+DECLARE_LRECORD (symbol_value_varalias,	struct symbol_value_varalias);
+#define XSYMBOL_VALUE_VARALIAS(x) \
+	XRECORD (x, symbol_value_varalias, struct symbol_value_varalias)
+#define SYMBOL_VALUE_VARALIAS_P(x) RECORDP (x, symbol_value_varalias)
 #define symbol_value_varalias_aliasee(m) ((m)->aliasee)
 #define symbol_value_varalias_shadowed(m) ((m)->shadowed)
 
 /* DEFSUBR (Fname);
  is how we define the symbol for function `Fname' at start-up time. */
 #define DEFSUBR(Fname) defsubr (&S##Fname)
-extern void defsubr (struct Lisp_Subr *);
+void defsubr (struct Lisp_Subr *);
 
-extern void defsymbol (Lisp_Object *location, CONST char *name);
+void defsymbol (Lisp_Object *location, CONST char *name);
 
-extern void defkeyword (Lisp_Object *location, CONST char *name);
+void defkeyword (Lisp_Object *location, CONST char *name);
 
-extern void deferror (Lisp_Object *symbol, CONST char *name,
-		      CONST char *message, Lisp_Object inherits_from);
+void deferror (Lisp_Object *symbol, CONST char *name,
+	       CONST char *message, Lisp_Object inherits_from);
 
 /* Macros we use to define forwarded Lisp variables.
    These are used in the syms_of_FILENAME functions.  */
 
-extern void defvar_mumble (CONST char *names,
-                           CONST void *magic, int sizeof_magic);
+void defvar_mumble (CONST char *names, CONST void *magic, size_t sizeof_magic);
 
 #ifdef USE_INDEXED_LRECORD_IMPLEMENTATION
 # define symbol_value_forward_lheader_initializer { 1, 0, 0 }
@@ -307,13 +295,8 @@ extern void defvar_mumble (CONST char *names,
    { lrecord_symbol_value_forward }
 #endif
 
-#define DEFVAR_HEADER(lname, c_location, forward_type) do {	\
-  static CONST struct symbol_value_forward I_hate_C		\
-   = { { { symbol_value_forward_lheader_initializer,		\
-	   (struct lcrecord_header *) (c_location), 69 },	\
-         forward_type }, 0 };					\
-  defvar_mumble ((lname), &I_hate_C, sizeof (I_hate_C));	\
-} while (0)
+#define DEFVAR_HEADER(lname, c_location, forward_type) \
+     	DEFVAR_MAGIC_HEADER (lname, c_location, forward_type, 0)
 
 #define DEFVAR_MAGIC_HEADER(lname, c_location, forward_type, magicfun) do {	\
   static CONST struct symbol_value_forward I_hate_C				\
@@ -322,9 +305,6 @@ extern void defvar_mumble (CONST char *names,
          forward_type }, magicfun };						\
   defvar_mumble ((lname), &I_hate_C, sizeof (I_hate_C));			\
 } while (0)
-
-/* These discard their DOC arg because it is snarfed by make-docfile
- *  and stored in an external file. */
 
 #define DEFVAR_HEADER_GCPRO(lname, c_location, symbol_value_type) do {	\
   DEFVAR_HEADER (lname, c_location, symbol_value_type);			\

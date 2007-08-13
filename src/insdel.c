@@ -200,6 +200,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
+#include <limits.h>
 
 #include "buffer.h"
 #include "device.h"
@@ -1274,9 +1275,7 @@ get_buffer_range_char (struct buffer *b, Lisp_Object from, Lisp_Object to,
 	signal_simple_error_2 ("start greater than end", from, to);
       else
 	{
-	  Bufpos temp;
-
-	  temp = *from_out;
+	  Bufpos temp = *from_out;
 	  *from_out = *to_out;
 	  *to_out = temp;
 	}
@@ -1332,7 +1331,7 @@ Charcount
 get_string_pos_char (Lisp_Object string, Lisp_Object pos, unsigned int flags)
 {
   return get_string_pos_char_1 (string, pos, flags,
-				string_char_length (XSTRING (string)));
+				XSTRING_CHAR_LENGTH (string));
 }
 
 Bytecount
@@ -1350,7 +1349,7 @@ get_string_range_char (Lisp_Object string, Lisp_Object from, Lisp_Object to,
 		       unsigned int flags)
 {
   Charcount min_allowed = 0;
-  Charcount max_allowed = string_char_length (XSTRING (string));
+  Charcount max_allowed = XSTRING_CHAR_LENGTH (string);
 
   if (NILP (from) && (flags & GB_ALLOW_NIL))
     *from_out = min_allowed;
@@ -1375,9 +1374,7 @@ get_string_range_char (Lisp_Object string, Lisp_Object from, Lisp_Object to,
 	signal_simple_error_2 ("start greater than end", from, to);
       else
 	{
-	  Bufpos temp;
-
-	  temp = *from_out;
+	  Bufpos temp = *from_out;
 	  *from_out = *to_out;
 	  *to_out = temp;
 	}
@@ -1453,7 +1450,7 @@ Bufpos
 buffer_or_string_accessible_end_char (Lisp_Object object)
 {
   return STRINGP (object) ?
-    string_char_length (XSTRING (object)) : BUF_ZV (XBUFFER (object));
+    XSTRING_CHAR_LENGTH (object) : BUF_ZV (XBUFFER (object));
 }
 
 Bytind
@@ -1479,7 +1476,7 @@ Bufpos
 buffer_or_string_absolute_end_char (Lisp_Object object)
 {
   return STRINGP (object) ?
-    string_char_length (XSTRING (object)) : BUF_Z (XBUFFER (object));
+    XSTRING_CHAR_LENGTH (object) : BUF_Z (XBUFFER (object));
 }
 
 Bytind
@@ -1877,8 +1874,8 @@ make_gap (struct buffer *buf, Bytecount increment)
 	 That won't work because so many places use `int'.  */
 
       if (BUF_Z (buf) - BUF_BEG (buf) + BUF_GAP_SIZE (buf) + increment
-	  >= ((unsigned) 1 << (min (INTBITS, VALBITS) - 1)))
-	error ("Buffer exceeds maximum size");
+	  > (int) EMACS_INT_MAX)
+	error ("Maximum buffer size exceeded");
 
       result = BUFFER_REALLOC (buf->text->beg,
 			       BI_BUF_Z (buf) - BI_BUF_BEG (buf) +
@@ -2391,13 +2388,8 @@ buffer_insert_string_1 (struct buffer *buf, Bufpos pos,
 #endif
 
   /* Make sure that point-max won't exceed the size of an emacs int. */
-  {
-    Lisp_Object temp;
-
-    XSETINT (temp, (int) (length + BUF_Z (buf)));
-    if ((int) (length + BUF_Z (buf)) != XINT (temp))
-      error ("maximum buffer size exceeded");
-  }
+  if ((length + BUF_Z (buf)) > (int) EMACS_INT_MAX)
+    error ("Maximum buffer size exceeded");
 
   /* theoretically not necessary -- caller should GCPRO */
   GCPRO1 (reloc);
@@ -2581,7 +2573,7 @@ buffer_delete_range (struct buffer *buf, Bufpos from, Bufpos to, int flags)
   Bytind bi_from, bi_to;
   Bytecount bc_numdel;
   int shortage;
-  Lisp_Object bufobj = Qnil;
+  Lisp_Object bufobj;
 
   /* Defensive steps just in case a buffer gets deleted and a calling
      function doesn't notice it. */
@@ -2641,7 +2633,7 @@ buffer_delete_range (struct buffer *buf, Bufpos from, Bufpos to, int flags)
 
       /* ### Point used to be modified here, but this causes problems with MULE,
 	 as point is used to calculate bytinds, and if the offset in bc_numdel causes
-	 point to move to a non first-byte location, causing some other function to 
+	 point to move to a non first-byte location, causing some other function to
 	 throw an assertion in ASSERT_VALID_BYTIND. I've moved the code to right after
 	  the other movements and adjustments, but before the gap is moved.
 	  -- jh 970813 */
@@ -2900,14 +2892,14 @@ make_string_from_buffer (struct buffer *buf, Bufpos pos, Charcount length)
 void
 barf_if_buffer_read_only (struct buffer *buf, Bufpos from, Bufpos to)
 {
-  Lisp_Object buffer = Qnil;
+  Lisp_Object buffer;
   Lisp_Object iro;
 
   XSETBUFFER (buffer, buf);
  back:
   iro = (buf == current_buffer ? Vinhibit_read_only :
 	 symbol_value_in_buffer (Qinhibit_read_only, buffer));
-  if (!NILP (iro) && !CONSP (iro))
+  if (!LISTP (iro))
     return;
   if (NILP (iro) && !NILP (buf->read_only))
     {
@@ -2985,14 +2977,17 @@ bufbyte_string_displayed_columns (CONST Bufbyte *str, Bytecount len)
 int
 emchar_string_displayed_columns (CONST Emchar *str, Charcount len)
 {
+#ifdef MULE
   int cols = 0;
   int i;
 
   for (i = 0; i < len; i++)
-
     cols += XCHARSET_COLUMNS (CHAR_CHARSET (str[i]));
 
   return cols;
+#else  /* not MULE */
+  return len;
+#endif
 }
 
 /* NOTE: Does not reset the Dynarr. */

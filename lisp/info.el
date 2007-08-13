@@ -302,6 +302,12 @@
 ;; (also added to defaults in "lisp/utils/savehist.el")
 ;;  Other changes in main ChangeLog.
 
+;; Modified 1998-03-29 by Oscar Figueiredo
+;;
+;; Added automatic dir/localdir (re)building capability for directories that
+;; contain none or when it has become older than info files in the same
+;; directory.
+
 ;; Code:
 
 (defgroup info nil
@@ -379,6 +385,17 @@ files.  These directories are not searched for merging the `dir'
 file. An example might be something like:
 \"/usr/local/lib/xemacs/packages/lisp/calc/\""
   :type '(repeat directory)
+  :group 'info)
+
+(defcustom Info-rebuild-outdated-dir 'ask
+  "*What to do if the `dir' or `localdir' file needs to be (re)built.
+Possible values are:
+`never' never (re)build the `dir' or `localdir' file
+`always' automatically (re)builds when needed
+`ask' asks the user before  (re)building"
+  :type '(choice (const :tag "never" never)
+		 (const :tag "always" always)
+		 (const :tag "ask" ask))
   :group 'info)
 
 (defvar Info-emacs-info-file-name "xemacs.info"
@@ -472,6 +489,18 @@ The last should be a world-writable \"public\" annotations file."
 
 (defvar Info-in-cross-reference nil)
 (defvar Info-window-configuration nil)
+
+(defvar Info-dir-prologue "-*- Text -*-
+This is the file .../info/dir, which contains the topmost node of the
+Info hierarchy.  The first time you invoke Info you start off
+looking at that node, which is (dir)Top.
+
+File: dir	Node: Top	This is the top of the INFO tree
+  This (the Directory node) gives a menu of major topics. 
+
+* Menu: The list of major topics begins on the next line.
+
+")
 
 ;;;###autoload
 (defun info (&optional file)
@@ -764,7 +793,8 @@ actually get any text from."
 	      (member (directory-file-name truename) dirs-done)
 	      ;; Try several variants of specified name.
 	      ;; Try upcasing, appending `.info', or both.
-	      (let* (file
+	      (let* (buf
+		     file
 		     (attrs
 		      (or
 		       (progn (setq file (expand-file-name "dir" truename))
@@ -777,20 +807,29 @@ actually get any text from."
 			      (file-attributes file))
 		       (progn (setq file (expand-file-name "localdir" truename))
 			      (file-attributes file))
+		       (progn (setq file (expand-file-name "dir" truename))
+			      nil)
 		       )))
 		(setq dirs-done
 		      (cons truename
 			    (cons (directory-file-name truename)
 				  dirs-done)))
-		(if attrs
+		(if (not (string= truename
+				  (file-truename (car Info-directory-list))))
+		    (Info-maybe-update-dir file))
+		(setq attrs (file-attributes file))
+		(if (or (setq buf (find-buffer-visiting file))
+			attrs)
 		    (save-excursion
 		      (or buffers
 			  (message "Composing main Info directory..."))
-		      (set-buffer (generate-new-buffer
-				   (if (string-match "localdir" file)
-				       "localdir"
-				     "info dir")))
-		      (insert-file-contents file)
+		      (set-buffer (or buf
+				      (generate-new-buffer
+				       (if (string-match "localdir" file)
+					   "localdir"
+					 "info dir"))))
+		      (if (not buf) 
+			  (insert-file-contents file))
 		      (if (string-match "localdir" (buffer-name))
 			  (setq lbuffers (cons (current-buffer) lbuffers))
 			(setq buffers (cons (current-buffer) buffers)))
@@ -926,6 +965,168 @@ actually get any text from."
     (setq Info-dir-contents (buffer-string)))
   (setq default-directory Info-dir-contents-directory)
   (setq buffer-file-name (caar Info-dir-file-attributes)))
+
+(defun Info-maybe-update-dir (file)
+  "Rebuild dir or localdir if it does not exist or is outdated."
+  (unless (or (eq Info-rebuild-outdated-dir 'never)
+	      (not (file-exists-p (file-name-directory file)))
+	      (null (directory-files (file-name-directory file) nil "\\.info")))
+    (if (not (find-buffer-visiting file))
+	(if (not (file-exists-p file))
+	    (if (or (eq Info-rebuild-outdated-dir 'always)
+		    (and (eq Info-rebuild-outdated-dir 'ask)
+			 (y-or-n-p (format "No dir file in %s. Rebuild now ? " (file-name-directory file)))))
+		(Info-build-dir-anew (file-name-directory file) (not (file-writable-p file))))
+	  (if (Info-dir-outdated-p file)
+	      (if (or (eq Info-rebuild-outdated-dir 'always)
+		      (and (eq Info-rebuild-outdated-dir 'ask)
+			   (y-or-n-p (format "%s is outdated. Rebuild now ? " file))))
+		  (Info-rebuild-dir file (not (file-writable-p file)))))))))
+
+;; Record which *.info files are newer than the dir file
+(defvar Info-dir-newer-info-files nil)
+
+(defun Info-dir-outdated-p (file)
+  "Return non-nil if dir or localdir is outdated.
+dir or localdir are outdated when an *.info file in the same
+directory has been modified more recently."
+  (let ((dir-mod-time (nth 5 (file-attributes file)))
+	f-mod-time
+	newer)
+    (setq Info-dir-newer-info-files nil)
+    (mapcar 
+     '(lambda (f)
+	(prog2
+	    (setq f-mod-time (nth 5 (file-attributes f)))
+	    (setq newer (or (> (car f-mod-time) (car dir-mod-time))
+			    (and (= (car f-mod-time) (car dir-mod-time))
+				 (> (car (cdr f-mod-time)) (car (cdr dir-mod-time))))))
+	  (if (and (file-readable-p f)
+		   newer)
+	      (setq Info-dir-newer-info-files 
+		    (cons f Info-dir-newer-info-files)))))
+     (directory-files (file-name-directory file)
+		      'fullname
+		      ".*\\.info\\(.gz\\|.Z\\|-z\\|.zip\\)?$"
+		      'nosort
+		      t))
+    Info-dir-newer-info-files))
+
+(defun Info-extract-dir-entries-from (file)
+  "Extract dir entries from the info FILE.
+dir entries are delimited by the markers `START-INFO-DIR-ENTRY'
+and `END-INFO-DIR-ENTRY'"
+  (save-excursion
+    (set-buffer (get-buffer-create " *Info-tmp*"))
+    (when (file-readable-p file)
+      (insert-file-contents file nil nil nil t)
+      (goto-char (point-min))
+      (let (beg)
+	(unless (null (re-search-forward "^START-INFO-DIR-ENTRY" nil t))
+	  (forward-line 1)
+	  (setq beg (point))
+	  (unless (null (re-search-forward "^END-INFO-DIR-ENTRY" nil t))
+	    (goto-char (match-beginning 0))
+	    (buffer-substring beg (point))))))))
+
+(defun Info-build-dir-anew (directory to-temp)
+  "Build a new info dir file in DIRECTORY"
+  (save-excursion
+    (let ((dirfile (expand-file-name "dir" directory)))
+      (if to-temp
+	  (message "Creating temporary dir...")
+	(message "Creating %s..." dirfile))
+      (set-buffer (find-file-noselect dirfile))
+      (erase-buffer)
+      (insert Info-dir-prologue
+	      "Info files in " directory "\n\n")
+      (mapcar 
+       '(lambda (f)
+	  (insert (or (Info-extract-dir-entries-from f)
+		    (format "* %s::\t[No description available]\n"
+			    (file-name-sans-extension (file-name-nondirectory f))))))
+       (directory-files directory
+			'fullname
+			".*\\.info\\(.gz\\|.Z\\|-z\\|.zip\\)?$"
+			nil
+			t))
+      (if to-temp
+	  (set-buffer-modified-p nil)
+	(save-buffer))
+      (if to-temp
+	  (message "Creating temporary dir...done")
+	(message "Creating %s...done" dirfile)))))
+
+(defvar Info-dir-entry-matcher "^\\* \\([^:]+\\):\\([ \t]*(\\(.*\\))\\w*\\.\\|:\\)[ \t]+\\(.*\\)$")
+
+(defun Info-parse-dir-entry (entry)
+  (string-match Info-dir-entry-matcher entry)
+  (list (match-string 1 entry) (match-string 2 entry) (match-string 4 entry)))
+
+(defun Info-rebuild-dir (file to-temp)
+  "Update an existing info dir file after info files have been modified"
+  (save-excursion
+    (let (dir-contents
+	  dir-entry
+	  file-dir-entry)
+      (set-buffer (find-file-noselect file))
+      (if to-temp
+	  (message "Rebuilding temporary dir...")
+	(message "Rebuilding %s..." file))
+      (setq buffer-read-only nil)
+      (goto-char (point-min))
+      (search-forward "\^_")
+      (re-search-forward "^\\* Menu:.*$" nil t)
+      (narrow-to-region (or (and (re-search-forward Info-dir-entry-matcher nil t)
+				 (match-beginning 0))
+			    (point))
+			(point-max))
+      (goto-char (point-min))
+      (while (re-search-forward Info-dir-entry-matcher nil t)
+	(setq dir-contents (cons (list (downcase (or (match-string 3)
+						     (match-string 1)))
+				       (match-string 1)
+				       (match-string 2)
+				       (match-string 4))
+				 dir-contents)))
+      (mapcar '(lambda (file)
+		 (setq dir-entry (assoc (downcase
+					 (file-name-sans-extension
+					  (file-name-nondirectory file)))
+					dir-contents)
+		       file-dir-entry (Info-extract-dir-entries-from file))
+		 (if dir-entry
+		     (if file-dir-entry
+			 ;; A dir entry in the info file takes precedence over an
+			 ;; existing entry in the dir file
+			 (setcdr dir-entry (Info-parse-dir-entry file-dir-entry)))
+		   (if file-dir-entry
+		       (setq dir-contents (cons (cons 'dummy (Info-parse-dir-entry file-dir-entry))
+						dir-contents))
+		     (setq dir-contents (cons (list 'dummy
+						    (capitalize (file-name-sans-extension
+								 (file-name-nondirectory file)))
+						    ":"
+						    "[No description available]") 
+					      dir-contents)))))
+	      Info-dir-newer-info-files)
+      (delete-region (point-min) (point-max))
+      (mapcar '(lambda (entry)
+		 (setq entry (cdr entry))
+		 (insert (format "* %s:"
+				 (car entry)))
+		 (setq entry (cdr entry))
+		 (insert (car entry))
+		 (insert "\t" (car (cdr entry)) "\n"))
+	      (nreverse dir-contents))
+      (widen)
+      (if to-temp
+	  (set-buffer-modified-p nil)
+	(save-buffer))
+      (if to-temp
+	  (message "Rebuilding temporary dir...done")
+	(message "Rebuilding %s...done" file)))))
+      
 
 (defun Info-history-add (file node point)
   (if Info-keeping-history

@@ -18,14 +18,14 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; along with XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: FSF 19.30.
 
 ;;; Commentary:
- 
+
 ;; This file is dumped with XEmacs.
 
 ;; This code implements XEmacs's on-line help system, the one invoked by
@@ -151,7 +151,7 @@
 ;    become hyperlinks.
 ; -- we should *not* use font-lock keywords like below.  Instead we
 ;    should add the font-lock stuff ourselves during the scanning phase,
-;    if font-lock is enabled in this buffer. 
+;    if font-lock is enabled in this buffer.
 
 ;(defun help-follow-reference (event extent user-data)
 ;  (let ((symbol (intern-soft (extent-string extent))))
@@ -242,12 +242,12 @@ Commands:
   (search-backward-regexp "^\\w+:" nil t))
 
 (defun help-mode-bury ()
-  "Buries the buffer, possibly restoring the previous window configuration."
+  "Bury the help buffer, possibly restoring the previous window configuration."
   (interactive)
   (help-mode-quit t))
 
 (defun help-mode-quit (&optional bury)
-  "Exits from help mode, possibly restoring the previous window configuration.
+  "Exit from help mode, possibly restoring the previous window configuration.
 If the optional argument BURY is non-nil, the help buffer is buried,
 otherwise it is killed."
   (interactive)
@@ -366,7 +366,7 @@ MENU-FLAG is a symbol that should be set to T if KEY is a menu event,
   "Print the name of the function KEY invokes.  KEY is a string."
   (interactive "kDescribe key briefly: ")
   (let (defn menup)
-    (setq defn (key-or-menu-binding key 'menup))    
+    (setq defn (key-or-menu-binding key 'menup))
     (if (or (null defn) (integerp defn))
         (message "%s is undefined" (key-description key))
       ;; If it's a keyboard macro which trivially invokes another command,
@@ -634,8 +634,10 @@ start with that sequence of keys are described.
 If the second argument (prefix arg, interactively) is non-null
 then only the mouse bindings are displayed."
   (interactive (list nil current-prefix-arg))
-  (with-displaying-help-buffer (format "bindings for %s" major-mode)
-    (describe-bindings-1 prefix mouse-only-p)))
+  (let (buf)
+    (with-displaying-help-buffer (format "bindings for %s" major-mode)
+      (setq buf (describe-bindings-1 prefix mouse-only-p)))
+    buf))
 
 (defun describe-bindings-1 (&optional prefix mouse-only-p)
   (let ((heading (if mouse-only-p
@@ -671,7 +673,8 @@ then only the mouse bindings are displayed."
       (insert "\nFunction key map translations:\n" heading)
       (describe-bindings-internal function-key-map nil nil
 				  prefix mouse-only-p))
-    (set-buffer buffer)))
+    (set-buffer buffer)
+    standard-output))
 
 (defun describe-prefix-bindings ()
   "Describe the bindings of the prefix used to reach this command.
@@ -691,7 +694,7 @@ of the key sequence that ran this command."
       (princ ":\n\n")
       (describe-bindings-1 prefix nil))))
 
-;; Make C-h after a prefix, when not specifically bound, 
+;; Make C-h after a prefix, when not specifically bound,
 ;; run describe-prefix-bindings.
 (setq prefix-help-command 'describe-prefix-bindings)
 
@@ -967,7 +970,7 @@ When run interactively, it defaults to any function found by
 
 ;; taken out of `describe-function-1'
 (defun function-arglist (function)
-  "Returns a string giving the argument list of FUNCTION.
+  "Return a string giving the argument list of FUNCTION.
 For example:
 
 	(function-arglist 'function-arglist)
@@ -999,8 +1002,8 @@ arguments in the standard Lisp style."
 	   (format "(%s %s)" function arglist)))))
 
 (defun function-documentation (function &optional strip-arglist)
-  "Returns a string giving the documentation for FUNCTION if any.  
-If the optional argument STRIP-ARGLIST is non-nil remove the arglist
+  "Return a string giving the documentation for FUNCTION, if any.
+If the optional argument STRIP-ARGLIST is non-nil, remove the arglist
 part of the documentation of internal subroutines."
   (let ((doc (condition-case nil
 		 (or (documentation function)
@@ -1021,7 +1024,7 @@ part of the documentation of internal subroutines."
 	(setq aliases
 	      (if aliases
 		  ;; I18N3 Need gettext due to concat
-		  (concat aliases 
+		  (concat aliases
 			  (format
 			   "\n     which is an alias for `%s', "
 			   (symbol-name def)))
@@ -1180,43 +1183,9 @@ part of the documentation of internal subroutines."
        (if type "an unknown type of built-in variable?"
 	 "a variable declared in Lisp")))))
 
-(defcustom help-pretty-print-limit 100
-  "Limit on length of lists above which pretty-printing of values is stopped.
-Setting this to 0 disables pretty-printing."
-  :type 'integer
-  :group 'help)
-
-(defun help-maybe-pretty-print-value (object)
-  "Pretty-print OBJECT, unless it is a long list.
-OBJECT is printed in the current buffer.  Unless it is a list with
-more than `help-pretty-print-limit' elements, it is pretty-printed.
-
-Uses `pp-internal' if defined, otherwise `cl-prettyprint'"
-  (princ
-   (let ((valstr
-	  (if (and (or (listp object) (vectorp object))
-		   (< (length object)
-		      help-pretty-print-limit))
-	      (with-output-to-string
-		(with-syntax-table emacs-lisp-mode-syntax-table
-		  ;; print `#<...>' values better
-		  (modify-syntax-entry ?< "(>")
-		  (modify-syntax-entry ?> ")<")
-		  (let ((indent-line-function 'lisp-indent-line))
-		    (if (fboundp 'pp-internal)
-			(progn
-			  (pp-internal object "\n")
-			  (terpri))
-		      (cl-prettyprint object)))))
-	    (format "\n%S\n" object))))
-
-     (if (string-match "^\n[^\n]*\n$" valstr)
-         (substring valstr 1)
-       valstr))))
-
 (defun describe-variable (variable)
   "Display the full documentation of VARIABLE (a symbol)."
-  (interactive 
+  (interactive
    (let* ((v (variable-at-point))
           (val (let ((enable-recursive-minibuffers t))
                  (completing-read
@@ -1235,7 +1204,7 @@ Uses `pp-internal' if defined, otherwise `cl-prettyprint'"
 	    (if aliases
 		;; I18N3 Need gettext due to concat
 		(setq aliases
-		      (concat aliases 
+		      (concat aliases
 			      (format "\n     which is an alias for `%s',"
 				      (symbol-name newvar))))
 	      (setq aliases
@@ -1252,7 +1221,8 @@ Uses `pp-internal' if defined, otherwise `cl-prettyprint'"
 	(princ "\nValue: ")
 	(if (not (boundp variable))
 	    (princ "void\n")
-	  (help-maybe-pretty-print-value (symbol-value variable)))
+	  (prin1 (symbol-value variable))
+	  (terpri))
 	(terpri)
 	(cond ((local-variable-p variable (current-buffer))
 	       (let* ((void (cons nil nil))
@@ -1270,7 +1240,8 @@ Uses `pp-internal' if defined, otherwise `cl-prettyprint'"
 		     (progn (princ "Default-value: ")
 			    (if (eq def void)
 				(princ "void\n")
-			      (help-maybe-pretty-print-value def))
+			      (prin1 def)
+			      (terpri))
 			    (terpri)))))
 	      ((local-variable-p variable (current-buffer) t)
 	       (princ "Setting it would make its value buffer-local.\n\n"))))
@@ -1311,7 +1282,7 @@ When run interactively, it defaults to any function found by
 `function-at-point'."
   (interactive
    (let ((fn (function-at-point))
-	 (enable-recursive-minibuffers t)	     
+	 (enable-recursive-minibuffers t)
 	 val)
      (setq val (read-command
 		(if fn (format "Where is command (default %s): " fn)

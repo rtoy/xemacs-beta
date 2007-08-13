@@ -18,9 +18,9 @@
  * NO EVENT SHALL SUN MICROSYSTEMS, INC. BE LIABLE FOR ANY SPECIAL, INDIRECT,
  * INCIDENTAL, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
  * FROM USE OF SUCH SOURCE CODE, REGARDLESS OF THE THEORY OF LIABILITY.
- * 
+ *
  * This source code is provided with no support and without any obligation on
- * the part of Sun Microsystems, Inc. to assist in its use, correction, 
+ * the part of Sun Microsystems, Inc. to assist in its use, correction,
  * modification or enhancement.
  *
  * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
@@ -73,7 +73,7 @@
  * N.B. The above commentary is not quite correct in the flags have been hardwired
  *      to RTLD_SAVREL.
  */
-#pragma ident	"@(#) $Id: dynodump.c,v 1.5 1997/09/03 03:39:06 steve Exp $ - SMI"
+#pragma ident	"@(#) $Id: dynodump.c,v 1.6 1998/03/31 20:10:55 steve Exp $ - SMI"
 
 #define __EXTENSIONS__ 1
 
@@ -492,7 +492,7 @@ dynodump(const char * file)
 
 	/*
 	 * If were inserting the new .heap section, insert the new
-	 * section name and initialize it's virtual address.
+	 * section name and initialize its virtual address.
 	 */
 	if (_addr) {
 	    strs = heap;

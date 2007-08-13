@@ -228,8 +228,9 @@ static void
 fixup_search_regs_for_buffer (struct buffer *buf)
 {
   int i;
+  int num_regs = search_regs.num_regs;
 
-  for (i = 0; i < search_regs.num_regs; i++)
+  for (i = 0; i < num_regs; i++)
     {
       if (search_regs.start[i] >= 0)
 	search_regs.start[i] = bytind_to_bufpos (buf, search_regs.start[i]);
@@ -243,6 +244,7 @@ static void
 fixup_search_regs_for_string (Lisp_Object string)
 {
   int i;
+  int num_regs = search_regs.num_regs;
 
   /* #### bytecount_to_charcount() is not that efficient.  This function
      could be faster if it did its own conversion (using INC_CHARPTR()
@@ -251,7 +253,7 @@ fixup_search_regs_for_string (Lisp_Object string)
 
      Think about this if this function is a time hog, which it's probably
      not. */
-  for (i = 0; i < search_regs.num_regs; i++)
+  for (i = 0; i < num_regs; i++)
     {
       if (search_regs.start[i] > 0)
 	{
@@ -311,12 +313,15 @@ looking_at_1 (Lisp_Object string, struct buffer *buf, int posix)
   val = (0 <= i ? Qt : Qnil);
   if (NILP (val))
     return Qnil;
-  for (i = 0; i < search_regs.num_regs; i++)
-    if (search_regs.start[i] >= 0)
-      {
-	search_regs.start[i] += BI_BUF_BEGV (buf);
-	search_regs.end[i] += BI_BUF_BEGV (buf);
-      }
+  {
+    int num_regs = search_regs.num_regs;
+    for (i = 0; i < num_regs; i++)
+      if (search_regs.start[i] >= 0)
+	{
+	  search_regs.start[i] += BI_BUF_BEGV (buf);
+	  search_regs.end[i] += BI_BUF_BEGV (buf);
+	}
+  }
   XSETBUFFER (last_thing_searched, buf);
   fixup_search_regs_for_buffer (buf);
   return val;
@@ -368,7 +373,7 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
     s = 0;
   else
     {
-      Charcount len = string_char_length (XSTRING (string));
+      Charcount len = XSTRING_CHAR_LENGTH (string);
 
       CHECK_INT (start);
       s = XINT (start);
@@ -741,7 +746,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 
   p = XSTRING_DATA (string);
   pend = p + XSTRING_LENGTH (string);
-  memset (fastmap, 0, sizeof (fastmap));
+  xzero (fastmap);
 
   Fclear_range_table (Vskip_chars_range_table);
 
@@ -811,7 +816,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
      in the comparisons below. */
 
   if (negate)
-    for (i = 0; i < sizeof fastmap; i++)
+    for (i = 0; i < (int) (sizeof fastmap); i++)
       fastmap[i] ^= 1;
 
   {
@@ -1128,8 +1133,9 @@ search_buffer (struct buffer *buf, Lisp_Object string, Bufpos bufpos,
 	    }
 	  if (val >= 0)
 	    {
+	      int num_regs = search_regs.num_regs;
 	      j = BI_BUF_BEGV (buf);
-	      for (i = 0; i < search_regs.num_regs; i++)
+	      for (i = 0; i < num_regs; i++)
 		if (search_regs.start[i] >= 0)
 		  {
 		    search_regs.start[i] += j;
@@ -1164,8 +1170,9 @@ search_buffer (struct buffer *buf, Lisp_Object string, Bufpos bufpos,
 	    }
 	  if (val >= 0)
 	    {
+	      int num_regs = search_regs.num_regs;
 	      j = BI_BUF_BEGV (buf);
-	      for (i = 0; i < search_regs.num_regs; i++)
+	      for (i = 0; i < num_regs; i++)
 		if (search_regs.start[i] >= 0)
 		  {
 		    search_regs.start[i] += j;
@@ -1360,8 +1367,8 @@ search_buffer (struct buffer *buf, Lisp_Object string, Bufpos bufpos,
 			       (EMACS_INT) p_limit)
 			  cursor += BM_tab[*cursor];
 		      else
-			while ((unsigned EMACS_INT) cursor <=
-			       (unsigned EMACS_INT) p_limit)
+			while ((EMACS_UINT) cursor <=
+			       (EMACS_UINT) p_limit)
 			  cursor += BM_tab[*cursor];
 		    }
 		  else
@@ -1372,8 +1379,8 @@ search_buffer (struct buffer *buf, Lisp_Object string, Bufpos bufpos,
 			       (EMACS_INT) p_limit)
 			  cursor += BM_tab[*cursor];
 		      else
-			while ((unsigned EMACS_INT) cursor >=
-			       (unsigned EMACS_INT) p_limit)
+			while ((EMACS_UINT) cursor >=
+			       (EMACS_UINT) p_limit)
 			  cursor += BM_tab[*cursor];
 		    }
 /* If you are here, cursor is beyond the end of the searched region. */
@@ -1537,7 +1544,7 @@ wordify (Lisp_Object buffer, Lisp_Object string)
     XCHAR_TABLE (buf->mirror_syntax_table);
 
   CHECK_STRING (string);
-  len = string_char_length (XSTRING (string));
+  len = XSTRING_CHAR_LENGTH (string);
 
   for (i = 0; i < len; i++)
     if (!WORD_SYNTAX_P (syntax_table, string_char (XSTRING (string), i)))
@@ -1845,7 +1852,7 @@ and you do not need to specify it.)
     {
       if (search_regs.start[0] < 0
 	  || search_regs.start[0] > search_regs.end[0]
-	  || search_regs.end[0] > string_char_length (XSTRING (string)))
+	  || search_regs.end[0] > XSTRING_CHAR_LENGTH (string))
 	args_out_of_range (make_int (search_regs.start[0]),
 			   make_int (search_regs.end[0]));
     }
@@ -1928,7 +1935,7 @@ and you do not need to specify it.)
       /* Do case substitution into NEWTEXT if desired.  */
       if (NILP (literal))
 	{
-	  Charcount stlen = string_char_length (XSTRING (newtext));
+	  Charcount stlen = XSTRING_CHAR_LENGTH (newtext);
 	  Charcount strpos;
 	  /* XEmacs change: rewrote this loop somewhat to make it
 	     cleaner.  Also added \U, \E, etc. */
@@ -1994,7 +2001,7 @@ and you do not need to specify it.)
 		      literal_end = strpos - 1;
 		      Dynarr_add (ul_pos_dynarr,
 				  (!NILP (accum)
-				  ? string_char_length (XSTRING (accum))
+				  ? XSTRING_CHAR_LENGTH (accum)
 				  : 0) + (literal_end - literal_start));
 		      Dynarr_add (ul_action_dynarr, c);
 		    }
@@ -2039,7 +2046,7 @@ and you do not need to specify it.)
 	{
 	  int i = 0;
 	  int cur_action = 'E';
-	  Charcount stlen = string_char_length (XSTRING (newtext));
+	  Charcount stlen = XSTRING_CHAR_LENGTH (newtext);
 	  Charcount strpos;
 
 	  for (strpos = 0; strpos < stlen; strpos++)
@@ -2093,7 +2100,7 @@ and you do not need to specify it.)
     Finsert (1, &newtext);
   else
     {
-      Charcount stlen = string_char_length (XSTRING (newtext));
+      Charcount stlen = XSTRING_CHAR_LENGTH (newtext);
       Charcount strpos;
       struct gcpro gcpro1;
       GCPRO1 (newtext);
@@ -2304,39 +2311,39 @@ LIST should have been created by calling `match-data' previously.
   /* This function has been Mule-ized. */
   REGISTER int i;
   REGISTER Lisp_Object marker;
+  int num_regs;
+  int length;
 
   if (running_asynch_code)
     save_search_regs ();
 
-  if (!CONSP (list) && !NILP (list))
-    list = wrong_type_argument (Qconsp, list);
+  CONCHECK_LIST (list);
 
   /* Unless we find a marker with a buffer in LIST, assume that this
      match data came from a string.  */
   last_thing_searched = Qt;
 
   /* Allocate registers if they don't already exist.  */
-  {
-    int length = XINT (Flength (list)) / 2;
+  length = XINT (Flength (list)) / 2;
+  num_regs = search_regs.num_regs;
 
-    if (length > search_regs.num_regs)
-      {
-	if (search_regs.num_regs == 0)
-	  {
-	    search_regs.start = xnew_array (regoff_t, length);
-	    search_regs.end   = xnew_array (regoff_t, length);
-	  }
-	else
-	  {
-	    XREALLOC_ARRAY (search_regs.start, regoff_t, length);
-	    XREALLOC_ARRAY (search_regs.end,   regoff_t, length);
-	  }
+  if (length > num_regs)
+    {
+      if (search_regs.num_regs == 0)
+	{
+	  search_regs.start = xnew_array (regoff_t, length);
+	  search_regs.end   = xnew_array (regoff_t, length);
+	}
+      else
+	{
+	  XREALLOC_ARRAY (search_regs.start, regoff_t, length);
+	  XREALLOC_ARRAY (search_regs.end,   regoff_t, length);
+	}
 
-	search_regs.num_regs = length;
-      }
-  }
+      search_regs.num_regs = length;
+    }
 
-  for (i = 0; i < search_regs.num_regs; i++)
+  for (i = 0; i < num_regs; i++)
     {
       marker = Fcar (list);
       if (NILP (marker))

@@ -97,69 +97,70 @@
 		  ".diff" ".oi" ".class"))))
 
 
-(setq debug-ignored-errors
-      '(beginning-of-line
-	beginning-of-buffer
-	end-of-line
-        end-of-buffer
-	end-of-file buffer-read-only
-	"\\`Previous command was not a yank\\'"
-	"\\`Minibuffer is not active for completion\\'"
-	"\\`No \\(following\\|preceding\\) item in .*-history\\'"
-	"\\`No recursive edit is in progress\\'"
-	"\\`Changes to be undone are outside visible portion of buffer\\'"
-	"\\`No further undo information\\'"
-	"\\`No undo information in this buffer\\'"
-	"\\`Buffer modified since last undo/redo, cannot redo"
-	"\\`Save not confirmed\\'"
-	"\\`Canceled\\'"
-	"\\`\\(Revert\\|Steal\\|Recover-file\\) cancelled\\.\\'"
+;; This needs to be redone better. -slb
+;(setq debug-ignored-errors
+;      '(beginning-of-line
+;	beginning-of-buffer
+;	end-of-line
+;        end-of-buffer
+;	end-of-file buffer-read-only
+;	"\\`Previous command was not a yank\\'"
+;	"\\`Minibuffer is not active for completion\\'"
+;	"\\`No \\(following\\|preceding\\) item in .*-history\\'"
+;	"\\`No recursive edit is in progress\\'"
+;	"\\`Changes to be undone are outside visible portion of buffer\\'"
+;	"\\`No further undo information\\'"
+;	"\\`No undo information in this buffer\\'"
+;	"\\`Buffer modified since last undo/redo, cannot redo"
+;	"\\`Save not confirmed\\'"
+;	"\\`Canceled\\'"
+;	"\\`\\(Revert\\|Steal\\|Recover-file\\) cancelled\\.\\'"
 
-	;; comint
-	"\\`Not at command line\\'"
-	"\\`Empty input ring\\'"
-	"\\`No history\\'"
-	"\\`Not found\\'" ;; To common?
-	"\\`Current buffer has no process\\'"
+;	;; comint
+;	"\\`Not at command line\\'"
+;	"\\`Empty input ring\\'"
+;	"\\`No history\\'"
+;	"\\`Not found\\'" ;; To common?
+;	"\\`Current buffer has no process\\'"
 
-	;; dabbrev
-	"\\`No \\(further \\)?dynamic expansion for .* found\\.?\\'"
+;	;; dabbrev
+;	"\\`No \\(further \\)?dynamic expansion for .* found\\.?\\'"
 
-	;; Completion
-	"\\`To complete, the point must be after a symbol at least [0-9]* character long\\.\\'"
-	"\\`The string \".*\" is too short to be saved as a completion\\.\\'"
+;	;; Completion
+;	"\\`To complete, the point must be after a symbol at least [0-9]* character long\\.\\'"
+;	"\\`The string \".*\" is too short to be saved as a completion\\.\\'"
 
-	;; Compile
-	"\\`No more errors\\( yet\\|\\)\\'"
+;	;; Compile
+;	"\\`No more errors\\( yet\\|\\)\\'"
 
-	;; Gnus
-	;"\\`NNTP: Connection closed\\.\\'"
+;	;; Gnus
+;	;"\\`NNTP: Connection closed\\.\\'"
 
-	;; info
-	"\\`Node has no Previous\\'"
-	"\\`No \".*\" in index\\'"
+;	;; info
+;	"\\`Node has no Previous\\'"
+;	"\\`No \".*\" in index\\'"
 
-	;; imenu
-	;"\\`No items suitable for an index found in this buffer\\.\\'"
-	;"\\`The mode \".*\" does not take full advantage of imenu\\.el yet\\.\\'"
+;	;; imenu
+;	;"\\`No items suitable for an index found in this buffer\\.\\'"
+;	;"\\`The mode \".*\" does not take full advantage of imenu\\.el yet\\.\\'"
 
-	;; ispell
-	"\\`No word found to check!\\'"
+;	;; ispell
+;	"\\`No word found to check!\\'"
 
-	;; man
-	"\\`.* not found\\'"
-	"\\`No more history\\.\\'"
+;	;; man
+;	"\\`.* not found\\'"
+;	"\\`No more history\\.\\'"
 
-	;; etags
-	"\\`File .* is not a valid tag table\\'"
-	"\\`File .* is not a valid tags file\\'"
-	"\\`All files processed\\.\\'"
-	"No TAGS file name supplied\\'"
-	"\\`Nothing to complete\\'"
+;	;; etags
+;	"\\`File .* is not a valid tag table\\'"
+;	"\\`File .* is not a valid tags file\\'"
+;	"\\`All files processed\\.\\'"
+;	"No TAGS file name supplied\\'"
+;	"\\`Nothing to complete\\'"
 
-	;; BBDB
-	"\\`no previous record\\'"
-	"\\`no next record\\'"))
+;	;; BBDB
+;	"\\`no previous record\\'"
+;	"\\`no next record\\'"))
 
 (make-variable-buffer-local 'indent-tabs-mode)
 

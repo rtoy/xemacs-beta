@@ -34,7 +34,7 @@ Boston, MA 02111-1307, USA.  */
 #define _XEMACS_BACKTRACE_H_
 
 #include <setjmp.h>
-       
+
 /* These definitions are used in eval.c and alloc.c */
 
 struct backtrace

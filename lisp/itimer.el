@@ -95,7 +95,7 @@ many seconds.")
   (define-key itimer-edit-map "\C-?" 'itimer-edit-previous-field)
   (define-key itimer-edit-map "x" 'start-itimer)
   (define-key itimer-edit-map "?" 'itimer-edit-help))
-  
+
 (defvar itimer-inside-driver nil)
 
 (defvar itimer-edit-start-marker nil)
@@ -127,7 +127,7 @@ This is a macro."
 
 (defmacro check-itimer-coerce-string (var)
   "If VAR is not bound to a string, look up the itimer that it names and
-bind VAR to it.  Otherwise if VAR is not bound to an itimer, signal
+bind VAR to it.  Otherwise, if VAR is not bound to an itimer, signal
 wrong-type-argument.  This is a macro."
   (list 'setq var
 	(list 'cond
@@ -159,56 +159,56 @@ This is a macro."
 ;; Functions to access and modify itimer attributes.
 
 (defun itimerp (obj)
-  "Returns non-nil iff OBJ is an itimer."
+  "Return t if OBJ is an itimer."
   (and (consp obj) (eq (length obj) 8)))
 
 (defun itimer-live-p (obj)
-  "Returns non-nil iff OBJ is an itimer and is active.
+  "Return non-nil if OBJ is an itimer and is active.
 ``Active'' means Emacs will run it when it expires.
-`activate-timer' must be called on a itimer to make it active.
+`activate-timer' must be called on an itimer to make it active.
 Itimers started with `start-itimer' are automatically active."
   (and (itimerp obj) (memq obj itimer-list)))
 
 (defun itimer-name (itimer)
-  "Returns the name of ITIMER."
+  "Return the name of ITIMER."
   (check-itimer itimer)
   (car itimer))
 
 (defun itimer-value (itimer)
-  "Returns the number of seconds until ITIMER expires."
+  "Return the number of seconds until ITIMER expires."
   (check-itimer itimer)
   (nth 1 itimer))
 
 (defun itimer-restart (itimer)
-  "Returns the value to which ITIMER will be set at restart.
-nil is returned if this itimer doesn't restart."
+  "Return the value to which ITIMER will be set at restart.
+Return nil if this itimer doesn't restart."
   (check-itimer itimer)
   (nth 2 itimer))
 
 (defun itimer-function (itimer)
-  "Returns the function of ITIMER.
+  "Return the function of ITIMER.
 This function is called each time ITIMER expires."
   (check-itimer itimer)
   (nth 3 itimer))
 
 (defun itimer-is-idle (itimer)
-  "Returns non-nil if ITIMER is an idle timer.
+  "Return non-nil if ITIMER is an idle timer.
 Normal timers expire after a set interval.  Idle timers expire
-only after Emacs has been idle for a specific interval.  ``Idle''
-means no command events within the interval."
+only after Emacs has been idle for a specific interval.
+``Idle'' means no command events occur within the interval."
   (check-itimer itimer)
   (nth 4 itimer))
 
 (defun itimer-uses-arguments (itimer)
-  "Returns non-nil if the function of ITIMER will be called with arguments.
+  "Return non-nil if the function of ITIMER will be called with arguments.
 ITIMER's function is called with the arguments each time ITIMER expires.
 The arguments themselves are retrievable with `itimer-function-arguments'."
   (check-itimer itimer)
   (nth 5 itimer))
 
 (defun itimer-function-arguments (itimer)
-  "Returns the function arguments of ITIMER as a list.
-ITIMER's function is called with these argument each timer ITIMER expires."
+  "Return the function arguments of ITIMER as a list.
+ITIMER's function is called with these argument each time ITIMER expires."
   (check-itimer itimer)
   (nth 6 itimer))
 
@@ -218,7 +218,7 @@ ITIMER's function is called with these argument each timer ITIMER expires."
 
 (defun set-itimer-value (itimer value)
   "Set the timeout value of ITIMER to be VALUE.
-Itimer will expire is this many seconds.
+Itimer will expire in this many seconds.
 If your version of Emacs supports floating point numbers then
 VALUE can be a floating point number.  Otherwise it
 must be an integer.
@@ -264,14 +264,14 @@ Returns FUNCTION."
   (setcar (nthcdr 3 itimer) function))
 
 (defun set-itimer-is-idle (itimer flag)
-  "Sets flag that says whether ITIMER is an idle timer.
-If FLAG is non-nil, then ITIMER will eb considered an idle timer.
+  "Set flag that says whether ITIMER is an idle timer.
+If FLAG is non-nil, then ITIMER will be considered an idle timer.
 Returns FLAG."
   (check-itimer itimer)
   (setcar (nthcdr 4 itimer) flag))
 
 (defun set-itimer-uses-arguments (itimer flag)
-  "Sets flag that says whether the function of ITIMER is called with arguments.
+  "Set flag that says whether the function of ITIMER is called with arguments.
 If FLAG is non-nil, then the function will be called with one argument,
 otherwise the function will be called with no arguments.
 Returns FLAG."
@@ -298,11 +298,11 @@ Returns ARGUMENTS."
   "Read the name of an itimer from the minibuffer and return the itimer
 associated with that name.  The user is prompted with PROMPT.
 Optional second arg INITIAL-INPUT non-nil is inserted into the
-  minibuffer as initial user input."
+minibuffer as initial user input."
   (get-itimer (completing-read prompt itimer-list nil 'confirm initial-input)))
 
 (defun delete-itimer (itimer)
-  "Deletes ITIMER.  ITIMER may be an itimer or the name of one."
+  "Delete ITIMER.  ITIMER may be an itimer or the name of one."
   (check-itimer-coerce-string itimer)
   (setq itimer-list (delq itimer itimer-list)))
 
@@ -312,8 +312,8 @@ Optional second arg INITIAL-INPUT non-nil is inserted into the
 Arguments are
   NAME, FUNCTION, VALUE &optional RESTART, IS-IDLE, WITH-ARGS, &rest FUNCTION-ARGUMENTS.
 NAME is an identifier for the itimer.  It must be a string.  If an itimer
-  already exists with this name, NAME will be modified slightly to until
-  it is unique.
+  already exists with this name, NAME will be modified slightly to make
+  it unique.
 FUNCTION should be a function (or symbol naming one).  It
   will be called each time the itimer expires with arguments of
   FUNCTION-ARGUMENTS.  The function can access the itimer that
@@ -323,17 +323,17 @@ FUNCTION should be a function (or symbol naming one).  It
   package which always called FUNCTION with no arguments.
 VALUE is the number of seconds until this itimer expires.
   If your version of Emacs supports floating point numbers then
-  you can VALUE can be a floating point number.  Otherwise it
+  VALUE can be a floating point number.  Otherwise it
   must be an integer.
 Optional fourth arg RESTART non-nil means that this itimer should be
   restarted automatically after its function is called.  Normally an itimer
-  is deleted at expiration after its function has returned. 
-  If non-nil RESTART should be a number indicating the value at which the
-  itimer should be set at restart time.
-Optional fifth arg IS-IDLE specified if this is an idle timer.
-  Normal timers eexpire after a set interval.  Idle timers expire
-  only after Emacs has been idle for specific interval.  ``Idle''
-  means no command events within the interval.
+  is deleted at expiration after its function has returned.
+  If non-nil, RESTART should be a number indicating the value at which
+  the itimer should be set at restart time.
+Optional fifth arg IS-IDLE specifies if this is an idle timer.
+  Normal timers expire after a set interval.  Idle timers expire
+  only after Emacs has been idle for specific interval.
+  ``Idle'' means no command events occur within the interval.
 Returns the newly created itimer."
   (interactive
    (list (completing-read "Start itimer: " itimer-list)

@@ -57,14 +57,13 @@ separator_string_p (CONST char *s)
   first = s[0];
   if (first != '-' && first != '=')
     return 0;
-  for (p = s; *p == first; p++);
+  for (p = s; *p == first; p++)
+    ;
 
-  if (*p == '!' || *p == ':' || *p == '\0')
-    return 1;
-  return 0;
+  return (*p == '!' || *p == ':' || *p == '\0');
 }
 
-/* 
+/*
  * Initialize the gui_item structure by setting all (GC-protected)
  * fields to their default values. The defaults are t for :active and
  * :included values, and nil for others.
@@ -72,16 +71,16 @@ separator_string_p (CONST char *s)
 void
 gui_item_init (struct gui_item *pgui_item)
 {
-  pgui_item->name = Qnil;
+  pgui_item->name     = Qnil;
   pgui_item->callback = Qnil;
-  pgui_item->suffix = Qnil;
-  pgui_item->active = Qt;
+  pgui_item->suffix   = Qnil;
+  pgui_item->active   = Qt;
   pgui_item->included = Qt;
-  pgui_item->config = Qunbound;
-  pgui_item->filter = Qnil;
-  pgui_item->style = Qnil;
+  pgui_item->config   = Qunbound;
+  pgui_item->filter   = Qnil;
+  pgui_item->style    = Qnil;
   pgui_item->selected = Qnil;
-  pgui_item->keys = Qnil;
+  pgui_item->keys     = Qnil;
 }
 
 /*
@@ -89,31 +88,23 @@ gui_item_init (struct gui_item *pgui_item)
  * structure. If KEY is not a keyword, or is an unknown keyword, then
  * error is signaled.
  */
-void 
+void
 gui_item_add_keyval_pair (struct gui_item *pgui_item,
 			  Lisp_Object key, Lisp_Object val)
 {
   if (!KEYWORDP (key))
-    error ("Not a keyword %S in gui item %S", key, pgui_item->name);
+    signal_simple_error_2 ("Non-keyword in gui item", key, pgui_item->name);
 
-  if (EQ (key, Q_suffix))
-    pgui_item->suffix = val;
-  else if (EQ (key, Q_active))
-    pgui_item->active = val;
-  else if (EQ (key, Q_included))
-    pgui_item->included = val;
-  else if (EQ (key, Q_config))
-    pgui_item->config = val;
-  else if (EQ (key, Q_filter))
-    pgui_item->filter = val;
-  else if (EQ (key, Q_style))
-    pgui_item->style = val;
-  else if (EQ (key, Q_selected))
-    pgui_item->selected = val;
-  else if (EQ (key, Q_keys))
-    pgui_item->keys = val;
+  if	  (EQ (key, Q_suffix))	 pgui_item->suffix   = val;
+  else if (EQ (key, Q_active))	 pgui_item->active   = val;
+  else if (EQ (key, Q_included)) pgui_item->included = val;
+  else if (EQ (key, Q_config))	 pgui_item->config   = val;
+  else if (EQ (key, Q_filter))	 pgui_item->filter   = val;
+  else if (EQ (key, Q_style))	 pgui_item->style    = val;
+  else if (EQ (key, Q_selected)) pgui_item->selected = val;
+  else if (EQ (key, Q_keys))	 pgui_item->keys     = val;
   else
-    error ("Unknown keyword %S in gui item %S", key, pgui_item->name);
+    signal_simple_error_2 ("Unknown keyword in gui item", key, pgui_item->name);
 }
 
 /*
@@ -167,7 +158,7 @@ gui_parse_item_keywords (Lisp_Object item, struct gui_item *pgui_item)
 	  Lisp_Object val = contents [i++];
 	  gui_item_add_keyval_pair (pgui_item, key, val);
 	}
-    }    
+    }
 }
 
 /*
@@ -178,7 +169,7 @@ int
 gui_item_active_p (CONST struct gui_item *pgui_item)
 {
   /* This function can call lisp */
-  
+
   /* Shortcut to avoid evaluating Qt each time */
   return (EQ (pgui_item->active, Qt)
 	  || !NILP (Feval (pgui_item->active)));
@@ -210,12 +201,12 @@ gui_item_included_p (CONST struct gui_item *pgui_item, Lisp_Object conflist)
 static DOESNT_RETURN
 signal_too_long_error (Lisp_Object name)
 {
-  error ("GUI item %s produces too long displayable string", name);
+  signal_simple_error ("GUI item produces too long displayable string", name);
 }
 
 /*
- * Format "left flush" display portion of an item into BUF, guarded by 
- * maximum buffer size BUF_LEN. BUF_LEN does not count for terminating 
+ * Format "left flush" display portion of an item into BUF, guarded by
+ * maximum buffer size BUF_LEN. BUF_LEN does not count for terminating
  * null character, so actual maximum size of buffer consumed is
  * BUF_LEN + 1 bytes. If buffer is not big enough, then error is
  * signaled.
@@ -224,46 +215,45 @@ signal_too_long_error (Lisp_Object name)
  */
 unsigned int
 gui_item_display_flush_left  (CONST struct gui_item *pgui_item,
-			      char* buf, unsigned int buf_len)
+			      char* buf, Bytecount buf_len)
 {
-  unsigned int consumed;
+  char *p = buf;
+  Bytecount len;
 
   /* Copy item name first */
   CHECK_STRING (pgui_item->name);
-  if (XSTRING_LENGTH (pgui_item->name) > buf_len)
+  len = XSTRING_LENGTH (pgui_item->name);
+  if (len > buf_len)
     signal_too_long_error (pgui_item->name);
-  strcpy (buf, XSTRING_DATA (pgui_item->name));
-  buf += (consumed = XSTRING_LENGTH (pgui_item->name));
-  buf_len -= consumed;
+  memcpy (p, XSTRING_DATA (pgui_item->name), len);
+  p += len;
 
   /* Add space and suffix, if there is a suffix.
-  * If suffix is not string evaluate it */
+   * If suffix is not string evaluate it */
   if (!NILP (pgui_item->suffix))
     {
-      Lisp_Object suffix2;
-      
+      Lisp_Object suffix = pgui_item->suffix;
       /* Shortcut to avoid evaluating suffix each time */
-      if (STRINGP (pgui_item->suffix))
-	suffix2 = pgui_item->suffix;
-      else
+      if (!STRINGP (suffix))
 	{
-	  suffix2 = Feval (pgui_item->suffix);
-	  CHECK_STRING (suffix2);
+	  suffix = Feval (suffix);
+	  CHECK_STRING (suffix);
 	}
-      
-      if (XSTRING_LENGTH (suffix2) + 1 > buf_len)
-	signal_too_long_error (pgui_item->name);
-      *(buf++) = ' ';
-      strcpy (buf, XSTRING_DATA (suffix2));
-      consumed += XSTRING_LENGTH (suffix2) + 1;
-    }
 
-  return consumed;
+      len = XSTRING_LENGTH (suffix);
+      if (p + len + 1 > buf + buf_len)
+	signal_too_long_error (pgui_item->name);
+      *(p++) = ' ';
+      memcpy (p, XSTRING_DATA (suffix), len);
+      p += len;
+    }
+  *p = '\0';
+  return p - buf;
 }
 
 /*
- * Format "right flush" display portion of an item into BUF, guarded by 
- * maximum buffer size BUF_LEN. BUF_LEN does not count for terminating 
+ * Format "right flush" display portion of an item into BUF, guarded by
+ * maximum buffer size BUF_LEN. BUF_LEN does not count for terminating
  * null character, so actual maximum size of buffer consumed is
  * BUF_LEN + 1 bytes. If buffer is not big enough, then error is
  * signaled.
@@ -272,7 +262,7 @@ gui_item_display_flush_left  (CONST struct gui_item *pgui_item,
  */
 unsigned int
 gui_item_display_flush_right (CONST struct gui_item *pgui_item,
-			      char* buf, unsigned int buf_len)
+			      char* buf, Bytecount buf_len)
 {
   *buf = 0;
 
@@ -286,7 +276,7 @@ gui_item_display_flush_right (CONST struct gui_item *pgui_item,
       CHECK_STRING (pgui_item->keys);
       if (XSTRING_LENGTH (pgui_item->keys) > buf_len)
 	signal_too_long_error (pgui_item->name);
-      strcpy (buf, XSTRING_DATA (pgui_item->keys));
+      strcpy (buf, (CONST char *) XSTRING_DATA (pgui_item->keys));
       return XSTRING_LENGTH (pgui_item->keys);
     }
 
@@ -294,7 +284,7 @@ gui_item_display_flush_right (CONST struct gui_item *pgui_item,
   if (SYMBOLP (pgui_item->callback))
     {
       char buf2 [1024];
-      unsigned int len;
+      Bytecount len;
 
       where_is_to_char (pgui_item->callback, buf2);
       len = strlen (buf2);

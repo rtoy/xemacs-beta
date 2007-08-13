@@ -6,7 +6,7 @@ Note that for most of the following options, you can explicitly enable
 them using `--OPTION=yes' and explicitly disable them using `--OPTION=no'.
 This is especially useful for auto-detected options.
 
-Options marked with a (*) are autodetected.
+Options marked with a (*) are auto-detected.
 
 Use colons (or quoted spaces) to separate directory names in option
 values which are PATHs (i.e. lists of directories).
@@ -20,15 +20,19 @@ General options:
 
 Compilation options:
 
---compiler=XXXX		Specify compiler.  Overrides environment variable CC.
+--compiler=prog		C compiler to use.
 --with-gcc (*)		Use GCC to compile XEmacs.
---with-gcc=no		Don't use GCC to compile XEmacs.
+--without-gcc		Don't use GCC to compile XEmacs.
 --with-gnu-make		Write the Makefiles to take advantage of
 			special features of GNU Make. (GNU Make
 			works fine on the Makefiles even without this
 			option.  This just allows for simultaneous
 			in-place and --srcdir building.)
---cflags=FLAGS		Compiler flags. Overrides environment variable CFLAGS.
+--cflags=FLAGS		Compiler flags (such as -O)
+--cpp=prog		C preprocessor to use (e.g. /usr/ccs/lib/cpp or cc -E)
+--cppflags=FLAGS	C preprocessor flags (e.g. -I/foo or -Dfoo=bar)
+--libs=LIBS		Additional libraries (e.g. -lfoo)
+--ldflags=FLAGS		Additional linker flags (e.g. -L/foo)
 --site-includes=PATH	List of directories to search first for header files.
 --site-libraries=PATH	List of directories to search first for libraries.
 --site-prefixes=PATH    List of directories to search for include/ and lib/
@@ -42,8 +46,10 @@ Compilation options:
 			linking is the default.
 --srcdir=DIR		Look for the XEmacs source files in DIR.
 			See also --with-gnu-make.
---const-is-losing=no	Allow the use of const in the source code.
---with-gung		Build with new-style Lisp_Objects.
+--use-indexed-lrecord-implementation
+--use-minimal-tagbits
+--gung-ho		Build with new-style Lisp_Objects.
+			Equivalent to both of the 2 previous options combined.
 
 
 Installation options:
@@ -54,11 +60,11 @@ Installation options:
 Window-system options:
 
 --with-x11 (*)		Support the X Window System.
---with-x11=no		Don't support X.
+--without-x11		Don't support X.
 --x-includes=DIR 	Search for X header files in DIR.
 --x-libraries=DIR	Search for X libraries in DIR.
---with-toolbars=no	Don't compile with any toolbar support.
---with-session=no	Compile without realized leader window which will
+--without-toolbars	Don't compile with any toolbar support.
+--without-session	Compile without realized leader window which will
 			keep the WM_COMMAND property. Required for proper
 			session-management.
 --with-menubars=TYPE	Use TYPE menubars (lucid, motif, or no).  The Lucid
@@ -70,8 +76,8 @@ Window-system options:
 			Lucid menubars and scrollbars are the default.
 			Motif dialog boxes will be used if Motif can be found.
 --with-cde (*)		Compile in support for CDE drag and drop.
---with-offix (*)	Compile in support for OffiX drag and drop.
---with-xmu=no (*)	For those unfortunates whose vendors don't ship Xmu.
+--with-offix		Compile in support for OffiX drag and drop.
+--without-xmu (*)	For those unfortunates whose vendors don't ship Xmu.
 --external-widget	Compile with external widget support.
 --with-xpm (*)		Compile with support for XPM files.
 			It is highly recommended that you obtain XPM
@@ -95,7 +101,7 @@ Window-system options:
 
 TTY options:
 
---with-tty=no		Don't support TTY-s.
+--without-tty		Don't support TTY-s.
 --with-ncurses (*)	Use the ncurses library for tty support.
 --with-gpm (*) 		Compile in support for General Purpose Mouse.
 
@@ -143,7 +149,7 @@ Additional features:
 Internationalization options:
 
 --with-mule		Compile with Mule (MUlti-Lingual Emacs) support,
-			needed to suport non-Latin-1 (including Asian) languages.
+			needed to support non-Latin-1 (including Asian) languages.
 --with-xim=xlib		Compile with support for X input methods,
 --with-xim=motif (*)	Used in conjunction with Mule support.
 			Use either raw Xlib to provide XIM support, or
@@ -212,13 +218,18 @@ complete list plus the reasons we advise not changing them.
 If successful, configure leaves its status in config.status.  If
 unsuccessful after disturbing the status quo, it removes config.status.
 
-The configure build process also uses the following environment variables:
+The configure script also recognizes some environment variables, each
+of which is equivalent to a corresponding configure flag.  A specified
+configure flag always overrides the environment variable.
 
-CC        C compiler to use (but configure flags take precedence)
-CPP       C preprocessor to use (such as /usr/ccs/lib/cpp or cc -E)
-CFLAGS    C compiler compilation flags (such as -O)
-CPPFLAGS  Compilation flags (such as -I/foo) used only by the preprocessor
-LDFLAGS   Additional linker flags (such as -L/foo)
-LIBS      Additional libraries (such as -lfoo)
+envvar      configure flag
+-----       --------------
+CC          --compiler
+CPP         --cpp
+CFLAGS      --cflags
+CPPFLAGS    --cppflags
+LDFLAGS     --ldflags
+LIBS        --libs
+LD_RUN_PATH --site-runtime-libraries
 
 For more details on the install process, consult the INSTALL file.

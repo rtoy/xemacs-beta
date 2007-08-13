@@ -144,7 +144,7 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef NEED_BSDTTY
 #include <sys/bsdtty.h>
-#endif 
+#endif
 
 /* Include files for PTY's */
 
@@ -155,8 +155,6 @@ Boston, MA 02111-1307, USA.  */
 #ifdef AIX
 #include <sys/pty.h>
 #endif /* AIX */
-
-/* XEmacs: We don't include unistd.h because it's done in lisp.h */
 
 #ifdef SYSV_PTYS
 # include <sys/types.h>

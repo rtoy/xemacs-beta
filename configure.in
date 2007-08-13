@@ -347,19 +347,19 @@ with_menubars=''
 with_scrollbars=''
 with_dialogs=''
 with_file_coding=''
-const_is_losing='yes'
+dnl const_is_losing is removed - we rely on AC_C_CONST instead.
+dnl We accept (and ignore) the --const-is-losing option for compatibility.
+dnl const_is_losing='yes'
 puresize=''
-cflags='UNSPECIFIED'
+cpp='' cppflags='' libs='' ldflags=''
 dynamic=''
 with_x11=''
 with_msw=''
-with_gung='no'
-with_minimal_tagbits='no'
 rel_alloc='default'
 with_system_malloc='default'
 with_dlmalloc='default'
 native_sound_lib=''
-dnl use-assertions should be 'yes' by default.  Too many people in this
+dnl use_assertions should be 'yes' by default.  Too many people in this
 dnl world have core dumps turned off by default or \"cannot find where the
 dnl core file went\".  At least we should get some useful output ...
 use_assertions="yes"
@@ -455,7 +455,6 @@ while test $# != 0; do
 	with_gcc	| \
 	with_gnu_make	| \
 	dynamic		| \
-	with_gung	| \
 	with_ncurses	| \
 	with_dnet	| \
 	with_socks	| \
@@ -496,6 +495,10 @@ while test $# != 0; do
 	use_union_type  | \
 	debug		| \
 	use_assertions	| \
+	use_minimal_tagbits			| \
+	use_indexed_lrecord_implementation	| \
+	gung_ho		| \
+	use_assertions	| \
 	memory_usage_stats | \
 	with_clash_detection | \
 	with_shlib | \
@@ -514,6 +517,10 @@ while test $# != 0; do
 	srcdir		| \
 	compiler	| \
 	cflags		| \
+	cpp		| \
+	cppflags	| \
+	libs		| \
+	ldflags		| \
 	puresize	| \
 	cache_file	| \
 	native_sound_lib | \
@@ -750,6 +757,17 @@ dnl -------------------------
 dnl Finish options processing
 dnl -------------------------
 
+dnl Several options are equivalent to, and override, environment variables.
+test -n "$cpp"      && CPP="$cpp"
+test -n "$cppflags" && CPPFLAGS="$cppflags"
+test -n "$libs"     && LIBS="$libs"
+test -n "$ldflags"  && LDFLAGS="$ldflags"
+
+dnl Personal settings shouldn't affect the configuration process.
+dnl if test "$infopath_user_defined" = "no" -a -n "$INFOPATH" ; then
+dnl   infopath="$INFOPATH"
+dnl fi
+
 dnl Get the arguments back.  See the diatribe on Shell Magic above.
 eval set x "$quoted_arguments"; shift
 
@@ -766,6 +784,20 @@ COLON_TO_SPACE(site_runtime_libraries)
 
 dnl with_x is an obsolete synonym for with_x11
 test -n "$with_x" && with_x11="$with_x"
+
+dnl --gung-ho=val is a synonym for
+dnl --use-minimal-tagbits=val --use-indexed-lrecord-implementation=val
+
+if test -n "$gung_ho"; then
+  test -z "$use_minimal_tagbits" && use_minimal_tagbits="$gung_ho"
+  test -z "$use_indexed_lrecord_implementation" && \
+    use_indexed_lrecord_implementation="$gung_ho"
+fi
+if test "$use_minimal_tagbits" = "no"; then
+  test "$with_dlmalloc" = "yes" && \
+    USAGE_ERROR(--with-dlmalloc=yes requires --use-minimal-tagbits=yes)
+  with_dlmalloc=no
+fi
 
 dnl# Ignore useless run-in-place flag
 if test "$run_in_place" = "yes"; then
@@ -901,7 +933,7 @@ test "${error_check_malloc=$beta}"    = yes && AC_DEFINE(ERROR_CHECK_MALLOC)
 dnl debug=yes must be set when error checking is present.  This should be
 dnl fixed up.
 dnl debug implies other options
-if test "${debug=beta}" = "yes"; then
+if test "${debug:=$beta}" = "yes"; then
   use_assertions=yes memory_usage_stats=yes
   XE_ADD_OBJS(debug.o)
   AC_DEFINE(DEBUG_XEMACS)
@@ -1466,7 +1498,13 @@ fi
 dnl If we don't set CFLAGS here, AC_PROG_CC will set it.
 dnl But we know better what's good for us, so we do our own
 dnl computation of real CFLAGS later.
-test "$cflags" != "UNSPECIFIED" && CFLAGS="$cflags"
+dnl --cflags overrides environment variable CFLAGS
+test "${cflags-unset}" != unset && CFLAGS="$cflags"
+if test "${CFLAGS-unset}" != unset
+  then cflags_specified=yes;
+  else cflags_specified=no;
+fi
+
 xe_save_CFLAGS="$CFLAGS"
 
 AC_PROG_CC dnl Autoconf has its own magic for compiler autodetection
@@ -1503,7 +1541,8 @@ AC_TRY_COMPILE([#include <features.h>],[
 ], have_glibc=yes, have_glibc=no)
 AC_MSG_RESULT($have_glibc)
 dnl I'm tired of pop being broken with GLIBC -slb
-dnl test "$have_glibc" = "yes" && AC_DEFINE(_GNU_SOURCE)
+dnl Well. then why not fix fucking pop?
+test "$have_glibc" = "yes" && AC_DEFINE(_GNU_SOURCE)
 
 AC_MSG_CHECKING(whether we are using SunPro C)
 AC_TRY_COMPILE([],[#ifndef __SUNPRO_C
@@ -1615,29 +1654,6 @@ CPP_boolean_to_sh(TERMINFO, have_terminfo)
 CPP_boolean_to_sh(MAIL_USE_FLOCK, mail_use_flock)
 CPP_boolean_to_sh(MAIL_USE_LOCKF, mail_use_lockf)
 
-#if 0
-#ifdef THIS_IS_CONFIGURE
-
-/* Get the CFLAGS for tests in configure.  */
-CPP_to_sh(C_DEBUG_SWITCH, c_debug_switch, -g)
-CPP_to_sh(C_OPTIMIZE_SWITCH, c_optimize_switch, -O)
-#ifdef __GNUC__
-configure___ CFLAGS=C_DEBUG_SWITCH C_OPTIMIZE_SWITCH '$SPECIFIED_CFLAGS'
-#else
-configure___ CFLAGS=C_DEBUG_SWITCH '$SPECIFIED_CFLAGS'
-#endif
-
-#else /* not THIS_IS_CONFIGURE */
-
-/* Get the CFLAGS for real compilation.  */
-#ifdef __GNUC__
-configure___ REAL_CFLAGS=C_DEBUG_SWITCH C_OPTIMIZE_SWITCH '$SPECIFIED_CFLAGS'
-#else
-configure___ REAL_CFLAGS=C_DEBUG_SWITCH '$SPECIFIED_CFLAGS'
-#endif
-
-#endif /* not THIS_IS_CONFIGURE */
-#endif /* 0 */
 ' > $tempcname
 dnl The value of CPP is a quoted variable reference, so we need to do this
 dnl to get its actual value...
@@ -1647,12 +1663,6 @@ changequote(, )dnl
 eval `$CPP -Isrc $tempcname \
 	| sed -n -e "s/[ TAB]*=[ TAB\"]*/='/" -e "s/[ TAB\"]*\$/'/" -e "s/^configure___//p"`
 changequote([, ])dnl
-dnl if test -z "$SPECIFIED_CFLAGS"; then
-dnl   eval `$CPP -Isrc -DTHIS_IS_CONFIGURE $tempcname \
-dnl 	| sed -n -e "s/ *=[[ \"]]*/='/" -e "s/[[ \"]]*\$/'/" -e "s/^configure___//p"`
-dnl else
-dnl   REAL_CFLAGS="$CFLAGS"
-dnl fi
 
 rm $tempcname
 
@@ -1669,7 +1679,7 @@ test "$ordinary_link" = "no" -a -z "$libs_standard" && libs_standard="-lc"
 
 dnl Calculalate value of CFLAGS:
 dnl Use either command line flag, environment var, or autodetection
-if test -z "$CFLAGS"; then
+if test "$cflags_specified" = "no"; then
   dnl Following values of CFLAGS are known to work well.
   dnl Should we take debugging options into consideration?
   if   test "$GCC" = "yes"; then
@@ -1685,26 +1695,30 @@ if test -z "$CFLAGS"; then
   elif test "$CC" = "xlc"; then
     CFLAGS="-O3 -qstrict -qnoansialias -qlibansi -qinfo -qro -qmaxmem=20000"
   else
+    dnl ### Add tests for other compilers here...
     CFLAGS="-O" ;dnl The only POSIX-approved flag
   fi
 fi
 
-dnl Make sure linker flags not understood by GCC are properly wrapped.
+dnl Inform compiler that certain flags are meant for the linker
+dnl XE_PROTECT_LINKER_FLAGS(shell_var)
+define([XE_PROTECT_LINKER_FLAGS], [
 if test "$GCC" = "yes"; then
-  define([XE_GCC_WRAP_LDFLAGS],
-  [[$1_tmp]="$[$1]"; [$1]=""
-  for arg in $[$1_tmp]; do
-    case "$arg" in
-      -L* | -l* | -R* | -u* | -Wl* | -f*) [$1]="$[$1] $arg" ;;
+  set x $[$1]; shift; [$1]=""
+  while test -n "[$]1"; do
+    case [$]1 in
+      -L  | -l  | -u         ) [$1]="$[$1] [$]1 [$]2"; shift ;;
+      -L* | -l* | -u* | -Wl* ) [$1]="$[$1] [$]1" ;;
       -Xlinker* ) ;;
-      * ) [$1]="$[$1] -Xlinker $arg" ;;
+      * ) [$1]="$[$1] -Xlinker [$]1" ;;
     esac
-  done])dnl
-  XE_GCC_WRAP_LDFLAGS(ld_switch_system)
-  XE_GCC_WRAP_LDFLAGS(ld_switch_machine)
-  XE_GCC_WRAP_LDFLAGS(LDFLAGS)
-  XE_GCC_WRAP_LDFLAGS(ld_call_shared)
-fi
+    shift
+  done
+fi])dnl
+XE_PROTECT_LINKER_FLAGS(ld_switch_system)
+XE_PROTECT_LINKER_FLAGS(ld_switch_machine)
+XE_PROTECT_LINKER_FLAGS(LDFLAGS)
+XE_PROTECT_LINKER_FLAGS(ld_call_shared)
 
 dnl Add s&m-determined objects (including unexec) to link line
 test -n "$objects_machine" && XE_ADD_OBJS($objects_machine)
@@ -1731,20 +1745,20 @@ fi
 
 dnl Feed s&m crud to src/Makefile
 
+dnl Linux/powerpc needs the following magic for some reason
+test "$machine$opsys" = "powerpclinux" && start_flags="-T $srcdir/ppc.ldscript"
+
 if test "$unexec" = "unexaix.o"; then
 dnl AIX needs various hacks to make static linking work.
-dnl This can go away if we ever figure out how to get dynamic linking on AIX.
   if   test "$dynamic" = "no"; then
   start_flags="-Wl,-bnso,-bnodelcsect"
   test "$GCC" = "yes" && start_flags="-B/bin/ ${start_flags}"
-  for f in "/lib/syscalls.exp" "$srcdir/src/m/ibmrs6000.inp"; do
+  for f in "/lib/syscalls.exp" "/lib/threads.exp"; do
     if test -r "$f"; then start_flags="${start_flags},-bI:${f}"; fi
   done
   for f in "/usr/lpp/X11/bin/smt.exp" "/usr/bin/X11/smt.exp"; do
     if test -r "$f"; then start_flags="${start_flags},-bI:${f}"; break; fi
   done
-  dnl elif
-    dnl Put any AIX/gcc/dynamic flags here - xlc needs none added
   fi
 elif test -n "$ld_text_start_addr"; then
   start_flags="-T $ld_text_start_addr -e __start"
@@ -1773,9 +1787,9 @@ dnl site-includes and site-libraries.
 dnl --site-prefixes (multiple dirs)
 if test -n "$site_prefixes"; then
   for arg in $site_prefixes; do
-    case "$arg" in 
-	-* ) ;; 
-	* ) argi="-I${arg}/include" ; argl="-L${arg}/lib" ;; 
+    case "$arg" in
+	-* ) ;;
+	* ) argi="-I${arg}/include" ; argl="-L${arg}/lib" ;;
     esac
     XE_APPEND($argi, c_switch_site)
     XE_APPEND($argl, ld_switch_site)
@@ -1791,7 +1805,7 @@ if test -n "$site_libraries"; then
 fi
 
 dnl --site-includes (multiple dirs)
-if test -n "$site_includes" ; then
+if test -n "$site_includes"; then
   for arg in $site_includes; do
     case "$arg" in -* ) ;; * ) arg="-I${arg}" ;; esac
     XE_APPEND($arg, c_switch_site)
@@ -1810,7 +1824,7 @@ for dir in "/usr/ccs/lib"; do
 done
 
 dnl --site-runtime-libraries (multiple dirs)
-if test -n "$site_runtime_libraries" ; then
+if test -n "$site_runtime_libraries"; then
   LD_RUN_PATH="`echo $site_runtime_libraries | sed -e 's/  */:/g'`"
   export LD_RUN_PATH
 fi
@@ -1834,6 +1848,7 @@ if test "$add_runtime_path" = "yes"; then
   dash_r=""
   for try_dash_r in "-R" "-R " "-rpath "; do
     xe_check_libs="${try_dash_r}/no/such/file-or-directory"
+    XE_PROTECT_LINKER_FLAGS(xe_check_libs)
     AC_TRY_LINK(, , dash_r="$try_dash_r")
     xe_check_libs=""
     test -n "$dash_r" && break
@@ -1908,6 +1923,7 @@ if test "$add_runtime_path" = "yes" -a -n "$dash_r"; then
 
   if test -n "$runpath"; then
     ld_switch_run="${dash_r}${runpath}"
+    XE_PROTECT_LINKER_FLAGS(ld_switch_run)
     test "$extra_verbose" = "yes" && echo "Setting runpath to $runpath"
   fi
 fi
@@ -1954,13 +1970,12 @@ if test "$doug_lea_malloc" = "yes" ; then
   (Using Doug Lea's new malloc from the GNU C Library.)"
   fi
   AC_DEFINE(DOUG_LEA_MALLOC)
-  AC_DEFINE(USE_MINIMAL_TAGBITS)
   if test "$after_morecore_hook_exists" = "no" ; then
     GNU_MALLOC_reason="
   (Using Doug Lea's new malloc from the Linux C Library.)"
     AC_DEFINE(_NO_MALLOC_WARNING_)
   fi
-  with_minimal_tagbits=yes
+  use_minimal_tagbits=yes
 fi
 
 dnl #### mcheck is broken in all versions of Linux libc and glibc.
@@ -2130,28 +2145,36 @@ if test "$with_x11" != "no"; then
   test "$x_includes $x_libraries" != "NONE NONE" && \
    window_system=x11 with_x11=yes
 
+  dnl Autodetection of X11 libraries and includes
+  dnl -------------------------------------------
+  dnl AC_PATH_XTRA thinks it can find our X headers and includes, but
+  dnl it often gets it wrong, so we only use it as a last resort.
+
   dnl $OPENWINHOME implies --x-includes and --x-libraries
   dnl Not (yet) handled by autoconf2
-  if test "$x_includes $x_libraries" = "NONE NONE"; then
-    if test -n "$OPENWINHOME" \
-     -a "$OPENWINHOME" != "/usr/openwin" \
-     -a -d "$OPENWINHOME"; then
+  if test "$x_includes $x_libraries" = "NONE NONE" \
+    -a -n "$OPENWINHOME" \
+    -a "$OPENWINHOME" != "/usr/openwin" \
+    -a -d "$OPENWINHOME"; then
       test -d "$OPENWINHOME/lib"           && x_libraries="$OPENWINHOME/lib"
       test -d "$OPENWINHOME/include"       && x_includes="$OPENWINHOME/include"
       test -d "$OPENWINHOME/share/include" && x_includes="$OPENWINHOME/share/include"
-    else
-      dnl AC_PATH_XTRA often guesses /usr/include, when some other 
-      dnl include directory is a MUCH better guess (Linux, HP-UX 10.20).
-      dnl This is a workaround for idiot (esp. HP) system packagers.
-      for dir in "/usr/X11R6/include" "/usr/include/X11R6"; do
-        if test -d "$dir/X11"; then x_includes="$dir"; break; fi
-      done
-      if test "$x_includes" != "NONE"; then
-        for dir in "/usr/X11R6/lib" "/usr/lib/X11R6"; do
-          if test -d "$dir"; then x_libraries="$dir"; break; fi
-        done
-      fi
-    fi
+  fi
+
+  if test "$x_includes" = "NONE"; then
+    dnl AC_PATH_XTRA often guesses /usr/include, when some other
+    dnl include directory is a MUCH better guess (Linux, HP-UX 10.20).
+    dnl This is a workaround for idiot (esp. HP) system vendors, who
+    dnl provide a /usr/include/X11, but DON'T FULLY POPULATE IT.
+    for dir in "/usr/X11" "/usr/X11R6"; do
+      if test -d "$dir/include/X11"; then x_includes="$dir/include"; break; fi
+    done
+  fi
+
+  if test "$x_libraries" = "NONE"; then
+    for dir in "/usr/X11/lib" "/usr/X11R6/lib" "/usr/lib/X11R6"; do
+      if test -r "$dir/libX11.a"; then x_libraries="$dir"; break; fi
+    done
   fi
 
   AC_PATH_XTRA # Autoconf claims to find X library and include dirs for us.
@@ -2282,7 +2305,7 @@ EOF
 
   AC_MSG_CHECKING(the version of X11 being used)
   AC_TRY_RUN([#include <X11/Intrinsic.h>
-    main(int c, char* v[]) { return c>1 ? XlibSpecificationRelease : 0; }],
+    int main(int c, char *v[]) { return c>1 ? XlibSpecificationRelease : 0; }],
     [./conftest foobar; x11_release=$?],[x11_release=4],[x11_release=4])
   AC_MSG_RESULT(R${x11_release})
   AC_DEFINE_UNQUOTED(THIS_IS_X11R${x11_release})
@@ -2317,7 +2340,16 @@ EOF
 
   dnl Problem with the MIT distribution of X on AIX
   if test "$unexec" = "unexaix.o" -a "$x11_release" = "6"; then
-	XE_APPEND(-lc_r, libs_x)
+    dnl X11R6 requires thread-safe code on AIX for some reason
+    case "$CC" in
+      "xlc" ) CC="xlc_r" ;;
+      "xlC" ) CC="xlC_r" ;;
+      "cc"  ) CC="cc_r" ;;
+      "gcc" )
+        XE_PREPEND(-mthreads, X_CFLAGS)
+        XE_PREPEND(-mthreads, libs_x)
+	;;
+    esac
   fi
 
 fi dnl $with_x11 = yes
@@ -2348,16 +2380,12 @@ fi
 
 test -z "$window_system" && window_system="none"
 
-if test "$window_system" = "none" ; then
-  if test "$with_tty" = "no" ; then
-    AC_MSG_ERROR([No window system support and no TTY support - Unable to proceed.])
-  fi
-  for feature in tooltalk cde offix session \
-                 menubars scrollbars toolbars dialogs xim xmu \
-                 tiff png jpeg gif xface xpm
+dnl Test for features that require a window system - ANY window system
+if test "$window_system" = "none"; then
+  for feature in menubars scrollbars toolbars dialogs
   do
     if eval "test -n \"\$with_${feature}\" -a \"\$with_${feature}\" != no" ; then
-       AC_MSG_WARN([--with-$feature ignored:  Not valid without X support])
+       AC_MSG_WARN([--with-$feature ignored:  Not valid without window system support])
     fi
     eval "with_${feature}=no"
   done
@@ -2365,12 +2393,43 @@ else
   test -z "$with_toolbars" && with_toolbars=yes
 fi
 
+dnl ### Test for features that require mswindows support - currently none
+dnl ### MS-Windows folks: add code here..... (martin)
+if test "$with_msw" != "yes"; then
+  for feature in   MARTIN_IS_CLUELESS_ABOUT_MSW_FEATURES
+  do
+    if eval "test -n \"\$with_${feature}\" -a \"\$with_${feature}\" != no" ; then
+       AC_MSG_WARN([--with-$feature ignored:  Not valid without MS-Windows support])
+    fi
+    eval "with_${feature}=no"
+  done
+else
+  :
+fi
+
+dnl Test for features that require X11 support
+if test "$with_x11" != "yes"; then
+  dnl It ought to be reasonable to have no output device at all, and only use
+  dnl XEmacs in --batch mode.
+  dnl if test "$with_tty" = "no" ; then
+  dnl   AC_MSG_ERROR([No window system support and no TTY support - Unable to proceed.])
+  dnl fi
+  for feature in tooltalk cde offix session xim xmu \
+                 tiff png jpeg gif xface xpm
+  do
+    if eval "test -n \"\$with_${feature}\" -a \"\$with_${feature}\" != no" ; then
+       AC_MSG_WARN([--with-$feature ignored:  Not valid without X support])
+    fi
+    eval "with_${feature}=no"
+  done
+fi
+
 dnl FSF 19.29 has some bitmapdir stuff here.
 bitmapdir=
 
 case "$window_system" in
   x11  ) HAVE_X_WINDOWS=yes; echo "  Using X11." ;;
-  msw  ) HAVE_X_WINDOWS=no; echo "  Using MS-Windows." ;;
+  msw  ) HAVE_X_WINDOWS=no ; echo "  Using MS-Windows." ;;
   none ) HAVE_X_WINDOWS=no ; echo "  Using no window system." ;;
 esac
 
@@ -2398,9 +2457,8 @@ if test "$with_xauth" = "yes"; then
 fi
 AC_SUBST(libs_xauth)
 
-dnl Always compile OffiX except --without-offix is given or no
-dnl x11 support is compiled in or no standard Xmu.
-OFFIX_O=""
+dnl Always compile OffiX unless --without-offix is given or no
+dnl X11 support is compiled in or no standard Xmu.
 test "$window_system" != "x11" && with_offix=no
 if test "$with_xmu" != yes -a "$with_x11" = yes; then
   AC_MSG_WARN([No OffiX without real Xmu support])
@@ -2409,9 +2467,8 @@ fi
 test -z "$with_offix" && with_offix=yes
 if test "$with_offix" = "yes"; then
   AC_DEFINE(HAVE_OFFIX_DND)
-  OFFIX_O="offix.o"
+  XE_ADD_OBJS(offix.o)
 fi
-AC_SUBST(OFFIX_O)
 
 dnl Autodetect tooltalk
 test "$with_cde" = "yes" && with_tooltalk=yes # CDE requires tooltalk
@@ -2450,26 +2507,26 @@ fi
 
 dnl Autodetect LDAP
 AC_CHECKING(for LDAP)
-test -z "$with_ldap" && { AC_CHECK_HEADER(ldap.h,          ,with_ldap=no) }
-test -z "$with_ldap" && { AC_CHECK_HEADER(lber.h,          ,with_ldap=no) }
-test -z "$with_ldap" -o "$with_ldap" = "yes" && { AC_CHECK_LIB(ldap, ldap_open, with_umich_ldap=yes, with_umich_ldap=no, -llber) }
-test \( -z "$with_ldap" -o "$with_ldap" = "yes" \) -a  "$with_umich_ldap" = "no" && { AC_CHECK_LIB(ldap10, ldap_set_option, with_ns_ldap=yes, with_ns_ldap=no) }
-test -z "$with_ldap" -a \( "$with_umich_ldap" = "yes" -o "$with_ns_ldap" = "yes" \) && with_ldap=yes
-if test "$with_ldap" = "yes" -a "$with_umich_ldap" = "yes" ; then
+test -z "$with_ldap" && { AC_CHECK_HEADER(ldap.h, ,with_ldap=no) }
+test -z "$with_ldap" && { AC_CHECK_HEADER(lber.h, ,with_ldap=no) }
+if test "$with_ldap" != "no"; then
+  test -z "$with_umich_ldap" && { AC_CHECK_LIB(ldap, ldap_open, with_umich_ldap=yes, with_umich_ldap=no, -llber) }
+  test "$with_umich_ldap" = "no" && { AC_CHECK_LIB(ldap10, ldap_set_option, with_ns_ldap=yes, with_ns_ldap=no) }
+  test -z "$with_ldap" -a \( "$with_umich_ldap" = "yes" -o "$with_ns_ldap" = "yes" \) && with_ldap=yes
+fi
+if test "$with_ldap" = "yes"; then
   AC_DEFINE(HAVE_LDAP)
-  AC_DEFINE(HAVE_UMICH_LDAP)
-  XE_PREPEND(-llber, LIBS)
-  XE_PREPEND(-lldap, LIBS)
   XE_ADD_OBJS(eldap.o)
-elif test "$with_ldap" = "yes" -a "$with_ns_ldap" = "yes" ; then
-  AC_DEFINE(HAVE_LDAP)
-  AC_DEFINE(HAVE_NS_LDAP)
-  XE_PREPEND(-lldap10, LIBS)
-  XE_ADD_OBJS(eldap.o)
-elif test "$with_ldap" = "yes" ; then
-  AC_DEFINE(HAVE_LDAP)
-  XE_PREPEND(-lldap, LIBS)
-  XE_ADD_OBJS(eldap.o)
+  if test "$with_umich_ldap" = "yes" ; then
+    AC_DEFINE(HAVE_UMICH_LDAP)
+    XE_PREPEND(-llber, LIBS)
+    XE_PREPEND(-lldap, LIBS)
+  elif test "$with_ldap" = "yes" -a "$with_ns_ldap" = "yes" ; then
+    AC_DEFINE(HAVE_NS_LDAP)
+    XE_PREPEND(-lldap10, LIBS)
+  elif test "$with_ldap" = "yes" ; then
+    XE_PREPEND(-lldap, LIBS)
+  fi
 fi
 
 dnl ----------------------
@@ -2480,30 +2537,44 @@ if test "$with_x11" = "yes"; then
 
   AC_CHECKING(for X11 graphics libraries)
 
+  dnl Too many stupid linkers can't detect cascaded lib dependencies until runtime
+  dnl So we always search for libz compression support.
+  if test "$with_png $with_tiff" != "no no"; then
+    AC_CHECK_LIB(c,  inflate, [:], [
+    AC_CHECK_LIB(z,  inflate, [XE_PREPEND(-lz,  libs_x)],[
+    AC_CHECK_LIB(gz, inflate, [XE_PREPEND(-lgz, libs_x)])])])
+  fi
+
   dnl Autodetect Xpm
-  AC_MSG_CHECKING(for Xpm - no older than 3.4f)
-  xe_check_libs=-lXpm
-  test -z "$with_xpm" && { AC_TRY_RUN([#include <X11/xpm.h>
-  int main(int c, char **v) {
-  return c == 1 ? 0 :
-    XpmIncludeVersion != XpmLibraryVersion() ? 1 :
-	  XpmIncludeVersion < 30406 ? 2 :
-		  0 ;
-  }], [./conftest foobar; xpm_status=$?;
-    if test "$xpm_status" = "0"; then with_xpm=yes; else with_xpm=no; fi;],
-  with_xpm=no, with_xpm=no)
-  }
-  xe_check_libs=
-  AC_MSG_RESULT($with_xpm)
-  if test "$xpm_status" = "1" -o "$xpm_status" = "2"; then
-    test "$xpm_status" = "1" && problem="Xpm library version and header file version don't match!"
-    test "$xpm_status" = "2" && problem="Xpm library version is too old!"
-    echo "
+  if test -z "$with_xpm"; then
+    AC_MSG_CHECKING(for Xpm - no older than 3.4f)
+    xe_check_libs=-lXpm
+    AC_TRY_RUN([#include <X11/xpm.h>
+    int main(int c, char **v) {
+    return c == 1 ? 0 :
+      XpmIncludeVersion != XpmLibraryVersion() ? 1 :
+      XpmIncludeVersion < 30406 ? 2 : 0 ;}],
+    [./conftest dummy_arg; xpm_status=$?;
+      if test "$?" = "0"; then
+        with_xpm=yes;
+      else
+        with_xpm=no;
+        if test "$?" = "1"; then
+          xpm_problem="Xpm library version and header file version don't match!"
+        elif test "$?" = "2"; then
+          xpm_problem="Xpm library version is too old!"
+        else
+          xpm_problem="Internal xpm detection logic error!"
+        fi
+        echo "
   *** WARNING *** $problem
 		  I'm not touching that with a 10-foot pole!
 		  If you really want to use the installed version of Xpm, rerun
-		  configure --with-xpm=yes, but don't blame me if XEmacs crashes!
-  "
+		  configure --with-xpm=yes, but don't blame me if XEmacs crashes!"
+      fi],
+    [with_xpm=no])
+    xe_check_libs=
+    AC_MSG_RESULT($with_xpm)
   fi
   if test "$with_xpm" = "yes"; then
     AC_DEFINE(HAVE_XPM)
@@ -2539,33 +2610,32 @@ if test "$with_x11" = "yes"; then
   fi
 
   dnl autodetect PNG
-  test -z "$with_png" && { AC_CHECK_HEADER(png.h, , with_png=no) }
-  test -z "$with_png" && { AC_CHECK_FUNC(pow,     , with_png=no) }
-  if test "$with_png" != "no"; then
-    for extra_libs in "" "-lz" "-lgz"; do
-      AC_CHECK_LIB(png, png_set_strip_alpha,
-	png_libs="-lpng $extra_libs" with_png=yes; break,[:],$extra_libs)
-    done
+  if test -z "$with_png"; then
+    AC_MSG_CHECKING(for png.h - no older than 0.96)
+    AC_EGREP_CPP(yes,
+[#include <png.h>
+#if PNG_LIBPNG_VER >= 96
+yes
+#endif
+], [AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no); have_png=no])
   fi
-  test -z "$with_png" && with_png=no
+  test -z "$with_png" && { AC_CHECK_FUNC(pow,                  ,with_png=no) }
+  test -z "$with_png" && { AC_CHECK_LIB(png, png_read_image,[:],with_png=no) }
+  test -z "$with_png" && with_png=yes
   if test "$with_png" = "yes"; then
     AC_DEFINE(HAVE_PNG)
-    XE_PREPEND($png_libs, libs_x)
+    XE_PREPEND(-lpng, libs_x)
   fi
 
   dnl autodetect TIFF
-  if test "$with_tiff" != no; then
-    for extra_libs in "" "-lz" "-lgz"; do
-      AC_CHECK_LIB(tiff, TIFFReadScanline, 
-        tiff_libs="-ltiff $extra_libs" with_tiff=yes; break, [:], $extra_libs)
-    done
-  fi
-  test -z "$with_tiff" && with_tiff=no
+  test -z "$with_tiff" && { AC_CHECK_HEADER(tiffio.h,              ,with_tiff=no) }
+  test -z "$with_tiff" && { AC_CHECK_LIB(tiff, TIFFReadScanline,[:],with_tiff=no) }
+  test -z "$with_tiff" && with_tiff=yes
   if test "$with_tiff" = "yes"; then
     AC_DEFINE(HAVE_TIFF)
-    XE_PREPEND($tiff_libs, libs_x)
+    XE_PREPEND(-ltiff, libs_x)
   fi
-    
+
   dnl Autodetect -lXaw
   AC_CHECK_LIB(Xaw, XawScrollbarSetThumb, have_xaw=yes, have_xaw=no)
   dnl if test "$have_xaw" = "yes"; then
@@ -2578,6 +2648,18 @@ if test "$with_x11" = "yes"; then
   AC_CHECK_HEADER(Xm/Xm.h,
    [AC_CHECK_LIB(Xm, XmStringFree, have_motif=yes, have_motif=no)],
    have_motif=no)
+
+  if test "$have_motif" = "yes"; then
+    dnl autodetect lesstif
+    AC_MSG_CHECKING(for Lesstif)
+    AC_EGREP_CPP(yes,
+[#include <Xm/Xm.h>
+#ifdef LESSTIF_VERSION
+yes
+#endif
+], have_lesstif=yes, have_lesstif=no)
+  AC_MSG_RESULT($have_lesstif)
+  fi
 
 fi dnl "$with_x11" = "yes"
 
@@ -2661,16 +2743,15 @@ else
   fi
 fi
 
-if test "$with_gung" != "no"; then
-	test "$with_minimal_tagbits" = "no" && AC_DEFINE(USE_MINIMAL_TAGBITS)
-	AC_DEFINE(USE_INDEXED_LRECORD_IMPLEMENTATION)
-fi
+test "$use_minimal_tagbits" = "yes" && AC_DEFINE(USE_MINIMAL_TAGBITS)
+test "$use_indexed_lrecord_implementation" = "yes" && \
+  AC_DEFINE(USE_INDEXED_LRECORD_IMPLEMENTATION)
 
 dnl ----------------------
 dnl Mule-dependent options
 dnl ----------------------
 
-test -z "$with_mule" && with_mule=no 
+test -z "$with_mule" && with_mule=no
 test -z "$with_file_coding" && with_file_coding=no
 
 dnl if test "$with_mule" = "yes" && test ! -d "$srcdir/lisp/mule"; then
@@ -2698,12 +2779,15 @@ if test "$with_mule" = "yes" ; then
   AC_CHECKING(for Mule input methods)
   dnl Do we have the XmIm* routines?  And if so, do we want to use them?
   dnl XIM seems to be flaky except on Solaris...
-  test -z "$with_xim" -a "$opsys" != "sol2" && with_xim=no
+  dnl test -z "$with_xim" -a "$opsys" != "sol2" && with_xim=no
   case "$with_xim" in "" | "yes" )
     AC_CHECKING(for XIM)
-    AC_CHECK_LIB(Xm, XmImMbLookupString, with_xim=motif, with_xim=xlib)
+    dnl XIM + Lesstif is not (yet?) usable
+    if test "$have_lesstif" = "yes"; then with_xim=xlib
+    else AC_CHECK_LIB(Xm, XmImMbLookupString, with_xim=motif, with_xim=xlib)
+    fi
   esac
-  if test "$with_xim" != "no" ; then
+  if test "$with_xim" != "no"; then
     AC_DEFINE(HAVE_XIM)
     if test "$with_xim" = "xlib"; then
       AC_DEFINE(XIM_XLIB)
@@ -2873,7 +2957,7 @@ if test $emacs_cv_localtime_cache = yes; then
 fi
 
 if test "$HAVE_TIMEVAL" = "yes"; then
-AC_MSG_CHECKING(whether gettimeofday cannot accept two arguments)
+AC_MSG_CHECKING(whether gettimeofday accepts one or two arguments)
 AC_TRY_LINK([
 #ifdef TIME_WITH_SYS_TIME
 #include <sys/time.h>
@@ -2891,8 +2975,8 @@ AC_TRY_LINK([
   struct timezone dummy;
   gettimeofday (&time, &dummy);
 ],
-  [AC_MSG_RESULT(no)],
-  [AC_MSG_RESULT(yes)
+  [AC_MSG_RESULT(two)],
+  [AC_MSG_RESULT(one)
    AC_DEFINE(GETTIMEOFDAY_ONE_ARGUMENT)])
 fi
 
@@ -3262,9 +3346,8 @@ typedef uint64_t u_int64_t;
   fi
 fi
 
-if test "$with_database_gnudbm" = "yes" -o \
-        "$with_database_dbm"    = "yes" -o \
-        "$with_database_berkdb" = "yes"; then
+if test "$with_database_gnudbm $with_database_dbm $with_database_berkdb" \
+     != "no no no"; then
   AC_DEFINE(HAVE_DATABASE)
   XE_ADD_OBJS(database.o)
 fi
@@ -3302,6 +3385,27 @@ if test "$with_shlib" = "yes"; then
   *) ;;
   esac
 fi
+
+dnl Unfortunately, just because we can link doesn't mean we can run.
+dnl One of the above link tests may have succeeded but caused resulting
+dnl executables to fail to run.  Also any tests using AC_TRY_RUN will
+dnl have reported incorrect results.
+AC_TRY_RUN([int main(int c,char *v[]){return 0;}],[:],[
+  echo ""
+  echo "*** PANIC *** The C compiler can no longer build working executables."
+  echo "*** PANIC *** Please examine the tail of config.log for runtime errors."
+  echo "*** PANIC *** The most likely reason for this problem is that configure"
+  echo "*** PANIC *** links with shared libraries, but those libraries cannot be"
+  echo "*** PANIC *** found at run time."
+  echo "*** PANIC ***"
+  echo "*** PANIC *** On a Linux system, edit /etc/ld.so.conf and re-run ldconfig."
+  echo "*** PANIC *** On other systems, try telling configure where to find the"
+  echo "*** PANIC *** shared libraries using the --site-runtime-libraries option"
+  echo "*** PANIC ***"
+  echo "*** PANIC *** Another way to shoot yourself in the foot is to specify"
+  echo "*** PANIC *** --with-FEATURE when FEATURE is not actually installed"
+  echo "*** PANIC *** on your system.  Don't do that."
+  exit 1])
 
 dnl Process support (hardcoded)
 dnl every system that supports this runs configure, the others don't
@@ -3487,12 +3591,12 @@ test "$GCC"                = "yes" && AC_DEFINE(USE_GCC)
 test "$external_widget"    = "yes" && AC_DEFINE(EXTERNAL_WIDGET)
 test "$with_gnu_make"      = "yes" && AC_DEFINE(USE_GNU_MAKE)
 test "$no_doc_file"        = "yes" && AC_DEFINE(NO_DOC_FILE)
-test "$const_is_losing"    = "yes" && AC_DEFINE(CONST_IS_LOSING)
+dnl test "$const_is_losing"    = "yes" && AC_DEFINE(CONST_IS_LOSING)
 test "$with_quantify"      = "yes" && AC_DEFINE(QUANTIFY)
 test "$with_pop"           = "yes" && AC_DEFINE(MAIL_USE_POP)
 test "$with_kerberos"      = "yes" && AC_DEFINE(KERBEROS)
 test "$with_hesiod"        = "yes" && AC_DEFINE(HESIOD)
-test "$use_union_type" != yes && AC_DEFINE(NO_UNION_TYPE)
+test "$use_union_type"     = "yes" && AC_DEFINE(USE_UNION_TYPE)
 
 dnl -------------------------------
 dnl Report on what we decided to do
@@ -3624,10 +3728,9 @@ echo "  movemail will use \"$mail_locking\" for locking mail spool files."
 test "$with_pop"	= yes && echo "  Using POP for mail access"
 test "$with_kerberos"	= yes && echo "  Using Kerberos for POP authentication"
 test "$with_hesiod"	= yes && echo "  Using Hesiod to get POP server host"
-test "$use_union_type"     = yes && echo "  Using the union type for Lisp_Objects."
-test "$with_minimal_tagbits" != "no" -o "$with_gung" != "no" && \
-		echo "  Using Lisp_Objects with minimal tagbits."
-test "$with_gung" != "no" && echo "  Using indexed lrecord implementation."
+test "$use_union_type"  = yes && echo "  Using the union type for Lisp_Objects."
+test "$use_minimal_tagbits" = yes && echo "  Using Lisp_Objects with minimal tagbits."
+test "$use_indexed_lrecord_implementation" = yes && echo "  Using indexed lrecord implementation."
 test "$debug"              = yes && echo "  Compiling in extra code for debugging."
 test "$memory_usage_stats" = yes && echo "  Compiling in code for checking XEmacs memory usage."
 test "$usage_tracking"     = yes && echo "  Compiling with usage tracking active (Sun internal)."
@@ -3664,8 +3767,15 @@ test -n "$exec_prefix" &&
 dnl Build Makefile.in's from Makefile.in.in's
 dnl except ./Makefile from $srcdir/Makefile.in
 
-AC_OUTPUT($internal_makefile_list lib-src/config.values,[
-for dir in $MAKE_SUBDIR; do
+for file in $internal_makefile_list; do
+  test "$file" = src/Makefile.in && \
+    file="src/Makefile.in:src/Makefile.in.in:src/depend"
+  ac_output_files="${ac_output_files+$ac_output_files }$file"
+done
+ac_output_files="$ac_output_files lib-src/config.values"
+
+AC_OUTPUT($ac_output_files,
+[for dir in $MAKE_SUBDIR; do
   echo creating $dir/Makefile
   (
 changequote(<<, >>)dnl
@@ -3692,8 +3802,8 @@ s/$/"/
 	| sed -n -e '/^..*$/p'		\
 	| sed '/^"/ {
 s/\\\([\"]\)/\1/g
-s/^"//
-s/"$//
+s/^[ TAB]*"//
+s/"[ TAB]*$//
 }'	> Makefile.new
     chmod 444 Makefile.new
     mv -f Makefile.new Makefile

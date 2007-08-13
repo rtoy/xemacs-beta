@@ -201,7 +201,7 @@ static void
 splitbox(quant_table *qt, Colorbox* ptr)
 {
   int		hist2[B_LEN];
-  int		first, last;
+  int		first = 0, last = 0;
   register Colorbox	*new;
   register int	*iptr, *histp;
   register int	i, j;

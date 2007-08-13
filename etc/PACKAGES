@@ -35,15 +35,18 @@ together and how they may be configured into XEmacs.
 ** Package Path
 ===============
 
-For backwards compatibility and for ease of transition to XEmacs
-20.5+, it is possible to use previous XEmacs installations as package
-directories.  Specify something like
---package-path="~/.xemacs::/usr/local/lib/xemacs-20.3" to configure
-when building.  You will have extra messages at dump time relating to
-lisp shadows which you may ignore.  The magical null directory `::' is 
-a marker indicating where Lisp bundled with the running XEmacs gets
-put into the load path.  By specifing the older directories after the
-current one, the newer lisp overrides the older lisp.
+For backwards compatibility and for ease of transition to XEmacs 21, it
+is possible to use previous XEmacs installations as package directories.
+Specify something like
+--package-path="~/.xemacs::/somewhere-newpackages::/usr/local/lib/xemacs-20.4"
+to configure when building.  You will have extra messages at dump
+time relating to lisp shadows which you may ignore.  The first
+magical null directory `::' is a marker indicating what packages
+should only be searched at run-time.  The second magical null
+directory is used to indicate where Lisp bundled with the running
+XEmacs gets put at the back of load path.  By specifing the older
+directories after the current one, the newer lisp overrides the
+older lisp.
 
 ** The anatomy of an XEmacs Package hierarchy
 =============================================

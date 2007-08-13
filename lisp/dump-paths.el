@@ -35,13 +35,14 @@
   (setq package-path (packages-find-package-path roots))
 
   (let ((stuff (packages-find-packages package-path inhibit-package-init)))
-    (setq late-packages (cdr stuff)))
+    (setq late-packages (car (cdr stuff))))
 
   (setq late-package-load-path (packages-find-package-load-path late-packages))
 
   (setq load-path (paths-construct-load-path roots
 					     '()
 					     late-package-load-path
+					     '()
 					     inhibit-site-lisp)))
 
 ;;; dump-paths.el ends here

@@ -320,14 +320,14 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
   int count = 0;
 #endif
 
-  memset (address, 0, sizeof (*address));
+  xzero (*address);
 
   while (1)
     {
 #ifdef TRY_AGAIN
       if (count++ > 10) break;
 #ifndef BROKEN_CYGWIN
-      h_errno = 0; 
+      h_errno = 0;
 #endif
 #endif
       /* Some systems can't handle SIGIO/SIGALARM in gethostbyname. */
@@ -647,7 +647,7 @@ process_signal_char (int tty_fd, int signo)
 /*              Process implementation methods                        */
 /**********************************************************************/
 
-/* 
+/*
  * Allocate and initialize Lisp_Process->process_data
  */
 
@@ -705,7 +705,7 @@ unix_init_process_io_handles (struct Lisp_Process *p, void* in, void* out, int f
 /*
  * Fork off a subprocess. P is a pointer to newly created subprocess
  * object. If this function signals, the caller is responsible for
- * deleting (and finalizing) the process object. 
+ * deleting (and finalizing) the process object.
  *
  * The method must return PID of the new proces, a (positive??? ####) number
  * which fits into Lisp_Int. No return value indicates an error, the method
@@ -1126,12 +1126,13 @@ send_process_trap (int signum)
 }
 
 static void
-unix_send_process (volatile Lisp_Object proc, struct lstream* lstream)
+unix_send_process (Lisp_Object proc, struct lstream* lstream)
 {
   /* Use volatile to protect variables from being clobbered by longjmp.  */
   SIGTYPE (*volatile old_sigpipe) (int) = 0;
-  volatile struct Lisp_Process *p = XPROCESS (proc);
- 
+  volatile Lisp_Object vol_proc = proc;
+  struct Lisp_Process *volatile p = XPROCESS (proc);
+
   if (!SETJMP (send_process_frame))
     {
       /* use a reasonable-sized buffer (somewhere around the size of the
@@ -1160,7 +1161,7 @@ unix_send_process (volatile Lisp_Object proc, struct lstream* lstream)
 	    /* This is a real error.  Blocking errors are handled
 	       specially inside of the filedesc stream. */
 	    report_file_error ("writing to process",
-			       list1 (proc));
+			       list1 (vol_proc));
 	  while (Lstream_was_blocked_p (XLSTREAM (p->pipe_outstream)))
 	    {
 	      /* Buffer is full.  Wait, accepting input;
@@ -1182,11 +1183,11 @@ unix_send_process (volatile Lisp_Object proc, struct lstream* lstream)
       p->core_dumped = 0;
       p->tick++;
       process_tick++;
-      deactivate_process (proc);
+      deactivate_process (vol_proc);
       error ("SIGPIPE raised on process %s; closed it",
 	     XSTRING_DATA (p->name));
     }
-  
+
   old_sigpipe = (SIGTYPE (*) (int)) signal (SIGPIPE, send_process_trap);
   Lstream_flush (XLSTREAM (DATA_OUTSTREAM(p)));
   signal (SIGPIPE, old_sigpipe);
@@ -1245,7 +1246,7 @@ unix_deactivate_process (struct Lisp_Process *p)
   old_sigpipe = (SIGTYPE (*) (int)) signal (SIGPIPE, SIG_IGN);
   usid = event_stream_delete_stream_pair (p->pipe_instream, p->pipe_outstream);
   signal (SIGPIPE, old_sigpipe);
-  
+
   UNIX_DATA(p)->infd  = -1;
 
   return usid;
@@ -1354,19 +1355,25 @@ unix_kill_child_process (Lisp_Object proc, int signo,
   else
     {
       /* gid may be a pid, or minus a pgrp's number */
-#ifdef TIOCSIGSEND
+#if defined (TIOCSIGNAL) || defined (TIOCSIGSEND)
       if (current_group)
-	kill_retval = ioctl (UNIX_DATA(p)->infd, TIOCSIGSEND, signo);
+	{
+#ifdef (TIOCSIGNAL)
+	  kill_retval = ioctl (UNIX_DATA(p)->infd, TIOCSIGNAL, signo);
+#else /* ! defined (TIOCSIGNAL) */
+	  kill_retval = ioctl (UNIX_DATA(p)->infd, TIOCSIGSEND, signo);
+#endif /* ! defined (TIOCSIGNAL) */
+	}
       else
 	kill_retval = kill (- XINT (p->pid), signo) ? errno : 0;
-#else /* ! defined (TIOCSIGSEND) */
+#else /* ! (defined (TIOCSIGNAL) || defined (TIOCSIGSEND)) */
       kill_retval = EMACS_KILLPG (-gid, signo) ? errno : 0;
-#endif /* ! defined (TIOCSIGSEND) */
+#endif /* ! (defined (TIOCSIGNAL) || defined (TIOCSIGSEND)) */
     }
 
   if (kill_retval < 0 && errno == EINVAL)
-    error ("Signal number %d is invalid for this system", make_int (signo));
-}  
+    error ("Signal number %d is invalid for this system", signo);
+}
 
 /*
  * Kill any process in the system given its PID.
@@ -1411,7 +1418,7 @@ unix_canonicalize_host_name (Lisp_Object host)
   else
     /* #### any clue what to do here? */
     return host;
-}  
+}
 
 /* open a TCP network connection to a given HOST/SERVICE.  Treated
    exactly like a normal process when reading and writing.  Only
@@ -1428,7 +1435,7 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host, Lisp_Object servic
   volatile int port;
   volatile int retry = 0;
   int retval;
-  
+
   CHECK_STRING (host);
 
   if (!EQ (family, Qtcpip))
@@ -1532,7 +1539,7 @@ unix_open_network_stream (Lisp_Object name, Lisp_Object host, Lisp_Object servic
 
   *vinfd = (void*)inch;
   *voutfd = (void*)outch;
-}  
+}
 
 
 #ifdef HAVE_MULTICAST
@@ -1570,16 +1577,16 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest, Lisp_Object port,
   volatile int retry = 0;
 
   CHECK_STRING (dest);
-  
+
   CHECK_NATNUM (port);
   theport = htons ((unsigned short) XINT (port));
-  
+
   CHECK_NATNUM (ttl);
   thettl = (unsigned char) XINT (ttl);
-  
+
   if ((udp = getprotobyname ("udp")) == NULL)
     error ("No info available for UDP protocol");
-  
+
   /* Init the sockets. Yes, I need 2 sockets. I couldn't duplicate one. */
   if ((rs = socket (PF_INET, SOCK_DGRAM, udp->p_proto)) < 0)
     report_file_error ("error creating socket", list1(name));
@@ -1588,22 +1595,22 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest, Lisp_Object port,
       close (rs);
       report_file_error ("error creating socket", list1(name));
     }
-  
+
   /* This will be used for both sockets */
   bzero(&sa, sizeof(sa));
-  sa.sin_family = AF_INET; 
+  sa.sin_family = AF_INET;
   sa.sin_port = theport;
   sa.sin_addr.s_addr = htonl (inet_addr ((char *) XSTRING_DATA (dest)));
 
   /* Socket configuration for reading ------------------------ */
-  
+
   /* Multiple connections from the same machine. This must be done before
      bind. If it fails, it shouldn't be fatal. The only consequence is that
      people won't be able to connect twice from the same machine. */
   if (setsockopt (rs, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof (one))
       < 0)
     warn_when_safe (Qmulticast, Qwarning, "Cannot reuse socket address");
-  
+
   /* bind socket name */
   if (bind (rs, (struct sockaddr *)&sa, sizeof(sa)))
     {
@@ -1611,7 +1618,7 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest, Lisp_Object port,
       close (ws);
       report_file_error ("error binding socket", list2(name, port));
     }
-  
+
   /* join multicast group */
   imr.imr_multiaddr.s_addr = htonl (inet_addr ((char *) XSTRING_DATA (dest)));
   imr.imr_interface.s_addr = htonl (INADDR_ANY);
@@ -1622,19 +1629,19 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest, Lisp_Object port,
       close (rs);
       report_file_error ("error adding membership", list2(name, dest));
     }
-  
+
   /* Socket configuration for writing ----------------------- */
-  
+
   /* Normaly, there's no 'connect' in multicast, since we use preferentialy
      'sendto' and 'recvfrom'. However, in order to handle this connection in
      the process-like way it is done for TCP, we must be able to use 'write'
      instead of 'sendto'. Consequently, we 'connect' this socket. */
-  
+
   /* See open-network-stream-internal for comments on this part of the code */
   slow_down_interrupts ();
-  
+
  loop:
-  
+
   /* A system call interrupted with a SIGALRM or SIGIO comes back
      here, with can_break_system_calls reset to 0. */
   SETJMP (break_system_call_jump);
@@ -1645,7 +1652,7 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest, Lisp_Object port,
       /* In case something really weird happens ... */
       slow_down_interrupts ();
     }
-  
+
   /* Break out of connect with a signal (it isn't otherwise possible).
      Thus you don't get screwed with a hung network. */
   can_break_system_calls = 1;
@@ -1654,11 +1661,11 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest, Lisp_Object port,
   if (ret == -1 && errno != EISCONN)
     {
       int xerrno = errno;
-      
+
       if (errno == EINTR)
 	goto loop;
       if (errno == EADDRINUSE && retry < 20)
-	{ 
+	{
 	  /* A delay here is needed on some FreeBSD systems,
 	     and it is harmless, since this retrying takes time anyway
 	     and should be infrequent.
@@ -1669,26 +1676,26 @@ unix_open_multicast_group (Lisp_Object name, Lisp_Object dest, Lisp_Object port,
 	  retry++;
 	  goto loop;
 	}
-    
+
       close (rs);
       close (ws);
       speed_up_interrupts ();
-      
+
       errno = xerrno;
       report_file_error ("error connecting socket", list2(name, port));
     }
-  
+
   speed_up_interrupts ();
-  
+
   /* scope */
-  if (setsockopt (ws, IPPROTO_IP, IP_MULTICAST_TTL, 
+  if (setsockopt (ws, IPPROTO_IP, IP_MULTICAST_TTL,
 		  (char *) &thettl, sizeof (thettl)) < 0)
     {
       close (rs);
       close (ws);
       report_file_error ("error setting ttl", list2(name, ttl));
     }
-  
+
   set_socket_nonblocking_maybe (rs, theport, "udp");
 
   *vinfd = (void*)rs;
