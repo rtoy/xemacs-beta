@@ -103,6 +103,12 @@
      (load-gc "list-mode")
      (load-gc "modeline") ; after simple.el so it can reference functions
 			  ; defined there.
+     (load-gc "help")
+     (load-gc "buff-menu")
+     (load-gc "w3-sysdp")
+     (load-gc "font") ; required by widget
+     (load-gc "widget")
+     (load-gc "custom") ; Before loaddefs so that defcustom exists.
      ;; If SparcWorks support is included some additional packages are
      ;; dumped which would normally have autoloads.  To avoid
      ;; duplicate doc string warnings, SparcWorks uses a separate
@@ -113,7 +119,6 @@
      (load-gc "loaddefs")
      (load-gc "misc")
      (load-gc "profile")
-     (load-gc "help")
      ;; (load-gc "hyper-apropos")  Soon...
      (load-gc "files")
      (load-gc "lib-complete")
@@ -121,7 +126,6 @@
      (load-gc "indent")
      (load-gc "isearch-mode")
      (load-gc "buffer")
-     (load-gc "buff-menu")
      (load-gc "undo-stack")
      (load-gc "window")
      (load-gc "paths.el")		; don't get confused if paths compiled.

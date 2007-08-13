@@ -464,6 +464,9 @@ syms_of_cmds (void)
   defsubr (&Sbeginning_of_line);
   defsubr (&Send_of_line);
 
+  defsubr (&Spoint_at_bol);
+  defsubr (&Spoint_at_eol);
+
   defsubr (&Sdelete_char);
   defsubr (&Sdelete_backward_char);
 

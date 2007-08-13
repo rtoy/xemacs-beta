@@ -3,7 +3,7 @@
 ;; Copyright (C) 1994,1995,1996,1997 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: tm-setup.el,v 1.3 1997/02/02 05:06:20 steve Exp $
+;; Version: $Id: tm-setup.el,v 1.4 1997/02/04 02:36:07 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is part of tm (Tools for MIME).
@@ -19,8 +19,8 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with This program; see the file COPYING.  If not, write to
-;; the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Code:
@@ -42,10 +42,10 @@
     (set-atype 'mime/content-decoding-condition
 	       '((type . "message/external-body")
 		 ("access-type" . "anon-ftp")
-		 (method . mime/decode-message/external-ftp)
+		 (method . mime-article/decode-message/external-ftp)
 		 ))
-    (autoload 'mime/decode-message/external-ftp "tm-ftp")
-        
+    (autoload 'mime-article/decode-message/external-ftp "tm-ftp")
+    
     ;; for LaTeX
     (set-atype 'mime/content-decoding-condition
 	       '((type . "text/x-latex")

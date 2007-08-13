@@ -1,4 +1,12 @@
 							-*- indented-text -*-
+to 19.15 beta92
+-- gnus-5.4.11
+-- tm-7.103.1
+-- custom-1.24
+-- widget-1.24
+-- Corrections for dumping custom.elc with XEmacs
+-- Miscellaneous bug fixes
+
 to 19.15 beta91
 -- Gnus-5.4.9 Courtesy of Lars Magne Ingebrigtsen
 -- Custom-1.20 Courtesy of Per Abrahamsen

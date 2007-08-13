@@ -94,16 +94,16 @@ with some simple extensions.
 
 (defun gnus-group-topic-name ()
   "The name of the topic on the current line."
-  (let ((topic (get-text-property (point-at-bol) 'gnus-topic)))
+  (let ((topic (get-text-property (gnus-point-at-bol) 'gnus-topic)))
     (and topic (symbol-name topic))))
 
 (defun gnus-group-topic-level ()
   "The level of the topic on the current line."
-  (get-text-property (point-at-bol) 'gnus-topic-level))
+  (get-text-property (gnus-point-at-bol) 'gnus-topic-level))
 
 (defun gnus-group-topic-unread ()
   "The number of unread articles in topic on the current line."
-  (get-text-property (point-at-bol) 'gnus-topic-unread))
+  (get-text-property (gnus-point-at-bol) 'gnus-topic-unread))
 
 (defun gnus-topic-unread (topic)
   "Return the number of unread articles in TOPIC."
@@ -118,7 +118,7 @@ with some simple extensions.
 
 (defun gnus-topic-visible-p ()
   "Return non-nil if the current topic is visible."
-  (get-text-property (point-at-bol) 'gnus-topic-visible))
+  (get-text-property (gnus-point-at-bol) 'gnus-topic-visible))
 
 (defun gnus-topic-articles-in-topic (entries)
   (let ((total 0)
@@ -642,7 +642,7 @@ articles in the topic and its subtopics."
   (let* ((tgroups (apply 'append (mapcar (lambda (entry) (cdr entry))
 					 gnus-topic-alist)))
 	 (entry (assoc (caar gnus-topic-topology) gnus-topic-alist))
-	 (newsrc gnus-newsrc-alist)
+	 (newsrc (cdr gnus-newsrc-alist))
 	 group)
     (while newsrc
       (unless (member (setq group (gnus-info-group (pop newsrc))) tgroups)
@@ -1287,6 +1287,7 @@ If performed on a topic, edit the topic parameters instead."
       ;; !!!Sometimes nil elements sneak into the alist,
       ;; for some reason or other.
       (setcar alist (delq nil (car alist)))
+      (setcar alist (delete "dummy.group" (car alist)))
       (gnus-topic-sort-topic (pop alist) func reverse))))
 
 (defun gnus-topic-sort-topic (topic func reverse)

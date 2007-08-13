@@ -224,7 +224,7 @@ The following commands are available:
   (gnus-server-position-point))
 
 (defun gnus-server-server-name ()
-  (let ((server (get-text-property (point-at-bol) 'gnus-server)))
+  (let ((server (get-text-property (gnus-point-at-bol) 'gnus-server)))
     (and server (symbol-name server))))
 
 (defalias 'gnus-server-position-point 'gnus-goto-colon)
@@ -671,7 +671,7 @@ buffer.
 (defun gnus-browse-group-name ()
   (save-excursion
     (beginning-of-line)
-    (when (re-search-forward ": \\(.*\\)$" (point-at-eol) t)
+    (when (re-search-forward ": \\(.*\\)$" (gnus-point-at-eol) t)
       (gnus-group-prefixed-name (match-string 1) gnus-browse-current-method))))
 
 (defun gnus-browse-unsubscribe-group ()

@@ -638,6 +638,7 @@
        ["No Warranty"		describe-no-warranty	t]
        ["XEmacs License"	describe-copying	t]
        ["The Latest Version"	describe-distribution	t])
+      ,custom-help-menu
       )
      )))
 

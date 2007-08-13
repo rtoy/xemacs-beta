@@ -112,9 +112,9 @@
 (defcustom message-fcc-handler-function 'message-output
   "*A function called to save outgoing articles.
 This function will be called with the name of the file to store the
-article in.  The default function is `rmail-output' which saves in Unix
+article in.  The default function is `message-output' which saves in Unix
 mailbox format."
-  :type '(radio (function-item rmail-output)
+  :type '(radio (function-item message-output)
 		(function :tag "Other"))
   :group 'message-sending)
 
@@ -1098,6 +1098,7 @@ C-c C-r  message-caesar-buffer-body (rot13 the message body)."
   (when (string-match "XEmacs\\|Lucid" emacs-version)
     (message-setup-toolbar))
   (easy-menu-add message-mode-menu message-mode-map)
+  (easy-menu-add message-mode-field-menu message-mode-map)
   ;; Allow mail alias things.
   (if (fboundp 'mail-abbrevs-setup)
       (mail-abbrevs-setup)
@@ -2141,7 +2142,13 @@ to find out how to use this."
 	  (setq file (expand-file-name file))
 	  (unless (file-exists-p (file-name-directory file))
 	    (make-directory (file-name-directory file) t))
-	  (funcall message-fcc-handler-function file)))
+	  (if (and message-fcc-handler-function
+		   (not (eq message-fcc-handler-function 'rmail-output)))
+	      (funcall message-fcc-handler-function file)
+	    (if (and (file-readable-p file) (mail-file-babyl-p file))
+		(rmail-output file 1 nil t)
+	      (let ((mail-use-rfc822 t))
+		(rmail-output file 1 t t))))))
       
       (kill-buffer (current-buffer)))))
 

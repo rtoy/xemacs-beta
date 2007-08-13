@@ -23,7 +23,7 @@ Boston, MA 02111-1307, USA.  */
 
 @SET_MAKE@
 
-/* Some people use these in paths they define.  We don't want their paths
+/* Some people use these in paths they define.  We do not want their paths
    getting changed on them. */
 #undef sparc
 #undef sun
@@ -61,14 +61,14 @@ SHELL=/bin/sh
    in-place location, it will not get recompiled in the not-in-place
    location.
 
-   The GNU Make `vpath' directive continues this tradition, but at
+   The GNU Make "vpath" directive continues this tradition, but at
    least lets you restrict the classes of files that it applies to.
    This allows us to kludge around the problem. */
 #ifdef USE_GNU_MAKE
 vpath %.c @srcdir@
 vpath %.h @srcdir@
 /* now list files that should NOT be searched in the srcdir.
-   This includes any .c or .h that's built from something else
+   This includes any .c or .h that is built from something else
    (e.g. a .in file). */
 vpath config.h
 vpath paths.h
@@ -95,7 +95,7 @@ VPATH=@srcdir@
 #endif
 
 /* On some machines #define register is done in config;
-   don't let it interfere with this file.  */
+   do not let it interfere with this file.  */
 #undef register
 
 /* On some systems we may not be able to use the system make command. */
@@ -107,7 +107,7 @@ MAKE = MAKE_COMMAND
 CC = C_COMPILER
 #endif
 
-/* Some machines don't find the standard C libraries in the usual place.  */
+/* Some machines do not find the standard C libraries in the usual place.  */
 #ifndef ORDINARY_LINK
 #ifndef LIB_STANDARD
 #define LIB_STANDARD -lc
@@ -244,7 +244,7 @@ STARTFILES =
 #define C_OPTIMIZE_SWITCH -O
 #endif
 
-/* cc switches needed to make `asm' keyword work.
+/* cc switches needed to make "asm" keyword work.
    Nothing special needed on most machines.  */
 #ifndef C_SWITCH_ASM
 #define C_SWITCH_ASM
@@ -422,7 +422,7 @@ JPEG_LIBS = -ljpeg
    for use in Emacs.
 
    -DHAVE_CONFIG_H is needed for some other files to take advantage of
-   the information in `config.h'.  */
+   the information in "config.h".  */
 
 /* C_SWITCH_X_SITE must come before C_SWITCH_X_MACHINE and C_SWITCH_X_SYSTEM
    since it may have -I options that should override those two.  */
@@ -600,7 +600,7 @@ LIBX=  $(LIBX11_LIBS) $(XMU_LIB) -lXt -lXext -lX11 LIBX11_MACHINE LIBX11_SYSTEM 
 #define NSOBJS console-ns.o device-ns.o DIALOG_NS_OBJS event-ns.o frame-ns.o \
 	       glyphs-ns.o MENUBAR_NS_OBJS nsselect.o objects-ns.o \
 	       redisplay-ns.o SCROLLBAR_NS_OBJS TOOLBAR_NS_OBJS
-	        
+
 #else
 # define NSOBJS
 #endif /* HAVE_NEXTSTEP */
@@ -618,18 +618,18 @@ DYNODUMPBUILDDIR = $(dot)$(dot)/dynodump
 /* Versions of GCC >= 2.0 put their library, libgcc.a, in obscure
    places that are difficult to figure out at make time.  Fortunately,
    these same versions allow you to pass arbitrary flags on to the
-   linker, so there's no reason not to use it as a linker.
+   linker, so there is no reason not to use it as a linker.
 
-   Well, it's not quite perfect.  The `-nostdlib' keeps GCC from
+   Well, it is not quite perfect.  The "-nostdlib" keeps GCC from
    searching for libraries in its internal directories, so we have to
    ask GCC explicitly where to find libgcc.a.  */
 
 #ifndef LINKER
 #define LINKER $(CC) -nostdlib
 /* GCC passes any argument prefixed with -Xlinker directly to the
-   linker.  See prefix-args.c for an explanation of why we don't do
-   this with the shell's `for' construct.
-   Note that some people don't have '.'  in their paths, so we must
+   linker.  See prefix-args.c for an explanation of why we do not do
+   this with the shell "for" construct.
+   Note that some people do not have "."  in their paths, so we must
    use ./prefix-args.  */
 #define YMF_PASS_LDFLAGS(flags) `./prefix-args -Xlinker flags`
 #endif /* LINKER */
@@ -679,7 +679,7 @@ LD=ld
 #endif /* not ORDINARY_LINK */
 
 /* A macro which other sections of the makefile can redefine to munge the
-   flags before they're passed to LD.  This is helpful if you have
+   flags before they are passed to LD.  This is helpful if you have
    redefined LD to something odd, like "gcc".  */
 #ifndef YMF_PASS_LDFLAGS
 #define YMF_PASS_LDFLAGS(flags) flags
@@ -916,13 +916,13 @@ allocaobjs = @ALLOCA@
 #  define EXTERNAL_WIDGET_OBJS ExternalShell.o extw-Xt-nonshared.o extw-Xlib-nonshared.o
 
 /* Now we try to figure out how to link a shared library.
-   If we can't figure it out, leave EXTW_LINK undefined and a shared
+   If we can not figure it out, leave EXTW_LINK undefined and a shared
    library will not be created. */
 
 # ifdef USE_GCC
 #  ifdef USG5
 #   define EXTW_LINK(objs, output) $(CC) -shared objs -Xlinker -z -Xlinker text -o output
-   /* I can't figure out how to do shared a.out libraries, so just punt. */
+   /* I can not figure out how to do shared a.out libraries, so just punt. */
 #  elif !defined (LINUX) || defined (__ELF__)
 #   define EXTW_LINK(objs, output) $(CC) -shared objs -o output
 #  endif
@@ -1119,10 +1119,10 @@ otherobjs= $(termcapobjs) BTLOBJS lastfile.o $(mallocobjs) $(rallocobjs) $(alloc
 
 /* List of Lisp files loaded into the dumped Emacs.
    Every file that is loaded from loadup.el must be enumerated
-   here, or the functions won't have docstrings.
+   here, or the functions will not have docstrings.
    This is dumb - this list should be generated automatically.
-   [Note: "version.el" is included in the doc separately, but is not listed 
-    here because we don't want things to appear to be out-of-date just 
+   [Note: "version.el" is included in the doc separately, but is not listed
+    here because we do not want things to appear to be out-of-date just 
     because the version number has been incremented. -- D.N.G. 8/28/93]
  */
 /* loaddefs is now included handled by the SUNPRO_LISP define because
@@ -1158,14 +1158,16 @@ lisp=   ${lispdir}paths.el \
         ${lispdir}modes/auto-show.elc SUNPRO_LISP TTY_LISP \
         ${lispdir}bytecomp/bytecomp-runtime.elc FLOAT_LISP EPOCH_LISP \
         ${lispdir}prim/itimer.elc ${lispdir}ediff/ediff-hook.elc \
+	${lispdir}custom/custom.elc ${lispdir}custom/widget.elc \
+	${lispdir}w3/w3-sysdp.elc ${lispdir}w3/font.elc \
 	${lispdir}packages/fontl-hooks.elc SCROLLBAR_LISP \
 	${lispdir}prim/buffer.elc MENUBAR_LISP \
 	${lispdir}packages/buff-menu.elc DIALOG_LISP \
 	${lispdir}modes/abbrev.elc X11_LISP NS_LISP ENERGIZE_LISP TOOLTALK_LISP
 
-/* Other Lisp files that are not dumped out but where it's convenient
+/* Other Lisp files that are not dumped out but where it is convenient
    (or required?) for them to be byte-compiled early, before xemacs
-   is dumped out.  Don't list them in ${lisp} because then the doc-snarfing
+   is dumped out.  Do not list them in ${lisp} because then the doc-snarfing
    routines get confused. */
 otherlisp= ${lispdir}bytecomp/bytecomp.elc \
 	   ${lispdir}bytecomp/byte-optimize.elc \
@@ -1433,9 +1435,9 @@ localcpp:
 	cd ${cppdir}; ${MAKE} ${MFLAGS} EMACS=-DEMACS
 	ln ${cppdir}cpp localcpp  /* Name where ALL_CFLAGS will refer to it */
 /* cc appears to be cretinous and require all of these to exist
-   if -B is specified -- we can't use one local pass and let the
+   if -B is specified -- we can not use one local pass and let the
    others be the standard ones.  What a loser.
-   We can't even use ln, since they are probably
+   We can not even use ln, since they are probably
    on different disks.  */
 	cp /lib/ccom localccom
 	-cp /lib/optim localoptim
@@ -1487,7 +1489,7 @@ alloca.o : ${srcdir}/alloca.s config.h
 	cp ${srcdir}/alloca.s allocatem.c
 /* Remove any ^L, blank lines, and preprocessor comments,
    since some assemblers barf on them.  Use a different basename for the
-   output file, since some stupid compilers (Green Hill's) use that
+   output file, since some stupid compilers (Green Hill) use that
    name for the intermediate assembler file. */
 	$(CPP) $(CPPFLAGS) $(ALL_CFLAGS) allocatem.c | \
 	sed -e 's///' -e 's/^#.*//' | \
@@ -1587,7 +1589,7 @@ obj_dep = $(objs:.o=.dep)
 
 gnu-depend: $(obj_dep)
 	/* #### Needs a bit of work: it doesn't see the object files that
-	   we aren't compiling */
+	   we are not compiling */
 	cat $(obj_dep) | sh ${libsrc}process-gnu-depends.sh > depend.out
 
 #endif /* GCC */

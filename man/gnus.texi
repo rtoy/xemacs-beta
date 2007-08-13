@@ -8606,8 +8606,11 @@ argument.  It should return a non-@code{nil} value if it thinks that the
 mail belongs in that group.
 
 The last of these groups should always be a general one, and the regular
-expression should @emph{always} be @samp{} so that it matches any
-mails that haven't been matched by any of the other regexps.
+expression should @emph{always} be @samp{} so that it matches any mails
+that haven't been matched by any of the other regexps.  (These rules are
+processed from the beginning of the alist toward the end.  The first
+rule to make a match will "win", unless you have crossposting enabled.
+In that case, all matching rules will "win".)
 
 If you like to tinker with this yourself, you can set this variable to a
 function of your choice.  This function will be called without any
@@ -12649,6 +12652,10 @@ this variable:
 
 If this variable is @code{nil} (which is the default), the mode line
 strings won't be chopped off, and they won't be padded either.
+Note that the default is unlikely to be desirable, as even the
+percentage complete in the buffer may be crowded off the mode line;
+the user should configure this variable appropriately for their
+configuration.
 
 
 @node Highlighting and Menus

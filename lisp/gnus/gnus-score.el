@@ -1871,7 +1871,7 @@ SCORE is the score to add."
 			(funcall search-func match nil t))
 	      ;; Is it really exact?
 	      (and (eolp)
-		   (= (point-at-bol) (match-beginning 0))
+		   (= (gnus-point-at-bol) (match-beginning 0))
 		   ;; Yup.
 		   (progn
 		     (setq found (setq arts (get-text-property 
@@ -1942,7 +1942,7 @@ SCORE is the score to add."
 	  (goto-char (point-min))
 	  (while (and (not (eobp))
 		      (search-forward match nil t))
-	    (when (and (= (point-at-bol) (match-beginning 0))
+	    (when (and (= (gnus-point-at-bol) (match-beginning 0))
 		       (eolp))
 	      (setq found (setq arts (get-text-property (point) 'articles)))
 	      (if trace
@@ -2026,7 +2026,7 @@ SCORE is the score to add."
 		   hashtb))
 	    (gnus-sethash
 	     word
-	     (append (get-text-property (point-at-eol) 'articles) val)
+	     (append (get-text-property (gnus-point-at-eol) 'articles) val)
 	     hashtb)))
       (set-syntax-table syntab))
     ;; Make all the ignorable words ignored.

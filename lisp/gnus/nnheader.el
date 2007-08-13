@@ -157,7 +157,7 @@ on your system, you could say something like:
 ;; Parsing headers and NOV lines.
 
 (defsubst nnheader-header-value ()
-  (buffer-substring (match-end 0) (point-at-eol)))
+  (buffer-substring (match-end 0) (gnus-point-at-eol)))
 
 (defun nnheader-parse-head (&optional naked)
   (let ((case-fold-search t)
@@ -263,7 +263,7 @@ on your system, you could say something like:
 ;; (defvar nnheader-none-counter 0)
 
 (defun nnheader-parse-nov ()
-  (let ((eol (point-at-eol)))
+  (let ((eol (gnus-point-at-eol)))
     (vector
      (nnheader-nov-read-integer)	; number
      (nnheader-nov-field)		; subject

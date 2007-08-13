@@ -1,6 +1,5 @@
 (provide 'vm-autoload)
 
-
 (autoload (quote vm-delete-message) "vm-delete" "Add the `deleted' attribute to the current message.
 
 The message will be physically deleted from the current folder the next

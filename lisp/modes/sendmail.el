@@ -1241,6 +1241,7 @@ The seventh argument ACTIONS is a list of actions to take
 
 ;;; Do not execute these when sendmail.el is loaded,
 ;;; only in loaddefs.el.
+;;; Do not autoload, this package is obsolete. -sb
 ;;;###autoload (define-key ctl-x-map "m" 'mail)
 ;;;###autoload (define-key ctl-x-4-map "m" 'mail-other-window)
 ;;;###autoload (define-key ctl-x-5-map "m" 'mail-other-frame)

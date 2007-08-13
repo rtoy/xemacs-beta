@@ -133,7 +133,7 @@ It is provided only to ease porting of broken FSF Emacs programs."
     (when gnus-newsgroup-selected-overlay
       (delete-extent gnus-newsgroup-selected-overlay))
     (setq gnus-newsgroup-selected-overlay 
-	  (make-extent (point-at-bol) (point-at-eol)))
+	  (make-extent (gnus-point-at-bol) (gnus-point-at-eol)))
     (set-extent-face gnus-newsgroup-selected-overlay
 		     gnus-summary-selected-face)))
 

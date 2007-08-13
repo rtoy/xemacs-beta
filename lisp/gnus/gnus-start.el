@@ -1666,7 +1666,7 @@ newsgroup."
       (while (not (eobp))
 	(condition-case ()
 	    (progn
-	      (narrow-to-region (point) (point-at-eol))
+	      (narrow-to-region (point) (gnus-point-at-eol))
 	      ;; group gets set to a symbol interned in the hash table
 	      ;; (what a hack!!) - jwz
 	      (setq group (let ((obarray hashtb)) (read cur)))
@@ -1694,7 +1694,7 @@ newsgroup."
 	   (unless ignore-errors
 	     (gnus-message 3 "Warning - illegal active: %s"
 			   (buffer-substring
-			    (point-at-bol) (point-at-eol))))))
+			    (gnus-point-at-bol) (gnus-point-at-eol))))))
 	(widen)
 	(forward-line 1)))))
 
@@ -1934,7 +1934,7 @@ If FORCE is non-nil, the .newsrc file is read."
 	      ;; don't give a damn, frankly, my dear.
 	      (concat gnus-newsrc-options
 		      (buffer-substring
-		       (point-at-bol)
+		       (gnus-point-at-bol)
 		       ;; Options may continue on the next line.
 		       (or (and (re-search-forward "^[^ \t]" nil 'move)
 				(progn (beginning-of-line) (point)))
@@ -2005,8 +2005,8 @@ If FORCE is non-nil, the .newsrc file is read."
 		;; The line was buggy.
 		(setq group nil)
 		(gnus-error 3.1 "Mangled line: %s"
-			    (buffer-substring (point-at-bol)
-					      (point-at-eol))))
+			    (buffer-substring (gnus-point-at-bol)
+					      (gnus-point-at-eol))))
 	      nil))
 	  ;; Skip past ", ".  Spaces are illegal in these ranges, but
 	  ;; we allow them, because it's a common mistake to put a
@@ -2115,9 +2115,9 @@ If FORCE is non-nil, the .newsrc file is read."
       (while (re-search-forward "[ \t]-n" nil t)
 	(setq eol
 	      (or (save-excursion
-		    (and (re-search-forward "[ \t]-n" (point-at-eol) t)
+		    (and (re-search-forward "[ \t]-n" (gnus-point-at-eol) t)
 			 (- (point) 2)))
-		  (point-at-eol)))
+		  (gnus-point-at-eol)))
 	;; Search for all "words"...
 	(while (re-search-forward "[^ \t,\n]+" eol t)
 	  (if (= (char-after (match-beginning 0)) ?!)

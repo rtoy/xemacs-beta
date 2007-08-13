@@ -30,26 +30,6 @@
 
 ;;; Code:
 
-;(if (fboundp 'point-at-bol)
-;    (fset 'gnus-point-at-bol 'point-at-bol)
-;  (defsubst gnus-point-at-bol ()
-;    "Return point at the beginning of the line."
-;    (let ((p (point)))
-;      (beginning-of-line)
-;      (prog1
-;	  (point)
-;	(goto-char p)))))
-
-;(if (fboundp 'point-at-eol)
-;    (fset 'gnus-point-at-eol 'point-at-eol)
-;  (defsubst gnus-point-at-eol ()
-;    "Return point at the end of the line."
-;    (let ((p (point)))
-;      (end-of-line)
-;      (prog1
-;	  (point)
-;	(goto-char p)))))
-
 (require 'custom)
 (require 'cl)
 (require 'nnheader)
@@ -122,6 +102,26 @@
      (when (gnus-buffer-exists-p buf)
        (kill-buffer buf))))
 
+(if (fboundp 'point-at-bol)
+    (fset 'gnus-point-at-bol 'point-at-bol)
+  (defun gnus-point-at-bol ()
+    "Return point at the beginning of the line."
+    (let ((p (point)))
+      (beginning-of-line)
+      (prog1
+	  (point)
+	(goto-char p)))))
+
+(if (fboundp 'point-at-eol)
+    (fset 'gnus-point-at-eol 'point-at-eol)
+  (defun gnus-point-at-eol ()
+    "Return point at the end of the line."
+    (let ((p (point)))
+      (end-of-line)
+      (prog1
+	  (point)
+	(goto-char p)))))
+
 (defun gnus-delete-first (elt list)
   "Delete by side effect the first occurrence of ELT as a member of LIST."
   (if (equal (car list) elt)
@@ -190,7 +190,7 @@
 
 (defun gnus-goto-colon ()
   (beginning-of-line)
-  (search-forward ":" (point-at-eol) t))
+  (search-forward ":" (gnus-point-at-eol) t))
 
 (defun gnus-remove-text-with-property (prop)
   "Delete all text in the current buffer with text property PROP."

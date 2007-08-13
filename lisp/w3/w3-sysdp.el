@@ -231,7 +231,7 @@
 (sysdep-defalias 'get-other-frame 'get-other-screen)
 (sysdep-defalias 'iconify-frame 'iconify-screen)
 (sysdep-defalias 'lower-frame 'lower-screen)
-(sysdep-defalias 'mail-other-frame 'mail-other-screen)
+;(sysdep-defalias 'mail-other-frame 'mail-other-screen)
 
 (sysdep-defalias 'make-frame
   (cond ((fboundp 'make-screen)

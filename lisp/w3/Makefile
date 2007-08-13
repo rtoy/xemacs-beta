@@ -38,7 +38,7 @@ URLSOURCES = \
 	url-pgp.el url-vars.el url-wais.el url-auth.el mm.el md5.el	\
 	url-gw.el ssl.el base64.el url.el socks.el
 
-CUSTOMSOURCES = widget.el widget-edit.el
+CUSTOMSOURCES = # widget.el widget-edit.el
 CUSTOMOBJECTS = $(CUSTOMSOURCES:.el=.elc)
 URLOBJECTS    = $(URLSOURCES:.el=.elc)
 

@@ -134,7 +134,7 @@ Keymap for characters following C-c.")
 (define-key global-map "\C-x50" 'delete-frame)
 (define-key global-map "\C-x5o" 'other-frame)
 ;; XEmacs addition:
-(define-key global-map "\C-x5m" 'mail-other-frame)
+;;(define-key global-map "\C-x5m" 'mail-other-frame)
 
 ;; FSFmacs help.el
 

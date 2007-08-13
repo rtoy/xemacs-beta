@@ -1592,8 +1592,6 @@ increase the score of each group you read."
 	["Remove article" gnus-cache-remove-article t])
        ["Enter digest buffer" gnus-summary-enter-digest-group t]
        ["Isearch article..." gnus-summary-isearch-article t]
-       ["Search articles forward..." gnus-summary-search-article-forward t]
-       ["Search articles backward..." gnus-summary-search-article-backward t]
        ["Beginning of the article" gnus-summary-beginning-of-article t]
        ["End of the article" gnus-summary-end-of-article t]
        ["Fetch parent of article" gnus-summary-refer-parent-article t]
@@ -1740,6 +1738,8 @@ increase the score of each group you read."
 	["Toggle threading" gnus-summary-toggle-threads t])
        ["Filter articles..." gnus-summary-execute-command t]
        ["Run command on subjects..." gnus-summary-universal-argument t]
+       ["Search articles forward..." gnus-summary-search-article-forward t]
+       ["Search articles backward..." gnus-summary-search-article-backward t]
        ["Toggle line truncation" gnus-summary-toggle-truncation t]
        ["Expand window" gnus-summary-expand-window t]
        ["Expire expirable articles" gnus-summary-expire-articles
@@ -1944,6 +1944,9 @@ The following commands are available:
 
 (defmacro gnus-data-header (data)
   `(nth 3 ,data))
+
+(defmacro gnus-data-set-header (data header)
+  `(setf (nth 3 ,data) ,header))
 
 (defmacro gnus-data-level (data)
   `(nth 4 ,data))
@@ -2974,7 +2977,7 @@ If NO-DISPLAY, don't generate a summary buffer."
 	(setq thread (list (car (gnus-id-to-thread id))))
       ;; Get the thread this article is part of.
       (setq thread (gnus-remove-thread id)))
-    (setq old-pos (point-at-bol))
+    (setq old-pos (gnus-point-at-bol))
     (setq current (save-excursion
 		    (and (zerop (forward-line -1))
 			 (gnus-summary-article-number))))
@@ -3133,9 +3136,9 @@ If NO-DISPLAY, don't generate a summary buffer."
       (goto-char (gnus-data-pos d))
       (gnus-data-remove 
        number
-       (- (point-at-bol)
+       (- (gnus-point-at-bol)
 	  (prog1
-	      (1+ (point-at-eol))
+	      (1+ (gnus-point-at-eol))
 	    (gnus-delete-line)))))))
 
 (defun gnus-sort-threads (threads)
@@ -4196,7 +4199,7 @@ The resulting hash table is returned, or nil if no Xrefs were found."
 ;; This function has to be called with point after the article number
 ;; on the beginning of the line.
 (defun gnus-nov-parse-line (number dependencies &optional force-new)
-  (let ((eol (point-at-eol))
+  (let ((eol (gnus-point-at-eol))
 	(buffer (current-buffer))
 	header ref id id-dep ref-dep)
 
@@ -4354,9 +4357,9 @@ This is meant to be called in `gnus-article-internal-prepare-hook'."
 	  (goto-char (gnus-data-pos d))
 	  (gnus-data-remove 
 	   number
-	   (- (point-at-bol)
+	   (- (gnus-point-at-bol)
 	      (prog1
-		  (1+ (point-at-eol))
+		  (1+ (gnus-point-at-eol))
 		(gnus-delete-line))))))
       (when old-header
 	(mail-header-set-number header (mail-header-number old-header)))
@@ -6913,11 +6916,26 @@ groups."
 	(save-excursion
 	  (save-restriction
 	    (message-narrow-to-head)
-	    (let ((header (nnheader-parse-head t)))
-	      (set-buffer buffer)
-	      (mail-header-set-number header (cdr gnus-article-current))
-	      (gnus-summary-update-article-line
-	       (cdr gnus-article-current) header))))
+	    (let ((head (buffer-string))
+		  header)
+	      (nnheader-temp-write nil
+		(insert (format "211 %d Article retrieved.\n"
+				(cdr gnus-article-current)))
+		(insert head)
+		(insert ".\n")
+		(let ((nntp-server-buffer (current-buffer)))
+		  (setq header (car (gnus-get-newsgroup-headers
+				     (save-excursion
+				       (set-buffer gnus-summary-buffer)
+				       gnus-newsgroup-dependencies)
+				     t))))
+		(save-excursion
+		  (set-buffer gnus-summary-buffer)
+		  (gnus-data-set-header
+		   (gnus-data-find (cdr gnus-article-current))
+		   header)
+		  (gnus-summary-update-article-line
+		   (cdr gnus-article-current) header))))))
       ;; Update threads.
       (set-buffer (or buffer gnus-summary-buffer))
       (gnus-summary-update-article (cdr gnus-article-current)))
@@ -7314,7 +7332,7 @@ marked."
 (defun gnus-summary-update-mark (mark type)
   (let ((forward (cdr (assq type gnus-summary-mark-positions)))
         (buffer-read-only nil))
-    (re-search-backward "[\n\r]" (point-at-bol) 'move-to-limit)
+    (re-search-backward "[\n\r]" (gnus-point-at-bol) 'move-to-limit)
     (when (looking-at "\r")
       (incf forward))
     (when (and forward

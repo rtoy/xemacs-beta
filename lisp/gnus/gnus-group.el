@@ -836,7 +836,7 @@ listed."
   (gnus-group-setup-buffer)
   (gnus-update-format-specifications nil 'group 'group-mode)
   (let ((case-fold-search nil)
-	(props (text-properties-at (point-at-bol)))
+	(props (text-properties-at (gnus-point-at-bol)))
 	(empty (= (point-min) (point-max)))
 	(group (gnus-group-group-name))
 	number)
@@ -1220,23 +1220,23 @@ already."
 
 (defun gnus-group-group-name ()
   "Get the name of the newsgroup on the current line."
-  (let ((group (get-text-property (point-at-bol) 'gnus-group)))
+  (let ((group (get-text-property (gnus-point-at-bol) 'gnus-group)))
     (and group (symbol-name group))))
 
 (defun gnus-group-group-level ()
   "Get the level of the newsgroup on the current line."
-  (get-text-property (point-at-bol) 'gnus-level))
+  (get-text-property (gnus-point-at-bol) 'gnus-level))
 
 (defun gnus-group-group-indentation ()
   "Get the indentation of the newsgroup on the current line."
-  (or (get-text-property (point-at-bol) 'gnus-indentation)
+  (or (get-text-property (gnus-point-at-bol) 'gnus-indentation)
       (and gnus-group-indentation-function
 	   (funcall gnus-group-indentation-function))
       ""))
 
 (defun gnus-group-group-unread ()
   "Get the number of unread articles of the newsgroup on the current line."
-  (get-text-property (point-at-bol) 'gnus-unread))
+  (get-text-property (gnus-point-at-bol) 'gnus-unread))
 
 (defun gnus-group-new-mail (group)
   (if (nnmail-new-mail-p (gnus-group-real-name group))
