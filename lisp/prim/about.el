@@ -542,7 +542,7 @@
 	Come visit his glorified .plan file at
 
 		")
-	  (about-xref "http://www.netscape.com/people/jwz/" 'w3-jamie "Visit Jamie's WWW page")
+	  (about-xref "http://people.netscape.com/jwz/" 'w3-jamie "Visit Jamie's WWW page")
 	  (insert "\n\n\tClick ")
 	  (about-xref "here" prev-page "Return to previous page")
 	  (insert " to go back to the previous page.\n")
@@ -1194,6 +1194,7 @@
 	  James Thompson <thompson@wg2.waii.com>
 	  Morioka Tomohiko <morioka@jaist.ac.jp>
 	  Raymond L. Toy <toy@rtp.ericsson.se>
+	  Remek Trzaska <remek@npac.syr.edu>
 	  John Turner <turner@xdiv.lanl.gov>
 	  Juan E. Villacis <jvillaci@cs.indiana.edu>
 	  Jan Vroonhof <vroonhof@math.ethz.ch>

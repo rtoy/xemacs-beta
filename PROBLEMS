@@ -1832,3 +1832,10 @@ an earlier version.  The solution is to upgrade your old library.
 
 This is normal (trust us) when upgrading to VM-6.22 from earlier versions.
 Let VM finish what it is doing and all will be well.
+
+* MH-E and TM can have problems with PGP messages.
+
+Rick Campbell <rickc@lehman.com> writes:
+A combination of MH-E and TM can cause problems deciphering PGP messages.
+TM causes mh-clean-message-header to be ignored and it must set
+to nil for MH and TM to play nicely.

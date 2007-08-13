@@ -1,4 +1,8 @@
 							-*- indented-text -*-
+to 19.16 -- "Bordeaux"
+-- about.el touch up
+-- TM and MH-e PGP problem documented in PROBLEMS
+
 to 19.16 pre6 -- "New York"
 -- Fix for using a pixmap background
 -- about.el updated
