@@ -398,6 +398,12 @@ popular alternate setting."
   :type 'function
   :group 'editing-basics)
 
+(eval-when-compile
+  (defmacro delete-forward-p ()
+    '(and delete-key-deletes-forward
+	  (or (eq 'tty (device-type))
+	      (x-keysym-on-keyboard-sans-modifiers-p 'backspace)))))
+
 (defun backward-or-forward-delete-char (arg)
   "Delete either one character backwards or one character forwards.
 Controlled by the state of `delete-key-deletes-forward' and whether the
@@ -405,9 +411,7 @@ BackSpace keysym even exists on your keyboard.  If you don't have a
 BackSpace keysym, the delete key should always delete one character
 backwards."
   (interactive "*p")
-  (if (and delete-key-deletes-forward
-	   (or (eq 'tty (device-type))
-	       (x-keysym-on-keyboard-p "BackSpace")))
+  (if (delete-forward-p)
       (delete-char arg)
     (funcall backward-delete-function arg)))
 
@@ -418,9 +422,7 @@ BackSpace keysym even exists on your keyboard.  If you don't have a
 BackSpace keysym, the delete key should always delete one character
 backwards."
   (interactive "*p")
-  (if (and delete-key-deletes-forward
-	   (or (eq 'tty (device-type))
-	       (x-keysym-on-keyboard-p "BackSpace")))
+  (if (delete-forward-p)
       (kill-word arg)
     (backward-kill-word arg)))
 
@@ -431,9 +433,7 @@ BackSpace keysym even exists on your keyboard.  If you don't have a
 BackSpace keysym, the delete key should always delete one character
 backwards."
   (interactive "*P")
-  (if (and delete-key-deletes-forward
-	   (or (eq 'tty (device-type))
-	       (x-keysym-on-keyboard-p "BackSpace")))
+  (if (delete-forward-p)
       (kill-sentence arg)
     (backward-kill-sentence (prefix-numeric-value arg))))
 
@@ -444,9 +444,7 @@ BackSpace keysym even exists on your keyboard.  If you don't have a
 BackSpace keysym, the delete key should always delete one character
 backwards."
   (interactive "*p")
-  (if (and delete-key-deletes-forward
-	   (or (eq 'tty (device-type))
-	       (x-keysym-on-keyboard-p "BackSpace")))
+  (if (delete-forward-p)
       (kill-sexp arg)
     (backward-kill-sexp arg)))
 
@@ -567,25 +565,32 @@ nil means discard it; anything else is stream for print."
   (eval-buffer (current-buffer) printflag))
 
 ;; XEmacs
-(defun count-words-buffer (b)
-  (interactive "b")
-  (save-excursion
-    (let ((buf (or b (current-buffer))))
-      (set-buffer buf)
-      (message "Buffer has %d words"
-	       (count-words-region (point-min) (point-max))))))
+(defun count-words-buffer (buffer)
+  "Print the number of words in BUFFER.
+If called noninteractively, the value is returned rather than printed.
+BUFFER defaults to the current buffer."
+  (interactive "bBuffer: ")
+  (let ((words (count-words-region (point-min) (point-max) buffer)))
+    (when (interactive-p)
+      (message "Buffer has %d words" words))
+    words))
 
 ;; XEmacs
-(defun count-words-region (start end)
+(defun count-words-region (start end &optional buffer)
+  "Print the number of words in region between START and END in BUFFER.
+If called noninteractively, the value is returned rather than printed.
+BUFFER defaults to the current buffer."
   (interactive "r")
   (save-excursion
-    (let ((n 0))
+    (set-buffer (or buffer (current-buffer)))
+    (let ((words 0))
       (goto-char start)
       (while (< (point) end)
-	(if (forward-word 1)
-	    (setq n (1+ n))))
-      (message "Region has %d words" n)
-      n)))
+	(when (forward-word 1)
+	  (incf words)))
+      (when (interactive-p)
+	(message "Region has %d words" words))
+      words)))
 
 (defun count-lines-region (start end)
   "Print number of lines and characters in the region."
@@ -595,14 +600,12 @@ nil means discard it; anything else is stream for print."
 	   (count-lines start end) (- end start)))
 
 ;; XEmacs
-(defun count-lines-buffer (b)
-  "Print number of lines and characters in the specified buffer."
-  (interactive "_b")
+(defun count-lines-buffer (buffer)
+  "Print number of lines and characters in BUFFER."
+  (interactive "_bBuffer: ")
   (save-excursion
-    (let ((buf (or b (current-buffer)))
-          cnt)
-      (set-buffer buf)
-      (setq cnt (count-lines (point-min) (point-max)))
+    (set-buffer (or buffer (current-buffer)))
+    (let ((cnt (count-lines (point-min) (point-max))))
       (message "Buffer has %d lines, %d characters"
                cnt (- (point-max) (point-min)))
       cnt)))
@@ -621,7 +624,7 @@ nil means discard it; anything else is stream for print."
 	(goto-char opoint)
 	(beginning-of-line)
 	(if (/= start 1)
-	    (message "line %d (narrowed line %d)"
+	    (message "Line %d (narrowed line %d)"
 		     (1+ (count-lines 1 (point)))
 		     (1+ (count-lines start (point))))
 	  (message "Line %d" (1+ (count-lines 1 (point)))))))))

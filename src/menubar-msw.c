@@ -807,3 +807,5 @@ vars_of_menubar_mswindows (void)
   staticpro (&current_menudesc);
   staticpro (&current_hashtable);
 
+  Fprovide (intern ("mswindows-menubars"));
+}

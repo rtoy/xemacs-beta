@@ -1,14 +1,20 @@
 This directory tree holds version 20.5 of XEmacs, the extensible,
-customizable, self-documenting real-time display editor.
+customizable, self-documenting real-time display editor.  This version
+of XEmacs also runs on various Microsoft Windows platforms including
+MS Windows '95 and MS Windows NT and Cygwin.
 
 See the file `etc/NEWS' for information on new features and other
 user-visible changes since the last version of XEmacs.
 
-The file INSTALL in this directory says how to bring up XEmacs on
-Unix, once you have loaded the entire subtree of this directory.
+The file `INSTALL' in this directory says how to bring up XEmacs on
+Unix and Cygwin, once you have loaded the entire subtree of this
+directory.
 
-The file PROBLEMS contains information on many common problems that
+The file `PROBLEMS' contains information on many common problems that
 occur in building, installing and running XEmacs.
+
+See the file `nt/README' for instructions on building XEmacs for
+Microsoft Windows.
 
 Reports of bugs in XEmacs should be posted to the newsgroup
 comp.emacs.xemacs or sent to the mailing list xemacs@xemacs.org.  See

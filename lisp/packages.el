@@ -95,7 +95,8 @@
 
 (defvar packages-hardcoded-lisp
   '(
-    ;; "startup"
+    #+infodock "id-vers"
+    #+infodock "easymenu-id-xemacs"
     )
   "Lisp packages that are always dumped with XEmacs")
 

@@ -18,7 +18,8 @@ Synched up with: FSF 19.30.
    of the Free Software Foundation are approved by the Foundation.
 
 
-BUILDING AND INSTALLATION:
+BUILDING AND INSTALLATION (Unix and Cygwin, see the file nt/README
+for instructions on building under Microsoft Windows):
 
 1) Make sure your system has enough swapping space allocated to handle
    a program whose pure code is 900k bytes and whose data area is at

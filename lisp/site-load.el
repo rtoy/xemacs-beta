@@ -14,16 +14,16 @@
 
 ;; The file `site-packages' if it exists should look something like:
 ;; (setq site-load-packages '(
-;; "../lisp/modes/cc-mode"
-;; "../lisp/utils/redo"
-;; "../lisp/packages/scroll-in-place"
+;; "../lisp/modes/cc-mode.elc"
+;; "../lisp/utils/redo.elc"
+;; "../lisp/packages/scroll-in-place.elc"
 ;; )
 ;; )
 
 ;; The first line and the last line must be exact.  Each of the packages
 ;; listed must be double quoted, have either an absolute path, or a relative
 ;; to the build src directory path *and* be bytecompiled prior to the attempt
-;; to dump.
+;; to dump.  They also must explicitly have the .elc extension.
 
 ;; Because this is a trial implementation and the file is shared with
 ;; make-docfiles, syntax is strict and unforgiving.  So sue me.  It

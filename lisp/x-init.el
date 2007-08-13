@@ -97,7 +97,7 @@
 
 (eval-when-compile
   (defmacro x-define-dead-key (key map)
-    `(when (x-keysym-on-keyboard-p ,(symbol-name key))
+    `(when (x-keysym-on-keyboard-p ',key)
        (define-key function-key-map [,key] ',map))))
 
 (defun x-initialize-compose ()
@@ -110,7 +110,7 @@
   (autoload 'compose-circumflex-map "x-compose" nil t 'keymap)
   (autoload 'compose-tilde-map	    "x-compose" nil t 'keymap)
 
-  (when (x-keysym-on-keyboard-p "Multi_key")
+  (when (x-keysym-on-keyboard-p 'multi-key)
     (define-key function-key-map [multi-key] 'compose-map))
 
   ;; The dead keys might really be called just about anything, depending
@@ -181,6 +181,13 @@
   (x-define-dead-key hpmute_asciicircum		compose-circumflex-map)
   (x-define-dead-key hpmute_asciitilde		compose-tilde-map)
 
+  ;; Empirically discovered on Linux XFree86 MetroX:
+  (x-define-dead-key usldead_acute		compose-acute-map)
+  (x-define-dead-key usldead_grave		compose-grave-map)
+  (x-define-dead-key usldead_diaeresis		compose-diaeresis-map)
+  (x-define-dead-key usldead_asciicircum	compose-circumflex-map)
+  (x-define-dead-key usldead_asciitilde		compose-tilde-map)
+
   ;; HP according to OpenWindows 3:
   (x-define-dead-key hpXK_mute_acute		compose-acute-map)
   (x-define-dead-key hpXK_mute_grave		compose-grave-map)
@@ -202,14 +209,6 @@
   (x-define-dead-key dead-diaeresis		compose-diaeresis-map)
   (x-define-dead-key dead-circum		compose-circumflex-map)
   (x-define-dead-key dead-tilde			compose-tilde-map)
-
-  ;;  and AIX uses underscore, sigh....
-  (x-define-dead-key dead_acute			compose-acute-map)
-  (x-define-dead-key dead_grave			compose-grave-map)
-  (x-define-dead-key dead_cedilla		compose-cedilla-map)
-  (x-define-dead-key dead_diaeresis		compose-diaeresis-map)
-  (x-define-dead-key dead_circum		compose-circumflex-map)
-  (x-define-dead-key dead_tilde			compose-tilde-map)
   )
 
 (defun x-initialize-keyboard ()

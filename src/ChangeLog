@@ -1,4 +1,48 @@
+1998-02-14  SL Baur  <steve@altair.xemacs.org>
+
+	* s/sco5.h: Define LIB_GCC as -lgcc for gcc 2.8 and egcs.
+	Suggested by Robert Lipe <robertl@dgii.com>
+
+1998-02-14  Martin Buchholz  <martin@xemacs.org>
+
+	* event-Xt.c (x_reset_key_mapping): 
+	* device-x.c: 
+	(x-keysym-on-keyboard-p):
+	(x-keysym-on-keyboard-sans-modifiers-p):
+	Use x-keysym-on-keyboard-sans-modifiers-p instead of
+	x-keysym-on-keyboard-p to detect backspace.
+	Use symbols instead of strings (now deprecated) with x-keysym-*-p.
+	Clean up symbols used with dead keys, checking Linux and solaris
+	keysyms.
+	Simplify x-win-*.el using above methods.
+	Change documentation for x-keysym-*-p functions.
+
+1998-02-13  SL Baur  <steve@altair.xemacs.org>
+
+	* unexelfsgi.c: Various changes.
+	From Olivier Galibert <galibert@pobox.com>
+
+	* s/freebsd.h: Avoid redefining BSD.
+	From Kazuyuki IENAGA <ienaga@jsys.co.jp>
+
+	* extents.c (extent_fragment_update): Break up a line to avoid a
+	Digital UNIX 3.2g C compiler bug.
+	From Tonny Madsen  <tma@nettest.dk>
+
+	* process.c (create_process): Restore save_environ hackery.
+
+1998-02-10  SL Baur  <steve@altair.xemacs.org>
+
+	* emacsfns.h: Remove mocklisp declarations.
+
+	* redisplay-msw.c (mswindows_update_dc): Enable evil kludge for
+	cygwin.
+	From Andy Piper <andyp@parallax.co.uk>
+
 1998-02-09  SL Baur  <steve@altair.xemacs.org>
+
+	* menubar-msw.c (vars_of_menubar_mswindows): Fix patch failure.
+	Suggested by: kny@tekla.fi
 
 	* data.c (Fold_eq): PC-ize.
 

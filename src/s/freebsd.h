@@ -33,15 +33,19 @@
 #define LIBS_SYSTEM "-lutil"
 #endif
 
+#ifndef NOT_C_CODE
+#ifdef BSD /* fixing BSD define */
+#undef BSD
+#endif
+#include <sys/param.h>
 /* Kludge to work around setlocale(LC_ALL,...) not working after 01/1997 */
 #if __FreeBSD_version >= 199701
 #ifdef HAVE_X_WINDOWS
-#ifndef NOT_C_CODE
 #include <X11/Xlocale.h>
 #define setlocale(locale_category, locale_spec) setlocale(LC_CTYPE, locale_spec)
+#endif /* HAVE X */
+#endif /* FreeBSD >= 199701 */
 #endif /* C code */
-#endif
-#endif
 
 #define LIBS_TERMCAP "-ltermcap"
 
@@ -82,20 +86,6 @@
 /* freebsd uses OXTABS instead of the expected TAB3. */
 #define TABDLY OXTABS
 #define TAB3 OXTABS
-
-/* this silences a few compilation warnings */
-#undef BSD
-#if __FreeBSD__ == 1
-#define BSD 199103
-#elif __FreeBSD__ == 2
-#if __FreeBSD_version < 199701
-# define BSD 199306
-#else
-# define BSD 199506
-#endif
-#elif __FreeBSD__ == 3
-#define BSD 199506
-#endif
 
 /* Needed to avoid hanging when child process writes an error message
    and exits -- enami tsugutomo <enami@ba2.so-net.or.jp>.  */

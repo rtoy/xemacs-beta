@@ -50,7 +50,7 @@
 ;; FSF comments the next two out, but I see no reason to do so. --ben
 (defmacro proclaim-inline (&rest fns)
   "Cause the named functions to be open-coded when called from compiled code.
-They will only be compiled open-coded when byte-optimize is true."
+They will only be compiled open-coded when `byte-optimize' is true."
   (cons 'eval-and-compile
 	(apply
 	 'nconc

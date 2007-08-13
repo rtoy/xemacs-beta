@@ -115,6 +115,7 @@ static CONST String x_fallback_resources[] =
   0
 };
 
+static Lisp_Object x_keysym_to_emacs_keysym (KeySym keysym, int simple_p);
 void emacs_Xt_mapping_action (Widget w, XEvent *event);
 void debug_process_finalization (struct Lisp_Process *p);
 void emacs_Xt_event_handler (Widget wid, XtPointer closure, XEvent *event,
@@ -193,8 +194,12 @@ x_reset_key_mapping (struct device *d)
     XGetKeyboardMapping (display, xd->x_keysym_map_min_code, key_code_count,
 			 &xd->x_keysym_map_keysyms_per_code);
 
-  xd->x_keysym_map_hashtable = hashtable =
-    make_lisp_hashtable (128, HASHTABLE_NONWEAK, HASHTABLE_EQUAL);
+  hashtable = xd->x_keysym_map_hashtable;
+  if (HASHTABLEP (hashtable))
+    Fclrhash (hashtable);
+  else
+    xd->x_keysym_map_hashtable = hashtable =
+      make_lisp_hashtable (128, HASHTABLE_NONWEAK, HASHTABLE_EQUAL);
 
   for (keysym = xd->x_keysym_map,
 	 keysyms_per_code = xd->x_keysym_map_keysyms_per_code,
@@ -203,25 +208,32 @@ x_reset_key_mapping (struct device *d)
        keysym += keysyms_per_code)
     {
       int j;
-      char *keysym_name;
 
       if (keysym[0] == NoSymbol)
 	continue;
 
-      if ((keysym_name = XKeysymToString (keysym[0])) != NULL)
-	Fputhash (build_string (keysym_name), Qsans_modifiers, hashtable);
+      {
+	char *name = XKeysymToString (keysym[0]);
+	Lisp_Object sym = x_keysym_to_emacs_keysym (keysym[0], 0);
+	if (name)
+	  {
+	    Fputhash (build_string (name), Qsans_modifiers, hashtable);
+	    Fputhash (sym, Qsans_modifiers, hashtable);
+	  }
+      }
 
       for (j = 1; j < keysyms_per_code; j++)
 	{
-	  if (keysym[j] == keysym[0] ||
-	      keysym[j] == NoSymbol)
-	    continue;
-
-	  if ((keysym_name = XKeysymToString (keysym[j])) != NULL)
+	  if (keysym[j] != keysym[0] &&
+	      keysym[j] != NoSymbol)
 	    {
-	      Lisp_Object name = build_string (keysym_name);
-	      if (NILP (Fgethash (name, hashtable, Qnil)))
-		Fputhash (name, Qt, hashtable);
+	      char *name = XKeysymToString (keysym[j]);
+	      Lisp_Object sym = x_keysym_to_emacs_keysym (keysym[j], 0);
+	      if (name && NILP (Fgethash (sym, hashtable, Qnil)))
+		{
+		  Fputhash (build_string (name), Qt, hashtable);
+		  Fputhash (sym, Qt, hashtable);
+		}
 	    }
 	}
     }

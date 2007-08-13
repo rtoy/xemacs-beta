@@ -2871,12 +2871,17 @@ extent_fragment_update (struct window *w, struct extent_fragment *ef,
 	    Dynarr_add (ef->extents, e);
 	  if (e == lhe)
 	    {
+	      Lisp_Object f;
 	      /* memset isn't really necessary; we only deref `priority'
 		 and `face' */
 	      memset (&dummy_lhe_extent, 0, sizeof (dummy_lhe_extent));
 	      set_extent_priority (&dummy_lhe_extent,
 				   mouse_highlight_priority);
-	      extent_face (&dummy_lhe_extent) = extent_mouse_face (lhe);
+	      /* Need to break up thefollowing expression, due to an */
+	      /* error in the Digital UNIX 3.2g C compiler (Digital */
+	      /* UNIX Compiler Driver 3.11). */
+	      f = extent_mouse_face (lhe);
+	      extent_face (&dummy_lhe_extent) = f;
 	      Dynarr_add (ef->extents, &dummy_lhe_extent);
 	    }
 	  /* since we are looping anyway, we might as well do this here */

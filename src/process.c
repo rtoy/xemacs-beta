@@ -868,9 +868,11 @@ create_process (Lisp_Object process,
   p->exit_code = 0;
 
   {
+#if !defined(__CYGWIN32__)
     /* child_setup must clobber environ on systems with true vfork.
        Protect it from permanent change.  */
-    /* char **save_environ = environ;*/
+    char **save_environ = environ;
+#endif
 
 #ifdef EMACS_BTL
     /* when performance monitoring is on, turn it off before the vfork(),
@@ -1024,7 +1026,9 @@ create_process (Lisp_Object process,
       cadillac_start_logging ();	/* #### rename me */
 #endif
 
-    /*    environ = save_environ;*/
+#if !defined(__CYGWIN32__)
+    environ = save_environ;
+#endif
   }
 
   if (pid < 0)

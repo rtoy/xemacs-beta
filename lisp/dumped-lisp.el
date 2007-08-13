@@ -5,8 +5,7 @@
 	"subr" 			; load the most basic Lisp functions
 	"replace" 		; match-string used in version.el.
 	; Ignore compiled-by-mistake version.elc
-	#-infodock "version.el"	; XEmacs
-	#+infodock "id-version.el" ; InfoDock
+	"version.el"
 	"cl"
 	"cl-extra"
 	"cl-seq"

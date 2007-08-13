@@ -217,8 +217,9 @@ mswindows_update_dc (HDC hdc, Lisp_Object font, Lisp_Object fg,
   if (!NILP (font))
     SelectObject(hdc, FONT_INSTANCE_MSWINDOWS_HFONT (XFONT_INSTANCE (font)));
 
-#ifdef DEBUG_XEMACS
-  /* evil kludge! - #### do we need this? */
+#if defined(DEBUG_XEMACS) || defined(__CYGWIN32__)
+  /* evil kludge! - #### do we need this? - cygwin does for some
+     reason --andyp */
   if (!NILP (fg) && !COLOR_INSTANCEP (fg))
     {
       /* this break under mule */

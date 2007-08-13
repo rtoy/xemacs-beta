@@ -107,6 +107,7 @@ int in_specifier_change_function;
 /************************************************************************/
 
 /* JH 97/11/25 removed the static declaration because I need it during setup in event-Xt... */
+struct device * get_device_from_display_1 (Display *dpy);
 struct device *
 get_device_from_display_1 (Display *dpy)
 {
@@ -593,7 +594,7 @@ CONST char *
 x_event_name (int event_type)
 {
   if (event_type < 0) return 0;
-  if (event_type >= (sizeof (events) / sizeof (char *))) return 0;
+  if (event_type >= countof (events)) return 0;
   return events [event_type];
 }
 
@@ -1387,13 +1388,16 @@ More precisely, return true if pressing a physical key
 on the keyboard of DEVICE without any modifier keys generates KEYSYM.
 Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
 /usr/lib/X11/XKeysymDB, or whatever the equivalents are on your system.
+The keysym name can be provided in two forms:
+- if keysym is a string, it must be the name as known to X windows.
+- if keysym is a symbol, it must be the name as known to XEmacs.
+The two names differ in capitalization and underscoring.
 */
        (keysym, device))
 {
   struct device *d = decode_device (device);
   if (!DEVICE_X_P (d))
     signal_simple_error ("Not an X device", device);
-  CHECK_STRING (keysym);
 
   return (EQ (Qsans_modifiers,
 	      Fgethash (keysym, DEVICE_X_KEYSYM_MAP_HASHTABLE (d), Qnil)) ?
@@ -1407,14 +1411,16 @@ More precisely, return true if some keystroke (possibly including modifiers)
 on the keyboard of DEVICE keys generates KEYSYM.
 Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
 /usr/lib/X11/XKeysymDB, or whatever the equivalents are on your system.
+The keysym name can be provided in two forms:
+- if keysym is a string, it must be the name as known to X windows.
+- if keysym is a symbol, it must be the name as known to XEmacs.
+The two names differ in capitalization and underscoring.
 */
        (keysym, device))
 {
   struct device *d = decode_device (device);
-
   if (!DEVICE_X_P (d))
     signal_simple_error ("Not an X device", device);
-  CHECK_STRING (keysym);
 
   return (NILP (Fgethash (keysym, DEVICE_X_KEYSYM_MAP_HASHTABLE (d), Qnil)) ?
 	  Qnil : Qt);

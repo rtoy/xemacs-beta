@@ -1,5 +1,16 @@
+1998-02-14  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs-20.5-beta25 is released.
+
+1998-02-13  SL Baur  <steve@altair.xemacs.org>
+
+	* INSTALL: Update for Cygwin and Microsoft Windows.
+
+	* README: Update for Microsoft Windows.
+
 1998-02-09  SL Baur  <steve@altair.xemacs.org>
 
+	* XEmacs 20.4-pre1 is released.
 	* XEmacs 20.5-beta24 is released.
 
 Wed Jan 28 13:41:22 1998  Andy Piper  <andyp@parallax.co.uk>

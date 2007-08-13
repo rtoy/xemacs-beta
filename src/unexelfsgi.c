@@ -498,7 +498,7 @@ Filesz      Memsz       Flags       Align
 #include <sym.h> /* for HDRR declaration */
 #include <sys/mman.h>
 #include <config.h>
-#include "sysdep.h"
+#include "lisp.h"
 
 /* in 64bits mode, use 64bits elf */
 #ifdef _ABI64
@@ -519,12 +519,6 @@ typedef Elf32_Off  l_Elf_Off;
 typedef Elf32_Sym  l_Elf_Sym;
 #endif
 
-
-#ifndef emacs
-#define fatal(a, b, c) fprintf(stderr, a, b, c), exit(1)
-#else
-extern void fatal(char *, ...);
-#endif
 
 /* Get the address of a particular section or program header entry,
  * accounting for the size of the entries.
@@ -605,7 +599,7 @@ find_section (name, section_names, file_name, old_file_h, old_section_h, noerror
  * .data section, and inserting an empty .bss immediately afterwards.
  *
  */
-void
+int
 unexec (new_name, old_name, data_start, bss_start, entry_address)
      char *new_name, *old_name;
      uintptr_t data_start, bss_start, entry_address;
@@ -1011,4 +1005,6 @@ unexec (new_name, old_name, data_start, bss_start, entry_address)
   stat_buf.st_mode |= 0111 & ~n;
   if (chmod (new_name, stat_buf.st_mode) == -1)
     fatal ("Can't chmod (%s): errno %d\n", new_name, errno);
+
+  return 0;
 }

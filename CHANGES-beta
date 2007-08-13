@@ -1,4 +1,10 @@
 							-*- indented-text -*-
+to 20.5 beta25 "Kamori"
+-- Dead key fixes courtesy of Martin Buchholz
+-- Make count-* functions work sensibly courtesy of Hrvoje Niksic
+-- SGI unexec fixes courtesy of Olivier Galibert
+-- Miscellaneous bug fixes
+
 to 20.5 beta24 "Kaghani"
 -- source commentary censored
 -- Miscellaneous MS Windows patches from Kirill Katsnelson

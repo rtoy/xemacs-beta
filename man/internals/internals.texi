@@ -3268,18 +3268,6 @@ various security applications on the Internet.
 
 
 
-@example
-   7000  mocklisp.c
-@end example
-
-This function provides some emulation of MockLisp, a version of Lisp
-provided in Gosling Emacs (aka Unipress Emacs), from which some old
-versions of GNU Emacs were derived.  You have to explicitly enable this
-code with a configure option and shouldn't normally, because it changes
-the semantics of XEmacs Lisp in ways that are not desirable for normal
-Lisp programs.
-
-
 
 @node Modules for Interfacing with the Operating System
 @section Modules for Interfacing with the Operating System
@@ -5033,9 +5021,8 @@ Not yet documented.
 
   @code{Feval()} evaluates the form (a Lisp object) that is passed to
 it.  Note that evaluation is only non-trivial for two types of objects:
-symbols and conses.  Under normal circumstances (i.e. not mocklisp) a
-symbol is evaluated simply by calling symbol-value on it and returning
-the value.
+symbols and conses.  A symbol is evaluated simply by calling
+symbol-value on it and returning the value.
 
   Evaluating a cons means calling a function.  First, @code{eval} checks
 to see if garbage-collection is necessary, and calls
@@ -5058,7 +5045,7 @@ the car of the cons (if this is a symbol, its function definition is
 retrieved and the process repeated).  The function should then consist
 of either a @code{Lisp_Subr} (built-in function), a
 @code{Lisp_Compiled_Function} object, or a cons whose car is the symbol
-@code{autoload}, @code{macro}, @code{lambda}, or @code{mocklisp}.
+@code{autoload}, @code{macro} or @code{lambda}.
 
 If the function is a @code{Lisp_Subr}, the lisp object points to a
 @code{struct Lisp_Subr} (created by @code{DEFUN()}), which contains a
@@ -5074,8 +5061,7 @@ created and put into the backtrace structure, and either passed whole
 @code{apply_lambda()} is called.  If the function is a macro,
 [..... fill in] is done.  If the function is an autoload,
 @code{do_autoload()} is called to load the definition and then eval
-starts over [explain this more].  If the function is a mocklisp,
-@code{ml_apply()} is called.
+starts over [explain this more].
 
   When @code{Feval} exits, the evaluation depth is reduced by one, the
 debugger is called if appropriate, and the current backtrace structure

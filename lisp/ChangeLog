@@ -1,3 +1,63 @@
+1998-02-14  Martin Buchholz  <martin@xemacs.org>
+
+	* x11/x-win-xfree86.el (x-win-init-xfree86): 
+	* x11/x-win-sun.el (x-win-init-sun): 
+	* x11/x-init.el (x-initialize-compose): 
+	* prim/simple.el:
+	(backward-or-forward-kill-sexp): 
+	(backward-or-forward-kill-sentence): 
+	(backward-or-forward-kill-word): 
+	(backward-or-forward-delete-char): 
+	* prim/isearch-mode.el (isearch-help-or-delete-char): 
+	Use x-keysym-on-keyboard-sans-modifiers-p instead of
+	x-keysym-on-keyboard-p to detect backspace.
+	Use symbols instead of strings (now deprecated) with x-keysym-*-p.
+	Clean up symbols used with dead keys, checking Linux and solaris
+	keysyms.
+	Simplify x-win-*.el using above methods.
+	Change documentation for x-keysym-*-p functions.
+
+1998-02-14  SL Baur  <steve@altair.xemacs.org>
+
+	* about.el (about-hackers): Restore entries for Michael Sperber and
+	Vinnie Shelton.
+	From Vinnie Shelton <acs@acm.org>
+
+1998-02-14  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* simple.el (count-words-region): Ditto.
+
+1998-02-12  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* simple.el (count-words-buffer): Document.  Don't print anything
+	if non-interactive.
+
+1998-02-12  SL Baur  <steve@altair.xemacs.org>
+
+	* packages.el (packages-hardcoded-lisp): easymenu.el is in
+	multiple files in InfoDock.
+
+1998-02-11  SL Baur  <steve@altair.xemacs.org>
+
+	* packages.el (packages-hardcoded-lisp): id-vers.elc is loaded
+	from version.el in InfoDock.
+
+	* dumped-lisp.el (preloaded-file-list): Don't treat InfoDock
+	specially.
+
+1998-02-09  Karl M. Hegbloom  <karlheg@bittersweet.inetarena.com>
+
+	* bytecomp-runtime.el (proclaim-inline): Single quotes around
+	variable name in docstring.
+
+1998-02-10  Andreas Jaeger  <aj@arthur.rhein-neckar.de>
+
+	* menubar.h: Include "gui.h".
+
+1998-02-10  SL Baur  <steve@altair.xemacs.org>
+
+	* site-load.el: Fix documentation.
+
 1998-02-09  SL Baur  <steve@altair.xemacs.org>
 
 	* package-get-base.el (package-get-base): Updated.

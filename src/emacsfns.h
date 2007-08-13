@@ -1501,11 +1501,6 @@ void message_no_translate (CONST char *fmt, ...) PRINTF_ARGS (1, 2);
 void clear_message (void);
 
 
-/* Defined in mocklisp.c */
-extern Lisp_Object Vmocklisp_arguments, Qmocklisp, Qmocklisp_arguments;
-Lisp_Object ml_apply (Lisp_Object function, Lisp_Object args);
-
-
 /* Defined in mule-*.c */
 Lisp_Object Ffind_charset (Lisp_Object charset);
 Lisp_Object Fget_coding_system (Lisp_Object coding_system);

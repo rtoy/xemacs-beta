@@ -869,7 +869,7 @@ backwards."
   (if (and delete-key-deletes-forward
            (case (device-type)
              ('tty (eq tty-erase-char ?\C-h))
-             ('x (not (x-keysym-on-keyboard-p "BackSpace")))))
+             ('x (not (x-keysym-on-keyboard-sans-modifiers-p 'backspace)))))
       (isearch-delete-char)
     (isearch-mode-help)))
 

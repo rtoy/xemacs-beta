@@ -1109,6 +1109,16 @@ learning german or showing people the best mail & news environment
 he's found in 10 years.  (That'd be XEmacs, Gnus and bbdb, of course.)
 He can be found at `druidmuck.egbt.org 4201' at various hours of the
 day.\n")
+    (about-show-linked-info 'sperber "\
+Mike ported EFS to XEmacs 20 and integrated EFS into XEmacs.  He's
+also responsible for the ports of facemenu.el and enriched.el.  When
+Mike isn't busy putting together patches for free software he has just
+installed or changing his hairstyle, he does research in modern
+programming languages and their implementation, and hopes that one day
+XEmacs will speak Scheme.\n")
+    (about-show-linked-info 'vin "\
+Vin helps maintain the older, more mature (read: moldy) versions of
+XEmacs.  Vin has maintained the official XEmacs patch pages.\n")
     (about-show-linked-info 'thiessel "\
 On May 1, 1996 he started working at University of Kaiserslautern in
 the field of computer aided analog circuit design. His

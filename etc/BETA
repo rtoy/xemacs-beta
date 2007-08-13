@@ -284,7 +284,6 @@ is divided into subdirectory by the major type of package.
 
 drwxr-xr-x   2 beta-f   beta-f      1024 Oct 10 00:43 binary-packages
 drwxr-xr-x   2 beta-f   beta-f       512 Oct 10 00:44 package-sources
-drwxr-xr-x   2 beta-f   beta-f       512 Oct  9 23:08 single-file-packages
 drwxr-xr-x   2 beta-f   beta-f       512 Oct 10 00:44 utils
 
 ** Support Utilities (utils)
@@ -296,14 +295,6 @@ is used with Quassia Gnus.  Edit the appropriate variables at the top of
 the script to reflect the local configuration and run it in the top level
 directory of a Quassia Gnus source tree to install an update to Quassia Gnus.
 
-** Source Installable Packages (package-sources)
-================================================
-
-This directory contains tarballs of Lisp packages that contain full support
-for installing as an XEmacs package.  To install them, one should untar
-them to someplace convenient (like /var/tmp), and issue the appropriate make
-command to install.
-
 ** Binary package installation (binary-packages)
 ================================================
 
@@ -313,16 +304,6 @@ Binary packages are complete entities that can be untarred at the top
 level of an XEmacs package hierarchy and work at runtime.  To install files
 in this directory, run the command `M-x package-admin-add-binary-package'
 and fill in appropriate values to the prompts.
-
-** Single file package installation
-===================================
-
-Prerequisite:  XEmacs 20.5-b1.
-
-These are single file, self-contained lisp packages that don't need a
-separate directory.  To install something from this directory, run
-the command `M-x package-admin-add-single-file-package' and fill in the
-prompts.
 
 ** Manual procedures for package management
 ===========================================
@@ -346,3 +327,53 @@ To bytecompile both of these files the command is:
 
 xemacs-20.5 -vanilla -batch -f batch-byte-compile \
 	lisp-utils/auto-autoloads.el lisp-utils/custom-laod.el
+
+** Building XEmacs and XEmacs packages from scratch
+===================================================
+
+To build everything completely from scratch (not a high priority as a
+design goal), the following procedure should work.  (I don't recommend
+building this way).
+
+*** Phase 1 -- Get a minimal XEmacs binary with mule to build the package
+    lisp with.
+
+**** Grab a mule-base tarball and install it into a newly created package
+      directory.
+
+**** Configure XEmacs with mule and a package-path including the
+     directory created above.
+
+**** Do a `make dist' to build an XEmacs binary.
+
+*** Phase 2 -- Build and install the package lisp.
+
+**** Modify XEmacs.rules for local paths and the XEmacs binary created in 
+     Phase 1.
+
+**** Do a make from the top level package lisp source directory.[1]
+
+***** There are two build glitches at this time.  You must `make
+       auto-autoloads.el' manually in comm/tm before starting if you have
+       done a `make distclean'.  This should be unnecessary after a fresh
+       cvs checkout.
+
+***** You must go back and rebuild the strokes package after the main
+      build is complete.
+
+**** Do `make bindist's on all the packages you wish to install and
+  remove the byproduct .tar.gz's.
+
+*** Phase 3 -- Redump XEmacs with the packages that require dump time
+    support (like egg-its, VM, etc.) and install it.
+
+**** Reconfigure without Mule if you don't wish a Mule-ish XEmacs, and
+     rebuild XEmacs.
+
+- or -
+
+**** rm lib-src/DOC src/xemacs; make
+
+**** Install or run in-place.
+
+Note that this is in essence what `make all-elc' has always done.

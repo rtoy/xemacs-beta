@@ -26,7 +26,7 @@ Boston, MA 02111-1307, USA.  */
 #define _XEMACS_MENUBAR_H_
 
 #ifdef HAVE_MENUBARS
-
+#include "gui.h"
 void update_frame_menubars (struct frame *f);
 void free_frame_menubars (struct frame *f);
 Lisp_Object menu_parse_submenu_keywords (Lisp_Object desc,
