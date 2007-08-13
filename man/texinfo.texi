@@ -1,9 +1,9 @@
 \input texinfo.tex    @c -*-texinfo-*-
-@c $Id: texinfo.texi,v 1.8.2.1 1999/03/04 15:48:24 steveb Exp $
+@c $Id: texinfo.texi,v 1.8.2.2 1999/07/22 06:19:49 steveb Exp $
 @c %**start of header
 
 @c All text is ignored before the setfilename.
-@setfilename ../info/texinfo
+@setfilename ../info/texinfo.info
 @settitle Texinfo @value{edition}
 
 @c Edition number is now the same as the Texinfo distribution version number.
