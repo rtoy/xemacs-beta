@@ -1174,10 +1174,10 @@ track the following environmental changes:
 -- byte-compilation of a .el file into a .elc file.
 
 `locate-file' will primarily get confused if you add a file that shadows
-(i.e. has the same name as) another file further down in the directory list.
+\(i.e. has the same name as) another file further down in the directory list.
 In this case, you must call `locate-file-clear-hashing'.
 */
-(path))
+       (path))
 {
   Lisp_Object pathtail;
 
@@ -2731,10 +2731,7 @@ read_list (Lisp_Object readcharfun,
   s.terminator = terminator;
   GCPRO2 (s.head, s.tail);
 
-  (void) sequence_reader (readcharfun,
-                          terminator,
-                          &s,
-                          read_list_conser);
+  sequence_reader (readcharfun, terminator, &s, read_list_conser);
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
   Vcurrent_compiled_function_annotation = old_compiled_function_annotation;
 #endif
@@ -2819,17 +2816,14 @@ read_vector (Lisp_Object readcharfun,
   struct read_list_state s;
   struct gcpro gcpro1, gcpro2;
 
-
   s.head = Qnil;
   s.tail = Qnil;
   s.length = 0;
   s.allow_dotted_lists = 0;
   GCPRO2 (s.head, s.tail);
 
-  (void) sequence_reader (readcharfun,
-                          terminator,
-                          &s,
-                          read_list_conser);
+  sequence_reader (readcharfun, terminator, &s, read_list_conser);
+  
   UNGCPRO;
   tem = s.head;
   len = XINT (Flength (tem));

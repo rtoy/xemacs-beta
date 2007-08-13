@@ -5,9 +5,9 @@
 (provide 'viper-autoloads)
 ))
 
-;;;### (autoloads (viper-mode) "viper" "viper/viper.el")
+;;;### (autoloads (viper-mode toggle-viper-mode) "viper" "viper/viper.el")
 
-(defalias 'vip-mode 'viper-mode)
+(autoload 'toggle-viper-mode "viper" nil t nil)
 
 (autoload 'viper-mode "viper" "\
 Turn on Viper emulation of Vi." t nil)

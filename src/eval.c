@@ -5209,6 +5209,7 @@ The debugger will not be entered if the error is handled by
 a `condition-case'.
 If the value is a list, an error only means to enter the debugger
 if one of its condition symbols appears in the list.
+This variable is overridden by `debug-ignored-errors'.
 See also variables `debug-on-quit' and `debug-on-signal'.
 */ );
   Vdebug_on_error = Qnil;

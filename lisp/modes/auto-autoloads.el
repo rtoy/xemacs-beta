@@ -570,7 +570,7 @@ Decode XPM image between START and END." nil nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.6 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.7 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -1939,11 +1939,11 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.6 $
+vhdl-mode $Revision: 1.7 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
-problem, including a reproducible test case and send the message.
+problem, including a reproducable test case and send the message.
 
 Note that the details of configuring vhdl-mode will soon be moved to the
 accompanying texinfo manual.  Until then, please read the README file

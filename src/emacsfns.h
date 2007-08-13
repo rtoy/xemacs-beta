@@ -691,7 +691,7 @@ Lisp_Object call2_trapping_errors (CONST char *warning_string,
 				   Lisp_Object object1,
 				   Lisp_Object object2);
 Lisp_Object call_with_suspended_errors (lisp_fn_t fun,
-					Lisp_Object retval,
+					volatile Lisp_Object retval,
 					Lisp_Object class,
 					Error_behavior errb,
 					int nargs, ...);

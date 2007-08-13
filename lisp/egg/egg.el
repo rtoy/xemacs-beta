@@ -862,8 +862,11 @@ unread-command-events to facilitate translation from Mule-2.3"
   (interactive "r")
     (goto-char start)
     (while (re-search-forward kanji-katakana end end)
-      (let ((ch (preceding-char)))
-	(cond( (<= ch ?ン)
+      (let ((ch (char-before (point))))
+	(cond( (not (or (> ch ?ン)
+			(eq ch ?ー)
+			(eq ch ?゛)
+			(eq ch ?゜)))
 	       (delete-char -1)
 	       (insert (make-char (find-charset 'japanese-jisx0208) 36 (char-octet ch 1))))))))
 
@@ -893,9 +896,10 @@ unread-command-events to facilitate translation from Mule-2.3"
   (interactive "r")
   (goto-char start)
   (while (re-search-forward kanji-hiragana end end)
-    (let ((ch (char-octet (preceding-char) 1)))
-      (delete-char -1)
-      (insert (make-char (find-charset 'japanese-jisx0208) 37 ch)))))
+    (let ((ch (char-before (point))))
+      (cond ((not (memq ch '(?ー ?゛ ?゜)))
+	     (delete-char -1)
+	     (insert (make-char (find-charset 'japanese-jisx0208) 37 (char-octet ch 1))))))))
 
 (defun katakana-paragraph ()
   "katakana  paragraph at or after point."
@@ -924,18 +928,21 @@ unread-command-events to facilitate translation from Mule-2.3"
   (save-restriction
     (narrow-to-region start end)
     (goto-char (point-min))
-    (while (re-search-forward "\\cS\\|\\cA" (point-max) (point-max))
+    (while (re-search-forward "\\cS\\|\\cA\\|\\cK" (point-max) (point-max))
       (let* ((ch (preceding-char))
 	     (ch1 (char-octet ch 0))
 	     (ch2 (char-octet ch 1)))
-	(cond ((= ?\241 ch1)
+	(cond ((= ch1 33) ;Symbols
 	       (let ((val (cdr (assq ch2 *hankaku-alist*))))
 		 (if val (progn
 			   (delete-char -1)
 			   (insert val)))))
-	      ((= ?\243 ch1)
+;	      ((= ch1 37) ;Katakana
+;	       (delete-char -1)
+;	       (insert (- ch2 ?\200 )))
+	      ((= ch1 35) ;Alphas
 	       (delete-char -1)
-	       (insert (- ch2 ?\200 ))))))))
+	       (insert ch2)))))))
 
 (defun hankaku-paragraph ()
   "hankaku  paragraph at or after point."

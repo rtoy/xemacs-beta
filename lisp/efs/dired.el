@@ -2953,11 +2953,9 @@ Optional arg NO-ERROR-IF-NOT-FILEP means return nil if no filename on
     (save-excursion
       (and
        (setq p1 (dired-move-to-filename (not no-error-if-not-filep) bol eol))
-       (setq p2 (dired-move-to-end-of-filename no-error-if-not-filep bol eol))
-       ;; We seem to be picking up the carriage-return at the end of the
-       ;; line, so here's a quick fix to get dired working.
-       (if (eq system-type 'windows-nt)
-         (setq p2 (1- p2)))
+       (setq p2 (if (eq system-type 'windows-nt) ; ignore carriage-return at eol
+		    (1- (dired-move-to-end-of-filename no-error-if-not-filep bol eol))
+		  (dired-move-to-end-of-filename no-error-if-not-filep bol eol)))
        (setq file (buffer-substring p1 p2))
        ;; Check if ls quoted the names, and unquote them.
        ;; Using read to unquote is much faster than substituting

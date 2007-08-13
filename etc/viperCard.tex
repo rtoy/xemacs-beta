@@ -1,4 +1,4 @@
-% ViperCard -- The Reference Card for Viper under GNU Emacs 19 and XEmacs 19
+% ViperCard -- The Reference Card for Viper under GNU Emacs 20 and XEmacs 20
 %**start of header
 \newcount\columnsperpage
 
@@ -7,7 +7,7 @@
 
 \columnsperpage=2
 
-% Copyright (c) 1987 Free Software Foundation, Inc.
+% Copyright (c) 1995, 1996, 1997 Free Software Foundation, Inc.
 
 % This file is part of GNU Emacs.
 
@@ -44,26 +44,25 @@
 %
 % Author of Viper:
 %  Michael Kifer
-%  Internet: kifer@cs.sunysb.edu
+%  email: kifer@cs.sunysb.edu
 %
 % Author of VIP 4.3:
 %  Aamod Sane
-%  Internet: sane@cs.uiuc.edu
+%  email: sane@cs.uiuc.edu
 %
 % Author of VIP 3.5:
 %  Masahiko Sato
-%  Internet: ms@sail.stanford.edu
-%  Junet: masahiko@sato.riec.tohoku.junet
+%  email: ms@sail.stanford.edu
 %
 % The original TeX code for formatting the reference card was written by:
 %  Stephen Gildea
 %  UUCP: mit-erl!gildea
-%  Internet: gildea@erl.mit.edu
+%  email: gildea@erl.mit.edu
 
 
-\def\versionnumber{2.94}
+\def\versionnumber{2.96}
 \def\year{1997}
-\def\version{June \year\ v\versionnumber}
+\def\version{August \year\ v\versionnumber}
 
 \def\shortcopyrightnotice{\vskip 1ex plus 2 fill
   \centerline{\small \copyright\ \year\ Free Software Foundation, Inc.
@@ -263,7 +262,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 \title{ViperCard: Viper Reference Pal}
 
-\centerline{(For Version 2.94 under Emacs and XEmacs 19 \& 20)}
+\centerline{(For Version 2.96 under Emacs 20 and XEmacs 20)}
 
 %\copyrightnotice
 
@@ -594,7 +593,7 @@ By default, search is case sensitive.
 You can change this by including the following line in your \kbd{\~{}/.vip} file.
 
 \hskip 5ex
-\kbd{(setq vip-case-fold-search t)}
+\kbd{(setq viper-case-fold-search t)}
 
 The following is a subset of the variety of
 options available for customizing Viper.
@@ -604,18 +603,18 @@ See the Viper manual for details on these and other options.
 
 \paralign to \hsize{#\tabskip=10pt plus 1 fil&#\tabskip=0pt&#\cr
 \twocol{{\bf variable}}{{\bf default value}}
-\twocol{vip-search-wrap-around}{t}
-\twocol{vip-case-fold-search}{nil}
-\twocol{vip-re-search}{t}
-\twocol{vip-re-replace}{t}
-\twocol{vip-re-query-replace}{t}
-\twocol{vip-auto-indent}{nil}
-\twocol{vip-shift-width}{8}
-\twocol{vip-tags-file-name}{"TAGS"}
-\twocol{vip-no-multiple-ESC}{t}
-\twocol{vip-ex-style-motion}{t}
-\twocol{vip-always}{t}
-\twocol{vip-custom-file-name}{"\~{}/.vip"}
+\twocol{viper-search-wrap-around}{t}
+\twocol{viper-case-fold-search}{nil}
+\twocol{viper-re-search}{t}
+\twocol{viper-re-replace}{t}
+\twocol{viper-re-query-replace}{t}
+\twocol{viper-auto-indent}{nil}
+\twocol{viper-shift-width}{8}
+\twocol{viper-tags-file-name}{"TAGS"}
+\twocol{viper-no-multiple-ESC}{t}
+\twocol{viper-ex-style-motion}{t}
+\twocol{viper-always}{t}
+\twocol{viper-custom-file-name}{"\~{}/.vip"}
 \twocol{ex-find-file-shell}{"csh"}
 \twocol{ex-cycle-other-window}{t}
 \twocol{ex-cycle-through-non-buffers}{t}
@@ -627,8 +626,8 @@ To bind keys in Vi command state, put lines like these in your
 \kbd{\~{}/.vip} file:
 
 \beginexample
-(define-key vip-vi-global-user-map "\\C-v" 'scroll-down)
-(define-key vip-vi-global-user-map "\\C-cm" 'smail)
+(define-key viper-vi-global-user-map "\\C-v" 'scroll-down)
+(define-key viper-vi-global-user-map "\\C-cm" 'smail)
 \endexample
 
 

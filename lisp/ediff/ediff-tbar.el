@@ -239,7 +239,7 @@ Here's an example:
 	     (lambda (type)
 	       (let ((ebuf (ediff-get-buffer type)))
 		 (and (ediff-buffer-live-p ebuf)
-		      (ediff-eval-in-buffer ebuf
+		      (ediff-with-current-buffer ebuf
 			(and (buffer-modified-p)
 			     (save-buffer)))))))
 	    '(A B C))))
@@ -364,8 +364,8 @@ Here's an example:
 
 ;;; Local Variables:
 ;;; eval: (put 'ediff-defvar-local 'lisp-indent-hook 'defun)
-;;; eval: (put 'ediff-eval-in-buffer 'lisp-indent-hook 1)
-;;; eval: (put 'ediff-eval-in-buffer 'edebug-form-spec '(form body))
+;;; eval: (put 'ediff-with-current-buffer 'lisp-indent-hook 1)
+;;; eval: (put 'ediff-with-current-buffer 'edebug-form-spec '(form body))
 ;;; End:
 
 ;;; ediff-tbar.el ends here

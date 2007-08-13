@@ -1,3 +1,15 @@
+1997-08-05  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* eval.c (vars_of_eval): Updated docstring for `debug_on_error' to 
+	mention `debug-ignored-errors'.
+
+1997-08-01  SL Baur  <steve@altair.xemacs.org>
+
+	* emacsfns.h: Fix declaration.
+
+	* event-stream.c (syms_of_event_stream): HAVE_MENUBARS not
+	HAVE_MENUBAR.
+
 1997-07-31  SL Baur  <steve@altair.xemacs.org>
 
 	* frame-x.c (x_offix_drop_event_handler): Use stderr_out instead

@@ -7,9 +7,9 @@
 # variables VERSION, EMACS, DATADIR and comment out the Emacs-specific
 # versions.
 
-VERSION = 19.34
+VERSION = 20.0
 EMACS = emacs-$(VERSION)
-#VERSION = 19.14
+#VERSION = 20.3
 #EMACS = xemacs-$(VERSION)
 PREFIX = /usr/local
 DATADIR = $(PREFIX)/share
@@ -17,6 +17,7 @@ DATADIR = $(PREFIX)/share
 LISPDIR = $(DATADIR)/emacs/site-lisp
 INFODIR = $(PREFIX)/info
 ETCDIR = $(DATADIR)/emacs/$(VERSION)/etc
+COMPDIR =
 
 # --------- YOU PROBABLY DON'T WANT TO CHANGE THESE ----------------
 TeX = tex
@@ -27,8 +28,16 @@ INSTALL = install
 # --------- ONLY AUTHORIZED PERSONNEL BEYOND THIS POINT!!! ------------
 VIPER = viper.el viper-cmd.el viper-util.el viper-mous.el viper-ex.el \
         viper-macs.el viper-keym.el viper-init.el
-VIPERelc = viper-util.elc viper-mous.elc viper-ex.elc viper-macs.elc \
-	   viper-keym.elc viper.elc viper-cmd.elc viper-init.elc
+VIPERelc = $(COMPDIR)viper-util.elc \
+	   $(COMPDIR)viper-mous.elc \
+	   $(COMPDIR)viper-ex.elc \
+	   $(COMPDIR)viper-macs.elc \
+	   $(COMPDIR)viper-keym.elc \
+	   $(COMPDIR)viper.elc \
+	   $(COMPDIR)viper-cmd.elc \
+	   $(COMPDIR)viper-init.elc
+
+COMPILE_ARGS = -batch -f batch-byte-compile
 
 all: dvi info hello elc goodbye
 
@@ -48,7 +57,7 @@ goodbye:
 hello:
 	@echo ""
 	@echo ""
-	@echo "Byte compiling using Emacs 19"
+	@echo "Byte compiling using Emacs"
 	@echo "Use  make EMACS=xemacs  to compile under XEmacs"
 	@echo ""
 	@echo ""
@@ -89,37 +98,37 @@ viperCard.dvi: viperCard.tex
 	@echo ""
 	$(TeX) viperCard.tex
 
-viper-init.elc: viper-init.el
+${COMPDIR}viper-init.elc: viper-init.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile viper-init.el
+	$(EMACS) $(COMPILE_ARGS) viper-init.el
 
-viper-util.elc: viper-util.el viper-init.el
+$(COMPDIR)viper-util.elc: viper-util.el viper-init.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile viper-util.el
+	$(EMACS) $(COMPILE_ARGS) viper-util.el
 
-viper-ex.elc: viper-ex.el viper-util.el viper-init.el
+$(COMPDIR)viper-ex.elc: viper-ex.el viper-util.el viper-init.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile viper-ex.el
+	$(EMACS) $(COMPILE_ARGS) viper-ex.el
 
-viper-mous.elc: viper-mous.el viper-util.el viper-init.el
+$(COMPDIR)viper-mous.elc: viper-mous.el viper-util.el viper-init.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile viper-mous.el
+	$(EMACS) $(COMPILE_ARGS) viper-mous.el
 
-viper-macs.elc: viper-macs.el viper-util.el viper-init.el
+$(COMPDIR)viper-macs.elc: viper-macs.el viper-util.el viper-init.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile viper-macs.el
+	$(EMACS) $(COMPILE_ARGS) viper-macs.el
 
-viper-keym.elc: viper-keym.el viper-util.el viper-init.el
+$(COMPDIR)viper-keym.elc: viper-keym.el viper-util.el viper-init.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile viper-keym.el
+	$(EMACS) $(COMPILE_ARGS) viper-keym.el
 
-viper.elc: viper.el viper-util.el viper-init.el
+$(COMPDIR)viper.elc: viper.el viper-util.el viper-init.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile viper.el
+	$(EMACS) $(COMPILE_ARGS) viper.el
 
-viper-cmd.elc: viper-cmd.el viper.el viper-util.el viper-init.el
+$(COMPDIR)viper-cmd.elc: viper-cmd.el viper.el viper-util.el viper-init.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile viper-cmd.el
+	$(EMACS) $(COMPILE_ARGS) viper-cmd.el
 
 
 dvi: viper.dvi viperCard.dvi

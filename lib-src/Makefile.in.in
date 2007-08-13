@@ -67,7 +67,7 @@ INSTALLABLE_SCRIPTS = rcs-checkin pstogif install-sid send-pr gnudoit gnuattach
 ## which should not be installed in bindir.
 UTILITIES= make-path wakeup profile make-docfile digest-doc \
 	sorted-doc movemail cvtmail fakemail yow hexl \
-	gnuserv mmencode config.values
+	gnuserv mmencode
 ## These need to be conditional on I18N3 make-msgfile make-po
 
 ## Like UTILITIES, but they are not system-dependent, and should not be
@@ -237,7 +237,7 @@ clean: mostlyclean
 	$(RM) ${INSTALLABLES} ${UTILITIES}
 distclean: clean
 	$(RM) DOC *.tab.c *.tab.h aixcc.c TAGS
-	$(RM) Makefile Makefile.in blessmail
+	$(RM) Makefile Makefile.in blessmail config.values
 realclean: distclean
 extraclean: distclean
 	$(RM) *~ \#*

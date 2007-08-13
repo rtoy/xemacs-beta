@@ -225,7 +225,6 @@ static Lisp_Object
 mark_coding_system (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
   struct Lisp_Coding_System *codesys = XCODING_SYSTEM (obj);
-  int i;
 
   (markobj) (CODING_SYSTEM_NAME (codesys));
   (markobj) (CODING_SYSTEM_DOC_STRING (codesys));
@@ -233,8 +232,10 @@ mark_coding_system (Lisp_Object obj, void (*markobj) (Lisp_Object))
   (markobj) (CODING_SYSTEM_EOL_LF (codesys));
   (markobj) (CODING_SYSTEM_EOL_CRLF (codesys));
   (markobj) (CODING_SYSTEM_EOL_CR (codesys));
+  
   switch (CODING_SYSTEM_TYPE (codesys))
     {
+      int i;
     case CODESYS_ISO2022:
       for (i = 0; i < 4; i++)
 	(markobj) (CODING_SYSTEM_ISO2022_INITIAL_CHARSET (codesys, i));
@@ -1539,33 +1540,34 @@ defaults to the current buffer.
    stream, the stream that is at the other end, and data that
    needs to be persistent across the lifetime of the stream. */
 
-/* Handle the EOL stuff related to just-read-in character C.  EOL is
-   the EOL type of the coding stream.  FLAGS is the current value of
-   FLAGS in the coding stream, and may be modified by this macro.
-   (The macro only looks at the CODING_STATE_CR flag.) DST is the
-   Dynarr to which the decoded bytes are to be written.  You need to
-   also define a local goto label "label_continue_loop" that is at the
-   end of the main character-reading loop.
+/* Handle the EOL stuff related to just-read-in character C.
+   EOL_TYPE is the EOL type of the coding stream.
+   FLAGS is the current value of FLAGS in the coding stream, and may
+   be modified by this macro.  (The macro only looks at the
+   CODING_STATE_CR flag.)  DST is the Dynarr to which the decoded
+   bytes are to be written.  You need to also define a local goto
+   label "label_continue_loop" that is at the end of the main
+   character-reading loop.
 
    If C is a CR character, then this macro handles it entirely and
    jumps to label_continue_loop.  Otherwise, this macro does not add
    anything to DST, and continues normally.  You should continue
    processing C normally after this macro. */
 
-#define DECODE_HANDLE_EOL_TYPE(eol, c, flags, dst)		\
+#define DECODE_HANDLE_EOL_TYPE(eol_type, c, flags, dst)		\
 do {								\
   if (c == '\r')						\
     {								\
-      if (eol == EOL_CR)					\
+      if (eol_type == EOL_CR)					\
 	Dynarr_add (dst, '\n');					\
-      else if (eol != EOL_CRLF || flags & CODING_STATE_CR)	\
+      else if (eol_type != EOL_CRLF || flags & CODING_STATE_CR)	\
 	Dynarr_add (dst, c);					\
       else							\
 	flags |= CODING_STATE_CR;				\
       goto label_continue_loop;					\
     }								\
   else if (flags & CODING_STATE_CR)				\
-    {	/* eol == CODING_SYSTEM_EOL_CRLF */			\
+    {	/* eol_type == CODING_SYSTEM_EOL_CRLF */		\
       if (c != '\n')						\
 	Dynarr_add (dst, '\r');					\
       flags &= ~CODING_STATE_CR;				\
@@ -1885,7 +1887,7 @@ make_decoding_output_stream (Lstream *stream, Lisp_Object codesys)
   return make_decoding_stream_1 (stream, codesys, "w");
 }
 
-/* Note: the decode_coding_? functions all take the same
+/* Note: the decode_coding_* functions all take the same
    arguments as mule_decode(), which is to say some SRC data of
    size N, which is to be stored into dynamic array DST.
    DECODING is the stream within which the decoding is
@@ -2189,7 +2191,7 @@ encoding_reader (Lstream *stream, unsigned char *data, int size)
       mule_encode (stream, data, str->runoff, read_size);
     }
 
-  if (data - orig_data == 0)
+  if (data == orig_data)
     return error_occurred ? -1 : 0;
   else
     return data - orig_data;
@@ -2218,26 +2220,33 @@ encoding_writer (Lstream *stream, CONST unsigned char *data, int size)
 static void
 reset_encoding_stream (struct encoding_stream *str)
 {
-  if (CODING_SYSTEM_TYPE (str->codesys) == CODESYS_ISO2022)
+  switch (CODING_SYSTEM_TYPE (str->codesys))
     {
-      int i;
+    case CODESYS_ISO2022:
+      {
+	int i;
 
-      for (i = 0; i < 4; i++)
-	str->iso2022.charset[i] =
-	  CODING_SYSTEM_ISO2022_INITIAL_CHARSET (str->codesys, i);
-      for (i = 0; i < 4; i++)
-	str->iso2022.force_charset_on_output[i] =
-	  CODING_SYSTEM_ISO2022_FORCE_CHARSET_ON_OUTPUT (str->codesys, i);
-      str->iso2022.register_left = 0;
-      str->iso2022.register_right = 1;
-      str->iso2022.current_charset = Qnil;
-      str->iso2022.current_half = 0;
-      str->iso2022.current_char_boundary = 1;
-    }
-  else if (CODING_SYSTEM_TYPE (str->codesys) == CODESYS_CCL)
-    {
+	for (i = 0; i < 4; i++)
+	  {
+	    str->iso2022.charset[i] =
+	      CODING_SYSTEM_ISO2022_INITIAL_CHARSET (str->codesys, i);
+	    str->iso2022.force_charset_on_output[i] =
+	      CODING_SYSTEM_ISO2022_FORCE_CHARSET_ON_OUTPUT (str->codesys, i);
+	  }
+	str->iso2022.register_left = 0;
+	str->iso2022.register_right = 1;
+	str->iso2022.current_charset = Qnil;
+	str->iso2022.current_half = 0;
+	str->iso2022.current_char_boundary = 1;
+	break;
+      }
+    case CODESYS_CCL:
       set_ccl_program (&str->ccl, CODING_SYSTEM_CCL_ENCODE (str->codesys), 0, 0, 0);
+      break;
+    default:
+      break;
     }
+  
   str->flags = str->ch = 0;
 }
 
@@ -2530,11 +2539,11 @@ decode_coding_sjis (Lstream *decoding, CONST unsigned char *src,
 {
   unsigned char c;
   unsigned int flags, ch;
-  int eol;
+  enum eol_type eol_type;
   struct decoding_stream *str = DECODING_STREAM_DATA (decoding);
 
   CODING_STREAM_DECOMPOSE (str, flags, ch);
-  eol = str->eol_type;
+  eol_type = str->eol_type;
 
   while (n--)
     {
@@ -2561,7 +2570,7 @@ decode_coding_sjis (Lstream *decoding, CONST unsigned char *src,
 	}
       else
 	{
-	  DECODE_HANDLE_EOL_TYPE (eol, c, flags, dst);
+	  DECODE_HANDLE_EOL_TYPE (eol_type, c, flags, dst);
 	  if (BYTE_SJIS_TWO_BYTE_1_P (c))
 	    ch = c;
 	  else if (BYTE_SJIS_KATAKANA_P (c))
@@ -2589,19 +2598,19 @@ encode_coding_sjis (Lstream *encoding, CONST unsigned char *src,
   unsigned char c;
   struct encoding_stream *str = ENCODING_STREAM_DATA (encoding);
   unsigned int flags, ch;
-  int eol;
+  enum eol_type eol_type;
 
   CODING_STREAM_DECOMPOSE (str, flags, ch);
-  eol = CODING_SYSTEM_EOL_TYPE (str->codesys);
+  eol_type = CODING_SYSTEM_EOL_TYPE (str->codesys);
 
   while (n--)
     {
       c = *src++;
       if (c == '\n')
 	{
-	  if (eol != EOL_LF && eol != EOL_AUTODETECT)
+	  if (eol_type != EOL_LF && eol_type != EOL_AUTODETECT)
 	    Dynarr_add (dst, '\r');
-	  if (eol != EOL_CR)
+	  if (eol_type != EOL_CR)
 	    Dynarr_add (dst, '\n');
 	  ch = 0;
 	}
@@ -2818,11 +2827,12 @@ decode_coding_big5 (Lstream *decoding, CONST unsigned char *src,
 		    unsigned_char_dynarr *dst, unsigned int n)
 {
   unsigned char c;
-  unsigned int flags, ch, eol;
+  unsigned int flags, ch;
+  enum eol_type eol_type;
   struct decoding_stream *str = DECODING_STREAM_DATA (decoding);
 
   CODING_STREAM_DECOMPOSE (str, flags, ch);
-  eol = str->eol_type;
+  eol_type = str->eol_type;
 
   while (n--)
     {
@@ -2847,7 +2857,7 @@ decode_coding_big5 (Lstream *decoding, CONST unsigned char *src,
 	}
       else
 	{
-	  DECODE_HANDLE_EOL_TYPE (eol, c, flags, dst);
+	  DECODE_HANDLE_EOL_TYPE (eol_type, c, flags, dst);
 	  if (BYTE_BIG5_TWO_BYTE_1_P (c))
 	    ch = c;
 	  else
@@ -2869,19 +2879,20 @@ encode_coding_big5 (Lstream *encoding, CONST unsigned char *src,
 {
   unsigned char c;
   struct encoding_stream *str = ENCODING_STREAM_DATA (encoding);
-  unsigned int flags, ch, eol;
+  unsigned int flags, ch;
+  enum eol_type eol_type;
 
   CODING_STREAM_DECOMPOSE (str, flags, ch);
-  eol = CODING_SYSTEM_EOL_TYPE (str->codesys);
+  eol_type = CODING_SYSTEM_EOL_TYPE (str->codesys);
 
   while (n--)
     {
       c = *src++;
       if (c == '\n')
 	{	
-	  if (eol != EOL_LF && eol != EOL_AUTODETECT)
+	  if (eol_type != EOL_LF && eol_type != EOL_AUTODETECT)
 	    Dynarr_add (dst, '\r');
-	  if (eol != EOL_CR)
+	  if (eol_type != EOL_CR)
 	    Dynarr_add (dst, '\n');
 	}
       else if (BYTE_ASCII_P (c))
@@ -3732,13 +3743,13 @@ decode_coding_iso2022 (Lstream *decoding, CONST unsigned char *src,
 {
   unsigned char c;
   unsigned int flags, ch;
-  int eol;
+  enum eol_type eol_type;
   struct decoding_stream *str = DECODING_STREAM_DATA (decoding);
   Lisp_Object coding_system = Qnil;
   unsigned_char_dynarr *real_dst = dst;
 
   CODING_STREAM_DECOMPOSE (str, flags, ch);
-  eol = CODING_SYSTEM_EOL_TYPE (str->codesys);
+  eol_type = str->eol_type;
   XSETCODING_SYSTEM (coding_system, str->codesys);
 
   if (flags & CODING_STATE_COMPOSITE)
@@ -3749,10 +3760,8 @@ decode_coding_iso2022 (Lstream *decoding, CONST unsigned char *src,
       c = *src++;
       if (flags & CODING_STATE_ESCAPE)
 	{	/* Within ESC sequence */
-	  int retval;
-
-	  retval = parse_iso2022_esc (coding_system, &str->iso2022,
-				      c, &flags, 1);
+	  int retval = parse_iso2022_esc (coding_system, &str->iso2022,
+					  c, &flags, 1);
 
 	  if (retval)
 	    {
@@ -3840,7 +3849,7 @@ decode_coding_iso2022 (Lstream *decoding, CONST unsigned char *src,
 	  /***** Now handle the control characters. *****/
 
 	  /* Handle CR/LF */
-	  DECODE_HANDLE_EOL_TYPE (eol, c, flags, dst);
+	  DECODE_HANDLE_EOL_TYPE (eol_type, c, flags, dst);
 
 	  flags &= CODING_STATE_ISO2022_LOCK;
 
@@ -3853,7 +3862,7 @@ decode_coding_iso2022 (Lstream *decoding, CONST unsigned char *src,
 	  int lb;
 	  int reg;
 
-	  DECODE_HANDLE_EOL_TYPE (eol, c, flags, dst);
+	  DECODE_HANDLE_EOL_TYPE (eol_type, c, flags, dst);
 
 	  /* Now determine the charset. */
 	  reg = ((flags & CODING_STATE_SS2) ? 2
@@ -4052,7 +4061,8 @@ encode_coding_iso2022 (Lstream *encoding, CONST unsigned char *src,
 		       unsigned_char_dynarr *dst, unsigned int n)
 {
   unsigned char charmask, c;
-  unsigned int flags, ch, eol;
+  unsigned int flags, ch;
+  enum eol_type eol_type;
   unsigned char char_boundary;
   struct encoding_stream *str = ENCODING_STREAM_DATA (encoding);
   struct Lisp_Coding_System *codesys = str->codesys;
@@ -4067,7 +4077,7 @@ encode_coding_iso2022 (Lstream *encoding, CONST unsigned char *src,
   int in_composite = 0;
 
   CODING_STREAM_DECOMPOSE (str, flags, ch);
-  eol = CODING_SYSTEM_EOL_TYPE (str->codesys);
+  eol_type = CODING_SYSTEM_EOL_TYPE (str->codesys);
   char_boundary = str->iso2022.current_char_boundary;
   charset = str->iso2022.current_charset;
   half = str->iso2022.current_half;
@@ -4109,9 +4119,9 @@ encode_coding_iso2022 (Lstream *encoding, CONST unsigned char *src,
 	    }
 	  if (c == '\n')
 	    {
-	      if (eol != EOL_LF && eol != EOL_AUTODETECT)
+	      if (eol_type != EOL_LF && eol_type != EOL_AUTODETECT)
 		Dynarr_add (dst, '\r');
-	      if (eol != EOL_CR)
+	      if (eol_type != EOL_CR)
 		Dynarr_add (dst, c);
 	    }
 	  else
@@ -4351,17 +4361,17 @@ decode_coding_no_conversion (Lstream *decoding, CONST unsigned char *src,
 {
   unsigned char c;
   unsigned int flags, ch;
-  int eol;
+  enum eol_type eol_type;
   struct decoding_stream *str = DECODING_STREAM_DATA (decoding);
 
   CODING_STREAM_DECOMPOSE (str, flags, ch);
-  eol = str->eol_type;
+  eol_type = str->eol_type;
 
   while (n--)
     {
       c = *src++;
       
-      DECODE_HANDLE_EOL_TYPE (eol, c, flags, dst);
+      DECODE_HANDLE_EOL_TYPE (eol_type, c, flags, dst);
       DECODE_ADD_BINARY_CHAR (c, dst);
     label_continue_loop:;
     }
@@ -4377,19 +4387,20 @@ encode_coding_no_conversion (Lstream *encoding, CONST unsigned char *src,
 {
   unsigned char c;
   struct encoding_stream *str = ENCODING_STREAM_DATA (encoding);
-  unsigned int flags, ch, eol;
+  unsigned int flags, ch;
+  enum eol_type eol_type;
 
   CODING_STREAM_DECOMPOSE (str, flags, ch);
-  eol = CODING_SYSTEM_EOL_TYPE (str->codesys);
+  eol_type = CODING_SYSTEM_EOL_TYPE (str->codesys);
 
   while (n--)
     {
       c = *src++;
       if (c == '\n')
 	{
-	  if (eol != EOL_LF && eol != EOL_AUTODETECT)
+	  if (eol_type != EOL_LF && eol_type != EOL_AUTODETECT)
 	    Dynarr_add (dst, '\r');
-	  if (eol != EOL_CR)
+	  if (eol_type != EOL_CR)
 	    Dynarr_add (dst, '\n');
 	  ch = 0;
 	}

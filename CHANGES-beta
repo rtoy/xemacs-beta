@@ -1,4 +1,14 @@
 							-*- indented-text -*-
+to 20.3 beta17 "Bucharest"
+-- ediff-2.67
+-- viper-2.96
+-- cc-mode-5.15
+-- Various patches by Karl Hegbloom
+   Interface change:  info mode now behaves like Emacs by default.
+-- Custom-1.9954
+-- texinfo documentation updated from texinfo-3.11
+-- Miscellaneous bug fixes
+
 to 20.3 beta16 "Budapest"
 -- New lisp finding functions courtesy of Jens Petersen
    New keybindings:  C-c f -- find-function

@@ -423,7 +423,6 @@ int x_IO_error_handler (Display *disp);
 
 void x_redraw_exposed_area (struct frame *f, int x, int y,
 			    int width, int height);
-struct Lisp_Image_Instance;
 void x_output_string (struct window *w, struct display_line *dl,
 		      emchar_dynarr *buf, int xpos, int xoffset,
 		      int start_pixpos, int width, face_index findex,

@@ -1,5 +1,5 @@
 #!/bin/sh
 emacs_major_version=20
 emacs_minor_version=3
-emacs_beta_version=16
-xemacs_codename="Budapest"
+emacs_beta_version=17
+xemacs_codename="Bucharest"

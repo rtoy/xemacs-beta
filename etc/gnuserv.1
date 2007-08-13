@@ -4,24 +4,55 @@
 gnuserv, gnuclient \- Server and Clients for XEmacs
 .SH SYNOPSIS
 .B gnuclient
-[-q] [-nw] [-l library] [-f function] [-eval form] [[-h hostname]
-[-p port] [-r pathname]] [[+line] path] ...
+[-nw] [-display display] [-q] [-v] [-l library] [-batch] [-f function] [-eval form] 
+[-h hostname] [-p port] [-r remote-pathname] [[+line] file] ...
+.br
+.B gnudoit [-q] 
+form
 .br
 .B gnuserv
+.br
+.B gnuattach   
+Removed as of gnuserv 3.x
 .SH DESCRIPTION
 
 .PP
 \fIgnuclient\fP allows the user to request a running XEmacs process to
-edit the named files or directories in a new frame.  Depending on your
-environment, it can be an X frame or a TTY frame.  One typical use for
-this is with a dialup connection to a machine on which an XEmacs
-process is currently running.
+edit the named files or directories and/or evaluate lisp forms.
+Depending on your environment, it can be an X frame or a TTY frame.
+One typical use for this is with a dialup connection to a machine on
+which an XEmacs process is currently running.
+.PP
+\fIgnudoit\fP is a shell script frontend to ``gnuclient -batch -eval form''.
+Its use is depreciated. Try to get used to calling gnuclient directly.
 .PP
 \fIgnuserv\fP is the server program that is set running by XEmacs to
 handle all incoming and outgoing requests. It is not usually invoked
 directly, but is started from XEmacs by loading the \fIgnuserv\fP
 package and evaluating the Lisp form (gnuserv-start).
+.PP
+\fIgnuattach\fP no longer exists. Its functionality has been replaced by
+\fIgnuclient -nw\fP.
 .SH OPTIONS
+.PP 
+\fIgnuclient\fP supports as much of the command line options of Emacs as
+makes sense in this context. In addition it adds a few of its own. 
+.br
+Options with long names can also be specified using a double
+hyphen instead of a single one.
+.TP 8
+.BI \-nw
+This option makes \fIgnuclient\fP act as a frontend such that XEmacs
+can attach to the current TTY. XEmacs will then open a new TTY frame.
+The effect is similar to having started a new XEmacs on this TTY with
+the ``-nw'' option. It currently only works if XEmacs is running on
+the same machine as gnuclient. This is the default if the `DISPLAY'
+environment variable is not set.
+.TP 8
+.BI \-display " display, " \--display " display" 
+If this option is given or the `DISPLAY' environment variable is set
+then gnuclient will tell XEmacs to edit files in a frame on the
+specified X device.
 .TP 8
 .BI \-q
 This option informs \fIgnuclient\fP to exit once connection has been
@@ -30,15 +61,37 @@ all of the files on the command line have been finished with (their
 buffers killed) by the XEmacs process, and all the forms have been
 evaluated.
 .TP 8
+.BI \-v
+When this option is specified \fIgnuclient\fP will request for the
+specified files to be viewed instead of edited.
+.TP 8
+.BI \-l " library"
+Tell Emacs to load the specified library.
+.TP 8
+.BI \-batch
+Tell Emacs not to open any frames. Just load libraries and evaluate lisp code.  You
+must use the
+.BR \-l ,
+.BR \-f ,
+and
+.B \-eval
+options to specify files to execute and functions to call.
+.TP 8
+.BI \-f " function," 
+Make Emacs execute the lisp function.
+.TP 8
+.BI \-eval " form"
+Make Emacs execute the lisp form.
+.TP 8
 .BI \-h " hostname"
 Used only with Internet-domain sockets, this option specifies the host
-machine which should be running \fIgnuserv\fP.  If this option is not
+machine which should be running \fIgnuserv\fP. If this option is not
 specified then the value of the environment variable GNU_HOST is used
-if set.  If no hostname is specified, and the GNU_HOST variable is not
-set, an internet connection will not be attempted.  N\.B.:
-\fIgnuserv\fP does NOT allow internet connections unless the
-GNU_SECURE variable has been specified and points at a file listing
-all trusted hosts. (See SECURITY below.)
+if set. If no hostname is specified, and the GNU_HOST variable is not
+set, an internet connection will not be attempted. N\.B.:
+\fIgnuserv\fP does NOT allow internet connections unless XAUTH
+authentication is used or the GNU_SECURE variable has been specified
+and points at a file listing all trusted hosts. (See SECURITY below.)
 
 .br
 Note that an internet address may be specified instead of a hostname
@@ -73,21 +126,23 @@ set to '/net/otter'.  If this option is omitted, then the value is
 taken from the environment variable GNU_NODE, if set, or the empty
 string otherwise.
 .TP 8
-.BI "path"
+.BI "[+n] file"
 This is the path of the file to be edited.  If the file is a directory, then
 the directory browsers dired or monkey are usually invoked instead.
-.TP 8
-.BI "sexpr"
-This is part of an XEmacs LISP expression to evaluate.  All the sexprs
-are concatenated together and wrapped in a progn form before sending
-to XEmacs.
+The cursor is put at line number 'n' if specified.
 
-.PP
 .SH SETUP
 \fIgnuserv\fP is packaged standardly with recent versions of XEmacs.
 Therefore, you should be able to start the server simply by evaluating
 the XEmacs Lisp form (gnuserv-start), or equivalently by typing
 `M-x gnuserv-start'.
+
+.SH CONFIGURATION
+The behavior of this suite of program is mostly controlled on the lisp 
+side in Emacs and its behavior can be customized to a large extent.
+Type `M-x customize-group RET gnuserv RET' for easy access. More
+documentation can be found in the file `gnuserv.el'
+
 .SH EXAMPLE
 .RS 4
 gnuclient -q -f mh-smail
@@ -96,6 +151,12 @@ gnuclient -h cuckoo -r /ange@otter: /tmp/*
 .br
 gnuclient -nw ../src/listproc.c
 .RE
+.br
+
+.br
+More examples and sample wrapper scripts are provided in the
+etc/gnuserv directory of the Emacs installation.
+
 
 .SH SYSV IPC
 SysV IPC is used to communicate between \fIgnuclient\fP and
@@ -198,6 +259,13 @@ name of the authorization protocol (i.e.`MIT-MAGIC-COOKIE-1')
 significant!
 .RE
 
+
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+Default X device to put edit frame.
+
 .SH FILES
 .PP
 .TP 8
@@ -212,7 +280,7 @@ XEmacs customization file, see xemacs(1).
 .SH SEE ALSO
 .PP
 .TP 8
-xauth(1X11), Xsecurity(1X11)
+xauth(1X11), Xsecurity(1X11), gnuserv.el
 .SH BUGS
 .PP 
 NULs occurring in result strings don't get passed back to gnudoit properly.

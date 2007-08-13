@@ -1,6 +1,6 @@
 ;;; pascal.el --- major mode for editing pascal source in Emacs
 
-;; Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
+;; Copyright (C) 1993, 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
 
 ;; Author: Espen Skoglund (espensk@stud.cs.uit.no)
 ;; Keywords: languages
@@ -18,8 +18,8 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; along with XEmacs; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: FSF 19.34
@@ -46,10 +46,10 @@
 ;;       pascal-auto-lineup        '(all)
 ;;       pascal-toggle-completions nil
 ;;       pascal-type-keywords      '("array" "file" "packed" "char" 
-;; 				      "integer" "real" "string" "record")
+;; 				     "integer" "real" "string" "record")
 ;;       pascal-start-keywords     '("begin" "end" "function" "procedure"
-;; 				      "repeat" "until" "while" "read" "readln"
-;; 				      "reset" "rewrite" "write" "writeln")
+;; 				     "repeat" "until" "while" "read" "readln"
+;; 				     "reset" "rewrite" "write" "writeln")
 ;;       pascal-separator-keywords '("downto" "else" "mod" "div" "then"))
 
 ;; KNOWN BUGS / BUGREPORTS
@@ -68,7 +68,6 @@
 (defgroup pascal nil
   "Major mode for editing Pascal source in Emacs"
   :group 'languages)
-
 
 (defvar pascal-mode-abbrev-table nil
   "Abbrev table in use in Pascal-mode buffers.")
@@ -104,9 +103,9 @@
 ;  (define-key pascal-mode-map "\C-cc"    'pascal-capitalize-keywords)
   )
 
-;(defvar pascal-imenu-generic-expression
-;  '("^[ \t]*\\(function\\|procedure\\)[ \t\n]+\\([a-zA-Z0-9_.:]+\\)" . (2))
-;  "Imenu expression for Pascal-mode.  See `imenu-generic-expression'.")
+(defvar pascal-imenu-generic-expression
+  '("^[ \t]*\\(function\\|procedure\\)[ \t\n]+\\([a-zA-Z0-9_.:]+\\)" . (2))
+  "Imenu expression for Pascal-mode.  See `imenu-generic-expression'.")
 
 (defvar pascal-keywords
   '("and" "array" "begin" "case" "const" "div" "do" "downto" "else" "end" 
@@ -158,17 +157,19 @@
   (modify-syntax-entry ?_ "_"    pascal-mode-syntax-table)
   (modify-syntax-entry ?\' "\""  pascal-mode-syntax-table))
 
-(defvar pascal-font-lock-keywords
+(defvar pascal-font-lock-keywords (purecopy
   (list
-   '("^[ \t]*\\(function\\|pro\\(cedure\\|gram\\)\\)\\>[ \t]*\\(\\sw+\\)?"
-     (1 font-lock-keyword-face) (3 font-lock-function-name-face nil t))
+   '("^[ \t]*\\(function\\|pro\\(cedure\\|gram\\)\\)\\>[ \t]*\\(\\[a-z]\\)?"
+     1 font-lock-keyword-face)
+   '("^[ \t]*\\(function\\|pro\\(cedure\\|gram\\)\\)\\>[ \t]*\\([a-z][a-z0-9_]*\\)"
+     3 font-lock-function-name-face t)
 ;   ("type" "const" "real" "integer" "char" "boolean" "var"
 ;    "record" "array" "file")
    (cons (concat "\\<\\(array\\|boolean\\|c\\(har\\|onst\\)\\|file\\|"
 		 "integer\\|re\\(al\\|cord\\)\\|type\\|var\\)\\>")
 	 'font-lock-type-face)
    '("\\<\\(label\\|external\\|forward\\)\\>" . font-lock-reference-face)
-   '("\\<\\([0-9]+\\)[ \t]*:" 1 font-lock-reference-face)
+   '("\\<\\([0-9]+\\)[ \t]*:" 1 font-lock-function-name-face)
 ;   ("of" "to" "for" "if" "then" "else" "case" "while"
 ;    "do" "until" "and" "or" "not" "in" "with" "repeat" "begin" "end")
    (concat "\\<\\("
@@ -176,8 +177,11 @@
 	   "not\\|o[fr]\\|repeat\\|t\\(hen\\|o\\)\\|until\\|w\\(hile\\|ith\\)"
 	   "\\)\\>")
    '("\\<\\(goto\\)\\>[ \t]*\\([0-9]+\\)?"
-     (1 font-lock-keyword-face) (2 font-lock-reference-face nil t)))
+     1 font-lock-keyword-face)
+   '("\\<\\(goto\\)\\>[ \t]*\\([0-9]+\\)?"
+     2 font-lock-keyword-face nil t)))
   "Additional expressions to highlight in Pascal mode.")
+(put 'pascal-mode 'font-lock-defaults '(pascal-font-lock-keywords nil t))
 
 (defcustom pascal-indent-level 3
   "*Indentation of Pascal statements with respect to containing block."
@@ -221,9 +225,10 @@ will do all lineups."
   :group 'pascal)
 
 (defcustom pascal-toggle-completions nil
-  "*Non-nil means that \\<pascal-mode-map>\\[pascal-complete-word] should try all pRepeated use of \\[pascal-complete-word] will show you all of them.
-Normally, when there is more than one possible completion,
-it displays a list of all possible completions."
+  "*Non-nil means that repeated use of \
+\\<pascal-mode-map>\\[pascal-complete-word] will toggle the possible
+completions in the minibuffer.  Normally, when there is more than one possible
+completion, a buffer will display all completions."
   :type 'boolean
   :group 'pascal)
 
@@ -360,11 +365,11 @@ no args, if that value is non-nil."
   (make-local-variable 'comment-end)
   (setq comment-end "}")
   ;; Font lock support
-  ;;(make-local-variable 'font-lock-defaults)
-  ;;(setq font-lock-defaults '(pascal-font-lock-keywords nil t))
+  ;(make-local-variable 'font-lock-defaults)
+  ;(setq font-lock-defaults '(pascal-font-lock-keywords nil t))
   ;; Imenu support
-  ;;  (make-local-variable 'imenu-generic-expression)
-  ;;  (setq imenu-generic-expression pascal-imenu-generic-expression)
+  (make-local-variable 'imenu-generic-expression)
+  (setq imenu-generic-expression pascal-imenu-generic-expression)
   (run-hooks 'pascal-mode-hook))
 
 
@@ -919,12 +924,12 @@ Do not count labels, case-statements or records."
   "Indent current line as comment.
 If optional arg is non-nil, just return the
 column number the line should be indented to."
-    (let* ((stcol (save-excursion
-		    (re-search-backward "(\\*\\|{" nil t)
-		    (1+ (current-column)))))
-      (if arg stcol
-	(delete-horizontal-space)
-	(indent-to stcol))))
+  (let* ((stcol (save-excursion
+		  (re-search-backward "(\\*\\|{" nil t)
+		  (1+ (current-column)))))
+    (if arg stcol
+      (delete-horizontal-space)
+      (indent-to stcol))))
 
 (defun pascal-indent-case ()
   "Indent within case statements."
@@ -1006,10 +1011,6 @@ indent of the current line in parameterlist."
 				      pos))))
 	    ind)
 
-	(if (= (point-max) edpos)
-	    (save-excursion
-	      (goto-char (point-max))
-	      (insert "\n")))
 	(goto-char stpos)
 	;; Indent lines in record block
 	(if arg
@@ -1024,7 +1025,7 @@ indent of the current line in parameterlist."
 	;; Do lineup
 	(setq ind (pascal-get-lineup-indent stpos edpos lineup))
 	(goto-char stpos)
-	(while (<= (point) edpos)
+	(while (and (<= (point) edpos) (not (eobp)))
 	  (if (search-forward lineup (pascal-get-end-of-line) 'move)
 	      (forward-char -1))
 	  (delete-horizontal-space)
@@ -1062,7 +1063,9 @@ indent of the current line in parameterlist."
 		  (skip-chars-backward " \t")
 		  (if (> (current-column) ind)
 		      (setq ind (current-column)))
-		  (goto-char (match-end 0)))))))
+		  (goto-char (match-end 0))
+		  (end-of-line)
+		  )))))
       ;; In case no lineup was found
       (if (> ind 0)
 	  (1+ ind)
@@ -1126,7 +1129,7 @@ indent of the current line in parameterlist."
 
 (defun pascal-get-completion-decl ()
   ;; Macro for searching through current declaration (var, type or const)
-  ;; for matches of `str' and adding the occurrence tp `all'
+  ;; for matches of `str' and adding the occurrence to `all'
   (let ((end (save-excursion (pascal-declaration-end)
 			     (point)))
 	match)

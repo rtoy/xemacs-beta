@@ -30,7 +30,7 @@ use @TeX{} mode; for input to nroff, Nroff mode.
 * Text Mode::   The major modes for editing text files.
 * Nroff Mode::  The major mode for editing input to the formatter nroff.
 * TeX Mode::    The major modes for editing input to the formatter TeX.
-* Outline Mode::The major mode for editing outlines.
+* Outline Mode:: The major mode for editing outlines.
 * Words::       Moving over and killing words.
 * Sentences::   Moving over and killing sentences.
 * Paragraphs::	Moving over paragraphs.
@@ -87,7 +87,7 @@ hide some of the headings at lower levels from view to make the high
 level structure more visible.
 
 
-* Outline Mode::The major mode for editing outlines.
+* Outline Mode:: The major mode for editing outlines.
 @end menu
 
 @node Nroff Mode, TeX Mode, Text Mode, Text Mode

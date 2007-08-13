@@ -4864,7 +4864,7 @@ syms_of_event_stream (void)
   DEFSUBR (Fthis_command_keys);
   DEFSUBR (Freset_this_command_lengths);
   DEFSUBR (Fopen_dribble_file);
-#if defined(HAVE_X_WINDOWS) && defined(HAVE_MENUBAR)
+#if defined(HAVE_X_WINDOWS) && defined(HAVE_MENUBARS)
   DEFSUBR (Faccelerate_menu);
 #endif
 

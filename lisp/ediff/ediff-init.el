@@ -97,6 +97,13 @@ that Ediff doesn't know about.")
 ;; The Ediff control buffer
 (ediff-defvar-local ediff-control-buffer nil "")
 
+
+;; Association between buff-type and ediff-buffer-*
+(defconst ediff-buffer-alist
+  '((?A . ediff-buffer-A)
+    (?B . ediff-buffer-B)
+    (?C . ediff-buffer-C)))
+
 ;;; Macros
 (defmacro ediff-odd-p (arg)
   (` (eq (logand (, arg) 1) 1)))
@@ -123,11 +130,27 @@ that Ediff doesn't know about.")
 	   ((memq (, arg) '(?c ?C)) 'C)
 	   )
   ))
+
+
+;; A-list is supposed to be of the form (A . symb) (B . symb)...)
+;; where the first part of any association is a buffer type and the second is
+;; an appropriate symbol. Given buffer-type, this function returns the
+;; symbol. This is used to avoid using `intern'
+(defsubst ediff-get-symbol-from-alist (buf-type alist)
+  (cdr (assoc buf-type alist)))
   
+(defconst ediff-difference-vector-alist
+  '((A . ediff-difference-vector-A)
+    (B . ediff-difference-vector-B)
+    (C . ediff-difference-vector-C)
+    (Ancestor . ediff-difference-vector-Ancestor)))
+
 (defmacro ediff-get-difference (n buf-type)
   (` (aref
       (symbol-value
-       (intern (format "ediff-difference-vector-%S" (, buf-type)))) (, n))))
+       (ediff-get-symbol-from-alist
+	(, buf-type) ediff-difference-vector-alist))
+      (, n))))
   
 ;; Tell if it has been previously determined that the region has
 ;; no diffs other than the white space and newlines
@@ -189,21 +212,18 @@ that Ediff doesn't know about.")
   (` (ediff-get-fine-diff-vector-from-diff-record
       (ediff-get-difference (, n) (, buf-type)))))
   
-;; Macro to switch to BUFFER, evaluate FORMS, returns to original buffer.
-;; Differs from `save-excursion' in that it doesn't save the point and mark.
-;; This is essentially `emerge-eval-in-buffer' with the test for live buffers."
-(defmacro ediff-eval-in-buffer (buffer &rest forms)
-  (` (let ((StartBuffer (current-buffer)))
-       (if (ediff-buffer-live-p (, buffer))
-	   (unwind-protect
-	       (progn
-		 (set-buffer (, buffer))
-		 (,@ forms))
-	     (set-buffer StartBuffer))
-	 (or (eq this-command 'ediff-quit)
-	     (error ediff-KILLED-VITAL-BUFFER))
-	 ))))
-	 
+;; Macro to switch to BUFFER, evaluate BODY, returns to original buffer.
+;; Doesn't save the point and mark.
+;; This is `with-current-buffer' with the added test for live buffers."
+(defmacro ediff-with-current-buffer (buffer &rest body)
+  (` (if (ediff-buffer-live-p (, buffer))
+       (save-current-buffer
+	 (set-buffer (, buffer))
+	 (,@ body))
+     (or (eq this-command 'ediff-quit)
+	 (error ediff-KILLED-VITAL-BUFFER))
+     )))
+     
 
 (defsubst ediff-multiframe-setup-p ()
   (and (ediff-window-display-p) ediff-multiframe))
@@ -561,6 +581,13 @@ ediff-toggle-hilit. Use `setq-default' to set it.")
 ;; The original values of ediff-protected-variables for buffer Ancestor
 (ediff-defvar-local ediff-buffer-values-orig-Ancestor nil "")
 
+;; association between buff-type and ediff-buffer-values-orig-*
+(defconst ediff-buffer-values-orig-alist
+  '((A . ediff-buffer-values-orig-A)
+    (B . ediff-buffer-values-orig-B)
+    (C . ediff-buffer-values-orig-C)
+    (Ancestor . ediff-buffer-values-orig-Ancestor)))
+
 ;; Buffer-local variables to be saved then restored during Ediff sessions
 (defconst ediff-protected-variables '(
 				      ;;buffer-read-only 
@@ -585,6 +612,12 @@ ediff-toggle-hilit. Use `setq-default' to set it.")
 (ediff-defvar-local ediff-difference-vector-B nil "")
 (ediff-defvar-local ediff-difference-vector-C nil "")
 (ediff-defvar-local ediff-difference-vector-Ancestor nil "")
+;; A-list of diff vector types associated with buffer types
+(defconst ediff-difference-vector-alist
+  '((A . ediff-difference-vector-A)
+    (B . ediff-difference-vector-B)
+    (C . ediff-difference-vector-C)
+    (Ancestor . ediff-difference-vector-Ancestor)))
 
 ;; [ status status status ...]
 ;; Each status: [state-of-merge state-of-ancestor]
@@ -676,30 +709,6 @@ appropriate symbol: `rcs', `pcl-cvs', or `generic-sc' if you so desire."
 	  ((memq op '(< <=)) t))))
   
   
-;;;; warn if it is a wrong version of emacs
-;;(if (or (ediff-check-version '< 19 35 'emacs)
-;;	(ediff-check-version '< 19 15 'xemacs))
-;;    (progn
-;;      (with-output-to-temp-buffer ediff-msg-buffer
-;;	(switch-to-buffer ediff-msg-buffer)
-;;	(insert
-;;	 (format "
-;;
-;;This version of Ediff requires 
-;;
-;;\t Emacs 19.35 and higher
-;;\t OR
-;;\t XEmacs 19.15 and higher
-;;
-;;It is unlikely to work under Emacs version %s
-;;that you are using... " emacs-version))
-;;	(if noninteractive
-;;	    ()
-;;	  (beep 1)
-;;	  (beep 1)
-;;	  (insert "\n\nType any key to continue...")
-;;	  (ediff-read-event)))
-;;      (kill-buffer ediff-msg-buffer)))
 
 ;; A fix for NeXT Step
 ;; Should probably be eliminated in later versions.
@@ -743,14 +752,30 @@ appropriate symbol: `rcs', `pcl-cvs', or `generic-sc' if you so desire."
       (fset 'ediff-display-pixel-height
 	    (symbol-function 'x-display-pixel-height))))
       
+;; A-list of current-diff-overlay symbols asssociated with buf types
+(defconst ediff-current-diff-overlay-alist
+  '((A . ediff-current-diff-overlay-A)
+    (B . ediff-current-diff-overlay-B)
+    (C . ediff-current-diff-overlay-C)
+    (Ancestor . ediff-current-diff-overlay-Ancestor)))
+  
+;; A-list of current-diff-face-* symbols asssociated with buf types
+(defconst ediff-current-diff-face-alist
+  '((A . ediff-current-diff-face-A)
+    (B . ediff-current-diff-face-B)
+    (C . ediff-current-diff-face-C)
+    (Ancestor . ediff-current-diff-face-Ancestor)))
+  
 
 (defun ediff-make-current-diff-overlay (type)
   (if (ediff-has-face-support-p)
-      (let ((overlay (intern (format "ediff-current-diff-overlay-%S" type)))
+      (let ((overlay (ediff-get-symbol-from-alist
+		      type ediff-current-diff-overlay-alist))
 	    (buffer (ediff-get-buffer type))
 	    (face (face-name
 		   (symbol-value
-		    (intern (format "ediff-current-diff-face-%S" type))))))
+		    (ediff-get-symbol-from-alist
+		     type ediff-current-diff-face-alist)))))
 	(set overlay
 	     (ediff-make-bullet-proof-overlay (point-max) (point-max) buffer))
 	(ediff-set-overlay-face (symbol-value overlay) face)
@@ -779,35 +804,35 @@ appropriate symbol: `rcs', `pcl-cvs', or `generic-sc' if you so desire."
 	  (t ""))   ; none
     ))
 
-(defun ediff-set-face (ground face color)
-  "Set face foreground/background."
-  (if (ediff-has-face-support-p)
-      (if (ediff-valid-color-p color)
-	  (if (eq ground 'foreground)
-	      (set-face-foreground face color)
-	    (set-face-background face color))
-	(cond ((memq face
-		     '(ediff-current-diff-face-A
-		       ediff-current-diff-face-B
-		       ediff-current-diff-face-C
-		       ediff-current-diff-face-Ancestor))
-	       (copy-face 'highlight face))
-	      ((memq face
-		     '(ediff-fine-diff-face-A
-		       ediff-fine-diff-face-B
-		       ediff-fine-diff-face-C
-		       ediff-fine-diff-face-Ancestor))
-	       (copy-face 'secondary-selection face)
-	       (set-face-underline-p face t))
-	      ((memq face
-		     '(ediff-even-diff-face-A
-		       ediff-odd-diff-face-A 
-		       ediff-even-diff-face-B ediff-odd-diff-face-B
-		       ediff-even-diff-face-C ediff-odd-diff-face-C
-		       ediff-even-diff-face-Ancestor
-		       ediff-odd-diff-face-Ancestor))
-	       (copy-face 'secondary-selection face))))
-    ))
+;;(defun ediff-set-face (ground face color)
+;;  "Set face foreground/background."
+;;  (if (ediff-has-face-support-p)
+;;      (if (ediff-valid-color-p color)
+;;	  (if (eq ground 'foreground)
+;;	      (set-face-foreground face color)
+;;	    (set-face-background face color))
+;;	(cond ((memq face
+;;		     '(ediff-current-diff-face-A
+;;		       ediff-current-diff-face-B
+;;		       ediff-current-diff-face-C
+;;		       ediff-current-diff-face-Ancestor))
+;;	       (copy-face 'highlight face))
+;;	      ((memq face
+;;		     '(ediff-fine-diff-face-A
+;;		       ediff-fine-diff-face-B
+;;		       ediff-fine-diff-face-C
+;;		       ediff-fine-diff-face-Ancestor))
+;;	       (copy-face 'secondary-selection face)
+;;	       (set-face-underline-p face t))
+;;	      ((memq face
+;;		     '(ediff-even-diff-face-A
+;;		       ediff-odd-diff-face-A 
+;;		       ediff-even-diff-face-B ediff-odd-diff-face-B
+;;		       ediff-even-diff-face-C ediff-odd-diff-face-C
+;;		       ediff-even-diff-face-Ancestor
+;;		       ediff-odd-diff-face-Ancestor))
+;;	       (copy-face 'secondary-selection face))))
+;;    ))
 
 (defun ediff-set-face-pixmap (face pixmap)
   "Set face pixmap on a monochrome display."
@@ -822,280 +847,556 @@ appropriate symbol: `rcs', `pcl-cvs', or `generic-sc' if you so desire."
   (if (and (ediff-has-face-support-p) ediff-emacs-p)
       (add-to-list 'facemenu-unlisted-faces face)))
       
-(defvar ediff-current-diff-face-A
-  (if (ediff-has-face-support-p)
-      (progn
-	(make-face 'ediff-current-diff-face-A)
-	(ediff-hide-face 'ediff-current-diff-face-A)
-	(or (face-differs-from-default-p 'ediff-current-diff-face-A)
-	    (cond ((ediff-color-display-p)
-		   (ediff-set-face
-		    'foreground 'ediff-current-diff-face-A "firebrick")
-		   (ediff-set-face
-		    'background 'ediff-current-diff-face-A "pale green"))
-		  (t
-		   (if ediff-xemacs-p
-		       (copy-face 'modeline 'ediff-current-diff-face-A)
-		     (copy-face 'highlight 'ediff-current-diff-face-A))
-		   )))
-	'ediff-current-diff-face-A))
-  "Face for highlighting the selected difference in buffer A.")
+(defgroup ediff-highlighting nil
+  "Hilighting of difference regions in Ediff"
+  :prefix "ediff-"
+  :group 'ediff)
 
-(defvar ediff-current-diff-face-B
-  (if (ediff-has-face-support-p)
-      (progn
-	(make-face 'ediff-current-diff-face-B)
-	(ediff-hide-face 'ediff-current-diff-face-B)
-	(or (face-differs-from-default-p 'ediff-current-diff-face-B)
-	    (cond ((ediff-color-display-p)
-		   (ediff-set-face
-		    'foreground 'ediff-current-diff-face-B "DarkOrchid")
-		   (ediff-set-face
-		    'background 'ediff-current-diff-face-B "Yellow"))
-		  (t 
-		   (if ediff-xemacs-p
-		       (copy-face 'modeline 'ediff-current-diff-face-B)
-		     (copy-face 'highlight 'ediff-current-diff-face-B))
-		   )))
-	'ediff-current-diff-face-B))
-  "Face for highlighting the selected difference in buffer B.")
+;;(defvar ediff-current-diff-face-A
+;;  (if (ediff-has-face-support-p)
+;;      (progn
+;;	(make-face 'ediff-current-diff-face-A)
+;;	(or (face-differs-from-default-p 'ediff-current-diff-face-A)
+;;	    (cond ((ediff-color-display-p)
+;;		   (ediff-set-face
+;;		    'foreground 'ediff-current-diff-face-A "firebrick")
+;;		   (ediff-set-face
+;;		    'background 'ediff-current-diff-face-A "pale green"))
+;;		  (t
+;;		   (if ediff-xemacs-p
+;;		       (copy-face 'modeline 'ediff-current-diff-face-A)
+;;		     (copy-face 'highlight 'ediff-current-diff-face-A))
+;;		   )))
+;;	'ediff-current-diff-face-A))
+;;  "Face for highlighting the selected difference in buffer A.")
+
+(defface ediff-current-diff-face-A
+  '((((class color)) (:foreground "firebrick" :background "pale green"))
+    (t (:inverse-video t)))
+  "Face for highlighting the selected difference in buffer A."
+  :group 'ediff-highlighting)
+;; An internal variable. Ediff takes the face from here. When unhighlighting,
+;; this variable is set to nil, then again to the appropriate face.
+(defvar ediff-current-diff-face-A 'ediff-current-diff-face-A)
+(ediff-hide-face 'ediff-current-diff-face-A)
+;; Until custom.el for XEmacs starts supporting :inverse-video we do this.
+;; This means that some user customization may be trashed.
+(if (and ediff-xemacs-p
+	 (ediff-has-face-support-p)
+	 (not (ediff-color-display-p))) 
+    (copy-face 'modeline 'ediff-current-diff-face-A))
+
+
+
+;;(defvar ediff-current-diff-face-B
+;;  (if (ediff-has-face-support-p)
+;;      (progn
+;;	(make-face 'ediff-current-diff-face-B)
+;;	(or (face-differs-from-default-p 'ediff-current-diff-face-B)
+;;	    (cond ((ediff-color-display-p)
+;;		   (ediff-set-face
+;;		    'foreground 'ediff-current-diff-face-B "DarkOrchid")
+;;		   (ediff-set-face
+;;		    'background 'ediff-current-diff-face-B "Yellow"))
+;;		  (t 
+;;		   (if ediff-xemacs-p
+;;		       (copy-face 'modeline 'ediff-current-diff-face-B)
+;;		     (copy-face 'highlight 'ediff-current-diff-face-B))
+;;		   )))
+;;	'ediff-current-diff-face-B))
+;;  "Face for highlighting the selected difference in buffer B.")
     
+(defface ediff-current-diff-face-B
+  '((((class color)) (:foreground "DarkOrchid" :background "Yellow"))
+    (t (:inverse-video t)))
+  "Face for highlighting the selected difference in buffer B."
+  :group 'ediff-highlighting)
+;; An internal variable. Ediff takes the face from here. When unhighlighting,
+;; this variable is set to nil, then again to the appropriate face.
+(defvar ediff-current-diff-face-B 'ediff-current-diff-face-B)
+(ediff-hide-face 'ediff-current-diff-face-B)
+;; Until custom.el for XEmacs starts supporting :inverse-video we do this.
+;; This means that some user customization may be trashed.
+(if (and ediff-xemacs-p
+	 (ediff-has-face-support-p)
+	 (not (ediff-color-display-p))) 
+    (copy-face 'modeline 'ediff-current-diff-face-B))
 
-(defvar ediff-current-diff-face-C
-  (if (ediff-has-face-support-p)
-      (progn
-	(make-face 'ediff-current-diff-face-C)
-	(ediff-hide-face 'ediff-current-diff-face-C)
-	(or (face-differs-from-default-p 'ediff-current-diff-face-C)
-	    (cond ((ediff-color-display-p)
-		   (ediff-set-face
-		    'foreground 'ediff-current-diff-face-C "Navy")
-		   (ediff-set-face
-		    'background 'ediff-current-diff-face-C "Pink"))
-		  (t 
-		   (if ediff-xemacs-p
-		       (copy-face 'modeline 'ediff-current-diff-face-C)
-		     (copy-face 'highlight 'ediff-current-diff-face-C))
-		   )))
-	'ediff-current-diff-face-C))
-  "Face for highlighting the selected difference in buffer C.")
+;;(defvar ediff-current-diff-face-C
+;;  (if (ediff-has-face-support-p)
+;;      (progn
+;;	(make-face 'ediff-current-diff-face-C)
+;;	(or (face-differs-from-default-p 'ediff-current-diff-face-C)
+;;	    (cond ((ediff-color-display-p)
+;;		   (ediff-set-face
+;;		    'foreground 'ediff-current-diff-face-C "Navy")
+;;		   (ediff-set-face
+;;		    'background 'ediff-current-diff-face-C "Pink"))
+;;		  (t 
+;;		   (if ediff-xemacs-p
+;;		       (copy-face 'modeline 'ediff-current-diff-face-C)
+;;		     (copy-face 'highlight 'ediff-current-diff-face-C))
+;;		   )))
+;;	'ediff-current-diff-face-C))
+;;  "Face for highlighting the selected difference in buffer C.")
 
-(defvar ediff-current-diff-face-Ancestor
-  (if (ediff-has-face-support-p)
-      (progn
-	(make-face 'ediff-current-diff-face-Ancestor)
-	(ediff-hide-face 'ediff-current-diff-face-Ancestor)
-	(or (face-differs-from-default-p 'ediff-current-diff-face-Ancestor)
-	    (copy-face 
-	     'ediff-current-diff-face-C 'ediff-current-diff-face-Ancestor))
-	'ediff-current-diff-face-Ancestor))
-  "Face for highlighting the selected difference in the ancestor buffer.")
+(defface ediff-current-diff-face-C
+  '((((class color)) (:foreground "Navy" :background "Pink"))
+    (t (:inverse-video t)))
+  "Face for highlighting the selected difference in buffer C."
+  :group 'ediff-highlighting)
+;; An internal variable. Ediff takes the face from here. When unhighlighting,
+;; this variable is set to nil, then again to the appropriate face.
+(defvar ediff-current-diff-face-C 'ediff-current-diff-face-C)
+(ediff-hide-face 'ediff-current-diff-face-C)
+;; Until custom.el for XEmacs starts supporting :inverse-video we do this.
+;; This means that some user customization may be trashed.
+(if (and ediff-xemacs-p
+	 (ediff-has-face-support-p)
+	 (not (ediff-color-display-p))) 
+    (copy-face 'modeline 'ediff-current-diff-face-C))
 
-(defvar ediff-fine-diff-pixmap "gray3"
-  "Pixmap to use for highlighting fine differences.")
-(defvar ediff-odd-diff-pixmap "gray1"
-  "Pixmap to use for highlighting odd differences.")
-(defvar ediff-even-diff-pixmap "Stipple"
-  "Pixmap to use for highlighting even differences.")
+;;(defvar ediff-current-diff-face-Ancestor
+;;  (if (ediff-has-face-support-p)
+;;      (progn
+;;	(make-face 'ediff-current-diff-face-Ancestor)
+;;	(or (face-differs-from-default-p 'ediff-current-diff-face-Ancestor)
+;;	    (copy-face 
+;;	     'ediff-current-diff-face-C 'ediff-current-diff-face-Ancestor))
+;;	'ediff-current-diff-face-Ancestor))
+;;  "Face for highlighting the selected difference in the ancestor buffer.")
 
-(defvar ediff-fine-diff-face-A
-  (if (ediff-has-face-support-p)
-      (progn
-	(make-face 'ediff-fine-diff-face-A)
-	(ediff-hide-face 'ediff-fine-diff-face-A)
-	(or (face-differs-from-default-p 'ediff-fine-diff-face-A)
-	    (cond ((ediff-color-display-p)
-		   (ediff-set-face 'foreground 'ediff-fine-diff-face-A
-				   "Navy")
-		   (ediff-set-face 'background 'ediff-fine-diff-face-A
-				   "sky blue"))
-		  (t
-		   (set-face-underline-p 'ediff-fine-diff-face-A t)
-		   (ediff-set-face-pixmap 'ediff-fine-diff-face-A
-					  ediff-fine-diff-pixmap)
-		   )))
-	'ediff-fine-diff-face-A))
-  "Face for highlighting the refinement of the selected diff in buffer A.")
+(defface ediff-current-diff-face-Ancestor
+  '((((class color)) (:foreground "Black" :background "VioletRed"))
+    (t (:inverse-video t)))
+  "Face for highlighting the selected difference in buffer Ancestor."
+  :group 'ediff-highlighting)
+;; An internal variable. Ediff takes the face from here. When unhighlighting,
+;; this variable is set to nil, then again to the appropriate face.
+(defvar ediff-current-diff-face-Ancestor 'ediff-current-diff-face-Ancestor)
+(ediff-hide-face 'ediff-current-diff-face-Ancestor)
+;; Until custom.el for XEmacs starts supporting :inverse-video we do this.
+;; This means that some user customization may be trashed.
+(if (and ediff-xemacs-p
+	 (ediff-has-face-support-p)
+	 (not (ediff-color-display-p))) 
+    (copy-face 'modeline 'ediff-current-diff-face-Ancestor))
 
-(defvar ediff-fine-diff-face-B
-  (if (ediff-has-face-support-p)
-      (progn
-	(make-face 'ediff-fine-diff-face-B)
-	(ediff-hide-face 'ediff-fine-diff-face-B)
-	(or (face-differs-from-default-p 'ediff-fine-diff-face-B)
-	    (cond ((ediff-color-display-p)
-		   (ediff-set-face 'foreground 'ediff-fine-diff-face-B "Black")
-		   (ediff-set-face 'background 'ediff-fine-diff-face-B "cyan"))
-		  (t
-		   (set-face-underline-p 'ediff-fine-diff-face-B t)
-		   (ediff-set-face-pixmap 'ediff-fine-diff-face-B
-					  ediff-fine-diff-pixmap)
-		   )))
-	'ediff-fine-diff-face-B))
-  "Face for highlighting the refinement of the selected diff in buffer B.")
+;;(defvar ediff-fine-diff-pixmap "gray3"
+;;  "Pixmap to use for highlighting fine differences.")
+;;(defvar ediff-odd-diff-pixmap "gray1"
+;;  "Pixmap to use for highlighting odd differences.")
+;;(defvar ediff-even-diff-pixmap "Stipple"
+;;  "Pixmap to use for highlighting even differences.")
+
+;;(defvar ediff-fine-diff-face-A
+;;  (if (ediff-has-face-support-p)
+;;      (progn
+;;	(make-face 'ediff-fine-diff-face-A)
+;;	(or (face-differs-from-default-p 'ediff-fine-diff-face-A)
+;;	    (cond ((ediff-color-display-p)
+;;		   (ediff-set-face 'foreground 'ediff-fine-diff-face-A
+;;				   "Navy")
+;;		   (ediff-set-face 'background 'ediff-fine-diff-face-A
+;;				   "sky blue"))
+;;		  (t
+;;		   (set-face-underline-p 'ediff-fine-diff-face-A t)
+;;		   (ediff-set-face-pixmap 'ediff-fine-diff-face-A
+;;					  ediff-fine-diff-pixmap)
+;;		   )))
+;;	'ediff-fine-diff-face-A))
+;;  "Face for highlighting the refinement of the selected diff in buffer A.")
+
+
+(defface ediff-fine-diff-face-A
+  '((((class color)) (:foreground "Navy" :background "sky blue"))
+    (t (:underline t :stipple "gray3")))
+  "Face for highlighting the refinement of the selected diff in buffer A."
+  :group 'ediff-highlighting)
+;; An internal variable. Ediff takes the face from here. When unhighlighting,
+;; this variable is set to nil, then again to the appropriate face.
+(defvar ediff-fine-diff-face-A 'ediff-fine-diff-face-A)
+(ediff-hide-face 'ediff-fine-diff-face-A)
+;; Until custom.el for XEmacs starts supporting :stipple we do this.
+;; This means that some use customization may be trashed.
+(if (and ediff-xemacs-p
+	 (ediff-has-face-support-p)
+	 (not (ediff-color-display-p))) 
+    (ediff-set-face-pixmap 'ediff-fine-diff-face-A "gray3"))
+
+;;(defvar ediff-fine-diff-face-B
+;;  (if (ediff-has-face-support-p)
+;;      (progn
+;;	(make-face 'ediff-fine-diff-face-B)
+;;	(or (face-differs-from-default-p 'ediff-fine-diff-face-B)
+;;	    (cond ((ediff-color-display-p)
+;;		   (ediff-set-face 'foreground 'ediff-fine-diff-face-B "Black")
+;;		   (ediff-set-face 'background 'ediff-fine-diff-face-B "cyan"))
+;;		  (t
+;;		   (set-face-underline-p 'ediff-fine-diff-face-B t)
+;;		   (ediff-set-face-pixmap 'ediff-fine-diff-face-B
+;;					  ediff-fine-diff-pixmap)
+;;		   )))
+;;	'ediff-fine-diff-face-B))
+;;  "Face for highlighting the refinement of the selected diff in buffer B.")
+
+(defface ediff-fine-diff-face-B
+  '((((class color)) (:foreground "Black" :background "cyan"))
+    (t (:underline t :stipple "gray3")))
+  "Face for highlighting the refinement of the selected diff in buffer B."
+  :group 'ediff-highlighting)
+;; An internal variable. Ediff takes the face from here. When unhighlighting,
+;; this variable is set to nil, then again to the appropriate face.
+(defvar ediff-fine-diff-face-B 'ediff-fine-diff-face-B)
+(ediff-hide-face 'ediff-fine-diff-face-B)
+;; Until custom.el for XEmacs starts supporting :stipple we do this.
+;; This means that some use customization may be trashed.
+(if (and ediff-xemacs-p
+	 (ediff-has-face-support-p)
+	 (not (ediff-color-display-p))) 
+    (ediff-set-face-pixmap 'ediff-fine-diff-face-B "gray3"))
     
-(defvar ediff-fine-diff-face-C
-  (if (ediff-has-face-support-p)
-      (progn
-	(make-face 'ediff-fine-diff-face-C)
-	(ediff-hide-face 'ediff-fine-diff-face-C)
-	(or (face-differs-from-default-p 'ediff-fine-diff-face-C)
-	    (cond ((ediff-color-display-p)
-		   (ediff-set-face 'foreground 'ediff-fine-diff-face-C "black")
-		   (ediff-set-face
-		    'background 'ediff-fine-diff-face-C "Turquoise"))
-		  (t
-		   (set-face-underline-p 'ediff-fine-diff-face-C t)
-		   (ediff-set-face-pixmap 'ediff-fine-diff-face-C
-					  ediff-fine-diff-pixmap)
-		   )))
-	'ediff-fine-diff-face-C))
-  "Face for highlighting the refinement of the selected diff in buffer C.")
+;;(defvar ediff-fine-diff-face-C
+;;  (if (ediff-has-face-support-p)
+;;      (progn
+;;	(make-face 'ediff-fine-diff-face-C)
+;;	(or (face-differs-from-default-p 'ediff-fine-diff-face-C)
+;;	    (cond ((ediff-color-display-p)
+;;		   (ediff-set-face 'foreground 'ediff-fine-diff-face-C "black")
+;;		   (ediff-set-face
+;;		    'background 'ediff-fine-diff-face-C "Turquoise"))
+;;		  (t
+;;		   (set-face-underline-p 'ediff-fine-diff-face-C t)
+;;		   (ediff-set-face-pixmap 'ediff-fine-diff-face-C
+;;					  ediff-fine-diff-pixmap)
+;;		   )))
+;;	'ediff-fine-diff-face-C))
+;;  "Face for highlighting the refinement of the selected diff in buffer C.")
 
-(defvar ediff-fine-diff-face-Ancestor
-  (if (ediff-has-face-support-p)
-      (progn
-	(make-face 'ediff-fine-diff-face-Ancestor)
-	(ediff-hide-face 'ediff-fine-diff-face-Ancestor)
-	(or (face-differs-from-default-p 'ediff-fine-diff-face-Ancestor)
-	    (progn
-	      (copy-face
-	       'ediff-fine-diff-face-C 'ediff-fine-diff-face-Ancestor)
-	      (ediff-set-face-pixmap 'ediff-fine-diff-face-Ancestor
-				     ediff-fine-diff-pixmap))
-	    )))
-  "Face highlighting refinements of the selected diff in ancestor buffer.
-Presently, this is not used, as difference regions are not refined in the
-ancestor buffer.")
+(defface ediff-fine-diff-face-C
+  '((((class color)) (:foreground "Black" :background "Turquoise"))
+    (t (:underline t :stipple "gray3")))
+  "Face for highlighting the refinement of the selected diff in buffer C."
+  :group 'ediff-highlighting)
+;; An internal variable. Ediff takes the face from here. When unhighlighting,
+;; this variable is set to nil, then again to the appropriate face.
+(defvar ediff-fine-diff-face-C 'ediff-fine-diff-face-C)
+(ediff-hide-face 'ediff-fine-diff-face-C)
+;; Until custom.el for XEmacs starts supporting :stipple we do this.
+;; This means that some use customization may be trashed.
+(if (and ediff-xemacs-p
+	 (ediff-has-face-support-p)
+	 (not (ediff-color-display-p))) 
+    (ediff-set-face-pixmap 'ediff-fine-diff-face-C "gray3"))
+
+;;(defvar ediff-fine-diff-face-Ancestor
+;;  (if (ediff-has-face-support-p)
+;;      (progn
+;;	(make-face 'ediff-fine-diff-face-Ancestor)
+;;	(ediff-hide-face 'ediff-fine-diff-face-Ancestor)
+;;	(or (face-differs-from-default-p 'ediff-fine-diff-face-Ancestor)
+;;	    (progn
+;;	      (copy-face
+;;	       'ediff-fine-diff-face-C 'ediff-fine-diff-face-Ancestor)
+;;	      (ediff-set-face-pixmap 'ediff-fine-diff-face-Ancestor
+;;				     ediff-fine-diff-pixmap))
+;;	    )))
+;;  "Face highlighting refinements of the selected diff in ancestor buffer.
+;;Presently, this is not used, as difference regions are not refined in the
+;;ancestor buffer.")
+
+(defface ediff-fine-diff-face-Ancestor
+  '((((class color)) (:foreground "Black" :background "Green"))
+    (t (:underline t :stipple "gray3")))
+  "Face for highlighting the refinement of the selected diff in the ancestor buffer.
+At present, this face is not used and no fine differences are computed for the
+ancestor buffer."
+  :group 'ediff-highlighting)
+;; An internal variable. Ediff takes the face from here. When unhighlighting,
+;; this variable is set to nil, then again to the appropriate face.
+(defvar ediff-fine-diff-face-Ancestor 'ediff-fine-diff-face-Ancestor)
+(ediff-hide-face 'ediff-fine-diff-face-Ancestor)
+;; Until custom.el for XEmacs starts supporting :stipple we do this.
+;; This means that some use customization may be trashed.
+(if (and ediff-xemacs-p
+	 (ediff-has-face-support-p)
+	 (not (ediff-color-display-p))) 
+    (ediff-set-face-pixmap
+     'ediff-fine-diff-face-Ancestor "gray3"))
     
-(defvar ediff-even-diff-face-A
-  (if (ediff-has-face-support-p)
-      (progn
-	(make-face 'ediff-even-diff-face-A)
-	(ediff-hide-face 'ediff-even-diff-face-A)
-	(or (face-differs-from-default-p 'ediff-even-diff-face-A)
-	    (cond ((ediff-color-display-p)
-		   (ediff-set-face
-		    'foreground 'ediff-even-diff-face-A "black")
-		   (ediff-set-face
-		    'background 'ediff-even-diff-face-A "light grey"))
-		  (t 
-		   (copy-face 'italic 'ediff-even-diff-face-A)
-		   (ediff-set-face-pixmap 'ediff-even-diff-face-A
-					  ediff-even-diff-pixmap)
-		   )))
-	'ediff-even-diff-face-A))
-  "Face used to highlight even-numbered differences in buffer A.")
+;;(defvar ediff-even-diff-face-A
+;;  (if (ediff-has-face-support-p)
+;;      (progn
+;;	(make-face 'ediff-even-diff-face-A)
+;;	(or (face-differs-from-default-p 'ediff-even-diff-face-A)
+;;	    (cond ((ediff-color-display-p)
+;;		   (ediff-set-face
+;;		    'foreground 'ediff-even-diff-face-A "black")
+;;		   (ediff-set-face
+;;		    'background 'ediff-even-diff-face-A "light grey"))
+;;		  (t 
+;;		   (copy-face 'italic 'ediff-even-diff-face-A)
+;;		   (ediff-set-face-pixmap 'ediff-even-diff-face-A
+;;					  ediff-even-diff-pixmap)
+;;		   )))
+;;	'ediff-even-diff-face-A))
+;;  "Face used for highlighting even-numbered differences in buffer A.")
+
+(defface ediff-even-diff-face-A
+  '((((class color)) (:foreground "Black" :background "light grey"))
+    (t (:italic t :stipple "Stipple")))
+  "Face for highlighting even-numbered non-current differences in buffer A."
+  :group 'ediff-highlighting)
+;; An internal variable. Ediff takes the face from here. When unhighlighting,
+;; this variable is set to nil, then again to the appropriate face.
+(defvar ediff-even-diff-face-A 'ediff-even-diff-face-A)
+(ediff-hide-face 'ediff-even-diff-face-A)
+;; Until custom.el for XEmacs starts supporting :stipple we do this.
+;; This means that some use customization may be trashed.
+(if (and ediff-xemacs-p
+	 (ediff-has-face-support-p)
+	 (not (ediff-color-display-p))) 
+    (ediff-set-face-pixmap 'ediff-even-diff-face-A "Stipple"))
       
-(defvar ediff-even-diff-face-B
-  (if (ediff-has-face-support-p)
-      (progn
-	(make-face 'ediff-even-diff-face-B)
-	(ediff-hide-face 'ediff-even-diff-face-B)
-	(or (face-differs-from-default-p 'ediff-even-diff-face-B)
-	    (cond ((ediff-color-display-p)
-		   (ediff-set-face
-		    'foreground 'ediff-even-diff-face-B "White")
-		   (ediff-set-face
-		    'background 'ediff-even-diff-face-B "Gray"))
-		  (t 
-		   (copy-face 'italic 'ediff-even-diff-face-B)
-		   (ediff-set-face-pixmap 'ediff-even-diff-face-B
-					  ediff-even-diff-pixmap)
-		   )))
-	'ediff-even-diff-face-B))
-  "Face used to highlight even-numbered differences in buffer B.")
-    
-(defvar ediff-even-diff-face-C
-  (if (ediff-has-face-support-p)
-      (progn
-	(make-face 'ediff-even-diff-face-C)
-	(ediff-hide-face 'ediff-even-diff-face-C)
-	(or (face-differs-from-default-p 'ediff-even-diff-face-C)
-	    (progn
-	      (copy-face 'ediff-even-diff-face-A 'ediff-even-diff-face-C)
-	      (ediff-set-face-pixmap 'ediff-even-diff-face-C
-				     ediff-even-diff-pixmap)))
-	'ediff-even-diff-face-C))
-  "Face used to highlight even-numbered differences in buffer C.")
+;;(defvar ediff-even-diff-face-B
+;;  (if (ediff-has-face-support-p)
+;;      (progn
+;;	(make-face 'ediff-even-diff-face-B)
+;;	(or (face-differs-from-default-p 'ediff-even-diff-face-B)
+;;	    (cond ((ediff-color-display-p)
+;;		   (ediff-set-face
+;;		    'foreground 'ediff-even-diff-face-B "White")
+;;		   (ediff-set-face
+;;		    'background 'ediff-even-diff-face-B "Gray"))
+;;		  (t 
+;;		   (copy-face 'italic 'ediff-even-diff-face-B)
+;;		   (ediff-set-face-pixmap 'ediff-even-diff-face-B
+;;					  ediff-even-diff-pixmap)
+;;		   )))
+;;	'ediff-even-diff-face-B))
+;;  "Face used for highlighting even-numbered differences in buffer B.")
 
-(defvar ediff-even-diff-face-Ancestor
-  (if (ediff-has-face-support-p)
-      (progn
-	(make-face 'ediff-even-diff-face-Ancestor)
-	(ediff-hide-face 'ediff-even-diff-face-Ancestor)
-	(or (face-differs-from-default-p 'ediff-even-diff-face-Ancestor)
-	    (progn
-	      (copy-face
-	       'ediff-even-diff-face-C 'ediff-even-diff-face-Ancestor)
-	      (ediff-set-face-pixmap 'ediff-even-diff-face-Ancestor
-				     ediff-even-diff-pixmap)))
-	'ediff-even-diff-face-Ancestor))
-  "Face highlighting even-numbered differences in the ancestor buffer.")
+(defface ediff-even-diff-face-B
+  '((((class color)) (:foreground "White" :background "Grey"))
+    (t (:italic t :stipple "Stipple")))
+  "Face for highlighting even-numbered non-current differences in buffer B."
+  :group 'ediff-highlighting)
+;; An internal variable. Ediff takes the face from here. When unhighlighting,
+;; this variable is set to nil, then again to the appropriate face.
+(defvar ediff-even-diff-face-B 'ediff-even-diff-face-B)
+(ediff-hide-face 'ediff-even-diff-face-B)
+;; Until custom.el for XEmacs starts supporting :stipple we do this.
+;; This means that some use customization may be trashed.
+(if (and ediff-xemacs-p
+	 (ediff-has-face-support-p)
+	 (not (ediff-color-display-p))) 
+    (ediff-set-face-pixmap 'ediff-even-diff-face-B "Stipple"))
+    
+;;(defvar ediff-even-diff-face-C
+;;  (if (ediff-has-face-support-p)
+;;      (progn
+;;	(make-face 'ediff-even-diff-face-C)
+;;	(ediff-hide-face 'ediff-even-diff-face-C)
+;;	(or (face-differs-from-default-p 'ediff-even-diff-face-C)
+;;	    (progn
+;;	      (copy-face 'ediff-even-diff-face-A 'ediff-even-diff-face-C)
+;;	      (ediff-set-face-pixmap 'ediff-even-diff-face-C
+;;				     ediff-even-diff-pixmap)))
+;;	'ediff-even-diff-face-C))
+;;  "Face used for highlighting even-numbered differences in buffer C.")
+
+(defface ediff-even-diff-face-C
+  '((((class color)) (:foreground "Black" :background "light grey"))
+    (t (:italic t :stipple "Stipple")))
+  "Face for highlighting even-numbered non-current differences in buffer C."
+  :group 'ediff-highlighting)
+;; An internal variable. Ediff takes the face from here. When unhighlighting,
+;; this variable is set to nil, then again to the appropriate face.
+(defvar ediff-even-diff-face-C 'ediff-even-diff-face-C)
+(ediff-hide-face 'ediff-even-diff-face-C)
+;; Until custom.el for XEmacs starts supporting :stipple we do this.
+;; This means that some use customization may be trashed.
+(if (and ediff-xemacs-p
+	 (ediff-has-face-support-p)
+	 (not (ediff-color-display-p))) 
+    (ediff-set-face-pixmap 'ediff-even-diff-face-C "Stipple"))
+
+;;(defvar ediff-even-diff-face-Ancestor
+;;  (if (ediff-has-face-support-p)
+;;      (progn
+;;	(make-face 'ediff-even-diff-face-Ancestor)
+;;	(ediff-hide-face 'ediff-even-diff-face-Ancestor)
+;;	(or (face-differs-from-default-p 'ediff-even-diff-face-Ancestor)
+;;	    (progn
+;;	      (copy-face
+;;	       'ediff-even-diff-face-C 'ediff-even-diff-face-Ancestor)
+;;	      (ediff-set-face-pixmap 'ediff-even-diff-face-Ancestor
+;;				     ediff-even-diff-pixmap)))
+;;	'ediff-even-diff-face-Ancestor))
+;;  "Face highlighting even-numbered differences in the ancestor buffer.")
+
+(defface ediff-even-diff-face-Ancestor
+  '((((class color)) (:foreground "White" :background "Grey"))
+    (t (:italic t :stipple "Stipple")))
+  "Face for highlighting even-numbered non-current differences in the ancestor buffer."
+  :group 'ediff-highlighting)
+;; An internal variable. Ediff takes the face from here. When unhighlighting,
+;; this variable is set to nil, then again to the appropriate face.
+(defvar ediff-even-diff-face-Ancestor 'ediff-even-diff-face-Ancestor)
+(ediff-hide-face 'ediff-even-diff-face-Ancestor)
+;; Until custom.el for XEmacs starts supporting :stipple we do this.
+;; This means that some use customization may be trashed.
+(if (and ediff-xemacs-p
+	 (ediff-has-face-support-p)
+	 (not (ediff-color-display-p))) 
+    (ediff-set-face-pixmap
+     'ediff-even-diff-face-Ancestor "Stipple"))
+
+;; Association between buffer types and even-diff-face symbols
+(defconst ediff-even-diff-face-alist
+  '((A . ediff-even-diff-face-A)
+    (B . ediff-even-diff-face-B)
+    (C . ediff-even-diff-face-C)
+    (Ancestor . ediff-even-diff-face-Ancestor)))
+
+;;(defvar ediff-odd-diff-face-A
+;;  (if (ediff-has-face-support-p)
+;;      (progn
+;;	(make-face 'ediff-odd-diff-face-A)
+;;	(or (face-differs-from-default-p 'ediff-odd-diff-face-A)
+;;	    (cond ((ediff-color-display-p)
+;;		   (ediff-set-face
+;;		    'foreground 'ediff-odd-diff-face-A "White")
+;;		   (ediff-set-face
+;;		    'background 'ediff-odd-diff-face-A "Gray"))
+;;		  (t 
+;;		   (copy-face 'italic 'ediff-odd-diff-face-A)
+;;		   (ediff-set-face-pixmap 'ediff-odd-diff-face-A
+;;					  ediff-odd-diff-pixmap)
+;;		   )))
+;;	'ediff-odd-diff-face-A))
+;;  "Face used for highlighting odd-numbered differences in buffer A.")
+
+(defface ediff-odd-diff-face-A
+  '((((class color)) (:foreground "White" :background "Grey"))
+    (t (:italic t :stipple "gray1")))
+  "Face for highlighting odd-numbered non-current differences in buffer A."
+  :group 'ediff-highlighting)
+;; An internal variable. Ediff takes the face from here. When unhighlighting,
+;; this variable is set to nil, then again to the appropriate face.
+(defvar ediff-odd-diff-face-A 'ediff-odd-diff-face-A)
+(ediff-hide-face 'ediff-odd-diff-face-A)
+;; Until custom.el for XEmacs starts supporting :stipple we do this.
+;; This means that some use customization may be trashed.
+(if (and ediff-xemacs-p
+	 (ediff-has-face-support-p)
+	 (not (ediff-color-display-p))) 
+    (ediff-set-face-pixmap 'ediff-odd-diff-face-A "gray1"))
+      
+;;(defvar ediff-odd-diff-face-B
+;;  (if (ediff-has-face-support-p)
+;;      (progn
+;;	(make-face 'ediff-odd-diff-face-B)
+;;	(ediff-hide-face 'ediff-odd-diff-face-B)
+;;	(or (face-differs-from-default-p 'ediff-odd-diff-face-B)
+;;	    (cond ((ediff-color-display-p)
+;;		   (ediff-set-face
+;;		    'foreground 'ediff-odd-diff-face-B "Black")
+;;		   (ediff-set-face
+;;		    'background 'ediff-odd-diff-face-B "light grey"))
+;;		  (t 
+;;		   (copy-face 'italic 'ediff-odd-diff-face-B)
+;;		   (ediff-set-face-pixmap 'ediff-odd-diff-face-B
+;;					  ediff-odd-diff-pixmap)
+;;		   )))
+;;	'ediff-odd-diff-face-B))
+;;  "Face used for highlighting odd-numbered differences in buffer B.")
+
+(defface ediff-odd-diff-face-B
+  '((((class color)) (:foreground "Black" :background "light grey"))
+    (t (:italic t :stipple "gray1")))
+  "Face for highlighting odd-numbered non-current differences in buffer B."
+  :group 'ediff-highlighting)
+;; An internal variable. Ediff takes the face from here. When unhighlighting,
+;; this variable is set to nil, then again to the appropriate face.
+(defvar ediff-odd-diff-face-B 'ediff-odd-diff-face-B)
+(ediff-hide-face 'ediff-odd-diff-face-B)
+;; Until custom.el for XEmacs starts supporting :stipple we do this.
+;; This means that some use customization may be trashed.
+(if (and ediff-xemacs-p
+	 (ediff-has-face-support-p)
+	 (not (ediff-color-display-p))) 
+    (ediff-set-face-pixmap 'ediff-odd-diff-face-B "gray1"))
+    
+;;(defvar ediff-odd-diff-face-C
+;;  (if (ediff-has-face-support-p)
+;;      (progn
+;;	(make-face 'ediff-odd-diff-face-C)
+;;	(or (face-differs-from-default-p 'ediff-odd-diff-face-C)
+;;	    (progn
+;;	      (copy-face 'ediff-odd-diff-face-A 'ediff-odd-diff-face-C)
+;;	      (ediff-set-face-pixmap 'ediff-odd-diff-face-C
+;;				     ediff-odd-diff-pixmap)))
+;;	'ediff-odd-diff-face-C))
+;;  "Face used for highlighting odd-numbered differences in buffer C.")
+
+(defface ediff-odd-diff-face-C
+  '((((class color)) (:foreground "White" :background "Grey"))
+    (t (:italic t :stipple "gray1")))
+  "Face for highlighting odd-numbered non-current differences in buffer C."
+  :group 'ediff-highlighting)
+;; An internal variable. Ediff takes the face from here. When unhighlighting,
+;; this variable is set to nil, then again to the appropriate face.
+(defvar ediff-odd-diff-face-C 'ediff-odd-diff-face-C)
+(ediff-hide-face 'ediff-odd-diff-face-C)
+;; Until custom.el for XEmacs starts supporting :stipple we do this.
+;; This means that some use customization may be trashed.
+(if (and ediff-xemacs-p
+	 (ediff-has-face-support-p)
+	 (not (ediff-color-display-p))) 
+    (ediff-set-face-pixmap 'ediff-odd-diff-face-C "gray1"))
+
+;;(defvar ediff-odd-diff-face-Ancestor 
+;;  (if (ediff-has-face-support-p)
+;;      (progn
+;;	(make-face 'ediff-odd-diff-face-Ancestor)
+;;	(or (face-differs-from-default-p 'ediff-odd-diff-face-Ancestor)
+;;	    (progn
+;;	      (copy-face 'ediff-odd-diff-face-C 'ediff-odd-diff-face-Ancestor)
+;;	      (ediff-set-face-pixmap 'ediff-odd-diff-face-Ancestor
+;;				     ediff-odd-diff-pixmap)))
+;;	'ediff-odd-diff-face-Ancestor))
+;;  "Face used for highlighting even-numbered differences in the ancestor buffer.")
+
+(defface ediff-odd-diff-face-Ancestor
+  '((((class color)) (:foreground "Black" :background "light grey"))
+    (t (:italic t :stipple "gray1")))
+  "Face for highlighting odd-numbered non-current differences in the ancestor buffer."
+  :group 'ediff-highlighting)
+;; An internal variable. Ediff takes the face from here. When unhighlighting,
+;; this variable is set to nil, then again to the appropriate face.
+(defvar ediff-odd-diff-face-Ancestor 'ediff-odd-diff-face-Ancestor)
+(ediff-hide-face 'ediff-odd-diff-face-Ancestor)
+;; Until custom.el for XEmacs starts supporting :stipple we do this.
+;; This means that some use customization may be trashed.
+(if (and ediff-xemacs-p
+	 (ediff-has-face-support-p)
+	 (not (ediff-color-display-p))) 
+    (ediff-set-face-pixmap 'ediff-odd-diff-face-Ancestor "gray1"))
+
+;; Association between buffer types and odd-diff-face symbols
+(defconst ediff-odd-diff-face-alist
+  '((A . ediff-odd-diff-face-A)
+    (B . ediff-odd-diff-face-B)
+    (C . ediff-odd-diff-face-C)
+    (Ancestor . ediff-odd-diff-face-Ancestor)))
   
-(defvar ediff-odd-diff-face-A
-  (if (ediff-has-face-support-p)
-      (progn
-	(make-face 'ediff-odd-diff-face-A)
-	(ediff-hide-face 'ediff-odd-diff-face-A)
-	(or (face-differs-from-default-p 'ediff-odd-diff-face-A)
-	    (cond ((ediff-color-display-p)
-		   (ediff-set-face
-		    'foreground 'ediff-odd-diff-face-A "White")
-		   (ediff-set-face
-		    'background 'ediff-odd-diff-face-A "Gray"))
-		  (t 
-		   (copy-face 'italic 'ediff-odd-diff-face-A)
-		   (ediff-set-face-pixmap 'ediff-odd-diff-face-A
-					  ediff-odd-diff-pixmap)
-		   )))
-	'ediff-odd-diff-face-A))
-  "Face used to highlight odd-numbered differences in buffer A.")
-      
-(defvar ediff-odd-diff-face-B
-  (if (ediff-has-face-support-p)
-      (progn
-	(make-face 'ediff-odd-diff-face-B)
-	(ediff-hide-face 'ediff-odd-diff-face-B)
-	(or (face-differs-from-default-p 'ediff-odd-diff-face-B)
-	    (cond ((ediff-color-display-p)
-		   (ediff-set-face
-		    'foreground 'ediff-odd-diff-face-B "Black")
-		   (ediff-set-face
-		    'background 'ediff-odd-diff-face-B "light grey"))
-		  (t 
-		   (copy-face 'italic 'ediff-odd-diff-face-B)
-		   (ediff-set-face-pixmap 'ediff-odd-diff-face-B
-					  ediff-odd-diff-pixmap)
-		   )))
-	'ediff-odd-diff-face-B))
-  "Face used to highlight odd-numbered differences in buffer B.")
-    
-(defvar ediff-odd-diff-face-C
-  (if (ediff-has-face-support-p)
-      (progn
-	(make-face 'ediff-odd-diff-face-C)
-	(ediff-hide-face 'ediff-odd-diff-face-C)
-	(or (face-differs-from-default-p 'ediff-odd-diff-face-C)
-	    (progn
-	      (copy-face 'ediff-odd-diff-face-A 'ediff-odd-diff-face-C)
-	      (ediff-set-face-pixmap 'ediff-odd-diff-face-C
-				     ediff-odd-diff-pixmap)))
-	'ediff-odd-diff-face-C))
-  "Face used to highlight odd-numbered differences in buffer C.")
-
-(defvar ediff-odd-diff-face-Ancestor 
-  (if (ediff-has-face-support-p)
-      (progn
-	(make-face 'ediff-odd-diff-face-Ancestor)
-	(ediff-hide-face 'ediff-odd-diff-face-Ancestor)
-	(or (face-differs-from-default-p 'ediff-odd-diff-face-Ancestor)
-	    (progn
-	      (copy-face 'ediff-odd-diff-face-C 'ediff-odd-diff-face-Ancestor)
-	      (ediff-set-face-pixmap 'ediff-odd-diff-face-Ancestor
-				     ediff-odd-diff-pixmap)))
-	'ediff-odd-diff-face-Ancestor))
-  "Face used to highlight even-numbered differences in the ancestor buffer.")
+;; A-list of fine-diff face symbols associated with buffer types
+(defconst ediff-fine-diff-face-alist
+  '((A . ediff-fine-diff-face-A)
+    (B . ediff-fine-diff-face-B)
+    (C . ediff-fine-diff-face-C)
+    (Ancestor . ediff-fine-diff-face-Ancestor)))
 
 ;; Help echo
 (put 'ediff-fine-diff-face-A 'ediff-help-echo
@@ -1118,14 +1419,14 @@ ancestor buffer.")
   "Overlay for the current difference region in buffer C.")
 (ediff-defvar-local ediff-current-diff-overlay-Ancestor nil
   "Overlay for the current difference region in the ancestor buffer.")
-  
+
 ;; Compute priority of ediff overlay.
 (defun ediff-highest-priority (start end buffer)
   (let ((pos (max 1 (1- start)))
 	ovr-list)
     (if ediff-xemacs-p
 	(1+ ediff-shadow-overlay-priority)
-      (ediff-eval-in-buffer buffer
+      (ediff-with-current-buffer buffer
 	(while (< pos (min (point-max) (1+ end)))
 	  (setq ovr-list (append (overlays-at pos) ovr-list))
 	  (setq pos (next-overlay-change pos)))
@@ -1240,16 +1541,18 @@ More precisely, a regexp to match any one such character.")
 (defsubst ediff-background-face (buf-type dif-num)
   ;; The value of dif-num is always 1- the one that user sees.
   ;; This is why even face is used when dif-num is odd.
-  (intern (format (if (ediff-odd-p dif-num)
-		      "ediff-even-diff-face-%S"
-		    "ediff-odd-diff-face-%S")
-		  buf-type)))
+  (ediff-get-symbol-from-alist
+   buf-type (if (ediff-odd-p dif-num)
+		ediff-even-diff-face-alist
+	      ediff-odd-diff-face-alist)
+   ))
 
 
 ;; activate faces on diff regions in buffer
 (defun ediff-paint-background-regions-in-one-buffer (buf-type unhighlight)
   (let ((diff-vector 
-	 (eval (intern (format "ediff-difference-vector-%S" buf-type))))
+	 (eval (ediff-get-symbol-from-alist
+		buf-type ediff-difference-vector-alist)))
 	overl diff-num)
     (mapcar (function
 	     (lambda (rec)
@@ -1279,14 +1582,15 @@ More precisely, a regexp to match any one such character.")
 (defun ediff-highlight-diff-in-one-buffer (n buf-type)
   (if (ediff-buffer-live-p (ediff-get-buffer buf-type))
       (let* ((buff (ediff-get-buffer buf-type))
-	     (last (ediff-eval-in-buffer buff (point-max)))
+	     (last (ediff-with-current-buffer buff (point-max)))
 	     (begin (ediff-get-diff-posn buf-type 'beg n))
 	     (end (ediff-get-diff-posn buf-type 'end n))
 	     (xtra (if (equal begin end) 1 0))
 	     (end-hilit (min last (+ end xtra)))
 	     (current-diff-overlay 
 	      (symbol-value
-	       (intern (format "ediff-current-diff-overlay-%S" buf-type)))))
+	       (ediff-get-symbol-from-alist
+		buf-type ediff-current-diff-overlay-alist))))
 	
 	(if ediff-xemacs-p
 	    (ediff-move-overlay current-diff-overlay begin end-hilit)
@@ -1305,7 +1609,8 @@ More precisely, a regexp to match any one such character.")
   (if (ediff-buffer-live-p (ediff-get-buffer buf-type))
       (let ((current-diff-overlay 
 	     (symbol-value
-	      (intern (format "ediff-current-diff-overlay-%S" buf-type))))
+	      (ediff-get-symbol-from-alist
+	       buf-type ediff-current-diff-overlay-alist)))
 	    (overlay
 	     (ediff-get-diff-overlay ediff-current-difference buf-type))
 	    )
@@ -1326,7 +1631,8 @@ More precisely, a regexp to match any one such character.")
   (if (and (ediff-has-face-support-p) ediff-use-faces)
       (let* ((inhibit-quit t)
 	     (current-diff-overlay-var
-	      (intern (format "ediff-current-diff-overlay-%S" buf-type)))
+	      (ediff-get-symbol-from-alist
+	       buf-type ediff-current-diff-overlay-alist))
 	     (current-diff-overlay (symbol-value current-diff-overlay-var)))
 	(ediff-paint-background-regions 'unhighlight)
 	(if (ediff-overlayp current-diff-overlay)
@@ -1557,7 +1863,7 @@ Checks if overlay's buffer exists."
       (ediff-empty-diff-region-p n buf-type)
       (let ((beg (ediff-get-diff-posn buf-type 'beg n))
 	    (end (ediff-get-diff-posn buf-type 'end n)))
-	(ediff-eval-in-buffer (ediff-get-buffer buf-type)
+	(ediff-with-current-buffer (ediff-get-buffer buf-type)
 	  (save-excursion
 	    (goto-char beg)
 	    (skip-chars-forward ediff-whitespace)
@@ -1632,8 +1938,8 @@ Checks if overlay's buffer exists."
 
     
 (defsubst ediff-get-region-contents (n buf-type ctrl-buf &optional start end)
-  (ediff-eval-in-buffer 
-      (ediff-eval-in-buffer ctrl-buf (ediff-get-buffer buf-type))
+  (ediff-with-current-buffer 
+      (ediff-with-current-buffer ctrl-buf (ediff-get-buffer buf-type))
     (buffer-substring
      (or start (ediff-get-diff-posn buf-type 'beg n ctrl-buf))
      (or end (ediff-get-diff-posn buf-type 'end n ctrl-buf)))))
@@ -1678,8 +1984,8 @@ Checks if overlay's buffer exists."
 
 ;;; Local Variables:
 ;;; eval: (put 'ediff-defvar-local 'lisp-indent-hook 'defun)
-;;; eval: (put 'ediff-eval-in-buffer 'lisp-indent-hook 1)
-;;; eval: (put 'ediff-eval-in-buffer 'edebug-form-spec '(form body))
+;;; eval: (put 'ediff-with-current-buffer 'lisp-indent-hook 1)
+;;; eval: (put 'ediff-with-current-buffer 'edebug-form-spec '(form body))
 ;;; End:
      
 (provide 'ediff-init)

@@ -48,9 +48,15 @@ as provided for compatibility only."
 (defsubst define-obsolete-variable-alias (oldvar newvar)
   "Define OLDVAR as an obsolete alias for variable NEWVAR.
 This makes referencing or setting OLDVAR equivalent to referencing or
-setting NEWVAR and marks OLDVAR as obsolete."
-  (defvaralias oldvar newvar)
-  (make-obsolete-variable oldvar newvar))
+setting NEWVAR and marks OLDVAR as obsolete. 
+If OLDVAR was bound and NEWVAR was not, Set NEWVAR to OLDVAR.
+
+Note: Use this before any other references (defvar/defcustom) to NEWVAR"
+  (let ((needs-setting (and (boundp oldvar) (not (boundp newvar))))
+        (value (and (boundp oldvar) (symbol-value oldvar))))
+     (defvaralias oldvar newvar)
+     (make-obsolete-variable oldvar newvar)
+     (and needs-setting (set newvar value))))
 
 (defsubst define-compatible-variable-alias (oldvar newvar)
   "Define OLDVAR as a compatible alias for variable NEWVAR.

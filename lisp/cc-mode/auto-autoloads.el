@@ -7,6 +7,18 @@
 (defvar c-mode-syntax-table nil "\
 Syntax table used in c-mode buffers.")
 
+(defvar c++-mode-syntax-table nil "\
+Syntax table used in c++-mode buffers.")
+
+(defvar objc-mode-syntax-table nil "\
+Syntax table used in objc-mode buffers.")
+
+(defvar java-mode-syntax-table nil "\
+Syntax table used in java-mode buffers.")
+
+(defvar idl-mode-syntax-table nil "\
+Syntax table used in idl-mode buffers.")
+
 ;;;***
 
 ;;;### (autoloads (idl-mode java-mode objc-mode c++-mode c-mode c-initialize-cc-mode) "cc-mode" "cc-mode/cc-mode.el")
@@ -101,7 +113,7 @@ Key bindings:
 
 ;;;***
 
-;;;### (autoloads (c-add-style c-set-style) "cc-styles" "cc-mode/cc-styles.el")
+;;;### (autoloads (c-set-offset c-add-style c-set-style) "cc-styles" "cc-mode/cc-styles.el")
 
 (autoload 'c-set-style "cc-styles" "\
 Set CC Mode variables to use one of several different indentation styles.
@@ -122,6 +134,12 @@ an association list describing the style and must be of the form:
 See the variable `c-style-alist' for the semantics of BASESTYLE,
 VARIABLE and VALUE.  This function also sets the current style to
 STYLE using `c-set-style' if the optional SET-P flag is non-nil." t nil)
+
+(autoload 'c-set-offset "cc-styles" "\
+Change the value of a syntactic element symbol in `c-offsets-alist'.
+SYMBOL is the syntactic element symbol to change and OFFSET is the new
+offset for that syntactic element.  Optional ADD says to add SYMBOL to
+`c-offsets-alist' if it doesn't already appear there." t nil)
 
 ;;;***
 

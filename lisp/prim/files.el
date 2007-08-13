@@ -3024,8 +3024,14 @@ With prefix arg, silently save all file-visiting buffers, then kill."
 		      val)
 		    (setq active t))
 	       (setq processes (cdr processes)))
-	     (or (not active)
-		 (yes-or-no-p "Active processes exist; kill them and exit anyway? "))))
+	     (or
+	      (not active)
+	      (save-excursion
+		(save-window-excursion
+		  (delete-other-windows)
+		  (list-processes)
+		  (yes-or-no-p
+		   "Active processes exist; kill them and exit anyway? "))))))
        ;; Query the user for other things, perhaps.
        (run-hook-with-args-until-failure 'kill-emacs-query-functions)
        (kill-emacs)))

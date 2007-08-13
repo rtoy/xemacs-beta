@@ -1444,7 +1444,7 @@ do								\
 #define NUM_LEADING_BYTES 1
 #define MIN_LEADING_BYTE 0x80
 #define CHARSETP(cs) 1
-#define CHARSET_BY_LEADING_BYTE(cs) Vcharset_ascii
+#define CHARSET_BY_LEADING_BYTE(lb) Vcharset_ascii
 #define XCHARSET_LEADING_BYTE(cs) LEADING_BYTE_ASCII
 #define XCHARSET_GRAPHIC(cs) -1
 #define XCHARSET_COLUMNS(cs) 1

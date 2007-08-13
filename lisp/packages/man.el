@@ -1,7 +1,7 @@
 ;;; man.el --- browse UNIX manual pages
 ;; Keywords: help
 
-;; Copyright (C) 1985, 1993, 1994, 1996 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1993, 1994, 1996, 1997 Free Software Foundation, Inc.
 ;;
 ;; This file is part of XEmacs.
 
@@ -180,34 +180,37 @@ parsing--no <PRE>!  Man page references are turned into hypertext links."
 			nil 'Manual-page-minibuffer-history)))
 	   (if (equal thing "") default thing))
 	 (prefix-numeric-value current-prefix-arg)))
-  ;;(interactive "sManual entry (topic): \np")
   (or arg (setq arg 1))
   (let (section apropos-mode)
     (let ((case-fold-search nil))
       (if (and (null section)
 	       (string-match "\\`[ \t]*\\([^( \t]+\\)[ \t]*(\\(.+\\))[ \t]*\\'"
 			     topic))
-	  (setq section (substring topic (match-beginning 2)
-				   (match-end 2))
-		topic (substring topic (match-beginning 1)
-				 (match-end 1)))
+	  (setq section (match-string 2 topic)
+		topic (match-string 1 topic))
 	(if (string-match "\\`[ \t]*-k[ \t]+\\([^ \t]+\\)\\'" topic)
 	    (setq section "-k"
-		  topic (substring topic (match-beginning 1))))))
+		  topic (match-string 1 topic)))))
 
     (when Manual-snip-subchapter
       ;; jwz: turn section "3x11" and "3n" into "3".
       (if (and section (string-match "\\`\\([0-9]+\\)[^0-9]" section))
-	  (setq section (substring section 0 (match-end 1)))))
+	  (setq section (match-string 1 section))))
+
     (if (equal section "-k")
 	(setq apropos-mode t))
 
-    (let ((bufname (cond (apropos-mode
-			  (concat "*man apropos " topic "*"))
-			 (t
-			  (concat "*man " topic
-				  (if section (concat "." section) "")
-				  "*"))))
+    (let ((bufname (flet
+		       ((maybe-star ()
+				    (if buffers-menu-submenus-for-groups-p
+					""
+				      "*")))
+		     (if apropos-mode
+			 (concat (maybe-star) "man apropos " topic (maybe-star))
+		       (concat (maybe-star)
+			       topic
+			       (if section (concat "(" section ")") "")
+			       (maybe-star)))))
 	  (temp-buffer-show-function 
 	   (cond ((eq 't Manual-buffer-view-mode)
 		  'view-buffer)
@@ -255,15 +258,24 @@ parsing--no <PRE>!  Man page references are turned into hypertext links."
 
 		   (message "%s (cleaning...)" args-string)
 		   (Manual-nuke-nroff-bs apropos-mode)
-		   (message "%s (done.)" args-string)
-		   )
-
+		   (message "%s (done.)" args-string))
 		 (set-buffer-modified-p nil)
-		 (Manual-mode)
-		 ))))
-      (setq Manual-page-history
-	    (cons (buffer-name)
-		  (delete (buffer-name) Manual-page-history)))))
+		 (Manual-mode)))))
+
+      (let ((page (flet
+		      ((maybe-star ()
+				   (if buffers-menu-submenus-for-groups-p
+				       ""
+				     "*")))
+		    (if section
+			(concat (maybe-star) topic "(" section ")" (maybe-star))
+		      topic))))
+	(setq Manual-page-history
+	      (cons (buffer-name)
+		    (delete (buffer-name) Manual-page-history))
+	      Manual-page-minibuffer-history
+	      (cons page (delete page Manual-page-minibuffer-history))))))
+
   (message nil)
   t)
 
@@ -280,15 +292,24 @@ parsing--no <PRE>!  Man page references are turned into hypertext links."
   ;; turn off horizontal scrollbars in this buffer
   (when (featurep 'scrollbar)
     (set-specifier scrollbar-height (cons (current-buffer) 0)))
+  (make-local-hook 'kill-buffer-hook)
+  (add-hook 'kill-buffer-hook #'(lambda ()
+				  (setq Manual-page-history
+					(delete (buffer-name)
+						Manual-page-history)))
+	    nil t)
   (run-hooks 'Manual-mode-hook))
 
 (defun Manual-last-page ()
   (interactive)
-  (while (or (not (get-buffer (car (or Manual-page-history
-				       (error "No more history.")))))
-	     (eq (get-buffer (car Manual-page-history)) (current-buffer)))
-    (setq Manual-page-history (cdr Manual-page-history)))
-  (switch-to-buffer (car Manual-page-history)))
+  (if Manual-page-history
+      (let ((page (pop Manual-page-history)))
+	(if page
+	    (progn
+	      (get-buffer page)
+	      (cons Manual-page-history page)
+	      (switch-to-buffer page))))
+    (error "No manual page buffers found. Use `M-x manual-entry'")))
 
 
 (defmacro Manual-delete-char (n)
@@ -394,6 +415,7 @@ parsing--no <PRE>!  Man page references are turned into hypertext links."
 
 
 (defun Manual-nuke-nroff-bs-footers ()
+  "For info see comments in packages/man.el"
   ;; Nuke headers and footers.
   ;;
   ;; nroff assumes pages are 66 lines high.  We assume that, and that the
@@ -492,7 +514,7 @@ parsing--no <PRE>!  Man page references are turned into hypertext links."
 (defun Manual-mouseify-xrefs ()
   (goto-char (point-min))
   (let ((case-fold-search nil)
-	s e name extent)
+	s e name splitp extent)
     ;; possibly it would be faster to rewrite this expression to search for
     ;; a less common sequence first (like "([0-9]") and then back up to see
     ;; if it's really a match.  This function is 15% of the total time, 13%
@@ -501,29 +523,49 @@ parsing--no <PRE>!  Man page references are turned into hypertext links."
 			      nil t)
       (setq s (match-beginning 0)
 	    e (match-end 0)
-	    name (buffer-substring s e))
+	    name (buffer-substring s e)
+	    splitp nil)
+
       (goto-char s)
-      (skip-chars-backward " \t")
-      (if (and (bolp) (not (bobp))
-	       (progn (backward-char 1) (equal (char-before) ?-)))
-	  (progn
-	    (setq s (point))
-	    (skip-chars-backward "-a-zA-Z0-9_.:")
-	    (setq name (concat (buffer-substring (point)
-						 (if (>= s 0)
-						     (1- s)
-						   0))
-			       name))
-	    (setq s (point))))
+      ;; if this is a hyphenated xref, we're on the second line, 1st char now.
+
+      (when (progn
+	      (beginning-of-line)
+	      (and (looking-at (concat "^[ \t]+" (regexp-quote name)))
+		   (progn
+		     (backward-char 1)
+		     (or (equal (char-before) ?-)
+			 (equal (char-before) ?\255)))
+		   (setq s (progn
+			     (skip-chars-backward "-\255_a-zA-Z0-9")
+			     (point))
+			 name (buffer-substring s e))))
+	(setq splitp t)
+	;; delete the spaces and dash from `name'
+	(let (i)
+	  (while (setq i (string-match "[-\255 \n\t]+" name i))
+	    (setq name (concat (substring name 0 i)
+			       (substring name (match-end 0)))
+		  i (1+ i)))))
+
       ;; if there are upper case letters in the section, downcase them.
       (if (string-match "(.*[A-Z]+.*)$" name)
 	  (setq name (concat (substring name 0 (match-beginning 0))
 			     (downcase (substring name (match-beginning 0))))))
-      ;; (setq already-fontified (extent-at s))
-      (setq extent (make-extent s e))
+
+      ;; if the xref was hyphenated, don't highlight the indention spaces.
+      (if splitp
+	  (progn
+	    (setq extent (make-extent s (progn (goto-char s) (end-of-line) (point))))
+	    (set-extent-property extent 'man (list 'Manual-follow-xref name))
+	    (set-extent-property extent 'highlight t)
+	    (set-extent-face extent 'man-xref)
+	    (goto-char e)
+	    (skip-chars-backward "-_a-zA-Z0-9()")
+	    (setq extent (make-extent (point) e)))
+	(setq extent (make-extent s e)))
       (set-extent-property extent 'man (list 'Manual-follow-xref name))
       (set-extent-property extent 'highlight t)
-      ;; (if (not already-fontified)...
       (set-extent-face extent 'man-xref)
       (goto-char e))))
 
@@ -561,7 +603,6 @@ on the menu in the order in which they appear in the buffer."
   (interactive "e")
   (let ((buffer (current-buffer))
 	(sep "---")
-	(prefix "Show Manual Page for ")
 	xref items)
     (cond (event
 	   (setq buffer (event-buffer event))
@@ -579,13 +620,14 @@ on the menu in the order in which they appear in the buffer."
 		    nil))
 		 buffer)
     (if (eq sep (car items)) (setq items (cdr items)))
-    (let ((popup-menu-titles nil))
+    (let ((popup-menu-titles t))
+      (and (null items) (setq popup-menu-titles nil))
       (popup-menu
        (cons "Manual Entry"
 	     (mapcar #'(lambda (item)
 			 (if (eq item sep)
 			     item
-                           (vector (concat prefix item)
+                           (vector item
                                    (list 'Manual-follow-xref item) t)))
 		     (nreverse items)))))))
 
@@ -606,9 +648,16 @@ on the menu in the order in which they appear in the buffer."
 		  (setq manpage (buffer-substring (match-beginning 1)
 						  (match-end 1)))
 		(setq manpage "???"))
-	      (setq buffer
-		    (rename-buffer
-		     (generate-new-buffer-name (concat "*man " manpage "*"))))
+	      (flet
+		  ((maybe-star ()
+			       (if buffers-menu-submenus-for-groups-p
+				   "*"
+				 "")))
+		(setq buffer
+		      (rename-buffer
+		       (generate-new-buffer-name (concat (maybe-star)
+							 manpage
+							 (maybe-star))))))
 	      (setq buffer-file-name nil)
 	      (goto-char (point-min))
 	      (insert (format "%s\n" buf-name))

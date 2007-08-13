@@ -631,7 +631,7 @@ by func-menu, then do something along the lines of the following:
    ;; >= six spaces
    "^      \\s-*"
    ;; type specs
-   "+[a-zA-Z0-9*]*\\s-*"
+   "[a-zA-Z0-9*]*\\s-*"
    ;; continuation lines
    "\\(\n     [^ 0]\\s-*\\)*"
    ;; function or subroutine
@@ -645,7 +645,7 @@ by func-menu, then do something along the lines of the following:
 (defvar fume-function-name-regexp-fortran90
   (concat
    ;; type specs
-   "+[a-zA-Z0-9*]*\\s-*"
+   "[a-zA-Z0-9*]*\\s-*"
    ;; function or subroutine
    "\\(entry\\|ENTRY\\|function\\|FUNCTION\\|module\\|MODULE\\|subroutine\\|SUBROUTINE\\)\\s-*"
    )

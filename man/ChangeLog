@@ -1,3 +1,17 @@
+Tue Aug  5 21:56:02 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.texi:
+	In FAQ section, document use of c-mode-base-map instead of c-mode-map.
+
+Fri Aug  1 22:44:49 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.texi: Removed the description of c-enable-//-in-c-mode.
+
+Wed Jul 30 00:01:45 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.texi:
+	Added description of template-args-cont syntactic symbol
+
 1997-07-25  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.texi: Describe support for idl-mode

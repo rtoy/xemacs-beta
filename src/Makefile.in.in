@@ -97,8 +97,8 @@ VPATH=@srcdir@
 RM = rm -f
 PURIFY_PROG=purify
 PURIFY_FLAGS=-chain-length=16 -ignore-signals=SIGPOLL -log-file=puremacs.log \
-             -messages=batch -show-directory=yes -windows=yes \
-             -cache-dir=. -always-use-cache-dir=yes
+             -messages=batch -show-directory=yes -windows=yes -threads=yes \
+             -cache-dir=. -always-use-cache-dir=yes -pointer-mask=0x0fffffff
 PURECOV_PROG=purecov
 #ifdef  QUANTIFY
 quantify_prog  = quantify
@@ -412,7 +412,11 @@ rtcrun: rtcmacs
 	run' rtcmacs
 
 puremacs: $(temacs_deps)
-	$(PURIFY_PROG) $(PURIFY_FLAGS) $(LD) $(temacs_link_args)
+	$(PURIFY_PROG) $(PURIFY_FLAGS) $(LD) $(temacs_link_args) -lpthread
+
+.PHONY : run-puremacs
+run-puremacs: puremacs
+	./puremacs -batch -l loadup.el run-temacs
 
 quantmacs: $(temacs_deps)
 	$(quantify_prog) $(quantify_flags) $(LD) $(temacs_link_args)

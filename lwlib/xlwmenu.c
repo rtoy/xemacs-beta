@@ -401,6 +401,11 @@ string_width_u (XlwMenuWidget mw,
   XmStringExtent (mw->menu.font_list, s, &width, &height);
   return width;
 #else
+# ifdef USE_XFONTSET
+  XRectangle ri, rl;
+  XmbTextExtents (mw->menu.font_set, string, strlen (string), &ri, &rl);
+  return rl.width;
+# else /* ! USE_XFONTSET */
   XCharStruct xcs;
   int i,s=0,w=0;
   int drop;
@@ -417,6 +422,7 @@ string_width_u (XlwMenuWidget mw,
 	  w += xcs.width;
   }
   return w;
+# endif /* USE_XFONTSET */
 #endif
 }
 

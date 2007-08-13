@@ -1,3 +1,219 @@
+1997-08-09  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* packages/info.el: (info::toolbar) swap next and prev buttons to
+ 	match the order of the node headings in info files.
+
+1997-08-09  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* packages/info.el: (Info-fontify-node) will now split top line
+ 	that spans 3 lines.  (Info-extract-pointer) adjust to match.
+
+1997-08-08  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* packages/info.el: (Info-extract-pointer) make it move forward
+ 	one more line so when the top line has been split, the toolbar
+ 	arrows, u, and p will find the link they need.
+
+Thu Aug  7 18:13:12 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/Release 5.15
+
+Thu Aug  7 19:21:32 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-styles.el (c-set-offset): Added autoload cookie.
+
+	* cc-mode/cc-langs.el (c++-mode-syntax-table, java-mode-syntax-table,
+	objc-mode-syntax-table, idl-mode-syntax-table):	Added autoload
+	cookies. c-mode-syntax-table already has one.
+
+Wed Aug  6 21:50:08 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-mode.el (c-initialize-cc-mode):
+	Check all cc-mode-19 interface requirements.
+
+Tue Aug  5 21:56:02 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-align.el (c-lineup-java-throws):
+	Change the `when' clause to an `if-progn' :-(
+
+	* cc-mode/cc-langs.el (c-common-init):
+	Make comment-line-break-function buffer local iff it's boundp.
+
+	* cc-mode/cc-cmds.el:
+	defadvice for indent-new-comment-line keys off of c-buffer-is-cc-mode
+	instead of an explicit major-mode list.  this means non-CC Mode
+	derived modes will work properly
+
+	* cc-mode/cc-mode.el (c-initialize-cc-mode): Set
+	c-buffer-is-cc-mode to t.
+
+	* cc-mode/cc-vars.el (c-buffer-is-cc-mode): New variable
+
+	* cc-mode/cc-mode.el (c-initialize-cc-mode):
+	Give in to the pressure.  require 'cc-mode-19
+	if functionp is not bound.  Too many novice errors without this.
+
+	* cc-mode/cc-cmds.el:
+	Added advice for indent-new-comment-line so older Emacsen work if they
+	don't have the variable comment-line-break-function.
+
+Mon Aug  4 14:55:40 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-langs.el (c-mode-base-map, c++-mode-map):
+	Move `/' as an electric character
+	from c++-mode-map to c-mode-base-map for all languages.
+
+	* cc-mode/cc-cmds.el (c-electric-slash):
+	Make this work as the final slash in a */ block
+	oriented comment closing token.
+
+	* cc-mode/cc-vars.el (c-comment-continuation-stars):
+	Can take a nil value.  Also, the default value is "* ".
+
+	* cc-mode/cc-cmds.el (c-comment-line-break-function): nil value for
+	c-comment-continuation-stars means use old semantics
+
+Fri Aug  1 22:44:49 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-cmds.el (c-comment-line-break-function):
+	Added optional soft argument
+
+	* cc-mode/cc-langs.el (c-common-init): Set comment-multi-line and
+	comment-line-break-function here for all modes.
+
+	* cc-mode/cc-mode.el (c-mode, c++-mode, objc-mode, java-mode,
+	idl-mode):
+	Don't set comment-multi-line here.
+
+	* cc-mode/cc-vars.el (c-comment-continuation-stars): New variable
+
+	* cc-mode/cc-cmds.el (c-comment-line-break-function): New function
+	for proposed mode-specific comment-line-break-function variable.
+
+	* cc-mode/cc-mode.el (c-mode): comment-multi-line => nil
+
+	* cc-mode/cc-langs.el (c-C-comment-start-regexp): Obsolete.
+
+	(c-comment-start-regexp): Initialize from c-C++-comment-start-regexp.
+
+	(c-populate-syntax-table, c-setup-dual-comments): Merge both functions
+	into c-populate-syntax-table.  With the new 9X draft C standard, both
+	line and block oriented comments are supported in all modes, so always
+	set up the syntax tables to support both comment styles.
+
+	(c-mode-syntax-table, c++-mode-syntax-table, java-mode-syntax-table,
+	objc-mode-syntax-table, idl-mode-syntax-table): Use the new syntax
+	table initialization idioms.
+
+	(c-enable-//-in-c-mode): Obsolete.
+
+	* cc-mode/cc-mode.el (c-mode):
+	c-comment-start-regexp uses c-C++-comment-start-regexp to
+	support line oriented comments.
+
+Wed Jul 30 00:01:45 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-engine.el (c-guess-basic-syntax):
+	CASE 5D.4: template argument continuation
+	lines are now analyzed as template-args-cont.
+
+	* cc-mode/cc-styles.el (c-offsets-alist):
+	Added template-args-cont syntactic symbol
+
+Sat Jul 26 16:03:33 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-styles.el (c-styles-alist):
+	In "java" style, set c-hanging-comment-starter-p to
+	nil to preserve Javadoc starter lines.
+
+1997-08-08  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* prim/obsolete.el (define-obsolete-variable-alias): If the
+	obsolete variable was setq'ed before the code was loaded we want
+	that value.
+
+1997-08-06  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* packages/man.el: Several modifications
+
+		* (manual-entry) buffers are named without *'s, when
+ 		`buffers-menu-submenus-for-groups-p' is t, so they show up
+ 		in a subsection of the Buffer's menu now, rather than
+ 		lumped under *Misc*.
+
+		* (Manual-mode) added a local `kill-buffer-hook' to remove
+ 		a killed manual from the `Manual-page-history'
+
+		* (Manual-last-page) begun rewrite of manuvering and
+ 		viewing mode code
+
+		* (Manual-mouseify-xrefs) hyphenated xrefs are highlighted
+ 		now, and properly handled when the second line is
+ 		indented.  They end up on the menus too.
+
+		* (Manual-popup-menu) made the far button popup menus look
+ 		better by removing the prefix string and adding a title.
+
+1997-08-06  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* packages/info.el: (Info-highlight-region) Fixed it to not
+ 	highlight the indention spaces in xrefs split across lines with
+ 	indention on the second line.
+
+1997-08-06  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* packages/info.el: Numerous modifications, including:
+
+		* support for "dir" merging 'ala Emacs-19.34, with
+ 		fallback to cheap localdir files in the secondary info
+ 		directories.
+ 	
+		* changed default `Info-annotations-path' from
+ 		~/.infonotes to ~/.xemacs/info.notes
+	
+		* added `Info-additional-directory-list'
+	
+		* changed a call to w3-fetch to browse-url
+ 	
+		* added new variables and functions from GNU Emacs 19.34:
+ 		`Info-dir-contents', `Info-dir-contents-directory',
+ 		`Info-dir-file-attributes', and the function
+ 		`Info-insert-dir'
+ 	
+		* rewrote `Info-suffixed-file' to a cond block rather than
+ 		nested if's for aesthetic reasons.
+ 	
+		* made the top line get split if it's longer than 79
+ 		characters and tweaked fontification to handle that.
+ 	
+		* changed the look of the pop-up mouse menus by utilizing
+ 		the "--:etchedThing" dividers.
+	
+		* several docstring reformats and typo fixes, a few
+ 		comments deleted.
+
+	* info/dir: deleted the Locals: line.  I think it's obsolete since
+ 	the "dir" merge can put things from like-named nodes in separated
+ 	"dir" files all under one menu, which is more versatile than just
+ 	a "Locals:" section.  If you still want a "Locals:" section, make
+ 	yourself a node for it.
+
+1997-08-07  SL Baur  <steve@altair.xemacs.org>
+
+	* egg/egg.el (hiragana-region): Ebola cleanup.
+	(katakana-region): Ditto.
+
+1997-08-02  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+	* prim/files.el (save-buffers-kill-emacs):
+	If there are active processes, then list them before querying if
+	it is ok to exit emacs.
+
+1997-08-01  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+        * efs/dired.el (dired-get-filename) Move the skipping of the
+        ending carriage return on NT to inside the setq so `and' won't
+        fail on Unix.
+
 1997-07-30  SL Baur  <steve@altair.xemacs.org>
 
 	* prim/startup.el (find-emacs-root-internal-1): Remove diagnostic.
@@ -52,10 +268,6 @@ Fri Jul 25 22:17:07 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode/cc-styles.el (c-set-style-2):
 	Fixed broken implementation of inherited styles.
-
-	* cc-mode.texi:
-	Document c-initialization-hook.  Also rewrite the "Getting Connected"
-	section on byte compiling the source.
 
 	* cc-mode/cc-mode.el (c-initialize-cc-mode):
 	Run the c-initialization-hook, but only once

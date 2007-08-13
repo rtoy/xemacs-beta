@@ -7,7 +7,7 @@
 @comment Using ediff.info instead of ediff in setfilename breaks DOS.
 @comment @setfilename ediff
 @comment @setfilename ediff.info
-@setfilename ediff
+@setfilename ../info/ediff
 
 @settitle Ediff User's Manual
 @synindex vr cp
@@ -40,9 +40,9 @@ paragraph not being relevant to the printed manual).
 @titlepage
 @title Ediff User's Manual
 @sp 4
-@subtitle Ediff version 2.66
+@subtitle Ediff version 2.67
 @sp 1
-@subtitle July 1997
+@subtitle August 1997
 @sp 5
 @author Michael Kifer
 @page
@@ -62,7 +62,7 @@ are preserved on all copies.
 
 
 @menu
-* Introduction::                About Ediff 2.66.
+* Introduction::                About Ediff 2.67.
 * Major Entry Points::          How to use Ediff.
 * Session Commands::            Ediff commands used within a session.
 * Registry of Ediff Sessions::  Keeping track of multiple Ediff sessions.
@@ -1460,21 +1460,6 @@ faces. The odd and the even faces are actually identical on monochrome
 displays, because without colors options are limited.
 So, Ediff uses italics to highlight non-current differences.
 
-@item ediff-even-diff-pixmap
-@itemx ediff-odd-diff-pixmap
-@itemx ediff-fine-diff-pixmap
-@vindex ediff-even-diff-pixmap
-@vindex ediff-odd-diff-pixmap
-@vindex ediff-fine-diff-pixmap
-On monochrome graphical displays, Ediff attempts to provide additional
-hues using background pixmaps. The above variables specify pixmaps (which
-are strings representing filenames of bitmaps) for even-numbered background
-difference regions, odd-numbered regions, and fine differences.  If Ediff's
-default pixmaps don't exist on your machine, check the bitmap directory at
-your installation to find an appropriate bitmap. The bitmap directory can
-be found by checking the value of the Emacs variable
-@code{x-bitmap-file-path}.
-
 @item ediff-force-faces
 @vindex ediff-force-faces
 Ediff generally can detect when Emacs is running on a device where it can
@@ -1502,18 +1487,20 @@ xterm window, the only available option is highlighting with strings.
 @end table
 
 @noindent
-If you want to change the above variables, you must do it
-@strong{before} Ediff is loaded. 
+If you want to change the default settings for @code{ediff-force-faces} and
+@code{ediff-highlight-all-diffs}, you must do it @strong{before} Ediff is
+loaded.
 
-There are two ways to change the default setting
-for highlighting faces: either change the variables, as shown here,
+You can also change the defaults for the faces used to highlight the
+difference regions.  There are two ways to do this.  The simplest and the
+preferred way is to use the customization widget accessible from the
+menubar. Ediff's customization group is located under "Tools", which in
+turn is under "Programming". The faces that are used to highlight
+difference regions are located in the "Highlighting" subgroup of the Ediff
+customization group.
 
-@example
-(setq ediff-current-diff-face-A 'bold-italic)
-@end example
-
-@noindent
-or here,
+The second, much more arcane, method to change default faces is to include
+some Lisp code in @file{~/.emacs}. For instance,
 
 @example
 (setq ediff-current-diff-face-A
@@ -1521,7 +1508,12 @@ or here,
 @end example
 
 @noindent
-or modify the defaults selectively:
+would use the pre-defined fase @code{bold-italic} to highlight the current
+difference region in buffer A (this face is not a good choice, by the way).
+
+If you are unhappy with just @emph{some} of the aspects of the default
+faces, you can modify them when Ediff is being loaded using
+@code{ediff-load-hook}. For instance:
 
 @smallexample
 (add-hook 'ediff-load-hook
@@ -1533,9 +1525,6 @@ or modify the defaults selectively:
                       (make-face-italic
                         ediff-current-diff-face-B))))
 @end smallexample
-
-You may also want to take a look at how the above faces are defined in the
-source code of Ediff. 
 
 @strong{Note:} it is not recommended to use @code{internal-get-face} (or
 @code{get-face} in XEmacs) when defining Ediff's faces, since this may

@@ -467,7 +467,7 @@ and `check-char-table-value'.
 */
        (object))
 {
-  return (CHAR_TABLEP (object) ? Qt : Qnil);
+  return CHAR_TABLEP (object) ? Qt : Qnil;
 }
 
 DEFUN ("char-table-type-list", Fchar_table_type_list, 0, 0, 0, /*
@@ -513,16 +513,13 @@ sorts of values.  The different char table types are
 */
        (type))
 {
-  if (EQ (type, Qchar)
+  return (EQ (type, Qchar)     ||
 #ifdef MULE
-      || EQ (type, Qcategory)
+	  EQ (type, Qcategory) ||
 #endif
-      || EQ (type, Qdisplay)
-      || EQ (type, Qgeneric)
-      || EQ (type, Qsyntax))
-    return Qt;
-
-  return Qnil;
+	  EQ (type, Qdisplay)  ||
+	  EQ (type, Qgeneric)  ||
+	  EQ (type, Qsyntax)) ? Qt : Qnil;
 }
 
 DEFUN ("char-table-type", Fchar_table_type, 1, 1, 0, /*
@@ -842,7 +839,7 @@ Find value for char CH in TABLE.
   CHECK_CHAR_COERCE_INT (ch);
   chr = XCHAR(ch);
   
-  return (get_char_table (chr, ct));
+  return get_char_table (chr, ct);
 }
 
 DEFUN ("get-range-char-table", Fget_range_char_table, 2, 3, 0, /*
@@ -1274,15 +1271,14 @@ map_over_other_charset (struct Lisp_Char_Table *ct, int lb,
 				   Lisp_Object val, void *arg),
 			void *arg)
 {
-  Lisp_Object charset;
-  Lisp_Object val;
-
-  val = ct->level1[lb - MIN_LEADING_BYTE];
-
-  charset = CHARSET_BY_LEADING_BYTE (lb);
-  if (!CHARSETP (charset) || lb == LEADING_BYTE_ASCII
+  Lisp_Object val = ct->level1[lb - MIN_LEADING_BYTE];
+  Lisp_Object charset = CHARSET_BY_LEADING_BYTE (lb);
+  
+  if (!CHARSETP (charset)
+      || lb == LEADING_BYTE_ASCII
       || lb == LEADING_BYTE_CONTROL_1)
     return 0;
+  
   if (!CHAR_TABLE_ENTRYP (val))
     {
       struct chartab_range rainj;
@@ -1291,26 +1287,17 @@ map_over_other_charset (struct Lisp_Char_Table *ct, int lb,
       rainj.charset = charset;
       return (fn) (&rainj, val, arg);
     }
-  else if (XCHARSET_DIMENSION (charset) == 1)
-    {
-      int i;
-      struct Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (val);
-      int start, stop;
-      
-      if (XCHARSET_CHARS (charset) == 94)
-	{
-	  start = 33;
-	  stop = 127;
-	}
-      else
-	{
-	  start = 32;
-	  stop = 128;
-	}
-
+  
+  {
+    struct Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (val);
+    int charset94_p = (XCHARSET_CHARS (charset) == 94);
+    int start = charset94_p ?  33 :  32;
+    int stop  = charset94_p ? 127 : 128;
+    int i, retval;
+  
+    if (XCHARSET_DIMENSION (charset) == 1)
       for (i = start; i < stop; i++)
 	{
-	  int retval;
 	  struct chartab_range rainj;
 
 	  rainj.type = CHARTAB_RANGE_CHAR;
@@ -1319,32 +1306,14 @@ map_over_other_charset (struct Lisp_Char_Table *ct, int lb,
 	  if (retval)
 	    return retval;
 	}
-    }
-  else
-    {
-      int i;
-      struct Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (val);
-      int start, stop;
-      
-      if (XCHARSET_CHARS (charset) == 94)
-	{
-	  start = 33;
-	  stop = 127;
-	}
-      else
-	{
-	  start = 32;
-	  stop = 128;
-	}
-
+    else
       for (i = start; i < stop; i++)
 	{
-	  int retval =
-	    map_over_charset_row (cte, charset, i, fn, arg);
+	  retval = map_over_charset_row (cte, charset, i, fn, arg);
 	  if (retval)
 	    return retval;
 	}
-    }
+  }
 
   return 0;
 }
@@ -1385,7 +1354,7 @@ map_char_table (struct Lisp_Char_Table *ct,
 		return retval;
 	    }
 	}
-#endif
+#endif /* MULE */
       }
       break;
 
@@ -1661,7 +1630,7 @@ check_category_char(Emchar ch, Lisp_Object table,
   if (EQ (temp, Qnil)) return not;
   
   designator -= ' ';
-  return (bit_vector_bit(XBIT_VECTOR (temp), designator) ? !not : not);
+  return bit_vector_bit(XBIT_VECTOR (temp), designator) ? !not : not;
 }
 
 DEFUN ("check-category-at", Fcheck_category_at, 2, 4, 0, /*
@@ -1682,8 +1651,7 @@ else return nil. Optional third arg specifies which buffer
   des = XREALINT(designator);
   ctbl = check_category_table (category_table, Vstandard_category_table);
   ch = BUF_FETCH_CHAR (buf, XINT(pos));
-  return (check_category_char(ch, ctbl, des, 0)
-	  ? Qt : Qnil);
+  return check_category_char(ch, ctbl, des, 0) ? Qt : Qnil;
 }
 
 DEFUN ("char-in-category-p", Fchar_in_category_p, 2, 3, 0, /*
@@ -1703,8 +1671,7 @@ which defaults to the system default table.
   CHECK_CHAR(chr);
   ch = XCHAR(chr);
   ctbl = check_category_table (category_table, Vstandard_category_table);
-  return (check_category_char(ch, ctbl, des, 0)
-	  ? Qt : Qnil);
+  return check_category_char(ch, ctbl, des, 0) ? Qt : Qnil;
 }
 
 DEFUN ("category-table", Fcategory_table, 0, 1, 0, /*
@@ -1759,9 +1726,7 @@ Return t if ARG is a category designator (a char in the range ' ' to '~').
 */
        (obj))
 {
-  if (CATEGORY_DESIGNATORP (obj))
-    return Qt;
-  return Qnil;
+  return CATEGORY_DESIGNATORP (obj) ? Qt : Qnil;
 }
 
 DEFUN ("category-table-value-p", Fcategory_table_value_p, 1, 1, 0, /*
@@ -1770,9 +1735,7 @@ Valid values are nil or a bit vector of size 95.
 */
        (obj))
 {
-  if (CATEGORY_TABLE_VALUEP (obj))
-    return Qt;
-  return Qnil;
+  return CATEGORY_TABLE_VALUEP (obj) ? Qt : Qnil;
 }
 
 #endif /* MULE */

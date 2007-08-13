@@ -7,9 +7,9 @@
 # variables VERSION, EMACS, DATADIR and comment out the Emacs-specific
 # versions.
 
-VERSION = 19.34
+VERSION = 20.0
 EMACS = emacs-$(VERSION)
-#VERSION = 19.14
+#VERSION = 20.3
 #EMACS = xemacs-$(VERSION)  
 PREFIX = /usr/local
 DATADIR = $(PREFIX)/share
@@ -17,6 +17,7 @@ DATADIR = $(PREFIX)/share
 LISPDIR = $(DATADIR)/emacs/site-lisp
 INFODIR = $(PREFIX)/info
 ETCDIR = $(DATADIR)/emacs/$(VERSION)/etc
+COMPDIR =
 
 # --------- YOU PROBABLY DON'T WANT TO CHANGE THESE ----------------
 TeX = tex
@@ -28,9 +29,20 @@ INSTALL = install
 EDIFF    = ediff-init.el ediff-help.el ediff-diff.el ediff-merg.el \
            ediff-wind.el ediff-util.el ediff-mult.el ediff-vers.el \
            ediff-ptch.el ediff.el ediff-hook.el ediff-tbar.el
-EDIFFelc = ediff-init.elc ediff-help.elc ediff-diff.elc ediff-merg.elc \
-           ediff-wind.elc ediff-util.elc ediff-mult.elc ediff-vers.elc \
-           ediff-ptch.elc ediff.elc ediff-hook.elc ediff-tbar.elc
+EDIFFelc = $(COMPDIR)ediff-init.elc \
+	   $(COMPDIR)ediff-help.elc \
+	   $(COMPDIR)ediff-diff.elc \
+	   $(COMPDIR)ediff-merg.elc \
+           $(COMPDIR)ediff-wind.elc \
+	   $(COMPDIR)ediff-util.elc \
+	   $(COMPDIR)ediff-mult.elc \
+	   $(COMPDIR)ediff-vers.elc \
+           $(COMPDIR)ediff-ptch.elc \
+	   $(COMPDIR)ediff.elc \
+	   $(COMPDIR)ediff-hook.elc \
+	   $(COMPDIR)ediff-tbar.elc
+
+COMPILE_ARGS = -batch -f batch-byte-compile
 
 
 all: hello elc goodbye dvi info
@@ -51,7 +63,7 @@ goodbye:
 hello:
 	@echo ""
 	@echo ""
-	@echo "Byte compiling using Emacs 19"
+	@echo "Byte compiling using Emacs"
 	@echo "Use  make EMACS=xemacs  to compile under XEmacs"
 	@echo ""
 	@echo ""
@@ -60,53 +72,53 @@ hello:
 	@echo ""
 	@echo ""
 
-ediff-init.elc: ediff-init.el
+$(COMPDIR)ediff-init.elc: ediff-init.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile ediff-init.el
+	$(EMACS) $(COMPILE_ARGS) ediff-init.el
 
-ediff-help.elc: ediff-help.el
+$(COMPDIR)ediff-help.elc: ediff-help.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile ediff-help.el
+	$(EMACS) $(COMPILE_ARGS) ediff-help.el
 
-ediff-hook.elc: ediff-hook.el
+$(COMPDIR)ediff-hook.elc: ediff-hook.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile ediff-hook.el
+	$(EMACS) $(COMPILE_ARGS) ediff-hook.el
 
-ediff-tbar.elc: ediff-tbar.el
+$(COMPDIR)ediff-tbar.elc: ediff-tbar.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile ediff-tbar.el
+	$(EMACS) $(COMPILE_ARGS) ediff-tbar.el
 
-ediff-diff.elc: ediff-init.el ediff-diff.el
+$(COMPDIR)ediff-diff.elc: ediff-init.el ediff-diff.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile ediff-diff.el
+	$(EMACS) $(COMPILE_ARGS) ediff-diff.el
 
-ediff-merg.elc: ediff-init.el ediff-merg.el
+$(COMPDIR)ediff-merg.elc: ediff-init.el ediff-merg.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile ediff-merg.el
+	$(EMACS) $(COMPILE_ARGS) ediff-merg.el
 
-ediff-mult.elc: ediff-init.el ediff-mult.el
+$(COMPDIR)ediff-mult.elc: ediff-init.el ediff-mult.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile ediff-mult.el
+	$(EMACS) $(COMPILE_ARGS) ediff-mult.el
 
-ediff-vers.elc: ediff-init.el ediff-vers.el
+$(COMPDIR)ediff-vers.elc: ediff-init.el ediff-vers.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile ediff-vers.el
+	$(EMACS) $(COMPILE_ARGS) ediff-vers.el
 
-ediff-ptch.elc: ediff-init.el ediff-ptch.el
+$(COMPDIR)ediff-ptch.elc: ediff-init.el ediff-ptch.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile ediff-ptch.el
+	$(EMACS) $(COMPILE_ARGS) ediff-ptch.el
 
-ediff.elc: ediff-init.el ediff.el
+$(COMPDIR)ediff.elc: ediff-init.el ediff.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile ediff.el
+	$(EMACS) $(COMPILE_ARGS) ediff.el
 
-ediff-util.elc: ediff-init.el ediff-util.el
+$(COMPDIR)ediff-util.elc: ediff-init.el ediff-util.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile ediff-util.el
+	$(EMACS) $(COMPILE_ARGS) ediff-util.el
 
-ediff-wind.elc: ediff-init.el ediff-wind.el
+$(COMPDIR)ediff-wind.elc: ediff-init.el ediff-wind.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile ediff-wind.el
+	$(EMACS) $(COMPILE_ARGS) ediff-wind.el
 
 ediff.dvi: ediff.texi
 	@echo ""
@@ -125,7 +137,7 @@ ediff.dvi: ediff.texi
 	$(TeX) ediff.texi
 	@echo ""
 
-ediff.info:  ediff.texi
+ediff:  ediff.texi
 	@echo ""
 	@echo ""
 	@echo "Making Info Files for the Ediff Manual"
@@ -135,7 +147,7 @@ ediff.info:  ediff.texi
 
 dvi: ediff.dvi
 
-info: ediff.info
+info: ediff
 
 install: all
 	$(INSTALL) -m444 $(EDIFF) $(LISPDIR)
@@ -152,7 +164,7 @@ clean:
 distclean: clean
  
 realclean: clean
-	rm -f *.dvi ediff.info*
+	rm -f *.dvi ../info/ediff ../info/ediff-?
 	rm -f ediff.aux ediff.cp ediff.cps ediff.fn ediff.fns ediff.ky \
 	      ediff.kys ediff.log ediff.pg ediff.pgs ediff.toc ediff.tp \
 	      ediff.tps ediff.vr ediff.vrs

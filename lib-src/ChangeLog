@@ -1,3 +1,11 @@
+1997-08-07  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* gnuclient.c (main): Made help string correspond to options.
+
+1997-08-01  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in (distclean): Remove config.values here only.
+
 1997-07-27  SL Baur  <steve@altair.xemacs.org>
 
 	* Makefile.in.in (UTILITIES): Add config.values so it can be

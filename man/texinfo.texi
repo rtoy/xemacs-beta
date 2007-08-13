@@ -1,12 +1,14 @@
 \input texinfo.tex    @c -*-texinfo-*-
-@comment $Id: texinfo.texi,v 1.4 1997/07/19 22:11:50 steve Exp $
-@comment %**start of header
-@set edition 2.24
-@set update-month July 1997
-@set update-date 15 @value{update-month}
+@c $Id: texinfo.texi,v 1.5 1997/08/10 04:40:35 steve Exp $
+@c %**start of header
 
+@c All text is ignored before the setfilename.
 @setfilename texinfo
 @settitle Texinfo @value{edition}
+
+@set edition 2.24
+@set update-month July 1997
+@set update-date 25 @value{update-month}
 
 @c Define a new index for options.
 @defcodeindex op
@@ -30,14 +32,15 @@
 * install-info: (texinfo)Invoking install-info. Updating info/dir entries.
 * texi2dvi: (texinfo)Format with texi2dvi.      Printing Texinfo documentation.
 * texindex: (texinfo)Format with tex/texindex.  Sorting Texinfo index files.
-* makeinfo: (texinfo)makeinfo preferred.        Translate Texinfo source.
+* makeinfo: (texinfo)makeinfo Preferred.        Translate Texinfo source.
 @end direntry
 
 @c Set smallbook if printing in smallbook format so the example of the
 @c smallbook font is actually written using smallbook; in bigbook, a kludge
-@c is used for TeX output.
-@smallbook
-@set smallbook
+@c is used for TeX output.  Do this through the -t option to texi2dvi,
+@c so this same source can be used for other paper sizes as well.
+@c smallbook
+@c set smallbook
 @c @@clear smallbook
 
 @c Currently undocumented command, 5 December 1993:
@@ -635,7 +638,7 @@ Page Headings
 
 Formatting Mistakes
 
-* makeinfo preferred::          @code{makeinfo} finds errors.
+* makeinfo Preferred::          @code{makeinfo} finds errors.
 * Debugging with Info::         How to catch errors with Info formatting.
 * Debugging with TeX::          How to catch errors with @TeX{} formatting.
 * Using texinfo-show-structure::  How to use @code{texinfo-show-structure}.
@@ -2707,9 +2710,10 @@ The subfile name @file{texinfo.info-10}, for example, is too long for
 some systems; so the Info file name for this document is @file{texinfo}
 rather than @file{texinfo.info}.
 
+@cindex Ignored before @code{@@setfilename}
 The Info formatting commands ignore everything written before the
 @code{@@setfilename} line, which is why the very first line of
-the file (the @code{\input} line) does not need to be commented out.
+the file (the @code{\input} line) does not show up in the output.
 
 @pindex texinfo.cnf
 The @code{@@setfilename} line produces no output when you typeset a
@@ -6131,6 +6135,7 @@ The converse of @code{@@inforef} is @code{@@cite}, which is used to
 refer to printed works for which no Info form exists.  @xref{cite, ,
 @code{@@cite}}.@refill
 
+
 @node uref,  , inforef, Cross References
 @section @code{@@uref@{@var{url}[, @var{displayed-text}]@}}
 @findex uref
@@ -6270,7 +6275,7 @@ Indicate a uniform resource locator for the World Wide Web.
 @item @@file@{@var{file-name}@}
 Indicate the name of a file.@refill
 
-@item @@email@{@var{email-address}@}
+@item @@email@{@var{email-address}[, @var{displayed-text}]@}
 Indicate an electronic mail address.
 
 @item @@dfn@{@var{term}@}
@@ -6768,6 +6773,7 @@ identify that control character: an uparrow followed by the character
 @var{ch}.@refill
 @end ignore
 
+
 @node url, email, cite, Indicating
 @subsection @code{@@url}@{@var{uniform-resource-locator}@}
 @findex url
@@ -6789,20 +6795,29 @@ For example, the url might be
 
 
 @node email,  , url, Indicating
-@subsection @code{@@email}@{@var{email-address}@}
+@subsection @code{@@email}@{@var{email-address}[, @var{displayed-text}]@}
 @findex email
 
 Use the @code{@@email} command to indicate an electronic mail address.
+It takes one mandatory argument, the address, and one optional argument, the
+text to display (the default is the address itself).
+
+@cindex mailto link
+In Info and @TeX{}, the address is shown in angle brackets, preceded by
+the text to display if any.  In HTML output, @code{@@email} produces a
+@samp{mailto} link that usually brings up a mail composition window.
 For example:
 
 @example
-Send bug reports to @@email@{bug-texinfo@@prep.ai.mit.edu@}.
+Send bug reports to @@email@{bug-texinfo@@@@prep.ai.mit.edu@}.
+Send suggestions to the @@email@{bug-texinfo@@@@prep.ai.mit.edu, same place@}.
+@end example
+@noindent produces
+@example
+Send bug reports to @email{bug-texinfo@@prep.ai.mit.edu}.
+Send suggestions to the @email{bug-texinfo@@prep.ai.mit.edu, same place}.
 @end example
 
-In Info and @TeX{}, this acts like @code{@@key} (it puts the argument in
-angle brackets).  When we have support for converting Texinfo to HTML,
-this will produce a link you can follow to bring up a mail composition
-window initialized with @var{email-address}.
 
 @node Emphasis,  , Indicating, Marking Text
 @comment node-name,  next,  previous,  up
@@ -9636,8 +9651,8 @@ centimeter (2.54cm = 1in)
 @cindex Millimeters
 millimeter (10mm = 1cm)
 @item dd
-@cindex Did\^ot points
-did\^ot point (1157dd = 1238pt)
+@cindex Did@^ot points
+did@^ot point (1157dd = 1238pt)
 @item cc
 @cindex Ciceros
 cicero (1cc = 12dd)
@@ -13907,14 +13922,15 @@ Generate a dot accent over the character @var{c}, as in @dotaccent{oo}.
 Insert an ellipsis: @samp{@dots{}}.
 @xref{dots, , @code{@@dots}}.@refill
 
-@item @@email@{@var{address}@}
+@item @@email@{@var{address}[, @var{displayed-text}]@}
 Indicate an electronic mail address.
 @xref{email, , @code{@@email}}.@refill
 
 @need 100
 @item @@emph@{@var{text}@}
 Highlight @var{text}; text is displayed in @emph{italics} in printed
-output, and surrounded by asterisks in Info.  @xref{Emphasis, , Emphasizing Text}.@refill
+output, and surrounded by asterisks in Info.  @xref{Emphasis, ,
+Emphasizing Text}.
 
 @item @@end @var{environment}
 Ends @var{environment}, as in @samp{@@end example}.  @xref{Formatting
@@ -15890,7 +15906,7 @@ For finding problems with the structure of nodes and chapters, you can use
 command and you can use the @kbd{M-x Info-validate} command.@refill
 
 @menu
-* makeinfo preferred::          @code{makeinfo} finds errors.
+* makeinfo Preferred::          @code{makeinfo} finds errors.
 * Debugging with Info::         How to catch errors with Info formatting.
 * Debugging with TeX::          How to catch errors with @TeX{} formatting.
 * Using texinfo-show-structure::  How to use @code{texinfo-show-structure}.
@@ -15898,7 +15914,7 @@ command and you can use the @kbd{M-x Info-validate} command.@refill
 * Running Info-Validate::       How to find badly referenced nodes.
 @end menu
 
-@node makeinfo preferred, Debugging with Info, Catching Mistakes, Catching Mistakes
+@node makeinfo Preferred, Debugging with Info, Catching Mistakes, Catching Mistakes
 @ifinfo
 @heading @code{makeinfo} Find Errors
 @end ifinfo
@@ -15917,7 +15933,7 @@ errors.  This is the best way to work with Texinfo.  But if you
 cannot use @code{makeinfo}, or your problem is very puzzling, then you
 may want to use the tools described in this appendix.@refill
 
-@node Debugging with Info, Debugging with TeX, makeinfo preferred, Catching Mistakes
+@node Debugging with Info, Debugging with TeX, makeinfo Preferred, Catching Mistakes
 @comment  node-name,  next,  previous,  up
 @appendixsec Catching Errors with Info Formatting
 @cindex Catching errors with Info formatting

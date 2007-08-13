@@ -406,10 +406,11 @@ main (int argc, char *argv[])
     {
       fprintf (stderr,
 #ifdef INTERNET_DOMAIN_SOCKETS
-	       "usage: %s [-nw] [-q] [-v] [-l library] [-f function] [-eval expr]\n"
-	       "       [-h host] [-p port] [-r file-name] [[+line] file] ...\n",
+	       "usage: %s [-nw] [-display display] [-q] [-v] [-l library]\n"
+               "       [-batch] [-f function] [-eval form]\n"
+	       "       [-h host] [-p port] [-r remote-path] [[+line] file] ...\n",
 #else /* !INTERNET_DOMAIN_SOCKETS */
-	       "usage: %s [-nw] [-q] [-v] [-l library] [-f function] [-eval expr] "
+	       "usage: %s [-nw] [-q] [-v] [-l library] [-f function] [-eval form] "
 	       "[[+line] path] ...\n",
 #endif /* !INTERNET_DOMAIN_SOCKETS */
 	       progname);

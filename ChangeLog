@@ -1,3 +1,30 @@
+1997-08-09  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta17 is released.
+
+1997-08-07  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* etc/gnuserv.1: Described Hrvoje's mods in manpage
+
+1997-08-09  Martin Buchholz  <mrb@eng.sun.com>
+
+	* configure.in:
+	- use-system-malloc renamed to with-system-malloc.
+	- config.el reimplemented for improved accuracy.
+	- new variable `blddir' introduced for informational purposes.
+	* lib-src/config.values.in: new config.el implementation
+	* lib-src/config.values.sh: new config.el implementation
+	* lisp/modes/pascal.el: Sync with GNU Emacs, fix infloop problem 
+	(thanks to Espen Skoglund, pascal.el maintainer)
+	* src/chartab.c: maintainability improvements.
+	* src/mule-coding.c: FIX for: editing DOS files with ISO2022*
+	coding systems results in extra CR's inserted into file on saving.
+
+1997-08-06  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in: Crash & burn if db-2 is detected.
+	From Soren Dayton <csdayton@cs.uchicago.edu>
+
 1997-07-31  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.3-beta16 is released.

@@ -1139,9 +1139,7 @@ ensure_face_cachel_complete (struct face_cachel *cachel,
   for (i = 0; i < NUM_LEADING_BYTES; i++)
     if (charsets[i])
       {
-	Lisp_Object charset;
-
-	charset = CHARSET_BY_LEADING_BYTE (i + MIN_LEADING_BYTE);
+	Lisp_Object charset = CHARSET_BY_LEADING_BYTE (i + MIN_LEADING_BYTE);
 	assert (CHARSETP (charset));
 	ensure_face_cachel_contains_charset (cachel, domain, charset);
       }

@@ -166,8 +166,8 @@ Advanced Features
                  the number of characters you must type.
 * Picture::     Editing pictures made up of characters
                  using the quarter-plane screen model.
-* Sending Mail::Sending mail in XEmacs.
-* Reading Mail::Reading mail in XEmacs.
+* Sending Mail:: Sending mail in XEmacs.
+* Reading Mail:: Reading mail in XEmacs.
 * Calendar/Diary:: A Calendar and diary facility in XEmacs.
 * Sorting::	Sorting lines, paragraphs or pages within XEmacs.
 * Shell::       Executing shell commands from XEmacs.
@@ -399,7 +399,7 @@ Commands for Human Languages
 * Text Mode::   The major modes for editing text files.
 * Nroff Mode::  The major mode for editing input to the formatter nroff.
 * TeX Mode::    The major modes for editing input to the formatter TeX.
-* Outline Mode::The major mode for editing outlines.
+* Outline Mode:: The major mode for editing outlines.
 * Words::       Moving over and killing words.
 * Sentences::   Moving over and killing sentences.
 * Paragraphs::	Moving over paragraphs.

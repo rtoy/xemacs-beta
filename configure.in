@@ -97,7 +97,6 @@ dnl Avoid spurious cross-compiling warnings from AC_TRY_RUN
 dnl XEmacs is unlikely to ever cross-compile
 define([AC_TRY_RUN],[AC_TRY_RUN_NATIVE([$1], [$2], [$3])])dnl
 
-
 dnl Redefine AC_DEFINE* to provide more output if extra_verbose
 dnl Set VARIABLE to VALUE, verbatim, or 1.
 dnl AC_DEFINE(VARIABLE [, VALUE])
@@ -241,7 +240,6 @@ define([AC_INIT_PARSE_ARGS],[
 dnl Initialize some variables set by options.
 dnl The variables have the same names as the options, with
 dnl dashes changed to underlines.
-build=NONE
 exec_prefix=NONE
 host=NONE
 no_create=
@@ -347,7 +345,7 @@ cflags='UNSPECIFIED'
 dynamic=''
 with_x11=''
 rel_alloc='default'
-use_system_malloc='default'
+with_system_malloc='default'
 energize_version=''
 native_sound_lib=''
 dnl use-assertions should be 'yes' by default.  Too many people in this
@@ -546,9 +544,8 @@ Other options:
   			is system-dependent).
 --with-clash-detection	Use lock files to detect multiple edits of the same file.
 			The default is to not do clash detection.
---use-system-malloc	Force use of the system malloc, rather than GNU
-			malloc.
---use-debug-malloc	Use the debugging malloc package.
+--with-system-malloc	Force use of the system malloc, rather than GNU malloc.
+--with-debug-malloc	Use the debugging malloc package.
 
 You may also specify any of the \`path' variables found in
 Makefile.in, including --bindir, --libdir, --lispdir, --datadir, and
@@ -727,16 +724,16 @@ while test $# != 0; do
 
 	dnl Options that take "yes", "no", or "default" values
 	rel_alloc | \
-	use_debug_malloc | \
-	use_system_malloc )
+	with_debug_malloc  | use_debug_malloc | \
+	with_system_malloc | use_system_malloc )
 	  case "$val" in
 	    y | ye | yes )	val=yes ;;
 	    n | no )		val=no  ;;
-	    d | de | def | defa | defau | defaul | default )
-				val=default ;;
+	    d | de | def | defa | defau | defaul | default ) val=default ;;
 	    * ) USAGE_ERROR(["The \`--$optname' option requires one of these values:
   \`yes', \`no', or \`default'."]) ;;
 	  esac
+	  case "$opt" in use_* ) opt="`echo $opt | sed /use/with/`" ;; esac
           eval "$opt=\"$val\""
         ;;
 
@@ -1024,21 +1021,23 @@ for dir in lisp etc man info site-lisp; do
   fi
 done
 
+dnl Calculate canonical name for blddir (i.e. current directory).
+dnl PWD may already be the preferable absolute name for ".",
+dnl but we can't trust it - it is sometimes inaccurate.
+absolute_pwd="`pwd`";
+if test -n "$PWD" && "`cd $PWD && pwd`" = "$absolute_pwd"
+then blddir="$PWD"
+else blddir="$absolute_pwd"
+fi
+AC_SUBST(blddir)
+
 dnl Make srcdir absolute, if not already.  It is important to
 dnl avoid running the path through pwd unnecessary, since pwd can
 dnl give you automounter prefixes, which can go away.
 case "$srcdir" in
   /* ) ;;
-  . )
-    dnl We may be able to use the $PWD environment variable to make this
-    dnl absolute.  But sometimes PWD is inaccurate.
-    if test "$PWD" != "" -a "`(cd $PWD ; sh -c pwd)`" = "`pwd`"; then
-      srcdir="$PWD"
-    else
-      srcdir="`(cd $srcdir && pwd)`"
-    fi
-  ;;
-  *  ) srcdir="`(cd $srcdir && pwd)`" ;;
+  .  ) srcdir="$blddir" ;;
+  *  ) srcdir="`cd $srcdir && pwd`" ;;
 esac
 
 dnl Check if the source directory already has a configured system in it.
@@ -2061,11 +2060,11 @@ if test "$system_malloc" = "yes" ; then
   GNU_MALLOC=no
   GNU_MALLOC_reason="
   (The GNU allocators don't work with this system configuration)."
-elif test "$use_system_malloc" = "yes" ; then
+elif test "$with_system_malloc" = "yes" ; then
   GNU_MALLOC=no
   GNU_MALLOC_reason="
   (User chose not to use GNU allocators)."
-elif test "$use_debug_malloc" = "yes" ; then
+elif test "$with_debug_malloc" = "yes" ; then
   GNU_MALLOC=no
   GNU_MALLOC_reason="
   (User chose to use Debugging Malloc)."
@@ -3196,6 +3195,11 @@ typedef uint64_t u_int64_t;
 #endif
 #endif
 #include <$path>
+#ifdef DB_VERSION_MAJOR
+#if DB_VERSION_MAJOR > 1
+choke me;
+#endif
+#endif
 ],[], db_h_path="$path"; break)
     done
     test -z "$db_h_path" && with_database_berkdb=no
@@ -3390,10 +3394,10 @@ dnl autodetection.
 
 test -n "$puresize" && AC_DEFINE_UNQUOTED(RAW_PURESIZE, $puresize)
 
-if   test "$GNU_MALLOC"        = "yes"; then AC_DEFINE(GNU_MALLOC)
-elif test "$use_system_malloc" = "yes"; then AC_DEFINE(USE_SYSTEM_MALLOC)
-elif test "$use_debug_malloc"  = "yes"; then AC_DEFINE(USE_DEBUG_MALLOC)
-					     AC_DEFINE(USE_SYSTEM_MALLOC)
+if   test "$GNU_MALLOC"         = "yes"; then AC_DEFINE(GNU_MALLOC)
+elif test "$with_system_malloc" = "yes"; then AC_DEFINE(USE_SYSTEM_MALLOC)
+elif test "$with_debug_malloc"  = "yes"; then AC_DEFINE(USE_DEBUG_MALLOC)
+					      AC_DEFINE(USE_SYSTEM_MALLOC)
 fi
 test "$with_i18n3"         = "yes" && AC_DEFINE(I18N3)
 test "$GCC"                = "yes" && AC_DEFINE(USE_GCC)
@@ -3560,7 +3564,7 @@ test -n "$exec_prefix" &&
 dnl Build Makefile.in's from Makefile.in.in's
 dnl except ./Makefile from $srcdir/Makefile.in
 
-AC_OUTPUT($internal_makefile_list,[
+AC_OUTPUT($internal_makefile_list lib-src/config.values,[
 for dir in $MAKE_SUBDIR; do
   echo creating $dir/Makefile
   (
@@ -3598,13 +3602,13 @@ changequote([, ])dnl
 )
 done
 
-dnl Create a file of config variables for use by the lisp code
-sed < config.status > lib-src/config.values \
--e 's/^s%@\(.*\)@%\(.*\)%g$/\1 "\2"/p' \
--e '/{ac_dA}.*{ac_dB}.*{ac_dC}.*{ac_dD}$/!d' \
--e 's/\${ac_dA}\(.*\)\${ac_dB}.*\${ac_dC}\(.*\)\${ac_dD}/\1 \2/' \
--e 's/^\([[^ ]]*\) $/\1 ""/' \
--e 's/ 1$/ t/'
+dnl Append AC_DEFINE information to lib-src/config.values
+dnl (AC_SUBST information is already there (see config.values.sh).
+sed < config.status >> lib-src/config.values \
+  -e '/{ac_dA}.*{ac_dB}.*{ac_dC}.*{ac_dD}$/!d' \
+  -e 's/\${ac_dA}\(.*\)\${ac_dB}.*\${ac_dC}\(.*\)\${ac_dD}/\1 \2/' \
+  -e 's/^\([[^ ]]*\) $/\1 ""/' \
+  -e 's/ 1$/ t/'
 
 ],
 [CPP="$CPP"
