@@ -118,7 +118,6 @@ Boston, MA 02111-1307, USA.  */
 
 #undef LIBS_MACHINE
 /* -lsun in case using Yellow Pages for passwords.  */
-#define LIBS_MACHINE -lmld
 #define LIBS_DEBUG
 
 /* Define this if you have a fairly recent system,
@@ -152,13 +151,3 @@ Boston, MA 02111-1307, USA.  */
 
 #undef STACK_DIRECTION
 #define STACK_DIRECTION -1
-
-#ifndef __GNUC__
-/* Turn off some "helpful" error checks for type mismatches
-   that we can't fix without breaking other machines.  */
-#ifdef IRIX_FORCE_32_BITS
-#ifdef THIS_IS_MAKEFILE
-#define C_SWITCH_MACHINE -32
-#endif
-#endif /* IRIX_FORCE_32_BITS */
-#endif /* not __GNUC__ */

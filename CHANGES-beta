@@ -1,4 +1,13 @@
 							-*- indented-text -*-
+to 19.16 pre6 -- "New York"
+-- Fix for using a pixmap background
+-- about.el updated
+-- Irix 6 build problem fixed
+-- W3 build problem fixed
+-- `sentence-end-double-space' doc string fixed
+-- Lucid scrollbar bug fixed (keyboard grab released when widget disappears)
+-- Iris4 build problem fixed
+
 to 19.16 pre5 -- "Staten Island"
 -- Irix 6 build problem fixed
 -- `directory-files' stack overrun fixed

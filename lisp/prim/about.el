@@ -80,7 +80,7 @@
   (view-mode nil 'kill-buffer)		;; assume the new view-less
   (let* ((buffer-read-only nil)
          (emacs-short-version (concat emacs-major-version "." emacs-minor-version))
-         (emacs-about-version (format "version %s; September 1997" emacs-short-version))
+         (emacs-about-version (format "version %s; October 1997" emacs-short-version))
 	 (indent-tabs-mode t)
 	 )
     (erase-buffer)
@@ -159,7 +159,7 @@
     (toggle-read-only 0)
 
     (let ((rest (if who-to-load (list who-to-load)
-		  '(steve mrb cthomp wing stig jwz mly vladimir baw piper bw wmperry kyle larsi jens vin)))
+		  '(steve mrb cthomp wing stig jwz mly vladimir baw piper bw wmperry kyle larsi jens vin dkindred)))
 	  (got-error nil))
       (while rest
 	(let* ((who (car rest))
@@ -240,6 +240,7 @@
     (w3-python   . "http://www.python.org/ftp/emacs/")
     (w3-infodock . "http://www.infodock.com")
     (w3-kyle     . "http://www.wonderworks.com/kyle/")
+    (w3-dkindred . "http://www.cs.cmu.edu/People/dkindred/me.html")
     (w3-larsi    . "http://www.ifi.uio.no/~larsi/")
     (w3-hrvoje   . "ftp://gnjilux.cc.fer.hr/pub/unix/util/wget/")
     (w3-upa      . "http://www.upa.org")
@@ -310,6 +311,7 @@
 			       ((eq xref 'larsi) "About Lars Magne Ingebrigtsen")
 			       ((eq xref 'jens) "About Jens Lautenbacher")
 			       ((eq xref 'vin) "About Vin Shelton")
+			       ((eq xref 'dkindred) "About Darrell Kindred")
 			       ((eq xref 'others) "About Everyone")
 			       ((eq xref 'features) "New XEmacs Features")
 			       ((eq xref 'history) "XEmacs History")
@@ -841,6 +843,26 @@
 	  (insert " to go back to the previous page.\n")
 	  )
 
+	 ((eq xref 'dkindred)
+	  (about-face "Darrell Kindred" 'bold)
+	  (insert " <dkindred@cmu.edu>
+
+	Darrell tends to come out of the woodwork a couple of weeks 
+	before a new release with a flurry of fixes for bugs that 
+	annoy him.  He hopes he's spared you from a core dump or two.
+
+	Darrell is currently a doctoral student in computer science at
+	Carnegie Mellon University, but he's trying hard to kick that
+	habit.  
+
+	See ")
+	  (about-xref "http://www.cs.cmu.edu/People/dkindred/me.html"
+		      'w3-dkindred "Visit Darrell's WWW page")
+	  (insert ".\n\n\tClick ")
+	  (about-xref "here" prev-page "Return to previous page")
+	  (insert " to go back to the previous page.\n")
+	  )
+
 	 ((eq xref 'others)
 	  (insert "Click ")
 	  (about-xref "here" 'about "Return to previous page")
@@ -944,12 +966,9 @@
 	  detached minibuffer code, as well as a few minor enhancements to
 	  the menubar options.
 
-	Darrell Kindred <Darrell.Kindred@cmu.edu>
-	  Unofficial maintainer of the xemacs-beta list of extant
-	  bugs and contributor of an extraordinary number of
-	  important bug fixes, many of them in areas that neither
-	  Chuck nor Ben was particularly enthusiastic about
-	  investigating.
+	") (about-xref "Darrell Kindred" 'dkindred "Find out more about Darrell Kindred") (insert " <dkindred@cmu.edu>
+	  Long-time bug tracker and exterminator for XEmacs and 
+          Lucid Emacs.
 
 	Eduardo Pelegri-Llopart <pelegri@eng.sun.com>
 	  Author of EOS, a package included in the standard XEmacs
@@ -984,8 +1003,8 @@
 	  the initial implementation of `duplicable' properties.
 
 	Hans Muller <hmuller@eng.sun.com>
-	 Author of the code used to connect XEmacs with ToolTalk,
-	 and of an early client of the external Emacs widget.
+	  Author of the code used to connect XEmacs with ToolTalk,
+	  and of an early client of the external Emacs widget.
 
 	David Moore <dmoore@UCSD.EDU>
 	  David has contributed greatly to the quest to speed up XEmacs.

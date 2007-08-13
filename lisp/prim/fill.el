@@ -38,7 +38,9 @@ but it requires separator lines between paragraphs.
 A value of nil means that any change in indentation starts a new paragraph.")
 
 (defconst sentence-end-double-space t
-  "*Non-nil means a single space does not end a sentence.")
+  "*Non-nil means a single space does not end a sentence.
+This variable applies only to filling, not motion commands.  To
+change the behavior of motion commands, see `sentence-end'.")
 
 (defconst colon-double-space nil
   "*Non-nil means put two spaces after a colon when filling.")

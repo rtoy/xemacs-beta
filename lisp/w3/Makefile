@@ -35,7 +35,7 @@ CORE = docomp.el
 URLSOURCES = \
 	url-nfs.el url-file.el url-cookie.el url-parse.el url-irc.el	\
 	url-gopher.el url-http.el url-mail.el url-misc.el url-news.el	\
-	url-vars.el url-auth.el mm.el md5.el url-gw.el ssl.el base64.el	\
+	url-vars.el url-auth.el mm.el url-gw.el ssl.el base64.el	\
 	url.el socks.el url-cache.el url-ns.el
 
 CUSTOMSOURCES = # widget.el widget-edit.el
