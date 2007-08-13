@@ -2665,7 +2665,9 @@ when it is off screen.")
 		(goto-char blinkpos)
 		(if (pos-visible-in-window-p)
 		    (and blink-matching-paren-on-screen
-			 (sit-for blink-matching-delay))
+			 (progn
+			   (auto-show-make-point-visible)
+			   (sit-for blink-matching-delay)))
 		  (goto-char blinkpos)
 		  (message
 		   "Matches %s"

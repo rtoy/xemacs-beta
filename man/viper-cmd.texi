@@ -1259,8 +1259,8 @@ you need.
 @node Mouse-bound Commands,,,Commands
 @section Mouse-bound Commands
 
-The following two mouse actions are normally bound to special search and
-insert commands in Viper:
+The following two mouse actions are normally bound to to special search and
+insert commands in of Viper:
 
 @table @kbd
 @item S-mouse-1 (Emacs)

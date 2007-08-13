@@ -1,8 +1,8 @@
 ;;; mic-paren.el --- highlight matching paren.
-;;; Version 1.0 - 96-08-16
-;;; Copyright (C) 1996 Mikael Sjödin (mic@docs.uu.se)
+;;; Version 1.2 - 96-09-19
+;;; Copyright (C) 1996 Mikael Sj,Av(Bdin (mic@docs.uu.se)
 ;;;
-;;; Author: Mikael Sjödin  --  mic@docs.uu.se
+;;; Author: Mikael Sj,Av(Bdin  --  mic@docs.uu.se
 ;;; Keywords: languages, faces
 ;;;
 ;;; This file is NOT part of GNU Emacs.
@@ -45,9 +45,10 @@
 ;;; matching parenthesis (or the entire expression between the parenthesises)
 ;;; is highlighted until the cursor is moved away from the parenthesis.
 ;;; Features include:
-;;; o Both forward and backward parenthesis matching (_simultaneously_ if
+;;; o Both forward and backward parenthesis matching (simultaneously if
 ;;;   cursor is between two expressions).
 ;;; o Indication of mismatched parenthesises.
+;;; o Recognition of "escaped" parenthesises.
 ;;; o Option to select if only the matching parenthesis or the entire
 ;;;   expression should be highlighted.
 ;;; o Message describing the match when the matching parenthesis is
@@ -57,12 +58,12 @@
 ;;; o Numerous options to control the behaviour and appearance of
 ;;;   mic-paren.el. 
 ;;;
-;;; mic-paren.el is developed and tested under Emacs 19.28 - 19.31.  It should
-;;; work on earlier and forthcoming Emacs versions.
+;;; mic-paren.el is developed and tested under Emacs 19.28 - 19.34.  It should
+;;; work on earlier and forthcoming Emacs versions.  XEmacs compatibility has
+;;; been provided by Steven L Baur <steve@altair.xemacs.org>.
 ;;;
 ;;; This file can be obtained from http://www.docs.uu.se/~mic/emacs.html
 
-;; Ported to XEmacs 15-September, 1996 Steve Baur <steve@miranova.com>
 ;;; ======================================================================
 ;;; User Options:
 
@@ -181,7 +182,7 @@ deactivated.")
 ;;; ======================================================================
 ;;; User Functions:
 
-;; XEmacs compatibility
+;; XEmacs compatibility (by Steven L Baur <steve@altair.xemacs.org>)
 (eval-and-compile
   (if (fboundp 'make-extent)
       (progn
@@ -240,15 +241,15 @@ Options:
   (or paren-dont-touch-blink
       (setq blink-matching-paren nil))
 
-  (cond
+  (cond(
 	;; If timers are available use them
 	;; (Emacs 19.31 and above)
-	((or (featurep 'timer) (featurep 'itimer))
-	 (if (numberp paren-delay)
-	     (setq mic-paren-idle-timer 
-		   (mic-run-with-idle-timer paren-delay t
-					    'mic-paren-command-idle-hook))
-	   (add-hook 'post-command-hook 'mic-paren-command-hook)))
+	(featurep 'timer)
+	(if (numberp paren-delay)
+	    (setq mic-paren-idle-timer 
+		  (mic-run-with-idle-timer paren-delay t
+					   'mic-paren-command-idle-hook))
+	  (add-hook 'post-command-hook 'mic-paren-command-hook)))
        ;; If the idle hook exists assume it is functioning and use it 
        ;; (Emacs 19.30)
        ((and (boundp 'post-command-idle-hook) 

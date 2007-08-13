@@ -6,7 +6,7 @@
 ;;         MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1994/08/21 renamed from mime.el
-;; Version: $Revision: 1.3 $
+;; Version: $Revision: 1.4 $
 ;; Keywords: mail, news, MIME, multimedia, multilingual
 
 ;; This file is part of tm (Tools for MIME).
@@ -120,7 +120,7 @@
 ;;;
 
 (defconst mime-editor/RCS-ID
-  "$Id: tm-edit.el,v 1.3 1996/12/29 00:15:13 steve Exp $")
+  "$Id: tm-edit.el,v 1.4 1997/01/04 21:20:11 steve Exp $")
 
 (defconst mime-editor/version (get-version-string mime-editor/RCS-ID))
 
@@ -742,8 +742,7 @@ TABs at the beginning of the line are not a part of the message:
 	This is also a plain text.  But, it is explicitly specified as
 	is.
 	--[[text/plain; charset=ISO-2022-JP]]
-	これは charset を ISO-2022-JP に指定した日本語の plain テキス
-	トです.
+	...Japanese text here....
 	--[[text/richtext]]
 	<center>This is a richtext.</center>
 	--[[image/gif][base64]]^M...image encoded in base64 here...

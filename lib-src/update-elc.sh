@@ -54,10 +54,11 @@ fi
 
 
 REAL=`cd \`dirname $EMACS\` ; pwd | sed 's|^/tmp_mnt||'`/`basename $EMACS`
-
+BYTECOMP="$REAL -batch -q -no-site-file -l bytecomp"
 echo "Recompiling in `pwd|sed 's|^/tmp_mnt||'`"
 echo "          with $REAL..."
 
+prune_vc="( -name SCCS -o -name RCS -o -name CVS ) -prune -o"
 
 tmp1=/tmp/rcl1.$$
 tmp2=/tmp/rcl2.$$
@@ -65,9 +66,8 @@ rm -f $tmp1 $tmp2
 
 # tmp1 is a list of all .el files
 # tmp2 is a list of all .elc files
-find lisp/. -name SCCS -prune -o -name '*.el'  -print | sort > $tmp1
-find lisp/. -name SCCS -prune -o -name 'w3.elc' -prune -o -name 'vm.elc' \
-	-prune -o -name '*.elc' -print | sed 's/elc$/el/' | sort > $tmp2
+find lisp/. $prune_vc -name '*.el'  -print | sort > $tmp1
+find lisp/. $prune_vc -name '*.elc' -print | sed 's/elc$/el/' | sort > $tmp2
 
 echon "Deleting .elc files without .el files... "
 # (except for vm/vm.elc)
@@ -80,7 +80,7 @@ echo done.
 # we're running, which might not be the case, but often is.)
 #
 echon "Checking the byte compiler... "
-$REAL -batch -q -no-site-file -f batch-byte-recompile-directory lisp/bytecomp
+$BYTECOMP -f batch-byte-recompile-directory lisp/bytecomp
 
 echo Compiling files without .elc...
 
@@ -125,7 +125,7 @@ comm -23 $tmp1 $tmp2 | sed '
 \!/its/!d
 \!/mule/!d
 \!/quail/!d
-' | xargs -t -n$NUMTOCOMPILE $REAL -batch -q -no-site-file -f batch-byte-compile
+' | xargs -t -n$NUMTOCOMPILE $BYTECOMP -f batch-byte-compile
 
 rm -f $tmp1 $tmp2
 echo Done.
@@ -171,7 +171,7 @@ echo Hyperbole done.
 
 # OO-Browser too
 echo Compiling OO-Browser...
-( cd lisp/oobr ; make EMACS=$REAL HYPB_ELC= elc )
+( cd lisp/oobr ; make EMACS=$REAL HYPB_ELC='' elc )
 echo OO-Browser done.
 
 # this is not strictly necessary but there are some special dependencies
@@ -183,11 +183,11 @@ echo EOS done.
 # previously this was up top, but it requires that comint.elc exists.
 
 echo Compiling Ilisp...
-( cd lisp/ilisp ; make compile -f Makefile EMACS=$REAL )
+( cd lisp/ilisp ; make elc -f Makefile EMACS=$REAL )
 echo Ilisp done.
 
 #
 # Now get the files whose .el is newer than .elc
 #
 echo Compiling files with out-of-date .elc...
-$REAL -batch -q -no-site-file -f batch-byte-recompile-directory lisp
+$BYTECOMP -f batch-byte-recompile-directory lisp

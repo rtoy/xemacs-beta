@@ -302,18 +302,20 @@ as bits.
 @node Array Functions
 @section Functions that Operate on Arrays
 
-  In this section, we describe the functions that accept both strings
-and vectors.
+  In this section, we describe the functions that accept strings, vectors,
+and bit vectors.
 
 @defun arrayp object
-This function returns @code{t} if @var{object} is an array (i.e., either a
-vector or a string).
+This function returns @code{t} if @var{object} is an array (i.e., a
+string, vector, or bit vector).
 
 @example
 @group
+(arrayp "asdf")
+@result{} t
 (arrayp [a])
 @result{} t
-(arrayp "asdf")
+(arrayp #*101)
 @result{} t
 @end group
 @end example
@@ -337,6 +339,11 @@ first element is at index zero.
 @group
 (aref "abcdefg" 1)
      @result{} 98           ; @r{@samp{b} is @sc{ASCII} code 98.}
+@end group
+
+@group
+(aref #*1101 2)
+     @result{} 0
 @end group
 @end example
 
@@ -365,6 +372,15 @@ w
 x
      @result{} "asdZasfd"
 @end group
+
+@group
+(setq bv #*1111)
+     @result{} #*1111
+(aset bv 2 0)
+     @result{} 0
+bv
+     @result{} #*1101
+@end group
 @end example
 
 If @var{array} is a string and @var{object} is not a character, a
@@ -389,6 +405,13 @@ a
      @result{} "When in the course"
 (fillarray s ?-)
      @result{} "------------------"
+@end group
+
+@group
+(setq bv #*1101)
+     @result{} #*1101
+(fillarray bv 0)
+     @result{} #*0000
 @end group
 @end example
 
@@ -545,9 +568,8 @@ and are useful for representing sets of boolean (true or false) values.
 create a bit vector with 100,000 elements if you really wanted to.
 
   Bit vectors have a special printed representation consisting of
-@samp{#*} followed by the bits of the vector.  For example, a bit
-vector whose elements are 0, 1, 1, 0, and 1, respectively, is printed
-as
+@samp{#*} followed by the bits of the vector.  For example, a bit vector
+whose elements are 0, 1, 1, 0, and 1, respectively, is printed as
 
 @example
 #*01101
@@ -570,7 +592,7 @@ This function returns @code{t} if @var{object} is a bit vector.
      @result{} t
 (bit-vector-p [0 1])
      @result{} nil
-(vectorp "asdf")
+(bit-vector-p "01")
      @result{} nil
 @end group
 @end example
@@ -581,27 +603,27 @@ This function returns @code{t} if @var{object} is either 0 or 1.
 @end defun
 
 @defun bit-vector &rest objects
-This function creates and returns a vector whose elements are the
-arguments, @var{objects}.  The elements must be either of the two
+This function creates and returns a bit vector whose elements are the
+arguments @var{objects}.  The elements must be either of the two
 integers 0 or 1.
 
 @example
 @group
 (bit-vector 0 0 0 1 0 0 0 0 1 0)
      @result{} #*0001000010
-(vector)
+(bit-vector)
      @result{} #*
 @end group
 @end example
 @end defun
 
 @defun make-bit-vector length object
-This function returns a new bit vector consisting of @var{length} elements,
-each initialized to @var{object}.
+This function creates and returns a bit vector consisting of
+@var{length} elements, each initialized to @var{object}.
 
 @example
 @group
-(setq sleepy (make-vector 9 1))
+(setq picket-fence (make-bit-vector 9 1))
      @result{} #*111111111
 @end group
 @end example
@@ -609,13 +631,13 @@ each initialized to @var{object}.
 
 @defun bvconcat &rest sequences
 @cindex copying bit vectors
-This function returns a new bit vector containing all the elements of the
-@var{sequences}.  The arguments @var{sequences} may be lists or vectors,
-all of whose elements are the integers 0 or 1.  If no @var{sequences} are
-given, an empty bit vector is returned.
+This function returns a new bit vector containing all the elements of
+the @var{sequences}.  The arguments @var{sequences} may be lists,
+vectors, or bit vectors, all of whose elements are the integers 0 or 1.
+If no @var{sequences} are given, an empty bit vector is returned.
 
 The value is a newly constructed bit vector that is not @code{eq} to any
-existing vector.
+existing bit vector.
 
 @example
 @group
@@ -642,9 +664,9 @@ list with the same elements (@pxref{Building Lists}):
 
 @example
 @group
-(setq avector #*00001110)
+(setq bv #*00001110)
      @result{} #*00001110
-(append avector nil)
+(append bv nil)
      @result{} (0 0 0 0 1 1 1 0)
 @end group
 @end example

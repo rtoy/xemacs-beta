@@ -17,7 +17,8 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with GNU Emacs; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
+the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.  */
 
 /* Some people use these in paths they define.  We don't want their paths
    getting changed on them. */
@@ -193,6 +194,12 @@ EZ_SUBDIR = ez_dialog
 EZ_OBJS =
 ENERGIZEP =
 EZ_SUBDIR =
+#endif
+
+#if defined (HAVE_X_WINDOWS)
+# ifndef NEED_TOOLKIT
+#  define NEED_TOOLKIT
+# endif
 #endif
 
 SRCS = lwlib.c MOTIF_SRCS LUCID_SRCS ATHENA_SRCS lwlib-utils.c \

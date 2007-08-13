@@ -143,9 +143,11 @@ database."
     (set-glyph-image gc-pointer-glyph
 	  (or (x-get-resource "gcPointer" "Cursor" 'string device)
 	      "watch"))
-    (set-glyph-image scrollbar-pointer-glyph
-	  (or (x-get-resource "scrollbarPointer" "Cursor" 'string device)
-	      "top_left_arrow"))
+    (when (featurep 'scrollbar)
+      (set-glyph-image
+       scrollbar-pointer-glyph
+       (or (x-get-resource "scrollbarPointer" "Cursor" 'string device)
+	   "top_left_arrow")))
     (set-glyph-image busy-pointer-glyph
 	  (or (x-get-resource "busyPointer" "Cursor" 'string device)
 	      "watch"))

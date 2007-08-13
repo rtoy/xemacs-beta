@@ -52,7 +52,8 @@ static char rcsid [] = "!Header: gnuclient.c,v 2.2 95/12/12 01:39:21 wing nene !
 
 #if !defined(SYSV_IPC) && !defined(UNIX_DOMAIN_SOCKETS) && \
     !defined(INTERNET_DOMAIN_SOCKETS)
-main ()
+int
+main (int argc, char *argv[])
 {
   fprintf (stderr, "Sorry, the Emacs server is only "
 	   "supported on systems that have\n");
@@ -126,8 +127,8 @@ filename_expand (char *fullpath, char *filename)
 
 } /* filename_expand */
 
-void
-main (int argc, char **argv)
+int
+main (int argc, char *argv[])
 {
   int starting_line = 1;			/* line to start editing at */
   char command[MAXPATHLEN+50];			/* emacs command buffer */
@@ -330,7 +331,7 @@ main (int argc, char **argv)
     disconnect_from_server (s, FALSE);
 #endif /* !SYSV_IPC */
 
-  exit (0);
+  return 0;
 
 } /* main */
 

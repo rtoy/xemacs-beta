@@ -7,7 +7,7 @@ This directory:
 README	    	-- This file
 Makefile	-- Automated installation file
 ediff.texi	-- Manual in Texinfo format
-ediff.info*	-- The Info files
+ediff, ediff-?	-- The Info files
 ediff.dvi	-- Manual in DVI format
 
 ediff.el    	-- Ediff Emacs Lisp code
@@ -19,6 +19,7 @@ ediff-merg.el	-- Ediff Emacs Lisp code
 ediff-mult.el   -- Ediff Emacs Lisp code
 ediff-vers.el	-- Ediff Emacs Lisp code
 ediff-ptch.el	-- Ediff Emacs Lisp code
+ediff-tbar.el	-- Ediff Emacs Lisp code -- this one only for XEmacs
 ediff-hook.el	-- Ediff Emacs Lisp code
 
 

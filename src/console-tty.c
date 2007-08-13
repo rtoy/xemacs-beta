@@ -43,7 +43,7 @@ DEFINE_CONSOLE_TYPE (tty);
 
 Lisp_Object Qterminal_type;
 
-Lisp_Object Vstdio_str;
+extern Lisp_Object Vstdio_str; /* in console-stream.c */
 
 
 static void
@@ -204,42 +204,28 @@ Lisp_Object
 tty_semi_canonicalize_console_connection (Lisp_Object connection,
 					  Error_behavior errb)
 {
-  if (NILP (connection))
-    return Vstdio_str;
-
-  return connection;
+  return stream_semi_canonicalize_console_connection (connection, errb);
 }
 
 Lisp_Object
 tty_canonicalize_console_connection (Lisp_Object connection,
 				     Error_behavior errb)
 {
-  if (NILP (connection) || !NILP (Fequal (connection, Vstdio_str)))
-    return Vstdio_str;
-
-  if (!ERRB_EQ (errb, ERROR_ME))
-    {
-      if (!STRINGP (connection))
-	return Qunbound;
-    }
-  else
-    CHECK_STRING (connection);
-
-  return Ffile_truename (connection, Qnil);
+  return stream_canonicalize_console_connection (connection, errb);
 }
 
 Lisp_Object
 tty_semi_canonicalize_device_connection (Lisp_Object connection,
 					 Error_behavior errb)
 {
-  return tty_semi_canonicalize_console_connection (connection, errb);
+  return stream_semi_canonicalize_console_connection (connection, errb);
 }
 
 Lisp_Object
 tty_canonicalize_device_connection (Lisp_Object connection,
 				    Error_behavior errb)
 {
-  return tty_canonicalize_console_connection (connection, errb);
+  return stream_canonicalize_console_connection (connection, errb);
 }
 
 
@@ -274,7 +260,4 @@ void
 vars_of_console_tty (void)
 {
   Fprovide (Qtty);
-
-  Vstdio_str = build_string ("stdio");
-  staticpro (&Vstdio_str);
 }

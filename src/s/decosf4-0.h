@@ -25,3 +25,4 @@
 #define regmatch_t sys_regmatch_t
 
 #define SYSTEM_MALLOC
+#define HAVE_RENAME

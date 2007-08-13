@@ -4,7 +4,8 @@
 \input texinfo
 
 @comment Using viper.info instead of viper in setfilename breaks DOS.
-@setfilename ../info/viper.info
+@setfilename viper
+@comment @setfilename ../info/viper
 @comment @setfilename viper.info
 
 @iftex
@@ -288,7 +289,7 @@ in a manner similar to the Control key, e.g., @kbd{M-x} means typing
 @kbd{x} while holding the Meta key down.
 For keyboards that do not have a Meta key, @key{ESC} is used as Meta.
 Thus @kbd{M-x} is typed as @kbd{ESC x}. Viper uses @key{ESC} to switch
-from Insert state to Vi state. Therefore Viper defines @kbd{_} as its Meta
+from Insert state to Vi state. Therefore Viper defines @kbd{C-\} as its Meta
 key in Vi state. @xref{Vi State}, for more info.@refill
 
 Emacs is structured as a lisp interpreter around a C core. Emacs keys
@@ -377,7 +378,6 @@ new commands that, in many cases, are more convenient than @kbd{:e},
 @section States in Viper
 
 @kindex @kbd{C-z}
-@kindex @kbd{C-z}
 @kindex @kbd{ESC}
 @kindex @kbd{i}
 @cindex Emacs state
@@ -442,11 +442,10 @@ doing soon!), you should learn about the meaning of the various keys in
 those special modes (typing @kbd{C-h m} in a buffer provides
 help with key bindings for the major mode of that buffer).
 
-If you switch to Vi in Dired or similar modes---no harm is
-done. It is just that 
-the special keybindings provided by those modes will be temporarily
-overshadowed by Viper's bindings. Switching back to Viper's
-Emacs state will revive the environment provided by the current major mode.
+If you switch to Vi in Dired or similar modes---no harm is done. It is just
+that the special keybindings provided by those modes will be temporarily
+overshadowed by Viper's bindings. Switching back to Viper's Emacs state
+will revive the environment provided by the current major mode.
 
 States in Viper are orthogonal to Emacs major modes, such as C mode or Dired
 mode. You can turn Viper on and off for any Emacs state. When Viper is turned
@@ -480,7 +479,7 @@ to allow Emacs keys in Insert state.
 
 You will be in this mode only by accident (hopefully). This is the state
 Emacs is normally in (imagine!!). Now leave it as soon as possible by
-typing @kbd{C-z}. The you will be in Vi state (sigh of relief) :-).
+typing @kbd{C-z}. Then you will be in Vi state (sigh of relief) :-).
 
 Emacs state is actually a Viperism to denote all the major and minor modes
 (@xref{Emacs Preliminaries})  other than Viper that Emacs can be in. Emacs
@@ -499,10 +498,10 @@ modes designed for editing files, such as cc-mode or latex-mode, use key
 sequences that begin with @kbd{C-x} and @kbd{C-c}.
 
 There is also a key that lets you temporarily escape to Vi command state
-from Emacs state: typing @kbd{M-C-z} (or @kbd{ESC C-z}) will let
-you execute a single Vi command while staying in Viper's Emacs state.
-At present, this works only for 1-character Vi commands (and for some
-complex commands).
+from Emacs or Insert states: typing @kbd{C-c \} will let you execute a
+single Vi command while staying in Viper's Emacs or Insert state.
+In Insert state, the same can also be achieved by typing @kbd{C-z}.
+
 
 @node Vi State, Insert State, Emacs State, States in Viper
 @subsection Vi State
@@ -544,15 +543,18 @@ Edit,Recursive Edit,emacs,The GNU Emacs Manual}.
 At user level 1, @kbd{C-g} is bound to @code{vip-info-on-file}
 function instead.
 @refill
-@item Underscore
-@kindex @kbd{_}
+@item C-\
+@kindex @kbd{C-\}
 @cindex Meta key
 
 Viper uses @kbd{ESC} as a switch between Insert and Vi states. Emacs uses
 @kbd{ESC} for Meta. We need a Meta key to call the Meta key functions
-such as @kbd{M-x function name}. The underscore key, @kbd{_}, was chosen,
-since it is the only reasonable, free Vi key left. Thus, in Vi state, to
-get @kbd{M-x}, you should type @kbd{_x} (if the keyboard has no Meta key).
+such as @kbd{M-x function name}. This role is played by the key @kbd{C-\}.
+Thus, to
+get @kbd{M-x}, you should type @kbd{C-\ x} (if the keyboard has no Meta key).
+This works both in the Vi state and the Insert state.
+Alternatively, you can use @kbd{\ ESC} in Vi state to simulate the meta
+key.
 It is possible to use @kbd{ESC} as Meta, but then you cannot
 press @kbd{ESC} multiple times in Vi state. @xref{Customization}, to find
 out how to rebind ESC to be Meta.@refill
@@ -698,15 +700,8 @@ which are more appropriate in the minibuffer.)
 
 @cindex Meta key
 
-You can call Meta functions from Insert state. The Vi-to-Emacs toggle key,
-normally @kbd{C-z}, is bound to Meta in Insert state. Thus @kbd{M-x} is
-typed as @kbd{C-zx}. The key @kbd{_} will now insert itself---it is not a
-Meta key in Insert state. (It is well understood that switching Meta keys
-around is inconvenient. However, there seems to be no way around this
-problem, short of changing Vi ESC key to something
-else. @xref{Customization}, for the information on @code{vip-ESC-key}, which
-can be used to free up @kbd{ESC} and designate some other key to do escape
-from Insert state to Vi state.)
+You can call Meta functions from Insert state. As in Vi state, the Meta key
+is @kbd{C-\}. Thus @kbd{M-x} is typed as @kbd{C-\ x}.
 
 Other Emacs commands that are useful in Insert state are @kbd{C-e}
 and @kbd{C-a}, which move the cursor to the end and the beginning of the
@@ -715,7 +710,7 @@ which move the cursor forward (or backward) one word.
 If your display has a Meta key, these functions are invoked by holding the
 Meta key and then typing @kbd{f} and @kbd{b}, respectively. On displays
 without the Meta key, these functions are invoked by typing
-@kbd{C-z f} and @kbd{C-z b} (@kbd{C-z} simulates the Meta key in Insert
+@kbd{C-\ f} and @kbd{C-\ b} (@kbd{C-\} simulates the Meta key in Insert
 state, as explained above).
 
 When Viper is in Insert state, you will see <I> in the mode line.
@@ -1173,14 +1168,14 @@ variable that controls how search patterns are highlighted is
 @code{vip-search-face}. 
 If you don't want any highlighting at all, put
 @example
-(copy-face 'default 'vip-search-face)
+(setq vip-search-face 'default)
 @end example
 @vindex @code{vip-search-face}
 @noindent
 in @file{~/.vip}. If you want to change how patterns are highlighted, you
 will have to set the variable @code{vip-search-face} to some other face,
 such as @code{highlight}. If none of the existing faces fits the bill, you
-may have to create your own. Further details on faces can be found
+would have to create your own. Further details on faces can be found
 in the Emacs Lisp Manual.
 
 @node Abbreviation Facilities,Movement and Markers,Improved Search,Improvements over Vi
@@ -1256,6 +1251,7 @@ the value can be @code{'reformed-vi} or @code{'emacs}.
 Changes to @code{vip-syntax-preference} should be done in the hooks to
 various major modes. Furthermore, for these changes to take effect, you
 should execute @code{(vip-update-alphanumeric-class)} right after changing
+the value of @code{vip-syntax-preference}.
 
 The above discussion of the meaning of Viper's words concerns only Viper's
 movement commands. In regular expressions, words remain the same as in
@@ -1282,8 +1278,7 @@ These commands have no Vi analogs.
 @kindex @kbd{C-x}
 @kindex @kbd{C-c}
 @kbd{C-x} will exit from Vi state and return to Emacs state
-@emph{temporarily}. If
-you hit one of these keys, Emacs will believe
+@emph{temporarily}. If you hit one of these keys, Emacs will believe
 that you hit that key in Emacs state. For example, if you hit @kbd{C-x}
 followed by @kbd{2}, then the current window will be split into 2 and you
 will be in Vi state again. Except for novice users, @kbd{C-c} is also set
@@ -1291,8 +1286,8 @@ to temporarily escape to Emacs and execute a command from the current
 major mode.
 @kbd{ESC} will do the same, if
 you configure @key{ESC} as Meta by setting @code{vip-no-multiple-ESC} to nil
-in @file{.vip}. @xref{Customization}. @kbd{C-z}
-in Insert state will make Emacs think @kbd{Meta} has been hit.@refill
+in @file{.vip}. @xref{Customization}. @kbd{C-\}
+in Insert or Vi states will make Emacs think @kbd{Meta} has been hit.@refill
 @item \
 @kindex @kbd{\}
 Escape to Emacs to execute a single Emacs command. For instance, @kbd{\
@@ -1385,9 +1380,6 @@ Go to end of heading.
 Search buffer for text delimited by movement command. The canonical
 example is @kbd{gw} to search for the word under the cursor.
 @xref{Improved Search}, for details.@refill
-@item _
-@kindex @kbd{_}
-Meta key when in Vi state.@xref{Vi State}, for an explanation.
 @item C-g and C-]
 @kindex @kbd{C-g}
 @kindex @kbd{C-]}
@@ -1521,8 +1513,7 @@ the file system.
 @pindex hilit19.el
 @cindex font-lock
 @pindex font-lock.el
-@code{hilit19.el} and @code{font-lock.el} for automatic highlighting
-various parts of a buffer 
+@code{font-lock.el} for automatic highlighting various parts of a buffer 
 using different fonts and colors.
 @item Saving Emacs Configuration
 @cindex desktop
@@ -1620,21 +1611,22 @@ appropriate major modes.
 @kbd{:se ai} changes the value of @code{vip-auto-indent} in the current
 buffer only; @kbd{:se gai} does the same globally.
 @item vip-electric-mode t
-If @code{t}, auto-indentation becomes electric, which means that @kbd{RET},
-@kbd{O}, and @kbd{o} indent cursor according to the current major mode. In
-the future, this variable may control additional electric features.
+If not @code{nil}, auto-indentation becomes electric, which means that
+@kbd{RET}, @kbd{O}, and @kbd{o} indent cursor according to the current
+major mode. In the future, this variable may control additional electric
+features.
 
 This is a local variable: @code{setq} changes the value of this variable
 in the current buffer only. Use @code{setq-default} to change the value in
 all buffers.
 @item vip-case-fold-search nil
 @itemx :se ic (:se ignorecase)
-If @code{t}, search ignores cases.
+If not @code{nil}, search ignores cases.
 This can also be toggled by quickly hitting @kbd{/} twice.
 @item vip-re-search nil
 @itemx :se magic
-If @code{t} then search is reg-exp search, if @code{nil} then vanilla
-search.
+If not @code{nil}, search will use regular expressions; if @code{nil} then
+use vanilla search.
 This behavior can also be toggled by quickly hitting @kbd{/} trice.
 @item buffer-read-only
 @itemx :se ro (:se readonly)
@@ -1673,18 +1665,21 @@ to bind @code{vip-insert-tab} to some other convenient key.
 The number of columns shifted by @kbd{>} and @kbd{<} commands.
 @item vip-search-wrap-around t
 @itemx :se ws (:se wrapscan)
-If @code{t}, search wraps around the end/beginning of buffer.
+If not @code{nil}, search wraps around the end/beginning of buffer.
+@item vip-adjust-window-after-search t
+If not @code{nil}, window will be pulled up or down, as appropriate, if
+search lands near the first (or last) line of the window.
 @item vip-tags-file-name "TAGS"
 The name of the file used as the tag table.
 @item vip-re-query-replace nil
-If @code{t}, use reg-exp replace in query replace.
+If not @code{nil}, use reg-exp replace in query replace.
 @item vip-want-ctl-h-help nil
-If @code{t}, @kbd{C-h} is bound to @code{help-command};
+If not @code{nil}, @kbd{C-h} is bound to @code{help-command};
 if @code{nil}, it is bound to @code{delete-backward-char}.
 @item vip-vi-style-in-minibuffer t
-If @code{t}, Viper provides a high degree of compatibility with Vi insert mode
-when you type text in the Minibuffer; if @code{nil}, typing in the
-Minibuffer feels like plain Emacs.
+If not @code{nil}, Viper provides a high degree of compatibility with Vi
+insert mode when you type text in the Minibuffer; if @code{nil}, typing in
+the Minibuffer feels like plain Emacs.
 @item vip-no-multiple-ESC t
 If you set this to @code{nil}, you can use @kbd{ESC} as Meta in Vi state.
 Normally, this is not necessary, since graphical displays have separate
@@ -1703,7 +1698,7 @@ Making this value too large will slow you down, so exercise restraint.
 Set this to @code{nil}, if you want @kbd{l,h} to cross
 lines, etc. @xref{Movement and Markers}, for more info.
 @item vip-ex-style-editing-in-insert t
-Set this to @code{nil}, if you want @kbd{ESC} to not move back and
+Set this to to @code{nil}, if you want @kbd{ESC} to not move back and
 @kbd{C-h} to not stop
 at the beginning of a line in Insert state.
 @item vip-always t
@@ -1734,7 +1729,7 @@ into the value of @code{ex-nontrivial-find-file-function}.  Use
 @findex @code{vip-ex-nontrivial-find-file-ms}
 @findex @code{vip-ex-nontrivial-find-file-unix}
 @item ex-cycle-other-window t
-If @code{t}, @kbd{:n} and @kbd{:b} will cycle through files in another
+If not @code{nil}, @kbd{:n} and @kbd{:b} will cycle through files in another
 window, if one exists.
 @item ex-cycle-through-non-files nil
 @kbd{:n} does not normally cycle through buffers. Set this to get
@@ -1762,9 +1757,9 @@ in Vi command state. Setting this to @code{nil} is really a bad idea,
 unless you are a novice, as this precludes the use
 of language-specific features provided by the major modes.
 @item vip-keep-point-on-repeat t
-If @code{t}, point is not moved when the user repeats the previous command
-by typing `.'  This is very useful for doing repeated changes with the
-@kbd{.} key.
+If not @code{nil}, point is not moved when the user repeats the previous
+command by typing `.'  This is very useful for doing repeated changes with
+the @kbd{.} key.
 @item vip-repeat-from-history-key 'f12
 Prefix key used to invoke the macros @kbd{f12 1} and @kbd{f12 2} that repeat
 the second-last and the third-last destructive command.
@@ -1775,44 +1770,59 @@ previous commands to invoke. Viper binds @kbd{f12 1} and @kbd{f12 2} only,
 but the user can bind more in @file{~/.vip}. @xref{Vi Macros}, for how to do
 this.
 @item vip-keep-point-on-undo nil
-If @code{t}, Viper tries to not move point when undoing commands.
+If not @code{nil}, Viper tries to not move point when undoing commands.
 Instead, it will briefly move the cursor to the place where change has
 taken place. However, if the undone piece of text is not seen in window,
 then point will be moved to the place where the change took place.
 Set it to @code{t} and see if you like it better.
 @item vip-delete-backwards-in-replace nil
-If @code{t}, DEL key will delete characters while moving the cursor backwards.
-If @code{nil}, the cursor will move backwards without deleting anything.
+If not @code{nil}, DEL key will delete characters while moving the cursor
+backwards.  If @code{nil}, the cursor will move backwards without deleting
+anything.
 @item vip-replace-overlay-face 'vip-replace-overlay-face
+@itemx vip-replace-overlay-pixmap "grey3"
 On a graphical display, Viper highlights replacement regions instead of
 putting a @samp{$} at the end. This variable controls the so called
 @dfn{face} used to highlight the region. 
 
-By default, @code{vip-replace-overlay-face} underlines the replacement
-on monochrome displays and highlights it with color on  color displays.
-If you know something about Emacs
-faces and don't like how Viper highlights replacement regions, you can change
-this variable to specify a new face name. (Emacs faces are described in the
-Emacs Lisp reference.)
-On a color display, the following customization method is usually
-most effective:
+By default, @code{vip-replace-overlay-face} underlines the replacement on
+monochrome displays and also lays a pixmap over them (as specified in the
+variable @code{vip-replace-overlay-pixmap}.  On color displays, replacement
+regions are highlighted with color.
+
+If you know something about Emacs faces and don't like how Viper highlights
+replacement regions, you can change @code{vip-replace-overlay-face} by
+specifying a new face. (Emacs faces are described in the Emacs Lisp
+reference.)  On a color display, the following customization method is
+usually most effective:
 @example
 (set-face-foreground vip-replace-overlay-face "DarkSlateBlue")
 (set-face-background vip-replace-overlay-face "yellow")
 @end example
-For a complete list of colors available to you, evaluate the
-expression @code{(x-defined-colors)}. (Type it in the buffer @code{*scratch*}
-and then hit the @kbd{C-j} key.
+For a complete list of colors available to you, evaluate the expression
+@code{(x-defined-colors)}. (Type it in the buffer @code{*scratch*} and then
+hit the @kbd{C-j} key.
+
+On a monochrome display, you can change the value of the variable
+@code{vip-replace-overlay-pixmap} to specify the pixmap of your choice
+(which should be a string denoting the file name of the pixmap).  Emacs
+takes pixmaps from the directory specified in the variable
+@code{x-bitmap-file-path}.
 @item vip-replace-overlay-cursor-color  "Red"
+@vindex @code{vip-replace-overlay-cursor-color}
 Cursor color when it is inside the replacement region.
 This has effect only on color displays and only when Emacs runs as an X
 application.
+@item vip-insert-state-cursor-color nil
+@vindex @code{vip-insert-state-cursor-color}
+If set to a valid color, this will be the cursor color when Viper is in
+insert state.
 @item vip-replace-region-end-delimiter "$"
-A string used to mark the end of replacement regions.  It is used only with
+A string used to mark the end of replacement regions.  It is used only on
 TTYs or if @code{vip-use-replace-region-delimiters} is non-nil.
 @item vip-replace-region-start-delimiter  ""
 A string used to mark the beginning of replacement regions.  It is used
-only with TTYs or if @code{vip-use-replace-region-delimiters} is non-nil.
+only on TTYs or if @code{vip-use-replace-region-delimiters} is non-nil.
 @item vip-use-replace-region-delimiters
 If non-nil, Viper will always use @code{vip-replace-region-end-delimiter} and
 @code{vip-replace-region-start-delimiter} to delimit replacement regions,
@@ -1822,6 +1832,10 @@ variable is non-nil only on TTYs or monochrome displays.
 Specifies the key used to switch from Emacs to Vi and back.
 Must be set in @file{.vip} or prior to loading Viper. This variable can't be
 changed interactively after Viper is loaded.
+
+In Insert state, this key acts as a temporary escape to Vi state, i.e., it
+will set Viper up so that the very next command will be executed as if it
+were typed in Vi state.
 @item vip-ESC-key "\e"
 Specifies the key used to escape from Insert/Replace states to Vi.
 Must be set in @file{.vip} or prior to loading Viper. This variable cannot be
@@ -1864,6 +1878,7 @@ can include a line like this in your @file{.vip} file:
 @vindex @code{vip-shift-width}
 @vindex @code{buffer-read-only}
 @vindex @code{vip-search-wrap-around}
+@vindex @code{vip-adjust-window-after-search}
 @vindex @code{vip-search-face}
 @vindex @code{vip-tags-file-name}
 @vindex @code{vip-re-query-replace}
@@ -1885,6 +1900,7 @@ can include a line like this in your @file{.vip} file:
 @vindex @code{vip-keep-point-on-undo}
 @vindex @code{vip-delete-backwards-in-replace}
 @vindex @code{vip-replace-overlay-face}
+@vindex @code{vip-replace-overlay-pixmap}
 @vindex @code{vip-replace-region-end-symbol}
 @vindex @code{vip-replace-region-start-symbol}
 @vindex @code{vip-toggle-key}
@@ -2167,8 +2183,8 @@ the @kbd{TAB} key, so @kbd{S-tab} behaves as if it were @kbd{TAB}. In such
 a case, you will have to bind @code{vip-insert-tab} to some other
 convenient key.
 
-Some packages, notably Dired, Gnus, Info, etc., attach special meaning
-to common keys like @kbd{SPC}, @kbd{x}, @kbd{d}, @kbd{v}, and others. This
+Some packages, notably Dired, Gnus, Info, etc., attach special meaning to
+common keys like @kbd{SPC}, @kbd{x}, @kbd{d}, @kbd{v}, and others. This
 means that Vi command state is inappropriate for working with these
 packages. Fortunately, these modes operate on read-only buffers and are
 designed not for editing files, but for special-purpose browsing, reading
@@ -2179,10 +2195,9 @@ if, for instance, you want to do Vi-style search in a buffer (although,
 usually, incremental search, which is bound to @kbd{C-s}, is sufficient in
 these situations). But you should then switch back to Emacs state if you
 plan to continue using these major modes productively. You can also switch
-to Vi temporarily, to execute one 1-character command. This is done by
-typing @kbd{M-C-z} (or @kbd{ESC C-z}).
-This facility cannot execute several complex Vi commands, such as @kbd{dw},
-@kbd{de}, etc.
+to Vi temporarily, to execute just one command. This is done by typing
+@kbd{C-c \}. (In some of these modes, @kbd{/} and @kbd{:} are bound
+Vi-style, unless these keys perform essential duties.)
 
 It is also possible to harness some major modes, even though they may bind
 common keys to specialized commands. Harnessing can make sense for modes
@@ -2282,15 +2297,41 @@ If you hit something other than @kbd{/} after the first @kbd{/} or if the
 second @kbd{/} doesn't follow quickly enough, then Viper will issue the
 usual prompt @kbd{/} and will wait for input, as usual in Vi.
 If you don't like this behavior, you can ``unrecord'' these macros in your
-@file{~/.vip} file. For instance, if u don't like the above feature, put
+@file{~/.vip} file. For instance, if you don't like the above feature, put
 this in @file{~/.vip}:
 @example
-(vip-unrecord-kbd-macro "//" 'vi-state)
-(vip-unrecord-kbd-macro "///" 'vi-state)
+(vip-set-vi-search-style-macros 'undefine)
 @end example
-@findex @code{vip-unrecord-kbd-macro}
+@findex @code{vip-set-vi-search-style-macros}
 
+@item Vi-isms in Emacs state
+Some people find it useful to use the Vi-style search key, `/', to invoke
+search in modes which Viper leaves in emacs-state. These modes are:
+@code{dired-mode}, @code{mh-folder-mode}, @code{gnus-group-mode},
+@code{gnus-summary-mode}, @code{Info-mode}, and @code{Buffer-menu-mode}
+(more may be added in the future).  So, in the above modes, Viper binds `/'
+so that it will behave Vi-style.  Furthermore, in those major modes, Viper
+binds `:' to invoke ex-style commands, like in vi-state.  And, as described
+above, `//' and `///' get bound to Vi-style macros that toggle
+case-insensitivity and regexp-search.
+
+If you don't like these features---which I don't really understand---you
+can unbind `/' and `:' in @code{vip-dired-modifier-map} (for Dired) or in
+@code{vip-slash-and-colon-map}, for other modes.
+@vindex @code{vip-slash-and-colon-map}
+@vindex @code{vip-dired-modifier-map}
+
+To unbind the macros `//' and `///' for a major mode where you feel they
+are undesirable, execute @code{vip-set-emacs-search-style-macros} with a
+non-nil argument.  This can be done either interactively, by supplying a
+prefix argument, or by placing
+@example
+(vip-set-emacs-search-style-macros 'undefine)
+@end example
+@findex @code{vip-set-emacs-search-style-macros}
+in the hook to the major mode (e.g., @code{dired-mode-hook}).
 @xref{Vi Macros}, for more information on Vi macros.
+
 @item vip-heading-start 
 @item vip-heading-end
 @cindex headings
@@ -2413,7 +2454,7 @@ putting
 in the @file{~/.vip} file. However, in that case, the user will not have any
 indication of the current Viper state in the minibuffer. (This is important
 if the user accidentally switches to another Viper state by typing @kbd{ESC} or
-@kbd{C-z}.
+@kbd{C-z}).
 @end table
 
 @cindex Multifile documents and programs
@@ -2917,7 +2958,9 @@ kanze@@gabi-soft.fr (James Kanze),
 hatazaki@@bach.convex.com (Takao Hatazaki),
 sawdey@@lcse.umn.edu (Aaron Sawdey),
 jobrien@@hchp.org (John O'Brien),
-mrb@@Eng.Sun.COM (Martin Buchholz)
+mrb@@Eng.Sun.COM (Martin Buchholz),
+kwzh@@gnu.ai.mit.edu (Karl Heuer),
+sudish@@MindSpring.COM (Sudish Joseph)
 @end example
 
 

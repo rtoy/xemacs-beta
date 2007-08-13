@@ -47,10 +47,11 @@
     (progn
       (setq command-line-args
 	    (cons (car command-line-args)
-		  (append '("-l" "loadup-el.el" "run-temacs"
-			    "-batch" "-q" "-no-site-file" "-f"
-			    "batch-byte-compile")
-			  update-elc-files-to-compile)))
+		  (append
+		   '("-l" "loadup-el.el" "run-temacs"
+		     "-batch" "-q" "-no-site-file"
+		     "-l" "bytecomp" "-f" "batch-byte-compile")
+		   update-elc-files-to-compile)))
       (load "loadup-el.el")))
 
 (kill-emacs)

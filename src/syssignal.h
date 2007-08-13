@@ -88,7 +88,9 @@ Boston, MA 02111-1307, USA.  */
    the risk of someone forgetting this convention and calling
    signal() directly. */
 
+#ifndef NeXT
 typedef SIGTYPE (*signal_handler_t) (int);
+#endif
 
 #if defined (HAVE_SIGPROCMASK)
 

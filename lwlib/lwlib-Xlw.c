@@ -15,7 +15,8 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with GNU Emacs; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
+the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.  */
 
 #include <stdlib.h> /* for abort () */
 #include <limits.h>
@@ -53,7 +54,7 @@ pre_hook (Widget w, XtPointer client_data, XtPointer call_data)
   /* #### - this code used to (for some random back_asswards reason) pass
   the expression below in the call_data slot.  For incremental menu
   construction, this needs to go.  I can't even figure out why it was done
-  this way in the first place...it's just a historical wierdism. --Stig */
+  this way in the first place...it's just a historical weirdism. --Stig */
   call_data = (val ? val->call_data : NULL);
 #endif 
   if (val && val->call_data)
@@ -161,7 +162,7 @@ xlw_scrollbar_callback (Widget widget, XtPointer closure, XtPointer call_data)
 
   if (data->event)
     {
-      switch (data->event->xany.type)
+      switch (data->event->type)
 	{
 	case KeyPress:
 	case KeyRelease:
@@ -221,48 +222,38 @@ xlw_scrollbar_callback (Widget widget, XtPointer closure, XtPointer call_data)
     instance->info->pre_activate_cb (widget, id, (XtPointer) &event_data);
 }
 
+#define add_scrollbar_callback(resource) \
+XtAddCallback (scrollbar, resource, xlw_scrollbar_callback, (XtPointer) instance)
+
 /* #### Does not yet support horizontal scrollbars. */
 static Widget
 xlw_create_scrollbar (widget_instance *instance, int vertical)
 {
   Arg al[20];
   int ac = 0;
-  Widget scrollbar;
+  static XtCallbackRec callbacks[2] =
+  { {xlw_scrollbar_callback, NULL}, {NULL, NULL} };
 
-  XtSetArg (al[ac], (String) XmNminimum, 1); ac++;
-  XtSetArg (al[ac], (String) XmNmaximum, INT_MAX); ac++;
-  XtSetArg (al[ac], (String) XmNincrement, 1); ac++;
-  XtSetArg (al[ac], (String) XmNpageIncrement, 1); ac++;
-  if (vertical)
-    {
-      XtSetArg (al[ac], (String) XmNorientation, XmVERTICAL); ac++;
-    }
-  else
-    {
-      XtSetArg (al[ac], (String) XmNorientation, XmHORIZONTAL); ac++;
-    }
+  callbacks[0].closure  = (XtPointer) instance;
 
-  scrollbar =
-    XtCreateWidget (instance->info->name, xlwScrollBarWidgetClass, instance->parent, al, ac);
+  XtSetArg (al[ac], XmNminimum,       1); ac++;
+  XtSetArg (al[ac], XmNmaximum, INT_MAX); ac++;
+  XtSetArg (al[ac], XmNincrement,     1); ac++;
+  XtSetArg (al[ac], XmNpageIncrement, 1); ac++;
+  XtSetArg (al[ac], XmNorientation, (vertical ? XmVERTICAL : XmHORIZONTAL));
+  ac++;
 
-  XtAddCallback(scrollbar, XmNdecrementCallback, xlw_scrollbar_callback,
-		(XtPointer) instance);
-  XtAddCallback(scrollbar, XmNdragCallback, xlw_scrollbar_callback,
-		(XtPointer) instance);
-  XtAddCallback(scrollbar, XmNincrementCallback, xlw_scrollbar_callback,
-		(XtPointer) instance);
-  XtAddCallback(scrollbar, XmNpageDecrementCallback, xlw_scrollbar_callback,
-		(XtPointer) instance);
-  XtAddCallback(scrollbar, XmNpageIncrementCallback, xlw_scrollbar_callback,
-		(XtPointer) instance);
-  XtAddCallback(scrollbar, XmNtoBottomCallback, xlw_scrollbar_callback,
-		(XtPointer) instance);
-  XtAddCallback(scrollbar, XmNtoTopCallback, xlw_scrollbar_callback,
-		(XtPointer) instance);
-  XtAddCallback(scrollbar, XmNvalueChangedCallback, xlw_scrollbar_callback,
-		(XtPointer) instance);
+  XtSetArg (al[ac], XmNdecrementCallback,	callbacks); ac++;
+  XtSetArg (al[ac], XmNdragCallback,		callbacks); ac++;
+  XtSetArg (al[ac], XmNincrementCallback,	callbacks); ac++;
+  XtSetArg (al[ac], XmNpageDecrementCallback,	callbacks); ac++;
+  XtSetArg (al[ac], XmNpageIncrementCallback,	callbacks); ac++;
+  XtSetArg (al[ac], XmNtoBottomCallback,	callbacks); ac++;
+  XtSetArg (al[ac], XmNtoTopCallback,		callbacks); ac++;
+  XtSetArg (al[ac], XmNvalueChangedCallback,	callbacks); ac++;
 
-  return scrollbar;
+  return XtCreateWidget (instance->info->name, xlwScrollBarWidgetClass,
+			 instance->parent, al, ac);
 }
 
 static Widget
@@ -288,9 +279,7 @@ xlw_update_scrollbar (widget_instance *instance, Widget widget,
       int new_sliderSize, new_value;
       double percent;
 
-      /*
-       * First size and position the scrollbar widget.
-       */
+      /* First size and position the scrollbar widget. */
       XtVaSetValues (widget,
 		     XtNx, data->scrollbar_x,
 		     XtNy, data->scrollbar_y,
@@ -298,9 +287,7 @@ xlw_update_scrollbar (widget_instance *instance, Widget widget,
 		     XtNheight, data->scrollbar_height,
 		     0);
 
-      /*
-       * Now the size the scrollbar's slider.
-       */
+      /* Now the size the scrollbar's slider. */
 
       XtVaGetValues (widget,
 		     XmNsliderSize, &widget_sliderSize,

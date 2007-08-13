@@ -185,6 +185,11 @@
 	      ;; Change the pointer used when the mouse is over a modeline
 	      (set-glyph-image modeline-pointer-glyph "leftbutton")
 
+	      ;; Change the continuation glyph face so it stands out more
+	      (and (fboundp 'set-glyph-property)
+		   (boundp 'continuation-glyph)
+		   (set-glyph-property continuation-glyph 'face 'bold))
+
 	      ;; Change the pointer used during garbage collection.
 	      ;;
 	      ;; Note that this pointer image is rather large as pointers go,
@@ -564,7 +569,24 @@
 (resize-minibuffer-mode)
 (setq resize-minibuffer-window-exactly nil)
 
- 
+;; Create a single detached minibuffer used by all frames.
+;; Uncomment to try this out.
+;(when running-xemacs
+;  (setq initial-frame-plist '(minibuffer nil))
+;  (setq default-frame-plist '(minibuffer nil))
+;  (setq default-minibuffer-frame
+;	(make-frame
+;	 '(minibuffer only
+;		      width 86
+;		      height 1
+;		      menubar-visible-p nil
+;		      default-toolbar-visible-p nil
+;		      name "minibuffer"
+;		      top -2
+;		      left -2
+;		      has-modeline-p nil)))
+;  (frame-notice-user-settings))
+
 ;;; ********************
 ;;; W3 is a browser for the World Wide Web, and takes advantage of the very
 ;;; latest redisplay features in XEmacs.  You can access it simply by typing 

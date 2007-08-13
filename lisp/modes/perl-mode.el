@@ -707,4 +707,6 @@ With argument, repeat that many times; negative args move backward."
   (perl-beginning-of-function)
   (backward-paragraph))
 
-;;;;;;;; That's all, folks! ;;;;;;;;;
+(provide 'perl-mode)
+
+;;; perl-mode.el ends here

@@ -7,7 +7,7 @@
 # variables VERSION, EMACS, DATADIR and comment out the Emacs-specific
 # versions.
 
-VERSION = 19.31
+VERSION = 19.34
 EMACS = emacs-$(VERSION)
 #VERSION = 19.14
 #EMACS = xemacs-$(VERSION)
@@ -124,7 +124,7 @@ info: viper.info
 install: all
 	$(INSTALL) -m444 $(VIPER) $(LISPDIR)
 	$(INSTALL) -m644 viper*.elc $(LISPDIR)
-	$(INSTALL) -m444 viper.info* $(INFODIR)
+	$(INSTALL) -m444 viper viper-? $(INFODIR)
 	$(INSTALL) -m644 viper.dvi viperCard.dvi $(ETCDIR)
 	@echo ""
 	@echo "Please move viper.texi and viper-cmd.texi to"

@@ -67,3 +67,8 @@ Boston, MA 02111-1307, USA.  */
 #include "glyphs-x.h"
 #include "gui-x.h"
 #endif
+
+#ifdef TOOLTALK
+#include <tt_c.h>
+#include "tooltalk.h"
+#endif

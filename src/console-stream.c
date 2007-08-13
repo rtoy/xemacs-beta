@@ -42,7 +42,7 @@ Lisp_Object Vterminal_console;
 Lisp_Object Vterminal_device;
 Lisp_Object Vterminal_frame;
 
-extern Lisp_Object Vstdio_str; /* in console-tty.c */
+Lisp_Object Vstdio_str;
 
 static void
 allocate_stream_console_struct (struct console *con)
@@ -124,32 +124,46 @@ stream_delete_console (struct console *con)
   free_stream_console_struct (con);
 }
 
-static Lisp_Object
+Lisp_Object
 stream_semi_canonicalize_console_connection (Lisp_Object connection,
 					     Error_behavior errb)
 {
-  return tty_semi_canonicalize_console_connection (connection, errb);
+  if (NILP (connection))
+    return Vstdio_str;
+
+  return connection;
 }
 
-static Lisp_Object
+Lisp_Object
 stream_canonicalize_console_connection (Lisp_Object connection,
 					Error_behavior errb)
 {
-  return tty_canonicalize_console_connection (connection, errb);
+  if (NILP (connection) || !NILP (Fequal (connection, Vstdio_str)))
+    return Vstdio_str;
+
+  if (!ERRB_EQ (errb, ERROR_ME))
+    {
+      if (!STRINGP (connection))
+	return Qunbound;
+    }
+  else
+    CHECK_STRING (connection);
+
+  return Ffile_truename (connection, Qnil);
 }
 
-static Lisp_Object
+Lisp_Object
 stream_semi_canonicalize_device_connection (Lisp_Object connection,
 					    Error_behavior errb)
 {
-  return tty_semi_canonicalize_device_connection (connection, errb);
+  return stream_semi_canonicalize_console_connection (connection, errb);
 }
 
-static Lisp_Object
+Lisp_Object
 stream_canonicalize_device_connection (Lisp_Object connection,
 				       Error_behavior errb)
 {
-  return tty_canonicalize_device_connection (connection, errb);
+  return stream_canonicalize_console_connection (connection, errb);
 }
 
 
@@ -317,6 +331,10 @@ The initial device-object, which represent's Emacs's stdout.
 The initial frame-object, which represents Emacs's stdout.
 */ );
   Vterminal_frame = Qnil;
+
+  /* Moved from console-tty.c */
+  Vstdio_str = build_string ("stdio");
+  staticpro (&Vstdio_str);
 }
 
 void

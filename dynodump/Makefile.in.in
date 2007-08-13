@@ -16,8 +16,9 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to the Free
-Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
+along with XEmacs; see the file COPYING.  If not, write to
+the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.  */
 
 /* Avoid trouble on systems where the "SHELL" variable might be
    inherited from the environment. */
@@ -94,7 +95,7 @@ all::
 #endif
 
 dynodump.so: ${srcdir}/_dynodump.h $(OBJS)
-	PATH=/usr/ccs/bin:$PATH ld -o dynodump.so -G $(OBJS) -lelf -lmapmalloc
+	PATH=/usr/ccs/bin:/bin:$PATH ld -o dynodump.so -G $(OBJS) -lelf -lmapmalloc
 
 _relocate.o: ${srcdir}/$(ARCH)/_relocate.c
 	$(CC) -c $(ALL_CFLAGS) ${srcdir}/$(ARCH)/_relocate.c

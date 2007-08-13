@@ -55,7 +55,12 @@
     (device-type (selected-device))))
 ;; in XEmacs: device-type is tty on tty and stream in batch.
 (defun vip-window-display-p ()
-  (and (vip-device-type) (not (memq (vip-device-type) '(tty stream)))))
+  (and (vip-device-type) (not (memq (vip-device-type) '(tty stream pc)))))
+
+(defvar vip-ms-style-os-p (memq system-type '(ms-dos windows-nt windows-95))
+  "Tells if Emacs is running under an MS-style OS: ms-dos, windows-nt, W95.")
+(defvar vip-vms-os-p (memq system-type '(vax-vms axp-vms))
+  "Tells if Emacs is running under VMS.")
 
 (defvar vip-force-faces nil
   "If t, Viper will think that it is running on a display that supports faces.
@@ -194,7 +199,19 @@ that Viper doesn't know about.")
     (eq (device-class (selected-device)) 'color)))
    
 (defsubst vip-get-cursor-color ()
-  (cdr (assoc 'cursor-color (frame-parameters))))
+  (if vip-emacs-p
+      (cdr (assoc 'cursor-color (frame-parameters)))
+    (color-instance-name (frame-property (selected-frame) 'cursor-color))))
+  
+(defun vip-set-face-pixmap (face pixmap)
+  "Set face pixmap on a monochrome display."
+  (if (and (vip-window-display-p) (not (vip-color-display-p)))
+      (condition-case nil
+	  (set-face-background-pixmap face pixmap)
+	(error
+	 (message "Pixmap not found for %S: %s" (face-name face) pixmap)
+	 (sit-for 1)))))
+
   
 ;; OS/2
 (cond ((eq (vip-device-type) 'pm)
@@ -232,10 +249,13 @@ that Viper doesn't know about.")
 		 (not (string= color vip-replace-overlay-cursor-color)))
 	    (vip-overlay-put vip-replace-overlay 'vip-cursor-color color)))))
 	
-(defsubst vip-restore-cursor-color ()
+;; restore cursor color from replace overlay
+(defsubst vip-restore-cursor-color-after-replace ()
   (vip-change-cursor-color
    (vip-overlay-get vip-replace-overlay 'vip-cursor-color)))
-	 
+(defsubst vip-restore-cursor-color-after-insert ()
+  (vip-change-cursor-color vip-saved-cursor-color))
+
 
 ;; Check the current version against the major and minor version numbers
 ;; using op: cur-vers op major.minor If emacs-major-version or
@@ -418,11 +438,11 @@ appropriately."
 	 ;; using cond in anticipation of further additions
 	 (cond (ex-unix-type-shell-options)
 	       ))
-	(command (cond (vip-ms-style-os-p (format "\"ls -1 %s\"" filespec))
-		       (t (format "ls -1 %s" filespec))))
-	file-list)
+	(command (cond (vip-ms-style-os-p (format "\"ls -1 -d %s\"" filespec))
+		       (t (format "ls -1 -d %s" filespec))))
+	file-list status)
     (save-excursion 
-      (set-buffer (setq tmp-buf (get-buffer-create vip-ex-tmp-buf-name)))
+      (set-buffer (get-buffer-create vip-ex-tmp-buf-name))
       (erase-buffer)
       (setq status
 	    (if gshell-options
@@ -462,7 +482,7 @@ The users of Unix-type shells should be able to use
 `ex-nontrivial-find-file-function'. If this doesn't work, the user may have
 to write a custom function, similar to `vip-ex-nontrivial-find-file-unix'."
   (save-excursion 
-    (set-buffer (setq tmp-buf (get-buffer-create vip-ex-tmp-buf-name)))
+    (set-buffer (get-buffer-create vip-ex-tmp-buf-name))
     (erase-buffer)
     (insert filespec)
     (goto-char (point-min))
@@ -475,7 +495,7 @@ to write a custom function, similar to `vip-ex-nontrivial-find-file-unix'."
 ;; return a list of file names listed in the buffer beginning at point
 ;; If optional arg is supplied, assume each filename is listed on a separate
 ;; line
-(defun vip-get-filenames-from-buffer (one-per-line)
+(defun vip-get-filenames-from-buffer (&optional one-per-line)
   (let ((skip-chars (if one-per-line "\t\n" " \t\n"))
 	 result fname delim)
     (skip-chars-forward skip-chars)
@@ -500,7 +520,7 @@ to write a custom function, similar to `vip-ex-nontrivial-find-file-unix'."
 ;; convert MS-DOS wildcards to regexp
 (defun vip-wildcard-to-regexp (wcard)
   (save-excursion
-    (set-buffer (setq tmp-buf (get-buffer-create vip-ex-tmp-buf-name)))
+    (set-buffer (get-buffer-create vip-ex-tmp-buf-name))
     (erase-buffer)
     (insert wcard)
     (goto-char (point-min))
@@ -536,7 +556,11 @@ to write a custom function, similar to `vip-ex-nontrivial-find-file-unix'."
       (setq tmp (cdr tmp)))
     (reverse (apply 'append tmp2))))
 
-      
+(defun vip-convert-standard-file-name (fname)
+  (if vip-emacs-p
+      (convert-standard-filename fname)
+    ;; hopefully, XEmacs adds this functionality
+    fname))
 
 
 
@@ -736,6 +760,7 @@ to write a custom function, similar to `vip-ex-nontrivial-find-file-unix'."
 	(sit-for 2)
 	(vip-overlay-put vip-search-overlay 'face nil))))
 
+
 ;; Replace state
 
 (defsubst vip-move-replace-overlay (beg end)
@@ -767,7 +792,8 @@ to write a custom function, similar to `vip-ex-nontrivial-find-file-unix'."
   
 (defsubst vip-hide-replace-overlay ()
   (vip-set-replace-overlay-glyphs nil nil)
-  (vip-restore-cursor-color)
+  (vip-restore-cursor-color-after-replace)
+  (vip-restore-cursor-color-after-insert)
   (if (vip-has-face-support-p)
       (vip-overlay-put vip-replace-overlay 'face nil)))
 
@@ -934,15 +960,17 @@ to write a custom function, similar to `vip-ex-nontrivial-find-file-unix'."
 
 ;; This function lets function-key-map convert key sequences into logical
 ;; keys. This does a better job than vip-read-event when it comes to kbd
-;; macros, since it enables certain macros to be shared between X and TTY
-;; modes.
+;; macros, since it enables certain macros to be shared between X and TTY modes
+;; by correctly mapping key sequences for Left/Right/... (one an ascii
+;; terminal) into logical keys left, right, etc.
 (defun vip-read-key () 
-  (let ((overriding-local-map vip-overriding-map) 
+  (let ((overriding-local-map vip-overriding-map)
+	(inhibit-quit t)
         key) 
     (use-global-map vip-overriding-map) 
     (setq key (elt (read-key-sequence nil) 0)) 
     (use-global-map global-map) 
-    key)) 
+    key))
 
 
 ;; Emacs has a bug in eventp, which causes (eventp nil) to return (nil)
@@ -1126,9 +1154,8 @@ Vi.")
 Usually contains ` ', linefeed, TAB or formfeed.")
 
 (defun vip-update-alphanumeric-class ()
-  "Set the syntactic class of Viper alphanumeric symbols according to
-the variable `vip-ALPHA-char-class'. Should be called in order for changes to
-`vip-ALPHA-char-class' to take effect."
+  "Set the syntax class of Viper alphanumerals according to `vip-syntax-preference'.
+Must be called in order for changes to `vip-syntax-preference' to take effect."
   (interactive)
   (setq-default
    vip-ALPHA-char-class

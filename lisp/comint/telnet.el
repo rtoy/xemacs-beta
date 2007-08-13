@@ -126,9 +126,7 @@ rejecting one login and prompting again for a username and password.")
 	  ((string-match "its" string)
 	   (setq telnet-prompt-pattern  "^[^*>\n]*[*>] *"))
 	  ((string-match "explorer" string) ;;explorer telnet needs work
-	   (setq telnet-replace-c-g ?\n))
-	  (t
-	   (setq telnet-prompt-pattern telnet-default-prompt-pattern))))
+	   (setq telnet-replace-c-g ?\n))))
   (setq comint-prompt-regexp telnet-prompt-pattern))
 
 (defun telnet-initial-filter (proc string)

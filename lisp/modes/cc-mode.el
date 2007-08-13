@@ -1197,7 +1197,7 @@ The expansion is entirely correct because it uses the C preprocessor."
 (defconst c-C++-friend-key
   "friend[ \t]+\\|template[ \t]*<.+>[ \t]*friend[ \t]+"
   "Regexp describing friend declarations in C++ classes.")
-(defconst c-C++-comment-start-regexp "//\\|/\\*"
+(defconst c-C++-comment-start-regexp "/[/*]"
   "Dual comment value for `c-comment-start-regexp'.")
 (defconst c-C-comment-start-regexp "/\\*"
   "Single comment style value for `c-comment-start-regexp'.")

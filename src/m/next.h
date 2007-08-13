@@ -35,14 +35,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define EXPLICIT_SIGN_EXTEND
 
-/* Data type of load average, as read out of kmem.  */
-
-#define LOAD_AVE_TYPE long
-
-/* Convert that into an integer that is 100 for a load average of 1.0  */
-
-#define LOAD_AVE_CVT(x) (int) (((double) (x)) * 100.0 / FSCALE)
-
 /* Say that the text segment of a.out includes the header;
    the header actually occupies the first few bytes of the text segment
    and is counted in hdr.a_text.  */
@@ -53,10 +45,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define SEGSIZ 0x20000
 #define SEGMENT_MASK (SEGSIZ - 1)
-
-#define HAVE_ALLOCA
-
-#define SYSTEM_MALLOC
 
 #define HAVE_UNIX_DOMAIN
 
@@ -108,34 +96,5 @@ Boston, MA 02111-1307, USA.  */
  */
 typedef unsigned short mode_t;
 #endif /* ! NOT_C_CODE */
-
-#ifdef hppa
-/* The following are glommed from the hp9000s800.h file */
-
-#define STACK_DIRECTION 1
-#endif
-
-/* Axel Seibert <seibert@leo.org> says the following is necessary due
-   to configure problems. */
-
-#undef REL_ALLOC
-
-#undef SYSV_SYSTEM_DIR
-#undef NONSYSTEM_DIR_LIBRARY
-
-#define signal_handler_t int
-#define pid_t int
-
-#undef HAVE_TERMIOS
-#undef BSD_TERMIOS
-#define NO_TERMIO
-#undef HAVE_TERMIO
-#undef HAVE_MMAP
-
-#define TAB3 XTABS
-
-#define C_OPTIMIZE_SWITCH -pipe
-
-#undef HAVE_SETITIMER
 
 #define ASSERT_VALID_POINTER(pnt) (assert ((((int) pnt) & 1) == 0))

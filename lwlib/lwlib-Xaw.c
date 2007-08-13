@@ -15,7 +15,8 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with GNU Emacs; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
+the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.  */
 
 #include <stdio.h>
 
@@ -554,9 +555,16 @@ xaw_scrollbar_jump (Widget widget, XtPointer closure, XtPointer call_data)
 static Widget
 xaw_create_scrollbar (widget_instance *instance, int vertical)
 {
-  Arg av[20];
+  Arg av[10];
   int ac = 0;
-  Widget scrollbar;
+
+  static XtCallbackRec jumpCallbacks[2] =
+  { {xaw_scrollbar_jump, NULL}, {NULL, NULL} };
+  
+  static XtCallbackRec scrollCallbacks[2] =
+  { {xaw_scrollbar_scroll, NULL}, {NULL, NULL} };
+
+  jumpCallbacks[0].closure = scrollCallbacks[0].closure = (XtPointer) instance;
 
   /* #### This is tacked onto the with and height and completely
      screws our geometry management.  We should probably make the
@@ -564,28 +572,13 @@ xaw_create_scrollbar (widget_instance *instance, int vertical)
      few people use the Athena scrollbar now that it really isn't
      worth the effort, at least not at the moment. */
   XtSetArg (av [ac], XtNborderWidth, 0); ac++;
-  if (vertical)
-    {
-      XtSetArg (av [ac], XtNorientation, XtorientVertical); ac++;
-    }
-  else
-    {
-      XtSetArg (av [ac], XtNorientation, XtorientHorizontal); ac++;
-    }
+  XtSetArg (av [ac], XtNorientation,
+	    vertical ? XtorientVertical : XtorientHorizontal); ac++;
+  XtSetArg (av [ac], "jumpProc",   jumpCallbacks);   ac++;
+  XtSetArg (av [ac], "scrollProc", scrollCallbacks); ac++;
 
-  scrollbar =
-    XtCreateWidget (instance->info->name, scrollbarWidgetClass,
-		    instance->parent, av, ac);
-
-  XtRemoveAllCallbacks (scrollbar, "jumpProc");
-  XtRemoveAllCallbacks (scrollbar, "scrollProc");
-
-  XtAddCallback (scrollbar, "jumpProc", xaw_scrollbar_jump,
-		 (XtPointer) instance);
-  XtAddCallback (scrollbar, "scrollProc", xaw_scrollbar_scroll,
-		 (XtPointer) instance);
-
-  return scrollbar;
+  return XtCreateWidget (instance->info->name, scrollbarWidgetClass,
+			 instance->parent, av, ac);
 }
 
 static Widget

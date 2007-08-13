@@ -490,7 +490,7 @@ to generate such a string.  This variable is always buffer-local.")
 
 ;; XEmacs
 ;;;###autoload
-(defvar list-buffers-directory)
+(defvar list-buffers-directory nil)
 
 ;;;###autoload
 (make-variable-buffer-local 'list-buffers-directory)
