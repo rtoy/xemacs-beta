@@ -51,12 +51,14 @@ Time at which Emacs was dumped out.")
 
 (defconst emacs-build-system (system-name))
 
-(defconst xemacs-betaname "(beta91)"
+(defconst xemacs-betaname nil
   "Non-nil when this is a test (beta) version of XEmacs.
 Warning, this variable did not exist in XEmacs versions prior to 20.3")
 
-(defconst xemacs-codename ""
-  "This only works in XEmacs 20.3 or greater.")
+(defconst xemacs-codename "Queens"
+  "Symbolic name of XEmacs build.
+Warning, this variable did not exist in XEmacs versions prior to 19.16
+and 20.3")
 
 (defconst emacs-version
   (purecopy

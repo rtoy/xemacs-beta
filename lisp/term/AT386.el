@@ -48,9 +48,9 @@
   (define-key AT386-keypad-map "@" [insert])	;; Ins key
 
   ;; These are not normally set up by either
-  (define-key AT386-keypad-map "G" [kp_5])	;; Unlabeled center key
-  (define-key AT386-keypad-map "S" [kp_subtract])
-  (define-key AT386-keypad-map "T" [kp_add])
+  (define-key AT386-keypad-map "G" [kp-5])	;; Unlabeled center key
+  (define-key AT386-keypad-map "S" [kp-subtract])
+  (define-key AT386-keypad-map "T" [kp-add])
 
   ;; Arrange for the ALT key to be equivalent to ESC
   (define-key function-key-map "\eN" [?\e]) ; ALT map

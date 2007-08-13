@@ -6514,12 +6514,9 @@ CFLAGS="$REAL_CFLAGS"
 
 
 #### Find out which version of XEmacs this is.
-version=`grep 'defconst[	 ]*emacs-version' ${srcdir}/lisp/version.el \
-	 | sed -ne 's/^(defconst emacs-version "\([0-9][0-9]\.[0-9]*\).*/\1/p'`
-beta=`grep '" XEmacs Lucid' ${srcdir}/lisp/version.el \
-      | sed -ne 's/^.*" XEmacs Lucid (beta\([^)]*\)).*/\1/p'`
-alpha=`grep '" XEmacs Lucid' ${srcdir}/lisp/version.el \
-       | sed -ne 's/^.*" XEmacs Lucid (alpha\([^)]*\)).*/\1/p'`
+version="19.16"
+beta=""
+alpha=""
 if [ "X$beta" != "X" ]; then
   version=${version}-b${beta}
 fi

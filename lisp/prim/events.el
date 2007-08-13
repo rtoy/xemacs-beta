@@ -120,29 +120,29 @@ See `keyboard-translate-table' for more information."
 (put 'space	'ascii-character ? )
 
  ;; Do the same voodoo for the keypad keys.  I used to bind these to keyboard
- ;; macros (for instance, kp_0 was bound to "0") so that they would track the
+ ;; macros (for instance, kp-0 was bound to "0") so that they would track the
  ;; bindings of the corresponding keys by default, but that made the display
  ;; of M-x describe-bindings much harder to read, so now we'll just bind them
  ;; to self-insert by default.  Not a big difference...
  
-(put 'kp_0 'ascii-character ?0)
-(put 'kp_1 'ascii-character ?1)
-(put 'kp_2 'ascii-character ?2)
-(put 'kp_3 'ascii-character ?3)
-(put 'kp_4 'ascii-character ?4)
-(put 'kp_5 'ascii-character ?5)
-(put 'kp_6 'ascii-character ?6)
-(put 'kp_7 'ascii-character ?7)
-(put 'kp_8 'ascii-character ?8)
-(put 'kp_9 'ascii-character ?9)
+(put 'kp-0 'ascii-character ?0)
+(put 'kp-1 'ascii-character ?1)
+(put 'kp-2 'ascii-character ?2)
+(put 'kp-3 'ascii-character ?3)
+(put 'kp-4 'ascii-character ?4)
+(put 'kp-5 'ascii-character ?5)
+(put 'kp-6 'ascii-character ?6)
+(put 'kp-7 'ascii-character ?7)
+(put 'kp-8 'ascii-character ?8)
+(put 'kp-9 'ascii-character ?9)
 
-(put 'kp_space     'ascii-character ? )
-(put 'kp_tab       'ascii-character ?\t)
-(put 'kp_enter     'ascii-character ?\r)
-(put 'kp_equal     'ascii-character ?=)
-(put 'kp_multiply  'ascii-character ?*)
-(put 'kp_add       'ascii-character ?+)
-(put 'kp_separator 'ascii-character ?,)
-(put 'kp_subtract  'ascii-character ?-)
-(put 'kp_decimal   'ascii-character ?.)
-(put 'kp_divide    'ascii-character ?/)
+(put 'kp-space     'ascii-character ? )
+(put 'kp-tab       'ascii-character ?\t)
+(put 'kp-enter     'ascii-character ?\r)
+(put 'kp-equal     'ascii-character ?=)
+(put 'kp-multiply  'ascii-character ?*)
+(put 'kp-add       'ascii-character ?+)
+(put 'kp-separator 'ascii-character ?,)
+(put 'kp-subtract  'ascii-character ?-)
+(put 'kp-decimal   'ascii-character ?.)
+(put 'kp-divide    'ascii-character ?/)

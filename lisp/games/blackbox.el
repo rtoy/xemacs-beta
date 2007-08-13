@@ -89,7 +89,7 @@
   (define-key blackbox-mode-map " " 'bb-romp)
   (define-key blackbox-mode-map [insert] 'bb-romp)
   (define-key blackbox-mode-map "\C-m" 'bb-done)
-  (define-key blackbox-mode-map [kp_enter] 'bb-done))
+  (define-key blackbox-mode-map [kp-enter] 'bb-done))
 
 ;; Blackbox mode is suitable only for specially formatted data.
 (put 'blackbox-mode 'mode-class 'special)

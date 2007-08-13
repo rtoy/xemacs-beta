@@ -330,7 +330,7 @@
 (cond
  ((not (equal tpu-enter tpu-return))
   (insert "
-;;  Minibuffer map additions to make KP_enter = RET
+;;  Minibuffer map additions to make KP-enter = RET
 ;;
 ")
 

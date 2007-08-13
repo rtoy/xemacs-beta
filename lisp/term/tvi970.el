@@ -38,10 +38,10 @@
 		      (car key-binding) (nth 1 key-binding))))
 	'(
 	  ;; These are set up by termcap or terminfo
-	  ;; ("\eOP"	[kp_f1])
-	  ;; ("\eOQ"	[kp_f2])
-	  ;; ("\eOR"	[kp_f3])
-	  ;; ("\eOS"	[kp_f4])
+	  ;; ("\eOP"	[kp-f1])
+	  ;; ("\eOQ"	[kp-f2])
+	  ;; ("\eOR"	[kp-f3])
+	  ;; ("\eOS"	[kp-f4])
 
 	  ;; These might br set by terminfo
 	  ("\e[H"	[home])
@@ -53,10 +53,10 @@
 	  ("\e[U"	[next])		;; actually the `page' key
 
 	  ;; These won't be set up by either
-	  ("\eOm"	[kp_subtract])
-	  ("\eOl"	[kp_separator])
-	  ("\eOn"	[kp_decimal])
-	  ("\eOM"	[kp_enter])
+	  ("\eOm"	[kp-subtract])
+	  ("\eOl"	[kp-separator])
+	  ("\eOn"	[kp-decimal])
+	  ("\eOM"	[kp-enter])
 
 	  ;; These won't be set up by either either
 	  ("\e[K"	[key_eol])	;; Not an X keysym
@@ -85,7 +85,7 @@
   (while (< i 10)
     (define-key function-key-map
       (format "\eO%c" (+ i ?p))
-      (vector (intern (format "kp_%d" i))))
+      (vector (intern (format "kp-%d" i))))
     (setq i (1+ i))))
 ;; The numbered function keys.
 (let ((i 0))
