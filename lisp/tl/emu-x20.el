@@ -3,7 +3,7 @@
 ;; Copyright (C) 1994,1995,1996,1997 MORIOKA Tomohiko
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: emu-x20.el,v 1.7 1997/04/10 05:55:51 steve Exp $
+;; Version: $Id: emu-x20.el,v 1.8 1997/04/16 04:08:02 steve Exp $
 ;; Keywords: emulation, compatibility, Mule, XEmacs
 
 ;; This file is part of XEmacs.
@@ -40,16 +40,16 @@
 
 (defmacro as-binary-process (&rest body)
   `(let (selective-display	; Disable ^M to nl translation.
-	 (coding-system-for-read  'no-conversion)
-	 (coding-system-for-write 'no-conversion))
+	 (coding-system-for-read  'binary)
+	 (coding-system-for-write 'binary))
      ,@body))
 
 (defmacro as-binary-input-file (&rest body)
-  `(let ((coding-system-for-read 'no-conversion))
+  `(let ((coding-system-for-read 'binary))
      ,@body))
 
 (defmacro as-binary-output-file (&rest body)
-  `(let ((coding-system-for-write 'no-conversion))
+  `(let ((coding-system-for-write 'binary))
      ,@body))
 
 

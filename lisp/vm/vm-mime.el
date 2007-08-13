@@ -1394,8 +1394,11 @@ in the buffer.  The function is expected to make the message
 	      (vm-mime-get-parameter layout "name"))))
       (vm-mime-send-body-to-file layout default-filename)))
   t )
-(fset 'vm-mime-display-button-application
+(fset 'vm-mime-display-button-application/octet-stream
       'vm-mime-display-internal-application/octet-stream)
+
+(defun vm-mime-display-button-application (layout)
+  (vm-mime-display-button-xxxx layout nil))
 
 (defun vm-mime-display-button-image (layout)
   (vm-mime-display-button-xxxx layout t))
@@ -1797,13 +1800,15 @@ in the buffer.  The function is expected to make the message
 (defvar vm-menu-mime-dispose-menu)
 
 (defun vm-mime-set-extent-glyph-for-type (e type)
-  (if (and vm-xemacs-p (fboundp 'make-glyph)
-	   (eq (device-type) 'x) (> (device-bitplanes) 7))
+  (if (and vm-xemacs-p
+	   (featurep 'xpm)
+	   (eq (device-type) 'x)
+	   (> (device-bitplanes) 7))
       (let ((dir vm-image-directory)
 	    (colorful (> (device-bitplanes) 15))
 	    (tuples
 	     '(("text" "document-simple.xpm" "document-colorful.xpm")
-	       ("image" "mona_stamp-simple.gif" "mona_stamp-colorful.gif")
+	       ("image" "mona_stamp-simple.xpm" "mona_stamp-colorful.xpm")
 	       ("audio" "audio_stamp-simple.xpm" "audio_stamp-colorful.xpm")
 	       ("video" "film-simple.xpm" "film-colorful.xpm")
 	       ("message" "message-simple.xpm" "message-colorful.xpm")
@@ -2264,7 +2269,7 @@ will interactively query you for the file type information."
 	   (put-text-property start end 'vm-mime-object object))
 	  (vm-xemacs-p
 	   (setq e (make-extent start end))
-	   (vm-mime-set-extent-glyph-for-type e type)
+	   (vm-mime-set-extent-glyph-for-type e (or type "text/plain"))
 	   (set-extent-property e 'start-open t)
 	   (set-extent-property e 'face vm-mime-button-face)
 	   (set-extent-property e 'duplicable t)
@@ -2383,15 +2388,17 @@ will interactively query you for the file type information."
     encoding ))
 
 (defun vm-mime-transfer-encode-layout (layout)
-  (if (vm-mime-text-type-p layout)
-      (vm-mime-transfer-encode-region (vm-mm-layout-encoding layout)
-				      (vm-mm-layout-body-start layout)
-				      (vm-mm-layout-body-end layout)
-				      t)
-    (vm-mime-transfer-encode-region (vm-mm-layout-encoding layout)
-				    (vm-mm-layout-body-start layout)
-				    (vm-mm-layout-body-end layout)
-				    nil)))
+  (let ((encoding
+	 (vm-mime-transfer-encode-region (vm-mm-layout-encoding layout)
+					 (vm-mm-layout-body-start layout)
+					 (vm-mm-layout-body-end layout)
+					 (vm-mime-text-type-p layout))))
+    (save-excursion
+      (save-restriction
+	(goto-char (vm-mm-layout-header-start layout))
+	(narrow-to-region (point) (vm-mm-layout-body-start layout))
+	(vm-reorder-message-headers nil nil "Content-Transfer-Encoding:")
+	(insert "Content-Transfer-Encoding: " encoding "\n")))))
 
 (defun vm-mime-encode-composition ()
  "MIME encode the current mail composition buffer.
@@ -2549,7 +2556,7 @@ and the approriate content-type and boundary markup information is added."
 		 ;; then any subpart that contains 8bit data must
 		 ;; have an opaque (qp or base64) 8->7bit
 		 ;; conversion performed on it so that the
-		 ;; enclosing entity can use an non-opqaue
+		 ;; enclosing entity can use a non-opaque
 		 ;; encoding.
 		 ;;
 		 ;; message/partial requires a "7bit" encoding so
@@ -2691,8 +2698,8 @@ and the approriate content-type and boundary markup information is added."
 	  (if params
 	      (if vm-mime-avoid-folding-content-type
 		  (insert "; " (mapconcat 'identity params "; ") "\n")
-		(insert ";\n\t" (mapconcat 'identity params ";\n\t"))))
-	  (insert "\n"))
+		(insert ";\n\t" (mapconcat 'identity params ";\n\t") "\n"))
+	    (insert "\n")))
 	(if just-one
 	    (and description
 		 (insert "Content-Description: " description "\n")))
@@ -2700,10 +2707,12 @@ and the approriate content-type and boundary markup information is added."
 	    (progn
 	      (insert "Content-Disposition: " (car disposition))
 	      (if (cdr disposition)
-		  (insert ";\n\t" (mapconcat 'identity
-					     (cdr disposition)
-					     ";\n\t")))
-	      (insert "\n")))
+		  (if vm-mime-avoid-folding-content-type
+		      (insert "; " (mapconcat 'identity (cdr disposition) "; ")
+			      "\n")
+		    (insert ";\n\t" (mapconcat 'identity (cdr disposition)
+					       ";\n\t")))
+		(insert "\n"))))
 	(if just-one
 	    (insert "Content-Transfer-Encoding: " encoding "\n")
 	  (if 8bit
@@ -2864,7 +2873,7 @@ and the approriate content-type and boundary markup information is added."
 		 ;; then any subpart that contains 8bit data must
 		 ;; have an opaque (qp or base64) 8->7bit
 		 ;; conversion performed on it so that the
-		 ;; enclosing entity can use an non-opqaue
+		 ;; enclosing entity can use a non-opaque
 		 ;; encoding.
 		 ;;
 		 ;; message/partial requires a "7bit" encoding so
@@ -3006,8 +3015,8 @@ and the approriate content-type and boundary markup information is added."
 	  (if params
 	      (if vm-mime-avoid-folding-content-type
 		  (insert "; " (mapconcat 'identity params "; ") "\n")
-		(insert ";\n\t" (mapconcat 'identity params ";\n\t"))))
-	  (insert "\n"))
+		(insert ";\n\t" (mapconcat 'identity params ";\n\t") "\n"))
+	    (insert "\n")))
 	(if just-one
 	    (and description
 		 (insert "Content-Description: " description "\n")))
@@ -3015,10 +3024,12 @@ and the approriate content-type and boundary markup information is added."
 	    (progn
 	      (insert "Content-Disposition: " (car disposition))
 	      (if (cdr disposition)
-		  (insert ";\n\t" (mapconcat 'identity
-					     (cdr disposition)
-					     ";\n\t")))
-	      (insert "\n")))
+		  (if vm-mime-avoid-folding-content-type
+		      (insert "; " (mapconcat 'identity (cdr disposition) "; ")
+			      "\n")
+		    (insert ";\n\t" (mapconcat 'identity (cdr disposition)
+					       ";\n\t")))
+		(insert "\n"))))
 	(if just-one
 	    (insert "Content-Transfer-Encoding: " encoding "\n")
 	  (if 8bit
@@ -3108,10 +3119,9 @@ message."
 	(progn
 	  (setq temp-buffer (generate-new-buffer "composition preview"))
 	  (set-buffer temp-buffer)
-	  ;; so vm-mime-encode-composition won't complain
+	  ;; so vm-mime-xxxx-encode-composition won't complain
 	  (setq major-mode 'mail-mode)
 	  (vm-insert-region-from-buffer mail-buffer)
-	  (vm-remove-mail-mode-header-separator)
 	  (goto-char (point-min))
 	  (or (vm-mail-mode-get-header-contents "From")
 	      (insert "From: " (user-login-name) "\n"))
@@ -3125,6 +3135,7 @@ message."
 	  (and vm-send-using-mime
 	       (null (vm-mail-mode-get-header-contents "MIME-Version:"))
 	       (vm-mime-encode-composition))
+	  (vm-remove-mail-mode-header-separator)
 	  (goto-char (point-min))
 	  (insert (vm-leading-message-separator 'From_))
 	  (goto-char (point-max))

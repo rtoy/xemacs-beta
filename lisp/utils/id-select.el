@@ -164,9 +164,13 @@
 ;;; Public variables
 ;;; ************************************************************************
 
-(defgroup id-select nil
-  "Select larger and larger syntax-driven regions in a buffer"
-  :group 'mouse)
+;; We need the progn to kill off the defgroup-tracking mechanism.
+;; This package changes the state of XEmacs by loading it, which is
+;; why it's potentially dangerous.
+(progn
+  (defgroup id-select nil
+    "Select larger and larger syntax-driven regions in a buffer"
+    :group 'mouse))
 
 
 (defcustom id-select-brace-modes

@@ -366,7 +366,9 @@ as having been replied to, if appropriate."
 				vm-kept-mail-buffers)))
 	(mapcar (function
 		 (lambda (b)
-		   (and (buffer-name b) (kill-buffer b))))
+		   (and (buffer-name b)
+			(not (buffer-modified-p b))
+			(kill-buffer b))))
 		extras)
 	(and vm-kept-mail-buffers extras
 	     (setcdr (memq (car extras) vm-kept-mail-buffers) nil)))))
@@ -1015,8 +1017,10 @@ found, the current buffer remains selected."
     (insert "X-Mailer: VM " vm-version " under "
 	    (if vm-fsfemacs-19-p "Emacs " "")
 	    emacs-version "\n")
-    ;; REPLYTO support for FSF Emacs v19.29
-    (and (eq mail-default-reply-to t)
+    ;; REPLYTO environmental variable support
+    ;; note that in FSF Emacs v19.29 we would initialize if the
+    ;; value was t.  nil is the treigger value used now.
+    (and (eq mail-default-reply-to nil)
 	 (setq mail-default-reply-to (getenv "REPLYTO")))
     (if mail-default-reply-to
 	(insert "Reply-To: " mail-default-reply-to "\n"))

@@ -90,7 +90,7 @@
 	  ((vm-mouse-fsfemacs-mouse-p)
 	   (set-buffer (window-buffer (posn-window (event-start event))))
 	   (goto-char (posn-point (event-start event)))))
-    (cond ((fboundp 'overlays-at)
+    (cond (vm-fsfemacs-19-p
 	   (let ((o-list (overlays-at (point)))
 		 (string nil))
 	     (while o-list
@@ -101,7 +101,7 @@
 			 o-list nil)
 		 (setq o-list (cdr o-list))))
 	     string ))
-	  ((fboundp 'extent-at)
+	  (vm-xemacs-p
 	   (let ((e (extent-at (point) nil 'highlight)))
 	     (if e
 		 (buffer-substring (extent-start-position e)
@@ -201,6 +201,9 @@
 	(vm-mouse-send-url-to-netscape url t new-window)))
   (message "Sending URL to Netscape... done"))
 
+(defun vm-mouse-send-url-to-netscape-new-window (url)
+  (vm-mouse-send-url-to-netscape url nil t))
+
 (defun vm-mouse-send-url-to-mosaic (url &optional new-mosaic new-window)
   (message "Sending URL to Mosaic...")
   (if (null new-mosaic)
@@ -232,6 +235,9 @@
      (apply 'vm-run-background-command vm-mosaic-program
 	    (append vm-mosaic-program-switches (list url))))
   (message "Sending URL to Mosaic... done"))
+
+(defun vm-mouse-send-url-to-mosaic-new-window (url)
+  (vm-mouse-send-url-to-mosaic url nil t))
 
 (defun vm-mouse-install-mouse ()
   (cond ((vm-mouse-xemacs-mouse-p)

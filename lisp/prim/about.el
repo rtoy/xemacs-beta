@@ -306,6 +306,7 @@
 	  ('dmoore "About David Moore")
 	  ('thiessel "About Marcus Thiessel")
 	  ('sperber "About Michael Sperber")
+	  ('ajc "About Andrew Cosgriff")
 	  ('others "About Everyone")
 	  ('features "New XEmacs Features")
 	  ('history "XEmacs History")
@@ -895,6 +896,25 @@
 	  (insert " to go back to the previous page.\n")
 	  )
 
+	 ((eq xref 'ajc)
+	  (about-face "Andrew Cosgriff" 'bold)
+	  (insert " <ajc@bing.wattle.id.au>
+
+	When not helping maintain the XEmacs website, Andrew is a
+	Network Software Engineer(tm) for Monash University in Australia,
+	maintaining webservers and doing random other things.  As well as
+	spending spare time being an Eager Young Space Cadet and fiddling
+	with XEmacs/Gnus et. al., he spends his time pursuing, among other
+	things, a Life.  Some of this currently involves doing an A-Z (by
+	country) of restaurants with friends, and has, in the past,
+	involved dyeing his hair various colours
+	(see http://www-personal.monash.edu.au/~ajc).")
+
+	  (insert "\n\n\tClick ")
+	  (about-xref "here" prev-page "Return to previous page")
+	  (insert " to go back to the previous page.\n")
+	  )
+
 	 ((eq xref 'others)
 	  (insert "Click ")
 	  (about-xref "here" 'about "Return to previous page")
@@ -1024,6 +1044,18 @@
 	installed or changing his hairstyle, he does research in modern
 	programming languages and their implementation, and hopes that one day
 	XEmacs will speak Scheme.
+
+	") (about-xref "Andrew Cosgriff" 'ajc "Find out more about Andrew Cosgriff") (insert " <ajc@bing.wattle.id.au>
+
+	When not helping maintain the XEmacs website, Andrew is a
+	Network Software Engineer(tm) for Monash University in Australia,
+	maintaining webservers and doing random other things.  As well as
+	spending spare time being an Eager Young Space Cadet and fiddling
+	with XEmacs/Gnus et. al., he spends his time pursuing, among other
+	things, a Life.  Some of this currently involves doing an A-Z (by
+	country) of restaurants with friends, and has, in the past,
+	involved dyeing his hair various colours
+	(see http://www-personal.monash.edu.au/~ajc).
 
 	Darrell Kindred <Darrell.Kindred@cmu.edu>
 	Unofficial maintainer of the xemacs-beta list of extant bugs

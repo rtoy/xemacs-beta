@@ -22,16 +22,19 @@ pending:Category for faulty PRs:gnats-admin:
 #
 # Sample categories:
 #
-auxillary:Auxillary Programs:gnats-admin:
+auxiliary:Auxiliary Programs:gnats-admin:
 configuration:Configuration:gnats-admin:mrb@eng.sun.com
 documentation:Documentation Bug:gnats-admin:weiner@infodock.com
 frames:X11 Frames:gnats-admin:
-i18n:I18n Internationalization:gnats-admin:mrb@eng.sun.com
+i18n:I18n Internationalization:martin:
 lisp:Emacs Lisp code:gnats-admin:
 menubars:X11 menubars:gnats-admin:
 misc:Miscellaneous:gnats-admin:
-performance:Performance Issues:gnats-admin:dmoore@ucsd.edu
+mule:MULE Internationalization stuffs:jhod:
+performance:Performance Issues:dmoore:
 redisplay:Redisplay Issues:gnats-admin:cthomp@xemacs.org
 scrollbars:X11 scrollbars:gnats-amdin:mrb@eng.sun.com
 toolbars:X11 toolbars:gnats-admin:
-test:*Test Category:gnats-admin:
+gnus:Gnus newsreader:larsi:
+vm:VM Mailreader:kyle:
+W3:W3 Browser:wmperry:

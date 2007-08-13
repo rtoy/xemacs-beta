@@ -3922,7 +3922,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.21 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.22 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -5276,7 +5276,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.21 $
+vhdl-mode $Revision: 1.22 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -6993,7 +6993,7 @@ For example, invoke \"emacs -batch -f batch-info-validate $info/ ~/*.info\"" nil
 
 (defvar ispell-dictionary-alist-1 '((nil "[A-Za-z]" "[^A-Za-z]" "[']" nil ("-B") nil) ("english" "[A-Za-z]" "[^A-Za-z]" "[']" nil ("-B") nil) ("british" "[A-Za-z]" "[^A-Za-z]" "[']" nil ("-B" "-d" "british") nil) ("deutsch" "[a-zA-Z\"]" "[^a-zA-Z\"]" "[']" t ("-C") "~tex") ("deutsch8" "[a-zA-ZÄÖÜäößü]" "[^a-zA-ZÄÖÜäößü]" "[']" t ("-C" "-d" "deutsch") "~latin1") ("nederlands" "[A-Za-zÀ-ÅÇÈ-ÏÒ-ÖÙ-Üà-åçè-ïñò-öù-ü]" "[^A-Za-zÀ-ÅÇÈ-ÏÒ-ÖÙ-Üà-åçè-ïñò-öù-ü]" "[']" t ("-C") nil) ("nederlands8" "[A-Za-zÀ-ÅÇÈ-ÏÒ-ÖÙ-Üà-åçè-ïñò-öù-ü]" "[^A-Za-zÀ-ÅÇÈ-ÏÒ-ÖÙ-Üà-åçè-ïñò-öù-ü]" "[']" t ("-C") nil)))
 
-(defvar ispell-dictionary-alist-2 '(("svenska" "[A-Za-z}{|\\133\\135\\\\]" "[^A-Za-z}{|\\133\\135\\\\]" "[']" nil ("-C") nil) ("svenska8" "[A-Za-zåäöÅÄö]" "[^A-Za-zåäöÅÄö]" "[']" nil ("-C" "-d" "svenska") "~list") ("francais7" "[A-Za-z]" "[^A-Za-z]" "[`'^---]" t nil nil) ("francais" "[A-Za-zÀÂÆÇÈÉÊËÎÏÔÙÛÜàâçèéêëîïôùûü]" "[^A-Za-zÀÂÆÇÈÉÊËÎÏÔÙÛÜàâçèéêëîïôùûü]" "[---']" t nil "~list") ("francais-tex" "[A-Za-zÀÂÆÇÈÉÊËÎÏÔÙÛÜàâçèéêëîïôùûü\\]" "[^A-Za-zÀÂÆÇÈÉÊËÎÏÔÙÛÜàâçèéêëîïôùûü\\]" "[---'^`\"]" t nil "~tex") ("italiano" "[A-Za-zÀÈÉÌÍÎÒÙÚàèéìíîòùú]" "[^A-Za-zÀÈÉÌÍÎÒÙÚàèéìíîòùú]" "[']" t ("-d" "italiano") "~list") ("dansk" "[A-ZÆØÅa-zæøå]" "[^A-ZÆØÅa-zæøå]" "" nil ("-C") nil)))
+(defvar ispell-dictionary-alist-2 '(("svenska" "[A-Za-z}{|\\133\\135\\\\]" "[^A-Za-z}{|\\133\\135\\\\]" "[']" nil ("-C") nil) ("svenska8" "[A-Za-zåäöÅÄö]" "[^A-Za-zåäöÅÄö]" "[']" nil ("-C" "-d" "svenska") "~list") ("norsk" "[A-Za-zéæøåÉÆØÅ]" "[^A-Za-zéæøåÉÆØÅ]" "[']" nil ("-C" "-d" "norsk") "~list") ("francais7" "[A-Za-z]" "[^A-Za-z]" "[`'^---]" t nil nil) ("francais" "[A-Za-zÀÂÆÇÈÉÊËÎÏÔÙÛÜàâçèéêëîïôùûü]" "[^A-Za-zÀÂÆÇÈÉÊËÎÏÔÙÛÜàâçèéêëîïôùûü]" "[---']" t nil "~list") ("francais-tex" "[A-Za-zÀÂÆÇÈÉÊËÎÏÔÙÛÜàâçèéêëîïôùûü\\]" "[^A-Za-zÀÂÆÇÈÉÊËÎÏÔÙÛÜàâçèéêëîïôùûü\\]" "[---'^`\"]" t nil "~tex") ("italiano" "[A-Za-zÀÈÉÌÍÎÒÙÚàèéìíîòùú]" "[^A-Za-zÀÈÉÌÍÎÒÙÚàèéìíîòùú]" "[']" t ("-d" "italiano") "~list") ("dansk" "[A-ZÆØÅa-zæøå]" "[^A-ZÆØÅa-zæøå]" "" nil ("-C") nil)))
 
 (defvar ispell-dictionary-alist (append ispell-dictionary-alist-1 ispell-dictionary-alist-2) "\
 An alist of dictionaries and their associated parameters.
@@ -7323,7 +7323,7 @@ redisplayed as output is inserted." t nil)
 
 ;;;### (autoloads (blink-paren paren-set-mode) "paren" "packages/paren.el")
 
-(defcustom paren-mode nil "*Sets the style of parenthesis highlighting.\nValid values are nil, `blink-paren', `paren', and `sexp'.\n  nil		no parenthesis highlighting.\n  blink-paren	causes the matching paren to blink.\n  paren		causes the matching paren to be highlighted but not to blink.\n  sexp		whole expression enclosed by the local paren at its mate.\n  nested	(not yet implemented) use variable shading to see the\n		nesting of an expression.  Also groks regular expressions\n		and shell quoting.\n\nThis variable is global by default, but you can make it buffer-local and\nhighlight parentheses differently in different major modes." :type '(radio (const nil) (const blink-paren) (const paren) (const sexp) (const nested)) :group 'paren)
+(defcustom paren-mode nil "*Sets the style of parenthesis highlighting.\nValid values are nil, `blink-paren', `paren', and `sexp'.\n  nil		no parenthesis highlighting.\n  blink-paren	causes the matching paren to blink.\n  paren		causes the matching paren to be highlighted but not to blink.\n  sexp		whole expression enclosed by the local paren at its mate.\n  nested	(not yet implemented) use variable shading to see the\n		nesting of an expression.  Also groks regular expressions\n		and shell quoting.\n\nThis variable is global by default, but you can make it buffer-local and\nhighlight parentheses differently in different major modes." :type '(radio (const nil) (const blink-paren) (const paren) (const sexp) (const nested)) :group 'paren-matching)
 
 (autoload 'paren-set-mode "paren" "\
 Cycles through possible values for `paren-mode', force off with negative arg.
@@ -9179,6 +9179,8 @@ Submit via mail, a bug report on elp." t nil)
 ;;;***
 
 ;;;### (autoloads (list-colors-display facemenu-read-color list-text-properties-at facemenu-remove-special facemenu-remove-props facemenu-set-read-only facemenu-set-intangible facemenu-set-invisible facemenu-make-much-smaller facemenu-make-much-larger facemenu-make-smaller facemenu-make-larger facemenu-set-size-default facemenu-set-face-from-menu facemenu-set-background facemenu-set-foreground facemenu-set-face) "facemenu" "utils/facemenu.el")
+
+(define-key ctl-x-map "F" 'facemenu-keymap)
 
 (defvar facemenu-menu nil "\
 Facemenu top-level menu keymap.")

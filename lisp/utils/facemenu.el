@@ -101,11 +101,8 @@
 (require 'easymenu)
 
 ;;; Provide some binding for startup:
-;;; XEmacs -- goto-line is a *much* better binding for M-g.
-;;;dont ###autoload (define-key global-map "\M-g" 'facemenu-keymap)
-
-(defvar facemenu-key "\M-g"
-  "Prefix key to use for facemenu commands.")
+;;;###autoload
+(define-key ctl-x-map "F" 'facemenu-keymap)
 
 (defvar facemenu-keybindings
   '((default     . "d")

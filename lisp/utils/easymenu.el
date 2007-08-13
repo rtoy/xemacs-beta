@@ -1,11 +1,11 @@
 ;;; easymenu.el - Easy menu support for Emacs 19 and XEmacs.
 ;; 
-;; $Id: easymenu.el,v 1.2 1997/01/03 03:10:33 steve Exp $
+;; $Id: easymenu.el,v 1.3 1997/04/16 04:08:03 steve Exp $
 ;;
 ;; LCD Archive Entry:
 ;; easymenu|Per Abrahamsen|abraham@iesd.auc.dk|
 ;; Easy menu support for XEmacs|
-;; $Date: 1997/01/03 03:10:33 $|$Revision: 1.2 $|~/misc/easymenu.el.gz|
+;; $Date: 1997/04/16 04:08:03 $|$Revision: 1.3 $|~/misc/easymenu.el.gz|
 
 ;; Copyright (C) 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
 
@@ -160,7 +160,7 @@ is a list of menu items, as above."
 (fset 'easy-menu-change (symbol-function 'add-menu))
 
 ;; This variable hold the easy-menu mode menus of all major and
-;; minor modes currently in effect.
+;; minor modes currently in effect in the current buffer.
 (defvar easy-menu-all-popups nil)
 (make-variable-buffer-local 'easy-menu-all-popups)
 
@@ -168,11 +168,10 @@ is a list of menu items, as above."
   "Add MENU to the current menu bar."
   (if (featurep 'menubar)
       (progn
-	(if easy-menu-all-popups
-	    (setq easy-menu-all-popups (cons menu easy-menu-all-popups))
-	  (setq easy-menu-all-popups (list menu mode-popup-menu)))
-	(setq mode-popup-menu menu)
-  
+	(setq easy-menu-all-popups (cons menu easy-menu-all-popups))
+	(setq mode-popup-menu (cons (easy-menu-title)
+				    (reverse easy-menu-all-popups)))
+
 	(cond ((null current-menubar)
 	       ;; Don't add it to a non-existing menubar.
 	       nil)
@@ -192,10 +191,23 @@ is a list of menu items, as above."
   (if (featurep 'menubar)
       (progn
 	(setq easy-menu-all-popups (delq menu easy-menu-all-popups)
-	      mode-popup-menu (car easy-menu-all-popups))
+	      mode-popup-menu (cons (easy-menu-title)
+				    (reverse easy-menu-all-popups)))
 	(and current-menubar
 	     (assoc (car menu) current-menubar)
 	     (delete-menu-item (list (car menu)))))))
+
+;; Think up a good title for the menu.  Take the major-mode of the
+;; buffer, strip the -mode part, convert hyphens to spaces, and
+;; capitalize it.
+;;
+;; If you can think of something smarter, feel free to replace it.
+;; Don't forget to mail the change to xemacs@xemacs.org where everyone
+;; can flame, er, praise your changes.
+(defun easy-menu-title ()
+  (capitalize (replace-in-string (replace-in-string
+				  (symbol-name major-mode) "-mode$" "")
+				 "-" " ")))
 
 (provide 'easymenu)
 

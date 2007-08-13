@@ -1826,7 +1826,8 @@ Returns whether it is indistinguishable from the default face."
    
    ;; In FSF this has the simpler definition of "\\sw+" for ctoken.
    ;; I'm not sure if ours is more correct.
-   (list (concat "^\\(" ctoken "\\)[ \t]*(") 1 'font-lock-function-name-face)
+   ;; This is a subset of the next rule, and is slower when present. --dmoore
+   ;; (list (concat "^\\(" ctoken "\\)[ \t]*(") 1 'font-lock-function-name-face)
    ;;
    ;; fontify the names of functions being defined.
    ;; FSF doesn't have this but I think it should be fast for us because
@@ -1835,13 +1836,17 @@ Returns whether it is indistinguishable from the default face."
    ;; the time to do the regexp phase of font-lock for a C file!) Not
    ;; including this discriminates against those who don't follow the
    ;; GNU coding style. --ben
+   ;; x?x?x?y?z should always be: (x(xx?)?)?y?z --dmoore
    (list (concat
-          "^\\(" ctoken "[ \t]+\\)?"	; type specs; there can be no
-          "\\(" ctoken "[ \t]+\\)?"	; more than 3 tokens, right?
-          "\\(" ctoken "[ \t]+\\)?"
+	  "^\\("
+          "\\(" ctoken "[ \t]+\\)"	; type specs; there can be no
+	  "\\("
+          "\\(" ctoken "[ \t]+\\)"	; more than 3 tokens, right?
+          "\\(" ctoken "[ \t]+\\)"
+	  "?\\)?\\)?"
           "\\([*&]+[ \t]*\\)?"		; pointer
           "\\(" ctoken "\\)[ \t]*(")	; name
-         8 'font-lock-function-name-face)
+         10 'font-lock-function-name-face)
    ;;
    ;; This is faster but not by much.  I don't see why not.
    ;(list (concat "^\\(" ctoken "\\)[ \t]*(") 1 'font-lock-function-name-face)
@@ -1940,7 +1945,9 @@ Returns whether it is indistinguishable from the default face."
   (append
    ;;
    ;; The list `c-font-lock-keywords-1' less that for function names.
-   (cdr c-font-lock-keywords-1)
+   ;; the simple function form regexp has been removed. --dmoore
+   ;;(cdr c-font-lock-keywords-1)
+   c-font-lock-keywords-1
    ;;
    ;; Fontify function name definitions, possibly incorporating class name.
    (list

@@ -1,3 +1,16 @@
+Sun Apr 13 09:56:54 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* emacs.c (shut_down_emacs): Advertise using send-pr as the
+	mechanism for submitting a bug report.
+
+	* Makefile.in.in: Handle pathological case of mis-autodetected
+	TOOLTALK.
+
+Sun Apr 13 11:33:34 1997  David Moore  <dmoore@ucsd.edu>
+
+	* regex.c (re_search_2): Prevent incorrect matching and infinite
+	loop with \\` and MULE.
+
 Sat Apr 12 05:57:51 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* Makefile.in.in (lisp): Dump cus-start.elc with XEmacs.

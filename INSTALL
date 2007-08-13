@@ -285,6 +285,10 @@ for specifying information about where to find WNN include directories
 and WNN libraries.  Currently you need to specify wnn-includes in most
 installations of Wnn-4.2.
 
+The `--with-pop', `--with-hesiod', and `--with-kerberos' options are used
+in conjunction with movemail.  As of XEmacs 20.1, movemail is identical
+to the one used in Emacs.
+
 `configure' doesn't do any compilation or installation
 itself.  It just creates the files that influence those things:
 `./Makefile', `src/Makefile', `lwlib/Makefile', `lib-src/Makefile',

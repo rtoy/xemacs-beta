@@ -768,6 +768,10 @@ LD=ld
 #  else
 #    if ((defined (SPARC) || defined(INTEL386)) && defined (USG))
 #      define LIB_TOOLTALK -ltt -lce
+#    else
+#      undef TOOLTALK
+#      define TOOLTALK_OBJS
+#      define LIB_TOOLTALK
 #    endif /* ((SPARC || INTEL386) && USG) */
 #  endif /* ! (SPARC && !USG) */
 # endif /* !IRIX5 */

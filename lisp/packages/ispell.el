@@ -518,6 +518,9 @@ for language-specific arguments."
     ("svenska8"				;8 bit swedish mode
      "[A-Za-z\345\344\366\305\304\366]"  "[^A-Za-z\345\344\366\305\304\366]"
      "[']" nil ("-C" "-d" "svenska") "~list") ; Add `"-T" "list"' instead?
+    ("norsk"                           ;8 bit norwegian mode
+     "[A-Za-z\351\346\370\345\311\306\330\305]"  "[^A-Za-z\351\346\370\345\311\306\330\305]"
+     "[']" nil ("-C" "-d" "norsk") "~list")
     ("francais7"
      "[A-Za-z]" "[^A-Za-z]" "[`'^---]" t nil nil)
     ("francais"				; francais.aff

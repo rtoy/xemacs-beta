@@ -392,8 +392,6 @@
 ;;;;  Aug-25-88 toroku-regionで登録する文字列からno graphic characterを
 ;;;;  自動的に除くことにした。
 
-(provide 'egg)
-
 ;; XEmacs addition: (and remove disable-undo variable)
 ;; For Emacs V18/Nemacs compatibility
 ;(and (not (fboundp 'buffer-disable-undo))
@@ -407,42 +405,14 @@ unread-command-events to facilitate translation from Mule-2.3"
   (let ((event (make-event))
 	(ch nil))
     (next-command-event event)
-    (if (key-press-event-p event)
+    (if (and (key-press-event-p event)
+	     (eq 0 (event-modifier-bits event)))
 	(setq ch (event-key event))
       (setq unread-command-events (list event)))
-    (deallocate-event event)
     ch))
 
 (eval-when-compile (require 'egg-jsymbol))
 
-;;;----------------------------------------------------------------------
-;;;
-;;; Version control routine
-;;;
-;;;----------------------------------------------------------------------
-
-(and (equal (user-full-name) "Satoru Tomura")
-     (defun egg-version-update (arg)
-       (interactive "P")
-       (if (equal (buffer-name (current-buffer)) "wnn-egg.el")
-	   (save-excursion
-	    (goto-char (point-min))
-	    (re-search-forward "(defvar egg-version \"[0-9]+\\.")
-	    (let ((point (point))
-		  (minor))
-	      (search-forward "\"")
-	      (backward-char 1)
-	      (setq minor (string-to-int (buffer-substring point (point))))
-	      (delete-region point (point))
-	      (if (<= minor 8) (insert "0"))
-	      (insert  (int-to-string (1+ minor)))
-	      (search-forward "Egg last modified date: ")
-	      (kill-line)
-	      (insert (current-time-string)))
-	    (save-buffer)
-	    (if arg (byte-compile-file (buffer-file-name)))
-	 )))
-     )
 ;;;
 ;;;----------------------------------------------------------------------
 ;;;
@@ -1920,7 +1890,6 @@ Arguments are STRING, ALIST and optional PRED. ALIST must be no obarray."
 			(funcall its:*display-status-string* (map-state map))
 		      (insert (map-state map)))
 		    )))
-
 	     (t
 	      (let ((output nil))
 		(let ((i its:*level*) (newlevel (1+ its:*level*)))
@@ -2865,5 +2834,7 @@ correspoding to character position.")
 
 (autoload 'busyu-input "busyu" nil t)	;92.10.18 by K.Handa
 (autoload 'kakusuu-input "busyu" nil t)	;92.10.18 by K.Handa
+
+(provide 'egg)
 
 ;;; egg.el ends here

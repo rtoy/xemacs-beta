@@ -50,6 +50,7 @@ move backward across N balanced expressions."
   ;; XEmacs: evil hack! The other half of the evil hack below.
   (if (and (> arg 0) (looking-at "#s("))
       (goto-char (+ (point) 2)))
+  ;; XEmacs change -- don't bomb out if unbalanced sexp
   (goto-char (or (scan-sexps (point) arg) (buffer-end arg)))
   (if (< arg 0) (backward-prefix-chars))
   ;; XEmacs: evil hack! Skip back over #s so that structures are read

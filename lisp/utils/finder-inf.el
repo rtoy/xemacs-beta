@@ -291,7 +291,7 @@
         (help)
         "lisp/electric/")
     ("crisp.el"
-        "Crisp/Brief Emacs emulator"
+        "CRiSP/Brief Emacs emulator"
         (emulations brief crisp)
         "lisp/emulators/")
     ("edt-lk201.el"
@@ -448,10 +448,6 @@
         "lisp/games/")
     ("life.el"
         "John Horton Conway's `Life' game for GNU Emacs"
-        (games)
-        "lisp/games/")
-    ("mine.el"
-        "Mine game for GNU Emacs"
         (games)
         "lisp/games/")
     ("mpuz.el"
@@ -641,10 +637,6 @@
     ("mailheader.el"
         "Mail header parsing, merging, formatting"
         (tools  mail  news)
-        "lisp/gnus/")
-    ("md5.el"
-        "MD5 Message Digest Algorithm"
-        nil
         "lisp/gnus/")
     ("message.el"
         "composing mail and news messages"
@@ -1116,7 +1108,7 @@
         "lisp/mule/")
     ("canna.el"
         "Interface to the Canna input method."
-        nil
+        (canna  japanese  input method  mule  multilingual)
         "lisp/mule/")
     ("chinese-hooks.el"
         "pre-loaded support for Chinese."
@@ -1293,10 +1285,6 @@
     ("crypt.el"
         "code for handling all sorts of compressed and encrypted files"
         (extensions)
-        "lisp/packages/")
-    ("cu-edit-faces.el"
-        "interactive face editing mode"
-        nil
         "lisp/packages/")
     ("dabbrev.el"
         "dynamic abbreviation package"
@@ -1580,6 +1568,10 @@
         "lisp/prim/")
     ("console.el"
         "miscellaneous console functions not written in C"
+        (internal)
+        "lisp/prim/")
+    ("cus-start.el"
+        "define customization properties of builtins."
         (internal)
         "lisp/prim/")
     ("debug.el"
@@ -2426,6 +2418,10 @@
         "Automatic image converters"
         (images)
         "lisp/w3/")
+    ("md5.el"
+        "MD5 Message Digest Algorithm"
+        nil
+        "lisp/w3/")
     ("mm.el"
         "Mailcap parsing routines, and MIME handling"
         (mail  news  hypermedia)
@@ -2605,10 +2601,6 @@
     ("w3.el"
         "Main functions for emacs-w3 on all platforms/versions"
         (faces  help  comm  news  mail  processes  mouse  hypermedia)
-        "lisp/w3/")
-    ("x-overlay.el"
-        "overlay support."
-        (internal)
         "lisp/w3/")
     ("x-faces.el"
         "X-specific face frobnication, aka black magic."

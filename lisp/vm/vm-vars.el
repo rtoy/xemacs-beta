@@ -354,7 +354,7 @@ FSF Emacs always uses VM's builtin highlighting code.")
 
 (defvar vm-highlighted-header-face 'bold
   "*Face to be used to highlight headers.
-The header to highlight are sepcified by the vm-highlighted-header-regexp
+The headers to highlight are specified by the vm-highlighted-header-regexp
 variable.
 
 This variable is ignored under XEmacs if vm-use-lucid-highlighting is
@@ -391,7 +391,10 @@ various MIME standards specifications.
 A nil value means VM will not display MIME messages any
 differently than any other message.")
 
-(defvar vm-mime-ignore-mime-version nil
+;; this is t because at this time (11 April 1997) Solaris is
+;; generated too many mangled MIME version headers.  For the same
+;; reason vm-mime-avoid-folding-content-type is also set to t.
+(defvar vm-mime-ignore-mime-version t
   "*Non-nil value means ignore the version number in the MIME-Version
 header.  VM only knows how to decode and display MIME version 1.0
 messages.  Some systems scramble the MIME-Version header, causing
@@ -2460,7 +2463,7 @@ mail is not sent.")
     (define-key map "\C-c\C-p" 'vm-mime-preview-composition)
     (define-key map "\C-c\C-e" 'vm-mime-encode-composition)
     (define-key map "\C-c\C-a" 'vm-mime-attach-file)
-    (define-key map "\C-c\C-m" 'vm-mime-attach-mime-file)
+;;    (define-key map "\C-c\C-m" 'vm-mime-attach-mime-file)
     (define-key map "\C-c\C-y" 'vm-yank-message)
     (define-key map "\C-c\C-s" 'vm-mail-send)
     (define-key map "\C-c\C-c" 'vm-mail-send-and-exit)
@@ -3077,6 +3080,9 @@ that has a match.")
 (defconst vm-xemacs-p nil)
 (defconst vm-xemacs-mule-p nil)
 (defconst vm-fsfemacs-19-p nil)
+(defun vm-xemacs-p () vm-xemacs-p)
+(defun vm-xemacs-mule-p () vm-xemacs-mule-p)
+(defun vm-fsfemacs-19-p () vm-fsfemacs-19-p)
 (defun vm-note-emacs-version ()
   (setq vm-xemacs-p (string-match "XEmacs" emacs-version)
 	vm-xemacs-mule-p (and vm-xemacs-p (featurep 'mule)

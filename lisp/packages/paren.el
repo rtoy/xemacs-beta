@@ -54,15 +54,10 @@
 
 ;;; Code:
 
-(defgroup paren nil
-  "Highlight (un)matching parens and whole expressions"
-  :group 'matching)
-
-
 (defcustom paren-message-offscreen t
   "*Display message if matching open paren is offscreen."
   :type 'boolean
-  :group 'paren)
+  :group 'paren-matching)
 
 (defcustom paren-ding-unmatched nil
   "*Make noise if the cursor is at an unmatched paren.
@@ -74,7 +69,7 @@ when the cursor moves over unmatched parens but will ring if one is typed."
   :type '(choice (const :tag "off" nil)
 		 (const :tag "on" t)
 		 (const :tag "other" other))
-  :group 'paren)
+  :group 'paren-matching)
 
 ;;;###autoload
 (defcustom paren-mode nil
@@ -92,7 +87,7 @@ This variable is global by default, but you can make it buffer-local and
 highlight parentheses differently in different major modes."
   :type '(radio (const nil) (const blink-paren) (const paren)
 		(const sexp) (const nested))
-  :group 'paren)
+  :group 'paren-matching)
 
 (make-face 'paren-match)
 (or (face-differs-from-default-p 'paren-match)

@@ -41,7 +41,7 @@
     (2.3 *noconv*)
     (2.4 'no-conversion)
     (3.0 'no-conversion)
-    (xemacs 'no-conversion)
+    (xemacs 'binary)
     (otherwise nil))
   "Coding system that means no coding system should be used.")
 

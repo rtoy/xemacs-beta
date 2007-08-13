@@ -3892,7 +3892,11 @@ re_search_2 (struct re_pattern_buffer *bufp, CONST char *string1,
       if (startpos > 0)
 	return -1;
       else
-	range = 1;
+	{
+	  d = ((CONST unsigned char *)
+	       (startpos >= size1 ? string2 - size1 : string1) + startpos);
+	    range = charcount_to_bytecount (d, 1);
+	}
     }
 
   /* Update the fastmap now if not correct already.  */

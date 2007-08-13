@@ -1259,6 +1259,8 @@ in the buffer.  The function is expected to make the message
 
 (autoload (quote vm-mime-display-internal-application/octet-stream) "vm-mime" nil nil nil)
 
+(autoload (quote vm-mime-display-button-application) "vm-mime" nil nil nil)
+
 (autoload (quote vm-mime-display-button-image) "vm-mime" nil nil nil)
 
 (autoload (quote vm-mime-display-button-audio) "vm-mime" nil nil nil)
@@ -1630,7 +1632,11 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 
 (autoload (quote vm-mouse-send-url-to-netscape) "vm-mouse" nil nil nil)
 
+(autoload (quote vm-mouse-send-url-to-netscape-new-window) "vm-mouse" nil nil nil)
+
 (autoload (quote vm-mouse-send-url-to-mosaic) "vm-mouse" nil nil nil)
+
+(autoload (quote vm-mouse-send-url-to-mosaic-new-window) "vm-mouse" nil nil nil)
 
 (autoload (quote vm-mouse-install-mouse) "vm-mouse" nil nil nil)
 
@@ -2198,7 +2204,7 @@ See the documentation for vm-mode for more information." t nil)
 
 (autoload (quote vm-mode) "vm-startup" "Major mode for reading mail.
 
-This is VM 6.24.
+This is VM 6.26.
 
 Commands:
    h - summarize folder contents
@@ -2800,6 +2806,12 @@ buffer.  The current buffer must be a composition buffer created
 by VM for a reply, resend or forward." nil nil)
 
 (autoload (quote vm-spool-files) "vm-vars" nil nil nil)
+
+(autoload (quote vm-xemacs-p) "vm-vars" nil nil nil)
+
+(autoload (quote vm-xemacs-mule-p) "vm-vars" nil nil nil)
+
+(autoload (quote vm-fsfemacs-19-p) "vm-vars" nil nil nil)
 
 (autoload (quote vm-note-emacs-version) "vm-vars" nil nil nil)
 

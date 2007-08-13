@@ -1,5 +1,14 @@
 							-*- indented-text -*-
+to 20.1
+-- time.el-1.15
+-- itimer.el-1.06
+-- facemenu-keymap moved to `C-x F'
+-- MULE anchored beginning regexp bug fix courtesy of David Moore
+-- VM-6.26
+-- miscellaneous bug fixes
+
 to 20.1 beta15
+-- tm-vm.el-8.11 -- Courtesy of Oscar Figuerido
 -- Restoration of zawinski features in telnet.el.
 -- paren.el & ps-print.el customized
 -- Gnus-5.4.45

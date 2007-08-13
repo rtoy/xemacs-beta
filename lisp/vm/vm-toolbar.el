@@ -199,10 +199,12 @@ s-expression like this one in your .vm file:
     (fset 'vm-toolbar-quit-command 'vm-quit))
 
 (defun vm-toolbar-any-messages-p ()
-  (save-excursion
-    (vm-check-for-killed-folder)
-    (vm-select-folder-buffer)
-    vm-message-list))
+  (condition-case nil
+      (save-excursion
+	(vm-check-for-killed-folder)
+	(vm-select-folder-buffer)
+	vm-message-list)
+    (error nil)))
 
 (defun vm-toolbar-delete/undelete-message (&optional prefix-arg)
   (interactive "P")
@@ -218,11 +220,13 @@ s-expression like this one in your .vm file:
 
 (defun vm-toolbar-can-autofile-p ()
   (interactive)
-  (save-excursion
-    (vm-check-for-killed-folder)
-    (vm-select-folder-buffer)
-    (and vm-message-pointer
-	 (vm-auto-select-folder vm-message-pointer vm-auto-folder-alist))))
+  (condition-case nil
+      (save-excursion
+	(vm-check-for-killed-folder)
+	(vm-select-folder-buffer)
+	(and vm-message-pointer
+	     (vm-auto-select-folder vm-message-pointer vm-auto-folder-alist)))
+    (error nil)))
 
 (defun vm-toolbar-autofile-message ()
   (interactive)
@@ -239,39 +243,43 @@ s-expression like this one in your .vm file:
       (error "No match for message in vm-auto-folder-alist."))))
 
 (defun vm-toolbar-can-recover-p ()
-  (save-excursion
-    (vm-check-for-killed-folder)
-    (vm-select-folder-buffer)
-    (and vm-folder-read-only
-	 buffer-file-name
-	 buffer-auto-save-file-name
-	 (null (buffer-modified-p))
-	 (file-newer-than-file-p
-	  buffer-auto-save-file-name
-	  buffer-file-name))))
+  (condition-case nil
+      (save-excursion
+	(vm-select-folder-buffer)
+	(and vm-folder-read-only
+	     buffer-file-name
+	     buffer-auto-save-file-name
+	     (null (buffer-modified-p))
+	     (file-newer-than-file-p
+	      buffer-auto-save-file-name
+	      buffer-file-name)))
+    (error nil)))
 
 (defun vm-toolbar-can-decode-mime-p ()
-  (save-excursion
-    (vm-check-for-killed-folder)
-    (vm-select-folder-buffer)
-    (and
-     vm-display-using-mime
-     vm-message-pointer
-     vm-presentation-buffer
-     (not vm-mime-decoded)
-     (not (vm-mime-plain-message-p (car vm-message-pointer))))))
+  (condition-case nil
+      (save-excursion
+	(vm-select-folder-buffer)
+	(and
+	 vm-display-using-mime
+	 vm-message-pointer
+	 vm-presentation-buffer
+	 (not vm-mime-decoded)
+	 (not (vm-mime-plain-message-p (car vm-message-pointer)))))
+    (error nil)))
 
 (defun vm-toolbar-can-quit-p ()
-  (save-excursion
-    (vm-check-for-killed-folder)
-    (vm-select-folder-buffer)
-    (memq major-mode '(vm-mode vm-virtual-mode))))
+  (condition-case nil
+      (save-excursion
+	(vm-select-folder-buffer)
+	(memq major-mode '(vm-mode vm-virtual-mode)))
+    (error nil)))
 
 (defun vm-toolbar-mail-waiting-p ()
-  (save-excursion
-    (vm-check-for-killed-folder)
-    (vm-select-folder-buffer)
-    vm-spooled-mail-waiting))
+  (condition-case nil
+      (save-excursion
+	(vm-select-folder-buffer)
+	vm-spooled-mail-waiting)
+    (error nil)))
 
 (fset 'vm-toolbar-can-help-p 'vm-toolbar-can-quit-p)
 

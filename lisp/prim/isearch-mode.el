@@ -94,6 +94,7 @@
 
 (defgroup isearch nil
   "Incremental search"
+  :prefix "search-"
   :group 'matching)
 
 

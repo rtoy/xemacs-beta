@@ -1,5 +1,5 @@
 pending
-auxillary
+auxiliary
 configuration
 documentation
 frames
@@ -7,8 +7,12 @@ i18n
 lisp
 menubars
 misc
+mule
 performance
 redisplay
 scrollbars
 tooblbars
+gnus
+vm
+w3
 test

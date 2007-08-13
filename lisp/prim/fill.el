@@ -461,7 +461,8 @@ space does not end a sentence, so don't break a line there."
 			;; end patch
 			(setq first nil)))
 		  ;; Normally, move back over the single space between the words.
-		  (forward-char -1))
+		  (if (eq (preceding-char) ?\ )
+		      (forward-char -1)))
 		;; If the left margin and fill prefix by themselves
 		;; pass the fill-column, keep at least one word.
 		;; This handles the first line of the paragraph.

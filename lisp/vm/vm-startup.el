@@ -171,9 +171,7 @@ See the documentation for vm-mode for more information."
 	  (setq totals-blurb (vm-emit-totals-blurb)))
 
       (vm-thoughtfully-select-message)
-      (if vm-message-list
-	  (vm-preview-current-message)
-	(vm-update-summary-and-mode-line))
+      (vm-update-summary-and-mode-line)
       ;; need to do this after any frame creation because the
       ;; toolbar sets frame-specific height and width specifiers.
       (and (vm-toolbar-support-possible-p) vm-use-toolbar
@@ -208,6 +206,9 @@ See the documentation for vm-mode for more information."
 		(switch-to-buffer (or vm-summary-buffer
 				      vm-presentation-buffer
 				      (current-buffer)))))))
+
+      (if vm-message-list
+	  (vm-preview-current-message))
 
       (run-hooks 'vm-visit-folder-hook)
 
@@ -275,7 +276,7 @@ See the documentation for vm-mode for more information."
 (defun vm-mode (&optional read-only)
   "Major mode for reading mail.
 
-This is VM 6.24.
+This is VM 6.26.
 
 Commands:
    h - summarize folder contents
@@ -1054,7 +1055,7 @@ vm-visit-virtual-folder.")
 (defun vm-session-initialization ()
   (vm-note-emacs-version)
   (vm-check-emacs-version)
-  (vm-set-debug-flags)
+  ;(vm-set-debug-flags)
   ;; If this is the first time VM has been run in this Emacs session,
   ;; do some necessary preparations.
   (if (or (not (boundp 'vm-session-beginning))

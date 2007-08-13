@@ -317,8 +317,6 @@ int		lb_sisheng;
 
 /* Lisp functions definition */
 
-
-
 DEFUN ("wnn-server-open", Fwnn_open, 2, 2, 0, /*
 Connect to jserver of host HNAME, make an environment with
 login name LNAME in the server.
@@ -358,12 +356,21 @@ Return nil if error occurs
       strncpy (hostname, XSTRING (hname)->_data, 32);
     }
   CHECK_STRING (lname);
+  /* 97/4/16 jhod@po.iijnet.or.jp
+   * libwnn uses SIGALRM, so we need to stop and start interrupts.
+   */
+  stop_interrupts();
   if (!(wnnfns_buf[snum] = jl_open_lang (envname, hostname, langname,
 					 0, 0, 0, EGG_TIMEOUT)))
     {
+      start_interrupts();
       return Qnil;
     }
-  if (!jl_isconnect (wnnfns_buf[snum])) return Qnil;
+  if (!jl_isconnect (wnnfns_buf[snum]))
+    {
+      start_interrupts();
+      return Qnil;
+    }
   wnnfns_env_norm[snum] = jl_env_get (wnnfns_buf[snum]);
 /*  if (Vwnnenv_sticky == Qt) jl_env_sticky_e (wnnfns_env_norm[snum]);
     else jl_env_un_sticky_e (wnnfns_env_norm[snum]);*/
@@ -371,10 +378,12 @@ Return nil if error occurs
   if (!(wnnfns_env_rev[snum] = jl_connect_lang (envname, hostname, langname,
 						0, 0, 0, EGG_TIMEOUT)))
     {
+      start_interrupts();
       return Qnil;
     }
 /*  if (Vwnnenv_sticky == Qt) jl_env_sticky_e (wnnfns_env_rev[snum]);
     else jl_env_un_sticky_e (wnnfns_env_rev[snum]);*/
+  start_interrupts();
   return Qt;
 }
 

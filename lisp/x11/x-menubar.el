@@ -664,6 +664,7 @@
        ["No Warranty"		describe-no-warranty	t]
        ["XEmacs License"	describe-copying	t]
        ["The Latest Version"	describe-distribution	t])
+      ["Submit Bug Report"	send-pr			t]
       )
      )))
 

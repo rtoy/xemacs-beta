@@ -1,29 +1,29 @@
--*- mode:outline; minor-mode:outl-mouse -*-
-
+-*- mode:outline -*-
+
 * Introduction
 ==============
 
 This file presents some general information about XEmacs.  It is primarily
 about the evolution of XEmacs and its release history.
 
-There are five sections.
+There are three sections.
 
     Introduction................(this section) provides an introduction
 
     Using Outline Mode..........briefly explains how to use outline mode
-
-    The History of XEmacs.......some historical notes
-
-    What's Different?...........new or changed capabilities
 
     XEmacs Release Notes........details of the changes between releases
 
 New users should look at the next section on "Using Outline Mode".  You will
 be more efficient when you can navigate quickly through this file.  Users
 interested in some of the details of how XEmacs differs from GNU Emacs
-should read the section "What's Different?".  Users who would to know which
-capabilities have been introduced in each release should look at the
-appropriate subsection of the "XEmacs Release Notes."
+should read the section "What's Different?".
+
+Users who would like to know which capabilities have been introduced
+in each release should look at the appropriate subsection of the
+"XEmacs Release Notes."  Starting with version 20.0, XEmacs includes
+ChangeLogs, which can be consulted for a more detailed list of
+changes.
 
     N.B.  The term "FSF GNU Emacs" refers to any release of Emacs Version 19
     from the Free Software Foundation's GNU Project. (We do not say just
@@ -35,7 +35,7 @@ appropriate subsection of the "XEmacs Release Notes."
     "Lucid Emacs".  The predecessor of all these program is called "Emacs 18".
     When no particular version is implied, "Emacs" will be used.
 
-
+
 * Using Outline Mode
 ====================
 
@@ -81,314 +81,444 @@ C-c C-c	   make immediately following body invisible.
 C-c C-e	   make it visible.
 C-c C-l	   make body under heading and under its subheadings invisible.
 		     The subheadings remain visible.
-C-c C-k  make all subheadings at all levels visible.x1
+C-c C-k  make all subheadings at all levels visible.
 
+
+			 XEmacs Release Notes
+			 ====================
 
-* XEmacs Release Notes
-======================
-
-** Future Plans for XEmacs
+* Future Plans for XEmacs
 ==========================
 
-The next `feature' will be the unbundling of XEmacs into constituent
-installable packages.
+** XEmacs will be unbundled into constituent installable packages.
 
-We are working on improving the Mule support in future releases:
+The XEmacs distribution has grown very large.  We plan the future
+distribution to contain a much smaller amount of code for basic
+functionality, with all the popular Lisp packages being available in
+the form of easy-to-install add-ons.
 
--- Other input methods, such as skk, will be supported.
+** Autoconf 2 will be supported, to make XEmacs a more behaved
+denizen of the free software community.
 
--- Wnn support will be made more solid.
+** We are working on improving the Mule support in future releases:
 
--- More user-level documentation on using Mule.
+*** Other input methods, such as skk, will be supported.
 
-** Major Differences between 20.0 and 20.1
+*** Wnn support will be made more solid.
 
-*** User Interface changes.
+*** More user-level documentation on using Mule.
 
-The keysyms mouse-1, mouse-2, mouse-3 and down-mouse-1, down-mouse-2,
-and down-mouse-3 have been added for Emacs compatibility.
+
+* Changes in XEmacs 20.1
+========================
 
-A new user customizable variable `signal-error-on-buffer-boundary' has
-been added.  Set this to nil to avoid XEmacs usual lossage of zmacs
-region when moving up against a buffer boundary.
+** The logo has been changed, and the default background color is
+now a shade of gray instead of the eye-burning white.
 
-The logo has been changed, and the default background color is now
-shade of gray instead of white.
+The sample .Xdefaults and .emacs files contain examples of how to
+revert to the old background color.
 
-Many packages have been add and upgraded.
+** Default modeline colors are now less of a color-salad.
 
--- Gnus-5.4.43  Courtesy of Lars Magne Ingebrigtsen
+** The command `display-time' now draws a pretty image in the modeline
+when new mail arrives.  It also supports balloon-help messages.
 
-*** Gnus changes.
+** Various commands that were previously disabled are now enabled, like
+eval-expression (`M-:') and upcase-region (`C-x C-u')/downcase-region
+(`C-x C-l').
 
-**** nntp.el has been totally rewritten in an asynchronous fashion.
+** Numerous causes of crashes have been fixed.  XEmacs should now be
+even more stable than before.
 
-**** Article prefetching functionality has been moved up into 
+** The XEmacs build process has been changed to make site
+administration easier.  See lisp/site-load.el for details.
+
+** It is now possible to customize the functions called by XEmacs toolbar.
+
+Type `M-x customize RET toolbar RET' to customize it.  Customizations
+include the choice of functions for the buttons to invoke, as well as
+a wide choice of mailers and newsreaders to invoked by the respective
+functions.
+
+** `temp-buffer-shrink-to-fit' now defaults to nil.
+
+There are unresolved issues regarding this feature, which is why the
+XEmacs developers decided to disable it by default.
+
+** `ps-print-color-p' now defaults to nil.
+
+This is because the new default background color is non-white.  The
+`Printing Options' in the `Options' menu now include an item that
+enables color printing, and sets the white background.
+
+** `line-number-mode' should be used to get line numbers in the
+modeline, and `column-number-mode' to get column numbers.  Line
+numbers now number from 1 by default.
+
+** font-lock-mode will now correctly fontify `int a, b, c;'
+expressions in C mode.
+
+** The blinking cursor is always "on" during movement.
+
+** A number of new packages are added, and many packages were
+updated.
+
+** Gnus-5.4.45, courtesy of Lars Magne Ingebrigtsen
+
+*** nntp.el has been totally rewritten in an asynchronous fashion.
+
+*** Article prefetching functionality has been moved up into 
 Gnus.  
 
-**** Scoring can now be performed with logical operators like 
+*** Scoring can now be performed with logical operators like 
 `and', `or', `not', and parent redirection.
 
 *** Article washing status can be displayed in the
 article mode line.
 
-**** gnus.el has been split into many smaller files.
+*** gnus.el has been split into many smaller files.
 
-**** Suppression of duplicate articles based on Message-ID.
+*** Suppression of duplicate articles based on Message-ID.
 
 (setq gnus-suppress-duplicates t)
 
-**** New variables for specifying what score and adapt files
+*** New variables for specifying what score and adapt files
 are to be considered home score and adapt files.  See
 `gnus-home-score-file' and `gnus-home-adapt-files'.
 
-**** Groups can inherit group parameters from parent topics.
+*** Groups can inherit group parameters from parent topics.
 
-**** Article editing has been revamped and is now usable.
+*** Article editing has been revamped and is now usable.
 
-**** Signatures can be recognized in more intelligent fashions.
+*** Signatures can be recognized in more intelligent fashions.
 See `gnus-signature-separator' and `gnus-signature-limit'.
 
-**** Summary pick mode has been made to look more nn-like.
+*** Summary pick mode has been made to look more nn-like.
 Line numbers are displayed and the `.' command can be
 used to pick articles.
 
-**** Commands for moving the .newsrc.eld from one server to
+*** Commands for moving the .newsrc.eld from one server to
 another have been added.
 
     `M-x gnus-change-server'
 
-**** A way to specify that "uninteresting" fields be suppressed when
+*** A way to specify that "uninteresting" fields be suppressed when
 generating lines in buffers.
 
-**** Several commands in the group buffer can be undone with
+*** Several commands in the group buffer can be undone with
 `M-C-_'.
 
-**** Scoring can be done on words using the new score type `w'.
+*** Scoring can be done on words using the new score type `w'.
 
-**** Adaptive scoring can be done on a Subject word-by-word basis:
+*** Adaptive scoring can be done on a Subject word-by-word basis:
 
     (setq gnus-use-adaptive-scoring '(word))
 
-**** Scores can be decayed.
+*** Scores can be decayed.
  
     (setq gnus-decay-scores t)
 
-**** Scoring can be performed using a regexp on the Date header.  The
+*** Scoring can be performed using a regexp on the Date header.  The
 Date is normalized to compact ISO 8601 format first.
 
-**** A new command has been added to remove all data on articles from
+*** A new command has been added to remove all data on articles from
 the native server.
 
    `M-x gnus-group-clear-data-on-native-groups'
 
-**** A new command for reading collections of documents
+*** A new command for reading collections of documents
 (nndoc with nnvirtual on top) has been added -- `M-C-d'.
 
-**** Process mark sets can be pushed and popped.
+*** Process mark sets can be pushed and popped.
 
-**** A new mail-to-news backend makes it possible to post
+*** A new mail-to-news backend makes it possible to post
 even when the NNTP server doesn't allow posting.
 
-**** A new backend for reading searches from Web search engines
+*** A new backend for reading searches from Web search engines
 (DejaNews, Alta Vista, InReference) has been added.
 
     Use the `G w' command in the group buffer to create such
     a group.
 
-**** Groups inside topics can now be sorted using the standard
+*** Groups inside topics can now be sorted using the standard
 sorting functions, and each topic can be sorted independently.
 
     See the commands under the `T S' submap.
 
-**** Subsets of the groups can be sorted independently.
+*** Subsets of the groups can be sorted independently.
 
     See the commands under the `G P' submap.
 
-**** Cached articles can be pulled into the groups.
+*** Cached articles can be pulled into the groups.
   
     Use the `Y c' command.
 
-**** Score files are now applied in a more reliable order.
+*** Score files are now applied in a more reliable order.
 
-**** Reports on where mail messages end up can be generated.
+*** Reports on where mail messages end up can be generated.
 
     `M-x nnmail-split-history'
 
-**** More hooks and functions have been added to remove junk
+*** More hooks and functions have been added to remove junk
 from incoming mail before saving the mail.
  
     See `nnmail-prepare-incoming-header-hook'.
 
-**** The nnml mail backend now understands compressed article files.
+*** The nnml mail backend now understands compressed article files.
 
--- custom-1.82 Courtesy of Per Abrahamsen
+** Custom 1.84, courtesy of Per Abrahamsen
 
 The Customize library enables Emacs Lisp programmers to specify types
-of their variables, so that the users can customize them.  For
-example, the old declaration
+of their variables, so that the users can customize them.
 
-(defvar foo-blurgoze nil
-  "*non-nil means that foo will act very blurgozely.")
+Invoke the customizations buffer using the menus (Customize is at the
+top of the Options menu), or using commands `M-x customize',
+`M-x customize-variable' and `M-x customize-face'.  Customize can save
+the changed settings to your `.emacs' file.
 
-now becomes:
+Customize is now the preferred way to change XEmacs settings.  Tens of
+packages have been converted to take advantage of the Customize
+features, including Gnus, Message, Supercite, Psgml, Comint, W3,
+cc-mode (and many other programming language modes), ispell.el,
+ps-print.el, id-select.el, most of the programming language modes, and
+many many more.
 
-(defcustom foo-blurgoze nil
-  "*non-nil means that foo will act very blurgozely."
-  :type 'boolean)
+See the "Lisp Changes" section later for a short description of why
+and how to add custom support to your Lisp packages.  Custom is also
+documented in the XEmacs info manuals.
 
-Now the user can type `M-x customize RET foo-blurgoze RET' to
-customize the variable.  Other, more complex data structures can be
-represented and customized too, e.g.
-
-(defcustom foo-hairy-alist '((somekey . "somestring")
-                             (otherkey . (foo-doit))
-                             (thirdkey . [1 2 3]))
-"*Alist describing the hairy options of foo package.
-The CAR of each element is a symbol, whereas the CDR can be either a
-string, a form to evaluate, or a vector of integers."
-  :type '(repeat (cons (symbol :tag "Key")
-                       (choice string
-                               (vector (repeat :inline t integer))
-                               sexp))))
-
-The user will be able to add and remove the entries to the list, as
-well as save the settings to his/her `.emacs'.
-
-The Customize now has its submenu at the top of the Options menu, and
-is the preferred way to change XEmacs settings.  Tens of packages have
-been converted to take advantage of the Customize features, including:
-Gnus, Message, Supercite, Psgml, Comint, Calendar, W3, cc-mode (and
-many other programming language modes), ispell.el, ps-print.el,
-id-select.el, most of the programming language modes, and many many
-more.
-
-been converted to use the Customize features.
-
--- mic-paren.el-1.3.1  Courtesy of Mikael Sjödin
--- hyperbole-4.022 Courtesy of Bob Weiner
-
--- W3-3.0.80 Courtesy of William Perry
+** W3-3.0.80, courtesy of William Perry
 
 Version 3 of Emacs/W3, the Emacs World Wide Web browser, has been
-included.  It is much faster than any of the previous versions, and
-contains numerous other features.
+included.  It is significantly faster than any of the previous
+versions, and contains numerous new features.
 
--- AUCTeX-9.7k Courtesy of Per Abrahamsen
+** AUCTeX-9.7k, courtesy of Per Abrahamsen
 
-   AUC TeX is a comprehensive customizable integrated environment for
+AUC TeX is a comprehensive customizable integrated environment for
 writing input files for LaTeX using GNU Emacs.
 
-   AUC TeX lets you run TeX/LaTeX and other LaTeX-related tools, such
-as a output filters or post processor from inside Emacs.  Especially
+AUC TeX lets you run TeX/LaTeX and other LaTeX-related tools, such as
+a output filters or post processor from inside Emacs.  Especially
 `running LaTeX' is interesting, as AUC TeX lets you browse through the
-errors TeX reported, while it moves the cursor directly to the reported
-error, and displays some documentation for that particular error.  This
-will even work when the document is spread over several files.
+errors TeX reported, while it moves the cursor directly to the
+reported error, and displays some documentation for that particular
+error.  This will even work when the document is spread over several
+files.
 
-   AUC TeX automatically indents your `LaTeX-source', not only as you
+AUC TeX automatically indents your `LaTeX-source', not only as you
 write it -- you can also let it indent and format an entire document.
-It has a special outline feature, which can greatly help you `getting an
-overview' of a document.
+It has a special outline feature, which can greatly help you `getting
+an overview' of a document.
 
-   Apart from these special features, AUC TeX provides an large range of
+Apart from these special features, AUC TeX provides an large range of
 handy Emacs macros, which in several different ways can help you write
 your LaTeX documents fast and painless.
 
--- hm--html-menus-5.3 Courtesy of Heiko Muenkel
--- python-mode.el-2.90 Courtesy of Barry Warsaw
--- balloon-help-1.04 Courtesy of Kyle Jones
--- xrdb-mode.el-1.21 Courtesy of Barry Warsaw
--- igrep.el-2.56 Courtesy of Kevin Rodgers
--- frame-icon.el Courtesy of Michael Lamoureux and Bob Weiner
--- itimer.el-1.01 Courtesy of Kyle Jones
-
--- redo.el-1.01 Courtesy of Kyle Jones
+** redo.el-1.01, courtesy of Kyle Jones
 
 redo.el is a package that implements true redo mechanism in XEmacs
-buffers.  You can bind the `redo' command to a convenient key to use
-it.
+buffers.  Once you load it from your `.emacs', you can bind the `redo'
+command to a convenient key to use it.
 
-Emacs' normal undo system allows you to undo an arbitrary
-number of buffer changes.  These undos are recorded as ordinary
-buffer changes themselves.  So when you break the chain of
-undos by issuing some other command, you can then undo all
-the undos.  The chain of recorded buffer modifications
-therefore grows without bound, truncated only at garbage
-collection time.
+Emacs' normal undo system allows you to undo an arbitrary number of
+buffer changes.  These undos are recorded as ordinary buffer changes
+themselves.  So when you break the chain of undos by issuing some
+other command, you can then undo all the undos.  The chain of recorded
+buffer modifications therefore grows without bound, truncated only at
+garbage collection time.
 
 The redo/undo system is different in two ways:
-  1. The undo/redo command chain is only broken by a buffer
-     modification.  You can move around the buffer or switch
-     buffers and still come back and do more undos or redos.
-  2. The `redo' command rescinds the most recent undo without
-     recording the change as a _new_ buffer change.  It
-     completely reverses the effect of the undo, which
-     includes making the chain of buffer modification records
-     shorter by one, to counteract the effect of the undo
-     command making the record list longer by one.
 
--- VM-6.15 Courtesy of Kyle Jones
--- OO-Browser-2.10 Courtesy of Bob Weiner
--- viper-2.93 Courtesy of Michael Kifer
--- ediff-2.64 Courtesy of Michael Kifer
+*** The undo/redo command chain is only broken by a buffer modification.
 
--- edmacro.el-3.05 Courtesy of Dave Gillespie, port to XEmacs by
-   Hrvoje Niksic.
+You can move around the buffer or switch buffers and still come back
+and do more undos or redos.
+
+*** The `redo' command rescinds the most recent undo without
+recording the change as a _new_ buffer change.
+
+It completely reverses the effect of the undo, which includes making
+the chain of buffer modification records shorter by one, to counteract
+the effect of the undo command making the record list longer by one.
+
+** edmacro.el-3.09, courtesy of Dave Gillespie, ported to XEmacs by
+Hrvoje Niksic.
 
 Edmacro is a utility that provides easy editing of keyboard macros.
+Originally written by Dave Gillespie, it has been mostly rewritten by
+Hrvoje Niksic, in order to make it distinguish characters and integer,
+as well as to adapt it to XEmacs keysyms.
+
 Press `C-x C-k' to invoke the `edit-kbd-macro' command that lets you
-edit and define new keyboard macros.  You can also edit the last 100
-keystrokes and insert them into a macro to be bound to a key.  The
-macros can be conveniently dumped to `.emacs' file.
+edit old as well as define new keyboard macros.  You can also edit the
+last 100 keystrokes and insert them into a macro to be bound to a key
+or named as a command.  The recorded/edited macros can be dumped to
+`.emacs' file.
 
-The `read-kbd-macro' function is now available in XEmacs.  The short
-form `kbd' that evaluates at compile-time can be used instead.
-
--- detached-minibuf.el Courtesy of Alvin Shelton
--- whitespace-mode.el Courtesy of Heiko Muenkel
--- winmgr-mode.el Courtesy of David Konerding, Stefan Strobel & Barry Warsaw
-
--- xmine.el-1.4 Courtesy of Jens Lautenbacher
+** xmine.el-1.7, courtesy of Jens Lautenbacher
 
 XEmacs now includes a minesweeper game with a full-featured graphics
 and mouse interface.  Invoke with `M-x xmine'.
 
--- fast-lock.el-3.11.01 Courtesy of Simon Marshall
--- lazy-lock.el-1.16 Courtesy of Simon Marshall
--- browse-cltl2.el-1.1 Courtesy of Holger Schauer
--- eldoc.el-1.8 Courtesy of Noah Friedman
--- tm-7.105 Courtesy of MORIOKA Tomohiko
-
--- efs-1.15 courtesy of Andy Norman and Michael Sperber
+** efs-1.15 courtesy of Andy Norman and Michael Sperber
 
 EFS is now integrated with XEmacs, and replaces the old ange-ftp.  It
 has many more features, including info documentation, support for many
 different FTP servers, and integration with dired.
 
--- verilog-mode.el Courtesy of Michael McNamara & Adrian Aichner
+** mic-paren.el-1.3.1, courtesy of Mikael Sjödin
+** hyperbole-4.022, courtesy of Bob Weiner
+** hm--html-menus-5.3, courtesy of Heiko Muenkel
+** python-mode.el-2.90, courtesy of Barry Warsaw
+** balloon-help-1.05, courtesy of Kyle Jones
+** xrdb-mode.el-1.21, courtesy of Barry Warsaw
+** igrep.el-2.56, courtesy of Kevin Rodgers
+** frame-icon.el, courtesy of Michael Lamoureux and Bob Weiner
+** itimer.el-1.05, courtesy of Kyle Jones
+** VM-6.26, courtesy of Kyle Jones
+** OO-Browser-2.10, courtesy of Bob Weiner
+** viper-2.93, courtesy of Michael Kifer
+** ediff-2.64, courtesy of Michael Kifer
+** detached-minibuf-1.1, courtesy of Alvin Shelton
+** whitespace-mode.el, courtesy of Heiko Muenkel
+** winmgr-mode.el, courtesy of David Konerding, Stefan Strobel & Barry Warsaw
+** fast-lock.el-3.11.01, courtesy of Simon Marshall
+** lazy-lock.el-1.16, courtesy of Simon Marshall
+** browse-cltl2.el-1.1, courtesy of Holger Schauer
+** eldoc.el-1.10, courtesy of Noah Friedman
+** tm-7.105, courtesy of MORIOKA Tomohiko
+** verilog-mode.el, courtesy of Michael McNamara & Adrian Aichner
+** overlay.el, courtesy of Joseph Nuspl
 
--- overlay.el Courtesy of Joseph Nuspl
+
+* Lisp and internal changes in XEmacs 20.1
+==========================================
 
-The overlay support in XEmacs is now functional.  Overlays are
-implemented on top of native extents, and can be used as a GNU
+** `defcustom' and `defgroup' can now be used to specify types and
+placement of the user-settable variables.
+
+You can now specify the types of user-settable variables in your Lisp
+packages to be customized by users.  To do so, use `defcustom' as a
+replacement for `defvar'.
+
+For example, the old declaration:
+
+(defvar foo-blurgoze nil
+  "*non-nil means that foo will act very blurgozely.")
+
+can be rewritten as:
+
+(defcustom foo-blurgoze nil
+  "*non-nil means that foo will act very blurgozely."
+  :type 'boolean
+  :group 'foo)
+
+From a package writer's point of view, nothing has been changed
+However, the user can now type `M-x customize RET foo-blurgoze RET' to
+customize the variable.
+
+Other, more complex data structures can be described with `defcustom'
+too, for instance:
+
+(defcustom foo-hairy-alist '((somekey . "somestring")
+                             (otherkey . (foo-doit))
+                             (thirdkey . [1 2 3]))
+"*Alist describing the hairy options of the foo package.
+The CAR of each element is a symbol, whereas the CDR can be either a
+string, a form to evaluate, or a vector of integers.
+New Emacs users simply adore alists like this one."
+  :type '(repeat (cons (symbol :tag "Key")
+                       (choice string
+                               (vector (repeat :inline t integer))
+                               sexp)))
+  :group 'foo)
+
+The user will be able to add and remove the entries to the list in a
+visually appealing way, as well as save the settings to his/her
+`.emacs'.
+
+Note that `defcustom' will also be included in GNU Emacs 19.35, and
+that both XEmacs and GNU Emacs will be using it in the future.
+Although the user-interface of customize may change, the Lisp
+interface will remain the same.  This is why we recommend that you use
+`defcustom' for user-settable variables in your new Lisp packages.
+
+** The `read-kbd-macro' function is now available.
+
+The `read-kbd-macro' function (and its shorter-named equivalent `kbd')
+from the edmacro package is now available in XEmacs.  For example:
+
+(define-key foo-mode-map (kbd "C-c <up>") 'foo-up)
+
+is the equivalent of
+
+(define-key foo-mode-map [(control ?c) up] 'foo-up)
+
+Using `read-kbd-macro' and `kbd' is not necessary for GNU Emacs
+compatibility (GNU Emacs supports the XEmacs-style keysyms), but adds
+to clarity.
+
+For example, (kbd "C-?") is easier to read than [(control ??)].  The
+full description of the syntax of keybindings accepted by
+`read-kbd-macro' is documented in the docstring of `edmacro-mode'.
+
+** Overlay compatibility is implemented.
+
+The overlay support in XEmacs is now functional.  Written by Joe
+Nuspl, the overlay compatibility library overlay.el is implemented on
+top of the native XEmacs extents, and can be used as a GNU
 Emacs-compatible way of changing display properties.
 
-*** Other changes
+** You should use keysyms kp-* (kp-1, kp-2, ..., kp-enter etc.)
+rather than the old form kp_*.  The old form is retained for
+backwards compatibility, but is obsolete.  The new form is also
+compatible with GNU Emacs.
 
-First alpha level support of MS Windows NT is available courtesy of
-David Hobley.
+** The keysyms mouse-1, mouse-2, mouse-3 and down-mouse-1,
+down-mouse-2, and down-mouse-3 have been added for GNU Emacs
+compatibility.
 
-Wnn/egg now has initial support Courtesy of Jareth Hein.
+** A new user variable `signal-error-on-buffer-boundary' has been
+added.
 
-The XEmacs build process has been changed to make site administration
-easier.  See lisp/site-load.el for details.
+Set this to variable to nil to avoid XEmacs usual lossage of zmacs
+region when moving up against a buffer boundary.
 
-Various functions that were previously disabled are now enabled like
-eval-expression (M-:) and upcase-region (C-x C-u)/downcase-region (C-x
-C-l).
+** The `eval-after-load' and `eval-next-after-load' functions are
+now available.
 
-** Major Differences Between 19.14 and 20.0
+** A bug that prevented `current-display-table' to be correctly set
+with `set-specifier' has been fixed.
+
+** The bug in easymenu which prevented multiple menus from being
+accessible through button3 has been fixed.
+
+You can now safely use easymenu to define multiple menu entries in a
+compatible way, with the added menus accessible via button3 as local
+submenus.
+
+** Many bugs in the scrollbar code have been fixed.
+
+** First alpha level support of MS Windows NT is available, courtesy
+of David Hobley.
+
+** Wnn/egg now has initial support Courtesy of Jareth Hein.
+
+** Some old non-working code has been removed until someone chooses
+to work on it.
+
+This includes much of the NeXTStep stuff.  The VMS support is also
+likely to be removed in the future.
+
+** Many files have been purged out of the etc/ directory.
+
+If you still need the purged files, look for them in the GNU Emacs
+distribution.
+
+
+* Major Differences Between 19.14 and 20.0
+===========================================
 
 XEmacs 20.0 is the first public release to have support for MULE
 (Multi-Lingual Emacs).  The --with-mule configuration flag must be

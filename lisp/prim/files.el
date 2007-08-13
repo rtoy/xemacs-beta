@@ -1474,8 +1474,9 @@ for current buffer."
 	      (val (cdr (car result))))
 	  (cond ((eq key 'mode)
 		 (setq mode-p t)
-		 (funcall (intern (concat (downcase (symbol-name val))
-					  "-mode"))))
+		 (and enable-local-variables
+		      (funcall (intern (concat (downcase (symbol-name val))
+					       "-mode")))))
 		(set-any-p
 		 (hack-one-local-variable key val))
 		(t

@@ -65,7 +65,7 @@ typedef struct
 	char	dd_buf[DIRBLKSIZ];	/* directory block */
 	}	DIR;			/* stream data from opendir() */
 
-extern DIR *opendir (CONST char *filename)
+extern DIR *opendir (CONST char *filename);
 extern int closedir (DIR *dirp);
 extern struct direct *readdir (DIR *dirp);
 extern struct direct *readdirver (DIR *dirp);

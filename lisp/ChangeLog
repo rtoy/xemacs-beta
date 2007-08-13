@@ -1,3 +1,38 @@
+Mon Apr 14 13:06:10 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* utils/autoload.el (generate-file-autoloads-1): Turn off local
+	variable processing.
+
+	* prim/files.el (hack-local-variables-prop-line): Respect setting
+	of enable-local-variables.
+
+	* vm/vm-startup.el (vm-session-initialization): Remove for
+	production version.
+
+	* utils/smtpmail.el (smtpmail-send-it): Forgot quote.
+	(smtpmail-deduce-address-list): case-fold-search mistakenly set
+	before buffer change.
+
+Sun Apr 13 14:49:34 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* x11/x-menubar.el (default-menubar): Added `send-pr' to Help
+	menu.
+
+	* modes/make-mode.el (makefile-font-lock-keywords): Correct old,
+	restored :-( 19.14 makefile-space-face lossage.
+
+Sat Apr 12 23:20:31 1997  David Moore  <dmoore@ucsd.edu>
+
+	* packages/font-lock.el (c-font-lock-keywords-1): Performance
+	tuned regexps.
+
+Sat Apr 12 21:32:37 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/about.el (about-xemacs): Update printed release date.
+
+	* calendar/appt.el (install-display-time-hook): Friends don't let
+	Friends quote lambda functions.
+
 Fri Apr 11 11:50:14 1997  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
 
 	* tm/tm-vm.el: tm-vm/use-original-url-button:

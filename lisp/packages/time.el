@@ -24,7 +24,7 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Version: 1.13  (I choose the version number starting at 1.1
+;;; Version: 1.15  (I choose the version number starting at 1.1
 ;;;                to indicate that 1.0 was the old version
 ;;;                before I hacked away on it -jtl)
 
@@ -57,11 +57,15 @@
 
 (require 'itimer)
 
-(defconst display-time-version-number "1.13" "Version number of time.el")
+(defconst display-time-version-number "1.15" "Version number of time.el")
 (defconst display-time-version (format "Time.el version %s for XEmacs"
 				       display-time-version-number)
   "The full version string for time.el")
 
+;; We need the progn to kill off the defgroup-tracking mechanism.
+;; This package changes the state of XEmacs by loading it, which is
+;; why it's potentially dangerous.
+(progn
 (defgroup display-time nil
   "Facilities to display the current time/date/load and a new-mail indicator
 in the XEmacs mode line or echo area."
@@ -71,7 +75,7 @@ in the XEmacs mode line or echo area."
   "Fancy add-ons to display-time for using the `balloon-help' feature.
 balloon-help must be loaded before these settings take effect."
   :group 'display-time)
-
+) ;progn
 
 (defcustom display-time-mail-file nil
   "*File name of mail inbox file, for indicating existence of new mail.
@@ -241,6 +245,11 @@ don't care and leave this set to nil"
   "Face used for entries in the mail balloon which match the regexp
 display-time-mail-balloon-enhance"
   :group 'display-time-balloon)
+
+(defface display-time-time-balloon-face '((t (:foreground  "red")))
+  "Face used in the time balloon to display the full date and load.
+It is also used in the mail balloon for the \"You have mail:\" heading."
+  :group 'display-time-balloon) 
 
 (defface display-time-mail-balloon-gnus-group-face '((t (:foreground "blue")))
   "Face used for the gnus group entry in the mail balloon
@@ -512,6 +521,7 @@ displayed."
       (display-time-generate-time-glyphs 'force)
       (display-time-generate-load-glyphs 'force)  
       (display-time-init-glyphs)
+      (sit-for 0)
       ))
 
 
@@ -535,7 +545,7 @@ displayed."
 				load
 			      " 0"))))
       (setq balloon-ext (make-extent 0 (length balloon-help) balloon-help))
-      (set-extent-property balloon-ext 'face 'red)
+      (set-extent-property balloon-ext 'face 'display-time-time-balloon-face)
       (set-extent-property balloon-ext 'duplicable 't)
       (while (setq elem (pop list))
 	(setq elem
@@ -587,7 +597,7 @@ displayed."
     (setq header "You have mail:")
     (setq header-ext
 	  (make-extent 0 (length header) header))
-    (set-extent-property header-ext 'face 'red)
+    (set-extent-property header-ext 'face 'display-time-time-balloon-face)
     (set-extent-property header-ext 'duplicable t)
     (setq header (concat header "\n"
 			 (make-string (+ display-time-mail-balloon-from-width

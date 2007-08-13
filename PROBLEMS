@@ -103,6 +103,12 @@ later.
 This error message has been observed with lesstif-0.75a.  It does not
 appear to cause any harm.
 
+** Movemail on Linux doesn't work any more
+
+Linux now defaults to using .lock mail locking.  To get back to the
+previous flock locking, edit src/s/linux.h and uncomment out the
+`# define MAIL_USE_FLOCK' line.
+
 ** Sparc Linux -vs- libXmu.
 
 There have been reports of configure not detecting libXmu on
@@ -226,6 +232,11 @@ hand, cd .., and redo the "make" command.  When recompiling the files by
 hand, use the old C compiler for the following versions of Digital UNIX:
   - V3.n: Remove "-migrate" from the compile command.
   - V4.n: Add "-oldc" to the compile command.
+
+** On Digital UNIX, TOOLTALK gets misdetected and misconfigured
+
+This problem manifested itself in the beta cycle as putting a literal
+LIB_TOOLTALK string into the Makefile.
 
 ** On HPUX, the HP C compiler might have a problem compiling some files
    with optimization.
@@ -1003,6 +1014,21 @@ that replacing the mouse made it stop.
 The program mkpts (which may be in `/usr/adm' or `/usr/sbin') needs to
 be set-UID to root, or non-root programs like Emacs will not be able
 to allocate ptys reliably.
+
+** Motif dialog boxes lose big time on Irix.
+
+Larry Auton <lda@control.att.com> writes:
+Beware of not specifying
+
+	--with-dialogs=athena
+
+if it builds with the motif dialogs [boom!] you're a dead man.
+
+** Beware of the default image & graphics library on Irix
+
+Richard Cognot <cognot@ensg.u-nancy.fr> writes:
+You *have* to compile your own jpeg lib. The one delivered with SGI
+systems is a C++ lib, which apparently XEmacs cannot cope with.
 
 ** Slow startup on Linux.
 

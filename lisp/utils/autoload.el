@@ -155,8 +155,10 @@ are used."
     (save-excursion
       (unwind-protect
 	  (progn
-	    (let ((find-file-hooks nil))
-	      (set-buffer (or visited (find-file-noselect file))))
+	    (let ((find-file-hooks nil)
+		  (enable-local-variables nil))
+	      (set-buffer (or visited (find-file-noselect file)))
+	      (set-syntax-table lisp-mode-syntax-table))
 	    (save-excursion
 	      (save-restriction
 		(widen)

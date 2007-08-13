@@ -181,10 +181,8 @@ default the local keymap of the current buffer is used."
 	     (while keymaps
 	       (setq keymap (car keymaps))
 	       (cond ((vm-mouse-xemacs-mouse-p)
-		      (define-key keymap 'button1 'ignore)
-		      (define-key keymap 'button2 'ignore)
-		      (define-key keymap 'button1up command)
-		      (define-key keymap 'button2up command))
+		      (define-key keymap 'button1 command)
+		      (define-key keymap 'button2 command))
 		     ((vm-mouse-fsfemacs-mouse-p)
 		      (define-key keymap [down-mouse-1] 'ignore)
 		      (define-key keymap [drag-mouse-1] 'ignore)

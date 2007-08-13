@@ -297,15 +297,15 @@ not be enclosed in { } or ( ).")
 
    ;; Highlight lines that contain just whitespace.
    ;; They can cause trouble, especially if they start with a tab.
-   '("^[ \t]+$" . 'makefile-space-face)
+   '("^[ \t]+$" . makefile-space-face)
 
    ;; Highlight shell comments that Make treats as commands,
    ;; since these can fool people.
-   '("^\t+#" 0 'makefile-space-face t)
+   '("^\t+#" 0 makefile-space-face t)
 
    ;; Highlight spaces that precede tabs.
    ;; They can make a tab fail to be effective.
-   '("^\\( +\\)\t" 1 'makefile-space-face)))
+   '("^\\( +\\)\t" 1 makefile-space-face)))
   "Additional expressions to highlight in makefiles")
 
 (put 'makefile-mode 'font-lock-defaults '(makefile-font-lock-keywords))

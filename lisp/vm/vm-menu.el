@@ -44,7 +44,18 @@
 
 (provide 'vm-menu)
 
-;; makeu sure the emacs/xemacs version variables are set, as they
+;; copied from vm-vars.el because vm-xemacs-p, vm-xemacs-mule-p
+;; and vm-fsfemacs-19-p are needed below at load time and
+;; vm-note-emacs-version may not be autoloadable.
+(or (fboundp 'vm-note-emacs-version)
+    (defun vm-note-emacs-version ()
+      (setq vm-xemacs-p (string-match "XEmacs" emacs-version)
+	    vm-xemacs-mule-p (and vm-xemacs-p (featurep 'mule)
+				  ;; paranoia
+				  (fboundp 'set-file-coding-system))
+	    vm-fsfemacs-19-p (not vm-xemacs-p))))
+
+;; make sure the emacs/xemacs version variables are set, as they
 ;; are needed below at load time.
 (vm-note-emacs-version)
 
@@ -369,7 +380,8 @@
 	      :selected (eq vm-mime-8bit-text-transfer-encoding 'base64)]))
 	   "----"
 	   ["Attach File..."	vm-mime-attach-file vm-send-using-mime]
-	   ["Attach MIME File..." vm-mime-attach-mime-file vm-send-using-mime]
+;;	   ["Attach MIME Message..." vm-mime-attach-mime-file
+;;	    vm-send-using-mime]
 	   ["Encode MIME, But Don't Send" vm-mime-encode-composition
 	    (and vm-send-using-mime
 		 (null (vm-mail-mode-get-header-contents "MIME-Version:")))]
@@ -544,50 +556,56 @@ set to the command name so that window configuration will be done."
   (apply command args))
 
 (defun vm-menu-can-revert-p ()
-  (save-excursion
-    (vm-check-for-killed-folder)
-    (vm-select-folder-buffer)
-    (and (buffer-modified-p) buffer-file-name)))
+  (condition-case nil
+      (save-excursion
+	(vm-select-folder-buffer)
+	(and (buffer-modified-p) buffer-file-name))
+    (error nil)))
 
 (defun vm-menu-can-recover-p ()
-  (save-excursion
-    (vm-check-for-killed-folder)
-    (vm-select-folder-buffer)
-    (and buffer-file-name
-	 buffer-auto-save-file-name
-	 (file-newer-than-file-p
-	  buffer-auto-save-file-name
-	  buffer-file-name))))
+  (condition-case nil
+      (save-excursion
+	(vm-select-folder-buffer)
+	(and buffer-file-name
+	     buffer-auto-save-file-name
+	     (file-newer-than-file-p
+	      buffer-auto-save-file-name
+	      buffer-file-name)))
+    (error nil)))
 
 (defun vm-menu-can-save-p ()
-  (save-excursion
-    (vm-check-for-killed-folder)
-    (vm-select-folder-buffer)
-    (or (eq major-mode 'vm-virtual-mode)
-	(buffer-modified-p))))
+  (condition-case nil
+      (save-excursion
+	(vm-select-folder-buffer)
+	(or (eq major-mode 'vm-virtual-mode)
+	    (buffer-modified-p)))
+    (error nil)))
 
 (defun vm-menu-can-get-new-mail-p ()
-  (save-excursion
-    (vm-check-for-killed-folder)
-    (vm-select-folder-buffer)
-    (or (eq major-mode 'vm-virtual-mode)
-	(and (not vm-block-new-mail) (not vm-folder-read-only)))))
+  (condition-case nil
+      (save-excursion
+	(vm-select-folder-buffer)
+	(or (eq major-mode 'vm-virtual-mode)
+	    (and (not vm-block-new-mail) (not vm-folder-read-only))))
+    (error nil)))
 
 (defun vm-menu-can-undo-p ()
-  (save-excursion
-    (vm-check-for-killed-folder)
-    (vm-select-folder-buffer)
-    vm-undo-record-list))
+  (condition-case nil
+      (save-excursion
+	(vm-select-folder-buffer)
+	vm-undo-record-list)
+    (error nil)))
 
 (defun vm-menu-can-decode-mime-p ()
-  (save-excursion
-    (vm-check-for-killed-folder)
-    (vm-select-folder-buffer)
-    (and vm-display-using-mime
-	 vm-message-pointer
-	 vm-presentation-buffer
-	 (not vm-mime-decoded)
-	 (not (vm-mime-plain-message-p (car vm-message-pointer))))))
+  (condition-case nil
+      (save-excursion
+	(vm-select-folder-buffer)
+	(and vm-display-using-mime
+	     vm-message-pointer
+	     vm-presentation-buffer
+	     (not vm-mime-decoded)
+	     (not (vm-mime-plain-message-p (car vm-message-pointer)))))
+    (error nil)))
 
 (defun vm-menu-yank-original ()
   (interactive)

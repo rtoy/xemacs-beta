@@ -46,7 +46,7 @@
 ;;
 ;; See the doc strings of these functions for more information.
 
-(defvar itimer-version "1.05"
+(defvar itimer-version "1.06"
   "Version number of the itimer package.")
 
 (defvar itimer-list nil
@@ -96,6 +96,8 @@ many seconds.")
   (define-key itimer-edit-map "x" 'start-itimer)
   (define-key itimer-edit-map "?" 'itimer-edit-help))
   
+(defvar itimer-inside-driver nil)
+
 (defvar itimer-edit-start-marker nil)
 
 ;; macros must come first... or byte-compile'd code will throw back its
@@ -803,7 +805,7 @@ x      start a new itimer
 	  ((fboundp 'cancel-timer)
 	   (cancel-timer itimer-timer)))
     (setq itimer-timer (add-timeout itimer-short-interval
-				    'itimer-timer-driver nil nil))))
+				    'itimer-timer-driver nil 5))))
 
 (defun itimer-time-difference (t1 t2)
   (let (usecs secs 65536-secs carry)
@@ -830,16 +832,17 @@ x      start a new itimer
   ;; system stops working.  itimer-run-expired-timers allows
   ;; individual timer function to be aborted, so the user can
   ;; escape a feral timer function.
-  (let* ((inhibit-quit t)
-	 (now (current-time))
-	 (elapsed (itimer-time-difference now itimer-timer-last-wakeup))
-	 (sleep nil))
-    (setq itimer-timer-last-wakeup now)
-    (unwind-protect
-	(setq sleep (itimer-run-expired-timers elapsed))
-      (and (null sleep) (add-timeout 1 'itimer-timer-driver nil nil)))
-    (setq itimer-next-wakeup sleep
-	  itimer-timer (add-timeout sleep 'itimer-timer-driver nil nil))))
+  (if (not itimer-inside-driver)
+      (let* ((inhibit-quit t)
+	     (itimer-inside-driver t)
+	     (now (current-time))
+	     (elapsed (itimer-time-difference now itimer-timer-last-wakeup))
+	     (sleep nil))
+	(setq itimer-timer-last-wakeup now
+	      sleep (itimer-run-expired-timers elapsed))
+	(disable-timeout itimer-timer)
+	(setq itimer-next-wakeup sleep
+	      itimer-timer (add-timeout sleep 'itimer-timer-driver nil 5)))))
 
 (defun itimer-driver-start ()
   (if (fboundp 'add-timeout)
