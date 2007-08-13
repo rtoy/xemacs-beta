@@ -1,4 +1,11 @@
 							-*- indented-text -*-
+to 21.0 pre3 "Toggenburg"
+-- Configure changes to handle Berkeley DB 2 from Kazuyuki IENAGA and Martin
+   Buchholz
+-- 64 bit cleanliness fix from Olivier Galibert
+-- Package Documentation from Michael Sperber
+-- Cygwin font lossage fix from Andy Piper
+
 to 21.0 pre2 "Thuringian"
 -- MS Windows native build fixes from Fabrice POPINEAU
 -- Miscellaneous bug fixes

@@ -1,4 +1,4 @@
-/* System description file for cygwin32.
+/* system description file for cygwin32.
    Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -120,6 +120,7 @@ extern long random();
 #define SIF_TRACKPOS	0x0010
 #define FW_BLACK	FW_HEAVY
 #define FW_ULTRABOLD	FW_EXTRABOLD
+#define FW_DEMIBOLD	FW_SEMIBOLD
 #define FW_ULTRALIGHT	FW_EXTRALIGHT
 #define VK_APPS			0x5D
 #define APPCMD_FILTERINITS	0x20L
@@ -142,7 +143,7 @@ extern long random();
 #define HEAP_IN_DATA
 #define UNEXEC "unexcw.o"
 /* #define BROKEN_SIGIO */
-#define PROCESS_IO_BLOCKING 
+#define PROCESS_IO_BLOCKING
 #define strnicmp strncasecmp
 #ifndef HAVE_SOCKETS
 #define HAVE_SOCKETS

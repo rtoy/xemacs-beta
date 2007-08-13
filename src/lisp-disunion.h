@@ -126,7 +126,7 @@ typedef EMACS_INT Lisp_Object;
 #else /* !USE_MINIMAL_TAGBITS */
 
 # define MARKBIT (1UL << VALBITS)
-# define XMARKBIT(x) ((x) & MARKBIT)
+# define XMARKBIT(x) (((x) & MARKBIT) != 0)
 # define XMARK(x) ((void) ((x) |= MARKBIT))
 # define XUNMARK(x) ((void) ((x) &= ~MARKBIT))
 # define make_obj(vartype, value) \

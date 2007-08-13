@@ -1,5 +1,19 @@
 1998-06-19  SL Baur  <steve@altair.xemacs.org>
 
+	* XEmacs 21.0-pre3 is released.
+
+1998-06-20  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* etc/PACKAGES: 
+	* etc/BETA: Moved some package stuff into Texinfo docs.  Other nitpicks
+
+1998-06-20  Kazuyuki IENAGA <ienaga@jsys.co.jp>
+
+	* configure.in: Added check if the berkdb has db_open or not.
+	(With fixes from Martin Buchholz)
+
+1998-06-19  SL Baur  <steve@altair.xemacs.org>
+
 	* XEmacs 21.0-pre2 is released.
 
 1998-06-18  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>

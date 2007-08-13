@@ -829,7 +829,7 @@ mswindows_string_to_color(CONST char *name)
 static int
 match_font (char *pattern1, char *pattern2, char *fontname)
 {
-  char *c1=pattern1, *c2=pattern2, *e1, *e2;
+  char *c1=pattern1, *c2=pattern2, *e1=0, *e2=0;
   int i;
 
   if (fontname)

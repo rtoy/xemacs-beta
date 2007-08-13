@@ -125,6 +125,8 @@ Important General Concepts
 * Exiting::     Stopping or killing XEmacs.
 * Command Switches::  
                 Hairy startup options.
+* Startup Paths::
+                How XEmacs finds Directories and Files
 
 Fundamental Editing Commands
 * Basic::       The most basic editing commands.
@@ -163,6 +165,7 @@ Advanced Features
 * Text::        Commands and modes for editing English.
 * Programs::    Commands and modes for editing programs.
 * Running::     Compiling, running and debugging programs.
+* Packages::    How to add new packages to XEmacs.
 * Abbrevs::     How to define text abbreviations to reduce
                  the number of characters you must type.
 * Picture::     Editing pictures made up of characters
@@ -492,6 +495,9 @@ Lisp Libraries
 * Loading::		Loading libraries of Lisp code into XEmacs for use.
 * Compiling Libraries:: Compiling a library makes it load and run faster.
 * Mocklisp::		Converting Mocklisp to Lisp so XEmacs can run it.
+
+Packages
+* Packages::            Introduction to XEmacs Packages.
 
 Abbrevs
 
@@ -1046,6 +1052,7 @@ can use it afterward.
 @include menus.texi
 @include entering.texi
 @include cmdargs.texi
+@include startup.texi
 @include basic.texi
 @include undo.texi
 @include mini.texi
@@ -1067,6 +1074,7 @@ can use it afterward.
 @include text.texi
 @include programs.texi
 @include building.texi
+@include packages.texi
 @include abbrevs.texi
 @include picture.texi
 @include sending.texi

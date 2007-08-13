@@ -1671,7 +1671,7 @@ file to keep.@refill
 requested.
 
 @table @kbd
-@item c
+@item C
 Copies the file described on the current line.  You must supply a file name
 to copy to, using the minibuffer.
 @item f
@@ -1683,7 +1683,7 @@ subdirectory.  @xref{Visiting}.
 Like @kbd{f}, but uses another window to display the file's buffer.  The
 Dired buffer remains visible in the first window.  This is like using
 @kbd{C-x 4 C-f} to visit the file.  @xref{Windows}.
-@item r
+@item R
 Renames the file described on the current line.  You must supply a file
 name to rename to, using the minibuffer.
 @item v

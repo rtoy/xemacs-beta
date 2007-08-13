@@ -1,3 +1,16 @@
+1998-06-21  Olivier Galibert  <galibert@pobox.com>
+
+	* lisp-disunion.h (XMARKBIT): Have XMARKBIT return something
+	suitable for an int used as a boolean (btw, C sucks.).
+
+1998-06-18  Andy Piper  <andyp@parallax.co.uk>
+
+	* object-msw.c: remove warnings.
+
+	* device-msw.c: #define wrongly named cygwin structure elements.
+
+	* s/cygwin32.h: define DEMI_BOLD
+
 1998-06-19  Jonathan Harris  <jhar@tardis.ed.ac.uk>
 
 	* redisplay-msw.c: new function mswindows_apply_face_effects.

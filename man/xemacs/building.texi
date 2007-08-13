@@ -1,5 +1,5 @@
 
-@node Running, Abbrevs, Programs, Top
+@node Running, Packages, Programs, Top
 @chapter Compiling and Testing Programs
 
   The previous chapter discusses the Emacs commands that are useful for

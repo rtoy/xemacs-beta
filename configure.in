@@ -3450,10 +3450,11 @@ if test "$with_database_dbm" != "no"; then
 fi
 
 if test "$with_database_berkdb" != "no"; then
-  AC_CHECK_FUNC(dbopen, with_database_berkdb=yes need_libdb=no)
-  if test "$need_libdb" != "no"; then
-    AC_CHECK_LIB(db, dbopen, with_database_berkdb=yes need_libdb=yes)
-    fi
+  AC_CHECK_FUNC(dbopen,     with_database_berkdb=yes need_libdb=no,
+  AC_CHECK_FUNC(db_open,    with_database_berkdb=yes need_libdb=no,
+  AC_CHECK_LIB(db, dbopen,  with_database_berkdb=yes need_libdb=yes,
+  AC_CHECK_LIB(db, db_open, with_database_berkdb=yes need_libdb=yes))))
+
   if test "$with_database_berkdb" = "yes"; then
     for path in "db/db.h" "db.h"; do
 AC_TRY_COMPILE([#ifdef HAVE_INTTYPES_H

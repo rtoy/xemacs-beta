@@ -1,4 +1,4 @@
-/* Device functions for mswindows.
+/* device functions for mswindows.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994, 1995 Free Software Foundation, Inc.
 
@@ -41,6 +41,9 @@ Boston, MA 02111-1307, USA.  */
 
 #ifndef __CYGWIN32__
 #include <commctrl.h>
+#else
+#define FONTENUMPROC FONTENUMEXPROC
+#define ntmTm ntmentm
 #endif
 
 /* win32 DDE management library globals */
@@ -68,7 +71,7 @@ struct font_enum_t
   struct device *d;
 };
 
-
+
 /************************************************************************/
 /*                               helpers                                */
 /************************************************************************/

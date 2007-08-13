@@ -1,5 +1,5 @@
 
-@node Basic, Undo, Command Switches, Top
+@node Basic, Undo, Startup Paths, Top
 @chapter Basic Editing Commands
 
 @kindex C-h t

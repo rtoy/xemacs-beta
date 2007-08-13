@@ -1,5 +1,5 @@
 
-@node Command Switches, Basic, Exiting, Top
+@node Command Switches, Startup Paths, Exiting, Top
 @section Command Line Switches and Arguments
 @cindex command line arguments
 @cindex arguments (from shell)
@@ -81,6 +81,7 @@ what @kbd{M-x insert-buffer} does; @xref{Misc File Ops}.
 Exit from Emacs without asking for confirmation.
 
 @item -version
+@itemx -V
 Prints version information.  This implies @samp{-batch}.
 
 @example
@@ -128,6 +129,10 @@ automatically if the @samp{DISPLAY} environment variable is not set.
 @item -debug-init
 Enter the debugger if an error in the init file occurs.
 
+@item -debug-paths
+Displays information on how XEmacs constructs the various paths into its
+hierarchy on startup.  (See also @pxref{Startup Paths}.)
+
 @item -unmapped
 Do not map the initial frame.  This is useful if you want to start up
 XEmacs as a server (e.g. for gnuserv screens or external client widgets).
@@ -139,10 +144,23 @@ Do not load your Emacs init file @file{~/.emacs}.
 @item -no-site-file
 Do not load the site-specific init file @file{lisp/site-start.el}.
 
+@item -no-autoloads
+Do not load global symbol files (@file{auto-autoloads}) at startup.
+This implies @samp{-vanilla}. 
+
+@item -no-early-packages
+Do not process early packages.  (For more information on startup issues
+concerning the package system, @xref{Startup Paths}.)
+
+@item -vanilla
+This is equivalent to @samp{-q -no-site-file -no-early-packages}.
+
 @item -user @var{user}
 @itemx -u @var{user}
 Load @var{user}'s Emacs init file @file{~@var{user}/.emacs} instead of
 your own.
+
+
 @end table
 
 @vindex command-line-args

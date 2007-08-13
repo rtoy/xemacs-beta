@@ -1,3 +1,16 @@
+1998-06-20  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* xemacs/abbrevs.texi: 
+	* xemacs/basic.texi: 
+	* xemacs/buildings.texi: 
+	* xemacs/cmdargs.texi: 
+	* xemacs/files.texi: 
+	* xemacs/adjustments.texi: Adjustments to integrate startup.texi
+	and packages.texi stuff.
+
+	* xemacs/startup.texi: 
+	* xemacs/packages.texi: Created.
+
 1998-06-10  Adrian Aichner  <aichner@ecf.teradyne.com>
 
 	* texinfo.texi: added ../info/ to @setfilename, broke line after
