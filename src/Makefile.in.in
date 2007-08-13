@@ -1221,18 +1221,20 @@ release: temacs ${lisp} ${libsrc}DOC MOFILE OTHER_FILES
 	else true; fi
 	@touch SATISFIED
 	-$(DUMPENV) ./temacs -nl -batch -l loadup.el dump
-	@if [ -f SATISFIED ]; then \
+	@if [ ! -f SATISFIED ]; then \
 		$(MAKE) release; \
 	fi
+	@/bin/rm -f SATISFIED
 #else /* ! defined (HAVE_SHM) */
 	-if [ -w ${srcdir}/../lisp ]; then \
 	  w=`pwd`; cd ${srcdir}; $${w}/temacs -batch -l inc-vers; \
 	else true; fi
 	@touch SATISFIED
 	-$(DUMPENV) ./temacs -batch -l loadup.el dump
-	@if [ -f SATISFIED ]; then \
+	@if [ ! -f SATISFIED ]; then \
 		$(MAKE) release; \
 	fi
+	@/bin/rm -f SATISFIED
 #endif /* ! defined (HAVE_SHM) */
 	touch release
 #endif /* ! defined (CANNOT_DUMP) */
@@ -1240,9 +1242,10 @@ release: temacs ${lisp} ${libsrc}DOC MOFILE OTHER_FILES
 xemacs: temacs ${libsrc}DOC ${lisp} MOFILE OTHER_FILES
 	@touch SATISFIED
 	-$(DUMPENV) ./temacs -batch -l loadup.el dump
-	@if [ -f SATISFIED ]; then \
+	@if [ ! -f SATISFIED ]; then \
 		$(MAKE) xemacs; \
 	fi
+	@/bin/rm -f SATISFIED
 
 xemacs-no-site-file: temacs ${libsrc}DOC ${lisp} MOFILE OTHER_FILES
 	@touch SATISFIED
@@ -1250,6 +1253,7 @@ xemacs-no-site-file: temacs ${libsrc}DOC ${lisp} MOFILE OTHER_FILES
 	@if [ -f SATISFIED ]; then \
 		$(MAKE) xemacs-no-site-file; \
 	fi
+	@/bin/rm -f SATISFIED
 
 obj_src = $(objs:.o=.c)
 
@@ -1260,7 +1264,7 @@ ${libsrc}DOC: ${libsrc}make-docfile
 ${libsrc}DOC: ${libsrc}make-docfile ${obj_src} ${lisp}
 #endif
 	rm -f ${libsrc}DOC
-	${libsrc}make-docfile -d ${srcdir} -i ${lispdir}../site-packages \
+	${libsrc}make-docfile -d ${srcdir} -i ../site-packages \
 		${obj_src} \
 	        ${mallocdocsrc} ${rallocdocsrc} ${lispdir}version.el \
 		${lisp} > ${libsrc}DOC

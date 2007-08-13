@@ -1120,6 +1120,7 @@ x_output_x_pixmap (struct frame *f, struct Lisp_Image_Instance *p, int x,
   GC gc;
   XGCValues gcv;
   unsigned long pixmap_mask;
+  int need_clipping = (clip_x || clip_y);
 
   if (!override_gc)
     {
@@ -1137,14 +1138,27 @@ x_output_x_pixmap (struct frame *f, struct Lisp_Image_Instance *p, int x,
 	  gcv.clip_y_origin = y - pixmap_offset;
 	  pixmap_mask |= (GCFunction | GCClipMask | GCClipXOrigin |
 			  GCClipYOrigin);
+	  /* Can't set a clip rectangle below because we already have a mask.
+	     We could conceivably create a new clipmask by zeroing out
+	     everything outside the clip region.  Is it worth it? 
+	     Is it possible to get an equivalent effect by changing the
+	     args to XCopyArea below rather than messing with a clip box?
+	     - dkindred@cs.cmu.edu */
+	  need_clipping = 0; 
 	}
 
       gc = gc_cache_lookup (DEVICE_X_GC_CACHE (d), &gcv, pixmap_mask);
     }
   else
-    gc = override_gc;
+    {
+      gc = override_gc;
+      /* override_gc might have a mask already--we don't want to nuke it.
+	 Maybe we can insist that override_gc have no mask, or use
+	 one of the suggestions above. */
+      need_clipping = 0;
+    }
 
-  if (clip_x || clip_y)
+  if (need_clipping)
     {
       XRectangle clip_box[1];
 
@@ -1179,7 +1193,7 @@ x_output_x_pixmap (struct frame *f, struct Lisp_Image_Instance *p, int x,
 		  1L);
     }
 
-  if (clip_x || clip_y)
+  if (need_clipping)
     {
       XSetClipMask (dpy, gc, None);
       XSetClipOrigin (dpy, gc, 0, 0);

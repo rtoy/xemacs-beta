@@ -2711,11 +2711,11 @@ report_pure_usage (int report_impurities,
   clear_message ();
 
   if (rc < 0) {
+    (void)unlink("SATISFIED");
     fatal ("Pure size adjusted, will restart `make'");
   } else if (pure_lossage && die_if_pure_storage_exceeded) {
     fatal ("Pure storage exhausted");
   }
-  (void)sys_unlink("SATISFIED");
 }
 
 

@@ -15,8 +15,7 @@
 ##  and 'etc'.  (If this is a Sun workspace, you can run it from
 ##  'era-specific' instead.)
 
-set -eu
-unset MAKEFLAGS   # GNU make sets MAKEFLAGS to -w; confuses non-GNU make
+set -e
 
 # This means we're running in a Sun workspace
 if [ -d ../era-specific ]; then
@@ -57,7 +56,7 @@ BYTECOMP="$REAL -batch -q -no-site-file "
 echo "Recompiling in `pwd|sed 's|^/tmp_mnt||'`"
 echo "          with $REAL..."
 
-$EMACS -batch -q -no-site-file -l cleantree -f batch-remove-old-elc lisp
+$EMACS -batch -q -l `pwd`/lisp/prim/cleantree -f batch-remove-old-elc lisp
 
 prune_vc="( -name SCCS -o -name RCS -o -name CVS ) -prune -o"
 
@@ -186,9 +185,3 @@ echo Ilisp done.
 echo Compiling AUC TeX...
 ( cd lisp/auctex ; ${MAKE:-make} some -f Makefile EMACS=$REAL )
 echo AUC TeX done.
-
-#
-# Now get the files whose .el is newer than .elc
-#
-echo Compiling files with out-of-date .elc...
-$BYTECOMP -f batch-byte-recompile-directory lisp

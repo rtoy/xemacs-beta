@@ -1,4 +1,13 @@
 							-*- indented-text -*-
+to 19.15 beta100
+-- GIF crash fix courtesy of David Moore
+-- Fix for problem dumping comint with sparcworks
+-- Fixes for problems during build with dynamic puresize
+-- xpm background color patch courtesy of Darrell Kindred
+-- Custom-1.64
+-- Gnus-5.4.28
+-- Miscellaneous bug fixes
+
 to 19.15 beta99
 -- Update to time.el.
 -- htmlpro DTD, IE3 DTDs added to etc/sgml.

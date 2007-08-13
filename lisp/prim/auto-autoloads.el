@@ -2223,7 +2223,7 @@ Finds out what articles are to be part of the nnkiboze groups." t nil)
 ;;;### (autoloads (nnml-generate-nov-databases) "nnml" "gnus/nnml.el")
 
 (autoload 'nnml-generate-nov-databases "nnml" "\
-Generate nov databases in all nnml directories." t nil)
+Generate NOV databases in all nnml directories." t nil)
 
 ;;;***
 
@@ -3674,7 +3674,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.13 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.14 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4946,7 +4946,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.13 $
+vhdl-mode $Revision: 1.14 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
