@@ -1,8 +1,17 @@
 							-*- indented-text -*-
+to 19.15 beta5
+-- tm-7.97
+-- InfoDock man.el
+-- Fix long-standing race condition in timeout handling (courtesy of David
+   Moore).
+-- next-line-add-newlines now defaults to nil
+-- Miscellaneous bug fixes.
+-- kp_ X11 keysyms now recognized as kp-.
+
 to 19.15 beta4
 -- Default JPEG image loading is now old tempfile code, but should work again.
 -- Miscellaneous bug fixes courtesy of Christoph Wedler
--- mic-paren.el courtesy of Mikael Sjödin
+-- mic-paren.el courtesy of Mikael Sjdin
 -- lpr.el/ps-print.el - Allow dynamic expansion of
    lpr-switches/ps-lpr-switches.
 -- Lisp Bug fixes

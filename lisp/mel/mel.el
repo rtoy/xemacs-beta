@@ -5,7 +5,7 @@
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; modified by Shuhei KOBAYASHI <shuhei-k@jaist.ac.jp>
 ;; Created: 1995/6/25
-;; Version: $Id: mel.el,v 1.1.1.1 1996/12/18 03:55:30 steve Exp $
+;; Version: $Id: mel.el,v 1.2 1996/12/22 00:29:16 steve Exp $
 ;; Keywords: MIME, Base64, Quoted-Printable, uuencode, gzip64
 
 ;; This file is part of MEL (MIME Encoding Library).

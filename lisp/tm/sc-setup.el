@@ -1,5 +1,5 @@
 ;;;
-;;; $Id: sc-setup.el,v 1.1.1.1 1996/12/18 03:55:31 steve Exp $
+;;; $Id: sc-setup.el,v 1.2 1996/12/22 00:29:37 steve Exp $
 ;;;
 
 (require 'emu)

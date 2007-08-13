@@ -136,7 +136,7 @@
      (load-gc "text-mode")
      (load-gc "fill")
      ;; (load-gc "cc-mode")		; as FSF goes so go we ..
-     (load-gc "scroll-in-place")
+     ;; (load-gc "scroll-in-place")	; We're not ready for this :-(
      ;; we no longer load buff-menu automatically.
      ;; it will get autoloaded if needed.
      

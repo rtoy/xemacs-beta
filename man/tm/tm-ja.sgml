@@ -1,0 +1,1628 @@
+<!doctype sinfo system>
+<!-- $Id: tm-ja.sgml,v 1.1 1996/12/22 00:09:33 steve Exp $ -->
+<head>
+<title>tm 7.90 Manual（日本語版）
+<author>守岡 知彦 <mail>morioka@jaist.ac.jp</mail>
+<date>1996/10/15
+
+<toc>
+</head>
+
+<body>
+
+<abstract>
+<p>
+This file documents tm, a MIME package for GNU Emacs.
+<p>
+GNU Emacs で MIME を楽しむための package である `tm' について説明しま
+す。
+</abstract>
+
+<h1> tm って何？
+<node> Introduction
+<p>
+tm は GNU Emacs で MIME を楽しむための package です。tm を使うと、
+
+<ul>
+<li> tm-view による MIME message の閲覧・再生 
+<li> tm-edit による MIME message の作成
+<li> mh-e, GNUS, Gnus, RMAIL, VM での MIME 機能の強化
+</ul>
+
+<noindent>
+というようなことが行なえます。
+<p>
+個別の項目については以下を御参照下さい：
+
+<ul>
+<li><a file="gnus-mime-ja">tm-MUA for Gnus</a>
+<li><a file="tm-gnus-ja">tm-MUA for GNUS</a>
+<li><a file="tm-mh-e-ja">tm-MUA for mh-e</a>
+<li><a file="tm-view-ja">mime/viewer-mode</a>
+<li><a file="tm-edit-ja">mime/editor-mode</a>
+</ul>
+
+
+<h2> 用語
+<node> Glossary
+<p>
+tm で使われている用語について解説します。
+
+<h3> 7bit
+<node> 7bit
+<p>
+ここでは 0 から 127 の整数を指します。
+<p>
+0 から 127 の整数の列で表現できるような data を ``7bit の data'' と呼
+びます。
+<p>
+また、0 から 31 および 127 で表現される制御文字と 32 で表現される空白
+と 33 から 126 で表現される図形文字からなる文字列のことを ``7bit の文
+字列'' と呼びます（これは <a node="ISO 2022">ISO 2022</a> の「7 単位系」
+と同様です）。
+<p>
+伝統的な Internet の <a node="MTA">MTA</a> は 7bit の data を転送でき
+るので、7bit の data は <a
+node="Quoted-Printable">Quoted-Printable</a> や <a
+node="Base64">Base64</a> といった変換を行わなくてもそのまま転送できま
+す。
+<p>
+しかし、7bit であればどんな data でも良いとはいえません。なぜなら、１
+行の長さがあまりに長いと、MTA はその message を転送することができない
+からです。ちなみに、<a node="RFC 821">RFC 821</a> は１行は改行文字を除
+いて 998 byte 以内であることを求めています。よって、これ以上の行が含ま
+れる可能性のある data, 例えば、Postscript の data などは 
+Quoted-Printable 等で encodeする必用があります。
+
+
+<h3> 8bit
+<node> 8bit
+<p>
+ここでは 0 から 255 の整数を指します。
+<p>
+0 から 255 の整数の列で表現できるような data を ``8bit の data'' と呼
+びます。
+<p>
+また、0 から 31, 127 および 128 から 159 で表現される制御文字と 32 で
+表現される空白と 33 から 126 と 160 から 255 で表現される図形文字から
+なる文字列のことを ``8bit の文字列'' と呼びます（これは <a node="ISO
+2022">ISO 2022</a> の「8 単位系」と同様です）。
+<p>
+<a node="iso-8859-1">iso-8859-1</a> や <a node="euc-kr">euc-kr</a> と
+いった符号化文字集合は 8bit の文字列です。
+<p>
+伝統的な Internet の <a node="MTA">MTA</a> は <a node="7bit">7bit</a> 
+の data しか転送できないので、そうした MTA を経由する場合、<a
+node="Quoted-Printable">Quoted-Printable</a> や <a
+node="Base64">Base64</a> といった変換を行わなくてはなりません。
+<p>
+しかし、最近では 8bit の文字列をそのまま通すことができる MTA も登場し
+てきたので、そのまま送ることができる場合も増えてきました。
+<p>
+しかし、8bit であればどんな data でも良いとはいえません。なぜなら、１
+行の長さがあまりに長いと、MTA はその message を転送することができない
+からです。ちなみに、RFC 821 は１行は改行文字を除いて 998 byte 以内であ
+ることを求めています。よって、これ以上の行が含まれる可能性のある data, 
+例えば、Postscript の data などは Quoted-Printable 等で encodeする必用
+があります。
+<p>
+また、こうした理由から、１行が 999 byte 以上の行が存在する可能性のある
+data は <a node="binary"><concept>binary</concept></a> と呼ぶことにし
+ます。
+<p>
+ちなみに、7bit で表現できる data は 8bit でも表現できます。よって、
+``8bit'' と言った場合、１行が 998 byte 以下の任意の data を指すことが
+あります。
+
+
+<h3> 94 文字集合
+<node> 94 character set
+<p>
+33 から 126 の範囲の 1 byte からなる <a node="Character set">文字集合
+</a>。<a node="ASCII">ASCII</a> や JIS X0201-Latin はその一種。
+
+
+<h3> 96 文字集合
+<node> 96 character set
+<p>
+32 から 127 の範囲の 1 byte からなる <a node="Character set">文字集合
+</a>。ISO 8859 シリーズはその一種。
+
+
+<h3> 94×94 文字集合
+<node> 94x94 character set
+<p>
+33 から 126 の範囲の 2 byte からなる <a node="Character set">文字集合
+</a>。<a node="JIS X0208">JIS X0208</a> や <a node="GB 2312">GB
+2312</a> はその一種。
+
+
+<h3> ASCII
+<node> ASCII
+<p>
+アメリカ連邦で使われる文字を符号化した <a node="94 character set">94 
+文字集合</a>。A-Z, a-z の Latin 文字と数字、幾つかの記号からなる。<a
+node="ISO 646">ISO 646</a> の一つ。
+
+<standard abbrev="ASCII" title-en="Coded Character Set -- 7-Bit
+	      American Standard Code for Information Interchange"
+	      number="ANSI X3.4" year="1986">
+
+
+<h3> Base64
+<node> Base64
+<p>
+<dref>RFC 2045</dref> で定義されている <dref>MIME</dref> における <a
+node="binary">binary data</a> の network での変換法の１つ。
+<p>
+『64 進数』という意味で、3 byte の data を 0 から 63 の数を表す 
+<dref>ASCII</dref> 4 文字に変換する方法。（もし、4 文字にならなければ 
+<concept>pad</concept> と呼ばれる詰め物をして長さを調整する）
+<p>
+この 65 種類の文字は ASCII と EBCDIC の共通部分から選ばれており、
+Internet 以外の network を経由する場合でも安全に転送できるように設計さ
+れている。
+
+
+<h3> binary
+<node> binary
+<p>
+任意の byte 列を <concept>binary</concept> と呼ぶことにします。
+<p>
+<a node="8bit">8bit</a> と異なるのは data に行の構造を仮定しないことで
+す。
+<p>
+また、行の構造があっても、999 byte 以上からなる行がある場合も binary
+と呼ぶことにします。
+<p>
+ちなみに、<a node="7bit">7bit</a> や 8bit で表現できる data は binary 
+でも表現できます。よって、<concept>binary data</concept> と言った場合、
+任意の data を指すことがあります。
+
+
+<h3> Character Set（文字集合）
+<node> Character Set
+<p>
+<a node="Coded character set">符号化文字集合</a>。但し、ここでは <a
+node="Code extension">符号拡張</a> されてない文字集合というニュアンス
+を込めている。
+
+
+<h3> cn-gb, gb2312
+<node> cn-gb
+<p>
+中国大陸でられている簡体字で表記される中国語を表現するための <a
+node="MIME charset">MIME charset</a> の１つ。
+<p>
+<a node="ISO 2022">ISO 2022</a> に基いて <a node="ASCII">ASCII</a> に 
+<a node="GB 2312">GB 2312</a> を <a node="8bit">8bit</a> で<a
+node="Code extension">符号拡張</a>している。
+<p>
+<a node="RFC 1922">RFC 1922</a> で定義されている。
+
+
+<h3> cn-big5, big5
+<node> cn-big5
+<p>
+台湾や香港で用いられている主に繁体字で表記される中国語を表現するための 
+<a node="MIME charset">MIME charset</a> の１つ。
+<p>
+<a node="ISO 2022">ISO 2022</a> に基かない <a node="8bit">8bit</a> の
+<a node="Coded character set">符号化文字集合</a>で de-fact standard で
+ある。<a node="RFC 1922">RFC 1922</a> で定義されている。
+<p>
+cf. <report abbrev="BIG5" author="Institute for Information Industry"
+	      title-en="Chinese Coded Character Set in Computer"
+	      date="March 1984">
+<p>
+<a node="CNS">CNS 11643-1986</a> と対応関係がある。
+
+
+<h3> CNS 11643-1992
+<node> CNS
+<p>
+台湾や香港で用いられている主に繁体字で表記される中国語を表現するための 
+<a node="Character set">文字集合</a>。台湾の標準。現在、<a node="94x94
+character set">94×94</a> の面が第１面から第７面まである。
+<p>
+<a node="ISO 2022">ISO 2022</a> での終端文字は、第１面が `G', 第２面が 
+`H', 第３面が `I', 第４面が `J', 第５面が `K', 第６面が `L', 第７面が 
+`M' である。
+
+<standard abbrev="CNS 11643-1992" title-en="Standard Interchange Code
+	      for Generally-Used Chinese Characters" number="CNS
+	      11643" year="1992">
+
+
+<h3> Coded character set（符号化文字集合）, Character code（文字符号）
+<node> Coded character set
+<p>
+文字と byte 列と１対１に対応付ける曖昧でない規則の集合。
+
+
+<h3> Code extension（符号拡張）
+<node> Code extension
+<p>
+与えられた<a node="Character set">文字集合</a>に含まれていない文字の符
+号化のために用いる手法。<a node="ISO 2022">ISO 2022</a> はその１つ。
+
+
+<h3> Content-Disposition field
+<node> Content-Disposition
+<p>
+Content の表示の仕方や file 名を表現するための field. <a
+node="MIME">MIME</a> の拡張の１つ。
+<p>
+<rfc number="1806" type="Experimental" author="E R. Troost and
+	      S. Dorner" title="Communicating Presentation Information
+	      in Internet Messages: The Content-Disposition Header"
+	      date="June 1995">
+
+
+<h3> media type
+<node> media type
+<p>
+<dref>MIME</dref> における <dref>entity</dref> の種類。
+<concept>type</> と <concept>subtype</concept> からなる。<dref>RFC
+2046</dref> で定義されている。
+<p>
+type は標準では
+
+<ul>
+<li><concept>text</concept>
+</li>
+<li><concept>image</concept>
+</li>
+<li><concept>audio</concept>
+</li>
+<li><concept>video</concept>
+</li>
+<li><concept>application</concept>
+</li>
+<li><a node="multipart"><concept>multipart</concept></a>
+</li>
+<li><concept>message</concept>
+</ul>
+
+<noindent>
+が定義され、それぞれには application/octet-stream, audio/basic,
+image/jpeg, <dref>multipart/mixed</dref>, <dref>text/plain</dref>,
+video/mpeg などのさまざまな subtype が定義されている。
+
+<memo title="注意">
+<p>
+ここでは、text/plain などの type/subtype の組をしばしば 
+<concept>content-type/subtype</concept> と書く。
+</memo>
+
+<p>
+media type は、RFC 2046 で定義されているものに加えて、登録することもで
+きる。現在、登録されているものは <a
+href="ftp://ftp.isi.edu/in-notes/iana/assignments/media-types">MEDIA
+TYPES</a> で参照できる。
+<p>
+また、type もしくは subtype に、前に `x-' を付けた 
+<concept>x-token</concept> を用いることにより、登録されていないものを
+私的に用いることもできる。しかし、当然のことながら、こうした私的な 
+content-type は諒解を得た者の間でしか解釈できないので利用には注意する
+こと。
+<p>
+<cf node="Content-Type field">
+
+
+<h3> Content-Type field
+<node> Content-Type field
+<p>
+<dref>media type</dref> や <dref>MIME charset</dref> などの part に関
+する情報を表現するための field. <dref>RFC 2045</dref> で定義されている。
+
+<memo>
+<p>
+歴史的には RFC 1049 で Content-Type field が提案されている。但し、ここ
+では type と subtype の区別はない。しかし、文法的には MIME parser は 
+RFC 1049 に基づく message を未知の content-type を持った message とし
+て parse できるだろう。
+</memo>
+
+<p>
+Content-Type field は
+
+<quote>
+``Content-Type'' ``:'' <concept>type</concept> ``/''
+<concept>subtype</concept> *( ``;'' <concept>parameter</concept> )
+</quote>
+
+<noindent>
+と定義される。
+<p>
+例えば、
+
+<quote>
+<verb>
+Content-Type: image/jpeg
+</verb>
+</quote>
+
+<noindent>
+や
+
+<quote>
+<verb>
+Content-Type: text/plain; charset=iso-2022-jp
+</verb>
+</quote>
+
+<noindent>
+などのように書かれる。
+
+<memo>
+<p>
+content-type のない part は
+
+<quote>
+<verb>
+Content-Type: text/plain; charset=us-ascii
+</verb>
+</quote>
+
+<noindent>
+として解釈される。<cf node="us-ascii">
+</memo>
+
+
+<h3> Emacs
+<node> Emacs
+<p>
+ここでは `Emacs' で FSF が配布している GNU Emacs を指し、`emacs' で
+GNU Emacs の変種の総称とする。
+
+
+<h3> encoded-word
+<node> encoded-word
+<p>
+header における非 <a node="ASCII">ASCII</a> 文字の表現。<concept>RFC
+2047</concept> で定義されている。
+<p>
+<rfc number="2047" type="Standards Track" author="K. Moore"
+	      title="MIME (Multipurpose Internet Mail Extensions) Part
+	      Three: Message Header Extensions for Non-ASCII Text"
+	      date="November 1996" obsolete="1521,1522,1590">
+
+
+<h3> encapsulation
+<node> encapsulation
+<p>
+<a node="RFC 822">Internet mail</a> を他の記事にまるごと入れる方法。
+<p>
+例えば、記事を転送したりするのに用いる。
+<p>
+<cf node="message/rfc822">
+
+
+<h3> euc-kr
+<node> euc-kr
+<p>
+韓国語を表現するための <a node="MIME charset">MIME charset</a> の１つ。
+<p>
+<a node="ISO 2022">ISO 2022</a> に基いて <a node="ASCII">ASCII</a> に
+<a node="KS C5601">KS C5601</a> を <a node="8bit">8bit</a> で<a
+node="Code extension">符号拡張</a>している。
+<p>
+<a node="RFC 1557">RFC 1557</a> で定義されている。
+<p>
+cf. <standard abbrev="euc-kr" org="Korea Industrial Standards
+	      Association" title-en="Hangul Unix Environment"
+	      number="KS C 5861" year="1992">
+
+
+<h3> FTP <node> FTP
+<p>
+Internet で file を転送するための protocol の１つ。RFC 959 で定義され
+ている。
+<p>
+<rfc name="FTP" number="959" type="STD 9" author="Postel, J. and
+	      J. Reynolds" title="File Transfer Protocol"
+	      date="October 1985">
+
+
+<h3> GB 2312-1980
+<node> GB 2312
+<p>
+中国大陸で用いられている簡体字で表記される中国語を表すための <a
+node="94x94 character set">94×94 文字集合</a>。中国の国家標準。<a
+node="ISO 2022">ISO 2022</a> での終端文字は `A'.
+<p>
+これは GB における基本集である。
+
+<standard abbrev="GB 2312"
+	      title-cn="信息交換用漢字編碼字符集 -- 基本集"
+	      title-en="Code of Chinese Graphic Character Set for
+	      Information Interchange - Primary Set" number="GB 2312"
+	      year="1980">
+
+
+<h3> GB 8565.2-1988
+<node> GB 8565.2
+<p>
+中国語のための補助<a node="Character set">文字集合</a>。中国の国家標準。
+<a node="GB 2312">GB 2312</a> の空き部分に補充するように定義されたらし
+い。
+
+<standard abbrev="GB 8565.2" title-en="Information Processing - Coded
+	      Character Sets for Text Communication - Part 2: Graphic
+	      Characters used with Primary Set" number="GB 8565.2"
+	      year="1988">
+
+
+<h3> hz-gb2312
+<node> hz-gb2312
+<p>
+中国大陸で用いられている簡体字で表記される中国語を表現するための <a
+node="MIME charset">MIME charset</a> の１つ。
+<p>
+<a node="ASCII">ASCII</a> に <a node="GB 2312">GB 2312</a> を 7bit で
+<a node="Code extension">符号拡張</a>したものを ASCII printable になる
+ように工夫している。
+<p>
+RFC 1842, 1843 で定義されている。
+
+<rfc number="1842" type="Informational" author="Y. Wei, Y. Zhang,
+	      J. Li, J. Ding and Y. Jiang" title="ASCII Printable
+	      Characters-Based Chinese Character Encoding for Internet
+	      Messages" date="August 1995">
+<rfc number="1843" type="Informational" author="F. Lee" title="HZ - A
+	      Data Format for Exchanging Files of Arbitrarily Mixed
+	      Chinese and ASCII characters" date="August 1995">
+
+
+<h3> ISO 2022
+<node> ISO 2022
+<p>
+<a node="Code extension">符号拡張</a>のための国際標準。
+<p>
+これを用いて複数の<a node="Character set">文字集合</a>を組合せて <a
+node="7bit">7bit</a> ないし <a node="8bit">8bit</a> の <a node="Coded
+character set">符号化文字集合</a> を作ることができる。
+
+<standard abbrev="ISO 2022" org="International Organization for
+	      Standardization (ISO)" title-en="Information Processing:
+	      ISO 7-bit and 8-bit coded character sets: Code extension
+	      techniques" number="ISO/IEC 2022" year="1994">
+
+
+<h3> iso-2022-cn
+<node> iso-2022-cn
+<p>
+中国語を表現するための <a node="MIME charset">MIME charset</a> の１つ。
+<p>
+<a node="ISO 2022">ISO 2022</a> に基いて <a node="ASCII">ASCII</a> に 
+<a node="GB 2312">GB 2312</a>, <a node="CNS">CNS 11643 plain 1, plain
+2</a> を <a node="7bit">7bit</a> で<a node="Code extension">符号拡張
+</a>している。
+<p>
+<a node="RFC 1922">RFC 1922</a> で定義されている。
+
+
+<h3> iso-2022-cn-ext
+<node> iso-2022-cn-ext
+<p>
+中国語を表現するための <a node="MIME charset">MIME charset</a> の１つ。
+<p>
+<a node="ISO 2022">ISO 2022</a> に基いて <a node="ASCII">ASCII</a> に 
+<a node="GB 2312">GB 2312</a>, <a node="CNS">CNS 11643 plain 1
+.. 7</a>, <a node="ISO-IR-165">ISO-IR-165</a> 等を <a
+node="7bit">7bit</a> で<a node="Code extension">符号拡張</a>している。
+<p>
+<a node="RFC 1922">RFC 1922</a> で定義されている。
+<p>
+<memo>
+MULE 2.3 および、現在の XEmacs/mule では正しく扱うことはできない。
+<p>
+Emacs/mule では利用可能である。
+</memo>
+
+
+<h3> iso-2022-jp
+<node> iso-2022-jp
+<p>
+日本語を表現するための <a node="MIME charset">MIME charset</a> の一つ。
+<p>
+古い <a node="ISO 2022">ISO 2022</a> に基いて <a
+node="ASCII">ASCII</a>, JIS X0201-Latin, <a node="JIS C6226-1978">JIS
+X0208-1978</a>, <a node="JIS X0208">JIS X0208-1983</a> を切り替える <a
+node="7bit">7bit</a> 文字符号。
+<p>
+RFC 1468 で定義されている。
+<p>
+<memo>
+JIS X0208-1996? では <a node="ISO 2022">ISO 2022</a> と独立に定義され
+る予定。
+</memo>
+
+<rfc name="iso-2022-jp" number="1468" author="Murai J., M. Crispin,
+	      and E. van der Poel" title="Japanese Character Encoding
+	      for Internet Messages" date="June 1993">
+
+
+<h3> iso-2022-jp-2
+<node> iso-2022-jp-2
+<p>
+<a node="iso-2022-jp">iso-2022-jp</a> を拡張した <a node="MIME
+charset">MIME charset</a> の一つ。
+<p>
+RFC 1554 で定義されている。
+
+<rfc name="iso-2022-jp-2" number="1554" type="Informational"
+	      author="Ohta M. and Handa K." title="ISO-2022-JP-2:
+	      Multilingual Extension of ISO-2022-JP" date="December
+	      1993">
+
+
+<h3> iso-2022-kr
+<node> iso-2022-kr
+<p>
+韓国語を表現するための <a node="MIME charset">MIME charset</a> の１つ。
+<p>
+<a node="ISO 2022">ISO 2022</a> に基いて <a node="ASCII">ASCII</a> に 
+<a node="KS C5601">KS C5601</a> を <a node="7bit">7bit</a> で<a
+node="Code extension">符号拡張</a>している。
+<p>
+<a node="RFC 1557">RFC 1557</a> で定義されている。
+
+
+<h3> ISO 646
+<node> ISO 646
+<p>
+各国で共通に使える最小限度の<a node="Character set">文字集合</a>を定め
+たもの。<a node="94 character set">94 文字集合</a>の１つ。ISO 646 IRV
+（国際基準版）を元に幾つかの文字は各国で違う文字を割当ることを許してい
+て、幾つかの変種が存在する。<a node="ASCII">ASCII</a> や JIS
+X0201-Latin はその一種。
+
+<standard abbrev="ISO 646" org="International Organization for
+	      Standardization (ISO)" title-en="Information technology:
+	      ISO 7-bit coded character set for information
+	      interchange" number="ISO/IEC 646" year="1991">
+
+
+<h3> ISO 8859-1
+<node> ISO 8859-1
+<p>
+西欧諸語で用いられる拡張 Latin 文字や記号からなる <a node="96
+character set">96 文字集合</a>。
+
+<standard abbrev="ISO 8859-1" org="International Organization for
+	      Standardization (ISO)" title-en="Information Processing
+	      -- 8-bit Single-Byte Coded Graphic Character Sets --
+	      Part 1: Latin Alphabet No.1" number="ISO 8859-1"
+	      year="1987">
+
+
+<h3> iso-8859-1
+<node> iso-8859-1
+<p>
+西欧諸語などを表現するための <dref>MIME charset</dref> の１つ。
+<p>
+<a node="ISO 2022">ISO 2022</a> に基いて、<a node="ASCII">ASCII</a> に 
+<a node="ISO 8859-1">ISO 8859-1</a> を <a node="8bit">8bit</a> で<a
+node="Code extension">符号拡張</a>している。
+<p>
+<dref>RFC 2046</dref> で定義されている。
+
+
+<h3> ISO 8859-2
+<node> ISO 8859-2
+<p>
+東欧諸語で用いられる拡張 Latin 文字や記号からなる <a node="96
+character set">96 文字集合</a>。
+
+<standard abbrev="ISO 8859-2" org="International Organization for
+	      Standardization (ISO)" title-en="Information Processing
+	      -- 8-bit Single-Byte Coded Graphic Character Sets --
+	      Part 2: Latin alphabet No.2" number="ISO 8859-2"
+	      year="1987">
+
+
+<h3> iso-8859-2
+<node> iso-8859-2
+<p>
+東欧諸語を表現するための <a node="MIME charset">MIME charset</a> の１
+つ。
+<p>
+<a node="ISO 2022">ISO 2022</a> に基いて、<a node="ASCII">ASCII</a> に 
+<a node="ISO 8859-2">ISO 8859-2</a> を <a node="8bit">8bit</a> で<a
+node="Code extension">符号拡張</a>している。
+<p>
+<dref>RFC 2046</dref> で定義されている。
+
+
+<h3> ISO 8859-3
+<node> ISO 8859-3
+<p>
+<standard abbrev="ISO 8859-3" org="International Organization for
+		Standardization (ISO)" title-en="Information
+		Processing -- 8-bit Single-Byte Coded Graphic
+		Character Sets -- Part 3: Latin alphabet No.3"
+		number="ISO 8859-3" year="1988">
+
+
+<h3> ISO 8859-4
+<node> ISO 8859-4
+<p>
+<standard abbrev="ISO 8859-4" org="International Organization for
+		Standardization (ISO)" title-en="Information
+		Processing -- 8-bit Single-Byte Coded Graphic
+		Character Sets -- Part 4: Latin alphabet No.4"
+		number="ISO 8859-4" year="1988">
+
+
+<h3> ISO 8859-5
+<node> ISO 8859-5
+<p>
+キリル文字や記号からなる <a node="96 character set">96 文字集合</a>。
+
+<standard abbrev="ISO 8859-5" org="International Organization for
+	      Standardization (ISO)" title-en="Information Processing
+	      -- 8-bit Single-Byte Coded Graphic Character Sets --
+	      Part 5: Latin/Cyrillic alphabet" number="ISO 8859-5"
+	      year="1988">
+
+
+<h3> iso-8859-5
+<node> iso-8859-5
+<p>
+キリル文字を表現するための <a node="MIME charset">MIME charset</a> の
+１つ。
+<p>
+<a node="ISO 2022">ISO 2022</a> に基いて、<a node="ASCII">ASCII</a> に 
+<a node="ISO 8859-5">ISO 8859-5</a> を <a node="8bit">8bit</a> で<a
+node="Code extension">符号拡張</a>している。
+<p>
+<dref>RFC 2046</dref> で定義されている。
+
+
+<h3> ISO 8859-6
+<node> ISO 8859-6
+<p>
+<standard abbrev="ISO 8859-6" org="International Organization for
+		Standardization (ISO)" title-en="Information
+		Processing -- 8-bit Single-Byte Coded Graphic
+		Character Sets -- Part 6: Latin/Arabic alphabet"
+		number="ISO 8859-6" year="1987">
+
+
+<h3> ISO 8859-7
+<node> ISO 8859-7
+<p>
+ギリシア文字や記号からなる <a node="96 character set">96 文字集合</a>。
+
+<standard abbrev="ISO 8859-7" org="International Organization for
+	      Standardization (ISO)" title-en="Information Processing
+	      -- 8-bit Single-Byte Coded Graphic Character Sets --
+	      Part 7: Latin/Greek alphabet" number="ISO 8859-7"
+	      year="1987">
+
+
+<h3> iso-8859-7
+<node> iso-8859-7
+<p>
+ギリシア語を表現するための <a node="MIME charset">MIME charset</a> の
+１つ。
+<p>
+<a node="ISO 2022">ISO 2022</a> に基いて、<a node="ASCII">ASCII</a> に 
+<a node="ISO 8859-7">ISO 8859-7</a> を <a node="8bit">8bit</a> で<a
+node="Code extension">符号拡張</a>している。
+<p>
+RFC 1947 で定義されている。
+
+<rfc name="iso-8859-7" number="1947" type="Informational"
+	      author="D. Spinellis" title="Greek Character Encoding
+	      for Electronic Mail Messages" date="May 1996">
+
+
+<h3> ISO 8859-8
+<node> ISO 8859-8
+<p>
+<standard abbrev="ISO 8859-8" org="International Organization for
+		Standardization (ISO)" title-en="Information
+		Processing -- 8-bit Single-Byte Coded Graphic
+		Character Sets -- Part 8: Latin/Hebrew alphabet"
+		number="ISO 8859-8" year="1988">
+
+
+<h3> ISO 8859-9
+<node> ISO 8859-9
+<p>
+<standard abbrev="ISO 8859-9" org="International Organization for
+		Standardization (ISO)" title-en="Information
+		Processing -- 8-bit Single-Byte Coded Graphic
+		Character Sets -- Part 9: Latin alphabet No.5"
+		number="ISO 8859-9" year="1990">
+
+
+<h3> ISO-IR-165, CCITT Extended GB <node> ISO-IR-165
+<p>
+CCITT が登録した、中国大陸で用いられている簡体字で表記される中国語を表
+現するための <a node="94x94 character set">94×94 文字集合</a>。
+<p>
+<a node="GB 2312">GB 2312</a> と <a node="GB 8865.2">GB 8565 表２</a> 
+に 150 文字ほどを追加したものらしい。
+<p>
+<a node="ISO 2022">ISO 2022</a> での終端文字は `E' である。
+
+
+<h3> JIS X0201
+<node> JIS X0201
+<p>
+<a node="ISO 646">ISO 646</a> の変種の１つである Latin 文字集合と 1
+byte のカタカナ文字集合からなる。
+<p>
+元は <concept>JIS C6220-1976</concept> と言ったが <concept>JIS
+X0201</concept> に番号が変更された。
+
+<standard abbrev="JIS X0201-1976" org="日本規格協会 (Japanese
+	      Standards Association)" title-ja="情報交換用符号"
+	      title-en="Code for Information Interchange" number="JIS
+	      X 0201-1976">
+
+また、1996 年に改定版が出る予定。
+
+<standard abbrev="JIS X0201-1996?" org="日本規格協会 (Japanese
+	      Standards Association)"
+	      title-ja="７ビット及び８ビットの情報交換用符号化文字集合"
+	      title-en="7-bit and 8-bit coded character sets for
+	      information interchange" number="JIS X 0201" year="1996?
+	      draft">
+
+
+<h3> JIS C6226-1978
+<node> JIS C6226
+<p>
+日本語を表すために作られた <a node="94x94 character set">94×94 文字集
+合</a>。日本の国家標準。JIS X0208-1978 ともいう。
+<p>
+<cf node="JIS X0208">
+
+
+<h3> JIS X0208
+<node> JIS X0208
+<p>
+日本語を表すために作られた <a node="94x94 character set">94×94 文字集
+合</a>。日本の国家標準。1978 年版、1983 年版、1990 年版があるが、
+Internet では 1983 年版がもっとも良く使われている。
+<p>
+JIS X0208 は記号、数字、ローマ字、ひらがな、カタカナ、ギリシャ文字、キ
+リル文字、罫線素、第１水準、第２水準の漢字が含まれる。但し、1983 年版
+の一部の記号と罫線素は 1978 年版にはない。また、一部の漢字の字形が 
+1983 年版では変更され、また、第１水準と第２水準が入れ替わっていたりす
+る。このため、1978 年版と 1983 年版は異なる文字集合として扱われる。
+<p>
+1990 年の改定では 1983 年版に対する追加が行われた。このため、1990 年版
+を指示する場合は前に更新シーケンスを用いる。
+
+<standard abbrev="JIS X0208-1978" org="日本規格協会 (Japanese Standards
+	      Association)" title-ja="情報交換用漢字符号系"
+	      title-en="Code of the Japanese graphic character set for
+	      information interchange" number="JIS C6226" year="1978">
+<standard abbrev="JIS X0208-1983,1990" org="日本規格協会 (Japanese Standards
+	      Association)" title-ja="情報交換用漢字符号系"
+	      title-en="Code of the Japanese graphic character set for
+	      information interchange" number="JIS X0208" year="1983,1990">
+
+<p>
+また、1996 年に改定版が出版される予定。（字形の変更は行われないので文
+字集合としては 1990 年版と同一である）
+
+<standard abbrev="JIS X0208-1996?" org="日本規格協会 (Japanese
+	      Standards Association)" title-ja="７ビット及び８ビットの
+	      ２バイト情報交換用符号化漢字集合" title-en="7-bit and
+	      8-bit double byte coded Kanji sets for information
+	      interchange" number="JIS X 0208" year="1996? draft">
+
+
+<h3> JIS X0212-1990
+<node> JIS X0212
+<p>
+<a node="JIS X0208">JIS X0208</a> になかった文字を集めた <a
+node="94x94 character set">94×94 文字集合</a>。「補助漢字」とも呼ばれ
+る。日本の国家標準。<a node="ISO 2022">ISO 2022</a> での終端文字は 
+`D'.
+
+
+<h3> koi8-r
+<node> koi8-r
+<p>
+ロシヤ語等で用いられるキリル文字を表現するための <a node="MIME
+charset">MIME charset</a> の１つ。
+<p>
+<a node="ISO 2022">ISO 2022</a> に基かない <a node="8bit">8bit</a> の
+<a node="Coded character set">符号化文字集合</a>で de-fact standard で
+ある。
+<p>
+RFC 1489 で定義されている。
+<p>
+<rfc number="1489" author="A. Chernov" title="Registration of a
+	      Cyrillic Character Set" date="July 1993">
+
+
+<h3> KS C5601-1987
+<node> KS C5601
+<p>
+韓国語を表すための <a node="94x94 character set">94×94 文字集合</a>。
+韓国の国家標準。<a node="ISO 2022">ISO 2022</a> での終端文字は `C'.
+
+<standard abbrev="KS C5601" org="Korea Industrial Standards
+	      Association" title-en="Code for Information Interchange
+	      (Hangul and Hanja)" number="KS C 5601" year="1987">
+
+
+<h3> message
+<node> message
+<p>
+ここでは <dref>RFC 822</dref> で定義される mail と <dref>RFC
+1036</dref> で定義される news 記事の総称として用いる。
+
+
+<h3> message/rfc822
+<node> message/rfc822
+<p>
+伝統的な <dref>RFC 934</dref> に代わり、<dref>RFC 822</dref> で定義さ
+れる mail を表す MIME の形式。<dref>RFC 2046</dref> で定義されている。
+
+
+<h3> method
+<node> method
+<p>
+tm で特定の種類の data を再生したとき実際にその処理を行なう
+program. Emacs Lisp で書かれた <concept>internal method</concept> と C 
+や script 言語などで書かれた <concept>external method</concept> がある。
+<p>
+<cf file="tm-view-ja" node="method">
+
+
+<h3> MIME
+<node> MIME
+<p>
+<concept>Multipurpose Internet Mail Extensions</concept> の略で、
+Internet の mail や news で <a node="us-ascii">us-ascii plain text</a> 
+以外の文字を使うための <dref>RFC 822</dref> に対する拡張。
+<p>
+RFC 2045 は冒頭で次のように述べている：
+<p>
+STD 11, RFC 822 は、US-ASCII message header に関して非常に詳細に規定し
+た message 表現 protocol を定義している。しかし、それは単に flat な 
+US-ASCII text のみに留まり、message の内容や message body に関する規定
+はなされていない。Multipurpose Internet Mail Extensions, あるいは MIME 
+と総称される、この一連の文書は、以下の事を可能とするために message の
+形式を再定義した：
+
+<ol>
+<li>文書 message body における US-ASCII 以外の文字集合
+</li>
+<li>非文書 message body
+</li>
+<li>複数の部分からなる message body
+</li>
+<li>US-ASCII 以外の文字集合からなる文書 header 情報
+</ol>
+
+<p>
+<dref>RFC 2045</dref>, <dref>RFC 2046</dref>, <a
+node="encoded-word">RFC 2047</a>, <dref>RFC 2048</dref>, <dref>RFC
+2049</dref> で定義されている。
+
+
+<h3> MIME charset
+<node> MIME charset
+<p>
+<dref>Content-Type field</dref> や <a
+node="encoded-word">encoded-word</a> の charset parameter で用いられる
+登録された<a node="Coded character set">符号化文字集合</a>。
+<p>
+<dref>RFC 2045</dref> で定義されている。
+<p>
+<a node="iso-2022-jp">iso-2022-jp</a> や <a node="euc-kr">euc-kr</a> 
+はその１つ。（ここでは、MIME charset は<a node="Character set">文字集
+合</a>と区別して小文字で書いている）
+
+
+<h3> MTA
+<node> MTA
+<p>
+<concept>Message Transfer Agent</concept> の略で、sendmail などの mail 
+配送 program と news server の総称。
+<p>
+<cf node="MUA">
+
+
+<h3> MUA
+<node> MUA
+<p>
+<concept>Message User Agent</concept> の略で、mail reader と news
+reader の総称。
+<p>
+<cf node="MTA">
+
+
+<h3> MULE
+<node> MULE
+<p>
+半田 剣一氏らが作った、多言語された <a node="Emacs">Emacs</a>.
+<p>
+[MULE] Nishikimi M., Handa K. and Tomura S., ``Mule: MULtilingual
+Enhancement to GNU Emacs'', Proc. of INET'93, August, 1993.
+<p>
+現在、MULE の機能を Emacs に merge する作業が行われており、<a
+href="ftp://etlport.etl.go.jp/pub/mule/mule-19.33-gamma.taz"> alpha 版
+</a> が存在する。
+<p>
+その他、XEmacs に merge したものも存在する。
+<p>
+このため、現在では多言語 Emacs は、元々の MULE を含めて３種類あること
+になる。
+<p>
+そこで、ここでは、多言語 Emacs の総称を <concept>mule</concept>, 元々
+の MULE を <concept>MULE</concept>, mule 機能を merge した Emacs を
+<concept>Emacs/mule</concept>, mule 機能を merge した XEmacs を 
+<concept>XEmacs/mule</concept> と呼ぶことにする。
+
+
+<h3> Multipart
+<node> multipart
+<p>
+１つの <dref>message</dref> に複数の <dref>entity</dref> を入れるため
+の <dref>MIME</dref> における <dref>media type</dref> の１つ、もしくは、
+複数の entity からなる message を指す。
+<p>
+現在、定義されている <concept>multipart</concept> としては、<dref>RFC
+2046</dref> で定義された
+
+<ul>
+<li><dref>multipart/mixed</dref>
+<li><dref>multipart/alternative</dref>
+<li><dref>multipart/digest</dref>
+<li><dref>multipart/parallel</dref>
+</ul>
+
+<noindent>
+のほか <a node="Security multipart">RFC 1847</a> で定義された
+
+<ul>
+<li><dref>multipart/signed</dref>
+<li><dref>multipart/encrypted</dref>
+</ul>
+
+<noindent>
+などがある。
+
+
+<h3> multipart/alternative
+<node> multipart/alternative
+<p>
+<dref>multipart</dref> の１つで、同じ情報を異った形式で入れ、選択肢と
+する場合に用いる。
+<p>
+<cf node="RFC 2046">
+
+
+<h3> multipart/digest
+<node> multipart/digest
+<p>
+<dref>multipart</dref> の１つで、含まれる <dref>entity</dref> の 
+default の<dref>media type</dref> が <dref>multipart/mixed</dref> など
+の場合 <dref>text/plain</dref> であるのに対し、
+<concept>multipart/digest</concept>では <dref>message/rfc822</dref> が
+用いられる点が異なる。
+<p>
+これは伝統的な <dref>RFC 1153</dref> に基づく 
+<dref>encapsulation</dref> に代わるものである。
+<p>
+<cf node="RFC 2046">
+
+
+<h3> multipart/encrypted
+<node> multipart/encrypted
+<p>
+RFC 1847 で定義された <dref>Security multipart</dref> の１つで、暗号化
+された message を表現するのに用いる。
+<p>
+<cf node="PGP/MIME">
+
+
+<h3> multipart/mixed
+<node> multipart/mixed
+<p>
+<dref>multipart</dref> の主要な subtype で、複数の part を順序付けて並
+べる場合に用いる。
+<p>
+<cf node="RFC 2046">
+
+
+<h3> multipart/parallel
+<node> multipart/parallel
+<p>
+<dref>multipart</dref> の１つで、複数の part を順序付けずに含める場合
+に用いる。
+<p>
+<cf node="RFC 2046">
+
+
+<h3> multipart/signed
+<node> multipart/signed
+<p>
+RFC 1847 で定義された <dref>Security multipart</dref> の１つで、電子署
+名を表現するのに用いる。
+<p>
+<cf node="PGP/MIME">
+
+
+<h3> PGP
+<node> PGP
+<p>
+Phil Zimmermann 氏が作成した公開鍵暗号処理系の１つ。
+<dref>message</dref> の暗号化や電子署名を行うことができる。Pretty Good
+Privacy の略。
+<p>
+伝統的な PGP では <dref>encapsulation</dref> に <dref>RFC 934</dref>に
+準じた方法を用いる。これは <dref>MIME</dref> と矛盾するので 
+<dref>PGP/MIME</dref> が提案されている。一方、MIME において PGP の
+encapsulation を用いる方法 <cf node="PGP-kazu"> も利用されてきた。しか
+し、今後は PGP/MIME に統一していく方が望ましい。
+<p>
+<rfc name="PGP" number="1991" type="Informational" author="D. Atkins,
+	      W. Stallings and P. Zimmermann" title="PGP Message
+	      Exchange Formats" date="August 1996">
+
+
+
+<h3> PGP-kazu
+<node> PGP-kazu
+<p>
+山本 和彦 氏が提案した <a node="MIME">MIME</a> で <a
+node="PGP">PGP</a> を利用するための方法をここでは 
+<concept>PGP-kazu</concept> と呼ぶことにする。
+<p>
+PGP-kazu は <concept>application/pgp</concept> という 
+<dref>content-type</dref> を定義する。
+<p>
+application/pgp の part では PGP の <dref>encapsulation</dref> が用い
+られる。PGP の encapsulation <cf node="RFC 934"> と MIME の 
+encapsulation は矛盾するので、PGP の encapsulation を解かない限り、中
+に含まれた MIME message を読むことができなくなる。即ち、PGP-kazu に対
+応していない MIME に対応した <dref>MUA</dref> はその part が読めなくな
+る。その代わり、MIME に対応していない PGP 対応の <dref>MUA</dref> でも 
+message を読むことができる。
+<p>
+PGP-kazu では MUA は PGP のと MIME のという２つの encapsulation を知ら
+なければならない。また、application/pgp part を parse するためには、ま
+ず、pgp の処理を行わなければならないので、parse 処理が複雑になる。
+<p>
+また、Internet では今後 <dref>PGP/MIME</dref> の方向で標準化していこう
+ということで合意が取れている。よって、今後は PGP-kazu は用いないのが望
+ましい。
+<p>
+[draft-kazu-pgp-mime-00.txt] Yamamoto K., ``PGP MIME Integration'',
+October, 1995
+
+
+<h3> PGP/MIME
+<node> PGP/MIME
+<p>
+Michael Elkins 氏が提案した <a node="MIME">MIME</a> で <a
+node="PGP">PGP</a> を利用するための方法。
+<p>
+<a node="Security multipart">RFC 1847</a> に基き、MIME の multipart に
+よる <dref>encapsulation</dref> を行う。このため、MIME の自然な拡張に
+なっている。しかし、伝統的な PGPとの互換性が失われている。
+<p>
+PGP/MIME では <dref>PGP-kazu</dref> と異なり、MIME の encapsulation の
+みを用いる。また、このため、PGP の処理を行う前に message の parse を行
+うことができる。
+<p>
+Internet では今後 <dref>PGP/MIME</dref> の方向で標準化していこうという
+ことで合意が取れている。よって、今後は PGP を用いる場合は PGP/MIMEを用
+いるのが望ましい。
+
+<rfc name="PGP/MIME" number="2015" type="Standards Track"
+	      author="M. Elkins" title="MIME Security with Pretty Good
+	      Privacy (PGP)" date="October 1996">
+
+
+<h3> Quoted-Printable
+<node> Quoted-Printable
+<p>
+<dref>RFC 2045</dref> で定義されている <dref>MIME</dref> における 
+<dref>binary data</dref> の network での変換法の１つ。
+<p>
+`=' や制御文字や 128 以上の文字などは `=AF' のように `=' の後に続く 16 
+進数で表現する。このため、<dref>ASCII</dref> 文字中心の data では 
+<dref>Base64</dref> に比べると可読性が高くなる可能性がある。
+<p>
+しかしながら、EBCDIC には存在しない文字を利用する場合、EBCDIC を利用し
+ている network では安全に転送することができず、Base64 に比べて安全性は
+低い。
+
+
+<h3> RFC 821
+<node> RFC 821
+<p>
+<concept>SMTP</concept> と呼ばれる Internet mail の配送法の標準を定め
+ている RFC.
+
+<rfc name="SMTP" number="821" type="STD 10" author="J. Postel"
+	      title="Simple Mail Transfer Protocol" date="August
+	      1982">
+
+
+<h3> RFC 822
+<node> RFC 822
+<p>
+Internet mail の主に <concept>message header</concept> に関する形式に
+関する標準を定めている RFC.
+
+<memo>
+<p>
+news message もこれに準じているので、<concept>Internet mail</concept> 
+と書くよりも、<concept>Internet message</concept> と書いた方が良いかも
+しれない。
+</memo>
+
+<rfc number="822" type="STD 11" author="D. Crocker" title="Standard
+	      for the Format of ARPA Internet Text Messages"
+	      date="August 1982">
+
+
+<h3> RFC 934
+<node> RFC 934
+<p>
+<a node="RFC 822">Internet mail</a> の <a node="encapsulation">
+<concept>encapsulation</concept></a> の方法を定めた RFC.
+<p>
+<dref>MIME</dref> と矛盾するので、現在では <dref>message/rfc822</dref> 
+を用いるべきである。
+
+
+<rfc number="934" author="Marshall T. Rose and Einar A. Stefferud"
+	      title="Proposed Standard for Message Encapsulation"
+	      date="January 1985">
+
+
+<h3> RFC 1036
+<node> RFC 1036
+<p>
+USENET での message の形式を定めた RFC. <a node="RFC 822">RFC 822</a>
+の subset になっている。Internet の標準ではないが、USENET 以外の 
+netnews でもこれに準じているものが多い。
+
+<rfc name="USENET" number="1036" author="M. Horton and R. Adams"
+	      title="Standard for Interchange of USENET Messages"
+	      date="December 1987" obsolete="850">
+
+
+<h3> RFC 1153
+<node> RFC 1153
+<p>
+複数の <a node="RFC 822">Internet mail</a> を <a node="encapsulation">
+<concept>encapsulation</concept></a> するための方法を定めた 
+RFC. <dref>RFC 934</dref> を用いる。
+<p>
+<dref>MIME</dref> と矛盾するので、現在では <dref>message/rfc822</dref> 
+を用いた <dref>multipart</dref> を用いるべきである。
+<p>
+<cf node="multipart/digest">
+
+<rfc number="1153" author="F. Wancho" title="Digest Message Format"
+	      date="April 1990">
+
+
+<h3> RFC 1557
+<node> RFC 1557
+<p>
+<dref>euc-kr</dref> と <dref>iso-2022-kr</dref> という韓国語のための 
+<a node="MIME charset">MIME charset</a> を定義している RFC.
+
+<rfc number="1557" type="Informational" author="U. Choi, K. Chon and
+	      H. Park" title="Korean Character Encoding for Internet
+	      Messages" date="December 1993">
+
+
+<h3> RFC 1922
+<node> RFC 1922
+<p>
+<dref>iso-2022-cn</dref>, <dref>iso-2022-cn-ext</dref>,
+<dref>cn-gb</dref>, <dref>cn-big5</dref> といった中国語のための <a
+node="MIME charset">MIME charset</a> を定義している RFC.
+<p>
+これに加えて、<concept>charset-edition</concept> と 
+<concept>charset-extension</concept> という <dref>Content-Type
+field</dref> の parameter を定義している。
+
+<rfc number="1922" type="Informational" author="Zhu, HF., Hu, DY.,
+	      Wang, ZG., Kao, TC., Chang, WCH. and Crispin, M."
+	      title="Chinese Character Encoding for Internet Messages"
+	      date="March 1996">
+
+
+<h3> RFC 2045
+<node> RFC 2045
+<p>
+<rfc number="2045" type="Standards Track" author="N. Freed and
+	      N. Borenstein" title="Multipurpose Internet Mail
+	      Extensions (MIME) Part One: Format of Internet Message
+	      Bodies" date="November 1996" obsolete="1521, 1522,
+	      1590">
+
+
+<h3> RFC 2046
+<node> RFC 2046
+<p>
+<rfc number="2046" type="Standards Track" author="N. Freed and
+	      N. Borenstein" title="Multipurpose Internet Mail
+                 Extensions (MIME) Part Two: Media Types"
+                 date="November 1996" obsolete="1521, 1522, 1590">
+
+
+<h3> RFC 2048
+<node> RFC 2048
+<p>
+<rfc number="2048" type="Standards Track" author="N. Freed, J. Klensin
+	      and J. Postel" title="Multipurpose Internet Mail
+	      Extensions (MIME) Part Four: Registration Procedures"
+	      date="November 1996" obsolete="1521, 1522, 1590">
+
+
+<h3> RFC 2049
+<node> RFC 2049
+<p>
+<rfc number="2049" type="Standards Track" author="N. Freed and
+	      N. Borenstein" title="Multipurpose Internet Mail
+	      Extensions (MIME) Part Five: Conformance Criteria and
+	      Examples" date="November 1996" obsolete="1521, 1522,
+	      1590">
+
+
+<h3> plain text
+<node> plain text
+<p>
+書体や組版に関する情報を持たない <a node="Coded character set">文字符
+号</a>のみで表現される text 情報。<cf node="text/plain">
+
+
+<h3> Security multipart
+<node> Security multipart
+<p>
+<a node="MIME">MIME</a> で暗号や電子書名を用いるための形式。<a
+node="multipart/signed"><concept>multipart/signed</concept></a> と <a
+node="multipart/encrypted"><concept>multipart/encrypted</concept></a> 
+という multipart を用いる。MOSS や <a node="PGP/MIME">PGP/MIME</a> は
+これに基いている。
+
+<rfc name="Security multipart" number="1847" type="Standards Track"
+	      author="James Galvin, Gale Murphy, Steve Crocker and Ned
+	      Freed" title="Security Multiparts for MIME:
+	      Multipart/Signed and Multipart/Encrypted" date="October
+	      1995">
+
+
+<h3> text/enriched
+<node> text/enriched
+<p>
+RFC 1521 で定義された <concept>text/richtext</concept> に代わって、書
+体や組版に関する情報を持った textを表現するための <dref>media
+type</dref>.
+
+<rfc name="text/enriched" number="1896" author="P. Resnick and
+	      A. Walker" title="The text/enriched MIME Content-type"
+	      date="February 1996" obsolete="1563">
+
+
+<h3> text/plain
+<node> text/plain
+<p>
+<dref>RFC 2046</dref> で定義された、<dref>plain text</dref> を表現する
+ための <dref>media type</dref>.
+<p>
+非 MIME message などの content-type が定義されない part は <dref>MIME
+charset</dref> が <dref>us-ascii</dref> である 
+<concept>text/plain</concept> の part であると見做されることになってい
+る。
+
+
+<h3> tm-kernel, tm
+<node> tm-kernel
+<p>
+Emacs で <a node="MIME">MIME</a> を利用するための user interface を提
+供する library 群。`tools for MIME' の略。
+
+<memo title="どうでも良いこと(^-^;">
+<p>
+<ul>
+  <li> tm は ``tiny-mime'' の略じゃないらしいぞ (^-^;
+  <li> tm は作者のイニシャルじゃないらしいぞ (^-^;
+  <li> ``Tools for MIME'' の略というのはこじつけらしいぞ (^-^;
+</ul>
+</memo>
+
+
+<h3> tm-MUA
+<node> tm-MUA
+<p>
+<a node="tm-kernel">tm</a> を用いた <a node="MUA">MUA</a> もしくは MUA 
+に対する extender.
+<p>
+<concept>tm 大盛り package</concept> には
+
+<ul>
+<li><a file="mh-e">mh-e</a> 用の <concept>tm-mh-e</concept>
+<li>GNUS 用の <concept>tm-gnus</concept>
+<li>Gnus 用の <a file="gnus-mime-ja"><concept>gnus-mime</concept></a>
+<li>VM 用の <concept>tm-vm</concept>
+<li>RMAIL 用の <concept>tm-rmail</concept>
+</ul>
+
+<noindent>
+が含まれている。
+<p>
+独立した MUA としては <a file="cmail">cmail</a> が tm を利用可能である。
+
+
+<h3> us-ascii
+<node> us-ascii
+<p>
+アメリカ連邦などで使われる英語などを表現するための <a node="MIME
+charset">MIME charset</a> の１つ。
+<p>
+<a node="ASCII">ASCII</a> のみからなり <a node="ISO 2022">ISO 2022</a> 
+による<a node="Code extension">符号拡張</a>は許されない。
+<p>
+Internet mail における標準の<a node="Coded character set">符号化文字集
+合</a>であり、明示的に MIME charset が示されない場合は原則として 
+<concept>us-ascii</concept> が使われる。
+<p>
+また、<a node="RFC 822">RFC 822</a> における <concept>ASCII</concept> 
+は us-ascii を指すものと解釈すべきである。
+
+
+<h1> 設定
+<node> Setting
+<p>
+この package には <file>mime-setup.el</file> と 
+<file>tm-setup.el</file> という簡易設定 file が附属しています。
+
+<p>
+<file>mime-setup.el</file> では <file>tm-edit.el</file> を使った MIME
+message の作成も含めた MIME 全般の設定を行ない、
+<file>tm-setup.el</file> では tm-MUA に関するMIME message の閲覧の設定
+のみを行ないます。
+
+
+<h2> 標準的な設定
+<node> mime-setup
+<p>
+tm の一般的な設定を行いたい場合は、<concept>mime-setup</concept> とい
+う標準設定 file を使ってください。例えば、<file>~/.emacs</file> 等で、
+<p>
+<lisp>
+(load "mime-setup")
+</lisp>
+<p>
+<noindent>
+とするだけで OK です。
+
+<p>
+<file>mime-setup.el</file> は <file>tm-setup.el</file> を呼んでいるの
+で、<file>tm-setup.el</file> を load する必要はありません。（過去の 
+Gnus FAQ の記述は間違っています！）
+
+
+<h3> signature.el
+<node> signature
+<p>
+tm には <concept>signature</concept> という signature の自動切替え 
+tool が附属しており、<file>mime-setup.el</file> はこの設定も行ないます。
+message header の field に合わせて signature の自動切替を行ないたい場
+合は <file>~/.emacs</file> に以下のようなものを入れて下さい。（詳しく
+は signature.el の説明書を参照して下さい）
+
+<lisp>
+(setq signature-file-alist
+      '((("Newsgroups" . "jokes")       . "~/.signature-jokes")
+        (("Newsgroups" . ("zxr" "nzr")) . "~/.signature-sun")
+        (("To" . ("ishimaru" "z-suzuki")) . "~/.signature-sun")
+        (("To" . "tea")                 . "~/.signature-jokes")
+        (("To" . ("sim" "oku" "takuo")) . "~/.signature-formal")
+        ))
+</lisp>
+
+
+<defvar name="mime-setup-use-signature">
+<p>
+この変数が <code>nil</code> 以外の時、<file>signature.el</file> を使い
+ます。既定値は <code>t</code> です。
+</defvar>
+
+
+<defvar name="mime-setup-signature-key-alist">
+<p>
+各 major-mode において signature 挿入命令を設定すべき key を指定します。
+既定値は
+
+<lisp>
+	((mail-mode . "\C-c\C-w"))
+</lisp>
+
+です。
+
+<p>
+これを変更したい場合は、関数 set-alist などを使ってこの変数を書き換え
+て下さい。
+
+<lisp>
+(set-alist 'mime-setup-signature-key-alist
+	   'news-reply-mode "\C-c\C-w")
+</lisp>
+
+</defvar>
+
+<defvar name="mime-setup-default-signature-key">
+<p>
+ある major-mode において signature 挿入命令を設定すべき key が見つから
+ない場合、この変数に設定された key が用いられます。既定値は、
+<code>"\C-c\C-s"</code> です。
+</defvar>
+
+
+<h3> GNUS の場合の注意
+<node> Notice about GNUS
+<p>
+<file>signature.el</file> を使う場合、<file>mime-setup.el</file> は変
+数 <code>gnus-signature-file</code> を <code>nil</code> に設定します。
+よって、送信時に自動的に <code>signature</code> が付く機能は抑制されま
+す。このようなことをしているのは以下の理由からです。
+
+<p>
+GNUS が signature を付けるのは <code>tm-edit.el</code> によって MIME
+message が作成された後です。よって、GNUS が付けた signature は MIME
+message として正しく処理されていません。例えば multipart message の場
+合、MIME message の外の非 MIME part に付きます。よって、MIME 対応 MUA 
+で見た場合、signature は表示されないかも知れません。
+
+<p>
+もう一つの注意は標準設定では signature を挿入する key は <kbd>C-c
+C-w</kbd> ではなく <a file="mh-e">mh-e</a> と同じ <kbd>C-c C-s</kbd> 
+に割り当てられていることです。これは
+
+<lisp>
+(set-alist 'mime-setup-signature-key-alist 'news-reply-mode "\C-c\C-w")
+</lisp>
+
+<noindent>
+によって GNUS の標準に戻すことができます。
+
+
+<h2> tm-edit を使わない設定
+<node> tm-setup
+
+<p>
+<concept>tm-setup</concept> は <a node="tm-MUA">tm-MUA</a> の設定のみ
+を行なう module です。この設定 file では <a
+file="tm-edit-ja">tm-edit</a> を使った MIME message の作成に関する設定
+は行われず、MIME message の閲覧に関する設定のみが行われます。MIME
+message を読みたいが自分では作成しないとか、tm-edit 以外の MIME
+composer を使いたい場合には mime-setup.el の代わりにこの設定 file を使っ
+てください。
+
+<p>
+例えば、<file>~/.emacs</file> 等に
+
+<lisp>
+(load "tm-setup")
+</lisp>
+
+<noindent>
+を入れれば OK です。
+
+<p>
+
+<memo>
+<p>
+<file>mime-setup.el</file> を load している場合、これを陽に load する
+必要はありません。
+</memo>
+
+
+<h2> VM を使う場合の設定
+<node> setting for VM
+
+<p>
+<concept>vm</concept> を使う場合は <file>~/.vm</file> に
+
+<lisp>
+(require 'tm-vm)
+</lisp>
+
+<noindent>
+を入れて下さい。
+
+
+<memo title="注意">
+<p>
+<concept>BBDB</concept> を使う場合は <code>(bbdb-insinuate-vm)</code> 
+の <bf>後</bf> に <code>(require 'tm-vm)</code> を入れてください。
+</memo>
+
+
+<h2> 設定 file を使わない場合
+<node> manual setting
+
+<p>
+<file>mime-setup.el</file> や <file>tm-setup.el</file> を参考にして下
+さい。
+
+
+<memo>
+<p>
+現在の tm では tm-edit の使用を仮定した幾つかの便利な機能が存在し、こ
+れらの機能は <file>mime-setup.el</file> を使わないと利用できません。も
+し、tm-edit を使う独自の設定を行う場合は、
+
+<lisp>
+(provide 'mime-setup)
+</lisp>
+
+<noindent>
+という宣言を行ってください。
+</memo>
+
+
+<h1> bug 報告の仕方
+<node> Bug report
+<p>
+tm のバグを見つけたら、以下の address に mail を送ってください：
+
+<ul>
+<li> 日本語 <mail>bug-tm-ja@chamonix.jaist.ac.jp</mail>
+<li> 英語 <mail>bug-tm-en@chamonix.jaist.ac.jp</mail>
+</ul>
+
+<p>
+但し、あまりにも古い版に関する報告は歓迎されません。古い版の bug は、
+新しい版では治っているかもしれません。まず、最新版で確認してみましょう。
+<p>
+それから、適切な報告をしましょう。単に「うまく動かない」と言われてもど
+ういう状況なのかはさっぱり判りません。最低限、OS, emacs, tm, 使ってい
+る MUA の種類および版、設定を書く必要があります。また、error が起って
+いる場合は backtrace を送ることも重要です。<cf file="emacs"
+node="Bugs">
+<p>
+また、bug は大抵複数の人が遭遇するものです（そうでなければ、bug ではな
+い可能性があります）。だから、作者に直接 mail を送ると作者は同じ mail
+を何通も書く羽目になります。だから、必ず bug 報告は上記の address に送っ
+てください。
+
+<p>
+tm ML では tm のバグ情報の交換や最新版の配布、tm の改良に関する議論を
+行なっています。tm ML に参加したい方は
+
+<ul>
+<li> 日本語 <mail>tm-ja-admin@chamonix.jaist.ac.jp</mail>
+<li> 英語 <mail>tm-en-admin@chamonix.jaist.ac.jp</mail>
+</ul>
+
+<noindent>
+まで mail を送って下さい。登録は手動ですので、できれば、自然言語で書い
+て下さい。(^_^)
+
+
+<h1> 概念索引
+<node> Concept Index
+
+<cindex>
+
+
+<h1> 変数索引
+<node> Variable Index
+
+<vindex>
+
+</body>

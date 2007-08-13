@@ -1,0 +1,200 @@
+<!doctype sinfo system>
+<!-- $Id: tm-mh-e-en.sgml,v 1.1 1996/12/22 00:09:34 steve Exp $ -->
+<head>
+<title>tm-mh-e 7.71 Reference Manual (English Version)
+<author>MORIOKA Tomohiko <mail>morioka@jaist.ac.jp</mail>
+<date>1996/10/15
+
+<toc>
+</head>
+
+<body>
+
+<abstract>
+<p>
+This file documents tm-mh-e, a MIME extension for GNUS.
+</abstract>
+
+
+<h1> What is tm-mh-e?
+<node> Introduction
+<p>
+<concept>tm-mh-e</concept> is a <a file="mh-e">mh-e</a> extender to
+use <dref file="tm-en">MIME</dref> feature using <a file="tm-en"
+node="tm-kernel">tm</a>.
+<p>
+tm-mh-e extends following features:
+
+<ul>
+<li>automatic MIME preview using <a file="tm-view-en">tm-view</a>
+<li>composing MIME message using <a file="tm-edit-en">tm-edit</a>
+</ul>
+
+
+<h1> Extension for MH-Folder mode
+<node> mh-folder-mode
+<p>
+<kl>
+<kt>M-t
+<kd>
+Toggle whether to do automatic MIME preview or not.
+</kd>
+<kt>v
+<kd>Enter <code>mime/viewer-mode</code> to view a message.
+</kd>
+<kt>.
+<kd>
+Display current message.
+</kd>
+<kt>,
+<kd>
+Display current message with showing all fields.
+</kd>
+<kt>M-,
+<kd>
+Display current ``raw'' message.
+</kl>
+
+<p>
+<dref file="tm-view-en">mime/viewer-mode</dref> is a major-mode to
+view and navigate MIME message.  In this mode, you can move in a
+message or play a content, interactively.
+
+
+<h1> Inline display for MIME message
+<node> Automatic MIME Preview
+<p>
+<concept>automatic MIME preview</concept> feature is available in
+tm-mh-e.  In automatic MIME preview mode, when reading an article in
+<a file="mh-e" node="Reading Mail">
+MH-Folder mode</a>, tm-mh-e displays preview buffer processed by <a
+file="tm-view-en">tm-view</a> instead of raw show buffer.
+<p>
+Therefore if an article is encoded by <dref file="tm-en">Base64</dref>
+or <dref file="tm-en">Quoted-Printable</dref>, a decoded article is
+displayed.  Or rich text article, such as <dref
+file="tm-en">text/enriched</dref> format, is automatic formated.  Of
+course, <dref file="tm-en">multipart</dref> article is dealt with
+correctly.
+<p>
+In addition, in <concept>XEmacs</concept>, images are displayed in
+preview buffer as same as text.
+<p>
+Different from using metamail, speaker does not roar just then read an
+article includes audio content, video player does not play just then
+read an article includes video content, it does not do anonymous <dref
+file="tm-en">ftp</dref> or send mail when read an article includes
+external-message.  These contents are played when you do decoding
+command in preview buffer.
+<p>
+However if you use a slow machine, or are just really impatient, you
+can stop automatic MIME preview.
+
+
+<defvar name="tm-mh-e/automatic-mime-preview">
+<p>
+If it is not <code>nil</code>, tm-mh-e is in automatic MIME preview
+mode.
+</defvar>
+
+
+<h1> Internationalization
+<node> mule
+<p>
+For emacs variants includes mule feature, such as <dref
+file="tm-en">MULE</dref>, XEmacs/mule and Emacs/mule(*1), tm-mh-e
+supports code-conversion by <dref file="tm-en">MIME charset</dref>.
+
+<memo>
+(*1) It means next generation of Emacs includes mule features.  Now
+(October 1996), HANDA Ken'ichi and RMS are developing it.
+</memo>
+
+<p>
+Detail of code conversion is following:
+
+<ol>
+<li>If a part of a MIME message has charset parameter of <dref
+file="tm-en">Content-Type field</dref>, it is code-converted by the
+MIME charset.
+</li>
+<li><dref file="tm-en">encoded-word</dref> are code-converted by their
+specified <dref file="tm-en">MIME charset</dref>.
+</li>
+<li>When there are no specified MIME charset, such as message header
+or non-MIME message, they are code-converted by
+<code>default-mime-charset</code> in Summary Buffer.
+</ol>
+
+
+<h2> Don't use MIME charset
+<node> evil environment
+<p>
+If <dref file="tm-en">MTA</dref> convert character encoding of
+messages from network code to local code, such as EUC or Shift_JIS,
+MIME charset does not work, so tm-mh-e can not display correct
+message.  It is quite evil environment.  It does not break only MIME
+charset, but also electric signature by PGP.
+<p>
+If you can manage your environment, you should fix it.  Otherwise you
+should persuade the administration.
+<p>
+Unfortunately you are in such environment and you can not it,
+following descriptions may be available.
+
+
+<h3> for non-MIME message or non-charset
+<p>
+For non-MIME message, please set the character encoding to variable
+<code>default-mime-charset</code>.  For example, if you use Japanese EUC:
+
+<lisp>
+(setq default-mime-charset 'euc-japan)
+</lisp>
+
+
+<h3> To disable MIME charset
+<p>
+If for a text part specified <dref file="tm-en">MIME charset</dref>,
+one way is to set variable
+<code>mime-charset-coding-system-alist</code> to specify the
+coding-system corresponding the primary MIME charset.  For example, to
+specify <code>*sjis*</code> or <code>*euc-japan*</code> as
+<code>iso-2022-jp</code>.  However it breaks texts encoded by Base64
+or Quoted-Printable.
+<p>
+So it is better to redefine function
+<code>tm-mh-e/decode-charset-buffer</code>.  For example, if your MTA
+converts iso-2022-jp to Japanese EUC, following definition may work:
+
+<lisp>
+(defun tm-mh-e/decode-charset-buffer (charset &amp;optional encoding)
+  (decode-mime-charset-region (point-min)(point-max) 'euc-japan)
+  )
+</lisp>
+
+
+<h1> Composing MIME message
+<node> MIME-Edit
+<p>
+If using <dref file="tm-en">mime-setup</dref>, you can edit MIME
+message in <a file="mh-e" node="Draft Editing">MH-Letter mode</a>
+using <a file="tm-edit-en">tm-edit</a>.
+<p>
+In addition, <kbd>f</kbd> is used for <dref
+file="tm-en">message/rfc822</dref> style forwarding instead of <dref
+file="tm-en">RFC 934</dref> style forwarding.
+
+
+<h1> Concept Index
+<node> Concept Index
+
+<cindex>
+
+
+<h1> Variable Index
+<node> Variable Index
+
+<vindex>
+
+</body>

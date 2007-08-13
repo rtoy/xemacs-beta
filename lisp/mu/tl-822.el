@@ -30,7 +30,7 @@
 
 
 (defconst rfc822/RCS-ID
-  "$Id: tl-822.el,v 1.1.1.1 1996/12/18 03:55:31 steve Exp $")
+  "$Id: tl-822.el,v 1.2 1996/12/22 00:29:21 steve Exp $")
 (defconst rfc822/version (get-version-string rfc822/RCS-ID))
 
 

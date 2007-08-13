@@ -8,7 +8,7 @@
 ;;; Created: 1995/9/14
 ;;;    based on tm-latex.el by OKABE Yasuo <okabe@kudpc.kyoto-u.ac.jp>
 ;;; Version:
-;;;	$Id: tm-html.el,v 1.1.1.1 1996/12/18 03:55:32 steve Exp $
+;;;	$Id: tm-html.el,v 1.2 1996/12/22 00:29:40 steve Exp $
 ;;; Keywords: mail, news, MIME, multimedia, HTML, WWW
 ;;;
 ;;; This file is part of tm (Tools for MIME).

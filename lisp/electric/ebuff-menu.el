@@ -179,9 +179,18 @@ Entry to this mode via command `electric-buffer-list' calls the value of
 (if electric-buffer-menu-mode-map
     nil
   (let ((map (make-keymap)) (submap (make-keymap)))
-    (fillarray (car (cdr map)) 'Electric-buffer-menu-undefined)
+    ;(fillarray (car (cdr map)) 'Electric-buffer-menu-undefined) ; FSF
+    (let ((i 0))
+      (while (< i 128)
+	(define-key map (make-string 1 i) 'Electric-buffer-menu-undefined)
+	(setq i (1+ i))))
     (define-key map "\e" submap)
-    (fillarray (car (cdr submap)) 'Electric-buffer-menu-undefined)
+    ;(fillarray (car (cdr submap)) 'Electric-buffer-menu-undefined) ; FSF
+    (let ((map2 (lookup-key map "\e"))
+	   (i 0))
+      (while (< i 128)
+	(define-key map2 (make-string 1 i) 'Electric-buffer-menu-undefined)
+	(setq i (1+ i))))
     (define-key map "\C-z" 'suspend-emacs)
     (define-key map "v" 'Electric-buffer-menu-mode-view-buffer)
     (define-key map (char-to-string help-char) 'Helper-help)

@@ -1,5 +1,5 @@
-\input texinfo    @c -*-texinfo-*-              Last modified:    April 10, 1993
-@setfilename ../info/ilisp.info
+\input texinfo    @c -*-texinfo-*-              Last modified: October 25, 1996
+@setfilename ilisp.info
 @settitle The ILISP Inferior LISP Interface
 
 @c  NOTE:  KEYBINDING DESCRIPTIONS IN THIS FILE
@@ -69,10 +69,13 @@
 @ifinfo
 This file documents ILISP.
 
-This is edition 0.11 of the ILISP manual
-for ILISP Version 5.5.
+This is edition 0.12 of the ILISP manual
+for ILISP Version 5.8.
 
 Copyright (C) 1991,1992,1993 Todd Kaufmann
+              1993,1994 Ivan Vasquez
+              1994, 1995, 1996 Marco Antoniotti and Rick Busdiecker
+              1996 Marco Antoniotti and Rick Campbell
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
@@ -96,8 +99,8 @@ by the Foundation.
 @titlepage
 @title ILISP User Manual
 @subtitle A GNU Emacs Interface for Interacting with Lisp
-@subtitle Edition 0.11, June 1993
-@subtitle For ILISP Version 5.5
+@subtitle Edition 0.13, October 1996
+@subtitle For ILISP Version 5.8
 @c
 @c the following comment string is removed by the ctrl-c-doc.sh script,
 @c which can be used to change all ilisp-prefix bindings to C-c (or
@@ -105,16 +108,19 @@ by the Foundation.
 @c
 @comment ctrl-C version: @subtitle This is the ``@key{C-z}'' version of the manual.
 
-@author by Todd Kaufmann, Chris McConnell and Ivan Vazquez
+@author by Todd Kaufmann, Chris McConnell, Ivan Vazquez, Marco Antoniotti, and Rick Campbell
 
 @page
 @vskip 0pt plus 1filll
 Copyright @copyright{} 1991, 1992, 1993 Todd Kaufmann
+                       1993, 1994 Ivan Vasquez
+                       1994, 1995, 1996 Marco Antoniotti and Rick Busdiecker
+                       1996 Marco Antoniotti and Rick Campbell
 
 @sp 2
-This is edition 0.11 of the @cite{ILISP User Manual}
-for ILISP Version 5.5,
-June 1993.
+This is edition 0.12 of the @cite{ILISP User Manual}
+for ILISP Version 5.8,
+July 1996.
 
 @sp 2
 
@@ -186,81 +192,144 @@ You need not ask for permission to do so, or tell any one else; just
 copy it.
 
 If you do start using the package, please send mail to 
-@samp{ilisp-request@@lehman.com} so that I can keep a mailing list of
-users.  
+@code{ilisp-request@@naggum.no} to subscribe to the ILISP mailing
+list.
 
-Please send bugs, questions or suggestions for discussion to @samp{ilisp@@lehman.com}
+Please send bugs, questions or suggestions for discussion to
+@code{ilisp@@naggum.no}.  Message sent there will be distributed to
+all subscribers.
 
 @menu
 * FTP directions::              FTP directions
+* WWW directions::              WWW directions
 @end menu
 
-@node FTP directions,  ,  , Distribution
+@node FTP directions, WWW directions,  , Distribution
 @unnumberedsec FTP directions
 @cindex FTP site
 @cindex Anonymous FTP
 @cindex How to get
 @cindex Getting ILISP
 @noindent
-You can anonymously ftp the source files from FTP.CS.CMU.EDU:
+You can get the distribution file, @code{ilisp-5.8.tar.gz} via
+anonymous FTP from @code{FTP.CS.CMU.EDU} (128.2.206.173) in
+@code{/afs/cs/user/campbell/http/ilisp/}.
 
-@itemize @bullet
-@item
-Ftp to ftp.cs.cmu.edu (128.2.206.173)
-@item
-login as anonymous, with user@@host as password
-@item
-@code{cd /user/ai/lang/lisp/util/emacs/ilisp/57}
-@item
-@code{binary}
-@item
-@code{get ilisp.tgz}
-@end itemize
+@format
+% @dfn{ftp ftp.cs.cmu.edu}
+Name (ftp.cs.cmu.edu:rickc): @dfn{anonymous}
+331 Guest login ok, send username@@node as password.
+Password: @dfn{@var{your-user-id@@your-hostname}}
+ftp> @dfn{cd /afs/cs/user/campbell/http/ilisp}
+250 Directory path set to /afs/cs/user/campbell/http/ilisp.
+ftp> @dfn{type binary}
+200 Type set to I.
+ftp> @dfn{get ilisp-5.8.tar.gz}
+200 PORT command successful.
+150 Opening data connection for ilisp-5.8.tar.gz.
+226 Transfer complete.
+local: ilisp-5.8.tar.gz remote: ilisp-5.8.tar.gz
+168801 bytes received.
+ftp> @dfn{quit}
+221 Goodbye.
+@end format
 
 @noindent
-Or get whatever single files you need.
+Or get whatever single files you need from the @code{untarred}
+subdirectory.
+
+@noindent
+You can also get @code{ilisp-5.8.tar.gz} via
+anonymous FTP from @code{FTP.ICSI.BERKELEY.EDU} in either
+@code{/pub/software/elisp/} or @code{/pub/theory/marcoxa/elisp/}.
 
 @noindent
 Unpack and install:
 
-@code{uncompress ilisp.tar.Z; tar xf ilisp.tar}
+@code{% @dfn{gzip -dc ilisp-5.8.tar.gz | tar xf -}}
 
 @xref{Installation}.
 
-If you want to use Thinking Machines' completion code, then Ftp it from
-THINK.COM
+@node WWW directions,  , FTP directions, Distribution
+@unnumberedsec WWW directions
+@cindex WWW site
+@cindex How to get
+@cindex Getting ILISP
+@noindent
+You can use the World Wide Web (WWW) to get the distribution file from
+the anonymous FTP locations using one of the following URLs:
+@itemize @bullet
+@item
+@code{ftp://ftp.cs.cmu.edu/afs/cs/user/campbell/http/ilisp/ilisp-5.8.tar.gz}
+@item
+@code{ftp://ftp.icsi.berkeley.edu/pub/software/elisp/ilisp-5.8.tar.gz}
+@item
+@code{ftp://ftp.icsi.berkeley.edu/pub/theory/marcoxa/ilisp-5.8.tar.gz}
+@end itemize
 
-It no longer comes as part of the distribution.
+You can also use the CMU Artificial Intelligence Repository:
+
+@code{http://www.cs.cmu.edu/Web/Groups/AI/html/repository.html}
+
+@noindent
+From there follow: @code{LISP}, @code{UTIL}, @code{EMACS} and finally
+@code{ILISP}.  Use your browser capabilities to download what you
+need.
+
+@noindent
+The complete URL for the distribution file in the CMU AI Repository is
+@code{http://www.cs.cmu.edu/afs/cs/project/ai-repository/ai/lang/lisp/util/emacs/ilisp/v57/ilisp57.tgz}
+
+@noindent
+Other URLs for the distribution file include:
+@itemize @bullet
+@item
+@code{http://www.c2.net/~campbell/ilisp/ilisp-5.8.tar.gz}
+@item
+@code{http://www.cs.cmu.edu/~campbell/ilisp/ilisp-5.8.tar.gz}
+@end itemize
+
+@noindent
+Unpack and install:
+
+@code{% @dfn{gzip -dc ilisp-5.8.tar.gz | tar xf -}}
+
+@xref{Installation}.
 
 @node Acknowledgements, Introduction, Distribution, Top
 @unnumbered Acknowledgements
 
 ILISP replaces the standard inferior LISP mode.  ILISP is based on
 comint mode and derived from a number of different interfaces including
-Symbolics, cmulisp, and Thinking Machines.  
+Symbolics, CMU Common Lisp, and Thinking Machines.  
 
 There are many people that have taken the time to report bugs, make
 suggestions and even better send code to fix bugs or implement new
 features.  
 
-Thanks to Neil Smithline, David Braunegg, Fred White, Jim Healy, Larry
-Stead, Hans Chalupsky, Michael Ernst, Frank Ritter, Tom Emerson, David
-Duff, Dan Pierson, Michael Kashket, Jamie Zawinski, Bjorn Victor, Brian
-Dennis, Guido Bosch, Chuck Irvine, Thomas M. Breuel, Ben Hyde, Paul
-Fuqua (for the CMU-CL GC display code) and Marco Antoniotti for bug
-reports, suggestions and code.  My apologies to those whom I may have
-forgotten.
+Thanks to Guido Bosch, David Braunegg, Tim Bradshaw, Thomas M. Breuel,
+Hans Chalupsky, Kimball Collins, Brian Dennis, David Duff, Tom
+Emerson, Michael Ernst, Scott Fahlman, David Gadbois, Robert
+P. Goldman, Marty Hall, Richard Harris, Jim Healy, Christopher Hoover,
+Larry Hunter, Ben Hyde, Chuck Irvine, Michael Kashket, Mark
+Kantrowitz, Qiegang Long, Erik Naggum, Dan Pierson, Yusuf Pisan, Frank
+Ritter, Jeffrey Mark Siskind, Neil Smithline, Richard Stallman, Larry
+Stead, Jason Trenouth, Christof Ullwer, Bjorn Victor, Fred White, Ben
+Wing, Matsuo Yoshihiro, Jamie Zawinski, Paul Fuqua (for the CMU-CL GC
+display code) and Marco Antoniotti for bug reports, suggestions and
+code.  Our apologies to anyone we may have forgotten.
 
 Special thanks to Todd Kaufmann for the texinfo file, work on bridge,
-epoch-pop and for really exercising everything.  
+epoch-pop and for really exercising everything.
 
 Please send bug reports, fixes and extensions to
-@samp{ilisp@@lehman.com} so I can merge them into the master
+@code{ilisp@@naggum.no} so that they can be merged into the master
 source.
 @noindent
 @example
---Chris McConnell  18-Mar-91 
---Ivan Vazquez     27-Jun-93
+--Chris McConnell                     18-Mar-91 
+--Ivan Vazquez                        27-Jun-93
+--Marco Antoniotti and Rick Campbell  25-Oct-96
 @end example
 
 
@@ -273,7 +342,7 @@ following features:
 
 @itemize @bullet
 @item
-Runs under emacs-18, fsf emacs-19, and Lucid emacs-19.
+Runs under Emacs-18, Emacs-19, and XEmacs-19.
 
 @item
 Support for multiple LISP dialects including Lucid, Allegro and CMU
@@ -349,12 +418,12 @@ sections carefully before getting started with ILISP.
 If ILISP has already been installed at your location, you can probably
 skip ahead to ``Autoloading.''
 
-Note that jwz's byte-compiler is required when compiling ILISP.  If you
-don't have it, get it from
-@code{archive.cis.ohio-state.edu:/pub/gnu/emacs/elisp-archive/bytecomp2.tar.Z}
+Note that Jamie Zawinki's byte-compiler is required when compiling
+ILISP.  If you don't have it, get it from
+@code{ftp://archive.cis.ohio-state.edu/pub/gnu/emacs/elisp-archive/bytecomp2.tar.Z}
 
-You don't need it if you are running emacs version 19 as both the Fsf
-and Lucid releases include this in their distributions.
+You don't need it if you are running emacs version 19 as both the FSF
+and XEmacs releases include this in their distributions.
 
 @menu
 * Makefile configuration::      
@@ -368,25 +437,26 @@ and Lucid releases include this in their distributions.
 
 Some configuration needs to be done before compiling the emacs-lisp
 files that comprise ILISP.  This should be done in the
-@code{Makefile-ilisp} file in the section of the file marked
+@code{Makefile} file in the section of the file marked
 CONFIGURATION SECTION. 
 
 First, set the @code{YOUR_EMACS} variable to be the pathname of the
 emacs you will be using ILISP with.  This is the emacs that will be used
 to compile ILISP with.
 
-If you don't have jwz's byte compiler in your standard load path then
-you will have to uncomment the @code{BYTECOMP} line and set it to point
-to the correct location of the bytecomp files.
+If you don't have Jamie Zawinski's byte compiler in your standard load
+path ( both FSF's 19 and XEmacs 19 do have enhaced versions of it )
+then you will have to uncomment the @code{BYTECOMP} line and set it to
+point to the correct location of the bytecomp files.
 
-If you do not have comint already in your emacs ( both Fsf 19 and Lucid
+If you do not have comint already in your emacs ( both FSF 19 and XEmacs
 19 do ) then uncomment the @code{USE_BUNDLED_COMINT} line.  This will
 cause the copy of @code{comint.el} to be moved from the @code{Extras}
 directory into the main ILISP directory.
 
 The advice section is left uncommented out in the distributed
-@code{Makefile-ilisp} because most people will not have
-@code{advice.elc} in their load path.  Only Lucid emacs 19.8 will have
+@code{Makefile} because most people will not have
+@code{advice.elc} in their load path.  Only XEmacs will have
 this in the standard distribution.  If you do have it in your load path,
 then to avoid having two copies in your load-path and avoiding future
 confusion then comment out both the @code{ADVICE} and
@@ -403,7 +473,7 @@ confusion then comment out both the @code{ADVICE} and
 
 You can then compile everything with the shell command
 
-   @code{make -f Makefile-ilisp <your target here>'}
+   @code{% @dfn{make -f Makefile-ilisp }}@dfn{@var{<your target here>}}
 
 Where the possible targets are @code{emacs_18}, @code{emacs_18_epoch},
 @code{emacs_18_menu}, and @code{emacs_19}.
@@ -418,6 +488,10 @@ who will be using ILISP.
 You should add the directory where all of the ILISP emacs-lisp files
 reside to your @code{load-path}.  There is an example of this in
 @code{ilisp.emacs} 
+
+As an alternative you could set up a @code{.ilisp} which contains the
+appropriate portions of @code{ilisp.emacs}, in order to avoid cluttering
+too much @code{.emacs} or @code{default.el}
 
 The first time a dialect is started, the interface files will complain
 about not being compiled, just hit @kbd{i} to ignore the message.  Once
@@ -648,11 +722,6 @@ can be found in the in the file @file{ilisp.emacs} in the
 ;;; If you always want partial minibuffer completion
 (require 'completer)
 
-;;; If want TMC completion then you will have to Ftp it yourself from think.com
-;;; It's become to flaky for me to deal with. -- Ivan
-;;;(load "completion")
-;;;(initialize-completions)
-
 ;;; If you want to redefine typeout-window keys:
 (add-hook 'ilisp-load-hook
       '(lambda ()
@@ -743,7 +812,46 @@ Entry into ILISP mode runs the hooks on @code{comint-mode-hook} and
 dialects in the nesting order above.  Many dialects call
 @code{ilisp-load-init} in their dialect setup.  
 
-These are the currently supported dialects.  The dialects
+These are the currently supported dialects.
+
+@itemize @bullet
+@item allegro
+Allegro Common Lisp from Franz Inc.
+
+@item lispworks
+Harlequin Common Lisp from Harlequin Ltd.
+
+@item lucid
+Lucid Common Lisp, currently supported by Harlequin Ltd.
+
+@item kcl
+Kyoto Common Lisp, original version.
+
+@item akcl
+Austin Kyoto Common Lisp, the U. Texas derivative.
+
+@item gcl
+GNU Common Lisp, the official GNU release. A derivative of AKCL.
+
+@item ecl
+EcoLisp, the Embeddable Common Lisp by Beppe Attardi. A derivative of
+KCL and AKCL.
+
+@item ibcl
+Ibuki Common Lisp, derived from KCL.
+
+@item cmucl
+CMU Common Lisp, the major development platform for ILISP so far.
+
+@item clisp-hs
+CLISP by Haible and Stoll.
+
+@item oaklisp
+Oaklisp scheme.
+
+@end itemize
+
+The dialects
 are listed so that the indentation correponds to the hierarchical
 relationship between dialects.
 @example
@@ -752,8 +860,12 @@ relationship between dialects.
    lucid
    kcl
      akcl
+       gcl
+       ecl
      ibcl
    cmulisp
+   clisp-hs
+   lispworks
  scheme
    oaklisp
 @end example

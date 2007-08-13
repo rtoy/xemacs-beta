@@ -137,22 +137,6 @@ If BUFFER is nil, the current buffer is assumed.
   return make_int (negp ? - shortage : shortage);
 }
 
-DEFUN ("beginning-of-line", Fbeginning_of_line, Sbeginning_of_line,
-  0, 2, "_p" /*
-Move point to beginning of current line.
-With argument ARG not nil or 1, move forward ARG - 1 lines first.
-If scan reaches end of buffer, stop there without error.
-If BUFFER is nil, the current buffer is assumed.
-*/ )
-  (arg, buffer)
-     Lisp_Object arg, buffer;
-{
-  struct buffer *b = decode_buffer (buffer, 1);
-
-  BUF_SET_PT(b, XINT (Fpoint_at_bol(arg, buffer)));
-  return Qnil;
-}
-
 DEFUN ("point-at-bol", Fpoint_at_bol, Spoint_at_bol, 0, 2, 0 /*
 Return the character position of the first character on the current line.
 With argument N not nil or 1, move forward N - 1 lines first.
@@ -160,6 +144,7 @@ If scan reaches end of buffer, return that position.
 This function does not move point.
 */ )
        (arg, buffer)
+     Lisp_Object arg, buffer;
 {
   struct buffer *b = decode_buffer (buffer, 1);
   register int orig, end;
@@ -178,6 +163,44 @@ This function does not move point.
   return make_int (end);
 }
 
+DEFUN ("beginning-of-line", Fbeginning_of_line, Sbeginning_of_line,
+  0, 2, "_p" /*
+Move point to beginning of current line.
+With argument ARG not nil or 1, move forward ARG - 1 lines first.
+If scan reaches end of buffer, stop there without error.
+If BUFFER is nil, the current buffer is assumed.
+*/ )
+  (arg, buffer)
+     Lisp_Object arg, buffer;
+{
+  struct buffer *b = decode_buffer (buffer, 1);
+
+  BUF_SET_PT(b, XINT (Fpoint_at_bol(arg, buffer)));
+  return Qnil;
+}
+
+DEFUN ("point-at-eol", Fpoint_at_eol, Spoint_at_eol, 0, 2, 0 /*
+Return the character position of the last character on the current line.
+With argument N not nil or 1, move forward N - 1 lines first.
+If scan reaches end of buffer, return that position.
+This function does not move point.
+*/ )
+       (arg, buffer)
+     Lisp_Object arg, buffer;
+{
+  struct buffer *buf = decode_buffer (buffer, 1);
+
+  XSETBUFFER (buffer, buf);
+
+  if (NILP (arg))
+    arg = make_int (1);
+  else
+    CHECK_INT (arg);
+
+  return make_int (find_before_next_newline (buf, BUF_PT (buf), 0,
+					     XINT (arg) - (XINT (arg) <= 0)));
+}
+
 DEFUN ("end-of-line", Fend_of_line, Send_of_line,
   0, 2, "_p" /*
 Move point to end of current line.
@@ -192,27 +215,6 @@ If BUFFER is nil, the current buffer is assumed.
 
   BUF_SET_PT(buf, XINT (Fpoint_at_eol (arg, buffer)));
   return Qnil;
-}
-
-DEFUN ("point-at-eol", Fpoint_at_eol, Spoint_at_eol, 0, 2, 0 /*
-Return the character position of the last character on the current line.
-With argument N not nil or 1, move forward N - 1 lines first.
-If scan reaches end of buffer, return that position.
-This function does not move point.
-*/ )
-       (arg, buffer)
-{
-  struct buffer *buf = decode_buffer (buffer, 1);
-
-  XSETBUFFER (buffer, buf);
-
-  if (NILP (arg))
-    arg = make_int (1);
-  else
-    CHECK_INT (arg);
-
-  return find_before_next_newline (buf, BUF_PT (buf), 0,
-				   XINT (arg) - (XINT (arg) <= 0));
 }
 
 DEFUN ("delete-char", Fdelete_char, Sdelete_char, 1, 2, "*p\nP" /*

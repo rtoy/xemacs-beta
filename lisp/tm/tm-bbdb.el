@@ -6,7 +6,7 @@
 ;; Author: Shuhei KOBAYASHI <shuhei-k@jaist.ac.jp>
 ;;         Artur Pioro <artur@flugor.if.uj.edu.pl>
 ;; Maintainer: Shuhei KOBAYASHI <shuhei-k@jaist.ac.jp>
-;; Version: $Id: tm-bbdb.el,v 1.1.1.1 1996/12/18 03:55:31 steve Exp $
+;; Version: $Id: tm-bbdb.el,v 1.2 1996/12/22 00:29:37 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia, multilingual, BBDB
 
 ;; This file is part of tm (Tools for MIME).
@@ -31,12 +31,46 @@
 (require 'std11)
 (require 'tm-ew-d)
 (require 'tm-view)
-(require 'bbdb-com) ; (require 'bbdb) implicitly
+(if (module-installed-p 'bbdb-com)
+    (require 'bbdb-com)
+  (eval-when-compile
+    ;; imported from bbdb-1.51
+    (defmacro bbdb-pop-up-elided-display ()
+      '(if (boundp 'bbdb-pop-up-elided-display)
+	   bbdb-pop-up-elided-display
+	 bbdb-elided-display))
+    (defmacro bbdb-user-mail-names ()
+      "Returns a regexp matching the address of the logged-in user"
+      '(or bbdb-user-mail-names
+	   (setq bbdb-user-mail-names
+		 (concat "\\b" (regexp-quote (user-login-name)) "\\b"))))
+    ))
+
+
+;;; @ User Variables
+;;;
+
+(defvar tm-bbdb/use-mail-extr t
+  "*If non-nil, `mail-extract-address-components' is used.
+Otherwise `tm-bbdb/extract-address-components' overrides it.")
+
+(defvar tm-bbdb/auto-create-p nil
+  "*If t, create new BBDB records automatically.
+If function, then it is called with no arguments to decide whether an
+entry should be automatically creaded.
+
+tm-bbdb uses this variable instead of `bbdb/mail-auto-create-p' or
+`bbdb/news-auto-create-p' unless other tm-MUA overrides it.")
+
+(defvar tm-bbdb/delete-empty-window nil
+  "*If non-nil, delete empty BBDB window.
+All bbdb-MUAs but bbdb-gnus display BBDB window even if it is empty.
+If you prefer behavior of bbdb-gnus, set this variable to t.
+
+For framepop users: If empty, `framepop-banish' is used instead.")
 
 ;;; @ mail-extr
 ;;;
-
-(defvar tm-bbdb/use-mail-extr t)
 
 (defun tm-bbdb/extract-address-components (str)
   (let* ((ret     (std11-extract-address-components str))
@@ -115,8 +149,6 @@
 
 ;;; @ BBDB functions for mime/viewer-mode
 ;;;
-
-(defvar tm-bbdb/auto-create-p nil)
 
 (defun tm-bbdb/update-record (&optional offer-to-create)
   "Return the record corresponding to the current MIME previewing message.
@@ -197,10 +229,9 @@ displaying the record corresponding to the sender of the current message."
                 (bbdb-display-records (list record))
               (framepop-banish))
           (bbdb-display-records (if record (list record) nil))
-	  (if (not record)
-	      (progn
-		(set-buffer "*BBDB*")
-		(delete-window))))
+          (if (and (null record)
+                   tm-bbdb/delete-empty-window)
+              (delete-windows-on (get-buffer "*BBDB*"))))
         (set-buffer b)
         record))))
 

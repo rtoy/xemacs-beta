@@ -3942,6 +3942,7 @@ complex_vars_of_glyphs_x (void)
   BUILD_GLYPH_INST (Vtruncation_glyph, truncator);
   BUILD_GLYPH_INST (Vcontinuation_glyph, continuer);
   BUILD_GLYPH_INST (Vxemacs_logo, xemacs);
+  BUILD_GLYPH_INST (Vhscroll_glyph, hscroll);
 
 #undef BUILD_GLYPH_INST
 }

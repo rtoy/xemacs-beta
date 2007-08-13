@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Version:
-;;	$Id: cless.el,v 1.1.1.1 1996/12/18 03:55:31 steve Exp $
+;;	$Id: cless.el,v 1.2 1996/12/22 00:29:30 steve Exp $
 ;; Keywords: common lisp
 
 ;; This file is not part of GNU Emacs.

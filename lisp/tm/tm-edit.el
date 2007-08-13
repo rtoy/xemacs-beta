@@ -6,7 +6,7 @@
 ;;         MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1994/08/21 renamed from mime.el
-;; Version: $Revision: 1.1.1.1 $
+;; Version: $Revision: 1.2 $
 ;; Keywords: mail, news, MIME, multimedia, multilingual
 
 ;; This file is part of tm (Tools for MIME).
@@ -110,7 +110,6 @@
 (require 'sendmail)
 (require 'mail-utils)
 (require 'mel)
-(require 'tl-822)
 (require 'tl-list)
 (require 'tm-view)
 (require 'tm-ew-e)
@@ -121,7 +120,7 @@
 ;;;
 
 (defconst mime-editor/RCS-ID
-  "$Id: tm-edit.el,v 1.1.1.1 1996/12/18 03:55:31 steve Exp $")
+  "$Id: tm-edit.el,v 1.2 1996/12/22 00:29:39 steve Exp $")
 
 (defconst mime-editor/version (get-version-string mime-editor/RCS-ID))
 
@@ -2479,18 +2478,27 @@ Content-Type: message/partial; id=%s; number=%d; total=%d\n%s\n"
 	     (t
 	      (let* (charset
 		     (pstr
-		      (mapconcat (function
-				  (lambda (attr)
-				    (if (string-equal (car attr)
-						      "charset")
-					(progn
-					  (setq charset (cdr attr))
-					  "")
-				      (concat ";" (car attr)
-					      "=" (cdr attr))
-				      )
-				    ))
-				 params ""))
+		      (let ((bytes (+ 14 (length ctype))))
+			(mapconcat (function
+				    (lambda (attr)
+				      (if (string-equal (car attr) "charset")
+					  (progn
+					    (setq charset (cdr attr))
+					    "")
+					(let* ((str
+						(concat (car attr)
+							"=" (cdr attr))
+						)
+					       (bs (length str))
+					       )
+					  (setq bytes (+ bytes bs 2))
+					  (if (< bytes 76)
+					      (concat "; " str)
+					    (setq bytes (+ bs 1))
+					    (concat ";\n " str)
+					    )
+					  ))))
+				   params "")))
 		     encoding
 		     encoded)
 		(save-excursion

@@ -5,7 +5,7 @@
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Keywords: mail, news, RFC 822, STD 11
 ;; Version:
-;;	$Id: std11-parse.el,v 1.1.1.1 1996/12/18 03:55:31 steve Exp $
+;;	$Id: std11-parse.el,v 1.2 1996/12/22 00:29:20 steve Exp $
 
 ;; This file is part of MU (Message Utilities).
 

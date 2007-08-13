@@ -5,7 +5,7 @@
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1996/8/6
 ;; Version:
-;;	$Id: gnus-charset.el,v 1.1.1.1 1996/12/18 03:55:31 steve Exp $
+;;	$Id: gnus-charset.el,v 1.2 1996/12/22 00:29:34 steve Exp $
 ;; Keywords: news, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is not part of GNU Emacs yet.
@@ -88,7 +88,10 @@
         (let ((format-alist nil)
               (auto-mode-alist (nnheader-auto-mode-alist))
               (default-major-mode 'fundamental-mode)
-              (after-insert-file-functions nil))
+              (after-insert-file-functions ; for jam-code-guess
+               (if (memq 'jam-code-guess-after-insert-file-function
+                         after-insert-file-functions)
+                   '(jam-code-guess-after-insert-file-function))))
           (apply 'find-file-noselect args)))
        )
      ;; Red Gnus 0.67 or later
@@ -98,9 +101,24 @@
         (let ((format-alist nil)
               (auto-mode-alist (nnheader-auto-mode-alist))
               (default-major-mode 'fundamental-mode)
-              (after-insert-file-functions nil))
+              (enable-local-variables nil)
+              (after-insert-file-functions ; for jam-code-guess
+               (if (memq 'jam-code-guess-after-insert-file-function
+                         after-insert-file-functions)
+                   '(jam-code-guess-after-insert-file-function))))
           (insert-file-contents filename visit beg end replace))
         ))
+     ;; imported from Red Gnus 0.66
+     (or (fboundp 'nnheader-auto-mode-alist)
+         (defun nnheader-auto-mode-alist ()
+           (let ((alist auto-mode-alist)
+                 out)
+             (while alist
+               (when (listp (cdar alist))
+                 (push (car alist) out))
+               (pop alist))
+             (nreverse out)))
+         )
      ;; alias for Old Gnus
      (defalias 'nnheader-insert-file-contents-literally
        'nnheader-insert-file-contents)

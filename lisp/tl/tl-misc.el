@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Version:
-;;	$Id: tl-misc.el,v 1.1.1.1 1996/12/18 03:55:31 steve Exp $
+;;	$Id: tl-misc.el,v 1.2 1996/12/22 00:29:32 steve Exp $
 ;; Keywords: load-path, module, structure
 
 ;; This file is part of tl (Tiny Library).

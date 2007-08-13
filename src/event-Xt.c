@@ -677,8 +677,13 @@ x_to_emacs_keysym (XEvent *event, int simple_p)
 	{
 	  char buf [255];
 	  char *s1, *s2;
-	  for (s1 = name, s2 = buf; *s1; s1++, s2++)
-	    *s2 = tolower (* (unsigned char *) s1);
+	  for (s1 = name, s2 = buf; *s1; s1++, s2++) {
+	    if (*s1 == '_') {
+	      *s2 = '-';
+	    } else {
+	      *s2 = tolower (* (unsigned char *) s1);
+	    }
+	  }
 	  *s2 = 0;
 	  return (KEYSYM (buf));
 	}

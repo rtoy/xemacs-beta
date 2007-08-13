@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: tm-def.el,v 1.1.1.1 1996/12/18 03:55:31 steve Exp $
+;; Version: $Id: tm-def.el,v 1.2 1996/12/22 00:29:38 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia, definition
 
 ;; This file is part of tm (Tools for MIME).

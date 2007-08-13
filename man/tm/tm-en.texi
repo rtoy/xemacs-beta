@@ -1,0 +1,1998 @@
+\input texinfo.tex
+@setfilename tm-en.info
+@settitle{tm 7.90 Manual (English Version)}
+@titlepage
+@title tm 7.90 Manual (English Version)
+@author MORIOKA Tomohiko <morioka@@jaist.ac.jp>
+@subtitle 1996/10/15
+@end titlepage
+@node Top, Introduction, (dir), (dir)
+@top tm 7.90 Manual (English Version)
+
+@ifinfo
+
+This file documents tm, a MIME package for GNU Emacs.
+@end ifinfo
+
+@menu
+* Introduction::                What is tm?
+* Setting::                     
+* Bug report::                  How to report bug and about mailing list of tm
+* Concept Index::               
+* Variable Index::              
+@end menu
+
+@node Introduction, Setting, Top, Top
+@chapter What is tm?
+
+The tm package is a set of modules to enjoy MIME on GNU Emacs.  Using
+tm, you can
+
+@itemize @bullet
+@item
+ playback or view the MIME messages using tm-view
+@item
+ compose MIME message using tm-edit
+@item
+ use the enhanced MIME features with mh-e, GNUS, Gnus, RMAIL and VM
+@end itemize
+
+@noindent
+and more.
+
+Please read following about each topics:
+
+@itemize @bullet
+@item
+tm-MUA for Gnus (@ref{(gnus-mime-en)})
+@item
+tm-MUA for GNUS (@ref{(tm-gnus-en)})
+@item
+tm-MUA for mh-e (@ref{(tm-mh-e-en)})
+@item
+mime/viewer-mode (@ref{(tm-view-en)})
+@item
+mime/editor-mode (@ref{(tm-edit-en)})
+@end itemize
+
+
+
+@menu
+* Glossary::                    
+@end menu
+
+@node Glossary,  , Introduction, Introduction
+@section Glossary
+
+
+@menu
+* 7bit::                        
+* 8bit::                        
+* 94-character set::            
+* 96-character set::            
+* 94x94-character set::         
+* ASCII::                       
+* Base64::                      
+* binary::                      
+* graphic character set::       Graphic Character Set
+* cn-gb::                       cn-gb, gb2312
+* cn-big5::                     cn-big5, big5
+* CNS::                         CNS 11643-1992
+* coded character set::         Coded character set, Character code
+* code extension::              Code extension
+* Content-Disposition::         Content-Disposition field
+* media type::                  
+* Content-Type field::          
+* Emacs::                       
+* encoded-word::                
+* encapsulation::               
+* euc-kr::                      
+* FTP::                         FTP 
+* GB 2312::                     GB 2312-1980
+* GB 8565.2::                   GB 8565.2-1988
+* hz-gb2312::                   
+* ISO 2022::                    
+* iso-2022-cn::                 
+* iso-2022-cn-ext::             
+* iso-2022-jp::                 
+* iso-2022-jp-2::               
+* iso-2022-kr::                 
+* ISO 646::                     
+* ISO 8859-1::                  
+* iso-8859-1::                  
+* ISO 8859-2::                  
+* iso-8859-2::                  
+* ISO 8859-3::                  
+* ISO 8859-4::                  
+* ISO 8859-5::                  
+* iso-8859-5::                  
+* ISO 8859-6::                  
+* ISO 8859-7::                  
+* iso-8859-7::                  
+* ISO 8859-8::                  
+* ISO 8859-9::                  
+* ISO-IR-165::                  ISO-IR-165, CCITT Extended GB 
+* JIS X0201::                   
+* JIS C6226::                   JIS C6226-1978
+* JIS X0208::                   
+* JIS X0212::                   JIS X0212-1990
+* koi8-r::                      
+* KS C5601::                    KS C5601-1987
+* message::                     
+* message/rfc822::              
+* method::                      
+* MIME::                        
+* MIME charset::                
+* MTA::                         
+* MUA::                         
+* MULE::                        
+* multipart::                   Multipart
+* multipart/alternative::       
+* multipart/digest::            
+* multipart/encrypted::         
+* multipart/mixed::             
+* multipart/parallel::          
+* multipart/signed::            
+* PGP::                         
+* PGP-kazu::                    
+* PGP/MIME::                    
+* Quoted-Printable::            
+* RFC 821::                     
+* RFC 822::                     
+* RFC 934::                     
+* RFC 1036::                    
+* RFC 1153::                    
+* RFC 1557::                    
+* RFC 1922::                    
+* RFC 2045::                    
+* RFC 2046::                    
+* RFC 2048::                    
+* RFC 2049::                    
+* plain text::                  
+* Security multipart::          
+* text/enriched::               
+* text/plain::                  
+* tm-kernel::                   tm-kernel, tm
+* tm-MUA::                      
+* us-ascii::                    
+@end menu
+
+@node 7bit, 8bit, Glossary, Glossary
+@subsection 7bit
+
+@cindex{7bit}@strong{7bit} means any integer between 0 .. 127.@refill
+
+Any data represented by 7bit integers is called @cindex{7bit
+data}@strong{7bit data}.@refill
+
+Textual string consisted of Control characters between 0 .. 31 and 127,
+and space represented by 32, and graphic characters between 33 .. 236
+are called @cindex{7bit (textual) string}@strong{7bit (textual)
+string}.@refill
+
+Traditional Internet MTA (@ref{MTA}) can translate 7bit data, so it is
+no need to translate by Quoted-Printable (@ref{Quoted-Printable}) or
+Base64 (@ref{Base64}) for 7bit data.@refill
+
+However if there are too long lines, it can not translate by 7bit MTA
+even if it is 7bit data.  RFC 821 (@ref{RFC 821}) and RFC 2045 (@ref{RFC
+2045}) require lines in 7bit data must be less than 998 bytes.  So if a
+``7bit data'' has a line more than 999 bytes, it is regarded as binary
+(@ref{binary}).  For example, Postscript file should be encoded by
+Quoted-Printable.
+
+
+@node 8bit, 94-character set, 7bit, Glossary
+@subsection 8bit
+
+@cindex{8bit}@strong{8bit} means any integer between 0 .. 255.@refill
+
+Any data represented by 8bit integers is called @cindex{8bit
+data}@strong{8bit data}.@refill
+
+Textual string consisted of Control characters between 0 .. 31, 127, and
+128 .. 159, and space represented by 32, and graphic characters between
+33 .. 236 and 160 .. 255 are called @cindex{8bit (textual)
+string}@strong{8bit (textual) string}.@refill
+
+For example, iso-8859-1 (@ref{iso-8859-1}) or euc-kr (@ref{euc-kr}) are
+coded-character-set represented by 8bit textual string.@refill
+
+Traditional Internet MTA (@ref{MTA}) can translate only 7bit
+(@ref{7bit}) data, so if a 8bit data will be translated such MTA, it
+must be encoded by Quoted-Printable (@ref{Quoted-Printable}) or Base64
+(@ref{Base64}).@refill
+
+However 8bit MTA are increasing today.@refill
+
+However if there are too long lines, it can not translate by 8bit MTA
+even if it is 8bit data.  RFC 2045 (@ref{RFC 2045}) require lines in
+8bit data must be less than 998 bytes.  So if a ``8bit data'' has a line
+more than 999 bytes, it is regarded as binary (@ref{binary}), so it must
+be encoded by Base64 or Quoted-Printable.
+
+
+@node 94-character set, 96-character set, 8bit, Glossary
+@subsection 94-character set
+
+@cindex{94-character set}@strong{94-character set} is a kind of 1 byte
+graphic character set (@ref{graphic character set}), each characters are
+in positions 02/01 (33) to 07/14 (126) or 10/01 (161) to 15/14 (254).
+(ex. ASCII (@ref{ASCII}), JIS X0201-Latin)
+
+
+@node 96-character set, 94x94-character set, 94-character set, Glossary
+@subsection 96-character set
+
+@cindex{96-character set}@strong{96-character set} is a kind of 1 byte
+graphic character set (@ref{graphic character set}), each characters are
+in positions 02/00 (32) to 07/15 (126) or 10/00 (160) to 15/15
+(255). (ex. ISO 8859)
+
+
+@node 94x94-character set, ASCII, 96-character set, Glossary
+@subsection 94x94-character set
+
+@cindex{94x94-character set}@strong{94x94-character set} is a kind of 2
+byte graphic character set (@ref{graphic character set}), each bytes are
+in positions 02/01 (33) to 07/14 (126) or 10/01 (161) to 15/14 (254).
+(ex. JIS X0208 (@ref{JIS X0208}), GB 2312 (@ref{GB 2312}))
+
+
+@node ASCII, Base64, 94x94-character set, Glossary
+@subsection ASCII
+
+アメリカ連邦で使われる文字を符号化した 94-character set
+(@ref{94-character set}).  A-Z, a-z の Latin 文字と数字、幾つかの記号か
+らなる。ISO 646 (@ref{ISO 646}) の一つ。
+
+@cindex{ASCII}@cindex{ANSI X3.4:1986}
+@noindent
+[ASCII]
+@quotation
+``Coded Character Set -- 7-Bit American Standard Code for Information
+Interchange'', ANSI X3.4:1986.
+@end quotation
+
+
+
+@node Base64, binary, ASCII, Glossary
+@subsection Base64
+
+@cindex{Base64}@strong{Base64} is a transfer encoding method of MIME
+(@ref{MIME}) defined in RFC 2045 (@ref{RFC 2045}).@refill
+
+The encoding process represents 24-bit groups of input bits as output
+strings of 4 encoded characters.  Encoded characters represent integer 0
+.. 63 or @cindex{pad}@strong{pad}.  Base64 data must be 4 * n bytes, so
+pad is used to adjust size.@refill
+
+These 65 characters are subset of all versions of ISO 646, including
+US-ASCII, and all versions of EBCDIC.  So it is safe even if it is
+translated by non-Internet gateways.
+
+
+@node binary, graphic character set, Base64, Glossary
+@subsection binary
+
+任意の byte 列を @cindex{binary}@strong{binary} と呼ぶことにします。
+@refill
+
+8bit (@ref{8bit}) と異なるのは data に行の構造を仮定しないことです。
+
+また、行の構造があっても、999 byte 以上からなる行がある場合も binaryと呼
+ぶことにします。@refill
+
+ちなみに、7bit (@ref{7bit}) や 8bit で表現できる data は binary でも表現
+できます。よって、@cindex{binary data}@strong{binary data} と言った場合、
+任意の data を指すことがあります。
+
+
+@node graphic character set, cn-gb, binary, Glossary
+@subsection Graphic Character Set
+
+Coded character set (@ref{Coded character set}) for graphic characters.
+
+
+@node cn-gb, cn-big5, graphic character set, Glossary
+@subsection cn-gb, gb2312
+
+中国大陸でられている簡体字で表記される中国語を表現するための MIME
+charset (@ref{MIME charset}) の１つ。@refill
+
+ISO 2022 (@ref{ISO 2022}) に基いて ASCII (@ref{ASCII}) に GB 2312
+(@ref{GB 2312}) を 8bit (@ref{8bit}) で符号拡張 (@ref{Code extension})し
+ている。@refill
+
+RFC 1922 (@ref{RFC 1922}) で定義されている。
+
+
+@node cn-big5, CNS, cn-gb, Glossary
+@subsection cn-big5, big5
+
+台湾や香港で用いられている主に繁体字で表記される中国語を表現するための 
+MIME charset (@ref{MIME charset}) の１つ。@refill
+
+ISO 2022 (@ref{ISO 2022}) に基かない 8bit (@ref{8bit}) のcoded character
+set (@ref{coded character set})で de-fact standard である。RFC 1922
+(@ref{RFC 1922}) で定義されている。@refill
+
+cf. @cindex{BIG5}
+@noindent
+[BIG5]
+@quotation
+Institute for Information Industry, ``Chinese Coded Character Set in
+Computer'', March 1984.
+@end quotation
+
+CNS 11643-1986 (@ref{CNS}) と対応関係がある。
+
+
+@node CNS, coded character set, cn-big5, Glossary
+@subsection CNS 11643-1992
+
+台湾や香港で用いられている主に繁体字で表記される中国語を表現するための 
+文字集合(@ref{Character set})。台湾の標準。現在、94×94 (@ref{94x94
+character set}) の面が第１面から第７面まである。@refill
+
+ISO 2022 (@ref{ISO 2022}) での終端文字は、第１面が `G', 第２面が `H', 第
+３面が `I', 第４面が `J', 第５面が `K', 第６面が `L', 第７面が `M' であ
+る。
+
+@cindex{CNS 11643-1992}@cindex{CNS        11643:1992}
+@noindent
+[CNS 11643-1992]
+@quotation
+``Standard Interchange Code for Generally-Used Chinese Characters'', CNS
+11643:1992.
+@end quotation
+
+
+
+@node coded character set, code extension, CNS, Glossary
+@subsection Coded character set, Character code
+
+A set of unambiguous rules that establishes a character set and the
+one-to-one relationship between the characters of the set and their
+bit combinations.
+
+
+@node code extension, Content-Disposition, coded character set, Glossary
+@subsection Code extension
+
+The techniques for the encoding of characters that are not included in
+the character set of a given code. (ex. ISO 2022 (@ref{ISO 2022}))
+
+
+@node Content-Disposition, media type, code extension, Glossary
+@subsection Content-Disposition field
+
+Content の表示の仕方や file 名を表現するための field. MIME (@ref{MIME}) 
+の拡張の１つ。@refill
+
+@cindex{Experimental}@cindex{RFC 1806}
+@noindent
+[RFC 1806]
+@quotation
+E R. Troost and S. Dorner, ``Communicating Presentation Information in
+Internet Messages: The Content-Disposition Header'', June 1995,
+Experimental.
+@end quotation
+
+
+
+@node media type, Content-Type field, Content-Disposition, Glossary
+@subsection media type
+
+@cindex{media type}@strong{media type} specifies the nature of the data
+in the body of MIME (@ref{MIME}) entity (@ref{entity}).  It consists of
+@cindex{type}@strong{type} and @cindex{subtype}@strong{subtype}.  It is
+defined in RFC 2046 (@ref{RFC 2046}).@refill
+
+Currently there are following types:
+
+@itemize @bullet
+@item
+@cindex{text}@strong{text}
+@item
+@cindex{image}@strong{image}
+@item
+@cindex{audio}@strong{audio}
+@item
+@cindex{video}@strong{video}
+@item
+@cindex{application}@strong{application}
+@item
+@cindex{multipart}@strong{multipart} (@ref{multipart})
+@item
+@cindex{message}@strong{message}
+@end itemize
+
+
+And there are various subtypes, for example, application/octet-stream,
+audio/basic, image/jpeg, multipart/mixed (@ref{multipart/mixed}),
+text/plain (@ref{text/plain}), video/mpeg...@refill
+
+You can refer registered media types at MEDIA TYPES
+(ftp://ftp.isi.edu/in-notes/iana/assignments/media-types).@refill
+
+In addition, you can use private type or subtype using
+@cindex{x-token}@strong{x-token}, which as the prefix `x-'.  However you
+can not use them in public.@refill
+
+(cf. @ref{Content-Type field})
+
+
+
+@node Content-Type field, Emacs, media type, Glossary
+@subsection Content-Type field
+
+Header field to represent information about body, such as media type
+(@ref{media type}), MIME charset (@ref{MIME charset}).  It is defined in
+RFC 2045 (@ref{RFC 2045}).
+
+@noindent
+@strong{[Memo]}
+@quotation
+
+Historically, Content-Type field was proposed in RFC 1049.  In it,
+Content-Type did not distinguish type and subtype.  However MIME parser
+may be able to accept RFC 1049 based Content-Type as unknown type.
+@end quotation
+
+
+Content-Type field is defined as following:
+
+@quotation
+``Content-Type'' ``:'' @cindex{type}@strong{type} ``/''
+@cindex{subtype}@strong{subtype} *( ``;'' @cindex{parameter}@strong{parameter} )
+@end quotation
+
+
+For example:
+
+@quotation
+@example
+Content-Type: image/jpeg
+@end example
+@end quotation
+
+
+@quotation
+@example
+Content-Type: text/plain; charset=iso-2022-jp
+@end example
+@end quotation
+
+
+@noindent
+@strong{[Memo]}
+@quotation
+
+A part does not have content-type field is regarded as
+
+@quotation
+@example
+Content-Type: text/plain; charset=us-ascii
+@end example
+@end quotation
+
+@noindent
+(cf. @ref{us-ascii})
+
+
+And a part has unknown type/subtype is regarded as
+
+@quotation
+@example
+Content-Type: application/octet-stream
+@end example
+@end quotation
+
+@end quotation
+
+
+
+@node Emacs, encoded-word, Content-Type field, Glossary
+@subsection Emacs
+
+ここでは `Emacs' で FSF が配布している GNU Emacs を指し、`emacs' で
+GNU Emacs の変種の総称とする。
+
+
+@node encoded-word, encapsulation, Emacs, Glossary
+@subsection encoded-word
+
+Representation non ASCII (@ref{ASCII}) characters in header.  It is
+defined in @cindex{RFC 2047}@strong{RFC 2047}.@refill
+
+@cindex{Standards Track}@cindex{RFC 2047}
+@noindent
+[RFC 2047]
+@quotation
+K. Moore, ``MIME (Multipurpose Internet Mail Extensions) Part Three:
+Message Header Extensions for Non-ASCII Text'', November 1996, Standards
+Track (obsolete RFC 1521,1522,1590).
+@end quotation
+
+
+
+@node encapsulation, euc-kr, encoded-word, Glossary
+@subsection encapsulation
+
+Internet mail (@ref{RFC 822}) を他の記事にまるごと入れる方法。@refill
+
+例えば、記事を転送したりするのに用いる。@refill
+
+(cf. @ref{message/rfc822})
+
+
+
+@node euc-kr, FTP, encapsulation, Glossary
+@subsection euc-kr
+
+韓国語を表現するための MIME charset (@ref{MIME charset}) の１つ。
+
+ISO 2022 (@ref{ISO 2022}) に基いて ASCII (@ref{ASCII}) にKS C5601
+(@ref{KS C5601}) を 8bit (@ref{8bit}) で符号拡張 (@ref{Code extension})
+している。@refill
+
+RFC 1557 (@ref{RFC 1557}) で定義されている。@refill
+
+cf. @cindex{euc-kr}@cindex{KS C 5861:1992}
+@noindent
+[euc-kr]
+@quotation
+Korea Industrial Standards Association, ``Hangul Unix Environment'', KS
+C 5861:1992.
+@end quotation
+
+
+
+@node FTP, GB 2312, euc-kr, Glossary
+@subsection FTP 
+
+Internet で file を転送するための protocol の１つ。RFC 959 で定義されて
+いる。@refill
+
+@cindex{FTP}@cindex{STD 9}@cindex{RFC 959}
+@noindent
+[FTP: RFC 959]
+@quotation
+Postel, J. and J. Reynolds, ``File Transfer Protocol'', October 1985,
+STD 9.
+@end quotation
+
+
+
+@node GB 2312, GB 8565.2, FTP, Glossary
+@subsection GB 2312-1980
+
+中国大陸で用いられている簡体字で表記される中国語を表すための 
+94x94-character set (@ref{94x94-character set})。中国の国家標準。ISO
+2022 (@ref{ISO 2022}) での終端文字は `A'.@refill
+
+これは GB における基本集である。
+
+@cindex{GB 2312}@cindex{GB 2312:1980}
+@noindent
+[GB 2312]
+@quotation
+『信息交換用漢字編碼字符集 -- 基本集』, ``Code of Chinese Graphic
+Character Set for Information Interchange - Primary Set'', GB 2312:1980.
+@end quotation
+
+
+
+@node GB 8565.2, hz-gb2312, GB 2312, Glossary
+@subsection GB 8565.2-1988
+
+中国語のための補助文字集合(@ref{Character set})。中国の国家標準。GB 2312
+(@ref{GB 2312}) の空き部分に補充するように定義されたらしい。
+
+@cindex{GB 8565.2}@cindex{GB 8565.2:1988}
+@noindent
+[GB 8565.2]
+@quotation
+``Information Processing - Coded Character Sets for Text Communication -
+Part 2: Graphic Characters used with Primary Set'', GB 8565.2:1988.
+@end quotation
+
+
+
+@node hz-gb2312, ISO 2022, GB 8565.2, Glossary
+@subsection hz-gb2312
+
+中国大陸で用いられている簡体字で表記される中国語を表現するための MIME
+charset (@ref{MIME charset}) の１つ。@refill
+
+ASCII (@ref{ASCII}) に GB 2312 (@ref{GB 2312}) を 7bit で符号拡張
+(@ref{Code extension})したものを ASCII printable になるように工夫してい
+る。@refill
+
+RFC 1842, 1843 で定義されている。
+
+@cindex{Informational}@cindex{RFC 1842}
+@noindent
+[RFC 1842]
+@quotation
+Y. Wei, Y. Zhang, J. Li, J. Ding and Y. Jiang, ``ASCII Printable
+Characters-Based Chinese Character Encoding for Internet Messages'',
+August 1995, Informational.
+@end quotation
+
+@cindex{Informational}@cindex{RFC 1843}
+@noindent
+[RFC 1843]
+@quotation
+F. Lee, ``HZ - A Data Format for Exchanging Files of Arbitrarily Mixed
+Chinese and ASCII characters'', August 1995, Informational.
+@end quotation
+
+
+
+@node ISO 2022, iso-2022-cn, hz-gb2312, Glossary
+@subsection ISO 2022
+
+符号拡張(@ref{Code extension})のための国際標準。@refill
+
+これを用いて複数の文字集合(@ref{Character set})を組合せて 7bit
+(@ref{7bit}) ないし 8bit (@ref{8bit}) の 符号化文字集合(@ref{Coded
+character set}) を作ることができる。
+
+@cindex{ISO 2022}@cindex{ISO/IEC 2022:1994}
+@noindent
+[ISO 2022]
+@quotation
+International Organization for Standardization (ISO), ``Information
+Processing: ISO 7-bit and 8-bit coded character sets: Code extension
+techniques'', ISO/IEC 2022:1994.
+@end quotation
+
+
+
+@node iso-2022-cn, iso-2022-cn-ext, ISO 2022, Glossary
+@subsection iso-2022-cn
+
+中国語を表現するための MIME charset (@ref{MIME charset}) の１つ。
+
+ISO 2022 (@ref{ISO 2022}) に基いて ASCII (@ref{ASCII}) に GB 2312
+(@ref{GB 2312}), CNS 11643 plain 1, plain 2 (@ref{CNS}) を 7bit
+(@ref{7bit}) で符号拡張 (@ref{Code extension})している。@refill
+
+RFC 1922 (@ref{RFC 1922}) で定義されている。
+
+
+@node iso-2022-cn-ext, iso-2022-jp, iso-2022-cn, Glossary
+@subsection iso-2022-cn-ext
+
+中国語を表現するための MIME charset (@ref{MIME charset}) の１つ。
+
+ISO 2022 (@ref{ISO 2022}) に基いて ASCII (@ref{ASCII}) に GB 2312
+(@ref{GB 2312}), CNS 11643 plain 1 .. 7 (@ref{CNS}), ISO-IR-165
+(@ref{ISO-IR-165}) 等を 7bit (@ref{7bit}) で符号拡張 (@ref{Code
+extension})している。@refill
+
+RFC 1922 (@ref{RFC 1922}) で定義されている。@refill
+
+@noindent
+@strong{[Memo]}
+@quotation
+MULE 2.3 および、現在の XEmacs/mule では正しく扱うことはできない。
+
+Emacs/mule では利用可能である。
+@end quotation
+
+
+
+@node iso-2022-jp, iso-2022-jp-2, iso-2022-cn-ext, Glossary
+@subsection iso-2022-jp
+
+日本語を表現するための MIME charset (@ref{MIME charset}) の一つ。
+
+古い ISO 2022 (@ref{ISO 2022}) に基いて ASCII (@ref{ASCII}), JIS
+X0201-Latin, JIS X0208-1978 (@ref{JIS C6226-1978}), JIS X0208-1983
+(@ref{JIS X0208}) を切り替える 7bit (@ref{7bit}) 文字符号。@refill
+
+RFC 1468 で定義されている。@refill
+
+@noindent
+@strong{[Memo]}
+@quotation
+JIS X0208-1996? では ISO 2022 (@ref{ISO 2022}) と独立に定義される予定。
+@end quotation
+
+
+@cindex{iso-2022-jp}@cindex{RFC 1468}
+@noindent
+[iso-2022-jp: RFC 1468]
+@quotation
+Murai J., M. Crispin, and E. van der Poel, ``Japanese Character Encoding
+for Internet Messages'', June 1993.
+@end quotation
+
+
+
+@node iso-2022-jp-2, iso-2022-kr, iso-2022-jp, Glossary
+@subsection iso-2022-jp-2
+
+A MIME charset (@ref{MIME charset}), which is a multilingual extension
+of iso-2022-jp (@ref{iso-2022-jp}).@refill
+
+It is defined in RFC 1554.
+
+@cindex{iso-2022-jp-2}@cindex{Informational}@cindex{RFC 1554}
+@noindent
+[iso-2022-jp-2: RFC 1554]
+@quotation
+Ohta M. and Handa K., ``ISO-2022-JP-2: Multilingual Extension of
+ISO-2022-JP'', December 1993, Informational.
+@end quotation
+
+
+
+@node iso-2022-kr, ISO 646, iso-2022-jp-2, Glossary
+@subsection iso-2022-kr
+
+A MIME charset (@ref{MIME charset}) for Korean language (Hangul
+script).@refill
+
+It is based on ISO 2022 (@ref{ISO 2022}) code extension (@ref{code
+extension}) technique to extends ASCII (@ref{ASCII}) to use KS C5601
+(@ref{KS C5601}) as 7bit (@ref{7bit}) text.@refill
+
+It is defined in RFC 1557 (@ref{RFC 1557}).
+
+
+@node ISO 646, ISO 8859-1, iso-2022-kr, Glossary
+@subsection ISO 646
+
+各国で共通に使える最小限度の文字集合(@ref{Character set})を定めたもの。
+94 文字集合 (@ref{94 character set})の１つ。ISO 646 IRV（国際基準版）を
+元に幾つかの文字は各国で違う文字を割当ることを許していて、幾つかの変種が
+存在する。ASCII (@ref{ASCII}) や JIS X0201-Latin はその一種。
+
+@cindex{ISO 646}@cindex{ISO/IEC 646:1991}
+@noindent
+[ISO 646]
+@quotation
+International Organization for Standardization (ISO), ``Information
+technology: ISO 7-bit coded character set for information interchange'',
+ISO/IEC 646:1991.
+@end quotation
+
+
+
+@node ISO 8859-1, iso-8859-1, ISO 646, Glossary
+@subsection ISO 8859-1
+
+@cindex{ISO 8859-1}@cindex{ISO 8859-1:1987}
+@noindent
+[ISO 8859-1]
+@quotation
+International Organization for Standardization (ISO), ``Information
+Processing -- 8-bit Single-Byte Coded Graphic Character Sets -- Part 1:
+Latin Alphabet No.1'', ISO 8859-1:1987.
+@end quotation
+
+
+
+@node iso-8859-1, ISO 8859-2, ISO 8859-1, Glossary
+@subsection iso-8859-1
+
+@cindex{iso-8859-1}@strong{iso-8859-1} is a MIME charset (@ref{MIME
+charset}) for west-European languages written by Latin script.@refill
+
+ISO 2022 (@ref{ISO 2022}) に基いて、ASCII (@ref{ASCII}) に ISO 8859-1
+(@ref{ISO 8859-1}) を 8bit (@ref{8bit}) で符号拡張 (@ref{Code
+extension})している。@refill
+
+It is defined in RFC 2046 (@ref{RFC 2046}).
+
+
+@node ISO 8859-2, iso-8859-2, iso-8859-1, Glossary
+@subsection ISO 8859-2
+
+@cindex{ISO 8859-2}@cindex{ISO 8859-2:1987}
+@noindent
+[ISO 8859-2]
+@quotation
+International Organization for Standardization (ISO), ``Information
+Processing -- 8-bit Single-Byte Coded Graphic Character Sets -- Part 2:
+Latin alphabet No.2'', ISO 8859-2:1987.
+@end quotation
+
+
+
+@node iso-8859-2, ISO 8859-3, ISO 8859-2, Glossary
+@subsection iso-8859-2
+
+@cindex{iso-8859-2}@strong{iso-8859-2} is a MIME charset (@ref{MIME
+charset}) for east-European languages written by Latin script.@refill
+
+ISO 2022 (@ref{ISO 2022}) に基いて、ASCII (@ref{ASCII}) に ISO 8859-2
+(@ref{ISO 8859-2}) を 8bit (@ref{8bit}) で符号拡張 (@ref{Code
+extension})している。@refill
+
+It is defined in RFC 2046 (@ref{RFC 2046}).
+
+
+@node ISO 8859-3, ISO 8859-4, iso-8859-2, Glossary
+@subsection ISO 8859-3
+
+@cindex{ISO 8859-3}@cindex{ISO 8859-3:1988}
+@noindent
+[ISO 8859-3]
+@quotation
+International Organization for Standardization (ISO), ``Information
+Processing -- 8-bit Single-Byte Coded Graphic Character Sets -- Part 3:
+Latin alphabet No.3'', ISO 8859-3:1988.
+@end quotation
+
+
+
+@node ISO 8859-4, ISO 8859-5, ISO 8859-3, Glossary
+@subsection ISO 8859-4
+
+@cindex{ISO 8859-4}@cindex{ISO 8859-4:1988}
+@noindent
+[ISO 8859-4]
+@quotation
+International Organization for Standardization (ISO), ``Information
+Processing -- 8-bit Single-Byte Coded Graphic Character Sets -- Part 4:
+Latin alphabet No.4'', ISO 8859-4:1988.
+@end quotation
+
+
+
+@node ISO 8859-5, iso-8859-5, ISO 8859-4, Glossary
+@subsection ISO 8859-5
+
+@cindex{ISO 8859-5}@cindex{ISO 8859-5:1988}
+@noindent
+[ISO 8859-5]
+@quotation
+International Organization for Standardization (ISO), ``Information
+Processing -- 8-bit Single-Byte Coded Graphic Character Sets -- Part 5:
+Latin/Cyrillic alphabet'', ISO 8859-5:1988.
+@end quotation
+
+
+
+@node iso-8859-5, ISO 8859-6, ISO 8859-5, Glossary
+@subsection iso-8859-5
+
+@cindex{iso-8859-5}@strong{iso-8859-5} is a MIME charset (@ref{MIME
+charset}) for Cyrillic script.@refill
+
+ISO 2022 (@ref{ISO 2022}) に基いて、ASCII (@ref{ASCII}) に ISO 8859-5
+(@ref{ISO 8859-5}) を 8bit (@ref{8bit}) で符号拡張 (@ref{Code
+extension})している。@refill
+
+It is defined in RFC 2046 (@ref{RFC 2046}).
+
+
+@node ISO 8859-6, ISO 8859-7, iso-8859-5, Glossary
+@subsection ISO 8859-6
+
+@cindex{ISO 8859-6}@cindex{ISO 8859-6:1987}
+@noindent
+[ISO 8859-6]
+@quotation
+International Organization for Standardization (ISO), ``Information
+Processing -- 8-bit Single-Byte Coded Graphic Character Sets -- Part 6:
+Latin/Arabic alphabet'', ISO 8859-6:1987.
+@end quotation
+
+
+
+@node ISO 8859-7, iso-8859-7, ISO 8859-6, Glossary
+@subsection ISO 8859-7
+
+@cindex{ISO 8859-7}@cindex{ISO 8859-7:1987}
+@noindent
+[ISO 8859-7]
+@quotation
+International Organization for Standardization (ISO), ``Information
+Processing -- 8-bit Single-Byte Coded Graphic Character Sets -- Part 7:
+Latin/Greek alphabet'', ISO 8859-7:1987.
+@end quotation
+
+
+
+@node iso-8859-7, ISO 8859-8, ISO 8859-7, Glossary
+@subsection iso-8859-7
+
+@cindex{iso-8859-7}@strong{iso-8859-7} is a MIME charset (@ref{MIME
+charset}) for Greek script.@refill
+
+ISO 2022 (@ref{ISO 2022}) に基いて、ASCII (@ref{ASCII}) に ISO 8859-7
+(@ref{ISO 8859-7}) を 8bit (@ref{8bit}) で符号拡張 (@ref{Code
+extension})している。@refill
+
+It is defined in RFC 1947.
+
+@cindex{iso-8859-7}@cindex{Informational}@cindex{RFC 1947}
+@noindent
+[iso-8859-7: RFC 1947]
+@quotation
+D. Spinellis, ``Greek Character Encoding for Electronic Mail Messages'',
+May 1996, Informational.
+@end quotation
+
+
+
+@node ISO 8859-8, ISO 8859-9, iso-8859-7, Glossary
+@subsection ISO 8859-8
+
+@cindex{ISO 8859-8}@cindex{ISO 8859-8:1988}
+@noindent
+[ISO 8859-8]
+@quotation
+International Organization for Standardization (ISO), ``Information
+Processing -- 8-bit Single-Byte Coded Graphic Character Sets -- Part 8:
+Latin/Hebrew alphabet'', ISO 8859-8:1988.
+@end quotation
+
+
+
+@node ISO 8859-9, ISO-IR-165, ISO 8859-8, Glossary
+@subsection ISO 8859-9
+
+@cindex{ISO 8859-9}@cindex{ISO 8859-9:1990}
+@noindent
+[ISO 8859-9]
+@quotation
+International Organization for Standardization (ISO), ``Information
+Processing -- 8-bit Single-Byte Coded Graphic Character Sets -- Part 9:
+Latin alphabet No.5'', ISO 8859-9:1990.
+@end quotation
+
+
+
+@node ISO-IR-165, JIS X0201, ISO 8859-9, Glossary
+@subsection ISO-IR-165, CCITT Extended GB 
+
+CCITT が登録した、中国大陸で用いられている簡体字で表記される中国語を表現
+するための 94x94-character set (@ref{94x94-character set})。@refill
+
+GB 2312 (@ref{GB 2312}) と GB 8565 表２ (@ref{GB 8865.2}) に 150 文字ほ
+どを追加したものらしい。@refill
+
+ISO 2022 (@ref{ISO 2022}) での終端文字は `E' である。
+
+
+@node JIS X0201, JIS C6226, ISO-IR-165, Glossary
+@subsection JIS X0201
+
+ISO 646 (@ref{ISO 646}) の変種の１つである Latin 文字集合と 1 byte のカ
+タカナ文字集合からなる。@refill
+
+元は @cindex{JIS C6220-1976}@strong{JIS C6220-1976} と言ったが @cindex{JIS
+X0201}@strong{JIS
+X0201} に番号が変更された。
+
+@cindex{JIS X0201-1976}@cindex{JIS        X 0201-1976:}
+@noindent
+[JIS X0201-1976]
+@quotation
+日本規格協会 (Japanese Standards Association),『情報交換用符号』, ``Code
+for Information Interchange'', JIS X 0201-1976:.
+@end quotation
+
+
+また、1996 年に改定版が出る予定。
+
+@cindex{JIS X0201-1996?}@cindex{JIS X 0201:1996?        draft}
+@noindent
+[JIS X0201-1996?]
+@quotation
+日本規格協会 (Japanese Standards Association),『７ビット及び８ビットの情
+報交換用符号化文字集合』, ``7-bit and 8-bit coded character sets for
+information interchange'', JIS X 0201:1996?  draft.
+@end quotation
+
+
+
+@node JIS C6226, JIS X0208, JIS X0201, Glossary
+@subsection JIS C6226-1978
+
+日本語を表すために作られた 94x94-character set (@ref{94x94-character
+set})。日本の国家標準。JIS X0208-1978 ともいう。@refill
+
+(cf. @ref{JIS X0208})
+
+
+
+@node JIS X0208, JIS X0212, JIS C6226, Glossary
+@subsection JIS X0208
+
+日本語を表すために作られた 94x94-character set (@ref{94x94-character
+set})。日本の国家標準。1978 年版、1983 年版、1990 年版があるが、Internet 
+では 1983 年版がもっとも良く使われている。@refill
+
+JIS X0208 は記号、数字、ローマ字、ひらがな、カタカナ、ギリシャ文字、キリ
+ル文字、罫線素、第１水準、第２水準の漢字が含まれる。但し、1983 年版の一
+部の記号と罫線素は 1978 年版にはない。また、一部の漢字の字形が 1983 年版
+では変更され、また、第１水準と第２水準が入れ替わっていたりする。このため、
+1978 年版と 1983 年版は異なる文字集合として扱われる。@refill
+
+1990 年の改定では 1983 年版に対する追加が行われた。このため、1990 年版
+を指示する場合は前に更新シーケンスを用いる。
+
+@cindex{JIS X0208-1978}@cindex{JIS C6226:1978}
+@noindent
+[JIS X0208-1978]
+@quotation
+日本規格協会 (Japanese Standards Association),『情報交換用漢字符号系』,
+``Code of the Japanese graphic character set for information
+interchange'', JIS C6226:1978.
+@end quotation
+
+@cindex{JIS X0208-1983,1990}@cindex{JIS X0208:1983,1990}
+@noindent
+[JIS X0208-1983,1990]
+@quotation
+日本規格協会 (Japanese Standards Association),『情報交換用漢字符号系』,
+``Code of the Japanese graphic character set for information
+interchange'', JIS X0208:1983,1990.
+@end quotation
+
+
+また、1996 年に改定版が出版される予定。（字形の変更は行われないので文
+字集合としては 1990 年版と同一である）
+
+@cindex{JIS X0208-1996?}@cindex{JIS X 0208:1996? draft}
+@noindent
+[JIS X0208-1996?]
+@quotation
+日本規格協会 (Japanese Standards Association),『７ビット及び８ビットの 
+２バイト情報交換用符号化漢字集合』, ``7-bit and 8-bit double byte coded
+Kanji sets for information interchange'', JIS X 0208:1996? draft.
+@end quotation
+
+
+
+@node JIS X0212, koi8-r, JIS X0208, Glossary
+@subsection JIS X0212-1990
+
+JIS X0208 (@ref{JIS X0208}) になかった文字を集めた 94x94-character set
+(@ref{94x94-character set})。「補助漢字」とも呼ばれる。日本の国家標準。
+ISO 2022 (@ref{ISO 2022}) での終端文字は `D'.
+
+
+@node koi8-r, KS C5601, JIS X0212, Glossary
+@subsection koi8-r
+
+A MIME charset (@ref{MIME charset}) for Cyrillic script for Russian or
+other languages.@refill
+
+It is a 1 byte 8bit (@ref{8bit}) coded character set (@ref{coded
+character set}), not based on ISO 2022 (@ref{ISO 2022}).  It is a
+de-fact standard.@refill
+
+It is defined in RFC 1489.@refill
+
+@cindex{RFC 1489}
+@noindent
+[RFC 1489]
+@quotation
+A. Chernov, ``Registration of a Cyrillic Character Set'', July 1993.
+@end quotation
+
+
+
+@node KS C5601, message, koi8-r, Glossary
+@subsection KS C5601-1987
+
+A 94x94-character set (@ref{94x94-character set}) for Korean language
+(Hangul script).  Korean Standard.  Final byte of ISO 2022 (@ref{ISO
+2022}) is `C'.
+
+@cindex{KS C5601}@cindex{KS C 5601:1987}
+@noindent
+[KS C5601]
+@quotation
+Korea Industrial Standards Association, ``Code for Information
+Interchange (Hangul and Hanja)'', KS C 5601:1987.
+@end quotation
+
+
+
+@node message, message/rfc822, KS C5601, Glossary
+@subsection message
+
+ここでは RFC 822 (@ref{RFC 822}) で定義される mail と RFC 1036 (@ref{RFC
+1036}) で定義される news 記事の総称として用いる。
+
+
+@node message/rfc822, method, message, Glossary
+@subsection message/rfc822
+
+@cindex{message/rfc822}@strong{message/rfc822} indicates that the body
+contains an encapsulated message, with the syntax of an RFC 822
+(@ref{RFC 822}) message.  It is the replacement of traditional RFC 934
+(@ref{RFC 934}) encapsulation.  It is defined in RFC 2046 (@ref{RFC
+2046}).
+
+
+@node method, MIME, message/rfc822, Glossary
+@subsection method
+
+tm で特定の種類の data を再生したとき実際にその処理を行なう
+program. Emacs Lisp で書かれた @cindex{internal method}@strong{internal
+method} と C や script 言語などで書かれた @cindex{external
+method}@strong{external method} がある。@refill
+
+(cf. @ref{(tm-view-en)method})
+
+
+
+@node MIME, MIME charset, method, Glossary
+@subsection MIME
+
+MIME stands for @cindex{Multipurpose Internet Mail
+Extensions}@strong{Multipurpose Internet Mail Extensions}, it is an
+extension for RFC 822 (@ref{RFC 822}).@refill
+
+According to RFC 2045:@refill
+
+STD 11, RFC 822, defines a message representation protocol specifying
+considerable detail about US-ASCII message headers, and leaves the
+message content, or message body, as flat US-ASCII text.  This set of
+documents, collectively called the Multipurpose Internet Mail
+Extensions, or MIME, redefines the format of messages to allow
+for@refill
+
+@enumerate
+@item
+textual message bodies in character sets other than US-ASCII,
+@item
+an extensible set of different formats for non-textual message
+bodies,
+@item
+multi-part message bodies, and
+@item
+textual header information in character sets other than US-ASCII.
+@end enumerate
+
+
+It is defined in RFC 2045 (@ref{RFC 2045}), RFC 2046 (@ref{RFC 2046}),
+RFC 2047 (@ref{encoded-word}), RFC 2048 (@ref{RFC 2048}) and RFC 2049
+(@ref{RFC 2049}).
+
+
+@node MIME charset, MTA, MIME, Glossary
+@subsection MIME charset
+
+Coded character set (@ref{Coded character set}) used in Content-Type
+field (@ref{Content-Type field}) or charset parameter of encoded-word
+(@ref{encoded-word}).@refill
+
+It is defined in RFC 2045 (@ref{RFC 2045}).@refill
+
+iso-2022-jp (@ref{iso-2022-jp}) や euc-kr (@ref{euc-kr}) はその１つ。
+（ここでは、MIME charset は文字集合 (@ref{Character set})と区別して小文
+字で書いている）
+
+
+@node MTA, MUA, MIME charset, Glossary
+@subsection MTA
+
+@cindex{Message Transfer Agent}@strong{Message Transfer Agent} の略で、
+sendmail などの mail 配送 program と news server の総称。@refill
+
+(cf. @ref{MUA})
+
+
+
+@node MUA, MULE, MTA, Glossary
+@subsection MUA
+
+@cindex{Message User Agent}@strong{Message User Agent} の略で、mail
+reader と news reader の総称。@refill
+
+(cf. @ref{MTA})
+
+
+
+@node MULE, multipart, MUA, Glossary
+@subsection MULE
+
+半田 剣一氏らが作った、多言語された Emacs (@ref{Emacs}).@refill
+
+[MULE] Nishikimi M., Handa K. and Tomura S., ``Mule: MULtilingual
+Enhancement to GNU Emacs'', Proc. of INET'93, August, 1993.@refill
+
+現在、MULE の機能を Emacs に merge する作業が行われており、alpha 版
+(ftp://etlport.etl.go.jp/pub/mule/mule-19.33-gamma.taz) が存在する。
+
+その他、XEmacs に merge したものも存在する。@refill
+
+このため、現在では多言語 Emacs は、元々の MULE を含めて３種類あることに
+なる。@refill
+
+そこで、ここでは、多言語 Emacs の総称を @cindex{mule}@strong{mule}, 元々
+の MULE を @cindex{MULE}@strong{MULE}, mule 機能を merge した Emacs を
+@cindex{Emacs/mule}@strong{Emacs/mule}, mule 機能を merge した XEmacs を 
+@cindex{XEmacs/mule}@strong{XEmacs/mule} と呼ぶことにする。
+
+
+@node multipart, multipart/alternative, MULE, Glossary
+@subsection Multipart
+
+@cindex{multipart}@strong{multipart} means media type (@ref{media type})
+to insert multiple entities (@ref{entities}) in a single body.  Or it
+also indicates a message consists of multiple entities.@refill
+
+There are following subtypes registered in RFC 2046 (@ref{RFC 2046}):
+
+@itemize @bullet
+@item
+multipart/mixed (@ref{multipart/mixed})
+@item
+multipart/alternative (@ref{multipart/alternative})
+@item
+multipart/digest (@ref{multipart/digest})
+@item
+multipart/parallel (@ref{multipart/parallel})
+@end itemize
+
+@noindent
+and registered in RFC 1847 (@ref{Security multipart}):
+
+@itemize @bullet
+@item
+multipart/signed (@ref{multipart/signed})
+@item
+multipart/encrypted (@ref{multipart/encrypted})
+@end itemize
+
+
+
+@node multipart/alternative, multipart/digest, multipart, Glossary
+@subsection multipart/alternative
+
+@cindex{multipart/digest}@strong{multipart/digest} is one of multipart
+(@ref{multipart}) media types.  This type is syntactically identical to
+multipart/mixed (@ref{multipart/mixed}), but the semantics are
+different.  In particular, each of the body parts is an ``alternative''
+version of the same information.@refill
+
+(cf. @ref{RFC 2046})
+
+
+
+@node multipart/digest, multipart/encrypted, multipart/alternative, Glossary
+@subsection multipart/digest
+
+@cindex{multipart/digest}@strong{multipart/digest} is one of multipart
+(@ref{multipart}) media types.  This type is syntactically identical to
+multipart/mixed (@ref{multipart/mixed}), but the semantics are
+different.  In particular, in a digest, the default Content-Type value
+for a body part is changed from text/plain (@ref{text/plain}) to
+message/rfc822 (@ref{message/rfc822}).@refill
+
+This is the replacement of traditional RFC 1153 (@ref{RFC 1153}) based
+encapsulation (@ref{encapsulation}).@refill
+
+(cf. @ref{RFC 2046})
+
+
+
+@node multipart/encrypted, multipart/mixed, multipart/digest, Glossary
+@subsection multipart/encrypted
+
+RFC 1847 で定義された Security multipart (@ref{Security multipart}) の１
+つで、暗号化された message を表現するのに用いる。@refill
+
+(cf. @ref{PGP/MIME})
+
+
+
+@node multipart/mixed, multipart/parallel, multipart/encrypted, Glossary
+@subsection multipart/mixed
+
+Primary and default subtype of multipart (@ref{multipart}), it is used
+when the body parts are independent and need to be bundled in a
+particular order.@refill
+
+(cf. @ref{RFC 2046})
+
+
+
+@node multipart/parallel, multipart/signed, multipart/mixed, Glossary
+@subsection multipart/parallel
+
+@cindex{multipart/parallel}@strong{multipart/parallel} is a subtype of
+multipart (@ref{multipart}).  This type is syntactically identical to
+multipart/mixed (@ref{multipart/mixed}), but the semantics are
+different.  In particular, in a parallel entity, the order of body parts
+is not significant.@refill
+
+(cf. @ref{RFC 2046})
+
+
+
+@node multipart/signed, PGP, multipart/parallel, Glossary
+@subsection multipart/signed
+
+RFC 1847 で定義された Security multipart (@ref{Security multipart}) の１
+つで、電子署名を表現するのに用いる。@refill
+
+(cf. @ref{PGP/MIME})
+
+
+
+@node PGP, PGP-kazu, multipart/signed, Glossary
+@subsection PGP
+
+Phil Zimmermann 氏が作成した公開鍵暗号処理系の１つ。message
+(@ref{message}) の暗号化や電子署名を行うことができる。Pretty Good
+Privacy の略。@refill
+
+伝統的な PGP では encapsulation (@ref{encapsulation}) に RFC 934
+(@ref{RFC 934})に準じた方法を用いる。これは MIME (@ref{MIME}) と矛盾する
+ので PGP/MIME (@ref{PGP/MIME}) が提案されている。一方、MIME において PGP 
+のencapsulation を用いる方法 (cf. @ref{PGP-kazu})
+ も利用されてきた。しかし、今後は PGP/MIME に統一していく方が望ましい。
+@refill
+
+@cindex{PGP}@cindex{Informational}@cindex{RFC 1991}
+@noindent
+[PGP: RFC 1991]
+@quotation
+D. Atkins, W. Stallings and P. Zimmermann, ``PGP Message Exchange
+Formats'', August 1996, Informational.
+@end quotation
+
+
+
+
+@node PGP-kazu, PGP/MIME, PGP, Glossary
+@subsection PGP-kazu
+
+山本 和彦 氏が提案した MIME (@ref{MIME}) で PGP (@ref{PGP}) を利用するた
+めの方法をここでは @cindex{PGP-kazu}@strong{PGP-kazu} と呼ぶことにする。
+
+PGP-kazu は @cindex{application/pgp}@strong{application/pgp} という 
+content-type (@ref{content-type}) を定義する。@refill
+
+application/pgp の part では PGP の encapsulation (@ref{encapsulation}) 
+が用いられる。PGP の encapsulation (cf. @ref{RFC 934})
+ と MIME の encapsulation は矛盾するので、PGP の encapsulation を解かな
+い限り、中に含まれた MIME message を読むことができなくなる。即ち、
+PGP-kazu に対応していない MIME に対応した MUA (@ref{MUA}) はその part が
+読めなくなる。その代わり、MIME に対応していない PGP 対応の MUA
+(@ref{MUA}) でも message を読むことができる。@refill
+
+PGP-kazu では MUA は PGP のと MIME のという２つの encapsulation を知らな
+ければならない。また、application/pgp part を parse するためには、まず、
+pgp の処理を行わなければならないので、parse 処理が複雑になる。@refill
+
+また、Internet では今後 PGP/MIME (@ref{PGP/MIME}) の方向で標準化していこ
+うということで合意が取れている。よって、今後は PGP-kazu は用いないのが望
+ましい。@refill
+
+[draft-kazu-pgp-mime-00.txt] Yamamoto K., ``PGP MIME Integration'',
+October, 1995
+
+
+@node PGP/MIME, Quoted-Printable, PGP-kazu, Glossary
+@subsection PGP/MIME
+
+Michael Elkins 氏が提案した MIME (@ref{MIME}) で PGP (@ref{PGP}) を利用
+するための方法。@refill
+
+RFC 1847 (@ref{Security multipart}) に基き、MIME の multipart による 
+encapsulation (@ref{encapsulation}) を行う。このため、MIME の自然な拡張
+になっている。しかし、伝統的な PGPとの互換性が失われている。@refill
+
+PGP/MIME では PGP-kazu (@ref{PGP-kazu}) と異なり、MIME の encapsulation 
+のみを用いる。また、このため、PGP の処理を行う前に message の parse を行
+うことができる。@refill
+
+Internet では今後 PGP/MIME (@ref{PGP/MIME}) の方向で標準化していこうとい
+うことで合意が取れている。よって、今後は PGP を用いる場合は PGP/MIMEを用
+いるのが望ましい。
+
+@cindex{PGP/MIME}@cindex{Standards Track}@cindex{RFC 2015}
+@noindent
+[PGP/MIME: RFC 2015]
+@quotation
+M. Elkins, ``MIME Security with Pretty Good Privacy (PGP)'', October
+1996, Standards Track.
+@end quotation
+
+
+
+@node Quoted-Printable, RFC 821, PGP/MIME, Glossary
+@subsection Quoted-Printable
+
+@cindex{Quoted-Printable}@strong{Quoted-Printable} is a transfer
+encoding method of MIME (@ref{MIME}) defined in RFC 2045 (@ref{RFC
+2045}).@refill
+
+If the data being encoded are mostly US-ASCII text, the encoded form of
+the data remains largely recognizable by humans.@refill
+
+(cf. @ref{Base64})
+
+
+
+@node RFC 821, RFC 822, Quoted-Printable, Glossary
+@subsection RFC 821
+
+@cindex{SMTP}@strong{SMTP} と呼ばれる Internet mail の配送法の標準を定め
+ている RFC.
+
+@cindex{SMTP}@cindex{STD 10}@cindex{RFC 821}
+@noindent
+[SMTP: RFC 821]
+@quotation
+J. Postel, ``Simple Mail Transfer Protocol'', August 1982, STD 10.
+@end quotation
+
+
+
+@node RFC 822, RFC 934, RFC 821, Glossary
+@subsection RFC 822
+
+Internet mail の主に @cindex{message header}@strong{message header} に関する形式に
+関する標準を定めている RFC.
+
+@noindent
+@strong{[Memo]}
+@quotation
+
+news message もこれに準じているので、@cindex{Internet
+mail}@strong{Internet mail} と書くよりも、@cindex{Internet
+message}@strong{Internet message} と書いた方が良いかもしれない。
+@end quotation
+
+
+@cindex{STD 11}@cindex{RFC 822}
+@noindent
+[RFC 822]
+@quotation
+D. Crocker, ``Standard for the Format of ARPA Internet Text Messages'',
+August 1982, STD 11.
+@end quotation
+
+
+
+@node RFC 934, RFC 1036, RFC 822, Glossary
+@subsection RFC 934
+
+Internet mail (@ref{RFC 822}) の 
+@cindex{encapsulation}@strong{encapsulation} (@ref{encapsulation}) の方
+法を定めた RFC.@refill
+
+MIME (@ref{MIME}) と矛盾するので、現在では message/rfc822
+(@ref{message/rfc822}) を用いるべきである。
+
+
+@cindex{RFC 934}
+@noindent
+[RFC 934]
+@quotation
+Marshall T. Rose and Einar A. Stefferud, ``Proposed Standard for Message
+Encapsulation'', January 1985.
+@end quotation
+
+
+
+@node RFC 1036, RFC 1153, RFC 934, Glossary
+@subsection RFC 1036
+
+USENET での message の形式を定めた RFC. RFC 822 (@ref{RFC 822})の subset 
+になっている。Internet の標準ではないが、USENET 以外の netnews でもこれ
+に準じているものが多い。
+
+@cindex{USENET}@cindex{RFC 1036}
+@noindent
+[USENET: RFC 1036]
+@quotation
+M. Horton and R. Adams, ``Standard for Interchange of USENET Messages'',
+December 1987, (obsolete RFC 850).
+@end quotation
+
+
+
+@node RFC 1153, RFC 1557, RFC 1036, Glossary
+@subsection RFC 1153
+
+複数の Internet mail (@ref{RFC 822}) を 
+@cindex{encapsulation}@strong{encapsulation} (@ref{encapsulation}) する
+ための方法を定めた RFC. RFC 934 (@ref{RFC 934}) を用いる。@refill
+
+MIME (@ref{MIME}) と矛盾するので、現在では message/rfc822
+(@ref{message/rfc822}) を用いた multipart (@ref{multipart}) を用いるべき
+である。@refill
+
+(cf. @ref{multipart/digest})
+
+
+@cindex{RFC 1153}
+@noindent
+[RFC 1153]
+@quotation
+F. Wancho, ``Digest Message Format'', April 1990.
+@end quotation
+
+
+
+@node RFC 1557, RFC 1922, RFC 1153, Glossary
+@subsection RFC 1557
+
+euc-kr (@ref{euc-kr}) と iso-2022-kr (@ref{iso-2022-kr}) という韓国語の
+ための MIME charset (@ref{MIME charset}) を定義している RFC.
+
+@cindex{Informational}@cindex{RFC 1557}
+@noindent
+[RFC 1557]
+@quotation
+U. Choi, K. Chon and H. Park, ``Korean Character Encoding for Internet
+Messages'', December 1993, Informational.
+@end quotation
+
+
+
+@node RFC 1922, RFC 2045, RFC 1557, Glossary
+@subsection RFC 1922
+
+iso-2022-cn (@ref{iso-2022-cn}), iso-2022-cn-ext
+(@ref{iso-2022-cn-ext}), cn-gb (@ref{cn-gb}), cn-big5 (@ref{cn-big5}) と
+いった中国語のための MIME charset (@ref{MIME charset}) を定義している 
+RFC.@refill
+
+これに加えて、@cindex{charset-edition}@strong{charset-edition} と 
+@cindex{charset-extension}@strong{charset-extension} という Content-Type
+field (@ref{Content-Type field}) の parameter を定義している。
+
+@cindex{Informational}@cindex{RFC 1922}
+@noindent
+[RFC 1922]
+@quotation
+Zhu, HF., Hu, DY., Wang, ZG., Kao, TC., Chang, WCH. and Crispin, M.,
+``Chinese Character Encoding for Internet Messages'', March 1996,
+Informational.
+@end quotation
+
+
+
+@node RFC 2045, RFC 2046, RFC 1922, Glossary
+@subsection RFC 2045
+
+@cindex{Standards Track}@cindex{RFC 2045}
+@noindent
+[RFC 2045]
+@quotation
+N. Freed and N. Borenstein, ``Multipurpose Internet Mail Extensions
+(MIME) Part One: Format of Internet Message Bodies'', November 1996,
+Standards Track (obsolete RFC 1521, 1522, 1590).
+@end quotation
+
+
+
+@node RFC 2046, RFC 2048, RFC 2045, Glossary
+@subsection RFC 2046
+
+@cindex{Standards Track}@cindex{RFC 2046}
+@noindent
+[RFC 2046]
+@quotation
+N. Freed and N. Borenstein, ``Multipurpose Internet Mail Extensions
+(MIME) Part Two: Media Types'', November 1996, Standards Track (obsolete
+RFC 1521, 1522, 1590).
+@end quotation
+
+
+
+@node RFC 2048, RFC 2049, RFC 2046, Glossary
+@subsection RFC 2048
+
+@cindex{Standards Track}@cindex{RFC 2048}
+@noindent
+[RFC 2048]
+@quotation
+N. Freed, J. Klensin and J. Postel, ``Multipurpose Internet Mail
+Extensions (MIME) Part Four: Registration Procedures'', November 1996,
+Standards Track (obsolete RFC 1521, 1522, 1590).
+@end quotation
+
+
+
+@node RFC 2049, plain text, RFC 2048, Glossary
+@subsection RFC 2049
+
+@cindex{Standards Track}@cindex{RFC 2049}
+@noindent
+[RFC 2049]
+@quotation
+N. Freed and N. Borenstein, ``Multipurpose Internet Mail Extensions
+(MIME) Part Five: Conformance Criteria and Examples'', November 1996,
+Standards Track (obsolete RFC 1521, 1522, 1590).
+@end quotation
+
+
+
+@node plain text, Security multipart, RFC 2049, Glossary
+@subsection plain text
+
+書体や組版に関する情報を持たない 文字符号(@ref{Coded character set})のみ
+で表現される text 情報。(cf. @ref{text/plain})
+
+
+
+@node Security multipart, text/enriched, plain text, Glossary
+@subsection Security multipart
+
+MIME (@ref{MIME}) で暗号や電子書名を用いるための形式。
+@cindex{multipart/signed}@strong{multipart/signed}
+(@ref{multipart/signed}) と 
+@cindex{multipart/encrypted}@strong{multipart/encrypted}
+(@ref{multipart/encrypted}) という multipart を用いる。MOSS や PGP/MIME
+(@ref{PGP/MIME}) はこれに基いている。
+
+@cindex{Security multipart}@cindex{Standards Track}@cindex{RFC 1847}
+@noindent
+[Security multipart: RFC 1847]
+@quotation
+James Galvin, Gale Murphy, Steve Crocker and Ned Freed, ``Security
+Multiparts for MIME: Multipart/Signed and Multipart/Encrypted'', October
+1995, Standards Track.
+@end quotation
+
+
+
+@node text/enriched, text/plain, Security multipart, Glossary
+@subsection text/enriched
+
+RFC 1521 で定義された @cindex{text/richtext}@strong{text/richtext} に代
+わって、書体や組版に関する情報を持った textを表現するための media type
+(@ref{media type}).
+
+@cindex{text/enriched}@cindex{RFC 1896}
+@noindent
+[text/enriched: RFC 1896]
+@quotation
+P. Resnick and A. Walker, ``The text/enriched MIME Content-type'',
+February 1996, (obsolete RFC 1563).
+@end quotation
+
+
+
+@node text/plain, tm-kernel, text/enriched, Glossary
+@subsection text/plain
+
+@cindex{text/plain}@strong{text/plain} is a media type (@ref{media
+type}) for plain text (@ref{plain text}), defined in RFC 2046 (@ref{RFC
+2046}).@refill
+
+The default media type of ``text/plain; charset=us-ascii'' for Internet
+mail describes existing Internet practice.  That is, it is the type of
+body defined by RFC 822 (@ref{RFC 822}).@refill
+
+(cf. @ref{MIME charset}) (cf. @ref{us-ascii})
+
+
+
+@node tm-kernel, tm-MUA, text/plain, Glossary
+@subsection tm-kernel, tm
+
+Emacs で MIME (@ref{MIME}) を利用するための user interface を提供する 
+library 群。`tools for MIME' の略。
+
+@noindent
+@strong{[どうでも良いこと(^-^;]}
+@quotation
+
+@itemize @bullet
+@item
+ tm は ``tiny-mime'' の略じゃないらしいぞ (^-^;
+  
+@item
+ tm は作者のイニシャルじゃないらしいぞ (^-^;
+  
+@item
+ ``Tools for MIME'' の略というのはこじつけらしいぞ (^-^;
+@end itemize
+@end quotation
+
+
+
+@node tm-MUA, us-ascii, tm-kernel, Glossary
+@subsection tm-MUA
+
+tm (@ref{tm-kernel}) を用いた MUA (@ref{MUA}) もしくは MUA に対する 
+extender.@refill
+
+@cindex{tm 大盛り package}@strong{tm 大盛り package} には
+
+@itemize @bullet
+@item
+mh-e (@ref{(mh-e)}) 用の @cindex{tm-mh-e}@strong{tm-mh-e}
+@item
+GNUS 用の @cindex{tm-gnus}@strong{tm-gnus}
+@item
+Gnus 用の @cindex{gnus-mime}@strong{gnus-mime} (@ref{(gnus-mime-en)})
+@item
+VM 用の @cindex{tm-vm}@strong{tm-vm}
+@item
+RMAIL 用の @cindex{tm-rmail}@strong{tm-rmail}
+@end itemize
+
+@noindent
+が含まれている。
+
+独立した MUA としては cmail (@ref{(cmail)}) が tm を利用可能である。
+
+
+@node us-ascii,  , tm-MUA, Glossary
+@subsection us-ascii
+
+アメリカ連邦などで使われる英語などを表現するための MIME charset
+(@ref{MIME charset}) の１つ。@refill
+
+ASCII (@ref{ASCII}) のみからなり ISO 2022 (@ref{ISO 2022}) による符号拡
+張 (@ref{Code extension})は許されない。@refill
+
+Internet mail における標準の符号化文字集合(@ref{Coded character set})で
+あり、明示的に MIME charset が示されない場合は原則として 
+@cindex{us-ascii}@strong{us-ascii} が使われる。@refill
+
+また、RFC 822 (@ref{RFC 822}) における @cindex{ASCII}@strong{ASCII} は 
+us-ascii を指すものと解釈すべきである。
+
+
+@node Setting, Bug report, Introduction, Top
+@chapter Setting
+
+In the tm package, two files, @file{mime-setup.el} and
+@file{tm-setup.el}, are provided to ease the setup.@refill
+
+The @file{mime-setup.el} is used for the whole MIME related
+setup including MIME encoding using @file{tm-edit.el}, while
+@file{tm-setup.el} is used to set up tm-MUA only.
+
+
+@menu
+* mime-setup::                  Normal setting
+* tm-setup::                    Setting not to use tm-edit
+* setting for VM::              Setting for VM
+* manual setting::              Setting up without loading provided setup files
+@end menu
+
+@node mime-setup, tm-setup, Setting, Setting
+@section Normal setting
+
+If you want normal setting, please use @cindex{mime-setup}@strong{mime-setup}.
+For example, please insert following into @file{~/.emacs}:
+
+@lisp
+(load "mime-setup")
+@end lisp
+
+
+As @file{mime-setup.el} loads @file{tm-setup.el}, you
+don't need to load @file{tm-setup.el} when you use
+@file{mime-setup.el} (Description of old version of Gnus FAQ is
+wrong!)
+
+
+@menu
+* signature::                   
+* Notice about GNUS::           Notices for GNUS
+@end menu
+
+@node signature, Notice about GNUS, mime-setup, mime-setup
+@subsection signature
+
+You can set up the @cindex{automatic signature selection
+tool}@strong{automatic signature selection
+tool} using @file{mime-setup}. If you want to
+automatically select the signature file depending on how the message
+headers show, add lines like shown below to your .emacs (Refer to the
+reference manual of @file{signature.el} for more details).
+
+@lisp
+(setq signature-file-alist
+      '((("Newsgroups" . "jokes")       . "~/.signature-jokes")
+        (("Newsgroups" . ("zxr" "nzr")) . "~/.signature-sun")
+        (("To" . ("ishimaru" "z-suzuki")) . "~/.signature-sun")
+        (("To" . "tea")                 . "~/.signature-jokes")
+        (("To" . ("sim" "oku" "takuo")) . "~/.signature-formal")
+        ))
+@end lisp
+
+
+
+@defvar mime-setup-use-signature
+
+If it is not @code{nil}, @file{mime-setup.el} sets up for
+@file{signature.el}.  Its default value is @code{t}.
+@end defvar
+
+
+
+@defvar mime-setup-signature-key-alist
+
+It defines key to bind signature inserting command for each
+major-mode.  Its default value is following:
+
+@lisp
+	((mail-mode . "\C-c\C-w"))
+@end lisp
+
+
+If you want to change, please rewrite it.  For example:
+
+@lisp
+(set-alist 'mime-setup-signature-key-alist
+	   'news-reply-mode "\C-c\C-w")
+@end lisp
+
+@end defvar
+
+
+
+@defvar mime-setup-default-signature-key
+
+If key to bind signature inserting command for a major-mode is not found
+from @code{mime-setup-signature-key-alist}, its value is used as key.
+Its default value is @code{"\C-c\C-s"}.
+@end defvar
+
+
+
+@node Notice about GNUS,  , signature, mime-setup
+@subsection Notices for GNUS
+
+When @file{mime-setup.el} sets up for @file{signature.el}, it sets
+variable @code{gnus-signature-file} to @code{nil}.  Therefore GNUS does
+not insert signature automatically when it is sending a message.  Reason
+of this setting is following:@refill
+
+GNUS inserts signature after @file{tm-edit.el} composed as MIME message.
+Therefore signature inserted by GNUS is not processed as a valid MIME
+part.  In particular, for multipart message, signature places in outside
+of MIME part.  So MIME MUA might not display it.@refill
+
+Other notice is key bind.  In historical reason, key bind to insert
+signature is @kbd{C-c C-s} (like mh-e (@ref{(mh-e)})) instead of
+@kbd{C-c C-w}. If you change to GNUS's default, please set following:
+
+@lisp
+(set-alist 'mime-setup-signature-key-alist 'news-reply-mode "\C-c\C-w")
+@end lisp
+
+
+
+@node tm-setup, setting for VM, mime-setup, Setting
+@section Setting not to use tm-edit
+
+@cindex{tm-setup}@strong{tm-setup} only sets up tm-MUA (@ref{tm-MUA})s.
+In other words, it is a setting to avoid to use tm-edit.  If you don't
+want to compose MIME message or want to use other MIME composer, please
+use it instead of @file{mime-setup.el}.@refill
+
+For example, please insert following into @file{~/.emacs}:
+
+@lisp
+(load "tm-setup")
+@end lisp
+
+
+
+@noindent
+@strong{[Memo]}
+@quotation
+
+If you use @file{mime-setup.el}, you you don't need to load
+@file{tm-setup.el}.
+@end quotation
+
+
+
+@node setting for VM, manual setting, tm-setup, Setting
+@section Setting for VM
+
+If you use @cindex{vm}@strong{vm}, please insert following in
+@file{~/.vm}:
+
+@lisp
+(require 'tm-vm)
+@end lisp
+
+
+
+@noindent
+@strong{[Notice]}
+@quotation
+
+If you use @cindex{BBDB}@strong{BBDB}, please insert @code{(require
+'tm-vm)} @strong{after} @code{(bbdb-insinuate-vm)}.
+@end quotation
+
+
+
+@node manual setting,  , setting for VM, Setting
+@section Setting up without loading provided setup files
+
+You may find the valuable hints in @file{mime-setup.el} or
+@file{tm-setup.el} if you want to set up MIME environment
+without loading the tm-provided setup files.
+
+@noindent
+@strong{[Memo]}
+@quotation
+
+Current tm provides some convenient features to expect tm-edit, and
+they can not use if @file{mime-setup.el} is not used.  If you
+want to set up original setting to use tm-edit, please declare
+following setting:
+
+@lisp
+(provide 'mime-setup)
+@end lisp
+
+@end quotation
+
+
+
+@node Bug report, Concept Index, Setting, Top
+@chapter How to report bug and about mailing list of tm
+
+If you write bug-reports and/or suggestions for improvement, please
+send them to the tm Mailing List:
+
+@itemize @bullet
+@item
+ Japanese <bug-tm-ja@@chamonix.jaist.ac.jp>
+@item
+ English <bug-tm-en@@chamonix.jaist.ac.jp>
+@end itemize
+
+
+Notice that, we does not welcome bug reports about too old version.
+Bugs in old version might be fixed.  So please try latest version at
+first.@refill
+
+You should write @cindex{good bug report}@strong{good bug report}.  If
+you write only ``tm does not work'', we can not find such situations.
+At least, you should write name, type, variants and version of OS,
+emacs, tm and MUA, and setting.  In addition, if error occurs, to send
+backtrace is very important. (cf. @ref{(emacs)Bugs}) @refill
+
+Bug may not appear only your environment, but also in a lot of
+environment (otherwise it might not bug).  Therefor if you send mail to
+author directly, we must write a lot of mails.  So please send mail to
+address for tm bugs instead of author.@refill
+
+Via the tm ML, you can report tm bugs, obtain the latest release of
+tm, and discuss future enhancements to tm.  To join the tm ML, send
+e-mail to:
+
+@itemize @bullet
+@item
+ Japanese <tm-ja-admin@@chamonix.jaist.ac.jp>
+@item
+ English  <tm-en-admin@@chamonix.jaist.ac.jp>
+@end itemize
+
+@noindent
+Since the user registration is done manually, please write the mail
+body in human-recognizable language (^_^).
+
+
+@node Concept Index, Variable Index, Bug report, Top
+@chapter Concept Index
+
+@printindex cp
+
+@node Variable Index,  , Concept Index, Top
+@chapter Variable Index
+
+@printindex vr
+@bye

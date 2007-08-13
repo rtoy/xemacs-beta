@@ -95,7 +95,7 @@ dynamic=''
 with_x11=''
 rel_alloc='default'
 use_system_malloc='default'
-internal_makefile_list='Makefile lib-src/Makefile.in man/Makefile.in src/Makefile.in lwlib/Makefile.in dynodump/Makefile.in'
+internal_makefile_list='Makefile lib-src/Makefile.in src/Makefile.in lwlib/Makefile.in dynodump/Makefile.in'
 energize_version='no'
 native_sound_lib=''
 # make normal error-checking be the default in alpha and beta versions, so
@@ -8475,7 +8475,6 @@ test -n "$no_create" || ${CONFIG_SHELL-/bin/sh} ./config.status
 # src/Makefile      from ${srcdir}/src/Makefile.in
 # lwlib/Makefile    from ${srcdir}/lwlib/Makefile.in
 # lib-src/Makefile  from ${srcdir}/lib-src/Makefile.in
-# man/Makefile      from ${srcdir}/man/Makefile.in
 # man/*/Makefile    from ${srcdir}/man/*/Makefile.in
 # dynodump/Makefile from ${srcdir}/dynodump/Makefile.in
 # and possibly
@@ -8560,23 +8559,6 @@ dynodump_makefile_command='echo "creating dynodump/Makefile";
     rm -f junk.c junk.cpp;
 )'
 eval `echo $dynodump_makefile_command`
-man_makefile_command='echo "creating man/Makefile";
-  topsrcdir='"${topsrcdir}"';
-( cd ./man;
-  rm -f junk.c;
-  sed -e '\''s/^# Generated.*//'\'' -e '\''s%/\*\*/#.*%%'\'' < Makefile.in > junk.c;
-  eval `echo ${CPP} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
-  < junk.cpp							'\
-'    sed -e '\''s/^#.*//'\''					'\
-'	-e '\''s/^[ \f\t][ \f\t]*$//'\''			'\
-'	-e '\''s/^ /	/'\'' 					'\
-'	| sed -n -e '\''/^..*$/p'\''				'\
-'	> Makefile.new;
-    chmod 444 Makefile.new;
-    mv -f Makefile.new Makefile;
-    rm -f junk.c junk.cpp;
-)'
-eval `echo $man_makefile_command`
 if [ "${with_energize}" = "yes" ]; then
 energize_makefile_command='echo "creating lwlib/energize/Makefile";
   topsrcdir='"${topsrcdir}"';
@@ -8598,7 +8580,7 @@ eval `echo $energize_makefile_command`
 fi
 # AC-OUTPUT has created `config.status' already.  We need to add the
 # above commands to re-create `src/Makefile', `lwlib/Makefile',
-# `lib-src/Makefile', `dynodump/Makefile', `man/Makefile', and possibly
+# `lib-src/Makefile', `dynodump/Makefile', and possibly
 # `lwlib/energize/Makefile', and we need to insert them before the final
 # "exit 0" which appears at the end of `config.status'.
 <config.status sed -e 's/^exit 0$//' >config.new
@@ -8615,7 +8597,7 @@ mv -f config.new config.status
 chmod +x config.status
 # Don't let the fact that we just rewrote config.status make Makefile think
 # that it is now newer.  We have just rewritten all of the Makefiles as well.
-MFS="Makefile src/Makefile src/Makefile.in lib-src/Makefile lib-src/Makefile.in dynodump/Makefile dynodump/Makefile.in lwlib/Makefile lwlib/Makefile.in man/Makefile man/Makefile.in"
+MFS="Makefile src/Makefile src/Makefile.in lib-src/Makefile lib-src/Makefile.in dynodump/Makefile dynodump/Makefile.in lwlib/Makefile lwlib/Makefile.in"
 for file in $MFS; do
    chmod a+w $file; touch $file; chmod 444 $file
 done

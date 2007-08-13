@@ -110,7 +110,7 @@ dynamic=''
 with_x11=''
 rel_alloc='default'
 use_system_malloc='default'
-internal_makefile_list='Makefile lib-src/Makefile.in man/Makefile.in src/Makefile.in lwlib/Makefile.in dynodump/Makefile.in'
+internal_makefile_list='Makefile lib-src/Makefile.in src/Makefile.in lwlib/Makefile.in dynodump/Makefile.in'
 energize_version='no'
 native_sound_lib=''
 # make normal error-checking be the default in alpha and beta versions, so
@@ -1537,6 +1537,20 @@ fi
 ### Eric Raymond says we should accept strings like "sysvr4" to mean
 ### "System V Release 4"; he writes, "The old convention encouraged
 ### confusion between `system' and `release' levels'."
+###
+### We rely on cpp to generate makefiles from Makefile.in.in templates.
+### There is at least one drawback to that. Since cpp generally has
+### built-in macro definitions like `#define unix' or `#define i386',
+### we must be careful to prevent it from substituting these occurences
+### in certain places in the makefiles. Pathnames for architecture-
+### specific files come to mind.
+### This is where CPPFLAGS_MAKEFILEGEN comes in. We try to selectively
+### disable (potentially) predefined macros that we find to be part of
+### the configuration string. 
+### This is but a poor method to help us fight off cpp, but it covers
+### those cases that used to bite me. <mdiers@logware.de>
+
+CPPFLAGS_MAKEFILEGEN=""  # we normally do not need any extra flags
 
 machine='' opsys='' unported=no need_dynodump=no
 case "${canonical}" in
@@ -2265,6 +2279,7 @@ case "${canonical}" in
   ## Intel 386 machines where we don't care about the manufacturer
   i[3-9]86-*-* )
     machine=intel386
+    CPPFLAGS_MAKEFILEGEN="${CPPFLAGS_MAKEFILEGEN} -Ui386"
     case "${canonical}" in
       *-isc1.* | *-isc2.[01]* )	opsys=386-ix ;;
       *-isc2.2* )		opsys=isc2-2 ;;
@@ -2295,8 +2310,8 @@ case "${canonical}" in
 		else
 			NON_GNU_CPP="/lib/cpp -D_XOPEN_SOURCE"  ;
 		fi ;;
-      *-386bsd* )	        opsys=386bsd ;;
-      *-freebsd* )		opsys=freebsd ;;
+      *-386bsd* )               opsys=386bsd ;;
+      *-freebsd* )              opsys=freebsd ;;
       *-nextstep* )		opsys=nextstep ;;
       ## Otherwise, we'll fall through to the generic opsys code at the bottom.
     esac
@@ -2540,14 +2555,7 @@ fi
 #### Now that we know whether we are using GCC, we can decide whether
 #### to use that one.
 
-#### Also, GNU CPP by default defines certain add'l macros that could
-#### hurt us when generating makefiles. We want to switch off these
-#### add'l macros for the purpose of generating makefiles.
-
-CPPFLAGS_MAKEFILEGEN=""
-if [ "x$GCC" = x1 ] ; then
-  CPPFLAGS_MAKEFILEGEN=" -undef "
-elif [ "x$NON_GNU_CPP" = x ] ; then
+if [ "x$GCC" = x1 ] || [ "x$NON_GNU_CPP" = x ] ; then
   true
 else
   if [ "x$CPP" = x ]; then
@@ -4442,7 +4450,6 @@ AC_OUTPUT($internal_makefile_list) [
 # src/Makefile      from ${srcdir}/src/Makefile.in
 # lwlib/Makefile    from ${srcdir}/lwlib/Makefile.in
 # lib-src/Makefile  from ${srcdir}/lib-src/Makefile.in
-# man/Makefile      from ${srcdir}/man/Makefile.in
 # man/*/Makefile    from ${srcdir}/man/*/Makefile.in
 # dynodump/Makefile from ${srcdir}/dynodump/Makefile.in
 # and possibly
@@ -4527,23 +4534,6 @@ dynodump_makefile_command='echo "creating dynodump/Makefile";
     rm -f junk.c junk.cpp;
 )'
 eval `echo $dynodump_makefile_command`
-man_makefile_command='echo "creating man/Makefile";
-  topsrcdir='"${topsrcdir}"';
-( cd ./man;
-  rm -f junk.c;
-  sed -e '\''s/^# Generated.*//'\'' -e '\''s%/\*\*/#.*%%'\'' < Makefile.in > junk.c;
-  eval `echo ${CPP} ${CPPFLAGS_MAKEFILEGEN} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
-  < junk.cpp							'\
-'    sed -e '\''s/^#.*//'\''					'\
-'	-e '\''s/^[ \f\t][ \f\t]*$//'\''			'\
-'	-e '\''s/^ /	/'\'' 					'\
-'	| sed -n -e '\''/^..*$/p'\''				'\
-'	> Makefile.new;
-    chmod 444 Makefile.new;
-    mv -f Makefile.new Makefile;
-    rm -f junk.c junk.cpp;
-)'
-eval `echo $man_makefile_command`
 if [ "${with_energize}" = "yes" ]; then
 energize_makefile_command='echo "creating lwlib/energize/Makefile";
   topsrcdir='"${topsrcdir}"';
@@ -4565,7 +4555,7 @@ eval `echo $energize_makefile_command`
 fi
 # AC-OUTPUT has created `config.status' already.  We need to add the
 # above commands to re-create `src/Makefile', `lwlib/Makefile',
-# `lib-src/Makefile', `dynodump/Makefile', `man/Makefile', and possibly
+# `lib-src/Makefile', `dynodump/Makefile', and possibly
 # `lwlib/energize/Makefile', and we need to insert them before the final
 # "exit 0" which appears at the end of `config.status'.
 <config.status sed -e 's/^exit 0$//' >config.new
@@ -4582,7 +4572,7 @@ mv -f config.new config.status
 chmod +x config.status
 # Don't let the fact that we just rewrote config.status make Makefile think
 # that it is now newer.  We have just rewritten all of the Makefiles as well.
-MFS="Makefile src/Makefile src/Makefile.in lib-src/Makefile lib-src/Makefile.in dynodump/Makefile dynodump/Makefile.in lwlib/Makefile lwlib/Makefile.in man/Makefile man/Makefile.in"
+MFS="Makefile src/Makefile src/Makefile.in lib-src/Makefile lib-src/Makefile.in dynodump/Makefile dynodump/Makefile.in lwlib/Makefile lwlib/Makefile.in"
 for file in $MFS; do
    chmod a+w $file; touch $file; chmod 444 $file
 done

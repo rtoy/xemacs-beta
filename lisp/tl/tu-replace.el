@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995,1996 MORIOKA Tomohiko
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: tu-replace.el,v 1.1.1.1 1996/12/18 03:55:31 steve Exp $
+;; Version: $Id: tu-replace.el,v 1.2 1996/12/22 00:29:33 steve Exp $
 ;; Keywords: replace
 
 ;; This file is part of tl (Tiny Library).

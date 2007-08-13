@@ -300,9 +300,6 @@ lwlib/Makefile: ${srcdir}/lwlib/Makefile.in.in config.status
 dynodump/Makefile: ${srcdir}/dynodump/Makefile.in.in config.status
 	./config.status
 
-man/Makefile: ${srcdir}/man/Makefile.in.in config.status
-	./config.status
-
 src/config.h: ${srcdir}/src/config.h.in
 	./config.status
 

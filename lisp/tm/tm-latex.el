@@ -5,7 +5,7 @@
 ;;;
 ;;; modified by MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;;;
-;;; $Id: tm-latex.el,v 1.1.1.1 1996/12/18 03:55:32 steve Exp $
+;;; $Id: tm-latex.el,v 1.2 1996/12/22 00:29:40 steve Exp $
 ;;;
 
 (require 'tm-view)

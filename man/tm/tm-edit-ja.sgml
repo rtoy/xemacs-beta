@@ -1,0 +1,467 @@
+<!doctype sinfo system>
+<!-- $Id: tm-edit-ja.sgml,v 1.1 1996/12/22 00:09:32 steve Exp $ -->
+<head>
+<title>tm-edit 7.90 説明書（日本語版）
+<author>守岡 知彦 <mail>morioka@jaist.ac.jp</mail>
+<date>1996/10/11
+
+<toc>
+</head>
+
+<body>
+
+<abstract>
+<p>
+This file documents tm-edit, a MIME composer for GNU Emacs.
+<p>
+GNU Emacs 用の MIME composer である `tm-edit' について説明します。
+</abstract>
+
+
+<h1> What is tm-edit?
+<node> Introduction
+<p>
+<concept>tm-edit</concept> は GNU Emacs で動作する汎用的な MIME
+composer です。
+<p>
+tm-edit は GNUS の作者としても有名な 梅田 政信
+<mail>umerin@mse.kyutech.ac.jp</mail> さんが書かれた 
+<file>mime.el</file> を基に
+
+<ul>
+<li>
+RFC 1521/1522 化
+<li>
+<a file="tm-ja" node="Content-Disposition">Content-Disposition
+field</a> (RFC 1806) の利用
+<li>
+入れ子になった <a file="tm-ja" node="multipart">multi-part message</a>
+<li>
+<dref>PGP</dref>
+<li>
+file type における parameter の自動指定の強化
+</ul>
+
+<noindent>
+などの改良を行いました。
+<p>
+<dref file="tm-ja">tm-MUA</dref> では tm-edit を使うことにより、容易に 
+MIME message を作成できます。
+
+
+<h1> mime/editor-mode
+<node> mime/editor-mode
+<p>
+<concept>mime/editor-mode</concept> は MIME message を作成するための 
+minor mode です。この mode では <concept>tag</concept> を使ってさまざ
+まな種類の data を表現し、<a file="tm-ja" node="multipart">複数の部分
+からなる message</a> を編集することを可能にしています。
+<p>
+tag には
+
+<ul>
+<li> single-part tag
+<li> multi-part tag
+</ul>
+
+<noindent>
+の２つがあります。
+<p>
+single-part tag は single part を表現するための tag で、
+<p>
+<verb>
+        --[[TYPE/SUBTYPE;PARAMETERS][ENCODING]
+        OPTIONAL-FIELDS]
+</verb>
+<p>
+<noindent>
+というような形をしています。
+<p>
+TYPE/SUBTYPE および PARAMETERS は <dref file="tm-ja">Content-Type
+field</dref> の type/subtype および parameters を表します。
+TYPE/SUBTYPE は必須であり、PARAMETERS は省略可です。
+<p>
+ENCODING は Content-Transfer-Encoding field を表します。これも省略可で
+す。
+<p>
+OPTIONAL-FIELDS は Content-Type, Content-Transfer-Encoding 以外の 
+field を書くための部分で、省略可です。
+<p>
+multi-part tag は <a file="tm-ja" node="multipart">multi part</a> を表
+現するための tag で、
+<p>
+<verb>
+        --<<TYPE>>-@{
+</verb>
+<p>
+<noindent>
+という形の <concept>multi-part 開始 tag</concept> と呼ばれる multi
+part の開始を示す tag と
+<p>
+<verb>
+        --@}-<<TYPE>>
+</verb>
+<p>
+<noindent>
+という形の <concept>multi-part 終了 tag</concept> と呼ばれる multi
+part の終了を示す tag があります。
+<p>
+また、multi-part 開始 tag と multi-part 終了 tag で囲まれた部分を 
+<concept>enclosure</concept> と呼びます。
+
+
+<h1> single-part に対する操作
+<node> single-part operations
+<p>
+single-part を作るための操作には以下のようなものがあります。
+
+<kl>
+<kt>C-c C-x C-t
+<kd>
+text part を表す single-part tag を挿入します。
+</kd>
+<kt>C-c C-x C-i
+<kd>
+file を MIME part として添付します。
+</kd>
+<kt>C-c C-x C-e
+<kd>
+external part を挿入します。
+</kd>
+<kt>C-c C-x C-v
+<kd>
+<kbd>C-g</kbd> が押されるまで録音を行い、音声 part を挿入します。（使
+用できない場合があります）
+</kd>
+<kt>C-c C-x C-y
+<kd>
+現在表示中の (mail or news) message を挿入します。（実際の動作は使用し
+ている MUA に依存します）
+</kd>
+<kt>C-c C-x C-m
+<kd>
+mail message を挿入します。
+</kd>
+<dt><key>C-c C-x C-w</key>, <key>C-c C-x C-s</key>
+<dd>
+signature を挿入します。
+</dd>
+<kt>C-c C-x C-k
+<kd>
+<dref>PGP</dref> の公開鍵を挿入します。
+</kd>
+<kt>C-c C-x t
+<kd>
+任意の single-part tag を挿入します。
+</kl>
+
+
+<h1> enclosure に対する操作
+<node> enclosure operation
+<p>
+enclosure を作るための操作としては以下のようなものがあります。
+
+<kl>
+<kt>C-c C-x a
+<kd>
+指定した region を multipart/alternative として囲みます。
+</kd>
+<kt>C-c C-x p
+<kd>
+指定した region を multipart/parallel として囲みます。
+</kd>
+<kt>C-c C-x m
+<kd>
+指定した region を multipart/mixed として囲みます。
+</kd>
+<kt>C-c C-x d
+<kd>
+指定した region を multipart/digest として囲みます。
+</kd>
+<kt>C-c C-x s
+<kd>
+指定した region に電子署名を行います。(<ref node="PGP">)
+</kd>
+<kt>C-c C-x e
+<kd>
+指定した region を暗号化します。(<ref node="PGP">)
+<kt>C-c C-x q
+<kd>
+指定した region 内の tag を無効にし、その tag を文字列として利用できる
+ようにします。（現在の版ではうまく働かないことがあります。また、電子署
+名との併用に関しても不完全です）
+</kl>
+
+
+<h1> mime/editor-mode におけるその他の操作
+<node> other operations of mime/editor-mode
+<p>
+mime/editor-mode におけるその他の操作を説明します。
+
+<kl>
+<kt>C-c C-c
+<kd>
+編集中の message を送信します。
+</kd>
+<kt>C-c C-x C-p
+<kd>
+編集中の message を preview します。(<ref file="tm-view-ja"
+node="mime/viewer-mode">)
+</kd>
+<kt>C-c C-x C-z
+<kd>
+編集中の message を送信することなく、mime/editor-mode を終了します。
+</kd>
+<kt>C-c C-x ?
+<kd>
+help message を表示します。
+</kd>
+<kt>C-c C-x /
+<kd>
+大きな message を送信する場合に message/partial 形式に自動分割可能とす
+るかどうかを決めます。
+</kd>
+<kt>C-c C-x 7
+<kd>
+<dref>transfer level</dref> を <dref file="tm-ja">7bit</dref> にします。
+</kd>
+<kt>C-c C-x 8
+<kd>
+<dref>transfer level</dref> を <dref file="tm-ja">8bit</dref> にします。
+</kd>
+<kt>C-c C-x v
+<kd>
+message 全体を電子署名するかどうかを決めます。(<ref node="PGP">)
+</kd>
+<kt>C-c C-x h
+<kd>
+message 全体を暗号化するかどうかを決めます。(<ref node="PGP">)
+<kt>C-c C-x ?
+<kd>
+help message を表示します。
+</kl>
+
+
+<h1> transfer level
+<node> transfer level
+<p>
+message に挿入する data は <dref file="tm-ja">7bit</dref> ないし <dref
+file="tm-ja">8bit</dref> もしくは <dref file="tm-ja">binary</dref> で
+表現することができます。
+<p>
+よって、7bit しか通さない <dref file="tm-ja">MTA</dref> を経由する場合、
+7bit の data はそのままで送れますが、8bit や binary の data は 7bit に
+変換しなければなりません。
+<p>
+同様に、8bit しか通さない MTA を経由する場合、7bit や 8bit の data は
+そのままで送れますが、binary の data は 7bit か 8bit に変換しなければ
+なりません。
+<p>
+<memo>
+EBCDIC しか通さない MTA を経由する場合、7bit の data も base64 等で変
+換しないと送れませんが、私は EBCDIC のことまでは知りません。(^_^;
+<p>
+同様に、制御文字を通さない MTA のことや code 変換を行なう MTA も消えて
+なくなって欲しいです。(^_^;
+<p>
+binary も通す MTA も存在するんでしょうが、今のところあまり一般的とはい
+えないでしょう。
+</memo>
+<p>
+<concept>transfer level</concept> というのはどの範囲の data まで送れる
+かということを表すものです。tm-edit は 
+<code>mime-editor/transfer-level</code> という変数を持っており、これで 
+transfer level を表現します。
+
+
+<defvar name="mime-editor/transfer-level">
+<p>
+transfer level を表す。
+<p>
+ある data の transfer level がこの値を越える場合、7bit data への変換が
+行われる。
+<p>
+現在のところ、7 か 8 が有効である。既定値は 7 である。
+<p>
+EBCDIC を 5, ASCII printable のみを 6, binary を 9 とすることを計画し
+ているが、実装の予定はない。
+</defvar>
+
+
+<memo>
+transfer level は <a node="header">message header</a> には関係しない。
+RFC 1521 は body において、8bit の data を使えるように <dref
+file="tm-ja">RFC 822</dref> を拡張しているが、message header では 
+<dref file="tm-ja">us-ascii</dref> のみを用いることを求めている。
+</memo>
+
+
+<h1> header での非 ASCII 文字の使用<node> header
+<p>
+<dref file="tm-ja">RFC 1522</dref> では header で非 ASCII 文字を表現す
+るための方法を定義しています。
+<p>
+これは <a file="tm-ja"
+node="encoded-word"><concept>encoded-word</concept></a> と呼ばれる型式
+で、<dref file="tm-ja">MIME charset</dref> を宣言し、かつ、<dref
+file="tm-ja">7bit</dref> で表現することを可能にしています。
+
+
+<h2> どうしても encoded-word を使いたくない場合
+<node> evil setting in header
+<p>
+ところで、header で encoded-word を用いずに生で非 ASCII 文字列を入れる
+のは間違っています。なぜなら、Internet ではさまざまな<a file="tm-ja"
+node="Coded character set">符号化文字集合</a>が使われており、<dref
+file="tm-ja">MIME charset</dref> を明示的に宣言しなければそれらを正確
+に区別することはできないからです。
+<p>
+例えば、MIME charset を宣言しなければ <dref
+file="tm-ja">iso-8859-1</dref> と <dref file="tm-ja">iso-8859-2</dref> 
+は見分けが付かないでしょう。
+<p>
+しかしながら、どうしても encoded-word を使いたくない場合には以下の変数
+を設定してください。
+
+
+<defvar name="mime/field-encoding-method-alist">
+<p>
+field 名と符号化法を表す symbol の対からなる連想 list.
+<p>
+field 名は文字列、もしくは、任意の文字列を表す <code>t</code> である。
+<p>
+符号化法は、<code>nil</code> ならば無変換、<code>mime</code> ならば
+encoded-word, MIME charset を表す symbol ならばその符号化文字集合へ
+encoded-word を用いずに変換することを表す。
+<p>
+field 名は文字列から検索され、指定した文字列が見付からなければ
+<code>t</code> を用いる。
+<p>
+既定値は
+
+<lisp>
+(("X-Nsubject" . iso-2022-jp-2)
+ ("Newsgroups" . nil)
+ (t            . mime)
+ ))
+</lisp>
+
+<noindent>
+である。即ち、X-Nsubject field は生の <dref
+file="tm-ja">iso-2022-jp-2</dref>, Newsgroup は無変換、それ以外の 
+field は encoded-word に変換される。
+</defvar>
+
+<p>
+また、field 毎ではなく、符号化文字集合毎に指定したい場合は、変数 
+<code>mime-eword/charset-encoding-alist</code> を用いてください。
+(<ref node="API about header">)
+
+
+<h2> header に関する関数・変数
+<node> API about header
+<p>
+<define type="Command" name="mime/encode-message-header">
+<opts> code-conversion
+<p>
+Current buffer の message header に存在する非 ASCII 文字を
+network 表現に変換します。
+<p>
+optional 引数の <var>code-conversion</var> に非-nil が指定された場合、
+encoded-word にしない field を
+<code>mime/field-encoding-method-alist</code> に従って、code 変換しま
+す。
+</define>
+
+<defun name="mime/encode-field">
+<args> string
+<p>
+<var>string</var> を field として encoded-word に変換します。
+<p>
+長い行は RFC 822 に従って折返されます。
+</defun>
+
+<defun name="mime-eword/encode-string">
+<args> string <opts> column mode
+<p>
+<var>string</var> を encoded-word に変換します。
+<p>
+長い行は RFC 822 に従って折返されます。
+<p>
+<var>column</var> はこの文字列が何桁目から始まっているかを指定します。
+既定値は 0 です。
+<p>
+<var>mode</var> はこの文字列がどういう部分で使われているかを示します。
+指定できる値としては <code>text</code>, <code>comment</code>,
+<code>phrase</code> があります。既定値は <code>phrase</code> です。
+</defun>
+
+<defvar name="mime-eword/charset-encoding-alist">
+<p>
+MIME charset を表す symbol と nil, もしくは、<code>"B"</code> か
+<code>"Q"</code> の文字列の対からなる連想 list.
+<p>
+<code>nil</code> はその MIME charset を encoded-word にしないことを表
+し、<code>"B"</code> はその MIME charset を B 方式の encoded-word にす
+ることを表し、<code>"Q"</code> はその MIME charset を Q 方式の 
+encoded-word にすることを表す。
+</defvar>
+
+
+<h1> PGP
+<node> PGP
+<p>
+tm-edit では <a file="tm-ja"
+node="PGP/MIME"><concept>PGP/MIME</concept></a> (RFC 2015) および <a
+file="tm-ja" node="PGP-kazu"><concept>PGP-kazu</concept></a>
+(draft-kazu-pgp-mime-00.txt) による暗号化・電子署名・公開鍵の挿入機能
+を利用することができます。
+<p>
+但し、この機能を利用するには <a file="mailcrypt">Mailcrypt package</a> 
+と pgp command が必要です。
+<p>
+また、変数 <code>mimed-editor/signing-type</code> と変数 
+<code>mime-editor/encrypting-type</code> に <code>pgp-elkins</code> か 
+<code>pgp-kazu</code> を代入してください。
+<p>
+<code>pgp-elkins</code> を指定した場合 PGP/MIME が使われ、
+<code>pgp-kazu</code> を指定した場合 PGP-kazu が使われます。
+
+
+<defvar name="mimed-editor/signing-type">
+<p>
+PGP での電子書名の形式を指定します。
+<p>
+<code>pgp-elkins</code> か <code>pgp-kazu</code> を指定してください。
+<p>
+既定値は <code>nil</code> です。
+</defvar>
+
+<defvar name="mime-editor/encrypting-type">
+<p>
+PGP での暗号化の形式を指定します。
+<p>
+<code>pgp-elkins</code> か <code>pgp-kazu</code> を指定してください。
+<p>
+既定値は <code>nil</code> です。
+</defvar>
+
+
+<h1> 概念索引
+<node> Concept Index
+
+<cindex>
+
+
+<h1> 関数索引
+<node> Function Index
+
+<findex>
+
+
+<h1> 変数索引
+<node> Variable Index
+
+<vindex>
+
+</body>

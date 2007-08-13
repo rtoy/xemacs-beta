@@ -1323,34 +1323,34 @@ static struct fkey_table keys[] =
   {"kD", "delete"},	/* terminfo */
   {"kB", "backtab"},	/* terminfo */
   /*
-   * "kp_backtab", "kp_space", "kp_tab" --- no termcaps
+   * "kp-backtab", "kp-space", "kp-tab" --- no termcaps
    */
-  {"@8", "kp_enter"},	/* terminfo */
+  {"@8", "kp-enter"},	/* terminfo */
   /*
-   * "kp_f1", "kp_f2", "kp_f3" "kp_f4",
-   * "kp_multiply", "kp_add", "kp_separator",
-   * "kp_subtract", "kp_decimal", "kp_divide", "kp_0";
+   * "kp-f1", "kp-f2", "kp-f3" "kp-f4",
+   * "kp-multiply", "kp-add", "kp-separator",
+   * "kp-subtract", "kp-decimal", "kp-divide", "kp-0";
    * --- no termcaps for any of these.
    */
-  {"K4", "kp_1"},	/* terminfo */
+  {"K4", "kp-1"},	/* terminfo */
   /*
-   * "kp_2" --- no termcap
+   * "kp-2" --- no termcap
    */
-  {"K5", "kp_3"},	/* terminfo */
+  {"K5", "kp-3"},	/* terminfo */
   /*
-   * "kp_4" --- no termcap
+   * "kp-4" --- no termcap
    */
-  {"K2", "kp_5"},	/* terminfo */
+  {"K2", "kp-5"},	/* terminfo */
   /*
-   * "kp_6" --- no termcap
+   * "kp-6" --- no termcap
    */
-  {"K1", "kp_7"},	/* terminfo */
+  {"K1", "kp-7"},	/* terminfo */
   /*
-   * "kp_8" --- no termcap
+   * "kp-8" --- no termcap
    */
-  {"K3", "kp_9"},	/* terminfo */
+  {"K3", "kp-9"},	/* terminfo */
   /*
-   * "kp_equal" --- no termcap
+   * "kp-equal" --- no termcap
    */
   {"k1", "f1"},
   {"k2", "f2"},

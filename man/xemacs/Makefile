@@ -1,31 +1,27 @@
 # Makefile for the XEmacs Reference Manual.
-#
-# based on FSF Makefile, 11 August 1990
+
+# This file is part of XEmacs.
+
+# XEmacs is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any
+# later version.
+
+# XEmacs is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with XEmacs; see the file COPYING.  If not, write to
+# the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+# Boston, MA 02111-1307, USA.
+
 # Modified by Ben Wing, February 1994
 
-# Redefine `TEX' if `tex' does not invoke plain TeX. For example:
-# TEX=platex
-
-TEX=tex
-
-# Where the TeX macros are kept:
-texmacrodir = /usr/local/lib/tex/macros
-
-# Where the Emacs hierarchy lives ($EMACS in the INSTALL document for Emacs.)
-# For example: 
-# emacslibdir = /usr/local/gnu/lib/emacs
-
-# Directory where Emacs is installed, by default:
-emacslibdir = /usr/local/emacs
-
-# Unless you have a nonstandard Emacs installation, these shouldn't have to 
-# be changed.
-prefix = /usr/local
-infodir = ${prefix}/info
-
-# The name of the manual:
-
 NAME=xemacs
+
+TEXI2DVI = texi2dvi
 
 # List of all the texinfo files in the manual:
 
@@ -37,34 +33,22 @@ srcs = xemacs.texi abbrevs.texi basic.texi buffers.texi building.texi \
   programs.texi reading.texi regs.texi frame.texi search.texi sending.texi \
   text.texi trouble.texi undo.texi windows.texi
 
-all: ../../info/$(NAME).info
+all : info
+info : ../../info/$(NAME).info
 
-$(NAME).dvi: $(srcs) ../texindex
-	# Avoid losing old contents of aux file entirely.
-	-mv $(NAME).aux $(NAME).oaux
-	# First shot to define xrefs:
-	$(TEX) $(NAME).texi
-	../texindex $(NAME).??
-	$(TEX) $(NAME).texi
+dvi: $(NAME).dvi
+.texi.dvi :
+	$(TEXI2DVI) $<
 
-../../info/$(NAME).info: $(srcs) ../makeinfo
-	../makeinfo $(NAME).texi
+../../info/$(NAME).info: $(srcs)
+	makeinfo -o $@ $(NAME).texi
 
 mostlyclean:
 	rm -f *.toc *.aux *.oaux *.log *.cp *.cps *.fn *.fns *.tp *.tps \
               *.vr *.vrs *.pg *.pgs *.ky *.kys
-
 clean: mostlyclean
-	rm -f *.dvi *.ps
-	rm -f make.out core
-
+	rm -f *.dvi *.ps make.out core
 distclean: clean
 realclean: distclean
 extraclean: distclean
 	-rm -f *~ \#*
-
-../texindex:
-	(cd ..; make texindex)
-
-../makeinfo:
-	(cd ..; make makeinfo)

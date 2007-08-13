@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Revision: 1.1.1.1 $
+;; Version: $Revision: 1.2 $
 ;; Keywords: encoded-word, MIME, multilingual, header, mail, news
 
 ;; This file is part of tm (Tools for MIME).
@@ -35,7 +35,7 @@
 ;;;
 
 (defconst tm-ew-e/RCS-ID
-  "$Id: tm-ew-e.el,v 1.1.1.1 1996/12/18 03:55:31 steve Exp $")
+  "$Id: tm-ew-e.el,v 1.2 1996/12/22 00:29:39 steve Exp $")
 (defconst mime-eword/encoder-version (get-version-string tm-ew-e/RCS-ID))
 
 
@@ -90,10 +90,14 @@ when Subject field is encoded by `mime/encode-message-header'.
     (iso-8859-9		. "Q")
     (iso-2022-jp	. "B")
     (iso-2022-kr	. "B")
+    (gb2312		. "B")
+    (cn-gb		. "B")
+    (cn-gb-2312		. "B")
     (euc-kr		. "B")
     (iso-2022-jp-2	. "B")
     (iso-2022-int-1	. "B")
     ))
+
 
 ;;; @ encoded-text encoder
 ;;;

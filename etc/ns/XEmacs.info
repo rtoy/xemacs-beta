@@ -1,0 +1,8 @@
+Title           XEmacs
+Version         19.13
+Description     XEmacs has native support for the NeXTstep window system.  If you have installed the old XEmacs.app in /LocalApps, don't forget to delete it first.  Installation will also create links to the /usr/local hierarchy which makes XEmacs accessible to shell users.
+DefaultLocation /LocalApps
+Relocatable     NO
+Application     YES
+DiskName        XEmacs19.13
+DeleteWarning   Removing this package will also delete the links to it in the /usr/local hierachy.

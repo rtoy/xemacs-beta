@@ -1536,7 +1536,8 @@ The mark is activated unless DONT-ACTIVATE-REGION is non-nil."
     (switch-to-buffer buffer)))
 
 
-(defvar next-line-add-newlines t
+;;; After 8 years of waiting ... -sb
+(defvar next-line-add-newlines nil  ; XEmacs
   "*If non-nil, `next-line' inserts newline to avoid `end of buffer' error.")
 
 (defun next-line (arg)

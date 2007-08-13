@@ -1,0 +1,330 @@
+<!doctype sinfo system>
+<!-- $Id: gnus-mime-ja.sgml,v 1.1 1996/12/22 00:09:31 steve Exp $ -->
+<head>
+<title>gnus-mime 0.10 説明書（日本語版）
+<author>守岡 知彦 <mail>morioka@jaist.ac.jp</mail>
+<date>1996/10/21
+
+<toc>
+</head>
+
+<body>
+    
+<abstract>
+<p>
+This file documents gnus-mime, a MIME extension for Gnus.
+<p>
+tm を使って Gnus の MIME 機能を強化するための package である 
+`gnus-mime' について説明します。
+</abstract>
+
+    
+<h1> gnus-mime って何？
+<node> Introduction
+<p>
+<concept>gnus-mime</concept> は <a file="tm-ja"
+node="tm-kernel">tm</a> を使って <a file="gnus">Gnus</a> の <dref
+file="tm-ja">MIME</dref> 機能を強化するための package です。
+
+<memo title="注意">
+<p>
+gnus-mime は Gnus 専用です。GNUS には <a file="tm-gnus_ja">tm-gnus</a> 
+を使います。
+</memo>
+
+<p>
+gnus-mime を使うと <a file="tm-view-ja"> tm-view</a> を用いて 
+<code>"*Article*"</code> buffer で MIME preview を行うことができます。
+特に、XEmacs では、text と同様に、絵も inline 表示をすることができます。
+<p>
+また、<a file="tm-ja" node="mule"> MULE</a>, XEmacs/mule, mule 統合版 
+Emacs では多言語・国際化機能が support され、MIME message に対する 
+charset の support, 非 MIME message に対する Newsgroup 毎の 
+default-mime-charset の指定を行うことができます。
+<p>
+また、original の Gnus では <dref file="tm-ja">iso-8859-1</dref> の Q
+encoding の <dref file="tm-ja">encoded-word</dref> の decode しか 
+support されませんが、gnus-mime では、<dref
+file="tm-ja">iso-8859-2</dref>, <dref file="tm-ja">iso-8859-3</dref>,
+..., <dref file="tm-ja">iso-2022-jp</dref>, <dref
+file="tm-ja">euc-kr</dref>, <dref file="tm-ja">iso-2022-kr</dref>,
+<dref file="tm-ja">hz-gb-2312</dref>, <dref
+file="tm-ja">cn-big5</dref> など、mule で利用可能なさまざまな charset 
+の B ならびに Q encoding の encoded-word を扱うことができます。また、
+Gnus よりも RFC 1522 に忠実に処理しています。
+
+
+<h1> MIME message の inline 表示
+<node> Automatic MIME Preview
+<p>
+gnus-mime では <concept>automatic MIME preview</concept> 機能を利用す
+ることができます。この機能を使うと Summary mode で記事を読む時、通常表
+示される Article buffer の代わりに tm-view で処理された preview buffer 
+を表示します。<cf file="tm-view-ja">
+<p>
+このため、<dref file="tm-ja">Base64</dref> や <dref
+file="tm-ja">Quoted-Printable</dref> で encode された記事を decode し
+て表示することができます。あるいは、<dref
+file="tm-ja">text/enriched</dref> 形式のような書体や組版に関する情報を
+持った記事を整形して表示できます。当然のことながら、<dref
+file="tm-ja">multipart</dref> の記事も正しく処理できます。
+<p>
+また、<concept>XEmacs</concept> では text と同様に絵も preview buffer 
+内で表示することができます。
+<p>
+metamail を使った場合と異なり、音の入った記事を読んだとたん、いきなり、
+音が鳴り出したり、video の入った記事を読むたびに video が再生されたり、
+anonymous <dref file="tm-ja">ftp</dref> や mail-server を利用した 
+external-message の入った記事を読むたびに anonymous ftp を実行したり、
+mail を送ったりすることが防げます。こうした content は preview buffer 
+の中に入って再生 command を実行した時のみ再生されます。
+<p>
+しかしながら、遅い machine を使っていて、MIME 処理の overhead が気にな
+る場合、automatic MIME preview を抑止することができます。
+
+
+<h2> MIME 処理の仕組み
+<node> MIME processing
+<p>
+<code>gnus-show-mime</code> が <code>nil</code> でなく、かつ、article 
+が Mime-Version field を持っている場合、即ち、その article が MIME
+message の場合、<code>gnus-show-mime-method</code> が呼ばれて MIME 処
+理が行なわれます。
+<p>
+<code>gnus-strict-mime</code> が <code>nil</code> の場合、
+<code>gnus-show-mime</code> が <code>nil</code> でなければ常に 
+<code>gnus-show-mime-method</code> が呼ばれて MIME 処理が行なわれます。
+<p>
+Gnus 5.2 以降では、<code>gnus-strict-mime</code> が <code>nil</code> 
+でなく、かつ、article に Mime-Version field がない場合、
+<code>gnus-show-mime-method</code> が呼ばれる代わりに 
+<code>gnus-decode-encoded-word-method</code> が呼ばれます。でも、古い 
+Gnus では有効ではないので、この場合、<code>gnus-strict-mime</code> は 
+<code>nil</code> にしておいた方が良いでしょう。
+
+
+<defvar name="gnus-show-mime">
+<p>
+この変数が <code>nil</code> でないとき、automatic MIME preview が行な
+われます。既定値は <code>t</code> です。
+<p>
+この変数は Gnus の変数なので、gnus-mime が load される前に gnus が 
+load された場合、既定値は保証されません。
+
+<cf file="gnus" node="Using MIME">
+</defvar>
+
+<defvar name="gnus-show-mime-method">
+<p>
+MIME 処理を行なう時に、この変数に束縛された関数が呼ばれます。既定値は 
+<code>gnus-article-preview-mime-message</code> です。
+<p>
+この変数は Gnus の変数なので、gnus-mime が load される前に gnus が 
+load された場合、既定値は保証されません。
+
+<cf file="gnus" node="Using MIME">
+</defvar>
+
+<defvar name="gnus-decode-encoded-word-method">
+<p>
+<code>gnus-show-mime</code> と <code>gnus-strict-mime</code> がともに 
+<code>nil</code> でない場合に、Mime-Version field がない article に対
+してこの変数に束縛された関数が呼ばれます。既定値は、
+<code>gnus-article-decode-encoded-word</code> です。
+<p>
+この変数は Gnus の変数なので、gnus-mime が load される前に gnus が 
+load された場合、既定値は保証されません。
+<p>
+また、Gnus 5.0.* および Gnus 5.1 では無効です。
+</defvar>
+
+<memo title="注意">
+<p>
+gnus-mime は Gnus の変数を用い、これを gnus-mime の初期値で
+<code>defvar</code> しています。例えば、<code>gnus-show-mime</code> は 
+<code>nil</code>ではなく <code>t</code> で、
+<code>gnus-show-mime-method</code> は <code>metamail-buffer</code> で
+はなく<code>gnus-article-preview-mime-message</code> で 
+<code>defvar</code> しています。<cf file="gnus" node="Using MIME">
+<p>
+<code>setq</code> ではなく <code>defvar</code> を用いているのは 
+gnus-mime が loadされる前に <file>~/.emacs</file> 等で user が行った設
+定を尊重するためですが、このことは同時に、もし gnus-mime が load され
+る前に gnus が load されれば gnus-mime の機能は標準では働かないことを
+意味しています。よって、<file>~/.gnus</file> 等で gnus-mime や 
+mime-setup を load することには問題があります。どうしてもそうしたい場
+合は、<code>gnus-show-mime</code> や<code>gnus-show-mime-method</code> 
+の設定を行ってください。
+</memo>
+
+
+<h2> Automatic MIME preview の仕組み
+<node> Two buffers for an article
+<p>
+Gnus 5.2 以降では Gnus は１つの article に対して 
+<code>gnus-original-article-buffer</code> (<code>" *Original
+Article*"</code>) と<code>gnus-article-buffer</code>
+(<code>"*Article*"</code>) という２つの buffer を持っています。ここで
+は前者を <concept>raw article buffer</concept>, 後者を 
+<concept>preview buffer</concept> と呼ぶことにします。
+<p>
+raw article buffer には何も処理をされていない『生の article』が入って
+います。特に、<dref file="tm-ja">mule</dref> では code 変換を行なわな
+い状態の記事が入ります。
+<p>
+preview buffer は raw article buffer を元に MIME 処理を行なって整形さ
+れた記事が入ります。特に、mule の場合、この中で、charset もしくは 
+newsgroup 毎に指定された文字 code での code 変換が行なわれます。
+<p>
+Gnus 5.0.* および Gnus 5.1 では raw article buffer と preview buffer 
+の区別はありませんが gnus-mime が無理矢理 raw article buffer を作り出
+しています。よって、特に理由がなければ Gnus 5.2 以降を使われることをお
+勧めします。
+<p>
+<cf file="tm-view-ja" node="Two buffers for an article">
+
+
+<h1> 国際化
+<node> mule
+<p>
+<a file="tm-ja" node="mule">MULE</a>, XEmacs/mule, および、mule 統合版 
+Emacs (*1) などの mule 機能を持った emacs では <dref file="tm-ja">MIME
+charset</dref> および、非 MIME message/part に対する newsgroup 毎に指
+定された <code>default-mime-charset</code> での code 変換が行われます。
+
+<memo>
+(*1) 1996 年 10 月現在、半田 剣一 氏と RMS 氏が開発中の Emacs で、MULE
+の機能のうち、多言語化と国際化に関する機能が merge されたものを指して
+います。
+</memo>
+
+<p>
+具体的には、code 変換は次のように行われます：
+
+<ol>
+<li>
+ある newsgroup を選択すると、その newsgroup に対応する default の MIME
+charset を <code>gnus-newsgroup-default-charset-alist</code> から捜し、
+もし、見付かれば、Summary Buffer の buffer local 変数
+<code>default-mime-charset</code> にそれを設定する。もし、なければ、
+<code>default-mime-charset</code> の大域値が用いられる。
+<p>
+<li>
+Summary Buffer 中の非 ASCII 文字は <code>default-mime-charset</code> 
+の Summary Buffer 上での値で code 変換される。
+<p>
+<li>
+<dref file="tm-ja">encoded-word</dref> の場合、宣言された <dref
+file="tm-ja">MIME charset</dref> で code 変換を行う。
+<p>
+<li>
+article の code 変換は：
+
+<ol>
+<li>
+もし、ある MIME message のある part が <dref file="tm-ja">Content-Type
+field</dref> に charset parameter を持っていれば、その MIME charset を
+用いて code 変換を行う。
+<p>
+<li>
+message header や非 MIME message など、charset が宣言されていない場合、
+Summary Buffer 上の <code>default-mime-charset</code> の値で code 変換
+される。
+</ol>
+</ol>
+
+<defvar name="gnus-newsgroup-default-charset-alist">
+<p>
+newsgroup に対応する正規表現と default MIME charset を表す symbol の対
+からなる連想 list.
+<p>
+既定値では、alt.chinese.* では <dref file="tm-ja">hz-gb-2312</dref>,
+alt.chinese.text.big5, hk.*, hkstar.*, tw.* では <dref
+file="tm-ja">cn-big5</dref>, fj.* では <dref
+file="tm-ja">iso-2022-jp-2</dref>, han.* では <dref
+file="tm-ja">euc-kr</dref>, relcom.* では <dref
+file="tm-ja">koi8-r</dref> が指定されています。
+<p>
+ある newsgroup に対応する MIME charset が存在しない場合は
+<code>default-mime-charset</code> が用いられます。
+</defvar>
+
+<defun name="gnus-set-newsgroup-default-charset">
+<args>newsgroup charset
+<p>
+<var>newsgroup</var> に対する default MIME charset を 
+<var>charset</var> に設定する。
+<p>
+<var>newsgroup</var> は newsgroup 名かその一部からなる文字列。（例：
+<code>"gnu.emacs.gnus"</code>, <code>"gnu.emacs"</code>,
+<code>"gnu"</code>）
+<p>
+<var>charset</var> は MIME charset を表す symbol. （例：
+<code>iso-8859-1</code>, <code>iso-2022-jp</code>）
+</defun>
+
+
+<h1> MIME message の作成
+<node> MIME-Edit
+<p>
+<dref file="tm-ja">mime-setup</dref> を使っている場合、<a
+file="tm-edit-ja">tm-edit</a> を用いた MIME message の作成を行うことが
+できます。
+
+<memo title="注意">
+<p>
+mime-setup の標準設定では signature の自動挿入が抑制されます。
+
+<cf file="tm-ja" node="mime-setup">
+</memo>
+
+<p>
+<kbd>C-c C-x C-m</kbd> (<code>mime-editor/insert-mail</code>) に対する
+実装は標準では与えられません。これは、Gnus と組み合わせるべき mail
+reader をどうすれば良いかが判らないからです。また、大抵の場合、
+<kbd>C-c C-x C-y</kbd> (<code>mime-editor/insert-message</code>) で事
+足りる（即ち、挿入したいmessage を選択してその 
+<code>"*Article*"</code> buffer を表示すればそのmessage を <kbd>C-c
+C-x C-y</kbd> で挿入することができます）からです。
+<p>
+しかしながら、<code>mime-editor/mail-inserter-alist</code> の
+<code>message-mode</code> の値に設定したい実装を指定することで 
+<kbd>C-c C-x C-m</kbd> を利用することができます。
+
+
+<h2> 例：<kbd>C-c C-x C-m</kbd> と同じ動作をさせる場合
+<p>
+<lisp>
+(set-alist 'mime-editor/mail-inserter-alist
+	   'message-mode (function message-mime-insert-article))
+</lisp>
+
+
+<h2> 例：MH の folder から取り込む場合
+<p>
+<lisp>
+(autoload 'tm-mh-e/insert-mail "tm-mh-e")
+
+(set-alist 'mime-editor/mail-inserter-alist
+	   'message-mode (function tm-mh-e/insert-mail))
+</lisp>
+
+
+<h1> 概念索引
+<node> Concept Index
+<p>
+<cindex>
+
+
+<h1> 関数索引
+<node> Function Index
+<p>
+<findex>
+
+
+<h1> 変数索引
+<node> Variable Index
+<p>
+<vindex>
+
+</body>

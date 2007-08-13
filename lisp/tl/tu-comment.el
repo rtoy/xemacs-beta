@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1995/10/27
-;; Version: $Id: tu-comment.el,v 1.1.1.1 1996/12/18 03:55:31 steve Exp $
+;; Version: $Id: tu-comment.el,v 1.2 1996/12/22 00:29:33 steve Exp $
 ;; Keywords: comment, Lisp
 
 ;; This file is part of tl (Tiny Library).

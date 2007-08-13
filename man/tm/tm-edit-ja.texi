@@ -1,0 +1,473 @@
+\input texinfo.tex
+@setfilename tm-edit-ja.info
+@settitle{tm-edit 7.90 説明書（日本語版）}
+@titlepage
+@title tm-edit 7.90 説明書（日本語版）
+@author 守岡 知彦 <morioka@@jaist.ac.jp>
+@subtitle 1996/10/11
+@end titlepage
+@node Top, Introduction, (dir), (dir)
+@top tm-edit 7.90 説明書（日本語版）
+
+@ifinfo
+
+This file documents tm-edit, a MIME composer for GNU Emacs.@refill
+
+GNU Emacs 用の MIME composer である `tm-edit' について説明します。
+@end ifinfo
+
+@menu
+* Introduction::                What is tm-edit?
+* mime/editor-mode::            
+* single-part operations::      single-part に対する操作
+* enclosure operation::         enclosure に対する操作
+* other operations of mime/editor-mode::  mime/editor-mode におけるその他の操作
+* transfer level::              
+* header::                      header での非 ASCII 文字の使用
+* PGP::                         
+* Concept Index::               概念索引
+* Function Index::              関数索引
+* Variable Index::              変数索引
+@end menu
+
+@node Introduction, mime/editor-mode, Top, Top
+@chapter What is tm-edit?
+
+@cindex{tm-edit}@strong{tm-edit} は GNU Emacs で動作する汎用的な MIME
+composer です。@refill
+
+tm-edit は GNUS の作者としても有名な 梅田 政信
+<umerin@@mse.kyutech.ac.jp> さんが書かれた 
+@file{mime.el} を基に
+
+@itemize @bullet
+@item
+RFC 1521/1522 化
+@item
+Content-Disposition field (@ref{(tm-ja)Content-Disposition}) (RFC 1806) 
+の利用
+@item
+入れ子になった multi-part message (@ref{(tm-ja)multipart})
+@item
+PGP (@ref{PGP})
+@item
+file type における parameter の自動指定の強化
+@end itemize
+
+@noindent
+などの改良を行いました。
+
+tm-MUA (@ref{(tm-ja)tm-MUA}) では tm-edit を使うことにより、容易に MIME
+message を作成できます。
+
+
+@node mime/editor-mode, single-part operations, Introduction, Top
+@chapter mime/editor-mode
+
+@cindex{mime/editor-mode}@strong{mime/editor-mode} は MIME message を作
+成するための minor mode です。この mode では @cindex{tag}@strong{tag} を
+使ってさまざまな種類の data を表現し、複数の部分からなる message
+(@ref{(tm-ja)multipart}) を編集することを可能にしています。@refill
+
+tag には
+
+@itemize @bullet
+@item
+ single-part tag
+@item
+ multi-part tag
+@end itemize
+
+@noindent
+の２つがあります。
+
+single-part tag は single part を表現するための tag で、@refill
+
+@example
+        --[[TYPE/SUBTYPE;PARAMETERS][ENCODING]
+        OPTIONAL-FIELDS]
+@end example
+
+@noindent
+というような形をしています。
+
+TYPE/SUBTYPE および PARAMETERS は Content-Type field
+(@ref{(tm-ja)Content-Type field}) の type/subtype および parameters を表
+します。TYPE/SUBTYPE は必須であり、PARAMETERS は省略可です。@refill
+
+ENCODING は Content-Transfer-Encoding field を表します。これも省略可です。
+@refill
+
+OPTIONAL-FIELDS は Content-Type, Content-Transfer-Encoding 以外の field 
+を書くための部分で、省略可です。@refill
+
+multi-part tag は multi part (@ref{(tm-ja)multipart}) を表現するための 
+tag で、@refill
+
+@example
+        --<<TYPE>>-@@@{
+@end example
+
+@noindent
+という形の @cindex{multi-part 開始 tag}@strong{multi-part 開始 tag} と呼ばれる multi
+part の開始を示す tag と
+
+@example
+        --@@@}-<<TYPE>>
+@end example
+
+@noindent
+という形の @cindex{multi-part 終了 tag}@strong{multi-part 終了 tag} と呼ばれる multi
+part の終了を示す tag があります。
+
+また、multi-part 開始 tag と multi-part 終了 tag で囲まれた部分を 
+@cindex{enclosure}@strong{enclosure} と呼びます。
+
+
+@node single-part operations, enclosure operation, mime/editor-mode, Top
+@chapter single-part に対する操作
+
+single-part を作るための操作には以下のようなものがあります。
+
+@table @kbd
+@item @key{C-c C-x C-t}
+text part を表す single-part tag を挿入します。
+
+@item @key{C-c C-x C-i}
+file を MIME part として添付します。
+
+@item @key{C-c C-x C-e}
+external part を挿入します。
+
+@item @key{C-c C-x C-v}
+@kbd{C-g} が押されるまで録音を行い、音声 part を挿入します。（使
+用できない場合があります）
+
+@item @key{C-c C-x C-y}
+現在表示中の (mail or news) message を挿入します。（実際の動作は使用し
+ている MUA に依存します）
+
+@item @key{C-c C-x C-m}
+mail message を挿入します。
+
+@item @key{C-c C-x C-w}, @key{C-c C-x C-s}
+signature を挿入します。
+
+@item @key{C-c C-x C-k}
+PGP (@ref{PGP}) の公開鍵を挿入します。
+
+@item @key{C-c C-x t}
+任意の single-part tag を挿入します。
+
+@end table
+
+
+
+@node enclosure operation, other operations of mime/editor-mode, single-part operations, Top
+@chapter enclosure に対する操作
+
+enclosure を作るための操作としては以下のようなものがあります。
+
+@table @kbd
+@item @key{C-c C-x a}
+指定した region を multipart/alternative として囲みます。
+
+@item @key{C-c C-x p}
+指定した region を multipart/parallel として囲みます。
+
+@item @key{C-c C-x m}
+指定した region を multipart/mixed として囲みます。
+
+@item @key{C-c C-x d}
+指定した region を multipart/digest として囲みます。
+
+@item @key{C-c C-x s}
+指定した region に電子署名を行います。(@ref{PGP})
+
+@item @key{C-c C-x e}
+指定した region を暗号化します。(@ref{PGP})
+
+@item @key{C-c C-x q}
+指定した region 内の tag を無効にし、その tag を文字列として利用できる
+ようにします。（現在の版ではうまく働かないことがあります。また、電子署
+名との併用に関しても不完全です）
+
+@end table
+
+
+
+@node other operations of mime/editor-mode, transfer level, enclosure operation, Top
+@chapter mime/editor-mode におけるその他の操作
+
+mime/editor-mode におけるその他の操作を説明します。
+
+@table @kbd
+@item @key{C-c C-c}
+編集中の message を送信します。
+
+@item @key{C-c C-x C-p}
+編集中の message を preview します。(@ref{(tm-view-ja)mime/viewer-mode})
+
+@item @key{C-c C-x C-z}
+編集中の message を送信することなく、mime/editor-mode を終了します。
+
+@item @key{C-c C-x ?}
+help message を表示します。
+
+@item @key{C-c C-x /}
+大きな message を送信する場合に message/partial 形式に自動分割可能とす
+るかどうかを決めます。
+
+@item @key{C-c C-x 7}
+transfer level (@ref{transfer level}) を 7bit (@ref{(tm-ja)7bit}) にしま
+す。
+
+@item @key{C-c C-x 8}
+transfer level (@ref{transfer level}) を 8bit (@ref{(tm-ja)8bit}) にしま
+す。
+
+@item @key{C-c C-x v}
+message 全体を電子署名するかどうかを決めます。(@ref{PGP})
+
+@item @key{C-c C-x h}
+message 全体を暗号化するかどうかを決めます。(@ref{PGP})
+
+@item @key{C-c C-x ?}
+help message を表示します。
+
+@end table
+
+
+
+@node transfer level, header, other operations of mime/editor-mode, Top
+@chapter transfer level
+
+message に挿入する data は 7bit (@ref{(tm-ja)7bit}) ないし 8bit
+(@ref{(tm-ja)8bit}) もしくは binary (@ref{(tm-ja)binary}) で表現すること
+ができます。@refill
+
+よって、7bit しか通さない MTA (@ref{(tm-ja)MTA}) を経由する場合、7bit の 
+data はそのままで送れますが、8bit や binary の data は 7bit に変換しなけ
+ればなりません。@refill
+
+同様に、8bit しか通さない MTA を経由する場合、7bit や 8bit の data はそ
+のままで送れますが、binary の data は 7bit か 8bit に変換しなければなり
+ません。@refill
+
+@noindent
+@strong{[Memo]}
+@quotation
+EBCDIC しか通さない MTA を経由する場合、7bit の data も base64 等で変
+換しないと送れませんが、私は EBCDIC のことまでは知りません。(^_^;
+
+同様に、制御文字を通さない MTA のことや code 変換を行なう MTA も消えてな
+くなって欲しいです。(^_^;@refill
+
+binary も通す MTA も存在するんでしょうが、今のところあまり一般的とはいえ
+ないでしょう。
+@end quotation
+
+@cindex{transfer level}@strong{transfer level} というのはどの範囲の data まで送れる
+かということを表すものです。tm-edit は 
+@code{mime-editor/transfer-level} という変数を持っており、これで 
+transfer level を表現します。
+
+
+@defvar mime-editor/transfer-level
+
+transfer level を表す。@refill
+
+ある data の transfer level がこの値を越える場合、7bit data への変換が行
+われる。@refill
+
+現在のところ、7 か 8 が有効である。既定値は 7 である。@refill
+
+EBCDIC を 5, ASCII printable のみを 6, binary を 9 とすることを計画して
+いるが、実装の予定はない。
+@end defvar
+
+
+
+@noindent
+@strong{[Memo]}
+@quotation
+transfer level は message header (@ref{header}) には関係しない。RFC 1521 
+は body において、8bit の data を使えるように RFC 822 (@ref{(tm-ja)RFC
+822}) を拡張しているが、message header では us-ascii
+(@ref{(tm-ja)us-ascii}) のみを用いることを求めている。
+@end quotation
+
+
+
+@node header, PGP, transfer level, Top
+@chapter header での非 ASCII 文字の使用
+
+RFC 1522 (@ref{(tm-ja)RFC 1522}) では header で非 ASCII 文字を表現するた
+めの方法を定義しています。@refill
+
+これは @cindex{encoded-word}@strong{encoded-word}
+(@ref{(tm-ja)encoded-word}) と呼ばれる型式で、MIME charset
+(@ref{(tm-ja)MIME charset}) を宣言し、かつ、7bit (@ref{(tm-ja)7bit}) で
+表現することを可能にしています。
+
+
+@menu
+* evil setting in header::      どうしても encoded-word を使いたくない場合
+* API about header::            header に関する関数・変数
+@end menu
+
+@node evil setting in header, API about header, header, header
+@section どうしても encoded-word を使いたくない場合
+
+ところで、header で encoded-word を用いずに生で非 ASCII 文字列を入れるの
+は間違っています。なぜなら、Internet ではさまざまな符号化文字集合
+(@ref{(tm-ja)Coded character set})が使われており、MIME charset
+(@ref{(tm-ja)MIME charset}) を明示的に宣言しなければそれらを正確に区別す
+ることはできないからです。@refill
+
+例えば、MIME charset を宣言しなければ iso-8859-1
+(@ref{(tm-ja)iso-8859-1}) と iso-8859-2 (@ref{(tm-ja)iso-8859-2}) は見分
+けが付かないでしょう。@refill
+
+しかしながら、どうしても encoded-word を使いたくない場合には以下の変数
+を設定してください。
+
+
+@defvar mime/field-encoding-method-alist
+
+field 名と符号化法を表す symbol の対からなる連想 list.@refill
+
+field 名は文字列、もしくは、任意の文字列を表す @code{t} である。@refill
+
+符号化法は、@code{nil} ならば無変換、@code{mime} ならばencoded-word,
+MIME charset を表す symbol ならばその符号化文字集合へencoded-word を用い
+ずに変換することを表す。@refill
+
+field 名は文字列から検索され、指定した文字列が見付からなければ@code{t} 
+を用いる。@refill
+
+既定値は
+
+@lisp
+(("X-Nsubject" . iso-2022-jp-2)
+ ("Newsgroups" . nil)
+ (t            . mime)
+ ))
+@end lisp
+
+@noindent
+である。即ち、X-Nsubject field は生の iso-2022-jp-2
+(@ref{(tm-ja)iso-2022-jp-2}), Newsgroup は無変換、それ以外の field は 
+encoded-word に変換される。
+@end defvar
+
+
+また、field 毎ではなく、符号化文字集合毎に指定したい場合は、変数 
+@code{mime-eword/charset-encoding-alist} を用いてください。
+(@ref{API about header})
+
+
+@node API about header,  , evil setting in header, header
+@section header に関する関数・変数
+
+@deffn{Command} mime/encode-message-header &optional  code-conversion
+
+Current buffer の message header に存在する非 ASCII 文字をnetwork 表現に
+変換します。@refill
+
+optional 引数の @var{code-conversion} に非-nil が指定された場合、
+encoded-word にしない field を@code{mime/field-encoding-method-alist} に
+従って、code 変換します。
+@end deffn
+
+
+@defun mime/encode-field string
+
+@var{string} を field として encoded-word に変換します。@refill
+
+長い行は RFC 822 に従って折返されます。
+@end defun
+
+
+@defun mime-eword/encode-string string  &optional  column mode
+
+@var{string} を encoded-word に変換します。@refill
+
+長い行は RFC 822 に従って折返されます。@refill
+
+@var{column} はこの文字列が何桁目から始まっているかを指定します。既定値
+は 0 です。@refill
+
+@var{mode} はこの文字列がどういう部分で使われているかを示します。指定で
+きる値としては @code{text}, @code{comment}, @code{phrase} があります。既
+定値は @code{phrase} です。
+@end defun
+
+
+@defvar mime-eword/charset-encoding-alist
+
+MIME charset を表す symbol と nil, もしくは、@code{"B"} か@code{"Q"} の
+文字列の対からなる連想 list.@refill
+
+@code{nil} はその MIME charset を encoded-word にしないことを表し、
+@code{"B"} はその MIME charset を B 方式の encoded-word にすることを表し、
+@code{"Q"} はその MIME charset を Q 方式の encoded-word にすることを表す。
+@end defvar
+
+
+
+@node PGP, Concept Index, header, Top
+@chapter PGP
+
+tm-edit では @cindex{PGP/MIME}@strong{PGP/MIME} (@ref{(tm-ja)PGP/MIME})
+(RFC 2015) および @cindex{PGP-kazu}@strong{PGP-kazu}
+(@ref{(tm-ja)PGP-kazu}) (draft-kazu-pgp-mime-00.txt) による暗号化・電子
+署名・公開鍵の挿入機能を利用することができます。@refill
+
+但し、この機能を利用するには Mailcrypt package (@ref{(mailcrypt)}) と 
+pgp command が必要です。@refill
+
+また、変数 @code{mimed-editor/signing-type} と変数 
+@code{mime-editor/encrypting-type} に @code{pgp-elkins} か 
+@code{pgp-kazu} を代入してください。@refill
+
+@code{pgp-elkins} を指定した場合 PGP/MIME が使われ、
+@code{pgp-kazu} を指定した場合 PGP-kazu が使われます。
+
+
+@defvar mimed-editor/signing-type
+
+PGP での電子書名の形式を指定します。@refill
+
+@code{pgp-elkins} か @code{pgp-kazu} を指定してください。@refill
+
+既定値は @code{nil} です。
+@end defvar
+
+
+@defvar mime-editor/encrypting-type
+
+PGP での暗号化の形式を指定します。@refill
+
+@code{pgp-elkins} か @code{pgp-kazu} を指定してください。@refill
+
+既定値は @code{nil} です。
+@end defvar
+
+
+
+@node Concept Index, Function Index, PGP, Top
+@chapter 概念索引
+
+@printindex cp
+
+@node Function Index, Variable Index, Concept Index, Top
+@chapter 関数索引
+
+@printindex fn
+
+@node Variable Index,  , Function Index, Top
+@chapter 変数索引
+
+@printindex vr
+@bye

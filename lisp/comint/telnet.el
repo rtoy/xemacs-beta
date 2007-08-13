@@ -55,7 +55,9 @@
 
 (defvar telnet-new-line "\r")
 (defvar telnet-mode-map nil)
-(defvar telnet-prompt-pattern "^[^#$%>\n]*[#$%>] *")
+(defvar telnet-default-prompt-pattern "^[^#$%>\n]*[#$%>] *")
+(defvar telnet-prompt-pattern telnet-default-prompt-pattern)
+
 (defvar telnet-replace-c-g nil)
 (make-variable-buffer-local
  (defvar telnet-remote-echoes t
@@ -117,7 +119,7 @@ rejecting one login and prompting again for a username and password.")
   "Tries to put correct initializations in.  Needs work."
   (let ((case-fold-search t))
     (cond ((string-match "unix" string)
-	   (setq telnet-prompt-pattern comint-prompt-pattern)
+	   (setq telnet-prompt-pattern comint-prompt-regexp)
 	   (setq telnet-new-line "\n"))
 	  ((string-match "tops-20" string) ;;maybe add telnet-replace-c-g
 	   (setq telnet-prompt-pattern  "[@>] *"))

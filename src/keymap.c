@@ -1253,23 +1253,23 @@ Return the number of bindings in the keymap.
 
 static void
 define_key_check_keysym (Lisp_Object spec,
-                         Lisp_Object keysym, unsigned int modifiers)
+                         Lisp_Object *keysym, unsigned int modifiers)
 {
   /* Now, check and massage the trailing keysym specifier. */
-  if (SYMBOLP (keysym))
+  if (SYMBOLP (*keysym))
     {
-      if (string_length (XSYMBOL (keysym)->name) == 1)
+      if (string_length (XSYMBOL (*keysym)->name) == 1)
 	{
-	  keysym = make_int (string_char (XSYMBOL (keysym)->name, 0));
+	  *keysym = make_int (string_char (XSYMBOL (*keysym)->name, 0));
 	  goto fixnum_keysym;
 	}
     }
-  else if (INTP (keysym))
+  else if (INTP (*keysym))
     {
     fixnum_keysym:
-      if (XINT (keysym) < ' ' || XINT (keysym) > 255)
+      if (XINT (*keysym) < ' ' || XINT (*keysym) > 255)
 	signal_simple_error ("keysym must be in the range 32 - 255",
-			     keysym);
+			     *keysym);
       /* #### This bites!  I want to be able to write (control shift a) */
       if (modifiers & MOD_SHIFT)
 	signal_simple_error ("the `shift' modifier may not be applied to ASCII keysyms",
@@ -1278,10 +1278,26 @@ define_key_check_keysym (Lisp_Object spec,
   else
     {
       signal_simple_error ("unknown keysym specifier",
-			   keysym);
+			   *keysym);
+    }
+
+  /* Code semi-snarfed from v20. */
+  if (SYMBOLP (*keysym))
+    {
+      char *name = (char *)
+	string_data (XSYMBOL (*keysym)->name);
+
+      if (!strncmp(name, "kp_", 3)) {
+	/* Likewise, the obsolete keysym binding of kp_.* should not lose. */
+	char temp[50];
+
+	strncpy(temp, name, sizeof (temp));
+	temp[sizeof (temp) - 1] = '\0';
+	temp[2] = '-';
+	*keysym = Fintern_soft(make_string(temp, strlen(temp)), Qnil);
+      }
     }
 }
-
 
 /* Given any kind of key-specifier, return a keysym and modifier mask.
  */
@@ -1345,7 +1361,7 @@ define_key_parser (Lisp_Object spec, struct key_data *returned_value)
       /* Be nice, allow = to mean (=) */
       if (bucky_sym_to_bucky_bit (spec) != 0)
         signal_simple_error ("Key is a modifier name", spec);
-      define_key_check_keysym (spec, spec, 0);
+      define_key_check_keysym (spec, &spec, 0);
       returned_value->keysym = spec;
       returned_value->modifiers = 0;
     }
@@ -1380,7 +1396,7 @@ define_key_parser (Lisp_Object spec, struct key_data *returned_value)
       if (!NILP (rest))
         signal_simple_error ("dotted list", spec);
 
-      define_key_check_keysym (spec, keysym, modifiers);
+      define_key_check_keysym (spec, &keysym, modifiers);
       returned_value->keysym = keysym;
       returned_value->modifiers = modifiers;
     }

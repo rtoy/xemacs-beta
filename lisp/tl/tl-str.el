@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Version:
-;;	$Id: tl-str.el,v 1.1.1.1 1996/12/18 03:55:31 steve Exp $
+;;	$Id: tl-str.el,v 1.2 1996/12/22 00:29:33 steve Exp $
 ;; Keywords: string
 
 ;; This file is part of tl (Tiny Library).
@@ -206,40 +206,7 @@
       (substring filename 0 (match-beginning 0))
     filename))
 
-(defvar filename-special-char-range
-  (nconc '((0 . 31))
-	 (string-to-int-list "!\"$")
-	 (list (cons (char-int ?&) (char-int ?*)))
-	 (string-to-int-list "/;<>?")
-	 (list (cons (char-int ?\[) (char-int ?^)))
-	 (string-to-int-list "`")
-	 (list (cons (char-int ?{) (char-int ?})))
-	 '((127 . 159)))
-  "*Range of characters which is not available in file name. [tl-str.el]")
-
-(defvar filename-space-char-range '(9 32 160)
-  "*Range of characters which indicates space. These characters
-are replaced to `_' by function `replace-as-filename' [tl-str.el]")
-
-(defun replace-as-filename (str)
-  "Return safety filename from STR. [tl-str.el]"
-  (let (sf)
-    (mapconcat (function
-		(lambda (chr)
-		  (cond ((member-of-range chr filename-space-char-range)
-			 (if sf
-			     ""
-			   (setq sf t)
-			   "_"))
-			((member-of-range chr filename-special-char-range)
-			 "")
-			(t
-			 (setq sf nil)
-			 (char-to-string chr)
-			 ))
-		  ))
-	       (string-to-char-list str)
-	       "")))
+(autoload 'replace-as-filename "filename")
 
 
 ;;; @ symbol
