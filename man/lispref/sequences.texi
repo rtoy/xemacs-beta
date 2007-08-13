@@ -400,6 +400,7 @@ each element of @var{array} is @var{object}.  It returns @var{array}.
 a
      @result{} [0 0 0 0 0 0 0]
 @end group
+
 @group
 (setq s "When in the course")
      @result{} "When in the course"

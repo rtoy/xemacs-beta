@@ -72,6 +72,7 @@
 
 (provide 'avoid)
 
+;;;###autoload
 (defvar mouse-avoidance-mode nil
   "Value is t or a symbol if the mouse pointer should avoid the cursor.
 See function `mouse-avoidance-mode' for possible values.  Changing this
@@ -366,4 +367,4 @@ definition of \"random distance\".)"
 ;;;###autoload
 (add-minor-mode 'mouse-avoidance-mode " Avoid")
 
-;;; End of avoid.el
+;;; avoid.el ends here

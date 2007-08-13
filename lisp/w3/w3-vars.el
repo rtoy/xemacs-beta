@@ -1,13 +1,14 @@
 ;;; w3-vars.el,v --- All variable definitions for emacs-w3
 ;; Author: wmperry
-;; Created: 1996/08/29 04:09:40
-;; Version: 1.18
+;; Created: 1997/01/03 16:47:06
+;; Version: 1.64
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
+;;; Copyright (c) 1996 Free Software Foundation, Inc.
 ;;;
-;;; This file is not part of GNU Emacs, but the same permissions apply.
+;;; This file is part of GNU Emacs.
 ;;;
 ;;; GNU Emacs is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -20,15 +21,16 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to
-;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;;; Boston, MA 02111-1307, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Variable definitions for w3
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defconst w3-version-number
-  (let ((x "p3.0.12"))
+  (let ((x "p3.0.43"))
     (if (string-match "State:[ \t\n]+.\\([^ \t\n]+\\)" x)
 	(setq x (substring x (match-beginning 1) (match-end 1)))
       (setq x (substring x 1)))
@@ -36,7 +38,7 @@
      (function (lambda (x) (if (= x ?-) "." (char-to-string x)))) x ""))
   "Version # of w3-mode.")
 
-(defconst w3-version-date (let ((x "1996/08/29 04:09:40"))
+(defconst w3-version-date (let ((x "1997/01/03 16:47:06"))
 			    (if (string-match "Date: \\([^ \t\n]+\\)" x)
 				(substring x (match-beginning 1) (match-end 1))
 			      x))
@@ -123,6 +125,8 @@ Possible values are:
 
   url    == show the url of the target in the minibuffer
   text   == show the text of the link in the minibuffer
+  title  == show the title attribute of the link in the minibuffer,
+            or the url if there is no title
   nil    == show nothing")
   
 (defvar w3-horizontal-rule-char ?-
@@ -136,13 +140,6 @@ This should be the name of a file that is stored in either
 NCSA's Mosaic/X or Netscape/X format.  It is used to keep a listing
 of commonly accessed URL's without having to go through 20 levels of
 menus to get to them.")
-
-(defvar w3-html2latex-args "-s -"
-  "*Args to pass `w3-html2latex-prog'.  This should send the LaTeX source
-to standard output.")
-
-(defvar w3-html2latex-prog "html2latex"
-  "*Program to convert html to latex.")
 
 (defvar w3-icon-directory "http://cs.indiana.edu/elisp/w3/icons/"
   "*Where to find standard icons.  Must end in a /!")
@@ -273,7 +270,7 @@ This will also accept:
 'yes 'reuse 'always	==> always reuse
 'ask nil		==> always ask")
 
-(defvar w3-right-border 2
+(defvar w3-right-margin 2
   "*Amount of space to leave on right margin of WWW buffers.
 This amount is subtracted from (window-width) for each new WWW buffer
 and used as the new fill-column.")
@@ -281,7 +278,7 @@ and used as the new fill-column.")
 (defvar w3-maximum-line-length nil
   "*Maximum length of a line.  If nil, then lines can extend all the way to
 the window margin.  If a number, the smaller of this and
-(- (window-width) w3-right-border) is used.")
+(- (window-width) w3-right-margin) is used.")
 
 (defvar w3-right-justify-address t
   "*Whether to make address fields right justified, like Arena.")
@@ -317,12 +314,6 @@ defaults so that new users have somewhere to go.")
   "*Non-nil means translate <ISINDEX> tags into a hypertext form.
 A single text entry box will be drawn where the ISINDEX tag appears.
 If t, the isindex handling will be the same as Mosaic for X.")
-
-(defvar w3-use-html2latex nil
-  "*This controls how HTML is converted into LaTeX for printing or mailing.
-If nil, the w3-convert-html-to-latex function is used instead of the
-html2latex in a subprocess.  The lisp function gives slightly better
-formatting in my biased opinion.")
 
 (defvar w3-use-netscape-configuration-file nil
   "*Whether to use a netscape configuration file to determine things like
@@ -468,46 +459,6 @@ You can test your ppmdither by doing
 If the output has a single line like this:
   255 255 255     255     10000
 then it's safe to set this variable to nil.")
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; How to look up styles
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defvar w3-style-tags-assoc
-  '(
-    (b       . ("*" . "*"))
-    (address . ("*" . "*"))
-    (byline  . ("_" . "_"))
-    (cite    . ("_" . "_"))
-    (cmd     . ("*" . "*"))
-    (dfn     . ("*" . "*"))
-    (em      . ("~" . "~"))
-    (i       . ("~" . "~"))
-    (q       . ("\"" . "\""))
-    (removed . ("" . ""))
-    (s       . ("" . ""))
-    (strong  . ("*" . "*"))
-    (sub     . ("" . ""))
-    (sup     . ("" . ""))
-    (u       . ("_" . "_"))
-    )
-  "*An assoc list of emphasis tags and their corresponding
-begin and end characters.")
-
-(defvar w3-header-chars-assoc
-  '(
-    (h1 . (?* ?* w3-upcase-region))
-    (h2 . (?* ?* w3-upcase-region))
-    (h3 . (?- ?- w3-upcase-region))
-    (h4 . (nil ?= nil))
-    (h5 . (nil ?= nil))
-    (h6 . (nil ?: nil)))
-  "*An assoc list of header tags and a list of formatting instructions.
-This list consists of 3 items - the first item is no longer used.  The
-second item is the character to insert after the header.  A <BR> is
-inserted before and after this string. And the third is a function to
-call on the region between the start and end of the header.  This will
-be called with 2 arguments, the buffer positions of the start and end
-of the headers.")
 
 ;; Store the database of HTML general entities.
 (defvar w3-html-entities 
@@ -740,16 +691,6 @@ of the headers.")
 If there is a 3rd item in the list, it is the alternative text to use
 for the image.")
 
-(defvar w3-list-chars-assoc 
-  '(
-    (ul . ("o" "*" "+" ">"))
-    (ol . ("." ")" "]" ":"))
-    (dl . ("o" "*" "+" ">")))
-  "An assoc list of characters to put at the front of list items.  It is
-keyed on the type of list, followed by a list of items.  Each item should
-be placed in the nth position of the list, where n is the nesting level it
-should be used for.  n starts at 1.")
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Menu definitions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -789,6 +730,14 @@ in a popup menu when the mouse is pressed on a hyperlink.  Format is
 ( (label . function)), function is called with one argument, the URL of
 the link.  Each label can have exactly one `%s' that will be replaced by
 the URL of the link.")
+
+(defvar w3-defined-link-types
+  ;; This is the HTML3.0 list (downcased) plus "made".
+  '("previous" "next" "up" "down" "home" "toc" "index" "glossary"
+    "copyright" "bookmark" "help" "made")
+  "A list of the (lower-case) names which have special significance
+as the values of REL or REV attributes of <link> elements.  They will
+be presented on the toolbar or the links menu, for instance.")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Variables internal to W3, you should not change any of these
@@ -913,7 +862,8 @@ when it is referenced.")
 (defvar w3-current-annotation nil "URL of document we are annotating...")
 (defvar w3-current-isindex nil "Is the current document a searchable index?")
 (defvar w3-current-last-buffer nil "Last W3 buffer seen before this one.")
-(defvar w3-current-links nil "An assoc list of <LINK> tags for this doc.")
+(defvar w3-current-links nil "An assoc list of <link> tags for this doc.")
+(defvar w3-current-metainfo nil "An assoc list of <meta> tags for this doc.")
 (defvar w3-current-source nil "Source of current document.")
 (defvar w3-current-parse nil "Parsed version of current document.")
 (defconst w3-default-continuation '(url-uncompress url-clean-text) 
@@ -942,12 +892,6 @@ returns.")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; buffer-local variables to keep around when going into w3-mode
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defvar w3-e19-hotlist-menu nil
-  "A menu for hotlists.")
-
-(defvar w3-e19-links-menu nil
-  "A buffer-local menu for links.")
-
 (defvar w3-id-positions nil "Internal use only.")
 (defvar w3-imagemaps nil "Internal use only.")
 
@@ -971,12 +915,12 @@ returns.")
     url-current-server
     url-current-type
     url-current-user
-    w3-e19-links-menu
     w3-current-parse
     w3-current-annotation
     w3-current-isindex
     w3-current-last-buffer
     w3-current-links
+    w3-current-metainfo
     w3-current-source
     w3-delayed-images
     w3-hidden-forms
@@ -1088,20 +1032,19 @@ returns.")
 (define-key w3-mode-map "\C-c\C-v" 'w3-version)
 (define-key w3-mode-map "\C-o"     'w3-fetch)
 (define-key w3-mode-map "\M-M"     'w3-mail-document-under-point)
-(define-key w3-mode-map "\M-\C-i"  'w3-insert-this-url)
 (define-key w3-mode-map "\M-m"	   'w3-mail-current-document)
 (define-key w3-mode-map "\M-s"	   'w3-search)
 (define-key w3-mode-map "\M-\r"    'w3-follow-inlined-image)
 (define-key w3-mode-map "\r"       'w3-widget-button-press)
-(define-key w3-mode-map "b"	   'widget-backward)
+(define-key w3-mode-map "b"	   'w3-widget-backward)
 (define-key w3-mode-map "c"        'w3-mail-document-author)
-(define-key w3-mode-map "f"	   'widget-forward)
+(define-key w3-mode-map "f"	   'w3-widget-forward)
 (define-key w3-mode-map "g"        'w3-reload-document)
 (define-key w3-mode-map "i"        'w3-document-information)
 (define-key w3-mode-map "k"        'w3-save-url)
 (define-key w3-mode-map "l"        'w3-goto-last-buffer)
 (define-key w3-mode-map "m"        'w3-complete-link)
-(define-key w3-mode-map "n"        'widget-forward)
+(define-key w3-mode-map "n"        'w3-widget-forward)
 (define-key w3-mode-map "o"	   'w3-open-local)
 (define-key w3-mode-map "p"        'w3-print-this-url)
 (define-key w3-mode-map "q"	   'w3-quit)
@@ -1116,8 +1059,8 @@ returns.")
 (define-key w3-mode-map [(control meta t)] 'url-list-processes)
 
 ;; Widget navigation
-(define-key w3-mode-map "\t"       'widget-forward)
-(define-key w3-mode-map [(shift tab)] 'widget-backward)
+(define-key w3-mode-map "\t"       'w3-widget-forward)
+(define-key w3-mode-map [(shift tab)] 'w3-widget-backward)
   
 (define-key w3-annotation-minor-mode-map "\C-c\C-c"
   'w3-personal-annotation-finish)

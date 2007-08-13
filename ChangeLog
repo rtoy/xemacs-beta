@@ -1,3 +1,11 @@
+Sat Jan 11 12:05:31 1997  Steven L Baur  <steve@altair.xemacs.org>
+	* XEmacs 20.0 beta90 (prerelease 1) is released.
+	* XEmacs 19.15 beta90 (prerelease 1) is released.
+	
+Tue Jan  7 08:45:16 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* configure.in (LIBS): Revise test for XFree86 (look for XF86Config).
+
 Sat Jan  4 14:52:57 1997  Steven L Baur  <steve@altair.xemacs.org>
 	* XEmacs 20.0 beta 34 is released.
 	* XEmacs 19.15 beta 7 is released.
@@ -5,6 +13,133 @@ Sat Jan  4 14:52:57 1997  Steven L Baur  <steve@altair.xemacs.org>
 Fri Jan  3 15:18:59 1997  Jeff Miller  <jmiller@bay1.bayserve.net>
 
 	* lwlib/Makefile.in.in: lwlib is required if X11 is used.
+
+Wed Jan  1 08:30:48 1997  Martin Buchholz  <mrb@eng.sun.com>
+
+	* src/emacs.c: Make sure 
+	`./temacs -batch -l loadup.el run-temacs <emacs-args>' 
+	works properly
+
+	* src/Makefile.in.in (rtcmacs): Add support for RTC, Sun's
+	  competitor to Purify.
+
+	* man/lispref/symbols.texi: Fix up bit vector documentation
+	* man/lispref/sequences.texi: Fix up bit vector documentation
+
+	* lisp/sunpro/sunpro-load.el: Only preload mime-setup for Sun.
+
+	* lisp/prim/update-elc.el: Don't rely on autoloads.
+
+Tue Dec 31 09:46:13 1996  Martin Buchholz  <mrb@eng.sun.com>
+
+	* lisp/prim/auto-autoloads.el: New, completely program-generated, file
+	* lib-src/update-autoloads.sh: Rewritten to use auto-autoloads.el.
+	* lisp/utils/autoload.el: Reorganization of autoload mechanism:
+	Errors during autoload generation are just that - errors.
+	
+	Generated autoloads are now in a separate file of their own.
+	
+	Reliability of autoload generation greatly increased.
+	
+	Distribution smaller by about 100k.
+	
+	`make autoloads' is still the preferred mechanism for update.
+	
+	Autoloads are always regenerated completely from scratch.  This
+ 	avoids errors with obsolete or corrupted autoload entries.
+
+	Caching of autoload entries using timestamps has been eliminated.
+	
+	Files that have no autoloads no longer have a comment placed into
+ 	the generated autoloads file.
+
+	There was a bug where autoload entries would sometimes end up
+	being inserted into the *middle* of other autoload entries,
+	thereby corrupting them.
+
+	* src/event-Xt.c: Remove SUNOS_GCC_L0_BUG kludge.
+
+Sun Dec 29 05:37:43 1996  Martin Buchholz  <mrb@eng.sun.com>
+
+	* lib-src/update-autoloads.sh: Make sure that `make autoloads'
+	  doesn't use the autoload facility to load `autoload';
+	  load it explicity instead.
+
+	* lib-src/update-elc.sh (ignore_dirs): ignore SCCS, CVS, RCS dirs
+
+	* man/Makefile: Reinstate hyperbole & oo-browser manuals
+
+	* lisp/modes/mail-abbrevs.el: Apply patch originated from Noah Friedman
+
+	* src/mule-charset.c: Use lower case for charset registry, to
+	  match XLFD.
+
+	* Makefile.in: replace list of info files with *.info* - one less
+	  maintenance headache
+
+	* etc/sample.emacs: Add sample code to highlight continuation glyph
+
+	* man/oo-browser.texi: Fix TeXability
+
+	* man/hyperbole.texi: Fix TeXability
+
+	* man/vhdl-mode.texi: Fix TeXability
+
+	* lisp/prim/loaddefs.el: Wholesale housecleaning
+	  `make autoloads' should finally work.
+
+	* lib-src/emacsclient.c (main): ANSIfication, compiler warning removal
+
+	* lisp/mule/mule-files.el: Add support for multi-lingual info files.
+
+	* lib-src/update-elc.sh: `make all-elc' was updating files in
+	  `special' directories without using the Makefiles
+	  designed for that purpose.
+	  - make sure ilisp isn't remade every time through `make all-elc'.
+
+	* info/dir (Packages): Add Japanese TM info files
+
+	* src/inline.c:  Allow compilation with `gcc -g'
+
+	* src/syntax.c (word_constituent_p): Allow compilation with `gcc -g'
+
+	* src/lread.c: Don't put `...' immediately after a filename, so
+	  that various tools can recognize the filename as such.
+
+	* src/event-Xt.c (x_to_emacs_keysym): Fix crash when
+	  --with-xim=xlib and key event on window frame.  
+	  Change return foo to return (foo) when return is a macro.
+
+	* src/editfns.c (Ffollowing_char): docstring fixes.
+
+	* man/tm/Makefile: Add support for Japanese TM info (but not dvi) files.
+	  This Makefile is no longer officially broken.
+
+	* info/dir: Add Japanese tm documents.
+
+	* man/tm/tm-vm-en.texi: Make document TeX-friendly.
+
+	* lib-src/update-autoloads.sh (EMACS): Don't rely on non-portable
+	  xargs -i flag.
+
+	* lisp/mule/mule-files.el (file-coding-system-alist): Make sure
+	  the `binary' coding system is used for .gz and .Z extensions.
+
+	* man/viper.texi: Viper version 2.90
+
+	* man/ediff.texi: Ediff Version 2.62
+
+	* lisp/packages/ispell.el (ispell-word): Avoid using strings with
+	  define-key, for compatibility with loaddefs.el
+
+	* lisp/modes/eiffel3.el: Make compatible with update-autoloads.
+
+	* lisp/ilisp/Makefile (elc): Add target to avoid re-compilation.
+
+	* lib-src/update-elc.sh: XEmacs sometimes re-byte-compiled elisp
+	  files in dirs that have their own Makefiles.
+
+
 
 Sun Dec 29 17:02:49 1996  Steven L Baur  <steve@altair.xemacs.org>
 

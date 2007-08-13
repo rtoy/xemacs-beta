@@ -1,5 +1,5 @@
 #!/bin/sh
-### update-autoloads.sh --- update auto-loaddefs.el as necessary
+### update-autoloads.sh --- update auto-autoloads.el as necessary
 
 set -eu
 

@@ -30,13 +30,13 @@
 (defvar cvs-shell)
 (defvar cvs-program)
 (defvar cvs-cookie-handle)
+(defvar ediff-temp-file-prefix)
 
-(and noninteractive
-     (eval-when-compile
-       (load "pcl-cvs" 'noerror)
-       (load "rcs" 'noerror)
-       (load "generic-sc" 'noerror)
-       (load "vc" 'noerror)))
+(eval-when-compile
+  (load "pcl-cvs" 'noerror)
+  (load "rcs" 'noerror)
+  (load "generic-sc" 'noerror)
+  (load "vc" 'noerror))
 ;; end pacifier
       
 ;; VC.el support
@@ -67,7 +67,7 @@
      'ediff-revision)))
     
 ;; RCS.el support
-(defun ediff-rcs-view-revision (&optional rev)
+(defun rcs-ediff-view-revision (&optional rev)
 ;; View previous RCS revision of current file.
 ;; With prefix argument, prompts for a revision name.
   (interactive (list (if current-prefix-arg 

@@ -1,3 +1,71 @@
+Fri Jan 10 22:27:58 1997  Shane Holder  <holder@rsn.hp.com>
+
+	* utils/bench.el:  New version.
+
+Fri Jan 10 13:22:26 1997  Christoph Wedler  <wedler@fmi.uni-passau.de>
+
+	* packages/man.el (Manual-entry-switches): New variable.
+	(Manual-apropos-switches): New variable.
+	(Manual-run-formatter): Use them.
+
+Thu Jan  9 22:04:42 1997  Greg Klanderman  <greg@alphatech.com>
+
+	* modes/make-mode.el: Allow disabling of suspicious line warnings
+	allow macro pickup when a macro is entered normally
+	add the runtime macros to the completion list so confirmation is
+	not necessary when minibuffer-confirm-incomplete is t.
+	(these last two only in effect when makefile-electric-keys=t)
+
+Thu Jan  9 11:44:11 1997  Martin Buchholz  <mrb@eng.sun.com>
+
+	* mule/mule-files.el (file-coding-system-alist): Default to 8 bit
+	on .el and .info files.
+
+Wed Jan  8 20:57:16 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/help.el (help-mode-quit): Correct typo in docstring.
+	(help-mode-quit): Bury help buffer before restoring previous
+	window configuration.
+
+Wed Jan  8 20:20:01 1997  Joe Nuspl  <nuspl@nvwls.cc.purdue.edu>
+
+	* x11/x-menubar.el (default-menubar): Include enriched.doc in the
+	samples in the help menu.
+
+Wed Jan  8 20:09:32 1997  Jens Krinke  <krinke@ips.cs.tu-bs.de>
+
+	* x11/x-toolbar.el (toolbar-news-frame-properties): New variable.
+	(toolbar-news): Use it.
+
+Wed Jan  8 10:11:35 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* x11/x-compose.el (global-map): Keysyms use `-' not `_'.
+
+Mon Jan  6 18:19:03 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* comint/telnet.el (telnet-initial-filter): Enable
+	case-fold-search.
+	(telnet-maximum-count): Bump up to 6, since 4 does not always
+	appear to be enough.
+
+Mon Jan  6 08:30:55 1997  Andrew Cohen  <cohen@andy.bu.edu>
+
+	* psgml/psgml-parse.el (sgml-compile-dtd): noconv coding system
+	has been renamed to no-conversion.
+	(sgml-bdtd-merge): Ditto.
+	(sgml-push-to-entity): Ditto.
+
+Sun Jan  5 14:35:30 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* utils/loadhist.el (symbol-file): Make interactive.
+
+Sun Jan  5 00:40:02 1997  Bob Weiner  <weiner@infodock.com>
+
+	* packages/avoid.el (mouse-avoidance-mode): autoload.
+
+	* x11/x-menubar.el (options-menu-saved-forms): Mouse avoidance
+	mode option.
+
 Sat Jan  4 12:25:34 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* prim/faces.el (init-other-random-faces): Guard against adding

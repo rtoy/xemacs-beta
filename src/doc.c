@@ -155,7 +155,7 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
             case '_': *to++ = '\037'; break;
             default:
               return_me = list2 (build_string
-      ("Invalid data in documentation file -- ^A followed by weird code"),
+	("Invalid data in documentation file -- ^A followed by weird code"),
                                  make_int (c));
               goto done;
             }
@@ -255,7 +255,7 @@ get_doc_string (Lisp_Object filepos)
 
 	  fd = open (name_nonreloc, O_RDONLY, 0);
 	}
-#endif /* CANNOT DUMP */
+#endif /* CANNOT_DUMP */
 
       if (fd < 0)
 	error ("Cannot open doc string file \"%s\"",

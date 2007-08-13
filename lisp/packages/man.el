@@ -575,17 +575,21 @@ if this function doesn't work on your system."
 	(error (buffer-substring (point) (progn (end-of-line) (point))))))
   nil)
 
-
+(defvar Manual-entry-switches '("-s")
+  "Switches for `manual-entry' including switch for section (at the end).")
+(defvar Manual-apropos-switches nil
+  "Additional switches for `Manpage-apropos' excluding switch `-k'.")
+  
 (defun Manual-run-formatter (name topic section)
   (cond ((string-match "roff\\'" Manual-program)
 	 ;; kludge kludge
 	 (call-process Manual-program nil t nil "-Tman" "-man" name))
-	(Manual-section-switch
-	 (call-process Manual-program nil t nil Manual-section-switch
-		       section topic))
 	(t
-	 (call-process Manual-program nil t nil section topic))))
-
+	 (apply 'call-process Manual-program nil t nil
+		(append (if apropos-mode
+			    Manual-apropos-switches
+			  Manual-entry-switches)
+			(list section topic))))))
 
 (defvar Manual-mode-map
   (let ((m (make-sparse-keymap)))

@@ -1675,18 +1675,18 @@ See `default-toolbar-height' for more information.
   elt = list1 (Fcons (list1 (Qtty), Qzero));
 #endif
 #ifdef HAVE_X_WINDOWS
-  if (elt != Qnil)
+  if (!EQ(elt, Qnil))
     elt = Fcons (Fcons (list1 (Qx), make_int (DEFAULT_TOOLBAR_HEIGHT)), elt);
   else
     elt = list1 (Fcons (list1 (Qx), make_int (DEFAULT_TOOLBAR_HEIGHT)));
 #endif
 #ifdef HAVE_NEXTSTEP
-  if (elt != Qnil)
+  if (!EQ(elt, Qnil))
     elt = Fcons (Fcons (list1 (Qns), make_int (DEFAULT_TOOLBAR_HEIGHT)), elt);
   else
     elt = list1 (Fcons (list1 (Qns), make_int (DEFAULT_TOOLBAR_HEIGHT)));
 #endif
-  if (elt != Qnil)
+  if (!EQ(elt, Qnil))
     set_specifier_fallback (Vdefault_toolbar_height, elt);
 
   elt = Qnil;
@@ -1694,18 +1694,18 @@ See `default-toolbar-height' for more information.
   elt = list1 (Fcons (list1 (Qtty), Qzero));
 #endif
 #ifdef HAVE_X_WINDOWS
-  if (elt != Qnil)
+  if (!EQ(elt, Qnil))
     elt = Fcons (Fcons (list1 (Qx), make_int (DEFAULT_TOOLBAR_WIDTH)), elt);
   else
     elt = list1 (Fcons (list1 (Qx), make_int (DEFAULT_TOOLBAR_WIDTH)));
 #endif
 #ifdef HAVE_NEXTSTEP
-  if (elt != Qnil)
+  if (!EQ(elt, Qnil))
     elt = Fcons (Fcons (list1 (Qns), make_int (DEFAULT_TOOLBAR_WIDTH)), elt);
   else
     elt = list1 (Fcons (list1 (Qns), make_int (DEFAULT_TOOLBAR_WIDTH)));
 #endif
-  if (elt != Qnil)
+  if (!EQ(elt, Qnil))
     set_specifier_fallback (Vdefault_toolbar_width, elt);
 
   set_specifier_fallback (Vtoolbar_size[TOP_TOOLBAR], Vdefault_toolbar_height);

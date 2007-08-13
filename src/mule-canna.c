@@ -785,7 +785,7 @@ DEFUN ("canna-henkan-next", Fcanna_henkan_next, 1, 1, 0, /*
   for (i = 0 ; i < len ; i++)
     {
       slen = strlen (p);
-      if (res == Qnil)
+      if (NILP(res))
 	{
 	  endp = res = Fcons (make_string (p, slen), Qnil);
 	}

@@ -476,26 +476,22 @@ symbol_is_constant (Lisp_Object sym, Lisp_Object val)
      type and make nil, t, and all keywords have that same magic
      constant_symbol value.  This test is awfully specific about what is
      constant and what isn't.  --Stig */
-  return (NILP (sym) || EQ (sym, Qt)
-	  || (SYMBOL_VALUE_MAGIC_P (val)
-	      && (XSYMBOL_VALUE_MAGIC_TYPE (val) ==
-		  SYMVAL_CONST_OBJECT_FORWARD ||
-		  XSYMBOL_VALUE_MAGIC_TYPE (val) ==
-		  SYMVAL_CONST_SPECIFIER_FORWARD ||
-		  XSYMBOL_VALUE_MAGIC_TYPE (val) ==
-		  SYMVAL_CONST_FIXNUM_FORWARD ||
-		  XSYMBOL_VALUE_MAGIC_TYPE (val) ==
-		  SYMVAL_CONST_BOOLEAN_FORWARD ||
-		  XSYMBOL_VALUE_MAGIC_TYPE (val) ==
-		  SYMVAL_CONST_CURRENT_BUFFER_FORWARD ||
-		  XSYMBOL_VALUE_MAGIC_TYPE (val) ==
-		  SYMVAL_CONST_SELECTED_CONSOLE_FORWARD))
+  return
+    NILP (sym) ||
+    EQ (sym, Qt) ||
+    (SYMBOL_VALUE_MAGIC_P (val) &&
+     (XSYMBOL_VALUE_MAGIC_TYPE (val) == SYMVAL_CONST_OBJECT_FORWARD ||
+      XSYMBOL_VALUE_MAGIC_TYPE (val) == SYMVAL_CONST_SPECIFIER_FORWARD ||
+      XSYMBOL_VALUE_MAGIC_TYPE (val) == SYMVAL_CONST_FIXNUM_FORWARD ||
+      XSYMBOL_VALUE_MAGIC_TYPE (val) == SYMVAL_CONST_BOOLEAN_FORWARD ||
+      XSYMBOL_VALUE_MAGIC_TYPE (val) == SYMVAL_CONST_CURRENT_BUFFER_FORWARD ||
+      XSYMBOL_VALUE_MAGIC_TYPE (val) == SYMVAL_CONST_SELECTED_CONSOLE_FORWARD))
 #if 0
-	      /* #### - This is disabled until a new magic symbol_value for
-		 constants is added */
-	      || SYMBOL_IS_KEYWORD (sym)
+    /* #### - This is disabled until a new magic symbol_value for
+       constants is added */
+    || SYMBOL_IS_KEYWORD (sym)
 #endif
-	      );
+    ;
 }
 
 /* We are setting SYM's value slot (or function slot, if FUNCTION_P is
@@ -513,18 +509,13 @@ reject_constant_symbols (Lisp_Object sym, Lisp_Object newval, int function_p,
      : fetch_value_maybe_past_magic (sym, follow_past_lisp_magic));
 
   if (SYMBOL_VALUE_MAGIC_P (val) &&
-      XSYMBOL_VALUE_MAGIC_TYPE (val) ==
-      SYMVAL_CONST_SPECIFIER_FORWARD)
+      XSYMBOL_VALUE_MAGIC_TYPE (val) == SYMVAL_CONST_SPECIFIER_FORWARD)
     signal_simple_error ("Use `set-specifier' to change a specifier's value",
 			 sym);
 
   if (symbol_is_constant (sym, val))
-    {
-      signal_error (Qsetting_constant,
-		    ((UNBOUNDP (newval))
-		     ? list1 (sym)
-		     : list2 (sym, newval)));
-    }
+    signal_error (Qsetting_constant,
+		  UNBOUNDP (newval) ? list1 (sym) : list2 (sym, newval));
 }
 
 /* Verify that it's ok to make SYM buffer-local.  This rejects

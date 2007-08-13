@@ -42,7 +42,11 @@
 (defvar vip-use-replace-region-delimiters)
 (defvar vip-fast-keyseq-timeout)
 (defvar vip-related-files-and-buffers-ring)
-;; end compiler pacifier
+(defvar vip-saved-cursor-color)
+(defvar ex-unix-type-shell)
+(defvar ex-unix-type-shell-options)
+(defvar vip-ex-tmp-buf-name)
+;; end pacifier
 
 ;; Is it XEmacs?
 (defconst vip-xemacs-p (string-match "\\(Lucid\\|XEmacs\\)" emacs-version))
@@ -155,6 +159,120 @@ that Viper doesn't know about.")
 (defvar vip-search-overlay-priority 500)
   
 
+;;; Viper minor modes
+
+;; This is not local in Emacs, so we make it local.
+;; This must be local because although the stack of minor modes can be the same
+;; for all buffers, the associated *keymaps* can be different. In Viper,
+;; vip-vi-local-user-map, vip-insert-local-user-map, and others can have
+;; different keymaps for different buffers.
+;; Also, the keymaps associated with vip-vi/insert-state-modifier-minor-mode
+;; can be different.
+(make-variable-buffer-local 'minor-mode-map-alist)
+
+;; Mode for vital things like \e, C-z.
+(vip-deflocalvar vip-vi-intercept-minor-mode nil)
+
+(vip-deflocalvar vip-vi-basic-minor-mode nil
+  "Viper's minor mode for Vi bindings.")
+  
+(vip-deflocalvar vip-vi-local-user-minor-mode nil
+  "Auxiliary minor mode for user-defined local bindings in Vi state.")
+
+(vip-deflocalvar vip-vi-global-user-minor-mode nil
+  "Auxiliary minor mode for user-defined global bindings in Vi state.")
+
+(vip-deflocalvar vip-vi-state-modifier-minor-mode nil
+  "Minor mode used to make major-mode-specific modification to Vi state.")
+
+(vip-deflocalvar vip-vi-diehard-minor-mode nil
+  "This minor mode is in effect when the user wants Viper to be Vi.")
+
+(vip-deflocalvar vip-vi-kbd-minor-mode nil
+  "Minor mode for Ex command macros in Vi state.
+The corresponding keymap stores key bindings of Vi macros defined with
+the Ex command :map.")
+
+;; Mode for vital things like \e, C-z.
+(vip-deflocalvar vip-insert-intercept-minor-mode nil)
+
+(vip-deflocalvar vip-insert-basic-minor-mode nil
+  "Viper's minor mode for bindings in Insert mode.")
+
+(vip-deflocalvar vip-insert-local-user-minor-mode nil
+  "Auxiliary minor mode for buffer-local user-defined bindings in Insert state.
+This is a way to overshadow normal Insert mode bindings locally to certain
+designated buffers.")
+
+(vip-deflocalvar vip-insert-global-user-minor-mode nil
+  "Auxiliary minor mode for global user-defined bindings in Insert state.")
+
+(vip-deflocalvar vip-insert-state-modifier-minor-mode nil
+  "Minor mode used to make major-mode-specific modification to Insert state.")
+
+(vip-deflocalvar vip-insert-diehard-minor-mode nil
+  "Minor mode that simulates Vi very closely.
+Not recommened, except for the novice user.")
+
+(vip-deflocalvar vip-insert-kbd-minor-mode nil
+"Minor mode for Ex command macros Insert state.
+The corresponding keymap stores key bindings of Vi macros defined with
+the Ex command :map!.")
+
+(vip-deflocalvar vip-replace-minor-mode nil
+  "Minor mode in effect in replace state (cw, C, and the like commands).")
+
+;; Mode for vital things like \C-z and \C-x)
+;; This is t, by default. So, any new buffer will have C-z defined as
+;; switch to Vi, unless we switched states in this buffer
+(vip-deflocalvar vip-emacs-intercept-minor-mode t)
+  
+(vip-deflocalvar vip-emacs-local-user-minor-mode t
+  "Minor mode for local user bindings effective in Emacs state.
+Users can use it to override Emacs bindings when Viper is in its Emacs
+state.")  
+  
+(vip-deflocalvar vip-emacs-global-user-minor-mode t
+  "Minor mode for global user bindings in effect in Emacs state.
+Users can use it to override Emacs bindings when Viper is in its Emacs
+state.")  
+
+(vip-deflocalvar vip-emacs-kbd-minor-mode t
+  "Minor mode for Vi style macros in Emacs state.
+The corresponding keymap stores key bindings of Vi macros defined with
+`vip-record-kbd-macro' command. There is no Ex-level command to do this
+interactively.")
+
+(vip-deflocalvar vip-emacs-state-modifier-minor-mode t
+  "Minor mode used to make major-mode-specific modification to Emacs state.
+For instance, a Vi purist may want to bind `dd' in Dired mode to a function
+that deletes a file.")
+
+(vip-deflocalvar vip-vi-minibuffer-minor-mode nil
+   "Minor mode that forces Vi-style when the Minibuffer is in Vi state.")
+
+(vip-deflocalvar vip-insert-minibuffer-minor-mode nil
+   "Minor mode that forces Vi-style when the Minibuffer is in Insert state.")
+  
+
+
+;; Some common error messages
+
+(defconst vip-SpuriousText "Spurious text after command"  "")
+(defconst vip-BadExCommand "Not an editor command"   "")
+(defconst vip-InvalidCommandArgument "Invalid command argument"   "")
+(defconst vip-NoPrevSearch "No previous search string"   "")
+(defconst vip-EmptyRegister "`%c': Nothing in this register"   "")
+(defconst vip-InvalidRegister "`%c': Invalid register"   "")
+(defconst vip-EmptyTextmarker "`%c': Text marker doesn't point anywhere"   "")
+(defconst vip-InvalidTextmarker "`%c': Invalid text marker"   "")
+(defconst vip-InvalidViCommand "Invalid command"   "")
+(defconst vip-BadAddress "Ill-formed address"   "")
+(defconst vip-FirstAddrExceedsSecond "First address exceeds second"   "")
+(defconst vip-NoFileSpecified "No file specified"   "")
+
+
+
 ;;; XEmacs support
 
 (if vip-xemacs-p
@@ -255,7 +373,7 @@ that Viper doesn't know about.")
    (vip-overlay-get vip-replace-overlay 'vip-cursor-color)))
 (defsubst vip-restore-cursor-color-after-insert ()
   (vip-change-cursor-color vip-saved-cursor-color))
-
+	 
 
 ;; Check the current version against the major and minor version numbers
 ;; using op: cur-vers op major.minor If emacs-major-version or
@@ -947,6 +1065,12 @@ to write a custom function, similar to `vip-ex-nontrivial-find-file-unix'."
       (set hook hook-value))))
 
     
+;; it is suggested that an event must be copied before it is assigned to
+;; last-command-event in XEmacs
+(defun vip-copy-event (event)
+  (if vip-xemacs-p
+      (copy-event event)
+    event))
     
 ;; like read-event, but in XEmacs also try to convert to char, if possible
 (defun vip-read-event-convert-to-char ()
@@ -964,7 +1088,7 @@ to write a custom function, similar to `vip-ex-nontrivial-find-file-unix'."
 ;; by correctly mapping key sequences for Left/Right/... (one an ascii
 ;; terminal) into logical keys left, right, etc.
 (defun vip-read-key () 
-  (let ((overriding-local-map vip-overriding-map)
+  (let ((overriding-local-map vip-overriding-map) 
 	(inhibit-quit t)
         key) 
     (use-global-map vip-overriding-map) 

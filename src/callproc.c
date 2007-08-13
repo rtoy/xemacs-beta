@@ -202,7 +202,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 
   error_file = Qt;
 
-#ifdef NO_SUBPROCESSES
+#if defined (NO_SUBPROCESSES)
   /* Without asynchronous processes we cannot have BUFFER == 0.  */
   if (nargs >= 3 && !INTP (args[2]))
     error ("Operating system cannot handle asynchronous subprocesses");
@@ -501,7 +501,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     {
       if (fd[0] >= 0)
 	close (fd[0]);
-#ifdef NO_SUBPROCESSES
+#if defined (NO_SUBPROCESSES)
       /* If Emacs has been built with asynchronous subprocess support,
 	 we don't need to do this, I think because it will then have
 	 the facilities for handling SIGCHLD.  */
@@ -659,7 +659,7 @@ child_setup (int in, int out, int err, char **new_argv,
     nice (- emacs_priority);
 #endif
 
-#ifndef NO_SUBPROCESSES
+#if !defined (NO_SUBPROCESSES)
   /* Close Emacs's descriptors that this process should not have.  */
   close_process_descs ();
 #endif /* not NO_SUBPROCESSES */
@@ -871,7 +871,7 @@ getenv_internal (CONST Bufbyte *var,
       
       if (STRINGP (entry)
 	  && XSTRING_LENGTH (entry) > varlen
-	  && string_byte (XSTRING (entry), varlen) == '='
+	  && XSTRING_BYTE (entry, varlen) == '='
 #ifdef WINDOWSNT
 	  /* NT environment variables are case insensitive.  */
 	  && ! memicmp (XSTRING_DATA (entry), var, varlen)

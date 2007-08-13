@@ -539,9 +539,9 @@ clear_sticky_modifiers (struct device *d)
   struct x_device *xd = DEVICE_X_DATA (d);
 
   xd->need_to_add_mask = 0;
-  xd->last_downkey = 0;
-  xd->release_time = 0;
-  xd->down_mask = 0;
+  xd->last_downkey     = 0;
+  xd->release_time     = 0;
+  xd->down_mask        = 0;
 }
 
 static int
@@ -735,7 +735,8 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
 	  return KEYSYM (buf);
 	}
       /* If it's got a one-character name, that's good enough. */
-      if (!name[1]) return make_char (name[0]);
+      if (!name[1])
+	return make_char (name[0]);
       
       /* If it's in the "Keyboard" character set, downcase it.
 	 The case of those keysyms is too totally random for us to

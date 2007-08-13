@@ -1433,7 +1433,7 @@ main_1 (int argc, char **argv, char **envp)
     {
       /* Handle -l loadup-and-dump, args passed by Makefile. */
       if (argc > 2 + skip_args && !strcmp (argv[1 + skip_args], "-l"))
-        load_me = build_string (argv[2 + skip_args]);
+	load_me = build_string (argv[2 + skip_args]);
 #ifdef CANNOT_DUMP
       /* Unless next switch is -nl, load "loadup.el" first thing.  */
       if (!(argc > 1 + skip_args && !strcmp (argv[1 + skip_args], "-nl")))
@@ -1796,8 +1796,8 @@ main (int argc, char **argv, char **envp)
 	  environ=_environ;
       }
 #endif /* _SCO_DS */
-    vol_envp = environ;
-  }
+      vol_envp = environ;
+    }
   run_temacs_argc = -1;
 
   main_1 (vol_argc, vol_argv, vol_envp);

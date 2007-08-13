@@ -348,7 +348,12 @@ The argument given to PREDICATE is the alist element or the symbol from the obar
 	{
 	  if (!ZEROP (bucket))
 	    {
-              struct Lisp_Symbol *next = symbol_next (XSYMBOL (bucket));
+              struct Lisp_Symbol *next;
+	      if (!SYMBOLP (bucket)) {
+		signal_simple_error("Bad obarry passed to try-completions",
+				    bucket);
+	      }
+	      next = symbol_next (XSYMBOL (bucket));
 	      elt = bucket;
 	      eltstring = Fsymbol_name (elt);
               if (next)

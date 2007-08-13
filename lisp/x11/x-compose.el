@@ -50,7 +50,7 @@
 ;;;
 ;;;    xmodmap -e "remove mod1 = Meta_R" -e "keysym Meta_R = Multi_key"
 ;;;
-;;; Multi_key is the name that X (and emacs) know the "Compose" key by.
+;;; Multi-key is the name that X (and emacs) know the "Compose" key by.
 ;;; The "remove..." command is necessary because the "Compose" key must not
 ;;; have any modifier bits associated with it.  This exact command may not
 ;;; work, depending on what system and keyboard you are using.  If it
@@ -101,7 +101,7 @@
 ;; (keysym is lower case because we downcase everything in the Symbol font...)
 ;;
 ;;;this doesn't work yet###autoload
-(define-key global-map [multi_key]	'compose-key)
+(define-key global-map [multi-key]	'compose-key)
 
 ;; The "Dead" keys:
 ;;

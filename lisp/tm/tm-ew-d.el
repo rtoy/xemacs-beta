@@ -9,7 +9,7 @@
 ;; Original: 1992/07/20 ENAMI Tsugutomo's `mime.el'.
 ;;	Renamed: 1993/06/03 to tiny-mime.el.
 ;;	Renamed: 1995/10/03 from tiny-mime.el. (split off encoder)
-;; Version: $Revision: 1.1.1.2 $
+;; Version: $Revision: 1.2 $
 ;; Keywords: encoded-word, MIME, multilingual, header, mail, news
 
 ;; This file is part of tm (Tools for MIME).
@@ -35,13 +35,14 @@
 (require 'std11)
 (require 'mel)
 (require 'tm-def)
+(require 'tl-str)
 
 
 ;;; @ version
 ;;;
 
 (defconst tm-ew-d/RCS-ID
-  "$Id: tm-ew-d.el,v 1.1.1.2 1996/12/21 20:50:42 steve Exp $")
+  "$Id: tm-ew-d.el,v 1.2 1997/01/11 20:14:11 steve Exp $")
 (defconst mime/eword-decoder-version (get-version-string tm-ew-d/RCS-ID))
 
 

@@ -26,7 +26,7 @@
 ;; Users are encouraged to add functionality to this file.
 ;; The present file contains all the infrastructure needed for that.
 ;;
-;; Generally, to implement a new multisession capability within Ediff,
+;; Generally, to to implement a new multisession capability within Ediff,
 ;; you need to tell it 
 ;;
 ;;	1. How to display the session group buffer.
@@ -90,7 +90,20 @@
 
 ;;; Code:
 
+(provide 'ediff-mult)
+
+;; compiler pacifier
+(eval-when-compile
+  (let ((load-path (cons (expand-file-name ".") load-path)))
+    (or (featurep 'ediff-init)
+	(load "ediff-init.el" nil nil 'nosuffix))
+    (or (featurep 'ediff-util)
+	(load "ediff-util.el" nil nil 'nosuffix))
+    ))
+;; end pacifier
+
 (require 'ediff-init)
+(require 'ediff-util)
 
 ;; meta-buffer
 (ediff-defvar-local ediff-meta-buffer nil "")
@@ -366,7 +379,7 @@ Moves in circular fashion. With numeric prefix arg, skip this many items."
 				  (ediff-add-slash-if-directory auxdir1 elt)))
 			 lis1)
 	  auxdir2	(file-name-as-directory dir2)
-	  lis2		(mapcar
+	  lis2		(mapcar 
 			 (function
 			  (lambda (elt)
 				  (ediff-add-slash-if-directory auxdir2 elt)))
@@ -374,7 +387,7 @@ Moves in circular fashion. With numeric prefix arg, skip this many items."
 
     (if (stringp dir3)
 	(setq auxdir3	(file-name-as-directory dir3)
-	      lis3	(mapcar
+	      lis3	(mapcar 
 			 (function
 			  (lambda (elt)
 				  (ediff-add-slash-if-directory auxdir3 elt)))
@@ -732,7 +745,7 @@ Moves in circular fashion. With numeric prefix arg, skip this many items."
 	(feq (ediff-get-file-eqstatus fileinfo))
 	file-modtime file-size)
 
-    (cond ((not (stringp fname)) (setq file-size -2)) ; file doesn't exist
+    (cond ((not (stringp fname)) (setq file-size -2)) ; file doesn't exits
 	  ((not (ediff-file-remote-p fname))
 	   (if (file-exists-p fname)
 	       ;; set real size and modtime
@@ -1017,7 +1030,6 @@ Useful commands:
 	 (meta-buf (ediff-event-buffer last-command-event))
 	 ;; ediff-get-meta-info gives error if meta-buf or pos are invalid
 	 (info (ediff-get-meta-info meta-buf pos))
-	 merge-autostore-dir
 	 (session-buf (ediff-get-session-buffer info)))
 
     (if (eq (ediff-get-session-status info) ?H)
@@ -1198,6 +1210,7 @@ all marked sessions must be active."
 	 (meta-buf (ediff-event-buffer last-command-event))
 	 ;; ediff-get-meta-info gives error if meta-buf or pos are invalid
 	 (info (ediff-get-meta-info meta-buf pos))
+	 merge-autostore-dir
 	 session-buf file1 file2 file3 regexp)
 
     (setq session-buf (ediff-get-session-buffer info)
@@ -1717,8 +1730,5 @@ This is used only for sessions that involve 2 or 3 files at the same time."
 ;;; eval: (put 'ediff-eval-in-buffer 'lisp-indent-hook 1)
 ;;; eval: (put 'ediff-eval-in-buffer 'edebug-form-spec '(form body))
 ;;; End:
-
-(provide 'ediff-mult)
-(require 'ediff-util)
 
 ;;; ediff-mult.el ends here

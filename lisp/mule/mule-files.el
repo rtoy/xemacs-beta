@@ -52,8 +52,8 @@ which is intended to be used for global environment specification.")
 
 (defvar file-coding-system-alist
   ;;  '(; ("\\.el$" . euc-japan)
-  '(("\\.el$" . iso-2022-7)
-    ("\\.info$" . iso-2022-7)
+  '(("\\.el$" . iso-2022-8)
+    ("\\.info$" . iso-2022-8)
     ("\\.\\(gz\\|Z\\)$" . binary)
     ("/spool/mail/.*$" . convert-mbox-coding-system))
   "Alist specifying the coding system used for particular files.
@@ -403,8 +403,7 @@ The functions on this hook are called with arguments START, END,
 FILENAME, APPEND, VISIT, and CODING-SYSTEM, the same as the
 corresponding arguments in the call to `write-region'.")
 
-(defun write-region (start end filename &optional append visit lockname
-			   coding-system)
+(defun write-region (start end filename &optional append visit lockname coding-system)
   "Write current region into specified file.
 When called from a program, takes three arguments:
 START, END and FILENAME.  START and END are buffer positions.

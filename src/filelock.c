@@ -69,9 +69,8 @@ static int current_lock_owner_1 (CONST char *);
 
 #ifndef HAVE_LONG_FILE_NAMES
 
-#define MAKE_LOCK_NAME(lock, file)					    \
-  (lock = (char *) alloca (14 + XSTRING_LENGTH (Vlock_directory) + \
-			   1),						    \
+#define MAKE_LOCK_NAME(lock, file)					\
+  (lock = (char *) alloca (14 + XSTRING_LENGTH (Vlock_directory) + 1),	\
    fill_in_lock_short_file_name (lock, (file)))
 
 static void
@@ -107,7 +106,7 @@ fill_in_lock_short_file_name (REGISTER char *lockfile, REGISTER Lisp_Object fn)
     int need_slash = 0;
 
     /* in case lock-directory doesn't end in / */
-    if (string_byte (XSTRING (Vlock_directory),
+    if (XSTRING_BYTE (Vlock_directory,
 		     XSTRING_LENGTH (Vlock_directory) - 1) != '/')
       need_slash = 1;
 
@@ -122,9 +121,9 @@ fill_in_lock_short_file_name (REGISTER char *lockfile, REGISTER Lisp_Object fn)
 #else /* defined HAVE_LONG_FILE_NAMES */
 
 /* +2 for terminating null and possible extra slash */
-#define MAKE_LOCK_NAME(lock, file)				\
-  (lock = (char *) alloca (XSTRING_LENGTH (file) +		\
-			   XSTRING_LENGTH (Vlock_directory) + 2),\
+#define MAKE_LOCK_NAME(lock, file)					\
+  (lock = (char *) alloca (XSTRING_LENGTH (file) +			\
+			   XSTRING_LENGTH (Vlock_directory) + 2),	\
    fill_in_lock_file_name (lock, (file)))
 
 static void

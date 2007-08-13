@@ -169,30 +169,30 @@ Boston, MA 02111-1307, USA.  */
    macro will realloc BASEVAR as necessary so that it can hold at
    least NEEDED_SIZE objects.  The reallocing is done by doubling,
    which ensures constant amortized time per element. */
-#define DO_REALLOC(basevar, sizevar, needed_size, type)	do	\
-{								\
-  /* Avoid side-effectualness. */				\
-  /* Dammit! Macros suffer from dynamic scope! */		\
-  /* We demand inline functions! */				\
-  int do_realloc_needed_size = (needed_size);			\
-  int newsize = 0;						\
-  while ((sizevar) < (do_realloc_needed_size)) {		\
-    newsize = 2*(sizevar);					\
-    if (newsize < 32)						\
-      newsize = 32;						\
-    (sizevar) = newsize;					\
-  }								\
-  if (newsize)							\
-    (basevar) = (type *) xrealloc (basevar,			\
-				   (newsize)*sizeof(type));	\
+#define DO_REALLOC(basevar, sizevar, needed_size, type)	do		\
+{									\
+  /* Avoid side-effectualness. */					\
+  /* Dammit! Macros suffer from dynamic scope! */			\
+  /* We demand inline functions! */					\
+  int do_realloc_needed_size = (needed_size);				\
+  int newsize = 0;							\
+  while ((sizevar) < (do_realloc_needed_size)) {			\
+    newsize = 2*(sizevar);						\
+    if (newsize < 32)							\
+      newsize = 32;							\
+    (sizevar) = newsize;						\
+  }									\
+  if (newsize)								\
+    (basevar) = (type *) xrealloc (basevar,				\
+				(newsize)*sizeof(type));		\
 } while (0)
 
 #ifdef ERROR_CHECK_MALLOC
-#define xfree(lvalue) do		\
-{					\
-  void **ptr = (void **) &(lvalue);	\
-  xfree_1 (*ptr);			\
-  *ptr = (void *) 0xDEADBEEF;		\
+#define xfree(lvalue) do						\
+{									\
+  void **ptr = (void **) &(lvalue);					\
+  xfree_1 (*ptr);							\
+  *ptr = (void *) 0xDEADBEEF;						\
 } while (0)
 #else
 #define xfree_1 xfree
@@ -251,12 +251,15 @@ Boston, MA 02111-1307, USA.  */
   ((((len) + (unit) - 1) / (unit)) * (unit))
 
 /* #### Yuck, this is kind of evil */
-#define ALIGN_PTR(ptr, unit) ((void *) ALIGN_SIZE ((long) (ptr), unit))
+#define ALIGN_PTR(ptr, unit) \
+  ((void *) ALIGN_SIZE ((long) (ptr), unit))
 
 #ifdef QUANTIFY
 #include "quantify.h"
-#define QUANTIFY_START_RECORDING quantify_start_recording_data ()
-#define QUANTIFY_STOP_RECORDING  quantify_stop_recording_data  ()
+#define QUANTIFY_START_RECORDING					\
+  do { quantify_start_recording_data (); } while (0)
+#define QUANTIFY_STOP_RECORDING						\
+  do { quantify_stop_recording_data (); } while (0)
 #else /* !QUANTIFY */
 #define QUANTIFY_START_RECORDING
 #define QUANTIFY_STOP_RECORDING

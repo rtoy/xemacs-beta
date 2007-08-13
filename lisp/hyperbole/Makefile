@@ -172,7 +172,7 @@ elc: elc-init hsite.el $(ELC_KOTL) $(ELC_COMPILE)
             || (echo "These files will be compiled: " \
                  && echo "`cat $(ELISP_TO_COMPILE)`" \
                  && $(EMACS) $(BATCHFLAGS) $(PRELOADS) \
-                       -f batch-byte-compile `cat $(ELISP_TO_COMPILE)`)
+                       -l bytecomp -f batch-byte-compile `cat $(ELISP_TO_COMPILE)`)
 	@ $(RM) $(ELISP_TO_COMPILE)
 
 elc-init:

@@ -1968,8 +1968,10 @@ map_extents_bytind (Bytind from, Bytind to,
       assert (!extent_detached_p (after));
     }
 
-  if (!buffer_or_string_extent_list (obj))
+  el = buffer_or_string_extent_list (obj);
+  if (!el || !extent_list_num_els(el))
     return;
+  el = 0;
 
   st = buffer_or_string_bytind_to_memind (obj, from);
   en = buffer_or_string_bytind_to_memind (obj, to);
@@ -2315,8 +2317,9 @@ adjust_extents (Lisp_Object obj, Memind from, Memind to, int amount)
 #endif
   el = buffer_or_string_extent_list (obj);
 
-  if (!el)
+  if (!el || !extent_list_num_els(el))
     return;
+
   /* IMPORTANT! Compute the starting positions of the extents to
      modify BEFORE doing any modification!  Otherwise the starting
      position for the second time through the loop might get
@@ -2516,7 +2519,7 @@ extent_find_end_of_run (Lisp_Object obj, Bytind pos, int outside_accessible)
     buffer_or_string_absolute_end_byte (obj) :
       buffer_or_string_accessible_end_byte (obj);
 
-  if (!bel)
+  if (!bel || !extent_list_num_els(bel))
     return limit;
 
   sel = buffer_or_string_stack_of_extents_force (obj)->extents;
@@ -2556,7 +2559,7 @@ extent_find_beginning_of_run (Lisp_Object obj, Bytind pos,
     buffer_or_string_absolute_begin_byte (obj) :
       buffer_or_string_accessible_begin_byte (obj);
 
-  if (!bel)
+  if (!bel || !extent_list_num_els(bel))
     return limit;
 
   sel = buffer_or_string_stack_of_extents_force (obj)->extents;

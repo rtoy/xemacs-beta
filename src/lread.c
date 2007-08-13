@@ -788,7 +788,7 @@ encoding detection or end-of-line detection.
       if (EQ (last_file_loaded, file))
 	message_append (" (%d)", purespace_usage() - pure_usage);
       else
-	message ("Loading %s...done (%d)", XSTRING_DATA (file),
+	message ("Loading %s ...done (%d)", XSTRING_DATA (file),
 		 purespace_usage() - pure_usage);
     }
 #endif /* DEBUG_XEMACS */
@@ -2736,10 +2736,10 @@ read_list (Lisp_Object readcharfun,
 		{
 		  if (NILP (Vdoc_file_name))
 		    /* We have not yet called Snarf-documentation, so
-		       assume this file is described in the DOC
-		       file and Snarf-documentation will fill in the
-		       right value later.  For now, replace the whole
-		       list with 0.  */
+		       assume this file is described in the DOC file
+		       and Snarf-documentation will fill in the right
+		       value later.  For now, replace the whole list
+		       with 0.  */
 		    XCAR (holding_cons) = Qzero;
 		  else
 		    /* We have already called Snarf-documentation, so

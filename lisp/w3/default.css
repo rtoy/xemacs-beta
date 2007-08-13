@@ -17,6 +17,7 @@
 ** There are a few special Emacs-W3 sections
 **
 **  emacs - only include this chunk if you are using Emacs 19
+** speech - only include this chunk if you are using Emacspeak for audio
 ** xemacs - only include this chunk if you are using XEmacs
 ** normal - always include this chunk (useful for switching out of another 
 **          device-type block
@@ -39,12 +40,11 @@ h4,h5,h6  {
 */
 
 :xemacs:
-      h1  { font-size : +10pt }
+      h1  { font-size : +12pt }
       h2  { font-size : +6pt  }
-      h3  { font-size : +3pt  }
-      h4  {                   } /* Do nothing, normal sized font, just bold */
-      h5  { font-size : -3pt  }
-      h6  { font-size : -6pt  }
+      h3  { font-size : +4pt  }
+      h5  { font-size : -2pt  }
+      h6  { font-size : -4pt  }
 
 /*
 ** Emacs-19 also doesn't handle how Emacs-W3 changes this type of font
@@ -52,7 +52,7 @@ h4,h5,h6  {
 ** do monospaced fonts anyway, so its redundant.
 */
    pre,xmp,
-  plaintext { font-family: monospace; display: block }
+  plaintext { font-family: monospace }
 key,code,tt { font-family: monospace }
 
 /*
@@ -74,24 +74,30 @@ strong,em { color: red         }
 
 :normal:
        p  { display: block }
+ pre,xmp  { display: block; white-space: pre; }
+blockquote{ display: block; margin-left: 5; margin-right: 5; }
 
 /*
 ** List formatting instructions
 */
 
- dl,ul,ol {
- 	    display: block;
-	    margin-left: 5em
-	  }
+       ul { display: block;     }
+       ol { display: block;     }
+       dl { display: block;     }
+       dt { font-weight: bold; display: list-item }
+       dd { display: list-item; margin-left: 5; }
+       li { display: list-item; margin-left: 5; }
+    ul li { list-style: circle; }
+    ol li { list-style: decimal; }
 
-       li { display: list-item }
-       dt { font-weight: bold; display: block }
-       dd { insert-before: 3em; display: list-item }
+/* These are to make nested list items look better */
+ul ul,ol ul,ol ol,ul ol { display: line; }
 
 /*
 ** All logical emphasis tags, the way god intended
 */
 
+        div { display: line;                }
   strong,em { font-weight: bold             }
         dfn { font-style: italic            }
    s,strike { text-decoration: line-through }
@@ -106,13 +112,12 @@ strong,em { color: red         }
 	  i { font-style: italic }
           u { text-decoration: underline }
       blink { text-decoration: blink }
-
+     center { display: line; text-align: center; }
 /*
 ** Various and sundry
 */
-         br { display: list-item }
-         hr { display: list-item }
-    hr[SRC] { replace: {SRC} }
+         br { display: line }
+         hr { display: line; text-align: center; }
 
 
 /*
@@ -125,12 +130,20 @@ a:visited { color: #B22222 }
 a:active  { color: #FF0000 }
 
 /*
+** Table formatting
+*/
+table     { display: block;    }
+   th     { display: block; font-weight: bold; text-align: center; }
+   td     { display: block; text-align: left; }
+caption   { display: block; text-align: center; }
+
+/*
 ** Various other character-level formatting issues
 */
 
- address { align : right }
-abstract { font-style : bold & italic ; align : indent }
-   quote { font-style : italic ; align : indent }
+ address { text-align: right; display: line; }
+abstract { font-style: bold & italic ; text-align : indent }
+   quote { font-style: italic ; text-align : indent }
 
 /*
 ** Now for monochrome defaults
@@ -145,7 +158,6 @@ a:visited { color: black; text-decoration: underline }
 */
 
 :tty:
-
 /*
 ** First, handle some stuff for generic TTYs to emulate our old
 ** behaviour with w3-delimit-links and a subset of w3-delimit-emphasis
@@ -153,18 +165,18 @@ a:visited { color: black; text-decoration: underline }
 
 h1,h2,h3,
 h4,h5,h6 {
-           insert.before: *;
-           insert.after: *
+           insert-before: *;
+           insert-after: *
          }
 
 a:visited{
-           insert.before: "{{";
-           insert.after: "}}"
+           insert-before: "{{";
+           insert-after: "}}"
          }
 
 a:link   {
-           insert.before: "[[";
-           insert.after: "]]"
+           insert-before: "[[";
+           insert-after: "]]"
          }
 
 /* End Generic TTY */
@@ -200,25 +212,29 @@ a:visited { color : magenta  }
 
 :speech:
 h1,h2,h3,
-h4,h5,h6 { voice-family: paul; stress: 8; }
-      h1 { pitch: 9; pitch-range: 9; }
-      h2 { pitch: 8; pitch-range: 8; }
-      h3 { pitch: 7; pitch-range: 7; }
-      h4 { pitch: 6; pitch-range: 6; }
-   h5,h6 { pitch: 5; pitch-range: 5; }
-      li { pitch: 6; richness: 6; }
-      dt { voice-family: harry;   }
-      dd { pitch: 6; richness: 6; }
-pre,xmp,
-plaintext { pitch: 1; pitch-range: 1; stress: 1; richness: 9; }
-key,code,
-       tt { pitch: 1; pitch-range: 1; stress: 1; richness: 9; }
-strong,em { pitch: 6; stress: 8; pitch-range: 9; }
-      dfn { pitch: 7; pitch-range: 6; stress: 6; }
- s,strike { richness: 9; }
-        b { pitch: 6; pitch-range: 9; stress: 8; }
-        i { pitch: 7; pitch-range: 6; stress: 6; }
-        u { richness: 0; }
-a:link    { voice-family: harry;  }
-a:visited { voice-family: betty;  }
-a:active  { voice-family: ursula; }
+h4,h5,h6 { voice-family: paul; stress: 2; richness: 9; }
+      h1 { pitch: 1; pitch-range: 9; }
+      h2 { pitch: 2; pitch-range: 8; }
+      h3 { pitch: 3; pitch-range: 7; }
+      h4 { pitch: 4; pitch-range: 6; }
+      h5 { pitch: 5; pitch-range: 5; }
+      h6 { pitch: 6; pitch-range: 4; }
+
+li,dt,dd { pitch: 6; richness: 6; }
+      dt { stress: 8; }
+
+pre,xmp,plaintext,key,code,tt { pitch: 1; 
+				pitch-range: 1;
+				stress: 1;
+				richness: 8;
+			      }
+      em { pitch: 6; pitch-range: 6; stress: 6; richness: 5; }
+  strong { pitch: 6; pitch-range: 6; stress: 9; richness: 9; }
+     dfn { pitch: 7; pitch-range: 6; stress: 6; }
+s,strike { richness: 0; }
+       i { pitch: 6; pitch-range: 6; stress: 6; richness: 5 }
+       b { pitch: 6; pitch-range: 6; stress: 9; richness: 9; }
+       u { richness: 0; }
+   a:link { voice-family: harry; }
+a:visited { voice-family: betty;}
+ a:active { voice-family: betty; pitch-range: 8; pitch: 8 }

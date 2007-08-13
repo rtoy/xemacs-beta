@@ -44,7 +44,7 @@ main (int argc, char *argv[])
   fprintf (stderr, "%s: Sorry, the Emacs server is supported only\n",
 	   argv[0]);
   fprintf (stderr, "on systems with Berkeley sockets or System V IPC.\n");
-  exit (1);
+  return 1;
 }
 
 #else /* HAVE_SOCKETS or HAVE_SYSVIPC */
@@ -321,7 +321,7 @@ main (int argc, char *argv[])
   strcpy (buf, msgp->mtext);
 
   printf ("\n%s\n", buf);
-  exit (0);
+  return 0;
 }
 
 #endif /* HAVE_SYSVIPC */

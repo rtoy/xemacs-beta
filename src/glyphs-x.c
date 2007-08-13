@@ -276,11 +276,11 @@ locate_pixmap_file (Lisp_Object name)
   /* Check non-absolute pathnames with a directory component relative to
      the search path; that's the way Xt does it. */
   /* #### Unix-specific */
-  if (string_byte (XSTRING (name), 0) == '/' ||
-      (string_byte (XSTRING (name), 0) == '.' &&
-       (string_byte (XSTRING (name), 1) == '/' ||
-	(string_byte (XSTRING (name), 1) == '.' &&
-	 (string_byte (XSTRING (name), 2) == '/')))))
+  if (XSTRING_BYTE (name, 0) == '/' ||
+      (XSTRING_BYTE (name, 0) == '.' &&
+       (XSTRING_BYTE (name, 1) == '/' ||
+	(XSTRING_BYTE (name, 1) == '.' &&
+	 (XSTRING_BYTE (name, 2) == '/')))))
     {
       if (!NILP (Ffile_readable_p (name)))
 	return name;

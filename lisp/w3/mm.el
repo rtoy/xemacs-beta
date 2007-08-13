@@ -5,8 +5,8 @@
 ;; Keywords: mail, news, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Copyright (c) 1994, 1995 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1994, 1995, 1996 by William M. Perry (wmperry@cs.indiana.edu)
+;;; Copyright (c) 1996 Free Software Foundation, Inc.
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -21,8 +21,9 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to
-;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;;; Boston, MA 02111-1307, USA.
 ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Generalized mailcap parsing and access routines
@@ -109,13 +110,6 @@
 (modify-syntax-entry ?` "\"" mm-parse-args-syntax-table)
 (modify-syntax-entry ?{ "(" mm-parse-args-syntax-table)
 (modify-syntax-entry ?} ")" mm-parse-args-syntax-table)
-
-;;; This is so we can use a consistent method of checking for mule support
-;;; Emacs-based mule uses (boundp 'MULE), but XEmacs-based mule uses
-;;; (featurep 'mule) - I choose to use the latter.
-
-(if (boundp 'MULE)
-    (provide 'mule))
 
 (defvar mm-mime-data
   '(
@@ -366,6 +360,8 @@ not.")
 	    new)
 	tree))))
 
+(require 'mule-sysdp)
+
 (if (not (fboundp 'w3-save-binary-file))
     (defun mm-save-binary-file ()
       ;; Ok, this is truly fucked.  In XEmacs, if you use the mouse to select
@@ -381,20 +377,15 @@ not.")
 				  (file-name-nondirectory (url-view-url t))))
 	    (require-final-newline nil))
 	(set-buffer old-buff)
-	(if (featurep 'mule)
-	    (let ((mc-flag t))
-	      (write-region (point-min) (point-max) file nil nil *noconv*))
-	  (write-region (point-min) (point-max) file))
+	(mule-write-region-no-coding-system (point-min) (point-max) file)
 	(kill-buffer (current-buffer))))
   (fset 'mm-save-binary-file 'w3-save-binary-file))
 
-(if (not (fboundp 'w3-maybe-eval))
-    (defun mm-maybe-eval ()
-      "Maybe evaluate a buffer of emacs lisp code"
-      (if (yes-or-no-p "This is emacs-lisp code, evaluate it? ")
-	  (eval-buffer (current-buffer))
-	(emacs-lisp-mode)))
-  (fset 'mm-maybe-eval 'w3-maybe-eval))
+(defun mm-maybe-eval ()
+  "Maybe evaluate a buffer of emacs lisp code"
+  (if (yes-or-no-p "This is emacs-lisp code, evaluate it? ")
+      (eval-buffer (current-buffer))
+    (emacs-lisp-mode)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1093,9 +1084,7 @@ correspond to.")
   (setq buff (or buff (current-buffer)))
   (let ((fname (mm-generate-unique-filename "%s.au"))
 	(synchronous-sounds t))		; Play synchronously
-    (if (featurep 'mule)
-	(write-region (point-min) (point-max) fname nil nil *noconv*)
-      (write-region (point-min) (point-max) fname))
+    (mm-write-region-no-coding-system (point-min) (point-max) fname)
     (kill-buffer (current-buffer))
     (play-sound-file fname)
     (condition-case ()

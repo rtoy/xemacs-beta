@@ -1,14 +1,17 @@
 (setq load-path (append (list (expand-file-name "./")
-			      (or (getenv "URLDIR")
-				  (expand-file-name "../url")))
+			      (or (getenv "WIDGETDIR")
+				  (expand-file-name "../widget"))
+			      )
 			load-path))
+
+(setq max-specpdl-size (* 10 max-specpdl-size)
+      max-lisp-eval-depth (* 10 max-lisp-eval-depth))
 
 (defun hack-dot-emacs ()
   (interactive)
   (let* ((args command-line-args-left)
 	 (fname (expand-file-name (nth 0 args)))
-	 (lispdir (nth 1 args))
-	 (urldir (nth 2 args)))
+	 (lispdir (nth 1 args)))
     (setq command-line-args-left (cdr (cdr (cdr command-line-args-left))))
     (set-buffer (get-buffer-create " *x*"))
     (erase-buffer)
@@ -21,8 +24,6 @@
       (insert "\n;;; Emacs-w3 configuration options\n")
       (insert "(setq load-path (cons (expand-file-name \""
 	      lispdir "\") load-path))\n")
-      (insert "(setq load-path (cons (expand-file-name \""
-	      urldir "\") load-path))\n")      
       (insert "(autoload 'w3-preview-this-buffer \"w3\" \"WWW Previewer\" t)\n")
       (insert "(autoload 'w3-follow-url-at-point \"w3\" \"Find document at pt\" t)\n")
       (insert "(autoload 'w3 \"w3\" \"WWW Browser\" t)\n")
@@ -64,6 +65,8 @@
 ;; For MULE
 (w3-declare-variables '*noconv* '*autoconv* '*euc-japan* '*internal*
 		      'w3-mime-list-for-code-conversion 'lc-ltn1
+		      'mule-version 'enable-multibyte-characters
+		      'charset-latin-iso8859-1
 		      'file-coding-system-for-read 'file-coding-system)
 
 ;; For Mailcrypt
@@ -84,12 +87,15 @@
 ;; For emacspeak
 (w3-declare-variables 'dtk-voice-table 'dtk-punctuation-mode)
 
-;; For a few intern things
+;; For a few internal things
 (w3-declare-variables 'tag 'w3-working-buffer 'proxy-info 'args
-		      'w3-image-widgets-waiting
+		      'w3-image-widgets-waiting 'w3-form-info
 		      'w3-last-parse-tree 'command-line-args-left
 		      'standard-display-table 'w3-html-bookmarks
-		      'widget-keymap)
+		      'browse-url-browser-function 'widget-keymap)
+
+;; GNUS
+(w3-declare-variables 'gnus-group-buffer 'gnus-version)		      
 
 (load "bytecomp" t t nil)
 ;; Emacs 19 byte compiler complains about too much stuff by default.
@@ -102,5 +108,5 @@
 (and w3-running-FSF19
      (< emacs-minor-version 29)
      (require 'font))
-(load-library "w3-sysdp")
+(require 'w3-sysdp)
 (provide 'ange-ftp)

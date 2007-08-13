@@ -790,17 +790,16 @@ share the same frame), and vice versa.  See
 @code{ediff-window-setup-function} for details on how to make either of
 these modes the default one.
 
-This function can also be invoked from Ediff menus.  However, in this case,
-it will affect only @emph{new} Ediff sessions, not the currently running
-ones.
+This function can also be invoked from the Menubar.  However, in some
+cases, the change will take place only after you execute one of the Ediff
+commands, such as going to the next difference or redisplaying.
 @item ediff-toggle-use-toolbar
 @findex ediff-toggle-use-toolbar
-Available in XEmacs only. The Ediff toolbar provides quick access to some
-of the common Ediff functions. This function toggles the display of the
-toolbar. If invoked from the menu, the function will not have immediate
-effect---you will have to perform an action that changes Ediff window
-configuration to see the effect (e.g., you could try to change the window
-split).
+Available in XEmacs only (in a forthcoming version). The Ediff toolbar
+provides quick access to some of the common Ediff functions. This function
+toggles the display of the toolbar. If invoked from the menubar, the function
+may take sometimes effect only after you execute an Ediff command, such as
+going to the next difference.
 
 @item ediff-use-toolbar-p
 @vindex ediff-use-toolbar-p
@@ -1287,7 +1286,8 @@ windowing displays.  The plain setup, one where all windows are always
 in one frame, is done by @code{ediff-setup-windows-plain}, which is the
 default on a non-windowing display (or in an xterm window).  In fact,
 under Emacs, you can switch freely between these two setups by executing
-the command @code{ediff-toggle-multiframe} using the Minibuffer.
+the command @code{ediff-toggle-multiframe} using the Minibuffer of the
+Menubar.
 @findex ediff-setup-windows-multiframe
 @findex ediff-setup-windows-plain
 @findex ediff-toggle-multiframe

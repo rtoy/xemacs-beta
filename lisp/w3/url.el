@@ -1,17 +1,18 @@
-;;; url.el,v --- Uniform Resource Locator retrieval tool
+;;; url.el --- Uniform Resource Locator retrieval tool
 ;; Author: wmperry
-;; Created: 1996/05/30 13:25:47
-;; Version: 1.52
+;; Created: 1996/12/19 21:53:03
+;; Version: 1.40
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;; LCD Archive Entry:
-;;; url|William M. Perry|wmperry@spry.com|
+;;; url|William M. Perry|wmperry@cs.indiana.edu|
 ;;; Major mode for manipulating URLs|
-;;; 1996/05/30 13:25:47|1.52|Location Undetermined
+;;; 1996/12/19 21:53:03|1.40|Location Undetermined
 ;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1993, 1994, 1995 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1993-1996 by William M. Perry (wmperry@cs.indiana.edu)
+;;; Copyright (c) 1996 Free Software Foundation, Inc.
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -26,15 +27,13 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to
-;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1993, 1994, 1995 by William M. Perry (wmperry@spry.com)   ;;;
+;;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;;; Boston, MA 02111-1307, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
+(require 'cl)
 (require 'url-vars)
 (require 'url-parse)
 (require 'urlauth)
@@ -42,14 +41,14 @@
 (require 'mm)
 (require 'md5)
 (require 'base64)
-(require 'url-hash)
+(require 'mule-sysdp)
 (or (featurep 'efs)
     (featurep 'efs-auto)
     (condition-case ()
 	(require 'ange-ftp)
       (error nil)))
 
-(load-library "url-sysdp")
+(require 'w3-sysdp)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Functions that might not exist in old versions of emacs
@@ -268,11 +267,6 @@
       (re-search-forward
        "<\\(TITLE\\|HEAD\\|BASE\\|H[0-9]\\|ISINDEX\\|P\\)>" nil t))))
 
-(defun nntp-after-change-function (&rest args)
-  (save-excursion
-    (set-buffer nntp-server-buffer)
-    (message "Read %d bytes" (point-max))))
-
 (defun url-percentage (x y)
   (if (fboundp 'float)
       (round (* 100 (/ x (float y))))
@@ -281,59 +275,54 @@
 (defun url-after-change-function (&rest args)
   ;; The nitty gritty details of messaging the HTTP/1.0 status messages
   ;; in the minibuffer."
-  (if (get-buffer url-working-buffer)
+  (or url-current-content-length
       (save-excursion
-	(set-buffer url-working-buffer)
-	(let (status-message)
-	  (if url-current-content-length
-	      nil
-	    (goto-char (point-min))
-	    (skip-chars-forward " \t\n")
-	    (if (not (looking-at "HTTP/[0-9]\.[0-9]"))
-		(setq url-current-content-length 0)
-	      (setq url-current-isindex
-		    (and (re-search-forward "$\r*$" nil t) (point)))
-	      (if (re-search-forward
-		   "^content-type:[ \t]*\\([^\r\n]+\\)\r*$"
-		   url-current-isindex t)
-		  (setq url-current-mime-type (downcase
-					       (url-eat-trailing-space
-						(buffer-substring
-						 (match-beginning 1)
-						 (match-end 1))))))
-	      (if (re-search-forward "^content-length:\\([^\r\n]+\\)\r*$"
-				     url-current-isindex t)
-		  (setq url-current-content-length
-			(string-to-int (buffer-substring (match-beginning 1)
-							 (match-end 1))))
-		(setq url-current-content-length nil))))
+	(goto-char (point-min))
+	(skip-chars-forward " \t\n")
+	(if (not (looking-at "HTTP/[0-9]\.[0-9]"))
+	    (setq url-current-content-length 0)
+	  (setq url-current-isindex
+		(and (re-search-forward "$\r*$" nil t) (point)))
+	  (if (re-search-forward
+	       "^content-type:[ \t]*\\([^\r\n]+\\)\r*$"
+	       url-current-isindex t)
+	      (setq url-current-mime-type (downcase
+					   (url-eat-trailing-space
+					    (buffer-substring
+					     (match-beginning 1)
+					     (match-end 1))))))
 	  (goto-char (point-min))
-	  (if (re-search-forward "^status:\\([^\r]*\\)" url-current-isindex t)
-	      (progn
-		(setq status-message (buffer-substring (match-beginning 1)
-						       (match-end 1)))
-		(replace-match (concat "btatus:" status-message))))
-	  (goto-char (point-max))
-	  (cond
-	   (status-message (url-lazy-message "%s" status-message))
-	   ((and url-current-content-length (> url-current-content-length 1)
-		 url-current-mime-type)
-	    (url-lazy-message "Read %d of %d bytes (%d%%) [%s]"
-			      (point-max) url-current-content-length
-			      (url-percentage (point-max)
-					      url-current-content-length)
-			      url-current-mime-type))
-	   ((and url-current-content-length (> url-current-content-length 1))
-	    (url-lazy-message "Read %d of %d bytes (%d%%)"
-			      (point-max) url-current-content-length
-			      (url-percentage (point-max)
-					      url-current-content-length)))
-	   ((and (/= 1 (point-max)) url-current-mime-type)
-	    (url-lazy-message "Read %d bytes. [%s]" (point-max)
-			      url-current-mime-type))
-	   ((/= 1 (point-max))
-	    (url-lazy-message "Read %d bytes." (point-max)))
-	   (t (url-lazy-message "Waiting for response.")))))))
+	  (if (re-search-forward "^content-length:\\([^\r\n]+\\)\r*$"
+				 url-current-isindex t)
+	      (setq url-current-content-length
+		    (string-to-int (buffer-substring (match-beginning 1)
+						     (match-end 1))))
+	    (setq url-current-content-length nil))))
+      )
+  (let ((current-length (max (point-max)
+			     (if url-current-isindex
+				 (- (point-max) url-current-isindex)
+			       (point-max)))))
+    (cond
+     ((and url-current-content-length (> url-current-content-length 1)
+	   url-current-mime-type)
+      (url-lazy-message "Reading [%s]... %d of %d bytes (%d%%)"
+			url-current-mime-type
+			current-length
+			url-current-content-length
+			(url-percentage current-length
+					url-current-content-length)))
+     ((and url-current-content-length (> url-current-content-length 1))
+      (url-lazy-message "Reading... %d of %d bytes (%d%%)"
+			current-length url-current-content-length
+			(url-percentage current-length
+					url-current-content-length)))
+     ((and (/= 1 current-length) url-current-mime-type)
+      (url-lazy-message "Reading [%s]... %d bytes"
+			url-current-mime-type current-length))
+     ((/= 1 current-length)
+      (url-lazy-message "Reading... %d bytes." current-length))
+     (t (url-lazy-message "Waiting for response...")))))
 
 (defun url-insert-entities-in-string (string)
   "Convert HTML markup-start characters to entity references in STRING.
@@ -368,37 +357,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar url-process-lookup-table nil)
 
-(defun url-setup-process-get ()
-  (let ((x nil)
-	(nativep t))
-    (condition-case ()
-	(progn
-	  (setq x (start-process "Test" nil "/bin/sh"))
-	  (get x 'command))
-      (error (setq nativep nil)))
-    (cond
-     ((fboundp 'process-get)		; Emacs 19.31 w/my hacks
-      (defun url-process-get (proc prop &optional default)
-	(or (process-get proc prop) default)))
-     (nativep				; XEmacs 19.14 w/my hacks
-      (fset 'url-process-get 'get))
-     (t
-      (defun url-process-get (proc prop &optional default)
-	(or (plist-get (cdr-safe (assq proc url-process-lookup-table)) prop)
-	    default))))
-    (cond
-     ((fboundp 'process-put)		; Emacs 19.31 w/my hacks
-      (fset 'url-process-put 'process-put))
-     (nativep
-      (fset 'url-process-put 'put))
-     (t
-      (defun url-process-put (proc prop val)
-	(let ((node (assq proc url-process-lookup-table)))
-	  (if (not node)
-	      (setq url-process-lookup-table (cons (cons proc (list prop val))
-						   url-process-lookup-table))
-	    (setcdr node (plist-put (cdr node) prop val)))))))
-    (and (processp x) (delete-process x))))
+(defun url-process-get (proc prop &optional default)
+  "Get a value associated to PROC as property PROP
+         in plist stored in `url-process-lookup-table'"
+  (or (plist-get (cdr-safe (assq proc url-process-lookup-table)) prop)
+      default))
+
+(defun url-process-put (proc prop val)
+  "Associate to PROC as property PROP the value VAL
+         in plist stored in `url-process-lookup-table'"
+  (let ((node (assq proc url-process-lookup-table)))
+    (if (not node)
+	(setq url-process-lookup-table (cons (cons proc (list prop val))
+					     url-process-lookup-table))
+      (setcdr node (plist-put (cdr node) prop val)))))
 
 (defun url-gc-process-lookup-table ()
   (let (new)
@@ -409,29 +381,50 @@
       (setq url-process-lookup-table (cdr url-process-lookup-table)))
     (setq url-process-lookup-table new)))
 
-(defun url-list-processes ()
-  (interactive)
+(defun url-process-list ()
   (url-gc-process-lookup-table)
   (let ((processes (process-list))
-	proc len type)
-    (set-buffer (get-buffer-create "URL Status Display"))
-    (display-buffer (current-buffer))
+	(retval nil))
+    (while processes
+      (if (url-process-get (car processes) 'url)
+	  (setq retval (cons (car processes) retval)))
+      (setq processes (cdr processes)))
+    retval))
+    
+(defun url-list-processes ()
+  (interactive)
+  (let ((processes (url-process-list))
+	proc total-len len type url
+	(url-status-buf (get-buffer-create "URL Status Display")))
+    (set-buffer url-status-buf)
     (erase-buffer)
+    (display-buffer url-status-buf)
     (insert
-     (eval-when-compile (format "%-40s%-10s%-25s" "URL" "Size" "Type")) "\n"
-     (eval-when-compile (make-string 75 ?-)) "\n")
+     (eval-when-compile (format "%-40s %-20s %-15s" "URL" "Size" "Type")) "\n"
+     (eval-when-compile (make-string 77 ?-)) "\n")
     (while processes
       (setq proc (car processes)
 	    processes (cdr processes))
-      (if (url-process-get proc 'url)
-	  (progn
-	    (save-excursion
-	      (set-buffer (process-buffer proc))
-	      (setq len url-current-content-length
-		    type url-current-mime-type))
-	    (insert
-	     (format "%-40s%-10d%-25s" (url-process-get proc 'url)
-		     len type)))))))
+      (save-excursion
+	(set-buffer (process-buffer proc))
+	(setq total-len url-current-content-length
+	      len (max (point-max)
+		       (if url-current-isindex
+			   (- (point-max) url-current-isindex)
+			 (point-max)))
+	      type url-current-mime-type
+	      url (url-process-get proc 'url))
+	(set-buffer url-status-buf)
+	(insert
+	 (format "%-40s%s%-20s %-15s\n"
+		 (url-process-get proc 'url)
+		 (if (> (length url) 40)
+		     (format "\n%-40s " " ")
+		   " ")
+		 (if total-len
+		     (format "%d of %d" len total-len)
+		   (format "%d" len))
+		 (or type "unknown")))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -441,7 +434,7 @@
 (defun url-have-visited-url (url &rest args)
   "Return non-nil iff the user has visited URL before.
 The return value is a cons of the url and the date last accessed as a string"
-  (url-gethash url url-global-history-hash-table))
+  (cl-gethash url url-global-history-hash-table))
 
 (defun url-directory-files (url &rest args)
   "Return a list of files on a server."
@@ -596,11 +589,16 @@ accessible."
   (save-excursion
     (let ((old-asynch url-be-asynchronous))
       (setq-default url-be-asynchronous nil)
-      (url-retrieve url)
-      (setq-default url-be-asynchronous old-asynch)))
-  (insert-buffer url-working-buffer)
-  (setq buffer-file-name url)
-  (kill-buffer url-working-buffer))
+      (let ((buf (current-buffer))
+	    (url-working-buffer (cdr (url-retrieve url))))
+	(setq-default url-be-asynchronous old-asynch)
+	(set-buffer buf)
+	(insert-buffer url-working-buffer)
+	(setq buffer-file-name url)
+	(save-excursion
+	  (set-buffer url-working-buffer)
+	  (set-buffer-modified-p nil))
+	(kill-buffer url-working-buffer)))))
 
 (defun url-file-directory-p (url &rest args)
   "Return t iff a url points to a directory"
@@ -661,8 +659,7 @@ numbers, etc."
       (save-excursion
 	(set-buffer (car bufs))
 	(setq found (if (and
-			 (not (equal (buffer-name (car bufs))
-				     url-working-buffer))
+			 (not (string-match " \\*URL-?[0-9]*\\*" (buffer-name (car bufs))))
 			 (memq major-mode '(url-mode w3-mode))
 			 (equal (url-view-url t) url)) (car bufs) nil)
 	      bufs (cdr bufs))))
@@ -826,18 +823,10 @@ or 1 second has elapsed."
 					(concat "Connection to " host
 						" failed, retry? "))))
 		 (kill-buffer (current-buffer)))))))
-	(if conn
- 	    (progn
- 	      (if (featurep 'mule)
-		  (save-excursion
-		    (set-buffer (get-buffer-create buffer))
-		    (setq mc-flag nil)
-		    (if (not url-running-xemacs)
-			(set-process-coding-system conn *noconv* *noconv*)
-		      (set-process-input-coding-system conn 'no-conversion)
-		      (set-process-output-coding-system conn 'no-conversion))))
- 	      conn)
-	  (error "Unable to connect to %s:%s" host service))))
+	(if (not conn)
+	    (error "Unable to connect to %s:%s" host service)
+	  (mule-inhibit-code-conversion conn)
+	  conn)))
      ((eq tmp-gateway-method 'program)
       (let ((proc (start-process name buffer url-gateway-telnet-program host
 				 (int-to-string service)))
@@ -965,8 +954,6 @@ dumped with emacs."
       nil
 
     (add-minor-mode 'url-download-minor-mode " Webbing" nil)
-    ;; Decide what type of process-get to use
-    ;(url-setup-process-get)
     
     ;; Make OS/2 happy
     (setq tcp-binary-process-input-services
@@ -1451,8 +1438,7 @@ path components followed by `..' are removed, along with the `..' itself."
 	   (defobj (cond
 		    ((vectorp default) default)
 		    (default (url-generic-parse-url default))
-		    ((and (null default) url-current-object)
-		     url-current-object)
+		    (url-current-object url-current-object)
 		    (t (url-generic-parse-url (url-view-url t)))))
 	   (expander (cdr-safe
 		      (cdr-safe
@@ -1492,24 +1478,27 @@ path components followed by `..' are removed, along with the `..' itself."
 (defun url-identity-expander (urlobj defobj)
   (url-set-type urlobj (or (url-type urlobj) (url-type defobj))))
 
+(defconst url-unreserved-chars
+  '(
+    ?a ?b ?c ?d ?e ?f ?g ?h ?i ?j ?k ?l ?m ?n ?o ?p ?q ?r ?s ?t ?u ?v ?w ?x ?y ?z
+    ?A ?B ?C ?D ?E ?F ?G ?H ?I ?J ?K ?L ?M ?N ?O ?P ?Q ?R ?S ?T ?U ?V ?W ?X ?Y ?Z
+    ?0 ?1 ?2 ?3 ?4 ?5 ?6 ?7 ?8 ?9
+    ?$ ?- ?_ ?. ?! ?~ ?* ?' ?\( ?\) ?,)
+  "A list of characters that are _NOT_ reserve in the URL spec.
+This is taken from draft-fielding-url-syntax-02.txt - check your local
+internet drafts directory for a copy.")
+       
 (defun url-hexify-string (str)
   "Escape characters in a string"
-  (if (and (featurep 'mule) str)
-      (setq str (code-convert-string 
- 		 str *internal* url-mule-retrieval-coding-system)))
-  (setq str (mapconcat
-	     (function
-	      (lambda (char)
-		(if (or (> char ?z)
-			(< char ?-)
-			(and (< char ?a)
-			     (> char ?Z))
-			(and (< char ?@)
-			     (>= char ?:)))
-		    (if (< char 16)
-			(upcase (format "%%0%x" char))
-		      (upcase (format "%%%x" char)))
-		  (char-to-string char)))) str "")))
+  (mapconcat
+   (function
+    (lambda (char)
+      (if (not (memq char url-unreserved-chars))
+	  (if (< char 16)
+	      (upcase (format "%%0%x" char))
+	    (upcase (format "%%%x" char)))
+	(char-to-string char))))
+   (mule-decode-string str) ""))
 
 (defun url-make-sequence (start end)
   "Make a sequence (list) of numbers from START to END"
@@ -1545,6 +1534,24 @@ then return the basename of the file with the extension stripped off."
    (x (file-name-nondirectory file))
    (t (file-name-directory file))))
 
+(defun url-parse-query-string (query &optional downcase)
+  (let (retval pairs cur key val)
+    (setq pairs (split-string query "&"))
+    (while pairs
+      (setq cur (car pairs)
+	    pairs (cdr pairs))
+      (if (not (string-match "=" cur))
+	  nil				; Grace
+	(setq key (url-unhex-string (substring cur 0 (match-beginning 0)))
+	      val (url-unhex-string (substring cur (match-end 0) nil)))
+	(if downcase
+	    (setq key (downcase key)))
+	(setq cur (assoc key retval))
+	(if cur
+	    (setcdr cur (cons val (cdr cur)))
+	  (setq retval (cons (list key val) retval)))))
+    retval))
+
 (defun url-unhex (x)
   (if (> x ?9)
       (if (>= x ?a)
@@ -1552,19 +1559,27 @@ then return the basename of the file with the extension stripped off."
 	(+ 10 (- x ?A)))
     (- x ?0)))
 
-(defun url-unhex-string (str)
-  "Remove %XXX embedded spaces, etc in a url"
+(defun url-unhex-string (str &optional allow-newlines)
+  "Remove %XXX embedded spaces, etc in a url.
+If optional second argument ALLOW-NEWLINES is non-nil, then allow the
+decoding of carriage returns and line feeds in the string, which is normally
+forbidden in URL encoding."
   (setq str (or str ""))
-  (let ((tmp ""))
+  (let ((tmp "")
+	(case-fold-search t))
     (while (string-match "%[0-9a-f][0-9a-f]" str)
       (let* ((start (match-beginning 0))
 	     (ch1 (url-unhex (elt str (+ start 1))))
 	     (code (+ (* 16 ch1)
 		      (url-unhex (elt str (+ start 2))))))
-	(setq tmp
-	      (concat 
-	       tmp (substring str 0 start)
-	       (if (or (= code ?\n) (= code ?\r)) " " (char-to-string code)))
+	(setq tmp (concat 
+		   tmp (substring str 0 start)
+		   (cond
+		    (allow-newlines
+		     (char-to-string code))
+		    ((or (= code ?\n) (= code ?\r))
+		     " ")
+		    (t (char-to-string code))))
 	      str (substring str (match-end 0)))))
     (setq tmp (concat tmp str))
     tmp))
@@ -1598,7 +1613,7 @@ and decoding any MIME content-transfer-encoding used."
 			  (cdr-safe (assoc extn url-uncompressor-alist))))
 	     (done nil)
 	     (default-process-coding-system
-	       (if (featurep 'mule) (cons *noconv* *noconv*))))
+	       (cons mule-no-coding-system mule-no-coding-system)))
 	(mapcar
 	 (function
 	  (lambda (code)
@@ -1659,38 +1674,39 @@ and decoding any MIME content-transfer-encoding used."
     (message "Retrieval for %s complete." buf))))
 
 (defun url-sentinel (proc string)
-  (if (buffer-name (process-buffer proc))
+  (let* ((buf (process-buffer proc))
+	 (url-working-buffer (and buf (get-buffer buf)))
+	 status)
+    (if (not url-working-buffer)
+	(url-warn 'url (format "Process %s completed with no buffer!" proc))
       (save-excursion
-	(set-buffer (get-buffer (process-buffer proc)))
+	(set-buffer url-working-buffer)
 	(remove-hook 'after-change-functions 'url-after-change-function)
-	(let ((status nil)
-	      (url-working-buffer (current-buffer)))
-	  (if url-be-asynchronous
-	      (progn
-		(widen)
-		(url-clean-text)
-		(cond
-		 ((and (null proc) (not (get-buffer url-working-buffer))) nil)
-		 ((url-mime-response-p)
-		  (setq status (url-parse-mime-headers))))
-		(if (not url-current-mime-type)
-		    (setq url-current-mime-type (mm-extension-to-mime
-						 (url-file-extension
-						  url-current-file))))))
+	(if url-be-asynchronous
+	    (progn
+	      (widen)
+	      (url-clean-text)
+	      (cond
+	       ((and (null proc) (not url-working-buffer)) nil)
+	       ((url-mime-response-p)
+		(setq status (url-parse-mime-headers))))
+	      (if (not url-current-mime-type)
+		  (setq url-current-mime-type (mm-extension-to-mime
+					       (url-file-extension
+						url-current-file)))))))
 	  (if (member status '(401 301 302 303 204))
 	      nil
-	    (funcall url-default-retrieval-proc (buffer-name)))))
-    (url-warn 'url (format "Process %s completed with no buffer!" proc))))
+	(funcall url-default-retrieval-proc (buffer-name url-working-buffer))))))
 
 (defun url-remove-relative-links (name)
   ;; Strip . and .. from pathnames
   (let ((new (if (not (string-match "^/" name))
 		 (concat "/" name)
 	       name)))
-    (while (string-match "/\\([^/]*/\\.\\./\\)" new)
+    (while (string-match "/\\(\\./\\)" new)
       (setq new (concat (substring new 0 (match-beginning 1))
 			(substring new (match-end 1)))))
-    (while (string-match "/\\(\\./\\)" new)
+    (while (string-match "/\\([^/]*/\\.\\./\\)" new)
       (setq new (concat (substring new 0 (match-beginning 1))
 			(substring new (match-end 1)))))
     (while (string-match "^/\\.\\.\\(/\\)" new)
@@ -1792,7 +1808,8 @@ just return the URL, don't show it in the minibuffer."
     (goto-char (point-min))
     (skip-chars-forward "^\n")
     (skip-chars-forward "\n \t")	; Skip past the tag line
-    (setq url-global-history-hash-table (url-make-hashtable 131))
+    (setq url-global-history-hash-table (make-hash-table :size 131
+							 :test 'equal))
     ;; Here we will go to the end of the line and
     ;; skip back over a token, since we might run
     ;; into spaces in URLs, depending on how much
@@ -1808,7 +1825,7 @@ just return the URL, don't show it in the minibuffer."
       (setq time (buffer-substring pos (point)))
       (skip-chars-forward "\n")
       (setq url-history-changed-since-last-save t)
-      (url-puthash url time url-global-history-hash-table))))
+      (cl-puthash url time url-global-history-hash-table))))
 
 (defun url-parse-Mosaic-history-v1 (fname)
   ;; Parse an NCSA Mosaic/X style global history list
@@ -1817,7 +1834,8 @@ just return the URL, don't show it in the minibuffer."
   (skip-chars-forward "\n \t")	; Skip past the tag line
   (skip-chars-forward "^\n")
   (skip-chars-forward "\n \t")	; Skip past the second tag line
-  (setq url-global-history-hash-table (url-make-hashtable 131))
+  (setq url-global-history-hash-table (make-hash-table :size 131
+						       :test 'equal))
   (let (pos				; Temporary position holder
 	bol				; Beginning-of-line
 	url				; URL
@@ -1849,7 +1867,7 @@ just return the URL, don't show it in the minibuffer."
       (if (/= (length url) 0)
 	  (progn
 	    (setq url-history-changed-since-last-save t)
-	    (url-puthash url time url-global-history-hash-table))))))
+	    (cl-puthash url time url-global-history-hash-table))))))
 
 (defun url-parse-Mosaic-history-v2 (fname)
   ;; Parse an NCSA Mosaic/X style global history list (version 2)
@@ -1858,7 +1876,8 @@ just return the URL, don't show it in the minibuffer."
   (skip-chars-forward "\n \t")	; Skip past the tag line
   (skip-chars-forward "^\n")
   (skip-chars-forward "\n \t")	; Skip past the second tag line
-  (setq url-global-history-hash-table (url-make-hashtable 131))
+  (setq url-global-history-hash-table (make-hash-table :size 131
+						       :test 'equal))
   (let (pos				; Temporary position holder
 	bol				; Beginning-of-line
 	url				; URL
@@ -1882,7 +1901,7 @@ just return the URL, don't show it in the minibuffer."
       (if (/= (length url) 0)
 	  (progn
 	    (setq url-history-changed-since-last-save t)
-	    (url-puthash url time url-global-history-hash-table))))))
+	    (cl-puthash url time url-global-history-hash-table))))))
 
 (defun url-parse-Emacs-history (&optional fname)
   ;; Parse out the Emacs-w3 global history file for completion, etc.
@@ -1899,11 +1918,12 @@ just return the URL, don't show it in the minibuffer."
     (if (boundp 'url-global-history-completion-list)
 	;; Hey!  Automatic conversion of old format!
 	(progn
-	  (setq url-global-history-hash-table (url-make-hashtable 131)
+	  (setq url-global-history-hash-table (make-hash-table :size 131
+							       :test 'equal)
 		url-history-changed-since-last-save t)
 	  (mapcar (function
 		   (lambda (x)
-		     (url-puthash (car x) (cdr x)
+		     (cl-puthash (car x) (cdr x)
 				 url-global-history-hash-table)))
 		  (symbol-value 'url-global-history-completion-list)))))))
 
@@ -1935,20 +1955,17 @@ just return the URL, don't show it in the minibuffer."
   ;; Write an Emacs-w3 style global history list into FNAME
   (erase-buffer)
   (let ((count 0))
-    (url-maphash (function
-		  (lambda (key value)
-		    (setq count (1+ count))
-		    (insert "(url-puthash "
-			    (if (stringp key)
-				(prin1-to-string key)
-			      (concat "\"" (symbol-name key) "\""))
-			    (if (not (stringp value)) " '" "")
-			    (prin1-to-string value)
-			    " url-global-history-hash-table)\n")))
-		 url-global-history-hash-table)
+    (cl-maphash (function
+		 (lambda (key value)
+		   (setq count (1+ count))
+		   (insert "(cl-puthash \"" key "\""
+			   (if (not (stringp value)) " '" "")
+			   (prin1-to-string value)
+			   " url-global-history-hash-table)\n")))
+		url-global-history-hash-table)
     (goto-char (point-min))
     (insert (format
-	     "(setq url-global-history-hash-table (url-make-hashtable %d))\n"
+	     "(setq url-global-history-hash-table (make-hash-table :size %d :test 'equal))\n"
 	     (/ count 4)))
     (goto-char (point-max))
     (insert "\n")
@@ -1962,16 +1979,13 @@ just return the URL, don't show it in the minibuffer."
 					; doesn't have a valid time
     (goto-char (point-min))
     (insert "MCOM-Global-history-file-1\n")
-    (url-maphash (function
-		  (lambda (url time)
-		    (if (or (not (stringp time)) (string-match " \t" time))
-			(setq time last-valid-time)
-		      (setq last-valid-time time))
-		    (insert (concat (if (stringp url)
-					url
-				      (symbol-name url))
-				    " " time "\n"))))
-		 url-global-history-hash-table)
+    (cl-maphash (function
+		 (lambda (url time)
+		   (if (or (not (stringp time)) (string-match " \t" time))
+		       (setq time last-valid-time)
+		     (setq last-valid-time time))
+		   (insert url " " time "\n")))
+		url-global-history-hash-table)
     (write-file fname)))
 
 (defun url-write-Mosaic-history-v1 (fname)
@@ -1979,18 +1993,15 @@ just return the URL, don't show it in the minibuffer."
   (erase-buffer)
   (goto-char (point-min))
   (insert "ncsa-mosaic-history-format-1\nGlobal\n")
-  (url-maphash (function
-		(lambda (url time)
-		  (if (listp time)
-		      (setq time (current-time-string time)))
-		  (if (or (not (stringp time))
-			  (not (string-match " " time)))
-		      (setq time (current-time-string)))
-		  (insert (concat (if (stringp url)
-				      url
-				    (symbol-name url))
-				  " " time "\n"))))
-	       url-global-history-hash-table)
+  (cl-maphash (function
+	       (lambda (url time)
+		 (if (listp time)
+		     (setq time (current-time-string time)))
+		 (if (or (not (stringp time))
+			 (not (string-match " " time)))
+		     (setq time (current-time-string)))
+		 (insert url " " time "\n")))
+	      url-global-history-hash-table)
   (write-file fname))
 
 (defun url-write-Mosaic-history-v2 (fname)
@@ -1999,18 +2010,15 @@ just return the URL, don't show it in the minibuffer."
     (erase-buffer)
     (goto-char (point-min))
     (insert "ncsa-mosaic-history-format-2\nGlobal\n")
-    (url-maphash (function
-		  (lambda (url time)
-		    (if (listp time)
-			(setq time last-valid-time)
-		      (setq last-valid-time time))
-		    (if (not (stringp time))
-			(setq time last-valid-time))
-		    (insert (concat (if (stringp url)
-					url
-				      (symbol-name url))
-				    " " time "\n"))))
-		 url-global-history-hash-table)
+    (cl-maphash (function
+		 (lambda (url time)
+		   (if (listp time)
+		       (setq time last-valid-time)
+		     (setq last-valid-time time))
+		   (if (not (stringp time))
+		       (setq time last-valid-time))
+		   (insert url " " time "\n")))
+		url-global-history-hash-table)
     (write-file fname)))
 
 (defun url-write-global-history (&optional fname)
@@ -2155,29 +2163,34 @@ user for what type to save as."
 retrieve a URL by its HTML source.")
 
 (defun url-retrieve-externally (url &optional no-cache)
-  (if (get-buffer url-working-buffer)
-      (save-excursion
-	(set-buffer url-working-buffer)
-	(set-buffer-modified-p nil)
-	(kill-buffer url-working-buffer)))
-  (set-buffer (get-buffer-create url-working-buffer))
-  (let* ((args (append url-external-retrieval-args (list url)))
-	 (urlobj (url-generic-parse-url url))
-	 (type (url-type urlobj)))
-    (if (or (member type '("www" "about" "mailto" "mailserver"))
-	    (url-file-directly-accessible-p urlobj))
-	(url-retrieve-internally url)
-      (url-lazy-message "Retrieving %s..." url)
-      (apply 'call-process url-external-retrieval-program
-	     nil t nil args)
-      (url-lazy-message "Retrieving %s... done" url)
-      (if (and type urlobj)
-	  (setq url-current-server (url-host urlobj)
-		url-current-type (url-type urlobj)
-		url-current-port (url-port urlobj)
-		url-current-file (url-filename urlobj)))
-      (if (member url-current-file '("/" ""))
-	  (setq url-current-mime-type "text/html")))))
+  (let ((url-working-buffer (if (and url-multiple-p
+				     (string-equal url-working-buffer
+						   url-default-working-buffer))
+				(url-get-working-buffer-name)
+			      url-working-buffer)))
+    (if (get-buffer-create url-working-buffer)
+	(save-excursion
+	  (set-buffer url-working-buffer)
+	  (set-buffer-modified-p nil)
+	  (kill-buffer url-working-buffer)))
+    (set-buffer (get-buffer-create url-working-buffer))
+    (let* ((args (append url-external-retrieval-args (list url)))
+	   (urlobj (url-generic-parse-url url))
+	   (type (url-type urlobj)))
+      (if (or (member type '("www" "about" "mailto" "mailserver"))
+	      (url-file-directly-accessible-p urlobj))
+	  (url-retrieve-internally url)
+	(url-lazy-message "Retrieving %s..." url)
+	(apply 'call-process url-external-retrieval-program
+	       nil t nil args)
+	(url-lazy-message "Retrieving %s... done" url)
+	(if (and type urlobj)
+	    (setq url-current-server (url-host urlobj)
+		  url-current-type (url-type urlobj)
+		  url-current-port (url-port urlobj)
+		  url-current-file (url-filename urlobj)))
+	(if (member url-current-file '("/" ""))
+	    (setq url-current-mime-type "text/html"))))))
 
 (defun url-get-normalized-date (&optional specified-time)
   ;; Return a 'real' date string that most HTTP servers can understand.
@@ -2230,93 +2243,145 @@ retrieve a URL by its HTML source.")
 		(> (nth 1 mod) (nth 1 (current-time))))))
        (t nil)))))
 
-(defun url-retrieve-internally (url &optional no-cache)
-  (if (get-buffer url-working-buffer)
-      (save-excursion
-	(set-buffer url-working-buffer)
-	(erase-buffer)
-	(setq url-current-can-be-cached (not no-cache))
-	(set-buffer-modified-p nil)))
-  (let* ((urlobj (url-generic-parse-url url))
-	 (type (url-type urlobj))
-	 (url-using-proxy (and
-			   (url-host urlobj)
-			   (if (assoc "no_proxy" url-proxy-services)
-			       (not (string-match
-				     (cdr
-				      (assoc "no_proxy" url-proxy-services))
-				     (url-host urlobj)))
-			     t)
-			   (cdr (assoc type url-proxy-services))))
-	 (handler nil)
-	 (original-url url)
-	 (cached nil)
-	 (tmp url-current-file))
-    (if url-using-proxy (setq type "proxy"))
-    (setq cached (url-is-cached url)
-	  cached (and cached (not (url-cache-expired url cached)))
-	  handler (if cached 'url-extract-from-cache
-		    (car-safe
-		     (cdr-safe (assoc (or type "auto")
-				      url-registered-protocols))))
-	  url (if cached (url-create-cached-filename url) url))
-    (save-excursion
-      (set-buffer (get-buffer-create url-working-buffer))
-      (setq url-current-can-be-cached (not no-cache)))
-;    (if url-be-asynchronous
-;	(url-download-minor-mode t))
-    (if (and handler (fboundp handler))
-	(funcall handler url)
-      (set-buffer (get-buffer-create url-working-buffer))
-      (setq url-current-file tmp)
-      (erase-buffer)
-      (insert "<title> Link Error! </title>\n"
-	      "<h1> An error has occurred... </h1>\n"
-	      (format "The link type `<code>%s</code>'" type)
-	      " is unrecognized or unsupported at this time.<p>\n"
-	      "If you feel this is an error, please "
-	      "<a href=\"mailto://" url-bug-address "\">send me mail.</a>"
-	      "<p><address>William Perry</address><br>"
-	      "<address>" url-bug-address "</address>")
-      (setq url-current-file "error.html"))
-    (if (and
-	 (not url-be-asynchronous)
-	 (get-buffer url-working-buffer))
-	(progn
-	  (set-buffer url-working-buffer)
-	  (if (not url-current-object)
-	      (setq url-current-object urlobj))
-	  (url-clean-text)))
+(defun url-get-working-buffer-name ()
+  "Get a working buffer name such as ` *URL-<i>*' without a live process and empty"
+  (let ((num 1)
+	name buf)
+    (while (progn (setq name (format " *URL-%d*" num))
+		  (setq buf (get-buffer name))
+		  (and buf (or (get-buffer-process buf)
+			       (save-excursion (set-buffer buf)
+					       (> (point-max) 1)))))
+      (setq num (1+ num)))
+    name))
+
+(defun url-default-find-proxy-for-url (urlobj host)
+  (cond
+   ((or (and (assoc "no_proxy" url-proxy-services)
+	     (string-match
+	      (cdr
+	       (assoc "no_proxy" url-proxy-services))
+	      host))
+	(equal "www" (url-type urlobj)))
+    "DIRECT")
+   ((cdr (assoc (url-type urlobj) url-proxy-services))
+    (concat "PROXY " (cdr (assoc (url-type urlobj) url-proxy-services))))
+   ;;
+   ;; Should check for socks
+   ;;
+   (t
+    "DIRECT")))
+
+(defvar url-proxy-locator 'url-default-find-proxy-for-url)
+
+(defun url-find-proxy-for-url (url host)
+  (let ((proxies (split-string (funcall url-proxy-locator url host) " *; *"))
+	(proxy nil)
+	(case-fold-search t))
+    ;; Not sure how I should handle gracefully degrading from one proxy to
+    ;; another, so for now just deal with the first one
+    ;; (while proxies
+    (setq proxy (pop proxies))
     (cond
-     ((equal type "wais") nil)
-     ((and url-be-asynchronous (not cached) (member type '("http" "proxy")))
-      nil)
-     (url-be-asynchronous
-      (funcall url-default-retrieval-proc (buffer-name)))
-     ((not (get-buffer url-working-buffer)) nil)
-     ((and (not url-inhibit-mime-parsing)
-	   (or cached (url-mime-response-p t)))
-      (or cached (url-parse-mime-headers nil t))))
-    (if (and (or (not url-be-asynchronous)
-		 (not (equal type "http")))
-	     (not url-current-mime-type))
-	(if (url-buffer-is-hypertext)
-	    (setq url-current-mime-type "text/html")
-	  (setq url-current-mime-type (mm-extension-to-mime
-				      (url-file-extension
-				       url-current-file)))))
-    (if (and url-automatic-caching url-current-can-be-cached
-	     (not url-be-asynchronous))
+     ((string-match "^direct" proxy) nil)
+     ((string-match "^proxy +" proxy)
+      (concat "http://" (substring proxy (match-end 0)) "/"))
+     ((string-match "^socks +" proxy)
+      (concat "socks://" (substring proxy (match-end 0))))
+     (t
+      (url-warn 'url (format "Unknown proxy directive: %s" proxy) 'critical)
+      nil))))
+
+(defun url-retrieve-internally (url &optional no-cache)
+  (let ((url-working-buffer (if (and url-multiple-p
+				     (string-equal
+				      (if (bufferp url-working-buffer)
+					  (buffer-name url-working-buffer)
+					url-working-buffer)
+				      url-default-working-buffer))
+				(url-get-working-buffer-name)
+			      url-working-buffer)))
+    (if (get-buffer url-working-buffer)
 	(save-excursion
-	  (url-store-in-cache url-working-buffer)))
-    (if (not (url-hashtablep url-global-history-hash-table))
-	(setq url-global-history-hash-table (url-make-hashtable 131)))
-    (if (not (string-match "^about:" original-url))
-	(progn
-	  (setq url-history-changed-since-last-save t)
-	  (url-puthash original-url (current-time)
-		       url-global-history-hash-table)))
-    cached))
+	  (set-buffer url-working-buffer)
+	  (erase-buffer)
+	  (setq url-current-can-be-cached (not no-cache))
+	  (set-buffer-modified-p nil)))
+    (let* ((urlobj (url-generic-parse-url url))
+	   (type (url-type urlobj))
+	   (url-using-proxy (if (url-host urlobj)
+				(url-find-proxy-for-url urlobj
+							(url-host urlobj))
+			      nil))
+	   (handler nil)
+	   (original-url url)
+	   (cached nil)
+	   (tmp url-current-file))
+      (if url-using-proxy (setq type "proxy"))
+      (setq cached (url-is-cached url)
+	    cached (and cached (not (url-cache-expired url cached)))
+	    handler (if cached 'url-extract-from-cache
+		      (car-safe
+		       (cdr-safe (assoc (or type "auto")
+					url-registered-protocols))))
+	    url (if cached (url-create-cached-filename url) url))
+      (save-excursion
+	(set-buffer (get-buffer-create url-working-buffer))
+	(setq url-current-can-be-cached (not no-cache)))
+					;    (if url-be-asynchronous
+					;	(url-download-minor-mode t))
+      (if (and handler (fboundp handler))
+	  (funcall handler url)
+	(set-buffer (get-buffer-create url-working-buffer))
+	(setq url-current-file tmp)
+	(erase-buffer)
+	(insert "<title> Link Error! </title>\n"
+		"<h1> An error has occurred... </h1>\n"
+		(format "The link type `<code>%s</code>'" type)
+		" is unrecognized or unsupported at this time.<p>\n"
+		"If you feel this is an error, please "
+		"<a href=\"mailto://" url-bug-address "\">send me mail.</a>"
+		"<p><address>William Perry</address><br>"
+		"<address>" url-bug-address "</address>")
+	(setq url-current-file "error.html"))
+      (if (and
+	   (not url-be-asynchronous)
+	   (get-buffer url-working-buffer))
+	  (progn
+	    (set-buffer url-working-buffer)
+
+	    (url-clean-text)))
+      (cond
+       ((equal type "wais") nil)
+       ((and url-be-asynchronous (not cached) (member type '("http" "proxy")))
+	nil)
+       (url-be-asynchronous
+	(funcall url-default-retrieval-proc (buffer-name)))
+       ((not (get-buffer url-working-buffer)) nil)
+       ((and (not url-inhibit-mime-parsing)
+	     (or cached (url-mime-response-p t)))
+	(or cached (url-parse-mime-headers nil t))))
+      (if (and (or (not url-be-asynchronous)
+		   (not (equal type "http")))
+	       (not url-current-mime-type))
+	  (if (url-buffer-is-hypertext)
+	      (setq url-current-mime-type "text/html")
+	    (setq url-current-mime-type (mm-extension-to-mime
+					 (url-file-extension
+					  url-current-file)))))
+      (if (and url-automatic-caching url-current-can-be-cached
+	       (not url-be-asynchronous))
+	  (save-excursion
+	    (url-store-in-cache url-working-buffer)))
+      (if (not url-global-history-hash-table)
+	  (setq url-global-history-hash-table (make-hash-table :size 131
+							       :test 'equal)))
+      (if (not (string-match "^about:" original-url))
+	  (progn
+	    (setq url-history-changed-since-last-save t)
+	    (cl-puthash original-url (current-time)
+			url-global-history-hash-table)))
+      (cons cached url-working-buffer))))
 
 ;;;###autoload
 (defun url-retrieve (url &optional no-cache expected-md5)
@@ -2423,7 +2488,8 @@ time, so this function should only be called after dumping emacs."
      (if (and (not cur-proxy) urlobj)
 	 (progn
 	   (setq url-proxy-services
-		 (cons (cons protocol (url-recreate-url urlobj))
+		 (cons (cons protocol (concat (url-host urlobj) ":"
+					      (url-port urlobj)))
 		       url-proxy-services))
 	   (message "Using a proxy for %s..." protocol)))))
 

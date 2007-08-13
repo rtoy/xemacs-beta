@@ -42,12 +42,10 @@
 
 (defun what-coding-system (start end &optional arg)
   "Show the encoding of text in the region.
-With prefix arg, show all possible coding systems.
 This function is meant to be called interactively;
 from a Lisp program, use `detect-coding-region' instead."
   (interactive "r\nP")
-  (let ((codings (detect-coding-region start end)))
-    (message "%s" (if (or arg (symbolp codings)) codings (car codings)))))
+  (princ (detect-coding-region start end)))
 
 (defmacro with-string-as-buffer-contents (str &rest body)
   "With the contents of the current buffer being STR, run BODY.

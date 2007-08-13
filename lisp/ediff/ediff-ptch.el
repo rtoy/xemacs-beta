@@ -23,6 +23,26 @@
 
 
 ;;; Code:
+	 
+(provide 'ediff-ptch)
+
+;; compiler pacifier
+(defvar ediff-window-A)
+(defvar ediff-window-B)
+(defvar ediff-window-C)
+(defvar ediff-use-last-dir)
+(defvar ediff-shell)
+
+(eval-when-compile
+  (let ((load-path (cons "." load-path)))
+    (or (featurep 'ediff-init)
+	(load "ediff-init.el" nil nil 'nosuffix))
+    (or (featurep 'ediff)
+	(load "ediff.el" nil nil 'nosuffix))
+    (or (featurep 'ange-ftp)
+	(load "ange-ftp" 'noerror))
+    ))
+;; end pacifier
 
 (require 'ediff-init)
 
@@ -540,7 +560,7 @@ Type any key to continue...
 		(select-window aux-wind)
 		(bury-buffer)))
 	  (error "Patch appears to have failed")))
-
+    
     ;; If black magic is involved, apply patch to a temp copy of the
     ;; file. Otherwise, apply patch to the orig copy.  If patch is applied
     ;; to temp copy, we name the result old-name_patched for local files
@@ -571,11 +591,11 @@ Type any key to continue...
       ;; arrange that the temp copy of orig will be deleted
       (rename-file (concat true-source-filename ediff-backup-extension)
 		   true-source-filename t))
-
+    
     ;; make orig buffer read-only
     (setq startup-hooks
 	  (cons 'ediff-set-read-only-in-buf-A startup-hooks))
-
+    
     ;; set up a buf for the patched file
     (setq target-buf (find-file-noselect target-filename))
     
@@ -624,7 +644,5 @@ Type any key to continue...
 ;;; eval: (put 'ediff-eval-in-buffer 'lisp-indent-hook 1)
 ;;; eval: (put 'ediff-eval-in-buffer 'edebug-form-spec '(form body))
 ;;; End:
-
-(provide 'ediff-ptch)
 
 ;;; ediff-ptch.el ends here

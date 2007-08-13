@@ -1,13 +1,14 @@
 ;;; w3-forms.el --- Emacs-w3 forms parsing code for new display engine
 ;; Author: wmperry
-;; Created: 1996/08/10 16:14:08
-;; Version: 1.14
+;; Created: 1997/01/02 20:20:29
+;; Version: 1.32
 ;; Keywords: faces, help, comm, data, languages
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1996 by William M. Perry (wmperry@cs.indiana.edu)
+;;; Copyright (c) 1996 Free Software Foundation, Inc.
 ;;;
-;;; This file is not part of GNU Emacs, but the same permissions apply.
+;;; This file is part of GNU Emacs.
 ;;;
 ;;; GNU Emacs is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -20,25 +21,20 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to
-;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;;; Boston, MA 02111-1307, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; FORMS processing for html 2.0/3.0
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (eval-and-compile
-  (require 'w3-draw))
+  (require 'w3-display)
+  (require 'widget))
 
-(require 'widget)
-
-(if (featurep 'mule) (fset 'string-width 'length))
-
-;; These are things in later versions of the widget package that I don't
-;; have yet.
-(defun widget-at (pt)
-  (or (get-text-property pt 'button)
-      (get-text-property pt 'field)))
+(require 'w3-vars)
+(require 'mule-sysdp)
 
 ;; A form entry area is a vector
 ;; [ type name default-value value maxlength options widget]
@@ -69,40 +65,72 @@
 (defsubst w3-form-element-set-widget        (obj val) (aset obj 8 val))
 
 ;; The main function - this adds a single widget to the form
-(defun w3-form-add-element (&rest args)
+(defun w3-form-add-element (type name value size maxlength default
+				 action options number id checked
+				 face)
+  (let* ((name (or name (case type
+			      ((submit reset) nil)
+			      (otherwise (symbol-name type)))))
+	 (el (vector type
+		     name
+		     default
+		     value
+		     size
+		     maxlength
+		     options
+		     action nil))
+	 (size (if size
+		   (+ 2 size)
+		 (case type
+		   ((checkbox radio) 3)
+		   ((reset submit)
+		    (+ 2 (length (or value (symbol-name type)))))
+		   (multiline 21)
+		   (hidden nil)
+		   (otherwise 22))))
+	 )
+    (if size
+	(set-text-properties (point)
+			     (progn (insert-char ?T size) (point))
+			     (list 'w3-form-info el
+				   'start-open t
+				   'end-open t
+				   'rear-nonsticky t)))))
+
+(defun w3-form-resurrect-widgets ()
+  (let ((st (point-min))
+	info nd node action)
+    (while st
+      (if (setq info (get-text-property st 'w3-form-info))
+	  (progn
+	    (setq nd (next-single-property-change st 'w3-form-info)
+		  action (w3-form-element-action info)
+		  node (assoc action w3-form-elements))
+	    (goto-char st)
+	    (delete-region st nd)
+	    (if (not (w3-form-element-size info))
+		(w3-form-element-set-size info 20))
+	    (if node
+		(setcdr node (cons info (cdr node)))
+	      (setq w3-form-elements (cons (cons action (list info))
+					   w3-form-elements)))
+	    (w3-form-add-element-internal info)
+	    (setq st (next-single-property-change st 'w3-form-info)))
+	(setq st (next-single-property-change st 'w3-form-info))))))
+
+(defun w3-form-add-element-internal (el)
   (let* ((widget nil)
 	 (buffer-read-only nil)
 	 (inhibit-read-only t)
-	 (widget-creation-function nil)
-	 (action (cons (cons 'form-number (w3-get-state :formnum))
-		       (nth 6 args)))
-	 (node (assoc action w3-form-elements))
-	 (name (or (nth 1 args)
-		   (if (memq (nth 0 args) '(submit reset))
-		       nil
-		     (symbol-name (nth 0 args)))))
-	 (val (vector (nth 0 args)	; type
-		      name		; name
-		      (nth 5 args)	; default
-		      (nth 2 args)	; value
-		      (nth 3 args)	; size
-		      (nth 4 args)	; maxlength
-		      (nth 7 args)	; options
-		      action
-		      nil))		; widget
-	 )
-    (setq widget-creation-function (or (get (car args)
+	 (widget-creation-function nil))
+    (setq widget-creation-function (or (get (w3-form-element-type el)
 					    'w3-widget-creation-function)
 				       'w3-form-default-widget-creator)
-	  widget (funcall widget-creation-function val
-			  (cdr (nth 10 args))))
-    (if node
-	(setcdr node (cons val (cdr node)))
-      (setq w3-form-elements (cons (cons action (list val)) w3-form-elements)))
+	  widget (funcall widget-creation-function el nil))
     (if (not widget)
 	nil
-      (w3-form-element-set-widget val widget)
-      (widget-put widget 'w3-form-data val))))
+      (w3-form-element-set-widget el widget)
+      (widget-put widget 'w3-form-data el))))
 
 ;; These properties tell the add-element function how to actually create
 ;; each type of widget.
@@ -138,7 +166,7 @@
 	  (if (w3-form-element-default-value el)
 	      (widget-value-set widget (w3-form-element-value el)))
 	  nil)
-      (setq widget (widget-create 'radio
+      (setq widget (widget-create 'radio-button-choice
 				  :value (w3-form-element-value el)
 				  (list 'item
 					:format "%t"
@@ -154,10 +182,10 @@
   (let ((val (w3-form-element-value el)))
     (if (or (not val) (string= val ""))
 	(setq val "Push Me"))
-    (widget-create 'push :notify 'ignore :button-face face val)))
+    (widget-create 'push-button :notify 'ignore :button-face face val)))
 
 (defun w3-form-create-image (el face)
-  (let ((widget (widget-create 'push
+  (let ((widget (widget-create 'push-button
 			       :notify 'w3-form-submit/reset-callback
 			       :value "Form-Image")))
     widget))
@@ -168,7 +196,8 @@
 	(setq val (if (eq (w3-form-element-type el) 'submit)
 		      "Submit"
 		    "Reset")))
-    (widget-create 'push :notify 'w3-form-submit/reset-callback
+    (widget-create 'push-button
+		   :notify 'w3-form-submit/reset-callback
 		   :button-face face val)))
 
 (defun w3-form-create-file-browser (el face)
@@ -195,14 +224,18 @@
       (setq options (cons (list 'choice-item :tag (caar tmp)
 				:value (cdar tmp)) options)
 	    tmp (cdr tmp)))
-    (apply 'widget-create 'choice :value 1024
+    (apply 'widget-create 'menu-choice
+	   :value 1024
+	   :ignore-case t
 	   :tag "Key Length"
 	   :size (1+ longest)
 	   :value-face face
 	   options)))
 
 (defun w3-form-create-option-list (el face)
-  (let ((widget (apply 'widget-create 'choice :value (w3-form-element-value el)
+  (let ((widget (apply 'widget-create 'menu-choice
+		       :value (w3-form-element-value el)
+		       :ignore-case t
 		       :tag "Choose"
 		       :format "%v"
 		       :size (w3-form-element-size el)
@@ -212,7 +245,7 @@
 			 (lambda (x)
 			   (list 'choice-item :format "%[%t%]"
 				 :tag (car x) :value (car x))))
-			(reverse (w3-form-element-options el))))))
+			(w3-form-element-options el)))))
     (widget-value-set widget (w3-form-element-value el))
     widget))
 
@@ -221,14 +254,14 @@
 ;  (widget-create 'field :value-face face (w3-form-element-value el)))
 
 (defun w3-form-create-multiline (el face)
-  (widget-create 'push :notify 'w3-do-text-entry "Multiline text area"))
+  (widget-create 'push-button :notify 'w3-do-text-entry "Multiline text area"))
 
 (defun w3-form-default-widget-creator (el face)
   (widget-create 'link
 		 :notify 'w3-form-default-button-callback
 		 :size (w3-form-element-size el)
-		 :tag (w3-truncate-string (w3-form-element-value el)
-					  (w3-form-element-size el) ?_)
+		 :tag (mule-truncate-string (w3-form-element-value el)
+					    (w3-form-element-size el) ?_)
 		 :value-face face
 		 (w3-form-element-value el)))
 
@@ -241,33 +274,16 @@
     (case typ
       (password
        (setq val (funcall url-passwd-entry-func "Password: " def))
-       (widget-put widget :tag (w3-truncate-string
+       (widget-put widget :tag (mule-truncate-string
 				(make-string (length val) ?*)
 				(w3-form-element-size obj) ?_)))
       (otherwise
        (setq val (read-string
 		  (concat (capitalize (symbol-name typ)) ": ") def))
-       (widget-put widget :tag (w3-truncate-string
+       (widget-put widget :tag (mule-truncate-string
 				val (w3-form-element-size obj) ?_))))
     (widget-value-set widget val))
   (apply 'w3-form-possibly-submit widget ignore))
-
-(defun w3-truncate-string (str len &optional pad)
-  "Truncate string STR so that string-width of STR is not greater than LEN.
- If width of the truncated string is less than LEN, and if a character PAD is
- defined, add padding end of it."
-  (if (featurep 'mule)
-      (let ((cl (string-to-char-list str)) (n 0) (sw 0))
- 	(if (<= (string-width str) len) str
- 	  (while (<= (setq sw (+ (char-width (nth n cl)) sw)) len)
- 	    (setq n (1+ n)))
- 	  (string-match (make-string n ?.) str)
- 	  (setq str (substring str 0 (match-end 0))))
- 	(if pad (concat str (make-string (- len (string-width str)) pad)) str))
-    (concat (if (> (length str) len) (substring str 0 len) str)
- 	    (if (or (null pad) (> (length str) len))
- 		""
- 	      (make-string (- len (length str)) pad)))))
 
 (defun w3-form-possibly-submit (widget &rest ignore)
   (let* ((formobj (widget-get widget 'w3-form-data))
@@ -474,8 +490,8 @@
 		     ((get-text-property pos 'field)
 		      (next-single-property-change pos 'field))
 		     (t pos)))
-	 (button (next-single-property-change next 'button))
-	 (field  (next-single-property-change next 'field)))
+	 (button (and next (next-single-property-change next 'button)))
+	 (field  (and next (next-single-property-change next 'field))))
     (setq next
 	  (cond
 	   ((and button field) (min button field))
@@ -518,35 +534,18 @@
 (defun w3-form-encode-application/x-gopher-query (result)
   (concat "\t" (cdr (car (w3-form-encode-helper result)))))
 
-(defconst w3-xwfu-acceptable-chars
- (list
-  ?a ?b ?c ?d ?e ?f ?g ?h ?i ?j ?k ?l ?m ?n ?o ?p ?q ?r ?s ?t ?u ?v ?w ?x ?y ?z
-  ?A ?B ?C ?D ?E ?F ?G ?H ?I ?J ?K ?L ?M ?N ?O ?P ?Q ?R ?S ?T ?U ?V ?W ?X ?Y ?Z
-  ?0 ?1 ?2 ?3 ?4 ?5 ?6 ?7 ?8 ?9
-  ?_ ;; BOGUS!  This is for #!%#@!ing netscape compatibility
-  ?. ;; BOGUS!  This is for #!%#@!ing netscape compatibility
-  )
-  "A list of characters that we do not have to escape in the media type
-application/x-www-form-urlencoded")
-   
 (defun w3-form-encode-xwfu (chunk)
   "Escape characters in a string for application/x-www-form-urlencoded.
 Blasphemous crap because someone didn't think %20 was good enough for encoding
 spaces.  Die Die Die."
-  (if (and (featurep 'mule) chunk)
-      (setq chunk (if w3-running-xemacs
-		      (decode-coding-string
-		       chunk url-mule-retrieval-coding-system)
-		    (code-convert-string 
-		     chunk *internal* url-mule-retrieval-coding-system))))
   (mapconcat
    (function
     (lambda (char)
       (cond
        ((= char ?  ) "+")
-       ((memq char w3-xwfu-acceptable-chars) (char-to-string char))
+       ((memq char url-unreserved-chars) (char-to-string char))
        (t (upcase (format "%%%02x" char))))))
-   chunk ""))
+    (mule-encode-string chunk) ""))
 
 (defun w3-form-encode-application/x-www-form-urlencoded (result)
   (mapconcat
@@ -579,7 +578,8 @@ spaces.  Die Die Die."
 (defun w3-submit-form (ident)
   ;; Submit form entry fields matching ACTN as their action identifier.
   (let* ((result (w3-all-widgets ident))
-	 (enctype (cdr (assq 'enctype ident)))
+	 (enctype (or (cdr (assq 'enctype ident))
+		      "application/x-www-form-urlencoded"))
 	 (query (w3-form-encode result enctype))
 	 (themeth (upcase (or (cdr (assq 'method ident)) "get")))
 	 (theurl (cdr (assq 'action ident))))

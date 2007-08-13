@@ -1,3 +1,25 @@
+Fri Jan 10 20:21:47 1997  Ben Wing  <ben@666.com>
+
+	* minibuf.c (Ftry_completion): Don't crash if not given a proper
+	obarray.
+
+Fri Jan 10 09:49:44 1997  Ted Phelps  <phelps@dstc.edu.au>
+
+	* objects-x.c (x_initialize_font_instance): Hardcode 'n' for
+	default font width.
+
+Mon Jan  6 15:16:46 1997  Carsten Leonhardt  <leo@arioch.tng.oche.de>
+
+	* Makefile.in.in: Linking with canna requires -lRKC.
+
+Mon Jan  6 12:22:57 1997  Frederic Poncin  <fp@info.ucl.ac.be>
+
+	* gmalloc.c: Don't declare __sbrk on SparcLinux.
+
+Sun Jan  5 18:04:47 1997  Soren Dayton  <csdayton@cs.uchicago.edu>
+
+	* Makefile.in.in: IRIX6 can use sgiplay.c too.
+
 Sat Jan  4 12:15:16 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* toolbar.c (specifier_vars_of_toolbar): Clean up fallback

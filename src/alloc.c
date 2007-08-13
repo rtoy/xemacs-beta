@@ -2228,7 +2228,7 @@ mark_lcrecord_list (Lisp_Object obj, void (*markobj) (Lisp_Object))
 #ifdef ERROR_CHECK_GC
       CONST struct lrecord_implementation *implementation
 	= lheader->implementation;
-      
+
       /* There should be no other pointers to the free list. */
       assert (!MARKED_RECORD_HEADER_P (lheader));
       /* Only lcrecords should be here. */
@@ -2241,7 +2241,7 @@ mark_lcrecord_list (Lisp_Object obj, void (*markobj) (Lisp_Object))
       assert (implementation->static_size == 0
 	      || implementation->static_size == list->size);
 #endif /* ERROR_CHECK_GC */
-      
+
       MARK_RECORD_HEADER (lheader);
       chain = free_header->chain;
     }

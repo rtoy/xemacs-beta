@@ -802,6 +802,7 @@ Calls the internal function cde-start-drag-internal to do the actual work."
 	       (buffer-substring-no-properties begin end))
     (error "CDE functionality not compiled in.")))
 
+
 
 ;;; Application-specific frame-management
 

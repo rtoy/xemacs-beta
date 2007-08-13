@@ -495,6 +495,8 @@ _CvtStringToScrollBarPlacement (XrmValuePtr args,   /* unused */
 				XrmValuePtr fromVal,
 				XrmValuePtr toVal)
 {
+#if 0
+  /* Martin, this is broken.  Please fix it. */
   XrmQuark q;
   char *lowerName = (char *) alloca (strlen ( (char *) fromVal->addr) + 1);
   
@@ -516,6 +518,41 @@ _CvtStringToScrollBarPlacement (XrmValuePtr args,   /* unused */
   toVal->addr = NULL;
   toVal->size = 0;
   XtStringConversionWarning (fromVal->addr, "scrollBarPlacement");
+#endif
+#define done(address, type) \
+toVal->size = sizeof(type); \
+toVal->addr = (XtPointer) address; \
+return /* `;' supplied by caller */
+
+  XrmQuark q;
+  char lowerName[1000];
+  
+  XmuCopyISOLatin1Lowered (lowerName, (char*)fromVal->addr);
+  q = XrmStringToQuark(lowerName);
+  if (q == XrmStringToQuark ("top_left"))
+    {
+      cvt_string_scrollbar_placement = XtTOP_LEFT;
+      done (&cvt_string_scrollbar_placement, unsigned char);
+    }
+  if (q == XrmStringToQuark ("bottom_left"))
+    {
+      cvt_string_scrollbar_placement = XtBOTTOM_LEFT;
+      done (&cvt_string_scrollbar_placement, unsigned char);
+    }
+  if (q == XrmStringToQuark ("top_right"))
+    {
+      cvt_string_scrollbar_placement = XtTOP_RIGHT;
+      done (&cvt_string_scrollbar_placement, unsigned char);
+    }
+  if (q == XrmStringToQuark ("bottom_right"))
+    {
+      cvt_string_scrollbar_placement = XtBOTTOM_RIGHT;
+      done (&cvt_string_scrollbar_placement, unsigned char);
+    }
+  XtStringConversionWarning (fromVal->addr, "scrollBarPlacement");
+  toVal->addr = NULL;
+  toVal->size = 0;
+#undef done
 }
 
 static void

@@ -310,7 +310,7 @@ SHORT=
 # elif defined (SPARC)
 #   define SOUND_CFLAGS	C_SWITCH_SITE -I/usr/demo/SOUND
 #   define SOUND_OBJS		sunplay.o
-# elif defined (IRIX4) || defined (IRIX5)
+# elif defined (IRIX4) || defined (IRIX5) || defined (IRIX6)
 #   define SOUND_CFLAGS
 #   define SOUND_OBJS		sgiplay.o
 # elif defined (hp9000s800)
@@ -553,7 +553,7 @@ XMU_LIB = -lXmu
 # ifdef HAVE_CANNA
 #  define CANNA_OBJS mule-canna.o
 #  define CANNA_OBJ_SRC ${muledirfromsrc}/mule-canna.c
-#  define LIB_CANNA -lcanna
+#  define LIB_CANNA -lcanna -lRKC
 # else
 #  define CANNA_OBJS
 #  define CANNA_OBJ_SRC
@@ -1175,18 +1175,22 @@ otherobjs= $(termcapobjs) BTLOBJS lastfile.o $(mallocobjs) $(rallocobjs) $(alloc
 	${lispdir}eos/sun-eos-browser.elc \
 	${lispdir}eos/sun-eos-debugger.elc \
 	${lispdir}eos/sun-eos-debugger-extra.elc \
-	${lispdir}comint/comint.elc \
-	${lispdir}utils/ring.elc \
 	${lispdir}eos/sun-eos-toolbar.elc \
 	${lispdir}eos/sun-eos-menubar.elc \
-	${lispdir}utils/annotations.elc
+	${lispdir}comint/comint.elc \
+	${lispdir}utils/ring.elc \
+	${lispdir}utils/annotations.elc \
+	${lispdir}modes/cc-mode.elc \
+	${lispdir}modes/imenu.elc \
+	${lispdir}utils/reporter.elc
 #else
-#define SUNPRO_LISP	${lispdir}prim/loaddefs.elc
+#define SUNPRO_LISP
 #endif
 
 #ifdef TOOLTALK
 /* Lisp files preloaded if compiled with support for Tooltalk */
 #define TOOLTALK_LISP \
+	${lispdir}tooltalk/tooltalk-load.elc \
 	${lispdir}tooltalk/tooltalk-macros.elc \
 	${lispdir}tooltalk/tooltalk-util.elc \
 	${lispdir}tooltalk/tooltalk-init.elc
@@ -1324,12 +1328,12 @@ release: temacs ${lisp} ${libsrc}DOC MOFILE OTHER_FILES
 #else
 #ifdef HAVE_SHM
 	-if [ -w ${srcdir}/../lisp ]; then \
-	  w=`pwd`; cd ${srcdir}; $${w}/temacs -nl -batch -l inc-vers; \
+	  w=`pwd`; cd ${srcdir} && $${w}/temacs -nl -batch -l inc-vers; \
 	else true; fi
 	$(DUMPENV) ./temacs -nl -batch -l loadup.el dump
 #else /* ! defined (HAVE_SHM) */
 	-if [ -w ${srcdir}/../lisp ]; then \
-	  w=`pwd`; cd ${srcdir}; $${w}/temacs -batch -l inc-vers; \
+	  w=`pwd`; cd ${srcdir} && $${w}/temacs -batch -l inc-vers; \
 	else true; fi
 	$(DUMPENV) ./temacs -batch -l loadup.el dump
 #endif /* ! defined (HAVE_SHM) */
@@ -1364,6 +1368,9 @@ dump_elcs: dump-elcs
 dump-elcs: temacs
 	$(LOADPATH) ./temacs -batch -l ../prim/update-elc.el $(lisp) $(otherlisp)
 
+all-elc all-elcs:
+	cd .. && $(MAKE) all-elc $(MFLAGS)
+
 #ifdef I18N3
 
 # if defined(SPARC) && !defined(USG)
@@ -1378,23 +1385,23 @@ dump-elcs: temacs
 
 ${modir}emacs.po: ${libsrc}make-msgfile ${libsrc}make-po ${objs} ${mule_objs} ${lisp}
 	${libsrc}make-msgfile -o ${libsrc}messages ${objs} ${mule_objs} ${lisp} ${otherlisp}
-	cd ${libsrc}; ${xgettext} ${xgettext_args}
+	cd ${libsrc} && ${xgettext} ${xgettext_args}
 	rm -f ${modir}emacs.po
-	cd ${libsrc}; ${libsrc}make-po -a ${modir}emacs.po DOC
+	cd ${libsrc} && ${libsrc}make-po -a ${modir}emacs.po DOC
 
 ${modir}emacs.mo: ${modir}emacs.po
-	cd ${modir}; ${msgfmt} -o emacs.mo emacs.po
+	cd ${modir} && ${msgfmt} -o emacs.mo emacs.po
 
 ${libsrc}make-msgfile:
-	cd ${libsrc}; ${MAKE} ${MFLAGS} make-msgfile
+	cd ${libsrc} && ${MAKE} ${MFLAGS} make-msgfile
 
 ${libsrc}make-po:
-	cd ${libsrc}; ${MAKE} ${MFLAGS} make-po
+	cd ${libsrc} && ${MAKE} ${MFLAGS} make-po
 
 #endif /* I18N3 */
 
 ${libsrc}make-docfile:
-	cd ${libsrc}; ${MAKE} ${MFLAGS} make-docfile
+	cd ${libsrc} && ${MAKE} ${MFLAGS} make-docfile
 
 /* Lint Section */
 LINT.c=$(LINT) $(LINTFLAGS) $(LINTINCLUDES) 
@@ -1411,7 +1418,7 @@ lint: $(LINTFILES)
 
 force:
 $(LWLIBBUILDDIR)/liblw.a: force
-	cd ${LWLIBBUILDDIR}; ${MAKE} ${MFLAGS}
+	cd ${LWLIBBUILDDIR} && ${MAKE} ${MFLAGS}
 
 /* Some systems define this to cause parallel Make-ing.  */
 #ifndef MAKE_PARALLEL
@@ -1563,7 +1570,7 @@ prefix-args: ${srcdir}/prefix-args.c config.h
 #ifdef NEED_CPP
 CPP = ./localcpp
 localcpp:
-	cd ${cppdir}; ${MAKE} ${MFLAGS} EMACS=-DEMACS
+	cd ${cppdir} && ${MAKE} ${MFLAGS} EMACS=-DEMACS
 	ln ${cppdir}cpp localcpp  /* Name where ALL_CFLAGS will refer to it */
 /* cc appears to be cretinous and require all of these to exist
    if -B is specified -- we cannot use one local pass and let the
@@ -1580,7 +1587,7 @@ CPP = $(CC) -E
 
 #ifdef SHORTNAMES
 shortnames:
-	cd ${shortnamesdir}; ${MAKE} ${MFLAGS}
+	cd ${shortnamesdir} && ${MAKE} ${MFLAGS}
 #endif
 
 config.h: ${srcdir}/config.h.in
@@ -1697,7 +1704,7 @@ mule-coding.o: ${MULESRCDIR}/mule-coding.c
    select which of these should be compiled.  */
 
 ${libsrc}emacstool: ${libsrc}emacstool.c
-	cd ${libsrc}; ${MAKE} ${MFLAGS} emacstool
+	cd ${libsrc} && ${MAKE} ${MFLAGS} emacstool
 mostlyclean:
 	rm -f temacs puremacs quantmacs prefix-args xmakefile* core depend.* \#* *.o
 	rm -f ${libsrc}DOC

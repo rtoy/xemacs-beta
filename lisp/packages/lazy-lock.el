@@ -874,7 +874,9 @@ Does not restore the value of point in the selected window, or anything else."
 ;; These fix bugs in `text-property-any' and `text-property-not-all'.  They may
 ;; not work perfectly in 19.11 and below because `next-single-property-change'
 ;; is also broke and not easily fixable in Lisp.
-(if (and lazy-lock-running-xemacs-p (< emacs-minor-version 12))
+(if (and lazy-lock-running-xemacs-p 
+	 (= emacs-major-version 19)
+	 (< emacs-minor-version 12))
     (progn
       ;; Loop through property changes until found.  This fix includes a work
       ;; around which prevents a bug in `window-start' causing a barf here.
@@ -904,7 +906,9 @@ If so, return the position of the first character whose PROP is not
 ;; than `face'.  Since `font-lock-unfontify-region' only removes `face', and we
 ;; have non-font-lock properties hanging about, `text-prop' never gets removed.
 ;; Unfortunately `font-lock-any-extents-p' is inlined so we can't redefine it.
-(if (and lazy-lock-running-xemacs-p (< emacs-minor-version 12))
+(if (and lazy-lock-running-xemacs-p 
+	 (= emacs-major-version 19)
+	 (< emacs-minor-version 12))
     (add-hook 'font-lock-mode-hook
      (function (lambda ()
 	(remove-hook 'after-change-functions 'font-lock-after-change-function)
@@ -921,7 +925,9 @@ If so, return the position of the first character whose PROP is not
 		;; Now set `fontified' to t to stop `lazy-lock-fontify-window'.
 		(put-text-property beg end 'fontified t))))))))))
 
-(if (and lazy-lock-running-xemacs-p (>= emacs-minor-version 12))
+(if (and lazy-lock-running-xemacs-p
+	 (or (> emacs-major-version 19)
+	     (>= emacs-minor-version 12)))
     ;; XEmacs 19.12 font-lock.el's `font-lock-fontify-buffer' runs a hook.
     (add-hook 'font-lock-after-fontify-buffer-hook
 	      'lazy-lock-after-fontify-buffer))

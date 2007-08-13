@@ -234,7 +234,7 @@ all-elc all-elcs:  src/paths.h src/Emacs.ad.h lib-src lwlib dump-elcs src
 
 # Sub-target for all-elc.
 dump-elc dump-elcs:  FRC.dump-elcs
-	cd src; $(MAKE) dump-elcs $(MFLAGS) \
+	cd src && $(MAKE) dump-elcs $(MFLAGS) \
 		CC='${CC}' CFLAGS='${CFLAGS}' MAKE='${MAKE}'
 
 autoloads:	src
@@ -299,7 +299,7 @@ dynodump: FRC.dynodump
 .RECURSIVE: ${SUBDIR}
 
 ${SUBDIR}: ${SUBDIR_MAKEFILES} src/config.h FRC
-	cd $@; $(MAKE) all $(MFLAGS) \
+	cd $@ && $(MAKE) all $(MFLAGS) \
 		CC='${CC}' CFLAGS='${CFLAGS}' MAKE='${MAKE}'
 
 Makefile: ${srcdir}/Makefile.in config.status
@@ -352,7 +352,7 @@ install-arch-dep: mkdir
 	  $(MAKE) install $(MFLAGS) prefix=${prefix} \
 	    exec_prefix=${exec_prefix} bindir=${bindir} libdir=${libdir} \
 	    archlibdir=${archlibdir})
-	if [ `(cd ${archlibdir}; /bin/pwd)` != `(cd ./lib-src; /bin/pwd)` ]; \
+	if [ `(cd ${archlibdir} && /bin/pwd)` != `(cd ./lib-src && /bin/pwd)` ]; \
 	then \
 	   ${INSTALL_DATA} lib-src/DOC ${archlibdir}/DOC ; \
 	   for subdir in `find ${archlibdir} -type d ! -name RCS ! -name SCCS ! -name CVS -print` ; do \
@@ -363,7 +363,7 @@ install-arch-dep: mkdir
 	${INSTALL_PROGRAM} src/xemacs ${bindir}/xemacs-${version}
 	-chmod 0755 ${bindir}/xemacs-${version}
 	rm -f ${bindir}/xemacs
-	(cd ${bindir} ; ${LN_S} xemacs-${version} ./xemacs)
+	(cd ${bindir} && ${LN_S} xemacs-${version} ./xemacs)
 
 install-arch-indep: mkdir
 	-set ${COPYDESTS} ; \
@@ -380,7 +380,8 @@ install-arch-indep: mkdir
 	   [ -d $${dir} ] \
 	   && [ `(cd $${dir} && /bin/pwd)` != `(cd $${dest} && /bin/pwd)` ] \
 	   && (echo "Copying $${dir}..." ; \
-	       (cd $${dir}; tar -cf - . )|(cd $${dest};umask 022; tar -xf - );\
+	       (cd $${dir} && tar -cf - . ) | \
+		(cd $${dest} && umask 022 && tar -xf - );\
 	       chmod 0755 $${dest}; \
 	       for subdir in `find $${dest} -type d ! -name RCS ! -name SCCS ! -name CVS -print` ; do \
 		 rm -rf $${subdir}/RCS $${subdir}/CVS $${subdir}/SCCS ; \
@@ -389,17 +390,17 @@ install-arch-indep: mkdir
 	 done
 	if [ `(cd ${srcdir}/info && /bin/pwd)` != `(cd ${infodir} && /bin/pwd)` ]; \
 	then \
-	  (cd ${srcdir}/info ; \
+	  (cd ${srcdir}/info && \
 	   if [ ! -f ${infodir}/dir ] && [ -f dir ]; then \
 	     ${INSTALL_DATA} ${srcdir}/info/dir ${infodir}/dir ; \
 	   fi ; \
 	   for f in *.info* ; do \
 	     ${INSTALL_DATA} ${srcdir}/info/$$f ${infodir}/$$f ; \
 	     chmod 0644 ${infodir}/$$f; \
-	     gzip -f9 ${infodir}/$$f; \
+	     gzip -9 -f ${infodir}/$$f; \
 	   done); \
 	else true; fi
-	cd ${srcdir}/etc; for page in xemacs etags ctags gnuserv \
+	cd ${srcdir}/etc && for page in xemacs etags ctags gnuserv \
 				      gnuclient gnuattach gnudoit ; do \
 	  ${INSTALL_DATA} ${srcdir}/etc/$${page}.1 ${mandir}/$${page}${manext} ; \
 	  chmod 0644 ${mandir}/$${page}${manext} ; \
@@ -574,10 +575,10 @@ TAGS tags:
 	@echo "If you don't have a copy of etags around, then do 'make lib-src' first."
 	@PATH=`pwd`/lib-src:$$PATH HOME=/-=-; export PATH HOME; \
 	  echo "Using etags from `which etags`."
-	PATH=`pwd`/lib-src:$$PATH ; export PATH; cd ${srcdir} ; \
+	PATH=`pwd`/lib-src:$$PATH ; export PATH; cd ${srcdir} && \
 	etags --regex='/[ 	]*DEF\(VAR\|INE\)_[A-Z_]+[ 	]*([ 	]*"\([^"]+\)"/\2/' src/*.[ch] ; \
 	for d in `find lisp -name SCCS -prune -o -name RCS -prune -o -type d -print` ; do \
-	  (cd $$d ; if [ "`echo *.el`" != "*.el" ] ; then etags -a -o ${srcdir}/TAGS *.el ; fi ) ; \
+	  (cd $$d && if [ "`echo *.el`" != "*.el" ] ; then etags -a -o ${srcdir}/TAGS *.el ; fi ) ; \
 	done ; \
 	etags -a lwlib/*.[ch]
 

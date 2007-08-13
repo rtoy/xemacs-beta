@@ -1,13 +1,14 @@
 ;;; w3-hot.el --- Main functions for emacs-w3 on all platforms/versions
 ;; Author: wmperry
-;; Created: 1996/07/26 05:22:59
-;; Version: 1.5
+;; Created: 1996/12/31 15:39:34
+;; Version: 1.10
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
+;;; Copyright (c) 1996 Free Software Foundation, Inc.
 ;;;
-;;; This file is not part of GNU Emacs, but the same permissions apply.
+;;; This file is part of GNU Emacs.
 ;;;
 ;;; GNU Emacs is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -20,8 +21,9 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to
-;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;;; Boston, MA 02111-1307, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -71,7 +73,7 @@
     (insert-file-contents fname)
     (let* ((w3-debug-html nil)
 	   (bkmarks nil)
-	   (parse (w3-parse-buffer (current-buffer) t)))
+	   (parse (w3-parse-buffer (current-buffer))))
       (setq parse w3-last-parse-tree
 	    bkmarks (nreverse (w3-grok-html-bookmarks parse))
 	    w3-html-bookmarks bkmarks)))
@@ -166,8 +168,7 @@
 (defun w3-hotlist-refresh ()
   "Reload the default hotlist file into memory"
   (interactive)
-  (w3-parse-hotlist)
-  (if (fboundp 'w3-add-hotlist-menu) (w3-add-hotlist-menu)))
+  (w3-parse-hotlist))
 
 (defun w3-delete-from-alist (x alist)
   ;; Remove X from ALIST, return new alist
@@ -203,8 +204,7 @@
 		(write-file w3-hotlist-file)
 		(setq w3-hotlist (w3-delete-from-alist title w3-hotlist))
 		(kill-buffer (current-buffer)))
-	    (message "%s was not found in %s" title w3-hotlist-file))))))
-  (and (fboundp 'w3-add-hotlist-menu) (funcall 'w3-add-hotlist-menu)))
+	    (message "%s was not found in %s" title w3-hotlist-file)))))))
 
 (defun w3-hotlist-rename-entry (title)
   "Rename a hotlist item"
@@ -246,16 +246,14 @@
 		(progn
 		  (delete-menu-item '("Go"))
 		  (w3-build-FSF19-menu))))
-	(message "%s was not found in %s" title w3-hotlist-file))))
-  (and (fboundp 'w3-add-hotlist-menu) (funcall 'w3-add-hotlist-menu)))
+	(message "%s was not found in %s" title w3-hotlist-file)))))
 
 (defun w3-hotlist-append (fname)
   "Append a hotlist to the one in memory"
   (interactive "fAppend hotlist file: ")
   (let ((x w3-hotlist))
     (w3-parse-hotlist fname)
-    (setq w3-hotlist (nconc x w3-hotlist))
-    (and (fboundp 'w3-add-hotlist-menu) (funcall 'w3-add-hotlist-menu))))
+    (setq w3-hotlist (nconc x w3-hotlist))))
 
 (defun w3-hotlist-parse-old-mosaic-format ()
   (let (cur-link cur-alias)
@@ -272,9 +270,7 @@
 					  (end-of-line)
 					  (point))))
       (if (not (equal cur-alias ""))
-	  (setq w3-hotlist (cons (list cur-alias cur-link) w3-hotlist)))
-      (if (fboundp 'w3-add-hotlist-menu)
-	  (funcall 'w3-add-hotlist-menu)))))
+	  (setq w3-hotlist (cons (list cur-alias cur-link) w3-hotlist))))))
 
 (defun w3-parse-hotlist (&optional fname)
   "Read in the hotlist specified by FNAME"
@@ -328,8 +324,7 @@ visited or interesting items you have found on the World Wide Web."
 	     (marker-buffer (cdr title)))
 	(setq title (buffer-substring-no-properties (car title) (cdr title)))
       (setq title "None"))
-    (w3-hotlist-add-document pref-arg title url)
-    (and (fboundp 'w3-add-hotlist-menu) (funcall 'w3-add-hotlist-menu))))
+    (w3-hotlist-add-document pref-arg title url)))
 
 (defun w3-hotlist-add-document (pref-arg &optional the-title the-url)
   "Add this documents url to the hotlist"
@@ -358,10 +353,8 @@ visited or interesting items you have found on the World Wide Web."
 	  (insert-file-contents w3-hotlist-file)
 	  (goto-char (point-max))
 	  (backward-char 1)))
-      (insert "\n" (url-hexify-string url) " " (current-time-string)
-		 "\n" title)
+      (insert "\n" url " " (current-time-string) "\n" title)
       (write-file w3-hotlist-file)
-      (kill-buffer (current-buffer))))
-      (and (fboundp 'w3-add-hotlist-menu) (funcall 'w3-add-hotlist-menu)))
+      (kill-buffer (current-buffer)))))
 
 (provide 'w3-hot)

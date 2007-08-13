@@ -134,7 +134,7 @@ If FILES-ONLY is the symbol t, then only the \"files\" in the directory
   dirname_length = XSTRING_LENGTH (dirname);
 #ifndef VMS
   if (dirname_length == 0
-      || !IS_ANY_SEP (string_byte (XSTRING (dirname), dirname_length - 1)))
+      || !IS_ANY_SEP (XSTRING_BYTE (dirname, dirname_length - 1)))
   {
     *filename++ = DIRECTORY_SEP;
     dirname_length++;

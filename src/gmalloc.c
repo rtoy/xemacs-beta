@@ -1297,7 +1297,9 @@ extern __ptr_t __sbrk __P ((ssize_t increment));
 #ifdef __GNU_LIBRARY__
 /* It is best not to declare this and cast its result on foreign operating
    systems with potentially hostile include files.  */
+#if !(defined(linux) && defined(sparc))
 extern __ptr_t __sbrk __P ((int increment));
+#endif
 #endif
 #endif
 

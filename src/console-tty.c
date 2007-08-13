@@ -206,6 +206,8 @@ Return the terminal type of TTY console CONSOLE.
   return CONSOLE_TTY_DATA (decode_tty_console (console))->terminal_type;
 }
 
+extern Lisp_Object stream_semi_canonicalize_console_connection(Lisp_Object,
+							       Error_behavior);
 Lisp_Object
 tty_semi_canonicalize_console_connection (Lisp_Object connection,
 					  Error_behavior errb)
@@ -213,6 +215,8 @@ tty_semi_canonicalize_console_connection (Lisp_Object connection,
   return stream_semi_canonicalize_console_connection (connection, errb);
 }
 
+extern Lisp_Object stream_canonicalize_console_connection(Lisp_Object,
+							  Error_behavior);
 Lisp_Object
 tty_canonicalize_console_connection (Lisp_Object connection,
 				     Error_behavior errb)

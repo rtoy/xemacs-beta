@@ -3011,7 +3011,9 @@ if test "${window_system}" != "none" ; then
   if test -d /usr/X386/include; then
     HAVE_XFREE386=yes
     test -z "${C_SWITCH_X_SITE}" && C_SWITCH_X_SITE="-I/usr/X386/include"
-  elif test -d /usr/X11R6/include; then
+  elif test -f /etc/XF86Config -o \
+	    -f /etc/X11/XF86Config -o \
+	    -f /usr/X11R6/lib/X11/XF86Config; then
     HAVE_XFREE386=yes
     test -z "${C_SWITCH_X_SITE}" && C_SWITCH_X_SITE="-I/usr/X11R6/include"
   else
@@ -5519,23 +5521,33 @@ rm -f conftest*
 
 
 # AIX export list
-for export in /usr/lpp/X11/bin/smt.exp /usr/bin/X11/smt.exp ; do
-  if test -f "$export" ; then
-    
+if test -f /usr/lpp/X11/bin/smt.exp ; then
+  
 {
 test -n "$verbose" && \
-echo "	defining" AIX_SMT_EXP to be "-bI:$export"
-echo "#define" AIX_SMT_EXP "-bI:$export" >> confdefs.h
-DEFS="$DEFS -DAIX_SMT_EXP=-bI:$export"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}AIX_SMT_EXP\${ac_dB}AIX_SMT_EXP\${ac_dC}-bI:\\\\\\\$export\${ac_dD}
-\${ac_uA}AIX_SMT_EXP\${ac_uB}AIX_SMT_EXP\${ac_uC}-bI:\\\\\\\$export\${ac_uD}
-\${ac_eA}AIX_SMT_EXP\${ac_eB}AIX_SMT_EXP\${ac_eC}-bI:\\\\\\\$export\${ac_eD}
+echo "	defining" AIX_SMT_EXP to be "-bI:/usr/lpp/X11/bin/smt.exp"
+echo "#define" AIX_SMT_EXP "-bI:/usr/lpp/X11/bin/smt.exp" >> confdefs.h
+DEFS="$DEFS -DAIX_SMT_EXP=-bI:/usr/lpp/X11/bin/smt.exp"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}AIX_SMT_EXP\${ac_dB}AIX_SMT_EXP\${ac_dC}-bI:/usr/lpp/X11/bin/smt.exp\${ac_dD}
+\${ac_uA}AIX_SMT_EXP\${ac_uB}AIX_SMT_EXP\${ac_uC}-bI:/usr/lpp/X11/bin/smt.exp\${ac_uD}
+\${ac_eA}AIX_SMT_EXP\${ac_eB}AIX_SMT_EXP\${ac_eC}-bI:/usr/lpp/X11/bin/smt.exp\${ac_eD}
 "
 }
 
-    break
-  fi
-done
+elif test -f /usr/bin/X11/smt.exp ; then
+  
+{
+test -n "$verbose" && \
+echo "	defining" AIX_SMT_EXP to be "-bI:/usr/bin/X11/smt.exp"
+echo "#define" AIX_SMT_EXP "-bI:/usr/bin/X11/smt.exp" >> confdefs.h
+DEFS="$DEFS -DAIX_SMT_EXP=-bI:/usr/bin/X11/smt.exp"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}AIX_SMT_EXP\${ac_dB}AIX_SMT_EXP\${ac_dC}-bI:/usr/bin/X11/smt.exp\${ac_dD}
+\${ac_uA}AIX_SMT_EXP\${ac_uB}AIX_SMT_EXP\${ac_uC}-bI:/usr/bin/X11/smt.exp\${ac_uD}
+\${ac_eA}AIX_SMT_EXP\${ac_eB}AIX_SMT_EXP\${ac_eC}-bI:/usr/bin/X11/smt.exp\${ac_eD}
+"
+}
+
+fi
 
 CFLAGS="$REAL_CFLAGS"
 

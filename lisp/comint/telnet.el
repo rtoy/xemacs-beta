@@ -73,7 +73,7 @@ while looking for the initial password.")
 (defvar telnet-program "telnet"
   "Program to run to open a telnet connection.")
 
-(defvar telnet-initial-count -50
+(defvar telnet-initial-count -75
   "Initial value of `telnet-count'.  Should be set to the negative of the
 number of terminal writes telnet will make setting up the host connection.")
 
@@ -130,29 +130,31 @@ rejecting one login and prompting again for a username and password.")
   (setq comint-prompt-regexp telnet-prompt-pattern))
 
 (defun telnet-initial-filter (proc string)
-  ;For reading up to and including password; also will get machine type.
-  (cond ((string-match "No such host" string)
-	 (kill-buffer (process-buffer proc))
-	 (error "No such host."))
-	((string-match "passw" string)
-	 (telnet-filter proc string)
-	 (let ((password (comint-read-noecho "Password: " t)))
-	   (setq telnet-count 0)
-	   (process-send-string proc (concat password telnet-new-line))))
-	(t (telnet-check-software-type-initialize string)
+  (let ((case-fold-search t))
+    ;For reading up to and including password; also will get machine type.
+    (cond ((string-match "No such host" string)
+	   (kill-buffer (process-buffer proc))
+	   (error "No such host."))
+	  ((string-match "passw" string)
 	   (telnet-filter proc string)
-	   (cond ((> telnet-count telnet-maximum-count)
-		  ;; (set-process-filter proc 'telnet-filter)
-		  ;; Kludge for shell-fonts -- this is the only mode that
-		  ;; actually changes what its process filter is at run time,
-		  ;; which confuses shell-font.  So we special-case that here.
-		  ;; #### Danger, knows an internal shell-font variable name.
-		  (let ((old-filter (process-filter proc)))
-		    (if (eq old-filter 'shell-font-process-filter)
-			(set (make-local-variable 'shell-font-process-filter)
-			     'telnet-filter)
-		      (set-process-filter proc 'telnet-filter))))
-		 (t (setq telnet-count (1+ telnet-count)))))))
+	   (let ((password (comint-read-noecho "Password: " t)))
+	     (setq telnet-count 0)
+	     (process-send-string proc (concat password telnet-new-line))))
+	  (t (telnet-check-software-type-initialize string)
+	     (telnet-filter proc string)
+	     (cond ((> telnet-count telnet-maximum-count)
+		    ;; (set-process-filter proc 'telnet-filter) Kludge
+		    ;; for shell-fonts -- this is the only mode that
+		    ;; actually changes what its process filter is at
+		    ;; run time, which confuses shell-font.  So we
+		    ;; special-case that here.
+		    ;; #### Danger, knows an internal shell-font variable name.
+		    (let ((old-filter (process-filter proc)))
+		      (if (eq old-filter 'shell-font-process-filter)
+			  (set (make-local-variable 'shell-font-process-filter)
+			       'telnet-filter)
+			(set-process-filter proc 'telnet-filter))))
+		   (t (setq telnet-count (1+ telnet-count))))))))
 
 ;; Identical to comint-simple-send, except that it sends telnet-new-line
 ;; instead of "\n".

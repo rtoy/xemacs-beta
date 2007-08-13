@@ -1,11 +1,12 @@
-;;; url-file.el,v --- File retrieval code
+;;; url-file.el --- File retrieval code
 ;; Author: wmperry
-;; Created: 1996/05/28 02:46:51
-;; Version: 1.12
+;; Created: 1996/12/30 14:25:26
+;; Version: 1.7
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1993, 1994, 1995 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1993-1996 by William M. Perry (wmperry@cs.indiana.edu)
+;;; Copyright (c) 1996 Free Software Foundation, Inc.
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -20,11 +21,13 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to
-;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;;; Boston, MA 02111-1307, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (require 'url-vars)
+(require 'mule-sysdp)
 (require 'url-parse)
 
 (defun url-insert-possibly-compressed-file (fname &rest args)
@@ -37,9 +40,8 @@
 	(crypt-encoding-alist nil)
 	(jka-compr-compression-info-list nil)
 	(jam-zcat-filename-list nil)
-	(file-coding-system-for-read
-	  (if (featurep 'mule)
-	      *noconv*)))
+	(file-coding-system-for-read mule-no-coding-system)
+	(coding-system-for-read mule-no-coding-system))
     (setq compressed 
 	  (cond
 	   ((file-exists-p fname) nil)
@@ -103,9 +105,6 @@
 		" <body>\n"
 		"  <div>\n"
 		"   <h1 align=center> Index of " title "</h1>\n"
-		(if url-forms-based-ftp
-		    "   <form method=mget enctype=application/batch-fetch>\n"
-		  "")
 		"   <pre>\n"
 		"       Name                     Last modified                Size\n</pre>"
 		"<hr>\n   <pre>\n")
@@ -143,57 +142,33 @@
 	    nil)
 	   ((equal ".." (car files))
 	    (if (not (= ?/ (aref file (1- (length file)))))
-		(setq file (concat file "/")))
-	    (insert (if url-forms-based-ftp "   " "")
-		    "[DIR] <a href=\"" file "\">Parent directory</a>\n"))
+		(setq file (concat file "/"))))
 	   ((stringp (nth 0 attr))	; Symbolic link handling
-	    (insert (if url-forms-based-ftp "   " "")
-		    "[LNK] <a href=\"./" file "\">" (car files) "</a>"
+	    (insert "[LNK] <a href=\"./" file "\">" (car files) "</a>"
 		    (make-string (max 0 (- 25 (length (car files)))) ? )
 		    mod-time size "\n"))
 	   ((nth 0 attr)		; Directory handling
-	    (insert (if url-forms-based-ftp "   " "")
-		    "[DIR] <a href=\"./" file "/\">" (car files) "</a>"
+	    (insert "[DIR] <a href=\"./" file "/\">" (car files) "</a>"
 		    (make-string (max 0 (- 25 (length (car files)))) ? )
 		    mod-time size "\n"))
 	   ((string-match "image" typ)
-	    (insert (if url-forms-based-ftp
-			(concat "<input type=checkbox name=file value=\""
-				(car files) "\">")
-		      "")
-		    "[IMG] <a href=\"./" file "\">" (car files) "</a>"
+	    (insert "[IMG] <a href=\"./" file "\">" (car files) "</a>"
 		    (make-string (max 0 (- 25 (length (car files)))) ? )
 		    mod-time size "\n"))
 	   ((string-match "application" typ)
-	    (insert (if url-forms-based-ftp
-			(concat "<input type=checkbox name=file value=\""
-				(car files) "\">")
-		      "")
-		    "[APP] <a href=\"./" file "\">" (car files) "</a>"
+	    (insert "[APP] <a href=\"./" file "\">" (car files) "</a>"
 		    (make-string (max 0 (- 25 (length (car files)))) ? )
 		    mod-time size "\n"))
 	   ((string-match "text" typ)
-	    (insert (if url-forms-based-ftp
-			(concat "<input type=checkbox name=file value=\""
-				(car files) "\">")
-		      "")
-		    "[TXT] <a href=\"./" file "\">" (car files) "</a>"
+	    (insert "[TXT] <a href=\"./" file "\">" (car files) "</a>"
 		    (make-string (max 0 (- 25 (length (car files)))) ? )
 		    mod-time size "\n"))
 	   (t
-	    (insert (if url-forms-based-ftp
-			(concat "<input type=checkbox name=file value=\""
-				(car files) "\">")
-		      "")
-		    "[UNK] <a href=\"./" file "\">" (car files) "</a>"
+	    (insert "[UNK] <a href=\"./" file "\">" (car files) "</a>"
 		    (make-string (max 0 (- 25 (length (car files)))) ? )
 		    mod-time size "\n")))
 	  (setq files (cdr files)))
 	(insert "   </pre>\n"
-		(if url-forms-based-ftp
-		    (concat "  <input type=submit value=\"Copy files\">\n"
-			    "  </form>\n")
-		  "")
 		"  </div>\n"
 		" </body>\n"
 		"</html>\n"

@@ -481,6 +481,15 @@
 	 :style radio :selected (eq (default-toolbar-position) 'right)]
 	)
        )))
+      ("Mouse"
+       ["Avoid-Text"
+	(if (equal (device-type) 'x)
+	    (if mouse-avoidance-mode
+		(mouse-avoidance-mode 'none)
+	      (mouse-avoidance-mode 'banish))
+	  (beep)
+	  (message "This option requires a window system."))
+	:style toggle :selected (and mouse-avoidance-mode window-system)])
       ("Open URLs With"
        ["Emacs-W3" (setq browse-url-browser-function 'browse-url-w3)
 	:style radio
@@ -575,7 +584,11 @@
        ["Sample"			(find-file
 					 (expand-file-name "sample.Xdefaults"
 							   data-directory))
-	t ".Xdefaults"])
+	t ".Xdefaults"]
+       ["Sample"			(find-file
+					 (expand-file-name "enriched.doc"
+							   data-directory))
+	t "enriched"])
       "-----"
       ("Lookup in Info"
        ["Key/Mouse Binding..."	Info-goto-emacs-key-command-node t]
@@ -1099,6 +1112,9 @@ items by redefining the function `format-buffers-menu-line'."
 		 toolbar-buttons-captioned-p
 		 ',(specifier-spec-list toolbar-buttons-captioned-p
 					'global)))))
+
+     ;; mouse
+     mouse-avoidance-mode
 
      ;; Open URLs With
      browse-url-browser-function

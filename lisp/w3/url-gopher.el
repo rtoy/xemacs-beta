@@ -1,11 +1,12 @@
-;;; url-gopher.el,v --- Gopher Uniform Resource Locator retrieval code
+;;; url-gopher.el --- Gopher Uniform Resource Locator retrieval code
 ;; Author: wmperry
-;; Created: 1995/12/02 16:46:12
-;; Version: 1.5
+;; Created: 1996/10/09 19:00:59
+;; Version: 1.3
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1993, 1994, 1995 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1993-1996 by William M. Perry (wmperry@cs.indiana.edu)
+;;; Copyright (c) 1996 Free Software Foundation, Inc.
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -20,8 +21,9 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to
-;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;;; Boston, MA 02111-1307, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (require 'url-vars)
@@ -301,10 +303,11 @@ title, type, selector string, server, port, gopher-plus?"
 		(delete-region (point-min) (progn
 					     (end-of-line)
 					     (point))))))
-	  (if len (url-lazy-message "Read %d of %d bytes (%d%%)" (point-max)
+	  (if len (url-lazy-message "Reading... %d of %d bytes (%d%%)"
+				    (point-max)
 				    len
 				    (url-percentage (point-max) len))
-	    (url-lazy-message "Read %d bytes." (point-max)))
+	    (url-lazy-message "Read... %d bytes." (point-max)))
 	  (url-accept-process-output proc))
 	(condition-case ()
 	    (url-kill-process proc)

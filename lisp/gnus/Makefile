@@ -1,6 +1,6 @@
 SHELL = /bin/sh
 EMACS=emacs
-FLAGS=-batch -q -no-site-file -l ./dgnushack.el
+FLAGS=-batch -q -no-site-file -l bytecomp -l ./dgnushack.el
 
 all:
 	rm -f *.elc ; $(EMACS) $(FLAGS) -f dgnushack-compile

@@ -1,11 +1,12 @@
 ;;; w3-toolbar.el --- Toolbar functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1996/06/30 18:12:43
-;; Version: 1.2
+;; Created: 1996/12/30 16:04:40
+;; Version: 1.6
 ;; Keywords: mouse, toolbar
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1995, 1996 by William M. Perry (wmperry@cs.indiana.edu)
+;;; Copyright (c) 1996 Free Software Foundation, Inc.
 ;;;
 ;;; This file is part of GNU Emacs.
 ;;;
@@ -20,15 +21,19 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to
-;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;;; Boston, MA 02111-1307, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Toolbar specific function for XEmacs 19.12+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require 'xpm-button)
-(require 'xbm-button)
+(condition-case ()
+    (progn
+      (require 'xpm-button)
+      (require 'xbm-button))
+  (error nil))
 
 (defvar w3-toolbar-icon-directory nil "Where the toolbar icons for w3 are.")
 (defvar w3-toolbar-back-icon nil "Toolbar icon for back")
@@ -170,9 +175,8 @@ not `none'.")
 
 (defun w3-link-is-defined (rel &optional rev)
   (or
-   (cdr-safe (assoc rel (cdr-safe (assoc "Parent of" w3-current-links))))
-   (cdr-safe (assoc (or rev rel) (cdr-safe (assoc "Child of"
-						  w3-current-links))))))
+   (cdr-safe (assoc rel (cdr-safe (assq 'rel w3-current-links))))
+   (cdr-safe (assoc (or rev rel) (cdr-safe (assq 'rev w3-current-links))))))
 
 ;; Need to create w3-toolbar-glos-icon
 ;;                w3-toolbar-toc-icon
@@ -288,7 +292,7 @@ not `none'.")
     (if toolbar
 	(if (w3-toolbar-active)
 	    (set-specifier toolbar (cons (current-buffer) nil))
-	  (set-specifier toolbar (cons (current-buffer) w3-link-toolbar))))))
+	  (set-specifier toolbar w3-link-toolbar (current-buffer))))))
 
 (defun w3-toggle-toolbar ()
   (interactive)

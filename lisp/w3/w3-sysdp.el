@@ -2,9 +2,9 @@
 
 ;; Copyright (C) 1995 Ben Wing.
 
-;; Author: Ben Wing <wing@666.com>
+;; Author: Ben Wing <wing@666.com>, William Perry <wmperry@aventail.com>
 ;; Keywords: lisp, tools
-;; Version: 0.001
+;; Version: 0.003
 
 ;; The purpose of this file is to eliminate the cruftiness that
 ;; would otherwise be required of packages that want to run on multiple
@@ -50,21 +50,10 @@
 ;; to sysdep.el; that way, the collective body of knowledge gets
 ;; increased.
 
-;; DO NOT load this file with `require'.
-;; DO NOT put a `provide' statement in this file.
-
 ;; IMPORTANT: leave the version string in the format X.XXX (e.g. 1.001)
 ;; so that string comparisons to other versions work properly.
 
-(defconst sysdep-potential-version "0.002")
-
-(if (and (boundp 'sysdep-version)
-	 (not (string-lessp sysdep-version sysdep-potential-version)))
-    ;; if a more recent version of sysdep was already loaded,
-    ;; or if the same package is loaded again, don't load.
-    nil
-
-(defconst sysdep-version sysdep-potential-version)
+(defconst sysdep-potential-version "0.003")
 
 ;; this macro means: define the function, but only if either it
 ;; wasn't bound before, or the supplied binding comes from an older
@@ -77,20 +66,39 @@
 ;; in v18.)
 
 (defmacro sysdep-defun (function &rest everything-else)
-  (` (cond ((or (not (fboundp (quote (, function))))
-		(get (quote (, function)) 'sysdep-defined-this))
-	    (put (quote (, function)) 'sysdep-defined-this t)
+  (` (cond ((and (not (fboundp (quote (, function))))
+		 (or
+		  (not
+		   (stringp (get (quote (, function)) 'sysdep-defined-this)))
+		  (and (get (quote (, function)) 'sysdep-defined-this)
+		       (string-lessp
+			(get (quote (, function)) 'sysdep-defined-this)
+			sysdep-potential-version))))
+	    (put (quote (, function)) 'sysdep-defined-this
+		 sysdep-potential-version)
 	    (defun (, function) (,@ everything-else))))))
 
 (defmacro sysdep-defvar (function &rest everything-else)
-  (` (cond ((or (not (boundp (quote (, function))))
-		(get (quote (, function)) 'sysdep-defined-this))
+  (` (cond ((and (not (boundp (quote (, function))))
+		 (or 
+		  (not
+		   (stringp (get (quote (, function)) 'sysdep-defined-this)))
+		  (and (get (quote (, function)) 'sysdep-defined-this)
+		       (string-lessp
+			(get (quote (, function)) 'sysdep-defined-this)
+			sysdep-potential-version))))
 	    (put (quote (, function)) 'sysdep-defined-this t)
 	    (defvar (, function) (,@ everything-else))))))
 
 (defmacro sysdep-defconst (function &rest everything-else)
-  (` (cond ((or (not (boundp (quote (, function))))
-		(get (quote (, function)) 'sysdep-defined-this))
+  (` (cond ((and (not (boundp (quote (, function))))
+		 (or
+		  (not
+		   (stringp (get (quote (, function)) 'sysdep-defined-this)))
+		  (and (get (quote (, function)) 'sysdep-defined-this)
+		       (string-lessp
+			(get (quote (, function)) 'sysdep-defined-this)
+			sysdep-potential-version))))
 	    (put (quote (, function)) 'sysdep-defined-this t)
 	    (defconst (, function) (,@ everything-else))))))
 
@@ -98,15 +106,25 @@
 ;; is already quoted.
 
 (defmacro sysdep-fset (function def)
-  (` (cond ((and (or (not (fboundp (, function)))
-		     (get (, function) 'sysdep-defined-this))
+  (` (cond ((and (not (fboundp (, function)))
+		 (or (not (stringp
+			   (get (, function) 'sysdep-defined-this)))
+		     (and (get (, function) 'sysdep-defined-this)
+			  (string-lessp
+			   (get (, function) 'sysdep-defined-this)
+			   sysdep-potential-version)))
 		 (, def))
 	    (put (, function) 'sysdep-defined-this t)
 	    (fset (, function) (, def))))))
 
 (defmacro sysdep-defalias (function def)
-  (` (cond ((and (or (not (fboundp (, function)))
-		     (get (, function) 'sysdep-defined-this))
+  (` (cond ((and (not (fboundp (, function)))
+		 (or (not (stringp
+			   (get (, function) 'sysdep-defined-this)))
+		     (and (get (, function) 'sysdep-defined-this)
+			  (string-lessp
+			   (get (, function) 'sysdep-defined-this)
+			   sysdep-potential-version)))
 		 (, def)
 		 (or (listp (, def))
 		     (and (symbolp (, def))
@@ -262,32 +280,34 @@
 (sysdep-defalias 'x-display-grayscale-p 'x-grayscale-display-p)
 (sysdep-defalias 'menu-event-p 'misc-user-event-p)
 
-(sysdep-defun add-submenu (menu-path submenu &optional before)
-  "Add a menu to the menubar or one of its submenus.
-If the named menu exists already, it is changed.
-MENU-PATH identifies the menu under which the new menu should be inserted.
- It is a list of strings; for example, (\"File\") names the top-level \"File\"
- menu.  (\"File\" \"Foo\") names a hypothetical submenu of \"File\".
- If MENU-PATH is nil, then the menu will be added to the menubar itself.
-SUBMENU is the new menu to add.
- See the documentation of `current-menubar' for the syntax.
-BEFORE, if provided, is the name of a menu before which this menu should
- be added, if this menu is not on its parent already.  If the menu is already
- present, it will not be moved."
-  (add-menu menu-path (car submenu) (cdr submenu) before))
+;; WMP - commention these out so that Emacs 19 doesn't get screwed by them.
+;; In particular, this makes the 'custom' package blow up quite well.
+;;(sysdep-defun add-submenu (menu-path submenu &optional before)
+;;  "Add a menu to the menubar or one of its submenus.
+;;If the named menu exists already, it is changed.
+;;MENU-PATH identifies the menu under which the new menu should be inserted.
+;; It is a list of strings; for example, (\"File\") names the top-level \"File\"
+;; menu.  (\"File\" \"Foo\") names a hypothetical submenu of \"File\".
+;; If MENU-PATH is nil, then the menu will be added to the menubar itself.
+;;SUBMENU is the new menu to add.
+;; See the documentation of `current-menubar' for the syntax.
+;;BEFORE, if provided, is the name of a menu before which this menu should
+;; be added, if this menu is not on its parent already.  If the menu is already
+;; present, it will not be moved."
+;;  (add-menu menu-path (car submenu) (cdr submenu) before))
 
-(sysdep-defun add-menu-button (menu-path menu-leaf &optional before)
-  "Add a menu item to some menu, creating the menu first if necessary.
-If the named item exists already, it is changed.
-MENU-PATH identifies the menu under which the new menu item should be inserted.
- It is a list of strings; for example, (\"File\") names the top-level \"File\"
- menu.  (\"File\" \"Foo\") names a hypothetical submenu of \"File\".
-MENU-LEAF is a menubar leaf node.  See the documentation of `current-menubar'.
-BEFORE, if provided, is the name of a menu item before which this item should
- be added, if this item is not on the menu already.  If the item is already
- present, it will not be moved."
- (add-menu-item menu-path (aref menu-leaf 0) (aref menu-leaf 1)
-		(aref menu-leaf 2) before))
+;;(sysdep-defun add-menu-button (menu-path menu-leaf &optional before)
+;;  "Add a menu item to some menu, creating the menu first if necessary.
+;;If the named item exists already, it is changed.
+;;MENU-PATH identifies the menu under which the new menu item should be inserted.
+;; It is a list of strings; for example, (\"File\") names the top-level \"File\"
+;; menu.  (\"File\" \"Foo\") names a hypothetical submenu of \"File\".
+;;MENU-LEAF is a menubar leaf node.  See the documentation of `current-menubar'.
+;;BEFORE, if provided, is the name of a menu item before which this item should
+;; be added, if this item is not on the menu already.  If the item is already
+;; present, it will not be moved."
+;; (add-menu-item menu-path (aref menu-leaf 0) (aref menu-leaf 1)
+;;		(aref menu-leaf 2) before))
 
 (sysdep-defun make-glyph (&optional spec-list)
   (if (and spec-list (cdr-safe (assq 'x spec-list)))
@@ -295,14 +315,23 @@ BEFORE, if provided, is the name of a menu item before which this item should
 
 (sysdep-defalias 'face-list 'list-faces)
 
+(sysdep-defun set-keymap-parent (keymap new-parent)
+  (let ((tail keymap))
+    (while (and tail (cdr tail) (not (eq (car (cdr tail)) 'keymap)))
+      (setq tail (cdr tail)))
+    (if tail
+	(setcdr tail new-parent))))
+
 (sysdep-defun facep (face)
   "Return t if X is a face name or an internal face vector."
   ;; CAUTION!!! This is Emacs 19.x, for x <= 28, specific
   ;; I know of no version of Lucid Emacs or XEmacs that did not have
   ;; facep.  Even if they did, they are unsupported, so big deal.
-  (and (or (internal-facep face)
-           (and (symbolp face) (assq face global-face-data)))
-       t))
+  (if (not window-system)
+      nil				; FIXME if FSF ever does TTY faces
+    (and (or (internal-facep face)
+	     (and (symbolp face) (assq face global-face-data)))
+	 t)))
 
 (sysdep-defun set-face-property (face property value &optional locale
 				      tag-set how-to-add)
@@ -313,6 +342,83 @@ BEFORE, if provided, is the name of a menu item before which this item should
 (sysdep-defun face-property (face property &optional locale tag-set exact-p)
   "Return FACE's value of the given PROPERTY."
   (and (symbolp face) (get face property)))
+
+;;; Additional text property functions.
+
+;; The following three text property functions are not generally available (and
+;; it's not certain that they should be) so they are inlined for speed.
+;; The case for `fillin-text-property' is simple; it may or not be generally
+;; useful.  (Since it is used here, it is useful in at least one place.;-)
+;; However, the case for `append-text-property' and `prepend-text-property' is
+;; more complicated.  Should they remove duplicate property values or not?  If
+;; so, should the first or last duplicate item remain?  Or the one that was
+;; added?  In our implementation, the first duplicate remains.
+
+(sysdep-defun fillin-text-property (start end setprop markprop value &optional object)
+  "Fill in one property of the text from START to END.
+Arguments PROP and VALUE specify the property and value to put where none are
+already in place.  Therefore existing property values are not overwritten.
+Optional argument OBJECT is the string or buffer containing the text."
+  (let ((start (text-property-any start end markprop nil object)) next)
+    (while start
+      (setq next (next-single-property-change start markprop object end))
+      (put-text-property start next setprop value object)
+      (put-text-property start next markprop value object)
+      (setq start (text-property-any next end markprop nil object)))))
+
+;; This function (from simon's unique.el) is rewritten and inlined for speed.
+;(defun unique (list function)
+;  "Uniquify LIST, deleting elements using FUNCTION.
+;Return the list with subsequent duplicate items removed by side effects.
+;FUNCTION is called with an element of LIST and a list of elements from LIST,
+;and should return the list of elements with occurrences of the element removed,
+;i.e., a function such as `delete' or `delq'.
+;This function will work even if LIST is unsorted.  See also `uniq'."
+;  (let ((list list))
+;    (while list
+;      (setq list (setcdr list (funcall function (car list) (cdr list))))))
+;  list)
+
+(sysdep-defun unique (list)
+  "Uniquify LIST, deleting elements using `delq'.
+Return the list with subsequent duplicate items removed by side effects."
+  (let ((list list))
+    (while list
+      (setq list (setcdr list (delq (car list) (cdr list))))))
+  list)
+
+;; A generalisation of `facemenu-add-face' for any property, but without the
+;; removal of inactive faces via `facemenu-discard-redundant-faces' and special
+;; treatment of `default'.  Uses `unique' to remove duplicate property values.
+(sysdep-defun prepend-text-property (start end prop value &optional object)
+  "Prepend to one property of the text from START to END.
+Arguments PROP and VALUE specify the property and value to prepend to the value
+already in place.  The resulting property values are always lists, and unique.
+Optional argument OBJECT is the string or buffer containing the text."
+  (let ((val (if (listp value) value (list value))) next prev)
+    (while (/= start end)
+      (setq next (next-single-property-change start prop object end)
+	    prev (get-text-property start prop object))
+      (put-text-property
+       start next prop
+       (unique (append val (if (listp prev) prev (list prev))))
+       object)
+      (setq start next))))
+
+(sysdep-defun append-text-property (start end prop value &optional object)
+  "Append to one property of the text from START to END.
+Arguments PROP and VALUE specify the property and value to append to the value
+already in place.  The resulting property values are always lists, and unique.
+Optional argument OBJECT is the string or buffer containing the text."
+  (let ((val (if (listp value) value (list value))) next prev)
+    (while (/= start end)
+      (setq next (next-single-property-change start prop object end)
+	    prev (get-text-property start prop object))
+      (put-text-property
+       start next prop
+       (unique (append (if (listp prev) prev (list prev)) val))
+       object)
+      (setq start next))))
 
 ;; Property list functions
 ;;
@@ -336,7 +442,9 @@ PLIST is a property list, which is a list of the form
 (PROP1 VALUE1 PROP2 VALUE2...).  This function returns the value
 corresponding to the given PROP, or nil if PROP is not
 one of the properties on the list."
-  (car-safe (cdr-safe (memq prop plist))))
+  (while (and plist (not (eq (car plist) prop)))
+    (setq plist (cdr (cdr plist))))
+  (and plist (car (cdr plist))))
 
 ;; Device functions
 ;; By wmperry@cs.indiana.edu
@@ -374,7 +482,7 @@ device is simply returned; no new device is created, and PROPS
 have no effect."
   (cond
    ((and (eq type 'x) connection)
-    (make-frame-on-display display props))
+    (make-frame-on-display connection props))
    ((eq type 'x)
     (make-frame props))
    ((eq type 'tty)
@@ -401,7 +509,7 @@ win32	A connection to a machine running Microsoft Windows NT or
 	Windows 95.  Not currently implemented.
 pc	A direct-write MS-DOS frame.  Not currently implemented.
 
-PROPS should be a plist of properties, as in the call to `make-frame'.
+PROPS should be an plist of properties, as in the call to `make-frame'.
 
 If a connection to CONNECTION already exists, it is reused; otherwise,
 a new connection is opened."
@@ -547,7 +655,10 @@ will automatically call `save-buffers-kill-emacs'.)"
    (t 'ignore)))
 
 (sysdep-defun try-font-name (fontname &rest args)
-  (car-safe (x-list-fonts fontname)))
+  (cond
+   ((eq window-system 'x) (car-safe (x-list-fonts fontname)))
+   ((eq window-system 'ns) (car-safe (ns-list-fonts fontname)))
+   (t nil)))
 
 (sysdep-defalias 'device-pixel-width
   (cond
@@ -943,6 +1054,15 @@ Returns nil if FUNCTION was already present in HOOK-VAR, else new
 		  (prin1 error-object stream))))
 	   error-object stream))
 
+(sysdep-defun decode-time (&optional specified-time)
+  (let* ((date (current-time-string specified-time))
+	 (dateinfo (and date (timezone-parse-date date)))
+	 (timeinfo (and dateinfo (timezone-parse-time (aref dateinfo 3)))))
+    (list (aref timeinfo 2) (aref timeinfo 1)
+	  (aref timeinfo 0) (aref dateinfo 2)
+	  (aref dateinfo 1) (aref dateinfo 0)
+	  "unknown" nil 0)))
+
 (sysdep-defun find-face (face)
   (car-safe (memq face (face-list))))
 
@@ -956,6 +1076,7 @@ If TYPE is nil, it means the marker stays behind when you insert text at it."
 
 ;; not defined in v18
 (sysdep-defun eval-buffer (bufname &optional printflag)
+  (interactive)
   (save-excursion
     (set-buffer bufname)
     (eval-current-buffer)))
@@ -969,13 +1090,7 @@ If TYPE is nil, it means the marker stays behind when you insert text at it."
   (and (windowp window)
        (window-point window)))
 
-;; this parenthesis closes the if statement at the top of the file.
-
-)
-
-;; DO NOT put a provide statement here.  This file should never be
-;; loaded with `require'.  Use `load-library' instead.
-
+(provide 'w3-sysdp)
 ;;; sysdep.el ends here
 
 ;;;(sysdep.el) Local Variables:

@@ -45,7 +45,7 @@ main (int argc, char *argv[])
 #else /* SYSV_IPC || UNIX_DOMAIN_SOCKETS || INTERNET_DOMAIN_SOCKETS */
 
 int
-main(int argc, char *argv[])
+main (int argc, char *argv[])
 {
   int qflg = 0;					/* don't wait around for 
 						 * gnu emacs to eval cmd */

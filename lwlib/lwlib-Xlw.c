@@ -14,7 +14,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs; see the file COPYING.  If not, write to
+along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
@@ -108,7 +108,7 @@ xlw_create_menubar (widget_instance* instance)
 		      instance->parent,
 		      XtNmenu, instance->info->val,
 		      0);
-  XtAddCallback (widget, XtNopen, pre_hook, (XtPointer)instance);
+  XtAddCallback (widget, XtNopen,   pre_hook,  (XtPointer)instance);
   XtAddCallback (widget, XtNselect, pick_hook, (XtPointer)instance);
   return widget;
 }
@@ -155,10 +155,10 @@ xlw_scrollbar_callback (Widget widget, XtPointer closure, XtPointer call_data)
   event_data.slider_value =
     (int) (percent * (double) (val->maximum - val->minimum)) + val->minimum;
 
-  if (event_data.slider_value > (val->maximum - val->slider_size))
-    event_data.slider_value = val->maximum - val->slider_size;
+  if (event_data.slider_value > val->maximum - val->slider_size)
+      event_data.slider_value = val->maximum - val->slider_size;
   else if (event_data.slider_value < val->minimum)
-    event_data.slider_value = val->minimum;
+           event_data.slider_value = val->minimum;
 
   if (data->event)
     {
@@ -189,33 +189,15 @@ xlw_scrollbar_callback (Widget widget, XtPointer closure, XtPointer call_data)
 
   switch (data->reason)
     {
-    case XmCR_DECREMENT:
-      event_data.action = SCROLLBAR_LINE_UP;
-      break;
-    case XmCR_INCREMENT:
-      event_data.action = SCROLLBAR_LINE_DOWN;
-      break;
-    case XmCR_PAGE_DECREMENT:
-      event_data.action = SCROLLBAR_PAGE_UP;
-      break;
-    case XmCR_PAGE_INCREMENT:
-      event_data.action = SCROLLBAR_PAGE_DOWN;
-      break;
-    case XmCR_TO_TOP:
-      event_data.action = SCROLLBAR_TOP;
-      break;
-    case XmCR_TO_BOTTOM:
-      event_data.action = SCROLLBAR_BOTTOM;
-      break;
-    case XmCR_DRAG:
-      event_data.action = SCROLLBAR_DRAG;
-      break;
-    case XmCR_VALUE_CHANGED:
-      event_data.action = SCROLLBAR_CHANGE;
-      break;
-    default:
-      event_data.action = SCROLLBAR_CHANGE;
-      break;
+    case XmCR_DECREMENT:	event_data.action = SCROLLBAR_LINE_UP;   break;
+    case XmCR_INCREMENT:	event_data.action = SCROLLBAR_LINE_DOWN; break;
+    case XmCR_PAGE_DECREMENT:	event_data.action = SCROLLBAR_PAGE_UP;   break;
+    case XmCR_PAGE_INCREMENT:	event_data.action = SCROLLBAR_PAGE_DOWN; break;
+    case XmCR_TO_TOP:		event_data.action = SCROLLBAR_TOP;       break;
+    case XmCR_TO_BOTTOM:	event_data.action = SCROLLBAR_BOTTOM;    break;
+    case XmCR_DRAG:		event_data.action = SCROLLBAR_DRAG;      break;
+    case XmCR_VALUE_CHANGED:	event_data.action = SCROLLBAR_CHANGE;    break;
+    default:			event_data.action = SCROLLBAR_CHANGE;    break;
     }
 
   if (instance->info->pre_activate_cb)
@@ -286,11 +268,10 @@ xlw_update_scrollbar (widget_instance *instance, Widget widget,
 		     XtNheight, data->scrollbar_height,
 		     0);
 
-      /* Now the size the scrollbar's slider. */
-
+      /* Now size the scrollbar's slider. */
       XtVaGetValues (widget,
 		     XmNsliderSize, &widget_sliderSize,
-		     XmNvalue, &widget_val,
+		     XmNvalue,      &widget_val,
 		     0);
 
       percent = (double) data->slider_size /
@@ -303,15 +284,15 @@ xlw_update_scrollbar (widget_instance *instance, Widget widget,
       percent = (percent > 1.0 ? 1.0 : percent);
       new_value = (int) ((double) (INT_MAX - 1) * percent);
 
-      if (new_sliderSize > (INT_MAX - 1))
-	new_sliderSize = INT_MAX - 1;
+      if (new_sliderSize > INT_MAX - 1)
+	  new_sliderSize = INT_MAX - 1;
       if (new_sliderSize < 1)
-	new_sliderSize = 1;
+	  new_sliderSize = 1;
 
       if (new_value > (INT_MAX - new_sliderSize))
-	new_value = INT_MAX - new_sliderSize;
+	  new_value = INT_MAX - new_sliderSize;
       else if (new_value < 1)
-	new_value = 1;
+	       new_value = 1;
 
       if (new_sliderSize != widget_sliderSize || new_value != widget_val)
 	XlwScrollBarSetValues (widget, new_value, new_sliderSize, 1, 1, False);
@@ -422,4 +403,3 @@ xlw_destroy_instance (widget_instance* instance)
   if (instance->widget)
     XtDestroyWidget (instance->widget);
 }
-

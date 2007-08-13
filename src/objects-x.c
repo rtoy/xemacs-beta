@@ -287,7 +287,8 @@ x_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object name,
   f->descent = xf->descent;
   f->height = xf->ascent + xf->descent;
   {
-    unsigned int def_char = xf->default_char;
+    /* following change suggested by Ted Phelps <phelps@dstc.edu.au> */
+    unsigned int def_char = 'n'; /*xf->default_char;*/
     int byte1, byte2;
 
   once_more:
@@ -315,11 +316,11 @@ x_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object name,
        0 width too (unlikely) then just use the max width. */
     if (f->width == 0)
       {
-	if (def_char == 'n')
+	if (def_char == xf->default_char)
 	  f->width = xf->max_bounds.width;
 	else
 	  {
-	    def_char = 'n';
+	    def_char = xf->default_char;
 	    goto once_more;
 	  }
       }

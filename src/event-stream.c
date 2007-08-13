@@ -2791,14 +2791,12 @@ execute_internal_event (Lisp_Object event)
 #endif
 		 )
 	  {
-	    /* Currently, we rely on SIGCHLD to indicate that
-	       the process has terminated.  Unfortunately, it
-	       appears that on some systems the SIGCHLD gets
-	       missed some of the time.  So, we put in am
-	       additional check in status_notify() to see
-	       whether a process has terminated.  We have to
-	       tell status_notify() to enable that check, and
-	       we do so now. */
+	    /* Currently, we rely on SIGCHLD to indicate that the
+	       process has terminated.  Unfortunately, on some systems
+	       the SIGCHLD gets missed some of the time.  So we put an
+	       additional check in status_notify() to see whether a
+	       process has terminated.  We must tell status_notify()
+	       to enable that check, and we do so now. */
 	    kick_status_notify ();
 	  }
 	else

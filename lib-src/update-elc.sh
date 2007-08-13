@@ -39,8 +39,8 @@ prune_vc="( -name SCCS -o -name RCS -o -name CVS ) -prune -o"
 els=/tmp/rcl1.$$ ; elcs=/tmp/rcl2.$$
 rm -f $els $elcs
 trap "rm -f $els $elcs" 0 1 2 3 15
-find lisp/. -name SCCS -prune -o -name '*.el'  -print                    | sort > $els
-find lisp/. -name SCCS -prune -o -name '*.elc' -print | sed 's/elc$/el/' | sort > $elcs
+find lisp/. $prune_vc -name '*.el'  -print                    | sort > $els
+find lisp/. $prune_vc -name '*.elc' -print | sed 's/elc$/el/' | sort > $elcs
 
 
 echo "Deleting .elc files without .el files..."
@@ -78,15 +78,14 @@ echo \"lisp/$dir done.\";"
 }
 
 make_special vm
-make_special ediff elc
-make_special viper elc
+#make_special ediff elc
+#make_special viper elc
 make_special gnus  some
 make_special w3
-make_special url		# really part of w3
 make_special hyperbole elc
 make_special oobr HYPB_ELC='' elc
 make_special eos -k		# not stricly necessary...
-make_special ilisp elc -f Makefile
+make_special ilisp elc
 
 ignore_pattern=''
 for dir in $ignore_dirs ; do
@@ -122,9 +121,9 @@ echo "Compiling files without .elc... Done"
 
 
 echo "Compiling files with out-of-date .elc..."
-find lisp/. -name CVS -prune -o -name SCCS -prune -o -type d -print | \
+find lisp/* $prune_vc -type d -print | \
  sed "$ignore_pattern" | \
- xargs -t $REAL -batch -q -no-site-file -f batch-byte-recompile-directory
+ xargs -t $BYTECOMP -f batch-byte-recompile-directory
 echo "Compiling files with out-of-date .elc... Done"
 
 

@@ -1339,7 +1339,7 @@ buffer." t nil)
 
 (autoload 'ediff-merge-revisions-with-ancestor "ediff" "\
 Run Ediff by merging two revisions of a file with a common ancestor.
-The file is the optional FILE argument or the file visited by the current
+The file is the the optional FILE argument or the file visited by the current
 buffer." t nil)
 
 (autoload 'run-ediff-from-cvs-buffer "ediff" "\
@@ -1773,6 +1773,29 @@ and subsequent calls on the same file won't go to disk." nil nil)
 
 (autoload 'shuffle-vector "cookie1" "\
 Randomly permute the elements of VECTOR (all permutations equally likely)" nil nil)
+
+;;;***
+
+;;;### (autoloads (decipher-mode decipher) "decipher" "games/decipher.el")
+
+(autoload 'decipher "decipher" "\
+Format a buffer of ciphertext for cryptanalysis and enter Decipher mode." t nil)
+
+(autoload 'decipher-mode "decipher" "\
+Major mode for decrypting monoalphabetic substitution ciphers.
+Lower-case letters enter plaintext.
+Upper-case letters are commands.
+
+The buffer is made read-only so that normal Emacs commands cannot
+modify it.
+
+The most useful commands are:
+\\<decipher-mode-map>
+\\[decipher-digram-list]  Display a list of all digrams & their frequency
+\\[decipher-frequency-count]  Display the frequency of each ciphertext letter
+\\[decipher-adjacency-list]  Show adjacency list for current letter (lists letters appearing next to it)
+\\[decipher-make-checkpoint]  Save the current cipher alphabet (checkpoint)
+\\[decipher-restore-checkpoint]  Restore a saved cipher alphabet (checkpoint)" t nil)
 
 ;;;***
 
@@ -3631,7 +3654,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.3 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.4 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4928,7 +4951,7 @@ gets scrolled to the same line." t nil)
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.3 $
+vhdl-mode $Revision: 1.4 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -5307,6 +5330,12 @@ or if CONDITION had no actions, after all other CONDITIONs." nil nil)
 ;;;***
 
 ;;;### (autoloads (mouse-avoidance-mode) "avoid" "packages/avoid.el")
+
+(defvar mouse-avoidance-mode nil "\
+Value is t or a symbol if the mouse pointer should avoid the cursor.
+See function `mouse-avoidance-mode' for possible values.  Changing this
+variable is NOT the recommended way to change modes; use that function 
+instead.")
 
 (autoload 'mouse-avoidance-mode "avoid" "\
 Set cursor avoidance mode to MODE.
@@ -6589,9 +6618,9 @@ For example, invoke \"emacs -batch -f batch-info-validate $info/ ~/*.info\"" nil
 If nil, the default personal dictionary, \"~/.ispell_DICTNAME\" is used,
 where DICTNAME is the name of your default dictionary.")
 
-(defvar ispell-dictionary-alist-1 '((nil "[A-Za-z]" "[^A-Za-z]" "[']" nil ("-B") nil) ("english" "[A-Za-z]" "[^A-Za-z]" "[']" nil ("-B") nil) ("british" "[A-Za-z]" "[^A-Za-z]" "[']" nil ("-B" "-d" "british") nil) ("deutsch" "[a-zA-Z\"]" "[^a-zA-Z\"]" "[']" t ("-C") "~tex") ("deutsch8" "[a-zA-Z,ADV\dv_|(B]" "[^a-zA-Z,ADV\dv_|(B]" "[']" t ("-C" "-d" "deutsch") "~latin1") ("nederlands" "[A-Za-z,A@(B-,AEGH(B-,AOR(B-,AVY(B-,A\`(B-,Aegh(B-,Aoqr(B-,Avy(B-,A|(B]" "[^A-Za-z,A@(B-,AEGH(B-,AOR(B-,AVY(B-,A\`(B-,Aegh(B-,Aoqr(B-,Avy(B-,A|(B]" "[']" t ("-C") nil) ("nederlands8" "[A-Za-z,A@(B-,AEGH(B-,AOR(B-,AVY(B-,A\`(B-,Aegh(B-,Aoqr(B-,Avy(B-,A|(B]" "[^A-Za-z,A@(B-,AEGH(B-,AOR(B-,AVY(B-,A\`(B-,Aegh(B-,Aoqr(B-,Avy(B-,A|(B]" "[']" t ("-C") nil)))
+(defvar ispell-dictionary-alist-1 '((nil "[A-Za-z]" "[^A-Za-z]" "[']" nil ("-B") nil) ("english" "[A-Za-z]" "[^A-Za-z]" "[']" nil ("-B") nil) ("british" "[A-Za-z]" "[^A-Za-z]" "[']" nil ("-B" "-d" "british") nil) ("deutsch" "[a-zA-Z\"]" "[^a-zA-Z\"]" "[']" t ("-C") "~tex") ("deutsch8" "[a-zA-ZÄÖÜäößü]" "[^a-zA-ZÄÖÜäößü]" "[']" t ("-C" "-d" "deutsch") "~latin1") ("nederlands" "[A-Za-zÀ-ÅÇÈ-ÏÒ-ÖÙ-Üà-åçè-ïñò-öù-ü]" "[^A-Za-zÀ-ÅÇÈ-ÏÒ-ÖÙ-Üà-åçè-ïñò-öù-ü]" "[']" t ("-C") nil) ("nederlands8" "[A-Za-zÀ-ÅÇÈ-ÏÒ-ÖÙ-Üà-åçè-ïñò-öù-ü]" "[^A-Za-zÀ-ÅÇÈ-ÏÒ-ÖÙ-Üà-åçè-ïñò-öù-ü]" "[']" t ("-C") nil)))
 
-(defvar ispell-dictionary-alist-2 '(("svenska" "[A-Za-z}{|\\133\\135\\\\]" "[^A-Za-z}{|\\133\\135\\\\]" "[']" nil ("-C") nil) ("svenska8" "[A-Za-z,AedvEDv(B]" "[^A-Za-z,AedvEDv(B]" "[']" nil ("-C" "-d" "svenska") "~list") ("francais7" "[A-Za-z]" "[^A-Za-z]" "[`'^---]" t nil nil) ("francais" "[A-Za-z,A@BFGHIJKNOTY[\`bghijknoty{|(B]" "[^A-Za-z,A@BFGHIJKNOTY[\`bghijknoty{|(B]" "[---']" t nil "~list") ("francais-tex" "[A-Za-z,A@BFGHIJKNOTY[\`bghijknoty{|(B\\]" "[^A-Za-z,A@BFGHIJKNOTY[\`bghijknoty{|(B\\]" "[---'^`\"]" t nil "~tex") ("dansk" "[A-Z,AFXE(Ba-z,Afxe(B]" "[^A-Z,AFXE(Ba-z,Afxe(B]" "" nil ("-C") nil)))
+(defvar ispell-dictionary-alist-2 '(("svenska" "[A-Za-z}{|\\133\\135\\\\]" "[^A-Za-z}{|\\133\\135\\\\]" "[']" nil ("-C") nil) ("svenska8" "[A-Za-zåäöÅÄö]" "[^A-Za-zåäöÅÄö]" "[']" nil ("-C" "-d" "svenska") "~list") ("francais7" "[A-Za-z]" "[^A-Za-z]" "[`'^---]" t nil nil) ("francais" "[A-Za-zÀÂÆÇÈÉÊËÎÏÔÙÛÜàâçèéêëîïôùûü]" "[^A-Za-zÀÂÆÇÈÉÊËÎÏÔÙÛÜàâçèéêëîïôùûü]" "[---']" t nil "~list") ("francais-tex" "[A-Za-zÀÂÆÇÈÉÊËÎÏÔÙÛÜàâçèéêëîïôùûü\\]" "[^A-Za-zÀÂÆÇÈÉÊËÎÏÔÙÛÜàâçèéêëîïôùûü\\]" "[---'^`\"]" t nil "~tex") ("dansk" "[A-ZÆØÅa-zæøå]" "[^A-ZÆØÅa-zæøå]" "" nil ("-C") nil)))
 
 (defvar ispell-dictionary-alist (append ispell-dictionary-alist-1 ispell-dictionary-alist-2) "\
 An alist of dictionaries and their associated parameters.
@@ -8322,7 +8351,7 @@ TABs at the beginning of the line are not a part of the message:
 	This is also a plain text.  But, it is explicitly specified as
 	is.
 	--[[text/plain; charset=ISO-2022-JP]]
-	...Japanese text here....
+        ... Japanese text here ...
 	--[[text/richtext]]
 	<center>This is a richtext.</center>
 	--[[image/gif][base64]]^M...image encoded in base64 here...
@@ -8366,59 +8395,6 @@ User customizable variables (not documented all of them):
     non-nil." t nil)
 
 (defalias 'edit-mime 'mime/editor-mode)
-
-;;;***
-
-;;;### (autoloads (url-retrieve url-cache-expired url-popup-info url-get-url-at-point url-buffer-visiting url-normalize-url url-file-attributes) "url" "url/url.el")
-
-(autoload 'url-file-attributes "url" "\
-Return a list of attributes of URL.
-Value is nil if specified file cannot be opened.
-Otherwise, list elements are:
- 0. t for directory, string (name linked to) for symbolic link, or nil.
- 1. Number of links to file.
- 2. File uid.
- 3. File gid.
- 4. Last access time, as a list of two integers.
-  First integer has high-order 16 bits of time, second has low 16 bits.
- 5. Last modification time, likewise.
- 6. Last status change time, likewise.
- 7. Size in bytes. (-1, if number is out of range).
- 8. File modes, as a string of ten letters or dashes as in ls -l.
-    If URL is on an http server, this will return the content-type if possible.
- 9. t iff file's gid would change if file were deleted and recreated.
-10. inode number.
-11. Device number.
-
-If file does not exist, returns nil." nil nil)
-
-(autoload 'url-normalize-url "url" "\
-Return a 'normalized' version of URL.  This strips out default port
-numbers, etc." nil nil)
-
-(autoload 'url-buffer-visiting "url" "\
-Return the name of a buffer (if any) that is visiting URL." nil nil)
-
-(autoload 'url-get-url-at-point "url" "\
-Get the URL closest to point, but don't change your
-position. Has a preference for looking backward when not
-directly on a symbol." nil nil)
-
-(autoload 'url-popup-info "url" "\
-Retrieve the HTTP/1.0 headers and display them in a temp buffer." nil nil)
-
-(autoload 'url-cache-expired "url" "\
-Return t iff a cached file has expired." nil nil)
-
-(autoload 'url-retrieve "url" "\
-Retrieve a document over the World Wide Web.
-The document should be specified by its fully specified
-Uniform Resource Locator.  No parsing is done, just return the
-document as the server sent it.  The document is left in the
-buffer specified by url-working-buffer.  url-working-buffer is killed
-immediately before starting the transfer, so that no buffer-local
-variables interfere with the retrieval.  HTTP/1.0 redirection will
-be honored before this function exits." nil nil)
 
 ;;;***
 
@@ -9417,6 +9393,59 @@ is a list of menu items, as above." nil 'macro)
 
 ;;;***
 
+;;;### (autoloads (url-retrieve url-cache-expired url-popup-info url-get-url-at-point url-buffer-visiting url-normalize-url url-file-attributes) "url" "w3/url.el")
+
+(autoload 'url-file-attributes "url" "\
+Return a list of attributes of URL.
+Value is nil if specified file cannot be opened.
+Otherwise, list elements are:
+ 0. t for directory, string (name linked to) for symbolic link, or nil.
+ 1. Number of links to file.
+ 2. File uid.
+ 3. File gid.
+ 4. Last access time, as a list of two integers.
+  First integer has high-order 16 bits of time, second has low 16 bits.
+ 5. Last modification time, likewise.
+ 6. Last status change time, likewise.
+ 7. Size in bytes. (-1, if number is out of range).
+ 8. File modes, as a string of ten letters or dashes as in ls -l.
+    If URL is on an http server, this will return the content-type if possible.
+ 9. t iff file's gid would change if file were deleted and recreated.
+10. inode number.
+11. Device number.
+
+If file does not exist, returns nil." nil nil)
+
+(autoload 'url-normalize-url "url" "\
+Return a 'normalized' version of URL.  This strips out default port
+numbers, etc." nil nil)
+
+(autoload 'url-buffer-visiting "url" "\
+Return the name of a buffer (if any) that is visiting URL." nil nil)
+
+(autoload 'url-get-url-at-point "url" "\
+Get the URL closest to point, but don't change your
+position. Has a preference for looking backward when not
+directly on a symbol." nil nil)
+
+(autoload 'url-popup-info "url" "\
+Retrieve the HTTP/1.0 headers and display them in a temp buffer." nil nil)
+
+(autoload 'url-cache-expired "url" "\
+Return t iff a cached file has expired." nil nil)
+
+(autoload 'url-retrieve "url" "\
+Retrieve a document over the World Wide Web.
+The document should be specified by its fully specified
+Uniform Resource Locator.  No parsing is done, just return the
+document as the server sent it.  The document is left in the
+buffer specified by url-working-buffer.  url-working-buffer is killed
+immediately before starting the transfer, so that no buffer-local
+variables interfere with the retrieval.  HTTP/1.0 redirection will
+be honored before this function exits." nil nil)
+
+;;;***
+
 ;;;### (autoloads (w3-use-hotlist) "w3-hot" "w3/w3-hot.el")
 
 (autoload 'w3-use-hotlist "w3-hot" "\
@@ -9514,6 +9543,36 @@ to disk." nil nil)
 Attempt to follow the hypertext reference under point.
 With prefix-arg P, ignore viewers and dump the link straight
 to disk." t nil)
+
+;;;***
+
+;;;### (autoloads (widget-delete widget-create) "widget-edit" "w3/widget-edit.el")
+
+(autoload 'widget-create "widget-edit" "\
+Create widget of TYPE.  
+The optional ARGS are additional keyword arguments." nil nil)
+
+(autoload 'widget-delete "widget-edit" "\
+Delete WIDGET." nil nil)
+
+;;;***
+
+;;;### (autoloads (define-widget) "widget" "w3/widget.el")
+
+(autoload 'define-widget "widget" "\
+Define a new widget type named NAME from CLASS.
+
+NAME and CLASS should both be symbols, CLASS should be one of the
+existing widget types, or nil to create the widget from scratch.
+
+After the new widget has been defined, the following two calls will
+create identical widgets:
+
+* (widget-create NAME)
+
+* (apply 'widget-create CLASS ARGS)
+
+The third argument DOC is a documentation string for the widget." nil nil)
 
 ;;;***
 

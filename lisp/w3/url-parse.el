@@ -1,11 +1,12 @@
-;;; url-parse.el,v --- Uniform Resource Locator parser
+;;; url-parse.el --- Uniform Resource Locator parser
 ;; Author: wmperry
-;; Created: 1996/01/05 17:45:31
-;; Version: 1.8
+;; Created: 1996/12/26 23:25:55
+;; Version: 1.3
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1993, 1994, 1995 by William M. Perry (wmperry@spry.com)
+;;; Copyright (c) 1993-1996 by William M. Perry (wmperry@cs.indiana.edu)
+;;; Copyright (c) 1996 Free Software Foundation, Inc.
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -20,8 +21,9 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to
-;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;;; Boston, MA 02111-1307, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro url-type (urlobj)
   (` (aref (, urlobj) 0)))
@@ -119,11 +121,8 @@ Format is [protocol username password hostname portnumber file reference]"
    (t
     (save-excursion
       (set-buffer (get-buffer-create " *urlparse*"))
-      (erase-buffer)
-      (insert url)
-      (goto-char (point-min))
       (set-syntax-table url-mailserver-syntax-table)
-      (let ((save-pos (point))
+      (let ((save-pos nil)
 	    (prot nil)
 	    (user nil)
 	    (pass nil)
@@ -132,7 +131,12 @@ Format is [protocol username password hostname portnumber file reference]"
 	    (file nil)
 	    (refs nil)
 	    (attr nil)
-	    (full nil))
+	    (full nil)
+	    (inhibit-read-only t))
+	(erase-buffer)
+	(insert url)
+	(goto-char (point-min))
+	(setq save-pos (point))
 	(if (not (looking-at "//"))
 	    (progn
 	      (skip-chars-forward "a-zA-Z+.\\-")

@@ -23,6 +23,24 @@
 
 ;;; Code:
 
+(provide 'ediff-merg)
+
+;; compiler pacifier
+(defvar ediff-window-A)
+(defvar ediff-window-B)
+(defvar ediff-window-C)
+(defvar ediff-merge-window-share)
+(defvar ediff-window-config-saved)
+
+(eval-when-compile
+  (let ((load-path (cons "." load-path)))
+    (or (featurep 'ediff-init)
+	(load "ediff-init.el" nil nil 'nosuffix))
+    (or (featurep 'ediff-util)
+	(load "ediff-util.el" nil nil 'nosuffix))
+    ))
+;; end pacifier
+
 (require 'ediff-init)
 
 
@@ -269,7 +287,5 @@ Combining is done according to the specifications in variable
 ;;; eval: (put 'ediff-eval-in-buffer 'lisp-indent-hook 1)
 ;;; eval: (put 'ediff-eval-in-buffer 'edebug-form-spec '(form body))
 ;;; End:
-
-(provide 'ediff-merg)
 
 ;; ediff-merg.el ends here

@@ -1,5 +1,5 @@
 \input texinfo
-@setfilename ../info/w3.info
+@setfilename w3.info
 @settitle Emacs-W3 User's Manual
 @iftex
 @finalout
@@ -38,7 +38,7 @@ notice identical to this one except for the removal of this paragraph
 @sp 4
 @center Third Edition, Emacs-W3 Version 3.0
 @sp 1
-@center August 1996
+@center December 1996
 @sp 5
 @center William M. Perry
 @center @i{wmperry@@cs.indiana.edu}
@@ -61,7 +61,7 @@ following chapters.
 
 @menu
 * Introduction::                Overview of Emacs-W3.
-* Starting Up::                 What happens when you start Emacs-W3
+* Getting Started::             Getting up and running with Emacs-W3
 * Basic Usage::                 Basic movement and usage of Emacs-W3.
 * Compatibility::               Explanation of compatibility with
                                 other web browsers.
@@ -88,102 +88,22 @@ Indices:
 @end menu
 @end ifinfo
 
-@node Introduction, Starting Up, Top, Top
+@node Introduction, Getting Started, Top, Top
 @chapter Introduction
 @cindex World Wide Web
-Emacs-W3 is an Emacs subsystem that allows the user to browse the wonderful
-World Wide Web (WWW).
 
-The World Wide Web was begun at the CERN physics institute in
-Switzerland in 1991.  The project was initiated by Tim Berners-Lee
-(@i{timbl@@w3.org}) for distributing data between different research
-groups effectively.
-
-
-The Web has since grown into the most advanced information system
-currently on the internet.  It is now a global hypertext system with
-servers and @dfn{browsers} (programs written to interpret the hypertext
-language and display it correctly, and allow the user to follow links)
-exist for all major platforms (VMS, Windows, DOS, Unix, VM, NeXTstep,
-Amiga, and Macintosh).
-
-The basic concepts used in the Web are @b{hypertext} and @b{hypermedia}.
-Hypertext is the same as regular text, with one exception---it can
-contain links (cross-references) to other textual documents.  Hypermedia
-is slightly different---it can contain links to other forms of media
-(movies, sounds, interactive programs, etc.).
-
-WWW also allows searches of indices that are located anywhere on the
-network; in this respect, it mirrors certain capabilities found in both
-WAIS and Gopher.
-@iftex
-@section Client Side View of WWW
-@end iftex
-@ifinfo
-@center ----------------
-@center CLIENT SIDE VIEW
-@center ----------------
-@end ifinfo
-The WWW consists of documents and links.  Indexes are special documents
-which, rather than being read, may be searched.  The result of such a
-search is another @i{virtual} document containing links to the documents
-found.  A simple protocol, Hypertext Transfer Protocol or @i{HTTP}, is
-used to allow a browser program to request a keyword search by a remote
-information server.
-
-
-The web contains documents in many formats.  Those documents which are
-hypertext, (real or virtual) contain links to other documents, or places
-within documents.  All documents, whether real, virtual or indexes, look
-similar to the reader and are contained within the same addressing
-scheme.
-@iftex
-@section Information Provider View of WWW
-@end iftex
-@ifinfo
-@center -------------------------
-@center INFORMATION PROVIDER VIEW
-@center -------------------------
-@end ifinfo
-WWW browsers can access many existing data systems via existing
-protocols (FTP, NNTP) or via HTTP and a gateway.  In this way, the
-critical mass of data is quickly exceeded, and the increasing use of the
-system by readers and information suppliers encourage each other.
-
-Providing information is as simple as running a WWW server and pointing
-it at an existing directory structure.  The server automatically
-generates a hypertext view of the files to guide the user around.
-
-
-To personalize it, a few @b{SGML} hypertext files can be written to give
-an even more friendly view.  Also, any file available by anonymous FTP,
-or any internet newsgroup can be immediately linked into the web.  The
-small start-up effort is designed to allow open contributions.  At the
-other end of the scale, large information providers may provide an HTTP
-server with full text or keyword indexing.  This may allow access to a
-large existing database without changing the way that database is
-managed.  Such gateways have already been made into Oracle(tm), WAIS,
-and Digital's VMS/Help systems, to name but a few.
-
-
-The WWW model gets over the frustrating incompatibilities of data format
-between suppliers and reader by allowing negotiation of format between a
-smart browser and a smart server.  This provides a basis for extension
-into multimedia, and allow those who share application standards to make
-full use of them across the web.
-
+:: WORK :: Basic info on what Emacs-W3 is, including copyrights, etc.
 
 @ifinfo
-Here is some more specific information about what Emacs-W3 does and does
-not understand:
+Here is some more specific information about what languages and
+protocols Emacs-W3 supports.
 @menu
-* Markup Languages Supported::	The different markup languages that
-				Emacs-W3 understands natively.
-* Supported Protocols::		The different network protocols that
-				Emacs-W3 speaks to.
+* Markup Languages Supported::	Markup languages supported by Emacs-W3
+* Stylesheets::                 Stylesheet languages supported by Emacs-W3
+* Supported Protocols::		Network protocols supported by Emacs-W3
 @end menu
 @end ifinfo
-@node Markup Languages Supported, Supported Protocols, Introduction, Introduction
+@node Markup Languages Supported, Stylesheets, Introduction, Introduction
 @chapter Supported Markup Languages
 Several different markup languages, and various extensions to those
 languages, are supported by Emacs-W3.
@@ -195,31 +115,14 @@ languages, are supported by Emacs-W3.
 @iftex
 @section HTML 2.0
 @end iftex
-The Hypertext Markup Language, or HTML, is composed of a set of elements
-that define a document and guide its display.  An HTML element may
-include a name, some attributes and some text or hypertext, and appears
-in an HTML document as <tag_name>text</tag_name>, <tag_name
-attribute_name=argument>text</tag_name>, or just <tag_name>.
+@cindex HTML 2.0
 
-
-For example: @samp{<title>My Useful Document</title>}, and @samp{<pre
-width=60> A lot of text here.  </pre>}. 
-
-An HTML document is composed of a single element: <html>...</html>, that
-is, in turn, composed of head and body elements: <head>...</head>, and
-<body>...</body>.  To allow older HTML documents to remain readable,
-<html>, <head>, and <body> are actually optional within HTML
-documents.
-
-All the tags and attributes of HTML are fully supported in Emacs-W3.
-
-The full HTML 2.0 specification is available at any RFC
-archive@footnote{ftp://ds.internic.net/}.  It is RFC 1866.
-
+:: WORK :: Reference to the HTML 2.0 RFC
+:: WORK :: Basic explanation of HTML, tag structure, etc.
 
 @ifinfo
 @center ----------
-@center HTML 3.0
+@center HTML 3.2
 @center ----------
 @end ifinfo
 @iftex
@@ -232,28 +135,6 @@ practice as of January, 1996.
 
 @ifinfo
 @center ----------
-@center Netscape-HTML
-@center ----------
-@end ifinfo
-@iftex
-@section Netscape-HTML
-@end iftex
-I hate to say it, but I broke down and actually included some of the
-Netscape extensions into Emacs-W3.  The thing I hate to say even more,
-is that most of the uglier things in Netscape-HTML are now in the HTML
-3.2 specification.  All hail the W3Cs lack of backbone.
-
-@table @b
-@item <center>...</center>
-This ugly, ill-thought-out alternative to the HTML 3.0 align attribute on
-headers and paragraphs was included for compatibility, and as an example
-of how @b{not} to do things.
-@item <isindex>
-The isindex tag can now take a prompt attribute, to get rid of the
-default 'This is a searchable index' label.
-@end table
-@ifinfo
-@center ----------
 @center SGML Features
 @center ----------
 @end ifinfo
@@ -263,7 +144,9 @@ default 'This is a searchable index' label.
 @cindex SGML Features
 @cindex Entity Definitions
 @cindex Marked Sections
+
 :: WORK :: Document marked sections, SGML features
+
 @ifinfo
 @center ----------
 @center Extras
@@ -276,28 +159,11 @@ default 'This is a searchable index' label.
 @cindex Fluff
 @cindex Pomp & Circumstance
 There are several different markup elements that are not officially part
-of HTML or HTML 3.0 that Emacs-W3 supports.  These are either items that
-were dropped from HTML 3.0 after I had implemented them, or experimental
-parts of HTML that should not be counted as "official" or long
-lived.
+of HTML or HTML 3.2 that Emacs-W3 supports.  These are either items that
+were dropped from HTML 3.@var{x} after I had implemented them, things I
+find just completely hilarious, or experimental parts of HTML that
+should not be counted as "official" or long lived.
 @itemize @bullet
-@item
-More <HR> improvements.  Text can be added into a horizontal rule by
-using the LABEL and TEXTALIGN attributes.
-
-@example
-<hr label="testing" textalign="right">
-yields
-----------------------------------------------------------testing-
-
-<hr label="testing" textalign="center">
-yields
------------------------------testing------------------------------
-
-<hr label="testing" textalign="left">
-yields
--Testing----------------------------------------------------------
-@end example
 @item
 FLAME support.  For truly interesting dynamic documents.  This is
 replaced with a random quote from Mr. Angry (see @kbd{M-x flame} for a
@@ -333,12 +199,12 @@ or not).  Please use this tag sparingly.
 @item <peek>....</peek>
 @item <poke>...</poke>
 Need more control over screen layout in HTML?  Well, here ya go.
-
+n
 Actually, <peek> could almost be considered useful.  The VARIABLE
 attribute can be used to insert the value of an emacs variable into the
 current document.  Things like 'Welcome to my page, <peek
-variable=user-mail-address>' can be useful in freaking people
-out.
+variable=user-mail-address>' can be useful in spreading fear,
+uncertainty, and doubt among users.
 @item <yogsothoth>
 @cindex Gates Bill
 @cindex Yogsothoth
@@ -350,7 +216,17 @@ when the <YOGSOTHOTH> and <HYPE> tags are used in close proximity.
 Causes the enclosed text to .... ooops that one made it in.
 @end table
 @end itemize
-@node Supported Protocols, , Markup Languages Supported, Introduction
+
+@node Stylesheets, Supported Protocols, Markup Languages Supported,Introduction
+@chapter Stylesheets
+@cindex Stylesheets
+@cindex Cascading Style Sheets
+@cindex CSS
+@cindex DSSSL
+:: WORK :: Document CSS support
+:: WORK :: Document DSSSL support
+
+@node Supported Protocols, , Stylesheets, Introduction
 @chapter Supported Protocols
 @cindex Network Protocols
 @cindex Protocols Supported
@@ -359,19 +235,20 @@ Emacs-W3 supports the following protocols
 @table @b
 @item Usenet News
 Can either display an entire newsgroup or specific articles by
-Message-ID: header.  This supports a unix-style .newsrc file, so the
-user does not see articles they have read using another newsreader, but
-due to how news URLs work, the .newsrc file cannot be updated
-reliably.
+Message-ID: header.  Instead of rewriting a newsreader, this integrates
+with the Gnus newsreader.  It requires at least Gnus 5.0, but it is
+always safest to use the latest version.  Gnus supports some very
+advanced features, including virtual newsgroups, mail and news
+integration, and reading news from multiple servers.  @inforef{Gnus,
+Top,gnus}, for more info.
 
 To be more in line with the other URL schemes, the hostname and port of
 an NNTP server can be specified.  URLs of the form
-news://hostname:port/messageID work, but will not work in most other
+news://hostname:port/messageID work, but might not work in some other
 browsers.
 
 @item HTTP
-Supports the HTTP/0.9, HTTP/1.0, and HTTP/1.1 protocols.  Fully
-MIME-compliant with regards to HTTP/1.0.
+Supports the HTTP/0.9, HTTP/1.0, and parts of the HTTP/1.1 protocols.
 @item Gopher
 Support for all gopher types, including CSO queries.
 @item Gopher+
@@ -379,63 +256,85 @@ Support for Gopher+ retrievals. Support for converting ASK blocks into
 HTML 3.0 FORMS and submitting them back to the server.
 @item FTP
 FTP is handled by either ange-ftp or efs.
+@inforef{Ange-FTP,Top,ange-ftp}, for more information on Ange-FTP, or
+@inforef{EFS, Top,efs}, for information on EFS.
 @item Local files
-Local files are handled, and MIME content-types are derived from the
-file extensions.
-@item Telnet
-Telnet is handled by running the Emacs Lisp function @code{telnet}, or
-spawning an xterm running telnet.
-@item TN3270
-TN3270 is handled by running a tn3270 program in an Emacs buffer, or
-spawning an xterm running tn3270.
+Local files are of course handled, and MIME content-types are derived
+from the file extensions.
+@item Telnet, tn3270, rlogin
+Telnet, tn3270, and rogin are handled by running the appropriate program
+in an emacs buffer, or running an external process.
 @item Mailto
-Causes a mail message to be started to a specific address.
+Causes a mail message to be started to a specific address.  Supports the
+Netscape @i{extensions} to specify arbitrary headers on the message.
 @item mailserver
 A more powerful version of mailto, which allows the author to specify
 the subject and body text of the mail message.  This type of link is
 never fully executed without user confirmation, because it is possible
 to insert insulting or threatening (and possibly illegal) data into the
-message.  The mail message is displayed, and the user must type 'yes' to
-send it.
+message.  The mail message is displayed, and the user must confirm the
+message before it is sent.
 @item X-exec
 A URL can cause a local executable to be run, and its output interpreted
 as if it had come from an HTTP server.  This is very useful, but is
-still an experimental protocol, hence the X- prefix.
+still an experimental protocol, hence the X- prefix.  This URL protocol
+is deprecated, but might be useful in the future.
+@item NFS
+Retrieves information over NFS.  This requires that your operating
+system support auto-mounting of NFS volumes.
+@item Finger
+Retrieves information about a user via the 'finger' protocol, as defined
+in RFC ????? :: WORK ::
+@item Info
+Creates a link to an GNU-style info file.  @inforef{Info,Top,info}, for more
+information on the Info format.
 @item SSL
 SSL requires a set of patches to the Emacs C code and SSLRef 2.0, or an
 external program to run in a subprocess (similar to the @file{tcp.el}
 package that comes with GNUS.  @xref{Installing SSL}
-@item Secure HTTP
-Work is in progress to add support for the Secure HTTP specification
-from Enterprise Information Technologies.  The specification for SHTTP
-can be found on EIT's web server at
-http://www.commerce.net/information/standards/drafts/shttp.txt.
 @end table
 
-@node Starting Up, Basic Setup, Introduction, Top
-@comment  node-name,  next,  previous,  up
-@chapter Starting Up
-@cindex Starting Up Emacs-W3
+@node Getting Started, Getting Emacs, Introduction, Top
+@chapter Getting Started
+@cindex Clueless in Seattle
+@cindex Getting Started
 This section of the manual deals with getting, compiling, and
 configuring @i{Emacs-W3}.
+:: WORK :: Introduction to 'Getting Started'
+
 @ifinfo
 @menu
-* Basic Setup::                 Basic setup that everyone needs to do
-* Firewalls::                   How to set Emacs-W3 up to use a particular
-                                firewall setup.
+* Getting Emacs::               Where to get Emacs
+* Getting Emacs-W3::            Where to get Emacs-W3
+* Basic Setup::                 Basic setup that most people want to do
+* Firewalls::                   Integrating Emacs-W3 with a firewall setup.
 * Proxy Gateways::              Using a proxy server
 @end menu
 @end ifinfo
 
-@node Basic Setup, Firewalls, Starting Up, Starting Up
-@comment  node-name,  next,  previous,  up
+@node Getting Emacs, Getting Emacs-W3, Getting Started, Getting Started
+@section Getting Emacs
+@cindex Getting Emacs
+@cindex Source code availability
+:: WORK :: Explanation of Emacs, XEmacs, and where to get both
+
+@node Getting Emacs-W3, Basic Setup, Getting Emacs, Getting Started
+@section Getting Emacs-W3
+@cindex FTP'in the distribution
+@cindex Source code availability
+:: WORK :: Explanation of Emacs, XEmacs, and where to get both
+
+@node Basic Setup, Firewalls, Getting Emacs-W3, Getting Started
 @section Basic Setup
-There are a few variables that almost all people need to change.
+For most people, Emacs-W3 will be ready to run straight out of the box.
+Once the user is more familiar with the web and how it integrates with
+Emacs, there are a few basic configuration variables that most people
+will want to personalize.
 
 @table @code
 @item w3-default-homepage
 @vindex w3-default-homepage
-The url to open at startup.  This defaults to the environment variable
+The URL to open at startup.  This defaults to the environment variable
 WWW_HOME if it is not set it in the users @file{.emacs} file. If
 WWW_HOME is undefined, then it defaults to the hypertext documentation
 for Emacs-W3.
@@ -500,6 +399,8 @@ Controls how a URL is shown when a link is reached with @key{f},
 Displays the URL (ie: @samp{http://www.cs.indiana.edu/}).
 @item text
 Displays the text of the link (ie: @samp{A link to Indiana University}).
+@item title
+Displays the title of the link, if any, otherwise behaves the same as @code{url}.
 @item nil
 Show nothing.
 @end table
@@ -526,8 +427,7 @@ the title of the window, the program name to execute, and the server and
 port number.  The default is for xterm, which is very UNIX and
 XWindows-centric.
 @end table
-@node Firewalls, Proxy Gateways, Basic Setup, Starting Up
-@comment  node-name,  next,  previous,  up
+@node Firewalls, Proxy Gateways, Basic Setup, Getting Started
 @section Firewalls
 @cindex Gateways
 There are several different reasons why the gateway support might be
@@ -598,9 +498,6 @@ administrators to see if anything similar is available}, an
 of interactive programs (like telnet) very easily.  It is available from
 gatekeeper.dec.com:/pub/GNU/expect-3.24.0.tar.gz} script, etc.).
 
-@item host
-Log into another local computer that has access to the internet, and run
-a telnet-like program from there.
 @item tcp
 Masanobu UMEDA (@i{umerin@@mse.kyutech.ac.jp}) has written a very nice
 replacement for the standard networking in Emacs.  This does basically
@@ -611,7 +508,7 @@ This means that Emacs-W3 should use the builtin networking code of Emacs.
 This should be used only if there is no firewall, or the Emacs source
 has already been hacked to get around the firewall.
 @end table
-Two of these need a bit more explanation than that:
+One of these needs a bit more explanation than that:
 @vindex url-gateway-telnet-ready-regexp
 @vindex url-gateway-telnet-program
 When running a program in a subprocess to emulate a network connection,
@@ -628,62 +525,6 @@ connection.  This should be a regular expression to watch for that
 signifies the end of the setup of @code{url-gateway-telnet-program}.
 The default should work fine for telnet.
 
-@cindex Host-based gateways
-@cindex Hair-pulling gateway-headaches
-@vindex url-gateway-host
-When using the @code{host}-based gatway method, things get a bit more
-complicated.  This is basically my attempt to do some of the basic stuff
-of @i{expect} within elisp.  First off, set the variable
-@code{url-gateway-host} to be the name of the gateway machine.
-
-
-@vindex url-gateway-connect-program
-The variable @code{url-gateway-connect-program} controls how the host is
-reached.  The easiest way is to have a program that does not require a
-username and password to login.  The most common of these is the
-@dfn{rsh} command.
-
-@vindex url-gateway-program-interactive
-@vindex url-gateway-handholding-password-regexp
-@vindex url-gateway-handholding-login-regexp
-@vindex url-gateway-host-username
-@vindex url-gateway-host-password
-If @i{rsh} is not available, then things get very ugly.  First, set the
-variable @code{url-gateway-program-interactive} to non-@code{nil}.  Then
-set the variables @code{url-gateway-host-username} and
-@code{url-gateway-host-password} to be the username and password
-necessary to log into the gateway machine.  The regular expressions in
-the variables @code{url-gateway-handholding-login-regexp} and
-@code{url-gateway-handholding-password-regexp} should match the login
-and password prompts on the gateway system respectively.  For example:
-
-@example
-(setq url-gateway-connect-program "telnet"
-      url-gateway-host-program "telnet"
-      url-gateway-program-interactive t
-      url-gateway-host-username "wmperry"
-      url-gateway-host-password "yeahrightkeepdreaming"
-      url-gateway-host "moose.cs.indiana.edu"
-      url-gateway-host-program-ready-regexp "Escape character is .*"
-      url-gateway-handholding-login-regexp "ogin:"
-      url-gateway-handholding-password-regexp "ord:")
-@end example
-
-@vindex url-gateway-host-prompt-pattern
-This should take care of logging in to the remote system.  The variable
-@code{url-gateway-host-prompt-pattern} should contain a regular
-expression that matches the shell prompt on the remote machine.  This
-should appear @b{no where} in the login banner/setup, or things could
-get very confused.
-
-@vindex url-gateway-host-program-ready-regexp
-@vindex url-gateway-host-program
-The variable @code{url-gateway-host-program-ready-regexp} should contain
-a regular expression that matches the end of the setup of
-@code{url-gateway-host-program} when it tries to make a connection to an
-off-firewall machine.  (Basically the same as
-@code{url-gateway-telnet-ready-regexp}.
-
 Emacs-W3 should now be able to get outside the local network.  If none
 of this makes sense, its probably my fault.  Please check with the
 network administrators to see if they have a program that does most of
@@ -692,8 +533,7 @@ through something similar to this before, and would be much more
 helpful/knowledgeable about the local setup than I would be.  But feel
 free to mail me as a last resort.
 
-@node Proxy Gateways, Basic Usage, Firewalls, Starting Up
-@comment  node-name,  next,  previous,  up
+@node Proxy Gateways, Basic Usage, Firewalls, Getting Started
 @section Proxy Gateways
 @vindex url-proxy-services
 @cindex Proxy Servers
@@ -743,7 +583,6 @@ directly.
 @end example
 
 @node Basic Usage, , Proxy Gateways, Top
-@comment  node-name,  next,  previous,  up
 @chapter Basic Usage
 Emacs-W3 is similar to the Info package all Emacs users hold near and dear to
 their hearts (@xref{Top,,Info,info, The Info Manual}, for a description
@@ -754,12 +593,11 @@ and @kbd{b} keys maneuver around the various links on the page.
 @b{NOTE:} To enter data into a form entry area, select it using
 @kbd{return} or the middle mouse button, just like a hypertext link.
 
-
-On non-graphic terminals (VT100, DOS, etc.), hypertext links are
-surrounded by '[[' and ']]' by default.  On a graphics terminal, the
-links are in bold print.  @xref{Controlling Formatting} for information
-on how to change this, or for help on getting the highlighting to work
-on graphics terminals.
+By default, hypertext links are surrounded by '[[' and ']]' on
+non-graphic terminals (VT100, DOS window, etc.).  On a graphics
+terminal, the links are in shown in different colors.  @xref{Controlling
+Formatting} for information on how to change this, or for help on
+getting the highlighting to work on graphics terminals.
 
 There are approximately 50 keys bound to special Emacs-W3 functions.
 The basic rule of thumb regarding keybindings in Emacs-W3 is that a
@@ -1047,22 +885,40 @@ control how the document is printed.
 
 When the HTML source is printed, then an appropriate <base> tag is
 inserted at the beginning of the document.
-@vindex w3-use-html2latex
-@vindex w3-html2latex-prog
-@vindex w3-html2latex-args
 @vindex w3-print-commnad
 @vindex w3-latex-docstyle
 When postscript is printed, then the HTML source of the document is
-converted into LaTeX source.  If the variable @code{w3-use-html2latex}
-is non-@code{nil}, then the program specified by
-@code{w3-html2latex-prog} is run in a subprocess with the arguments in
-@code{w3-html2latex-args}.  The @code{w3-html2latex-prog} must accept
-HTML source on its standard input and send the LaTeX output to standard
-output.  If @code{w3-use-html2latex} is @code{nil}, then an Emacs Lisp
-function uses regular expressions to replace the HTML code with LaTeX
-markup.  The variable @code{w3-latex-docstyle} controls how the document
-is laid out in this case, and postscript figures are printed as
-well.
+converted into LaTeX source.  There are several variables controlling
+what the final LaTeX document looks like.
+
+:: WORK :: Document the new LaTeX backend
+
+@table @code
+@item w3-latex-use-latex2e
+@vindex w3-latex-use-latex2e
+If non-@code{nil}, configures the LaTeX engine to use the LaTeX2e
+syntax.  A @code{nil} value indicates that LaTeX 2.0.9 compabibility
+will be used instead.
+@item w3-latex-docstyle
+@vindex w3-latex-docstyle
+The document style to use when printing or mailing converted HTML files
+in LaTeX.  Good defaults are: @{article@}, [psfig,twocolumn]@{article@},
+etc.
+@item w3-latex-packages
+@vindex w3-latex-packages
+List of LaTeX packages to include.  Currently this is only used if 
+@code{w3-latex-use-latex2e} is non-@code{nil}.
+@item w3-latex-use-maketitle
+@vindex w3-latex-use-maketitle
+If non-@code{nil}, the LaTeX engine will use real LaTeX title pages for
+document titles.
+@item w3-latex-print-links
+@vindex w3-latex-print-links
+If non-@code{nil}, prints the URLs of hypertext links as endnotes at the
+end of the document.  If set to @code{footnote}, prints the URL's as
+footnotes on each page.
+@end table
+
 @kindex P
 @findex w3-print-url-under-point
 @item P
@@ -1097,7 +953,6 @@ relationship.
 @end table
 
 @node Compatibility, , , Top
-@comment  node-name,  next,  previous,  up
 @chapter Compatibility with other Browsers
 Due to the popularity of several other browsers, Emacs-W3 offers an easy
 transition to its much better way of life.  This ranges from being able
@@ -1123,8 +978,6 @@ the keybindings used in other browsers.
 @end ifinfo
 @node Emulation, Hotlist Handling, Compatibility, Compatibility
 @section Emulation
-:: WORK :: Document lynx emulation
-:: WORK :: Document netscape emulation
 @cindex Browser emulation
 @cindex Emulation of other browsers
 @cindex Netscape emulation
@@ -1134,6 +987,8 @@ the keybindings used in other browsers.
 @findex w3-netscape-emulation-minor-mode
 @findex w3-lynx-emulation-minor-mode
 @vindex w3-mode-hook
+:: WORK :: Document lynx emulation
+:: WORK :: Document netscape emulation
 
 @node Hotlist Handling, Session History, Emulation, Compatibility
 @section Hotlist Handling
@@ -1315,15 +1170,14 @@ references to it in the annotation log file.
 Editing personal annotations is not yet supported.
 
 @node Controlling Formatting, General Formatting, Top, Top
-@comment  node-name,  next,  previous,  up
 @chapter Controlling Formatting
 @cindex Customizing formatting
 @cindex Specifying Fonts
 @cindex Fonts
 @cindex Colors
-How Emacs-W3 formats a document is very customizable.  How a document is
-displayed depends on whether the user is on a terminal
-capable of graphics and a few variables.
+How Emacs-W3 formats a document is very customizable.  All control over
+formatting is now controlled by a default stylesheet set by the user
+with the @code{w3-default-sheet} variable.
 
 The following sections describe in more detail how to change the
 formatting of a document.
@@ -1351,72 +1205,17 @@ formatting of a document.
 @end iftex
 @ifinfo
 @center --------------------
-@center Setting the fill column
+@center Setting the right margin
 @center --------------------
 @end ifinfo
+@cindex Margins
 @vindex fill-column
 @vindex w3-right-border
-Each time a document is parsed, the @code{fill-column} is recalculated
-using @code{window-width} and @code{w3-right-border}.
+Each time a document is parsed, the right margin is recalculated
+using the width of the current window and @code{w3-right-border}.
 @code{w3-right-border} is an integer specifying how much room at the
 right edge of the screen to leave blank.  The @code{fill-column} is set
 to @code{(- (window-width) @code{w3-right-border})}.
-@iftex
-@heading Formatting of hypertext links
-@end iftex
-@ifinfo
-@center --------------------
-@center Formatting of hypertext links
-@center --------------------
-@end ifinfo
-@vindex w3-delimit-links
-@vindex w3-link-start-delimiter
-@vindex w3-link-end-delimiter
-If the variable @code{w3-delimit-links} is non-@code{nil} (the default
-for text-terminals), then hypertext links are surrounded by text
-specified by the user.  The variables @code{w3-link-start-delimiter} and
-@code{w3-link-end-delimiter} control what text is at the start and end
-of a hypertext link.  These variables are cons-pairs of two
-strings.
-
-If a link has never been visited before (it is not in the @i{global
-history}), then the @code{car} of these variables is inserted at the
-start and end of the link.  If the link has been visited before, then
-the @code{cdr} is inserted.  So, links look like:
-
-@example
-[[This is a hypertext link]] that has never been visited.
-@{@{This one, however@}@} has been seen before at some point in time.
-@end example
-
-@iftex
-@heading Formatting of lists
-@end iftex
-@ifinfo
-@center --------------------
-@center Formatting of lists
-@center --------------------
-@end ifinfo
-@cindex Indentation
-@vindex w3-indent-level
-There are several different ways to control the formatting of lists.
-The most obvious is how deeply they are indented relative to the rest of
-the paragraphs in the document.  To control this, set the
-variable @code{w3-indent-level}.  This is the number of spaces to
-indent lists and other items requiring special margins.
-
-@vindex w3-list-chars-assoc
-Another thing that is easy to change about lists is the bullet character
-put at the front of each list item.  This is controlled by the variable
-@code{w3-list-chars-assoc}, which is an assoc list.  This is a list of
-lists, each sublist describing what to put at the start of each
-particular list type.  The @code{car} of this list should be a symbol
-(@b{not} a string) representing the type of list (e.g., @samp{ul}).
-The rest of the list should consist of strings to insert at certain
-levels of lists.  The @code{n}th element of this list is used when the
-list is nested @code{n + 1} levels.  If the list is not long enough to
-define a string for a certain nesting level, then it defaults to either
-a '*' or a '.'.
 @iftex
 @heading Formatting of directory listings
 @end iftex
@@ -1440,19 +1239,6 @@ If the value is @code{nil}, just pass the directory off to dired using
 of Emacs-W3, and the users is unable to load documents in the directory
 directly into Emacs-W3 by clicking with the mouse, etc.
 
-@ignore
-@cindex Downloading multiple files
-@cindex FTP'ing multiple files
-@vindex url-forms-based-ftp
-A new option in the 2.2 series is @code{url-forms-based-ftp} - this is
-still in the experimental stages, but can be useful.  If
-@code{url-forms-based-ftp} is @code{t}, then all automatically generated
-directory listings will have a form mixed in with the file listing.
-Each file will have a checkbox next to it, and a row of buttons at the
-bottom of the screen.  Selecting one of the buttons at the bottom of the
-screen will take the designated action on all the marked files.
-Currently, only deleting and copying marked files is supported.
-@end ignore
 @iftex
 @heading Formatting of gopher directories
 @end iftex
@@ -1495,10 +1281,11 @@ to three characters plus two parentheses.
 Horizontal rules (@b{<HR>} tags in HTML[+]) are used to separate chunks
 of a document, and is meant to be rendered as a solid line across the
 page.  Some terminals display characters differently, so the variable
-@code{w3-horizontal-rule-char} controls which character is used to draw a
-horizontal bar.  This variable must be the ASCII value of the character,
-@b{not a string}.  The variable is passed through make-string whenever a
-horizontal rule of a certain width is necessary.
+@code{w3-horizontal-rule-char} controls which character is used to draw
+a horizontal bar.  This variable must be the ASCII value of the
+character, @b{not a string}.  The variable is passed through
+@code{make-string} whenever a horizontal rule of a certain width is
+necessary.
 
 @node Character based terminals, Graphics workstations, General Formatting, Controlling Formatting
 @section On character based terminals
@@ -1871,7 +1658,6 @@ been superseded by SSL and Secure-HTTP.@xref{Using PGP/PEM}
 :: WORK :: Amiga specific instructions
 
 @node Advanced Features, Style Sheets, Amiga, Top
-@comment  node-name,  next,  previous,  up
 @chapter Advanced Features
 
 @ifinfo

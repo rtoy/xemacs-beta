@@ -2091,7 +2091,9 @@ if test "${window_system}" != "none" ; then
   if test -d /usr/X386/include; then
     HAVE_XFREE386=yes
     test -z "${C_SWITCH_X_SITE}" && C_SWITCH_X_SITE="-I/usr/X386/include"
-  elif test -d /usr/X11R6/include; then
+  elif test -f /etc/XF86Config -o \
+	    -f /etc/X11/XF86Config -o \
+	    -f /usr/X11R6/lib/X11/XF86Config; then
     HAVE_XFREE386=yes
     test -z "${C_SWITCH_X_SITE}" && C_SWITCH_X_SITE="-I/usr/X11R6/include"
   else

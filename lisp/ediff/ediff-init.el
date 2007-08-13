@@ -63,7 +63,7 @@ that Ediff doesn't know about.")
 	(ediff-emacs-p (memq (ediff-device-type) '(pc)))
 	(ediff-xemacs-p (memq (ediff-device-type) '(tty pc)))))
 
-
+  
 ;; Defines SYMBOL as an advertised local variable.  
 ;; Performs a defvar, then executes `make-variable-buffer-local' on
 ;; the variable.  Also sets the `permanent-local' property,
@@ -378,7 +378,7 @@ The most common use is to save and delete the merge buffer.")
 *** 
 *** Please contact your system administrator. "
 				 (if ediff-xemacs-p "X" "")))
-
+ 
 ;; Selective browsing
 
 (ediff-defvar-local ediff-skip-diff-region-function 'ediff-show-all-diffs
@@ -513,7 +513,7 @@ ediff-toggle-hilit. Use `setq-default' to set it.")
 ;; Buffer-local variables to be saved then restored during Ediff sessions
 ;; Buffer-local variables to be saved then restored during Ediff sessions
 (defconst ediff-protected-variables '(
-				      ;;buffer-read-only
+				      ;;buffer-read-only 
 				      mode-line-format))
 
 ;; Vector of differences between the variants.  Each difference is
@@ -1157,6 +1157,7 @@ More precisely, a regexp to match any one such character.")
   (car (if ediff-xemacs-p
 	   (ange-ftp-ftp-path file-name)
 	 (ange-ftp-ftp-name file-name))))
+
     
 (defsubst ediff-frame-unsplittable-p (frame)
   (cdr (assq 'unsplittable (frame-parameters frame))))
@@ -1173,6 +1174,14 @@ More precisely, a regexp to match any one such character.")
   (if (ediff-buffer-live-p buf)
       (kill-buffer (get-buffer buf))))
 
+(defsubst ediff-background-face (buf-type dif-num)
+  ;; The value of dif-num is always 1- the one that user sees.
+  ;; This is why even face is used when dif-num is odd.
+  (intern (format (if (ediff-odd-p dif-num)
+		      "ediff-even-diff-face-%S"
+		    "ediff-odd-diff-face-%S")
+		  buf-type)))
+
 
 ;; activate faces on diff regions in buffer
 (defun ediff-paint-background-regions-in-one-buffer (buf-type unhighlight)
@@ -1183,11 +1192,13 @@ More precisely, a regexp to match any one such character.")
 	     (lambda (rec)
 	       (setq overl (ediff-get-diff-overlay-from-diff-record rec)
 		     diff-num (ediff-overlay-get overl 'ediff-diff-num))
-	       (ediff-set-overlay-face
-		overl
-		(if (not unhighlight)
-		    (ediff-background-face buf-type diff-num))
-		)))
+	       (if (ediff-overlay-buffer overl)
+		   ;; only if overlay is alive
+		   (ediff-set-overlay-face
+		    overl
+		    (if (not unhighlight)
+			(ediff-background-face buf-type diff-num))))
+	       ))
 	    diff-vector)))
 
 
@@ -1259,6 +1270,7 @@ More precisely, a regexp to match any one such character.")
 	    (ediff-delete-overlay current-diff-overlay))
 	(set current-diff-overlay-var nil)
 	)))
+      
 
 (defsubst ediff-highlight-diff (n)
   "Put face on diff N.  Invoked for X displays only."
@@ -1285,14 +1297,6 @@ More precisely, a regexp to match any one such character.")
   (ediff-unhighlight-diffs-totally-in-one-buffer 'Ancestor)
   )
 
-(defsubst ediff-background-face (buf-type dif-num)
-  ;; The value of dif-num is always 1- the one that user sees.
-  ;; This is why even face is used when dif-num is odd.
-  (intern (format (if (ediff-odd-p dif-num)
-		      "ediff-even-diff-face-%S"
-		    "ediff-odd-diff-face-%S")
-		  buf-type)))
-    
       
 ;; arg is a record for a given diff in a difference vector
 ;; this record is itself a vector
@@ -1416,6 +1420,18 @@ More precisely, a regexp to match any one such character.")
     (frame-char-height frame)))
     
 ;; Some overlay functions
+
+(defsubst ediff-overlay-start (overl)
+  (if (ediff-overlayp overl)
+      (if ediff-emacs-p
+	  (overlay-start overl)
+	(extent-start-position overl))))
+	
+(defsubst ediff-overlay-end  (overl)
+  (if (ediff-overlayp overl)
+      (if ediff-emacs-p
+	  (overlay-end overl)
+	(extent-end-position overl))))
 
 (defsubst ediff-empty-overlay-p (overl)
   (= (ediff-overlay-start overl) (ediff-overlay-end overl)))
@@ -1592,17 +1608,17 @@ Checks if overlay's buffer exists."
 
 
 (defun ediff-convert-standard-filename (fname)
-  (if ediff-emacs-p
+  (if (fboundp 'convert-standard-filename)
       (convert-standard-filename fname)
-    ;; hopefully, XEmacs adds this functionality
     fname))
+
 
 ;;; Local Variables:
 ;;; eval: (put 'ediff-defvar-local 'lisp-indent-hook 'defun)
 ;;; eval: (put 'ediff-eval-in-buffer 'lisp-indent-hook 1)
 ;;; eval: (put 'ediff-eval-in-buffer 'edebug-form-spec '(form body))
 ;;; End:
-
+     
 (provide 'ediff-init)
 
 
