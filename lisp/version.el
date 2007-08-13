@@ -18,14 +18,14 @@
 ;; Free Software Foundation Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Code:
 
 (defconst emacs-version "20.0"
   "Version numbers of this version of Emacs.")
 
-(setq emacs-version (purecopy (concat emacs-version " XEmacs Lucid (beta30)")))
+(setq emacs-version (purecopy (concat emacs-version " XEmacs Lucid (beta31)")))
 
 (defconst emacs-major-version
   (progn (or (string-match "^[0-9]+" emacs-version)

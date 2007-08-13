@@ -19,25 +19,25 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
-;;; Reposition-window makes an entire function definition or comment visible,
-;;; or, if it is already visible, places it at the top of the window;
-;;; additional invocations toggle the visibility of comments preceding the
-;;; code.  For the gory details, see the documentation for reposition-window;
-;;; rather than reading that, you may just want to play with it.
+;; Reposition-window makes an entire function definition or comment visible,
+;; or, if it is already visible, places it at the top of the window;
+;; additional invocations toggle the visibility of comments preceding the
+;; code.  For the gory details, see the documentation for reposition-window;
+;; rather than reading that, you may just want to play with it.
 
-;;; This tries pretty hard to do the recentering correctly; the precise
-;;; action depends on what the buffer looks like.  If you find a situation
-;;; where it doesn't behave well, let me know.  This function is modeled
-;;; after one of the same name in ZMACS, but the code is all-new and the
-;;; behavior in some situations differs.
+;; This tries pretty hard to do the recentering correctly; the precise
+;; action depends on what the buffer looks like.  If you find a situation
+;; where it doesn't behave well, let me know.  This function is modeled
+;; after one of the same name in ZMACS, but the code is all-new and the
+;; behavior in some situations differs.
 
 ;;; Code:
 
@@ -74,13 +74,13 @@ first comment line visible (if point is in a comment)."
 		;; the beginning of the preceding comment
 		(save-excursion
 		  (if (not (eobp)) (forward-char 1))
-		  (end-of-defun -1) 
+		  (end-of-defun -1)
 		  ;; Skip whitespace, newlines, and form feeds.
 		  (if (re-search-forward "[^ \t\n\f]" nil t)
 		      (backward-char 1))
 		  (point))
 		here)))
-	 (defun-height 
+	 (defun-height
 	   (repos-count-screen-lines-signed
 	    (save-excursion
 	      (end-of-defun 1) ; so comments associate with following defuns
@@ -122,16 +122,16 @@ first comment line visible (if point is in a comment)."
 	   ;; whose first line is offscreen.
 	   ;; Avoid moving definition up even if defun runs offscreen;
 	   ;; we care more about getting the comment onscreen.
-	   
+
 	   (cond ((= line ht)
 		  ;; cursor on last screen line (and so in a comment)
 		  (if arg (progn (end-of-defun) (beginning-of-defun)))
 		  (recenter 0)
 		  ;;(repos-debug-macro "2a")
 		  )
-		 
+
 		 ;; This condition, copied from case 4, may not be quite right
-		 
+
 		 ((and arg (< ht comment-height))
 		  ;; Can't get first comment line onscreen.
 		  ;; Go there and try again.

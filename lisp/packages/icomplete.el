@@ -4,7 +4,7 @@
 
 ;;; Author: Ken Manheimer <klm@nist.gov>
 ;;; Maintainer: Ken Manheimer <klm@nist.gov>
-;;; Version: $Id: icomplete.el,v 1.1.1.1 1996/12/18 22:42:52 steve Exp $
+;;; Version: $Id: icomplete.el,v 1.1.1.2 1996/12/18 22:50:53 steve Exp $
 ;;; Created: Mar 1993 klm@nist.gov - first release to usenet
 ;;; Keywords: help, abbrev
 
@@ -90,6 +90,9 @@ with other packages.  For instance:
 
 will constrain rsz-mini to a maximum minibuffer height of 3 lines when
 icompletion is occurring.")
+
+(if (string-match "XEmacs\\|Lucid" emacs-version)
+    (add-hook 'icomplete-minibuffer-setup-hook 'icomplete-exhibit))
 
 ;;;_ + Internal Variables
 ;;;_  = icomplete-mode
@@ -273,7 +276,7 @@ matches exist."
 		   " [Matched]"
 	   ;; XEmacs
 		   (if (and icomplete-show-key-bindings
-			    (commandp (car comps)))
+			    (commandp (intern-soft (car comps))))
 		       (icomplete-get-keys (car comps))
 		     "")
 		   ))

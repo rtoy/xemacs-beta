@@ -18,11 +18,11 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -33,7 +33,7 @@
 
 ;;; Code:
 
-(define-error 'file-locked "File is locked" 'file-error)
+(define-error 'file-locked "File is locked" 'file-error) ; XEmacs
 
 (defun ask-user-about-lock-minibuf (fn opponent)
   (save-window-excursion
@@ -59,7 +59,7 @@
 		   (ask-user-about-lock-help)
 		   (setq answer nil))
 		  ((eq (cdr answer) 'yield)
-		   (signal 'file-locked (list fn opponent)))))))
+		   (signal 'file-locked (list "File is locked" fn opponent)))))))
       (cdr answer))))
 
 (defun ask-user-about-lock-help ()
@@ -75,13 +75,13 @@ You can <q>uit; don't modify this file.")
       (set-buffer standard-output)
       (help-mode))))
 
-(define-error 'file-supersession "File changed on disk" 'file-error)
+(define-error 'file-supersession "File changed on disk" 'file-error) ; XEmacs
 
 (defun ask-user-about-supersession-threat-minibuf (fn)
   (save-window-excursion
     (let (answer)
       (while (null answer)
-	(message "%s changed on disk; really edit the buffer? (y, n or C-h) "
+	(message "%s changed on disk; really edit the buffer? (y, n, r or C-h) "
                  (file-name-nondirectory fn))
 	(let ((tem (downcase (let ((cursor-in-echo-area t))
 			       (read-char)))))
@@ -91,17 +91,23 @@ You can <q>uit; don't modify this file.")
 		  (cdr (assoc tem '((?n . yield)
 				    (?\C-g . yield)
 				    (?y . proceed)
+				    (?r . revert)
 				    (?? . help))))))
 	  (cond ((null answer)
 		 (beep)
-		 (message "Please type y or n; or ? for help")
+		 (message "Please type y, n or r; or ? for help")
 		 (sit-for 3))
 		((eq answer 'help)
 		 (ask-user-about-supersession-help)
 		 (setq answer nil))
+		((eq answer 'revert)
+		 (revert-buffer nil (not (buffer-modified-p)))
+		 ; ask confirmation iff buffer modified
+		 (signal 'file-supersession
+			 (list "File reverted" fn)))
 		((eq answer 'yield)
 		 (signal 'file-supersession
-			 (list fn))))))
+			 (list "File changed on disk" fn))))))
       (message
         "File on disk now will become a backup file if you save these changes.")
       (setq buffer-backed-up nil))))
@@ -113,6 +119,8 @@ since you last read it in or saved it with this buffer.
 
 If you say `y' to go ahead and modify this buffer,
 you risk ruining the work of whoever rewrote the file.
+If you say `r' to revert, the contents of the buffer are refreshed
+from the file on disk.
 If you say `n', the change you started to make will be aborted.
 
 Usually, you should type `n' and then `M-x revert-buffer',
@@ -120,9 +128,8 @@ to get the latest version of the file, then make the change again.")
     (save-excursion
       (set-buffer standard-output)
       (help-mode))))
-
 
-;;; dialog-box versions
+;;; dialog-box versions [XEmacs]
 
 (defun ask-user-about-lock-dbox (fn opponent)
   (let ((echo-keystrokes 0)
@@ -146,7 +153,7 @@ to get the latest version of the file, then make the change again.")
 		((and (misc-user-event-p event) (eq (event-object event) 'steal))
 		 (throw 'aual-done t))
 		((and (misc-user-event-p event) (eq (event-object event) 'yield))
-		 (signal 'file-locked (list fn opponent)))
+		 (signal 'file-locked (list "File is locked" fn opponent)))
 		((button-release-event-p event) ;; don't beep twice
 		 nil)
 		(t

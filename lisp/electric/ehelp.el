@@ -3,7 +3,6 @@
 ;; Copyright (C) 1986, 1995 Free Software Foundation, Inc.
 
 ;; Author: Richard Mlynarik <mly@ai.mit.edu>
-
 ;; Maintainer: FSF
 ;; Keywords: help, extensions
 
@@ -21,9 +20,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -42,15 +42,15 @@
 ;;; Code:
 
 (require 'electric)
-
-(defvar electric-help-map nil
+(defvar electric-help-map ()
   "Keymap defining commands available in `electric-help-mode'.")
+
+(defvar electric-help-form-to-execute nil)
 
 (put 'electric-help-undefined 'suppress-keymap t)
 (if electric-help-map
     ()
   (let ((map (make-keymap)))
-    (set-keymap-name map 'electric-help-map)
     ;; allow all non-self-inserting keys - search, scroll, etc, but
     ;; let M-x and C-x exit ehelp mode and retain buffer:
     (suppress-keymap map)
@@ -67,6 +67,7 @@
     (define-key map [(control ?9)] 'electric-help-undefined)
     (define-key map (char-to-string help-char) 'electric-help-help)
     (define-key map "?" 'electric-help-help)
+    ;; XEmacs addition
     (define-key map 'help 'electric-help-help)
     (define-key map " " 'scroll-up)
     (define-key map "\^?" 'scroll-down)
@@ -86,13 +87,14 @@
 
 (defun electric-help-mode ()
   "`with-electric-help' temporarily places its buffer in this mode.
-\(On exit from `with-electric-help', the buffer is put in `default-major-mode'.\)"
+\(On exit from `with-electric-help', the buffer is put in `default-major-mode'.)"
   (setq buffer-read-only t)
   (setq mode-name "Help")
   (setq major-mode 'help)
   (setq modeline-buffer-identification '(" Help:  %b"))
   (use-local-map electric-help-map)
-  (setq mouse-leave-buffer-hook '(electric-help-retain))
+  (add-hook 'mouse-leave-buffer-hook 'electric-help-retain)
+  (view-mode -1)
   ;; this is done below in with-electric-help
   ;(run-hooks 'electric-help-mode-hook)
   )
@@ -126,7 +128,7 @@ BUFFER is put into `default-major-mode' (or `fundamental-mode') when we exit."
   (let ((one (one-window-p t))
 	(config (current-window-configuration))
         (bury nil)
-        (to-be-executed nil))
+        (electric-help-form-to-execute nil))
     (unwind-protect
 	(save-excursion
 	  (if one (goto-char (window-start (selected-window))))
@@ -138,7 +140,8 @@ BUFFER is put into `default-major-mode' (or `fundamental-mode') when we exit."
 		(enlarge-window (- minheight (window-height))))
 	    (electric-help-mode)
 	    (setq buffer-read-only nil)
-	    (or noerase (erase-buffer)))
+	    (or noerase
+		(erase-buffer)))
 	  (let ((standard-output buffer))
 	    (if (not (funcall thunk))
 		(progn
@@ -148,14 +151,15 @@ BUFFER is put into `default-major-mode' (or `fundamental-mode') when we exit."
 		  (if one (shrink-window-if-larger-than-buffer (selected-window))))))
 	  (set-buffer buffer)
 	  (run-hooks 'electric-help-mode-hook)
+	  (setq buffer-read-only t)
 	  (if (eq (car-safe
-		   ;; Don't be screwed by minor-modes (view-minor-mode)
+		   ;; XEmacs: Don't be screwed by minor-modes (view-minor-mode)
 		   (let ((overriding-local-map electric-help-map))
 		     (electric-help-command-loop)))
 		  'retain)
 	      (setq config (current-window-configuration))
 	    (setq bury t)))
-      (message nil)
+      (message "")
       (set-buffer buffer)
       (setq buffer-read-only nil)
       (condition-case ()
@@ -169,12 +173,13 @@ BUFFER is put into `default-major-mode' (or `fundamental-mode') when we exit."
             (replace-buffer-in-windows buffer)
             ;; must do this outside of save-window-excursion
             (bury-buffer buffer)))
-      (eval to-be-executed))))
+      (eval electric-help-form-to-execute))))
 
 (defun electric-help-command-loop ()
   (catch 'exit
     (if (pos-visible-in-window-p (point-max))
-	(progn (message (substitute-command-keys "<<< Press Space to bury the help buffer, Press \\[electric-help-retain] to retain it >>>"))
+	(progn (message "%s" (substitute-command-keys "<<< Press Space to bury the help buffer, Press \\[electric-help-retain] to retain it >>>"))
+	       ;; XEmacs change
 	       (if (equal (setq unread-command-events
 				(list (next-command-event)))
 			  '(?\ ))
@@ -219,14 +224,14 @@ BUFFER is put into `default-major-mode' (or `fundamental-mode') when we exit."
 
 
 ;(defun electric-help-scroll-up (arg)
-;  "####Doc"
+;  ">>>Doc"
 ;  (interactive "P")
 ;  (if (and (null arg) (pos-visible-in-window-p (point-max)))
 ;      (electric-help-exit)
 ;    (scroll-up arg)))
 
 (defun electric-help-exit ()
-  "####Doc"
+  ">>>Doc"
   (interactive)
   (throw 'exit t))
 
@@ -237,27 +242,11 @@ will select it.)"
   (interactive)
   ;; Make sure that we don't throw twice, even if two events cause
   ;; calling this function:
-  (if mouse-leave-buffer-hook
-    (progn
-      (setq mouse-leave-buffer-hook nil)
-      (throw 'exit '(retain)))))
+  (if (memq 'electric-help-retain mouse-leave-buffer-hook)
+      (progn
+	(remove-hook 'mouse-leave-buffer-hook 'electric-help-retain)
+	(throw 'exit '(retain)))))
 
-
-;(defun electric-help-undefined ()
-;  (interactive)
-;  (let* ((keys (this-command-keys))
-;	 (n (length keys)))
-;    (if (or (= n 1)
-;	    (and (= n 2)
-;		 meta-flag
-;		 (eq (aref keys 0) meta-prefix-char)))
-;	(setq unread-command-char last-input-char
-;	      current-prefix-arg prefix-arg)
-;      ;;#### I don't care.
-;      ;;#### The emacs command-loop is too much pure pain to
-;      ;;#### duplicate
-;      ))
-;  (throw 'exit t))
 
 (defun electric-help-undefined ()
   (interactive)
@@ -268,7 +257,7 @@ will select it.)"
 	   (substitute-command-keys "\\[electric-help-exit]"))))
 
 
-;#### this needs to be hairified (recursive help, anybody?)
+;>>> this needs to be hairified (recursive help, anybody?)
 (defun electric-help-help ()
   (interactive)
   (if (and (eq (key-binding "q") 'electric-help-exit)
@@ -281,35 +270,56 @@ will select it.)"
 
 
 ;;;###autoload
-(defun electric-helpify (fun &optional buffer-name)
-  (or buffer-name (setq buffer-name "*Help*"))
-  (let* ((p (symbol-function 'print-help-return-message))
-         (b (get-buffer buffer-name))
-         (tick (and b (buffer-modified-tick b))))
-    (and b (not (get-buffer-window b))
-         (setq b nil))
-    (if (unwind-protect
-             (save-window-excursion
-               (message "%s..." (capitalize (symbol-name fun)))
-               ;; kludge-o-rama
-               (fset 'print-help-return-message 'ignore)
-               (let ((a (call-interactively fun 'lambda)))
-                 (let ((temp-buffer-show-function 'ignore))
-                   (apply fun a)))
-               (message nil)
-               ;; Was a non-empty help buffer created/modified?
-               (let ((r (get-buffer buffer-name)))
-                 (and r
-                      ;(get-buffer-window r)
-                      (or (not b)
-                          (not (eq b r))
-                          (not (eql tick (buffer-modified-tick b))))
-                      (save-excursion
-                        (set-buffer r)
-                        (> (buffer-size) 0)))))
-	  (fset 'print-help-return-message p)
-	  )
-        (with-electric-help 'ignore buffer-name t))))
+(defun electric-helpify (fun &optional name)
+  (let ((name (or name "*Help*")))
+    (if (save-window-excursion
+	  ;; kludge-o-rama
+	  (let* ((p (symbol-function 'print-help-return-message))
+		 (b (get-buffer name))
+		 (m (buffer-modified-p b)))
+	    (and b (not (get-buffer-window b))
+		 (setq b nil))
+	    (unwind-protect
+		(progn
+		  (message "%s..." (capitalize (symbol-name fun)))
+		  ;; with-output-to-temp-buffer marks the buffer as unmodified.
+		  ;; kludging excessively and relying on that as some sort
+		  ;;  of indication leads to the following abomination...
+		  ;;>> This would be doable without such icky kludges if either
+		  ;;>> (a) there were a function to read the interactive
+		  ;;>>     args for a command and return a list of those args.
+		  ;;>>     (To which one would then just apply the command)
+		  ;;>>     (The only problem with this is that interactive-p
+		  ;;>>      would break, but that is such a misfeature in
+		  ;;>>      any case that I don't care)
+		  ;;>>     It is easy to do this for emacs-lisp functions;
+		  ;;>>     the only problem is getting the interactive spec
+		  ;;>>     for subrs
+		  ;;>> (b) there were a function which returned a
+		  ;;>>     modification-tick for a buffer.  One could tell
+		  ;;>>     whether a buffer had changed by whether the
+		  ;;>>     modification-tick were different.
+		  ;;>>     (Presumably there would have to be a way to either
+		  ;;>>      restore the tick to some previous value, or to
+		  ;;>>      suspend updating of the tick in order to allow
+		  ;;>>      things like momentary-string-display)
+		  (and b
+		       (save-excursion
+			 (set-buffer b)
+			 (set-buffer-modified-p t)))
+		  (fset 'print-help-return-message 'ignore)
+		  (call-interactively fun)
+		  (and (get-buffer name)
+		       (get-buffer-window (get-buffer name))
+		       (or (not b)
+			   (not (eq b (get-buffer name)))
+			   (not (buffer-modified-p b)))))
+	      (fset 'print-help-return-message p)
+	      (and b (buffer-name b)
+		   (save-excursion
+		     (set-buffer b)
+		     (set-buffer-modified-p m))))))
+	(with-electric-help 'ignore name t))))
 
 
 
@@ -317,14 +327,14 @@ will select it.)"
 ;; continues with execute-extended-command.
 (defun electric-help-execute-extended (prefixarg)
   (interactive "p")
-  (setq to-be-executed '(execute-extended-command nil))
+  (setq electric-help-form-to-execute '(execute-extended-command nil))
   (electric-help-retain))
 
 ;; This is to be buond to C-x in ehelp mode. Retains ehelp buffer and then
 ;; continues with ctrl-x prefix.
 (defun electric-help-ctrl-x-prefix (prefixarg)
   (interactive "p")
-  (setq to-be-executed '(progn (message nil) (setq unread-command-char ?\C-x)))
+  (setq electric-help-form-to-execute '(progn (message nil) (setq unread-command-char ?\C-x)))
   (electric-help-retain))
 
 
@@ -363,7 +373,7 @@ will select it.)"
 
 (defun electric-command-apropos ()
   (interactive)
-  (electric-helpify 'command-apropos))
+  (electric-helpify 'command-apropos "*Apropos*"))
 
 ;(define-key help-map "a" 'electric-command-apropos)
 
@@ -371,11 +381,10 @@ will select it.)"
   (interactive)
   (electric-helpify 'apropos))
 
-
 
 ;;;; ehelp-map
 
-(defvar ehelp-map nil)
+(defvar ehelp-map ())
 (if ehelp-map
     nil
   ;; #### WTF?  Why don't we just use substitute-key-definition

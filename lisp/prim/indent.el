@@ -1,9 +1,9 @@
 ;;; indent.el --- indentation commands for XEmacs
-;; Keywords: lisp languages tools
 
 ;; Copyright (C) 1985, 1992, 1993, 1995 Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
+;; Keywords: lisp languages tools
 
 ;; This file is part of XEmacs.
 
@@ -18,9 +18,9 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
 ;;; Synched up with: FSF 19.30.
 
@@ -46,17 +46,19 @@ Default number of columns for margin-changing functions to indent.")
   "Indent line in proper way for current major mode."
   (interactive "P")
   (if (eq indent-line-function 'indent-to-left-margin)
-      (insert-tab)
+      (insert-tab prefix-arg)
     (if prefix-arg
 	(funcall indent-line-function prefix-arg)
       (funcall indent-line-function))))
 
-(defun insert-tab ()
-  (if abbrev-mode
-      (expand-abbrev))
-  (if indent-tabs-mode
-      (insert ?\t)
-    (indent-to (* tab-width (1+ (/ (current-column) tab-width))))))
+(defun insert-tab (&optional prefix-arg)
+  (let ((count (prefix-numeric-value prefix-arg)))
+    (if abbrev-mode
+	(expand-abbrev))
+    (if indent-tabs-mode
+	(insert-char ?\t count)
+      ;; XEmacs: (Need the `1+')
+      (indent-to (* tab-width (1+ (/ (current-column) tab-width)))))))
 
 (defun indent-rigidly (start end arg)
   "Indent all lines starting in the region sideways by ARG columns.
@@ -78,7 +80,7 @@ Called from a program, takes three arguments, START, END and ARG."
 	(delete-region (point) (progn (skip-chars-forward " \t") (point))))
       (forward-line 1))
     (move-marker end nil)
-    (setq zmacs-region-stays nil)))
+    (setq zmacs-region-stays nil))) ; XEmacs
 
 (defun indent-line-to (column)
   "Indent current line to COLUMN.
@@ -207,12 +209,12 @@ If `auto-fill-mode' is active, re-fill the region to fit the new margin."
     (if (bolp) (setq from (point)))
     (goto-char to)
     (setq to (point-marker)))
-  (alter-text-property from (marker-position to) 'left-margin
+  (alter-text-property from (marker-position to) 'left-margin ; XEmacs
 		       (lambda (v) (max (- left-margin) (+ inc (or v 0)))))
-  (indent-rigidly from (marker-position to) inc)
+  (indent-rigidly from (marker-position to) inc) ; XEmacs
   (if auto-fill-function
       (save-excursion
-	(fill-region from (marker-position to) nil t t)))
+	(fill-region from (marker-position to) nil t t))) ; XEmacs
   (move-marker to nil))
 
 (defun decrease-left-margin (from to inc)
@@ -270,7 +272,7 @@ line, but does not move past any whitespace that was explicitly inserted
 		 (buffer-substring 
 		  (point) (min (point-max) (+ (length fill-prefix) (point)))))
 	  (forward-char (length fill-prefix)))
-    (if (and adaptive-fill-mode 
+    (if (and adaptive-fill-mode adaptive-fill-regexp
 	     (looking-at adaptive-fill-regexp))
 	(goto-char (match-end 0))))
   ;; Skip centering or flushright indentation
@@ -334,8 +336,8 @@ Called from a program, takes three args: START, END and COLUMN."
 (defun indent-relative (&optional unindented-ok)
   "Space out to under next indent point in previous nonblank line.
 An indent point is a non-whitespace character following whitespace.
-If the previous nonblank line has no indent points beyond
-the column point starts at, `tab-to-tab-stop' is done instead."
+If the previous nonblank line has no indent points beyond the
+column point starts at, `tab-to-tab-stop' is done instead."
   (interactive "P")
   (if abbrev-mode (expand-abbrev))
   (let ((start-column (current-column))
@@ -408,6 +410,7 @@ You can add or remove colons and then do \\<edit-tab-stops-map>\\[edit-tab-stops
     (while (> count 0)
       (insert "0123456789")
       (setq count (1- count))))
+  ;; XEmacs
   (insert (substitute-command-keys "\nTo install changes, type \\<edit-tab-stops-map>\\[edit-tab-stops-note-changes]"))
   (goto-char (point-min)))
 
@@ -464,5 +467,10 @@ Use \\[edit-tab-stops] to edit them interactively."
 			      (eq (preceding-char) ?\ ))
 		    (forward-char -1))
 		  (delete-region (point) before))))))))
+
+;(define-key global-map "\t" 'indent-for-tab-command)
+;(define-key esc-map "\034" 'indent-region)
+;(define-key ctl-x-map "\t" 'indent-rigidly)
+;(define-key esc-map "i" 'tab-to-tab-stop)
 
 ;;; indent.el ends here

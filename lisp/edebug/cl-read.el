@@ -2,23 +2,27 @@
 ;; 
 ;; Copyright (C) 1993 by Guido Bosch <Guido.Bosch@loria.fr>
 
-;; This file is written in GNU Emacs Lisp, but not (yet) part of GNU Emacs.
+;; This file is part of XEmacs
 
-;; The software contained in this file is free software; you can
-;; redistribute it and/or modify it under the terms of the GNU General
-;; Public License as published by the Free Software Foundation; either
-;; version 2, or (at your option) any later version.
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-;; 
+;;; Synched up with: Not in FSF
+
+;;; Commentary:
+
 ;; Please send bugs and comments to the author.
 ;;
 ;; <DISCLAIMER>
@@ -204,8 +208,8 @@
 ; Change History
 ; 
 ; $Log: cl-read.el,v $
-; Revision 1.1.1.1  1996/12/18 22:43:07  steve
-; XEmacs 20.0 -- Beta 30
+; Revision 1.1.1.2  1996/12/18 22:51:45  steve
+; XEmacs 20.0 -- Beta 31
 ;
 ; Revision 1.19  94/03/21  19:59:24  liberte
 ; Add invalid-cl-read-syntax error symbol.
@@ -302,11 +306,15 @@
 ;
 ;
 
-;; 
-(require 'cl)
+;;; Code:
 
-(provide 'cl-read)
+(require 'cl)
+;; Thou shalt evaluate a defadvice only once, or thou shalt surely lose. -sb
+(require 'advise-eval-region)
+
 ;; load before compiling
+;; This is ugly, but apparently the only way to do it :-(  -sb
+(provide 'cl-read)
 (require 'cl-read)
 
 ;; bootstrapping with cl-packages
@@ -1315,7 +1323,7 @@ Value is also consed on to front of variable `values'."
   (prin1 (car values) t))
 
 (require 'eval-reg "eval-reg")
-(require 'advice)
+; (require 'advice)
 
 
 ;; installing/uninstalling the cl reader
@@ -1344,14 +1352,6 @@ Value is also consed on to front of variable `values'."
 ;; package or the original ones are actually called.
 (cl-reader-install)
 (cl-reader-uninstall)
-
-;; Advise the redefined eval-region
-(defadvice eval-region (around cl-read activate)
-  "Use the reader::read instead of the original read if cl-read-active."
-  (with-elisp-eval-region (not cl-read-active)
-    (ad-do-it)))
-;;(ad-unadvise 'eval-region)
-
 
 (add-hook 'emacs-lisp-mode-hook 'cl-reader-autoinstall-function)
 
@@ -1397,4 +1397,5 @@ if the property line has a local variable setting like this:
 
 
 (run-hooks 'cl-read-load-hooks)
-;; end cl-read.el
+
+;; cl-read.el ends here

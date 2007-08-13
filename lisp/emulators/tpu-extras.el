@@ -1,6 +1,6 @@
 ;;; tpu-extras.el --- Scroll margins and free cursor mode for TPU-edt
 
-;; Copyright (C) 1993 Free Software Foundation, Inc.
+;; Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
 
 ;; Author: Rob Riepel <riepel@networking.stanford.edu>
 ;; Maintainer: Rob Riepel <riepel@networking.stanford.edu>
@@ -20,9 +20,34 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
+
+;;; Synched up with: FSF 19.34
 
 ;;; Commentary:
+
+;;  Use the functions defined here to customize TPU-edt to your tastes by
+;;  setting scroll margins and/or turning on free cursor mode.  Here's an
+;;  example for your .emacs file.
+
+;;     (tpu-set-cursor-free)                   ; Set cursor free.
+;;     (tpu-set-scroll-margins "10%" "15%")    ; Set scroll margins.
+
+;;  Scroll margins and cursor binding can be changed from within emacs using
+;;  the following commands:
+
+;;     tpu-set-scroll-margins  or   set scroll margins
+;;     tpu-set-cursor-bound    or   set cursor bound
+;;     tpu-set-cursor-free     or   set cursor free
+
+;;  Additionally, Gold-F toggles between bound and free cursor modes.
+
+;;  Note that switching out of free cursor mode or exiting TPU-edt while in
+;;  free cursor mode strips trailing whitespace from every line in the file.
+
+
+;;; Details:
 
 ;;  The functions contained in this file implement scroll margins and free
 ;;  cursor mode.  The following keys and commands are affected.
@@ -67,8 +92,8 @@
 ;;  performance of TPU-edt on slower computers.  In order to support the
 ;;  widest range of computers, scroll margin support is optional.
 
-;;  I don't know for a fact that the overhead associated with scroll
-;;  margin support is significant.  If you find that it is, please send me
+;;  It's actually not known whether the overhead associated with scroll
+;;  margin support is significant.  If you find that it is, please send
 ;;  a note describing the extent of the performance degradation.  Be sure
 ;;  to include a description of the platform where you're running TPU-edt.
 ;;  Send your note to the address provided by Gold-V.
@@ -77,35 +102,15 @@
 ;;  important aspects of the real TPU/edt.  Those who miss free cursor mode
 ;;  and/or scroll margins will appreciate these implementations.
 
-;;; Usage:
-
-;;  To use this file, simply load it after loading TPU-edt.  After that,
-;;  customize TPU-edt to your tastes by setting scroll margins and/or
-;;  turning on free cursor mode.  Here's an example for your .emacs file.
-
-;;     (load "tpu-edt")                      ; Load the base TPU-edt
-;;     (load "tpu-extras")                   ;   and the extras.
-;;     (tpu-set-scroll-margins "10%" "15%")  ; Set scroll margins.
-
-;;  Once the extras are loaded, scroll margins and cursor binding can be
-;;  changed with the following commands:
-
-;;     tpu-set-scroll-margins  or   set scroll margins
-;;     tpu-set-cursor-bound    or   set cursor bound
-;;     tpu-set-cursor-free     or   set cursor free
-
-;;  Additionally, Gold-F toggles between bound and free cursor modes.
-
-;;  Note that switching out of free cursor mode or exiting TPU-edt while in
-;;  free cursor mode strips trailing whitespace from every line in the file.
+;; NOTE: There was a very old tpu-edt in XEmacs 19.14 so I deleted it and
+;;  replaced it with the one in Emacs 19.34. -sb
 
 ;;; Code:
 
 
-;;;  Revision Information
+;;;  Gotta have tpu-edt
 
-(defconst tpu-extras-revision "!Revision: 1.6 !"
-  "Revision number of the TPU-edt extras.")
+(require 'tpu-edt)
 
 
 ;;;  Customization variables
@@ -132,11 +137,7 @@ the previous line when starting from a line beginning.")
 ;;;  Hooks  --  Set cursor free in picture mode.
 ;;;             Clean up when writing a file from cursor free mode.
 
-(if tpu-gnu-emacs18-p
-    (or (memq 'tpu-set-cursor-free edit-picture-hook)
-	(setq edit-picture-hook
-	      (cons 'tpu-set-cursor-free edit-picture-hook)))
-  (add-hook 'picture-mode-hook 'tpu-set-cursor-free))
+(add-hook 'picture-mode-hook 'tpu-set-cursor-free)
 
 (defun tpu-write-file-hook nil
   "Eliminate whitespace at ends of lines, if the cursor is free."
@@ -264,6 +265,7 @@ Prefix argument serves as a repeat count."
 Prefix argument serves as repeat count."
   (interactive "p")
   (let ((beg (tpu-current-line)))
+    (or (bolp) (>= 0 num) (setq num (- num 1)))
     (next-line-internal (- num))
     (tpu-top-check beg num)
     (beginning-of-line)))
@@ -428,7 +430,7 @@ version that respects the bottom scroll margin."
 
 ;;;  Function to set scroll margins
 
-;;;jwz: don't autoload this by default ###autoload
+;;;###autoload
 (defun tpu-set-scroll-margins (top bottom)
   "Set scroll margins."
   (interactive
@@ -456,7 +458,7 @@ version that respects the bottom scroll margin."
 
 ;;;  Functions to set cursor bound or free
 
-;;;jwz: don't autoload this by default ###autoload
+;;;###autoload
 (defun tpu-set-cursor-free nil
   "Allow the cursor to move freely about the screen."
   (interactive)
@@ -466,7 +468,7 @@ version that respects the bottom scroll margin."
 			     GOLD-map)
   (message "The cursor will now move freely about the screen."))
 
-;;;jwz: don't autoload this by default ###autoload
+;;;###autoload
 (defun tpu-set-cursor-bound nil
   "Constrain the cursor to the flow of the text."
   (interactive)

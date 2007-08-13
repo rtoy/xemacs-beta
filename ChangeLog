@@ -1,0 +1,28 @@
+Tue Dec 10 18:33:19 1996  Rod Whitby  <rwhitby@asc.sps.mot.com>
+
+	* info/vhdl-mode.info: New file.
+
+	* info/dir (Packages): Add vhdl-mode documentation.
+
+Tue Dec 10 18:27:02 1996  Martin Buchholz  <mrb@Eng.Sun.COM>
+
+	* configure: Make shared/dynamic flags work much more logically.
+
+Tue Dec 10 09:17:22 1996  David Worenklein  <dcw@gcm.com>
+
+	* configure.in (machine): Patch to make newly renamed shared
+	link include files work.
+
+Sat Dec  7 16:28:10 1996  Martin Buchholz  <mrb@Eng.Sun.COM>
+
+	* configure.in: Configure for POSIX getcwd if available.
+
+Thu Dec  5 20:42:35 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* etc/edt-user.doc (File): New file from Emacs 19.34.
+
+Thu Dec  5 11:56:05 1996  Joseph J Nuspl <nuspl@nvwls.cc.purdue.edu>
+
+	* configure.in (LIBS): Fix typo in dialog box test.
+
+

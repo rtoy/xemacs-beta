@@ -1097,9 +1097,10 @@ to the specified name LIBRARY (a la calling `load' instead of `load-library')."
     (setq library (symbol-name library)))
   ;; XEmacs: We have the nifty `locate-file' so we use it.
   (let ((file (locate-file library load-path (if nosuffix nil ".elc:.el:"))))
-    (if file
-	(message "Library is file %s" file)
-      (message "No library %s in search path" library))
+    (when (interactive-p)
+      (if file
+	  (message "Library is file %s" file)
+	(message "No library %s in search path" library)))
     file))
 
 ;; Functions ported from C into Lisp in XEmacs

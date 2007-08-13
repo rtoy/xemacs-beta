@@ -1,8 +1,9 @@
 ;;; ebuff-menu.el --- electric-buffer-list mode
 
-;; Copyright (C) 1985, 1986, 1992, 1993, 1994 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1986, 1994 Free Software Foundation, Inc.
 
 ;; Author: Richard Mlynarik <mly@ai.mit.edu>
+;; Keywords: frames
 
 ;; This file is part of XEmacs.
 
@@ -18,9 +19,10 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -31,6 +33,7 @@
 ;;; Code:
 
 (require 'electric)
+;; XEmacs change
 (require 'buff-menu)
 
 ;; this depends on the format of list-buffers (from src/buffer.c) and
@@ -39,79 +42,71 @@
 (defvar electric-buffer-menu-mode-map nil)
 
 ;;;###autoload
-(defun electric-buffer-list (&optional files-only)
+(defun electric-buffer-list (arg)
   "Pops up a buffer describing the set of Emacs buffers.
 Vaguely like ITS lunar select buffer; combining typeoutoid buffer
 listing with menuoid buffer selection.
 
 If the very next character typed is a space then the buffer list
-window disappears.  Otherwise, one may move around in the
-buffer list window, marking buffers to be selected, saved or deleted.
+window disappears.  Otherwise, one may move around in the buffer list
+window, marking buffers to be selected, saved or deleted.
 
-To exit and select a new buffer, type a space when the cursor is on the
-appropriate line of the buffer-list window.
-
-Other commands are much like those of buffer-menu-mode.
+To exit and select a new buffer, type a space when the cursor is on
+the appropriate line of the buffer-list window.  Other commands are
+much like those of buffer-menu-mode.
 
 Calls value of `electric-buffer-menu-mode-hook' on entry if non-nil.
 
-Non-null optional arg FILES-ONLY means mention only file buffers.
-When called from Lisp code, FILES-ONLY may be a regular expression,
-in which case only buffers whose names match that expression are listed,
-or an arbitrary predicate function.
-
 \\{electric-buffer-menu-mode-map}" 
-  (interactive (list (if current-prefix-arg t nil)))
+  (interactive "P")
   (let (select buffer)
     (save-window-excursion
-      (save-excursion
-	(save-window-excursion
-          (let ((temp-buffer-show-function 'ignore))
-	    (list-buffers files-only)))
-	(setq buffer (window-buffer (Electric-pop-up-window "*Buffer List*")))
-	(unwind-protect
-	    (progn
-	      (set-buffer buffer)
-	      (Electric-buffer-menu-mode)
-	      (setq select
-		    (catch 'electric-buffer-menu-select
-		      (message "<<< Press Return to bury the buffer list >>>")
-		      (let ((start-point (point))
-			    (first (progn (goto-char (point-min))
-					  (forward-line 2)
-					  (point)))
-			    (last (progn (goto-char (point-max))
-					 (forward-line -1)
-					 (point)))
-			    (goal-column 0))
-			;; Use start-point if it is meaningful.
-			(goto-char (if (or (< start-point first)
-					   (> start-point last))
-				       first
-				     start-point))
-			(Electric-command-loop 'electric-buffer-menu-select
-					       nil
-					       t
-					       'electric-buffer-menu-looper
-					       (cons first last))))))
-	  (save-excursion
+      (save-window-excursion (list-buffers arg))
+      (setq buffer (window-buffer (Electric-pop-up-window "*Buffer List*")))
+      (unwind-protect
+	  (progn
 	    (set-buffer buffer)
-	    (Buffer-menu-mode))
-	  (bury-buffer buffer)
-	  (message nil))))
+	    (Electric-buffer-menu-mode)
+	    (setq select
+		  (catch 'electric-buffer-menu-select
+		    (message "<<< Press Return to bury the buffer list >>>")
+		    ;; XEmacs change
+		    (if (eq (setq unread-command-events
+				  (list (next-command-event)))
+			    ?\ )
+			(progn (setq unread-command-events nil)
+			       (throw 'electric-buffer-menu-select nil)))
+		    (let ((start-point (point))
+			  (first (progn (goto-char (point-min))
+					(forward-line 2)
+					(point)))
+			  (last (progn (goto-char (point-max))
+				       (forward-line -1)
+				       (point)))
+			  (goal-column 0))
+		      ;; Use start-point if it is meaningful.
+		      (goto-char (if (or (< start-point first)
+					 (> start-point last))
+				     first
+				   start-point))
+		      (Electric-command-loop 'electric-buffer-menu-select
+					     nil
+					     t
+					     'electric-buffer-menu-looper
+					     (cons first last))))))
+	(set-buffer buffer)
+	(Buffer-menu-mode)
+	(bury-buffer buffer)
+	(message "")))
     (if select
-	(progn
-	  (set-buffer buffer)
-	  (let ((opoint (point-marker)))
-	    (Buffer-menu-execute)
-	    (goto-char (point-min))
-	    (cond ((prog1 (search-forward "\n>" nil t)
-		     (goto-char opoint) (set-marker opoint nil))
-		   (Buffer-menu-select))
-		  ((bufferp select)
-		   (switch-to-buffer select))
-		  (t
-		   (switch-to-buffer (Buffer-menu-buffer t)))))))))
+	(progn (set-buffer buffer)
+	       (let ((opoint (point-marker)))
+		 (Buffer-menu-execute)
+		 (goto-char (point-min))
+		 (if (prog1 (search-forward "\n>" nil t)
+		       (goto-char opoint) (set-marker opoint nil))
+		     (Buffer-menu-select)
+		   (switch-to-buffer (Buffer-menu-buffer t))))))))
 
 (defun electric-buffer-menu-looper (state condition)
   (cond ((and condition
@@ -156,15 +151,18 @@ Entry to this mode via command `electric-buffer-list' calls the value of
   (use-local-map electric-buffer-menu-mode-map)
   (setq mode-name "Electric Buffer Menu")
   (setq mode-line-buffer-identification "Electric Buffer List")
+  ;; XEmacs
   (if (memq 'mode-name mode-line-format)
       (progn (setq mode-line-format (copy-sequence mode-line-format))
 	     (setcar (memq 'mode-name mode-line-format) "Buffers")))
   (make-local-variable 'Helper-return-blurb)
   (setq Helper-return-blurb "return to buffer editing")
   (setq truncate-lines t)
+  ;; XEmacs
   (setq buffer-scrollbar-height 0)
   (setq buffer-read-only t)
   (setq major-mode 'Electric-buffer-menu-mode)
+  ;; XEmacs
   (setq mode-motion-hook 'mode-motion-highlight-line)
   (goto-char (point-min))
   (if (search-forward "\n." nil t) (forward-char -1))
@@ -175,30 +173,29 @@ Entry to this mode via command `electric-buffer-list' calls the value of
 (put 'Electric-buffer-menu-undefined 'suppress-keymap t)
 (if electric-buffer-menu-mode-map
     nil
-  (let ((map (make-keymap)))
-    (set-keymap-name map 'electric-buffer-menu-mode-map)
-    ;;#### Urk! There must be a buffer way in Lucid Emacs.
+  (let ((map (make-keymap)) (submap (make-keymap)))
+    ;(fillarray (car (cdr map)) 'Electric-buffer-menu-undefined) ; FSF
     (let ((i 0))
       (while (< i 128)
 	(define-key map (make-string 1 i) 'Electric-buffer-menu-undefined)
 	(setq i (1+ i))))
-    (define-key map "\e" (make-keymap))
+    (define-key map "\e" submap)
+    ;(fillarray (car (cdr submap)) 'Electric-buffer-menu-undefined) ; FSF
     (let ((map2 (lookup-key map "\e"))
-	  (i 0))
+	   (i 0))
       (while (< i 128)
 	(define-key map2 (make-string 1 i) 'Electric-buffer-menu-undefined)
 	(setq i (1+ i))))
-;;  (define-key map "\C-z" 'suspend-emacs)
+    (define-key map "\C-z" 'suspend-emacs)
     (define-key map "v" 'Electric-buffer-menu-mode-view-buffer)
-;;  (define-key map "\C-h" 'Helper-help)
-    (define-key map '(control h) 'Helper-help)
+    (define-key map (char-to-string help-char) 'Helper-help)
     (define-key map "?" 'Helper-describe-bindings)
     (define-key map "\C-c" nil)
     (define-key map "\C-c\C-c" 'Electric-buffer-menu-quit)
     (define-key map "\C-]" 'Electric-buffer-menu-quit)
     (define-key map "q" 'Electric-buffer-menu-quit)
-    (define-key map " " 'Electric-buffer-menu-select)  
-    (define-key map "\r" 'Electric-buffer-menu-select) ;; XEmacs change
+    (define-key map " " 'Electric-buffer-menu-select)
+    (define-key map "\C-m" 'Electric-buffer-menu-select)
     (define-key map "\C-l" 'recenter)
     (define-key map "s" 'Buffer-menu-save)
     (define-key map "d" 'Buffer-menu-delete)
@@ -206,6 +203,7 @@ Entry to this mode via command `electric-buffer-list' calls the value of
     (define-key map "\C-d" 'Buffer-menu-delete-backwards)
     ;(define-key map "\C-k" 'Buffer-menu-delete)
     (define-key map "\177" 'Buffer-menu-backup-unmark)
+    ;; XEmacs
     (define-key map 'backspace 'Buffer-menu-backup-unmark)
     (define-key map "~" 'Buffer-menu-not-modified)
     (define-key map "u" 'Buffer-menu-unmark)
@@ -232,6 +230,7 @@ Entry to this mode via command `electric-buffer-list' calls the value of
     (define-key map "\e<" 'beginning-of-buffer)
     (define-key map "\e\e" nil)
     (define-key map "\e\e\e" 'Electric-buffer-menu-quit)
+    ;; XEmacs
     (define-key map [home] 'beginning-of-buffer)
     (define-key map [down] 'next-line)
     (define-key map [up] 'previous-line)
@@ -243,6 +242,7 @@ Entry to this mode via command `electric-buffer-list' calls the value of
  
 (defun Electric-buffer-menu-exit ()
   (interactive)
+  ;; XEmacs
   (setq unread-command-event last-input-event)
   ;; for robustness
   (condition-case ()
@@ -253,13 +253,13 @@ Entry to this mode via command `electric-buffer-list' calls the value of
 (defun Electric-buffer-menu-select ()
   "Leave Electric Buffer Menu, selecting buffers and executing changes.
 Saves buffers marked \"S\".  Deletes buffers marked \"K\".
-Selects buffer at point and displays buffers marked \">\" in other
-windows."
+Selects buffer at point and displays buffers marked \">\" in other windows."
   (interactive)
   (throw 'electric-buffer-menu-select (point)))
 
 (defun Electric-buffer-menu-mouse-select (event)
   (interactive "e")
+  ;; XEmacs is simpler
   (mouse-set-point event)
   (Electric-buffer-menu-select))
 
@@ -272,10 +272,15 @@ Does not execute select, save, or delete commands."
 (defun Electric-buffer-menu-undefined ()
   (interactive)
   (ding)
-  (message (substitute-command-keys "\
+  (message "%s"
+	   (if (and (eq (key-binding "\C-c\C-c") 'Electric-buffer-menu-quit)
+		    (eq (key-binding " ") 'Electric-buffer-menu-select)
+		    (eq (key-binding (char-to-string help-char)) 'Helper-help)
+		    (eq (key-binding "?") 'Helper-describe-bindings))
+	       (substitute-command-keys "Type C-c C-c to exit, Space to select,
 Type \\[Electric-buffer-menu-quit] to exit, \
 \\[Electric-buffer-menu-select] to select, \
-\\[Helper-help] for help, \\[Helper-describe-bindings] for commands."))
+\\[Helper-help] for help, \\[Helper-describe-bindings] for commands.")))
   (sit-for 4))
 
 (defun Electric-buffer-menu-mode-view-buffer ()

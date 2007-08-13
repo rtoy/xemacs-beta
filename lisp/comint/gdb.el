@@ -20,9 +20,13 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
+
+;;; Synched up with: Not in FSF
+
+;;; Commentary:
 
 ;; Description of GDB interface:
 
@@ -57,6 +61,8 @@
 
 ;; gdb-display-frame is invoked automatically when a filename-and-line-number
 ;; appears in the output.
+
+;;; Code:
 
 (require 'comint)
 (require 'shell)
@@ -665,3 +671,5 @@ It is for customization by you.")
     (gdb-clear)))
 
 (provide 'gdb)
+
+;;; gdb.el ends here

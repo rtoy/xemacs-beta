@@ -16,11 +16,11 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc. 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34 [Partial].
 ;;; Warning: Merging this file is tough.  Beware.
 
 ;;; Commentary:
@@ -31,13 +31,27 @@
 
 ;;; Code:
 
-;; Avoid compilation warnings.
+;; XEmacs: Avoid compilation warnings.
 (defvar overriding-file-coding-system)
 (defvar file-coding-system)
 
-;; In buffer.c
+;; XEmacs: In buffer.c
 ;(defconst delete-auto-save-files t
 ;  "*Non-nil means delete auto-save file when a buffer is saved or killed.")
+
+;; FSF has automount-dir-prefix.  Our directory-abbrev-alist is more general.
+;; note: tmp_mnt bogosity conversion is established in paths.el.
+(defvar directory-abbrev-alist nil
+  "*Alist of abbreviations for file directories.
+A list of elements of the form (FROM . TO), each meaning to replace
+FROM with TO when it appears in a directory name.
+This replacement is done when setting up the default directory of a
+newly visited file.  *Every* FROM string should start with \\\\` or ^.
+
+Use this feature when you have directories which you normally refer to
+via absolute symbolic links or to eliminate automounter mount points
+from the beginning of your filenames.  Make TO the name of the link,
+and FROM the name it is linked to.")
 
 ;;; Turn off backup files on VMS since it has version numbers.
 (defconst make-backup-files (not (eq system-type 'vax-vms))
@@ -96,6 +110,7 @@ even if the buffer is not visiting a file.
 Automatically local in all buffers.")
 (make-variable-buffer-local 'buffer-offer-save)
 
+;; FSF uses normal defconst
 (defvaralias 'find-file-visit-truename 'find-file-use-truenames)
 (defvaralias 'find-file-existing-other-name 'find-file-compare-truenames)
 
@@ -106,6 +121,9 @@ This pair of numbers uniquely identifies the file.
 If the buffer is visiting a new file, the value is nil.")
 (make-variable-buffer-local 'buffer-file-number)
 (put 'buffer-file-number 'permanent-local t)
+
+(defvar buffer-file-numbers-unique (not (memq system-type '(windows-nt)))
+  "Non-nil means that buffer-file-number uniquely identifies files.")
 
 (defconst file-precious-flag nil
   "*Non-nil means protect against I/O errors while saving files.
@@ -180,15 +198,19 @@ If one of them returns non-nil, the file is considered already written
 and the rest are not called.
 These hooks are considered to pertain to the visited file.
 So this list is cleared if you change the visited file name.
-See also `write-contents-hooks' and `continue-save-buffer'.
-Don't make this variable buffer-local; instead, use `local-write-file-hooks'.")
+See also `write-contents-hooks' and `continue-save-buffer'.")
 ;;; However, in case someone does make it local...
 (put 'write-file-hooks 'permanent-local t)
 
 (defvar local-write-file-hooks nil
   "Just like `write-file-hooks', except intended for per-buffer use.
 The functions in this list are called before the ones in
-`write-file-hooks'.")
+`write-file-hooks'.
+
+This variable is meant to be used for hooks that have to do with a
+particular visited file.  Therefore, it is a permanent local, so that
+changing the major mode does not clear it.  However, calling
+`set-visited-file-name' does clear it.")
 (make-variable-buffer-local 'local-write-file-hooks)
 (put 'local-write-file-hooks 'permanent-local t)
 
@@ -213,7 +235,7 @@ not to the particular visited file; thus, `set-visited-file-name' does
 not clear this variable, but changing the major mode does clear it.
 See also `write-file-hooks' and `continue-save-buffer'.")
 
-;;  Not in FSF19
+;;  XEmacs addition
 ;;  Energize needed this to hook into save-buffer at a lower level; we need
 ;;  to provide a new output method, but don't want to have to duplicate all
 ;;  of the backup file and file modes logic.that does not occur if one uses
@@ -247,15 +269,6 @@ nil means ignore them; anything else means query.
 
 The command \\[normal-mode] always obeys local-variables lists
 and ignores this variable.")
-
-(defvar hack-local-variables-hook nil
-  "Normal hook run after processing a file's local variables specs.
-Major modes can use this to examine user-specified local variables
-in order to initialize other data structure based on them.
-
-This hook runs even if there were no local variables or if their
-evaluation was suppressed.  See also `enable-local-variables' and
-`enable-local-eval'.")
 
 ;; Avoid losing in versions where CLASH_DETECTION is disabled.
 (or (fboundp 'lock-buffer)
@@ -300,7 +313,7 @@ Not actually set up until the first time you use it.")
 (defun parse-colon-path (cd-path)
   "Explode a colon-separated list of paths into a string list."
   (and cd-path
-       (let (cd-list (cd-start 0) cd-colon)
+       (let (cd-list cd-list (cd-start 0) cd-colon)
 	 (setq cd-path (concat cd-path path-separator))
 	 (while (setq cd-colon (string-match path-separator cd-path cd-start))
 	   (setq cd-list
@@ -335,41 +348,40 @@ Not actually set up until the first time you use it.")
   "Make DIR become the current buffer's default directory.
 If your environment includes a `CDPATH' variable, try each one of that
 colon-separated list of directories when resolving a relative directory name."
-;  (interactive "DChange default directory: ")
   (interactive
-   ;; XEmacs change?
+   ;; XEmacs change? (read-file-name => read-directory-name)
    (list (read-directory-name "Change default directory: "
 			      default-directory default-directory
 			      (and (member cd-path '(nil ("./")))
 				   (null (getenv "CDPATH"))))))
   (if (file-name-absolute-p dir)
       (cd-absolute (expand-file-name dir))
-    (progn
-      (if (null cd-path)
-          ;;#### Unix-specific
-          (let ((trypath (parse-colon-path (getenv "CDPATH"))))
-            (setq cd-path (or trypath (list "./")))))
-      (or (catch 'found
-            (mapcar #'(lambda (x)
-                        (let ((f (expand-file-name (concat x dir))))
-                          (if (file-directory-p f)
-                              (progn
-                                (cd-absolute f)
-                                (throw 'found t)))))
-                    cd-path)
-            nil)
-	  ;; jwz: give a better error message to those of us with the
-	  ;; good taste not to use a kludge like $CDPATH.
-	  (if (equal cd-path '("./"))
-	      (error "No such directory: %s" (expand-file-name dir))
-	    (error "Directory not found in $CDPATH: %s" dir))))))
+    ;; XEmacs
+    (if (null cd-path)
+	;;#### Unix-specific
+	(let ((trypath (parse-colon-path (getenv "CDPATH"))))
+	  (setq cd-path (or trypath (list "./")))))
+    (or (catch 'found
+	  (mapcar #'(lambda (x)
+		        (let ((f (expand-file-name (concat x dir))))
+			  (if (file-directory-p f)
+			      (progn
+			        (cd-absolute f)
+			        (throw 'found t)))))
+		  cd-path)
+	  nil)
+	;; jwz: give a better error message to those of us with the
+	;; good taste not to use a kludge like $CDPATH.
+	(if (equal cd-path '("./"))
+	    (error "No such directory: %s" (expand-file-name dir))
+	  (error "Directory not found in $CDPATH: %s" dir)))))
 
 (defun load-file (file)
   "Load the Lisp file named FILE."
   (interactive "fLoad file: ")
   (load (expand-file-name file) nil nil t))
 
-; We now dump utils/lib-complete.el which has improved versions of these.
+; We now dump utils/lib-complete.el which has improved versions of this.
 ;(defun load-library (library)
 ;  "Load the library named LIBRARY.
 ;This is an interface to the function `load'."
@@ -394,6 +406,7 @@ accessible."
 	(funcall handler 'file-local-copy file)
       nil)))
 
+;; XEmacs change block
 ; We have this in C and use the realpath() system call.
 
 ;(defun file-truename (filename &optional counter prev-dirs)
@@ -503,6 +516,7 @@ BUFFER defaults to the current buffer if unspecified."
 	(setq buffer-file-name (abbreviate-file-name buffer-file-truename)
 	      default-directory (file-name-directory buffer-file-name)))
     buffer-file-truename))
+;; End XEmacs change block
 
 (defun file-chase-links (filename)
   "Chase links in FILENAME until a name that is not a link.
@@ -744,20 +758,6 @@ otherwise a string <2> or <3> or ... is appended to get an unused name."
   "Create and return a buffer with a name based on NAME.
 Choose the buffer's name using `generate-new-buffer-name'."
   (get-buffer-create (generate-new-buffer-name name)))
-
-;; FSF has automount-dir-prefix.  Our directory-abbrev-alist is more general.
-;; note: tmp_mnt bogosity conversion is established in paths.el.
-(defvar directory-abbrev-alist nil
-  "*Alist of abbreviations for file directories.
-A list of elements of the form (FROM . TO), each meaning to replace
-FROM with TO when it appears in a directory name.
-This replacement is done when setting up the default directory of a
-newly visited file.  *Every* FROM string should start with \\\\` or ^.
-
-Use this feature when you have directories which you normally refer to
-via absolute symbolic links or to eliminate automounter mount points
-from the beginning of your filenames.  Make TO the name of the link,
-and FROM the name it is linked to.")
 
 (defvar abbreviated-home-dir nil
   "The user's homedir abbreviated according to `directory-abbrev-alist'.")
@@ -1256,6 +1256,15 @@ If `enable-local-variables' is nil, this function does not check for a
               (if mode
                   (funcall mode))
               ))))))
+
+(defvar hack-local-variables-hook nil
+  "Normal hook run after processing a file's local variables specs.
+Major modes can use this to examine user-specified local variables
+in order to initialize other data structure based on them.
+
+This hook runs even if there were no local variables or if their
+evaluation was suppressed.  See also `enable-local-variables' and
+`enable-local-eval'.")
 
 (defun hack-local-variables (&optional force)
   "Parse, and bind or evaluate as appropriate, any local variables
@@ -2907,6 +2916,3 @@ absolute one."
       (error "Apparently circular symlink path"))))
 
 ;;; files.el ends here
-
-
-

@@ -5,85 +5,90 @@
 ;; Author: Daniel LaLiberte <liberte@cs.uiuc.edu>
 ;; Keywords: lisp, tools, maint
 
-;; LCD Archive Entry:
-;; edebug|Daniel LaLiberte|liberte@cs.uiuc.edu
-;; |A source level debugger for Emacs Lisp.
-;; |$Date: 1996/12/18 22:43:07 $|$Revision: 1.1.1.1 $|~/modes/edebug.el|
+;; This file is part of XEmacs.
 
-;; This file is part of GNU Emacs.
-
-;; GNU Emacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;;; Commentary:
+;;; Synched up with: Not in FSF
 
-;;; This minor mode allows programmers to step through Emacs Lisp
-;;; source code while executing functions.  You can also set
-;;; breakpoints, trace (stopping at each expression), evaluate
-;;; expressions as if outside Edebug, reevaluate and display a list of
-;;; expressions, trap errors normally caught by debug, and display a
-;;; debug style backtrace.
+;;; Commentary:
 
-;;;; Installation
-;;; =============
+;; LCD Archive Entry:
+;; edebug|Daniel LaLiberte|liberte@cs.uiuc.edu
+;; |A source level debugger for Emacs Lisp.
+;; |$Date: 1996/12/18 22:51:47 $|$Revision: 1.1.1.2 $|~/modes/edebug.el|
 
-;;; Put edebug.el in some directory in your load-path and
-;;; byte-compile it.  Also read the beginning of edebug-epoch.el, 
-;;; cl-specs.el, and edebug-cl-read.el if they apply to you.
+;; This minor mode allows programmers to step through Emacs Lisp
+;; source code while executing functions.  You can also set
+;; breakpoints, trace (stopping at each expression), evaluate
+;; expressions as if outside Edebug, reevaluate and display a list of
+;; expressions, trap errors normally caught by debug, and display a
+;; debug style backtrace.
 
-;;; Unless you are using Emacs 19 which is already set up to use Edebug,
-;;; put the following forms in your .emacs file.
-;;; (define-key emacs-lisp-mode-map "\C-xx" 'edebug-eval-top-level-form)
-;;; (autoload 'edebug-eval-top-level-form "edebug")
+;; Installation
+;; =============
 
-;;; If you wish to change the default edebug global command prefix, change:
-;;; (setq edebug-global-prefix "\C-xX")
+;; Put edebug.el in some directory in your load-path and
+;; byte-compile it.  Also read the beginning of edebug-epoch.el, 
+;; cl-specs.el, and edebug-cl-read.el if they apply to you.
 
-;;; Other options, are described in the manual.
+;; Unless you are using Emacs 19 which is already set up to use Edebug,
+;; put the following forms in your .emacs file.
+;; (define-key emacs-lisp-mode-map "\C-xx" 'edebug-eval-top-level-form)
+;; (autoload 'edebug-eval-top-level-form "edebug")
 
-;;; In previous versions of Edebug, users were directed to set
-;;; `debugger' to `edebug-debug'.  This is no longer necessary
-;;; since Edebug automatically sets it whenever Edebug is active.
+;; If you wish to change the default edebug global command prefix, change:
+;; (setq edebug-global-prefix "\C-xX")
 
-;;;; Minimal Instructions
-;;; =====================
+;; Other options, are described in the manual.
 
-;;; First evaluate a defun with C-xx, then run the function.  Step
-;;; through the code with SPC, mark breakpoints with b, go until a
-;;; breakpoint is reached with g, and quit execution with q.  Use the
-;;; "?" command in edebug to describe other commands.  See edebug.tex
-;;; or the Emacs 19 Lisp Reference Manual for more instructions.
+;; In previous versions of Edebug, users were directed to set
+;; `debugger' to `edebug-debug'.  This is no longer necessary
+;; since Edebug automatically sets it whenever Edebug is active.
 
-;;; Send me your enhancements, ideas, bugs, or fixes.
-;;; For bugs, you can call edebug-submit-bug-report if you have reporter.el.
-;;; There is an edebug mailing list if you want to keep up
-;;; with the latest developments. Requests to: edebug-request@cs.uiuc.edu
+;; Minimal Instructions
+;; =====================
 
-;;; Daniel LaLiberte   217-398-4114
-;;; University of Illinois, Urbana-Champaign
-;;; Department of Computer Science
-;;; 1304 W Springfield
-;;; Urbana, IL  61801
+;; First evaluate a defun with C-xx, then run the function.  Step
+;; through the code with SPC, mark breakpoints with b, go until a
+;; breakpoint is reached with g, and quit execution with q.  Use the
+;; "?" command in edebug to describe other commands.  See edebug.tex
+;; or the Emacs 19 Lisp Reference Manual for more instructions.
 
-;;; uiucdcs!liberte
-;;; liberte@cs.uiuc.edu
+;; Send me your enhancements, ideas, bugs, or fixes.
+;; For bugs, you can call edebug-submit-bug-report if you have reporter.el.
+;; There is an edebug mailing list if you want to keep up
+;; with the latest developments. Requests to: edebug-request@cs.uiuc.edu
 
-;;; ===============================
-;;; For the early revision history, see edebug-history.
+;; Daniel LaLiberte   217-398-4114
+;; University of Illinois, Urbana-Champaign
+;; Department of Computer Science
+;; 1304 W Springfield
+;; Urbana, IL  61801
+
+;; uiucdcs!liberte
+;; liberte@cs.uiuc.edu
+
+;; ===============================
+;; For the early revision history, see edebug-history.
+
+;;; Code:
 
 (defconst edebug-version
-  (let ((raw-version "$Revision: 1.1.1.1 $"))
+  (let ((raw-version "$Revision: 1.1.1.2 $"))
     (substring raw-version (string-match "[0-9.]*" raw-version)
 	       (match-end 0))))
      
@@ -94,8 +99,8 @@
   (or (fboundp 'defalias) (fset 'defalias 'fset)))
 
 
-;;;; Bug reporting
-;;; ==============
+;; Bug reporting
+;; ==============
 
 (defconst edebug-maintainer-address "liberte@cs.uiuc.edu")
 
@@ -124,8 +129,8 @@
 	       ))))
 
 
-;;;; Options
-;;; ===============================
+;; Options
+;; ===============================
 
 (defvar edebug-setup-hook nil
   "*Functions to call before edebug is used.
@@ -248,8 +253,8 @@ After execution is resumed, the error is signaled again.")
 If the result is non-nil, then break.  Errors are ignored.")
 
 
-;;;; Form spec utilities.
-;;; ===============================
+;; Form spec utilities.
+;; ===============================
 
 ;;;###autoload
 (defmacro def-edebug-spec (symbol spec)
@@ -275,8 +280,8 @@ Both SYMBOL and SPEC are unevaluated. The SPEC can be 0, t, a symbol
     ))
 
 
-;;;; Utilities
-;;; ===============================
+;; Utilities
+;; ===============================
 
 ;; Define edebug-gensym - from old cl.el
 (defvar edebug-gensym-index 0
@@ -367,7 +372,7 @@ A lambda list keyword is a symbol that starts with `&'."
   "Returns the function named by OBJECT, or nil if it is not a function."
   (setq object (edebug-lookup-function object))
   (if (or (subrp object)
-	  (byte-code-function-p object)
+	  (compiled-function-p object)
 	  (and (listp object)
 	       (eq (car object) 'lambda)
 	       (listp (car (cdr object)))))
@@ -398,8 +403,8 @@ Return the result of the last expression in BODY."
 	   (set-buffer (marker-buffer edebug:s-r-beg))
 	   (narrow-to-region edebug:s-r-beg edebug:s-r-end))))))
 
-;;;; Display
-;;; ============
+;; Display
+;; ============
 
 (defconst edebug-trace-buffer "*edebug-trace*"
   "Name of the buffer to put trace info in.")
@@ -493,12 +498,12 @@ Return the result of the last expression in BODY."
 (defalias 'edebug-input-pending-p 'input-pending-p)
 
 
-;;;; Redefine read and eval functions
-;;; =================================
-;;; read is redefined to maybe instrument forms.
-;;; eval-defun is redefined to check edebug-all-forms and edebug-all-defs.
+;; Redefine read and eval functions
+;; =================================
+;; read is redefined to maybe instrument forms.
+;; eval-defun is redefined to check edebug-all-forms and edebug-all-defs.
 
-;;; Use the Lisp version of eval-region.
+;; Use the Lisp version of eval-region.
 (require 'eval-reg "eval-reg")
 
 ;; Save the original read function
@@ -611,11 +616,11 @@ or if an error occurs, leave point after it with mark at the original point."
   (defalias 'eval-defun (symbol-function 'edebug-original-eval-defun)))
 
 
-;;;; Edebug internal data
-;;; ===============================
+;; Edebug internal data
+;; ===============================
 
-;;; The internal data that is needed for edebugging is kept in the
-;;; buffer-local variable `edebug-form-data'. 
+;; The internal data that is needed for edebugging is kept in the
+;; buffer-local variable `edebug-form-data'. 
 
 ;; XEmacs change?
 (defconst edebug-form-data nil)
@@ -698,8 +703,8 @@ or if an error occurs, leave point after it with mark at the original point."
 	(setq edebug-form-data (delq entry edebug-form-data)))))
 
 
-;;;; Parser utilities
-;;; ===============================
+;; Parser utilities
+;; ===============================
 
 
 (defun edebug-syntax-error (&rest args)
@@ -771,8 +776,8 @@ or if an error occurs, leave point after it with mark at the original point."
       (edebug-original-read (current-buffer))))))
 
 
-;;;; Offsets for reader
-;;; ==============================
+;; Offsets for reader
+;; ==============================
 
 ;; Define a structure to represent offset positions of expressions.
 ;; Each offset structure looks like: (before . after) for constituents,
@@ -847,8 +852,8 @@ or if an error occurs, leave point after it with mark at the original point."
        (edebug-store-after-offset (point)))))
 
 
-;;;; Reader for Emacs Lisp.
-;;; ==========================================
+;; Reader for Emacs Lisp.
+;; ==========================================
 ;; Uses edebug-next-token-class (and edebug-skip-whitespace) above.
 
 (defconst edebug-read-alist
@@ -934,8 +939,8 @@ or if an error occurs, leave point after it with mark at the original point."
 
 
 
-;;;; Cursors for traversal of list and vector elements with offsets.
-;;;====================================================================
+;; Cursors for traversal of list and vector elements with offsets.
+;;====================================================================
 
 (defvar edebug-dotted-spec nil)
 
@@ -1012,29 +1017,29 @@ or if an error occurs, leave point after it with mark at the original point."
       (setq offset (cdr offset)))
     offset))
 
-;;;; The Parser
-;;; ===============================
+;; The Parser
+;; ===============================
 
-;;; The top level function for parsing forms is
-;;; edebug-read-and-maybe-wrap-form; it calls all the rest.  It checks the
-;;; syntax a bit and leaves point at any error it finds, but otherwise
-;;; should appear to work like eval-defun.
+;; The top level function for parsing forms is
+;; edebug-read-and-maybe-wrap-form; it calls all the rest.  It checks the
+;; syntax a bit and leaves point at any error it finds, but otherwise
+;; should appear to work like eval-defun.
 
-;;; The basic plan is to surround each expression with a call to
-;;; the edebug debugger together with indexes into a table of positions of
-;;; all expressions.  Thus an expression "exp" becomes:
+;; The basic plan is to surround each expression with a call to
+;; the edebug debugger together with indexes into a table of positions of
+;; all expressions.  Thus an expression "exp" becomes:
 
-;;; (edebug-after (edebug-before 1) 2 exp)
+;; (edebug-after (edebug-before 1) 2 exp)
 
-;;; When this is evaluated, first point is moved to the beginning of
-;;; exp at offset 1 of the current function.  The expression is
-;;; evaluated, which may cause more edebug calls, and then point is
-;;; moved to offset 2 after the end of exp.
+;; When this is evaluated, first point is moved to the beginning of
+;; exp at offset 1 of the current function.  The expression is
+;; evaluated, which may cause more edebug calls, and then point is
+;; moved to offset 2 after the end of exp.
 
-;;; The highest level expressions of the function are wrapped in a call to
-;;; edebug-enter, which supplies the function name and the actual
-;;; arguments to the function.  See functions edebug-enter, edebug-before,
-;;; and edebug-after for more details.
+;; The highest level expressions of the function are wrapped in a call to
+;; edebug-enter, which supplies the function name and the actual
+;; arguments to the function.  See functions edebug-enter, edebug-before,
+;; and edebug-after for more details.
 
 ;; Dynamically bound vars, left unbound, but globally declared.
 ;; This is to quiet the byte compiler.
@@ -1108,7 +1113,7 @@ or if an error occurs, leave point after it with mark at the original point."
 				  (eq 'name (car (cdr spec)))
 				  (eq 'symbol (edebug-next-token-class)))
 			     (edebug-original-read (current-buffer))))))
-;;;(message "all defs: %s   all forms: %s"  edebug-all-defs edebug-all-forms)
+;;(message "all defs: %s   all forms: %s"  edebug-all-defs edebug-all-forms)
     (cond
      (defining-form-p
        (if (or edebug-all-defs edebug-all-forms)
@@ -1491,8 +1496,8 @@ expressions; a `progn' form will be returned enclosing these forms."
       ))
 
 
-;;;; Matching of specs.
-;;; ===================
+;; Matching of specs.
+;; ===================
 
 (defvar edebug-after-dotted-spec nil)
 
@@ -1500,8 +1505,8 @@ expressions; a `progn' form will be returned enclosing these forms."
 (defconst edebug-max-depth 150)  ;; maximum number of matching recursions.
 
 
-;;;; Failure to match 
-;;; ==================
+;; Failure to match 
+;; ==================
 ;; This throws to no-match, if there are higher alternatives.
 ;; Otherwise it signals an error.  The place of the error is found
 ;; with the two before- and after-offset functions.
@@ -1927,12 +1932,12 @@ expressions; a `progn' form will be returned enclosing these forms."
     (list (edebug-wrap-def-body (edebug-forms cursor)))))
 
 
-;;;; Edebug Form Specs
-;;; ==========================================================
-;;; See cl-specs.el for common lisp specs.
+;; Edebug Form Specs
+;; ==========================================================
+;; See cl-specs.el for common lisp specs.
 
-;;;;* Spec for def-edebug-spec
-;;; Out of date.
+;;* Spec for def-edebug-spec
+;; Out of date.
 
 (defun edebug-spec-p (object)
   "Return non-nil if OBJECT is a symbol with an edebug-form-spec property."
@@ -1962,7 +1967,7 @@ expressions; a `progn' form will be returned enclosing these forms."
    ))
 
 
-;;;;* Emacs special forms and some functions.
+;;* Emacs special forms and some functions.
 
 ;; quote expects only one argument, although it allows any number.
 (def-edebug-spec quote sexp)
@@ -2099,12 +2104,12 @@ expressions; a `progn' form will be returned enclosing these forms."
 	   def-body))
 
 
-;;;; The debugger itself
-;;; ===============================
+;; The debugger itself
+;; ===============================
 
 (defvar edebug-active nil)  ;; Non-nil when edebug is active
 
-;;; add minor-mode-alist entry
+;; add minor-mode-alist entry
 (or (assq 'edebug-active minor-mode-alist)
     (setq minor-mode-alist (cons (list 'edebug-active " *Debugging*")
 				 minor-mode-alist)))
@@ -2166,8 +2171,8 @@ expressions; a `progn' form will be returned enclosing these forms."
 
 (defvar cl-lexical-debug)  ;; Defined in cl.el
 
-;;; Handling signals
-;;; =================
+;; Handling signals
+;; =================
 
 (if (not (fboundp 'edebug-original-signal))
     (defalias 'edebug-original-signal (symbol-function 'signal)))
@@ -2195,8 +2200,8 @@ error is signaled again."
   (edebug-original-signal edebug-signal-name edebug-signal-data))
   
 
-;;; Entering Edebug
-;;; ==================
+;; Entering Edebug
+;; ==================
 
 (defun edebug-enter (edebug-function edebug-args edebug-body)
   ;; Entering FUNC.  The arguments are ARGS, and the body is BODY.
@@ -2227,7 +2232,7 @@ error is signaled again."
 	    (cl-lexical-debug t)
 
 	    ;; Save the outside value of executing macro.  (here??)
-	    (edebug-outside-executing-macro executing-macro)
+	    (edebug-outside-executing-macro executing-kbd-macro)
 	    (edebug-outside-pre-command-hook pre-command-hook)
 	    (edebug-outside-post-command-hook post-command-hook)
 	    (edebug-outside-post-command-idle-hook post-command-idle-hook))
@@ -2235,8 +2240,8 @@ error is signaled again."
 	    (let (;; Don't keep reading from an executing kbd macro
 		  ;; within edebug unless edebug-continue-kbd-macro is
 		  ;; non-nil.  Again, local binding may not be best.
-		  (executing-macro 
-		   (if edebug-continue-kbd-macro executing-macro))
+		  (executing-kbd-macro 
+		   (if edebug-continue-kbd-macro executing-kbd-macro))
 
 		  ;; Disable command hooks.  This is essential when
 		  ;; a hook function is instrumented - to avoid infinite loop.
@@ -2254,7 +2259,7 @@ error is signaled again."
 		  (edebug-enter edebug-function edebug-args edebug-body)
 		(fset 'signal (symbol-function 'edebug-original-signal))))
 	  ;; Reset global variables in case outside value was changed.
-	  (setq executing-macro edebug-outside-executing-macro
+	  (setq executing-kbd-macro edebug-outside-executing-macro
 		pre-command-hook edebug-outside-pre-command-hook
 		post-command-hook edebug-outside-post-command-hook
 		post-command-idle-hook edebug-outside-post-command-idle-hook
@@ -2899,13 +2904,13 @@ MSG is printed after `::::} '."
     ))
 
 
-;;; Display related functions
-;;; ===============================
+;; Display related functions
+;; ===============================
 
 (defun edebug-adjust-window (old-start)
   ;; If pos is not visible, adjust current window to fit following context.
-;;;  (message "window: %s old-start: %s window-start: %s pos: %s" 
-;;;	   (selected-window) old-start (window-start) (point)) (sit-for 5)
+;;  (message "window: %s old-start: %s window-start: %s pos: %s" 
+;;	   (selected-window) old-start (window-start) (point)) (sit-for 5)
   (if (not (pos-visible-in-window-p))
       (progn
 	;; First try old-start
@@ -3074,8 +3079,8 @@ The default is one second."
 	     (if already-displaying "off" "on"))))
 
 
-;;; Breakpoint related functions
-;;; ===============================
+;; Breakpoint related functions
+;; ===============================
 
 (defun edebug-find-stop-point ()
   ;; Return (function . index) of the nearest edebug stop point.
@@ -3233,8 +3238,8 @@ With prefix argument, make it a temporary breakpoint."
   (setq edebug-global-break-condition expression))
 
 
-;;; Mode switching functions
-;;; ===============================
+;; Mode switching functions
+;; ===============================
 
 (defun edebug-set-mode (mode shortmsg msg)
   ;; Set the edebug mode to MODE.
@@ -3459,8 +3464,8 @@ This is useful for exiting even if unwind-protect code may be executed."
 ;;  (edebug-set-mode 'exiting "Exit..."))
 
 
-;;; -----------------------------------------------------------------
-;;; The following initial mode setting definitions are not used yet.
+;; -----------------------------------------------------------------
+;; The following initial mode setting definitions are not used yet.
 
 '(defconst edebug-initial-mode-alist
   '((edebug-Continue-fast . Continue-fast)
@@ -3506,8 +3511,8 @@ edebug-mode."
       )))
 
 
-;;; Evaluation of expressions
-;;; ===============================
+;; Evaluation of expressions
+;; ===============================
 
 (def-edebug-spec edebug-outside-excursion t)
 
@@ -3544,7 +3549,7 @@ Return the result of the last expression."
 	     (standard-output edebug-outside-standard-output)
 	     (standard-input edebug-outside-standard-input)
 
-	     (executing-macro edebug-outside-executing-macro)
+	     (executing-kbd-macro edebug-outside-executing-macro)
 	     (defining-kbd-macro edebug-outside-defining-kbd-macro)
 	     (pre-command-hook edebug-outside-pre-command-hook)
 	     (post-command-hook edebug-outside-post-command-hook)
@@ -3586,7 +3591,7 @@ Return the result of the last expression."
 	    edebug-outside-standard-output standard-output
 	    edebug-outside-standard-input standard-input
 
-	    edebug-outside-executing-macro executing-macro
+	    edebug-outside-executing-macro executing-kbd-macro
 	    edebug-outside-defining-kbd-macro defining-kbd-macro
 	    edebug-outside-pre-command-hook pre-command-hook
 	    edebug-outside-post-command-hook post-command-hook
@@ -3615,8 +3620,8 @@ Return the result of the last expression."
 			  (get (car edebug-err) 'error-message)
 			  (car (cdr edebug-err))))))
 
-;;;; Printing
-;;; =========
+;; Printing
+;; =========
 ;; Replace printing functions.
 
 ;; obsolete names
@@ -3698,8 +3703,8 @@ Return the result of the last expression."
   (interactive)
   (message "%s" edebug-previous-result))
 
-;;;; Read, Eval and Print
-;;; =====================
+;; Read, Eval and Print
+;; =====================
 
 (defun edebug-eval-expression (edebug-expr)
   "Evaluate an expression in the outside environment.  
@@ -3733,8 +3738,8 @@ print value into current buffer."
     ))
 
 
-;;;; Edebug Minor Mode 
-;;; ===============================
+;; Edebug Minor Mode 
+;; ===============================
 
 ;; Global GUD bindings for all emacs-lisp-mode buffers.
 (define-key emacs-lisp-mode-map "\C-x\C-a\C-s" 'edebug-step-mode)
@@ -3898,8 +3903,8 @@ edebug-global-break-condition
   (use-local-map edebug-mode-map))
 
 
-;;;; edebug eval list mode
-;;; ===============================================
+;; edebug eval list mode
+;; ===============================================
 ;; A list of expressions and their evaluations is displayed in *edebug*.
 
 (defun edebug-eval-result-list ()
@@ -4035,8 +4040,8 @@ Global commands prefixed by global-edebug-prefix:
   (use-local-map edebug-eval-mode-map))
 
 
-;;;; Interface with standard debugger.
-;;; ========================================
+;; Interface with standard debugger.
+;; ========================================
 
 ;; (setq debugger 'edebug) ; to use the edebug debugger
 ;; (setq debugger 'debug)  ; use the standard debugger
@@ -4115,7 +4120,7 @@ show where we last were.  Otherwise call debug normally."
       )))))
 
 
-;;;; Trace display
+;; Trace display
 ;; ===============================
 
 (defun edebug-trace-display (buf-name fmt &rest args)
@@ -4151,8 +4156,8 @@ You must include newlines in FMT to break lines, but one newline is appended."
   (apply 'edebug-trace-display edebug-trace-buffer fmt args))
 
 
-;;;; Frequency count and coverage
-;;; ==============================
+;; Frequency count and coverage
+;; ==============================
 
 (defun edebug-display-freq-count ()
   "Display the frequency count data for each line of the current
@@ -4235,8 +4240,8 @@ It is removed when you hit any char."
     (undo)))
 
 
-;;;; Menus
-;;;=========
+;; Menus
+;;=========
 
 (defun edebug-toggle (variable)
   (set variable (not (eval variable)))
@@ -4303,11 +4308,11 @@ It is removed when you hit any char."
   "XEmacs style menus for Edebug.")
 
 
-;;;; Emacs version specific code
-;;;=============================
-;;; The default for all above is Emacs 18, because it is easier to compile
-;;; Emacs 18 code in Emacs 19 than vice versa.  This default will
-;;; change once most people are using Emacs 19 or derivatives.
+;; Emacs version specific code
+;;=============================
+;; The default for all above is Emacs 18, because it is easier to compile
+;; Emacs 18 code in Emacs 19 than vice versa.  This default will
+;; change once most people are using Emacs 19 or derivatives.
 
 ;; Epoch specific code is in a separate file: edebug-epoch.el.
 
@@ -4370,7 +4375,7 @@ Print result in minibuffer."
       (edebug-safe-prin1-to-string (car values)))))
 
   (easy-menu-define edebug-menu edebug-mode-map "Edebug menus" edebug-mode-menus)
-  (if window-system
+  (if (eq (console-type) 'x)
       (x-popup-menu nil (lookup-key edebug-mode-map [menu-bar Edebug])))
   )
 
@@ -4414,8 +4419,8 @@ Print result in minibuffer."
 (edebug-emacs-version-specific)
 
 
-;;;; Byte-compiler
-;;; ====================
+;; Byte-compiler
+;; ====================
 ;; Extension for bytecomp to resolve undefined function references.
 ;; Requires new byte compiler.
 
@@ -4499,8 +4504,8 @@ Print result in minibuffer."
   )))
 
 
-;;;; Autoloading of Edebug accessories
-;;;===================================
+;; Autoloading of Edebug accessories
+;;===================================
 
 (if (featurep 'cl)
     (add-hook 'edebug-setup-hook
@@ -4518,11 +4523,11 @@ Print result in minibuffer."
 	    (function (lambda () (require 'edebug-cl-read)))))
 
 
-;;;; Finalize Loading
-;;;===================
+;; Finalize Loading
+;;===================
 
-;;; Finally, hook edebug into the rest of Emacs.
-;;; There are probably some other things that could go here.
+;; Finally, hook edebug into the rest of Emacs.
+;; There are probably some other things that could go here.
 
 ;; Install edebug read and eval functions.
 (edebug-install-read-eval-functions)
@@ -4530,5 +4535,3 @@ Print result in minibuffer."
 (provide 'edebug)
 
 ;;; edebug.el ends here
-
-

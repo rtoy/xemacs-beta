@@ -1,7 +1,9 @@
 ;;; format.el --- read and save files in multiple formats
+
 ;; Copyright (c) 1994, 1995 Free Software Foundation
 
 ;; Author: Boris Goldowsky <boris@gnu.ai.mit.edu>
+;; Keywords: extensions
 
 ;; This file is part of GNU Emacs.
 
@@ -9,54 +11,58 @@
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
-;;
+
 ;; GNU Emacs is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
-;;
-;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-;;; Synched up with: FSF 19.30.
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
+
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
-;; This file defines a unified mechanism for saving & loading files stored in
-;; different formats.  `format-alist' contains information that directs
+
+;; This file defines a unified mechanism for saving & loading files stored
+;; in different formats.  `format-alist' contains information that directs
 ;; Emacs to call an encoding or decoding function when reading or writing
-;; files that match certain conditions.  
+;; files that match certain conditions.
 ;;
-;; When a file is visited, its format is determined by matching the beginning
-;; of the file against regular expressions stored in `format-alist'.  If this
-;; fails, you can manually translate the buffer using `format-decode-buffer'.
-;; In either case, the formats used are listed in the variable
-;; `buffer-file-format', and become the default format for saving the buffer.
-;; To save a buffer in a different format, change this variable, or use
-;; `format-write-file'.
+;; When a file is visited, its format is determined by matching the
+;; beginning of the file against regular expressions stored in
+;; `format-alist'.  If this fails, you can manually translate the buffer
+;; using `format-decode-buffer'.  In either case, the formats used are
+;; listed in the variable `buffer-file-format', and become the default
+;; format for saving the buffer.  To save a buffer in a different format,
+;; change this variable, or use `format-write-file'.
 ;;
 ;; Auto-save files are normally created in the same format as the visited
-;; file, but the variable `auto-save-file-format' can be set to a particularly
-;; fast or otherwise preferred format to be used for auto-saving (or nil to do
-;; no encoding on auto-save files, but then you risk losing any
-;; text-properties in the buffer).
+;; file, but the variable `auto-save-file-format' can be set to a
+;; particularly fast or otherwise preferred format to be used for
+;; auto-saving (or nil to do no encoding on auto-save files, but then you
+;; risk losing any text-properties in the buffer).
 ;;
-;; You can manually translate a buffer into or out of a particular format with
-;; the functions `format-encode-buffer' and `format-decode-buffer'.
-;; To translate just the region use the functions `format-encode-region' and
-;; `format-decode-region'.  
+;; You can manually translate a buffer into or out of a particular format
+;; with the functions `format-encode-buffer' and `format-decode-buffer'.
+;; To translate just the region use the functions `format-encode-region'
+;; and `format-decode-region'.  
 ;;
-;; You can define a new format by writing the encoding and decoding functions,
-;; and adding an entry to `format-alist'.  See enriched.el for an example of
-;; how to implement a file format.  There are various functions defined
-;; in this file that may be useful for writing the encoding and decoding
-;; functions:
-;;  * `format-annotate-region' and `format-deannotate-region' allow a single
-;;     alist of information to be used for encoding and decoding.  The alist
-;;     defines a correspondence between strings in the file ("annotations")
-;;     and text-properties in the buffer.
+;; You can define a new format by writing the encoding and decoding
+;; functions, and adding an entry to `format-alist'.  See enriched.el for
+;; an example of how to implement a file format.  There are various
+;; functions defined in this file that may be useful for writing the
+;; encoding and decoding functions:
+;;  * `format-annotate-region' and `format-deannotate-region' allow a
+;;     single alist of information to be used for encoding and decoding.
+;;     The alist defines a correspondence between strings in the file
+;;     ("annotations") and text-properties in the buffer.
 ;;  * `format-replace-strings' is similarly useful for doing simple
 ;;     string->string translations in a reversible manner.
+
+;;; Code:
 
 (put 'buffer-file-format 'permanent-local t)
 
@@ -470,7 +476,7 @@ to write these unknown annotations back into the file."
 		  (message "Extra closing annotation (%s) in file" name)
 	      ;; If one is open, but not on the top of the stack, close
 	      ;; the things in between as well.  Set `found' when the real
-	      ;; oneis closed.
+	      ;; one is closed.
 		(while (not found)
 		  (let* ((top (car open-ans)) ; first on stack: should match.
 			 (top-name (car top))
@@ -497,8 +503,21 @@ to write these unknown annotations back into the file."
 						    (assoc r open-ans))
 						  ans))
 				    nil	; multiple ans not satisfied
-				  ;; Yes, use the current property name &
-				  ;; value.  Set loop variables to nil so loop
+				  ;; Yes, all set.
+				  ;; If there are multiple annotations going
+				  ;; into one text property, adjust the 
+				  ;; begin points of the other annotations
+				  ;; so that we don't get double marking.
+				  (let ((to-reset ans)
+					this-one)
+				    (while to-reset
+				      (setq this-one
+					    (assoc (car to-reset) 
+						   (cdr open-ans)))
+				      (if this-one
+					  (setcdr this-one (list loc)))
+				      (setq to-reset (cdr to-reset))))
+				  ;; Set loop variables to nil so loop
 				  ;; will exit.
 				  (setq alist nil aalist nil matched t
 					;; pop annotation off stack.
@@ -734,11 +753,9 @@ Annotations to open and to close are returned as a dotted pair."
     (if (not prop-alist)
 	nil
       ;; If property is numeric, nil means 0
-      (cond ((and (numberp old) (null new)
-		  (numberp (car (car prop-alist))))
+      (cond ((and (numberp old) (null new))
 	     (setq new 0))
-	    ((and (numberp new) (null old)
-		  (numberp (car (car prop-alist))))
+	    ((and (numberp new) (null old))
 	     (setq old 0)))
       ;; If either old or new is a list, have to treat both that way.
       (if (or (consp old) (consp new))
@@ -763,12 +780,11 @@ Annotations to open and to close are returned as a dotted pair."
 
 (defun format-annotate-atomic-property-change (prop-alist old new)
   "Internal function annotate a single property change.
-PROP-ALIST is the relevant segement of a TRANSLATIONS list.
+PROP-ALIST is the relevant segment of a TRANSLATIONS list.
 OLD and NEW are the values."
   (cond
    ;; Numerical annotation - use difference
-   ((and (numberp old) (numberp new)
-	 (numberp (car (car prop-alist))))
+   ((and (numberp old) (numberp new))
     (let* ((entry (progn
 		    (while (and (car (car prop-alist))
 				(not (numberp (car (car prop-alist)))))

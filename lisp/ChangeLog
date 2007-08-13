@@ -1,0 +1,196 @@
+Tue Dec 10 18:30:01 1996  Rod Whitby  <rwhitby@asc.sps.mot.com>
+
+	* modes/vhdl-mode.el: New File.
+
+Tue Dec 10 17:59:35 1996  Shane Holder  <holder@rsn.hp.com>
+
+	* utils/bench.el: New file.  Utility for benchmarking emacs
+	performance.
+
+Tue Dec 10 10:11:55 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* electric/ebuff-menu.el (electric-buffer-menu-mode-map): Correct
+	bad 19.34 synch patch.
+	
+	* utils/pretty-print.el: New File.
+
+Sun Dec  8 13:59:40 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/files-nomule.el: Documentation corrections.
+
+	* prim/files.el: Synch to 19.15/Emacs 19.34.
+
+Sat Dec  7 18:48:34 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* packages/hexl.el (hexl-mode-map): Corrected obsolescent key
+	names introduced in 19.15-b2.
+
+Fri Dec  6 20:17:47 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* games/yow.el: Sync to GNU Emacs 19.34.
+
+	* games/studly.el: Documentation fixes.
+
+	* games/spook.el: Sync to GNU Emacs 19.34.
+
+	* games/mpuz.el: Sync to GNU Emacs 19.34.
+
+	* games/life.el: Sync to GNU Emacs 19.34.
+
+	* games/hanoi.el: Sync to GNU Emacs 19.34.
+
+	* games/flame.el: Documentation fixes.
+
+	* games/dunnet.el: Sync to GNU Emacs 19.34.
+
+	* games/doctor.el: Sync to GNU Emacs 19.34.
+
+	* games/dissociate.el: Sync to GNU Emacs 19.34.
+
+	* games/cookie1.el: Sync to GNU Emacs 19.34.
+
+	* games/conx.el: Documentation fixes.
+
+	* games/blackbox.el: Sync to GNU Emacs 19.34.
+
+	* games/NeXTify.el: Documentation fixes.
+
+	* packages/man.el: New file/replacement from Emacs 19.34.
+
+	* packages/man-xref.el: New file from Emacs 19.35.
+
+	* utils/smtpmail.el: New file from Emacs 19.34.
+
+Fri Dec  6 09:28:04 1996  MORIOKA Tomohiko <morioka@jaist.ac.jp>
+
+	* prim/startup.el (set-default-load-path): Set default-load-path
+	dynamically since file-detect.el is dumped with XEmacs.
+
+Thu Dec  5 20:37:32 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* emulators/tpu-mapper.el: Total replacement with version in GNU
+	Emacs 19.34.
+
+	* emulators/tpu-extras.el: Total replacement with version in GNU
+	Emacs 19.34.
+
+	* emulators/tpu-edt.el: Total replacement with version in GNU Emacs
+	19.34.
+
+	* comint/history.el: Documentation fixes.
+
+	* comint/gdb.el: Documentation fixes.
+
+	* comint/dbx.el: Documentation fixes.
+
+	* comint/background.el: Documentation fixes.
+
+	* rmail/rmail-xemacs.el: Documentation fixes.
+
+	* rmail/rmail-kill.el: Documentation fixes.
+
+	* emulators/ws-mode.el: Synch up to Emacs 19.34.
+
+	* emulators/teco.el: Documentation cleanup.
+
+	* emulators/mlsupport.el: Synch up to Emacs 19.34.
+
+	* emulators/mlconvert.el: Synch up to Emacs 19.34.
+
+	* emulators/edt-vt100.el: New file from Emacs 19.34.
+
+	* emulators/edt-pc.el: New file from Emacs 19.34.
+
+	* emulators/edt-mapper.el: New file from Emacs 19.34.
+
+	* emulators/edt-lk201.el: New file from Emacs 19.34.
+
+	* emulators/edt.el: Synched up to Emacs 19.34.
+
+Thu Dec  5 12:09:19 1996  Lars Magne Ingebrigtsen  <larsi@ifi.uio.no>
+
+	* prim/replace.el (match-string): Use a function instead of a
+ 	macro to be compatible with .elc files compiled under Emacs.
+
+Thu Dec  5 09:50:12 1996  Bob Weiner <weiner@infodock.com>
+
+	* utils/id-select.el: New file -- Version 1.4.3.
+
+Thu Dec  5 09:17:53 1996  Gary D. Foster  <Gary.Foster@corp.sun.com>
+
+	* emulators/crisp.el: New file.
+
+	* emulators/scroll-lock.el: New file.
+
+Thu Dec  5 00:15:59 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/help.el: A callable library-type function should not
+ 	contain an unprotected print statement.  This change implements my
+ 	version of Erik Naggum's statement about locate-library being less
+ 	chatty in Emacs 19.35.
+
+Wed Dec  4 22:00:49 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* utils/flow-ctrl.el: Synch up to Emacs 19.34.
+
+	* utils/forms.el: Synch up to Emacs 19.34.
+
+	* packages/column.el: Allow column numbers to start at one.
+
+	* prim/userlock.el: Synch up to Emacs 19.34.
+
+	* prim/paragraphs.el: Synch up to Emacs 19.34.
+
+	* prim/page.el: Synch up to Emacs 19.34.
+
+	* prim/options.el: Synch up to Emacs 19.34.
+
+	* prim/novice.el: Synch up to Emacs 19.34.
+
+	* prim/rect.el: Sync up to Emacs 19.34.
+
+	* prim/reposition.el: Synch up to Emacs 19.34.
+
+	* prim/replace.el: Synch up to Emacs 19.34.
+
+	* prim/register.el: Synch up to Emacs 19.34.
+
+	* prim/indent.el: Synch up to Emacs 19.34.
+
+	* prim/subr.el: Synch up to Emacs 19.34.
+
+	* prim/simple.el: Synch up to Emacs 19.34.
+
+	* prim/debug.el: Synch up to Emacs 19.34.
+
+	* edebug/cl-specs.el: Comment formatting changes.
+
+	* edebug/cl-read.el: Protect advisement of eval-region from being
+ 	evaluated more than once.
+
+	Comment formatting changes.
+	
+	* edebug/advise-eval-region.el: New File.  Separate out advise for
+	eval-region so it is only evaluated once.
+
+	* packages/icomplete.el: Fix a bug in locating command bound to key.
+
+	icomplete-exhibit needs to be called in the setup-hook.
+
+	* packages/apropos.el: Correct a typo in button binding. 
+
+	Fixes the bug where if apropos-label-face is actually defined as
+ 	face, apropos bombs with an error
+
+	Do a (provide 'apropos), like all packages should.
+
+	Provides an apropos-mode-hook for Apropos Mode buffers (otherwise
+ 	customization is unnecessarily painful).
+
+	Redefines the default faces for the various apropos faces so they
+ 	come out in color by default (defaults are based on various
+ 	standard font-lock faces).
+	
+	* version.el: Bumped up to b31.
+	
+

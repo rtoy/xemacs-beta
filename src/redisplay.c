@@ -477,6 +477,7 @@ Lisp_Object Vminimum_line_ascent, Vminimum_line_descent;
 Lisp_Object Vuse_left_overflow, Vuse_right_overflow;
 Lisp_Object Vtext_cursor_visible_p;
 
+int column_number_start_at_one;
 
 /***************************************************************************/
 /*									   */
@@ -5703,7 +5704,7 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
       /* print the current column */
     case 'c':
       {
-	int col = current_column (b);
+	int col = current_column (b) + (column_number_start_at_one != 0);
 	int temp = col;
 	int size = 2;
 	char *buf;
@@ -8298,6 +8299,11 @@ is not valid when these functions are called.
 See `set-window-redisplay-end-trigger'.
 */ );
   Vredisplay_end_trigger_functions = Qnil;
+
+  DEFVAR_BOOL ("column-number-start-at-one", &column_number_start_at_one /*
+Non-nil means column display number starts at 1.
+*/ );
+  column_number_start_at_one = 1;
 }
 
 void
@@ -8397,4 +8403,5 @@ This is a specifier; use `set-specifier' to change it.
 				      text_cursor_visible_p),
 			 text_cursor_visible_p_changed,
 			 0, 0);
+
 }

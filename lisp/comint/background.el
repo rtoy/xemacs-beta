@@ -4,20 +4,25 @@
 ;; Keywords: processes
 
 ;; This file is part of XEmacs.
-;; 
+
 ;; XEmacs is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2 of the License, or
 ;; (at your option) any later version.
-;; 
+
 ;; XEmacs is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
-;; 
+
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; if not, write to the Free Software
-;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
+
+;;; Synched up with: Not in FSF
+
+;;; Commentary:
 
 ;; - Adapted to use comint and cleaned up somewhat. Olin Shivers 5/90
 ;; - Background failed to set the process buffer's working directory
@@ -37,6 +42,8 @@
 ;; - Dec 29 1995: changed for new stuff (shell-command-switch, second
 ;;   arg to shell-command --> BUFFER-NAME arg to background) from
 ;;   FSF 19.30.  Ben Wing
+
+;;; Code:
 
 (provide 'background)
 (require 'comint)
@@ -116,3 +123,5 @@ If omitted, a buffer name is constructed from the command run."
 		       (if at-end (goto-char (point-max))))
 		     (set-buffer-modified-p nil)))))
       (store-match-data ms))))
+
+;;; background.el ends here

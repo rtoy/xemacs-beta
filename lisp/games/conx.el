@@ -1,11 +1,34 @@
-;;; -*- Mode:Emacs-Lisp; Blat:Foop -*-
+;;; conx.el --- Yet another dissociater
+
+;; Copyright status unknown
+
+;; Author: Jamie Zawinski <jwz@netscape.com>
+;; Keywords: games
+
+;; This file is part of XEmacs.
+
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
+
+;;; Synched up with: Not in FSF
+
+;;; Commentary:
 
 ;;; conx.el: Yet Another Dissociator.
 ;;; Original design by Skef Wholey <skef@cs.cmu.edu>;
-;;; ported to Emacs-Lisp by Jamie Zawinski <jwz@lucid.com>, 5-mar-91.
-;;;
-(defconst conx-version "1.6,  6-may-94.")
-;;;
+;;; ported to Emacs-Lisp by Jamie Zawinski <jwz@netscape.com>, 5-mar-91.
 ;;; Run this compiled.  It will be an order of magnitude faster.
 ;;;
 ;;; Select a buffer with a lot of text in it.  Say M-x conx-buffer
@@ -46,6 +69,9 @@
 ;;;
 ;;;  o  It could stand to be faster...
 
+;;; Code:
+(defconst conx-version "1.6,  6-may-94.")
+
 (defvar conx-bounce 10) ; 1/x
 (defvar conx-hashtable-size 9923)  ; 9923 is prime
 (defconst conx-words-hashtable nil)
@@ -53,7 +79,7 @@
 (defconst conx-words-vector-fp 0)
 
 (defconst conx-last-word nil)
-
+p
 (defvar conx-files nil "FYI")
 
 (defun conx-init ()
@@ -777,3 +803,4 @@ will overflow static limits in most K&R preprocessors."
 	    conx-words-hashtable)
   (sort-numeric-fields -1 (point-min) (point-max)))
 
+;;; conx.el ends here

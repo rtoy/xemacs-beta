@@ -20,7 +20,13 @@
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: Not in FSF.
+;;; Synched up with: FSF 19.34 (files.el).
+
+;;; Commentary:
+
+;; These stubs were moved from the bottom of files.el.
+
+;;; Code:
 
 (defun insert-file-contents (filename &optional visit beg end replace)
   "Insert contents of file FILENAME after point.
@@ -75,3 +81,4 @@ If optional fourth arg NOSUFFIX is non-nil, don't try adding
 Return t if file exists."
   (load-internal file noerror nomessage nosuffix nil nil))
 
+;;; files-nomule.el ends here

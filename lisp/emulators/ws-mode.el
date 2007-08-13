@@ -1,169 +1,35 @@
 ;;; ws-mode.el --- WordStar emulation mode for GNU Emacs
 
-;; Author:		Juergen Nickelsen <nickel@cs.tu-berlin.de>
-;; Created:		13 Feb 1991
-;; Version:		0.7
-
 ;; Copyright (C) 1991 Free Software Foundation, Inc.
 
-;; This file is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY.  No author or distributor
-;; accepts responsibility to anyone for the consequences of using it
-;; or for whether it serves any particular purpose or works at all,
-;; unless he says so in writing.  Refer to the GNU Emacs General Public
-;; License for full details.
+;; Author: Juergen Nickelsen <nickel@cs.tu-berlin.de>
+;; Version: 0.7
+;; Keywords: emulations
 
-;; Everyone is granted permission to copy, modify and redistribute
-;; this file, but only under the conditions described in the
-;; GNU Emacs General Public License.   A copy of this license is
-;; supposed to have been given to you along with GNU Emacs so you
-;; can know your rights and responsibilities.  It should be in a
-;; file named COPYING.  Among other things, the copyright notice
-;; and this notice must be preserved on all copies.
+;; This file is part of XEmacs.
 
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
 
-;; How to install ws-mode.el:
-;;
-;; either you
-;; put the following line into your default.el (usually
-;; /usr/local/emacs/lisp/default.el):
-;;     (autoload 'wordstar-mode "ws-mode.el" "WordStar emulation mode." t)
-;; put ws-mode.el into a directory in your Emacs load-path (usually
-;; /usr/local/emacs/local/lisp).
-;;
-;; or you
-;; put ws-mode.el into your directory $HOME/lib/emacs (or something
-;; like that)
-;; put the following two lines into your file $HOME/.emacs
-;;     (autoload 'wordstar-mode (expand-file-name "~/lib/emacs/ws-mode.el")
-;;               "WordStar emulation mode." t)
-;;
-;; You can then invoke wordstar-mode for a buffer by typing
-;;     M-x wordstar-mode
-;;
-;; If you want to use Emacs in wordstar-mode by default, put the 
-;; following line in addition into your file $HOME/.emacs :
-;;     (setq default-major-mode 'wordstar-mode)
-;;
-;; If you want to use Emacs *always* in wordstar-mode, even when the
-;; file type would indicate another mode, put the follwoing line in
-;; addition into your file $HOME/.emacs :
-;;     (setq auto-mode-alist nil)
-;;
-;; Enjoy!
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 
+;; You should have received a copy of the GNU General Public License
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
+;;; Synched up with: FSF 19.34
 
-(defun wordstar-mode ()
-  "Major mode with WordStar-like key bindings.
+;;; Commentary:
 
-BUGS:
- - Help menus with WordStar commands (C-j just calls help-for-help)
-   are not implemented
- - Options for search and replace
- - Show markers (C-k h) is somewhat strange
- - Search and replace (C-q a) is only available in forward direction
+;; This emulates WordStar, with a major mode.
 
-No key bindings beginning with ESC are installed, they will work
-Emacs-like.
-
-The key bindings are:
-
-  C-a		backward-word
-  C-b		fill-paragraph
-  C-c		scroll-up-line
-  C-d		forward-char
-  C-e		previous-line
-  C-f		forward-word
-  C-g		delete-char
-  C-h		backward-char
-  C-i		indent-for-tab-command
-  C-j		help-for-help
-  C-k		ordstar-C-k-map
-  C-l		ws-repeat-search
-  C-n		open-line
-  C-p		quoted-insert
-  C-r		scroll-down-line
-  C-s		backward-char
-  C-t		kill-word
-  C-u		keyboard-quit
-  C-v		overwrite-mode
-  C-w		scroll-down
-  C-x		next-line
-  C-y		kill-complete-line
-  C-z		scroll-up
-
-  C-k 0		ws-set-marker-0
-  C-k 1		ws-set-marker-1
-  C-k 2		ws-set-marker-2
-  C-k 3		ws-set-marker-3
-  C-k 4		ws-set-marker-4
-  C-k 5		ws-set-marker-5
-  C-k 6		ws-set-marker-6
-  C-k 7		ws-set-marker-7
-  C-k 8		ws-set-marker-8
-  C-k 9		ws-set-marker-9
-  C-k b		ws-begin-block
-  C-k c		ws-copy-block
-  C-k d		save-buffers-kill-emacs
-  C-k f		find-file
-  C-k h		ws-show-markers
-  C-k i		ws-indent-block
-  C-k k		ws-end-block
-  C-k p		ws-print-block
-  C-k q		kill-emacs
-  C-k r		insert-file
-  C-k s		save-some-buffers
-  C-k t		ws-mark-word
-  C-k u		ws-exdent-block
-  C-k C-u	keyboard-quit
-  C-k v		ws-move-block
-  C-k w		ws-write-block
-  C-k x		kill-emacs
-  C-k y		ws-delete-block
-
-  C-o c		center-line
-  C-o b		switch-to-buffer
-  C-o j		justify-current-line
-  C-o k		kill-buffer
-  C-o l		list-buffers
-  C-o m		auto-fill-mode
-  C-o r		set-fill-column
-  C-o C-u	keyboard-quit
-  C-o wd	delete-other-windows
-  C-o wh	split-window-horizontally
-  C-o wo	other-window
-  C-o wv	split-window-vertically
-
-  C-q 0		ws-find-marker-0
-  C-q 1		ws-find-marker-1
-  C-q 2		ws-find-marker-2
-  C-q 3		ws-find-marker-3
-  C-q 4		ws-find-marker-4
-  C-q 5		ws-find-marker-5
-  C-q 6		ws-find-marker-6
-  C-q 7		ws-find-marker-7
-  C-q 8		ws-find-marker-8
-  C-q 9		ws-find-marker-9
-  C-q a		ws-query-replace
-  C-q b		ws-to-block-begin
-  C-q c		end-of-buffer
-  C-q d		end-of-line
-  C-q f		ws-search
-  C-q k		ws-to-block-end
-  C-q l		ws-undo
-  C-q p		ws-last-cursorp
-  C-q r		beginning-of-buffer
-  C-q C-u	keyboard-quit
-  C-q w		ws-last-error
-  C-q y		ws-kill-eol
-  C-q DEL	ws-kill-bol
-"
-  (interactive)
-  (kill-all-local-variables)
-  (use-local-map wordstar-mode-map)
-  (setq mode-name "WordStar")
-  (setq major-mode 'wordstar-mode))
+;;; Code:
 
 (defvar wordstar-mode-map nil "")
 (defvar wordstar-C-j-map nil "")
@@ -258,8 +124,8 @@ The key bindings are:
   ;; wordstar-C-o-map
   
   (define-key wordstar-C-o-map " " ())
-  (define-key wordstar-C-o-map "c" 'center-line)
-  (define-key wordstar-C-o-map "\C-c" 'center-line)
+  (define-key wordstar-C-o-map "c" 'wordstar-center-line)
+  (define-key wordstar-C-o-map "\C-c" 'wordstar-center-line)
   (define-key wordstar-C-o-map "b" 'switch-to-buffer)
   (define-key wordstar-C-o-map "\C-b" 'switch-to-buffer)
   (define-key wordstar-C-o-map "j" 'justify-current-line)
@@ -317,21 +183,133 @@ The key bindings are:
   (define-key wordstar-C-q-map "\C-y" 'ws-kill-eol)
   (define-key wordstar-C-q-map "\177" 'ws-kill-bol))
 
+;;;###autoload
+(defun wordstar-mode ()
+  "Major mode with WordStar-like key bindings.
 
-(defun center-paragraph ()
+BUGS:
+ - Help menus with WordStar commands (C-j just calls help-for-help)
+   are not implemented
+ - Options for search and replace
+ - Show markers (C-k h) is somewhat strange
+ - Search and replace (C-q a) is only available in forward direction
+
+No key bindings beginning with ESC are installed, they will work
+Emacs-like.
+
+The key bindings are:
+
+  C-a		backward-word
+  C-b		fill-paragraph
+  C-c		scroll-up-line
+  C-d		forward-char
+  C-e		previous-line
+  C-f		forward-word
+  C-g		delete-char
+  C-h		backward-char
+  C-i		indent-for-tab-command
+  C-j		help-for-help
+  C-k		ordstar-C-k-map
+  C-l		ws-repeat-search
+  C-n		open-line
+  C-p		quoted-insert
+  C-r		scroll-down-line
+  C-s		backward-char
+  C-t		kill-word
+  C-u		keyboard-quit
+  C-v		overwrite-mode
+  C-w		scroll-down
+  C-x		next-line
+  C-y		kill-complete-line
+  C-z		scroll-up
+
+  C-k 0		ws-set-marker-0
+  C-k 1		ws-set-marker-1
+  C-k 2		ws-set-marker-2
+  C-k 3		ws-set-marker-3
+  C-k 4		ws-set-marker-4
+  C-k 5		ws-set-marker-5
+  C-k 6		ws-set-marker-6
+  C-k 7		ws-set-marker-7
+  C-k 8		ws-set-marker-8
+  C-k 9		ws-set-marker-9
+  C-k b		ws-begin-block
+  C-k c		ws-copy-block
+  C-k d		save-buffers-kill-emacs
+  C-k f		find-file
+  C-k h		ws-show-markers
+  C-k i		ws-indent-block
+  C-k k		ws-end-block
+  C-k p		ws-print-block
+  C-k q		kill-emacs
+  C-k r		insert-file
+  C-k s		save-some-buffers
+  C-k t		ws-mark-word
+  C-k u		ws-exdent-block
+  C-k C-u	keyboard-quit
+  C-k v		ws-move-block
+  C-k w		ws-write-block
+  C-k x		kill-emacs
+  C-k y		ws-delete-block
+
+  C-o c		wordstar-center-line
+  C-o b		switch-to-buffer
+  C-o j		justify-current-line
+  C-o k		kill-buffer
+  C-o l		list-buffers
+  C-o m		auto-fill-mode
+  C-o r		set-fill-column
+  C-o C-u	keyboard-quit
+  C-o wd	delete-other-windows
+  C-o wh	split-window-horizontally
+  C-o wo	other-window
+  C-o wv	split-window-vertically
+
+  C-q 0		ws-find-marker-0
+  C-q 1		ws-find-marker-1
+  C-q 2		ws-find-marker-2
+  C-q 3		ws-find-marker-3
+  C-q 4		ws-find-marker-4
+  C-q 5		ws-find-marker-5
+  C-q 6		ws-find-marker-6
+  C-q 7		ws-find-marker-7
+  C-q 8		ws-find-marker-8
+  C-q 9		ws-find-marker-9
+  C-q a		ws-query-replace
+  C-q b		ws-to-block-begin
+  C-q c		end-of-buffer
+  C-q d		end-of-line
+  C-q f		ws-search
+  C-q k		ws-to-block-end
+  C-q l		ws-undo
+  C-q p		ws-last-cursorp
+  C-q r		beginning-of-buffer
+  C-q C-u	keyboard-quit
+  C-q w		ws-last-error
+  C-q y		ws-kill-eol
+  C-q DEL	ws-kill-bol
+"
+  (interactive)
+  (kill-all-local-variables)
+  (use-local-map wordstar-mode-map)
+  (setq mode-name "WordStar")
+  (setq major-mode 'wordstar-mode))
+
+
+(defun wordstar-center-paragraph ()
   "Center each line in the paragraph at or after point.
-See center-line for more info."
+See `wordstar-center-line' for more info."
   (interactive)
   (save-excursion
     (forward-paragraph)
     (or (bolp) (newline 1))
     (let ((end (point)))
       (backward-paragraph)
-      (center-region (point) end))))
+      (wordstar-center-region (point) end))))
 
-(defun center-region (from to)
+(defun wordstar-center-region (from to)
   "Center each line starting in the region.
-See center-line for more info."
+See `wordstar-center-line' for more info."
   (interactive "r")
   (if (> from to)
       (let ((tem to))
@@ -341,10 +319,10 @@ See center-line for more info."
       (narrow-to-region from to)
       (goto-char from)
       (while (not (eobp))
-	(center-line)
+	(wordstar-center-line)
 	(forward-line 1)))))
 
-(defun center-line ()
+(defun wordstar-center-line ()
   "Center the line point is on, within the width specified by `fill-column'.
 This means adjusting the indentation to match
 the distance between the end of the text and `fill-column'."
@@ -496,7 +474,7 @@ in ws-last-errormessage for recovery with C-q w."
 
 
 (defun ws-indent-block ()
-  "In WordStar mode: Indent block (not yet implemeted)."
+  "In WordStar mode: Indent block (not yet implemented)."
   (interactive)
   (ws-error "Indent block not yet implemented"))
 
@@ -515,10 +493,10 @@ in ws-last-errormessage for recovery with C-q w."
   "In WordStar mode: Mark current word as block."
   (interactive)
   (save-excursion
-    (forward-word)
+    (forward-word 1)
     (sit-for 1)
     (ws-end-block)
-    (backward-word)
+    (forward-word -1)
     (sit-for 1)
     (ws-begin-block)))
 
@@ -531,7 +509,8 @@ in ws-last-errormessage for recovery with C-q w."
   "In WordStar mode: Move block to current cursor position."
   (interactive)
   (if (and ws-block-begin-marker ws-block-end-marker)
-      (let () 
+      (let ()
+	;; XEmacs
 	(kill-region ws-block-begin-marker ws-block-end-marker 'silent)
 	(yank)
 	(save-excursion
@@ -724,7 +703,7 @@ This will only work for errors raised by WordStar mode functions."
 
 (defun ws-kill-bol ()
   "In WordStar mode: Kill to beginning of line 
-(like WordStar, not like Emacs)."
+\(like WordStar, not like Emacs)."
   (interactive)
   (let ((p (point)))
     (beginning-of-line)

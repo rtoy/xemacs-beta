@@ -21,7 +21,7 @@ for dir in  .  ..  ../..  editor  ../editor  ; do
 done
 
 if test ! -d lisp/. ; then
-  echo "$0: Can't find the `lisp' directory."
+  echo "$0: Can't find the \`lisp' directory."
   exit 1
 fi
 
@@ -52,11 +52,8 @@ ignore_dirs="egg its quail"	# ### Not ported yet...
 
 # Only use Mule XEmacs to compile Mule-specific elisp dirs
 echo "Checking for Mule support..."
-# You cannot just use 'test -n' here because it will fail on a null
-# return value (null != null string)
-mule_check=`$REAL -batch -no-site-file \
- -eval "(when (featurep 'mule) (message \"yes\"))" 2>&1`
-if [ -z "$mule_check" ]; then
+lisp_prog='(when (featurep (quote mule)) (message "yes"))'
+if test -z `$REAL -batch -no-site-file -eval "$lisp_prog" 2>&1` ; then
   ignore_dirs="$ignore_dirs mule"
 fi
 

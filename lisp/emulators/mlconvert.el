@@ -1,7 +1,9 @@
 ;;; mlconvert.el --- convert buffer of Mocklisp code to real lisp.
-;; Keywords: emulations
 
 ;; Copyright (C) 1985 Free Software Foundation, Inc.
+
+;; Maintainer: FSF
+;; Keywords: emulations
 
 ;; This file is part of XEmacs.
 
@@ -17,7 +19,18 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
+
+;;; Synched up with: FSF 19.34
+
+;;; Commentary:
+
+;; This package converts Mocklisp code written under a Gosling or UniPress
+;; Emacs for use with GNU Emacs.  The translated code will require runtime
+;; support from the mlsupport.el equivalent.
+
+;;; Code:
 
 ;;;###autoload
 (defun convert-mocklisp-buffer ()
@@ -100,19 +113,19 @@
 		       (if (looking-at "setq[ \t\n]+buffer-modified-p")
 			   (replace-match "set-buffer-modified-p"))))
 
-(ml-expansion 'while '(lambda ()
-			 (let ((end (progn (forward-sexp 2) (point-marker)))
-			       (start (progn (forward-sexp -1) (point))))
-			   (let ((cond (buffer-substring start end)))
-			     (cond ((equal cond "1")
-				    (delete-region (point) end)
-				    (insert "t"))
-				   (t
-				    (insert "(not (zerop ")
-				    (goto-char end)
-				    (insert "))")))
-			     (set-marker end nil)
-			     (goto-char start)))))
+;;(ml-expansion 'while '(lambda ()
+;;			 (let ((end (progn (forward-sexp 2) (point-marker)))
+;;			       (start (progn (forward-sexp -1) (point))))
+;;			   (let ((cond (buffer-substring start end)))
+;;			     (cond ((equal cond "1")
+;;				    (delete-region (point) end)
+;;				    (insert "t"))
+;;				   (t
+;;				    (insert "(not (zerop ")
+;;				    (goto-char end)
+;;				    (insert "))")))
+;;			     (set-marker end nil)
+;;			     (goto-char start)))))
 
 (ml-expansion 'arg "ml-arg")
 (ml-expansion 'nargs "ml-nargs")
@@ -184,6 +197,7 @@
 (ml-expansion 'get-tty-no-blanks-input "read-no-blanks-input")
 (ml-expansion 'get-tty-key "read-key")
 
+(ml-expansion 'concat "ml-concat")
 (ml-expansion 'c= "char-equal")
 (ml-expansion 'goto-character "goto-char")
 (ml-expansion 'substr "ml-substr")
@@ -273,3 +287,4 @@
 
 ;Variable pause-writes-files
 
+;;; mlconvert.el ends here

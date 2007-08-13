@@ -1124,11 +1124,8 @@ case "${canonical}" in
 
     case "${canonical}" in
       *-hp-hpux7*     )  opsys=hpux      ;;
-      *-hp-hpux8shr*  )  opsys=hpux8shr  ;;
       *-hp-hpux8*     )  opsys=hpux8     ;;
-      *-hp-hpux9shr*  )  opsys=hpux9shr  ;;
       *-hp-hpux9*     )  opsys=hpux9     ;;
-      *-hp-hpux10shr* )  opsys=hpux10shr ;;
       *-hp-hpux10*    )  opsys=hpux10    ;;
       * )
         case "`uname -r`" in
@@ -1142,6 +1139,8 @@ case "${canonical}" in
         esac
       ;;
     esac
+
+    case "${canonical}" in *-hp-hpux*shr* ) opsys="${opsys}-shr" ;; esac
   ;;
 
   hppa-*-nextstep* ) machine=hp800 opsys=nextstep ;;
@@ -1333,12 +1332,7 @@ case "${canonical}" in
     
     case "${canonical}" in
       ## The Sun386 didn't get past 4.0.
-      i[3-9]86-*-sunos4	   ) opsys=sunos4-0      ;;
-      *-sunos4shr*	   ) opsys=sunos4-0shr   ;;
-      *-sunos4-0shr*	   ) opsys=sunos4-0shr   ;;
-      *-sunos4-1shr*	   ) opsys=sunos4-1shr   ;;
-      *-sunos4-1-2shr*	   ) opsys=sunos4-1-2shr ;;
-      *-sunos4-1-[3-9]shr* ) opsys=sunos4-1-3shr ;;
+      i[3-9]86-*-sunos4*   ) opsys=sunos4-0      ;;
       *-sunos4.0*	   ) opsys=sunos4-0      ;;
       *-sunos4.1.2*        ) opsys=sunos4-1-2    ;;
       *-sunos4.1.[3-9]*	   ) opsys=sunos4-1-3    ;;
@@ -1352,6 +1346,8 @@ case "${canonical}" in
       *-mach*		   ) opsys=mach-bsd4-3   ;;
       *			   ) opsys=bsd4-2	 ;;
     esac
+
+    case "${canonical}" in *-sunos4*shr* ) opsys="${opsys}-shr" ;; esac
 
     ## Watch out for a compiler that is guaranteed not to work.
     case "${canonical}" in
@@ -1499,13 +1495,11 @@ fi
 
 if test "${dynamic}" = "yes" ; then
   case "${opsys}" in
-    hpux8 | hpux9 | hpux10 | sunos4-0 | sunos4-1 | sunos4-1-2 | sunos4-1-3 | sco5 ) 
-    opsys="${opsys}-shr" ;;
+    hpux* | sunos4* | sco5 ) opsys="${opsys}-shr" ;;
   esac
 elif test "${dynamic}" = "no" ; then
   case "${opsys}" in
-    sol2 | sol2-3 | sol2-4 | decosf1-3 | decosf3-1 | decosf3-2 | linux )
-    opsys="${opsys}-static" ;;
+    sol2* | decosf1-3 | decosf3-* | linux ) opsys="${opsys}-static" ;;
   esac
 fi
 
@@ -2723,7 +2717,7 @@ if test "${opsys}" = "hpux9"; then
   esac
 fi
 
-if test "${opsys}" = "hpux9shr"; then
+if test "${opsys}" = "hpux-9shr"; then
   case "${x_libraries}" in
     *X11R4* ) opsysfile="s/hpux9shxr4.h" ;;
   esac

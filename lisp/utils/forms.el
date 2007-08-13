@@ -1,8 +1,8 @@
-;;; forms.el --- Forms mode: edit a file as a form to fill in.
+;;; forms.el --- Forms mode: edit a file as a form to fill in
 
-;;; Copyright (C) 1991, 1993 Free Software Foundation, Inc.
+;; Copyright (C) 1991, 1994, 1995, 1996 Free Software Foundation, Inc.
 
-;; Author: Johan Vromans <jv@nl.net>
+;; Author: Johan Vromans <jvromans@squirrel.nl>
 ;; Version: Revision: 2.10 
 ;; Keywords: extensions
 ;; hacked on by jwz for XEmacs
@@ -20,262 +20,278 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.28.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
-;;; Visit a file using a form.
-;;;
-;;; === Naming conventions
-;;;
-;;; The names of all variables and functions start with 'forms-'.
-;;; Names which start with 'forms--' are intended for internal use, and
-;;; should *NOT* be used from the outside.
-;;;
-;;; All variables are buffer-local, to enable multiple forms visits 
-;;; simultaneously.
-;;; Variable `forms--mode-setup' is local to *ALL* buffers, for it 
-;;; controls if forms-mode has been enabled in a buffer.
-;;;
-;;; === How it works ===
-;;;
-;;; Forms mode means visiting a data file which is supposed to consist
-;;; of records each containing a number of fields.  The records are
-;;; separated by a newline, the fields are separated by a user-defined
-;;; field separater (default: TAB).
-;;; When shown, a record is transferred to an Emacs buffer and
-;;; presented using a user-defined form.  One record is shown at a
-;;; time.
-;;;
-;;; Forms mode is a composite mode.  It involves two files, and two
-;;; buffers.
-;;; The first file, called the control file, defines the name of the
-;;; data file and the forms format.  This file buffer will be used to
-;;; present the forms.
-;;; The second file holds the actual data.  The buffer of this file
-;;; will be buried, for it is never accessed directly.
-;;;
-;;; Forms mode is invoked using M-x forms-find-file control-file .
-;;; Alternativily `forms-find-file-other-window' can be used.
-;;;
-;;; You may also visit the control file, and switch to forms mode by hand
-;;; with M-x forms-mode .
-;;;
-;;; Automatic mode switching is supported if you specify 
-;;; "-*- forms -*-" in the first line of the control file.
-;;; 
-;;; The control file is visited, evaluated using `eval-current-buffer',
-;;; and should set at least the following variables:
-;;;
-;;;	forms-file				[string]
-;;;			The name of the data file.
-;;;
-;;;	forms-number-of-fields			[integer]
-;;;			The number of fields in each record.
-;;;
-;;;	forms-format-list			[list]
-;;;			Formatting instructions.
-;;;
-;;; `forms-format-list' should be a list, each element containing
-;;;
-;;;   - a string, e.g. "hello".  The string is inserted in the forms
-;;;	"as is".
-;;;   
-;;;   - an integer, denoting a field number.
-;;;	The contents of this field are inserted at this point.
-;;;     Fields are numbered starting with number one.
-;;;   
-;;;   - a function call, e.g. (insert "text").
-;;;	This function call is dynamically evaluated and should return a
-;;;     string.  It should *NOT* have side-effects on the forms being
-;;;     constructed.  The current fields are available to the function
-;;;     in the variable `forms-fields', they should *NOT* be modified.
-;;;   
-;;;   - a lisp symbol, that must evaluate to one of the above.
-;;;
-;;; Optional variables which may be set in the control file:
-;;;
-;;;	forms-field-sep				[string, default TAB]
-;;;			The field separator used to separate the
-;;;			fields in the data file.  It may be a string.
-;;;
-;;;	forms-read-only				[bool, default nil]
-;;;			Non-nil means that the data file is visited
-;;;			read-only (view mode) as opposed to edit mode.
-;;;			If no write access to the data file is
-;;;			possible, view mode is enforced. 
-;;;
-;;;	forms-multi-line			[string, default "^K"]
-;;;			If non-null the records of the data file may
-;;;			contain fields that can span multiple lines in
-;;;			the form.
-;;;			This variable denotes the separator character
-;;;			to be used for this purpose.  Upon display, all
-;;;			occurrencies of this character are translated
-;;;			to newlines.  Upon storage they are translated
-;;;			back to the separator character.
-;;;
-;;;	forms-forms-scroll			[bool, default nil]
-;;;			Non-nil means: rebind locally the commands that
-;;;			perform `scroll-up' or `scroll-down' to use
-;;;			`forms-next-field' resp. `forms-prev-field'.
-;;;
-;;;	forms-forms-jump			[bool, default nil]
-;;;			Non-nil means: rebind locally the commands that
-;;;			perform `beginning-of-buffer' or `end-of-buffer'
-;;;			to perform `forms-first-field' resp. `forms-last-field'.
-;;;
-;;;	forms-read-file-filter			[symbol, default nil]
-;;;			If not nil: this should be the name of a 
-;;;			function that is called after the forms data file
-;;;			has been read.  It can be used to transform
-;;;			the contents of the file into a format more suitable
-;;;			for forms-mode processing.
-;;;
-;;;	forms-write-file-filter			[symbol, default nil]
-;;;			If not nil: this should be the name of a 
-;;;			function that is called before the forms data file
-;;;			is written (saved) to disk.  It can be used to undo
-;;;			the effects of `forms-read-file-filter', if any.
-;;;
-;;;	forms-new-record-filter			[symbol, default nil]
-;;;			If not nil: this should be the name of a 
-;;;			function that is called when a new
-;;;			record is created.  It can be used to fill in
-;;;			the new record with default fields, for example.
-;;;
-;;;	forms-modified-record-filter		[symbol, default nil]
-;;;			If not nil: this should be the name of a 
-;;;			function that is called when a record has
-;;;			been modified.  It is called after the fields
-;;;			are parsed.  It can be used to register
-;;;			modification dates, for example.
-;;;
-;;;	forms-use-extents			[bool, see text for default]
-;;;	forms-use-text-properties		[bool, see text for default]
-;;;			These variables control if forms mode should use
-;;;			text properties or extents to protect the form text
-;;;			from being modified (using text-property `read-only').
-;;;			Also, the read-write fields are shown using a
-;;;			distinct face, if possible.
-;;;			One of these variables defaults to t if running 
-;;;			FSF or Lucid Emacs 19.
-;;;
-;;;	forms-ro-face 				[symbol, default 'default]
-;;;			This is the face that is used to show
-;;;			read-only text on the screen.If used, this
-;;;			variable should be set to a symbol that is a
-;;;			valid face.
-;;;			E.g.
-;;;			  (make-face 'my-face)
-;;;			  (setq forms-ro-face 'my-face)
-;;;
-;;;	forms-rw-face				[symbol, default 'region]
-;;;			This is the face that is used to show
-;;;			read-write text on the screen.
-;;;
-;;; After evaluating the control file, its buffer is cleared and used
-;;; for further processing.
-;;; The data file (as designated by `forms-file') is visited in a buffer
-;;; `forms--file-buffer' which will not normally be shown.
-;;; Great malfunctioning may be expected if this file/buffer is modified
-;;; outside of this package while it is being visited!
-;;;
-;;; Normal operation is to transfer one line (record) from the data file,
-;;; split it into fields (into `forms--the-record-list'), and display it
-;;; using the specs in `forms-format-list'.
-;;; A format routine `forms--format' is built upon startup to format 
-;;; the records according to `forms-format-list'.
-;;;
-;;; When a form is changed the record is updated as soon as this form
-;;; is left.  The contents of the form are parsed using information
-;;; obtained from `forms-format-list', and the fields which are
-;;; deduced from the form are modified.  Fields not shown on the forms
-;;; retain their origional values.  The newly formed record then
-;;; replaces the contents of the old record in `forms--file-buffer'.
-;;; A parse routine `forms--parser' is built upon startup to parse
-;;; the records.
-;;;
-;;; Two exit functions exist: `forms-exit' and `forms-exit-no-save'.
-;;; `forms-exit' saves the data to the file, if modified.
-;;; `forms-exit-no-save` does not.  However, if `forms-exit-no-save'
-;;; is executed and the file buffer has been modified, Emacs will ask
-;;; questions anyway.
-;;;
-;;; Other functions provided by forms mode are:
-;;;
-;;;	paging (forward, backward) by record
-;;;	jumping (first, last, random number)
-;;;	searching
-;;;	creating and deleting records
-;;;	reverting the form (NOT the file buffer)
-;;;	switching edit <-> view mode v.v.
-;;;	jumping from field to field
-;;;
-;;; As an documented side-effect: jumping to the last record in the
-;;; file (using forms-last-record) will adjust forms--total-records if
-;;; needed.
-;;;
-;;; The forms buffer can be in on eof two modes: edit mode or view
-;;; mode.  View mode is a read-only mode, you cannot modify the
-;;; contents of the buffer.
-;;;
-;;; Edit mode commands:
-;;; 
-;;; TAB		 forms-next-field
-;;; \C-c TAB	 forms-next-field
-;;; \C-c <	 forms-first-record
-;;; \C-c >	 forms-last-record
-;;; \C-c ?	 describe-mode
-;;; \C-c \C-k	 forms-delete-record
-;;; \C-c \C-q	 forms-toggle-read-only
-;;; \C-c \C-o	 forms-insert-record
-;;; \C-c \C-l	 forms-jump-record
-;;; \C-c \C-n	 forms-next-record
-;;; \C-c \C-p	 forms-prev-record
-;;; \C-c \C-s	 forms-search
-;;; \C-c \C-x	 forms-exit
-;;; 
-;;; Read-only mode commands:
-;;; 
-;;; SPC 	 forms-next-record
-;;; DEL	 forms-prev-record
-;;; ?	 describe-mode
-;;; \C-q forms-toggle-read-only
-;;; l	 forms-jump-record
-;;; n	 forms-next-record
-;;; p	 forms-prev-record
-;;; s	 forms-search
-;;; x	 forms-exit
-;;; 
-;;; Of course, it is also possible to use the \C-c prefix to obtain the
-;;; same command keys as in edit mode.
-;;; 
-;;; The following bindings are available, independent of the mode: 
-;;; 
-;;; [next]	  forms-next-record
-;;; [prior]	  forms-prev-record
-;;; [begin]	  forms-first-record
-;;; [end]	  forms-last-record
-;;; [S-TAB]	  forms-prev-field
-;;; [backtab] forms-prev-field
-;;;
-;;; For convenience, TAB is always bound to `forms-next-field', so you
-;;; don't need the C-c prefix for this command.
-;;;
-;;; As mentioned above (see `forms-forms-scroll' and `forms-forms-jump')
-;;; the bindings of standard functions `scroll-up', `scroll-down',
-;;; `beginning-of-buffer' and `end-of-buffer' can be locally replaced with
-;;; forms mode functions next/prev record and first/last
-;;; record.
-;;;
-;;; `local-write-file hook' is defined to save the actual data file
-;;; instead of the buffer data, `revert-file-hook' is defined to
-;;; revert a forms to original.
+;; Visit a file using a form.
+;;
+;; === Naming conventions
+;;
+;; The names of all variables and functions start with 'forms-'.
+;; Names which start with 'forms--' are intended for internal use, and
+;; should *NOT* be used from the outside.
+;;
+;; All variables are buffer-local, to enable multiple forms visits 
+;; simultaneously.
+;; Variable `forms--mode-setup' is local to *ALL* buffers, for it 
+;; controls if forms-mode has been enabled in a buffer.
+;;
+;; === How it works ===
+;;
+;; Forms mode means visiting a data file which is supposed to consist
+;; of records each containing a number of fields.  The records are
+;; separated by a newline, the fields are separated by a user-defined
+;; field separator (default: TAB).
+;; When shown, a record is transferred to an Emacs buffer and
+;; presented using a user-defined form.  One record is shown at a
+;; time.
+;;
+;; Forms mode is a composite mode.  It involves two files, and two
+;; buffers.
+;; The first file, called the control file, defines the name of the
+;; data file and the forms format.  This file buffer will be used to
+;; present the forms.
+;; The second file holds the actual data.  The buffer of this file
+;; will be buried, for it is never accessed directly.
+;;
+;; Forms mode is invoked using M-x forms-find-file control-file .
+;; Alternatively `forms-find-file-other-window' can be used.
+;;
+;; You may also visit the control file, and switch to forms mode by hand
+;; with M-x forms-mode .
+;;
+;; Automatic mode switching is supported if you specify 
+;; "-*- forms -*-" in the first line of the control file.
+;; 
+;; The control file is visited, evaluated using `eval-current-buffer',
+;; and should set at least the following variables:
+;;
+;;	forms-file				[string]
+;;			The name of the data file.
+;;
+;;	forms-number-of-fields			[integer]
+;;			The number of fields in each record.
+;;
+;;	forms-format-list			[list]
+;;			Formatting instructions.
+;;
+;; `forms-format-list' should be a list, each element containing
+;;
+;;   - a string, e.g. "hello".  The string is inserted in the forms
+;;	"as is".
+;;   
+;;   - an integer, denoting a field number.
+;;	The contents of this field are inserted at this point.
+;;     Fields are numbered starting with number one.
+;;   
+;;   - a function call, e.g. (insert "text").
+;;	This function call is dynamically evaluated and should return a
+;;     string.  It should *NOT* have side-effects on the forms being
+;;     constructed.  The current fields are available to the function
+;;     in the variable `forms-fields', they should *NOT* be modified.
+;;   
+;;   - a lisp symbol, that must evaluate to one of the above.
+;;
+;; Optional variables which may be set in the control file:
+;;
+;;	forms-field-sep				[string, default TAB]
+;;			The field separator used to separate the
+;;			fields in the data file.  It may be a string.
+;;
+;;	forms-read-only				[bool, default nil]
+;;			Non-nil means that the data file is visited
+;;			read-only (view mode) as opposed to edit mode.
+;;			If no write access to the data file is
+;;			possible, view mode is enforced. 
+;;
+;;	forms-check-number-of-fields            [bool, default t]
+;;			If non-nil, a warning will be issued whenever
+;;			a record is found that does not have the number
+;;			of fields specified by `forms-number-of-fields'.
+;;
+;;	forms-multi-line			[string, default "^K"]
+;;			If non-null the records of the data file may
+;;			contain fields that can span multiple lines in
+;;			the form.
+;;			This variable denotes the separator character
+;;			to be used for this purpose.  Upon display, all
+;;			occurrences of this character are translated
+;;			to newlines.  Upon storage they are translated
+;;			back to the separator character.
+;;
+;;	forms-forms-scroll			[bool, default nil]
+;;			Non-nil means: rebind locally the commands that
+;;			perform `scroll-up' or `scroll-down' to use
+;;			`forms-next-field' resp. `forms-prev-field'.
+;;
+;;	forms-forms-jump			[bool, default nil]
+;;			Non-nil means: rebind locally the commands that
+;;			perform `beginning-of-buffer' or `end-of-buffer'
+;;			to perform `forms-first-field' and `forms-last-field'.
+;;
+;;	forms-insert-after			[bool, default nil]
+;;			Non-nil means: inserts of new records go after
+;;			current record, also initial position is at last
+;;			record.
+;;
+;;	forms-read-file-filter			[symbol, default nil]
+;;			If not nil: this should be the name of a 
+;;			function that is called after the forms data file
+;;			has been read.  It can be used to transform
+;;			the contents of the file into a format more suitable
+;;			for forms-mode processing.
+;;
+;;	forms-write-file-filter			[symbol, default nil]
+;;			If not nil: this should be the name of a 
+;;			function that is called before the forms data file
+;;			is written (saved) to disk.  It can be used to undo
+;;			the effects of `forms-read-file-filter', if any.
+;;
+;;	forms-new-record-filter			[symbol, default nil]
+;;			If not nil: this should be the name of a 
+;;			function that is called when a new
+;;			record is created.  It can be used to fill in
+;;			the new record with default fields, for example.
+;;
+;;	forms-modified-record-filter		[symbol, default nil]
+;;			If not nil: this should be the name of a 
+;;			function that is called when a record has
+;;			been modified.  It is called after the fields
+;;			are parsed.  It can be used to register
+;;			modification dates, for example.
+;;
+;;	forms-use-extents			[bool, see text for default]
+;;	forms-use-text-properties		[bool, see text for default]
+;;			These variables control if forms mode should use
+;;			text properties or extents to protect the form text
+;;			from being modified (using text-property `read-only').
+;;			Also, the read-write fields are shown using a
+;;			distinct face, if possible.
+;;			As of emacs 19.29, the `intangible' text property
+;;			is used to prevent moving into read-only fields.
+;;			This variable defaults to t if running Emacs 19
+;;			with text properties.
+;;			The default face to show read-write fields is
+;;			copied from face `region'.
+;;
+;;	forms-ro-face 				[symbol, default 'default]
+;;			This is the face that is used to show
+;;			read-only text on the screen.If used, this
+;;			variable should be set to a symbol that is a
+;;			valid face.
+;;			E.g.
+;;			  (make-face 'my-face)
+;;			  (setq forms-ro-face 'my-face)
+;;
+;;	forms-rw-face				[symbol, default 'region]
+;;			This is the face that is used to show
+;;			read-write text on the screen.
+;;
+;; After evaluating the control file, its buffer is cleared and used
+;; for further processing.
+;; The data file (as designated by `forms-file') is visited in a buffer
+;; `forms--file-buffer' which will not normally be shown.
+;; Great malfunctioning may be expected if this file/buffer is modified
+;; outside of this package while it is being visited!
+;;
+;; Normal operation is to transfer one line (record) from the data file,
+;; split it into fields (into `forms--the-record-list'), and display it
+;; using the specs in `forms-format-list'.
+;; A format routine `forms--format' is built upon startup to format 
+;; the records according to `forms-format-list'.
+;;
+;; When a form is changed the record is updated as soon as this form
+;; is left.  The contents of the form are parsed using information
+;; obtained from `forms-format-list', and the fields which are
+;; deduced from the form are modified.  Fields not shown on the forms
+;; retain their original values.  The newly formed record then
+;; replaces the contents of the old record in `forms--file-buffer'.
+;; A parse routine `forms--parser' is built upon startup to parse
+;; the records.
+;;
+;; Two exit functions exist: `forms-exit' and `forms-exit-no-save'.
+;; `forms-exit' saves the data to the file, if modified.
+;; `forms-exit-no-save` does not.  However, if `forms-exit-no-save'
+;; is executed and the file buffer has been modified, Emacs will ask
+;; questions anyway.
+;;
+;; Other functions provided by forms mode are:
+;;
+;;	paging (forward, backward) by record
+;;	jumping (first, last, random number)
+;;	searching
+;;	creating and deleting records
+;;	reverting the form (NOT the file buffer)
+;;	switching edit <-> view mode v.v.
+;;	jumping from field to field
+;;
+;; As an documented side-effect: jumping to the last record in the
+;; file (using forms-last-record) will adjust forms--total-records if
+;; needed.
+;;
+;; The forms buffer can be in on eof two modes: edit mode or view
+;; mode.  View mode is a read-only mode, you cannot modify the
+;; contents of the buffer.
+;;
+;; Edit mode commands:
+;; 
+;; TAB		 forms-next-field
+;; \C-c TAB	 forms-next-field
+;; \C-c <	 forms-first-record
+;; \C-c >	 forms-last-record
+;; \C-c ?	 describe-mode
+;; \C-c \C-k	 forms-delete-record
+;; \C-c \C-q	 forms-toggle-read-only
+;; \C-c \C-o	 forms-insert-record
+;; \C-c \C-l	 forms-jump-record
+;; \C-c \C-n	 forms-next-record
+;; \C-c \C-p	 forms-prev-record
+;; \C-c \C-r	 forms-search-backward
+;; \C-c \C-s	 forms-search-forward
+;; \C-c \C-x	 forms-exit
+;; 
+;; Read-only mode commands:
+;; 
+;; SPC 	 forms-next-record
+;; DEL	 forms-prev-record
+;; ?	 describe-mode
+;; \C-q forms-toggle-read-only
+;; l	 forms-jump-record
+;; n	 forms-next-record
+;; p	 forms-prev-record
+;; r	 forms-search-backward
+;; s	 forms-search-forward
+;; x	 forms-exit
+;; 
+;; Of course, it is also possible to use the \C-c prefix to obtain the
+;; same command keys as in edit mode.
+;; 
+;; The following bindings are available, independent of the mode: 
+;; 
+;; [next]	  forms-next-record
+;; [prior]	  forms-prev-record
+;; [begin]	  forms-first-record
+;; [end]	  forms-last-record
+;; [S-TAB]	  forms-prev-field
+;; [backtab] forms-prev-field
+;;
+;; For convenience, TAB is always bound to `forms-next-field', so you
+;; don't need the C-c prefix for this command.
+;;
+;; As mentioned above (see `forms-forms-scroll' and `forms-forms-jump')
+;; the bindings of standard functions `scroll-up', `scroll-down',
+;; `beginning-of-buffer' and `end-of-buffer' can be locally replaced with
+;; forms mode functions next/prev record and first/last
+;; record.
+;;
+;; `local-write-file hook' is defined to save the actual data file
+;; instead of the buffer data, `revert-file-hook' is defined to
+;; revert a forms to original.
 
 ;;; Code:
 
@@ -284,10 +300,10 @@
 (provide 'forms)			;;; official
 (provide 'forms-mode)			;;; for compatibility
 
-(defconst forms-version (substring "!Revision: 2.10 !" 11 -2)
+(defconst forms-version (substring "$Revision: 1.1.1.2 $" 11 -2)
   "The version number of forms-mode (as string).  The complete RCS id is:
 
-  !Id: forms.el,v 2.10 1994/07/26 21:31:13 rms Exp !")
+  $Id: forms.el,v 1.1.1.2 1996/12/18 22:51:25 steve Exp $")
 
 (defvar forms-mode-hooks nil
   "Hook functions to be run upon entering Forms mode.")
@@ -304,6 +320,9 @@
   "Number of fields per record.")
 
 ;;; Optional variables with default values.
+
+(defvar forms-check-number-of-fields t
+  "*If non-nil, warn about records with wrong number of fields.")
 
 (defvar forms-field-sep "\t"
   "Field separator character (default TAB).")
@@ -348,9 +367,13 @@ The contents may NOT be modified.")
 Defaults to t if this emacs is capable of handling text properties.")
 
 (defvar forms-use-text-properties (and (fboundp 'set-text-properties)
-				       (not forms-use-extents))
+				       (not forms-use-extents)) ; XEmacs
   "*Non-nil means: use emacs-19 text properties.
 Defaults to t if this emacs is capable of handling text properties.")
+
+(defvar forms-insert-after nil
+  "*Non-nil means: inserts of new records go after current record.
+Also, initial position is at last record.")
 
 (defvar forms-ro-face (if (string-match "XEmacs" emacs-version)
 			  'forms-label-face
@@ -392,7 +415,7 @@ Defaults to t if this emacs is capable of handling text properties.")
    "List of strings of the current record, as parsed from the file.")
 
 (defvar forms--search-regexp nil
-  "Last regexp used by forms-search.")
+  "Last regexp used by forms-search functions.")
 
 (defvar forms--format nil
   "Formatting routine.")
@@ -415,27 +438,27 @@ Defaults to t if this emacs is capable of handling text properties.")
 
 (defvar forms--rw-face nil
   "Face used to represent read-write data on the screen.")
-
 
 ;;;###autoload 
 (defun forms-mode (&optional primary)
   "Major mode to visit files in a field-structured manner using a form.
 
 Commands:                        Equivalent keys in read-only mode:
-
- TAB          forms-next-field           TAB
- C-c TAB      forms-next-field
- C-c <        forms-first-record         <
- C-c >        forms-last-record          >
- C-c ?        describe-mode              ?
- C-c C-k      forms-delete-record
- C-c C-q      forms-toggle-read-only     q
- C-c C-o      forms-insert-record
- C-c C-l      forms-jump-record          l
- C-c C-n      forms-next-record          n
- C-c C-p      forms-prev-record          p
- C-c C-s      forms-search               s
- C-c C-x      forms-exit                 x"
+ TAB            forms-next-field          TAB
+ \\C-c TAB       forms-next-field          
+ \\C-c <         forms-first-record         <
+ \\C-c >         forms-last-record          >
+ \\C-c ?         describe-mode              ?
+ \\C-c \\C-k      forms-delete-record
+ \\C-c \\C-q      forms-toggle-read-only     q
+ \\C-c \\C-o      forms-insert-record
+ \\C-c \\C-l      forms-jump-record          l
+ \\C-c \\C-n      forms-next-record          n
+ \\C-c \\C-p      forms-prev-record          p
+ \\C-c \\C-r      forms-search-backward      r
+ \\C-c \\C-s      forms-search-forward       s
+ \\C-c \\C-x      forms-exit                 x
+"
   (interactive)
 
   ;; This is not a simple major mode, as usual.  Therefore, forms-mode
@@ -466,6 +489,7 @@ Commands:                        Equivalent keys in read-only mode:
         (make-local-variable 'forms-multi-line)
 	(make-local-variable 'forms-forms-scroll)
 	(make-local-variable 'forms-forms-jump)
+	(make-local-variable 'forms-insert-after)
 ;;	(make-local-variable 'forms-use-text-properties)
 
 	;; Filter functions.
@@ -480,7 +504,7 @@ Commands:                        Equivalent keys in read-only mode:
 	(setq forms-new-record-filter nil)
 	(setq forms-modified-record-filter nil)
 
-	(if forms--lemacs-p
+	(if forms--lemacs-p ; XEmacs
 	    (progn
 	      ;; forms-field-face defaults to bold.
 	      ;; forms-label-face defaults to no attributes
@@ -578,8 +602,7 @@ Commands:                        Equivalent keys in read-only mode:
 	(make-local-variable 'forms--dynamic-text)
 
 	;; Prevent accidental overwrite of the control file and autosave.
-	(setq buffer-file-name nil)
-	(auto-save-mode nil)
+	(set-visited-file-name nil)
 
 	;; Prepare this buffer for further processing.
 	(setq buffer-read-only nil)
@@ -621,6 +644,10 @@ Commands:                        Equivalent keys in read-only mode:
     ;;(message "forms: building keymap... done.")
     )
 
+  ;; set the major mode indicator
+  (setq major-mode 'forms-mode)
+  (setq mode-name "Forms")
+
   ;; find the data file
   (setq forms--file-buffer (find-file-noselect forms-file))
 
@@ -630,9 +657,10 @@ Commands:                        Equivalent keys in read-only mode:
     (if read-file-filter
 	(save-excursion
 	  (set-buffer forms--file-buffer)
-	  (let ((inhibit-read-only t))
-	    (run-hooks 'read-file-filter))
-	  (set-buffer-modified-p nil)
+	  (let ((inhibit-read-only t)
+		(file-modified (buffer-modified-p)))
+	    (run-hooks 'read-file-filter)
+	    (if (not file-modified) (set-buffer-modified-p nil)))
 	  (if write-file-filter
 	      (progn
 		(make-variable-buffer-local 'local-write-file-hooks)
@@ -641,7 +669,8 @@ Commands:                        Equivalent keys in read-only mode:
 	  (save-excursion
 	    (set-buffer forms--file-buffer)
 	    (make-variable-buffer-local 'local-write-file-hooks)
-	    (setq local-write-file-hooks write-file-filter)))))
+	    ;; (setq local-write-file-hooks (list write-file-filter))))))
+	    (add-hook 'local-write-file-hooks 'write-file-filter)))))
 
   ;; count the number of records, and set see if it may be modified
   (let (ro)
@@ -660,9 +689,6 @@ Commands:                        Equivalent keys in read-only mode:
 	(setq forms-read-only t)))
 
   ;;(message "forms: proceeding setup...")
-  ;; set the major mode indicator
-  (setq major-mode 'forms-mode)
-  (setq mode-name "Forms")
 
   ;; Since we aren't really implementing a minor mode, we hack the modeline
   ;; directly to get the text " View " into forms-read-only form buffers.  For
@@ -684,8 +710,8 @@ Commands:                        Equivalent keys in read-only mode:
 	(insert 
 	 "GNU Emacs Forms Mode version " forms-version "\n\n"
 	 (if (file-exists-p forms-file)
-	     (concat "No records available in file \"" forms-file "\".\n\n")
-	   (format "Creating new file \"%s\"\nwith %d field%s per record.\n\n"
+	     (concat "No records available in file `" forms-file "'\n\n")
+	   (format "Creating new file `%s'\nwith %d field%s per record\n\n"
 		   forms-file forms-number-of-fields
 		   (if (= 1 forms-number-of-fields) "" "s")))
 	 "Use " (substitute-command-keys "\\[forms-insert-record]")
@@ -699,6 +725,10 @@ Commands:                        Equivalent keys in read-only mode:
 	(setq forms--current-record 1))
     (forms-jump-record forms--current-record)
     )
+
+  (if forms-insert-after
+      (forms-last-record)
+    (forms-first-record))
 
   ;; user customising
   ;;(message "forms: proceeding setup (user hooks)...")
@@ -717,7 +747,7 @@ Commands:                        Equivalent keys in read-only mode:
   ;; of the fields on the display. This array is used by 
   ;; `forms--parser-using-text-properties' to extract the fields data
   ;; from the form on the screen.
-  ;; Upon completion, `forms-format-list' is garanteed correct, so
+  ;; Upon completion, `forms-format-list' is guaranteed correct, so
   ;; `forms--make-format' and `forms--make-parser' do not need to perform
   ;; any checks.
 
@@ -789,8 +819,8 @@ Commands:                        Equivalent keys in read-only mode:
 	  ;; Validate.
 	  (or (fboundp (car-safe el))
 	      (error (concat "Forms format error: "
-			     "not a function "
-			     (prin1-to-string (car-safe el)))))
+			     "not a function %S")
+		     (car-safe el)))
 
 	  ;; Shift.
 	  (if prev-item
@@ -801,8 +831,8 @@ Commands:                        Equivalent keys in read-only mode:
 	 ;; else
 	 (t
 	  (error (concat "Forms format error: "
-			 "invalid element "
-			 (prin1-to-string el)))))
+			 "invalid element %S")
+		 el)))
 
 	;; Advance to next element of the list.
 	(setq the-list rem)))
@@ -910,12 +940,12 @@ Commands:                        Equivalent keys in read-only mode:
 		(,@ (if (numberp (car forms-format-list))
 			nil
 		      '((add-text-properties (point-min) (1+ (point-min))
-					     '(front-sticky (read-only))))))
+					     '(front-sticky (read-only intangible))))))
 		;; Prevent insertion after the last text.
 		(remove-text-properties (1- (point)) (point)
 					'(rear-nonsticky)))
 	      (setq forms--iif-start nil)))
-       (if forms-use-extents
+       (if forms-use-extents ; XEmacs version
 	   (` (lambda (arg)
 		(,@ (apply 'append
 			   (mapcar 'forms--make-format-elt-using-extents
@@ -1038,8 +1068,10 @@ Commands:                        Equivalent keys in read-only mode:
 	   (point))
 	 (list 'face forms--ro-face	; read-only appearance
 	       'read-only (,@ (list (1+ forms--marker)))
+	       'intangible t
 	       'insert-in-front-hooks '(forms--iif-hook)
-	       'rear-nonsticky '(face read-only insert-in-front-hooks))))))
+	       'rear-nonsticky '(face read-only insert-in-front-hooks
+				      intangible))))))
     
    ((numberp el)
     (` ((let ((here (point)))
@@ -1065,12 +1097,15 @@ Commands:                        Equivalent keys in read-only mode:
 	   (point))
 	 (list 'face forms--ro-face
 	       'read-only (,@ (list (1+ forms--marker)))
+	       'intangible t
 	       'insert-in-front-hooks '(forms--iif-hook)
-	       'rear-nonsticky '(read-only face insert-in-front-hooks))))))
+	       'rear-nonsticky '(read-only face insert-in-front-hooks
+					   intangible))))))
 
    ;; end of cond
    ))
 
+;; XEmacs
 (defun forms--make-format-elt-using-extents (el)
   "Helper routine to generate format function."
 
@@ -1238,9 +1273,9 @@ Commands:                        Equivalent keys in read-only mode:
 	(if (setq there 
 		  (next-single-property-change here 'read-only))
 	    (aset forms--recordv (aref forms--elements i)
-		  (buffer-substring here there))
+		  (buffer-substring-no-properties here there))
 	  (aset forms--recordv (aref forms--elements i)
-		(buffer-substring here (point-max)))))
+		(buffer-substring-no-properties here (point-max)))))
       (setq i (1+ i)))))
 
 (defun forms--make-parser-elt (el)
@@ -1262,7 +1297,7 @@ Commands:                        Equivalent keys in read-only mode:
   ;;     (setq here (point))
   ;;     (if (not (search-forward "\nmore text: " nil t nil))
   ;; 	    (error "Parse error: cannot find \"\\nmore text: \""))
-  ;;     (aset forms--recordv 5 (buffer-substring here (- (point) 12)))
+  ;;     (aset forms--recordv 5 (buffer-substring-no-properties here (- (point) 12)))
   ;;
   ;;	 ;;  (tocol 40)
   ;;	(let ((forms--dyntext (car-safe forms--dynamic-text)))
@@ -1272,7 +1307,7 @@ Commands:                        Equivalent keys in read-only mode:
   ;;	  (setq forms--dynamic-text (cdr-safe forms--dynamic-text)))
   ;;     ... 
   ;;     ;; final flush (due to terminator sentinel, see below)
-  ;;	(aset forms--recordv 7 (buffer-substring (point) (point-max)))
+  ;;	(aset forms--recordv 7 (buffer-substring-no-properties (point) (point-max)))
 
   (cond
    ((stringp el)
@@ -1298,7 +1333,7 @@ Commands:                        Equivalent keys in read-only mode:
    ((null el)
     (if forms--field
 	(` ((aset forms--recordv (, (1- forms--field))
-		  (buffer-substring (point) (point-max)))))))
+		  (buffer-substring-no-properties (point) (point-max)))))))
    ((listp el)
     (prog1
 	(if forms--field
@@ -1307,7 +1342,7 @@ Commands:                        Equivalent keys in read-only mode:
 		  (if (not (search-forward forms--dyntext nil t nil))
 		      (error "Parse error: cannot find \"%s\"" forms--dyntext))
 		  (aset forms--recordv (, (1- forms--field))
-			(buffer-substring here
+			(buffer-substring-no-properties here
 					  (- (point) (length forms--dyntext)))))))
 	  (` ((let ((forms--dyntext (aref forms--dyntexts (, forms--dyntext))))
 		(if (not (looking-at (regexp-quote forms--dyntext)))
@@ -1383,11 +1418,12 @@ Commands:                        Equivalent keys in read-only mode:
   (define-key forms-mode-map "\C-l" 'forms-jump-record)
   (define-key forms-mode-map "\C-n" 'forms-next-record)
   (define-key forms-mode-map "\C-p" 'forms-prev-record)
-  (define-key forms-mode-map "\C-s" 'forms-search)
+  (define-key forms-mode-map "\C-r" 'forms-search-backward)
+  (define-key forms-mode-map "\C-s" 'forms-search-forward)
   (define-key forms-mode-map "\C-x" 'forms-exit)
   (define-key forms-mode-map "<" 'forms-first-record)
   (define-key forms-mode-map ">" 'forms-last-record)
-  (define-key forms-mode-map "?" 'describe-mode)
+  (define-key forms-mode-map "?" 'describe-mode) ; XEmacs
   (define-key forms-mode-map "\C-?" 'forms-prev-record)
 
   ;; `forms-mode-ro-map' replaces the local map when in read-only mode.
@@ -1399,24 +1435,120 @@ Commands:                        Equivalent keys in read-only mode:
   (define-key forms-mode-ro-map "l" 'forms-jump-record)
   (define-key forms-mode-ro-map "n" 'forms-next-record)
   (define-key forms-mode-ro-map "p" 'forms-prev-record)
-  (define-key forms-mode-ro-map "s" 'forms-search)
+  (define-key forms-mode-ro-map "r" 'forms-search-backward)
+  (define-key forms-mode-ro-map "s" 'forms-search-forward)
   (define-key forms-mode-ro-map "x" 'forms-exit)
   (define-key forms-mode-ro-map "<" 'forms-first-record)
   (define-key forms-mode-ro-map ">" 'forms-last-record)
   (define-key forms-mode-ro-map "?" 'describe-mode)
   (define-key forms-mode-ro-map " " 'forms-next-record)
   (forms--mode-commands1 forms-mode-ro-map)
+  (forms--mode-menu-ro forms-mode-ro-map)
 
   ;; This is the normal, local map.
   (setq forms-mode-edit-map (make-keymap))
   (define-key forms-mode-edit-map "\t"   'forms-next-field)
   (define-key forms-mode-edit-map "\C-c" forms-mode-map)
   (forms--mode-commands1 forms-mode-edit-map)
+  (forms--mode-menu-edit forms-mode-edit-map)
   )
 
-(defun forms--mode-commands1 (map)
+(defun forms--mode-menu-ro (map)
+;;; Menu initialisation
+;  (define-key map [menu-bar] (make-sparse-keymap))
+  (define-key map [menu-bar forms]
+    (cons "Forms" (make-sparse-keymap "Forms")))
+  (define-key map [menu-bar forms menu-forms-exit]
+    '("Exit Forms Mode" . forms-exit))
+  (define-key map [menu-bar forms menu-forms-sep1]
+    '("----"))
+  (define-key map [menu-bar forms menu-forms-save]
+    '("Save Data" . forms-save-buffer))
+  (define-key map [menu-bar forms menu-forms-print]
+    '("Print Data" . forms-print))
+  (define-key map [menu-bar forms menu-forms-describe]
+    '("Describe Mode" . describe-mode))
+  (define-key map [menu-bar forms menu-forms-toggle-ro]
+    '("Toggle View/Edit" . forms-toggle-read-only))
+  (define-key map [menu-bar forms menu-forms-jump-record]
+    '("Jump" . forms-jump-record))
+  (define-key map [menu-bar forms menu-forms-search-backward]
+    '("Search Backward" . forms-search-backward))
+  (define-key map [menu-bar forms menu-forms-search-forward]
+    '("Search Forward" . forms-search-forward))
+  (define-key map [menu-bar forms menu-forms-delete-record]
+    '("Delete" . forms-delete-record))
+  (define-key map [menu-bar forms menu-forms-insert-record]
+    '("Insert" . forms-insert-record))
+  (define-key map [menu-bar forms menu-forms-sep2]
+    '("----"))
+  (define-key map [menu-bar forms menu-forms-last-record]
+    '("Last Record" . forms-last-record))
+  (define-key map [menu-bar forms menu-forms-first-record]
+    '("First Record" . forms-first-record))
+  (define-key map [menu-bar forms menu-forms-prev-record]
+    '("Previous Record" . forms-prev-record))
+  (define-key map [menu-bar forms menu-forms-next-record]
+    '("Next Record" . forms-next-record))
+  (define-key map [menu-bar forms menu-forms-sep3]
+    '("----"))
+  (define-key map [menu-bar forms menu-forms-prev-field]
+    '("Previous Field" . forms-prev-field))
+  (define-key map [menu-bar forms menu-forms-next-field]
+    '("Next Field" . forms-next-field))
+  (put 'forms-insert-record 'menu-enable '(not forms-read-only))
+  (put 'forms-delete-record 'menu-enable '(not forms-read-only))
+)
+(defun forms--mode-menu-edit (map)
+;;; Menu initialisation
+;  (define-key map [menu-bar] (make-sparse-keymap))
+  (define-key map [menu-bar forms]
+    (cons "Forms" (make-sparse-keymap "Forms")))
+  (define-key map [menu-bar forms menu-forms-edit--exit]
+    '("Exit" . forms-exit))
+  (define-key map [menu-bar forms menu-forms-edit-sep1]
+    '("----"))
+  (define-key map [menu-bar forms menu-forms-edit-save]
+    '("Save Data" . forms-save-buffer))
+  (define-key map [menu-bar forms menu-forms-edit-print]
+    '("Print Data" . forms-print))
+  (define-key map [menu-bar forms menu-forms-edit-describe]
+    '("Describe Mode" . describe-mode))
+  (define-key map [menu-bar forms menu-forms-edit-toggle-ro]
+    '("Toggle View/Edit" . forms-toggle-read-only))
+  (define-key map [menu-bar forms menu-forms-edit-jump-record]
+    '("Jump" . forms-jump-record))
+  (define-key map [menu-bar forms menu-forms-edit-search-backward]
+    '("Search Backward" . forms-search-backward))
+  (define-key map [menu-bar forms menu-forms-edit-search-forward]
+    '("Search Forward" . forms-search-forward))
+  (define-key map [menu-bar forms menu-forms-edit-delete-record]
+    '("Delete" . forms-delete-record))
+  (define-key map [menu-bar forms menu-forms-edit-insert-record]
+    '("Insert" . forms-insert-record))
+  (define-key map [menu-bar forms menu-forms-edit-sep2]
+    '("----"))
+  (define-key map [menu-bar forms menu-forms-edit-last-record]
+    '("Last Record" . forms-last-record))
+  (define-key map [menu-bar forms menu-forms-edit-first-record]
+    '("First Record" . forms-first-record))
+  (define-key map [menu-bar forms menu-forms-edit-prev-record]
+    '("Previous Record" . forms-prev-record))
+  (define-key map [menu-bar forms menu-forms-edit-next-record]
+    '("Next Record" . forms-next-record))
+  (define-key map [menu-bar forms menu-forms-edit-sep3]
+    '("----"))
+  (define-key map [menu-bar forms menu-forms-edit-prev-field]
+    '("Previous Field" . forms-prev-field))
+  (define-key map [menu-bar forms menu-forms-edit-next-field]
+    '("Next Field" . forms-next-field))
+  (put 'forms-insert-record 'menu-enable '(not forms-read-only))
+  (put 'forms-delete-record 'menu-enable '(not forms-read-only))
+)
+
+(defun forms--mode-commands1 (map) 
   "Helper routine to define keys."
-  (if forms--lemacs-p
+  (if forms--lemacs-p ; XEmacs
       (progn
 	(define-key map [tab] 'forms-next-field)
 	(define-key map [(shift tab)] 'forms-prev-field))
@@ -1440,11 +1572,11 @@ Commands:                        Equivalent keys in read-only mode:
       (progn
 	(substitute-key-definition 'scroll-up 'forms-next-record
 				   (current-local-map)
-				   ;;(current-global-map)
+				   ;;(current-global-map) ; FSF
 				   )
 	(substitute-key-definition 'scroll-down 'forms-prev-record
 				   (current-local-map)
-				   ;;(current-global-map)
+				   ;;(current-global-map) ; FSF
 				   )))
   ;;
   ;; beginning-of-buffer -> forms-first-record
@@ -1453,11 +1585,11 @@ Commands:                        Equivalent keys in read-only mode:
       (progn
 	(substitute-key-definition 'beginning-of-buffer 'forms-first-record
 				   (current-local-map)
-				   ;;(current-global-map)
+				   ;;(current-global-map) ; FSF
 				   )
 	(substitute-key-definition 'end-of-buffer 'forms-last-record
 				   (current-local-map)
-				   ;;(current-global-map)
+				   ;;(current-global-map) ;FSF
 				   )))
   ;;
   ;; Save buffer
@@ -1471,7 +1603,7 @@ Commands:                        Equivalent keys in read-only mode:
 
 (defun forms--help ()
   "Initial help for Forms mode."
-  (message (substitute-command-keys (concat
+  (message "%s" (substitute-command-keys (concat
   "\\[forms-next-record]:next"
   "   \\[forms-prev-record]:prev"
   "   \\[forms-first-record]:first"
@@ -1519,7 +1651,7 @@ Commands:                        Equivalent keys in read-only mode:
   (let ((here (point)))
     (prog2
      (end-of-line)
-     (buffer-substring here (point))
+     (buffer-substring-no-properties here (point))
      (goto-char here))))
 
 (defun forms--show-record (the-record)
@@ -1550,9 +1682,11 @@ Commands:                        Equivalent keys in read-only mode:
   ;; Verify the number of fields, extend forms--the-record-list if needed.
   (if (= (length forms--the-record-list) forms-number-of-fields)
       nil
-    (beep)
-    (message "Warning: this record has %d fields instead of %d"
-	     (length forms--the-record-list) forms-number-of-fields)
+    (if (null forms-check-number-of-fields)
+	nil
+      (beep)
+      (message "Warning: this record has %d fields instead of %d"
+	       (length forms--the-record-list) forms-number-of-fields))
     (if (< (length forms--the-record-list) forms-number-of-fields)
 	(setq forms--the-record-list 
 	      (append forms--the-record-list
@@ -1570,7 +1704,7 @@ Commands:                        Equivalent keys in read-only mode:
   (set-buffer-modified-p nil)
   (setq buffer-read-only forms-read-only)
   (setq mode-line-process
-	(format " %d/%d" forms--current-record forms--total-records)))
+	(concat " " forms--current-record "/" forms--total-records)))
 
 (defun forms--parse-form ()
   "Parse contents of form into list of strings."
@@ -1761,7 +1895,7 @@ As a side effect: re-calculates the number of records in the data file."
 (defun forms-toggle-read-only (arg)
   "Toggles read-only mode of a forms mode buffer.
 With an argument, enables read-only mode if the argument is positive.
-Otherwise enables edit mode if the visited file is writeable."
+Otherwise enables edit mode if the visited file is writable."
 
   (interactive "P")
 
@@ -1778,7 +1912,7 @@ Otherwise enables edit mode if the visited file is writeable."
 	      buffer-read-only)
 	    (progn
 	      (setq forms-read-only t)
-	      (message "No write access to \"%s\"" forms-file)
+	      (message "No write access to `%s'" forms-file)
 	      (beep))
 	  (setq forms-read-only nil))
 	(if (equal ro forms-read-only)
@@ -1804,15 +1938,21 @@ Otherwise enables edit mode if the visited file is writeable."
   "Create a new record before the current one.
 With ARG: store the record after the current one.
 If `forms-new-record-filter' contains the name of a function, 
-it is called to fill (some of) the fields with default values."
+it is called to fill (some of) the fields with default values.
+If `forms-insert-after is non-nil, the default behavior is to insert
+after the current record."
 
   (interactive "P")
 
   (if forms-read-only
       (error ""))
 
-  (let ((ln (if arg (1+ forms--current-record) forms--current-record))
-        the-list the-record)
+  (let (ln the-list the-record)
+
+    (if (or (and arg forms-insert-after)
+	    (and (not arg) (not forms-insert-after)))
+	(setq ln forms--current-record)
+      (setq ln (1+ forms--current-record)))
 
     (forms--checkmod)
     (if forms-new-record-filter
@@ -1865,10 +2005,10 @@ it is called to fill (some of) the fields with default values."
 	(forms-jump-record forms--current-record)))
   (message ""))
 
-(defun forms-search (regexp)
-  "Search REGEXP in file buffer."
+(defun forms-search-forward (regexp)
+  "Search forward for record containing REGEXP."
   (interactive 
-   (list (read-string (concat "Search for" 
+   (list (read-string (concat "Search forward for" 
 				  (if forms--search-regexp
 				   (concat " ("
 					   forms--search-regexp
@@ -1887,7 +2027,39 @@ it is called to fill (some of) the fields with default values."
 	  (if (null (re-search-forward regexp nil t))
 	      (progn
 		(goto-char here)
-		(message (concat "\"" regexp "\" not found."))
+		(message "\"%s\" not found" regexp)
+		nil)
+	    (setq the-record (forms--get-record))
+	    (setq the-line (1+ (count-lines (point-min) (point))))))
+	(progn
+	  (setq forms--current-record the-line)
+	  (forms--show-record the-record)
+	  (re-search-forward regexp nil t))))
+  (setq forms--search-regexp regexp))
+
+(defun forms-search-backward (regexp)
+  "Search backward for record containing REGEXP."
+  (interactive 
+   (list (read-string (concat "Search backward for" 
+				  (if forms--search-regexp
+				   (concat " ("
+					   forms--search-regexp
+					   ")"))
+				  ": "))))
+  (if (equal "" regexp)
+      (setq regexp forms--search-regexp))
+  (forms--checkmod)
+
+  (let (the-line the-record here
+		 (fld-sep forms-field-sep))
+    (if (save-excursion
+	  (set-buffer forms--file-buffer)
+	  (setq here (point))
+	  (beginning-of-line)
+	  (if (null (re-search-backward regexp nil t))
+	      (progn
+		(goto-char here)
+		(message "\"%s\" not found" regexp)
 		nil)
 	    (setq the-record (forms--get-record))
 	    (setq the-line (1+ (count-lines (point-min) (point))))))
@@ -1929,7 +2101,8 @@ Calls `forms-write-file-filter' before writing out the data."
   (let ((i 0)
 	(here (point))
 	there
-	(cnt 0))
+	(cnt 0)
+	(inhibit-point-motion-hooks t))
 
     (if (zerop arg)
 	(setq cnt 1)
@@ -1955,7 +2128,8 @@ Calls `forms-write-file-filter' before writing out the data."
   (let ((i (length forms--markers))
 	(here (point))
 	there
-	(cnt 0))
+	(cnt 0)
+	(inhibit-point-motion-hooks t))
 
     (if (zerop arg)
 	(setq cnt 1)
@@ -1973,13 +2147,39 @@ Calls `forms-write-file-filter' before writing out the data."
 		    (throw 'done t))))))
 	nil
       (goto-char (aref forms--markers (1- (length forms--markers)))))))
+
+(defun forms-print ()
+  "Send the records to the printer with 'print-buffer', one record per page."
+  (interactive)
+  (let ((inhibit-read-only t)
+	(save-record forms--current-record)
+	(nb-record 1)
+	(record nil))
+    (while (<= nb-record forms--total-records)
+      (forms-jump-record nb-record)
+      (setq record (buffer-string))
+      (save-excursion
+	(set-buffer (get-buffer-create "*forms-print*"))
+	(goto-char (buffer-end 1))
+	(insert record)
+	(setq buffer-read-only nil)
+	(if (< nb-record forms--total-records)
+	    (insert "\n\n")))
+      (setq nb-record (1+ nb-record)))
+    (save-excursion
+      (set-buffer "*forms-print*")
+      (print-buffer)
+      (set-buffer-modified-p nil)
+      (kill-buffer (current-buffer)))
+    (forms-jump-record save-record)))
+
 ;;;
 ;;; Special service
 ;;;
 (defun forms-enumerate (the-fields)
   "Take a quoted list of symbols, and set their values to sequential numbers.
 The first symbol gets number 1, the second 2 and so on.
-It returns the higest number.
+It returns the highest number.
 
 Usage: (setq forms-number-of-fields
              (forms-enumerate

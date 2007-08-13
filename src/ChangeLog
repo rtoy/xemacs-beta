@@ -1,0 +1,34 @@
+Tue Dec 10 11:17:32 1996  Shane Holder  <holder@mordor.rsn.hp.com>
+
+	* s/hpux9shxr4.h: hpux9shr.h -> hpux9-shr.h
+
+	* s/hpux10.h: hpux9shr.h -> hpux9-shr.h
+
+Sat Dec  7 18:29:34 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* puresize.h (BASE_PURESIZE): Bumped up PURESIZE by 10k.
+
+Sat Dec  7 16:26:34 1996  Martin Buchholz  <mrb@Eng.Sun.COM>
+
+	* config.h.in: configure for POSIX getcwd if available.
+
+Sat Dec  7 15:48:39 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* s/sunos4-1-shr.h: Renamed from sunos4-1shr.h.
+
+	* s/sunos4-1-3-shr.h: Renamed from sunos4-1-3shr.h.
+
+	* s/sunos4-1-2-shr.h: Renamed from sunos4-1-2-shr.h.
+
+	* s/sunos4-0-shr.h: Renamed from sunos4-0shr.h.
+
+	* s/hpux9-shr.h: Renamed from hpux9shr.h.
+
+	* s/hpux8-shr.h: Renamed from hpux8shr.h.
+
+	* s/hpux10-shr.h: Renamed from hpux10shr.h.
+
+Wed Dec  4 23:38:03 1996  Steven L Baur  <steve@altair.xemacs.org>
+
+	* redisplay.c: Allow column numbers in modeline to start from 1.
+

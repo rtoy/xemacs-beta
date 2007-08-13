@@ -1,3 +1,7 @@
+Tue Dec 10 18:35:21 1996  Rod Whitby  <rwhitby@asc.sps.mot.com>
+
+	* vhdl-mode.texi: New file.
+
 Thu Jan 24 12:41:33 1991  Richard Stallman  (rms at mole.ai.mit.edu)
 
 	* texinfo.tex: Delete spurious character at beginning.

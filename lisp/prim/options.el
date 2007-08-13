@@ -17,11 +17,11 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -42,7 +42,7 @@
     (Edit-options-mode))
   (with-output-to-temp-buffer "*List Options*"
     (let (vars)
-      (mapatoms #'(lambda (sym)
+      (mapatoms #'(lambda (sym) ; XEmacs
 		    (if (user-variable-p sym)
 			(setq vars (cons sym vars)))))
       (setq vars (sort vars 'string-lessp))
@@ -51,7 +51,7 @@
 	  (princ ";; ")
 	  (prin1 sym)
 	  (princ ":\n\t")
-	  (if (boundp sym)
+	  (if (boundp sym) ; XEmacs
 	      (prin1 (symbol-value sym))
               (princ "#<unbound>"))
 	  (terpri)
@@ -109,12 +109,12 @@ For convenience, the characters \\[backward-paragraph] and \\[forward-paragraph]
   (setq paragraph-start "\t")
   (setq truncate-lines t)
   (setq major-mode 'Edit-options-mode)
-  (setq mode-name (gettext "Options"))
+  (setq mode-name (gettext "Options")) ; XEmacs
   (run-hooks 'Edit-options-mode-hook))
 
 (defun Edit-options-set () (interactive)
   (Edit-options-modify
-   '(lambda (var) (eval-minibuffer (format "New %s:" (symbol-name var))))))
+   '(lambda (var) (eval-minibuffer (concat "New " (symbol-name var) ": ")))))
 
 (defun Edit-options-toggle () (interactive)
   (Edit-options-modify '(lambda (var) (not (symbol-value var)))))
@@ -132,14 +132,14 @@ For convenience, the characters \\[backward-paragraph] and \\[forward-paragraph]
      (forward-char 3)
      (setq pos (point))
      (save-restriction
-      (narrow-to-region pos (progn (end-of-line) (1- (point))))
-      (goto-char pos)
-      (setq var (read (current-buffer))))
+       (narrow-to-region pos (progn (end-of-line) (1- (point))))
+       (goto-char pos)
+       (setq var (read (current-buffer))))
      (goto-char pos)
      (forward-line 1)
      (forward-char 1)
      (save-excursion
-      (set var (funcall modfun var)))
+       (set var (funcall modfun var)))
      (kill-sexp 1)
      (prin1 (symbol-value var) (current-buffer)))))
 

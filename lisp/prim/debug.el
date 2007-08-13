@@ -18,11 +18,17 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: FSF 19.34.
+
+;;; Commentary:
+
+;; NB: There are lots of formatting changes in the XEmacs version. -sb
+
+;; This is a major mode documented in the Emacs manual.
 
 ;;; Code:
 
@@ -47,10 +53,14 @@
 (defvar debugger-outer-last-command)
 (defvar debugger-outer-this-command)
 (defvar debugger-outer-unread-command-event)
+;; FSF: (defvar debugger-outer-unread-command-char)
+(defvar debugger-outer-unread-command-events)
 (defvar debugger-outer-last-input-event)
 (defvar debugger-outer-last-input-char)
 (defvar debugger-outer-last-input-time)
 (defvar debugger-outer-last-command-event)
+;; (defvar debugger-outer-last-nonmenu-event)
+;; (defvar debugger-outer-last-event-frame)
 (defvar debugger-outer-last-command-char)
 (defvar debugger-outer-standard-input)
 (defvar debugger-outer-standard-output)
@@ -66,12 +76,12 @@
 ;;;###autoload
 (defun debug (&rest debugger-args)
   "Enter debugger.  To return, type \\<debugger-mode-map>`\\[debugger-continue]'.
-Arguments are mainly for use when this is called
- from the internals of the evaluator.
-You may call with no args, or you may
- pass nil as the first arg and any other args you like.
- In that case, the list of args after the first will 
- be printed into the backtrace buffer."
+Arguments are mainly for use when this is called from the internals
+of the evaluator.
+
+You may call with no args, or you may pass nil as the first arg and
+any other args you like.  In that case, the list of args after the
+first will be printed into the backtrace buffer."
   (interactive)
   ;; XEmacs: it doesn't work to enter the debugger non-interactively
   ;; so just print out a backtrace and exit.
@@ -80,32 +90,32 @@ You may call with no args, or you may
   (let (debugger-value
 	(debug-on-error nil)
 	(debug-on-quit nil)
-	(debug-on-signal nil)
+	(debug-on-signal nil)	; XEmacs
 	(debugger-buffer (let ((default-major-mode 'fundamental-mode))
 			   (get-buffer-create "*Backtrace*")))
 	;; #### I18N3 set the debugger-buffer to output-translating
 	(debugger-old-buffer (current-buffer))
 	(debugger-step-after-exit nil)
-        ;; Don't keep reading from an executing kbd macro!
-        (executing-macro nil)
-        ;; Save the outer values of these vars for the `e' command
+	;; Don't keep reading from an executing kbd macro!
+	(executing-macro nil)
+	;; Save the outer values of these vars for the `e' command
 	;; before we replace the values.
 	(debugger-outer-match-data (match-data))
 	(debugger-outer-load-read-function load-read-function)
 	(debugger-outer-overriding-local-map overriding-local-map)
 	;; FSFmacs (debugger-outer-track-mouse track-mouse)
-        (debugger-outer-last-command last-command)
-        (debugger-outer-this-command this-command)
-        (debugger-outer-unread-command-event unread-command-event)
-        (debugger-outer-last-input-event last-input-event)
-        (debugger-outer-last-input-char last-input-char)
-        (debugger-outer-last-input-time last-input-time)
-        (debugger-outer-last-command-event last-command-event)
-        (debugger-outer-last-command-char last-command-char)
-        (debugger-outer-standard-input standard-input)
-        (debugger-outer-standard-output standard-output)
-        (debugger-outer-cursor-in-echo-area cursor-in-echo-area)
-        )
+	(debugger-outer-last-command last-command)
+	(debugger-outer-this-command this-command)
+	(debugger-outer-unread-command-event unread-command-event)
+	(debugger-outer-unread-command-events unread-command-events)
+	(debugger-outer-last-input-event last-input-event)
+	(debugger-outer-last-input-char last-input-char)
+	(debugger-outer-last-input-time last-input-time)
+	(debugger-outer-last-command-event last-command-event)
+	(debugger-outer-last-command-char last-command-char)
+	(debugger-outer-standard-input standard-input)
+	(debugger-outer-standard-output standard-output)
+	(debugger-outer-cursor-in-echo-area cursor-in-echo-area))
     ;; Don't let these magic variables affect the debugger itself.
     (unwind-protect                     ;XEmacs change
 	(let ((last-command nil)
@@ -133,12 +143,13 @@ You may call with no args, or you may
 	      (debugger-mode)
 	      (delete-region (point)
 			     (progn
+			       ;; XEmacs change
 			       (re-search-forward "\n[* ] debug(")
 			       (forward-line 1)
 			       (point)))
+	      (debugger-reenable)
 	      ;; lambda is for debug-on-call when a function call is next.
 	      ;; debug is for debug-on-entry function called.
-	      (debugger-reenable)
 	      (cond ((memq (car debugger-args) '(lambda debug))
 		     (insert "Entering:\n")
 		     (if (eq (car debugger-args) 'debug)
@@ -160,13 +171,12 @@ You may call with no args, or you may
 		     (beginning-of-line))
 		    ;; Debugger entered for an error.
 		    ((eq (car debugger-args) 'error)
-		     (insert "Signalling: ")
+		     (insert "Signaling: ")
 		     (prin1 (nth 1 debugger-args) (current-buffer))
 		     (insert ?\n))
 		    ;; debug-on-call, when the next thing is an eval.
 		    ((eq (car debugger-args) t)
-		     (insert
-		      "Beginning evaluation of function call form:\n"))
+		     (insert "Beginning evaluation of function call form:\n"))
 		    ;; User calls debug directly.
 		    (t
 		     (prin1 (if (eq (car debugger-args) 'nil)
@@ -177,11 +187,12 @@ You may call with no args, or you may
 	      (let ((inhibit-trace t)
 		    (standard-output nil)
 		    (buffer-read-only t))
-		(message nil)
+		(message "")
 		(recursive-edit)))
+	    ;; XEmacs change
 	    debugger-value))
-	;; Kill or at least neuter the backtrace buffer, so that users
-	;; don't try to execute debugger commands in an invalid context.
+      ;; Kill or at least neuter the backtrace buffer, so that users
+      ;; don't try to execute debugger commands in an invalid context.
       (if (get-buffer-window debugger-buffer 'visible)
 	    ;; Still visible despite the save-window-excursion?  Maybe it
 	    ;; it's in a pop-up frame.  It would be annoying to delete and
@@ -201,6 +212,7 @@ You may call with no args, or you may
       (setq last-command debugger-outer-last-command)
       (setq this-command debugger-outer-this-command)
       (setq unread-command-event debugger-outer-unread-command-event)
+      (setq unread-command-event debugger-outer-unread-command-events)
       (setq last-input-event debugger-outer-last-input-event)
       (setq last-input-char debugger-outer-last-input-char)
       (setq last-input-time debugger-outer-last-input-time)
@@ -212,7 +224,7 @@ You may call with no args, or you may
       (setq debug-on-next-call debugger-step-after-exit) ;do this last!
       )))
 
-
+;; XEmacs
 (defun debugger-exit ()
   (condition-case nil
       (let ((debug-on-error nil)
@@ -229,12 +241,14 @@ Enter another debugger on next entry to eval, apply or funcall."
   (interactive)
   (setq debugger-step-after-exit t)
   (message "Proceeding, will debug on next eval or call.")
+  ;; XEmacs
   (debugger-exit))
 
 (defun debugger-continue ()
   "Continue, evaluating this expression without stopping."
   (interactive)
   (message "Continuing.")
+  ;; XEmacs
   (debugger-exit))
 
 (defun debugger-return-value (val)
@@ -247,6 +261,7 @@ will be used, such as in a debug on exit from a frame."
   (prin1 debugger-value)
   (exit-recursive-edit))
 
+;; XEmacs: [Moved block]
 ;; Chosen empirically to account for all the frames
 ;; that will exist when debugger-frame is called
 ;; within the first one that appears in the backtrace buffer.
@@ -287,7 +302,7 @@ will be used, such as in a debug on exit from a frame."
     (let ((opoint (point))
 	  (count 0))
       (goto-char (point-min))
-      ;; #### I18N3 will not localize properly!
+      ;; XEmacs:#### I18N3 will not localize properly!
       (if (or (equal (buffer-substring (point) (+ (point) 6))
 		     (gettext "Signal"))
 	      (equal (buffer-substring (point) (+ (point) 6))
@@ -344,15 +359,16 @@ Applies to the frame whose line point is on in the backtrace."
 	(setq debugger-old-buffer (current-buffer)))
     (set-buffer debugger-old-buffer)
     (let ((last-command debugger-outer-last-command)
-          (this-command debugger-outer-this-command)
-          (unread-command-event debugger-outer-unread-command-event)
-          (last-input-event debugger-outer-last-input-event)
-          (last-input-char debugger-outer-last-input-char)
-          (last-input-time debugger-outer-last-input-time)
-          (last-command-event debugger-outer-last-command-event)
-          (last-command-char debugger-outer-last-command-char)
-          (standard-input debugger-outer-standard-input)
-          (standard-output debugger-outer-standard-output)
+	  (this-command debugger-outer-this-command)
+	  (unread-command-event debugger-outer-unread-command-event)
+	  (unread-command-event debugger-outer-unread-command-events)
+	  (last-input-event debugger-outer-last-input-event)
+	  (last-input-char debugger-outer-last-input-char)
+	  (last-input-time debugger-outer-last-input-time)
+	  (last-command-event debugger-outer-last-command-event)
+	  (last-command-char debugger-outer-last-command-char)
+	  (standard-input debugger-outer-standard-input)
+	  (standard-output debugger-outer-standard-output)
 	  (cursor-in-echo-area debugger-outer-cursor-in-echo-area)
 	  (overriding-local-map debugger-outer-overriding-local-map)
 	  (load-read-function debugger-outer-load-read-function))
@@ -373,23 +389,24 @@ Applies to the frame whose line point is on in the backtrace."
               debugger-outer-standard-output standard-output
               debugger-outer-cursor-in-echo-area cursor-in-echo-area)))))
 
-(defvar debugger-mode-map
-  (let ((map (make-keymap)))
-    (set-keymap-name map 'debugger-mode-map)
-    (suppress-keymap map)
-    (define-key map "-" 'negative-argument)
-    (define-key map "b" 'debugger-frame)
-    (define-key map "c" 'debugger-continue)
-    (define-key map "j" 'debugger-jump)
-    (define-key map "r" 'debugger-return-value)
-    (define-key map "u" 'debugger-frame-clear)
-    (define-key map "d" 'debugger-step-through)
-    (define-key map "l" 'debugger-list-functions)
-    (define-key map "h" 'describe-mode)
-    (define-key map "q" 'top-level)
-    (define-key map "e" 'debugger-eval-expression)
-    (define-key map " " 'next-line)
-    map))
+(defvar debugger-mode-map nil)
+(if debugger-mode-map
+    nil
+  (let ((loop ? ))
+    (setq debugger-mode-map (make-keymap))
+    (suppress-keymap debugger-mode-map)
+    (define-key debugger-mode-map "-" 'negative-argument)
+    (define-key debugger-mode-map "b" 'debugger-frame)
+    (define-key debugger-mode-map "c" 'debugger-continue)
+    (define-key debugger-mode-map "j" 'debugger-jump)
+    (define-key debugger-mode-map "r" 'debugger-return-value)
+    (define-key debugger-mode-map "u" 'debugger-frame-clear)
+    (define-key debugger-mode-map "d" 'debugger-step-through)
+    (define-key debugger-mode-map "l" 'debugger-list-functions)
+    (define-key debugger-mode-map "h" 'describe-mode)
+    (define-key debugger-mode-map "q" 'top-level)
+    (define-key debugger-mode-map "e" 'debugger-eval-expression)
+    (define-key debugger-mode-map " " 'next-line)))
 
 (put 'debugger-mode 'mode-class 'special)
 
@@ -410,7 +427,7 @@ Complete list of commands:
 \\{debugger-mode-map}"
   (kill-all-local-variables)    
   (setq major-mode 'debugger-mode)
-  (setq mode-name (gettext "Debugger"))
+  (setq mode-name (gettext "Debugger"))	; XEmacs
   (setq truncate-lines t)
   (set-syntax-table emacs-lisp-mode-syntax-table)
   (use-local-map debugger-mode-map))
@@ -442,11 +459,12 @@ Redefining FUNCTION also cancels it."
 If argument is nil or an empty string, cancel for all functions."
   (interactive
    (list (let ((name
-                (completing-read "Cancel debug on entry (to function): "
-                                 ;; Make an "alist" of the functions
+		(completing-read "Cancel debug on entry (to function): "
+				 ;; Make an "alist" of the functions
 				 ;; that now have debug on entry.
-				 (mapcar 'list (mapcar 'symbol-name
-                                                       debug-function-list))
+				 (mapcar 'list
+					 (mapcar 'symbol-name
+						 debug-function-list))
 				 nil t nil)))
 	   (if name (intern name)))))
   (debugger-reenable)
@@ -486,7 +504,8 @@ If argument is nil or an empty string, cancel for all functions."
       (let (tail prec)
 	(if (stringp (car (nthcdr 2 defn)))
 	    (setq tail (nthcdr 3 defn)
-		  prec (list (car defn) (car (cdr defn)) (car (cdr (cdr defn)))))
+		  prec (list (car defn) (car (cdr defn))
+			     (car (cdr (cdr defn)))))
 	  (setq tail (nthcdr 2 defn)
 		prec (list (car defn) (car (cdr defn)))))
 	(if (eq flag (equal (car tail) '(debug 'debug)))

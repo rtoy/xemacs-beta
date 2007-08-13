@@ -1,0 +1,4 @@
+Thu Dec  5 15:41:53 1996  Martin Buchholz  <mrb@Eng.Sun.COM>
+
+	* update-elc.sh: Corrections to protect against too smart /bin/sh'es.
+

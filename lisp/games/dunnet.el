@@ -1,10 +1,11 @@
 ;;; dunnet.el --- Text adventure for Emacs
 
+;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
+
 ;; Author: Ron Schnell <ronnie@media.mit.edu>
 ;; Created: 25 Jul 1992
 ;; Version: 2.0
 ;; Keywords: games
-;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
 
 ;; This file is part of XEmacs.
 
@@ -19,11 +20,11 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.28.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -32,7 +33,7 @@
 
 ;;; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
 ;;;  The log file should be set for your system, and it must
-;;;  be writeable by all.
+;;;  be writable by all.
 
 
 (defvar dun-log-file "/usr/local/dunnet.score"
@@ -41,7 +42,8 @@
 (if nil
     (eval-and-compile (setq byte-compile-warnings nil)))
 
-(require 'cl)
+(eval-when-compile
+  (require 'cl))
 
 ;;;; Mode definitions for interactive mode
 
@@ -49,6 +51,8 @@
   "Major mode for running dunnet."
   (interactive)
   (text-mode)
+  (make-local-variable 'scroll-step)
+  (setq scroll-step 2)
   (use-local-map dungeon-mode-map)
   (setq major-mode 'dungeon-mode)
   (setq mode-name "Dungeon"))
@@ -425,19 +429,22 @@ For an explosive time, go to Fourth St. and Vermont.")
 (defun dun-climb (obj)
   (let (objnum)
     (setq objnum (dun-objnum-from-args obj))
-    (if (and (not (= objnum obj-special))
-	     (not (member objnum (nth dun-current-room dun-room-objects)))
-	     (not (member objnum (nth dun-current-room dun-room-silents)))
-	     (not (member objnum dun-inventory)))
-	(dun-mprincl "I don't see that here.")
-      (if (and (= objnum obj-special)
-	       (not (member obj-tree (nth dun-current-room dun-room-silents))))
-	  (dun-mprincl "There is nothing here to climb.")
-	(if (and (not (= objnum obj-tree)) (not (= objnum obj-special)))
-	    (dun-mprincl "You can't climb that.")
-	  (dun-mprincl
-"You manage to get about two feet up the tree and fall back down.  You
-notice that the tree is very unsteady."))))))
+    (cond ((null objnum)
+	   (dun-mprincl "I don't know that name."))
+	  ((and (not (eq objnum obj-special))
+		(not (member objnum (nth dun-current-room dun-room-objects)))
+		(not (member objnum (nth dun-current-room dun-room-silents)))
+		(not (member objnum dun-inventory)))
+	   (dun-mprincl "I don't see that here."))
+	  ((and (eq objnum obj-special)
+		(not (member obj-tree (nth dun-current-room dun-room-silents))))
+	   (dun-mprincl "There is nothing here to climb."))
+	  ((and (not (eq objnum obj-tree)) (not (eq objnum obj-special)))
+	   (dun-mprincl "You can't climb that."))
+	  (t
+	   (dun-mprincl
+	    "You manage to get about two feet up the tree and fall back down.  You
+notice that the tree is very unsteady.")))))
 
 (defun dun-eat (obj)
   (let (objnum)
@@ -790,7 +797,7 @@ huge rocks sliding down from the ceiling, and blocking your way out.\n")
 (defun dun-sauna-heat ()
   (if (= dun-sauna-level 0)
       (dun-mprincl 
-       "The termperature has returned to normal room termperature."))
+       "The temperature has returned to normal room temperature."))
   (if (= dun-sauna-level 1)
       (dun-mprincl "It is now luke warm in here.  You begin to sweat."))
   (if (= dun-sauna-level 2)
@@ -1342,6 +1349,7 @@ for a moment, then straighten yourself up.
 (defvar dungeon-mode-map nil)
 (setq dungeon-mode-map (make-sparse-keymap))
 (define-key dungeon-mode-map "\r" 'dun-parse)
+;; XEmacs
 (defvar dungeon-batch-map
   (let ((map (make-keymap))
         (n 32))
@@ -1920,7 +1928,7 @@ A hole leads north."
 		     (type . dun-type)  (insert . dun-put)
 		     (score . dun-score) (help . dun-help) (quit . dun-quit) 
 		     (read . dun-examine) (verbose . dun-long) 
-		     (urinate . dun-piss) (piss . dun-piss)
+		     (urinate . dun-piss) (piss . dun-piss)	; censored
 		     (flush . dun-flush) (sleep . dun-sleep) (lie . dun-sleep) 
 		     (x . dun-examine) (break . dun-break) (drive . dun-drive)
 		     (board . dun-in) (enter . dun-in) (turn . dun-turn)
@@ -2095,7 +2103,7 @@ A hole leads north."
 		 (floppy . 27) (disk . 27)
 		 
 		 (boulder . -1)
-		 (tree . -2) (trees . -2) 
+		 (tree . -2) (trees . -2) (palm . -2) 
 		 (bear . -3)
 		 (bin . -4) (bins . -4)
 		 (cabinet . -5) (computer . -5) (vax . -5) (ibm . -5) 
@@ -2416,8 +2424,6 @@ nil
 		  nil nil nil nil nil nil nil nil nil nil      ;31-40
 		  nil (list obj-platinum) nil nil nil nil nil nil nil nil))
 
-(setq scroll-step 2)
-
 (setq dun-room-shorts nil)
 (dolist (x dun-rooms)
   (setq dun-room-shorts  
@@ -2583,7 +2589,7 @@ treasures for points?" "4" "four")
 	(dun-mprincl "
 Welcome to Unix\n
 Please clean up your directories.  The filesystem is getting full.
-Our tcp/ip link to gamma is a little flakey, but seems to work.
+Our tcp/ip link to gamma is a little flaky, but seems to work.
 The current version of ftp can only send files from the current
 directory, and deletes them after they are sent!  Be careful.
 
@@ -2871,7 +2877,7 @@ drwxr-xr-x  3 root     staff          2048 Jan 1 1970 ..")
 	      (dun-uexit nil))))))))
   
 (defun dun-cd (args)
-  (let (tcdpath tcdroom path-elemants room-check)
+  (let (tcdpath tcdroom path-elements room-check)
     (if (not (car args))
 	(dun-mprincl "Usage: cd <path>")
       (setq tcdpath dun-cdpath)
@@ -3330,3 +3336,5 @@ File not found")))
   (dun-mprinc "\n")
   (setq dun-batch-mode t)
   (dun-batch-loop))
+
+;;; dunnet.el ends here

@@ -1,6 +1,7 @@
 ;;; doctor.el --- psychological help for frustrated users.
+;;; (uncensored version--see below)
 
-;; Copyright (C) 1985, 1987, 1994 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1987, 1994, 1996  Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
 ;; Keywords: games
@@ -18,17 +19,28 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.28.
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
 ;; The single entry point `doctor', simulates a Rogerian analyst using
 ;; phrase-production techniques similar to the classic ELIZA demonstration
 ;; of pseudo-AI.
+
+;; Original Censorship message:
+;; This file has been censored by the Communications Decency Act.
+;; Some of its features were removed.  The law was promoted as a ban
+;; on pornography, but it bans far more than that.  The doctor program
+;; did not contain pornography, but part of it was prohibited
+;; nonetheless.
+
+;; For information on US government censorship of the Internet, and
+;; what you can do to bring back freedom of the press, see the web
+;; site http://www.vtw.org/
 
 ;;; Code:
 
@@ -226,7 +238,7 @@ reads the sentence before point, and prints the Doctor's answer."
   (make-local-variable 'feelings-about)
   (setq feelings-about
 	'((feelings about)
-	  (aprehensions toward)
+	  (apprehensions toward)
 	  (thoughts on)
 	  (emotions toward)))
   (make-local-variable 'random-adjective)
@@ -605,7 +617,7 @@ reads the sentence before point, and prints the Doctor's answer."
 (doctor-put-meaning ibm 'mach)
 (doctor-put-meaning pc 'mach)
 (doctor-put-meaning bitching 'foul)
-(doctor-put-meaning shit 'foul)
+(doctor-put-meaning shit 'foul)	; Censored
 (doctor-put-meaning bastard 'foul)
 (doctor-put-meaning damn 'foul)
 (doctor-put-meaning damned 'foul)
@@ -680,7 +692,7 @@ reads the sentence before point, and prints the Doctor's answer."
 (doctor-put-meaning lonely 'mood)
 (doctor-put-meaning angry 'mood)
 (doctor-put-meaning mad 'mood)
-(doctor-put-meaning pissed 'mood)
+(doctor-put-meaning pissed 'mood)	; censored
 (doctor-put-meaning jealous 'mood)
 (doctor-put-meaning afraid 'fear)
 (doctor-put-meaning terrified 'fear)
@@ -694,8 +706,8 @@ reads the sentence before point, and prints the Doctor's answer."
 (doctor-put-meaning cocks 'sexnoun)
 (doctor-put-meaning dick 'sexnoun)
 (doctor-put-meaning dicks 'sexnoun)
-(doctor-put-meaning cunt 'sexnoun)
-(doctor-put-meaning cunts 'sexnoun)
+(doctor-put-meaning cunt 'sexnoun)	; censored
+(doctor-put-meaning cunts 'sexnoun)	; censored
 (doctor-put-meaning prostitute 'sexnoun)
 (doctor-put-meaning condom 'sexnoun)
 (doctor-put-meaning sex 'sexnoun)
@@ -753,18 +765,18 @@ reads the sentence before point, and prints the Doctor's answer."
 (doctor-put-meaning wine 'alcohol)
 (doctor-put-meaning whiskey 'alcohol)
 (doctor-put-meaning scotch 'alcohol)
-(doctor-put-meaning fuck 'sexverb)
-(doctor-put-meaning fucked 'sexverb)
+(doctor-put-meaning fuck 'sexverb)	; censored
+(doctor-put-meaning fucked 'sexverb)	; censored
 (doctor-put-meaning screw 'sexverb)
 (doctor-put-meaning screwing 'sexverb)
-(doctor-put-meaning fucking 'sexverb)
+(doctor-put-meaning fucking 'sexverb)	; censored
 (doctor-put-meaning rape 'sexverb)
 (doctor-put-meaning raped 'sexverb)
 (doctor-put-meaning kiss 'sexverb)
 (doctor-put-meaning kissing 'sexverb)
 (doctor-put-meaning kisses 'sexverb)
 (doctor-put-meaning screws 'sexverb)
-(doctor-put-meaning fucks 'sexverb)
+(doctor-put-meaning fucks 'sexverb)	; censored
 (doctor-put-meaning because 'conj)
 (doctor-put-meaning but 'conj)
 (doctor-put-meaning however 'conj)
@@ -862,7 +874,7 @@ Otherwise call the Doctor to parse preceding sentence."
     (setq bak sent)))
 
 (defun doctor-readin nil
-  "Read a sentence. Return it as a list of words."
+  "Read a sentence.  Return it as a list of words."
   (let (sentence)
     (backward-sentence 1)
     (while (not (eobp))
@@ -882,11 +894,11 @@ Otherwise call the Doctor to parse preceding sentence."
 (defun doctor-doc (sent)
   (cond
    ((equal sent '(foo))
-    (doctor-type '(bar! ($ please)($ continue))))
+    (doctor-type '(bar! ($ please)($ continue) \.)))
    ((member sent howareyoulst)
     (doctor-type '(i\'m ok \.  ($ describe) yourself \.)))
    ((or (member sent '((good bye) (see you later) (i quit) (so long)
-                       (go away) (get lost)))
+		       (go away) (get lost)))
 	(memq (car sent)
 	      '(bye halt break quit done exit goodbye 
 		    bye\, stop pause goodbye\, stop pause)))
@@ -1002,8 +1014,8 @@ Otherwise call the Doctor to parse preceding sentence."
   (setq history (reverse (cdr (reverse history)))))
 
 (defun doctor-query (x)
-  "Prompt for a line of input from the minibuffer until a noun or
-verb is seen.  Put dialogue in buffer."
+  "Prompt for a line of input from the minibuffer until a noun or verb is seen.
+Put dialogue in buffer."
   (let (a
 	(prompt (concat (doctor-make-string x)
 			" what \?  "))
@@ -1026,9 +1038,9 @@ verb is seen.  Put dialogue in buffer."
     retval))
 
 (defun doctor-subjsearch (sent key type)
-  "Search for the subject of a sentence SENT, looking for the noun closest to
-and preceding KEY by at least TYPE words. Set global variable subj to the
-subject noun, and return the portion of the sentence following it."
+  "Search for the subject of a sentence SENT, looking for the noun closest
+to and preceding KEY by at least TYPE words.  Set global variable subj to
+the subject noun, and return the portion of the sentence following it."
   (let ((i (- (length sent) (length (memq key sent)) type)))
     (while (and (> i -1) (not (doctor-nounp (nth i sent))))
       (setq i (1- i)))
@@ -1078,8 +1090,8 @@ subject noun, and return the portion of the sentence following it."
 		expect expected expects expel expels expelled
 		explain explained explains
 		fart farts feel feels felt fight fights find finds finding
-		forget forgets forgot fought found fuck fucked
-		fucking fucks
+		forget forgets forgot fought found fuck fucked	; censored
+		fucking fucks	; censored
 		gave get gets getting give gives go goes going gone got gotten
 		had harm harms has hate hated hates have having
 		hear heard hears hearing help helped helping helps
@@ -1220,7 +1232,7 @@ subject noun, and return the portion of the sentence following it."
   (memq x '(all also always amusing any anyway associated awesome
 		bad beautiful best better but certain clear
 		ever every fantastic fun funny
-		good great gross growdy however if ignorant
+		good great grody gross however if ignorant
 		less linked losing lusing many more much
 		never nice obnoxious often poor pretty real related rich
 		similar some stupid super superb
@@ -1310,8 +1322,8 @@ subject noun, and return the portion of the sentence following it."
   (memq x '(?a ?e ?i ?o ?u)))
 
 (defun doctor-replace (sent rlist)
-  "Replace any element of SENT that is the car of a replacement element
-pair in RLIST."
+  "Replace any element of SENT that is the car of a replacement
+element pair in RLIST."
   (apply 'append
 	 (mapcar
 	  (function
@@ -1332,9 +1344,9 @@ pair in RLIST."
 
 (defun doctor-svo (sent key type mem)
   "Find subject, verb and object in sentence SENT with focus on word KEY.
-TYPE is number of words preceding KEY to start looking for subject. MEM is
-t if results are to be put on Doctor's memory stack.
-Return is in global variables `subj', `verb' and `object'."
+TYPE is number of words preceding KEY to start looking for subject.
+MEM is t if results are to be put on Doctor's memory stack.
+Return in the global variables SUBJ, VERB and OBJECT."
   (let ((foo (doctor-subjsearch sent key type)))
     (or foo
 	(setq foo sent
@@ -1348,8 +1360,8 @@ Return is in global variables `subj', `verb' and `object'."
     (cond (mem (doctor-remember (list subj verb obj))))))
 
 (defun doctor-possess (sent key)
-  "Set possessive in SENT for keyword KEY. Hack on previous word, setting
-global variable `owner' to possibly correct result."
+  "Set possessive in SENT for keyword KEY.
+Hack on previous word, setting global variable OWNER to correct result."
   (let* ((i (- (length sent) (length (memq key sent)) 1))
 	 (prev (if (< i 0) 'your
 		 (nth i sent))))
@@ -1623,7 +1635,7 @@ global variable `owner' to possibly correct result."
 
 (defun doctor-strangelove ()
   (interactive)
-  (insert "Mein fuhrer!!\n")
+  (insert "Mein fuehrer!!\n")
   (doctor-read-print))
 
 ;;; doctor.el ends here
