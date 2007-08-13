@@ -24,7 +24,7 @@ The message will be physically deleted from the current folder the next
 time the current folder is expunged.
 
 With a prefix argument COUNT, the current message and the next
-COUNT - 1 messages are deleted.  A negative argument means
+COUNT - 1 messages are deleted.  A negative argument means the
 the current message and the previous |COUNT| - 1 messages are
 deleted.
 
@@ -71,7 +71,7 @@ only marked messages are deleted, other messages are ignored."
   "Remove the `deleted' attribute from the current message.
 
 With a prefix argument COUNT, the current message and the next
-COUNT - 1 messages are undeleted.  A negative argument means
+COUNT - 1 messages are undeleted.  A negative argument means the
 the current message and the previous |COUNT| - 1 messages are
 deleted.
 

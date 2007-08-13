@@ -12,13 +12,13 @@
 EMACS_VERSION = 19
 
 # what emacs is called on your system
-EMACS = ../../src/xemacs
+EMACS = emacs
 
 # where the Info file should go
-INFODIR = ../../info
+INFODIR = /usr/local/lib/emacs/info
 
 # where the vm.elc, tapestry.elc, etc. files should go
-#LISPDIR = /usr/local/lib/emacs/site-lisp
+LISPDIR = /usr/local/lib/emacs/site-lisp
 
 # where the toolbar pixmaps should go.
 # vm-toolbar-pixmap-directory must point to the same place.
@@ -68,24 +68,18 @@ SOURCES = \
 
 vm:	vm.elc
 
-vm.elc:	.autoload
+vm.elc:	autoload
 
-.noautoload:	$(OBJECTS) tapestry.elc
+noautoload:	$(OBJECTS) tapestry.elc
 	@echo "building vm.elc (with all modules included)..."
 	@cat $(OBJECTS) tapestry.elc > vm.elc
-	# in case the -f flag doesn't exist (e.g. on HPUX)
-	-chmod +w .noautoload
-	touch -f .noautoload || touch .noautoload
 
-.autoload:	vm-autoload.elc $(OBJECTS) tapestry.elc
+autoload:	vm-autoload.elc $(OBJECTS) tapestry.elc
 	@echo "building vm.elc (with all modules set to autoload)..."
 	@echo "(require 'vm-startup)" > vm.elc
 	@echo "(require 'vm-vars)" >> vm.elc
 	@echo "(require 'vm-version)" >> vm.elc
 	@echo "(require 'vm-autoload)" >> vm.elc
-	# in case the -f flag doesn't exist (e.g. on HPUX)
-	-chmod +w .autoload
-	touch -f .autoload || touch .autoload
 
 all:	vm.info vm
 
@@ -93,10 +87,10 @@ debug:	$(SOURCES) tapestry.el
 	@echo "building vm.elc (uncompiled, no autoloads)..."
 	@cat $(SOURCES) tapestry.el > vm.elc
 
-#install:	all
-#	cp vm.info $(INFODIR)/vm
-#	cp *.elc $(LISPDIR)
-#	cp pixmaps/*.xpm $(PIXMAPDIR)
+install:	all
+	cp vm.info $(INFODIR)/vm
+	cp *.elc $(LISPDIR)
+	cp pixmaps/*.xpm $(PIXMAPDIR)
 
 clean:
 	rm -f vm-autoload.el vm-autoload.elc $(OBJECTS) tapestry.elc

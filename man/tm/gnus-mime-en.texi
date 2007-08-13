@@ -26,9 +26,10 @@ This file documents gnus-mime, a MIME extension for Gnus.
 
 @node Introduction, Automatic MIME Preview, Top, Top
 @chapter What is gnus-mime?
+@cindex gnus-mime
 
-@cindex{gnus-mime}@strong{gnus-mime} is a MIME (@ref{(tm-en)MIME})
-extender for Gnus (@ref{(gnus)}) using tm (@ref{(tm-en)tm-kernel}).
+@strong{gnus-mime} is a MIME (@ref{(tm-en)MIME}) extender for Gnus
+(@ref{(gnus)}) using tm (@ref{(tm-en)tm-kernel}).
 
 @noindent
 @strong{[Notice]}
@@ -61,12 +62,13 @@ space elimination rule of RFC 1522.  gnus-mime is more rightful.
 
 @node Automatic MIME Preview, mule, Introduction, Top
 @chapter Inline display for MIME message
+@cindex XEmacs
+@cindex automatic MIME preview
 
-@cindex{automatic MIME preview}@strong{automatic MIME preview} feature
-is available for gnus-mime.  In automatic MIME preview mode, when
-reading an article in summary mode, gnus-mime displays preview buffer
-processed by tm-view instead of raw article
-buffer. (cf. @ref{(tm-view-en)}) @refill
+@strong{automatic MIME preview} feature is available for gnus-mime.  In
+automatic MIME preview mode, when reading an article in summary mode,
+gnus-mime displays preview buffer processed by tm-view instead of raw
+article buffer. (cf. @ref{(tm-view-en)}) @refill
 
 Therefore if an article is encoded by Base64 (@ref{(tm-en)Base64}) or
 Quoted-Printable (@ref{(tm-en)Quoted-Printable}), a decoded article is
@@ -75,8 +77,8 @@ displayed.  Or rich text article, such as text/enriched
 multipart (@ref{(tm-en)multipart}) article is dealt with
 correctly.@refill
 
-In addition, in @cindex{XEmacs}@strong{XEmacs}, images are displayed in
-preview buffer as same as text.@refill
+In addition, in @strong{XEmacs}, images are displayed in preview buffer
+as same as text.@refill
 
 Different from using metamail, speaker does not roar just then read an
 article includes audio content, video player does not play just then
@@ -174,12 +176,13 @@ is not good way.  If you want such way, please do setting for
 
 @node Two buffers for an article,  , MIME processing, Automatic MIME Preview
 @section Mechanism of Automatic MIME preview
+@cindex preview buffer
+@cindex raw article buffer
 
 Gnus 5.2 or later has two buffers for an article,
 @code{gnus-original-article-buffer} (@code{" *Original Article*"}) and
 @code{gnus-article-buffer} (@code{"*Article*"}).  The former is called
-@cindex{raw article buffer}@strong{raw article buffer}, the latter is
-called @cindex{preview buffer}@strong{preview buffer}.@refill
+@strong{raw article buffer}, the latter is called @strong{preview buffer}.@refill
 
 Content of raw article buffer is non-processed ``raw message''.  In
 particular, for emacs variants includes mule (@ref{(tm-en)mule})

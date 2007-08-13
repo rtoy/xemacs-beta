@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; modified by Shuhei KOBAYASHI <shuhei-k@jaist.ac.jp>
-;; Version: $Id: tm-file.el,v 1.2 1996/12/22 00:29:39 steve Exp $
+;; Version: $Id: tm-file.el,v 1.3 1996/12/29 00:15:13 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia, file, extract
 
 ;; This file is part of tm (Tools for MIME).

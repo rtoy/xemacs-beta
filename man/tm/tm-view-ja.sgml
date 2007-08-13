@@ -1,9 +1,9 @@
 <!doctype sinfo system>
-<!-- $Id: tm-view-ja.sgml,v 1.1 1996/12/22 00:09:35 steve Exp $ -->
+<!-- $Id: tm-view-ja.sgml,v 1.2 1996/12/29 00:15:33 steve Exp $ -->
 <head>
-<title>tm-view 7.77 Reference Manual$B!JF|K\8lHG!K(B
+<title>tm-view 7.79 Reference Manual$B!JF|K\8lHG!K(B
 <author>$B<i2,(B $BCNI'(B <mail>morioka@jaist.ac.jp</mail>
-<date>1996/10/11
+<date>1996/12/25
 
 <toc>
 </head>
@@ -941,6 +941,24 @@ charset">MIME charset</a> $B$,MQ$$$i$l$F$$$k(B encoded-word $B$O(B decode $
 $B@^$jJV$7!"$b$7$/$O!"2~9T$,4^$^$l$F$$$F$b!"$=$l$i$O(B unfold $B$5$lC1BN$N2~(B
 $B9TJ8;z$b<h$j=|$+$l$^$9!#(B
 </defun>
+
+
+<h1> $B<U<-(B
+<node> Acknowledgments
+<p>
+$B:G=i$K!";d$,(B tm-view $B$r:G=i$K:n$C$?;~$K!"87$7$$CmJ8$HM-1W$J=u8@$r2<$5(B
+$B$j!"$=$N@_7W$KB?Bg$JM?$($i$l$?>#C+J]Gn$5$s$K46<U$7$^$9!#(B
+<p>
+$B<!$K!"(B<file>tm-ew-d.el</file> $B$H(B <file>mel-b.el</file> $B$NA0?H$KEv$?$k(B
+<file>mime.el</file> $B$r=q$-!"$=$NG[I[$H2~B$$r$*5v$72<$5$C$?1]JB;LCR$5(B
+$B$s$K46<U$7$^$9!#(B
+<p>
+$B$^$?!"(BLaTeX $BMQ$NFbIt(B method $B$H(B message/partial $BMQ$N<+F07k9g(B method $B$r(B
+$BDs6!$7$F2<$5$C$?2,It<wCK$5$s!"(Btar archive $BMQ$NFbIt(B method $B$rDs6!$7$F2<(B
+$B$5$C$?>eLnGn$5$s$K46<U$7$^$9!#(B
+<p>
+$B:G8e$K!"(Bbeta test $B$K6(NO$7$F2<$5$C$?F|K\8lHG!"1Q8lHGAPJ}$N(B tm mailing
+list $B$N(B member $B$K46<U$7$^$9!#(B
 
 
 <h1> $B35G0:w0z(B

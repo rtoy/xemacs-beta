@@ -53,10 +53,10 @@
 	(progn
 	  (setq toolbar-mail-frame (make-frame))
 	  (add-hook 'vm-quit-hook
-		    '(lambda ()
-		       (save-excursion
-			 (if (frame-live-p toolbar-mail-frame)
-			     (delete-frame toolbar-mail-frame)))))
+		    (lambda ()
+		      (save-excursion
+			(if (frame-live-p toolbar-mail-frame)
+			    (delete-frame toolbar-mail-frame)))))
 	  (select-frame toolbar-mail-frame)
 	  (raise-frame toolbar-mail-frame)
 	  (funcall toolbar-mail-command)))
@@ -124,19 +124,20 @@
   "The frame in which news is displayed.")
 
 (defun toolbar-news ()
-  "Run GNUS in a separate frame."
+  "Run Gnus in a separate frame."
   (interactive)
-  (if (or (not toolbar-news-frame)
-	  (not (frame-live-p toolbar-news-frame)))
-      (progn
-	(setq toolbar-news-frame (make-frame))
-	(add-hook 'gnus-exit-gnus-hook
-		  '(lambda ()
-		     (if (frame-live-p toolbar-news-frame)
-			 (delete-frame toolbar-news-frame))))
-	(select-frame toolbar-news-frame)
-	(raise-frame toolbar-news-frame)
-	(gnus)))
+  (when (or (not toolbar-news-frame)
+	    (not (frame-live-p toolbar-news-frame)))
+    (setq toolbar-news-frame (make-frame))
+    (add-hook 'gnus-exit-gnus-hook
+	      (lambda ()
+		(when (frame-live-p toolbar-news-frame)
+		  (if (cdr (frame-list))
+		      (delete-frame toolbar-news-frame))
+                  (setq toolbar-news-frame nil))))
+    (select-frame toolbar-news-frame)
+    (raise-frame toolbar-news-frame)
+    (gnus))
   (if (frame-iconified-p toolbar-news-frame)
       (deiconify-frame toolbar-news-frame))
   (select-frame toolbar-news-frame)
@@ -206,22 +207,22 @@ One possibility for a different value would be `query-replace-regexp'.")
 
 (defun init-x-toolbar ()
   (mapcar
-   #'(lambda (cons)
-       (let ((prefix (expand-file-name (cdr cons) toolbar-icon-directory)))
-	 (set (car cons)
-	      (if (featurep 'xpm)
-		  (toolbar-make-button-list
-                   (concat prefix "-up.xpm")
-		   nil
-                   (concat prefix "-xx.xpm")
-                   (concat prefix "-cap-up.xpm")
-		   nil
-                   (concat prefix "-cap-xx.xpm"))
-                (toolbar-make-button-list
-                 (concat prefix "-up.xbm")
-                 (concat prefix "-dn.xbm")
-                 (concat prefix "-xx.xbm")
-                 )))))
+   (lambda (cons)
+     (let ((prefix (expand-file-name (cdr cons) toolbar-icon-directory)))
+       (set (car cons)
+	    (if (featurep 'xpm)
+		(toolbar-make-button-list
+		 (concat prefix "-up.xpm")
+		 nil
+		 (concat prefix "-xx.xpm")
+		 (concat prefix "-cap-up.xpm")
+		 nil
+		 (concat prefix "-cap-xx.xpm"))
+	      (toolbar-make-button-list
+	       (concat prefix "-up.xbm")
+	       (concat prefix "-dn.xbm")
+	       (concat prefix "-xx.xbm")
+	       )))))
    init-x-toolbar-list)
   ;; do this now because errors will occur if the icon symbols
   ;; are not initted

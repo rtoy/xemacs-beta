@@ -154,7 +154,7 @@ See the documentation for vm-mode for more information."
 	  (vm-display (current-buffer) t nil nil))
       ;; need to do this after any frame creation because the
       ;; toolbar sets frame-specific height and width specifiers.
-      (and full-startup (vm-toolbar-support-possible-p) vm-use-toolbar
+      (and (vm-toolbar-support-possible-p) vm-use-toolbar
 	   (progn
 	     (vm-toolbar-install-toolbar)
 	     (vm-toolbar-update-toolbar)))

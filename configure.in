@@ -1826,20 +1826,20 @@ case "${canonical}" in
   hppa*-hp-hpux7* )
     machine=hp800 opsys=hpux NON_GNU_CPP="cc -Aa -E" NON_GNU_CC="cc -Aa"
   ;;
-  hppa*-hp-hpux8shr* )
-    machine=hp800 opsys=hpux8shr NON_GNU_CPP="cc -Aa -E" NON_GNU_CC="cc -Aa"
+  hppa*-hp-hpux8*shr* )
+    machine=hp800 opsys=hpux8*shr NON_GNU_CPP="cc -Aa -E" NON_GNU_CC="cc -Aa"
   ;;
   hppa*-hp-hpux8* )
     machine=hp800 opsys=hpux8 NON_GNU_CPP="cc -Aa -E" NON_GNU_CC="cc -Aa"
   ;;
-  hppa*-hp-hpux9shr* )
-    machine=hp800 opsys=hpux9shr NON_GNU_CPP="cc -Aa -E" NON_GNU_CC="cc -Aa"
+  hppa*-hp-hpux9*shr* )
+    machine=hp800 opsys=hpux9*shr NON_GNU_CPP="cc -Aa -E" NON_GNU_CC="cc -Aa"
   ;;
   hppa*-hp-hpux9* )
     machine=hp800 opsys=hpux9 NON_GNU_CPP="cc -Aa -E" NON_GNU_CC="cc -Aa"
   ;;
-  hppa*-hp-hpux10shr* )
-    machine=hp800 opsys=hpux10shr NON_GNU_CPP="cc -Aa -E" NON_GNU_CC="cc -Aa"
+  hppa*-hp-hpux10*shr* )
+    machine=hp800 opsys=hpux10*shr NON_GNU_CPP="cc -Aa -E" NON_GNU_CC="cc -Aa"
   ;;
   hppa*-hp-hpux10* )
     machine=hp800 opsys=hpux10 NON_GNU_CPP="cc -Aa -E" NON_GNU_CC="cc -Aa"
@@ -2171,11 +2171,11 @@ case "${canonical}" in
     case "${canonical}" in
       ## The Sun386 didn't get past 4.0.
       i[3-9]86-*-sunos4	   ) opsys=sunos4-0      ;;
-      *-sunos4shr*	   ) opsys=sunos4-0shr   ;;
-      *-sunos4-0shr*	   ) opsys=sunos4-0shr   ;;
-      *-sunos4-1shr*	   ) opsys=sunos4-1shr   ;;
-      *-sunos4-1-2shr*	   ) opsys=sunos4-1-2shr ;;
-      *-sunos4-1-[3-9]shr* ) opsys=sunos4-1-3shr ;;
+      *-sunos4*shr*	   ) opsys=sunos4-0-shr   ;;
+      *-sunos4-0*shr*	   ) opsys=sunos4-0-shr   ;;
+      *-sunos4-1*shr*	   ) opsys=sunos4-1-shr   ;;
+      *-sunos4-1-2*shr*	   ) opsys=sunos4-1-2-shr ;;
+      *-sunos4-1-[3-9]*shr* ) opsys=sunos4-1-3-shr ;;
       *-sunos4.0*	   ) opsys=sunos4-0      ;;
       *-sunos4.1.2*        ) opsys=sunos4-1-2    ;;
       *-sunos4.1.[3-9]*	   ) opsys=sunos4-1-3    ;;
@@ -2859,7 +2859,7 @@ if test "${opsys}" = "hpux9"; then
   esac
 fi
 
-if test "${opsys}" = "hpux9shr"; then
+if test "${opsys}" = "hpux9-shr"; then
   case "${x_libraries}" in
     *X11R4* )
       opsysfile="s/hpux9shxr4.h"

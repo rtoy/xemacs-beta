@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Version:
-;;	$Id: file-detect.el,v 1.2 1996/12/22 00:29:31 steve Exp $
+;;	$Id: file-detect.el,v 1.3 1996/12/29 00:15:09 steve Exp $
 ;; Keywords: install, module
 
 ;; This file is part of tl (Tiny Library).

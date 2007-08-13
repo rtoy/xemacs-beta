@@ -5,7 +5,7 @@
 ;; Author: OKABE Yasuo @ Kyoto University
 ;;         MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Version:
-;;	$Id: tm-partial.el,v 1.2 1996/12/22 00:29:41 steve Exp $ 
+;;	$Id: tm-partial.el,v 1.3 1996/12/29 00:15:14 steve Exp $ 
 ;; Keywords: mail, news, MIME, multimedia, message/partial
 
 ;; This file is a part of tm (Tools for MIME).

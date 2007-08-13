@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: tm-def.el,v 1.2 1996/12/22 00:29:38 steve Exp $
+;; Version: $Id: tm-def.el,v 1.3 1996/12/29 00:15:13 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia, definition
 
 ;; This file is part of tm (Tools for MIME).
@@ -104,8 +104,12 @@
     (tl:overlay-put overlay 'face face)
     ))
 
-(setq tm:button-face 'bold)
-(setq tm:mouse-face 'highlight)
+(defvar tm:button-face 'bold
+  "Face used for content-button or URL-button of MIME-Preview buffer.
+\[tm-def.el]")
+
+(defvar tm:mouse-face 'highlight
+  "Face used for MIME-preview buffer mouse highlighting. [tm-def.el]")
 
 (defun tm:add-button (from to func &optional data)
   "Create a button between FROM and TO with callback FUNC and data DATA."

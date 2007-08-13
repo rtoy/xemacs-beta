@@ -1,4 +1,15 @@
 							-*- indented-text -*-
+to 19.15 beta6
+-- tm-7.100.2
+-- 20k of new zippy quotes from mly
+-- By popular demand, `font-menu-this-frame-only-p' now defaults to nil.
+-- Neal Becker's Rosetta Man patch reinstalled
+-- VM 5.97
+-- Minimize displayed help windows to avoid wasted screen space
+-- Miscellaneous bug fixes
+-- Java fontlocking update from Bob Weiner
+-- pcl-cvs update from Neal Becker
+
 to 19.15 beta5
 -- tm-7.97
 -- InfoDock man.el

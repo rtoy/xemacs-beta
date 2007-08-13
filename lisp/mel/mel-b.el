@@ -10,7 +10,7 @@
 ;;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;;; Created: 1995/6/24
 ;;; Version:
-;;;	$Id: mel-b.el,v 1.2 1996/12/22 00:29:15 steve Exp $
+;;;	$Id: mel-b.el,v 1.3 1996/12/29 00:14:57 steve Exp $
 ;;; Keywords: MIME, Base64
 ;;;
 ;;; This file is part of MEL (MIME Encoding Library).

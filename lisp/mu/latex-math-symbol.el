@@ -5,7 +5,7 @@
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1996/7/1
 ;; Version:
-;;    $Id: latex-math-symbol.el,v 1.1 1996/12/22 00:35:05 steve Exp $
+;;    $Id: latex-math-symbol.el,v 1.2 1996/12/29 00:14:59 steve Exp $
 ;; Keywords: LaTeX, math, mule
 
 ;; This file is part of MU (Message Utilities).

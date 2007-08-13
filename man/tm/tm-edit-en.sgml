@@ -1,9 +1,9 @@
 <!doctype sinfo system>
-<!-- $Id: tm-edit-en.sgml,v 1.1 1996/12/22 00:09:32 steve Exp $ -->
+<!-- $Id: tm-edit-en.sgml,v 1.2 1996/12/29 00:15:29 steve Exp $ -->
 <head>
-<title>tm-edit 7.90 Reference Manual (English Version)
+<title>tm-edit 7.100 Reference Manual (English Version)
 <author>MORIOKA Tomohiko <mail>morioka@jaist.ac.jp</mail>
-<date>1996/10/11
+<date>1996/12/25
 
 <toc>
 </head>
@@ -109,7 +109,9 @@ Insert single-part tag indicates text part.
 </kd>
 <kt>C-c C-x C-i
 <kd>
-Insert file as a MIME attachment.
+Insert file as a MIME attachment.  If <kbd>C-u</kbd> is followed by
+it, it asks media-type, subtype or encoding even if their default
+values are specified. <cf node="tag specification for inserted file">
 </kd>
 <kt>C-c C-x C-e
 <kd>
@@ -225,6 +227,68 @@ Set current editing message to digital-sign or not. <cf node="PGP">
 <kd>
 Set current editing message to encrypt or not. <cf node="PGP">
 </kl>
+
+
+<h1> Default media-type or encoding for inserted file
+<node> tag specification for inserted file
+<p>
+When <kbd>C-c C-x C-i</kbd> (<code>mime-editor/insert-file</code>) is
+pressed, tag parameters for inserted file, such as media-type or
+encoding, are detected by variable <code>mime-file-types</code>.
+<p>
+When <kbd>C-u</kbd> is followed by it or parameter is not found from
+the variable, it asks from user.  (When <kbd>C-u</kbd> is followed by
+it, detected value is used as default value)
+<p>
+If you want to change default value for file names, please change
+variable <code>mime-file-types</code>.
+
+
+<defvar name="mime-file-types">
+<p>
+Specification of default value of tag for file name of inserted file.
+<p>
+It is a list of following list:
+
+<lisp>
+	(FILE_PAT TYPE SUBTYPE PARAMS ENCODING
+	 DISPOSITION_TYPE DISPOSITION_PARAMS)
+</lisp>
+
+Each elements of the list are following:
+
+<dl>
+<dt>FILE_PAT
+<dd>regular expression of file name
+<dt>TYPE
+<dd>media type
+<dt>SUBTYPE
+<dd>media subtype
+<dt>PARAMS
+<dd>parameters of Content-Type field
+<dt>ENCODING
+<dd>Content-Transfer-Encoding
+<dt>DISPOSITION_TYPE
+<dd>disposition-type
+<dt>DISPOSITION_PARAMS
+<dd>parameters of Content-Disposition field
+</dl>
+
+<noindent>
+Example: Specify application/rtf as default media type for
+<file>*.rtf</file>
+
+<lisp>
+(call-after-loaded
+ 'tm-edit
+ (lambda ()
+   (set-alist 'mime-file-types
+	      "\\.rtf$"
+	      '("application" "rtf" nil nil
+		"attachment" (("filename" . file)))
+	      )))
+</lisp>
+</defvar>
 
 
 <h1> transfer level
@@ -426,6 +490,16 @@ It allows <code>pgp-elkins</code> or <code>pgp-kazu</code>.
 <p>
 Default value is <code>nil</code>.
 </defvar>
+
+
+<h1> Acknowledgments
+<node> Acknowledgments
+<p>
+First of all, I thank UMEDA Masanobu for his work of
+<file>mime.el</file>, which is the origin of tm-edit, and permission
+to rewrite his work as tm-edit.
+<p>
+I thank members of two tm mailing lists, Japanese and English version.
 
 
 <h1> Concept Index

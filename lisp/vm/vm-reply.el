@@ -529,10 +529,6 @@ Subject: header manually."
 	       (vm-rfc1153-encapsulate-messages
 		vm-forward-list vm-forwarded-headers
 		vm-unforwarded-header-regexp))
-	      ((equal vm-forwarding-digest-type "rfc1521")
-	       (vm-rfc1521-encapsulate-messages
-		vm-forward-list vm-forwarded-headers
-		vm-unforwarded-header-regexp))
 	      ((equal vm-forwarding-digest-type nil)
 	       (vm-no-frills-encapsulate-message
 		(car vm-forward-list) vm-forwarded-headers
@@ -690,11 +686,7 @@ only marked messages will be put into the digest."
 	    ((equal vm-digest-send-type "rfc1153")
 	     (vm-rfc1153-encapsulate-messages
 	      mlist vm-rfc1153-digest-headers
-	      vm-rfc1153-digest-discard-header-regexp))
-	    ((equal vm-digest-send-type "rfc1521")
-	     (vm-rfc1521-encapsulate-messages
-	      mlist vm-rfc1521-digest-headers
-	      vm-rfc1521-digest-discard-header-regexp)))
+	      vm-rfc1153-digest-discard-header-regexp)))
       (goto-char start)
       (setq mp mlist)
       (if prefix
@@ -724,12 +716,6 @@ only marked messages will be put into the digest."
   "Like vm-send-digest but always sends an RFC 1153 digest."
   (interactive "P")
   (let ((vm-digest-send-type "rfc1153"))
-    (vm-send-digest preamble)))
-
-(defun vm-send-rfc1521-digest (&optional preamble)
-  "Like vm-send-digest but always sends an RFC 1521 (MIME) digest."
-  (interactive "P")
-  (let ((vm-digest-send-type "rfc1521"))
     (vm-send-digest preamble)))
 
 (defun vm-continue-composing-message (&optional not-picky)
@@ -866,8 +852,6 @@ found, the current buffer remains selected."
 		  vm-send-rfc934-digest-other-frame
 		  vm-send-rfc1153-digest
 		  vm-send-rfc1153-digest-other-frame
-		  vm-send-rfc1521-digest
-		  vm-send-rfc1521-digest-other-frame
 		  vm-forward-message
 		  vm-forward-message-other-frame
 		  vm-forward-message-all-headers
@@ -993,17 +977,6 @@ found, the current buffer remains selected."
 
 (defun vm-send-rfc1153-digest-other-frame (&optional prefix)
   "Like vm-send-rfc1153-digest, but run in a newly created frame."
-  (interactive "P")
-  (if (vm-multiple-frames-possible-p)
-      (vm-goto-new-frame 'composition))
-  (let ((vm-frame-per-composition nil)
-	(vm-search-other-frames nil))
-    (vm-send-rfc1153-digest prefix))
-  (if (vm-multiple-frames-possible-p)
-      (vm-set-hooks-for-frame-deletion)))
-
-(defun vm-send-rfc1521-digest-other-frame (&optional prefix)
-  "Like vm-send-rfc1521-digest, but run in a newly created frame."
   (interactive "P")
   (if (vm-multiple-frames-possible-p)
       (vm-goto-new-frame 'composition))

@@ -5786,6 +5786,7 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
 #else /* not MSDOS */
       str = "T";
 #endif /* not MSDOS */
+      break;
 
       /* print percent of buffer above top of window, or Top, Bot or All */
     case 'p':
@@ -5832,6 +5833,12 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
       Bufpos toppos = marker_position (w->start[type]);
       Bufpos botpos = BUF_Z (b) - w->window_end_pos[type];
       Charcount total = BUF_ZV (b) - BUF_BEGV (b);
+
+      /* botpos is only accurate as of the last redisplay, so we can
+	 only treat it as a hint.  In particular, after erase-buffer,
+	 botpos may be negative. */
+      if (botpos < toppos)
+	botpos = toppos;
 
       if (botpos >= BUF_ZV (b))
 	{

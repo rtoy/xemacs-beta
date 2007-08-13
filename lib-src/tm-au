@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $Id: tm-au,v 1.1.1.1 1996/12/18 03:52:12 steve Exp $
+# $Id: tm-au,v 1.2 1996/12/29 00:14:55 steve Exp $
 #
 
 if [ "$TM_TMP_DIR" = "" ]; then
@@ -18,19 +18,17 @@ fi
 case "$4" in
 "play")
 	echo "$2; $3 ->"
+	tmdecode $3 $1 $filename
 	if [ "$AUDIOSERVER" = "" ]; then
 		if [ `uname` = "IRIX" ]; then
-			tmdecode $3 $1 $filename
 			sfplay $filename
-			trap 'rm -f $filename' 0 1 2 3 13 15
 		else
-			tmdecode $3 $1 /dev/audio
+			cat $filename > /dev/audio
 		fi
 	else
-		tmdecode $3 $1 $filename
 		autool -v 40 $filename
-		trap 'rm -f $filename' 0 1 2 3 13 15
 	fi
+	trap 'rm -f $filename' 0 1 2 3 13 15
 	;;
 "extract")
 	echo "$2; $3 -> $filename"

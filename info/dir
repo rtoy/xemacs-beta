@@ -36,12 +36,12 @@ File: dir	Node: Top	This is the top of the INFO tree
 
 * Info::	Documentation browsing system.
 * XEmacs::	The extensible user-friendly self-documenting text editor.
-		This manual is for XEmacs 19.15.
+		This manual is for XEmacs 20.0.
 * Lispref::	XEmacs Lisp technical reference.
-		This manual is for XEmacs 19.15.
+		This manual is for XEmacs 20.0.
 * New-Users-Guide::
-	        XEmacs User's Guide for XEmacs 19.15.
-* XEmacs-FAQ::	XEmacs Frequently Asked Questions for 19.15.
+	        XEmacs User's Guide for XEmacs 20.0.
+* XEmacs-FAQ::	XEmacs Frequently Asked Questions for 20.0.
 * Internals::	Guide to the internals of XEmacs.
 
 Packages:
@@ -74,6 +74,14 @@ Packages:
 * Texinfo::	With one source file, make either a printed manual (through
 		TeX) or an Info file (through texinfo).
 * Viper::	A VI Plan for Emacs Rescue and a venomous VI PERil.
+* Vhdl-mode::	A major mode for editing VHDL files.
 * VM::		View Mail, a replacement for Rmail.
 * W3::		A browser for the World Wide Web global hypertext system.
+* tm-en::	Tools for Mime (English version)
+* tm-ja::	Tools for Mime (Japanese version)
+* tm-mh-e-en::	MIME extender for mh-e (English version)
+* tm-mh-e-ja::	MIME extender for mh-e (Japanese version)
+* tm-vm_en::	MIME extender for VM.
+* gnus-mime-en::MIME extender for Gnus (English version)
+* gnus-mime-ja::MIME extender for Gnus (Japanese version)
 * Locals:

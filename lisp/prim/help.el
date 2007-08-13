@@ -379,7 +379,8 @@ the window.")
                       (substitute-command-keys "Type \\[delete-other-windows] to remove help window, \\[scroll-other-window] to scroll the help.")))
                     (t
                      (message
-                      (substitute-command-keys "Type \\[switch-to-buffer-other-window] to restore the other window, \\[scroll-other-window] to scroll the help."))))))))))
+                      (substitute-command-keys "Type \\[switch-to-buffer-other-window] to restore the other window, \\[scroll-other-window] to scroll the help."))))
+	      (shrink-window-if-larger-than-buffer helpwin)))))))
 
 (defun describe-key (key)
   "Display documentation of the function invoked by KEY.
@@ -679,12 +680,14 @@ instead, to ensure that you get the most up-to-date information."
 		     (eq char ? )
 		     (eq 'scroll-up (key-binding event))
 		     (eq char ?\177)
-		     (eq 'scroll-down (key-binding event)))
+		     (and (not (eq char ?b))
+			  (eq 'scroll-down (key-binding event))))
 	    (if (or (eq char ? )
 		    (eq 'scroll-up (key-binding event)))
 		(scroll-up))
 	    (if (or (eq char ?\177)
-		    (eq 'scroll-down (key-binding event)))
+		    (and (not (eq char ?b))
+			 (eq 'scroll-down (key-binding event))))
 		(scroll-down))
 	    ;; write this way for I18N3 snarfing
 	    (if (pos-visible-in-window-p (point-max))

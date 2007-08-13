@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Version:
-;;	$Id: tl-seq.el,v 1.2 1996/12/22 00:29:33 steve Exp $
+;;	$Id: tl-seq.el,v 1.3 1996/12/29 00:15:10 steve Exp $
 ;; Keywords: sequence
 
 ;; This file is part of tl (Tiny Library).

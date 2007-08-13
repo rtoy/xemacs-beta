@@ -64,8 +64,7 @@
   (vm-save-buffer-excursion
    (let ((w (and buffer (vm-get-buffer-window buffer))))
      (and buffer (set-buffer buffer))
-;     (and w display (vm-raise-frame (vm-window-frame w)))
-     (and w display (vm-window-frame w))
+     (and w display (vm-raise-frame (vm-window-frame w)))
      (and w display (not (eq (vm-selected-frame) (vm-window-frame w)))
 	  (vm-select-frame (vm-window-frame w)))
      (cond ((and buffer display)

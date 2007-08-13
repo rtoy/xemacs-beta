@@ -440,7 +440,7 @@ by vm-match-header."
 This function works by examining the beginning of a folder.
 If optional arg FILE is present the type of FILE is returned instead.
 If optional second and third arg START and END are provided,
-vm-get-folder-type will examine the text between those buffer
+vm-get-folder-type will examine the the text between those buffer
 positions.  START and END default to 1 and (buffer-size) + 1.
 
 Returns
@@ -1473,6 +1473,8 @@ vm-folder-type is initialized here."
 	   attributes cache
 	   (case-fold-search t)
 	   (buffer-read-only nil)
+	   ;; don't truncate the printing of large Lisp objects
+	   (print-length nil)
 	   opoint
 	   ;; This prevents file locking from occuring.  Disabling
 	   ;; locking can speed things noticeably if the lock
@@ -1653,6 +1655,8 @@ vm-folder-type is initialized here."
 	   ;; oh well, no way around this.
 	   (insert vm-labels-header " "
 		   (let ((print-escape-newlines t)
+			 ;; don't truncate the printing of large Lisp objects
+			 (print-length nil)
 			 (list nil))
 		     (mapatoms (function
 				(lambda (sym)
@@ -1713,6 +1717,8 @@ vm-folder-type is initialized here."
 	 (widen)
 	 (let ((old-buffer-modified-p (buffer-modified-p))
 	       (case-fold-search t)
+	       ;; don't truncate the printing of large Lisp objects
+	       (print-length nil)
 	       ;; This prevents file locking from occuring.  Disabling
 	       ;; locking can speed things noticeably if the lock
 	       ;; directory is on a slow device.  We don't need locking
@@ -1759,6 +1765,8 @@ vm-folder-type is initialized here."
 	       (case-fold-search t)
 	       (print-escape-newlines t)
 	       lim
+	       ;; don't truncate the printing of large Lisp objects
+	       (print-length nil)
 	       (buffer-read-only nil)
 	       ;; This prevents file locking from occuring.  Disabling
 	       ;; locking can speed things noticeably if the lock
@@ -1802,6 +1810,8 @@ vm-folder-type is initialized here."
 	 (widen)
 	 (let ((old-buffer-modified-p (buffer-modified-p))
 	       (case-fold-search t)
+	       ;; don't truncate the printing of large Lisp objects
+	       (print-length nil)
 	       ;; This prevents file locking from occuring.  Disabling
 	       ;; locking can speed things noticeably if the lock
 	       ;; directory is on a slow device.  We don't need locking
@@ -1958,12 +1968,12 @@ The folder is not altered and Emacs is still visiting it."
   (vm-iconify-frame))
 
 (defun vm-quit-no-change ()
-  "Exit VM without saving changes made to the folder."
+  "Quit visiting the current folder without saving changes made to the folder."
   (interactive)
   (vm-quit t))
 
 (defun vm-quit (&optional no-change)
-  "Quit VM, saving changes.  Deleted messages are not expunged."
+  "Quit visiting the current folder, saving changes.  Deleted messages are not expunged."
   (interactive)
   (vm-select-folder-buffer)
   (if (not (memq major-mode '(vm-mode vm-virtual-mode)))

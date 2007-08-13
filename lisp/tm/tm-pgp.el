@@ -5,7 +5,7 @@
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1995/12/7
-;; Version: $Id: tm-pgp.el,v 1.2 1996/12/22 00:29:41 steve Exp $
+;; Version: $Id: tm-pgp.el,v 1.3 1996/12/29 00:15:14 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia, PGP, security
 
 ;; This file is part of tm (Tools for MIME).

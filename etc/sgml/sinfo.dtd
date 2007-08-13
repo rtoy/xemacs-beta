@@ -1,6 +1,6 @@
 <!-- This is sinfo.dtd,
       by MORIOKA Tomohiko
-      $Id: sinfo.dtd,v 1.1 1996/12/22 00:34:43 steve Exp $
+      $Id: sinfo.dtd,v 1.2 1996/12/29 00:14:54 steve Exp $
 -->
 
 <!entity % emph 
@@ -17,7 +17,7 @@
 
 <!entity % list 
         " list | ul | ol | dl | kl | vl | memo | lisp | rfc | standard
-        | report " >
+        | report | inproc " >
 
 <!entity % par 	
 	"  %list; | comment | lq | quote | tscreen " >
@@ -28,7 +28,7 @@
         " defun | define | defvar | prop | lemma | coroll | proof | theorem " >
 
 <!entity % sectpar 
-        " %par; | figure | table | faq | hrule | %mathpar; | 
+        " %par; | figure | table | faq | %mathpar; | 
 	  %thrm; ">
 <!element sinfo o o (head, body) >
 
@@ -101,6 +101,19 @@
 	  title-fr cdata #implied
 	  title-ja cdata #implied
 	  date     cdata #implied>
+<!element inproc - o empty>
+<!attlist inproc
+	  abbrev   cdata #implied
+	  author   cdata #required
+	  title-cn cdata #implied
+	  title-en cdata #implied
+	  title-fr cdata #implied
+	  title-ja cdata #implied
+	  book-cn  cdata #implied
+	  book-en  cdata #implied
+	  book-fr  cdata #implied
+	  book-ja  cdata #implied
+	  date     cdata #implied>
 <!element dl - - (dt,dd)+ >
 <!element dt - o ((%inline; | %sectpar;)*, (p|noindent)*) >
 <!element dd - o ((%inline; | %sectpar;)*, (p|noindent|newline)*) >
@@ -124,7 +137,6 @@
 <!element question - o ((%inline; | %sectpar;)*, (p|noindent)*)+>
 <!element answer - o ((%inline; | %sectpar;)*, (p|noindent)*)+>
 <!element coment - o ((%inline; | %sectpar;)*, (p|noindent)*)+>
-<!element hrule - o empty >
 
 <!element figure - - ((eps | ph ), caption?)>
 <!attlist figure

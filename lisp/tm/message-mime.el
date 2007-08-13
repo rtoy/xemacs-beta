@@ -5,7 +5,7 @@
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1996/8/6
 ;; Version:
-;;	$Id: message-mime.el,v 1.2 1996/12/22 00:29:36 steve Exp $
+;;	$Id: message-mime.el,v 1.3 1996/12/29 00:15:12 steve Exp $
 ;; Keywords: news, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is not part of GNU Emacs yet.

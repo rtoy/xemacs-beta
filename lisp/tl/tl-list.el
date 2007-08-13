@@ -6,7 +6,7 @@
 ;;         Masanobu UMEDA <umerin@flab.flab.fujitsu.junet>
 ;;         Lars Magne Ingebrigtsen <larsi@ifi.uio.no>
 ;; Version:
-;;	$Id: tl-list.el,v 1.2 1996/12/22 00:29:32 steve Exp $
+;;	$Id: tl-list.el,v 1.3 1996/12/29 00:15:09 steve Exp $
 ;; Keywords: list
 
 ;; This file is part of tl (Tiny Library).

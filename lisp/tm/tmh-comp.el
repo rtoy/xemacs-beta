@@ -6,7 +6,7 @@
 ;;         OKABE Yasuo <okabe@kudpc.kyoto-u.ac.jp>
 ;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1996/2/29 (separated from tm-mh-e.el)
-;; Version: $Id: tmh-comp.el,v 1.2 1996/12/22 00:29:44 steve Exp $
+;; Version: $Id: tmh-comp.el,v 1.3 1996/12/29 00:15:15 steve Exp $
 ;; Keywords: mail, MH, MIME, multimedia, encoded-word, multilingual
 
 ;; This file is part of tm (Tools for MIME).

@@ -498,7 +498,7 @@ place\" scrolling in particular buffers."
   ;; be worth it.
   )
 
-(defvar scroll-allow-blank-lines-past-eob t
+(defvar scroll-allow-blank-lines-past-eob nil
   "*When this variable is `nil' the \"in place\" scrolling commands will avoid
 displaying empty lines past the end of the buffer text.  In other words, just
 as you can't see \"dead space\" before the beginning of the buffer text, the

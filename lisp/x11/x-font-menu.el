@@ -117,7 +117,7 @@
   "*If non-nil, then the font menu will try to show only bitmap fonts.")
 
 ;;;###autoload
-(defvar font-menu-this-frame-only-p t
+(defvar font-menu-this-frame-only-p nil
   "*If non-nil, then changing the default font from the font menu will only
 affect one frame instead of all frames.")
 

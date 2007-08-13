@@ -72,15 +72,15 @@ If EXPLICIT-DEFAULTS is not nil and not t, it should be something
 that is allowable as a value for `font-lock-defaults' and will be
 used to initialize the Font Lock variables."
 
-  (if (not (featurep 'font-lock))
-      nil
-    (if (or (and font-lock-auto-fontify
-		 (not (memq major-mode font-lock-mode-disable-list)))
-	    (and (not font-lock-auto-fontify)
-		 (memq major-mode font-lock-mode-enable-list)))
-	(if (and (font-lock-set-defaults-1 explicit-defaults)
-		 font-lock-keywords)
-	    (turn-on-font-lock)))))
+  (when
+      (and
+       (featurep 'font-lock)
+       (if font-lock-auto-fontify
+	   (not (memq major-mode font-lock-mode-disable-list))
+	 (memq major-mode font-lock-mode-enable-list))
+       (font-lock-set-defaults-1 explicit-defaults)
+       font-lock-keywords)
+    (turn-on-font-lock)))
 
 (provide 'fontl-hooks)
 

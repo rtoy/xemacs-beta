@@ -380,6 +380,9 @@
        ["Blinking Cursor" (blink-cursor-mode)
 	:style toggle
 	:selected (and (boundp 'blink-cursor-mode) blink-cursor-mode)]
+       ["Frame-Local Font Menu" (setq font-menu-this-frame-only-p
+				    (not font-menu-this-frame-only-p))
+	:style toggle :selected font-menu-this-frame-only-p]
 ;     ["Line Numbers" (line-number-mode nil)
 ;      :style toggle :selected line-number-mode]
       )
@@ -426,9 +429,6 @@
 	:selected buffers-menu-submenus-for-groups-p
 	:active (not (null buffers-menu-grouping-function))]
        "---"
-       ["Frame-Local Font Menu" (setq font-menu-this-frame-only-p
-				    (not font-menu-this-frame-only-p))
-	:style toggle :selected font-menu-this-frame-only-p]
        ["Ignore Scaled Fonts" (setq font-menu-ignore-scaled-fonts
 				    (not font-menu-ignore-scaled-fonts))
 	:style toggle :selected font-menu-ignore-scaled-fonts]
@@ -523,42 +523,48 @@
 
      ("Help"
       ["About XEmacs..."	about-xemacs		t]
+      ("Basics"
+       ["XEmacs Tutorial"	help-with-tutorial	t]
+       ["XEmacs News"		view-emacs-news		t]
+       ["Package Browser"	finder-by-keyword	t]
+       ["Splash Screen"		xemacs-splash-buffer	t])
       "-----"
-      ["XEmacs WWW Page"	xemacs-www-page		t]
-      ["Newest XEmacs FAQ via WWW"	xemacs-www-faq	t]
-      ["XEmacs FAQ (local)"	xemacs-local-faq	t]
-      ["XEmacs Tutorial"	help-with-tutorial	t]
-      ["XEmacs News"		view-emacs-news		t]
-      ["Sample .emacs"		(find-file
+      ("XEmacs FAQ & Web Page"
+       ["XEmacs WWW Page"	xemacs-www-page		t]
+       ["Newest XEmacs FAQ via WWW"	xemacs-www-faq	t]
+       ["XEmacs FAQ (local)"	xemacs-local-faq	t])
+      ("Samples"
+       ["Sample .emacs"		(find-file
 				 (expand-file-name "sample.emacs"
 						   data-directory))
-							t]
-      ["Sample .Xdefaults"	(find-file
+	t]
+       ["Sample .Xdefaults"	(find-file
 				 (expand-file-name "sample.Xdefaults"
 						   data-directory))
-							t]
+	t])
       "-----"
-      ["Info (Detailed Docs)"	info			t]
       ("Lookup in Info"
        ["Key/Mouse Binding..."	Info-goto-emacs-key-command-node t]
        ["Command..."		Info-goto-emacs-command-node t]
        ["Elisp Function..."	Info-elisp-ref		t]
        ["Topic..."		Info-query		t])
-      ["Package Browser"	finder-by-keyword	t]
-      ["Describe Mode"		describe-mode		t]
-      ["Apropos..."		hyper-apropos		t]
-      ["Apropos Documentation..."	apropos-documentation		t]
+      ("Manuals"
+       ["Info (Detailed Docs)"	info			t]
+       ["Unix Manual..."	manual-entry		t])
+      ("Commands & Keys"
+       ["Describe Mode"		describe-mode		t]
+       ["Apropos..."		hyper-apropos		t]
+       ["Apropos Documentation..."	apropos-documentation		t]
+       "-----"
+       ["Describe Key/Mouse..."	describe-key		t]
+       ["List Key Bindings"	describe-bindings	t]
+       ["List Mouse Bindings"	describe-pointer	t]
+       "-----"
+       ["Describe Function..."	describe-function	t]
+       ["Describe Variable..."	describe-variable	t]
+       ["Where Is Command..."	where-is		t])
       "-----"
       ["Recent Keystrokes/Messages" view-lossage	t]
-      ["Describe Key/Mouse..."	describe-key		t]
-      ["List Key Bindings"	describe-bindings	t]
-      ["List Mouse Bindings"	describe-pointer	t]
-      "-----"
-      ["Describe Function..."	describe-function	t]
-      ["Describe Variable..."	describe-variable	t]
-      ["Where Is Command..."	where-is		t]
-      "-----"
-      ["Unix Manual..."		manual-entry		t]
       ("Misc"
        ["Describe No Warranty"	describe-no-warranty	t]
        ["Describe XEmacs License" describe-copying	t]
@@ -1384,6 +1390,15 @@ The menu is computed by combining `global-popup-menu' and `mode-popup-menu'."
 ;        "shadowDoubleEtchedOutDash"
 ;        ))
 
+(defun xemacs-splash-buffer ()
+  "Redisplay XEmacs splash screen in a buffer."
+  (interactive)
+  (let ((buffer (get-buffer-create "*Splash*")))
+    (set-buffer buffer)
+    (erase-buffer buffer)
+    (startup-splash-frame)
+    (pop-to-buffer buffer)
+    (delete-other-windows)))
 
 (provide 'x-menubar)
 

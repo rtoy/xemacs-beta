@@ -115,7 +115,7 @@ starting XEmacs to run the tutorial.  Type ^Hi to enter the manual browser.\n")
 
 (defvar command-line-processed nil "t once command line has been processed")
 
-(defconst startup-message-timeout 120)
+(defconst startup-message-timeout 1200) ; More or less disable the timeout
 
 (defconst inhibit-startup-message nil
   "*Non-nil inhibits the initial startup message.

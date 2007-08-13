@@ -762,7 +762,6 @@ Legal values of this variable are:
 
 \"rfc934\"
 \"rfc1153\"
-\"rfc1521\"
 nil
 
 A nil value means don't use a digest, just mark the beginning and
@@ -792,20 +791,18 @@ values of this variable are:
 
    \"rfc934\"
    \"rfc1153\"
-   \"rfc1521\"
    \"guess\"
 
 If the value is \"guess\", and you take the default
 response when vm-burst-digest queries you, VM will try to guess
 the digest type.")
 
-(defvar vm-digest-send-type "rfc1521"
+(defvar vm-digest-send-type "rfc934"
   "*String that specifies the type of digest vm-send-digest will use.
 Legal values of this variable are:
 
 \"rfc934\"
 \"rfc1153\"
-\"rfc1521\"
 
 ")
 
@@ -898,48 +895,6 @@ will be kept.  vm-rfc1153-digest-headers determines the order of
 appearance in that case, with headers not matching any in the
 vm-rfc1153-digest-headers list appearing last in the headers of
 the digestified messages.")
-
-(defvar vm-rfc1521-digest-headers
-  '()
-  "*List of headers that should be appear in RFC 1521 digests
-created by VM.  These should be listed in the order you wish them
-to appear in the digest.  Regular expressions are allowed.
-There is no need to anchor patterns with \"^\", as searches always
-start at the beginning of a line.  Put a colon at the end of
-patterns to get exact matches.  (E.g. \"Date\" matches \"Date\"
-and \"Date-Sent\".)  Header names are always matched case
-insensitively.
-
-If the value of vm-rfc1521-digest-discard-header-regexp is nil, the headers
-matched by vm-rfc1521-digest-headers are the only headers that will be
-kept.
-
-If vm-rfc1521-digest-discard-header-regexp is non-nil, then only
-headers matched by that variable will be discarded; all others
-will be kept.  vm-rfc1521-digest-headers determines the order of
-appearance in that case, with headers not matching any in the
-vm-rfc1521-digest-headers list appearing last in the headers of
-the digestified messages.")
-
-
-(defvar vm-rfc1521-digest-discard-header-regexp "\\(X400-\\)?Received:"
-  "*Non-nil value should be a regular expression header that tells
-what headers should not appear in RFC 1521 digests created by VM.  This
-variable along with vm-rfc1521-digest-headers determines which headers
-are kept and which headers are discarded.
-
-If the value of vm-rfc1521-digest-discard-header-regexp is nil, the headers
-matched by vm-rfc1521-digest-headers are the only headers that will be
-kept.
-
-If vm-rfc1521-digest-discard-header-regexp is non-nil, then only
-headers matched by this variable will be discarded; all others
-will be kept.  vm-rfc1521-digest-headers determines the order of
-appearance in that case, with headers not matching any in the
-vm-1521-digest-headers list appearing last in the headers of
-the digestified messages.")
-
-
 
 (defvar vm-resend-bounced-headers
   '("Resent-"
@@ -1090,7 +1045,7 @@ The field width may be followed by a `.' and a number specifying
 the maximum allowed length of the substituted string.  If the
 string is longer than this value the right end of the string is
 truncated.  If the value is negative, the string is truncated on
-the left instead of the right.
+on the left instead of the right.
 
 The summary format need not be one line per message but it must end with
 a newline, otherwise the message pointer will not be displayed correctly
@@ -1261,14 +1216,7 @@ This variable has no meaning if you're not running Emacs native
 under X Windows or some other window system that allows multiple
 Emacs frames.")
 
-;; #### Chuck, I know you don't like external package mods but
-;; this one is an absolute travesty, and VM has a simply
-;; abominable time between releases.  If you don't at least give
-;; the VM frames a special name, it makes it impossible for lots
-;; of other things to work sensibly.
-(defvar vm-frame-parameter-alist
-  (if (string-match "XEmacs" emacs-version)
-      '((folder ((name . "VM")))))
+(defvar vm-frame-parameter-alist nil
   "*Non-nil value is an alist of types and lists of frame parameters.
 This list tells VM what frame parameters to associate with each
 new frame it creates of a specific type.
@@ -1277,8 +1225,9 @@ The alist should be of this form
 
 ((SYMBOL PARAMLIST) (SYMBOL2 PARAMLIST2) ...)
 
-SYMBOL must be one of `composition', `edit', `folder' or `summary'.
-It specifies the type of frame that the following PARAMLIST applies to.
+SYMBOL must be one of `composition', `edit', `folder',
+`primary-folder' or `summary'.  It specifies the type of frame
+that the following PARAMLIST applies to.
 
 `composition' specifies parameters for mail composition frames.
 `edit' specifies parameters for message edit frames
@@ -1340,6 +1289,18 @@ This variable only has meaning under XEmacs 19.12 and beyond.")
   (expand-file-name (concat data-directory "vm/"))
   "*Value specifies the directory VM should find its toolbar pixmaps.")
 
+(defvar vm-toolbar nil
+  "*Non-nil value should be a list of toolbar button descriptors.
+See the documentation for the variable default-toolbar for a
+definition of what a toolbar button descriptor is.
+
+If vm-toolbar is set non-nil VM will use its value as a toolbar
+instantiator instead of the usual beavior of building a button
+list based on the value of vm-use-toolbar.  vm-use-toolbar still
+must be set non-nil for a toolbar to appear, however.
+
+Consider this variable experimental; it may not be supported forever.")
+
 (defvar vm-use-menus '(folder motion send mark label sort
 		       virtual undo dispose emacs nil help)
   "*Non-nil value causes VM to provide a menu interface.
@@ -1379,7 +1340,7 @@ that randomly place newly created frames.
 
 Nil means don't move the mouse cursor.")
 
-;; if browse-url is around (always will be in XEmacs 19.14) use it;
+;; if browse-url is around (always will be in XEmacs 19.14 or later) use it;
 ;; otherwise do our own support.
 (if (boundp 'browse-url-browser-function)
     (defvaralias 'vm-url-browser 'browse-url-browser-function)
@@ -1389,7 +1350,7 @@ Nil means don't move the mouse cursor.")
 	  ((fboundp 'w3-fetch)
 	   'w3-fetch)
 	  (t 'vm-mouse-send-url-to-netscape))
-  "*Non-nil value means VM should enable URL passing.
+    "*Non-nil value means VM should enable URL passing.
 This means that VM will search for URLs (Universal Resource
 Locators) in messages and make it possible for you to pass them
 to a World Wide Web browser.
@@ -1567,7 +1528,7 @@ Mail.")
 (defvar vm-strip-reply-headers nil
   "*Non-nil value causes VM to strip away all comments and extraneous text
 from the headers generated in reply messages.  If you use the \"fakemail\"
-program as distributed with Emacs, you probably want to set this variable
+program as distributed with Emacs, you probably want to set this variable to
 to t, because as of Emacs v18.52 \"fakemail\" could not handle unstripped
 headers.")
 
@@ -1738,7 +1699,7 @@ confusing.")
   "*List of hook functions that are run whenever VM iconifies a frame.")
 
 (defvar vm-menu-setup-hook nil
-  "*List of hook function that are run just after all menus are initialized.")
+  "*List of hook functions that are run just after all menus are initialized.")
 
 (defvar mail-yank-hooks nil
   "Hooks called after a message is yanked into a mail composition.
@@ -2065,7 +2026,6 @@ mail is not sent.")
     ("vm-burst-digest")
     ("vm-burst-rfc934-digest")
     ("vm-burst-rfc1153-digest")
-    ("vm-burst-rfc1521-digest")
     ("vm-edit-message")
     ("vm-discard-cached-data")
     ("vm-edit-message-end")
@@ -2134,7 +2094,6 @@ mail is not sent.")
     ("vm-send-digest")
     ("vm-send-rfc934-digest")
     ("vm-send-rfc1153-digest")
-    ("vm-send-rfc1521-digest")
     ("vm-reply-other-frame")
     ("vm-reply-include-text-other-frame")
     ("vm-followup-other-frame")
@@ -2148,7 +2107,6 @@ mail is not sent.")
     ("vm-send-digest-other-frame")
     ("vm-send-rfc934-digest-other-frame")
     ("vm-send-rfc1153-digest-other-frame")
-    ("vm-send-rfc1521-digest-other-frame")
     ("vm-continue-composing-message")
     ("vm-auto-archive-messages")
     ("vm-save-message")
@@ -2224,7 +2182,7 @@ mail is not sent.")
     "unanswered"))
 
 (defvar vm-key-functions nil)
-(defconst vm-digest-type-alist '(("rfc934") ("rfc1153") ("rfc1521")))
+(defconst vm-digest-type-alist '(("rfc934") ("rfc1153")))
 (defvar vm-completion-auto-correct t
   "Non-nil means that minibuffer-complete-file should aggressively erase
 the trailing part of a word that caused completion to fail, and retry

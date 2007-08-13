@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $Id: tm-plain,v 1.1.1.1 1996/12/18 03:52:12 steve Exp $
+# $Id: tm-plain,v 1.2 1996/12/29 00:14:55 steve Exp $
 #
 
 if [ "$TM_TMP_DIR" = "" ]; then

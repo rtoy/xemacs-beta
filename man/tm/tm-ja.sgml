@@ -1,9 +1,9 @@
 <!doctype sinfo system>
-<!-- $Id: tm-ja.sgml,v 1.1 1996/12/22 00:09:33 steve Exp $ -->
+<!-- $Id: tm-ja.sgml,v 1.2 1996/12/29 00:15:31 steve Exp $ -->
 <head>
-<title>tm 7.90 Manual$B!JF|K\8lHG!K(B
+<title>tm 7.100 Manual$B!JF|K\8lHG!K(B
 <author>$B<i2,(B $BCNI'(B <mail>morioka@jaist.ac.jp</mail>
-<date>1996/10/15
+<date>1996/12/25
 
 <toc>
 </head>
@@ -51,98 +51,95 @@ tm $B$G;H$o$l$F$$$kMQ8l$K$D$$$F2r@b$7$^$9!#(B
 <h3> 7bit
 <node> 7bit
 <p>
-$B$3$3$G$O(B 0 $B$+$i(B 127 $B$N@0?t$r;X$7$^$9!#(B
+$B$3$3$G$O(B 0 $B$+$i(B 127 $B$N@0?t$r;X$9!#(B
 <p>
 0 $B$+$i(B 127 $B$N@0?t$NNs$GI=8=$G$-$k$h$&$J(B data $B$r(B ``7bit $B$N(B data'' $B$H8F(B
-$B$S$^$9!#(B
+$B$V!#(B
 <p>
 $B$^$?!"(B0 $B$+$i(B 31 $B$*$h$S(B 127 $B$GI=8=$5$l$k@)8fJ8;z$H(B 32 $B$GI=8=$5$l$k6uGr(B
 $B$H(B 33 $B$+$i(B 126 $B$GI=8=$5$l$k?^7AJ8;z$+$i$J$kJ8;zNs$N$3$H$r(B ``7bit $B$NJ8(B
-$B;zNs(B'' $B$H8F$S$^$9!J$3$l$O(B <a node="ISO 2022">ISO 2022</a> $B$N!V(B7 $BC10L7O!W(B
-$B$HF1MM$G$9!K!#(B
+$B;zNs(B'' $B$H8F$V!J$3$l$O(B <dref>ISO 2022</dref> $B$N!V(B7 $BC10L7O!W$HF1MM!K!#(B
 <p>
-$BEAE}E*$J(B Internet $B$N(B <a node="MTA">MTA</a> $B$O(B 7bit $B$N(B data $B$rE>Aw$G$-(B
-$B$k$N$G!"(B7bit $B$N(B data $B$O(B <a
-node="Quoted-Printable">Quoted-Printable</a> $B$d(B <a
-node="Base64">Base64</a> $B$H$$$C$?JQ49$r9T$o$J$/$F$b$=$N$^$^E>Aw$G$-$^(B
-$B$9!#(B
+$BEAE}E*$J(B Internet $B$N(B <dref>MTA</dref> $B$O(B 7bit $B$N(B data $B$rE>Aw$G$-$k$N$G!"(B
+7bit $B$N(B data $B$O(B <dref>Quoted-Printable</dref> $B$d(B <dref>Base64</dref> 
+$B$H$$$C$?JQ49$r9T$o$J$/$F$b$=$N$^$^E>Aw$G$-$k!#(B
 <p>
-$B$7$+$7!"(B7bit $B$G$"$l$P$I$s$J(B data $B$G$bNI$$$H$O$$$($^$;$s!#$J$<$J$i!"#1(B
-$B9T$ND9$5$,$"$^$j$KD9$$$H!"(BMTA $B$O$=$N(B message $B$rE>Aw$9$k$3$H$,$G$-$J$$(B
-$B$+$i$G$9!#$A$J$_$K!"(B<a node="RFC 821">RFC 821</a> $B$O#19T$O2~9TJ8;z$r=|(B
-$B$$$F(B 998 byte $B0JFb$G$"$k$3$H$r5a$a$F$$$^$9!#$h$C$F!"$3$l0J>e$N9T$,4^$^(B
-$B$l$k2DG=@-$N$"$k(B data, $BNc$($P!"(BPostscript $B$N(B data $B$J$I$O(B 
-Quoted-Printable $BEy$G(B encode$B$9$kI,MQ$,$"$j$^$9!#(B
+$B$7$+$7!"(B7bit $B$G$"$l$P$I$s$J(B data $B$G$bNI$$$H$O$$$($J$$!#$J$<$J$i!"#19T(B
+$B$ND9$5$,$"$^$j$KD9$$$H!"(BMTA $B$O$=$N(B message $B$rE>Aw$9$k$3$H$,$G$-$J$$$+(B
+$B$i$G$"$k!#$A$J$_$K!"(B<dref>RFC 821</dref> $B$O#19T$O2~9TJ8;z$r=|$$$F(B 998
+byte $B0JFb$G$"$k$3$H$r5a$a$F$$$k!#$h$C$F!"$3$l0J>e$N9T$,4^$^$l$k2DG=@-(B
+$B$N$"$k(B data, $BNc$($P!"(BPostscript $B$N(B data $B$J$I$O(B Quoted-Printable $BEy$G(B 
+encode$B$9$kI,MQ$,$"$k!#(B
 
 
 <h3> 8bit
 <node> 8bit
 <p>
-$B$3$3$G$O(B 0 $B$+$i(B 255 $B$N@0?t$r;X$7$^$9!#(B
+$B$3$3$G$O(B 0 $B$+$i(B 255 $B$N@0?t$r;X$9!#(B
 <p>
 0 $B$+$i(B 255 $B$N@0?t$NNs$GI=8=$G$-$k$h$&$J(B data $B$r(B ``8bit $B$N(B data'' $B$H8F(B
-$B$S$^$9!#(B
+$B$V!#(B
 <p>
 $B$^$?!"(B0 $B$+$i(B 31, 127 $B$*$h$S(B 128 $B$+$i(B 159 $B$GI=8=$5$l$k@)8fJ8;z$H(B 32 $B$G(B
 $BI=8=$5$l$k6uGr$H(B 33 $B$+$i(B 126 $B$H(B 160 $B$+$i(B 255 $B$GI=8=$5$l$k?^7AJ8;z$+$i(B
-$B$J$kJ8;zNs$N$3$H$r(B ``8bit $B$NJ8;zNs(B'' $B$H8F$S$^$9!J$3$l$O(B <a node="ISO
-2022">ISO 2022</a> $B$N!V(B8 $BC10L7O!W$HF1MM$G$9!K!#(B
+$B$J$kJ8;zNs$N$3$H$r(B ``8bit $B$NJ8;zNs(B'' $B$H8F$V!J$3$l$O(B <dref>ISO
+2022</dref> $B$N!V(B8 $BC10L7O!W$HF1MM!K!#(B
 <p>
-<a node="iso-8859-1">iso-8859-1</a> $B$d(B <a node="euc-kr">euc-kr</a> $B$H(B
-$B$$$C$?Id9f2=J8;z=89g$O(B 8bit $B$NJ8;zNs$G$9!#(B
+<dref>iso-8859-1</dref> $B$d(B <dref>euc-kr</dref> $B$H$$$C$?Id9f2=J8;z=89g(B
+$B$O(B 8bit $B$NJ8;zNs$G$"$k!#(B
 <p>
-$BEAE}E*$J(B Internet $B$N(B <a node="MTA">MTA</a> $B$O(B <a node="7bit">7bit</a> 
-$B$N(B data $B$7$+E>Aw$G$-$J$$$N$G!"$=$&$7$?(B MTA $B$r7PM3$9$k>l9g!"(B<a
-node="Quoted-Printable">Quoted-Printable</a> $B$d(B <a
-node="Base64">Base64</a> $B$H$$$C$?JQ49$r9T$o$J$/$F$O$J$j$^$;$s!#(B
+$BEAE}E*$J(B Internet $B$N(B <dref>MTA</dref> $B$O(B <dref>7bit</dref> $B$N(B data $B$7(B
+$B$+E>Aw$G$-$J$$$N$G!"$=$&$7$?(B MTA $B$r7PM3$9$k>l9g!"(B
+<dref>Quoted-Printable</dref> $B$d(B <dref>Base64</dref> $B$H$$$C$?JQ49$r9T(B
+$B$o$J$/$F$O$J$i$J$$!#(B
 <p>
 $B$7$+$7!":G6a$G$O(B 8bit $B$NJ8;zNs$r$=$N$^$^DL$9$3$H$,$G$-$k(B MTA $B$bEP>l$7(B
-$B$F$-$?$N$G!"$=$N$^$^Aw$k$3$H$,$G$-$k>l9g$bA}$($F$-$^$7$?!#(B
+$B$F$-$?$N$G!"$=$N$^$^Aw$k$3$H$,$G$-$k>l9g$bA}$($F$-$?!#(B
 <p>
-$B$7$+$7!"(B8bit $B$G$"$l$P$I$s$J(B data $B$G$bNI$$$H$O$$$($^$;$s!#$J$<$J$i!"#1(B
-$B9T$ND9$5$,$"$^$j$KD9$$$H!"(BMTA $B$O$=$N(B message $B$rE>Aw$9$k$3$H$,$G$-$J$$(B
-$B$+$i$G$9!#$A$J$_$K!"(BRFC 821 $B$O#19T$O2~9TJ8;z$r=|$$$F(B 998 byte $B0JFb$G$"(B
-$B$k$3$H$r5a$a$F$$$^$9!#$h$C$F!"$3$l0J>e$N9T$,4^$^$l$k2DG=@-$N$"$k(B data, 
-$BNc$($P!"(BPostscript $B$N(B data $B$J$I$O(B Quoted-Printable $BEy$G(B encode$B$9$kI,MQ(B
-$B$,$"$j$^$9!#(B
+$B$7$+$7!"(B8bit $B$G$"$l$P$I$s$J(B data $B$G$bNI$$$H$O$$$($J$$!#$J$<$J$i!"#19T(B
+$B$ND9$5$,$"$^$j$KD9$$$H!"(BMTA $B$O$=$N(B message $B$rE>Aw$9$k$3$H$,$G$-$J$$$+(B
+$B$i$G$"$k!#$A$J$_$K!"(B<dref>RFC 821</dref> $B$O#19T$O2~9TJ8;z$r=|$$$F(B 998
+byte $B0JFb$G$"$k$3$H$r5a$a$F$$$k!#$h$C$F!"$3$l0J>e$N9T$,4^$^$l$k2DG=@-(B
+$B$N$"$k(B data, $BNc$($P!"(BPostscript $B$N(B data $B$J$I$O(B Quoted-Printable $BEy$G(B 
+encode$B$9$kI,MQ$,$"$k!#(B
 <p>
 $B$^$?!"$3$&$7$?M}M3$+$i!"#19T$,(B 999 byte $B0J>e$N9T$,B8:_$9$k2DG=@-$N$"$k(B
-data $B$O(B <a node="binary"><concept>binary</concept></a> $B$H8F$V$3$H$K$7(B
-$B$^$9!#(B
+data $B$O(B <a node="binary"><concept>binary</concept></a> $B$H8F$V$3$H$K$9(B
+$B$k!#(B
 <p>
-$B$A$J$_$K!"(B7bit $B$GI=8=$G$-$k(B data $B$O(B 8bit $B$G$bI=8=$G$-$^$9!#$h$C$F!"(B
+$B$A$J$_$K!"(B7bit $B$GI=8=$G$-$k(B data $B$O(B 8bit $B$G$bI=8=$G$-$k!#$h$C$F!"(B
 ``8bit'' $B$H8@$C$?>l9g!"#19T$,(B 998 byte $B0J2<$NG$0U$N(B data $B$r;X$9$3$H$,(B
-$B$"$j$^$9!#(B
+$B$"$k!#(B
 
 
 <h3> 94 $BJ8;z=89g(B
-<node> 94 character set
+<node> 94-character set
 <p>
-33 $B$+$i(B 126 $B$NHO0O$N(B 1 byte $B$+$i$J$k(B <a node="Character set">$BJ8;z=89g(B
-</a>$B!#(B<a node="ASCII">ASCII</a> $B$d(B JIS X0201-Latin $B$O$=$N0l<o!#(B
+33 $B$+$i(B 126 $B$NHO0O$N(B 1 byte $B$+$i$J$k(B <a node="Graphic character set">
+$B?^7AJ8;z=89g(B</a>$B!#(B<dref>ASCII</dref> $B$d(B JIS X0201-Latin $B$O$=$N0l<o!#(B
 
 
 <h3> 96 $BJ8;z=89g(B
-<node> 96 character set
+<node> 96-character set
 <p>
-32 $B$+$i(B 127 $B$NHO0O$N(B 1 byte $B$+$i$J$k(B <a node="Character set">$BJ8;z=89g(B
-</a>$B!#(BISO 8859 $B%7%j!<%:$O$=$N0l<o!#(B
+32 $B$+$i(B 127 $B$NHO0O$N(B 1 byte $B$+$i$J$k(B <a node="Graphic character set">
+$B?^7AJ8;z=89g(B</a>$B!#(BISO 8859 $B%7%j!<%:$O$=$N0l<o!#(B
 
 
 <h3> 94$B!_(B94 $BJ8;z=89g(B
-<node> 94x94 character set
+<node> 94x94-character set
 <p>
-33 $B$+$i(B 126 $B$NHO0O$N(B 2 byte $B$+$i$J$k(B <a node="Character set">$BJ8;z=89g(B
-</a>$B!#(B<a node="JIS X0208">JIS X0208</a> $B$d(B <a node="GB 2312">GB
-2312</a> $B$O$=$N0l<o!#(B
+33 $B$+$i(B 126 $B$NHO0O$N(B 2 byte $B$+$i$J$k(B <a node="Graphic character set">
+$B?^7AJ8;z=89g(B</a>$B!#(B<dref>JIS X0208</dref> $B$d(B <dref>GB 2312</dref> $B$O$=(B
+$B$N0l<o!#(B
 
 
 <h3> ASCII
 <node> ASCII
 <p>
-$B%"%a%j%+O"K.$G;H$o$l$kJ8;z$rId9f2=$7$?(B <a node="94 character set">94 
-$BJ8;z=89g(B</a>$B!#(BA-Z, a-z $B$N(B Latin $BJ8;z$H?t;z!"4v$D$+$N5-9f$+$i$J$k!#(B<a
-node="ISO 646">ISO 646</a> $B$N0l$D!#(B
+$B%"%a%j%+O"K.$G;H$o$l$kJ8;z$rId9f2=$7$?(B <a node="94-character set">94 
+$BJ8;z=89g(B</a>$B!#(BA-Z, a-z $B$N(B Latin $BJ8;z$H?t;z!"4v$D$+$N5-9f$+$i$J$k!#(B
+<dref>ISO 646</dref> $B$N0l$D!#(B
 
 <standard abbrev="ASCII" title-en="Coded Character Set -- 7-Bit
 	      American Standard Code for Information Interchange"
@@ -167,67 +164,69 @@ Internet $B0J30$N(B network $B$r7PM3$9$k>l9g$G$b0BA4$KE>Aw$G$-$k$h$&$K@_7W$5
 <h3> binary
 <node> binary
 <p>
-$BG$0U$N(B byte $BNs$r(B <concept>binary</concept> $B$H8F$V$3$H$K$7$^$9!#(B
+$BG$0U$N(B byte $BNs$r(B <concept>binary</concept> $B$H8F$V!#(B
 <p>
-<a node="8bit">8bit</a> $B$H0[$J$k$N$O(B data $B$K9T$N9=B$$r2>Dj$7$J$$$3$H$G(B
-$B$9!#(B
+<dref>8bit</dref> $B$H0[$J$k$N$O(B data $B$K9T$N9=B$$r2>Dj$7$J$$$3$H$G$"$k!#(B
 <p>
-$B$^$?!"9T$N9=B$$,$"$C$F$b!"(B999 byte $B0J>e$+$i$J$k9T$,$"$k>l9g$b(B binary
-$B$H8F$V$3$H$K$7$^$9!#(B
+$B$^$?!"9T$N9=B$$,$"$C$F$b!"(B999 byte $B0J>e$+$i$J$k9T$,$"$k>l9g$b(B binary 
+$B$H8F$V$3$H$K$9$k!#(B
 <p>
-$B$A$J$_$K!"(B<a node="7bit">7bit</a> $B$d(B 8bit $B$GI=8=$G$-$k(B data $B$O(B binary 
-$B$G$bI=8=$G$-$^$9!#$h$C$F!"(B<concept>binary data</concept> $B$H8@$C$?>l9g!"(B
-$BG$0U$N(B data $B$r;X$9$3$H$,$"$j$^$9!#(B
-
-
-<h3> Character Set$B!JJ8;z=89g!K(B
-<node> Character Set
-<p>
-<a node="Coded character set">$BId9f2=J8;z=89g(B</a>$B!#C"$7!"$3$3$G$O(B <a
-node="Code extension">$BId9f3HD%(B</a> $B$5$l$F$J$$J8;z=89g$H$$$&%K%e%"%s%9(B
-$B$r9~$a$F$$$k!#(B
+$B$A$J$_$K!"(B<dref>7bit</dref> $B$d(B 8bit $B$GI=8=$G$-$k(B data $B$O(B binary $B$G$bI=(B
+$B8=$G$-$k!#$h$C$F!"(B<concept>binary data</concept> $B$H8@$C$?>l9g!"G$0U$N(B 
+data $B$r;X$9$3$H$,$"$k!#(B
 
 
 <h3> cn-gb, gb2312
 <node> cn-gb
 <p>
-$BCf9qBgN&$G$i$l$F$$$k4JBN;z$GI=5-$5$l$kCf9q8l$rI=8=$9$k$?$a$N(B <a
-node="MIME charset">MIME charset</a> $B$N#1$D!#(B
+$BCf9qBgN&$G$i$l$F$$$k4JBN;z$GI=5-$5$l$kCf9q8l$rI=8=$9$k$?$a$N(B 
+<dref>MIME charset</dref> $B$N#1$D!#(B
 <p>
-<a node="ISO 2022">ISO 2022</a> $B$K4p$$$F(B <a node="ASCII">ASCII</a> $B$K(B 
-<a node="GB 2312">GB 2312</a> $B$r(B <a node="8bit">8bit</a> $B$G(B<a
-node="Code extension">$BId9f3HD%(B</a>$B$7$F$$$k!#(B
+<dref>ISO 2022</dref> $B$K4p$$$F(B <dref>ASCII</dref> $B$K(B <dref>GB
+2312</dref> $B$r(B <dref>8bit</dref> $B$G(B<a node="Code extension">$BId9f3HD%(B
+</a>$B$7$F$$$k!#(B
 <p>
-<a node="RFC 1922">RFC 1922</a> $B$GDj5A$5$l$F$$$k!#(B
+<dref>RFC 1922</dref> $B$GDj5A$5$l$F$$$k!#(B
 
 
 <h3> cn-big5, big5
 <node> cn-big5
 <p>
 $BBfOQ$d9a9A$GMQ$$$i$l$F$$$k<g$KHKBN;z$GI=5-$5$l$kCf9q8l$rI=8=$9$k$?$a$N(B 
-<a node="MIME charset">MIME charset</a> $B$N#1$D!#(B
+<dref>MIME charset</dref> $B$N#1$D!#(B
 <p>
-<a node="ISO 2022">ISO 2022</a> $B$K4p$+$J$$(B <a node="8bit">8bit</a> $B$N(B
+<dref>ISO 2022</dref> $B$K4p$+$J$$(B <dref>8bit</dref> $B$N(B
 <a node="Coded character set">$BId9f2=J8;z=89g(B</a>$B$G(B de-fact standard $B$G(B
-$B$"$k!#(B<a node="RFC 1922">RFC 1922</a> $B$GDj5A$5$l$F$$$k!#(B
+$B$"$k!#(B<dref>RFC 1922</dref> $B$GDj5A$5$l$F$$$k!#(B
 <p>
 cf. <report abbrev="BIG5" author="Institute for Information Industry"
 	      title-en="Chinese Coded Character Set in Computer"
 	      date="March 1984">
 <p>
-<a node="CNS">CNS 11643-1986</a> $B$HBP1~4X78$,$"$k!#(B
+<dref>CNS 11643</dref> $B$HBP1~4X78$,$"$k!#(B
 
 
 <h3> CNS 11643-1992
-<node> CNS
+<node> CNS 11643
 <p>
 $BBfOQ$d9a9A$GMQ$$$i$l$F$$$k<g$KHKBN;z$GI=5-$5$l$kCf9q8l$rI=8=$9$k$?$a$N(B 
-<a node="Character set">$BJ8;z=89g(B</a>$B!#BfOQ$NI8=`!#8=:_!"(B<a node="94x94
-character set">94$B!_(B94</a> $B$NLL$,Bh#1LL$+$iBh#7LL$^$G$"$k!#(B
+<a node="Graphic character set">$B?^7AJ8;z=89g(B</a>$B!#BfOQ$NI8=`!#8=:_!"(B<a
+node="94x94 character set">94$B!_(B94</a> $B$NLL$,Bh#1LL$+$iBh#7LL$^$G$"$k!#(B
 <p>
-<a node="ISO 2022">ISO 2022</a> $B$G$N=*C<J8;z$O!"Bh#1LL$,(B `G', $BBh#2LL$,(B 
-`H', $BBh#3LL$,(B `I', $BBh#4LL$,(B `J', $BBh#5LL$,(B `K', $BBh#6LL$,(B `L', $BBh#7LL$,(B 
-`M' $B$G$"$k!#(B
+<dref>ISO 2022</dref> $B$G$N=*C<J8;z$O(B
+
+<dl>
+<dt>plane 1<dd>04/07 (`G')
+<dt>plane 2<dd>04/08 (`H')
+<dt>plane 3<dd>04/09 (`I')
+<dt>plane 4<dd>04/10 (`J')
+<dt>plane 5<dd>04/11 (`K')
+<dt>plane 6<dd>04/12 (`L')
+<dt>plane 7<dd>04/13 (`M')
+</dl>
+
+<noindent>
+$B$G$"$k!#(B
 
 <standard abbrev="CNS 11643-1992" title-en="Standard Interchange Code
 	      for Generally-Used Chinese Characters" number="CNS
@@ -243,78 +242,28 @@ character set">94$B!_(B94</a> $B$NLL$,Bh#1LL$+$iBh#7LL$^$G$"$k!#(B
 <h3> Code extension$B!JId9f3HD%!K(B
 <node> Code extension
 <p>
-$BM?$($i$l$?(B<a node="Character set">$BJ8;z=89g(B</a>$B$K4^$^$l$F$$$J$$J8;z$NId(B
-$B9f2=$N$?$a$KMQ$$$k<jK!!#(B<a node="ISO 2022">ISO 2022</a> $B$O$=$N#1$D!#(B
+$BM?$($i$l$?(B<a node="Graphic character set">$B?^7AJ8;z=89g(B</a>$B$K4^$^$l$F$$(B
+$B$J$$J8;z$NId9f2=$N$?$a$KMQ$$$k<jK!!#(B<dref>ISO 2022</dref> $B$O$=$N#1$D!#(B
 
 
 <h3> Content-Disposition field
 <node> Content-Disposition
 <p>
-Content $B$NI=<($N;EJ}$d(B file $BL>$rI=8=$9$k$?$a$N(B field. <a
-node="MIME">MIME</a> $B$N3HD%$N#1$D!#(B
-<p>
+Content $B$NI=<($N;EJ}$d(B file $BL>$rI=8=$9$k$?$a$N(B field.
+<dref>MIME</dref> $B$N3HD%$N#1$D!#(B
+
 <rfc number="1806" type="Experimental" author="E R. Troost and
 	      S. Dorner" title="Communicating Presentation Information
 	      in Internet Messages: The Content-Disposition Header"
 	      date="June 1995">
 
 
-<h3> media type
-<node> media type
-<p>
-<dref>MIME</dref> $B$K$*$1$k(B <dref>entity</dref> $B$N<oN`!#(B
-<concept>type</> $B$H(B <concept>subtype</concept> $B$+$i$J$k!#(B<dref>RFC
-2046</dref> $B$GDj5A$5$l$F$$$k!#(B
-<p>
-type $B$OI8=`$G$O(B
-
-<ul>
-<li><concept>text</concept>
-</li>
-<li><concept>image</concept>
-</li>
-<li><concept>audio</concept>
-</li>
-<li><concept>video</concept>
-</li>
-<li><concept>application</concept>
-</li>
-<li><a node="multipart"><concept>multipart</concept></a>
-</li>
-<li><concept>message</concept>
-</ul>
-
-<noindent>
-$B$,Dj5A$5$l!"$=$l$>$l$K$O(B application/octet-stream, audio/basic,
-image/jpeg, <dref>multipart/mixed</dref>, <dref>text/plain</dref>,
-video/mpeg $B$J$I$N$5$^$6$^$J(B subtype $B$,Dj5A$5$l$F$$$k!#(B
-
-<memo title="$BCm0U(B">
-<p>
-$B$3$3$G$O!"(Btext/plain $B$J$I$N(B type/subtype $B$NAH$r$7$P$7$P(B 
-<concept>content-type/subtype</concept> $B$H=q$/!#(B
-</memo>
-
-<p>
-media type $B$O!"(BRFC 2046 $B$GDj5A$5$l$F$$$k$b$N$K2C$($F!"EPO?$9$k$3$H$b$G(B
-$B$-$k!#8=:_!"EPO?$5$l$F$$$k$b$N$O(B <a
-href="ftp://ftp.isi.edu/in-notes/iana/assignments/media-types">MEDIA
-TYPES</a> $B$G;2>H$G$-$k!#(B
-<p>
-$B$^$?!"(Btype $B$b$7$/$O(B subtype $B$K!"A0$K(B `x-' $B$rIU$1$?(B 
-<concept>x-token</concept> $B$rMQ$$$k$3$H$K$h$j!"EPO?$5$l$F$$$J$$$b$N$r(B
-$B;dE*$KMQ$$$k$3$H$b$G$-$k!#$7$+$7!"EvA3$N$3$H$J$,$i!"$3$&$7$?;dE*$J(B 
-content-type $B$ONJ2r$rF@$?<T$N4V$G$7$+2r<a$G$-$J$$$N$GMxMQ$K$OCm0U$9$k(B
-$B$3$H!#(B
-<p>
-<cf node="Content-Type field">
-
-
 <h3> Content-Type field
 <node> Content-Type field
 <p>
-<dref>media type</dref> $B$d(B <dref>MIME charset</dref> $B$J$I$N(B part $B$K4X(B
-$B$9$k>pJs$rI=8=$9$k$?$a$N(B field. <dref>RFC 2045</dref> $B$GDj5A$5$l$F$$$k!#(B
+<dref>media type</dref> $B$d(B <dref>MIME charset</dref> $B$J$I$N(B body $B$K4X(B
+$B$9$k>pJs$rI=8=$9$k$?$a$N(B field.  <dref>RFC 2045</dref> $B$GDj5A$5$l$F$$(B
+$B$k!#(B
 
 <memo>
 <p>
@@ -380,7 +329,7 @@ GNU Emacs $B$NJQ<o$NAm>N$H$9$k!#(B
 <h3> encoded-word
 <node> encoded-word
 <p>
-header $B$K$*$1$kHs(B <a node="ASCII">ASCII</a> $BJ8;z$NI=8=!#(B<concept>RFC
+header $B$K$*$1$kHs(B <dref>ASCII</dref> $BJ8;z$NI=8=!#(B<concept>RFC
 2047</concept> $B$GDj5A$5$l$F$$$k!#(B
 <p>
 <rfc number="2047" type="Standards Track" author="K. Moore"
@@ -399,13 +348,25 @@ header $B$K$*$1$kHs(B <a node="ASCII">ASCII</a> $BJ8;z$NI=8=!#(B<concept>RFC
 <cf node="message/rfc822">
 
 
+<h3> Entity
+<node> entity
+<p>
+$B$"$k(B message $B$b$7$/$O(B <dref>multipart</dref> message $B$N#1$D$N(B part $B$N(B 
+header $B$H(B body $B$rJ;$;$?$b$N!#(B
+
+<memo>
+<p>
+$B$3$3$G$O(B part $B$H8F$V$3$H$b$"$k!#(B
+</memo>
+
+
 <h3> euc-kr
 <node> euc-kr
 <p>
-$B4Z9q8l$rI=8=$9$k$?$a$N(B <a node="MIME charset">MIME charset</a> $B$N#1$D!#(B
+$B4Z9q8l$rI=8=$9$k$?$a$N(B <dref>MIME charset</dref> $B$N#1$D!#(B
 <p>
-<a node="ISO 2022">ISO 2022</a> $B$K4p$$$F(B <a node="ASCII">ASCII</a> $B$K(B
-<a node="KS C5601">KS C5601</a> $B$r(B <a node="8bit">8bit</a> $B$G(B<a
+<dref>ISO 2022</dref> $B$K4p$$$F(B <dref>ASCII</dref> $B$K(B
+<a node="KS C5601">KS C5601</a> $B$r(B <dref>8bit</dref> $B$G(B<a
 node="Code extension">$BId9f3HD%(B</a>$B$7$F$$$k!#(B
 <p>
 <a node="RFC 1557">RFC 1557</a> $B$GDj5A$5$l$F$$$k!#(B
@@ -429,8 +390,8 @@ Internet $B$G(B file $B$rE>Aw$9$k$?$a$N(B protocol $B$N#1$D!#(BRFC 959 $B
 <node> GB 2312
 <p>
 $BCf9qBgN&$GMQ$$$i$l$F$$$k4JBN;z$GI=5-$5$l$kCf9q8l$rI=$9$?$a$N(B <a
-node="94x94 character set">94$B!_(B94 $BJ8;z=89g(B</a>$B!#Cf9q$N9q2HI8=`!#(B<a
-node="ISO 2022">ISO 2022</a> $B$G$N=*C<J8;z$O(B `A'.
+node="94x94-character set">94$B!_(B94 $BJ8;z=89g(B</a>$B!#Cf9q$N9q2HI8=`!#(B
+<dref>ISO 2022</dref> $B$G$N=*C<(B byte $B$O(B 04/01 (`A').
 <p>
 $B$3$l$O(B GB $B$K$*$1$k4pK\=8$G$"$k!#(B
 
@@ -444,9 +405,9 @@ node="ISO 2022">ISO 2022</a> $B$G$N=*C<J8;z$O(B `A'.
 <h3> GB 8565.2-1988
 <node> GB 8565.2
 <p>
-$BCf9q8l$N$?$a$NJd=u(B<a node="Character set">$BJ8;z=89g(B</a>$B!#Cf9q$N9q2HI8=`!#(B
-<a node="GB 2312">GB 2312</a> $B$N6u$-ItJ,$KJd=<$9$k$h$&$KDj5A$5$l$?$i$7(B
-$B$$!#(B
+$BCf9q8l$N$?$a$NJd=u(B<a node="Graphic character set">$B?^7AJ8;z=89g(B</a>$B!#Cf(B
+$B9q$N9q2HI8=`!#(B<dref>GB 2312</dref> $B$N6u$-ItJ,$KJd=<$9$k$h$&$KDj5A$5$l(B
+$B$?$i$7$$!#(B
 
 <standard abbrev="GB 8565.2" title-en="Information Processing - Coded
 	      Character Sets for Text Communication - Part 2: Graphic
@@ -454,15 +415,21 @@ node="ISO 2022">ISO 2022</a> $B$G$N=*C<J8;z$O(B `A'.
 	      year="1988">
 
 
+<h3> Graphic character set$B!J?^7AJ8;z=89g!K(B
+<node> Graphic character set
+<p>
+$B?^7AJ8;z$+$i$J$k(B <a node="Coded character set">$BId9f2=J8;z=89g(B</a>$B!#(B
+
+
 <h3> hz-gb2312
 <node> hz-gb2312
 <p>
-$BCf9qBgN&$GMQ$$$i$l$F$$$k4JBN;z$GI=5-$5$l$kCf9q8l$rI=8=$9$k$?$a$N(B <a
-node="MIME charset">MIME charset</a> $B$N#1$D!#(B
+$BCf9qBgN&$GMQ$$$i$l$F$$$k4JBN;z$GI=5-$5$l$kCf9q8l$rI=8=$9$k$?$a$N(B 
+<dref>MIME charset</dref> $B$N#1$D!#(B
 <p>
-<a node="ASCII">ASCII</a> $B$K(B <a node="GB 2312">GB 2312</a> $B$r(B 7bit $B$G(B
-<a node="Code extension">$BId9f3HD%(B</a>$B$7$?$b$N$r(B ASCII printable $B$K$J$k(B
-$B$h$&$K9)IW$7$F$$$k!#(B
+<dref>ASCII</dref> $B$K(B <dref>GB 2312</dref> $B$r(B 7bit $B$G(B<a node="Code
+extension">$BId9f3HD%(B</a>$B$7$?$b$N$r(B ASCII printable $B$K$J$k$h$&$K9)IW$7$F(B
+$B$$$k!#(B
 <p>
 RFC 1842, 1843 $B$GDj5A$5$l$F$$$k!#(B
 
@@ -478,11 +445,12 @@ RFC 1842, 1843 $B$GDj5A$5$l$F$$$k!#(B
 <h3> ISO 2022
 <node> ISO 2022
 <p>
-<a node="Code extension">$BId9f3HD%(B</a>$B$N$?$a$N9q:]I8=`!#(B
+$BId9f2=J8;z=89g$N9=B$$H(B<a node="Code extension">$BId9f3HD%(B</a>$BK!$rDj$a$?(B
+$B9q:]I8=`!#(B
 <p>
-$B$3$l$rMQ$$$FJ#?t$N(B<a node="Character set">$BJ8;z=89g(B</a>$B$rAH9g$;$F(B <a
-node="7bit">7bit</a> $B$J$$$7(B <a node="8bit">8bit</a> $B$N(B <a node="Coded
-character set">$BId9f2=J8;z=89g(B</a> $B$r:n$k$3$H$,$G$-$k!#(B
+$B$3$l$rMQ$$$FJ#?t$N(B<a node="Graphic character set">$B?^7AJ8;z=89g(B</a>$B$rAH(B
+$B9g$;$F(B <a node="7bit">7bit</a> $B$J$$$7(B <dref>8bit</dref> $B$N(B <a
+node="Coded character set">$BId9f2=J8;z=89g(B</a> $B$r:n$k$3$H$,$G$-$k!#(B
 
 <standard abbrev="ISO 2022" org="International Organization for
 	      Standardization (ISO)" title-en="Information Processing:
@@ -493,27 +461,26 @@ character set">$BId9f2=J8;z=89g(B</a> $B$r:n$k$3$H$,$G$-$k!#(B
 <h3> iso-2022-cn
 <node> iso-2022-cn
 <p>
-$BCf9q8l$rI=8=$9$k$?$a$N(B <a node="MIME charset">MIME charset</a> $B$N#1$D!#(B
+$BCf9q8l$rI=8=$9$k$?$a$N(B <dref>MIME charset</dref> $B$N#1$D!#(B
 <p>
-<a node="ISO 2022">ISO 2022</a> $B$K4p$$$F(B <a node="ASCII">ASCII</a> $B$K(B 
-<a node="GB 2312">GB 2312</a>, <a node="CNS">CNS 11643 plain 1, plain
-2</a> $B$r(B <a node="7bit">7bit</a> $B$G(B<a node="Code extension">$BId9f3HD%(B
-</a>$B$7$F$$$k!#(B
+<dref>ISO 2022</dref> $B$K4p$$$F(B <dref>ASCII</dref> $B$K(B <dref>GB
+2312</dref>, <a node="CNS 11643">CNS 11643 plain 1, plain 2</a> $B$r(B 
+<dref>7bit</dref> $B$G(B<a node="Code extension">$BId9f3HD%(B</a>$B$7$F$$$k!#(B
 <p>
-<a node="RFC 1922">RFC 1922</a> $B$GDj5A$5$l$F$$$k!#(B
+<dref>RFC 1922</dref> $B$GDj5A$5$l$F$$$k!#(B
 
 
 <h3> iso-2022-cn-ext
 <node> iso-2022-cn-ext
 <p>
-$BCf9q8l$rI=8=$9$k$?$a$N(B <a node="MIME charset">MIME charset</a> $B$N#1$D!#(B
+$BCf9q8l$rI=8=$9$k$?$a$N(B <dref>MIME charset</dref> $B$N#1$D!#(B
 <p>
-<a node="ISO 2022">ISO 2022</a> $B$K4p$$$F(B <a node="ASCII">ASCII</a> $B$K(B 
-<a node="GB 2312">GB 2312</a>, <a node="CNS">CNS 11643 plain 1
-.. 7</a>, <a node="ISO-IR-165">ISO-IR-165</a> $BEy$r(B <a
-node="7bit">7bit</a> $B$G(B<a node="Code extension">$BId9f3HD%(B</a>$B$7$F$$$k!#(B
+<dref>ISO 2022</dref> $B$K4p$$$F(B <dref>ASCII</dref> $B$K(B <dref>GB
+2312</dref>, <a node="CNS 11643">CNS 11643 plain 1 .. 7</a>,
+<dref>ISO-IR-165</dref> $BEy$r(B <dref>7bit</dref> $B$G(B<a node="Code
+extension">$BId9f3HD%(B</a>$B$7$F$$$k!#(B
 <p>
-<a node="RFC 1922">RFC 1922</a> $B$GDj5A$5$l$F$$$k!#(B
+<dref>RFC 1922</dref> $B$GDj5A$5$l$F$$$k!#(B
 <p>
 <memo>
 MULE 2.3 $B$*$h$S!"8=:_$N(B XEmacs/mule $B$G$O@5$7$/07$&$3$H$O$G$-$J$$!#(B
@@ -525,18 +492,16 @@ Emacs/mule $B$G$OMxMQ2DG=$G$"$k!#(B
 <h3> iso-2022-jp
 <node> iso-2022-jp
 <p>
-$BF|K\8l$rI=8=$9$k$?$a$N(B <a node="MIME charset">MIME charset</a> $B$N0l$D!#(B
+$BF|K\8l$rI=8=$9$k$?$a$N(B <dref>MIME charset</dref> $B$N0l$D!#(B
 <p>
-$B8E$$(B <a node="ISO 2022">ISO 2022</a> $B$K4p$$$F(B <a
-node="ASCII">ASCII</a>, JIS X0201-Latin, <a node="JIS C6226-1978">JIS
-X0208-1978</a>, <a node="JIS X0208">JIS X0208-1983</a> $B$r@Z$jBX$($k(B <a
-node="7bit">7bit</a> $BJ8;zId9f!#(B
+$B8E$$(B <dref>ISO 2022</dref> $B$K4p$$$F(B <dref>ASCII</dref>, JIS
+X0201-Latin, <a node="JIS C6226">JIS X0208-1978</a>, <a node="JIS
+X0208">JIS X0208-1983</a> $B$r@Z$jBX$($k(B <dref>7bit</dref> $BJ8;zId9f!#(B
 <p>
 RFC 1468 $B$GDj5A$5$l$F$$$k!#(B
 <p>
 <memo>
-JIS X0208-1996? $B$G$O(B <a node="ISO 2022">ISO 2022</a> $B$HFHN)$KDj5A$5$l(B
-$B$kM=Dj!#(B
+JIS X0208-1997? $B$G$O(B <dref>ISO 2022</dref> $B$HFHN)$KDj5A$5$l$kM=Dj!#(B
 </memo>
 
 <rfc name="iso-2022-jp" number="1468" author="Murai J., M. Crispin,
@@ -547,8 +512,8 @@ JIS X0208-1996? $B$G$O(B <a node="ISO 2022">ISO 2022</a> $B$HFHN)$KDj5A$5$l(
 <h3> iso-2022-jp-2
 <node> iso-2022-jp-2
 <p>
-<a node="iso-2022-jp">iso-2022-jp</a> $B$r3HD%$7$?(B <a node="MIME
-charset">MIME charset</a> $B$N0l$D!#(B
+<a node="iso-2022-jp">iso-2022-jp</a> $B$r3HD%$7$?(B <dref>MIME
+charset</dref> $B$N0l$D!#(B
 <p>
 RFC 1554 $B$GDj5A$5$l$F$$$k!#(B
 
@@ -561,22 +526,22 @@ RFC 1554 $B$GDj5A$5$l$F$$$k!#(B
 <h3> iso-2022-kr
 <node> iso-2022-kr
 <p>
-$B4Z9q8l$rI=8=$9$k$?$a$N(B <a node="MIME charset">MIME charset</a> $B$N#1$D!#(B
+$B4Z9q8l$rI=8=$9$k$?$a$N(B <dref>MIME charset</dref> $B$N#1$D!#(B
 <p>
-<a node="ISO 2022">ISO 2022</a> $B$K4p$$$F(B <a node="ASCII">ASCII</a> $B$K(B 
-<a node="KS C5601">KS C5601</a> $B$r(B <a node="7bit">7bit</a> $B$G(B<a
-node="Code extension">$BId9f3HD%(B</a>$B$7$F$$$k!#(B
+<dref>ISO 2022</dref> $B$K4p$$$F(B <dref>ASCII</dref> $B$K(B <dref>KS
+C5601</dref> $B$r(B <dref>7bit</dref> $B$G(B<a node="Code extension">$BId9f3HD%(B
+</a>$B$7$F$$$k!#(B
 <p>
-<a node="RFC 1557">RFC 1557</a> $B$GDj5A$5$l$F$$$k!#(B
+<dref>RFC 1557</dref> $B$GDj5A$5$l$F$$$k!#(B
 
 
 <h3> ISO 646
 <node> ISO 646
 <p>
-$B3F9q$G6&DL$K;H$($k:G>.8BEY$N(B<a node="Character set">$BJ8;z=89g(B</a>$B$rDj$a(B
-$B$?$b$N!#(B<a node="94 character set">94 $BJ8;z=89g(B</a>$B$N#1$D!#(BISO 646 IRV
-$B!J9q:]4p=`HG!K$r85$K4v$D$+$NJ8;z$O3F9q$G0c$&J8;z$r3dEv$k$3$H$r5v$7$F$$(B
-$B$F!"4v$D$+$NJQ<o$,B8:_$9$k!#(B<a node="ASCII">ASCII</a> $B$d(B JIS
+$B3F9q$G6&DL$K;H$($k:G>.8BEY$N(B<a node="Graphic character set">$B?^7AJ8;z=8(B
+$B9g(B</a>$B$rDj$a$?$b$N!#(B<a node="94-character set">94 $BJ8;z=89g(B</a>$B$N#1$D!#(B
+ISO 646 IRV$B!J9q:]4p=`HG!K$r85$K4v$D$+$NJ8;z$O3F9q$G0c$&J8;z$r3dEv$k$3(B
+$B$H$r5v$7$F$$$F!"4v$D$+$NJQ<o$,B8:_$9$k!#(B<dref>ASCII</dref> $B$d(B JIS
 X0201-Latin $B$O$=$N0l<o!#(B
 
 <standard abbrev="ISO 646" org="International Organization for
@@ -588,8 +553,8 @@ X0201-Latin $B$O$=$N0l<o!#(B
 <h3> ISO 8859-1
 <node> ISO 8859-1
 <p>
-$B@>2$=t8l$GMQ$$$i$l$k3HD%(B Latin $BJ8;z$d5-9f$+$i$J$k(B <a node="96
-character set">96 $BJ8;z=89g(B</a>$B!#(B
+$B@>2$=t8l$GMQ$$$i$l$k3HD%(B Latin $BJ8;z$d5-9f$+$i$J$k(B <a
+node="96-character set">96 $BJ8;z=89g(B</a>$B!#(B
 
 <standard abbrev="ISO 8859-1" org="International Organization for
 	      Standardization (ISO)" title-en="Information Processing
@@ -603,9 +568,9 @@ character set">96 $BJ8;z=89g(B</a>$B!#(B
 <p>
 $B@>2$=t8l$J$I$rI=8=$9$k$?$a$N(B <dref>MIME charset</dref> $B$N#1$D!#(B
 <p>
-<a node="ISO 2022">ISO 2022</a> $B$K4p$$$F!"(B<a node="ASCII">ASCII</a> $B$K(B 
-<a node="ISO 8859-1">ISO 8859-1</a> $B$r(B <a node="8bit">8bit</a> $B$G(B<a
-node="Code extension">$BId9f3HD%(B</a>$B$7$F$$$k!#(B
+<dref>ISO 2022</dref> $B$K4p$$$F!"(B<dref>ASCII</dref> $B$K(B <dref>ISO
+8859-1</dref> $B$r(B <dref>8bit</dref> $B$G(B<a node="Code extension">$BId9f3HD%(B
+</a>$B$7$F$$$k!#(B
 <p>
 <dref>RFC 2046</dref> $B$GDj5A$5$l$F$$$k!#(B
 
@@ -613,8 +578,8 @@ node="Code extension">$BId9f3HD%(B</a>$B$7$F$$$k!#(B
 <h3> ISO 8859-2
 <node> ISO 8859-2
 <p>
-$BEl2$=t8l$GMQ$$$i$l$k3HD%(B Latin $BJ8;z$d5-9f$+$i$J$k(B <a node="96
-character set">96 $BJ8;z=89g(B</a>$B!#(B
+$BEl2$=t8l$GMQ$$$i$l$k3HD%(B Latin $BJ8;z$d5-9f$+$i$J$k(B <a
+node="96-character set">96 $BJ8;z=89g(B</a>$B!#(B
 
 <standard abbrev="ISO 8859-2" org="International Organization for
 	      Standardization (ISO)" title-en="Information Processing
@@ -626,12 +591,12 @@ character set">96 $BJ8;z=89g(B</a>$B!#(B
 <h3> iso-8859-2
 <node> iso-8859-2
 <p>
-$BEl2$=t8l$rI=8=$9$k$?$a$N(B <a node="MIME charset">MIME charset</a> $B$N#1(B
+$BEl2$=t8l$rI=8=$9$k$?$a$N(B <dref>MIME charset</dref> $B$N#1(B
 $B$D!#(B
 <p>
-<a node="ISO 2022">ISO 2022</a> $B$K4p$$$F!"(B<a node="ASCII">ASCII</a> $B$K(B 
-<a node="ISO 8859-2">ISO 8859-2</a> $B$r(B <a node="8bit">8bit</a> $B$G(B<a
-node="Code extension">$BId9f3HD%(B</a>$B$7$F$$$k!#(B
+<dref>ISO 2022</dref> $B$K4p$$$F!"(B<dref>ASCII</dref> $B$K(B <dref>ISO
+8859-2</dref> $B$r(B <dref>8bit</dref> $B$G(B<a node="Code extension">$BId9f3HD%(B
+</a>$B$7$F$$$k!#(B
 <p>
 <dref>RFC 2046</dref> $B$GDj5A$5$l$F$$$k!#(B
 
@@ -659,7 +624,7 @@ node="Code extension">$BId9f3HD%(B</a>$B$7$F$$$k!#(B
 <h3> ISO 8859-5
 <node> ISO 8859-5
 <p>
-$B%-%j%kJ8;z$d5-9f$+$i$J$k(B <a node="96 character set">96 $BJ8;z=89g(B</a>$B!#(B
+$B%-%j%kJ8;z$d5-9f$+$i$J$k(B <a node="96-character set">96 $BJ8;z=89g(B</a>$B!#(B
 
 <standard abbrev="ISO 8859-5" org="International Organization for
 	      Standardization (ISO)" title-en="Information Processing
@@ -671,12 +636,12 @@ node="Code extension">$BId9f3HD%(B</a>$B$7$F$$$k!#(B
 <h3> iso-8859-5
 <node> iso-8859-5
 <p>
-$B%-%j%kJ8;z$rI=8=$9$k$?$a$N(B <a node="MIME charset">MIME charset</a> $B$N(B
+$B%-%j%kJ8;z$rI=8=$9$k$?$a$N(B <dref>MIME charset</dref> $B$N(B
 $B#1$D!#(B
 <p>
-<a node="ISO 2022">ISO 2022</a> $B$K4p$$$F!"(B<a node="ASCII">ASCII</a> $B$K(B 
-<a node="ISO 8859-5">ISO 8859-5</a> $B$r(B <a node="8bit">8bit</a> $B$G(B<a
-node="Code extension">$BId9f3HD%(B</a>$B$7$F$$$k!#(B
+<dref>ISO 2022</dref> $B$K4p$$$F!"(B<dref>ASCII</dref> $B$K(B <dref>ISO
+8859-5</dref> $B$r(B <dref>8bit</dref> $B$G(B<a node="Code extension">$BId9f3HD%(B
+</a>$B$7$F$$$k!#(B
 <p>
 <dref>RFC 2046</dref> $B$GDj5A$5$l$F$$$k!#(B
 
@@ -694,7 +659,7 @@ node="Code extension">$BId9f3HD%(B</a>$B$7$F$$$k!#(B
 <h3> ISO 8859-7
 <node> ISO 8859-7
 <p>
-$B%.%j%7%"J8;z$d5-9f$+$i$J$k(B <a node="96 character set">96 $BJ8;z=89g(B</a>$B!#(B
+$B%.%j%7%"J8;z$d5-9f$+$i$J$k(B <a node="96-character set">96 $BJ8;z=89g(B</a>$B!#(B
 
 <standard abbrev="ISO 8859-7" org="International Organization for
 	      Standardization (ISO)" title-en="Information Processing
@@ -706,12 +671,12 @@ node="Code extension">$BId9f3HD%(B</a>$B$7$F$$$k!#(B
 <h3> iso-8859-7
 <node> iso-8859-7
 <p>
-$B%.%j%7%"8l$rI=8=$9$k$?$a$N(B <a node="MIME charset">MIME charset</a> $B$N(B
+$B%.%j%7%"8l$rI=8=$9$k$?$a$N(B <dref>MIME charset</dref> $B$N(B
 $B#1$D!#(B
 <p>
-<a node="ISO 2022">ISO 2022</a> $B$K4p$$$F!"(B<a node="ASCII">ASCII</a> $B$K(B 
-<a node="ISO 8859-7">ISO 8859-7</a> $B$r(B <a node="8bit">8bit</a> $B$G(B<a
-node="Code extension">$BId9f3HD%(B</a>$B$7$F$$$k!#(B
+<dref>ISO 2022</dref> $B$K4p$$$F!"(B<dref>ASCII</dref> $B$K(B <dref>ISO
+8859-7</dref> $B$r(B <dref>8bit</dref> $B$G(B<a node="Code extension">$BId9f3HD%(B
+</a>$B$7$F$$$k!#(B
 <p>
 RFC 1947 $B$GDj5A$5$l$F$$$k!#(B
 
@@ -740,22 +705,24 @@ RFC 1947 $B$GDj5A$5$l$F$$$k!#(B
 		number="ISO 8859-9" year="1990">
 
 
-<h3> ISO-IR-165, CCITT Extended GB <node> ISO-IR-165
+<h3> ISO-IR-165, CCITT Extended GB
+<node> ISO-IR-165
 <p>
 CCITT $B$,EPO?$7$?!"Cf9qBgN&$GMQ$$$i$l$F$$$k4JBN;z$GI=5-$5$l$kCf9q8l$rI=(B
-$B8=$9$k$?$a$N(B <a node="94x94 character set">94$B!_(B94 $BJ8;z=89g(B</a>$B!#(B
+$B8=$9$k$?$a$N(B<a node="94x94-character set">94$B!_(B94 $BJ8;z=89g(B</a>$B!#(B
 <p>
-<a node="GB 2312">GB 2312</a> $B$H(B <a node="GB 8865.2">GB 8565 $BI=#2(B</a> 
-$B$K(B 150 $BJ8;z$[$I$rDI2C$7$?$b$N$i$7$$!#(B
+<dref>GB 2312</dref> $B$H(B <a node="GB 8565.2">GB 8565 $BI=#2(B</a> $B$K(B 150 $BJ8(B
+$B;z$[$I$rDI2C$7$?$b$N$i$7$$!#(B
 <p>
-<a node="ISO 2022">ISO 2022</a> $B$G$N=*C<J8;z$O(B `E' $B$G$"$k!#(B
+<dref>ISO 2022</dref> $B$G$N=*C<(B byte $B$O(B 04/05 (`E') $B$G$"$k!#(B
 
 
 <h3> JIS X0201
 <node> JIS X0201
 <p>
-<a node="ISO 646">ISO 646</a> $B$NJQ<o$N#1$D$G$"$k(B Latin $BJ8;z=89g$H(B 1
-byte $B$N%+%?%+%JJ8;z=89g$+$i$J$k!#(B
+<dref>ISO 646</dref> $B$NJQ<o$N#1$D$G$"$k(B Latin $BJ8;z=89g$H(B 1 byte $B$N%+%?(B
+$B%+%JJ8;z=89g$H!"$3$l$i$+$i$J$k(B 7bit $B$*$h$S(B 8bit <a node="Coded
+character set">$BId9f2=J8;z=89g(B</a> $B$rDj5A$7$F$$$k!#(B
 <p>
 $B85$O(B <concept>JIS C6220-1976</concept> $B$H8@$C$?$,(B <concept>JIS
 X0201</concept> $B$KHV9f$,JQ99$5$l$?!#(B
@@ -765,20 +732,19 @@ X0201</concept> $B$KHV9f$,JQ99$5$l$?!#(B
 	      title-en="Code for Information Interchange" number="JIS
 	      X 0201-1976">
 
-$B$^$?!"(B1996 $BG/$K2~DjHG$,=P$kM=Dj!#(B
+$B$^$?!"(B1997 $BG/$K2~DjHG$,=P$kM=Dj!#(B
 
-<standard abbrev="JIS X0201-1996?" org="$BF|K\5,3J6(2q(B (Japanese
-	      Standards Association)"
-	      title-ja="$B#7%S%C%H5Z$S#8%S%C%H$N>pJs8r49MQId9f2=J8;z=89g(B"
-	      title-en="7-bit and 8-bit coded character sets for
-	      information interchange" number="JIS X 0201" year="1996?
-	      draft">
+<standard abbrev="JIS X0201-1997?" org="$BF|K\5,3J6(2q(B (Japanese
+	      Standards Association)" title-ja="$B#7%S%C%H5Z$S#8%S%C%H$N(B
+	      $B>pJs8r49MQId9f2=J8;z=89g(B" title-en="7-bit and 8-bit
+	      coded character sets for information interchange"
+	      number="JIS X 0201" year="1997?  draft">
 
 
 <h3> JIS C6226-1978
 <node> JIS C6226
 <p>
-$BF|K\8l$rI=$9$?$a$K:n$i$l$?(B <a node="94x94 character set">94$B!_(B94 $BJ8;z=8(B
+$BF|K\8l$rI=$9$?$a$K:n$i$l$?(B<a node="94x94-character set">94$B!_(B94 $BJ8;z=8(B
 $B9g(B</a>$B!#F|K\$N9q2HI8=`!#(BJIS X0208-1978 $B$H$b$$$&!#(B
 <p>
 <cf node="JIS X0208">
@@ -787,7 +753,7 @@ X0201</concept> $B$KHV9f$,JQ99$5$l$?!#(B
 <h3> JIS X0208
 <node> JIS X0208
 <p>
-$BF|K\8l$rI=$9$?$a$K:n$i$l$?(B <a node="94x94 character set">94$B!_(B94 $BJ8;z=8(B
+$BF|K\8l$rI=$9$?$a$K:n$i$l$?(B<a node="94x94-character set">94$B!_(B94 $BJ8;z=8(B
 $B9g(B</a>$B!#F|K\$N9q2HI8=`!#(B1978 $BG/HG!"(B1983 $BG/HG!"(B1990 $BG/HG$,$"$k$,!"(B
 Internet $B$G$O(B 1983 $BG/HG$,$b$C$H$bNI$/;H$o$l$F$$$k!#(B
 <p>
@@ -798,7 +764,7 @@ JIS X0208 $B$O5-9f!"?t;z!"%m!<%^;z!"$R$i$,$J!"%+%?%+%J!"%.%j%7%cJ8;z!"%-(B
 $B$k!#$3$N$?$a!"(B1978 $BG/HG$H(B 1983 $BG/HG$O0[$J$kJ8;z=89g$H$7$F07$o$l$k!#(B
 <p>
 1990 $BG/$N2~Dj$G$O(B 1983 $BG/HG$KBP$9$kDI2C$,9T$o$l$?!#$3$N$?$a!"(B1990 $BG/HG(B
-$B$r;X<($9$k>l9g$OA0$K99?7%7!<%1%s%9$rMQ$$$k!#(B
+$B$r;X<($9$k>l9g$OA0$K99?7%7!<%1%s%9(B (ESC 02/06 4/0) $B$rMQ$$$k!#(B
 
 <standard abbrev="JIS X0208-1978" org="$BF|K\5,3J6(2q(B (Japanese Standards
 	      Association)" title-ja="$B>pJs8r49MQ4A;zId9f7O(B"
@@ -810,34 +776,32 @@ JIS X0208 $B$O5-9f!"?t;z!"%m!<%^;z!"$R$i$,$J!"%+%?%+%J!"%.%j%7%cJ8;z!"%-(B
 	      information interchange" number="JIS X0208" year="1983,1990">
 
 <p>
-$B$^$?!"(B1996 $BG/$K2~DjHG$,=PHG$5$l$kM=Dj!#!J;z7A$NJQ99$O9T$o$l$J$$$N$GJ8(B
+$B$^$?!"(B1997 $BG/$K2~DjHG$,=PHG$5$l$kM=Dj!#!J;z7A$NJQ99$O9T$o$l$J$$$N$GJ8(B
 $B;z=89g$H$7$F$O(B 1990 $BG/HG$HF10l$G$"$k!K(B
 
-<standard abbrev="JIS X0208-1996?" org="$BF|K\5,3J6(2q(B (Japanese
+<standard abbrev="JIS X0208-1997?" org="$BF|K\5,3J6(2q(B (Japanese
 	      Standards Association)" title-ja="$B#7%S%C%H5Z$S#8%S%C%H$N(B
 	      $B#2%P%$%H>pJs8r49MQId9f2=4A;z=89g(B" title-en="7-bit and
 	      8-bit double byte coded Kanji sets for information
-	      interchange" number="JIS X 0208" year="1996? draft">
+	      interchange" number="JIS X 0208" year="1997? draft">
 
 
 <h3> JIS X0212-1990
 <node> JIS X0212
 <p>
-<a node="JIS X0208">JIS X0208</a> $B$K$J$+$C$?J8;z$r=8$a$?(B <a
-node="94x94 character set">94$B!_(B94 $BJ8;z=89g(B</a>$B!#!VJd=u4A;z!W$H$b8F$P$l(B
-$B$k!#F|K\$N9q2HI8=`!#(B<a node="ISO 2022">ISO 2022</a> $B$G$N=*C<J8;z$O(B 
-`D'.
+<dref>JIS X0208</dref> $B$K$J$+$C$?J8;z$r=8$a$?(B<a node="94x94-character
+set">94$B!_(B94 $BJ8;z=89g(B</a>$B!#!VJd=u4A;z!W$H$b8F$P$l$k!#F|K\$N9q2HI8=`!#(B
+<dref>ISO 2022</dref> $B$G$N=*C<(B byte $B$O(B 04/04 (`D').
 
 
 <h3> koi8-r
 <node> koi8-r
 <p>
-$B%m%7%d8lEy$GMQ$$$i$l$k%-%j%kJ8;z$rI=8=$9$k$?$a$N(B <a node="MIME
-charset">MIME charset</a> $B$N#1$D!#(B
+$B%m%7%d8lEy$GMQ$$$i$l$k%-%j%kJ8;z$rI=8=$9$k$?$a$N(B <dref>MIME
+charset</dref> $B$N#1$D!#(B
 <p>
-<a node="ISO 2022">ISO 2022</a> $B$K4p$+$J$$(B <a node="8bit">8bit</a> $B$N(B
-<a node="Coded character set">$BId9f2=J8;z=89g(B</a>$B$G(B de-fact standard $B$G(B
-$B$"$k!#(B
+<dref>ISO 2022</dref> $B$K4p$+$J$$(B <dref>8bit</dref> $B$N(B<a node="Coded
+character set">$BId9f2=J8;z=89g(B</a>$B$G(B de-fact standard $B$G$"$k!#(B
 <p>
 RFC 1489 $B$GDj5A$5$l$F$$$k!#(B
 <p>
@@ -848,12 +812,63 @@ RFC 1489 $B$GDj5A$5$l$F$$$k!#(B
 <h3> KS C5601-1987
 <node> KS C5601
 <p>
-$B4Z9q8l$rI=$9$?$a$N(B <a node="94x94 character set">94$B!_(B94 $BJ8;z=89g(B</a>$B!#(B
-$B4Z9q$N9q2HI8=`!#(B<a node="ISO 2022">ISO 2022</a> $B$G$N=*C<J8;z$O(B `C'.
+$B4Z9q8l$rI=$9$?$a$N(B <a node="94x94-character set">94$B!_(B94 $BJ8;z=89g(B</a>$B!#(B
+$B4Z9q$N9q2HI8=`!#(B<dref>ISO 2022</dref> $B$G$N=*C<(B byte $B$O(B 04/03 (`C').
 
 <standard abbrev="KS C5601" org="Korea Industrial Standards
 	      Association" title-en="Code for Information Interchange
 	      (Hangul and Hanja)" number="KS C 5601" year="1987">
+
+
+<h3> media type
+<node> media type
+<p>
+<dref>MIME</dref> $B$K$*$1$k(B <dref>entity</dref> $B$N<oN`!#(B
+<concept>type</concept> $B$H(B <concept>subtype</concept> $B$+$i$J$k!#(B
+<dref>RFC 2046</dref> $B$GDj5A$5$l$F$$$k!#(B
+<p>
+type $B$OI8=`$G$O(B
+
+<ul>
+<li><concept>text</concept>
+</li>
+<li><concept>image</concept>
+</li>
+<li><concept>audio</concept>
+</li>
+<li><concept>video</concept>
+</li>
+<li><concept>application</concept>
+</li>
+<li><a node="multipart"><concept>multipart</concept></a>
+</li>
+<li><concept>message</concept>
+</ul>
+
+<noindent>
+$B$,Dj5A$5$l!"$=$l$>$l$K$O(B application/octet-stream, audio/basic,
+image/jpeg, <dref>multipart/mixed</dref>, <dref>text/plain</dref>,
+video/mpeg $B$J$I$N$5$^$6$^$J(B subtype $B$,Dj5A$5$l$F$$$k!#(B
+
+<memo title="$BCm0U(B">
+<p>
+$B$3$3$G$O!"(Btext/plain $B$J$I$N(B type/subtype $B$NAH$r$7$P$7$P(B 
+<concept>content-type/subtype</concept> $B$H=q$/!#(B
+</memo>
+
+<p>
+media type $B$O!"(BRFC 2046 $B$GDj5A$5$l$F$$$k$b$N$K2C$($F!"EPO?$9$k$3$H$b$G(B
+$B$-$k!#8=:_!"EPO?$5$l$F$$$k$b$N$O(B <a
+href="ftp://ftp.isi.edu/in-notes/iana/assignments/media-types">MEDIA
+TYPES</a> $B$G;2>H$G$-$k!#(B
+<p>
+$B$^$?!"(Btype $B$b$7$/$O(B subtype $B$K!"A0$K(B `x-' $B$rIU$1$?(B 
+<concept>x-token</concept> $B$rMQ$$$k$3$H$K$h$j!"EPO?$5$l$F$$$J$$$b$N$r(B
+$B;dE*$KMQ$$$k$3$H$b$G$-$k!#$7$+$7!"EvA3$N$3$H$J$,$i!"$3$&$7$?;dE*$J(B 
+content-type $B$ONJ2r$rF@$?<T$N4V$G$7$+2r<a$G$-$J$$$N$GMxMQ$K$OCm0U$9$k(B
+$B$3$H!#(B
+<p>
+<cf node="Content-Type field">
 
 
 <h3> message
@@ -873,9 +888,9 @@ RFC 1489 $B$GDj5A$5$l$F$$$k!#(B
 <h3> method
 <node> method
 <p>
-tm $B$GFCDj$N<oN`$N(B data $B$r:F@8$7$?$H$-<B:]$K$=$N=hM}$r9T$J$&(B
-program. Emacs Lisp $B$G=q$+$l$?(B <concept>internal method</concept> $B$H(B C 
-$B$d(B script $B8@8l$J$I$G=q$+$l$?(B <concept>external method</concept> $B$,$"$k!#(B
+tm $B$GFCDj$N<oN`$N(B data $B$r:F@8$7$?$H$-<B:]$K$=$N=hM}$r9T$J$&(B program.
+Emacs Lisp $B$G=q$+$l$?(B <concept>internal method</concept> $B$H(B C $B$d(B 
+script $B8@8l$J$I$G=q$+$l$?(B <concept>external method</concept> $B$,$"$k!#(B
 <p>
 <cf file="tm-view-ja" node="method">
 
@@ -915,15 +930,15 @@ node="encoded-word">RFC 2047</a>, <dref>RFC 2048</dref>, <dref>RFC
 <h3> MIME charset
 <node> MIME charset
 <p>
-<dref>Content-Type field</dref> $B$d(B <a
-node="encoded-word">encoded-word</a> $B$N(B charset parameter $B$GMQ$$$i$l$k(B
-$BEPO?$5$l$?(B<a node="Coded character set">$BId9f2=J8;z=89g(B</a>$B!#(B
+<dref>Content-Type field</dref> $B$d(B <dref>encoded-word</dref> $B$N(B 
+charset parameter $B$GMQ$$$i$l$kEPO?$5$l$?(B<a node="Coded character set">
+$BId9f2=J8;z=89g(B</a>$B!#(B
 <p>
 <dref>RFC 2045</dref> $B$GDj5A$5$l$F$$$k!#(B
 <p>
-<a node="iso-2022-jp">iso-2022-jp</a> $B$d(B <a node="euc-kr">euc-kr</a> 
-$B$O$=$N#1$D!#!J$3$3$G$O!"(BMIME charset $B$O(B<a node="Character set">$BJ8;z=8(B
-$B9g(B</a>$B$H6hJL$7$F>.J8;z$G=q$$$F$$$k!K(B
+<dref>iso-2022-jp</dref> $B$d(B <dref>euc-kr</dref> $B$O$=$N#1$D!#!J$3$3$G$O!"(B
+MIME charset $B$O(B<a node="Graphic character set">$B?^7AJ8;z=89g(B</a>$B$H6hJL(B
+$B$7$F>.J8;z$G=q$$$F$$$k!K(B
 
 
 <h3> MTA
@@ -947,14 +962,15 @@ reader $B$NAm>N!#(B
 <h3> MULE
 <node> MULE
 <p>
-$BH>ED(B $B7u0l;a$i$,:n$C$?!"B?8@8l$5$l$?(B <a node="Emacs">Emacs</a>.
-<p>
-[MULE] Nishikimi M., Handa K. and Tomura S., ``Mule: MULtilingual
-Enhancement to GNU Emacs'', Proc. of INET'93, August, 1993.
+$BH>ED(B $B7u0l;a$i$,:n$C$?!"B?8@8l$5$l$?(B GNU <dref>Emacs</dref>.
+
+<inproc abbrev="MULE" author="Nishikimi M., Handa K. and Tomura S."
+	      title-en="Mule: MULtilingual Enhancement to GNU Emacs"
+	      book-en="Proc. of INET'93" date="August, 1993">
 <p>
 $B8=:_!"(BMULE $B$N5!G=$r(B Emacs $B$K(B merge $B$9$k:n6H$,9T$o$l$F$*$j!"(B<a
-href="ftp://etlport.etl.go.jp/pub/mule/mule-19.33-gamma.taz"> alpha $BHG(B
-</a> $B$,B8:_$9$k!#(B
+href="ftp://etlport.etl.go.jp/pub/mule/mule-19.33-delta.taz">alpha $BHG(B
+</a>$B$,B8:_$9$k!#(B
 <p>
 $B$=$NB>!"(BXEmacs $B$K(B merge $B$7$?$b$N$bB8:_$9$k!#(B
 <p>
@@ -1078,9 +1094,8 @@ encapsulation $B$rMQ$$$kJ}K!(B <cf node="PGP-kazu"> $B$bMxMQ$5$l$F$-$?!#$7$+
 <h3> PGP-kazu
 <node> PGP-kazu
 <p>
-$B;3K\(B $BOBI'(B $B;a$,Ds0F$7$?(B <a node="MIME">MIME</a> $B$G(B <a
-node="PGP">PGP</a> $B$rMxMQ$9$k$?$a$NJ}K!$r$3$3$G$O(B 
-<concept>PGP-kazu</concept> $B$H8F$V$3$H$K$9$k!#(B
+$B;3K\(B $BOBI'(B $B;a$,Ds0F$7$?(B <dref>MIME</dref> $B$G(B <dref>PGP</dref> $B$rMxMQ$9(B
+$B$k$?$a$NJ}K!$r$3$3$G$O(B <concept>PGP-kazu</concept> $B$H8F$V$3$H$K$9$k!#(B
 <p>
 PGP-kazu $B$O(B <concept>application/pgp</concept> $B$H$$$&(B 
 <dref>content-type</dref> $B$rDj5A$9$k!#(B
@@ -1100,16 +1115,13 @@ PGP-kazu $B$G$O(B MUA $B$O(B PGP $B$N$H(B MIME $B$N$H$$$&#2$D$N(B encaps
 $B$^$?!"(BInternet $B$G$O:#8e(B <dref>PGP/MIME</dref> $B$NJ}8~$GI8=`2=$7$F$$$3$&(B
 $B$H$$$&$3$H$G9g0U$,<h$l$F$$$k!#$h$C$F!":#8e$O(B PGP-kazu $B$OMQ$$$J$$$N$,K>(B
 $B$^$7$$!#(B
-<p>
-[draft-kazu-pgp-mime-00.txt] Yamamoto K., ``PGP MIME Integration'',
-October, 1995
 
 
 <h3> PGP/MIME
 <node> PGP/MIME
 <p>
-Michael Elkins $B;a$,Ds0F$7$?(B <a node="MIME">MIME</a> $B$G(B <a
-node="PGP">PGP</a> $B$rMxMQ$9$k$?$a$NJ}K!!#(B
+Michael Elkins $B;a$,Ds0F$7$?(B <dref>MIME</dref> $B$G(B <dref>PGP</dref> $B$rMx(B
+$BMQ$9$k$?$a$NJ}K!!#(B
 <p>
 <a node="Security multipart">RFC 1847</a> $B$K4p$-!"(BMIME $B$N(B multipart $B$K(B
 $B$h$k(B <dref>encapsulation</dref> $B$r9T$&!#$3$N$?$a!"(BMIME $B$N<+A3$J3HD%$K(B
@@ -1190,9 +1202,9 @@ news message $B$b$3$l$K=`$8$F$$$k$N$G!"(B<concept>Internet mail</concept>
 <h3> RFC 1036
 <node> RFC 1036
 <p>
-USENET $B$G$N(B message $B$N7A<0$rDj$a$?(B RFC. <a node="RFC 822">RFC 822</a>
-$B$N(B subset $B$K$J$C$F$$$k!#(BInternet $B$NI8=`$G$O$J$$$,!"(BUSENET $B0J30$N(B 
-netnews $B$G$b$3$l$K=`$8$F$$$k$b$N$,B?$$!#(B
+USENET $B$G$N(B message $B$N7A<0$rDj$a$?(B RFC.  <dref>RFC 822</dref> $B$N(B 
+subset $B$K$J$C$F$$$k!#(BInternet $B$NI8=`$G$O$J$$$,!"(BUSENET $B0J30$N(B netnews 
+$B$G$b$3$l$K=`$8$F$$$k$b$N$,B?$$!#(B
 
 <rfc name="USENET" number="1036" author="M. Horton and R. Adams"
 	      title="Standard for Interchange of USENET Messages"
@@ -1203,8 +1215,7 @@ netnews $B$G$b$3$l$K=`$8$F$$$k$b$N$,B?$$!#(B
 <node> RFC 1153
 <p>
 $BJ#?t$N(B <a node="RFC 822">Internet mail</a> $B$r(B <a node="encapsulation">
-<concept>encapsulation</concept></a> $B$9$k$?$a$NJ}K!$rDj$a$?(B 
-RFC. <dref>RFC 934</dref> $B$rMQ$$$k!#(B
+<concept>encapsulation</concept></a> $B$9$k$?$a$NJ}K!$rDj$a$?(B RFC.
 <p>
 <dref>MIME</dref> $B$HL7=b$9$k$N$G!"8=:_$G$O(B <dref>message/rfc822</dref> 
 $B$rMQ$$$?(B <dref>multipart</dref> $B$rMQ$$$k$Y$-$G$"$k!#(B
@@ -1219,7 +1230,7 @@ RFC. <dref>RFC 934</dref> $B$rMQ$$$k!#(B
 <node> RFC 1557
 <p>
 <dref>euc-kr</dref> $B$H(B <dref>iso-2022-kr</dref> $B$H$$$&4Z9q8l$N$?$a$N(B 
-<a node="MIME charset">MIME charset</a> $B$rDj5A$7$F$$$k(B RFC.
+<dref>MIME charset</dref> $B$rDj5A$7$F$$$k(B RFC.
 
 <rfc number="1557" type="Informational" author="U. Choi, K. Chon and
 	      H. Park" title="Korean Character Encoding for Internet
@@ -1230,8 +1241,8 @@ RFC. <dref>RFC 934</dref> $B$rMQ$$$k!#(B
 <node> RFC 1922
 <p>
 <dref>iso-2022-cn</dref>, <dref>iso-2022-cn-ext</dref>,
-<dref>cn-gb</dref>, <dref>cn-big5</dref> $B$H$$$C$?Cf9q8l$N$?$a$N(B <a
-node="MIME charset">MIME charset</a> $B$rDj5A$7$F$$$k(B RFC.
+<dref>cn-gb</dref>, <dref>cn-big5</dref> $B$H$$$C$?Cf9q8l$N$?$a$N(B 
+<dref>MIME charset</dref> $B$rDj5A$7$F$$$k(B RFC.
 <p>
 $B$3$l$K2C$($F!"(B<concept>charset-edition</concept> $B$H(B 
 <concept>charset-extension</concept> $B$H$$$&(B <dref>Content-Type
@@ -1284,18 +1295,21 @@ field</dref> $B$N(B parameter $B$rDj5A$7$F$$$k!#(B
 <h3> plain text
 <node> plain text
 <p>
-$B=qBN$dAHHG$K4X$9$k>pJs$r;}$?$J$$(B <a node="Coded character set">$BJ8;zId(B
-$B9f(B</a>$B$N$_$GI=8=$5$l$k(B text $B>pJs!#(B<cf node="text/plain">
+$B=qBN$dAHHG$K4X$9$k>pJs$r;}$?$J$$(B<a node="Coded character set">$BJ8;zId9f(B
+</a>$B$N$_$GI=8=$5$l$k(B text $B>pJs!#(B<cf node="text/plain">
 
 
 <h3> Security multipart
 <node> Security multipart
 <p>
-<a node="MIME">MIME</a> $B$G0E9f$dEE;R=qL>$rMQ$$$k$?$a$N7A<0!#(B<a
-node="multipart/signed"><concept>multipart/signed</concept></a> $B$H(B <a
+<dref>MIME</dref> $B$G0E9f$dEE;R=qL>$rMQ$$$k$?$a$N7A<0!#(B
+<p>
+<a node="multipart/signed"><concept>multipart/signed</concept></a> $B$H(B 
+<a
 node="multipart/encrypted"><concept>multipart/encrypted</concept></a> 
-$B$H$$$&(B multipart $B$rMQ$$$k!#(BMOSS $B$d(B <a node="PGP/MIME">PGP/MIME</a> $B$O(B
-$B$3$l$K4p$$$F$$$k!#(B
+$B$H$$$&(B multipart $B$rMQ$$$k!#(B
+<p>
+MOSS $B$d(B <dref>PGP/MIME</dref> $B$O$3$l$K4p$$$F$$$k!#(B
 
 <rfc name="Security multipart" number="1847" type="Standards Track"
 	      author="James Galvin, Gale Murphy, Steve Crocker and Ned
@@ -1322,16 +1336,16 @@ type</dref>.
 <dref>RFC 2046</dref> $B$GDj5A$5$l$?!"(B<dref>plain text</dref> $B$rI=8=$9$k(B
 $B$?$a$N(B <dref>media type</dref>.
 <p>
-$BHs(B MIME message $B$J$I$N(B content-type $B$,Dj5A$5$l$J$$(B part $B$O(B <dref>MIME
-charset</dref> $B$,(B <dref>us-ascii</dref> $B$G$"$k(B 
-<concept>text/plain</concept> $B$N(B part $B$G$"$k$H8+Pv$5$l$k$3$H$K$J$C$F$$(B
-$B$k!#(B
+$BHs(B MIME message $B$J$I$N(B content-type $B$,Dj5A$5$l$J$$(B <dref>entity</dref> 
+$B$O(B <dref>MIME charset</dref> $B$,(B <dref>us-ascii</dref> $B$G$"$k(B 
+<concept>text/plain</concept> $B$N(B entity $B$G$"$k$H8+Pv$5$l$k$3$H$K$J$C$F(B
+$B$$$k!#(B
 
 
 <h3> tm-kernel, tm
 <node> tm-kernel
 <p>
-Emacs $B$G(B <a node="MIME">MIME</a> $B$rMxMQ$9$k$?$a$N(B user interface $B$rDs(B
+Emacs $B$G(B <dref>MIME</dref> $B$rMxMQ$9$k$?$a$N(B user interface $B$rDs(B
 $B6!$9$k(B library $B72!#(B`tools for MIME' $B$NN,!#(B
 
 <memo title="$B$I$&$G$bNI$$$3$H(B(^-^;">
@@ -1347,8 +1361,8 @@ Emacs $B$G(B <a node="MIME">MIME</a> $B$rMxMQ$9$k$?$a$N(B user interface $B
 <h3> tm-MUA
 <node> tm-MUA
 <p>
-<a node="tm-kernel">tm</a> $B$rMQ$$$?(B <a node="MUA">MUA</a> $B$b$7$/$O(B MUA 
-$B$KBP$9$k(B extender.
+<a node="tm-kernel">tm</a> $B$rMQ$$$?(B <dref>MUA</dref> $B$b$7$/$O(B MUA $B$KBP(B
+$B$9$k(B extender.
 <p>
 <concept>tm $BBg@9$j(B package</concept> $B$K$O(B
 
@@ -1369,17 +1383,17 @@ Emacs $B$G(B <a node="MIME">MIME</a> $B$rMxMQ$9$k$?$a$N(B user interface $B
 <h3> us-ascii
 <node> us-ascii
 <p>
-$B%"%a%j%+O"K.$J$I$G;H$o$l$k1Q8l$J$I$rI=8=$9$k$?$a$N(B <a node="MIME
-charset">MIME charset</a> $B$N#1$D!#(B
+$B%"%a%j%+O"K.$J$I$G;H$o$l$k1Q8l$J$I$rI=8=$9$k$?$a$N(B <dref>MIME
+charset</dref> $B$N#1$D!#(B
 <p>
-<a node="ASCII">ASCII</a> $B$N$_$+$i$J$j(B <a node="ISO 2022">ISO 2022</a> 
-$B$K$h$k(B<a node="Code extension">$BId9f3HD%(B</a>$B$O5v$5$l$J$$!#(B
+<dref>ASCII</dref> $B$N$_$+$i$J$j(B <dref>ISO 2022</dref> $B$K$h$k(B<a
+node="Code extension">$BId9f3HD%(B</a>$B$O5v$5$l$J$$!#(B
 <p>
 Internet mail $B$K$*$1$kI8=`$N(B<a node="Coded character set">$BId9f2=J8;z=8(B
 $B9g(B</a>$B$G$"$j!"L@<(E*$K(B MIME charset $B$,<($5$l$J$$>l9g$O86B'$H$7$F(B 
 <concept>us-ascii</concept> $B$,;H$o$l$k!#(B
 <p>
-$B$^$?!"(B<a node="RFC 822">RFC 822</a> $B$K$*$1$k(B <concept>ASCII</concept> 
+$B$^$?!"(B<dref>RFC 822</dref> $B$K$*$1$k(B <concept>ASCII</concept> 
 $B$O(B us-ascii $B$r;X$9$b$N$H2r<a$9$Y$-$G$"$k!#(B
 
 
@@ -1612,6 +1626,37 @@ tm ML $B$G$O(B tm $B$N%P%0>pJs$N8r49$d:G?7HG$NG[I[!"(Btm $B$N2~NI$K4X$9$k5D
 <noindent>
 $B$^$G(B mail $B$rAw$C$F2<$5$$!#EPO?$O<jF0$G$9$N$G!"$G$-$l$P!"<+A38@8l$G=q$$(B
 $B$F2<$5$$!#(B(^_^)
+
+
+<h1> $B<U<-(B
+<node> Acknowledgments
+<p>
+$B;d$,(B tm-view $B$r:G=i$K:n$C$?;~$K!"87$7$$CmJ8$HM-1W$J=u8@$r2<$5$j!"$=$N(B
+$B@_7W$KB?Bg$JM?$($i$l$?>#C+J]Gn$5$s$K46<U$7$^$9!#(B
+<p>
+<file>tm-ew-d.el</file> $B$H(B <file>mel-b.el</file> $B$NA0?H$KEv$?$k(B
+<file>mime.el</file> $B$r=q$-!"$=$NG[I[$H2~B$$r$*5v$72<$5$C$?1]JB;LCR$5(B
+$B$s$K46<U$7$^$9!#(B
+<p>
+$B$^$?!"(BLaTeX $BMQ$NFbIt(B method $B$H(B message/partial $BMQ$N<+F07k9g(B method $B$r(B
+$BDs6!$7$F2<$5$C$?2,It<wCK$5$s!"(Btar archive $BMQ$NFbIt(B method $B$rDs6!$7$F2<(B
+$B$5$C$?>eLnGn$5$s$K46<U$7$^$9!#(B
+<p>
+tm-edit $B$NA0?H$H$J$C$?(B <file>mime.el</file> $B$r=q$-!"$=$NG[I[$H2~B$$r$*(B
+$B5v$72<$5$C$?!"G_ED@/?.$5$s$K46<U$7$^$9!#(Btm-edit $B$N(B user interface $B$N4p(B
+$BK\E*$J@_7W$OG_ED$5$s$N<j$K$h$k$b$N$G!"$H$F$bNI$$@_7W$G$"$C$?$H;W$$$^$9!#(B
+<p>
+tm $B$N4v$D$+$N(B module $B$N(B maintainer $B$r0z$-<u$1$F2<$5$C$?>.NS=$J?$5$s!"(B
+$BH`$O$^$?!"(BRFC $B$KBP$9$kE,9g@-$KBP$7$F1T$$;XE&$rB?!99T$&$3$H$G(B tm $B$NF0:n(B
+$B$N5,3J$KBP$9$kCi<BEY$r>e$2$k$N$KHs>o$J9W8%$r9T$$$^$7$?!#(B
+<p>
+$B$^$?!"(Btm-vm $B$N(B maintainer $B$r0z$-<u$1$F2<$5$C$?(B Oscar Figueiredo $B$5$s$K(B
+$B46<U$7$^$9!#@:NOE*$K(B tm-vm $B$r2~NI$7!"$^$?!"N)GI$J@bL@=q$r=q$$$F2<$5$$(B
+$B$^$7$?!#(B
+<p>
+$B:G8e$K!"(Bbeta test $B$K6(NO$7$F2<$5$C$?F|K\8lHG!"1Q8lHGAPJ}$N(B tm mailing
+list $B$N(B member $B$K46<U$7$^$9!#$^$?!"(Bpatch $B$rAw$C$F2<$5$C$?A4$F$NJ}$K46(B
+$B<U$7$^$9!#(B
 
 
 <h1> $B35G0:w0z(B

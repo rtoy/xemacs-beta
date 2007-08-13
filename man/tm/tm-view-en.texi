@@ -1,13 +1,13 @@
 \input texinfo.tex
 @setfilename tm-view-en.info
-@settitle{tm-view 7.77 Reference Manual (English Version)}
+@settitle{tm-view 7.79 Reference Manual (English Version)}
 @titlepage
-@title tm-view 7.77 Reference Manual (English Version)
+@title tm-view 7.79 Reference Manual (English Version)
 @author MORIOKA Tomohiko <morioka@@jaist.ac.jp>
-@subtitle 1996/10/11
+@subtitle 1996/12/25
 @end titlepage
 @node Top, Introduction, (dir), (dir)
-@top tm-view 7.77 Reference Manual (English Version)
+@top tm-view 7.79 Reference Manual (English Version)
 
 @ifinfo
 
@@ -21,6 +21,7 @@ This file documents tm-view, a MIME Viewer for GNU Emacs.
 * method::                      Mechanism of decoding
 * Two buffers for an article::  raw-article-buffer and preview-buffer
 * API::                         Functions to decode MIME message
+* Acknowledgments::             
 * Concept Index::               
 * Function Index::              
 * Variable Index::              
@@ -28,6 +29,8 @@ This file documents tm-view, a MIME Viewer for GNU Emacs.
 
 @node Introduction, MIME display, Top, Top
 @chapter What is tm-view?
+@cindex filter
+@cindex method
 
 The tm-view is a general MIME viewer running on GNU Emacs.@refill
 
@@ -37,12 +40,10 @@ tm-view provides the major-mode called @code{mime/viewer-mode}
 
 tm-view is a user interface kernel to view and navigate MIME message.
 tm-view drives some programs to navigate each content-type
-(@ref{(tm-en)content-type})s, they are called
-@cindex{method}@strong{method} (@ref{method}).  tm-view calls some
-programs to display each contents and headers in preview buffer, they
-are called @cindex{filter}@strong{filter} (@ref{Two buffers for an
-article}).  Method and filters are tm-view application program.  They
-expand tm-view to treat various kinds of MIME types.
+(@ref{(tm-en)content-type})s, they are called @strong{method}
+(@ref{method}).  tm-view calls some programs to display each contents
+and headers in preview buffer, they are called @strong{filter} (@ref{Two buffers for an article}).  Method and filters are tm-view application
+program.  They expand tm-view to treat various kinds of MIME types.
 
 
 @node MIME display, mime/viewer-mode, Introduction, Top
@@ -123,6 +124,7 @@ So press `C-c C-x C-i' and specify file name you want to include.
 
 @node content-button, content-header, MIME display, MIME display
 @section content-button
+@cindex content-number
 
 content-subject displays abstract for the part.  It is placed in top of
 the part.@refill
@@ -135,8 +137,8 @@ In default, it is displayed following design:
 
 
 First number field represents position of a content in the part.  It is
-called @cindex{content-number}@strong{content-number}.  It can be
-considered as the chapter number in the message.@refill
+called @strong{content-number}.  It can be considered as the chapter
+number in the message.@refill
 
 Second string part represents title.  It is created by following:
 
@@ -189,6 +191,7 @@ is not displayed.
 
 @node content-header, content-body, content-button, MIME display
 @section content-header
+@cindex content-header-filter
 
 A content header displays the header portion of a part in the
 preview-buffer.  However it is annoying to display header for every
@@ -210,9 +213,8 @@ work.  So if you want to redefine it, it should be refer variable
 @code{mime-viewer/childrens-header-showing-Content-Type-list}.@refill
 
 When content-header is displayed, content-header are formated by the
-program called by
-@cindex{content-header-filter}@strong{content-header-filter}.
-Content-header-filter is searched from variable
+program called by @strong{content-header-filter}.  Content-header-filter
+is searched from variable
 @code{mime-viewer/content-header-filter-alist}.  Its key is major-mode
 of the raw-article-buffer (@ref{raw-article-buffer}).  If not found,
 function @code{mime-viewer/default-content-header-filter} is
@@ -275,9 +277,10 @@ set it.
 
 @node content-body, content-separator, content-header, MIME display
 @section content-body
+@cindex content-filter
+@cindex content-body
 
-@cindex{content-body}@strong{content-body} represents content of the
-part.@refill
+@strong{content-body} represents content of the part.@refill
 
 tm-view does not display raw content body.  For example, if a content
 has binary, it is hidden.  If a content has text/enriched, it is
@@ -290,10 +293,9 @@ content-type of a part is a member of variable
 @code{mime-viewer/default-showing-Content-Type-list}.@refill
 
 When content-body of a content is displayed, content-body is formated by
-@cindex{content-filter}@strong{content-filter}.  Content-filter is
-searched from variable @code{mime-viewer/content-filter-alist}.  At this
-time, major-mode of the raw-article-buffer (@ref{raw-article-buffer}) is
-used as the key.
+@strong{content-filter}.  Content-filter is searched from variable
+@code{mime-viewer/content-filter-alist}.  At this time, major-mode of
+the raw-article-buffer (@ref{raw-article-buffer}) is used as the key.
 
 If it is not found, function
 @code{mime-viewer/default-content-filter} is called.
@@ -338,9 +340,10 @@ In default, it does nothing.
 
 @node content-separator,  , content-body, MIME display
 @section content-separator
+@cindex content-separator
 
-@cindex{content-separator}@strong{content-separator} is displayed to
-represent boundary of contents.@refill
+@strong{content-separator} is displayed to represent boundary of
+contents.@refill
 
 Content-separator is displayed by function
 @code{mime-viewer/default-content-separator}.  In default, it displays
@@ -435,22 +438,25 @@ tm-mh-e, tm-vm, gnus-mime, tm-gnus, tm-rmail etc.@refill
 
 @node method, Two buffers for an article, mime/viewer-mode, Top
 @chapter Mechanism of decoding
+@cindex external method
+@cindex internal method
+@cindex method
+@cindex decoding-mode
+@cindex decoding operation(s) (for a part)
 
 In @code{mime/viewer-mode}, you can do play (@kbd{v}), extract
 (@kbd{e}), or print (@kbd{C-c C-p}) for each parts.  These operations
-are called @cindex{decoding operation(s) (for a part)}@strong{decoding
-operation(s) (for a part)}.  And kind of decoding operations are called
-@cindex{decoding-mode}@strong{decoding-mode}.@refill
+are called @strong{decoding operation(s) (for a part)}.  And kind of
+decoding operations are called @strong{decoding-mode}.@refill
 
 When decoding operation is driven, tm-view calls a procedure matched for
 the condition, such as content-type (@ref{(tm-en)content-type}) of the
 part or its environment.  This procedure is called
-@cindex{method}@strong{method}.@refill
+@strong{method}.@refill
 
 There are two kinds of methods.  One is Emacs Lisp function, called
-@cindex{internal method}@strong{internal method}.  Another one is
-external program, called @cindex{external method}@strong{external
-method}.@refill
+@strong{internal method}.  Another one is external program, called
+@strong{external method}.@refill
 
 Internal method operates in Emacs, so it can do carefully.@refill
 
@@ -716,14 +722,17 @@ WWW browser name.  If it is omitted, `netscape' is used.
 
 @node Two buffers for an article, API, method, Top
 @chapter raw-article-buffer and preview-buffer
+@cindex filter
+@cindex content-filter
+@cindex header-filter
+@cindex preview-buffer
+@cindex raw-article-buffer
 
 tm-view managements two buffers, one is for raw message called
-@cindex{raw-article-buffer}@strong{raw-article-buffer}, another one is
-to preview for user called
-@cindex{preview-buffer}@strong{preview-buffer}.  major-mode of
-raw-article-buffer is same as major-mode for article of original MUA,
-major-mode of preview-buffer is @code{mime/viewer-mode}
-(@ref{mime/viewer-mode}).@refill
+@strong{raw-article-buffer}, another one is to preview for user called
+@strong{preview-buffer}.  major-mode of raw-article-buffer is same as
+major-mode for article of original MUA, major-mode of preview-buffer is
+@code{mime/viewer-mode} (@ref{mime/viewer-mode}).@refill
 
 When called @code{mime/viewer-mode}, tm-view analyzes
 raw-article-buffer, and sets its result to the variable
@@ -732,10 +741,9 @@ raw-article-buffer, and sets its result to the variable
 After that, tm-view create a preview-buffer corresponded to the
 raw-article-buffer.  As this time, tm-view modifies header and body of
 each parts of the message by specified conditions.  Filter program for
-header is called @cindex{header-filter}@strong{header-filter}
-(@ref{content-header}), filter program for body is called
-@cindex{content-filter}@strong{content-filter} (@ref{content-body}), and
-they are called @cindex{filter}@strong{filter}.@refill
+header is called @strong{header-filter} (@ref{content-header}), filter
+program for body is called @strong{content-filter} (@ref{content-body}),
+and they are called @strong{filter}.@refill
 
 When preview-buffer is made, buffer local variable of preview-buffer
 @code{mime::preview/content-list} is made to register structure of
@@ -759,11 +767,12 @@ Content-Type field.
 
 @node raw-article-buffer, preview-buffer, Two buffers for an article, Two buffers for an article
 @section buffer local variables of raw-article-buffer
+@cindex content-info
 
 @deffn{Structure} mime::content-info rcnum point-min point-max type parameters encoding children
 
 structure to represent MIME content in raw-article-buffer.  It is called
-by @cindex{content-info}@strong{content-info}.@refill
+by @strong{content-info}.@refill
 
 Please use reference function @code{mime::content-info/SLOT-NAME} to
 reference slot of content-info.  Their argument is only
@@ -856,6 +865,7 @@ default value.
 
 @node preview-buffer,  , raw-article-buffer, Two buffers for an article
 @section Buffer local variables of preview-buffer
+@cindex preview-content-info
 
 @defvar mime::preview/mother-buffer
 
@@ -866,7 +876,7 @@ Mother buffer of this preview-buffer.
 @deffn{Structure} mime::preview-content-info point-min point-max buffer content-info
 
 structure to represent MIME content in preview-buffer.  It is called by
-@cindex{preview-content-info}@strong{preview-content-info}.@refill
+@strong{preview-content-info}.@refill
 
 Please use reference function
 @code{mime::preview-content-info/SLOT-NAME} to reference slot of
@@ -932,7 +942,7 @@ If @var{cinfo} is omitted, @code{mime::preview/content-list} is used.
 
 
 
-@node API, Concept Index, Two buffers for an article, Top
+@node API, Acknowledgments, Two buffers for an article, Top
 @chapter Functions to decode MIME message
 
 tm-view provides some available functions to decode and navigate MIME
@@ -1028,7 +1038,26 @@ folding or raw CR or LF, it unfolds or delete raw CR or LF.
 
 
 
-@node Concept Index, Function Index, API, Top
+@node Acknowledgments, Concept Index, API, Top
+@chapter Acknowledgments
+
+First of all, I thank MASUTANI Yasuhiro.  He requested me a lot of
+important features and gave me a lot of suggestions when tm-view was
+born.  tm-view is based on his influence.@refill
+
+I thank ENAMI Tsugutomo for work of @file{mime.el}, which is an origin
+of @file{tm-ew-d.el} and @file{mel-b.el}, and permission to rewrite for
+tm.@refill
+
+I thank OKABE Yasuo for work of internal method for LaTeX and automatic
+assembling method for message/partial.  I thank UENO Hiroshi for work of
+internal method for tar archive.@refill
+
+Last of all, I thank members of two tm mailing lists, Japanese and
+English version.
+
+
+@node Concept Index, Function Index, Acknowledgments, Top
 @chapter Concept Index
 
 @printindex cp

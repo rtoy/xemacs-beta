@@ -26,10 +26,10 @@ This file documents tm-mh-e, a MIME extension for GNUS.
 
 @node Introduction, mh-folder-mode, Top, Top
 @chapter What is tm-mh-e?
+@cindex tm-mh-e
 
-@cindex{tm-mh-e}@strong{tm-mh-e} is a mh-e (@ref{(mh-e)}) extender to
-use MIME (@ref{(tm-en)MIME}) feature using tm
-(@ref{(tm-en)tm-kernel}).@refill
+@strong{tm-mh-e} is a mh-e (@ref{(mh-e)}) extender to use MIME
+(@ref{(tm-en)MIME}) feature using tm (@ref{(tm-en)tm-kernel}).@refill
 
 tm-mh-e extends following features:
 
@@ -71,12 +71,13 @@ or play a content, interactively.
 
 @node Automatic MIME Preview, mule, mh-folder-mode, Top
 @chapter Inline display for MIME message
+@cindex XEmacs
+@cindex automatic MIME preview
 
-@cindex{automatic MIME preview}@strong{automatic MIME preview} feature
-is available in tm-mh-e.  In automatic MIME preview mode, when reading
-an article in MH-Folder mode (@ref{(mh-e)Reading Mail}), tm-mh-e
-displays preview buffer processed by tm-view (@ref{(tm-view-en)})
-instead of raw show buffer.@refill
+@strong{automatic MIME preview} feature is available in tm-mh-e.  In
+automatic MIME preview mode, when reading an article in MH-Folder mode
+(@ref{(mh-e)Reading Mail}), tm-mh-e displays preview buffer processed by
+tm-view (@ref{(tm-view-en)}) instead of raw show buffer.@refill
 
 Therefore if an article is encoded by Base64 (@ref{(tm-en)Base64}) or
 Quoted-Printable (@ref{(tm-en)Quoted-Printable}), a decoded article is
@@ -85,8 +86,8 @@ displayed.  Or rich text article, such as text/enriched
 multipart (@ref{(tm-en)multipart}) article is dealt with
 correctly.@refill
 
-In addition, in @cindex{XEmacs}@strong{XEmacs}, images are displayed in
-preview buffer as same as text.@refill
+In addition, in @strong{XEmacs}, images are displayed in preview buffer
+as same as text.@refill
 
 Different from using metamail, speaker does not roar just then read an
 article includes audio content, video player does not play just then

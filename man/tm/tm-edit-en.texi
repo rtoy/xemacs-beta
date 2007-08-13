@@ -1,13 +1,13 @@
 \input texinfo.tex
 @setfilename tm-edit-en.info
-@settitle{tm-edit 7.90 Reference Manual (English Version)}
+@settitle{tm-edit 7.100 Reference Manual (English Version)}
 @titlepage
-@title tm-edit 7.90 Reference Manual (English Version)
+@title tm-edit 7.100 Reference Manual (English Version)
 @author MORIOKA Tomohiko <morioka@@jaist.ac.jp>
-@subtitle 1996/10/11
+@subtitle 1996/12/25
 @end titlepage
 @node Top, Introduction, (dir), (dir)
-@top tm-edit 7.90 Reference Manual (English Version)
+@top tm-edit 7.100 Reference Manual (English Version)
 
 @ifinfo
 
@@ -20,9 +20,11 @@ This file documents tm-edit, a MIME composer for GNU Emacs.
 * single-part operations::      
 * enclosure operation::         
 * other operations of mime/editor-mode::  
+* tag specification for inserted file::  Default media-type or encoding for inserted file
 * transfer level::              
 * header::                      Using non-ASCII characters in header
 * PGP::                         
+* Acknowledgments::             
 * Concept Index::               
 * Function Index::              
 * Variable Index::              
@@ -30,9 +32,9 @@ This file documents tm-edit, a MIME composer for GNU Emacs.
 
 @node Introduction, mime/editor-mode, Top, Top
 @chapter What is tm-edit?
+@cindex tm-edit
 
-@cindex{tm-edit}@strong{tm-edit} is a general MIME composer for GNU
-Emacs.@refill
+@strong{tm-edit} is a general MIME composer for GNU Emacs.@refill
 
 tm-edit is based on mime.el by UMEDA Masanobu
 <umerin@@mse.kyutech.ac.jp>, who is famous as the author of
@@ -60,11 +62,15 @@ tm-edit.
 
 @node mime/editor-mode, single-part operations, Introduction, Top
 @chapter mime/editor-mode
+@cindex enclosure
+@cindex multi-part ending tag
+@cindex multi-part beginning tag
+@cindex tag
+@cindex mime/editor-mode
 
-@cindex{mime/editor-mode}@strong{mime/editor-mode} is a minor mode to
-compose MIME message.  In this mode, @cindex{tag}@strong{tag} represents
-various kinds of data, you can edit multi part (@ref{(tm-en)multipart})
-message.@refill
+@strong{mime/editor-mode} is a minor mode to compose MIME message.  In
+this mode, @strong{tag} represents various kinds of data, you can edit
+multi part (@ref{(tm-en)multipart}) message.@refill
 
 There are 2 kinds of tags:
 
@@ -93,9 +99,8 @@ OPTIONAL-FIELDS is to represent another fields except Content-Type field
 and Content-Transfer-Encoding field.@refill
 
 multi-part tags represent multi part (@ref{(tm-en)multipart}).  They
-consist of a pair of @cindex{multi-part beginning tag}@strong{multi-part
-beginning tag} and @cindex{multi-part ending tag}@strong{multi-part
-ending tag}.@refill
+consist of a pair of @strong{multi-part beginning tag} and
+@strong{multi-part ending tag}.@refill
 
 multi-part beginning tag's form is following:@refill
 
@@ -110,7 +115,7 @@ multi-part ending tag's form is following:@refill
 @end example
 
 A region from multi-part beginning tag to multi-part ending tag is
-called as @cindex{enclosure}@strong{enclosure}.
+called as @strong{enclosure}.
 
 
 @node single-part operations, enclosure operation, mime/editor-mode, Top
@@ -123,7 +128,9 @@ Operations to make single-part are following:
 Insert single-part tag indicates text part.
 
 @item @key{C-c C-x C-i}
-Insert file as a MIME attachment.
+Insert file as a MIME attachment.  If @kbd{C-u} is followed by it, it
+asks media-type, subtype or encoding even if their default values are
+specified. (cf. @ref{tag specification for inserted file})
 
 @item @key{C-c C-x C-e}
 Insert external part.
@@ -184,7 +191,7 @@ incomplete.  Maybe PGP-signature does not work for this enclosure.)
 
 
 
-@node other operations of mime/editor-mode, transfer level, enclosure operation, Top
+@node other operations of mime/editor-mode, tag specification for inserted file, enclosure operation, Top
 @chapter other operations of mime/editor-mode
 
 There are another operations in mime/editor-mode.
@@ -223,8 +230,81 @@ Set current editing message to encrypt or not. (cf. @ref{PGP})
 
 
 
-@node transfer level, header, other operations of mime/editor-mode, Top
+@node tag specification for inserted file, transfer level, other operations of mime/editor-mode, Top
+@chapter Default media-type or encoding for inserted file
+
+When @kbd{C-c C-x C-i} (@code{mime-editor/insert-file}) is pressed, tag
+parameters for inserted file, such as media-type or encoding, are
+detected by variable @code{mime-file-types}.@refill
+
+When @kbd{C-u} is followed by it or parameter is not found from the
+variable, it asks from user.  (When @kbd{C-u} is followed by it,
+detected value is used as default value)@refill
+
+If you want to change default value for file names, please change
+variable @code{mime-file-types}.
+
+
+@defvar mime-file-types
+
+Specification of default value of tag for file name of inserted
+file.@refill
+
+It is a list of following list:
+
+@lisp
+	(FILE_PAT TYPE SUBTYPE PARAMS ENCODING
+	 DISPOSITION_TYPE DISPOSITION_PARAMS)
+@end lisp
+
+
+Each elements of the list are following:
+
+@table @samp
+@item FILE_PAT
+regular expression of file name
+
+@item TYPE
+media type
+
+@item SUBTYPE
+media subtype
+
+@item PARAMS
+parameters of Content-Type field
+
+@item ENCODING
+Content-Transfer-Encoding
+
+@item DISPOSITION_TYPE
+disposition-type
+
+@item DISPOSITION_PARAMS
+parameters of Content-Disposition field
+
+@end table
+
+@noindent
+Example: Specify application/rtf as default media type for
+@file{*.rtf}
+
+@lisp
+(call-after-loaded
+ 'tm-edit
+ (lambda ()
+   (set-alist 'mime-file-types
+	      "\\.rtf$"
+	      '("application" "rtf" nil nil
+		"attachment" (("filename" . file)))
+	      )))
+@end lisp
+@end defvar
+
+
+
+@node transfer level, header, tag specification for inserted file, Top
 @chapter transfer level
+@cindex transfer level
 
 Contents inserted in a message are represented by 7bit
 (@ref{(tm-en)7bit}), 8bit (@ref{(tm-en)8bit}) or binary
@@ -250,7 +330,7 @@ disappeared. (^_^;@refill
 Maybe there are binary-through MTA, but I think it is not major.
 @end quotation
 
-@cindex{transfer level}@strong{transfer level} represents how range data is
+@strong{transfer level} represents how range data is
 available.  tm-edit has a variable
 @code{mime-editor/transfer-level} to represent transfer level.
 
@@ -282,11 +362,12 @@ but it requires to use us-ascii (@ref{(tm-en)us-ascii}) in header.
 
 @node header, PGP, transfer level, Top
 @chapter Using non-ASCII characters in header
+@cindex encoded-word
 
 RFC 1522 (@ref{(tm-en)RFC 1522}) defines representation of non-ASCII
 characters in header.@refill
 
-It is a format called as @cindex{encoded-word}@strong{encoded-word}
+It is a format called as @strong{encoded-word}
 (@ref{(tm-en)encoded-word}), it is available to represent every
 non-ASCII characters by 7bit (@ref{(tm-en)7bit}) to declare MIME charset
 (@ref{(tm-en)MIME charset}).
@@ -394,13 +475,15 @@ B-encoding.  @code{"Q"} means to use Q-encoding.
 
 
 
-@node PGP, Concept Index, header, Top
+@node PGP, Acknowledgments, header, Top
 @chapter PGP
+@cindex PGP-kazu
+@cindex PGP/MIME
 
 tm-edit provides PGP encryption, signature and inserting public-key
-features based on @cindex{PGP/MIME}@strong{PGP/MIME}
-(@ref{(tm-en)PGP/MIME}) (RFC 2015) or @cindex{PGP-kazu}@strong{PGP-kazu}
-(@ref{(tm-en)PGP-kazu}) (draft-kazu-pgp-mime-00.txt).@refill
+features based on @strong{PGP/MIME} (@ref{(tm-en)PGP/MIME}) (RFC 2015)
+or @strong{PGP-kazu} (@ref{(tm-en)PGP-kazu})
+(draft-kazu-pgp-mime-00.txt).@refill
 
 This feature requires pgp command and Mailcrypt package
 (@ref{(mailcrypt)}).@refill
@@ -434,7 +517,17 @@ Default value is @code{nil}.
 
 
 
-@node Concept Index, Function Index, PGP, Top
+@node Acknowledgments, Concept Index, PGP, Top
+@chapter Acknowledgments
+
+First of all, I thank UMEDA Masanobu for his work of @file{mime.el},
+which is the origin of tm-edit, and permission to rewrite his work as
+tm-edit.@refill
+
+I thank members of two tm mailing lists, Japanese and English version.
+
+
+@node Concept Index, Function Index, Acknowledgments, Top
 @chapter Concept Index
 
 @printindex cp
