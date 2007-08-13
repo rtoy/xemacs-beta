@@ -67,20 +67,19 @@ Boston, MA 02111-1307, USA.  */
 #undef CONST
 #endif 
 
-/* Start and end of text and data.  */
-extern void* _data_start__;
-extern void* _data_end__;
-
 #include <windows.h> 
 #endif
 
+#ifdef HAVE_MS_WINDOWS
 #define HAVE_NTGUI
 #define HAVE_FACES
+#endif
 
 #ifndef ORDINARY_LINK
 #define ORDINARY_LINK
 #endif
 
+#define C_SWITCH_SYSTEM -Wno-sign-compare
 #undef MOD_ALT
 #undef MOD_CONTROL
 #undef MOD_SHIFT
@@ -93,7 +92,12 @@ extern void* _data_end__;
 #define VK_APPS			0x5D
 #define SIGPROF	0
 #define NO_LIM_DATA
-#define HAVE_TEXT_START
+
+#define TEXT_START -1
+#define TEXT_END -1
+#define DATA_END -1
+#define RUN_TIME_REMAP
+#define UNEXEC "unexcw.o"
 
 #undef MAIL_USE_SYSTEM_LOCK
 
@@ -123,17 +127,6 @@ extern void* _data_end__;
 
 #define LOAD_AVE_CVT(x) (int) (((double) (x)) * 100.0 / FSCALE)
 
-/* Define CANNOT_DUMP on machines where unexec does not work.
-   Then the function dump-emacs will not be defined
-   and temacs will do (load "loadup") automatically unless told otherwise.  */
-
-#define CANNOT_DUMP	1
-#define	CANNOT_UNEXEC	1
-#define UNEXEC /* unexnt.o */
-
-#define DATA_START 	_data_start__
-#define DATA_END 	_data_end__
-
 /* Define VIRT_ADDR_VARIES if the virtual addresses of
    pure and impure space as loaded can vary, and even their
    relative order cannot be relied on.
@@ -156,7 +149,7 @@ extern void* _data_end__;
 /* SYSTEM_TYPE should indicate the kind of system you are using.
  It sets the Lisp variable system-type.  */
 
-#define SYSTEM_TYPE "windows-nt"
+#define SYSTEM_TYPE "cygwin32"
 
 #define NO_MATHERR
 
@@ -180,7 +173,7 @@ extern void* _data_end__;
 /* If your system uses COFF (Common Object File Format) then define the
    preprocessor symbol "COFF". */
 
-#define COFF
+#define COFF 1
 
 /* define MAIL_USE_FLOCK if the mailer uses flock
    to interlock access to /usr/spool/mail/$USER.
@@ -189,7 +182,7 @@ extern void* _data_end__;
 
 /* If the character used to separate elements of the executable path
    is not ':', #define this to be the appropriate character constant.  */
-#define SEPCHAR ';'
+#define SEPCHAR ':'
 
 /* ============================================================ */
 

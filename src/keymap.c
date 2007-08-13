@@ -52,7 +52,7 @@ Boston, MA 02111-1307, USA.  */
 #include "events-mod.h"
 
 
-/* A keymap contains four slots:
+/* A keymap contains six slots:
 
    parents	   Ordered list of keymaps to search after
                    this one if no match is found.

@@ -39,3 +39,5 @@ Boston, MA 02111-1307, USA.  */
 */
 
 char my_edata[] = "End of Emacs initialized data";
+
+int my_ebss;

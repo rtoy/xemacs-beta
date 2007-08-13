@@ -1,4 +1,14 @@
 							-*- indented-text -*-
+to 20.5 beta21 "Golden Guernsey"
+-- Package interface standard 1.0
+-- Cygwin stuffs from Andy Piper
+-- Miscellaneous patches from Kyle Jones
+-- Miscellaneous patches from Martin Buchholz
+-- Experimental Shared Library support courtesy of Joshua Rowe, and integration
+   courtesy of Hrvoje Niksic
+-- Miscellaneous patches from Hrvoje Niksic
+-- Miscellaneous bug fixes
+
 to 20.5 beta20 "Don"
 -- Miscellaneous patches from Damon Lipparelli, Jens Petersen, Karl Hegbloom,
    and Christoph Wedler

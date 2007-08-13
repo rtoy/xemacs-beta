@@ -485,6 +485,7 @@ while test $# != 0; do
 	use_assertions	| \
 	memory_usage_stats | \
 	with_clash_detection | \
+	with_shlib | \
 	no_doc_file )
 	  dnl Make sure the value given was either "yes" or "no".
 	  case "$val" in
@@ -1443,6 +1444,11 @@ if test "$with_clash_detection" = "yes"; then
   XE_ADD_OBJS(filelock.o)
 fi
 
+if test "$with_shlib" = "yes"; then
+  AC_DEFINE(HAVE_SHLIB)
+  XE_ADD_OBJS(dlopen.o)
+fi
+
 dnl Choose a compiler from (in order)
 dnl --compiler, env var CC, with_gcc=no && ${NON_GNU_CC:-cc}, AC_PROG_CC
 test -n "$compiler" && CC="$compiler"
@@ -1932,7 +1938,7 @@ AC_PROG_YACC
 dnl checks for header files
 AC_CHECK_HEADERS(mach/mach.h sys/stropts.h sys/timeb.h sys/time.h unistd.h)
 AC_CHECK_HEADERS(utime.h locale.h libgen.h fcntl.h ulimit.h)
-AC_CHECK_HEADERS(linux/version.h kstat.h sys/pstat.h inttypes.h sys/un.h)
+AC_CHECK_HEADERS(linux/version.h kstat.h sys/pstat.h inttypes.h sys/un.h coff.h)
 AC_HEADER_SYS_WAIT
 AC_HEADER_STDC
 AC_HEADER_TIME

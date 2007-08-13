@@ -1777,7 +1777,9 @@ With argument, insert value in current buffer after the form."
 	  (print-length nil)
 	  (print-level nil)
 	  (print-readably t)	; print #[] for bytecode, 'x for (quote x)
-	  (print-gensym nil))	; this is too dangerous for now
+	  ;; Emacs 19 can't handle gensyms well.
+	  (print-gensym (if byte-compile-emacs19-compatibility nil
+			    t)))
       (princ "\n" byte-compile-outbuffer)
       (prin1 form byte-compile-outbuffer)
       nil)))
@@ -1825,7 +1827,12 @@ list that represents a doc string reference.
 	 (insert (car info))
 	 (let ((print-escape-newlines t)
 	       (print-readably t)	; print #[] for bytecode, 'x for (quote x)
-	       (print-gensym nil)	; this is too dangerous for now
+	       ;; Use a cons cell to say that we want
+	       ;; print-gensym-alist not to be cleared between calls
+	       ;; to print functions.
+	       (print-gensym (if byte-compile-emacs19-compatibility nil
+			       '(t)))
+	       print-gensym-alist
 	       (index 0))
 	   (prin1 (car form) byte-compile-outbuffer)
 	   (while (setq form (cdr form))
@@ -2042,7 +2049,11 @@ list that represents a doc string reference.
   ;; Much better than creating them and then "uncreating" them
   ;; like this.
   (read (concat "("
-		(substring (let ((print-readably t))
+		(substring (let ((print-readably t)
+				 (print-gensym
+				  (if byte-compile-emacs19-compatibility nil
+				    '(t)))
+				 (print-gensym-alist nil))
 			     (prin1-to-string obj))
 			   2 -1)
 		")")))

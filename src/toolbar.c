@@ -446,7 +446,7 @@ update_toolbar_button (struct frame *f, struct toolbar_button *tb,
 
       /* We know that we at least have an up_glyph.  Well, no, we
          don't.  The user may have changed the button glyph on us. */
-      if (!NILP (glyphs) && CONSP (glyphs))
+      if (CONSP (glyphs))
 	{
 	  if (!EQ (XCAR (glyphs), tb->up_glyph))
 	    {
@@ -459,7 +459,7 @@ update_toolbar_button (struct frame *f, struct toolbar_button *tb,
 	tb->up_glyph = Qnil;
 
       /* We might have a down_glyph. */
-      if (!NILP (glyphs) && CONSP (glyphs))
+      if (CONSP (glyphs))
 	{
 	  if (!EQ (XCAR (glyphs), tb->down_glyph))
 	    {
@@ -472,7 +472,7 @@ update_toolbar_button (struct frame *f, struct toolbar_button *tb,
 	tb->down_glyph = Qnil;
 
       /* We might have a disabled_glyph. */
-      if (!NILP (glyphs) && CONSP (glyphs))
+      if (CONSP (glyphs))
 	{
 	  if (!EQ (XCAR (glyphs), tb->disabled_glyph))
 	    {
@@ -485,7 +485,7 @@ update_toolbar_button (struct frame *f, struct toolbar_button *tb,
 	tb->disabled_glyph = Qnil;
 
       /* We might have a cap_up_glyph. */
-      if (!NILP (glyphs) && CONSP (glyphs))
+      if (CONSP (glyphs))
 	{
 	  if (!EQ (XCAR (glyphs), tb->cap_up_glyph))
 	    {
@@ -498,7 +498,7 @@ update_toolbar_button (struct frame *f, struct toolbar_button *tb,
 	tb->cap_up_glyph = Qnil;
 
       /* We might have a cap_down_glyph. */
-      if (!NILP (glyphs) && CONSP (glyphs))
+      if (CONSP (glyphs))
 	{
 	  if (!EQ (XCAR (glyphs), tb->cap_down_glyph))
 	    {
@@ -511,7 +511,7 @@ update_toolbar_button (struct frame *f, struct toolbar_button *tb,
 	tb->cap_down_glyph = Qnil;
 
       /* We might have a cap_disabled_glyph. */
-      if (!NILP (glyphs) && CONSP (glyphs))
+      if (CONSP (glyphs))
 	{
 	  if (!EQ (XCAR (glyphs), tb->cap_disabled_glyph))
 	    {

@@ -76,23 +76,6 @@ A value of nil means skip the middle step, so that
   :type 'boolean
   :group 'help-appearance)
 
-;;;###autoload
-(defun help-read-key (prompt)
-  (let (events)
-    (while (not (key-press-event-p
-		 (aref (setq events (read-key-sequence prompt)) 0)))
-      ;; Mouse clicks are not part of the help feature, so reexecute
-      ;; them in the standard environment.
-      (mapc 'dispatch-event events))
-    (let ((key (nconc (event-modifiers (aref events 0))
-		      (list (event-key (aref events 0))))))
-      ;; Make the HELP key translate to C-h.
-      (when (lookup-key function-key-map key)
-	(setq key (lookup-key function-key-map key)))
-      (if (eq (length key) 1)
-	  (car key)
-	key))))
-
 (defmacro make-help-screen (fname help-line help-text helped-map)
   "Construct help-menu function name FNAME.
 When invoked, FNAME shows HELP-LINE and reads a command using HELPED-MAP.
@@ -103,71 +86,89 @@ and then returns."
   `(defun ,fname ()
      ,help-text
      (interactive)
-     (let ((line-prompt
-	    (substitute-command-keys ,help-line)))
-       (when three-step-help
-	 (message "%s" line-prompt))
-       (let* ((help-screen (documentation (quote ,fname)))
-	      ;; We bind overriding-local-map for very small
-	      ;; sections, *excluding* where we switch buffers
-	      ;; and where we execute the chosen help command.
-	      (local-map (make-sparse-keymap))
-	      (minor-mode-map-alist nil)
-	      (prev-frame (selected-frame))
-	      config new-frame key)
-	 (unwind-protect
-	     (progn
-	       (set-keymap-parents local-map (list ,helped-map))
-	       (cond (three-step-help
-		      (let* ((overriding-local-map local-map))
-			(setq key (help-read-key nil))))
-		     (t
-		      (setq key ??)))
-	       (when (or (equal key ??)
-			 (equal key (list help-char)))
-		 (setq config (current-window-configuration))
-		 (switch-to-buffer-other-window "*Help*")
-		 (and (not (eq (window-frame (selected-window))
-			       prev-frame))
-		      (setq new-frame (window-frame (selected-window))
-			    config nil))
-		 (setq buffer-read-only nil)
-		 (erase-buffer)
-		 (insert help-screen)
-		 (help-mode)
-		 (goto-char (point-min))
-		 (while (member key `((,help-char) ?? (control v) space ?\177
-				      delete backspace (meta v)))
-		   (ignore-errors
-		     (cond ((member key '((control v) space))
-			    (scroll-up))
-			   ((member key '(?\177 delete (meta v) backspace))
-			    (scroll-down))))
-		   (let ((cursor-in-echo-area t)
-			 (overriding-local-map local-map))
-		     (setq key (help-read-key
-				(format "Type one of the options listed%s: "
-					(if (pos-visible-in-window-p
-					     (point-max))
-					    "" " or Space to scroll")))))))
-	       ;; We don't need the prompt any more.
-	       (message nil)
-	       (let ((defn (lookup-key local-map key)))
-		 (cond (defn
-			 (when config
-			   (set-window-configuration config)
-			   (setq config nil))
-			 (when new-frame
-			   (iconify-frame new-frame)
-			   (setq new-frame nil))
-			 (call-interactively defn))
+     (flet ((help-read-key (prompt)
+	      ;; This is in `flet' to avoid problems with autoloading.
+	      ;; #### The function is ill-conceived -- there should be
+	      ;; a way to do it without all the hassle!
+	      (let (events)
+		(while (not (key-press-event-p
+			     (aref (setq events (read-key-sequence prompt)) 0)))
+		  ;; Mouse clicks are not part of the help feature, so
+		  ;; reexecute them in the standard environment.
+		  (mapc 'dispatch-event events))
+		(let ((key (nconc (event-modifiers (aref events 0))
+				  (list (event-key (aref events 0))))))
+		  ;; Make the HELP key translate to C-h.
+		  (when (lookup-key function-key-map key)
+		    (setq key (lookup-key function-key-map key)))
+		  (if (eq (length key) 1)
+		      (car key)
+		    key)))))
+       (let ((line-prompt
+	      (substitute-command-keys ,help-line)))
+	 (when three-step-help
+	   (message "%s" line-prompt))
+	 (let* ((help-screen (documentation (quote ,fname)))
+		;; We bind overriding-local-map for very small
+		;; sections, *excluding* where we switch buffers and
+		;; where we execute the chosen help command.
+		(local-map (make-sparse-keymap))
+		(minor-mode-map-alist nil)
+		(prev-frame (selected-frame))
+		config new-frame key)
+	   (unwind-protect
+	       (progn
+		 (set-keymap-parents local-map (list ,helped-map))
+		 (cond (three-step-help
+			(let* ((overriding-local-map local-map))
+			  (setq key (help-read-key nil))))
 		       (t
-			(ding)))))
-	   (and (get-buffer "*Help*")
-		(bury-buffer "*Help*"))
-	   (and new-frame (iconify-frame new-frame))
-	   (and config
-		(set-window-configuration config)))))))
+			(setq key ??)))
+		 (when (or (equal key ??)
+			   (equal key (list help-char)))
+		   (setq config (current-window-configuration))
+		   (switch-to-buffer-other-window "*Help*")
+		   (and (not (eq (window-frame (selected-window))
+				 prev-frame))
+			(setq new-frame (window-frame (selected-window))
+			      config nil))
+		   (setq buffer-read-only nil)
+		   (erase-buffer)
+		   (insert help-screen)
+		   (help-mode)
+		   (goto-char (point-min))
+		   (while (member key `((,help-char) ?? (control v) space ?\177
+					delete backspace (meta v)))
+		     (ignore-errors
+		       (cond ((member key '((control v) space))
+			      (scroll-up))
+			     ((member key '(?\177 delete (meta v) backspace))
+			      (scroll-down))))
+		     (let ((cursor-in-echo-area t)
+			   (overriding-local-map local-map))
+		       (setq key (help-read-key
+				  (format "Type one of the options listed%s: "
+					  (if (pos-visible-in-window-p
+					       (point-max))
+					      "" " or Space to scroll")))))))
+		 ;; We don't need the prompt any more.
+		 (message nil)
+		 (let ((defn (lookup-key local-map key)))
+		   (cond (defn
+			   (when config
+			     (set-window-configuration config)
+			     (setq config nil))
+			   (when new-frame
+			     (iconify-frame new-frame)
+			     (setq new-frame nil))
+			   (call-interactively defn))
+			 (t
+			  (ding)))))
+	     (and (get-buffer "*Help*")
+		  (bury-buffer "*Help*"))
+	     (and new-frame (iconify-frame new-frame))
+	     (and config
+		  (set-window-configuration config))))))))
 
 ;;; help-macro.el
 

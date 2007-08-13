@@ -757,21 +757,22 @@ all frames that were visible, and iconify all frames that were not."
 (defun suspend-or-iconify-emacs ()
   "Calls iconify-emacs if frame is an X frame, otherwise calls suspend-emacs"
   (interactive)
-  (cond
-   ((eq (frame-type) 'x)
-    (iconify-emacs))
-   ((and (eq (frame-type) 'tty)
-	 (console-tty-controlling-process (selected-console)))
-    (suspend-console (selected-console)))
-   (t
-    (suspend-emacs))))
+  (cond ((device-on-window-system-p)
+	 (iconify-emacs))
+	((and (eq (frame-type) 'tty)
+	      (console-tty-controlling-process (selected-console)))
+	 (suspend-console (selected-console)))
+	(t
+	 (suspend-emacs))))
 
 ;; This is quite a mouthful, but it should be descriptive, as it's
-;; bound to C-z
+;; bound to C-z.  FSF takes the easy way out by binding C-z to
+;; different things depending on window-system.  We can't do the same,
+;; because we allow simultaneous X and TTY consoles.
 (defun suspend-emacs-or-iconify-frame ()
   "Iconify current frame if it is an X frame, otherwise suspend Emacs."
   (interactive)
-  (cond ((eq (frame-type) 'x)
+  (cond ((device-on-window-system-p)
 	 (iconify-frame))
 	((and (eq (frame-type) 'tty)
 	      (console-tty-controlling-process (selected-console)))
@@ -901,6 +902,11 @@ This always assumes DndText as type."
 	(set-window-buffer w buffer))
     fr))
 
+(defcustom get-frame-for-buffer-default-to-current nil
+  "*When non-nil, `get-frame-for-buffer' will default to the current frame."
+  :type 'boolean
+  :group 'frames)
+
 (defun get-frame-for-buffer-noselect (buffer
 				      &optional not-this-window-p on-frame)
   "Return a frame in which to display BUFFER.
@@ -1005,6 +1011,13 @@ This is a subroutine of `get-frame-for-buffer' (which see)."
 		(< (length frames) limit))
 	    (get-frame-for-buffer-make-new-frame buffer)
 	  (car frames))))
+
+     ;;
+     ;; This buffer's mode did not express a preference for a frame of a
+     ;; particular name.  However, the user wants the frame to be the
+     ;; current one in that case.
+     ;;
+     (get-frame-for-buffer-default-to-current nil)
 
      (t
       ;;

@@ -62,6 +62,7 @@ static Lisp_Object mswindows_find_frame (HWND hwnd);
 static Lisp_Object mswindows_find_console (HWND hwnd);
 static Lisp_Object mswindows_key_to_emacs_keysym(int mswindows_key, int mods);
 static int mswindows_modifier_state (BYTE* keymap, int has_AltGr);
+#if 0 /* NOTUSED */
 static int mswindows_enqueue_timeout (int milliseconds);
 static void mswindows_dequeue_timeout (int interval_id);
 
@@ -75,7 +76,9 @@ struct mswindows_timeout
 typedef struct mswindows_timeout mswindows_timeout;
 static mswindows_timeout timeout_pool[MSW_TIMEOUT_MAX];
 static mswindows_timeout *timeout_head = NULL;
+
 static int timeout_mswindows_id;
+#endif
 
 /*----------------------------------------------------------------------------*/
 /* Enqueue helpers                                                            */
@@ -247,7 +250,7 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 	  int quit_ch = CONSOLE_QUIT_CHAR (XCONSOLE (mswindows_find_console (hwnd)));
 	  BYTE keymap_orig[256];
-	  MSG msg = { hwnd, message, wParam, lParam, GetMessageTime(), GetMessagePos() };
+	  MSG msg = { hwnd, message, wParam, lParam, GetMessageTime(), (GetMessagePos()) };
 	  memcpy (keymap_orig, keymap, 256);
 
 	  /* Clear control and alt modifiers out of the keymap */

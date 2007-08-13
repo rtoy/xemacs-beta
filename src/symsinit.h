@@ -101,6 +101,7 @@ void syms_of_marker (void);
 void syms_of_md5 (void);
 void syms_of_menubar_x (void);
 void syms_of_menubar (void);
+void syms_of_menubar_mswindows (void);
 void syms_of_minibuf (void);
 void syms_of_mule (void);
 void syms_of_mule_canna (void);
@@ -152,6 +153,14 @@ void console_type_create_objects_x (void);
 void console_type_create_redisplay_x (void);
 void console_type_create_scrollbar_x (void);
 void console_type_create_toolbar_x (void);
+void console_type_create_mswindows (void);
+void console_type_create_device_mswindows (void);
+void console_type_create_frame_mswindows (void);
+void console_type_create_menubar_mswindows (void);
+void console_type_create_objects_mswindows (void);
+void console_type_create_redisplay_mswindows (void);
+void console_type_create_scrollbar_mswindows (void);
+void console_type_create_toolbar_mswindows (void);
 
 /* Initialize the specifier types (dump-time only). */
 
@@ -243,6 +252,7 @@ void vars_of_macros (void);
 void vars_of_md5 (void);
 void vars_of_menubar_x (void);
 void vars_of_menubar (void);
+void vars_of_menubar_mswindows (void);
 void vars_of_minibuf (void);
 void vars_of_mule (void);
 void vars_of_mule_canna (void);
@@ -260,6 +270,7 @@ void vars_of_ralloc (void);
 void vars_of_redisplay (void);
 void vars_of_scrollbar_x (void);
 void vars_of_scrollbar (void);
+void vars_of_scrollbar_mswindows (void);
 void vars_of_search (void);
 void vars_of_select_mswindows (void);
 void vars_of_sound (void);

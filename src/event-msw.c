@@ -81,7 +81,7 @@ int mswindows_button2_max_skew_y;
 int mswindows_button2_chord_time;
 
 /* Number of wait handles */
-static mswindows_waitable_count=0;
+static int mswindows_waitable_count=0;
 
 /* This is the event signaled by the event pump.
    See mswindows_pump_outstanding_events for comments */
@@ -321,6 +321,7 @@ mswindows_pump_outstanding_events (void)
 /*
  * Find a free waitable slot
  */
+#if 0 /* NOTUSED */
 static int
 mswindows_find_free_waitable(void)
 {
@@ -331,6 +332,7 @@ mswindows_find_free_waitable(void)
   assert (mswindows_waitable_count < MAX_WAITABLE);
   return mswindows_waitable_count++;
 }
+#endif
 
 /*
  * Create a new waitable using the type and data passed in by the info structure

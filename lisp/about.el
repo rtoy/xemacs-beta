@@ -77,7 +77,7 @@
     (mrb      "Martin Buchholz"   "mrb@sun.eng.com")
     (ograf    "Oliver Graf"       "ograf@fga.de")
     (pez      "Peter Pezaris"	  "pez@dwwc.com")
-    (piper    "Andy Piper"        "andy@parallax.co.uk")
+    (piper    "Andy Piper"        "andyp@parallax.co.uk")
     (rickc    "Rick Campbell"     "rickc@lehman.com")
     (rossini  "Anthony Rossini"	  "rossini@stat.sc.edu")
     (vin      "Vin Shelton"	  "acs@acm.org")
@@ -720,7 +720,10 @@ Churn it up and make some butter\n"))
     (piper
      (widget-insert "\
 Author of the original \"fake\" XEmacs toolbar, and outl-mouse for
-mouse gesture based outlining.  Accomplished kludge contributor.\n"))
+mouse gesture based outlining.  Accomplished kludge contributor.
+
+Andy has recently rejoined the XEmacs team to help port XEmacs to
+MS Windows operating systems.\n"))
     (bw
      (widget-insert "\
 Author of the Hyperbole everyday information management hypertext
@@ -772,7 +775,7 @@ system written in Modula3:\n")
      (about-url-link 'marcpa "Visit POWER 911")
      (widget-insert "\
 Previously, I worked at Softimage Inc., now a Microsoft company
-(eeekkk!), as a UNIX system administrator.  This is where I've been
+\(eeekkk!), as a UNIX system administrator.  This is where I've been
 converted to NT.
 
 In a previous life, I was a programmer/sysadmin at CRIM (Centre de
@@ -996,8 +999,6 @@ See: ")
        " <" address ">\n\n")
       ;; Display the actual info
       (about-maintainer-info entry)
-      ;; I don't use `about-finish-buffer' because I want "Remove" to
-      ;; kill the buffer.
       (widget-insert "\n")
       (about-finish-buffer 'kill)
       (forward-line 2))))
@@ -1302,6 +1303,7 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "ChangGil Han" "cghan@phys401.phys.pusan.ac.kr")
        (print-short "Derek Harding" "dharding@lssec.bt.co.uk")
        (print-short "Michael Harnois" "mharnois@sbt.net")
+       (print-short "Jonathan Harris" "jharris@tardis.co.uk")
        (print-short "John Haxby" "J.Haxby@isode.com")
        (print-short "Karl M. Hegbloom" "karlheg@inetarena.com")
        (print-short "Benedikt Heinen" "beh@icemark.thenet.ch")
@@ -1380,7 +1382,7 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Sudeep Kumar Palat" "palat@idt.unit.no")
        (print-short "Joel Peterson" "tarzan@aosi.com")
        (print-short "Thomas A. Peterson" "tap@src.honeywell.com")
-       (print-short "Tibor Polgar" "tlp00@eng.amdahl.com")
+       (print-short "Tibor Polgar" "tibor@alteon.com")
        (print-short "Frederic Poncin" "fp@info.ucl.ac.be")
        (print-short "E. Rehmi Post" "rehmi@asylum.sf.ca.us")
        (print-short "Martin Pottendorfer" "Martin.Pottendorfer@aut.alcatel.at")

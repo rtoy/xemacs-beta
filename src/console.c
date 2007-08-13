@@ -922,9 +922,9 @@ On such systems, who knows what will happen.
 */
        (console))
 {
+#ifdef HAVE_TTY
   struct console *c;
 
-#ifdef HAVE_TTY
   c = decode_console (console);
 
   if (CONSOLE_TTY_P (c))
@@ -961,9 +961,9 @@ do stuff to the tty to make it sane again.
 */
        (console))
 {
+#ifdef HAVE_TTY
   struct console *c;
 
-#ifdef HAVE_TTY
   c = decode_console (console);
 
   if (CONSOLE_TTY_P (c))

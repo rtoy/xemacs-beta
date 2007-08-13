@@ -1412,7 +1412,7 @@
     menubar-show-keybindings completion-ignore-case
     canna-empty-info canna-through-info canna-underline
     canna-inhibit-hankakukana x-handle-non-fully-specified-fonts
-    print-escape-newlines print-readably print-gensym
+    print-escape-newlines print-readably
     delete-exited-processes truncate-partial-width-windows
     visible-bell no-redraw-on-reenter cursor-in-echo-area
     inhibit-warning-display parse-sexp-ignore-comments words-include-escapes

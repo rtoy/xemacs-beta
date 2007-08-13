@@ -1194,7 +1194,7 @@ mark_vector (Lisp_Object obj, void (*markobj) (Lisp_Object))
 static unsigned int
 size_vector (CONST void *lheader)
 {
-  struct Lisp_Vector *p = lheader;
+  CONST struct Lisp_Vector *p = lheader;
   /*
    * -1 because struct Lisp_Vector includes 1 slot
    */
@@ -1783,6 +1783,7 @@ Its value and function definition are void, and its property list is nil.
   p->plist = Qnil;
   p->value = Qunbound;
   p->function = Qunbound;
+  p->obarray = Qnil;
   symbol_next (p) = 0;
   XSETSYMBOL (val, p);
   return val;

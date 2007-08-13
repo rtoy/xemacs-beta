@@ -763,14 +763,7 @@ a new format, when variables have changed, etc."
 	   (t (find-file-other-window arg)))
 	  (when line
 	    (goto-line line)
-	    (setq line nil))))
-      ;; If 3 or more files visited, and not all visible,
-      ;; show user what they all are.
-      (when (and (not noninteractive)
-		 (> file-count 2)
-		 (not (get-buffer-window first-file-buffer)))
-	(other-window 1)
-	(buffer-menu nil))))))
+	    (setq line nil))))))))
 
 (defvar startup-presentation-hack-keymap
   (let ((map (make-sparse-keymap)))

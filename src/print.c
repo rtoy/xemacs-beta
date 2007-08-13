@@ -83,7 +83,12 @@ Lisp_Object Vprint_message_label;
 
 int print_escape_newlines;
 int print_readably;
-int print_gensym;
+
+/* Non-nil means print #: before uninterned symbols.
+   Neither t nor nil means so that and don't clear Vprint_gensym_alist
+   on entry to and exit from print functions.  */
+Lisp_Object Vprint_gensym;
+Lisp_Object Vprint_gensym_alist;
 
 Lisp_Object Qprint_escape_newlines;
 Lisp_Object Qprint_readably;
@@ -338,6 +343,8 @@ print_prepare (Lisp_Object printcharfun)
       stdio_stream = stderr;
     }
 #endif
+  if (!CONSP (Vprint_gensym))
+    Vprint_gensym_alist = Qnil;
 
   return make_print_output_stream (stdio_stream, printcharfun);
 }
@@ -348,6 +355,9 @@ print_finish (Lisp_Object stream)
   /* Emacs won't print whilst GCing, but an external debugger might */
   if (gc_in_progress)
     return;
+
+  if (!CONSP (Vprint_gensym))
+    Vprint_gensym_alist = Qnil;
 
   Lstream_delete (XLSTREAM (stream));
 }
@@ -893,9 +903,9 @@ print_cons (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	    write_c_string ("...", printcharfun);
 	    break;
 	  }
-	print_internal (Fcar (obj), printcharfun,
+	print_internal (XCAR (obj), printcharfun,
 			escapeflag);
-	obj = Fcdr (obj);
+	obj = XCDR (obj);
       }
   }
   if (!NILP (obj) && !CONSP (obj))
@@ -917,33 +927,40 @@ print_vector (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 void
 print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
-  Bytecount size = XSTRING_LENGTH (obj);
+  struct Lisp_String *s = XSTRING (obj);
+  /* We distinguish between Bytecounts and Charcounts, to make
+     Vprint_string_length work correctly under Mule.  */
+  Charcount size = string_char_length (s);
+  Charcount max = size;
+  Bytecount bcmax = string_length (s);
   struct gcpro gcpro1, gcpro2;
-  int max = size;
   GCPRO2 (obj, printcharfun);
 
   if (INTP (Vprint_string_length) &&
       XINT (Vprint_string_length) < max)
-    max = XINT (Vprint_string_length);
+    {
+      max = XINT (Vprint_string_length);
+      bcmax = charcount_to_bytecount (string_data (s), max);
+    }
   if (max < 0)
-    max = 0;
+    {
+      max = 0;
+      bcmax = 0;
+    }
 
-  /* !!#### This handles MAX incorrectly for Mule. */
   if (!escapeflag)
     {
-      /* This deals with GC-relocation */
-      output_string (printcharfun, 0, obj, 0, max);
+      /* This deals with GC-relocation and Mule. */
+      output_string (printcharfun, 0, obj, 0, bcmax);
       if (max < size)
 	write_c_string (" ...", printcharfun);
     }
   else
     {
-      Bytecount i;
-      struct Lisp_String *s = XSTRING (obj);
-      Bytecount last = 0;
+      Bytecount i, last = 0;
 
       write_char_internal ("\"", printcharfun);
-      for (i = 0; i < max; i++)
+      for (i = 0; i < bcmax; i++)
 	{
 	  Bufbyte ch = string_byte (s, i);
 	  if (ch == '\"' || ch == '\\'
@@ -969,10 +986,10 @@ print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	      last = i + 1;
 	    }
 	}
-      if (max > last)
+      if (bcmax > last)
 	{
 	  output_string (printcharfun, 0, obj, last,
-			 max - last);
+			 bcmax - last);
 	}
       if (max < size)
 	write_c_string (" ...", printcharfun);
@@ -1326,17 +1343,35 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     }
   GCPRO2 (obj, printcharfun);
 
-  if (print_gensym)
+  /* If we print an uninterned symbol as part of a complex object and
+     the flag print-gensym is non-nil, prefix it with #n= to read the
+     object back with the #n# reader syntax later if needed.  */
+  if (!NILP (Vprint_gensym) && NILP (XSYMBOL (obj)->obarray))
     {
-      Lisp_Object tem = oblookup (Vobarray, string_data (name), size);
-      if (!EQ (tem, obj))
-	/* (read) would return a new symbol with the same name.
-	   This isn't quite correct, because that symbol might not
-	   really be uninterned (it might be interned in some other
-	   obarray) but there's no way to win in that case without
-	   implementing a real package system.
-	   */
-	write_c_string ("#:", printcharfun);
+      if (print_depth > 1)
+	{
+	  Lisp_Object tem = Fassq (obj, Vprint_gensym_alist);
+	  if (CONSP (tem))
+	    {
+	      write_char_internal ("#", printcharfun);
+	      print_internal (XCDR (tem), printcharfun, escapeflag);
+	      write_char_internal ("#", printcharfun);
+	      return;
+	    }
+	  else
+	    {
+	      if (CONSP (Vprint_gensym_alist))
+		XSETINT (tem, XINT (XCDR (XCAR (Vprint_gensym_alist))) + 1);
+	      else
+		XSETINT (tem, 1);
+	      Vprint_gensym_alist = Fcons (Fcons (obj, tem), Vprint_gensym_alist);
+
+	      write_char_internal ("#", printcharfun);
+	      print_internal (tem, printcharfun, escapeflag);
+	      write_char_internal ("=", printcharfun);
+	    }
+	}
+      write_c_string ("#:", printcharfun);
     }
 
   /* Does it look like an integer or a float? */
@@ -1751,23 +1786,34 @@ Do not SET this variable; bind it instead.
 */ );
   print_readably = 0;
 
-  DEFVAR_BOOL ("print-gensym", &print_gensym /*
+  /* #### I think this should default to t.  But we'd better wait
+     until we see that it works out.  */
+  DEFVAR_LISP ("print-gensym", &Vprint_gensym /*
 If non-nil, then uninterned symbols will be printed specially.
 Uninterned symbols are those which are not present in `obarray', that is,
 those which were made with `make-symbol' or by calling `intern' with a
 second argument.
 
-When print-gensym is true, such symbols will be preceded by "#:", which
-causes the reader to create a new symbol instead of interning and returning
-an existing one.  Beware: the #: syntax creates a new symbol each time it is
-seen, so if you print an object which contains two pointers to the same
-uninterned symbol, `read' will not duplicate that structure.
+When print-gensym is true, such symbols will be preceded by "#:",
+which causes the reader to create a new symbol instead of interning
+and returning an existing one.  Beware: the #: syntax creates a new
+symbol each time it is seen, so if you print an object which contains
+two pointers to the same uninterned symbol, `read' will not duplicate
+that structure.
 
-Also, since XEmacs has no real notion of packages, there is no way for the
-printer to distinguish between symbols interned in no obarray, and symbols
-interned in an alternate obarray.
+If the value of `print-gensym' is a cons cell, then in addition
+refrain from clearing `print-gensym-alist' on entry to and exit from
+printing functions, so that the use of #...# and #...= can carry over
+for several separately printed objects.
 */ );
-  print_gensym = 0;
+  Vprint_gensym = Qnil;
+
+  DEFVAR_LISP ("print-gensym-alist", &Vprint_gensym_alist /*
+Association list of elements (GENSYM . N) to guide use of #N# and #N=.
+In each element, GENSYM is an uninterned symbol that has been associated
+with #N= for the specified value of N.
+*/ );
+  Vprint_gensym_alist = Qnil;
 
   DEFVAR_LISP ("print-message-label", &Vprint_message_label /*
 Label for minibuffer messages created with `print'.  This should

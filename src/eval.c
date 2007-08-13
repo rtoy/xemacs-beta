@@ -782,7 +782,7 @@ whose values are discarded.
        (args))
 {
   /* This function can GC */
-  Lisp_Object val;
+  Lisp_Object val = Qnil;
   struct gcpro gcpro1, gcpro2;
 
   GCPRO2 (args, val);
@@ -808,7 +808,7 @@ whose values are discarded.
        (args))
 {
   /* This function can GC */
-  Lisp_Object val;
+  Lisp_Object val = Qnil;
   struct gcpro gcpro1, gcpro2;
 
   GCPRO2 (args, val);
@@ -2986,6 +2986,9 @@ Evaluate FORM and return its value.
 
   if (debug_on_next_call)
     do_debug_on_call (Qt);
+
+  if (profiling_active)
+    profile_increase_call_count (original_fun);
 
   /* At this point, only original_fun and original_args
      have values that will be used below */

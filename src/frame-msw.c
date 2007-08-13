@@ -60,7 +60,6 @@ static void
 mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
 {
   Lisp_Object device = FRAME_DEVICE (f);
-  struct device *d = XDEVICE (device);
   Lisp_Object initially_unmapped;
   Lisp_Object name, height, width, popup, top, left;
   Lisp_Object frame_obj;
@@ -251,7 +250,7 @@ mswindows_set_title_from_bufbyte (struct frame *f, Bufbyte *title)
 static void
 mswindows_set_frame_properties (struct frame *f, Lisp_Object plist)
 {
-  int x, y;
+  int x=0, y=0;
   int width = 0, height = 0;
   BOOL width_specified_p = FALSE;
   BOOL height_specified_p = FALSE;

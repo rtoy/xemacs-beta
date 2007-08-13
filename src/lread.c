@@ -119,6 +119,12 @@ Lisp_Object Vload_file_name_internal_the_purecopy;
 /* Function to use for reading, in `load' and friends.  */
 Lisp_Object Vload_read_function;
 
+/* The association list of objects read with the #n=object form.
+   Each member of the list has the form (n . object), and is used to
+   look up the object for the corresponding #n# construct.
+   It must be set to nil before all top-level calls to read0.  */
+Lisp_Object read_objects;
+
 /* Nonzero means load should forcibly load all dynamic doc strings.  */
 /* Note that this always happens (with some special behavior) when
    purify_flag is set. */
@@ -1360,6 +1366,7 @@ readevalloop (Lisp_Object readcharfun,
 #else /* No "defun hack" -- Emacs 19 uses read-time syntax for bytecodes */
 	{
 	  unreadchar (readcharfun, c);
+	  read_objects = Qnil;
 	  if (NILP (Vload_read_function))
 	    val = read0 (readcharfun);
 	  else
@@ -1501,6 +1508,8 @@ STREAM or the value of `standard-input' may be:
   if (EQ (stream, Qt))
     stream = Qread_char;
 
+  read_objects = Qnil;
+
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
   Vcurrent_compiled_function_annotation = Qnil;
 #endif
@@ -1541,6 +1550,8 @@ START and END optionally delimit a substring of STRING from which to read;
 			 GB_HISTORICAL_STRING_BEHAVIOR);
   lispstream = make_lisp_string_input_stream (string, startval,
 					      endval - startval);
+
+  read_objects = Qnil;
 
   tem = read0 (lispstream);
   /* Yeah, it's ugly.  Gonna make something of it?
@@ -2413,6 +2424,52 @@ retry:
 	      return obj;
 	    }
 #endif
+	  case '0': case '1': case '2': case '3': case '4':
+	  case '5': case '6': case '7': case '8': case '9':
+	    /* Reader forms that can reuse previously read objects.  */
+	    {
+	      int n = 0;
+	      Lisp_Object found;
+
+	      /* Using read_integer() here is impossible, because it
+                 chokes on `='.  Using parse_integer() is too hard.
+                 So we simply read it in, and ignore overflows, which
+                 is safe.  */
+	      while (c >= '0' && c <= '9')
+		{
+		  n *= 10;
+		  n += c - '0';
+		  c = readchar (readcharfun);
+		}
+	      found = assq_no_quit (make_int (n), read_objects);
+	      if (c == '=')
+		{
+		  /* #n=object returns object, but associates it with
+		     n for #n#.  */
+		  Lisp_Object obj;
+		  if (CONSP (found))
+		    return Fsignal (Qinvalid_read_syntax,
+				    list2 (build_translated_string
+					   ("Multiply defined symbol label"),
+					   make_int (n)));
+		  obj = read0 (readcharfun);
+		  read_objects = Fcons (Fcons (make_int (n), obj), read_objects);
+		  return obj;
+		}
+	      else if (c == '#')
+		{
+		  /* #n# returns a previously read object.  */
+		  if (CONSP (found))
+		    return XCDR (found);
+		  else
+		    return Fsignal (Qinvalid_read_syntax,
+				    list2 (build_translated_string
+					   ("Undefined symbol label"),
+					   make_int (n)));
+		}
+	      return Fsignal (Qinvalid_read_syntax,
+			      list1 (build_string ("#")));
+	    }
 	  default:
 	    {
 	      unreadchar (readcharfun, c);
@@ -3201,4 +3258,7 @@ character escape syntaxes or just read them incorrectly.
 #ifdef I18N3
   Vfile_domain = Qnil;
 #endif
+
+  read_objects = Qnil;
+  staticpro (&read_objects);
 }

@@ -220,7 +220,14 @@ mswindows_update_gc (HDC hdc, Lisp_Object font, Lisp_Object fg, Lisp_Object bg,
       fprintf (stderr, "Help! mswindows_update_gc got a bogus fg value! fg = ");
       debug_print (fg);
       fg = Qnil;
-    }
+      }
+
+  if (!NILP (bg) && !COLOR_INSTANCEP (bg))
+    {
+      fprintf (stderr, "Help! mswindows_update_gc got a bogus fg value! bg = ");
+      debug_print (bg);
+      bg = Qnil;
+      }
 
   if (!NILP (fg))
     SetTextColor (hdc, COLOR_INSTANCE_MSWINDOWS_COLOR (XCOLOR_INSTANCE (fg)));
@@ -413,7 +420,7 @@ mswindows_output_string (struct window *w, struct display_line *dl,
 		   int width, face_index findex)
 {
   struct frame *f = XFRAME (w->frame);
-  struct device *d = XDEVICE (f->device);
+  /* struct device *d = XDEVICE (f->device);*/
   Lisp_Object window = Qnil;
   HDC hdc;
   int clip_end;
@@ -457,7 +464,7 @@ mswindows_output_string (struct window *w, struct display_line *dl,
   for (i = 0; i < nruns; i++)
     {
       Lisp_Object font = FACE_CACHEL_FONT (cachel, runs[i].charset);
-      struct Lisp_Font_Instance *fi = XFONT_INSTANCE (font);
+      /* struct Lisp_Font_Instance *fi = XFONT_INSTANCE (font);*/
       int this_width;
       RECT rect = { clip_start, dl->ypos - dl->ascent,
 		    clip_end, dl->ypos + dl->descent - dl->clip };
@@ -695,7 +702,7 @@ mswindows_bevel_modeline (struct window *w, struct display_line *dl)
 
 /*****************************************************************************
  #### Display methods
-/*****************************************************************************
+*****************************************************************************/
 
 /*****************************************************************************
  mswindows_divider_width

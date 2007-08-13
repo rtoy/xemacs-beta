@@ -432,7 +432,7 @@ __malloc_size_t _chunks_free;
 __malloc_size_t _bytes_free;
 
 /* Are you experienced?  */
-static int __malloc_initialized;
+int __malloc_initialized;
 
 void (*__after_morecore_hook) __P ((void));
 

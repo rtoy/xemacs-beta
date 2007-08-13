@@ -44,13 +44,9 @@ Lisp_Object Qinit_pre_mswindows_win, Qinit_post_mswindows_win;
 static void
 mswindows_init_device (struct device *d, Lisp_Object props)
 {
-  struct console *con = XCONSOLE (DEVICE_CONSOLE (d));
   WNDCLASS wc;
-  mswindows_waitable_info_type info;
   HWND desktop;
   HDC hdc;
-  MSG msg;
-  HANDLE handle;
 
   DEVICE_INFD (d) = DEVICE_OUTFD (d) = -1;
   init_baud_rate (d);

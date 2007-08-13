@@ -88,13 +88,21 @@ where WAV files are also supported.
     }
 
   GCPRO1 (file);
-  file = Fexpand_file_name (file, Qnil);
-  if (NILP (Ffile_readable_p (file)))
+  while (1)
     {
-    if (NILP (Ffile_exists_p (file)))
-      error ("file does not exist.");
-    else
-      error ("file is unreadable.");
+      file = Fexpand_file_name (file, Qnil);
+      if (!NILP(Ffile_readable_p (file)))
+	break;
+      else
+	{
+	  /* #### This is crockish.  It might be a better idea to try
+	     to open the file, and use report_file_error() if it
+	     fails.  --hniksic */
+	  if (NILP (Ffile_exists_p (file)))
+	    signal_simple_continuable_error ("File does not exist", file);
+	  else
+	    signal_simple_continuable_error ("File is unreadable", file);
+	}
     }
   UNGCPRO;
 
@@ -338,6 +346,13 @@ device).
   struct device *d = decode_device (device);
 
   XSETDEVICE (device, d);
+
+  /* #### This is utterly disgusting, and is probably a remnant from
+     legacy code that used `ding'+`message' to signal error instead
+     calling `error'.  As a result, there is no way to beep from Lisp
+     directly, without also invoking this aspect.  Maybe we should
+     define a `ring-bell' function that simply beeps on the console,
+     which `ding' should invoke?  --hniksic */
   if (NILP (arg) && !NILP (Vexecuting_macro))
     /* Stop executing a keyboard macro. */
     error ("Keyboard macro terminated by a command ringing the bell");

@@ -62,16 +62,46 @@
       (when (search-forward key)
 	(replace-match value t)))))
 
+(defun pi-author-version (author-version)
+  (if (> (length author-version) 0)
+      (format "\"%s\"" author-version)
+    (format "\"%d.%d%s\"" emacs-major-version emacs-minor-version
+	    (if (and (boundp 'xemacs-betaname) xemacs-betaname)
+		(progn
+		  (string-match "[0-9]+" xemacs-betaname)
+		  (concat "b" (match-string 0 xemacs-betaname)))
+	      ""))))
+
+(defun pi-last-mod-date ()
+  (condition-case nil
+      (save-excursion
+	(with-temp-buffer
+	  (insert-file-contents-literally "ChangeLog")
+	  (goto-char (point-min))
+	  (looking-at "[-0-9]+")
+	  (format "\"%s\""
+		  (buffer-substring (match-beginning 0)
+				    (match-end 0)))))
+    ;; Fallback on current date if no valid ChangeLog entry
+    (t (format-time-string "\"%Y-%m-%d\""))))
+
 (defun batch-update-package-info ()
   "Generate a package-info file for use by package-get.el.
 Parameters are:
 version -- Package version number
-filename -- Filename of tarball to generate info for."
+filename -- Filename of tarball to generate info for.
+requires -- Packages necessary for bytecompiling.
+author-version -- The original Author's version #.
+maintainer -- The package maintainer.
+category -- The build category."
   (unless noninteractive
     (error "`batch-update-package-info' is to be used only with -batch"))
   (let ((version (nth 0 command-line-args-left))
 	(filename (nth 1 command-line-args-left))
-	(requires (nth 2 command-line-args-left)))
+	(requires (nth 2 command-line-args-left))
+	(author-version (nth 3 command-line-args-left))
+	(maintainer (nth 4 command-line-args-left))
+	(category (nth 5 command-line-args-left)))
     (unless requires
       (setq requires ""))
     (find-file package-info)
@@ -86,6 +116,11 @@ filename -- Filename of tarball to generate info for."
     (pi-update-key "SIZE" (format "%d"
 				  (nth 7 (file-attributes filename))))
     (pi-update-key "REQUIRES" requires)
+    (pi-update-key "AUTHOR_VERSION" (pi-author-version author-version))
+    (pi-update-key "MAINTAINER" (format "\"%s\"" maintainer))
+    (pi-update-key "CATEGORY" (format "\"%s\"" category))
+    (pi-update-key "BUILD_DATE" (format-time-string "\"%Y-%m-%d\""))
+    (pi-update-key "DATE" (pi-last-mod-date))
     (save-buffers-kill-emacs 0)))
 
 (provide 'package-info)

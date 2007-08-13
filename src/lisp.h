@@ -1095,6 +1095,7 @@ struct Lisp_Symbol
   struct Lisp_String *name;
   Lisp_Object value;
   Lisp_Object function;
+  Lisp_Object obarray;
   Lisp_Object plist;
 };
 

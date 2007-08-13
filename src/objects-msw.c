@@ -782,11 +782,13 @@ mswindows_initialize_color_instance (struct Lisp_Color_Instance *c, Lisp_Object 
   return(0);
 }
 
+#if 0
 static void
 mswindows_mark_color_instance (struct Lisp_Color_Instance *c,
 			 void (*markobj) (Lisp_Object))
 {
 }
+#endif
 
 static void
 mswindows_print_color_instance (struct Lisp_Color_Instance *c,
@@ -910,7 +912,7 @@ mswindows_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object na
   {
     char *c;
     /* Maybe split weight into weight and style */
-    if (c=strchr(weight, ' '))
+    if ((c=strchr(weight, ' ')))
     {
       *c = '\0';
       style = c+1;
@@ -1058,11 +1060,13 @@ mswindows_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object na
   return 1;
 }
 
+#if 0
 static void
 mswindows_mark_font_instance (struct Lisp_Font_Instance *f,
 			void (*markobj) (Lisp_Object))
 {
 }
+#endif
 
 static void
 mswindows_print_font_instance (struct Lisp_Font_Instance *f,

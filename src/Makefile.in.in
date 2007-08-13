@@ -27,7 +27,7 @@ all: xemacs
 
 ## For performance and consistency, no built-in rules.
 .SUFFIXES:
-.SUFFIXES: .c .o .i .h .dep
+.SUFFIXES: .c .cc .o .i .h .dep
 
 @SET_MAKE@
 SHELL=/bin/sh
@@ -86,6 +86,7 @@ lib_gcc=@lib_gcc@
 
 #ifdef USE_GNU_MAKE
 vpath %.c @srcdir@
+vpath %.cc @srcdir@
 vpath %.h @srcdir@
 ## now list files that should NOT be searched in the srcdir.
 ## This includes any .c or .h built from something else
@@ -136,6 +137,13 @@ ldflags  = $(ld_switch_all)
 %.o : %.c
 #else
 .c.o:
+#endif
+	$(CC) -c $(cflags) $<
+
+#ifdef SOLARIS2
+%.o : %.cc
+#else
+.cc.o:
 #endif
 	$(CC) -c $(cflags) $<
 

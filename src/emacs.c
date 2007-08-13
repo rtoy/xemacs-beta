@@ -544,11 +544,6 @@ main_1 (int argc, char **argv, char **envp, int restart)
   /* Record (approximately) where the stack begins.  */
   stack_bottom = &stack_bottom_variable;
 
-#ifdef RUN_TIME_REMAP
-  if (initialized)
-    run_time_remap (argv[0]);
-#endif
-
 #ifdef USG_SHARED_LIBRARIES
   if (bss_end)
     brk ((void *) bss_end);
@@ -831,6 +826,9 @@ main_1 (int argc, char **argv, char **envp, int restart)
       syms_of_dialog ();
 #endif
       syms_of_dired ();
+#ifdef HAVE_SHLIB
+      syms_of_dlopen ();
+#endif
       syms_of_doc ();
       syms_of_editfns ();
       syms_of_elhash ();
@@ -1910,6 +1908,13 @@ main (int argc, char **argv, char **envp)
 #endif /* _SCO_DS */
       vol_envp = environ;
     }
+#ifdef RUN_TIME_REMAP		
+  else 
+    /* obviously no-one uses this because where it was before initalized was 
+     *always* true */  
+    run_time_remap (argv[0]);
+#endif
+
   run_temacs_argc = -1;
 
   main_1 (vol_argc, vol_argv, vol_envp, restarted);

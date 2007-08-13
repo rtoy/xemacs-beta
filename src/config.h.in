@@ -171,6 +171,7 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_LINUX_VERSION_H
 #undef HAVE_INTTYPES_H
 #undef HAVE_SYS_UN_H
+#undef HAVE_COFF_H
 #undef STDC_HEADERS
 #undef TIME_WITH_SYS_TIME
 #undef WORDS_BIGENDIAN
@@ -183,6 +184,9 @@ Boston, MA 02111-1307, USA.  */
 
 /* Use lock files to detect multiple edits of the same file? */
 #undef CLASH_DETECTION
+
+/* Have shared library support (currently only dlopen() supported?  */
+#undef HAVE_SHLIB
 
 #undef HAVE_LIBKSTAT
 #undef HAVE_LIBINTL

@@ -1,3 +1,103 @@
+1998-01-23  SL Baur  <steve@altair.xemacs.org>
+
+	* sound.c (Fplay_sound_file): Use NILP for comparison of
+	Lisp_Object.
+
+Wed Jan 21 10:49:47 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* unexcw.cc: new file for cygwin32 unexec() requires cygwin32
+	b19. Predicated on HAVE_COFF_H.
+
+	* console.c: 
+	* device-msw.c:
+	* event-msw.c:
+	* frame-msw.c:
+	* msw-proc.c:
+	* objects-msw.c:
+	Eliminate warnings.
+
+	* redisplay-msw.c (mswindows_update_gc): eliminate warnings and
+	extend hack for bogus bg values.
+
+	* symsinit.h: add msw headers to eliminate warnings.
+
+	* s/cygwin32.h: various updates for unexec() support.
+
+	* lastfile.c: add my_ebss for cygwin32 unexec() support.
+
+	* gmalloc.c: made __malloc_initialized non-static so that
+	it goes into the bss where we expect it.
+
+	* emacs.c: put run_time_remap() in a place where initialized is
+	not always true.
+
+	* Makefile.in.in: add support for compiling .cc files.
+
+	* config.h.in: added HAVE_COFF_H support.
+
+1998-01-23  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* print.c (print_cons): Use XCAR/XCDR.
+	(print_string): Fix up so it Vprint_string_length works under Mule 
+	correctly.
+
+	* eval.c (Feval): Increase profile call count.
+
+	* keymap.c: Fixed typo.
+
+1998-01-22  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* symbols.c (Funintern): Reset symbol's obarray property.
+
+1998-01-22  Karl M. Hegbloom  <karlheg@bittersweet.inetarena.com>
+
+	* alloc.c (size_vector): Declare *p as CONST to eliminate warning.
+
+1998-01-22  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* print.c (print_symbol): Recognize Vprint_gensym being a cons;
+	use Vprint_gensym_alist.
+
+	* symbols.c (init_symbols_once_early): Ditto.
+
+	* alloc.c (Fmake_symbol): Reset it.
+
+	* symbols.c (Fintern): Set it.
+
+	* lisp.h (struct Lisp_Symbol): New element `obarray'.
+
+	* print.c (print_prepare): Reset Vprint_gensym_alist.
+	(print_finish): Ditto.
+
+	* lread.c: Recognize #n= and #n#.
+	(readevalloop): Reset read_objects to nil.
+	(Fread): Ditto.
+
+1998-01-23  SL Baur  <steve@altair.xemacs.org>
+
+	* toolbar.c (update_toolbar_button): Eliminate redundant NILP
+	checks.
+	From Martin Buchholz <martin@xemacs.org>
+
+1998-01-21  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* dlopen.c: New file.
+
+1998-01-19  Steven L Baur  <steve@altair.xemacs.org>
+
+	* eval.c (prog1): Don't GCPRO unitialized variable.
+	(prog2): Ditto.
+	From Martin Buchholz <martin@xemacs.org>
+
+1998-01-19  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* sound.c (Fplay_sound_file): Use
+	signal_simple_continuable_error() instead of error().
+
+1998-01-18  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* README: Updated.
+
 1998-01-18  SL Baur  <steve@altair.xemacs.org>
 
 	* glyphs-x.c (imagick_instantiate): Dynamically allocate pixar

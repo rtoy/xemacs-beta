@@ -37,7 +37,7 @@ General changes for XEmacs:
       (primitive types are int, cons, string, and vector).
 
    -- References to `XSTRING (obj)->size' get replaced with
-      `string_length (obj)'.  This is currently for cosmetic reasons
+      `XSTRING_LENGTH (obj)'.  This is currently for cosmetic reasons
       but there may be other reasons in the future.  (This change is
       currently incomplete in the source files.)
 
@@ -58,17 +58,21 @@ General changes for XEmacs:
       Therefore, it's important that functions do something reasonable
       if an error gets continued.  If you want to signal a non-
       continuable error, the call to Fsignal() gets put inside a
-      `while (1)' loop.  To facilitate this, and also for proper
-      I18N3 message snarfing, most calls to Fsignal() have been
-      replaced by calls to signal_error(), signal_simple_error(),
-      etc.
+      `while (1)' loop.  To facilitate this, and also for proper I18N3
+      message snarfing, most calls to Fsignal() have been replaced by
+      calls to signal_error(), signal_simple_error(), etc.  Look at
+      eval.c for a classification of various error functions.
 
    -- Constant strings occurring in source files need to get wrapped
       in a call to GETTEXT (or if inside of a call to `build_string',
       change that function to `build_translated_string') if they don't
       occur in certain places where the I18N3 message snarfer will see
       them.  For a complete discussion of this, see the file
-      lib-src/make-msgfile.l.
+      lib-src/make-msgfile.lex.
+
+      NOTE: I18N3 support is not currently working, so the above may
+      or may not apply.  Thus it is not a good idea to add random
+      GETTEXTs, unless you really know what you are doing.
 
    -- Calls to `fprintf (stderr, ...)' and `printf (...)' get replaced
       with calls to `stderr_out' and `stdout_out'.  This is for I18N3

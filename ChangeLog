@@ -1,3 +1,15 @@
+1998-01-25  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta21 is released.
+
+Wed Jan 21 10:49:47 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* configure.in: check for coff.h
+
+1998-01-21  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* configure.in: Added support for `--with-shlib'.
+
 1998-01-18  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.5-beta20 is released.
