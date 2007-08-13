@@ -2,14 +2,14 @@
 ;;;
 ;;; Keywords: hypermedia languages help docs wp
 ;;;
-;;; $Id: hm--html-mode.el,v 1.1.1.1 1996/12/18 22:43:20 steve Exp $
+;;; $Id: hm--html-mode.el,v 1.2 1997/02/15 22:21:04 steve Exp $
 ;;;
-;;; Copyright (C) 1996 Heiko Muenkel
+;;; Copyright (C) 1996, 1997 Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
 ;;;
 ;;;  This program is free software; you can redistribute it and/or modify
 ;;;  it under the terms of the GNU General Public License as published by
-;;;  the Free Software Foundation; either version 1, or (at your option)
+;;;  the Free Software Foundation; either version 2, or (at your option)
 ;;;  any later version.
 ;;;
 ;;;  This program is distributed in the hope that it will be useful,
@@ -64,6 +64,7 @@
 (require 'hm--date)
 (require 'hm--html)
 (hm--html-load-config-files)
+(require 'hm--html-indentation)
 (require 'hm--html-menu)
 (require 'hm--html-drag-and-drop)
 ;(hm--html-load-config-files) ; Load the system and user configuration files
@@ -75,7 +76,7 @@
 
 (defconst hm--html-menus-package-name "hm--html-menus")
 
-(defconst hm--html-menus-package-version "5.0")
+(defconst hm--html-menus-package-version "5.1")
   
 
 ;;; Generate the help buffer faces
@@ -89,9 +90,15 @@
 (if hm--html-mode-syntax-table
     ()
   (setq hm--html-mode-syntax-table (make-syntax-table))
-  (modify-syntax-entry ?\" ".   " hm--html-mode-syntax-table)
-  (modify-syntax-entry ?\\ ".   " hm--html-mode-syntax-table)
-  (modify-syntax-entry ?' "w   " hm--html-mode-syntax-table))
+;  (modify-syntax-entry ?\" ".   " hm--html-mode-syntax-table)
+;  (modify-syntax-entry ?\\ ".   " hm--html-mode-syntax-table)
+;  (modify-syntax-entry ?'  "w   " hm--html-mode-syntax-table)
+  (modify-syntax-entry ?\\ "." hm--html-mode-syntax-table)
+  (modify-syntax-entry ?'  "w" hm--html-mode-syntax-table)
+  (modify-syntax-entry ?<  "(>" hm--html-mode-syntax-table)
+  (modify-syntax-entry ?>  ")<" hm--html-mode-syntax-table)
+  (modify-syntax-entry ?\" "\"" hm--html-mode-syntax-table)
+  (modify-syntax-entry ?=  "."  hm--html-mode-syntax-table))
 
 
 ;;; abbreviation table
@@ -119,12 +126,27 @@ if that value is non-nil."
   (setq major-mode 'hm--html-mode)
   (setq local-abbrev-table hm--html-mode-abbrev-table)
   (set-syntax-table hm--html-mode-syntax-table)
+  (make-local-variable 'comment-start)
+  (make-local-variable 'comment-end)
+  (setq comment-start "<!--" comment-end "-->")
+  (make-local-variable 'sentence-end)
+  (setq sentence-end "[<>.?!][]\"')}]*\\($\\| $\\|\t\\|  \\)[ \t\n]*")
+  (setq indent-line-function 'hm--html-indent-line)
   (setq idd-actions hm--html-idd-actions)
   (hm--install-html-menu hm--html-mode-pulldown-menu-name)
   (make-variable-buffer-local 'write-file-hooks)
   (add-hook 'write-file-hooks 'hm--html-maybe-new-date-and-changed-comment)
-  (make-local-variable 'font-lock-keywords)
-  (setq font-lock-keywords hm--html-font-lock-keywords)
+;  (make-local-variable 'font-lock-keywords)
+;  (setq font-lock-keywords-case-fold-search t)
+;  (setq font-lock-keywords hm--html-font-lock-keywords)
+  (put major-mode 'font-lock-defaults '((hm--html-font-lock-keywords
+					 hm--html-font-lock-keywords-1
+					 hm--html-font-lock-keywords-2)
+					t
+					t
+					nil
+					nil
+					))
   (run-hooks 'hm--html-mode-hook))
 
 ;;;; Minor Modes

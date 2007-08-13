@@ -1,11 +1,11 @@
 ;;; tm-rmail.el --- MIME extension for RMAIL
 
-;; Copyright (C) 1994,1995,1996 Free Software Foundation, Inc.
+;; Copyright (C) 1994,1995,1996,1997 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; modified by KOBAYASHI Shuhei <shuhei-k@jaist.ac.jp>
 ;; Created: 1994/8/30
-;; Version: $Revision: 1.1.1.2 $
+;; Version: $Revision: 1.2 $
 ;; Keywords: mail, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is not part of tm (Tools for MIME).
@@ -40,7 +40,7 @@
 ;;;
 
 (defconst tm-rmail/RCS-ID
-  "$Id: tm-rmail.el,v 1.1.1.2 1996/12/21 20:50:48 steve Exp $")
+  "$Id: tm-rmail.el,v 1.2 1997/02/15 22:21:30 steve Exp $")
 (defconst tm-rmail/version (get-version-string tm-rmail/RCS-ID))
 
 (defvar tm-rmail/decode-all nil)
@@ -189,8 +189,16 @@
 
 (defun tm-rmail/quitting-method-to-article ()
   (setq tm-rmail/decode-all nil)
-  (mime-viewer/kill-buffer)
-  )
+  (let ((buffer
+	 (mime::preview-content-info/buffer
+	  (mime-preview/point-pcinfo (point))))
+	)
+    (mime-viewer/kill-buffer)
+
+    ;;  Make sure we return to RMAIL buffer
+    (if buffer
+	(switch-to-buffer buffer))
+    ))
 
 (defalias 'tm-rmail/quitting-method 'tm-rmail/quitting-method-to-article)
 

@@ -1,35 +1,66 @@
-;;;
-;;; tm-ftp: anonymous ftp processor for tm-view
-;;;
-;;; by MASUTANI Yasuhiro <masutani@me.es.osaka-u.ac.jp> (1994/11/ 5)
-;;;    
-;;; modified by MORIOKA Tomohiko <morioka@jaist.ac.jp>  (1994/11/ 8)
-;;;         and OKABE Yasuo <okabe@kudpc.kyoto-u.ac.jp> (1994/11/11)
-;;;
-;;; $Id: tm-ftp.el,v 1.2 1996/12/28 21:03:14 steve Exp $
-;;;
+;;; tm-ftp.el --- tm-view internal method for anonymous ftp
+
+;; Copyright (C) 1994,1995,1996,1997 Free Software Foundation, Inc.
+
+;; Author: MASUTANI Yasuhiro <masutani@me.es.osaka-u.ac.jp>
+;;         MORIOKA Tomohiko <morioka@jaist.ac.jp>
+;; Created: 1994/11/5
+;; Version: $Id: tm-ftp.el,v 1.3 1997/02/15 22:21:29 steve Exp $
+;; Keywords: anonymous ftp, MIME, multimedia, mail, news
+
+;; This file is part of tm (Tools for MIME).
+
+;; This program is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 2, or (at
+;; your option) any later version.
+
+;; This program is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
+
+;;; Code:
 
 (require 'tm-view)
-(require 'ange-ftp)
 
-(defvar mime/dired-function
+(defvar mime-view-ftp-module
+  (if (< emacs-major-version 19)
+      'ange-ftp)
+  "*Module for ftp file access.")
+
+(and mime-view-ftp-module
+     (require mime-view-ftp-module)
+     )
+
+(defvar mime-article/dired-function
   (if mime/use-multi-frame
       (function dired-other-frame)
-    (function dired)
+    (function mime-article/dired-function-for-one-frame)
     ))
 
-(defun mime/decode-message/external-ftp (beg end cal)
-  (let ((access-type (cdr (assoc "access-type" cal)))
-	(site (cdr (assoc "site" cal)))
-	(directory (cdr (assoc "directory" cal)))
-	(name (cdr (assoc "name" cal)))
-	(mode (cdr (assoc "mode" cal)))
-	(pathname))
-    (setq pathname
-	  (concat "/anonymous@" site ":" directory))
-    (message (concat "Accessing " pathname "/" name "..."))
-    (switch-to-buffer mime::article/preview-buffer)
-    (funcall mime/dired-function pathname)
+(defun mime-article/dired-function-for-one-frame (dir)
+  (let ((win (or (get-buffer-window mime::article/preview-buffer)
+		 (get-largest-window))))
+    (select-window win)
+    (dired dir)
+    ))
+
+(defun mime-article/decode-message/external-ftp (beg end cal)
+  (let* ((access-type (cdr (assoc "access-type" cal)))
+	 (site (cdr (assoc "site" cal)))
+	 (directory (cdr (assoc "directory" cal)))
+	 (name (cdr (assoc "name" cal)))
+	 (mode (cdr (assoc "mode" cal)))
+	 (pathname (concat "/anonymous@" site ":" directory))
+	 )
+    (message (concat "Accessing " (expand-file-name name pathname) "..."))
+    (funcall mime-article/dired-function pathname)
     (goto-char (point-min))
     (search-forward name)
     ))
@@ -37,7 +68,13 @@
 (set-atype 'mime/content-decoding-condition
 	   '((type . "message/external-body")
 	     ("access-type" . "anon-ftp")
-	     (method . mime/decode-message/external-ftp)
+	     (method . mime-article/decode-message/external-ftp)
 	     ))
 
+
+;;; @ end
+;;;
+
 (provide 'tm-ftp)
+
+;;; tm-ftp.el ends here

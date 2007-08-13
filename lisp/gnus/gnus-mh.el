@@ -1,5 +1,5 @@
 ;;; gnus-mh.el --- mh-e interface for Gnus
-;; Copyright (C) 1994,95,96 Free Software Foundation, Inc.
+;; Copyright (C) 1994,95,96,97 Free Software Foundation, Inc.
 
 ;; Author: Masanobu UMEDA <umerin@flab.flab.fujitsu.junet>
 ;;	Lars Magne Ingebrigtsen <larsi@ifi.uio.no>
@@ -33,11 +33,11 @@
 
 ;;; Code:
 
+(require 'gnus)
 (require 'mh-e)
 (require 'mh-comp)
-(require 'gnus)
 (require 'gnus-msg)
-(eval-when-compile (require 'cl))
+(require 'gnus-sum)
 
 (defun gnus-summary-save-article-folder (&optional arg)
   "Append the current article to an mh folder.

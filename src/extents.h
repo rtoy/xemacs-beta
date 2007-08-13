@@ -369,7 +369,7 @@ void adjust_extents (Lisp_Object object, Memind from,
 		     Memind to, int amount);
 void adjust_extents_for_deletion (Lisp_Object object, Bytind from,
 				  Bytind to, int gapsize,
-				  int numdel);
+				  int numdel, int movegapsize);
 void verify_extent_modification (Lisp_Object object, Bytind from,
 				 Bytind to,
 				 Lisp_Object inhibit_read_only_value);

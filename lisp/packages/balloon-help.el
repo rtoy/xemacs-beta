@@ -1,5 +1,5 @@
 ;;; Balloon help for XEmacs (requires 19.12 or later)
-;;; Copyright (C) 1995 Kyle E. Jones
+;;; Copyright (C) 1995, 1997 Kyle E. Jones
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -17,8 +17,6 @@
 ;;; 02139, USA.
 ;;;
 ;;; Send bug reports to kyle@wonderworks.com
-
-;;; Synched up with: Not in FSF.
 
 ;; Balloon help pops up a small frame to display help text
 ;; relating to objects that the mouse cursor passes over.
@@ -59,7 +57,7 @@
 
 (provide 'balloon-help)
 
-(defvar balloon-help-version "1.02"
+(defvar balloon-help-version "1.03"
   "Version string for Balloon Help.")
 
 (defvar balloon-help-mode t
@@ -95,6 +93,10 @@ define sounds.")
 
 (defvar balloon-help-frame-name nil
   "*The frame name to use for the frame to display the balloon help.")
+
+(defvar balloon-help-aggressively-follow-mouse nil
+  "*Non-nil means the balloon should move with the mouse even if the mouse
+is over the same object as the last mouse motion event.")
 
 ;;;
 ;;; End of user variables.
@@ -219,7 +221,8 @@ used as the help message."
 		   (event-y-pixel event))))
 	(cond ((eq frame balloon-help-frame) t)
 	      ((eq object balloon-help-help-object)
-	       (if (balloon-help-displayed)
+	       (if (and (balloon-help-displayed)
+			balloon-help-aggressively-follow-mouse)
 		   (balloon-help-move-help-frame)))
 	      ((balloon-help-displayed)
 	       (setq balloon-help-help-object object)

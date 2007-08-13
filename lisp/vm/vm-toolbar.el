@@ -1,5 +1,5 @@
 ;;; Toolbar related functions and commands
-;;; Copyright (C) 1995 Kyle E. Jones
+;;; Copyright (C) 1995-1997 Kyle E. Jones
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -118,6 +118,24 @@ s-expression like this one in your .vm file:
 (or (fboundp 'vm-toolbar-compose-command)
     (fset 'vm-toolbar-compose-command 'vm-mail))
 
+(defvar vm-toolbar-decode-mime-button
+  [vm-toolbar-decode-mime-icon vm-toolbar-decode-mime-command
+   (vm-toolbar-can-decode-mime-p)
+   "Decode the MIME objects in the current message.\n
+The objects might be displayed immediately, or buttons might be
+displayed that you need to click on to view the object.  See the
+documentation for the variables vm-mime-internal-content-types
+and vm-mime-external-content-types-alist to see how to control
+whether you see buttons or objects.\n
+The command `vm-toolbar-decode-mime-command' is run, which is normally
+bound to `vm-decode-mime-messages'.
+You can make this button run some other command by using a Lisp
+s-expression like this one in your .vm file:
+   (fset 'vm-toolbar-decode-mime-command 'some-other-command)"])
+(defvar vm-toolbar-decode-mime-icon nil)
+(or (fboundp 'vm-toolbar-decode-mime-command)
+    (fset 'vm-toolbar-decode-mime-command 'vm-decode-mime-message))
+
 (defvar vm-toolbar-delete-icon nil)
 
 (defvar vm-toolbar-undelete-icon nil)
@@ -138,7 +156,8 @@ s-expression like this one in your .vm file:
 (make-variable-buffer-local 'vm-toolbar-helper-icon)
 
 (defvar vm-toolbar-help-button
-  [vm-toolbar-helper-icon vm-toolbar-helper-command t
+  [vm-toolbar-helper-icon vm-toolbar-helper-command
+   (vm-toolbar-can-help-p)
    "Don't Panic.\n
 VM uses this button to offer help if you're in trouble.
 Under normal circumstances, this button runs `vm-help'.\n
@@ -154,7 +173,8 @@ file then this button will run `recover-file'."])
   (call-interactively vm-toolbar-helper-command))
 
 (defvar vm-toolbar-quit-button
-  [vm-toolbar-quit-icon vm-toolbar-quit-command t
+  [vm-toolbar-quit-icon vm-toolbar-quit-command
+   (vm-toolbar-can-quit-p)
    "Quit visiting this folder.\n
 The command `vm-toolbar-quit-command' is run, which is normally
 bound to `vm-quit'.
@@ -217,6 +237,25 @@ s-expression like this one in your .vm file:
 	  buffer-auto-save-file-name
 	  buffer-file-name))))
 
+(defun vm-toolbar-can-decode-mime-p ()
+  (save-excursion
+    (vm-check-for-killed-folder)
+    (vm-select-folder-buffer)
+    (and
+     vm-display-using-mime
+     vm-message-pointer
+     vm-presentation-buffer
+     (not vm-mime-decoded)
+     (not (vm-mime-plain-message-p (car vm-message-pointer))))))
+
+(defun vm-toolbar-can-quit-p ()
+  (save-excursion
+    (vm-check-for-killed-folder)
+    (vm-select-folder-buffer)
+    (memq major-mode '(vm-mode vm-virtual-mode))))
+
+(fset 'vm-toolbar-can-help-p 'vm-toolbar-can-quit-p)
+
 (defun vm-toolbar-update-toolbar ()
   (if (and vm-message-pointer (vm-deleted-flag (car vm-message-pointer)))
       (setq vm-toolbar-delete/undelete-icon vm-toolbar-undelete-icon)
@@ -224,11 +263,19 @@ s-expression like this one in your .vm file:
   (cond ((vm-toolbar-can-recover-p)
 	 (setq vm-toolbar-helper-command 'recover-file
 	       vm-toolbar-helper-icon vm-toolbar-recover-icon))
+	((vm-toolbar-can-decode-mime-p)
+	 (setq vm-toolbar-helper-command 'vm-decode-mime-message
+	       vm-toolbar-helper-icon vm-toolbar-decode-mime-icon))
 	(t
 	 (setq vm-toolbar-helper-command 'vm-help
 	       vm-toolbar-helper-icon vm-toolbar-help-icon)))
   (if vm-summary-buffer
       (vm-copy-local-variables vm-summary-buffer
+			       'vm-toolbar-delete/undelete-icon
+			       'vm-toolbar-helper-command
+			       'vm-toolbar-helper-icon))
+  (if vm-presentation-buffer
+      (vm-copy-local-variables vm-presentation-buffer
 			       'vm-toolbar-delete/undelete-icon
 			       'vm-toolbar-helper-command
 			       'vm-toolbar-helper-icon))
@@ -242,7 +289,14 @@ s-expression like this one in your .vm file:
   (vm-toolbar-initialize)
   (let ((height (+ 4 (glyph-height (car vm-toolbar-help-icon))))
 	(width (+ 4 (glyph-width (car vm-toolbar-help-icon))))
+	(myframe (vm-created-this-frame-p))
 	toolbar )
+    ;; glyph-width and glyph-height return 0 at startup sometimes
+    ;; use reasonable values if they fail.
+    (if (= width 4)
+	(setq width 68))
+    (if (= height 4)
+	(setq height 46))
     ;; honor user setting of vm-toolbar if they are daring enough
     ;; to set it.
     (if vm-toolbar
@@ -251,21 +305,29 @@ s-expression like this one in your .vm file:
 	    vm-toolbar toolbar))
     (cond ((eq vm-toolbar-orientation 'right)
 	   (setq vm-toolbar-specifier right-toolbar)
+	   (if myframe
+	       (set-specifier right-toolbar (cons (selected-frame) toolbar)))
 	   (set-specifier right-toolbar (cons (current-buffer) toolbar))
 	   (set-specifier right-toolbar-width
 			  (cons (selected-frame) width)))
 	  ((eq vm-toolbar-orientation 'left)
 	   (setq vm-toolbar-specifier left-toolbar)
+	   (if myframe
+	       (set-specifier left-toolbar (cons (selected-frame) toolbar)))
 	   (set-specifier left-toolbar (cons (current-buffer) toolbar))
 	   (set-specifier left-toolbar-width
 			  (cons (selected-frame) width)))
 	  ((eq vm-toolbar-orientation 'bottom)
 	   (setq vm-toolbar-specifier bottom-toolbar)
+	   (if myframe
+	       (set-specifier bottom-toolbar (cons (selected-frame) toolbar)))
 	   (set-specifier bottom-toolbar (cons (current-buffer) toolbar))
 	   (set-specifier bottom-toolbar-height
 			  (cons (selected-frame) height)))
 	  (t
 	   (setq vm-toolbar-specifier top-toolbar)
+	   (if myframe
+	       (set-specifier top-toolbar (cons (selected-frame) toolbar)))
 	   (set-specifier top-toolbar (cons (current-buffer) toolbar))
 	   (set-specifier top-toolbar-height
 			  (cons (selected-frame) height))))))
@@ -277,6 +339,7 @@ s-expression like this one in your .vm file:
 			(delete/undelete . vm-toolbar-delete/undelete-button)
 			(file . vm-toolbar-file-button)
 			(help . vm-toolbar-help-button)
+			(mime . vm-toolbar-decode-mime-button)
 			(next . vm-toolbar-next-button)
 			(previous . vm-toolbar-previous-button)
 			(print . vm-toolbar-print-button)
@@ -307,25 +370,33 @@ s-expression like this one in your .vm file:
    ((null vm-toolbar-help-icon)
     (let ((tuples
 	   (if (featurep 'xpm)
-	       '(
- (vm-toolbar-next-icon "next-up.xpm" "next-dn.xpm" "next-dn.xpm")
- (vm-toolbar-previous-icon "previous-up.xpm" "previous-dn.xpm"
+	       (list
+		(if (>= (device-bitplanes) 16)
+      '(vm-toolbar-decode-mime-icon "mime-colorful-up.xpm"
+				    "mime-colorful-dn.xpm"
+				    "mime-colorful-xx.xpm")
+   '(vm-toolbar-decode-mime-icon "mime-simple-up.xpm"
+				 "mime-simple-dn.xpm"
+				 "mime-simple-xx.xpm"))
+ '(vm-toolbar-next-icon "next-up.xpm" "next-dn.xpm" "next-dn.xpm")
+ '(vm-toolbar-previous-icon "previous-up.xpm" "previous-dn.xpm"
 			   "previous-dn.xpm")
- (vm-toolbar-delete-icon "delete-up.xpm" "delete-dn.xpm" "delete-dn.xpm")
- (vm-toolbar-undelete-icon "undelete-up.xpm" "undelete-dn.xpm"
+ '(vm-toolbar-delete-icon "delete-up.xpm" "delete-dn.xpm" "delete-dn.xpm")
+ '(vm-toolbar-undelete-icon "undelete-up.xpm" "undelete-dn.xpm"
 			   "undelete-dn.xpm")
- (vm-toolbar-autofile-icon "autofile-up.xpm" "autofile-dn.xpm"
+ '(vm-toolbar-autofile-icon "autofile-up.xpm" "autofile-dn.xpm"
 			   "autofile-dn.xpm")
- (vm-toolbar-file-icon "file-up.xpm" "file-dn.xpm" "file-dn.xpm")
- (vm-toolbar-reply-icon "reply-up.xpm" "reply-dn.xpm" "reply-dn.xpm")
- (vm-toolbar-compose-icon "compose-up.xpm" "compose-dn.xpm" "compose-dn.xpm")
- (vm-toolbar-print-icon "print-up.xpm" "print-dn.xpm" "print-dn.xpm")
- (vm-toolbar-visit-icon "visit-up.xpm" "visit-dn.xpm" "visit-dn.xpm")
- (vm-toolbar-quit-icon "quit-up.xpm" "quit-dn.xpm" "quit-dn.xpm")
- (vm-toolbar-help-icon "help-up.xpm" "help-dn.xpm" "help-dn.xpm")
- (vm-toolbar-recover-icon "recover-up.xpm" "recover-dn.xpm" "recover-dn.xpm")
+ '(vm-toolbar-file-icon "file-up.xpm" "file-dn.xpm" "file-dn.xpm")
+ '(vm-toolbar-reply-icon "reply-up.xpm" "reply-dn.xpm" "reply-dn.xpm")
+ '(vm-toolbar-compose-icon "compose-up.xpm" "compose-dn.xpm" "compose-dn.xpm")
+ '(vm-toolbar-print-icon "print-up.xpm" "print-dn.xpm" "print-dn.xpm")
+ '(vm-toolbar-visit-icon "visit-up.xpm" "visit-dn.xpm" "visit-dn.xpm")
+ '(vm-toolbar-quit-icon "quit-up.xpm" "quit-dn.xpm" "quit-dn.xpm")
+ '(vm-toolbar-help-icon "help-up.xpm" "help-dn.xpm" "help-dn.xpm")
+ '(vm-toolbar-recover-icon "recover-up.xpm" "recover-dn.xpm" "recover-dn.xpm")
 	   )
 	       '(
+ (vm-toolbar-decode-mime-icon "mime-up.xbm" "mime-dn.xbm" "mime-xx.xbm")
  (vm-toolbar-next-icon "next-up.xbm" "next-dn.xbm" "next-xx.xbm")
  (vm-toolbar-previous-icon "previous-up.xbm" "previous-dn.xbm"
 			   "previous-xx.xbm")
@@ -359,5 +430,7 @@ s-expression like this one in your .vm file:
 		    files))
 	  (setq tuples (cdr tuples)))))))
   (setq vm-toolbar-delete/undelete-icon vm-toolbar-delete-icon)
+  (setq-default vm-toolbar-delete/undelete-icon vm-toolbar-delete-icon)
   (setq vm-toolbar-helper-command 'vm-help)
-  (setq vm-toolbar-helper-icon vm-toolbar-help-icon))
+  (setq vm-toolbar-helper-icon vm-toolbar-help-icon)
+  (setq-default vm-toolbar-helper-icon vm-toolbar-help-icon))

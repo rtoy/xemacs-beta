@@ -1,10 +1,10 @@
 ;;; tm-view.el --- interactive MIME viewer for GNU Emacs
 
-;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
+;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1994/7/13 (1994/8/31 obsolete tm-body.el)
-;; Version: $Revision: 1.1.1.2 $
+;; Version: $Revision: 1.2 $
 ;; Keywords: mail, news, MIME, multimedia
 
 ;; This file is part of tm (Tools for MIME).
@@ -42,7 +42,7 @@
 ;;;
 
 (defconst mime-viewer/RCS-ID
-  "$Id: tm-view.el,v 1.1.1.2 1996/12/21 20:50:43 steve Exp $")
+  "$Id: tm-view.el,v 1.2 1997/02/15 22:21:30 steve Exp $")
 
 (defconst mime-viewer/version (get-version-string mime-viewer/RCS-ID))
 (defconst mime/viewer-version mime-viewer/version)
@@ -741,6 +741,10 @@ The compressed face will be piped to this command.")
     (define-key mime/viewer-mode-map
       "n"        (function mime-viewer/next-content))
     (define-key mime/viewer-mode-map
+      "\e\t"     (function mime-viewer/previous-content))
+    (define-key mime/viewer-mode-map
+      "\t"       (function mime-viewer/next-content))
+    (define-key mime/viewer-mode-map
       " "        (function mime-viewer/scroll-up-content))
     (define-key mime/viewer-mode-map
       "\M- "     (function mime-viewer/scroll-down-content))
@@ -753,7 +757,7 @@ The compressed face will be piped to this command.")
     (define-key mime/viewer-mode-map
       "v"        (function mime-viewer/play-content))
     (define-key mime/viewer-mode-map
-      "e"	   (function mime-viewer/extract-content))
+      "e"        (function mime-viewer/extract-content))
     (define-key mime/viewer-mode-map
       "\C-c\C-p" (function mime-viewer/print-content))
     (define-key mime/viewer-mode-map
@@ -808,11 +812,10 @@ key		feature
 ---		-------
 
 u		Move to upper content
-p		Move to previous content
-n		Move to next content
+p or M-TAB	Move to previous content
+n or TAB	Move to next content
 SPC		Scroll up or move to next content
-M-SPC		Scroll down or move to previous content
-DEL		Scroll down or move to previous content
+M-SPC or DEL	Scroll down or move to previous content
 RET		Move to next line
 M-RET		Move to previous line
 v		Decode current content as `play mode'
@@ -1004,8 +1007,14 @@ button-2	Move to point under the mouse cursor
 		))
 	    (mime/decode-message-header)
 	    )
-	  (funcall (cdr (assq mode mime-viewer/following-method-alist))
-		   new-buf)
+	  (let ((f (cdr (assq mode mime-viewer/following-method-alist))))
+	    (if (functionp f)
+		(funcall f new-buf)
+	      (message
+	       (format
+		"Sorry, following method for %s is not implemented yet."
+		mode))
+	      ))
 	  ))))
 
 (defun mime-viewer/display-x-face ()

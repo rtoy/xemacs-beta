@@ -1,5 +1,5 @@
 ;;; nndraft.el --- draft article access for Gnus
-;; Copyright (C) 1995,96 Free Software Foundation, Inc.
+;; Copyright (C) 1995,96,97 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@ifi.uio.no>
 ;; Keywords: news
@@ -203,14 +203,14 @@
 (deffoo nndraft-close-group (group &optional server)
   t)
 
-(deffoo nndraft-request-create-group (group &optional server)
+(deffoo nndraft-request-create-group (group &optional server args)
   (if (file-exists-p nndraft-directory)
       (if (file-directory-p nndraft-directory)
 	  t
 	nil)
     (condition-case ()
 	(progn
-	  (make-directory nndraft-directory t)
+	  (gnus-make-directory nndraft-directory)
 	  t)
       (file-error nil))))
 
@@ -219,8 +219,8 @@
 
 (defun nndraft-execute-nnmh-command (command)
   (let ((dir (expand-file-name nndraft-directory)))
-    (and (string-match "/$" dir)
-	 (setq dir (substring dir 0 (match-beginning 0))))
+    (when (string-match "/$" dir)
+      (setq dir (substring dir 0 (match-beginning 0))))
     (string-match "/[^/]+$" dir)
     (let ((group (substring dir (1+ (match-beginning 0))))
           (nnmh-directory (substring dir 0 (1+ (match-beginning 0))))

@@ -1,7 +1,7 @@
 ;;; gnus-vm.el --- vm interface for Gnus
-;; Copyright (C) 1994,95,96 Free Software Foundation, Inc.
+;; Copyright (C) 1994,95,96,97 Free Software Foundation, Inc.
 
-;; Author: Per Persson <pp@solace.mh.se>
+;; Author: Per Persson <pp@gnu.ai.mit.edu>
 ;; Keywords: news, mail
 
 ;; This file is part of GNU Emacs.
@@ -48,12 +48,12 @@ Has to be set before gnus-vm is loaded.")
 
 (or gnus-vm-inhibit-window-system
     (condition-case nil
-	(if window-system
-	    (require 'win-vm))
+	(when window-system
+	  (require 'win-vm))
       (error nil)))
 
-(if (not (featurep 'vm))
-    (load "vm"))
+(when (not (featurep 'vm))
+  (load "vm"))
 
 (defun gnus-vm-make-folder (&optional buffer)
   (let ((article (or buffer (current-buffer)))
@@ -94,7 +94,7 @@ save those articles instead."
 	  (cond ((eq folder 'default) default-name)
 		(folder folder)
 		(t (gnus-read-save-file-name 
-		    "Save article in VM folder:" default-name))))
+		    "Save %s in VM folder:" default-name))))
     (gnus-make-directory (file-name-directory folder))
     (set-buffer gnus-original-article-buffer)
     (save-excursion

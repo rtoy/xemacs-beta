@@ -1,7 +1,7 @@
 ;;; gnus-setup.el --- Initialization & Setup for Gnus 5
-;; Copyright (C) 1995, 96, 97 Free Software Foundation, Inc.
+;; Copyright (C) 1995, 96 Free Software Foundation, Inc.
 
-;; Author: Steven L. Baur <steve@altair.xemacs.org>
+;; Author: Steven L. Baur <steve@miranova.com>
 ;; Keywords: news
 
 ;; This file is part of GNU Emacs.
@@ -29,12 +29,9 @@
 ;; not to byte compile this, and just arrange to have the .el loaded out
 ;; of .emacs.
 
-;; Dec-28 1996: Updated for better handling of preinstalled Gnus
-
 ;;; Code:
 
-(eval-when-compile
-  (require 'cl))
+(require 'cl)
 
 (defvar running-xemacs (string-match "XEmacs\\|Lucid" emacs-version))
 
@@ -84,13 +81,12 @@
   "Set this if you want to use Mailcrypt for dealing with PGP messages")
 (defvar gnus-use-bbdb nil
   "Set this if you want to use the Big Brother DataBase")
-(defvar gnus-use-september nil
-  "Set this if you are using the experimental September Gnus")
 
 (when (and (not gnus-use-installed-gnus)
 	   (null (member gnus-gnus-lisp-directory load-path)))
-  (setq load-path (cons gnus-gnus-lisp-directory load-path)))
+  (push gnus-gnus-lisp-directory load-path))
 
+;;; We can't do this until we know where Gnus is.
 (require 'message)
 
 ;;; Tools for MIME by
@@ -113,7 +109,7 @@
 (when gnus-use-mailcrypt
   (when (and (not gnus-use-installed-mailcrypt)
 	     (null (member gnus-mailcrypt-lisp-directory load-path)))
-      (setq load-path (cons gnus-mailcrypt-lisp-directory load-path)))
+    (setq load-path (cons gnus-mailcrypt-lisp-directory load-path)))
   (autoload 'mc-install-write-mode "mailcrypt" nil t)
   (autoload 'mc-install-read-mode "mailcrypt" nil t)
   (add-hook 'message-mode-hook 'mc-install-write-mode)
@@ -123,7 +119,7 @@
     (add-hook 'mh-letter-mode-hook 'mc-install-write-mode)))
 
 ;;; BBDB by
-;;; Jamie Zawinski <jwz@netscape.com>
+;;; Jamie Zawinski <jwz@lucid.com>
 
 (when gnus-use-bbdb
   ;; bbdb will never be installed with emacs.
@@ -169,14 +165,11 @@
   (setq message-cite-function 'sc-cite-original)
   (autoload 'sc-cite-original "supercite"))
 
-;;;### (autoloads (gnus-batch-score gnus-fetch-group gnus gnus-slave gnus-no-server gnus-update-format) "gnus" "lisp/gnus.el" (12473 2137))
+;;;### (autoloads (gnus gnus-slave gnus-no-server) "gnus" "lisp/gnus.el" (12473 2137))
 ;;; Generated autoloads from lisp/gnus.el
 
 ;; Don't redo this if autoloads already exist
 (unless (fboundp 'gnus)
-  (autoload 'gnus-update-format "gnus" "\
-Update the format specification near point." t nil)
-
   (autoload 'gnus-slave-no-server "gnus" "\
 Read network news as a slave without connecting to local server." t nil)
 
@@ -186,8 +179,7 @@ If ARG is a positive number, Gnus will use that as the
 startup level.  If ARG is nil, Gnus will be started at level 2. 
 If ARG is non-nil and not a positive number, Gnus will
 prompt the user for the name of an NNTP server to use.
-As opposed to `gnus', this command will not connect to the local server."
-    t nil)
+As opposed to `gnus', this command will not connect to the local server." t nil)
 
   (autoload 'gnus-slave "gnus" "\
 Read news as a slave." t nil)
@@ -198,20 +190,25 @@ If ARG is non-nil and a positive number, Gnus will use that as the
 startup level.  If ARG is non-nil and not a positive number, Gnus will
 prompt the user for the name of an NNTP server to use." t nil)
 
-  (autoload 'gnus-fetch-group "gnus" "\
+;;;***
+
+;;; These have moved out of gnus.el into other files.
+;;; FIX FIX FIX: should other things be in gnus-setup? or these not in it?
+  (autoload 'gnus-update-format "gnus-spec" "\
+Update the format specification near point." t nil)
+
+  (autoload 'gnus-fetch-group "gnus-group" "\
 Start Gnus if necessary and enter GROUP.
 Returns whether the fetching was successful or not." t nil)
 
   (defalias 'gnus-batch-kill 'gnus-batch-score)
 
-  (autoload 'gnus-batch-score "gnus" "\
+  (autoload 'gnus-batch-score "gnus-kill" "\
 Run batched scoring.
 Usage: emacs -batch -l gnus -f gnus-batch-score <newsgroups> ...
 Newsgroups is a list of strings in Bnews format.  If you want to score
 the comp hierarchy, you'd say \"comp.all\".  If you would not like to
 score the alt hierarchy, you'd say \"!alt.all\"." t nil))
-
-;;;***
 
 (provide 'gnus-setup)
 

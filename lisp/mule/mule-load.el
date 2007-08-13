@@ -33,6 +33,19 @@
 (when (featurep 'x)
   (load-gc "mule-x-init"))
 
+;; after this goes the specific lisp routines for a particular input system
+;; 97.2.5 JHod Shouldn't these go into a site-load file to allow site
+;; or user switching of input systems???
+;(if (featurep 'wnn)
+;    (progn
+;      (load-gc "egg")
+;      (load-gc "egg-wnn")
+;      (setq egg-default-startup-file "eggrc-wnn")))
+
+;(if (featurep 'canna)
+;    (progn
+;      (load-gc "canna")))
+
 ;; Now load files to set up all the different languages/environments
 ;; that Mule knows about.
 

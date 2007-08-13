@@ -227,6 +227,9 @@ Lisp_Object Qbutton0, Qbutton1, Qbutton2, Qbutton3, Qbutton4, Qbutton5,
 Lisp_Object Qbutton0up, Qbutton1up, Qbutton2up, Qbutton3up, Qbutton4up,
   Qbutton5up, Qbutton6up, Qbutton7up;
 Lisp_Object Qmenu_selection;
+/* Emacs compatibility */
+Lisp_Object Qdown_mouse_1, Qdown_mouse_2, Qdown_mouse_3;
+Lisp_Object Qmouse_1, Qmouse_2, Qmouse_3;
 
 /* Kludge kludge kludge */
 Lisp_Object QLFD, QTAB, QRET, QESC, QDEL, QSPC, QBS;
@@ -1342,6 +1345,19 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
 	*keysym = QKdelete;
       else if (EQ (*keysym, QBS))
 	*keysym = QKbackspace;
+      /* Emacs compatibility */
+      else if (EQ(*keysym, Qdown_mouse_1))
+	*keysym = Qbutton1;
+      else if (EQ(*keysym, Qdown_mouse_2))
+	*keysym = Qbutton2;
+      else if (EQ(*keysym, Qdown_mouse_3))
+	*keysym = Qbutton3;
+      else if (EQ(*keysym, Qmouse_1))
+	*keysym = Qbutton1up;
+      else if (EQ(*keysym, Qmouse_2))
+	*keysym = Qbutton2up;
+      else if (EQ(*keysym, Qmouse_3))
+	*keysym = Qbutton3up;
     }
 }
 
@@ -4198,6 +4214,12 @@ syms_of_keymap (void)
   defsymbol (&Qbutton5up, "button5up");
   defsymbol (&Qbutton6up, "button6up");
   defsymbol (&Qbutton7up, "button7up");
+  defsymbol (&Qmouse_1, "mouse-1");
+  defsymbol (&Qmouse_2, "mouse-2");
+  defsymbol (&Qmouse_3, "mouse-3");
+  defsymbol (&Qdown_mouse_1, "down-mouse-1");
+  defsymbol (&Qdown_mouse_2, "down-mouse-2");
+  defsymbol (&Qdown_mouse_3, "down-mouse-3");
   defsymbol (&Qmenu_selection, "menu-selection");
   defsymbol (&QLFD, "LFD");
   defsymbol (&QTAB, "TAB");

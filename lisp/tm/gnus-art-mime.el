@@ -1,11 +1,11 @@
 ;;; gnus-art-mime.el --- MIME extension for article mode of Gnus
 
-;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
+;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1996/8/6
 ;; Version:
-;;	$Id: gnus-art-mime.el,v 1.1.1.2 1996/12/21 20:50:48 steve Exp $
+;;	$Id: gnus-art-mime.el,v 1.2 1997/02/15 22:21:25 steve Exp $
 ;; Keywords: news, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is not part of GNU Emacs yet.
@@ -46,7 +46,7 @@
 ;;; RFC 1522 and it does not do unfolding.  So gnus-mime defines own
 ;;; function using tm-ew-d.
 
-(defun gnus-decode-rfc1522 ()
+(defun gnus-decode-encoded-word ()
   (goto-char (point-min))
   (if (re-search-forward "^[0-9]+\t" nil t)
       (progn
@@ -62,6 +62,10 @@
 	  ))
     (mime-eword/decode-region (point-min)(point-max) t)
     ))
+
+(defalias 'gnus-decode-rfc1522 'gnus-decode-encoded-word)
+
+;; In addition, latest RFC about encoded-word is RFC 2047. (^_^;
 
 
 ;;; @ article filter

@@ -10,7 +10,7 @@
 @subtitle Frequently asked questions about XEmacs
 @subtitle Last Modified:  1997/01/16
 @sp 1
-@author Anthony Rossini <arossini@@biostats.hmc.psu.edu>
+@author Tony Rossini <arossini@@stat.sc.edu>
 @author Ben Wing <wing@@netcom.com>
 @author Chuck Thompson <cthomp@@cs.uiuc.edu>
 @author Steve Baur <steve@@miranova.com>

@@ -35,6 +35,8 @@
 
 ;;;  修正メモ
 
+;;;  97/2/4   Modified for use with XEmacs by J.Hein <jhod@po.iijnet.or.jp>
+;;;           (mostly changes regarding extents and markers)
 ;;;  94/2/3   kWnn support by H.Kuribayashi
 ;;;  93/11/24 henkan-select-kouho: bug fixed
 ;;;  93/7/22  hinsi-from-menu updated
@@ -92,19 +94,19 @@
 
 (defvar egg:*sho-bunsetu-face* nil "*小文節表示に用いる face または nil")
 (make-variable-buffer-local
- (defvar egg:*sho-bunsetu-overlay* nil "小文節の表示に使う overlay"))
+ (defvar egg:*sho-bunsetu-extent* nil "小文節の表示に使う extent"))
 
 (defvar egg:*sho-bunsetu-kugiri* "-" "*小文節の区切りを示す文字列")
 
 (defvar egg:*dai-bunsetu-face* nil "*大文節表示に用いる face または nil")
 (make-variable-buffer-local
- (defvar egg:*dai-bunsetu-overlay* nil "大文節の表示に使う overlay"))
+ (defvar egg:*dai-bunsetu-extent* nil "大文節の表示に使う extent"))
 
 (defvar egg:*dai-bunsetu-kugiri* " " "*大文節の区切りを示す文字列")
 
 (defvar egg:*henkan-face* nil "*変換領域を表示する face または nil")
 (make-variable-buffer-local
- (defvar egg:*henkan-overlay* nil "変換領域の表示に使う overlay"))
+ (defvar egg:*henkan-extent* nil "変換領域の表示に使う extent"))
 
 (defvar egg:*henkan-open*  "|" "*変換の始点を示す文字列")
 (defvar egg:*henkan-close* "|" "*変換の終点を示す文字列")
@@ -453,6 +455,8 @@
   (if (null (wnn-server-fuzokugo-set (substitute-in-file-name ffile)))
       (egg:error (wnn-server-get-msg))))
 
+;; ###jhod Currently very broken. Needs to be rewritten for the new
+;;         wnn-server-set-param
 (defun set-wnn-param (&rest param)
   (interactive)
 ;  (open-wnn-if-disconnected)
@@ -776,21 +780,22 @@ whose name defaults to .eggrc.")
 ;;;;
 
 (defun egg:henkan-face-on ()
-  ;; Make an overlay if henkan overlay does not exist.
-  ;; Move henkan overlay to henkan region.
+  ;; Make an extent if henkan extent does not exist.
+  ;; Move henkan extent to henkan region.
   (if egg:*henkan-face*
       (progn
-	(if (overlayp egg:*henkan-overlay*)
+	(if (extentp egg:*henkan-extent*)
 	    nil
-	  (setq egg:*henkan-overlay* (make-overlay 1 1 nil t))
-	  (overlay-put egg:*henkan-overlay* 'face egg:*henkan-face*))
-	(move-overlay egg:*henkan-overlay* egg:*region-start* egg:*region-end*))))
+	  ;; ###jhod this was a 'point-type' overlay
+	  (setq egg:*henkan-extent* (make-extent 1 1))
+	  (set-extent-property egg:*henkan-extent* 'face egg:*henkan-face*))
+	(set-extent-endpoints egg:*henkan-extent* egg:*region-start* egg:*region-end*))))
 
 (defun egg:henkan-face-off ()
-  ;; detach henkan overlay from the current buffer.
+  ;; detach henkan extent from the current buffer.
   (and egg:*henkan-face*
-       (overlayp egg:*henkan-overlay*)
-       (delete-overlay egg:*henkan-overlay*) ))
+       (extentp egg:*henkan-extent*)
+       (delete-extent egg:*henkan-extent*) ))
 
 
 (defun henkan-region (start end)
@@ -837,7 +842,7 @@ whose name defaults to .eggrc.")
 		      (or (markerp egg:*region-start*)
 			  (setq egg:*region-start* (make-marker)))
 		      (or (markerp egg:*region-end*)
-			  (setq egg:*region-end* (set-marker-type (make-marker) t)))
+			  (setq egg:*region-end* (set-marker-insertion-type (make-marker) t)))
 		      (if (null (marker-position egg:*region-start*))
 			  (progn
 			    ;;;(setq egg:*global-map-backup* (current-global-map))
@@ -974,22 +979,22 @@ optional SHO-BUNSETU-FACE は小文節区間を表示する face または nil"
   (if (or (null henkan-face) (memq henkan-face (face-list)))
       (progn
 	(setq egg:*henkan-face* henkan-face)
-	(if (overlayp egg:*henkan-overlay*)
-	    (overlay-put egg:*henkan-overlay* 'face egg:*henkan-face*)))
+	(if (extentp egg:*henkan-extent*)
+	    (set-extent-property egg:*henkan-extent* 'face egg:*henkan-face*)))
     (egg:error "Wrong type of arguments(henkan-face): %s" henkan-face))
 
   (if (or (null dai-bunsetu-face) (memq dai-bunsetu-face (face-list)))
       (progn
 	(setq egg:*dai-bunsetu-face* dai-bunsetu-face)
-	(if (overlayp egg:*dai-bunsetu-overlay*)
-	    (overlay-put egg:*dai-bunsetu-overlay* 'face egg:*dai-bunsetu-face*)))
+	(if (extentp egg:*dai-bunsetu-extent*)
+	    (set-extent-property egg:*dai-bunsetu-extent* 'face egg:*dai-bunsetu-face*)))
     (egg:error "Wrong type of arguments(dai-bunsetu-face): %s" dai-bunsetu-face))
 
   (if (or (null sho-bunsetu-face) (memq sho-bunsetu-face (face-list)))
       (progn
 	(setq egg:*sho-bunsetu-face* sho-bunsetu-face)
-	(if (overlayp egg:*sho-bunsetu-overlay*)
-	    (overlay-put egg:*sho-bunsetu-overlay* 'face egg:*sho-bunsetu-face*)))
+	(if (extentp egg:*sho-bunsetu-extent*)
+	    (set-extent-property egg:*sho-bunsetu-extent* 'face egg:*sho-bunsetu-face*)))
     (egg:error "Wrong type of arguments(sho-bunsetu-face): %s" sho-bunsetu-face))
   )
 
@@ -1123,55 +1128,60 @@ optional SHO-BUNSETU-FACE は小文節区間を表示する face または nil"
   )
 
 (defun egg:bunsetu-face-on ()
-  ;; make dai-bunsetu overlay and sho-bunsetu overlay if they do not exist.
-  ;; put thier faces to overlays and move them to each bunsetu.
+  ;; make dai-bunsetu extent and sho-bunsetu extent if they do not exist.
+  ;; put thier faces to extents and move them to each bunsetu.
   (let* ((bunsetu-begin *bunsetu-number*)
 	 (bunsetu-end)
 	 (bunsetu-suu (wnn-server-bunsetu-suu)))
 ; dai bunsetu
     (if egg:*dai-bunsetu-face*
 	(progn
-	  (if (overlayp egg:*dai-bunsetu-overlay*)
+	  (if (extentp egg:*dai-bunsetu-extent*)
 	      nil
-	    (setq egg:*dai-bunsetu-overlay* (make-overlay 1 1))
-	    (overlay-put egg:*dai-bunsetu-overlay* 'face egg:*dai-bunsetu-face*))
+	    (setq egg:*dai-bunsetu-extent* (make-extent 1 1))
+	    (set-extent-property egg:*dai-bunsetu-extent* 'face egg:*dai-bunsetu-face*))
 	  (setq bunsetu-end (wnn-server-dai-end *bunsetu-number*))
 	  (while (not (wnn-server-dai-top bunsetu-begin))
 	    (setq bunsetu-begin (1- bunsetu-begin)))
-	  (move-overlay egg:*dai-bunsetu-overlay*
+	  (set-extent-endpoints egg:*dai-bunsetu-extent*
 			(bunsetu-position bunsetu-begin)
 			(+ (bunsetu-position (1- bunsetu-end))
 			   (length (bunsetu-kanji (1- bunsetu-end)))))))
 ; sho bunsetu
     (if egg:*sho-bunsetu-face*
 	(progn
-	  (if (overlayp egg:*sho-bunsetu-overlay*)
+	  (if (extentp egg:*sho-bunsetu-extent*)
 	       nil
-	    (setq egg:*sho-bunsetu-overlay* (make-overlay 1 1))
-	    (overlay-put egg:*sho-bunsetu-overlay* 'face egg:*sho-bunsetu-face*))
+	    (setq egg:*sho-bunsetu-extent* (make-extent 1 1))
+	    (set-extent-property egg:*sho-bunsetu-extent* 'face egg:*sho-bunsetu-face*))
 	  (setq bunsetu-end (1+ *bunsetu-number*))
-	  (move-overlay egg:*sho-bunsetu-overlay*
+	  (set-extent-endpoints egg:*sho-bunsetu-extent*
 			(let ((point (bunsetu-position *bunsetu-number*)))
+;; ###jhod Removed the char-boundary stuff, as I *THINK* we can only move by whole chars...
+;;			  (if (eq egg:*sho-bunsetu-face* 'modeline)
+;;			      (+ point (1+ (char-boundary-p point)))
+;;			    point))
 			  (if (eq egg:*sho-bunsetu-face* 'modeline)
-			      (+ point (1+ (char-boundary-p point)))
+			      (+ point 1)
 			    point))
+
 			(+ (bunsetu-position (1- bunsetu-end))
 			   (length (bunsetu-kanji (1- bunsetu-end)))))))))
 
 (defun egg:bunsetu-face-off ()
   (and egg:*dai-bunsetu-face*
-       (overlayp egg:*dai-bunsetu-overlay*)
-       (delete-overlay egg:*dai-bunsetu-overlay*))
+       (extentp egg:*dai-bunsetu-extent*)
+       (delete-extent egg:*dai-bunsetu-extent*))
   (and egg:*sho-bunsetu-face*
-       (overlayp egg:*sho-bunsetu-overlay*)
-       (delete-overlay egg:*sho-bunsetu-overlay*))
+       (extentp egg:*sho-bunsetu-extent*)
+       (delete-extent egg:*sho-bunsetu-extent*))
   )
 
 (defun henkan-goto-bunsetu (number)
   (setq *bunsetu-number*
 	(check-number-range number 0 (1- (wnn-server-bunsetu-suu))))
   (goto-char (bunsetu-position *bunsetu-number*))
-;  (egg:move-bunsetu-overlay)
+;  (egg:move-bunsetu-extent)
   (egg:bunsetu-face-on)
   )
 
@@ -1259,7 +1269,7 @@ optional SHO-BUNSETU-FACE は小文節区間を表示する face または nil"
     (goto-char (bunsetu-position min))
     (henkan-insert-kouho min max)
     (goto-char point))
-;  (egg:move-bunsetu-overlay)
+;  (egg:move-bunsetu-extent)
   (egg:bunsetu-face-on)
   (egg:henkan-face-on)
   )

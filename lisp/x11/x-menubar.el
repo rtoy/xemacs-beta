@@ -132,6 +132,7 @@
        ["Towers of Hanoi"	hanoi			t]
        ["Game of Life"		life			t]
        ["Multiplication Puzzle"	mpuz			t]
+       ["Mine Game"		mine			t]
        )
       )
 
@@ -653,6 +654,7 @@
        ["No Warranty"		describe-no-warranty	t]
        ["XEmacs License"	describe-copying	t]
        ["The Latest Version"	describe-distribution	t])
+      ,custom-help-menu
       )
      )))
 

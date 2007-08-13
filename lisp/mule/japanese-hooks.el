@@ -97,23 +97,6 @@
 (setq paragraph-start    "^[ 　\t\n\f]")
 (setq paragraph-separate "^[ 　\t\f]*$")
 
-;; EGG specific setup
-;;(when (featurep 'egg)
-;;  (setq wnn-server-type 'jserver)
-;;  (load "its/hira")
-;;  (load "its/kata")
-;;  (load "its/hankaku")
-;;  (load "its/zenkaku")
-;;  (setq its:*standard-modes*
-;;        (append
-;;         (list (its:get-mode-map "roma-kana")
-;;               (its:get-mode-map "roma-kata")
-;;               (its:get-mode-map "downcase")
-;;               (its:get-mode-map "upcase")
-;;               (its:get-mode-map "zenkaku-downcase")
-;;               (its:get-mode-map "zenkaku-upcase"))
-;;         its:*standard-modes*)))
-
 (make-coding-system
  'shift-jis 'shift-jis
  "Coding-system of Shift-JIS used in Japan."
@@ -164,8 +147,25 @@
     (set-coding-priority-list '(iso-7 iso-8-2 shift-jis no-conversion))
     ;;'(iso-8-2 iso-8-designate iso-8-1 shift-jis big5)
     
-    ;;(when (featurep 'egg)
-    ;;  (setq-default its:*current-map* (its:get-mode-map "roma-kana")))
+    ;; EGG specific setup 97.02.05 jhod
+    (when (featurep 'egg)
+      (when (not (featurep 'egg-jpn))
+	(provide 'egg-jpn)
+	(setq wnn-server-type 'jserver)
+	(load "its/its-hira")
+	(load "its/its-kata")
+	(load "its/its-hankaku")
+	(load "its/its-zenkaku")
+	(setq its:*standard-modes*
+	      (append
+	       (list (its:get-mode-map "roma-kana")
+		     (its:get-mode-map "roma-kata")
+		     (its:get-mode-map "downcase")
+		     (its:get-mode-map "upcase")
+		     (its:get-mode-map "zenkaku-downcase")
+		     (its:get-mode-map "zenkaku-upcase"))
+	       its:*standard-modes*)))
+      (setq-default its:*current-map* (its:get-mode-map "roma-kana")))
 
     ;; Added by mrb, who doesn't speak japanese - so be sceptical...
     ;; (when (string-match "solaris\\|sunos" system-configuration)

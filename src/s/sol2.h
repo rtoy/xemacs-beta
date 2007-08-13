@@ -41,7 +41,7 @@
 /* The standard Solaris library nsl has this function in it which is
    supposed to only be in the BSD compat stuff.  Yuck.  Of course,
    there isn't a prototype for it other than in /usr/ucbinclude. */
-int gethostname (char *, int);
+int gethostname (char *, size_t);
 
 /* Get non-ANSI functions from ANSI header files in cc -Xc mode.
    Sun has promised to fix setjmp.h */

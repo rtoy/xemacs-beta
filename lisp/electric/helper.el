@@ -52,7 +52,7 @@
   ;(define-key Helper-help-map "f" 'Helper-describe-function)
   ;(define-key Helper-help-map "v" 'Helper-describe-variable)
   (define-key Helper-help-map "?" 'Helper-help-options)
-  (define-key Helper-help-map (char-to-string help-char) 'Helper-help-options)
+  (define-key Helper-help-map (vector help-char) 'Helper-help-options)
   (fset 'Helper-help-map Helper-help-map))
 
 (defun Helper-help-scroller ()

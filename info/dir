@@ -46,10 +46,9 @@ File: dir	Node: Top	This is the top of the INFO tree
 
 Packages:
 
-* Ange-FTP::	Making the entire network accessible as a pseudo-filesystem.
 * CC-MODE::	Mode for editing C, C++, and Objective-C code.
 * CL::		A Common Lisp compatibility package for Emacs-Lisp.
-* Dired::	Manual for Tree Dired.
+* Custom::	Customization Library for Emacs
 * Ediff::	A Visual Interface to Unix Diff and Patch Utilities.
 * External-Widget::
 		Use XEmacs as a text widget inside of another program.
@@ -77,6 +76,7 @@ Packages:
 * Vhdl-mode::	A major mode for editing VHDL files.
 * VM::		View Mail, a replacement for Rmail.
 * W3::		A browser for the World Wide Web global hypertext system.
+* Widget::	An Emacs Lisp widget library
 * tm-en::	Tools for Mime (English version)
 * tm-mh-e-en::	Tools for Mime for MH-E (English version)
 * gnus-mime-en::Tools for Mime for Gnus (English version)

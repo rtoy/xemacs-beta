@@ -1,5 +1,5 @@
 ;;; gnus-demon.el --- daemonic Gnus behaviour
-;; Copyright (C) 1995,96 Free Software Foundation, Inc.
+;; Copyright (C) 1995,96,97 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@ifi.uio.no>
 ;; Keywords: news
@@ -26,10 +26,18 @@
 ;;; Code:
 
 (require 'gnus)
+(require 'gnus-int)
+(require 'nnheader)
+(eval-and-compile
+  (if (string-match "XEmacs" (emacs-version))
+      (require 'itimer)
+    (require 'timer)))
 
-(eval-when-compile (require 'cl))
+(defgroup gnus-demon nil
+  "Demonic behaviour."
+  :group 'gnus)
 
-(defvar gnus-demon-handlers nil
+(defcustom gnus-demon-handlers nil
   "Alist of daemonic handlers to be run at intervals.
 Each handler is a list on the form
 
@@ -42,10 +50,22 @@ If IDLE is t, only call if Emacs has been idle for a while.  If IDLE
 is a number, only call when Emacs has been idle more than this number
 of `gnus-demon-timestep's.  If IDLE is nil, don't care about
 idleness.  If IDLE is a number and TIME is nil, then call once each
-time Emacs has been idle for IDLE `gnus-demon-timestep's.")
+time Emacs has been idle for IDLE `gnus-demon-timestep's."
+  :group 'gnus-demon
+  :type '(repeat (list function 
+		       (choice :tag "Time" 
+			       (const :tag "never" nil)
+			       (const :tag "one" t)
+			       (integer :tag "steps" 1))
+		       (choice :tag "Idle"
+			       (const :tag "don't care" nil)
+			       (const :tag "for a while" t)
+			       (integer :tag "steps" 1)))))
 
-(defvar gnus-demon-timestep 60
-  "*Number of seconds in each demon timestep.")
+(defcustom gnus-demon-timestep 60
+  "*Number of seconds in each demon timestep."
+  :group 'gnus-demon
+  :type 'integer)
 
 ;;; Internal variables.
 
@@ -53,8 +73,7 @@ time Emacs has been idle for IDLE `gnus-demon-timestep's.")
 (defvar gnus-demon-idle-has-been-called nil)
 (defvar gnus-demon-idle-time 0)
 (defvar gnus-demon-handler-state nil)
-(defvar gnus-demon-is-idle nil)
-(defvar gnus-demon-last-keys nil) 
+(defvar gnus-demon-last-keys nil)
 
 (eval-and-compile
   (autoload 'timezone-parse-date "timezone")
@@ -75,14 +94,15 @@ time Emacs has been idle for IDLE `gnus-demon-timestep's.")
   (setq gnus-demon-handlers 
 	(delq (assq function gnus-demon-handlers)
 	      gnus-demon-handlers))
-  (or no-init (gnus-demon-init)))
+  (unless no-init
+    (gnus-demon-init)))
 
 (defun gnus-demon-init ()
   "Initialize the Gnus daemon."
   (interactive)
   (gnus-demon-cancel)
   (if (null gnus-demon-handlers)
-      () ; Nothing to do.
+      ()				; Nothing to do.
     ;; Set up timer.
     (setq gnus-demon-timer 
 	  (nnheader-run-at-time 
@@ -103,10 +123,13 @@ time Emacs has been idle for IDLE `gnus-demon-timestep's.")
 (defun gnus-demon-cancel ()
   "Cancel any Gnus daemons."
   (interactive)
-  (and gnus-demon-timer
-       (nnheader-cancel-timer gnus-demon-timer))
+  (when gnus-demon-timer
+    (nnheader-cancel-timer gnus-demon-timer))
   (setq gnus-demon-timer nil
-	gnus-use-demon nil))
+	gnus-use-demon nil)
+  (condition-case ()
+      (nnheader-cancel-function-timers 'gnus-demon)
+    (error t)))
 
 (defun gnus-demon-is-idle-p ()
   "Whether Emacs is idle or not."
@@ -135,9 +158,11 @@ time Emacs has been idle for IDLE `gnus-demon-timestep's.")
 	   (nseconds (gnus-time-minus
 		      (gnus-encode-date tdate) (gnus-encode-date date))))
       (round
-       (/ (if (< nseconds 0)
-	      (+ nseconds (* 60 60 24))
-	    nseconds) gnus-demon-timestep)))))
+       (/ (+ (if (< (car nseconds) 0)
+ 		 86400 0)
+ 	     (* 65536 (car nseconds))
+ 	     (nth 1 nseconds))
+ 	  gnus-demon-timestep)))))
 
 (defun gnus-demon ()
   "The Gnus daemon that takes care of running all Gnus handlers."
@@ -146,48 +171,54 @@ time Emacs has been idle for IDLE `gnus-demon-timestep's.")
       (incf gnus-demon-idle-time)
     (setq gnus-demon-idle-time 0)
     (setq gnus-demon-idle-has-been-called nil))
-  ;; Then we go through all the handler and call those that are
-  ;; sufficiently ripe.
-  (let ((handlers gnus-demon-handler-state)
-	handler time idle)
-    (while handlers
-      (setq handler (pop handlers))
-      (cond 
-       ((numberp (setq time (nth 1 handler)))
-	;; These handlers use a regular timeout mechanism.  We decrease
-	;; the timer if it hasn't reached zero yet.
-	(or (zerop time)
+  ;; Disable all daemonic stuff if we're in the minibuffer
+  (unless (window-minibuffer-p (selected-window))
+    ;; Then we go through all the handler and call those that are
+    ;; sufficiently ripe.
+    (let ((handlers gnus-demon-handler-state)
+	  handler time idle)
+      (while handlers
+	(setq handler (pop handlers))
+	(cond 
+	 ((numberp (setq time (nth 1 handler)))
+	  ;; These handlers use a regular timeout mechanism.  We decrease
+	  ;; the timer if it hasn't reached zero yet.
+	  (unless (zerop time)
 	    (setcar (nthcdr 1 handler) (decf time)))
-	(and (zerop time)		; If the timer now is zero...
-	     (or (not (setq idle (nth 2 handler))) ; Don't care about idle.
-		 (and (numberp idle)	; Numerical idle...
-		      (< idle gnus-demon-idle-time)) ; Idle timed out.
-		 gnus-demon-is-idle)	; Or just need to be idle.
-	     ;; So we call the handler.
-	     (progn
-	       (funcall (car handler))
-	       ;; And reset the timer.
-	       (setcar (nthcdr 1 handler)
-		       (gnus-demon-time-to-step
-			(nth 1 (assq (car handler) gnus-demon-handlers)))))))
-       ;; These are only supposed to be called when Emacs is idle. 
-       ((null (setq idle (nth 2 handler)))
-	;; We do nothing.
-	)
-       ((not (numberp idle))
-	;; We want to call this handler each and every time that
-	;; Emacs is idle. 
-	(funcall (car handler)))
-       (t
-	;; We want to call this handler only if Emacs has been idle
-	;; for a specified number of timesteps.
-	(and (not (memq (car handler) gnus-demon-idle-has-been-called))
-	     (< idle gnus-demon-idle-time)
-	     (progn
-	       (funcall (car handler))
-	       ;; Make sure the handler won't be called once more in
-	       ;; this idle-cycle.
-	       (push (car handler) gnus-demon-idle-has-been-called))))))))
+	  (and (zerop time)		; If the timer now is zero...
+	       ;; Test for appropriate idleness
+	       (progn
+		 (setq idle (nth 2 handler))
+		 (cond
+		  ((null idle) t)	; Don't care about idle.
+		  ((numberp idle)	; Numerical idle...
+		   (< idle gnus-demon-idle-time)) ; Idle timed out.
+		  (t (< 0 gnus-demon-idle-time)))) ; Or just need to be idle.
+	       ;; So we call the handler.
+	       (progn
+		 (funcall (car handler))
+		 ;; And reset the timer.
+		 (setcar (nthcdr 1 handler)
+			 (gnus-demon-time-to-step
+			  (nth 1 (assq (car handler) gnus-demon-handlers)))))))
+	 ;; These are only supposed to be called when Emacs is idle. 
+	 ((null (setq idle (nth 2 handler)))
+	  ;; We do nothing.
+	  )
+	 ((not (numberp idle))
+	  ;; We want to call this handler each and every time that
+	  ;; Emacs is idle. 
+	  (funcall (car handler)))
+	 (t
+	  ;; We want to call this handler only if Emacs has been idle
+	  ;; for a specified number of timesteps.
+	  (and (not (memq (car handler) gnus-demon-idle-has-been-called))
+	       (< idle gnus-demon-idle-time)
+	       (progn
+		 (funcall (car handler))
+		 ;; Make sure the handler won't be called once more in
+		 ;; this idle-cycle.
+		 (push (car handler) gnus-demon-idle-has-been-called)))))))))
 
 (defun gnus-demon-add-nocem ()
   "Add daemonic NoCeM handling to Gnus."
@@ -195,27 +226,60 @@ time Emacs has been idle for IDLE `gnus-demon-timestep's.")
 
 (defun gnus-demon-scan-nocem ()
   "Scan NoCeM groups for NoCeM messages."
-  (gnus-nocem-scan-groups))
+  (save-window-excursion
+    (gnus-nocem-scan-groups)))
 
 (defun gnus-demon-add-disconnection ()
   "Add daemonic server disconnection to Gnus."
   (gnus-demon-add-handler 'gnus-demon-close-connections nil 30))
 
 (defun gnus-demon-close-connections ()
-  (gnus-close-backends))
+  (save-window-excursion
+    (gnus-close-backends)))
 
 (defun gnus-demon-add-scanmail ()
   "Add daemonic scanning of mail from the mail backends."
   (gnus-demon-add-handler 'gnus-demon-scan-mail 120 60))
 
 (defun gnus-demon-scan-mail ()
-  (let ((servers gnus-opened-servers)
-	server)
-    (while (setq server (car (pop servers)))
-      (and (gnus-check-backend-function 'request-scan (car server))
-	   (or (gnus-server-opened server)
-	       (gnus-open-server server))
-	   (gnus-request-scan nil server)))))
+  (save-window-excursion
+    (let ((servers gnus-opened-servers)
+	  server)
+      (while (setq server (car (pop servers)))
+	(and (gnus-check-backend-function 'request-scan (car server))
+	     (or (gnus-server-opened server)
+		 (gnus-open-server server))
+	     (gnus-request-scan nil server))))))
+
+(defun gnus-demon-add-rescan ()
+  "Add daemonic scanning of new articles from all backends."
+  (gnus-demon-add-handler 'gnus-demon-scan-news 120 60))
+
+(defun gnus-demon-scan-news ()
+  (save-window-excursion
+    (when (gnus-alive-p)
+      (save-excursion
+	(set-buffer gnus-group-buffer)
+	(gnus-group-get-new-news)))))
+
+(defun gnus-demon-add-scan-timestamps ()
+  "Add daemonic updating of timestamps in empty newgroups."
+  (gnus-demon-add-handler 'gnus-demon-scan-timestamps nil 30))
+
+(defun gnus-demon-scan-timestamps ()
+  "Set the timestamp on all newsgroups with no unread and no ticked articles."
+  (when (gnus-alive-p)
+    (let ((cur-time (current-time))
+	  (newsrc (cdr gnus-newsrc-alist))
+	  info group unread has-ticked)
+      (while (setq info (pop newsrc))
+	(setq group (gnus-info-group info)
+	      unread (gnus-group-unread group)
+	      has-ticked (cdr (assq 'tick (gnus-info-marks info))))
+	(when (and (numberp unread)
+		   (= unread 0)
+		   (not has-ticked))
+	  (gnus-group-set-parameter group 'timestamp cur-time))))))
 
 (provide 'gnus-demon)
 

@@ -1,9 +1,9 @@
 ;;; tm-def.el --- definition module for tm
 
-;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
+;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: tm-def.el,v 1.3 1997/01/30 02:22:47 steve Exp $
+;; Version: $Id: tm-def.el,v 1.4 1997/02/15 22:21:26 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia, definition
 
 ;; This file is part of tm (Tools for MIME).
@@ -168,6 +168,46 @@
 	(call-interactively tm:mother-button-dispatcher)
       )
     ))
+
+
+;;; @ PGP
+;;;
+
+(defvar pgp-function-alist
+  '(
+    ;; for tm-pgp
+    (verify		mc-verify			"mc-toplev")
+    (decrypt		mc-decrypt			"mc-toplev")
+    (fetch-key		mc-pgp-fetch-key		"mc-pgp")
+    (snarf-keys		mc-snarf-keys			"mc-toplev")
+    ;; for tm-edit
+    (mime-sign		tm:mc-pgp-sign-region		"tm-edit-mc")
+    (traditional-sign	mc-pgp-sign-region		"mc-pgp")
+    (encrypt		tm:mc-pgp-encrypt-region	"tm-edit-mc")
+    (insert-key		mc-insert-public-key		"mc-toplev")
+    )
+  "Alist of service names vs. corresponding functions and its filenames.
+Each element looks like (SERVICE FUNCTION FILE).
+
+SERVICE is a symbol of PGP processing.  It allows `verify', `decrypt',
+`fetch-key', `snarf-keys', `mime-sign', `traditional-sign', `encrypt'
+or `insert-key'.
+
+Function is a symbol of function to do specified SERVICE.
+
+FILE is string of filename which has definition of corresponding
+FUNCTION.")
+
+(defmacro pgp-function (method)
+  "Return function to do service METHOD."
+  (` (car (cdr (assq (, method) (symbol-value 'pgp-function-alist)))))
+  )
+
+(mapcar (function
+	 (lambda (method)
+	   (autoload (second method)(third method))
+	   ))
+	pgp-function-alist)
 
 
 ;;; @ definitions about MIME

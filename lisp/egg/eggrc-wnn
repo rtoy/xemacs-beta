@@ -55,7 +55,24 @@
        (add-wnn-dict (concat wnn-usr-dic-dir "/ud") "" 15 t t)
 ;       (add-wnn-dict "wnncons/tankan2.dic" "" 1 nil nil)
 ;       (add-wnn-dict "wnncons/tankan3.dic" "" 1 nil nil)
-       (set-wnn-param  5 10 2 45 0  80 5 1 20  0 400 -100 400   80 200 2 200)
+       (wnn-server-set-param '(wnn_n 5
+		        wnn_nsho 10
+		        wnn_hindo 2
+		        wnn_len 45
+		        wnn_jiri 0
+		        wnn_flag 80
+		        wnn_jisho 5
+		        wnn_sbn 1
+		        wnn_dbn_len 20
+		        wnn_sbn_cnt 0
+		        wnn_suuji 400
+		        wnn_kana -100
+		        wnn_eisuu 400
+		        wnn_kigou 80
+		        wnn_toji_kakko 200
+		        wnn_fuzokogo 2
+		        wnn_kaikakko 200))
+;       (set-wnn-param  5 10 2 45 0  80 5 1 20  0 400 -100 400   80 200 2 200)
 
        (add-wnn-notrans-dict "usr/$USER/katakana" 15 t)
        (add-wnn-bmodify-dict "usr/$USER/bunsetsu" 15 t)
@@ -80,7 +97,24 @@
        (set-wnn-reverse t)
        (set-wnn-fuzokugo "iwanami/kougo.fzk")
        (add-wnn-dict (concat wnn-usr-dic-dir "/ud") "" 15 t t)
-       (set-wnn-param  2 10 2 45 1 80 5 1 50 -20 400 -10  100  -100 200 0 200)
+       (wnn-server-set-param '(wnn_n 2
+		        wnn_nsho 10
+		        wnn_hindo 2
+		        wnn_len 45
+		        wnn_jiri 1
+		        wnn_flag 80
+		        wnn_jisho 5
+		        wnn_sbn 1
+		        wnn_dbn_len 50
+		        wnn_sbn_cnt -20
+		        wnn_suuji 400
+		        wnn_kana -10
+		        wnn_eisuu 100
+		        wnn_kigou -100
+		        wnn_toji_kakko 200
+		        wnn_fuzokogo 2
+		        wnn_kaikakko 200))
+;       (set-wnn-param  2 10 2 45 1 80 5 1 50 -20 400 -10  100  -100 200 0 200)
 
        )
 
@@ -101,7 +135,24 @@
        (add-wnn-dict (concat wnn-usr-dic-dir "/ud") "" 5 t t)
 ;       (add-wnn-dict "wnncons/tankan2.dic" "" 1 nil nil)
 ;       (add-wnn-dict "wnncons/tankan3.dic" "" 1 nil nil)
-       (set-wnn-param  2 10 2 45 5  80 5 1 40  0 400 -100 400   80 200 2 200)
+       (wnn-server-set-param '(wnn_n 2
+		        wnn_nsho 10
+		        wnn_hindo 2
+		        wnn_len 45
+		        wnn_jiri 5
+		        wnn_flag 80
+		        wnn_jisho 5
+		        wnn_sbn 1
+		        wnn_dbn_len 40
+		        wnn_sbn_cnt 0
+		        wnn_suuji 400
+		        wnn_kana -100
+		        wnn_eisuu 400
+		        wnn_kigou 80
+		        wnn_toji_kakko 200
+		        wnn_fuzokogo 2
+		        wnn_kaikakko 200))
+;       (set-wnn-param  2 10 2 45 5  80 5 1 40  0 400 -100 400   80 200 2 200)
        (set-wnn-reverse t)
        (set-wnn-fuzokugo "pubdic/full.fzk")
        (add-wnn-dict "pubdic/kihon.dic" (concat wnn-usr-dic-dir "/kihon.h") 5 nil t)
@@ -117,7 +168,24 @@
        (add-wnn-dict (concat wnn-usr-dic-dir "/ud") "" 5 t t)
 ;       (add-wnn-dict "wnncons/tankan2.dic" "" 1 nil nil)
 ;       (add-wnn-dict "wnncons/tankan3.dic" "" 1 nil nil)
-       (set-wnn-param  2 10 2 45 1 80 5 1 50 -20 400 -10  100  -100 200 0 200)
+       (wnn-server-set-param '(wnn_n 2
+		        wnn_nsho 10
+		        wnn_hindo 2
+		        wnn_len 45
+		        wnn_jiri 1
+		        wnn_flag 80
+		        wnn_jisho 5
+		        wnn_sbn 1
+		        wnn_dbn_len 50
+		        wnn_sbn_cnt -20
+		        wnn_suuji 400
+		        wnn_kana -10
+		        wnn_eisuu 100
+		        wnn_kigou -100
+		        wnn_toji_kakko 200
+		        wnn_fuzokogo 2
+		        wnn_kaikakko 200))
+;       (set-wnn-param  2 10 2 45 1 80 5 1 50 -20 400 -10  100  -100 200 0 200)
 
 )
 
@@ -132,14 +200,48 @@
        (add-wnn-dict "sys/level_2.dic" (concat wnn-usr-dic-dir "/level_2.h") 1 nil t)
        (add-wnn-dict "sys/basic.dic"	(concat wnn-usr-dic-dir "/basic.h") 7 nil t)
        (add-wnn-dict (concat wnn-usr-dic-dir "/ud") "" 5 t t)
-       (set-wnn-param 1 5  2 750 10 80 10 5 1000 50  0  -200  0  0  0  16  0)
+       (wnn-server-set-param '(wnn_n 1
+		        wnn_nsho 5
+		        wnn_hindo 2
+		        wnn_len 750
+		        wnn_jiri 10
+		        wnn_flag 80
+		        wnn_jisho 10
+		        wnn_sbn 5
+		        wnn_dbn_len 1000
+		        wnn_sbn_cnt 50
+		        wnn_suuji 0
+		        wnn_kana -200
+		        wnn_eisuu 0
+		        wnn_kigou 0
+		        wnn_toji_kakko 0
+		        wnn_fuzokogo 16
+		        wnn_kaikakko 0))
+;       (set-wnn-param 1 5  2 750 10 80 10 5 1000 50  0  -200  0  0  0  16  0)
        (set-wnn-reverse t)
        (set-wnn-fuzokugo "sys/full.con")
        (add-wnn-dict "sys/level_1.dic" (concat wnn-usr-dic-dir "/level_1.h") 4 nil t)
        (add-wnn-dict "sys/level_2.dic" (concat wnn-usr-dic-dir "/level_2.h") 1 nil t)
        (add-wnn-dict "sys/basic.dic"	(concat wnn-usr-dic-dir "/basic.h") 7 nil t)
        (add-wnn-dict (concat wnn-usr-dic-dir "/ud") "" 5 t t)
-       (set-wnn-param 1 5  2 750 10 80 10 5 1000 50  0  -200  0  0  0  16  0)
+       (wnn-server-set-param '(wnn_n 1
+		        wnn_nsho 5
+		        wnn_hindo 2
+		        wnn_len 750
+		        wnn_jiri 10
+		        wnn_flag 80
+		        wnn_jisho 10
+		        wnn_sbn 5
+		        wnn_dbn_len 1000
+		        wnn_sbn_cnt 50
+		        wnn_suuji 0
+		        wnn_kana -200
+		        wnn_eisuu 0
+		        wnn_kigou 0
+		        wnn_toji_kakko 0
+		        wnn_fuzokogo 16
+		        wnn_kaikakko 0))
+;       (set-wnn-param 1 5  2 750 10 80 10 5 1000 50  0  -200  0  0  0  16  0)
        )
       ((eq wnn-server-type 'tserver)
        (set-wnn-reverse nil)
@@ -147,13 +249,47 @@
        (add-wnn-dict "sys/cns_ch.dic" (concat wnn-usr-dic-dir "/cns_ch.h") 4 nil t)
        (add-wnn-dict "sys/cns_wd.dic" (concat wnn-usr-dic-dir "/cns_wd.h") 1 nil t)
        (add-wnn-dict (concat wnn-usr-dic-dir "/ud") "" 5 t t)
-       (set-wnn-param 1 5 2 750 10 80 10 5 1000 50  0 -200 0 0 0 16 0)
+       (wnn-server-set-param '(wnn_n 1
+		        wnn_nsho 5
+		        wnn_hindo 2
+		        wnn_len 750
+		        wnn_jiri 10
+		        wnn_flag 80
+		        wnn_jisho 10
+		        wnn_sbn 5
+		        wnn_dbn_len 1000
+		        wnn_sbn_cnt 50
+		        wnn_suuji 0
+		        wnn_kana -200
+		        wnn_eisuu 0
+		        wnn_kigou 0
+		        wnn_toji_kakko 0
+		        wnn_fuzokogo 16
+		        wnn_kaikakko 0))
+;       (set-wnn-param 1 5 2 750 10 80 10 5 1000 50  0 -200 0 0 0 16 0)
        (set-wnn-reverse t)
        (set-wnn-fuzokugo "sys/full.con")
        (add-wnn-dict "sys/cns_ch.dic" (concat wnn-usr-dic-dir "/cns_ch.h") 4 nil t)
        (add-wnn-dict "sys/cns_wd.dic" (concat wnn-usr-dic-dir "/cns_wd.h") 1 nil t)
        (add-wnn-dict (concat wnn-usr-dic-dir "/ud") "" 5 t t)
-       (set-wnn-param 1 5 2 750 10 80 10 5 1000 50  0 -200 0 0 0 16 0)
+       (wnn-server-set-param '(wnn_n 1
+		        wnn_nsho 5
+		        wnn_hindo 2
+		        wnn_len 750
+		        wnn_jiri 10
+		        wnn_flag 80
+		        wnn_jisho 10
+		        wnn_sbn 5
+		        wnn_dbn_len 1000
+		        wnn_sbn_cnt 50
+		        wnn_suuji 0
+		        wnn_kana -200
+		        wnn_eisuu 0
+		        wnn_kigou 0
+		        wnn_toji_kakko 0
+		        wnn_fuzokogo 16
+		        wnn_kaikakko 0))
+;       (set-wnn-param 1 5 2 750 10 80 10 5 1000 50  0 -200 0 0 0 16 0)
        )
       ((eq wnn-server-type 'kserver)
        (set-wnn-reverse nil)
@@ -163,7 +299,24 @@
        (add-wnn-dict (concat wnn-usr-dic-dir "/ud") "" 5 t t)
 					;       (add-wnn-dict (concat wnn-usr-dic-dir "/hangul") "" 5 t t)
 					;       (add-wnn-dict (concat wnn-usr-dic-dir "/fuzokugo") "" 5 t t)
-       (set-wnn-param 1 5 2 750 10 80 10 5 1000 50  0 -200 0 0 0 16 0)
+       (wnn-server-set-param '(wnn_n 1
+		        wnn_nsho 5
+		        wnn_hindo 2
+		        wnn_len 750
+		        wnn_jiri 10
+		        wnn_flag 80
+		        wnn_jisho 10
+		        wnn_sbn 5
+		        wnn_dbn_len 1000
+		        wnn_sbn_cnt 50
+		        wnn_suuji 0
+		        wnn_kana -200
+		        wnn_eisuu 0
+		        wnn_kigou 0
+		        wnn_toji_kakko 0
+		        wnn_fuzokogo 16
+		        wnn_kaikakko 0))
+;       (set-wnn-param 1 5 2 750 10 80 10 5 1000 50  0 -200 0 0 0 16 0)
        (set-wnn-reverse t)
        (set-wnn-fuzokugo "sys/full.fzk")
 					;       (add-wnn-dict "sys/hword.dic" (concat wnn-usr-dic-dir "/hword.h") 4 nil t)
@@ -171,7 +324,24 @@
        (add-wnn-dict (concat wnn-usr-dic-dir "/ud") "" 5 t t)
 					;       (add-wnn-dict (concat wnn-usr-dic-dir "/hangul") "" 5 t t)
 					;       (add-wnn-dict (concat wnn-usr-dic-dir "/fuzokugo") "" 5 t t)
-       (set-wnn-param 1 5 2 750 10 80 10 5 1000 50  0 -200 0 0 0 16 0)
+       (wnn-server-set-param '(wnn_n 1
+		        wnn_nsho 5
+		        wnn_hindo 2
+		        wnn_len 750
+		        wnn_jiri 10
+		        wnn_flag 80
+		        wnn_jisho 10
+		        wnn_sbn 5
+		        wnn_dbn_len 1000
+		        wnn_sbn_cnt 50
+		        wnn_suuji 0
+		        wnn_kana -200
+		        wnn_eisuu 0
+		        wnn_kigou 0
+		        wnn_toji_kakko 0
+		        wnn_fuzokogo 16
+		        wnn_kaikakko 0))
+;       (set-wnn-param 1 5 2 750 10 80 10 5 1000 50  0 -200 0 0 0 16 0)
        )
       )
 

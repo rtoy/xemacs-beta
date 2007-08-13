@@ -32,10 +32,10 @@ SUBDIR = xemacs lispref new-users-guide internals tm
 	makeinfo -o $@ $<
 
 # hyperbole and oo-browser manuals broken - do not TeX properly
-srcs = ange-ftp cc-mode cl dired ediff external-widget forms gnus \
+srcs = cc-mode cl custom ediff external-widget forms gnus \
        hyperbole ilisp info ispell mailcrypt message mh-e oo-browser \
        pcl-cvs psgml psgml-api rmail standards supercite term \
-       termcap texinfo vhdl-mode viper vm w3 xemacs-faq
+       termcap texinfo vhdl-mode viper vm w3 widget xemacs-faq
 
 info = $(srcs:%=../info/%.info)
 dvi  = $(srcs:%=%.dvi)

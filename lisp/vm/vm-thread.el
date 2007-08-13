@@ -122,8 +122,7 @@ will be visible."
 	(setq loop-sym (intern (symbol-name id-sym) vm-thread-loop-obarray))
 	(if (boundp loop-sym)
 	    ;; loop detected, bail...
-	    (setq done t
-		  thread-list (cdr thread-list))
+	    (setq done t)
 	  (set loop-sym t)
 	  (if (and (boundp id-sym) (symbol-value id-sym))
 	      (progn
@@ -212,12 +211,12 @@ will be visible."
       (vm-set-parent-of
        m
        (or (let (references)
-	     (setq references (vm-get-header-contents m "References:"))
+	     (setq references (vm-get-header-contents m "References:" " "))
 	     (and references
 		  (car (vm-last
 			(vm-parse references "[^<]*\\(<[^>]+>\\)")))))
 	   (let (in-reply-to)
-	     (setq in-reply-to (vm-get-header-contents m "In-Reply-To:"))
+	     (setq in-reply-to (vm-get-header-contents m "In-Reply-To:" " "))
 	     (and in-reply-to
 		  (car (vm-parse in-reply-to "[^<]*\\(<[^>]+>\\)"))))))))
 

@@ -1,3 +1,145 @@
+Sat Feb 15 13:58:14 1997  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* packages/info.el: Don't call switch-to-buffer if the Info frame
+	is being deleted.
+
+Sat Feb 15 12:07:46 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/simple.el (previous-line): Allow escape from signaled error
+	on buffer boundary.
+	(next-line): Ditto.
+
+Sat Feb 15 11:05:29 1997  Kyle Jones  <kyle_jones@wonderworks.com>
+	* utils/redo.el: made before and after status messages so that
+	the user is aware if a long action is still being processed.
+	
+	rolled version number up to 1.00, since the package seems to be
+	stable.
+
+	cosmetic changes so the file could be included in the XEmacs
+	distribution.
+	
+Sat Feb 15 11:13:05 1997  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/simple.el (line-move-ignore-invisible): Change default to
+	t.
+
+Sat Feb 15 01:04:21 1997  Hrvoje Niksic  <hniksic@bjesomar.srce.hr>
+
+	* prim/macros.el: Removed.  Superseded by new version in
+	edmacro.el.
+
+Fri Feb 14 23:29:16 1997  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* modes/executable.el (executable-set-magic): Correct for the #!
+	getting lost.
+
+Fri Feb 14 23:10:58 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/modeline.el (modeline-modified-map): Call
+	vc-toggle-read-only instead of toggle-read-only to be consistent
+	with override of `C-x C-q'.
+
+Fri Feb 14 16:11:10 1997  Jonathon Edwards  <edwards@intranet.com>
+
+	* packages/blink-cursor.el (blink-cursor-post-command-hook): stop
+	cursor blink momentarily after receiving user input.
+
+Fri Feb 14 15:26:38 1997  Jacques Duthen  <duthen@club-internet.fr>
+
+	* x11/x-menubar.el (default-menubar): mine goes into games menu.
+
+Thu Feb 13 22:16:09 1997  Michael Sperber  <sperber@informatik.uni-tuebingen.de>
+
+	* prim/files.el (recover-session-finish): Modify for efs.
+
+Thu Feb 13 21:23:07 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/files.el (file-remote-p): New function.
+
+	* sunpro/sunpro-load.el: Do not dump mime-setup under any
+	circumstances.
+
+Thu Feb 13 17:58:09 1997  Richard Mlynarik  <mly@adoc.xerox.com>
+
+	* prim/obsolete.el (insert-before-markers-and-inherit): Correct
+	typo.
+
+Wed Feb 12 17:48:59 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* comint/gdb.el (gdb-control-c-subjob): Nuke this loser.
+
+Wed Feb 12 13:58:01 1997  Hrvoje Niksic  <hniksic@bjesomar.srce.hr>
+
+	* utils/edmacro.el: New file.
+
+Wed Feb 12 09:00:48 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/sound.el (load-sound-file): Update documentation of
+	restrictions on what machines XEmacs can play sound on.
+
+Tue Feb 11 09:39:25 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/glyphs.el (init-glyphs): Correct autodetection to find
+	GIF89.  Look for PNG.
+
+Mon Feb 10 21:37:54 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/frame.el (show-temp-buffer-in-current-frame): Conditional
+	shrink-to-fit behavior on `temp-buffer-shrink-to-fit'.
+
+	* packages/apropos.el (apropos-print): Ditto.
+
+	* prim/lisp.el (lisp-complete-symbol): Ditto.
+
+	* prim/help.el (with-displaying-help-buffer): Ditto.
+
+Mon Feb 10 20:58:19 1997  Hrvoje Niksic  <hniksic@bjesomar.srce.hr>
+
+	* x11/x-toolbar.el: Allow customization of toolbar functions by
+	customizable variables.
+
+Mon Feb 10 14:58:05 1997  Greg Klanderman  <greg@alphatech.com>
+
+	* comint/gdb.el (gdb-mode): Correct setting of obsolete hook.
+
+Sun Feb  9 19:55:03 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/obsolete.el (define-compatible-variable-alias): New function.
+	(define-compatible-variable-alias): New function.
+	.*mode-line.*, frame-parameters, modify-frame-parameters,
+	x-display-.* all made compatible not obsolete.
+
+	* bytecomp/bytecomp.el (byte-compile-variable-ref): Warn for
+	compatibility symbols.
+	(byte-compile-compatible): New function.
+
+	* bytecomp/bytecomp-runtime.el (make-compatible): New function.
+	(make-compatible-variable): New function.
+
+Sun Feb  9 19:14:25 1997  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* utils/redo.el: New file.
+
+	* utils/floating-toolbar.el: New file.
+
+Sun Feb  9 15:19:46 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* custom/custom.el: Remove ;;;###autoloads since this file is
+	dumped with XEmacs.
+
+Sun Feb  9 00:28:20 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* custom/widget.el: New file.
+
+	* custom/widget-example.el: New file.
+
+	* custom/widget-edit.el: New file.
+
+	* custom/custom.el: New file.
+
+	* custom/custom-edit.el: New file.
+
 Fri Feb  7 03:09:32 1997  Alastair Burt <burt@dfki.uni-sb.de>
 
 	* bytecomp/bytecomp.el (byte-compile-insert-header): Correct

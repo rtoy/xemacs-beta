@@ -4,7 +4,7 @@
 
 @titlepage
 @sp 6
-@ceter @titlefont{Foreign Languages}
+@center @titlefont{Foreign Languages}
 @sp 4
 @center Version 2.1
 @sp 5
@@ -618,9 +618,9 @@ Mule with the following command:
 read the following text, which contains both ASCII and Thai characters:
 
 @example
-Mule 0,T$W1M(B editor GNU Emacs 0,T7Uh106Y1!`0>Th1A$GRAJRARC6c0Ki1c0*i1d04i10!Q1:@RIRKERB(B ,Tf(B ,T@RIR(B
-0,T;Q1(0(X10:Q1909Ui1(B 0,TAU1(B Mule 0,TCXh19(B 1 0,T+Vh1'c0*i1(B GNU Emacs 0,TCXh19(B 18 ,T`0;g190R9(B ,TaEP(B Mule 0,TCXh19(B 2 0,T+Vh1'c0*i1(B
-GNU Emacs 0,TCXh19(B 19 ,T`0;g190R9(B  ,T`)>RP(B Mule 0,TCXh19(B 2 ,T`07h1R09Qi1907Uh1(P06Y1!0>Q129R;0CQ1:;0CX1'05h1Md;(B
+Mule 0-T¤×1Í editor GNU Emacs 0·Õè10¶Ù1¡à0¾Ôè1Á¤ÇÒÁÊÒÁÒÃ¶ã0Ëé1ã0ªé1ä0´é10¡Ñ1ºÀÒÉÒËÅÒÂ æ ÀÒÉÒ-A
+0-T»Ñ1¨0¨Ø10ºÑ1¹0¹Õé1 0ÁÕ1 Mule 0ÃØè1¹ 1 0«Öè1§ã0ªé1 GNU Emacs 0ÃØè1¹ 18 à0»ç1¹°Ò¹ áÅÐ Mule 0ÃØè1¹ 2 0«Öè1§ã0ªé1-A
+GNU Emacs 0-TÃØè1¹ 19 à0»ç1¹°Ò¹  à©¾ÒÐ Mule 0ÃØè1¹ 2 à0·è1Ò0¹Ñé1¹0·Õè1¨Ð0¶Ù1¡0¾Ñ1²¹Ò»0ÃÑ1º»0ÃØ1§0µè1Íä»-A
 @end example
 
   Bear in mind that all fonts used in Mule must be of fixed width.
@@ -663,23 +663,23 @@ you hit @key{RET} without specifying a package name, the default package
   The Thai keymap in quail-mode looks like this:
 
 @example
-,TE(B# /,Tq(B _,Tr(B ,T@s(B ,T6t(B ,TXY(B ,TV0Qi1(B ,T$u(B ,T5v(B ,T(w(B ,T"x(B ,T*y(B ,T_o(B ,T#%(B
- ,Tfp(B ,Td(B\" ,TS.(B ,T>1(B ,TP8(B ,TQm(B ,TUj(B ,TC3(B ,T9O(B ,TB-(B ,T:0(B ,TE(B,
-  ,T?D(B ,TK&(B ,T!/(B ,T4b(B ,T`,(B ,Tig(B ,Thk(B ,TRI(B ,TJH(B ,TG+(B ,T'F(B
-   ,T<(B( ,T;(B) ,Ta)(B ,TMN(B ,TTZ(B ,TWl(B 0,T7n1(B ,TA2(B ,TcL(B ,T=(B?
+-TÅ# /ñ _ò Àó ¶ô ØÙ Ö0Ñé1 ¤õ µö ¨÷ ¢ø ªù ßï £¥-A
+ -Tæð ä\" Ó® ¾± Ð¸ Ñí Õê Ã³ ¹Ï Â­ º° Å,-A
+  -T¿Ä Ë¦ ¡¯ ´â à¬ éç èë ÒÉ ÊÈ Ç« §Æ-A
+   -T¼( ») á© ÍÎ ÔÚ ×ì 0·î1 Á² ãÌ ½?-A
 @end example
 
   The difference from the ordinal Thai keyboards are:
 
 @itemize @bullet
 @item
-@samp{,T_(B} and @samp{,To(B} are assigned to @key{\} and @key{|}
+@samp{-Tß} and @samp{ï} are assigned to @key{\} and @key{|}-A
 
 @item
-@samp{,T#(B} and @samp{,T%(B} are assigned to @key{`} and @key{~}
+@samp{-T£} and @samp{¥} are assigned to @key{`} and @key{~}-A
 
 @item
-We don't know where to assign characters @samp{,Tz(B} and @samp{,T{(B}
+We don't know where to assign characters @samp{-Tú} and @samp{û}-A
 @end itemize
 
   To exit quail-mode, hit @kbd{C-]} once again.
@@ -737,14 +737,14 @@ file:
 the following text, which contains both ASCII and Vietnamese characters:
 
 @example
-Mule l,1`(B m,15(Bt s,1q(B gia c,1t(Bng v,1+(B ,1p(Ba ng,1t(Bn ng,1f(B cho GNU Emacs [MULtilingual
-Enhancement to GNU Emacs].  Kh,1t(Bng nh,1f(Bng n,1s(B c,1s(B th,1,(B x,1X(B l,1}(B ch,1f(B ASCII (7
-bit) v,1`(B ISO Latin-1 (8 bit) m,1`(B c,1r(Bn c,1s(B th,1,(B x,1X(B l,1}(B Nh,1'(Bt ng,1f(B, Hoa ng,1f(B, H,1`(Bn
-ng,1f(B (16 bit) m,1c(B h,1s(Ba theo ti,1j(Bu chu,1&(Bn ISO2022 v,1`(B c,1a(Bc d,18(B b,1d(Bn (th,1m(B d,1x(B nh,1_(B
-EUC, Compound Text).  ,2p,1/(Bi v,1>(Bi Hoa ng,1f(B, Mule c,1s(B th,1,(B ph,1x(Bc v,1x(B cho c,1d(B GB l,1g(Bn
-Big5.  Ngo,1`(Bi ra, hi,1.(Bn nay ch,1z(Bng t,1t(Bi c,1{(Bng ph,1x(Bc v,1x(B cho ch,1f(B Th,1a(Bi d,1q(Ba tr,1j(Bn
-TIS620 m,1#(Bc d,1%(Bu ti,1j(Bu chu,1&(Bn n,1`(By kh,1t(Bng tu,1b(Bn theo ISO nh,1_(Bng r,1$(Bt ph,11(B th,1t(Bng ,17(B
-Th,1a(Bi Lan.
+Mule l-1à mµt sñ gia công v« ða ngôn ngæ cho GNU Emacs [MULtilingual-A
+Enhancement to GNU Emacs].  Kh-1ông nhæng nó có th¬ xØ lý chæ ASCII (7-A
+bit) v-1à ISO Latin-1 (8 bit) mà còn có th¬ xØ lý Nh§t ngæ, Hoa ngæ, Hàn-A
+ng-1æ (16 bit) mã hóa theo tiêu chu¦n ISO2022 và các d¸ bän (thí dø nhß-A
+EUC, Compound Text).  -2ð-1¯i v¾i Hoa ngæ, Mule có th¬ phøc vø cho cä GB lçn-A
+Big5.  Ngo-1ài ra, hi®n nay chúng tôi cûng phøc vø cho chæ Thái dña trên-A
+TIS620 m-1£c d¥u tiêu chu¦n này không tuân theo ISO nhßng r¤t ph± thông ·-A
+Th-1ái Lan.-A
 @end example
 
   Bear in mind that all fonts used in Mule must be of fixed width.
@@ -804,21 +804,21 @@ you hit @key{RET} without specifying a package name, the default package
 @example
    effect   | postfix | examples
 ------------+---------+----------
-   breve    |    (    | a( -> ,1e(B
- circumflex |    ^    | a^ -> ,1b(B
-   horn     |    +    | o+ -> ,1=(B
+   breve    |    (    | a( -> -1å-A
+ circumflex |    ^    | a^ -> -1â-A
+   horn     |    +    | o+ -> -1½-A
 ------------+---------+----------
-   acute    |    '    | a' -> ,1a(B
-   grave    |    `    | a` -> ,1`(B
- hook above |    ?    | a? -> ,1d(B
-   tilde    |    ~    | a~ -> ,1c(B
-  dot below |    .    | a. -> ,1U(B
+   acute    |    '    | a' -> -1á-A
+   grave    |    `    | a` -> -1à-A
+ hook above |    ?    | a? -> -1ä-A
+   tilde    |    ~    | a~ -> -1ã-A
+  dot below |    .    | a. -> -1Õ-A
 ------------+---------+----------
-   d bar    |   dd    | dd -> ,1p(B
+   d bar    |   dd    | dd -> -1ð-A
 ------------+---------+----------
  no compose |    \    | a\. -> a.
 ------------+---------+----------
- combination|   (~    | a(~ -> ,1G(B
+ combination|   (~    | a(~ -> -1Ç-A
 @end example
 
   To exit quail-mode, hit @kbd{C-]} once again.
@@ -875,8 +875,8 @@ system, you should be able to read the following French sentence that
 contains many accented characters:
 
 @example
-,A+(BTout Fran,Ag(Bais de bon go,A{(Bt, m,Aj(Bme r,Ai(Bsident de Capharna,A|(Bm, doit payer la
-d,An(Bme ,A`(B No,Ak(Bl ou ,A`(B P,Ab(Bques, en esp,Ah(Bces, en gn,At(Ble ou en ma,Ao(Bs.,A;(B
+«Tout Français de bon goût, même résident de Capharnaüm, doit payer la
+dîme à Noël ou à Pâques, en espèces, en gnôle ou en maïs.»
 @end example
 
   Bear in mind that all fonts used in Mule must be of fixed width.  For
@@ -924,7 +924,7 @@ name, the default package (shown in the parentheses) will be used.
 
   The Quail packages are divided into two groups.  The first one is for
 naive users.  Most of the accented letters can be input by composing two
-characters.  For example, you will get an @samp{,Ai(B} (@samp{e} with acute
+characters.  For example, you will get an @samp{é} (@samp{e} with acute
 accent) by typing an @samp{e} followed by a @samp{'} (single quote).
 
 @example
@@ -995,10 +995,10 @@ contain four vowels (@samp{A}, @samp{E}, @samp{I} and @samp{U}) with
 acute accent both in upper case and in lower case:
 
 @example
-ISO 8859-2 (Latin-2): ,BA(B ,Ba(B ,BI(B ,Bi(B ,BM(B ,Bm(B ,BZ(B ,Bz(B
-ISO 8859-3 (Latin-3): ,CA(B ,Ca(B ,CI(B ,Ci(B ,CM(B ,Cm(B ,CZ(B ,Cz(B
-ISO 8859-4 (Latin-4): ,DA(B ,Da(B ,DI(B ,Di(B ,DM(B ,Dm(B ,DZ(B ,Dz(B
-ISO 8859-9 (Latin-5): ,MA(B ,Ma(B ,MI(B ,Mi(B ,MM(B ,Mm(B ,MZ(B ,Mz(B
+ISO 8859-2 (Latin-2): -BÁ á É é Í í Ú ú-A
+ISO 8859-3 (Latin-3): -CÁ á É é Í í Ú ú-A
+ISO 8859-4 (Latin-4): -DÁ á É é Í í Ú ú-A
+ISO 8859-9 (Latin-5): -MÁ á É é Í í Ú ú-A
 @end example
 
   Bear in mind that all fonts used in Mule must be of fixed width.
@@ -1105,10 +1105,10 @@ system on which appropriate ISO 8859-5 fonts are installed.
 to read the following Ukrainian folk song:
 
 @example
-,L2WoR(B ,LQX(B ,Lo(B ,LQP]Tc`c(B
-,LBP(B ,LY(B ,LWPS`PR(B, ,Li^(B ,LW]PR(B.
-,LGU`UW(B ,Lbc(B ,LQP]Tc`c(B
-,L1P]Tc`Xab^\(B ,LabPR(B.
+-L²×ïÒ ÑØ ï ÑÐÝÔãàã-A
+-LÂÐ Ù ×ÐÓàÐÒ, éÞ ×ÝÐÒ.-A
+-LÇÕàÕ× âã ÑÐÝÔãàã-A
+-L±ÐÝÔãàØáâÞÜ áâÐÒ.-A
 @end example
 
   Bear in mind that all fonts used in Mule must be of fixed width.
@@ -1241,12 +1241,12 @@ on which appropriate ISO 8859-7 fonts are installed.
 read the following poem:
 
 @example
-,FK_co(B ,Faj|la(B
-,Fha(B ,Fido}le(B ,Ftir(B ,Falucdaki]r(B ,Fm(B',Famh_foum(B
-,Fta(B ,Fl\qlaqa(B ,Fma(B ,Fk\lpoum(B ,Fstom(B ,F^kio(B
-,Ftg(B ,Fh\kassa(B ,Fma(B ,Fjulat_fei(B
-,Fk_co(B ,Faj|la(B,
-,Fma(B ,Fsgjyho}le(B ,Fk_co(B ,Fxgk|teqa(B.
+-FËßãï áêüìá-A
+-Fèá éäïýìå ôéò áìõãäáëéÝò í'áíèßæïõí-A
+-Fôá ìÜñìáñá íá ëÜìðïõí óôïí Þëéï-A
+-Fôç èÜëáóóá íá êõìáôßæåé-A
+-Fëßãï áêüìá,-A
+-Fíá óçêùèïýìå ëßãï øçëüôåñá.-A
 @end example
 
   Bear in mind that all fonts used in Mule must be of fixed width.
@@ -1278,7 +1278,7 @@ use @code{*junet*} for file I/O, add the following line to your
 @subsection Inputing Greek
 
   To input Greek characters, use the Quail system.  Hit @kbd{C-]} to
-turn into quail-mode.  If you do not see the string @samp{[,FEkkgmij\(B]} in
+turn into quail-mode.  If you do not see the string @samp{[-FÅëëçíéêÜ]} in-A
 the mode-line, then hit @kbd{M-s} and specify the package name
 @samp{greek}.  @key{SPC} works as the completion key.  If you hit
 @key{RET} without specifying a package name, the default package (shown
@@ -1288,18 +1288,18 @@ in the parentheses) will be used.
 
 @example
 1!  2@  3#  4$  5%  6^  7&  8*  9(  0)  -_  =+  `~
- ,F7/(B  ,FrS(B  ,FeE(B  ,FqQ(B  ,FtT(B  ,FuU(B  ,FhH(B  ,FiI(B  ,FoO(B  ,FpP(B  [{  ]}
-  ,FaA(B  ,FsS(B  ,FdD(B  ,FvV(B  ,FcC(B  ,FgG(B  ,FnN(B  ,FjJ(B  ,FkK(B  ,F4((B  '"  \|
-   ,FfF(B  ,FwW(B  ,FxX(B  ,FyY(B  ,FbB(B  ,FmM(B  ,FlL(B  ,;  .:  /?  
+ -F·¯  òÓ  åÅ  ñÑ  ôÔ  õÕ  èÈ  éÉ  ïÏ  ðÐ  [{  ]}-A
+  -FáÁ  óÓ  äÄ  öÖ  ãÃ  çÇ  îÎ  êÊ  ëË  ´¨  '"  \|-A
+   -FæÆ  ÷×  øØ  ùÙ  âÂ  íÍ  ìÌ  ,;  .:  /?  -A
 @end example
 
-  The keys @kbd{,F4(B} (@kbd{;} on ASCII keyboard) and @kbd{,F((B} (@kbd{:} on
+  The keys @kbd{-F´} (@kbd{;} on ASCII keyboard) and @kbd{¨} (@kbd{:} on-A
 ASCII keyboard) work as dead keys.  For example,
 
 @example
-@samp{,Fa(B} + @samp{,F4(B} becomes @samp{,F\(B}
-@samp{,Fi(B} + @samp{,F((B} becomes @samp{,Fz(B}
-@samp{,Fi(B} + @samp{,F((B} + @samp{,F4(B} becomes @samp{,F@(B}
+@samp{-Fá} + @samp{´} becomes @samp{Ü}-A
+@samp{-Fé} + @samp{¨} becomes @samp{ú}-A
+@samp{-Fé} + @samp{¨} + @samp{´} becomes @samp{À}-A
 @end example
 
   To exit quail-mode, hit @kbd{C-]} once again.
@@ -1345,7 +1345,7 @@ on which appropriate ISO 8859-8 fonts are installed.
 read the following Hebrew alphabet:
 
 @example
-[2],H`abcdefghijklmnopqrstuvwxyz[0](B
+›2]-Hàáâãäåæçèéêëìíîïðñòóôõö÷øùú›0]-A
 @end example
 
   Bear in mind that all fonts used in Mule must be of fixed width.
@@ -1416,10 +1416,10 @@ in the parentheses) will be used.
   The Hebrew keymap in quail-mode looks like this:
 
 @example
-1[2]![0]  2[2]@[0]  3[2]#[0]  4[2]$[0]  5[2]%[0]  6[2]^[0]  7[2]&[0]  8[2]*[0]  9[2]([0]  0[2])[0]  [2]-_[0]  [2]=+[0]  [2];~[0]  [2]\|[0]           
- [2]/[0]Q  [2]'[0]W  [2],Hw[0](BE  [2],Hx[0](BR  [2],H`[0](BT  [2],Hh[0](BY  [2],He[0](BU  [2],Ho[0](BI  [2],Hm[0](BO  [2],Ht[0](BP  [2][{[0]  [2]]}[0]                  
-  [2],Hy[0](BA  [2],Hc[0](BS  [2],Hb[0](BD  [2],Hk[0](BF  [2],Hr[0](BG  [2],Hi[0](BH  [2],Hg[0](BJ  [2],Hl[0](BK  [2],Hj[0](BL  [2],Hs(B:[0]  [2],"[0]                     
-   [2],Hf[0](BZ  [2],Hq[0](BX  [2],Ha[0](BC  [2],Hd[0](BV  [2],Hp[0](BB  [2],Hn[0](BN  [2],Hv[0](BM  [2],Hz(B<[0]  [2],Hu(B>[0]  [2].?[0]                        
+1!  2@  3#  4$  5%  6^  7&  8*  9(  0)  -_  =+  ;~  \|           
+ /Q  'W  ›2]-H÷›0]E  ›2]ø›0]R  ›2]à›0]T  ›2]è›0]Y  ›2]å›0]U  ›2]ï›0]I  ›2]í›0]O  ›2]ô›0]P  [{  ]}                  -A
+  ›2]-Hù›0]A  ›2]ã›0]S  ›2]â›0]D  ›2]ë›0]F  ›2]ò›0]G  ›2]é›0]H  ›2]ç›0]J  ›2]ì›0]K  ›2]ê›0]L  ›2]ó›0](B:[0]  [2],"[0]                     -A
+   [2],H›2]-Hæ›0]Z  ›2]ñ›0]X  ›2]á›0]C  ›2]ä›0]V  ›2]ð›0]B  ›2]î›0]N  ›2]ö›0]M  ›2]ú›0](B<[0]  [2],H›2]õ›0](B>[0]  [2].?[0]                        -A
 @end example
 
   With @key{SFT} keys, you can input upper case ASCII characters even
@@ -1536,7 +1536,7 @@ Or if you are using 24 pixels fonts, start up Mule with:
 following famous words:
 
 @quotation
-[2](3U(4?(3G![;=!8RYa(4Z(3&[0](B
+[2](3›2](3U(4?(3G![;=!8RYa(4Z(3&›0](B
 @end quotation
 
   For the Arabic non-spacing marks, only two of them, i.e., hamza and
@@ -1575,7 +1575,7 @@ below:
 +-------------+         +------------+   C-]   +-----------+
 @end example
 
-  The string @samp{[2](3JG:a=[0](B} in the mode-line indicates that you are in
+  The string @samp{›2](3JG:a=›0](B} in the mode-line indicates that you are in
 arabic-mode and the keyboard produces Arabic characters; @samp{Arabic}
 indicates that you are in arabic-mode and the keyboard produces ASCII
 characters.
@@ -1617,17 +1617,17 @@ like this:
                     +-------------------+
 
 +----------------------------------------------------------------+
-|[2](3"[0](B   |    |    |    |    |    |    |    |[2](3#[0](B   |[2](3$[0](B   |    |    |    |
+|›2](3"›0](B   |    |    |    |    |    |    |    |›2](3#›0](B   |›2](3$›0](B   |    |    |    |
 |(2"(B  1|(2#(B  2|(2$(B  3|(2%(B  4|(2&(B  5|(2'(B  6|(2((B  7|(2)(B  8|(2*(B  9|(2!(B  0|   -|   =|   `|
 +----------------------------------------------------------------+
   |    |    |    |    |    |    |    |    |    |    |    |    |
-  |[2](4A[0](B q|[2](4=[0](B w|[2](4S[0](B e|[2](4Q[0](B r|[2](4O[0](B t|[2](4M[0](B y|[2](3Z[0](B  u|   i|[2](41[0](B o|[2](4-[0](B p|[2](4)[0](B [|[2](4g[0](B ]|
+  |›2](4A›0](B q|›2](4=›0](B w|›2](4S›0](B e|›2](4Q›0](B r|›2](4O›0](B t|›2](4M›0](B y|›2](3Z›0](B  u|   i|›2](41›0](B o|›2](4-›0](B p|›2](4)›0](B [|›2](4g›0](B ]|
   +-------------------------------------------------------------+
-    |    |    |    |[2](4e[0](B  |[2](3.[0](B   |    |    |    |    |  [2](4k[0](B|    |[2](3,[0](B   |
-    |[2](49[0](B a|[2](45[0](B s|[2](4_[0](B d|[2](4#[0](B f|[2](38[0](B  g|[2](4%[0](B h|[2](4Y[0](B j|[2](4[[0](B k|[2](3T[0](B  l|[2](4U[0](B ;|   '|   \|
+    |    |    |    |›2](4e›0](B  |›2](3.›0](B   |    |    |    |    |  ›2](4k›0](B|    |›2](3,›0](B   |
+    |›2](49›0](B a|›2](45›0](B s|›2](4_›0](B d|›2](4#›0](B f|›2](38›0](B  g|›2](4%›0](B h|›2](4Y›0](B j|›2](4[›0](B k|›2](3T›0](B  l|›2](4U›0](B ;|   '|   \|
     +-----------------------------------------------------------+
-      |    |    |    |[2](30[0](B  [2](3-[0](B|[2](3h[0](B   |    |    |[2](3*[0](B   |[2](3+[0](B   |[2](3)[0](B   |
-      |[2](4I[0](B z|[2](4E[0](B x|[2](3D[0](B  c|[2](3B[0](B  v|[2](3H[0](B  b|[2](3F[0](B  n|[2](3^[0](B  m|[2](3%[0](B  ,|[2](3&[0](B  .|   /|
+      |    |    |    |›2](30›0](B  ›2](3-›0](B|›2](3h›0](B   |    |    |›2](3*›0](B   |›2](3+›0](B   |›2](3)›0](B   |
+      |›2](4I›0](B z|›2](4E›0](B x|›2](3D›0](B  c|›2](3B›0](B  v|›2](3H›0](B  b|›2](3F›0](B  n|›2](3^›0](B  m|›2](3%›0](B  ,|›2](3&›0](B  .|   /|
       +-------------------------------------------------+
 @end example
 
@@ -1646,17 +1646,17 @@ the following:
        Upper : shifted      Lower : unshifted
 
 +----------------------------------------------------------------+
-|! [2](3"[0](B |@   |#   |$   |%   |^   |&   |*   |( [2](3#[0](B |) [2](3$[0](B |_   |+   |~ [2](3+[0](B |
-|1 (2"(B |2 (2#(B |3 (2$(B |4 (2%(B |5 (2&(B |6 (2'(B |7 (2((B |8 (2)(B |9 (2*(B |0 (2!(B |-   |=   |` [2](4M[0](B|
+|! ›2](3"›0](B |@   |#   |$   |%   |^   |&   |*   |( ›2](3#›0](B |) ›2](3$›0](B |_   |+   |~ ›2](3+›0](B |
+|1 (2"(B |2 (2#(B |3 (2$(B |4 (2%(B |5 (2&(B |6 (2'(B |7 (2((B |8 (2)(B |9 (2*(B |0 (2!(B |-   |=   |` ›2](4M›0](B|
 +----------------------------------------------------------------+
-  |Q   |W   |E   |R   |T [2](4E[0](B|Y   |U   |I   |O   |P   |{   |}   |
-  |q [2](4S[0](B|w [2](3^[0](B |e   |r [2](3F[0](B |t [2](4%[0](B|y [2](4_[0](B|u   |i   |o [2](3<[0](B |p   |[   |]   |
+  |Q   |W   |E   |R   |T ›2](4E›0](B|Y   |U   |I   |O   |P   |{   |}   |
+  |q ›2](4S›0](B|w ›2](3^›0](B |e   |r ›2](3F›0](B |t ›2](4%›0](B|y ›2](4_›0](B|u   |i   |o ›2](3<›0](B |p   |[   |]   |
   +-------------------------------------------------------------+
-    |A [2](4][0](B|S [2](4=[0](B|D [2](4A[0](B|F   |G [2](4O[0](B|H [2](4-[0](B|J   |K [2](41[0](B|L   |: [2](3'[0](B |" [2](3-[0](B || [2](3,[0](B |
-    |a [2](38[0](B |s [2](45[0](B|d [2](3B[0](B |f [2](4Q[0](B|g   |h [2](3Z[0](B |j [2](4)[0](B|k [2](4U[0](B|l [2](4Y[0](B|; [2](3([0](B |' [2](3*[0](B |\   |
+    |A ›2](4]›0](B|S ›2](4=›0](B|D ›2](4A›0](B|F   |G ›2](4O›0](B|H ›2](4-›0](B|J   |K ›2](41›0](B|L   |: ›2](3'›0](B |" ›2](3-›0](B || ›2](3,›0](B |
+    |a ›2](38›0](B |s ›2](45›0](B|d ›2](3B›0](B |f ›2](4Q›0](B|g   |h ›2](3Z›0](B |j ›2](4)›0](B|k ›2](4U›0](B|l ›2](4Y›0](B|; ›2](3(›0](B |' ›2](3*›0](B |\   |
     +-----------------------------------------------------------+
-      |Z [2](4I[0](B|X   |C   |V   |B   |N   |M   |<   |>   |? [2](3)[0](B |
-      |z [2](3H[0](B |x [2](3D[0](B |c [2](4'[0](B|v   |b [2](4#[0](B|n [2](4[[0](B|m [2](3T[0](B |, [2](3%[0](B |. [2](3&[0](B |/ [2](49[0](B|
+      |Z ›2](4I›0](B|X   |C   |V   |B   |N   |M   |<   |>   |? ›2](3)›0](B |
+      |z ›2](3H›0](B |x ›2](3D›0](B |c ›2](4'›0](B|v   |b ›2](4#›0](B|n ›2](4[›0](B|m ›2](3T›0](B |, ›2](3%›0](B |. ›2](3&›0](B |/ ›2](49›0](B|
       +-------------------------------------------------+
 
 COMBINATIONS:
@@ -2532,7 +2532,7 @@ fonts for this purpose are found in Mule's FTP sites.  Their names are:
 read the following line:
 
 @quotation
-,0I!J(B ,0!K(B ,0'(B ,0Z% S(B ,0V!BS(B ,0!S(B ,0p% p@ rp" (B ,0Dp$V'DB'K(B
+-0É¡Ê ¡Ë § Ú¥ Ó Ö¡ÂÓ ¡Ó ð¥ ðÀ òð¢  Äð¤Ö§ÄÂ§Ë-A
 @end quotation
 
   Bear in mind that all fonts used in Mule must be of fixed width.

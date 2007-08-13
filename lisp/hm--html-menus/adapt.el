@@ -1,4 +1,4 @@
-;;; $Id: adapt.el,v 1.1.1.1 1996/12/18 22:43:20 steve Exp $
+;;; $Id: adapt.el,v 1.2 1997/02/15 22:21:03 steve Exp $
 ;;;
 ;;; Copyright (C) 1993, 1994, 1995  Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -312,6 +312,10 @@ WARNING: THIS FUNCTION ISN'T READ YET."
 				minor-mode-map-alist))))
 	      ))
 	)
+
+      (if (not (fboundp 'redraw-modeline))
+	  (defalias 'redraw-modeline 'force-mode-line-update))
+
       ))
 
 

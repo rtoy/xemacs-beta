@@ -1,7 +1,7 @@
 ;;; url-misc.el --- Misc Uniform Resource Locator retrieval code
 ;; Author: wmperry
-;; Created: 1997/01/21 21:14:56
-;; Version: 1.9
+;; Created: 1997/02/08 05:29:22
+;; Version: 1.10
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -54,8 +54,8 @@
 	 (user (url-unhex-string (url-filename urlobj)))
 	 (proc (url-open-stream "finger" url-working-buffer host
 				(string-to-int port))))
-    (if (stringp proc)
-	(message "%s" proc)
+    (if (not (processp proc))
+	nil
       (process-kill-without-query proc)
       (if (= (string-to-char user) ?/)
 	  (setq user (substring user 1 nil)))

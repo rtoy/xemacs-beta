@@ -1,11 +1,11 @@
 ;;; gnus-sum-mime.el --- MIME extension for summary mode of Gnus
 
-;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
+;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1996/8/6
 ;; Version:
-;;	$Id: gnus-sum-mime.el,v 1.2 1996/12/28 21:03:12 steve Exp $
+;;	$Id: gnus-sum-mime.el,v 1.3 1997/02/15 22:21:26 steve Exp $
 ;; Keywords: news, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is not part of GNU Emacs yet.
@@ -21,14 +21,14 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program; see the file COPYING.  If not, write to
-;; the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Code:
 
 (require 'gnus-mime)
-(require 'gnus-art-mime)
+(require 'gnus-sum)
 
 
 ;;; @ summary filter

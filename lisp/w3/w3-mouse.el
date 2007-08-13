@@ -1,7 +1,7 @@
 ;;; w3-xemac.el --- XEmacs specific functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/01/18 00:42:22
-;; Version: 1.6
+;; Created: 1997/02/13 23:05:39
+;; Version: 1.7
 ;; Keywords: mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -81,7 +81,9 @@ the mouse click, opening it in another frame."
 
 (if w3-running-FSF19
     (progn
-      (define-key w3-mode-map [down-mouse-3] 'w3-popup-menu)
-      (define-key w3-mode-map [mouse-movement] 'w3-mouse-handler)))
+      (define-key w3-mode-map [mouse-movement] 'w3-mouse-handler)
+      (if w3-popup-menu-on-mouse-3
+	  (define-key w3-mode-map [down-mouse-3] 'w3-popup-menu))))
+
   
 (provide 'w3-mouse)

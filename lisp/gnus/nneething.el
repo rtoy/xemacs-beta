@@ -1,5 +1,5 @@
 ;;; nneething.el --- random file access for Gnus
-;; Copyright (C) 1995,96 Free Software Foundation, Inc.
+;; Copyright (C) 1995,96,97 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@ifi.uio.no>
 ;; 	Masanobu UMEDA <umerin@flab.flab.fujitsu.junet>
@@ -33,7 +33,8 @@
 (require 'nnheader)
 (require 'nnmail)
 (require 'nnoo)
-(eval-when-compile (require 'cl))
+(require 'gnus-util)
+(require 'cl)
 
 (nnoo-declare nneething)
 
@@ -115,18 +116,18 @@ If this variable is nil, no files will be excluded.")
 
 (deffoo nneething-request-article (id &optional group server buffer)
   (nneething-possibly-change-directory group)
-  (let ((file (unless (stringp id) (nneething-file-name id)))
+  (let ((file (unless (stringp id)
+		(nneething-file-name id)))
 	(nntp-server-buffer (or buffer nntp-server-buffer)))
     (and (stringp file)			; We did not request by Message-ID.
 	 (file-exists-p file)		; The file exists.
 	 (not (file-directory-p file))	; It's not a dir.
 	 (save-excursion
 	   (nnmail-find-file file)	; Insert the file in the nntp buf.
-	   (or (nnheader-article-p)	; Either it's a real article...
-	       (progn
-		 (goto-char (point-min))
-		 (nneething-make-head file (current-buffer)) ; ... or we fake some headers.
-		 (insert "\n")))
+	   (unless (nnheader-article-p)	; Either it's a real article...
+	     (goto-char (point-min))
+	     (nneething-make-head file (current-buffer)) ; ... or we fake some headers.
+	     (insert "\n"))
 	   t))))
 
 (deffoo nneething-request-group (group &optional dir dont-check)
@@ -180,8 +181,7 @@ If this variable is nil, no files will be excluded.")
 
 (defun nneething-map-file ()
   ;; We make sure that the .nneething directory exists. 
-  (unless (file-exists-p nneething-map-file-directory)
-    (make-directory nneething-map-file-directory 'parents))
+  (gnus-make-directory nneething-map-file-directory)
   ;; We store it in a special directory under the user's home dir.
   (concat (file-name-as-directory nneething-map-file-directory)
 	  nneething-group nneething-map-file))
@@ -191,17 +191,17 @@ If this variable is nil, no files will be excluded.")
   (let ((map-file (nneething-map-file))
 	(files (directory-files nneething-directory))
 	touched map-files)
-    (if (file-exists-p map-file)
-	(condition-case nil
-	    (load map-file nil t t)
-	  (error nil)))
-    (or nneething-active (setq nneething-active (cons 1 0)))
+    (when (file-exists-p map-file)
+      (ignore-errors
+	(load map-file nil t t)))
+    (unless nneething-active
+      (setq nneething-active (cons 1 0)))
     ;; Old nneething had a different map format.
     (when (and (cdar nneething-map)
 	       (atom (cdar nneething-map)))
       (setq nneething-map
 	    (mapcar (lambda (n)
-		      (list (cdr n) (car n) 
+		      (list (cdr n) (car n)
 			    (nth 5 (file-attributes 
 				    (nneething-file-name (car n))))))
 		    nneething-map)))
@@ -234,24 +234,23 @@ If this variable is nil, no files will be excluded.")
 	(setq map (cdr map))))
     ;; Find all new files and enter them into the map.
     (while files
-      (unless (member (car files) map-files) 
+      (unless (member (car files) map-files)
 	;; This file is not in the map, so we enter it.
 	(setq touched t)
 	(setcdr nneething-active (1+ (cdr nneething-active)))
-	(push (list (cdr nneething-active) (car files) 
+	(push (list (cdr nneething-active) (car files)
 		    (nth 5 (file-attributes
 			    (nneething-file-name (car files)))))
 	      nneething-map))
       (setq files (cdr files)))
     (when (and touched 
 	       (not nneething-read-only))
-      (save-excursion
-	(nnheader-set-temp-buffer " *nneething map*")
-	(insert "(setq nneething-map '" (prin1-to-string nneething-map) ")\n"
-		"(setq nneething-active '" (prin1-to-string nneething-active)
-		")\n")
-	(write-region (point-min) (point-max) map-file nil 'nomesg)
-	(kill-buffer (current-buffer))))))
+      (nnheader-temp-write map-file
+	(insert "(setq nneething-map '")
+	(gnus-prin1 nneething-map)
+	(insert ")\n(setq nneething-active '")
+	(gnus-prin1 nneething-active)
+	(insert ")\n")))))
 
 (defun nneething-insert-head (file)
   "Insert the head of FILE."
@@ -269,11 +268,11 @@ If this variable is nil, no files will be excluded.")
      "@" (system-name) ">\n"
      (if (equal '(0 0) (nth 5 atts)) ""
        (concat "Date: " (current-time-string (nth 5 atts)) "\n"))
-     (or (if buffer
-	     (save-excursion 
-	       (set-buffer buffer)
-	       (if (re-search-forward "<[a-zA-Z0-9_]@[-a-zA-Z0-9_]>" 1000 t)
-		   (concat "From: " (match-string 0) "\n"))))
+     (or (when buffer
+	   (save-excursion 
+	     (set-buffer buffer)
+	     (when (re-search-forward "<[a-zA-Z0-9_]@[-a-zA-Z0-9_]>" 1000 t)
+	       (concat "From: " (match-string 0) "\n"))))
 	 (nneething-from-line (nth 2 atts) file))
      (if (> (string-to-int (int-to-string (nth 7 atts))) 0)
 	 (concat "Chars: " (int-to-string (nth 7 atts)) "\n")
@@ -282,7 +281,8 @@ If this variable is nil, no files will be excluded.")
 	 (save-excursion
 	   (set-buffer buffer)
 	   (concat "Lines: " (int-to-string 
-			      (count-lines (point-min) (point-max))) "\n"))
+			      (count-lines (point-min) (point-max)))
+		   "\n"))
        "")
      )))
 
@@ -302,13 +302,13 @@ If this variable is nil, no files will be excluded.")
 	 (host (if  (string-match "\\`/[^/@]*@\\([^:/]+\\):" file)
 		   (prog1
 		       (substring file 
-				  (match-beginning 1) 
+				  (match-beginning 1)
 				  (match-end 1))
-		     (if (string-match "/\\(users\\|home\\)/\\([^/]+\\)/" file)
-			 (setq login (substring file
-						(match-beginning 2)
-						(match-end 2))
-			       name nil)))
+		     (when (string-match "/\\(users\\|home\\)/\\([^/]+\\)/" file)
+		       (setq login (substring file
+					      (match-beginning 2)
+					      (match-end 2))
+			     name nil)))
 		 (system-name))))
     (concat "From: " login "@" host 
 	    (if name (concat " (" name ")") "") "\n")))

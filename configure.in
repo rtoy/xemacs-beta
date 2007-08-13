@@ -116,7 +116,7 @@ energize_version='no'
 native_sound_lib=''
 # make normal error-checking be the default in alpha and beta versions, so
 # that bugs get noticed.  Change this for released versions.
-error_check_default='no'
+error_check_default='yes'
 error_check_extents=$error_check_default
 error_check_typecheck=$error_check_default
 error_check_bufpos=$error_check_default
@@ -289,11 +289,13 @@ Internationalization options:
 			the Motif XmIm* routines (when available).
 			If the XmIm* routines are autodetected,
 			then the default is --with-xim=motif, else --with-xim=no.
---with-canna		Compile with support for Canna (an input method
+--with-canna		Compile with support for Canna (a Japanese input method
 			used in conjunction with Mule support).
---with-wnn		Compile with support for WNN (an input method
+--with-wnn		Compile with support for WNN (a multi-language input method
 			used in conjunction with Mule support).
-			This doesn't work yet.
+			This is beta level code.
+--with-wnn6		Compile with support for WNN version 6
+			This is alpha level code.
 --with-i18n3		Compile with I18N level 3 (support for message
 			translation).  This doesn't currently work.
 
@@ -425,6 +427,7 @@ while test $# != 0; do
 	with_mule	| \
 	with_canna	| \
 	with_wnn	| \
+	with_wnn6	| \
 	with_mocklisp	| \
 	with_energize	| \
 	with_sparcworks | \
@@ -2635,9 +2638,13 @@ if test "$with_mule" = "yes" ; then
     test "$with_xim" = "xlib"  && AC_DEFINE(XIM_XLIB)
     test "$with_xim" = "motif" && AC_DEFINE(XIM_MOTIF)
   fi
+  # wnn6 implies wnn support
+  if test "$with_wnn6" = "yes" ; then
+    with_wnn=yes
+  fi
 else # Other internationalization features depend on Mule
   with_mule="no"
-  for feature in xim canna wnn ; do
+  for feature in xim canna wnn wnn6 ; do
     if eval "test -n \"\$with_$feature\" -a \"\$with_$feature\" != no" ; then
       AC_WARN(--with-$feature ignored:  Not valid without Mule support)
     fi
@@ -3055,6 +3062,7 @@ IF_YES_AC_DEFINE(with_i18n3,     I18N3)
 IF_YES_AC_DEFINE(with_mule,      MULE)
 IF_YES_AC_DEFINE(with_canna,     HAVE_CANNA)
 IF_YES_AC_DEFINE(with_wnn,       HAVE_WNN)
+IF_YES_AC_DEFINE(with_wnn6,      WNN6)
 IF_YES_AC_DEFINE(with_mock,      MOCKLISP_SUPPORT)
 IF_YES_AC_DEFINE(with_sparcworks,SUNPRO)
 IF_YES_AC_DEFINE(usage_tracking, USAGE_TRACKING)
@@ -3160,7 +3168,8 @@ test "$with_xim"      != no && echo "  Compiling in XIM (X11R5+ I18N input metho
 test "$with_xim" = motif    && echo "    Using Motif to provide XIM support."
 test "$with_xim" = xlib     && echo "    Using raw Xlib to provide XIM support."
 test "$with_canna"    = yes && echo "  Compiling in support for Canna on Mule."
-test "$with_wnn"      = yes && echo "  Compiling in support for WNN on Mule (doesn't currently work)."
+test "$with_wnn"      = yes && echo "  Compiling in support for WNN on Mule."
+test "$with_wnn6"     = yes && echo "  WNN support for version 6."
 test "$with_i18n3"    = yes && echo "  Compiling in I18N support, level 3 (doesn't currently work)."
 
 test "$with_cde"      = yes && echo "  Compiling in support for CDE."

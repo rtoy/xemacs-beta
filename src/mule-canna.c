@@ -28,7 +28,7 @@ Boston, MA 02111-1307, USA.  */
 
 /*
 
-  Authors: Akira Kon (kon@d1.bs2.mt.nec.co.jp)
+  Authors: Akira Kon (we need a current email address)
            Ichiro Hirakura (hirakura@uxp.bs2.mt.nec.co.jp)
 
   Functions defined in this file are
@@ -212,7 +212,7 @@ variables.
   jrKanjiStatus ks;
   int len;
 
-  CHECK_CHAR (ch);
+  CHECK_CHAR_COERCE_INT (ch);
   len = jrKanjiString (0, XCHAR (ch), buf, KEYTOSTRSIZE, &ks);
   return storeResults (buf, len, &ks);
 }
@@ -323,6 +323,14 @@ No separator will be used otherwise.
   jrKanjiControl (0, KC_SETBUNSETSUKUGIRI, (char *) kugiri);
 }
 
+/* For whatever reason, calling Fding directly from libCanna loses */
+static void call_Fding()
+{
+  extern Lisp_Object Fding();
+
+  (void)Fding(Qnil, Qnil, Qnil);
+}
+
 DEFUN ("canna-initialize", Fcanna_initialize, 0, 3, 0, /*
 Initialize ``canna'', which is a kana-to-kanji converter for GNU Emacs.
 The first arg specifies if inserting space character between BUNSETSU when
@@ -411,10 +419,10 @@ If nil is specified for each arg, the default value will be used.
     }
   else
     {
-      extern (*jrBeepFunc)();
-      Lisp_Object Fding (), CANNA_mode_keys ();
+      extern void (*jrBeepFunc)();
+      Lisp_Object CANNA_mode_keys ();
 
-      jrBeepFunc = Fding;
+      jrBeepFunc = call_Fding;
 
 #ifdef KC_SETAPPNAME
 #ifndef CANNA_MULE
@@ -823,12 +831,17 @@ DEFUN ("canna-henkan-kakutei", Fcanna_henkan_kakutei, 2, 2, 0, /*
 */
        (bun, kouho))
 {
+  int nbun, nkouho;
+
   if (confirmContext () == 0)
     {
       return Qnil;
     }
-  RkGoTo (IRCP_context, bun);
-  RkXfer (IRCP_context, kouho);
+  nbun = XINT(bun);
+  RkGoTo (IRCP_context, nbun);
+
+  nkouho = XINT(kouho);
+  RkXfer (IRCP_context, nkouho);
   return Qt;
 }
 

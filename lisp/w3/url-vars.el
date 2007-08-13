@@ -1,7 +1,7 @@
 ;;; url-vars.el --- Variables for Uniform Resource Locator tool
 ;; Author: wmperry
-;; Created: 1997/01/16 14:13:05
-;; Version: 1.24
+;; Created: 1997/02/10 16:15:19
+;; Version: 1.27
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -273,7 +273,6 @@ show when possible.")
 (defvar url-working-buffer url-default-working-buffer " The buffer to do all of the processing in.
  (It defaults to `url-default-working-buffer' and is bound to ` *URL-<i>*' buffers
   when used for multiple requests, cf. `url-multiple-p')")
-(defvar url-current-annotation nil "URL of document we are annotating...")
 (defvar url-current-referer nil "Referer of this page.")
 (defvar url-current-content-length nil "Current content length.")
 (defvar url-current-file nil "Filename of current document.")
@@ -427,12 +426,6 @@ values are 'yes-or-no-p or 'y-or-n-p, or any function that takes a
 single argument (the prompt), and returns t only if a positive answer
 is gotten.")
 
-(defvar url-connection-retries 5
-  "*# of times to try for a connection before bailing.
-If for some reason url-open-stream cannot make a connection to a host
-right away, it will sit for 1 second, then try again, up to this many
-tries.")
-
 (defvar url-find-this-link nil "Link to go to within a document.")
 
 (defvar url-gateway-method 'native
@@ -453,19 +446,6 @@ Currently supported methods:
 
 (defvar url-running-xemacs (string-match "XEmacs" emacs-version)
   "*In XEmacs?.")
-
-(defvar url-use-hypertext-dired t
-  "*How to format directory listings.
-
-If value is non-nil, use directory-files to list them out and
-transform them into a hypertext document, then pass it through the
-parse like any other document.
-
-If value nil, just pass the directory off to dired using find-file.")
-
-(defconst monthabbrev-alist
-  '(("Jan" . 1) ("Feb" . 2) ("Mar" . 3) ("Apr" . 4) ("May" . 5) ("Jun" . 6)
-    ("Jul" . 7) ("Aug" . 8) ("Sep" . 9) ("Oct" . 10) ("Nov" . 11) ("Dec" . 12)))
 
 (defvar url-default-ports '(("http"   .  "80")
 			    ("gopher" .  "70")

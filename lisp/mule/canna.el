@@ -381,7 +381,11 @@ See also document for canna:saved-exit-minibuffer."
   "Use input character as a key of complex translation input such as\n\
 kana-to-kanji translation."
   (interactive "*p")
-  (canna:functional-insert-command2 last-command-char arg) )
+  (let ((ch))
+    (if (char-or-char-int-p arg)
+	(setq ch last-command-char)
+      (setq ch (event-to-character last-command-event)))
+    (canna:functional-insert-command2 ch arg) ))
 
 (defun canna:functional-insert-command2 (ch arg)
   "This function actualy isert a converted Japanese string."
@@ -647,7 +651,11 @@ kana-to-kanji translation, even if you are in the minibuffer."
   (use-local-map canna:*minibuffer-local-map-backup*)
   (set-window-buffer (minibuffer-window) canna:*saved-minibuffer*)
   (select-window canna:*previous-window*)
-  (canna:functional-insert-command2 last-command-char arg) )
+  (let ((ch))
+    (if (char-or-char-int-p arg)
+	(setq ch last-command-char)
+      (setq ch (event-to-character last-command-event)))
+    (canna:functional-insert-command2 ch arg) ))
 
 ;;;
 ;;; かんなモードの主役は、次の canna-self-insert-command である。この

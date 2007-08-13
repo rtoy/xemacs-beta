@@ -1,5 +1,5 @@
 ;;; nnspool.el --- spool access for GNU Emacs
-;; Copyright (C) 1988,89,90,93,94,95,96 Free Software Foundation, Inc.
+;; Copyright (C) 1988,89,90,93,94,95,96,97 Free Software Foundation, Inc.
 
 ;; Author: Masanobu UMEDA <umerin@flab.flab.fujitsu.junet>
 ;; 	Lars Magne Ingebrigtsen <larsi@ifi.uio.no>
@@ -143,8 +143,8 @@ there.")
 		 (message "nnspool: Receiving headers... %d%%"
 			  (/ (* count 100) number))))
 	  
-	  (and do-message
-	       (message "nnspool: Receiving headers...done"))
+	  (when do-message
+	    (message "nnspool: Receiving headers...done"))
 	  
 	  ;; Fold continuation lines.
 	  (nnheader-fold-continuation-lines)
@@ -282,7 +282,7 @@ there.")
 	  (while (and (looking-at "\\([^ ]+\\) +[0-9]+ ")
 		      (progn
 			;; We insert a .0 to make the list reader
-			;; interpret the number as a float. It is far
+			;; interpret the number as a float.  It is far
 			;; too big to be stored in a lisp integer. 
 			(goto-char (1- (match-end 0)))
 			(insert ".0")
@@ -290,9 +290,9 @@ there.")
 			     (goto-char (match-end 1))
 			     (read (current-buffer)))
 			   seconds))
-		      (setq groups (cons (buffer-substring
+		      (push (buffer-substring
 					  (match-beginning 1) (match-end 1))
-					 groups))
+					 groups)
 		      (zerop (forward-line -1))))
 	  (erase-buffer)
 	  (while groups
@@ -320,9 +320,8 @@ there.")
 	(process-send-region proc (point-min) (point-max))
 	;; We slap a condition-case around this, because the process may
 	;; have exited already...
-	(condition-case nil
-	    (process-send-eof proc)
-	  (error nil))
+	(ignore-errors
+	  (process-send-eof proc))
 	t))))
 
 
@@ -358,44 +357,34 @@ there.")
 	  (erase-buffer)
 	  (if nnspool-sift-nov-with-sed
 	      (nnspool-sift-nov-with-sed articles nov)
-	    (insert-file-contents nov)
+	    (nnheader-insert-file-contents nov)
 	    (if (and fetch-old
 		     (not (numberp fetch-old)))
 		t			; We want all the headers.
-	      (condition-case ()
-		  (progn
-		    ;; First we find the first wanted line.
-		    (nnspool-find-nov-line
-		     (if fetch-old (max 1 (- (car articles) fetch-old))
-		       (car articles)))
-		    (delete-region (point-min) (point))
-		    ;; Then we find the last wanted line. 
-		    (if (nnspool-find-nov-line 
-			 (progn (while (cdr articles)
-				  (setq articles (cdr articles)))
-				(car articles)))
-			(forward-line 1))
-		    (delete-region (point) (point-max))
-		    ;; If the buffer is empty, this wasn't very successful.
-		    (unless (zerop (buffer-size))
-		      ;; We check what the last article number was.  
-		      ;; The NOV file may be out of sync with the articles
-		      ;; in the group.
-		      (forward-line -1)
-		      (setq last (read (current-buffer)))
-		      (if (= last (car articles))
-			  ;; Yup, it's all there.
-			  t
-			;; Perhaps not.  We try to find the missing articles.
-			(while (and arts
-				    (<= last (car arts)))
-			  (pop arts))
-			;; The articles in `arts' are missing from the buffer.
-			(while arts
-			  (nnspool-insert-nov-head (pop arts)))
-			t)))
-		;; The NOV file was corrupted.
-		(error nil)))))))))
+	      (ignore-errors
+		;; Delete unwanted NOV lines.
+		(nnheader-nov-delete-outside-range
+		 (if fetch-old (max 1 (- (car articles) fetch-old))
+		   (car articles))
+		 (car (last articles)))
+		;; If the buffer is empty, this wasn't very successful.
+		(unless (zerop (buffer-size))
+		  ;; We check what the last article number was.  
+		  ;; The NOV file may be out of sync with the articles
+		  ;; in the group.
+		  (forward-line -1)
+		  (setq last (read (current-buffer)))
+		  (if (= last (car articles))
+		      ;; Yup, it's all there.
+		      t
+		    ;; Perhaps not.  We try to find the missing articles.
+		    (while (and arts
+				(<= last (car arts)))
+		      (pop arts))
+		    ;; The articles in `arts' are missing from the buffer.
+		    (while arts
+		      (nnspool-insert-nov-head (pop arts)))
+		    t))))))))))
 
 (defun nnspool-insert-nov-head (article)
   "Read the head of ARTICLE, convert to NOV headers, and insert."
@@ -412,42 +401,6 @@ there.")
 	  (nnheader-insert-nov headers)))
       (kill-buffer buf))))
 
-(defun nnspool-find-nov-line (article)
-  (let ((max (point-max))
-	(min (goto-char (point-min)))
-	(cur (current-buffer))
-	(prev (point-min))
-	num found)
-    (while (not found)
-      (goto-char (/ (+ max min) 2))
-      (beginning-of-line)
-      (if (or (= (point) prev)
-	      (eobp))
-	  (setq found t)
-	(setq prev (point))
-	(cond ((> (setq num (read cur)) article)
-	       (setq max (point)))
-	      ((< num article)
-	       (setq min (point)))
-	      (t
-	       (setq found 'yes)))))
-    ;; Now we may have found the article we're looking for, or we
-    ;; may be somewhere near it.
-    (when (and (not (eq found 'yes))
-	       (not (eq num article)))
-      (setq found (point))
-      (while (and (< (point) max)
-		  (or (not (numberp num))
-		      (< num article)))
-	(forward-line 1)
-	(setq found (point))
-	(or (eobp)
-	    (= (setq num (read cur)) article)))
-      (unless (eq num article)
-	(goto-char found)))
-    (beginning-of-line)
-    (eq num article)))
-    
 (defun nnspool-sift-nov-with-sed (articles file)
   (let ((first (car articles))
 	(last (progn (while (cdr articles) (setq articles (cdr articles)))
@@ -464,13 +417,12 @@ there.")
     (set-buffer (get-buffer-create " *nnspool work*"))
     (buffer-disable-undo (current-buffer))
     (erase-buffer)
-    (condition-case ()
-	(call-process "grep" nil t nil (regexp-quote id) nnspool-history-file)
-      (error nil))
+    (ignore-errors
+      (call-process "grep" nil t nil (regexp-quote id) nnspool-history-file))
     (goto-char (point-min))
     (prog1
-	(if (looking-at "<[^>]+>[ \t]+[-0-9~]+[ \t]+\\([^ /\t\n]+\\)/\\([0-9]+\\)[ \t\n]")
-	    (cons (match-string 1) (string-to-int (match-string 2))))
+	(when (looking-at "<[^>]+>[ \t]+[-0-9~]+[ \t]+\\([^ /\t\n]+\\)/\\([0-9]+\\)[ \t\n]")
+	  (cons (match-string 1) (string-to-int (match-string 2))))
       (kill-buffer (current-buffer)))))
 
 (defun nnspool-find-file (file)
@@ -478,7 +430,7 @@ there.")
   (set-buffer nntp-server-buffer)
   (erase-buffer)
   (condition-case ()
-      (progn (nnheader-insert-file-contents-literally file) t)
+      (progn (nnheader-insert-file-contents file) t)
     (file-error nil)))
 
 (defun nnspool-possibly-change-directory (group)
@@ -501,7 +453,7 @@ there.")
 			(timezone-parse-time
 			 (aref (timezone-parse-date date) 3))))
 	 (unix (encode-time (nth 2 ttime) (nth 1 ttime) (nth 0 ttime)
-			    (nth 2 tdate) (nth 1 tdate) (nth 0 tdate) 
+			    (nth 2 tdate) (nth 1 tdate) (nth 0 tdate)
 			    (nth 4 tdate))))
     (+ (* (car unix) 65536.0)
        (cadr unix))))

@@ -8,6 +8,4 @@
   ;;(load "sunpro-sparcworks")
   (load "eos/sun-eos-load")
   (require 'annotations)
-  (when (featurep 'mule)
-    (load "mime-setup"))
   (garbage-collect))

@@ -2,12 +2,12 @@
 
 ;; Copyright (C) 1992,1993,1994  Tim Peters
 
-;; Author: 1995-1996 Barry A. Warsaw
+;; Author: 1995-1997 Barry A. Warsaw
 ;;         1992-1994 Tim Peters
 ;; Maintainer:    python-mode@python.org
 ;; Created:       Feb 1992
-;; Version:       2.83
-;; Last Modified: 1996/10/23 20:44:59
+;; Version:       2.89
+;; Last Modified: 1997/01/30 20:16:18
 ;; Keywords: python languages oop
 
 ;; This software is provided as-is, without express or implied
@@ -275,6 +275,9 @@ Currently-active file is at the head of the list.")
 (and (fboundp 'make-obsolete-variable)
      (make-obsolete-variable 'py-mode-hook 'python-mode-hook))
 
+(defvar py-delete-function 'backward-delete-char-untabify
+  "*Function called by `py-delete-char' when deleting characters.")
+
 (defvar py-mode-map ()
   "Keymap used in `python-mode' buffers.")
 
@@ -407,6 +410,26 @@ This is only used by `py-current-defun' to find the name for add-log.el.")
 If you change this, you probably have to change `py-current-defun' as well.
 This is only used by `py-current-defun' to find the name for add-log.el.")
 
+;; As of 30-Jan-1997, Emacs 19.34 works but XEmacs 19.15b90 and
+;; previous does not.  It is suspected that Emacsen before 19.34 are
+;; also broken.
+(defvar py-parse-partial-sexp-works-p
+  (let ((buf (get-buffer-create " ---*---pps---*---"))
+	state status)
+    (save-excursion
+      (set-buffer buf)
+      (erase-buffer)
+      (insert "(line1\n line2)\nline3")
+      (lisp-mode)
+      (goto-char (point-min))
+      (setq state (parse-partial-sexp (point) (save-excursion
+						(forward-line 1)
+						(point))))
+      (parse-partial-sexp (point) (point-max) 0 nil state)
+      (setq status (not (= (point) (point-max))))
+      (kill-buffer buf)
+      status))
+  "Does `parse-partial-sexp' work in this Emacs?")
 
 
 ;; Menu definitions, only relevent if you have the easymenu.el package
@@ -424,8 +447,8 @@ this package.")
     (easy-menu-define
      py-menu py-mode-map "Python Mode menu"
      '("Python"
-       ["Comment Out Region"   comment-region  (mark)]
-       ["Uncomment Region"     (comment-region (point) (mark) '(4)) (mark)]
+       ["Comment Out Region"   py-comment-region  (mark)]
+       ["Uncomment Region"     (py-comment-region (point) (mark) '(4)) (mark)]
        "-"
        ["Mark current block"   py-mark-block t]
        ["Mark current def"     mark-python-def-or-class t]
@@ -682,6 +705,7 @@ py-beep-if-tab-change\t\tring the bell if tab-width is changed"
   (make-local-variable 'paragraph-start)
   (make-local-variable 'require-final-newline)
   (make-local-variable 'comment-start)
+  (make-local-variable 'comment-end)
   (make-local-variable 'comment-start-skip)
   (make-local-variable 'comment-column)
   (make-local-variable 'indent-region-function)
@@ -697,6 +721,7 @@ py-beep-if-tab-change\t\tring the bell if tab-width is changed"
 	paragraph-start        "^[ \t]*$"
 	require-final-newline  t
 	comment-start          "# "
+	comment-end            ""
 	comment-start-skip     "# *"
 	comment-column         40
 	indent-region-function 'py-indent-region
@@ -990,7 +1015,10 @@ See the `\\[py-execute-region]' docs for an account of some subtleties."
 ;; Functions for Python style indentation
 (defun py-delete-char (count)
   "Reduce indentation or delete character.
+
 If point is at the leftmost column, deletes the preceding newline.
+Deletion is performed by calling the function in `py-delete-function'
+with a single argument (the number of characters to delete).
 
 Else if point is at the leftmost non-blank character of a line that is
 neither a continuation line nor a non-indenting comment line, or if
@@ -1009,7 +1037,7 @@ argument delets that many characters."
 	  (py-continuation-line-p)
 	  (not py-honor-comment-indentation)
 	  (looking-at "#[^ \t\n]"))	; non-indenting #
-      (backward-delete-char-untabify count)
+      (funcall py-delete-function count)
     ;; else indent the same as the colon line that opened the block
 
     ;; force non-blank so py-goto-block-up doesn't ignore it
@@ -2195,9 +2223,9 @@ local bindings to py-newline-and-indent."))
       (if (and (not (zerop (car state)))
 	       (not (eobp)))
 	  (progn
-	    ;; BUG ALERT: I could swear, from reading the docs, that
-	    ;; the 3rd argument should be plain 0
-	    (parse-partial-sexp (point) (point-max) (- 0 (car state))
+	    (parse-partial-sexp (point) (point-max)
+				(if py-parse-partial-sexp-works-p
+				    0 (- 0 (car state)))
 				nil state)
 	    (forward-line 1))))))
 
@@ -2361,6 +2389,15 @@ local bindings to py-newline-and-indent."))
     (set-buffer cbuf))
   (sit-for 0))
 
+;; older Emacsen don't have this function
+(if (not (fboundp 'match-string))
+    (defun match-string (n)
+      (let ((beg (match-beginning n))
+	    (end (match-end n)))
+	(if (and beg end)
+	    (buffer-substring beg end)
+	  nil))))
+
 (defun py-current-defun ()
   ;; tell add-log.el how to find the current function/method/variable
   (save-excursion
@@ -2374,7 +2411,7 @@ local bindings to py-newline-and-indent."))
       nil)))
 
 
-(defconst py-version "2.83"
+(defconst py-version "2.89"
   "`python-mode' version number.")
 (defconst py-help-address "python-mode@python.org"
   "Address accepting submission of bug reports.")

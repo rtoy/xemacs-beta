@@ -1,9 +1,13 @@
 # what Emacs version to build VM for.
 # Allowed values are 18 and 19.
+# Version 18 of Emacs is UNSUPPORTED.
+# In fact all versions of Emacs prior to 19.34 for Emacs and
+# prior to 19.14 for XEmacs are unsupported.
 #
-# Currently only vm-isearch-forward depends on this being
-# correct.  You can use the same VM .elc files under v18 and v19
-# Emacs if you don't care about vm-isearch-forward.
+# Currently only vm-isearch-forward depends on the EMACS_VERSION
+# setting being correct.  You can use the same VM .elc files
+# under v18 and v19 Emacs if you don't care about
+# vm-isearch-forward.
 #
 # Note that .elc files compiled with the v19 byte compiler won't
 # work under v18 Emacs, but v18 .elcs will work under v19.  So
@@ -50,7 +54,7 @@ CORE = vm-message.el vm-misc.el vm-byteopts.el
 OBJECTS = \
     vm-delete.elc vm-digest.elc vm-easymenu.elc vm-edit.elc vm-folder.elc \
     vm-license.elc vm-mark.elc vm-menu.elc vm-message.elc \
-    vm-minibuf.elc vm-misc.elc vm-mouse.elc \
+    vm-mime.elc vm-minibuf.elc vm-misc.elc vm-mouse.elc \
     vm-motion.elc vm-page.elc vm-pop.elc vm-reply.elc \
     vm-save.elc \
     vm-search.elc vm-sort.elc vm-summary.elc vm-startup.elc vm-thread.elc \
@@ -60,7 +64,7 @@ OBJECTS = \
 SOURCES = \
     vm-delete.el vm-digest.el vm-easymenu.el vm-edit.el vm-folder.el \
     vm-license.el vm-mark.el vm-menu.el vm-message.el \
-    vm-minibuf.el vm-misc.el vm-mouse.el \
+    vm-mime.el vm-minibuf.el vm-misc.el vm-mouse.el \
     vm-motion.el vm-page.el vm-pop.el vm-reply.el vm-save.el \
     vm-search.el vm-sort.el vm-startup.el vm-summary.el vm-thread.el \
     vm-toolbar.el \
@@ -141,6 +145,10 @@ vm-message.elc:	vm-message.el $(CORE)
 vm-minibuf.elc:	vm-minibuf.el $(CORE)
 	@echo compiling vm-minibuf.el...
 	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-minibuf.el
+
+vm-mime.elc:	vm-mime.el $(CORE)
+	@echo compiling vm-mime.el...
+	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-mime.el
 
 vm-misc.elc:	vm-misc.el $(CORE)
 	@echo compiling vm-misc.el...

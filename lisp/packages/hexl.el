@@ -706,8 +706,8 @@ This discards the buffer's undo information."
   (define-key hexl-mode-map "\C-e" 'hexl-end-of-line)
   (define-key hexl-mode-map "\C-f" 'hexl-forward-char)
 
-  (if (not (eq (key-binding (char-to-string help-char)) 'help-command))
-      (define-key hexl-mode-map (char-to-string help-char) 'undefined))
+  (if (not (eq (key-binding (vector help-char)) 'help-command))
+      (define-key hexl-mode-map (vector help-char) 'undefined))
 
   (define-key hexl-mode-map "\C-i" 'hexl-self-insert-command)
   (define-key hexl-mode-map "\C-j" 'hexl-self-insert-command)

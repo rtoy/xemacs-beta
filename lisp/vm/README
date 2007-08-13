@@ -5,7 +5,8 @@ How to setup VM:
    system, change them.
 
    Note that version 18 of Emacs is no longer supported.  VM may
-   or may not work under v18.
+   or may not work under v18.  The old v18 support code has been left
+   in place for those hardy souls who want to attempt it anyway.
 
 1) Do one of these:
      `make'.
@@ -16,7 +17,7 @@ How to setup VM:
 2) Put all the .elc files into a Lisp directory that Emacs knows
    about.  (see load-path).
 
-3) If you're using XEmacs 19.12 and you want toolbar support,
+3) If you're using XEmacs 19.14 and you want toolbar support,
    make a directory called `vm' in the XEmacs `etc' directory.
    Copy the files in pixmaps directory into the directory you
    just created.  VM will look for the pixmap there by default.

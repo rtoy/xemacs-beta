@@ -2577,7 +2577,10 @@ This command is used in the special Dired buffer created by
 	files
 	(buffer (get-buffer-create " *recover*")))
     ;; #### dired-do-flagged-delete in FSF.
-    (dired-do-deletions t)
+    ;; This version is for ange-ftp
+    ;;(dired-do-deletions t)
+    ;T This version is for efs
+    (dired-expunge-deletions)
     (unwind-protect
 	(save-excursion
 	  ;; Read in the auto-save-list file.
@@ -2935,5 +2938,14 @@ absolute one."
     (if (> count 0)
 	filename
       (error "Apparently circular symlink path"))))
+
+;; Suggested by Michael Kifer <kifer@CS.SunySB.EDU>
+(defun file-remote-p (file)
+  "Test whether file resides on the local system.
+The special value 'unknown is returned if no remote file access package
+has been loaded."
+  (cond ((fboundp 'efs-ftp-path) (efs-ftp-path name))
+	((fboundp 'ange-ftp-ftp-name) (ange-ftp-ftp-name name))
+	(t 'unknown)))
 
 ;;; files.el ends here

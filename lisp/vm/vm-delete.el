@@ -1,5 +1,5 @@
 ;;; Delete and expunge commands for VM.
-;;; Copyright (C) 1989, 1990, 1991, 1993, 1994, 1995 Kyle E. Jones
+;;; Copyright (C) 1989-1997 Kyle E. Jones
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ The message will be physically deleted from the current folder the next
 time the current folder is expunged.
 
 With a prefix argument COUNT, the current message and the next
-COUNT - 1 messages are deleted.  A negative argument means the
+COUNT - 1 messages are deleted.  A negative argument means
 the current message and the previous |COUNT| - 1 messages are
 deleted.
 
@@ -71,7 +71,7 @@ only marked messages are deleted, other messages are ignored."
   "Remove the `deleted' attribute from the current message.
 
 With a prefix argument COUNT, the current message and the next
-COUNT - 1 messages are undeleted.  A negative argument means the
+COUNT - 1 messages are undeleted.  A negative argument means
 the current message and the previous |COUNT| - 1 messages are
 deleted.
 
@@ -107,11 +107,17 @@ only marked messages are undeleted, other messages are ignored."
 					(eq vm-move-after-undeleting t))))
 	  (vm-next-message count t executing-kbd-macro)))))
 
-(defun vm-kill-subject ()
+(defun vm-kill-subject (&optional arg)
   "Delete all messages with the same subject as the current message.
 Message subjects are compared after ignoring parts matched by
-the variables vm-subject-ignored-prefix and vm-subject-ignored-suffix."
-  (interactive)
+the variables vm-subject-ignored-prefix and vm-subject-ignored-suffix.
+
+The optional prefix argument ARG specifies the direction to move
+if vm-move-after-killing is non-nil.  The default direction is
+forward.  A positive prefix argument means move forward, a
+negative arugment means move backward, a zero argument means
+don't move at all."
+  (interactive "p")
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
@@ -133,7 +139,16 @@ the variables vm-subject-ignored-prefix and vm-subject-ignored-suffix."
 	     (message "No messages deleted.")
 	   (message "%d message%s deleted" n (if (= n 1) "" "s")))))
   (vm-display nil nil '(vm-kill-subject) '(vm-kill-subject))
-  (vm-update-summary-and-mode-line))
+  (vm-update-summary-and-mode-line)
+  (cond ((or (not (numberp arg)) (> arg 0))
+	 (setq arg 1))
+	((< arg 0)
+	 (setq arg -1))
+	(t (setq arg 0)))
+  (if vm-move-after-killing
+      (let ((vm-circular-folders (and vm-circular-folders
+				      (eq vm-move-after-deleting t))))
+	(vm-next-message arg t executing-kbd-macro))))
 
 (defun vm-expunge-folder (&optional shaddap)
   "Expunge messages with the `deleted' attribute.
@@ -273,11 +288,13 @@ ignored."
 	  (lambda (buffer)
 	    (set-buffer (symbol-name buffer))
 	    (if (null vm-system-state)
-		(if (null vm-message-pointer)
-		    ;; folder is now empty
-		    (progn (setq vm-folder-type nil)
-			   (vm-update-summary-and-mode-line))
-		  (vm-preview-current-message))
+		(progn
+		  (vm-garbage-collect-message)
+		  (if (null vm-message-pointer)
+		      ;; folder is now empty
+		      (progn (setq vm-folder-type nil)
+			     (vm-update-summary-and-mode-line))
+		    (vm-preview-current-message)))
 	      (vm-update-summary-and-mode-line))
 	    (if (not (eq major-mode 'vm-virtual-mode))
 		(setq vm-message-order-changed

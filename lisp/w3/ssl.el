@@ -26,10 +26,13 @@
 ;;; Boston, MA 02111-1307, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defvar ssl-program-name "ssl %s %s"
-  "*The program to run in a subprocess to open an SSL connection.
-This is run through `format' with two strings, the hostname and port #
-to connect to.")
+(defvar ssl-program-name "ssl"
+  "*The program to run in a subprocess to open an SSL connection.")
+
+(defvar ssl-program-arguments nil
+  "*Arguments that should be passed to the program `ssl-program-name'.
+This should be used if your SSL program needs command line switches to
+specify any behaviour (certificate file locations, etc).")
 
 (defun open-ssl-stream (name buffer host service)
   "Open a SSL connection for a service to a host.
@@ -45,13 +48,15 @@ BUFFER is the buffer (or buffer-name) to associate with the process.
 Third arg is name of the host to connect to, or its IP address.
 Fourth arg SERVICE is name of the service desired, or an integer
  specifying a port number to connect to."
-  (let ((proc (start-process name buffer
-			     "/bin/sh"
-			     "-c"
-			     (format ssl-program-name host 
-				     (if (stringp service)
-					 service
-				       (int-to-string service))))))
+  (let ((proc (apply 'start-process
+		     name
+		     buffer
+		     ssl-program-name
+		     (append ssl-program-arguments
+			     (list host 
+				   (if (stringp service)
+				       service
+				     (int-to-string service)))))))
     (process-kill-without-query proc)
     proc))
 

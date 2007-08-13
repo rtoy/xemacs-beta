@@ -193,7 +193,7 @@ Entry to this mode via command `electric-buffer-list' calls the value of
 	(setq i (1+ i))))
     (define-key map "\C-z" 'suspend-emacs)
     (define-key map "v" 'Electric-buffer-menu-mode-view-buffer)
-    (define-key map (char-to-string help-char) 'Helper-help)
+    (define-key map (vector help-char) 'Helper-help)
     (define-key map "?" 'Helper-describe-bindings)
     (define-key map "\C-c" nil)
     (define-key map "\C-c\C-c" 'Electric-buffer-menu-quit)
@@ -280,7 +280,7 @@ Does not execute select, save, or delete commands."
   (message "%s"
 	   (if (and (eq (key-binding "\C-c\C-c") 'Electric-buffer-menu-quit)
 		    (eq (key-binding " ") 'Electric-buffer-menu-select)
-		    (eq (key-binding (char-to-string help-char)) 'Helper-help)
+		    (eq (key-binding (vector help-char)) 'Helper-help)
 		    (eq (key-binding "?") 'Helper-describe-bindings))
 	       (substitute-command-keys "Type C-c C-c to exit, Space to select,
 Type \\[Electric-buffer-menu-quit] to exit, \

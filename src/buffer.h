@@ -81,6 +81,7 @@ struct buffer_text
     Bytind z;			/* Index of end of buffer. */
     Bufpos bufz;		/* Equivalent as a Bufpos. */
     int gap_size;		/* Size of buffer's gap */
+    int end_gap_size;		/* Size of buffer's end gap */
     int modiff;			/* This counts buffer-modification events
 				   for this buffer.  It is incremented for
 				   each such event, and never otherwise

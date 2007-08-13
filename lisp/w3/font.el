@@ -1,7 +1,7 @@
 ;;; font.el --- New font model
 ;; Author: wmperry
-;; Created: 1997/01/30 00:58:33
-;; Version: 1.29
+;; Created: 1997/02/08 00:56:14
+;; Version: 1.33
 ;; Keywords: faces
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -29,9 +29,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; The emacsen compatibility package - load it up before anything else
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(require 'cl)
+
 (eval-and-compile
-  (require 'w3-sysdp)
-  (require 'cl))
+  (if (not (and (string-match "XEmacs" emacs-version)
+		(or (> emacs-major-version 19)
+		    (>= emacs-minor-version 14))))
+      (require 'w3-sysdp)))
 
 (require 'disp-table)
 (if (not (fboundp '<<))   (fset '<< 'lsh))
@@ -295,8 +299,12 @@ for use in the 'weight' field of an X font string.")
 (defun font-spatial-to-canonical (spec &optional device)
   "Convert SPEC (in inches, millimeters, points, or picas) into points"
   ;; 1 in = 6 pa = 25.4 mm = 72 pt
-  (if (numberp spec)
-      spec
+  (cond
+   ((numberp spec)
+    spec)
+   ((null spec)
+    nil)
+   (t
     (let ((num nil)
 	  (type nil)
 	  ;; If for any reason we get null for any of this, default
@@ -339,7 +347,7 @@ for use in the 'weight' field of an X font string.")
        (t
 	(setq retval num))
        )
-      retval)))
+      retval))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -466,46 +474,47 @@ for use in the 'weight' field of an X font string.")
 	   ))))
 
 (defun x-font-create-object (fontname &optional device)
-  (if (or (not (stringp fontname))
-	  (not (string-match font-x-font-regexp fontname)))
-      (make-font)
-    (let ((family nil)
-	  (style nil)
-	  (size nil)
-	  (weight  (match-string 1 fontname))
-	  (slant   (match-string 2 fontname))
-	  (swidth  (match-string 3 fontname))
-	  (adstyle (match-string 4 fontname))
-	  (pxsize  (match-string 5 fontname))
-	  (ptsize  (match-string 6 fontname))
-	  (retval nil)
-	  (case-fold-search t)
-	  )
-      (if (not (string-match x-font-regexp-foundry-and-family fontname))
-	  nil
-	(setq family (list (downcase (match-string 1 fontname)))))
-      (if (string= "*" weight)  (setq weight  nil))
-      (if (string= "*" slant)   (setq slant   nil))
-      (if (string= "*" swidth)  (setq swidth  nil))
-      (if (string= "*" adstyle) (setq adstyle nil))
-      (if (string= "*" pxsize)  (setq pxsize  nil))
-      (if (string= "*" ptsize)  (setq ptsize  nil))
-      (if ptsize (setq size (/ (string-to-int ptsize) 10)))
-      (if (and (not size) pxsize) (setq size (concat pxsize "px")))
-      (if weight (setq weight (intern-soft (concat ":" (downcase weight)))))
-      (if (and adstyle (not (equal adstyle "")))
-	  (setq family (append family (list (downcase adstyle)))))
-      (setq retval (make-font :family family
-			      :weight weight
-			      :size size))
-      (set-font-bold-p retval (eq :bold weight))
-      (cond
-       ((null slant) nil)
-       ((member slant '("i" "I"))
-	(set-font-italic-p retval t))
-       ((member slant '("o" "O"))
-	(set-font-oblique-p retval t)))
-      retval)))
+  (let ((case-fold-search t))
+    (if (or (not (stringp fontname))
+	    (not (string-match font-x-font-regexp fontname)))
+	(make-font)
+      (let ((family nil)
+	    (style nil)
+	    (size nil)
+	    (weight  (match-string 1 fontname))
+	    (slant   (match-string 2 fontname))
+	    (swidth  (match-string 3 fontname))
+	    (adstyle (match-string 4 fontname))
+	    (pxsize  (match-string 5 fontname))
+	    (ptsize  (match-string 6 fontname))
+	    (retval nil)
+	    (case-fold-search t)
+	    )
+	(if (not (string-match x-font-regexp-foundry-and-family fontname))
+	    nil
+	  (setq family (list (downcase (match-string 1 fontname)))))
+	(if (string= "*" weight)  (setq weight  nil))
+	(if (string= "*" slant)   (setq slant   nil))
+	(if (string= "*" swidth)  (setq swidth  nil))
+	(if (string= "*" adstyle) (setq adstyle nil))
+	(if (string= "*" pxsize)  (setq pxsize  nil))
+	(if (string= "*" ptsize)  (setq ptsize  nil))
+	(if ptsize (setq size (/ (string-to-int ptsize) 10)))
+	(if (and (not size) pxsize) (setq size (concat pxsize "px")))
+	(if weight (setq weight (intern-soft (concat ":" (downcase weight)))))
+	(if (and adstyle (not (equal adstyle "")))
+	    (setq family (append family (list (downcase adstyle)))))
+	(setq retval (make-font :family family
+				:weight weight
+				:size size))
+	(set-font-bold-p retval (eq :bold weight))
+	(cond
+	 ((null slant) nil)
+	 ((member slant '("i" "I"))
+	  (set-font-italic-p retval t))
+	 ((member slant '("o" "O"))
+	  (set-font-oblique-p retval t)))
+	retval))))
 
 (defun x-font-families-for-device (&optional device no-resetp)
   (condition-case ()
@@ -565,9 +574,7 @@ for use in the 'weight' field of an X font string.")
 		    (font-size fontobj)
 		    (font-registry fontobj)
 		    (font-encoding fontobj)))
-	   (not (font-bold-p fontobj))
-	   (not (font-italic-p fontobj))
-	   (not (font-oblique-p fontobj)))
+	   (= (font-style fontobj) 0))
       (face-font 'default)
     (or device (setq device (selected-device)))
     (let ((family (or (font-family fontobj)

@@ -67,7 +67,7 @@ With prefix arg NOCONFIRM, execute current line as-is without editing."
   (define-key electric-history-map "\C-c\C-c" 'Electric-history-quit)
   (define-key electric-history-map "\C-]" 'Electric-history-quit)
   (define-key electric-history-map "\C-z" 'suspend-emacs)
-  (define-key electric-history-map (char-to-string help-char) 'Helper-help)
+  (define-key electric-history-map (vector help-char) 'Helper-help)
   ;; XEmacs
   (define-key electric-history-map 'backspace 'previous-line)
   (define-key electric-history-map "?" 'Helper-describe-bindings)

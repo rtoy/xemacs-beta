@@ -1,5 +1,5 @@
 ;;; nnbabyl.el --- rmail mbox access for Gnus
-;; Copyright (C) 1995,96 Free Software Foundation, Inc.
+;; Copyright (C) 1995,96,97 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@ifi.uio.no>
 ;; 	Masanobu UMEDA <umerin@flab.flab.fujitsu.junet>
@@ -85,10 +85,11 @@
       (while (setq article (pop articles))
 	(setq art-string (nnbabyl-article-string article))
 	(set-buffer nnbabyl-mbox-buffer)
-	(beginning-of-line)
+	(end-of-line)
 	(when (or (search-forward art-string nil t)
 		  (search-backward art-string nil t))
-	  (re-search-backward delim nil t)
+	  (unless (re-search-backward delim nil t)
+	    (goto-char (point-min)))
 	  (while (and (not (looking-at ".+:"))
 		      (zerop (forward-line 1))))
 	  (setq start (point))
@@ -117,6 +118,7 @@
 
 (deffoo nnbabyl-open-server (server &optional defs)
   (nnoo-change-server 'nnbabyl server defs)
+  (nnbabyl-create-mbox)
   (cond 
    ((not (file-exists-p nnbabyl-mbox-file))
     (nnbabyl-close-server)
@@ -157,13 +159,16 @@
     (goto-char (point-min))
     (when (search-forward (nnbabyl-article-string article) nil t)
       (let (start stop summary-line)
-	(re-search-backward (concat "^" nnbabyl-mail-delimiter) nil t)
+	(unless (re-search-backward (concat "^" nnbabyl-mail-delimiter) nil t)
+	  (goto-char (point-min))
+	  (end-of-line))
 	(while (and (not (looking-at ".+:"))
 		    (zerop (forward-line 1))))
 	(setq start (point))
-	(or (and (re-search-forward 
-		  (concat "^" nnbabyl-mail-delimiter) nil t)
-		 (forward-line -1))
+	(or (when (re-search-forward 
+		   (concat "^" nnbabyl-mail-delimiter) nil t)
+	      (beginning-of-line)
+	      t)
 	    (goto-char (point-max)))
 	(setq stop (point))
 	(let ((nntp-server-buffer (or buffer nntp-server-buffer)))
@@ -184,7 +189,7 @@
 	      (delete-region (progn (beginning-of-line) (point))
 			     (or (search-forward "\n\n" nil t)
 				 (point)))))
-	  (if (numberp article) 
+	  (if (numberp article)
 	      (cons nnbabyl-current-group article)
 	    (nnbabyl-article-group-number)))))))
 
@@ -205,6 +210,7 @@
 			 (car active) (cdr active) group))))))
 
 (deffoo nnbabyl-request-scan (&optional group server)
+  (nnbabyl-possibly-change-newsgroup group server)
   (nnbabyl-read-mbox)
   (nnmail-get-new-mail 
    'nnbabyl 
@@ -229,18 +235,19 @@
 (deffoo nnbabyl-close-group (group &optional server)
   t)
 
-(deffoo nnbabyl-request-create-group (group &optional server) 
+(deffoo nnbabyl-request-create-group (group &optional server args)
   (nnmail-activate 'nnbabyl)
   (unless (assoc group nnbabyl-group-alist)
-    (setq nnbabyl-group-alist (cons (list group (cons 1 0))
-				    nnbabyl-group-alist))
+    (push (list group (cons 1 0))
+				    nnbabyl-group-alist)
     (nnmail-save-active nnbabyl-group-alist nnbabyl-active-file))
   t)
 
 (deffoo nnbabyl-request-list (&optional server)
   (save-excursion
     (nnmail-find-file nnbabyl-active-file)
-    (setq nnbabyl-group-alist (nnmail-get-active))))
+    (setq nnbabyl-group-alist (nnmail-get-active))
+    t))
 
 (deffoo nnbabyl-request-newgroups (date &optional server)
   (nnbabyl-request-list server))
@@ -260,17 +267,17 @@
       (gnus-set-text-properties (point-min) (point-max) nil)
       (while (and articles is-old)
 	(goto-char (point-min))
-	(if (search-forward (nnbabyl-article-string (car articles)) nil t)
-	    (if (setq is-old
-		      (nnmail-expired-article-p
-		       newsgroup
-		       (buffer-substring 
-			(point) (progn (end-of-line) (point))) force))
-		(progn
-		  (nnheader-message 5 "Deleting article %d in %s..." 
-				    (car articles) newsgroup)
-		  (nnbabyl-delete-mail))
-	      (setq rest (cons (car articles) rest))))
+	(when (search-forward (nnbabyl-article-string (car articles)) nil t)
+	  (if (setq is-old
+		    (nnmail-expired-article-p
+		     newsgroup
+		     (buffer-substring 
+		      (point) (progn (end-of-line) (point))) force))
+	      (progn
+		(nnheader-message 5 "Deleting article %d in %s..." 
+				  (car articles) newsgroup)
+		(nnbabyl-delete-mail))
+	    (push (car articles) rest)))
 	(setq articles (cdr articles)))
       (save-buffer)
       ;; Find the lowest active article in this group.
@@ -286,7 +293,6 @@
 
 (deffoo nnbabyl-request-move-article 
   (article group server accept-form &optional last)
-  (nnbabyl-possibly-change-newsgroup group server)
   (let ((buf (get-buffer-create " *nnbabyl move*"))
 	result)
     (and 
@@ -295,15 +301,16 @@
        (set-buffer buf)
        (insert-buffer-substring nntp-server-buffer)
        (goto-char (point-min))
-       (if (re-search-forward 
-	    "^X-Gnus-Newsgroup:" 
-	    (save-excursion (search-forward "\n\n" nil t) (point)) t)
-	   (delete-region (progn (beginning-of-line) (point))
-			  (progn (forward-line 1) (point))))
+       (while (re-search-forward 
+	       "^X-Gnus-Newsgroup:" 
+	       (save-excursion (search-forward "\n\n" nil t) (point)) t)
+	 (delete-region (progn (beginning-of-line) (point))
+			(progn (forward-line 1) (point))))
        (setq result (eval accept-form))
        (kill-buffer (current-buffer))
        result)
      (save-excursion
+       (nnbabyl-possibly-change-newsgroup group server)
        (set-buffer nnbabyl-mbox-buffer)
        (goto-char (point-min))
        (if (search-forward (nnbabyl-article-string article) nil t)
@@ -325,10 +332,10 @@
        (save-excursion
 	 (while (re-search-backward "^X-Gnus-Newsgroup: " beg t)
 	   (delete-region (point) (progn (forward-line 1) (point)))))
-       (let ((nnmail-split-methods
-	      (if (stringp group) (list (list group "")) 
-		nnmail-split-methods)))
-	 (setq result (car (nnbabyl-save-mail))))
+       (setq result (car (nnbabyl-save-mail
+			  (if (stringp group)
+			      (list (cons group (nnbabyl-active-number group)))
+			    (nnmail-article-group 'nnbabyl-active-number)))))
        (set-buffer nnbabyl-mbox-buffer)
        (goto-char (point-max))
        (search-backward "\n\^_")
@@ -365,7 +372,8 @@
 	(while (search-forward ident nil t)
 	  (setq found t)
 	  (nnbabyl-delete-mail))
-	(and found (save-buffer)))))
+	(when found
+	  (save-buffer)))))
   ;; Remove the group from all structures.
   (setq nnbabyl-group-alist 
 	(delq (assoc group nnbabyl-group-alist) nnbabyl-group-alist)
@@ -385,7 +393,8 @@
       (while (search-forward ident nil t)
 	(replace-match new-ident t t)
 	(setq found t))
-      (and found (save-buffer))))
+      (when found
+	(save-buffer))))
   (let ((entry (assoc group nnbabyl-group-alist)))
     (and entry (setcar entry new-name))
     (setq nnbabyl-current-group nil)
@@ -397,45 +406,45 @@
 ;;; Internal functions.
 
 ;; If FORCE, delete article no matter how many X-Gnus-Newsgroup
-;; headers there are. If LEAVE-DELIM, don't delete the Unix mbox
+;; headers there are.  If LEAVE-DELIM, don't delete the Unix mbox
 ;; delimiter line.
 (defun nnbabyl-delete-mail (&optional force leave-delim)
   ;; Delete the current X-Gnus-Newsgroup line.
-  (or force
-      (delete-region
-       (progn (beginning-of-line) (point))
-       (progn (forward-line 1) (point))))
+  (unless force
+    (delete-region
+     (progn (beginning-of-line) (point))
+     (progn (forward-line 1) (point))))
   ;; Beginning of the article.
   (save-excursion
     (save-restriction
       (widen)
       (narrow-to-region
        (save-excursion
-	 (re-search-backward (concat "^" nnbabyl-mail-delimiter) nil t)
+	(unless (re-search-backward (concat "^" nnbabyl-mail-delimiter) nil t)
+	  (goto-char (point-min))
+	  (end-of-line))
 	 (if leave-delim (progn (forward-line 1) (point))
 	   (match-beginning 0)))
        (progn
 	 (forward-line 1)
-	 (or (and (re-search-forward (concat "^" nnbabyl-mail-delimiter) 
+	 (or (and (re-search-forward (concat "^" nnbabyl-mail-delimiter)
 				     nil t)
-		  (if (and (not (bobp)) leave-delim)
-		      (progn (forward-line -2) (point))
-		    (match-beginning 0)))
+		  (match-beginning 0))
 	     (point-max))))
       (goto-char (point-min))
       ;; Only delete the article if no other groups owns it as well.
-      (if (or force (not (re-search-forward "^X-Gnus-Newsgroup: " nil t)))
-	  (delete-region (point-min) (point-max))))))
+      (when (or force (not (re-search-forward "^X-Gnus-Newsgroup: " nil t)))
+	(delete-region (point-min) (point-max))))))
 
 (defun nnbabyl-possibly-change-newsgroup (newsgroup &optional server)
   (when (and server 
 	     (not (nnbabyl-server-opened server)))
     (nnbabyl-open-server server))
-  (if (or (not nnbabyl-mbox-buffer)
-	  (not (buffer-name nnbabyl-mbox-buffer)))
-      (save-excursion (nnbabyl-read-mbox)))
-  (or nnbabyl-group-alist
-      (nnmail-activate 'nnbabyl))
+  (when (or (not nnbabyl-mbox-buffer)
+	    (not (buffer-name nnbabyl-mbox-buffer)))
+    (save-excursion (nnbabyl-read-mbox)))
+  (unless nnbabyl-group-alist
+    (nnmail-activate 'nnbabyl))
   (if newsgroup
       (if (assoc newsgroup nnbabyl-group-alist)
 	  (setq nnbabyl-current-group newsgroup)
@@ -451,18 +460,18 @@
 (defun nnbabyl-article-group-number ()
   (save-excursion
     (goto-char (point-min))
-    (and (re-search-forward "^X-Gnus-Newsgroup: +\\([^:]+\\):\\([0-9]+\\) "
-			    nil t)
-	 (cons (buffer-substring (match-beginning 1) (match-end 1))
-	       (string-to-int
-		(buffer-substring (match-beginning 2) (match-end 2)))))))
+    (when (re-search-forward "^X-Gnus-Newsgroup: +\\([^:]+\\):\\([0-9]+\\) "
+			     nil t)
+      (cons (buffer-substring (match-beginning 1) (match-end 1))
+	    (string-to-int
+	     (buffer-substring (match-beginning 2) (match-end 2)))))))
 
 (defun nnbabyl-insert-lines ()
   "Insert how many lines and chars there are in the body of the mail."
   (let (lines chars)
     (save-excursion
       (goto-char (point-min))
-      (when (search-forward "\n\n" nil t) 
+      (when (search-forward "\n\n" nil t)
 	;; There may be an EOOH line here...
 	(when (looking-at "\\*\\*\\* EOOH \\*\\*\\*")
 	  (search-forward "\n\n" nil t))
@@ -478,14 +487,13 @@
 	(insert (format "Lines: %d\n" lines))
 	chars))))
 
-(defun nnbabyl-save-mail ()
+(defun nnbabyl-save-mail (group-art)
   ;; Called narrowed to an article.
-  (let ((group-art (nreverse (nnmail-article-group 'nnbabyl-active-number))))
-    (nnbabyl-insert-lines)
-    (nnmail-insert-xref group-art)
-    (nnbabyl-insert-newsgroup-line group-art)
-    (run-hooks 'nnbabyl-prepare-save-mail-hook)
-    group-art))
+  (nnbabyl-insert-lines)
+  (nnmail-insert-xref group-art)
+  (nnbabyl-insert-newsgroup-line group-art)
+  (run-hooks 'nnbabyl-prepare-save-mail-hook)
+  group-art)
 
 (defun nnbabyl-insert-newsgroup-line (group-art)
   (save-excursion
@@ -496,19 +504,18 @@
     ;; If there is a C-l at the beginning of the narrowed region, this
     ;; isn't really a "save", but rather a "scan".
     (goto-char (point-min))
-    (or (looking-at "\^L")
-	(save-excursion
-	  (insert "\^L\n0, unseen,,\n*** EOOH ***\n")
-	  (goto-char (point-max))
-	  (insert "\^_\n")))
-    (if (search-forward "\n\n" nil t)
-	(progn
-	  (forward-char -1)
-	  (while group-art
-	    (insert (format "X-Gnus-Newsgroup: %s:%d   %s\n" 
-			    (caar group-art) (cdar group-art)
-			    (current-time-string)))
-	    (setq group-art (cdr group-art)))))
+    (unless (looking-at "\^L")
+      (save-excursion
+	(insert "\^L\n0, unseen,,\n*** EOOH ***\n")
+	(goto-char (point-max))
+	(insert "\^_\n")))
+    (when (search-forward "\n\n" nil t)
+      (forward-char -1)
+      (while group-art
+	(insert (format "X-Gnus-Newsgroup: %s:%d   %s\n" 
+			(caar group-art) (cdar group-art)
+			(current-time-string)))
+	(setq group-art (cdr group-art))))
     t))
 
 (defun nnbabyl-active-number (group)
@@ -519,12 +526,11 @@
       ;; This group is new, so we create a new entry for it.
       ;; This might be a bit naughty... creating groups on the drop of
       ;; a hat, but I don't know...
-      (setq nnbabyl-group-alist (cons (list group (setq active (cons 1 1)))
-				      nnbabyl-group-alist)))
+      (push (list group (setq active (cons 1 1)))
+	    nnbabyl-group-alist))
     (cdr active)))
 
-(defun nnbabyl-read-mbox ()
-  (nnmail-activate 'nnbabyl)
+(defun nnbabyl-create-mbox ()
   (unless (file-exists-p nnbabyl-mbox-file)
     ;; Create a new, empty RMAIL mbox file.
     (save-excursion
@@ -532,14 +538,19 @@
 			(create-file-buffer nnbabyl-mbox-file)))
       (setq buffer-file-name nnbabyl-mbox-file)
       (insert "BABYL OPTIONS:\n\n\^_")
-      (write-region (point-min) (point-max) nnbabyl-mbox-file t 'nomesg)))
+      (nnmail-write-region
+       (point-min) (point-max) nnbabyl-mbox-file t 'nomesg))))
 
-  (if (and nnbabyl-mbox-buffer
+(defun nnbabyl-read-mbox ()
+  (nnmail-activate 'nnbabyl)
+  (nnbabyl-create-mbox)
+
+  (unless (and nnbabyl-mbox-buffer
 	   (buffer-name nnbabyl-mbox-buffer)
 	   (save-excursion
 	     (set-buffer nnbabyl-mbox-buffer)
 	     (= (buffer-size) (nnheader-file-size nnbabyl-mbox-file))))
-      () ; This buffer hasn't changed since we read it last.  Possibly.
+    ;; This buffer has changed since we read it last.  Possibly.
     (save-excursion
       (let ((delim (concat "^" nnbabyl-mail-delimiter))
 	    (alist nnbabyl-group-alist)
@@ -563,20 +574,23 @@
 	  (goto-char (point-max))
 	  (when (and (re-search-backward
 		      (format "^X-Gnus-Newsgroup: %s:\\([0-9]+\\) "
-			      (caar alist)) nil t)
+			      (caar alist))
+		      nil t)
 		     (> (setq number
 			      (string-to-number 
 			       (buffer-substring
 				(match-beginning 1) (match-end 1))))
 			(cdadar alist)))
-	    (setcdr (cadar alist) (1+ number)))
+	    (setcdr (cadar alist) number))
 	  (setq alist (cdr alist)))
 	
 	;; We go through the mbox and make sure that each and 
 	;; every mail belongs to some group or other.
 	(goto-char (point-min))
-	(re-search-forward delim nil t)
-	(setq start (match-end 0))
+	(if (looking-at "\^L")
+	    (setq start (point))
+	  (re-search-forward delim nil t)
+	  (setq start (match-end 0)))
 	(while (re-search-forward delim nil t)
 	  (setq end (match-end 0))
 	  (unless (search-backward "\nX-Gnus-Newsgroup: " start t)
@@ -584,7 +598,8 @@
 	    (save-excursion
 	      (save-restriction
 		(narrow-to-region (goto-char start) end)
-		(nnbabyl-save-mail)
+		(nnbabyl-save-mail 
+		 (nnmail-article-group 'nnbabyl-active-number))
 		(setq end (point-max)))))
 	  (goto-char (setq start end)))
 	(when (buffer-modified-p (current-buffer))
@@ -613,7 +628,8 @@
 	      (delete-region (progn (beginning-of-line) (point))
 			     (progn (forward-line 1) (point)))
 	      (nnheader-message 7 "Moving %s..." id)
-	      (nnbabyl-save-mail))
+	      (nnbabyl-save-mail
+	       (nnmail-article-group 'nnbabyl-active-number)))
 	  (intern id idents)))
       (when (buffer-modified-p (current-buffer))
 	(save-buffer))

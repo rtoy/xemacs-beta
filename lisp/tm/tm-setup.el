@@ -1,9 +1,9 @@
 ;;; tm-setup.el --- setup file for tm viewer.
 
-;; Copyright (C) 1994,1995,1996 Free Software Foundation, Inc.
+;; Copyright (C) 1994,1995,1996,1997 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: tm-setup.el,v 1.1.1.2 1996/12/21 20:50:45 steve Exp $
+;; Version: $Id: tm-setup.el,v 1.2 1997/02/15 22:21:30 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is part of tm (Tools for MIME).
@@ -19,8 +19,8 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with This program; see the file COPYING.  If not, write to
-;; the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Code:
@@ -42,10 +42,10 @@
     (set-atype 'mime/content-decoding-condition
 	       '((type . "message/external-body")
 		 ("access-type" . "anon-ftp")
-		 (method . mime/decode-message/external-ftp)
+		 (method . mime-article/decode-message/external-ftp)
 		 ))
-    (autoload 'mime/decode-message/external-ftp "tm-ftp")
-        
+    (autoload 'mime-article/decode-message/external-ftp "tm-ftp")
+    
     ;; for LaTeX
     (set-atype 'mime/content-decoding-condition
 	       '((type . "text/x-latex")
@@ -63,8 +63,16 @@
     (autoload 'mime/decode-text/latex "tm-latex")
     )))
 
+
 ;; for image/* and X-Face
-(if running-xemacs
+(defvar mime-setup-enable-inline-image
+  (and window-system
+       (or running-xemacs
+	   (and (featurep 'mule)(module-installed-p 'bitmap))
+	   ))
+  "*If it is non-nil, tm-setup sets up to use tm-image.")
+
+(if mime-setup-enable-inline-image
     (call-after-loaded 'tm-view
 		       (function
 			(lambda ()
@@ -72,8 +80,13 @@
 			  )))
   )
 
+
+(defvar mime-setup-enable-pgp
+  (module-installed-p 'mailcrypt)
+  "*If it is non-nil, tm-setup sets uf to use tm-pgp.")
+
 ;; for PGP
-(if (module-installed-p 'mailcrypt)
+(if mime-setup-enable-pgp
     (call-after-loaded 'tm-view
 		       (function
 			(lambda ()
@@ -85,14 +98,15 @@
 ;;; @ for RMAIL
 ;;;
 
-(or running-xemacs-with-mule
-    (call-after-loaded 'rmail
-		       (function
-			(lambda ()
-			  (require 'tm-rmail)
-			  ))
-		       'rmail-mode-hook)
-    )
+(defun tm-setup/load-rmail ()
+  (or (and (boundp 'rmail-support-mime)
+	   rmail-support-mime)
+      (require 'tm-rmail)
+      )
+  (remove-hook 'rmail-mode-hook 'tm-setup/load-rmail)
+  )
+
+(call-after-loaded 'rmail 'tm-setup/load-rmail 'rmail-mode-hook)
 
 
 ;;; @ for mh-e

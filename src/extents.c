@@ -2380,10 +2380,13 @@ adjust_extents_for_deletion_mapper (EXTENT extent, void *arg)
 
 void
 adjust_extents_for_deletion (Lisp_Object object, Bytind from,
-			     Bytind to, int gapsize, int numdel)
+			     Bytind to, int gapsize, int numdel,
+			     int movegapsize)
 {
   struct adjust_extents_for_deletion_arg closure;
   int i;
+  Memind adjust_to = (Memind) (to + gapsize);
+  Bytecount amount = - numdel - movegapsize;
   Memind oldsoe, newsoe;
   Stack_Of_Extents *soe = buffer_or_string_stack_of_extents (object);
 
@@ -2414,9 +2417,8 @@ adjust_extents_for_deletion (Lisp_Object object, Bytind from,
       oldsoe = soe->pos;
       if (soe->pos >= 0)
 	newsoe = do_marker_adjustment (soe->pos,
-				       (Memind) (to + gapsize),
-				       (Memind) (to + gapsize),
-				       - numdel - gapsize);
+						adjust_to, adjust_to,
+						amount);
       else
 	newsoe = soe->pos;
     }
@@ -2424,21 +2426,20 @@ adjust_extents_for_deletion (Lisp_Object object, Bytind from,
   for (i = 0; i < Dynarr_length (closure.list); i++)
     {
       EXTENT extent = Dynarr_at (closure.list, i);
-      Memind new_start, new_end;
+      Memind new_start = extent_start (extent);
+      Memind new_end = extent_end (extent);
 
       /* do_marker_adjustment() will not adjust values that should not be
 	 adjusted.  We're passing the same funky arguments to
 	 do_marker_adjustment() as buffer_delete_range() does. */
       new_start =
-	do_marker_adjustment (extent_start (extent),
-			      (Memind) (to + gapsize),
-			      (Memind) (to + gapsize),
-			      - numdel - gapsize);
+	do_marker_adjustment (new_start,
+				       adjust_to, adjust_to,
+				       amount);
       new_end =
-	do_marker_adjustment (extent_end (extent),
-			      (Memind) (to + gapsize),
-			      (Memind) (to + gapsize),
-			      - numdel - gapsize);
+	do_marker_adjustment (new_end,
+				       adjust_to, adjust_to,
+				       amount);
 
       /* We need to be very careful here so that the SOE doesn't get
 	 corrupted.  We are shrinking extents out of the deleted region
@@ -5138,7 +5139,8 @@ The following symbols have predefined meanings:
                     `inside-margin', or `outside-margin') of the extent's
                     begin glyph.
 
- end-glyph-layout The layout policy of the extent's end glyph.  */
+ end-glyph-layout The layout policy of the extent's end glyph.
+*/
        (extent, property, value))
 {
   /* This function can GC if property is `keymap' */
@@ -6354,9 +6356,15 @@ Used as the `paste-function' property of `text-prop' extents.
   if (NILP (prop))
     signal_simple_error ("internal error: no text-prop", extent);
   val = Fextent_property (extent, prop, Qnil);
+#if 0
+  /* removed by bill perry, 2/9/97
+  ** This little bit of code would not allow you to have a text property
+  ** with a value of Qnil.  This is bad bad bad.
+  */
   if (NILP (val))
     signal_simple_error_2 ("internal error: no text-prop",
 			   extent, prop);
+#endif
   Fput_text_property (from, to, prop, val, Qnil);
   return Qnil; /* important! */
 }

@@ -1,7 +1,7 @@
 ;;; w3-widget.el --- An image widget
 ;; Author: wmperry
-;; Created: 1997/01/17 22:09:43
-;; Version: 1.16
+;; Created: 1997/02/09 06:37:14
+;; Version: 1.18
 ;; Keywords: faces, images
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -148,6 +148,37 @@
 		    'src (widget-get widget 'src)
 		    'ismap server-map)))
 
+(defun widget-image-emacspeak-tty-imagemap (usemap)
+  (let* ((default nil)
+	 (href nil)
+	 (tag nil)
+	 (options (delete
+		   nil
+		   (mapcar
+		    (function
+		     (lambda (x)
+		       (if (eq (aref x 0) 'default)
+			   (setq default (aref x 2)))
+		       (if (and (not default) (stringp (aref x 2)))
+			   (setq default (aref x 2)))
+		       (setq tag (or (aref x 3) (aref x 2))
+			     href (aref x 2))
+		       (and (stringp tag)
+			    (stringp href)
+			    (list 'a
+				  (list
+				   (cons 'href href)
+				   (cons
+				    'class
+				    (list
+				     (if (url-have-visited-url href)
+					 ":visited" ":link"))))
+				  (list tag)))))
+		    usemap))))
+    (w3-display-node (list 'table '((border . "1"))
+			   (w3-display-chop-into-table
+			    (list nil nil options) 3)))))
+
 (defun widget-image-value-create (widget)
   ;; Insert the printed representation of the value
   (let (
@@ -177,27 +208,31 @@
 	  (goto-char where)
 	  (cond
 	   (client-map
-	    (let* ((default nil)
-		   (options (mapcar
-			     (function
-			      (lambda (x)
-				(if (eq (aref x 0) 'default)
-				    (setq default (aref x 2)))
-				(if (and (not default) (stringp (aref x 2)))
-				    (setq default (aref x 2)))
-				(list 'choice-item
-				      :format "%[%t%]"
-				      :tag (or (aref x 3) (aref x 2))
-				      :value (aref x 2)))) client-map)))
-	      (setq real-widget
-		    (apply 'widget-create 'menu-choice
-			   :tag (or (widget-get widget :tag) "Imagemap")
-			   :notify (widget-get widget :notify)
-			   :action (widget-get widget :action)
-			   :value default
-			   :parent widget
-			   :help-echo 'widget-image-summarize
-			   options))))
+	    (if (featurep 'emacspeak)
+		(widget-image-emacspeak-tty-imagemap client-map)
+	      (let* ((default nil)
+		     (href nil)
+		     (tag nil)
+		     (options (mapcar
+			       (function
+				(lambda (x)
+				  (if (eq (aref x 0) 'default)
+				      (setq default (aref x 2)))
+				  (if (and (not default) (stringp (aref x 2)))
+				      (setq default (aref x 2)))
+				  (list 'choice-item
+					:format "%[%t%]"
+					:tag (or (aref x 3) (aref x 2))
+					:value (aref x 2)))) client-map)))
+		(setq real-widget
+		      (apply 'widget-create 'menu-choice
+			     :tag (or (widget-get widget :tag) "Imagemap")
+			     :notify (widget-get widget :notify)
+			     :action (widget-get widget :action)
+			     :value default
+			     :parent widget
+			     :help-echo 'widget-image-summarize
+			     options)))))
 	   ((and server-map (stringp href))
 	    (setq real-widget
 		  (widget-image-create-subwidget
@@ -334,9 +369,10 @@ Any other value means ask the user each time.")
 			      (lambda (entry)
 				(cons
 				 (or (aref entry 3) (aref entry 2))
-				 (aref entry 3)))) usemap))
+				 (aref entry 2)))) usemap))
 	    (choice nil))
-	(setq choice (completing-read "Imagemap: " choices nil t))
+	(setq choice (completing-read "Imagemap: " choices nil t)
+	      choice (cdr-safe (assoc choice choices)))
 	(and (stringp choice) (w3-fetch choice))))
      (ismap				; Do server-side dummy imagemap for tty
       (w3-fetch (concat href "?0,0")))

@@ -1,10 +1,10 @@
 ;;; mime-setup.el --- setup file for tm viewer and composer.
 
-;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
+;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Version:
-;;	$Id: mime-setup.el,v 1.4 1997/01/30 02:22:47 steve Exp $
+;;	$Id: mime-setup.el,v 1.5 1997/02/15 22:21:26 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is part of tm (Tools for MIME).
@@ -102,13 +102,18 @@
 (add-hook 'mu-cite/pre-cite-hook 'mime/decode-message-header)
 
 
-;;; @ for RMAIL and VM
+;;; @ for mail-mode, RMAIL and VM
 ;;;
 
 (add-hook 'mail-setup-hook 'mime/decode-message-header)
 (add-hook 'mail-setup-hook 'mime/editor-mode 'append)
 (add-hook 'mail-send-hook  'mime-editor/maybe-translate)
-
+(set-alist 'mime-editor/split-message-sender-alist
+           'mail-mode (function
+                       (lambda ()
+                         (interactive)
+                         (funcall send-mail-function)
+                         )))
 
 ;;; @ for mh-e
 ;;;

@@ -182,18 +182,14 @@ default the local keymap of the current buffer is used."
 	       (setq keymap (car keymaps))
 	       (cond ((vm-mouse-xemacs-mouse-p)
 		      (define-key keymap 'button1 command)
-		      (define-key keymap 'button2 command)
-		      (define-key keymap 'button3 command))
+		      (define-key keymap 'button2 command))
 		     ((vm-mouse-fsfemacs-mouse-p)
 		      (define-key keymap [down-mouse-1] 'ignore)
 		      (define-key keymap [drag-mouse-1] 'ignore)
 		      (define-key keymap [mouse-1] command)
 		      (define-key keymap [drag-mouse-2] 'ignore)
 		      (define-key keymap [down-mouse-2] 'ignore)
-		      (define-key keymap [mouse-2] command)
-		      (define-key keymap [drag-mouse-3] 'ignore)
-		      (define-key keymap [down-mouse-3] 'ignore)
-		      (define-key keymap [mouse-3] command)))
+		      (define-key keymap [mouse-2] command)))
 	       (setq keymaps (cdr keymaps)))))
       (setq w (vm-get-buffer-window (current-buffer)))
       (setq q list
@@ -266,7 +262,9 @@ default the local keymap of the current buffer is used."
     (if (not multi-word)
 	(define-key minibuffer-local-map "\r"
 	  'vm-minibuffer-complete-word-and-exit))
-    (read-string prompt)))
+    ;; evade the XEmacs dialox box, yeccch.
+    (let ((should-use-dialog-box nil))
+      (read-string prompt))))
 
 (defvar last-nonmenu-event)
 
@@ -362,7 +360,9 @@ Line editing keys are:
 (defun vm-keyboard-read-file-name (prompt &optional dir default
 					  must-match initial history)
   "Like read-file-name, except HISTORY's value is unaltered."
-  (let ((oldvalue (symbol-value history)))
+  (let ((oldvalue (symbol-value history))
+	;; evade the XEmacs dialox box, yeccch.
+	(should-use-dialog-box nil))
     (unwind-protect
 	(condition-case nil
 	    (read-file-name prompt dir default must-match initial history)

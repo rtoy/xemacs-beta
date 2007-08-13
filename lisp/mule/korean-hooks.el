@@ -98,6 +98,17 @@
     (set-default-file-coding-system 'euc-korea)
     (setq keyboard-coding-system     'euc-korea)
     (setq terminal-coding-system     'euc-korea)
-    (set-charset-registry 'ascii "ksc5636")))
+    (set-charset-registry 'ascii "ksc5636")
+
+    ;; EGG specific setup 97.02.05 jhod
+    (when (featurep 'egg)
+      (when (not (featurep 'egg-kor))
+	(provide 'egg-kor)
+	(load "its/its-hangul")
+	(setq its:*standard-modes*
+	    (cons (its:get-mode-map "hangul") its:*standard-modes*)))
+      (setq-default its:*current-map* (its:get-mode-map "hangul")))
+
 ;    (setq-default quail-current-package
 ;                  (assoc "hangul" quail-package-alist))))
+    ))

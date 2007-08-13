@@ -1,13 +1,13 @@
 \input texinfo.tex
 @setfilename tm-view-ja.info
-@settitle{tm-view 7.79 Reference Manual（日本語版）}
+@settitle{tm-view 7.80 Reference Manual（日本語版）}
 @titlepage
-@title tm-view 7.79 Reference Manual（日本語版）
+@title tm-view 7.80 Reference Manual（日本語版）
 @author 守岡 知彦 <morioka@@jaist.ac.jp>
-@subtitle 1996/12/25
+@subtitle 1997/1/31
 @end titlepage
 @node Top, Introduction, (dir), (dir)
-@top tm-view 7.79 Reference Manual（日本語版）
+@top tm-view 7.80 Reference Manual（日本語版）
 
 @ifinfo
 
@@ -375,7 +375,13 @@ mode に戻る (*1)）
 @item @key{p}
 前の part に移動する
 
+@item @key{M-TAB}
+前の part に移動する
+
 @item @key{n}
+次の part に移動する
+
+@item @key{TAB}
 次の part に移動する
 
 @item @key{SPC}

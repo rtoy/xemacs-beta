@@ -45,10 +45,7 @@
 ;; global-map definitions moved to keydefs.el
 (fset 'help-command help-map)
 
-(let ((ch help-char))
-  (if (or (characterp ch) (integerp ch))
-      (setq ch (char-to-string ch)))
-  (define-key help-map ch 'help-for-help))
+(define-key help-map (vector help-char) 'help-for-help)
 (define-key help-map "?" 'help-for-help)
 (define-key help-map 'help 'help-for-help)
 
@@ -382,7 +379,8 @@ the window.")
                     (t
                      (message
                       (substitute-command-keys "Type \\[switch-to-buffer-other-window] to restore the other window, \\[scroll-other-window] to scroll the help."))))
-	      (shrink-window-if-larger-than-buffer helpwin)))))))
+	      (when temp-buffer-shrink-to-fit
+		(shrink-window-if-larger-than-buffer helpwin))))))))
 
 (defun describe-key (key)
   "Display documentation of the function invoked by KEY.

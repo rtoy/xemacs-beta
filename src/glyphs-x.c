@@ -1054,6 +1054,7 @@ xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
 /* The in-core jpeg code doesn't work, so I'm avoiding it for now.  -sb  */
 #define USE_TEMP_FILES_FOR_JPEG_IMAGES 1
+#define USE_TEMP_FILES_FOR_PNG_IMAGES 1
 
 static void
 jpeg_validate (Lisp_Object instantiator)
@@ -1875,7 +1876,7 @@ png_possible_dest_types (void)
   return IMAGE_COLOR_PIXMAP_MASK;
 }
 
-#if !defined (USE_TEMP_FILES_FOR_IMAGES) && (PNG_LIBPNG_VER >= 87)
+#if !defined (USE_TEMP_FILES_FOR_PNG_IMAGES) && (PNG_LIBPNG_VER >= 87)
 struct png_memory_storage
 {
   Extbyte *bytes;		/* The data       */
@@ -1894,7 +1895,7 @@ static void png_read_from_memory(png_structp png_ptr, png_bytep data,
    memcpy(data,tbr->bytes + tbr->index,length);
    tbr->index = tbr->index + length;
 }
-#endif /* !USE_TEMP_FILES_FOR_IMAGESS || PNG_LIBPNG_VER >= 87 */
+#endif /* !USE_TEMP_FILES_FOR_PNG_IMAGESS || PNG_LIBPNG_VER >= 87 */
 
 struct png_unwind_data
 {
@@ -1996,7 +1997,7 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
      this file, example.c from the libpng 0.81 distribution, and the
      pngtopnm sources. -WMP-
      */
-#if defined (USE_TEMP_FILES_FOR_IMAGES) || (PNG_LIBPNG_VER < 87)
+#if defined (USE_TEMP_FILES_FOR_PNG_IMAGES) || (PNG_LIBPNG_VER < 87)
   /* Write out to a temp file - we really should take the time to
      write appropriate memory bound IO stuff, but I am just trying
      to get the stupid thing working right now.
@@ -2032,7 +2033,7 @@ png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   png_read_init (png_ptr);
 
   /* Initialize the IO layer and read in header information */
-#if defined (USE_TEMP_FILES_FOR_IMAGES) || (PNG_LIBPNG_VER < 87)
+#if defined (USE_TEMP_FILES_FOR_PNG_IMAGES) || (PNG_LIBPNG_VER < 87)
   png_init_io (png_ptr, unwind.instream);
 #else
   {

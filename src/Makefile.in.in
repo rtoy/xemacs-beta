@@ -320,7 +320,7 @@ SHORT=
 #     define SOUND_CFLAGS	+e -I/usr/audio/examples 
 #   endif /* USE_GCC */
 #   define SOUND_OBJS		hpplay.o
-# elif defined (LINUX)
+# elif defined (LINUX) || defined(__FreeBSD__)
 #   define SOUND_CFLAGS
 #   define SOUND_OBJS		linuxplay.o
 # else
@@ -562,9 +562,11 @@ XMU_LIB = -lXmu
 # ifdef HAVE_WNN
 #  define WNN_OBJS mule-wnnfns.o
 #  define WNN_OBJ_SRC ${muledirfromsrc}/mule-wnnfns.c
+#  define LIB_WNN -lwnn
 # else
 #  define WNN_OBJS
 #  define WNN_OBJ_SRC
+#  define LIB_WNN
 # endif
 /* Chuck says that you have to have at least one specified actual
    object file per line. */
@@ -580,6 +582,7 @@ mule_obj_src=	${muledirfromsrc}/mule.c \
 mule_objs=
 mule_obj_src=
 #define LIB_CANNA
+#define LIB_WNN
 
 #endif /* not MULE */
 
@@ -627,9 +630,13 @@ TOOLKIT_LIBS = -lXaw
 LIBX11_LIBS = -llw $(TOOLKIT_LIBS) $(XPM_LIBS) $(XFACE_LIBS) $(JPEG_LIBS) $(PNG_LIBS) $(USAGE_TRACKING_LIBS) 
 
 #ifdef AIX4
-#define LIBI18N -li18n
+# define LIBI18N -li18n
 #else
-#define LIBI18N
+# if (defined(LINUX) && defined(HAVE_CDE))
+#  define LIBI18N -lXintl
+# else
+#  define LIBI18N
+#endif /* LINUX & CDE */
 #endif /* AIX4 */
 
 #ifdef THIS_IS_X11R6
@@ -788,7 +795,7 @@ LD=ld
 
 #ifdef TOOLTALK
 # define TOOLTALK_OBJS tooltalk.o
-# if (defined (IRIX5) || defined (HPUX) || defined (POWERPC) || defined (AIX4))
+# if (defined (IRIX5) || defined (HPUX) || defined (POWERPC) || defined (AIX4) || defined (LINUX))
 #  define LIB_TOOLTALK -ltt
 # else
 #  if (defined (SPARC) && !defined (USG))
@@ -1152,19 +1159,6 @@ otherobjs= $(termcapobjs) BTLOBJS lastfile.o $(mallocobjs) $(rallocobjs) $(alloc
 
 #ifdef SUNPRO
 /* Lisp files preloaded if compiled with support for SunPro products */
-#define MULE_TM_LISP \
-	${lispdir}tm/mime-setup.elc \
-	${lispdir}tl/tl-misc.elc \
-	${lispdir}tl/tl-str.elc \
-	${lispdir}tl/tl-list.elc \
-	${lispdir}tl/tl-seq.elc \
-	${lispdir}tl/tl-atype.elc \
-	${lispdir}tl/file-detect.elc \
-	${lispdir}tl/emu.elc \
-	${lispdir}tl/emu-x20.elc \
-	${lispdir}tl/emu-xemacs.elc \
-	${lispdir}tm/tm-setup.elc \
-	${lispdir}mule/cyrillic.elc
 #define SUNPRO_LISP \
 	${lispdir}packages/sccs.elc \
 	${lispdir}sunpro/sunpro-init.elc \
@@ -1184,8 +1178,7 @@ otherobjs= $(termcapobjs) BTLOBJS lastfile.o $(mallocobjs) $(rallocobjs) $(alloc
 	${lispdir}utils/annotations.elc \
 	${lispdir}modes/cc-mode.elc \
 	${lispdir}modes/imenu.elc \
-	${lispdir}utils/reporter.elc \
-	MULE_TM_LISP
+	${lispdir}utils/reporter.elc
 #else
 #define SUNPRO_LISP
 #endif
@@ -1275,6 +1268,8 @@ lisp=   ${lispdir}paths.el \
         ${lispdir}modes/auto-show.elc SUNPRO_LISP TTY_LISP \
         ${lispdir}bytecomp/bytecomp-runtime.elc FLOAT_LISP EPOCH_LISP \
         ${lispdir}prim/itimer.elc ${lispdir}ediff/ediff-hook.elc \
+	${lispdir}custom/custom.elc ${lispdir}custom/widget.elc \
+	${lispdir}w3/font.elc \
 	${lispdir}packages/fontl-hooks.elc SCROLLBAR_LISP \
 	${lispdir}prim/buffer.elc MENUBAR_LISP \
 	${lispdir}packages/buff-menu.elc DIALOG_LISP MULE_LISP NOMULE_LISP \
@@ -1291,7 +1286,7 @@ otherlisp= ${lispdir}bytecomp/bytecomp.elc \
 LIBES = NAS_LIBS ${native_sound_lib} SOCKS_LIBS ENERGIZE_LIBS LIB_CDE LIB_OFFIX_DND \
 	LIB_TOOLTALK $(LIBX) \
 	LIBS_SYSTEM LIBS_MACHINE LIBS_TERMCAP \
-	LIB_CANNA LIB_INTL QUANTIFY_LIBS $(LIB_KSTAT) \
+	LIB_CANNA LIB_WNN LIB_INTL QUANTIFY_LIBS $(LIB_KSTAT) \
 	DATABASE_LIBS LIBS_DEBUG $(GNULIB_VAR) LIB_MATH LIB_STANDARD \
 	$(GNULIB_VAR)
 

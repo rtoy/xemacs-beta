@@ -1,13 +1,13 @@
 \input texinfo.tex
 @setfilename tm-view-en.info
-@settitle{tm-view 7.79 Reference Manual (English Version)}
+@settitle{tm-view 7.80 Reference Manual (English Version)}
 @titlepage
-@title tm-view 7.79 Reference Manual (English Version)
+@title tm-view 7.80 Reference Manual (English Version)
 @author MORIOKA Tomohiko <morioka@@jaist.ac.jp>
-@subtitle 1996/12/25
+@subtitle 1997/1/31
 @end titlepage
 @node Top, Introduction, (dir), (dir)
-@top tm-view 7.79 Reference Manual (English Version)
+@top tm-view 7.80 Reference Manual (English Version)
 
 @ifinfo
 
@@ -379,7 +379,13 @@ is sitting on the top content (*1))
 @item @key{p}
 goes to the previous content
 
+@item @key{M-TAB}
+goes to the previous content
+
 @item @key{n}
+goes to the next content
+
+@item @key{TAB}
 goes to the next content
 
 @item @key{SPC}

@@ -108,6 +108,9 @@
      ;; After fixing, eos/loaddefs-eos and loaddefs appear identical?!!
      ;; So just make loaddefs-eos go away...
      ;;(load-gc (if (featurep 'sparcworks) "eos/loaddefs-eos" "loaddefs"))
+     (load-gc "font") ; required by widget
+     (load-gc "widget")
+     (load-gc "custom") ; Before loaddefs so that defcustom exists
      (load-gc "loaddefs")
      (load-gc "misc")
      (load-gc "profile")

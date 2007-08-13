@@ -1,9 +1,9 @@
 ;;; tm-ew-e.el --- RFC 2047 based encoded-word encoder for GNU Emacs
 
-;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
+;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Revision: 1.1.1.2 $
+;; Version: $Revision: 1.2 $
 ;; Keywords: encoded-word, MIME, multilingual, header, mail, news
 
 ;; This file is part of tm (Tools for MIME).
@@ -35,7 +35,7 @@
 ;;;
 
 (defconst tm-ew-e/RCS-ID
-  "$Id: tm-ew-e.el,v 1.1.1.2 1996/12/21 20:50:44 steve Exp $")
+  "$Id: tm-ew-e.el,v 1.2 1997/02/15 22:21:29 steve Exp $")
 (defconst mime-eword/encoder-version (get-version-string tm-ew-e/RCS-ID))
 
 
@@ -316,8 +316,7 @@ when Subject field is encoded by `mime/encode-message-header'.
 	     )
 	    (t
 	     (setq string (car rword))
-	     (let* ((sl (length string))
-		    (p 0) np
+	     (let* ((p 0) np
 		    (str "") nstr)
 	       (while (and (< p len)
 			   (progn

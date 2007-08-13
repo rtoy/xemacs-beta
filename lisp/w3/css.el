@@ -1,7 +1,7 @@
 ;;; css.el -- Cascading Style Sheet parser
 ;; Author: wmperry
-;; Created: 1997/01/17 14:30:54
-;; Version: 1.25
+;; Created: 1997/02/08 05:24:49
+;; Version: 1.27
 ;; Keywords: 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -366,10 +366,10 @@
   (cond
    ((not (stringp spec)) spec)
    ((string-equal spec "auto") nil)
-   ((string-match "\([0-9]+\)%" spec)	; A percentage
+   ((string-match "\\([+-]?\\([0-9]+\\|[0-9]*\\.[0-9]+\\)\\)%" spec)	; A percentage
     nil)
-   ((string-match "\([0-9]+\)e[mn]" spec) ; Character based
-    (string-to-int (substring spec (match-beginning 1) (match-end 1))))
+   ((string-match "\\([+-]?\\([0-9]+\\|[0-9]*\\.[0-9]+\\)\\)e[mx]" spec) ; Character based
+    (max 0 (round (string-to-number (match-string 1 spec)))))
    (t
     (truncate (font-spatial-to-canonical spec)))
    )

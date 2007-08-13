@@ -25,52 +25,85 @@
 ;; order to get different behaviour.
 ;;
 
+(defvar toolbar-open-function 'find-file
+  "*Function to call when the open icon is selected.")
+
 (defun toolbar-open ()
   (interactive)
-  (call-interactively 'find-file))
+  (call-interactively toolbar-open-function))
+
+(defvar toolbar-dired-function 'dired
+  "*Function to call when the dired icon is selected.")
 
 (defun toolbar-dired ()
   (interactive)
-  (call-interactively 'dired))
+  (call-interactively toolbar-dired-function))
+
+(defvar toolbar-save-function 'save-buffer
+  "*Function to call when the save icon is selected.")
 
 (defun toolbar-save ()
   (interactive)
-  (call-interactively 'save-buffer))
+  (call-interactively toolbar-save-function))
+
+(defvar toolbar-print-function 'lpr-buffer
+  "*Function to call when the print icon is selected.")
 
 (defun toolbar-print ()
   (interactive)
-  (call-interactively 'lpr-buffer))
+  (call-interactively toolbar-print-function))
+
+(defvar toolbar-cut-function 'x-kill-primary-selection
+  "*Function to call when the cut icon is selected.")
 
 (defun toolbar-cut ()
   (interactive)
-  (call-interactively 'x-kill-primary-selection))
+  (call-interactively toolbar-cut-function))
+
+(defvar toolbar-copy-function 'x-copy-primary-selection
+  "*Function to call when the copy icon is selected.")
 
 (defun toolbar-copy ()
   (interactive)
-  (call-interactively 'x-copy-primary-selection))
+  (call-interactively toolbar-copy-function))
+
+(defvar toolbar-paste-function 'x-yank-clipboard-selection
+  "*Function to call when the paste icon is selected.")
 
 (defun toolbar-paste ()
   (interactive)
-  (call-interactively 'x-yank-clipboard-selection))
+  (call-interactively toolbar-paste-function))
+
+(defvar toolbar-undo-function 'undo
+  "*Function to call when the undo icon is selected.")
 
 (defun toolbar-undo ()
   (interactive)
-  (call-interactively 'undo))
+  (call-interactively toolbar-undo-function))
+
+(defvar toolbar-replace-function 'query-replace
+  "*Function to call when the replace icon is selected.")
 
 (defun toolbar-replace ()
   (interactive)
-  (call-interactively 'query-replace))
+  (call-interactively toolbar-replace-function))
 
 ;;
 ;; toolbar ispell variables and defuns
 ;;
 
+(defvar toolbar-ispell-function
+  (lambda ()
+    (interactive)
+    (if (region-active-p)
+	(ispell-region (region-beginning) (region-end))
+      (ispell-buffer)))
+  "*Function to call when the ispell icon is selected.")
+
 (defun toolbar-ispell ()
   "Intelligently spell the region or buffer."
   (interactive)
-  (if (region-active-p)
-      (ispell-region (region-beginning) (region-end))
-    (ispell-buffer)))
+  (call-interactively toolbar-ispell-function))
 
 ;;
 ;; toolbar mail variables and defuns
@@ -95,7 +128,7 @@ The car of the alist is the mail reader, and the cdr is the form
 used to start it.")
 
 (defvar toolbar-mail-reader 'vm
-  "Mail reader toolbar will invoke.
+  "*Mail reader toolbar will invoke.
 The legal values are `vm' and `gnus', but you can add your own values
 by customizing `toolbar-mail-commands-alist'.")
 
@@ -158,6 +191,28 @@ by customizing `toolbar-mail-commands-alist'.")
 ;;
 ;; toolbar news variables and defuns
 ;;
+
+(defvar toolbar-news-commands-alist
+  `((gnus	. gnus)			; M-x all-hail-gnus
+    (rn		. ,(toolbar-external "xterm" "-e" "rn"))
+    (nn		. ,(toolbar-external "xterm" "-e" "nn"))
+    (trn	. ,(toolbar-external "xterm" "-e" "trn"))
+    (xrn	. ,(toolbar-external "xrn"))
+    (slrn	. ,(toolbar-external "xterm" "-e" "slrn"))
+    (pine	. ,(toolbar-external "xterm" "-e" "pine")) ; *gag*
+    (tin	. ,(toolbar-external "xterm" "-e" "tin")) ; *gag*
+    (netscape	. ,(toolbar-external "netscape" "news:")))
+  "Alist of news readers and their commands.
+Each list element is a pair.  The car of the pair is the mail
+reader, and the cdr is the form used to start it.")
+
+(defvar toolbar-news-reader 'gnus
+  "*News reader toolbar will invoke.
+The legal values are gnus, rn, nn, trn, xrn, slrn, pine and netscape.
+You can add your own values by customizing `toolbar-news-commands-alist'.")
+
+(defvar toolbar-news-use-separate-frame t
+  "*Whether Gnus is invoked in a separate frame.")
 
 (defvar toolbar-news-frame nil
   "The frame in which news is displayed.")
@@ -293,3 +348,5 @@ by customizing `toolbar-mail-commands-alist'.")
   (x-init-specifier-from-resources
    right-toolbar-width 'natnum locale
    '("rightToolBarWidth" . "RightToolBarWidth")))
+
+;;; x-toolbar.el ends here

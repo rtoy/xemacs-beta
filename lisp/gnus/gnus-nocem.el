@@ -1,5 +1,5 @@
 ;;; gnus-nocem.el --- NoCeM pseudo-cancellation treatment
-;; Copyright (C) 1995,96 Free Software Foundation, Inc.
+;; Copyright (C) 1995,96,97 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@ifi.uio.no>
 ;; Keywords: news
@@ -27,31 +27,58 @@
 
 (require 'gnus)
 (require 'nnmail)
-(eval-when-compile (require 'cl))
+(require 'gnus-art)
+(require 'gnus-sum)
+(require 'gnus-range)
 
-(defvar gnus-nocem-groups 
-  '("alt.nocem.misc" "news.admin.net-abuse.announce")
-  "*List of groups that will be searched for NoCeM messages.")
+(defgroup gnus-nocem nil
+  "NoCeM pseudo-cancellation treatment"
+  :group 'gnus-score)
 
-(defvar gnus-nocem-issuers 
-  '("Automoose-1" ; The CancelMoose[tm] on autopilot.
-    "clewis@ferret.ocunix.on.ca;" ; Chris Lewis -- Canadian angel & despammer.
-    "jem@xpat.com;"  ; John Milburn -- despammer in Korea.
-    "red@redpoll.mrfs.oh.us (Richard E. Depew)" ; Spew/bincancel guy.
-    )
-  "*List of NoCeM issuers to pay attention to.")
+(defcustom gnus-nocem-groups 
+  '("news.lists.filters" "news.admin.net-abuse.bulletins"
+    "alt.nocem.misc" "news.admin.net-abuse.announce")
+  "List of groups that will be searched for NoCeM messages."
+  :group 'gnus-nocem
+  :type '(repeat (string :tag "Group")))
 
-(defvar gnus-nocem-directory 
-  (concat (file-name-as-directory gnus-article-save-directory) "NoCeM/")
-  "*Directory where NoCeM files will be stored.")
+(defcustom gnus-nocem-issuers 
+ '("AutoMoose-1" "Automoose-1"   ; CancelMoose[tm]
+   "rbraver@ohww.norman.ok.us"   ; Robert Braver
+   "clewis@ferret.ocunix.on.ca;" ; Chris Lewis
+   "jem@xpat.com;"		 ; Despammer from Korea
+   "snowhare@xmission.com"       ; Benjamin "Snowhare" Franz
+   "red@redpoll.mrfs.oh.us (Richard E. Depew)"
+   )
+  "List of NoCeM issuers to pay attention to."
+  :group 'gnus-nocem
+  :type '(repeat string))
 
-(defvar gnus-nocem-expiry-wait 15
-  "*Number of days to keep NoCeM headers in the cache.")
+(defcustom gnus-nocem-directory 
+  (nnheader-concat gnus-article-save-directory "NoCeM/")
+  "*Directory where NoCeM files will be stored."
+  :group 'gnus-nocem
+  :type 'directory)
 
-(defvar gnus-nocem-verifyer nil
+(defcustom gnus-nocem-expiry-wait 15
+  "*Number of days to keep NoCeM headers in the cache."
+  :group 'gnus-nocem
+  :type 'integer)
+
+(defcustom gnus-nocem-verifyer 'mc-verify
   "*Function called to verify that the NoCeM message is valid.
 One likely value is `mc-verify'.  If the function in this variable
-isn't bound, the message will be used unconditionally.")
+isn't bound, the message will be used unconditionally."
+  :group 'gnus-nocem
+  :type '(radio (function-item mc-verify)
+		(function :tag "other")))
+
+(defcustom gnus-nocem-liberal-fetch nil
+  "*If t try to fetch all messages which have @@NCM in the subject.
+Otherwise don't fetch messages which have references or whose messsage-id
+matches an previously scanned and verified nocem message."
+  :group 'gnus-nocem
+  :type 'boolean)
 
 ;;; Internal variables
 
@@ -59,6 +86,7 @@ isn't bound, the message will be used unconditionally.")
 (defvar gnus-nocem-alist nil)
 (defvar gnus-nocem-touched-alist nil)
 (defvar gnus-nocem-hashtb nil)
+(defvar gnus-nocem-seen-message-ids nil)
 
 ;;; Functions
 
@@ -73,21 +101,19 @@ isn't bound, the message will be used unconditionally.")
   (interactive)
   (let ((groups gnus-nocem-groups)
 	group active gactive articles)
-    (or (file-exists-p gnus-nocem-directory)
-	(make-directory gnus-nocem-directory t))
+    (gnus-make-directory gnus-nocem-directory)
     ;; Load any previous NoCeM headers.
     (gnus-nocem-load-cache)
     ;; Read the active file if it hasn't been read yet.
     (and (file-exists-p (gnus-nocem-active-file))
 	 (not gnus-nocem-active)
-	 (condition-case ()
-	     (load (gnus-nocem-active-file) t t t)
-	   (error nil)))
+	 (ignore-errors
+	   (load (gnus-nocem-active-file) t t t)))
     ;; Go through all groups and see whether new articles have
     ;; arrived.  
     (while (setq group (pop groups))
       (if (not (setq gactive (gnus-activate-group group)))
-	  () ; This group doesn't exist.
+	  ()				; This group doesn't exist.
 	(setq active (nth 1 (assoc group gnus-nocem-active)))
 	(when (and (not (< (cdr gactive) (car gactive))) ; Empty group.
 		   (or (not active)
@@ -96,31 +122,35 @@ isn't bound, the message will be used unconditionally.")
 	  ;; headers.
 	  (save-excursion
 	    (let ((dependencies (make-vector 10 nil))
-		  (buffer (nnheader-set-temp-buffer " *Gnus NoCeM*"))
-		  headers)
-	      (setq headers
-		    (if (eq 'nov
-			    (gnus-retrieve-headers 
-			     (setq articles
-				   (gnus-uncompress-range
-				    (cons 
-				     (if active (1+ (cdr active)) 
-				       (car gactive))
-				     (cdr gactive))))
-			     group))
-			(gnus-get-newsgroup-headers-xover 
-			 articles nil dependencies)
-		      (gnus-get-newsgroup-headers dependencies)))
-	      (while headers
-		;; We take a closer look on all articles that have
-		;; "@@NCM" in the subject.  
-		(when (string-match "@@NCM"
-				    (mail-header-subject (car headers)))
-		  (gnus-nocem-check-article group (car headers)))
-		(setq headers (cdr headers)))
-	      (kill-buffer (current-buffer)))))
+		  headers header)
+	      (nnheader-temp-write nil
+		(setq headers
+		      (if (eq 'nov
+			      (gnus-retrieve-headers 
+			       (setq articles
+				     (gnus-uncompress-range
+				      (cons 
+				       (if active (1+ (cdr active))
+					 (car gactive))
+				       (cdr gactive))))
+			       group))
+			  (gnus-get-newsgroup-headers-xover 
+			   articles nil dependencies)
+			(gnus-get-newsgroup-headers dependencies)))
+		(while (setq header (pop headers))
+		  ;; We take a closer look on all articles that have
+		  ;; "@@NCM" in the subject.  Unless we already read
+		  ;; this cross posted message.  Nocem messages
+		  ;; are not allowed to have references, so we can
+		  ;; ignore scanning followups.
+		  (and (string-match "@@NCM" (mail-header-subject header))
+		       (or gnus-nocem-liberal-fetch
+			   (and (string= "" (mail-header-references header))
+				(not (member (mail-header-message-id header)
+					     gnus-nocem-seen-message-ids))))
+		       (gnus-nocem-check-article group header)))))))
 	(setq gnus-nocem-active
-	      (cons (list group gactive) 
+	      (cons (list group gactive)
 		    (delq (assoc group gnus-nocem-active)
 			  gnus-nocem-active)))))
     ;; Save the results, if any.
@@ -140,22 +170,29 @@ isn't bound, the message will be used unconditionally.")
 	       (nnmail-days-to-time gnus-nocem-expiry-wait)))
       (gnus-request-article-this-buffer (mail-header-number header) group)
       (goto-char (point-min))
+      (when (re-search-forward "-----BEGIN PGP MESSAGE-----" nil t)
+	(delete-region (point-min) (match-beginning 0)))
+      (when (re-search-forward "-----END PGP MESSAGE-----\n?" nil t)
+	(delete-region (match-end 0) (point-max)))
+      (goto-char (point-min))
       ;; The article has to have proper NoCeM headers.
       (when (and (setq b (search-forward "\n@@BEGIN NCM HEADERS\n" nil t))
 		 (setq e (search-forward "\n@@BEGIN NCM BODY\n" nil t)))
 	;; We get the name of the issuer.
 	(narrow-to-region b e)
 	(setq issuer (mail-fetch-field "issuer"))
-	(and (member issuer gnus-nocem-issuers) ; We like her...
-	     (gnus-nocem-verify-issuer issuer) ; She is who she says she is..
-	     (gnus-nocem-enter-article)))))) ; We gobble the message.
-  
+	(widen)
+	(and (member issuer gnus-nocem-issuers) ; We like her....
+	     (gnus-nocem-verify-issuer issuer) ; She is who she says she is...
+	     (gnus-nocem-enter-article)	; We gobble the message..
+	     (push (mail-header-message-id header) ; But don't come back for
+		   gnus-nocem-seen-message-ids)))))) ; second helpings.
+
 (defun gnus-nocem-verify-issuer (person)
   "Verify using PGP that the canceler is who she says she is."
-  (widen)
   (if (fboundp gnus-nocem-verifyer)
       (funcall gnus-nocem-verifyer)
-    ;; If we don't have MailCrypt, then we use the message anyway.
+    ;; If we don't have Mailcrypt, then we use the message anyway.
     t))
 
 (defun gnus-nocem-enter-article ()
@@ -164,31 +201,46 @@ isn't bound, the message will be used unconditionally.")
   (let ((b (search-forward "\n@@BEGIN NCM BODY\n" nil t))
 	(e (search-forward "\n@@END NCM BODY\n" nil t))
 	(buf (current-buffer))
-	ncm id)
+	ncm id group)
     (when (and b e)
       (narrow-to-region b (1+ (match-beginning 0)))
       (goto-char (point-min))
       (while (search-forward "\t" nil t)
-	(when (condition-case nil
-		  (boundp (let ((obarray gnus-active-hashtb)) (read buf)))
-		(error nil))
-	  (beginning-of-line)
-	  (while (= (following-char) ?\t)
-	    (forward-line -1))
-	  (setq id (buffer-substring (point) (1- (search-forward "\t"))))
-	  (push id ncm)
-	  (gnus-sethash id t gnus-nocem-hashtb)
-	  (forward-line 1)
-	  (while (= (following-char) ?\t)
-	    (forward-line 1))))
+	(cond
+	 ((not (ignore-errors
+		 (setq group (let ((obarray gnus-active-hashtb)) (read buf)))))
+	  ;; An error.
+	  )
+	 ((not (symbolp group))
+	  ;; Ignore invalid entries.
+	  )
+	 ((not (boundp group))
+	  ;; Make sure all entries in the hashtb are bound.
+	  (set group nil))
+	 (t
+	  (when (gnus-gethash (symbol-name group) gnus-newsrc-hashtb)
+	    ;; Valid group.
+	    (beginning-of-line)
+	    (while (= (following-char) ?\t)
+	      (forward-line -1))
+	    (setq id (buffer-substring (point) (1- (search-forward "\t"))))
+	    (unless (gnus-gethash id gnus-nocem-hashtb)
+	      ;; only store if not already present
+	      (gnus-sethash id t gnus-nocem-hashtb)
+	      (push id ncm))
+	    (forward-line 1)
+	    (while (= (following-char) ?\t)
+	      (forward-line 1))))))
       (when ncm
 	(setq gnus-nocem-touched-alist t)
 	(push (cons (let ((time (current-time))) (setcdr (cdr time) nil) time)
-		    ncm) 
-	      gnus-nocem-alist)))))
+		    ncm)
+	      gnus-nocem-alist))
+      t)))
 
 (defun gnus-nocem-load-cache ()
   "Load the NoCeM cache."
+  (interactive)
   (unless gnus-nocem-alist
     ;; The buffer doesn't exist, so we create it and load the NoCeM
     ;; cache.  
@@ -201,13 +253,13 @@ isn't bound, the message will be used unconditionally.")
   (when (and gnus-nocem-alist
 	     gnus-nocem-touched-alist)
     (nnheader-temp-write (gnus-nocem-cache-file)
-      (prin1 `(setq gnus-nocem-alist ',gnus-nocem-alist) (current-buffer)))
+      (gnus-prin1 `(setq gnus-nocem-alist ',gnus-nocem-alist)))
     (setq gnus-nocem-touched-alist nil)))
 
 (defun gnus-nocem-save-active ()
   "Save the NoCeM active file."
   (nnheader-temp-write (gnus-nocem-active-file)
-    (prin1 `(setq gnus-nocem-active ',gnus-nocem-active) (current-buffer))))
+    (gnus-prin1 `(setq gnus-nocem-active ',gnus-nocem-active))))
 
 (defun gnus-nocem-alist-to-hashtb ()
   "Create a hashtable from the Message-IDs we have."
@@ -236,7 +288,8 @@ isn't bound, the message will be used unconditionally.")
   (setq gnus-nocem-alist nil
 	gnus-nocem-hashtb nil
 	gnus-nocem-active nil
-	gnus-nocem-touched-alist nil))
+	gnus-nocem-touched-alist nil
+	gnus-nocem-seen-message-ids nil))
 
 (defun gnus-nocem-unwanted-article-p (id)
   "Say whether article ID in the current group is wanted."

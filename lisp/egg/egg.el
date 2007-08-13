@@ -61,14 +61,22 @@
 ;;; (eval-when (load) (require 'wnn-client))
 ;;;
 
-(defvar egg-version "3.09" "Version number of this version of Egg. ")
+; last master version
+;;; (defvar egg-version "3.09" "Version number of this version of Egg. ")
 ;;; Last modified date: Fri Sep 25 12:59:00 1992
+(defvar egg-version "3.09 xemacs" "Version number of this version of Egg. ")
+;;; Last modified date: Wed Feb 05 20:45:00 1997
 
 ;;;;  修正要求リスト
 
 ;;;;  read-hiragana-string, read-kanji-string で使用する平仮名入力マップを roma-kana に固定しないで欲しい．
 
 ;;;;  修正メモ
+
+;;; 97.2.05 modified by J.Hein <jhod@po.iijnet.or.jp>
+;;; Lots of mods to make it XEmacs workable. Most fixes revolve around the fact that
+;;; Mule/et al assumes that all events are keypress events unless specified otherwise.
+;;; Also modified to work with the new charset names and API
 
 ;;; 95.6.5 modified by S.Tomura <tomura@etl.go.jp>
 ;;; 変換直後に連続して変換する場合を認識するために、"-in-cont" に関連した
@@ -384,11 +392,23 @@
 ;;;;  Aug-25-88 toroku-regionで登録する文字列からno graphic characterを
 ;;;;  自動的に除くことにした。
 
+(provide 'egg)
+
 ;; XEmacs addition: (and remove disable-undo variable)
 ;; For Emacs V18/Nemacs compatibility
 (and (not (fboundp 'buffer-disable-undo))
      (fboundp 'buffer-flush-undo)
      (defalias 'buffer-disable-undo 'buffer-flush-undo))
+
+;; 97.2.4 Created by J.Hein to simulate Mule-2.3
+(defun read-event ()
+  "Cheap 'n cheesy event filter to facilitate translation from Mule-2.3"
+  (setq event (make-event))
+  (while (progn
+	   (next-event event)
+	   (not (key-press-event-p event)))
+	    (dispatch-event event))
+  (event-key event))
 
 (eval-when-compile (require 'egg-jsymbol))
 
@@ -430,16 +450,13 @@
 ;;; 
 ;;;;
 
-(defun characterp (form)
-  (numberp form))
-
 (defun coerce-string (form)
   (cond((stringp form) form)
        ((characterp form) (char-to-string form))))
 
 (defun coerce-internal-string (form)
   (cond((stringp form)
-	(if (= (chars-in-string form) 1) 
+	(if (= (length form) 1) 
 	    (string-to-char form)
 	  form))
        ((characterp form) form)))
@@ -471,7 +488,7 @@
     (while (null (setq val (read-jis-code-from-string str)))
       (beep)
       (setq str (read-from-minibuffer prompt str)))
-    (insert (make-character lc-jp (car val) (cdr val)))))
+    (insert (make-char (find-charset 'japanese-jisx0208) (car val) (cdr val)))))
 
 (defun hexadigit-value (ch)
   (cond((and (<= ?0 ch) (<= ch ?9))
@@ -765,7 +782,7 @@
     (+ p menu:*select-item-no*)))
     
 (defun menu:select-goto-item-position (pos)
-  (let ((m 0) (i 0) (p 0))
+  (let ((m 0) (p 0))
     (while (<= (+ p (length (nth m menu:*select-menus*))) pos)
       (setq p (+ p (length (nth m menu:*select-menus*))))
       (setq m (1+ m)))
@@ -817,17 +834,17 @@
 
 (defun menu:item-string (item)
   (cond((stringp item) item)
-       ((numberp item) (char-to-string item))
+       ((characterp item) (char-to-string item))
        ((consp item)
 	(if menu:*display-item-value*
 	    (format "%s [%s]"
 		    (cond ((stringp (car item)) (car item))
-			  ((numberp (car item)) (char-to-string (car item)))
+			  ((characterp (car item)) (char-to-string (car item)))
 			  (t ""))
 		    (cdr item))
 	  (cond ((stringp (car item))
 		 (car item))
-		((numberp (car item))
+		((characterp (car item))
 		 (char-to-string (car item)))
 		(t ""))))
        (t "")))
@@ -905,7 +922,7 @@
       (let ((ch (preceding-char)))
 	(cond( (<= ch ?ン)
 	       (delete-char -1)
-	       (insert (make-character lc-jp ?\244 (char-component ch 2))))))))
+	       (insert (make-char (find-charset 'japanese-jisx0208) 36 (char-octet ch 1))))))))
 
 (defun hiragana-paragraph ()
   "hiragana  paragraph at or after point."
@@ -931,12 +948,11 @@
 
 (defun katakana-region (start end)
   (interactive "r")
-  (let ((point (point)))
-    (goto-char start)
-    (while (re-search-forward kanji-hiragana end end)
-      (let ((ch (char-component (preceding-char) 2)))
-	(delete-char -1)
-	(insert (make-character lc-jp ?\245 ch))))))
+  (goto-char start)
+  (while (re-search-forward kanji-hiragana end end)
+    (let ((ch (char-octet (preceding-char) 1)))
+      (delete-char -1)
+      (insert (make-char (find-charset 'japanese-jisx0208) 37 ch)))))
 
 (defun katakana-paragraph ()
   "katakana  paragraph at or after point."
@@ -967,8 +983,8 @@
     (goto-char (point-min))
     (while (re-search-forward "\\cS\\|\\cA" (point-max) (point-max))
       (let* ((ch (preceding-char))
-	     (ch1 (char-component ch 1))
-	     (ch2 (char-component ch 2)))
+	     (ch1 (char-octet ch 0))
+	     (ch2 (char-octet ch 1)))
 	(cond ((= ?\241 ch1)
 	       (let ((val (cdr (assq ch2 *hankaku-alist*))))
 		 (if val (progn
@@ -1054,7 +1070,7 @@
 	      (delete-char -1)
 	      (let ((zen (cdr (assq ch *zenkaku-alist*))))
 		(if zen (insert zen)
-		  (insert (make-character lc-jp ?\243 (+ ?\200 ch)))))))))))
+		  (insert (make-char (find-charset 'japanese-jisx0208) 38 ch))))))))))
 
 (defun zenkaku-paragraph ()
   "zenkaku  paragraph at or after point."
@@ -1339,7 +1355,7 @@ its-defrule, its-defrule-conditional, defule-select-mode-temporally を
       (and (consp action)
 	   (or (stringp (car action))
 	       (and (consp (car action))
-		    (numberp (car (car action))))
+		    (characterp (car (car action))))
 	       (null (car action)))
 	   (or (null (car (cdr action)))
 	       (stringp (car (cdr action)))))))
@@ -1570,7 +1586,8 @@ OUTPUTn)))は INPUT が入力された時に状態 STATE を表示し，条件 C
 ;;;
 
 (defvar its:*buff-s* (make-marker))
-(defvar its:*buff-e* (set-marker-type (make-marker) t))
+(defvar its:*buff-e* (make-marker))
+(set-marker-insertion-type its:*buff-e* t)
 
 ;;;    STATE     unread
 ;;; |<-s   p->|<-    e ->|
@@ -1628,7 +1645,7 @@ OUTPUTn)))は INPUT が入力された時に状態 STATE を表示し，条件 C
 (defun its:peek-char ()
   (if (= (point) its:*buff-e*)
       (if its:*interactive*
-	  (setq unread-command-events (list (read-event)))
+	  (setq unread-command-events (list (character-to-event(read-event))))
 	nil)
     (following-char)))
 
@@ -1648,26 +1665,27 @@ OUTPUTn)))は INPUT が入力された時に状態 STATE を表示し，条件 C
   (if its:*char-from-buff*
       (save-excursion
 	(its:insert-char ch))
-    (if ch (setq unread-command-events (list ch)))))
+    (if ch (setq unread-command-events (list (character-to-event ch))))))
 
 (defun its:insert-char (ch)
   (insert ch))
 
 (defun its:ordinal-charp (ch)
-  (and (numberp ch) (<= ch 127)
+  (and (characterp ch) (<= ch 127)
        (eq (lookup-key fence-mode-map (char-to-string ch)) 'fence-self-insert-command)))
 
 (defun its:delete-charp (ch)
-  (and (numberp ch) (<= ch 127)
+  (and (characterp ch) (<= ch 127)
        (eq (lookup-key fence-mode-map (char-to-string ch)) 'fence-backward-delete-char)))
     
 (defun fence-self-insert-command ()
   (interactive)
+  (setq ch (event-to-character last-command-event))
   (cond((or (not egg:*input-mode*)
-	    (null (get-next-map its:*current-map* last-command-event)))
-	(insert last-command-event))
+	    (null (get-next-map its:*current-map* ch)))
+	(insert ch))
        (t
-	(insert last-command-event)
+	(insert ch)
 	(its:translate-region (1- (point)) (point) t))))
 
 ;;;
@@ -1707,7 +1725,7 @@ Arguments are STRING, ALIST and optional PRED. ALIST must be no obarray."
     (if quit-flag
 	(progn
 	  (setq quit-flag nil)
-	  (setq unread-command-events (list ?\^G))))))
+	  (setq unread-command-events (list (character-to-event ?\^G)))))))
 
 (defun car-string-lessp (item1 item2)
   (string-lessp (car item1) (car item2)))
@@ -1804,7 +1822,7 @@ Arguments are STRING, ALIST and optional PRED. ALIST must be no obarray."
 	      (cons (list string 
 			  (let ((action-output (action-output action)))
 			    (cond((and (consp action-output)
-				       (numberp (car action-output)))
+				       (characterp (car action-output)))
 				  (format "%s..."
 				  (nth (car action-output) (cdr action-output))))
 				 ((stringp action-output)
@@ -1888,7 +1906,7 @@ Arguments are STRING, ALIST and optional PRED. ALIST must be no obarray."
       (setq action (get-action newmap))
 
       (cond
-       ((and its:*interactive* (not its:*char-from-buff*) (numberp ch) (= ch ?\^@))
+       ((and its:*interactive* (not its:*char-from-buff*) (characterp ch) (= ch ?\^@))
 	(delete-region its:*buff-s* (point))
 	(let ((i 1))
 	  (while (<= i its:*level*)
@@ -2081,7 +2099,7 @@ Arguments are STRING, ALIST and optional PRED. ALIST must be no obarray."
 
     (set-marker its:*buff-s* nil)
     (set-marker its:*buff-e* nil)
-    (if (and its:*interactive* ch) (setq unread-command-events (list ch)))
+    (if (and its:*interactive* ch) (setq unread-command-events (list (character-to-event ch))))
     ))
 
 ;;;----------------------------------------------------------------------
@@ -2189,39 +2207,38 @@ Arguments are STRING, ALIST and optional PRED. ALIST must be no obarray."
 ;;;
 ;;;
 
-(defvar its:*reset-mode-line-format* nil)
+(defvar its:*reset-modeline-format* nil)
 
-(if its:*reset-mode-line-format*
-    (setq-default mode-line-format
-		  (cdr mode-line-format)))
+(if its:*reset-modeline-format*
+    (setq-default modeline-format
+		  (cdr modeline-format)))
 
-(if (not (egg:find-symbol-in-tree 'mode-line-egg-mode mode-line-format))
+(if (not (egg:find-symbol-in-tree 'mode-line-egg-mode modeline-format))
     (setq-default 
-     mode-line-format
-     (cons (list 'mc-flag
-		 (list 'display-minibuffer-mode-in-minibuffer
-		       ;;; minibuffer mode in minibuffer
-		       (list 
-			(list 'its:*previous-map* "<" "[")
-			'mode-line-egg-mode
-			(list 'its:*previous-map* ">" "]")
-			)
+     modeline-format
+     (cons (list 'display-minibuffer-mode-in-minibuffer
+		 ;;; minibuffer mode in minibuffer
+		 (list 
+		  (list 'its:*previous-map* "<" "[")
+		  'mode-line-egg-mode
+		  (list 'its:*previous-map* ">" "]")
+		  )
 		       ;;;; minibuffer mode in mode line
-		       (list 
-			(list 'minibuffer-window-selected
-			      (list 'display-minibuffer-mode
-				    "m"
-				    " ")
+		 (list 
+		  (list 'minibuffer-window-selected
+			(list 'display-minibuffer-mode
+			      "m"
 			      " ")
-			(list 'its:*previous-map* "<" "[")
-			(list 'minibuffer-window-selected
-			      (list 'display-minibuffer-mode
-				    'mode-line-egg-mode-in-minibuffer
-				    'mode-line-egg-mode)
+			" ")
+		  (list 'its:*previous-map* "<" "[")
+		  (list 'minibuffer-window-selected
+			(list 'display-minibuffer-mode
+			      'mode-line-egg-mode-in-minibuffer
 			      'mode-line-egg-mode)
-			(list 'its:*previous-map* ">" "]")
-			)))
-	   mode-line-format)))
+			'mode-line-egg-mode)
+		  (list 'its:*previous-map* ">" "]")
+		  ))
+	   modeline-format)))
 
 ;;;
 ;;; minibuffer でのモード表示をするために nemacs 4 で定義された 
@@ -2276,8 +2293,7 @@ Arguments are STRING, ALIST and optional PRED. ALIST must be no obarray."
       (progn
 	(setq its:*current-map* (its:get-mode-map name))
 	(egg:mode-line-display))
-    (beep))
-  )
+    (beep)))
 
 (defvar its:*select-mode-menu* '(menu "Mode:" nil))
 
@@ -2351,11 +2367,10 @@ Arguments are STRING, ALIST and optional PRED. ALIST must be no obarray."
 
 (defun toggle-egg-mode ()
   (interactive)
-  (if mc-flag 
-      (if egg:*mode-on* (fence-toggle-egg-mode)
-	(progn
-	  (setq egg:*mode-on* t)
-	  (egg:mode-line-display)))))
+  (if egg:*mode-on* (fence-toggle-egg-mode)
+    (progn
+      (setq egg:*mode-on* t)
+      (egg:mode-line-display))))
 
 (defun fence-toggle-egg-mode ()
   (interactive)
@@ -2418,7 +2433,7 @@ Arguments are STRING, ALIST and optional PRED. ALIST must be no obarray."
 (defconst egg:*fence-close*  "|" "*フェンスの終点を示す文字列")
 (defconst egg:*fence-face* nil  "*フェンス表示に用いる face または nil")
 (make-variable-buffer-local
- (defvar egg:*fence-overlay* nil "フェンス表示用 overlay"))
+ (defvar egg:*fence-extent* nil "フェンス表示用 extent"))
 
 (defvar egg:*face-alist*
   '(("nil" . nil)
@@ -2442,18 +2457,16 @@ CLOSEはフェンスの終点を示す文字列または nil。\n\
 	(setq egg:*fence-open* (or open "")
 	      egg:*fence-close* (or close "")
 	      egg:*fence-face* face)
-	(if (overlayp egg:*fence-overlay*)
-	    (overlay-put egg:*fence-overlay* 'face egg:*fence-face*))
+	(if (extentp egg:*fence-extent*)
+	    (set-extent-property egg:*fence-extent* 'face egg:*fence-face*))
 	t)
     (error "Wrong type of argument: %s %s %s" open close face)))
 
-;(defconst egg:*region-start* (make-marker))
-;(defconst egg:*region-end*   (set-marker-type (make-marker) t))
 (defvar egg:*region-start* nil)
-(defvar egg:*region-end*   nil)
 (make-variable-buffer-local 'egg:*region-start*)
-(make-variable-buffer-local 'egg:*region-end*)
 (set-default 'egg:*region-start* nil)
+(defvar egg:*region-end* nil)
+(make-variable-buffer-local 'egg:*region-end*)
 (set-default 'egg:*region-end* nil)
 (defvar egg:*global-map-backup* nil)
 (defvar egg:*local-map-backup*  nil)
@@ -2470,10 +2483,9 @@ CLOSEはフェンスの終点を示す文字列または nil。\n\
 (defun egg-self-insert-command (arg)
   (interactive "p")
   (if (and (not buffer-read-only)
-	   mc-flag
 	   egg:*mode-on* egg:*input-mode* 
 	   (not egg:*in-fence-mode*) ;;; inhibit recursive fence mode
-	   (not (= last-command-event  ?  )))
+	   (not (= (event-to-character last-command-event) ? )))
       (egg:enter-fence-mode-and-self-insert)
     (progn
       ;; treat continuous 20 self insert as a single undo chunk.
@@ -2492,7 +2504,7 @@ CLOSEはフェンスの終点を示す文字列または nil。\n\
 	  (if (<= 1 arg)
 	      (funcall self-insert-after-hook
 		       (- (point) arg) (point)))
-	(if (= last-command-event ? ) (egg:do-auto-fill))))))
+	(if (= (event-to-character last-command-event) ? ) (egg:do-auto-fill))))))
 
 ;;
 ;; 前確定変換処理関数 
@@ -2525,8 +2537,8 @@ FACE は nil でなければ、フェンス区間の表示にそれを使う。\n\
         (setq egg:*fence-open-in-cont* (or open "")
               egg:*fence-close-in-cont* (or close "")
               egg:*fence-face-in-cont* face)
-        (if (overlayp egg:*fence-overlay*)
-            (overlay-put egg:*fence-overlay* 'face egg:*fence-face*))
+        (if (extentp egg:*fence-extent*)
+            (set-extent-property egg:*fence-extent* 'face egg:*fence-face*))
         t)
     (error "Wrong type of argument: %s %s %s" open close face)))
 
@@ -2568,16 +2580,16 @@ FACE は nil でなければ、フェンス区間の表示にそれを使う。\n\
 (defun egg:fence-face-on ()
   (if egg:*fence-face*
       (progn
-	(if (overlayp egg:*fence-overlay*)
+	(if (extentp egg:*fence-extent*)
 	    nil
-	  (setq egg:*fence-overlay* (make-overlay 1 1 nil t))
-	  (if egg:*fence-face* (overlay-put egg:*fence-overlay* 'face egg:*fence-face*)))
-	(move-overlay egg:*fence-overlay* egg:*region-start* egg:*region-end* ) )))
+	  (setq egg:*fence-extent* (make-extent 1 1 nil t))
+	  (if egg:*fence-face* (set-extent-property egg:*fence-extent* 'face egg:*fence-face*)))
+	(set-extent-endpoints egg:*fence-extent* egg:*region-start* egg:*region-end* ) )))
 
 (defun egg:fence-face-off ()
   (and egg:*fence-face*
-       (overlayp egg:*fence-overlay*)
-       (delete-overlay egg:*fence-overlay*) ))
+       (extentp egg:*fence-extent*)
+       (detach-extent egg:*fence-extent*) ))
 
 (defun enter-fence-mode ()
   ;; XEmacs change:
@@ -2594,7 +2606,7 @@ FACE は nil でなければ、フェンス区間の表示にそれを使う。\n\
   (or (markerp egg:*region-start*) (setq egg:*region-start* (make-marker)))
   (set-marker egg:*region-start* (point))
   (insert egg:*fence-close*)
-  (or (markerp egg:*region-end*) (setq egg:*region-end* (set-marker-type (make-marker) t)))
+  (or (markerp egg:*region-end*) (set-marker-insertion-type (setq egg:*region-end* (make-marker)) t))
   (set-marker egg:*region-end* egg:*region-start*)
   (egg:fence-face-on)
   (goto-char egg:*region-start*)
@@ -2740,7 +2752,7 @@ correspoding to character position.")
 
 (defvar fence-mode-map (make-keymap))
 
-(substitute-key-definition 'self-insert-command
+(substitute-key-definition 'egg-self-insert-command
 			   'fence-self-insert-command
 			   fence-mode-map global-map)
 

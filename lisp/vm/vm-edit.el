@@ -1,5 +1,5 @@
 ;;; Editing VM messages
-;;; Copyright (C) 1990, 1991, 1993, 1994 Kyle E. Jones
+;;; Copyright (C) 1990, 1991, 1993, 1994, 1997 Kyle E. Jones
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@ replace the original, use C-c C-] and the edit will be aborted."
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
+  (vm-check-for-killed-presentation)
   (vm-error-if-folder-read-only)
   (vm-error-if-folder-empty)
   (if (and (vm-virtual-message-p (car vm-message-pointer))
@@ -44,7 +45,10 @@ replace the original, use C-c C-] and the edit will be aborted."
 	    (vm-set-edited-flag-of (car vm-message-pointer) nil)
 	    (vm-update-summary-and-mode-line)))
     (let ((mp vm-message-pointer)
-	  (offset (- (point) (vm-headers-of (car vm-message-pointer))))
+	  (offset (save-excursion
+		    (if vm-presentation-buffer
+			(set-buffer vm-presentation-buffer))
+		    (- (point) (vm-headers-of (car vm-message-pointer)))))
 	  (edit-buf (vm-edit-buffer-of (car vm-message-pointer)))
 	  (folder-buffer (current-buffer)))
       (if (not (and edit-buf (buffer-name edit-buf)))
@@ -124,6 +128,7 @@ data is discarded only from the marked messages in the current folder."
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
+  (vm-check-for-killed-presentation)
   (vm-error-if-folder-empty)
   (let ((mlist (vm-select-marked-or-prefixed-messages count)) m)
     (while mlist
@@ -134,6 +139,9 @@ data is discarded only from the marked messages in the current folder."
       (vm-set-vheaders-of m nil)
       (vm-set-vheaders-regexp-of m nil)
       (vm-set-text-of m nil)
+      (vm-set-mime-layout-of m nil)
+      (if (and vm-presentation-buffer (eq (car vm-message-pointer) m))
+	  (save-excursion (vm-preview-current-message)))
       (if vm-thread-obarray
 	  (vm-build-threads (list m)))
       (if vm-summary-show-threads
@@ -142,6 +150,9 @@ data is discarded only from the marked messages in the current folder."
 	(save-excursion
 	  (while v-list
 	    (set-buffer (vm-buffer-of (car v-list)))
+	    (if (and vm-presentation-buffer
+		     (eq (car vm-message-pointer) (car v-list)))
+		(save-excursion (vm-preview-current-message)))
 	    (if vm-thread-obarray
 		(vm-build-threads (list (car v-list))))
 	    (if vm-summary-show-threads

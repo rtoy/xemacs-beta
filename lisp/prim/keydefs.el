@@ -142,10 +142,7 @@ Keymap for characters following C-c.")
 
 ;; FSFmacs help.el
 
-(let ((ch help-char))
-  (if (or (characterp ch) (integerp ch))
-      (setq ch (char-to-string ch)))
-  (define-key global-map ch 'help-command))
+(define-key global-map (vector help-char) 'help-command)
 (define-key global-map 'help 'help-command)
 (define-key global-map 'f1 'help-command)
 

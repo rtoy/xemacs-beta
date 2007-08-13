@@ -1,5 +1,5 @@
 ;;; Virtual folders for VM
-;;; Copyright (C) 1990, 1993, 1994, 1995 Kyle E. Jones
+;;; Copyright (C) 1990-1997 Kyle E. Jones
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -165,8 +165,7 @@
 			      (vm-buffer-of
 			       (vm-real-message-of
 				(car mp))))
-			     (apply 'vm-vs-or (vm-real-message-of (car mp))
-				    selectors))
+			     (apply 'vm-vs-or (car mp) selectors))
 			 (apply 'vm-vs-or (car mp) selectors)))
 		  (progn
 		    (intern
@@ -221,12 +220,18 @@
     ;;
     ;; Now we tie it all together, with this section of code being
     ;; uninterruptible.
-    (let ((inhibit-quit t))
+    (let ((inhibit-quit t)
+	  (label-obarray vm-label-obarray))
       (if (null vm-real-buffers)
 	  (setq vm-real-buffers real-buffers-used))
       (save-excursion
 	(while real-buffers-used
 	  (set-buffer (car real-buffers-used))
+	  ;; inherit the global label lists of all the associated
+	  ;; real folders.
+	  (mapatoms (function (lambda (x) (intern (symbol-name x)
+						  label-obarray)))
+		    vm-label-obarray)
 	  (if (not (memq vbuffer vm-virtual-buffers))
 	      (setq vm-virtual-buffers (cons vbuffer vm-virtual-buffers)))
 	  (setq real-buffers-used (cdr real-buffers-used))))
@@ -352,15 +357,6 @@ Prefix arg means the new virtual folder should be visited read only."
   (vm-display nil nil '(vm-virtual-help) '(vm-virtual-help))
   (message "VV = visit, VA = apply selectors, VC = create, VM = toggle virtual mirror"))
 
-(defun vm-delete-directory-file-names (list)
-  (vm-delete 'file-directory-p list))
-
-(defun vm-delete-backup-file-names (list)
-  (vm-delete 'backup-file-name-p list))
-
-(defun vm-delete-auto-save-file-names (list)
-  (vm-delete 'auto-save-file-name-p list))
-
 (defun vm-vs-or (m &rest selectors)
   (let ((result nil) selector arglist)
     (while selectors
@@ -407,8 +403,8 @@ Prefix arg means the new virtual folder should be visited read only."
   (save-excursion
     (save-restriction
       (widen)
-      (goto-char (vm-headers-of m))
-      (re-search-forward arg (vm-text-of m) t))))
+      (goto-char (vm-headers-of (vm-real-message-of m)))
+      (re-search-forward arg (vm-text-of (vm-real-message-of m)) t))))
 
 (defun vm-vs-label (m arg)
   (vm-member arg (vm-labels-of m)))
@@ -417,8 +413,8 @@ Prefix arg means the new virtual folder should be visited read only."
   (save-excursion
     (save-restriction
       (widen)
-      (goto-char (vm-text-of m))
-      (re-search-forward arg (vm-text-end-of m) t))))
+      (goto-char (vm-text-of (vm-real-message-of m)))
+      (re-search-forward arg (vm-text-end-of (vm-real-message-of m)) t))))
 
 (defun vm-vs-more-chars-than (m arg)
   (> (string-to-int (vm-su-byte-count m)) arg))
@@ -485,6 +481,8 @@ Prefix arg means the new virtual folder should be visited read only."
 				vm-label-obarray)
 			       nil)))))
 		(t (setq arg (read-string prompt))))))
+    (or (fboundp (intern (concat "vm-vs-" (symbol-name selector))))
+	(error "Invalid selector"))
     (list selector arg)))
 
 ;; clear away links between real and virtual folders when
@@ -536,22 +534,26 @@ Prefix arg means the new virtual folder should be visited read only."
 	       (setq vm-real-buffers (delq b vm-real-buffers))
 	       ;; set the message pointer to a new value if it is
 	       ;; now invalid.
-	       (setq vmp vm-message-pointer)
-	       (while (and vm-message-pointer
-			   (equal "Q" (vm-message-id-number-of
-				       (car vm-message-pointer))))
-		 (setq vm-message-pointer
-		       (cdr vm-message-pointer)))
-	       ;; if there were no good messages ahead, try going
-	       ;; backward.
-	       (if (null vm-message-pointer)
-		   (progn
-		     (setq vm-message-pointer vmp)
-		     (while (and vm-message-pointer
-				 (equal "Q" (vm-message-id-number-of
-					     (car vm-message-pointer))))
-		       (setq vm-message-pointer
-			     (vm-reverse-link-of (car vm-message-pointer))))))
+	       (cond
+		((equal "Q" (vm-message-id-number-of (car vm-message-pointer)))
+		 (vm-garbage-collect-message)
+		 (setq vmp vm-message-pointer)
+		 (while (and vm-message-pointer
+			     (equal "Q" (vm-message-id-number-of
+					 (car vm-message-pointer))))
+		   (setq vm-message-pointer
+			 (cdr vm-message-pointer)))
+		 ;; if there were no good messages ahead, try going
+		 ;; backward.
+		 (if (null vm-message-pointer)
+		     (progn
+		       (setq vm-message-pointer vmp)
+		       (while (and vm-message-pointer
+				   (equal "Q" (vm-message-id-number-of
+					       (car vm-message-pointer))))
+			 (setq vm-message-pointer
+			       (vm-reverse-link-of
+				(car vm-message-pointer))))))))
 	       ;; expunge the virtual messages associated with
 	       ;; real messages that are going away.
 	       (setq vm-message-list

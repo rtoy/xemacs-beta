@@ -822,10 +822,8 @@
       (let ((ten 126))
 	(while (< 32 ten)
 	  (setq result (cons 
-			(let ((str (make-string 3 0)))
-			  (aset str 0 lc-jp)
-			  (aset str 1 (+ 128 ku))
-			  (aset str 2 (+ 128 ten))
+			(let ((str (make-string 1 0)))
+			  (aset str 0 (make-char (find-charset 'japanese-jisx0208)  ku ten))
 			  (cons str str))
 			result))
 	  (setq ten (1- ten))))
@@ -838,10 +836,8 @@
       (let ((ten 126))
 	(while (<= 33 ten)
 	  (setq result (cons 
-			(let ((str (make-string 3 0)))
-			  (aset str 0 lc-jp)
-			  (aset str 1 (+ 128 ku))
-			  (aset str 2 (+ 128 ten))
+			(let ((str (make-string 1 0)))
+			  (aset str 0 (make-char (find-charset 'japanese-jisx0208)  ku ten))
 			  (cons str str))
 			result))
 	  (setq ten (1- ten))))
@@ -854,10 +850,8 @@
       (let ((ten 126))
 	(while (<= 33 ten)
 	  (setq result (cons 
-			(let ((str (make-string 3 0))) ; by T.Shingu
-			  (aset str 0 lc-jp)
-			  (aset str 1 (+ 128 ku))
-			  (aset str 2 (+ 128 ten))
+			(let ((str (make-string 1 0))) ; by T.Shingu
+			  (aset str 0 (make-char (find-charset 'japanese-jisx0208)  ku ten))
 			  (cons str str))
 			result))
 	  (setq ten (1- ten))))
@@ -870,10 +864,8 @@
       (let ((ten 126))
 	(while (<= 33 ten)
 	  (setq result (cons 
-			(let ((str (make-string 3 0)))
-			  (aset str 0 lc-jp2)
-			  (aset str 1 (+ 128 ku))
-			  (aset str 2 (+ 128 ten))
+			(let ((str (make-string 1 0)))
+			  (aset str 0 (make-char (find-charset 'japanese-jisx0212)  ku ten))
 			  (cons str str))
 			result))
 	  (setq ten (1- ten))))

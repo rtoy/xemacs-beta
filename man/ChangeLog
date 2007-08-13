@@ -1,3 +1,20 @@
+Wed Feb 12 12:30:27 1997  Yotam Medini  <yotam_medini@tmai.com>
+
+	* mule/languages.texi: Correct typo.
+
+Mon Feb 10 08:17:22 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile (srcs): Add custom and widget to srcs.
+
+	* lispref/extents.texi (Intro to Extents): Removed erroneous
+	reference to `start-glyph' property.
+
+Sun Feb  9 00:27:22 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* widget.texi: New file.
+
+	* custom.texi: New file.
+
 Thu Feb  6 22:57:09 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* lispref/extents.texi (Duplicable Extents): replicable extents

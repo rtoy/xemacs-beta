@@ -232,10 +232,12 @@ short three_to_one_table[1 + MAX_BYTIND_GAP_SIZE_3];
 
 /* Gap size.  */
 #define BUF_GAP_SIZE(buf) ((buf)->text->gap_size + 0)
-
+#define BUF_END_GAP_SIZE(buf) ((buf)->text->end_gap_size + 0)
 /* Set gap size.  */
 #define SET_BUF_GAP_SIZE(buf, value) \
   do { (buf)->text->gap_size = (value); } while (0)
+#define SET_BUF_END_GAP_SIZE(buf, value) \
+  do { (buf)->text->end_gap_size = (value); } while (0)
 
 /* Gap location.  */ 
 #define BI_BUF_GPT(buf) ((buf)->text->gpt + 0)
@@ -1801,6 +1803,15 @@ gap_right (struct buffer *buf, Bytind pos)
     sledgehammer_extent_check (make_buffer (buf));
 #endif
   }
+  if (pos == BI_BUF_Z (buf))
+    {
+      /* merge gap with end gap */
+
+      SET_BUF_GAP_SIZE (buf, BUF_GAP_SIZE (buf) + BUF_END_GAP_SIZE (buf));
+      SET_BUF_END_GAP_SIZE (buf, 0);
+      SET_END_SENTINEL (buf);
+    }
+  
   QUIT;
 }
 
@@ -1818,6 +1829,49 @@ move_gap (struct buffer *buf, Bytind pos)
     gap_right (buf, pos);
 }
 
+/* Merge the end gap into the gap */
+
+static void
+merge_gap_with_end_gap (struct buffer *buf)
+{
+  Lisp_Object tem;
+  Bytind real_gap_loc;
+  Bytecount old_gap_size;
+  Bytecount increment;
+
+  increment = BUF_END_GAP_SIZE (buf);
+  SET_BUF_END_GAP_SIZE (buf, 0);
+  
+  if (increment > 0)
+    {
+      /* Prevent quitting in move_gap.  */
+      tem = Vinhibit_quit;
+      Vinhibit_quit = Qt;
+
+      real_gap_loc = BI_BUF_GPT (buf);
+      old_gap_size = BUF_GAP_SIZE (buf);
+
+      /* Pretend the end gap is the gap */
+      SET_BI_BUF_GPT (buf, BI_BUF_Z (buf) + BUF_GAP_SIZE (buf));
+      SET_BUF_GAP_SIZE (buf, increment);
+
+      /* Move the new gap down to be consecutive with the end of the old one.
+	 This adjusts the markers properly too.  */
+      gap_left (buf, real_gap_loc + old_gap_size);
+
+      /* Now combine the two into one large gap.  */
+      SET_BUF_GAP_SIZE (buf, BUF_GAP_SIZE (buf) + old_gap_size);
+      SET_BI_BUF_GPT (buf, real_gap_loc);
+      SET_GAP_SENTINEL (buf);
+
+      /* We changed the total size of the buffer (including gap),
+	 so we need to fix up the end sentinel. */
+      SET_END_SENTINEL (buf);
+
+      Vinhibit_quit = tem;
+    }
+}
+
 /* Make the gap INCREMENT bytes longer.  */
 
 static void
@@ -1832,22 +1886,28 @@ make_gap (struct buffer *buf, Bytecount increment)
      a geometric progession that saves on realloc space. */
   increment += 2000 + ((BI_BUF_Z (buf) - BI_BUF_BEG (buf)) / 8);
 
-  /* Don't allow a buffer size that won't fit in an int
-     even if it will fit in a Lisp integer.
-     That won't work because so many places use `int'.  */
-     
-  if (BUF_Z (buf) - BUF_BEG (buf) + BUF_GAP_SIZE (buf) + increment
-      >= ((unsigned) 1 << (min (INTBITS, VALBITS) - 1)))
-    error ("Buffer exceeds maximum size");
+  if (increment > BUF_END_GAP_SIZE (buf))
+    {
+      /* Don't allow a buffer size that won't fit in an int
+	 even if it will fit in a Lisp integer.
+	 That won't work because so many places use `int'.  */
+      
+      if (BUF_Z (buf) - BUF_BEG (buf) + BUF_GAP_SIZE (buf) + increment
+	  >= ((unsigned) 1 << (min (INTBITS, VALBITS) - 1)))
+	error ("Buffer exceeds maximum size");
 
-  result = BUFFER_REALLOC (buf->text->beg,
-			   BI_BUF_Z (buf) - BI_BUF_BEG (buf) +
-			   BUF_GAP_SIZE (buf) + increment +
-			   BUF_END_SENTINEL_SIZE);
-  if (result == 0)
-    memory_full ();
-  SET_BUF_BEG_ADDR (buf, result);
-
+      result = BUFFER_REALLOC (buf->text->beg,
+			       BI_BUF_Z (buf) - BI_BUF_BEG (buf) +
+			       BUF_GAP_SIZE (buf) + increment +
+			       BUF_END_SENTINEL_SIZE);
+      if (result == 0)
+	memory_full ();
+      
+      SET_BUF_BEG_ADDR (buf, result);
+    }
+  else
+    increment = BUF_END_GAP_SIZE (buf);
+  
   /* Prevent quitting in move_gap.  */
   tem = Vinhibit_quit;
   Vinhibit_quit = Qt;
@@ -1858,6 +1918,8 @@ make_gap (struct buffer *buf, Bytecount increment)
   /* Call the newly allocated space a gap at the end of the whole space.  */
   SET_BI_BUF_GPT (buf, BI_BUF_Z (buf) + BUF_GAP_SIZE (buf));
   SET_BUF_GAP_SIZE (buf, increment);
+
+  SET_BUF_END_GAP_SIZE (buf, 0);
 
   /* Move the new gap down to be consecutive with the end of the old one.
      This adjusts the markers properly too.  */
@@ -2375,7 +2437,12 @@ buffer_insert_string_1 (struct buffer *buf, Bufpos pos,
        in Emacs. */
     move_gap (buf, ind); /* may QUIT */
   if (! GAP_CAN_HOLD_SIZE_P (buf, length))
-    make_gap (buf, length - BUF_GAP_SIZE (buf));
+    {
+      if (BUF_END_GAP_SIZE (buf) >= length)
+	merge_gap_with_end_gap (buf);
+      else
+	make_gap (buf, length - BUF_GAP_SIZE (buf));
+    }
 
   record_insert (buf, pos, cclen);
   BUF_MODIFF (buf)++;
@@ -2564,50 +2631,96 @@ buffer_delete_range (struct buffer *buf, Bufpos from, Bufpos to, int flags)
   bi_to = bufpos_to_bytind (buf, to);
   bc_numdel = bi_to - bi_from;
 
-  /* Make sure the gap is somewhere in or next to what we are deleting.  */
-  if (bi_to < BI_BUF_GPT (buf))
-    gap_left (buf, bi_to);
-  if (bi_from > BI_BUF_GPT (buf))
-    gap_right (buf, bi_from);
-
-  record_delete (buf, from, numdel);
-  BUF_MODIFF (buf)++;
-  MARK_BUFFERS_CHANGED;
-
-  /* Relocate point as if it were a marker.  */
-  if (bi_from < BI_BUF_PT (buf))
+  if (to == BUF_Z (buf) &&
+      bi_from > BI_BUF_GPT (buf))
     {
-      if (BI_BUF_PT (buf) < bi_to)
-	JUST_SET_POINT (buf, from, bi_from);
-      else
-	JUST_SET_POINT (buf, BUF_PT (buf) - numdel,
-			BI_BUF_PT (buf) - bc_numdel);
+      /* avoid moving the gap just to delete from the bottom. */
+      
+      record_delete (buf, from, numdel);
+      BUF_MODIFF (buf)++;
+      MARK_BUFFERS_CHANGED;
+
+      /* Relocate point as if it were a marker.  */
+      if (bi_from < BI_BUF_PT (buf))
+	{
+	  if (BI_BUF_PT (buf) < bi_to)
+	    JUST_SET_POINT (buf, from, bi_from);
+	  else
+	    JUST_SET_POINT (buf, BUF_PT (buf) - numdel,
+			    BI_BUF_PT (buf) - bc_numdel);
+	}
+
+      /* Detach any extents that are completely within the range [FROM, TO],
+	 if the extents are detachable.
+
+	 This must come AFTER record_delete(), so that the appropriate extents
+	 will be present to be recorded, and BEFORE the gap size is increased,
+	 as otherwise we will be confused about where the extents end. */
+      process_extents_for_deletion (bufobj, bi_from, bi_to, 0);
+
+      /* Relocate all markers pointing into the new, larger gap
+	 to point at the end of the text before the gap.  */
+      adjust_markers (buf,
+		      (bi_to + BUF_GAP_SIZE (buf)),
+		      (bi_to + BUF_GAP_SIZE (buf)),
+		      (- bc_numdel));
+
+      /* Relocate any extent endpoints just like markers. */
+      adjust_extents_for_deletion (bufobj, bi_from, bi_to,
+				   BUF_GAP_SIZE (buf), bc_numdel, 0);
+      SET_BUF_END_GAP_SIZE (buf, BUF_END_GAP_SIZE (buf) + bc_numdel);
+      
+      SET_BOTH_BUF_ZV (buf, BUF_ZV (buf) - numdel, BI_BUF_ZV (buf) - bc_numdel);
+      SET_BOTH_BUF_Z (buf, BUF_Z (buf) - numdel, BI_BUF_Z (buf) - bc_numdel);
+      SET_GAP_SENTINEL (buf);
     }
+  else
+    {
+      /* Make sure the gap is somewhere in or next to what we are deleting.  */
+      if (bi_to < BI_BUF_GPT (buf))
+	gap_left (buf, bi_to);
+      if (bi_from > BI_BUF_GPT (buf))
+	gap_right (buf, bi_from);
 
-  /* Detach any extents that are completely within the range [FROM, TO],
-     if the extents are detachable.
+      record_delete (buf, from, numdel);
+      BUF_MODIFF (buf)++;
+      MARK_BUFFERS_CHANGED;
 
-     This must come AFTER record_delete(), so that the appropriate extents
-     will be present to be recorded, and BEFORE the gap size is increased,
-     as otherwise we will be confused about where the extents end. */
-  process_extents_for_deletion (bufobj, bi_from, bi_to, 0);
+      /* Relocate point as if it were a marker.  */
+      if (bi_from < BI_BUF_PT (buf))
+	{
+	  if (BI_BUF_PT (buf) < bi_to)
+	    JUST_SET_POINT (buf, from, bi_from);
+	  else
+	    JUST_SET_POINT (buf, BUF_PT (buf) - numdel,
+			    BI_BUF_PT (buf) - bc_numdel);
+	}
 
-  /* Relocate all markers pointing into the new, larger gap
-     to point at the end of the text before the gap.  */
-  adjust_markers (buf,
-		  (bi_to + BUF_GAP_SIZE (buf)),
-		  (bi_to + BUF_GAP_SIZE (buf)),
-                  (- bc_numdel - BUF_GAP_SIZE (buf)));
+      /* Detach any extents that are completely within the range [FROM, TO],
+	 if the extents are detachable.
 
-  /* Relocate any extent endpoints just like markers. */
-  adjust_extents_for_deletion (bufobj, bi_from, bi_to, BUF_GAP_SIZE (buf),
-			       bc_numdel);
+	 This must come AFTER record_delete(), so that the appropriate extents
+	 will be present to be recorded, and BEFORE the gap size is increased,
+	 as otherwise we will be confused about where the extents end. */
+      process_extents_for_deletion (bufobj, bi_from, bi_to, 0);
 
-  SET_BUF_GAP_SIZE (buf, BUF_GAP_SIZE (buf) + bc_numdel);
-  SET_BOTH_BUF_ZV (buf, BUF_ZV (buf) - numdel, BI_BUF_ZV (buf) - bc_numdel);
-  SET_BOTH_BUF_Z (buf, BUF_Z (buf) - numdel, BI_BUF_Z (buf) - bc_numdel);
-  SET_BI_BUF_GPT (buf, bi_from);
-  SET_GAP_SENTINEL (buf);
+      /* Relocate all markers pointing into the new, larger gap
+	 to point at the end of the text before the gap.  */
+      adjust_markers (buf,
+		      (bi_to + BUF_GAP_SIZE (buf)),
+		      (bi_to + BUF_GAP_SIZE (buf)),
+		      (- bc_numdel - BUF_GAP_SIZE (buf)));
+
+      /* Relocate any extent endpoints just like markers. */
+      adjust_extents_for_deletion (bufobj, bi_from, bi_to, BUF_GAP_SIZE (buf),
+				   bc_numdel, BUF_GAP_SIZE (buf));
+
+      SET_BUF_GAP_SIZE (buf, BUF_GAP_SIZE (buf) + bc_numdel);
+      SET_BOTH_BUF_ZV (buf, BUF_ZV (buf) - numdel, BI_BUF_ZV (buf) - bc_numdel);
+      SET_BOTH_BUF_Z (buf, BUF_Z (buf) - numdel, BI_BUF_Z (buf) - bc_numdel);
+      SET_BI_BUF_GPT (buf, bi_from);
+      SET_GAP_SENTINEL (buf);
+    }
 
 #ifdef MULE
   buffer_mule_signal_deleted_region (buf, from, to, bi_from, bi_to);
@@ -2957,7 +3070,8 @@ init_buffer_text (struct buffer *b, int indirect_p)
 			   BUF_GAP_SIZE (b) + BUF_END_SENTINEL_SIZE);
       if (! BUF_BEG_ADDR (b))
 	memory_full ();
-      
+
+      SET_BUF_END_GAP_SIZE (b, 0);
       SET_BI_BUF_GPT (b, 1);
       SET_BOTH_BUF_Z (b, 1, 1);
       SET_GAP_SENTINEL (b);

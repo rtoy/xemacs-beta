@@ -1775,7 +1775,7 @@ compute_buffer_text_usage (struct buffer *b, struct overhead_stats *ovstats)
   int gap;
 
   was_requested = b->text->z - 1;
-  gap = b->text->gap_size;
+  gap = b->text->gap_size + b->text->end_gap_size;
   malloc_use = malloced_storage_size (b->text->beg, was_requested + gap, 0);
   ovstats->gap_overhead += gap;
   ovstats->was_requested += was_requested;

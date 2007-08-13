@@ -446,6 +446,9 @@ main_1 (int argc, char **argv, char **envp)
   int skip_args = 0;
   Lisp_Object load_me;
   int inhibit_window_system;
+#ifdef NeXT
+  extern int malloc_cookie;
+#endif
 
 #ifndef SYSTEM_MALLOC
   /* Make sure that any libraries we link against haven't installed a 
@@ -458,8 +461,6 @@ main_1 (int argc, char **argv, char **envp)
   noninteractive = 0;
 
 #ifdef NeXT
-  extern int malloc_cookie;
-  
   /* 19-Jun-1995 -baw
    * NeXT secret magic, ripped from Emacs-for-NS by Carl Edman
    * <cedman@princeton.edu>.  Note that even Carl doesn't know what this

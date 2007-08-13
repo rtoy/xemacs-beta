@@ -78,9 +78,6 @@
 		      'gnus-nntp-server 'nntp-server-name 'nntp-version
 		      'gnus-default-nntp-server)
 
-;; For ps-print
-(w3-declare-variables 'ps-bold-faces 'ps-italic-faces 'ps-print-version)
-
 ;; For xpm-button
 (w3-declare-variables 'x-library-search-path)
 
@@ -108,5 +105,6 @@
 (and w3-running-FSF19
      (< emacs-minor-version 29)
      (require 'font))
+
 (require 'w3-sysdp)
 (provide 'ange-ftp)

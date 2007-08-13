@@ -1679,7 +1679,7 @@ investigate_frame_change (void)
       Lisp_Object sel_frame = DEVICE_SELECTED_FRAME (d);
 
       /* You'd think that maybe we should use FRAME_WITH_FOCUS_REAL,
-	 but that can cause us to end up in an infinite loop focussing
+	 but that can cause us to end up in an infinite loop focusing
 	 between two frames.  It seems that since the call to `select-frame'
 	 in emacs_handle_focus_change_final() is based on the _FOR_HOOKS
 	 value, we need to do so too. */
@@ -3912,7 +3912,7 @@ from the current local and global keymaps.  A C-g typed while in this
 function is treated like any other character, and `quit-flag' is not set.
 
 First arg PROMPT is a prompt string.  If nil, do not prompt specially.
-Second (optional) arg CONTINUE-ECHO, if non-nil, means this key echos
+Second (optional) arg CONTINUE-ECHO, if non-nil, means this key echoes
 as a continuation of the previous key.
 
 The third (optional) arg DONT-DOWNCASE-LAST, if non-nil, means do not
@@ -4369,7 +4369,7 @@ Character to recognize as meaning Help.
 When it is read, do `(eval help-form)', and display result if it's a string.
 If the value of `help-form' is nil, this char can be read normally.
 This can be any form recognized as a single key specifier.
-To disable the help-char, set it to a negative number.
+The help-char cannot be a negative number in XEmacs.
 */ );
   Vhelp_char = make_char (8); /* C-h */
 

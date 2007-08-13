@@ -3,7 +3,7 @@
 ;; Copyright (C) 1996,1997 MORIOKA Tomohiko
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: char-table.el,v 1.1 1997/01/30 02:27:29 steve Exp $
+;; Version: $Id: char-table.el,v 1.2 1997/02/15 22:21:24 steve Exp $
 ;; Keywords: character, Emacs/mule
 
 ;; This file is not part of tl (Tiny Library).
@@ -25,13 +25,11 @@
 
 ;;; Code:
 
-(require 'char-util)
-
 (defun char-position-to-string (charset r l &optional plane)
   (char-to-string
    (if plane
-       (make-character charset plane (row-line-to-char r l))
-     (make-character charset (row-line-to-char r l))
+       (make-char charset plane (+ (* r 16) l))
+     (make-char charset (+ (* r 16) l))
      )))
 
 (defun char-table-1 (charset r l plane)

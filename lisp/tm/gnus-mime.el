@@ -1,10 +1,10 @@
 ;;; gnus-mime.el --- MIME extensions for Gnus
 
-;; Copyright (C) 1996 Free Software Foundation, Inc.
+;; Copyright (C) 1996,1997 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1996/8/6
-;; Version: $Revision: 1.2 $
+;; Version: $Revision: 1.3 $
 ;; Keywords: news, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is not part of GNU Emacs yet.
@@ -33,7 +33,7 @@
 ;;;
 
 (defconst gnus-mime-RCS-ID
-  "$Id: gnus-mime.el,v 1.2 1996/12/28 21:03:11 steve Exp $")
+  "$Id: gnus-mime.el,v 1.3 1997/02/15 22:21:26 steve Exp $")
 
 (defconst gnus-mime-version
   (get-version-string gnus-mime-RCS-ID))
@@ -64,12 +64,6 @@ The function is called from the article buffer.")
 ;;;
 
 (require 'gnus)
-(autoload 'gnus-decode-rfc1522			"gnus-art-mime")
-(autoload 'gnus-article-preview-mime-message	"gnus-art-mime")
-(autoload 'gnus-article-decode-encoded-word	"gnus-art-mime")
-(autoload 'gnus-set-summary-default-charset	"gnus-sum-mime")
-;;(autoload 'gnus-get-newsgroup-headers		"gnus-sum-mime")
-;;(autoload 'gnus-get-newsgroup-headers-xover	"gnus-sum-mime")
 (require 'gnus-charset)
 
 
@@ -101,17 +95,16 @@ The function is called from the article buffer.")
 
 (provide 'gnus-mime)
 
-(if gnus-is-red-gnus-or-later
-    (progn
-      (call-after-loaded 'gnus-art (lambda ()
-				     (require 'gnus-art-mime)
-				     ))
-      (call-after-loaded 'gnus-sum (lambda ()
-				     (require 'gnus-sum-mime)
-				     ))
-      )
-  (require 'gnus-mime-old)
-  )
+(or gnus-is-red-gnus-or-later
+    (require 'gnus-mime-old)
+    )
+
+(call-after-loaded 'gnus-art (lambda ()
+			       (require 'gnus-art-mime)
+			       ))
+(call-after-loaded 'gnus-sum (lambda ()
+			       (require 'gnus-sum-mime)
+			       ))
 
 (run-hooks 'gnus-mime-load-hook)
 

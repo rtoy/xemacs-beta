@@ -31,6 +31,8 @@
 ;; lisp corresponding to a macro, query the user from within a macro,
 ;; or apply a macro to each line in the reason.
 
+;; This file is largely superseded by edmacro.el as of XEmacs 20.1. -sb
+
 ;;; Code:
 
 ;;;###autoload
@@ -50,91 +52,91 @@ editor command."
 	      symbol))
   (fset symbol last-kbd-macro))
 
-(defun insert-kbd-macro-pretty-string (string)
-  ;; Convert control characters to the traditional readable representation:
-  ;; put the four characters \M-x in the buffer instead of the one char \370,
-  ;; which would deceptively print as `oslash' with the default settings.
-  (save-restriction
-    (narrow-to-region (point) (point))
-    (prin1 string (current-buffer))
-    (goto-char (1+ (point-min)))
-    (while (not (eobp))
-      (cond ((= (following-char)   0) (insert "\\C-@") (delete-char 1))
-	    ((= (following-char) ?\n) (insert "\\n") (delete-char 1))
-	    ((= (following-char) ?\r) (insert "\\r") (delete-char 1))
-	    ((= (following-char) ?\t) (insert "\\t") (delete-char 1))
-	    ((= (following-char) ?\e) (insert "\\e") (delete-char 1))
-	    ((= (following-char) 127) (insert "\\C-?") (delete-char 1))
-	    ((= (following-char) 128) (insert "\\M-\\C-@") (delete-char 1))
-	    ((= (following-char) 255) (insert "\\M-\\C-?") (delete-char 1))
-	    ((and (> (following-char) 127) (< (following-char) 155))
-	     (insert "\\M-\\C-")
-	     (insert (- (following-char) 32))
-	     (delete-char 1)
-	     (forward-char -1))
-	    ((and (>= (following-char) 155) (< (following-char) 160))
-	     (insert "\\M-\\C-")
-	     (insert (- (following-char) 64))
-	     (delete-char 1)
-	     (forward-char -1))
-	    ((>= (following-char) 160)
-	     (insert "\\M-")
-	     (insert (- (following-char) 128))
-	     (delete-char 1)
-	     (forward-char -1))
-	    ((< (following-char) 27)
-	     ;;(insert "\\^") (insert (+ (following-char) 64))
-	     (insert "\\C-") (insert (+ (following-char) 96))
-	     (delete-char 1)
-	     (forward-char -1))
-	    ((< (following-char) 32)
-	     ;;(insert "\\^") (insert (+ (following-char) 64))
-	     (insert "\\C-") (insert (+ (following-char) 64))
-	     (delete-char 1)
-	     (forward-char -1))
-	    (t
-	     (forward-char 1))))))
+;(defun insert-kbd-macro-pretty-string (string)
+;  ;; Convert control characters to the traditional readable representation:
+;  ;; put the four characters \M-x in the buffer instead of the one char \370,
+;  ;; which would deceptively print as `oslash' with the default settings.
+;  (save-restriction
+;    (narrow-to-region (point) (point))
+;    (prin1 string (current-buffer))
+;    (goto-char (1+ (point-min)))
+;    (while (not (eobp))
+;      (cond ((= (following-char)   0) (insert "\\C-@") (delete-char 1))
+;	    ((= (following-char) ?\n) (insert "\\n") (delete-char 1))
+;	    ((= (following-char) ?\r) (insert "\\r") (delete-char 1))
+;	    ((= (following-char) ?\t) (insert "\\t") (delete-char 1))
+;	    ((= (following-char) ?\e) (insert "\\e") (delete-char 1))
+;	    ((= (following-char) 127) (insert "\\C-?") (delete-char 1))
+;	    ((= (following-char) 128) (insert "\\M-\\C-@") (delete-char 1))
+;	    ((= (following-char) 255) (insert "\\M-\\C-?") (delete-char 1))
+;	    ((and (> (following-char) 127) (< (following-char) 155))
+;	     (insert "\\M-\\C-")
+;	     (insert (- (following-char) 32))
+;	     (delete-char 1)
+;	     (forward-char -1))
+;	    ((and (>= (following-char) 155) (< (following-char) 160))
+;	     (insert "\\M-\\C-")
+;	     (insert (- (following-char) 64))
+;	     (delete-char 1)
+;	     (forward-char -1))
+;	    ((>= (following-char) 160)
+;	     (insert "\\M-")
+;	     (insert (- (following-char) 128))
+;	     (delete-char 1)
+;	     (forward-char -1))
+;	    ((< (following-char) 27)
+;	     ;;(insert "\\^") (insert (+ (following-char) 64))
+;	     (insert "\\C-") (insert (+ (following-char) 96))
+;	     (delete-char 1)
+;	     (forward-char -1))
+;	    ((< (following-char) 32)
+;	     ;;(insert "\\^") (insert (+ (following-char) 64))
+;	     (insert "\\C-") (insert (+ (following-char) 64))
+;	     (delete-char 1)
+;	     (forward-char -1))
+;	    (t
+;	     (forward-char 1))))))
 
-;;;###autoload
-(defun insert-kbd-macro (macroname &optional keys)
-  "Insert in buffer the definition of kbd macro NAME, as Lisp code.
-Optional second argument KEYS means also record the keys it is on
-\(this is the prefix argument, when calling interactively).
+;; ;;;###autoload
+;(defun insert-kbd-macro (macroname &optional keys)
+;  "Insert in buffer the definition of kbd macro NAME, as Lisp code.
+;Optional second argument KEYS means also record the keys it is on
+;\(this is the prefix argument, when calling interactively).
 
-This Lisp code will, when executed, define the kbd macro with the
-same definition it has now.  If you say to record the keys,
-the Lisp code will also rebind those keys to the macro.
-Only global key bindings are recorded since executing this Lisp code
-always makes global bindings.
+;This Lisp code will, when executed, define the kbd macro with the
+;same definition it has now.  If you say to record the keys,
+;the Lisp code will also rebind those keys to the macro.
+;Only global key bindings are recorded since executing this Lisp code
+;always makes global bindings.
 
-To save a kbd macro, visit a file of Lisp code such as your `~/.emacs',
-use this command, and then save the file."
-  (interactive "CInsert kbd macro (name): \nP")
-  (let (definition)
-    (if (string= (symbol-name macroname) "")
-	(progn
-	  (setq macroname 'last-kbd-macro 
-                definition last-kbd-macro)
-	  (insert "(setq "))
-        (progn
-          (setq definition (symbol-function macroname))
-          (insert "(fset '")))
-  (prin1 macroname (current-buffer))
-  (insert "\n   ")
-  (let ((string (events-to-keys definition t)))
-    (if (stringp string)
-	(insert-kbd-macro-pretty-string string)
-      (prin1 string (current-buffer))))
-  (insert ")\n")
-  (if keys
-      (let ((keys (where-is-internal macroname)))
-	(while keys
-	  (insert "(global-set-key ")
-	  (prin1 (car keys) (current-buffer))
-	  (insert " '")
-	  (prin1 macroname (current-buffer))
-	  (insert ")\n")
-            (setq keys (cdr keys)))))))
+;To save a kbd macro, visit a file of Lisp code such as your `~/.emacs',
+;use this command, and then save the file."
+;  (interactive "CInsert kbd macro (name): \nP")
+;  (let (definition)
+;    (if (string= (symbol-name macroname) "")
+;	(progn
+;	  (setq macroname 'last-kbd-macro 
+;                definition last-kbd-macro)
+;	  (insert "(setq "))
+;        (progn
+;          (setq definition (symbol-function macroname))
+;          (insert "(fset '")))
+;  (prin1 macroname (current-buffer))
+;  (insert "\n   ")
+;  (let ((string (events-to-keys definition t)))
+;    (if (stringp string)
+;	(insert-kbd-macro-pretty-string string)
+;      (prin1 string (current-buffer))))
+;  (insert ")\n")
+;  (if keys
+;      (let ((keys (where-is-internal macroname)))
+;	(while keys
+;	  (insert "(global-set-key ")
+;	  (prin1 (car keys) (current-buffer))
+;	  (insert " '")
+;	  (prin1 macroname (current-buffer))
+;	  (insert ")\n")
+;            (setq keys (cdr keys)))))))
 
 ;;;###autoload
 (defun kbd-macro-query (flag)

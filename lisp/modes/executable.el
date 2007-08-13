@@ -211,7 +211,8 @@ executable."
 			     (y-or-n-p (concat "Replace magic number by `"
 					       executable-prefix argument "'? "))))
 		       (progn
-			 (replace-match argument t t nil 1)
+			 (replace-match (concat executable-prefix argument)
+					t t nil 1)
 			 (message "Magic number changed to `%s'"
 				  (concat executable-prefix argument)))))
 	    (insert executable-prefix argument ?\n)

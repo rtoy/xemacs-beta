@@ -34,7 +34,7 @@ Boston, MA 02111-1307, USA.  */
 #if (LONGBITS == 64)
 # define BASE_PURESIZE 893000
 #else
-# define BASE_PURESIZE 518000
+# define BASE_PURESIZE 563000
 #endif
 
 /* If any particular systems need to change the base puresize, they
@@ -83,10 +83,15 @@ Boston, MA 02111-1307, USA.  */
 #else
 # define MULE_PURESIZE_CANNA 0
 #endif
+#ifdef HAVE_WNN
+# define MULE_PURESIZE_WNN 5000
+#else
+# define MULE_PURESIZE_WNN 0
+#endif
 # if (LONGBITS == 64)
-#  define MULE_PURESIZE_EXTRA 99000+MULE_PURESIZE_CANNA
+#  define MULE_PURESIZE_EXTRA 99000+MULE_PURESIZE_CANNA+MULE_PURESIZE_WNN
 # else
-#  define MULE_PURESIZE_EXTRA 78000+MULE_PURESIZE_CANNA
+#  define MULE_PURESIZE_EXTRA 78000+MULE_PURESIZE_CANNA+MULE_PURESIZE_WNN
 # endif
 #else
 # define MULE_PURESIZE_EXTRA 0
@@ -115,11 +120,7 @@ Boston, MA 02111-1307, USA.  */
 /* Extra amount of purespace needed for Sunpro builds. */
 
 #ifdef SUNPRO
-#ifdef MULE /* ~50k extra for tm */
-# define SUNPRO_PURESIZE_EXTRA 135000
-#else
 #define SUNPRO_PURESIZE_EXTRA 85000
-#endif
 #else
 # define SUNPRO_PURESIZE_EXTRA 0
 #endif

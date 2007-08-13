@@ -1,3 +1,7 @@
+Thu Feb 13 11:32:47 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in: Install pstogif script.
+
 Sun Dec 29 17:16:45 1996  Martin Buchholz  <mrb@eng.sun.com>
 
 	* update-elc.sh (make_special_commands): Make ilisp be a little

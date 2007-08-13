@@ -38,12 +38,26 @@ as obsolete."
   (define-function oldfun newfun)
   (make-obsolete oldfun newfun))
 
+(defsubst define-compatible-function-alias (oldfun newfun)
+  "Define OLDFUN as a compatible alias for function NEWFUN.
+This makes calling OLDFUN equivalent to calling NEWFUN and marks OLDFUN
+as provided for compatibility only."
+  (define-function oldfun newfun)
+  (make-compatible oldfun newfun))
+
 (defsubst define-obsolete-variable-alias (oldvar newvar)
   "Define OLDVAR as an obsolete alias for varction NEWVAR.
 This makes referencing or setting OLDVAR equivalent to referencing or
 setting NEWVAR and marks OLDVAR as obsolete."
   (defvaralias oldvar newvar)
   (make-obsolete-variable oldvar newvar))
+
+(defsubst define-compatible-variable-alias (oldvar newvar)
+  "Define OLDVAR as a compatible alias for varction NEWVAR.
+This makes referencing or setting OLDVAR equivalent to referencing or
+setting NEWVAR and marks OLDVAR as provided for compatibility only."
+  (defvaralias oldvar newvar)
+  (make-compatible-variable oldvar newvar))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; device stuff
 
@@ -54,24 +68,24 @@ setting NEWVAR and marks OLDVAR as obsolete."
 (defun x-display-color-p (&optional device)
   "Returns non-nil if DEVICE is a color device."
   (eq 'color (device-class device)))
-(make-obsolete 'x-display-color-p 'device-class)
+(make-compatible 'x-display-color-p 'device-class)
 
 (define-function 'x-color-display-p 'x-display-color-p)
-(make-obsolete 'x-display-color-p 'device-class)
+(make-compatible 'x-display-color-p 'device-class)
 
 (defun x-display-grayscale-p (&optional device)
   "Returns non-nil if DEVICE is a grayscale device."
   (eq 'grayscale (device-class device)))
-(make-obsolete 'x-display-grayscale-p 'device-class)
+(make-compatible 'x-display-grayscale-p 'device-class)
 
 (define-function 'x-grayscale-display-p 'x-display-grayscale-p)
-(make-obsolete 'x-display-grayscale-p 'device-class)
+(make-compatible 'x-display-grayscale-p 'device-class)
 
-(define-obsolete-function-alias 'x-display-pixel-width 'device-pixel-width)
-(define-obsolete-function-alias 'x-display-pixel-height
+(define-compatible-function-alias 'x-display-pixel-width 'device-pixel-width)
+(define-compatible-function-alias 'x-display-pixel-height
   'device-pixel-height)
-(define-obsolete-function-alias 'x-display-planes 'device-bitplanes)
-(define-obsolete-function-alias 'x-display-color-cells 'device-color-cells)
+(define-compatible-function-alias 'x-display-planes 'device-bitplanes)
+(define-compatible-function-alias 'x-display-color-cells 'device-color-cells)
 
 (define-obsolete-function-alias 'baud-rate 'device-baud-rate)
 
@@ -246,7 +260,7 @@ If omitted, FRAME defaults to the currently selected frame."
 (define-obsolete-variable-alias 'default-tty-frame-alist
   'default-tty-frame-plist)
 
-(make-obsolete 'frame-parameters 'frame-property)
+(make-compatible 'frame-parameters 'frame-property)
 (defun frame-parameters (&optional frame)
   "Return the parameters-alist of frame FRAME.
 It is a list of elements of the form (PARM . VALUE), where PARM is a symbol.
@@ -265,7 +279,7 @@ for particular types of frames."
   ;; future.
   (destructive-plist-to-alist (frame-properties frame)))
 
-(make-obsolete 'modify-frame-parameters 'set-frame-properties)
+(make-compatible 'modify-frame-parameters 'set-frame-properties)
 (defun modify-frame-parameters (frame alist)
   "Modify the properties of frame FRAME according to ALIST.
 ALIST is an alist of properties to change and their new values.
@@ -308,7 +322,7 @@ See `set-frame-properties' for built-in property names."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; insertion and deletion
 
 (define-obsolete-function-alias 'insert-and-inherit 'insert)
-(define-obsolete-function-alias 'insert-before-markers-and-inerhit
+(define-obsolete-function-alias 'insert-before-markers-and-inherit
   'insert-before-markers)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; keymaps
@@ -380,20 +394,20 @@ See `set-frame-properties' for built-in property names."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; modeline
 
-(define-obsolete-function-alias 'redraw-mode-line 'redraw-modeline)
-(define-obsolete-function-alias 'force-mode-line-update
+(define-compatible-function-alias 'redraw-mode-line 'redraw-modeline)
+(define-compatible-function-alias 'force-mode-line-update
   'redraw-modeline) ;; FSF compatibility
-(define-obsolete-variable-alias 'mode-line-map 'modeline-map)
-(define-obsolete-variable-alias 'mode-line-buffer-identification
+(define-compatible-variable-alias 'mode-line-map 'modeline-map)
+(define-compatible-variable-alias 'mode-line-buffer-identification
   'modeline-buffer-identification)
-(define-obsolete-variable-alias 'mode-line-process 'modeline-process)
-(define-obsolete-variable-alias 'mode-line-modified 'modeline-modified)
-(make-obsolete-variable 'mode-line-inverse-video
+(define-compatible-variable-alias 'mode-line-process 'modeline-process)
+(define-compatible-variable-alias 'mode-line-modified 'modeline-modified)
+(make-compatible-variable 'mode-line-inverse-video
 			"use set-face-highlight-p and set-face-reverse-p")
-(define-obsolete-variable-alias 'default-mode-line-format
+(define-compatible-variable-alias 'default-mode-line-format
   'default-modeline-format)
-(define-obsolete-variable-alias 'mode-line-format 'modeline-format)
-(define-obsolete-variable-alias 'mode-line-menu 'modeline-menu)
+(define-compatible-variable-alias 'mode-line-format 'modeline-format)
+(define-compatible-variable-alias 'mode-line-menu 'modeline-menu)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; mouse
 

@@ -65,7 +65,7 @@
     (define-key map [(control ?7)] 'electric-help-undefined)
     (define-key map [(control ?8)] 'electric-help-undefined)
     (define-key map [(control ?9)] 'electric-help-undefined)
-    (define-key map (char-to-string help-char) 'electric-help-help)
+    (define-key map (vector help-char) 'electric-help-help)
     (define-key map "?" 'electric-help-help)
     ;; XEmacs addition
     (define-key map 'help 'electric-help-help)

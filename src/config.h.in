@@ -390,6 +390,7 @@ Boston, MA 02111-1307, USA.  */
 /* Non-XIM input methods for use with Mule. */
 #undef HAVE_CANNA
 #undef HAVE_WNN
+#undef WNN6
 
 /* Mocklisp Support. */
 #undef MOCKLISP_SUPPORT
