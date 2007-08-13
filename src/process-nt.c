@@ -438,8 +438,23 @@ nt_create_process (struct Lisp_Process *p,
   {
     /* SHGetFileInfo tends to return ERROR_FILE_NOT_FOUND on most
        errors. This leads to bogus error message. */
-    DWORD image_type = SHGetFileInfo ((char *)XSTRING_DATA (program), 0,NULL,
-				      0, SHGFI_EXETYPE);
+    DWORD image_type;
+    char *p = strrchr ((char *)XSTRING_DATA (program), '.');
+    if (p != NULL &&
+	(stricmp (p, ".exe") == 0 ||
+	 stricmp (p, ".com") == 0 ||
+	 stricmp (p, ".bat") == 0 ||
+	 stricmp (p, ".cmd") == 0))
+      {
+	image_type = SHGetFileInfo ((char *)XSTRING_DATA (program), 0,NULL,
+				    0, SHGFI_EXETYPE);
+      }
+    else
+      {
+	char progname[MAX_PATH];
+	sprintf (progname, "%s.exe", (char *)XSTRING_DATA (program));
+	image_type = SHGetFileInfo (progname, 0, NULL, 0, SHGFI_EXETYPE);
+      }
     if (image_type == 0)
       signal_cannot_launch (program, (GetLastError () == ERROR_FILE_NOT_FOUND
 				      ? ERROR_BAD_FORMAT : GetLastError ()));

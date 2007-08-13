@@ -936,7 +936,7 @@ AC_DEFINE_UNQUOTED(XEMACS_CODENAME, "$xemacs_codename")
 AC_DEFINE_UNQUOTED(EMACS_VERSION, "$version")
 
 if test "$with_infodock" = "yes"; then
-  if test ! -f ../InfoDock.rules; then
+  if test ! -f ../ID-INSTALL; then
     echo "Cannot build InfoDock without InfoDock sources"
     with_infodock=no
   fi
@@ -3450,14 +3450,9 @@ if test "$with_database_dbm" != "no"; then
 fi
 
 if test "$with_database_berkdb" != "no"; then
-  AC_CHECK_FUNC(dbopen,     with_database_berkdb=yes need_libdb=no,
-  AC_CHECK_FUNC(db_open,    with_database_berkdb=yes need_libdb=no,
-  AC_CHECK_LIB(db, dbopen,  with_database_berkdb=yes need_libdb=yes,
-  AC_CHECK_LIB(db, db_open, with_database_berkdb=yes need_libdb=yes))))
-
-  if test "$with_database_berkdb" = "yes"; then
-    for path in "db/db.h" "db.h"; do
-AC_TRY_COMPILE([#ifdef HAVE_INTTYPES_H
+  AC_MSG_CHECKING(for Berkeley db.h)
+  for path in "db/db.h" "db.h"; do
+    AC_TRY_COMPILE([#ifdef HAVE_INTTYPES_H
 #define __BIT_TYPES_DEFINED__
 #include <inttypes.h>
 typedef uint8_t  u_int8_t;
@@ -3469,9 +3464,24 @@ typedef uint64_t u_int64_t;
 #endif
 #include <$path>
 ],[], db_h_path="$path"; break)
-    done
-    test -z "$db_h_path" && with_database_berkdb=no
+  done
+  if test -z "$db_h_path" 
+  then AC_MSG_RESULT(no); with_database_berkdb=no
+  else AC_MSG_RESULT($db_h_path)
   fi
+
+  if test "$with_database_berkdb" != "no"; then
+    AC_MSG_CHECKING(for Berkeley DB version)
+    AC_EGREP_CPP(yes,
+[#include <$db_h_path>
+#if DB_VERSION_MAJOR > 1
+yes
+#endif
+], [AC_MSG_RESULT(2); dbfunc=db_open], [AC_MSG_RESULT(1); dbfunc=dbopen])
+    AC_CHECK_FUNC($dbfunc,     with_database_berkdb=yes need_libdb=no, [
+    AC_CHECK_LIB(db, $dbfunc,  with_database_berkdb=yes need_libdb=yes)])
+  fi
+
   if test "$with_database_berkdb" = "yes"; then
     AC_DEFINE_UNQUOTED(DB_H_PATH, "$db_h_path")
     AC_DEFINE(HAVE_BERKELEY_DB)

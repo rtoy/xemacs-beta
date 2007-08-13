@@ -21,7 +21,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Mule 2.3.  Not in FSF. */
 
-/* Rewritten by Ben Wing <wing@666.com>. */
+/* Rewritten by Ben Wing <ben@xemacs.org>. */
 
 #ifndef _XEMACS_MULE_CHARSET_H
 #define _XEMACS_MULE_CHARSET_H

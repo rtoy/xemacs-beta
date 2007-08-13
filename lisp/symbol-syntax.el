@@ -29,7 +29,7 @@
 
 ;;; Commentary:
 
-;; Last modified by: Ben Wing, wing@666.com
+;; Last modified by: Ben Wing, ben@xemacs.org
 ;; Last modified on: Mon Oct  2 02:32:05 GMT 1995
 
 ;;; Code:

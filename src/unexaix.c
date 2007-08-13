@@ -558,7 +558,7 @@ adjust_lnnoptrs (int writedesc, int readdesc, char *new_name)
 	  write (new, &symentry, SYMESZ);
 	}
 
-      for (naux = symentry.n_numaux; naux != 0; --naux)
+      for (naux = symentry.n_numaux; naux-- != 0; )
 	{
 	  read (new, &auxentry, AUXESZ);
 	  nsyms++;

@@ -3003,7 +3003,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 	  ((= len 4) (byte-compile-three-args form))
 	  (t (byte-compile-subr-wrong-args form "2-3")))))
 
-;; from Ben Wing <wing@666.com>: some inlined functions have extra
+;; from Ben Wing <ben@xemacs.org>: some inlined functions have extra
 ;; optional args added to them in XEmacs 19.12.  Changing the byte
 ;; interpreter to deal with these args would be wrong and cause
 ;; incompatibility, so we generate non-inlined calls for those cases.

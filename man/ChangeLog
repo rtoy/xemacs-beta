@@ -1,3 +1,57 @@
+1998-07-09  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre4 is released.
+
+1998-07-09  Oliver Graf <ograf@fga.de>
+
+	* lispref/dragndrop.texi: added warning to OffiX Protocol section
+
+1998-07-09  SL Baur  <steve@altair.xemacs.org>
+
+	* lispref/ldap.texi (Syntax of Search Filters): Fix QP encoding
+	damage in transit.
+
+1998-07-05  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* lispref/tooltalk.texi: Fixed NEXT to @node LDAP
+
+	* lispref/internationalization.texi: Fixed PREV to @node LDAP
+
+	* lispref/lispref.texi: Added LDAP chapter from ldap.texi
+
+	* lispref/Makefile: Added ldap.texi to srcs
+
+1998-06-29  SL Baur  <steve@altair.xemacs.org>
+
+	* standards.texi (Preface): Revert previous change to @node
+	because it doesn't pass makeinfo.
+
+1998-06-27  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* cl.texi: See ALL.
+	* info-stnd.texi: Fixed @setfilename.
+	* info.texi: Fixed @setfilename and a typo.
+	* standards.texi: Added NEXT to @node Preface. See ALL.
+	* texinfo.texi: Fixed section names, quoted usage of @TeX{},
+	changed some occurences of `:' to `colon'.
+	* xemacs-faq.texi: See ALL.
+	* internals/internals.texi: See ALL.
+	* lispref/back.texi: Fixed @setfilename.
+	* lispref/compile.texi: See ALL.
+	* lispref/debugging.texi: See ALL.
+	* lispref/edebug-inc.texi: Added NEXT and UP to @node Edebug.
+	* lispref/eval.texi: See ALL.
+	* lispref/extents.texi: See ALL.
+	* lispref/loading.texi: See ALL.
+	* lispref/searching.texi: Escaped `(' in
+	@cindex @samp{(?:} in regex
+	* lispref/variables.texi: See ALL.
+
+1998-06-28  SL Baur  <steve@altair.xemacs.org>
+
+	* xemacs/calendar.texi: Massive update.
+	From Jeff Miller <jmiller@smart.net>
+
 1998-06-20  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
 
 	* xemacs/abbrevs.texi: 

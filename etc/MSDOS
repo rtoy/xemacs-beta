@@ -1,6 +1,0 @@
-XEmacs does not work under MSDOS.  If you would be interested in porting
-XEmacs to MSDOS, please contact Steve Baur <steve@altair.xemacs.org>.
-
-As of 20.1 the old Emacs files have been removed from the XEmacs
-distribution.  Interested parties should probably grab updated versions
-from a current Emacs distribution.

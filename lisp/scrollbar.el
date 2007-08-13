@@ -30,21 +30,16 @@
 
 ;;; Code:
 
-(defcustom scrollbars-visible-p ;; added for the options menu - dverna
-  (specifier-instance vertical-scrollbar-visible-p (selected-device))
-  "Whether the scrollbars are globally visible. This variable can be
-customized through the options menu."
-  :group 'display
+;; added for the options menu - dverna
+(defcustom scrollbars-visible-p t
+  "Whether the scrollbars are globally visible.
+This variable can be customized through the options menu."
   :type 'boolean
-  :set '(lambda (var val)
-	  (if val
-	      (progn
-		(remove-specifier vertical-scrollbar-visible-p 'global)
-		(remove-specifier horizontal-scrollbar-visible-p 'global))
-	    (set-specifier vertical-scrollbar-visible-p nil 'global)
-	    (set-specifier horizontal-scrollbar-visible-p nil 'global))
-	  (setq scrollbars-visible-p val))
-  )
+  :set (lambda (var val)
+	 (set-specifier vertical-scrollbar-visible-p val)
+	 (set-specifier horizontal-scrollbar-visible-p val)
+	 (setq-default scrollbars-visible-p val))
+  :group 'display)
 
 (defun init-scrollbar-from-resources (locale)
   (when (and (featurep 'x)

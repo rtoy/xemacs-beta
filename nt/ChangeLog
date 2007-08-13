@@ -1,3 +1,34 @@
+1998-07-09  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre4 is released.
+
+1998-07-04  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* README: Documented the changed PACKAGEPATH option and the new
+	  INSTALL_DIR option, install target and runemacs executable.
+	  Added more debugging documentation.
+
+	* config.h: Don't undef EMACS_CONFIGURATION because it's now
+	  set in the makefile.
+
+	* xemacs.mak: Added an INSTALL_DIR option and install target.
+          Renamed the default package location option to PACKAGEPATH
+	  and made it cope with paths with spaces in them.
+	  Made non-debug build the default; DEBUG_XEMACS defaults to 0.
+	  System configuration (EMACS_CONFIGURATION) now correctly
+	  determined at build-time by this makefile.
+	  Compiles the runemacs executable as part of the all target.
+
+1998-06-29  SL Baur  <steve@altair.xemacs.org>
+
+	* config.h:
+	* xemacs.mak: NT native sound fixes
+	From Fabrice POPINEAU via Adrian Aichner <aichner@ecf.teradyne.com>
+
+1998-06-21  Martin Buchholz  <martin@xemacs.org>
+
+	* xemacs.mak: It's XEmacs, not Xemacs!
+
 1998-06-19  Jonathan Harris  <jhar@tardis.ed.ac.uk>
 
 	* file.ico, lisp.ico:

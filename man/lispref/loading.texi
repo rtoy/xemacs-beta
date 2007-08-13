@@ -647,7 +647,7 @@ Examples:
                ; @r{FSF Emacs 19.34 and later.}
 @end example
 
-@strong{NOTE}: The advanced arguments of this function (anything other than a
+@strong{Please note:} The advanced arguments of this function (anything other than a
 symbol) are not yet supported by FSF Emacs.  If you feel they are useful
 for supporting multiple Emacs variants, lobby Richard Stallman at
 @samp{<bug-gnu-emacs@@prep.ai.mit.edu>}.

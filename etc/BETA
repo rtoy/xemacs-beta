@@ -224,6 +224,9 @@ Patches to XEmacs should be mailed to <xemacs-patches@xemacs.org>.
 Each patch will be reviewed by the patches review board, and will be
 acked and added to the distribution, or rejected with an explanation.
 
+Emailed patches should preferably be sent in MIME format and quoted
+printable encoding (if necessary).
+
 When making patches, please use the `-u' option, or if your diff
 doesn't support it, `-c'.  Using ordinary (context-free) diffs are
 notoriously prone to error, since line numbers tend to change when
@@ -254,6 +257,17 @@ you will probably lose due to tab expansion.  The best thing to do is
 to use an XEmacs shell buffer to run the diff commands, or ...
 M-x cd to the appropriate directory, and issue the command `C-u M-!' from
 within XEmacs.
+
+Guidelines for writing ChangeLog entries is governed by the GNU coding 
+standards.  Please see
+	http://www.gnu.org/prep/standards_toc.html   [Change Logs section]
+for details.
+
+Patches should be as single-minded as possible.  Mammoth patches can
+be very difficult to place into the right slot.  They are much easier
+to deal with when broken down into functional or conceptual chunks.
+The patches submitted by Kyle Jones and Hrvoje Niksic are stellar
+examples of how to Do The Right Thing.
 
 ** Packages directory on the FTP Site
 =====================================

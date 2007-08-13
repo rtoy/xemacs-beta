@@ -473,7 +473,8 @@ Otherwise, it returns the next larger version of this font that is defined."
     ;; frames or devices because then, common resource specs like
     ;; "*Foreground: black" will have unwanted effects.
     ;;
-    (if (and (eq (face-name face) 'default)
+    (if (and (or (eq (face-name face) 'default)
+		 (eq (face-name face) 'gui-element))
 	     (or (null locale) (eq locale 'global)))
 	(progn
 	  (or fn (setq fn (x-get-resource

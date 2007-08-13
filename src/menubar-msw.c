@@ -633,7 +633,12 @@ mswindows_handle_wm_command (struct frame* f, WORD id)
   /* Ok, this is our one. Enqueue it. */
   get_gui_callback (data, &fn, &arg);
   XSETFRAME (frame, f);
-  mswindows_enqueue_misc_user_event (frame, fn, arg);
+  /* this used to call mswindows_enqueue_misc_user_event but that
+     breaks customize because the misc_event gets eval'ed in some
+     cicumstances. Don't change it back unless you can fix the
+     customize problem also.*/
+  enqueue_misc_user_event (frame, fn, arg);
+  mswindows_enqueue_magic_event (NULL, XM_BUMPQUEUE);
 
   UNGCPRO; /* data */
   return Qt;
@@ -736,12 +741,18 @@ mswindows_popup_menu (Lisp_Object menu_desc, Lisp_Object event)
 
   if (SYMBOLP (menu_desc))
     menu_desc = Fsymbol_value (menu_desc);
+  CHECK_CONS (menu_desc);
+  CHECK_STRING (XCAR (menu_desc));
 
   current_menudesc = menu_desc;
   current_hashtable = Fmake_hashtable (make_int(10), Qequal);
   menu = create_empty_popup_menu();
   Fputhash (hmenu_to_lisp_object (menu), Qnil, current_hashtable);
   top_level_menu = menu;
+  
+  /* see comments in menubar-x.c */
+  if (zmacs_regions)
+    zmacs_region_stays = 1;
   
   ok = TrackPopupMenu (menu,
 		       TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_RIGHTBUTTON,

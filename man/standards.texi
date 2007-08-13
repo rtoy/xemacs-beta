@@ -1337,9 +1337,9 @@ Used in @code{tar} and @code{cp}.
 @samp{-q} in Make.
 
 @item quiet
-Used in many programs to inhibit the usual output.  @strong{Note:} every
-program accepting @samp{--quiet} should accept @samp{--silent} as a
-synonym.
+Used in many programs to inhibit the usual output.  @strong{Please
+note:} every program accepting @samp{--quiet} should accept
+@samp{--silent} as a synonym.
 
 @item quiet-unshar
 @samp{-Q} in @code{shar}
@@ -1452,7 +1452,7 @@ Used by @code{recode} to chose files or pipes for sequencing passes.
 
 @item silent
 Used in many programs to inhibit the usual output.
-@strong{Note:} every program accepting
+@strong{Please note:} every program accepting
 @samp{--silent} should accept @samp{--quiet} as a synonym.
 
 @item size

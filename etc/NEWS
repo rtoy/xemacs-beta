@@ -34,8 +34,9 @@ file.
 ========================
 
 ** XEmacs has been unbundled into constituent installable packages.
-See the file `etc/PACKAGES' in the distribution for a full
-description.
+See the Info documentation under "Packages" for more information.
+See the file `etc/PACKAGES' in the distribution for a partial list of
+packages available at the time of the 21.0 release.
 
 ** XEmacs is now supported under Microsoft Windows 95/98 and Windows
 NT operating systems.  For starters, look at the XEmacs on Windows FAQ
@@ -63,8 +64,6 @@ colormap.
 
 ** The `imenu' package has been ported to XEmacs and is available as a
 package.
-
-** Horizontally split windows are now draggable.
 
 ** `echo-keystrokes' can now be a floating-point number, so that you
 can set it to intervals shorter than one second.
@@ -123,9 +122,10 @@ result to the current buffer.
 ** The `C-h c' command, when given a prefix argument, will now insert
 the message into the current buffer.
 
-** Horizontally split windows may now be dragged using the mouse.  The
-draggable vertical dividers may be turned off using the
-`vertical-divider-draggable-p' specifier.
+** Horizontally split windows may now be dragged using the mouse.
+Because of this, the dividers between vertical windows are always
+visible.  To turn it off, set `vertical-divider-always-visible-p' to
+nil.
 
 ** XEmacs/Mule (internationalization) changes.
 
@@ -200,6 +200,98 @@ and is an alias for it.
 If you want spaces at the beginning of a line to start a paragraph,
 use the new mode, Paragraph Indent Text mode.
 
+** Changes to Gnus, the XEmacs newsreader.
+
+*** New functionality for using Gnus as an offline newsreader has been
+added.  A plethora of new commands and modes have been added.  See the
+Gnus manual for the full story.
+
+*** The nndraft backend has returned, but works differently than
+before.  All Message buffers are now also articles in the nndraft
+group, which is created automatically.
+
+*** `gnus-alter-header-function' can now be used to alter header
+values.
+
+*** `gnus-summary-goto-article' now accept Message-ID's.
+
+*** A new Message command for deleting text in the body of a message
+outside the region: `C-c C-v'.
+
+*** You can now post to component group in nnvirtual groups with
+`C-u C-c C-c'.
+
+*** `nntp-rlogin-program' -- new variable to ease customization.
+
+*** `C-u C-c C-c' in `gnus-article-edit-mode' will now inhibit
+re-highlighting of the article buffer.
+
+*** New element in `gnus-boring-article-headers' -- `long-to'.
+
+*** `M-i' symbolic prefix command.  See the section "Symbolic
+Prefixes" in the Gnus manual for details.
+
+*** `L' and `I' in the summary buffer now take the symbolic prefix
+`a' to add the score rule to the "all.SCORE" file.
+
+*** `gnus-simplify-subject-functions' variable to allow greater
+control over simplification.
+
+*** `A T' -- new command for fetching the current thread.
+
+*** `/ T' -- new command for including the current thread in the
+limit.
+
+*** `M-RET' is a new Message command for breaking cited text.
+
+*** \\1-expressions are now valid in `nnmail-split-methods'.
+
+*** The `custom-face-lookup' function has been removed.  
+If you used this function in your initialization files, you must
+rewrite them to use `face-spec-set' instead.
+
+*** Cancelling now uses the current select method.  Symbolic prefix
+`a' forces normal posting method.
+
+*** New command to translate M******** sm*rtq**t*s into proper text
+-- `W d'.
+
+*** For easier debugging of nntp, you can set `nntp-record-commands'
+to a non-nil value.
+
+*** nntp now uses ~/.authinfo, a .netrc-like file, for controlling
+where and how to send AUTHINFO to NNTP servers.
+
+*** A command for editing group parameters from the summary buffer
+has been added.
+
+*** A history of where mails have been split is available.
+
+*** A new article date command has been added -- `article-date-iso8601'.
+
+*** Subjects can be simplified when threading by setting
+`gnus-score-thread-simplify'.
+
+*** A new function for citing in Message has been added --
+`message-cite-original-without-signature'.
+
+*** `article-strip-all-blank-lines' -- new article command.
+
+*** A new Message command to kill to the end of the article has
+been added.
+
+*** A minimum adaptive score can be specified by using the
+`gnus-adaptive-word-minimum' variable.
+
+*** The "lapsed date" article header can be kept continually
+updated by the `gnus-start-date-timer' command.
+
+*** Web listserv archives can be read with the nnlistserv backend.
+
+*** Old dejanews archives can now be read by nnweb.
+
+*** Byte-compilation of user-specs now works under XEmacs.
+
 ** The `dir' files are no longer essential for functioning of the Info
 subsystem.  If the `dir' file does not exist in an Info directory, the
 relevant information will be generated on-the-fly.
@@ -239,9 +331,9 @@ toolbar.  Previously, their position could be changed only through the
 use of X resources.
 
 *** The new draggable vertical dividers between windows may be turned
-off using the `vertical-divider-draggable-p' specifier.  When this is
-set to nil, the vertical dividers between windows are shown only when
-needed, and they are not draggable.
+off using the `vertical-divider-always-visible-p' specifier.  When
+this is set to nil, the vertical dividers between windows are shown
+only when needed, and they are not draggable.
 
 Other properties of the vertical dividers may be controlled using
 `vertical-divider-shadow-thickness', `vertical-divider-line-width' and 
@@ -398,6 +490,8 @@ with libc6.
 
 ** The code XEmacs uses to assemble its various paths into the
 directory hierarchy has been rewritten to support the package system.
+Look under "Startup Paths" in the Info documentation for more
+information.
 
 *** site-lisp is now longer part of the load-path by default.
 Its use is deprecated, but you can specify --with-site-lisp=yes at the

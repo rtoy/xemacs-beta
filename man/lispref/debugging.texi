@@ -190,7 +190,7 @@ for @var{function-name} in the minibuffer.
   If the function is already set up to invoke the debugger on entry,
 @code{debug-on-entry} does nothing.
 
-  @strong{Note:} if you redefine a function after using
+  @strong{Please note:} if you redefine a function after using
 @code{debug-on-entry} on it, the code to enter the debugger is lost.
 
   @code{debug-on-entry} returns @var{function-name}.

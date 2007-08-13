@@ -603,7 +603,7 @@ vertical_scrollbar_changed_in_window (Lisp_Object specifier,
      completely at either window edge, we do this always, as users
      usually do not reposition scrollbars 200 times a second or so. Do
      you? */
-  if (NILP (w->vertical_divider_draggable_p))
+  if (NILP (w->vertical_divider_always_visible_p))
     MARK_FRAME_WINDOWS_STRUCTURE_CHANGED (XFRAME (WINDOW_FRAME (w)));
   else
     MARK_WINDOWS_CHANGED (w);

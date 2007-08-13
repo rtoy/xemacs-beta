@@ -196,6 +196,8 @@ Reference Manual, corresponding to XEmacs version 21.0.
                               variables, and other such things.
 * X-Windows::		    Functions specific to the X Window System.
 * ToolTalk Support::        Interfacing with the ToolTalk message service.
+* LDAP Support::            Interfacing with the Lightweight Directory
+                              Access Protocol.
 * Internationalization::    How Emacs supports different languages and
                               cultural conventions.
 * MULE::                    Specifics of the Asian-language support.
@@ -1076,6 +1078,24 @@ ToolTalk Support
 * Sending Messages::
 * Receiving Messages::
 
+LDAP Support
+
+* Building XEmacs with LDAP support::  How to add LDAP support to XEmacs
+* XEmacs LDAP API::             Lisp access to LDAP functions
+* Syntax of Search Filters::    A brief summary of RFC 1558
+
+XEmacs LDAP API
+
+* LDAP Variables::              Lisp variables related to LDAP
+* The High-Level LDAP API::     High-level LDAP lisp functions 
+* The Low-Level LDAP API::      Low-level LDAP lisp primitives
+
+The Low-Level LDAP API
+
+* The LDAP Lisp Object::        
+* Opening and Closing a LDAP Connection::  
+* Searching on a LDAP Server (Low-level)::  
+
 Internationalization
 
 * I18N Levels 1 and 2:: Support for different time, date, and currency formats.
@@ -1171,6 +1191,7 @@ Building XEmacs and Object Allocation
 @include os.texi
 @include x-windows.texi
 @include tooltalk.texi
+@include ldap.texi
 @include internationalization.texi
 @include mule.texi
 

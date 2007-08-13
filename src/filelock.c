@@ -40,7 +40,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* The name of the directory in which we keep lock files, with a '/'
    appended.  */
-Lisp_Object Vlock_directory, Vconfigure_lock_directory;
+Lisp_Object Vlock_directory;
 
 #if 0 /* FSFmacs */
 /* Look in startup.el */
@@ -533,16 +533,6 @@ Don't change this
 void
 complex_vars_of_filelock (void)
 {
-  DEFVAR_LISP ("configure-lock-directory", &Vconfigure_lock_directory /*
-For internal use by the build procedure only.
-configure's idea of what LOCK-DIRECTORY will be.
-*/ );
-#ifdef PATH_LOCK
-  Vconfigure_lock_directory =
-    Ffile_name_as_directory (build_string (PATH_LOCK));
-#else
-  Vconfigure_lock_directory = Qnil;
-#endif
   DEFVAR_LISP ("configure-superlock-file", &Vconfigure_superlock_file /*
 For internal use by the build procedure only.
 configure's idea of what SUPERLOCK-FILE will be.

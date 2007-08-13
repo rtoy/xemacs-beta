@@ -1,4 +1,23 @@
 							-*- indented-text -*-
+to 21.0 pre4 "Uzbek Black"
+-- Miscellaneous documentation cleanup from Altrasoft
+-- Updates for using emacsbug.el as primary bug report interface from
+   Hrvoje Niksic
+-- Russian TUTORIAL courtesy of Vladimir Bormotov
+-- Build and dump fixes for MS Windows from Jonathan Harris
+-- Modeline/Toolbar background color fix from Andy Piper
+-- Hook fix redux from Kyle Jones
+-- Patch for EFS for MS Windows NT native from Jonathan Harris
+-- various patches and manual changes from Adrian Aichner
+-- Miscellaneous hook patches from Kyle Jones
+-- Calendar manual updates from Jeff Miller
+-- various fixes from Martin Buchholz, Olivier Galibert, Michael Sperber
+-- Documentation cleanup by Michael Sperber
+-- Fix for customize breakage in MS Windows from Andy Piper
+-- Line-number mode tuning from Hrvoje Niksic
+-- Romanian Tutorial translation courtesy of Tudor Hulubei
+-- Romanian Tutorial integration from Altrasoft
+
 to 21.0 pre3 "Toggenburg"
 -- Configure changes to handle Berkeley DB 2 from Kazuyuki IENAGA and Martin
    Buchholz
@@ -7,6 +26,7 @@ to 21.0 pre3 "Toggenburg"
 -- Cygwin font lossage fix from Andy Piper
 
 to 21.0 pre2 "Thuringian"
+-- MS Windows font fixes from Jonathan Harris
 -- MS Windows native build fixes from Fabrice POPINEAU
 -- Miscellaneous bug fixes
 -- Documentation updates

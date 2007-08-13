@@ -660,12 +660,11 @@ ignored and this function returns the login name for that UID, or nil.
    character string representation of the user_login_name is
    needed but a Lisp Object is not.  The UID is passed by
    reference.  If UID == NULL, then the USER name
-   for the user running Xemacs will be returned.  This
+   for the user running XEmacs will be returned.  This
    corresponds to a nil argument to Fuser_login_name.
 */
 char*
-user_login_name (uid)
-  int *uid;          
+user_login_name (int *uid)
 {
   struct passwd *pw = NULL;
   
@@ -880,7 +879,7 @@ get_home_directory (void)
       if (initialized && output_home_warning)
 	{
 	  warn_when_safe(Quser_files_and_directories, Qwarning, "\n"
-"	Xemacs was unable to determine a good value for the user's $HOME\n"
+"	XEmacs was unable to determine a good value for the user's $HOME\n"
 "	directory, and will be using the value:\n"
 "		%s\n"
 "	This is probably incorrect.",

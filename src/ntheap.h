@@ -107,11 +107,6 @@ int open_input_file (file_data *p_file, char *name);
 int open_output_file (file_data *p_file, char *name, unsigned long size);
 void close_file_data (file_data *p_file);
 
-unsigned long get_section_size (PIMAGE_SECTION_HEADER p_section);
-
-/* Return pointer to section header for named section. */
-IMAGE_SECTION_HEADER * find_section (char * name, IMAGE_NT_HEADERS * nt_header);
-
 /* Return pointer to section header for section containing the given
    relative virtual address. */
 IMAGE_SECTION_HEADER * rva_to_section (DWORD rva, IMAGE_NT_HEADERS * nt_header);

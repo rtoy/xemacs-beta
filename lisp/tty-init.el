@@ -1,7 +1,7 @@
 ;;; tty-init.el --- initialization code for tty's
 
 ;; Copyright (C) 1994, 1997 Free Software Foundation, Inc.
-;; Copyright (C) 1996 Ben Wing <wing@666.com>.
+;; Copyright (C) 1996 Ben Wing <ben@xemacs.org>.
 
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: terminals, dumped

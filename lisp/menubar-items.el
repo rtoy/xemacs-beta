@@ -576,6 +576,11 @@
 		:style toggle 
 		:selected scrollbars-visible-p]))
        ;; I don't think this is of any interest. - dverna apr. 98
+       ;; #### I beg to differ!  Many FSFmacs converts hate the 3D
+       ;; modeline, and it was perfectly fine to be able to turn them
+       ;; off through the Options menu.  I would have uncommented this
+       ;; source, but the code for saving options would not save the
+       ;; modeline 3D-ness.  Grrr.  --hniksic
 ;;	 ["3D Modeline"			   
 ;;	  (progn				   
 ;;	    (if (zerop (specifier-instance modeline-shadow-thickness))
@@ -927,8 +932,7 @@
        ["No Warranty" describe-no-warranty]
        ["XEmacs License" describe-copying]
        ["The Latest Version" describe-distribution])
-      ["Submit Bug Report" send-pr
-       :active (fboundp 'send-pr)]))))
+      ["Send Bug Report..." report-emacs-bug]))))
 
 
 (defun maybe-add-init-button ()
@@ -937,13 +941,7 @@ Adds `Load .emacs' button to menubar when starting up with -q."
   ;; by Stig@hackvan.com
   (cond
    (init-file-user nil)
-   ((file-exists-p (cond
-		    ((eq system-type 'ms-dos)
-		     (concat "~" (user-login-name) "/_emacs"))
-		    ((eq system-type 'vax-vms)
-		     "sys$login:.emacs")
-		    (t
-		     (concat "~" (user-login-name) "/.emacs"))))
+   ((file-exists-p (expand-file-name ".emacs" "~"))
     (add-menu-button nil
 		     ["Load .emacs"
 		      (progn (delete-menu-item '("Load .emacs"))

@@ -198,11 +198,10 @@ convert_EImage_to_XImage (Lisp_Object device, int width, int height,
 	      gr = *ip++;
 	      bl = *ip++;
 	      conv.val = pixarray[QUANT_GET_COLOR(qtable,rd,gr,bl)];
-#ifdef WORDS_BIGENDIAN
-	      for (q = 4-byte_cnt; q < 4; q++) *dp++ = conv.cp[q];
-#else
-	      for (q = 0; q < byte_cnt; q++) *dp++ = conv.cp[q];
-#endif
+	      if (outimg->byte_order == MSBFirst)
+		for (q = 4-byte_cnt; q < 4; q++) *dp++ = conv.cp[q];
+	      else
+		for (q = 0; q < byte_cnt; q++) *dp++ = conv.cp[q];
 	    }
 	}
       xfree(qtable);
@@ -267,11 +266,10 @@ convert_EImage_to_XImage (Lisp_Object device, int width, int height,
 		bl = *ip++ >> (8 - bbits);
 
 	      conv.val = (rd << rshift) | (gr << gshift) | (bl << bshift);
-#ifdef WORDS_BIGENDIAN
-	      for (q = 4-byte_cnt; q < 4; q++) *dp++ = conv.cp[q];
-#else
-	      for (q = 0; q < byte_cnt; q++) *dp++ = conv.cp[q];
-#endif
+	      if (outimg->byte_order == MSBFirst)
+		for (q = 4-byte_cnt; q < 4; q++) *dp++ = conv.cp[q];
+	      else
+		for (q = 0; q < byte_cnt; q++) *dp++ = conv.cp[q];
 	    }
 	}
     }  

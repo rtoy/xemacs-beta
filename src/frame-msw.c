@@ -69,9 +69,6 @@ Boston, MA 02111-1307, USA.  */
 Lisp_Object Vdefault_mswindows_frame_plist;
 Lisp_Object Vmswindows_use_system_frame_size_defaults;
 
-/* Lisp_Object Qname, Qheight, Qwidth, Qinitially_unmapped, Qpopup, Qtop, Qleft; */
-Lisp_Object Qinitially_unmapped, Qpopup;
-
 /* This does not need to be GC protected, as it holds a
    frame Lisp_Object already protected by Fmake_frame */
 Lisp_Object Vmswindows_frame_being_created;
@@ -86,7 +83,6 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
   XEMACS_RECT_WH rect_default;
   DWORD style, exstyle;
   HWND hwnd, hwnd_parent;
-  static BOOL first_frame = 1;
 
   /* Pick up relevant properties */
   initially_unmapped = Fplist_get (props, Qinitially_unmapped, Qnil);
@@ -147,12 +143,6 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
       style = MSWINDOWS_FRAME_STYLE;
       exstyle = MSWINDOWS_FRAME_EXSTYLE;
       hwnd_parent = NULL;
-
-      if (first_frame)
-        {
-	  style |= WS_VISIBLE;
-	  first_frame = 0;
-	}
 
       rect_default.left = rect_default.top = CW_USEDEFAULT;
       rect_default.width = rect_default.height = CW_USEDEFAULT;
@@ -224,7 +214,12 @@ mswindows_init_frame_2 (struct frame *f, Lisp_Object props)
 static void
 mswindows_init_frame_3 (struct frame *f)
 {
-  /* Don't do this earlier or we get a WM_PAINT before the frame is ready */
+  /* Don't do this earlier or we get a WM_PAINT before the frame is ready.
+   * The SW_x parameter in the first call that an app makes to ShowWindow is
+   * ignored, and the parameter specified in the caller's STARTUPINFO is 
+   * substituted instead. That parameter is SW_HIDE if we were started by
+   * runemacs, so call this twice. #### runemacs is evil */
+  ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_SHOWNORMAL);
   ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_SHOWNORMAL);
   SetForegroundWindow (FRAME_MSWINDOWS_HANDLE(f));
   DragAcceptFiles (FRAME_MSWINDOWS_HANDLE(f), TRUE);

@@ -35,13 +35,13 @@ srcs = abbrevs.texi annotations.texi back.texi backups.texi buffers.texi \
   edebug.texi errors.texi eval.texi extents.texi faces.texi files.texi \
   frames.texi functions.texi glyphs.texi hash-tables.texi help.texi \
   hooks.texi index.texi internationalization.texi intro.texi \
-  keymaps.texi lispref.texi lists.texi loading.texi locals.texi macros.texi \
-  maps.texi markers.texi menus.texi minibuf.texi modes.texi mouse.texi \
-  mule.texi numbers.texi objects.texi os.texi positions.texi processes.texi \
-  range-tables.texi scrollbars.texi searching.texi sequences.texi \
-  specifiers.texi streams.texi strings.texi symbols.texi syntax.texi \
-  text.texi tips.texi toolbar.texi tooltalk.texi variables.texi windows.texi \
-  x-windows.texi index.unperm index.perm
+  keymaps.texi ldap.texi lispref.texi lists.texi loading.texi locals.texi \
+  macros.texi maps.texi markers.texi menus.texi minibuf.texi modes.texi \
+  mouse.texi mule.texi numbers.texi objects.texi os.texi positions.texi \
+  processes.texi range-tables.texi scrollbars.texi searching.texi \
+  sequences.texi specifiers.texi streams.texi strings.texi symbols.texi \
+  syntax.texi text.texi tips.texi toolbar.texi tooltalk.texi variables.texi \
+  windows.texi x-windows.texi index.unperm index.perm
 
 all : info
 info : ../../info/$(NAME).info

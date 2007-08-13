@@ -22,10 +22,50 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 
 /* Adapted for XEmacs by David Hobley <david@spook-le0.cia.com.au> */
 
+/* The linkers that come with MSVC >= 4.0 merge .bss into .data and reorder
+ * uninitialised data so that the .data section looks like:
+ *
+ *	crt0 initialised data
+ *	emacs initialised data
+ *		<my_edata>
+ *	library initialised data
+ *		<start of bss part of .data>
+ *	emacs static uninitialised data
+ *	library static uninitialised data
+ *	emacs global uninitialised data
+ *		<my_ebss>
+ *	library global uninitialised data
+ *
+ * This means that we can't use the normal my_ebss in lastfile.c trick to
+ * differentiate between unitialised data that belongs to emacs and
+ * uninitialised data that belongs to system libraries. This is bad because
+ * we do want to initialise the emacs data, but we don't want to initialise
+ * the system library data.
+ *
+ * To solve this problem using MSVC >= 5.0 we use a pragma directive to tell
+ * the compiler to put emacs's data (both initialised and uninitialised) in
+ * a separate section in the executable, and we only dump that section. This
+ * means that all files that define initialized data must include config.h
+ * to pick up the pragma. We don't try to make any part of that section
+ * read-only.
+ *
+ * This pragma directive isn't supported by the MSVC 4.x compiler. Instead,
+ * we dump crt0 initialised data and library static uninitialised data in
+ * addition to the emacs data. This is wrong, but we appear to be able to
+ * get away with it. A proper fix might involve the introduction of a static
+ * version of my_ebss in lastfile.c and a new firstfile.c file.  jhar */
+
+#include <config.h>
 #include <stdlib.h> 	/* _fmode */
 #include <stdio.h>
 #include <fcntl.h>
 #include <windows.h>
+
+/* From IMAGEHLP.H which is not installed by default by MSVC < 5 */
+/* The IMAGEHLP.DLL library is not distributed by default with Windows95 */
+PIMAGE_NT_HEADERS
+(__stdcall * pfnCheckSumMappedFile) (LPVOID BaseAddress, DWORD FileLength,
+				     LPDWORD HeaderSum, LPDWORD CheckSum);
 
 #if 0
 extern BOOL ctrl_c_handler (unsigned long type);
@@ -57,8 +97,10 @@ DWORD  data_start_file = UNINIT_LONG;
 DWORD  data_size = UNINIT_LONG;
 
 /* Cached info about the .bss section in the executable.  */
-PUCHAR bss_start = UNINIT_PTR;
-DWORD  bss_size = UNINIT_LONG;
+#ifndef DUMP_SEPARATE_SECTION
+PUCHAR bss_start = 0;
+DWORD  bss_size = 0;
+#endif
 
 #ifdef HAVE_NTGUI
 HINSTANCE hinst = NULL;
@@ -74,6 +116,7 @@ int nCmdShow = 0;
 void
 _start (void)
 {
+  char * p;
   extern void mainCRTStartup (void);
 
   /* Cache system info, e.g., the NT page size.  */
@@ -92,6 +135,12 @@ _start (void)
 	{
 	  exit (1);
 	}
+
+      /* To allow profiling, make sure executable_path names the .exe
+	 file, not the file created by the profiler */
+      p = strrchr (executable_path, '\\');
+      strcpy (p+1, PATH_PROGNAME ".exe");
+
       recreate_heap (executable_path);
       heap_state = HEAP_LOADED;
     }
@@ -126,6 +175,7 @@ unexec (char *new_name, char *old_name, void *start_data, void *start_bss,
   char out_filename[MAX_PATH], in_filename[MAX_PATH];
   unsigned long size;
   char *ptr;
+  HANDLE hImagehelp;
   
   /* Make sure that the input and output filenames have the
      ".exe" extension...patch them up if they don't.  */
@@ -173,6 +223,36 @@ unexec (char *new_name, char *old_name, void *start_data, void *start_bss,
 
   copy_executable_and_dump_data_section (&in_file, &out_file);
   dump_bss_and_heap (&in_file, &out_file);
+
+  /* Patch up header fields; profiler is picky about this. */
+  hImagehelp = LoadLibrary ("imagehlp.dll");
+  if (hImagehelp)
+  {
+    PIMAGE_DOS_HEADER dos_header;
+    PIMAGE_NT_HEADERS nt_header;
+    DWORD  headersum;
+    DWORD  checksum;
+
+    dos_header = (PIMAGE_DOS_HEADER) out_file.file_base;
+    nt_header = (PIMAGE_NT_HEADERS) ((char *) dos_header + dos_header->e_lfanew);
+
+    nt_header->OptionalHeader.CheckSum = 0;
+//    nt_header->FileHeader.TimeDateStamp = time (NULL);
+//    dos_header->e_cp = size / 512;
+//    nt_header->OptionalHeader.SizeOfImage = size;
+
+    pfnCheckSumMappedFile = (void *) GetProcAddress (hImagehelp, "CheckSumMappedFile");
+    if (pfnCheckSumMappedFile)
+      {
+//	nt_header->FileHeader.TimeDateStamp = time (NULL);
+	pfnCheckSumMappedFile (out_file.file_base,
+			       out_file.size,
+			       &headersum,
+			       &checksum);
+	nt_header->OptionalHeader.CheckSum = checksum;
+      }
+    FreeLibrary (hImagehelp);
+  }
 
   close_file_data (&in_file);
   close_file_data (&out_file);
@@ -225,7 +305,7 @@ open_output_file (file_data *p_file, char *filename, unsigned long size)
 		     CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
   if (file == INVALID_HANDLE_VALUE) 
     return FALSE;
-  
+
   file_mapping = CreateFileMapping (file, NULL, PAGE_READWRITE, 
 				    0, size, NULL);
   if (!file_mapping) 
@@ -256,6 +336,7 @@ close_file_data (file_data *p_file)
 
 /* Routines to manipulate NT executable file sections.  */
 
+#ifndef DUMP_SEPARATE_SECTION
 static void
 get_bss_info_from_map_file (file_data *p_infile, PUCHAR *p_bss_start, 
 			    DWORD *p_bss_size)
@@ -294,24 +375,7 @@ get_bss_info_from_map_file (file_data *p_infile, PUCHAR *p_bss_start,
   *p_bss_start = (PUCHAR) start;
   *p_bss_size = (DWORD) len;
 }
-
-/* Return pointer to section header for named section. */
-IMAGE_SECTION_HEADER *
-find_section (char * name, IMAGE_NT_HEADERS * nt_header)
-{
-  PIMAGE_SECTION_HEADER section;
-  int i;
-
-  section = IMAGE_FIRST_SECTION (nt_header);
-
-  for (i = 0; i < nt_header->FileHeader.NumberOfSections; i++)
-    {
-      if (strcmp (section->Name, name) == 0)
-	return section;
-      section++;
-    }
-  return NULL;
-}
+#endif
 
 /* Return pointer to section header for section containing the given
    relative virtual address. */
@@ -325,26 +389,14 @@ rva_to_section (DWORD rva, IMAGE_NT_HEADERS * nt_header)
 
   for (i = 0; i < nt_header->FileHeader.NumberOfSections; i++)
     {
-      if (rva >= section->VirtualAddress &&
-	  rva < section->VirtualAddress + section->SizeOfRawData)
+      if (rva >= section->VirtualAddress
+	  && rva < section->VirtualAddress + section->SizeOfRawData)
 	return section;
       section++;
     }
   return NULL;
 }
 
-static unsigned long
-get_section_size (PIMAGE_SECTION_HEADER p_section)
-{
-  /* The section size is in different locations in the different versions.  */
-  switch (get_nt_minor_version ()) 
-    {
-    case 10:
-      return p_section->SizeOfRawData;
-    default:
-      return p_section->Misc.VirtualSize;
-    }
-}
 
 /* Flip through the executable and cache the info necessary for dumping.  */
 static void
@@ -382,18 +434,23 @@ get_section_info (file_data *p_infile)
   section = (PIMAGE_SECTION_HEADER) IMAGE_FIRST_SECTION (nt_header);
   for (i = 0; i < nt_header->FileHeader.NumberOfSections; i++) 
     {
+#ifndef DUMP_SEPARATE_SECTION
       if (!strcmp (section->Name, ".bss")) 
 	{
-	  /* The .bss section.  */
+	  extern int my_ebss;		/* From lastfile.c  */
+
 	  ptr = (char *) nt_header->OptionalHeader.ImageBase +
 	    section->VirtualAddress;
 	  bss_start = ptr;
-	  bss_size = get_section_size (section);
+	  bss_size = (char*)&my_ebss - (char*)bss_start;
 	}
+
       if (!strcmp (section->Name, ".data")) 
+#else
+      if (!strcmp (section->Name, "xdata"))
+#endif
 	{
-	  /* From lastfile.c  */
-	  extern char my_edata[];
+	  extern char my_edata[];	/* From lastfile.c  */
 
 	  /* The .data section.  */
 	  data_section = section;
@@ -402,16 +459,27 @@ get_section_info (file_data *p_infile)
 	  data_start_va = ptr;
 	  data_start_file = section->PointerToRawData;
 
-	  /* We want to only write Emacs data back to the executable,
-	     not any of the library data (if library data is included,
-	     then a dumped Emacs won't run on system versions other
-	     than the one Emacs was dumped on).  */
+#ifndef DUMP_SEPARATE_SECTION
+	  /* Write only the part of the section that contains emacs data. */
 	  data_size = my_edata - data_start_va;
+#else
+	  /* Write back the full section.  */
+	  data_size = section->SizeOfRawData;
+
+	  /* This code doesn't know how to grow the raw size of a section. */
+	  if (section->SizeOfRawData < section->Misc.VirtualSize)
+	    {
+	      printf ("The emacs data section is smaller than expected"
+		      "...bailing.\n");
+	      exit (1);
+	    }
+#endif
 	}
       section++;
     }
 
-  if (bss_start == UNINIT_PTR && bss_size == UNINIT_LONG)
+#ifndef DUMP_SEPARATE_SECTION
+  if (!bss_start)
     {
       /* Starting with MSVC 4.0, the .bss section has been eliminated
 	 and appended virtually to the end of the .data section.  Our
@@ -421,10 +489,14 @@ get_section_info (file_data *p_infile)
 	 is a rounded number and is typically rounded just beyond the
 	 start of the .bss section.  To find the start and size of the
 	 .bss section exactly, we have to peek into the map file.  */
+      extern int my_ebss;
+
       get_bss_info_from_map_file (p_infile, &ptr, &bss_size);
       bss_start = ptr + nt_header->OptionalHeader.ImageBase
 	+ data_section->VirtualAddress;
+      bss_size = (char*)&my_ebss - (char*)bss_start;
     }
+#endif
 }
 
 
@@ -457,7 +529,7 @@ copy_executable_and_dump_data_section (file_data *p_infile,
   memcpy (p_outfile->file_base, p_infile->file_base, size);
 
   size = data_size;
-  DUMP_MSG (("Dumping .data section...\n"));
+  DUMP_MSG (("Dumping data section...\n"));
   DUMP_MSG (("\t0x%08x Address in process.\n", data_va));
   DUMP_MSG (("\t0x%08x Offset in output file.\n", 
 	     data_file - p_outfile->file_base));
@@ -480,7 +552,7 @@ dump_bss_and_heap (file_data *p_infile, file_data *p_outfile)
     unsigned char *heap_data, *bss_data;
     unsigned long size, index;
 
-    DUMP_MSG (("Dumping heap into executable...\n"));
+    DUMP_MSG (("Dumping heap onto end of executable...\n"));
 
     index = heap_index_in_executable;
     size = get_committed_heap_size ();
@@ -492,7 +564,8 @@ dump_bss_and_heap (file_data *p_infile, file_data *p_outfile)
 
     memcpy ((PUCHAR) p_outfile->file_base + index, heap_data, size);
 
-    DUMP_MSG (("Dumping .bss into executable...\n"));
+#ifndef DUMP_SEPARATE_SECTION
+    printf ("Dumping bss onto end of executable...\n");
     
     index += size;
     size = bss_size;
@@ -502,6 +575,7 @@ dump_bss_and_heap (file_data *p_infile, file_data *p_outfile)
     DUMP_MSG (("\t0x%08x BSS offset in executable.\n", index));
     DUMP_MSG (("\t0x%08x BSS size in bytes.\n", size));
     memcpy ((char *) p_outfile->file_base + index, bss_data, size);
+#endif
 }
 
 #undef DUMP_MSG
@@ -510,9 +584,11 @@ dump_bss_and_heap (file_data *p_infile, file_data *p_outfile)
 
 
 /* Load the dumped .bss section into the .bss area of our address space.  */
+/* Already done if the .bss  was part of a separate emacs data section */
 void
 read_in_bss (char *filename)
 {
+#ifndef DUMP_SEPARATE_SECTION
   HANDLE file;
   unsigned long index, n_read;
 
@@ -532,6 +608,7 @@ read_in_bss (char *filename)
     abort ();
 
   CloseHandle (file);
+#endif
 }
 
 /* Map the heap dumped into the executable file into our address space.  */

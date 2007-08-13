@@ -1,5 +1,5 @@
 \input texinfo.tex    @c -*-texinfo-*-
-@c $Id: texinfo.texi,v 1.7 1998/06/20 00:58:34 steve Exp $
+@c $Id: texinfo.texi,v 1.8 1998/06/30 06:35:31 steve Exp $
 @c %**start of header
 
 @c All text is ignored before the setfilename.
@@ -9173,7 +9173,7 @@ this is @samp{(C)}.@refill
 
 
 @node pounds, minus, TeX and copyright, Insertions
-@section @code{@@pounds}@{@} (@pounds{}): Pounds Sterling
+@section @code{@@pounds@{@}} (@pounds{}): Pounds Sterling
 @findex pounds
 
 Use the @code{@@pounds@{@}} command to generate `@pounds{}'.  In a
@@ -9213,7 +9213,7 @@ an itemized list, you do not need to type the braces
 
 
 @node math, Glyphs, minus, Insertions
-@section @code{@@math}: Inserting Mathematical Expressions
+@section @code{@@math} - Inserting Mathematical Expressions
 @findex math
 @cindex Mathematical expressions
 
@@ -12310,7 +12310,7 @@ Every Texinfo file that is to be input to @TeX{} must begin with a
 
 @example
 \input texinfo
-@@setfilename @var{arg-not-used-by-@TeX{}}
+@@setfilename @var{arg-not-used-by-@@TeX@{@}}
 @end example
 
 @noindent
@@ -13383,7 +13383,7 @@ The @samp{.} indicates the current directory as usual.  Emacs uses the
 @code{INFOPATH} environment variable to initialize the value of Emacs's
 own @code{Info-directory-list} variable.
 
-@cindex @samp{:} @r{last in @code{INFOPATH}}
+@cindex colon @r{last in @code{INFOPATH}}
 However you set @code{INFOPATH}, if its last character is a colon, this
 is replaced by the default (compiled-in) path.  This gives you a way to
 augment the default path with new directories without having to list all
@@ -13922,7 +13922,7 @@ Generate a dot accent over the character @var{c}, as in @dotaccent{oo}.
 
 @item @@dots@{@}
 Insert an ellipsis: @samp{@dots{}}.
-@xref{dots, , @code{@@dots}}.@refill
+@xref{dots, , @code{@@dots@{@}}}.@refill
 
 @item @@email@{@var{address}[, @var{displayed-text}]@}
 Indicate an electronic mail address.
@@ -14188,7 +14188,7 @@ chapheading, , @code{@@majorheading} and @code{@@chapheading}}.@refill
 
 @item @@math@{@var{mathematical-expression}@}
 Format a mathematical expression.
-@xref{math, , @code{@@math}: Inserting Mathematical Expressions}.
+@xref{math, , @code{@@math} - Inserting Mathematical Expressions}.
 
 @item @@menu
 Mark the beginning of a menu of nodes in Info.  No effect in a printed
@@ -17209,7 +17209,7 @@ see @ref{Overfull hboxes},@*
 see @ref{Footnotes},@*
 see @ref{dmn, , Format a Dimension},@*
 see @ref{Raise/lower sections, , @code{@@raisesections} and @code{@@lowersections}},@*
-see @ref{math, , @code{@@math}: Inserting Mathematical Expressions}.@*
+see @ref{math, , @code{@@math} - Inserting Mathematical Expressions}.@*
 see @ref{minus, , Inserting a Minus Sign},@*
 see @ref{paragraphindent, , Paragraph Indenting},@*
 see @ref{Cross Reference Commands},@*

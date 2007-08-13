@@ -34,11 +34,6 @@
 (defun mswindows-init-device-faces (device)
   (set-face-font 'default 
 		 '((mswindows default) . "Courier New:Regular:10") 'global)
-  ;; gui elements
-  (set-face-foreground 'gui-element '((mswindows default) . "Black") 'global)
-  (set-face-background 'gui-element '((mswindows default) . "Gray75") 'global)
-  (set-face-foreground 'default '((mswindows default) . "black") 'global)
-  (set-face-background 'default '((mswindows default) . "white") 'global)
   )
 
 

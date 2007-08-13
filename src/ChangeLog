@@ -1,3 +1,196 @@
+1998-07-09  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre4 is released.
+
+1998-07-01  James N. Potts  <jnpotts@plutonium.net>
+
+	* fileio.c: (expand_file_name): under win32: Don't treat names
+	as UNC names if a drive letter has been specified.  If a drive
+	has been specified, strip out extra directory-seperators that
+	reportedly cause problems under Win95.
+
+1998-07-09  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* windowsnt.h: Define DUMP_SEPARATE_SECTION when building with
+	  MSVC >= 5.0. Put emacs init and zero-init data in a special
+	  section of the executable when this is defined.
+
+	* unexnt.c, ntheap.h:
+	  Removed unused find_section() and get_section_size().
+
+	* unexnt.c:
+	  Fix up the executable's checksum after dumping otherwise the
+	  profiler complains.
+	  When DUMP_SEPARATE_SECTION is defined, don't need to dump
+	  zero-init data separately from init data. Dump emacs data
+	  into a special section of the executable.
+	  When DUMP_SEPARATE_SECTION not defined, dump .bss up to
+	  my_ebss instead of up to the end of bss.
+
+1998-07-09  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* filelock.c: Removed Vconfigure_lock_directory - already
+	  defined in emacs.c.
+
+	* frame-msw.c: Removed Qinitially_unmapped and Qpopup - already
+	  defined in frame.c and general.c respectively.
+
+	* glyphs-msw.c: Removed Qresource - already defined in
+	  general.c.
+
+1998-07-05  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* eldap.c (Fldap_search_internal): Docstring fixes
+
+1998-07-04  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* nt.c (init_environment): Removed unused PRELOAD_WINSOCK,
+	  EMACSDOC and TERM variables. Added EMACSDEBUGPATHS,
+	  EMACSPACKAGEPATH and INFOPATH variables.
+	  Removed unused get_emacs_configuration function.
+
+	* s/windowsnt.h: Don't define EMACS_CONFIGURATION here because
+	  it is now defined at build-time by the makefile.
+
+1998-07-01  James N. Potts  <jnpotts@plutonium.net>
+
+	* fileio.c: (expand_file_name): under win32: Don't treat names as
+	UNC names if a drive letter has been specified.  If a drive has
+	been specified, strip out extra directory-seperators that
+	reportedly cause problems under Win95.
+
+1998-07-05  Andy Piper  <andyp@parallax.co.uk>
+
+	* faces.c (complex_vars_of_faces): for the gui-element face don't
+	fallback to the default face, instead provide reasonable default
+	fallbacks that were previously hardcoded elsewhere.
+
+1998-07-06  Olivier Galibert  <galibert@pobox.com>
+
+	* glyphs-x.c (convert_EImage_to_XImage): Fix pixel writing problem
+	when the X server endianness is different than the client's one.
+
+1998-06-29  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* eval.c (run_hook_with_args_in_buffer): Check
+	  default (non-buffer-local) value of hook for
+	  nil before treating it as a function.  Don't initialize 
+	  the `globals' variable twice.
+
+1998-06-24  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* fileio.c: Don't do directory seperator canonicalisation in
+	  substitute-in-file-name because we don't know that the
+	  filename refers to a local file.
+
+1998-06-24  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* process-nt.c (nt_create_process): Try appending the standard
+	  executable file extensions to the filename if none supplied.
+
+1998-06-29  SL Baur  <steve@altair.xemacs.org>
+
+	* fileio.c (Fsubstitute_in_file_name): Enable double slash notation
+	for cygwin32.
+	From Keisuke Mori <ksk@ntts.com>
+
+1998-06-24  Andy Piper  <andyp@parallax.co.uk>
+
+	* toolbar-msw.c (mswindows_output_toolbar): only enable masked
+	images if we have masks. This handles the xbm case (have masks)
+	and avoids overuse of resources in the xpm case (generally no masks).
+	Don't output small toolbars.
+
+1998-06-29  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* eval.c (run_hook_with_args_in_buffer): Don't treat
+	  the default value of a buffer local hook as a list of
+	  hooks unless it is both a cons and the car of that cons 
+	  is not Qlambda.
+
+1998-06-29  SL Baur  <steve@altair.xemacs.org>
+
+	* extents.c: Email address for Ben Wing is ben@xemacs.org.
+	* process-unix.c: Ditto.
+	* mule-coding.h: Ditto.
+	* mule-coding.c: Ditto.
+	* mule-charset.c: Ditto.
+	* mule-charset.h: Ditto.
+	* file-coding.c: Ditto.
+	* file-coding.h: Ditto.
+
+1998-06-22  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* event-msw.c: Guard against recursion when freeing
+	  FRAME_MSWINDOWS_TARGET_RECT struture in WM_SIZE processing.
+
+	* frame-msw.c: Don't set WS_VISIBLE attribute on first frame.
+	  Call ShowWindow twice in init_frame_3 to get round runemacs
+	  weirdness.
+
+1998-06-27  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* scrollbar.c (vertical_scrollbar_changed_in_window): Ditto.
+
+	* winslots.h: Rename.
+
+	* window.c (specifier_vars_of_window): Renamed
+	vertical-divider-draggable-p to vertical-divider-always-visible-p, 
+	as suggested by Ben Wing.
+	(specifier_vars_of_window): Fix docstrings.
+
+1998-06-22  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* unexaix.c: Line number information works correctly again.
+
+1998-06-22  Olivier Galibert  <galibert@pobox.com>
+
+	* emacs.c (__sti__iflPNGFile_c___): Added. See comment. Cry.
+
+1998-06-21  Martin Buchholz  <martin@xemacs.org>
+
+	* editfns.c (get_home_directory): ANSIfy.
+	XEmacs is compilable under C *and* C++.
+	It's XEmacs, not Xemacs!
+
+1998-06-19  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* console-msw.h: added a list of fonts to device data.
+
+	* device-msw.c: enumerate list of available fonts in
+	  mswindows_init_device. Free list in mswindows_delete_device.
+
+	* objects-msw.c: Added helper function match_font used by
+	  mswindows_initialize_font_instance and mswindows_list_fonts.
+	  Allow a charset to be specified in a font string, even if
+	  previous fields havn't been specified.
+
+1998-06-23  Greg Klanderman  <greg@alphatech.com>
+
+	* indent.c (column_at_point): column cache bugfix.
+	Set last_known_column_point to the buffer position for
+	which the column was requested, not buffer's point.
+
+	* redisplay.c (decode_mode_spec): for current-column, show 
+	window's point's column, not buffer's point's column.
+
+1998-06-23  Andy Piper  <andyp@parallax.co.uk>
+
+	* menubar-msw.c (mswindows_handle_wm_command): use
+	enqueue_misc_user event rather than
+	mswindows_enqueue_msic_user_event to fix customize problems. Add some
+	checks that X does.
+
+	* console-msw.h: declare mswindows_enqueue_magic_event.
+
+	* event-msw.c (mswindows_enqueue_magic_event): make global.
+
+1998-06-24  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* line-number.c (LINE_NUMBER_FAR): Reverted to 16384.
+	(buffer_line_number): Use EMACS_INT_MAX instead of random LOTS.
+	(add_position_to_cache): Use EMACS_INT instead of int.
+
 1998-06-21  Olivier Galibert  <galibert@pobox.com>
 
 	* lisp-disunion.h (XMARKBIT): Have XMARKBIT return something

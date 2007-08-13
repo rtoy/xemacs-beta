@@ -5,7 +5,7 @@
 ;; Author: Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Maintainer: Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Created: Jan 1998
-;; Version: $Revision: 1.5 $
+;; Version: $Revision: 1.7 $
 ;; Keywords: help comm
 
 ;; This file is part of XEmacs
@@ -41,8 +41,8 @@
 (defvar ldap-default-host nil
   "*Default LDAP server.")
 
-(defvar ldap-host-parameters-plist nil
-  "*A property list of per host options for LDAP transactions
+(defvar ldap-host-parameters-alist nil
+  "*An alist of per host options for LDAP transactions
 The list elements look like (HOST PROP1 VAL1 PROP2 VAL2 ...)
 HOST is the name of an LDAP server. PROPn and VALn are property/value pairs
 describing parameters for the server.  Valid properties: 
@@ -67,7 +67,7 @@ retrieve all
 ATTRSONLY if non nil retrieves the attributes only without 
 the associated values.
 Additional search parameters can be specified through 
-`ldap-host-parameters-plist' which see."
+`ldap-host-parameters-alist' which see."
   (interactive "sFilter:")
   (let (host-plist res ldap)
     (if (null host)
@@ -75,7 +75,7 @@ Additional search parameters can be specified through
     (if (null host)
 	(error "No LDAP host specified"))
     (setq host-plist
-	  (cdr (assoc host ldap-host-parameters-plist)))
+	  (cdr (assoc host ldap-host-parameters-alist)))
     (message "Opening LDAP connection to %s..." host)
     (setq ldap (ldap-open host host-plist))
     (message "Searching with LDAP on %s..." host)

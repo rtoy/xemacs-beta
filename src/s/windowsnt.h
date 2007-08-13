@@ -328,10 +328,6 @@ int getegid ();
 #define getdisk()               (_getdrive () - 1)
 #define getdefdir(_drv, _buf)   _getdcwd (_drv, _buf, MAXPATHLEN)
 
-#define EMACS_CONFIGURATION 	get_emacs_configuration ()
-const char *get_emacs_configuration (void);
-#define EMACS_CONFIG_OPTIONS	"NT"	/* Not very meaningful yet.  */
-
 #if 0 /* they do. -kkm */
 /* Define this so that winsock.h definitions don't get included when windows.h
    is...  I don't know if they do the right thing for emacs.  For this to
@@ -365,3 +361,12 @@ const char *get_emacs_configuration (void);
 #define SYSTEM_PURESIZE_EXTRA 15000
 
 /* ============================================================ */
+
+/* See unexnt.c */
+#if (_MSC_VER >= 1100)
+#define DUMP_SEPARATE_SECTION
+#endif
+#ifdef DUMP_SEPARATE_SECTION
+#pragma data_seg("xdata")
+#pragma bss_seg("xdata")
+#endif

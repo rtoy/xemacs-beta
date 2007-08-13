@@ -375,15 +375,14 @@ ldap_search_unwind (Lisp_Object unwind_obj)
 DEFUN ("ldap-search-internal", Fldap_search_internal, 2, 6, 0, /*
 Perform a search on an open LDAP connection.
 LDAP is an LDAP connection object created with `ldap-open'.
-FILTER is a filter string for the search as described in RFC 1558
-BASE is the distinguished name at which to start the search
-SCOPE is an integer or a symbol indicating the scope of the search
- Possible values are `ldap-scope-base', `ldap-scope-onelevel' or
- `ldap-scope-subtree'
+FILTER is a filter string for the search as described in RFC 1558.
+BASE is the distinguished name at which to start the search.
+SCOPE is one of the symbols `base', `onelevel' or `subtree' indicating
+the scope of the search.
 ATTRS is a list of strings indicating which attributes to retrieve
  for each matching entry. If nil return all available attributes.
 If ATTRSONLY is non-nil then only the attributes are retrieved, not
-the associated values
+the associated values.
 The function returns a list of matching entries.  Each entry is itself
 an alist of attribute/values.
 */

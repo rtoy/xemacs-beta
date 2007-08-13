@@ -185,7 +185,7 @@ column_at_point (struct buffer *buf, Bufpos init_pos, int cur_col)
     {
       last_known_column_buffer = buf;
       last_known_column = col;
-      last_known_column_point = BUF_PT (buf);
+      last_known_column_point = init_pos;
       last_known_column_modified = BUF_MODIFF (buf);
     }
 

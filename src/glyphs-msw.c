@@ -53,7 +53,6 @@ Lisp_Object Vmswindows_bitmap_file_path;
 static	COLORREF transparent_color = RGB (1,1,1);
 
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (resource);
-Lisp_Object Qresource;
 Lisp_Object Q_resource_type, Q_resource_id;
 
 static void

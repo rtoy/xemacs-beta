@@ -1,3 +1,7 @@
+1998-07-09  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre4 is released.
+
 1998-06-16  Jan Vroonhof  <vroonhof@math.ethz.ch>
 
 	* gnuclient.c (main): Use disconnect_from_server to read & echo

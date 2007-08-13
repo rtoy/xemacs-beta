@@ -898,12 +898,6 @@ See also the function `substitute-in-file-name'.
      "//somedir".  */
   if (drive && IS_DIRECTORY_SEP (nm[0]) && IS_DIRECTORY_SEP (nm[1]))
     nm++;
-
-  /* Discard any previous drive specifier if nm is now in UNC format. */
-  if (IS_DIRECTORY_SEP (nm[0]) && IS_DIRECTORY_SEP (nm[1]))
-    {
-      drive = 0;
-    }
 #endif /* WINDOWSNT */
 
   /* If nm is absolute, look for /./ or /../ sequences; if none are
@@ -1104,6 +1098,8 @@ See also the function `substitute-in-file-name'.
 	     && IS_DEVICE_SEP (newdir[1]) && IS_DIRECTORY_SEP (newdir[2]))
 	  /* Detect Windows file names in UNC format.  */
 	  && ! (IS_DIRECTORY_SEP (newdir[0]) && IS_DIRECTORY_SEP (newdir[1]))
+	  /* Detect drive spec by itself */
+	  && ! (IS_DEVICE_SEP (newdir[1]) && newdir[2] == 0)
 	  )
 	{
 	  /* Effectively, let newdir be (expand-file-name newdir cwd).
@@ -1239,6 +1235,13 @@ See also the function `substitute-in-file-name'.
 	    ++o;
 	  p += 3;
 	}
+#ifdef WINDOWSNT
+      /* if drive is set, we're not dealing with an UNC, so
+	 multiple dir-seps are redundant (and reportedly cause trouble
+	 under win95) */
+      else if (drive && IS_DIRECTORY_SEP (p[0]) && IS_DIRECTORY_SEP (p[1]))
+	  ++p;
+#endif
       else
 	{
 	  *o++ = *p++;
@@ -1247,12 +1250,16 @@ See also the function `substitute-in-file-name'.
 
 #ifdef WINDOWSNT
   /* At last, set drive name, except for network file name.  */
-  if (!(IS_DIRECTORY_SEP (target[0]) && IS_DIRECTORY_SEP (target[1])))
+  if (drive)
     {
-      if (!drive) abort ();
       target -= 2;
       target[0] = DRIVE_LETTER (drive);
       target[1] = ':';
+    }
+  else
+    {
+      if (!(IS_DIRECTORY_SEP (target[0]) && IS_DIRECTORY_SEP (target[1])))
+      abort ();
     }
   CORRECT_DIR_SEPS (target);
 #endif /* WINDOWSNT */
@@ -1414,11 +1421,6 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 				      string);
 
   nm = XSTRING_DATA (string);
-#ifdef WINDOWSNT
-  nm = strcpy (alloca (strlen (nm) + 1), nm);
-  CORRECT_DIR_SEPS (nm);
-  substituted = (strcmp (nm, XSTRING_DATA (string)) != 0);
-#endif
   endp = nm + XSTRING_LENGTH (string);
 
   /* If /~ or // appears, discard everything through first slash. */
@@ -1426,13 +1428,13 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
   for (p = nm; p != endp; p++)
     {
       if ((p[0] == '~'
-#if defined (APOLLO) || defined (WINDOWSNT)
+#if defined (APOLLO) || defined (WINDOWSNT) || defined (__CYGWIN32__)
 	   /* // at start of file name is meaningful in Apollo and
 	      WindowsNT systems */
 	   || (IS_DIRECTORY_SEP (p[0]) && p - 1 != nm)
-#else /* not (APOLLO || WINDOWSNT) */
+#else /* not (APOLLO || WINDOWSNT || __CYGWIN32__) */
 	   || IS_DIRECTORY_SEP (p[0])
-#endif /* not (APOLLO || WINDOWSNT) */
+#endif /* not (APOLLO || WINDOWSNT || __CYGWIN32__) */
 	   )
 	  && p != nm
 	  && (IS_DIRECTORY_SEP (p[-1])))

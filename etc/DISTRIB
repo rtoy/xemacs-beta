@@ -6,24 +6,7 @@ XEmacs is available via anonymous FTP from ftp.xemacs.org (128.174.252.16)
 in the directory /pub/xemacs/.
 
 ftp.xemacs.org is the primary distribution point, but you may find
-copies of it at other sites as well.  Some sites to try include:
-
-	ftp://ftp2.xemacs.org/pub/xemacs/
-	ftp://ftp.uu.net/systems/gnu/xemacs/
-	ftp://ftp.sunet.se/pub/gnu/xemacs/
-	ftp://ftp.cenatls.cena.dgac.fr/pub/Emacs/xemacs/
-	ftp://ftp.th-darmstadt.de/pub/editors/xemacs/
-	ftp://sunsite.doc.ic.ac.uk/gnu/xemacs/
-	ftp://ftp.ibp.fr/pub/emacs/xemacs/
-	ftp://uiarchive.cso.uiuc.edu/pub/packages/xemacs/
-	ftp://ftp.technion.ac.il/pub/unsupported/gnu/xemacs/
-	ftp://thphys.irb.hr/pub/xemacs/
-	ftp://sunsite.cnlab-switch.ch/mirror/xemacs/
-	ftp://ftp.unicamp.br/pub/xemacs/
-	ftp://ftp.usyd.edu.au/pub/Xemacs/
-	ftp://ftp.lab.kdd.co.jp/xemacs/
-	ftp://SunSITE.sut.ac.jp/pub/archives/packages/xemacs/
-	ftp://sunsite.icm.edu.pl/pub/unix/xemacs
+copies of it at other sites as well.  Please see the file FTP for mirrors.
 
 The most up-to-date list of distribution sites can always be found on
 the XEmacs WWW page, http://www.xemacs.org/.  Try to pick a site

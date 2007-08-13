@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 1998/06/13 04:28:18 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 1998/06/30 06:35:33 $
 @sp 1
 @author Tony Rossini <arossini@@stat.sc.edu>
 @author Ben Wing <wing@@666.com>
@@ -2796,7 +2796,7 @@ Implement the above as well as set the following in your @file{.emacs}
 (frame-notice-user-settings)
 @end lisp
 
-@strong{NOTE:} The single minibuffer frame may not be to everyone's
+@strong{Please note:} The single minibuffer frame may not be to everyone's
 taste, and there any number of other XEmacs options settings that may
 make it difficult or inconvenient to use.
 

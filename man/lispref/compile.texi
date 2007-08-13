@@ -483,7 +483,7 @@ representation.  It is the definition of the command
 This function constructs and returns a compiled-function object
 with @var{elements} as its elements.
 
-@emph{NOTE:} Unlike all other Emacs-lisp functions, calling this with
+@emph{Please note:} Unlike all other Emacs-lisp functions, calling this with
 five arguments is @emph{not} the same as calling it with six arguments,
 the last of which is @code{nil}.  If the @var{interactive} arg is
 specified as @code{nil}, then that means that this function was defined

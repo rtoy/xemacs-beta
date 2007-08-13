@@ -881,7 +881,7 @@ mswindows_enqueue_misc_user_event (Lisp_Object channel, Lisp_Object function,
   mswindows_enqueue_dispatch_event (event);
 }
 
-static void
+void
 mswindows_enqueue_magic_event (HWND hwnd, UINT message)
 {
   Lisp_Object emacs_event = Fmake_event (Qnil, Qnil);
@@ -1917,9 +1917,13 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	      mswindows_size_frame_internal ( frame, 
 					      FRAME_MSWINDOWS_TARGET_RECT 
 					      (frame));
-	      /* Reset to we do not get here again */
-	      xfree (FRAME_MSWINDOWS_TARGET_RECT (frame));
-	      FRAME_MSWINDOWS_TARGET_RECT (frame) = 0;
+	      /* Reset so we do not get here again. The SetWindowPos call in
+	       * mswindows_size_frame_internal can cause recursion here. */
+	      if (FRAME_MSWINDOWS_TARGET_RECT (frame))
+		{
+		  xfree (FRAME_MSWINDOWS_TARGET_RECT (frame));
+		  FRAME_MSWINDOWS_TARGET_RECT (frame) = 0;
+		}
 	    }
 	  else
 	    {

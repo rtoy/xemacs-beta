@@ -67,7 +67,7 @@ Boston, MA 02111-1307, USA.  */
 /* How much traversal has to be exceeded for two points to be
    considered "far" from each other.  When two points are far, cache
    will be used.  */
-#define LINE_NUMBER_FAR 32768
+#define LINE_NUMBER_FAR 16384
 
 /* How large a string has to be to give up searching it for newlines,
    before change. */
@@ -195,7 +195,6 @@ delete_invalidate_line_number_cache (struct buffer *b, Bufpos from, Bufpos to)
 	invalidate_line_number_cache (b, from);
     }
 }
-
 
 /* Get the nearest known position we know the line number of
    (i.e. BUF_BEGV, and cached positions).  The return position will be
@@ -234,7 +233,7 @@ get_nearest_line_number (struct buffer *b, Bufpos *beg, Bufpos pos,
 
 /* Add a (POS . LINE) pair to the ring, and rotate it. */
 static void
-add_position_to_cache (struct buffer *b, Bufpos pos, int line)
+add_position_to_cache (struct buffer *b, Bufpos pos, EMACS_INT line)
 {
   Lisp_Object *ring = XVECTOR_DATA (LINE_NUMBER_RING (b));
   int i = LINE_NUMBER_RING_SIZE - 1;
@@ -295,12 +294,10 @@ buffer_line_number (struct buffer *b, Bufpos pos, int cachep)
       get_nearest_line_number (b, &beg, pos, &cached_lines);
     }
 
-  /* An EMACS_MAXINT would be cool to have. */
-#define LOTS 999999999
+  scan_buffer (b, '\n', beg, pos, pos > beg ? EMACS_INT_MAX : -EMACS_INT_MAX,
+	       &shortage, 0);
 
-  scan_buffer (b, '\n', beg, pos, pos > beg ? LOTS : -LOTS, &shortage, 0);
-
-  line = LOTS - shortage;
+  line = EMACS_INT_MAX - shortage;
   if (beg > pos)
     line = -line;
   line += cached_lines;

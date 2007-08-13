@@ -97,6 +97,7 @@
 ;;; Code:
 
 (require 'package-admin)
+(require 'package-get-base)
 
 (defvar package-get-base nil
   "List of packages that are installed at this site.
@@ -165,7 +166,6 @@ copy.  Otherwise, keep it around.")
   "Fetch and install the latest versions of all currently installed packages."
   (interactive)
   ;; Load a fresh copy
-  (load "package-get-base.el")
   (mapcar (lambda (pkg)
 	    (package-get-all
 	     (car pkg) nil))
@@ -179,7 +179,6 @@ package provides that functionality.  If VERSION is nil, retrieves
 latest version.  Optional argument FETCHED-PACKAGES is used to keep
 track of packages already fetched."
   (interactive "sPackage: \nsVersion: ")
-  (load "package-get-base.el")
   (let* ((the-package (package-get-info-find-package package-get-base
 						     package))
 	 (this-package (package-get-info-version
@@ -230,7 +229,6 @@ Once the package is retrieved, its md5 checksum is computed.  If that
 sum does not match that stored in `package-get-base' for this version
 of the package, an error is signalled."
   (interactive "xPackage List: ")
-  (load "package-get-base.el")
   (let* ((this-package
 	  (package-get-info-version
 	   (package-get-info-find-package package-get-base
@@ -362,10 +360,13 @@ words
 "
   (if (efs-ftp-path filename)
       filename
-    (concat "/"
-	    (car search) ":"
-	    (file-name-as-directory (cadr search))
-	    filename)))
+    (let ((dir (cadr search)))
+      (concat "/"
+	      (car search) ":"
+	      (if (string-match "/$" dir)
+		  dir
+		(concat dir "/"))
+	      filename))))
 
 
 (defun package-get-installedp (package version)
@@ -385,7 +386,6 @@ some built in variables.  For now, use packages-package-list."
   consp, then it must match a corresponding (provide (SYM VERSION)) from 
   the package."
   (interactive "SSymbol: ")
-  (load "package-get-base.el")
   (let ((packages package-get-base)
 	(done nil)
 	(found nil))
@@ -418,7 +418,6 @@ some built in variables.  For now, use packages-package-list."
   "Fetch and install the latest versions of all customized packages."
   (interactive)
   ;; Load a fresh copy
-  (load "package-get-base.el")
   (load "package-get-custom.el")
   (mapcar (lambda (pkg)
 	    (if (eval (intern (concat (symbol-name (car pkg)) "-package")))
@@ -456,7 +455,6 @@ If PATHS is omitted, `load-path' is used."
 Entries in the customization file are retrieved from package-get-base.el."
   (interactive)
   ;; Load a fresh copy
-  (load "package-get-base.el")
   (let ((custom-buffer (find-file-noselect 
 			(or (package-get-file-installed-p 
 			     "package-get-custom.el")

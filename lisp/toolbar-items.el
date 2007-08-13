@@ -3,7 +3,7 @@
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1994 Andy Piper <andyp@parallax.demon.co.uk>
 ;; Copyright (C) 1995 Board of Trustees, University of Illinois
-;; Copyright (C) 1996 Ben Wing <wing@666.com>
+;; Copyright (C) 1996 Ben Wing <ben@xemacs.org>
 
 ;; Maintainer: XEmacs development team
 ;; Keywords: frames, dumped

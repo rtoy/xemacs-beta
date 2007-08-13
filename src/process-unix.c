@@ -718,7 +718,7 @@ unix_create_process (struct Lisp_Process *p,
 		     Lisp_Object *argv, int nargv,
 		     Lisp_Object program, Lisp_Object cur_dir)
 {
-  /* This function rewritten by wing@666.com. */
+  /* This function rewritten by ben@xemacs.org. */
 
   int pid, inchannel, outchannel;
   /* Use volatile to protect variables from being clobbered by longjmp.  */

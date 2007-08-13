@@ -1,6 +1,6 @@
 								-*- text -*-
 
-	   XEmacs availability information.  Last Modified: 19-Jun-1998.
+	   XEmacs availability information.  Last Modified: 9-Jul-1998.
 
 XEmacs is available via anonymous FTP from ftp.xemacs.org (207.96.122.8)
 in the directory /pub/xemacs/.
@@ -9,6 +9,8 @@ ftp.xemacs.org is the primary distribution point, but you may find
 copies of it at other sites as well.  Some sites to try include:
 
 	ftp://ftp.jaist.ac.jp/pub/GNU/xemacs/
+	ftp://ring.aist.go.jp/pub/text/xemacs/
+	ftp://ring.asahi-net.or.jp/pub/text/xemacs/
 	ftp://ftp.uu.net/systems/gnu/xemacs/
 	ftp://ftp.sunet.se/pub/gnu/xemacs/
 	ftp://ftp.cenatls.cena.dgac.fr/pub/Emacs/xemacs/

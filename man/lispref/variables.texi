@@ -1087,7 +1087,7 @@ variable does not work.  This is because @code{let} does not distinguish
 between different kinds of bindings; it knows only which variable the
 binding was made for.
 
-@strong{Note:} do not use @code{make-local-variable} for a hook
+@strong{Please note:} do not use @code{make-local-variable} for a hook
 variable.  Instead, use @code{make-local-hook}.  @xref{Hooks}.
 @end deffn
 

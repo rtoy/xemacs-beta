@@ -1340,7 +1340,9 @@ and `mode-motion-hook'."
 		 '(modeline-pointer-glyph nontext-pointer-glyph
 					  text-pointer-glyph))
 		((and (event-over-vertical-divider-p event)
-		      (specifier-instance vertical-divider-draggable-p
+		      ;; #### I disagree with the check below.
+		      ;; Discuss it with Kirill for 21.1.  --hniksic
+		      (specifier-instance vertical-divider-always-visible-p
 					  (event-window event)))
 		 '(divider-pointer-glyph nontext-pointer-glyph
 					 text-pointer-glyph))
@@ -1416,9 +1418,11 @@ This is an intenal function, normally bound to button1 event in
 window-divider-map. You would not call it, but you may bind it to
 other mouse buttons."
   (interactive "e")
-  (if (not (specifier-instance vertical-divider-draggable-p
+  ;; #### I disagree with the check below.
+  ;; Discuss it with Kirill for 21.1.  --hniksic
+  (if (not (specifier-instance vertical-divider-always-visible-p
 			       (event-window event)))
-      (error "Not over a window!"))
+      (error "Not over a window"))
   (let-specifier ((vertical-divider-shadow-thickness
 		   (- (specifier-instance vertical-divider-shadow-thickness
 					  (event-window event)))

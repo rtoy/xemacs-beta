@@ -30,7 +30,7 @@
 
 ;; This file is dumped with XEmacs.
 
-;; Modified by: Ben Wing <wing@666.com>
+;; Modified by: Ben Wing <ben@xemacs.org>
 
 ;; This file provides functions that
 ;; automatically scroll the window horizontally when the point moves

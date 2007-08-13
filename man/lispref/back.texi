@@ -1,6 +1,6 @@
 \input /home/gd/gnu/doc/texinfo.tex  @c -*-texinfo-*-
 @c %**start of header
-@setfilename back-cover
+@setfilename ../../info/back-cover
 @settitle XEmacs Lisp Reference Manual
 @c %**end of header
 .

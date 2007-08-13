@@ -3040,3 +3040,16 @@ The configured initial path for info documentation.
   Vconfigure_info_path = Qnil;
 #endif
 }
+
+#ifdef __sgi
+/* This is so tremendously ugly I'd puke. But then, it works.
+ * The target is to override the static constructor from the
+ * libiflPNG.so library which is maskerading as libz, and
+ * cores on us when re-started from the dumped executable.
+ * This will have to go for 21.1  -- OG.
+ */
+void __sti__iflPNGFile_c___()
+{
+}
+
+#endif

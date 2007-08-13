@@ -61,7 +61,7 @@
   :group 'build)
 
 (defcustom build-report-destination
-  "xemacs-beta@xemacs.org"
+  "xemacs-build-reports@xemacs.org"
   "The mail address XEmacs Build Reports should go to."
   :type 'string
   :group 'build-report)

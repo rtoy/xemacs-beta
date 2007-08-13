@@ -1695,11 +1695,12 @@ particular, into what's called the @dfn{pure space} -- see below) during
 the @file{temacs} phase.
 
 @cindex copy-on-write
-  @strong{Note:} This kludge only works on a few systems nowadays, and is
-rapidly becoming irrelevant because most modern operating systems provide
-@dfn{copy-on-write} semantics.  All data is initially shared between
-processes, and a private copy is automatically made (on a page-by-page
-basis) when a process first attempts to write to a page of memory.
+  @strong{Please note:} This kludge only works on a few systems
+nowadays, and is rapidly becoming irrelevant because most modern
+operating systems provide @dfn{copy-on-write} semantics.  All data is
+initially shared between processes, and a private copy is automatically
+made (on a page-by-page basis) when a process first attempts to write to
+a page of memory.
 
   Formerly, there was a requirement that static variables not be
 declared inside of functions.  This had to do with another hack along
@@ -1984,15 +1985,15 @@ uninterning the symbol out of @code{obarray} or even setting
 @code{obarray} to a different value [although this is likely to make
 XEmacs crash!].)
 
-  @strong{Note:} It is potentially deadly if you declare a @samp{Q...}
-variable in two different modules.  The two calls to @code{defsymbol()}
-are no problem, but some linkers will complain about multiply-defined
-symbols.  The most insidious aspect of this is that often the link will
-succeed anyway, but then the resulting executable will sometimes crash
-in obscure ways during certain operations!  To avoid this problem,
-declare any symbols with common names (such as @code{text}) that are not
-obviously associated with this particular module in the module
-@file{general.c}.
+  @strong{Please note:} It is potentially deadly if you declare a
+@samp{Q...}  variable in two different modules.  The two calls to
+@code{defsymbol()} are no problem, but some linkers will complain about
+multiply-defined symbols.  The most insidious aspect of this is that
+often the link will succeed anyway, but then the resulting executable
+will sometimes crash in obscure ways during certain operations!  To
+avoid this problem, declare any symbols with common names (such as
+@code{text}) that are not obviously associated with this particular
+module in the module @file{general.c}.
 
   Global variables whose names begin with @samp{V} are variables that
 contain Lisp objects.  The convention here is that all global variables
@@ -2048,7 +2049,7 @@ commands: @code{quantify-start-recording-data},
 
 To get started debugging XEmacs, take a look at the @file{gdbinit} and
 @file{dbxrc} files in the @file{src} directory.  
-@xref{Q2.1.15: How to Debug an XEmacs problem with a debugger,,, 
+@xref{Q2.1.15 - How to Debug an XEmacs problem with a debugger,,, 
 xemacs-faq, XEmacs FAQ}.
 
 
@@ -4326,9 +4327,9 @@ an object to mark. (This can be used in lieu of calling
 consequently should be the most heavily nested sub-object, such as a
 long list.)
 
-@strong{Note}: When the mark method is called, garbage collection
-is in progress, and special precautions need to be taken
-when accessing objects; see section (B) above.
+@strong{Please note:} When the mark method is called, garbage collection
+is in progress, and special precautions need to be taken when accessing
+objects; see section (B) above.
 
 If your mark method does not need to do anything, it can be
 @code{NULL}.

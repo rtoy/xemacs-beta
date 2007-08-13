@@ -52,7 +52,7 @@
 ;;
 ;;  Mouse bindings and menus are provided for XEmacs.
 ;;
-;; additions by Ben Wing <wing@666.com> July 1995:
+;; additions by Ben Wing <ben@xemacs.org> July 1995:
 ;; added support for function aliases, made programmer's apropos be the
 ;; default, various other hacking.
 ;; Massive changes by Christoph Wedler <wedler@fmi.uni-passau.de>

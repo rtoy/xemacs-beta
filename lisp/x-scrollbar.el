@@ -4,7 +4,7 @@
 ;; Copyright (C) 1995 Sun Microsystems.
 ;; Copyright (C) 1995, 1996 Ben Wing.
 
-;; Author: Ben Wing <wing@666.com>
+;; Author: Ben Wing <ben@xemacs.org>
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: extensions, dumped
 

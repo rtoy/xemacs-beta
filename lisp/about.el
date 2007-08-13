@@ -26,7 +26,7 @@
 ;;; Synched up with: Not in FSF.
 
 ;; Original code: Jamie Zawinski <jwz@netscape.com>
-;; Text: Ben Wing <wing@666.com>, Jamie Zawinski <jwz@netscape.com>
+;; Text: Ben Wing <ben@xemacs.org>, Jamie Zawinski <jwz@netscape.com>
 ;; Hard: Amiga 1000, Progressive Peripherals Frame Grabber.
 ;; Soft: FG 2.0, DigiPaint 3.0, pbmplus (dec 91), xv 3.0.
 ;; Modified for 19.11 by Eduardo Pelegri-Llopart <pelegri@eng.sun.com>
@@ -66,6 +66,7 @@
     (jareth   "Jareth Hein"       "jareth@camelot.co.jp")
     (jason    "Jason Mastaler"	  "jason@mastaler.com")
     (jens     "Jens Lautenbacher" "jens@lemcbed.lem.uni-karlsruhe.de")
+    (jmiller  "Jeff Miller"       "jmiller@smart.net")
     (juhp     "Jens-Ulrik Holger Petersen" "petersen@kurims.kyoto-u.ac.jp")
     (jwz      "Jamie Zawinski"    "jwz@netscape.com")
     (kazz     "IENAGA Kazuyuki"   "ienaga@jsys.co.jp")
@@ -88,7 +89,7 @@
     (stigb    "Stig Bjorlykke"	  "stigb@tihlde.hist.no")
     (thiessel "Marcus Thiessel"   "thiessel@rhrk.uni-kl.de")
     (vladimir "Vladimir Ivanovic" "vladimir@mri.com")
-    (wing     "Ben Wing"          "wing@xemacs.org")
+    (wing     "Ben Wing"          "ben@xemacs.org")
     (wmperry  "William Perry"     "wmperry@aventail.com"))
   "Alist of XEmacs hackers.")
 
@@ -986,6 +987,16 @@ busy with studies at the university and consulting work.
 See: ")
       (about-url-link 'jason "Visit Jason's homepage")
       (widget-insert ".\n"))
+    (jmiller
+     (widget-inset "\
+Jeff grew up in Indiana and is a country boy at heart.  He currently lives
+in, of all places, Millersville Maryland.  He spends a lot of his free
+time tinkering with Linux and hacking on XEmacs and loves it when he finds
+new cool features in either.  When he's not doing that, he enjoys downhill
+skiing, puzzles, and sci-fi.  Jeff is also really interested in classical
+Roman history and enjoys making trips to Italy, where he was born, and
+seeing the sights")
+     (widget-insert ".\n"))
 ))
 
 ;; Setup the buffer for a maintainer.
@@ -1193,6 +1204,8 @@ Author of \"find-func.el\".\n")
     (about-show-linked-info 'jason "\
 Beta tester and manager of the various XEmacs mailing lists.
 Originator and maintainer of the gnus.org domain.\n")
+    (about-show-linked-info 'jmiller "\
+Beta tester and last hacker of calendar.\n")
     (flet ((print-short (name addr &optional shortinfo)
 	     (concat (about-with-face name 'italic)
 		     (about-tabs name)
@@ -1235,6 +1248,10 @@ muck around with things. As a result I started the NT port. Hopefully I
 will get to finish it sometime sooner rather than later. I do vaguely
 remember University where it seems like I had more spare time that I can
 believe now. Oh well, such is life.\n")
+       (print-short "Jonathan Harris" "jhar@tardis.ed.ac.uk" "\
+Manages the team responsible for the EPOC kernel at Symbian Ltd. Started
+the mswindows native-GUI port of XEmacs because he felt lost using
+Microsoft Windows without a real editor.\n")
        (print-short "Michael R. Cook" "mcook@cognex.com" "\
 Author of the \"shy groups\" and minimal matching regular expression
 extensions.\n")
@@ -1330,7 +1347,6 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "ChangGil Han" "cghan@phys401.phys.pusan.ac.kr")
        (print-short "Derek Harding" "dharding@lssec.bt.co.uk")
        (print-short "Michael Harnois" "mharnois@sbt.net")
-       (print-short "Jonathan Harris" "jhar@tardis.ed.ac.uk")
        (print-short "John Haxby" "J.Haxby@isode.com")
        (print-short "Karl M. Hegbloom" "karlheg@inetarena.com")
        (print-short "Benedikt Heinen" "beh@icemark.thenet.ch")
@@ -1342,6 +1358,7 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Chris Holt" "xris@migraine.stanford.edu")
        (print-short "Tetsuya HOYANO" "hoyano@ari.bekkoame.or.jp")
        (print-short "David Hughes" "djh@harston.cv.com")
+       (print-short "Tudor Hulubei" "tudor@cs.unh.edu")
        (print-short "Tatsuya Ichikawa" "ichikawa@hv.epson.co.jp")
        (print-short "Andrew Innes" "andrewi@harlequin.co.uk")
        (print-short "Andreas Jaeger" "aj@arthur.rhein-neckar.de")

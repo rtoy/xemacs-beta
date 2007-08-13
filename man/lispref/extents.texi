@@ -45,7 +45,7 @@ Extents can freely overlap each other in a buffer or string.  Extents
 are invisible to functions that merely examine the text of a buffer or
 string.
 
-  @emph{NOTE}: An alternative way to add properties to a buffer or
+  @emph{Please note:} An alternative way to add properties to a buffer or
 string is to use text properties.  @xref{Text Properties}.
 
   An extent is logically a Lisp object consisting of a start position,

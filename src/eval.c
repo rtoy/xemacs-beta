@@ -3726,20 +3726,29 @@ run_hook_with_args_in_buffer (struct buffer *buf, int nargs, Lisp_Object *args,
 	    {
 	      /* t indicates this hook has a local binding;
 		 it means to run the global binding too.  */
-	      Lisp_Object globals;
+	      Lisp_Object globals = Fdefault_value (sym);
 
-	      for (globals = Fdefault_value (sym);
-		   CONSP (globals) && ((cond == RUN_HOOKS_TO_COMPLETION)
-				       || (cond == RUN_HOOKS_UNTIL_SUCCESS
-					   ? NILP (ret)
-					   : !NILP (ret)));
-		   globals = XCDR (globals))
+	      if ((! CONSP (globals) || EQ (XCAR (globals), Qlambda)) &&
+		  ! NILP (globals))
 		{
-		  args[0] = XCAR (globals);
-		  /* In a global value, t should not occur.  If it does, we
-		     must ignore it to avoid an endless loop.  */
-		  if (!EQ (args[0], Qt))
-		    ret = Ffuncall (nargs, args);
+		  args[0] = globals;
+		  ret = Ffuncall (nargs, args);
+		}
+	      else
+		{
+		  for (;
+		       CONSP (globals) && ((cond == RUN_HOOKS_TO_COMPLETION)
+					   || (cond == RUN_HOOKS_UNTIL_SUCCESS
+					       ? NILP (ret)
+					       : !NILP (ret)));
+		       globals = XCDR (globals))
+		    {
+		      args[0] = XCAR (globals);
+		      /* In a global value, t should not occur.  If it does, we
+			 must ignore it to avoid an endless loop.  */
+		      if (!EQ (args[0], Qt))
+			ret = Ffuncall (nargs, args);
+		    }
 		}
 	    }
 	  else

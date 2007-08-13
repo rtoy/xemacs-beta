@@ -109,7 +109,7 @@ write code that evaluates a form that is computed at run time, such as
 after reading a form from text being edited or getting one from a
 property list.  On these occasions, use the @code{eval} function.
 
-  @strong{Note:} it is generally cleaner and more flexible to call
+  @strong{Please note:} it is generally cleaner and more flexible to call
 functions that are stored in data structures, rather than to evaluate
 expressions stored in data structures.  Using functions provides the
 ability to pass information to them as arguments.

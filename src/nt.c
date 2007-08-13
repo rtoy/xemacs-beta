@@ -585,19 +585,16 @@ init_environment ()
     static char * env_vars[] = 
     {
       "HOME",
-      "PRELOAD_WINSOCK",
       "emacs_dir",
       "EMACSLOADPATH",
+      "EMACSDEBUGPATHS",
       "SHELL",
       "CMDPROXY",
       "EMACSDATA",
       "EMACSPATH",
+      "EMACSPACKAGEPATH",
       "EMACSLOCKDIR",
-      /* We no longer set INFOPATH because Info-default-directory-list
-	 is then ignored.  We use a hook in winnt.el instead.  */
-      /*      "INFOPATH", */
-      "EMACSDOC",
-      "TERM",
+      "INFOPATH"
     };
 
     for (i = 0; i < countof (env_vars); i++) 
@@ -666,65 +663,6 @@ init_environment ()
   }
 
   init_user_info ();
-}
-
-/* We don't have scripts to automatically determine the system configuration
-   for Emacs before it's compiled, and we don't want to have to make the
-   user enter it, so we define EMACS_CONFIGURATION to invoke this runtime
-   routine.  */
-
-static char configuration_buffer[32];
-
-const char *
-get_emacs_configuration (void)
-{
-  char *arch, *oem, *os;
-
-  /* Determine the processor type.  */
-  switch (get_processor_type ()) 
-    {
-
-#ifdef PROCESSOR_INTEL_386
-    case PROCESSOR_INTEL_386:
-    case PROCESSOR_INTEL_486:
-    case PROCESSOR_INTEL_PENTIUM:
-      arch = "i386";
-      break;
-#endif
-
-#ifdef PROCESSOR_INTEL_860
-    case PROCESSOR_INTEL_860:
-      arch = "i860";
-      break;
-#endif
-
-#ifdef PROCESSOR_MIPS_R2000
-    case PROCESSOR_MIPS_R2000:
-    case PROCESSOR_MIPS_R3000:
-    case PROCESSOR_MIPS_R4000:
-      arch = "mips";
-      break;
-#endif
-
-#ifdef PROCESSOR_ALPHA_21064
-    case PROCESSOR_ALPHA_21064:
-      arch = "alpha";
-      break;
-#endif
-
-    default:
-      arch = "unknown";
-      break;
-    }
-
-  /* Let oem be "*" until we figure out how to decode the OEM field.  */
-  oem = "*";
-
-  os = (GetVersion () & 0x80000000) ? "win95" : "nt";
-
-  sprintf (configuration_buffer, "%s-%s-%s%d.%d", arch, oem, os,
-	   get_nt_major_version (), get_nt_minor_version ());
-  return configuration_buffer;
 }
 
 #ifndef HAVE_X_WINDOWS

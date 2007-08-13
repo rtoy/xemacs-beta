@@ -59,8 +59,8 @@ Boston, MA 02111-1307, USA.  */
   WINDOW_SLOT (vertical_divider_line_width, EQ);
   /* Spacing between outer egde of divider border and window edge */
   WINDOW_SLOT (vertical_divider_spacing, EQ);
-  /* Whether vertical dividers are draggable and displayed */
-  WINDOW_SLOT (vertical_divider_draggable_p, EQ);
+  /* Whether vertical dividers are always displayed */
+  WINDOW_SLOT (vertical_divider_always_visible_p, EQ);
 
 #ifdef HAVE_SCROLLBARS
   /* Width of vertical scrollbars. */

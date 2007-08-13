@@ -27,11 +27,47 @@
 XEMACS=..
 LISP=$(XEMACS)\lisp
 
+# Program name and version
+
+!include "..\version.sh"
+
+!if !defined(INFODOCK)
+INFODOCK=0
+!endif
+
+!if $(INFODOCK)
+INFODOCK_VERSION_STRING=$(infodock_major_version).$(infodock_minor_version).$(infodock_build_version)
+PROGRAM_DEFINES=-DINFODOCK 					\
+	-DPATH_VERSION=\"$(INFODOCK_VERSION_STRING)\"		\
+	-DPATH_PROGNAME=\"infodock\" 				\
+	-DINFODOCK_MAJOR_VERSION=$(infodock_major_version)	\
+	-DINFODOCK_MINOR_VERSION=$(infodock_minor_version)	\
+	-DINFODOCK_BUILD_VERSION=$(infodock_build_version)
+!else
+!if "$(emacs_beta_version)" != ""
+XEMACS_VERSION_STRING=$(emacs_major_version).$(emacs_minor_version)-b$(emacs_beta_version)
+!else
+XEMACS_VERSION_STRING=$(emacs_major_version).$(emacs_minor_version)
+!endif
+PROGRAM_DEFINES=						\
+	-DPATH_VERSION=\"$(XEMACS_VERSION_STRING)\"		\
+	-DPATH_PROGNAME=\"xemacs\"
+!endif
+
 #
 # Command line options defaults
 #
-!if !defined(PATH_PACKAGEPATH)
-PATH_PACKAGEPATH="~/.xemacs"
+!if !defined(INSTALL_DIR)
+! if $(INFODOCK)
+INSTALL_DIR=c:\Program Files\Infodock\Infodock-$(INFODOCK_VERSION_STRING)
+! else
+INSTALL_DIR=c:\Program Files\XEmacs\XEmacs-$(XEMACS_VERSION_STRING)
+! endif
+!endif
+!if !defined(PACKAGEPATH)
+PATH_PACKAGEPATH="c:\\Program Files\\XEmacs\\packages"
+!else
+PATH_PACKAGEPATH="$(PACKAGEPATH)"
 !endif
 !if !defined(HAVE_MSW)
 HAVE_MSW=1
@@ -54,8 +90,11 @@ HAVE_DIALOGS=1
 !if !defined(HAVE_MSW_C_DIRED)
 HAVE_MSW_C_DIRED=1
 !endif
+!if !defined(HAVE_NATIVE_SOUND)
+HAVE_NATIVE_SOUND=1
+!endif
 !if !defined(DEBUG_XEMACS)
-DEBUG_XEMACS=1
+DEBUG_XEMACS=0
 !endif
 !if !defined(USE_UNION_TYPE)
 USE_UNION_TYPE=0
@@ -66,8 +105,22 @@ USE_MINIMAL_TAGBITS=0
 !if !defined(USE_INDEXED_LRECORD_IMPLEMENTATION)
 USE_INDEXED_LRECORD_IMPLEMENTATION=0
 !endif
-!if !defined(INFODOCK)
-INFODOCK=0
+
+#
+# System configuration
+#
+!if !defined(PROCESSOR_ARCHITECTURE) && "$(OS)" != "Windows_NT"
+EMACS_CONFIGURATION=i386-pc-win32
+!else if "$(PROCESSOR_ARCHITECTURE)" == "x86"
+EMACS_CONFIGURATION=i386-pc-win32
+!else if "$(PROCESSOR_ARCHITECTURE)" == "MIPS"
+EMACS_CONFIGURATION=mips-pc-win32
+!else if "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
+EMACS_CONFIGURATION=alpha-pc-win32
+!else if "$(PROCESSOR_ARCHITECTURE)" == "PPC"
+EMACS_CONFIGURATION=ppc-pc-win32
+!else
+! error Unknown processor architecture type $(PROCESSOR_ARCHITECTURE)
 !endif
 
 #
@@ -121,6 +174,11 @@ USE_INDEXED_LRECORD_IMPLEMENTATION=$(GUNG_HO)
 !if [set CONF_REPORT_ALREADY_PRINTED=1]
 !endif
 !message ------------------------------------------------
+!message Configured for "$(EMACS_CONFIGURATION)".
+!message 
+!message Installation directory is "$(INSTALL_DIR)".
+!message Package path is $(PATH_PACKAGEPATH).
+!message 
 !if $(INFODOCK)
 !message Building InfoDock.
 !endif
@@ -142,8 +200,11 @@ USE_INDEXED_LRECORD_IMPLEMENTATION=$(GUNG_HO)
 !if $(HAVE_DIALOGS)
 !message Compiling in support for dialogs.
 !endif
+!if $(HAVE_NATIVE_SOUND)
+!message Compiling in support for native sounds.
+!endif
 !if $(HAVE_MSW_C_DIRED)
-# Define HAVE_MSW_C_DIRED to be non-zero if you want Xemacs to use C
+# Define HAVE_MSW_C_DIRED to be non-zero if you want XEmacs to use C
 # primitives to significantly speed up dired, at the expense of an
 # additional ~4KB of code.
 !message Compiling in fast dired implementation.
@@ -215,6 +276,9 @@ MSW_DEFINES=$(MSW_DEFINES) -DHAVE_DIALOGS
 MSW_DIALOG_SRC=$(XEMACS)\src\dialog.c $(XEMACS)\src\dialog-msw.c
 MSW_DIALOG_OBJ=$(OUTDIR)\dialog.obj $(OUTDIR)\dialog-msw.obj
 !endif
+!if $(HAVE_NATIVE_SOUND)
+MSW_DEFINES=$(MSW_DEFINES) -DHAVE_NATIVE_SOUND
+!endif
 !endif
 
 !if $(HAVE_MULE)
@@ -236,8 +300,6 @@ LRECORD_DEFINES=-DUSE_INDEXED_LRECORD_IMPLEMENTATION
 UNION_DEFINES=-DUSE_UNION_TYPE
 !endif
 
-!include "..\version.sh"
-
 # Hard-coded paths
 
 !if $(INFODOCK)
@@ -247,27 +309,6 @@ PATH_PREFIX=..
 !endif
 
 PATH_DEFINES=-DPATH_PREFIX=\"$(PATH_PREFIX)\"
-
-# Program name and version
-
-!if $(INFODOCK)
-INFODOCK_VERSION_STRING=$(infodock_major_version).$(infodock_minor_version).$(infodock_build_version)
-PROGRAM_DEFINES=-DINFODOCK 					\
-	-DPATH_VERSION=\"$(INFODOCK_VERSION_STRING)\"		\
-	-DPATH_PROGNAME=\"infodock\" 				\
-	-DINFODOCK_MAJOR_VERSION=$(infodock_major_version)	\
-	-DINFODOCK_MINOR_VERSION=$(infodock_minor_version)	\
-	-DINFODOCK_BUILD_VERSION=$(infodock_build_version)
-!else
-!if "$(emacs_beta_version)" != ""
-XEMACS_VERSION_STRING=$(emacs_major_version).$(emacs_minor_version)-b$(emacs_beta_version)
-!else
-XEMACS_VERSION_STRING=$(emacs_major_version).$(emacs_minor_version)
-!endif
-PROGRAM_DEFINES=						\
-	-DPATH_VERSION=\"$(XEMACS_VERSION_STRING)\"		\
-	-DPATH_PROGNAME=\"xemacs\"
-!endif
 
 # Generic variables
 
@@ -332,9 +373,19 @@ LIB_SRC_TOOLS = \
 	$(LIB_SRC)/wakeup.exe		\
 	$(LIB_SRC)/etags.exe		
 
-# LASTFILE Library
+#------------------------------------------------------------------------------
+
+# runemacs proglet
+
+NT = $(XEMACS)\nt
+RUNEMACS = $(XEMACS)\src\runemacs.exe
+
+$(RUNEMACS): $(NT)\runemacs.c $(NT)\xemacs.res
+	$(CCV) -I. -I$(XEMACS)/src -I$(XEMACS)/nt/inc -O2 -W3 -Fe$@ $** kernel32.lib user32.lib
 
 #------------------------------------------------------------------------------
+
+# LASTFILE Library
 
 LASTFILE=$(OUTDIR)\lastfile.lib
 LASTFILE_SRC=$(XEMACS)\src
@@ -461,6 +512,7 @@ DOC_SRC4=\
  $(XEMACS)\src\minibuf.c \
  $(XEMACS)\src\nt.c \
  $(XEMACS)\src\ntheap.c \
+ $(XEMACS)\src\ntplay.c \
  $(XEMACS)\src\ntproc.c \
  $(XEMACS)\src\objects.c \
  $(XEMACS)\src\opaque.c \
@@ -574,6 +626,7 @@ TEMACS_CPP_FLAGS= $(WARN_CPP_FLAGS) $(INCLUDES) $(DEFINES) $(DEBUG_DEFINES) \
  -DEMACS_MINOR_VERSION=$(emacs_minor_version) \
  $(EMACS_BETA_VERSION) \
  -DXEMACS_CODENAME=\"$(xemacs_codename)\" \
+ -DEMACS_CONFIGURATION=\"$(EMACS_CONFIGURATION)\" \
  -DPATH_PACKAGEPATH=\"$(PATH_PACKAGEPATH)\"
 
 TEMACS_FLAGS=-ML $(WARN_CPP_FALGS) $(OPT) -c $(TEMACS_CPP_FLAGS)
@@ -701,6 +754,7 @@ TEMACS_OBJS= \
 	$(OUTDIR)\minibuf.obj \
 	$(OUTDIR)\nt.obj \
 	$(OUTDIR)\ntheap.obj \
+	$(OUTDIR)\ntplay.obj \
 	$(OUTDIR)\ntproc.obj \
 	$(OUTDIR)\objects.obj \
 	$(OUTDIR)\opaque.obj \
@@ -807,14 +861,26 @@ dump-xemacs: $(TEMACS)
 #------------------------------------------------------------------------------
 
 # use this rule to build the complete system
-all:	$(OUTDIR)\nul $(LASTFILE) $(LWLIB) $(LIB_SRC_TOOLS) \
+all:	$(OUTDIR)\nul $(LASTFILE) $(LWLIB) $(LIB_SRC_TOOLS) $(RUNEMACS) \
 	$(TEMACS) $(TEMACS_BROWSE) update-elc $(DOC) dump-xemacs
 
 temacs: $(TEMACS)
 
 # use this rule to install the system
-install:
-	echo Not yet implemented.
+install:	all "$(INSTALL_DIR)\nul" "$(INSTALL_DIR)\lock\nul"
+	@xcopy /q $(LIB_SRC)\*.exe "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)\"
+	@copy $(LIB_SRC)\DOC "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)\"
+	@copy $(XEMACS)\src\xemacs.exe "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)\"
+	@copy $(RUNEMACS) "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)\"
+	@xcopy /e /q $(XEMACS)\etc  "$(INSTALL_DIR)\etc\"
+	@xcopy /e /q $(XEMACS)\info "$(INSTALL_DIR)\info\"
+	@xcopy /e /q $(XEMACS)\lisp "$(INSTALL_DIR)\lisp\"
+
+"$(INSTALL_DIR)\nul":
+	-@mkdir "$(INSTALL_DIR)"
+
+"$(INSTALL_DIR)\lock\nul":	"$(INSTALL_DIR)\nul"
+	-@mkdir "$(INSTALL_DIR)\lock"
 
 distclean:
 	del *.bak

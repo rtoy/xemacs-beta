@@ -100,11 +100,10 @@ from the search."
    (file-directory-p (paths-construct-path (list directory
 						 "lib"
 						 emacs-program-name)))
-   ;; in-place
+   ;; in-place or windows-nt
    (and 
-    (file-directory-p (paths-construct-path (list directory "lib-src")))
     (file-directory-p (paths-construct-path (list directory "lisp")))
-    (file-directory-p (paths-construct-path (list directory "src"))))))
+    (file-directory-p (paths-construct-path (list directory "etc"))))))
 
 (defun paths-chase-symlink (file-name)
   "Chase a symlink until the bitter end."

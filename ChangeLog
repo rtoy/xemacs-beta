@@ -1,3 +1,45 @@
+1998-07-09  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre4 is released.
+
+	* configure.in: Fix test for InfoDock sources.
+
+	* etc/BETA (writing): Update patch creation instructions.
+
+	* etc/FTP: Update FTP mirror list.
+
+	* etc/DISTRIB: Remove duplicated FTP mirror list.
+	* etc/xemacs.1 (ftp): Ditto.
+
+1998-07-09  Oliver Graf <ograf@fga.de>
+
+	* configure.usage: added warning to --with-offix
+
+1998-06-29  SL Baur  <steve@altair.xemacs.org>
+
+	* etc/gnuserv.1 (this): Email address for Ben Wing is ben@xemacs.org.
+	* etc/gnuserv.README (README): Ditto.
+	* etc/xemacs-ja.1: Ditto.
+
+1998-06-28  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in: Berkeley DB autodetection fixes
+	From Martin Buchholz <martin@xemacs.org>
+
+	* etc/BABYL: Moved to rmail package
+
+	* etc/enriched.doc: Moved to xemacs-base package
+
+	* etc/MSDOS:
+	* etc/GNUS-NEWS: deleted
+
+1998-06-21  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* etc/NEWS: Added references to documentation about packages and
+	path setup.
+
+	* etc/README: Synched.
+
 1998-06-19  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-pre3 is released.

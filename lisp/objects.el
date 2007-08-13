@@ -4,7 +4,7 @@
 ;; Copyright (C) 1995 Ben Wing
 
 ;; Author: Chuck Thompson <cthomp@xemacs.org>
-;; Author: Ben Wing <wing@666.com>
+;; Author: Ben Wing <ben@xemacs.org>
 ;; Maintainer: XEmacs Development Team
 ;; Keywords: faces, internal, dumped
 

@@ -57,6 +57,7 @@ GetDlgItem(FRAME_MSWINDOWS_HANDLE(f), TOOLBAR_ID_BIAS + p)
 #endif
 #define MSWINDOWS_BUTTON_SHADOW_THICKNESS 2
 #define MSWINDOWS_BLANK_SIZE 5
+#define MSWINDOWS_MINIMUM_TOOLBAR_SIZE 8
 
 #define SET_TOOLBAR_WAS_VISIBLE_FLAG(frame, pos, flag)			\
   do {									\
@@ -152,6 +153,16 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
   HWND toolbarwnd=NULL;
 
   get_toolbar_coords (f, pos, &x, &y, &bar_width, &bar_height, &vert, 0);
+
+  /* ediff bogusly sets the height to 2 for some obscure X-specific
+     reason. This ensures that we only try and output a toolbar for
+     sensible sizes */
+  if (bar_width < MSWINDOWS_MINIMUM_TOOLBAR_SIZE
+      ||
+      bar_height < MSWINDOWS_MINIMUM_TOOLBAR_SIZE)
+    {
+      return;
+    }
 
   if (x==1)
     x=0;
@@ -300,7 +311,8 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 		      /* need to build an image list for the bitmaps */
 		      if (!ilist && !(ilist = ImageList_Create 
 				      ( bmwidth, bmheight,
-					ILC_MASK | ILC_COLOR24, 
+					(IMAGE_INSTANCE_MSWINDOWS_MASK (p) 
+					 ? ILC_MASK  : 0) | ILC_COLOR24, 
 					nbuttons, nbuttons * 2 )))
 			{
 			  xfree (button_tbl);

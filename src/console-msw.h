@@ -223,6 +223,7 @@ LRESULT WINAPI mswindows_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam,
 void mswindows_redraw_exposed_area (struct frame *f, int x, int y, 
 				    int width, int height);
 void mswindows_size_frame_internal (struct frame* f, XEMACS_RECT_WH* dest);
+void mswindows_enqueue_magic_event (HWND hwnd, UINT message);
 
 /* win32 DDE management library */
 #define MSWINDOWS_DDE_ITEM_OPEN "Open"

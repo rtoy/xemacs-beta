@@ -455,7 +455,7 @@ half, which may be anything, but the @samp{\1} that follows must match
 the same exact text.
 
 @item \(?: @dots{} \)
-@cindex @samp{(?:} in regex
+@cindex @samp{\(?:} in regexp
 @cindex regexp grouping
 is called a @dfn{shy} grouping operator, and it is used just like
 @samp{\( @dots{} \)}, except that it does not cause the matched

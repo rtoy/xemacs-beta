@@ -1,3 +1,132 @@
+1998-07-09  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre4 is released.
+
+1998-06-28  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* menubar-items.el (default-menubar): Use `report-emacs-bug' for
+	reporting bugs.
+	(maybe-add-init-button): Fix semantics under Windows.  Use
+	`expand-file-name' rather than `concat'.
+
+	* help.el (print-messages): New function.
+
+1998-07-05  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* ldap.el (ldap-host-parameters-alist): Docstring fixes
+
+1998-07-04  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* about.el: Tweaked my entry in about-hackers.
+
+	* find-paths.el (paths-emacs-root-p):
+	  Relaxed emacs-root checking of an in-place installation to
+	  also accomodate the flat layout used on MS Windows.
+
+1998-06-29  John Jones  <jj@asu.edu>
+
+	* package-get.el: calls to package-get-update-all will only
+	  update packages which are already installed.
+
+1998-07-05  Andy Piper  <andyp@parallax.co.uk>
+
+	* faces.el (xpm-color-symbols): remove hardcoded defaults these
+ 	are handled by the gui-element face fallbacks now.
+	
+	* x-faces.el: default gui-element face to "background" as well as
+ 	the default face.
+
+	* msw-faces.el (mswindows-init-device-faces): remove gui-element
+ 	and default face settings since these are set as fallbacks now in
+ 	the appropriate domain.
+
+1998-07-02  SL Baur  <steve@altair.xemacs.org>
+
+	* text-mode.el (text-mode): Reorder regexp so the OR part
+	corresponding to `page-delim' goes first and the hack in
+	`forward-paragraph' will work.
+	With bug analysis from Bob Weiner <weiner@altrasoft.com>
+	
+1998-06-29  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* subr.el (remove-hook): When checking the hook value
+	  with functionp, don't apply car to it.
+
+1998-06-24  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* package-get.el (package-get-remote-filename):
+	  Don't use file-name-as-directory because the local directory
+	  separator conventions might not be the same as ftp's.
+
+1998-06-27  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* ldap.el (ldap-host-parameters-alist): New name of
+	`ldap-host-parameters-plist'
+
+1998-06-26  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* package-get.el: Using (require 'package-get-base), now that it
+	provides itself.  Consequently removed all instances of (load
+	"package-get-base.el").
+
+1998-06-29  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* subr.el (remove-hook): Don't treat the hook value as a 
+	  list unless it is both consp and not functionp.
+
+1998-06-29  SL Baur  <steve@altair.xemacs.org>
+
+	* about.el: Email address for Ben Wing is ben@xemacs.org.
+	* auto-show.el: Ditto.
+	* bytecomp.el: Ditto.
+	* faces.el: Ditto.
+	* x-scrollbar.el: Ditto.
+	* x-misc.el: Ditto.
+	* tty-init.el: Ditto.
+	* toolbar-items.el: Ditto.
+	* symbol-syntax.el: Ditto.
+	* specifier.el: Ditto.
+	* objects.el: Ditto.
+	* hyper-apropos.el: Ditto.
+	* glyphs.el: Ditto.
+
+1998-06-27  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* mouse.el (drag-window-divider): vertical-divider-draggable-p ->
+	vertical-divider-always-visible-p.
+	(default-mouse-motion-handler): Ditto.
+
+1998-06-21  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* scrollbar.el (scrollbars-visible-p): Simplify.  Always set the
+	global value.
+
+1998-06-21  Oliver Graf <ograf@fga.de>
+
+	* build-reports.el: changed receiver to xemacs-build-reports list
+
+1998-06-19  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* font.el: Split font-family-mappings into X and
+	  mswindows-specific versions.
+	  mswindows-font-create-[object|name]: Treat supplied size
+	  as a pointsize. Added underline and strikethru handling.
+
+	* msw-faces.el: changed default mswindows charset to western.
+
+	* msw-glyphs.el: removed space in border-glyph font string that
+	  was inserted to get round bugs in the mswindows C font code.
+
+1998-06-27  SL Baur  <steve@altair.xemacs.org>
+
+	* about.el (about-hackers): Credits update.
+
+	* help-nomule.el (tutorial-supported-languages): Add Romanian
+	TUTORIAL.
+
+	* code-files.el (file-coding-system-alist): Hardwire TUTORIAL.ro
+	to ISO-8859-2.
+
 1998-06-19  Jonathan Harris  <jhar@tardis.ed.ac.uk>
 
 	* font.el: Split font-family-mappings into X and

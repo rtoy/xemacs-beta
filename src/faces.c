@@ -1944,6 +1944,27 @@ complex_vars_of_faces (void)
 				  build_string ("gui element face"),
 				  Qnil);
 
+  /* Provide some last-resort fallbacks for gui-element face which
+     mustn't default to default. */
+  {
+    Lisp_Object fg_fb = Qnil, bg_fb = Qnil;
+
+#ifdef HAVE_X_WINDOWS
+    fg_fb = acons (list1 (Qx), build_string ("black"), fg_fb);
+    bg_fb = acons (list1 (Qx), build_string ("Gray80"), bg_fb);
+#endif
+#ifdef HAVE_TTY
+    fg_fb = acons (list1 (Qtty), Fvector (0, 0), fg_fb);
+    bg_fb = acons (list1 (Qtty), Fvector (0, 0), bg_fb);
+#endif
+#ifdef HAVE_MS_WINDOWS
+    fg_fb = acons (list1 (Qmswindows), build_string ("black"), fg_fb);
+    bg_fb = acons (list1 (Qmswindows), build_string ("Gray75"), bg_fb);
+#endif
+    set_specifier_fallback (Fget (Vgui_element_face, Qforeground, Qnil), fg_fb);
+    set_specifier_fallback (Fget (Vgui_element_face, Qbackground, Qnil), bg_fb);
+  }
+
   /* Now create the other faces that redisplay needs to refer to
      directly.  We could create them in Lisp but it's simpler this
      way since we need to get them anyway. */

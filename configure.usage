@@ -83,6 +83,11 @@ Window-system options:
 				   and is considered experimental.
 --with-cde (*)		Compile in support for CDE drag and drop.
 --with-offix (*)	Compile in support for OffiX drag and drop.
+			*WARNING*  If you compile in OffiX, you may not be
+				   able to use multiple X displays success-
+				   fully.  If the two servers are from
+				   different vendors, the results may be
+				   unpredictable.
 --without-xmu (*)	For those unfortunates whose vendors don't ship Xmu.
 --external-widget	Compile with external widget support.
 --with-xpm (*)		Compile with support for XPM files.

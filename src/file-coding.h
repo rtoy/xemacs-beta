@@ -22,7 +22,7 @@ Boston, MA 02111-1307, USA.  */
 /* Synched up with: Mule 2.3.  Not in FSF. */
 
 /* 91.10.09 written by K.Handa <handa@etl.go.jp> */
-/* Rewritten by Ben Wing <wing@666.com>. */
+/* Rewritten by Ben Wing <ben@xemacs.org>. */
 
 #ifndef _XEMACS_MULE_CODING_H_
 #define _XEMACS_MULE_CODING_H_

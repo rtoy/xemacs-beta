@@ -23,7 +23,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* This file has been Mule-ized. */
 
-/* Written by Ben Wing <wing@666.com>.
+/* Written by Ben Wing <ben@xemacs.org>.
 
    [Originally written by some people at Lucid.
    Hacked on by jwz.

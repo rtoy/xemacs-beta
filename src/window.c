@@ -69,7 +69,7 @@ static void change_window_height (struct window *w, int delta, int widthflag,
 Lisp_Object Vmodeline_shadow_thickness;
 
 /* Whether vertical dividers are draggable and displayed */
-Lisp_Object Vvertical_divider_draggable_p;
+Lisp_Object Vvertical_divider_always_visible_p;
 
 /* Whether a modeline should be displayed. */
 Lisp_Object Vhas_modeline_p;
@@ -742,7 +742,7 @@ window_needs_vertical_divider_1 (struct window *w)
     return 0;
 
   /* Always if draggable */
-  if (!NILP (w->vertical_divider_draggable_p))
+  if (!NILP (w->vertical_divider_always_visible_p))
     return 1;
 
 #ifdef HAVE_SCROLLBARS
@@ -5618,24 +5618,27 @@ This is a specifier; use `set-specifier' to change it.
 			 some_window_value_changed,
 			 0, 0);
 
-  DEFVAR_SPECIFIER ("vertical-divider-draggable-p", &Vvertical_divider_draggable_p /*
-*Should XEmacs allow resizing windows by dragging vertical dividers.
-When t, vertical dividers are always shown, and are draggable.
-When nil, vertical dividers are shown only when there are no scrollbars
-in between windows, and not draggable.
+  DEFVAR_SPECIFIER ("vertical-divider-always-visible-p",
+		    &Vvertical_divider_always_visible_p /*
+*Should XEmacs always display vertical dividers between windows.
+
+When this is non-nil, vertical dividers are always shown, and are
+draggable.  When it is nil, vertical dividers are shown only when
+there are no scrollbars in between windows, and are not draggable.
+
 This is a specifier; use `set-specifier' to change it.
 */ );
-  Vvertical_divider_draggable_p = Fmake_specifier (Qboolean);
-  set_specifier_fallback (Vvertical_divider_draggable_p,
+  Vvertical_divider_always_visible_p = Fmake_specifier (Qboolean);
+  set_specifier_fallback (Vvertical_divider_always_visible_p,
 			  list1 (Fcons (Qnil, Qt)));
-  set_specifier_caching (Vvertical_divider_draggable_p,
+  set_specifier_caching (Vvertical_divider_always_visible_p,
 			 slot_offset (struct window,
-				      vertical_divider_draggable_p),
+				      vertical_divider_always_visible_p),
 			 vertical_divider_changed_in_window,
  			 0, 0);
 
   DEFVAR_SPECIFIER ("vertical-divider-shadow-thickness", &Vvertical_divider_shadow_thickness /*
-*How thick to draw shadows around the vertical dividers. 
+*How thick to draw 3D shadows around vertical dividers. 
 This is a specifier; use `set-specifier' to change it.
 */ );
   Vvertical_divider_shadow_thickness = Fmake_specifier (Qinteger);
@@ -5651,9 +5654,9 @@ This is a specifier; use `set-specifier' to change it.
   DEFVAR_SPECIFIER ("vertical-divider-line-width", &Vvertical_divider_line_width /*
 *The width of the vertical dividers, not including shadows.
 
-For TTY windows, divider line is always one character wide. When
+For TTY windows, divider line is always one character wide.  When
 instance of this specifier is zero in a TTY window, no divider is
-drawn at all between windows. When non-zero, one character wide
+drawn at all between windows.  When non-zero, a one character wide
 divider is displayed.
 
 This is a specifier; use `set-specifier' to change it.

@@ -4,7 +4,7 @@
 ;; Copyright (C) 1995 Board of Trustees, University of Illinois
 ;; Copyright (C) 1995, 1996 Ben Wing
 
-;; Author: Ben Wing <wing@666.com>
+;; Author: Ben Wing <ben@xemacs.org>
 ;; Keywords: faces, internal, dumped
 
 ;; This file is part of XEmacs.
@@ -1674,16 +1674,14 @@ in that frame; otherwise change each frame."
 			 (x-get-resource "backgroundToolBarColor"
 					 "BackgroundToolBarColor" 'string))
 
-			(face-background 'toolbar)
-			"Gray80")))
+			(face-background 'toolbar))))
 	   (purecopy '("foregroundToolBarColor"
 		       (or
 			(and 
 			 (featurep 'x)
 			 (x-get-resource "foregroundToolBarColor"
 					 "ForegroundToolBarColor" 'string))
-			(face-foreground 'toolbar)
-			"Black")))
+			(face-foreground 'toolbar))))
 	   )))
 
 (when (featurep 'tty)

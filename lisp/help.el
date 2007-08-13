@@ -762,6 +762,26 @@ The maximum number of available keys is governed by `recent-keys-ring-size'."
   :type 'integer
   :group 'help)
 
+(defun print-recent-messages (n)
+  "Print N most recent messages to standard-output, most recent first.
+If N is nil, all messages will be printed."
+  (save-excursion
+    (let ((buffer (get-buffer-create " *Message-Log*"))
+	  oldpoint extent)
+      (goto-char (point-max buffer) buffer)
+      (set-buffer standard-output)
+      (while (and (not (bobp buffer))
+		  (or (null n) (>= (decf n) 0)))
+	(setq oldpoint (point buffer))
+	(setq extent (extent-at oldpoint buffer
+				'message-multiline nil 'before))
+	;; If the message was multiline, move all the way to the
+	;; beginning.
+	(if extent
+	    (goto-char (extent-start-position extent) buffer)
+	  (forward-line -1 buffer))
+	(insert-buffer-substring buffer (point buffer) oldpoint)))))
+
 (defun view-lossage ()
   "Display recent input keystrokes and recent minibuffer messages.
 The number of keys shown is controlled by `view-lossage-key-count'.
@@ -781,24 +801,7 @@ The number of messages shown is controlled by `view-lossage-message-count'."
      ;; reversing their order and handling multiline messages
      ;; correctly.
      (princ "\n\n\nRecent minibuffer messages (most recent first):\n\n")
-     (save-excursion
-       (let ((buffer (get-buffer-create " *Message-Log*"))
-	     (count 0)
-	     oldpoint extent)
-	 (goto-char (point-max buffer) buffer)
-	 (set-buffer standard-output)
-	 (while (and (not (bobp buffer))
-		     (< count view-lossage-message-count))
-	   (setq oldpoint (point buffer))
-	   (setq extent (extent-at oldpoint buffer
-				   'message-multiline nil 'before))
-	   ;; If the message was multiline, move all the way to the
-	   ;; beginning.
-	   (if extent
-	       (goto-char (extent-start-position extent) buffer)
-	     (forward-line -1 buffer))
-	   (insert-buffer-substring buffer (point buffer) oldpoint)
-	   (incf count)))))
+     (print-recent-messages view-lossage-message-count))
    "lossage"))
 
 (define-function 'help 'help-for-help)

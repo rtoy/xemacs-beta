@@ -45,6 +45,10 @@ protocols. Some of these only support limited options avaiable in the API.
 @subsection OffiX DND
 @cindex OffiX DND
 
+@emph{WARNING}: If you compile in OffiX, you may not be able to use
+multiple X displays successfully.  If the two servers are from
+different vendors, the results may be unpredictable.
+
 The OffiX Drag'n'Drop protocol is part of a X API/Widget library created by
 Cesar Crusius. It is based on X-Atoms and ClientMessage events, and works with
 any X platform supporting them.

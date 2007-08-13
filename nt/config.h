@@ -31,7 +31,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Use this to add code in a structured way to FSF-maintained source
    files so as to make it obvious where XEmacs changes are. */
-#define XEMACS
+#define XEMACS 1
 
 /* Allow s&m files to differentiate OS versions without having
    multiple files to maintain. */
@@ -39,7 +39,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* The configuration name.  This is used as the install directory name
    for the lib-src programs. */
-#undef EMACS_CONFIGURATION
+/* #undef EMACS_CONFIGURATION -- defined in xemacs.mak */
 
 /* The configuration options.  This is exported to Lisp. */
 #undef EMACS_CONFIG_OPTIONS
@@ -486,7 +486,7 @@ Boston, MA 02111-1307, USA.  */
    and Solaris systems; on Solaris, you may need to install the "SUNWaudmo"
    package.)
  */
-#undef HAVE_NATIVE_SOUND
+/* #undef HAVE_NATIVE_SOUND */
 
 /* If you wish to compile with support for the Network Audio System
    system define HAVE_NAS_SOUND.
