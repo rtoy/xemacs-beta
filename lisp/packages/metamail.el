@@ -3,7 +3,7 @@
 ;; Copyright (C) 1993, 1996  Masanobu UMEDA
 
 ;; Author: Masanobu UMEDA <umerin@mse.kyutech.ac.jp>
-;; Version: $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs/lisp/packages/Attic/metamail.el,v 1.1.1.1 1996/12/18 22:42:53 steve Exp $
+;; Version: $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs/lisp/packages/Attic/metamail.el,v 1.2 1997/02/06 02:08:35 steve Exp $
 ;; Keywords: mail, news, mime, multimedia
 
 ;; This file is part of XEmacs.
@@ -166,7 +166,7 @@ redisplayed as output is inserted."
       (let ((selective-display nil)    ;Disable ^M to nl translation.
 	    (kanji-fileio-code 2)       ;Write in JIS code when nemacs.
 	    (file-coding-system         ;Write in JUNET style when mule.
-	     (if (featurep 'mule) *junet*)))
+	     (if (featurep 'mule) 'junet)))
 	(write-region beg end metafile nil 'nomessage))
       (if buffer
 	  (set-buffer buffer))
@@ -185,7 +185,13 @@ redisplayed as output is inserted."
 	(if (boundp 'NEMACS)
 	    (define-program-kanji-code nil metamail-program-name 2)) ;JIS
 	(if (featurep 'mule)
-	    (define-program-coding-system nil metamail-program-name *junet*))
+	    (if (fboundp 'define-program-coding-system)
+		(define-program-coding-system
+		  nil
+		  metamail-program-name
+		  'junet)
+	      ;; XEmacs with MULE
+	      (setq file-coding-system 'junet)))
 	(apply (function call-process)
 	       metamail-program-name
 	       nil

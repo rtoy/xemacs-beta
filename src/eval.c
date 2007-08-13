@@ -403,9 +403,8 @@ static Lisp_Object
 do_debug_on_exit (Lisp_Object val)
 {
   /* This is falsified by call_debugger */
-  int old_debug_on_next_call = debug_on_next_call;
   Lisp_Object v = call_debugger (list2 (Qexit, val));
-  debug_on_next_call = old_debug_on_next_call;
+
   return ((!UNBOUNDP (v)) ? v : val);
 }
 

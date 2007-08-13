@@ -548,7 +548,7 @@ int compute_glyph_cachel_usage (glyph_cachel_dynarr *glyph_cachels,
  *****************************************************************************/
 
 #define DISP_TABLE_SIZE	256
-#define DISP_CHAR_ENTRY(dp, c)	((dp)->contents[c])
+#define DISP_CHAR_ENTRY(dp, c) ((c < (dp)->size) ? (dp)->contents[c] : Qnil)
 
 struct Lisp_Vector *get_display_table (struct window *, face_index);
 

@@ -3,11 +3,11 @@
 ;; Copyright (C) 1993, 1994, 1996 Free Software Foundation, Inc.
 
 ;; Author: Johan Vromans <jv@mh.nl>
-;; Version: 1.8
-;; Maintainer: FSF
+;; Maintainer: Alexandre Oliva <oliva@dcc.unicamp.br>
 ;; Keywords: i18n
 ;; Adapted to XEmacs 19.14 by Alexandre Oliva <oliva@dcc.unicamp.br>
-;; Last update: Jan 25, 1997
+;; $Revision: 1.3 $
+;; $Date: 1997/02/06 02:08:34 $
 
 ;; This file is part of GNU Emacs.
 
@@ -41,15 +41,16 @@
 ;;   "  (second)    -> diaeresis
 ;;   ^  (caret)     -> circumflex
 ;;   ~  (tilde)     -> tilde over the character
-;;   /  (slash)     -> slash through the character.
-;;   ,  (cedilla)   -> cedilla under the character (except on default mode).
-;;		  Also:  /A is A-with-ring and /E is AE ligature.
+;;   /  (slash)     -> slash through the character
+;;   .  (dot)       -> dot over the character
+;;   ,  (cedilla)   -> cedilla under the character (except on default mode)
+;;                  Also:  /A is A-with-ring and /E is AE ligature.
 ;;
 ;; The action taken depends on the key that follows the pseudo accent.
 ;; In general: 
 ;;
 ;;   pseudo-accent + appropriate letter -> accented letter
-;;   pseudo-accent + space -> pseudo-accent (except for comma)
+;;   pseudo-accent + space -> pseudo-accent (except comma)
 ;;   pseudo-accent + pseudo-accent -> accent (if available)
 ;;   pseudo-accent + other -> pseudo-accent + other
 ;;
@@ -72,10 +73,13 @@
 (if (fboundp 'read-event) ()
   (defun read-event () (event-key (next-command-event))))
 
-;; needed to work on GNU Emacs (had to use this function on XEmacs)
-(if (fboundp 'character-to-event) ()
-  (defun character-to-event (ch &optional event console meta)
-    (if (listp ch) (car ch) ch)))
+(if (fboundp 'character-to-event)
+    (defun iso-char-to-event (ch)
+      "returns an event containing the given character"
+      (character-to-event (list ch)))
+  (defun iso-char-to-event (ch)
+    "returns the character itself"
+    ch))
 
 ;; needed for compatibility with XEmacs 19.14 and GNU Emacs 19.30
 (if (fboundp 'this-single-command-keys) ()
@@ -84,6 +88,8 @@
 	(setq this-command (not (this-command-keys)))
 	(this-command-keys))
     (defun this-single-command-keys () (this-command-keys))))
+
+;; end of compatibility modules
 
 (defvar iso-languages
   '(("portuguese"
@@ -94,7 +100,8 @@
      (?^ (?A . ?\302) (?E . ?\312) (?O . ?\324) (?a . ?\342) (?e . ?\352)
 	 (?o . ?\364) (?\  . ?^) (space . ?^))
      (?\" (?U . ?\334) (?u . ?\374) (?\  . ?\") (space . ?\"))
-     (?\~ (?A . ?\303) (?O . ?\325) (?a . ?\343) (?o . ?\365) (?\  . ?\~) (space . ?\~))
+     (?\~ (?A . ?\303) (?O . ?\325) (?a . ?\343) (?o . ?\365) (?\  . ?\~)
+	  (space . ?\~))
      (?, (?c . ?\347) (?C . ?\307)))
     
     ("irish"
@@ -103,17 +110,44 @@
 	 (?\  . ?') (space . ?')))
     
     ("french"
-     (?' (?A . ?\301) (?E . ?\311) (?I . ?\315) (?O . ?\323) (?U . ?\332)
-	 (?C . ?\307) (?a . ?\341) (?e . ?\351) (?i . ?\355) (?o . ?\363)
-	 (?u . ?\372) (?c . ?\347) (?\  . ?') (space . ?'))
-     (?` (?A . ?\300) (?E . ?\310) (?a . ?\340) (?e . ?\350) (?\  . ?`) (space . ?`))
+     (?' (?E . ?\311) (?C . ?\307) (?e . ?\351) (?c . ?\347) (?\  . ?')
+	 (space . ?'))
+     (?` (?A . ?\300) (?E . ?\310) (?a . ?\340) (?e . ?\350) (?\  . ?`)
+	 (space . ?`))
      (?^ (?A . ?\302) (?E . ?\312) (?I . ?\316) (?O . ?\324) (?U . ?\333)
 	 (?a . ?\342) (?e . ?\352) (?i . ?\356) (?o . ?\364) (?u . ?\373)
 	 (?\  . ?^) (space . ?^))
-     (?\" (?U . ?\334) (?u . ?\374) (?\  . ?\") (space . ?\"))
-     (?\~ (?A . ?\303) (?O . ?\325) (?a . ?\343) (?o . ?\365) (?\  . ?\~) (space . ?\~))
+     (?\" (?E . ?\313) (?I . ?\317)  
+          (?e . ?\353) (?i . ?\357) (?\  . ?\") (space . ?\"))
+     (?\~ (?< . ?\253) (?> . ?\273) (?C . ?\307) (?c . ?\347) (?\  . ?\~)
+	  (space . ?\~))
      (?, (?c . ?\347) (?C . ?\307)))
     
+   ;;; ISO-8859-3, developed by D. Dale Gulledge <ddg@cci.com>
+    ("latin-3"
+     (?' (?A . ?\301) (?E . ?\311) (?I . ?\315) (?O . ?\323)
+	 (?U . ?\332) (?a . ?\341) (?e . ?\351) (?i . ?\355)
+     	 (?o . ?\363) (?u . ?\372) (?\  . ?') (space . ?'))
+     (?. (?C . ?\305) (?G . ?\325) (?I . ?\251) (?Z . ?\257)
+	 (?c . ?\345) (?g . ?\365) (?z . ?\277))
+     (?\" (?A . ?\304) (?E . ?\313) (?I . ?\317) (?O . ?\326)
+	  (?U . ?\334) (?a . ?\344) (?e . ?\353) (?i . ?\357)
+	  (?o ?\366) (?u ?\374) (?\  . ?\") (space . ?\"))
+     (?\/ (?\/ . ?\260) (?\  . ?/) (space . ?/))
+     (?\~ (?C . ?\307) (?G . ?\253) (?N . ?\321) (?S . ?\252)
+          (?U . ?\335) (?\~ . ?\270) (?c . ?\347) (?g . ?\273)
+	  (?h . ?\261) (?n . ?\361) (?u . ?\375)
+	  (?\  . ?~) (space . ?~))
+     (?^ (?A . ?\302) (?C . ?\306) (?E . ?\312) (?G . ?\330)
+	 (?H . ?\246) (?I . ?\316) (?J . ?\254) (?O . ?\324)
+	 (?S . ?\336) (?U . ?\333) (?a . ?\342) (?c . ?\346)
+	 (?e . ?\352) (?g . ?\370) (?h . ?\266) (?i . ?\356)
+	 (?j . ?\274) (?o . ?\364) (?s . ?\376) (?u . ?\373)
+	 (?\  . ?^) (space . \^))
+     (?` (?A . ?\300) (?E . ?\310) (?I . ?\314) (?O . ?\322)
+	 (?U . ?\331) (?a . ?\340) (?e . ?\350) (?i . ?\354)
+	 (?o . ?\362) (?u . ?\371) (?\  . ?`) (space . ?`)))
+
     ("latin-2"
      (?' (?A . ?\301) (?C . ?\306) (?D . ?\320) (?E . ?\311) (?I . ?\315)
 	 (?L . ?\305) (?N . ?\321) (?O . ?\323) (?R . ?\300) (?S . ?\246)
@@ -190,9 +224,9 @@ Setting this variable makes it local to the current buffer.
 See the function `iso-accents-mode'.")
 (make-variable-buffer-local 'iso-accents-mode)
 
-(defvar iso-accents-enable '(?' ?` ?^ ?\" ?~ ?/ ?,)
+(defvar iso-accents-enable '(?' ?` ?^ ?\" ?~ ?/ ?, ?.)
   "*List of accent keys that become prefixes in ISO Accents mode.
-The default is (?' ?` ?^ ?\" ?~ ?/ ?,), which contains all the supported
+The default is (?' ?` ?^ ?\" ?~ ?/ ?, ?.), which contains all the supported
 accent keys.  If you set this variable to a list in which some of those
 characters are missing, the missing ones do not act as accents.
 
@@ -229,15 +263,12 @@ the language you choose).")
 			  (delete-region (1- (point)) (point)))))
 	 (entry (cdr (assq second-char list))))
     (if entry
-	;; Found it: insert the accented character and
-	;; return a do-nothing key
-        (vector (character-to-event (list entry)))
+	;; Found it: return the mapped char
+        (vector (iso-char-to-event entry))
       ;; Otherwise, advance and schedule the second key for execution.
-      (setq unread-command-events (append
-				   (list
-				    (character-to-event (list second-char)))
-				   unread-command-events))
-      (vector (character-to-event (list first-char))))))
+      (setq unread-command-events (cons (iso-char-to-event second-char)
+					unread-command-events))
+      (vector (iso-char-to-event first-char)))))
 
 ;; It is a matter of taste if you want the minor mode indicated
 ;; in the mode line...
@@ -283,14 +314,13 @@ and a negative argument disables it."
     ;; Enable electric accents.
     (setq iso-accents-mode t)))
 
-(defvar iso-accents-mode-map nil)
-
 (defun iso-accents-customize (language)
   "Customize the ISO accents machinery for a particular language.
 It selects the customization based on the specifications in the
 `iso-languages' variable."
   (interactive (list (completing-read "Language: " iso-languages nil t)))
-  (let ((table (assoc language iso-languages)) tail acc)
+  (let ((table (assoc language iso-languages))
+	tail)
     (if (not table)
 	(error "Unknown language '%s'" language)
       (setq iso-language language
@@ -299,56 +329,14 @@ It selects the customization based on the specifications in the
 	  (substitute-key-definition
 	   'iso-accents-accent-key nil key-translation-map)
 	(setq key-translation-map (make-sparse-keymap)))
-      (setq iso-accents-mode-map (make-sparse-keymap))
-      (let ((pair (assoc 'iso-accents-mode minor-mode-map-alist)))
-	(if pair
-	    (setcdr pair iso-accents-mode-map)
-	  (let ((l minor-mode-map-alist))
-	    (while (cdr l)
-	      (setq l (cdr l)))
-	    (setcdr l (list (cons 'iso-accents-mode iso-accents-mode-map))))))
       ;; Set up translations for all the characters that are used as
       ;; accent prefixes in this language.
       (setq tail iso-accents-list)
       (while tail
-	(define-key key-translation-map
-	  (vector (character-to-event (list (car (car tail)))))
+	(define-key key-translation-map (vector (iso-char-to-event
+						 (car (car tail))))
 	  'iso-accents-accent-key)
-	(setq acc (cdr (car tail)))
-	(while acc
-	  (define-key iso-accents-mode-map
-	    (vector (character-to-event (list (cdr (car acc)))))
-	    'iso-accents-self-insert-unless-redefined)
-	  (setq acc (cdr acc)))
 	(setq tail (cdr tail))))))
-
-(defun iso-accents-self-insert-unless-redefined (prompt)
-  "Temporarily disables iso-accents-mode, and checks for additional bindings of the keys that produced its invocation.  If no such binding is found, 'self-insert-command is returned"
-  (interactive "p")
-  (let* ((iso-accents-mode nil)
-	 (bind (key-binding (this-command-keys)))
-	 (repeat t) result)
-    (while repeat
-      (setq result
-	    (cond ((or (null bind)
-		       (eq bind 'self-insert-command))
-		   (setq repeat nil)
-		   (self-insert-command prompt))
-		  ((commandp bind)
-		   (setq repeat nil)
-		   (call-interactively bind))
-		  ((or (stringp bind)
-		       (keymapp bind))
-		   (setq repeat nil)
-		   bind)
-		  ((and (consp bind)
-			(stringp (car bind)))
-		   (setq bind (cdr bind)))
-		  ((and (consp bind)
-			(keymapp (car bind)))
-		   (setq bind (lookup-key (car bind) (cdr bind))))
-		  (t (error "Invalid key binding")))))
-    result))
 
 (defun iso-accentuate (start end)
   "Convert two-character sequences in region into accented characters.

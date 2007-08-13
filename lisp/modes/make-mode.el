@@ -946,12 +946,11 @@ If called with a prefix argument, trailing backslashes are removed."
    target makefile-target-colon))
 
 (defun makefile-browser-format-macro-line (macro selected)
-  (format
    (concat (make-string makefile-browser-leftmost-column ?\ )
 	   (if selected
 	       makefile-browser-selected-mark
 	     makefile-browser-unselected-mark)
-	   (makefile-format-macro-ref macro))))
+	   (makefile-format-macro-ref macro)))
 
 (defun makefile-browser-fill (targets macros)
   (let ((inhibit-read-only t))
@@ -1108,7 +1107,9 @@ Insertion takes place at point."
   (setq makefile-browser-client (current-buffer))
   (makefile-pickup-targets)
   (makefile-pickup-macros)
-  (makefile-browse makefile-target-table makefile-macro-table))
+  (makefile-browse makefile-target-table
+                   ;; take out the runtime macros which were added for completion sake -gk
+                   (set-difference makefile-macro-table makefile-runtime-macros-list)))
 
 
 

@@ -64,6 +64,12 @@ Boston, MA 02111-1307, USA.  */
 
 extern void memory_warnings (void *, void (*warnfun) (CONST char *));
 
+#ifndef SYSTEM_MALLOC
+extern void *(*__malloc_hook)(size_t);
+extern void *(*__realloc_hook)(void *, size_t);
+extern void (*__free_hook)(void *);
+#endif  /* not SYSTEM_MALLOC */
+
 /* Command line args from shell, as list of strings */
 Lisp_Object Vcommand_line_args;
 
@@ -440,6 +446,14 @@ main_1 (int argc, char **argv, char **envp)
   int skip_args = 0;
   Lisp_Object load_me;
   int inhibit_window_system;
+
+#ifndef SYSTEM_MALLOC
+  /* Make sure that any libraries we link against haven't installed a 
+     hook for a gmalloc of a potentially incompatible version. */
+  __malloc_hook = NULL;
+  __realloc_hook = NULL;
+  __free_hook = NULL;
+#endif /* not SYSTEM_MALLOC */
 
   noninteractive = 0;
 

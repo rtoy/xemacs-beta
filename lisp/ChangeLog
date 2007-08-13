@@ -1,3 +1,24 @@
+Tue Feb  4 11:51:25 1997  Greg Klanderman  <greg@alphatech.com>
+
+	* modes/make-mode.el: Remove `makefile-runtime-macros-list' from
+	`makefile-macro-table'.
+
+Tue Feb  4 11:06:33 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* packages/metamail.el (metamail-region): *junet* coding system
+	name changed to 'junet.
+
+Mon Feb  3 22:34:09 1997  Alexandre Oliva  <oliva@dcc.unicamp.br>
+
+	* iso/iso-acc.el: Critical Bug fix.
+	Add ISO-8859-3 support to iso-acc.el, as suggested by Dale
+	Gulledge.
+
+Mon Feb  3 17:11:21 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* modes/make-mode.el (makefile-browser-format-macro-line): Remove
+	redundant (and wrong) format statement.
+
 Fri Jan 31 21:38:47 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* psgml/psgml-html.el (html-auto-sgml-entity-conversion): Allow

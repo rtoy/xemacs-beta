@@ -108,6 +108,10 @@ typedef struct position_redisplay_data_type
 			       Used to optimize some lookups -- we
 			       only have to do some things when
 			       the charset changes. */
+  face_index last_findex;   /* The face index of the previous character.
+			       Needed to ensure the validity of the
+			       last_charset optimization. */
+  
   int last_char_width;	/* The width of the previous character. */
   int font_is_bogus;	/* If true, it means we couldn't instantiate
 			   the font for this charset, so we substitute
@@ -850,7 +854,8 @@ add_emchar_rune (pos_data *data)
   else
     {
       Lisp_Object charset = CHAR_CHARSET (data->ch);
-      if (!EQ (charset, data->last_charset))
+      if (!EQ (charset, data->last_charset) ||
+	  data->findex != data->last_findex)
 	{
 	  /* OK, we need to do things the hard way. */
 	  struct window *w = XWINDOW (data->window);
@@ -876,8 +881,8 @@ add_emchar_rune (pos_data *data)
 	    data->last_char_width = -1;
 	  data->new_ascent  = max (data->new_ascent,  (int) fi->ascent);
 	  data->new_descent = max (data->new_descent, (int) fi->descent);
-	  /* The following line causes display goobers and I don't know why */
-	  /*data->last_charset = charset;*/
+	  data->last_charset = charset;
+	  data->last_findex = data->findex;
 	}
 
       width = data->last_char_width;
@@ -1877,6 +1882,7 @@ create_text_block (struct window *w, struct display_line *dl,
   data.bi_bufpos = bi_start_pos;
   data.pixpos = dl->bounds.left_in;
   data.last_charset = Qunbound;
+  data.last_findex = DEFAULT_INDEX;
   data.result_str = Qnil;
 
   /* Set the right boundary adjusting it to take into account any end
@@ -2643,6 +2649,7 @@ create_overlay_glyph_block (struct window *w, struct display_line *dl)
   data.cursor_x = -1;
   data.findex = DEFAULT_INDEX;
   data.last_charset = Qunbound;
+  data.last_findex = DEFAULT_INDEX;
   data.result_str = Qnil;
 
   Dynarr_reset (data.db->runes);
@@ -3570,6 +3577,7 @@ generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
   data.max_pixpos = max_pixpos;
   data.cursor_type = NO_CURSOR;
   data.last_charset = Qunbound;
+  data.last_findex = DEFAULT_INDEX;
   data.result_str = result_str;
   data.is_modeline = 1;
   XSETWINDOW (data.window, w);

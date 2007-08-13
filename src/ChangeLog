@@ -1,3 +1,17 @@
+Wed Feb  5 17:13:17 1997  David Moore  <dmoore@UCSD.EDU>
+
+	* emacs.c (main_1): Try to avoid collisions against potentially
+	incompatible system mallocs.
+
+Mon Feb  3 23:04:41 1997  Joel Peterson  <tarzan@aosi.com>
+
+	* redisplay.c: Activate face/charset redisplay caching.
+
+Mon Feb  3 22:01:09 1997  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* eval.c (do_debug_on_exit): Don't restore old value of
+	debug_on_next_call improperly.
+
 Fri Jan 31 10:28:47 1997  David Byers  <davby@ida.liu.se>
 
 	* frame.c (frame_matches_frametype): Fix next-window when the next

@@ -397,7 +397,6 @@ install-arch-indep: mkdir
 	   for f in *.info* ; do \
 	     ${INSTALL_DATA} ${srcdir}/info/$$f ${infodir}/$$f ; \
 	     chmod 0644 ${infodir}/$$f; \
-	     gzip -9 -f ${infodir}/$$f; \
 	   done); \
 	else true; fi
 	cd ${srcdir}/etc && for page in xemacs etags ctags gnuserv \
