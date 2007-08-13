@@ -62,7 +62,9 @@ extern int etext, __data_start; weak_symbol (__data_start)
 #ifndef USG
 #ifndef MSDOS
 #ifndef WINDOWSNT
+#ifndef __CYGWIN32__
 #include <sys/vlimit.h>
+#endif /* not __CYGWIN32__ */
 #endif /* not WINDOWSNT */
 #endif /* not MSDOS */
 #endif /* not USG */
@@ -81,7 +83,9 @@ typedef void *POINTER;
 typedef char *POINTER;
 #endif
 
+#ifndef __CYGWIN32__
 typedef unsigned long SIZE;
+#endif
 
 #ifdef NULL
 #undef NULL
@@ -148,7 +152,7 @@ get_lim_data (void)
 }
 
 #else /* not USG */
-#ifdef WINDOWSNT
+#if defined( WINDOWSNT ) || defined (__CYGWIN32__)
 
 static void
 get_lim_data (void)

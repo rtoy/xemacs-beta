@@ -41,7 +41,7 @@ Copy STRING to the mswindows clipboard.
   unsigned char *src, *dst, *next;
   HGLOBAL h = NULL;
 
-  CHECK_STRING (string, 0);
+  CHECK_STRING (string);
 
   /* Calculate size with LFs converted to CRLFs because
    * CF_TEXT format uses CRLF delimited ASCIIZ */

@@ -34,6 +34,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "buffer.h"
 #include "commands.h"           /* zmacs_regions */
+#include "gui.h"
 #include "events.h"
 #include "frame.h"
 #include "opaque.h"

@@ -1,3 +1,15 @@
+1997-12-26  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* xemacs.mak: added menubar-msw.c, menubar.c
+
+	* xemacs.mak: scrollabrs and menubars are rearranged properly
+	  under different ifdef'd secions, so for example menubar.obj goes
+	  to always compiled section, and menubar-msw.obj is built only when
+	  HAVE_MSW.
+
+	* xemacs.mak: Compiler warning flag definition moved to a macro
+	  CPP_WARN_FLAGS. Redefined from -w to -W3 (Doh!).
+
 1997-12-11  David Hobley <davidh@wr.com.au>
 
         * Added support for auto generation of puresize-adjust.h

@@ -1,3 +1,64 @@
+1997-12-23  Andy Piper <andyp@parallax.co.uk>
+
+	* Conditionals to enable XEmacs to compile (not run!) under
+	  CygWin32. Files touched:
+	  events.c
+	  getloadavg.c
+	  mem-limits.h
+	  objects-msw.c
+	  select-msw.c
+	  sysdep.c
+	* s/cygwin.h: New file.
+
+1997-12-26  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* menubar-msw.c, menubar-msw.h: New files. Menus support.
+	
+	* console-msw.h: Added frame menu hashtable variable.
+
+	* gui.c: popup_up_p variable and Fpopup_up_p and
+	  separator_string_p functions are moved from gui-x.c
+
+	* gui.h: New file declaring the above. It is #included into the
+	  following files:
+	  dialog-x.c
+	  gui-x.c
+	  menubar-x.c
+
+	* emacs.c: Added calls to *_of_menubar_mswindows()
+
+	* event-msw.c: Generalization of modal pump interface so it may be
+	  used bu menubars also. Some functions and vars renamed, to
+	  reflect more general approach (event_pump -> modal_loop)
+
+	* frame-msw.c: Initialization and marking of menu hashtable.
+
+	* msw-proc.c: Added handling for menu window messages.
+
+	* opaque.c: opaque objects given hash and equal methods, so they
+	  can be compared with 'equal. Menubar uses opaque pointers as
+	  hash keys in an 'equal style hastable.
+
+	* Most of the above touched files: Eliminated compiler warnings. 
+
+1997-12-18  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* elhash.c (print_hashtable): Use `%u' for fullness.
+	(hashtable_equal): New function.
+	(hashtable_equal_mapper): Ditto.
+
+	* lread.c (vars_of_lread): Initialize Vread_buffer_stream here
+	instead of in init_lread.
+
+1997-12-26  P. E. Jareth Hein  <jareth@camelot-soft.com>
+
+	* glyphs-x.c (imagick_instantiate): Add in error and 
+	warning handling for ImageMagick files
+
+1997-12-26  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in (distclean): Remove `xemacs.*'.
+
 1997-12-22  SL Baur  <steve@altair.xemacs.org>
 
 	* device.c (vars_of_device): Provide `devices' feature so W3's

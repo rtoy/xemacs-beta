@@ -1,3 +1,88 @@
+1997-12-27  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* help.el (help-mode-bury): Now a call to `help-mode-quit' with
+ 	argument.
+	(help-mode-quit): New optional arg to control whether it kills or
+	buries.  Tidied up.
+	(with-displaying-help-buffer): Don't kill buffer initially, even
+	if it exists: it is erased by `with-output-to-temp-buffer' anyway.
+	(help-pretty-print-value): Rename back from
+	`help-maybe-pretty-print-value'!  If `pp-internal' is available
+	use it, otherwise use dumped `cl-prettyprint'.
+	(describe-variable): Use `help-pretty-print-value' again.
+	(find-func): Removed reference to "find-func" at end.
+
+1997-12-26  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* dumped-lisp.el: x-menubar.el dumped along with mswindows native
+	  GUI XEmacs. Rename? x-menubar is rather window system
+	  independant, except for a couple of items.
+
+1997-12-26  SL Baur  <steve@altair.xemacs.org>
+
+	* x-menubar.el (default-menubar): Remove hyperbole and oobr
+	entries as they will no longer be distributed with XEmacs.
+
+	* format.el (format-alist): Fix image/tiff regexps.
+	From P. E. Jareth Hein <jareth@camelot-soft.com>
+
+	* help.el (help-maybe-pretty-print-value): Rename.
+	(describe-variable): Use it.
+	(describe-variable): Add trailing linefeed.
+
+1997-12-26  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* help.el (describe-function-1): Don't output anything for
+	  arglist of autoload functions.
+
+1997-12-26  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* help.el (describe-function-1): Don't output anything for
+	  arglist of autoload functions.
+
+1997-12-26  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* help.el (help-mode-map): New bindings for `help-mode-bury',
+ 	`describe-function-at-point', `describe-variable-at-point',
+ 	`Info-elisp-ref', `customize-variable', `help-next-section' and
+ 	`help-prev-section'.
+	(help-next-section): New function.
+	(help-prev-section): New function.
+	(help-mode-quit): Changed to kill the help buffer.
+	(help-mode-bury): Formerly `help-mode-quit'.  Bury buffer
+ 	correctly.
+	(help-buffer-name): New function to generate the name of help
+ 	buffers.
+	(with-displaying-help-buffer): Is now a macro.  Takes an new first
+ 	argument giving the name of the help buffer.
+	(describe-key): Use `with-displaying-help-buffer' with name.
+	(describe-mode): Ditto.
+	(describe-bindings): Ditto.
+	(describe-prefix-bindings): Ditto.
+	(view-lossage): Ditto.
+	(with-syntax-table): New macro.
+	(function-called-at-point): Use `ignore-errors' and
+ 	`with-syntax-table'.
+	(function-at-point): Ditto.
+	(describe-function): Use `with-displaying-help-buffer' with name.
+	(function-arglist): Extracted from `describe-function-1'.  Returns
+ 	function's arglist as string.
+	(function-documentation): Extracted from `describe-function-1'.
+  	Returns function's docstring.
+	(describe-function-1): Remove all the "stream" garbage, including
+	the stream argument.  Use `function-arglist' and
+	`function-documentation'.
+	(describe-function-arglist): Just use `function-arglist'.
+	(variable-at-point): Use `ignore-errors' and `with-syntax-table'.
+	(help-pretty-print-value): New function to help with
+	pretty-printing variable values.  Knows about `#<...>'.  Needs
+	`pp-internal'.
+	(describe-variable): Use `with-displaying-help-buffer' with name.
+	Formatting improved.  Display file where variable is defined, if
+	known.  Use `help-pretty-print-value'.
+	(describe-syntax): Use `with-displaying-help-buffer' with name.
+	(list-processes): Remove "stream" garbage.
+
 1997-12-25  SL Baur  <steve@altair.xemacs.org>
 
 	* x-init.el (x-initialize-keyboard): Don't load x-win*.el files,

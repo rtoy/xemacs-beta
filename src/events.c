@@ -381,7 +381,7 @@ event_hash (Lisp_Object obj, int depth)
 		       e->event.magic.underlying_mswindows_event.data[0],
 		       e->event.magic.underlying_mswindows_event.data[1],
 		       e->event.magic.underlying_mswindows_event.data[2],
-		       e->event.magic.underlying_mswindows_event.data[3],
+		       e->event.magic.underlying_mswindows_event.data[3]
 		       );
 #endif
       }

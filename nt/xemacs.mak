@@ -15,6 +15,8 @@ OPT=-Od -Zi
 OPT=-O2 -G5 -Zi
 !endif
 
+WARN_CPP_FLAGS = -W3
+
 #------------------------------------------------------------------------------
 
 !if $(HAVE_X)
@@ -34,7 +36,7 @@ X_LIBS=$(MAGICK_LIBS) Xaw.lib Xmu.lib Xt.lib SM.lib ICE.lib Xext.lib X11.lib
 !endif
 
 !if $(HAVE_MSW)
-MSW_DEFINES=-DHAVE_MS_WINDOWS -DHAVE_SCROLLBARS
+MSW_DEFINES=-DHAVE_MS_WINDOWS -DHAVE_SCROLLBARS -DHAVE_MENUBARS
 !endif
 
 !if $(HAVE_MULE)
@@ -92,7 +94,7 @@ $(XEMACS)\src\puresize-adjust.h:	puresize-adjust.h
 
 LASTFILE=$(OUTDIR)\lastfile.lib
 LASTFILE_SRC=$(XEMACS)\src
-LASTFILE_FLAGS=-nologo -w $(OPT) $(INCLUDES) -Fo$@ -c
+LASTFILE_FLAGS=-nologo $(WARN_CPP_FLAGS) $(OPT) $(INCLUDES) -Fo$@ -c
 LASTFILE_OBJS= \
 	$(OUTDIR)\lastfile.obj
 
@@ -110,7 +112,7 @@ $(OUTDIR)\lastfile.obj:	$(LASTFILE_SRC)\lastfile.c
 
 LWLIB=$(OUTDIR)\lwlib.lib
 LWLIB_SRC=$(XEMACS)\lwlib
-LWLIB_FLAGS=-nologo -w $(OPT) $(INCLUDES) $(DEFINES) \
+LWLIB_FLAGS=-nologo $(WARN_CPP_FLAGS) $(OPT) $(INCLUDES) $(DEFINES) \
  -DNEED_ATHENA -DNEED_LUCID \
  -D_WINDOWS -DMENUBARS_LUCID -DSCROLLBARS_LUCID -DDIALOGS_ATHENA \
  -Fo$@ -c
@@ -222,6 +224,7 @@ DOC_SRC3=\
  $(XEMACS)\src\marker.c
 DOC_SRC4=\
  $(XEMACS)\src\md5.c \
+ $(XEMACS)\src\menubar.c \
  $(XEMACS)\src\minibuf.c \
  $(XEMACS)\src\nt.c \
  $(XEMACS)\src\ntheap.c \
@@ -287,8 +290,10 @@ DOC_SRC7=\
  $(XEMACS)\src\device-msw.c  \
  $(XEMACS)\src\event-msw.c  \
  $(XEMACS)\src\frame-msw.c \
+ $(XEMACS)\src\menubar-msw.c \
  $(XEMACS)\src\objects-msw.c \
  $(XEMACS)\src\redisplay-msw.c \
+ $(XEMACS)\src\scrollbar-msw.c \
  $(XEMACS)\src\select-msw.c \
  $(XEMACS)\src\msw-proc.c
 !endif
@@ -324,7 +329,7 @@ $(RUNEMACS): $(OUTDIR)\runemacs.obj
 	advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib libc.lib
 
 $(OUTDIR)\runemacs.obj:	$(XEMACS)\nt\runemacs.c
-	$(CC) -nologo -ML -w $(OPT) -c \
+	$(CC) -nologo -ML $(WARN_CPP_FLAGS) $(OPT) -c \
 	-D_DEBUG -DWIN32 -D_WIN32 -DWIN32_LEAN_AND_MEAN \
 	-D_X86_ -Demacs -DHAVE_CONFIG_H \
 	$** -Fo$@
@@ -346,7 +351,7 @@ TEMACS_LFLAGS=-nologo $(LIBRARIES) $(DEBUG_FLAGS) -base:0x1000000\
  -stack:0x800000 -entry:_start -subsystem:console\
  -pdb:$(TEMACS_DIR)\temacs.pdb -map:$(TEMACS_DIR)\temacs.map \
  -heap:0x00100000 -out:$@
-TEMACS_CPP_FLAGS= $(INCLUDES) $(DEFINES) $(DEBUG_DEFINES) \
+TEMACS_CPP_FLAGS= $(WARN_CPP_FLAGS) $(INCLUDES) $(DEFINES) $(DEBUG_DEFINES) \
  -DEMACS_MAJOR_VERSION=$(emacs_major_version) \
  -DEMACS_MINOR_VERSION=$(emacs_minor_version) \
  -DEMACS_BETA_VERSION=$(emacs_beta_version) \
@@ -354,7 +359,7 @@ TEMACS_CPP_FLAGS= $(INCLUDES) $(DEFINES) $(DEBUG_DEFINES) \
  -DPATH_PREFIX=\"$(XEMACS)\" \
  -DPACKAGE_PATH=\"$(PACKAGE_PATH)\"
 
-TEMACS_FLAGS=-nologo -ML -w $(OPT) -c $(TEMACS_CPP_FLAGS)
+TEMACS_FLAGS=-nologo -ML $(WARN_CPP_FALGS) $(OPT) -c $(TEMACS_CPP_FLAGS)
 
 !if $(HAVE_X)
 TEMACS_X_OBJS=\
@@ -372,7 +377,6 @@ TEMACS_X_OBJS=\
 	$(OUTDIR)\frame-x.obj \
 	$(OUTDIR)\glyphs-x.obj \
 	$(OUTDIR)\gui-x.obj \
-	$(OUTDIR)\menubar.obj \
 	$(OUTDIR)\menubar-x.obj \
 	$(OUTDIR)\objects-x.obj \
 	$(OUTDIR)\redisplay-x.obj \
@@ -389,8 +393,10 @@ TEMACS_MSW_OBJS=\
 	$(OUTDIR)\device-msw.obj \
 	$(OUTDIR)\event-msw.obj \
 	$(OUTDIR)\frame-msw.obj \
+	$(OUTDIR)\menubar-msw.obj \
 	$(OUTDIR)\objects-msw.obj \
 	$(OUTDIR)\redisplay-msw.obj \
+	$(OUTDIR)\scrollbar-msw.obj \
 	$(OUTDIR)\select-msw.obj \
 	$(OUTDIR)\msw-proc.obj
 !endif
@@ -469,6 +475,7 @@ TEMACS_OBJS= \
 	$(OUTDIR)\lread.obj \
 	$(OUTDIR)\lstream.obj \
 	$(OUTDIR)\macros.obj \
+	$(OUTDIR)\menubar.obj \
 	$(OUTDIR)\marker.obj \
 	$(OUTDIR)\md5.obj \
 	$(OUTDIR)\minibuf.obj \
@@ -487,7 +494,6 @@ TEMACS_OBJS= \
 	$(OUTDIR)\redisplay.obj \
 	$(OUTDIR)\regex.obj \
 	$(OUTDIR)\scrollbar.obj \
-	$(OUTDIR)\scrollbar-msw.obj \
 	$(OUTDIR)\search.obj \
 	$(OUTDIR)\signal.obj \
 	$(OUTDIR)\sound.obj \
@@ -581,6 +587,8 @@ dump-xemacs: $(TEMACS)
 # use this rule to build the complete system
 all: $(LASTFILE) $(LWLIB) $(SUPPORT_PROGS) $(TEMACS) $(TEMACS_BROWSE) $(DOC) dump-xemacs
 	-del rebuild
+
+temacs:  $(TEMACS)
 
 # use this rule to install the system
 install:

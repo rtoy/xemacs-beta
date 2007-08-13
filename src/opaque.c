@@ -56,8 +56,12 @@ static Lisp_Object mark_opaque (Lisp_Object, void (*) (Lisp_Object));
 static unsigned int sizeof_opaque (CONST void *header);
 static void print_opaque (Lisp_Object obj, Lisp_Object printcharfun,
 			  int escapeflag);
+static int equal_opaque (Lisp_Object obj1, Lisp_Object obj2, int depth);
+static unsigned long hash_opaque (Lisp_Object obj, int depth);
+
 DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("opaque", opaque,
-					mark_opaque, print_opaque, 0, 0, 0,
+					mark_opaque, print_opaque, 0, 
+					equal_opaque, hash_opaque,
 					sizeof_opaque, struct Lisp_Opaque);
 
 static Lisp_Object
@@ -119,6 +123,39 @@ make_opaque (int size, CONST void *data)
     memset (p->data, 0, size);
   XSETOPAQUE (val, p);
   return val;
+}
+
+/* This will not work correctly for opaques with subobjects! */
+
+static int
+equal_opaque (Lisp_Object obj1, Lisp_Object obj2, int depth)
+{
+#ifdef DEBUG_XEMACS
+  assert (!XOPAQUE_MARKFUN (obj1) && !XOPAQUE_MARKFUN (obj2));
+  assert (INTP (XOPAQUE(obj1)->size_or_chain));
+  assert (INTP (XOPAQUE(obj2)->size_or_chain));
+#endif
+  if (XOPAQUE_SIZE(obj1) != XOPAQUE_SIZE(obj2))
+    return 0;
+  return (XOPAQUE_SIZE(obj1) == sizeof(*XOPAQUE_DATA(obj1))
+	  ? *XOPAQUE_DATA(obj1) == *XOPAQUE_DATA(obj2)
+	  : memcmp (XOPAQUE_DATA(obj1), XOPAQUE_DATA(obj2),
+		    XOPAQUE_SIZE(obj1)) == 0);
+}
+
+/* This will not work correctly for opaques with subobjects! */
+
+static unsigned long
+hash_opaque (Lisp_Object obj, int depth)
+{
+#ifdef DEBUG_XEMACS
+  assert (!XOPAQUE_MARKFUN (obj));
+  assert (INTP (XOPAQUE(obj)->size_or_chain));
+#endif
+  if (XOPAQUE_SIZE(obj) == sizeof (unsigned long))
+    return (unsigned int) *XOPAQUE_DATA(obj);
+  else
+    return memory_hash (XOPAQUE_DATA(obj), XOPAQUE_SIZE(obj));
 }
 
 static Lisp_Object mark_opaque_list (Lisp_Object, void (*) (Lisp_Object));

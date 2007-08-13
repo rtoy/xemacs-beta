@@ -50,9 +50,10 @@ static Lisp_Object Vall_weak_hashtables;
 
 static Lisp_Object mark_hashtable (Lisp_Object, void (*) (Lisp_Object));
 static void print_hashtable (Lisp_Object, Lisp_Object, int);
+static int hashtable_equal (Lisp_Object t1, Lisp_Object t2, int depth);
 DEFINE_LRECORD_IMPLEMENTATION ("hashtable", hashtable,
-                               mark_hashtable, print_hashtable, 0, 0, 0,
-			       struct hashtable);
+                               mark_hashtable, print_hashtable, 0,
+			       hashtable_equal, 0, struct hashtable);
 
 static Lisp_Object
 mark_hashtable (Lisp_Object obj, void (*markobj) (Lisp_Object))
@@ -70,6 +71,72 @@ mark_hashtable (Lisp_Object obj, void (*markobj) (Lisp_Object))
     }
   ((markobj) (table->zero_entry));
   return table->harray;
+}
+
+/* Equality of hashtables.  Two hashtables are equal when they are of
+   the same type and test function, they have the same number of
+   elements, and for each key in hashtable, the values are `equal'.
+
+   This is similar to Common Lisp `equalp' of hashtables, with the
+   difference that CL requires the keys to be compared using the
+   `:test' function, which we don't do.  Doing that would require
+   consing, and consing is bad idea in `equal'.  Anyway, our method
+   should provide the same result -- if the keys are not equal
+   according to `:test', then Fgethash() in hashtable_equal_mapper()
+   will fail.  */
+struct hashtable_equal_closure
+{
+  int depth;
+  int equal_so_far;
+  Lisp_Object other_table;
+};
+
+static void
+hashtable_equal_mapper (void *key, void *contents, void *arg)
+{
+  struct hashtable_equal_closure *closure =
+    (struct hashtable_equal_closure *)arg;
+  Lisp_Object keytem, valuetem;
+
+  /* It would be beautiful if maphash() allowed us to bail out when C
+     function returns non-zero, a la map_extents() et al.  #### Make
+     it so!  */
+  if (closure->equal_so_far)
+    {
+      Lisp_Object value_in_other;
+      CVOID_TO_LISP (keytem, key);
+      CVOID_TO_LISP (valuetem, contents);
+      /* Look up the key in the other hashtable, and compare the
+         values.  */
+      value_in_other = Fgethash (keytem, closure->other_table, Qunbound);
+      if (UNBOUNDP (value_in_other)
+	  || !internal_equal (valuetem, value_in_other, closure->depth))
+	closure->equal_so_far = 0;
+      /* return 1; */
+    }
+  /* return 0; */
+}
+
+static int
+hashtable_equal (Lisp_Object t1, Lisp_Object t2, int depth)
+{
+  struct hashtable_equal_closure closure;
+  struct hashtable *table1 = XHASHTABLE (t1);
+  struct hashtable *table2 = XHASHTABLE (t2);
+
+  /* The objects are `equal' if they are of the same type, so return 0
+     if types or test functions are not the same.  Obviously, the
+     number of elements must be equal, too.  */
+  if ((table1->test_function != table2->test_function)
+      || (table1->type != table2->type)
+      || (table1->fullness != table2->fullness))
+    return 0;
+
+  closure.depth = depth + 1;
+  closure.equal_so_far = 1;
+  closure.other_table = t2;
+  elisp_maphash (hashtable_equal_mapper, t1, &closure);
+  return closure.equal_so_far;
 }
 
 /* Printing hashtables.
@@ -92,11 +159,12 @@ mark_hashtable (Lisp_Object obj, void (*markobj) (Lisp_Object))
    The data is truncated to four pairs, and the rest is shown with
    `...'.  The actual printer is non-consing.  */
 
-struct print_mapper_arg {
-  EMACS_INT count;		/* Used to implement the truncation
-				   for non-readable printing, as well
-				   as to avoid the unnecessary space
-				   at the beginning.  */
+struct print_hashtable_data_closure
+{
+  EMACS_INT count;		/* Used to implement truncation for
+				   non-readable printing, as well as
+				   to avoid the unnecessary space at
+				   the beginning.  */
   Lisp_Object printcharfun;
 };
 
@@ -104,7 +172,8 @@ static void
 print_hashtable_data_mapper (void *key, void *contents, void *arg)
 {
   Lisp_Object keytem, valuetem;
-  struct print_mapper_arg *closure = (struct print_mapper_arg *)arg;
+  struct print_hashtable_data_closure *closure =
+    (struct print_hashtable_data_closure *)arg;
 
   if (closure->count < 4 || print_readably)
     {
@@ -126,7 +195,7 @@ print_hashtable_data_mapper (void *key, void *contents, void *arg)
 static void
 print_hashtable_data (Lisp_Object hashtable, Lisp_Object printcharfun)
 {
-  struct print_mapper_arg closure;
+  struct print_hashtable_data_closure closure;
   closure.count = 0;
   closure.printcharfun = printcharfun;
 
@@ -163,13 +232,13 @@ print_hashtable (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   else if (table->test_function == lisp_object_equal_equal)
     write_c_string (" test equal", printcharfun);
   else if (table->test_function == lisp_object_eql_equal)
-      ;
+    DO_NOTHING;
   else
     abort ();
   if (table->fullness || !print_readably)
     {
       if (print_readably)
-	sprintf (buf, " size %d", table->fullness);
+	sprintf (buf, " size %u", table->fullness);
       else
 	sprintf (buf, " size %u/%ld", table->fullness,
 		 XVECTOR_LENGTH (table->harray) / LISP_OBJECTS_PER_HENTRY);
@@ -559,7 +628,7 @@ decode_hashtable_test_fun (Lisp_Object sym)
   if (EQ (sym, Qequal)) return HASHTABLE_EQUAL;
   if (EQ (sym, Qeql))   return HASHTABLE_EQL;
 
-  signal_simple_error ("Invalid hashtable test fun", sym);
+  signal_simple_error ("Invalid hashtable test function", sym);
   return HASHTABLE_EQ; /* not reached */
 }
 

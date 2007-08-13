@@ -35,6 +35,14 @@ Boston, MA 02111-1307, USA.  */
 #include "event-msw.h"
 #include "redisplay.h"
 
+#ifdef HAVE_SCROLLBARS
+# include "scrollbar-msw.h"
+#endif
+
+#ifdef HAVE_MENUBARS
+# include "menubar-msw.h"
+#endif
+
 #ifdef DEBUG_XEMACS
 # include "opaque.h"	/* For the debug functions at the end of this file */
 # undef DEBUG_MESSAGES
@@ -51,6 +59,7 @@ Boston, MA 02111-1307, USA.  */
 #define BUTTON_2_TIMER_ID 1
 
 static Lisp_Object mswindows_find_frame (HWND hwnd);
+static Lisp_Object mswindows_find_console (HWND hwnd);
 static Lisp_Object mswindows_key_to_emacs_keysym(int mswindows_key, int mods);
 static int mswindows_modifier_state (BYTE* keymap, int has_AltGr);
 static int mswindows_enqueue_timeout (int milliseconds);
@@ -178,12 +187,12 @@ mswindows_current_layout_has_AltGr ()
   HKL current_hkl = GetKeyboardLayout (0);
   if (current_hkl != last_hkl)
     {
-      int c;
+      TCHAR c;
       last_hkl_has_AltGr = 0;
       /* In this loop, we query whether a character requires
 	 AltGr to be down to generate it. If at least such one
 	 found, this means that the layout does regard AltGr */
-      for (c = ' '; c <= 0xFF && !last_hkl_has_AltGr; ++c)
+      for (c = ' '; c <= 0xFFU && c != 0 && !last_hkl_has_AltGr; ++c)
 	if (HIBYTE (VkKeyScan (c)) == 6)
 	  last_hkl_has_AltGr = 1;
       last_hkl = current_hkl;
@@ -204,7 +213,7 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
   Lisp_Object fobj;
   struct frame *frame;
   struct mswindows_frame* msframe;
-  
+
   switch (message)
   {
   case WM_ERASEBKGND:
@@ -225,7 +234,7 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
       BYTE keymap[256];
       int has_AltGr = mswindows_current_layout_has_AltGr ();
-      int mods, ch;
+      int mods;
       Lisp_Object keysym;
 
       GetKeyboardState (keymap);
@@ -236,7 +245,6 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	mswindows_enqueue_keypress_event (hwnd, keysym, mods);
       else
 	{
-	  int ch;
 	  int quit_ch = CONSOLE_QUIT_CHAR (XCONSOLE (mswindows_find_console (hwnd)));
 	  BYTE keymap_orig[256];
 	  MSG msg = { hwnd, message, wParam, lParam, GetMessageTime(), GetMessagePos() };
@@ -245,12 +253,13 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	  /* Clear control and alt modifiers out of the keymap */
 	  keymap [VK_RCONTROL] = 0;
 	  keymap [VK_LMENU] = 0;
-	  if (!has_AltGr || !(keymap [VK_LCONTROL] & 0x80) || !(keymap [VK_RMENU] & 0x80)) {
-	    keymap [VK_LCONTROL] = 0;
-	    keymap [VK_CONTROL] = 0;
-	    keymap [VK_RMENU] = 0;
-	    keymap [VK_MENU] = 0;
-	  }
+	  if (!has_AltGr || !(keymap [VK_LCONTROL] & 0x80) || !(keymap [VK_RMENU] & 0x80))
+	    {
+	      keymap [VK_LCONTROL] = 0;
+	      keymap [VK_CONTROL] = 0;
+	      keymap [VK_RMENU] = 0;
+	      keymap [VK_MENU] = 0;
+	    }
 	  SetKeyboardState (keymap);
 
 	  /* Have some WM_[SYS]CHARS in the queue */
@@ -259,7 +268,7 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	  while (PeekMessage (&msg, hwnd, WM_CHAR, WM_CHAR, PM_REMOVE)
 		 ||PeekMessage (&msg, hwnd, WM_SYSCHAR, WM_SYSCHAR, PM_REMOVE))
 	    {
-	      ch = msg.wParam;
+	      int ch = msg.wParam;
 	      /* CH is a character code for the key: 
 		 'C' for Shift+C and Ctrl+Shift+C
 		 'c' for c and Ctrl+c */
@@ -595,6 +604,7 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     mswindows_enqueue_magic_event (hwnd, XM_BUMPQUEUE);
     return 0;
 
+#ifdef HAVE_SCROLLBARS
   case WM_VSCROLL:
   case WM_HSCROLL:
     {
@@ -604,7 +614,7 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
       HWND hwndScrollBar = (HWND) lParam;
       mswindows_handle_scrollbar_event (hwndScrollBar, code,  pos);
 
-      if (NILP(mswindows_pump_outstanding_events()))
+      if (UNBOUNDP(mswindows_pump_outstanding_events()))
 	{
 	  /* Error during event pumping - cancel scroll */
 	  SendMessage (hwndScrollBar, WM_CANCELMODE, 0, 0);
@@ -612,6 +622,53 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
       break;     
     }
+#endif
+
+#ifdef HAVE_MENUBARS
+  case WM_INITMENU:
+    if (UNBOUNDP (mswindows_handle_wm_initmenu (
+			XFRAME (mswindows_find_frame (hwnd)))))
+      SendMessage (hwnd, WM_CANCELMODE, 0, 0);
+    break;
+
+  case WM_INITMENUPOPUP:
+    if (!HIWORD(lParam))
+      {
+	if (UNBOUNDP (mswindows_handle_wm_initmenupopup (
+			(HMENU) wParam,
+			 XFRAME (mswindows_find_frame (hwnd)))))
+	  SendMessage (hwnd, WM_CANCELMODE, 0, 0);
+      }
+    break;
+
+  case WM_EXITMENULOOP:
+    if (UNBOUNDP (mswindows_handle_wm_exitmenuloop (
+			XFRAME (mswindows_find_frame (hwnd)))))
+      SendMessage (hwnd, WM_CANCELMODE, 0, 0);
+    break;
+
+#endif /* HAVE_MENUBARS */
+
+  case WM_COMMAND:
+    {
+      WORD id = LOWORD (wParam);
+      frame = XFRAME (mswindows_find_frame (hwnd));
+
+#ifdef HAVE_MENUBARS
+      if (!NILP (mswindows_handle_wm_command (frame, id)))
+	break;
+#endif
+
+#ifdef HAVE_TOOLBARS
+      O Toolbar Implementor, this place may have something for you!;
+#endif
+
+      /* Bite me - a spurious command. No abort(), for safety */
+      /* #### Perhaps, this message should be changed */
+      error ("Cannot decode command. Tell kkm he's a parallelogramm, if you know"
+	     " what does that mean!");
+    }
+  break;
 
   defproc:
   default:
@@ -757,7 +814,7 @@ struct lrecord_header *DHEADER(Lisp_Object obj)
   return (LRECORDP (obj)) ? XRECORD_LHEADER (obj) : NULL;
 }
 
-int DOPAQUE_DATA (Lisp_Object obj)
+int *DOPAQUE_DATA (Lisp_Object obj)
 {
   return (OPAQUEP (obj)) ? OPAQUE_DATA (XOPAQUE (obj)) : NULL;
 }
@@ -782,7 +839,7 @@ Lisp_Object DCDR(Lisp_Object obj)
   return (CONSP (obj)) ? XCDR (obj) : 0;
 }
 
-Lisp_Object DCONSCDR(Lisp_Object obj)
+struct Lisp_Cons *DCONSCDR(Lisp_Object obj)
 {
   return ((CONSP (obj)) && (CONSP (XCDR (obj)))) ? XCONS (XCDR (obj)) : 0;
 }

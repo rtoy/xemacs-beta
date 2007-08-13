@@ -85,8 +85,8 @@ static mswindows_waitable_count=0;
 
 /* This is the event signaled by the event pump.
    See mswindows_pump_outstanding_events for comments */
-static Lisp_Object mswindows_error_caught_by_event_pump;
-static int mswindows_in_event_pump;
+static Lisp_Object mswindows_error_caught_in_modal_loop;
+static int mswindows_in_modal_loop;
 
 /* Count of wound timers */
 static int mswindows_pending_timers_count;
@@ -203,6 +203,43 @@ mswindows_cancel_dispatch_event (struct Lisp_Event* match)
     }
 }
 
+static Lisp_Object
+mswindows_modal_loop_error_handler (Lisp_Object cons_sig_data,
+				    Lisp_Object u_n_u_s_e_d)
+{
+  mswindows_error_caught_in_modal_loop = cons_sig_data;
+  return Qunbound;
+}
+
+Lisp_Object
+mswindows_protect_modal_loop (Lisp_Object (*bfun) (Lisp_Object barg),
+			      Lisp_Object barg)
+{
+  Lisp_Object tmp;
+
+  ++mswindows_in_modal_loop; 
+  tmp = condition_case_1 (Qt,
+			  bfun, barg,
+			  mswindows_modal_loop_error_handler, Qnil);
+  --mswindows_in_modal_loop;
+
+  return tmp;
+}
+
+void
+mswindows_unmodalize_signal_maybe (void)
+{
+  if (!NILP (mswindows_error_caught_in_modal_loop))
+    {
+      /* Got an error while messages were pumped while
+	 in window procedure - have to resignal */
+      Lisp_Object sym = XCAR (mswindows_error_caught_in_modal_loop);
+      Lisp_Object data = XCDR (mswindows_error_caught_in_modal_loop);
+      mswindows_error_caught_in_modal_loop = Qnil;
+      Fsignal (sym, data);
+    }
+}
+
 /*
  * This is an unsafe part of event pump, guarded by 
  * condition_case. See mswindows_pump_outstanding_events
@@ -234,15 +271,6 @@ mswindows_unsafe_pump_events (Lisp_Object u_n_u_s_e_d)
   return Qt;
 }
 
-/* See mswindows_pump_outstanding_events */
-static Lisp_Object
-mswindows_event_pump_error_handler (Lisp_Object cons_sig_data,
-				    Lisp_Object u_n_u_s_e_d)
-{
-  mswindows_error_caught_by_event_pump = cons_sig_data;
-  return Qnil;
-}
-
 /*
  * This function pumps emacs events, while available, by using
  * next_message/dispatch_message loop. Errors are trapped around
@@ -252,22 +280,22 @@ mswindows_event_pump_error_handler (Lisp_Object cons_sig_data,
  * neither are waitable handles checked. The function pumps
  * thus only dispatch events already queued, as well as those
  * resulted in dispatching thereof. This is done by setting
- * module local variable mswidows_in_event_pump to nonzero.
+ * module local variable mswidows_in_modal_loop to nonzero.
  *
- * Return value is Qt if no errors was trapped, or Qnil if
+ * Return value is Qt if no errors was trapped, or Qunbound if
  * there was an error.
  *
  * In case of error, a cons representing the error, in the
  * form (SIGNAL . DATA), is stored in the module local variable
- * mswindows_error_caught_by_event_pump. This error is signaled
+ * mswindows_error_caught_in_modal_loop. This error is signaled
  * again when DispatchMessage returns. Thus, Windows internal
  * modal loops are protected against throws, which are proven
  * to corrupt internal Windows structures.
  *
- * In case of success, mswindows_error_caught_by_event_pump is
+ * In case of success, mswindows_error_caught_in_modal_loop is
  * assigned Qnil.
  *
- * If the value of mswindows_error_caught_by_event_pump is not
+ * If the value of mswindows_error_caught_in_modal_loop is not
  * nil already upon entry, the function just returns non-nil.
  * This situation means that a new event has been queued while
  * cancleng mode. The event will be dequeued on the next regular
@@ -284,17 +312,8 @@ mswindows_pump_outstanding_events (void)
 
   Lisp_Object result = Qt;
 
-  if (NILP(mswindows_error_caught_by_event_pump))
-    {
-
-      mswindows_in_event_pump = 1;
-
-      result = condition_case_1 (Qt,
-				 mswindows_unsafe_pump_events, Qnil,
-				 mswindows_event_pump_error_handler, Qnil);
-
-      mswindows_in_event_pump = 0; 
-    }
+  if (NILP(mswindows_error_caught_in_modal_loop))
+      result = mswindows_protect_modal_loop (mswindows_unsafe_pump_events, Qnil);
   return result;
 }
 
@@ -328,7 +347,9 @@ mswindows_add_waitable(mswindows_waitable_info_type *info)
     /* Can only have one waitable for the dispatch queue, and it's the first one */
     assert (mswindows_waitable_count++ == 0);
     waitable=0;
-//    InitializeCriticalSection(&mswindows_dispatch_crit);
+#if 0
+    InitializeCriticalSection(&mswindows_dispatch_crit);
+#endif
     assert (mswindows_waitable[0] = CreateSemaphore (NULL, 0, 0x7fffffff, NULL));
     return mswindows_waitable_info+0;
 
@@ -388,15 +409,7 @@ mswindows_drain_windows_queue ()
   while (PeekMessage (&msg, NULL, 0, 0, PM_REMOVE))
     {
       DispatchMessage (&msg);
-      if (!NILP (mswindows_error_caught_by_event_pump))
-	{
-	  /* Got an error while messages were pumped while
-	     in window procedure - have to resignal */
-	  Lisp_Object sym = XCAR (mswindows_error_caught_by_event_pump);
-	  Lisp_Object data = XCDR (mswindows_error_caught_by_event_pump);
-	  mswindows_error_caught_by_event_pump = Qnil;
-	  Fsignal (sym, data);
-	}
+      mswindows_unmodalize_signal_maybe ();
     }
 }
 
@@ -416,7 +429,7 @@ mswindows_drain_windows_queue ()
  * The implementation does not honor user_p by design.
  */
 static void
-mswindows_need_event_in_event_pump (int user_p, int badly_p)
+mswindows_need_event_in_modal_loop (int user_p, int badly_p)
 {
   MSG msg;
 
@@ -463,9 +476,9 @@ mswindows_need_event (int user_p, int badly_p)
 {
   int active;
 
-  if (mswindows_in_event_pump)
+  if (mswindows_in_modal_loop)
     {
-      mswindows_need_event_in_event_pump (user_p, badly_p);
+      mswindows_need_event_in_modal_loop (user_p, badly_p);
       return;
     }
 
@@ -739,9 +752,9 @@ vars_of_event_mswindows (void)
   staticpro (&mswindows_s_dispatch_event_queue);
   mswindows_s_dispatch_event_queue_tail = Qnil;
 
-  mswindows_error_caught_by_event_pump = Qnil;
-  staticpro (&mswindows_error_caught_by_event_pump);
-  mswindows_in_event_pump = 0;
+  mswindows_error_caught_in_modal_loop = Qnil;
+  staticpro (&mswindows_error_caught_in_modal_loop);
+  mswindows_in_modal_loop = 0;
   mswindows_pending_timers_count = 0;
 
   mswindows_event_stream = xnew (struct event_stream);

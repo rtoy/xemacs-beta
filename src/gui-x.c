@@ -33,12 +33,10 @@ Boston, MA 02111-1307, USA.  */
 #include "buffer.h"
 #include "device.h"
 #include "frame.h"
+#include "gui.h"
 #include "opaque.h"
 
 #ifdef HAVE_POPUPS
-/* count of menus/dboxes currently up */
-int popup_up_p;
-
 Lisp_Object Qmenu_no_selection_hook;
 #endif
 
@@ -221,15 +219,6 @@ free_popup_widget_value_tree (widget_value *wv)
   free_widget_value (wv);
 }
 
-DEFUN ("popup-up-p", Fpopup_up_p, 0, 0, 0, /*
-Return t if a popup menu or dialog box is up, nil otherwise.
-See `popup-menu' and `popup-dialog-box'.
-*/
-       ())
-{
-  return popup_up_p ? Qt : Qnil;
-}
-
 /* The following is actually called from somewhere within XtDispatchEvent(),
    called from XtAppProcessEvent() in event-Xt.c */
 
@@ -314,24 +303,6 @@ popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
 # define wv_set_evalable_slot(slot,form)	\
       slot = (!NILP ((form)))
 #endif
-
-Boolean
-separator_string_p (CONST char *s)
-{
-  CONST char *p;
-  char first;
-
-  if (!s || s[0] == '\0')
-    return False;
-  first = s[0];
-  if (first != '-' && first != '=')
-    return False;
-  for (p = s; *p == first; p++);
-
-  if (*p == '!' || *p == ':' || *p == '\0')
-    return True;
-  return False;
-}
 
 char *
 menu_separator_style (CONST char *s)
@@ -633,7 +604,6 @@ void
 syms_of_gui_x (void)
 {
 #ifdef HAVE_POPUPS
-  DEFSUBR (Fpopup_up_p);
   defsymbol (&Qmenu_no_selection_hook, "menu-no-selection-hook");
 #endif
 }

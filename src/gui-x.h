@@ -32,8 +32,6 @@ extern LWLIB_ID new_lwlib_id (void);
 
 #ifdef HAVE_POPUPS
 
-extern int popup_up_p;
-
 /* Each frame has one of these, and they are also contained in
    Vpopup_callbacks.
    It doesn't really need to be an lrecord (it's not lisp-accessible)
@@ -76,7 +74,6 @@ void popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
 int button_item_to_widget_value (Lisp_Object desc, widget_value *wv,
 				 int allow_text_field_p, int no_keys_p);
 Lisp_Object menu_name_to_accelerator (char *name);
-Boolean separator_string_p (CONST char *s);
 char *menu_separator_style (CONST char *s);
 Lisp_Object widget_value_unwind (Lisp_Object closure);
 

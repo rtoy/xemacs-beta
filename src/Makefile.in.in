@@ -613,7 +613,7 @@ clean: mostlyclean versionclean
 ## Do not use it on development directories!
 distclean: clean
 	$(RM) config.h paths.h puresize-adjust.h Emacs.ad.h \
-	  Makefile Makefile.in TAGS
+	  Makefile Makefile.in TAGS xemacs.*
 realclean: distclean
 versionclean:
 	$(RM) xemacs ${libsrc}DOC

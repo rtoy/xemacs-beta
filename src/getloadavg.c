@@ -19,6 +19,7 @@ along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
+#ifndef __CYGWIN32__
 
 /* Compile-time symbols that this file uses:
 
@@ -986,3 +987,22 @@ main (int argc, char **argv)
   exit (0);
 }
 #endif /* TEST */
+
+#else
+
+/* Emulate getloadavg.  */
+int
+getloadavg (double loadavg[], int nelem)
+{
+  int i;
+
+  /* A faithful emulation is going to have to be saved for a rainy day.  */
+  for (i = 0; i < nelem; i++) 
+    {
+      loadavg[i] = 0.0;
+    }
+  return i;
+}
+
+#endif /*__GNUWIN32__*/
+

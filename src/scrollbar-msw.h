@@ -55,5 +55,8 @@ extern void mswindows_update_frame_scrollbars (struct frame *f);
 extern void mswindows_set_scrollbar_pointer (struct frame *f, Lisp_Object cursor);
 extern EMACS_INT mswindows_window_is_scrollbar (struct frame *f, Window win);
      */
+
+void mswindows_handle_scrollbar_event (HWND hwnd, int code, int pos);
+
 #endif /* HAVE_MS_WINDOWS and HAVE_SCROLLBARS */
 #endif /* _XEMACS_SCROLLBAR_MSW_H_ */

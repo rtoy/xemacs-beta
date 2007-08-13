@@ -1,4 +1,11 @@
 							-*- indented-text -*-
+to 20.5 beta14 "Booted Goat"
+-- help.el update courtesy of Jens Petersen
+-- Image error handling courtesy of Jareth Hein
+-- MS Windows menubar support courtesy of Kirill Katsnelson
+-- Compile time/but not run-time support for cygwin courtesy of Andy Piper
+-- Miscellaneous bug fixes
+
 to 20.5 beta13 "Boer"
 -- Run time dependencies on x-win*.el removed.
 -- Total package upgrade

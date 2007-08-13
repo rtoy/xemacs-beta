@@ -887,6 +887,9 @@ main_1 (int argc, char **argv, char **envp)
       syms_of_frame_mswindows ();
       syms_of_objects_mswindows ();
       syms_of_select_mswindows ();
+#ifdef HAVE_MENUBARS
+      syms_of_menubar_mswindows ();
+#endif
 #endif
 
 #ifdef MULE
@@ -981,6 +984,9 @@ main_1 (int argc, char **argv, char **envp)
 # ifdef HAVE_SCROLLBARS
       console_type_create_scrollbar_mswindows ();
 # endif
+#ifdef HAVE_MENUBARS
+      console_type_create_menubar_mswindows ();
+#endif
 #endif
 
       /* Now initialize the specifier types and associated symbols.
@@ -1219,6 +1225,9 @@ main_1 (int argc, char **argv, char **envp)
       vars_of_select_mswindows ();
 #ifdef HAVE_SCROLLBARS
       vars_of_scrollbar_mswindows ();
+#endif
+#ifdef HAVE_MENUBARS
+      vars_of_menubar_mswindows ();
 #endif
 #endif
 

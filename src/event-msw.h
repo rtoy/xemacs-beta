@@ -54,8 +54,14 @@ Boston, MA 02111-1307, USA.  */
 #define MSW_TIMEOUT_MAX	32
 
 /* Random globals */
-extern LRESULT WINAPI mswindows_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-extern Lisp_Object mswindows_pump_outstanding_events (void);
+LRESULT WINAPI mswindows_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+Lisp_Object mswindows_pump_outstanding_events (void);
+Lisp_Object mswindows_protect_modal_loop (Lisp_Object (*bfun) (Lisp_Object barg),
+					  Lisp_Object barg);
+void mswindows_unmodalize_signal_maybe (void);
+void mswindows_enqueue_dispatch_event (Lisp_Object event);
+
+
 extern int mswindows_quit_chars_count;
 
 /* These are Lisp integer variables */

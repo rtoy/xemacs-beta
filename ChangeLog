@@ -1,3 +1,11 @@
+1997-12-27  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta14 is released.
+
+1997-12-23  Andy Piper <andyp@parallax.co.uk>
+
+	* configure.in: support for *-pc-cygwin32 config
+
 1997-12-25  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.5-beta13 is released.

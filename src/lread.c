@@ -636,7 +636,6 @@ encoding detection or end-of-line detection.
       else if (load_warn_when_source_newer &&
 	       !memcmp (".elc", foundstr + foundlen - 4, 4))
 	{
-/*	  struct stat s1, s2;*/
 	  if (! fstat (fd, &s1))	/* can't fail, right? */
 	    {
 	      int result;
@@ -2981,7 +2980,15 @@ init_lread (void)
 
   Vload_descriptor_list = Qnil;
 
-  Vread_buffer_stream = make_resizing_buffer_output_stream ();
+  /* This used to get initialized in init_lread because all streams
+     got closed when dumping occurs.  This is no longer true --
+     Vread_buffer_stream is a resizing output stream, and there is no
+     reason to close it at dump-time.
+
+     Vread_buffer_stream is set to Qnil in vars_of_lread, and this
+     will initialize it only once, at dump-time.  */
+  if (NILP (Vread_buffer_stream))
+    Vread_buffer_stream = make_resizing_buffer_output_stream ();
 
   Vload_force_doc_string_list = Qnil;
 }
@@ -3143,8 +3150,7 @@ character escape syntaxes or just read them incorrectly.
      with values saved when the image is dumped. */
   staticpro (&Vload_descriptor_list);
 
-  /* This gets initialized in init_lread because all streams get closed
-     when dumping occurs */
+  Vread_buffer_stream = Qnil;
   staticpro (&Vread_buffer_stream);
 
   /* Initialized in init_lread. */
@@ -3169,8 +3175,8 @@ character escape syntaxes or just read them incorrectly.
   Fprovide(intern("xemacs"));
 #ifdef INFODOCK
   Fprovide(intern("infodock"));
-#endif
-#endif
+#endif /* INFODOCK */
+#endif /* FEATUREP_SYNTAX */
 
 #ifdef LISP_BACKQUOTES
   old_backquote_flag = new_backquote_flag = 0;

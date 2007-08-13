@@ -63,13 +63,14 @@ Boston, MA 02111-1307, USA.  */
 #include "syswait.h"
 #include "sysdir.h"
 #include "systime.h"
-#if defined(WINDOWSNT)
+#if defined(WINDOWSNT) || defined(__CYGWIN32__)
 #include "syssignal.h"
-#else
+#endif
+#ifndef WINDOWSNT
 #include <sys/times.h>
 #endif
 
-#ifdef WINDOWSNT
+#if defined(WINDOWSNT)
 #include <direct.h>
 /* In process.h which conflicts with the local copy.  */
 #define _P_WAIT 0
@@ -2195,7 +2196,7 @@ init_system_name (void)
       hostname_size <<= 1;
       hostname = (char *) alloca (hostname_size);
     }
-# ifdef HAVE_SOCKETS
+# if defined( HAVE_SOCKETS) && !defined(__CYGWIN32__)
   /* Turn the hostname into the official, fully-qualified hostname.
      Don't do this if we're going to dump; this can confuse system
      libraries on some machines and make the dumped emacs core dump. */
@@ -3245,8 +3246,8 @@ insque (caddr_t q, caddr_t p)
 
 #if !defined (SYS_SIGLIST_DECLARED) && !defined (HAVE_SYS_SIGLIST)
 
-#ifdef WINDOWSNT
-char *sys_siglist[] =
+#if defined(WINDOWSNT) || defined(__CYGWIN32__)
+CONST char *sys_siglist[] =
   {
     "bum signal!!",
     "hangup",

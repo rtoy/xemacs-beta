@@ -137,8 +137,6 @@
        :active (fboundp 'w3)]
       ["Gopher" gopher
        :active (fboundp 'gopher)]
-      ["Hyperbole..." hyperbole
-       :active (fboundp 'hmail:compose)]
       "----"
       ["Spell-Check Buffer" ispell-buffer
        :active (fboundp 'ispell-buffer)]
@@ -715,8 +713,6 @@
       ["Debug (DBX)..." dbx
        :active (fboundp 'dbx)]
       "-----"
-      ["OO-Browser..." oobr
-       :active (fboundp 'oobr)]
       ("Tags"
        ["Find Tag..."		find-tag		t]
        ["Find Other Window..."	find-tag-other-window	t]

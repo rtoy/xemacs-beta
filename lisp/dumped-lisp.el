@@ -151,7 +151,7 @@
 	#+window-system "mode-motion"
 	#+window-system "mouse"
 ;; preload the X code, for faster startup.
-	#+(and x menubar) "x-menubar"
+	#+(and (not infodock) (or x mswindows) menubar) "x-menubar"
 	#+x "x-faces"
 	#+x "x-iso8859-1"
 	#+x "x-mouse"

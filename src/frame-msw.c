@@ -35,6 +35,7 @@ Boston, MA 02111-1307, USA.  */
 #include "event-msw.h"
 
 #include "buffer.h"
+#include "faces.h"
 #include "frame.h"
 #include "events.h"
 
@@ -60,13 +61,11 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
 {
   Lisp_Object device = FRAME_DEVICE (f);
   struct device *d = XDEVICE (device);
-  Lisp_Object lisp_window_id, initially_unmapped;
+  Lisp_Object initially_unmapped;
   Lisp_Object name, height, width, popup, top, left;
   Lisp_Object frame_obj;
-  int pixel_width, pixel_height;
   RECT rect;
   DWORD style, exstyle;
-  HWND hwnd;
 
   initially_unmapped = Fplist_get (props, Qinitially_unmapped, Qnil);
   name = Fplist_get (props, Qname, Qnil);
@@ -101,6 +100,8 @@ mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
   FRAME_MSWINDOWS_DATA(f)->ignore_next_rbutton_up = 0;
   FRAME_MSWINDOWS_DATA(f)->sizing = 0;
 
+  FRAME_MSWINDOWS_MENU_HASHTABLE(f) = Qnil;
+
   AdjustWindowRectEx(&rect, style, ADJR_MENUFLAG, exstyle);
 
   FRAME_MSWINDOWS_HANDLE(f) =
@@ -132,6 +133,12 @@ mswindows_init_frame_3 (struct frame *f)
   /* Don't do this earlier or we get a WM_PAINT before the frame is ready*/
   ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_SHOWNORMAL);
   SetForegroundWindow (FRAME_MSWINDOWS_HANDLE(f));
+}
+
+static void
+mswindows_mark_frame (struct frame *f, void (*markobj) (Lisp_Object))
+{
+  ((markobj) (FRAME_MSWINDOWS_MENU_HASHTABLE (f)));
 }
 
 static void
@@ -340,7 +347,7 @@ console_type_create_frame_mswindows (void)
   CONSOLE_HAS_METHOD (mswindows, init_frame_1);
   CONSOLE_HAS_METHOD (mswindows, init_frame_2);
   CONSOLE_HAS_METHOD (mswindows, init_frame_3);
-/*  CONSOLE_HAS_METHOD (mswindows, mark_frame); */
+  CONSOLE_HAS_METHOD (mswindows, mark_frame);
   CONSOLE_HAS_METHOD (mswindows, focus_on_frame);
   CONSOLE_HAS_METHOD (mswindows, delete_frame);
 /*  CONSOLE_HAS_METHOD (mswindows, get_mouse_position); */

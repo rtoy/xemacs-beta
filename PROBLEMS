@@ -1,4 +1,4 @@
--*- mode:outline; minor-mode:outl-mouse -*-
+-*- mode:outline -*-
 This file describes various problems that have been encountered
 in compiling, installing and running XEmacs.  It has been updated for
 XEmacs 20.5.

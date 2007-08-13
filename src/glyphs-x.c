@@ -42,6 +42,7 @@ Boston, MA 02111-1307, USA.  */
  */
 
 #include <config.h>
+#include <setjmp.h>
 #include "lisp.h"
 
 #include "console-x.h"
@@ -1678,10 +1679,36 @@ xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 /**********************************************************************
  *                             ImageMagick                            *
  **********************************************************************/
+JMP_BUF imagick_jump;
+Lisp_Object imagick_err; /* slightly hackish way to return a proper error message */
+
 static void
 imagick_validate (Lisp_Object instantiator)
 {
 	file_or_data_must_be_present (instantiator);
+}
+
+static void
+imagick_error_handler (const char *message,const char *qualifier)
+{
+  /* ImageMagick defaults to exiting on errors, which is an anti-thing.
+   * Dump the info into imagick_err, and jmp back */
+  if (qualifier != NULL)
+    imagick_err = emacs_doprnt_string_c((CONST Bufbyte *) GETTEXT ("ImageMagick error: %s (%s)"),
+					Qnil, -1, message, qualifier);
+  else
+    imagick_err = emacs_doprnt_string_c((CONST Bufbyte *) GETTEXT ("ImageMagick error: %s"),
+					Qnil, -1, message);
+  LONGJMP(imagick_jump,1);
+}
+
+static void
+imagick_warning_handler (const char *message,const char *qualifier)
+{
+  if (qualifier != NULL)
+    warn_when_safe(Qimagick, Qwarning, "ImageMagick warning: %s (%s)",message,qualifier);
+  else
+    warn_when_safe(Qimagick, Qwarning, "ImageMagick warning: %s",message);
 }
 
 static Lisp_Object
@@ -1775,6 +1802,16 @@ imagick_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   unwind.cmap = cmap;
   speccount = specpdl_depth();
   record_unwind_protect(imagick_instantiate_unwind,make_opaque_ptr(&unwind));
+
+  /* Set up error handlers */
+  if (SETJMP(imagick_jump)) 
+    {
+      /* signal error GCPROs it's arguments */
+      signal_error(Qerror, list2(imagick_err, instantiator));
+    }
+  
+  SetErrorHandler(imagick_error_handler);
+  SetWarningHandler(imagick_warning_handler);
 
   /* Write out to a temp file - not sure if ImageMagick supports the
   ** notion of an abstract 'data source' right now.

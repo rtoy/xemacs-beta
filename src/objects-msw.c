@@ -49,6 +49,9 @@ Boston, MA 02111-1307, USA.  */
 #include "insdel.h"
 
 #include "windows.h"
+#ifdef __CYGWIN32__
+#define stricmp strcasecmp
+#endif
 
 typedef struct colormap_t 
 {
