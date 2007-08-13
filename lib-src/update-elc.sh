@@ -167,6 +167,7 @@ ignore_pattern="$ignore_pattern"'
 \!/site-load.el$!d
 \!/site-init.el$!d
 \!/version.el$!d
+\!/very-early-lisp.el$!d
 \!/Installation.el$!d
 '
 

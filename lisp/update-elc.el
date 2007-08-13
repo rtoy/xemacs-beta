@@ -62,9 +62,9 @@
 ;		    ;; -batch gets filtered out.
 ;		    (nthcdr 3 command-line-args))))
 
-(define-function 'defalias 'define-function)
-
 (setq load-path (split-path (getenv "EMACSBOOTSTRAPLOADPATH")))
+
+(load "very-early-lisp" nil t)
 
 (load "find-paths.el")
 (load "packages.el")

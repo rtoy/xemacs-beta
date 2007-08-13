@@ -31,18 +31,18 @@
 ;;; Code:
 
 (set-glyph-image text-pointer-glyph
-		 [resource :resource-type cursor :resource-id "Ibeam"])
+		 [mswindows-resource :resource-type cursor :resource-id "Ibeam"])
 (set-glyph-image nontext-pointer-glyph
-		 [resource :resource-type cursor :resource-id "Normal"])
+		 [mswindows-resource :resource-type cursor :resource-id "Normal"])
 (set-glyph-image selection-pointer-glyph
-		 [resource :resource-type cursor :resource-id "Normal"])
+		 [mswindows-resource :resource-type cursor :resource-id "Normal"])
 (set-glyph-image modeline-pointer-glyph
-		 [resource :resource-type cursor :resource-id "SizeNS"])
+		 [mswindows-resource :resource-type cursor :resource-id "SizeNS"])
 (set-glyph-image divider-pointer-glyph
-		 [resource :resource-type cursor :resource-id "SizeWE"])
+		 [mswindows-resource :resource-type cursor :resource-id "SizeWE"])
 (set-glyph-image busy-pointer-glyph
-		 [resource :resource-type cursor :resource-id "Wait"])
+		 [mswindows-resource :resource-type cursor :resource-id "Wait"])
 (set-glyph-image gc-pointer-glyph
-		 [resource :resource-type cursor :resource-id "Wait"])
+		 [mswindows-resource :resource-type cursor :resource-id "Wait"])
 
 ;;; msw-mouse.el ends here

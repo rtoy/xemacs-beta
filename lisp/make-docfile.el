@@ -75,9 +75,9 @@
   (setq command-line-args (cdr command-line-args)))
 
 ;; Then process the list of Lisp files.
-(define-function 'defalias 'define-function)
-
 (setq load-path (split-path (getenv "EMACSBOOTSTRAPLOADPATH")))
+
+(load "very-early-lisp" nil t)
 
 ;; Then process the autoloads
 (setq autoload-file-name "auto-autoloads.elc")

@@ -5,7 +5,7 @@
 ;; Author: Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Maintainer: Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 ;; Created: Jan 1998
-;; Version: $Revision: 1.7 $
+;; Version: $Revision: 1.8 $
 ;; Keywords: help comm
 
 ;; This file is part of XEmacs
@@ -62,8 +62,8 @@ describing parameters for the server.  Valid properties:
   "Perform an LDAP search.
 FILTER is the search filter in RFC1558 syntax
 HOST is the LDAP host on which to perform the search
-ATTRIBUTES is the specific attributes to retrieve, nil means 
-retrieve all
+ATTRIBUTES is a list of the specific attributes to retrieve, 
+nil means retrieve all
 ATTRSONLY if non nil retrieves the attributes only without 
 the associated values.
 Additional search parameters can be specified through 

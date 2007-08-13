@@ -1,3 +1,16 @@
+1998-07-19  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre7 is released.
+
+1998-07-19  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre6 is released.
+
+1998-07-15  SL Baur  <steve@altair.xemacs.org>
+
+	* update-elc.sh (ignore_pattern): Add very-early-lisp.el as
+	something to never bytecompile.
+
 1998-07-12  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-pre5 is released.

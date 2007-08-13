@@ -1676,8 +1676,6 @@ init_ntproc ()
   }
 }
 #ifndef HAVE_TTY
-Lisp_Object Vstdio_str;
-
 Lisp_Object
 tty_semi_canonicalize_console_connection (Lisp_Object connection,
 					  Error_behavior errb)

@@ -298,6 +298,7 @@ syms_of_general (void)
   defsymbol (&Qrassoc, "rassoc");
   defsymbol (&Qrassq, "rassq");
   defsymbol (&Qrequire, "require");
+  defsymbol (&Qresource, "resource");
   defsymbol (&Qreturn, "return");
   defsymbol (&Qreverse, "reverse");
   defsymbol (&Qright, "right");

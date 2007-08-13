@@ -26,6 +26,7 @@
 
 XEMACS=..
 LISP=$(XEMACS)\lisp
+NT=$(XEMACS)\nt
 
 # Program name and version
 
@@ -357,7 +358,7 @@ LIB_SRC_DEFINES = -DHAVE_CONFIG_H -DWIN32 -DWINDOWSNT
 {$(LIB_SRC)}.c{$(LIB_SRC)}.exe :
 	@cd $(LIB_SRC)
 	$(CCV) -I. -I$(XEMACS)/src -I$(XEMACS)/nt/inc $(LIB_SRC_DEFINES) -O2 -W3 -Fe$@ $**
-	@cd $(XEMACS)\nt
+	@cd $(NT)
 
 # Individual dependencies
 ETAGS_DEPS = $(LIB_SRC)/getopt.c $(LIB_SRC)/getopt1.c $(LIB_SRC)/../src/regex.c
@@ -377,7 +378,6 @@ LIB_SRC_TOOLS = \
 
 # runemacs proglet
 
-NT = $(XEMACS)\nt
 RUNEMACS = $(XEMACS)\src\runemacs.exe
 
 $(RUNEMACS): $(NT)\runemacs.c $(NT)\xemacs.res
@@ -783,7 +783,7 @@ TEMACS_OBJS= \
 	$(OUTDIR)\vm-limit.obj \
 	$(OUTDIR)\widget.obj \
 	$(OUTDIR)\window.obj \
-	xemacs.res
+	$(NT)\xemacs.res
 
 # Rules
 
@@ -813,7 +813,7 @@ $(TEMACS): $(TEMACS_INCLUDES) $(TEMACS_OBJS)
   $(TEMACS_LFLAGS) $(TEMACS_OBJS) $(TEMACS_LIBS)
 <<
 
-xemacs.res: xemacs.rc
+$(NT)\xemacs.res: xemacs.rc
 	rc xemacs.rc
 
 # MSDEV Source Broswer file. "*.sbr" is too inclusive but this is harmless
@@ -855,7 +855,7 @@ dump-xemacs: $(TEMACS)
 	cd $(TEMACS_DIR)
 	set EMACSBOOTSTRAPLOADPATH=$(LISP)
 	-1 $(TEMACS) -batch -l $(TEMACS_DIR)\..\lisp\loadup.el dump
-	cd $(XEMACS)\nt
+	@cd $(NT)
 	@if not exist $(TEMACS_DIR)\SATISFIED nmake -nologo -f xemacs.mak $@
 
 #------------------------------------------------------------------------------

@@ -1,4 +1,49 @@
+1998-07-19  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre7 is released.
+
+1998-07-19  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre6 is released.
+
+1998-07-12  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* ldap.el (ldap-search): Doc string change
+
+1998-07-16  Colin Rafferty   <colin@xemacs.org>
+
+	* menubar-items.el (default-menubar): Removed references to
+	`data-directory', and use `locate-data-file' instead, and made 
+	then greyed out if they don't exist.
+
+1998-07-14  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* keymap.el (events-to-keys): Use `format' instead of `concat'
+	since the latter does not accept integer args anymore
+
 1998-07-12  SL Baur  <steve@altair.xemacs.org>
+
+	* msw-mouse.el: Global change resource -> mswindows-resource.
+
+1998-07-15  SL Baur  <steve@altair.xemacs.org>
+
+	* dumped-lisp.el (preloaded-file-list): Usage of Lisp read-time
+	macros replaced.
+
+1998-07-14  SL Baur  <steve@altair.xemacs.org>
+
+	* make-docfile.el: Get first initialization from very-early-lisp.el
+	* update-elc.el: Ditto.
+	* loadup.el (really-early-error-handler): Ditto.
+
+	* packages.el (packages-unbytecompiled-lisp): Add new file,
+	very-early-lisp.el.
+
+	* very-early-lisp.el: New file.
+
+1998-07-12  SL Baur  <steve@altair.xemacs.org>
+
+	* about.el: Fix typos, update release date.
 
 	* XEmacs 21.0-pre5 is released.
 

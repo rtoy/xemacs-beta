@@ -1,5 +1,6 @@
 (setq preloaded-file-list
-      '("backquote" 		; needed for defsubst etc.
+      (assemble-list
+        "backquote" 		; needed for defsubst etc.
 	"bytecomp-runtime"	; define defsubst
 	"Installation.el"
 	"find-paths"
@@ -32,7 +33,7 @@
 	"events"
 	"text-props"
 	"process" ;; This is bad. network-streams may not be defined.
-	#+multicast "multicast" ;; #+network-streams implicitely true
+	(when-feature multicast "multicast") ; #+network-streams implicitely true
 	"frame"			; move up here cause some stuff needs it here
 	"map-ynp"
 	"simple"
@@ -53,10 +54,10 @@
 				;  `emacs-user-extension-dir'
 	"misc"
 	;; (pureload "profile")
-	#-mule "help-nomule"
+	(unless-feature mule "help-nomule")
 	"help"
 	;; (pureload "hyper-apropos")  Soon...
-	#-file-coding "files-nomule"
+	(unless-feature file-coding "files-nomule")
 	"files"
 	"lib-complete"
 	"format"
@@ -80,32 +81,32 @@
 	"fill"
 	"auto-save"		; Added for 20.4
 
-	#+windows-nt "winnt"
-	#+lisp-float-type "float-sup"
+	(when-feature windows-nt "winnt")
+	(when-feature lisp-float-type "float-sup")
 	"itimer"		; for vars auto-save-timeout and
 				; auto-gc-threshold
 	"itimer-autosave"
-	#+toolbar "toolbar"
-	#+scrollbar "scrollbar"
-	#+menubar "menubar"
-	#+dialog "dialog"
-	#+mule "mule-charset"
-	#+file-coding "coding"
-	#+mule "mule-coding"
+	(when-feature toolbar "toolbar")
+	(when-feature scrollbar "scrollbar")
+	(when-feature menubar "menubar")
+	(when-feature dialog "dialog")
+	(when-feature mule "mule-charset")
+	(when-feature file-coding "coding")
+	(when-feature mule "mule-coding")
 ;; Handle I/O of files with extended characters.
-	#+file-coding "code-files"
-	#+mule "mule-files"
+	(when-feature file-coding "code-files")
+	(when-feature mule "mule-files")
 ;; Handle process with encoding/decoding non-ascii coding-system.
-	#+file-coding "code-process"
-	#+mule "mule-help"
+	(when-feature file-coding "code-process")
+	(when-feature mule "mule-help")
 ;; Load the remaining basic files.
-	#+mule "mule-category"
-	#+mule "mule-ccl"
-	#+mule "mule-misc"
-	#+mule "kinsoku"
-	#+(and mule x) "mule-x-init"
-	#+(and mule tty) "mule-tty-init"
-	#+mule "mule-cmds" ; to sync with Emacs 20.1
+	(when-feature mule "mule-category")
+	(when-feature mule "mule-ccl")
+	(when-feature mule "mule-misc")
+	(when-feature mule "kinsoku")
+	(when-feature (and mule x) "mule-x-init")
+	(when-feature (and mule tty) "mule-tty-init")
+	(when-feature mule "mule-cmds") ; to sync with Emacs 20.1
 
 ;; after this goes the specific lisp routines for a particular input system
 ;; 97.2.5 JHod Shouldn't these go into a site-load file to allow site
@@ -123,95 +124,97 @@
 ;; Now load files to set up all the different languages/environments
 ;; that Mule knows about.
 
-	#+mule "arabic"
-	#+mule "chinese"
-	#+mule "mule-base/cyrillic" ; overloaded in leim/quail
-	#+mule "english"
-;;	#+mule "ethiopic"
-	#+mule "european"
-	#+mule "mule-base/greek" ; overloaded in leim/quail
-	#+mule "hebrew"
-	#+mule "japanese"
-	#+mule "korean"
-	#+mule "misc-lang"
-;;	#+mule "thai"
-	#+mule "viet-chars"
-;;	#+mule "vietnamese"
+	(when-feature mule "arabic")
+	(when-feature mule "chinese")
+	(when-feature mule "mule-base/cyrillic") ; overloaded in leim/quail
+	(when-feature mule "english")
+;;	(when-feature mule "ethiopic")
+	(when-feature mule "european")
+	(when-feature mule "mule-base/greek") ; overloaded in leim/quail
+	(when-feature mule "hebrew")
+	(when-feature mule "japanese")
+	(when-feature mule "korean")
+	(when-feature mule "misc-lang")
+;;	(when-feature mule "thai")
+	(when-feature mule "viet-chars")
+;;	(when-feature mule "vietnamese")
 
 	;; Specialized language support
-	#+(and mule CANNA) "canna-leim"
+	(when-feature (and mule CANNA) "canna-leim")
 ;; Egg/Its is now a package
-;	#+(and mule wnn) "egg-leim"
-;	#+(and mule wnn) "egg-kwnn-leim"
-;	#+(and mule wnn) "egg-cwnn-leim"
-;	#+mule "egg-sj3-leim"
+;	(when-feature (and mule wnn) "egg-leim")
+;	(when-feature (and mule wnn) "egg-kwnn-leim")
+;	(when-feature (and mule wnn) "egg-cwnn-leim")
+;	(when-feature mule "egg-sj3-leim")
 ;; SKK is now a package
-;	#+mule "skk-leim"
+;	(when-feature mule "skk-leim")
 
 ;; Set up the XEmacs environment for Mule.
 ;; Assumes the existence of various stuff above.
-	#+mule "mule-init"
+	(when-feature mule "mule-init")
 
 ;; Enable Mule capability for Gnus, mail, etc...
 ;; Moved to sunpro-load.el - the default only for Sun.
 ;;(pureload "mime-setup")
 ;;; mule-load.el ends here
-	#+window-system "gui"
-	#+window-system "mode-motion"
-	#+window-system "mouse"
-	#+window-system "select"
-	#+dragdrop-api "dragdrop"
+	(when-feature window-system "gui")
+	(when-feature window-system "mode-motion")
+	(when-feature window-system "mouse")
+	(when-feature window-system "select")
+	(when-feature dragdrop-api "dragdrop")
 ;; preload the X code, for faster startup.
-	#+(and (not infodock) (or x mswindows) menubar) "menubar-items"
-	#+(and infodock (or x mswindows) menubar) "id-menus"
-	#+x "x-faces"
-	#+x "x-iso8859-1"
-	#+x "x-mouse"
-	#+x "x-select"
-	#+(and x scrollbar) "x-scrollbar"
-	#+x "x-misc"
-	#+x "x-init"
-	#+(and (not infodock) window-system toolbar) "toolbar-items"
-	#+x "x-win-xfree86"
-	#+x "x-win-sun"
+	(when-feature (and (not infodock)
+			   (or x mswindows) menubar) "menubar-items")
+	(when-feature (and infodock (or x mswindows) menubar) "id-menus")
+	(when-feature x "x-faces")
+	(when-feature x "x-iso8859-1")
+	(when-feature x "x-mouse")
+	(when-feature x "x-select")
+	(when-feature (and x scrollbar) "x-scrollbar")
+	(when-feature x "x-misc")
+	(when-feature x "x-init")
+	(when-feature (and (not infodock)
+			   window-system toolbar) "toolbar-items")
+	(when-feature x "x-win-xfree86")
+	(when-feature x "x-win-sun")
 ;; preload the mswindows code.
-	#+mswindows "msw-glyphs"
-	#+mswindows "msw-faces"
-	#+mswindows "msw-mouse"
-	#+mswindows "msw-init"
-	#+mswindows "msw-select"
+	(when-feature mswindows "msw-glyphs")
+	(when-feature mswindows "msw-faces")
+	(when-feature mswindows "msw-mouse")
+	(when-feature mswindows "msw-init")
+	(when-feature mswindows "msw-select")
 ;; preload the TTY init code.
-	#+tty "tty-init"
+	(when-feature tty "tty-init")
 ;;; Formerly in tooltalk/tooltalk-load.el
 	;; Moved to tooltalk package
-	;; #+tooltalk "tooltalk-macros"
-	;; #+tooltalk "tooltalk-util"
-	;; #+tooltalk "tooltalk-init"
+	;; (when-feature tooltalk "tooltalk-macros")
+	;; (when-feature tooltalk "tooltalk-util")
+	;; (when-feature tooltalk "tooltalk-init")
 	;; "vc-hooks"		; Packaged.  Available in two versions.
 	;; "ediff-hook"		; Packaged.
 	"fontl-hooks"
 	"auto-show"
-	#+ldap "ldap"
+	(when-feature ldap "ldap")
 
-;; #+energize "energize/energize-load.el"
+;; (when-feature energize "energize/energize-load.el")
 ;;; formerly in sunpro/sunpro-load.el
-;;	#+(and mule sparcworks) "mime-setup"
+;;	(when-feature (and mule sparcworks) "mime-setup")
 
 	;; Moved to Sun package
-	;; #+sparcworks "cc-mode" ; Requires cc-mode package
-	;; #+sparcworks "sunpro-init"
-	;; #+sparcworks "ring"
-	;; #+sparcworks "comint" ; Requires comint package
-	;; #+sparcworks "annotations"
+	;; (when-feature sparcworks "cc-mode") ; Requires cc-mode package
+	;; (when-feature sparcworks "sunpro-init")
+	;; (when-feature sparcworks "ring")
+	;; (when-feature sparcworks "comint") ; Requires comint package
+	;; (when-feature sparcworks "annotations")
 
 ;;; formerly in eos/sun-eos-load.el
-;;	#+sparcworks "sun-eos-init"
-;;	#+sparcworks "sun-eos-common"
-;;	#+sparcworks "sun-eos-editor"
-;;	#+sparcworks "sun-eos-browser"
-;;	#+sparcworks "sun-eos-debugger"
-;;	#+sparcworks "sun-eos-debugger-extra"
-;;	#+sparcworks "sun-eos-menubar"
+;;	(when-feature sparcworks "sun-eos-init")
+;;	(when-feature sparcworks "sun-eos-common")
+;;	(when-feature sparcworks "sun-eos-editor")
+;;	(when-feature sparcworks "sun-eos-browser")
+;;	(when-feature sparcworks "sun-eos-debugger")
+;;	(when-feature sparcworks "sun-eos-debugger-extra")
+;;	(when-feature sparcworks "sun-eos-menubar")
 	"loadhist"		; Must be dumped before loaddefs is loaded
 	"loaddefs"		; <=== autoloads get loaded here
 ))

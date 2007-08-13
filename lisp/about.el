@@ -209,7 +209,7 @@
     (let* ((emacs-short-version (format "%d.%d"
 					emacs-major-version
 					emacs-minor-version))
-	   (emacs-about-version (format "version %s; Apr 1998"
+	   (emacs-about-version (format "version %s; Aug 1998"
 					emacs-short-version)))
       (widget-insert (about-center emacs-about-version))
       (widget-create 'link :help-echo "The latest NEWS of XEmacs"
@@ -988,7 +988,7 @@ See: ")
       (about-url-link 'jason "Visit Jason's homepage")
       (widget-insert ".\n"))
     (jmiller
-     (widget-inset "\
+     (widget-insert "\
 Jeff grew up in Indiana and is a country boy at heart.  He currently lives
 in, of all places, Millersville Maryland.  He spends a lot of his free
 time tinkering with Linux and hacking on XEmacs and loves it when he finds
@@ -1257,8 +1257,8 @@ Author of the \"shy groups\" and minimal matching regular expression
 extensions.\n")
        (print-short "Darryl Okahata" "darrylo@sr.hp.com" "\
 Perennial Emacs hacker since 1986 or so, when he first started on GNU
-Emacs 17.something.  Over the years, he's developed "OEmacs", the first
-version of GNU Emacs 19 for MSDOS, and "bigperl", a 32-bit version of
+Emacs 17.something.  Over the years, he's developed \"OEmacs\", the first
+version of GNU Emacs 19 for MSDOS, and \"bigperl\", a 32-bit version of
 Perl4 for MSDOS.  In recent years, reality has intruded and he no longer 
 has much time for playing with cool programs.  What little time he has
 now goes to XEmacs hacking, where he's worked on speeding up dired under 
@@ -1419,7 +1419,6 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "David M. Meyer" "meyer@ns.uoregon.edu")
        (print-short "John Mignault" "jbm@panix.com")
        (print-short "Brad Miller" "bmiller@cs.umn.edu")
-       (print-short "Jeff Miller" "jmiller@smart.net")
        (print-short "John Morey" "jmorey@crl.com")
        (print-short "Rob Mori" "rob.mori@sun.com")
        (print-short "Heiko Muenkel" "muenkel@tnt.uni-hannover.de")

@@ -52,8 +52,9 @@ Lisp_Object Qbmp;
 Lisp_Object Vmswindows_bitmap_file_path;
 static	COLORREF transparent_color = RGB (1,1,1);
 
-DEFINE_IMAGE_INSTANTIATOR_FORMAT (resource);
+DEFINE_IMAGE_INSTANTIATOR_FORMAT (mswindows_resource);
 Lisp_Object Q_resource_type, Q_resource_id;
+Lisp_Object Qmswindows_resource;
 
 static void
 mswindows_initialize_dibitmap_image_instance (struct Lisp_Image_Instance *ii,
@@ -940,7 +941,7 @@ bmp_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
  **********************************************************************/
 
 static void
-resource_validate (Lisp_Object instantiator)
+mswindows_resource_validate (Lisp_Object instantiator)
 {
   if ((NILP (find_keyword_in_vector (instantiator, Q_file)) 
        &&
@@ -952,7 +953,7 @@ resource_validate (Lisp_Object instantiator)
 }
 
 static Lisp_Object
-resource_normalize (Lisp_Object inst, Lisp_Object console_type)
+mswindows_resource_normalize (Lisp_Object inst, Lisp_Object console_type)
 {
   /* This function can call lisp */
   Lisp_Object file = Qnil;
@@ -980,14 +981,14 @@ resource_normalize (Lisp_Object inst, Lisp_Object console_type)
   }
 
   {
-    Lisp_Object result = alist_to_tagged_vector (Qresource, alist);
+    Lisp_Object result = alist_to_tagged_vector (Qmswindows_resource, alist);
     free_alist (alist);
     RETURN_UNGCPRO (result);
   }
 }
 
 static int
-resource_possible_dest_types (void)
+mswindows_resource_possible_dest_types (void)
 {
   return IMAGE_POINTER_MASK | IMAGE_COLOR_PIXMAP_MASK;
 }
@@ -1108,7 +1109,7 @@ resource_symbol_to_type (Lisp_Object data)
 }
 
 static void
-resource_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
+mswindows_resource_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		    Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 		    int dest_mask, Lisp_Object domain)
 {
@@ -1960,24 +1961,25 @@ image_instantiator_format_create_glyphs_mswindows (void)
   IIFORMAT_VALID_KEYWORD (bmp, Q_data, check_valid_string);
   IIFORMAT_VALID_KEYWORD (bmp, Q_file, check_valid_string);
 
-  INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (resource, "resource");
+  INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (mswindows_resource,
+					"mswindows-resource");
 
-  IIFORMAT_HAS_METHOD (resource, validate);
-  IIFORMAT_HAS_METHOD (resource, normalize);
-  IIFORMAT_HAS_METHOD (resource, possible_dest_types);
-  IIFORMAT_HAS_METHOD (resource, instantiate);
+  IIFORMAT_HAS_METHOD (mswindows_resource, validate);
+  IIFORMAT_HAS_METHOD (mswindows_resource, normalize);
+  IIFORMAT_HAS_METHOD (mswindows_resource, possible_dest_types);
+  IIFORMAT_HAS_METHOD (mswindows_resource, instantiate);
 
-  IIFORMAT_VALID_KEYWORD (resource, Q_resource_type, 
+  IIFORMAT_VALID_KEYWORD (mswindows_resource, Q_resource_type, 
 			  check_valid_resource_symbol);
-  IIFORMAT_VALID_KEYWORD (resource, Q_resource_id, check_valid_resource_id);
-  IIFORMAT_VALID_KEYWORD (resource, Q_file, check_valid_string);
+  IIFORMAT_VALID_KEYWORD (mswindows_resource, Q_resource_id, check_valid_resource_id);
+  IIFORMAT_VALID_KEYWORD (mswindows_resource, Q_file, check_valid_string);
 }
 
 void
 vars_of_glyphs_mswindows (void)
 {
   Fprovide (Qbmp);
-  Fprovide (Qresource);
+  Fprovide (Qmswindows_resource);
   DEFVAR_LISP ("mswindows-bitmap-file-path", &Vmswindows_bitmap_file_path /*
 A list of the directories in which mswindows bitmap files may be found.
 This is used by the `make-image-instance' function.

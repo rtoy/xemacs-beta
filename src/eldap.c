@@ -427,7 +427,7 @@ an alist of attribute/values.
     }
   if (!NILP (base))
     {
-      CHECK_STRING (Vldap_default_base);
+      CHECK_STRING (base);
     }
 
   /* Search scope */
@@ -456,8 +456,9 @@ an alist of attribute/values.
 	  CHECK_STRING (current);
 	  ldap_attributes[i] =
 	    alloca_array (char, 1 + XSTRING_LENGTH (current));
+          /* XSTRING_LENGTH is increased by one in order to copy the final 0 */
 	  memcpy (ldap_attributes[i],
-		  XSTRING_DATA (current), XSTRING_LENGTH (current));
+		  XSTRING_DATA (current), 1 + XSTRING_LENGTH (current));
 	  ++i;
 	}
       ldap_attributes[i] = NULL;

@@ -354,7 +354,7 @@ Optional arg NO-MICE means that button events are not allowed."
                        (error
                          "Mouse events can't be saved in keyboard macros."))
                    (setq mods (event-modifiers event)
-                         key (intern (concat "button"
+                         key (intern (format "button%d%s"
                                              (event-button event)
                                              (if (button-release-event-p event)
                                                  "up" ""))))

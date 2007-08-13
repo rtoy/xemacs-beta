@@ -1,6 +1,12 @@
 							-*- indented-text -*-
+to 21.0 pre6 "Belgian Fawn"
+-- Miscellaneous bug fixes from various people
+-- Rename MS Windows 'resource image instantiator to 'mswindows-resource
+   courtesy of Altrasoft and Ben Wing
+
 to 21.0 pre5 "Zhong Wei"
 -- multiple DB configure fix from Gregory Neil Shapiro
+-- miscellaneous fixes from various people
 
 to 21.0 pre4 "Uzbek Black"
 -- Miscellaneous documentation cleanup from Altrasoft

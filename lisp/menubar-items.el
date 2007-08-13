@@ -898,12 +898,9 @@
        ["FAQ via WWW" xemacs-www-faq	(boundp 'browse-url-browser-function)]
        ["Home Page" xemacs-www-page		(boundp 'browse-url-browser-function)])
       ("Samples"
-       ["Sample .emacs" (find-file (expand-file-name "sample.emacs"
-						     data-directory))]
-       ["Sample .Xdefaults" (find-file (expand-file-name "sample.Xdefaults"
-							 data-directory))]
-       ["Sample enriched" (find-file (expand-file-name "enriched.doc"
-						       data-directory))])
+       ["Sample .emacs" (find-file (locate-data-file "sample.emacs")) (locate-data-file "sample.emacs")]
+       ["Sample .Xdefaults" (find-file (locate-data-file "sample.Xdefaults")) (locate-data-file "sample.Xdefaults")]
+       ["Sample enriched" (find-file (locate-data-file "enriched.doc")) (locate-data-file "enriched.doc")])
       "-----"
       ("Lookup in Info"
        ["Key Binding..." Info-goto-emacs-key-command-node]

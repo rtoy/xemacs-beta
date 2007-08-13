@@ -1,3 +1,51 @@
+1998-07-19  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre7 is released.
+
+1998-07-19  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre6 is released.
+
+1998-07-12  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* eldap.c (Fldap_search_internal): When converting the list of
+	attributes to search Copy the final 0 from Lisp strings to C
+	strings.
+	Check base, not Vldap_default_base as a a string
+
+1998-07-13  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* nt.c: Remove Vstdio_str; already defined in console-stream.c.
+
+	* unexnt.c: Unconditionally define bss_start and bss_size, and
+	  ensure that they don't go in the .bss section.
+
+1998-07-17  Olivier Galibert  <galibert@pobox.com>
+
+	* glyphs-x.c (convert_EImage_to_XImage):  Fix previous patch (conv
+	byte order is dependant  of  the local  byte order).
+	From Takeshi Hagiwara <hagiwara@ie.niigata-u.ac.jp>
+
+1998-07-18  SL Baur  <steve@altair.xemacs.org>
+
+	* glyphs-msw.c (mswindows_resource_normalize): Qresource ->
+	Qmswindows_resource.
+	From Jonathan Harris <jhar@tardis.ed.ac.uk>
+	
+1998-07-12  SL Baur  <steve@altair.xemacs.org>
+
+	* general.c (syms_of_general): Add defsymbol for Qresource.
+
+	* glyphs-msw.c (vars_of_glyphs_mswindows): Rename Qresource to
+	Qmswindows_resource.
+	(TopLevel): Rename 'resource image format to 'mswindows_resource.
+	(mswindows_resource_validate): Rename.
+	(mswindows_resource_normalize): Rename.
+	(mswindows_resource_possible_dest_types): Rename.
+	(mswindows_resource_instantiate): Rename.
+	(image_instantiator_format_create_glyphs_mswindows): Replace
+	`resource' with `mswindows.resource'.
+
 1998-07-12  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-pre5 is released.

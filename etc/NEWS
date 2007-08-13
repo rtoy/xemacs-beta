@@ -299,6 +299,13 @@ relevant information will be generated on-the-fly.
 This behaviour can be customized, look for `Info-auto-generate-directory'
 and `Info-save-auto-generated-dir' in the `info' customization group.
 
+** Version Control is no longer automatically loaded.  Users must
+add:
+
+(require 'vc-hooks)
+
+to their .emacs file to get version control functionality.
+
 
 * Lisp and internal changes in XEmacs 21.0
 ==========================================
@@ -493,7 +500,7 @@ directory hierarchy has been rewritten to support the package system.
 Look under "Startup Paths" in the Info documentation for more
 information.
 
-*** site-lisp is now longer part of the load-path by default.
+*** site-lisp is no longer part of the load-path by default.
 Its use is deprecated, but you can specify --with-site-lisp=yes at the
 configure command line to get it back.
 

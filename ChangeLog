@@ -1,3 +1,19 @@
+1998-07-19  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre7 is released.
+
+1998-07-19  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 21.0-pre6 is released.
+
+1998-07-18  SL Baur  <steve@altair.xemacs.org>
+
+	* config.guess: Synched with latest FSF version.
+
+1998-07-12  Björn Torkelsson  <torkel@hpc2n.umu.se>
+
+	* Makefile.in: added LDFLAGS. 
+
 1998-07-12  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 21.0-pre5 is released.

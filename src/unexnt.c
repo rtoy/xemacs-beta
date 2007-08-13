@@ -97,10 +97,8 @@ DWORD  data_start_file = UNINIT_LONG;
 DWORD  data_size = UNINIT_LONG;
 
 /* Cached info about the .bss section in the executable.  */
-#ifndef DUMP_SEPARATE_SECTION
-PUCHAR bss_start = 0;
-DWORD  bss_size = 0;
-#endif
+PUCHAR bss_start = UNINIT_PTR;
+DWORD  bss_size = UNINIT_LONG;
 
 #ifdef HAVE_NTGUI
 HINSTANCE hinst = NULL;
@@ -479,7 +477,7 @@ get_section_info (file_data *p_infile)
     }
 
 #ifndef DUMP_SEPARATE_SECTION
-  if (!bss_start)
+  if (bss_start == UNINIT_PTR)
     {
       /* Starting with MSVC 4.0, the .bss section has been eliminated
 	 and appended virtually to the end of the .data section.  Our
@@ -496,6 +494,8 @@ get_section_info (file_data *p_infile)
 	+ data_section->VirtualAddress;
       bss_size = (char*)&my_ebss - (char*)bss_start;
     }
+#else
+  bss_size = 0;
 #endif
 }
 

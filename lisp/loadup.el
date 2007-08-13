@@ -37,7 +37,6 @@
 (if (fboundp 'error)
     (error "loadup.el already loaded!"))
 
-(define-function 'defalias 'define-function)
 (defvar running-xemacs t
   "Non-nil when the current emacs is XEmacs.")
 (defvar preloaded-file-list nil
@@ -53,6 +52,9 @@
 
 	;; We don't want to have any undo records in the dumped XEmacs.
 	(buffer-disable-undo (get-buffer "*scratch*"))
+
+	;; Load our first bootstrap support
+	(load "very-early-lisp" nil t)
 
 	;; lread.c (or src/Makefile.in.in) has prepended
 	;; "${srcdir}/../lisp/" to load-path, which is how this file
