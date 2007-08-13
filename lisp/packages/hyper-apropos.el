@@ -1221,7 +1221,7 @@ source is found for the \"*Hyper Apropos*\" buffer."
   (mouse-set-point event)
   (let* ((sym (hypropos-this-symbol))
 	 (notjunk (not (null sym)))
-	 (command-p (commandp sym))
+	 (command-p (if (commandp sym) t))
 	 (variable-p (and sym (boundp sym)))
 	 (function-p (fboundp sym))
 	 (apropos-p (eq 'hyper-apropos-mode

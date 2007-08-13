@@ -41,7 +41,7 @@
        (vm-mouse-support-possible-p)
        (vm-mouse-xemacs-mouse-p)
        (add-hook 'mode-motion-hook 'mode-motion-highlight-line))
-  (if (or vm-frame-per-folder vm-frame-per-summary)
+  (if (and vm-mutable-frames (or vm-frame-per-folder vm-frame-per-summary))
       (vm-set-hooks-for-frame-deletion))
   (run-hooks 'vm-summary-mode-hook)
   ;; Lucid Emacs apparently used this name

@@ -3173,6 +3173,9 @@ character escape syntaxes or just read them incorrectly.
   Qfeaturep = intern("featurep");
   staticpro(&Qfeaturep);
   Fprovide(intern("xemacs"));
+#ifdef INFODOCK
+  Fprovide(intern("infodock"));
+#endif
 #endif
 
 #ifdef LISP_BACKQUOTES

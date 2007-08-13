@@ -1,3 +1,187 @@
+1997-06-05  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-b4 is released.
+
+1997-06-04  Martin Buchholz  <mrb@eng.sun.com>
+
+	* src/*/*.h: Remove definitions of HAVE_UNION_WAIT, in accordance
+	with new Autoconf 2 mechanisms.
+	* src/syswait.h:
+	* src/sysdep.c:
+	* src/process.c: Use only Posix.1 sys/wait.h-defined symbols
+
+	* src/s/netbsd.h: complete rewrite, use ORDINARY_LINK, #ifdef out
+	old cruft that can be obtained from system header files.
+	* lib-src/getopt*: Synch with FSF, remove compiler warnings.
+	
+	* lib-src/b2m.c: 
+	* src/gifalloc.c: 
+	* lib-src/gnuslib.c: 
+	* lib-src/profile.c: 
+	* lib-src/movemail.c: Fix compiler warnings
+	
+	* lib-src/Makefile.in.in: Remove unused -DCONFIG_BROKETS flag
+	- Fix up compile flags for new etags version
+
+	* etc/NEWS: 
+	* etc/etags.1: 
+	* man/xemacs/programs.texi: 
+	* lib-src/etags.c:  Upgraded to etags 12.11
+
+	* src/config.h.in: Fix inline keyword support
+	
+	* configure.in: Use a different mechanism for removing extra white 
+	space.  Avoid using foo=`echo $bar`, which loses with various echos.
+	- new M4 macro XE_SPACE(var, words...)
+	- Use autoconf 2's AC_HEADER_SYS_WAIT
+	- Check for Xpm-XpmFree instead of Xpm-XpmReadFileToData to avoid
+	linking with losing Xpm implementations
+	- Check for correct wnn4 lib symbols
+	- Only link with inline.o when using gcc
+	- Support inline keywords inline, __inline, __inline__
+	- Ultrix now implies have_mmap=no
+	- Sun sound in non-standard dirs now works
+	- --native-sound-lib no longer ignored on HP & SGI
+	- gpm configure tests moved after curses configure tests
+	
+1997-05-30  Martin Buchholz  <mrb@eng.sun.com>
+
+	* configure.in: Automagically compute -R path for gcc
+
+Thu May 29 15:35:07 1997  Martin Buchholz  <mrb@eng.sun.com>
+
+	* configure.in: Add support for Solaris2.6 -z ignore linker flags
+
+1997-05-29  Martin Buchholz  <mrb@eng.sun.com>
+
+	* configure.in: Replace standard Autoconf MMAP test with Neal
+	Becker's replacement, hacked somewhat.
+
+1997-06-03  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* lisp/x11/x-menubar.el (default-menubar): Add menu for Mule.
+
+	* lisp/mule/mule-cmds.el: Menu for XEmacs were moved to
+ 	x11/x-menubar.el.
+
+1997-06-03  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* lisp/leim/quail.el: to avoid compiling warnings about
+ 	overlay.el.
+
+1997-06-03  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* lisp/leim/quail.el: to sync with quail.el of
+ 	Emacs-19.34.94-zeta.
+
+	* lisp/leim/quail/ziranma.el, lisp/leim/quail/tonepy.el,
+ 	lisp/leim/quail/py.el, lisp/leim/quail/qj.el,
+ 	lisp/leim/quail/sw.el, lisp/leim/quail/ccdospy.el,
+ 	lisp/leim/quail/punct.el, lisp/leim/quail/4corner.el,
+ 	lisp/leim/quail/symbol-ksc.el, lisp/leim/quail/ethiopic.el,
+ 	lisp/leim/quail/hanja.el, lisp/leim/quail/quick-cns.el,
+ 	lisp/leim/quail/tsangchi-cns.el, lisp/leim/quail/lrt.el,
+ 	lisp/leim/quail/tsangchi-b5.el, lisp/leim/quail/devanagari.el,
+ 	lisp/leim/quail/japanese.el, lisp/leim/quail/quick-b5.el,
+ 	lisp/leim/quail/punct-b5.el, lisp/leim/quail/qj-b5.el,
+ 	lisp/leim/quail/py-b5.el, lisp/leim/quail/ctlau.el,
+ 	lisp/leim/quail/ctlaub.el, lisp/leim/quail/ecdict.el,
+ 	lisp/leim/quail/array30.el, lisp/leim/quail/hangul3.el,
+ 	lisp/leim/quail/hanja-jis.el, lisp/leim/quail/cyrillic.el,
+ 	lisp/leim/quail/etzy.el, lisp/leim/quail/greek.el,
+ 	lisp/leim/quail/ipa.el, lisp/leim/quail/lao.el,
+ 	lisp/leim/quail/zozy.el, lisp/leim/quail/viqr.el,
+ 	lisp/leim/quail/latin.el, lisp/leim/quail/thai.el,
+ 	lisp/leim/quail/hangul.el: quail of LEIM for Emacs-19.34.94-zeta.
+
+1997-06-02  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mule/korean.el was abolished because it seems not to be used.
+
+	* mule/japanese.el was abolished because it seems not to be used.
+
+1997-06-01  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* lisp/tm/gnus-mime-old.el was abolished because XEmacs 20.3 has
+ 	Gnus 5.4.
+
+	* lisp/tm/tm-edit.el: updated to 7.108.
+
+	* lisp/tm/tm-view.el: updated to 7.83.
+
+	* lisp/leim/quail.el: modified for XEmacs.
+
+	* lisp/mule/mule-load.el, lisp/mule/mule-process.el: delete
+ 	mule-process.el because it is not used.
+
+	* lisp/mule/european.el was abolished because it seems not to be
+ 	used.
+
+	* lisp/mule/mule-load.el: must load mule-cmds before setting for
+ 	language-environment.
+
+	* lisp/mule/european-hooks.el: Modified for LEIM.
+
+	* lisp/mule/mule-cmds.el: Uncomment key definition for
+ 	`toggle-input-method'.
+
+	* lisp/mule/mule-init.el: Comment out about `mule-keymap' (moved
+ 	to mule-cmds.el).
+
+	* lisp/mule/mule-cmds.el: Uncomment about `mule-keymap' (moved
+ 	from mule-init.el).
+
+	* lisp/tl/tl-atype.el: Don't require tl-str.
+
+	* lisp/tl/tl-atype.el: Use atype.el of APEL.
+
+	* lisp/tl/tl-list.el: Use alist.el of APEL.
+
+1997-05-31  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* lisp/tl/richtext.el, lisp/tl/emu-x20.el, lisp/tl/emu-xemacs.el,
+ 	lisp/tl/emu.el, lisp/tl/emu-e19.el: moved to apel/.
+
+	* lisp/tl/file-detect.el, lisp/tl/filename.el: replaced by APEL's.
+
+	* lisp/mu/std11-parse.el, lisp/mu/std11.el: moved to apel/.
+
+	* lisp/leim/quail.el: Add new quail.el (imported from Emacs
+ 	19.34.94-epsilon).
+
+	* lisp/leim/skk/skkdic.el: delete skkdic.el temporary because
+ 	XEmacs can not compile it.
+
+	* lisp/leim/skk/skkdic.el, lisp/leim/quail/zozy.el,
+ 	lisp/leim/quail/ziranma.el, lisp/leim/quail/viqr.el,
+ 	lisp/leim/quail/tsangchi-cns.el, lisp/leim/quail/tsangchi-b5.el,
+ 	lisp/leim/quail/symbol-ksc.el, lisp/leim/quail/thai.el,
+ 	lisp/leim/quail/tonepy.el, lisp/leim/quail/quick-cns.el,
+ 	lisp/leim/quail/sw.el, lisp/leim/quail/qj-b5.el,
+ 	lisp/leim/quail/qj.el, lisp/leim/quail/quick-b5.el,
+ 	lisp/leim/quail/py-b5.el, lisp/leim/quail/py.el,
+ 	lisp/leim/quail/lao.el, lisp/leim/quail/latin.el,
+ 	lisp/leim/quail/lrt.el, lisp/leim/quail/punct-b5.el,
+ 	lisp/leim/quail/punct.el, lisp/leim/quail/hanja-jis.el,
+ 	lisp/leim/quail/hanja.el, lisp/leim/quail/ipa.el,
+ 	lisp/leim/quail/japanese.el, lisp/leim/quail/hangul3.el,
+ 	lisp/leim/quail/etzy.el, lisp/leim/quail/greek.el,
+ 	lisp/leim/quail/hangul.el, lisp/leim/quail/ethiopic.el,
+ 	lisp/leim/quail/devanagari.el, lisp/leim/quail/ecdict.el,
+ 	lisp/leim/quail/ctlau.el, lisp/leim/quail/ctlaub.el,
+ 	lisp/leim/quail/cyrillic.el, lisp/leim/quail/array30.el,
+ 	lisp/leim/quail/ccdospy.el, lisp/leim/quail/4corner.el: Add LEIM
+ 	elisp files; old lisp/quail was abolished.
+
+	* src/Makefile.in.in: Add mule-cmds.elc.
+
+	* lisp/mule/mule-load.el, lisp/mule/mule-cmds.el: Add mule-cmds.el
+ 	(imported from Emacs-19.34.94-epsilon and comment out a lot to
+ 	avoid conflict with mule-init.el or other XEmacs/mule files).
+
+	* lisp/prim/simple.el (assoc-ignore-case): New function; imported
+ 	from Emacs-19.34.94-epsilon.
+
 1997-05-29  Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.3-beta3 is released.

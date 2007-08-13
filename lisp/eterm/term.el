@@ -849,7 +849,7 @@ name of one"
 ;;; for the second argument (program).
 ;;;###autoload
 (defun make-term (name program &optional startfile &rest switches)
-"Make a term process NAME in a buffer, running PROGRAM.
+  "Make a term process NAME in a buffer, running PROGRAM.
 The name of the buffer is made by surrounding NAME with `*'s.
 If there is already a running process in that buffer, it is not restarted.
 Optional third arg STARTFILE is the name of a file to send the contents of to 

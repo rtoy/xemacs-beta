@@ -97,7 +97,3 @@
 #if 0
 #define X_IO_BUG
 #endif
-
-/* XEmacs change */
-
-#undef HAVE_UNION_WAIT

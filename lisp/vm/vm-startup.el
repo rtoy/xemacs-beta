@@ -193,6 +193,7 @@ See the documentation for vm-mode for more information."
 	    ;; raise the summary frame if the user wants frames
 	    ;; raised and if there is a summary frame.
 	    (if (and vm-summary-buffer
+		     vm-mutable-frames
 		     vm-frame-per-summary
 		     vm-raise-frame-at-startup)
 		(vm-raise-frame))
@@ -276,7 +277,7 @@ See the documentation for vm-mode for more information."
 (defun vm-mode (&optional read-only)
   "Major mode for reading mail.
 
-This is VM 6.31.
+This is VM 6.32.
 
 Commands:
    h - summarize folder contents
@@ -441,6 +442,7 @@ Variables:
    vm-frame-per-composition
    vm-frame-per-edit
    vm-frame-per-folder
+   vm-frame-per-help
    vm-frame-per-summary
    vm-highlighted-header-face
    vm-highlighted-header-regexp
@@ -539,6 +541,7 @@ Variables:
    vm-summary-thread-indent-level
    vm-tale-is-an-idiot
    vm-temp-file-directory
+   vm-toolbar-pixmap-directory
    vm-trust-From_-with-Content-Length
    vm-undisplay-buffer-hook
    vm-unforwarded-header-regexp
@@ -740,6 +743,7 @@ vm-visit-virtual-folder.")
 	  ;; raise the summary frame if the user wants frames
 	  ;; raised and if there is a summary frame.
 	  (if (and vm-summary-buffer
+		   vm-mutable-frames
 		   vm-frame-per-summary
 		   vm-raise-frame-at-startup)
 	      (vm-raise-frame))
@@ -798,30 +802,36 @@ vm-visit-virtual-folder.")
 	(vm-search-other-frames nil))
     (vm-visit-virtual-folder folder-name read-only)))
 
-(defun vm-mail ()
-  "Send a mail message from within VM, or from without."
+(defun vm-mail (&optional to)
+  "Send a mail message from within VM, or from without.
+Optional argument TO is a string that should contain a comma separated
+recipient list."
   (interactive)
   (vm-session-initialization)
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
-  (vm-mail-internal)
+  (vm-mail-internal nil to)
   (run-hooks 'vm-mail-hook)
   (run-hooks 'vm-mail-mode-hook))
 
-(defun vm-mail-other-frame ()
-  "Like vm-mail, but run in a newly created frame."
+(defun vm-mail-other-frame (&optional to)
+  "Like vm-mail, but run in a newly created frame.
+Optional argument TO is a string that should contain a comma separated
+recipient list."
   (interactive)
   (vm-session-initialization)
   (if (vm-multiple-frames-possible-p)
       (vm-goto-new-frame 'composition))
   (let ((vm-frame-per-composition nil)
 	(vm-search-other-frames nil))
-    (vm-mail))
+    (vm-mail to))
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
-(defun vm-mail-other-window ()
-  "Like vm-mail, but run in a different window."
+(defun vm-mail-other-window (&optional to)
+  "Like vm-mail, but run in a different window.
+Optional argument TO is a string that should contain a comma separated
+recipient list."
   (interactive)
   (vm-session-initialization)
   (if (one-window-p t)
@@ -829,7 +839,7 @@ vm-visit-virtual-folder.")
   (other-window 1)
   (let ((vm-frame-per-composition nil)
 	(vm-search-other-frames nil))
-    (vm-mail)))
+    (vm-mail to)))
 
 (defun vm-submit-bug-report ()
   "Submit a bug report, with pertinent information to the VM bug list."
@@ -887,6 +897,7 @@ vm-visit-virtual-folder.")
       'vm-frame-per-composition
       'vm-frame-per-edit
       'vm-frame-per-folder
+      'vm-frame-per-help
       'vm-frame-per-summary
       'vm-highlight-url-face
       'vm-highlighted-header-regexp
@@ -991,6 +1002,7 @@ vm-visit-virtual-folder.")
       'vm-summary-uninteresting-senders
       'vm-summary-uninteresting-senders-arrow
       'vm-tale-is-an-idiot
+      'vm-toolbar-pixmap-directory
       'vm-temp-file-directory
       'vm-trust-From_-with-Content-Length
       'vm-undisplay-buffer-hook

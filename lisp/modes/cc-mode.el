@@ -481,7 +481,9 @@ placed on the same line as the block comment starter (i.e. the text
 This hook gets called after a line is indented by the mode."
   :type 'hook
   :group 'cc-indent)
-(defcustom c-delete-function 'backward-delete-char-untabify
+(defcustom c-delete-function (if (fboundp 'backspace-or-delete)
+				 'backspace-or-delete
+			       'backward-delete-char-untabify)
   "*Function called by `c-electric-delete' when deleting characters."
   :type 'function
   :group 'cc-mode)
@@ -1035,8 +1037,7 @@ Infodock (based on XEmacs) has an additional symbol on this list:
   (define-key c-mode-map "\C-c\C-p"  'c-backward-conditional)
   (define-key c-mode-map "\C-c\C-u"  'c-up-conditional)
   (define-key c-mode-map "\t"        'c-indent-command)
-;; GDF - don't rebind the DEL key
-;;  (define-key c-mode-map "\177"      'c-electric-delete)
+  (define-key c-mode-map "\177"      'c-electric-delete)
   ;; these are new keybindings, with no counterpart to BOCM
   (define-key c-mode-map ","         'c-electric-semi&comma)
   (define-key c-mode-map "*"         'c-electric-star)
@@ -1428,8 +1429,6 @@ Key bindings:
 \\{c-mode-map}"
   (interactive)
   (kill-all-local-variables)
-  (make-local-hook 'backspace-or-delete-hook)
-  (add-hook 'backspace-or-delete-hook 'c-electric-delete nil t)
   (set-syntax-table c-mode-syntax-table)
   (setq major-mode 'c-mode
 	mode-name "C"
@@ -1941,23 +1940,25 @@ See `c-toggle-auto-state' and `c-toggle-hungry-state' for details."
 
 ;; COMMANDS
 (defun c-electric-delete (arg)
-  "Deletes preceding character or whitespace.
+  "Deletes preceding or following character or whitespace.
 If `c-hungry-delete-key' is non-nil, as evidenced by the \"/h\" or
-\"/ah\" string on the mode line, then all preceding whitespace is
-consumed.  If however an ARG is supplied, or `c-hungry-delete-key' is
-nil, or point is inside a literal then the function in the variable
-`c-delete-function' is called."
+\"/ah\" string on the mode line, then all preceding or following
+whitespace is consumed.  If however an ARG is supplied, or
+`c-hungry-delete-key' is nil, or point is inside a literal then the
+function in the variable `c-delete-function' is called."
   (interactive "P")
   (if (or (not c-hungry-delete-key)
 	  arg
 	  (c-in-literal))
       (funcall c-delete-function (prefix-numeric-value arg))
     (let ((here (point)))
-      (skip-chars-backward " \t\n")
+      (if (and (boundp 'delete-erases-forward)
+	       delete-erases-forward)
+	  (skip-chars-forward " \t\n")
+	(skip-chars-backward " \t\n"))
       (if (/= (point) here)
 	  (delete-region (point) here)
-	(funcall c-delete-function 1))))
-  t)
+	(funcall c-delete-function 1)))))
 
 (defun c-electric-pound (arg)
   "Electric pound (`#') insertion.

@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.98
+;; Version: 1.9907
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;; This file is part of GNU Emacs.
@@ -37,7 +37,6 @@
 ;;; Code:
 
 (require 'widget)
-(eval-when-compile (require 'cl))
 
 (define-widget-keywords :initialize :set :get :require :prefix :tag
   :load :link :options :type :group) 
@@ -227,7 +226,7 @@ The remaining arguments should have the form
 
    [KEYWORD VALUE]...
 
-The following KEYWORD's are defined:
+The following KEYWORDs are defined:
 
 :group  VALUE should be a customization group.
         Add FACE to that group.

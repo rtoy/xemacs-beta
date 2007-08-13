@@ -321,8 +321,8 @@ See `set-frame-properties' for built-in property names."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; insertion and deletion
 
-(define-obsolete-function-alias 'insert-and-inherit 'insert)
-(define-obsolete-function-alias 'insert-before-markers-and-inherit
+(define-compatible-function-alias 'insert-and-inherit 'insert)
+(define-compatible-function-alias 'insert-before-markers-and-inherit
   'insert-before-markers)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; keymaps

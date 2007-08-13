@@ -1,11 +1,11 @@
 ;;; glyphs.el --- Lisp interface to C glyphs
-;; Keywords: glyphs internal
 
-;; Copyright (C) 1994 Board of Trustees, University of Illinois
+;; Copyright (C) 1994, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1996 Ben Wing.
 
-;; Author: Chuck Thompson <cthomp@cs.uiuc.edu>,
-;;         Ben Wing <wing@666.com>
+;; Author: Chuck Thompson <cthomp@cs.uiuc.edu>, Ben Wing <wing@666.com>
+;; Maintainer: XEmacs Development Team
+;; Keywords: extensions, internal
 
 ;; This file is part of XEmacs.
 
@@ -25,6 +25,10 @@
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: Not in FSF.
+
+;;; Commentary:
+
+;;; Code:
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; font specifiers
 
@@ -563,31 +567,33 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
 	(remove-specifier harg 'global)
       (set-glyph-image (symbol-value harg) value))))
 
+;; It might or might not be garbage, but it's rude.  Make these
+;; 'compatible instead of 'obsolete.  -slb
 (defun define-obsolete-pointer-glyph (old new)
-  (define-obsolete-variable-alias old new)
+  (define-compatible-variable-alias old new)
   (dontusethis-set-symbol-value-handler
    old 'set-value 'dontusethis-old-pointer-shape-handler new))
 
-(defvar x-pointer-shape nil)
+;;; (defvar x-pointer-shape nil)
 (define-obsolete-pointer-glyph 'x-pointer-shape 'text-pointer-glyph)
 
-(defvar x-nontext-pointer-shape nil)
+;;; (defvar x-nontext-pointer-shape nil)
 (define-obsolete-pointer-glyph 'x-nontext-pointer-shape 'nontext-pointer-glyph)
 
-(defvar x-mode-pointer-shape nil)
+;;; (defvar x-mode-pointer-shape nil)
 (define-obsolete-pointer-glyph 'x-mode-pointer-shape 'modeline-pointer-glyph)
 
-(defvar x-selection-pointer-shape nil)
+;;; (defvar x-selection-pointer-shape nil)
 (define-obsolete-pointer-glyph 'x-selection-pointer-shape
   'selection-pointer-glyph)
 
-(defvar x-busy-pointer-shape nil)
+;;; (defvar x-busy-pointer-shape nil)
 (define-obsolete-pointer-glyph 'x-busy-pointer-shape 'busy-pointer-glyph)
 
-(defvar x-gc-pointer-shape nil)
+;;; (defvar x-gc-pointer-shape nil)
 (define-obsolete-pointer-glyph 'x-gc-pointer-shape 'gc-pointer-glyph)
 
-(defvar x-toolbar-pointer-shape nil)
+;;; (defvar x-toolbar-pointer-shape nil)
 (define-obsolete-pointer-glyph 'x-toolbar-pointer-shape 'toolbar-pointer-glyph)
 
 ;;;;;;;;;; initialization
@@ -596,19 +602,19 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
   ;; initialize default image types
   (if (featurep 'x)
     (set-console-type-image-conversion-list 'x
-     `(,@(if (featurep 'xpm) '(("\.xpm$" [xpm :file nil] 2)))
-       ,@(if (featurep 'xpm) '(("^/\\* XPM \\*/" [xpm :data nil] 2)))
-       ,@(if (featurep 'xface) '(("^X-Face:" [xface :data nil] 2)))
-       ,@(if (featurep 'gif) '(("\.gif$" [gif :file nil] 2)))
-       ,@(if (featurep 'gif) '(("^GIF8[79]" [gif :data nil] 2)))
-       ,@(if (featurep 'jpeg) '(("\.jpeg$" [jpeg :file nil] 2)))
-       ,@(if (featurep 'jpeg) '(("\.jpg$" [jpeg :file nil] 2)))
+     `(,@(if (featurep 'xpm) '(("\\.xpm$\\'" [xpm :file nil] 2)))
+	 ("\\.xbm\\'" [xbm :file nil] 2)
+       ,@(if (featurep 'xpm) '(("\\`/\\* XPM \\*/" [xpm :data nil] 2)))
+       ,@(if (featurep 'xface) '(("\\`X-Face:" [xface :data nil] 2)))
+       ,@(if (featurep 'gif) '(("\\.gif\\'" [gif :file nil] 2)))
+       ,@(if (featurep 'gif) '(("\\`GIF8[79]" [gif :data nil] 2)))
+       ,@(if (featurep 'jpeg) '(("\\.jpe?g\\'" [jpeg :file nil] 2)))
        ;; all of the JFIF-format JPEG's that I've seen begin with
        ;; the following.  I have no idea if this is standard.
-       ,@(if (featurep 'jpeg) '(("^\377\330\340\000\020JFIF"
+       ,@(if (featurep 'jpeg) '(("\\`\377\330\340\000\020JFIF"
 				 [jpeg :data nil] 2)))
-       ,@(if (featurep 'png) '(("\.png$" [png :file nil] 2)))
-       ,@(if (featurep 'png) '(("^\211PNG" [png :data nil] 2)))
+       ,@(if (featurep 'png) '(("\\.png\\'" [png :file nil] 2)))
+       ,@(if (featurep 'png) '(("\\`\211PNG" [png :data nil] 2)))
        ("" [autodetect :data nil] 2))))
   ;; #### this should really be formatted-string, not string but we
   ;; don't have it implemented yet
@@ -621,10 +627,10 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
 	(set-console-type-image-conversion-list
 	 'tty
 	 '(("^#define" [string :data "[xpm]"])
-	   ("^X-Face:" [string :data "[xface]"])
-	   ("^/\\* XPM \\*/" [string :data "[xpm]"])
-	   ("^GIF87" [string :data "[gif]"])
-	   ("^\377\330\340\000\020JFIF" [string :data "[jpeg]"])
+	   ("\\`X-Face:" [string :data "[xface]"])
+	   ("\\`/\\* XPM \\*/" [string :data "[xpm]"])
+	   ("\\`GIF87" [string :data "[gif]"])
+	   ("\\`\377\330\340\000\020JFIF" [string :data "[jpeg]"])
 	   ("" [string :data nil] 2)
 	   ;; this last one is here for pointers and icons and such --
 	   ;; strings are not allowed so they will be ignored.

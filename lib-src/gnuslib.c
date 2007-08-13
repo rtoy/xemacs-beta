@@ -107,19 +107,17 @@ int make_connection(hostarg, portarg, s)
   } else {
     /* no hostname given.  Use unix-domain/sysv-ipc, or
      * internet-domain connection to local host if they're not available. */
-#ifdef UNIX_DOMAIN_SOCKETS
+#if   defined(UNIX_DOMAIN_SOCKETS)
     *s = connect_to_unix_server();
     return (int) CONN_UNIX;
-#endif
-#ifdef SYSV_IPC
+#elif defined(SYSV_IPC)
     *s = connect_to_ipc_server();
     return (int) CONN_IPC;
-#endif
-#ifdef INTERNET_DOMAIN_SOCKETS
+#elif defined(INTERNET_DOMAIN_SOCKETS)
     gethostname(localhost,HOSTNAMSZ);	  /* use this host by default */    
     *s = connect_to_internet_server(localhost, portarg);
     return (int) CONN_INTERNET;
-#endif      
+#endif /* IPC type */
   }
 }
 

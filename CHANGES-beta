@@ -1,4 +1,31 @@
 							-*- indented-text -*-
+to 20.3 beta4.
+-- miscellaneous bug fixes
+-- various about.el additions & updates
+-- edmacro.el-3.15
+-- Configure patches courtesy of Martin Buchholz
+-- about.el-2.2 courtesy of Hrvoje Niksic
+-- New function eval-when-feature from Emacs 20
+-- Toolbar buttons now take arbitrary lisp functions for callback
+-- webjump.el-1.5 courtesy of Neal W. Van Dyke
+-- reftex.el-2.13 courtesy of Carsten Dominik
+-- Initial synch with InfoDock 3.5
+-- Give defcustom the same special treatment defvar gets when evaluated with
+   `eval-last-sexp' (C-x C-e)
+-- "These patches make XEmacs run under NT!" - David Hobley
+-- Initial port of LEIM courtesy of MORIOKA Tomohiko
+-- tm-7.108 courtey of MORIOKA Tomohiko
+-- Custom-1.9907
+-- VM-6.32
+-- Gnus-5.4.56
+-- ediff & viper updates courtesy of Michael Kifer
+-- icomplete.el-4.10 courtesy of Ken Manheimer
+-- gdb-highlight.el courtesy of Jamie Zawinski
+-- New function `narrow-to-defun' bound to `C-x n d', from Emacs 19.35
+-- Oops, sorry.  gnudoit script restored
+-- New function `kill-buffer-and-window' bound to `C-x 4 0', from Emacs 19.34
+-- Cleanup of dumped packages to eliminate bytecompiler warnings
+
 to 20.3 beta3.
 -- miscellaneous bug fixes
 -- iso-acc.el-1.14 courtesy of Alexandre Oliva

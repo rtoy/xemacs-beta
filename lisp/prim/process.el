@@ -1,7 +1,11 @@
 ;;; process.el --- commands for subprocesses; split out of simple.el
 
-;; Copyright (C) 1985, 1986, 1987, 1993, 1994 Free Software Foundation, Inc.
+;; Copyright (C) 1985-1987, 1993, 1994, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Ben Wing.
+
+;; Author: Ben Wing
+;; Maintainer: XEmacs Development Team
+;; Keywords: internal, processes
 
 ;; This file is part of XEmacs.
 
@@ -21,6 +25,8 @@
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: FSF 19.30.
+
+;;; Commentary:
 
 ;;; Code:
 
@@ -158,7 +164,6 @@ In either case, the output is inserted after point (leaving mark after it)."
       (if (string-match "[ \t]*&[ \t]*$" command)
 	  ;; Command ending with ampersand means asynchronous.
 	  (progn
-	    (require 'background) ; whizzy comint background code
 	    (background (substring command 0 (match-beginning 0))))
 	(shell-command-on-region (point) (point) command output-buffer)))))
 

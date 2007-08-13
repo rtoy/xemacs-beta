@@ -1,3 +1,251 @@
+Tue Jun 03 02:05:13 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9907 released.
+
+Tue Jun  3 00:22:44 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-beginning-of-line): Work with overlays.
+	(widget-end-of-line): Ditto.
+	(widget-specify-inactive): Use inactive for mouse-face as well.
+	(widget-read-event): New alias.
+	(widget-button-click): Use it.
+	Don't execute up events twice.
+	(widget-field-end): Workaround for local-map at
+	end of overlay.
+	(widget-specify-field): Ditto.
+	(widget-move): Fixed but with single button buffers.
+
+Mon Jun  2 23:09:33 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-buffer-create-internal): Improved help
+	strings for reset buttons.
+
+	* wid-edit.el (widget-move): Restored support for
+	`widget-echo-help' and `widget-move-hook'.
+	(widget-documentation-string-value-create): Restore support for
+	`widget-documentation--face'.
+
+1997-06-02  Steven L Baur  <steve@altair.xemacs.org>
+
+	* cus-edit.el (customize-variable-other-window): Added defalias.
+
+Mon Jun  2 21:03:14 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* widget.el (:complete): New keyword.
+	(:complete-function): New keyword.
+	* wid-edit.el (widget-complete): New command.
+	(widget-keymap): Bind it.
+	(widget-complete-field): New option.
+	(widget-default-complete): New function.
+	(default): Bind :complete.
+	(string): Bind :complete-function.
+	(sexp): Ditto.
+
+Mon Jun 02 20:39:28 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9906 released.
+
+Mon Jun  2 23:26:11 1997  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* wid-edit.el (widget-glyph-find): Would infloop when file not found.
+
+Mon Jun  2 17:54:43 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-glyph-find): Try to avoid pure text glyphs.
+	(widget-glyph-insert): Update doc string.
+	Patch by Hrvoje Niksic <hniksic@srce.hr>.
+
+	* wid-edit.el (widget-button-click): Didn't restore `mouse-face'.
+
+Sun Jun  1 20:29:18 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* widget.texi (editable-field): Removed :hide-front-space and
+	:hide-rear-space. 
+	* widget.el: Ditto.
+
+Sun Jun 01 19:55:00 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9905 released.
+
+Sun Jun  1 13:24:07 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el: Changed to overlays.
+	* cus-edit.el (custom-buffer-create-internal): Remove kludge for
+	getting read-only bob and eob in XEmacs.
+	* wid-browse.el (widget-browse-at): Use `get-char-property'
+	instead of `get-text-property'.
+	* widget.el (:value-from :value-to): Deleted.
+	* widget.el (:button-overlay, :field-overlay): New keywords. 
+	* wid-edit.el (widget-default-delete): Delete overlays.
+	(widget-field-value-delete): Delete overlay.
+
+	* wid-edit.el (widget-specify-field-update): Specify both
+	`ballon-help' and `help-echo'. 
+
+Sun Jun 01 13:13:40 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9904 released.
+
+Sun Jun  1 06:34:54 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (visibility): Change "more" to "show".
+
+	* cus-edit.el (:custom-category): New keyword.
+	(custom-variable): Add it.
+	(custom-face): Ditto.
+	(custom-group): Ditto.
+	(custom-magic-value-create): Replace %c with category in state
+	text. 
+	(custom-magic-alist): Use it.
+	(custom-magic-show-hidden): Allow control on each custom
+	category. 
+	(custom-magic-value-create): Ditto.
+	(custom-reset-current): Ignore extra arguments.
+	(custom-reset-saved): Ditto.
+	(custom-reset-standard): Ditto.
+	(custom-reset-button-menu): New option.
+	(custom-buffer-create-internal): Use it.
+
+	* cus-edit.el (customize-variable): Uncomment alias.
+
+	* all: Synched with FSF.
+
+	* cus-edit.el (custom-format-handler): Cleanup.
+
+	* wid-edit.el (widget-kill-line): Use forward-line instead of
+	search-forward.  
+	Suggested by Hrvoje Niksic <hniksic@srce.hr>.
+
+	* cus-edit.el (custom-magic-value-create): Cleanup.
+
+	* wid-edit.el (set-text-properties): Redefine for broken XEmacsen.
+	(widget-field-value-get): Remove workaround.
+	(widget-specify-button): Specify both `ballon-help' and `help-echo'.
+
+Sat May 31 10:41:00 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9903 released.
+
+Sat May 31 08:44:20 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.9902 released.
+
+Sat May 31 08:10:49 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* all: Synched with FSF.
+
+	* Version 1.9901 released.
+
+Sat May 31 03:26:11 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-format-handler): Don't show links for hidden
+	items. 
+
+	* wid-edit.el (widget-button-prefix): Move to `widget-button' group.
+	(widget-button-suffix): Ditto.
+
+	* cus-edit.el (custom-format-handler): New %e and %- escapes.
+	(custom-group): Use them.
+
+	* widget.el (:widget-doc): Removed keyword.
+	* wid-edit.el (widget-help): Removed widget.
+	(widget-help-action): Removed function.
+
+	* widget.el (:documentation-shown): New keyword.
+	* wid-edit.el (documentation-string): New widget.
+	(widget-documentation-string-value-create): New function.
+	(widget-documentation-string-action): New function.
+	(widget-default-format-handler): Use them.
+	* cus-edit.el (custom-toggle-hide): Hide documentation.
+
+	* cus-edit.el (custom-buffer-sort-predicate): Fix :type.
+	(custom-menu-sort-predicate): Ditto.
+
+	* right.xpm: New file.
+	* right-pushed.xpm: New file.
+	* down.xpm: New file.
+	* down-pushed.xpm: New file.
+	* Makefile (TEXT): Add them
+	* wid-edit.el (visibility): New widget.
+	(widget-visibility-value-create): New function.
+	(widget-glyph-find): New function.
+	(widget-glyph-insert): Use it.
+	* cus-edit.el (custom-variable-menu, custom-face-menu,
+	custom-group-menu): Remove `Hide' entry.
+	(custom-magic-show-hidden): New option.
+	(custom-magic-value-create): Use it.
+	(custom-face): Show visibility.
+
+	* custom.texi (The Variable Options): Use dots to show value.
+	(The Face Options): Ditto.
+
+	* cus-edit.el (custom-load-symbol): More code to avoid recursion.
+	Patch by RMS.
+
+Fri May 30 04:44:37 1997  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* wid-edit.el (widget-glyph-insert-glyph): Clean up.
+
+Fri May 30 01:50:05 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* all: Synched with FSF.
+
+	* cus-edit.el (custom-variable-action): Clarified prompt.
+	(custom-face-action): Ditto.
+	(custom-group-action): Ditto.
+
+	* Version 1.9900 released.
+
+Fri May 30 01:02:57 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-face-set): Call `face-spec-set' instead of
+	`custom-face-display-set'. 
+	(custom-face-save): Ditto.
+	(custom-face-reset-saved): Ditto.
+	(custom-face-reset-standard): Ditto.
+
+	* cus-edit.el (custom-buffer-sort-predicate): New option.
+	(custom-buffer-sort-alphabetically): New function.
+	(custom-group-value-create): Use them.
+	(custom-menu-sort-predicate): New option.
+	(custom-menu-sort-alphabetically): New function.
+	(custom-menu-create): Use them.
+
+	* cus-edit.el (custom-magic-alist): Shortened message.
+
+Thu May 29 00:09:41 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el: (custom-help-menu): Updated names.
+
+	* cus-edit.el: Say `invoke' instead of `activate'.
+
+	* wid-edit.el: Ditto.
+	* widget.texi: Ditto.
+	* custom.texi Ditto.
+
+	* wid-edit.el (widget-help): Fix format string.
+
+Wed May 28 17:00:23 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-magic-value-create): Use push button
+	brackets around state button.
+	(custom-magic-value-create): Indent with three spaces.
+
+	* cus-face.el (face-spec-set-match-display): Change error for
+	unknown requirement to warning.
+	Suggested by Hrvoje Niksic  <hniksic@srce.hr>.
+
+Tue May 27 23:37:26 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* wid-edit.el (widget-link-prefix): Change to "[".
+	(widget-link-suffix): Change to "]".
+
+Tue May 27 20:30:52 1997  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* wid-edit.el (widget-color-item-button-face-get): Don't require
+	facemenu for XEmacs.
+	(widget-glyph-insert): Would bug out.
+
 Tue May 27 16:19:16 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
 
 	* Version 1.98 released.
@@ -72,14 +320,13 @@ Thu May 15 10:47:20 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
 	(custom): Removed `:format'.
 	(custom-variable): Removed level button.
 	(custom-face): Ditto.
-	(custom-level): Deteted.
+	(custom-level): Deleted.
 	(custom-level-action): Deleted.
 	(custom-format-handler): Update caller.
 	(custom-group-magic-alist): Merged into `custom-magic-alist'.
 	(custom-magic-value-create): Use merged `custom-magic-alist'.
 	(custom-group-state-update): Ditto.
 	
-
 Wed May 14 19:47:35 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
 
 	* all: Synched with FSF.

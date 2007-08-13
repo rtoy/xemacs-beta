@@ -73,7 +73,11 @@ Previous contents of that buffer are killed first."
 			      (forward-line -1)
 			      (point))))))
        (goto-char (point-min))
-       (insert "Emacs command summary, " (substring (current-time-string) 0 10)
+       (insert
+	(cond ((featurep 'xemacs) "XEmacs")
+	      ((featurep 'infodock) "InfoDock")
+	      (t "Emacs")))
+       (insert " command summary, " (substring (current-time-string) 0 10)
 	       ".\n")
        ;; Delete "key    binding" and underlining of dashes.
        (delete-region (point) (progn (forward-line 2) (point)))
@@ -89,8 +93,7 @@ Previous contents of that buffer are killed first."
 
 (defun double-column (start end)
   (interactive "r")
-  (let (half cnt
-        line lines nlines
+  (let (half line lines nlines
 	(from-end (- (point-max) end)))
     (setq nlines (count-lines start end))
     (if (<= nlines 1)

@@ -1,8 +1,14 @@
-;;; minibuf.el
-;; Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
+;;; minibuf.el --- Minibuffer functions for XEmacs
+
+;; Copyright (C) 1992, 1993, 1994, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems
 ;; Copyright (C) 1995, 1996 Ben Wing
  
+;; Author: Richard Mlynarik
+;; Created: 2-Oct-92
+;; Maintainer: XEmacs Development Team
+;; Keywords: internal
+
 ;; This file is part of XEmacs.
 
 ;; XEmacs is free software; you can redistribute it and/or modify it

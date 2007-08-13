@@ -6,7 +6,7 @@
 ;;         MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1994/08/21 renamed from mime.el
-;; Version: $Revision: 1.10 $
+;; Version: $Revision: 1.11 $
 ;; Keywords: mail, news, MIME, multimedia, multilingual
 
 ;; This file is part of tm (Tools for MIME).
@@ -120,7 +120,7 @@
 ;;;
 
 (defconst mime-editor/RCS-ID
-  "$Id: tm-edit.el,v 1.10 1997/05/29 23:50:20 steve Exp $")
+  "$Id: tm-edit.el,v 1.11 1997/06/06 00:57:43 steve Exp $")
 
 (defconst mime-editor/version (get-version-string mime-editor/RCS-ID))
 
@@ -1554,8 +1554,9 @@ Parameter must be '(PROMPT CHOICE1 (CHOISE2 ...))."
 	    (insert (format "Content-Transfer-Encoding: %s\n" encoding))
 	  )
 	(insert "\n")
-	(or (funcall (pgp-function 'mime-sign)
-		     (point-min)(point-max) nil nil pgp-boundary)
+	(or (as-binary-process
+	     (funcall (pgp-function 'mime-sign)
+		      (point-min)(point-max) nil nil pgp-boundary))
 	    (throw 'mime-editor/error 'pgp-error)
 	    )
 	))))

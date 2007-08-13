@@ -5,6 +5,15 @@
 /* Get most of the stuff from bsd4.3 */
 #include "bsd4-3.h"
 
+/* limits that lisp.h might have to guess otherwise */
+#include <limits.h>
+#undef BSD
+
+#ifndef NOT_C_CODE
+#include <sys/param.h>
+#include <sys/exec.h>
+#endif /* C_CODE */
+
 /* For mem-limits.h.  */
 #define BSD4_2
 
@@ -35,26 +44,35 @@
 
 #define GETPGRP_NO_ARG
 
+#if 0
 #ifndef NO_SHARED_LIBS
 /* These definitions should work for either dynamic or static linking,
    whichever is the default for `cc -nostdlib'.  */
 /* but they probably don't, and life's too short - jrg@doc.ic.ac.uk 
    ask for no shared libs if you have 0.9 */
-#define HAVE_TEXT_START		/* No need to define `start_of_text'.  */
+/* mrb -- ORDINARY_LINK works just fine... */
 #define LD_SWITCH_SYSTEM -e start
 #define START_FILES pre-crt0.o /usr/lib/crt0.o
-#define UNEXEC unexfreebsd.o    /* ironic, considering history of unexfreebsd */
 #define RUN_TIME_REMAP
+#else
+#define START_FILES crt0.o
 
+#endif /* not NO_SHARED_LIBS */
+#endif /* 0 */
+
+#define HAVE_TEXT_START		/* No need to define `start_of_text'.  */
+#define ORDINARY_LINK
+#define UNEXEC unexfreebsd.o    /* ironic, considering history of unexfreebsd */
+
+#if 0
 /* Try to make this work for both 0.9 and >0.9.  */
 #define N_PAGSIZ(x) __LDPGSZ
 #define N_BSSADDR(x) (N_ALIGN(x, N_DATADDR(x)+x.a_data))
 /* #define N_TRELOFF(x) N_RELOFF(x) */
 /* the 1.0 way.. */
+#endif /* 0 */
+
 #define N_RELOFF(x) N_TRELOFF(x)
-#else
-#define START_FILES crt0.o
-#endif /* not NO_SHARED_LIBS */
 
 #define NO_MATHERR
 

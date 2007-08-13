@@ -41,7 +41,7 @@ Boston, MA 02111-1307, USA.  */
 #include "regex.h"
 
 
-#define REGEXP_CACHE_SIZE 5
+#define REGEXP_CACHE_SIZE 20
 
 /* If the regexp is non-nil, then the buffer contains the compiled form
    of that regexp, suitable for searching.  */

@@ -450,7 +450,8 @@ There should be no more than seven characters after the final `/'"
 	    (jka-compr-run-real-handler 'write-region
 					(list (point-min) (point-max)
 					      filename
-					      (and append can-append) 'dont lockname coding-system))
+					      (and append can-append)
+					      'dont lockname 'binary))
 	    (erase-buffer)
 	    (set-buffer cbuf)
 

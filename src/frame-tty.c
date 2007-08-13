@@ -31,6 +31,8 @@ Boston, MA 02111-1307, USA.  */
 #include "console-tty.h"
 #include "frame.h"
 
+#include "events.h"
+
 #ifdef HAVE_GPM
 #include <gpm.h>
 #endif
@@ -42,8 +44,7 @@ Lisp_Object Vdefault_tty_frame_plist;
 /* The count of frame number. */
 static int tty_frame_count;
 
-static void tty_make_frame_visible (struct frame *);
-static void tty_make_frame_invisible (struct frame *);
+static void tty_raise_frame (struct frame *);
 
 
 static void
@@ -65,17 +66,23 @@ tty_init_frame_1 (struct frame *f, Lisp_Object props)
 static void
 tty_init_frame_3 (struct frame *f)
 {
-  struct device *d = XDEVICE (FRAME_DEVICE (f));
-  Lisp_Object tail = DEVICE_FRAME_LIST (d);
+  tty_raise_frame (f);
+}
 
-  while (CONSP (tail))
-    {
-      tty_make_frame_invisible (decode_frame (XCAR (tail)));
-      tail = XCDR (tail);
-    }
-  select_frame_2 (make_frame (f));
-  SET_FRAME_CLEAR (f);
-  tty_make_frame_visible (f);
+static void
+tty_select_frame_if_unhidden (Lisp_Object frame)
+{
+    if (FRAME_REPAINT_P (XFRAME (frame)))
+      select_frame_1 (frame);
+}
+
+static void
+tty_schedule_frame_select (struct frame *f)
+{
+  Lisp_Object frame;
+
+  XSETFRAME (frame, f);
+  enqueue_magic_eval_event (tty_select_frame_if_unhidden, frame);
 }
 
 static void
@@ -119,8 +126,7 @@ tty_make_frame_visible (struct frame *f)
 {
   if (!FRAME_VISIBLE_P(f))
     {
-      SET_FRAME_CLEAR(f);
-      f->visible = 1;
+      f->visible = -1;
     }
 }
 
@@ -131,65 +137,101 @@ tty_make_frame_invisible (struct frame *f)
   f->visible = 0;
 }
 
+static void
+tty_make_frame_hidden (struct frame *f)
+{
+  f->visible = -1;
+}
+
+static void
+tty_make_frame_unhidden (struct frame *f)
+{
+  if (!FRAME_REPAINT_P(f))
+    {
+      SET_FRAME_CLEAR(f);
+      f->visible = 1;
+    }
+}
+
 static int
 tty_frame_visible_p (struct frame *f)
 {
   return FRAME_VISIBLE_P (f);
 }
 
-/* Raise the frame.  This means that it becomes visible, and all the
-   others become invisible.  */
 static void
-tty_raise_frame (struct frame *f)
+tty_raise_frame_no_select (struct frame *f)
 {
+  struct frame *o;
   struct device *d = XDEVICE (FRAME_DEVICE (f));
   Lisp_Object frame_list = DEVICE_FRAME_LIST (d);
   Lisp_Object tail = frame_list;
 
   while (CONSP (tail))
     {
-      if (decode_frame (XCAR (tail)) != f)
-	tty_make_frame_invisible (XFRAME (XCAR (tail)));
+      o = XFRAME (XCAR (tail));
+      if (o != f && FRAME_REPAINT_P(o))
+	{
+	   tty_make_frame_hidden (o);
+	   break;
+	}
       tail = XCDR (tail);
     }
-  select_frame_2 (make_frame (f));
-  tty_make_frame_visible (f);
+  tty_make_frame_unhidden (f);
 }
 
-/* Lower the frame.  This means that it becomes invisible, while the
-   one after it in the frame list becomes visible.  */
+static void
+tty_raise_frame (struct frame *f)
+{
+  struct device *d = XDEVICE (FRAME_DEVICE (f));
+
+  tty_raise_frame_no_select (f);
+  tty_schedule_frame_select (f);
+}
+
 static void
 tty_lower_frame (struct frame *f)
 {
+  struct frame *o;
   struct device *d = XDEVICE (FRAME_DEVICE (f));
   Lisp_Object frame_list = DEVICE_FRAME_LIST (d);
   Lisp_Object tail;
   Lisp_Object new;
 
-  if (!FRAME_VISIBLE_P (f))
+  if (!FRAME_REPAINT_P (f))
     return;
 
   tail = frame_list;
   while (CONSP (tail))
     {
-      if (decode_frame (XCAR (tail)) == f)
+      o = XFRAME (XCAR (tail));
+      if (o == f)
 	break;
       tail = XCDR (tail);
     }
-  if (!CONSP (tail))
-    {
-      error ("Cannot find frame to lower");
-    }
 
-  tty_make_frame_invisible (f);
+  /* to lower this frame another frame has to be raised.
+     return if there is no other frame. */
+  if (!CONSP (tail) && EQ(frame_list, tail))
+    return;
+
+  tty_make_frame_hidden (f);
   if (CONSP (XCDR (tail)))
     new = XCAR (XCDR (tail));
   else
     new = XCAR (frame_list);
-  tty_make_frame_visible (XFRAME (new));
-  select_frame_2 (new);
+  tty_make_frame_unhidden (XFRAME (new));
+  tty_schedule_frame_select (XFRAME (new));
 }
 
+static void
+tty_delete_frame (struct frame *f)
+{
+    struct device *d = XDEVICE (FRAME_DEVICE (f));
+
+    if (!NILP (DEVICE_SELECTED_FRAME (d)))
+      tty_raise_frame (XFRAME (DEVICE_SELECTED_FRAME (d)));
+}
 
 /************************************************************************/
 /*                            initialization                            */
@@ -210,6 +252,7 @@ console_type_create_frame_tty (void)
   CONSOLE_HAS_METHOD (tty, frame_visible_p);
   CONSOLE_HAS_METHOD (tty, raise_frame);
   CONSOLE_HAS_METHOD (tty, lower_frame);
+  CONSOLE_HAS_METHOD (tty, delete_frame);
 }
 
 void

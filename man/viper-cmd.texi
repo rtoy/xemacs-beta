@@ -333,7 +333,12 @@ this function.
 @cindex case-sensitive search
 @cindex case-insensitive search
 @item  %
-Find the next bracket and go to its match.
+Find the next bracket/parenthesis/brace and go to its match.
+By default, Viper ignores brackets/parentheses/braces that occur inside
+parentheses. You can change this by setting
+@code{vip-parse-sexp-ignore-comments} to nil in your @file{.vip} fipe.
+This option can also be toggled interactively if you quickly hit @kbd{%}
+three times.
 @end table
 @kindex @kbd{%}
 @kindex @kbd{C-c /}
@@ -389,6 +394,7 @@ Find the next bracket and go to its match.
 @kindex @kbd{j}
 @kindex @kbd{k}
 @kindex @kbd{l}
+@vindex @code{vip-parse-sexp-ignore-comments}
 
 @node Marking,Appending Text,Move Commands,Text Handling
 @subsection Marking

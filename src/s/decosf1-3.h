@@ -6,9 +6,6 @@
 #include <sys/stropts.h>
 #endif
 
-/* XEmacs addition */
-#undef HAVE_UNION_WAIT
-
 /* Supposedly gmalloc and rel_alloc will work now
    (grunwald@foobar.cs.colorado.edu) */
 #undef SYSTEM_MALLOC

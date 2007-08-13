@@ -75,3 +75,8 @@
 
 /* XEmacs: apparently rint() is totally broken in HPUX 9. */
 #undef HAVE_RINT
+
+/* XEmacs: avoid using -lcurses, to make the binary portable from 9.X to 10.X */
+#undef LIBS_TERMCAP
+#define LIBS_TERMCAP -ltermcap
+

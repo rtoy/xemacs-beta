@@ -1,7 +1,8 @@
 ;;; autoload.el --- maintain autoloads in loaddefs.el.
-;;; Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
-;;; Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
-;;; Copyright (C) 1996 Ben Wing.
+
+;; Copyright (C) 1991, 1992, 1993, 1994, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1995 Tinker Systems and INS Engineering Corp.
+;; Copyright (C) 1996 Ben Wing.
 
 ;; Author: Roland McGrath <roland@gnu.ai.mit.edu>
 ;; Keywords: maint

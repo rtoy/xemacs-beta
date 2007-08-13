@@ -1,3 +1,7 @@
+1997-06-04  Steven L Baur  <steve@altair.xemacs.org>
+
+	* term.el (make-term): Fix docstring.
+
 Sun Dec 22 00:38:46 1996  Sudish Joseph  <sudish@mindspring.com>
 
 	* tgud.el (tgud-gdb-complete-filter): Match carriage returns as

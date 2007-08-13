@@ -91,6 +91,3 @@ Boston, MA 02111-1307, USA.  */
 
 #define SECTION_ALIGNMENT (getpagesize() - 1)
 
-/* Define this macro if system defines a type `union wait'.  */
-
-#define HAVE_UNION_WAIT

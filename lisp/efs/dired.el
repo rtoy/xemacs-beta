@@ -102,6 +102,7 @@ variable default-directory.
 Buffer local.")
 (make-variable-buffer-local 'default-directory-function)
 
+;;;###autoload
 (defun default-directory ()
   " Returns the default-directory for the current buffer.
 Will use the variable default-directory-function if it non-nil."

@@ -193,7 +193,8 @@ remaining command-line args are in the variable `command-line-args-left'.")
     (princ (concat "\n" (emacs-version) "\n\n"))
     (princ
      (if (featurep 'x)
-	 (concat "XEmacs accepts all standard X Toolkit command line options.\n"
+	 (concat (emacs-name)
+		 " accepts all standard X Toolkit command line options.\n"
 		 "In addition, the")
        "The"))
     (princ " following options are accepted:
@@ -247,17 +248,17 @@ remaining command-line args are in the variable `command-line-args-left'.")
 	    (princ doc)
 	    (terpri))))
         (setq l (cdr l))))
-    (princ "\
+    (princ (concat "\
   +N <file>             Start displaying <file> at line N.
 
 Anything else is considered a file name, and is placed into a buffer for
 editing.
 
-XEmacs has an online tutorial and manuals.  Type ^Ht (Control-h t) after
+" (emacs-name) " has an online tutorial and manuals.  Type ^Ht (Control-h t) after
 starting XEmacs to run the tutorial.  Type ^Hi to enter the manual browser.
 Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
 
-    (kill-emacs 0)))
+    (kill-emacs 0))))
 
 (defun command-line-do-funcall (arg)
   "Invoke the named lisp function with no arguments.

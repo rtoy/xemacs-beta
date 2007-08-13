@@ -2,6 +2,9 @@
 
 ;; Copyright (C) 1996 Ben Wing.
 
+;; Maintainer: XEmacs Development Team
+;; Keywords: internal
+
 ;; This file is part of XEmacs.
 
 ;; XEmacs is free software; you can redistribute it and/or modify it
@@ -21,6 +24,11 @@
 
 ;;; Synched up with: Not in FSF.
 
+;;; Commentary:
+
+;;; Code:
+
+;;;###autoload
 (defun pretty-print-profiling-info (&optional info)
   "Print profiling info INFO to standard output in a pretty format.
 If INFO is omitted, the current profiling info is retrieved using
@@ -40,3 +48,5 @@ If INFO is omitted, the current profiling info is retrieved using
 	(princ (format "%-50s%10d   %6.3f\n" f (cdar info)
 		       (* 100 (/ (cdar info) sum)))))
       (setq info (cdr info)))))
+
+;;; profile.el ends here

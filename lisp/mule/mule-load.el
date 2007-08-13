@@ -27,12 +27,12 @@
 (load-gc "mule-files")
 ;; Load the remaining basic files.
 (load-gc "mule-category")
-;;(load-gc "mule-process")
 (load-gc "mule-ccl")
 (load-gc "mule-misc")
 (load-gc "kinsoku")
 (when (featurep 'x)
   (load-gc "mule-x-init"))
+(load-gc "mule-cmds") ; to sync with Emacs 20.1
 
 ;; after this goes the specific lisp routines for a particular input system
 ;; 97.2.5 JHod Shouldn't these go into a site-load file to allow site

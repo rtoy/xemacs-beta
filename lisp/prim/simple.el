@@ -1117,11 +1117,10 @@ to make one entry in the kill ring."
   (or (and beg end) (if zmacs-regions ;; rewritten for I18N3 snarfing
 			(error "The region is not active now")
 		      (error "The mark is not set now")))
+  (if (> beg end) (setq beg (prog1 end (setq end beg))))
   (if verbose (if buffer-read-only
-		  (message "Copying %d characters"
-		       (- (max beg end) (min beg end)))
-		  (message "Killing %d characters"
-		       (- (max beg end) (min beg end)))))
+		  (message "Copying %d characters" (- end beg))
+		  (message "Killing %d characters" (- end beg))))
   (cond
 
    ;; I don't like this large change in behavior -- jwz
@@ -1151,7 +1150,7 @@ to make one entry in the kill ring."
 	     (= beg end)))
     ;; Don't let the undo list be truncated before we can even access it.
     ;; FSF calls this `undo-strong-limit'
-    (let ((undo-high-threshold (+ (- (max beg end) (min beg end)) 100))
+    (let ((undo-high-threshold (+ (- end beg) 100))
 	  ;(old-list buffer-undo-list)
 	  tail)
       (delete-region beg end)
@@ -2042,9 +2041,7 @@ If nil, use `comment-end' instead.")
 	(setq begpos (point))
 	;; Compute desired indent.
 	(if (= (current-column)
-	       (setq indent (if comment-indent-hook
-				(funcall comment-indent-hook)
-			      (funcall comment-indent-function))))
+	       (setq indent (funcall comment-indent-function)))
 	    (goto-char begpos)
 	  ;; If that's different from current, change it.
 	  (skip-chars-backward " \t")
@@ -2383,14 +2380,16 @@ Setting this variable automatically makes it local to the current buffer.")
 ;; Put FSF one in until I can one or the other working properly, then the
 ;; other one is history.
 (defun fsf:do-auto-fill ()
-  (let (fc justify bol give-up
+  (let (fc justify
+	   ;; bol
+	   give-up
 	   (fill-prefix fill-prefix))
     (if (or (not (setq justify (current-justification)))
 	    (null (setq fc (current-fill-column)))
 	    (and (eq justify 'left)
 		 (<= (current-column) fc))
 	    (save-excursion (beginning-of-line) 
-			    (setq bol (point))
+			    ;; (setq bol (point))
 			    (and auto-fill-inhibit-regexp
 				 (looking-at auto-fill-inhibit-regexp))))
 	nil ;; Auto-filling not required
@@ -2848,6 +2847,15 @@ when it is off screen."
 ;; buffer-quit-function
 ;; keyboard-escape-quit
 
+(defun assoc-ignore-case (key alist)
+  "Like `assoc', but assumes KEY is a string and ignores case when comparing."
+  (let (element)
+    (while (and alist (not element))
+      (if (equal key (downcase (car (car alist))))
+	  (setq element (car alist)))
+      (setq alist (cdr alist)))
+    element))
+
 (defun set-variable (var val)
   "Set VARIABLE to VALUE.  VALUE is a Lisp object.
 When using this interactively, supply a Lisp expression for VALUE.
@@ -3140,29 +3148,59 @@ as the second argument.")
 
 (defvar log-message-max-size 50000
   "Maximum size of the \" *Message-Log*\" buffer.  See `log-message'.")
+(make-compatible-variable 'message-log-max 'log-message-max-size)
 
 (defvar log-message-ignore-regexps
-  '("^Mark set$"
-    "^Undo!$"
-    "^Undo\\.\\.\\.$"
-    "^Quit$"
+  '(;; Often-seen messages
+    "^$"				; empty message
+    "^Mark set$"
     "^\\(Beginning\\|End\\) of buffer$"
-    "^Fontifying"
-    "^\\(Failing \\)?\\([Ww]rapped \\)?\\([Rr]egexp \\)?I-search\\( backward\\)?:"
-    "^Mark saved where search started$"
-    "^Making completion list"
-    "^Matches "					; paren-matching message
-    "^Type .* to \\(remove help\\|restore the other\\) window."
-    "^M-x .* (bound to key"			; teach-extended-commands
+    "^Quit$"
+    "^Killing [0-9]+ characters$"
+    ;; saving
+    "^Saving file .*\\.\\.\\.$"		; note: cannot ignore ^Wrote, because
+					; it would kill off too much stuff.
     "^(No changes need to be saved)$"
     "^(No files need saving)$"
-    "^\\(Parsing messages\\|Reading attributes\\|Generating summary\\|Building threads\\|Converting\\)\\.\\.\\. [0-9]+$"	; vm
-    "^End of message \d+"			; vm
-    "^Parsing error messages\\.\\.\\.[0-9]+"	; compile
-    "^Parsed [0-9]+ of [0-9]+ ([0-9]+%)$"	; w3
-    "^\\(Formatting Summary\\|Reading active file\\|Checking new news\\|Looking for crossposts\\|Marking crossposts\\|MHSPOOL:\\|NNSPOOL:\\|NNTP:\\|\\(Uns\\|S\\)ubscribing new newsgroups\\)\\.\\.\\. *[0-9]+%$"	; gnus
-    "^Adding glyphs\\.\\.\\. ([0-9]+%)\\( done\\)?$"	; outl-mouse
-    "^->"				        ; bbdb prompt
+    ;; undo, with the output of redo.el
+    "^Undo[!.]+$"
+    "^Redo[!.]+$"
+    ;; M-x compile
+    "^Parsing error messages\\.\\.\\."
+    ;; M-!
+    "^(Shell command completed with no output)"
+    ;; font-lock
+    "^Fontifying"
+    ;; isearch
+    "^\\(Failing \\)?\\([Ww]rapped \\)?\\([Rr]egexp \\)?I-search\\( backward\\)?:"
+    "^Mark saved where search started$"
+    ;; menus
+    "^Selecting menu item"
+    ;; completions
+    "^Making completion list"
+    "^Matches "				; paren-matching message
+    ;; help
+    "^Type .* to \\(remove help\\|restore the other\\) window."
+    "^M-x .* (bound to key"		; teach-extended-commands
+    ;; VM
+    "^\\(Parsing messages\\|Reading attributes\\|Generating summary\\|Building threads\\|Converting\\)\\.\\.\\. [0-9]+$"
+    "^End of message"			; + Gnus
+    ;; Gnus
+    "^No news is no news$"
+    "^No more\\( unread\\)? newsgroups$"
+    "^Opening [^ ]+ server\\.\\.\\."
+    "^[^:]+: Reading incoming mail"
+    "^Getting mail from "
+    "^\\(Generating Summary\\|Sorting threads\\|Making sparse threads\\|Scoring\\|Checking new news\\|Expiring articles\\|Sending\\)\\.\\.\\."
+    "^\\(Fetching headers for\\|Retrieving newsgroup\\|Reading active file\\)"
+    "^No more\\( unread\\)? articles"
+    "^Deleting article "
+    ;; W3
+    "^Parsed [0-9]+ of [0-9]+ ([0-9]+%)"
+    ;; outl-mouse
+    "^Adding glyphs\\.\\.\\."
+    ;; bbdb
+    "^->"
     )
   "List of regular expressions matching messages which shouldn't be logged.
 See `log-message'.  
@@ -3457,7 +3495,7 @@ suppression in the .emacs file will be honored."
     (setq before-init-deferred-warnings
 	  (cdr before-init-deferred-warnings))))
 
-(add-hook 'after-init-hook 'after-init-display-warnings)
+#-infodock (add-hook 'after-init-hook 'after-init-display-warnings)
 
 (defun display-warning (class message &optional level)
   "Display a warning message.
@@ -3472,7 +3510,8 @@ times."
   (or level (setq level 'warning))
   (or (listp class) (setq class (list class)))
   (check-argument-type 'warning-level-p level)
-  (if (not init-file-loaded)
+  (if (and (not (featurep 'infodock))
+	   (not init-file-loaded))
       (setq before-init-deferred-warnings
 	    (cons (list class message level) before-init-deferred-warnings))
     (catch 'ignored
@@ -3533,5 +3572,11 @@ The C code calls this periodically, right before redisplay."
 	  (set-marker warning-marker 1 buffer)))
     (set-window-start (display-buffer buffer) warning-marker)
     (set-marker warning-marker (point-max buffer) buffer)))
+
+(defun emacs-name ()
+  "Return the printable name of this instance of GNU Emacs."
+  (cond ((featurep 'infodock) "InfoDock")
+	((featurep 'xemacs) "XEmacs")
+	(t "Emacs")))
 
 ;;; simple.el ends here

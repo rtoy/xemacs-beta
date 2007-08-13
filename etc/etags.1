@@ -40,8 +40,8 @@ understood by
 format understood by
 .BR vi ( 1 )\c
 \&.  Both forms of the program understand
-the syntax of C, Objective C, C++, Fortran, Pascal, LaTeX, Scheme,
-Emacs Lisp/Common Lisp, Erlang, Postscript, Prolog and
+the syntax of C, Objective C, C++, Java, Fortran, Pascal, Cobol,
+LaTeX, Scheme, Emacs Lisp/Common Lisp, Postscript, Erlang, Prolog and
 most assembler\-like syntaxes.
 Both forms read the files specified on the command line, and write a tag
 table (defaults: `\|TAGS\|' for \fBetags\fP, `\|tags\|' for
@@ -99,6 +99,14 @@ detection of language based on filename extension.  The `none'
 language may be used to disable language parsing altogether; only
 regexp matching is done in this case (see the \fB\-\-regex\fP option).
 .TP
+\fB\-\-no_globals\fP
+Do not tag global variables in C, C++, Objective C, Java.  Typically
+this reduces the file size by one fourth.
+.TP
+\fB\-\-members\fP
+Tag variables that are members of strucure-like constructs in C++,
+Objective C, Java. 
+.TP
 \fB\-o\fP \fItagfile\fP, \fB\-\-output=\fItagfile\fP
 Explicit name of file for tag table; overrides default `\|TAGS\|' or
 `\|tags\|'.   (But ignored with \fB\-v\fP or \fB\-x\fP.)
@@ -138,16 +146,6 @@ formatting reasons):
 CONFIGURATION\\)\ +[^\ ]*\ +OF/'\ \-\-regex\='/[\ \\t]*\\
 \\(ATTRIBUTE\\|ENTITY\\|FUNCTION\\|PACKAGE\\(\ BODY\\)?\\
 \\|PROCEDURE\\|PROCESS\\|TYPE\\)[\ \\t]+\\([^\ \\t(]+\\)/\\3/'\fP
-.br
-
-Tag Cobol files:
-.br
-\fI\-\-language\=none \-\-regex\='/.......[a\-zA\-Z0\-9\-]+\\./'\fP
-.br
-
-Tag Postscript files:
-.br
-\fI\-\-language\=none \-\-regex\='#/[^\ \\t{]+#/'\fP
 .br
 
 Tag TCL files (this last example shows the usage of a \fItagregexp\fP):

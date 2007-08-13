@@ -2670,9 +2670,11 @@ init_event_Xt_late (void) /* called when already initialized */
   XSetErrorHandler (x_error_handler);
   XSetIOErrorHandler (x_IO_error_handler);
 
+#ifndef WINDOWSNT
   XtAppAddInput (Xt_app_con, signal_event_pipe[0],
 		 (XtPointer) (XtInputReadMask /* | XtInputExceptMask */),
 		 Xt_what_callback, 0);
+#endif
 
   XtAppSetTypeConverter (Xt_app_con, XtRString, XtRPixel,
 		         EmacsXtCvtStringToPixel,

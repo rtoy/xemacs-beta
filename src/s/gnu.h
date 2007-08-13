@@ -43,7 +43,6 @@ Boston, MA 02111-1307, USA.  */
 #define TAB3 OXTABS
 
 #define GETPGRP_NO_ARG
-#define HAVE_UNION_WAIT
 
 /* GNU needs its own crt0, and libc defines data_start.  */
 #define ORDINARY_LINK

@@ -1,5 +1,10 @@
-;; Compose-key processing in emacs.
-;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
+;;; x-compose.el --- Compose-key processing in XEmacs
+
+;; Copyright (C) 1992, 1993, 1997 Free Software Foundation, Inc.
+
+;; Author: Jamie Zawinski <jwz@netscape.com>
+;; Maintainer: XEmacs Development Team
+;; Keywords: i18n
 
 ;; This file is part of XEmacs.
 
@@ -18,69 +23,75 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-;;; created by jwz, 14-jun-92.
+;;; Synched up with: Not in FSF.
 
-;;; This file implements DEC-, OpenWindows-, and HP-compatible "Compose"
-;;; processing for XEmacs.  
-;;;
-;;; If you are running a version of X which already does compose processing,
-;;; then you don't need this file.  But the MIT R4 and R5 distributions don't
-;;; do compose processing, so you may want to fake it by using this code.
-;;;
-;;; The basic idea is that there are several ways to generate keysyms which
-;;; do not have keys devoted to them on your keyboard.
-;;;
-;;; The first method is by using "dead" keys.  A dead key is a key which,
-;;; when typed, does not insert a character.  Instead it modifies the
-;;; following character typed.  So if you typed "dead-tilde" followed by "A",
-;;; then "A-tilde" would be inserted.  Of course, this requires you to modify
-;;; your keyboard to include a "dead-tilde" key on it somewhere.
-;;;
-;;; The second method is by using a "Compose" key.  With a Compose key, you
-;;; would type "Compose" then "tilde" then "A" to insert "A-tilde".
-;;;
-;;; There are a small number of dead keys: acute, grave, cedilla, diaeresis,
-;;; circumflex, tilde, and ring.  There are a larger number of accented and
-;;; other characters accessible via the Compose key, so both are useful.
-;;;
-;;; To use this code, you will need to have a Compose key on your keyboard.
-;;; The default configuration of most X keyboards doesn't contain one.  You
-;;; can, for example, turn the right "Meta" key into a "Compose" key with
-;;; this command:
-;;;
-;;;    xmodmap -e "remove mod1 = Meta_R" -e "keysym Meta_R = Multi_key"
-;;;
-;;; Multi-key is the name that X (and emacs) know the "Compose" key by.
-;;; The "remove..." command is necessary because the "Compose" key must not
-;;; have any modifier bits associated with it.  This exact command may not
-;;; work, depending on what system and keyboard you are using.  If it
-;;; doesn't, you'll have to read the man page for xmodmap.  You might want
-;;; to get the "xkeycaps" program from the host export.lcs.mit.edu in the
-;;; file contrib/xkeycaps.tar.Z, which is a graphical front end to xmodmap
-;;; that hides xmodmap's arcane syntax from you.
-;;;
-;;; If for some reason you don't want to have a dedicated compose key on your
-;;; keyboard, you can use some other key as the prefix.  For example, to make
-;;; "Meta-Shift-C" act as a compose key (so that "M-C , c" would insert the
-;;; character "ccedilla") you could do
-;;;
-;;;    (global-set-key "\M-C" compose-map)
-;;;
-;;; I believe the bindings encoded in this file are the same as those used
-;;; by OpenWindows versions 2 and 3, and DEC VT320 terminals.  Please let me
-;;; know if you think otherwise.
-;;;
-;;; Much thanks to Justin Bur <justin@crim.ca> for helping me understand how
-;;; this stuff is supposed to work.
-;;;
-;;; You also might want to consider getting Justin's patch for the MIT Xlib
-;;; that implements compose processing in the library.  This will enable
-;;; compose processing in applications other than emacs as well.  You can
-;;; get it from export.lcs.mit.edu in contrib/compose.tar.Z.
+;;; Commentary:
 
-;;; This code has one feature that a more "builtin" Compose mechanism could
-;;; not have: at any point you can type C-h to get a list of the possible
-;;; completions of what you have typed so far.
+;; created by jwz, 14-jun-92.
+
+;; This file implements DEC-, OpenWindows-, and HP-compatible "Compose"
+;; processing for XEmacs.  
+
+;; If you are running a version of X which already does compose processing,
+;; then you don't need this file.  But the MIT R4 and R5 distributions don't
+;; do compose processing, so you may want to fake it by using this code.
+
+;; The basic idea is that there are several ways to generate keysyms which
+;; do not have keys devoted to them on your keyboard.
+
+;; The first method is by using "dead" keys.  A dead key is a key which,
+;; when typed, does not insert a character.  Instead it modifies the
+;; following character typed.  So if you typed "dead-tilde" followed by "A",
+;; then "A-tilde" would be inserted.  Of course, this requires you to modify
+;; your keyboard to include a "dead-tilde" key on it somewhere.
+
+;; The second method is by using a "Compose" key.  With a Compose key, you
+;; would type "Compose" then "tilde" then "A" to insert "A-tilde".
+
+;; There are a small number of dead keys: acute, grave, cedilla, diaeresis,
+;; circumflex, tilde, and ring.  There are a larger number of accented and
+;; other characters accessible via the Compose key, so both are useful.
+
+;; To use this code, you will need to have a Compose key on your keyboard.
+;; The default configuration of most X keyboards doesn't contain one.  You
+;; can, for example, turn the right "Meta" key into a "Compose" key with
+;; this command:
+
+;;    xmodmap -e "remove mod1 = Meta_R" -e "keysym Meta_R = Multi_key"
+
+;; Multi-key is the name that X (and emacs) know the "Compose" key by.
+;; The "remove..." command is necessary because the "Compose" key must not
+;; have any modifier bits associated with it.  This exact command may not
+;; work, depending on what system and keyboard you are using.  If it
+;; doesn't, you'll have to read the man page for xmodmap.  You might want
+;; to get the "xkeycaps" program from the host export.lcs.mit.edu in the
+;; file contrib/xkeycaps.tar.Z, which is a graphical front end to xmodmap
+;; that hides xmodmap's arcane syntax from you.
+
+;; If for some reason you don't want to have a dedicated compose key on your
+;; keyboard, you can use some other key as the prefix.  For example, to make
+;; "Meta-Shift-C" act as a compose key (so that "M-C , c" would insert the
+;; character "ccedilla") you could do
+
+;;    (global-set-key "\M-C" compose-map)
+
+;; I believe the bindings encoded in this file are the same as those used
+;; by OpenWindows versions 2 and 3, and DEC VT320 terminals.  Please let me
+;; know if you think otherwise.
+
+;; Much thanks to Justin Bur <justin@crim.ca> for helping me understand how
+;; this stuff is supposed to work.
+
+;; You also might want to consider getting Justin's patch for the MIT Xlib
+;; that implements compose processing in the library.  This will enable
+;; compose processing in applications other than emacs as well.  You can
+;; get it from export.lcs.mit.edu in contrib/compose.tar.Z.
+
+;; This code has one feature that a more "builtin" Compose mechanism could
+;; not have: at any point you can type C-h to get a list of the possible
+;; completions of what you have typed so far.
+
+;;; Code:
 
 (require 'x-iso8859-1)
 
@@ -782,3 +793,5 @@ which it understands) are:
 
 
 (provide 'x-compose)
+
+;;; x-compose.el ends here

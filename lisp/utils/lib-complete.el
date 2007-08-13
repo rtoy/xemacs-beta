@@ -1,9 +1,10 @@
 ;;; lib-complete.el --- Completion on the lisp search path
 
+;; Copyright (C) 1997 Free Software Foundation, Inc.
 ;; Copyright (C) Mike Williams <mike-w@cs.aukuni.ac.nz> 1991
 
 ;; Author: Mike Williams <mike-w@cs.aukuni.ac.nz>
-;; Maintainer:
+;; Maintainer: XEmacs Development Team
 ;; Keywords: lisp, extensions
 ;; Created: Sat Apr 20 17:47:21 1991
 
@@ -35,7 +36,7 @@
 ;; Last Modified By: Heiko M|nkel <muenkel@tnt.uni-hannover.de>
 ;; Additional XEmacs integration By: Chuck Thompson <cthomp@cs.uiuc.edu>
 ;; Last Modified On: Thu Jul 1 14:23:00 1994
-;; RCS Info        : $Revision: 1.2 $ $Locker:  $
+;; RCS Info        : $Revision: 1.3 $ $Locker:  $
 ;; ========================================================================
 ;; NOTE: XEmacs must be redumped if this file is changed.
 ;;
@@ -56,43 +57,6 @@
 ;; 4/26/97: sb Mule-ize.
 
 ;;; Code:
-
-;;=== Usage ===============================================================
-;; 
-;; (autoload (fmakunbound 'load-library) "lib-complete" nil t)
-;; (autoload 'library-all-completions "lib-complete")
-;; (autoload 'read-library "lib-complete")
-;; (autoload 'find-library "lib-complete"
-;;  "Find and edit the source for the library named LIBRARY.
-;; The extension of the LIBRARY must be omitted.")
-
-;;=== Locate a file in a search path ======================================
-
-;(defun locate-file (FILE SEARCH-PATH &optional SUFFIX-LIST PRED)
-;  "Search for FILE on SEARCH-PATH (list).  If optional SUFFIX-LIST is
-;provided, allow file to be followed by one of the suffixes.
-;Optional second argument PRED restricts the number of files which
-;may match.  The default is file-exists-p."
-;  (if (not SUFFIX-LIST) (setq SUFFIX-LIST '("")))
-;  (if (not PRED) (setq PRED 'file-exists-p))
-;  (if (file-name-absolute-p FILE) (setq SEARCH-PATH '(nil)))
-;  (if (equal FILE "") (error "Empty filename"))
-;  (let ((filelist 
-;	 (mapcar 
-;	  (function (lambda (ext) (concat FILE ext)))
-;	  SUFFIX-LIST)))
-;    ;; Search SEARCH-PATH for a readable file in filelist
-;    (catch 'found
-;      (while SEARCH-PATH
-;	(let ((filelist filelist))
-;	  (while filelist
-;	    (let ((filepath (expand-file-name (car filelist) 
-;					      (car SEARCH-PATH))))
-;	      (if (funcall PRED filepath)
-;		  (throw 'found filepath)))
-;	    (setq filelist (cdr filelist))))
-;	(setq SEARCH-PATH (cdr SEARCH-PATH))))
-;    ))
 
 ;;=== Determine completions for filename in search path ===================
 

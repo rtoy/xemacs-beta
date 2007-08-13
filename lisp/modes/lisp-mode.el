@@ -366,11 +366,17 @@ if that value is non-nil."
 (defun eval-interactive (expr)
   "Like `eval' except that it transforms defvars to defconsts."
   ;; by Stig@hackvan.com
-  (if (and (consp expr)
-	   (eq (car expr) 'defvar)
-	   (> (length expr) 2))
-      (eval (cons 'defconst (cdr expr)))
-    (eval expr)))
+  (cond ((and (consp expr)
+	      (eq (car expr) 'defvar)
+	      (> (length expr) 2))
+	 (eval (cons 'defconst (cdr expr))))
+	((and (consp expr)
+	      (eq (car expr) 'defcustom)
+	      (> (length expr) 2))
+	 (makunbound (nth 1 expr))
+	 (eval expr))
+	(t
+	 (eval expr))))
 
 ;; XEmacs change, based on Bob Weiner suggestion
 (defun eval-last-sexp (eval-last-sexp-arg-internal) ;dynamic scoping wonderment

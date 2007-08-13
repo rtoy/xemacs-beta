@@ -1619,23 +1619,28 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 (defsetf face-underline-p (f &optional s) (x)
   (list 'set-face-underline-p f x s))
 (defsetf file-modes set-file-modes t)
-(defsetf frame-height set-screen-height t)
 (defsetf frame-parameters modify-frame-parameters t)
 (defsetf frame-visible-p cl-set-frame-visible-p)
-(defsetf frame-width set-screen-width t)
-
-;; XEmacs: new stuff
-(defsetf selected-console select-console t)
-(defsetf selected-device select-device t)
-(defsetf device-baud-rate (&optional d) (v)
-  `(set-device-baud-rate ,d ,v))
-(defsetf current-frame-configuration set-frame-configuration)
 (defsetf frame-properties (&optional f) (p)
   `(progn (set-frame-properties ,f ,p) ,p))
 (defsetf frame-property (f p &optional d) (v)
   `(progn (set-frame-property ,f ,v) ,p))
+(defsetf frame-width (&optional f) (v)
+  `(progn (set-frame-width ,f ,v) ,v))
+(defsetf frame-height (&optional f) (v)
+  `(progn (set-frame-height ,f ,v) ,v))
+(defsetf current-frame-configuration set-frame-configuration)
+
+;; XEmacs: new stuff
+;; Consoles
+(defsetf selected-console select-console t)
+(defsetf selected-device select-device t)
+(defsetf device-baud-rate (&optional d) (v)
+  `(set-device-baud-rate ,d ,v))
 (defsetf specifier-instance (spec &optional dom def nof) (val)
   `(set-specifier ,spec ,val ,dom))
+
+;; Annotations
 (defsetf annotation-glyph set-annotation-glyph)
 (defsetf annotation-down-glyph set-annotation-down-glyph)
 (defsetf annotation-face set-annotation-face)
@@ -1643,6 +1648,11 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 (defsetf annotation-data set-annotation-data)
 (defsetf annotation-action set-annotation-action)
 (defsetf annotation-menu set-annotation-menu)
+;; Widget
+(defsetf widget-get widget-put t)
+(defsetf widget-value widget-value-set t)
+
+;; Misc
 (defsetf recent-keys-ring-size set-recent-keys-ring-size)
 
 (defsetf getenv setenv t)

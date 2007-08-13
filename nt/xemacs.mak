@@ -44,6 +44,7 @@ $(OUTDIR)/lastfile.obj:	$(LASTFILE_SRC)/lastfile.c
 LWLIB=$(OUTDIR)/lwlib.lib
 LWLIB_SRC=$(XEMACS)/lwlib
 LWLIB_FLAGS=/nologo /w /Od /Zi $(INCLUDES) /D "WIN32" /D "_DEBUG" \
+ /D "_NTSDK" /D "_M_IX86" /D "_X86_" \
  /D "NEED_ATHENA" /D "NEED_LUCID" \
  /D "_WINDOWS" /D "MENUBARS_LUCID" /D "SCROLLBARS_LUCID" /D "DIALOGS_ATHENA" \
  /D "WINDOWSNT" /Fo$@ /c
@@ -204,7 +205,9 @@ DOC_SRCS_1=\
  $(XEMACS)/src/window.c \
  $(XEMACS)/src/xgccache.c \
  $(XEMACS)/src/xmu.c \
- $(XEMACS)/src/xselect.c
+ $(XEMACS)/src/xselect.c \
+ $(XEMACS)/src/balloon-x.c \
+ $(XEMACS)/src/balloon_help.c
 DOC_SRCS_2=\
  $(LISP)/version.el \
  $(LISP)/paths.el \
@@ -266,13 +269,26 @@ DOC_SRCS_2=\
  $(LISP)/prim/float-sup.elc \
  $(LISP)/prim/itimer.elc \
  $(LISP)/ediff/ediff-hook.elc \
- $(LISP)/packages/fontl-hooks.elc \
+ $(LISP)/packages/fontl-hooks.elc 
+DOC_SRCS_3= \
  $(LISP)/prim/scrollbar.elc \
  $(LISP)/prim/buffer.elc \
  $(LISP)/prim/menubar.elc \
  $(LISP)/packages/buff-menu.elc  \
- $(LISP)/modes/abbrev.elc 
-# X11_LISP NS_LISP ENERGIZE_LISP TOOLTALK_LISP DIALOG_LISP MULE_LISP NOMULE_LISP
+ $(LISP)/modes/abbrev.elc  \
+ $(LISP)/x11/x-menubar.elc \
+ $(LISP)/x11/x-faces.elc \
+ $(LISP)/x11/x-iso8859-1.elc \
+ $(LISP)/x11/x-mouse.elc \
+ $(LISP)/x11/x-select.elc \
+ $(LISP)/x11/x-scrollbar.elc \
+ $(LISP)/x11/x-toolbar.elc \
+ $(LISP)/x11/x-misc.elc \
+ $(LISP)/x11/x-init.elc \
+ $(LISP)/prim/dialog.elc \
+ $(LISP)/prim/files-nomule.elc
+
+# MULE_LISP or NOMULE_LISP
 
 MAKE_DOCFILE=$(OUTDIR)\make-docfile.exe
 SUPPORT_PROGS=$(MAKE_DOCFILE)
@@ -286,6 +302,7 @@ $(OUTDIR)/make-docfile.obj:	$(LIB_SRC)\make-docfile.c
 $(DOC): $(OUTDIR)/make-docfile.exe
 	!$(MAKE_DOCFILE) -o $@ $(DOC_SRCS_1) 
 	!$(MAKE_DOCFILE) -a $@ $(DOC_SRCS_2)
+	!$(MAKE_DOCFILE) -a $@ $(DOC_SRCS_3)
 
 #------------------------------------------------------------------------------
 
@@ -314,6 +331,8 @@ TEMACS_OBJS= \
 	$(OUTDIR)/abbrev.obj \
 	$(OUTDIR)/alloc.obj \
 	$(OUTDIR)/alloca.obj \
+	$(OUTDIR)/balloon-x.obj \
+	$(OUTDIR)/balloon_help.obj \
 	$(OUTDIR)/blocktype.obj \
 	$(OUTDIR)/buffer.obj \
 	$(OUTDIR)/bytecode.obj \
@@ -441,6 +460,16 @@ $(OUTDIR)/alloc.obj:	$(TEMACS_SRC)/alloc.c
 #	!"del $(OUTDIR)\\foo.c"
 
 $(OUTDIR)/alloca.obj:	$(TEMACS_SRC)/alloca.c
+#	!"$(TEMACS_CPP) $(TEMACS_CPP_FLAGS) $** > $(OUTDIR)/foo.c"
+	$(CC) $(TEMACS_FLAGS) $** /Fo$@
+#	!"del $(OUTDIR)\\foo.c"
+
+$(OUTDIR)/balloon-x.obj:	$(TEMACS_SRC)/balloon-x.c
+#	!"$(TEMACS_CPP) $(TEMACS_CPP_FLAGS) $** > $(OUTDIR)/foo.c"
+	$(CC) $(TEMACS_FLAGS) $** /Fo$@
+#	!"del $(OUTDIR)\\foo.c"
+
+$(OUTDIR)/balloon_help.obj:	$(TEMACS_SRC)/balloon_help.c
 #	!"$(TEMACS_CPP) $(TEMACS_CPP_FLAGS) $** > $(OUTDIR)/foo.c"
 	$(CC) $(TEMACS_FLAGS) $** /Fo$@
 #	!"del $(OUTDIR)\\foo.c"
@@ -852,7 +881,7 @@ $(OUTDIR)/print.obj:	$(TEMACS_SRC)/print.c
 
 $(OUTDIR)/process.obj:	$(TEMACS_SRC)/process.c
 #	!"$(TEMACS_CPP) $(TEMACS_CPP_FLAGS) $** > $(OUTDIR)/foo.c"
-	$(CC) $(TEMACS_FLAGS)  $** /Fo$@
+	$(CC) $(TEMACS_FLAGS) $** /Fo$@
 #	!"del $(OUTDIR)\\foo.c"
 
 $(OUTDIR)/pure.obj:	$(TEMACS_SRC)/pure.c

@@ -1,3 +1,25 @@
+Thu May 29 23:11:21 1997 davidh
+
+	* Synced with 20.3b2.
+
+	* Removed nt/README.src, nt/src.m.windowsnt.h nt/src.s.windowsnt.h.
+
+	* Updated README from marcpa.
+
+	* Added example Win32.cf and site.def files for X.
+
+	* Added sed.exe into nt/.
+
+	* Modified nt/xemacs.mak to pass correct flags to lwlib compile.
+
+	* Added extra .elc files to ensure make-docfile gets all symbols.
+
+	* Modified balloon_help.c to compile (#if'd max definition)
+
+	* Modified src/event-Xt.c so as not to add signal_event_pipe to
+          be selected on - this is a hack until I can work out a better
+          way. Thanks to Ben Wing for help on this.
+
 Thu Mar 27 20:56:21 1997  marcpa  (marcpa at MARCPA)
 
 	* Synced with 20.1b9.

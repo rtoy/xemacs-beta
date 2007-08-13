@@ -5,7 +5,7 @@
 ;; Author: Dave Gillespie <daveg@synaptics.com>
 ;;         Hrvoje Niksic <hniksic@srce.hr>  -- XEmacs port
 ;; Maintainer: Hrvoje Niksic <hniksic@srce.hr>
-;; Version: 3.14
+;; Version: 3.15
 ;; Keywords: abbrev
 
 ;; This file is part of XEmacs.
@@ -655,6 +655,7 @@ doubt, use whitespace."
     (while keys
       (when (or (eq (car keys) ?-)
 		(eq (car keys) '-)
+		(eq (car keys) ?>)
 		(not (or togetherp (eq start keys))))
 	(callf concat res " "))
       (if (> times 1)

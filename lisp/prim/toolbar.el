@@ -1,5 +1,9 @@
-;; Toolbar support.
-;; Copyright (C) 1995 Board of Trustees, University of Illinois
+;;; toolbar.el --- Toolbar support for XEmacs
+
+;; Copyright (C) 1995, 1997 Free Software Foundation, Inc.
+
+;; Maintainer: XEmacs Development Team
+;; Keywords: extensions, internal
 
 ;; This file is part of XEmacs.
 
@@ -19,6 +23,10 @@
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: Not in FSF.
+
+;;; Commentary:
+
+;;; Code:
 
 (defvar toolbar-help-enabled t
   "If non-nil help is echoed for toolbar buttons.")
@@ -82,7 +90,9 @@
 ;; default-mouse-motion-handler to make sliding buttons work right.
 ;;
 (defun press-toolbar-button (event)
-  "Press a toolbar button.  This only changes its appearance."
+  "Press a toolbar button.  This only changes its appearance.
+Call function stored in `toolbar-blank-press-function,' if any, with EVENT as
+an argument if press is over a blank area of the toolbar."
   (interactive "_e")
   (setq this-command last-command)
   (let ((button (event-toolbar-button event)))
@@ -92,10 +102,17 @@
     (if (toolbar-button-p button)
 	(progn
 	  (set-toolbar-button-down-flag button t)
-	  (setq last-pressed-toolbar-button button)))))
+	  (setq last-pressed-toolbar-button button))
+      ;; Added by Bob Weiner, Motorola Inc., 10/6/95, to handle
+      ;; presses on blank portions of toolbars.
+      (and (boundp 'toolbar-blank-press-function)
+	   (functionp toolbar-blank-press-function)
+	   (funcall toolbar-blank-press-function event)))))
 
 (defun release-and-activate-toolbar-button (event)
-  "Release a toolbar button and activate its callback."
+  "Release a toolbar button and activate its callback.
+Call function stored in `toolbar-blank-release-function,' if any, with EVENT
+as an argument if release is over a blank area of the toolbar."
   (interactive "_e")
   (or (button-release-event-p event)
       (error "%s must be invoked by a mouse-release" this-command))
@@ -106,8 +123,11 @@
 	     (toolbar-button-callback button))
 	(let ((callback (toolbar-button-callback button)))
 	  (setq this-command callback)
-	  (if (symbolp callback)
-	      (call-interactively callback)
+	  ;; Handle arbitrary functions.
+	  (if (functionp callback)
+	      (if (commandp callback)
+		  (call-interactively callback)
+		(funcall callback))
 	    (eval callback))))))
 
 ;; If current is not t, then only release the toolbar button stored in
@@ -140,3 +160,4 @@
   (setq zmacs-region-stays t)
   (release-toolbar-button-internal event nil))
 
+;;; toolbar.el ends here

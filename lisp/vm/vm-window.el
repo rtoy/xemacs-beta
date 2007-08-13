@@ -74,8 +74,7 @@
 	    (if (and vm-display-buffer-hook
 		     (null (vm-get-visible-buffer-window buffer)))
 		(progn (run-hooks 'vm-display-buffer-hook)
-		       (switch-to-buffer buffer)
-		       (vm-record-current-window-configuration nil))
+		       (switch-to-buffer buffer))
 	      (if (not (and (memq this-command commands)
 			    (apply 'vm-set-window-configuration configs)
 			    (vm-get-visible-buffer-window buffer)))
@@ -84,8 +83,7 @@
 	    (if (and vm-undisplay-buffer-hook
 		     (vm-get-visible-buffer-window buffer))
 		(progn (set-buffer buffer)
-		       (run-hooks 'vm-undisplay-buffer-hook)
-		       (vm-record-current-window-configuration nil))
+		       (run-hooks 'vm-undisplay-buffer-hook))
 	      (if (not (and (memq this-command commands)
 			    (apply 'vm-set-window-configuration configs)))
 		  (vm-undisplay-buffer buffer))))
@@ -94,8 +92,7 @@
 
 (defun vm-display-buffer (buffer)
   (let ((pop-up-windows (eq vm-mutable-windows t))
-	(pop-up-frames vm-mutable-frames))
-    (vm-record-current-window-configuration nil)
+	(pop-up-frames (and pop-up-frames vm-mutable-frames)))
     (if (or pop-up-frames
 	    (and (eq vm-mutable-windows t)
 		 (symbolp
@@ -107,7 +104,7 @@
 
 (defun vm-undisplay-buffer (buffer)
   (vm-save-buffer-excursion
-    (vm-delete-windows-or-frames-on buffer)
+    (vm-maybe-delete-windows-or-frames-on buffer)
     (let ((w (vm-get-buffer-window buffer)))
       (and w (set-window-buffer w (other-buffer))))))
 
@@ -183,14 +180,6 @@
       (vm-check-for-killed-presentation)
       (if vm-presentation-buffer
 	  (setq message vm-presentation-buffer))
-      ;; if this configuration is already the current one, don't
-      ;; set it up again.
-      (if (or (and vm-mutable-frames (eq (car config) vm-window-configuration))
-	      (and (not vm-mutable-frames)
-		   (listp vm-window-configuration)
-		   (eq (car config)
-		       (cdr (assq selected-frame vm-window-configuration)))))
-	  (throw 'done nil))
       (vm-check-for-killed-summary)
       (or summary (setq summary (or vm-summary-buffer nonexistent-summary)))
       (or composition (setq composition nonexistent))
@@ -203,7 +192,7 @@
 					      x ))))
       (set-tapestry (nth 1 config) 1)
       (and (get-buffer nonexistent)
-	   (vm-delete-windows-or-frames-on nonexistent))
+	   (vm-maybe-delete-windows-or-frames-on nonexistent))
       (if (and (vm-get-buffer-window nonexistent-summary)
 	       (not (vm-get-buffer-window message)))
 	  ;; user asked for summary to be displayed but doesn't
@@ -211,30 +200,7 @@
 	  ;; the user not to lose here.
 	  (vm-replace-buffer-in-windows nonexistent-summary message)
 	(and (get-buffer nonexistent-summary)
-	     (vm-delete-windows-or-frames-on nonexistent-summary)))
-      (vm-record-current-window-configuration config)
-      config )))
-
-(defun vm-record-current-window-configuration (config)
-  ;; this function continues to be a no-op.
-  ;;
-  ;; the idea behind this function is that VM can remember what
-  ;; the current window configuration is and not rebuild the
-  ;; configuration for the next command if it matches what we
-  ;; have recorded.
-  ;;
-  ;; the problem with this idea is that the user can do things
-  ;; like C-x 0 and VM has no way of knowing.  So VM thinks the
-  ;; right configuration is displayed when in fact it is not,
-  ;; which can cause incorrect displays.
-  '(let (cell)
-    (if (and (listp vm-window-configuration)
-	     (setq cell (assq (vm-selected-frame) vm-window-configuration)))
-	(setcdr cell (car config))
-      (setq vm-window-configuration
-	    (cons
-	     (cons (vm-selected-frame) (car config))
-	     vm-window-configuration)))))
+	     (vm-maybe-delete-windows-or-frames-on nonexistent-summary))) )))
 
 (defun vm-save-window-configuration (tag)
   "Name and save the current window configuration.
@@ -253,11 +219,7 @@ configurations and then the default configuration.  The first
 configuration found is the one that is applied.
 
 The value of vm-mutable-windows must be non-nil for VM to use
-window configurations.
-
-If vm-mutable-frames is non-nil and Emacs is running under X
-windows, then VM will use all existing frames.  Otherwise VM will
-restrict its changes to the frame in which it was started."
+window configurations."
   (interactive
    (let ((last-command last-command)
 	 (this-command this-command))
@@ -366,7 +328,7 @@ Run the hooks in vm-iconify-frame-hook before doing so."
 (defun vm-window-loop (action obj-1 &optional obj-2)
   (let ((delete-me nil)
 	(done nil)
-	(all-frames (if vm-mutable-frames t nil))
+	(all-frames (if vm-search-other-frames t nil))
 	start w)
     (setq start (next-window (selected-window) 'nomini all-frames)
 	  w start)
@@ -440,7 +402,7 @@ Run the hooks in vm-iconify-frame-hook before doing so."
 	      (vm-error-free-call 'vm-delete-frame delete-me)
 	      (setq delete-me nil))))))
 
-(defun vm-delete-windows-or-frames-on (buffer)
+(defun vm-maybe-delete-windows-or-frames-on (buffer)
   (and (eq vm-mutable-windows t) (vm-window-loop 'delete buffer))
   (and vm-mutable-frames (vm-frame-loop 'delete buffer)))
 
@@ -509,7 +471,7 @@ Run the hooks in vm-iconify-frame-hook before doing so."
 	  (and w (eq (vm-selected-frame) wf) (vm-created-this-frame-p wf)
 	       (vm-error-free-call 'vm-delete-frame wf))
 	  (and w (let ((vm-mutable-frames t))
-		   (vm-delete-windows-or-frames-on b)))))))
+		   (vm-maybe-delete-windows-or-frames-on b)))))))
 
 (defun vm-register-frame (frame)
   (setq vm-frame-list (cons frame vm-frame-list)))
@@ -533,7 +495,8 @@ Run the hooks in vm-iconify-frame-hook before doing so."
 	 (vm-warp-mouse-to-frame-maybe (vm-selected-frame)))))
 
 (defun vm-goto-new-summary-frame-maybe ()
-  (if (and vm-frame-per-summary (vm-multiple-frames-possible-p))
+  (if (and vm-mutable-frames vm-frame-per-summary
+	   (vm-multiple-frames-possible-p))
       (let ((w (vm-get-buffer-window vm-summary-buffer)))
 	(if (null w)
 	    (progn
@@ -545,7 +508,8 @@ Run the hooks in vm-iconify-frame-hook before doing so."
 		 (vm-warp-mouse-to-frame-maybe (vm-window-frame w))))))))
 
 (defun vm-goto-new-folder-frame-maybe (&rest types)
-  (if (and vm-frame-per-folder (vm-multiple-frames-possible-p))
+  (if (and vm-mutable-frames vm-frame-per-folder
+	   (vm-multiple-frames-possible-p))
       (let ((w (or (vm-get-buffer-window (current-buffer))
 		   ;; summary == folder for the purpose
 		   ;; of frame reuse.
@@ -566,7 +530,7 @@ Run the hooks in vm-iconify-frame-hook before doing so."
 
 (defun vm-warp-mouse-to-frame-maybe (&optional frame)
   (or frame (setq frame (vm-selected-frame)))
-  (if (vm-mouse-support-possible-p)
+  (if (vm-mouse-support-possible-here-p)
       (cond ((vm-mouse-xemacs-mouse-p)
 	     (cond ((fboundp 'mouse-position);; XEmacs 19.12
 		    (let ((mp (mouse-position)))

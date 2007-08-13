@@ -394,7 +394,9 @@
 		   (vm-increment cols))
 		  ((or (< char 33) (> char 126) (= char 61)
 		       (and quote-from (= cols 0) (let ((case-fold-search nil))
-						    (looking-at "From "))))
+						    (looking-at "From ")))
+		       (and (= cols 0) (= char ?.)
+			    (looking-at "\\.\\(\n\\|\\'\\)")))
 		   (vm-insert-char ?= 1 nil work-buffer)
 		   (vm-insert-char (car (rassq (lsh char -4) hex-digit-alist))
 				   1 nil work-buffer)
@@ -837,7 +839,8 @@
 			    (copy-sequence standard-display-table)))
 		      (standard-display-european t)
 		      (setq buffer-display-table standard-display-table))))
-	     (if (and vm-frame-per-folder (vm-multiple-frames-possible-p))
+	     (if (and vm-mutable-frames vm-frame-per-folder
+		      (vm-multiple-frames-possible-p))
 		 (vm-set-hooks-for-frame-deletion))
 	     (use-local-map vm-mode-map)
 	     (and (vm-toolbar-support-possible-p) vm-use-toolbar
@@ -1334,11 +1337,13 @@ in the buffer.  The function is expected to make the message
 (defun vm-mime-display-external-generic (layout)
   (let ((program-list (vm-mime-find-external-viewer
 		       (car (vm-mm-layout-type layout))))
-	(process (nth 0 (vm-mm-layout-cache layout)))
-	(tempfile (nth 1 (vm-mm-layout-cache layout)))
 	(buffer-read-only nil)
 	(start (point))
-	end)
+	process	tempfile cache end)
+    (setq cache (cdr (assq 'vm-mime-display-external-generic
+			   (vm-mm-layout-cache layout)))
+	  process (nth 0 cache)
+	  tempfile (nth 1 cache))
     (if (and (processp process) (eq (process-status process) 'run))
 	t
       (cond ((or (null tempfile) (null (file-exists-p tempfile)))
@@ -1382,7 +1387,11 @@ in the buffer.  The function is expected to make the message
 	(setq vm-message-garbage-alist
 	      (cons (cons process 'delete-process)
 		    vm-message-garbage-alist)))
-      (vm-set-mm-layout-cache layout (list process tempfile))))
+      (vm-set-mm-layout-cache
+       layout
+       (nconc (vm-mm-layout-cache layout)
+	      (list (cons 'vm-mime-display-external-generic
+			  (list process tempfile)))))))
   t )
 
 (defun vm-mime-display-internal-application/octet-stream (layout)
@@ -1392,7 +1401,7 @@ in the buffer.  The function is expected to make the message
 	(vm-mime-insert-button
 	 (format "%-35.35s [%s to save to a file]"
 		 (vm-mime-layout-description layout)
-		 (if (vm-mouse-support-possible-p)
+		 (if (vm-mouse-support-possible-here-p)
 		     "Click mouse-2"
 		   "Press RETURN"))
 	 (function
@@ -1479,7 +1488,7 @@ in the buffer.  The function is expected to make the message
   (vm-mime-insert-button
    (format "%-35.35s [%s to display in parallel]"
 	   (vm-mime-layout-description layout)
-	   (if (vm-mouse-support-possible-p)
+	   (if (vm-mouse-support-possible-here-p)
 	       "Click mouse-2"
 	     "Press RETURN"))
    (function
@@ -1498,7 +1507,7 @@ in the buffer.  The function is expected to make the message
 	(vm-mime-insert-button
 	 (format "%-35.35s [%s to display]"
 		 (vm-mime-layout-description layout)
-		 (if (vm-mouse-support-possible-p)
+		 (if (vm-mouse-support-possible-here-p)
 		     "Click mouse-2"
 		   "Press RETURN"))
 	 (function
@@ -1530,7 +1539,7 @@ in the buffer.  The function is expected to make the message
     (vm-mime-insert-button
      (format "%-35.35s [%s to display]"
 	     (vm-mime-layout-description layout)
-	     (if (vm-mouse-support-possible-p)
+	     (if (vm-mouse-support-possible-here-p)
 		 "Click mouse-2"
 	       "Press RETURN"))
      (function
@@ -1586,7 +1595,7 @@ in the buffer.  The function is expected to make the message
 		 (concat (vm-mime-layout-description layout)
 			 (and number (concat ", part " number))
 			 (and number total (concat " of " total)))
-		 (if (vm-mouse-support-possible-p)
+		 (if (vm-mouse-support-possible-here-p)
 		     "Click mouse-2"
 		   "Press RETURN"))
 	 (function
@@ -1716,8 +1725,9 @@ in the buffer.  The function is expected to make the message
 	   (eq (device-type) 'x))
       (let ((start (point)) end tempfile g e
 	    (buffer-read-only nil))
-	(if (vm-mm-layout-cache layout)
-	    (setq g (vm-mm-layout-cache layout))
+	(if (setq g (cdr (assq 'vm-mime-display-internal-image-xxxx
+			       (vm-mm-layout-cache layout))))
+	    nil
 	  (vm-mime-insert-mime-body layout)
 	  (setq end (point-marker))
 	  (vm-mime-transfer-decode-region layout start end)
@@ -1731,14 +1741,25 @@ in the buffer.  The function is expected to make the message
 	  ;; we don't need to set it here.
 	  (write-region start end tempfile nil 0)
 	  (message "Creating %s glyph..." name)
+;; `((LOCALE (TAG-SET . INSTANTIATOR) ...) ...)'.  This function accepts
 	  (setq g (make-glyph
-		   (list (vector feature ':file tempfile)
-			 (vector 'string
-				 ':data
-				 (format "[Unknown %s image encoding]\n"
-					 name)))))
+		   (list
+		    (cons (list 'win)
+			  (vector feature ':file tempfile))
+		    (cons (list 'win)
+			  (vector 'string
+				  ':data
+				  (format "[Unknown/Bsd %s image encoding]\n"
+					  name)))
+		    (cons nil
+			  (vector 'string
+				  ':data
+				  (format "[%s image]\n" name))))))
 	  (message "")
-	  (vm-set-mm-layout-cache layout g)
+	  (vm-set-mm-layout-cache
+	   layout
+	   (nconc (vm-mm-layout-cache layout)
+		  (list (cons 'vm-mime-display-internal-image-xxxx g))))
 	  (save-excursion
 	    (vm-select-folder-buffer)
 	    (setq vm-folder-garbage-alist
@@ -1774,8 +1795,9 @@ in the buffer.  The function is expected to make the message
 		    (eq (device-type) 'x))))
       (let ((start (point)) end tempfile
 	    (buffer-read-only nil))
-	(if (vm-mm-layout-cache layout)
-	    (setq tempfile (vm-mm-layout-cache layout))
+	(if (setq tempfile (cdr (assq 'vm-mime-display-internal-audio/basic
+				      (vm-mm-layout-cache layout))))
+	    nil
 	  (vm-mime-insert-mime-body layout)
 	  (setq end (point-marker))
 	  (vm-mime-transfer-decode-region layout start end)
@@ -1788,7 +1810,11 @@ in the buffer.  The function is expected to make the message
 	  ;; coding system for presentation buffer is binary, so
 	  ;; we don't need to set it here.
 	  (write-region start end tempfile nil 0)
-	  (vm-set-mm-layout-cache layout tempfile)
+	  (vm-set-mm-layout-cache
+	   layout
+	   (nconc (vm-mm-layout-cache layout)
+		  (list (cons 'vm-mime-display-internal-audio/basic
+			      tempfile))))
 	  (save-excursion
 	    (vm-select-folder-buffer)
 	    (setq vm-folder-garbage-alist
@@ -1806,7 +1832,9 @@ in the buffer.  The function is expected to make the message
     (vm-mime-insert-button
      (format "%-35.35s [%s to attempt display]"
 	     description
-	     (if (vm-mouse-support-possible-p) "Click mouse-2" "Press RETURN"))
+	     (if (vm-mouse-support-possible-here-p)
+		 "Click mouse-2"
+	       "Press RETURN"))
      (function
       (lambda (layout)
 	(save-excursion
@@ -2429,11 +2457,16 @@ will interactively query you for the file type information."
 			 (let ((case-fold-search nil))
 			   (save-excursion
 			     (goto-char beg)
-			     (re-search-forward "^From " nil t))))))
+			     (re-search-forward "^From " nil t)))))
+	(armor-dot (let ((case-fold-search nil))
+		     (save-excursion
+		       (goto-char beg)
+		       (re-search-forward "^\\.\\n" nil t)))))
     (cond ((string-match "^binary$" encoding)
 	   (vm-mime-base64-encode-region beg end crlf)
 	   (setq encoding "base64"))
-	  ((and (not armor-from) (string-match "^7bit$" encoding)) t)
+	  ((and (not armor-from) (not armor-dot)
+		(string-match "^7bit$" encoding)) t)
 	  ((string-match "^base64$" encoding) t)
 	  ((string-match "^quoted-printable$" encoding) t)
 	  ((eq vm-mime-8bit-text-transfer-encoding 'quoted-printable)

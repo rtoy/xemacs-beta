@@ -523,6 +523,20 @@ Requires floating point." nil nil)
 
 ;;;***
 
+;;;### (autoloads (background) "background" "comint/background.el")
+
+(autoload 'background "background" "\
+Run COMMAND in the background like csh.  
+A message is displayed when the job starts and finishes.  The buffer is in
+comint mode, so you can send input and signals to the job.  The process object
+is returned if anyone cares.  See also comint-mode and the variables
+background-show and background-select.
+
+Optional second argument BUFFER-NAME is a buffer to insert the output into.
+If omitted, a buffer name is constructed from the command run." t nil)
+
+;;;***
+
 ;;;### (autoloads (comint-dynamic-list-completions comint-dynamic-complete comint-run make-comint) "comint" "comint/comint.el")
 
 (autoload 'make-comint "comint" "\
@@ -754,7 +768,7 @@ See also `\\[telnet]'." t nil)
 
 ;;;***
 
-;;;### (autoloads (customize-menu-create custom-menu-create custom-save-all custom-save-customized custom-buffer-create-other-window custom-buffer-create customize-apropos customize-saved customize-customized customize-face-other-window customize-face customize-variable-other-window customize-variable customize-group-other-window customize-group customize custom-set-variable custom-set-value) "cus-edit" "custom/cus-edit.el")
+;;;### (autoloads (customize-menu-create custom-menu-create custom-save-all custom-save-customized custom-buffer-create-other-window custom-buffer-create customize-apropos customize-saved customize-customized customize-face-other-window customize-face customize-option-other-window customize-option customize-group-other-window customize-group customize custom-set-variable custom-set-value) "cus-edit" "custom/cus-edit.el")
 
 (autoload 'custom-set-value "cus-edit" "\
 Set VARIABLE to VALUE.  VALUE is a Lisp object.
@@ -792,11 +806,15 @@ Customize GROUP, which must be a customization group." t nil)
 (autoload 'customize-group-other-window "cus-edit" "\
 Customize SYMBOL, which must be a customization group." t nil)
 
-(autoload 'customize-variable "cus-edit" "\
-Customize SYMBOL, which must be a variable." t nil)
+(defalias 'customize-variable 'customize-option)
 
-(autoload 'customize-variable-other-window "cus-edit" "\
-Customize SYMBOL, which must be a variable.
+(autoload 'customize-option "cus-edit" "\
+Customize SYMBOL, which must be a user option variable." t nil)
+
+(defalias 'customize-variable-other-window 'customize-option-other-window)
+
+(autoload 'customize-option-other-window "cus-edit" "\
+Customize SYMBOL, which must be a user option variable.
 Show the buffer in another window, but don't select it." t nil)
 
 (autoload 'customize-face "cus-edit" "\
@@ -1113,7 +1131,11 @@ Buffer local.")
 
 ;;;***
 
-;;;### (autoloads (dired-jump-back-other-frame dired-jump-back-other-window dired-jump-back dired-noselect dired-other-frame dired-other-window dired) "dired" "efs/dired.el")
+;;;### (autoloads (dired-jump-back-other-frame dired-jump-back-other-window dired-jump-back dired-noselect dired-other-frame dired-other-window dired default-directory) "dired" "efs/dired.el")
+
+(autoload 'default-directory "dired" "\
+ Returns the default-directory for the current buffer.
+Will use the variable default-directory-function if it non-nil." nil nil)
 
 (defvar dired-compression-method 'compress "\
 *Type of compression program to use.
@@ -2817,6 +2839,14 @@ and a negative argument disables it." t nil)
 
 ;;;***
 
+;;;### (autoloads (quail-use-package) "quail" "leim/quail.el")
+
+(autoload 'quail-use-package "quail" "\
+Start using Quail package PACKAGE-NAME.
+The remaining arguments are libraries to be loaded before using the package." nil nil)
+
+;;;***
+
 ;;;### (autoloads (mc-deactivate-passwd mc-install-write-mode mc-install-read-mode) "mailcrypt" "mailcrypt/mailcrypt.el")
 
 (autoload 'mc-install-read-mode "mailcrypt" nil t nil)
@@ -3723,8 +3753,6 @@ Last, the normal hook `hs-minor-mode-hook' is run; see the doc for `run-hooks'.
 Turning hideshow minor mode off reverts the menu bar and the
 variables to default values and disables the hideshow commands." t nil)
 
-(add-minor-mode 'hs-minor-mode " hs" 'hs-minor-mode-map)
-
 ;;;***
 
 ;;;### (autoloads (icon-mode) "icon" "modes/icon.el")
@@ -3810,7 +3838,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.30 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.31 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4412,6 +4440,47 @@ be lost if you do.  This appears to be an Emacs bug, an unfortunate
 interaction between undo and process filters; the same problem exists in
 non-Python process buffers using the default (Emacs-supplied) process
 filter." t nil)
+
+;;;***
+
+;;;### (autoloads (reftex-add-to-label-alist reftex-mode turn-on-reftex) "reftex" "modes/reftex.el")
+
+(autoload 'turn-on-reftex "reftex" "\
+Turn on RefTeX minor mode." nil nil)
+
+(autoload 'reftex-mode "reftex" "\
+Minor mode with distinct support for \\label, \\ref and \\cite in LaTeX.
+
+Labels can be created with `\\[reftex-label]' and referenced with `\\[reftex-reference]'.
+When referencing, you get a menu with all labels of a given type and
+context of the label definition. The selected label is inserted as a
+\\ref macro.
+
+Citations can be made with `\\[reftex-citation]' which will use a regular expression 
+to pull out a *formatted* list of articles from your BibTeX
+database. The selected citation is inserted as a \\cite macro.
+
+A Table of Contents of the entire (multifile) document with browsing
+capabilities is available with `\\[reftex-toc]'.
+
+Most command have help available on the fly. This help is accessed by
+pressing `?' to any prompt mentioning this feature.
+
+\\{reftex-mode-map}
+Under X, these functions will be available also in a menu on the menu bar.
+
+------------------------------------------------------------------------------" t nil)
+
+(autoload 'reftex-add-to-label-alist "reftex" "\
+Add label environment descriptions to reftex-label-alist-external-add-ons.
+The format of ENTRY-LIST is exactly like reftex-label-alist. See there 
+for details.
+This function makes it possible to support RefTeX from AUCTeX style files.
+The entries in ENTRY-LIST will be processed after the user settings in
+reftex-label-alist, and before the defaults (specified in
+reftex-default-label-alist-entries).  Any changes made to
+reftex-label-alist-external-add-ons will raise a flag to the effect that a
+mode reset is done on the next occasion." nil nil)
 
 ;;;***
 
@@ -5111,7 +5180,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.30 $
+vhdl-mode $Revision: 1.31 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -6211,7 +6280,7 @@ BUFFER's name, and the current buffer, respectively." t nil)
 
 ;;;***
 
-;;;### (autoloads (font-lock-fontify-buffer turn-off-font-lock turn-on-font-lock font-lock-mode) "font-lock" "packages/font-lock.el")
+;;;### (autoloads (font-lock-set-defaults-1 font-lock-fontify-buffer turn-off-font-lock turn-on-font-lock font-lock-mode) "font-lock" "packages/font-lock.el")
 
 (defvar font-lock-auto-fontify t "\
 *Whether font-lock should automatically fontify files as they're loaded.
@@ -6434,7 +6503,65 @@ See `font-lock-mode' for details.
 
 This can take a while for large buffers." t nil)
 
+(autoload 'font-lock-set-defaults-1 "font-lock" nil nil nil)
+
 (add-minor-mode 'font-lock-mode " Font")
+
+;;;***
+
+;;;### (autoloads (sc-mode) "generic-sc" "packages/generic-sc.el")
+
+(autoload 'sc-mode "generic-sc" "\
+Toggle sc-mode.
+SYSTEM can be sccs, rcs or cvs.
+Cvs requires the pcl-cvs package.
+
+The following commands are available
+\\[sc-next-operation]	perform next logical source control operation on current file
+\\[sc-show-changes]	compare the version being edited with an older one
+\\[sc-version-diff-file]	compare two older versions of a file
+\\[sc-show-history]		display change history of current file
+\\[sc-visit-previous-revision]	display an older revision of current file
+\\[sc-revert-file]		revert buffer to last checked-in version
+\\[sc-list-all-locked-files]		show all files locked in current directory
+\\[sc-list-locked-files]		show all files locked by you in current directory
+\\[sc-list-registered-files]		show all files under source control in current directory
+\\[sc-update-directory]		get fresh copies of files checked-in by others in current directory
+\\[sc-rename-file]		rename the current file and its source control file
+
+
+While you are entering a change log message for a check in, sc-log-entry-mode
+will be in effect.
+
+Global user options:
+    sc-diff-command	A list consisting of the command and flags
+			to be used for generating context diffs.
+    sc-mode-expert	suppresses some conformation prompts,
+			notably for delta aborts and file saves.
+    sc-max-log-size	specifies the maximum allowable size
+			of a log message plus one.
+
+
+When using SCCS you have additional commands and options
+
+\\[sccs-insert-headers]		insert source control headers in current file
+
+When you generate headers into a buffer using \\[sccs-insert-headers],
+the value of sc-insert-headers-hook is called before insertion. If the
+file is recognized a C or Lisp source, sc-insert-c-header-hook or
+sc-insert-lisp-header-hook is called after insertion respectively.
+
+    sccs-headers-wanted	which %-keywords to insert when adding
+			headers with C-c h
+    sccs-insert-static	if non-nil, keywords inserted in C files
+			get stuffed in a static string area so that
+			what(1) can see them in the compiled object code.
+
+When using CVS you have additional commands
+
+\\[sc-cvs-update-directory]	update the current directory using pcl-cvs
+\\[sc-cvs-file-status]		show the CVS status of current file
+" t nil)
 
 ;;;***
 
@@ -6596,8 +6723,8 @@ Interactively set the variable on the current line." t nil)
 ;;;### (autoloads (icomplete-minibuffer-setup icomplete-mode) "icomplete" "packages/icomplete.el")
 
 (autoload 'icomplete-mode "icomplete" "\
-Activate incremental minibuffer completion for this emacs session,
-or deactivate with negative prefix arg." t nil)
+Activate incremental minibuffer completion for this emacs session.
+Deactivates with negative universal argument." t nil)
 
 (autoload 'icomplete-minibuffer-setup "icomplete" "\
 Run in minibuffer on activation to establish incremental completion.
@@ -7616,9 +7743,12 @@ Jumps to a Web site from a programmable hotlist.
 See the documentation for the `webjump-sites' variable for how to customize the
 hotlist.
 
-Feedback on WebJump can be sent to the author, Neil W. Van Dyke <nwv@acm.org>,
-or submitted via `\\[webjump-submit-bug-report]'.  The latest version can be
-gotten from `http://www.cs.brown.edu/people/nwv/'." t nil)
+Please submit bug reports and other feedback to the author, Neil W. Van Dyke
+<nwv@acm.org>.
+
+The latest version can be gotten from `http://www.cs.brown.edu/people/nwv/'.
+That Web site also contains `webjump-plus.el', a larger and more frequently
+updated sample WebJump hotlist." t nil)
 
 ;;;***
 
@@ -7671,7 +7801,8 @@ If optional prefix argument LOCAL is non-nil, 'cvs update -l' is run." t nil)
 
 ;;;### (autoloads (about-xemacs) "about" "prim/about.el")
 
-(autoload 'about-xemacs "about" nil t nil)
+(autoload 'about-xemacs "about" "\
+Describe the True Editor and its minions." t nil)
 
 ;;;***
 
@@ -7886,6 +8017,15 @@ Edit a list of XEmacs user option values.
 Selects a buffer containing such a list,
 in which there are commands to set the option values.
 Type \\[describe-mode] in that buffer for a list of commands." t nil)
+
+;;;***
+
+;;;### (autoloads (pretty-print-profiling-info) "profile" "prim/profile.el")
+
+(autoload 'pretty-print-profiling-info "profile" "\
+Print profiling info INFO to standard output in a pretty format.
+If INFO is omitted, the current profiling info is retrieved using
+`get-profiling-info'." nil nil)
 
 ;;;***
 

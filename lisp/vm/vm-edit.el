@@ -83,7 +83,8 @@ replace the original, use C-c C-] and the edit will be aborted."
 	     (substitute-command-keys
 	      "Type \\[vm-edit-message-end] to end edit, \\[vm-edit-message-abort] to abort with no change.")))
 	(set-buffer edit-buf))
-      (if (and vm-frame-per-edit (vm-multiple-frames-possible-p))
+      (if (and vm-mutable-frames vm-frame-per-edit
+	       (vm-multiple-frames-possible-p))
 	  (let ((w (vm-get-buffer-window edit-buf)))
 	    (if (null w)
 		(progn

@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.98
+;; Version: 1.9907
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -499,8 +499,9 @@ If FRAME is nil, the current FRAME is used."
 			  ((eq req 'background)
 			   (memq background options))
 			  (t
-			   (error "Unknown req `%S' with options `%S'" 
-				  req options)))))
+			   (message (format "\
+Warning: Unknown req `%S' with options `%S'" req options))
+			   nil))))
       match)))
 
 (defun custom-relevant-frames ()

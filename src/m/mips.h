@@ -166,6 +166,5 @@ NOTE-END  */
 #define COFF
 #define TERMINFO
 #undef MAIL_USE_FLOCK  /* Someone should check this.  */
-#undef HAVE_UNION_WAIT
 #endif /* BSD */
 #endif /* not NEWSOS5 */

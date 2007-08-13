@@ -1284,6 +1284,7 @@ complex_vars_of_console (void)
     console_local_flags.default_minibuffer_frame = always_local_resettable;
     console_local_flags.overriding_terminal_local_map =
       always_local_resettable;
+    console_local_flags.tty_erase_char = always_local_resettable;
     
     console_local_flags.function_key_map = make_int (1);
     
@@ -1318,6 +1319,14 @@ Typing `ESC O P' to `read-key-sequence' would return
 \[#<keypress-event control-X> #<keypress-event f1>].  If [f1]
 were a prefix key, typing `ESC O P x' would return
 \[#<keypress-event f1> #<keypress-event x>].
+*/ );
+
+  /* ### Should this somehow go to TTY data?  How do we make it
+     accessible from Lisp, then?  */
+  DEFVAR_CONSOLE_LOCAL ("tty-erase-char", tty_erase_char /*
+The ERASE character as set by the user with stty.
+When this value cannot be determined or would be meaningless (on non-TTY
+consoles, for example), it is set to nil.
 */ );
 
   /* While this should be CONST it can't be because some things

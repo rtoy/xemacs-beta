@@ -81,6 +81,9 @@ Boston, MA 02111-1307, USA.  */
     /* Last anonymous kbd macro defined.  */
     MARKED_SLOT (last_kbd_macro);
 
+    /* ERASE character from stty settings.  */
+    MARKED_SLOT (tty_erase_char);
+
     /* Minibufferless frames on this console use this frame's minibuffer.  */
     MARKED_SLOT (default_minibuffer_frame);
 

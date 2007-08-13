@@ -579,7 +579,7 @@ of the key sequence that ran this command."
 (defun view-emacs-news ()
   "Display info on recent changes to XEmacs."
   (interactive)
-  (require 'outl-mouse)
+  #-infodock (require 'outl-mouse)
   (find-file (expand-file-name "NEWS" data-directory)))
 
 (defun xemacs-www-page ()

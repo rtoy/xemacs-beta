@@ -132,9 +132,6 @@ so disable it for them.  */
 /* I'm guessing that that means it doesn't want ptem.h either.  */
 #undef NEED_PTEM_H
 
-/* aix has `union wait'  */
-#define HAVE_UNION_WAIT
-
 /* Here override various assumptions in ymakefile */
 
 /* Define C_ALLOCA if this machine does not support a true alloca

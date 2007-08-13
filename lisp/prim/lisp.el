@@ -1,6 +1,6 @@
 ;;; lisp.el --- Lisp editing commands for XEmacs
 
-;; Copyright (C) 1985, 1986, 1994 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1986, 1994, 1997 Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
 ;; Keywords: lisp, languages
@@ -22,7 +22,7 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.34.
+;;; Synched up with: Emacs/Mule zeta.
 
 ;;; Commentary:
 
@@ -192,7 +192,7 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
   (if (or (null arg) (= arg 0)) (setq arg 1))
   (let ((first t))
     (while (and (> arg 0) (< (point) (point-max)))
-      (let ((pos (point)) npos)
+      (let ((pos (point))) ; XEmacs -- remove unused npos.
 	(while (progn
 		(if (and first
 			 (progn
@@ -233,15 +233,28 @@ The defun marked is the one that contains point or follows point."
   (beginning-of-defun)
   (re-search-backward "^\n" (- (point) 1) t))
 
+(defun narrow-to-defun (&optional arg)
+  "Make text outside current defun invisible.
+The defun visible is the one that contains point or follows point."
+  (interactive)
+  (save-excursion
+    (widen)
+    (end-of-defun)
+    (let ((end (point)))
+      (beginning-of-defun)
+      (narrow-to-region (point) end))))
+
 (defun insert-parentheses (arg)
-  "Put parentheses around next ARG sexps.  Leave point after open-paren.
+  "Enclose following ARG sexps in parentheses.  Leave point after open-paren.
+A negative ARG encloses the preceding ARG sexps instead.
 No argument is equivalent to zero: just insert `()' and leave point between.
 If `parens-require-spaces' is non-nil, this command also inserts a space
 before and after, depending on the surrounding characters."
   (interactive "P")
   (if arg (setq arg (prefix-numeric-value arg))
     (setq arg 0))
-  (or (eq arg 0) (skip-chars-forward " \t"))
+  (cond ((> arg 0) (skip-chars-forward " \t"))
+	((< arg 0) (forward-sexp arg) (setq arg (- arg))))
   (and parens-require-spaces
        (not (bobp))
        (memq (char-syntax (preceding-char)) '(?w ?_ ?\) ))
@@ -308,7 +321,7 @@ function definitions, values or properties are considered."
 	  (t
 	   (message "Making completion list...")
 	   (let ((list (all-completions pattern obarray predicate))
-		 ;FSFmacs crock unnecessary in XEmacs (ROTFL -sb)
+		 ;FSFmacs crock unnecessary in XEmacs
 		 ;see minibuf.el
 		 ;(completion-fixup-function
 		 ; (function (lambda () (if (save-excursion

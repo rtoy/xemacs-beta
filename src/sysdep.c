@@ -312,7 +312,7 @@ wait_for_termination (int pid)
 	synchronous subprocess, we should take care of that.  */
 	
 	int ret;
-	WAITTYPE w;
+	int w;
 	/* Will stay in the do loop as long as:
 	   1. Process is alive
 	   2. Ctrl-G is not pressed */
@@ -348,7 +348,7 @@ wait_for_termination (int pid)
 	  { /* Update the global sigchld stats. */
 	    synch_process_alive = 0;
 	    if (WIFEXITED (w))
-	      synch_process_retcode = WRETCODE (w);
+	      synch_process_retcode = WEXITSTATUS (w);
 	    else if (WIFSIGNALED (w))
 	      synch_process_death = signal_name (WTERMSIG (w));
 	  }
@@ -1505,7 +1505,11 @@ tty_init_sys_modes_on_device (struct device *d)
   EMACS_GET_TTY (input_fd, &CONSOLE_TTY_DATA (con)->old_tty);
   tty = CONSOLE_TTY_DATA (con)->old_tty;
 
+  con->tty_erase_char = Qnil;
+
 #if defined (HAVE_TERMIO) || defined (HAVE_TERMIOS)
+  /* after all those years... */
+  con->tty_erase_char = make_char (tty.main.c_cc[VERASE]);
 #ifdef DGUX
   /* This allows meta to be sent on 8th bit.  */
   tty.main.c_iflag &= ~INPCK;	/* don't check input for parity */
@@ -1620,6 +1624,7 @@ tty_init_sys_modes_on_device (struct device *d)
 #endif /* AIX */
 #else /* if not HAVE_TERMIO */
 #ifndef MSDOS
+  con->tty_erase_char = make_char (tty.main.sg_erase);
   tty.main.sg_flags &= ~(ECHO | CRMOD | XTABS);
   if (TTY_FLAGS (con).meta_key)
     tty.main.sg_flags |= ANYP;

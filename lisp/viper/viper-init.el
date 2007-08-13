@@ -507,6 +507,9 @@ negative number.")
 (defconst vip-re-replace t
   "*If t, do regexp replace. nil means do string replace.")
 
+(defvar vip-parse-sexp-ignore-comments t
+  "*If t, `%' ignores the parentheses that occur inside comments.")
+
 (vip-deflocalvar vip-ex-style-motion t
   "*Ex-style: the commands l,h do not cross lines, etc.")
 

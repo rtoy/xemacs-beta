@@ -35,6 +35,4 @@
 #include <sys/param.h> /* To get BSD defined consistently.  */
 #endif
   
-#undef HAVE_UNION_WAIT
-
 #define GETPGRP_NO_ARG 1

@@ -1,34 +1,31 @@
-;;;
 ;;; mel-b.el: Base64 encoder/decoder for GNU Emacs
-;;;
-;;; Copyright (C) 1995 Free Software Foundation, Inc.
-;;; Copyright (C) 1992 ENAMI Tsugutomo
-;;; Copyright (C) 1995,1996 MORIOKA Tomohiko
-;;;
-;;; Author: ENAMI Tsugutomo <enami@sys.ptg.sony.co.jp>
-;;;         MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;;; Created: 1995/6/24
-;;; Version:
-;;;	$Id: mel-b.el,v 1.2 1996/12/28 21:02:56 steve Exp $
-;;; Keywords: MIME, Base64
-;;;
-;;; This file is part of MEL (MIME Encoding Library).
-;;;
-;;; This program is free software; you can redistribute it and/or
-;;; modify it under the terms of the GNU General Public License as
-;;; published by the Free Software Foundation; either version 2, or
-;;; (at your option) any later version.
-;;;
-;;; This program is distributed in the hope that it will be useful,
-;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;;; General Public License for more details.
-;;;
-;;; You should have received a copy of the GNU General Public License
-;;; along with This program.  If not, write to the Free Software
-;;; Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-;;;
+
+;; Copyright (C) 1992,1995,1996,1997 Free Software Foundation, Inc.
+
+;; Author: ENAMI Tsugutomo <enami@sys.ptg.sony.co.jp>
+;;         MORIOKA Tomohiko <morioka@jaist.ac.jp>
+;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
+;; Created: 1995/6/24
+;; Version: $Id: mel-b.el,v 1.3 1997/06/06 00:57:14 steve Exp $
+;; Keywords: MIME, Base64
+
+;; This file is part of MEL (MIME Encoding Library).
+
+;; This program is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 2, or (at
+;; your option) any later version.
+
+;; This program is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
+
 ;;; Code:
 
 (require 'emu)
@@ -123,6 +120,7 @@ external decoder is called.")
 ;;;
 
 (defun base64-encode-string (string)
+  "Encode STRING to base64, and return the result."
   (let ((len (length string))
 	(b 0)(e 57)
 	dest)
@@ -150,6 +148,7 @@ external decoder is called.")
       )))
 
 (defun base64-decode-string (string)
+  "Decode STRING which is encoded in base64, and return the result."
   (mapconcat (function base64-decode-1)
 	     (pack-sequence string 4)
 	     ""))
@@ -222,20 +221,34 @@ external decoder is called.")
 			      t t nil (cdr base64-external-decoder))
 		       )))
 
-(defun base64-encode-region (beg end)
+(defun base64-encode-region (start end)
+  "Encode current region by base64.
+START and END are buffer positions.
+This function calls internal base64 encoder if size of region is
+smaller than `base64-internal-encoding-limit', otherwise it calls
+external base64 encoder specified by `base64-external-encoder'.  In
+this case, you must install the program (maybe mmencode included in
+metamail or XEmacs package)."
   (interactive "r")
   (if (and base64-internal-encoding-limit
-	   (> (- end beg) base64-internal-encoding-limit))
-      (base64-external-encode-region beg end)
-    (base64-internal-encode-region beg end)
+	   (> (- end start) base64-internal-encoding-limit))
+      (base64-external-encode-region start end)
+    (base64-internal-encode-region start end)
     ))
 
-(defun base64-decode-region (beg end)
+(defun base64-decode-region (start end)
+  "Decode current region by base64.
+START and END are buffer positions.
+This function calls internal base64 decoder if size of region is
+smaller than `base64-internal-decoding-limit', otherwise it calls
+external base64 decoder specified by `base64-external-decoder'.  In
+this case, you must install the program (maybe mmencode included in
+metamail or XEmacs package)."
   (interactive "r")
   (if (and base64-internal-decoding-limit
-	   (> (- end beg) base64-internal-decoding-limit))
-      (base64-external-decode-region beg end)
-    (base64-internal-decode-region beg end)
+	   (> (- end start) base64-internal-decoding-limit))
+      (base64-external-decode-region start end)
+    (base64-internal-decode-region start end)
     ))
 
 
@@ -243,6 +256,10 @@ external decoder is called.")
 ;;;
 
 (defun base64-insert-encoded-file (filename)
+  "Encode contents of file FILENAME to base64, and insert the result.
+It calls external base64 encoder specified by
+`base64-external-encoder'.  So you must install the program (maybe
+mmencode included in metamail or XEmacs package)."
   (interactive (list (read-file-name "Insert encoded file: ")))
   (apply (function call-process) (car base64-external-encoder)
 	 filename t nil (cdr base64-external-encoder))

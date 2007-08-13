@@ -1,10 +1,11 @@
 ;;; auto-show.el --- perform automatic horizontal scrolling as point moves
-;;; This file is in the public domain.
 
-;;; Keywords: scroll display minor-mode
-;;; Author: Pete Ware <ware@cis.ohio-state.edu>
-;;; Modified by: Ben Wing <wing@666.com>
-;;; Maintainer: FSF
+;; This file is in the public domain.
+
+;; Author: Pete Ware <ware@cis.ohio-state.edu>
+;; Modified by: Ben Wing <wing@666.com>
+;; Maintainer: XEmacs Development Team
+;; Keywords: extensions, internal
 
 ;; This file is part of XEmacs.
 
@@ -23,37 +24,37 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.34 (But starting to deviate).
+;;; Synched up with: Emacs/Mule zeta.
 
 ;;; Commentary:
 
-;;; This file provides functions that
-;;; automatically scroll the window horizontally when the point moves
-;;; off the left or right side of the window.
+;; This file provides functions that
+;; automatically scroll the window horizontally when the point moves
+;; off the left or right side of the window.
 
-;;; Once this library is loaded, automatic horizontal scrolling
-;;; occurs whenever long lines are being truncated.
-;;; To request truncation of long lines, set the variable
-;;; Setting the variable `truncate-lines' to non-nil.
-;;; You can do this for all buffers as follows:
-;;;
-;;; (set-default 'truncate-lines t)
+;; Once this library is loaded, automatic horizontal scrolling
+;; occurs whenever long lines are being truncated.
+;; To request truncation of long lines, set the variable
+;; Setting the variable `truncate-lines' to non-nil.
+;; You can do this for all buffers as follows:
+;;
+;; (set-default 'truncate-lines t)
 
-;;; Here is how to do it for C mode only:
-;;;
-;;; (set-default 'truncate-lines nil)	; this is the original value
-;;; (defun my-c-mode-hook ()
-;;;   "Run when C-mode starts up.  Changes ..."
-;;;   ... set various personal preferences ...
-;;;   (setq truncate-lines t))
-;;; (add-hook 'c-mode-hook 'my-c-mode-hook)
-;;;
-;;;
-;;; As a finer level of control, you can still have truncated lines but
-;;; without the automatic horizontal scrolling by setting the buffer
-;;; local variable `auto-show-mode' to nil.  The default value is t.
-;;; The command `auto-show-mode' toggles the value of the variable
-;;; `auto-show-mode'.
+;; Here is how to do it for C mode only:
+;;
+;; (set-default 'truncate-lines nil)	; this is the original value
+;; (defun my-c-mode-hook ()
+;;   "Run when C-mode starts up.  Changes ..."
+;;   ... set various personal preferences ...
+;;   (setq truncate-lines t))
+;; (add-hook 'c-mode-hook 'my-c-mode-hook)
+;;
+;;
+;; As a finer level of control, you can still have truncated lines but
+;; without the automatic horizontal scrolling by setting the buffer
+;; local variable `auto-show-mode' to nil.  The default value is t.
+;; The command `auto-show-mode' toggles the value of the variable
+;; `auto-show-mode'.
 
 ;;; Code:
 
@@ -62,7 +63,8 @@
 The default value is t.  To change the default, do this:
 	(set-default 'auto-show-mode nil)
 See also command `auto-show-mode'.
-This variable has no effect when lines are not being truncated.")
+This variable has no effect when lines are not being truncated.
+This variable is automatically local in each buffer where it is set.")
 
 (make-variable-buffer-local 'auto-show-mode)
 
@@ -87,7 +89,9 @@ visible.  Setting this to 0 disables this feature.")
 
 (defun auto-show-mode (arg)
   "Turn automatic horizontal scroll mode on or off.
-With arg, turn auto scrolling on if arg is positive, off otherwise."
+With arg, turn auto scrolling on if arg is positive, off otherwise.
+This mode is enabled or disabled for each buffer individually.
+It takes effect only when `truncate-lines' is non-nil."
   (interactive "P")
   (setq auto-show-mode
 	(if (null arg)
@@ -141,7 +145,7 @@ is next called (this happens after every command)."
   "Scroll horizontally to make point visible, if that is enabled.
 This function only does something if `auto-show-mode' is non-nil
 and longlines are being truncated in the selected window.
-See also the command `auto-show-toggle'."
+See also the command `auto-show-mode'."
   (interactive)
   ;; XEmacs change
   (if (auto-show-should-take-action-p)
@@ -177,7 +181,8 @@ See also the command `auto-show-toggle'."
 ;;(add-hook 'post-command-hook 'auto-show-make-point-visible)
 
 ;; If being dumped, turn it on right away.
-(and (noninteractive) (auto-show-mode 1))
+(when (boundp 'load-gc)
+  (auto-show-mode 1))
 
 ;; Do auto-scrolling in comint buffers after process output also.
 ; XEmacs -- don't do this now, it messes up comint.
@@ -186,4 +191,3 @@ See also the command `auto-show-toggle'."
 (provide 'auto-show)
 
 ;; auto-show.el ends here
-

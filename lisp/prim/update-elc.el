@@ -1,3 +1,11 @@
+;;; update-elc.el --- Bytecompile out-of-date dumped files
+
+;; Copyright (C) 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1996 Unknown
+
+;; Maintainer: XEmacs Development Team
+;; Keywords: internal
+
 ;; This file is part of XEmacs.
 
 ;; XEmacs is free software; you can redistribute it and/or modify it
@@ -17,6 +25,8 @@
 
 ;;; Synched up with: Not in FSF.
 
+;;; Commentary:
+
 ;; Byte compile the .EL files necessary to dump out xemacs.
 ;; Use this file like this:
 ;;
@@ -28,6 +38,11 @@
 ;;
 ;; (the idea here is that you can bootstrap if your .ELC files
 ;; are missing or badly out-of-date)
+
+;; Currently this code gets the list of files to check passed to it from
+;; src/Makefile.  This must be fixed.  -slb
+
+;;; Code:
 
 (setq update-elc-files-to-compile
       (delq nil
@@ -56,3 +71,5 @@
       (load "loadup-el.el")))
 
 (kill-emacs)
+
+;;; update-elc.el ends here

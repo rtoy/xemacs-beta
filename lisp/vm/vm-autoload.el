@@ -1568,6 +1568,8 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 
 (autoload (quote vm-mouse-support-possible-p) "vm-misc" nil nil nil)
 
+(autoload (quote vm-mouse-support-possible-here-p) "vm-misc" nil nil nil)
+
 (autoload (quote vm-menu-support-possible-p) "vm-misc" nil nil nil)
 
 (autoload (quote vm-toolbar-support-possible-p) "vm-misc" nil nil nil)
@@ -2217,7 +2219,7 @@ See the documentation for vm-mode for more information." t nil)
 
 (autoload (quote vm-mode) "vm-startup" "Major mode for reading mail.
 
-This is VM 6.31.
+This is VM 6.32.
 
 Commands:
    h - summarize folder contents
@@ -2382,6 +2384,7 @@ Variables:
    vm-frame-per-composition
    vm-frame-per-edit
    vm-frame-per-folder
+   vm-frame-per-help
    vm-frame-per-summary
    vm-highlighted-header-face
    vm-highlighted-header-regexp
@@ -2480,6 +2483,7 @@ Variables:
    vm-summary-thread-indent-level
    vm-tale-is-an-idiot
    vm-temp-file-directory
+   vm-toolbar-pixmap-directory
    vm-trust-From_-with-Content-Length
    vm-undisplay-buffer-hook
    vm-unforwarded-header-regexp
@@ -2528,11 +2532,17 @@ vm-visit-virtual-folder." nil nil)
 
 (autoload (quote vm-visit-virtual-folder-other-window) "vm-startup" "Like vm-visit-virtual-folder, but run in a different window." t nil)
 
-(autoload (quote vm-mail) "vm-startup" "Send a mail message from within VM, or from without." t nil)
+(autoload (quote vm-mail) "vm-startup" "Send a mail message from within VM, or from without.
+Optional argument TO is a string that should contain a comma separated
+recipient list." t nil)
 
-(autoload (quote vm-mail-other-frame) "vm-startup" "Like vm-mail, but run in a newly created frame." t nil)
+(autoload (quote vm-mail-other-frame) "vm-startup" "Like vm-mail, but run in a newly created frame.
+Optional argument TO is a string that should contain a comma separated
+recipient list." t nil)
 
-(autoload (quote vm-mail-other-window) "vm-startup" "Like vm-mail, but run in a different window." t nil)
+(autoload (quote vm-mail-other-window) "vm-startup" "Like vm-mail, but run in a different window.
+Optional argument TO is a string that should contain a comma separated
+recipient list." t nil)
 
 (autoload (quote vm-submit-bug-report) "vm-startup" "Submit a bug report, with pertinent information to the VM bug list." t nil)
 
@@ -2921,8 +2931,6 @@ Prefix arg means the new virtual folder should be visited read only." t nil)
 
 (autoload (quote vm-set-window-configuration) "vm-window" nil nil nil)
 
-(autoload (quote vm-record-current-window-configuration) "vm-window" nil nil nil)
-
 (autoload (quote vm-save-window-configuration) "vm-window" "Name and save the current window configuration.
 With this command you associate the current window setup with an
 action.  Each time you perform this action VM will duplicate this
@@ -2939,11 +2947,7 @@ configurations and then the default configuration.  The first
 configuration found is the one that is applied.
 
 The value of vm-mutable-windows must be non-nil for VM to use
-window configurations.
-
-If vm-mutable-frames is non-nil and Emacs is running under X
-windows, then VM will use all existing frames.  Otherwise VM will
-restrict its changes to the frame in which it was started." t nil)
+window configurations." t nil)
 
 (autoload (quote vm-buffer-to-label) "vm-window" nil nil nil)
 
@@ -2964,7 +2968,7 @@ Run the hooks in vm-iconify-frame-hook before doing so." t nil)
 
 (autoload (quote vm-frame-loop) "vm-window" nil nil nil)
 
-(autoload (quote vm-delete-windows-or-frames-on) "vm-window" nil nil nil)
+(autoload (quote vm-maybe-delete-windows-or-frames-on) "vm-window" nil nil nil)
 
 (autoload (quote vm-replace-buffer-in-windows) "vm-window" nil nil nil)
 

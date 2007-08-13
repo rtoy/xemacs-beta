@@ -14,10 +14,6 @@
 #undef SYSTEM_TYPE
 #define SYSTEM_TYPE "mach"
 
-/* Define this macro if system defines a type `union wait'.  */
-
-#define HAVE_UNION_WAIT
-
 /* Don't send signals to subprocesses by "typing" special chars at them. */
 #undef SIGNALS_VIA_CHARACTERS
 

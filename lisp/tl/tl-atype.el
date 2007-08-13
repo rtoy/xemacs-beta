@@ -1,12 +1,13 @@
 ;;; tl-atype.el --- atype functions
 
 ;; Copyright (C) 1994,1995,1996 Free Software Foundation, Inc.
+;; Copyright (C) 1997 MORIOKA Tomohiko
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: tl-atype.el,v 1.2 1996/12/28 21:03:09 steve Exp $
+;; Version: $Id: tl-atype.el,v 1.3 1997/06/06 00:57:42 steve Exp $
 ;; Keywords: atype
 
-;; This file is part of tl (Tiny Library).
+;; This file is part of XEmacs.
 
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -25,9 +26,8 @@
 
 ;;; Code:
 
-(require 'emu)
-(require 'tl-str)
 (require 'tl-list)
+(require 'atype)
 
 
 ;;; @ field
@@ -51,150 +51,6 @@
 	(setq r (cdr r))
 	))
     c))
-
-
-;;; @ field unifier
-;;;
-
-(defun field-unifier-for-default (a b)
-  (let ((ret
-	 (cond ((equal a b)    a)
-	       ((null (cdr b)) a)
-	       ((null (cdr a)) b)
-	       )))
-    (if ret
-	(list nil ret nil)
-      )))
-
-(defun field-unify (a b)
-  (let ((sym (symbol-concat "field-unifier-for-" (car a))))
-    (if (not (fboundp sym))
-	(setq sym (function field-unifier-for-default))
-      )
-    (funcall sym a b)
-    ))
-
-
-;;; @ type unifier
-;;;
-
-(defun assoc-unify (class instance)
-  (catch 'tag
-    (let ((cla (copy-alist class))
-	  (ins (copy-alist instance))
-	  (r class)
-	  cell aret ret prev rest)
-      (while r
-	(setq cell (car r))
-	(setq aret (fetch-field (car cell) ins))
-	(if aret
-	    (if (setq ret (field-unify cell aret))
-		(progn
-		  (if (car ret)
-		      (setq prev (put-field (car (car ret))
-					    (cdr (car ret))
-					    prev))
-		    )
-		  (if (nth 2 ret)
-		      (setq rest (put-field (car (nth 2 ret))
-					    (cdr (nth 2 ret))
-					    rest))
-		    )
-		  (setq cla (put-field (car cell)(cdr (nth 1 ret)) cla))
-		  (setq ins (delete-field (car cell) ins))
-		  )
-	      (throw 'tag nil)
-	      ))
-	(setq r (cdr r))
-	)
-      (setq r (copy-alist ins))
-      (while r
-	(setq cell (car r))
-	(setq aret (fetch-field (car cell) cla))
-	(if aret
-	    (if (setq ret (field-unify cell aret))
-		(progn
-		  (if (car ret)
-		      (setq prev (put-field (car (car ret))
-					    (cdr (car ret))
-					    prev))
-		    )
-		  (if (nth 2 ret)
-		      (setq rest (put-field (car (nth 2 ret))
-					    (cdr (nth 2 ret))
-					    rest))
-		    )
-		  (setq cla (delete-field (car cell) cla))
-		  (setq ins (put-field (car cell)(cdr (nth 1 ret)) ins))
-		  )
-	      (throw 'tag nil)
-	      ))
-	(setq r (cdr r))
-	)
-      (list prev (append cla ins) rest)
-      )))
-
-(defun get-unified-alist (db al)
-  (let ((r db) ret)
-    (catch 'tag
-      (while r
-	(if (setq ret (nth 1 (assoc-unify (car r) al)))
-	    (throw 'tag ret)
-	  )
-	(setq r (cdr r))
-	))))
-
-(defun delete-atype (atl al)
-  (let* ((r atl) ret oal)
-    (setq oal
-	  (catch 'tag
-	    (while r
-	      (if (setq ret (nth 1 (assoc-unify (car r) al)))
-		  (throw 'tag (car r))
-		)
-	      (setq r (cdr r))
-	      )))
-    (delete oal atl)
-    ))
-
-(defun remove-atype (sym al)
-  (and (boundp sym)
-       (set sym (delete-atype (eval sym) al))
-       ))
-
-(defun replace-atype (atl old-al new-al)
-  (let* ((r atl) ret oal)
-    (if (catch 'tag
-	  (while r
-	    (if (setq ret (nth 1 (assoc-unify (car r) old-al)))
-		(throw 'tag (rplaca r new-al))
-	      )
-	    (setq r (cdr r))
-	    ))
-	atl)))
-
-(defun set-atype (sym al &rest options)
-  (if (null (boundp sym))
-      (set sym al)
-    (let* ((replacement (memq 'replacement options))
-	   (ignore-fields (car (cdr (memq 'ignore options))))
-	   (remove (or (car (cdr (memq 'remove options)))
-		       (let ((ral (copy-alist al)))
-			 (mapcar (function
-				  (lambda (type)
-				    (setq ral (del-alist type ral))
-				    ))
-				 ignore-fields)
-			 ral)))
-	   )
-      (set sym
-	   (or (if replacement
-		   (replace-atype (eval sym) remove al)
-		 )
-	       (cons al
-		     (delete-atype (eval sym) remove)
-		     )
-	       )))))
 
 
 ;;; @ end

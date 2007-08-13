@@ -167,6 +167,21 @@ The result of the body appears to the compiler as a quoted constant."
   ;; Remember, it's magic.
   (cons 'progn body))
 
+;;; From Emacs 20.
+(put 'eval-when-feature 'lisp-indent-hook 1)
+(defmacro eval-when-feature (feature &rest body)
+  "Run the body forms when FEATURE is featurep, be it now or later.
+Called (eval-when-feature (FEATURE [. FILENAME]) BODYFORMS...).
+If (featurep 'FEATURE), evals now; otherwise adds an elt to
+`after-load-alist' (which see), using FEATURE as filename if FILENAME is nil."
+  (let ((file (or (cdr feature) (symbol-name (car feature)))))
+    `(let ((bodythunk (function (lambda () ,@body))))
+       (if (featurep ',(car feature))
+	   (funcall bodythunk)
+	 (setq after-load-alist (cons '(,file . (list 'lambda '() bodythunk))
+				      after-load-alist))))))
+      
+
 
 ;;; Interface to file-local byte-compiler parameters.
 ;;; Redefined in bytecomp.el.

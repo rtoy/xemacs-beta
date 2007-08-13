@@ -16,9 +16,6 @@
 #define HAVE_SYS_TIME_H
 #endif
 
-/* XEmacs addition */
-#undef HAVE_UNION_WAIT
-
 #if 0  /* This may have been needed for an earlier version of Sun OS 4.
 	  It seems to cause warnings in 4.0.3 and 4.1.  */
 #define O_NDELAY        FNDELAY /* Non-blocking I/O (4.2 style) */

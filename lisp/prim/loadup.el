@@ -1,8 +1,5 @@
 ;;; loadup.el --- load up standardly loaded Lisp files for XEmacs.
 
-;; It is not a good idea to edit this file.  Use site-init.el or site-load.el
-;; instead.
-;;
 ;; Copyright (C) 1985, 1986, 1992, 1994 Free Software Foundation, Inc.
 ;; Copyright (C) 1996 Richard Mlynarik.
 ;; Copyright (C) 1995, 1996 Ben Wing.
@@ -30,6 +27,9 @@
 
 ;;; Commentary:
 
+;; It is not a good idea to edit this file.  Use site-init.el or site-load.el
+;; instead.
+;;
 ;; This is loaded into a bare Emacs to make a dumpable one.
 
 ;;; Code:
@@ -116,7 +116,7 @@
      ;;(load-gc (if (featurep 'sparcworks) "eos/loaddefs-eos" "loaddefs"))
      (load-gc "loaddefs") ; <=== autoloads get put here
      (load-gc "misc")
-     (load-gc "profile")
+     ;; (load-gc "profile")
      (load-gc "help")
      ;; (load-gc "hyper-apropos")  Soon...
      (when (not (featurep 'mule))
@@ -130,6 +130,7 @@
      (load-gc "buff-menu")
      (load-gc "undo-stack")
      (load-gc "window")
+     (load-gc "window-xemacs")
      (load-gc "paths.el")		; don't get confused if paths compiled.
      (load-gc "startup")
      (load-gc "lisp")

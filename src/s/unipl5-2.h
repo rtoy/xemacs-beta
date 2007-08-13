@@ -47,10 +47,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define HAVE_PTYS
 
-/* Define this macro if system defines a type `union wait'.  */
-
-#define HAVE_UNION_WAIT
-
 /* Subprocesses are supported under UniPlus System V Release 2. */
 
 /* If your system uses COFF (Common Object File Format) then define the

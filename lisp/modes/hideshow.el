@@ -44,6 +44,11 @@
 ;;
 ;; The variable `hs-unbalance-handler-method' controls hideshow's behavior
 ;; in the case of "unbalanced parentheses".  See doc for more info.
+;;
+;; 30 May 1997	Pete Ware (ware@cis.ohio-state.edu)
+;;	* Modified to use easymenu interface.
+;;	* Removed tests for XEmacs vs GNU Emacs
+;;	* Got it to work under XEmacs
 
 ;; Suggested usage:
 
@@ -74,6 +79,7 @@
 
 ;;; Code:
 
+(require 'easymenu)
 
 ;;;----------------------------------------------------------------------------
 ;;; user-configurable variables
@@ -131,11 +137,17 @@ These commands include `hs-show-all', `hs-show-block' and `hs-show-region'.")
   "Non-nil if using hideshow mode as a minor mode of some other mode.
 Use the command `hs-minor-mode' to toggle this variable.")
 
-(defvar hs-minor-mode-map nil
+(defvar hs-minor-mode-map (make-sparse-keymap)
   "Mode map for hideshow minor mode.")
 
-(defvar hs-menu-bar nil
-  "Menu bar for hideshow minor mode (Xemacs only).")
+(easy-menu-define
+ hs-minor-mode-menu hs-minor-mode-map "Menu for hideshow minor mode"
+ '("Hideshow"
+    ["Hide Block" hs-hide-block t]
+    ["Show Block" hs-show-block t]
+    ["Hide All" hs-hide-all t]
+    ["Show All" hs-show-all t]
+    ["Show Region" hs-show-region t]))
 
 (defvar hs-c-start-regexp nil
   "Regexp for beginning of comments.  Buffer-local.
@@ -158,18 +170,6 @@ For single-character block delimiters -- ie, the syntax table regexp for the
 character is either `(' or `)' -- `hs-forward-sexp-func' would just be
 `forward-sexp'.  For other modes such as simula, a more specialized function
 is necessary.")
-
-(defvar hs-emacs-type 'lucid
-  "Used to support both FSF Emacs and Xemacs.")
-
-;; This doesn't work
-;(eval-when-compile
-;  (if (string-match "XEmacs\\|Lucid" emacs-version)
-;      (progn
-;	(defvar current-menubar nil "")
-;	(defun set-buffer-menubar (arg1))
-;	(defmacro add-menu (arg1 arg2 arg3)))))
-
 
 ;;;----------------------------------------------------------------------------
 ;;; support funcs
@@ -415,16 +415,12 @@ variables to default values and disables the hideshow commands."
           (> (prefix-numeric-value arg) 0)))
   (if hs-minor-mode
       (progn
- 	(if (eq hs-emacs-type 'lucid)
-	    (progn
-	      (set-buffer-menubar (copy-sequence current-menubar))
-	      (add-submenu (car hs-menu-bar) hs-menu-bar)))
+	(easy-menu-add hs-minor-mode-menu hs-minor-mode-map)
 	(setq selective-display t
 	      selective-display-ellipses t)
 	(hs-grok-mode-type)
 	(run-hooks 'hs-minor-mode-hook))
-    (if (eq hs-emacs-type 'lucid)
-	(set-buffer-menubar (delete hs-menu-bar current-menubar)))
+    (easy-menu-remove hs-minor-mode-menu)
     (kill-local-variable 'selective-display)
     (kill-local-variable 'selective-display-ellipses)))
 
@@ -432,52 +428,20 @@ variables to default values and disables the hideshow commands."
 ;;;----------------------------------------------------------------------------
 ;;; load-time setup routines
 
-;; which emacs being used?
-(setq hs-emacs-type
-      (if (string-match "XEmacs\\|Lucid" emacs-version)
-	  'lucid
-	'fsf))
-
-;; keymaps and menus
-(if (not hs-minor-mode-map)
-  (setq hs-minor-mode-map (make-sparse-keymap))
-  ;; XEmacs: need this for the change in add-minor-mode
-  (fset 'hs-minor-mode-map hs-minor-mode-map)
-  (cond
-   ((eq hs-emacs-type 'lucid)
-    (setq hs-menu-bar			; build top down for lucid
-	  '("hideshow"
-	    ["Hide Block" hs-hide-block t]
-	    ["Show Block" hs-show-block t]
-	    ["Hide All" hs-hide-all t]
-	    ["Show All" hs-show-all t]
-	    ["Show Region" hs-show-region t])))
-   (t					; build bottom up for others
-    (define-key hs-minor-mode-map [menu-bar hideshow]
-      (cons "hideshow" (make-sparse-keymap "hideshow")))
-    (define-key hs-minor-mode-map [menu-bar hideshow hs-show-region]
-      '("Show Region" . hs-show-region))
-    (define-key hs-minor-mode-map [menu-bar hideshow hs-show-all]
-      '("Show All" . hs-show-all))
-    (define-key hs-minor-mode-map [menu-bar hideshow hs-hide-all]
-      '("Hide All" . hs-hide-all))
-    (define-key hs-minor-mode-map [menu-bar hideshow hs-show-block]
-      '("Show Block" . hs-show-block))
-    (define-key hs-minor-mode-map [menu-bar hideshow hs-hide-block]
-      '("Hide Block" . hs-hide-block)))))
-
-;; some housekeeping
-;(or (assq 'hs-minor-mode minor-mode-map-alist)
-;    (setq minor-mode-map-alist
-;          (cons (cons 'hs-minor-mode hs-minor-mode-map)
-;                minor-mode-map-alist)))
-;(or (assq 'hs-minor-mode minor-mode-alist)
-;    (setq minor-mode-alist (append minor-mode-alist
-;                                   (list '(hs-minor-mode " hs")))))
-;; XEmacs: do it right.
-;;;###autoload
-(add-minor-mode 'hs-minor-mode " hs" 'hs-minor-mode-map)
-
+(if (fboundp 'add-minor-mode)
+    (progn
+      ;; XEmacs: need this for the change in add-minor-mode
+      ;; ### Why? -- pete@cis.ohio-state.edu
+      (fset 'hs-minor-mode-map hs-minor-mode-map)
+      (add-minor-mode 'hs-minor-mode " hs" 'hs-minor-mode-map))
+  ;;else
+  (or (assq 'hs-minor-mode minor-mode-map-alist)
+      (setq minor-mode-map-alist
+	    (cons (cons 'hs-minor-mode hs-minor-mode-map)
+		  minor-mode-map-alist)))
+  (or (assq 'hs-minor-mode minor-mode-alist)
+      (setq minor-mode-alist (append minor-mode-alist
+				     (list '(hs-minor-mode " hs"))))))
 ;; make some variables buffer-local
 (make-variable-buffer-local 'hs-minor-mode)
 (make-variable-buffer-local 'hs-c-start-regexp)

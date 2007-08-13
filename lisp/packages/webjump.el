@@ -1,51 +1,56 @@
 ;;; webjump.el --- programmable Web hotlist
      
-;; Copyright (C) 1996 Free Software Foundation
+;; Copyright (C) 1996-1997 Free Software Foundation
 
 ;; Author:    Neil W. Van Dyke <nwv@acm.org>
-;; Created:   Fri 09 Aug 1996
-;; Version:   1.4
-;; Keywords:  webjump web www browse-url
+;; Created:   09-Aug-1996
+;; Keywords:  comm www
 ;; X-URL:     http://www.cs.brown.edu/people/nwv/
 
-;; This file is not yet part of GNU Emacs.
+;; This file is part of GNU Emacs.
 
-;; This is free software; you can redistribute it and/or modify it under the
-;; terms of the GNU General Public License as published by the Free Software
-;; Foundation; either version 2, or (at your option) any later version.
+;; GNU Emacs is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
 
-;; This is distributed in the hope that it will be useful, but WITHOUT ANY
-;; WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-;; FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
-;; details.
+;; GNU Emacs is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
 
-;; You should have received a copy of the GNU General Public License along with
-;; GNU Emacs; see the file COPYING.  If not, write to the Free Software
-;; Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Change Log:
 
-;; [Version 1.4, Tue 17 Sep 1995, nwv] Removed the evil "defconst-TEST" that
-;; slipped into 1.3.  Organized webjump-sample-sites and modified the content a
-;; bit.
+;; [Version 1.5, 02-Jun-1997, nwv@acm.org] Prepared for first inclusion in GNU
+;; Emacs distribution by merging in RMS' minor changes and moving some sample
+;; Web site entries out.  Also updated Lycos and Yahoo sample entries.
 
-;; [Version 1.3, Fri 30 Aug 1996, nwv] Fixed broken `if' function in
+;; [Version 1.4, 17-Sep-1996, nwv@acm.org] Removed the evil "defconst-TEST"
+;; that slipped into 1.3.  Organized webjump-sample-sites and modified the
+;; content a bit.
+
+;; [Version 1.3, 30-Aug-1996, nwv@acm.org] Fixed broken `if' function in
 ;; `webjump-to-javaapi' (bugfix already posted).  Added `webjump-to-iwin'.
 ;; Added comment on purpose of `webjump-sample-sites'.  Added
 ;; `webjump-read-choice'.
 
-;; [Version 1.2, Fri 16 Aug 1996, nwv] Oops, got Gamelan mixed up with Digital
-;; Espresso somehow.  Added `mirrors' builtin and used it for the sample GNU
-;; Archive site.  Added some other sample sites.  Split sample sites out into
-;; separate constant.  Misc. small changes.  Copyright has been transferred to
-;; the FSF.
+;; [Version 1.2, 16-Aug-1996, nwv@acm.org] Oops, got Gamelan mixed up with
+;; Digital Espresso somehow.  Added `mirrors' builtin and used it for the
+;; sample GNU Archive site.  Added some other sample sites.  Split sample sites
+;; out into separate constant.  Misc. small changes.  Copyright has been
+;; transferred to the FSF.
 
-;; [Version 1.1, Sat 10 Aug 1996, nwv] Added missing call to `webjump-url-fix'
-;; (thanks to Istvan Marko <mi@bgytf.hu> for pointing this out).  Added
-;; ``builtins'' concept in order to support `simple-query' builtin for covering
-;; the majority of cases.  Added a couple more sample sites.
+;; [Version 1.1, 10-Aug-1996, nwv@acm.org] Added missing call to
+;; `webjump-url-fix' (thanks to Istvan Marko <mi@bgytf.hu> for pointing this
+;; out).  Added ``builtins'' concept in order to support `simple-query' builtin
+;; for covering the majority of cases.  Added a couple more sample sites.
 
-;; [Version 1.0, Fri 09 Aug 1996, nwv] Wrote initial version and posted to
+;; [Version 1.0, 09-Aug-1996, nwv@acm.org] Wrote initial version and posted to
 ;; gnu.emacs.sources.
 
 ;;; Commentary:
@@ -67,8 +72,8 @@
 
 ;; You may wish to add something like the following to your `.emacs' file:
 ;;
-;;   (load "webjump")
-;;   (global-set-key "\C-c\C-j" 'webjump)
+;;   (require 'webjump)
+;;   (global-set-key "\C-cj" 'webjump)
 ;;   (setq webjump-sites
 ;;         (append '(
 ;;                   ("My Home Page" . "www.someisp.net/users/joebobjr/")
@@ -76,18 +81,13 @@
 ;;                   )
 ;;                 webjump-sample-sites))
 ;;
-;; The above loads this package, binds `C-c C-j' to invoke WebJump, and adds
-;; your personal favorite sites to the hotlist.
+;; The above loads this package, binds `C-c j' to invoke WebJump, and adds your
+;; personal favorite sites to the hotlist.
 
-;; The `webjump-sample-sites' constant mostly contains sites that are expected
-;; to be generally useful to Emacs users or that have some sort of query which
-;; can be coded in WebJump.  There are two main goals of this sample site list:
-;; (1) demonstrate WebJump capabilities and usage; (2) provide definitions for
-;; many popular sites so that people don't have to reinvent the wheel.  A few
-;; assorted other sites have been thrown in on a whim.  No commercial sites are
-;; included unless they provide a free, generally-useful service.  Inclusion of
-;; a site does not represent an endorsement.  Please contact the maintainer
-;; with change requests.
+;; The `webjump-sample-sites' variable mostly contains some site entries that
+;; are expected to be generally relevant to most Emacs users.  Some additional
+;; site entries are defined in the separate and more frequently updated
+;; `webjump-plus' package, which is available from the author's Web site.
 
 ;; The `browse-url' package is used to submit URLs to the browser, so any
 ;; browser-specific configuration should be done there.
@@ -101,21 +101,15 @@
 
 (require 'browse-url)
 
-;;------------------------------------------------------ Package Identification
-
-(defconst webjump-version "1.4")
-(defconst webjump-author "Neil W. Van Dyke <nwv@acm.org>")
-(defconst webjump-maintainer-address "nwv@acm.org")
-(defconst webjump-vc-id
-  "$Id: webjump.el,v 1.1 1997/02/14 19:21:27 steve Exp $")
-
 ;;------------------------------------------------------------------- Constants
 
-(defconst webjump-sample-sites
+(defvar webjump-version "1.5")
+
+(defvar webjump-sample-sites
   '(
 
     ;; FSF, not including Emacs-specific.
-    ("GNU Project FTP Archive".
+    ("GNU Project FTP Archive" .
      [mirrors "ftp://prep.ai.mit.edu/pub/gnu/"
               ;; ASIA:
               "ftp://ftp.cs.titech.ac.jp"
@@ -169,32 +163,35 @@
               "ftp://gatekeeper.dec.com/pub/GNU"
               "ftp://ftp.uu.net/systems/gnu"])
     ("GNU Project Home Page" . "www.fsf.org")
-					;"www.gnu.ai.mit.edu"
-					;"agnes.dida.physik.uni-essen.de/~gnu"
 
     ;; Emacs.
     ("Eieio" . "ftp.ultranet.com/pub/zappo/")
     ("Emacs Lisp Archive" .
      "ftp://archive.cis.ohio-state.edu/pub/gnu/emacs/elisp-archive/")
     ("Insidious Big Brother Database" . "home.netscape.com/people/jwz/bbdb/")
-                                        ;"ftp.xemacs.org/pub/bbdb/"
     ("Mailcrypt" . "cag-www.lcs.mit.edu/mailcrypt/")
-    ("XEmacs Home" . "www.xemacs.org")  ; Doesn't hurt to have this here. :)
+    ("WebJump" . "http://www.cs.brown.edu/people/nwv/projects/webjump/")
+    ("XEmacs Home" . "www.xemacs.org")
     ("Yahoo: Emacs" .
-     "www.yahoo.com/Computers_and_Internet/Software/Editors/Emacs/")
+     "www.yahoo.com/Computers_and_Internet/Software/Text_Editors/Emacs/")
 
-    ;; General interest.
+    ;; Internet search engines.
     ("AltaVista" . 
      [simple-query
       "www.altavista.digital.com"
       "www.altavista.digital.com/cgi-bin/query?pg=aq&what=web&fmt=.&q="
       "&r=&d0=&d1="])
     ("Archie" .
-     [simple-query "http://hoohoo.ncsa.uiuc.edu/cgi-bin/AA.pl"
-		   "http://hoohoo.ncsa.uiuc.edu/cgi-bin/AA.pl?query=" ""])
-    ("Interactive Weather Information Network" . webjump-to-iwin)
+     [simple-query "hoohoo.ncsa.uiuc.edu/cgi-bin/AA.pl"
+		   "hoohoo.ncsa.uiuc.edu/cgi-bin/AA.pl?query=" ""])
     ("Lycos" .
-     [simple-query "www.lycos.com" "www.lycos.com/cgi-bin/pursuit?query=" ""])
+     [simple-query "www.lycos.com"
+                   "www.lycos.com/cgi-bin/pursuit?cat=lycos&query=" ""])
+    ("Yahoo" . 
+     [simple-query "www.yahoo.com" "search.yahoo.com/bin/search?p=" ""])
+
+    ;; Misc. general interest.
+    ("Interactive Weather Information Network" . webjump-to-iwin)
     ("Usenet FAQs" . 
      [simple-query "www.cis.ohio-state.edu/hypertext/faq/usenet/FAQ-List.html"
 		   "www.cis.ohio-state.edu/htbin/search-usenet-faqs/form?find="
@@ -207,36 +204,24 @@
      [simple-query "c.gp.cs.cmu.edu:5103/prog/webster"
 		   "gs213.sp.cs.cmu.edu/prog/webster?" ""])
     ("X Consortium Archive". "ftp.x.org")
-    ("Yahoo" . 
-     [simple-query "www.yahoo.com" "search.yahoo.com/bin/search?p=" ""])
-    ("Yahoo: Reference" "www.yahoo.com/Reference/")
+    ("Yahoo: Reference" . "www.yahoo.com/Reference/")
 
-    ;; Computer privacy and social issues.
+    ;; Computer social issues, privacy, professionalism.
+    ("Association for Computing Machinery" . "www.acm.org")
     ("Computer Professionals for Social Responsibility" . "www.cpsr.org/dox/")
     ("Electronic Frontier Foundation" . "www.eff.org")
+    ("IEEE Computer Society" . "www.computer.org")
     ("Pretty Good Privacy" . "web.mit.edu/network/pgp.html")
     ("Risks Digest" . webjump-to-risks)
 
-    ;; Java.
-    ("Digital Espresso" .
-     [simple-query "www.io.org/~mentor/DigitalEspresso.html"
-		   "www.jars.com/cgi-bin/aglimpse/01?query="
-		   "&case=on&whole=on&errors=0&maxfiles=100&maxlines=30"])
-    ("Java API" . webjump-to-javaapi)
-
     ;; Fun.
     ("Bastard Operator from Hell" . "www.replay.com/bofh/")
-    ("Dilbert" . "www.unitedmedia.com/comics/dilbert/")
-    ("Playboy" . (if (webjump-adult-p) "www.playboy.com" "www.whitehouse.gov"))
-
-    ;; Author's indulgence.
-    ("Brown University" .
-     [simple-query "www.brown.edu" "www.brown.edu/cgi-local/bsearch?" ""])
 
     )
-  "Sample hotlist for WebJump.")
+  "Sample hotlist for WebJump.  See the documentation for the `webjump'
+function and the `webjump-sites' variable.")
 
-(defconst webjump-state-to-postal-alist
+(defvar webjump-state-to-postal-alist
   '(("Alabama" . "al") ("Alaska" . "ak") ("Arizona" . "az") ("Arkansas" . "ar")
     ("California" . "ca") ("Colorado" . "co") ("Connecticut" . "ct")
     ("Delaware" . "de") ("Florida" . "fl") ("Georgia" . "ga") ("Hawaii" . "hi")
@@ -316,17 +301,6 @@ submitting the URL.")
                 ".html")
       prefix)))
 
-(defun webjump-to-javaapi (name)
-  (let* ((prefix "http://www.javasoft.com/products/JDK/CurrentRelease/api/")
-	 (packages '(("java.applet") ("java.awt") ("java.awt.image")
-		     ("java.awt.peer") ("java.io") ("java.lang") ("java.net")
-		     ("java.util") ("sun.tools.debug")))
-	 (completion-ignore-case t)
-	 (package (completing-read (concat name " package: ") packages nil t)))
-    (if (webjump-null-or-blank-string-p package)
-        (concat prefix "packages.html")
-      (concat prefix "Package-" package ".html"))))
-
 (defun webjump-to-risks (name)
   (let (issue volume)
     (if (and (setq volume (webjump-read-number (concat name " volume")))
@@ -343,9 +317,12 @@ submitting the URL.")
 See the documentation for the `webjump-sites' variable for how to customize the
 hotlist.
 
-Feedback on WebJump can be sent to the author, Neil W. Van Dyke <nwv@acm.org>,
-or submitted via `\\[webjump-submit-bug-report]'.  The latest version can be
-gotten from `http://www.cs.brown.edu/people/nwv/'."
+Please submit bug reports and other feedback to the author, Neil W. Van Dyke
+<nwv@acm.org>.
+
+The latest version can be gotten from `http://www.cs.brown.edu/people/nwv/'.
+That Web site also contains `webjump-plus.el', a larger and more frequently
+updated sample WebJump hotlist."
   (interactive)
   (let* ((completion-ignore-case t)
 	 (item (assoc (completing-read "WebJump to site: " webjump-sites nil t)
@@ -364,9 +341,6 @@ gotten from `http://www.cs.brown.edu/people/nwv/'."
 		       (error "WebJump URL function \"%s\" undefined." expr)))
 		    (t (error "WebJump URL expression for \"%s\" invalid."
 			      name)))))))
-
-(defun webjump-adult-p ()
-  (and (boundp 'age) (integerp age) (>= age 21)))
 
 (defun webjump-builtin (expr name)
   (if (< (length expr) 1)
@@ -405,7 +379,7 @@ gotten from `http://www.cs.brown.edu/people/nwv/'."
 (defun webjump-mirror-default (urls)
   ;; Note: This should be modified to apply some simple kludges/heuristics to
   ;; pick a site which is likely "close".  As a tie-breaker among candidates
-  ;; judged equally desirable, randomness should be used.
+  ;; judged equally desirable, randomness might be used.
   (car urls))
 
 (defun webjump-read-choice (name what choices &optional default)
@@ -440,20 +414,6 @@ gotten from `http://www.cs.brown.edu/people/nwv/'."
 
 (defun webjump-null-or-blank-string-p (str)
   (or (null str) (string-match "^[ \t]*$" str)))
-
-(defun webjump-submit-bug-report ()
-  "Submit via mail a bug report on WebJump."
-  (interactive)
-  (require 'reporter)
-  (reporter-submit-bug-report
-   webjump-maintainer-address
-   (concat "webjump.el " webjump-version " " webjump-vc-id)
-   '(webjump-sites)
-   nil
-   nil
-   (concat
-    "[Dear bug report submitter:  Please ensure that the variable dumps\n"
-    "below do not contain any information you consider private.]\n")))
 
 (defun webjump-url-encode (str)
   (mapconcat '(lambda (c)

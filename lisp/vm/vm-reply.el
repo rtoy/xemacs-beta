@@ -442,14 +442,14 @@ as replied to, forwarded, etc, if appropriate."
     ;; buffer inside mail-send.
     (if (eq (current-buffer) composition-buffer)
 	(progn
+	  (cond ((eq vm-system-state 'replying)
+		 (vm-mail-mark-replied))
+		((eq vm-system-state 'forwarding)
+		 (vm-mail-mark-forwarded))
+		((eq vm-system-state 'redistributing)
+		 (vm-mail-mark-redistributed)))
 	  (vm-rename-current-mail-buffer)
 	  (vm-keep-mail-buffer (current-buffer))))
-    (cond ((eq vm-system-state 'replying)
-	   (vm-mail-mark-replied))
-	  ((eq vm-system-state 'forwarding)
-	   (vm-mail-mark-forwarded))
-	  ((eq vm-system-state 'redistributing)
-	   (vm-mail-mark-redistributed)))
     (vm-display nil nil '(vm-mail-send) '(vm-mail-send))))
 
 (defun vm-mail-mode-get-header-contents (header-name-regexp)
@@ -946,7 +946,8 @@ found, the current buffer remains selected."
 	  ;; different composition buffer.
 	  (vm-unbury-buffer b)
 	  (set-buffer b)
-	  (if (and vm-frame-per-composition (vm-multiple-frames-possible-p)
+	  (if (and vm-mutable-frames vm-frame-per-composition
+		   (vm-multiple-frames-possible-p)
 		   ;; only pop up a frame if there's an undisplay
 		   ;; hook in place to make the frame go away.
 		   vm-undisplay-buffer-hook)
@@ -1010,7 +1011,7 @@ found, the current buffer remains selected."
       (if (eq mail-aliases t)
 	  (progn
 	    (setq mail-aliases nil)
-	    (if (file-exists-p "~/.mailrc")
+	    (if (file-exists-p (or mail-personal-alias-file "~/.mailrc"))
 		(build-mail-aliases)))))
     (if (stringp vm-mail-header-from)
 	(insert "From: " vm-mail-header-from "\n"))
@@ -1053,7 +1054,8 @@ found, the current buffer remains selected."
     ;; config stuff will select it as the composition buffer.
     (vm-unbury-buffer (current-buffer))
     ;; make a new frame if the user wants it.
-    (if (and vm-frame-per-composition (vm-multiple-frames-possible-p))
+    (if (and vm-mutable-frames vm-frame-per-composition
+	     (vm-multiple-frames-possible-p))
 	(progn
 	  (vm-goto-new-frame 'composition)
 	  (vm-set-hooks-for-frame-deletion)))

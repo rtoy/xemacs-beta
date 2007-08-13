@@ -18,6 +18,13 @@
 /* Made conformant to the GNU coding standards January, 1995
    by Francesco Potorti` <pot@cnuce.cnr.it>. */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+/* On some systems, Emacs defines static as nothing for the sake
+   of unexec.  We don't want that here since we don't use unexec. */
+#undef static
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,7 +40,6 @@
    of unexec.  We don't want that here since we don't use unexec. */
 #undef static
 #endif
-
 #undef TRUE
 #define TRUE	1
 #undef FALSE
@@ -69,7 +75,7 @@ extern char *strtok();
 long *xmalloc (), *xrealloc ();
 char *concat ();
 long readline ();
-void fatal ();
+void fatal (char *);
 
 /*
  * xnew -- allocate storage.  SYNOPSIS: Type *xnew (int n, Type);
@@ -80,9 +86,8 @@ void fatal ();
 
 char *progname;
 
-main (argc, argv)
-     int argc;
-     char **argv;
+int
+main (int argc, char **argv)
 {
   logical labels_saved, printing, header;
   time_t ltoday;
@@ -160,6 +165,7 @@ main (argc, argv)
       if (printing)
 	puts (data.buffer);
     }
+  return 0;
 }
 
 
@@ -169,8 +175,7 @@ main (argc, argv)
  * concatenate those of s1, s2, s3.
  */
 char *
-concat (s1, s2, s3)
-     char *s1, *s2, *s3;
+concat (char *s1, char *s2, char *s3)
 {
   int len1 = strlen (s1), len2 = strlen (s2), len3 = strlen (s3);
   char *result = xnew (len1 + len2 + len3 + 1, char);
@@ -189,9 +194,7 @@ concat (s1, s2, s3)
  * which is the length of the line including the newline, if any.
  */
 long
-readline (linebuffer, stream)
-     struct linebuffer *linebuffer;
-     register FILE *stream;
+readline (struct linebuffer *linebuffer, register FILE *stream)
 {
   char *buffer = linebuffer->buffer;
   register char *p = linebuffer->buffer;
@@ -240,8 +243,7 @@ readline (linebuffer, stream)
  * Like malloc but get fatal error if memory is exhausted.
  */
 long *
-xmalloc (size)
-     unsigned int size;
+xmalloc (unsigned int size)
 {
   long *result = (long *) malloc (size);
   if (result == NULL)
@@ -250,9 +252,7 @@ xmalloc (size)
 }
 
 long *
-xrealloc (ptr, size)
-     char *ptr;
-     unsigned int size;
+xrealloc (char *ptr, unsigned int size)
 {
   long *result = (long *) realloc (ptr, size);
   if (result == NULL)
@@ -261,7 +261,7 @@ xrealloc (ptr, size)
 }
 
 void
-fatal (message)
+fatal (char *message)
 {
   fprintf (stderr, "%s: %s\n", progname, message);
   exit (BAD);

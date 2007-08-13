@@ -1009,23 +1009,24 @@ Tue Jun 25 05:25:33 1985  Richard M. Stallman  (rms at mit-prep)
 
   A @dfn{tags table} is a description of how a multi-file program is
 broken up into files.  It lists the names of the component files and the
-names and positions of the functions in each file.  Grouping the related
-files makes it possible to search or replace through all the files with
-one command.  Recording the function names and positions makes it
-possible to use the @kbd{Meta-.} command, which finds the definition of a
-function without asking for information on the file it is in.
+names and positions of the functions (or other named subunits) in each
+file.  Grouping the related files makes it possible to search or replace
+through all the files with one command.  Recording the function names
+and positions makes possible the @kbd{M-.}  command which finds the
+definition of a function by looking up which of the files it is in.
 
-  tags tables are stored in files called @dfn{tags table files}.  The
+  Tags tables are stored in files called @dfn{tags table files}.  The
 conventional name for a tags table file is @file{TAGS}.
 
   Each entry in the tags table records the name of one tag, the name of the
 file that the tag is defined in (implicitly), and the position in that file
 of the tag's definition.
 
-   The programming language of a file determines what names are recorded
-in the tags table depends on.  Normally, Emacs includes all functions and
-subroutines, and may also include global variables, data types, and
-anything else convenient.  Each recorded name is called a @dfn{tag}.
+  Just what names from the described files are recorded in the tags table
+depends on the programming language of the described file.  They
+normally include all functions and subroutines, and may also include
+global variables, data types, and anything else convenient.  Each name
+recorded is called a @dfn{tag}.
 
 @menu
 * Tag Syntax::		Tag syntax for various types of code and text files.  
@@ -1036,55 +1037,33 @@ anything else convenient.  Each recorded name is called a @dfn{tag}.
 * List Tags::		Listing and finding tags defined in a file.
 @end menu
 
-@node Tag Syntax, Create Tags Table, Tags, Tags
+@node Tag Syntax
 @subsection Source File Tag Syntax
+
+  Here is how tag syntax is defined for the most popular languages:
 
 @itemize @bullet
 @item
-In Lisp code, any function defined with @code{defun}, any variable
-defined with @code{defvar} or @code{defconst}, and in general the first
-argument of any expression that starts with @samp{(def} in column zero, is
-a tag.
-
-@item
-In Scheme code, tags include anything defined with @code{def} or with a
-construct whose name starts with @samp{def}.  They also include variables
-set with @code{set!} at top level in the file.
-
-@item
 In C code, any C function or typedef is a tag, and so are definitions of
 @code{struct}, @code{union} and @code{enum}.  @code{#define} macro
-definitions and @code{enum} constant are also tags, unless
-@samp{--no-defines} is specified when the tags table is constructed,
-which sometimes makes the tags file much smaller.  In C++ code, member
-functions are also recognized.
+definitions and @code{enum} constants are also tags, unless you specify
+@samp{--no-defines} when making the tags table.  Similarly, global
+variables are tags, unless you specify @samp{--no-globals}.  Use of
+@samp{--no-globals} and @samp{--no-defines} can make the tags table file
+much smaller.
 
 @item
-In Yacc or Bison input files, each rule defines as a tag the
-nonterminal it constructs.  The portions of the file that contain C code
-are parsed as C code.
+In C++ code, in addition to all the tag constructs of C code, member
+functions are also recognized, and optionally member variables if you
+use the @samp{--members} option.  Tags for variables and functions in
+classes are named @samp{@var{class}::@var{variable}} and
+@samp{@var{class}::@var{function}}.
 
 @item
-In Fortran code, functions and subroutines are tags.
-
-@item
-In Pascal code, the tags are the functions and procedures defined in
-the file.
-
-@item
-In Perl code, the tags are the procedures defined by the @code{sub}
-keyword.
-
-@item
-In Prolog code, a tag name appears at the left margin.
-
-@item
-In Erlang code, the tags are the functions, records, and macros defined
-in the file.
-
-@item
-In assembler code, labels appearing at the beginning of a line,
-followed by a colon, are tags.
+In Java code, tags include all the constructs recognized in C++, plus
+the @code{extends} and @code{implements} constructs.  Tags for variables
+and functions in classes are named @samp{@var{class}.@var{variable}} and
+@samp{@var{class}.@var{function}}.
 
 @item
 In La@TeX{} text, the argument of any of the commands @code{\chapter},
@@ -1108,13 +1087,65 @@ specifies (using Bourne shell syntax) that the commands @samp{\def},
 @samp{\newcommand} and @samp{\newenvironment} also define tags.
 
 @item
-You can also generate tags based on regexp matching
-(@pxref{Create Tags Table}) for any text file.
+In Lisp code, any function defined with @code{defun}, any variable
+defined with @code{defvar} or @code{defconst}, and in general the first
+argument of any expression that starts with @samp{(def} in column zero, is
+a tag.
+
+@item
+In Scheme code, tags include anything defined with @code{def} or with a
+construct whose name starts with @samp{def}.  They also include variables
+set with @code{set!} at top level in the file.
 @end itemize
 
-@node Create Tags Table, Select Tags Table, Tag Syntax, Tags
+  Several other languages are also supported:
+
+@itemize @bullet
+@item
+In assembler code, labels appearing at the beginning of a line,
+followed by a colon, are tags.
+
+@item
+In Bison or Yacc input files, each rule defines as a tag the nonterminal
+it constructs.  The portions of the file that contain C code are parsed
+as C code.
+
+@item
+In Cobol code, paragraphs names are the tags, i.e. any word starting in
+column 8 and followed by a full stop.
+
+@item
+In Erlang code, the tags are the functions, records, and macros defined
+in the file.
+
+@item
+In Fortran code, functions and subroutines are tags.
+
+@item
+In Objective C code, tags include Objective C definitions for classes,
+class categories, methods and protocols.
+
+@item
+In Pascal code, the tags are the functions and procedures defined in
+the file.
+
+@item
+In Perl code, the tags are the procedures defined by the @code{sub}
+keyword.
+
+@item
+In Postscript code, the tags are the functions.
+
+@item
+In Prolog code, a tag name appears at the left margin.
+@end itemize
+
+  You can also generate tags based on regexp matching (@pxref{Create
+Tags Table}) to handle other formats and languages.
+
+@node Create Tags Table
 @subsection Creating Tags Tables
-@cindex etags program
+@cindex @code{etags} program
 
   The @code{etags} program is used to create a tags table file.  It knows
 the syntax of several languages, as described in
@@ -1208,14 +1239,21 @@ anchored, that is, it behaves as if preceded by @samp{^}.  If you want
 to account for indentation, just match any initial number of blanks by
 beginning your regular expression with @samp{[ \t]*}.  In the regular
 expressions, @samp{\} quotes the next character, and @samp{\t} stands
-for the tab character.  Note that @code{etags} does not handle the
-other C escape sequences for special characters.
+for the tab character.  Note that @code{etags} does not handle the other
+C escape sequences for special characters.
+
+@cindex interval operator (in regexps)
+  The syntax of regular expressions in @code{etags} is the same as in
+Emacs, augmented with the @dfn{interval operator}, which works as in
+@code{grep} and @code{ed}.  The syntax of an interval operator is
+@samp{\@{@var{m},@var{n}\@}}, and its meaning is to match the preceding
+expression at least @var{m} times and up to @var{n} times.
 
   You should not match more characters with @var{tagregexp} than that
 needed to recognize what you want to tag.  If the match is such that
 more characters than needed are unavoidably matched by @var{tagregexp},
-you may find useful to add a @var{nameregexp}, in order to narrow the
-tag scope.  You can find some examples below.
+you may find useful to add a @var{nameregexp}, in order to narrow the tag
+scope.  You can find some examples below.
 
   The @samp{-R} option deletes all the regexps defined with
 @samp{--regex} options.  It applies to the file names following it, as
@@ -1253,20 +1291,6 @@ formatting reasons):
 --regex='/[ \t]*\(ARCHITECTURE\|CONFIGURATION\) +[^ ]* +OF/'
 --regex='/[ \t]*\(ATTRIBUTE\|ENTITY\|FUNCTION\|PACKAGE\
 \( BODY\)?\|PROCEDURE\|PROCESS\|TYPE\)[ \t]+\([^ \t(]+\)/\3/'
-@end example
-
-@noindent
-Tag Cobol files (every label starting in column seven):
-
-@example
---language=none --regex='/.......[a-zA-Z0-9-]+\./'
-@end example
-
-@noindent
-Tag Postscript files (every label starting in column one):
-
-@example
---language=none --regex='#/[^ \t@{]+#/'
 @end example
 
 @noindent

@@ -1,4 +1,342 @@
+1997-06-05  Steven L Baur  <steve@altair.xemacs.org>
+
+	* packages/jka-compr.el (jka-compr-write-region): Use 'binary
+	coding-system for compression.
+	Suggested by Katsumi Yamaoka <yamaoka@ga.sony.co.jp>
+
+1997-06-03  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* x11/x-menubar.el (default-menubar): Add menu for Mule.
+
+	* mule/mule-cmds.el: Menu for XEmacs were moved to
+ 	x11/x-menubar.el.
+
+1997-06-03  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* leim/quail.el: to avoid compiling warnings about overlay.el.
+
+1997-06-03  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* leim/quail.el: to sync with quail.el of Emacs-19.34.94-epsilon.
+
+	* leim/quail/ziranma.el, leim/quail/tonepy.el, leim/quail/py.el,
+ 	leim/quail/qj.el, leim/quail/sw.el, leim/quail/ccdospy.el,
+ 	leim/quail/punct.el, leim/quail/4corner.el,
+ 	leim/quail/symbol-ksc.el, leim/quail/ethiopic.el,
+ 	leim/quail/hanja.el, leim/quail/quick-cns.el,
+ 	leim/quail/tsangchi-cns.el, leim/quail/lrt.el,
+ 	leim/quail/tsangchi-b5.el, leim/quail/devanagari.el,
+ 	leim/quail/japanese.el, leim/quail/quick-b5.el,
+ 	leim/quail/punct-b5.el, leim/quail/qj-b5.el, leim/quail/py-b5.el,
+ 	leim/quail/ctlau.el, leim/quail/ctlaub.el, leim/quail/ecdict.el,
+ 	leim/quail/array30.el, leim/quail/hangul3.el,
+ 	leim/quail/hanja-jis.el, leim/quail/cyrillic.el,
+ 	leim/quail/etzy.el, leim/quail/greek.el, leim/quail/ipa.el,
+ 	leim/quail/lao.el, leim/quail/zozy.el, leim/quail/viqr.el,
+ 	leim/quail/latin.el, leim/quail/thai.el, leim/quail/hangul.el:
+ 	quail of LEIM for Emacs-19.34.94-epsilon.
+
+1997-06-04  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/about.el: Installed new version 2.1.
+	From Hrvoje Niksic <hniksic@srce.hr>
+	
+	* prim/profile.el (pretty-print-profiling-info): Autoload don't
+	dump.
+	Clean up comments.
+
+	* prim/update-elc.el: Comment cleanup.
+
+	* modes/cperl-mode.el (cperl-mode-map): Restore previous
+	definition.
+	(cperl-electric-backspace): Use backspace-or-delete if it exists.
+
+	* bytecomp/bytecomp-runtime.el (eval-when-feature): New macro.
+	From Roland McGrath <roland@frob.com>
+
+	* prim/glyphs.el (init-glyphs): Add xbm instantiator for 'x
+	consoles.
+	Suggested by Hrvoje Niksic <hniksic@srce.hr>.
+
+	* utils/passwd.el: Eliminate obsolete Lucid emacs usage.
+
+	* utils/timezone.el (timezone-make-date-arpa-standard): Correct
+	docstring.
+	(timezone-make-date-sortable): Ditto.
+
+	* utils/passwd.el (passwd-invert-frame-when-keyboard-grabbed):
+	Change default for InfoDock.
+
+	* utils/highlight-headers.el
+	(highlight-headers-follow-url-function): Correct docstring.
+
+	* utils/finder.el (finder-known-keywords): Cleanup keyword
+	documentation.
+
+	* prim/startup.el (command-line-do-help): Use emacs-name function
+	for printing the editor name.
+
+	* prim/simple.el: Disable for InfoDock.
+	(display-warning): Disable for InfoDock.
+	(emacs-name): New function.
+
+	* prim/toolbar.el (press-toolbar-button): Allow mouse presses on
+	blank portions of the toolbar to do something.
+	(release-and-activate-toolbar-button): Handle arbitrary functions
+	as toolbar callbacks.
+	From weiner@altrasoft.com
+
+	* prim/mouse.el (default-mouse-track-cleanup-extent): Correct test 
+	on dead-func extent.
+
+	* prim/help.el (view-emacs-news): outl-mouse turned off in
+	InfoDock.
+
+	* packages/tar-mode.el (tar-mode-map): InfoDock doesn't like the
+	mouse bindings.
+
+	* packages/makesum.el (make-command-summary): Output correct
+	program name.
+	(double-column): Remove unused variable.
+
+	* packages/hyper-apropos.el (hypropos-popup-menu): Synch with
+	infodock.  Initialize command-p to either t or nil.
+
+	* eterm/term.el (make-term): Fix docstring.
+
+	* comint/shell.el: Correct comment.
+
+	* comint/comint.el (comint-mode-map): Infodock doesn't like the
+	button3 assignment.
+
+1997-06-03  Steven L Baur  <steve@altair.xemacs.org>
+
+	* modes/lisp-mode.el (eval-interactive): Treat defcustom like
+	defvar (turn into an effective defconst).
+
+	* cl/cl-macs.el (widget-get): Add defsetf method.
+	(widget-value): Add defsetf method.
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+1997-06-02  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/obsolete.el (insert-and-inherit): Make 'compatible not
+	'obsolete.
+	Suggested by Hrvoje Niksic <hniksic@srce.hr>
+	(insert-before-markers-and-inherit): Ditto.
+
+1997-06-02  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* lisp/mule/korean.el was abolished because it seems not to be used.
+
+	* lisp/mule/japanese.el was abolished because it seems not to be used.
+
+1997-06-01  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* lisp/tm/gnus-mime-old.el was abolished because XEmacs 20.3 has Gnus
+ 	5.4.
+
+	* lisp/tm/tm-edit.el: updated to 7.108.
+
+	* lisp/tm/tm-view.el: updated to 7.83.
+
+	* lisp/leim/quail.el: modified for XEmacs.
+	
+	* lisp/mule/mule-load.el, lisp/mule/mule-process.el: delete
+	mule-process.el because it is not used.
+
+	* lisp/mule/european.el was abolished because it seems not to be used.
+
+	* lisp/mule/mule-load.el: must load mule-cmds before setting for
+ 	language-environment.
+
+	* lisp/mule/mule-cmds.el, lisp/mule/european-hooks.el: Modified
+	for LEIM.
+
+	* lisp/mule/mule-cmds.el: Uncomment key definition for
+ 	`toggle-input-method'.
+
+	* lisp/mule/mule-init.el: Comment out about `mule-keymap' (moved to
+ 	mule-cmds.el).
+
+	* lisp/mule/mule-cmds.el: Uncomment about `mule-keymap' (moved from
+ 	mule-init.el).
+
+	* lisp/tl/tl-atype.el: Don't require tl-str.
+
+	* lisp/tl/tl-atype.el: Use atype.el of APEL.
+
+	* lisp/tl/tl-list.el: Use alist.el of APEL.
+
+1997-05-31  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* lisp/tl/richtext.el, lisp/tl/emu-x20.el, lisp/tl/emu-xemacs.el,
+	lisp/tl/emu.el, lisp/tl/emu-e19.el: moved to lisp/apel/.
+
+	* lisp/tl/file-detect.el, lisp/tl/filename.el: replaced by APEL's.
+
+	* lisp/mu/std11-parse.el, lisp/mu/std11.el: moved to lisp/apel/.
+
+	* lisp/leim/quail.el: Add new quail.el (imported from Emacs
+ 	19.34.94-epsilon).
+
+	* lisp/leim/skk/skkdic.el: delete skkdic.el temporary because XEmacs
+ 	can not compile it.
+
+	* leim/skk/skkdic.el, leim/quail/zozy.el, leim/quail/ziranma.el,
+ 	leim/quail/viqr.el, leim/quail/tsangchi-cns.el,
+ 	leim/quail/tsangchi-b5.el, leim/quail/symbol-ksc.el,
+ 	leim/quail/thai.el, leim/quail/tonepy.el, leim/quail/quick-cns.el,
+ 	leim/quail/sw.el, leim/quail/qj-b5.el, leim/quail/qj.el,
+ 	leim/quail/quick-b5.el, leim/quail/py-b5.el, leim/quail/py.el,
+ 	leim/quail/lao.el, leim/quail/latin.el, leim/quail/lrt.el,
+ 	leim/quail/punct-b5.el, leim/quail/punct.el,
+ 	leim/quail/hanja-jis.el, leim/quail/hanja.el, leim/quail/ipa.el,
+ 	leim/quail/japanese.el, leim/quail/hangul3.el, leim/quail/etzy.el,
+ 	leim/quail/greek.el, leim/quail/hangul.el, leim/quail/ethiopic.el,
+ 	leim/quail/devanagari.el, leim/quail/ecdict.el,
+ 	leim/quail/ctlau.el, leim/quail/ctlaub.el, leim/quail/cyrillic.el,
+ 	leim/quail/array30.el, leim/quail/ccdospy.el,
+ 	leim/quail/4corner.el: Add LEIM elisp files.
+
+	* mule/mule-load.el, mule/mule-cmds.el: Add mule-cmds.el.
+
+	* lisp/prim/simple.el (assoc-ignore-case): New function; imported
+	from Emacs/mule-19.34.94-epsilon.
+
+1997-06-02  Steven L Baur  <steve@altair.xemacs.org>
+
+	* modes/hideshow.el: Make it work again.
+	From Pete Ware <ware@cis.ohio-state.edu>
+
+Sat May 31 09:00:14 1997  David Moore  <dmoore@ucsd.edu>
+
+	* utils/text-props.el (set-text-properties): Was exiting
+	map-extents too early.
+
+1997-06-02  Steven L Baur  <steve@altair.xemacs.org>
+
+	* cl/cl-macs.el (frame-parameters): Tweaking frame configuration
+	defsetf's.
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+	* modes/vhdl-mode.el (vhdl-emacs-features): Allow recognition of
+	major version 20.
+
+	* prim/simple.el (kill-region): Sort beginning and ending
+	endpoints to simplify logic.
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+Tue May 27 13:42:57 1997  Ken Manheimer  <klm@python.org>
+
+	* packages/icomplete.el:
+	* Updated my email address - klm@python.org instead of klm@nist.gov.
+
+	* Icomplete no longer installs itself when you load the package -
+ 	  you have to invoke `icomplete-mode'.  (Since it's autoloaded in
+	  both emacs, you can just invoke the function.)
+
+	* Integrated Emacs 19.34 and XEmacs 19.15 corrections (typos,
+ 	  style, command revisions, etc).
+
+	* Integrated immediate keybindings display.  See
+	  `icomplete-show-key-bindings', `icomplete-get-keys', and
+	  `icomplete-completions'.
+
+	* `icomplete-get-keys': Return keys bound in prior buffer to func name.
+
+	* Added icomplete delay behavior, so completions don't intrude as
+ 	  quickly for short input, with customization variables:
+
+	  `icomplete-max-delay-chars' - Maximum number of initial chars to
+	  apply icomplete compute delay.
+	
+	  `icomplete-compute-delay' - Completions-computation stall, used
+	  only with large-number completions
+
+	  `icomplete-delay-completions-threshold' Pending-completions
+	  number over which to apply icomplete-compute-delay
+
+	* Provided `icomplete-exhibit' on `icomplete-minibuffer-setup-hook'
+	   so icomplete behaves well with XEmacs GNUS.
+
+Fri May 30 18:39:01 1997  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/glyphs.el (init-glyphs): Minor regexp cleanup.
+
+1997-05-30  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/simple.el (fsf:do-auto-fill): Remove unused variable.
+	(indent-for-comment): Use comment-indent-function instead of
+	obsolete variant.  This is dumped with XEmacs!
+
+	* packages/generic-sc.el (sc-next-operation): Remove unused
+	variable.
+	(sccs-insert-c-header): Ditto.
+	(ccase-new-revision-p): Ditto.
+	(sc-sensitize-menu): Ditto.
+
+	* modes/auto-show.el (TopLevel): Tighten check on
+	dump-time initialization.
+
 1997-05-29  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/format.el (format-alist): Change defconst to defvar.
+	From Richard Stallman  <rms@psilocin.gnu.ai.mit.edu>
+
+	(format-encode-region): Reduce bytecompiler warnings for bound but
+	unused variables.
+	(format-deannotate-region): Ditto.
+	(format-annotate-region): Ditto.
+	(format-annotate-single-property-change) Ditto.
+
+	* utils/lib-complete.el: Clean up documentation in header.
+
+	* prim/glyphs.el: Eliminate bytecompiler warnings.
+	(define-obsolete-pointer-glyph): Mark as 'compatible not 'obsolete.
+
+	* prim/keydefs.el (ctl-x-map): Bind narrow-to-defun to `C-x n d'.
+
+	* prim/lisp.el (narrow-to-defun): Narrow to the same defun that
+	`mark-defun' would make the region.
+	(insert-parentheses): Let a negative argument enclose preceding
+	sexps.
+	From Erik Naggum  <erik@naggum.no>
+	
+	* prim/window-xemacs.el: New file, split from window.el with
+	XEmacs-specific stuff.
+
+	* prim/window.el (display-buffer): Remove unused variable.
+
+	* prim/keydefs.el (ctl-x-4-map): Add binding for
+	`kill-buffer-and-window'.
+
+	* prim/window.el (kill-buffer-and-window): New command.
+	Bind it to C-x 4 0.
+	From Richard Stallman  <rms@whiz-bang.gnu.ai.mit.edu>
+	
+	* prim/window.el (split-window-vertically): Don't change point in old
+	window if both the original point and the end of the buffer are
+	visible after splitting, when split-window-keep-point is nil.
+	From Noah Friedman  <friedman@prep.ai.mit.edu>
+	
+	* prim/files.el (revert-buffer-internal-hook): Declare.
+
+	* utils/map-ynp.el: Synch with Emacs 19.34.94.
+	(map-y-or-n-p): Clean up bytecompiler warnings.
+
+	* packages/generic-sc.el: Restored to distribution, comment
+	cleanup.
+
+	* prim/simple.el (message-log-max): Add compatible variable alias
+	for `log-message-max-size'.
+
+	* comint/background.el (background): Autoload.
+
+	* prim/process.el (shell-command): background.el is now
+	autoloaded.
+
+	* prim/minibuf.el: Clean up file header.
 
 	* packages/bookmark.el (bookmark-menu-popup-paned-menu): Naive
 	port to XEmacs.

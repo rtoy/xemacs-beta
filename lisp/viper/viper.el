@@ -8,7 +8,7 @@
 
 ;; Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
 
-(defconst viper-version "2.93 of March 9, 1997"
+(defconst viper-version "2.93 of May 20, 1997"
   "The current version of Viper")
 
 ;; This file is part of GNU Emacs.
@@ -3329,7 +3329,8 @@ controlled by the sign of prefix numeric value."
   (interactive "P")
   (vip-leave-region-active)
   (let ((com (vip-getcom arg))
-	parse-sexp-ignore-comments anchor-point)
+	(parse-sexp-ignore-comments vip-parse-sexp-ignore-comments)
+	anchor-point)
     (if (integerp arg)
 	(if (or (> arg 99) (< arg 1))
 	    (error "Prefix must be between 1 and 99")
@@ -3371,6 +3372,13 @@ controlled by the sign of prefix numeric value."
 	     (backward-sexp 1)
 	     (if com (vip-execute-com 'vip-paren-match nil com)))
 	    (t (error ""))))))
+
+(defun vip-toggle-parse-sexp-ignore-comments ()
+  (interactive)
+  (setq vip-parse-sexp-ignore-comments (not vip-parse-sexp-ignore-comments))
+  (prin1 (format "`%%' will %signore parentheses inside the comments"
+	   (if vip-parse-sexp-ignore-comments "" "NOT ")))
+  )
 
 
 ;; sentence ,paragraph and heading
@@ -5238,6 +5246,12 @@ Mail anyway (y or n)? ")
  
 ;; set the toggle case sensitivity and regexp search macros
 (vip-set-vi-search-style-macros nil)
+
+;; Make %%% toggle parsing comments for matching parentheses
+(vip-record-kbd-macro
+ "%%%" 'vi-state
+ [(meta x) v i p - t o g g l e - p a r s e - s e x p - i g n o r e - c o m m e n t s return]
+ 't)
  
 
 ;; ~/.vip is loaded if it exists

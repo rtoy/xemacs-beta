@@ -1636,32 +1636,22 @@ A value of nil restricts VM's window usage to the window from which
 it was invoked.  VM will not create, delete, or use any other windows,
 nor will it resize its own window.")
 
-(defvar vm-mutable-frames nil
+(defvar vm-mutable-frames t
   "*Non-nil value means VM is allowed to create and destroy frames
-to display and undisplay buffers.
+to display and undisplay buffers.  Whether VM actually does
+so depends on the value of the variables with names prefixed by
+`vm-frame-per-'.
 
 VM can create a frame to display a buffer, and delete frame to
 undisplay a buffer.  A nil value means VM should not create or
 delete frames.
 
-This variable is _not_ an analogue of vm-mutable-windows.  VM
-still might create frames if this variable is nil.  If you set
-the vm-frame-per-* variables VM will still create frames.  Using
-the vm-frame-per-* variables you have more control over when it
-happens.
-
-Users should consider setting vm-frame-per-folder and
-vm-frame-per-composition and/or using the -other-frame commands
-instead of setting this variable.  If vm-mutable-frames is set to t,
-then vm-mutable-windows should probably be set to nil so that you
-avoid splitting frames.
+This variable used to have a different meaning but it was changed
+to better reflect what users expected.  This variable is now a
+frame analogue of vm-mutable-windows.
 
 This variable does not apply to the VM commands whose
-names end in -other-frame, which always create a new frame.
-
-This variable has no meaning if you're not running Emacs native
-under X Windows or some other window system that allows multiple
-Emacs frames.")
+names end in -other-frame, which always create a new frame.")
 
 (defvar vm-raise-frame-at-startup t
   "*Specifies whether VM should raise its frame at startup.
@@ -1675,9 +1665,10 @@ Nil means the commands will use the current frame.  This variable
 does not apply to the VM commands whose names end in
 -other-frame, which always create a new frame.
 
-This variable has no meaning if you're not running Emacs native
-under X Windows or some other window system that allows multiple
-Emacs frames.")
+This variable has no meaning if you're not running under an Emacs
+capable of displaying multiple real or virtual frames.  Note that
+Emacs supports multiple virtual frames on dumb terminals, and
+VM will use them.")
 
 (defvar vm-frame-per-summary nil
   "*Non-nil value causes VM to display the folder summary in its own frame.
@@ -1685,9 +1676,10 @@ Nil means the vm-summarize command will use the current frame.
 This variable does not apply to vm-summarize-other-frame, which
 always create a new frame.
 
-This variable has no meaning if you're not running Emacs native
-under X Windows or some other window system that allows multiple
-Emacs frames.")
+This variable has no meaning if you're not running under an Emacs
+capable of displaying multiple real or virtual frames.  Note that
+Emacs supports multiple virtual frames on dumb terminals, and
+VM will use them.")
 
 (defvar vm-frame-per-composition t
   "*Non-nil value causes the mail composition commands to open a new frame.
@@ -1695,9 +1687,10 @@ Nil means the commands will use the current frame.  This variable
 does not apply to the VM commands whose names end in
 -other-frame, which always create a new frame.
 
-This variable has no meaning if you're not running Emacs native
-under X Windows or some other window system that allows multiple
-Emacs frames.")
+This variable has no meaning if you're not running under an Emacs
+capable of displaying multiple real or virtual frames.  Note that
+Emacs supports multiple virtual frames on dumb terminals, and
+VM will use them.")
 
 (defvar vm-frame-per-edit t
   "*Non-nil value causes vm-edit-message to open a new frame.
@@ -1705,9 +1698,19 @@ Nil means the vm-edit-message will use the current frame.  This
 variable does not apply to vm-edit-message-other-frame, which
 always create a new frame.
 
-This variable has no meaning if you're not running Emacs native
-under X Windows or some other window system that allows multiple
-Emacs frames.")
+This variable has no meaning if you're not running under an Emacs
+capable of displaying multiple real or virtual frames.  Note that
+Emacs support multiple virtual frames on dumb terminals, and
+VM will use them.")
+
+(defvar vm-frame-per-help nil
+  "*Non-nil value causes VM to open a new frame to display help buffers.
+Nil means the VM will use the current frame.
+
+This variable has no meaning if you're not running under an Emacs
+capable of displaying multiple real or virtual frames.  Note that
+Emacs supports multiple virtual frames on dumb terminals, and
+VM will use them.")
 
 (defvar vm-frame-per-completion t
   "*Non-nil value causes VM to open a new frame on mouse
@@ -1725,7 +1728,8 @@ list of choices.
 
 This variable has no meaning if you're not running Emacs native
 under X Windows or some other window system that allows multiple
-Emacs frames.")
+real Emacs frames.  Note that Emacs supports virtual frames under
+ttys but VM will not use these to display completion information.")
 
 (defvar vm-frame-parameter-alist nil
   "*Non-nil value is an alist of types and lists of frame parameters.
@@ -1754,10 +1758,7 @@ of frame that the following PARAMLIST applies to.
    (e.g. created by vm-summarize-other-frame)
 
 PARAMLIST is a list of pairs as described in the documentation for
-the function `make-frame'.
-
-This variable has no effect on frames created as a result of
-having vm-mutable-frames set to non-nil.")
+the function `make-frame'.")
 
 (defvar vm-search-other-frames t
   "*Non-nil means VM should search frames other than the selected frame
@@ -2346,7 +2347,8 @@ mail is not sent.")
     (define-key map "t" 'vm-expose-hidden-headers)
     (define-key map " " 'vm-scroll-forward)
     (define-key map "b" 'vm-scroll-backward)
-    (define-key map "\C-?" 'vm-scroll-backward)
+    (define-key map "\177" 'vm-scroll-backward)
+    (define-key map 'backspace 'vm-scroll-backward)
     (define-key map "D" 'vm-decode-mime-message)
     (define-key map "d" 'vm-delete-message)
     (define-key map "\C-d" 'vm-delete-message-backward)

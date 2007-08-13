@@ -39,6 +39,9 @@ SHELL = /bin/sh
 #undef i386
 #undef linux
 
+/* For performance and consistency, no built-in rules */
+.SUFFIXES:
+.SUFFIXES: .c .o .i .h
 /* ==================== Things "configure" will edit ==================== */
 
 CC=@CC@
@@ -299,7 +302,7 @@ all: ${UTILITIES} ${INSTALLABLES} ${SCRIPTS}
 /* Make symlinks for shell scripts if using --srcdir */
 rcs2log:
 	${LN_S} ${srcdir}/$@ $@
-vcdiff: 
+vcdiff:
 	${LN_S} ${srcdir}/$@ $@
 tm-au :
 	${LN_S} ${srcdir}/$@ $@
@@ -427,15 +430,15 @@ REGEXDEPS = $(REGEXOBJ) ${srcdir}/../src/regex.h
 
 regex.o: ${srcdir}/../src/regex.c ${srcdir}/../src/regex.h
 	$(CC) -c `echo ${cflags} | sed 's/-Demacs/ /'` \
-		-DCONFIG_BROKETS -DINHIBIT_STRING_HEADER ${srcdir}/../src/regex.c
+		-DINHIBIT_STRING_HEADER ${srcdir}/../src/regex.c
 
 etags: ${srcdir}/etags.c $(GETOPTDEPS) $(REGEXDEPS) ../src/config.h
-	$(CC) ${cflags} -DVERSION="\"${version}\"" -DETAGS_REGEXPS ${srcdir}/etags.c $(GETOPTOBJS) $(REGEXOBJ) $(ldflags) -o etags
+	$(CC) ${cflags} -DVERSION="\"${version}\"" ${srcdir}/etags.c $(GETOPTOBJS) $(REGEXOBJ) $(ldflags) -o etags
 
 /* We depend on etags to assure that parallel makes do not write two
    etags.o files on top of each other.  */
-ctags: ${srcdir}/etags.c $(GETOPTDEPS) etags
-	$(CC) ${cflags} -DCTAGS -DVERSION="\"${version}\"" ${srcdir}/etags.c $(GETOPTOBJS) $(ldflags) -o ctags
+ctags: ${srcdir}/etags.c $(GETOPTDEPS) $(REGEXDEPS) etags
+	$(CC) ${cflags} -DCTAGS -DVERSION="\"${version}\"" ${srcdir}/etags.c $(GETOPTOBJS) $(REGEXOBJ) $(ldflags) -o ctags
 
 wakeup: ${srcdir}/wakeup.c
 	$(CC) ${cflags} ${srcdir}/wakeup.c $(ldflags) -o wakeup
@@ -447,13 +450,13 @@ make-docfile: ${srcdir}/make-docfile.c
 	$(CC) ${cflags} ${srcdir}/make-docfile.c $(ldflags) -o make-docfile
 
 digest-doc: ${srcdir}/digest-doc.c
-	$(CC) ${cflags} ${srcdir}/digest-doc.c $(ldflags) -o digest-doc 
+	$(CC) ${cflags} ${srcdir}/digest-doc.c $(ldflags) -o digest-doc
 
 sorted-doc: ${srcdir}/sorted-doc.c ${ALLOCA}
 	$(CC) ${cflags} ${srcdir}/sorted-doc.c ${ALLOCA} $(ldflags) -o sorted-doc
 
 b2m: ${srcdir}/b2m.c ../src/config.h
-	$(CC) ${cflags} ${srcdir}/b2m.c $(ldflags) -o b2m 
+	$(CC) ${cflags} ${srcdir}/b2m.c $(ldflags) -o b2m
 
 movemail: ${srcdir}/movemail.c ${srcdir}/pop.c ${srcdir}/pop.h ../src/config.h
 	$(CC) ${cflags} ${MOVE_FLAGS} ${srcdir}/movemail.c ${srcdir}/pop.c $(ldflags) ${MOVE_LIBS} -o movemail
@@ -487,7 +490,7 @@ ldflags_gnuserv = ${ldflags}
 #endif
 gnuslib.o: ${srcdir}/gnuslib.c ${srcdir}/gnuserv.h ../src/config.h
 	$(CC) -c ${cflags_gnuserv} ${srcdir}/gnuslib.c
-gnuclient: ${srcdir}/gnuclient.c gnuslib.o ${srcdir}/gnuserv.h 
+gnuclient: ${srcdir}/gnuclient.c gnuslib.o ${srcdir}/gnuserv.h
 	$(CC) ${cflags_gnuserv} -o gnuclient ${srcdir}/gnuclient.c gnuslib.o $(ldflags_gnuserv)
 gnuserv: ${srcdir}/gnuserv.c gnuslib.o ${srcdir}/gnuserv.h
 	$(CC) ${cflags_gnuserv} -o gnuserv ${srcdir}/gnuserv.c gnuslib.o $(ldflags_gnuserv)

@@ -32,11 +32,11 @@ Boston, MA 02111-1307, USA.  */
  **  abstraction : a stopwatch
  **  operations: reset_watch, get_time
  */
+#include <config.h>
 #include <stdio.h>
 #if __STDC__ || defined(STDC_HEADERS)
 #include <stdlib.h>
 #endif
-#include <config.h>
 #include <../src/systime.h>
 
 static struct timeval TV1, TV2;

@@ -3,6 +3,7 @@
 ;; Copyright (C) 1992,93,94,95 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Amdahl Corporation.
 ;; Copyright (C) 1995 Sun Microsystems.
+;; Copyright (C) 1997 MORIOKA Tomohiko
 
 ;; This file is part of XEmacs.
 
@@ -21,7 +22,13 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: Mule 2.3.
+;;; Commentary:
+
+;; Synched up with: Mule 2.3.
+
+;; Modification to sync with Emacs 20.1 is not finished yet.
+
+;;; Code:
 
 ;; For syntax of Latin-1 characters.
 (loop for c from 64 to 127		; from 'À' to 'ÿ'
@@ -32,15 +39,15 @@
 (modify-syntax-entry ?÷ "_")
 
 ;; For syntax of Latin-2
-(loop for c in '(?-B¡ ?£ ?¥ ?¦ ?© ?ª ?« ?¬ ?® ?¯ ?± ?³ ?µ ?¶ ?¹ ?º ?» ?¼)-A
+(loop for c in '(?-B¡-A ?-B£-A ?-B¥-A ?-B¦-A ?-B©-A ?-Bª-A ?-B«-A ?-B¬-A ?-B®-A ?-B¯-A ?-B±-A ?-B³-A ?-Bµ-A ?-B¶-A ?-B¹-A ?-Bº-A ?-B»-A ?-B¼)-A
       do (modify-syntax-entry c "w"))
 
 (loop for c from 62 to 126
       do (modify-syntax-entry (make-char 'latin-iso8859-2 c) "w"))
 
 (modify-syntax-entry (make-char 'latin-iso8859-2 32) "w") ; no-break space
-(modify-syntax-entry ?-B× ".")-A
-(modify-syntax-entry ?-B÷ ".")-A
+(modify-syntax-entry ?-B×-A ".")
+(modify-syntax-entry ?-B÷-A ".")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; EUROPEANS
@@ -82,11 +89,16 @@
    mnemonic "MIME/Ltn-5"
    ))
 
-(add-hook 'quail-package-alist '("latin-1" "quail-latin"))
-(add-hook 'quail-package-alist '("latin-2" "quail-latin"))
-(add-hook 'quail-package-alist '("latin-3" "quail-latin"))
-(add-hook 'quail-package-alist '("latin-4" "quail-latin"))
-(add-hook 'quail-package-alist '("latin-5" "quail-latin"))
+(register-input-method "European"
+		       '("quail-latin-1" quail-use-package "quail/latin"))
+(register-input-method "European"
+		       '("quail-latin-2" quail-use-package "quail/latin"))
+(register-input-method "European"
+		       '("quail-latin-3" quail-use-package "quail/latin"))
+(register-input-method "European"
+		       '("quail-latin-4" quail-use-package "quail/latin"))
+(register-input-method "European"
+		       '("quail-latin-5" quail-use-package "quail/latin"))
 
 (define-language-environment 'european
   "European (for Latin-1 through Latin-5)"
@@ -101,3 +113,12 @@
     (setq-default quail-current-package
                   (assoc "latin-1" quail-package-alist))
     ))
+
+(set-language-info "English" 'tutorial "TUTORIAL")
+
+(register-input-method "French"
+		       '("quail-latin-1" quail-use-package "quail/latin"))
+(register-input-method "French"
+		       '("quail-latin-1" quail-use-package "quail/latin"))
+
+;;; european-hooks.el ends here

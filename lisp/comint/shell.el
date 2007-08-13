@@ -92,7 +92,7 @@
 ;;;					List completions in help buffer
 ;;; m-c-f   shell-forward-command	Forward a shell command
 ;;; m-c-b   shell-backward-command	Backward a shell command
-;;; 	    dirs			Resync the buffer's dir stack
+;;; 	    shell-resync-dirs		Resync the buffer's dir stack
 ;;; 	    dirtrack-toggle		Turn dir tracking on/off
 ;;;         comint-strip-ctrl-m		Remove trailing ^Ms from output
 ;;;

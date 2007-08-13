@@ -310,11 +310,15 @@ The third argument PROPS is the new property list.
 The optional fourth argument, BUFFER-OR-STRING,
 is the string or buffer containing the text."
   (map-extents #'(lambda (extent ignored)
+		   ;; #### dmoore - shouldn't this use
+		   ;; (extent-start-position extent)
+		   ;; (extent-end-position extent)
 		   (remove-text-properties start end
 					   (list (extent-property extent
 								  'text-prop)
 						 nil)
-					   buffer-or-string))
+					   buffer-or-string)
+		   nil)
 	       buffer-or-string start end nil nil 'text-prop)
   (add-text-properties start end props buffer-or-string))
 

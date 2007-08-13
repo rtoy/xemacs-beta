@@ -61,9 +61,9 @@
 %  Internet: gildea@erl.mit.edu
 
 
-\def\versionnumber{2.70}
-\def\year{1995}
-\def\version{February \year\ v\versionnumber}
+\def\versionnumber{2.93}
+\def\year{1997}
+\def\version{May \year\ v\versionnumber}
 
 \def\shortcopyrightnotice{\vskip 1ex plus 2 fill
   \centerline{\small \copyright\ \year\ Free Software Foundation, Inc.
@@ -261,15 +261,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 \beginindentedkeys
 
-\title{ViperCard --- The Viper Quick Reference Card}
+\title{ViperCard: Viper Reference Pal}
 
-\centerline{(for version 2.70 under GNU Emacs 19 and XEmacs 19)}
+\centerline{(For Version 2.93 under Emacs and XEmacs 19 \& 20)}
 
 %\copyrightnotice
 
 \section{Loading Viper}
 
 Just type \kbd{M-x viper-mode} followed by \kbd{RET}
+
+OR put (require 'viper) in .emacs
 
 \section{Viper States}
 
@@ -286,16 +288,8 @@ You can switch states as follows.
 \key{from vi state to emacs state}{C-z}
 \metax{from vi state to insert state}{i, I, a, A, o, O}
 \metax{from vi state to replace state}{c, C, R}
-\metax{from replace state to insert state}{Cross \$ sign}
 \key{from insert or replace state to vi state}{ESC}
 
-If you wish to be in vi state when Emacs starts up and thereafter,
-include the line:
-
-\hskip 5ex
-\kbd{(setq vip-always t)}
-
-in your \kbd{\~{}/.vip} file.
 
 \section{Insert Mode}
 You can do editing in insert state.
@@ -307,8 +301,9 @@ You can do editing in insert state.
 \key{indent shiftwidth forward}{C-t}
 \key{indent shiftwidth backward}{C-d}
 \key{delete line word}{C-u}
-\key{Quote following character}{C-v}
-\key{emulate Meta key in emacs state}{C-z}
+\key{quote following character}{C-v}
+\key{emulate Meta key in emacs state}{C-\\}
+\key{escape to Vi state for one command}{C-z}
 
 \vskip 2mm
 
@@ -319,8 +314,7 @@ You can do editing in insert state.
 Execute info command by typing \kbd{M-x info} and select menu item
 \kbd{viper}.  Also:
 
-\key{describe function attached to the key {\it x}}{C-h k {\it x}}
-\key{if you've enabled help; or if you didn't}{$\backslash$ C-h k {\it x}}
+\key{describe function attached to the key {\it x}}{$\backslash$ C-h k {\it x}}
 
 \section{Leaving Emacs}
 
@@ -417,20 +411,28 @@ We will use {\it x\/} to denote a register.
 
 \section{Macros}
 
-\key{start remembering keyboard macro}{@ \#}
-\key{finish macro and put into register {\it x}}{@ {\it x}}
-\key{execute macro stored in register {\it x}}{@ {\it x}}
-\key{repeat last @{\it x} command}{@ @}
-
 Emacs style macros:
 
 \key{start remembering keyboard macro}{C-x (}
 \key{finish remembering keyboard macro}{C-x )}
 \key{call last keyboard macro}{*}
 
-Combining:
+\key{start remembering keyboard macro}{@ \#}
+\key{finish macro and put into register {\it x}}{@ {\it x}}
+\key{execute macro stored in register {\it x}}{@ {\it x}}
+\key{repeat last @{\it x} command}{@ @}
 
 \key{Pull last macro into register {\it x}}{@ ! {\it x}}
+
+Vi-style macros (keys to be hit in quick succession):
+
+\key{define Vi-style macro for Vi state}{:map}
+\key{define Vi-style macro for Insert state}{:map!}
+
+\key{toggle case-sensitive search}{//}
+\key{toggle regular expression search}{///}
+\key{toggle `\%' to ignore parentheses inside comments}{\%\%\%}
+
 
 \section{Motion Commands}
 

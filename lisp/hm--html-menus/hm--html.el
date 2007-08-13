@@ -1,4 +1,4 @@
-;;; $Id: hm--html.el,v 1.7 1997/05/29 23:49:43 steve Exp $
+;;; $Id: hm--html.el,v 1.8 1997/06/06 00:57:04 steve Exp $
 ;;;
 ;;; Copyright (C) 1993 - 1997  Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -4054,6 +4054,8 @@ A prefix arg is used as no of ROWS."
 	(hm--html-greater-than)
 	(setq hm--just-insert-greater-than nil))
     (insert ?>)
+    ;; Next line added by Bob Weiner, Altrasoft, 11/21/96.
+    #+infodock (if id-html-auto-indent (indent-according-to-mode))
     (setq hm--just-insert-greater-than t)))
 
 

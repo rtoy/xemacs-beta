@@ -1,15 +1,15 @@
 ;;; tl-list.el --- utility functions about list
 
 ;; Copyright (C) 1987 .. 1996 Free Software Foundation, Inc.
+;; Copyright (C) 1997 MORIOKA Tomohiko
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;;         Masanobu UMEDA <umerin@flab.flab.fujitsu.junet>
 ;;         Lars Magne Ingebrigtsen <larsi@ifi.uio.no>
-;; Version:
-;;	$Id: tl-list.el,v 1.2 1996/12/28 21:03:10 steve Exp $
+;; Version: $Id: tl-list.el,v 1.3 1997/06/06 00:57:42 steve Exp $
 ;; Keywords: list
 
-;; This file is part of tl (Tiny Library).
+;; This file is part of XEmacs.
 
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -292,75 +292,11 @@ And return union of each result returned by FUNC. [tl-list.el]"
 ;;; @ alist
 ;;;
 
-(defun put-alist (item value alist)
-  "Modify ALIST to set VALUE to ITEM.
-If there is a pair whose car is ITEM, replace its cdr by VALUE.
-If there is not such pair, create new pair (ITEM . VALUE) and
-return new alist whose car is the new pair and cdr is ALIST.
-\[tl-list.el; tomo's ELIS like function]"
-  (let ((pair (assoc item alist)))
-    (if pair
-	(progn
-	  (setcdr pair value)
-	  alist)
-      (cons (cons item value) alist)
-      )))
-
-(defun del-alist (item alist)
-  "If there is a pair whose key is <ITEM>, delete it from <ALIST>.
-\[tl-list.el; mol's ELIS emulating function]"
-  (if (equal item (car (car alist)))
-      (cdr alist)
-    (let ((pr alist)
-	  (r (cdr alist))
-	  )
-      (catch 'tag
-	(while (not (null r))
-	  (if (equal item (car (car r)))
-	      (progn
-		(rplacd pr (cdr r))
-		(throw 'tag alist)))
-	  (setq pr r)
-	  (setq r (cdr r))
-	  )
-	alist))))
+(require 'alist)
 
 (defun assoc-value (item alist)
   "Return value of <ITEM> from <ALIST>. [tl-list.el]"
   (cdr (assoc item alist))
-  )
-
-(defun set-alist (symbol item value)
-  "Modify a alist indicated by SYMBOL to set VALUE to ITEM. [tl-list.el]"
-  (or (boundp symbol)
-      (set symbol nil)
-      )
-  (set symbol (put-alist item value (symbol-value symbol)))
-  )
-
-(defun remove-alist (symbol item)
-  "Remove ITEM from the alist indicated by SYMBOL. [tl-list.el]"
-  (and (boundp symbol)
-       (set symbol (del-alist item (symbol-value symbol)))
-       ))
-
-(defun modify-alist (modifier default)
-  "Modify alist DEFAULT into alist MODIFIER. [tl-list.el]"
-  (mapcar (function
-	   (lambda (as)
-	     (setq default (put-alist (car as)(cdr as) default))
-	     ))
-	  modifier)
-  default)
-
-(defun set-modified-alist (sym modifier)
-  "Modify a value of a symbol SYM into alist MODIFIER.
-The symbol SYM should be alist. If it is not bound,
-its value regard as nil. [tl-list.el]"
-  (if (not (boundp sym))
-      (set sym nil)
-    )
-  (set sym (modify-alist modifier (eval sym)))
   )
 
 

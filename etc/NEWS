@@ -117,6 +117,38 @@ On consoles that display only one frame at a time (e.g. TTY consoles),
 creating a new frame with `C-x 5 2' also raises and selects that
 frame.  The behavior of window system frames is unchanged.
 
+** Etags changes.
+
+*** In C, C++, Objective C and Java, Etags tags global variables by
+default.  The resulting tags files are inflated by 30% on average.
+Use --no-globals to turn this feature off.  Etags can also tag
+ariables which are members of structure-like constructs, but it does
+not by default.  Use --members to turn this feature on.
+
+*** C++ member functions are now recognized as tags.
+
+*** Java is tagged like C++.  In addition, "extends" and "implements"
+constructs are tagged.  Files are recognised by the extension .java.
+
+*** Etags can now handle programs written in Postscript.  Files are
+recognised by the extensions .ps and .pdb (Postscript with C syntax).
+In Postscript, tags are lines that start with a slash.
+
+*** Etags now handles Objective C and Objective C++ code.  The usual C and
+C++ tags are recognized in these languages; in addition, etags
+recognizes special Objective C syntax for classes, class categories,
+methods and protocols.
+
+*** Etags also handles Cobol.  Files are recognised by the extension
+.cobol.  The tagged lines are those containing a word that begins in
+column 8 and ends in a full stop, i.e. anything that could be a
+paragraph name.
+
+*** Regexps in Etags now support intervals, as in ed or grep.  The syntax of
+an interval is \{M,N\}, and it means to match the preceding expression
+at least M times and as many as N times.
+
+
 
 * Lisp and internal changes in XEmacs 20.3
 ==========================================

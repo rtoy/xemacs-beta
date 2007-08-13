@@ -59,7 +59,7 @@ dnl - ordinary libs are handled separately from X libs (might be a mistake)
 dnl - various random kludges (e.g. -with-dnet=no
 
 dnl PRINT_VAR(var, var, ...)  prints values of shell variables
-define([PRINT_VAR],[ifelse([$#] ,0, , [$#], 1, echo "[$1]=\"$[$1]\"", echo "[$1] = $[$1]"
+define([PRINT_VAR],[ifelse([$#] ,0, , [$#], 1, echo "[$1] = \"$[$1]\"", echo "[$1] = \"$[$1]\""
 [PRINT_VAR(builtin([shift],$@))])])
 
 dnl Disable cache files:
@@ -206,6 +206,14 @@ ac_link='${CC-cc} -o conftest $CFLAGS '"$xe_cppflags $xe_ldflags"' conftest.$ac_
 cross_compiling=no
 ])
 
+dnl The construct foo=`echo $w1 $w2 $w3` fails on some systems if $w1 = -e or -n
+dnl So we use the following instead.
+dnl XE_SPACE(var, words)
+define([XE_SPACE],[
+T=""
+for W in $2; do if test -z "$T"; then T="$W"; else T="$T $W"; fi; done
+$1="$T"
+])dnl
 
 dnl XE_ADD_OBJS(foo.o ...)
 define([XE_ADD_OBJS],
@@ -250,6 +258,7 @@ target=NONE
 verbose=
 x_includes=NONE
 x_libraries=NONE
+CDPATH=.; export CDPATH
 
 dnl Allow this script to work with zsh, by setting sh emulation options
 if test -n "$ZSH_VERSION"; then
@@ -852,7 +861,7 @@ while test $# != 0; do
 
 	dnl Has the user specified one of the path options?
 	prefix | exec_prefix | bindir | datadir | statedir | libdir | \
-	mandir | infodir | lispdir | etcdir | lockdir | archlibdir | \
+	mandir | infodir | lispdir | etcdir | lockdir | pkgdir | archlibdir | \
 	sitelispdir | docdir )
 	   dnl If the value was omitted, get it from the next argument.
 	   if test "$valomitted" = "yes"; then
@@ -1710,12 +1719,10 @@ dnl The value of CPP is a quoted variable reference, so we need to do this
 dnl to get its actual value...
 CPP=`eval "echo $CPP"`
 eval `$CPP -Isrc $tempcname \
-       | grep 'configure___' \
-       | sed -n -e 's/^configure___ \([[^= ]]* *=\)\(.*\)$/\1\`echo \2\`/p'`
+	| sed -n -e "s/ *= */='/" -e "s/ *\$/'/" -e "s/^configure___//p"`
 if test -z "$SPECIFIED_CFLAGS"; then
   eval `$CPP -Isrc -DTHIS_IS_CONFIGURE $tempcname \
-	 | grep 'configure___' \
-	 | sed -n -e 's/^configure___ \([[^= ]]* *=\)\(.*\)$/\1\`echo \2\`/p'`
+	| sed -n -e "s/ *= */='/" -e "s/ *\$/'/" -e "s/^configure___//p"`
 else
   REAL_CFLAGS="$CFLAGS"
 fi
@@ -1791,6 +1798,18 @@ if test "$add_runtime_path" = "yes"; then
   fi
 fi
 
+dnl XE_ADD_RUNPATH_DIR(directory)
+define([XE_ADD_RUNPATH_DIR],[
+xe_runpath_dir=$1
+if test "$xe_runpath_dir" != "/lib"     -a \
+	"$xe_runpath_dir" != "/usr/lib" -a \
+	-n "`ls ${xe_runpath_dir}/*.s[[ol]] 2>/dev/null`"; then
+  test -n "$runpath" && runpath="${runpath}:"
+  runpath="${runpath}${xe_runpath_dir}"
+fi
+])dnl
+
+dnl XE_COMPUTE_RUNPATH()
 define([XE_COMPUTE_RUNPATH],[
 if test "$add_runtime_path" = "yes" -a -n "$dash_r"; then
   dnl Remove runtime paths from current ld switches
@@ -1801,26 +1820,31 @@ if test "$add_runtime_path" = "yes" -a -n "$dash_r"; then
   dnl Fix up Runtime path
   dnl If LD_RUN_PATH is set in environment, use that.
   dnl In this case, assume user has set the right value.
+  runpath=""
   if test -n "$LD_RUN_PATH"; then
     runpath="$LD_RUN_PATH"
+  elif test "$GCC" = "yes"; then
+    dnl Compute runpath from gcc's -v output
+    echo "int main(int argc, char *argv[[]]) {return 0;}" > conftest.c
+    xe_runpath_link='${CC-cc} -o conftest -v $CFLAGS '"$xe_ldflags"' conftest.$ac_ext 2>&1 1>/dev/null'
+    for arg in `eval "$xe_runpath_link" | grep ' -L'`; do
+      case "$arg" in P,* | -L* | -R* )
+        for dir in `echo "$arg" | sed -e 's/^..//' -e 'y/:/ /'`; do
+          XE_ADD_RUNPATH_DIR("$dir")
+        done ;;
+      esac
+    done
+    rm -f conftest*
   else
     dnl Add all directories with .so files to runpath
-    runpath=""
     for arg in $ld_switch_site $ld_switch_x_site; do
-      case "$arg" in -L* )
-	dir=`echo "$arg" | sed 's/^-L//'`
-	if test -n "`ls ${dir}/*.s[[ol]] 2>/dev/null`"; then
-	  test -n "$runpath" && runpath="${runpath}:"
-	  runpath="${runpath}${dir}"
-        fi
-	;;
-      esac
+      case "$arg" in -L*) XE_ADD_RUNPATH_DIR(`echo "$arg" | sed 's/^-L//'`);; esac
     done
     dnl Sometimes /opt/SUNWdt/lib is the only installed Motif available
     case "$canonical" in  *-solaris2.[[1-4]]* )
       test "$need_motif" = "yes" && runpath="${runpath}:/opt/SUNWdt/lib" ;;
     esac
-  fi
+  fi dnl Compute $runpath
 
   if test -n "$runpath"; then
     ld_switch_run="${dash_r}${runpath}"
@@ -1860,8 +1884,9 @@ AC_AIX
 
 dnl checks for header files
 AC_CHECK_HEADERS(mach/mach.h sys/stropts.h sys/timeb.h sys/time.h unistd.h)
-AC_CHECK_HEADERS(utime.h sys/wait.h libintl.h locale.h libgen.h)
+AC_CHECK_HEADERS(utime.h locale.h libgen.h)
 AC_CHECK_HEADERS(linux/version.h kstat.h sys/pstat.h inttypes.h)
+AC_HEADER_SYS_WAIT
 AC_HEADER_STDC
 AC_HEADER_TIME
 AC_DECL_SYS_SIGLIST
@@ -1964,18 +1989,28 @@ fi
 
 dnl Dynodump (Solaris 2.x, x<6)
 AC_MSG_CHECKING(for dynodump)
-case "$canonical" in *-solaris2.[[0-5]]* )
+case "$opsys" in sol2* )
   AC_MSG_RESULT(yes)
   AC_DEFINE(DYNODUMP)
   XE_APPEND(dynodump, MAKE_SUBDIR)
-  case "$canonical" in
-    sparc*   ) dynodump_arch=sparc ;;
-    powerpc* ) dynodump_arch=ppc   ;;
-    i*86*    ) dynodump_arch=i386  ;;
+  case "$machine" in
+    sparc   ) dynodump_arch=sparc ;;
+    *86*    ) dynodump_arch=i386  ;;
+    powerpc ) dynodump_arch=ppc   ;;
   esac
   dnl Dynodump requires the system linker
   test "$GCC" = "yes" && XE_APPEND(-fno-gnu-linker, ld_switch_site) ;;
   *) AC_MSG_RESULT(no) ;;
+esac
+
+dnl Link with "-z ignore" on Solaris if supported
+case "$opsys" in sol2-[[6-9]]* )
+  AC_MSG_CHECKING(for \"-z ignore\" linker flag)
+  case "`ld -h 2>&1`" in
+    *-z\ ignore\|record* ) AC_MSG_RESULT(yes)
+      XE_PREPEND(-z ignore, ld_switch_site) ;;
+    *) AC_MSG_RESULT(no) ;;
+  esac ;;
 esac
 
 dnl ----------------------
@@ -2148,38 +2183,6 @@ else
   test -z "$with_toolbars" && with_toolbars=yes
 fi
 
-if false; then # obsolete
-runtime_arg="-R${dash_r_space}"
-
-case "$canonical" in
-  *-sun-solaris* | *-sun-sunos5* )
-    add_runtime_flag=yes ;;
-  *-sgi-irix5.* )
-    dnl In the IRIX 5.3 ld, only the last -rpath arg has any effect.  This is
-    dnl fundamentaly incompatible with having separate LD_SWITCH_X_SITE
-    dnl and LD_SWITCH_SITE variables.  Fortunately, SGI fixed this by 6.2.
-    if test -n "$x_libraries" || test -n "$site_runtime_libraries" ; then
-      (echo "WARNING: The IRIX 5 ld ignores all but the last -rpath argument,";
-       echo "         so if you need to specify more than one additional";
-       echo "         runtime library directory, you will have to do so";
-       echo "         manually by setting the environment variable";
-       echo "         LD_SWITCH_SITE to '-rpath <path>' before running";
-       echo "         configure.  If you have only one additional directory,"
-       echo "         you can specify it with --site-runtime-libraries.") >&2
-    fi
-    runtime_arg="-rpath " ;;
-  *-sgi-irix* )
-    dnl Note that IRIX gcc (as of 2.7.2) does not accept -rpath, so
-    dnl using it can cause trouble.  Specifying --use-gcc=no will work
-    dnl around this, but the real problem is that configure uses $LDFLAGS
-    dnl as arguments to $(CC), instead of using prefix-args like the
-    dnl src/Makefile does.
-    add_runtime_flag=yes;
-    runtime_arg="-rpath " ;;
-esac
-fi
-
-
 dnl FSF 19.29 has some bitmapdir stuff here.
 bitmapdir=
 
@@ -2281,8 +2284,8 @@ if test "$with_gif" = "yes"; then
 fi
 
 dnl Autodetect Xpm
-test -z "$with_xpm" && { AC_CHECK_HEADER(X11/xpm.h,             ,with_xpm=no) }
-test -z "$with_xpm" && { AC_CHECK_LIB(Xpm, XpmReadFileToData,[:],with_xpm=no) }
+test -z "$with_xpm" && { AC_CHECK_HEADER(X11/xpm.h,   ,with_xpm=no) }
+test -z "$with_xpm" && { AC_CHECK_LIB(Xpm, XpmFree,[:],with_xpm=no) }
 test -z "$with_xpm" && with_xpm=yes
 if test "$with_xpm" = "yes"; then
   AC_DEFINE(HAVE_XPM)
@@ -2405,6 +2408,7 @@ if test "$with_mule" = "yes" ; then
   XE_ADD_OBJS(mule.o mule-ccl.o mule-charset.o mule-coding.o)
 
   dnl Use -lintl to get internationalized strerror for Mule
+  AC_CHECK_HEADERS(libintl.h)
   AC_CHECK_LIB(intl, strerror)
 
   AC_CHECKING(for Mule input methods)
@@ -2431,7 +2435,7 @@ if test "$with_mule" = "yes" ; then
   dnl Autodetect WNN
   test "$with_wnn6" = "yes" && with_wnn=yes # wnn6 implies wnn support
   test -z "$with_wnn" && { AC_CHECK_HEADER(wnn/jllib.h, ,with_wnn=no) }
-  test -z "$with_wnn" && { AC_CHECK_LIB(wnn,jl_dic_list,[:],with_wnn=no) }
+  test -z "$with_wnn" && { AC_CHECK_LIB(wnn,jl_dic_list_e, ,with_wnn=no) }
   test -z "$with_wnn" && with_wnn=yes
   if test "$with_wnn" = "yes"; then
     AC_DEFINE(HAVE_WNN)
@@ -2451,6 +2455,7 @@ if test "$with_mule" = "yes" ; then
     XE_PREPEND(-lcanna -lRKC, libs_x)
     XE_ADD_OBJS(mule-canna.o)
   fi
+
 else dnl "$with_mule" = "no"
   for feature in xim canna wnn; do
     if eval "test -n \"\$with_${feature}\" -a \"\$with_${feature}\" != no" ; then
@@ -2569,7 +2574,10 @@ fi
 
 
 AC_C_INLINE
-test "$ac_cv_c_inline" != "no" && AC_DEFINE(HAVE_INLINE)
+if test "$ac_cv_c_inline" != "no"; then
+  AC_DEFINE(HAVE_INLINE)
+  test "$GCC" = "yes" && XE_ADD_OBJS(inline.o)
+fi
 
 
 AC_FUNC_ALLOCA
@@ -2587,6 +2595,7 @@ AC_FUNC_STRCOLL
 dnl We used to call AC_FUNC_MMAP here
 dnl Instead we now use following, suggested by Neal Becker
 AC_MSG_CHECKING(for working mmap)
+case "$opsys" in ultrix* ) have_mmap=no ;; *)
 AC_TRY_RUN([#include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -2616,7 +2625,8 @@ int main (int argc, char *argv[])
     return 0;
   perror ("conftest: mmap failed");
   return 1;
-}], have_mmap=yes, have_mmap=no)
+}], have_mmap=yes, have_mmap=no) ;;
+esac
 AC_MSG_RESULT($have_mmap)
 test "$have_mmap" = "yes" && AC_DEFINE(HAVE_MMAP)
 
@@ -2684,10 +2694,19 @@ case "$with_sound" in
   native | both ) with_native_sound=yes;;
   nas    | no   ) with_native_sound=no;;
 esac
+test -z "$with_native_sound" -a -n "$native_sound_lib" && with_native_sound=yes
+
 if test "$with_native_sound" != "no"; then
+  dnl Maybe sound is already on include path...
+  if test -n "$native_sound_lib"; then
+    AC_CHECK_HEADER(multimedia/audio_device.h,
+      [sound_found=yes sound_cflags=""
+      XE_ADD_OBJS(sunplay.o)])
+  fi
+
   dnl Autodetect Sun native sound from SUNWaudmo package
-  if test -d "/usr/demo/SOUND"; then
-    sound_found="yes"
+  if test -z "$sound_found" -a -d "/usr/demo/SOUND"; then
+    sound_found=yes
     XE_ADD_OBJS(sunplay.o)
     if test -d "/usr/demo/SOUND/include"
       then sound_cflags="-I/usr/demo/SOUND/include"
@@ -2699,18 +2718,25 @@ if test "$with_native_sound" != "no"; then
         else native_sound_lib="/usr/demo/SOUND/libaudio.a"
       fi
     fi
-  else
-    case "$canonical" in \
+  fi
+
+  dnl Check for SGI and HP native sound libs
+  if test -z "$sound_found"; then
+    case "$canonical" in
     *-sgi-* )
-      AC_CHECK_LIB(audio, ALopenport, native_sound_lib="-laudio")
-      if test "$native_sound_lib" = "-laudio"; then
-        sound_found="yes" sound_cflags=""
+      if test -z "$native_sound_lib"; then
+        AC_CHECK_LIB(audio, ALopenport, native_sound_lib="-laudio")
+      fi
+      if test -n "$native_sound_lib"; then
+        sound_found=yes sound_cflags=""
         XE_ADD_OBJS(sgiplay.o)
       fi ;;
     hppa*-hp-hpux* )
-      AC_CHECK_LIB(Alib, AOpenAudio, native_sound_lib="-lAlib")
-      if test "$native_sound_lib" = "-lAlib"; then
-        sound_found="yes"
+      if test -z "$native_sound_lib"; then
+	AC_CHECK_LIB(Alib, AOpenAudio, native_sound_lib="-lAlib")
+      fi
+      if test -n "$native_sound_lib"; then
+        sound_found=yes
         XE_ADD_OBJS(hpplay.o)
         if test "$with_gcc" = "yes" # Kludge city
           then sound_cflags="-Dconst= -Dvolatile= -I/usr/audio/examples"
@@ -2720,6 +2746,7 @@ if test "$with_native_sound" != "no"; then
     esac
   fi
 
+  dnl Check for Linux/BSD native sound
   if test -z "$sound_found"; then
     for dir in "machine" "sys" "linux"; do
       AC_CHECK_HEADER(${dir}/soundcard.h,
@@ -2768,15 +2795,6 @@ if test "$with_tty" = "yes"  ; then
   dnl TERMIOS systems may have termio.h, but not vice-versa, I think.
   AC_CHECK_HEADER(termios.h,  [AC_DEFINE(HAVE_TERMIOS)],
    [AC_CHECK_HEADER(termio.h, [AC_DEFINE(HAVE_TERMIO)])])
-
-  dnl Autodetect gpm
-  test -z "$with_gpm" && { AC_CHECK_HEADER(gpm.h, , with_gpm=no) }
-  test -z "$with_gpm" && { AC_CHECK_LIB(gpm, Gpm_Open, with_gpm=yes, with_gpm=no) }
-  if test "$with_gpm" = "yes"; then
-    AC_DEFINE(HAVE_GPM)
-    XE_ADD_OBJS(gpmevent.o)
-    XE_PREPEND(-lgpm, LIBS)
-  fi
 
   dnl Autodetect ncurses.
   if test -z "$with_ncurses"; then
@@ -2829,6 +2847,16 @@ if test "$with_tty" = "yes"  ; then
   fi
   AC_DEFINE_UNQUOTED(CURSES_H_PATH, "${curses_h_path-curses.h}")
   AC_DEFINE_UNQUOTED(TERM_H_PATH, "${term_h_path-term.h}")
+
+  dnl Autodetect gpm
+  test -z "$with_gpm" && { AC_CHECK_HEADER(gpm.h, , with_gpm=no) }
+  test -z "$with_gpm" && { AC_CHECK_LIB(gpm, Gpm_Open, with_gpm=yes, with_gpm=no) }
+  if test "$with_gpm" = "yes"; then
+    AC_DEFINE(HAVE_GPM)
+    XE_ADD_OBJS(gpmevent.o)
+    XE_PREPEND(-lgpm, LIBS)
+  fi
+
 else dnl "$with_tty" = "no"
   for feature in ncurses gpm; do
     if eval "test -n \"\$with_${feature}\" -a \"\$with_${feature}\" != no" ; then
@@ -2927,17 +2955,19 @@ fi
 dnl --------------------------------
 dnl Compute SUBST-itutable variables
 dnl --------------------------------
+
 dnl We ignore (C|LD)_SWITCH_X_(MACHINE|SYSTEM)
-dnl Use `echo ...` to remove extraneous blanks
-c_switch_general=`echo -DHAVE_CONFIG_H $c_switch_site $c_switch_machine $c_switch_system`
-c_switch_window_system=`echo $c_switch_x_site $X_CFLAGS`
-c_switch_all=`echo $c_switch_general $c_switch_window_system`
-ld_switch_general=`echo $ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_run`
-ld_switch_window_system=`echo $ld_switch_x_site`
-ld_switch_all=`echo $ld_switch_general $ld_switch_window_system`
-ld_libs_general=`echo $LIBS $libs_machine $libs_system $libs_standard`
-ld_libs_window_system=`echo $X_EXTRA_LIBS $libs_x $X_PRE_LIBS`
-ld_libs_all=`echo $ld_libs_window_system $ld_libs_general`
+dnl Use XE_SPACE instead of plain assignment statements to remove extraneous blanks
+XE_SPACE(extra_objs, $extra_objs)
+XE_SPACE(c_switch_general, -DHAVE_CONFIG_H $c_switch_site $c_switch_machine $c_switch_system)
+XE_SPACE(c_switch_window_system, $c_switch_x_site $X_CFLAGS)
+XE_SPACE(c_switch_all, $c_switch_general $c_switch_window_system)
+XE_SPACE(ld_switch_general, $ld_switch_site $ld_switch_machine $ld_switch_system $ld_switch_run)
+XE_SPACE(ld_switch_window_system, $ld_switch_x_site)
+XE_SPACE(ld_switch_all, $ld_switch_general $ld_switch_window_system)
+XE_SPACE(ld_libs_general, $LIBS $libs_machine $libs_system $libs_standard)
+XE_SPACE(ld_libs_window_system, $X_EXTRA_LIBS $libs_x $X_PRE_LIBS)
+XE_SPACE(ld_libs_all, $ld_libs_window_system $ld_libs_general)
 
 dnl Compute lists of Makefiles and subdirs
 SRC_SUBDIR_DEPS="$MAKE_SUBDIR"
@@ -2948,8 +2978,8 @@ SUBDIR_MAKEFILES=''
 test -d lock || mkdir lock
 for dir in $MAKE_SUBDIR; do
   test -d "$dir" || mkdir "$dir"
-  SUBDIR_MAKEFILES=`echo $SUBDIR_MAKEFILES $dir/Makefile`
-  internal_makefile_list=`echo $internal_makefile_list $dir/Makefile.in`
+  XE_SPACE(SUBDIR_MAKEFILES, $SUBDIR_MAKEFILES $dir/Makefile)
+  XE_SPACE(internal_makefile_list, $internal_makefile_list $dir/Makefile.in)
 done
 AC_SUBST(MAKE_SUBDIR)
 AC_SUBST(SUBDIR_MAKEFILES)
@@ -2998,6 +3028,7 @@ AC_SUBST(prefix)
 AC_SUBST(exec_prefix)
 AC_SUBST(bindir)
 AC_SUBST(datadir)
+AC_SUBST(pkgdir)
 AC_SUBST(statedir)
 AC_SUBST(libdir)
 AC_SUBST(mandir)

@@ -45,10 +45,11 @@
 (setq language-environment-list
       (sort (language-environment-list) 'string-lessp))
 
-(defvar mule-keymap (make-sparse-keymap) "Keymap for Mule specific commands.")
-(fset 'mule-prefix mule-keymap)
+;; (defvar mule-keymap (make-sparse-keymap)
+;;   "Keymap for Mule specific commands.")
+;; (fset 'mule-prefix mule-keymap)
 
-(define-key ctl-x-map "\C-n" 'mule-prefix)
+;; (define-key ctl-x-map "\C-n" 'mule-prefix)
 
 ;; Alternative key definitions
 ;; Original mapping will be altered by set-keyboard-coding-system.
@@ -67,15 +68,15 @@
 	(cons 'modeline-multibyte-status
 	      (cdr modeline-format))))
 
-(define-key mule-keymap "f" 'set-buffer-file-coding-system)
-(define-key mule-keymap "i" 'set-keyboard-coding-system)
-(define-key mule-keymap "d" 'set-terminal-coding-system)
-(define-key mule-keymap "p" 'set-current-process-coding-system)
-(define-key mule-keymap "F" 'set-default-buffer-file-coding-system)
-(define-key mule-keymap "P" 'set-default-process-coding-system)
-(define-key mule-keymap "c" 'list-coding-system-briefly)
-(define-key mule-keymap "C" 'list-coding-system)
-(define-key mule-keymap "r" 'toggle-display-direction)
+;; (define-key mule-keymap "f" 'set-buffer-file-coding-system)
+;; (define-key mule-keymap "i" 'set-keyboard-coding-system)
+;; (define-key mule-keymap "d" 'set-terminal-coding-system)
+;; (define-key mule-keymap "p" 'set-current-process-coding-system)
+;; (define-key mule-keymap "F" 'set-default-buffer-file-coding-system)
+;; (define-key mule-keymap "P" 'set-default-process-coding-system)
+;; (define-key mule-keymap "c" 'list-coding-system-briefly)
+;; (define-key mule-keymap "C" 'list-coding-system)
+;; (define-key mule-keymap "r" 'toggle-display-direction)
 
 (define-key help-map "T" 'help-with-tutorial-for-mule)
 

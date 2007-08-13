@@ -90,6 +90,8 @@ bindir=@bindir@
 # and ${etcdir} are subdirectories of this.
 datadir=@datadir@
 
+pkgdir=@pkgdir@
+
 # Where to install and expect the files that XEmacs modifies as it
 # runs.	 These files are all architecture-independent. Right now, the
 # only such data is the locking directory; ${lockdir} is a
@@ -420,7 +422,7 @@ MAKEPATH=./lib-src/make-path
 ### instead of mkdir.  Not all systems' mkdirs have the `-p' flag.
 mkdir: FRC.mkdir
 	${MAKEPATH} ${COPYDESTS} ${lockdir} ${infodir} ${mandir} \
-	  ${bindir} ${datadir} ${libdir} ${sitelispdir}
+	  ${bindir} ${datadir} ${libdir} ${sitelispdir} ${pkdir}
 	-chmod 0777 ${lockdir}
 
 ### Delete all the installed files that the `install' target would

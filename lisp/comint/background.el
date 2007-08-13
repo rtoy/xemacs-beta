@@ -63,6 +63,7 @@
   :type 'boolean
   :group 'background)
 
+;;;###autoload
 (defun background (command &optional buffer-name)
   "Run COMMAND in the background like csh.  
 A message is displayed when the job starts and finishes.  The buffer is in

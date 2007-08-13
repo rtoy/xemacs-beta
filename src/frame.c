@@ -369,6 +369,7 @@ make_sure_its_a_fresh_plist (Lisp_Object foolist)
 
 DEFUN ("make-frame", Fmake_frame, 0, 2, "", /*
 Create a new frame, displaying the current buffer.
+Runs the functions listed in `create-frame-hook' after frame creation.
 
 Optional argument PROPS is a property list (a list of alternating
 keyword-value specifications) of properties for the new frame.
@@ -456,6 +457,12 @@ See `set-frame-properties', `default-x-frame-plist', and
       reset_face_cachels (XWINDOW (f->root_window));
     }
 
+  /* If no frames on this device formerly existed, say this is the
+     first frame.  It kind of assumes that frameless devices don't
+     exist, but it shouldn't be too harmful.  */
+  if (NILP (DEVICE_FRAME_LIST (d)))
+    first_frame_on_device = 1;
+
   /* This *must* go before the init_*() methods.  Those functions
      call Lisp code, and if any of them causes a warning to be displayed
      and the *Warnings* buffer to be created, it won't get added to
@@ -504,11 +511,8 @@ See `set-frame-properties', `default-x-frame-plist', and
   f->init_finished = 1;
 
   /* If this is the first frame on the device, make it the selected one. */
-  if (NILP (DEVICE_SELECTED_FRAME (d)))
-    {
-      first_frame_on_device = 1;
-      set_device_selected_frame (d, frame);
-    }
+  if (first_frame_on_device && NILP (DEVICE_SELECTED_FRAME (d)))
+    set_device_selected_frame (d, frame);
 
   /* If at startup or if the current console is a stream console
      (usually also at startup), make this console the selected one
@@ -637,25 +641,6 @@ Return non-nil if OBJECT is a frame which has not been deleted.
 /* Called from Fselect_window() */
 void
 select_frame_1 (Lisp_Object frame)
-{
-  struct frame *f = XFRAME (frame);
-
-  /* If on a TTY, selecting a frame must raise it.  */
-#ifdef HAVE_TTY
-  if (FRAME_TTY_P (f))
-    FRAMEMETH(f, raise_frame, (f));  /* tty_raise_frame will call
-					select_frame_2, so we can skip
-					it. */
-  else
-    select_frame_2 (frame);
-#else
-  select_frame_2 (frame);
-#endif
-}
-
-/* Called from tty_raise_frame. */
-void
-select_frame_2 (Lisp_Object frame)
 {
   struct frame *f = XFRAME (frame);
   Lisp_Object old_selected_frame = Fselected_frame (Qnil);
@@ -985,7 +970,6 @@ next_frame_internal (Lisp_Object frame, Lisp_Object frametype,
 {
   int passed = 0;
   int started_over = 0;
-  Lisp_Object tmp_frametype;
 
   /* If this frame is dead, it won't be in frame_list, and we'll loop
      forever.  Forestall that.  */
@@ -1033,18 +1017,7 @@ next_frame_internal (Lisp_Object frame, Lisp_Object frametype,
 		  if (EQ (f, frame))
 		    return f;
 
-		  tmp_frametype = frametype;
-		  if (FRAME_TTY_P (XFRAME (f)))
-		    {
-		      /* Only one TTY frame is visible at a time, but
-                         next-frame and similar should still find
-                         them.  */
-		      if (EQ (frametype, Qvisible)
-			  || EQ (frametype, Qvisible_nomini)
-			  || EQ (frametype, Qvisible_iconic_nomini))
-			tmp_frametype = Qnil;
-		    }
-		  if (frame_matches_frametype (f, tmp_frametype))
+		  if (frame_matches_frametype (f, frametype))
 		    return f;
 		}
 	      
@@ -1074,7 +1047,6 @@ prev_frame (Lisp_Object frame, Lisp_Object frametype, Lisp_Object console)
 {
   Lisp_Object devcons, concons;
   Lisp_Object prev;
-  Lisp_Object tmp_frametype;
 
   /* If this frame is dead, it won't be in frame_list, and we'll loop
      forever.  Forestall that.  */
@@ -1099,17 +1071,7 @@ prev_frame (Lisp_Object frame, Lisp_Object frametype, Lisp_Object console)
 	  /* Decide whether this frame is eligible to be returned,
 	     according to frametype.  */
 
-	  tmp_frametype = frametype;
-	  if (FRAME_TTY_P (XFRAME (f)))
-	    {
-	      /* Only one TTY frame is visible at a time, but
-		 next-frame and similar should still find them.  */
-	      if (EQ (frametype, Qvisible)
-		  || EQ (frametype, Qvisible_nomini)
-		  || EQ (frametype, Qvisible_iconic_nomini))
-		tmp_frametype = Qnil;
-	    }
-	  if (frame_matches_frametype (f, tmp_frametype))
+	  if (frame_matches_frametype (f, frametype))
 	    prev = f;
 
 	}

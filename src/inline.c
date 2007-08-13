@@ -25,7 +25,7 @@ Boston, MA 02111-1307, USA.  */
    reason is that under GCC we declare our inline functions `extern
    inline', which causes the inlined version to get used only for
    inlining, and in other cases to generate an external reference to
-   the function.  This is more efficient that declaring out inline
+   the function.  This is more efficient than declaring our inline
    functions `static inline', which (in many cases) would cause a separate
    version of the function to get inserted into every source file that
    included the corresponding header file.

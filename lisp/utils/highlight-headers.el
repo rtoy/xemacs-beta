@@ -436,7 +436,7 @@ interpreted as cited text.)"
 Possible values that work out of the box are:
 
 'w3-fetch                                == Use emacs-w3
-'highlight-headers-follow-url-netscape   == Use Netscape 1.1
+'highlight-headers-follow-url-netscape   == Use Netscape
 'highlight-headers-follow-url-mosaic     == Use Mosaic")
 
 (defvar highlight-headers-follow-url-netscape-auto-raise t

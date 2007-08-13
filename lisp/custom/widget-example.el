@@ -4,13 +4,13 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, extensions, faces, hypermedia
-;; Version: 1.98
+;; Version: 1.9907
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 (require 'widget)
 
-(eval-when-compile
-  (require 'wid-edit))
+(require 'wid-edit)
+(eval-when-compile (require 'cl))
 
 (defvar widget-example-repeat)
 
@@ -22,6 +22,10 @@
   (make-local-variable 'widget-example-repeat)
   (let ((inhibit-read-only t))
     (erase-buffer))
+  (let ((all (overlay-lists)))
+    ;; Delete all the overlays.
+    (mapcar 'delete-overlay (car all))
+    (mapcar 'delete-overlay (cdr all)))
   (widget-insert "Here is some documentation.\n\n")
   (widget-create 'editable-field
 		 :size 12
@@ -32,7 +36,7 @@
 		 :value "This"
 		 :help-echo "Choose me, please!"
 		 :notify (lambda (widget &rest ignore)
-			   (message "%s is a good choice!"
+			   (message "%s is a good choice!" 
 				    (widget-value widget)))
 		 '(item :tag "This option" :value "This")
 		 '(choice-item "That option")

@@ -92,20 +92,27 @@ int connect_to_gpm(struct console *con)
   /* Only do this if we are running after dumping and really interactive */
   if (!noninteractive && initialized) {
     /* We really only want to do this on a TTY */
+    CONSOLE_TTY_MOUSE_FD (con) = -1;
     if (EQ (CONSOLE_TYPE (con), Qtty)) {
       Gpm_Connect conn;
+      int rval;
 
       conn.eventMask = GPM_DOWN|GPM_UP|GPM_MOVE;
       conn.defaultMask = GPM_MOVE;
       conn.minMod = 0;
       conn.maxMod = ((1<<KG_SHIFT)|(1<<KG_ALT)|(1<<KG_CTRL));
 
-      if (Gpm_Open (&conn, 0) == -1) {
-	CONSOLE_TTY_MOUSE_FD (con) = -1;
-	return(0);
+      rval = Gpm_Open (&conn, 0);
+      switch (rval) {
+      case -1: /* General failure */
+	break;
+      case -2: /* We are running under an XTerm */
+	Gpm_Close();
+	break;
+      default:
+	set_descriptor_non_blocking (gpm_fd);
+	CONSOLE_TTY_MOUSE_FD (con) = gpm_fd;
       }
-      set_descriptor_non_blocking (gpm_fd);
-      CONSOLE_TTY_MOUSE_FD (con) = gpm_fd;
     }
   }
 }

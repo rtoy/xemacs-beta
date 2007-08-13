@@ -40,7 +40,7 @@
 #define GETPGRP_NO_ARG
 
 #ifndef NO_SHARED_LIBS
-#define LD_SWITCH_SYSTEM -e start -dc -dp
+#define LD_SWITCH_SYSTEM -dc -dp -e start
 #define HAVE_TEXT_START		/* No need to define `start_of_text'. */
 #define START_FILES pre-crt0.o /usr/lib/crt0.o
 #define UNEXEC unexfreebsd.o
@@ -81,10 +81,6 @@
 #elif __FreeBSD__ == 3
 #define BSD 199506
 #endif
-
-#undef HAVE_UNION_WAIT
-/* #### XEmacs: Is this necessary? */
-#define WRETCODE(w) (_W_INT(w) >> 8)
 
 /* FreeBSD defines INT_MAX in /usr/include/limits.h.
    Unless INT_MAX is already defined in lisp.h, XEmacs goes right

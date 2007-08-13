@@ -1,3 +1,63 @@
+1997-06-05  Steven L Baur  <steve@altair.xemacs.org>
+
+	* frame.c (Fmake_frame): Correct checking of first_frame_on_device.
+	From Hrvoje Niksic <hniksic@srce.hr>
+	
+1997-06-04  Steven L Baur  <steve@altair.xemacs.org>
+
+	* device.c (delete_deviceless_console): New function.
+	(Fmake_device): Use it.  Fix problem of creation of a frame on a
+	tty where something fails during initialization.
+	From Kyle Jones <kyle_jones@wonderworks.com>
+
+	* specifier.c (Fboolean_specifier_p): Correct spelling in
+	Docstring (synch from Infodock 3.5).
+
+	* frame.c: Update docstring.
+
+1997-06-03  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* sysdep.c (tty_init_sys_modes_on_device): Initialize it.
+
+	* console.c (complex_vars_of_console): New variable
+	`tty-erase-char'.
+
+	* conslots.h (MARKED_SLOT): New slot.
+
+Mon Jun  2 02:49:44 1997  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* frame.c, frame-tty.c
+	  Treat tty frames like a cross between stacked window
+	  system frames and frames on virtual displays.  All
+	  frames but the top frame are visible but hidden by
+	  default.  next-frame and previous-frame now skip
+	  invisible tty frames by default.  raise-frame and
+	  lower-frame now control whether a frame is hidden
+	  instead of whether it is visible.  Frames are no
+	  longer automatically raised when they are selected.
+	  After a raise/lower operation selection of the new
+	  topmost frame is deferred until a selection magic
+	  event is read.
+
+Sat May 31 19:59:49 1997  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* frame-tty.c (tty_init_frame_3:
+	  Defer selection of the newly created frame until 
+	  an event is read.
+
+1997-06-02  Steven L Baur  <steve@altair.xemacs.org>
+
+	* search.c (REGEXP_CACHE_SIZE): Bump to 20.
+	Suggested by Karl M. Hegbloom <karlheg@inetarena.com>
+
+1997-05-30  Steven L Baur  <steve@altair.xemacs.org>
+
+	* device-tty.c (tty_asynch_device_change):
+	* gpmevent.c (connect_to_gpm): Makes it so it doesn't **ck up the
+	mouse stuff on an XTerm, and resets the internal GPM variables for
+	the width and height of the screen when we get a sigwinch.
+	From William M. Perry <wmperry@aventail.com>
+
 1997-05-29  Steven L Baur  <steve@altair.xemacs.org>
 
 	* eval.c (Fprogn): Delete mocklisp support.

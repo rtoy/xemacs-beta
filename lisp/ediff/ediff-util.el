@@ -263,15 +263,6 @@ to invocation.")
 			   (get-buffer-create control-buffer-name))))
     (ediff-eval-in-buffer control-buffer
       (ediff-mode)                 
-      ;; set variables classifying the current ediff job
-      (setq ediff-3way-comparison-job (ediff-3way-comparison-job)
-	    ediff-merge-job (ediff-merge-job)
-	    ediff-merge-with-ancestor-job (ediff-merge-with-ancestor-job)
-	    ediff-3way-job (ediff-3way-job)
-	    ediff-diff3-job (ediff-diff3-job)
-	    ediff-narrow-job (ediff-narrow-job)
-	    ediff-windows-job (ediff-windows-job)
-	    ediff-word-mode-job (ediff-word-mode-job))
 	
       (make-local-variable 'ediff-use-long-help-message)
       (make-local-variable 'ediff-prefer-iconified-control-frame)
@@ -286,6 +277,16 @@ to invocation.")
 	(set (car (car setup-parameters)) (cdr (car setup-parameters)))
 	(setq setup-parameters (cdr setup-parameters)))
 	
+      ;; set variables classifying the current ediff job
+      ;; must come AFTER setup-parameters
+      (setq ediff-3way-comparison-job (ediff-3way-comparison-job)
+	    ediff-merge-job (ediff-merge-job)
+	    ediff-merge-with-ancestor-job (ediff-merge-with-ancestor-job)
+	    ediff-3way-job (ediff-3way-job)
+	    ediff-diff3-job (ediff-diff3-job)
+	    ediff-narrow-job (ediff-narrow-job)
+	    ediff-windows-job (ediff-windows-job)
+	    ediff-word-mode-job (ediff-word-mode-job))
 
       ;; Don't delete variants in case of ediff-buffer-* jobs without asking.
       ;; This is because u may loose work---dangerous.
@@ -2618,12 +2619,12 @@ Hit \\[ediff-recenter] to reset the windows afterward."
 		   (if (ediff-buffer-live-p ediff-custom-diff-buffer)
 		       (concat "\tin buffer "
 			       (buffer-name ediff-custom-diff-buffer))
-		     "is not available")))
+		     " is not available")))
     (princ (format "Plain diff output %s\n"
 		   (if (ediff-buffer-live-p ediff-diff-buffer)
 		       (concat "\tin buffer "
 			       (buffer-name ediff-diff-buffer))
-		     "is not available")))
+		     " is not available")))
 			      
     (let* ((A-line (ediff-eval-in-buffer ediff-buffer-A
 		     (1+ (count-lines (point-min) (point)))))
@@ -2645,9 +2646,9 @@ Hit \\[ediff-recenter] to reset the windows afterward."
 			 (t (1+ ediff-current-difference)))))
 
     (princ
-     (format "\n%s regions that differ only in white space & line breaks"
+     (format "\n%s regions that differ in white space & line breaks only"
 	     (if ediff-ignore-similar-regions
-		 "Skipping" "Not skipping")))
+		 "Ignoring" "Showing")))
     (if (and ediff-merge-job ediff-show-clashes-only)
 	(princ
 	 "\nFocusing on regions where both buffers differ from the ancestor"))

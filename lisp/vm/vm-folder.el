@@ -2547,7 +2547,7 @@ run vm-expunge-folder followed by vm-save-folder."
   (if (eq major-mode 'vm-summary-mode)
       (vm-select-folder-buffer))
   (let ((pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
-	(pop-up-frames vm-mutable-frames))
+	(pop-up-frames (and vm-mutable-frames vm-frame-per-help)))
     (cond
      ((eq last-command 'vm-help)
       (describe-function major-mode))
@@ -2562,7 +2562,7 @@ run vm-expunge-folder followed by vm-save-folder."
      ((eq major-mode 'mail-mode)
       (message
        (substitute-command-keys
-	"Type \\[vm-mail-send-and-exit] to send message, \\[kill-buffer] to discard this message")))
+	"Type \\[vm-mail-send-and-exit] to send message, \\[kill-buffer] to discard this composition")))
      (t (describe-mode)))))
 
 (defun vm-spool-move-mail (source destination)

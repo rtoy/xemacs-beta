@@ -68,7 +68,7 @@ echo done.
 
 
 # Compute patterns to ignore when searching for files
-ignore_dirs="quail"	# ### Not ported yet...
+ignore_dirs=""
 
 # Only use Mule XEmacs to compile Mule-specific elisp dirs
 echon "Checking for Mule support..."
@@ -76,7 +76,7 @@ lisp_prog='(princ (featurep (quote mule)))'
 mule_p="`$EMACS -batch -no-site-file -eval \"$lisp_prog\"`"
 if test "$mule_p" = nil ; then
   echo No
-  ignore_dirs="$ignore_dirs its egg mule"
+  ignore_dirs="$ignore_dirs its egg mule leim"
 else
   echo Yes
 fi

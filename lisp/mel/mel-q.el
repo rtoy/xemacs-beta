@@ -1,10 +1,10 @@
 ;;; mel-q.el: Quoted-Printable and Q-encoding encoder/decoder for GNU Emacs
 
-;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
+;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1995/6/25
-;; Version: $Id: mel-q.el,v 1.2 1996/12/28 21:02:56 steve Exp $
+;; Version: $Id: mel-q.el,v 1.3 1997/06/06 00:57:14 steve Exp $
 ;; Keywords: MIME, Quoted-Printable, Q-encoding
 
 ;; This file is part of MEL (MIME Encoding Library).
@@ -76,7 +76,8 @@ external decoder is called.")
 ;;; @@ Quoted-Printable encoder/decoder for string
 ;;;
 
-(defun quoted-printable-encode-string (str)
+(defun quoted-printable-encode-string (string)
+  "Encode STRING to quoted-printable, and return the result."
   (let ((i 0))
     (mapconcat (function
 		(lambda (chr)
@@ -103,9 +104,10 @@ external decoder is called.")
 			       (char-to-string chr)
 			       )))
 			)))
-	       str "")))
+	       string "")))
 
-(defun quoted-printable-decode-string (str)
+(defun quoted-printable-decode-string (string)
+  "Decode STRING which is encoded in quoted-printable, and return the result."
   (let (q h l)
     (mapconcat (function
 		(lambda (chr)
@@ -130,7 +132,7 @@ external decoder is called.")
 			   )
 			(t (char-to-string chr))
 			)))
-	       str "")))
+	       string "")))
 
 
 ;;; @@ Quoted-Printable encoder/decoder for region
@@ -194,6 +196,13 @@ external decoder is called.")
      )))
 
 (defun quoted-printable-encode-region (beg end)
+  "Encode current region by quoted-printable.
+START and END are buffer positions.
+This function calls internal quoted-printable encoder if size of
+region is smaller than `quoted-printable-internal-encoding-limit',
+otherwise it calls external quoted-printable encoder specified by
+`quoted-printable-external-encoder'.  In this case, you must install
+the program (maybe mmencode included in metamail or XEmacs package)."
   (interactive "r")
   (if (and quoted-printable-internal-encoding-limit
 	   (> (- end beg) quoted-printable-internal-encoding-limit))
@@ -202,6 +211,13 @@ external decoder is called.")
     ))
 
 (defun quoted-printable-decode-region (beg end)
+  "Decode current region by quoted-printable.
+START and END are buffer positions.
+This function calls internal quoted-printable decoder if size of
+region is smaller than `quoted-printable-internal-decoding-limit',
+otherwise it calls external quoted-printable decoder specified by
+`quoted-printable-external-decoder'.  In this case, you must install
+the program (maybe mmencode included in metamail or XEmacs package)."
   (interactive "r")
   (if (and quoted-printable-internal-decoding-limit
 	   (> (- end beg) quoted-printable-internal-decoding-limit))
@@ -214,6 +230,10 @@ external decoder is called.")
 ;;;
 
 (defun quoted-printable-insert-encoded-file (filename)
+  "Encode contents of file FILENAME to quoted-printable, and insert the result.
+It calls external quoted-printable encoder specified by
+`quoted-printable-external-encoder'.  So you must install the program
+(maybe mmencode included in metamail or XEmacs package)."
   (interactive (list (read-file-name "Insert encoded file: ")))
   (apply (function call-process) (car quoted-printable-external-encoder)
 	 filename t nil (cdr quoted-printable-external-encoder))
@@ -230,7 +250,10 @@ external decoder is called.")
 		?: ?\; ?< ?> ?@ ?\[ ?\] ?^ ?` ?{ ?| ?} ?~)
     ))
 
-(defun q-encoding-encode-string (str &optional mode)
+(defun q-encoding-encode-string (string &optional mode)
+  "Encode STRING to Q-encoding of encoded-word, and return the result.
+MODE allows `text', `comment', `phrase' or nil.  Default value is
+`phrase'."
   (let ((specials (cdr (or (assq mode q-encoding-special-chars-alist)
 			   (assq 'phrase q-encoding-special-chars-alist)
 			   ))))
@@ -246,10 +269,11 @@ external decoder is called.")
 			 (char-to-string chr)
 			 ))
 		  ))
-	       str "")
+	       string "")
     ))
 
-(defun q-encoding-decode-string (str)
+(defun q-encoding-decode-string (string)
+  "Decode STRING which is encoded in Q-encoding and return the result."
   (let (q h l)
     (mapconcat (function
 		(lambda (chr)
@@ -274,7 +298,7 @@ external decoder is called.")
 			   )
 			(t (char-to-string chr))
 			)))
-	       str "")))
+	       string "")))
 
 
 ;;; @@ etc

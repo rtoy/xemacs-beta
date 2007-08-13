@@ -17,7 +17,6 @@ NOTE-END  */
 #undef COFF
 #undef TERMINFO
 #define MAIL_USE_FLOCK
-#define HAVE_UNION_WAIT
 
 #ifdef MACH
 #define START_FILES pre-crt0.o /usr/lib/crt0.o

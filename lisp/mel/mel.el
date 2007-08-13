@@ -5,7 +5,7 @@
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; modified by Shuhei KOBAYASHI <shuhei-k@jaist.ac.jp>
 ;; Created: 1995/6/25
-;; Version: $Id: mel.el,v 1.3 1997/03/16 03:05:15 steve Exp $
+;; Version: $Id: mel.el,v 1.4 1997/06/06 00:57:15 steve Exp $
 ;; Keywords: MIME, Base64, Quoted-Printable, uuencode, gzip64
 
 ;; This file is part of MEL (MIME Encoding Library).
@@ -115,10 +115,10 @@ FUNCTION is region decoder.")
 ;;; @ file
 ;;;
 
-(autoload 'base64-insert-encoded-file
-  "mel-b" "Insert file encoded by base64." t)
-(autoload 'quoted-printable-insert-encoded-file
-  "mel-q" "Insert file encoded by quoted-printable." t)
+(autoload 'base64-insert-encoded-file "mel-b"
+  "Encode contents of file to base64, and insert the result." t)
+(autoload 'quoted-printable-insert-encoded-file "mel-q"
+  "Encode contents of file to quoted-printable, and insert the result." t)
 (autoload 'uuencode-insert-encoded-file
   "mel-u" "Insert file encoded by unofficial uuencode format." t)
 (autoload 'gzip64-insert-encoded-file
@@ -155,14 +155,19 @@ FUNCTION is function to insert encoded file.")
 ;;; @ string
 ;;;
 
-(autoload 'base64-encode-string "mel-b")
-(autoload 'base64-decode-string "mel-b")
+(autoload 'base64-encode-string "mel-b"
+  "Encode STRING to base64, and return the result.")
+(autoload 'base64-decode-string "mel-b"
+  "Decode STRING which is encoded in base64, and return the result.")
+(autoload 'quoted-printable-encode-string "mel-q"
+  "Encode STRING to quoted-printable, and return the result.")
+(autoload 'quoted-printable-decode-string "mel-q"
+  "Decode STRING which is encoded in quoted-printable, and return the result.")
 
-(autoload 'q-encoding-encode-string-for-text "mel-q")
-(autoload 'q-encoding-encode-string-for-comment "mel-q")
-(autoload 'q-encoding-encode-string-for-phrase "mel-q")
-(autoload 'q-encoding-encode-string "mel-q")
-(autoload 'q-encoding-decode-string "mel-q")
+(autoload 'q-encoding-encode-string "mel-q"
+  "Encode STRING to Q-encoding of encoded-word, and return the result.")
+(autoload 'q-encoding-decode-string "mel-q"
+  "Decode STRING which is encoded in Q-encoding and return the result.")
 
 (autoload 'base64-encoded-length "mel-b")
 (autoload 'q-encoding-encoded-length "mel-q")

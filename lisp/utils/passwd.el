@@ -42,7 +42,7 @@
   :group 'processes)
 
 
-(defcustom passwd-invert-frame-when-keyboard-grabbed t
+(defcustom passwd-invert-frame-when-keyboard-grabbed (not (featurep 'infodock))
   "*If non-nil swap the foreground and background colors of all faces.
 This is done while the keyboard is grabbed in order to give a visual
 clue that a grab is in effect."
@@ -317,10 +317,8 @@ characters are typed.  There's not currently a way around this."
 					       (color-name bg))
 				       (list face fg bg))
 				   nil))))
-			    (if (fboundp 'list-faces)
-				(list-faces) ; lemacs
-			      (face-list)    ; FSFmacs
-			      ))))
+			    (face-list)
+			      )))
     (let ((rest passwd-face-data))
       (while rest
 	(set-face-foreground (nth 0 (car rest)) (nth 2 (car rest)))
@@ -344,7 +342,7 @@ characters are typed.  There's not currently a way around this."
   (cond ((not (and (fboundp 'x-grab-keyboard) ; lemacs 19.10+
 		   (eq 'x (if (fboundp 'frame-type)
 			      (frame-type (selected-frame))
-			    (live-screen-p (selected-screen))))))
+			    (frame-live-p (selected-frame))))))
 	 nil)
 	((x-grab-keyboard)
 	 t)
@@ -364,7 +362,7 @@ characters are typed.  There's not currently a way around this."
   (if (and (fboundp 'x-ungrab-keyboard) ; lemacs 19.10+
 	   (eq 'x (if (fboundp 'frame-type)
 		      (frame-type (selected-frame))
-		    (live-screen-p (selected-screen)))))
+		    (frame-live-p (selected-frame)))))
       (x-ungrab-keyboard)))
 
 ;; v18 compatibility

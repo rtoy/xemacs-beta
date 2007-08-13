@@ -1,6 +1,6 @@
 ;;; font-lock.el --- decorating source files with fonts/colors based on syntax
 
-;; Copyright (C) 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+;; Copyright (C) 1992-1995, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Amdahl Corporation.
 ;; Copyright (C) 1996 Ben Wing.
 
@@ -10,7 +10,7 @@
 ;; Next Author: RMS
 ;; Next Author: Simon Marshall <simon@gnu.ai.mit.edu>
 ;; Latest XEmacs Author: Ben Wing
-;; Maintainer: FSF (well, maybe)
+;; Maintainer: XEmacs Development Team (sigh :-( )
 ;; Keywords: languages, faces
 
 ;; This file is part of XEmacs.
@@ -1292,6 +1292,7 @@ START should be at the beginning of a line."
 
 ;; font-lock-set-defaults is in fontl-hooks.el.
 
+;;;###autoload
 (defun font-lock-set-defaults-1 (&optional explicit-defaults)
   ;; does everything that font-lock-set-defaults does except
   ;; enable font-lock-mode.  This is called by `font-lock-mode'.

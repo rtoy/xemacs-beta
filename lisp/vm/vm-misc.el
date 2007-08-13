@@ -423,31 +423,30 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	((markerp object) (copy-marker object))
 	(t object)))
 
-;; make-frame might be defined and still not work.  This would
-;; be true since the user could be running on a tty and using
-;; XEmacs 19.12, or using FSF Emacs 19.28 (or prior FSF Emacs versions).
-;;
-;; make-frame works on ttys in FSF Emacs 19.29, but other than
-;; looking at the version number I don't know a sane way to
-;; test for it without just running make-frame.  I'll just
-;; let it not work for now... someone will complain eventually
-;; and I'll think of something.
-
 (defun vm-multiple-frames-possible-p () 
   (cond (vm-xemacs-p 
-         (eq (device-type) 'x)) 
+	 (or (memq 'win (device-matching-specifier-tag-list))
+	     (featurep 'tty-frames)))
         (vm-fsfemacs-19-p 
-         (not (eq window-system nil))))) 
+         (fboundp 'make-frame))))
  
 (defun vm-mouse-support-possible-p () 
-  (vm-multiple-frames-possible-p)) 
+  (cond (vm-xemacs-p 
+         (featurep 'window-system)) 
+        (vm-fsfemacs-19-p 
+         (fboundp 'track-mouse))))
  
+(defun vm-mouse-support-possible-here-p ()
+  (cond (vm-xemacs-p
+	 (memq 'win (device-matching-specifier-tag-list)))
+	(vm-fsfemacs-19-p
+	 (eq window-system 'x))))
+
 (defun vm-menu-support-possible-p ()
   (cond (vm-xemacs-p
 	 (featurep 'menubar))
 	(vm-fsfemacs-19-p
-	 (fboundp 'menu-bar-mode))
-	(t nil)))
+	 (fboundp 'menu-bar-mode))))
  
 (defun vm-toolbar-support-possible-p ()
   (and vm-xemacs-p (featurep 'toolbar)))

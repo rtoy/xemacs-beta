@@ -1,6 +1,6 @@
 ;;; files.el --- file input and output commands for XEmacs.
 
-;; Copyright (C) 1985-1987, 1992-1995 Free Software Foundation, Inc.
+;; Copyright (C) 1985-1987, 1992-1995, 1997 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Sun Microsystems.
 
 ;; This file is part of XEmacs.
@@ -2419,6 +2419,9 @@ hook functions.
 If `revert-buffer-function' is used to override the normal revert
 mechanism, this hook is not used.")
 
+(defvar revert-buffer-internal-hook nil
+  "Don't use this.")
+
 (defun revert-buffer (&optional ignore-auto noconfirm preserve-modes)
   "Replace the buffer text with the text of the visited file on disk.
 This undoes all changes since the file was visited or saved.
@@ -2590,7 +2593,7 @@ This command is used in the special Dired buffer created by
     ;; #### dired-do-flagged-delete in FSF.
     ;; This version is for ange-ftp
     ;;(dired-do-deletions t)
-    ;T This version is for efs
+    ;; This version is for efs
     (dired-expunge-deletions)
     (unwind-protect
 	(save-excursion

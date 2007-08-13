@@ -15,7 +15,7 @@
 @titlepage
 @title Viper Is a Package for Emacs Rebels
 @subtitle a Vi emulator for GNU Emacs 19 and XEmacs 19
-@subtitle June 1996, Viper Version 2.90
+@subtitle May 1997, Viper Version 2.93
 
 @author Masahiko Sato (VIP 3.5)
 @author Aamod Sane (VIP 4.4)
@@ -2969,7 +2969,8 @@ jobrien@@hchp.org (John O'Brien),
 mrb@@Eng.Sun.COM (Martin Buchholz),
 kwzh@@gnu.ai.mit.edu (Karl Heuer),
 sudish@@MindSpring.COM (Sudish Joseph),
-paulk@@summit.esg.apertus.com (Paul Keusemann)
+paulk@@summit.esg.apertus.com (Paul Keusemann),
+roderick@@argon.org (Roderick Schertler)
 @end example
 
 

@@ -1,28 +1,28 @@
 ;;; format.el --- read and save files in multiple formats
 
-;; Copyright (c) 1994, 1995 Free Software Foundation
+;; Copyright (c) 1994, 1995, 1997 Free Software Foundation
 
 ;; Author: Boris Goldowsky <boris@gnu.ai.mit.edu>
 ;; Keywords: extensions
 
-;; This file is part of GNU Emacs.
+;; This file is part of XEmacs.
 
-;; GNU Emacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.34.
+;;; Synched up with: Emacs/Mule zeta.
 
 ;;; Commentary:
 
@@ -66,7 +66,7 @@
 
 (put 'buffer-file-format 'permanent-local t)
 
-(defconst format-alist 
+(defvar format-alist 
   '((text/enriched "Extended MIME text/enriched format."
 		   "Content-[Tt]ype:[ \t]*text/enriched"
 		   enriched-decode enriched-encode t enriched-mode)
@@ -86,20 +86,25 @@ FROM-FN is called to decode files in that format; it gets two args, BEGIN
         and END, and can make any modifications it likes, returning the new
         end.  It must make sure that the beginning of the file no longer
         matches REGEXP, or else it will get called again.
-TO-FN   is called to encode a region into that format; it is also passed BEGIN
-        and END, and either returns a list of annotations like
-        `write-region-annotate-functions', or modifies the region and returns
-        the new end.
-MODIFY, if non-nil, means the TO-FN modifies the region.  If nil, TO-FN may
-        not make any changes and should return a list of annotations.
+TO-FN   is called to encode a region into that format; it is passed three
+        arguments: BEGIN, END, and BUFFER.  BUFFER is the original buffer that
+        the data being written came from, which the function could use, for
+        example, to find the values of local variables.  TO-FN should either
+        return a list of annotations like `write-region-annotate-functions',
+        or modify the region and return the new end.
+MODIFY, if non-nil, means the TO-FN wants to modify the region.  If nil,
+        TO-FN will not make any changes but will instead return a list of
+        annotations. 
 MODE-FN, if specified, is called when visiting a file with that format.")
 
 ;;; Basic Functions (called from Lisp)
 
-(defun format-annotate-function (format from to)
+(defun format-annotate-function (format from to orig-buf)
   "Returns annotations for writing region as FORMAT.
 FORMAT is a symbol naming one of the formats defined in `format-alist',
 it must be a single symbol, not a list like `buffer-file-format'.
+FROM and TO delimit the region to be operated on in the current buffer.
+ORIG-BUF is the original buffer that the data came from.
 This function works like a function on `write-region-annotate-functions':
 it either returns a list of annotations, or returns with a different buffer
 current, which contains the modified text to write.
@@ -117,10 +122,10 @@ For most purposes, consider using `format-encode-region' instead."
 	      (copy-to-buffer copy-buf from to)
 	      (set-buffer copy-buf)
 	      (format-insert-annotations write-region-annotations-so-far from)
-	      (funcall to-fn (point-min) (point-max))
+	      (funcall to-fn (point-min) (point-max) orig-buf)
 	      nil)
 	  ;; Otherwise just call function, it will return annotations.
-	  (funcall to-fn from to)))))
+	  (funcall to-fn from to orig-buf)))))
 
 (defun format-decode (format length &optional visit-flag)
   ;; This function is called by insert-file-contents whenever a file is read.
@@ -226,17 +231,19 @@ one of the formats defined in `format-alist', or a list of such symbols."
  (if (symbolp format) (setq format (list format)))
  (save-excursion
    (goto-char end)
-   (let ((cur-buf (current-buffer))
+   (let ( ; (cur-buf (current-buffer))
 	 (end (point-marker)))
      (while format 
        (let* ((info (assq (car format) format-alist))
 	      (to-fn  (nth 4 info))
 	      (modify (nth 5 info))
-	      result)
+	      ;; result
+	      )
 	 (if to-fn
 	     (if modify
-		 (setq end (funcall to-fn beg end))
-	       (format-insert-annotations (funcall to-fn beg end))))
+		 (setq end (funcall to-fn beg end (current-buffer)))
+	       (format-insert-annotations
+		(funcall to-fn beg end (current-buffer)))))
 	 (setq format (cdr format)))))))
 
 (defun format-write-file (filename format)
@@ -454,7 +461,9 @@ to write these unknown annotations back into the file."
     (save-restriction
       (narrow-to-region (point-min) to)
       (goto-char from)
-      (let (next open-ans todo loc unknown-ans)
+      (let (next open-ans todo
+		 ;; loc
+		 unknown-ans)
 	(while (setq next (funcall next-fn))
 	  (let* ((loc      (nth 0 next))
 		 (end      (nth 1 next))
@@ -515,7 +524,7 @@ to write these unknown annotations back into the file."
 					    (assoc (car to-reset) 
 						   (cdr open-ans)))
 				      (if this-one
-					  (setcdr this-one (list loc)))
+					  (setcar (cdr this-one) loc))
 				      (setq to-reset (cdr to-reset))))
 				  ;; Set loop variables to nil so loop
 				  ;; will exit.
@@ -677,7 +686,8 @@ lists of annotations like `format-annotate-location' does.
 			all-ans)))
 	  (setq neg-ans (cdr neg-ans)))
 	;; Now deal with positive (opening) annotations
-	(let ((p pos-ans))
+	(let ( ; (p pos-ans)
+	      )
 	  (while pos-ans
 	    (setq open-ans (cons (car pos-ans) open-ans))
 	    (setq all-ans 
@@ -749,7 +759,8 @@ If NEW does not appear in the list, but there is a default function, then that
 function is called.
 Annotations to open and to close are returned as a dotted pair."
   (let ((prop-alist (cdr (assoc prop trans)))
-	default)
+	;; default
+	)
     (if (not prop-alist)
 	nil
       ;; If property is numeric, nil means 0
@@ -761,7 +772,7 @@ Annotations to open and to close are returned as a dotted pair."
       (if (or (consp old) (consp new))
 	  (let* ((old (if (listp old) old (list old)))
 		 (new (if (listp new) new (list new)))
-		 (tail (format-common-tail old new))
+		 ;; (tail (format-common-tail old new))
 		 close open)
 	    (while old
 	      (setq close 

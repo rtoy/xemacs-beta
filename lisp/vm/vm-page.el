@@ -25,11 +25,18 @@ value of vm-auto-next-message is non-nil.
 Prefix argument N means scroll forward N lines."
   (interactive "P")
   (let ((mp-changed (vm-follow-summary-cursor))
+	needs-decoding 
 	(was-invisible nil))
     (vm-select-folder-buffer)
     (vm-check-for-killed-summary)
     (vm-check-for-killed-presentation)
     (vm-error-if-folder-empty)
+    (setq needs-decoding (and vm-display-using-mime
+			      (not vm-mime-decoded)
+			      (not (vm-mime-plain-message-p
+				    (car vm-message-pointer)))
+			      vm-auto-decode-mime-messages
+			      (eq vm-system-state 'previewing)))
     (and vm-presentation-buffer
 	 (set-buffer vm-presentation-buffer))
     (let ((point (point))
@@ -46,7 +53,7 @@ Prefix argument N means scroll forward N lines."
 	    (if (= (window-start w) (point-max))
 		(set-window-start w (point-min)))
 	    (setq was-invisible t))))
-    (if (or mp-changed was-invisible
+    (if (or mp-changed was-invisible needs-decoding
 	    (and (eq vm-system-state 'previewing)
 		 (pos-visible-in-window-p
 		  (point-max)
@@ -488,7 +495,6 @@ Use mouse button 3 to choose a Web browser for the URL."
   ;; display xfaces, if we can
   (if (and vm-display-xfaces
 	   vm-xemacs-p
-	   (vm-multiple-frames-possible-p)
 	   (featurep 'xface))
       (save-restriction
 	(widen)

@@ -11,6 +11,20 @@
 * History:								     *
 * 15 Sep 92 - Version 1.0 by Eric Raymond.				     *
 *****************************************************************************/
+
+#ifdef emacs
+#include <config.h>
+
+void *xmalloc (unsigned int size);
+void *xrealloc (void *ptr, unsigned int size);
+#ifdef ERROR_CHECK_MALLOC
+void *xfree_1 (void *);
+#define xfree xfree_1
+#else
+void *xfree (void *);
+#endif
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -27,7 +41,6 @@ void *xfree_1 (void *);
 void *xfree (void *);
 #endif
 #endif
-
 #include "gif_lib.h"
 
 #ifndef MAX

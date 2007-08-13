@@ -179,6 +179,7 @@ Keymap for characters following C-c.")
 (put 'narrow-to-region 'disabled t)
 (define-key global-map "\C-xnn" 'narrow-to-region)
 (define-key global-map "\C-xnw" 'widen)
+(define-key global-map "\C-xnd" 'narrow-to-defun)
 ;; Old v18 bindings
 ;(define-key global-map "\C-xn" 'narrow-to-region)
 ;(define-key global-map "\C-xw" 'widen)
@@ -425,7 +426,7 @@ Keymap for characters following C-c.")
 ;; New FSF19 bindings
 (define-key global-map "\C-x-" 'shrink-window-if-larger-than-buffer)
 (define-key global-map "\C-x+" 'balance-windows)
-
+(define-key ctl-x-4-map "0" 'kill-buffer-and-window)
 
 ;;(define-key global-map "\C-g" 'keyboard-quit)
 (let ((ch (quit-char)))

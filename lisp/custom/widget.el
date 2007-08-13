@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, extensions, faces, hypermedia
-;; Version: 1.98
+;; Version: 1.9907
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;; This file is part of GNU Emacs.
@@ -44,16 +44,18 @@
 	     (set (car keywords) (car keywords)))
 	 (setq keywords (cdr keywords)))))))
 
-(define-widget-keywords :button-prefix :button-suffix
-  :mouse-down-action :glyph-up :glyph-down :glyph-inactive  
+(define-widget-keywords :complete-function :complete :button-overlay
+  :field-overlay  
+  :documentation-shown :button-prefix  
+  :button-suffix :mouse-down-action :glyph-up :glyph-down :glyph-inactive  
   :prompt-internal :prompt-history :prompt-match
   :prompt-value  :deactivate :active  
   :inactive :activate :sibling-args :delete-button-args
   :insert-button-args :append-button-args :button-args 
   :tag-glyph :off-glyph :on-glyph :valid-regexp
-  :secret :sample-face :sample-face-get :case-fold :widget-doc 
+  :secret :sample-face :sample-face-get :case-fold 
   :create :convert-widget :format :value-create :offset :extra-offset
-  :tag :doc :from :to :args :value :value-from :value-to :action
+  :tag :doc :from :to :args :value :action
   :value-set :value-delete :match :parent :delete :menu-tag-get
   :value-get :choice :void :menu-tag :on :off :on-type :off-type
   :notify :entry-format :button :children :buttons :insert-before
@@ -61,8 +63,7 @@
   :indent :size :value-to-external :validate :error :directory
   :must-match :type-error :value-inline :inline :match-inline :greedy
   :button-face-get :button-face :value-face :keymap :entry-from
-  :entry-to :help-echo :documentation-property :hide-front-space
-  :hide-rear-space :tab-order) 
+  :entry-to :help-echo :documentation-property :tab-order) 
 
 ;; These autoloads should be deleted when the file is added to Emacs.
 (unless (fboundp 'load-gc)

@@ -97,6 +97,7 @@ VPATH=@srcdir@
 /* On some machines #define register is done in config;
    do not let it interfere with this file.  */
 #undef register
+#undef inline
 
 /* Unless inhibited or changed, use -lg to link for debugging.  */
 #ifndef LIBS_DEBUG
@@ -319,7 +320,7 @@ objs =	abbrev.o alloc.o blocktype.o buffer.o bytecode.o \
 	event-stream.o $(event_unixoid_objs) extents.o faces.o \
 	fileio.o filelock.o filemode.o floatfns.o fns.o font-lock.o \
 	frame.o general.o getloadavg.o glyphs.o \
-	$(gui_objs) hash.o indent.o inline.o insdel.o intl.o \
+	$(gui_objs) hash.o indent.o insdel.o intl.o \
 	keymap.o $(RTC_patch_objs) lread.o lstream.o \
 	macros.o marker.o md5.o minibuf.o objects.o opaque.o \
 	print.o process.o profile.o pure.o \
@@ -458,7 +459,8 @@ otherobjs = $(BTL_objs) lastfile.o $(mallocobjs) $(rallocobjs) $(X11_objs)
 	${lispdir}mule/mule-load.elc ${lispdir}mule/mule-coding.elc \
 	${lispdir}mule/mule-charset.elc ${lispdir}mule/mule-files.elc \
 	${lispdir}mule/mule-category.elc ${lispdir}mule/mule-misc.elc \
-	${lispdir}mule/mule-ccl.elc ${lispdir}mule/mule-init.elc \
+	${lispdir}mule/mule-ccl.elc \
+	${lispdir}mule/mule-init.elc ${lispdir}mule/mule-cmds.elc \
 	${lispdir}mule/kinsoku.elc \
 	MULE_X11_LISP \
 	${lispdir}mule/arabic-hooks.elc \
@@ -507,7 +509,6 @@ otherobjs = $(BTL_objs) lastfile.o $(mallocobjs) $(rallocobjs) $(X11_objs)
 #ifdef SUNPRO
 /* Lisp files preloaded if compiled with support for SunPro products */
 #define SUNPRO_LISP \
-	${lispdir}packages/sccs.elc \
 	${lispdir}sunpro/sunpro-init.elc \
 	${lispdir}sunpro/sunpro-menubar.elc \
 	${lispdir}sunpro/sunpro-keys.elc \
@@ -597,14 +598,15 @@ lisp=   ${lispdir}paths.el ${lispdir}prim/featurep.elc \
 	${lispdir}prim/extents.elc ${lispdir}prim/backquote.elc \
 	${lispdir}prim/events.elc ${lispdir}prim/console.elc \
         ${lispdir}utils/map-ynp.elc ${lispdir}prim/modeline.elc \
-        ${lispdir}prim/profile.elc ${lispdir}modes/list-mode.elc \
+        ${lispdir}modes/list-mode.elc \
 	${lispdir}utils/derived.elc ${lispdir}cl/cl.elc \
 	${lispdir}cl/cl-defs.elc ${lispdir}prim/undo-stack.elc \
         ${lispdir}prim/simple.elc ${lispdir}prim/help.elc \
         ${lispdir}prim/files.elc ${lispdir}utils/lib-complete.elc \
 	${lispdir}prim/indent.elc ${lispdir}prim/frame.elc \
 	TOOLBAR_LISP ${lispdir}prim/format.elc \
-        ${lispdir}prim/window.elc ${lispdir}prim/startup.elc \
+	${lispdir}prim/window.elc ${lispdir}prim/window-xemacs.elc \
+	${lispdir}prim/startup.elc \
         ${lispdir}prim/lisp.elc ${lispdir}prim/page.elc \
         ${lispdir}prim/register.elc ${lispdir}iso/iso8859-1.elc \
         ${lispdir}prim/paragraphs.elc ${lispdir}modes/lisp-mode.elc \
@@ -796,9 +798,6 @@ temacs_link_args = \
 temacs_deps: $(temacs_deps)
 
 temacs: $(temacs_deps)
-	$(LD) $(temacs_link_args)
-
-cemacs: $(temacs_deps)
 	$(LD) $(temacs_link_args)
 
 rtc_patch.o:

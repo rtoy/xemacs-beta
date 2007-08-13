@@ -17,3 +17,7 @@
 /* Fix kernel file name for 10.10 */
 #undef KERNEL_FILE
 #define KERNEL_FILE "/stand/vmunix"
+
+/* XEmacs: -lcurses includes a broken select() call on some 10.X systems. */
+#undef LIBS_TERMCAP
+#define LIBS_TERMCAP -ltermcap

@@ -157,7 +157,7 @@ main (argc, argv)
   char *inname, *outname;
   int indesc, outdesc;
   int nread;
-  WAITTYPE status;
+  int status;
 
 #ifndef MAIL_USE_SYSTEM_LOCK
   struct stat st;
@@ -397,8 +397,8 @@ main (argc, argv)
   wait (&status);
   if (!WIFEXITED (status))
     exit (1);
-  else if (WRETCODE (status) != 0)
-    exit (WRETCODE (status));
+  else if (WEXITSTATUS (status) != 0)
+    exit (WEXITSTATUS (status));
 
 #if !defined (MAIL_USE_MMDF) && !defined (MAIL_USE_SYSTEM_LOCK)
   unlink (lockname);

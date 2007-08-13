@@ -494,7 +494,8 @@ is visible (and the real data of the buffer is hidden)."
   (define-key tar-mode-map "G" 'tar-chgrp-entry)
   (define-key tar-mode-map "O" 'tar-chown-entry)
 
-  (cond ((string-match "XEmacs" emacs-version)
+  (cond ((and (featurep 'xemacs)
+	      (not (featurep 'infodock)))
 	 (define-key tar-mode-map 'button2 'tar-track-mouse-and-extract-file)
 	 (define-key tar-mode-map 'button3 'tar-popup-menu)))
   )

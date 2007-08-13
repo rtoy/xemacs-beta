@@ -1,6 +1,6 @@
-;;; map-ynp.el --- General-purpose boolean question-asker
+;;; map-ynp.el --- General-purpose boolean question-asker.
 
-;;; Copyright (C) 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+;; Copyright (C) 1991-1995, 1997 Free Software Foundation, Inc.
 
 ;; Author: Roland McGrath <roland@gnu.ai.mit.edu>
 ;; Keywords: lisp, extensions
@@ -22,24 +22,19 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.30.
+;;; Synched up with: Emacs/Mule zeta.
 
 ;;; Commentary:
 
-;;; map-y-or-n-p is a general-purpose question-asking function.
-;;; It asks a series of y/n questions (a la y-or-n-p), and decides to
-;;; applies an action to each element of a list based on the answer.
-;;; The nice thing is that you also get some other possible answers
-;;; to use, reminiscent of query-replace: ! to answer y to all remaining
-;;; questions; ESC or q to answer n to all remaining questions; . to answer
-;;; y once and then n for the remainder; and you can get help with C-h.
+;; map-y-or-n-p is a general-purpose question-asking function.
+;; It asks a series of y/n questions (a la y-or-n-p), and decides to
+;; applies an action to each element of a list based on the answer.
+;; The nice thing is that you also get some other possible answers
+;; to use, reminiscent of query-replace: ! to answer y to all remaining
+;; questions; ESC or q to answer n to all remaining questions; . to answer
+;; y once and then n for the remainder; and you can get help with C-h.
 
 ;;; Code:
-
-;; Note: the old code used help-form.  That might be a good
-;; idea in general, but the code for execute-help-form needs
-;; to be moved into Lisp so that it can do things like put
-;; the buffer into `help-mode'.
 
 (defun map-y-or-n-p (prompter actor list &optional help action-alist
 			      no-cursor-in-echo-area)
@@ -58,8 +53,7 @@ on the object without asking the user.
 ACTOR is a function of one arg (an object from LIST),
 which gets called with each object that the user answers `yes' for.
 
-If HELP is given, it is a list
-  (OBJECT OBJECTS ACTION),
+If HELP is given, it is a list (OBJECT OBJECTS ACTION),
 where OBJECT is a string giving the singular noun for an elt of LIST;
 OBJECTS is the plural noun for elts of LIST, and ACTION is a transitive
 verb describing ACTOR.  The default is \(\"object\" \"objects\" \"act on\"\).
@@ -84,12 +78,11 @@ but not all of the responses which `query-replace' understands
 are meaningful here.
 
 Returns the number of actions taken."
-  (let* (;(old-help-form help-form)
-	 ;(help-form (cons 'map-y-or-n-p-help
-	 ;		   (or help '("object" "objects" "act on"))))
-	 (actions 0)
+  (let* ((actions 0)
 	 user-keys mouse-event map prompt char elt def
-	 ;delayed-switch-frame
+	 ;; Non-nil means we should use mouse menus to ask.
+	 ;; use-menus
+	 ;;delayed-switch-frame
 	 (next (if (or (and list (symbolp list))
 		       (subrp list)
 		       (compiled-function-p list)
@@ -106,9 +99,10 @@ Returns the number of actions taken."
 			       nil))))))
     (if (should-use-dialog-box-p)
 	;; Make a list describing a dialog box.
-	(let ((object (capitalize (or (nth 0 help) "object")))
- 	      (objects (capitalize (or (nth 1 help) "objects")))
-	      (action (capitalize (or (nth 2 help) "act on"))))
+	(let (;; (object (capitalize (or (nth 0 help) "object")))
+ 	      ;; (objects (capitalize (or (nth 1 help) "objects")))
+	      ;; (action (capitalize (or (nth 2 help) "act on")))
+	      )
 	  (setq map `(("Yes" . act) ("No" . skip)
 ; bogus crap.  --ben
 ;			((, (if help
@@ -137,6 +131,7 @@ Returns the number of actions taken."
 					      (lambda (elt)
 						(key-description
 						 (if (characterp (car elt))
+						     ;; XEmacs
 						     (char-to-string (car elt))
 						   (car elt)))))
 					     action-alist ", ")
@@ -144,6 +139,7 @@ Returns the number of actions taken."
 			"")
 	    ;; Make a map that defines each user key as a vector containing
 	    ;; its definition.
+	    ;; XEmacs
 	    map (let ((foomap (make-sparse-keymap)))
 		  (mapcar #'(lambda (elt)
 			      (define-key
@@ -165,7 +161,7 @@ Returns the number of actions taken."
 	    (cond ((stringp prompt)
 		   ;; Prompt the user about this object.
 		   (setq quit-flag nil)
-		   (if mouse-event
+		   (if mouse-event ; XEmacs
 		       (setq def (or (get-dialog-box-response
 				      mouse-event
 				      (cons prompt map))
@@ -191,7 +187,6 @@ Returns the number of actions taken."
 			  (setq next (function (lambda () nil))))
 			 ((eq def 'act)
 			  ;; Act on the object.
-			  ;(let ((help-form old-help-form))
 			  (funcall actor elt)
 			  (setq actions (1+ actions)))
 			 ((eq def 'skip)
@@ -207,14 +202,15 @@ Returns the number of actions taken."
 			  (setq next (` (lambda ()
 					  (setq next '(, next))
 					  '(, elt)))))
-
 			 ((eq def 'automatic)
 			  ;; Act on this and all following objects.
+			  ;; (if (funcall prompter elt) ; Emacs
 			  (if (eval (funcall prompter elt))
 			      (progn
 				(funcall actor elt)
 				(setq actions (1+ actions))))
 			  (while (funcall next)
+			    ;; (funcall prompter elt) ; Emacs
 			    (if (eval (funcall prompter elt))
 				(progn
 				  (funcall actor elt)
@@ -258,7 +254,7 @@ the current %s and exit."
 			    (setq next (` (lambda ()
 					    (setq next '(, next))
 					    '(, elt))))))
-			 ;((and (consp char)
+			 ;((and (consp char) ; Emacs
 			 ;	(eq (car char) 'switch-frame))
 			 ; ;; switch-frame event.  Put it off until we're done.
 			 ; (setq delayed-switch-frame char)
@@ -278,13 +274,17 @@ the current %s and exit."
 		   (progn
 		     (funcall actor elt)
 		     (setq actions (1+ actions)))))))
-      ;(if delayed-switch-frame
-      ;	   (setq unread-command-events
-      ;		 (cons delayed-switch-frame unread-command-events)))
+      ;;(if delayed-switch-frame
+      ;;	   (setq unread-command-events
+      ;;		 (cons delayed-switch-frame unread-command-events))))
+      ;;		   ((eval prompt)
+      ;;		    (progn
+      ;;		      (funcall actor elt)
+      ;;		      (setq actions (1+ actions)))))
       )
     ;; Clear the last prompt from the minibuffer.
     (clear-message 'prompt)
     ;; Return the number of actions that were taken.
-    actions)) 
+    actions))
 
 ;;; map-ynp.el ends here

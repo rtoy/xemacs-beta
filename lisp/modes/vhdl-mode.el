@@ -7,8 +7,8 @@
 ;; Author:	  Rodney J. Whitby <rwhitby@asc.corp.mot.com>
 ;; Maintainer:	  Rodney J. Whitby <rwhitby@asc.corp.mot.com>
 ;; Created:	  June 1994, adapted from cc-mode.el 4.29 by Barry A. Warsaw.
-;; Version:	  $Revision: 1.3 $
-;; Last Modified: $Date: 1997/05/29 23:49:57 $
+;; Version:	  $Revision: 1.4 $
+;; Last Modified: $Date: 1997/06/06 00:57:20 $
 ;; Keywords:	  languages VHDL
 ;; Archive:	  ftp.eda.com.au:/pub/emacs/vhdl-mode.tar.gz
 
@@ -69,7 +69,7 @@
 ;; LCD Archive Entry:
 ;; vhdl-mode.el|Rodney J. Whitby|rwhitby@asc.corp.mot.com
 ;; |Major mode for editing VHDL code
-;; |$Date: 1997/05/29 23:49:57 $|$Revision: 1.3 $
+;; |$Date: 1997/06/06 00:57:20 $|$Revision: 1.4 $
 ;; |ftp.eda.com.au:/pub/emacs/vhdl-mode.tar.gz
 
 
@@ -285,7 +285,7 @@ your style, only those that are different from the default.")
     (cond
      ((= major 18) (setq major 'v18))	;Emacs 18
      ((= major 4)  (setq major 'v18))	;Epoch 4
-     ((= major 19) (setq major 'v19	;Emacs 19
+     ((>= major 19) (setq major 'v19	;Emacs 19
 			 flavor (cond
 				 ((string-match "Win-Emacs" emacs-version)
 				  'Win-Emacs)
@@ -540,7 +540,7 @@ This does a lot more highlighting.")
 ;;;###autoload
 (defun vhdl-mode ()
   "Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.3 $
+vhdl-mode $Revision: 1.4 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2594,7 +2594,7 @@ ENDPOS is encountered.  (interactive)"
 
 ;; Defuns for submitting bug reports:
 
-(defconst vhdl-version "$Revision: 1.3 $"
+(defconst vhdl-version "$Revision: 1.4 $"
   "vhdl-mode version number.")
 (defconst vhdl-mode-help-address "rwhitby@asc.corp.mot.com"
   "Address accepting submission of bug reports.")

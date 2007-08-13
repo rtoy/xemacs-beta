@@ -324,7 +324,8 @@ HISTORY argument is ignored."
     (setq vm-mouse-read-file-name-history history)
     (setq vm-mouse-read-file-name-prompt prompt)
     (setq vm-mouse-read-file-name-return-value nil)
-    (if (and vm-frame-per-completion (vm-multiple-frames-possible-p))
+    (if (and vm-mutable-frames vm-frame-per-completion
+	     (vm-multiple-frames-possible-p))
 	(save-excursion
 	  (vm-goto-new-frame 'completion)))
     (switch-to-buffer (current-buffer))
@@ -345,9 +346,6 @@ HISTORY argument is ignored."
 	(cond ((equal string key-doc)
 	       (condition-case nil
 		   (save-excursion
-		     (save-excursion
-		       (let ((vm-mutable-frames t))
-			 (vm-delete-windows-or-frames-on (current-buffer))))
 		     (setq vm-mouse-read-file-name-return-value
 			   (save-excursion
 			     (vm-keyboard-read-file-name
@@ -389,11 +387,10 @@ HISTORY argument is ignored."
 
 (defun vm-mouse-read-file-name-quit-handler (&optional normal-exit)
   (interactive)
-  (let ((vm-mutable-frames t))
-    (vm-delete-windows-or-frames-on (current-buffer))
-    (if normal-exit
-	(throw 'exit nil)
-      (throw 'exit t))))
+  (vm-maybe-delete-windows-or-frames-on (current-buffer))
+  (if normal-exit
+      (throw 'exit nil)
+    (throw 'exit t)))
 
 (defvar vm-mouse-read-string-prompt)
 (defvar vm-mouse-read-string-completion-list)
@@ -413,7 +410,8 @@ HISTORY argument is ignored."
     (setq vm-mouse-read-string-completion-list completion-list)
     (setq vm-mouse-read-string-multi-word multi-word)
     (setq vm-mouse-read-string-return-value nil)
-    (if (and vm-frame-per-completion (vm-multiple-frames-possible-p))
+    (if (and vm-mutable-frames vm-frame-per-completion
+	     (vm-multiple-frames-possible-p))
 	(save-excursion
 	  (vm-goto-new-frame 'completion)))
     (switch-to-buffer (current-buffer))
@@ -438,9 +436,6 @@ HISTORY argument is ignored."
 	(cond ((equal string key-doc)
 	       (condition-case nil
 		   (save-excursion
-		     (save-excursion
-		       (let ((vm-mutable-frames t))
-			 (vm-delete-windows-or-frames-on (current-buffer))))
 		     (setq vm-mouse-read-string-return-value
 			   (vm-keyboard-read-string
 			    vm-mouse-read-string-prompt
@@ -491,8 +486,7 @@ HISTORY argument is ignored."
 
 (defun vm-mouse-read-string-quit-handler (&optional normal-exit)
   (interactive)
-  (let ((vm-mutable-frames t))
-    (vm-delete-windows-or-frames-on (current-buffer))
-    (if normal-exit
-	(throw 'exit nil)
-      (throw 'exit t))))
+  (vm-maybe-delete-windows-or-frames-on (current-buffer))
+  (if normal-exit
+      (throw 'exit nil)
+    (throw 'exit t)))

@@ -2206,10 +2206,10 @@ signal_name (int signum)
    the numeric status that was returned by `wait'.  */
 
 static void
-update_status_from_wait_code (struct Lisp_Process *p, WAITTYPE *w_fmh)
+update_status_from_wait_code (struct Lisp_Process *p, int *w_fmh)
 {
   /* C compiler lossage when attempting to pass w directly */
-  WAITTYPE w = *w_fmh;
+  int w = *w_fmh;
 
   if (WIFSTOPPED (w))
     {
@@ -2220,14 +2220,14 @@ update_status_from_wait_code (struct Lisp_Process *p, WAITTYPE *w_fmh)
   else if (WIFEXITED (w))
     {
       p->status_symbol = Qexit;
-      p->exit_code = WRETCODE (w);
-      p->core_dumped = ((WCOREDUMP (w)) ? 1 : 0);
+      p->exit_code = WEXITSTATUS (w);
+      p->core_dumped = 0;
     }
   else if (WIFSIGNALED (w))
     {
       p->status_symbol = Qsignal;
-      p->exit_code = (int) WTERMSIG (w);
-      p->core_dumped = ((WCOREDUMP (w)) ? 1 : 0);
+      p->exit_code = WTERMSIG (w);
+      p->core_dumped = WCOREDUMP (w);
     }
   else
     {
@@ -2253,7 +2253,7 @@ update_process_status (Lisp_Object p,
 
 #define MAX_EXITED_PROCESSES 1000
 static volatile pid_t exited_processes[MAX_EXITED_PROCESSES];
-static volatile WAITTYPE exited_processes_status[MAX_EXITED_PROCESSES];
+static volatile int exited_processes_status[MAX_EXITED_PROCESSES];
 static volatile int exited_processes_index;
 
 static volatile int sigchld_happened;
@@ -2282,7 +2282,7 @@ reap_exited_processes (void)
   for (i = 0; i < exited_processes_index; i++)
     {
       int pid = exited_processes[i];
-      WAITTYPE w = exited_processes_status[i];
+      int w = exited_processes_status[i];
 
       /* Find the process that signaled us, and record its status.  */
 
@@ -2331,7 +2331,7 @@ reap_exited_processes (void)
 
 	      /* Report the status of the synchronous process.  */
 	      if (WIFEXITED (w))
-		synch_process_retcode = WRETCODE (w);
+		synch_process_retcode = WEXITSTATUS (w);
 	      else if (WIFSIGNALED (w))
 		synch_process_death = signal_name (WTERMSIG (w));
 	    }
@@ -2371,7 +2371,7 @@ record_exited_processes (int block_sigchld)
   while (sigchld_happened)
     {
       int pid;
-      WAITTYPE w;
+      int w;
       
       /* Keep trying to get a status until we get a definitive result.  */
       do 
@@ -2553,7 +2553,7 @@ status_notify (void)
 	 got missed (this seems to happen sometimes, I'm not sure why).
        */
       {
-	WAITTYPE w;
+	int w;
 #ifdef SIGCHLD
 	EMACS_BLOCK_SIGNAL (SIGCHLD);
 #endif

@@ -550,7 +550,7 @@ Entry to this mode runs the hooks on `comint-mode-hook'."
   (define-key comint-mode-map "\e}" 'comint-next-prompt)
   (define-key comint-mode-map "\e{" 'comint-previous-prompt)
 
-  (define-key comint-mode-map 'button3 'comint-popup-menu)
+  #-infodock (define-key comint-mode-map 'button3 'comint-popup-menu)
   )
 
 (defconst comint-1-menubar-menu

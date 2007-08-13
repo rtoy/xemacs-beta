@@ -4,7 +4,7 @@
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Version:
-;;	$Id: mime-setup.el,v 1.5 1997/02/15 22:21:26 steve Exp $
+;;	$Id: mime-setup.el,v 1.6 1997/06/06 00:57:42 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is part of tm (Tools for MIME).

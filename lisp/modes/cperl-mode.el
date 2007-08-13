@@ -32,7 +32,7 @@
 ;;; Corrections made by Ilya Zakharevich ilya@math.mps.ohio-state.edu
 ;;; XEmacs changes by Peter Arius arius@informatik.uni-erlangen.de
 
-;; $Id: cperl-mode.el,v 1.7 1997/05/29 23:49:50 steve Exp $
+;; $Id: cperl-mode.el,v 1.8 1997/06/06 00:57:17 steve Exp $
 
 ;;; To use this mode put the following into your .emacs file:
 
@@ -713,8 +713,7 @@ Imenu in 19.31 is broken. Set `imenu-use-keymap-menu' to t, and remove
   (cperl-define-key "\e\C-q" 'cperl-indent-exp) ; Usually not bound
   ;;(cperl-define-key "\M-q" 'cperl-fill-paragraph)
   ;;(cperl-define-key "\e;" 'cperl-indent-for-comment)
-;; GDF - don't clobber the DEL binding...
-;;  (cperl-define-key "\177" 'cperl-electric-backspace)
+  (cperl-define-key "\177" 'cperl-electric-backspace)
   (cperl-define-key "\t" 'cperl-indent-command)
   ;; don't clobber the backspace binding:
   (cperl-define-key "\C-hf" 'cperl-info-on-command [(control h) f])
@@ -992,8 +991,6 @@ Turning on CPerl mode calls the hooks in the variable `cperl-mode-hook'
 with no args."
   (interactive)
   (kill-all-local-variables)
-  (make-local-hook 'backspace-or-delete-hook)
-  (add-hook 'backspace-or-delete-hook 'cperl-electric-backspace nil t)
   ;;(if cperl-hairy
   ;;    (progn
   ;;	(cperl-set 'cperl-font-lock cperl-hairy)
@@ -1563,8 +1560,9 @@ If not, or if we are not at the end of marking range, would self-insert."
 	(setq p (point))
 	(skip-chars-backward " \t\n")
 	(delete-region (point) p))
-    (backward-delete-char-untabify (prefix-numeric-value arg)))
-  t)
+    (if (fboundp 'backspace-or-delete)
+	(backspace-or-delete (prefix-numeric-value arg))
+      (backward-delete-char-untabify (prefix-numeric-value arg)))))
 
 (defun cperl-inside-parens-p ()
   (condition-case ()

@@ -13,7 +13,7 @@
 @comment  node-name,  next,  previous,  up
 @top The Emacs Widget Library
 
-Version: 1.98
+Version: 1.9907
 
 @menu
 * Introduction::                
@@ -64,7 +64,7 @@ visible in the buffer.
 A simple constant widget intended to be used in the @code{menu-choice} and
 @code{radio-button-choice} widgets. 
 @item choice-item
-An button item only intended for use in choices.  When activated, the user
+An button item only intended for use in choices.  When invoked, the user
 will be asked to select another option from the choice widget.
 @item toggle
 A simple @samp{on}/@samp{off} switch.
@@ -191,22 +191,22 @@ Face used for other editing fields.
 @subsection Buttons
 
 Some portions of the buffer have an associated @dfn{action}, which can
-be @dfn{activated} by a standard key or mouse command.  These portions
+be @dfn{invoked} by a standard key or mouse command.  These portions
 are called @dfn{buttons}.  The default commands for activating a button
 are:
 
 @table @kbd
 @item @key{RET}
 @deffn Command widget-button-press @var{pos} &optional @var{event}
-Activate the button at @var{pos}, defaulting to point.
-If point is not located on a button, activate the binding in
+Invoke the button at @var{pos}, defaulting to point.
+If point is not located on a button, invoke the binding in
 @code{widget-global-map} (by default the global map).
 @end deffn
 
 @item mouse-2
 @deffn Command widget-button-click @var{event}
-Activate the button at the location of the mouse pointer.  If the mouse
-pointer is located in an editable text field, activate the binding in
+Invoke the button at the location of the mouse pointer.  If the mouse
+pointer is located in an editable text field, invoke the binding in
 @code{widget-global-map} (by default the global map).
 @end deffn
 @end table
@@ -216,7 +216,7 @@ the example:
 
 @table @emph
 @item The Option Field Tags.
-When you activate one of these buttons, you will be asked to choose
+When you invoke one of these buttons, you will be asked to choose
 between a number of different options.  This is how you edit an option
 field.  Option fields are created by the @code{menu-choice} widget.  In
 the example, @samp{@b{Choose}} is an option field tag.
@@ -233,7 +233,7 @@ Activating one of these will convert it to the other.  This is useful
 for implementing multiple-choice fields.  You can create it wit
 @item The @samp{@b{( )}} and @samp{@b{(*)}} buttons.
 Only one radio button in a @code{radio-button-choice} widget can be
-selected at any time.  When you activate one of the unselected radio
+selected at any time.  When you invoke one of the unselected radio
 buttons, it will be selected and the previous selected radio button will
 become unselected.
 @item The @samp{@b{[Apply Form]}} @samp{@b{[Reset Form]}} buttons.
@@ -660,7 +660,7 @@ Syntax:
 TYPE ::= (url-link [KEYWORD ARGUMENT]...  URL)
 @end example
 
-When this link is activated, the @sc{www} browser specified by
+When this link is invoked, the @sc{www} browser specified by
 @code{browse-url-browser-function} will be called with @var{url}. 
 
 @node info-link, push-button, url-link, Basic Types
@@ -673,7 +673,7 @@ Syntax:
 TYPE ::= (info-link [KEYWORD ARGUMENT]...  ADDRESS)
 @end example
 
-When this link is activated, the build-in info browser is started on
+When this link is invoked, the build-in info browser is started on
 @var{address}. 
 
 @node  push-button, editable-field, info-link, Basic Types
@@ -739,29 +739,7 @@ which matches everything.
 Keymap used in the editable field.  The default value is
 @code{widget-field-keymap}, which allows you to use all the normal
 editing commands, even if the buffers major mode supress some of them.
-Pressing return activates the function specified by @code{:activate}. 
-
-@item :hide-front-space
-@itemx :hide-rear-space
-In order to keep track of the editable field, emacs places an invisible
-space character in front of the field, and for fixed sized fields also
-in the rear end of the field.  For fields that extent to the end of the
-line, the terminating linefeed serves that purpose instead.  
-
-Emacs will try to make the spaces intangible when it is safe to do so.
-Intangible means that the cursor motion commands will skip over the
-character as if it didn't exist.  This is safe to do when the text
-preceding or following the widget cannot possible change during the
-lifetime of the @code{editable-field} widget.  The preferred way to tell
-Emacs this, is to add text to the @code{:format} property around the
-value.  For example @code{:format "Tag: %v "}.  
-
-You can overwrite the internal safety check by setting the
-@code{:hide-front-space} or @code{:hide-rear-space} properties to
-non-nil.  This is not recommended.  For example, @emph{all} text that
-belongs to a widget (i.e. is created from its @code{:format} string) will
-change whenever the widget changes its value.
-
+Pressing return invokes the function specified by @code{:action}. 
 @end table
 
 @node text, menu-choice, editable-field, Basic Types
@@ -1160,7 +1138,7 @@ Allows you to enter a character in an editable field.
 @end deffn
 
 @deffn Widget file
-Allows you to edit a file name in an editable field.  You you activate
+Allows you to edit a file name in an editable field.  If you invoke
 the tag button, you can edit the file name in the mini-buffer with
 completion. 
 
@@ -1581,7 +1559,7 @@ and @kbd{C-o} (suggested by @sc{rms}).
 
 @item 
 The @samp{[INS]} and @samp{[DEL]} buttons should be replaced by a single
-dash (@samp{-}).  The dash should be a button that, when activated, ask
+dash (@samp{-}).  The dash should be a button that, when invoked, ask
 whether you want to add or delete an item (@sc{rms} wanted to git rid of
 the ugly buttons, the dash is my idea).
 
@@ -1623,6 +1601,9 @@ See @code{TeX-printer-list} for an explanation.
 
 @item 
 @kbd{C-h} in @code{widget-prompt-value} should give type specific help.
+
+@item 
+A mailto widget.
 
 @end itemize
 

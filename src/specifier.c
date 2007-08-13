@@ -2873,7 +2873,7 @@ boolean_validate (Lisp_Object instantiator)
 }
 
 DEFUN ("boolean-specifier-p", Fboolean_specifier_p, 1, 1, 0, /*
-Return non-nil if OBJECT is an boolean specifier.
+Return non-nil if OBJECT is a boolean specifier.
 */
        (object))
 {

@@ -61,10 +61,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define HAVE_PTYS
 
-/* XEmacs addition */
-
-#define HAVE_UNION_WAIT
-
 /* If your system uses COFF (Common Object File Format) then define the
    preprocessor symbol "COFF". */
 

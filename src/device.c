@@ -495,6 +495,14 @@ name; in such a case, the first device found is returned.)
   return device;
 }
 
+static Lisp_Object
+delete_deviceless_console(Lisp_Object console)
+{
+  if (NILP (XCONSOLE (console)->device_list))
+    Fdelete_console(console, Qnil);
+  return Qnil;
+}
+
 DEFUN ("make-device", Fmake_device, 2, 3, 0, /*
 Create a new device of type TYPE, attached to connection CONNECTION.
 
@@ -521,6 +529,7 @@ have no effect.
   Lisp_Object console = Qnil;
   Lisp_Object name = Qnil;
   struct console_methods *conmeths;
+  int speccount = specpdl_depth();
 
   struct gcpro gcpro1, gcpro2, gcpro3;
 #ifdef HAVE_X_WINDOWS
@@ -563,6 +572,8 @@ have no effect.
     console = create_console (name, type, conconnect, props);
   }
 
+  record_unwind_protect(delete_deviceless_console, console);
+
   con = XCONSOLE (console);
   d = allocate_device (console);
   XSETDEVICE (device, d);
@@ -602,6 +613,7 @@ have no effect.
   setup_device_initial_specifier_tags (d);
 
   UNGCPRO;
+  unbind_to(speccount, Qnil);
   return device;
 }
 

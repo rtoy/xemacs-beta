@@ -1088,7 +1088,7 @@ at the initial click position."
 			 (extent-detached-p x)))))
 	(extent default-mouse-track-extent))
     (if (consp extent)
-	(if (some dead-func extent)
+	(if (funcall dead-func extent)
 	    (let (newval)
 	      (mapcar (function (lambda (x)
 				  (if (not (funcall dead-func x))
