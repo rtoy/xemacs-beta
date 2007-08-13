@@ -1,6 +1,6 @@
 \input texinfo    @c -*-texinfo-*-
 @comment %**start of header (This is for running Texinfo on a region.)
-@setfilename ../info/ispell.info
+@setfilename ispell.info
 @settitle ISPELL V3.1
 @comment %**end of header (This is for running Texinfo on a region.)
 
@@ -73,6 +73,8 @@ except that this permission notice may be stated in a translation approved
 by the Foundation.
 
 @end titlepage
+@node Top, Emacs, (dir), (dir)
+
 @menu
 * Emacs::			Using ispell from emacs
 * Old Emacs::			Old Emacs
@@ -91,7 +93,6 @@ Using ispell from emacs
 * Multiple Dictionaries::	Using Multiple Dictionaries
 @end menu
 
-@node Top, Emacs, (dir), (dir)
 
 @iftex
 @chapter ISPELL

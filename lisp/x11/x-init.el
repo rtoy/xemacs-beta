@@ -83,7 +83,8 @@
 
 (defun x-initialize-compose ()
   "Enable compose processing"
-  (require 'x-compose))
+  (when (x-keysym-on-keyboard-p "Multi_key")
+    (require 'x-compose)))
 
 ;;; Load X-server specific code.
 ;;; Specifically, load some code to repair the grievous damage that MIT and

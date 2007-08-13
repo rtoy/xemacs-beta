@@ -1269,7 +1269,9 @@ init_tty_for_redisplay (struct device *d, char *terminal_type)
        color, too. */
     char foobuf[500];
     char *fooptr = foobuf;
-    if (tgetstr ("AB", &fooptr) && tgetstr ("AF", &fooptr))
+    if ((tgetstr ("AB", &fooptr) && tgetstr ("AF", &fooptr)) ||
+        (tgetstr ("Sf", &fooptr) && tgetstr ("Sb", &fooptr)) ||
+        ((tgetnum ("Co") > 0) && (tgetnum ("pa") > 0)))
       DEVICE_CLASS (d) = Qcolor;
     else
       DEVICE_CLASS (d) = Qmono;

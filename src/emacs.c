@@ -84,6 +84,10 @@ Lisp_Object Vsystem_type;
 /* Variable whose value is string giving configuration built for.  */
 Lisp_Object Vsystem_configuration;
   
+/* Version numbers and strings */
+Lisp_Object Vemacs_major_version;
+Lisp_Object Vemacs_minor_version;
+
 /* The name under which XEmacs was invoked, with any leading directory
    names discarded.  */
 Lisp_Object Vinvocation_name;
@@ -2236,6 +2240,25 @@ Value is symbol indicating type of operating system you are using.
 Value is string indicating configuration XEmacs was built for.
 */ );
   Vsystem_configuration = Fpurecopy (build_string (EMACS_CONFIGURATION));
+
+  /* emacs-major-version and emacs-minor-version work correctly in the */
+  /* real XEmacs source code ... */
+  DEFVAR_LISP ("emacs-major-version", &Vemacs_major_version /*
+Major version number of this version of Emacs, as an integer.
+Warning: this variable did not exist in Emacs versions earlier than:
+  FSF Emacs:   19.23
+  XEmacs:      19.10
+*/ );
+  Vemacs_major_version = make_int (19);
+
+  DEFVAR_LISP ("emacs-minor-version", &Vemacs_minor_version /*
+Minor version number of this version of Emacs, as an integer.
+Warning: this variable did not exist in Emacs versions earlier than:
+  FSF Emacs:   19.23
+  XEmacs:      19.10
+*/ );
+  Vemacs_minor_version = make_int (16);
+
 
   DEFVAR_BOOL ("noninteractive", &noninteractive1 /*
 Non-nil means XEmacs is running without interactive terminal.

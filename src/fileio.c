@@ -123,7 +123,8 @@ report_file_error (CONST char *string, Lisp_Object data)
 
   /* System error messages are capitalized.  Downcase the initial
      unless it is followed by a slash.  */
-  if (string_char (XSTRING (errstring), 1) != '/')
+  if (string_char_length (XSTRING (errstring)) >= 2
+      && string_char (XSTRING (errstring), 1) != '/')
     set_string_char (XSTRING (errstring), 0,
 		     DOWNCASE (current_buffer,
 			       string_char (XSTRING (errstring), 0)));

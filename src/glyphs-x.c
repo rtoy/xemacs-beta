@@ -3586,8 +3586,8 @@ subwindow_hash (Lisp_Object obj, int depth)
  which are both being displayed simultaneously you will lose big time.
  This can be dealt with in the new redisplay. */
 
-/* #### These are completely un-re-implemented in 19.14.  Get it done
-   for 19.15. */
+/* #### These are completely un-re-implemented in 19.16.  Get it done
+   for 20.3. */
 
 DEFUN ("make-subwindow", Fmake_subwindow, 0, 3, 0, /*
 Creates a new `subwindow' object of size WIDTH x HEIGHT.
@@ -3611,7 +3611,7 @@ Subwindows are not currently implemented.
   XSetWindowAttributes xswa;
   Mask valueMask = 0;
 
-  error ("subwindows are not functional in 19.14; they will be in 19.15");
+  error ("subwindows are not functional in 19.16; perhaps some day ...");
 
   f = decode_x_frame (frame);
 

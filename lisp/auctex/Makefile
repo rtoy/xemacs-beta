@@ -79,15 +79,17 @@ AUCELC = auc-old.elc tex.elc tex-buf.elc latex.elc tex-info.elc \
 	multi-prompt.elc
 
 
-STYLESRC = style/slides.el    style/foils.el    style/amstex.el \
-	   style/article.el   style/book.el     style/letter.el \
-	   style/report.el    style/amsart.el   style/amsbook.el \
-	   style/epsf.el      style/psfig.el    style/latexinfo.el \
-	   style/dutch.el     style/german.el   style/dk.el \
-	   style/j-article.el style/j-book.el   style/j-report.el \
-	   style/jarticle.el  style/jbook.el    style/jreport.el \
-	   style/dinbrief.el  style/virtex.el   style/plfonts.el \
-	   style/plhb.el      style/harvard.el	style/swedish.el
+STYLE=../../etc/auctex/style
+
+STYLESRC = $(STYLE)/slides.el    $(STYLE)/foils.el    $(STYLE)/amstex.el \
+	   $(STYLE)/article.el   $(STYLE)/book.el     $(STYLE)/letter.el \
+	   $(STYLE)/report.el    $(STYLE)/amsart.el   $(STYLE)/amsbook.el \
+	   $(STYLE)/epsf.el      $(STYLE)/psfig.el    $(STYLE)/latexinfo.el \
+	   $(STYLE)/dutch.el     $(STYLE)/german.el   $(STYLE)/dk.el \
+	   $(STYLE)/j-article.el $(STYLE)/j-book.el   $(STYLE)/j-report.el \
+	   $(STYLE)/jarticle.el  $(STYLE)/jbook.el    $(STYLE)/jreport.el \
+	   $(STYLE)/dinbrief.el  $(STYLE)/virtex.el   $(STYLE)/plfonts.el \
+	   $(STYLE)/plhb.el      $(STYLE)/harvard.el	$(STYLE)/swedish.el
 
 DOCFILES = doc/Makefile doc/auc-tex.texi doc/intro.texi doc/install.texi \
 	doc/changes.texi doc/tex-ref.tex doc/math-ref.tex doc/history.texi

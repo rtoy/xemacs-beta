@@ -320,7 +320,7 @@
        (define-key compose-map [dead-grave]		compose-grave-map)
        (define-key function-key-map  [dead-cedilla]	compose-cedilla-map)
        (define-key compose-map [dead-cedilla]	compose-cedilla-map)
-       (define-key function-key-map  [dead_diaeresis]	compose-diaeresis-map)
+       (define-key function-key-map  [dead-diaeresis]	compose-diaeresis-map)
        (define-key compose-map [dead-diaeresis]	compose-diaeresis-map)
        (define-key function-key-map  [dead-circum]	compose-circumflex-map)
        (define-key compose-map [dead-circum]	compose-circumflex-map)

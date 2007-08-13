@@ -1,6 +1,6 @@
 ;;; article.el - Special code for article style.
 
-;; $Id: article.el,v 1.1 1997/02/20 02:15:19 steve Exp $
+;; $Id: article.el,v 1.1 1997/08/30 02:45:14 steve Exp $
 
 ;;; Code:
 

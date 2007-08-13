@@ -198,7 +198,9 @@ arguments compiles from `load-path'."
 	     (directory-files d nil "^[^=].*\\.el$")))))
        dirs)
       (insert "))\n\n(provide 'finder-inf)\n\n;;; finder-inf.el ends here\n")
-      (kill-buffer "*finder-scratch*")
+      (condition-case nil
+	  (kill-buffer "*finder-scratch*")
+	(t nil))
       (eval-current-buffer) ;; So we get the new keyword list immediately
       (basic-save-buffer))))
 

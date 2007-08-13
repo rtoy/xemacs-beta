@@ -250,7 +250,7 @@ select_console_1 (Lisp_Object console)
   /* perhaps this should do something more complicated */
   Vselected_console = console;
 
-  /* #### Schedule this to be removed in 19.14 */
+  /* #### Schedule this to be removed in some future version */
 #ifdef HAVE_X_WINDOWS
   if (CONSOLE_X_P (XCONSOLE (console)))
     Vwindow_system = Qx;

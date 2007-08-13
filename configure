@@ -201,7 +201,8 @@ Window-system options:
 --with-x=no		Don't support X.
 --x-includes=DIR 	Search for X header files in DIR.
 --x-libraries=DIR	Search for X libraries in DIR.
---with-ns		Support NeXTstep windows (not yet implemented).
+--with-ns		Support NeXTstep windows (Doesn't work, option
+			removed in 20.3)
 --with-menubars=TYPE	Use TYPE menubars (lucid, motif, or no).  The Lucid
 			widgets emulate Motif (mostly) but are faster.
 			*WARNING*  The Motif menubar is currently broken.

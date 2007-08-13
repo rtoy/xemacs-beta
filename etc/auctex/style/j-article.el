@@ -1,6 +1,6 @@
 ;;; j-article.el - Special code for j-article style.
 
-;; $Id: j-article.el,v 1.1 1997/02/20 02:15:20 steve Exp $
+;; $Id: j-article.el,v 1.1 1997/08/30 02:45:15 steve Exp $
 
 ;;; Code:
 

@@ -209,7 +209,7 @@ Symbols and Variables
 Buffers and Textual Representation
 
 * Introduction to Buffers::     A buffer holds a block of text such as a file.
-* A Buffer@'s Text::            Representation of the text in a buffer.
+* A Buffer's Text::            Representation of the text in a buffer.
 * Buffer Lists::                Keeping track of all buffers.
 * Markers and Extents::         Tagging locations within a buffer.
 * Bufbytes and Emchars::        Representation of individual characters.
@@ -5322,7 +5322,7 @@ well-documented in comments in @file{buffer.c}, @file{symbols.c}, and
 
 @menu
 * Introduction to Buffers::     A buffer holds a block of text such as a file.
-* A Buffer@'s Text::            Representation of the text in a buffer.
+* A Buffer's Text::            Representation of the text in a buffer.
 * Buffer Lists::                Keeping track of all buffers.
 * Markers and Extents::         Tagging locations within a buffer.
 * Bufbytes and Emchars::        Representation of individual characters.
@@ -5382,7 +5382,7 @@ and @dfn{buffer of the selected window}, and the distinction between
 window. (This latter distinction is explained in detail in the section
 on windows.)
 
-@node A Buffer@'s Text
+@node A Buffer's Text
 @section A Buffer's Text
 
   The text in a buffer consists of a sequence of zero or more

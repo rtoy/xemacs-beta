@@ -3031,18 +3031,77 @@ which case you can't use this.
 
 
 Lisp_Object Vfeatures;
+extern Lisp_Object Vemacs_major_version, Vemacs_minor_version;
 
 DEFUN ("featurep", Ffeaturep, 1, 1, 0, /*
-Return t if FEATURE is present in this Emacs.
-Use this to conditionalize execution of lisp code based on the
-presence or absence of emacs or environment extensions.
-Use `provide' to declare that a feature is available.
-This function looks at the value of the variable `features'.
+Return non-nil if feature expression FEXP is true.
 */
-       (feature))
+       (fexp))
 {
-  CHECK_SYMBOL (feature);
-  return NILP (Fmemq (feature, Vfeatures)) ? Qnil : Qt;
+  static double featurep_emacs_version;
+
+  /* Brute force translation from Erik Naggum's lisp function. */
+  if (SYMBOLP(fexp))
+    {
+      /* Original definition */
+      return NILP (Fmemq (fexp, Vfeatures)) ? Qnil : Qt;
+    }
+  else if (INTP(fexp) || FLOATP(fexp))
+    {
+      double d = extract_float(fexp);
+
+      if (featurep_emacs_version == 0.0)
+        {
+          featurep_emacs_version = XINT (Vemacs_major_version) +
+            (XINT (Vemacs_minor_version) / 100.0);
+        }
+      return featurep_emacs_version >= d ? Qt : Qnil;
+    }
+  else if (CONSP(fexp))
+    {
+      Lisp_Object tem;
+
+      tem = XCAR(fexp);
+      if (EQ(tem, Qnot))
+        {
+          Lisp_Object negate = XCDR(fexp);
+
+          if (!NILP(XCDR(fexp)))
+            {
+              return Fsignal(Qinvalid_read_syntax, list1(XCDR(fexp)));
+            }
+          else
+            {
+              return NILP(Ffeaturep(negate)) ? Qt : Qnil;
+            }
+        }
+      else if (EQ(tem, Qand))
+        {
+          tem = XCDR(fexp);
+          while (!NILP(tem) && !NILP(Ffeaturep(XCAR(tem))))
+            {
+              tem = XCDR(tem);
+            }
+          return NILP(tem) ? Qt : Qnil;
+        }
+      else if (EQ(tem, Qor))
+        {
+          tem = XCDR(fexp);
+          while (!NILP(tem) && NILP(Ffeaturep(XCAR(tem))))
+            {
+              tem = XCDR(tem);
+            }
+          return NILP(tem) ? Qnil : Qt;
+        }
+      else
+        {
+          return Fsignal(Qinvalid_read_syntax, list1(XCDR(fexp)));
+        }
+    }
+  else
+    {
+      return Fsignal(Qinvalid_read_syntax, list1 (fexp));
+    }
 }
 
 DEFUN ("provide", Fprovide, 1, 1, 0, /*

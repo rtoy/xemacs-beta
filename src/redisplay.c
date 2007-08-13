@@ -465,6 +465,7 @@ Lisp_Object Qredisplay_end_trigger_functions, Vredisplay_end_trigger_functions;
 #ifndef INHIBIT_REDISPLAY_HOOKS
 /* #### Chuck says: I think this needs more thought.
    Think about this for 19.14. */
+/* 19.16:  We're still thinking, I guess.  -slb */
 Lisp_Object Vpre_redisplay_hook, Vpost_redisplay_hook;
 Lisp_Object Qpre_redisplay_hook, Qpost_redisplay_hook;
 #endif
@@ -8209,11 +8210,9 @@ It is up to you to set this variable if your terminal can do that.
 */ );
   no_redraw_on_reenter = 0;
 
-  /* #### This should be removed in 19.14 */
   DEFVAR_LISP ("window-system", &Vwindow_system /*
 A symbol naming the window-system under which Emacs is running,
 such as `x', or nil if emacs is running on an ordinary terminal.
-This variable is OBSOLETE and will be removed in a future version.
 */ );
   Vwindow_system = Qnil;
 

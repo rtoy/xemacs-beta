@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1994 Berwin Turlach <berwin@core.ucl.ac.be>
 
-;; Version: $Id: harvard.el,v 1.1 1997/02/20 02:15:20 steve Exp $
+;; Version: $Id: harvard.el,v 1.1 1997/08/30 02:45:15 steve Exp $
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by

@@ -29,7 +29,7 @@ EMACSFLAGS = -batch -q -no-site-file
 # Implies makeinfo-1.64
 MAKEINFO = makeinfo
 # Implies makeinfo-1.67
-NEWMAKEINFO = makeinfo-1.67
+NEWMAKEINFO = makeinfo
 
 .SUFFIXES: .info .texi .dvi
 

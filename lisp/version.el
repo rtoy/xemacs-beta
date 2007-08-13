@@ -23,33 +23,53 @@
 
 ;; The following line is modified automatically
 ;; by loading inc-version.el, each time a new Emacs is dumped.
-(defconst emacs-version "19.16" "\
-Version numbers of this version of Emacs.")
+;; (defconst emacs-version "19.16" "\
+;; Version numbers of this version of Emacs.")
 
-(setq emacs-version (purecopy (concat emacs-version " XEmacs Lucid (beta90)")))
+;; (setq emacs-version (purecopy (concat emacs-version " XEmacs Lucid (beta90)")))
 
-(defconst emacs-major-version
-  (progn (or (string-match "^[0-9]+" emacs-version)
-	     (error "emacs-version unparsable"))
-         (string-to-int (match-string 0 emacs-version)))
-  "Major version number of this version of Emacs, as an integer.
-Warning, this variable did not exist in Emacs versions earlier than:
-  FSF Emacs:   19.23
-  XEmacs:      19.10")
+;(defconst emacs-major-version
+;  (progn (or (string-match "^[0-9]+" emacs-version)
+;	     (error "emacs-version unparsable"))
+;         (string-to-int (match-string 0 emacs-version)))
+;  "Major version number of this version of Emacs, as an integer.
+;Warning, this variable did not exist in Emacs versions earlier than:
+;  FSF Emacs:   19.23
+;  XEmacs:      19.10")
 
-(defconst emacs-minor-version
-  (progn (or (string-match "^[0-9]+\\.\\([0-9]+\\)" emacs-version)
-	     (error "emacs-version unparsable"))
-         (string-to-int (match-string 1 emacs-version)))
-  "Minor version number of this version of Emacs, as an integer.
-Warning, this variable did not exist in Emacs versions earlier than:
-  FSF Emacs:   19.23
-  XEmacs:      19.10")
+;(defconst emacs-minor-version
+;  (progn (or (string-match "^[0-9]+\\.\\([0-9]+\\)" emacs-version)
+;	     (error "emacs-version unparsable"))
+;         (string-to-int (match-string 1 emacs-version)))
+;  "Minor version number of this version of Emacs, as an integer.
+;Warning, this variable did not exist in Emacs versions earlier than:
+;  FSF Emacs:   19.23
+;  XEmacs:      19.10")
 
 (defconst emacs-build-time (current-time-string) "\
 Time at which Emacs was dumped out.")
 
 (defconst emacs-build-system (system-name))
+
+(defconst xemacs-betaname "(beta91)"
+  "Non-nil when this is a test (beta) version of XEmacs.
+Warning, this variable did not exist in XEmacs versions prior to 20.3")
+
+(defconst xemacs-codename ""
+  "This only works in XEmacs 20.3 or greater.")
+
+(defconst emacs-version
+  (purecopy
+   (format "%d.%d \"%s\"%s%s"
+	   emacs-major-version
+	   emacs-minor-version
+	   xemacs-codename
+	   " XEmacs Lucid"
+	   (if xemacs-betaname
+	       (concat " " xemacs-betaname)
+	     "")))
+  "Version numbers of this version of XEmacs.")
+
 
 (defun emacs-version  (&optional here) "\
 Return string describing the version of Emacs that is running.

@@ -10,6 +10,34 @@
         "define pathnames for use by various Emacs commands."
         (internal)
         "lisp/")
+    ("site-load.el"
+        "Template file for site-wide XEmacs customization"
+        (internal)
+        "lisp/")
+    ("font-latex.el"
+        "LaTeX fontification for Font Lock mode."
+        (latex faces)
+        "lisp/auctex/")
+    ("latex.el"
+        "Support for LaTeX documents."
+        (wp)
+        "lisp/auctex/")
+    ("multi-prompt.el"
+        "completing read of multiple strings."
+        (extensions)
+        "lisp/auctex/")
+    ("tex.el"
+        "Support for TeX documents."
+        (wp)
+        "lisp/auctex/")
+    ("byte-optimize.el"
+        "the optimization passes of the emacs-lisp byte compiler."
+        (internal)
+        "lisp/bytecomp/")
+    ("bytecomp-runtime.el"
+        "byte-compiler support for inlining"
+        (internal)
+        "lisp/bytecomp/")
     ("bytecomp.el"
         "compilation of Lisp code into byte code."
         (internal)
@@ -43,7 +71,7 @@
         (calendar)
         "lisp/calendar/")
     ("calendar.el"
-        "Calendar functions."
+        "Calendar functions.  -*-byte-compile-dynamic: t;-*-"
         (calendar)
         "lisp/calendar/")
     ("diary-ins.el"
@@ -66,9 +94,37 @@
         "calendar functions for solar events."
         (calendar)
         "lisp/calendar/")
+    ("cl-autoload.el"
+        "Generate the autoload file cl-defs.el."
+        (extensions  lisp)
+        "lisp/cl/")
+    ("cl-compat.el"
+        "Common Lisp extensions for GNU Emacs Lisp (compatibility)"
+        (extensions)
+        "lisp/cl/")
+    ("cl-extra.el"
+        "Common Lisp extensions for GNU Emacs Lisp (part two)"
+        (extensions)
+        "lisp/cl/")
+    ("cl-macs.el"
+        "Common Lisp extensions for GNU Emacs Lisp (part four)"
+        (extensions)
+        "lisp/cl/")
+    ("cl-seq.el"
+        "Common Lisp extensions for GNU Emacs Lisp (part three)"
+        (extensions)
+        "lisp/cl/")
+    ("cl.el"
+        "Common Lisp extensions for GNU Emacs Lisp"
+        (extensions  lisp)
+        "lisp/cl/")
     ("background.el"
         "fun with background jobs"
         (processes)
+        "lisp/comint/")
+    ("comint-xemacs.el"
+        "Face customizations for comint"
+        (help  faces)
         "lisp/comint/")
     ("comint.el"
         "general command interpreter in a window stuff"
@@ -82,9 +138,17 @@
         "run gdb under Emacs"
         (c  unix  tools  debugging)
         "lisp/comint/")
+    ("gdbsrc.el"
+        "Source-based (as opposed to comint-based) debugger"
+        (c  unix  tools  debugging)
+        "lisp/comint/")
     ("gud.el"
         "Grand Unified Debugger mode for gdb, sdb, dbx, or xdb"
         (c  unix  tools  debugging)
+        "lisp/comint/")
+    ("history.el"
+        "Generic history stuff"
+        nil
         "lisp/comint/")
     ("inf-lisp.el"
         "an inferior-lisp mode"
@@ -92,7 +156,7 @@
         "lisp/comint/")
     ("kermit.el"
         "additions to shell mode for use with kermit, etc."
-        (comm  processes)
+        (comm)
         "lisp/comint/")
     ("rlogin.el"
         "remote login interface"
@@ -106,32 +170,60 @@
         "run a telnet session from within an Emacs buffer"
         (comm  unix)
         "lisp/comint/")
-    ("ange-ftp.el"
-        "transparent FTP support for GNU Emacs"
-        (comm)
-        "lisp/dired/")
-    ("dired-link.el"
-        "Properly resolves UNIX (and Apollo variant) links under dired."
-        nil
-        "lisp/dired/")
-    ("dired-x.el"
-        "Sebastian Kremer's Extra DIRED hacked up for GNU Emacs19"
-        (dired extensions)
-        "lisp/dired/")
-    ("dired.el"
-        "directory-browsing commands"
-        (dired extensions)
-        "lisp/dired/")
+    ("cus-edit.el"
+        "Tools for customization Emacs."
+        (help  faces)
+        "lisp/custom/")
+    ("cus-face.el"
+        "XEmacs specific custom support."
+        (help  faces)
+        "lisp/custom/")
+    ("custom.el"
+        "Tools for declaring and initializing options."
+        (help  faces)
+        "lisp/custom/")
+    ("wid-browse.el"
+        "Functions for browsing widgets."
+        (extensions)
+        "lisp/custom/")
+    ("wid-edit.el"
+        "Functions for creating and using widgets."
+        (extensions)
+        "lisp/custom/")
+    ("widget-example.el"
+        "example of using the widget library"
+        (help  extensions  faces  hypermedia)
+        "lisp/custom/")
+    ("widget.el"
+        "a library of user interface components."
+        (help  extensions  faces  hypermedia)
+        "lisp/custom/")
+    ("advise-eval-region.el"
+        "Wrap advice around eval-region"
+        (extensions lisp)
+        "lisp/edebug/")
     ("cust-print.el"
         "handles print-level and print-circle."
         (extensions)
         "lisp/edebug/")
+    ("edebug-cl-read.el"
+        "Edebug reader macros for use with cl-read."
+        (lisp  tools  maint)
+        "lisp/edebug/")
     ("edebug.el"
         "a source-level debugger for Emacs Lisp"
-        (lisp  tools  debugging)
+        (lisp  tools  maint)
+        "lisp/edebug/")
+    ("eval-reg.el"
+        "Redefine eval-region, and subrs that use it, in Lisp"
+        (lisp)
         "lisp/edebug/")
     ("ediff-diff.el"
         "diff-related utilities"
+        nil
+        "lisp/ediff/")
+    ("ediff-help.el"
+        "Code related to the contents of Ediff help buffers"
         nil
         "lisp/ediff/")
     ("ediff-hook.el"
@@ -146,12 +238,24 @@
         "merging utilities"
         nil
         "lisp/ediff/")
-    ("ediff-meta.el"
+    ("ediff-mult.el"
         "support for multi-file/multi-buffer processing in Ediff"
+        nil
+        "lisp/ediff/")
+    ("ediff-ptch.el"
+        "Ediff's  patch support"
+        nil
+        "lisp/ediff/")
+    ("ediff-tbar.el"
+        "A toolbar for Ediff control buffer"
         nil
         "lisp/ediff/")
     ("ediff-util.el"
         "the core commands and utilities of ediff"
+        nil
+        "lisp/ediff/")
+    ("ediff-vers.el"
+        "version control interface to Ediff"
         nil
         "lisp/ediff/")
     ("ediff-wind.el"
@@ -164,11 +268,11 @@
         "lisp/ediff/")
     ("ebuff-menu.el"
         "electric-buffer-list mode"
-        nil
+        (frames)
         "lisp/electric/")
     ("echistory.el"
         "Electric Command History Mode"
-        nil
+        (extensions)
         "lisp/electric/")
     ("ehelp.el"
         "bindings for electric-help mode"
@@ -182,12 +286,28 @@
         "utility help package supporting help in electric modes"
         (help)
         "lisp/electric/")
-    ("edt.el"
-        "EDT emulation in Emacs"
+    ("crisp.el"
+        "CRiSP/Brief Emacs emulator"
+        (emulations brief crisp)
+        "lisp/emulators/")
+    ("edt-lk201.el"
+        "Enhanced EDT Keypad Mode Emulation for LK-201 Keyboards"
         (emulations)
         "lisp/emulators/")
-    ("gosmacs.el"
-        "rebindings to imitate Gosmacs."
+    ("edt-mapper.el"
+        "Create an EDT LK-201 Map File for X-Windows Emacs"
+        (emulations)
+        "lisp/emulators/")
+    ("edt-pc.el"
+        "Enhanced EDT Keypad Mode Emulation for PC 101 Keyboards"
+        (emulations)
+        "lisp/emulators/")
+    ("edt-vt100.el"
+        "Enhanced EDT Keypad Mode Emulation for VT Series Terminals"
+        (emulations)
+        "lisp/emulators/")
+    ("edt.el"
+        "Enhanced EDT Keypad Mode Emulation for GNU Emacs 19"
         (emulations)
         "lisp/emulators/")
     ("mlconvert.el"
@@ -198,9 +318,13 @@
         "run-time support for mocklisp code."
         (extensions)
         "lisp/emulators/")
+    ("scroll-lock.el"
+        "scroll-locking minor mode"
+        (scroll crisp brief lock)
+        "lisp/emulators/")
     ("teco.el"
         "Teco interpreter for Gnu Emacs, version 1."
-        nil
+        (emulators)
         "lisp/emulators/")
     ("tpu-doc.el"
         "Documentation for TPU-edt"
@@ -214,9 +338,13 @@
         "Scroll margins and free cursor mode for TPU-edt"
         (emulations)
         "lisp/emulators/")
+    ("tpu-mapper.el"
+        "Create a TPU-edt X-windows keymap file"
+        (emulations)
+        "lisp/emulators/")
     ("ws-mode.el"
         "WordStar emulation mode for GNU Emacs"
-        nil
+        (emulations)
         "lisp/emulators/")
     ("eos.el"
         "Intereactively loads the XEmacs/SPARCworks interface"
@@ -262,16 +390,32 @@
         "Intereactively loads the XEmacs/SPARCworks interface"
         (sparcworks eos era on sparcworks load)
         "lisp/eos/")
+    ("term.el"
+        "general command interpreter in a window stuff"
+        nil
+        "lisp/eterm/")
     ("tshell.el"
         "specialized term.el for running the shell."
         (processes)
         "lisp/eterm/")
+    ("NeXTify.el"
+        "Character insertion variation"
+        (games)
+        "lisp/games/")
     ("blackbox.el"
         "blackbox game in Emacs Lisp"
         (games)
         "lisp/games/")
+    ("conx.el"
+        "Yet another dissociater"
+        (games)
+        "lisp/games/")
     ("cookie1.el"
         "retrieve random phrases from fortune cookie files"
+        (games)
+        "lisp/games/")
+    ("decipher.el"
+        "Cryptanalyze monoalphabetic substitution ciphers"
         (games)
         "lisp/games/")
     ("dissociate.el"
@@ -286,6 +430,10 @@
         "Text adventure for Emacs"
         (games)
         "lisp/games/")
+    ("flame.el"
+        "Automated insults"
+        (games)
+        "lisp/games/")
     ("gomoku.el"
         "Gomoku game between you and Emacs"
         (games)
@@ -298,8 +446,12 @@
         "John Horton Conway's `Life' game for GNU Emacs"
         (games)
         "lisp/games/")
+    ("mine.el"
+        "Mine game for GNU Emacs"
+        (games)
+        "lisp/games/")
     ("mpuz.el"
-        "multiplication puzzle for GNU Emacs"
+        "multiplication puzzle for XEmacs"
         (games)
         "lisp/games/")
     ("spook.el"
@@ -314,317 +466,317 @@
         "quote random zippyisms"
         (games)
         "lisp/games/")
-    ("chat.el"
-        "a method for talking to asynchronous processes."
+    ("dgnushack.el"
+        "a hack to set the load path for byte-compiling"
+        (news  path)
+        "lisp/gnus/")
+    ("earcon.el"
+        "Sound effects for messages"
+        (news fun sound)
+        "lisp/gnus/")
+    ("gnus-art.el"
+        "article mode commands for Gnus"
+        (news)
+        "lisp/gnus/")
+    ("gnus-async.el"
+        "asynchronous support for Gnus"
+        (news)
+        "lisp/gnus/")
+    ("gnus-audio.el"
+        "Sound effects for Gnus"
+        (news)
+        "lisp/gnus/")
+    ("gnus-bcklg.el"
+        "backlog functions for Gnus"
+        (news)
+        "lisp/gnus/")
+    ("gnus-cache.el"
+        "cache interface for Gnus"
+        (news)
+        "lisp/gnus/")
+    ("gnus-cite.el"
+        "parse citations in articles for Gnus"
+        (news  mail)
+        "lisp/gnus/")
+    ("gnus-cus.el"
+        "customization commands for Gnus"
+        (news)
+        "lisp/gnus/")
+    ("gnus-demon.el"
+        "daemonic Gnus behaviour"
+        (news)
+        "lisp/gnus/")
+    ("gnus-dup.el"
+        "suppression of duplicate articles in Gnus"
+        (news)
+        "lisp/gnus/")
+    ("gnus-eform.el"
+        "a mode for editing forms for Gnus"
+        (news)
+        "lisp/gnus/")
+    ("gnus-ems.el"
+        "functions for making Gnus work under different Emacsen"
+        (news)
+        "lisp/gnus/")
+    ("gnus-gl.el"
+        "an interface to GroupLens for Gnus"
+        (news  score)
+        "lisp/gnus/")
+    ("gnus-group.el"
+        "group mode commands for Gnus"
+        (news)
+        "lisp/gnus/")
+    ("gnus-int.el"
+        "backend interface functions for Gnus"
+        (news)
+        "lisp/gnus/")
+    ("gnus-kill.el"
+        "kill commands for Gnus"
+        (news)
+        "lisp/gnus/")
+    ("gnus-load.el"
+        "automatically extracted custom dependencies"
         nil
         "lisp/gnus/")
-    ("gnus-virt.el"
-        "framework for \"virtual\" newsgroups"
+    ("gnus-logic.el"
+        "advanced scoring code for Gnus"
+        (news)
+        "lisp/gnus/")
+    ("gnus-mh.el"
+        "mh-e interface for Gnus"
+        (news)
+        "lisp/gnus/")
+    ("gnus-move.el"
+        "commands for moving Gnus from one server to another"
+        (news)
+        "lisp/gnus/")
+    ("gnus-msg.el"
+        "mail and post interface for Gnus"
+        (news)
+        "lisp/gnus/")
+    ("gnus-nocem.el"
+        "NoCeM pseudo-cancellation treatment"
+        (news)
+        "lisp/gnus/")
+    ("gnus-picon.el"
+        "displaying pretty icons in Gnus"
+        (news xpm annotation glyph faces)
+        "lisp/gnus/")
+    ("gnus-range.el"
+        "range and sequence functions for Gnus"
+        (news)
+        "lisp/gnus/")
+    ("gnus-salt.el"
+        "alternate summary mode interfaces for Gnus"
         nil
         "lisp/gnus/")
-    ("gnusmail.el"
-        "mail reply commands for GNUS newsreader"
+    ("gnus-score.el"
+        "scoring code for Gnus"
         (news)
         "lisp/gnus/")
-    ("gnusmisc.el"
-        "miscellaneous commands for GNUS newsreader"
+    ("gnus-setup.el"
+        "Initialization & Setup for Gnus 5"
         (news)
         "lisp/gnus/")
-    ("gnuspost.el"
-        "post news commands for GNUS newsreader"
+    ("gnus-soup.el"
+        "SOUP packet writing support for Gnus"
+        (news  mail)
+        "lisp/gnus/")
+    ("gnus-spec.el"
+        "format spec functions for Gnus"
         (news)
         "lisp/gnus/")
-    ("mhspool.el"
-        "MH folder access using NNTP for GNU Emacs"
+    ("gnus-srvr.el"
+        "virtual server support for Gnus"
+        (news)
+        "lisp/gnus/")
+    ("gnus-start.el"
+        "startup functions for Gnus"
+        (news)
+        "lisp/gnus/")
+    ("gnus-sum.el"
+        "summary mode commands for Gnus"
+        (news)
+        "lisp/gnus/")
+    ("gnus-topic.el"
+        "a folding minor mode for Gnus group buffers"
+        (news)
+        "lisp/gnus/")
+    ("gnus-undo.el"
+        "minor mode for undoing in Gnus"
+        (news)
+        "lisp/gnus/")
+    ("gnus-util.el"
+        "utility functions for Gnus"
+        (news)
+        "lisp/gnus/")
+    ("gnus-uu.el"
+        "extract (uu)encoded files in Gnus"
+        nil
+        "lisp/gnus/")
+    ("gnus-vm.el"
+        "vm interface for Gnus"
+        (news  mail)
+        "lisp/gnus/")
+    ("gnus-win.el"
+        "window configuration functions for Gnus"
+        (news)
+        "lisp/gnus/")
+    ("gnus-xmas.el"
+        "Gnus functions for XEmacs"
+        (news)
+        "lisp/gnus/")
+    ("gnus.el"
+        "a newsreader for GNU Emacs"
+        (news  mail)
+        "lisp/gnus/")
+    ("mailheader.el"
+        "Mail header parsing, merging, formatting"
+        (tools  mail  news)
+        "lisp/gnus/")
+    ("md5.el"
+        "MD5 Message Digest Algorithm"
+        nil
+        "lisp/gnus/")
+    ("message.el"
+        "composing mail and news messages"
         (mail  news)
         "lisp/gnus/")
+    ("messagexmas.el"
+        "XEmacs extensions to message"
+        (mail  news)
+        "lisp/gnus/")
+    ("messcompat.el"
+        "making message mode compatible with mail mode"
+        (mail  news)
+        "lisp/gnus/")
+    ("nnbabyl.el"
+        "rmail mbox access for Gnus"
+        (news  mail)
+        "lisp/gnus/")
+    ("nndb.el"
+        "nndb access for Gnus"
+        (news)
+        "lisp/gnus/")
+    ("nndir.el"
+        "single directory newsgroup access for Gnus"
+        (news)
+        "lisp/gnus/")
+    ("nndoc.el"
+        "single file access for Gnus"
+        (news)
+        "lisp/gnus/")
+    ("nndraft.el"
+        "draft article access for Gnus"
+        (news)
+        "lisp/gnus/")
+    ("nneething.el"
+        "random file access for Gnus"
+        (news  mail)
+        "lisp/gnus/")
+    ("nnfolder.el"
+        "mail folder access for Gnus"
+        (mail)
+        "lisp/gnus/")
+    ("nngateway.el"
+        "posting news via mail gateways"
+        (news  mail)
+        "lisp/gnus/")
+    ("nnheader.el"
+        "header access macros for Gnus and its backends"
+        (news)
+        "lisp/gnus/")
+    ("nnheaderxm.el"
+        "making Gnus backends work under XEmacs"
+        (news)
+        "lisp/gnus/")
+    ("nnkiboze.el"
+        "select virtual news access for Gnus"
+        (news)
+        "lisp/gnus/")
+    ("nnmail.el"
+        "mail support functions for the Gnus mail backends"
+        (news  mail)
+        "lisp/gnus/")
+    ("nnmbox.el"
+        "mail mbox access for Gnus"
+        (news  mail)
+        "lisp/gnus/")
+    ("nnmh.el"
+        "mhspool access for Gnus"
+        (news  mail)
+        "lisp/gnus/")
+    ("nnml.el"
+        "mail spool access for Gnus"
+        (news  mail)
+        "lisp/gnus/")
+    ("nnoo.el"
+        "OO Gnus Backends"
+        (news)
+        "lisp/gnus/")
+    ("nnsoup.el"
+        "SOUP access for Gnus"
+        (news  mail)
+        "lisp/gnus/")
     ("nnspool.el"
-        "spool access using NNTP for GNU Emacs"
+        "spool access for GNU Emacs"
         (news)
         "lisp/gnus/")
     ("nntp.el"
-        "GNUS interface to NNTP servers"
-        nil
-        "lisp/gnus/")
-    ("old-nntp.el"
-        "NNTP (RFC977) Interface for GNU Emacs"
+        "nntp access for Gnus"
         (news)
         "lisp/gnus/")
-    ("html-mode.el"
-        "Major mode for editing HTML hypertext documents for the WWW"
+    ("nnvirtual.el"
+        "virtual newsgroups access for Gnus"
+        (news)
+        "lisp/gnus/")
+    ("nnweb.el"
+        "retrieving articles via web search engines"
+        (news)
+        "lisp/gnus/")
+    ("parse-time.el"
+        "Parsing time strings"
+        (util)
+        "lisp/gnus/")
+    ("pop3.el"
+        "Post Office Protocol (RFC 1460) interface"
+        (mail  pop3)
+        "lisp/gnus/")
+    ("score-mode.el"
+        "mode for editing Gnus score files"
+        (news  mail)
+        "lisp/gnus/")
+    ("smiley.el"
+        "displaying smiley faces"
+        (fun)
+        "lisp/gnus/")
+    ("hm--html-menu.el"
+        "A menu for the hm--html-mode."
+        nil
+        "lisp/hm--html-menus/")
+    ("hm--html-mode.el"
+        "Major mode for editing HTML documents for the WWW"
         (hypermedia languages help docs wp)
         "lisp/hm--html-menus/")
     ("html-view.el"
         "routines for communicating with a NCSA Mosaic process"
-        nil
+        (comm unix wp help)
         "lisp/hm--html-menus/")
     ("tmpl-minor-mode.el"
         "Template Minor Mode"
-        nil
+        (data tools)
         "lisp/hm--html-menus/")
-    ("hact.el"
-        "Hyperbole button action handling."
-        (hypermedia)
-        "lisp/hyperbole/")
-    ("hactypes.el"
-        "Default action types for Hyperbole."
-        (extensions  hypermedia)
-        "lisp/hyperbole/")
-    ("hargs.el"
-        "Obtains user input through Emacs for Hyperbole"
-        (extensions  hypermedia)
-        "lisp/hyperbole/")
-    ("hbdata.el"
-        "Hyperbole button attribute accessor methods."
-        (hypermedia)
-        "lisp/hyperbole/")
-    ("hbmap.el"
-        "Hyperbole button map maintenance for queries and lookups."
-        (hypermedia  matching)
-        "lisp/hyperbole/")
-    ("hbut.el"
-        "Hyperbole button constructs."
-        (extensions  hypermedia)
-        "lisp/hyperbole/")
-    ("hgnus.el"
-        "Support Hyperbole buttons in news reader/poster: GNUS."
-        (hypermedia  news)
-        "lisp/hyperbole/")
-    ("hhist.el"
-        "Maintains history of Hyperbole buttons selected."
-        (hypermedia)
-        "lisp/hyperbole/")
-    ("hib-doc-id.el"
-        "Implicit button type for document id index entries."
-        (docs  extensions  hypermedia)
-        "lisp/hyperbole/")
-    ("hib-kbd.el"
-        "Implicit button type for key sequences delimited with {}."
-        (extensions  hypermedia)
-        "lisp/hyperbole/")
-    ("hibtypes.el"
-        "Hyperbole System Implicit Button Types."
-        (extensions  hypermedia)
-        "lisp/hyperbole/")
-    ("hinit.el"
-        "Standard initializations for Hyperbole hypertext system."
-        (hypermedia)
-        "lisp/hyperbole/")
-    ("hlvar.el"
-        "Permits use of Hyperbole variables in local variable lists."
-        (extensions  hypermedia)
-        "lisp/hyperbole/")
-    ("hmail.el"
-        "Support for Hyperbole buttons embedded in e-mail messages."
-        (hypermedia  mail)
-        "lisp/hyperbole/")
-    ("hmh.el"
-        "Support for Hyperbole buttons in mail reader: Mh."
-        (hypermedia  mail)
-        "lisp/hyperbole/")
-    ("hmoccur.el"
-        "Multi-buffer or multi-file regexp occurrence location."
-        (hypermedia  matching)
-        "lisp/hyperbole/")
-    ("hmous-info.el"
-        "Walks through Info networks using one key."
-        (docs  help  hypermedia  mouse)
-        "lisp/hyperbole/")
-    ("hmouse-drv.el"
-        "Smart Key/Mouse driver functions."
-        (hypermedia  mouse)
-        "lisp/hyperbole/")
-    ("hmouse-key.el"
-        "Load \"hmouse-sh.el\" or \"hmouse-reg.el\" for Smart Key bindings."
-        (hypermedia  mouse)
-        "lisp/hyperbole/")
-    ("hmouse-mod.el"
-        "Action Key acts as CONTROL modifier and Assist Key as META modifier."
-        (hypermedia  mouse)
-        "lisp/hyperbole/")
-    ("hmouse-reg.el"
-        "System-dependent Smart Mouse Key bindings (no shift key)."
-        (hypermedia  mouse)
-        "lisp/hyperbole/")
-    ("hmouse-sh.el"
-        "System-dependent Smart Mouse Key bindings (using shift key)."
-        (hypermedia  mouse)
-        "lisp/hyperbole/")
-    ("hmouse-tag.el"
-        "Smart Key support of programming language tags location."
-        (c  hypermedia  mouse  oop  tools)
-        "lisp/hyperbole/")
-    ("hpath.el"
-        "Hyperbole support routines for handling UNIX paths.  "
-        (comm  hypermedia  unix)
-        "lisp/hyperbole/")
-    ("hrmail.el"
-        "Support for Hyperbole buttons in mail reader: Rmail."
-        (hypermedia  mail)
-        "lisp/hyperbole/")
-    ("hsite-ex.el"
-        "Site-specific setup for Hyperbole"
-        (hypermedia  local)
-        "lisp/hyperbole/")
-    ("hsite.el"
-        "Site-specific setup for Hyperbole"
-        (hypermedia  local)
-        "lisp/hyperbole/")
-    ("hsmail.el"
-        "Support for Hyperbole buttons in mail composer: mail and mh-letter."
-        (hypermedia  mail)
-        "lisp/hyperbole/")
-    ("hsys-hbase.el"
-        "Hyperbole support for the Hyperbase system."
-        (comm  hypermedia)
-        "lisp/hyperbole/")
-    ("hsys-w3.el"
-        "Hyperbole support for Emacs W3 World-Wide Web (WWW) browsing."
-        (comm  help  hypermedia)
-        "lisp/hyperbole/")
-    ("hsys-wais.el"
-        "Hyperbole support for WAIS browsing."
-        (comm  help  hypermedia)
-        "lisp/hyperbole/")
-    ("hsys-www.el"
-        "Hyperbole support for old CERN command line WWW browsing."
-        (comm  help  hypermedia)
-        "lisp/hyperbole/")
-    ("htz.el"
-        "Timezone-based time and date support for Hyperbole."
-        (calendar  hypermedia)
-        "lisp/hyperbole/")
-    ("hui-em19-b.el"
-        "GNU Emacs V19 button highlighting and flashing support."
-        (faces  hypermedia)
-        "lisp/hyperbole/")
-    ("hui-ep-but.el"
-        "Support for highlighting/flashing buttons under Epoch."
-        (faces  hypermedia)
-        "lisp/hyperbole/")
-    ("hui-epV4-b.el"
-        "Support color and flashing of hyper-buttons under Epoch V4"
-        (faces  hypermedia)
-        "lisp/hyperbole/")
-    ("hui-menu.el"
-        "InfoDock/Emacs menubar menu of Hyperbole commands."
-        (hypermedia  mouse)
-        "lisp/hyperbole/")
-    ("hui-menus.el"
-        "One line command menus for Hyperbole"
-        (hypermedia  mouse)
-        "lisp/hyperbole/")
-    ("hui-mouse.el"
-        "Use key or mouse key for many functions, e.g. Hypb menus."
-        (hypermedia  mouse)
-        "lisp/hyperbole/")
-    ("hui-window.el"
-        "Smart Mouse Key window and modeline depress/release actions."
-        (hypermedia  mouse)
-        "lisp/hyperbole/")
-    ("hui-xe-but.el"
-        "XEmacs button highlighting and flashing support."
-        (faces  hypermedia)
-        "lisp/hyperbole/")
-    ("hui.el"
-        "GNU Emacs User Interface to Hyperbole"
-        (hypermedia)
-        "lisp/hyperbole/")
-    ("hvar.el"
-        "Variable manipulation routines for Hyperbole."
-        (extensions  hypermedia)
-        "lisp/hyperbole/")
-    ("hversion.el"
-        "Hyperbole version, system and load path information."
-        (hypermedia)
-        "lisp/hyperbole/")
-    ("hvm.el"
-        "Support Hyperbole buttons in mail reader: Vm."
-        (hypermedia  mail)
-        "lisp/hyperbole/")
-    ("hypb.el"
-        "Miscellaneous Hyperbole support features."
-        (extensions  hypermedia)
-        "lisp/hyperbole/")
-    ("hyperbole.el"
-        "Sets up Hyperbole for autoloading and use."
-        (hypermedia)
-        "lisp/hyperbole/")
-    ("set.el"
-        "Provide general mathematical operators on unordered sets."
-        (extensions  tools)
-        "lisp/hyperbole/")
-    ("wconfig.el"
-        "Saves and yanks from save ring of window configurations."
-        (frames  hypermedia)
-        "lisp/hyperbole/")
-    ("wrolo-logic.el"
-        "Performs logical retrievals on rolodex files"
-        (hypermedia  matching)
-        "lisp/hyperbole/")
-    ("wrolo-menu.el"
-        "Pulldown and popup menus of Hyperbole rolodex commands."
-        (hypermedia  matching  mouse)
-        "lisp/hyperbole/")
-    ("wrolo.el"
-        "Hierarchical, multi-file, easy to use rolodex system"
-        (hypermedia  matching)
-        "lisp/hyperbole/")
-    ("kfile.el"
-        "Save and restore kotls from files."
-        (outlines  wp)
-        "lisp/hyperbole/kotl/")
-    ("kfill.el"
-        "Fill and justify koutline cells (adapted from Kyle Jones' filladapt)."
-        (outlines  wp)
-        "lisp/hyperbole/kotl/")
-    ("kimport.el"
-        "Convert and insert other outline file formats into koutlines."
-        (data  outlines  wp)
-        "lisp/hyperbole/kotl/")
-    ("klabel.el"
-        "Display label handling for koutlines."
-        (outlines  wp)
-        "lisp/hyperbole/kotl/")
-    ("klink.el"
-        "Implicit reference to a kcell action type, for use in koutlines."
-        (extensions  hypermedia  outlines  wp)
-        "lisp/hyperbole/kotl/")
-    ("kmenu.el"
-        "Pulldown and popup menus for kotl-mode, the Hyperbole Outliner."
-        (mouse  outlines  wp)
-        "lisp/hyperbole/kotl/")
-    ("knode.el"
-        "Generic nodes for use as elements in data structures."
-        (extensions  hypermedia  outlines)
-        "lisp/hyperbole/kotl/")
-    ("kotl-mode.el"
-        "Major mode for editing koutlines and associated commands."
-        (data  hypermedia  outlines  wp)
-        "lisp/hyperbole/kotl/")
-    ("kotl.el"
-        "Internal representation of outline kcells used by kviews."
-        (outlines  wp)
-        "lisp/hyperbole/kotl/")
-    ("kprop-em19.el"
-        "Koutline text property handling under Emacs 19."
-        (outlines  wp)
-        "lisp/hyperbole/kotl/")
-    ("kprop-xe.el"
-        "Koutline text property handling under XEmacs."
-        (outlines  wp)
-        "lisp/hyperbole/kotl/")
-    ("kproperty.el"
-        "Wrapper for koutline text property implementations."
-        (outlines  wp)
-        "lisp/hyperbole/kotl/")
-    ("kview.el"
-        "Display handling of koutlines."
-        (outlines  wp)
-        "lisp/hyperbole/kotl/")
+    ("iso-acc.el"
+        "minor mode providing electric accent keys"
+        (i18n)
+        "lisp/iso/")
     ("iso-ascii.el"
         "set up char tables for ISO 8859/1 on ASCII terminals."
         (i18n)
+        "lisp/iso/")
+    ("iso-cvt.el"
+        "translate to ISO 8859-1 from/to net/TeX conventions"
+        (tex  iso  latin  i18n)
         "lisp/iso/")
     ("iso-insert.el"
         "insert functions for ISO 8859/1."
@@ -642,6 +794,10 @@
         "miscellaneous functions for dealing with Swedish."
         (i18n)
         "lisp/iso/")
+    ("mc-remail.el"
+        "Remailer support for Mailcrypt"
+        nil
+        "lisp/mailcrypt/")
     ("mh-comp.el"
         "mh-e functions for composing messages"
         nil
@@ -672,11 +828,11 @@
         "lisp/mh-e/")
     ("abbrev.el"
         "abbrev mode commands for Emacs"
-        (internal  abbrev)
+        (abbrev)
         "lisp/modes/")
-    ("ada.el"
-        "Ada editing support package in GNUlisp.  v1.0"
-        (languages)
+    ("ada-mode.el"
+        "An Emacs major-mode for editing Ada source."
+        nil
         "lisp/modes/")
     ("arc-mode.el"
         "simple editing of archives"
@@ -686,13 +842,17 @@
         "mode for editing assembler code"
         (tools  languages)
         "lisp/modes/")
+    ("auto-show.el"
+        "perform automatic horizontal scrolling as point moves"
+        (scroll display minor-mode)
+        "lisp/modes/")
     ("awk-mode.el"
         "AWK code editing commands for Emacs"
         (unix  languages)
         "lisp/modes/")
     ("bib-mode.el"
         "bib-mode, major mode for editing bib files."
-        (bib  wp)
+        (bib)
         "lisp/modes/")
     ("bibtex.el"
         "BibTeX mode for GNU Emacs"
@@ -701,6 +861,10 @@
     ("c-comment.el"
         "edit C comments"
         (c)
+        "lisp/modes/")
+    ("c-style.el"
+        "sets c-style control variables."
+        nil
         "lisp/modes/")
     ("cc-compat.el"
         "cc-mode compatibility with c-mode.el confusion"
@@ -715,12 +879,32 @@
         (c languages oop)
         "lisp/modes/")
     ("cc-mode.el"
-        "major mode for editing C, C++, and Objective-C code"
+        "major mode for editing C, C++, Objective-C, and Java code"
         (c languages oop)
+        "lisp/modes/")
+    ("cl-indent.el"
+        "enhanced lisp-indent mode"
+        (lisp  tools)
         "lisp/modes/")
     ("cmacexp.el"
         "expand C macros in a region"
         (c)
+        "lisp/modes/")
+    ("enriched.el"
+        "read and save files in text/enriched format"
+        (wp  faces)
+        "lisp/modes/")
+    ("executable.el"
+        "base functionality for executable interpreter scripts"
+        (languages  unix)
+        "lisp/modes/")
+    ("f90.el"
+        "Fortran-90 mode (free format)"
+        (fortran  f90  languages)
+        "lisp/modes/")
+    ("follow.el"
+        "Minor mode, Synchronize windows showing the same buffer."
+        (display  window  minor-mode)
         "lisp/modes/")
     ("fortran-misc.el"
         "Routines than can be used with fortran mode."
@@ -732,15 +916,23 @@
         "lisp/modes/")
     ("hideif.el"
         "hides selected code within ifdef."
-        (c)
+        (c  outlines)
         "lisp/modes/")
     ("hideshow.el"
         "minor mode cmds to selectively display blocks of code"
-        nil
+        (c c++ lisp tools editing)
         "lisp/modes/")
     ("icon.el"
         "mode for editing Icon code"
         (languages)
+        "lisp/modes/")
+    ("imenu.el"
+        "Framework for mode-specific buffer indexes."
+        (tools)
+        "lisp/modes/")
+    ("ksh-mode.el"
+        "sh (ksh, bash) script editing mode for GNU Emacs."
+        (shell  korn  bourne  sh  ksh  bash)
         "lisp/modes/")
     ("lisp-mnt.el"
         "minor mode for Emacs Lisp maintainers"
@@ -750,17 +942,13 @@
         "Lisp mode, and its idiosyncratic commands."
         (lisp  languages)
         "lisp/modes/")
-    ("makefile.el"
+    ("m4-mode.el"
+        "m4 code editing commands for Emacs"
+        (languages  faces)
+        "lisp/modes/")
+    ("make-mode.el"
         "makefile editing commands for Emacs"
         (unix  tools)
-        "lisp/modes/")
-    ("mim-mode.el"
-        "Mim (MDL in MDL) mode."
-        (languages)
-        "lisp/modes/")
-    ("mim-syntax.el"
-        "syntax checker for Mim (MDL)."
-        (languages)
         "lisp/modes/")
     ("modula2.el"
         "Modula-2 editing support package"
@@ -802,13 +990,17 @@
         "major mode for editing and running Prolog under Emacs"
         (languages)
         "lisp/modes/")
+    ("python-mode.el"
+        "Major mode for editing Python programs"
+        (python languages oop)
+        "lisp/modes/")
     ("rexx-mode.el"
         "major mode for editing REXX program files"
         (languages)
         "lisp/modes/")
     ("rsz-minibuf.el"
         "dynamically resize minibuffer to display entire contents"
-        nil
+        (minibuffer  window  frames  display)
         "lisp/modes/")
     ("scheme.el"
         "Scheme mode, and its idiosyncratic commands."
@@ -822,17 +1014,25 @@
         "mail sending commands for Emacs."
         (mail)
         "lisp/modes/")
-    ("sgml-mode.el"
-        "SGML-editing mode"
-        (wp)
+    ("sh-script.el"
+        "shell-script editing commands for Emacs"
+        (languages  unix)
         "lisp/modes/")
     ("simula.el"
         "SIMULA 87 code editing commands for Emacs"
         (languages)
         "lisp/modes/")
+    ("tcl.el"
+        "Tcl code editing commands for Emacs"
+        (languages tcl modes)
+        "lisp/modes/")
     ("tex-mode.el"
         "TeX, LaTeX, and SliTeX mode commands."
         nil
+        "lisp/modes/")
+    ("texinfo.el"
+        "major mode for editing Texinfo files"
+        (tex wp)
         "lisp/modes/")
     ("text-mode.el"
         "text mode, and its idiosyncratic commands."
@@ -842,169 +1042,89 @@
         "minor mode for editing of two-column text"
         nil
         "lisp/modes/")
+    ("verilog-mode.el"
+        "major mode for editing verilog source in Emacs"
+        (languages)
+        "lisp/modes/")
+    ("vhdl-mode.el"
+        "major mode for editing VHDL code"
+        (languages vhdl)
+        "lisp/modes/")
     ("view-less.el"
         "Minor mode for browsing files with keybindings like `less'"
-        nil
+        (wp unix)
         "lisp/modes/")
     ("view.el"
         "peruse file or buffer without editing."
         (wp unix)
         "lisp/modes/")
-    ("br-c++-ft.el"
-        "C++ OO-Browser class and member functions."
-        (c  oop  tools)
-        "lisp/oobr/")
-    ("br-c++.el"
-        "Support routines for C++ inheritance browsing."
-        (c  oop  tools)
-        "lisp/oobr/")
-    ("br-c-ft.el"
-        "OO-Browser C construct handling."
-        (c  tools)
-        "lisp/oobr/")
-    ("br-clos-ft.el"
-        "CLOS OO-Browser class and element functions."
-        (lisp  oop  tools)
-        "lisp/oobr/")
-    ("br-clos.el"
-        "Support routines for CLOS inheritance browsing."
-        (lisp  oop  tools)
-        "lisp/oobr/")
-    ("br-compl.el"
-        "Most functions for performing completion on OO constructs."
-        (matching  oop  tools)
-        "lisp/oobr/")
-    ("br-eif-ft.el"
-        "Eiffel OO-Browser class and feature functions."
-        (oop  tools)
-        "lisp/oobr/")
-    ("br-eif.el"
-        "Support routines for Eiffel inheritance browsing and error parsing."
-        (oop  tools)
-        "lisp/oobr/")
-    ("br-env.el"
-        "OO-Browser Environment support functions."
-        (oop  tools)
-        "lisp/oobr/")
-    ("br-ftr.el"
-        "OO-Browser feature browsing support."
-        (oop  tools)
-        "lisp/oobr/")
-    ("br-info.el"
-        "Support routines for Info file hierarchy browsing."
-        (docs  help  hypermedia)
-        "lisp/oobr/")
-    ("br-init.el"
-        "OO-Browser per Emacs session initialization."
-        (oop  tools)
-        "lisp/oobr/")
-    ("br-lib.el"
-        "OO-Browser support functions."
-        (oop  tools)
-        "lisp/oobr/")
-    ("br-menu.el"
-        "Pulldown and popup menus for the OO-Browser."
-        (mouse  oop  tools)
-        "lisp/oobr/")
-    ("br-objc-ft.el"
-        "Objective-C OO-Browser class and feature functions."
-        (c  oop  tools)
-        "lisp/oobr/")
-    ("br-objc.el"
-        "Support routines for Objective-C inheritance browsing."
-        (c  oop  tools)
-        "lisp/oobr/")
-    ("br-site.el"
-        "Site OO-Browser per Emacs session initialization."
-        (local  oop  tools)
-        "lisp/oobr/")
-    ("br-smt.el"
-        "Support routines for Smalltalk inheritance browsing and error parsing."
-        (oop  tools)
-        "lisp/oobr/")
-    ("br-start.el"
-        "Select language and invoke OO-Browser."
-        (oop  tools)
-        "lisp/oobr/")
-    ("br-tree.el"
-        "Interface between textual and graphical OO-Browsers."
-        (mouse  oop  tools)
-        "lisp/oobr/")
-    ("br-vers.el"
-        "OO-Browser revision number as 'br-version' variable."
-        (oop  tools)
-        "lisp/oobr/")
-    ("br.el"
-        "Browse object-oriented code."
-        (matching  oop  tools)
-        "lisp/oobr/")
-    ("c++-browse.el"
-        "C++ source code browser."
-        (c  oop  tools)
-        "lisp/oobr/")
-    ("clos-brows.el"
-        "Common Lisp/CLOS source code browser."
-        (lisp  oop  tools)
-        "lisp/oobr/")
-    ("eif-browse.el"
-        "Eiffel source code browser."
-        (oop  tools)
-        "lisp/oobr/")
-    ("eif-calls.el"
-        "Produce first level static call tree for Eiffel class."
-        (oop  tools)
-        "lisp/oobr/")
-    ("eif-ise-er.el"
-        "Parses ISE's Eiffel error messages; compiles Eiffel classes."
-        (oop  tools)
-        "lisp/oobr/")
-    ("hash-test.el"
-        "Interactively test functions from hasht.el."
-        (extensions  maint  tools)
-        "lisp/oobr/")
-    ("hasht.el"
-        "Create hash tables from lists and operate on them."
-        (extensions  tools)
-        "lisp/oobr/")
-    ("hmouse-br.el"
-        "Hyperbole Key control for the OO-Browser."
-        (mouse  oop  tools)
-        "lisp/oobr/")
-    ("info-brows.el"
-        "Support routines for Info inheritance browsing and error parsing."
-        (docs  help  hypermedia)
-        "lisp/oobr/")
-    ("objc-brows.el"
-        "Objective-C source code browser."
-        (c  oop  tools)
-        "lisp/oobr/")
-    ("smt-browse.el"
-        "Smalltalk source code browser."
-        (oop  tools)
-        "lisp/oobr/")
+    ("vrml-mode.el"
+        "major mode for editing VRML (.wrl) files"
+        (languages vrml modes)
+        "lisp/modes/")
+    ("whitespace-mode.el"
+        "minor mode for making whitespace visible"
+        (modes  extensions)
+        "lisp/modes/")
+    ("winmgr-mode.el"
+        "generic window manager mode"
+        (languages)
+        "lisp/modes/")
+    ("xpm-mode.el"
+        "minor mode for editing XPM files"
+        (data tools)
+        "lisp/modes/")
+    ("xrdb-mode.el"
+        "mode for editing X resource database files"
+        (data languages)
+        "lisp/modes/")
+    ("mu-bbdb.el"
+        "`attribution' function for mu-cite with BBDB."
+        nil
+        "lisp/mu/")
+    ("mu-cite.el"
+        "yet another citation tool for GNU Emacs"
+        (mail  news  citation)
+        "lisp/mu/")
+    ("std11-parse.el"
+        "STD 11 parser for GNU Emacs"
+        (mail  news  rfc 822  std 11)
+        "lisp/mu/")
+    ("std11.el"
+        "STD 11 functions for GNU Emacs"
+        (mail  news  rfc 822  std 11)
+        "lisp/mu/")
+    ("ns-init.el"
+        "runtime initialization for the NeXTstep window system"
+        (terminals)
+        "lisp/ns/")
     ("add-log.el"
         "change log maintenance commands for Emacs"
         (maint)
         "lisp/packages/")
     ("apropos.el"
-        "faster apropos commands."
+        "apropos commands for users and programmers."
         (help)
         "lisp/packages/")
     ("array.el"
         "array editing commands for XEmacs"
         (extensions)
         "lisp/packages/")
-    ("auto-save.el"
-        "safer auto saving with support for ange-ftp and /tmp"
-        nil
-        "lisp/packages/")
     ("autoinsert.el"
         "automatic mode-dependent insertion of text into new files"
         nil
         "lisp/packages/")
     ("avoid.el"
-        "make mouse pointer stay out of the way of editing."
+        "make mouse pointer stay out of the way of editing"
         (mouse)
+        "lisp/packages/")
+    ("big-menubar.el"
+        "an alternate menubar"
+        (mouse menubar)
+        "lisp/packages/")
+    ("blink-cursor.el"
+        "Blink the cursor on or off"
+        (display)
         "lisp/packages/")
     ("blink-paren.el"
         "blink the matching paren, just like Zmacs"
@@ -1016,7 +1136,7 @@
         "lisp/packages/")
     ("buff-menu.el"
         "buffer menu main function and support functions."
-        nil
+        (extensions)
         "lisp/packages/")
     ("chistory.el"
         "list command history"
@@ -1025,10 +1145,6 @@
     ("cmuscheme.el"
         "Scheme process in a buffer. Adapted from tea.el."
         (processes  lisp)
-        "lisp/packages/")
-    ("column.el"
-        "display line and column in the mode line"
-        nil
         "lisp/packages/")
     ("compare-w.el"
         "compare text between windows for Emacs."
@@ -1046,6 +1162,10 @@
         "code for handling all sorts of compressed and encrypted files"
         (extensions)
         "lisp/packages/")
+    ("cu-edit-faces.el"
+        "interactive face editing mode"
+        nil
+        "lisp/packages/")
     ("dabbrev.el"
         "dynamic abbreviation package"
         (abbrev expand completion)
@@ -1058,13 +1178,13 @@
         "remove Texinfo commands from a Texinfo source file"
         (tex  docs)
         "lisp/packages/")
-    ("diff.el"
-        "Run `diff' in compilation-mode."
-        (unix  tools)
-        "lisp/packages/")
     ("doctex.el"
         "grind GNU Emacs DOC file into LaTeX input"
         (tex  docs)
+        "lisp/packages/")
+    ("edit-faces.el"
+        "interactive face editing mode"
+        nil
         "lisp/packages/")
     ("emacsbug.el"
         "command to report Emacs bugs to appropriate mailing list."
@@ -1090,13 +1210,17 @@
         "treat a section of a buffer as a separate file"
         (extensions  tools)
         "lisp/packages/")
-    ("filladapt.el"
-        "adaptive fill; replacement for fill commands"
-        (wp)
-        "lisp/packages/")
     ("font-lock.el"
         "decorating source files with fonts/colors based on syntax"
         (languages  faces)
+        "lisp/packages/")
+    ("fontl-hooks.el"
+        "pre-loaded stuff for font-lock."
+        nil
+        "lisp/packages/")
+    ("func-menu.el"
+        "Jump to a function within a buffer."
+        (tools  c  lisp)
         "lisp/packages/")
     ("generic-sc.el"
         "generic interface to source control systems"
@@ -1116,6 +1240,10 @@
         "lisp/packages/")
     ("icomplete.el"
         "minibuffer completion with incremental feedback"
+        (help  abbrev)
+        "lisp/packages/")
+    ("igrep.el"
+        "An improved interface to `grep`."
         nil
         "lisp/packages/")
     ("info.el"
@@ -1126,8 +1254,16 @@
         "info support functions package for Emacs"
         (help)
         "lisp/packages/")
+    ("ispell.el"
+        "spell checking using Ispell"
+        nil
+        "lisp/packages/")
+    ("jka-compr.el"
+        "reading/writing/loading compressed files"
+        (data)
+        "lisp/packages/")
     ("lazy-lock.el"
-        "Lazy demand-driven fontification for fast font-lock mode."
+        "Lazy demand-driven fontification for fast Font Lock mode."
         (faces files)
         "lisp/packages/")
     ("ledit.el"
@@ -1142,6 +1278,10 @@
         "print Emacs buffer on line printer."
         (unix)
         "lisp/packages/")
+    ("makeinfo.el"
+        "run makeinfo conveniently"
+        nil
+        "lisp/packages/")
     ("makesum.el"
         "generate key binding summary for Emacs"
         (help)
@@ -1150,13 +1290,13 @@
         "browse UNIX manual pages"
         (help)
         "lisp/packages/")
-    ("medit.el"
-        "front-end to the MEDIT package for editing MDL"
-        (languages)
-        "lisp/packages/")
     ("metamail.el"
         "Metamail interface for GNU Emacs"
         (mail  news  mime  multimedia)
+        "lisp/packages/")
+    ("mic-paren.el"
+        "highlight matching parenthesises."
+        (languages  faces)
         "lisp/packages/")
     ("mime-compose.el"
         "mime-compose.el ---"
@@ -1174,9 +1314,17 @@
         "highlight (un)matching parens and whole expressions"
         (languages  faces)
         "lisp/packages/")
+    ("pending-del.el"
+        "Making insertions replace any selected text."
+        nil
+        "lisp/packages/")
     ("ps-print.el"
         "Jim's Pretty-Good PostScript Generator for Emacs 19."
         (print  postscript)
+        "lisp/packages/")
+    ("rcompile.el"
+        "run a compilation on a remote machine"
+        (tools  processes)
         "lisp/packages/")
     ("recent-files.el"
         "Maintain menu of recently opened files."
@@ -1190,17 +1338,13 @@
         "process command line args from within a suspended Emacs job"
         (processes)
         "lisp/packages/")
-    ("rnews.el"
-        "USENET news reader for gnu emacs"
-        (news)
-        "lisp/packages/")
-    ("rnewspost.el"
-        "USENET news poster/mailer for GNU Emacs"
-        (mail  news)
-        "lisp/packages/")
     ("saveplace.el"
         "automatically save place in files."
         (bookmarks  placeholders)
+        "lisp/packages/")
+    ("sccs.el"
+        "easy-to-use SCCS control from within Emacs"
+        nil
         "lisp/packages/")
     ("server.el"
         "Lisp code for GNU Emacs running as server process."
@@ -1222,13 +1366,21 @@
         "terminal emulator for GNU Emacs."
         (comm  terminals)
         "lisp/packages/")
+    ("texinfmt.el"
+        "format Texinfo files into Info files."
+        nil
+        "lisp/packages/")
+    ("texnfo-upd.el"
+        "utilities for updating nodes and menus in Texinfo files"
+        (maint  tex  docs)
+        "lisp/packages/")
     ("time-stamp.el"
         "Maintain last change time stamps in files edited by Emacs"
         (tools)
         "lisp/packages/")
     ("time.el"
         "display time and load in mode line of Emacs."
-        (extensions)
+        nil
         "lisp/packages/")
     ("uncompress.el"
         "auto-decompression hook for visiting .Z files"
@@ -1250,25 +1402,49 @@
         "drive a version-control system from within Emacs"
         nil
         "lisp/packages/")
+    ("webjump.el"
+        "programmable Web hotlist"
+        (webjump web www browse-url)
+        "lisp/packages/")
     ("xscheme.el"
         "run Scheme under Emacs"
         (languages  lisp)
         "lisp/packages/")
+    ("dll-debug.el"
+        "A slow implementation of dll for debugging."
+        (extensions  lisp)
+        "lisp/pcl-cvs/")
     ("about.el"
         "the About The Authors page (shameless self promotion)."
+        nil
+        "lisp/prim/")
+    ("advocacy.el"
+        "blatant XEmacs self promotion"
         nil
         "lisp/prim/")
     ("backquote.el"
         "Full backquote support for elisp.  Reverse compatible too."
         (extensions)
         "lisp/prim/")
+    ("buffer.el"
+        "buffer routines taken from C"
+        nil
+        "lisp/prim/")
     ("case-table.el"
         "code to extend the character set and support case tables."
         (i18n)
         "lisp/prim/")
+    ("cleantree.el"
+        "Remove out of date .elcs in lisp directories"
+        (internal)
+        "lisp/prim/")
     ("cmdloop.el"
         "support functions for the top-level command loop."
         nil
+        "lisp/prim/")
+    ("console.el"
+        "miscellaneous console functions not written in C"
+        (internal)
         "lisp/prim/")
     ("debug.el"
         "debuggers and related commands for XEmacs"
@@ -1285,6 +1461,10 @@
     ("env.el"
         "functions to manipulate environment variables."
         (processes  unix)
+        "lisp/prim/")
+    ("events.el"
+        "event functions."
+        (internal)
         "lisp/prim/")
     ("extents.el"
         "miscellaneous extent functions not written in C"
@@ -1306,6 +1486,10 @@
         "detect absence of floating-point support in XEmacs runtime"
         (internal)
         "lisp/prim/")
+    ("format.el"
+        "read and save files in multiple formats"
+        (extensions)
+        "lisp/prim/")
     ("frame.el"
         "multi-frame management independent of window systems."
         (internal)
@@ -1314,9 +1498,13 @@
         "Lisp interface to C glyphs"
         (glyphs internal)
         "lisp/prim/")
+    ("gui.el"
+        "Basic GUI functions for XEmacs."
+        nil
+        "lisp/prim/")
     ("help.el"
         "help commands for XEmacs."
-        nil
+        (help  internal)
         "lisp/prim/")
     ("inc-vers.el"
         "load this to increment the recorded XEmacs version number."
@@ -1325,6 +1513,10 @@
     ("indent.el"
         "indentation commands for XEmacs"
         (lisp languages tools)
+        "lisp/prim/")
+    ("itimer-autosave.el"
+        "Autosave functions with itimers"
+        nil
         "lisp/prim/")
     ("lisp.el"
         "Lisp editing commands for XEmacs"
@@ -1342,8 +1534,16 @@
         "non-primitive commands for keyboard macros."
         (abbrev)
         "lisp/prim/")
+    ("minibuf.el"
+        "Minibuffer support functions for XEmacs"
+        (internal)
+        "lisp/prim/")
     ("misc.el"
         "miscellaneous functions for XEmacs"
+        nil
+        "lisp/prim/")
+    ("modeline.el"
+        "modeline hackery."
         nil
         "lisp/prim/")
     ("mouse.el"
@@ -1366,6 +1566,10 @@
         "edit Options command for XEmacs."
         nil
         "lisp/prim/")
+    ("overlay.el"
+        "overlay support."
+        (internal)
+        "lisp/prim/")
     ("page.el"
         "page motion commands for emacs."
         nil
@@ -1376,6 +1580,10 @@
         "lisp/prim/")
     ("process.el"
         "commands for subprocesses; split out of simple.el"
+        nil
+        "lisp/prim/")
+    ("profile.el"
+        "basic profiling commands for XEmacs"
         nil
         "lisp/prim/")
     ("rect.el"
@@ -1418,9 +1626,17 @@
         "basic lisp subroutines for XEmacs"
         nil
         "lisp/prim/")
+    ("symbols.el"
+        "functions for working with symbols and symbol values"
+        nil
+        "lisp/prim/")
     ("tabify.el"
         "tab conversion commands for XEmacs"
         nil
+        "lisp/prim/")
+    ("undo-stack.el"
+        "An \"undoable stack\" object."
+        (extensions)
         "lisp/prim/")
     ("userlock.el"
         "handle file access contention between multiple users"
@@ -1430,6 +1646,58 @@
         "XEmacs window commands aside from those written in C."
         (extensions)
         "lisp/prim/")
+    ("iso-sgml.el"
+        "display SGML entity references as ISO 8859-1 characters"
+        (sgml  html  iso  latin  i18n)
+        "lisp/psgml/")
+    ("psgml-api.el"
+        "Extra API functions for PSGML"
+        nil
+        "lisp/psgml/")
+    ("psgml-dtd.el"
+        "DTD parser for SGML-editing mode with parsing support"
+        nil
+        "lisp/psgml/")
+    ("psgml-edit.el"
+        "Editing commands for SGML-mode with parsing support"
+        nil
+        "lisp/psgml/")
+    ("psgml-fs.el"
+        "Format a SGML-file according to a style file"
+        nil
+        "lisp/psgml/")
+    ("psgml-html.el"
+        "HTML mode in conjunction with PSGML"
+        nil
+        "lisp/psgml/")
+    ("psgml-other.el"
+        "Part of SGML-editing mode with parsing support"
+        nil
+        "lisp/psgml/")
+    ("psgml-parse.el"
+        "Parser for SGML-editing mode with parsing support"
+        nil
+        "lisp/psgml/")
+    ("psgml-xemacs.el"
+        "Part of SGML-editing mode with parsing support"
+        nil
+        "lisp/psgml/")
+    ("psgml.el"
+        "SGML-editing mode with parsing support"
+        (languages)
+        "lisp/psgml/")
+    ("tempo.el"
+        "Flexible template insertion"
+        (extensions  languages  tools)
+        "lisp/psgml/")
+    ("rmail-kill.el"
+        "Mail filtering for rmail"
+        (mail)
+        "lisp/rmail/")
+    ("rmail-xemacs.el"
+        "Mouse and font support for RMAIL running on XEmacs"
+        (mail)
+        "lisp/rmail/")
     ("rmail.el"
         "main code of \"RMAIL\" mail reader for Emacs."
         (mail)
@@ -1478,33 +1746,57 @@
         "support SPARCworks manager ToolTalk messages"
         (sparcworks  tooltalk  messages)
         "lisp/sunpro/")
-    ("generic-win.el"
-        "generic window function initializtion"
+    ("AT386.el"
+        "terminal support package for IBM AT keyboards"
         (terminals)
         "lisp/term/")
-    ("ns-win.el"
-        "runtime initialization for the NeXTstep window system"
-        (terminals)
+    ("bg-mouse.el"
+        "GNU Emacs code for BBN Bitgraph mouse."
+        (hardware)
         "lisp/term/")
-    ("post-tty-win.el"
-        "second phase of runtime initialization for tty's"
+    ("internal.el"
+        "setup support for PC keyboards and screens, internal terminal"
         nil
         "lisp/term/")
-    ("post-x-win.el"
-        "second phase of runtime initialization for X windows"
+    ("keyswap.el"
+        "swap BS and DEL keys"
         (terminals)
         "lisp/term/")
-    ("pre-tty-win.el"
-        "first phase of runtime initialization for tty's"
-        nil
-        "lisp/term/")
-    ("pre-x-win.el"
-        "first phase of runtime initialization for X windows"
+    ("linux.el"
+        "define function key sequences for the Linux console"
         (terminals)
         "lisp/term/")
-    ("tty-win.el"
-        "runtime initialization for tty's if initial window system"
+    ("news.el"
+        "keypad and function key bindings for the Sony NEWS keyboard"
+        (terminals)
+        "lisp/term/")
+    ("pc-win.el"
+        "setup support for `PC windows' (whatever that is)."
         nil
+        "lisp/term/")
+    ("scoansi.el"
+        "set up key names for SCO ansi console"
+        nil
+        "lisp/term/")
+    ("sun-mouse.el"
+        "mouse handling for Sun windows"
+        (hardware)
+        "lisp/term/")
+    ("sun.el"
+        "keybinding for standard default sunterm keys"
+        (terminals)
+        "lisp/term/")
+    ("sup-mouse.el"
+        "supdup mouse support for lisp machines"
+        (hardware)
+        "lisp/term/")
+    ("tty-init.el"
+        "initialization code for tty's"
+        (terminals)
+        "lisp/term/")
+    ("tvi970.el"
+        "terminal support for the Televideo 970"
+        (terminals)
         "lisp/term/")
     ("vt-control.el"
         "Common VTxxx control functions"
@@ -1514,18 +1806,210 @@
         "functions for LED control on VT-100 terminals & clones."
         (hardware)
         "lisp/term/")
-    ("x-win-sun.el"
-        "runtime initialization for Sun X servers and keyboards"
+    ("vt100.el"
+        "define VT100 function key sequences in function-key-map"
         (terminals)
         "lisp/term/")
-    ("x-win-xfree86.el"
-        "runtime initialization for XFree86 servers"
+    ("win32-win.el"
+        "parse switches controlling interface with win32"
         (terminals)
         "lisp/term/")
-    ("x-win.el"
-        "runtime initialization for X windows if initial window system"
+    ("wyse50.el"
+        "terminal support code for Wyse 50"
         (terminals)
         "lisp/term/")
+    ("xterm.el"
+        "define function key sequences for xterm"
+        (terminals)
+        "lisp/term/")
+    ("bitmap.el"
+        "bitmap (xbm) file handler on Mule"
+        (bitmap  xbm  x-face  mule)
+        "lisp/tl/")
+    ("cless.el"
+        "Common lisp and Emacs Lisp source sharing"
+        (common lisp)
+        "lisp/tl/")
+    ("emu-e19.el"
+        "emu module for Emacs 19 and XEmacs 19"
+        (emulation  compatibility  mule  latin-1)
+        "lisp/tl/")
+    ("emu-xemacs.el"
+        "emu API implementation for XEmacs"
+        (emulation  compatibility  xemacs)
+        "lisp/tl/")
+    ("emu.el"
+        "Emulation module for each Emacs variants"
+        (emulation  compatibility  nemacs  mule  emacs/mule  xemacs)
+        "lisp/tl/")
+    ("file-detect.el"
+        "Emacs Lisp file detection utility"
+        (install  module)
+        "lisp/tl/")
+    ("filename.el"
+        "file name filter"
+        (string  file name)
+        "lisp/tl/")
+    ("range.el"
+        "range functions"
+        (range)
+        "lisp/tl/")
+    ("richtext.el"
+        "read and save files in text/richtext format"
+        (wp  faces  mime  multimedia)
+        "lisp/tl/")
+    ("texi-util.el"
+        "Texinfo utility"
+        (texinfo)
+        "lisp/tl/")
+    ("tl-822.el"
+        "RFC 822 parser for GNU Emacs"
+        (mail  news  rfc 822)
+        "lisp/tl/")
+    ("tl-atype.el"
+        "atype functions"
+        (atype)
+        "lisp/tl/")
+    ("tl-list.el"
+        "utility functions about list"
+        (list)
+        "lisp/tl/")
+    ("tl-misc.el"
+        "miscellaneous utility of tl."
+        (load-path  module  structure)
+        "lisp/tl/")
+    ("tl-seq.el"
+        "sequence functions"
+        (sequence)
+        "lisp/tl/")
+    ("tl-str.el"
+        "Emacs Lisp Library module about string"
+        (string)
+        "lisp/tl/")
+    ("tu-comment.el"
+        "a comment out utility for Lisp programs."
+        (comment  lisp)
+        "lisp/tl/")
+    ("tu-replace.el"
+        "a replacing utility for GNU Emacs"
+        (replace)
+        "lisp/tl/")
+    ("gnus-art-mime.el"
+        "MIME extension for article mode of Gnus"
+        (news  mime  multimedia  multilingual  encoded-word)
+        "lisp/tm/")
+    ("gnus-charset.el"
+        "MIME charset extension for Gnus"
+        (news  mime  multimedia  multilingual  encoded-word)
+        "lisp/tm/")
+    ("gnus-mime-old.el"
+        "MIME extensions for Gnus 5.[01] and 5.[23]"
+        (news  mime  multimedia  multilingual  encoded-word)
+        "lisp/tm/")
+    ("gnus-mime.el"
+        "MIME extensions for Gnus"
+        (news  mime  multimedia  multilingual  encoded-word)
+        "lisp/tm/")
+    ("gnus-msg-mime.el"
+        "MIME extension for mail and post interface of Gnus"
+        (news  mime  multimedia  multilingual  encoded-word)
+        "lisp/tm/")
+    ("gnus-sum-mime.el"
+        "MIME extension for summary mode of Gnus"
+        (news  mime  multimedia  multilingual  encoded-word)
+        "lisp/tm/")
+    ("message-mime.el"
+        "MIME extensions for message.el"
+        (news  mime  multimedia  multilingual  encoded-word)
+        "lisp/tm/")
+    ("mime-setup.el"
+        "setup file for tm viewer and composer."
+        (mail  news  mime  multimedia  multilingual  encoded-word)
+        "lisp/tm/")
+    ("signature.el"
+        "a signature utility for GNU Emacs"
+        (mail  news  signature)
+        "lisp/tm/")
+    ("tm-bbdb.el"
+        "tm shared module for BBDB"
+        (mail  news  mime  multimedia  multilingual  bbdb)
+        "lisp/tm/")
+    ("tm-def.el"
+        "definition module for tm"
+        (mail  news  mime  multimedia  definition)
+        "lisp/tm/")
+    ("tm-edit-mc.el"
+        "Mailcrypt interface for tm-edit"
+        (mail  news  mime  multimedia  multilingual  security  pgp)
+        "lisp/tm/")
+    ("tm-edit.el"
+        "Simple MIME Composer for GNU Emacs"
+        (mail  news  mime  multimedia  multilingual)
+        "lisp/tm/")
+    ("tm-ew-d.el"
+        "RFC 2047 based encoded-word decoder for GNU Emacs"
+        (encoded-word  mime  multilingual  header  mail  news)
+        "lisp/tm/")
+    ("tm-ew-e.el"
+        "RFC 2047 based encoded-word encoder for GNU Emacs"
+        (encoded-word  mime  multilingual  header  mail  news)
+        "lisp/tm/")
+    ("tm-file.el"
+        "tm-view internal method for file extraction"
+        (mail  news  mime  multimedia  file  extract)
+        "lisp/tm/")
+    ("tm-ftp.el"
+        "tm-view internal method for anonymous ftp"
+        (anonymous ftp  mime  multimedia  mail  news)
+        "lisp/tm/")
+    ("tm-image.el"
+        "tm-view filter to display images in XEmacs or MULE buffers"
+        (image  picture  x-face  mime  multimedia  mail  news)
+        "lisp/tm/")
+    ("tm-mail.el"
+        "mail-mode extension."
+        (mail  mime  multimedia)
+        "lisp/tm/")
+    ("tm-mh-e.el"
+        "MIME extension for mh-e"
+        (mail  mh  mime  multimedia  encoded-word  multilingual)
+        "lisp/tm/")
+    ("tm-parse.el"
+        "MIME message parser"
+        (mail  news  mime  multimedia)
+        "lisp/tm/")
+    ("tm-partial.el"
+        "Grabbing all MIME \"message/partial\"s."
+        (mail  news  mime  multimedia  message/partial)
+        "lisp/tm/")
+    ("tm-pgp.el"
+        "tm-view internal methods for PGP."
+        (mail  news  mime  multimedia  pgp  security)
+        "lisp/tm/")
+    ("tm-play.el"
+        "decoder for tm-view.el"
+        (mail  news  mime  multimedia)
+        "lisp/tm/")
+    ("tm-rmail.el"
+        "MIME extension for RMAIL"
+        (mail  mime  multimedia  multilingual  encoded-word)
+        "lisp/tm/")
+    ("tm-setup.el"
+        "setup file for tm viewer."
+        (mail  news  mime  multimedia  multilingual  encoded-word)
+        "lisp/tm/")
+    ("tm-view.el"
+        "interactive MIME viewer for GNU Emacs"
+        (mail  news  mime  multimedia)
+        "lisp/tm/")
+    ("tm-vm.el"
+        "tm-MUA (MIME Extension module) for VM"
+        (mail  mime  multimedia  multilingual  encoded-word)
+        "lisp/tm/")
+    ("tmh-comp.el"
+        "tm-mh-e functions for composing messages"
+        (mail  mh  mime  multimedia  encoded-word  multilingual)
+        "lisp/tm/")
     ("abbrevlist.el"
         "list one abbrev table alphabetically ordered."
         (abbrev)
@@ -1550,29 +2034,17 @@
         "maintain autoloads in loaddefs.el."
         (maint)
         "lisp/utils/")
+    ("bench.el"
+        "benchmarking utility for emacsen"
+        (internal  maint)
+        "lisp/utils/")
     ("blessmail.el"
         "Decide whether movemail needs special privileges."
         (internal)
         "lisp/utils/")
-    ("cl-compat.el"
-        "Common Lisp extensions for GNU Emacs Lisp (compatibility)"
-        (extensions)
-        "lisp/utils/")
-    ("cl-extra.el"
-        "Common Lisp extensions for GNU Emacs Lisp (part two)"
-        (extensions)
-        "lisp/utils/")
-    ("cl-macs.el"
-        "Common Lisp extensions for GNU Emacs Lisp (part four)"
-        (extensions)
-        "lisp/utils/")
-    ("cl-seq.el"
-        "Common Lisp extensions for GNU Emacs Lisp (part three)"
-        (extensions)
-        "lisp/utils/")
-    ("cl.el"
-        "Common Lisp extensions for GNU Emacs Lisp"
-        (extensions  lisp)
+    ("browse-url.el"
+        "ask a WWW browser to load a URL"
+        (hypertext)
         "lisp/utils/")
     ("delbackspace.el"
         "rebind backspace and delete to be correct"
@@ -1580,11 +2052,31 @@
         "lisp/utils/")
     ("derived.el"
         "allow inheritance of major modes."
+        nil
+        "lisp/utils/")
+    ("detached-minibuf.el"
+        "Support a detached minibuffer for XEmacs."
+        (extensions)
+        "lisp/utils/")
+    ("docref.el"
+        "Simple cross references for Elisp documentation strings"
+        (docs  help  lisp)
+        "lisp/utils/")
+    ("edmacro.el"
+        "keyboard macro editor"
+        (abbrev)
+        "lisp/utils/")
+    ("eldoc.el"
+        "show function arglist or variable docstring in echo area"
         (extensions)
         "lisp/utils/")
     ("elp.el"
         "Emacs Lisp Profiler"
         (debugging lisp tools)
+        "lisp/utils/")
+    ("facemenu.el"
+        "create a face menu for interactively adding fonts to text"
+        (faces)
         "lisp/utils/")
     ("find-gc.el"
         "detect functions that call the garbage collector"
@@ -1598,29 +2090,37 @@
         "topic & keyword-based code finder"
         (help)
         "lisp/utils/")
+    ("floating-toolbar.el"
+        "popup toolbar support for XEmacs."
+        (lisp)
+        "lisp/utils/")
     ("flow-ctrl.el"
         "help for lusers on cu(1) or ttys with wired-in ^S/^Q flow control"
         (hardware)
         "lisp/utils/")
     ("foldout.el"
         "Folding extensions for outline-mode and outline-minor-mode."
-        (outlining)
+        (folding  outline)
         "lisp/utils/")
     ("forms-d2.el"
         "demo forms-mode"
-        (extensions)
+        nil
         "lisp/utils/")
     ("forms-pass.el"
-        "demo for forms-mode"
-        (extensions)
+        "passwd file demo for forms-mode"
+        nil
         "lisp/utils/")
     ("forms.el"
-        "Forms mode: edit a file as a form to fill in."
+        "Forms mode: edit a file as a form to fill in"
         (extensions)
         "lisp/utils/")
     ("highlight-headers.el"
         "highlighting message headers."
         (mail  news)
+        "lisp/utils/")
+    ("live-icon.el"
+        "make frame icons represent the current frame contents"
+        nil
         "lisp/utils/")
     ("loadhist.el"
         "lisp functions for working with feature groups"
@@ -1631,8 +2131,8 @@
         (mail)
         "lisp/utils/")
     ("mail-utils.el"
-        "Utility functions used both by rmail and rnews"
-        (mail  news  internal)
+        "utility functions used both by rmail and rnews"
+        (mail  news)
         "lisp/utils/")
     ("mailpost.el"
         "RMAIL coupler to /usr/uci/post mailer"
@@ -1640,7 +2140,7 @@
         "lisp/utils/")
     ("map-ynp.el"
         "General-purpose boolean question-asker"
-        (extensions)
+        (lisp  extensions)
         "lisp/utils/")
     ("meese.el"
         "protect the impressionable young minds of America"
@@ -1650,13 +2150,21 @@
         "Prompting for passwords semi-securely"
         (comm  extensions)
         "lisp/utils/")
+    ("pp.el"
+        "pretty printer for Emacs Lisp"
+        (lisp  tools  language  extensions)
+        "lisp/utils/")
+    ("redo.el"
+        "Redo/undo system for XEmacs"
+        (lisp  extensions)
+        "lisp/utils/")
     ("regi.el"
         "REGular expression Interpreting engine"
-        (extensions  matching  wp)
+        (extensions  matching)
         "lisp/utils/")
     ("reporter.el"
         "customizable bug reporting of lisp programs"
-        (mail  lisp)
+        (maint mail tools)
         "lisp/utils/")
     ("rfc822.el"
         "hairy rfc822 parser for mail and news and suchlike"
@@ -1665,6 +2173,18 @@
     ("ring.el"
         "handle rings of items"
         (extensions)
+        "lisp/utils/")
+    ("shadowfile.el"
+        "automatic file copying for Emacs 19"
+        (comm)
+        "lisp/utils/")
+    ("skeleton.el"
+        "Lisp language extension for writing statement skeletons"
+        (extensions  abbrev  languages  tools)
+        "lisp/utils/")
+    ("soundex.el"
+        "implement Soundex algorithm"
+        (matching)
         "lisp/utils/")
     ("symbol-syntax.el"
         "find chars with symbol syntax"
@@ -1683,8 +2203,8 @@
         (extensions  languages)
         "lisp/utils/")
     ("timezone.el"
-        "timezone package for GNU Emacs"
-        (internal extensions news)
+        "time zone package for GNU Emacs"
+        (news)
         "lisp/utils/")
     ("tq.el"
         "utility to maintain a transaction queue"
@@ -1692,19 +2212,39 @@
         "lisp/utils/")
     ("trace.el"
         "tracing facility for Emacs Lisp functions"
-        (lisp  tools  debugging)
+        (tools  lisp)
         "lisp/utils/")
-    ("with-timeout.el"
-        "timeout hackery"
-        (extensions)
+    ("uniquify.el"
+        "unique buffer names dependent on file name"
+        nil
         "lisp/utils/")
+    ("viper-ex.el"
+        "functions implementing the Ex commands for Viper"
+        nil
+        "lisp/viper/")
+    ("viper-init.el"
+        "some common definitions for Viper"
+        nil
+        "lisp/viper/")
+    ("viper-keym.el"
+        "Viper keymaps"
+        nil
+        "lisp/viper/")
+    ("viper-macs.el"
+        "functions implementing keyboard macros for Viper"
+        nil
+        "lisp/viper/")
+    ("viper-mous.el"
+        "mouse support for Viper"
+        nil
+        "lisp/viper/")
     ("viper-util.el"
         "Utilities used by viper.el"
         nil
         "lisp/viper/")
     ("viper.el"
         "A full-featured Vi emulator for GNU Emacs 19 and XEmacs 19,"
-        nil
+        (emulations)
         "lisp/viper/")
     ("vm-easymenu.el"
         "support the easymenu interface for defining a menu."
@@ -1726,77 +2266,173 @@
         "Base64 encoding functions"
         (extensions)
         "lisp/w3/")
-    ("md5.el"
-        "MD5 functionality for emacsen without it builtin"
-        (mail  news  tools  hypermedia)
+    ("css.el"
+        "Cascading Style Sheet parser"
+        nil
+        "lisp/w3/")
+    ("dsssl.el"
+        "DSSSL parser"
+        nil
+        "lisp/w3/")
+    ("font.el"
+        "New font model"
+        (faces)
+        "lisp/w3/")
+    ("images.el"
+        "Automatic image converters"
+        (images)
         "lisp/w3/")
     ("mm.el"
         "Mailcap parsing routines, and MIME handling"
         (mail  news  hypermedia)
         "lisp/w3/")
+    ("mule-sysdp.el"
+        "consolidate MULE-version dependencies in one file."
+        (lisp  tools)
+        "lisp/w3/")
+    ("socks.el"
+        "A Socks v5 Client for Emacs"
+        (comm  firewalls)
+        "lisp/w3/")
     ("ssl.el"
         "ssl functions for emacsen without them builtin"
         (comm)
+        "lisp/w3/")
+    ("url-auth.el"
+        "Uniform Resource Locator authorization modules"
+        (comm  data  processes  hypermedia)
+        "lisp/w3/")
+    ("url-cache.el"
+        "Uniform Resource Locator retrieval tool"
+        (comm  data  processes  hypermedia)
+        "lisp/w3/")
+    ("url-cookie.el"
+        "Netscape Cookie support"
+        (comm  data  processes  hypermedia)
+        "lisp/w3/")
+    ("url-file.el"
+        "File retrieval code"
+        (comm  data  processes)
+        "lisp/w3/")
+    ("url-gopher.el"
+        "Gopher Uniform Resource Locator retrieval code"
+        (comm  data  processes)
+        "lisp/w3/")
+    ("url-gw.el"
+        "Gateway munging for URL loading"
+        (comm  data  processes)
+        "lisp/w3/")
+    ("url-http.el"
+        "HTTP Uniform Resource Locator retrieval code"
+        (comm  data  processes)
+        "lisp/w3/")
+    ("url-irc.el"
+        "IRC URL interface"
+        (comm  data  processes)
+        "lisp/w3/")
+    ("url-mail.el"
+        "Mail Uniform Resource Locator retrieval code"
+        (comm  data  processes)
+        "lisp/w3/")
+    ("url-misc.el"
+        "Misc Uniform Resource Locator retrieval code"
+        (comm  data  processes)
+        "lisp/w3/")
+    ("url-news.el"
+        "News Uniform Resource Locator retrieval code"
+        (comm  data  processes)
+        "lisp/w3/")
+    ("url-nfs.el"
+        "NFS URL interface"
+        (comm  data  processes)
+        "lisp/w3/")
+    ("url-ns.el"
+        "Various netscape-ish functions for proxy definitions"
+        (comm  data  processes  hypermedia)
+        "lisp/w3/")
+    ("url-parse.el"
+        "Uniform Resource Locator parser"
+        (comm  data  processes)
+        "lisp/w3/")
+    ("url-vars.el"
+        "Variables for Uniform Resource Locator tool"
+        (comm  data  processes  hypermedia)
         "lisp/w3/")
     ("url.el"
         "Uniform Resource Locator retrieval tool"
         (comm  data  processes  hypermedia)
         "lisp/w3/")
-    ("urlauth.el"
-        "Uniform Resource Locator authorization modules"
-        (comm  data  processes  hypermedia)
-        "lisp/w3/")
-    ("w3-10646.el"
-        "ISO 10646 Entities for Emacs-w3"
-        (i18n)
-        "lisp/w3/")
     ("w3-about.el"
         "About pages for emacs-w3"
         (hypermedia)
         "lisp/w3/")
-    ("w3-beta.el"
-        "Misc functions for emacs-w3's new display engine"
-        (help  hypermedia  comm)
+    ("w3-cus.el"
+        "Customization support for Emacs-W3"
+        (comm  help  hypermedia)
         "lisp/w3/")
-    ("w3-draw.el"
-        "Emacs-W3 drawing functions for new display engine"
+    ("w3-display.el"
+        "display engine v99999"
         (faces  help  hypermedia)
         "lisp/w3/")
     ("w3-e19.el"
         "Emacs 19.xx specific functions for emacs-w3"
         (faces  help  mouse  hypermedia)
         "lisp/w3/")
-    ("w3-emacs.el"
-        "Emacs 18.xx specific functions for emacs-w3"
-        (faces  help  mouse  hypermedia)
+    ("w3-elisp.el"
+        "Scripting support for emacs-lisp"
+        (hypermedia  scripting)
         "lisp/w3/")
-    ("w3-epoch.el"
-        "Epoch 4.x specific functions for emacs-w3"
-        (faces  help  mouse  hypermedia)
+    ("w3-emulate.el"
+        "All variable definitions for emacs-w3"
+        (comm  help  hypermedia)
         "lisp/w3/")
-    ("w3-mac.el"
-        "Macintosh specific functions for emacs-w3"
-        (faces  help  mouse  hypermedia)
+    ("w3-forms.el"
+        "Emacs-w3 forms parsing code for new display engine"
+        (faces  help  comm  data  languages)
         "lisp/w3/")
-    ("w3-mule.el"
-        "MULE 18/19 specific functions for emacs-w3"
-        (faces  help  i18n  mouse  hypermedia)
+    ("w3-hot.el"
+        "Main functions for emacs-w3 on all platforms/versions"
+        (faces  help  comm  news  mail  processes  mouse  hypermedia)
         "lisp/w3/")
-    ("w3-next.el"
-        "NeXTStep specific functions for emacs-w3"
-        (faces  help  mouse  hypermedia)
+    ("w3-imap.el"
+        "Imagemap functions"
+        (hypermedia)
         "lisp/w3/")
-    ("w3-parse.el"
-        "Generalized html/sgml parsing support for emacs-w3"
-        (faces  help  hypermedia)
+    ("w3-jscript.el"
+        "Scripting support for javascript"
+        (hypermedia  scripting)
+        "lisp/w3/")
+    ("w3-keyword.el"
+        "Emacs-W3 binding style sheet mechanism"
+        (hypermedia)
+        "lisp/w3/")
+    ("w3-latex.el"
+        "Emacs-W3 printing via LaTeX"
+        (hypermedia  printing  typesetting)
+        "lisp/w3/")
+    ("w3-menu.el"
+        "Menu functions for emacs-w3"
+        (menu  hypermedia)
+        "lisp/w3/")
+    ("w3-mouse.el"
+        "Mouse specific functions for emacs-w3"
+        (mouse  hypermedia)
+        "lisp/w3/")
+    ("w3-prefs.el"
+        "Preferences panels for Emacs-W3"
+        (hypermedia  preferences)
         "lisp/w3/")
     ("w3-print.el"
         "Printing support for emacs-w3"
         (faces  help  printing  hypermedia)
         "lisp/w3/")
-    ("w3-srch.el"
-        "Searching functions for emacs-w3"
-        (matching  help  comm  hypermedia)
+    ("w3-script.el"
+        "Scripting support"
+        (hypermedia  scripting)
+        "lisp/w3/")
+    ("w3-speak.el"
+        "Emacs-W3 speech interface"
+        (hypermedia  speech)
         "lisp/w3/")
     ("w3-style.el"
         "Emacs-W3 binding style sheet mechanism"
@@ -1806,13 +2442,17 @@
         "consolidate Emacs-version dependencies in one file."
         (lisp  tools)
         "lisp/w3/")
+    ("w3-toolbar.el"
+        "Toolbar functions for emacs-w3"
+        (mouse  toolbar)
+        "lisp/w3/")
     ("w3-vars.el"
         "All variable definitions for emacs-w3"
         (comm  help  hypermedia)
         "lisp/w3/")
-    ("w3-wemac.el"
-        "WinEmacs specific functions for emacs-w3"
-        (faces  help  hypermedia  mouse)
+    ("w3-widget.el"
+        "An image widget"
+        (faces  images)
         "lisp/w3/")
     ("w3-xemac.el"
         "XEmacs specific functions for emacs-w3"
@@ -1826,6 +2466,14 @@
         "X-specific face frobnication, aka black magic."
         nil
         "lisp/x11/")
+    ("x-font-menu.el"
+        "Managing menus of X fonts."
+        nil
+        "lisp/x11/")
+    ("x-init.el"
+        "initialization code for X windows"
+        (terminals)
+        "lisp/x11/")
     ("x-menubar.el"
         "Menubar and popup-menu support for X."
         nil
@@ -1837,6 +2485,18 @@
     ("x-scrollbar.el"
         "scrollbar resourcing and such."
         nil
+        "lisp/x11/")
+    ("x-select.el"
+        "Elisp interface to X Selections."
+        nil
+        "lisp/x11/")
+    ("x-win-sun.el"
+        "runtime initialization for Sun X servers and keyboards"
+        (terminals)
+        "lisp/x11/")
+    ("x-win-xfree86.el"
+        "runtime initialization for XFree86 servers"
+        (terminals)
         "lisp/x11/")
 ))
 

@@ -65,6 +65,18 @@
      (setq load-warn-when-source-newer t ; set to nil at the end
 	   load-warn-when-source-only t)
 
+     ;; Inserted for debugging.  Something is corrupting a single symbol
+     ;; somewhere to have an integer 0 property list.  -slb 6/28/1997.
+     (defun test-atoms ()
+       (mapatoms
+        #'(lambda (symbol)
+            (condition-case nil
+                (get symbol 'custom-group)
+              (t (princ
+                  (format "Bad plist in %s, %s\n"
+                          (symbol-name symbol)
+                          (prin1-to-string (object-plist symbol)))))))))
+
      ;; garbage collect after loading every file in an attempt to
      ;; minimize the size of the dumped image (if we don't do this,
      ;; there will be lots of extra space in the data segment filled

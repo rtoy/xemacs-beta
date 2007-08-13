@@ -445,6 +445,15 @@ emacs_doprnt_1 (Lisp_Object stream, CONST Bufbyte *format_nonreloc,
 	  if (!largs)
 	    {
 	      string = Dynarr_at (args, spec->argnum - 1).bp;
+	      /* error() can be called with null string arguments.
+		 E.g., in fileio.c, the return value of strerror()
+		 is never checked.  We'll print (null), like some
+		 printf implementations do.  Would it be better (and safe)
+		 to signal an error instead?  Or should we just use the 
+                 empty string?  -dkindred@cs.cmu.edu 8/1997
+	       */
+	      if (!string)
+		string = "(null)";
 	      string_len = strlen ((char *) string);
 	    }
 	  else

@@ -1,6 +1,6 @@
 ;;; plfonts.el - Setup AUC TeX for editing Polish text with plfonts.sty
 
-;; $Id: plfonts.el,v 1.1 1997/02/20 02:15:21 steve Exp $
+;; $Id: plfonts.el,v 1.1 1997/08/30 02:45:17 steve Exp $
 
 ;;; Commentary:
 ;;

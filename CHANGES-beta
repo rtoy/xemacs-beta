@@ -1,4 +1,14 @@
 							-*- indented-text -*-
+to 19.16 beta91
+-- Make all texinfo source work with makeinfo-1.68
+-- Update texinfo stuffs from texinfo-3.11
+-- Updated finder database
+-- Move AUCTeX style files so the package will work
+-- provide 'xemacs for compatibility with future XEmacsen
+-- improved color terminal detection
+-- miscellaneous bug fixes
+-- X-compose fixes Courtesy of Jan Vroonhof
+
 to 19.16 beta90
 -- Miscellaneous 20.1 fixes merged
 -- Synch with 19.15p8 Courtesy of Alvin Shelton

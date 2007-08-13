@@ -74,7 +74,7 @@ Lisp_Object Vall_specifiers;
    in specifiers that can inherit from other specifiers, but it's
    not yet implemented.
 
-   #### Look into this for 19.14. */
+   #### Look into this some day. */
 lisp_dynarr current_specifiers;
 
 static void recompute_cached_specifier_everywhere (Lisp_Object specifier);
@@ -2771,7 +2771,6 @@ DEFINE_SPECIFIER_TYPE (generic);
 
    What really needs to be done is to write a function
    `make-specifier-type' that creates new specifier types.
-   #### I'll look into this for 19.14.
  */
 
 "A generic specifier is a generalized kind of specifier with user-defined\n"
