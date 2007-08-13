@@ -46,7 +46,8 @@
 (if (not (fboundp 'try-font-name))
     (defun try-font-name (fontname &rest args)
       (case window-system
-	((x win32 w32 pm) (car-safe (x-list-fonts fontname)))
+	((x pm) (car-safe (x-list-fonts fontname)))
+	(mswindows (car-safe (x-list-fonts fontname))) ; XXX FIXME
 	(ns (car-safe (ns-list-fonts fontname)))
 	(otherwise nil))))
 
@@ -97,12 +98,11 @@
 	 (setq keywords (cdr keywords)))))))  
 
 (defconst font-window-system-mappings
-  '((x        . (x-font-create-name x-font-create-object))
-    (ns       . (ns-font-create-name ns-font-create-object))
-    (win32    . (x-font-create-name x-font-create-object))
-    (w32      . (x-font-create-name x-font-create-object))
-    (pm       . (x-font-create-name x-font-create-object)) ; Change? FIXME
-    (tty      . (tty-font-create-plist tty-font-create-object)))
+  '((x         . (x-font-create-name x-font-create-object))
+    (ns        . (ns-font-create-name ns-font-create-object))
+    (mswindows . (x-font-create-name x-font-create-object)) ; XXX FIXME
+    (pm        . (x-font-create-name x-font-create-object)) ; Change? FIXME
+    (tty       . (tty-font-create-plist tty-font-create-object)))
   "An assoc list mapping device types to the function used to create
 a font name from a font structure.")
 
@@ -1139,15 +1139,10 @@ is returned."
   (case (device-type device)
    ((x pm)
     (apply 'format "#%02x%02x%02x" (font-color-rgb-components color)))
-   (win32
+   (mswindows
     (let* ((rgb (font-color-rgb-components color))
 	   (color (apply 'format "#%02x%02x%02x" rgb)))
-      (win32-define-rgb-color (nth 0 rgb) (nth 1 rgb) (nth 2 rgb) color)
-      color))
-   (w32
-    (let* ((rgb (font-color-rgb-components color))
-	   (color (apply 'format "#%02x%02x%02x" rgb)))
-      (w32-define-rgb-color (nth 0 rgb) (nth 1 rgb) (nth 2 rgb) color)
+      (mswindows-define-rgb-color (nth 0 rgb) (nth 1 rgb) (nth 2 rgb) color)
       color))
    (tty
     (apply 'font-tty-find-closest-color (font-color-rgb-components color)))

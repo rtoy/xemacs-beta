@@ -139,13 +139,13 @@ static void pfatal_with_name (char *);
 static void pfatal_and_delete (char *);
 static char *concat (char *, char *, char *);
 static long *xmalloc (unsigned int);
-static int popmail (char *, char *, char *);
 #ifdef MAIL_USE_POP
-static int pop_retr (popserver server, int msgno, int (*action)(), int arg);
-#endif
+static int popmail (char *, char *, char *);
+static int pop_retr (popserver server, int msgno, int (*action)(), void *arg);
 static int mbx_write (char *, FILE *);
 static int mbx_delimit_begin (FILE *);
 static int mbx_delimit_end (FILE *);
+#endif
 
 /* Nonzero means this is name of a lock file to delete on fatal error.  */
 char *delete_lockname;
@@ -505,7 +505,6 @@ popmail (char *user, char *outfile, char *password)
   int mbfi;
   FILE *mbf;
   char *getenv ();
-  int mbx_write ();
   popserver server;
   extern char *strerror ();
 
@@ -606,7 +605,7 @@ popmail (char *user, char *outfile, char *password)
 }
 
 static int
-pop_retr (popserver server, int msgno, int (*action)(), int arg)
+pop_retr (popserver server, int msgno, int (*action)(), void *arg)
 {
   char *line;
   int ret;

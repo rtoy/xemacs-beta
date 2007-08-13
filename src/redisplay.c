@@ -8117,16 +8117,17 @@ init_redisplay (void)
     }
 #endif /* HAVE_X_WINDOWS */
 
-#ifdef HAVE_W32GUI
-  if (!strcmp (display_use, "w32"))
+#ifdef HAVE_MS_WINDOWS
+  if (!strcmp (display_use, "mswindows"))
     {
       /* Some stuff checks this way early. */
-      Vwindow_system = Qw32;
-      Vinitial_window_system = Qw32;
+      Vwindow_system = Qmswindows;
+      Vinitial_window_system = Qmswindows;
       return;
     }
-#endif /* HAVE_W32GUI */
+#endif /* HAVE_MS_WINDOWS */
 
+#ifdef HAVE_TTY
   /* If no window system has been specified, try to use the terminal.  */
   if (!isatty (0))
     {
@@ -8142,6 +8143,14 @@ init_redisplay (void)
     }
 
   Vinitial_window_system = Qtty;
+  return;
+#else  /* not HAVE_TTY */
+  /* No DISPLAY specified, and no TTY support. */
+  stderr_out ("XEmacs: Cannot open display.\n\
+Please set the environmental variable DISPLAY to an appropriate value.\n");
+  exit (1);
+#endif
+  /* Unreached. */
 }
 
 void

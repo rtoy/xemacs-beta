@@ -584,6 +584,18 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 	if (nread == 0)
 	  break;
 
+#ifdef DOS_NT
+       /* Until we pull out of MULE things like
+	  make_decoding_input_stream(), we do the following which is
+	  less elegant. --marcpa */
+       {
+	 int lf_count;
+	 if (NILP (Vbinary_process_output)) {
+	   nread = nread - crlf_to_lf(nread, bufptr, &lf_count);
+         }
+       }
+#endif
+
 	total_read += nread;
 
 	if (!NILP (buffer))

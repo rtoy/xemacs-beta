@@ -94,11 +94,12 @@
 ;; KOI-8 staff
 
 (define-ccl-program ccl-decode-koi8
-  '(((read r0)
+  '(3
+    ((read r0)
      (loop
-	 (write-read-repeat
-	  r0
-          [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+       (write-read-repeat
+	r0
+	[0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
 	   16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31
 	   32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47
 	   48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63
@@ -117,53 +118,55 @@
   "CCL program to decode KOI8.")
 
 (define-ccl-program ccl-encode-koi8
-  '(((read r0)
+  `(1
+    ((read r0)
      (loop
-	 (if (r0 != 140)		; lc-crl == 140
-	     (write-read-repeat r0)
-	   ((read r0)
-	    (r0 -= 160)
-	    (write-read-repeat
-	     r0
-	     [ 32 179  32  32  32  32  32  32  32  32  32  32  32  32  32  32
+       (if (r0 != ,(charset-id 'cyrillic-iso8859-5))
+	   (write-read-repeat r0)
+	 ((read r0)
+	  (r0 -= 160)
+	  (write-read-repeat
+	   r0
+	   [ 32 179  32  32  32  32  32  32  32  32  32  32  32  32  32  32
+		225 226 247 231 228 229 246 250 233 234 235 236 237 238 239 240
+		242 243 244 245 230 232 227 254 251 253 255 249 248 252 224 241
+		193 194 215 199 196 197 214 218 201 202 203 204 205 206 207 208
+		210 211 212 213 198 200 195 222 219 221 223 217 216 220 192 209
+		32 163  32  32  32  32  32  32  32  32  32  32  32  32  32  32])
+	  )))))
+  "CCL program to encode KOI8.")
+
+;(make-coding-system
+;  'cyrillic-koi8 4
+;  ;; We used to use ?K.  It is true that ?K is more strictly correct,
+;  ;; but it is also used for Korean.
+;  ;; So people who use koi8 for languages other than Russian
+;  ;; will have to forgive us.
+;  ?R "KOI8 8-bit encoding for Cyrillic (MIME: KOI8-R)"
+;  (cons ccl-decode-koi8 ccl-encode-koi8))
+
+;(define-coding-system-alias 'koi8-r 'cyrillic-koi8)
+;(define-coding-system-alias 'koi8 'cyrillic-koi8)
+
+;(make-coding-system
+;  'koi8-r 'ccl
+;  "Coding-system used for KOI8-R."
+;  `(decode ,ccl-decode-koi8
+;    encode ,ccl-encode-koi8
+;    mnemonic "KOI8"))
+
+;(define-coding-system-alias 'koi8-r 'koi8)
+
+(define-ccl-program ccl-encode-koi8-font
+  '(0
+    ((r1 -= 160)
+     (r1 = r1
+	 [ 32 179  32  32  32  32  32  32  32  32  32  32  32  32  32  32
 	      225 226 247 231 228 229 246 250 233 234 235 236 237 238 239 240
 	      242 243 244 245 230 232 227 254 251 253 255 249 248 252 224 241
 	      193 194 215 199 196 197 214 218 201 202 203 204 205 206 207 208
 	      210 211 212 213 198 200 195 222 219 221 223 217 216 220 192 209
-	       32 163  32  32  32  32  32  32  32  32  32  32  32  32  32  32])
-	    )))))
-  "CCL program to encode KOI8.")
-	     
-;; (make-coding-system
-;;  'cyrillic-koi8 4
-;;  ;; We used to use ?K.  It is true that ?K is more strictly correct,
-;;  ;; but it is also used for Korean.
-;;  ;; So people who use koi8 for languages other than Russian
-;;  ;; will have to forgive us.
-;;  ?R "KOI8 8-bit encoding for Cyrillic (MIME: KOI8-R)"
-;;  (cons ccl-decode-koi8 ccl-encode-koi8))
-
-;; (define-coding-system-alias 'koi8-r 'cyrillic-koi8)
-;; (define-coding-system-alias 'koi8 'cyrillic-koi8)
-
-;; (make-coding-system
-;;  'koi8-r 'ccl
-;;  "Coding-system used for KOI8-R."
-;;  `(decode ,ccl-decode-koi8
-;;    encode ,ccl-encode-koi8
-;;    mnemonic "KOI8"))
-
-;;(define-coding-system-alias 'koi8-r 'koi8)
-
-(define-ccl-program ccl-encode-koi8-font
-  '(((r1 -= 160)
-     (r1 = r1
-      [ 32 179  32  32  32  32  32  32  32  32  32  32  32  32  32  32
-       225 226 247 231 228 229 246 250 233 234 235 236 237 238 239 240
-       242 243 244 245 230 232 227 254 251 253 255 249 248 252 224 241
-       193 194 215 199 196 197 214 218 201 202 203 204 205 206 207 208
-       210 211 212 213 198 200 195 222 219 221 223 217 216 220 192 209
-        32 163  32  32  32  32  32  32  32  32  32  32  32  32  32  32])
+	      32 163  32  32  32  32  32  32  32  32  32  32  32  32  32  32])
      ))
   "CCL program to encode Cyrillic chars to KOI font.")
 
@@ -182,44 +185,46 @@
 ;;; ALTERNATIVNYJ staff
 
 (define-ccl-program ccl-decode-alternativnyj
-  '(((read r0)
+  '(3
+    ((read r0)
      (loop
-	 (write-read-repeat
-	  r0
-          [  0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
-	    16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
-	    32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
-	    48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
-	    64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
-	    80  81  82  83  84  85  86  87  88  89  90  91  92  93  94  95
-	    96  97  98  99 100 101 102 103 104 105 106 107 108 109 110 111
-	   112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127
-	    ?,L0(B  ?,L1(B  ?,L2(B  ?,L3(B  ?,L4(B  ?,L5(B  ?,L6(B  ?,L7(B  ?,L8(B  ?,L9(B  ?,L:(B  ?,L;(B  ?,L<(B  ?,L=(B  ?,L>(B  ?,L?(B
-	    ?,L@(B  ?,LA(B  ?,LB(B  ?,LC(B  ?,LD(B  ?,LE(B  ?,LF(B  ?,LG(B  ?,LH(B  ?,LI(B  ?,LJ(B  ?,LK(B  ?,LL(B  ?,LM(B  ?,LN(B  ?,LO(B
-	    ?,LP(B  ?,LQ(B  ?,LR(B  ?,LS(B  ?,LT(B  ?,LU(B  ?,LV(B  ?,LW(B  ?,LX(B  ?,LY(B  ?,LZ(B  ?,L[(B  ?,L\(B  ?,L](B  ?,L^(B  ?,L_(B
-	    32  32  32  32  32  32  32  32  32  32  32  32  32  32  32  32
-	    32  32  32  32  32  32  32  32  32  32  32  32  32  32  32  32
-	    32  32  32  32  32  32  32  32  32  32  32  32  32  32  32  32
-	    ?,L`(B  ?,La(B  ?,Lb(B  ?,Lc(B  ?,Ld(B  ?,Le(B  ?,Lf(B  ?,Lg(B  ?,Lh(B  ?,Li(B  ?,Lj(B  ?,Lk(B  ?,Ll(B  ?,Lm(B  ?,Ln(B  ?,Lo(B
-	    ?,L!(B  ?,Lq(B   32  32  32  32  32  32  32  32  32  32  32  32  32 ?,Lp(B]))))
+       (write-read-repeat
+	r0
+	[  0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
+	       16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31
+	       32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47
+	       48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63
+	       64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79
+	       80  81  82  83  84  85  86  87  88  89  90  91  92  93  94  95
+	       96  97  98  99 100 101 102 103 104 105 106 107 108 109 110 111
+	       112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127
+	       ?,L0(B  ?,L1(B  ?,L2(B  ?,L3(B  ?,L4(B  ?,L5(B  ?,L6(B  ?,L7(B  ?,L8(B  ?,L9(B  ?,L:(B  ?,L;(B  ?,L<(B  ?,L=(B  ?,L>(B  ?,L?(B
+	       ?,L@(B  ?,LA(B  ?,LB(B  ?,LC(B  ?,LD(B  ?,LE(B  ?,LF(B  ?,LG(B  ?,LH(B  ?,LI(B  ?,LJ(B  ?,LK(B  ?,LL(B  ?,LM(B  ?,LN(B  ?,LO(B
+	       ?,LP(B  ?,LQ(B  ?,LR(B  ?,LS(B  ?,LT(B  ?,LU(B  ?,LV(B  ?,LW(B  ?,LX(B  ?,LY(B  ?,LZ(B  ?,L[(B  ?,L\(B  ?,L](B  ?,L^(B  ?,L_(B
+	       32  32  32  32  32  32  32  32  32  32  32  32  32  32  32  32
+	       32  32  32  32  32  32  32  32  32  32  32  32  32  32  32  32
+	       32  32  32  32  32  32  32  32  32  32  32  32  32  32  32  32
+	       ?,L`(B  ?,La(B  ?,Lb(B  ?,Lc(B  ?,Ld(B  ?,Le(B  ?,Lf(B  ?,Lg(B  ?,Lh(B  ?,Li(B  ?,Lj(B  ?,Lk(B  ?,Ll(B  ?,Lm(B  ?,Ln(B  ?,Lo(B
+	       ?,L!(B  ?,Lq(B   32  32  32  32  32  32  32  32  32  32  32  32  32 ?,Lp(B]))))
   "CCL program to decode Alternativnyj.")
 
 (define-ccl-program ccl-encode-alternativnyj
-  '(((read r0)
+  `(1
+    ((read r0)
      (loop
-	 (if (r0 != 140)		; lc-crl == 140
-	     (write-read-repeat r0)
-	   ((read r0)
-	    (r0 -= 160)
-	    (write-read-repeat
-	     r0
-	     [ 32 240  32  32  32  32  32  32  32  32  32  32  32  32  32  32
-	      128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143
-	      144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159
-	      160 161 162 163 164 165 166 167 168 169 170 171 172 173 174 175
-	      224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239
-	      255 241  32  32  32  32  32  32  32  32  32  32  32  32  32  32])
-	    )))))
+       (if (r0 != ,(charset-id 'cyrillic-iso8859-5))
+	   (write-read-repeat r0)
+	 ((read r0)
+	  (r0 -= 160)
+	  (write-read-repeat
+	   r0
+	   [ 32 240  32  32  32  32  32  32  32  32  32  32  32  32  32  32
+		128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143
+		144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159
+		160 161 162 163 164 165 166 167 168 169 170 171 172 173 174 175
+		224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239
+		255 241  32  32  32  32  32  32  32  32  32  32  32  32  32  32])
+	  )))))
   "CCL program to encode Alternativnyj.")
 
 ;; (make-coding-system
@@ -235,7 +240,8 @@
    mnemonic "Cy.Alt"))
 
 (define-ccl-program ccl-encode-alternativnyj-font
-  '(((r1 -= 160)
+  '(0
+    ((r1 -= 160)
      (r1 = r1
       [ 32 240  32  32  32  32  32  32  32  32  32  32  32  32  32  32
        128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143
@@ -261,35 +267,35 @@
 
 ;;; GENERAL
 
-;; (defun setup-cyrillic-environment ()
-;;   "Setup multilingual environment for Cyrillic users."
-;;   (interactive)
-;;   (setq primary-language "Cyrillic")
-;; 
-;;   (setq coding-category-iso-8-1 'iso-8859-5)
-;; 
-;;   (set-coding-priority
-;;    '(coding-category-iso-7
-;;      coding-category-iso-8-1))
-;; 
-;;   (setq-default buffer-file-coding-system 'iso-8859-5)
-;;   (set-terminal-coding-system 'iso-8859-5)
-;;   (set-keyboard-coding-system 'iso-8859-5)
-;; 
-;;   (setq default-input-method '("Cyrillic" . "quail-yawerty"))
-;;   )
+(defun setup-cyrillic-environment ()
+  "Setup multilingual environment for Cyrillic users."
+  (interactive)
+  (setq primary-language "Cyrillic")
 
-;; (defun describe-cyrillic-support ()
-;;   "Describe how Emacs support Cyrillic."
-;;   (interactive)
-;;   (describe-language-support-internal "Cyrillic"))
+  (setq coding-category-iso-8-1 'iso-8859-5)
 
-;; (set-language-info-alist
-;;  "Cyrillic" '((setup-function . setup-cyrillic-environment)
-;;               (describe-function . describe-cyrillic-support)
-;;               (charset . (cyrillic-iso8859-5))
-;;               (coding-system . (iso-8859-5 koi8-r alternativnyj))
-;;               (sample-text . "Russian (,L@caaZXY(B) ,L7T`PRabRcYbU(B!")
-;;               (documentation . nil)))
+  (set-coding-priority
+   '(coding-category-iso-7
+     coding-category-iso-8-1))
+
+  (setq-default buffer-file-coding-system 'iso-8859-5)
+  (set-terminal-coding-system 'iso-8859-5)
+  (set-keyboard-coding-system 'iso-8859-5)
+
+  (setq default-input-method '("Cyrillic" . "quail-yawerty"))
+  )
+
+(defun describe-cyrillic-support ()
+  "Describe how Emacs support Cyrillic."
+  (interactive)
+  (describe-language-support-internal "Cyrillic"))
+
+(set-language-info-alist
+ "Cyrillic" '((setup-function . setup-cyrillic-environment)
+              (describe-function . describe-cyrillic-support)
+              (charset . (cyrillic-iso8859-5))
+              (coding-system . (iso-8859-5 koi8-r alternativnyj))
+              (sample-text . "Russian (,L@caaZXY(B) ,L7T`PRabRcYbU(B!")
+              (documentation . nil)))
 
 ;;; cyrillic.el ends here

@@ -257,7 +257,7 @@ Note that W3 (XEmacs's own browser), might need customization (due to
 firewalls) in order to work correctly.
 
 XEmacs is the result of the time and effort of many people.  The
-developers responsible for the 20.3 release are:\n\n")
+developers responsible for the 20.4 release are:\n\n")
 
     (flet ((setup-person (who)
 	    (widget-insert "\t* ")
@@ -273,7 +273,7 @@ developers responsible for the 20.3 release are:\n\n")
 			     :value who)
 	      (widget-insert (format "  <%s>\n" address)))))
       ;; Setup persons responsible for this release.
-      (mapc 'setup-person '(slb mrb hniksic))
+      (mapc 'setup-person '(slb hniksic kyle mrb))
       (widget-insert "\n\t* ")
       (widget-create 'link :help-echo "A legion of XEmacs hackers"
 		     :action 'about-hackers

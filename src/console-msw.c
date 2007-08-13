@@ -1,4 +1,4 @@
-/* Console functions for win32.
+/* Console functions for mswindows.
    Copyright (C) 1996 Ben Wing.
 
 This file is part of XEmacs.
@@ -23,19 +23,19 @@ Boston, MA 02111-1307, USA.  */
 /* Authorship:
 
    Ben Wing: January 1996, for 19.14.
-   Rewritten for win32 by Jonathan Harris, November 1997 for 20.4.
+   Rewritten for mswindows by Jonathan Harris, November 1997 for 20.4.
  */
 
 #include <config.h>
 #include "lisp.h"
 
-#include "console-w32.h"
+#include "console-msw.h"
 
-DEFINE_CONSOLE_TYPE (w32);
+DEFINE_CONSOLE_TYPE (mswindows);
 
 
 static int
-w32_initially_selected_for_input (struct console *con)
+mswindows_initially_selected_for_input (struct console *con)
 {
   return 1;
 }
@@ -48,28 +48,28 @@ w32_initially_selected_for_input (struct console *con)
 /************************************************************************/
 
 void
-syms_of_console_w32 (void)
+syms_of_console_mswindows (void)
 {
 }
 
 void
-console_type_create_w32 (void)
+console_type_create_mswindows (void)
 {
-  INITIALIZE_CONSOLE_TYPE (w32, "w32", "console-w32-p");
+  INITIALIZE_CONSOLE_TYPE (mswindows, "mswindows", "console-mswindows-p");
 
   /* console methods */
-/*  CONSOLE_HAS_METHOD (w32, init_console); */
-/*  CONSOLE_HAS_METHOD (w32, mark_console); */
-  CONSOLE_HAS_METHOD (w32, initially_selected_for_input);
-/*  CONSOLE_HAS_METHOD (w32, delete_console); */
-/*  CONSOLE_HAS_METHOD (w32, canonicalize_console_connection); */
-/*  CONSOLE_HAS_METHOD (w32, canonicalize_device_connection); */
-/*  CONSOLE_HAS_METHOD (w32, semi_canonicalize_console_connection); */
-/*  CONSOLE_HAS_METHOD (w32, semi_canonicalize_device_connection); */
+/*  CONSOLE_HAS_METHOD (mswindows, init_console); */
+/*  CONSOLE_HAS_METHOD (mswindows, mark_console); */
+  CONSOLE_HAS_METHOD (mswindows, initially_selected_for_input);
+/*  CONSOLE_HAS_METHOD (mswindows, delete_console); */
+/*  CONSOLE_HAS_METHOD (mswindows, canonicalize_console_connection); */
+/*  CONSOLE_HAS_METHOD (mswindows, canonicalize_device_connection); */
+/*  CONSOLE_HAS_METHOD (mswindows, semi_canonicalize_console_connection); */
+/*  CONSOLE_HAS_METHOD (mswindows, semi_canonicalize_device_connection); */
 }
 
 void
-vars_of_console_w32 (void)
+vars_of_console_mswindows (void)
 {
-  Fprovide (Qw32);
+  Fprovide (Qmswindows);
 }

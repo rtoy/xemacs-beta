@@ -60,18 +60,6 @@ enum eol_type
   EOL_CR
 };
 
-/* This holds the current state of a running CCL program. */
-struct ccl_program
-{
-  Lisp_Object saved_vector;
-  Lisp_Object *prog;		/* compiled code */
-  int size;			/* size of compiled code */
-  int ic;			/* instruction counter */
-  int reg[8];			/* reg[7] is used for `condition' */
-  int end_flag;			/* set when processing the last block */
-  int status;
-};
-
 typedef struct charset_conversion_spec charset_conversion_spec;
 struct charset_conversion_spec
 {
@@ -420,6 +408,32 @@ enum coding_category_type
 #define CODING_CATEGORY_NOT_FINISHED_MASK \
   (1 << 30)
 
+/* Macros to decode or encode a character of JISX0208 in SJIS.  S1 and
+   S2 are the 1st and 2nd position-codes of JISX0208 in SJIS coding
+   system.  C1 and C2 are the 1st and 2nd position codes of Emacs'
+   internal format.  */
+
+#define DECODE_SJIS(s1, s2, c1, c2)		  	\
+  do {						  	\
+    if (s2 >= 0x9F)				  	\
+      c1 = s1 * 2 - (s1 >= 0xE0 ? 0x160 : 0xE0),  	\
+      c2 = s2 - 0x7E;				  	\
+    else					  	\
+      c1 = s1 * 2 - ((s1 >= 0xE0) ? 0x161 : 0xE1),	\
+      c2 = s2 - ((s2 >= 0x7F) ? 0x20 : 0x1F);	  	\
+  } while (0)
+
+#define ENCODE_SJIS(c1, c2, s1, s2)			\
+  do {							\
+    if ((c1) & 1)						\
+      s1 = (c1) / 2 + (((c1) < 0x5F) ? 0x71 : 0xB1),	\
+      s2 = (c2) + (((c2) >= 0x60) ? 0x20 : 0x1F);		\
+    else						\
+      s1 = (c1) / 2 + (((c1) < 0x5F) ? 0x70 : 0xB0),	\
+      s2 = (c2) + 0x7E;					\
+  } while (0)
+
+
 extern Lisp_Object make_decoding_input_stream (Lstream *stream,
 					       Lisp_Object codesys);
 extern Lisp_Object make_encoding_input_stream (Lstream *stream,
@@ -434,11 +448,4 @@ extern void set_decoding_stream_coding_system (Lstream *stream,
 					       Lisp_Object codesys);
 extern void set_encoding_stream_coding_system (Lstream *stream,
 					       Lisp_Object codesys);
-
-/* In mule-ccl.c */
-int ccl_driver (struct ccl_program *ccl, CONST unsigned char *src,
-		unsigned_char_dynarr *dst, int n, int end_flag);
-void set_ccl_program (struct ccl_program *ccl, Lisp_Object val, int *regs,
-		      int numregs, int initial_ic);
-
 #endif /* _XEMACS_MULE_CODING_H_ */

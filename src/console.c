@@ -320,8 +320,7 @@ DEFUN ("console-type", Fconsole_type, 0, 1, 0, /*
 Return the type of the specified console (e.g. `x' or `tty').
 Value is `tty' for a tty console (a character-only terminal),
 `x' for a console that is an X display,
-`win32' for a console that is a Windows or Windows NT connection (not yet
-  implemented),
+`mswindows' for a console that is a Windows NT/95/97 connection,
 `pc' for a console that is a direct-write MS-DOS connection (not yet
   implemented),
 `stream' for a stream console (which acts like a stdio stream), and
@@ -824,10 +823,9 @@ On systems that don't have job control, run a subshell instead.
 
 If optional arg STUFFSTRING is non-nil, its characters are stuffed
 to be read as terminal input by Emacs's superior shell.
-Before suspending, if `suspend-hook' is bound and value is non-nil
-call the value as a function of no args.  Don't suspend if it returns non-nil.
-Otherwise, suspend normally and after resumption call
-`suspend-resume-hook' if that is bound and non-nil.
+
+Before suspending, run the normal hook `suspend-hook'.
+After resumption run the normal hook `suspend-resume-hook'.
 
 Some operating systems cannot stop the Emacs process and resume it later.
 On such systems, Emacs will start a subshell and wait for it to exit.
@@ -1169,7 +1167,7 @@ One argument, the to-be-deleted console.
    makes debugging unbelievably more bearable) */
 #define DEFVAR_CONSOLE_LOCAL(lname, field_name) do {			\
 static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
-  = { { { { lrecord_symbol_value_forward },				\
+  = { { { symbol_value_forward_lheader_initializer,			\
     (struct lcrecord_header *) &(console_local_flags.field_name), 69 },	\
      SYMVAL_SELECTED_CONSOLE_FORWARD }, 0 };				\
      defvar_console_local ((lname), &I_hate_C);				\
@@ -1177,7 +1175,7 @@ static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
 
 #define DEFVAR_CONSOLE_LOCAL_MAGIC(lname, field_name, magicfun)	do {	\
 static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
-  = { { { { lrecord_symbol_value_forward },				\
+  = { { { symbol_value_forward_lheader_initializer,			\
     (struct lcrecord_header *) &(console_local_flags.field_name), 69 },	\
      SYMVAL_SELECTED_CONSOLE_FORWARD }, magicfun };			\
      defvar_console_local ((lname), &I_hate_C);				\
@@ -1185,7 +1183,7 @@ static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
 
 #define DEFVAR_CONST_CONSOLE_LOCAL(lname, field_name) do {		\
 static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
-  = { { { { lrecord_symbol_value_forward },				\
+  = { { { symbol_value_forward_lheader_initializer,			\
     (struct lcrecord_header *) &(console_local_flags.field_name), 69 },	\
      SYMVAL_CONST_SELECTED_CONSOLE_FORWARD }, 0 };			\
      defvar_console_local ((lname), &I_hate_C);				\
@@ -1193,7 +1191,7 @@ static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
 
 #define DEFVAR_CONST_CONSOLE_LOCAL_MAGIC(lname, field_name, magicfun) do { \
 static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
-  = { { { { lrecord_symbol_value_forward },				\
+  = { { { symbol_value_forward_lheader_initializer,			\
     (struct lcrecord_header *) &(console_local_flags.field_name), 69 },	\
      SYMVAL_CONST_SELECTED_CONSOLE_FORWARD }, magicfun };		\
      defvar_console_local ((lname), &I_hate_C);			\
@@ -1201,7 +1199,7 @@ static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
 
 #define DEFVAR_CONSOLE_DEFAULTS(lname, field_name) do {			\
 static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
-  = { { { { lrecord_symbol_value_forward },				\
+  = { { { symbol_value_forward_lheader_initializer,			\
     (struct lcrecord_header *) &(console_local_flags.field_name), 69 },	\
      SYMVAL_DEFAULT_CONSOLE_FORWARD }, 0 };				\
      defvar_mumble ((lname), &I_hate_C, sizeof (I_hate_C));		\
@@ -1209,7 +1207,7 @@ static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
 
 #define DEFVAR_CONSOLE_DEFAULTS_MAGIC(lname, field_name, magicfun) do {	\
 static CONST_IF_NOT_DEBUG struct symbol_value_forward I_hate_C		\
-  = { { { { lrecord_symbol_value_forward },				\
+  = { { { symbol_value_forward_lheader_initializer,			\
     (struct lcrecord_header *) &(console_local_flags.field_name), 69 },	\
      SYMVAL_DEFAULT_CONSOLE_FORWARD }, magicfun };			\
      defvar_mumble ((lname), &I_hate_C, sizeof (I_hate_C));		\

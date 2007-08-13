@@ -73,6 +73,14 @@ extern struct servent *hes_getservbyname (/* char *, char * */);
 #include <errno.h>
 #include <stdio.h>
 
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/file.h>
+#include "../src/syswait.h"
+#include "../src/systime.h"
+#include <stdlib.h>
+#include <string.h>
+
 #ifdef KERBEROS
 #ifndef KRB5
 #include <des.h>
@@ -627,8 +635,10 @@ pop_retrieve (server, message, markfrom)
   if (ret)
     {
       free (ptr);
-      return (0);
+      /* return (0); */
     }
+  /* This function used to fall off the end, but that doesn't make any sense */
+  return (0);
 }     
 
 int

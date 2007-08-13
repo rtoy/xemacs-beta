@@ -1414,6 +1414,13 @@ Unlike (get-char-property POS 'field) this, works with empty fields too."
 	     ;; The change begins in one fields, and ends in another one.
 	     (add-hook 'post-command-hook 'widget-add-change nil t)
 	     (error "Change should be restricted to a single field"))
+	    ((or (and from-field
+		      (get-char-property from 'widget-inactive))
+		 (and to-field
+		      (get-char-property to 'widget-inactive)))
+	     ;; Trying to change an inactive editable field.
+	     (add-hook 'post-command-hook 'widget-add-change nil t)
+	     (error "Attempt to change an inactive field"))
 	    (widget-field-use-before-change
 	     ;; #### Bletch!  This loses because XEmacs get confused
 	     ;; if before-change-functions change the contents of

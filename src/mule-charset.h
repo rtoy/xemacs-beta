@@ -444,6 +444,7 @@ struct Lisp_Charset
 {
   struct lcrecord_header header;
 
+  int id;
   Lisp_Object name;
   Lisp_Object doc_string, registry;
 
@@ -492,6 +493,7 @@ DECLARE_LRECORD (charset, struct Lisp_Charset);
 #define CHARSET_LEFT_TO_RIGHT	0
 #define CHARSET_RIGHT_TO_LEFT	1
 
+#define CHARSET_ID(cs)		 ((cs)->id)
 #define CHARSET_NAME(cs)	 ((cs)->name)
 #define CHARSET_LEADING_BYTE(cs) ((cs)->leading_byte)
 #define CHARSET_REP_BYTES(cs)	 ((cs)->rep_bytes)
@@ -511,6 +513,7 @@ DECLARE_LRECORD (charset, struct Lisp_Charset);
 
 #define CHARSET_PRIVATE_P(cs) LEADING_BYTE_PRIVATE_P (CHARSET_LEADING_BYTE (cs))
 
+#define XCHARSET_ID(cs)		  CHARSET_ID           (XCHARSET (cs))
 #define XCHARSET_NAME(cs)	  CHARSET_NAME         (XCHARSET (cs))
 #define XCHARSET_REP_BYTES(cs)	  CHARSET_REP_BYTES    (XCHARSET (cs))
 #define XCHARSET_COLUMNS(cs)	  CHARSET_COLUMNS      (XCHARSET (cs))

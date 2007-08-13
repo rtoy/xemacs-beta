@@ -102,6 +102,8 @@ typedef EMACS_INT Lisp_Object;
 
 # define XMARK(a) ((void) ((a) |= (MARKBIT)))
 # define XUNMARK(a) ((void) ((a) &= (~(MARKBIT))))
+#else
+# define XUNMARK(a) DO_NOTHING
 #endif
 
 /*

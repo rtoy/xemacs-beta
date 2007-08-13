@@ -48,6 +48,7 @@ Boston, MA 02111-1307, USA.  */
 #include "sysproc.h" /* for select() */
 
 #ifdef MULE
+#include "mule-ccl.h"
 #include "mule-coding.h" /* for CCL conversion */
 #endif
 
@@ -184,7 +185,7 @@ separate_textual_runs (unsigned char *text_storage,
 	    Lisp_Object ccl_prog = XCHARSET_CCL_PROGRAM (charset);
 	    need_ccl_conversion = !NILP (ccl_prog);
 	    if (need_ccl_conversion)
-	      set_ccl_program (&char_converter, ccl_prog, 0, 0, 0);
+	      setup_ccl_program (&char_converter, ccl_prog);
 	  }
 #endif
 	}
@@ -202,12 +203,12 @@ separate_textual_runs (unsigned char *text_storage,
 #ifdef MULE
       if (need_ccl_conversion)
 	{
-	  char_converter.reg[0] = byte1;
-	  char_converter.reg[1] = byte2;
-	  char_converter.ic = 0; /* start at beginning each time */
+	  char_converter.reg[0] = XCHARSET_ID (charset);
+	  char_converter.reg[1] = byte1;
+	  char_converter.reg[2] = byte2;
 	  ccl_driver (&char_converter, 0, 0, 0, 0);
-	  byte1 = char_converter.reg[0];
-	  byte2 = char_converter.reg[1];
+	  byte1 = char_converter.reg[1];
+	  byte2 = char_converter.reg[2];
 	}
 #endif
       *text_storage++ = (unsigned char) byte1;

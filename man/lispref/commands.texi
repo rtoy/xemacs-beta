@@ -1309,17 +1309,147 @@ argument and fill in the fields of this event; or they make accept
 either an event object or @code{nil}, creating the event object first in
 the latter case.
 
-@defun allocate-event
-This function returns an empty event structure.  WARNING: The event
-object returned may be a reused one; see the function
-@code{deallocate-event}.
+@defun make-event &optional type plist
+This function creates a new event structure.  If no arguments are
+specified, the created event will be empty.  To specify the event type,
+use the @var{type} argument.  The allowed types are @code{empty},
+@code{key-press}, @code{button-press}, @code{button-release}, or
+@code{motion}.
+
+@var{plist} is a property list, the properties being compatible to those
+returned by @code{event-properties}.  For events other than
+@code{empty}, it is mandatory to specify certain properties.  For
+@code{empty} events, @var{plist} must be @code{nil}.  The list is
+@dfn{canonicalized}, which means that if a property keyword is present
+more than once, only the first instance is taken into account.
+Specifying an unknown or illegal property signals an error.
+
+The following properties are allowed:
+
+@table @b
+@item @code{channel}
+The event channel.  This is a frame or a console.  For mouse events (of
+type @code{button-press}, @code{button-release} and @code{motion}), this
+must be a frame.  For key-press events, it must be a console.  If
+channel is unspecified by @var{plist}, it will be set to the selected
+frame or selected console, as appropriate.
+
+@item @code{key}
+The event key.  This is either a symbol or a character.  It is allowed
+(and required) only for key-press events.
+
+@item @code{button}
+The event button.  This an integer, either 1, 2 or 3.  It is allowed
+only for button-press and button-release events.
+
+@item @code{modifiers}
+The event modifiers.  This is a list of modifier symbols.  It is allowed 
+for key-press, button-press, button-release and motion events.
+
+@item @code{x}
+The event X coordinate.  This is an integer.  It is relative to the
+channel's root window, and is allowed for button-press, button-release
+and motion events.
+
+@item @code{y}
+The event Y coordinate.  This is an integer.  It is relative to the
+channel's root window, and is allowed for button-press, button-release
+and motion events.  This means that, for instance, to access the
+toolbar, the @code{y} property will have to be negative.
+
+@item @code{timestamp}
+The event timestamp, a non-negative integer.  Allowed for all types of
+events.
+@end table
+
+@emph{WARNING}: the event object returned by this function may be a
+reused one; see the function @code{deallocate-event}.
+
+The events created by @code{make-event} can be used as non-interactive
+arguments to the functions with an @code{(interactive "e")}
+specification.
+
+Here are some basic examples of usage:
+
+@lisp
+@group
+;; @r{Create an empty event.}
+(make-event)
+     @result{} #<empty-event>
+@end group
+
+@group
+;; @r{Try creating a key-press event.}
+(make-event 'key-press)
+     @error{} Undefined key for keypress event
+@end group
+
+@group
+;; @r{Creating a key-press event, try No. 2.}
+(make-event 'key-press '(key home))
+     @result{} #<keypress-event home>
+@end group
+
+@group
+;; @r{Create a key-press event of dubious fame.}
+(make-event 'key-press '(key escape modifiers (meta alt control shift)))
+     @result{} #<keypress-event control-meta-alt-shift-escape>
+@end group
+
+@group
+;; @r{Create a M-button1 event at coordinates defined by variables
+;; @var{x} and @var{y}.}
+(make-event 'button-press `(button 1 modifiers (meta) x ,x y ,y))
+     @result{} #<buttondown-event meta-button1>
+@end group
+
+@group
+;; @r{Create a simmilar button-release event.}
+(make-event 'button-release `(button 1 modifiers (meta) x ,x y ,x))
+     @result{} #<buttonup-event meta-button1up>
+@end group
+
+@group
+;; @r{Create a mouse-motion event.}
+(make-event 'motion '(x 20 y 30))
+     @result{} #<motion-event 20, 67>
+
+;; @r{(the Y coordinate is printed incompatibly; however:)}
+(event-properties (make-event 'motion '(x 20 y 30)))
+     @result{} (channel #<x-frame "emacs" 0x8e2> x 20 y 30 modifiers nil timestamp 0)
+@end group
+@end lisp
+
+In conjunction with @code{event-properties}, you can use
+@code{make-event} to create modified copies of existing events.  For
+instance, the following code will return an @code{equal} copy of
+@var{event}:
+
+@lisp
+(make-event (event-type @var{event})
+            (event-properties @var{event}))
+@end lisp
+
+Note, however, that you cannot use @code{make-event} as the generic
+replacement for @code{copy-event}, because it does not allow creating
+all of the event types.
+
+To create a changed copy of an event, you can use the canonicalization
+feature of @var{plist}.  The following example creates a copy of
+@var{event}, but with @code{modifiers} reset to @code{nil}.
+
+@lisp
+(make-event (event-type @var{event})
+            (append '(modifiers nil)
+                    (event-properties @var{event})))
+@end lisp
 @end defun
 
 @defun copy-event event1 &optional event2
 This function makes a copy of the given event object.  If a second
 argument is given, the first event is copied into the second and the
 second is returned.  If the second argument is not supplied (or is
-@code{nil}) then a new event will be made as with @code{allocate-event}.
+@code{nil}) then a new event will be made.
 @end defun
 
 @defun deallocate-event event

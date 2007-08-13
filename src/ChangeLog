@@ -1,3 +1,110 @@
+1997-11-15  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* console.h
+	  mswindows is now a window-system according to
+	  CONSOLE_TYPESYM_WIN_P
+
+	* device.msw.c
+	  Now calls init_baud_rate & init_one_device
+
+	* msw-proc.c
+	  Fixed C-key so key is returned unshifted
+
+	* redisplay-msw.c
+	  Modeline and vertical divider appearance tweaks
+
+
+1997-11-14  SL Baur  <steve@altair.xemacs.org>
+
+	* console.c (Fsuspend_emacs): Fix docstring.  Evaluating
+	`suspend-hook' cannot stop suspension.
+
+1997-11-14  Marc Paquette  <marcpa@cam.org>
+
+	* callproc.c (Fcall_process_internal): Do CRLF -> LF
+	conversion when reading process output.
+
+1997-11-14  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* redisplay.c (init_redisplay): Handle not having DISPLAY and not
+	having TTY support.
+
+1997-11-14  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* events.c (Fmake_event): Support DND events.
+
+1997-11-10  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* events.c (Fmake_event): Reenable the event creation code.
+	(Fmake_event): Canonicalize the plist.
+
+1997-11-13  SL Baur  <steve@altair.xemacs.org>
+
+	* mule-charset.c (Fcharset_id): Typecast result to Lisp_Object.
+
+	* mule-ccl.c (CCL_WRITE_STRING): Reorder parens to avoid compiler
+	barf on Lisp_Object.
+	(Fregister_ccl_program): Remove unused variable idx.
+
+	* mule-canna.c: Fix declaration of mule_strlen().
+
+	* mule-coding.h (ENCODE_SJIS): Parenthesize first two params to
+	avoid compilation problems.
+
+1997-11-13  Olivier Galibert  <olivier.galibert@mines.u-nancy.fr>
+
+	* mule-charset.h: Added preliminary support for charset Ids.
+
+	* mule-charset.c: Added preliminary support for charset Ids.
+
+	* redisplay-msw.c (separate_textual_runs): Synched with FSF 20.2
+ 	ccl API.
+
+	* redisplay-x.c (separate_textual_runs): Synched with FSF 20.2 ccl
+ 	API.
+
+	* mule-coding.c: Synched with FSF 20.2 ccl API.
+
+	* mule-coding.h: Moved ccl part to mule-ccl.h.
+
+	* mule-ccl.c: Synched with FSF 20.2.
+
+	* mule-ccl.h: New file.
+
+Thu Nov 13 21:34:13 1997  Marc Paquette  <marcpa@cam.org>
+
+	* nt.c (REG_ROOT): Use a registry key different that the one for
+	NTEmacs.
+
+1997-11-12  SL Baur  <steve@altair.xemacs.org>
+
+	* lrecord.h: Fix typo in set_lheader_implementation.
+	From: Robert Pluim <Robert_Pluim@BayNetworks.COM>
+
+1997-11-13  Olivier Galibert  <galibert@renaissance.loria.fr>
+
+	* configure.in:  Remove HAVE_TIMEZONE_DECL test.
+
+1997-11-13  Olivier Galibert  <galibert@renaissance.loria.fr>
+
+	* s/freebsd.h: Remove HAVE_TIMEZONE_DECL forced value.
+
+	* config.h.in: Remove HAVE_TIMEZONE_DECL reference.
+
+	* systime.h: Remove timezone conditional declaration.
+
+1997-11-12  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* console.c: Use symbol_value_forward_lheader_initializer
+	  in various DEFVAR* macros.  Forgot this in previous
+	  related patch.
+
+	* lisp-disunion.h: Provide a no-op XUNMARK macro for
+	  the GC error checking code even if GCMARKBITS is not
+	  greater than 0.
+
+	* lisp-union.h: Ditto.
+
 1997-11-10  Hrvoje Niksic  <hniksic@srce.hr>
 
 	* event-stream.c: Make echo_keystrokes a Lisp_Object.
@@ -214,15 +321,6 @@ Sun November 01 12:00:00 1997 <jhar@tardis.ed.ac.uk>
 
 	* events.c (Fevent_modeline_position): Return nil if event is not
 	over modeline, as the docstring says.
-
-	* utils/facemenu.el (facemenu-insert-menu-entry): Check for
-	menubar availability.
-
-	* utils/easymenu.el (easy-menu-change): Check for menubar
- 	availability.
-
-	* custom/wid-edit.el (widget-echo-help): Use `help-echo' as label
- 	for help-echo messages.
 
 1997-11-05  Martin Buchholz  <Martin Buchholz <martin@xemacs.org>>
 

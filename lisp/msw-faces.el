@@ -1,4 +1,4 @@
-;;; w32-faces.el --- win32-specific face stuff.
+;;; msw-faces.el --- mswindows-specific face stuff.
 
 ;;; Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
 ;;; Copyright (C) 1995, 1996 Ben Wing.
@@ -7,7 +7,7 @@
 ;; Modified by:  Chuck Thompson
 ;; Modified by:  Ben Wing
 ;; Modified by:  Martin Buchholz
-;; Rewritten for win32 by:  Jonathan Harris
+;; Rewritten for mswindows by:  Jonathan Harris
 
 ;; This file is part of XEmacs.
 
@@ -26,78 +26,78 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-;; This file does the magic to parse w32 font names, and make sure that the
+;; This file does the magic to parse mswindows font names, and make sure that the
 ;; default and modeline attributes of new frames are specified enough.
 
-(defun w32-init-global-faces ()
+(defun mswindows-init-global-faces ()
   )
 
 ;;; ensure that the default face has some reasonable fallbacks if nothing
 ;;; else is specified.
-(defun w32-init-device-faces (device)
+(defun mswindows-init-device-faces (device)
   (or (face-font 'default 'global)
       (set-face-font 'default "Courier New:Regular:10")
       'global)
   (or (face-foreground 'default 'global)
-      (set-face-foreground 'default "black" 'global 'w32))
+      (set-face-foreground 'default "black" 'global 'mswindows))
   (or (face-background 'default 'global)
-      (set-face-background 'default "white" 'global 'w32))
+      (set-face-background 'default "white" 'global 'mswindows))
   (or (face-background 'modeline 'global)
-      (set-face-background 'modeline "grey" 'global 'w32))
+      (set-face-background 'modeline "grey75" 'global 'mswindows))
   )
 
 
-(defun w32-init-frame-faces (frame)
+(defun mswindows-init-frame-faces (frame)
   )
 
 
 ;;; Fill in missing parts of a font spec. This is primarily intended as a
 ;;; helper function for the functions below.
-;;; w32 fonts look like:
+;;; mswindows fonts look like:
 ;;;	fontname[:[weight ][style][:pointsize[:effects[:charset]]]]
-;;; A minimal w32 font spec looks like:
+;;; A minimal mswindows font spec looks like:
 ;;;	Courier New
-;;; A maximal w32 font spec looks like:
+;;; A maximal mswindows font spec looks like:
 ;;;	Courier New:Bold Italic:10:underline strikeout:ansi
 ;;; Missing parts of the font spec should be filled in with these values:
 ;;;	Courier New:Normal:10::ansi
-(defun w32-canicolize-font (font &optional device)
-  "Given a win32 font specification, this converts it to canonical form."
+(defun mswindows-canicolize-font (font &optional device)
+  "Given a mswindows font specification, this converts it to canonical form."
   nil)
 
-(defun w32-make-font-bold (font &optional device)
-  "Given a win32 font specification, this attempts to make a bold font.
+(defun mswindows-make-font-bold (font &optional device)
+  "Given a mswindows font specification, this attempts to make a bold font.
 If it fails, it returns nil."
   nil)
 
-(defun w32-make-font-unbold (font &optional device)
-  "Given a win32 font specification, this attempts to make a non-bold font.
+(defun mswindows-make-font-unbold (font &optional device)
+  "Given a mswindows font specification, this attempts to make a non-bold font.
 If it fails, it returns nil."
   nil)
 
-(defun w32-make-font-italic (font &optional device)
-  "Given a win32 font specification, this attempts to make an `italic' font.
+(defun mswindows-make-font-italic (font &optional device)
+  "Given a mswindows font specification, this attempts to make an `italic' font.
 If it fails, it returns nil."
   nil)
 
-(defun w32-make-font-unitalic (font &optional device)
-  "Given a win32 font specification, this attempts to make a non-italic font.
+(defun mswindows-make-font-unitalic (font &optional device)
+  "Given a mswindows font specification, this attempts to make a non-italic font.
 If it fails, it returns nil."
   nil)
 
-(defun w32-make-font-bold-italic (font &optional device)
-  "Given a win32 font specification, this attempts to make a `bold-italic'
+(defun mswindows-make-font-bold-italic (font &optional device)
+  "Given a mswindows font specification, this attempts to make a `bold-italic'
 font. If it fails, it returns nil."
   nil)
 
-(defun w32-find-smaller-font (font &optional device)
+(defun mswindows-find-smaller-font (font &optional device)
   "Loads a new, version of the given font (or font name).
 Returns the font if it succeeds, nil otherwise.
 If scalable fonts are available, this returns a font which is 1 point smaller.
 Otherwise, it returns the next smaller version of this font that is defined."
   nil)
 
-(defun w32-find-larger-font (font &optional device)
+(defun mswindows-find-larger-font (font &optional device)
   "Loads a new, slightly larger version of the given font (or font name).
 Returns the font if it succeeds, nil otherwise.
 If scalable fonts are available, this returns a font which is 1 point larger.

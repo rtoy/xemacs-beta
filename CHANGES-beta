@@ -1,4 +1,11 @@
 							-*- indented-text -*-
+to 20.4 beta5 "Anglo-Nubian"
+-- CCL synched with Emacs 20.2 courtesy of Olivier Galibert
+-- various updates from Hrvoje Niksic and Kyle Jones
+-- MS Windows updates from Marc Paquette and Jonathon Harris
+-- FAQ update courtesy of Andreas Kaempf
+-- miscellaneous bug fixes
+
 to 20.4 beta4 "American Cashmere"
 -- Major changes in portable dumping/Lisp_Object code courtesy of Kyle Jones
 -- Miscellaneous patches from Kyle Jones, Hrvoje Niksic

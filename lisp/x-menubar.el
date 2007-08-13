@@ -579,7 +579,7 @@
 	    (strokes-mode)
 	  (beep)
 	  (message "This option requires a window system."))
-	:style toggle :selected (and (fboundp strokes-mode)
+	:style toggle :selected (and (boundp 'strokes-mode)
 				     strokes-mode
 				     window-system)])
       ("Open URLs With"

@@ -23,16 +23,45 @@ Boston, MA 02111-1307, USA.  */
 /* No code in XEmacs #includes config.h twice, but some of the code
    intended to work with other packages as well (like gmalloc.c) 
    think they can include it as many times as they like.  */
-#ifndef _CONFIG_H_
-#define _CONFIG_H_
-
-/* #### This will be removed in 19.15. */
-#define LOSING_BYTECODE
+#ifndef _SRC_CONFIG_H_
+#define _SRC_CONFIG_H_
 
 #define NTHEAP_PROBE_BASE 1
+#undef LOSING_BYTECODE
 
-/* These are all defined in the top-level Makefile by configure.
-   They're here only for reference.  */
+/* Use this to add code in a structured way to FSF-maintained source
+   files so as to make it obvious where XEmacs changes are. */
+#define XEMACS
+
+/* Allow s&m files to differentiate OS versions without having
+   multiple files to maintain. */
+#undef OS_RELEASE
+
+/* The configuration name.  This is used as the install directory name
+   for the lib-src programs. */
+#undef EMACS_CONFIGURATION
+
+/* The configuration options.  This is exported to Lisp. */
+#undef EMACS_CONFIG_OPTIONS
+
+/* The version info from xemacs.mak via version.sh. Used in #pragma ident
+   in emacs.c */
+#if 0
+#undef EMACS_MAJOR_VERSION
+#undef EMACS_MINOR_VERSION
+#undef EMACS_BETA_VERSION
+#undef EMACS_VERSION
+#undef XEMACS_CODENAME
+#endif
+
+/* Make all functions available on AIX.  See AC_AIX. */
+#undef _ALL_SOURCE
+
+/* Used to identify the XEmacs version in stack traces. */
+#undef STACK_TRACE_EYE_CATCHER
+
+/* Allow the configurer to specify (additional) package directories. */
+#undef PACKAGE_PATH
 
 /* Define LISP_FLOAT_TYPE if you want XEmacs to support floating-point
    numbers. */
@@ -47,20 +76,26 @@ Boston, MA 02111-1307, USA.  */
 /* Define HAVE_TTY if you want TTY support compiled in. */
 #undef HAVE_TTY
 
-/* Define HAVE_X_WINDOWS if you want to use the X window system.  */
-#define HAVE_X_WINDOWS
+/* Compile in support for the X window system? */
+/* #undef HAVE_X_WINDOWS -- defined in xemacs.mak */
 
-/* Define HAVE_NEXTSTEP if you want to use the NeXTstep window system.  */
-#undef HAVE_NEXTSTEP
-
-/* Define HAVE_WINDOW_SYSTEM if any windowing system is available.  */
-#if defined (HAVE_X_WINDOWS) || defined (HAVE_NEXTSTEP)
-#define HAVE_WINDOW_SYSTEM
+/* Defines for building X applications */
+#ifdef HAVE_X_WINDOWS
+/* The following will be defined if xmkmf thinks they are necessary */
+#undef SVR4
+#undef SYSV
+#undef AIXV3
+#undef _POSIX_SOURCE
+#undef _BSD_SOURCE
+#undef _GNU_SOURCE
+#undef X_LOCALE
+#undef NARROWPROTO
+/* The following should always be defined, no matter what xmkmf thinks. */
+#ifndef NeedFunctionPrototypes
+#define NeedFunctionPrototypes 1
 #endif
-
-/* Define HAVE_UNIXOID_EVENT_LOOP if we use select() to wait for events.  */
-#if defined (HAVE_X_WINDOWS) || defined (HAVE_TTY)
-#define HAVE_UNIXOID_EVENT_LOOP
+#ifndef FUNCPROTO
+#define FUNCPROTO 15
 #endif
 
 /* Define this if you're using XFree386.  */
@@ -69,6 +104,39 @@ Boston, MA 02111-1307, USA.  */
 #undef THIS_IS_X11R4
 #undef THIS_IS_X11R5
 #define THIS_IS_X11R6
+
+/* Define HAVE_XPM if you have the `xpm' library and want XEmacs to use it. */
+#undef HAVE_XPM
+
+/* Define HAVE_XFACE if you have the `compface' library and want to use it.
+   This will permit X-face pixmaps in mail and news messages to display
+   quickly. */
+#undef HAVE_XFACE
+
+#define HAVE_IMAGEMAGICK
+
+/* Define HAVE_XMU if you have the Xmu library.  This should always be
+   the case except on losing HPUX systems. */
+#define HAVE_XMU
+
+/* Define HAVE_XAUTH if the Xauth library is present.  This will add
+   some extra functionality to gnuserv. */
+#undef HAVE_XAUTH
+
+/* Define HAVE_XLOCALE_H if X11/Xlocale.h is present. */
+#define HAVE_XLOCALE_H
+
+#endif /* HAVE_X_WINDOWS */
+
+/* Define HAVE_WINDOW_SYSTEM if any windowing system is available.  */
+#if defined (HAVE_X_WINDOWS) || defined (HAVE_NEXTSTEP) || defined (HAVE_MS_WINDOWS)
+#define HAVE_WINDOW_SYSTEM
+#endif
+
+/* Define HAVE_UNIXOID_EVENT_LOOP if we use select() to wait for events.  */
+#if defined (HAVE_X_WINDOWS) || defined (HAVE_TTY) || defined (HAVE_MS_WINDOWS)
+#define HAVE_UNIXOID_EVENT_LOOP
+#endif
 
 /* Define USER_FULL_NAME to return a string
    that is the user's full name.
@@ -80,9 +148,6 @@ Boston, MA 02111-1307, USA.  */
    field contains the right thing, use pw_name,
    giving the user's login name, since that is better than nothing.  */
 #define USER_FULL_NAME pw->pw_gecos
-#if 0
-#define USER_FULL_NAME unknown
-#endif
 
 /* Define AMPERSAND_FULL_NAME if you use the convention
    that & in the full name stands for the login id.  */
@@ -103,7 +168,9 @@ Boston, MA 02111-1307, USA.  */
 
 #define HAVE_SYS_TIME_H
 #define HAVE_LOCALE_H
+#ifdef HAVE_X_WINDOWS
 #define HAVE_X11_LOCALE_H
+#endif
 #define STDC_HEADERS
 #define HAVE_LIMITS_H
 #define HAVE_GETCWD
@@ -114,6 +181,8 @@ Boston, MA 02111-1307, USA.  */
 #define CLASH_DETECTION
 #endif
 
+#undef HAVE_LIBKSTAT
+#undef HAVE_LIBINTL
 #undef HAVE_LIBDNET
 #undef HAVE_LIBRESOLV
 
@@ -125,7 +194,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* Define if `struct timeval' is declared by <sys/time.h>.  */
 #define HAVE_TIMEVAL
-
 
 #undef TM_IN_SYS_TIME
 #undef HAVE_TM_ZONE
@@ -144,19 +212,19 @@ Boston, MA 02111-1307, USA.  */
 #undef GETTIMEOFDAY_ONE_ARGUMENT
 #endif
 
-/* Define in keyword `inline' exists. */
-#undef HAVE_INLINE
-
-#undef HAVE_ALLOCA_H
-#undef HAVE_VFORK_H
-#undef vfork
+/* Is the timezone variable already declared in system headers? */
+#undef HAVE_TIMEZONE_DECL
 
 #undef HAVE_MMAP
 #undef HAVE_STRCOLL
+#undef HAVE_GETPGRP
+#undef GETPGRP_VOID
 
 #undef SIZEOF_SHORT
 #undef SIZEOF_INT
 #undef SIZEOF_LONG
+#undef SIZEOF_LONG_LONG
+#undef SIZEOF_VOID_P
 
 #undef HAVE_ACOSH
 #undef HAVE_ASINH
@@ -217,9 +285,6 @@ Boston, MA 02111-1307, USA.  */
 
 #undef NLIST_STRUCT
 
-#undef UNEXEC_SRC
-#undef AIX_SMT_EXP
-
 /* Define HAVE_SOCKS if you have the `socks' library and want XEmacs to
    use it.  */
 #undef HAVE_SOCKS
@@ -228,80 +293,23 @@ Boston, MA 02111-1307, USA.  */
    want XEmacs to use it.  */
 #undef HAVE_TERM
 
-/* Define HAVE_XPM if you have the `xpm' library and want XEmacs to use it. */
-#undef HAVE_XPM
-
-/* Define HAVE_XFACE if you have the `compface' library and want to use it.
-   This will permit X-face pixmaps in mail and news messages to display
-   quickly. */
-#undef HAVE_XFACE
-
-/* Define HAVE_GIF if you want XEmacs to support converting GIF
-   (Graphics Interchange Format) images. */
-#undef HAVE_GIF
-
-/* Define HAVE_JPEG if you have the JPEG library and want XEmacs to use it.
-   This is for converting JPEG images. */
-#undef HAVE_JPEG
-
-/* Define HAVE_PNG if you have the PNG library and want XEmacs to use it.
-   This is for converting PNG images. */
-#undef HAVE_PNG
-
-/* Define HAVE_PNG_GNUZ if you want to use -lgz instead of -lz for PNG. */
-#undef HAVE_PNG_GNUZ
-
-/* Define HAVE_TIFF if you have the TIFF library and want XEmacs to use it.
-   This is for converting TIFF images. */
-#undef HAVE_TIFF
-
-/* Define HAVE_XMU if you have the Xmu library.  This should always be
-   the case except on losing HPUX systems. */
-#define HAVE_XMU
-
 /* Define HAVE_DBM if you want to use the DBM libraries */
 #undef HAVE_DBM
 
-/* Define HAVE_GNU_DBM if you want to use the GNU DBM libraries;
-   if you define this, you should also define HAVE_DBM */
-#undef HAVE_GNU_DBM
-
 /* Define HAVE_BERKELEY_DB if you want to use the BerkDB libraries */
 #undef HAVE_BERKELEY_DB
-
-/* Define HAVE_LIBGDBM if you have -lgdbm (separated from HAVE_DBM
-   stuff because FreeBSD has the DBM routines in libc) */
-#undef HAVE_LIBGDBM
-
-/* Define HAVE_LIBDBM if you have -ldbm */
-#undef HAVE_LIBDBM
-
-/* Define HAVE_LIBDB if you have -ldb */
-#undef HAVE_LIBDB
+/* Full #include file path for Berkeley DB's db.h */
+#undef DB_H_PATH
 
 #if defined (HAVE_DBM) || defined (HAVE_BERKELEY_DB)
 # define HAVE_DATABASE
 #endif
 
-/* Define HAVE_XAUTH if the Xauth library is present.  This will add
-   some extra functionality to gnuserv. */
-#undef HAVE_XAUTH
-
-/* Define HAVE_XLOCALE_H if X11/Xlocale.h is present. */
-#define HAVE_XLOCALE_H
-
 /* Define HAVE_NCURSES if -lncurses is present. */
 #undef HAVE_NCURSES
-
-/* Define HAVE_NCURSES_CURSES_H if ncurses/curses.h is present. */
-#undef HAVE_NCURSES_CURSES_H
-
-/* Define HAVE_NCURSES_TERM_H if ncurses/term.h is present. */
-#undef HAVE_NCURSES_TERM_H
-
-/* Define EPOCH to include extra functionality that was present in Epoch.
-   This code has received only limited testing. */
-#undef EPOCH
+/* Full #include file paths for ncurses' curses.h and term.h. */
+#undef CURSES_H_PATH
+#undef TERM_H_PATH
 
 #define LOWTAGS
 
@@ -319,6 +327,7 @@ Boston, MA 02111-1307, USA.  */
 /* Check the entire extent structure of a buffer each time an extent
    change is done, and do other extent-related checks. */
 #define ERROR_CHECK_EXTENTS
+
 /* Make sure that all X... macros are dereferencing the correct type,
    and that all XSET... macros (as much as possible) are setting the
    correct type of structure.  Highly recommended for all
@@ -357,28 +366,50 @@ Boston, MA 02111-1307, USA.  */
 /* Allow the user to override the default value of PURESIZE at configure
    time.  This must come before we include the sys files in order for
    it to be able to override any changes in them. */
-#undef PURESIZE
+#undef RAW_PURESIZE
 
+/* Define this if you want level 2 internationalization compliance
+   (localized collation and formatting).  Generally this should be
+   defined, unless your system doesn't have the strcoll() and
+   setlocale() library routines.  This really should be (NOT! -mrb)
+   defined in the appropriate s/ or m/ file. */
+#undef I18N2
 
-/* Define this if you want to use the Common Desktop Environment
-*/
+/* Define this if you want level 3 internationalization compliance
+   (localized messaging).  This will cause a small runtime performance
+   penalty, as the strings are read from the message catalog(s).
+   For this you need the gettext() and dgetext() library routines.
+   WARNING, this code is under construction. */
+#undef I18N3
+
+/* Compile in support for CDE (Common Desktop Environment) drag and drop?
+   Requires libDtSvc, which typically must be present at runtime.  */
 #undef HAVE_CDE
+
+/* Compile in support for OffiX Drag and Drop? */
+#undef HAVE_OFFIX_DND
+
+/* Compile in support for proper session-management. */
+#undef HAVE_SESSION
 
 /* Define this if you want Mule support (multi-byte character support).
    There may be some performance penalty, although it should be small
    if you're working with ASCII files. */
-#define MULE
+/* #undef MULE */
 
+#ifdef MULE
 /* Do we want to use X window input methods for use with Mule? (requires X11R5)
    If so, use raw Xlib or higher level Motif interface? */
-#define HAVE_XIM
-#define XIM_XLIB
+#undef HAVE_XIM
+#undef XIM_XLIB
 #undef XIM_MOTIF
 
 /* Non-XIM input methods for use with Mule. */
 #undef HAVE_CANNA
 #undef HAVE_WNN
 #undef WNN6
+
+#endif
 
 /* enable special GNU Make features in the Makefiles. */
 #undef USE_GNU_MAKE
@@ -431,37 +462,9 @@ Boston, MA 02111-1307, USA.  */
 #define SYSTEM_MALLOC
 #endif
 
-/* The configuration name.  This is used as the install directory name
-   for the lib-src programs. */
-#undef EMACS_CONFIGURATION
-
 /* Define REL_ALLOC if you want to use the relocating allocator for
    buffer space. */
 #undef REL_ALLOC
-
-/* Define LD_SWITCH_SITE to contain any special flags your loader may need.  */
-#undef LD_SWITCH_SITE
-
-/* Define C_SWITCH_SITE to contain any special flags your compiler needs.  */
-#undef C_SWITCH_SITE
-
-/* Define LD_SWITCH_X_SITE to contain any special flags your loader
-   may need to deal with X Windows.  For instance, if you've defined
-   HAVE_X_WINDOWS above and your X libraries aren't in a place that
-   your loader can find on its own, you might want to add "-L/..." or
-   something similar.  */
-#undef LD_SWITCH_X_SITE
-
-/* Define LD_SWITCH_X_SITE_AUX with an -R option
-   in case it's needed (for Solaris, for example).  */
-#undef LD_SWITCH_X_SITE_AUX
-
-/* Define C_SWITCH_X_SITE to contain any special flags your compiler
-   may need to deal with X Windows.  For instance, if you've defined
-   HAVE_X_WINDOWS above and your X include files aren't in a place
-   that your compiler can find on its own, you might want to add
-   "-I/..." or something similar.  */
-#undef C_SWITCH_X_SITE
 
 /* Define the return type of signal handlers if the s-xxx file
    did not already do so.  */
@@ -473,14 +476,17 @@ Boston, MA 02111-1307, USA.  */
 #define SIGRETURN return
 #endif
 
+/* Allow the source to use standard types */
+#undef size_t
+#undef pid_t
+#undef mode_t
+#undef off_t
+#undef uid_t
+#undef gid_t
+
 /* Define DYNODUMP if it is necessary to properly dump on this system.
    Currently this is only Solaris. */
 #undef DYNODUMP
-
-/* Define NEED_XILDOFF if the -xildoff flag must be passed to cc to
-   avoid invoking the incremental linker ild which is incompatible
-   with dynodump.  This is needed for recent Sunsoft compilers. */
-#undef NEED_XILDOFF
 
 /* Define ENERGIZE to compile with support for the Energize Programming System.
    If you do this, don't forget to define ENERGIZE in lwlib/Imakefile as well.
@@ -517,6 +523,8 @@ Boston, MA 02111-1307, USA.  */
 /* Define TOOLTALK if your site supports the ToolTalk library. */
 #undef TOOLTALK
 
+#ifdef HAVE_X_WINDOWS
+
 #undef LWLIB_USES_MOTIF
 #define LWLIB_MENUBARS_LUCID
 #undef LWLIB_MENUBARS_MOTIF
@@ -532,6 +540,7 @@ Boston, MA 02111-1307, USA.  */
 #define HAVE_DIALOGS
 #undef HAVE_TOOLBARS
 
+#endif
 
 #if defined (HAVE_MENUBARS) || defined (HAVE_DIALOGS)
 #define HAVE_POPUPS
@@ -665,4 +674,24 @@ on various systems. */
 # define JMP_BUF jmp_buf
 #endif
 
-#endif /* _CONFIG_H_ */
+/* movemail options */
+/* Should movemail use POP3 for mail access? */
+#undef MAIL_USE_POP
+/* Should movemail use kerberos for POP authentication? */
+#undef KERBEROS
+/* Should movemail use hesiod for getting POP server host? */
+#undef HESIOD
+/* Determine type of mail locking. */
+/* Play preprocessor games so that configure options override s&m files */
+#undef REAL_MAIL_USE_LOCKF
+#undef REAL_MAIL_USE_FLOCK
+#undef MAIL_USE_LOCKF
+#undef MAIL_USE_FLOCK
+#ifdef REAL_MAIL_USE_FLOCK
+#define MAIL_USE_FLOCK
+#endif
+#ifdef REAL_MAIL_USE_LOCKF
+#define MAIL_USE_LOCKF
+#endif
+
+#endif /* _SRC_CONFIG_H_ */

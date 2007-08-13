@@ -201,6 +201,8 @@ extern int pure_size;
 # define XMARKBIT(a) ((a).gu.markbit)
 # define XMARK(a) ((void) (XMARKBIT (a) = 1))
 # define XUNMARK(a) ((void) (XMARKBIT (a) = 0))
+#else
+# define XUNMARK(a) DO_NOTHING
 #endif
 
 /* Use this for turning a (void *) into a Lisp_Object, as when the

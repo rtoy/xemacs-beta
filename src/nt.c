@@ -590,7 +590,7 @@ request_sigio (void)
   return 0;
 }
 
-#define REG_ROOT "SOFTWARE\\GNU\\Emacs"
+#define REG_ROOT "SOFTWARE\\GNU\\XEmacs"
 
 LPBYTE 
 nt_get_resource (key, lpdwtype)

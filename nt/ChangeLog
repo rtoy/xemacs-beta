@@ -1,5 +1,15 @@
 Thu September 25 23:06:44 1997 davidh
 
+	* xemacs.mak updated to make the build as simple as typing
+	  nmake -f xemacs.mak. Also support for native gui included 
+	  which should mean the w32 directory is no longer required.
+
+	* config.h synced with config.h.in from 20.3-b2
+
+	* synced in changes to support native gui.
+
+Thu September 25 23:06:44 1997 davidh
+
 	* August Hill provided a patch to xemacs.mak to greatly simplify
 	  the build - the DOC file gets created correctly. 
 

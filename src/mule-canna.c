@@ -194,7 +194,7 @@ static Lisp_Object kanjiYomiList (int, int);
 #ifdef CANNA_MULE
 static void m2c (unsigned char *, int, unsigned char *);
 static Lisp_Object mule_make_string (unsigned char *, int);
-static mule_strlen (unsigned char *, int);
+static int mule_strlen (unsigned char *, int);
 static void count_char (unsigned char *,int, int, int, int *, int *, int *);
 #define make_string mule_make_string
 #endif

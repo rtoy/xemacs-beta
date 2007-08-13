@@ -1,4 +1,4 @@
-/* Win32 specific event-handling.
+/* mswindows specific event-handling.
    Copyright (C) 1997 Jonathan Harris.
 
 This file is part of XEmacs.
@@ -56,32 +56,32 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include "lisp.h"
 
-#include "console-w32.h"
+#include "console-msw.h"
 #include "device.h"
 #include "frame.h"
 #include "events.h"
-#include "event-w32.h"
+#include "event-msw.h"
 
-#define W32_FRAME_STYLE WS_CLIPCHILDREN|WS_CLIPSIBLINGS|WS_TILEDWINDOW
-#define W32_POPUP_STYLE WS_CLIPCHILDREN|WS_CLIPSIBLINGS|WS_CAPTION|WS_POPUP
+#define MSWINDOWS_FRAME_STYLE WS_CLIPCHILDREN|WS_CLIPSIBLINGS|WS_TILEDWINDOW
+#define MSWINDOWS_POPUP_STYLE WS_CLIPCHILDREN|WS_CLIPSIBLINGS|WS_CAPTION|WS_POPUP
 
-static LRESULT WINAPI w32_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-static Lisp_Object w32_find_console (HWND hwnd);
-static Lisp_Object w32_find_frame (HWND hwnd);
-static Lisp_Object w32_key_to_emacs_keysym(int w32_key);
+static LRESULT WINAPI mswindows_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+static Lisp_Object mswindows_find_console (HWND hwnd);
+static Lisp_Object mswindows_find_frame (HWND hwnd);
+static Lisp_Object mswindows_key_to_emacs_keysym(int mswindows_key);
 
 /*
  * Entry point for the "windows" message-processing thread
  */
-DWORD w32_win_thread()
+DWORD mswindows_win_thread()
 {
   WNDCLASS wc;
   MSG msg;
-  w32_waitable_info_type info;
+  mswindows_waitable_info_type info;
 
   /* Register the main window class */
-  wc.style = /* CS_HREDRAW | CS_VREDRAW | */ CS_OWNDC;	/* One DC per window */
-  wc.lpfnWndProc = (WNDPROC) w32_wnd_proc;
+  wc.style = CS_OWNDC;	/* One DC per window */
+  wc.lpfnWndProc = (WNDPROC) mswindows_wnd_proc;
   wc.cbClsExtra = 0;
   wc.cbWndExtra = 0;	/* ? */
   wc.hInstance = NULL;	/* ? */
@@ -92,14 +92,14 @@ DWORD w32_win_thread()
   wc.lpszClassName = XEMACS_CLASS;
   RegisterClass(&wc);		/* XXX FIXME: Should use RegisterClassEx */
 
-  info.type = w32_waitable_type_dispatch;
-  w32_add_waitable(&info);
+  info.type = mswindows_waitable_type_dispatch;
+  mswindows_add_waitable(&info);
 
   /* Ensure our message queue is created XXX FIXME: Is this necessary? */
   PeekMessage (&msg, NULL, 0, 0, PM_NOREMOVE);
 
   /* Notify the main thread that we're ready */
-  assert(PostThreadMessage (w32_main_thread_id, WM_XEMACS_ACK, 0, 0));
+  assert(PostThreadMessage (mswindows_main_thread_id, WM_XEMACS_ACK, 0, 0));
 
   /* Main windows loop */
   while (1)
@@ -108,12 +108,12 @@ DWORD w32_win_thread()
 
     /*
      * Process things that don't have an associated window, so wouldn't
-     * get sent to w32_wnd_proc
+     * get sent to mswindows_wnd_proc
      */
 
     /* Request from main thread */
     if (msg.message>=WM_XEMACS_BASE && msg.message<=WM_XEMACS_END)
-      w32_handle_request(&msg);
+      mswindows_handle_request(&msg);
 
     /* Timeout */
     else if (msg.message ==  WM_TIMER)
@@ -122,7 +122,7 @@ DWORD w32_win_thread()
       struct Lisp_Event *event;
 
       KillTimer(NULL, msg.wParam);
-      EnterCriticalSection (&w32_dispatch_crit);
+      EnterCriticalSection (&mswindows_dispatch_crit);
       emacs_event = Fmake_event (Qnil, Qnil);
       event = XEVENT(emacs_event);
 
@@ -130,20 +130,20 @@ DWORD w32_win_thread()
       event->timestamp = msg.time;
       event->event_type = timeout_event;
       event->event.timeout.interval_id = msg.wParam;
-      w32_enqueue_dispatch_event (emacs_event);
-      LeaveCriticalSection (&w32_dispatch_crit);
+      mswindows_enqueue_dispatch_event (emacs_event);
+      LeaveCriticalSection (&mswindows_dispatch_crit);
     }
     else
-      /* Pass on to w32_wnd_proc */
+      /* Pass on to mswindows_wnd_proc */
       DispatchMessage (&msg);
   }
 }
 
 /*
  * The windows procedure for the window class XEMACS_CLASS
- * Stuffs messages in the w32 event queue
+ * Stuffs messages in the mswindows event queue
  */
-static LRESULT WINAPI w32_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
+static LRESULT WINAPI mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
 				   LPARAM lParam)
 {
   /* Note: Remember to initialise these before use */
@@ -176,19 +176,19 @@ static LRESULT WINAPI w32_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
       /* Handle those keys that TranslateMessage won't generate a WM_CHAR for */
       {
         Lisp_Object keysym;
-        if (!NILP (keysym = w32_key_to_emacs_keysym(wParam)))
+        if (!NILP (keysym = mswindows_key_to_emacs_keysym(wParam)))
 	{
-          EnterCriticalSection (&w32_dispatch_crit);
+          EnterCriticalSection (&mswindows_dispatch_crit);
 	  emacs_event = Fmake_event (Qnil, Qnil);
 	  event = XEVENT(emacs_event);
 
-          event->channel = w32_find_console(hwnd);
+          event->channel = mswindows_find_console(hwnd);
           event->timestamp = msg.time;
           event->event_type = key_press_event;
           event->event.key.keysym = keysym;
 	  event->event.key.modifiers = mods;
-	  w32_enqueue_dispatch_event (emacs_event);
-          LeaveCriticalSection (&w32_dispatch_crit);
+	  mswindows_enqueue_dispatch_event (emacs_event);
+          LeaveCriticalSection (&mswindows_dispatch_crit);
 	  return (0);
 	}
       }
@@ -216,18 +216,18 @@ static LRESULT WINAPI w32_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
   case WM_CHAR:
   case WM_SYSCHAR:
     {
-      EnterCriticalSection (&w32_dispatch_crit);
+      EnterCriticalSection (&mswindows_dispatch_crit);
       emacs_event = Fmake_event (Qnil, Qnil);
       event = XEVENT(emacs_event);
 
-      event->channel = w32_find_console(hwnd);
+      event->channel = mswindows_find_console(hwnd);
       event->timestamp = msg.time;
       event->event_type = key_press_event;
       event->event.key.modifiers = mods;
       event->event.key.modifiers = lParam & 0x20000000 ? MOD_META : 0; /* redundant? */
       if (wParam<' ')	/* Control char not handled under WM_KEYDOWN */
       {
-	event->event.key.keysym = make_char(wParam+'@');
+	event->event.key.keysym = make_char(wParam+'a'-1);
 	event->event.key.modifiers |= MOD_CONTROL;   /* redundant? */
       }
       else
@@ -235,8 +235,8 @@ static LRESULT WINAPI w32_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
 	/* Assumes that emacs keysym == ASCII code */
 	event->event.key.keysym = make_char(wParam);
       }
-      w32_enqueue_dispatch_event (emacs_event);
-      LeaveCriticalSection (&w32_dispatch_crit);
+      mswindows_enqueue_dispatch_event (emacs_event);
+      LeaveCriticalSection (&mswindows_dispatch_crit);
     }
     break;
 
@@ -248,11 +248,11 @@ static LRESULT WINAPI w32_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
   case WM_RBUTTONUP:
     {
       /* XXX FIXME: Do middle button emulation */
-      EnterCriticalSection (&w32_dispatch_crit);
+      EnterCriticalSection (&mswindows_dispatch_crit);
       emacs_event = Fmake_event (Qnil, Qnil);
       event = XEVENT(emacs_event);
 
-      event->channel = w32_find_frame(hwnd);
+      event->channel = mswindows_find_frame(hwnd);
       event->timestamp = msg.time;
       event->event_type =
 	(message==WM_LBUTTONDOWN || message==WM_MBUTTONDOWN ||
@@ -269,26 +269,26 @@ static LRESULT WINAPI w32_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
       event->event.button.y = HIWORD(lParam);
       event->event.button.modifiers = mods;
       
-      w32_enqueue_dispatch_event (emacs_event);
-      LeaveCriticalSection (&w32_dispatch_crit);
+      mswindows_enqueue_dispatch_event (emacs_event);
+      LeaveCriticalSection (&mswindows_dispatch_crit);
     }
     break;
 
   case WM_MOUSEMOVE:
     {
-      EnterCriticalSection (&w32_dispatch_crit);
+      EnterCriticalSection (&mswindows_dispatch_crit);
       emacs_event = Fmake_event (Qnil, Qnil);
       event = XEVENT(emacs_event);
 
-      event->channel = w32_find_frame(hwnd);
+      event->channel = mswindows_find_frame(hwnd);
       event->timestamp = msg.time;
       event->event_type = pointer_motion_event;
       event->event.motion.x = LOWORD(lParam);
       event->event.motion.y = HIWORD(lParam);
       event->event.motion.modifiers = mods;
       
-      w32_enqueue_dispatch_event (emacs_event);
-      LeaveCriticalSection (&w32_dispatch_crit);
+      mswindows_enqueue_dispatch_event (emacs_event);
+      LeaveCriticalSection (&mswindows_dispatch_crit);
     }
     break;
 
@@ -297,20 +297,20 @@ static LRESULT WINAPI w32_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
     {
       PAINTSTRUCT paintStruct;
 
-      EnterCriticalSection (&w32_dispatch_crit);
+      EnterCriticalSection (&mswindows_dispatch_crit);
       emacs_event = Fmake_event (Qnil, Qnil);
       event = XEVENT(emacs_event);
 
-      event->channel = w32_find_frame(hwnd);
+      event->channel = mswindows_find_frame(hwnd);
       event->timestamp = msg.time;
       event->event_type = magic_event;
       BeginPaint (hwnd, &paintStruct);
-      EVENT_W32_MAGIC_TYPE(event) = message;
-      EVENT_W32_MAGIC_DATA(event) = paintStruct.rcPaint;
+      EVENT_MSWINDOWS_MAGIC_TYPE(event) = message;
+      EVENT_MSWINDOWS_MAGIC_DATA(event) = paintStruct.rcPaint;
       EndPaint (hwnd, &paintStruct);
 
-      w32_enqueue_dispatch_event (emacs_event);
-      LeaveCriticalSection (&w32_dispatch_crit);
+      mswindows_enqueue_dispatch_event (emacs_event);
+      LeaveCriticalSection (&mswindows_dispatch_crit);
     }
     break;
 
@@ -319,39 +319,39 @@ static LRESULT WINAPI w32_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
     if (wParam==SIZE_RESTORED || wParam==SIZE_MAXIMIZED || wParam==SIZE_MINIMIZED)
     {
       RECT rect;
-      EnterCriticalSection (&w32_dispatch_crit);
+      EnterCriticalSection (&mswindows_dispatch_crit);
       emacs_event = Fmake_event (Qnil, Qnil);
       event = XEVENT(emacs_event);
 
-      event->channel = w32_find_frame(hwnd);
+      event->channel = mswindows_find_frame(hwnd);
       event->timestamp = msg.time;
       event->event_type = magic_event;
       if (wParam==SIZE_MINIMIZED)
 	rect.left = rect.top = rect.right = rect.bottom = -1;
       else
 	GetClientRect(hwnd, &rect);
-      EVENT_W32_MAGIC_TYPE(event) = message;
-      EVENT_W32_MAGIC_DATA(event) = rect;
+      EVENT_MSWINDOWS_MAGIC_TYPE(event) = message;
+      EVENT_MSWINDOWS_MAGIC_DATA(event) = rect;
 
-      w32_enqueue_dispatch_event (emacs_event);
-      LeaveCriticalSection (&w32_dispatch_crit);
+      mswindows_enqueue_dispatch_event (emacs_event);
+      LeaveCriticalSection (&mswindows_dispatch_crit);
     }
     break;
 
   case WM_SETFOCUS:
   case WM_KILLFOCUS:
     {
-      EnterCriticalSection (&w32_dispatch_crit);
+      EnterCriticalSection (&mswindows_dispatch_crit);
       emacs_event = Fmake_event (Qnil, Qnil);
       event = XEVENT(emacs_event);
 
-      event->channel = w32_find_frame(hwnd);
+      event->channel = mswindows_find_frame(hwnd);
       event->timestamp = msg.time;
       event->event_type = magic_event;
-      EVENT_W32_MAGIC_TYPE(event) = message;
+      EVENT_MSWINDOWS_MAGIC_TYPE(event) = message;
 
-      w32_enqueue_dispatch_event (emacs_event);
-      LeaveCriticalSection (&w32_dispatch_crit);
+      mswindows_enqueue_dispatch_event (emacs_event);
+      LeaveCriticalSection (&mswindows_dispatch_crit);
     }
     break;
 
@@ -370,10 +370,10 @@ static LRESULT WINAPI w32_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
  * can't be done in the main thread.
  */
 LPARAM
-w32_make_request(UINT message, WPARAM wParam, w32_request_type *request)
+mswindows_make_request(UINT message, WPARAM wParam, mswindows_request_type *request)
 {
   MSG msg;
-  assert(PostThreadMessage (w32_win_thread_id, message, wParam,
+  assert(PostThreadMessage (mswindows_win_thread_id, message, wParam,
 			    (LPARAM) request));
   GetMessage (&msg, NULL, WM_XEMACS_ACK, WM_XEMACS_ACK);
   return (msg.lParam);
@@ -385,9 +385,9 @@ w32_make_request(UINT message, WPARAM wParam, w32_request_type *request)
  * done in the message-processing thread.
  */
 static void
-w32_handle_request (MSG *msg)
+mswindows_handle_request (MSG *msg)
 {
-  w32_request_type *request = (w32_request_type *) msg->lParam;
+  mswindows_request_type *request = (mswindows_request_type *) msg->lParam;
 
   switch (msg->message)
   {
@@ -407,7 +407,7 @@ w32_handle_request (MSG *msg)
     top = Fplist_get (*props, Qtop, Qnil);
     left = Fplist_get (*props, Qleft, Qnil);
 
-    style = (NILP(popup)) ? W32_FRAME_STYLE : W32_POPUP_STYLE;
+    style = (NILP(popup)) ? MSWINDOWS_FRAME_STYLE : MSWINDOWS_POPUP_STYLE;
 
     rect.left = rect.top = 0;
     rect.right = INTP(width) ? XINT(width) : 640;
@@ -426,7 +426,7 @@ w32_handle_request (MSG *msg)
 	INTP(top) ? XINT(top) : CW_USEDEFAULT,
 	rect.right-rect.left, rect.bottom-rect.top,
 	NULL, NULL, NULL, NULL);
-    assert(PostThreadMessage (w32_main_thread_id, WM_XEMACS_ACK, 0, (LPARAM) hwnd));
+    assert(PostThreadMessage (mswindows_main_thread_id, WM_XEMACS_ACK, 0, (LPARAM) hwnd));
     }
     return;
 
@@ -434,14 +434,14 @@ w32_handle_request (MSG *msg)
     {
     UINT id;
     id=SetTimer (NULL, 0, (UINT) request->thing1, NULL);
-    assert(PostThreadMessage (w32_main_thread_id, WM_XEMACS_ACK, 0, id));
+    assert(PostThreadMessage (mswindows_main_thread_id, WM_XEMACS_ACK, 0, id));
     }
     break;
 
   case WM_XEMACS_KILLTIMER:
     {
     KillTimer (NULL, (UINT) request->thing1);
-    assert(PostThreadMessage (w32_main_thread_id, WM_XEMACS_ACK, 0, 0));
+    assert(PostThreadMessage (mswindows_main_thread_id, WM_XEMACS_ACK, 0, 0));
     }
     break;
 
@@ -452,15 +452,15 @@ w32_handle_request (MSG *msg)
 
 
 /*
- * Translate a win32 virtual key to a keysym.
+ * Translate a mswindows virtual key to a keysym.
  * Only returns non-Qnil for keys that don't generate WM_CHAR messages
  * or whose ASCII codes (like space) xemacs doesn't like.
  * Virtual key values are defined in winresrc.h
  * XXX I'm not sure that KEYSYM("name") is the best thing to use here.
  */
-Lisp_Object w32_key_to_emacs_keysym(int w32_key)
+Lisp_Object mswindows_key_to_emacs_keysym(int mswindows_key)
 {
-  switch (w32_key)
+  switch (mswindows_key)
   {
   /* First the predefined ones */
   case VK_BACK:		return QKbackspace;
@@ -512,10 +512,10 @@ Lisp_Object w32_key_to_emacs_keysym(int w32_key)
 
 
 /*
- * Find the console that matches the supplied win32 window handle
+ * Find the console that matches the supplied mswindows window handle
  */
 static Lisp_Object
-w32_find_console (HWND hwnd)
+mswindows_find_console (HWND hwnd)
 {
   Lisp_Object concons;
 
@@ -530,10 +530,10 @@ w32_find_console (HWND hwnd)
 }
 
 /*
- * Find the frame that matches the supplied win32 window handle
+ * Find the frame that matches the supplied mswindows window handle
  */
 static Lisp_Object
-w32_find_frame (HWND hwnd)
+mswindows_find_frame (HWND hwnd)
 {
   Lisp_Object frmcons, devcons, concons;
 
@@ -542,8 +542,8 @@ w32_find_frame (HWND hwnd)
       struct frame *f;
       Lisp_Object frame = XCAR (frmcons);
       f = XFRAME (frame);
-      if (FRAME_TYPE_P(f, w32))	    /* Might be a stream-type frame */
-	if (FRAME_W32_HANDLE(f)==hwnd)
+      if (FRAME_TYPE_P(f, mswindows))	    /* Might be a stream-type frame */
+	if (FRAME_MSWINDOWS_HANDLE(f)==hwnd)
 	  return frame;
     }
   assert(0);  /* XXX Can't happen! we only get messages for our windows */
@@ -581,9 +581,9 @@ Lisp_Object DCDR(Lisp_Object obj)
   return (CONSP (obj)) ? XCDR(obj) : 0;
 }
 
-struct Lisp_String *DSTRING(Lisp_Object obj)
+char *DSTRING(Lisp_Object obj)
 {
-  return (STRINGP (obj)) ? XSTRING(obj) : NULL;
+  return (STRINGP (obj)) ? XSTRING_DATA(obj) : NULL;
 }
 
 struct Lisp_Vector *DVECTOR(Lisp_Object obj)

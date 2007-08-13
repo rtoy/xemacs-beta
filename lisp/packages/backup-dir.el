@@ -1,5 +1,5 @@
 ;;; BACKUP-DIR.EL:   Emacs functions to allow backup files to live in
-;;;                  some other directory(s).             Version 2.0
+;;;                  some other directory(s).             Version 2.1
 ;;;
 ;;; Copyright (C) 1992-97 Greg Klanderman
 ;;;
@@ -22,6 +22,14 @@
 ;;;
 ;;; Modification History
 ;;; ====================
+;;;
+;;; 10/27/1997  Version 2.1
+;;; Updated to support GNU Emacs 20.2.  The function `backup-extract-version'
+;;; now uses the free variable `backup-extract-version-start' rather than
+;;; `bv-length'.  Note, we continue to support older GNU Emacs and XEmacsen.
+;;;
+;;; 10/22/1997
+;;; Customization by Karl M. Hegbloom <karlheg@inetarena.com>
 ;;;
 ;;; 12/28/1996  Version 2.0
 ;;; Updated for XEmacs 19.15b4, much of code reorganized & cleaned up
@@ -84,7 +92,9 @@
 ;;; (require 'backup-dir)
 ;;; (setq bkup-backup-directory-info
 ;;;       '(("/home/greg/.*" "/~/.backups/" ok-create full-path)
-;;; 	   (t                ".backups/"    full-path search-upward)))
+;;;         ("^/[^/:]+:"     ".backups/")   ; handle EFS files specially:  we don't 
+;;;         ("^/[^/:]+:"     "./")          ; want to search-upward... its very slow
+;;;         (t               ".backups/"    full-path search-upward)))
 ;;;
 ;;;
 ;;; The package also provides a new function, `find-file-latest-backup' to find
@@ -133,19 +143,20 @@ usual behavior results.
 Once you save this variable with `M-x customize-variable',
 `backup-dir' will  be loaded for you each time you start XEmacs."
   :type '(repeat 
-	  (list (regexp :tag "File regexp")
-		(string :tag "Backup Dir")
-		(set :inline t
-		     (const ok-create)
-		     (const full-path)
-		     (const search-upward))))
+          (list (regexp :tag "File regexp")
+                (string :tag "Backup Dir")
+                (set :inline t
+                     (const ok-create)
+                     (const full-path)
+                     (const search-upward))))
   :require 'backup-dir
   :group 'backup)
+
  
 ;;; New functions
 ;;;
 (defun bkup-search-upward-for-backup-dir (base bd-name)
-  "search upward for a directory named BD-NAME, starting in the
+  "Search upward for a directory named BD-NAME, starting in the
 directory BASE and continuing with its parent directories until
 one is found or the root is reached."
   (let ((prev nil) (curr base) (gotit nil) (tryit nil))
@@ -174,7 +185,7 @@ A new string is produced and returned."
     ns))
 
 (defun bkup-try-making-directory (dir)
-  "try making directory DIR, return non-nil if successful"
+  "Try making directory DIR, return non-nil if successful"
   (condition-case ()
       (progn (make-directory dir t)
              t)
@@ -368,7 +379,8 @@ If the value is nil, don't make a backup.
                (bk-base (cdr dir-n-base))                                   ;add
                (base-versions (concat bk-base ".~"))                        ;mod
 	       ;; used by backup-extract-version:
-	       (bv-length (length base-versions))
+	       (bv-length (length base-versions)) ;; older GNU Emacsen and XEmacs
+	       (backup-extract-version-start (length base-versions)) ;; new GNU Emacs (20.2)
 	       possibilities
 	       (versions nil)
 	       (high-water-mark 0)

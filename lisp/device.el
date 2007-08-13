@@ -41,7 +41,7 @@ This is equivalent to the type of the device's console.
 Value is `tty' for a tty device (a character-only terminal),
 `x' for a device that is a screen on an X display,
 `ns' for a device that is a NeXTstep connection (not yet implemented),
-`w32' for a device that is a Windows or Windows NT connection,
+`mswindows' for a device that is a Windows or Windows NT connection,
 `pc' for a device that is a direct-write MS-DOS screen (not yet implemented),
 `stream' for a stream device (which acts like a stdio stream), and
 `dead' for a deleted device."
@@ -67,9 +67,9 @@ it is nil, it is assumes to be the value returned by emacs-pid."
   "Create a new device connected to DISPLAY."
   (make-device 'x display))
 
-(defun make-w32-device ()
-  "Create a new win32 device."
-  (make-device 'w32 nil))
+(defun make-mswindows-device ()
+  "Create a new mswindows device."
+  (make-device 'mswindows nil))
 
 (defun device-on-window-system-p (&optional device)
   "Return non-nil if DEVICE is on a window system.

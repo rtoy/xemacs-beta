@@ -81,7 +81,7 @@ Control whether the text should be inverted.  Works only on TTY-s")
 		    set-face-reverse-p face-reverse-p)
     (:stipple (editable-field :format "Stipple: %v"
 			      :help-echo "Name of background bitmap file.")
-	      set-face-background-pixmap custom-face-stipple)
+	      set-face-stipple custom-face-stipple)
     (:family (editable-field :format "Font Family: %v"
 			     :help-echo "\
 Name of font family to use (e.g. times).") 

@@ -1,4 +1,4 @@
-/* Functions for the win32 window system.
+/* Functions for the mswindows window system.
    Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995, 1996 Ben Wing.
 
@@ -25,28 +25,28 @@ Boston, MA 02111-1307, USA.  */
 
    Ultimately based on FSF.
    Substantially rewritten for XEmacs by Ben Wing.
-   Rewritten for win32 by Jonathan Harris, November 1997 for 20.4.
+   Rewritten for mswindows by Jonathan Harris, November 1997 for 20.4.
  */
 
 #include <config.h>
 #include "lisp.h"
 
-#include "console-w32.h"
-#include "event-w32.h"
+#include "console-msw.h"
+#include "event-msw.h"
 
 #include "buffer.h"
 #include "frame.h"
 #include "events.h"
 
 /* Default properties to use when creating frames.  */
-Lisp_Object Vdefault_w32_frame_plist;
+Lisp_Object Vdefault_mswindows_frame_plist;
 /* Lisp_Object Qname, Qheight, Qwidth, Qinitially_unmapped, Qpopup, Qtop, Qleft; */
 Lisp_Object Qinitially_unmapped, Qpopup;
 
 static void
-w32_init_frame_1 (struct frame *f, Lisp_Object props)
+mswindows_init_frame_1 (struct frame *f, Lisp_Object props)
 {
-  w32_request_type request = { f, &props };
+  mswindows_request_type request = { f, &props };
   Lisp_Object device = FRAME_DEVICE (f);
   struct device *d = XDEVICE (device);
   Lisp_Object lisp_window_id, initially_unmapped;
@@ -58,11 +58,11 @@ w32_init_frame_1 (struct frame *f, Lisp_Object props)
     f->visible = 1;
 #endif
 
-  f->frame_data = xnew_and_zero (struct w32_frame);
-  FRAME_W32_HANDLE(f) = (HWND)w32_make_request(WM_XEMACS_CREATEWINDOW,
+  f->frame_data = xnew_and_zero (struct mswindows_frame);
+  FRAME_MSWINDOWS_HANDLE(f) = (HWND)mswindows_make_request(WM_XEMACS_CREATEWINDOW,
 					       0, &request);
-  FRAME_W32_DC(f) = GetDC(FRAME_W32_HANDLE(f));
-  SetTextAlign(FRAME_W32_DC(f), TA_BASELINE|TA_LEFT|TA_NOUPDATECP);
+  FRAME_MSWINDOWS_DC(f) = GetDC(FRAME_MSWINDOWS_HANDLE(f));
+  SetTextAlign(FRAME_MSWINDOWS_DC(f), TA_BASELINE|TA_LEFT|TA_NOUPDATECP);
 
   /* XXX FIXME: This function should be made to do something */
   update_frame_face_values (f);
@@ -70,41 +70,41 @@ w32_init_frame_1 (struct frame *f, Lisp_Object props)
 
 /* Called just before frame's properties are set */
 static void
-w32_init_frame_2 (struct frame *f, Lisp_Object props)
+mswindows_init_frame_2 (struct frame *f, Lisp_Object props)
 {
 }
 
 /* Called after frame's properties are set */
 static void
-w32_init_frame_3 (struct frame *f)
+mswindows_init_frame_3 (struct frame *f)
 {
   /* Don't do this earlier or we get a WM_PAINT before the frame is ready*/
-  ShowWindow(FRAME_W32_HANDLE(f), SW_SHOWNORMAL);
+  ShowWindow(FRAME_MSWINDOWS_HANDLE(f), SW_SHOWNORMAL);
 }
 
 static void
-w32_delete_frame (struct frame *f)
+mswindows_delete_frame (struct frame *f)
 {
   if (f->frame_data)
     {
-      ReleaseDC(FRAME_W32_HANDLE(f), FRAME_W32_DC(f));
-      DestroyWindow(FRAME_W32_HANDLE(f));
+      ReleaseDC(FRAME_MSWINDOWS_HANDLE(f), FRAME_MSWINDOWS_DC(f));
+      DestroyWindow(FRAME_MSWINDOWS_HANDLE(f));
     }
 }
 
 static void
-w32_set_frame_size (struct frame *f, int cols, int rows)
+mswindows_set_frame_size (struct frame *f, int cols, int rows)
 {
 }
 
 
 static void
-w32_set_frame_position (struct frame *f, int xoff, int yoff)
+mswindows_set_frame_position (struct frame *f, int xoff, int yoff)
 {
 }
 
 static void
-w32_set_frame_properties (struct frame *f, Lisp_Object plist)
+mswindows_set_frame_properties (struct frame *f, Lisp_Object plist)
 {
   int x, y;
   int width = 0, height = 0;
@@ -178,53 +178,53 @@ w32_set_frame_properties (struct frame *f, Lisp_Object plist)
 	height = FRAME_HEIGHT (f);
       char_to_pixel_size (f, width, height, &pixel_width, &pixel_height);
 
-      GetWindowRect (FRAME_W32_HANDLE(f), &rect);
+      GetWindowRect (FRAME_MSWINDOWS_HANDLE(f), &rect);
       if (!x_specified_p)
 	x = rect.left;
       if (!y_specified_p)
 	y = rect.top;
-      /* XXX FIXME: Should do AdjustWindowRect here like in w32_handle_request */
-      MoveWindow (FRAME_W32_HANDLE(f), x, y, pixel_width, pixel_height,
+      /* XXX FIXME: Should do AdjustWindowRect here like in mswindows_handle_request */
+      MoveWindow (FRAME_MSWINDOWS_HANDLE(f), x, y, pixel_width, pixel_height,
 		  (width_specified_p || height_specified_p));
     }
 }
 
 
 void
-console_type_create_frame_w32 (void)
+console_type_create_frame_mswindows (void)
 {
   /* frame methods */
-  CONSOLE_HAS_METHOD (w32, init_frame_1);
-  CONSOLE_HAS_METHOD (w32, init_frame_2);
-  CONSOLE_HAS_METHOD (w32, init_frame_3);
-/*  CONSOLE_HAS_METHOD (w32, mark_frame); */
-/*  CONSOLE_HAS_METHOD (w32, focus_on_frame); */
-  CONSOLE_HAS_METHOD (w32, delete_frame);
-/*  CONSOLE_HAS_METHOD (w32, get_mouse_position); */
-/*  CONSOLE_HAS_METHOD (w32, set_mouse_position); */
-/*  CONSOLE_HAS_METHOD (w32, raise_frame); */
-/*  CONSOLE_HAS_METHOD (w32, lower_frame); */
-/*  CONSOLE_HAS_METHOD (w32, make_frame_visible); */
-/*  CONSOLE_HAS_METHOD (w32, make_frame_invisible); */
-/*  CONSOLE_HAS_METHOD (w32, iconify_frame); */
-  CONSOLE_HAS_METHOD (w32, set_frame_size);
-  CONSOLE_HAS_METHOD (w32, set_frame_position);
-/*  CONSOLE_HAS_METHOD (w32, frame_property); */
-/*  CONSOLE_HAS_METHOD (w32, internal_frame_property_p); */
-/*  CONSOLE_HAS_METHOD (w32, frame_properties); */
-  CONSOLE_HAS_METHOD (w32, set_frame_properties);
-/*  CONSOLE_HAS_METHOD (w32, set_title_from_bufbyte); */
-/*  CONSOLE_HAS_METHOD (w32, set_icon_name_from_bufbyte); */
-/*  CONSOLE_HAS_METHOD (w32, frame_visible_p); */
-/*  CONSOLE_HAS_METHOD (w32, frame_totally_visible_p); */
-/*  CONSOLE_HAS_METHOD (w32, frame_iconified_p); */
-/*  CONSOLE_HAS_METHOD (w32, set_frame_pointer); */
-/*  CONSOLE_HAS_METHOD (w32, set_frame_icon); */
-/*  CONSOLE_HAS_METHOD (w32, get_frame_parent); */
+  CONSOLE_HAS_METHOD (mswindows, init_frame_1);
+  CONSOLE_HAS_METHOD (mswindows, init_frame_2);
+  CONSOLE_HAS_METHOD (mswindows, init_frame_3);
+/*  CONSOLE_HAS_METHOD (mswindows, mark_frame); */
+/*  CONSOLE_HAS_METHOD (mswindows, focus_on_frame); */
+  CONSOLE_HAS_METHOD (mswindows, delete_frame);
+/*  CONSOLE_HAS_METHOD (mswindows, get_mouse_position); */
+/*  CONSOLE_HAS_METHOD (mswindows, set_mouse_position); */
+/*  CONSOLE_HAS_METHOD (mswindows, raise_frame); */
+/*  CONSOLE_HAS_METHOD (mswindows, lower_frame); */
+/*  CONSOLE_HAS_METHOD (mswindows, make_frame_visible); */
+/*  CONSOLE_HAS_METHOD (mswindows, make_frame_invisible); */
+/*  CONSOLE_HAS_METHOD (mswindows, iconify_frame); */
+  CONSOLE_HAS_METHOD (mswindows, set_frame_size);
+  CONSOLE_HAS_METHOD (mswindows, set_frame_position);
+/*  CONSOLE_HAS_METHOD (mswindows, frame_property); */
+/*  CONSOLE_HAS_METHOD (mswindows, internal_frame_property_p); */
+/*  CONSOLE_HAS_METHOD (mswindows, frame_properties); */
+  CONSOLE_HAS_METHOD (mswindows, set_frame_properties);
+/*  CONSOLE_HAS_METHOD (mswindows, set_title_from_bufbyte); */
+/*  CONSOLE_HAS_METHOD (mswindows, set_icon_name_from_bufbyte); */
+/*  CONSOLE_HAS_METHOD (mswindows, frame_visible_p); */
+/*  CONSOLE_HAS_METHOD (mswindows, frame_totally_visible_p); */
+/*  CONSOLE_HAS_METHOD (mswindows, frame_iconified_p); */
+/*  CONSOLE_HAS_METHOD (mswindows, set_frame_pointer); */
+/*  CONSOLE_HAS_METHOD (mswindows, set_frame_icon); */
+/*  CONSOLE_HAS_METHOD (mswindows, get_frame_parent); */
 }
 
 void
-syms_of_frame_w32 (void)
+syms_of_frame_mswindows (void)
 {
 #if 0	/* XXX these are in general.c */
   defsymbol (&Qname, "name");
@@ -238,10 +238,10 @@ syms_of_frame_w32 (void)
 }
 
 void
-vars_of_frame_w32 (void)
+vars_of_frame_mswindows (void)
 {
-  DEFVAR_LISP ("default-w32-frame-plist", &Vdefault_w32_frame_plist /*
-Plist of default frame-creation properties for w32 frames.
+  DEFVAR_LISP ("default-mswindows-frame-plist", &Vdefault_mswindows_frame_plist /*
+Plist of default frame-creation properties for mswindows frames.
 These override what is specified in `default-frame-plist', but are
 overridden by the arguments to the particular call to `make-frame'.
 
@@ -274,10 +274,10 @@ set at any time, except as otherwise noted):
 				decorations).
 
 See also `default-frame-plist', which specifies properties which apply
-to all frames, not just w32 frames.
+to all frames, not just mswindows frames.
 */ );
-  Vdefault_w32_frame_plist = Qnil;
+  Vdefault_mswindows_frame_plist = Qnil;
 
-  w32_console_methods->device_specific_frame_props =
-    &Vdefault_w32_frame_plist;
+  mswindows_console_methods->device_specific_frame_props =
+    &Vdefault_mswindows_frame_plist;
 }

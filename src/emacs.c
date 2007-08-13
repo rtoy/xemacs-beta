@@ -697,10 +697,10 @@ main_1 (int argc, char **argv, char **envp)
 	display_use = "x";
 
 #endif /* HAVE_X_WINDOWS */
-#ifdef HAVE_W32GUI
+#ifdef HAVE_MS_WINDOWS
       if (!noninteractive)
-	display_use = "w32";
-#endif /* HAVE_W32GUI */
+	display_use = "mswindows";
+#endif /* HAVE_MS_WINDOWS */
     }
 #endif /* HAVE_WINDOW_SYSTEM */
 
@@ -879,12 +879,12 @@ main_1 (int argc, char **argv, char **envp)
 #endif
 #endif /* HAVE_X_WINDOWS */
 
-#ifdef HAVE_W32GUI
-      syms_of_console_w32 ();
-      syms_of_device_w32 ();
-      syms_of_event_w32 ();
-      syms_of_frame_w32 ();
-      syms_of_objects_w32 ();
+#ifdef HAVE_MS_WINDOWS
+      syms_of_console_mswindows ();
+      syms_of_device_mswindows ();
+      syms_of_event_mswindows ();
+      syms_of_frame_mswindows ();
+      syms_of_objects_mswindows ();
 #endif
 
 #ifdef MULE
@@ -974,12 +974,12 @@ main_1 (int argc, char **argv, char **envp)
 #endif
 #endif /* HAVE_X_WINDOWS */
 
-#ifdef HAVE_W32GUI
-      console_type_create_w32 ();
-      console_type_create_device_w32 ();
-      console_type_create_frame_w32 ();
-      console_type_create_objects_w32 ();
-      console_type_create_redisplay_w32 ();
+#ifdef HAVE_MS_WINDOWS
+      console_type_create_mswindows ();
+      console_type_create_device_mswindows ();
+      console_type_create_frame_mswindows ();
+      console_type_create_objects_mswindows ();
+      console_type_create_redisplay_mswindows ();
 #endif
 
       /* Now initialize the specifier types and associated symbols.
@@ -1210,12 +1210,12 @@ main_1 (int argc, char **argv, char **envp)
 #endif
 #endif
 
-#ifdef HAVE_W32GUI
-      vars_of_device_w32 ();
-      vars_of_console_w32 ();
-      vars_of_event_w32 ();
-      vars_of_frame_w32 ();
-      vars_of_objects_w32 ();
+#ifdef HAVE_MS_WINDOWS
+      vars_of_device_mswindows ();
+      vars_of_console_mswindows ();
+      vars_of_event_mswindows ();
+      vars_of_frame_mswindows ();
+      vars_of_objects_mswindows ();
 #endif
 
 #ifdef MULE

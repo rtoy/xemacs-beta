@@ -65,7 +65,7 @@
 (custom-add-loads 'programming '("compile"))
 (custom-add-loads 'metamail '("metamail"))
 (custom-add-loads 'icomplete '("icomplete"))
-(custom-add-loads 'compilation '("compile"))
+(custom-add-loads 'compilation '("compile" "auto-autoloads"))
 (custom-add-loads 'iswitchb '("iswitchb"))
 (custom-add-loads 'makeinfo '("makeinfo"))
 (custom-add-loads 'fume '("func-menu"))

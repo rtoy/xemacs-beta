@@ -1916,10 +1916,10 @@ complex_vars_of_faces (void)
     bg_inst_list = Fcons (Fcons (list1 (Qtty), Fvector (0, 0)),
 			  bg_inst_list);
 #endif
-#ifdef HAVE_W32GUI
-    fg_inst_list = Fcons (Fcons (list1 (Qw32), build_string ("black")),
+#ifdef HAVE_MS_WINDOWS
+    fg_inst_list = Fcons (Fcons (list1 (Qmswindows), build_string ("black")),
 			  fg_inst_list);
-    bg_inst_list = Fcons (Fcons (list1 (Qw32), build_string ("white")),
+    bg_inst_list = Fcons (Fcons (list1 (Qmswindows), build_string ("white")),
 			  bg_inst_list);
 #endif
     set_specifier_fallback (Fget (Vdefault_face, Qforeground, Qnil),
@@ -1966,10 +1966,10 @@ complex_vars_of_faces (void)
     inst_list = Fcons (Fcons (list1 (Qtty), build_string ("normal")),
 		       inst_list);
 #endif /* HAVE_TTY */
-#ifdef HAVE_W32GUI
-    inst_list = Fcons (Fcons (list1 (Qw32), build_string ("Courier New")),
+#ifdef HAVE_MS_WINDOWS
+    inst_list = Fcons (Fcons (list1 (Qmswindows), build_string ("Courier New")),
 		       inst_list);
-#endif /* HAVE_W32GUI */
+#endif /* HAVE_MS_WINDOWS */
     set_specifier_fallback (Fget (Vdefault_face, Qfont, Qnil), inst_list);
   }
 

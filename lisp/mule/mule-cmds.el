@@ -208,12 +208,14 @@ if you want to use your own KEY values, make them start with `user-'."
            ;;   t)
 	   (if (consp info)
 	       (setq info (car info)))
-	   (eval-after-load "x-menubar"
-	     `(add-menu-button
-	       '("Mule" "Describe Language Support")
-	       (vector ,language-name
-		       '(describe-language-environment ,language-name)
-		       t)))
+	   (when (featurep 'menubar)
+	     (eval-after-load
+	      "x-menubar"
+	      `(add-menu-button
+		'("Mule" "Describe Language Support")
+		(vector ,language-name
+			'(describe-language-environment ,language-name)
+			t))))
 	   )
 	  ((eq key 'setup-function)
            ;; (define-key-after
@@ -226,12 +228,14 @@ if you want to use your own KEY values, make them start with `user-'."
            ;;   t)
 	   (if (consp info)
 	       (setq info (car info)))
-	   (eval-after-load "x-menubar"
-	     `(add-menu-button
-	       '("Mule" "Set Language Environment")
-	       (vector ,language-name
-		       '(set-language-environment ,language-name)
-		       t)))
+	   (when (featurep 'menubar)
+	     (eval-after-load
+	      "x-menubar"
+	      `(add-menu-button
+		'("Mule" "Set Language Environment")
+		(vector ,language-name
+			'(set-language-environment ,language-name)
+			t))))
            ))
 
     (setcdr key-slot info)

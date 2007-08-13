@@ -1,58 +1,171 @@
-;;; mule-ccl.el --- Code Conversion Language functions.
+;;; ccl.el --- CCL (Code Conversion Language) compiler
 
-;; Copyright (C) 1992 Free Software Foundation, Inc.
+;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
 
-;; This file is part of XEmacs.
+;; Keywords: CCL, mule, multilingual, character set, coding-system
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
+;; This file is part of X Emacs.
+
+;; GNU Emacs is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; GNU Emacs is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-;;; 93.5.26  created for Mule Ver.0.9.8 by K.Handa <handa@etl.go.jp>
+;; Synched up with: FSF 20.2
 
-;;;; #### This stuff doesn't work yet.
+;;; Commentary:
 
-(defconst ccl-operator-table
-  '[if branch loop break repeat write-repeat write-read-repeat
-    read read-if read-branch write end])
+;; CCL (Code Conversion Language) is a simple programming language to
+;; be used for various kind of code conversion.  CCL program is
+;; compiled to CCL code (vector of integers) and executed by CCL
+;; interpreter of Emacs.
+;;
+;; CCL is used for code conversion at process I/O and file I/O for
+;; non-standard coding-system.  In addition, it is used for
+;; calculating a code point of X's font from a character code.
+;; However, since CCL is designed as a powerful programming language,
+;; it can be used for more generic calculation.  For instance,
+;; combination of three or more arithmetic operations can be
+;; calculated faster than Emacs Lisp.
+;;
+;; Here's the syntax of CCL program in BNF notation.
+;;
+;; CCL_PROGRAM :=
+;;	(BUFFER_MAGNIFICATION
+;;	 CCL_MAIN_BLOCK
+;;	 [ CCL_EOF_BLOCK ])
+;;
+;; BUFFER_MAGNIFICATION := integer
+;; CCL_MAIN_BLOCK := CCL_BLOCK
+;; CCL_EOF_BLOCK := CCL_BLOCK
+;;
+;; CCL_BLOCK :=
+;;	STATEMENT | (STATEMENT [STATEMENT ...])
+;; STATEMENT :=
+;;	SET | IF | BRANCH | LOOP | REPEAT | BREAK | READ | WRITE | CALL
+;;
+;; SET :=
+;;	(REG = EXPRESSION)
+;;	| (REG ASSIGNMENT_OPERATOR EXPRESSION)
+;;	| integer
+;;
+;; EXPRESSION := ARG | (EXPRESSION OPERATOR ARG)
+;;
+;; IF := (if EXPRESSION CCL_BLOCK CCL_BLOCK)
+;; BRANCH := (branch EXPRESSION CCL_BLOCK [CCL_BLOCK ...])
+;; LOOP := (loop STATEMENT [STATEMENT ...])
+;; BREAK := (break)
+;; REPEAT :=
+;;	(repeat)
+;;	| (write-repeat [REG | integer | string])
+;;	| (write-read-repeat REG [integer | ARRAY])
+;; READ :=
+;;	(read REG ...)
+;;	| (read-if (REG OPERATOR ARG) CCL_BLOCK CCL_BLOCK)
+;;	| (read-branch REG CCL_BLOCK [CCL_BLOCK ...])
+;; WRITE :=
+;;	(write REG ...)
+;;	| (write EXPRESSION)
+;;	| (write integer) | (write string) | (write REG ARRAY)
+;;	| string
+;; CALL := (call ccl-program-name)
+;; END := (end)
+;;
+;; REG := r0 | r1 | r2 | r3 | r4 | r5 | r6 | r7
+;; ARG := REG | integer
+;; OPERATOR :=
+;;	+ | - | * | / | % | & | '|' | ^ | << | >> | <8 | >8 | //
+;;	| < | > | == | <= | >= | != | de-sjis | en-sjis
+;; ASSIGNMENT_OPERATOR :=
+;;	+= | -= | *= | /= | %= | &= | '|=' | ^= | <<= | >>=
+;; ARRAY := '[' interger ... ']'
 
-(let (op (i 0) (len (length ccl-operator-table)))
+;;; Code:
+
+(defconst ccl-command-table
+  [if branch loop break repeat write-repeat write-read-repeat
+      read read-if read-branch write call end]
+  "*Vector of CCL commands (symbols).")
+
+;; Put a property to each symbol of CCL commands for the compiler.
+(let (op (i 0) (len (length ccl-command-table)))
   (while (< i len)
-    (setq op (aref ccl-operator-table i))
+    (setq op (aref ccl-command-table i))
     (put op 'ccl-compile-function (intern (format "ccl-compile-%s" op)))
     (setq i (1+ i))))
 
-(defconst ccl-machine-code-table
-  '[set-cs set-cl set-r set-a
-    jump jump-cond write-jump write-read-jump write-c-jump
-    write-c-read-jump write-s-jump write-s-read-jump write-a-read-jump
-    branch
-    read1 read2 read-branch write1 write2 write-c write-s write-a
-    end
-    set-self-cs set-self-cl set-self-r set-expr-cl set-expr-r
-    jump-cond-c jump-cond-r read-jump-cond-c read-jump-cond-r
-    ])
+(defconst ccl-code-table
+  [set-register
+   set-short-const
+   set-const
+   set-array
+   jump
+   jump-cond
+   write-register-jump
+   write-register-read-jump
+   write-const-jump
+   write-const-read-jump
+   write-string-jump
+   write-array-read-jump
+   read-jump
+   branch
+   read-register
+   write-expr-const
+   read-branch
+   write-register
+   write-expr-register
+   call
+   write-const-string
+   write-array
+   end
+   set-assign-expr-const
+   set-assign-expr-register
+   set-expr-const
+   set-expr-register
+   jump-cond-expr-const
+   jump-cond-expr-register
+   read-jump-cond-expr-const
+   read-jump-cond-expr-register
+   ]
+  "*Vector of CCL compiled codes (symbols).")
 
-(let (code (i 0) (len (length ccl-machine-code-table)))
+;; Put a property to each symbol of CCL codes for the disassembler.
+(let (code (i 0) (len (length ccl-code-table)))
   (while (< i len)
-    (setq code (aref ccl-machine-code-table i))
+    (setq code (aref ccl-code-table i))
     (put code 'ccl-code i)
     (put code 'ccl-dump-function (intern (format "ccl-dump-%s" code)))
     (setq i (1+ i))))
 
-(defconst ccl-register-table '[r0 r1 r2 r3 r4 r5 r6 r7])
+(defconst ccl-jump-code-list
+  '(jump jump-cond write-register-jump write-register-read-jump
+    write-const-jump write-const-read-jump write-string-jump
+    write-array-read-jump read-jump))
 
+;; Put a property `jump-flag' to each CCL code which execute jump in
+;; some way.
+(let ((l ccl-jump-code-list))
+  (while l
+    (put (car l) 'jump-flag t)
+    (setq l (cdr l))))
+
+(defconst ccl-register-table
+  [r0 r1 r2 r3 r4 r5 r6 r7]
+  "*Vector of CCL registers (symbols).")
+
+;; Put a property to indicate register number to each symbol of CCL.
+;; registers.
 (let (reg (i 0) (len (length ccl-register-table)))
   (while (< i len)
     (setq reg (aref ccl-register-table i))
@@ -60,52 +173,94 @@
     (setq i (1+ i))))
 
 (defconst ccl-arith-table
-  '[+ - * / % & | ^ << >> <8 >8 // nil nil nil < > == <= >= !=])
+  [+ - * / % & | ^ << >> <8 >8 // nil nil nil
+   < > == <= >= != de-sjis en-sjis]
+  "*Vector of CCL arithmetic/logical operators (symbols).")
 
+;; Put a property to each symbol of CCL operators for the compiler.
 (let (arith (i 0) (len (length ccl-arith-table)))
   (while (< i len)
     (setq arith (aref ccl-arith-table i))
     (if arith (put arith 'ccl-arith-code i))
     (setq i (1+ i))))
 
-(defconst ccl-self-arith-table
-  '[+= -= *= /= %= &= |= ^= <<= >>= <8= >8= //=])
+(defconst ccl-assign-arith-table
+  [+= -= *= /= %= &= |= ^= <<= >>= <8= >8= //=]
+  "*Vector of CCL assignment operators (symbols).")
 
-(let (arith (i 0) (len (length ccl-self-arith-table)))
+;; Put a property to each symbol of CCL assignment operators for the compiler.
+(let (arith (i 0) (len (length ccl-assign-arith-table)))
   (while (< i len)
-    (setq arith (aref ccl-self-arith-table i))
+    (setq arith (aref ccl-assign-arith-table i))
     (put arith 'ccl-self-arith-code i)
     (setq i (1+ i))))
 
-;; this holds the compiled CCL program as it is being compiled.
-(defvar ccl-program-vector nil)
+(defvar ccl-program-vector nil
+  "Working vector of CCL codes produced by CCL compiler.")
+(defvar ccl-current-ic 0
+  "The current index for `ccl-program-vector'.")
 
-;; this holds the index into ccl-program-vector where the next
-;; instruction is to be stored.
-(defvar ccl-current-ic 0)
-
-;; add a constant to the compiled CCL program, either at IC (if specified)
-;; or at the current instruction counter (and bumping that value)
-(defun ccl-embed-const (const &optional ic)
-  (if ic
-      (aset ccl-program-vector ic const)
-    (aset ccl-program-vector ccl-current-ic const)
-    (setq ccl-current-ic (1+ ccl-current-ic))))
-
-(defun ccl-embed-code (op reg const &optional ic)
-  (let ((machine-code (logior (get op 'ccl-code)
-			      (if (symbolp reg)
-				  (ash (get reg 'ccl-register-number) 5)
-				0)
-			      (ash const 8))))
+;; Embed integer DATA in `ccl-program-vector' at `ccl-current-ic' and
+;; increment it.  If IC is specified, embed DATA at IC.
+(defun ccl-embed-data (data &optional ic)
+  (let ((val (if (characterp data) (char-int data) data)))
     (if ic
-	(aset ccl-program-vector ic machine-code)
-      (aset ccl-program-vector ccl-current-ic machine-code)
+	(aset ccl-program-vector ic val)
+      (aset ccl-program-vector ccl-current-ic val)
       (setq ccl-current-ic (1+ ccl-current-ic)))))
 
-;; advance the instruction counter by INC without doing anything else
-(defun ccl-embed-nop (&optional inc)
-  (setq ccl-current-ic (+ ccl-current-ic (or inc 1))))
+;; Embed string STR of length LEN in `ccl-program-vector' at
+;; `ccl-current-ic'.
+(defun ccl-embed-string (len str)
+  (let ((i 0))
+    (while (< i len)
+      (ccl-embed-data (logior (ash (aref str i) 16)
+			       (if (< (1+ i) len)
+				   (ash (aref str (1+ i)) 8)
+				 0)
+			       (if (< (+ i 2) len)
+				   (aref str (+ i 2))
+				 0)))
+      (setq i (+ i 3)))))
+
+;; Embed a relative jump address to `ccl-current-ic' in
+;; `ccl-program-vector' at IC without altering the other bit field.
+(defun ccl-embed-current-address (ic)
+  (let ((relative (- ccl-current-ic (1+ ic))))
+    (aset ccl-program-vector ic
+	  (logior (aref ccl-program-vector ic) (ash relative 8)))))
+
+;; Embed CCL code for the operation OP and arguments REG and DATA in
+;; `ccl-program-vector' at `ccl-current-ic' in the following format.
+;;	|----------------- integer (28-bit) ------------------|
+;;	|------------ 20-bit ------------|- 3-bit --|- 5-bit -|
+;;	|------------- DATA -------------|-- REG ---|-- OP ---|
+;; If REG2 is specified, embed a code in the following format.
+;;	|------- 17-bit ------|- 3-bit --|- 3-bit --|- 5-bit -|
+;;	|-------- DATA -------|-- REG2 --|-- REG ---|-- OP ---|
+
+;; If REG is a CCL register symbol (e.g. r0, r1...), the register
+;; number is embedded.  If OP is one of unconditional jumps, DATA is
+;; changed to an relative jump address.
+
+(defun ccl-embed-code (op reg data &optional reg2)
+  (if (and (> data 0) (get op 'jump-flag))
+      ;; DATA is an absolute jump address.  Make it relative to the
+      ;; next of jump code.
+      (setq data (- data (1+ ccl-current-ic))))
+  (let ((code (logior (get op 'ccl-code)
+		      (ash
+		       (if (symbolp reg) (get reg 'ccl-register-number) reg) 5)
+		      (if reg2
+			  (logior (ash (get reg2 'ccl-register-number) 8)
+				  (ash data 11))
+			(ash data 8)))))
+    (aset ccl-program-vector ccl-current-ic code)
+    (setq ccl-current-ic (1+ ccl-current-ic))))
+
+;; Just advance `ccl-current-ic' by INC.
+(defun ccl-increment-ic (inc)
+  (setq ccl-current-ic (+ ccl-current-ic inc)))
 
 ;;;###autoload
 (defun ccl-program-p (obj)
@@ -119,30 +274,45 @@
 		 (setq i (1+ i)))
 	       flag)))))
 
+;; If non-nil, index of the start of the current loop.
 (defvar ccl-loop-head nil)
+;; If non-nil, list of absolute addresses of the breaking points of
+;; the current loop.
 (defvar ccl-breaks nil)
 
 ;;;###autoload
 (defun ccl-compile (ccl-program)
-  "Compile a CCL source program and return the compiled equivalent.
-The return value will be a vector of integers."
+  "Return a compiled code of CCL-PROGRAM as a vector of integer."
   (if (or (null (consp ccl-program))
-	  (null (listp (car ccl-program))))
-      (error "CCL: Invalid source program: %s" ccl-program))
+	  (null (integer-or-char-p (car ccl-program)))
+	  (null (listp (car (cdr ccl-program)))))
+      (error "CCL: Invalid CCL program: %s" ccl-program))
   (if (null (vectorp ccl-program-vector))
-      (setq ccl-program-vector (make-vector 8192 0))
-    ;; perhaps not necessary but guarantees some sort of determinism
-    (fillarray ccl-program-vector 0))
+      (setq ccl-program-vector (make-vector 8192 0)))
   (setq ccl-loop-head nil ccl-breaks nil)
   (setq ccl-current-ic 0)
-  ;; leave space for offset to EOL program
-  (ccl-embed-nop)
-  (ccl-compile-1 (car ccl-program))
-  ;; store offset to EOL program in first word of compiled prog
-  (ccl-embed-const ccl-current-ic 0)
-  (if (car (cdr ccl-program))
-      (ccl-compile-1 (car (cdr ccl-program))))
+
+  ;; The first element is the buffer magnification.
+  (ccl-embed-data (car ccl-program))
+
+  ;; The second element is the address of the start CCL code for
+  ;; processing end of input buffer (we call it eof-processor).  We
+  ;; set it later.
+  (ccl-increment-ic 1)
+
+  ;; Compile the main body of the CCL program.
+  (ccl-compile-1 (car (cdr ccl-program)))
+
+  ;; Embed the address of eof-processor.
+  (ccl-embed-data ccl-current-ic 1)
+
+  ;; Then compile eof-processor.
+  (if (nth 2 ccl-program)
+      (ccl-compile-1 (nth 2 ccl-program)))
+
+  ;; At last, embed termination code.
   (ccl-embed-code 'end 0 0)
+
   (let ((vec (make-vector ccl-current-ic 0))
 	(i 0))
     (while (< i ccl-current-ic)
@@ -150,235 +320,351 @@ The return value will be a vector of integers."
       (setq i (1+ i)))
     vec))
 
-(defun ccl-check-constant (arg cmd)
-  (if (>= arg 0)
-      arg
-    (error "CCL: Negative constant %s not allowed: %s" arg cmd)))
+;; Signal syntax error.
+(defun ccl-syntax-error (cmd)
+  (error "CCL: Syntax error: %s" cmd))
 
+;; Check if ARG is a valid CCL register.
 (defun ccl-check-register (arg cmd)
   (if (get arg 'ccl-register-number)
       arg
-    (error "CCL: Invalid register %s: %s" arg cmd)))
+    (error "CCL: Invalid register %s in %s." arg cmd)))
 
-(defun ccl-check-reg-const (arg cmd)
-  (if (integer-or-char-p arg)
-      (ccl-check-constant arg cmd)
-    (ccl-check-register arg cmd)))
-
+;; Check if ARG is a valid CCL command.
 (defun ccl-check-compile-function (arg cmd)
   (or (get arg 'ccl-compile-function)
       (error "CCL: Invalid command: %s" cmd)))
 
-;; compile a block of CCL code (see CCL_BLOCK above).
-(defun ccl-compile-1 (cmd-list)
-  (let (cmd)
-    ;; a CCL_BLOCK is either STATEMENT or (STATEMENT [STATEMENT ...])
-    ;; convert the former into the latter.
-    (if (or (not (listp cmd-list))
-	    (and cmd-list (symbolp (car cmd-list))))
-	(setq cmd-list (list cmd-list)))
-    (while cmd-list
-      (setq cmd (car cmd-list))
-      ;; an int-or-char is equivalent to (r0 = int-or-char)
-      ;; a string is equivalent to (write string)
-      ;; convert the above two into their equivalent forms.
-      ;; everything else is a list.
-      (cond ((integer-or-char-p cmd)
-	     (ccl-compile-set (list 'r0 '= cmd)))
-	    ((stringp cmd)
-	     (ccl-compile-write-string (list 'write cmd)))
-	    ((listp cmd)
-	     (if (eq (nth 1 cmd) '=)
-		 (ccl-compile-set cmd)
-	       (if (and (symbolp (nth 1 cmd))
-			(get (nth 1 cmd) 'ccl-self-arith-code))
-		   (ccl-compile-self-set cmd)
-		 (funcall (ccl-check-compile-function (car cmd) cmd) cmd))))
-	    (t
-	     (error "CCL: Invalid command: %s" cmd)))
-      (setq cmd-list (cdr cmd-list)))))
+;; In the following code, most ccl-compile-XXXX functions return t if
+;; they end with unconditional jump, else return nil.
 
+;; Compile CCL-BLOCK (see the syntax above).
+(defun ccl-compile-1 (ccl-block)
+  (let (unconditional-jump
+	cmd)
+    (if (or (integer-or-char-p ccl-block)
+	    (stringp ccl-block)
+	    (and ccl-block (symbolp (car ccl-block))))
+	;; This block consists of single statement.
+	(setq ccl-block (list ccl-block)))
+
+    ;; Now CCL-BLOCK is a list of statements.  Compile them one by
+    ;; one.
+    (while ccl-block
+      (setq cmd (car ccl-block))
+      (setq unconditional-jump
+	    (cond ((integer-or-char-p cmd)
+		   ;; SET statement for the register 0.
+		   (ccl-compile-set (list 'r0 '= cmd)))
+
+		  ((stringp cmd)
+		   ;; WRITE statement of string argument.
+		   (ccl-compile-write-string cmd))
+
+		  ((listp cmd)
+		   ;; The other statements.
+		   (cond ((eq (nth 1 cmd) '=)
+			  ;; SET statement of the form `(REG = EXPRESSION)'.
+			  (ccl-compile-set cmd))
+
+			 ((and (symbolp (nth 1 cmd))
+			       (get (nth 1 cmd) 'ccl-self-arith-code))
+			  ;; SET statement with an assignment operation.
+			  (ccl-compile-self-set cmd))
+
+			 (t
+			  (funcall (ccl-check-compile-function (car cmd) cmd)
+				   cmd))))
+
+		  (t
+		   (ccl-syntax-error cmd))))
+      (setq ccl-block (cdr ccl-block)))
+    unconditional-jump))
+
+(defconst ccl-max-short-const (ash 1 19))
+(defconst ccl-min-short-const (ash -1 19))
+
+;; Compile SET statement.
 (defun ccl-compile-set (cmd)
   (let ((rrr (ccl-check-register (car cmd) cmd))
 	(right (nth 2 cmd)))
     (cond ((listp right)
-	   ;; cmd == (RRR = (XXX OP YYY))
+	   ;; CMD has the form `(RRR = (XXX OP YYY))'.
 	   (ccl-compile-expression rrr right))
+
 	  ((integer-or-char-p right)
-	   (ccl-check-constant right cmd)
-	   (if (< right 524288)		; (< right 2^19)
-	       (ccl-embed-code 'set-cs rrr right)
-	     (ccl-embed-code 'set-cl rrr 0)
-	     (ccl-embed-const right)))
+	   ;; CMD has the form `(RRR = integer)'.
+	   (if (and (<= right ccl-max-short-const)
+		    (>= right ccl-min-short-const))
+	       (ccl-embed-code 'set-short-const rrr right)
+	     (ccl-embed-code 'set-const rrr 0)
+	     (ccl-embed-data right)))
+
 	  (t
+	   ;; CMD has the form `(RRR = rrr [ array ])'.
 	   (ccl-check-register right cmd)
 	   (let ((ary (nth 3 cmd)))
 	     (if (vectorp ary)
 		 (let ((i 0) (len (length ary)))
-		   (ccl-embed-code 'set-a rrr (get right 'ccl-register-number))
-		   (ccl-embed-const len)
+		   (ccl-embed-code 'set-array rrr len right)
 		   (while (< i len)
-		     (ccl-check-constant (aref ary i) cmd)
-		     (ccl-embed-const (aref ary i))
+		     (ccl-embed-data (aref ary i))
 		     (setq i (1+ i))))
-	       (ccl-embed-code 'set-r rrr right)))))))
+	       (ccl-embed-code 'set-register rrr 0 right))))))
+  nil)
 
+;; Compile SET statement with ASSIGNMENT_OPERATOR.
 (defun ccl-compile-self-set (cmd)
   (let ((rrr (ccl-check-register (car cmd) cmd))
 	(right (nth 2 cmd)))
     (if (listp right)
-	;; cmd == (RRR SELF-OP= (XXX OP YYY))
+	;; CMD has the form `(RRR ASSIGN_OP (XXX OP YYY))', compile
+	;; the right hand part as `(r7 = (XXX OP YYY))' (note: the
+	;; register 7 can be used for storing temporary value).
 	(progn
 	  (ccl-compile-expression 'r7 right)
 	  (setq right 'r7)))
+    ;; Now CMD has the form `(RRR ASSIGN_OP ARG)'.  Compile it as
+    ;; `(RRR = (RRR OP ARG))'.
     (ccl-compile-expression
      rrr
-     (list rrr (intern (substring (symbol-name (nth 1 cmd)) 0 -1)) right))))
+     (list rrr (intern (substring (symbol-name (nth 1 cmd)) 0 -1)) right)))
+  nil)
 
+;; Compile SET statement of the form `(RRR = EXPR)'.
 (defun ccl-compile-expression (rrr expr)
   (let ((left (car expr))
+	(op (get (nth 1 expr) 'ccl-arith-code))
 	(right (nth 2 expr)))
     (if (listp left)
 	(progn
+	  ;; EXPR has the form `((EXPR2 OP2 ARG) OP RIGHT)'.  Compile
+	  ;; the first term as `(r7 = (EXPR2 OP2 ARG)).'
 	  (ccl-compile-expression 'r7 left)
 	  (setq left 'r7)))
+
+    ;; Now EXPR has the form (LEFT OP RIGHT).
     (if (eq rrr left)
+	;; Compile this SET statement as `(RRR OP= RIGHT)'.
 	(if (integer-or-char-p right)
-	    (if (< right 32768)
-		(ccl-embed-code 'set-self-cs rrr right)
-	      (ccl-embed-code 'set-self-cl rrr 0)
-	      (ccl-embed-const right))
+	    (progn
+	      (ccl-embed-code 'set-assign-expr-const rrr (ash op 3) 'r0)
+	      (ccl-embed-data right))
 	  (ccl-check-register right expr)
-	  (ccl-embed-code 'set-self-r rrr (get right 'ccl-register-number)))
+	  (ccl-embed-code 'set-assign-expr-register rrr (ash op 3) right))
+
+      ;; Compile this SET statement as `(RRR = (LEFT OP RIGHT))'.
       (if (integer-or-char-p right)
 	  (progn
-	    (ccl-embed-code 'set-expr-cl rrr (get left 'ccl-register-number))
-	    (ccl-embed-const right))
+	    (ccl-embed-code 'set-expr-const rrr (ash op 3) left)
+	    (ccl-embed-data right))
 	(ccl-check-register right expr)
-	(ccl-embed-code 'set-expr-r rrr (get left 'ccl-register-number))
-	(ccl-embed-const (get right 'ccl-register-number))))
-    (ccl-embed-const (get (nth 1 expr) 'ccl-arith-code))))
+	(ccl-embed-code 'set-expr-register
+			rrr
+			(logior (ash op 3) (get right 'ccl-register-number))
+			left)))))
 
-(defun ccl-compile-write-string (cmd)
-  (if (/= (length cmd) 2)
-      (error "CCL: Invalid number of arguments: %s" cmd))
-  (let* ((str (nth 1 cmd))
-	 (len (length str))
-	 (i 0))
-    (ccl-embed-code 'write-s 0 0)
-    (ccl-embed-const len)
-    (while (< i len)
-      (ccl-embed-const (aref str i))
-      (setq i (1+ i)))))
+;; Compile WRITE statement with string argument.
+(defun ccl-compile-write-string (str)
+  (let ((len (length str)))
+    (ccl-embed-code 'write-const-string 1 len)
+    (ccl-embed-string len str))
+  nil)
 
-(defun ccl-compile-if (cmd)
+;; Compile IF statement of the form `(if CONDITION TRUE-PART FALSE-PART)'.
+;; If READ-FLAG is non-nil, this statement has the form
+;; `(read-if (REG OPERATOR ARG) TRUE-PART FALSE-PART)'.
+(defun ccl-compile-if (cmd &optional read-flag)
   (if (and (/= (length cmd) 3) (/= (length cmd) 4))
       (error "CCL: Invalid number of arguments: %s" cmd))
   (let ((condition (nth 1 cmd))
 	(true-cmds (nth 2 cmd))
 	(false-cmds (nth 3 cmd))
-	ic0 ic1 ic2)
-    (if (listp condition)
-	;; cmd == (if (XXX OP YYY) ...)
-	(if (listp (car condition))
-	    ;; cmd == (if ((xxx op yyy) OP YYY) ...)
-	    (progn
-	      (ccl-compile-expression 'r7 (car condition))
-	      (setq condition (cons 'r7 (cdr condition)))
-	      (setq cmd (cons (car cmd)
-			      (cons condition
-				    (cdr (cdr cmd))))))))
-    (setq ic0 ccl-current-ic)
-    (ccl-embed-nop (if (listp condition) 3 1))
-    (ccl-compile-1 true-cmds)
-    (if (null false-cmds)
-	(setq ic1 ccl-current-ic)
-      (setq ic2 ccl-current-ic)
-      (ccl-embed-const 0)
-      (setq ic1 ccl-current-ic)
-      (ccl-compile-1 false-cmds)
-      (ccl-embed-code 'jump 0 ccl-current-ic ic2))
+	jump-cond-address
+	false-ic)
+    (if (and (listp condition)
+	     (listp (car condition)))
+	;; If CONDITION is a nested expression, the inner expression
+	;; should be compiled at first as SET statement, i.e.:
+	;; `(if ((X OP2 Y) OP Z) ...)' is compiled into two statements:
+	;; `(r7 = (X OP2 Y)) (if (r7 OP Z) ...)'.
+	(progn
+	  (ccl-compile-expression 'r7 (car condition))
+	  (setq condition (cons 'r7 (cdr condition)))
+	  (setq cmd (cons (car cmd)
+			  (cons condition (cdr (cdr cmd)))))))
+
+    (setq jump-cond-address ccl-current-ic)
+    ;; Compile CONDITION.
     (if (symbolp condition)
-	(ccl-embed-code 'jump-cond condition ic1 ic0)
-      (let ((arg (nth 2 condition)))
+	;; CONDITION is a register.
+	(progn
+	  (ccl-check-register condition cmd)
+	  (ccl-embed-code 'jump-cond condition 0))
+      ;; CONDITION is a simple expression of the form (RRR OP ARG).
+      (let ((rrr (car condition))
+	    (op (get (nth 1 condition) 'ccl-arith-code))
+	    (arg (nth 2 condition)))
+	(ccl-check-register rrr cmd)
 	(if (integer-or-char-p arg)
 	    (progn
-	      (ccl-embed-code 'jump-cond-c (car condition) ic1 ic0)
-	      (ccl-embed-const arg (1+ ic0)))
+	      (ccl-embed-code (if read-flag 'read-jump-cond-expr-const
+				'jump-cond-expr-const)
+			      rrr 0)
+	      (ccl-embed-data op)
+	      (ccl-embed-data arg))
 	  (ccl-check-register arg cmd)
-	  (ccl-embed-code 'jump-cond-r (car condition) ic1 ic0)
-	  (ccl-embed-const (get arg 'ccl-register-number) (1+ ic0)))
-	(ccl-embed-const (get (nth 1 condition) 'ccl-arith-code) (+ ic0 2))))))
+	  (ccl-embed-code (if read-flag 'read-jump-cond-expr-register 
+			    'jump-cond-expr-register)
+			  rrr 0)
+	  (ccl-embed-data op)
+	  (ccl-embed-data (get arg 'ccl-register-number)))))
 
+    ;; Compile TRUE-PART.
+    (let ((unconditional-jump (ccl-compile-1 true-cmds)))
+      (if (null false-cmds)
+	  ;; This is the place to jump to if condition is false.
+	  (ccl-embed-current-address jump-cond-address)
+	(let (end-true-part-address)
+	  (if (not unconditional-jump)
+	      (progn
+		;; If TRUE-PART does not end with unconditional jump, we
+		;; have to jump to the end of FALSE-PART from here.
+		(setq end-true-part-address ccl-current-ic)
+		(ccl-embed-code 'jump 0 0)))
+	  ;; This is the place to jump to if CONDITION is false.
+	  (ccl-embed-current-address jump-cond-address)
+	  ;; Compile FALSE-PART.
+	  (setq unconditional-jump
+		(and (ccl-compile-1 false-cmds) unconditional-jump))
+	  (if end-true-part-address
+	      ;; This is the place to jump to after the end of TRUE-PART.
+	      (ccl-embed-current-address end-true-part-address))))
+      unconditional-jump)))
+
+;; Compile BRANCH statement.
 (defun ccl-compile-branch (cmd)
   (if (< (length cmd) 3)
       (error "CCL: Invalid number of arguments: %s" cmd))
-  (if (listp (nth 1 cmd))
-      (progn
-	(ccl-compile-expression 'r7 (nth 1 cmd))
-	(setq cmd (cons (car cmd)
-			(cons 'r7 (cdr (cdr cmd)))))))
-  (ccl-compile-branch-1 cmd))
+  (ccl-compile-branch-blocks 'branch
+			     (ccl-compile-branch-expression (nth 1 cmd) cmd)
+			     (cdr (cdr cmd))))
 
+;; Compile READ statement of the form `(read-branch EXPR BLOCK0 BLOCK1 ...)'.
 (defun ccl-compile-read-branch (cmd)
-  (ccl-compile-branch-1 cmd))
-
-(defun ccl-compile-branch-1 (cmd)
   (if (< (length cmd) 3)
       (error "CCL: Invalid number of arguments: %s" cmd))
-  (let ((rrr (ccl-check-register (car (cdr cmd)) cmd))
-	(branches (cdr (cdr cmd)))
-	i ic0 ic1 ic2
-	branch-tails)
-    (ccl-embed-code (car cmd) rrr (- (length cmd) 2))
-    (setq ic0 ccl-current-ic)
-    (ccl-embed-nop (1- (length cmd)))
-    (setq i 0)
-    (while branches
-      (ccl-embed-const ccl-current-ic (+ ic0 i))
-      (ccl-compile-1 (car branches))
-      (setq branch-tails (cons ccl-current-ic branch-tails))
-      (ccl-embed-nop)
-      (setq i (1+ i))
-      (setq branches (cdr branches)))
-    ;; We don't need `jump' from the last branch.
-    (setq branch-tails (cdr branch-tails))
-    (setq ccl-current-ic (1- ccl-current-ic))
-    (while branch-tails
-      (ccl-embed-code 'jump 0 ccl-current-ic (car branch-tails))
-      (setq branch-tails (cdr branch-tails)))
-    ;; This is the case `rrr' is out of range.
-    (ccl-embed-const ccl-current-ic (+ ic0 i))
-    ))
+  (ccl-compile-branch-blocks 'read-branch
+			     (ccl-compile-branch-expression (nth 1 cmd) cmd)
+			     (cdr (cdr cmd))))
 
+;; Compile EXPRESSION part of BRANCH statement and return register
+;; which holds a value of the expression.
+(defun ccl-compile-branch-expression (expr cmd)
+  (if (listp expr)
+      ;; EXPR has the form `(EXPR2 OP ARG)'.  Compile it as SET
+      ;; statement of the form `(r7 = (EXPR2 OP ARG))'.
+      (progn
+	(ccl-compile-expression 'r7 expr)
+	'r7)
+    (ccl-check-register expr cmd)))
+
+;; Compile BLOCKs of BRANCH statement.  CODE is 'branch or 'read-branch.
+;; REG is a register which holds a value of EXPRESSION part.  BLOCKs
+;; is a list of CCL-BLOCKs.
+(defun ccl-compile-branch-blocks (code rrr blocks)
+  (let ((branches (length blocks))
+	branch-idx
+	jump-table-head-address
+	empty-block-indexes
+	block-tail-addresses
+	block-unconditional-jump)
+    (ccl-embed-code code rrr branches)
+    (setq jump-table-head-address ccl-current-ic)
+    ;; The size of jump table is the number of blocks plus 1 (for the
+    ;; case RRR is out of range).
+    (ccl-increment-ic (1+ branches))
+    (setq empty-block-indexes (list branches))
+    ;; Compile each block.
+    (setq branch-idx 0)
+    (while blocks
+      (if (null (car blocks))
+	  ;; This block is empty.
+	  (setq empty-block-indexes (cons branch-idx empty-block-indexes)
+		block-unconditional-jump t)
+	;; This block is not empty.
+	(ccl-embed-data (- ccl-current-ic jump-table-head-address)
+			(+ jump-table-head-address branch-idx))
+	(setq block-unconditional-jump (ccl-compile-1 (car blocks)))
+	(if (not block-unconditional-jump)
+	    (progn
+	      ;; Jump address of the end of branches are embedded later.
+	      ;; For the moment, just remember where to embed them.
+	      (setq block-tail-addresses
+		    (cons ccl-current-ic block-tail-addresses))
+	      (ccl-embed-code 'jump 0 0))))
+      (setq branch-idx (1+ branch-idx))
+      (setq blocks (cdr blocks)))
+    (if (not block-unconditional-jump)
+	;; We don't need jump code at the end of the last block.
+	(setq block-tail-addresses (cdr block-tail-addresses)
+	      ccl-current-ic (1- ccl-current-ic)))
+    ;; Embed jump address at the tailing jump commands of blocks.
+    (while block-tail-addresses
+      (ccl-embed-current-address (car block-tail-addresses))
+      (setq block-tail-addresses (cdr block-tail-addresses)))
+    ;; For empty blocks, make entries in the jump table point directly here.
+    (while empty-block-indexes
+      (ccl-embed-data (- ccl-current-ic jump-table-head-address)
+		      (+ jump-table-head-address (car empty-block-indexes)))
+      (setq empty-block-indexes (cdr empty-block-indexes))))
+  ;; Branch command ends by unconditional jump if RRR is out of range.
+  nil)
+
+;; Compile LOOP statement.
 (defun ccl-compile-loop (cmd)
   (if (< (length cmd) 2)
       (error "CCL: Invalid number of arguments: %s" cmd))
-  (let ((ccl-loop-head ccl-current-ic)
-	(ccl-breaks nil))
+  (let* ((ccl-loop-head ccl-current-ic)
+	 (ccl-breaks nil)
+	 unconditional-jump)
     (setq cmd (cdr cmd))
-    (while cmd
-      (ccl-compile-1 (car cmd))
-      (setq cmd (cdr cmd)))
-    (while ccl-breaks
-      (ccl-embed-code 'jump 0 ccl-current-ic (car ccl-breaks))
-      (setq ccl-breaks (cdr ccl-breaks)))))
+    (if cmd
+	(progn
+	  (setq unconditional-jump t)
+	  (while cmd
+	    (setq unconditional-jump
+		  (and (ccl-compile-1 (car cmd)) unconditional-jump))
+	    (setq cmd (cdr cmd)))
+	  (if (not ccl-breaks)
+	      unconditional-jump
+	    ;; Embed jump address for break statements encountered in
+	    ;; this loop.
+	    (while ccl-breaks
+	      (ccl-embed-current-address (car ccl-breaks))
+	      (setq ccl-breaks (cdr ccl-breaks))))
+	  nil))))
 
+;; Compile BREAK statement.
 (defun ccl-compile-break (cmd)
   (if (/= (length cmd) 1)
       (error "CCL: Invalid number of arguments: %s" cmd))
   (if (null ccl-loop-head)
       (error "CCL: No outer loop: %s" cmd))
   (setq ccl-breaks (cons ccl-current-ic ccl-breaks))
-  (ccl-embed-nop))
+  (ccl-embed-code 'jump 0 0)
+  t)
 
+;; Compile REPEAT statement.
 (defun ccl-compile-repeat (cmd)
   (if (/= (length cmd) 1)
       (error "CCL: Invalid number of arguments: %s" cmd))
   (if (null ccl-loop-head)
       (error "CCL: No outer loop: %s" cmd))
-  (ccl-embed-code 'jump 0 ccl-loop-head))
+  (ccl-embed-code 'jump 0 ccl-loop-head)
+  t)
 
+;; Compile WRITE-REPEAT statement.
 (defun ccl-compile-write-repeat (cmd)
   (if (/= (length cmd) 2)
       (error "CCL: Invalid number of arguments: %s" cmd))
@@ -386,19 +672,20 @@ The return value will be a vector of integers."
       (error "CCL: No outer loop: %s" cmd))
   (let ((arg (nth 1 cmd)))
     (cond ((integer-or-char-p arg)
-	   (ccl-embed-code 'write-c-jump 0 ccl-loop-head)
-	   (ccl-embed-const arg))
+	   (ccl-embed-code 'write-const-jump 0 ccl-loop-head)
+	   (ccl-embed-data arg))
 	  ((stringp arg)
-	   (ccl-embed-code 'write-s-jump 0 ccl-loop-head)
-	   (let ((i 0) (len (length arg)))
-	     (ccl-embed-const (length arg))
-	     (while (< i len)
-	       (ccl-embed-const (aref arg i))
-	       (setq i (1+ i)))))
+	   (let ((len (length arg))
+		 (i 0))
+	     (ccl-embed-code 'write-string-jump 0 ccl-loop-head)
+	     (ccl-embed-data len)
+	     (ccl-embed-string len arg)))
 	  (t
 	   (ccl-check-register arg cmd)
-	   (ccl-embed-code 'write-jump arg ccl-loop-head)))))
+	   (ccl-embed-code 'write-register-jump arg ccl-loop-head))))
+  t)
 
+;; Compile WRITE-READ-REPEAT statement.
 (defun ccl-compile-write-read-repeat (cmd)
   (if (or (< (length cmd) 2) (> (length cmd) 3))
       (error "CCL: Invalid number of arguments: %s" cmd))
@@ -407,290 +694,417 @@ The return value will be a vector of integers."
   (let ((rrr (ccl-check-register (nth 1 cmd) cmd))
 	(arg (nth 2 cmd)))
     (cond ((null arg)
-	   (ccl-embed-code 'write-read-jump rrr ccl-loop-head))
+	   (ccl-embed-code 'write-register-read-jump rrr ccl-loop-head))
 	  ((integer-or-char-p arg)
-	   (ccl-embed-code 'write-c-read-jump rrr ccl-loop-head)
-	   (ccl-embed-const arg))
-	  ((or (stringp arg) (vectorp arg))
-	   (ccl-embed-code (if (stringp arg)
-			       'write-s-read-jump
-			     'write-a-read-jump)
-			   rrr ccl-loop-head)
-	   (let ((i 0) (len (length arg)))
-	     (ccl-embed-const (length arg))
+	   (ccl-embed-code 'write-const-read-jump rrr arg ccl-loop-head))
+	  ((vectorp arg)
+	   (let ((len (length arg))
+		 (i 0))
+	     (ccl-embed-code 'write-array-read-jump rrr ccl-loop-head)
+	     (ccl-embed-data len)
 	     (while (< i len)
-	       (ccl-embed-const (aref arg i))
+	       (ccl-embed-data (aref arg i))
 	       (setq i (1+ i)))))
-	  (t (error "CCL: Invalide argument %s: %s" arg cmd)))))
+	  (t
+	   (error "CCL: Invalid argument %s: %s" arg cmd)))
+    (ccl-embed-code 'read-jump rrr ccl-loop-head))
+  t)
 			    
+;; Compile READ statement.
 (defun ccl-compile-read (cmd)
-  (let ((rrr (ccl-check-register (nth 1 cmd) cmd)))
-    (cond ((= (length cmd) 2)
-	   (ccl-embed-code 'read1 rrr 0))
-	  ((= (length cmd) 3)
-	   (ccl-embed-code 'read2 rrr (get (nth 2 cmd) 'ccl-register-number)))
-	  (t (error "CCL: Invalid number of arguments: %s" cmd)))))
-
-(defun ccl-compile-read-if (cmd)
-  (if (and (/= (length cmd) 3) (/= (length cmd) 4))
+  (if (< (length cmd) 2)
       (error "CCL: Invalid number of arguments: %s" cmd))
-  (let* ((expr (nth 1 cmd))
-	 (rrr (ccl-check-register (car expr) cmd))
-	 (true-cmds (nth 2 cmd))
-	 (false-cmds (nth 3 cmd))
-	 ic0 ic1 ic2)
-    (setq ic0 ccl-current-ic)
-    (ccl-embed-nop 3)
-    (ccl-compile-1 true-cmds)
-    (if (null false-cmds)
-	(setq ic1 ccl-current-ic)
-      (setq ic2 ccl-current-ic)
-      (ccl-embed-const 0)
-      (setq ic1 ccl-current-ic)
-      (ccl-compile-1 false-cmds)
-      (ccl-embed-code 'jump 0 ccl-current-ic ic2))
-    (let ((arg (nth 2 expr)))
-      (ccl-embed-code (if (integer-or-char-p arg) 'read-jump-cond-c
-			'read-jump-cond-r)
-		      rrr ic1 ic0)
-      (ccl-embed-const (if (integer-or-char-p arg) arg
-			 (get arg 'ccl-register-number))
-		       (1+ ic0))
-      (ccl-embed-const (get (nth 1 expr) 'ccl-arith-code) (+ ic0 2)))))
+  (let* ((args (cdr cmd))
+	 (i (1- (length args))))
+    (while args
+      (let ((rrr (ccl-check-register (car args) cmd)))
+	(ccl-embed-code 'read-register rrr i)
+	(setq args (cdr args) i (1- i)))))
+  nil)
 
+;; Compile READ-IF statement.
+(defun ccl-compile-read-if (cmd)
+  (ccl-compile-if cmd 'read))
+
+;; Compile WRITE statement.
 (defun ccl-compile-write (cmd)
-  (if (and (/= (length cmd) 2) (/= (length cmd) 3))
+  (if (< (length cmd) 2)
       (error "CCL: Invalid number of arguments: %s" cmd))
   (let ((rrr (nth 1 cmd)))
     (cond ((integer-or-char-p rrr)
-	   (ccl-embed-code 'write-c 0 0)
-	   (ccl-embed-const rrr))
+	   (ccl-embed-code 'write-const-string 0 rrr))
 	  ((stringp rrr)
-	   (ccl-compile-write-string (list 'write rrr)))
-	  (t
+	   (ccl-compile-write-string rrr))
+	  ((and (symbolp rrr) (vectorp (nth 2 cmd)))
 	   (ccl-check-register rrr cmd)
-	   (let ((arg (nth 2 cmd)))
-	     (if arg
-		 (cond ((symbolp arg)
-			(ccl-check-register arg cmd)
-			(ccl-embed-code 'write2 rrr
-					(get arg 'ccl-register-number)))
-		       ((vectorp arg)
-			(let ((i 0) (len (length arg)))
-			  (ccl-embed-code 'write-a rrr 0)
-			  (ccl-embed-const len)
-			  (while (< i len)
-			    (ccl-embed-const (aref arg i))
-			    (setq i (1+ i)))))
-		       (t (error "CCL: Invalid argument %s: %s" arg cmd)))
-	       (ccl-embed-code 'write1 rrr 0)))))))
+	   ;; CMD has the form `(write REG ARRAY)'.
+	   (let* ((arg (nth 2 cmd))
+		  (len (length arg))
+		  (i 0))
+	     (ccl-embed-code 'write-array rrr len)
+	     (while (< i len)
+	       (if (not (integer-or-char-p (aref arg i)))
+		   (error "CCL: Invalid argument %s: %s" arg cmd))
+	       (ccl-embed-data (aref arg i))
+	       (setq i (1+ i)))))
 
+	  ((symbolp rrr)
+	   ;; CMD has the form `(write REG ...)'.
+	   (let* ((args (cdr cmd))
+		  (i (1- (length args))))
+	     (while args
+	       (setq rrr (ccl-check-register (car args) cmd))
+	       (ccl-embed-code 'write-register rrr i)
+	       (setq args (cdr args) i (1- i)))))
+
+	  ((listp rrr)
+	   ;; CMD has the form `(write (LEFT OP RIGHT))'.
+	   (let ((left (car rrr))
+		 (op (get (nth 1 rrr) 'ccl-arith-code))
+		 (right (nth 2 rrr)))
+	     (if (listp left)
+		 (progn
+		   ;; RRR has the form `((EXPR OP2 ARG) OP RIGHT)'.
+		   ;; Compile the first term as `(r7 = (EXPR OP2 ARG))'.
+		   (ccl-compile-expression 'r7 left)
+		   (setq left 'r7)))
+	     ;; Now RRR has the form `(ARG OP RIGHT)'.
+	     (if (integer-or-char-p right)
+		 (progn
+		   (ccl-embed-code 'write-expr-const 0 (ash op 3) left)
+		   (ccl-embed-data right))
+	       (ccl-check-register right rrr)
+	       (ccl-embed-code 'write-expr-register 0
+			       (logior (ash op 3)
+				       (get right 'ccl-register-number))))))
+
+	  (t
+	   (error "CCL: Invalid argument: %s" cmd))))
+  nil)
+
+;; Compile CALL statement.
+(defun ccl-compile-call (cmd)
+  (if (/= (length cmd) 2)
+      (error "CCL: Invalid number of arguments: %s" cmd))
+  (if (not (symbolp (nth 1 cmd)))
+      (error "CCL: Subroutine should be a symbol: %s" cmd))
+  (let* ((name (nth 1 cmd))
+	 (idx (get name 'ccl-program-idx)))
+    (if (not idx)
+	(error "CCL: Unknown subroutine name: %s" name))
+    (ccl-embed-code 'call 0 idx))
+  nil)
+
+;; Compile END statement.
 (defun ccl-compile-end (cmd)
   (if (/= (length cmd) 1)
       (error "CCL: Invalid number of arguments: %s" cmd))
-  (ccl-embed-code 'end 0 0))
+  (ccl-embed-code 'end 0 0)
+  t)
 
 ;;; CCL dump staffs
-(defvar ccl-program-vector-dump nil)
+
+;; To avoid byte-compiler warning.
+(defvar ccl-code)
 
 ;;;###autoload
 (defun ccl-dump (ccl-code)
   "Disassemble compiled CCL-CODE."
-  (save-excursion
-    (set-buffer (get-buffer-create "*CCL-Dump*"))
-    (erase-buffer)
-    (setq ccl-program-vector-dump ccl-code)
-    (let ((len (length ccl-code)))
-      (insert "Main:\n")
-      (setq ccl-current-ic 1)
-      (if (> (aref ccl-code 0) 0)
-	  (progn
-	    (while (< ccl-current-ic (aref ccl-code 0))
-	      (ccl-dump-1))
-	    (insert "At EOF:\n")))
-      (while (< ccl-current-ic len)
-	(ccl-dump-1))
-      ))
-  (display-buffer (get-buffer "*CCL-Dump*")))
+  (let ((len (length ccl-code))
+	(buffer-mag (aref ccl-code 0)))
+    (cond ((= buffer-mag 0)
+	   (insert "Don't output anything.\n"))
+	  ((= buffer-mag 1)
+	   (insert "Out-buffer must be as large as in-buffer.\n"))
+	  (t
+	   (insert
+	    (format "Out-buffer must be %d times bigger than in-buffer.\n"
+		    buffer-mag))))
+    (insert "Main-body:\n")
+    (setq ccl-current-ic 2)
+    (if (> (aref ccl-code 1) 0)
+	(progn
+	  (while (< ccl-current-ic (aref ccl-code 1))
+	    (ccl-dump-1))
+	  (insert "At EOF:\n")))
+    (while (< ccl-current-ic len)
+      (ccl-dump-1))
+    ))
 
+;; Return a CCL code in `ccl-code' at `ccl-current-ic'.
 (defun ccl-get-next-code ()
   (prog1
-      (aref ccl-program-vector-dump ccl-current-ic)
+      (aref ccl-code ccl-current-ic)
     (setq ccl-current-ic (1+ ccl-current-ic))))
 
 (defun ccl-dump-1 ()
-  (let* ((opcode (ccl-get-next-code))
-	 (code (logand opcode 31))
-	 (cmd (aref ccl-machine-code-table code))
-	 (rrr (logand (ash opcode -5) 7))
-	 (cc (ash opcode -8)))
-    (insert (format "%4d: " (1- ccl-current-ic)))
+  (let* ((code (ccl-get-next-code))
+	 (cmd (aref ccl-code-table (logand code 31)))
+	 (rrr (ash (logand code 255) -5))
+	 (cc (ash code -8)))
+    (insert (format "%5d:[%s] " (1- ccl-current-ic) cmd))
     (funcall (get cmd 'ccl-dump-function) rrr cc))) 
 
-(defun ccl-dump-set-cs (rrr cc)
-  (insert (format "r%d = %s\n" rrr cc)))
-
-(defun ccl-dump-set-cl (rrr cc)
-  (setq cc (ccl-get-next-code))
-  (insert (format "r%d = %s\n" rrr cc)))
-
-(defun ccl-dump-set-r (rrr cc)
+(defun ccl-dump-set-register (rrr cc)
   (insert (format "r%d = r%d\n" rrr cc)))
 
-(defun ccl-dump-set-a (rrr cc)
-  (let ((range (ccl-get-next-code)) (i 0))
+(defun ccl-dump-set-short-const (rrr cc)
+  (insert (format "r%d = %d\n" rrr cc)))
+
+(defun ccl-dump-set-const (rrr ignore)
+  (insert (format "r%d = %d\n" rrr (ccl-get-next-code))))
+
+(defun ccl-dump-set-array (rrr cc)
+  (let ((rrr2 (logand cc 7))
+	(len (ash cc -3))
+	(i 0))
     (insert (format "r%d = array[r%d] of length %d\n\t"
-		    rrr cc range))
-    (let ((i 0))
-      (while (< i range)
-	(insert (format "%d " (ccl-get-next-code)))
-	(setq i (1+ i))))
+		    rrr rrr2 len))
+    (while (< i len)
+      (insert (format "%d " (ccl-get-next-code)))
+      (setq i (1+ i)))
     (insert "\n")))
 
-(defun ccl-dump-jump (rrr cc)
-  (insert (format "jump to %d\n" cc)))
+(defun ccl-dump-jump (ignore cc &optional address)
+  (insert (format "jump to %d(" (+ (or address ccl-current-ic) cc)))
+  (if (>= cc 0)
+      (insert "+"))
+  (insert (format "%d)\n" (1+ cc))))
 
 (defun ccl-dump-jump-cond (rrr cc)
-  (insert (format "if !(r%d), jump to %d\n" rrr cc)))
+  (insert (format "if (r%d == 0), " rrr))
+  (ccl-dump-jump nil cc))
 
-(defun ccl-dump-write-jump (rrr cc)
-  (insert (format "write r%d, jump to %d\n" rrr cc)))
+(defun ccl-dump-write-register-jump (rrr cc)
+  (insert (format "write r%d, " rrr))
+  (ccl-dump-jump nil cc))
 
-(defun ccl-dump-write-read-jump (rrr cc)
-  (insert (format "write r%d, read r%d, jump to %d\n" rrr rrr cc)))
+(defun ccl-dump-write-register-read-jump (rrr cc)
+  (insert (format "write r%d, read r%d, " rrr rrr))
+  (ccl-dump-jump nil cc)
+  (ccl-get-next-code)			; Skip dummy READ-JUMP
+  )
 
-(defun ccl-dump-write-c-jump (rrr cc)
-  (let ((const (ccl-get-next-code)))
-    (insert (format "write %s, jump to %d\n" const cc))))
+(defun ccl-extract-arith-op (cc)
+  (aref ccl-arith-table (ash cc -6)))
 
-(defun ccl-dump-write-c-read-jump (rrr cc)
-  (let ((const (ccl-get-next-code)))
-    (insert (format "write %s, read r%d, jump to %d\n" const rrr cc))))
+(defun ccl-dump-write-expr-const (ignore cc)
+  (insert (format "write (r%d %s %d)\n"
+		  (logand cc 7)
+		  (ccl-extract-arith-op cc)
+		  (ccl-get-next-code))))
 
-(defun ccl-dump-write-s-jump (rrr cc)
-  (let ((len (ccl-get-next-code)) (i 0))
+(defun ccl-dump-write-expr-register (ignore cc)
+  (insert (format "write (r%d %s r%d)\n"
+		  (logand cc 7)
+		  (ccl-extract-arith-op cc)
+		  (logand (ash cc -3) 7))))
+
+(defun ccl-dump-insert-char (cc)
+  (cond ((= cc ?\t) (insert " \"^I\""))
+	((= cc ?\n) (insert " \"^J\""))
+	(t (insert (format " \"%c\"" cc)))))
+
+(defun ccl-dump-write-const-jump (ignore cc)
+  (let ((address ccl-current-ic))
+    (insert "write char")
+    (ccl-dump-insert-char (ccl-get-next-code))
+    (insert ", ")
+    (ccl-dump-jump nil cc address)))
+
+(defun ccl-dump-write-const-read-jump (rrr cc)
+  (let ((address ccl-current-ic))
+    (insert "write char")
+    (ccl-dump-insert-char (ccl-get-next-code))
+    (insert (format ", read r%d, " rrr))
+    (ccl-dump-jump cc address)
+    (ccl-get-next-code)			; Skip dummy READ-JUMP
+    ))
+
+(defun ccl-dump-write-string-jump (ignore cc)
+  (let ((address ccl-current-ic)
+	(len (ccl-get-next-code))
+	(i 0))
     (insert "write \"")
     (while (< i len)
-      (insert (format "%c" (ccl-get-next-code)))
-      (setq i (1+ i)))
-    (insert (format "\", jump to %d\n" cc))))
+      (let ((code (ccl-get-next-code)))
+	(insert (ash code -16))
+	(if (< (1+ i) len) (insert (logand (ash code -8) 255)))
+	(if (< (+ i 2) len) (insert (logand code 255))))
+      (setq i (+ i 3)))
+    (insert "\", ")
+    (ccl-dump-jump nil cc address)))
 
-(defun ccl-dump-write-s-read-jump (rrr cc)
-  (let ((len (ccl-get-next-code)) (i 0))
-    (insert "write \"")
+(defun ccl-dump-write-array-read-jump (rrr cc)
+  (let ((address ccl-current-ic)
+	(len (ccl-get-next-code))
+	(i 0))
+    (insert (format "write array[r%d] of length %d,\n\t" rrr len))
     (while (< i len)
-      (insert (format "%c" (ccl-get-next-code)))
+      (ccl-dump-insert-char (ccl-get-next-code))
       (setq i (1+ i)))
-    (insert (format "\", read r%d, jump to %d\n" rrr cc))))
+    (insert (format "\n\tthen read r%d, " rrr))
+    (ccl-dump-jump nil cc address)
+    (ccl-get-next-code)			; Skip dummy READ-JUMP.
+    ))
 
-(defun ccl-dump-write-a-read-jump (rrr cc)
-  (let ((len (ccl-get-next-code)) (i 0))
-    (insert (format "write array[r%d] of length %d, read r%d, jump to %d\n\t"
-		    rrr len rrr cc))
-    (while (< i len)
-      (insert (format "%d " (ccl-get-next-code)))
-      (setq i (1+ i)))
-    (insert "\n")))
-
-(defun ccl-dump-branch (rrr cc)
-  (let ((i 0))
-    (insert (format "jump to array[r%d] of length %d)\n\t" rrr cc))
-    (while (<= i cc)
-      (insert (format "%d " (ccl-get-next-code)))
-      (setq i (1+ i)))
-    (insert "\n")))
-
-(defun ccl-dump-read1 (rrr cc)
-  (insert (format "read r%d\n" rrr)))
-
-(defun ccl-dump-read2 (rrr cc)
-  (insert (format "read r%d and r%d\n" rrr cc)))
-
-(defun ccl-dump-read-branch (rrr cc)
+(defun ccl-dump-read-jump (rrr cc)
   (insert (format "read r%d, " rrr))
-  (ccl-dump-branch rrr cc))
+  (ccl-dump-jump nil cc))
 
-(defun ccl-dump-write1 (rrr cc)
-  (insert (format "write r%d\n" rrr)))
-
-(defun ccl-dump-write2 (rrr cc)
-  (insert (format "write r%d and r%d\n" rrr cc)))
-
-(defun ccl-dump-write-c (rrr cc)
-  (insert (format "write %s\n" (ccl-get-next-code))))
-
-(defun ccl-dump-write-s (rrr cc)
-  (let ((len (ccl-get-next-code)) (i 0))
-    (insert "write \"")
-    (while (< i len)
-      (insert (format "%c" (ccl-get-next-code)))
-      (setq i (1+ i)))
-    (insert "\"\n")))
-
-(defun ccl-dump-write-a (rrr cc)
-  (let ((len (ccl-get-next-code)) (i 0))
-    (insert (format "write array[r%d] of length %d\n\t" rrr len))
-    (while (< i 0)
-      (insert "%d " (ccl-get-next-code))
+(defun ccl-dump-branch (rrr len)
+  (let ((jump-table-head ccl-current-ic)
+	(i 0))
+    (insert (format "jump to array[r%d] of length %d\n\t" rrr len))
+    (while (<= i len)
+      (insert (format "%d " (+ jump-table-head (ccl-get-next-code))))
       (setq i (1+ i)))
     (insert "\n")))
 
-(defun ccl-dump-end (rrr cc)
+(defun ccl-dump-read-register (rrr cc)
+  (insert (format "read r%d (%d remaining)\n" rrr cc)))
+
+(defun ccl-dump-read-branch (rrr len)
+  (insert (format "read r%d, " rrr))
+  (ccl-dump-branch rrr len))
+
+(defun ccl-dump-write-register (rrr cc)
+  (insert (format "write r%d (%d remaining)\n" rrr cc)))
+
+(defun ccl-dump-call (ignore cc)
+  (insert (format "call subroutine #%d\n" cc)))
+
+(defun ccl-dump-write-const-string (rrr cc)
+  (if (= rrr 0)
+      (progn
+	(insert "write char")
+	(ccl-dump-insert-char cc)
+	(newline))
+    (let ((len cc)
+	  (i 0))
+      (insert "write \"")
+      (while (< i len)
+	(let ((code (ccl-get-next-code)))
+	  (insert (format "%c" (lsh code -16)))
+	  (if (< (1+ i) len)
+	      (insert (format "%c" (logand (lsh code -8) 255))))
+	  (if (< (+ i 2) len)
+	      (insert (format "%c" (logand code 255))))
+	  (setq i (+ i 3))))
+      (insert "\"\n"))))
+
+(defun ccl-dump-write-array (rrr cc)
+  (let ((i 0))
+    (insert (format "write array[r%d] of length %d\n\t" rrr cc))
+    (while (< i cc)
+      (ccl-dump-insert-char (ccl-get-next-code))
+      (setq i (1+ i)))
+    (insert "\n")))
+
+(defun ccl-dump-end (&rest ignore)
   (insert "end\n"))
 
-(defun ccl-dump-set-self-cs (rrr cc)
-  (let ((arith (aref ccl-arith-table (ccl-get-next-code))))
-    (insert (format "r%d %s= %s\n" rrr arith cc))))
+(defun ccl-dump-set-assign-expr-const (rrr cc)
+  (insert (format "r%d %s= %d\n"
+		  rrr
+		  (ccl-extract-arith-op cc)
+		  (ccl-get-next-code))))
 
-(defun ccl-dump-set-self-cl (rrr cc)
-  (setq cc (ccl-get-next-code))
-  (let ((arith (aref ccl-arith-table (ccl-get-next-code))))
-    (insert (format "r%d %s= %s\n" rrr arith cc))))
+(defun ccl-dump-set-assign-expr-register (rrr cc)
+  (insert (format "r%d %s= r%d\n"
+		  rrr
+		  (ccl-extract-arith-op cc)
+		  (logand cc 7))))
 
-(defun ccl-dump-set-self-r (rrr cc)
-  (let ((arith (aref ccl-arith-table (ccl-get-next-code))))
-    (insert (format "r%d %s= r%d\n" rrr arith cc))))
+(defun ccl-dump-set-expr-const (rrr cc)
+  (insert (format "r%d = r%d %s %d\n"
+		  rrr
+		  (logand cc 7)
+		  (ccl-extract-arith-op cc)
+		  (ccl-get-next-code))))
 
-(defun ccl-dump-set-expr-cl (rrr cc)
-  (let ((const (ccl-get-next-code))
-	(arith (aref ccl-arith-table (ccl-get-next-code))))
-    (insert (format "r%d = r%d %s %s\n" rrr cc arith const))))
+(defun ccl-dump-set-expr-register (rrr cc)
+  (insert (format "r%d = r%d %s r%d\n"
+		  rrr
+		  (logand cc 7)
+		  (ccl-extract-arith-op cc)
+		  (logand (ash cc -3) 7))))
 
-(defun ccl-dump-set-expr-r (rrr cc)
-  (let ((reg (ccl-get-next-code))
-	(arith (aref ccl-arith-table (ccl-get-next-code))))
-    (insert (format "r%d = r%d %s r%d\n" rrr cc arith reg))))
+(defun ccl-dump-jump-cond-expr-const (rrr cc)
+  (let ((address ccl-current-ic))
+    (insert (format "if !(r%d %s %d), "
+		    rrr
+		    (aref ccl-arith-table (ccl-get-next-code))
+		    (ccl-get-next-code)))
+    (ccl-dump-jump nil cc address)))
 
-(defun ccl-dump-jump-cond-c (rrr cc)
-  (let ((const (ccl-get-next-code))
-	(arith (aref ccl-arith-table (ccl-get-next-code))))
-    (insert (format "if !(r%d %s %s), jump to %d\n" rrr arith const cc))))
+(defun ccl-dump-jump-cond-expr-register (rrr cc)
+  (let ((address ccl-current-ic))
+    (insert (format "if !(r%d %s r%d), "
+		    rrr
+		    (aref ccl-arith-table (ccl-get-next-code))
+		    (ccl-get-next-code)))
+    (ccl-dump-jump nil cc address)))
 
-(defun ccl-dump-jump-cond-r (rrr cc)
-  (let ((reg (ccl-get-next-code))
-	(arith (aref ccl-arith-table (ccl-get-next-code))))
-    (insert (format "if !(r%d %s r%d), jump to %d\n" rrr arith reg cc))))
-
-(defun ccl-dump-read-jump-cond-c (rrr cc)
+(defun ccl-dump-read-jump-cond-expr-const (rrr cc)
   (insert (format "read r%d, " rrr))
-  (ccl-dump-jump-cond-c rrr cc))
+  (ccl-dump-jump-cond-expr-const rrr cc))
 
-(defun ccl-dump-read-jump-cond-r (rrr cc)
+(defun ccl-dump-read-jump-cond-expr-register (rrr cc)
   (insert (format "read r%d, " rrr))
-  (ccl-dump-jump-cond-r rrr cc))
+  (ccl-dump-jump-cond-expr-register rrr cc))
+
+(defun ccl-dump-binary (ccl-code)
+  (let ((len (length ccl-code))
+	(i 2))
+    (while (< i len)
+      (let ((code (aref ccl-code i))
+	    (j 27))
+	(while (>= j 0)
+	  (insert (if (= (logand code (ash 1 j)) 0) ?0 ?1))
+	  (setq j (1- j)))
+	(setq code (logand code 31))
+	(if (< code (length ccl-code-table))
+	    (insert (format ":%s" (aref ccl-code-table code))))
+	(insert "\n"))
+      (setq i (1+ i)))))
 
 ;; CCL emulation staffs 
 
 ;; Not yet implemented.
+
+;;;###autoload
+(defmacro declare-ccl-program (name)
+  "Declare NAME as a name of CCL program.
 
-;; For byte-compiler
+To compile a CCL program which calls another CCL program not yet
+defined, it must be declared as a CCL program in advance."
+  `(put ',name 'ccl-program-idx (register-ccl-program ',name nil)))
 
 ;;;###autoload
 (defmacro define-ccl-program (name ccl-program &optional doc)
-  "Does (defconst NAME (ccl-compile (eval CCL-PROGRAM)) DOC).
-Byte-compiler expand this macro while compiling."
-  (` (defconst (, name) (, (ccl-compile (eval ccl-program))) (, doc))))
+  "Set NAME the compiled code of CCL-PROGRAM.
+CCL-PROGRAM is `eval'ed before being handed to the CCL compiler `ccl-compile'.
+The compiled code is a vector of integers."
+  `(let ((prog ,(ccl-compile (eval ccl-program))))
+     (defconst ,name prog ,doc)
+     (put ',name 'ccl-program-idx (register-ccl-program ',name prog))
+     nil))
 
-(put 'define-ccl-program 'byte-hunk-handler 'macroexpand)
+;;;###autoload
+(defun ccl-execute-with-args (ccl-prog &rest args)
+  "Execute CCL-PROGRAM with registers initialized by the remaining args.
+The return value is a vector of resulting CCL registeres."
+  (let ((reg (make-vector 8 0))
+	(i 0))
+    (while (and args (< i 8))
+      (if (not (integerp (car args)))
+	  (error "Arguments should be integer"))
+      (aset reg i (car args))
+      (setq args (cdr args) i (1+ i)))
+    (ccl-execute ccl-prog reg)
+    reg))
 
 (provide 'ccl)
+
+;; ccl.el ends here

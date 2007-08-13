@@ -207,9 +207,6 @@ Boston, MA 02111-1307, USA.  */
 /* Can `gettimeofday' accept two arguments? */
 #undef GETTIMEOFDAY_ONE_ARGUMENT
 
-/* Is the timezone variable already declared in system headers? */
-#undef HAVE_TIMEZONE_DECL
-
 #undef HAVE_MMAP
 #undef HAVE_STRCOLL
 #undef HAVE_GETPGRP

@@ -1,3 +1,27 @@
+1997-11-13  Marc Paquette <marcpa@cam.org>
+
+	* nt/Todo: added a task for support of lisp packages through
+	the registry.
+
+1997-11-13  Jonathan Harris <jhar@tardis.ed.ac.uk>
+
+	* Renamed files *w32* to *msw*
+
+	* Changed 'w32' and 'win32' to 'mswindows', and HAVE_W32GUI to
+	  HAVE_MS_WINDOWS. Changed files:
+	  cus-edit.el, device.el, faces.el, frame.el, msw-faces.el,
+	  msw.init.el, igrep.el, dumped-lisp.el, font.el, hippie-exp.el,
+	  sysdep.el, console-msw.c, console-msw.h, console.c,
+	  device-msw.c, emacs.c, event-msw.c, event-msw.h, event-stream.c,
+	  events.c, events.h, faces.c, frame-msw.c, frame.c, general.c,
+	  msw-proc.c, objects-msw.c, objects-msw.h, redisplay-msw.c,
+	  redisplay.c, symsinit.h, 
+
+	* Didn't change 'win32' in nt.c, nt.h, ntproc.c
+
+	* Deleted w32 build directory since nt build directory now handles
+	  X and native mswindows builds.
+
 1997-11-10  SL Baur  <steve@altair.xemacs.org>
 
 	* info/dir: remove packaged entries.

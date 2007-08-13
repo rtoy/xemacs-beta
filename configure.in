@@ -2920,27 +2920,6 @@ AC_TRY_LINK([
    AC_DEFINE(GETTIMEOFDAY_ONE_ARGUMENT)])
 fi
 
-AC_MSG_CHECKING(whether the timezone variable is already declared)
-AC_TRY_LINK([
-#ifdef TIME_WITH_SYS_TIME
-#include <sys/time.h>
-#include <time.h>
-#else
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
-#else
-#include <time.h>
-#endif
-#endif
-  ],
-  [
-  timezone = 0;
-],
-  [AC_MSG_RESULT(yes)
-   AC_DEFINE(HAVE_TIMEZONE_DECL)],
-  [AC_MSG_RESULT(no)])
-
-
 
 AC_C_INLINE
 if test "$ac_cv_c_inline" != "no"; then

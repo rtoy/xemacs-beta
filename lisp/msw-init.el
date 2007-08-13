@@ -1,10 +1,10 @@
-;;; w32-init.el --- initialization code for win32
+;;; msw-init.el --- initialization code for mswindows
 ;; Copyright (C) 1990, 1993, 1994 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Board of Trustees, University of Illinois.
 ;; Copyright (C) 1995, 1996 Ben Wing.
 
 ;; Author: various
-;; Rewritten for win32 by: Jonathan Harris
+;; Rewritten for mswindows by: Jonathan Harris
 
 ;; This file is part of XEmacs.
 
@@ -23,25 +23,25 @@
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-(defvar w32-win-initted nil)
-(defvar w32-pre-win-initted nil)
-(defvar w32-post-win-initted nil)
+(defvar mswindows-win-initted nil)
+(defvar mswindows-pre-win-initted nil)
+(defvar mswindows-post-win-initted nil)
 
-(defun init-pre-w32-win ()
-  "Initialize win32 GUI at startup (pre).  Don't call this."
-  (unless w32-pre-win-initted
-    (setq w32-pre-win-initted t)))
+(defun init-pre-mswindows-win ()
+  "Initialize mswindows GUI at startup (pre).  Don't call this."
+  (unless mswindows-pre-win-initted
+    (setq mswindows-pre-win-initted t)))
 
-(defun init-w32-win ()
-  "Initialize win32 GUI at startup.  Don't call this."
-  (unless w32-win-initted
-    (init-pre-w32-win)
-    (make-w32-device)
-    (init-post-w32-win (selected-console))
-    (setq w32-win-initted t)))
+(defun init-mswindows-win ()
+  "Initialize mswindows GUI at startup.  Don't call this."
+  (unless mswindows-win-initted
+    (init-pre-mswindows-win)
+    (make-mswindows-device)
+    (init-post-mswindows-win (selected-console))
+    (setq mswindows-win-initted t)))
 
-(defun init-post-w32-win (console)
-  "Initialize win32 GUI at startup (post).  Don't call this."
-  (unless w32-post-win-initted
-    (setq w32-post-win-initted t)))
+(defun init-post-mswindows-win (console)
+  "Initialize mswindows GUI at startup (post).  Don't call this."
+  (unless mswindows-post-win-initted
+    (setq mswindows-post-win-initted t)))
 

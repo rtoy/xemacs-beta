@@ -1,3 +1,14 @@
+1997-11-15  SL Baur  <steve@altair.xemacs.org>
+
+	* lispref/windows.texi (scroll-conservatively): Fix typo.
+
+1997-11-12  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* lispref/commands.texi (Working With Events): Document fully.
+
+	* lispref/windows.texi (Vertical Scrolling): Document
+ 	scroll-conservatively.
+
 1997-11-09  Hrvoje Niksic  <hniksic@srce.hr>
 
 	* lispref/extents.texi (Intro to Extents): Minor correction.

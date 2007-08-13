@@ -2200,7 +2200,7 @@ up and setting frame property values.  This allows you to alias one
 frame property name to another.
 
 See the variables `default-x-frame-plist', `default-tty-frame-plist'
-and `default-w32-frame-plist' for a description of the properties
+and `default-mswindows-frame-plist' for a description of the properties
 recognized for particular types of frames.
 */
        (frame, plist))

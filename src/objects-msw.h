@@ -1,4 +1,4 @@
-/* win32-specific Lisp objects.
+/* mswindows-specific Lisp objects.
    Copyright (C) 1993, 1994 Free Software Foundation, Inc.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995, 1996 Ben Wing.
@@ -27,26 +27,28 @@ Boston, MA 02111-1307, USA.  */
 
    Ultimately based on FSF.
    Rewritten by Ben Wing.
-   Rewritten for win32 by Jonathan Harris, November 1997 for 20.4.
+   Rewritten for mswindows by Jonathan Harris, November 1997 for 20.4.
  */
 
 
-#ifndef _XEMACS_OBJECTS_W32_H_
-#define _XEMACS_OBJECTS_W32_H_
+#ifndef _XEMACS_OBJECTS_MSW_H_
+#define _XEMACS_OBJECTS_MSW_H_
 
 #include "objects.h"
 
-struct w32_color_instance_data
+struct mswindows_color_instance_data
 {
   COLORREF  color;
   HBRUSH    brush;
 };
 
-#define W32_COLOR_INSTANCE_DATA(c) ((struct w32_color_instance_data *) (c)->data)
-#define COLOR_INSTANCE_W32_COLOR(c) (W32_COLOR_INSTANCE_DATA (c)->color)
-#define COLOR_INSTANCE_W32_BRUSH(c) (W32_COLOR_INSTANCE_DATA (c)->brush)
+#define MSWINDOWS_COLOR_INSTANCE_DATA(c)	\
+	((struct mswindows_color_instance_data *) (c)->data)
+#define COLOR_INSTANCE_MSWINDOWS_COLOR(c)	\
+	(MSWINDOWS_COLOR_INSTANCE_DATA (c)->color)
+#define COLOR_INSTANCE_MSWINDOWS_BRUSH(c)	\
+	(MSWINDOWS_COLOR_INSTANCE_DATA (c)->brush)
 
+#define FONT_INSTANCE_MSWINDOWS_HFONT(c)	((HFONT) (c)->data)
 
-#define FONT_INSTANCE_W32_HFONT(c)	((HFONT) (c)->data)
-
-#endif /* _XEMACS_OBJECTS_W32_H_ */
+#endif /* _XEMACS_OBJECTS_MSW_H_ */

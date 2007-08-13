@@ -2,16 +2,39 @@
 
 			     David Hobley
 			    Marc Paquette
+			   Jonathon Harris
 
-Currently XEmacs for NT is in an early stage of development. Only X support
-works at the moment, although native GUI/terminal support will be added at a
-later date. If anyone wants to help with this, please contact us.
+Currently XEmacs for Win32 is in an early stage of development. 
 
 The port was made much easier by the groundbreaking work of Geoff Voelker
 and others who worked on the GNU Emacs port to NT. Their version is available
 from http://www.cs.washington.edu/homes/voelker/ntemacs.html
 
 To get it working you will need:
+
+1.  You will need Visual C++ V4.2 or later to compile everything. Personally we
+    have tested V4.2 and V5.0.
+2.  Grab the latest XEmacs beta from ftp.xemacs.org if necessary. All Win32
+    support is in the nt/ subdirectory.
+3.  Edit the xemacs.mak file and ensure variables point to the correct place.
+    Note that Visual C++ assumes a couple of environment variables INCLUDE and
+    LIB to be set which specify the location of the includes and libraries.
+    At this point you can select X or Win32 native support.
+4.  Run make. I simply use nmake -f xemacs.mak. This will build temacs, the
+    DOC file, if startup.elc does not exist it will update the elc's and
+    then it will dump xemacs.
+5.  The build process creates debugging and "Source Browser" information for
+    use with MS DevStudio. To use this create a new "console" project and set
+    the Project/Settings/Debug executable name to the full path of
+    src\xemacs.exe. Remember to close the Source Browser file in DevStudio
+    before rebuilding.
+6.  If you're going to edit sources I recommend that you first get a copy of
+    makedepend and make a list of dependencies in the makefile by doing
+    "nmake -f xemacs.mak depend". I (jhar) have a hacked-up copy of X11R5
+    makedepend which I can distribute if anyone wants it. Is there a real
+    version anywhere which handles '\' as the path delimiter?
+
+If you want support for X you will need:
 
 1.  An X server. MI/X is available on the Internet for free; It is 
     available from:  http://www.microimages.com/www/html/freestuf/mixdlfrm.htm
@@ -34,29 +57,6 @@ To get it working you will need:
 -
 +#endif
  
-4.  You will need Visual C++ V4.2 or later to compile everything. Personally we
-    have tested V4.2 and V5.0.
-5.  Grab the latest XEmacs beta from ftp.xemacs.org if necessary. All nt
-    support is in the nt/ subdirectory.
-6.  Edit the xemacs.mak file and ensure variables point to the correct place.
-    Note that Visual C++ assumes a couple of environment variables INCLUDE and
-    LIB to be set which specify the location of the includes and libraries.
-7.  Copy the files Emacs.ad.h, config.h and paths.h from nt/ to src/.
-    Note, to rebuild Emacs.ad.h a sed script is run. SED for NT is available
-    from the Virtually Unix site: http://www.itribe.net/virtunix
-    This is not required however in normal operation.
-8.  Run make. I simply use nmake -f xemacs.mak.
-9.  Change directory to the src/ directory and run the temacs executable
-    manually:
-                temacs -batch -l loadup.el dump
-    This will produce an xemacs.exe which can be run in conjunction with your
-    X server.
-10. Ensure your HOME environment variable is set correctly. Also ensure TERM
-    isn't set anywhere.
-11. When you build, the DOC file will get created correctly. However I don't
-    update the elc's by default. This means the build will fail on the DOC
-    file if they don't exist. Just use the update-elcs rule and then rebuild.
-
 Known Problems:
 Please look at the TODO list for the current list of problems and people 
 working on them.
@@ -64,9 +64,12 @@ working on them.
 Any other problems you need clarified, please email us and we will endeavour
 to provide any assistance we can:
 
-David Hobley   david_hobley@optusvision.com.au -- work email.
-               davidh@wr.com.au                -- home account.
+The XEmacs NT Mailing List: xemacs-nt@xemacs.org
+Subscribe address:          xemacs-nt-request@xemacs.org
 
-Marc Paquette  marcpa@cam.org                  -- home account.
+David Hobley
+Marc Paquette
+August Hill
+Jonathon Harris
 
-August Hill    awhill@inlink.com
+and others.

@@ -1,18 +1,46 @@
 # List of problems with XEmacs. If anyone wants to work on these, please
 # mail me and I'll update the table below.
 
-1. vfork references
-2. provide working select which supports handles as well as sockets
-3. make "Save Options" actually save options to home directory. Currently I get
-   it trying to save in g:\home\davidh\~davidh
-4. build a binary distribution (just install temacs and get user to _easily_
-   build an xemacs.exe on their system. This will ensure heap problems do not
-   occur)
-5. provide option for dired to use dir/attrib on Win32 platforms
-6. verify MULE supports CRLF correctly
-7. get subprocesses working
+# Core NT issues
+    1. Subprocess support is completely broken. 
+    2. Networking support is completely broken. This is due to the fact that
+       the model relies on the subprocess support also working. 
+    4. No binary release. We know a binary release would be A Good Thing.
+       However we want to make things stable before producing one so we don't
+       have to field too many problems. Sorry. 
+    5. Support for dired is perhaps not quite there. We need to port ls-lisp.el
+       from FSF Emacs. 
+    6. Currently the backup files do not get the same permissions as the file
+       being edited. August Hill is looking at this one. 
+    7. Verify that CRLF issues are dealt with correctly. Marc Paquette is
+       looking at this. 
+    8. Use the registry to store the root directory(ies) of lisp packages; that
+       is the path name, not the elisp files.
 
+# X issues
+    1. Redrawing on my (davidh) system seems fairly broken - I don't know if
+       this is the XEmacs redraw functionality, my X server or just something
+       strange with X under NT. Has anyone else experiences with this ?
 
-Issue - Person
-2	David Hobley
-3	August Hill
+# Native GUI issues
+    1. Mouse drags can cause aborts. I think this is because the timeout
+       implementation is broken and can cause the same timeout to go
+       off twice (especially during mouse drags?), which makes XEmacs abort.
+       Windows95 doesn't appear to provide any one-shot timers (NT does).
+    2. XEmacs starts-up with "Arithmetic error".
+    3. It might be a good idea if someone sanity-checked my (jhar) changes to
+       faces.el.
+    4. w32-make-font-foo in w32/w32-faces.el need to be written.
+    5. Calling mouse_[enter|leave]_frame_hook.
+    6. Eliminate resizing funnies
+    7. Scrollbar
+    8. Menubar
+    9. Palette handling
+   10. Middle mouse button emulation. Dragging off-frame.
+   11. Images
+   12. Toolbar
+
+Old Issues. 
+
+    1. For some reason, HOME is a required environment variable. 
+

@@ -377,12 +377,12 @@ union magic_data
 #ifdef HAVE_X_WINDOWS
   XEvent	    underlying_x_event;
 #endif
-#ifdef HAVE_W32GUI  /* XXX FIXME */
+#ifdef HAVE_MS_WINDOWS
   struct
     {
       int	    message;
       unsigned long data[4]; /* XXX Big enough for biggest thing? */
-    } underlying_w32_event;
+    } underlying_mswindows_event;
 #endif
 };
 

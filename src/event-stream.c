@@ -4894,8 +4894,8 @@ vars_of_event_stream (void)
 #if defined(HAVE_TTY) && (defined (DEBUG_TTY_EVENT_STREAM) || !defined (HAVE_X_WINDOWS))
   vars_of_event_tty ();
 #endif
-#ifdef HAVE_W32GUI
-  vars_of_event_w32 ();
+#ifdef HAVE_MS_WINDOWS
+  vars_of_event_mswindows ();
 #endif
 
   recent_keys_ring_index = 0;
@@ -5310,9 +5310,9 @@ init_event_stream (void)
       if (!strcmp (display_use, "x"))
 	init_event_Xt_late ();
       else
-#elif defined(HAVE_W32GUI)
-      if (!strcmp (display_use, "w32"))
-	init_event_w32_late ();
+#elif defined(HAVE_MS_WINDOWS)
+      if (!strcmp (display_use, "mswindows"))
+	init_event_mswindows_late ();
       else
 #endif
 	  {
@@ -5322,8 +5322,8 @@ init_event_stream (void)
 	    init_event_Xt_late ();
 #elif defined (HAVE_TTY)
 	    init_event_tty_late ();
-#elif defined(HAVE_W32GUI)
-	    init_event_w32_late ();
+#elif defined(HAVE_MS_WINDOWS)
+	    init_event_mswindows_late ();
 #endif
 	  }
       init_interrupts_late ();

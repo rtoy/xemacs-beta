@@ -2107,10 +2107,10 @@ The X11 Window System")
 					   :sibling-args (:help-echo "\
 OS/2 Presentation Manager")
 					   pm)
-				    (const :format "Win32 "
+				    (const :format "MSWindows "
 					   :sibling-args (:help-echo "\
 Windows NT/95/97")
-					   win32)
+					   mswindows)
 				    (const :format "DOS "
 					   :sibling-args (:help-echo "\
 Plain MS-DOS")
@@ -2387,6 +2387,7 @@ Optional EVENT is the location for the menu."
     (face-spec-set symbol value)
     (put symbol 'saved-face value)
     (put symbol 'customized-face nil)
+    (custom-save-all)
     (custom-face-state-set widget)
     (custom-redraw-magic widget)))
 
@@ -2921,10 +2922,10 @@ Optional EVENT is the location for the menu."
 
 ;;; The `custom-save-all' Function.
 ;;;###autoload
-(defcustom custom-file (if (boundp 'emacs-user-extension-dir)
+(defcustom custom-file (if (boundp 'user-init-directory)
 			   (concat "~"
 				   init-file-user
-				   emacs-user-extension-dir
+				   user-init-directory
 				   "options.el")
 			 "~/.emacs")
   "File used for storing customization information.

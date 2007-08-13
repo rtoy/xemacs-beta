@@ -219,40 +219,25 @@
 (copy-coding-system 'big5 'chinese-big5)
 
 ;; Big5 font requires special encoding.
-;; (define-ccl-program ccl-encode-big5-font
-;;   `(0
-;;     ;; In:  R0:chinese-big5-1 or chinese-big5-2
-;;     ;;      R1:position code 1
-;;     ;;      R2:position code 2
-;;     ;; Out: R1:font code point 1
-;;     ;;      R2:font code point 2
-;;     ((r2 = ((((r1 - ?\x21) * 94) + r2) - ?\x21))
-;;      (if (r0 == ,(charset-id 'chinese-big5-2)) (r2 += 6280))
-;;      (r1 = ((r2 / 157) + ?\xA1))
-;;      (r2 %= 157)
-;;      (if (r2 < ?\x3F) (r2 += ?\x40) (r2 += ?\x62))))
-;;   "CCL program to encode a Big5 code to code point of Big5 font.")
+(define-ccl-program ccl-encode-big5-font
+  `(0
+    ;; In:  R0:chinese-big5-1 or chinese-big5-2
+    ;;      R1:position code 1
+    ;;      R2:position code 2
+    ;; Out: R1:font code point 1
+    ;;      R2:font code point 2
+    ((r2 = ((((r1 - ?\x21) * 94) + r2) - ?\x21))
+     (if (r0 == ,(charset-id 'chinese-big5-2)) (r2 += 6280))
+     (r1 = ((r2 / 157) + ?\xA1))
+     (r2 %= 157)
+     (if (r2 < ?\x3F) (r2 += ?\x40) (r2 += ?\x62))))
+  "CCL program to encode a Big5 code to code point of Big5 font.")
 
 ;; (setq font-ccl-encoder-alist
 ;;       (cons (cons "big5" ccl-encode-big5-font) font-ccl-encoder-alist))
 
-(define-ccl-program ccl-encode-big5-1-font
-  '(((r1 = ((((r0 - #x21) * 94) + r1) - #x21))
-     (r0 = ((r1 / 157) + #xA1))
-     (r1 %= 157)
-     (if (r1 < #x3F) (r1 += #x40) (r1 += #x62))))
-  "CCL program to encode a Big5 code (level1) to code point of Big5 font.")
-
-;; 6280 is the number of characters that got shoved into `chinese-big5-1'.
-(define-ccl-program ccl-encode-big5-2-font
-  '(((r1 = (((((r0 - #x21) * 94) + r1) - #x21) + 6280))
-     (r0 = ((r1 / 157) + #xA1))
-     (r1 %= 157)
-     (if (r1 < #x3F) (r1 += #x40) (r1 += #x62))))
-  "CCL program to encode a Big5 code (level2) to code point of Big5 font.")
-
-(set-charset-ccl-program 'chinese-big5-1 ccl-encode-big5-1-font)
-(set-charset-ccl-program 'chinese-big5-2 ccl-encode-big5-2-font)
+(set-charset-ccl-program 'chinese-big5-1 ccl-encode-big5-font)
+(set-charset-ccl-program 'chinese-big5-2 ccl-encode-big5-font)
 
 (set-language-info-alist
  "Chinese-BIG5" '((setup-function . (setup-chinese-big5-environment

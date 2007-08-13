@@ -137,8 +137,8 @@ they can be perused for their useful information."
   ;; Source directory may not be initialized yet.
   ;; (print (prin1-to-string load-path))
   (if (null source-directory)
-      (setq source-directory (concat (car load-path) "/..")))
-  (let ((files (directory-files source-directory t ".*"))
+      (setq source-directory (concat (car load-path) "/./")))
+  (let ((files (directory-files (file-name-as-directory source-directory) t ".*"))
 	file autolist)
     (while (setq file (car-safe files))
       (if (and (file-directory-p file)

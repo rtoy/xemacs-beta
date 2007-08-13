@@ -1,3 +1,15 @@
+1997-11-13  SL Baur  <steve@altair.xemacs.org>
+
+	* pop.c: Add includes from movemail.c so standard functions get
+	declared.
+	(pop_retrieve): Return NULL if falling off the end of the
+	function.
+
+	* movemail.c: Hide declarations of popmail(), mbx_write(),
+	mbc_delimit_begin(), and mbx_delimit_end() behind MAIL_USE_POP
+	guard.
+	(pop_retr): Change 4th parameter to void *.
+
 1997-11-02  SL Baur  <steve@altair.xemacs.org>
 
 	* update-custom.sh (dirs): Remove packaged directories.

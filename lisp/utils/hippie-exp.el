@@ -495,7 +495,7 @@ otherwise."
 		  (string= (substring name-part 0 2) "[."))
 	     (concat (substring dir-part 0 -1) (substring name-part 1))
 	   (concat dir-part name-part)))
-	((memq system-type '(ms-dos w32))
+	((memq system-type '(ms-dos mswindows))
 	 (if (and (string-match "\\\\" dir-part)
 		  (not (string-match "/" dir-part))
 		  (= (aref name-part (1- (length name-part))) ?/))

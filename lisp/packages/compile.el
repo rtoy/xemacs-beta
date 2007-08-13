@@ -127,38 +127,11 @@ buffer is not visible in its window."
 
 (defvar compilation-num-errors-found)
 
-(defcustom compilation-error-regexp-systems-list 'all
-  "*This is either the symbol `all', or a list of systems for which
-compilation error regexps should be included in
-`compilation-error-regexp-alist'.  
-
-The list of known systems is:
-  gnu:      but of course
-  lcc:      Lucid compilers
-  ada:      Ada compilers
-  of:       Using tool that says line xx of foo.c
-  comma:    Using tool that says \"foo.c\", line 12
-  4bsd:     Using 4bsd
-  msft:     Using microsoft
-  borland:  Using Borland
-  mips:     Using Mips
-  sgi:      Using SGI
-  cray:     Using Cray
-  ibm:      IBM C compilers
-  aix:      the operating system
-  ultrix:   the operating system
-
-See also the variable `compilation-error-regexp-alist-alist'."
-  :type '(choice (const all)
-		 (set :menu-tag "Pick"
-		      (const gnu) (const lcc) (const ada)
-		      (const of) (const comma) (const 4bsd)
-		      (const msft) (const borland) (const mips)
-		      (const sgi) (const cray) (const ibm)
-		      (const aix) (const ultrix)))
-  :group 'compilation)
-
 (defun compilation-build-compilation-error-regexp-alist ()
+  "Set the regular expressions used for parsing compiler
+errors based on the compilers listed in the variable
+`compilation-error-regexp-systems-list'.  Updates the
+variable `compilation-error-regexp-alist'."
   (interactive)
   (setq compilation-error-regexp-alist
         (apply 'append
@@ -357,6 +330,42 @@ Note that this now gets set by the function
 `compilation-build-compilation-error-regexp-alist' using the 
 value of the variable `compilation-error-regexp-alist-alist'")
 
+(defcustom compilation-error-regexp-systems-list 'all
+  "*This is either the symbol `all', or a list of systems for which
+compilation error regexps should be included in
+`compilation-error-regexp-alist'.  You must run the function
+`compilation-build-compilation-error-regexp-alist' after changing
+the value of this variable for the change to take effect.
+
+The list of known systems is:
+  gnu:      but of course
+  lcc:      Lucid compilers
+  ada:      Ada compilers
+  of:       Using tool that says line xx of foo.c
+  comma:    Using tool that says \"foo.c\", line 12
+  4bsd:     Using 4bsd
+  msft:     Using microsoft
+  borland:  Using Borland
+  mips:     Using Mips
+  sgi:      Using SGI
+  cray:     Using Cray
+  ibm:      IBM C compilers
+  aix:      the operating system
+  ultrix:   the operating system
+
+See also the variable `compilation-error-regexp-alist-alist'."
+  :type '(choice (const all)
+		 (set :menu-tag "Pick"
+		      (const gnu) (const lcc) (const ada)
+		      (const of) (const comma) (const 4bsd)
+		      (const msft) (const borland) (const mips)
+		      (const sgi) (const cray) (const ibm)
+		      (const aix) (const ultrix)))
+  :set (lambda (symbol value)
+         (set-default symbol value)
+         (compilation-build-compilation-error-regexp-alist))
+  :group 'compilation)
+
 (compilation-build-compilation-error-regexp-alist)
 
 (defcustom compilation-read-command t
@@ -458,7 +467,7 @@ write into the compilation buffer, and to put in its mode line.")
 (put 'compilation-mode 'font-lock-defaults
      '(compilation-font-lock-keywords t))
 
-(defcustom compilation-mouse-motion-initiate-parsing t
+(defcustom compilation-mouse-motion-initiate-parsing nil
   "*Should mouse motion over the compilation buffer initiate parsing?
 When set to a non-nil value, mouse motion over the compilation/grep
 buffer may initiate parsing of the error messages or grep hits.

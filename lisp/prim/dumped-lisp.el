@@ -154,9 +154,9 @@
 	#+x "x-misc"
 	#+x "x-init"
 	#+(and x toolbar) "x-toolbar"
-;; preload the w32gui code.
-	#+w32 "w32-faces"
-	#+w32 "w32-init"
+;; preload the mswindows code.
+	#+mswindows "msw-faces"
+	#+mswindows "msw-init"
 ;; preload the TTY init code.
 	#+tty "tty-init"
 ;;; Formerly in tooltalk/tooltalk-load.el

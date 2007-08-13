@@ -1284,6 +1284,14 @@ scrolling @var{n} lines in either direction, if possible; otherwise, it
 centers point.  The default value is zero.
 @end defopt
 
+@defopt scroll-conservatively
+This variable controls how many lines Emacs tries to scroll before
+recentering.  If you set it to a small number, then when you move point
+a short distance off the screen, XEmacs will scroll the screen just far
+enough to bring point back on screen, provided that does not exceed
+@var{scroll-conservatively} lines.
+@end defopt
+
 @defopt next-screen-context-lines
 The value of this variable is the number of lines of continuity to
 retain when scrolling by full screens.  For example, @code{scroll-up}

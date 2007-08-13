@@ -1,3 +1,95 @@
+1997-11-15  SL Baur  <steve@altair.xemacs.org>
+
+	* packages.el (list-autoloads): Fix typo (I hope). [Doesn't work]
+
+1997-11-14  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/wid-edit.el (widget-before-change): Check for inactive
+	editable fields.
+
+1997-11-13  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/about.el (about-xemacs): Update maintainers.
+
+1997-11-12  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/cus-edit.el (custom-face-save): Save the face.
+
+1997-11-13  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* packages/font-lock.el (font-lock-fontify-keywords-region):
+	  If not fontifying a MATCH-ANCHORED style keyword,
+	  backtrack to just after the end of the keyword before
+	  doing the next search.
+
+1997-11-13  Olivier Galibert  <olivier.galibert@mines.u-nancy.fr>
+
+	* language/vietnamese.el: Synched ccl with FSF 20.2.
+
+	* language/cyrillic.el: Synched ccl with FSF 20.2.
+
+	* language/chinese.el: Synched ccl with FSF 20.2.
+
+	* mule/mule-ccl.el: Synched with FSF 20.2.
+
+1997-11-12  SL Baur  <steve@altair.xemacs.org>
+
+	* leim/quail.el (quail-translation-keymap): Guard against
+	meta-prefix-char being -1 (documented as disabling it :-().
+	(quail-simple-translation-keymap): Ditto.
+	(quail-conversion-keymap): Ditto.
+
+1997-11-11  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/cus-face.el (custom-face-attributes): Use
+ 	`set-face-stipple' instead of `set-face-background-pixmap'.
+
+	* prim/faces.el (set-face-stipple): Search through
+	x-bitmap-file-path.
+
+1997-11-09  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* speedbar/speedbar.el (speedbar-needed-height): New function.
+	(speedbar-frame-mode): Use it.
+
+1997-11-07  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* speedbar/speedbar.el: Various docfixes.
+
+1997-11-12  SL Baur  <steve@altair.xemacs.org>
+
+	* pcl-cvs/pcl-cvs-xemacs.el: Fix emerge menu item.
+	From Jens Krinke <krinke@ips.cs.tu-bs.de>
+
+	* mule/mule-cmds.el (set-language-info): Don't add mule menu if
+	menubars haven't been compiled in.
+
+1997-11-10  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* custom/cus-edit.el (custom-file): Use `user-init-directory'
+	instead of `emacs-user-extension-dir'.
+
+1997-11-12  SL Baur  <steve@altair.xemacs.org>
+
+	* modes/image-mode.el: Add command to enter xpm mode when viewing XPM
+	image.
+	From:  Jens Krinke <krinke@ips.cs.tu-bs.de>
+
+1997-11-12  Greg Klanderman  <greg@alphatech.com>
+
+	* packages/compile.el (compilation-build-compilation-error-regexp-alist): 
+	Added documentation for this function.
+	
+	** (compilation-error-regexp-systems-list): Update documentation
+ 	to note that `compilation-build-compilation-error-regexp-alist'
+ 	must be called after changing the value.  Update customization to
+ 	add a set method which automatically calls
+ 	`compilation-build-compilation-error-regexp-alist' when the value
+ 	is set by custom.  Move declaration below declarations that it now
+ 	depends upon.
+
+	** (compilation-mouse-motion-initiate-parsing): Default to nil.
+
 1997-11-12  Hrvoje Niksic  <hniksic@srce.hr>
 
 	* help.el (help-for-help): Use `make-help-screen'.
@@ -187,6 +279,17 @@ Wed Nov 05 23:40:00 1997 Jonathan Harris <jhar@tardis.ed.ac.uk>
 	
 	* Added file headers to:
 	  w32-faces.el, w32-init.el
+
+1997-11-06  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* facemenu.el (facemenu-insert-menu-entry): Check for
+	menubar availability.
+
+	* easymenu.el (easy-menu-change): Check for menubar
+	availability.
+
+	* wid-edit.el (widget-echo-help): Use `help-echo' as label
+	for help-echo messages.
 
 Sun Nov 01 12:00:00 1997 Jonathan Harris  <jhar@tardis.ed.ac.uk>
 

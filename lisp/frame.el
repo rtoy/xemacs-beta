@@ -448,20 +448,20 @@ The format of this can also be an alist for backward compatibility."
   "Create a frame of type TYPE on CONNECTION.
 TYPE should be a symbol naming the device type, i.e. one of
 
-x	An X display.  CONNECTION should be a standard display string
-	such as \"unix:0\", or nil for the display specified on the
-	command line or in the DISPLAY environment variable.  Only if
-	support for X was compiled into	XEmacs.
-tty	A standard TTY connection or terminal.  CONNECTION should be
-	a TTY device name such as \"/dev/ttyp2\" (as determined by
-	the Unix command `tty') or nil for XEmacs' standard input
-	and output (usually the TTY in which XEmacs started).  Only
-	if support for TTY's was compiled into XEmacs.
-ns	A connection to a machine running the NeXTstep windowing
-	system.  Not currently implemented.
-w32	A connection to a machine running Microsoft Windows NT or
-	Windows 95.
-pc	A direct-write MS-DOS frame.  Not currently implemented.
+x	    An X display.  CONNECTION should be a standard display string
+	    such as \"unix:0\", or nil for the display specified on the
+	    command line or in the DISPLAY environment variable.  Only if
+	    support for X was compiled into XEmacs.
+tty	    A standard TTY connection or terminal.  CONNECTION should be
+	    a TTY device name such as \"/dev/ttyp2\" (as determined by
+	    the Unix command `tty') or nil for XEmacs' standard input
+	    and output (usually the TTY in which XEmacs started).  Only
+	    if support for TTY's was compiled into XEmacs.
+ns	    A connection to a machine running the NeXTstep windowing
+	    system.  Not currently implemented.
+mswindows   A connection to a machine running Microsoft Windows NT or
+	    Windows 95/97.
+pc	    A direct-write MS-DOS frame.  Not currently implemented.
 
 PROPS should be a plist of properties, as in the call to `make-frame'.
 
@@ -558,8 +558,7 @@ This is equivalent to the type of the frame's device.
 Value is `tty' for a tty frame (a character-only terminal),
 `x' for a frame that is an X window,
 `ns' for a frame that is a NeXTstep window (not yet implemented),
-`win32' for a frame that is a Windows or Windows NT window (not yet
-  implemented),
+`mswindows' for a frame that is a Windows NT or Windows 95/97 window,
 `pc' for a frame that is a direct-write MS-DOS frame (not yet implemented),
 `stream' for a stream frame (which acts like a stdio stream), and
 `dead' for a deleted frame."

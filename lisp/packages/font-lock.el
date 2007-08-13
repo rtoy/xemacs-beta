@@ -1183,11 +1183,16 @@ START should be at the beginning of a line."
 	  ;; Apply each highlight to this instance of `matcher', which may be
 	  ;; specific highlights or more keywords anchored to `matcher'.
 	  (setq highlights (cdr keyword))
-	(while highlights
-	  (if (numberp (car (car highlights)))
-	      (font-lock-apply-highlight (car highlights))
-	    (font-lock-fontify-anchored-keywords (car highlights) end))
-	  (setq highlights (cdr highlights))))
+	  (while highlights
+	    (if (numberp (car (car highlights)))
+		(let ((end (match-end (car (car highlights)))))
+		  (font-lock-apply-highlight (car highlights))
+		  ;; restart search just after the end of the
+		  ;; keyword so keywords can share bracketing
+		  ;; expressions.
+		  (and end (goto-char end)))
+	      (font-lock-fontify-anchored-keywords (car highlights) end))
+	    (setq highlights (cdr highlights))))
 	(setq keywords (cdr keywords))))
     (if loudly (display-message
 		'progress

@@ -962,8 +962,8 @@ circumstances."
      ;; handle X specific entries
      (cond ((featurep 'x)
 	    (frob-face-property face 'font 'x-make-font-bold locale))
-	   ((featurep 'w32)
-	    (frob-face-property face 'font 'w32-make-font-bold locale))
+	   ((featurep 'mswindows)
+	    (frob-face-property face 'font 'mswindows-make-font-bold locale))
 	   ))
    '(([default] . [bold])
      ([bold] . t)
@@ -987,8 +987,8 @@ for more specifics on exactly how this function works."
      ;; handle X specific entries
      (cond ((featurep 'x)
 	    (frob-face-property face 'font 'x-make-font-italic locale))
-	   ((featurep 'w32)
-	    (frob-face-property face 'font 'w32-make-font-italic locale))
+	   ((featurep 'mswindows)
+	    (frob-face-property face 'font 'mswindows-make-font-italic locale))
 	   ))
    '(([default] . [italic])
      ([bold] . [bold-italic])
@@ -1013,8 +1013,8 @@ for more specifics on exactly how this function works."
      ;; handle X specific entries
      (cond ((featurep 'x)
 	    (frob-face-property face 'font 'x-make-font-bold-italic locale))
-	   ((featurep 'w32)
-	    (frob-face-property face 'font 'w32-make-font-bold-italic locale))
+	   ((featurep 'mswindows)
+	    (frob-face-property face 'font 'mswindows-make-font-bold-italic locale))
 	   ))
    '(([default] . [italic])
      ([bold] . [bold-italic])
@@ -1038,8 +1038,8 @@ for more specifics on exactly how this function works."
      ;; handle X specific entries
      (cond ((featurep 'x)
 	    (frob-face-property face 'font 'x-make-font-unbold locale))
-	   ((featurep 'w32)
-	    (frob-face-property face 'font 'w32-make-font-unbold locale))
+	   ((featurep 'mswindows)
+	    (frob-face-property face 'font 'mswindows-make-font-unbold locale))
 	   ))
    '(([default] . t)
      ([bold] . [default])
@@ -1063,8 +1063,8 @@ for more specifics on exactly how this function works."
      ;; handle X specific entries
      (cond ((featurep 'x)
 	    (frob-face-property face 'font 'x-make-font-unitalic locale))
-	   ((featurep 'w32)
-	    (frob-face-property face 'font 'w32-make-font-unitalic locale))
+	   ((featurep 'mswindows)
+	    (frob-face-property face 'font 'mswindows-make-font-unitalic locale))
 	   ))
    '(([default] . t)
      ([bold] . t)
@@ -1084,8 +1084,8 @@ because they don't make sense in this context."
   ;; handle X specific entries
   (cond ((featurep 'x)
 	 (frob-face-property face 'font 'x-find-smaller-font locale))
-	((featurep 'w32)
-	 (frob-face-property face 'font 'w32-find-smaller-font locale))))
+	((featurep 'mswindows)
+	 (frob-face-property face 'font 'mswindows-find-smaller-font locale))))
 
 (defun make-face-larger (face &optional locale)
   "Make the font of the given face be larger, if possible.
@@ -1094,8 +1094,8 @@ See `make-face-smaller' for the semantics of the LOCALE argument."
   ;; handle X specific entries
   (cond ((featurep 'x)
 	 (frob-face-property face 'font 'x-find-larger-font locale))
-	((featurep 'w32)
-	 (frob-face-property face 'font 'w32-find-larger-font locale))))
+	((featurep 'mswindows)
+	 (frob-face-property face 'font 'mswindows-find-larger-font locale))))
 
 (defun invert-face (face &optional locale)
   "Swap the foreground and background colors of the face."
@@ -1346,8 +1346,8 @@ and 'global)."
     ;; Then do any device-specific initialization.
     (cond ((eq 'x (device-type device))
 	   (x-init-device-faces device))
-	  ((eq 'w32 (device-type device))
-	   (w32-init-device-faces device))
+	  ((eq 'mswindows (device-type device))
+	   (mswindows-init-device-faces device))
 	  ;; Nothing to do for TTYs?
 	  )
     (init-other-random-faces device)))
@@ -1360,8 +1360,8 @@ and 'global)."
     ;; Then do any frame-specific initialization.
     (cond ((eq 'x (frame-type frame))
 	   (x-init-frame-faces frame))
-	  ((eq 'w32 (frame-type frame))
-	   (w32-init-frame-faces frame))
+	  ((eq 'mswindows (frame-type frame))
+	   (mswindows-init-frame-faces frame))
 	  ;; Is there anything which should be done for TTY's?
 	  )))
 
@@ -1550,12 +1550,11 @@ you want to add code to do stuff like this, use the create-device-hook."
 	      (face-background 'list-mode-item-selected 'global))
     (set-face-background 'list-mode-item-selected "gray68" 'global 'color)
     (set-face-background 'list-mode-item-selected "gray68" 'global 'grayscale)
-    (if (featurep 'x)
-	(unless (face-foreground 'list-mode-item-selected 'global)
-		(set-face-background 'list-mode-item-selected
-				     [default foreground] 'global '(mono x))
-		(set-face-foreground 'list-mode-item-selected
-				     [default background] 'global '(mono x)))))
+    (unless (face-foreground 'list-mode-item-selected 'global)
+	    (set-face-background 'list-mode-item-selected
+				 [default foreground] 'global '(mono x))
+	    (set-face-foreground 'list-mode-item-selected
+				 [default background] 'global '(mono x))))
 
   ;; if the list-mode-item-selected face isn't distinguished on this device,
   ;; at least try inverting it.
@@ -1614,7 +1613,6 @@ set-face-background-pixmap instead.
 
 PIXMAP should be a string, the name of a file of pixmap data.
 The directories listed in the `x-bitmap-file-path' variable are searched.
-Any kind of image file for which XEmacs has builtin support can be used.
 
 Alternatively, PIXMAP may be a list of the form (WIDTH HEIGHT
 DATA) where WIDTH and HEIGHT are the size in pixels, and DATA is
@@ -1625,6 +1623,7 @@ If the optional FRAME argument is provided, change only
 in that frame; otherwise change each frame."
   (while (not (find-face face))
     (setq face (signal 'wrong-type-argument (list 'facep face))))
+  (locate-file pixmap x-bitmap-file-path ".xbm:" 4)
   (while (cond ((stringp pixmap)
 		(unless (file-readable-p pixmap)
 		  (setq pixmap `[xbm :file ,pixmap]))

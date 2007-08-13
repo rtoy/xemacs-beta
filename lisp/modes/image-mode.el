@@ -49,6 +49,8 @@ Please type `\\[image-toggle-decoding]' if you would like to display
 raw data.
 Please type `\\[image-enter-hexl-mode]' if you would like to edit hex
 data.
+Please type `\\[image-enter-xpm-mode]' if you would like to edit xpm
+data.
 Please type `\\[image-start-external-viewer]' if you would like to
 display contents of this buffer by external viewer.\n")))
 	(call-interactively 'fill-paragraph)
@@ -60,6 +62,7 @@ display contents of this buffer by external viewer.\n")))
 (define-key image-mode-map "v" 'image-start-external-viewer)
 (define-key image-mode-map "t" 'image-toggle-decoding)
 (define-key image-mode-map "h" 'image-enter-hexl-mode)
+(define-key image-mode-map "e" 'image-enter-xpm-mode)
 (define-key image-mode-map "q" 'image-mode-quit)
 
 (defvar image-external-viewer
@@ -115,6 +118,25 @@ It uses `image-external-viewer' as external image viewer."
     (add-hook 'hexl-mode-exit-hook 'image-exit-hexl-mode-function)
     )
   (hexl-mode)
+  )
+
+(defun image-enter-xpm-mode ()
+  "Enter to xpm-mode."
+  (interactive)
+  (if (not (eq buffer-image-format 'image/x-xpm))
+      (error "Not a xpm-picture."))
+  (when buffer-file-format
+    (setq buffer-read-only nil)
+    (erase-buffer)
+    (map-extents (function
+		  (lambda (extent maparg)
+		    (delete-extent extent)
+		    )) nil (point-min)(point-min))
+    (setq buffer-file-format nil)
+    (insert-file-contents-literally buffer-file-name)
+    (set-buffer-modified-p nil)
+    )
+  (xpm-mode 1)
   )
 
 (defun image-mode-quit ()

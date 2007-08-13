@@ -186,7 +186,7 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       break;
     case pointer_motion_event:
       {
-	char buf[100];
+	char buf[64];
 	sprintf (buf, "#<motion-event %d, %d",
 		 XEVENT (obj)->event.motion.x, XEVENT (obj)->event.motion.y);
 	write_c_string (buf, printcharfun);
@@ -298,10 +298,10 @@ event_equal (Lisp_Object o1, Lisp_Object o2, int depth)
 	return (e1->event.magic.underlying_tty_event ==
 		e2->event.magic.underlying_tty_event);
 #endif
-#ifdef HAVE_W32GUI
-	if (CONSOLE_W32_P (con))
-	return (!memcmp(&e1->event.magic.underlying_w32_event,
-		&e2->event.magic.underlying_w32_event,
+#ifdef HAVE_MS_WINDOWS
+	if (CONSOLE_MSWINDOWS_P (con))
+	return (!memcmp(&e1->event.magic.underlying_mswindows_event,
+		&e2->event.magic.underlying_mswindows_event,
 		sizeof(union magic_data)));
 #endif
 	return 1; /* not reached */
@@ -371,14 +371,14 @@ event_hash (Lisp_Object obj, int depth)
 	if (CONSOLE_TTY_P (con))
 	  return HASH2 (hash, e->event.magic.underlying_tty_event);
 #endif
-#ifdef HAVE_W32GUI
-	if (CONSOLE_W32_P (con))
-	  return HASH6 (hash, e->event.magic.underlying_w32_event.message,
-			e->event.magic.underlying_w32_event.data[0],
-			e->event.magic.underlying_w32_event.data[1],
-			e->event.magic.underlying_w32_event.data[2],
-			e->event.magic.underlying_w32_event.data[3],
-			);
+#ifdef HAVE_MS_WINDOWS
+	if (CONSOLE_MSWINDOWS_P (con))
+	 return HASH6 (hash, e->event.magic.underlying_mswindows_event.message,
+		       e->event.magic.underlying_mswindows_event.data[0],
+		       e->event.magic.underlying_mswindows_event.data[1],
+		       e->event.magic.underlying_mswindows_event.data[2],
+		       e->event.magic.underlying_mswindows_event.data[3],
+		       );
 #endif
       }
 
@@ -395,21 +395,60 @@ event_hash (Lisp_Object obj, int depth)
 
 
 DEFUN ("make-event", Fmake_event, 0, 2, 0, /*
-Create a new event of type TYPE, with properties stored in PLIST.
+Create a new event of type TYPE, with properties described by PLIST.
+
 TYPE is a symbol, either `empty', `key-press', `button-press',
+ `button-release', `motion' or `dnd-drop'.  If TYPE is nil, it
+ defaults to `empty'.
+
+PLIST is a property list, the properties being compatible to those
+ returned by `event-properties'.  The following properties are
+ allowed:
+
+ channel	-- The event channel, a frame or a console.  For
+		   button-press, button-release and motion events, this
+		   must be a frame.  For key-press events, it must be a
+		   console.  If channel is unspecified, it will be set to
+		   the selected frame or selected console, as appropriate.
+ key		-- The event key, a symbol or character.  Allowed only for
+		   keypress events.
+ button		-- The event button, integer 1, 2 or 3.  Allowed only for
+		   button-press and button-release events.
+ modifiers	-- The event modifiers, a list of modifier symbols.  Allowed
+		   for key-press, button-press, button-release and motion
+		   events.
+ x		-- The event X coordinate, an integer.  This is relative
+		   to the left of CHANNEL's root window.  Allowed for
+		   motion, button-press and button-release events.
+ y		-- The event Y coordinate, an integer.  This is relative
+		   to the top of CHANNEL's root window.  Allowed for
+		   motion, button-press and button-release events.
+ dnd-data	-- The event DND data, a list of (INTEGER DATA).  Allowed
+		   for dnd-drop events, if support for DND has been
+		   compiled into XEmacs.
+ timestamp	-- The event timestamp, a non-negative integer.  Allowed for
+		   all types of events.
+
+For event type `empty', PLIST must be nil.
  `button-release', or `motion'.  If TYPE is left out, it defaults to
  `empty'.
 PLIST is a list of properties, as returned by `event-properties'.  Not
  all properties are allowed for all kinds of events, and some are
  required.
 
-WARNING, the event object returned may be a reused one; see the function
+WARNING: the event object returned may be a reused one; see the function
  `deallocate-event'.
 */
        (type, plist))
 {
-  Lisp_Object event, prop, val;
+  Lisp_Object tail, keyword, value;
+  Lisp_Object event = Qnil;
+  Lisp_Object dnd_data = Qnil;
   struct Lisp_Event *e;
+  EMACS_INT coord_x = 0, coord_y = 0;
+  struct gcpro gcpro1, gcpro2;
+
+  GCPRO2 (event, dnd_data);
 
   if (NILP (type))
     type = Qempty;
@@ -426,7 +465,19 @@ WARNING, the event object returned may be a reused one; see the function
   e = XEVENT (event);
   zero_event (e);
 
-  if (EQ (type, Qkey_press))
+  if (EQ (type, Qempty))
+    {
+      /* For empty event, we return immediately, without processing
+         PLIST.  In fact, processing PLIST would be wrong, because the
+         sanitizing process would fill in the properties
+         (e.g. CHANNEL), which we don't want in empty events.  */
+      e->event_type = empty_event;
+      if (!NILP (plist))
+	error ("Cannot set properties of empty event");
+      UNGCPRO;
+      return event;
+    }
+  else if (EQ (type, Qkey_press))
     e->event_type = key_press_event;
   else if (EQ (type, Qbutton_press))
     e->event_type = button_press_event;
@@ -434,58 +485,75 @@ WARNING, the event object returned may be a reused one; see the function
     e->event_type = button_release_event;
   else if (EQ (type, Qmotion))
     e->event_type = pointer_motion_event;
-  else if (EQ (type, Qempty))
-    e->event_type = empty_event;
+#ifdef HAVE_OFFIX_DND
+  else if (EQ (type, Qdnd_drop))
+    {
+      e->event_type = dnd_drop_event;
+      e->event.dnd_drop.data = Qnil;
+    }
+#endif
   else
-    /* not allowed: Qmisc_user, Qprocess, Qtimeout, Qmagic, Qmagic_eval */
-    /* dnd_drop is also not allowed */
-    signal_simple_error ("Invalid event type", type);
+    {
+      /* Not allowed: Qmisc_user, Qprocess, Qtimeout, Qmagic, Qeval,
+	 Qmagic_eval.  */
+      /* #### Should we allow misc-user events?  */
+      signal_simple_error ("Invalid event type", type);
+    }
+
+  plist = Fcopy_sequence (plist);
+  Fcanonicalize_plist (plist, Qnil);
 
   /* Process the plist. */
-  while (!NILP (plist))
+  EXTERNAL_PROPERTY_LIST_LOOP (tail, keyword, value, plist)
     {
-      prop = Fcar (plist);
-      plist = Fcdr (plist);
-      val = Fcar (plist);
-      plist = Fcdr (plist);
-      if (EQ (prop, Qchannel))
+      if (EQ (keyword, Qchannel))
 	{
-	  if (!FRAMEP (val) && !NILP (val))
-	    signal_simple_error ("Invalid event channel", val);
-	  EVENT_CHANNEL (e) = val;
+	  if (e->event_type == key_press_event)
+	    {
+	      if (!CONSOLEP (value))
+		wrong_type_argument (Qconsolep, value);
+	    }
+	  else
+	    {
+	      if (!FRAMEP (value))
+		wrong_type_argument (Qframep, value);
+	    }
+	  EVENT_CHANNEL (e) = value;
 	}
-      else if (EQ (prop, Qkey))
+      else if (EQ (keyword, Qkey))
 	{
 	  if (e->event_type != key_press_event)
-	    wrong_type_argument (Qkey_press_event_p, event);
-	  if (!SYMBOLP (val) && !CHARP (val))
-	    signal_simple_error ("Invalid event key", val);
-	  e->event.key.keysym = val;
+	    signal_simple_error ("Invalid event type for `key' property",
+				 type);
+	  if (!SYMBOLP (value) && !CHARP (value))
+	    signal_simple_error ("Invalid event key", value);
+	  e->event.key.keysym = value;
 	}
-      else if (EQ (prop, Qbutton))
+      else if (EQ (keyword, Qbutton))
 	{
-	  CHECK_NATNUM (val);
-	  check_int_range (XINT(val), 1, 3);
+	  CHECK_NATNUM (value);
+	  check_int_range (XINT(value), 1, 3);
 	  if (e->event_type != button_press_event
 	      && e->event_type != button_release_event)
 	    signal_simple_error ("Invalid event type for `button' property",
 				 type);
-	  e->event.button.button = XINT (val);
+	  e->event.button.button = XINT (value);
 	}
-      else if (EQ (prop, Qmodifiers))
+      else if (EQ (keyword, Qmodifiers))
 	{
-	  Lisp_Object tail, sym;
+	  Lisp_Object modtail, sym;
 	  int modifiers = 0;
 
 	  if (e->event_type != key_press_event
 	      && e->event_type != button_press_event
 	      && e->event_type != button_release_event
 	      && e->event_type != pointer_motion_event)
+	    /* Currently unreached. */
 	    signal_simple_error ("Invalid event type for modifiers", type);
 
-	  for (tail = val; !NILP (tail); tail = Fcdr (tail))
+	  EXTERNAL_LIST_LOOP (modtail, value)
 	    {
-	      sym = Fcar (tail);
+	      sym = XCAR (modtail);
 	      if (EQ (sym, Qcontrol))      modifiers |= MOD_CONTROL;
 	      else if (EQ (sym, Qmeta))    modifiers |= MOD_META;
 	      else if (EQ (sym, Qsuper))   modifiers |= MOD_SUPER;
@@ -494,7 +562,7 @@ WARNING, the event object returned may be a reused one; see the function
 	      else if (EQ (sym, Qsymbol))  modifiers |= MOD_ALT;
 	      else if (EQ (sym, Qshift))   modifiers |= MOD_SHIFT;
 	      else
-		signal_simple_error ("Invalid key modifier", Fcar (tail));
+		signal_simple_error ("Invalid key modifier", XCAR (modtail));
 	    }
 	  if (e->event_type == key_press_event)
 	    e->event.key.modifiers = modifiers;
@@ -504,34 +572,103 @@ WARNING, the event object returned may be a reused one; see the function
 	  else /* pointer_motion_event */
 	    e->event.motion.modifiers = modifiers;
 	}
-      else if (EQ (prop, Qx))
+      else if (EQ (keyword, Qx))
 	{
-	  CHECK_NATNUM (val);
-	  if (e->event_type == pointer_motion_event)
-	    e->event.motion.x = XINT (val);
-	  else if (e->event_type == button_press_event
-		   || e->event_type == button_release_event)
-	    e->event.button.x = XINT (val);
+	  /* Allow negative values, so we can specify toolbar
+             positions.  */
+	  CHECK_INT (value);
+	  if (e->event_type != pointer_motion_event
+	      && e->event_type != button_press_event
+	      && e->event_type != button_release_event)
+	    {
+	      signal_simple_error ("Cannot assign `x' property to event",
+				   type);
+	    }
+	  coord_x = XINT (value);
 	}
-      else if (EQ (prop, Qy))
+      else if (EQ (keyword, Qy))
 	{
-	  CHECK_NATNUM (val);
-	  if (e->event_type == pointer_motion_event)
-	    e->event.motion.y = XINT (val);
-	  else if (e->event_type == button_press_event
-		   || e->event_type == button_release_event)
-	    e->event.button.y = XINT (val);
+	  /* Allow negative values; see above. */
+	  CHECK_INT (value);
+	  if (e->event_type != pointer_motion_event
+	      && e->event_type != button_press_event
+	      && e->event_type != button_release_event)
+	    {
+	      signal_simple_error ("Cannot assign `y' property to event",
+				   type);
+	    }
+	  coord_y = XINT (value);
 	}
-      else if (EQ (prop, Qtimestamp))
+      else if (EQ (keyword, Qtimestamp))
 	{
-	  CHECK_NATNUM (val);
-	  e->timestamp = XINT (val);
+	  CHECK_NATNUM (value);
+	  e->timestamp = XINT (value);
 	}
+#ifdef HAVE_OFFIX_DND
+      else if (EQ (keyword, Qdnd_data))
+	{
+	  Lisp_Object dnd_tail;
+	  /* Value is a list of (INT DATA).  Data is a list. */
+	  CHECK_CONS (value);
+	  /* Oliver, change this to accept symbols, when the time is
+             ripe!  */
+	  CHECK_NATNUM (XCAR (value));
+	  CHECK_CONS (XCDR (value));
+	  if (!NILP (XCDR (XCDR (value))))
+	    wrong_type_argument (Qlistp, XCDR (value));
+	  /* Check the list validity. */
+	  EXTERNAL_LIST_LOOP (dnd_tail, XCAR (XCDR (value)))
+	    ;
+	  /* And now, copy it all. */
+	  e->event.dnd_drop.data = Fcopy_tree (value, Qnil);
+	}
+#endif /* HAVE_OFFIX_DND */
       else
-	signal_simple_error ("Invalid property", prop);
+	signal_simple_error ("Invalid property", keyword);
     } /* while */
 
-  /* Now, let's validate what we got. */
+  /* Insert the channel, if missing. */
+  if (NILP (EVENT_CHANNEL (e)))
+    {
+      if (e->event_type == key_press_event)
+	EVENT_CHANNEL (e) = Vselected_console;
+      else
+	EVENT_CHANNEL (e) = Fselected_frame (Qnil);
+    }
+
+  /* Fevent_properties, Fevent_x_pixel, etc. work with pixels relative
+     to the frame, so we must adjust accordingly.  */
+  if (e->event_type == pointer_motion_event
+      || e->event_type == button_press_event
+      || e->event_type == button_release_event
+#ifdef HAVE_OFFIX_DND
+      || e->event_type == dnd_drop_event
+#endif
+      )
+    {
+      struct frame *f = XFRAME (EVENT_CHANNEL (e));
+
+      coord_x += FRAME_REAL_LEFT_TOOLBAR_WIDTH (f);
+      coord_y += FRAME_REAL_TOP_TOOLBAR_HEIGHT (f);
+
+      if (e->event_type == pointer_motion_event)
+	{
+	  e->event.motion.x = coord_x;
+	  e->event.motion.y = coord_y;
+	}
+      else if (e->event_type == button_press_event
+	       || e->event_type == button_release_event
+#ifdef HAVE_OFFIX_DND
+	       || e->event_type == dnd_drop_event
+#endif
+	       )
+	{
+	  e->event.button.x = coord_x;
+	  e->event.button.y = coord_y;
+	}
+    }
+
+  /* Finally, do some more validation.  */
   switch (e->event_type)
     {
     case key_press_event:
@@ -540,14 +677,31 @@ WARNING, the event object returned may be a reused one; see the function
       break;
     case button_press_event:
     case button_release_event:
+#ifdef HAVE_OFFIX_DND
+    case dnd_drop_event:
+#endif
       if (!e->event.button.button)
-	error ("Undefined button for button-press or button-release event");
-      if (NILP (EVENT_CHANNEL (e)))
-	error ("Undefined channel for button-press or button-release event");
+	error ("Undefined button for %s event",
+	       e->event_type == button_press_event
+	       ? "buton-press" :
+#ifdef HAVE_OFFIX_DND
+	       e->event_type == button_release_event
+	       ? "button-release" : "dnd-drop"
+#else
+	       "button-release"
+#endif
+	       );
+#ifdef HAVE_OFFIX_DND
+      if ((e->event_type == dnd_drop_event) &&
+	  NILP (e->event.dnd_drop.data))
+	error ("Unspecified data for dnd-drop event");
       break;
+#endif
     default:
       break;
     }
+
+  UNGCPRO;
   return event;
 }
 

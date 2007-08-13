@@ -103,7 +103,7 @@
 ;;;    (autoload (function dired-do-grep-find) "igrep"
 ;;;       "*Run `grep` via `find` on the marked (or next prefix ARG) directories." t)
 ;;; 3. If you are running Windows 95/NT, you should install findutils
-;;;    and grep from release 17.1 (or higher) of the Cygnus GNU-Win32
+;;;    and grep from release 17.1 (or higher) of the Cygnus cygwin32
 ;;;    distribution.  See <URL:http://www.cygnus.com/misc/gnu-win32/>.
 
 ;;; Usage:
@@ -329,7 +329,7 @@ if called programmatically, GREP-ARGS is still (COMMAND)."
   (defalias 'dired-do-grep-find 'dired-do-igrep-find))
 
 
-(defvar win32-quote-process-args)	; XEmacs
+(defvar mswindows-quote-process-args)	; XEmacs
 
 ;;;###autoload
 (defun igrep (program expression files &optional options)
@@ -379,7 +379,7 @@ EXPRESSION\)."
       ;; (restricted, job-control, or standard) Bourne shell doesn't expand ~:
       (setq files
 	    (mapcar 'expand-file-name files)))
-  (let* ((win32-quote-process-args nil)	; work around NT Emacs hack
+  (let* ((mswindows-quote-process-args nil)	; work around NT Emacs hack
 	 (use-zgrep (cond ((eq igrep-use-zgrep t))
 			  (igrep-use-zgrep
 			   (let ((files files)

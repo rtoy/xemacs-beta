@@ -1,4 +1,4 @@
-/* Define win32 specific console, device, and frame object for XEmacs.
+/* Define mswindowsindows-specific console, device, and frame object for XEmacs.
    Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
 
@@ -26,25 +26,25 @@ Boston, MA 02111-1307, USA.  */
 
    Ultimately based on FSF, then later on JWZ work for Lemacs.
    Rewritten over time by Ben Wing and Chuck Thompson.
-   Rewritten for win32 by Jonathan Harris, November 1997 for 20.4.
+   Rewritten for mswindows by Jonathan Harris, November 1997 for 20.4.
  */
 
-#ifndef _XEMACS_CONSOLE_W32_H_
-#define _XEMACS_CONSOLE_W32_H_
+#ifndef _XEMACS_CONSOLE_MSW_H_
+#define _XEMACS_CONSOLE_MSW_H_
 
 #include "console.h"
 
 #include "windows.h"
 
-DECLARE_CONSOLE_TYPE (w32);
+DECLARE_CONSOLE_TYPE (mswindows);
 
-struct w32_console
+struct mswindows_console
 {
   int infd, outfd;
 };
 
 
-struct w32_device
+struct mswindows_device
 {
   int logpixelsx, logpixelsy;
   int planes, cells;
@@ -52,18 +52,18 @@ struct w32_device
   int horzsize, vertsize;	/* Size in mm */
 };
 
-#define DEVICE_W32_DATA(d) DEVICE_TYPE_DATA (d, w32)
-#define DEVICE_W32_LOGPIXELSX(d) 	(DEVICE_W32_DATA (d)->logpixelsx)
-#define DEVICE_W32_LOGPIXELSY(d) 	(DEVICE_W32_DATA (d)->logpixelsy)
-#define DEVICE_W32_PLANES(d) 	(DEVICE_W32_DATA (d)->planes)
-#define DEVICE_W32_CELLS(d) 	(DEVICE_W32_DATA (d)->cells)
-#define DEVICE_W32_HORZRES(d) 	(DEVICE_W32_DATA (d)->horzres)
-#define DEVICE_W32_VERTRES(d) 	(DEVICE_W32_DATA (d)->vertres)
-#define DEVICE_W32_HORZSIZE(d) 	(DEVICE_W32_DATA (d)->horzsize)
-#define DEVICE_W32_VERTSIZE(d) 	(DEVICE_W32_DATA (d)->vertsize)
+#define DEVICE_MSWINDOWS_DATA(d) DEVICE_TYPE_DATA (d, mswindows)
+#define DEVICE_MSWINDOWS_LOGPIXELSX(d) 	(DEVICE_MSWINDOWS_DATA (d)->logpixelsx)
+#define DEVICE_MSWINDOWS_LOGPIXELSY(d) 	(DEVICE_MSWINDOWS_DATA (d)->logpixelsy)
+#define DEVICE_MSWINDOWS_PLANES(d) 	(DEVICE_MSWINDOWS_DATA (d)->planes)
+#define DEVICE_MSWINDOWS_CELLS(d) 	(DEVICE_MSWINDOWS_DATA (d)->cells)
+#define DEVICE_MSWINDOWS_HORZRES(d) 	(DEVICE_MSWINDOWS_DATA (d)->horzres)
+#define DEVICE_MSWINDOWS_VERTRES(d) 	(DEVICE_MSWINDOWS_DATA (d)->vertres)
+#define DEVICE_MSWINDOWS_HORZSIZE(d) 	(DEVICE_MSWINDOWS_DATA (d)->horzsize)
+#define DEVICE_MSWINDOWS_VERTSIZE(d) 	(DEVICE_MSWINDOWS_DATA (d)->vertsize)
 
 
-struct w32_frame
+struct mswindows_frame
 {
   /* win32 window handle */
   HWND hwnd;
@@ -72,16 +72,16 @@ struct w32_frame
   HDC hdc;
 };
 
-#define FRAME_W32_DATA(f) FRAME_TYPE_DATA (f, w32)
+#define FRAME_MSWINDOWS_DATA(f) FRAME_TYPE_DATA (f, mswindows)
 
-#define FRAME_W32_HANDLE(f)	(FRAME_W32_DATA (f)->hwnd)
-#define FRAME_W32_DC(f)		(FRAME_W32_DATA (f)->hdc)
+#define FRAME_MSWINDOWS_HANDLE(f)	(FRAME_MSWINDOWS_DATA (f)->hwnd)
+#define FRAME_MSWINDOWS_DC(f)		(FRAME_MSWINDOWS_DATA (f)->hdc)
 
 
 /*
  * Redisplay functions
  */
-void w32_redraw_exposed_area (struct frame *f, int x, int y, 
+void mswindows_redraw_exposed_area (struct frame *f, int x, int y, 
 			      int width, int height);
 
-#endif /* _XEMACS_CONSOLE_W32_H_ */
+#endif /* _XEMACS_CONSOLE_MSW_H_ */

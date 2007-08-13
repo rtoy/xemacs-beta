@@ -102,7 +102,7 @@ struct lrecord_header
 
 #ifdef USE_INDEXED_LRECORD_IMPLEMENTATION
 # define set_lheader_implementation(header,imp) \
-	do { (header)->type = lrecord_type_index((imp)) \
+	do { (header)->type = lrecord_type_index((imp)); \
 	     (header)->mark = 0;			\
 	     (header)->pure = 0;			\
 	} while (0)

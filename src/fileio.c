@@ -562,6 +562,9 @@ file_name_as_directory (char *out, char *in)
       out[size + 1] = DIRECTORY_SEP;
       out[size + 2] = '\0';
     }
+#ifdef DOS_NT
+  CORRECT_DIR_SEPS (out);
+#endif
   return out;
 }
 
@@ -768,7 +771,7 @@ See also the function `substitute-in-file-name'.
 	    /* Detect MSDOS file names with drive specifiers. */
 	    && (IS_DRIVE (XSTRING_BYTE (default_, 0))
 		&& (IS_DEVICE_SEP (XSTRING_BYTE (default_, 1))
-		    IS_DIRECTORY_SEP (XSTRING_BYTE (default_, 2)))))
+		    && IS_DIRECTORY_SEP (XSTRING_BYTE (default_, 2)))))
 #ifdef WINDOWSNT
       /* Detect Windows file names in UNC format.  */
       && ! (XSTRING_LENGTH (default_) >= 2
@@ -2059,10 +2062,13 @@ This is what happens in interactive use with M-x.
 				  INTP (ok_if_already_exists), 0);
 /* Syncing with FSF 19.34.6 note: FSF does not report a file error
    on NT here. --marcpa */
-#if 0 /* defined(WINDOWSNT) */
+/* But FSF #defines link as sys_link which is supplied in nt.c. We can't do
+   that because sysfile.h defines sys_link depending on ENCAPSULATE_LINK.
+   Reverted to previous behaviour pending a working fix. (jhar) */
+#if defined(WINDOWSNT)
   /* Windows does not support this operation.  */
   report_file_error ("Adding new name", Flist (2, &filename));
-#else /* not 0 -- defined(WINDOWSNT) */
+#else /* not defined(WINDOWSNT) */
 
   unlink ((char *) XSTRING_DATA (newname));
   if (0 > link ((char *) XSTRING_DATA (filename),
@@ -2071,7 +2077,7 @@ This is what happens in interactive use with M-x.
       report_file_error ("Adding new name",
 			 list2 (filename, newname));
     }
-#endif /* 0 -- defined(WINDOWSNT) */
+#endif /* defined(WINDOWSNT) */
 
   UNGCPRO;
   return Qnil;

@@ -30,6 +30,7 @@ Boston, MA 02111-1307, USA.  */
 #include "elhash.h"
 #include "insdel.h"
 #include "lstream.h"
+#include "mule-ccl.h"
 #include "mule-coding.h"
 
 Lisp_Object Qbuffer_file_coding_system, Qcoding_system_error;
@@ -1810,8 +1811,7 @@ reset_decoding_stream (struct decoding_stream *str)
     }
   else if (CODING_SYSTEM_TYPE (str->codesys) == CODESYS_CCL)
     {
-      set_ccl_program (&str->ccl, CODING_SYSTEM_CCL_DECODE (str->codesys),
-		       0, 0, 0);
+      setup_ccl_program (&str->ccl, CODING_SYSTEM_CCL_DECODE (str->codesys));
     }
 
   str->flags = str->ch = 0;
@@ -1985,7 +1985,7 @@ mule_decode (Lstream *decoding, CONST unsigned char *src,
       decode_coding_big5 (decoding, src, dst, n);
       break;
     case CODESYS_CCL:
-      ccl_driver (&str->ccl, src, dst, n, (str->flags) & CODING_STATE_END);
+      ccl_driver (&str->ccl, src, dst, n, 0);
       break;
     case CODESYS_ISO2022:
       decode_coding_iso2022 (decoding, src, dst, n);
@@ -2263,7 +2263,7 @@ reset_encoding_stream (struct encoding_stream *str)
 	break;
       }
     case CODESYS_CCL:
-      set_ccl_program (&str->ccl, CODING_SYSTEM_CCL_ENCODE (str->codesys), 0, 0, 0);
+      setup_ccl_program (&str->ccl, CODING_SYSTEM_CCL_ENCODE (str->codesys));
       break;
     default:
       break;
@@ -2385,7 +2385,7 @@ mule_encode (Lstream *encoding, CONST unsigned char *src,
       encode_coding_big5 (encoding, src, dst, n);
       break;
     case CODESYS_CCL:
-      ccl_driver (&str->ccl, src, dst, n, (str->flags) & CODING_STATE_END);
+      ccl_driver (&str->ccl, src, dst, n, 0);
       break;
     case CODESYS_ISO2022:
       encode_coding_iso2022 (encoding, src, dst, n);
@@ -2495,44 +2495,6 @@ text.  BUFFER defaults to the current buffer if unspecified.
 
 #define BYTE_SJIS_KATAKANA_P(c)	\
   ((c) >= 0xA1 && (c) <= 0xDF)
-
-/* Code conversion macros.  These are macros because they are used in
-   inner loops during code conversion.
-
-   Note that temporary variables in macros introduce the classic
-   dynamic-scoping problems with variable names.  We use capital-
-   lettered variables in the assumption that XEmacs does not use
-   capital letters in variables except in a very formalized way
-   (e.g. Qstring). */
-
-/* Convert shift-JIS code (sj1, sj2) into internal string
-   representation (c1, c2). (The leading byte is assumed.) */
-
-#define DECODE_SJIS(sj1, sj2, c1, c2)			\
-do {							\
-  int I1 = sj1, I2 = sj2;				\
-  if (I2 >= 0x9f)					\
-    c1 = (I1 << 1) - ((I1 >= 0xe0) ? 0xe0 : 0x60),	\
-    c2 = I2 + 2;					\
-  else							\
-    c1 = (I1 << 1) - ((I1 >= 0xe0) ? 0xe1 : 0x61),	\
-    c2 = I2 + ((I2 >= 0x7f) ? 0x60 : 0x61);		\
-} while (0)
-
-/* Convert the internal string representation of a Shift-JIS character
-   (c1, c2) into Shift-JIS code (sj1, sj2).  The leading byte is
-   assumed. */
-
-#define ENCODE_SJIS(c1, c2, sj1, sj2)			\
-do {							\
-  int I1 = c1, I2 = c2;					\
-  if (I1 & 1)						\
-    sj1 = (I1 >> 1) + ((I1 < 0xdf) ? 0x31 : 0x71),	\
-    sj2 = I2 - ((I2 >= 0xe0) ? 0x60 : 0x61);		\
-  else							\
-    sj1 = (I1 >> 1) + ((I1 < 0xdf) ? 0x30 : 0x70),	\
-    sj2 = I2 - 2;					\
-} while (0)
 
 static int
 detect_coding_sjis (struct detection_state *st, CONST unsigned char *src,
