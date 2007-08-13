@@ -67,6 +67,9 @@ Boston, MA 02111-1307, USA.  */
 /* Make all functions available on AIX.  See AC_AIX. */
 #undef _ALL_SOURCE
 
+/* Make all functions available on GNU libc systems.  See features.h. */
+#undef _GNU_SOURCE
+
 /* Used to identify the XEmacs version in stack traces. */
 #undef STACK_TRACE_EYE_CATCHER
 
@@ -108,7 +111,6 @@ Boston, MA 02111-1307, USA.  */
 #undef AIXV3
 #undef _POSIX_SOURCE
 #undef _BSD_SOURCE
-#undef _GNU_SOURCE
 #undef X_LOCALE
 #undef NARROWPROTO
 /* The following should always be defined, no matter what xmkmf thinks. */
@@ -168,7 +170,6 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_X11_XLOCALE_H
 #undef HAVE_LINUX_VERSION_H
 #undef HAVE_INTTYPES_H
-#undef HAVE_LIMITS_H
 #undef HAVE_SYS_UN_H
 #undef STDC_HEADERS
 #undef TIME_WITH_SYS_TIME
@@ -222,13 +223,7 @@ Boston, MA 02111-1307, USA.  */
 #undef SIZEOF_LONG_LONG
 #undef SIZEOF_VOID_P
 
-#undef HAVE_ACOSH
-#undef HAVE_ASINH
-#undef HAVE_ATANH
-
-#if defined (HAVE_ACOSH) && defined (HAVE_ASINH) && defined (HAVE_ATANH)
-#define HAVE_INVERSE_HYPERBOLIC
-#endif
+#undef HAVE_INVERSE_HYPERBOLIC
 
 #undef HAVE_CBRT
 #undef HAVE_CLOSEDIR

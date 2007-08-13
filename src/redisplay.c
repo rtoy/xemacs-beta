@@ -934,10 +934,9 @@ add_emchar_rune (pos_data *data)
   crb->xpos = data->pixpos;
   crb->width = width;
   if (data->bi_bufpos)
-    {
-      struct buffer *buf = XBUFFER (WINDOW_BUFFER (XWINDOW (data->window)));
-      crb->bufpos = bytind_to_bufpos (buf, data->bi_bufpos);
-    }
+    crb->bufpos =
+      bytind_to_bufpos (XBUFFER (WINDOW_BUFFER (XWINDOW (data->window))),
+			data->bi_bufpos);
   else if (data->is_modeline)
     crb->bufpos = data->modeline_charpos;
   else
@@ -1079,10 +1078,9 @@ add_blank_rune (pos_data *data, struct window *w, int char_tab_width)
   rb.xpos = data->pixpos;
   rb.width = data->blank_width;
   if (data->bi_bufpos)
-    {
-      struct buffer *buf = XBUFFER (WINDOW_BUFFER (XWINDOW (data->window)));
-      rb.bufpos = bytind_to_bufpos (buf, data->bi_bufpos);
-    }
+    rb.bufpos =
+      bytind_to_bufpos (XBUFFER (WINDOW_BUFFER (XWINDOW (data->window))),
+			data->bi_bufpos);
   else
     /* #### and this is really correct too? */
     rb.bufpos = 0;
@@ -1661,11 +1659,9 @@ add_glyph_rune (pos_data *data, struct glyph_block *gb, int pos_type,
       rb.width = width;
       rb.bufpos = 0;			/* glyphs are never "at" anywhere */
       if (data->bi_endpos)
-        {
-	  /* #### is this necessary at all? */
-	  struct buffer *buf = XBUFFER (WINDOW_BUFFER (w));
-	  rb.endpos = bytind_to_bufpos (buf, data->bi_endpos);
-        }
+	/* #### is this necessary at all? */
+	rb.endpos = bytind_to_bufpos (XBUFFER (WINDOW_BUFFER (w)),
+				      data->bi_endpos);
       else
         rb.endpos = 0;
       rb.type = RUNE_DGLYPH;
@@ -1682,10 +1678,8 @@ add_glyph_rune (pos_data *data, struct glyph_block *gb, int pos_type,
 
       if (allow_cursor)
 	{
-	  {
-	    struct buffer *buf = XBUFFER (WINDOW_BUFFER (w));
-	    rb.bufpos = bytind_to_bufpos (buf, data->bi_bufpos);
-	  }
+	  rb.bufpos = bytind_to_bufpos (XBUFFER (WINDOW_BUFFER (w)),
+					data->bi_bufpos);
 
 	  if (data->cursor_type == CURSOR_ON)
 	    {
@@ -4807,7 +4801,7 @@ regenerate_window_incrementally (struct window *w, Bufpos startp,
 }
 
 /* Given a window and a point, update the given display lines such
-   that point is displayed in the middle of the window. 
+   that point is displayed in the middle of the window.
    Return the window's new start position. */
 
 static Bufpos

@@ -39,10 +39,8 @@ Boston, MA 02111-1307, USA.  */
 #include <stdio.h>		/* NULL, etc. */
 #include <ctype.h>
 #include <stdarg.h>
-
-#ifdef HAVE_LIMITS_H
 #include <limits.h>
-#endif
+
 /* Define INT_MAX, DBL_DIG if not in limits.h */
 #ifndef INT_MAX
 #define INT_MAX ((int) ((1U << (INTBITS - 1)) - 1))

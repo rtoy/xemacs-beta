@@ -20,9 +20,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include <stdlib.h> /* for abort () */
-#ifdef HAVE_LIMITS_H
 #include <limits.h>
-#endif
 
 #include "lwlib-Xlw.h"
 #include <X11/StringDefs.h>
@@ -30,16 +28,16 @@ Boston, MA 02111-1307, USA.  */
 #include <X11/ObjectP.h>
 #include <X11/CompositeP.h>
 #include <X11/Shell.h>
-#ifdef MENUBARS_LUCID
+#ifdef LWLIB_MENUBARS_LUCID
 #include "xlwmenu.h"
 #endif
-#ifdef SCROLLBARS_LUCID
+#ifdef LWLIB_SCROLLBARS_LUCID
 #include "xlwscrollbar.h"
 #endif
 
 
 
-#ifdef MENUBARS_LUCID
+#ifdef LWLIB_MENUBARS_LUCID
 
 /* Menu callbacks */
 
@@ -134,9 +132,9 @@ xlw_create_popup_menu (widget_instance* instance)
 
   return popup_shell;
 }
-#endif /* MENUBARS_LUCID */
+#endif /* LWLIB_MENUBARS_LUCID */
 
-#ifdef SCROLLBARS_LUCID
+#ifdef LWLIB_SCROLLBARS_LUCID
 static void
 xlw_scrollbar_callback (Widget widget, XtPointer closure, XtPointer call_data)
 {
@@ -301,16 +299,16 @@ xlw_update_scrollbar (widget_instance *instance, Widget widget,
     }
 }
 
-#endif /* SCROLLBARS_LUCID */
+#endif /* LWLIB_SCROLLBARS_LUCID */
 
 widget_creation_entry 
 xlw_creation_table [] =
 {
-#ifdef MENUBARS_LUCID
+#ifdef LWLIB_MENUBARS_LUCID
   {"menubar", xlw_create_menubar},
   {"popup", xlw_create_popup_menu},
 #endif
-#ifdef SCROLLBARS_LUCID
+#ifdef LWLIB_SCROLLBARS_LUCID
   {"vertical-scrollbar",	xlw_create_vertical_scrollbar},
   {"horizontal-scrollbar",	xlw_create_horizontal_scrollbar},
 #endif
@@ -321,15 +319,15 @@ Boolean
 lw_lucid_widget_p (Widget widget)
 {
   WidgetClass the_class = XtClass (widget);
-#ifdef MENUBARS_LUCID
+#ifdef LWLIB_MENUBARS_LUCID
   if (the_class == xlwMenuWidgetClass)
     return True;
 #endif
-#ifdef SCROLLBARS_LUCID
+#ifdef LWLIB_SCROLLBARS_LUCID
   if (the_class == xlwScrollBarWidgetClass)
     return True;
 #endif
-#ifdef MENUBARS_LUCID
+#ifdef LWLIB_MENUBARS_LUCID
   if (the_class == overrideShellWidgetClass)
     return
       XtClass (((CompositeWidget)widget)->composite.children [0])
@@ -348,7 +346,7 @@ xlw_update_one_widget (widget_instance* instance, Widget widget,
 
   if (0)
     ;
-#ifdef MENUBARS_LUCID
+#ifdef LWLIB_MENUBARS_LUCID
   else if (class == xlwMenuWidgetClass)
     {
       XlwMenuWidget mw;
@@ -361,7 +359,7 @@ xlw_update_one_widget (widget_instance* instance, Widget widget,
       XtSetValues (widget, al, 1);
     }
 #endif
-#ifdef SCROLLBARS_LUCID
+#ifdef LWLIB_SCROLLBARS_LUCID
   else if (class == xlwScrollBarWidgetClass)
     {
       xlw_update_scrollbar (instance, widget, val);
@@ -381,7 +379,7 @@ xlw_pop_instance (widget_instance* instance, Boolean up)
 {
 }
 
-#ifdef MENUBARS_LUCID
+#ifdef LWLIB_MENUBARS_LUCID
 void
 xlw_popup_menu (Widget widget, XEvent *event)
 {
@@ -398,7 +396,7 @@ xlw_popup_menu (Widget widget, XEvent *event)
   else
     abort ();
 }
-#endif
+#endif /* LWLIB_MENUBARS_LUCID */
 
 /* Destruction of instances */
 void

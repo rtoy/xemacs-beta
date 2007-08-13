@@ -39,24 +39,23 @@
 
 ### Code:
 
-XEMACS=$1			# Not used at present
-LISP_FILE=$2			# Should be a binary package tarball
-DEST_DIR=$3			# Should be a top level package directory
+XEMACS="$1"			# Not used at present
+LISP_FILE="$2"			# Should be a binary package tarball
+DEST_DIR="$3"			# Should be a top level package directory
 
 # Test for valid XEmacs executable and valid input file
-if [ \( ! -f ${LISP_FILE} \) -o \( ! -x ${XEMACS} \) ]; then
+if [ ! -f "${LISP_FILE}" -o ! -x "${XEMACS}" ]; then
 	exit 1
 fi
 
 # Test for destination directory, creating if necessary
-if [ ! -d ${DEST_DIR} ]; then
-	mkdir ${DEST_DIR}
-fi
+test -d "${DEST_DIR}" || mkdir "${DEST_DIR}"
+test -d "${DEST_DIR}" || exit 1;
 
 # Very simple minded extraction for the first cut
 # We'll get more sophisticated later
-cd ${DEST_DIR}
-gunzip -c ${LISP_FILE} | tar xvf -
+cd "${DEST_DIR}"
+gunzip -c "${LISP_FILE}" | tar xvf -
 
 # Need to refresh the info/dir file, I don't know how to do that.
 

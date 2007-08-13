@@ -11,13 +11,13 @@
 # define CONST const
 #endif
 
-#if defined (MENUBARS_LUCID) || defined (MENUBARS_MOTIF) || defined (MENUBARS_ATHENA)
+#if defined (LWLIB_MENUBARS_LUCID) || defined (LWLIB_MENUBARS_MOTIF) || defined (LWLIB_MENUBARS_ATHENA)
 #define NEED_MENUBARS
 #endif
-#if defined (SCROLLBARS_LUCID) || defined (SCROLLBARS_MOTIF) || defined (SCROLLBARS_ATHENA)
+#if defined (LWLIB_SCROLLBARS_LUCID) || defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_ATHENA)
 #define NEED_SCROLLBARS
 #endif
-#if defined (DIALOGS_LUCID) || defined (DIALOGS_MOTIF) || defined (DIALOGS_ATHENA)
+#if defined (LWLIB_DIALOGS_LUCID) || defined (LWLIB_DIALOGS_MOTIF) || defined (LWLIB_DIALOGS_ATHENA)
 #define NEED_DIALOGS
 #endif
 
@@ -171,9 +171,9 @@ extern int lw_menu_active;
 #define lw_kill_menus xlw_kill_menus
 #define lw_get_entries xlw_get_entries
 #define lw_menu_level xlw_menu_level
-#else /* MENUBARS_LUCID */
+#else /* LWLIB_MENUBARS_LUCID */
 /* do this for the other toolkits too */
-#endif /* MENUBARS_LUCID */
+#endif /* LWLIB_MENUBARS_LUCID */
 
 void  lw_register_widget (CONST char* type, CONST char* name, LWLIB_ID id,
 			  widget_value* val, lw_callback pre_activate_cb,

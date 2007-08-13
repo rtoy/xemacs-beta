@@ -1169,7 +1169,7 @@ This command is designed to be used whether you are already in Info or not." t n
 Install a single file Lisp package into XEmacs package hierarchy.
 `file' should be the full path to the lisp file to install.
 `destdir' should be a simple directory name.
-The optional `pkg-dir' can be used to override the default package hiearchy
+The optional `pkg-dir' can be used to override the default package hierarchy
 \(last package-path)." t nil)
 
 (autoload 'package-admin-add-binary-package "package-admin" "\

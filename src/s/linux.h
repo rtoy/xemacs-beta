@@ -23,10 +23,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* This file was put together by Michael K. Johnson and Rik Faith.  */
 
-/* #define UNIPLUS */
-/* #define USG5 */
 #define USG
-/* #define BSD */
 #define LINUX
 
 /* SYSTEM_TYPE should indicate the kind of system you are using.
@@ -65,12 +62,6 @@ Boston, MA 02111-1307, USA.  */
 #define INTERRUPTIBLE_OPEN
 #define INTERRUPTIBLE_CLOSE
 #define INTERRUPTIBLE_IO
-
-/* If you mount the proc file system somewhere other than /proc
-   you will have to uncomment the following and make the proper
-   changes */
-
-/* #define LINUX_LDAV_FILE "/proc/loadavg" */
 
 /* This is needed for dispnew.c:update_frame */
 
@@ -117,17 +108,6 @@ Boston, MA 02111-1307, USA.  */
 #define LIB_STANDARD "-lgcc -lc -lgcc /usr/lib/crtn.o"
 #endif
 
-/* Don't use -g in test compiles in configure.
-   This is so we will use the same shared libs for that linking
-   that are used when linking temacs.  */
-#ifdef THIS_IS_CONFIGURE
-#define C_DEBUG_SWITCH
-#endif
-
-/* Let's try this out, just in case.
-   Nah.  Rik Faith <faith@cs.unc.edu> says it doesn't work well.  */
-/* #define SIGNALS_VIA_CHARACTERS */
-
 #ifdef TERM
 #define LIBS_SYSTEM "-lclient"
      /* #define C_SWITCH_SYSTEM "-D_BSD_SOURCE -I/usr/src/term" - mrb */
@@ -136,13 +116,7 @@ Boston, MA 02111-1307, USA.  */
 /* alane@wozzle.linet.org says that -lipc is not a separate library,
    since libc-4.4.1.  So -lipc was deleted.  */
 #define LIBS_SYSTEM
-     /* #define _BSD_SOURCE 1 - mrb */
 #endif
-
-
-/* XEmacs change: configure doesn't find this because math.h aliases
-   rint to __rint so that it's not found. */
-#define HAVE_RINT 1
 
 #ifdef __ELF__
 #define UNEXEC "unexelf.o"

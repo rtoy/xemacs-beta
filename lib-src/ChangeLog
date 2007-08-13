@@ -1,3 +1,10 @@
+1998-01-13  Martin Buchholz  <martin@xemacs.org>
+
+	* lib-src/add-little-package.sh: 
+	* lib-src/add-big-package.sh: 
+	Use proper paranoid quoting for sh variables.
+	-batch implies -q.
+
 Thu Jan 08 09:42:36 1998    <andyp@parallax.co.uk>
 	
 	* gnuserv.h: only set UNIX_DOMAIN_SOCKETS if HAVE_SYS_UN_H is

@@ -2890,7 +2890,6 @@ when it is off screen."
 			   (skip-syntax-backward "/\\")
 			   (point)))))
        (let* ((oldpos (point))
-	      (parse-sexp-ignore-comments t) ; to avoid C++ lossage
 	      (blinkpos)
 	      (mismatch))
 	 (save-excursion

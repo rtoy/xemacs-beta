@@ -216,7 +216,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 		  incr_wv->call_data = LISP_TO_VOID (incremental_data);
 		  goto menu_item_done;
 		}
-#endif /* LWLIB_MENUBARS_LUCID */
+#endif /* LWLIB_MENUBARS_LUCID || LWLIB_MENUBARS_MOTIF */
 	    }
 	  if (menu_type == POPUP_TYPE && popup_menu_titles && depth == 0)
 	    {
@@ -331,7 +331,7 @@ restore_in_menu_callback (Lisp_Object val)
     in_menu_callback = XINT(val);
     return Qnil;
 }
-#endif /* LWLIB_MENUBARS_LUCID */
+#endif /* LWLIB_MENUBARS_LUCID || LWLIB_MENUBARS_MOTIF */
 
 
 /* The order in which callbacks are run is funny to say the least.

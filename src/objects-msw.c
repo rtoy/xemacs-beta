@@ -829,9 +829,13 @@ static Lisp_Object
 mswindows_color_instance_rgb_components (struct Lisp_Color_Instance *c)
 {
   COLORREF color = COLOR_INSTANCE_MSWINDOWS_COLOR (c);
-  return (list3 (make_int (GetRValue(color)<<8),
-		 make_int (GetGValue(color)<<8),
-		 make_int (GetBValue(color)<<8)));
+  /* This used to say GetXValue(color)<<8, but that made, e.g. white
+     show as (#xff00 #xff00 #xff00) instead of (#xffff #xffff #xffff).
+     This slightly kludgier variant gives the expected results for
+     black and white, while hopefully not introducing too much error.  */
+  return list3 (make_int (GetRValue (color) * 257),
+		make_int (GetGValue (color) * 257),
+		make_int (GetBValue (color) * 257));
 }
 
 static int

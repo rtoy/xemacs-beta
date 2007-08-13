@@ -217,7 +217,7 @@ deactivates the region.
 19.34.
 
 XEmacs will now correctly merge all the `dir' files in
-`Info-directory-list' (initialized from either `INFOPATH'
+`Info-directory-list' (initialized from either the `INFOPATH'
 env. variable or `Info-default-directory-list'.)  These files may be
 full-fledged info files containing subnodes or menus.  Previously
 supported `localdir' files are looked for also, secondary to `dir's.
@@ -1103,8 +1103,8 @@ now compiles with nary a warning with some compilers.
    then XIM support is automatically configured in as well.
 
 -- TM (Tools for Mime) now comes with XEmacs.  This provides MIME
-   (Multi-purpose Internet Multi-media Extensions?) support for Mail
-   and News.  The primary author is Morioka Tomohiko.
+   (Multipurpose Internet Mail Extensions) support for Mail and News.
+   The primary author is Morioka Tomohiko.
 
 -- Japanese input can also be input using the `canna' input method.
    This support was contributed by Morioka Tomohiko.  Setting up canna

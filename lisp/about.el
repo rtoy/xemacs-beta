@@ -64,6 +64,7 @@
     (dv       "Didier Verna"      "verna@inf.enst.fr")
     (hniksic  "Hrvoje Niksic"     "hniksic@srce.hr")
     (jareth   "Jareth Hein"       "jhod@camelot-soft.com")
+    (jason    "Jason Mastaler"	  "jason@mastaler.com")
     (jens     "Jens Lautenbacher" "jens@lemcbed.lem.uni-karlsruhe.de")
     (juhp     "Jens-Ulrik Holger Petersen" "petersen@kurims.kyoto-u.ac.jp")
     (jwz      "Jamie Zawinski"    "jwz@netscape.com")
@@ -100,6 +101,7 @@
     (cc-mode   . "http://www.python.org/ftp/emacs/")
     (dkindred  . "http://www.cs.cmu.edu/People/dkindred/me.html")
     (dmoore    . "http://oj.egbt.org/dmoore/")
+    (jason     . "http://www.mastaler.com/")
     (juhp      . "http://www.kurims.kyoto-u.ac.jp/~petersen/")
     (jwz       . "http://people.netscape.com/jwz/")
     (kazz      . "http://www.imasy.or.jp/~kazz/")
@@ -964,7 +966,17 @@ groups).  Though now I seem to be heading for other things.
 My homepage is ")
      (about-url-link 'juhp "Visit Jens' homepage")
      (widget-insert ".\n"))
+    (jason
+     (widget-insert "\
+Beta tester and manager of the various XEmacs mailing lists. 
+Originator and maintainer of the gnus.org domain.   
 
+Jason resides in Albuquerque, New Mexico where he keeps himself 
+busy with studies at the university and consulting work.
+
+See: ")
+      (about-url-link 'jason "Visit Jason's homepage")
+      (widget-insert ".\n"))
 ))
 
 ;; Setup the buffer for a maintainer.
@@ -1160,6 +1172,9 @@ Is currently working on the integration of OffiX and CDE drag-and-drop
 into the event system of XEmacs.\n")
     (about-show-linked-info 'juhp "\
 Author of \"find-func.el\".\n")
+    (about-show-linked-info 'jason "\
+Beta tester and manager of the various XEmacs mailing lists.
+Originator and maintainer of the gnus.org domain.\n")
     (flet ((print-short (name addr &optional shortinfo)
 	     (concat (about-with-face name 'italic)
 		     (about-tabs name)

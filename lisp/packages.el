@@ -252,7 +252,7 @@ This is an extremely dangerous function to call at any time."
   "Search the supplied directory for associated directories.
 The top level is assumed to look like:
 info/           Contain texinfo files for lisp installed in this hierarchy
-etc/            Contain data files for lisp installled in this hiearchy
+etc/            Contain data files for lisp installled in this hierarchy
 lisp/           Contain directories which either have straight lisp code
                 or are self-contained packages of their own.
 
@@ -287,7 +287,8 @@ This is an internal function.  Do not call it after startup."
 	(if (and (running-temacs-p)
 		 (file-exists-p (concat package "/lisp/dumped-lisp.el")))
 	    (let (package-lisp)
-	      (load (concat package "/lisp/dumped-lisp.el"))
+	      (let (preloaded-file-list)
+		(load (concat package "/lisp/dumped-lisp.el")))
 	      (if package-lisp
 		  (progn
 		    (if (boundp 'preloaded-file-list)

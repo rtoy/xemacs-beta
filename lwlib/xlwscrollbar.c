@@ -71,9 +71,7 @@ Boston, MA 02111-1307, USA.  */
 #include <config.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_LIMITS_H
 #include <limits.h>
-#endif
 
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>

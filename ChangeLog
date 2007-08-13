@@ -1,4 +1,47 @@
+1998-01-18  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta20 is released.
+
+1998-01-13  Martin Buchholz  <martin@xemacs.org>
+
+	* configure.usage:  
+	* etc/NEWS:  
+	Remove doc for configure-time INFOPATH, no longer used.
+
+	* etc/BETA: Update ftp addresses.
+	* etc/INSTALL: Update ftp addresses.
+	* etc/MAILINGLISTS: Sync with Emacs 20.2. Update ftp addresses.
+
+	* configure.in:
+	* src/config.h.in:
+	Define HAVE_INVERSE_HYPERBOLIC using 1 configure test, not 3.
+
+	* lwlib/lwlib.h: 
+	* lwlib/lwlib.c: 
+	* lwlib/lwlib-config.c: 
+	* lwlib/lwlib-Xm.c: 
+	* lwlib/lwlib-Xaw.c: 
+	* lwlib/lwlib-Xlw.c: 
+	* lwlib/config.h.in: 
+	* src/menubar-x.c:
+	Prepend LWLIB_ to (SCROLLBARS|MENUBARS|DIALOGS)_(MOTIF|LUCID|ATHENA).
+	Maintain only one set of variables.
+
+	* etc/xemacs.1: Update author list.
+
+	* Makefile.in (install-arch-dep): Simplify.
+	Replace construct  `test -d $dir && foo'  with  
+	`if test -d $dir; then foo; fi'
+
+	* lwlib/xlwmenu.c: 
+	* lwlib/xlwscrollbar.c: 
+	* lwlib/lwlib-Xlw.c: 
+	* lwlib/lwlib-Xm.c: 
+	Always assume presence of limits.h (ANSI).
+
 1998-01-12  SL Baur  <steve@altair.xemacs.org>
+
+	* INSTALL: Updated for recent Mule/package changes.
 
 	* XEmacs 20.5-beta19 is released.
 

@@ -88,22 +88,29 @@
 	;; minimize the size of the dumped image (if we don't do this,
 	;; there will be lots of extra space in the data segment filled
 	;; with garbage-collected junk)
-	(defmacro load-gc (file)
-	  (list 'prog1
-		(list 'load
-		      (list 'locate-file file
-			    'load-path
-			    (list 'if 'load-ignore-elc-files
-				  ".el:"
-				  ".elc:.el:")))
-		;; '(test-atoms)
-		'(garbage-collect)))
+	(defun load-gc (file)
+	  (let ((full-path (locate-file file
+					load-path
+					(if load-ignore-elc-files
+					    ".el:"
+					  ".elc:.el:"))))
+	    (if full-path
+		(prog1
+		  (load full-path)
+		  ;; '(test-atoms)
+		  '(garbage-collect))
+	      (external-debugging-output (format "\nLoad file %s: not found\n"
+						 file))
+	      nil)))
 
 	(load (concat default-directory "../lisp/dumped-lisp.el"))
 	(let ((dumped-lisp-packages preloaded-file-list)
 	      file)
 	  (while (setq file (car dumped-lisp-packages))
-	    (load-gc file)
+	    (or (load-gc file)
+	      (progn
+		(external-debugging-output "Fatal error during load, aborting")
+		(kill-emacs 1)))
 	    (setq dumped-lisp-packages (cdr dumped-lisp-packages)))
 	  (if (not (featurep 'toolbar))
 	      (progn

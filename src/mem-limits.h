@@ -20,6 +20,13 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.30. */
 
+/* #### This ancient code really sucks.
+   configure should check for:
+   HAVE_SYS_RESOURCE_H, HAVE_ULIMIT_H, HAVE_GETRLIMIT, HAVE_ULIMIT,
+   and select action based on those values.
+   getrlimit() should be preferred to ulimit().
+   On Linux, ulimit() is deprecated and always returns -1. */
+
 #ifndef _XEMACS_MEM_LIMITS_H_
 #define _XEMACS_MEM_LIMITS_H_
 
@@ -47,7 +54,7 @@ Boston, MA 02111-1307, USA.  */
 extern int etext, __data_start; weak_symbol (__data_start)
 #define start_of_data()	(&__data_start ?: &etext)
 
-#else /* not _LIBC */
+#else /* not GNU libc */
 
 #if defined (__osf__) && (defined (__mips) || defined (mips) || defined (__alpha))
 #include <sys/time.h>

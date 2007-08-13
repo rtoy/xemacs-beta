@@ -78,14 +78,6 @@ clear_event_resource (void)
   Vevent_resource = Qnil;
 }
 
-static Lisp_Object mark_event (Lisp_Object, void (*) (Lisp_Object));
-static void print_event (Lisp_Object, Lisp_Object, int);
-static int event_equal (Lisp_Object, Lisp_Object, int);
-static unsigned long event_hash (Lisp_Object obj, int depth);
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("event", event,
-				     mark_event, print_event, 0, event_equal,
-				     event_hash, struct Lisp_Event);
-
 /* Make sure we lose quickly if we try to use this event */
 static void
 deinitialize_event (Lisp_Object ev)
@@ -396,6 +388,10 @@ event_hash (Lisp_Object obj, int depth)
 
   return 0; /* unreached */
 }
+
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("event", event,
+				     mark_event, print_event, 0, event_equal,
+				     event_hash, struct Lisp_Event);
 
 
 DEFUN ("make-event", Fmake_event, 0, 2, 0, /*

@@ -97,7 +97,7 @@ If FILES-ONLY is the symbol t, then only the "files" in the directory
   name_as_dir = Ffile_name_as_directory (dirname);
 
   name_as_dir_length = XSTRING_LENGTH (name_as_dir);
-  statbuf = alloca (name_as_dir_length + MAXNAMLEN + 1);
+  statbuf = (char *) alloca (name_as_dir_length + MAXNAMLEN + 1);
   memcpy (statbuf, XSTRING_DATA (name_as_dir), name_as_dir_length);
   statbuf_tail = statbuf + name_as_dir_length;
 

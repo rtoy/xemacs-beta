@@ -244,7 +244,8 @@ primary selection-extent, nil otherwise."
 	     (pop-to-buffer buf nil frame)
 	     (insert data)
 	     (hexlify-buffer)
-	     (make-frame-visible frame))))))
+	     (make-frame-visible frame))))
+    (undo-boundary)))
 
 (defun mouse-eval-sexp (click force-window)
   "Evaluate the sexp under the mouse.  Usually, this is the last sexp before

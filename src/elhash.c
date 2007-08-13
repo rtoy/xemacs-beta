@@ -838,6 +838,49 @@ Return number of entries in HASHTABLE.
   return make_int (htbl.fullness);
 }
 
+DEFUN ("hashtable-type", Fhashtable_type, 1, 1, 0, /*
+Return type of HASHTABLE.
+This can be one of `non-weak', `weak', `key-weak' and `value-weak'.
+*/
+       (hashtable))
+{
+  CHECK_HASHTABLE (hashtable);
+
+  switch (XHASHTABLE (hashtable)->type)
+    {
+    case HASHTABLE_WEAK:
+      return Qweak;
+      break;
+    case HASHTABLE_KEY_WEAK:
+      return Qkey_weak;
+      break;
+    case HASHTABLE_VALUE_WEAK:
+      return Qvalue_weak;
+      break;
+    default:
+      return Qnon_weak;
+    }
+}
+
+DEFUN ("hashtable-test-function", Fhashtable_test_function, 1, 1, 0, /*
+Return test function of HASHTABLE.
+This can be one of `eq', `eql' or `equal'.
+*/
+       (hashtable))
+{
+  int (*fun) (CONST void *, CONST void *);
+
+  CHECK_HASHTABLE (hashtable);
+
+  fun = XHASHTABLE (hashtable)->test_function;
+
+  if (fun == lisp_object_eql_equal)
+    return Qeql;
+  else if (fun == lisp_object_equal_equal)
+    return Qequal;
+  else
+    return Qeq;
+}
 
 static void
 verify_function (Lisp_Object function, CONST char *description)
@@ -900,7 +943,7 @@ each key and value in the table.
    lisp hashtable.
  */
 void
-elisp_maphash (void (*function) (CONST void *key, void *contents,
+elisp_maphash (int (*function) (CONST void *key, void *contents,
 				 void *extra_arg),
 	       Lisp_Object hashtable, void *closure)
 {
@@ -1284,6 +1327,8 @@ syms_of_elhash (void)
   DEFSUBR (Fclrhash);
   DEFSUBR (Fmaphash);
   DEFSUBR (Fhashtable_fullness);
+  DEFSUBR (Fhashtable_type);
+  DEFSUBR (Fhashtable_test_function);
   DEFSUBR (Fmake_weak_hashtable);
   DEFSUBR (Fmake_key_weak_hashtable);
   DEFSUBR (Fmake_value_weak_hashtable);

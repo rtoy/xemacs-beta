@@ -55,23 +55,23 @@ int lwlib_uses_motif_1_2;
 int lwlib_does_not_use_motif_1_2;
 #endif
 
-#ifdef MENUBARS_LUCID
+#ifdef LWLIB_MENUBARS_LUCID
 int lwlib_menubars_lucid;
 #else
-# ifdef MENUBARS_MOTIF
+# ifdef LWLIB_MENUBARS_MOTIF
 int lwlib_menubars_motif;
 # else
 int lwlib_does_not_support_menubars;
 # endif
 #endif
 
-#ifdef SCROLLBARS_LUCID
+#ifdef LWLIB_SCROLLBARS_LUCID
 int lwlib_scrollbars_lucid;
 #else
-# ifdef SCROLLBARS_MOTIF
+# ifdef LWLIB_SCROLLBARS_MOTIF
 int lwlib_scrollbars_motif;
 # else
-#  ifdef SCROLLBARS_ATHENA
+#  ifdef LWLIB_SCROLLBARS_ATHENA
 int lwlib_scrollbars_athena;
 #  else
 int lwlib_does_not_support_scrollbars;
@@ -79,10 +79,10 @@ int lwlib_does_not_support_scrollbars;
 # endif
 #endif
 
-#ifdef DIALOGS_MOTIF
+#ifdef LWLIB_DIALOGS_MOTIF
 int lwlib_dialogs_motif;
 #else
-# ifdef DIALOGS_ATHENA
+# ifdef LWLIB_DIALOGS_ATHENA
 int lwlib_dialogs_athena;
 # else
 int lwlib_does_not_support_dialogs;

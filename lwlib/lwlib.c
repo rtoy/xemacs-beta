@@ -842,15 +842,15 @@ instantiate_widget_instance (widget_instance *instance)
     {
       if (dialog_spec_p (instance->info->type))
 	{
-#ifdef DIALOGS_MOTIF
+#ifdef LWLIB_DIALOGS_MOTIF
 	  if (!function)
 	    function = xm_create_dialog;
 #endif
-#ifdef DIALOGS_ATHENA
+#ifdef LWLIB_DIALOGS_ATHENA
 	  if (!function)
 	    function = xaw_create_dialog;
 #endif
-#ifdef DIALOGS_LUCID
+#ifdef LWLIB_DIALOGS_LUCID
 	  /* not yet (not ever?) */
 #endif
 	}
@@ -1109,15 +1109,15 @@ lw_pop_down_all_widgets (LWLIB_ID id)
 void
 lw_popup_menu (Widget widget, XEvent *event)
 {
-#ifdef MENUBARS_LUCID
+#ifdef LWLIB_MENUBARS_LUCID
   if (lw_lucid_widget_p (widget))
     xlw_popup_menu (widget, event);
 #endif
-#ifdef MENUBARS_MOTIF
+#ifdef LWLIB_MENUBARS_MOTIF
   if (lw_motif_widget_p (widget))
     xm_popup_menu (widget, event);
 #endif
-#ifdef MENUBARS_ATHENA
+#ifdef LWLIB_MENUBARS_ATHENA
   if (lw_xaw_widget_p (widget))
     xaw_popup_menu (widget, event); /* not implemented */
 #endif

@@ -100,7 +100,10 @@ struct lrecord_header
 #endif
 };
 
+
 #ifdef USE_INDEXED_LRECORD_IMPLEMENTATION
+struct lrecord_implementation;
+int lrecord_type_index (CONST struct lrecord_implementation *implementation);
 # define set_lheader_implementation(header,imp) \
 	do { (header)->type = lrecord_type_index((imp)); \
 	     (header)->mark = 0;			\

@@ -1,4 +1,13 @@
 							-*- indented-text -*-
+to 20.5 beta20 "Don"
+-- Miscellaneous patches from Damon Lipparelli, Jens Petersen, Karl Hegbloom,
+   and Christoph Wedler
+-- overlay.el has been packaged (xemacs-base)
+-- Configure changes from Martin Buchholz
+-- Hashing changes from Hrvoje Niksic
+-- IBM AIX build fix to work with MIT X11 courtesy of Michael Sperber
+-- Miscellaneous bug fixes
+
 to 20.5 beta19 "Damani"
 -- Package building update
 -- Hash and profile patches from Hrvoje Niksic

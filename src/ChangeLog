@@ -1,3 +1,68 @@
+1998-01-18  SL Baur  <steve@altair.xemacs.org>
+
+	* glyphs-x.c (imagick_instantiate): Dynamically allocate pixar
+	with alloca.
+	From Damon Lipparelli <lipp@primus.com>
+
+1998-01-14  Martin Buchholz  <martin@xemacs.org>
+
+	* eval.c (For, Fand, Fif, Fcond, Fprogn, Fprog1, Fprog2):
+	Modernize and streamline.
+	Replace Fcdr with XCDR, Fcar with XCAR for efficiency.
+	Remove REGISTER declarations.
+
+1998-01-13  Martin Buchholz  <martin@xemacs.org>
+
+	* emacsfns.h:
+	* alloc.c:
+	Add proper prototypes for print_cons, print_vector, print_string.
+
+	* dired.c (directory-files):
+	* elhash.c (elisp_maphash):
+	* elhash.h (elisp_maphash):
+	* lrecord.h:
+	* mule-ccl.c (setup_ccl_program):
+	* mule-coding.c (coding_system_charset):
+	* offix-cursors.h (cursor_bits):
+	Warning elimination.
+
+	* redisplay.c (add_blank_rune): 
+	* redisplay.c (add_glyph_rune): 
+	* redisplay.c (add_emchar_rune): 
+	Warning elimination. Avoid useless computation in non-mule case.
+
+	* config.h.in:
+	Define HAVE_INVERSE_HYPERBOLIC using 1 configure test, not 3.
+	* src/alloc.c: 
+	* src/events.c: 
+	Rearrange order of declarations and definitions to avoid forward
+	* src/mem-limits.h: Add motivating comment for future cleanup.
+
+	* s/linux.h: Cleanup.  Remove old cruft.
+
+	* config.h.in:
+	Always define _GNU_SOURCE when using GNU libc.
+	Support --without-FOO as a synonym for --with-FOO=no.
+	Always use $srcdir to locate config.guess.
+	Make it clear that CONFIGURATION is optional.  
+	De-emphasize CONFIGURATION parameter. Random cleanup.
+	More compatible with standard GNU install instructions.
+	--with-menubars=athena3d ==> --with-menubars=lucid.
+
+1998-01-14  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* fileio.c (Fexpand_file_name): Synched with FSF.
+
+1998-01-13  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* objects-msw.c (mswindows_color_instance_rgb_components):
+	Multiply components by 257 instead of shifting by 8.
+
+1998-01-15  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* elhash.c (Fhashtable_type): New function.
+	(Fhashtable_test_function): Ditto.
+
 1998-01-12  SL Baur  <steve@altair.xemacs.org>
 
 	* profile.c (Fclear_profiling_info): Fix typing error.

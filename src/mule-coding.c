@@ -962,6 +962,7 @@ Return the type of CODING-SYSTEM.
   return Qnil; /* not reached */
 }
 
+static
 Lisp_Object coding_system_charset (Lisp_Object coding_system, int gnum)
 {
   Lisp_Object cs

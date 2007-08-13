@@ -931,9 +931,7 @@ ccl_driver (struct ccl_program *ccl, CONST unsigned char *source, unsigned_char_
 /* Setup fields of the structure pointed by CCL appropriately for the
    execution of compiled CCL code in VEC (vector of integer).  */
 void
-setup_ccl_program (ccl, vec)
-     struct ccl_program *ccl;
-     Lisp_Object vec;
+setup_ccl_program (struct ccl_program *ccl, Lisp_Object vec)
 {
   int i;
 

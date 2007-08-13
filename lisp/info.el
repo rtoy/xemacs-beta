@@ -379,13 +379,14 @@ This variable is ignored unless running under XEmacs."
   "*List of directories to search for Info documents, and `dir' or `localdir' files.
 The value of `Info-default-directory-list' will be initialized to a
 reasonable default by the startup code, and usually doesn't need to be
-changed in your personal configuration, though you may do so if you like.
+changed in your personal configuration, though you may do so if you
+like, and this is where to do that.
 
 The first directory on this list must contain a `dir' file like the one
 supplied with XEmacs, which will be used as the (dir)Top node.
 
-For more information, see the documentation to the variable:
-`Info-directory-list'.")
+For more information, see the documentation to the variables:
+`Info-additional-search-directory-list' and `Info-directory-list'.")
 
 (defcustom Info-additional-search-directory-list nil
   "*List of additional directories to search for Info documentation
@@ -405,10 +406,12 @@ file. An example might be something like:
 	(split-string path path-separator)
       Info-default-directory-list))
   "List of directories to search for Info documentation files.
-Default is to use the environment variable INFOPATH if it exists,
-else to use `Info-default-directory-list'.
-The first directory in this list, the \"dir\" file there will become
-the (dir)Top node of the Info documentation tree.")
+
+The default is to use the environment variable INFOPATH if it exists,
+else to use `Info-default-directory-list'.  The first directory in
+this list, the \"dir\" file there will become the (dir)Top node of the
+Info documentation tree.  If you wish to modify the info search path,
+use `M-x customize-variable, Info-default-directory-list' to do so.")
 
 (defcustom Info-localdir-heading-regexp
     "^Locally installed XEmacs Packages:?"

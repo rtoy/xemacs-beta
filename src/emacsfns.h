@@ -1548,6 +1548,9 @@ void write_c_string (CONST char *s, Lisp_Object printcharfun);
 /* Same goes for this function. */
 void write_string_1 (CONST Bufbyte *s, Bytecount size,
 		     Lisp_Object printcharfun);
+extern void print_cons   (Lisp_Object, Lisp_Object, int);
+extern void print_vector (Lisp_Object, Lisp_Object, int);
+extern void print_string (Lisp_Object, Lisp_Object, int);
 void print_internal (Lisp_Object obj,
 		     Lisp_Object printcharfun,
 		     int escapeflag);

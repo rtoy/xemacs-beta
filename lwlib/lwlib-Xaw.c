@@ -32,10 +32,10 @@ Boston, MA 02111-1307, USA.  */
 #include <X11/CoreP.h>
 #include <X11/Shell.h>
 
-#ifdef SCROLLBARS_ATHENA
+#ifdef LWLIB_SCROLLBARS_ATHENA
 #include <X11/Xaw/Scrollbar.h>
 #endif
-#ifdef DIALOGS_ATHENA
+#ifdef LWLIB_DIALOGS_ATHENA
 #include <X11/Xaw/Dialog.h>
 #include <X11/Xaw/Form.h>
 #include <X11/Xaw/Command.h>
@@ -51,16 +51,16 @@ Boolean
 lw_xaw_widget_p (Widget widget)
 {
   return (0
-#ifdef SCROLLBARS_ATHENA
+#ifdef LWLIB_SCROLLBARS_ATHENA
 	  || XtIsSubclass (widget, scrollbarWidgetClass)
 #endif
-#ifdef DIALOGS_ATHENA
+#ifdef LWLIB_DIALOGS_ATHENA
 	  || XtIsSubclass (widget, dialogWidgetClass)
 #endif
 	  );
 }
 
-#ifdef SCROLLBARS_ATHENA
+#ifdef LWLIB_SCROLLBARS_ATHENA
 static void
 xaw_update_scrollbar (widget_instance *instance, Widget widget,
 		      widget_value *val)
@@ -104,7 +104,7 @@ xaw_update_scrollbar (widget_instance *instance, Widget widget,
 	XawScrollbarSetThumb (widget, new_topOfThumb, new_shown);
     }
 }
-#endif /* SCROLLBARS_ATHENA */
+#endif /* LWLIB_SCROLLBARS_ATHENA */
 
 void
 xaw_update_one_widget (widget_instance *instance, Widget widget,
@@ -112,13 +112,13 @@ xaw_update_one_widget (widget_instance *instance, Widget widget,
 {
   if (0)
     ;
-#ifdef SCROLLBARS_ATHENA
+#ifdef LWLIB_SCROLLBARS_ATHENA
   else if (XtIsSubclass (widget, scrollbarWidgetClass))
     {
       xaw_update_scrollbar (instance, widget, val);
     }
 #endif
-#ifdef DIALOGS_ATHENA
+#ifdef LWLIB_DIALOGS_ATHENA
   else if (XtIsSubclass (widget, dialogWidgetClass))
       {
 	Arg al [1];
@@ -144,7 +144,7 @@ xaw_update_one_widget (widget_instance *instance, Widget widget,
 	  XtSetArg (al [0], XtNborderWidth, 1);
 	  XtSetValues (widget, al, 1);
 	}
-#endif
+#endif /* ! LWLIB_DIALOGS_ATHENA3D */
 
       XtSetArg (al [0], XtNlabel,     val->value);
       XtSetArg (al [1], XtNsensitive, val->enabled);
@@ -155,7 +155,7 @@ xaw_update_one_widget (widget_instance *instance, Widget widget,
       XtRemoveAllCallbacks (widget, XtNcallback);
       XtAddCallback (widget, XtNcallback, xaw_generic_callback, instance);
     }
-#endif
+#endif /* LWLIB_DIALOGS_ATHENA */
 }
 
 void
@@ -170,7 +170,7 @@ xaw_update_one_value (widget_instance *instance, Widget widget,
 void
 xaw_destroy_instance (widget_instance *instance)
 {
-#ifdef DIALOGS_ATHENA
+#ifdef LWLIB_DIALOGS_ATHENA
   if (XtIsSubclass (instance->widget, dialogWidgetClass))
     /* Need to destroy the Shell too. */
     XtDestroyWidget (XtParent (instance->widget));
@@ -193,7 +193,7 @@ xaw_pop_instance (widget_instance *instance, Boolean up)
 
   if (up)
     {
-#ifdef DIALOGS_ATHENA
+#ifdef LWLIB_DIALOGS_ATHENA
       if (XtIsSubclass (widget, dialogWidgetClass))
 	{
 	  /* For dialogs, we need to call XtPopup on the parent instead
@@ -237,12 +237,12 @@ xaw_pop_instance (widget_instance *instance, Boolean up)
 	  XtPopup (shell, XtGrabNonexclusive);
 	}
       else
-#endif /* DIALOGS_ATHENA */
+#endif /* LWLIB_DIALOGS_ATHENA */
 	XtManageChild (widget);
     }
   else
     {
-#ifdef DIALOGS_ATHENA
+#ifdef LWLIB_DIALOGS_ATHENA
       if (XtIsSubclass (widget, dialogWidgetClass))
 	XtUnmanageChild (XtParent (widget));
       else
@@ -252,7 +252,7 @@ xaw_pop_instance (widget_instance *instance, Boolean up)
 }
 
 
-#ifdef DIALOGS_ATHENA
+#ifdef LWLIB_DIALOGS_ATHENA
 /* Dialog boxes */
 
 static char overrideTrans[] =
@@ -430,7 +430,7 @@ xaw_create_dialog (widget_instance* instance)
 
   return widget;
 }
-#endif /* DIALOGS_ATHENA */
+#endif /* LWLIB_DIALOGS_ATHENA */
 
 
 static void
@@ -483,7 +483,7 @@ xaw_generic_callback (Widget widget, XtPointer closure, XtPointer call_data)
     instance->info->selection_cb (widget, id, user_data);
 }
 
-#ifdef DIALOGS_ATHENA
+#ifdef LWLIB_DIALOGS_ATHENA
 
 static XtActionProc
 wm_delete_window (Widget shell, XtPointer closure, XtPointer call_data)
@@ -515,12 +515,12 @@ wm_delete_window (Widget shell, XtPointer closure, XtPointer call_data)
   return NULL;
 }
 
-#endif /* DIALOGS_ATHENA */
+#endif /* LWLIB_DIALOGS_ATHENA */
 
 
 /* Scrollbars */
 
-#ifdef SCROLLBARS_ATHENA
+#ifdef LWLIB_SCROLLBARS_ATHENA
 static void
 xaw_scrollbar_scroll (Widget widget, XtPointer closure, XtPointer call_data)
 {
@@ -612,12 +612,12 @@ xaw_create_horizontal_scrollbar (widget_instance *instance)
 {
   return xaw_create_scrollbar (instance, 0);
 }
-#endif /* SCROLLBARS_ATHENA */
+#endif /* LWLIB_SCROLLBARS_ATHENA */
 
 widget_creation_entry
 xaw_creation_table [] =
 {
-#ifdef SCROLLBARS_ATHENA
+#ifdef LWLIB_SCROLLBARS_ATHENA
   {"vertical-scrollbar",	xaw_create_vertical_scrollbar},
   {"horizontal-scrollbar",	xaw_create_horizontal_scrollbar},
 #endif

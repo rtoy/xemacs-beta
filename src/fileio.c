@@ -686,21 +686,21 @@ so there is no danger of generating a name being used by another process.
 }
 
 DEFUN ("expand-file-name", Fexpand_file_name, 1, 2, 0, /*
-Convert FILENAME to absolute, and canonicalize it.
-Second arg DEFAULT is directory to start with if FILENAME is relative
- (does not start with slash); if DEFAULT is nil or missing,
+Convert filename NAME to absolute, and canonicalize it.
+Second arg DEFAULT-DIRECTORY is directory to start with if NAME is relative
+ (does not start with slash); if DEFAULT-DIRECTORY is nil or missing,
 the current buffer's value of default-directory is used.
-Path components that are `.' are removed, and
-path components followed by `..' are removed, along with the `..' itself;
+File name components that are `.' are removed, and
+so are file name components followed by `..', along with the `..' itself;
 note that these simplifications are done without checking the resulting
-paths in the file system.
+file names in the file system.
 An initial `~/' expands to your home directory.
 An initial `~USER/' expands to USER's home directory.
 See also the function `substitute-in-file-name'.
 */
-       (name, default_))
+       (name, default_directory))
 {
-  /* This function can GC.  GC checked 1997.04.06. */
+  /* This function can GC */
   Bufbyte *nm;
 
   Bufbyte *newdir, *p, *o;
@@ -710,8 +710,8 @@ See also the function `substitute-in-file-name'.
 #ifdef DOS_NT
   int drive = 0;
   int collapse_newdir = 1;
-  int length;
 #endif /* DOS_NT */
+  int length;
   Lisp_Object handler;
 
   CHECK_STRING (name);
@@ -720,38 +720,27 @@ See also the function `substitute-in-file-name'.
      call the corresponding file handler.  */
   handler = Ffind_file_name_handler (name, Qexpand_file_name);
   if (!NILP (handler))
-    return call3_check_string (handler, Qexpand_file_name, name, default_);
+    return call3_check_string (handler, Qexpand_file_name, name,
+			       default_directory);
 
-  /* Use the buffer's default-directory if DEFAULT_ is omitted.  */
-  if (NILP (default_))
-    default_ = current_buffer->directory;
-  if (NILP (default_))		/* this should be a meaningful error */
+  /* Use the buffer's default-directory if DEFAULT_DIRECTORY is omitted.  */
+  if (NILP (default_directory))
+    default_directory = current_buffer->directory;
+  if (! STRINGP (default_directory))
+    default_directory = build_string ("/");
+
+  if (!NILP (default_directory))
     {
-      /* #### If we had a minibuffer-only frame up then current_buffer
-	 is likely to not have a directory setting.  We should
-	 probably redo things to make sure that current_buffer stays
-	 set to something sensible. */
-      if (!preparing_for_armageddon)
-	signal_simple_error ("default-directory is not set",
-			     make_buffer (current_buffer));
-    }
-  else
-    CHECK_STRING (default_);
-
-  if (!NILP (default_))
-    {
-      struct gcpro gcpro1;
-
-      GCPRO1 (default_);	/* might be current_buffer->directory */
-      handler = Ffind_file_name_handler (default_, Qexpand_file_name);
-      UNGCPRO;
+      handler = Ffind_file_name_handler (default_directory, Qexpand_file_name);
       if (!NILP (handler))
-	return call3 (handler, Qexpand_file_name, name, default_);
+	return call3 (handler, Qexpand_file_name, name, default_directory);
     }
 
-  /* Make sure DEFAULT_ is properly expanded.
+  o = XSTRING_DATA (default_directory);
+
+  /* Make sure DEFAULT_DIRECTORY is properly expanded.
      It would be better to do this down below where we actually use
-     default_.  Unfortunately, calling Fexpand_file_name recursively
+     default_directory.  Unfortunately, calling Fexpand_file_name recursively
      could invoke GC, and the strings might be relocated.  This would
      be annoying because we have pointers into strings lying around
      that would need adjusting, and people would add new pointers to
@@ -759,34 +748,28 @@ See also the function `substitute-in-file-name'.
      Putting this call here avoids all that crud.
 
      The EQ test avoids infinite recursion.  */
-  if (! NILP(default_) && !EQ (default_, name)
+  if (! NILP (default_directory) && !EQ (default_directory, name)
       /* Save time in some common cases - as long as default_directory
 	 is not relative, it can be canonicalized with name below (if it
 	 is needed at all) without requiring it to be expanded now.  */
-      && ! (XSTRING_LENGTH (default_) >= 3
 #ifdef DOS_NT
-	    /* Detect MSDOS file names with drive specifiers. */
-	    && (IS_DRIVE (XSTRING_BYTE (default_, 0))
-		&& (IS_DEVICE_SEP (XSTRING_BYTE (default_, 1))
-		    && IS_DIRECTORY_SEP (XSTRING_BYTE (default_, 2))))
+      /* Detect MSDOS file names with drive specifiers.  */
+      && ! (IS_DRIVE (o[0]) && (IS_DEVICE_SEP (o[1]) && IS_DIRECTORY_SEP (o[2])))
 #ifdef WINDOWSNT
-	    /* Detect Windows file names in UNC format.  */
-	    && ! (XSTRING_LENGTH (default_) >= 2
-		  && IS_DIRECTORY_SEP (XSTRING_BYTE (default_, 0))
-		  && IS_DIRECTORY_SEP (XSTRING_BYTE (default_, 1)))
+      /* Detect Windows file names in UNC format.  */
+      && ! (IS_DIRECTORY_SEP (o[0]) && IS_DIRECTORY_SEP (o[1]))
 #endif
 #else /* not DOS_NT */
-	    /* Detect Unix absolute file names (/... alone is not absolute on
-	       DOS or Windows).  */
-	    && (IS_DIRECTORY_SEP (XSTRING_BYTE (default_, 0))
-		|| IS_DEVICE_SEP (XSTRING_BYTE (default_, 1)))
+      /* Detect Unix absolute file names (/... alone is not absolute on
+	 DOS or Windows).  */
+      && ! (IS_DIRECTORY_SEP (o[0]))
 #endif /* not DOS_NT */
-	    ))
+      )
     {
       struct gcpro gcpro1;
 
-      GCPRO1 (default_);	/* may be current_buffer->directory */
-      default_ = Fexpand_file_name (default_, Qnil);
+      GCPRO1 (name);
+      default_directory = Fexpand_file_name (default_directory, Qnil);
       UNGCPRO;
     }
 
@@ -794,8 +777,8 @@ See also the function `substitute-in-file-name'.
   name = FILE_SYSTEM_CASE (name);
 #endif
 
-  /* #### dmoore - this is ugly, clean this up.  Looks like nm
-     pointing into name should be safe during all of this, though. */
+ /* #### dmoore - this is ugly, clean this up.  Looks like nm pointing
+    into name should be safe during all of this, though. */
   nm = XSTRING_DATA (name);
 
 #ifdef DOS_NT
@@ -807,13 +790,14 @@ See also the function `substitute-in-file-name'.
      even if the rest of the name appears to be relative. */
   {
     Bufbyte *colon = strrchr (nm, ':');
+
     if (colon)
       /* Only recognize colon as part of drive specifier if there is a
 	 single alphabetic character preceeding the colon (and if the
 	 character before the drive letter, if present, is a directory
 	 separator); this is to support the remote system syntax used by
 	 ange-ftp, and the "po:username" syntax for POP mailboxes. */
-      look_again:
+    look_again:
       if (nm == colon)
 	nm++;
       else if (IS_DRIVE (colon[-1])
@@ -839,36 +823,6 @@ See also the function `substitute-in-file-name'.
 #endif /* WINDOWSNT */
 #endif /* DOS_NT */
 
-  /* We *don't* want to handle // and /~ that way.  */
-#if 0
-  /* Handle // and /~ in middle of file name
-     by discarding everything through the first / of that sequence.  */
-  p = nm;
-  while (*p)
-    {
-      /* Since we know the path is absolute, we can assume that each
-	 element starts with a "/".  */
-
-      /* "//" anywhere isn't necessarily hairy; we just start afresh
-	 with the second slash.  */
-      if (IS_DIRECTORY_SEP (p[0]) && IS_DIRECTORY_SEP (p[1])
-#if defined (APOLLO) || defined (WINDOWSNT)
-	  /* // at start of filename is meaningful on Apollo
-	     and WindowsNT systems */
-	  && nm != p
-#endif /* APOLLO || WINDOWSNT */
-	  )
-	nm = p + 1;
-
-      /* "~" is hairy as the start of any path element.  */
-      if (IS_DIRECTORY_SEP (p[0]) && p[1] == '~')
-	nm = p + 1;
-
-      p++;
-    }
-
-#endif /* 0 */
-
 #ifdef WINDOWSNT
   /* Discard any previous drive specifier if nm is now in UNC format. */
   if (IS_DIRECTORY_SEP (nm[0]) && IS_DIRECTORY_SEP (nm[1]))
@@ -880,7 +834,11 @@ See also the function `substitute-in-file-name'.
   /* If nm is absolute, look for /./ or /../ sequences; if none are
      found, we can probably return right away.  We will avoid allocating
      a new string if name is already fully expanded.  */
-  if (IS_DIRECTORY_SEP (nm[0])
+  if (
+      IS_DIRECTORY_SEP (nm[0])
+#ifdef MSDOS
+      && drive
+#endif
 #ifdef WINDOWSNT
       && (drive || IS_DIRECTORY_SEP (nm[1]))
 #endif
@@ -897,7 +855,7 @@ See also the function `substitute-in-file-name'.
       p = nm;
       while (*p)
 	{
-	  /* Since we know the path is absolute, we can assume that each
+	  /* Since we know the name is absolute, we can assume that each
 	     element starts with a "/".  */
 
 	  /* "." and ".." are hairy.  */
@@ -925,20 +883,19 @@ See also the function `substitute-in-file-name'.
 	    }
 	  else
 #endif
-	    /* drive must be set, so this is okay */
-	    if (strcmp (nm - 2, XSTRING_DATA (name)) != 0)
-	      {
-		name = make_string (nm - 2, p - nm + 2);
-		XSTRING_DATA (name)[0] = DRIVE_LETTER (drive);
-		XSTRING_DATA (name)[1] = ':';
-	      }
+	  /* drive must be set, so this is okay */
+	  if (strcmp (nm - 2, XSTRING_DATA (name)) != 0)
+	    {
+	      name = make_string (nm - 2, p - nm + 2);
+	      XSTRING_DATA (name)[0] = DRIVE_LETTER (drive);
+	      XSTRING_DATA (name)[1] = ':';
+	    }
 	  return name;
 #else /* not DOS_NT */
-	  /* Unix */
 	  if (nm == XSTRING_DATA (name))
 	    return name;
-	  return build_string ((char *) nm);
-#endif /* DOS_NT */
+	  return build_string (nm);
+#endif /* not DOS_NT */
 	}
     }
 
@@ -948,10 +905,10 @@ See also the function `substitute-in-file-name'.
      and /foo/../ sequences.
 
      We set newdir to be the appropriate prefix if one is needed:
-	- the relevant user directory if nm starts with ~ or ~user
-	- the specified drive's working dir (DOS/NT only) if nm does not
-	  start with /
-	- the value of default_directory.
+       - the relevant user directory if nm starts with ~ or ~user
+       - the specified drive's working dir (DOS/NT only) if nm does not
+         start with /
+       - the value of default_directory.
 
      Note that these prefixes are not guaranteed to be absolute (except
      for the working dir of a drive).  Therefore, to ensure we always
@@ -963,26 +920,14 @@ See also the function `substitute-in-file-name'.
   if (nm[0] == '~')		/* prefix ~ */
     {
       if (IS_DIRECTORY_SEP (nm[1])
-	  || nm[1] == 0)		/* ~ by itself */
+	  || nm[1] == 0)	/* ~ by itself */
 	{
 	  if (!(newdir = (Bufbyte *) egetenv ("HOME")))
 	    newdir = (Bufbyte *) "";
-/* Syncing with FSF 19.34.6 note: this is not in FSF.  Since it is dated 1995,
-   I doubt it is coming from XEmacs.  I (#if 0) it but let the code
-   stay there just in case. --marcpa */
-#if 0
-#ifdef DOS_NT
- 	  /* Problem when expanding "~\" if HOME is not on current drive.
- 	     Ulrich Leodolter, Wed Jan 11 10:20:35 1995 */
- 	  if (newdir[1] == ':')
- 	    drive = newdir[0];
-	  dostounix_filename (newdir);
-#endif /* DOS_NT */
-#endif /* 0 */
 	  nm++;
 #ifdef DOS_NT
 	  collapse_newdir = 0;
-#endif /* DOS_NT */
+#endif
 	}
       else			/* ~user/filename */
 	{
@@ -991,19 +936,19 @@ See also the function `substitute-in-file-name'.
 	  memcpy (o, (char *) nm, p - nm);
 	  o [p - nm] = 0;
 
-/* Syncing with FSF 19.34.6 note: FSF uses getpwnam even on NT, which does
-   not work.  The following works only if ~USER names the user who runs
-   this instance of XEmacs.  While NT is single-user (for the moment) you
-   still can have multiple user profiles users defined, each with its
-   HOME.  Therefore, the following should be reworked to handle this case.  
-   --marcpa */
+	  /* #### marcpa's syncing note: FSF uses getpwnam even on NT,
+	     which does not work.  The following works only if ~USER
+	     names the user who runs this instance of XEmacs.  While
+	     NT is single-user (for the moment) you still can have
+	     multiple user profiles users defined, each with its HOME.
+	     Therefore, the following should be reworked to handle
+	     this case.  */
 #ifdef  WINDOWSNT
-	  /*
-	  ** Now if the file given is "~foo/file" and HOME="c:/", then we
-	  ** want the file to be named "c:/file" ("~foo" becomes "c:/").
-	  ** The variable o has "~foo", so we can use the length of
-	  ** that string to offset nm.  August Hill, 31 Aug 1998.
-	  */
+	  /* Now if the file given is "~foo/file" and HOME="c:/", then
+	     we want the file to be named "c:/file" ("~foo" becomes
+	     "c:/").  The variable o has "~foo", so we can use the
+	     length of that string to offset nm.  August Hill, 31 Aug
+	     1998.  */
 	  newdir = (Bufbyte *) egetenv ("HOME");
 	  dostounix_filename (newdir);
 	  nm += strlen(o) + 1;
@@ -1051,17 +996,18 @@ See also the function `substitute-in-file-name'.
 
   /* Finally, if no prefix has been specified and nm is not absolute,
      then it must be expanded relative to default_directory. */
+
   if (1
 #ifndef DOS_NT
-      && !IS_ANY_SEP (nm[0])
-#endif /* not DOS_NT */
+      /* /... alone is not absolute on DOS and Windows. */
+      && !IS_DIRECTORY_SEP (nm[0])
+#endif
 #ifdef WINDOWSNT
       && !(IS_DIRECTORY_SEP (nm[0]) && IS_DIRECTORY_SEP (nm[1]))
 #endif
-      && !newdir
-      && STRINGP (default_))
+      && !newdir)
     {
-      newdir = XSTRING_DATA (default_);
+      newdir = XSTRING_DATA (default_directory);
     }
 
 #ifdef DOS_NT
@@ -1133,16 +1079,13 @@ See also the function `substitute-in-file-name'.
 	}
     }
 #endif /* DOS_NT */
-  if (newdir != 0)
+
+  if (newdir)
     {
       /* Get rid of any slash at the end of newdir, unless newdir is
 	 just // (an incomplete UNC name).  */
-      int length = strlen ((char *) newdir);
-      /* Adding `length > 1 &&' makes ~ expand into / when homedir
-	 is the root dir.  People disagree about whether that is right.
-	 Anyway, we can't take the risk of this change now.  */
-      /* Syncing with FSF 19.34.6 note: FSF does the above. */
-      if (IS_DIRECTORY_SEP (newdir[length - 1])
+      length = strlen (newdir);
+      if (length > 0 && IS_DIRECTORY_SEP (newdir[length - 1])
 #ifdef WINDOWSNT
 	  && !(length == 2 && IS_DIRECTORY_SEP (newdir[0]))
 #endif
@@ -1159,7 +1102,7 @@ See also the function `substitute-in-file-name'.
     tlen = 0;
 
   /* Now concatenate the directory and name to new space in the stack frame */
-  tlen += strlen ((char *) nm) + 1;
+  tlen += strlen (nm) + 1;
 #ifdef DOS_NT
   /* Add reserved space for drive name.  (The Microsoft x86 compiler
      produces incorrect code if the following two lines are combined.)  */
@@ -1167,18 +1110,20 @@ See also the function `substitute-in-file-name'.
   target += 2;
 #else  /* not DOS_NT */
   target = (Bufbyte *) alloca (tlen);
-#endif /* DOS_NT */
+#endif /* not DOS_NT */
   *target = 0;
 
   if (newdir)
     {
       if (nm[0] == 0 || IS_DIRECTORY_SEP (nm[0]))
-	strcpy ((char *) target, (char *) newdir);
+	strcpy (target, newdir);
       else
-      file_name_as_directory ((char *) target, (char *) newdir);
+	file_name_as_directory (target, newdir);
     }
 
-  strcat ((char *) target, (char *) nm);
+  strcat (target, nm);
+
+  /* ASSERT (IS_DIRECTORY_SEP (target[0])) if not VMS */
 
   /* Now canonicalize by removing /. and /foo/.. if they appear.  */
 
@@ -1191,19 +1136,8 @@ See also the function `substitute-in-file-name'.
 	{
 	  *o++ = *p++;
 	}
-      else if (IS_DIRECTORY_SEP (p[0]) && IS_DIRECTORY_SEP (p[1])
-#if defined (APOLLO) || defined (WINDOWSNT)
-	       /* // at start of filename is meaningful in Apollo
-		  and WindowsNT systems */
-	       && o != target
-#endif /* APOLLO || WINDOWSNT */
-	       )
-	{
-	  o = target;
-	  p++;
-	}
       else if (IS_DIRECTORY_SEP (p[0])
-               && p[1] == '.'
+	       && p[1] == '.'
 	       && (IS_DIRECTORY_SEP (p[2])
 		   || p[2] == 0))
 	{
@@ -1220,11 +1154,8 @@ See also the function `substitute-in-file-name'.
 	{
 	  while (o != target && (--o) && !IS_DIRECTORY_SEP (*o))
 	    ;
-	  if (o == target && IS_ANY_SEP (*o)
-#ifdef DOS_NT
-	      && p[3] == 0
-#endif
-	      )
+	  /* Keep initial / only if this is the whole name.  */
+	  if (o == target && IS_ANY_SEP (*o) && p[3] == 0)
 	    ++o;
 	  p += 3;
 	}

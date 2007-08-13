@@ -63,7 +63,7 @@ Lisp_Object make_lisp_hashtable (int size,
 				 enum hashtable_type type,
 				 enum hashtable_test_fun test_fun);
 
-void elisp_maphash (void (*fn) (CONST void *key, void *contents,
+void elisp_maphash (int (*fn) (CONST void *key, void *contents,
 				void *extra_arg),
 		    Lisp_Object table,
 		    void *extra_arg);

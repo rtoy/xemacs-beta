@@ -39,40 +39,39 @@
 
 ### Code:
 
-XEMACS=$1
-LISP_FILE=$2
-DEST_DIR=$3
+XEMACS="$1"
+LISP_FILE="$2"
+DEST_DIR="$3"
 
 # Test for valid XEmacs executable and valid input file
-if [ \( ! -f ${LISP_FILE} \) -o \( ! -x ${XEMACS} \) ]; then
+if [ ! -f "${LISP_FILE}" -o ! -x "${XEMACS}" ]; then
 	exit 1
 fi
 
 # Test for destination directory, creating if necessary
-if [ ! -d ${DEST_DIR} ]; then
-	mkdir ${DEST_DIR}
-fi
+test -d "${DEST_DIR}" || mkdir "${DEST_DIR}"
+test -d "${DEST_DIR}" || exit 1;
 
-cp ${LISP_FILE} ${DEST_DIR}
-${XEMACS} -batch -q -no-site-file -f batch-byte-compile \
-		${DEST_DIR}/`basename ${LISP_FILE}`
+cp -p "${LISP_FILE}" "${DEST_DIR}" || exit 1;
+"${XEMACS}" -batch -no-site-file -f batch-byte-compile \
+		"${DEST_DIR}/"`basename ${LISP_FILE}`
 
 # recompute autoloads ...
-${XEMACS} -batch -q -no-site-file -l autoload \
-		-f batch-update-directory ${DEST_DIR}
+"${XEMACS}" -batch -no-site-file -l autoload \
+		-f batch-update-directory "${DEST_DIR}"
 # and bytecompile if one was created
-if [ -f ${DEST_DIR}/auto-autoloads.el ]; then
-	${XEMACS} -batch -q -no-site-file -f batch-byte-compile \
-		${DEST_DIR}/auto-autoloads.el
+if [ -f "${DEST_DIR}/auto-autoloads.el" ]; then
+	"${XEMACS}" -batch -no-site-file -f batch-byte-compile \
+		"${DEST_DIR}"/auto-autoloads.el
 fi
 
 # recompute custom-loads
-${XEMACS} -batch -q -no-site-file -l cus-dep \
-		-f Custom-make-dependencies ${DEST_DIR}
+"${XEMACS}" -batch -no-site-file -l cus-dep \
+		-f Custom-make-dependencies "${DEST_DIR}"
 # and bytecompile if one was created
-if [ -f ${DEST_DIR}/custom-load.el ]; then
-	${XEMACS} -batch -q -no-site-file -f batch-byte-compile \
-		${DEST_DIR}/custom-load.el
+if [ -f "${DEST_DIR}/custom-load.el" ]; then
+	"${XEMACS}" -batch -no-site-file -f batch-byte-compile \
+		"${DEST_DIR}"/custom-load.el
 fi
 
 exit 0

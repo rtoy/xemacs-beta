@@ -1,7 +1,6 @@
-Usage: configure CONFIGURATION [[--OPTION[=VALUE] ...]]
+Usage: configure [--OPTION[=VALUE] ...] [CONFIGURATION]
 
 Set compilation and installation parameters for XEmacs, and report.
-CONFIGURATION specifies the machine and operating system to build for.
 
 Note that for most of the following options, you can explicitly enable
 them using `--OPTION=yes' and explicitly disable them using `--OPTION=no'.
@@ -32,8 +31,8 @@ Compilation options:
 --cflags=FLAGS		Compiler flags. Overrides environment variable CFLAGS.
 --site-includes=PATH	List of directories to search first for header files.
 --site-libraries=PATH	List of directories to search first for libraries.
---site-prefixes=PATH    List of directories to search for include/ and lib/ 
-                        subdirectories, just after 'site-includes' and 
+--site-prefixes=PATH    List of directories to search for include/ and lib/
+                        subdirectories, just after 'site-includes' and
                         'site-libraries'.
 --site-runtime-libraries=PATH
 			List of ALL directories to search for dynamically
@@ -211,14 +210,13 @@ we advise not changing them.
 If successful, configure leaves its status in config.status.  If
 unsuccessful after disturbing the status quo, it removes config.status.
 
-The configure build process also used the following environment variables:
+The configure build process also uses the following environment variables:
+
 CC        C compiler to use (but configure flags take precedence)
 CPP       C preprocessor to use (such as /usr/ccs/lib/cpp or cc -E)
 CFLAGS    C compiler compilation flags (such as -O)
-CPPFLAGS  Additional compilation flags (such as -I/foo) used only by the preprocessor
+CPPFLAGS  Compilation flags (such as -I/foo) used only by the preprocessor
 LDFLAGS   Additional linker flags (such as -L/foo)
 LIBS      Additional libraries (such as -lfoo)
-
-INFOPATH  Path to search for Info documentation.
 
 For more details on the install process, consult the INSTALL file.

@@ -1,3 +1,68 @@
+1998-01-18  SL Baur  <steve@altair.xemacs.org>
+
+	* about.el: Add xemacs.org email manager.
+
+	* package-get-base.el (package-get-base): Updated with most recent 
+	package updates.
+
+1998-01-14  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* help.el (function-arglist): Use `indirect-function' instead of
+	`symbol-function' so that aliases are treated correctly.
+
+1998-01-13  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* help.el (help-map): Add f1 binding to `help-for-help'.
+	Suggested by Karl M. Hegbloom <karlheg@inetarena.com>.
+	(describe-key-briefly): Use `princ' "%s" to print object.
+	(with-displaying-help-buffer): Kill buffer if it exists, again.
+	(describe-key): Use `princ' "%s" to print object.
+	(describe-function-1): Use `princ' "%s" to print object.
+	Commented out alias lines removed.
+	(help-pretty-print-limit): New variable to control pretty-printing 
+	of variable values.
+	(help-maybe-pretty-print-value): Steve wins!  Renamed back from
+	`help-pretty-print-value' again.  Only print-print when OBJECT is
+	list of length less than `help-pretty-print-limit'.
+	(describe-variable): Use `help-maybe-pretty-print-value' again.
+
+1998-01-18  SL Baur  <steve@altair.xemacs.org>
+
+	* simple.el (blink-matching-open): Remove C++ kludge.
+	Suggested by Bob Weiner <weiner@wave.altrasoft.com>
+
+1998-01-14  Karl M. Hegbloom  <karlheg@bittersweet.inetarena.com>
+
+	* info.el (Info-default-directory-list): Made the documentation
+	more explanitory.
+
+1998-01-13  Martin Buchholz  <martin@xemacs.org>
+
+	* lisp/packages.el: 
+	* lisp/package-admin.el: 
+	* lisp/build-report.el: 
+	Fix typos.
+
+1998-01-14  Christoph Wedler  <wedler@fmi.uni-passau.de>
+
+	* Patches/font-lock.el (java-font-lock-keywords-*): Would produce
+	warnings in Java buffers without final newline and editing the
+	last line.
+
+1998-01-17  SL Baur  <steve@altair.xemacs.org>
+
+	* packages.el (packages-find-packages-1): Don't allow a backwards
+	compatible lisp tree to overwrite `preloaded-file-list'.
+	Suggested by Colin Rafferty  <colin@xemacs.org>
+
+	* mouse.el (mouse-offix-drop): Set undo-boundary.
+	From Oliver Graf <ograf@fga.de>
+
+1998-01-13  SL Baur  <steve@altair.xemacs.org>
+
+	* loadup.el (load-gc): rewrite as defun.
+	Print something sensical if a required dump-time file isn't found.
+
 1998-01-12  SL Baur  <steve@altair.xemacs.org>
 
 	* menubar.el (check-menu-syntax): Emergency dirty fix -- the 0 plist

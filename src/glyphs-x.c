@@ -1918,7 +1918,7 @@ imagick_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     int i,j,x,b;
     unsigned int bytes_per_pixel, scanline_pad;
     unsigned long pixval;
-    unsigned char *q, pixar[3];
+    unsigned char *q, *pixar;
     RunlengthPacket *p;
 
     q = (unsigned char *) unwind.ximage->data;
@@ -1929,6 +1929,8 @@ imagick_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
     /* Convert to multi-byte color-mapped X image. */
     bytes_per_pixel=unwind.ximage->bits_per_pixel >> 3;
+
+    pixar = (unsigned char *) alloca (bytes_per_pixel);
 
     for (i=0; i < unwind.image->packets; i++) {
       if (unwind.image->class == PseudoClass) 

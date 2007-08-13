@@ -24,77 +24,9 @@ Boston, MA 02111-1307, USA.  */
 #define _LWLIB_CONFIG_H_
 
 #include <../src/config.h>
-#if 0
-/* alloca twiddling belongs in one place, not the s&m headers
-   AIX requires this to be the first thing in the file.  */
-#undef HAVE_ALLOCA_H
-
-#ifndef NOT_C_CODE
-
-#ifdef __GNUC__
-#undef  alloca
-#define alloca __builtin_alloca
-#elif defined(_AIX)
-#pragma alloca
-#elif HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
-
-#endif /* C code */
-
-#undef HAVE_UNISTD_H
-#undef HAVE_LIMITS_H
-#undef STDC_HEADERS
-#undef CONST_IS_LOSING
-
-#ifndef NeedFunctionPrototypes
-#define NeedFunctionPrototypes 1
-#endif
-
-#ifndef FUNCPROTO
-#define FUNCPROTO 15
-#endif
-
-/* Required for most XFree86 systems */
-#undef NARROWPROTO
-#endif
-/* widget feature definitions */
-#undef LWLIB_MENUBARS_LUCID
-#undef LWLIB_MENUBARS_MOTIF
-
-#if   defined (LWLIB_MENUBARS_LUCID)
-#define MENUBARS_LUCID
-#elif defined (LWLIB_MENUBARS_MOTIF)
-#define MENUBARS_MOTIF
-#endif
-
-#undef LWLIB_SCROLLBARS_LUCID
-#undef LWLIB_SCROLLBARS_MOTIF
-#undef LWLIB_SCROLLBARS_ATHENA
-
-#if   defined (LWLIB_SCROLLBARS_LUCID)
-#define SCROLLBARS_LUCID
-#elif defined(LWLIB_SCROLLBARS_MOTIF)
-#define SCROLLBARS_MOTIF
-#elif defined (LWLIB_SCROLLBARS_ATHENA)
-#define SCROLLBARS_ATHENA
-#endif
-
-#undef LWLIB_DIALOGS_MOTIF
-#undef LWLIB_DIALOGS_ATHENA
-
-#if   defined (LWLIB_DIALOGS_MOTIF)
-#define DIALOGS_MOTIF
-#elif defined (LWLIB_DIALOGS_ATHENA)
-#define DIALOGS_ATHENA
-#endif
 
 #undef NEED_MOTIF
 #undef NEED_ATHENA
-#undef USE_XFONTSET
-
-#if defined (LWLIB_MENUBARS_LUCID) || defined (LWLIB_SCROLLBARS_LUCID)
-#define NEED_LUCID
-#endif
+#undef NEED_LUCID
 
 #endif /* _LWLIB_CONFIG_H_ */

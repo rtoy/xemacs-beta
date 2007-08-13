@@ -1,6 +1,2 @@
 #!
 pthread_yield
-gethostbyname_r
-getservbyname_r
-getpwnam_r
-getpwuid_r

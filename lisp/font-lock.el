@@ -2317,12 +2317,10 @@ The name is assumed to begin with a capital letter.")
 	       '(2 font-lock-reference-face)
 	       (list (concat
 		      "\\=\\.\\(" java-font-lock-identifier-regexp "\\)")
-		     nil nil '(1 (let ((c (char-after (match-end 0))))
-				   (if (and (characterp c)
-					    (= c ?.))
-				       'font-lock-reference-face
-				     'font-lock-type-face)))))
-
+		     nil nil '(1 (if (equal (char-after (match-end 0)) ?.)
+				     'font-lock-reference-face
+				   'font-lock-type-face))))
+	 
 	 ;; Constructors:
 	 (list (concat
 		"^\\s *\\(" java-modifier-regexp "\\s +\\)*"
@@ -2369,22 +2367,22 @@ The name is assumed to begin with a capital letter.")
 	  ;; Keywords followed by a type:
 	  (list (concat "\\<\\(extends\\|instanceof\\|new\\)\\>\\s *"
 			java-font-lock-identifier-regexp)
-		'(2 (if (= (char-after (match-end 0)) ?.)
+		'(2 (if (equal (char-after (match-end 0)) ?.)
 			'font-lock-reference-face 'font-lock-type-face))
 		(list (concat "\\=\\." java-font-lock-identifier-regexp)
 		      '(goto-char (match-end 0)) nil
-		      '(1 (if (= (char-after (match-end 0)) ?.)
+		      '(1 (if (equal (char-after (match-end 0)) ?.)
 			      'font-lock-reference-face 'font-lock-type-face))))
 
 	  ;; Keywords followed by a type list:
 	  (list (concat "\\<\\(implements\\|throws\\)\\>\\ s*"
 			java-font-lock-identifier-regexp)
-		'(2 (if (= (char-after (match-end 0)) ?.)
+		'(2 (if (equal (char-after (match-end 0)) ?.)
 			font-lock-reference-face font-lock-type-face))
 		(list (concat "\\=\\(\\.\\|\\s *\\(,\\)\\s *\\)"
 			      java-font-lock-identifier-regexp)
 		      '(goto-char (match-end 0)) nil
-		      '(3 (if (= (char-after (match-end 0)) ?.)
+		      '(3 (if (equal (char-after (match-end 0)) ?.)
 			      font-lock-reference-face font-lock-type-face))))
 
 	  ;; primitive types, can't be confused with anything else.
@@ -2460,11 +2458,11 @@ The name is assumed to begin with a capital letter.")
 	  ;; Doc tag - Exception types
 	  (list (concat "@exception\\ s*"
 			java-font-lock-identifier-regexp)
-		'(1 (if (= (char-after (match-end 0)) ?.)
+		'(1 (if (equal (char-after (match-end 0)) ?.)
 			font-lock-reference-face font-lock-type-face) t)
 		(list (concat "\\=\\." java-font-lock-identifier-regexp)
 		      '(goto-char (match-end 0)) nil
-		      '(1 (if (= (char-after (match-end 0)) ?.)
+		      '(1 (if (equal (char-after (match-end 0)) ?.)
 			      'font-lock-reference-face 'font-lock-type-face) t)))
 
 	  ;; Doc tag - Cross-references, usually to methods 

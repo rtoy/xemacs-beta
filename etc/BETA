@@ -38,12 +38,12 @@ Mailing List manager Steve Baur <steve@xemacs.org>.
 ** Beta Release Schedule
 ========================
 
-The URL ftp://ftp.xemacs.org/pub/beta/README always contains the best
-estimate of when the next beta XEmacs will be released.  For weekend
-betas the release time is generally in the vicinity of 2PM to 5PM US
-Pacific Time (Universal Time minus 8 hours).  For weekday betas, the
-release time is generally in the vicinity of 8PM to Midnight US
-Pacific Time on the listed day.
+The URL ftp://ftp.xemacs.org/pub/xemacs/beta/README always contains
+the best estimate of when the next beta XEmacs will be released.  For
+weekend betas the release time is generally in the vicinity of 2PM to
+5PM US Pacific Time (Universal Time minus 8 hours).  For weekday
+betas, the release time is generally in the vicinity of 8PM to
+Midnight US Pacific Time on the listed day.
 
 Betas are nominally a week apart, scheduled on every Saturday.
 Midweek releases are made when a serious enough problem warrants it.
@@ -267,7 +267,7 @@ A `find . -type d -print' in my top-level package directory reveals:
 
 
 AUCTeX and Gnus have package tarballs in
-	ftp://ftp.xemacs.org/pub/beta/xemacs-20.4/packages/
+	ftp://ftp.xemacs.org/pub/xemacs/beta/xemacs-20.5/packages/
 that you can simply untar in a package directory to install.
 
 Karl Hegbloom has a set of packages in

@@ -23,9 +23,7 @@ Boston, MA 02111-1307, USA.  */
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#ifdef HAVE_LIMITS_H
 #include <limits.h>
-#endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -63,7 +61,7 @@ Boston, MA 02111-1307, USA.  */
 #include <Xm/DialogS.h>
 #include <Xm/Form.h>
 
-#ifdef MENUBARS_MOTIF
+#ifdef LWLIB_MENUBARS_MOTIF
 static void xm_pull_down_callback (Widget, XtPointer, XtPointer);
 #if 0
 static void xm_pop_down_callback (Widget, XtPointer, XtPointer);
@@ -72,14 +70,14 @@ static void xm_pop_down_callback (Widget, XtPointer, XtPointer);
 static void xm_internal_update_other_instances (Widget, XtPointer,
 						XtPointer);
 static void xm_generic_callback (Widget, XtPointer, XtPointer);
-#ifdef DIALOGS_MOTIF
+#ifdef LWLIB_DIALOGS_MOTIF
 static void xm_nosel_callback (Widget, XtPointer, XtPointer);
 #endif
-#ifdef SCROLLBARS_MOTIF
+#ifdef LWLIB_SCROLLBARS_MOTIF
 static void xm_scrollbar_callback (Widget, XtPointer, XtPointer);
 #endif
 
-#ifdef MENUBARS_MOTIF
+#ifdef LWLIB_MENUBARS_MOTIF
 static void
 xm_update_menu (widget_instance* instance, Widget widget, widget_value* val,
 		Boolean deep_p);
@@ -146,7 +144,7 @@ Boolean
 lw_motif_widget_p (Widget widget)
 {
   return 
-#ifdef DIALOGS_MOTIF
+#ifdef LWLIB_DIALOGS_MOTIF
     XtClass (widget) == xmDialogShellWidgetClass ||
 #endif
       XmIsPrimitive (widget) || XmIsManager (widget) || XmIsGadget (widget);
@@ -171,7 +169,7 @@ resource_string (Widget widget, char *name)
   return result;
 }
 
-#ifdef MENUBARS_MOTIF
+#ifdef LWLIB_MENUBARS_MOTIF
 
 static void
 destroy_all_children (Widget widget)
@@ -198,11 +196,11 @@ destroy_all_children (Widget widget)
     }
 }
 
-#endif /* MENUBARS_MOTIF */
+#endif /* LWLIB_MENUBARS_MOTIF */
 
 
 
-#ifdef DIALOGS_MOTIF
+#ifdef LWLIB_DIALOGS_MOTIF
 
 static Boolean
 is_in_dialog_box (Widget w)
@@ -219,9 +217,9 @@ is_in_dialog_box (Widget w)
     return False;
 }
 
-#endif /* DIALOGS_MOTIF */
+#endif /* LWLIB_DIALOGS_MOTIF */
 
-#if defined (DIALOGS_MOTIF) || defined (MENUBARS_MOTIF)
+#if defined (LWLIB_DIALOGS_MOTIF) || defined (LWLIB_MENUBARS_MOTIF)
 
 /* update the label of anything subclass of a label */
 static void
@@ -236,7 +234,7 @@ xm_update_label (widget_instance* instance, Widget widget, widget_value* val)
 
   if (val->value)
     {
-#ifdef DIALOGS_MOTIF
+#ifdef LWLIB_DIALOGS_MOTIF
       /*
        * Sigh.  The main text of a label is the name field for menubar
        * entries.  The value field is a possible additional field to be
@@ -256,7 +254,7 @@ xm_update_label (widget_instance* instance, Widget widget, widget_value* val)
 	    XmStringCreateLtoR (value_name, XmSTRING_DEFAULT_CHARSET);
 	}
       else
-#endif /* DIALOGS_MOTIF */
+#endif /* LWLIB_DIALOGS_MOTIF */
 	{
 	  char *value_name = NULL;
 	  char *res_name = NULL;
@@ -305,7 +303,7 @@ xm_update_label (widget_instance* instance, Widget widget, widget_value* val)
     XmStringFree (name_string);
 }
 
-#endif /* defined (DIALOGS_MOTIF) || defined (MENUBARS_MOTIF) */
+#endif /* defined (LWLIB_DIALOGS_MOTIF) || defined (LWLIB_MENUBARS_MOTIF) */
 
 /* update of list */
 static void
@@ -340,7 +338,7 @@ xm_update_pushbutton (widget_instance* instance, Widget widget,
   XtAddCallback (widget, XmNactivateCallback, xm_generic_callback, instance);
 }
 
-#ifdef MENUBARS_MOTIF
+#ifdef LWLIB_MENUBARS_MOTIF
 
 static void
 xm_update_cascadebutton (widget_instance* instance, Widget widget,
@@ -368,7 +366,7 @@ xm_update_cascadebutton (widget_instance* instance, Widget widget,
     }      
 }
 
-#endif /* MENUBARS_MOTIF */
+#endif /* LWLIB_MENUBARS_MOTIF */
 
 /* update toggle and radiobox */
 static void
@@ -425,7 +423,7 @@ xm_update_radiobox (widget_instance* instance, Widget widget,
     }
 }
 
-#ifdef MENUBARS_MOTIF
+#ifdef LWLIB_MENUBARS_MOTIF
 
 /* update a popup menu, pulldown menu or a menubar */
 static void
@@ -657,10 +655,10 @@ xm_update_menu (widget_instance* instance, Widget widget, widget_value* val,
     }
 }
 
-#endif /* MENUBARS_MOTIF */
+#endif /* LWLIB_MENUBARS_MOTIF */
 
 
-#ifdef DIALOGS_MOTIF
+#ifdef LWLIB_DIALOGS_MOTIF
 
 /* update text widgets */
 
@@ -687,9 +685,9 @@ xm_update_text_field (widget_instance* instance, Widget widget,
 		 xm_internal_update_other_instances, instance);
 }
 
-#endif /* DIALOGS_MOTIF */
+#endif /* LWLIB_DIALOGS_MOTIF */
 
-#ifdef SCROLLBARS_MOTIF
+#ifdef LWLIB_SCROLLBARS_MOTIF
 
 /*
  * If this function looks like it does a lot more work than it needs to,
@@ -760,7 +758,7 @@ xm_update_scrollbar (widget_instance *instance, Widget widget,
     }
 }
 
-#endif /* SCROLLBARS_MOTIF */
+#endif /* LWLIB_SCROLLBARS_MOTIF */
 
 
 /* update a motif widget */
@@ -780,7 +778,7 @@ xm_update_one_widget (widget_instance* instance, Widget widget,
   XtSetArg (al [1], XmNuserData,  val->call_data);
   XtSetValues (widget, al, 2);
 
-#if defined (DIALOGS_MOTIF) || defined (MENUBARS_MOTIF)
+#if defined (LWLIB_DIALOGS_MOTIF) || defined (LWLIB_MENUBARS_MOTIF)
   /* Common to all label like widgets */
   if (XtIsSubclass (widget, xmLabelWidgetClass))
     xm_update_label (instance, widget, val);
@@ -793,7 +791,7 @@ xm_update_one_widget (widget_instance* instance, Widget widget,
     {
       xm_update_pushbutton (instance, widget, val);
     }
-#ifdef MENUBARS_MOTIF
+#ifdef LWLIB_MENUBARS_MOTIF
   else if (class == xmCascadeButtonWidgetClass)
     {
       xm_update_cascadebutton (instance, widget, val);
@@ -813,12 +811,12 @@ xm_update_one_widget (widget_instance* instance, Widget widget,
       
       if (radiobox)
 	xm_update_radiobox (instance, widget, val);
-#ifdef MENUBARS_MOTIF
+#ifdef LWLIB_MENUBARS_MOTIF
       else
 	xm_update_menu (instance, widget, val, deep_p);
 #endif
     }
-#ifdef DIALOGS_MOTIF
+#ifdef LWLIB_DIALOGS_MOTIF
   else if (class == xmTextWidgetClass)
     {
       xm_update_text (instance, widget, val);
@@ -832,7 +830,7 @@ xm_update_one_widget (widget_instance* instance, Widget widget,
     {
       xm_update_list (instance, widget, val);
     }
-#ifdef SCROLLBARS_MOTIF
+#ifdef LWLIB_SCROLLBARS_MOTIF
   else if (class == xmScrollBarWidgetClass)
     {
       xm_update_scrollbar (instance, widget, val);
@@ -863,7 +861,7 @@ xm_update_one_value (widget_instance* instance, Widget widget,
       XtGetValues (widget, al, 1);
       val->edited = True;
     }
-#ifdef DIALOGS_MOTIF
+#ifdef LWLIB_DIALOGS_MOTIF
   else if (class == xmTextWidgetClass)
     {
       if (val->value)
@@ -935,7 +933,7 @@ xm_update_one_value (widget_instance* instance, Widget widget,
 	  XtFree ((char *) pos_list);
 	}
     }
-#ifdef SCROLLBARS_MOTIF
+#ifdef LWLIB_SCROLLBARS_MOTIF
   else if (class == xmScrollBarWidgetClass)
     {
       /* This function is not used by the scrollbar. */
@@ -960,7 +958,7 @@ activate_button (Widget widget, XtPointer closure, XtPointer call_data)
 
 /* creation functions */
 
-#ifdef DIALOGS_MOTIF
+#ifdef LWLIB_DIALOGS_MOTIF
 
 /* dialogs */
 
@@ -1490,9 +1488,9 @@ xm_create_dialog (widget_instance* instance)
   return widget;
 }
 
-#endif /* DIALOGS_MOTIF */
+#endif /* LWLIB_DIALOGS_MOTIF */
 
-#ifdef MENUBARS_MOTIF
+#ifdef LWLIB_MENUBARS_MOTIF
 static Widget
 make_menubar (widget_instance* instance)
 {
@@ -1527,9 +1525,9 @@ make_popup_menu (widget_instance* instance)
   parent->core.window = parent_window;
   return result;
 }
-#endif /* MENUBARS_MOTIF */
+#endif /* LWLIB_MENUBARS_MOTIF */
 
-#ifdef SCROLLBARS_MOTIF
+#ifdef LWLIB_SCROLLBARS_MOTIF
 static Widget
 make_scrollbar (widget_instance *instance, int vertical)
 {
@@ -1571,18 +1569,18 @@ make_horizontal_scrollbar (widget_instance *instance)
   return make_scrollbar (instance, 0);
 }
 
-#endif /* SCROLLBARS_MOTIF */
+#endif /* LWLIB_SCROLLBARS_MOTIF */
 
 /* Table of functions to create widgets */
 
 widget_creation_entry
 xm_creation_table [] = 
 {
-#ifdef MENUBARS_MOTIF
+#ifdef LWLIB_MENUBARS_MOTIF
   {"menubar", 			make_menubar},
   {"popup",			make_popup_menu},
 #endif
-#ifdef SCROLLBARS_MOTIF
+#ifdef LWLIB_SCROLLBARS_MOTIF
   {"vertical-scrollbar",	make_vertical_scrollbar},
   {"horizontal-scrollbar",	make_horizontal_scrollbar},
 #endif
@@ -1593,7 +1591,7 @@ xm_creation_table [] =
 void
 xm_destroy_instance (widget_instance* instance)
 {
-#ifdef DIALOGS_MOTIF
+#ifdef LWLIB_DIALOGS_MOTIF
   /* It appears that this is used only for dialog boxes. */
   Widget widget = instance->widget;
   /* recycle the dialog boxes */
@@ -1624,11 +1622,11 @@ xm_destroy_instance (widget_instance* instance)
 
       XtDestroyWidget (instance->widget);
     }
-#endif /* DIALOGS_MOTIF */
+#endif /* LWLIB_DIALOGS_MOTIF */
 }
 
 /* popup utility */
-#ifdef MENUBARS_MOTIF
+#ifdef LWLIB_MENUBARS_MOTIF
 
 void
 xm_popup_menu (Widget widget, XEvent *event)
@@ -1658,7 +1656,7 @@ xm_popup_menu (Widget widget, XEvent *event)
 
 #endif
 
-#ifdef DIALOGS_MOTIF
+#ifdef LWLIB_DIALOGS_MOTIF
 
 static void
 set_min_dialog_size (Widget w)
@@ -1683,7 +1681,7 @@ xm_pop_instance (widget_instance* instance, Boolean up)
 {
   Widget widget = instance->widget;
 
-#ifdef DIALOGS_MOTIF
+#ifdef LWLIB_DIALOGS_MOTIF
   if (XtClass (widget) == xmDialogShellWidgetClass)
     {
       Widget widget_to_manage = first_child (widget);
@@ -1777,7 +1775,7 @@ xm_internal_update_other_instances (Widget widget, XtPointer closure,
 static void
 xm_generic_callback (Widget widget, XtPointer closure, XtPointer call_data)
 {
-#if (defined (MENUBARS_MOTIF) || defined (DIALOGS_MOTIF))
+#if (defined (LWLIB_MENUBARS_MOTIF) || defined (LWLIB_DIALOGS_MOTIF))
   /* We want the selected status to change only when we decide it
      should change.  Yuck but correct. */
   if (XtClass (widget) == xmToggleButtonWidgetClass
@@ -1797,7 +1795,7 @@ xm_generic_callback (Widget widget, XtPointer closure, XtPointer call_data)
   do_call (widget, closure, selection);
 }
 
-#ifdef DIALOGS_MOTIF
+#ifdef LWLIB_DIALOGS_MOTIF
 
 static void
 xm_nosel_callback (Widget widget, XtPointer closure, XtPointer call_data)
@@ -1816,7 +1814,7 @@ xm_nosel_callback (Widget widget, XtPointer closure, XtPointer call_data)
 
 #endif
 
-#ifdef MENUBARS_MOTIF
+#ifdef LWLIB_MENUBARS_MOTIF
 
 static void
 xm_pull_down_callback (Widget widget, XtPointer closure, XtPointer call_data)
@@ -1840,9 +1838,9 @@ xm_pop_down_callback (Widget widget, XtPointer closure, XtPointer call_data)
 }
 #endif /* 0 */
 
-#endif /* MENUBARS_MOTIF */
+#endif /* LWLIB_MENUBARS_MOTIF */
 
-#ifdef SCROLLBARS_MOTIF
+#ifdef LWLIB_SCROLLBARS_MOTIF
 static void
 xm_scrollbar_callback (Widget widget, XtPointer closure, XtPointer call_data)
 {
@@ -1930,7 +1928,7 @@ xm_scrollbar_callback (Widget widget, XtPointer closure, XtPointer call_data)
   if (instance->info->pre_activate_cb)
     instance->info->pre_activate_cb (widget, id, (XtPointer) &event_data);
 }
-#endif /* SCROLLBARS_MOTIF */
+#endif /* LWLIB_SCROLLBARS_MOTIF */
 
 
 /* set the keyboard focus */

@@ -654,24 +654,18 @@ If all args return nil, return nil.
        (args))
 {
   /* This function can GC */
-  REGISTER Lisp_Object val;
-  Lisp_Object args_left;
+  Lisp_Object val = Qnil;
   struct gcpro gcpro1;
 
-  if (NILP (args))
-    return Qnil;
+  GCPRO1 (args);
 
-  args_left = args;
-  GCPRO1 (args_left);
-
-  do
+  while (!NILP (args))
     {
-      val = Feval (Fcar (args_left));
+      val = Feval (XCAR (args));
       if (!NILP (val))
 	break;
-      args_left = Fcdr (args_left);
+      args = XCDR (args);
     }
-  while (!NILP (args_left));
 
   UNGCPRO;
   return val;
@@ -685,24 +679,18 @@ If no arg yields nil, return the last arg's value.
        (args))
 {
   /* This function can GC */
-  REGISTER Lisp_Object val;
-  Lisp_Object args_left;
+  Lisp_Object val = Qt;
   struct gcpro gcpro1;
 
-  if (NILP (args))
-    return Qt;
+  GCPRO1 (args);
 
-  args_left = args;
-  GCPRO1 (args_left);
-
-  do
+  while (!NILP (args))
     {
-      val = Feval (Fcar (args_left));
+      val = Feval (XCAR (args));
       if (NILP (val))
 	break;
-      args_left = Fcdr (args_left);
+      args = XCDR (args);
     }
-  while (!NILP (args_left));
 
   UNGCPRO;
   return val;
@@ -721,12 +709,14 @@ If COND yields nil, and there are no ELSE's, the value is nil.
   struct gcpro gcpro1;
 
   GCPRO1 (args);
-  cond = Feval (Fcar (args));
+  cond = Feval (XCAR (args));
   UNGCPRO;
 
+  args = XCDR (args);
+
   if (!NILP (cond))
-    return Feval (Fcar (Fcdr (args)));
-  return Fprogn (Fcdr (Fcdr (args)));
+    return Feval (XCAR (args));
+  return Fprogn (XCDR (args));
 }
 
 DEFUN ("cond", Fcond, 0, UNEVALLED, 0, /*
@@ -742,15 +732,14 @@ CONDITION's value if non-nil is returned from the cond-form.
        (args))
 {
   /* This function can GC */
-  REGISTER Lisp_Object clause, val;
+  Lisp_Object val = Qnil;
   struct gcpro gcpro1;
 
-  val = Qnil;
   GCPRO1 (args);
   while (!NILP (args))
     {
-      clause = Fcar (args);
-      val = Feval (Fcar (clause));
+      Lisp_Object clause = XCAR (args);
+      val = Feval (XCAR (clause));
       if (!NILP (val))
 	{
 	  if (!EQ (XCDR (clause), Qnil))
@@ -770,22 +759,16 @@ DEFUN ("progn", Fprogn, 0, UNEVALLED, 0, /*
        (args))
 {
   /* This function can GC */
-  REGISTER Lisp_Object val;
-  Lisp_Object args_left;
+  Lisp_Object val = Qnil;
   struct gcpro gcpro1;
 
-  if (! CONSP (args))
-    return Qnil;
+  GCPRO1 (args);
 
-  args_left = args;
-  GCPRO1 (args_left);
-
-  do
+  while (!NILP (args))
     {
-      val = Feval (XCAR (args_left));
-      args_left = XCDR (args_left);
+      val = Feval (XCAR (args));
+      args = XCDR (args);
     }
-  while (CONSP (args_left));
 
   UNGCPRO;
   return val;
@@ -800,26 +783,18 @@ whose values are discarded.
 {
   /* This function can GC */
   Lisp_Object val;
-  REGISTER Lisp_Object args_left;
   struct gcpro gcpro1, gcpro2;
-  REGISTER int argnum = 0;
 
-  if (NILP (args))
-    return Qnil;
-
-  args_left = args;
-  val = Qnil;
   GCPRO2 (args, val);
 
-  do
+  val = Feval (XCAR (args));
+  args = XCDR (args);
+
+  while (!NILP (args))
     {
-      if (!(argnum++))
-        val = Feval (Fcar (args_left));
-      else
-	Feval (Fcar (args_left));
-      args_left = Fcdr (args_left);
+      Feval (XCAR (args));
+      args = XCDR (args);
     }
-  while (!NILP (args_left));
 
   UNGCPRO;
   return val;
@@ -834,28 +809,20 @@ whose values are discarded.
 {
   /* This function can GC */
   Lisp_Object val;
-  REGISTER Lisp_Object args_left;
   struct gcpro gcpro1, gcpro2;
-  REGISTER int argnum = -1;
 
-  val = Qnil;
-
-  if (NILP (args))
-    return Qnil;
-
-  args_left = args;
-  val = Qnil;
   GCPRO2 (args, val);
 
-  do
+  Feval (XCAR (args));
+  args = XCDR (args);
+  val = Feval (XCAR (args));
+  args = XCDR (args);
+
+  while (!NILP (args))
     {
-      if (!(argnum++))
-        val = Feval (Fcar (args_left));
-      else
-	Feval (Fcar (args_left));
-      args_left = Fcdr (args_left);
+      Feval (XCAR (args));
+      args = XCDR (args);
     }
-  while (!NILP (args_left));
 
   UNGCPRO;
   return val;
@@ -961,7 +928,7 @@ DEFUN ("while", Fwhile, 1, UNEVALLED, 0, /*
 The order of execution is thus TEST, BODY, TEST, BODY and so on
 until TEST returns nil.
 */
-(args))
+       (args))
 {
   /* This function can GC */
   Lisp_Object test, body, tem;
@@ -1008,7 +975,7 @@ The return value of the `setq' form is the value of the last VAL.
 	/*
 	 * uncomment the QUIT if there is some way a circular
 	 * arglist can get in here.  I think Feval or Fapply would
-	 * spin first and the list would never get here. 
+	 * spin first and the list would never get here.
 	 */
 	/* QUIT; */
       }

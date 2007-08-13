@@ -17,6 +17,16 @@
    requires (mail-lib xemacs-base)
    type regular
 ))
+(gnus
+  (version "1.02"
+   description "The Gnus Newsreader and Mailreader."
+   filename "gnus-1.02-pkg.tar.gz"
+   md5sum "ec5ed0322e46b8f672997d27a128b58e"
+   size 1663754
+   provides (gnus message)
+   requires (gnus w3 mh-e mailcrypt rmail mail-lib xemacs-base)
+   type regular
+))
 (mailcrypt
   (version "1.02"
    filename "mailcrypt-1.02-pkg.tar.gz"
@@ -72,12 +82,13 @@
    type regular
 ))
 (tm
-  (version "1.02"
-   filename "tm-1.02-pkg.tar.gz"
-   md5sum "fa55affd4762141dc1a8090565438bbe"
-   size 180988
+  (version "1.03"
+   description "Emacs MIME support."
+   filename "tm-1.03-pkg.tar.gz"
+   md5sum "1bc0d0c17ca472c793b0eceafa10624b"
+   size 251874
    provides (tm tm-edit tm-view mime-setup)
-   requires (gnus vm mailcrypt mail-lib xemacs-base)
+   requires (gnus mh-e rmail vm mailcrypt mail-lib apel xemacs-base)
    type regular
 ))
 (vm
@@ -99,10 +110,11 @@
    type regular
 ))
 (cookie
-  (version "1.03"
-   filename "cookie-1.03-pkg.tar.gz"
-   md5sum "28b2fee1f0acbc8f19af12a415743c3f"
-   size 33784
+  (version "1.04"
+   description "Spook and Yow (Zippy quotes)."
+   filename "cookie-1.04-pkg.tar.gz"
+   md5sum "e2c77311b5483e9e700d28f7b2993aca"
+   size 33833
    provides (cookie1 yow)
    requires (xemacs-base)
    type regular
@@ -162,20 +174,22 @@
    type regular
 ))
 (efs
-  (version "1.03"
-   filename "efs-1.03-pkg.tar.gz"
-   md5sum "7bc6786f8dee4d955d6365f0cbe2b610"
-   size 540959
+  (version "1.04"
+   description "Treat files on remote systems the same as local files."
+   filename "efs-1.04-pkg.tar.gz"
+   md5sum "ba6bce39196f5d63fdc15f21c4cd1294"
+   size 542848
    provides (efs diff dired efs-auto)
-   requires (xemacs-base)
+   requires (vm xemacs-base)
    type regular
 ))
 (mail-lib
-  (version "1.04"
-   filename "mail-lib-1.04-pkg.tar.gz"
-   md5sum "59b9cd8aefaa035cb6de8ebdfc141b0a"
-   size 118703
-   provides (browse-url highlight-headers mail-abbrevs mail-extr mail-utils reporter rfc822 rmail-mini sendmail smtpmail)
+  (version "1.05"
+   description "Fundamental lisp files for providing email support."
+   filename "mail-lib-1.05-pkg.tar.gz"
+   md5sum "da865a128c4ce310fab6bc2704b58d2a"
+   size 118732
+   provides (browse-url highlight-headers mail-abbrevs mail-extr mail-utils reporter rfc822 rmail-mini rmailout sendmail smtpmail)
    requires (xemacs-base)
    type single
 ))
@@ -189,11 +203,12 @@
    type regular
 ))
 (xemacs-base
-  (version "1.07"
-   filename "xemacs-base-1.07-pkg.tar.gz"
-   md5sum "b1b4c6a7005a2ee33fee0c992e256ceb"
-   size 376530
-   provides (add-log advice annotations assoc case-table chistory comint-xemacs comint compile edmacro ehelp electric enriched env facemenu helper imenu iso-syntax outline passwd pp regi ring shell skeleton sort thing time-stamp timezone xbm-button xpm-button)
+  (version "1.08"
+   description "Fundamental XEmacs support, you almost certainly need this."
+   filename "xemacs-base-1.08-pkg.tar.gz"
+   md5sum "5bf009bdb7b0d0478987319d71bcacc4"
+   size 380727
+   provides (add-log advice annotations assoc case-table chistory comint-xemacs comint compile debug ebuff-menu echistory edmacro ehelp electric enriched env facemenu helper imenu iso-syntax macros novice outline overlay passwd pp regi ring shell skeleton sort thing time-stamp timezone xbm-button xpm-button)
    requires ()
    type regular
 ))
@@ -207,10 +222,11 @@
    type single
 ))
 (egg-its
-  (version "1.02"
-   filename "egg-its-1.02-pkg.tar.gz"
-   md5sum "e7fa42a1121fc260f459e4dabac061ac"
-   size 257713
+  (version "1.03"
+   description "Wnn (4.2 and 6) support.  SJ3 support."
+   filename "egg-its-1.03-pkg.tar.gz"
+   md5sum "6dcae480cb0351da8533e6b95abeb2f5"
+   size 259771
    provides ()
    requires (leim mule-base xemacs-base)
    type regular
@@ -279,12 +295,13 @@
    type regular
 ))
 (hm--html-menus
-  (version "1.02"
-   filename "hm--html-menus-1.02-pkg.tar.gz"
-   md5sum "79a9958a08c7e40f8316a9bf8637b3c5"
-   size 144731
+  (version "1.03"
+   description "HTML editing."
+   filename "hm--html-menus-1.03-pkg.tar.gz"
+   md5sum "cce45f2664aa9cd3c931cfff23c621a5"
+   size 146847
    provides (adapt hm--date hm--html-configuration hm--html-drag-and-drop hm--html-indentation hm--html-keys hm--html-menu hm--html-mode hm--html-not-standard hm--html html-view tmpl-minor-mode)
-   requires ()
+   requires (xemacs-base)
    type regular
 ))
 (ispell
@@ -423,19 +440,21 @@
    type regular
 ))
 (c-support
-  (version "1.02"
-   filename "c-support-1.02-pkg.tar.gz"
-   md5sum "9d6e3bb330ca128c13dea88f321c74c3"
-   size 41817
+  (version "1.03"
+   description "Basic single-file add-ons for editing C code."
+   filename "c-support-1.03-pkg.tar.gz"
+   md5sum "18815426732ff136a9eedfbcfa5f3a86"
+   size 41780
    provides (c-comment-edit cmacexp hideif hideshow)
    requires (cc-mode xemacs-base)
    type regular
 ))
 (cc-mode
-  (version "1.03"
-   filename "cc-mode-1.03-pkg.tar.gz"
-   md5sum "c943e700b28d9c0fe9a870403b913959"
-   size 126973
+  (version "1.04"
+   description "C, C++ and Java language support."
+   filename "cc-mode-1.04-pkg.tar.gz"
+   md5sum "4594ac91bbe114ceea4f06a1196076f6"
+   size 128650
    provides (cc-mode)
    requires (xemacs-base)
    type regular
@@ -531,10 +550,11 @@
    type regular
 ))
 (auctex
-  (version "1.02"
-   filename "auctex-1.02-pkg.tar.gz"
-   md5sum "31f3845c0cd3178cbd07478da9a0e70e"
-   size 289385
+  (version "1.03"
+   description "Basic TeX/LaTeX support."
+   filename "auctex-1.03-pkg.tar.gz"
+   md5sum "1b0403e3b22e3a8fb0f46019e2c245ba"
+   size 289505
    provides (auc-old bib-cite font-latex latex multi-prompt tex-buf tex-info tex-jp tex-site tex)
    requires (xemacs-base)
    type regular
@@ -585,10 +605,11 @@
    type regular
 ))
 (viper
-  (version "1.02"
-   filename "viper-1.02-pkg.tar.gz"
-   md5sum "99145b4a71030c0fc8c93e24ddc29dd3"
-   size 260582
+  (version "1.03"
+   description "VI emulation support."
+   filename "viper-1.03-pkg.tar.gz"
+   md5sum "b1f8a6543aacc5c2d79c76082c739b81"
+   size 260554
    provides (viper)
    requires (xemacs-base)
    type regular

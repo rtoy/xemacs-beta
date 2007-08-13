@@ -43,7 +43,7 @@
   "Install a single file Lisp package into XEmacs package hierarchy.
 `file' should be the full path to the lisp file to install.
 `destdir' should be a simple directory name.
-The optional `pkg-dir' can be used to override the default package hiearchy
+The optional `pkg-dir' can be used to override the default package hierarchy
 \(last package-path)."
   (interactive "fLisp File: \nsDestination: ")
   (when (null pkg-dir)

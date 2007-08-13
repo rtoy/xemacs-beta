@@ -50,7 +50,7 @@
 (require 'config)
 (provide 'build-report)
 
-;; Due to recommandation by developers on xemacs-beta@xemacs.org,
+;; Due to recommendation by developers on xemacs-beta@xemacs.org,
 ;; release versions are to be checked out using `co -u -kv ...'.
 (defconst build-report-version
   "1.35"
@@ -282,12 +282,12 @@ created by the XEmacs Beta configure process."
     (buffer-string)))
 
 (defun build-report-keep ()
-  "build-report-internal fuction of no general value."
+  "build-report-internal function of no general value."
   (mapconcat '(lambda (item) item)
 	     (cons "^--\\[\\[\\|\\]\\]$" build-report-keep-regexp) "\\|"))
 
 (defun build-report-delete ()
-  "build-report-internal fuction of no general value."
+  "build-report-internal function of no general value."
   (mapconcat '(lambda (item) item)
 	     build-report-delete-regexp "\\|"))
 

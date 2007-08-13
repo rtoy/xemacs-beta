@@ -505,8 +505,6 @@ allocate_lisp_storage (int size)
  */
 static struct lcrecord_header *all_lcrecords;
 
-int lrecord_type_index (CONST struct lrecord_implementation *implementation);
-
 void *
 alloc_lcrecord (int size, CONST struct lrecord_implementation *implementation)
 {
@@ -994,19 +992,6 @@ DECLARE_FIXED_TYPE_ALLOC (cons, struct Lisp_Cons);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_cons 2000
 
 #ifdef LRECORD_CONS
-static Lisp_Object mark_cons (Lisp_Object, void (*) (Lisp_Object));
-static int cons_equal(Lisp_Object, Lisp_Object, int);
-extern void print_cons (Lisp_Object, Lisp_Object, int);
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("cons", cons,
-				     mark_cons, print_cons, 0,
-				     cons_equal, 
-				     /*
-				      * No `hash' method needed.
-				      * internal_hash knows how to
-				      * handle conses.
-				      */
-				     0,
-				     struct Lisp_Cons);
 static Lisp_Object
 mark_cons (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
@@ -1029,6 +1014,17 @@ cons_equal (Lisp_Object ob1, Lisp_Object ob2, int depth)
     }
   return 0;
 }
+
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("cons", cons,
+				     mark_cons, print_cons, 0,
+				     cons_equal,
+				     /*
+				      * No `hash' method needed.
+				      * internal_hash knows how to
+				      * handle conses.
+				      */
+				     0,
+				     struct Lisp_Cons);
 #endif /* LRECORD_CONS */
 
 DEFUN ("cons", Fcons, 2, 2, 0, /*
@@ -1183,20 +1179,6 @@ make_float (double float_value)
 /**********************************************************************/
 
 #ifdef LRECORD_VECTOR
-static Lisp_Object mark_vector (Lisp_Object, void (*) (Lisp_Object));
-static unsigned int size_vector (CONST void *);
-static int vector_equal(Lisp_Object, Lisp_Object, int);
-extern void print_vector (Lisp_Object, Lisp_Object, int);
-DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION("vector", vector,
-				       mark_vector, print_vector, 0,
-				       vector_equal,
-				       /*
-				        * No `hash' method needed for
-				        * vectors.  internal_hash
-				        * knows how to handle vectors.
-				        */
-				       0,
-				       size_vector, struct Lisp_Vector);
 static Lisp_Object
 mark_vector (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
@@ -1237,6 +1219,17 @@ vector_equal (Lisp_Object o1, Lisp_Object o2, int depth)
   return 1;
 }
 
+DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION("vector", vector,
+				       mark_vector, print_vector, 0,
+				       vector_equal,
+				       /*
+				        * No `hash' method needed for
+				        * vectors.  internal_hash
+				        * knows how to handle vectors.
+				        */
+				       0,
+				       size_vector, struct Lisp_Vector);
+
 /* #### should allocate `small' vectors from a frob-block */
 static struct Lisp_Vector *
 make_vector_internal (EMACS_INT sizei)
@@ -1274,7 +1267,7 @@ make_vector_internal (EMACS_INT sizei)
   return p;
 }
 
-#endif
+#endif /* ! LRECORD_VECTOR */
 
 Lisp_Object
 make_vector (EMACS_INT length, Lisp_Object init)
@@ -1914,23 +1907,6 @@ DECLARE_FIXED_TYPE_ALLOC (string, struct Lisp_String);
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_string 1000
 
 #ifdef LRECORD_STRING
-static Lisp_Object mark_string (Lisp_Object, void (*) (Lisp_Object));
-static int string_equal (Lisp_Object, Lisp_Object, int);
-extern void print_string (Lisp_Object, Lisp_Object, int);
-DEFINE_BASIC_LRECORD_IMPLEMENTATION ("string", string,
-				     mark_string, print_string,
-				     /*
-				      * No `finalize', or `hash' methods.
-				      * internal_hash already knows how
-				      * to hash strings and finalization
-				      * is done with the
-				      * ADDITIONAL_FREE_string macro,
-				      * which is the standard way to do
-				      * finalization when using
-				      * SWEEP_FIXED_TYPE_BLOCK().
-				      */
-				     0, string_equal, 0,
-				     struct Lisp_String);
 static Lisp_Object
 mark_string (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
@@ -1951,6 +1927,21 @@ string_equal (Lisp_Object o1, Lisp_Object o2, int depth)
     return 0;
   return 1;
 }
+
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("string", string,
+				     mark_string, print_string,
+				     /*
+				      * No `finalize', or `hash' methods.
+				      * internal_hash already knows how
+				      * to hash strings and finalization
+				      * is done with the
+				      * ADDITIONAL_FREE_string macro,
+				      * which is the standard way to do
+				      * finalization when using
+				      * SWEEP_FIXED_TYPE_BLOCK().
+				      */
+				     0, string_equal, 0,
+				     struct Lisp_String);
 #endif /* LRECORD_STRING */
 
 /* String blocks contain this many useful bytes. */
@@ -2357,11 +2348,6 @@ build_translated_string (CONST char *str)
 
    */
 
-static Lisp_Object mark_lcrecord_list (Lisp_Object, void (*) (Lisp_Object));
-DEFINE_LRECORD_IMPLEMENTATION ("lcrecord-list", lcrecord_list,
-			       mark_lcrecord_list, internal_object_printer,
-			       0, 0, 0, struct lcrecord_list);
-
 static Lisp_Object
 mark_lcrecord_list (Lisp_Object obj, void (*markobj) (Lisp_Object))
 {
@@ -2398,6 +2384,9 @@ mark_lcrecord_list (Lisp_Object obj, void (*markobj) (Lisp_Object))
   return Qnil;
 }
 
+DEFINE_LRECORD_IMPLEMENTATION ("lcrecord-list", lcrecord_list,
+			       mark_lcrecord_list, internal_object_printer,
+			       0, 0, 0, struct lcrecord_list);
 Lisp_Object
 make_lcrecord_list (int size,
 		    CONST struct lrecord_implementation *implementation)
@@ -2685,7 +2674,7 @@ make_pure_vector (EMACS_INT len, Lisp_Object init)
   for (size = 0; size < len; size++)
     v->contents[size] = init;
 
-  XSETVECTOR (new, v); 
+  XSETVECTOR (new, v);
   return new;
 }
 
@@ -4519,7 +4508,7 @@ Garbage collection happens automatically if you cons more than
   Lisp_Object ret[6];
   int i;
 #ifdef LRECORD_VECTOR
-  int gc_count_vector_total_size;
+  int gc_count_vector_total_size = 0;
 #endif
 
   if (purify_flag && pure_lossage)
