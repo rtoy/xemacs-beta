@@ -86,6 +86,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "sysdep.h"		/* init_poll_for_quit() */
 #include "syssignal.h"		/* SIGCHLD, etc. */
+#include "sysfile.h"
 #include "systime.h"		/* to set Vlast_input_time */
 
 #include "events-mod.h"
@@ -4810,7 +4811,9 @@ If FILE is nil, close any open dribble file.
       int fd;
 
       file = Fexpand_file_name (file, Qnil);
-      fd = creat ((char *) XSTRING_DATA (file), 0666);
+      fd = open ((char*) XSTRING_DATA (file),
+		 O_WRONLY | O_TRUNC | O_CREAT | OPEN_BINARY,
+		 CREAT_MODE);
       if (fd < 0)
 	error ("Unable to create dribble file");
       Vdribble_file = make_filedesc_output_stream (fd, 0, 0, LSTR_CLOSING);

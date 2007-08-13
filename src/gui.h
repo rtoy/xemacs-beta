@@ -30,6 +30,37 @@ Boston, MA 02111-1307, USA.  */
 #ifdef HAVE_POPUPS
 int separator_string_p (CONST char *s);
 extern int popup_up_p;
+
+/* This structure describes gui button,
+   menu item or submenu properties */
+struct gui_item
+{
+  Lisp_Object name;		/* String */
+  Lisp_Object callback;		/* Symbol or form */
+  Lisp_Object suffix;		/* String */
+  Lisp_Object active;		/* Form */
+  Lisp_Object included;		/* Form */
+  Lisp_Object config;		/* Anything EQable */
+  Lisp_Object filter;		/* Form */
+  Lisp_Object style;		/* Symbol */
+  Lisp_Object selected;		/* Form */
+  Lisp_Object keys;		/* String */
+};
+#define GUI_ITEM_LAST_GCPROED keys
+#define GUI_ITEM_GCPRO_COUNT \
+  (slot_offset(struct gui_item, GUI_ITEM_LAST_GCPROED) / sizeof(Lisp_Object) + 1)
+
+void gui_item_init (struct gui_item *pgui_item);
+void gui_item_add_keyval_pair (struct gui_item *pgui_item,
+			       Lisp_Object key, Lisp_Object val);
+void gui_parse_item_keywords (Lisp_Object item, struct gui_item *pgui_item);
+int  gui_item_active_p (CONST struct gui_item *pgui_item);
+int  gui_item_included_p (CONST struct gui_item *pgui_item, Lisp_Object into);
+unsigned int gui_item_display_flush_left  (CONST struct gui_item *pgui_item,
+					   char* buf, unsigned int buf_len);
+unsigned int gui_item_display_flush_right (CONST struct gui_item *pgui_item,
+					   char* buf, unsigned int buf_len);
+
 #endif /* HAVE_POPUPS */
 
 #endif /* _XEMACS_GUI_H_ */

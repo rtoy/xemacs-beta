@@ -235,9 +235,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     current_dir = Funhandled_file_name_directory (current_dir);
     current_dir = expand_and_dir_to_file (current_dir, Qnil);
 #if 0
-  /* I don't know how RMS intends this crock of shit to work, but it
-     breaks everything in the presence of ange-ftp-visited files, so
-     fuck it. */
+    /* reportedly causes problems with ange-ftp-visited-files */
     if (NILP (Ffile_accessible_directory_p (current_dir)))
       report_file_error ("Setting current directory",
                          Fcons (current_buffer->directory, Qnil));
@@ -318,7 +316,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     report_file_error ("Searching for program", Fcons (args[0], Qnil));
   new_argv[0] = (char *) XSTRING_DATA (path);
 
-  filefd = open ((char *) XSTRING_DATA (infile), O_RDONLY, 0);
+  filefd = open ((char *) XSTRING_DATA (infile), O_RDONLY | OPEN_BINARY, 0);
   if (filefd < 0)
     report_file_error ("Opening process input file", Fcons (infile, Qnil));
 
@@ -354,7 +352,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 #ifndef MSDOS
   if (INTP (buffer))
     {
-      fd[1] = open (NULL_DEVICE, O_WRONLY, 0);
+      fd[1] = open (NULL_DEVICE, O_WRONLY | OPEN_BINARY, 0);
       fd[0] = -1;
     }
   else
@@ -440,7 +438,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
       }
 #else /* not MSDOS */
     if (NILP (error_file))
-      fd_error = open (NULL_DEVICE, O_WRONLY);
+      fd_error = open (NULL_DEVICE, O_WRONLY | OPEN_BINARY);
     else if (STRINGP (error_file))
       {
 #ifdef DOS_NT
@@ -448,8 +446,9 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 			 O_WRONLY | O_TRUNC | O_CREAT | O_TEXT,
 			 S_IREAD | S_IWRITE);
 #else  /* not DOS_NT */
-	fd_error =
-	  creat ((CONST char *) XSTRING_DATA (error_file), 0666);
+	fd_error = open (XSTRING_DATA (error_file),
+			 O_WRONLY | O_TRUNC | O_CREAT | OPEN_BINARY,
+			 CREAT_MODE);
 #endif /* not DOS_NT */
       }
 

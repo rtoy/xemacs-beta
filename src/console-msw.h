@@ -33,10 +33,14 @@ Boston, MA 02111-1307, USA.  */
 #define _XEMACS_CONSOLE_MSW_H_
 
 #include "console.h"
-
+#ifdef CONST			/* I suspect this is safe */
+#undef CONST
+#endif
 #include "windows.h"
 #include "ddeml.h"	/* DDE management library */
+#ifndef __CYGWIN32__
 #include "shellapi.h"	/* FileManager/Explorer drag and drop */
+#endif
 
 /*
  * XXX FIXME: The following X modifier defs in events-mod.h clash with win32

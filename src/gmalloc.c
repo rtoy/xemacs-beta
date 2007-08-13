@@ -402,7 +402,23 @@ Boston, MA 02111-1307, USA.
 #endif
 
 /* How to really get more memory.  */
+#ifdef HEAP_IN_DATA
+/* once dumped, free() & realloc() on static heap space will fail */
+#define PURE_DATA(x) \
+((static_heap_dumped && (char*)x >= static_heap_base \
+  && (char*)x <= (static_heap_base + static_heap_size) ) ? 1 : 0)
+extern int initialized;
+extern int purify_flag;
+extern char* static_heap_base;
+extern char* static_heap_ptr;
+extern char* static_heap_dumped;
+extern unsigned long static_heap_size;
+extern __ptr_t more_static_core __P ((ptrdiff_t __size));
+__ptr_t (*__morecore) __P ((ptrdiff_t __size)) = more_static_core;
+#else
 __ptr_t (*__morecore) __P ((ptrdiff_t __size)) = __default_morecore;
+#define PURE_DATA(x) 0
+#endif
 
 /* Debugging hook for `malloc'.  */
 __ptr_t (*__malloc_hook) __P ((__malloc_size_t __size));
@@ -465,19 +481,30 @@ static int initialize __P ((void));
 static int
 initialize ()
 {
+#ifdef HEAP_IN_DATA
+  if (static_heap_dumped && __morecore == more_static_core)
+    {
+      __morecore = __default_morecore;
+    }
+#endif
   heapsize = HEAP / BLOCKSIZE;
   _heapinfo = (malloc_info *) align (heapsize * sizeof (malloc_info));
   if (_heapinfo == NULL)
     return 0;
   memset (_heapinfo, 0, heapsize * sizeof (malloc_info));
+  memset (_fraghead, 0, BLOCKLOG * sizeof (struct list));
   _heapinfo[0].free.size = 0;
   _heapinfo[0].free.next = _heapinfo[0].free.prev = 0;
   _heapindex = 0;
+  _heaplimit = 0;
   _heapbase = (char *) _heapinfo;
 
   /* Account for the _heapinfo block itself in the statistics.  */
   _bytes_used = heapsize * sizeof (malloc_info);
   _chunks_used = 1;
+  _chunks_free=0;
+  _bytes_free=0;
+  _aligned_blocks=0;
 
   __malloc_initialized = 1;
   return 1;
@@ -936,6 +963,11 @@ free (__ptr_t ptr)
   if (ptr == NULL)
     return;
 
+  if (PURE_DATA(ptr))
+    {
+      return;
+    }
+
   for (l = _aligned_blocks; l != NULL; l = l->next)
     if (l->aligned == ptr)
       {
@@ -1112,7 +1144,14 @@ realloc (__ptr_t ptr, __malloc_size_t size)
   int type;
   __malloc_size_t block, blocks, oldlimit;
 
-  if (size == 0)
+  if (PURE_DATA(ptr))
+    {
+      result = malloc (size);
+      memcpy(result, ptr, size);
+      return result;
+    }
+  
+  else if (size == 0)
     {
       free (ptr);
       return malloc (0);

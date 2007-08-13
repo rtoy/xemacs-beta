@@ -58,7 +58,7 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #endif
 
-#if defined (_WIN32)
+#if defined (WINDOWSNT)
 #include <windows.h>
 #endif
 
@@ -608,7 +608,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       {
 	close (0);
 	close (1);
-	if (open (term, O_RDWR, 2) < 0)
+	if (open (term, O_RDWR | OPEN_BINARY, 2) < 0)
 	  fatal ("%s: %s", term, strerror (errno));
 	dup (0);
 	if (! isatty (0))
@@ -1825,7 +1825,7 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
   unbind_to (0, Qnil); /* this closes loadup.el */
   purify_flag = 0;
   run_temacs_argc = nargs + 1;
-#ifdef DEBUG_XEMACS
+#ifdef REPORT_PURE_USAGE
   report_pure_usage (1, 0);
 #else
   report_pure_usage (0, 0);

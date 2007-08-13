@@ -51,15 +51,14 @@ Lisp_Object Qread_char, Qstandard_input;
 Lisp_Object Qvariable_documentation;
 #define LISP_BACKQUOTES
 #ifdef LISP_BACKQUOTES
-/* FSFmacs says:
-
+/*
    Nonzero means inside a new-style backquote
    with no surrounding parentheses.
    Fread initializes this to zero, so we need not specbind it
    or worry about what happens to it when there is an error.
 
-   But this is fucking typical Stallman bogosity.  Nested
-   backquotes are perfectly legal and fail utterly with
+XEmacs:
+   Nested backquotes are perfectly legal and fail utterly with
    this silliness. */
 static int new_backquote_flag, old_backquote_flag;
 Lisp_Object Qbackquote, Qbacktick, Qcomma, Qcomma_at, Qcomma_dot;
@@ -154,12 +153,12 @@ static int load_byte_code_version;
 /* An array describing all known built-in structure types */
 static structure_type_dynarr *the_structure_type_dynarr;
 
-#if 0 /* FSFmacs defun hack */
+#if 0 /* FSF defun hack */
 /* When nonzero, read conses in pure space */
 static int read_pure;
 #endif
 
-#if 0 /* FSFmacs bogosity */
+#if 0 /* FSF stuff */
 /* For use within read-from-string (this reader is non-reentrant!!)  */
 static int read_from_string_index;
 static int read_from_string_limit;
@@ -174,8 +173,8 @@ static int read_from_string_limit;
    correctly because there's no stack of remembered #@-quoted-strings
    and those strings don't generally appear in the file in the same
    order as their #$ references. (Yes, that is amazingly stupid too.
-   WHY IN THE FUCKING HELL CAN'T RMS EVER IMPLEMENT ANYTHING IN A SANE
-   WAY?  It would be trivially easy to always encode the #@ string
+
+   It would be trivially easy to always encode the #@ string
    [which is a comment, anyway] in the middle of the (#$ . INT) cons
    reference.  That way, it would be really easy to implement
    load-force-doc-string in a non-kludgy way by just retrieving the
@@ -585,7 +584,7 @@ encoding detection or end-of-line detection.
       last_file_loaded = file;
       pure_usage = purespace_usage ();
     }
-/*#endif /* DEBUG_XEMACS */
+/*#endif / * DEBUG_XEMACS */
 
   /* If file name is magic, call the handler.  */
   handler = Ffind_file_name_handler (file, Qload);
@@ -836,7 +835,7 @@ encoding detection or end-of-line detection.
 	message ("Loading %s ...done (%d)", XSTRING_DATA (file),
 		 purespace_usage() - pure_usage);
     }
-/*#endif /* DEBUG_XEMACS */
+/*#endif / * DEBUG_XEMACS */
 
   if (!noninteractive)
     PRINT_LOADING_MESSAGE ("done");
@@ -986,7 +985,7 @@ locate_file_in_directory (Lisp_Object path, Lisp_Object str,
 #ifdef DOS_NT
 	    fd = open (fn, O_RDONLY | O_BINARY, 0);
 #else
-	    fd = open (fn, O_RDONLY, 0);
+	    fd = open (fn, O_RDONLY | OPEN_BINARY, 0);
 #endif
 
 	  if (fd >= 0)

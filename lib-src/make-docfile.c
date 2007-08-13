@@ -52,7 +52,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include <sys/param.h>
 
-#ifdef MSDOS
+#if defined(MSDOS) || defined(__CYGWIN32__)
 #include <fcntl.h>
 #endif /* MSDOS */
 #ifdef WINDOWSNT
@@ -61,12 +61,16 @@ Boston, MA 02111-1307, USA.  */
 #include <direct.h>
 #endif /* WINDOWSNT */
 
-#ifdef DOS_NT
+#if defined(DOS_NT) || defined(__CYGWIN32__)
 #define READ_TEXT "rt"
 #define READ_BINARY "rb"
+#define WRITE_BINARY "wb"
+#define APPEND_BINARY "ab"
 #else  /* not DOS_NT */
 #define READ_TEXT "r"
 #define READ_BINARY "r"
+#define WRITE_BINARY "w"
+#define APPEND_BINARY "a"
 #endif /* not DOS_NT */
 
 #ifdef MSDOS
@@ -143,7 +147,7 @@ next_extra_elc(char *extra_elcs)
   if (!fp) {
     if (!extra_elcs) {
       return NULL;
-    } else if (!(fp = fopen(extra_elcs, "r"))) {
+    } else if (!(fp = fopen(extra_elcs, READ_BINARY))) {
       /* It is not an error if this file doesn't exist. */
       /*fatal("error opening site package file list", 0);*/
       return NULL;
@@ -200,12 +204,12 @@ main (int argc, char **argv)
   i = 1;
   if (argc > i + 1 && !strcmp (argv[i], "-o"))
     {
-      outfile = fopen (argv[i + 1], "w");
+      outfile = fopen (argv[i + 1], WRITE_BINARY);
       i += 2;
     }
   if (argc > i + 1 && !strcmp (argv[i], "-a"))
     {
-      outfile = fopen (argv[i + 1], "a");
+      outfile = fopen (argv[i + 1], APPEND_BINARY);
       i += 2;
     }
   if (argc > i + 1 && !strcmp (argv[i], "-d"))

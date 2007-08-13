@@ -1373,7 +1373,7 @@ NCOL should be zero or positive.
   return ncol;
 }
 
-#if 0 /* bogus RMS crock */
+#if 0 /* bogus crock */
 
 xxDEFUN ("window-redisplay-end-trigger",
 	 Fwindow_redisplay_end_trigger, 0, 1, 0, /*
@@ -4289,6 +4289,7 @@ map_windows_1 (Lisp_Object window,
   for (; !NILP (window); window = XWINDOW (window)->next)
     {
       struct window *w = XWINDOW (window);
+
       if (!NILP (w->vchild))
 	retval = map_windows_1 (w->vchild, mapfun, closure);
       else if (!NILP (w->hchild))
@@ -4299,20 +4300,33 @@ map_windows_1 (Lisp_Object window,
 	return retval;
     }
 
-  return 0;
+  return retval;
 }
 
 /* Map MAPFUN over the windows in F.  CLOSURE is passed to each
-   invocation of MAPFUN.  If any invocation of MAPFUN returns non-zero,
-   the mapping is halted and the value returned is the return value
-   of map_windows().  Otherwise, map_windows() maps over all windows
-   in F and returns 0. */
+   invocation of MAPFUN.  If any invocation of MAPFUN returns
+   non-zero, the mapping is halted.  Otherwise, map_windows() maps
+   over all windows in F.
 
-int
+   If MAPFUN create or delete windows, the behaviour is undefined.  */
+
+void
 map_windows (struct frame *f, int (*mapfun) (struct window *w, void *closure),
 	     void *closure)
 {
-  return map_windows_1 (FRAME_ROOT_WINDOW (f), mapfun, closure);
+  if (f)
+    map_windows_1 (FRAME_ROOT_WINDOW (f), mapfun, closure);
+  else
+    {
+      Lisp_Object frmcons, devcons, concons;
+
+      FRAME_LOOP_NO_BREAK(frmcons, devcons, concons)
+	{
+	  if (map_windows_1 (FRAME_ROOT_WINDOW (XFRAME (XCAR (frmcons))),
+			     mapfun, closure))
+	    return;
+	}
+    }
 }
 
 
@@ -4626,24 +4640,18 @@ T if OBJECT is a window-configuration object.
   return WINDOW_CONFIGURATIONP (obj) ? Qt : Qnil;
 }
 
-/*
- * There are getting to be a lot of functions which traverse the
- * window structure doing various things.  It may be worth writing a
- * generic map-windows function.
- * #### I just did.  Feel free to rewrite. --ben
- */
-void
-mark_windows_in_use (Lisp_Object window, int mark)
+static int
+mark_windows_in_use_closure (struct window *w, void *closure)
 {
-  for (; !NILP (window) ; window = XWINDOW (window)->next)
-    {
-      XWINDOW (window)->config_mark = mark;
+  int mark = *(int *)closure;
+  w->config_mark = mark;
+  return 0;
+}
 
-      if (!NILP (XWINDOW (window)->vchild))
-	mark_windows_in_use (XWINDOW (window)->vchild, mark);
-      else if (!NILP (XWINDOW (window)->hchild))
-	mark_windows_in_use (XWINDOW (window)->hchild, mark);
-    }
+static void
+mark_windows_in_use (struct frame *f, int mark)
+{
+  map_windows (f, mark_windows_in_use_closure, &mark);
 }
 
 /* Lisp_Object return value so it can be used in record_unwind_protect() */
@@ -4771,7 +4779,7 @@ by `current-window-configuration' (which see).
       begin_dont_check_for_quit ();
       record_unwind_protect (free_window_configuration, old_window_config);
 
-      mark_windows_in_use (f->root_window, 1);
+      mark_windows_in_use (f, 1);
 
       previous_frame_width = FRAME_WIDTH (f);
       previous_frame_height = FRAME_HEIGHT (f);
@@ -5326,7 +5334,7 @@ syms_of_window (void)
   DEFSUBR (Fwindow_pixel_height);
   DEFSUBR (Fwindow_pixel_width);
   DEFSUBR (Fwindow_hscroll);
-#if 0 /* bogus RMS crock */
+#if 0 /* bogus crock */
   DEFSUBR (Fwindow_redisplay_end_trigger);
   DEFSUBR (Fset_window_redisplay_end_trigger);
 #endif

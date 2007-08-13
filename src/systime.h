@@ -224,7 +224,7 @@ extern int set_file_times (char *filename, EMACS_TIME atime, EMACS_TIME mtime);
 extern void get_process_times (double *user_time, double *system_time,
 			       double *real_time);
 
-#ifdef _WIN32
+#if defined(WINDOWSNT) || defined(BROKEN_CYGWIN)
 
 /* setitimer emulation for Win32 (see nt.c) */
 
@@ -240,6 +240,6 @@ int setitimer (int kind, const struct itimerval* itnew,
 #define ITIMER_REAL 1
 #define ITIMER_PROF 2
 
-#endif /* _WIN32 */
+#endif /* WINDOWSNT */
 
 #endif /* _XEMACS_SYSTIME_H_ */

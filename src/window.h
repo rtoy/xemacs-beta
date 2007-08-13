@@ -380,7 +380,6 @@ void window_scroll (Lisp_Object window, Lisp_Object n, int direction,
 int buffer_window_count (struct buffer *b, struct frame *f);
 int buffer_window_mru (struct window *w);
 void check_frame_size (struct frame *frame, int *rows, int *cols);
-void mark_windows_in_use (Lisp_Object window, int mark);
 struct window *decode_window (Lisp_Object window);
 struct window *find_window_by_pixel_pos (unsigned int pix_x,
 					 unsigned int pix_y,
@@ -395,9 +394,9 @@ struct buffer *window_display_buffer (struct window *w);
 void set_window_display_buffer (struct window *w, struct buffer *b);
 void update_frame_window_mirror (struct frame *f);
 
-int map_windows (struct frame *f,
-		 int (*mapfun) (struct window *w, void *closure),
-		 void *closure);
+void map_windows (struct frame *f,
+		  int (*mapfun) (struct window *w, void *closure),
+		  void *closure);
 void some_window_value_changed (Lisp_Object specifier, struct window *w,
 				Lisp_Object oldval);
 

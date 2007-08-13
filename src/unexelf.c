@@ -680,7 +680,7 @@ unexec (char *new_name, char *old_name, unsigned int data_start,
   if (n < 0)
     fatal ("Couldn't find segment next to .bss in %s\n", old_name, 0);
 
-  NEW_PROGRAM_H (n).p_filesz += new_data2_size;
+  NEW_PROGRAM_H (n).p_filesz = new_bss_addr - NEW_PROGRAM_H (n).p_vaddr;
   NEW_PROGRAM_H (n).p_memsz = NEW_PROGRAM_H (n).p_filesz;
 
 #if 0 /* Maybe allow section after data2 - does this ever happen? */

@@ -46,6 +46,10 @@ Boston, MA 02111-1307, USA.  */
 #include "window.h"
 
 #include "windows.h"
+#ifdef MULE
+#include "mule-ccl.h"
+#include "mule-charset.h"
+#endif
 
 /* MSWINDOWS_DIVIDER_LINE_WIDTH is the width of the line drawn in the gutter.
    MSWINDOWS_DIVIDER_SPACING is the amount of blank space on each side of the line.
@@ -60,6 +64,8 @@ Boston, MA 02111-1307, USA.  */
 /*
  * Random forward delarations
  */
+static void mswindows_update_dc (HDC hdc, Lisp_Object font, Lisp_Object fg,
+				 Lisp_Object bg, Lisp_Object bg_pmap);
 static void mswindows_clear_region (Lisp_Object locale, face_index findex,
 			      int x, int y, int width, int height);
 static void mswindows_output_vertical_divider (struct window *w, int clear);
@@ -181,53 +187,58 @@ separate_textual_runs (unsigned char *text_storage,
 
 static int
 mswindows_text_width_single_run (HDC hdc, struct face_cachel *cachel,
-			   textual_run *run)
+				 textual_run *run)
 {
   Lisp_Object font_inst = FACE_CACHEL_FONT (cachel, run->charset);
   struct Lisp_Font_Instance *fi = XFONT_INSTANCE (font_inst);
   SIZE size;
 
-#if 0	/* XXX HACK: mswindows_text_width is broken and will pass in a NULL hdc */
-  if (!fi->proportional_p)
-#else
   if (!fi->proportional_p || !hdc)
-#endif
     return (fi->width * run->len);
   else
     {
-      assert(run->dimension == 1);	/* XXX FIXME! */
-      GetTextExtentPoint32(hdc, run->ptr, run->len, &size);
+      assert(run->dimension == 1);	/* #### FIXME! */
+      mswindows_update_dc (hdc, font_inst, Qnil, Qnil, Qnil);
+      GetTextExtentPoint32 (hdc, run->ptr, run->len, &size);
       return(size.cx);
     }
 }
 
 
 /*****************************************************************************
- mswindows_update_gc
+ mswindows_update_dc
 
- Given a number of parameters munge the GC so it has those properties.
+ Given a number of parameters munge the DC so it has those properties.
  ****************************************************************************/
 static void
-mswindows_update_gc (HDC hdc, Lisp_Object font, Lisp_Object fg, Lisp_Object bg,
-	       Lisp_Object bg_pmap, Lisp_Object lwidth)
+mswindows_update_dc (HDC hdc, Lisp_Object font, Lisp_Object fg,
+		     Lisp_Object bg, Lisp_Object bg_pmap)
 {
   if (!NILP (font))
-    SelectObject(hdc, (XFONT_INSTANCE (font))->data);
+    SelectObject(hdc, FONT_INSTANCE_MSWINDOWS_HFONT (XFONT_INSTANCE (font)));
 
-  /* evil kludge! - XXX do we need this? */
+#ifdef DEBUG_XEMACS
+  /* evil kludge! - #### do we need this? */
   if (!NILP (fg) && !COLOR_INSTANCEP (fg))
     {
-      fprintf (stderr, "Help! mswindows_update_gc got a bogus fg value! fg = ");
-      debug_print (fg);
+      /* this break under mule */
+#if 0 
+      fprintf (stderr, "Help! mswindows_update_dc got a bogus fg value! fg = ");
+      debug_print (fg); 
+#endif
       fg = Qnil;
       }
 
   if (!NILP (bg) && !COLOR_INSTANCEP (bg))
     {
-      fprintf (stderr, "Help! mswindows_update_gc got a bogus fg value! bg = ");
-      debug_print (bg);
+      /* this break under mule */
+#if 0 
+      fprintf (stderr, "Help! mswindows_update_dc got a bogus fg value! bg = ");
+      debug_print (bg); 
+#endif
       bg = Qnil;
       }
+#endif
 
   if (!NILP (fg))
     SetTextColor (hdc, COLOR_INSTANCE_MSWINDOWS_COLOR (XCOLOR_INSTANCE (fg)));
@@ -252,14 +263,6 @@ mswindows_update_gc (HDC hdc, Lisp_Object font, Lisp_Object fg, Lisp_Object bg,
 	  gcv.tile = XIMAGE_INSTANCE_X_PIXMAP (bg_pmap);
 	  mask |= (GCTile | GCFillStyle);
 	}
-    }
-#endif
-
-#if 0	/* XXX FIXME */
-  if (!NILP (lwidth))
-    {
-      gcv.line_width = XINT (lwidth);
-      mask |= GCLineWidth;
     }
 #endif
 }
@@ -297,8 +300,8 @@ mswindows_output_blank (struct window *w, struct display_line *dl, struct rune *
     bg_pmap = Qnil;
 
   /* #### This deals only with solid colors */
-  mswindows_update_gc (FRAME_MSWINDOWS_DC (f), Qnil, Qnil,
-		       cachel->background, Qnil, Qnil);  
+  mswindows_update_dc (FRAME_MSWINDOWS_DC (f), Qnil, Qnil,
+		       cachel->background, Qnil);
   ExtTextOut (FRAME_MSWINDOWS_DC (f), 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
 }
 
@@ -352,20 +355,17 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
 		   (bar_p
 		   ? rb->findex
 		   : get_builtin_face_cache_index (w, Vtext_cursor_face)));
-  mswindows_update_gc (hdc, font, cachel->foreground,
-		       cachel->background, Qnil, Qnil);
-  ExtTextOut (FRAME_MSWINDOWS_DC (f), xpos, dl->ypos, ETO_OPAQUE,
-	      &rect, p_char, n_char, NULL);
+  mswindows_update_dc (hdc, font, cachel->foreground,
+		       cachel->background, Qnil);
+  ExtTextOut (hdc, xpos, dl->ypos, ETO_OPAQUE|ETO_CLIPPED, &rect, p_char, n_char, NULL);
 
   if (focus && bar_p)
     {
       rect.right = rect.left + (EQ (bar, Qt) ? 1 : 2);
       cachel = WINDOW_FACE_CACHEL (w,
 		 get_builtin_face_cache_index (w, Vtext_cursor_face));
-      mswindows_update_gc (hdc, Qnil, Qnil,
-			   cachel->background, Qnil, Qnil);
-      ExtTextOut (FRAME_MSWINDOWS_DC (f), xpos, dl->ypos, ETO_OPAQUE,
-		  &rect, NULL, 0, NULL);
+      mswindows_update_dc (hdc, Qnil, Qnil, cachel->background, Qnil);
+      ExtTextOut (hdc, xpos, dl->ypos, ETO_OPAQUE, &rect, NULL, 0, NULL);
     }
   else if (!focus)
     {
@@ -382,9 +382,9 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
 
       cachel = WINDOW_FACE_CACHEL (w, (real_char_p ? rb->findex
 				       : get_builtin_face_cache_index (w, Vdefault_face)));
-      mswindows_update_gc (hdc, Qnil, cachel->foreground,
-			   cachel->background, Qnil, Qnil);
-      ExtTextOut (FRAME_MSWINDOWS_DC (f), xpos, dl->ypos, ETO_OPAQUE | ETO_CLIPPED,
+      mswindows_update_dc (hdc, Qnil, cachel->foreground,
+			   cachel->background, Qnil);
+      ExtTextOut (hdc, xpos, dl->ypos, ETO_OPAQUE | ETO_CLIPPED,
 		  &rect, p_char, n_char, NULL);
     }
 }
@@ -422,7 +422,7 @@ mswindows_output_string (struct window *w, struct display_line *dl,
   struct frame *f = XFRAME (w->frame);
   /* struct device *d = XDEVICE (f->device);*/
   Lisp_Object window = Qnil;
-  HDC hdc;
+  HDC hdc = FRAME_MSWINDOWS_DC (f);
   int clip_end;
   Lisp_Object bg_pmap;
   int len = Dynarr_length (buf);
@@ -433,7 +433,6 @@ mswindows_output_string (struct window *w, struct display_line *dl,
   struct face_cachel *cachel = WINDOW_FACE_CACHEL (w, findex);
 
   XSETWINDOW (window, w);
-  hdc = FRAME_MSWINDOWS_DC(f);
 
 #if 0	/* XXX: FIXME? */
   /* We can't work out the width before we've set the font in the DC */
@@ -472,9 +471,8 @@ mswindows_output_string (struct window *w, struct display_line *dl,
       if (EQ (font, Vthe_null_font_instance))
 	continue;
 
-      mswindows_update_gc (hdc, font, cachel->foreground,
-			   NILP(bg_pmap) ? cachel->background : Qnil,
-			   Qnil, Qnil);
+      mswindows_update_dc (hdc, font, cachel->foreground,
+			   NILP(bg_pmap) ? cachel->background : Qnil, Qnil);
 
       this_width = mswindows_text_width_single_run (hdc, cachel, runs + i);
 
@@ -502,8 +500,7 @@ mswindows_output_string (struct window *w, struct display_line *dl,
  * to by PRC, and paints only the intersection
  */
 static void
-mswindows_redisplay_deadbox_maybe (struct window *w,
-				   CONST RECT* prc)
+mswindows_redisplay_deadbox_maybe (struct window *w, CONST RECT* prc)
 {
   int sbh = window_scrollbar_height (w);
   int sbw = window_scrollbar_width (w);
@@ -682,7 +679,7 @@ mswindows_bevel_modeline (struct window *w, struct display_line *dl)
   UINT edge;
 
   color = WINDOW_FACE_CACHEL_BACKGROUND (w, MODELINE_INDEX);
-  mswindows_update_gc(FRAME_MSWINDOWS_DC(f), Qnil, Qnil, color, Qnil, Qnil);
+  mswindows_update_dc (FRAME_MSWINDOWS_DC (f), Qnil, Qnil, color, Qnil);
 
   if (XINT (w->modeline_shadow_thickness) < 0)
     shadow_width = -shadow_width;
@@ -696,7 +693,7 @@ mswindows_bevel_modeline (struct window *w, struct display_line *dl)
   else
     edge = EDGE_RAISED;
     
-  DrawEdge (FRAME_MSWINDOWS_DC(f), &rect, edge, BF_RECT);
+  DrawEdge (FRAME_MSWINDOWS_DC (f), &rect, edge, BF_RECT);
 }
 
 
@@ -865,14 +862,7 @@ mswindows_output_display_block (struct window *w, struct display_line *dl, int b
 		  else
 		    {
 		      Dynarr_add (buf, rb->object.chr.ch);
-#if 0
-		      mswindows_output_string (w, dl, buf, xpos, 0, start_pixpos,
-					 rb->width, findex, 1,
-					 cursor_start, cursor_width,
-				         cursor_height);
-#else
 		      mswindows_output_cursor (w, dl, xpos, cursor_width, rb);
-#endif
 		      Dynarr_reset (buf);
 		    }
 
@@ -941,10 +931,10 @@ mswindows_output_display_block (struct window *w, struct display_line *dl, int b
 
 		      if (rb->cursor_type == CURSOR_ON)
 			mswindows_output_cursor (w, dl, xpos, cursor_width, rb);
-		      else
+		      else /* #### redisplay-x passes -1 as the width: why ? */
 			mswindows_output_string (w, dl, buf, xpos,
 					   rb->object.dglyph.xoffset,
-					   start_pixpos, -1, findex);
+					   start_pixpos, rb->width, findex);
 		      Dynarr_reset (buf);
 		    }
 		    break;
@@ -1038,10 +1028,10 @@ mswindows_output_vertical_divider (struct window *w, int clear)
 
   /* Draw the divider line */
   color = WINDOW_FACE_CACHEL_BACKGROUND (w, MODELINE_INDEX);
-  mswindows_update_gc(FRAME_MSWINDOWS_DC(f), Qnil, Qnil, color, Qnil, Qnil);
-  ExtTextOut (FRAME_MSWINDOWS_DC(f), 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
+  mswindows_update_dc (FRAME_MSWINDOWS_DC(f), Qnil, Qnil, color, Qnil);
+  ExtTextOut (FRAME_MSWINDOWS_DC (f), 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
   if (shadow_width)
-    DrawEdge (FRAME_MSWINDOWS_DC(f), &rect,
+    DrawEdge (FRAME_MSWINDOWS_DC (f), &rect,
 	      shadow_width==1 ? BDR_RAISEDINNER : EDGE_RAISED,
 	      BF_TOP|BF_RIGHT|BF_LEFT);
 }
@@ -1052,24 +1042,22 @@ mswindows_output_vertical_divider (struct window *w, int clear)
 
  Given a string and a face, return the string's length in pixels when
  displayed in the font associated with the face.
- XXX FIXME: get redisplay_text_width_emchar_string() etc to pass in the
- window so we can get hold of the window's frame's gc
  ****************************************************************************/
 static int
-mswindows_text_width (struct face_cachel *cachel, CONST Emchar *str,
-		Charcount len)
+mswindows_text_width (struct frame *f, struct face_cachel *cachel,
+		      CONST Emchar *str, Charcount len)
 {
   int width_so_far = 0;
   unsigned char *text_storage = (unsigned char *) alloca (2 * len);
   textual_run *runs = alloca_array (textual_run, len);
   int nruns;
   int i;
-  HDC hdc=NULL;	/* XXXXX FIXME! only works for non-proportional fonts! */
 
   nruns = separate_textual_runs (text_storage, runs, str, len);
 
   for (i = 0; i < nruns; i++)
-    width_so_far += mswindows_text_width_single_run (hdc, cachel, runs + i);
+    width_so_far += mswindows_text_width_single_run (FRAME_MSWINDOWS_DC (f),
+						     cachel, runs + i);
 
   return width_so_far;
 }
@@ -1148,7 +1136,8 @@ mswindows_clear_region (Lisp_Object locale, face_index findex, int x, int y,
 	      bcolor = FACE_BACKGROUND (Vdefault_face, locale);
 	    }
 
-	  mswindows_update_gc (FRAME_MSWINDOWS_DC(f), Qnil, fcolor, bcolor, background_pixmap, Qnil);
+	  mswindows_update_dc (FRAME_MSWINDOWS_DC (f),
+			       Qnil, fcolor, bcolor, background_pixmap);
       }
 
       /* XX FIXME: Get brush from background_pixmap here */
@@ -1159,8 +1148,8 @@ mswindows_clear_region (Lisp_Object locale, face_index findex, int x, int y,
     {
       Lisp_Object color = (w ? WINDOW_FACE_CACHEL_BACKGROUND (w, findex) :
 			   FACE_BACKGROUND (Vdefault_face, locale));
-      mswindows_update_gc(FRAME_MSWINDOWS_DC(f), Qnil, Qnil, color, Qnil, Qnil);
-      ExtTextOut (FRAME_MSWINDOWS_DC(f), 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
+      mswindows_update_dc (FRAME_MSWINDOWS_DC (f), Qnil, Qnil, color, Qnil);
+      ExtTextOut (FRAME_MSWINDOWS_DC (f), 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
     }
 
 #ifdef HAVE_SCROLLBARS

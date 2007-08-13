@@ -104,13 +104,7 @@ mark_symbol (Lisp_Object obj, void (*markobj) (Lisp_Object))
 
   ((markobj) (sym->value));
   ((markobj) (sym->function));
-  /* DON'T mark through ->obarray slot.  Since the slot is not visible
-     from Lisp, it would be wrong not to gc an obarray vector only
-     because there are symbols pointing to it.  This is safe, because
-     we only check the nil-ness of the object.  An implication of this
-     is that, when the obarray vector is gc-ed, its symbols are still
-     considered "interned" for printing purposes -- but it's probably
-     no big deal.  */
+  /* No need to mark through ->obarray, because it only holds nil or t.  */
   /*((markobj) (sym->obarray));*/
   XSETSTRING (pname, sym->name);
   ((markobj) (pname));
@@ -201,7 +195,12 @@ it defaults to the value of `obarray'.
   if (purify_flag && ! purified (str))
     str = make_pure_pname (XSTRING_DATA (str), len, 0);
   sym = Fmake_symbol (str);
-  XSYMBOL (sym)->obarray = obarray;
+  /* FSFmacs places OBARRAY here, but it is pointless because we do
+     not mark through this slot, so it is not usable later (because
+     the obarray might have been collected).  Marking through the
+     ->obarray slot is an even worse idea, because it would keep
+     obarrays from being collected because of symbols pointed to them.  */
+  XSYMBOL (sym)->obarray = Qt;
 
   if (SYMBOLP (*ptr))
     symbol_next (XSYMBOL (sym)) = XSYMBOL (*ptr);
@@ -3174,7 +3173,7 @@ init_symbols_once_early (void)
     hash %= OBARRAY_SIZE;
     tem = &XVECTOR_DATA (Vobarray)[hash];
     *tem = Qnil;
-    XSYMBOL (Qnil)->obarray = Vobarray;
+    XSYMBOL (Qnil)->obarray = Qt;
   }
 
   {

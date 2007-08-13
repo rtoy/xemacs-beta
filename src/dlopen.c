@@ -113,21 +113,15 @@ available for use.
 
   function = dlsym (handle, "syms_of");
   if (function)
-    {
-      function ();
-    }
+    (*function) ();
 
   function = dlsym (handle, "vars_of");
   if (function)
-    {
-      function ();
-    }
+    (*function) ();
 
   function = dlsym (handle, "complex_vars_of");
   if (function)
-    {
-      function ();
-    }
+    (*function) ();
 
   return Qnil;
 }

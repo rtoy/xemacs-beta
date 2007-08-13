@@ -1361,7 +1361,13 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	  else
 	    {
 	      if (CONSP (Vprint_gensym_alist))
-		XSETINT (tem, XINT (XCDR (XCAR (Vprint_gensym_alist))) + 1);
+		{
+		  /* Vprint_gensym_alist is exposed to Lisp, so we
+                     have to be careful.  */
+		  CHECK_CONS (XCAR (Vprint_gensym_alist));
+		  CHECK_INT (XCDR (XCAR (Vprint_gensym_alist)));
+		  XSETINT (tem, XINT (XCDR (XCAR (Vprint_gensym_alist))) + 1);
+		}
 	      else
 		XSETINT (tem, 1);
 	      Vprint_gensym_alist = Fcons (Fcons (obj, tem), Vprint_gensym_alist);

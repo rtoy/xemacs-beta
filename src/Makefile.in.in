@@ -95,6 +95,7 @@ vpath config.h
 vpath paths.h
 vpath Emacs.ad.h
 vpath puresize-adjust.h
+vpath sheap-adjust.h
 #else
 VPATH=@srcdir@
 #endif
@@ -125,6 +126,10 @@ LIBI18N = -li18n
 
 X11_libs= $(LIBX11_LIBS) $(libx11_intl) $(LIBI18N)
 #endif /* HAVE_X_WINDOWS */
+
+#ifdef HEAP_IN_DATA
+sheap_obj=sheap.o
+#endif
 
 ## -Demacs is needed to make some files produce the correct version
 ## for use in Emacs.
@@ -172,7 +177,7 @@ objs=\
  macros.o marker.o md5.o minibuf.o objects.o opaque.o\
  print.o process.o profile.o pure.o\
  rangetab.o redisplay.o redisplay-output.o regex.o\
- search.o signal.o sound.o\
+ search.o $(sheap_obj) signal.o sound.o\
  specifier.o strftime.o symbols.o syntax.o sysdep.o\
  undo.o $(x_objs) widget.o window.o
 
@@ -299,8 +304,8 @@ xemacs: temacs ${libsrc}DOC $(mo_file) ${other_files} update-elc.stamp
 	@if test -f $@;        then if test -f SATISFIED; then \
 		./xemacs -batch -vanilla -f list-load-path-shadows; fi; \
 		$(RM) SATISFIED; exit 0; fi; \
-	 if test -f SATISFIED; then $(RM) SATISFIED; exit 1; fi; \
-	 $(RECURSIVE_MAKE) $@;
+	if test -f SATISFIED; then $(RM) SATISFIED; exit 1; fi; \
+	$(RECURSIVE_MAKE) $@;
 
 FRC.update-elc.stamp :
 
@@ -550,7 +555,7 @@ puresize-adjust.h: ${srcdir}/puresize.h
 paths.h: ${srcdir}/paths.h.in
 Emacs.ad.h: ${srcdir}/${etcdir}Emacs.ad
 
-config.h puresize-adjust.h paths.h Emacs.ad.h :
+config.h puresize-adjust.h sheap-adjust.h paths.h Emacs.ad.h :
 	@echo "The file $@ needs to be re-generated."
 	@echo "Please run a make in the top level directory."
 	@echo "Consult the file \`INSTALL' for instructions for building XEmacs."
@@ -615,7 +620,7 @@ hpplay.o: ${srcdir}/hpplay.c
 .PHONY: mostlyclean clean distclean realclean versionclean extraclean
 mostlyclean:
 	$(RM) temacs puremacs quantmacs prefix-args depend.* *.o *.i \
-	  core puresize-adjust.h
+	  core puresize-adjust.h sheap-adjust.h
 clean: mostlyclean versionclean
 	$(RM) libextcli* update-elc.stamp
 ## This is used in making a distribution.
@@ -873,6 +878,8 @@ redisplay-output.o: mule-charset.h
 redisplay-tty.o: mule-charset.h
 redisplay-x.o: mule-charset.h
 redisplay-x.o: mule-coding.h
+redisplay-msw.o: mule-charset.h
+redisplay-msw.o: mule-ccl.h
 redisplay.o: mule-charset.h
 redisplay.o: mule-coding.h
 regex.o: mule-charset.h
@@ -2316,6 +2323,8 @@ search.o: insdel.h
 search.o: opaque.h
 search.o: regex.h
 search.o: syntax.h
+sheap.o: sheap-adjust.h
+sheap.o: config.h
 signal.o: blocktype.h
 signal.o: config.h
 signal.o: conslots.h

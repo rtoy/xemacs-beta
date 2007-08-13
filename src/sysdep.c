@@ -885,7 +885,7 @@ init_baud_rate (struct device *d)
 /*                       SIGIO control                    */
 /* ------------------------------------------------------ */
 
-#ifdef SIGIO
+#if defined(SIGIO) && !defined(BROKEN_SIGIO)
 
 static void
 init_sigio_on_device (struct device *d)
@@ -1659,7 +1659,7 @@ init_one_device (struct device *d)
   if (DEVICE_TTY_P (d))
     tty_init_sys_modes_on_device (d);
 #endif
-#ifdef SIGIO
+#if defined(SIGIO) && !defined(BROKEN_SIGIO)
   if (!DEVICE_STREAM_P (d))
     {
       init_sigio_on_device (d);
@@ -1870,7 +1870,7 @@ reset_one_device (struct device *d)
 #endif
   if (DEVICE_STREAM_P (d))
     fflush (CONSOLE_STREAM_DATA (XCONSOLE (DEVICE_CONSOLE (d)))->outfd);
-#ifdef SIGIO
+#if defined(SIGIO) && !defined(BROKEN_SIGIO)
   if (!DEVICE_STREAM_P (d))
     {
       unrequest_sigio_on_device (d);
@@ -2119,7 +2119,11 @@ start_of_data (void)
    * we don't sweat the handful of bytes that might lose.
    */
   extern char **environ;
-
+#ifdef HEAP_IN_DATA
+  extern char* static_heap_base;
+  if (!initialized)
+    return static_heap_base;
+#endif
   return((char *) &environ);
 #else
   extern int data_start;
@@ -2208,7 +2212,7 @@ init_system_name (void)
       hostname_size <<= 1;
       hostname = (char *) alloca (hostname_size);
     }
-# if defined( HAVE_SOCKETS) && !defined(__CYGWIN32__)
+# if defined( HAVE_SOCKETS) && !defined(BROKEN_CYGWIN)
   /* Turn the hostname into the official, fully-qualified hostname.
      Don't do this if we're going to dump; this can confuse system
      libraries on some machines and make the dumped emacs core dump. */

@@ -94,7 +94,7 @@
 		'(".o" ".elc" "~" ".bin" ".lbin" ".fasl"
 		  ".dvi" ".toc" ".log" ".aux" ".a" ".ln"
 		  ".lof" ".blg" ".bbl" ".glo" ".idx" ".lot" ".fmt"
-		  ".diff" ".oi"))))
+		  ".diff" ".oi" ".class"))))
 
 
 (setq debug-ignored-errors

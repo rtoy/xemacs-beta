@@ -3,7 +3,7 @@
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>, then
-;;         Richar Stallman <rms@gnu.ai.mit.edu>, then
+;;         Richard Stallman <rms@gnu.ai.mit.edu>, then
 ;;         Hrvoje Niksic <hniksic@srce.hr>       (rewritten for XEmacs)
 ;; Maintainer: Hrvoje Niksic <hniksic@srce.hr>
 ;; Keywords: internal

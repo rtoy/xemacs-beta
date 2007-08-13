@@ -1,3 +1,229 @@
+1998-02-09  SL Baur  <steve@altair.xemacs.org>
+
+	* data.c (Fold_eq): PC-ize.
+
+	* chartab.c: PC-ize.
+
+	* window.c (toplevel): PC-ize.
+	(syms_of_window): Ditto.
+
+	* search.c (Freplace_match): PC-ize.
+
+	* lread.c: PC-ize.
+
+	* buffer.c (Fbuffer_enable_undo): PC-ize.
+	(Fbuffer_disable_undo): ditto.
+
+	* eval.c (return_from_signal): PC-ize.
+
+	* casetab.c: PC-ize.
+
+	* callproc.c (Fcall_process_internal): PC-ize.
+
+1998-02-02  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* gui.h (struct gui_item): Menu item, submenu or GUI button
+	properties are abstracted into this new structure.
+	Added prototypes for the following functions
+
+	* gui.c (gui_item_init): New function
+	(gui_item_add_keyval_pair): Ditto
+	(gui_parse_item_keywords): Ditto
+	(gui_item_active_p): Ditto
+	(gui_item_included_p): Ditto
+	(gui_item_display_flush_left): Ditto
+	(gui_item_display_flush_right): Ditto. The above listen new
+	functions manipulate on properties common to menu items and GUI
+	buttons. 
+
+	* menubar.c (current_frame_menubar): Moved from menubar-msw.c
+	(menu_parse_submenu_keywords): New function
+	(Fmenu_find_real_submenu): Ditto, lisp accessible. The last two
+	functions operate on menu properties stored in struct gui_item,
+	but are specific to menus only.
+
+	* menubar.h: Prototypes for the above functions.
+
+	* menubar-msw.c: Modified to utilize struct gui_item instead of
+	plists, to reduce garbage. Suggested by Ben Wing.
+	Unreachable menus are fixed.
+
+1998-01-03  Kirill M. Katsnelson  <kkm@kis.ru>
+
+	* menubar-msw.c (allocate_menu_item_id): Added third parameter to
+	hash, suffix. Menus tend to put non-localizable items into suffix
+	with empty name.
+	(update_frame_menubar_maybe): top_level_menu is now set here.
+	(mswindows_popup_menu): Ditto. It was incorrect to set it from
+	populate.
+	(vars_of_menubar_mswindows): Fprovide ('mswindows-menubar) removed:
+	(featurep (and 'mswindows 'menubars)) tests the same.
+	(mswindows_update_frame_menubars): update_..._maybe () now called
+	only if frame->menubar_changed is set. Is it right to patch
+	menubar.c instead?
+
+1998-02-08  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* objects-msw.c:
+	  Updated color database to X11R6. Also added support for
+	  "#RRRGGGBBB" and "#RRRRGGGGBBBB" in addition to "#RRGGBB".
+
+1998-02-08  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* console.h:
+	* console-stream.c:
+	* redisplay.c:
+	* redisplay-msw.c:
+	* redisplay-tty.c:
+	* redisplay-x.c:
+	  Added the frame as a parameter to the text_width device
+	  method.
+
+	* redisplay-msw.c:
+	  Support for proportional fonts.
+
+1998-02-07  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* window.c (map_windows): Don't return the value of map_windows_1.
+	(map_windows): If F is NULL, map through all the windows.
+	(mark_windows_in_use): Use map_windows(); made it static.
+	(mark_windows_in_use_closure): New function.
+
+1998-02-01  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* alloc.c (Fpurecopy): Check for non-`nil'-ness instead of
+	checking for Vobarray.
+
+	* dlopen.c (Fdl_open): Indirect FUNCTION explicitly, for clarity.
+
+	* elhash.c: Removed broken hashtable_hash().
+
+1998-01-28  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* symbols.c (Fintern): Use Qt instead of the actual obarray.
+	(init_symbols_once_early): Ditto.
+
+1998-01-27  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* lisp.h (DO_REALLOC): Name the variable `do_realloc_newsize'
+	instead of `newsize', to avoid name collisions.
+
+1998-01-26  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* print.c (print_symbol): Be more wary about the contents of
+	Vprint_gensym_alist.
+
+1998-02-06  SL Baur  <steve@altair.xemacs.org>
+
+	* emacs.c (Frun_emacs_from_temacs): Disable largely meaning-free
+	purity/impurity summary.  Compile with -DREPORT_PURE_USAGE to get
+	it back.
+
+	* process.c (create_process): Unused variable elimination.
+
+	* lread.c (Fload_internal): Compiler warning suppression.
+
+	* alloc.c (report_pure_usage): Remove unused variable.
+
+Wed Jan 28 13:41:22 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* Makefile.in.in: add support for sheap-adjust.h generation for
+	static heap. 
+
+Wed Jan 28 13:41:22 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* Makefile.in.in: add sheap-adjust.h support, basically copied
+	from puresize-adjust.h. predicate sheap.o on HEAP_IN_DATA. fix
+	xemacs target slightly to not be a single shell command, this
+	fixes an obscure bug in cygwin gmake.
+
+	* alloc.c (report_pure_usage): call sheap_adjust_h if HEAP_IN_DATA
+	is defined.
+
+	* sysfile.h: add abstracted OPEN_BINARY, OPEN_TEXT etc defines. On
+	Unix these are all 0 and have no effect. On systems defining
+	O_BINARY these use it. WINDOWSNT is currently unaffected because
+	there are individual #ifdefs in each source file, but with this
+	change they could be removed.
+
+	* emacs.c:
+	* doc.c:
+	* lread.c:
+	* process.c: generalize open() calls with OPEN_BINARY. Does
+	nothing under Unix.
+
+	* emacs.c: predicate inclusion of windows.h on WINDOWSNT not
+	_WIN32.
+
+	* process.c:
+	* sysdep.c:
+	* signal.c: predicate SIGIO stuff also on !BROKEN_SIGIO, this is
+	required for building on cygwin32 b19 which has SIGIO that only
+	works on sockets.
+
+	* fileio.c:
+	* event-stream.c: generalize open() calls with OPEN_BINARY. Does
+	nothing under Unix. Use open() instead of creat() to make this
+	possible. use CREAT_MODE from sysfile.h
+
+	* config.h.in: add MULE_CODING, currently not used. add support
+	for HAVE_A_OUT_H.
+
+	* elhash.c:
+	* menubar-msw.c:
+	* mule-ccl.c:
+	* device-msw.c: warning elimination.
+
+	* event-msw.c: add undeclared Dde calls for cygwin.
+
+	* redisplay-msw.c: warning elimination under mule.
+
+	* gmalloc.c: make initalize() really do that. If HEAP_IN_DATA is
+	defined catch free() & realloc() calls with addresses in the data
+	space. __morecore calls more_static_core for temacs, when dumped
+	switches to sbrk().
+
+	* console-msw.h: undef CONST after windows.h inclusion since this
+	defines CONST. #ifdef out shellapi under cygwin.
+
+	* device-msw.c: include sysdep.h
+
+	* objects-msw.c: add dummy mswindows_font_spec_matches_charset and
+	mswindows_find_charset_font so that we can build with mule.
+
+	* mem-limits: return -1 for get_lim_data() when HEAP_IN_DATA is
+	defined.
+
+	* sheap.c: new file. defines sheap_adjust_h and more_static_core
+	so that data space can be used by gmalloc before dumping when
+	HEAP_IN_DATA is defined. beef up error message about what to do if
+	sheap space runs out.
+
+	* sysdep.c: make start_of_data reurn something sensible for
+	HEAP_IN_DATA.
+
+	* systime.h: don't use itimer stuff on cygwin b19.
+
+	* unexcw.c: new file. Full unexec() support for cygwin using the
+	HEAP_IN_DATA setup provided by sheap.c and friends. No run-time
+	remapping is performed. This could be generalized to support many
+	platforms that use COFF. you need a.out.h from my website to build
+	this. cygwin b19 will have this.
+
+	* s/cygwin32.h: fixed commentary. compile in unexcw.o for dumping
+	support. removed irrelevent things. define BROKEN_SIGIO. remove
+	include of windows.h. add correct process support defines, process
+	support might work when non-blocking io is implemented in cygwin.
+
+1998-02-02  P. E. Jareth Hein  <jareth@camelot-soft.com>
+
+	* glyphs.c: Removed ImageMagick support, re-instituted the previous
+	support for JPEG, GIF and PNG with the new color system.
+
+1998-02-05  Olivier Galibert  <galibert@pobox.com>
+
+	* unexelf.c: Fix alignment problems on Linux.
+
 1998-02-01  Kyle Jones  <kyle_jones@wonderworks.com>
 
 	* redisplay.c (redisplay_window): After outputting

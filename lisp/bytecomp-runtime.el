@@ -189,8 +189,6 @@ If (featurep 'FEATURE), evals now; otherwise adds an elt to
 ;;; Interface to file-local byte-compiler parameters.
 ;;; Redefined in bytecomp.el.
 
-;;; The great RMS speaketh:
-;;;
 ;;; I nuked this because it's not a good idea for users to think of
 ;;; using it.  These options are a matter of installation preference,
 ;;; and have nothing to do with particular source files; it's a

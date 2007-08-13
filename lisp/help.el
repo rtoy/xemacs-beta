@@ -1160,7 +1160,7 @@ Uses `pp-internal' if defined, otherwise `cl-prettyprint'"
 		   (pp-internal object "\n")
 		   (terpri))
 	       (cl-prettyprint object)))))
-     (format "\n%s\n" object))))
+     (format "\n%S\n" object))))
 
 (defun describe-variable (variable)
   "Display the full documentation of VARIABLE (a symbol)."

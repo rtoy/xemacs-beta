@@ -22,7 +22,7 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: FSF 19.34.
+;;; Synched up with: FSF 20.2.
 
 ;;; Commentary:
 
@@ -32,6 +32,12 @@
 ;; Emacs user's manual.
 
 ;;; Code:
+
+(defvar text-mode-hook nil
+  "Normal hook run when entering Text mode and many related modes.")
+
+(defvar text-mode-variant nil
+  "Non-nil if this buffer's major mode is a variant of Text mode.")
 
 (defvar text-mode-syntax-table nil
   "Syntax table used while in text mode.")
@@ -58,71 +64,76 @@ inherit all the commands defined in this map.")
   ;; XEmacs change
   (set-keymap-name text-mode-map 'text-mode-map)
   (define-key text-mode-map "\e\t" 'ispell-complete-word)
-  (define-key text-mode-map "\t" 'tab-to-tab-stop)
+  (define-key text-mode-map "\t" 'indent-relative)
   (define-key text-mode-map "\es" 'center-line)
   (define-key text-mode-map "\eS" 'center-paragraph))
 
 
-;(defun non-saved-text-mode ()
-;  "Like text-mode, but delete auto save file when file is saved for real."
-;  (text-mode)
-;  (make-local-variable 'delete-auto-save-files)
-;  (setq delete-auto-save-files t))
-
 (defun text-mode ()
-  "Major mode for editing text intended for humans to read.
-Special commands:
-\\{text-mode-map}
-Turning on Text mode calls the value of the variable `text-mode-hook',
-if that value is non-nil."
-  (interactive)
-  (kill-all-local-variables)
-  (use-local-map text-mode-map)
-  (setq mode-name "Text")
-  (setq major-mode 'text-mode)
-  (setq local-abbrev-table text-mode-abbrev-table)
-  (set-syntax-table text-mode-syntax-table)
-  (run-hooks 'text-mode-hook))
-
-(defvar indented-text-mode-map ()
-  "Keymap for Indented Text mode.
-All the commands defined in Text mode are inherited unless overridden.")
-
-(if indented-text-mode-map
-    ()
-  ;; Make different definition for TAB before the one in text-mode-map, but
-  ;; share the rest.
-  ;; XEmacs change
-  (setq indented-text-mode-map (make-sparse-keymap))
-  (set-keymap-name indented-text-mode-map 'indented-text-mode-map)
-  (set-keymap-parents indented-text-mode-map (list text-mode-map))
-  (define-key indented-text-mode-map "\t" 'indent-relative))
-
-(defun indented-text-mode ()
-  "Major mode for editing text with indented paragraphs.
-In this mode, paragraphs are delimited only by blank lines.
-You can thus get the benefit of adaptive filling
+  "Major mode for editing text written for humans to read.
+In this mode, paragraphs are delimited only by blank or white lines.
+You can thus get the full benefit of adaptive filling
  (see the variable `adaptive-fill-mode').
-\\{indented-text-mode-map}
-Turning on `indented-text-mode' calls the value of the variable
-`text-mode-hook', if that value is non-nil."
+\\{text-mode-map}
+Turning on Text mode runs the normal hook `text-mode-hook'."
   (interactive)
   (kill-all-local-variables)
   (use-local-map text-mode-map)
-  (define-abbrev-table 'text-mode-abbrev-table ())
   (setq local-abbrev-table text-mode-abbrev-table)
   (set-syntax-table text-mode-syntax-table)
-  (make-local-variable 'indent-line-function)
-  (setq indent-line-function 'indent-relative-maybe)
   (make-local-variable 'paragraph-start)
-  (setq paragraph-start (concat "$\\|" page-delimiter))
+  (setq paragraph-start (concat "[ \t]*$\\|" page-delimiter))
   (make-local-variable 'paragraph-separate)
   (setq paragraph-separate paragraph-start)
-  (use-local-map indented-text-mode-map)
-  (setq mode-name "Indented Text")
-  (setq major-mode 'indented-text-mode)
-  (run-hooks 'text-mode-hook 'indented-text-mode-hook))
+  (setq mode-name "Text")
+  (setq major-mode 'text-mode)
+  (run-hooks 'text-mode-hook))
 
+(defun paragraph-indent-text-mode ()
+  "Major mode for editing text, with leading spaces starting a paragraph.
+In this mode, you do not need blank lines between paragraphs
+when the first line of the following paragraph starts with whitespace.
+Special commands:
+\\{text-mode-map}
+Turning on Paragraph-Indent Text mode runs the normal hooks
+`text-mode-hook' and `paragraph-indent-text-mode-hook'."
+  (interactive)
+  (kill-all-local-variables)
+  (use-local-map text-mode-map)
+  (setq mode-name "Parindent")
+  (setq major-mode 'paragraph-indent-text-mode)
+  (setq local-abbrev-table text-mode-abbrev-table)
+  (set-syntax-table text-mode-syntax-table)
+  (run-hooks 'text-mode-hook 'paragraph-indent-text-mode-hook))
+
+(defalias 'indented-text-mode 'text-mode)
+
+(defun text-mode-hook-identify ()
+  "Mark that this mode has run `text-mode-hook'.
+This is how `toggle-text-mode-auto-fill' knows which buffers to operate on."
+  (make-local-variable 'text-mode-variant)
+  (setq text-mode-variant t))
+
+(add-hook 'text-mode-hook 'text-mode-hook-identify)
+
+(defun toggle-text-mode-auto-fill ()
+  "Toggle whether to use Auto Fill in Text mode and related modes.
+This command affects all buffers that use modes related to Text mode,
+both existing buffers and buffers that you subsequently create."
+  (interactive)
+  (let ((enable-mode (not (memq 'turn-on-auto-fill text-mode-hook)))
+	(buffers (buffer-list)))
+    (if enable-mode
+	(add-hook 'text-mode-hook 'turn-on-auto-fill)
+      (remove-hook 'text-mode-hook 'turn-on-auto-fill))
+    (while buffers
+      (with-current-buffer (car buffers)
+	(if text-mode-variant
+	    (auto-fill-mode (if enable-mode 1 0))))
+      (setq buffers (cdr buffers)))
+    (message "Auto Fill %s in Text modes"
+	     (if enable-mode "enabled" "disabled"))))
+
 (defun center-paragraph ()
   "Center each nonblank line in the paragraph at or after point.
 See `center-line' for more info."

@@ -72,18 +72,6 @@
 	(setq load-warn-when-source-newer t ; Used to be set to nil at the end
 	      load-warn-when-source-only  t) ; Set to nil at the end
 
-	;; Inserted for debugging.  Something is corrupting a single symbol
-	;; somewhere to have an integer 0 property list.  -slb 6/28/1997.
-	(defun test-atoms ()
-	  (mapatoms
-	   #'(lambda (symbol)
-	       (condition-case nil
-		   (get symbol 'custom-group)
-		 (t (princ
-		     (format "Bad plist in %s, %s\n"
-			     (symbol-name symbol)
-			     (prin1-to-string (object-plist symbol)))))))))
-
 	;; garbage collect after loading every file in an attempt to
 	;; minimize the size of the dumped image (if we don't do this,
 	;; there will be lots of extra space in the data segment filled
@@ -97,7 +85,6 @@
 	    (if full-path
 		(prog1
 		  (load full-path)
-		  ;; '(test-atoms)
 		  '(garbage-collect))
 	      (external-debugging-output (format "\nLoad file %s: not found\n"
 						 file))
@@ -160,12 +147,9 @@
 ;; purify-flag is nil if called from loadup-el.el.
 (when purify-flag
   (message "Finding pointers to doc strings...")
-  ;; (test-atoms) ; Debug -- Doesn't happen here
   (Snarf-documentation "DOC")
-  ;; (test-atoms) ; Debug -- Doesn't happen here
   (message "Finding pointers to doc strings...done")
   (Verify-documentation)
-  ;; (test-atoms) ; Debug -- Doesn't happen here
   )
 
 ;; Note: You can cause additional libraries to be preloaded
@@ -184,12 +168,9 @@
     (message "Dumping under the name xemacs")
     ;; This is handled earlier in the build process.
     ;; (condition-case () (delete-file "xemacs") (file-error nil))
-    (test-atoms)
     (when (fboundp 'really-free)
       (really-free))
-    (test-atoms)
     (dump-emacs "xemacs" "temacs")
-    (test-atoms)
     (kill-emacs))
 
 (when (member "run-temacs" command-line-args)

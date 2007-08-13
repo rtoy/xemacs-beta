@@ -171,7 +171,7 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_LINUX_VERSION_H
 #undef HAVE_INTTYPES_H
 #undef HAVE_SYS_UN_H
-#undef HAVE_COFF_H
+#undef HAVE_A_OUT_H
 #undef STDC_HEADERS
 #undef TIME_WITH_SYS_TIME
 #undef WORDS_BIGENDIAN
@@ -298,9 +298,17 @@ Boston, MA 02111-1307, USA.  */
    This enables graphical display of X-face headers in mail/news messages */
 #undef HAVE_XFACE
 
-/* Compile in support for ImageMagick (all image formats) */
-#undef HAVE_IMAGEMAGICK
-#undef MAGICK_HEADERS_ARE_UNDER_X11
+/* Compile in support for JPEG images */
+#undef HAVE_JPEG
+
+/* Compile in support for TIFF images */
+#undef HAVE_TIFF
+
+/* Compile in support for GIF images */
+#undef HAVE_GIF
+
+/* Compile in support for PNG images */
+#undef HAVE_PNG
 
 /* Do you have the Xmu library?
    This should always be the case except on losing HP-UX systems. */
@@ -412,6 +420,9 @@ Boston, MA 02111-1307, USA.  */
    There may be some performance penalty, although it should be small
    if you're working with ASCII files. */
 #undef MULE
+
+/* Define this if you want Mule coding support */
+#undef MULE_CODING
 
 /* Do we want to use X window input methods for use with Mule? (requires X11R5)
    If so, use raw Xlib or higher level Motif interface? */

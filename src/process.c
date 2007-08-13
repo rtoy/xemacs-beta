@@ -619,7 +619,7 @@ allocate_pty (void)
 #else /* no PTY_OPEN */
 #ifdef IRIS
 	/* Unusual IRIS code */
- 	*ptyv = open ("/dev/ptc", O_RDWR | O_NDELAY, 0);
+ 	*ptyv = open ("/dev/ptc", O_RDWR | O_NDELAY | OPEN_BINARY, 0);
  	if (fd < 0)
  	  return -1;
 	if (fstat (fd, &stb) < 0)
@@ -634,9 +634,9 @@ allocate_pty (void)
 	else
 	  failed_count = 0;
 #ifdef O_NONBLOCK
-	fd = open (pty_name, O_RDWR | O_NONBLOCK, 0);
+	fd = open (pty_name, O_RDWR | O_NONBLOCK | OPEN_BINARY, 0);
 #else
-	fd = open (pty_name, O_RDWR | O_NDELAY, 0);
+	fd = open (pty_name, O_RDWR | O_NDELAY | OPEN_BINARY, 0);
 #endif
 #endif /* not IRIS */
 #endif /* no PTY_OPEN */
@@ -829,15 +829,15 @@ create_process (Lisp_Object process,
       /* You're "supposed" to now open the slave in the child.
 	 On some systems, we can open it here; this allows for
 	 better error checking. */
-#ifndef USG
+#if !defined(USG)
       /* On USG systems it does not work to open the pty's tty here
 	       and then close and reopen it in the child.  */
 #ifdef O_NOCTTY
       /* Don't let this terminal become our controlling terminal
 	 (in case we don't have one).  */
-      forkout = forkin = open (pty_name, O_RDWR | O_NOCTTY, 0);
+      forkout = forkin = open (pty_name, O_RDWR | O_NOCTTY | OPEN_BINARY, 0);
 #else
-      forkout = forkin = open (pty_name, O_RDWR, 0);
+      forkout = forkin = open (pty_name, O_RDWR | OPEN_BINARY, 0);
 #endif
       if (forkin < 0)
 	goto io_failure;
@@ -870,7 +870,7 @@ create_process (Lisp_Object process,
   {
     /* child_setup must clobber environ on systems with true vfork.
        Protect it from permanent change.  */
-    char **save_environ = environ;
+    /* char **save_environ = environ;*/
 
 #ifdef EMACS_BTL
     /* when performance monitoring is on, turn it off before the vfork(),
@@ -938,7 +938,7 @@ create_process (Lisp_Object process,
 	    /* I wonder if close (open (pty_name, ...)) would work?  */
 	    if (xforkin >= 0)
 	      close (xforkin);
-	    xforkout = xforkin = open (pty_name, O_RDWR, 0);
+	    xforkout = xforkin = open (pty_name, O_RDWR | OPEN_BINARY, 0);
 	    if (xforkin < 0)
 	      {
 		write (1, "Couldn't open the pty terminal ", 31);
@@ -1024,7 +1024,7 @@ create_process (Lisp_Object process,
       cadillac_start_logging ();	/* #### rename me */
 #endif
 
-    environ = save_environ;
+    /*    environ = save_environ;*/
   }
 
   if (pid < 0)
@@ -1277,7 +1277,9 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
     {
 #ifdef TRY_AGAIN
       if (count++ > 10) break;
-      h_errno = 0;
+#ifndef BROKEN_CYGWIN
+      h_errno = 0; 
+#endif
 #endif
       /* Some systems can't handle SIGIO/SIGALARM in gethostbyname. */
       slow_down_interrupts ();
@@ -3048,7 +3050,7 @@ text to PROCESS after you call this function.
   else
     {
       close (XPROCESS (proc)->outfd);
-      XPROCESS (proc)->outfd = open (NULL_DEVICE, O_WRONLY, 0);
+      XPROCESS (proc)->outfd = open (NULL_DEVICE, O_WRONLY | OPEN_BINARY, 0);
     }
 
   return process;

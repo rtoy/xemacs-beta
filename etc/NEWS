@@ -102,6 +102,18 @@ XFONTSET and either the X11 libraries are built with X_LOCALE defined
 or the native C libraries support Japanese localization.  This has
 been available since 20.3, only it hasn't been announced before.
 
+** In Text mode, now only blank lines separate paragraphs.
+This makes it possible to get the full benefit of Adaptive Fill mode
+in Text mode, and other modes derived from it (such as Mail mode).
+TAB in Text mode now runs the command indent-relative; this
+makes a practical difference only when you use indented paragraphs.
+
+As a result, the old Indented Text mode is now identical to Text mode,
+and is an alias for it.
+
+If you want spaces at the beginning of a line to start a paragraph,
+use the new mode, Paragraph Indent Text mode.
+
 
 * Lisp and internal changes in XEmacs 20.5
 ==========================================
@@ -110,10 +122,6 @@ been available since 20.3, only it hasn't been announced before.
 integers are only 28 bits wide on 32-bit machines.)  Compile with
 -DUSE_MINIMAL_TAGBITS to test.  With this change, the maximum buffer
 size on 32-bit machines is bumped from 128M to 1G.
-
-** The internal image code now uses the ImageMagick library as an
-interface to various image-related functions.  You still need the
-other libraries to build the image support, though.
 
 ** The XEmacs hashtables now have a consistent read/print syntax.
 This means that a hashtable will be readably printed in a

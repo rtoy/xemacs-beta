@@ -344,6 +344,7 @@ archlibdir_user_defined='no'
 with_menubars=''
 with_scrollbars=''
 with_dialogs=''
+with_mule_coding=''
 const_is_losing='yes'
 puresize=''
 cflags='UNSPECIFIED'
@@ -357,6 +358,7 @@ dnl world have core dumps turned off by default or \"cannot find where the
 dnl core file went\".  At least we should get some useful output ...
 use_assertions="yes"
 dnl the following is set to yes or no later.
+with_gif=""
 dnl the following is set to yes or no later.
 with_toolbars=""
 with_tty=""
@@ -456,7 +458,10 @@ while test $# != 0; do
 	with_gpm	| \
 	with_xpm	| \
 	with_xface	| \
-	with_imagick	| \
+	with_gif	| \
+	with_jpeg	| \
+	with_png	| \
+	with_tiff	| \
 	with_session	| \
 	with_xmu	| \
 	with_quantify	| \
@@ -465,6 +470,7 @@ while test $# != 0; do
 	with_xfs	| \
 	with_i18n3	| \
 	with_mule	| \
+	with_mule_coding	| \
 	with_canna	| \
 	with_wnn	| \
 	with_wnn6	| \
@@ -1938,7 +1944,7 @@ AC_PROG_YACC
 dnl checks for header files
 AC_CHECK_HEADERS(mach/mach.h sys/stropts.h sys/timeb.h sys/time.h unistd.h)
 AC_CHECK_HEADERS(utime.h locale.h libgen.h fcntl.h ulimit.h)
-AC_CHECK_HEADERS(linux/version.h kstat.h sys/pstat.h inttypes.h sys/un.h coff.h)
+AC_CHECK_HEADERS(linux/version.h kstat.h sys/pstat.h inttypes.h sys/un.h a.out.h)
 AC_HEADER_SYS_WAIT
 AC_HEADER_STDC
 AC_HEADER_TIME
@@ -2113,19 +2119,21 @@ case "$with_x11" in
   no  ) window_system=none HAVE_X_WINDOWS=no  ;;
 esac
 
-if test "$window_system" = "none"; then
+if test "$window_system" = "none" && test -z "$with_tty"; then
   AC_CHECKING(for MS-Windows)
   AC_CHECK_LIB(gdi32,main,have_msw=yes)
   if test "$have_msw" = "yes"; then
     AC_DEFINE(HAVE_MS_WINDOWS)
-    XE_APPEND(-lgdi32 -luser32, libs_system)
+    XE_APPEND(-lshell32 -lgdi32 -luser32, libs_system)
     window_system=msw
     test "$with_scrollbars"   != "no" && with_scrollbars=msw && XE_ADD_OBJS(scrollbar-msw.o)
     test "$with_menubars"   != "no" && with_menubars=msw && XE_ADD_OBJS(menubar-msw.o)
     with_dialogs=msw
     with_toolbars=no
     with_tty=no
-    XE_ADD_OBJS(console-msw.o device-msw.o event-msw.o frame-msw.o objects-msw.o select-msw.o redisplay-msw.o)
+    const_is_losing=no
+    #with_mule_coding=yes
+    XE_ADD_OBJS(console-msw.o device-msw.o event-msw.o frame-msw.o objects-msw.o select-msw.o redisplay-msw.o gif_err.o gifalloc.o dgif_lib.o)
   fi
 fi
 
@@ -2274,7 +2282,7 @@ if test "$window_system" = "none" ; then
   fi
   for feature in tooltalk cde offix session \
                  menubars scrollbars toolbars dialogs xim xmu \
-                 imagick xface xpm
+                 tiff png jpeg gif xface xpm
   do
     if eval "test -n \"\$with_${feature}\" -a \"\$with_${feature}\" != no" ; then
        AC_MSG_WARN([--with-$feature ignored:  Not valid without X support])
@@ -2411,36 +2419,50 @@ if test "$with_x11" = "yes"; then
     XE_PREPEND(-lcompface, libs_x)
   fi
 
-  dnl autodetect ImageMagick
-  test "$with_imagick" != "no" && { AC_CHECK_HEADER(magick/magick.h, ,AC_CHECK_HEADER(X11/magick/magick.h,AC_DEFINE(MAGICK_HEADERS_ARE_UNDER_X11),with_imagick=no)) }
-  test "$with_imagick" != "no" && {
-    dnl check the appropriate libraries for ImageMagick
-    dnl First, let's check libz or libgz for png...
-    z_libs=""
-    AC_CHECK_LIB(z, inflateInit_, XE_APPEND(-lz, z_libs),
-      AC_CHECK_LIB(gz, inflateInit_, XE_APPEND(-lgz, z_libs)))
-
-    imagick_libs=""
-    AC_CHECK_LIB(dps, XDPSPixelsPerPoint, XE_APPEND(-ldpstk -ldps, imagick_libs),,,-ldpstk)
-    AC_CHECK_LIB(fpx, FPX_SetToolkitMemoryLimit, XE_APPEND(-lfpx, imagick_libs))
-    AC_CHECK_LIB(df, DF24getdims, XE_APPEND(-ldf, imagick_libs))
-    AC_CHECK_LIB(jbig, jbg_dec_init, XE_APPEND(-ljbig, imagick_libs))
-    AC_CHECK_LIB(jpeg, jpeg_read_header, XE_APPEND(-ljpeg, imagick_libs))
-    AC_CHECK_LIB(mpeg, OpenMPEG, XE_APPEND(-lmpeg, imagick_libs))
-    AC_CHECK_LIB(ttf, TT_Init_FreeType, XE_APPEND(-lttf, imagick_libs))
-    AC_CHECK_LIB(png, png_create_read_struct, XE_APPEND(-lpng, imagick_libs),,$z_libs)
-    AC_CHECK_LIB(tiff, TIFFOpen, XE_APPEND(-ltiff, imagick_libs),
-      AC_CHECK_LIB(tiff, TIFFOpen, XE_APPEND(-ltiff -ljpeg, imagick_libs),,-ljpeg $z_libs),,$z_libs)
-    XE_APPEND($z_libs, imagick_libs)
-    XE_APPEND($imagick_libs, libs_x)
-  }
-  test -z "$with_imagick" && { AC_CHECK_LIB(Magick, MogrifyImage,[:],with_imagick=no) }
-  test -z "$with_imagick" && with_imagick=yes
-  if test "$with_imagick" = "yes"; then
-    AC_DEFINE(HAVE_IMAGEMAGICK)
-    XE_PREPEND(-lMagick, libs_x)
+  dnl Built-in GIF support defaults to yes (note: this will be libraried soon)
+  test -z "$with_gif" && with_gif=yes;
+  if test "$with_gif" = "yes"; then
+    AC_DEFINE(HAVE_GIF)
+    XE_ADD_OBJS(dgif_lib.o gif_err.o gifalloc.o)
   fi
 
+  dnl autodetect JPEG
+  test -z "$with_jpeg" && { AC_CHECK_HEADER(jpeglib.h,                    ,with_jpeg=no) }
+  test -z "$with_jpeg" && { AC_CHECK_LIB(jpeg, jpeg_destroy_decompress,[:],with_jpeg=no) }
+  test -z "$with_jpeg" && with_jpeg=yes
+  if test "$with_jpeg" = "yes"; then
+    AC_DEFINE(HAVE_JPEG)
+    XE_PREPEND(-ljpeg, libs_x)
+  fi
+
+  dnl autodetect PNG
+  test -z "$with_png" && { AC_CHECK_HEADER(png.h, , with_png=no) }
+  test -z "$with_png" && { AC_CHECK_FUNC(pow,     , with_png=no) }
+  if test "$with_png" != "no"; then
+    for extra_libs in "" "-lz" "-lgz"; do
+      AC_CHECK_LIB(png, png_read_image,
+	png_libs="-lpng $extra_libs" with_png=yes; break,[:],$extra_libs)
+    done
+  fi
+  test -z "$with_png" && with_png=no
+  if test "$with_png" = "yes"; then
+    AC_DEFINE(HAVE_PNG)
+    XE_PREPEND($png_libs, libs_x)
+  fi
+
+  dnl autodetect TIFF
+  if test "$with_tiff" != no; then
+    for extra_libs in "" "-lz" "-lgz"; do
+      AC_CHECK_LIB(tiff, TIFFReadScanline, 
+        tiff_libs="-ltiff $extra_libs" with_tiff=yes; break, [:], $extra_libs)
+    done
+  fi
+  test -z "$with_tiff" && with_tiff=no
+  if test "$with_tiff" = "yes"; then
+    AC_DEFINE(HAVE_TIFF)
+    XE_PREPEND($tiff_libs, libs_x)
+  fi
+    
   dnl Autodetect -lXaw
   AC_CHECK_LIB(Xaw, XawScrollbarSetThumb, have_xaw=yes, have_xaw=no)
   dnl if test "$have_xaw" = "yes"; then
@@ -2540,7 +2562,8 @@ dnl ----------------------
 dnl Mule-dependent options
 dnl ----------------------
 
-test -z "$with_mule" && with_mule=no
+test -z "$with_mule" && with_mule=no 
+test -z "$with_mule_coding" && with_mule_coding=no
 
 dnl if test "$with_mule" = "yes" && test ! -d "$srcdir/lisp/mule"; then
 dnl	echo "Attempt to Build with Mule without Mule/Lisp"
@@ -2549,9 +2572,15 @@ dnl	echo "rerun configure with --with-mule=no"
 dnl	exit 1
 dnl fi
 
+if test "$with_mule_coding" = "yes" && test "$with_mule" = "no"; then
+  AC_DEFINE(MULE_CODING)
+  XE_ADD_OBJS(mule-coding.o)
+fi
+
 if test "$with_mule" = "yes" ; then
   AC_CHECKING(for Mule-related features)
   AC_DEFINE(MULE)
+  AC_DEFINE(MULE_CODING)
   XE_ADD_OBJS(mule.o mule-ccl.o mule-charset.o mule-coding.o)
 
   dnl Use -lintl to get internationalized strerror for Mule
@@ -3369,8 +3398,10 @@ elif test "$with_x11" = yes; then
   echo "  --------------------------------------------------------------------"
 fi
 test "$with_xface" = yes && echo "  Compiling in support for X-Face message headers."
-test "$with_imagick"  = yes && echo "  Compiling in support for ImageMagick image conversion."
-test "$with_imagick" = yes && echo "   Using $imagick_libs for graphics libraries."
+test "$with_gif"   = yes && echo "  Compiling in (built in) support for GIF image conversion."
+test "$with_jpeg"  = yes && echo "  Compiling in support for JPEG image conversion."
+test "$with_png"   = yes && echo "  Compiling in support for PNG image conversion."
+test "$with_tiff"  = yes && echo "  Compiling in support for TIFF image conversion (not implemented)."
 case "$with_sound" in
   nas    ) echo "  Compiling in network sound (NAS) support." ;;
   native ) echo "  Compiling in native sound support." ;;
@@ -3386,6 +3417,7 @@ test "$with_ncurses"  = yes && echo "  Compiling in support for ncurses."
 test "$with_gpm"      = yes && echo "  Compiling in support for GPM (General Purpose Mouse)."
 
 test "$with_mule"     = yes && echo "  Compiling in Mule (multi-lingual) support."
+test "$with_mule_coding"     = yes && echo "  Compiling in Mule coding support."
 test "$with_xim"      != no && echo "  Compiling in XIM (X11R5+ I18N input method) support."
 test "$with_xim" = motif    && echo "    Using Motif to provide XIM support."
 test "$with_xim" = xlib     && echo "    Using raw Xlib to provide XIM support."

@@ -401,6 +401,16 @@ Some users have reported problems in this area.  The reported solution
 is to define the environment variable OPENWINHOME, even if you must set
 it to `/usr/openwin'.
 
+** Under Linux, you get "too many arguments to function `getpgrp'".
+
+You have probably installed LessTiff under `/usr/local' and `libXm.so'
+could not be found when linking `getpgrp()' test program, making XEmacs
+think that `getpgrp()' takes an argument. Try adding `/usr/local/lib'
+in `/etc/ld.so.conf' and run `ldconfig'. Then run XEmacs's `configure'
+again.  As with all problems of this type, reading the config.log file
+generated from configure and seeing the log of how the test failed can
+prove enlightening.
+
 
 * Problems with running XEmacs
 ==============================

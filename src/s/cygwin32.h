@@ -37,37 +37,35 @@ Boston, MA 02111-1307, USA.  */
  * unnecessary. Also make sure your HOME path is unix style -
  * i.e. without a drive letter.
  *
- * once you have done this, configure and make. The
- * undump phase will fail but that is to be expected. To run you need
- * to set EMACSLOADPATH, EMACSDOC, EMACSDATA etc appropriately and then do:
- * temacs -batch -l loadup.el run-temacs
- * 
- * What I want to do
+ * once you have done this, configure and make. If you want unexec
+ * support you need to download coff.h from my web page or use cygwin
+ * b19. You probably want to build with mule support since this
+ * addresses crlf issues in a sensible way.
+ *
+ * What I want to do:
  *
  * the fileio stuff merely uses the unix system calls this means that
  * the mount type of your fs will determine how files are edited. This
  * is fine except in the instance that you want to convert one to the
  * other. In this instance I would like to bring the buffer_file_type
- * code into the picture without all the other windows-nt cruft.
+ * code into the picture without all the other windows-nt
+ * cruft. Apparently the best way to do this is use the mule coding
+ * stuff.
  *
- * Also the undumped version should be able to do path guessing, I
- * don't know why it doesn't currently.
- *
- * Ideally a dumped version would be done but I'm not sure I am up to
- * the task.
+ * process support needs fixing although basic support works (a la
+ * make-docfile)
  *
  * Andy Piper <andyp@parallax.co.uk> 8/1/98 
- * http://parallax.co.uk/~andyp
- */
+ * http://www.parallax.co.uk/~andyp */
 
-
-/* Need the win32 api */
+/* cheesy way to determine cygwin version */
 #ifndef NOT_C_CODE
-#ifdef CONST
-#undef CONST
-#endif 
-
-#include <windows.h> 
+#include <signal.h>
+#ifdef SIGIO
+#define CYGWIN_B19
+#else
+#define BROKEN_CYGWIN
+#endif
 #endif
 
 #ifdef HAVE_MS_WINDOWS
@@ -88,16 +86,32 @@ Boston, MA 02111-1307, USA.  */
 #define FW_BLACK	FW_HEAVY
 #define FW_ULTRABOLD	FW_EXTRABOLD
 #define FW_ULTRALIGHT	FW_EXTRALIGHT
-#define TMPF_FIXED_PITCH	0x01
 #define VK_APPS			0x5D
-#define SIGPROF	0
-#define NO_LIM_DATA
+#define APPCMD_FILTERINITS	0x20L
+#define CBF_FAIL_SELFCONNECTIONS 0x1000
+#define CBF_SKIP_ALLNOTIFICATIONS	0x3C0000
+#define CBF_FAIL_ADVISES	0x4000
+#define CBF_FAIL_POKES		0x10000
+#define CBF_FAIL_REQUESTS	0x20000
+#define SZDDESYS_TOPIC		"System"
 
 #define TEXT_START -1
 #define TEXT_END -1
 #define DATA_END -1
-#define RUN_TIME_REMAP
+#define HEAP_IN_DATA
 #define UNEXEC "unexcw.o"
+#define BROKEN_SIGIO
+#define PROCESS_IO_BLOCKING 
+#define strnicmp strncasecmp
+#ifndef HAVE_SOCKETS
+#define HAVE_SOCKETS
+#endif
+
+#ifndef CYGWIN_B19
+#define TMPF_FIXED_PITCH	0x01
+#define SIGPROF	0
+#define SIGWINCH 0
+#endif
 
 #undef MAIL_USE_SYSTEM_LOCK
 
@@ -159,22 +173,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define NOMULTIPLEJOBS
 
-/* Letter to use in finding device name of first pty,
-  if system supports pty's.  'a' means it is /dev/ptya0  */
-
-#define FIRST_PTY_LETTER 'a'
-
-/*
- *      Define HAVE_PTYS if the system supports pty devices.
- */
-
-/* #define HAVE_PTYS */
-
-/* If your system uses COFF (Common Object File Format) then define the
-   preprocessor symbol "COFF". */
-
-#define COFF 1
-
 /* define MAIL_USE_FLOCK if the mailer uses flock
    to interlock access to /usr/spool/mail/$USER.
    The alternative is that a lock file named
@@ -199,26 +197,49 @@ Boston, MA 02111-1307, USA.  */
 /* Define this to be the separator between devices and paths */
 #define DEVICE_SEP ':'
 
-#define SIGWINCH NSIG
-
 /* We'll support either convention on NT.  */
 #define IS_DIRECTORY_SEP(_c_) ((_c_) == '/' || (_c_) == '\\')
 #define IS_ANY_SEP(_c_) (IS_DIRECTORY_SEP (_c_) || IS_DEVICE_SEP (_c_))
 
 /* The null device on Windows NT. */
-#define NULL_DEVICE     "NUL:"
 #define EXEC_SUFFIXES   ".exe:.com:.bat:.cmd:"
 
 #define MODE_LINE_BINARY_TEXT(_b_) (NILP ((_b_)->buffer_file_type) ? "T" : "B")
 
-/* For integration with MSDOS support.  
-#define getdisk()               (_getdrive () - 1)
-#define getdefdir(_drv, _buf)   _getdcwd (_drv, _buf, MAXPATHLEN)
-*/
-
-/* Defines size_t and alloca ().  */
-
 /* We need a little extra space, see ../../lisp/loadup.el */
 #define SYSTEM_PURESIZE_EXTRA 15000
 
+/*
+ * stolen from usg.
+ */
+#define HAVE_PTYS
+#define FIRST_PTY_LETTER 'z'
+
+/* Pseudo-terminal support under SVR4 only loops to deal with errors. */
+
+#define PTY_ITERATION for (i = 0; i < 1; i++)
+
+/* This sets the name of the master side of the PTY. */
+
+#define PTY_NAME_SPRINTF strcpy (pty_name, "/dev/ptmx");
+
+/* This sets the name of the slave side of the PTY.  On SysVr4,
+   grantpt(3) forks a subprocess, so keep sigchld_handler() from
+   intercepting that death.  If any child but grantpt's should die
+   within, it should be caught after EMACS_UNBLOCK_SIGNAL. */
+
+#define PTY_OPEN \
+   fd = open (pty_name, O_RDWR | O_NONBLOCK | OPEN_BINARY, 0)
+
+#define PTY_TTY_NAME_SPRINTF				\
+  {							\
+    char *ptyname;					\
+							\
+    if (!(ptyname = ptsname (fd)))			\
+      { close (fd); return -1; }			\
+    strncpy (pty_name, ptyname, sizeof (pty_name));	\
+    pty_name[sizeof (pty_name) - 1] = 0;		\
+  }
+
 /* ============================================================ */
+

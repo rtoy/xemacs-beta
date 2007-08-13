@@ -1,4 +1,13 @@
 							-*- indented-text -*-
+to 20.5 beta24 "Kaghani"
+-- source commentary censored
+-- Miscellaneous MS Windows patches from Kirill Katsnelson
+-- Miscellaneous MS Windows patches from Jonathan Harris
+-- Miscellaneous patches from Martin Buchholz and Hrvoje Niksic
+-- Cygwin patches courtesy of Andy Piper
+-- Fix for integer 0 plist problem on Linux courtesy of Olivier Galibert
+-- Miscellaneous bug fixes
+
 to 20.5 beta23 "Jining Grey"
 -- MS Windows DnD stuffs courtesy of Jonathon Harris
 -- Miscellaneous bug fixes

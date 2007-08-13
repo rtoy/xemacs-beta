@@ -115,7 +115,7 @@ struct console_methods
   /* redisplay methods */
   int (*left_margin_width_method) (struct window *);
   int (*right_margin_width_method) (struct window *);
-  int (*text_width_method) (struct face_cachel *cachel,
+  int (*text_width_method) (struct frame *f, struct face_cachel *cachel,
 			    CONST Emchar *str, Charcount len);
   void (*output_display_block_method) (struct window *, struct display_line *,
 				       int, int, int, int, int, int, int);

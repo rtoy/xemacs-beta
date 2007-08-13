@@ -1808,8 +1808,7 @@ and you do not need to specify it.)
       CHECK_STRING (string);
       if (!EQ (last_thing_searched, Qt))
 	error ("last thing matched was not a string");
-      /* Damn you RMS!  You are going to burn in hell for your
-	 antipathy towards data abstraction.  If the match data
+      /* If the match data
 	 were abstracted into a special "match data" type instead
 	 of the typical half-assed "let the implementation be
 	 visible" form it's in, we could extend it to include

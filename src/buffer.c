@@ -1162,7 +1162,7 @@ No argument or nil as argument means do this for the current buffer.
 */
        (buffer))
 {
-  /* Allowing nil is an RMSism */
+  /* Allowing nil is an Emacs-ism */
   struct buffer *real_buf = decode_buffer (buffer, 1);
   real_buf->undo_list = Qt;
   return Qnil;
@@ -1174,7 +1174,7 @@ No argument or nil as argument means do this for the current buffer.
 */
        (buffer))
 {
-  /* Allowing nil is an RMSism */
+  /* Allowing nil is an Emacs-ism */
   struct buffer *real_buf = decode_buffer (buffer, 1);
   if (EQ (real_buf->undo_list, Qt))
     real_buf->undo_list = Qnil;

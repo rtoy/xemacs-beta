@@ -178,6 +178,10 @@ extern
 /* Non-zero means defun should do purecopy on the function definition */
 int purify_flag;
 
+#ifdef HEAP_IN_DATA
+extern void sheap_adjust_h();
+#endif
+
 extern Lisp_Object pure[];/* moved to pure.c to speed incremental linking */
 
 #define PUREBEG ((unsigned char *) pure)
@@ -2803,7 +2807,7 @@ Does not copy symbols.
 	     * Vpure_uninterned_symbol_table, which is itself
 	     * staticpro'd.
 	     */
-	    if (EQ (XSYMBOL (obj)->obarray, Vobarray))
+	    if (!NILP (XSYMBOL (obj)->obarray))
 	      return obj;
 	    Fputhash (obj, obj, Vpure_uninterned_symbol_table);
 	    return obj;
@@ -2848,6 +2852,9 @@ report_pure_usage (int report_impurities,
                get_PURESIZE()+pure_lossage, (long) get_PURESIZE());
       if (die_if_pure_storage_exceeded) {
 	puresize_adjust_h (get_PURESIZE() + pure_lossage);
+#ifdef HEAP_IN_DATA
+	sheap_adjust_h();
+#endif
 	rc = -1;
       }
     }
@@ -2855,7 +2862,7 @@ report_pure_usage (int report_impurities,
     {
       int lost = (get_PURESIZE() - pureptr) / 1024;
       char buf[200];
-      extern Lisp_Object Vemacs_beta_version;
+      /* extern Lisp_Object Vemacs_beta_version; */
       /* This used to be NILP(Vemacs_beta_version) ? 512 : 4; */
 #ifndef PURESIZE_SLOP
 #define PURESIZE_SLOP 0
@@ -2869,6 +2876,9 @@ report_pure_usage (int report_impurities,
         sprintf (buf + strlen (buf), " -- %dk wasted", lost);
 	if (die_if_pure_storage_exceeded) {
 	  puresize_adjust_h (pureptr + slop);
+#ifdef HEAP_IN_DATA
+	  sheap_adjust_h();
+#endif
 	  rc = -1;
 	}
       }

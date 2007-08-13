@@ -35,8 +35,9 @@ Boston, MA 02111-1307, USA.  */
 #include <sys/stat.h>
 #include <sys/param.h>
 
-#if NeXT
-/* what is needed from here?  Do others need it too? */
+#if defined (NeXT) || defined(__CYGWIN32__)
+/* what is needed from here?  Do others need it too? 
+ O_BINARY is in here under cygwin. */
 # include <sys/fcntl.h>
 #endif /* NeXT */
 
@@ -69,6 +70,55 @@ Boston, MA 02111-1307, USA.  */
 
 #ifndef O_RDWR
 #define O_RDWR 2
+#endif
+
+/* file opening defaults */
+#ifndef OPEN_BINARY
+#ifdef O_BINARY
+#define OPEN_BINARY	O_BINARY
+#else
+#define OPEN_BINARY	(0)
+#endif
+#endif
+
+#ifndef OPEN_TEXT
+#ifdef O_TEXT
+#define OPEN_TEXT	O_TEXT
+#else
+#define OPEN_TEXT	(0)
+#endif
+#endif
+
+#ifndef CREAT_MODE
+#ifdef WINDOWSNT
+#define CREAT_MODE	(S_IREAD | S_IWRITE)
+#else
+#define CREAT_MODE	(0666)
+#endif
+#endif
+
+#ifndef READ_TEXT
+#ifdef O_TEXT
+#define READ_TEXT "rt"
+#else
+#define READ_TEXT "r"
+#endif
+#endif
+
+#ifndef READ_BINARY
+#ifdef O_BINARY
+#define READ_BINARY "rb"
+#else
+#define READ_BINARY "r"
+#endif
+#endif
+
+#ifndef WRITE_BINARY
+#ifdef O_BINARY
+#define WRITE_BINARY "wb"
+#else
+#define WRITE_BINARY "w"
+#endif
 #endif
 
 /* if system does not have symbolic links, it does not have lstat.

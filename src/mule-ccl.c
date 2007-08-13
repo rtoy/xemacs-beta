@@ -533,8 +533,9 @@ ccl_driver (struct ccl_program *ccl, CONST unsigned char *source, unsigned_char_
   int code = -1; /* init to illegal value,  */
   int field1, field2;
   Lisp_Object *ccl_prog = ccl->prog;
-  unsigned char *src = source, *src_end = src + src_bytes;
+  CONST unsigned char *src = source, *src_end = src + src_bytes;
   int jump_address = 0; /* shut up the compiler */
+
   int i, j, op;
   int stack_idx = 0;
   /* For the moment, we only support depth 256 of stack.  */ 

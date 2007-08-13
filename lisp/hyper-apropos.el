@@ -712,9 +712,9 @@ See also `hyper-apropos' and `hyper-describe-function'."
 					       (lambda   . "Lisp "))))
 				  desc
 				  (case symtype
-				    ((autoload) (format ", (autoloaded from \"%s\")"
+				    ((autoload) (format ",\n(autoloaded from \"%s\")"
 							(nth 1 newsym)))
-				    ((bytecode) (format ", (loaded from \"%s\")"
+				    ((bytecode) (format ",\n(loaded from \"%s\")"
 							(symbol-file symbol)))))
 		     local (current-local-map)
 		     global (current-global-map)

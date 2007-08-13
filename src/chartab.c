@@ -79,7 +79,7 @@ Lisp_Object Vstandard_category_table;
    4) case tables
    5) keyboard-translate-table?
 
-   We do the very non-Stallman-esque thing of actually providing an
+   We provide an
    abstract type to generalize the Emacs vectors and Mule
    vectors-of-vectors goo.
    */

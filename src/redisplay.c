@@ -516,8 +516,8 @@ redisplay_text_width_emchar_string (struct window *w, int findex,
   ensure_face_cachel_complete (WINDOW_FACE_CACHEL (w, findex), window,
 			       charsets);
   return DEVMETH (XDEVICE (FRAME_DEVICE (XFRAME (WINDOW_FRAME (w)))),
-		  text_width, (WINDOW_FACE_CACHEL (w, findex),
-			       str, len));
+		  text_width, (XFRAME (WINDOW_FRAME (w)),
+			       WINDOW_FACE_CACHEL (w, findex), str, len));
 }
 
 static Emchar_dynarr *rtw_emchar_dynarr;
@@ -563,7 +563,7 @@ redisplay_frame_text_width_string (struct frame *f, Lisp_Object face,
   XSETFRAME (frame, f);
   ensure_face_cachel_complete (&cachel, frame, charsets);
   return DEVMETH (XDEVICE (FRAME_DEVICE (f)),
-		  text_width, (&cachel, Dynarr_atp (rtw_emchar_dynarr, 0),
+		  text_width, (f, &cachel, Dynarr_atp (rtw_emchar_dynarr, 0),
 			       Dynarr_length (rtw_emchar_dynarr)));
 }
 

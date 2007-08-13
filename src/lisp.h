@@ -195,15 +195,15 @@ char *xstrdup (CONST char *);
   /* Dammit! Macros suffer from dynamic scope! */		\
   /* We demand inline functions! */				\
   int do_realloc_needed_size = (needed_size);			\
-  int newsize = 0;						\
+  int do_realloc_newsize = 0;					\
   while ((sizevar) < (do_realloc_needed_size)) {		\
-    newsize = 2*(sizevar);					\
-    if (newsize < 32)						\
-      newsize = 32;						\
-    (sizevar) = newsize;					\
+    do_realloc_newsize = 2*(sizevar);				\
+    if (do_realloc_newsize < 32)				\
+      do_realloc_newsize = 32;					\
+    (sizevar) = do_realloc_newsize;				\
   }								\
-  if (newsize)							\
-    XREALLOC_ARRAY (basevar, type, newsize);			\
+  if (do_realloc_newsize)					\
+    XREALLOC_ARRAY (basevar, type, do_realloc_newsize);		\
 } while (0)
 
 #ifdef ERROR_CHECK_MALLOC

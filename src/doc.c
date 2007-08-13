@@ -215,7 +215,7 @@ get_doc_string (Lisp_Object filepos)
     name_reloc = file;
 
   fd = open (name_nonreloc ? name_nonreloc :
-	     (char *) XSTRING_DATA (name_reloc), O_RDONLY, 0);
+	     (char *) XSTRING_DATA (name_reloc), O_RDONLY | OPEN_BINARY, 0);
   if (fd < 0)
     {
 #ifndef CANNOT_DUMP
@@ -228,7 +228,7 @@ get_doc_string (Lisp_Object filepos)
 	  strcpy (name_nonreloc, "../lib-src/");
 	  strcat (name_nonreloc, (char *) XSTRING_DATA (file));
 
-	  fd = open (name_nonreloc, O_RDONLY, 0);
+	  fd = open (name_nonreloc, O_RDONLY | OPEN_BINARY, 0);
 	}
 #endif /* CANNOT_DUMP */
 
@@ -446,7 +446,7 @@ when doc strings are referred to in the dumped Emacs.
 
   strcat (name, (char *) XSTRING_DATA (filename));
 
-  fd = open (name, O_RDONLY, 0);
+  fd = open (name, O_RDONLY | OPEN_BINARY, 0);
   if (fd < 0)
     report_file_error ("Opening doc string file",
 		       Fcons (build_string (name), Qnil));

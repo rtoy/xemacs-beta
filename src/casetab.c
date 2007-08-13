@@ -20,8 +20,8 @@ the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.28.  Between FSF 19.28 and 19.30, casetab.c
-   was rewritten to use junky RMS char tables.  Meanwhile I rewrote it
-   to use more logical char tables.  RMS also discards the "list of four
+   was rewritten to use junky char tables.  Meanwhile I rewrote it
+   to use more logical char tables.  Emacs also discards the "list of four
    tables" format and instead stuffs the other tables as "extra slots"
    in the downcase table.  I've kept the four-lists format for now. */
 

@@ -1655,7 +1655,7 @@ A prefix arg makes KEEP-TIME non-nil.
   else if (stat ((CONST char *) XSTRING_DATA (newname), &out_st) < 0)
     out_st.st_mode = 0;
 
-  ifd = interruptible_open ((char *) XSTRING_DATA (filename), O_RDONLY, 0);
+  ifd = interruptible_open ((char *) XSTRING_DATA (filename), O_RDONLY | OPEN_BINARY, 0);
   if (ifd < 0)
     report_file_error ("Opening input file", list1 (filename));
 
@@ -1698,7 +1698,8 @@ A prefix arg makes KEEP-TIME non-nil.
   /* System's default file type was set to binary by _fmode in emacs.c.  */
   ofd = creat ((char *) XSTRING_DATA (newname), S_IREAD | S_IWRITE);
 #else /* not MSDOS */
-  ofd = creat ((char *) XSTRING_DATA (newname), 0666);
+  ofd = open( (char *) XSTRING_DATA (newname), 
+	      O_WRONLY | O_CREAT | O_TRUNC | OPEN_BINARY, CREAT_MODE);
 #endif /* not MSDOS */
   if (ofd < 0)
     report_file_error ("Opening output file", list1 (newname));
@@ -2260,7 +2261,7 @@ See also `file-exists-p' and `file-attributes'.
     return Qt;
   return Qnil;
 #else /* not DOS_NT */
-  desc = interruptible_open ((char *) XSTRING_DATA (abspath), O_RDONLY, 0);
+  desc = interruptible_open ((char *) XSTRING_DATA (abspath), O_RDONLY | OPEN_BINARY, 0);
   UNGCPRO;
   if (desc < 0)
     return Qnil;
@@ -2774,7 +2775,7 @@ positions), even in Mule. (Fixing this is very difficult.)
       (stat ((char *) XSTRING_DATA (filename), &st) < 0)
 #else /* APOLLO */
       /* Don't even bother with interruptible_open.  APOLLO sucks. */
-      ((fd = open ((char *) XSTRING_DATA (filename), O_RDONLY, 0)) < 0
+      ((fd = open ((char *) XSTRING_DATA (filename), O_RDONLY | OPEN_BINARY, 0)) < 0
        || fstat (fd, &st) < 0)
 #endif /* APOLLO */
       )
@@ -2819,7 +2820,7 @@ positions), even in Mule. (Fixing this is very difficult.)
   if (fd < 0)
     {
       if ((fd = interruptible_open ((char *) XSTRING_DATA (filename),
-				    O_RDONLY, 0)) < 0)
+				    O_RDONLY | OPEN_BINARY, 0)) < 0)
 	goto badopen;
     }
 
@@ -3524,7 +3525,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
     desc = open ((char *) XSTRING_DATA (fn),
                        (O_WRONLY | buffer_file_type), 0);
 #else /* not DOS_NT */
-    desc = open ((char *) XSTRING_DATA (fn), O_WRONLY, 0);
+    desc = open ((char *) XSTRING_DATA (fn), O_WRONLY | OPEN_BINARY, 0);
 #endif /* not DOS_NT */
 
   if (desc < 0)
@@ -3534,8 +3535,9 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
                    (O_WRONLY | O_TRUNC | O_CREAT | buffer_file_type),
                    (S_IREAD | S_IWRITE));
 #else /* not DOS_NT */
-      desc = creat ((char *) XSTRING_DATA (fn),
-		    ((auto_saving) ? auto_save_mode_bits : 0666));
+      desc = open ((char *) XSTRING_DATA (fn),
+                   (O_WRONLY | O_TRUNC | O_CREAT | OPEN_BINARY),
+		   ((auto_saving) ? auto_save_mode_bits : CREAT_MODE));
 #endif /* DOS_NT */
     }
 
@@ -4288,7 +4290,9 @@ Non-nil second argument means save only current buffer.
 				   O_WRONLY | O_TRUNC | O_CREAT | O_BINARY,
 				   S_IREAD | S_IWRITE);
 #else /* not DOS_NT */
-		  listdesc = creat ((char *) XSTRING_DATA (listfile), 0666);
+		  listdesc = open ((char *) XSTRING_DATA (listfile),
+				   O_WRONLY | O_TRUNC | O_CREAT | OPEN_BINARY,
+				   CREAT_MODE);
 #endif /* not DOS_NT */
 
 		  /* Arrange to close that file whether or not we get

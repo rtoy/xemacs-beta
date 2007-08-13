@@ -55,6 +55,12 @@ Boston, MA 02111-1307, USA.  */
 
 #include "events-mod.h"
 
+#ifdef BROKEN_CYGWIN
+int WINAPI      DdeCmpStringHandles (HSZ, HSZ);
+HDDEDATA WINAPI DdeCreateDataHandle (DWORD, LPBYTE, DWORD, DWORD, HSZ,
+				     UINT, UINT);
+#endif
+
 #ifdef HAVE_MENUBARS
 #define ADJR_MENUFLAG TRUE
 #else
@@ -81,7 +87,6 @@ static int mswindows_modifier_state (BYTE* keymap, int has_AltGr);
 static void mswindows_set_chord_timer (HWND hwnd);
 static int mswindows_button2_near_enough (POINTS p1, POINTS p2);
 static int mswindows_current_layout_has_AltGr (void);
-
 
 static struct event_stream *mswindows_event_stream;
 
@@ -661,7 +666,6 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
 	}
       DdeFreeDataHandle (hdata); 
       return (HDDEDATA) DDE_FNOTPROCESSED;
-
     default: 
       return (HDDEDATA) NULL; 
     } 

@@ -51,10 +51,10 @@ static Lisp_Object Vall_weak_hashtables;
 static Lisp_Object mark_hashtable (Lisp_Object, void (*) (Lisp_Object));
 static void print_hashtable (Lisp_Object, Lisp_Object, int);
 static int hashtable_equal (Lisp_Object t1, Lisp_Object t2, int depth);
-static unsigned long hashtable_hash (Lisp_Object obj, int depth);
 DEFINE_LRECORD_IMPLEMENTATION ("hashtable", hashtable,
                                mark_hashtable, print_hashtable, 0,
-			       hashtable_equal, hashtable_hash,
+			       /* #### Implement hashtable_hash()! */
+			       hashtable_equal, 0,
 			       struct hashtable);
 
 static Lisp_Object
@@ -93,7 +93,7 @@ struct hashtable_equal_closure
 };
 
 static int
-hashtable_equal_mapper (void *key, void *contents, void *arg)
+hashtable_equal_mapper (CONST void *key, void *contents, void *arg)
 {
   struct hashtable_equal_closure *closure =
     (struct hashtable_equal_closure *)arg;
@@ -123,10 +123,12 @@ hashtable_equal (Lisp_Object t1, Lisp_Object t2, int depth)
 
   /* The objects are `equal' if they are of the same type, so return 0
      if types or test functions are not the same.  Obviously, the
-     number of elements must be equal, too.  */
+     number of elements must be equal, too.  #### table->fullness is
+     broken, so we cannot use it.  */
   if ((table1->test_function != table2->test_function)
       || (table1->type != table2->type)
-      || (table1->fullness != table2->fullness))
+      /*|| (table1->fullness != table2->fullness))*/
+      )
     return 0;
 
   closure.depth = depth + 1;
@@ -134,67 +136,6 @@ hashtable_equal (Lisp_Object t1, Lisp_Object t2, int depth)
   closure.other_table = t2;
   elisp_maphash (hashtable_equal_mapper, t1, &closure);
   return closure.equal;
-}
-
-/* Hashtable hash function.  This hashes 5 key-value pairs.  For EQ
-   hashtables, keys are used as the hash value themselves, whereas
-   values are hashed with internal_hash().  For EQUAL hashtables, both
-   keys and values are hashed properly.  EQL tables are handled as
-   necessary.  All of this should make the hash function compatible
-   with hashtable_equal().  The elements hashed are the first five
-   mapped over by maphash().  */
-
-struct hashtable_hash_closure
-{
-  struct hashtable *table;
-  int depth;
-  unsigned long hash;
-  int count;
-};
-
-/* Needed for tests.  */
-static int lisp_object_eql_equal (CONST void *x1, CONST void *x2);
-static int lisp_object_equal_equal (CONST void *x1, CONST void *x2);
-
-static int
-hashtable_hash_mapper (void *key, void *contents, void *arg)
-{
-  struct hashtable_hash_closure *closure =
-    (struct hashtable_hash_closure *)arg;
-  Lisp_Object valuetem, keytem;
-  unsigned long keyhash;
-
-  CVOID_TO_LISP (keytem, key);
-  CVOID_TO_LISP (valuetem, contents);
-
-  if (!closure->table->test_function)
-    /* For eq, use key itself as hash.  */
-    keyhash = LISP_HASH (keytem);
-  else if (closure->table->test_function == lisp_object_eql_equal)
-    /* The same as eq, unless the key is float.  */
-    keyhash = (FLOATP (keytem)
-	       ? internal_hash (keytem, closure->depth) : LISP_HASH (keytem));
-  else
-    /* equal: hash the key properly. */
-    keyhash = internal_hash (keytem, closure->depth);
-
-  closure->hash = HASH3 (closure->hash, keyhash,
-			 internal_hash (valuetem, closure->depth));
-  return (++closure->count > 5) ? 1 : 0;
-}
-
-static unsigned long
-hashtable_hash (Lisp_Object obj, int depth)
-{
-  struct hashtable_hash_closure closure;
-
-  closure.table = XHASHTABLE (obj);
-  closure.depth = depth + 1;
-  closure.hash = 0;
-  closure.count = 0;
-
-  elisp_maphash (hashtable_hash_mapper, obj, &closure);
-  return closure.hash;
 }
 
 /* Printing hashtables.
@@ -227,7 +168,7 @@ struct print_hashtable_data_closure
 };
 
 static int
-print_hashtable_data_mapper (void *key, void *contents, void *arg)
+print_hashtable_data_mapper (CONST void *key, void *contents, void *arg)
 {
   Lisp_Object keytem, valuetem;
   struct print_hashtable_data_closure *closure =
@@ -263,6 +204,10 @@ print_hashtable_data (Lisp_Object hashtable, Lisp_Object printcharfun)
   write_c_string ((!print_readably && closure.count > 4) ? " ...)" : ")",
 		  printcharfun);
 }
+
+/* Needed for tests.  */
+static int lisp_object_eql_equal (CONST void *x1, CONST void *x2);
+static int lisp_object_equal_equal (CONST void *x1, CONST void *x2);
 
 static void
 print_hashtable (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)

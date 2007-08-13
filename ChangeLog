@@ -1,3 +1,18 @@
+1998-02-09  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta24 is released.
+
+Wed Jan 28 13:41:22 1998  Andy Piper  <andyp@parallax.co.uk>
+
+	* configure.in: add mule-coding target which defines MULE_CODING,
+	nothing uses it as yet. add gif objects to msw support. define
+	const_is_losing=no for msw. make msw not selected if tty selected.
+ 	add -lshell32 for dnd support. check for a.out.h rather than
+	coff.h
+
+	* lib-src/make-docfile.c: add cygwin support and generalise the
+	remaining open calls. IMHO this should really include sysfile.h.
+
 1998-02-03  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.5-beta23 is released.

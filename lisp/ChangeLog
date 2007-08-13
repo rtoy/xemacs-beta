@@ -1,3 +1,69 @@
+1998-02-09  SL Baur  <steve@altair.xemacs.org>
+
+	* package-get-base.el (package-get-base): Updated.
+
+	* keymap.el: PC-ize.
+
+1998-02-08  Karl M. Hegbloom  <karlheg@bittersweet.inetarena.com>
+
+	* hyper-apropos.el (hyper-apropos-get-doc): Print the `loaded
+	from' on a fresh line.
+
+1998-02-08  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* help.el (help-maybe-pretty-print-value): prin1, not princ the
+	object.
+
+1998-02-09  SL Baur  <steve@altair.xemacs.org>
+
+	* undo-stack.el: PC-ize.
+
+	* cmdloop.el: PC-ize.
+
+1998-02-08  SL Baur  <steve@altair.xemacs.org>
+
+	* bytecomp-runtime.el: PC-ize.
+
+	* byte-optimize.el: Prolog fixup.  PC-ize.
+
+	* cus-dep.el: Spelling fix.
+
+	* text-mode.el: Synch with Emacs 20.2.  (Original ChangeLog
+	entries follow).
+
+1997-08-29  Richard Stallman  <rms@psilocin.gnu.ai.mit.edu>
+
+	* text-mode.el (text-mode-hook-identify): New function,
+	put on text-mode-hook.  Set text-mode-variant here.
+	(text-mode): Don't set it here.
+
+1997-08-27  Richard Stallman  <rms@psilocin.gnu.ai.mit.edu>
+
+	* text-mode.el (text-mode-hook): New defvar.
+	(text-mode-variant): New variable.
+	(text-mode): Set that variable locally.
+	(toggle-text-mode-auto-fill): New command.
+
+1997-06-15  Richard Stallman  <rms@psilocin.gnu.ai.mit.edu>
+
+	* text-mode.el (text-mode): Let all-white lines separate paragraphs.
+	
+1997-06-11  Richard Stallman  <rms@psilocin.gnu.ai.mit.edu>
+
+	* text-mode.el (paragraph-indent-text-mode):
+	Renamed from spaced-text-mode.
+	(text-mode-map): Bind TAB to indent-relative.
+	(indented-text-mode-map): Variable deleted.
+	(indented-text-mode): Now an alias for text-mode.
+
+1998-02-05  SL Baur  <steve@altair.xemacs.org>
+
+	* loadup.el: test-atoms debugging stuffs removed.
+
+1998-02-03  Martin Buchholz  <Martin Buchholz <martin@xemacs.org>>
+
+	* lisp/loaddefs.el (completion-ignored-extensions): Add ".class"
+
 1997-12-30  Colin Rafferty  <colin@xemacs.org>
 
 	* help.el (describe-beta): Made it use `locate-data-file'.

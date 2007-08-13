@@ -259,7 +259,7 @@ x_text_width_single_run (struct face_cachel *cachel, struct textual_run *run)
    */
 
 static int
-x_text_width (struct face_cachel *cachel, CONST Emchar *str,
+x_text_width (struct frame *f, struct face_cachel *cachel, CONST Emchar *str,
 	      Charcount len)
 {
   int width_so_far = 0;
@@ -814,7 +814,7 @@ x_output_string (struct window *w, struct display_line *dl,
   XSETWINDOW (window, w);
 
   if (width < 0)
-    width = x_text_width (cachel, Dynarr_atp (buf, 0), Dynarr_length (buf));
+    width = x_text_width (f, cachel, Dynarr_atp (buf, 0), Dynarr_length (buf));
   height = dl->ascent + dl->descent - dl->clip;
 
   /* Regularize the variables passed in. */

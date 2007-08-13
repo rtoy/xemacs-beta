@@ -1840,7 +1840,7 @@ condition_type_p (Lisp_Object type, Lisp_Object conditions)
 static Lisp_Object
 return_from_signal (Lisp_Object value)
 {
-#if 1 /* RMS Claims: */
+#if 1
   /* Most callers are not prepared to handle gc if this
      returns.  So, since this feature is not very useful,
      take it out.  */

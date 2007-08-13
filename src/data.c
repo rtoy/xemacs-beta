@@ -233,8 +233,7 @@ Do not use this function!
 */
        (obj1, obj2))
 {
-  /* The miscreant responsible for this blasphemy is known as
-     Richard M. Stallman, and he will burn in hell for it. */
+  /* #### blasphemy */
   return HACKEQ_UNSAFE (obj1, obj2) ? Qt : Qnil;
 }
 

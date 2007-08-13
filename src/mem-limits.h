@@ -129,6 +129,22 @@ static POINTER data_space_start;
 /* Number of bytes of writable memory we can expect to be able to get */
 extern unsigned int lim_data;
 
+#ifdef HEAP_IN_DATA
+extern unsigned long static_heap_size;
+extern int initialized;
+static void
+get_lim_data (void)
+{
+  if (!initialized)
+    {
+      lim_data = -1; /* static_heap_size; */
+    }
+  else
+    {
+      lim_data = -1;
+    }
+}
+#else
 #ifdef NO_LIM_DATA
 static void
 get_lim_data (void)
@@ -159,7 +175,7 @@ get_lim_data (void)
 }
 
 #else /* not USG */
-#if defined( WINDOWSNT ) || defined (__CYGWIN32__)
+#if defined( WINDOWSNT )
 
 static void
 get_lim_data (void)
@@ -206,5 +222,6 @@ get_lim_data (void)
 #endif /* not WINDOWSNT */
 #endif /* not USG */
 #endif /* not NO_LIM_DATA */
+#endif /* not HEAP_IN_DATA */
 
 #endif /* _XEMACS_MEM_LIMITS_H_ */

@@ -37,14 +37,12 @@ Boston, MA 02111-1307, USA.  */
    Pointer/icon overhaul, more restructuring by Ben Wing for 19.14
 
    TODO:
-   ImageMagick support
    Convert images.el to C and stick it in here?
  */
 
 #include <config.h>
-#include <setjmp.h>
 #include "lisp.h"
-
+#include "lstream.h"
 #include "console-x.h"
 #include "glyphs-x.h"
 #include "objects-x.h"
@@ -57,17 +55,20 @@ Boston, MA 02111-1307, USA.  */
 
 #include "sysfile.h"
 
-#ifdef HAVE_IMAGEMAGICK
-#define _XOS_H_
-#ifdef MAGICK_HEADERS_ARE_UNDER_X11
-#include <X11/magick/magick.h>
-#else
-#include <magick/magick.h>
+#ifdef HAVE_PNG
+#ifdef __cplusplus
+extern "C" {
 #endif
-/*#include <image.h>*/
-/*#include <assert.h>*/
+#include <png.h>
+#ifdef __cplusplus
+}
+#endif
+#else
+#include <setjmp.h>
+#endif
 
-#define OLDCOMPAT /* allow lisp code using the old names to still function */
+#ifdef MULE
+#include "mule-coding.h"
 #endif
 
 #define LISP_DEVICE_TO_X_SCREEN(dev)					\
@@ -90,20 +91,24 @@ DEFINE_IMAGE_INSTANTIATOR_FORMAT (xface);
 Lisp_Object Qxface;
 #endif
 
-#ifdef HAVE_IMAGEMAGICK
-DEFINE_IMAGE_INSTANTIATOR_FORMAT (imagick);
-Lisp_Object Qimagick;
-
-#ifdef OLDCOMPAT /* old compatibility */
+#ifdef HAVE_TIFF
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (tiff);
-DEFINE_IMAGE_INSTANTIATOR_FORMAT (png);
-DEFINE_IMAGE_INSTANTIATOR_FORMAT (gif);
-DEFINE_IMAGE_INSTANTIATOR_FORMAT (jpeg);
 Lisp_Object Qtiff;
-Lisp_Object Qpng;
-Lisp_Object Qgif;
+#endif
+
+#ifdef HAVE_JPEG
+DEFINE_IMAGE_INSTANTIATOR_FORMAT (jpeg);
 Lisp_Object Qjpeg;
 #endif
+
+#ifdef HAVE_GIF
+DEFINE_IMAGE_INSTANTIATOR_FORMAT (gif);
+Lisp_Object Qgif;
+#endif
+
+#ifdef HAVE_PNG
+DEFINE_IMAGE_INSTANTIATOR_FORMAT (png);
+Lisp_Object Qpng;
 #endif
 
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (cursor_font);
@@ -439,26 +444,36 @@ simple_image_type_normalize (Lisp_Object inst, Lisp_Object console_type,
 static void
 write_lisp_string_to_temp_file (Lisp_Object string, char *filename_out)
 {
-  Extbyte *bytes;
-  Extcount len;
-  FILE *stream;
+  Lisp_Object instream, outstream;
+  Lstream *istr, *ostr;
+  char tempbuf[1024]; /* some random amount */
+  int fubar = 0;
+  FILE *tmpfil;
+  static Extbyte_dynarr *conversion_out_dynarr = NULL;
+  Bytecount bstart, bend;
+  struct gcpro gcpro1, gcpro2;
+#ifdef MULE
+  Lisp_Object conv_out_stream;
+  Lstream *costr;
+  struct gcpro gcpro3;
+#endif
 
-  /* #### This is a definite problem under Mule due to the amount of
-     stack data it might allocate.  Need to be able to convert and
-     write out to a file. */
-  GET_STRING_BINARY_DATA_ALLOCA (string, bytes, len);
+  /* This function can GC */
+  if (!conversion_out_dynarr)
+    conversion_out_dynarr = Dynarr_new (Extbyte);
+  else
+    Dynarr_reset (conversion_out_dynarr);
 
-  /* Write out to a temporary file ... */
+  /* Create the temporary file ... */
   sprintf (filename_out, "/tmp/emacs%d.XXXXXX", (int) getpid ());
   mktemp (filename_out);
-  stream = fopen (filename_out, "w");
-  if (!stream)
+  tmpfil = fopen (filename_out, "w");
+  if (!tmpfil)
     {
-    temp_file_error:
-      if (stream)
+      if (tmpfil)
 	{
 	  int old_errno = errno;
-	  fclose (stream);
+	  fclose (tmpfil);
 	  unlink (filename_out);
 	  errno = old_errno;
 	}
@@ -466,14 +481,63 @@ write_lisp_string_to_temp_file (Lisp_Object string, char *filename_out)
 			 list1 (build_string (filename_out)));
     }
 
-  if (fwrite (bytes, len, 1, stream) != 1)
-    goto temp_file_error;
+  CHECK_STRING (string);
+  get_string_range_byte (string, Qnil, Qnil, &bstart, &bend,
+			 GB_HISTORICAL_STRING_BEHAVIOR);
+  instream = make_lisp_string_input_stream (string, bstart, bend);
+  istr = XLSTREAM (instream);
+  /* setup the out stream */
+  outstream = make_dynarr_output_stream((unsigned_char_dynarr *)conversion_out_dynarr);
+  ostr = XLSTREAM (outstream);
+#ifdef MULE
+  /* setup the conversion stream */
+  conv_out_stream = make_encoding_output_stream (ostr, Fget_coding_system(Qbinary));
+  costr = XLSTREAM (conv_out_stream);
+  GCPRO3 (instream, outstream, conv_out_stream);
+#else
+  GCPRO2 (instream, outstream);
+#endif
 
-  if (fclose (stream) != 0)
-    {
-      stream = 0;
-      goto temp_file_error;
-    }
+  /* Get the data while doing the conversion */
+  while (1) {
+    int size_in_bytes = Lstream_read (istr, tempbuf, sizeof (tempbuf));
+    if (!size_in_bytes)
+      break;
+    /* It does seem the flushes are necessary... */
+#ifdef MULE
+    Lstream_write (costr, tempbuf, size_in_bytes);
+    Lstream_flush (costr);
+#else
+    Lstream_write (ostr, tempbuf, size_in_bytes);
+#endif
+    Lstream_flush (ostr);
+    if (fwrite ((unsigned char *)Dynarr_atp(conversion_out_dynarr, 0),
+		Dynarr_length(conversion_out_dynarr), 1, tmpfil) != 1)
+      {
+	fubar = 1;
+	break;
+      }
+    /* reset the dynarr */
+    Lstream_rewind(ostr);
+  }
+  
+  if (fclose (tmpfil) != 0)
+    fubar = 1;
+  Lstream_close (istr);
+#ifdef MULE
+  Lstream_close (costr);
+#endif
+  Lstream_close (ostr);
+  
+  UNGCPRO;
+  Lstream_delete (istr);
+  Lstream_delete (ostr);
+#ifdef MULE
+  Lstream_delete (costr);
+#endif
+  if (fubar)
+    report_file_error ("Writing temp file",
+		       list1 (build_string (filename_out)));
 }
 
 
@@ -1383,8 +1447,6 @@ xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     signal_simple_error ("Not an X device", device);
 
   dpy = DEVICE_X_DISPLAY (XDEVICE (device));
-  cmap = DEVICE_X_COLORMAP (XDEVICE(device));
-  depth = DEVICE_X_DEPTH (XDEVICE(device));
   xs = DefaultScreenOfDisplay (dpy);
 
   if (dest_mask & IMAGE_COLOR_PIXMAP_MASK)
@@ -1398,6 +1460,26 @@ xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 			      IMAGE_MONO_PIXMAP_MASK | IMAGE_COLOR_PIXMAP_MASK
 			      | IMAGE_POINTER_MASK);
   force_mono = (type != IMAGE_COLOR_PIXMAP);
+
+#if 0
+  /* Although I haven't found it documented yet, it appears that pointers are
+     always colored via the default window colormap... Sigh.  However, with
+     the current color structure, this will blow the doors off as things aren't set up
+     to differenciate between two colormaps per console.  AARGH! */
+  if (type == IMAGE_POINTER)
+    {
+      cmap = DefaultColormap(dpy, DefaultScreen(dpy));
+      depth = DefaultDepthOfScreen (xs);
+    }
+  else
+    {
+      cmap = DEVICE_X_COLORMAP (XDEVICE(device));
+      depth = DEVICE_X_DEPTH (XDEVICE(device));
+    }
+#else
+  cmap = DEVICE_X_COLORMAP (XDEVICE(device));
+  depth = DEVICE_X_DEPTH (XDEVICE(device));
+#endif
 
   x_initialize_pixmap_image_instance (ii, type);
 
@@ -1675,148 +1757,915 @@ xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 #endif /* HAVE_XPM */
 
 
-#ifdef HAVE_IMAGEMAGICK
+#ifdef HAVE_JPEG
+
 /**********************************************************************
- *                             ImageMagick                            *
+ *                             JPEG                                   *
  **********************************************************************/
-JMP_BUF imagick_jump;
-Lisp_Object imagick_err; /* slightly hackish way to return a proper error message */
 
-static void
-imagick_validate (Lisp_Object instantiator)
-{
-	file_or_data_must_be_present (instantiator);
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include <jpeglib.h>
+#include <jerror.h>
+#ifdef __cplusplus
 }
+#endif
 
+/*#define USE_TEMP_FILES_FOR_JPEG_IMAGES 1*/
 static void
-imagick_error_handler (const char *message,const char *qualifier)
+jpeg_validate (Lisp_Object instantiator)
 {
-  /* ImageMagick defaults to exiting on errors, which is an anti-thing.
-   * Dump the info into imagick_err, and jmp back */
-  if (qualifier != NULL)
-    imagick_err = emacs_doprnt_string_c((CONST Bufbyte *) GETTEXT ("ImageMagick error: %s (%s)"),
-					Qnil, -1, message, qualifier);
-  else
-    imagick_err = emacs_doprnt_string_c((CONST Bufbyte *) GETTEXT ("ImageMagick error: %s"),
-					Qnil, -1, message);
-  LONGJMP(imagick_jump,1);
-}
-
-static void
-imagick_warning_handler (const char *message,const char *qualifier)
-{
-  if (qualifier != NULL)
-    warn_when_safe(Qimagick, Qwarning, "ImageMagick warning: %s (%s)",message,qualifier);
-  else
-    warn_when_safe(Qimagick, Qwarning, "ImageMagick warning: %s",message);
+  file_or_data_must_be_present (instantiator);
 }
 
 static Lisp_Object
-imagick_normalize (Lisp_Object inst, Lisp_Object console_type)
+jpeg_normalize (Lisp_Object inst, Lisp_Object console_type)
 {
-	return simple_image_type_normalize (inst, console_type, Qimagick);
+  return simple_image_type_normalize (inst, console_type, Qjpeg);
 }
 
 static int
-imagick_possible_dest_types (void)
+jpeg_possible_dest_types (void)
 {
-	return IMAGE_COLOR_PIXMAP_MASK;
+  return IMAGE_COLOR_PIXMAP_MASK;
 }
 
-struct imagick_unwind_data
+/* To survive the otherwise baffling complexity of making sure
+   everything gets cleaned up in the presence of an error, we
+   use an unwind_protect(). */
+
+struct jpeg_unwind_data
 {
-	Display *dpy;
-	Colormap cmap;
-	FILE *instream;
-	Image *image;
-	XImage *ximage;
-	unsigned long *pixels;
-	unsigned long npixels;
-	char tempfile[50];
-	int tempfile_needs_to_be_removed;
+  Display *dpy;
+  Colormap cmap;
+  /* Stream that we need to close */
+  FILE *instream;
+  /* Object that holds state info for JPEG decoding */
+  struct jpeg_decompress_struct *cinfo_ptr;
+  /* Pixels to keep around while the image is active */
+  unsigned long *pixels;
+  int npixels;
+  /* Client-side image structure */
+  XImage *ximage;
+  /* Tempfile to remove */
+  char tempfile[50];
+  int tempfile_needs_to_be_removed;
 };
 
 static Lisp_Object
-imagick_instantiate_unwind (Lisp_Object unwind_obj)
+jpeg_instantiate_unwind (Lisp_Object unwind_obj)
 {
-	struct imagick_unwind_data *data =
-		(struct imagick_unwind_data *) get_opaque_ptr (unwind_obj);
- 
-	free_opaque_ptr (unwind_obj);
-	if (data->instream)
-		fclose (data->instream);
-	if (data->tempfile_needs_to_be_removed)
-		unlink (data->tempfile);
+  struct jpeg_unwind_data *data =
+    (struct jpeg_unwind_data *) get_opaque_ptr (unwind_obj);
 
-	if (data->image) {
-		DestroyImage(data->image);
-	}
+  free_opaque_ptr (unwind_obj);
+  if (data->cinfo_ptr)
+    jpeg_destroy_decompress (data->cinfo_ptr);
 
-	if (data->ximage) {
-		if (data->ximage->data) {
-			xfree (data->ximage->data);
-			data->ximage->data = NULL;
-		}
-		XDestroyImage (data->ximage);
-	}
+  if (data->instream)
+    fclose (data->instream);
 
-	if (data->npixels > 0) {
-	  XFreeColors(data->dpy, data->cmap, data->pixels, data->npixels, 0L);
-	  xfree (data->pixels);
-	}
- 
-	return Qnil;
+  if (data->tempfile_needs_to_be_removed)
+    unlink (data->tempfile);
+
+  if (data->npixels > 0)
+    {
+      XFreeColors (data->dpy, data->cmap, data->pixels, data->npixels, 0L);
+      xfree (data->pixels);
+    }
+
+  if (data->ximage)
+    {
+      if (data->ximage->data)
+        {
+	  xfree (data->ximage->data);
+          data->ximage->data = 0;
+        }
+      XDestroyImage (data->ximage);
+    }
+
+  return Qnil;
 }
 
+/*
+ * ERROR HANDLING:
+ *
+ * The JPEG library's standard error handler (jerror.c) is divided into
+ * several "methods" which you can override individually.  This lets you
+ * adjust the behavior without duplicating a lot of code, which you might
+ * have to update with each future release.
+ *
+ * Our example here shows how to override the "error_exit" method so that
+ * control is returned to the library's caller when a fatal error occurs,
+ * rather than calling exit() as the standard error_exit method does.
+ *
+ * We use C's setjmp/longjmp facility to return control.  This means that the
+ * routine which calls the JPEG library must first execute a setjmp() call to
+ * establish the return point.  We want the replacement error_exit to do a
+ * longjmp().  But we need to make the setjmp buffer accessible to the
+ * error_exit routine.  To do this, we make a private extension of the
+ * standard JPEG error handler object.  (If we were using C++, we'd say we
+ * were making a subclass of the regular error handler.)
+ *
+ * Here's the extended error handler struct:
+ */
+
+struct my_jpeg_error_mgr
+{
+  struct jpeg_error_mgr pub;	/* "public" fields */
+  jmp_buf setjmp_buffer;	/* for return to caller */
+};
+
+#if defined(JPEG_LIB_VERSION) && (JPEG_LIB_VERSION >= 61)
+METHODDEF(void)
+#else
+METHODDEF void
+#endif
+our_init_source (j_decompress_ptr cinfo) {
+}
+
+#if defined(JPEG_LIB_VERSION) && (JPEG_LIB_VERSION >= 61)
+METHODDEF(boolean)
+#else
+METHODDEF boolean
+#endif
+our_fill_input_buffer (j_decompress_ptr cinfo) {
+  /* Insert a fake EOI marker */
+  struct jpeg_source_mgr *src = (struct jpeg_source_mgr *) cinfo->src;
+  static JOCTET buffer[2];
+
+  buffer[0] = (JOCTET) 0xFF;
+  buffer[1] = (JOCTET) JPEG_EOI;
+
+  src->next_input_byte = buffer;
+  src->bytes_in_buffer = 2;
+  return TRUE;
+}
+
+#if defined(JPEG_LIB_VERSION) && (JPEG_LIB_VERSION >= 61)
+METHODDEF(void)
+#else
+METHODDEF void
+#endif
+our_skip_input_data (j_decompress_ptr cinfo, long num_bytes) {
+  struct jpeg_source_mgr *src = NULL;
+
+  src = (struct jpeg_source_mgr *) cinfo->src;
+
+  if (!src) {
+    return;
+  } else if (num_bytes > src->bytes_in_buffer) {
+    ERREXIT(cinfo, JERR_INPUT_EOF);
+    /*NOTREACHED*/
+  }
+
+  src->bytes_in_buffer -= num_bytes;
+  src->next_input_byte += num_bytes;
+}
+
+#if defined(JPEG_LIB_VERSION) && (JPEG_LIB_VERSION >= 61)
+METHODDEF(void)
+#else
+METHODDEF void
+#endif
+our_term_source (j_decompress_ptr cinfo) {
+}
+
+typedef struct {
+  struct jpeg_source_mgr pub;
+} our_jpeg_source_mgr;
+
 static void
-imagick_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-					 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-					 int dest_mask, Lisp_Object domain)
+jpeg_memory_src (j_decompress_ptr cinfo, JOCTET *data, unsigned int len)
+{
+  struct jpeg_source_mgr *src = NULL;
+
+  if (cinfo->src == NULL) {	/* first time for this JPEG object? */
+    cinfo->src = (struct jpeg_source_mgr *)
+      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
+				  sizeof(our_jpeg_source_mgr));
+    src = (struct jpeg_source_mgr *) cinfo->src;
+    src->next_input_byte = data;
+  }
+  src = (struct jpeg_source_mgr *) cinfo->src;
+  src->init_source = our_init_source;
+  src->fill_input_buffer = our_fill_input_buffer;
+  src->skip_input_data = our_skip_input_data;
+  src->resync_to_restart = jpeg_resync_to_restart; /* use default method */
+  src->term_source = our_term_source;
+  src->bytes_in_buffer = len;
+  src->next_input_byte = data;
+}
+
+#if defined(JPEG_LIB_VERSION) && (JPEG_LIB_VERSION >= 61)
+METHODDEF(void)
+#else
+METHODDEF void
+#endif
+my_jpeg_error_exit (j_common_ptr cinfo)
+{
+  /* cinfo->err really points to a my_error_mgr struct, so coerce pointer */
+  struct my_jpeg_error_mgr *myerr = (struct my_jpeg_error_mgr *) cinfo->err;
+
+  /* Return control to the setjmp point */
+  longjmp (myerr->setjmp_buffer, 1);
+}
+
+/* The code in this routine is based on example.c from the JPEG library
+   source code and from gif_instantiate() */
+static void
+jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
+		  Lisp_Object pointer_fg, Lisp_Object pointer_bg,
+		  int dest_mask, Lisp_Object domain)
 {
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
   Display *dpy;
   Screen *scr;
-  Visual *visual;
   Colormap cmap;
-  Dimension depth;
-  struct imagick_unwind_data unwind;
-  int speccount;
-  ImageInfo image_info;
+  Visual *vis;
+  /* It is OK for the unwind data to be local to this function,
+     because the unwind-protect is always executed when this
+     stack frame is still valid. */
+  struct jpeg_unwind_data unwind;
+  int speccount = specpdl_depth ();
 
-  /* ImageMagick variables */
+  /* This struct contains the JPEG decompression parameters and pointers to
+   * working space (which is allocated as needed by the JPEG library).
+   */
+  struct jpeg_decompress_struct cinfo;
+  /* We use our private extension JPEG error handler.
+   * Note that this struct must live as long as the main JPEG parameter
+   * struct, to avoid dangling-pointer problems.
+   */
+  struct my_jpeg_error_mgr jerr;
 
-  /* Basic error checking */
   if (!DEVICE_X_P (XDEVICE (device)))
     signal_simple_error ("Not an X device", device);
 
   dpy = DEVICE_X_DISPLAY (XDEVICE (device));
   scr = DefaultScreenOfDisplay (dpy);
-  depth = DEVICE_X_DEPTH (XDEVICE (device));
-  visual = DEVICE_X_VISUAL (XDEVICE (device));
   cmap = DEVICE_X_COLORMAP (XDEVICE(device));
+  vis = DEVICE_X_VISUAL (XDEVICE(device));
 
-  /* Set up the unwind */
+  /* Step -1: First record our unwind-protect, which will clean up after
+     any exit, normal or not */
+
   memset (&unwind, 0, sizeof (unwind));
   unwind.dpy = dpy;
   unwind.cmap = cmap;
-  speccount = specpdl_depth();
-  record_unwind_protect(imagick_instantiate_unwind,make_opaque_ptr(&unwind));
+  record_unwind_protect (jpeg_instantiate_unwind, make_opaque_ptr (&unwind));
 
-  /* Set up error handlers */
-  if (SETJMP(imagick_jump)) 
+#ifdef USE_TEMP_FILES_FOR_JPEG_IMAGES
+  /* Step 0: Write out to a temp file.
+
+     The JPEG routines require you to read from a file unless
+     you provide your own special input handlers, which I don't
+     feel like doing. */
+  {
+    Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
+
+    assert (!NILP (data));
+
+    write_lisp_string_to_temp_file (data, unwind.tempfile);
+    unwind.tempfile_needs_to_be_removed = 1;
+
+    /* VERY IMPORTANT: use "b" option to fopen() if you are on a machine that
+     * requires it in order to read binary files.
+     */
+
+    if ((unwind.instream = fopen (unwind.tempfile, "r")) == NULL)
+      report_file_error ("Opening JPEG temp file",
+			 list1 (build_string (unwind.tempfile)));
+  }
+#endif
+
+  /* Step 1: allocate and initialize JPEG decompression object */
+
+  /* We set up the normal JPEG error routines, then override error_exit. */
+  cinfo.err = jpeg_std_error (&jerr.pub);
+  jerr.pub.error_exit = my_jpeg_error_exit;
+
+  /* Establish the setjmp return context for my_error_exit to use. */
+  if (setjmp (jerr.setjmp_buffer))
     {
-      /* signal error GCPROs it's arguments */
-      signal_error(Qerror, list2(imagick_err, instantiator));
-    }
-  
-  SetErrorHandler(imagick_error_handler);
-  SetWarningHandler(imagick_warning_handler);
+      /* If we get here, the JPEG code has signaled an error.
+       * We need to clean up the JPEG object, close the input file, and return.
+       */
 
-  /* Write out to a temp file - not sure if ImageMagick supports the
-  ** notion of an abstract 'data source' right now.
-  ** JH: It doesn't as of 3.9.3
-  */
+      {
+	Lisp_Object errstring;
+	char buffer[JMSG_LENGTH_MAX];
+
+	/* Create the message */
+	(*cinfo.err->format_message) ((j_common_ptr) &cinfo, buffer);
+	errstring = build_string (buffer);
+
+	signal_simple_error_2 ("JPEG decoding error",
+			       errstring, instantiator);
+      }
+    }
+
+  /* Now we can initialize the JPEG decompression object. */
+  jpeg_create_decompress (&cinfo);
+  unwind.cinfo_ptr = &cinfo;
+
+  /* Step 2: specify data source (eg, a file) */
+
+#ifdef USE_TEMP_FILES_FOR_JPEG_IMAGES
+  jpeg_stdio_src (&cinfo, unwind.instream);
+#else
+  {
+    Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
+    Extbyte *bytes;
+    Extcount len;
+
+    /* #### This is a definite problem under Mule due to the amount of
+       stack data it might allocate.  Need to be able to convert and
+       write out to a file. */
+    GET_STRING_BINARY_DATA_ALLOCA (data, bytes, len);
+    jpeg_memory_src (&cinfo, bytes, len);
+  }
+#endif
+
+  /* Step 3: read file parameters with jpeg_read_header() */
+
+  jpeg_read_header (&cinfo, TRUE);
+  /* We can ignore the return value from jpeg_read_header since
+   *   (a) suspension is not possible with the stdio data source, and
+   *   (b) we passed TRUE to reject a tables-only JPEG file as an error.
+   * See libjpeg.doc for more info.
+   */
+
+  /* Step 4: set parameters for decompression.   */
+
+  /* We request that the JPEG file be automatically quantized into
+     8-bit color in case it's not already (many JPEGs are stored in
+     24-bit color).  "Two-pass quantize" means that the colormap
+     is determined on-the-fly for this particular image rather than
+     quantizing to a supplied colormap.  We can get away with this
+     because we then use allocate_nearest_color().
+
+     #### Note of course that this is not the most color-effective
+     way of doing things -- we could quantize an image that has
+     lots of very similar colors, and eat up the colormap with these
+     (useless to other images) colors.  Unfortunately I don't think
+     there's any "general" way of maximizing the overall image
+     quality of lots of images, given that we don't know the
+     colors of the images until we come across each one.  Best we
+     could do would be various sorts of heuristics, which I don't
+     feel like dealing with now.  A better scheme would be the
+     way things are done under MS Windows, where the colormap is
+     dynamically adjusted for various applications; but that kind
+     of thing would have to be provided by X, which it isn't. */
+
+  cinfo.quantize_colors = TRUE;
+  cinfo.two_pass_quantize = TRUE;
+  cinfo.colormap = NULL;
+
+  /* Step 5: Start decompressor */
+
+  jpeg_start_decompress (&cinfo);
+  /* We can ignore the return value since suspension is not possible
+   * with the stdio data source.
+   */
+
+  /* At this point we know the size of the image and the colormap. */
+
+  /* Step 5.33: Allocate the colors */
+  {
+    int i;
+
+    /* Just in case the image contains out-of-range pixels, we go
+       ahead and allocate space for all of them. */
+    unwind.pixels = xnew_array (unsigned long, 256);
+    unwind.npixels = cinfo.actual_number_of_colors;
+
+    for (i = 0; i < 256; i++)
+      unwind.pixels[i] = 0;   /* Use a reasonable color for out of range. */
+
+    /* Allocate pixels for the various colors. */
+    for (i = 0; i < unwind.npixels; i++)
+      {
+	XColor color;
+	int ri, gi, bi;
+
+	ri = 0;
+	gi = cinfo.out_color_components > 1 ? 1 : 0;
+	bi = cinfo.out_color_components > 2 ? 2 : 0;
+
+	/* Ok... apparently, an entry of cinfo.colormap can be NULL if
+	   there are no bits of that color in the image.  How incredibly
+	   gross.  Wouldn't it be nice to have exceptions!? */
+	color.red = cinfo.colormap[ri] ? cinfo.colormap[ri][i] << 8 : 0;
+	color.green = cinfo.colormap[gi] ? cinfo.colormap[gi][i] << 8 : 0;
+	color.blue = cinfo.colormap[bi] ? cinfo.colormap[bi][i] << 8 : 0;
+	color.flags = DoRed | DoGreen | DoBlue;
+
+	allocate_nearest_color (dpy, cmap, vis, &color);
+	unwind.pixels[i] = color.pixel;
+      }
+  }
+
+  /* Step 5.66: Create the image */
+  {
+    int height = cinfo.output_height;
+    int width = cinfo.output_width;
+    int depth;
+    int bitmap_pad;
+
+    depth = DEVICE_X_DEPTH(XDEVICE(device));
+
+    /* first get bitmap_pad (from XPM) */
+    bitmap_pad = ((depth > 16) ? 32 :
+		  (depth >  8) ? 16 :
+		  8);
+
+    unwind.ximage = XCreateImage (dpy, DefaultVisualOfScreen (scr),
+				  depth, ZPixmap, 0, 0, width, height,
+				  bitmap_pad, 0);
+
+    if (!unwind.ximage)
+      signal_simple_error ("Unable to create X image struct", instantiator);
+
+    /* now that bytes_per_line must have been set properly alloc data */
+    unwind.ximage->data =
+      (char *) xmalloc (unwind.ximage->bytes_per_line * height);
+  }
+
+  /* Step 6: Read in the data and put into image */
+  {
+    JSAMPARRAY row_buffer;	/* Output row buffer */
+    int row_stride;		/* physical row width in output buffer */
+
+    /* We may need to do some setup of our own at this point before reading
+     * the data.  After jpeg_start_decompress() we have the correct scaled
+     * output image dimensions available, as well as the output colormap
+     * if we asked for color quantization.
+     * In this example, we need to make an output work buffer of the right size.
+     */
+    /* JSAMPLEs per row in output buffer.
+       Since we asked for quantized output, cinfo.output_components
+       will always be 1. */
+    row_stride = cinfo.output_width * cinfo.output_components;
+    /* Make a one-row-high sample array that will go away when done
+       with image */
+    row_buffer = ((*cinfo.mem->alloc_sarray)
+		  ((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1));
+
+    /* Here we use the library's state variable cinfo.output_scanline as the
+     * loop counter, so that we don't have to keep track ourselves.
+     */
+    while (cinfo.output_scanline < cinfo.output_height)
+      {
+	int i;
+	int scanline = cinfo.output_scanline;
+
+	/* jpeg_read_scanlines expects an array of pointers to scanlines.
+	 * Here the array is only one element long, but you could ask for
+	 * more than one scanline at a time if that's more convenient.
+	 */
+	(void) jpeg_read_scanlines (&cinfo, row_buffer, 1);
+
+	for (i = 0; i < cinfo.output_width; i++)
+	  XPutPixel (unwind.ximage, i, scanline,
+		     /* Let's make sure we avoid getting bit like
+			what happened for GIF's.  It's probably the
+			case that JSAMPLE's are unsigned chars as
+			opposed to chars, but you never know.
+
+			(They could even be shorts if the library
+			was compiled with 12-bit samples -- ####
+			We should deal with this possibility) */
+		     unwind.pixels[(unsigned char) row_buffer[0][i]]);
+      }
+  }
+
+  /* Step 6.5: Create the pixmap and set up the image instance */
+  init_image_instance_from_x_image (ii, unwind.ximage, dest_mask,
+				    unwind.pixels, unwind.npixels,
+				    instantiator);
+
+  /* Step 7: Finish decompression */
+
+  jpeg_finish_decompress (&cinfo);
+  /* We can ignore the return value since suspension is not possible
+   * with the stdio data source.
+   */
+
+  /* And we're done!
+
+     Now that we've succeeded, we don't want the pixels
+     freed right now.  They're kept around in the image instance
+     structure until it's destroyed. */
+  unwind.npixels = 0;
+
+  /* This will clean up everything else. */
+  unbind_to (speccount, Qnil);
+}
+
+#endif /* HAVE_JPEG */
+
+#ifdef HAVE_GIF
+
+/**********************************************************************
+ *                               GIF                                  *
+ **********************************************************************/
+
+#include "gif_lib.h" /* This is in our own source tree */
+
+static void
+gif_validate (Lisp_Object instantiator)
+{
+  file_or_data_must_be_present (instantiator);
+}
+
+static Lisp_Object
+gif_normalize (Lisp_Object inst, Lisp_Object console_type)
+{
+  return simple_image_type_normalize (inst, console_type, Qgif);
+}
+
+static int
+gif_possible_dest_types (void)
+{
+  return IMAGE_COLOR_PIXMAP_MASK;
+}
+
+/* To survive the otherwise baffling complexity of making sure
+   everything gets cleaned up in the presence of an error, we
+   use an unwind_protect(). */
+
+struct gif_unwind_data
+{
+  Display *dpy;
+  Colormap cmap;
+  /* Object that holds the decoded data from a GIF file */
+  GifFileType *giffile;
+  /* Pixels to keep around while the image is active */
+  unsigned long *pixels;
+  int npixels;
+  /* Client-side image structure */
+  XImage *ximage;
+  /* Tempfile to remove */
+  char tempfile[50];
+  int tempfile_needs_to_be_removed;
+};
+
+static Lisp_Object
+gif_instantiate_unwind (Lisp_Object unwind_obj)
+{
+  struct gif_unwind_data *data =
+    (struct gif_unwind_data *) get_opaque_ptr (unwind_obj);
+
+  free_opaque_ptr (unwind_obj);
+  if (data->giffile)
+    DGifCloseFile (data->giffile);
+  if (data->tempfile_needs_to_be_removed)
+    unlink (data->tempfile);
+  if (data->npixels > 0)
+    {
+      XFreeColors (data->dpy, data->cmap, data->pixels, data->npixels, 0L);
+      xfree (data->pixels);
+    }
+  if (data->ximage)
+    {
+      if (data->ximage->data)
+        {
+	  xfree (data->ximage->data);
+          data->ximage->data = 0;
+        }
+      XDestroyImage (data->ximage);
+    }
+
+  return Qnil;
+}
+
+static void
+gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
+		 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
+		 int dest_mask, Lisp_Object domain)
+{
+  struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
+  Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
+  Display *dpy;
+  Screen *scr;
+  Colormap cmap;
+  Visual *vis;
+  /* It is OK for the unwind data to be local to this function,
+     because the unwind-protect is always executed when this
+     stack frame is still valid. */
+  struct gif_unwind_data unwind;
+  int speccount = specpdl_depth ();
+
+  if (!DEVICE_X_P (XDEVICE (device)))
+    signal_simple_error ("Not an X device", device);
+
+  dpy = DEVICE_X_DISPLAY (XDEVICE (device));
+  scr = DefaultScreenOfDisplay (dpy);
+  cmap = DEVICE_X_COLORMAP (XDEVICE(device));
+  vis = DEVICE_X_VISUAL (XDEVICE(device));
+
+  memset (&unwind, 0, sizeof (unwind));
+  unwind.dpy = dpy;
+  unwind.cmap = cmap;
+  record_unwind_protect (gif_instantiate_unwind, make_opaque_ptr (&unwind));
+
+  /* 1. Now decode the data. */
+
+  /* #### The GIF routines currently require that you read from a file,
+     so write out to a temp file.  We should change this. */
+  {
+    Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
+
+    assert (!NILP (data));
+
+    write_lisp_string_to_temp_file (data, unwind.tempfile);
+    unwind.tempfile_needs_to_be_removed = 1;
+
+    /* Then slurp the image into memory, decoding along the way.
+       The result is the image in a simple one-byte-per-pixel
+       format (#### the GIF routines only support 8-bit GIFs,
+       it appears). */
+    unwind.giffile = DGifOpenFileName (unwind.tempfile);
+    if (unwind.giffile == NULL)
+      {
+      gif_decode_error:
+	signal_simple_error ("Unable to decode GIF",
+			     build_string (EmacsPrintGifError ()));
+      }
+    /* DGifSlurp() doesn't handle interlaced files. */
+    /* Actually, it does, sort of.  It just sets the Interlace flag
+       and stores RasterBits in interlaced order.  We handle that below. */
+    if (DGifSlurp (unwind.giffile) != GIF_OK)
+      goto gif_decode_error;
+  }
+
+  /* 2. Now allocate the colors for the image. */
+  {
+    int i;
+    ColorMapObject *cmo = unwind.giffile->SColorMap;
+    /* Just in case the image contains out-of-range pixels, we go
+       ahead and allocate space for all of them. */
+    unwind.pixels = xnew_array (unsigned long, 256);
+    unwind.npixels = cmo->ColorCount;
+
+    for (i = 0; i < 256; i++)
+      unwind.pixels[i] = 0;   /* Use a reasonable color for out of range. */
+
+    /* Allocate pixels for the various colors. */
+    for (i = 0; i < cmo->ColorCount; i++)
+      {
+	XColor color;
+
+	color.red = cmo->Colors[i].Red << 8;
+	color.green = cmo->Colors[i].Green << 8;
+	color.blue = cmo->Colors[i].Blue << 8;
+	color.flags = DoRed | DoGreen | DoBlue;
+
+	allocate_nearest_color (dpy, cmap, vis, &color);
+	unwind.pixels[i] = color.pixel;
+      }
+  }
+
+  /* 3. Now create the image */
+  {
+    int height = unwind.giffile->SHeight;
+    int width = unwind.giffile->SWidth;
+    int depth;
+    int bitmap_pad;
+    int i, j, row, pass, interlace;
+    /* interlaced gifs have rows in this order:
+       0, 8, 16, ..., 4, 12, 20, ..., 2, 6, 10, ..., 1, 3, 5, ...  */
+    static int InterlacedOffset[] = { 0, 4, 2, 1 };
+    static int InterlacedJumps[] = { 8, 8, 4, 2 };
+
+    depth = DEVICE_X_DEPTH(XDEVICE(device));
+
+    /* first get bitmap_pad (from XPM) */
+    bitmap_pad = ((depth > 16) ? 32 :
+		  (depth >  8) ? 16 :
+		  8);
+
+    unwind.ximage = XCreateImage (dpy, vis,
+				  depth, ZPixmap, 0, 0, width, height,
+				  bitmap_pad, 0);
+
+    if (!unwind.ximage)
+      signal_simple_error ("Unable to create X image struct", instantiator);
+
+    /* now that bytes_per_line must have been set properly alloc data */
+    unwind.ximage->data =
+      (char *) xmalloc (unwind.ximage->bytes_per_line * height);
+
+    /* write the data --
+       #### XPutPixel() is a client-side-only function but could
+       still be slow.  Another possibility is to just convert to
+       XPM format and use the Xpm routines, which optimize this
+       stuff; but it's doubtful that this will be faster in the
+       long run, what with all the XPM overhead.  If this proves
+       to be a bottleneck here, maybe we should just copy the
+       optimization routines from XPM (they're in turn mostly
+       copied from the Xlib source code). */
+
+    /* Note: We just use the first image in the file and ignore the rest.
+             We check here that that image covers the full "screen" size.
+	     I don't know whether that's always the case.
+             -dkindred@cs.cmu.edu  */
+    if (unwind.giffile->SavedImages[0].ImageDesc.Height != height
+	|| unwind.giffile->SavedImages[0].ImageDesc.Width != width
+	|| unwind.giffile->SavedImages[0].ImageDesc.Left != 0
+	|| unwind.giffile->SavedImages[0].ImageDesc.Top != 0)
+      signal_simple_error ("First image in GIF file is not full size",
+			   instantiator);
+
+    interlace = unwind.giffile->SavedImages[0].ImageDesc.Interlace;
+    pass = 0;
+    row = interlace ? InterlacedOffset[pass] : 0;
+    for (i = 0; i < height; i++)
+      {
+	if (interlace && row >= height)
+	  row = InterlacedOffset[++pass];
+
+	for (j = 0; j < width; j++)
+	  XPutPixel (unwind.ximage, j, row,
+		     unwind.pixels[(unsigned char)
+				  /* incorrect signed declaration
+				     of RasterBits[] */
+				  (unwind.giffile->SavedImages[0].
+				   RasterBits[i * width + j])]);
+
+	row += interlace ? InterlacedJumps[pass] : 1;
+      }
+  }
+
+  /* 4. Now create the pixmap and set up the image instance */
+  init_image_instance_from_x_image (ii, unwind.ximage, dest_mask,
+				    unwind.pixels, unwind.npixels,
+				    instantiator);
+  /* Now that we've succeeded, we don't want the pixels
+     freed right now.  They're kept around in the image instance
+     structure until it's destroyed. */
+  unwind.npixels = 0;
+  unbind_to (speccount, Qnil);
+}
+
+#endif /* HAVE_GIF */
+
+
+#ifdef HAVE_PNG
+/* #define USE_TEMP_FILES_FOR_PNG_IMAGES 1 */
+
+/**********************************************************************
+ *                             PNG                                    *
+ **********************************************************************/
+static void
+png_validate (Lisp_Object instantiator)
+{
+  file_or_data_must_be_present (instantiator);
+}
+
+static Lisp_Object
+png_normalize (Lisp_Object inst, Lisp_Object console_type)
+{
+  return simple_image_type_normalize (inst, console_type, Qpng);
+}
+
+static int
+png_possible_dest_types (void)
+{
+  return IMAGE_COLOR_PIXMAP_MASK;
+}
+
+#if !defined (USE_TEMP_FILES_FOR_PNG_IMAGES) && (PNG_LIBPNG_VER >= 87)
+struct png_memory_storage
+{
+  Extbyte *bytes;		/* The data       */
+  Extcount len;			/* How big is it? */
+  int index;			/* Where are we?  */
+};
+
+static void png_read_from_memory(png_structp png_ptr, png_bytep data,
+				 png_uint_32 length)
+{
+   struct png_memory_storage *tbr =
+     (struct png_memory_storage *) png_get_io_ptr (png_ptr);
+
+   if (length > (tbr->len - tbr->index))
+     png_error (png_ptr, (png_const_charp) "Read Error");
+   memcpy(data,tbr->bytes + tbr->index,length);
+   tbr->index = tbr->index + length;
+}
+#endif /* !USE_TEMP_FILES_FOR_PNG_IMAGESS || PNG_LIBPNG_VER >= 87 */
+
+struct png_unwind_data
+{
+  Display *dpy;
+  Colormap cmap;
+  FILE *instream;
+  png_struct *png_ptr;
+  png_info *info_ptr;
+  unsigned long *pixels;
+  int npixels;
+  XImage *ximage;
+  char tempfile[50];
+  int tempfile_needs_to_be_removed;
+};
+
+static Lisp_Object
+png_instantiate_unwind (Lisp_Object unwind_obj)
+{
+  struct png_unwind_data *data =
+    (struct png_unwind_data *) get_opaque_ptr (unwind_obj);
+
+  free_opaque_ptr (unwind_obj);
+  if (data->png_ptr)
+    png_read_destroy (data->png_ptr, data->info_ptr, (png_info *) NULL);
+  if (data->instream)
+    fclose (data->instream);
+  if (data->tempfile_needs_to_be_removed)
+    unlink (data->tempfile);
+  if (data->npixels > 0)
+    {
+      XFreeColors (data->dpy, data->cmap, data->pixels, data->npixels, 0L);
+      xfree (data->pixels);
+    }
+
+  if (data->ximage)
+    {
+      if (data->ximage->data)
+	{
+	  xfree (data->ximage->data);
+	  data->ximage->data = 0;
+	}
+      XDestroyImage (data->ximage);
+    }
+
+  return Qnil;
+}
+
+/* This doesn't appear to be used. */
+#if 0
+#define get_png_val(p) _get_png_val (&(p), info_ptr.bit_depth)
+png_uint_16
+_get_png_val (png_byte **pp, int bit_depth)
+{
+  png_uint_16 c = 0;
+
+  if (bit_depth == 16) {
+    c = (*((*pp)++)) << 8;
+  }
+  c |= (*((*pp)++));
+
+  return c;
+}
+#endif
+
+static void
+png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
+		 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
+		 int dest_mask, Lisp_Object domain)
+{
+  struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
+  Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
+  Display *dpy;
+  Colormap cmap;
+  Visual *vis;
+  struct png_unwind_data unwind;
+  int speccount = specpdl_depth ();
+
+  /* PNG variables */
+  png_struct *png_ptr;
+  png_info *info_ptr;
+
+  if (!DEVICE_X_P (XDEVICE (device)))
+    signal_simple_error ("Not an X device", device);
+
+  dpy = DEVICE_X_DISPLAY (XDEVICE (device));
+  cmap = DEVICE_X_COLORMAP (XDEVICE(device));
+  vis = DEVICE_X_VISUAL (XDEVICE(device));
+
+  png_ptr  = xnew (png_struct);
+  info_ptr = xnew (png_info);
+
+  memset (&unwind, 0, sizeof (unwind));
+  unwind.png_ptr = png_ptr;
+  unwind.info_ptr = info_ptr;
+  unwind.dpy = dpy;
+  unwind.cmap = cmap;
+
+  record_unwind_protect (png_instantiate_unwind, make_opaque_ptr (&unwind));
+
+  /* This code is a mixture of stuff from Ben's GIF/JPEG stuff from
+     this file, example.c from the libpng 0.81 distribution, and the
+     pngtopnm sources. -WMP-
+     */
+#if defined (USE_TEMP_FILES_FOR_PNG_IMAGES) || (PNG_LIBPNG_VER < 87)
+  /* Write out to a temp file - we really should take the time to
+     write appropriate memory bound IO stuff, but I am just trying
+     to get the stupid thing working right now.
+     */
   {
     Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
 
@@ -1826,156 +2675,254 @@ imagick_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     unwind.tempfile_needs_to_be_removed = 1;
 
     if ((unwind.instream = fopen (unwind.tempfile, "rb")) == NULL)
-      report_file_error ("Opening ImageMagick temp file",
+      report_file_error ("Opening PNG temp file",
 			 list1 (build_string (unwind.tempfile)));
   }
-
-  /* Initialize structures and read in the image */
-  GetImageInfo(&image_info);
-  strcpy(image_info.filename,unwind.tempfile);
-  unwind.image = ReadImage(&image_info);
-
-  if (unwind.image == (Image *) NULL) {
-    signal_simple_error ("Unable to read image.",instantiator);
-  }
-
-#if 1
-  /*
-   * For now, force dithering everything, and deal with all images as if they
-   * were PseudoClass images
-   */
-  if (unwind.image->class != PseudoClass) {
-    QuantizeInfo quantize_info;
-    GetQuantizeInfo(&quantize_info);
-    quantize_info.number_colors=256;
-    quantize_info.tree_depth=8;
-    quantize_info.dither=True;
-    quantize_info.colorspace=RGBColorspace;
-    QuantizeImage(&quantize_info, unwind.image);
-    SyncImage(unwind.image);
-    /* #### It would probably be a good idea to sort the colormap by popularity,
-     * so that in case we run out of entries in the map, it will likely be on
-     * the less used colors
-     */
-  } else {
-    CompressColormap(unwind.image);
-    SyncImage(unwind.image);
-  }
-  
+#else
+  /* Nothing */
 #endif
 
-#if 0
-  DescribeImage(unwind.image,stderr,1);
-#endif
-
-  unwind.ximage = XCreateImage(dpy, visual, depth,
-			       (depth == 1) ? XYPixmap : ZPixmap,
-			       0, 0,
-			       unwind.image->columns,
-			       unwind.image->rows,
-			       XBitmapPad(dpy), 0);
-
-  if (!unwind.ximage) {
-    signal_simple_error("Unable to allocate XImage structure",
-			instantiator);
-  }
-
-  unwind.ximage->data = (char *) xmalloc(unwind.ximage->bytes_per_line *
-					 unwind.ximage->height);
-
-  if (unwind.ximage->data == (char *)NULL) {
-    signal_simple_error("Unable to allocate XImage data information",
-			instantiator);
-  }
-
-  
-  /*
-  ** First pull out all of the colors used, and create a lookup for them
-  */
-
-  if (unwind.image->class == PseudoClass) {
-    int i;
-
-    unwind.npixels = unwind.image->colors;
-    unwind.pixels = xmalloc(unwind.npixels * sizeof(unsigned long));
-    for (i = 0; i < unwind.npixels; i++) {
-      XColor color;
-      /* ImageMagic uses 8bit values for colors, whilst X expects 16bits */
-      color.red = unwind.image->colormap[i].red << 8;
-      color.green = unwind.image->colormap[i].green << 8;
-      color.blue = unwind.image->colormap[i].blue << 8;
-      color.flags = DoRed | DoGreen | DoBlue;
-      allocate_nearest_color (dpy, cmap, visual, &color);
-      unwind.pixels[i] = color.pixel;
+  /* Set the jmp_buf reurn context for png_error ... if this returns !0, then
+     we ran into a problem somewhere, and need to clean up after ourselves. */
+  if (setjmp (png_ptr->jmpbuf))
+    {
+      /* Am I doing enough here?  I think so, since most things happen
+         in png_unwind */
+      png_read_destroy (png_ptr, info_ptr, (png_info *) NULL);
+      signal_simple_error ("Error decoding PNG", instantiator);
     }
-  }
-  
-  /*
-  ** Need to pull the data from the 'Image' structure in
-  ** unwind.image and convert it to an 'XImage' in unwind.ximage
-  */
+
+  /* Initialize all PNG structures */
+  png_info_init (info_ptr);
+  png_read_init (png_ptr);
+
+  /* Initialize the IO layer and read in header information */
+#if defined (USE_TEMP_FILES_FOR_PNG_IMAGES) || (PNG_LIBPNG_VER < 87)
+  png_init_io (png_ptr, unwind.instream);
+#else
   {
-    int i,j,x,b;
-    unsigned int bytes_per_pixel, scanline_pad;
-    unsigned long pixval;
-    unsigned char *q, *pixar;
-    RunlengthPacket *p;
+    Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
+    Extbyte *bytes;
+    Extcount len;
+    struct png_memory_storage tbr; /* Data to be read */
 
-    q = (unsigned char *) unwind.ximage->data;
-    x  = 0;
-    p = unwind.image->pixels;
-    scanline_pad = unwind.ximage->bytes_per_line -
-      ((unwind.ximage->width * unwind.ximage->bits_per_pixel) >> 3);
+    assert (!NILP (data));
 
-    /* Convert to multi-byte color-mapped X image. */
-    bytes_per_pixel=unwind.ximage->bits_per_pixel >> 3;
+    /* #### This is a definite problem under Mule due to the amount of
+       stack data it might allocate.  Need to be able to convert and
+       write out to a file. */
+    GET_STRING_BINARY_DATA_ALLOCA (data, bytes, len);
+    tbr.bytes = bytes;
+    tbr.len = len;
+    tbr.index = 0;
+    png_set_read_fn(png_ptr,(void *) &tbr, png_read_from_memory);
+  }
+#endif
 
-    pixar = (unsigned char *) alloca (bytes_per_pixel);
+  png_read_info (png_ptr, info_ptr);
 
-    for (i=0; i < unwind.image->packets; i++) {
-      if (unwind.image->class == PseudoClass) 
-	pixval = unwind.pixels[p->index];
+  /* set up the transformations you want.  Note that these are
+     all optional.  Only call them if you want them */
+  /* tell libpng to strip 16 bit depth files down to 8 bits */
+  if (info_ptr->bit_depth == 16)
+    png_set_strip_16 (png_ptr);
+  if (info_ptr->bit_depth < 8)
+    png_set_packing (png_ptr);
+  /* ##### Perhaps some way to specify the screen gamma should be in here? */
+
+  {
+    int height = info_ptr->height;
+    int width = info_ptr->width;
+    int depth = info_ptr->bit_depth;
+    int linesize = max (info_ptr->bit_depth >> 3, 1) * width;
+    int bitmap_pad;
+    int y;
+    XColor color;
+    png_byte *png_pixels;
+    png_byte **row_pointers;
+    png_color static_color_cube[216];
+
+    /* Wow, allocate all the memory.  Truly, exciting. */
+    unwind.pixels = xnew_array (unsigned long, 256);
+    png_pixels    = xnew_array (png_byte, linesize * height);
+    row_pointers  = xnew_array (png_byte *, height);
+
+    for (y = 0; y < 256; y++)
+      unwind.pixels[y] = 0;
+    for (y = 0; y < height; y++)
+      row_pointers[y] = png_pixels + (linesize * y);
+
+    /*  #### This is where we should handle transparency, but I am unsure of
+	how exactly to get that information right now, in a safe manner. */
+#if 0
+    {
+      png_color_16 current_background;
+
+      /* Some appropriate magic should go here to get the current
+	 buffers (device?)  background color and convert it to a
+	 png_color_16 struct */
+      if (info_ptr->valid & PNG_INFO_bKGD)
+	png_set_background (png_ptr, &(info_ptr->background), PNG_GAMMA_FILE,
+			    1, 1.0);
       else
-	{
-	  /* ### NOW what? */
-	  pixval = 0;
-	}
-
-      for (b=0; b < bytes_per_pixel; b++) {
-	if (unwind.ximage->bitmap_bit_order == LSBFirst) 
-	  pixar[b] = (unsigned char)pixval;
-	else
-	  pixar[bytes_per_pixel - 1 - b] = (unsigned char)pixval;
-	pixval>>=8;
-      }
-
-      for (j=0; j <= ((int) p->length); j++) {
-	for (b=0; b < bytes_per_pixel; b++) 
-	  *q++= pixar[b];
-	x++;
-	if (x == unwind.ximage->width) {
-	  x=0;
-	  q+=scanline_pad;
-	}
-      }
-      p++;
+	png_set_background (png_ptr, &current_background, PNG_GAMMA_SCREEN,
+			    0, 1.0);
     }
+#endif
+
+    if ((info_ptr->color_type == PNG_COLOR_TYPE_RGB) ||
+	(info_ptr->color_type == PNG_COLOR_TYPE_RGB_ALPHA))
+      {
+	if (!(info_ptr->valid & PNG_INFO_PLTE))
+	  {
+	    for (y = 0; y < 216; y++)
+	      {
+		static_color_cube[y].red = (y % 6) * 255.0 / 5;
+		static_color_cube[y].green = ((y / 6) % 6) * 255.0 / 5;
+		static_color_cube[y].blue = (y / 36) * 255.0 / 5;
+	      }
+	    png_set_dither (png_ptr, static_color_cube, 216, 216, NULL, 1);
+	  }
+	else
+	  {
+	    png_set_dither (png_ptr, info_ptr->palette, info_ptr->num_palette,
+			    info_ptr->num_palette, info_ptr->hist, 1);
+	  }
+      }
+
+    png_read_image (png_ptr, row_pointers);
+    png_read_end (png_ptr, info_ptr);
+
+    /* Ok, now we go and allocate all the colors */
+    if (info_ptr->valid & PNG_INFO_PLTE)
+      {
+	unwind.npixels = info_ptr->num_palette;
+	for (y = 0; y < unwind.npixels; y++)
+	  {
+	    color.red = info_ptr->palette[y].red << 8;
+	    color.green = info_ptr->palette[y].green << 8;
+	    color.blue = info_ptr->palette[y].blue << 8;
+	    color.flags = DoRed | DoGreen | DoBlue;
+	    allocate_nearest_color (dpy, cmap, vis, &color);
+	    unwind.pixels[y] = color.pixel;
+	  }
+      }
+    else
+      {
+	unwind.npixels = 216;
+	for (y = 0; y < 216; y++)
+	  {
+	    color.red = static_color_cube[y].red << 8;
+	    color.green = static_color_cube[y].green << 8;
+	    color.blue = static_color_cube[y].blue << 8;
+	    color.flags = DoRed|DoGreen|DoBlue;
+	    allocate_nearest_color (dpy, cmap, vis, &color);
+	    unwind.pixels[y] = color.pixel;
+	  }
+      }
+
+#ifdef PNG_SHOW_COMMENTS
+    /* ####
+     * I turn this off by default now, because the !%^@#!% comments
+     * show up every time the image is instantiated, which can get
+     * really really annoying.  There should be some way to pass this
+     * type of data down into the glyph code, where you can get to it
+     * from lisp anyway. - WMP
+     */
+    {
+      int i;
+
+      for (i = 0 ; i < info_ptr->num_text ; i++)
+	{
+	  /* How paranoid do I have to be about no trailing NULLs, and
+	     using (int)info_ptr->text[i].text_length, and strncpy and a temp
+	     string somewhere? */
+
+	  warn_when_safe (Qpng, Qinfo, "%s - %s",
+			  info_ptr->text[i].key,
+			  info_ptr->text[i].text);
+	}
+    }
+#endif
+
+    /* Now create the image */
+
+    depth = DEVICE_X_DEPTH(XDEVICE(device));
+
+    /* first get bitmap_pad (from XPM) */
+    bitmap_pad = ((depth > 16) ? 32 :
+		  (depth >  8) ? 16 :
+		  8);
+
+    unwind.ximage = XCreateImage (dpy, vis,
+				  depth, ZPixmap, 0, 0, width, height,
+				  bitmap_pad, 0);
+
+    if (!unwind.ximage)
+      signal_simple_error ("Unable to create X image struct",
+			   instantiator);
+
+    /* now that bytes_per_line must have been set properly alloc data */
+    unwind.ximage->data = (char *) xmalloc (unwind.ximage->bytes_per_line *
+					    height);
+
+    {
+      int i, j;
+      for (i = 0; i < height; i++)
+	for (j = 0; j < width; j++)
+	  XPutPixel (unwind.ximage, j, i,
+		     unwind.pixels[png_pixels[i * width + j]]);
+    }
+
+    xfree (row_pointers);
+    xfree (png_pixels);
   }
 
   init_image_instance_from_x_image (ii, unwind.ximage, dest_mask,
 				    unwind.pixels, unwind.npixels,
 				    instantiator);
 
-  /* And we are done!
-  ** Now that we've succeeded, we don't want the pixels
-  ** freed right now.  They're kept around in the image instance
-  ** structure until it's destroyed.
-  */
+  /* This will clean up everything else. */
   unwind.npixels = 0;
   unbind_to (speccount, Qnil);
 }
 
-#endif /* HAVE_IMAGEMAGICK */
+#endif /* HAVE_PNG */
+
+
+#ifdef HAVE_TIFF
+
+/**********************************************************************
+ *                             TIFF                                   *
+ **********************************************************************/
+static void
+tiff_validate (Lisp_Object instantiator)
+{
+  file_or_data_must_be_present (instantiator);
+}
+
+static Lisp_Object
+tiff_normalize (Lisp_Object inst, Lisp_Object console_type)
+{
+  signal_simple_error ("No TIFF support yet", inst);
+  return Qnil;
+}
+
+static int
+tiff_possible_dest_types (void)
+{
+  return IMAGE_COLOR_PIXMAP_MASK;
+}
+
+static void
+tiff_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
+		  Lisp_Object pointer_fg, Lisp_Object pointer_bg,
+		  int dest_mask, Lisp_Object domain)
+{
+  abort ();
+}
+
+#endif /* HAVE_TIFF */
 
 
 #ifdef HAVE_XFACE
@@ -2882,55 +3829,52 @@ image_instantiator_format_create_glyphs_x (void)
   IIFORMAT_VALID_KEYWORD (font, Q_foreground, check_valid_string);
   IIFORMAT_VALID_KEYWORD (font, Q_background, check_valid_string);
 
-#ifdef HAVE_IMAGEMAGICK
-  INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (imagick, "imagick");
-
-  IIFORMAT_HAS_METHOD (imagick, validate);
-  IIFORMAT_HAS_METHOD (imagick, normalize);
-  IIFORMAT_HAS_METHOD (imagick, possible_dest_types);
-  IIFORMAT_HAS_METHOD (imagick, instantiate);
-
-  IIFORMAT_VALID_KEYWORD (imagick, Q_data, check_valid_string);
-  IIFORMAT_VALID_KEYWORD (imagick, Q_file, check_valid_string);
-
-#ifdef OLDCOMPAT /* old graphics compatibility */
-#define IIFORMAT_USES_METHOD(format, source, m) \
-  (format##_image_instantiator_methods->m##_method = source##_##m)
-
-  INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (tiff, "tiff");
-  IIFORMAT_USES_METHOD (tiff, imagick, validate);
-  IIFORMAT_USES_METHOD (tiff, imagick, normalize);
-  IIFORMAT_USES_METHOD (tiff, imagick, possible_dest_types);
-  IIFORMAT_USES_METHOD (tiff, imagick, instantiate);
-  IIFORMAT_VALID_KEYWORD (tiff, Q_data, check_valid_string);
-  IIFORMAT_VALID_KEYWORD (tiff, Q_file, check_valid_string);
-
-  INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (png, "png");
-  IIFORMAT_USES_METHOD (png, imagick, validate);
-  IIFORMAT_USES_METHOD (png, imagick, normalize);
-  IIFORMAT_USES_METHOD (png, imagick, possible_dest_types);
-  IIFORMAT_USES_METHOD (png, imagick, instantiate);
-  IIFORMAT_VALID_KEYWORD (png, Q_data, check_valid_string);
-  IIFORMAT_VALID_KEYWORD (png, Q_file, check_valid_string);
-
-  INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (gif, "gif");
-  IIFORMAT_USES_METHOD (gif, imagick, validate);
-  IIFORMAT_USES_METHOD (gif, imagick, normalize);
-  IIFORMAT_USES_METHOD (gif, imagick, possible_dest_types);
-  IIFORMAT_USES_METHOD (gif, imagick, instantiate);
-  IIFORMAT_VALID_KEYWORD (gif, Q_data, check_valid_string);
-  IIFORMAT_VALID_KEYWORD (gif, Q_file, check_valid_string);
-
+#ifdef HAVE_JPEG
   INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (jpeg, "jpeg");
-  IIFORMAT_USES_METHOD (jpeg, imagick, validate);
-  IIFORMAT_USES_METHOD (jpeg, imagick, normalize);
-  IIFORMAT_USES_METHOD (jpeg, imagick, possible_dest_types);
-  IIFORMAT_USES_METHOD (jpeg, imagick, instantiate);
+
+  IIFORMAT_HAS_METHOD (jpeg, validate);
+  IIFORMAT_HAS_METHOD (jpeg, normalize);
+  IIFORMAT_HAS_METHOD (jpeg, possible_dest_types);
+  IIFORMAT_HAS_METHOD (jpeg, instantiate);
+
   IIFORMAT_VALID_KEYWORD (jpeg, Q_data, check_valid_string);
   IIFORMAT_VALID_KEYWORD (jpeg, Q_file, check_valid_string);
+#endif
 
-#endif /* old compat */
+#ifdef HAVE_GIF
+  INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (gif, "gif");
 
+  IIFORMAT_HAS_METHOD (gif, validate);
+  IIFORMAT_HAS_METHOD (gif, normalize);
+  IIFORMAT_HAS_METHOD (gif, possible_dest_types);
+  IIFORMAT_HAS_METHOD (gif, instantiate);
+
+  IIFORMAT_VALID_KEYWORD (gif, Q_data, check_valid_string);
+  IIFORMAT_VALID_KEYWORD (gif, Q_file, check_valid_string);
+#endif
+
+#ifdef HAVE_PNG
+  INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (png, "png");
+
+  IIFORMAT_HAS_METHOD (png, validate);
+  IIFORMAT_HAS_METHOD (png, normalize);
+  IIFORMAT_HAS_METHOD (png, possible_dest_types);
+  IIFORMAT_HAS_METHOD (png, instantiate);
+
+  IIFORMAT_VALID_KEYWORD (png, Q_data, check_valid_string);
+  IIFORMAT_VALID_KEYWORD (png, Q_file, check_valid_string);
+#endif
+
+#ifdef HAVE_TIFF
+  INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (tiff, "tiff");
+
+  IIFORMAT_HAS_METHOD (tiff, validate);
+  IIFORMAT_HAS_METHOD (tiff, normalize);
+  IIFORMAT_HAS_METHOD (tiff, possible_dest_types);
+  IIFORMAT_HAS_METHOD (tiff, instantiate);
+
+  IIFORMAT_VALID_KEYWORD (tiff, Q_data, check_valid_string);
+  IIFORMAT_VALID_KEYWORD (tiff, Q_file, check_valid_string);
 #endif
 
 #ifdef HAVE_XPM
@@ -2976,6 +3920,22 @@ image_instantiator_format_create_glyphs_x (void)
 void
 vars_of_glyphs_x (void)
 {
+#ifdef HAVE_JPEG
+  Fprovide (Qjpeg);
+#endif
+
+#ifdef HAVE_GIF
+  Fprovide (Qgif);
+#endif
+
+#ifdef HAVE_PNG
+  Fprovide (Qpng);
+#endif
+
+#ifdef HAVE_TIFF
+  Fprovide (Qtiff);
+#endif
+
 #ifdef HAVE_XPM
   Fprovide (Qxpm);
 
@@ -2991,17 +3951,6 @@ The default value of this variable defines the logical color names
 \"foreground\" and \"background\" to be the colors of the `default' face.
 */ );
   Vxpm_color_symbols = Qnil; /* initialized in x-faces.el */
-#endif
-
-#ifdef HAVE_IMAGEMAGICK
-  Fprovide (Qimagick);
-
-#ifdef OLDCOMPAT
-  Fprovide (Qtiff);
-  Fprovide (Qpng);
-  Fprovide (Qgif);
-  Fprovide (Qjpeg);
-#endif
 #endif
 
 #ifdef HAVE_XFACE

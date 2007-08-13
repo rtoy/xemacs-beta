@@ -199,7 +199,7 @@ as described in the documentation for the `define-key' function."
       (define-key (current-local-map) key nil)))
 
 
-;; Yet more RMS brain-death.
+;; brain-death.
 (defun minor-mode-key-binding (key &optional accept-default)
   "Find the visible minor mode bindings of KEY.
 Return an alist of pairs (MODENAME . BINDING), where MODENAME is

@@ -105,7 +105,7 @@ static void term_get_fkeys (Lisp_Object keymap, char **address);
  considered to be fixed width.  In other words, we just return len.
  ****************************************************************************/
 static int
-tty_text_width (struct face_cachel *cachel, CONST Emchar *str,
+tty_text_width (struct frame *f, struct face_cachel *cachel, CONST Emchar *str,
 		Charcount len)
 {
   return emchar_string_displayed_columns (str, len);

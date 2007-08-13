@@ -598,7 +598,7 @@ stop_interrupts (void)
 {
   if (!interrupts_initted)
     return;
-#ifdef SIGIO
+#if defined(SIGIO) && !defined(BROKEN_SIGIO)
   unrequest_sigio ();
 #endif
   stop_async_timeouts ();
@@ -609,7 +609,7 @@ start_interrupts (void)
 {
   if (!interrupts_initted)
     return;
-#ifdef SIGIO
+#if defined(SIGIO) && !defined(BROKEN_SIGIO)
   request_sigio ();
 #endif
   start_async_timeouts ();

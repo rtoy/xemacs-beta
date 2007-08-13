@@ -190,8 +190,7 @@
 
 ;;; FMH! FMH! FMH!  This object-oriented stuff doesn't really work
 ;;; properly without built-in structures (vectors suck) and without
-;;; public and private functions and fields.  Bogons descend on
-;;; RMS for not believing in any of this.
+;;; public and private functions and fields.
 
 (defsubst undoable-stack-max (stack)
   (aref stack 1))
