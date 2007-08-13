@@ -125,6 +125,7 @@ struct buffer buffer_local_flags;
 
 /* This is the initial (startup) directory, as used for the *scratch* buffer.
    We're making this a global to make others aware of the startup directory.
+   `initial_directory' is stored in external format.
  */
 char initial_directory[MAXPATHLEN+1];
 
@@ -2747,37 +2748,53 @@ handled:
   }
 }
 
+/* Is PWD another name for `.' ? */
+static int
+directory_is_current_directory (char *pwd)
+{
+  Bufbyte *pwd_internal;
+  struct stat dotstat, pwdstat;
+
+  GET_C_CHARPTR_INT_FILENAME_DATA_ALLOCA (pwd, pwd_internal);
+
+  return (IS_DIRECTORY_SEP (*pwd_internal)
+	  && stat (pwd_internal, &pwdstat) == 0
+	  && stat ("."         , &dotstat) == 0
+	  && dotstat.st_ino == pwdstat.st_ino
+	  && dotstat.st_dev == pwdstat.st_dev
+	  && (int) strlen (pwd_internal) < MAXPATHLEN);
+}
+
 void
 init_initial_directory (void)
 {
   /* This function can GC */
 
   char *pwd;
-  struct stat dotstat, pwdstat;
-  int rc;
 
   initial_directory[0] = 0;
 
   /* If PWD is accurate, use it instead of calling getcwd.  This is faster
      when PWD is right, and may avoid a fatal error.  */
-  if ((pwd = getenv ("PWD")) != 0 && IS_DIRECTORY_SEP (*pwd)
-      && stat (pwd, &pwdstat) == 0
-      && stat (".", &dotstat) == 0
-      && dotstat.st_ino == pwdstat.st_ino
-      && dotstat.st_dev == pwdstat.st_dev
-      && (int) strlen (pwd) < MAXPATHLEN)
+  if ((pwd = getenv ("PWD")) != NULL
+      && directory_is_current_directory (pwd))
     strcpy (initial_directory, pwd);
   else if (getcwd (initial_directory, MAXPATHLEN) == NULL)
     fatal ("`getcwd' failed: %s\n", strerror (errno));
 
-  /* Maybe this should really use some standard subroutine
+  /* Make sure pwd is DIRECTORY_SEP-terminated.
+     Maybe this should really use some standard subroutine
      whose definition is filename syntax dependent.  */
-  rc = strlen (initial_directory);
-  if (!(IS_DIRECTORY_SEP (initial_directory[rc - 1])))
-    {
-      initial_directory[rc] = DIRECTORY_SEP;
-      initial_directory[rc + 1] = '\0';
-    }
+  {
+    int len = strlen (initial_directory);
+
+    if (! IS_DIRECTORY_SEP (initial_directory[len - 1]))
+      {
+	initial_directory[len] = DIRECTORY_SEP;
+	initial_directory[len + 1] = '\0';
+      }
+  }
+  
   /* XEmacs change: store buffer's default directory
      using prefered (i.e. as defined at compile-time)
      directory separator. --marcpa */
@@ -2798,7 +2815,8 @@ init_buffer (void)
 
   Fset_buffer (Fget_buffer_create (QSscratch));
 
-  current_buffer->directory = build_string (initial_directory);
+  current_buffer->directory =
+    build_ext_string (initial_directory, FORMAT_FILENAME);
 
 #if 0 /* FSFmacs */
   /* #### is this correct? */

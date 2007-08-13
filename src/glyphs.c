@@ -466,8 +466,12 @@ normalize_image_instantiator (Lisp_Object instantiator,
 			      Lisp_Object contype,
 			      Lisp_Object dest_mask)
 {
+  struct gcpro gcpro1;
+  
+  GCPRO1(instantiator);
+
   if (IMAGE_INSTANCEP (instantiator))
-    return instantiator;
+    RETURN_UNGCPRO (instantiator);
 
   if (STRINGP (instantiator))
     instantiator = process_image_string_instantiator (instantiator, contype,
@@ -484,9 +488,9 @@ normalize_image_instantiator (Lisp_Object instantiator,
     struct image_instantiator_methods * meths =
       decode_image_instantiator_format (XVECTOR_DATA (instantiator)[0],
 					ERROR_ME);
-    return IIFORMAT_METH_OR_GIVEN (meths, normalize,
+    RETURN_UNGCPRO (IIFORMAT_METH_OR_GIVEN (meths, normalize,
 				   (instantiator, contype),
-				   instantiator);
+				   instantiator));
   }
 }
 

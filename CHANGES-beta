@@ -1,5 +1,17 @@
 							-*- indented-text -*-
-to 21.0 "Pyrenean"
+to 21.0 "Poitou61"
+-- mswindows modeline crash fix from Jonathan Harris
+-- picon glyph fix from Gunnar Evermann
+-- ldap fixes from Oscar Figueiredo
+-- mswindows accelerator fix from Jonathan Harris
+-- package fixes from Jan Vroonhof
+-- configure fixes from Martin Buchholz
+-- mule xemacs crash fixed
+-- sound doc cleanup from Charles Waldman
+-- package admin fixes under mswindows from Charles Waldman
+-- sound.el name change sync from Andy Piper
+
+to 21.0 "Poitou60"
 -- help-echo message fix from Hrvoje Niksic
 -- Fix building with union type on MS Windows NT from Andy Piper
 -- Installation/Installation.el/config.values for MS Windows from Adrian

@@ -393,6 +393,10 @@ mswindows_set_frame_pointer (struct frame *f)
     {
       SetClassLong (FRAME_MSWINDOWS_HANDLE (f), GCL_HCURSOR,
 		    (LONG) XIMAGE_INSTANCE_MSWINDOWS_ICON (f->pointer));
+      /* we only have to do this because GC doesn't cause a mouse
+         event and doesn't give time to event processing even if it
+         did. */
+      SetCursor (XIMAGE_INSTANCE_MSWINDOWS_ICON (f->pointer));
     }
 }
 

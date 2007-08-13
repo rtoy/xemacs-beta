@@ -1,3 +1,51 @@
+1999-01-04  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.0.61 is released
+
+1998-12-15  Charles G. Waldman <cgw@pgt.com>
+
+	* sound.c (play-sound-file): Correct doc string to
+	mention support of WAV files on Microsoft Windows
+
+1998-12-28  Martin Buchholz  <martin@xemacs.org>
+
+	* buffer.c (init_initial_directory): 
+	- use correct conversions between internal and external format.
+	(directory_is_current_directory): new function
+	(init_buffer): convert initial_directory to internal format.
+	- solve crashes when current working directory is non-ASCII.
+
+1998-12-15  Oscar Figueiredo  <Oscar.Figueiredo@di.epfl.ch>
+
+	* eldap.c (toplevel): Mention that eldap.c compiles with
+	OpenLDAP libs
+	(Fldap_open): Use `GET_C_STRING_OS_DATA_ALLOCA'
+	(Fldap_search_internal): Ditto
+
+1998-12-15  Gunnar Evermann  <ge204@eng.cam.ac.uk>
+
+	* glyphs.c (normalize_image_instantiator): GCPRO instantiator
+
+1998-12-16  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* menubar-msw.c (displayable_menu_item):
+	  Escape occurrences of '&' and support occurrences of the
+	 '%_' accelerator indicator in menus.
+
+1998-12-16  Jonathan Harris  <jhar@tardis.ed.ac.uk>
+
+	* event-msw.c
+	  (Belatedly) added Kirill to list of file's authors.
+	  emacs_mswindows_quit_p: Don't process WM_PAINT messages in
+	  quit checking. WM_PAINT messages cause redisplay, but
+	  windows' states are not necessarily stable when this function
+	  gets called.
+
+1998-12-14  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* extents.c (set_extent_glyph_1): Make sure that the glyph we
+	attach to the extent is valid.
+
 1998-12-11  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.0.60 is released

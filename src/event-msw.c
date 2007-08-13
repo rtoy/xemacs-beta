@@ -28,6 +28,7 @@ Boston, MA 02111-1307, USA.  */
    Ultimately based on FSF.
    Rewritten by Ben Wing.
    Rewritten for mswindows by Jonathan Harris, November 1997 for 21.0.
+   Subprocess and modal loop support by Kirill M. Katsnelson.
  */
 
 #include <config.h>
@@ -2579,14 +2580,20 @@ emacs_mswindows_unselect_console (struct console *con)
 static void
 emacs_mswindows_quit_p (void)
 {
+  MSG msg;
+
   /* Quit cannot happen in modal loop: all program
      input is dedicated to Windows. */
   if (mswindows_in_modal_loop)
     return;
 
-  /* Drain windows queue. This sets up number of quit
-     characters in in the queue */
-  mswindows_drain_windows_queue ();
+  /* Drain windows queue. This sets up number of quit characters in the queue
+   * (and also processes wm focus change, move, resize, etc messages).
+   * We don't want to process WM_PAINT messages because this function can be
+   * called from almost anywhere and the windows' states may be changing. */
+  while (PeekMessage (&msg, NULL, 0, WM_PAINT-1, PM_REMOVE) ||
+	 PeekMessage (&msg, NULL, WM_PAINT+1, WM_USER-1, PM_REMOVE))
+      DispatchMessage (&msg);
 
   if (mswindows_quit_chars_count > 0)
     {

@@ -1,3 +1,14 @@
+1999-01-04  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.0.61 is released
+
+1998-12-20  Martin Buchholz  <martin@xemacs.org>
+
+	* configure.in: Redo DBM support
+	- die if dbm support requested, but not provided.
+	- properly check for libgdbm, then libc, then libdbm
+	- properly check for ndbm.h
+
 1998-12-11  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.0.60 is released

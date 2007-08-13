@@ -254,13 +254,17 @@ When nil, updates which are not PGP signed are allowed without confirmation."
 (defvar package-get-was-current nil
   "Non-nil we did our best to fetch a current database.")
 
+
+;Shouldn't this be in package-ui?
 ;;;###autoload
 (defun package-get-download-menu ()
   "Build the `Add Download Site' menu."
   (mapcar (lambda (site)
             (vector (car site)
-                    `(push (quote ,(cdr site))
-                           package-get-remote)))
+                    `(lambda ()
+		       (interactive) (package-ui-add-site (quote ,(cdr site))))
+		    :style 'toggle :selected
+		    `(member (quote ,(cdr site)) package-get-remote)))
           package-get-download-sites))
 
 ;;;###autoload
@@ -705,8 +709,10 @@ successfully installed but errors occurred during initialization, or
 	 (package-status t)
 	 filenames full-package-filename)
     (if (null this-package)
-	(error "Couldn't find package %s with version %s"
-	       package version))
+	(if package-get-remote
+	    (error "Couldn't find package %s with version %s"
+		   package version)
+	  (error "No download sites or local package locations specified.")))
     (if (null base-filename)
 	(error "No filename associated with package %s, version %s"
 	       package version))
@@ -807,7 +813,10 @@ successfully installed but errors occurred during initialization, or
 
       (if (or (not full-package-filename)
 	      (not (file-exists-p full-package-filename)))
-	  (error "Unable to find file %s" base-filename))
+	  (if package-get-remote
+	      (error "Unable to find file %s" base-filename)
+	    (error
+	     "No download sites or local package locations specified.")))
       ;; Validate the md5 checksum
       ;; Doing it with XEmacs removes the need for an external md5 program
       (message "Validating checksum for `%s'..." package) (sit-for 0)
@@ -940,7 +949,9 @@ words
   (if (efs-ftp-path filename)
       filename
     (let ((dir (cadr search)))
-      (concat "/"
+      (concat (if (string-match "@" (car search))
+		  "/"
+		"/anonymous@")
 	      (car search) ":"
 	      (if (string-match "/$" dir)
 		  dir

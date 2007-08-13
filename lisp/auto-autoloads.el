@@ -1062,7 +1062,7 @@ Prefix arg means just kill any existing server communications subprocess." t nil
 
 ;;;***
 
-;;;### (autoloads (hyper-apropos-popup-menu hyper-apropos-set-variable hyper-set-variable hyper-apropos-read-variable-symbol hyper-describe-function hyper-describe-variable hyper-describe-face hyper-describe-key-briefly hyper-describe-key hyper-apropos) "hyper-apropos" "lisp/hyper-apropos.el")
+;;;### (autoloads (hyper-apropos-popup-menu hyper-apropos-set-variable hyper-set-variable hyper-apropos-read-variable-symbol hyper-describe-function hyper-where-is hyper-describe-variable hyper-describe-face hyper-describe-key-briefly hyper-describe-key hyper-apropos) "hyper-apropos" "lisp/hyper-apropos.el")
 
 (autoload 'hyper-apropos "hyper-apropos" "\
 Display lists of functions and variables matching REGEXP
@@ -1081,6 +1081,9 @@ See also `hyper-apropos' and `hyper-describe-function'." t nil)
 (autoload 'hyper-describe-variable "hyper-apropos" "\
 Hypertext drop-in replacement for `describe-variable'.
 See also `hyper-apropos' and `hyper-describe-function'." t nil)
+
+(autoload 'hyper-where-is "hyper-apropos" "\
+Print message listing key sequences that invoke specified command." t nil)
 
 (autoload 'hyper-describe-function "hyper-apropos" "\
 Hypertext replacement for `describe-function'.  Unlike `describe-function'
@@ -1302,7 +1305,10 @@ Fetch and install the latest versions of all customized packages." t nil)
 
 ;;;***
 
-;;;### (autoloads (pui-list-packages pui-add-install-directory) "package-ui" "lisp/package-ui.el")
+;;;### (autoloads (pui-list-packages pui-add-install-directory package-ui-add-site) "package-ui" "lisp/package-ui.el")
+
+(autoload 'package-ui-add-site "package-ui" "\
+Add site to package-get-remote and possibly offer to update package list." nil nil)
 
 (autoload 'pui-add-install-directory "package-ui" "\
 Add a new package binary directory to the head of `package-get-remote'.
@@ -1316,6 +1322,8 @@ The package name, version, and description are displayed.  From the displayed
 buffer, the user can see which packages are installed, which are not, and
 which are out-of-date (a newer version is available).  The user can then
 select packages for installation via the keyboard or mouse." t nil)
+
+(defalias 'list-packages 'pui-list-packages)
 
 ;;;***
 
