@@ -45,5 +45,8 @@
    PATH_SUPERLOCK	The name of the file !!!SuperLock!!! in the lock 
 			directory.  You probably should let this default...
 
-   PATH_INFO		The default value of `Info-directory-list'.
-			This is where info files are searched for. */
+   PATH_INFO		This is where the info documentation is installed.
+
+   PATH_INFOPATH	The default value of `Info-directory-list'.
+			These are additional places info files are searched
+			for. */

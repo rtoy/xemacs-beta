@@ -489,6 +489,8 @@ this buffer uses."
 			    ((string-match "\\.\\(el\\|cl\\|lisp\\)\\'"
 					   filename)
 			     'lisp-mode)
+			    ((string-match "\\.scm\\'" filename)
+			     'scheme-mode)
 			    (t nil)))
       (cond ((and (eq file-type 'c-mode)
 		  c-mode-syntax-table)
@@ -521,6 +523,10 @@ this buffer uses."
 		     (t
 		      (setq name (buffer-substring (match-beginning 1)
 						   (match-end 1))))))
+	      ((and (eq file-type 'scheme-mode)
+		    (looking-at "\\s-*(\\s-*def\\sw*\\s-*(?\\s-*\\(\\(\\sw\\|\\s_\\|:\\)+\\))?\\s-*\C-?"))
+	       (setq name (buffer-substring (match-beginning 1)
+					    (match-end 1))))
 	      ((looking-at tags-def-pattern)
 	       (setq name (buffer-substring (match-beginning 2)
 					    (match-end 2)))))

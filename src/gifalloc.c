@@ -47,6 +47,10 @@ void *xfree (void *);
 #define MAX(x, y)	(((x) > (y)) ? (x) : (y))
 #endif
 
+#ifndef REGISTER	/* Rigidly enforced in 20.3 */
+#define REGISTER
+#endif
+
 /******************************************************************************
 * Miscellaneous utility functions					      *
 ******************************************************************************/
@@ -54,7 +58,7 @@ void *xfree (void *);
 int BitSize(int n)
 /* return smallest bitfield size n will fit in */
 {
-    register	i;
+    REGISTER int i;
 
     for (i = 1; i <= 8; i++)
 	if ((1 << i) >= n)
@@ -196,7 +200,7 @@ ColorMapObject *UnionColorMap(
 
     if (RoundUpTo != ColorUnion->ColorCount)
     {
-	register GifColorType	*Map = ColorUnion->Colors;
+	REGISTER GifColorType	*Map = ColorUnion->Colors;
 
 	/*
 	 * Zero out slots up to next power of 2.
@@ -223,8 +227,8 @@ void ApplyTranslation(SavedImage *Image, GifPixelType Translation[])
  * Apply a given color translation to the raster bits of an image
  */
 {
-    register int i;
-    register int RasterSize = Image->ImageDesc.Height * Image->ImageDesc.Width;
+    REGISTER int i;
+    REGISTER int RasterSize = Image->ImageDesc.Height * Image->ImageDesc.Width;
 
     for (i = 0; i < RasterSize; i++)
 	Image->RasterBits[i] = Translation[Image->RasterBits[i]];

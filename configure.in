@@ -255,7 +255,7 @@ verbose=
 x_includes=NONE
 x_libraries=NONE
 CDPATH=.; export CDPATH
-dnl this will serve for testing if a default value sould be given
+dnl this will serve for testing if a default value should be given
 package_path=NONE
 
 dnl Allow this script to work with zsh, by setting sh emulation options
@@ -327,6 +327,11 @@ libdir='${exec_prefix}/lib'
 mandir='${prefix}/man/man1'
 infodir='${prefix}/lib/xemacs-${version}/info'
 infodir_user_defined='no'
+dnl BETA NOTE: ! Will you please add to this list?  Nonexistent dirs
+dnl are dropped from the list at runtime, so it is safe to add
+dnl directories to this list that you don't have at home.
+infopath='/usr/info:/usr/local/info:/usr/lib/texmf/doc/info:/usr/local/lib/texmf/doc/info'
+infopath_user_defined='no'
 lispdir='${datadir}/xemacs-${version}/lisp'
 lispdir_user_defined='no'
 sitelispdir='${datadir}/xemacs/site-lisp'
@@ -490,6 +495,20 @@ Additional features:
 			are \`lockf', \`flock', and \`file'.
 --package-path=PATH     Directories to search for packages to dump with xemacs.
                         Defaults to \`$prefix/lib/xemacs/packages:~/.xemacs'.
+--infodir=dir		Directory to install the XEmacs Info manuals and dir in.
+    Defaults to: \`$info_dir'.
+--infopath=PATH		Directories to search for Info documents, info dir
+			and localdir files.  This is used to initialize
+			\`Info-default-directory-list' at dump time.
+			Directories on this path that do not exist in the
+			filesystem will be dropped by the startup code at
+			runtime, so it is safe to specify directories that do
+			not exist in the compilation environment, or that won't
+			exist in the runtime environment. The \"dir\"
+			file in the first existing directory in this list will
+			become the (dir)Top node of the Info tree.
+    Defaults to the value of \`INFOPATH', or:
+    \`$infopath'.
 
 Internationalization options:
 
@@ -547,6 +566,9 @@ Other options:
   			is system-dependent).
 --with-clash-detection	Use lock files to detect multiple edits of the same file.
 			The default is to not do clash detection.
+--lockdir=dir		The directory to put clash detection files in, such as
+			\`/var/lock/emacs'.
+    Defaults to \`$lockdir'.
 --with-system-malloc	Force use of the system malloc, rather than GNU malloc.
 --with-debug-malloc	Use the debugging malloc package.
 
@@ -566,6 +588,8 @@ CFLAGS    C compiler compilation flags (such as -O)
 CPPFLAGS  Additional compilation flags (such as -I/foo) used only by the preprocessor
 LDFLAGS   Additional linker flags (such as -L/foo)
 LIBS      Additional libraries (such as -lfoo)
+
+INFOPATH  Path to search for Info documentation.
 
 For more details on the install process, consult the INSTALL file.
 "
@@ -872,8 +896,8 @@ while test $# != 0; do
 
 	dnl Has the user specified one of the path options?
 	prefix | exec_prefix | bindir | datadir | statedir | libdir | \
-	mandir | infodir | lispdir | etcdir | lockdir | pkgdir | archlibdir | \
-	sitelispdir | docdir )
+	mandir | infodir | infopath | lispdir | etcdir | lockdir | pkgdir | \
+	 archlibdir | sitelispdir | docdir )
 	   dnl If the value was omitted, get it from the next argument.
 	   if test "$valomitted" = "yes"; then
 	     if test "$#" = 0; then
@@ -891,6 +915,7 @@ while test $# != 0; do
              lispdir ) lispdir_user_defined=yes ;;
              etcdir  )  etcdir_user_defined=yes ;;
              infodir ) infodir_user_defined=yes ;;
+             infopath ) infopath_user_defined=yes ;;
              datadir ) lispdir_user_defined=yes etcdir_user_defined=yes ;;
              statedir | lockdir ) lockdir_user_defined=yes ;;
              exec_prefix | libdir | archlibdir ) archlibdir_user_defined=yes ;;
@@ -934,6 +959,10 @@ done
 dnl -------------------------
 dnl Finish options processing
 dnl -------------------------
+
+if test "$infopath_user_defined" = "no" -a -n "$INFOPATH" ; then
+  infopath="$INFOPATH"
+fi
 
 dnl Get the arguments back.  See the diatribe on Shell Magic above.
 eval set x "$quoted_arguments"; shift
@@ -1848,7 +1877,7 @@ if test -z "$CFLAGS"; then
   dnl Should we take debugging options into consideration?
   if   test "$GCC" = "yes"; then
     CFLAGS="-g -O2 -Wall -Wno-switch"
-    test "$opsys" = "linux" -a "$machine" = "intel386" && \
+    test "$opsys $machine" = "linux intel386" && \
       CFLAGS="$CFLAGS -fno-strength-reduce -malign-loops=2 -malign-jumps=2 -malign-functions=2"
   elif test "$__sunpro_c" = "yes"; then
     case "$opsys" in
@@ -3352,6 +3381,7 @@ AC_SUBST(libdir)
 AC_SUBST(mandir)
 AC_SUBST(infodir)
 AC_SUBST(infodir_user_defined)
+AC_SUBST(infopath)
 AC_SUBST(lispdir)
 AC_SUBST(lispdir_user_defined)
 AC_SUBST(sitelispdir)
@@ -3539,7 +3569,7 @@ test "$with_offix"    = yes && echo "  Compiling in support for OffiX."
 test "$with_workshop" = yes && echo "  Compiling in support for Sun WorkShop."
 test "$with_energize" = yes && echo "  Compiling in support for Lucid Energize (doesn't currently work)."
 test "$with_session"  != no && echo "  Compiling in support for proper session-management."
-case  "$with_menubars" in
+case "$with_menubars" in
   lucid ) echo "  Using Lucid menubars." ;;
   motif ) echo "  Using Motif menubars."
           echo "  *WARNING*  The Motif menubar implementation is currently buggy."
@@ -3557,11 +3587,14 @@ case "$with_dialogs" in
   athena   ) echo "  Using Athena dialog boxes."    ;;
   athena3d ) echo "  Using Athena-3d dialog boxes." ;;
 esac
+test "$with_clash_detection" = yes && \
+  echo "  Clash detection will use \"$lockdir\" for locking files."
 echo "  movemail will use \"$mail_locking\" for locking mail spool files."
 test "$with_pop"	= yes && echo "  Using POP for mail access"
 test "$with_kerberos"	= yes && echo "  Using Kerberos for POP authentication"
 test "$with_hesiod"	= yes && echo "  Using Hesiod to get POP server host"
-
+echo "  The \`Info-default-directory-list' will be initialized from:"
+echo "  INFOPATH=\"`echo $infopath`\""
 test "$use_union_type"     = yes && echo "  Using the union type for Lisp_Objects."
 test "$debug"              = yes && echo "  Compiling in extra code for debugging."
 test "$memory_usage_stats" = yes && echo "  Compiling in code for checking XEmacs memory usage."

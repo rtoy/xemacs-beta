@@ -6,7 +6,7 @@
 ;; Maintainer: Stephen Eglen <stephen@cns.ed.ac.uk>
 ;; Keywords: extensions
 ;; location: http://www.cogs.susx.ac.uk/users/stephene/emacs
-;; RCS: $Id: iswitchb.el,v 1.1 1997/09/27 16:57:40 steve Exp $
+;; RCS: $Id: iswitchb.el,v 1.2 1997/10/12 01:39:45 steve Exp $
 
 ;; This file is part of GNU Emacs.
 
@@ -1049,7 +1049,7 @@ For details of keybindings, do `\\[describe-function] iswitchb'."
 ;; function.  To solve this, we use another entry hook for emacs to
 ;; show the default the first time we enter the minibuffer.
 
-(defun iswitchb-init-Xemacs-trick ()
+(defun iswitchb-init-XEmacs-trick ()
   "Display default buffer when first entering minibuffer.
 This is a hack for XEmacs, and should really be handled by `iswitchb-exhibit'."
   (if (iswitchb-entryfn-p)
@@ -1061,7 +1061,7 @@ This is a hack for XEmacs, and should really be handled by `iswitchb-exhibit'."
 ;; add this hook for XEmacs only.
 (if iswitchb-xemacs
     (add-hook 'iswitchb-minibuffer-setup-hook 
-	      'iswitchb-init-Xemacs-trick))
+	      'iswitchb-init-XEmacs-trick))
 
 
 ;;; XEmacs / backspace key

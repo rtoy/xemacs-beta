@@ -42,7 +42,7 @@ but optional second arg NODIGITS non-nil treats them like other chars."
 	;; Make plain numbers do numeric args.
 	(while (<= (aref string 0) ?9)
 	  (define-key map string 'digit-argument)
-	  (aset string 0 (1+ (aref string 0)))))))
+	  (incf (aref string 0))))))
 
 (defun substitute-key-definition (olddef newdef keymap &optional oldmap prefix)
   "Replace OLDDEF with NEWDEF for any keys in KEYMAP now defined as OLDDEF.
@@ -81,36 +81,24 @@ KEYMAP are redefined.  See also `accessible-keymaps'."
 		  map)
       )))
 
-;; from Bill Dubuque <wgd@martigny.ai.mit.edu>
+
+;; From Bill Dubuque <wgd@martigny.ai.mit.edu>
+
+;; This used to wrap forms into an interactive lambda.  It is unclear
+;; to me why this is needed in this function.  Anyway,
+;; `key-or-menu-binding' doesn't do it, so this function no longer
+;; does it, either.
 (defun insert-key-binding (key)         ; modeled after describe-key
+  "Insert the command bound to KEY."
   (interactive "kInsert command bound to key: ")
-  (let (defn)
-    ;; If the key typed was really a menu selection, grab the form out
-    ;; of the event object and intuit the function that would be called,
-    ;; and describe that instead.
-    (if (and (vectorp key) (= 1 (length key))
-             (or (misc-user-event-p (aref key 0))
-                 (eq (car-safe (aref key 0)) 'menu-selection)))
-        (let ((event (aref key 0)))
-          (setq defn (if (eventp event)
-                         (list (event-function event) (event-object event))
-                       (cdr event)))
-          (if (eq (car defn) 'eval)
-              (setq defn (` (lambda ()
-                              (interactive)
-                              (, (car (cdr defn)))))))
-          (if (eq (car-safe defn) 'call-interactively)
-              (setq defn (car (cdr defn))))
-          (if (and (consp defn) (null (cdr defn)))
-              (setq defn (car defn))))
-      (setq defn (key-binding key)))
+  (let ((defn (key-or-menu-binding key)))
     (if (or (null defn) (integerp defn))
-        (error "%s is undefined" (key-description key))
+	(error "%s is undefined" (key-description key))
       (if (or (stringp defn) (vectorp defn))
           (setq defn (key-binding defn))) ;; a keyboard macro
       (insert (format "%s" defn)))))
 
-;; from Bill Dubuque <wgd@martigny.ai.mit.edu>
+;; From Bill Dubuque <wgd@martigny.ai.mit.edu>
 (defun read-command-or-command-sexp (prompt)
   "Read a command symbol or command sexp.
 A command sexp is wrapped in an interactive lambda if needed.
@@ -122,9 +110,9 @@ Prompts with PROMPT."
                       (completing-read prompt obarray 'commandp)))))
     (if (and (consp result)
              (not (eq (car result) 'lambda)))
-        (` (lambda ()
-             (interactive)
-             (, result)))
+        `(lambda ()
+	   (interactive)
+	   ,result)
       result)))
 
 (defun local-key-binding (keys)
@@ -227,7 +215,7 @@ bindings; see the description of `lookup-key' for more details about this."
            ;; Terminate loop, with v set to non-nil value
            (setq tail nil)))
     v))
-    
+
 
 (defun current-minor-mode-maps ()
   "Return a list of keymaps for the minor modes of the current buffer."
@@ -256,8 +244,7 @@ If second optional argument MAPVAR is not specified,
 If a second optional argument MAPVAR is given and is not `t',
   the map is stored as its value.
 Regardless of MAPVAR, COMMAND's function-value is always set to the keymap."
-  (let ((map (make-sparse-keymap)))
-    (set-keymap-name map name)
+  (let ((map (make-sparse-keymap name)))
     (fset name map)
     (cond ((not mapvar)
            (set name map))
@@ -272,6 +259,10 @@ Regardless of MAPVAR, COMMAND's function-value is always set to the keymap."
 ;;; This is used both by call-interactively (for the command history)
 ;;; and by macros.el (for saving keyboard macros to a file).
 
+;; ### why does (events-to-keys [backspace]) return "\C-h"?
+;; BTW, this function is a mess, and macros.el does *not* use it, in
+;; spite of the above comment.  `format-kbd-macro' is used to save
+;; keyboard macros to a file.
 (defun events-to-keys (events &optional no-mice)
  "Given a vector of event objects, returns a vector of key descriptors,
 or a string (if they all fit in the ASCII range).
@@ -382,10 +373,12 @@ SYMBOL is the name of this modifier, as a symbol."
   (let (event)
     (while (not (key-press-event-p (setq event (next-command-event))))
       (dispatch-event event))
-    (vector (append (list symbol)
-		    (delq symbol (event-modifiers event))
-		    (list (event-key event))))))
+    (vconcat (list symbol)
+	     (delq symbol (event-modifiers event))
+	     (list (event-key event)))))
 
+;; This looks dirty.  The following code should maybe go to another
+;; file, and `create-console-hook' should maybe default to nil.
 (add-hook
  'create-console-hook
  (lambda (console)

@@ -1552,7 +1552,7 @@ non-nil means yes.
 */
        (window, arg))
 {
-  register struct window *w = decode_window (window);
+  REGISTER struct window *w = decode_window (window);
 
   w->dedicated = NILP (arg) ? Qnil : Qt;
 

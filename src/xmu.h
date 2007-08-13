@@ -20,8 +20,8 @@
 
 #else
 
-int XmuCursorNameToIndex (const char *name);
-int XmuReadBitmapDataFromFile (const char *filename, unsigned int *width,
+int XmuCursorNameToIndex (CONST char *name);
+int XmuReadBitmapDataFromFile (CONST char *filename, unsigned int *width,
                                unsigned int *height, unsigned char **datap,
                                int *x_hot, int *y_hot);
 int XmuPrintDefaultErrorMessage (Display *dpy, XErrorEvent *event, FILE *fp);

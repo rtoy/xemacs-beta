@@ -132,7 +132,11 @@ Return a modified address list."
 	 (not (null rmail-default-dont-reply-to-names)))
     (setq rmail-default-dont-reply-to-names "info-"))
 
-; rmail-dont-reply-to-names is defined in loaddefs
+;;;###autoload
+(defvar rmail-dont-reply-to-names nil "\
+*A regexp specifying names to prune of reply to messages.
+A value of nil means exclude your own name only.")
+
 (defun rmail-dont-reply-to (userids)
   "Returns string of mail addresses USERIDS sans any recipients
 that start with matches for `rmail-dont-reply-to-names'.

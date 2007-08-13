@@ -119,7 +119,7 @@ static int DGifBufferedInput(FILE *File, GifByteType *Buf,
 *   Returns GifFileType pointer dynamically allocated which serves as the gif *
 * info record. _GifError is cleared if succesfull.			      *
 ******************************************************************************/
-GifFileType *DGifOpenFileName(const char *FileName)
+GifFileType *DGifOpenFileName(CONST char *FileName)
 {
     int FileHandle;
 

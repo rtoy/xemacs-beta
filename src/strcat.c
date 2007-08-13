@@ -18,6 +18,11 @@ Cambridge, MA 02139, USA.  */
 
 /* Synched up with: Not in FSF. */
 
+# include <config.h>
+# ifndef REGISTER	/* Strictly enforced in 20.3 */
+# define REGISTER
+# endif
+
 /* In HPUX 10 the strcat function references memory past the last byte of 
    the string!  This will core dump if the memory following the last byte is 
    not mapped.
@@ -28,11 +33,12 @@ Cambridge, MA 02139, USA.  */
 char *strcat (char *dest, const char *src);
 
 /* Append SRC on the end of DEST.  */
+/* CONST IS LOSING, but const is part of the interface of strcat */
 char *
 strcat (char *dest, const char *src)
 {
-  register char *s1 = dest;
-  register const char *s2 = src;
+  REGISTER char *s1 = dest;
+  REGISTER CONST char *s2 = src;
   char c;
 
   /* Find the end of the string.  */

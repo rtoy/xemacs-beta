@@ -154,7 +154,7 @@ This function does not move point.
        (arg, buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  register int orig, end;
+  REGISTER int orig, end;
 
   XSETBUFFER (buffer, b);
   if (NILP (arg))

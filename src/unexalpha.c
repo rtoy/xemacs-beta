@@ -386,7 +386,7 @@ update_dynamic_symbols (old, new_name, new, newsyms, nsyms, symoff, stroff)
 
   for (i = 0; i < nsyms && found < 2; i += cbEXTR)
     {
-      register pEXTR x = (pEXTR) (old + symoff + i);
+      REGISTER pEXTR x = (pEXTR) (old + symoff + i);
       char *s;
   
       s = old + stroff + x->asym.iss; /* name of the symbol */

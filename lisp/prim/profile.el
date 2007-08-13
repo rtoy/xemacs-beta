@@ -60,8 +60,14 @@
 
 ;;; Code:
 
+(defun profile-align (form width)
+  ;; Bletch!  this is what (format "%-*s" width form) should do.
+  (let ((printed-form (format "%s" form)))
+    (concat printed-form
+	    (make-string (max 0 (- width (length printed-form))) ?\ ))))
+
 ;;;###autoload
-(defun profiling-results (&optional info stream)
+(defun profile-results (&optional info stream)
   "Print profiling info INFO to STREAM in a pretty format.
 If INFO is omitted, the current profiling info is retrieved using
  `get-profiling-info'.
@@ -76,32 +82,32 @@ If STREAM is omitted, either a *Profiling Results* buffer or standard
 	     (interactive-p))
     (pop-to-buffer (get-buffer-create "*Profiling Results*"))
     (erase-buffer))
-  (let* ((standard-output (or stream (if (interactive-p)
-					 (current-buffer)
-				       standard-output)))
-	 (maxfunlen (max (length "Function Name")
-			 (apply 'max (mapcar (lambda (sym)
-					       (length (symbol-name
-							(car sym))))
-					     info))))
-	 (formatstr (format "%%-%ds" maxfunlen)))
-    (setq info (nreverse (sort info #'cdr-less-than-cdr)))
-    (princ (format (concat formatstr "    Ticks    %%/Total\n")
-		   "Function Name"))
+  (let ((standard-output (or stream (if (interactive-p)
+					(current-buffer)
+				      standard-output)))
+	;; Calculate the longest function
+	(maxfunlen (apply #'max
+			  (length "Function Name")
+			  (mapcar (lambda (el)
+				    ;; Functions longer than 40
+				    ;; characters don't qualify
+				    (let ((l (length (format "%s" (car el)))))
+				      (if (< l 40)
+					  l 0)))
+				  info))))
+    (princ (format "%s    Ticks    %%/Total\n"
+		   (profile-align "Function Name" maxfunlen)))
     (princ (make-string maxfunlen ?=))
     (princ "    =====    =======\n")
-    (let ((sum 0.0))
-      (dolist (info2 info)
-	(incf sum (cdr info2)))
-      (while info
-	(let ((f (caar info)))
-	  (princ (format (concat formatstr "    %-5d    %-6.3f\n")
-			 f (cdar info) (* 100 (/ (cdar info) sum)))))
-	(pop info))
+    (let ((sum (float (apply #'+ (mapcar #'cdr info)))))
+      (dolist (entry (nreverse (sort info #'cdr-less-than-cdr)))
+	(princ (format "%s    %-5d    %-6.3f\n"
+		       (profile-align (car entry) maxfunlen)
+		       (cdr entry) (* 100 (/ (cdr entry) sum)))))
       (princ (make-string maxfunlen ?-))
       (princ "--------------------\n")
-      (princ (format (concat formatstr "    %-5d    %-6.2f\n")
-		     "Total" sum 100.0))
+      (princ (format "%s    %-5d    %-6.2f\n"
+		     (profile-align "Total" maxfunlen) sum 100.0))
       (princ (format "\n\nOne tick = %g ms\n"
 		     (/ default-profiling-interval 1000.0)))))
   (when (and (not stream)
@@ -120,14 +126,12 @@ PROFILE was called, it will be turned off after FORMS are evaluated.
 Otherwise, profiling will be left running.
 
 Returns the profiling info, printable by `profiling-results'."
-  `(progn
-     (if (profiling-active-p)
+  `(let ((was-profiling (profiling-active-p)))
+     (unwind-protect
 	 (progn
+	   (start-profiling)
 	   ,@forms)
-       (unwind-protect
-	   (progn
-	     (start-profiling)
-	     ,@forms)
+       (unless was-profiling
 	 (stop-profiling)))
      (get-profiling-info)))
 

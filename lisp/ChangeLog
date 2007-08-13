@@ -1,3 +1,242 @@
+1997-10-11  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/startup.el (set-default-load-path): Look for `packages'
+	directory too.
+	(set-default-load-path): Initialize Info-default-directory-list
+	from the environment variable INFOPATH.
+	(set-default-load-path): Initialize Info-default-diretory-list
+	from the configure variable `infopath'.
+
+1997-10-10  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* prim/startup.el: (set-default-load-path): loop over the `Info-
+	default-directory-list' and collect those that are `file-
+	directory-p'.
+
+	* '': various doc string corrections.
+
+	* '': changed `auto-saves-file-prefix' to "~/.xemacs/saves-"
+
+	* '' Added toplevel block (when (fboundp 'load-gc) ...to init the
+ 	Info-def..list from the environment variable INFOPATH at dump time.
+	
+	* prim/packages.el (packages-find-packages-1): append the list of
+ 	packages info directories to `Info-default-directory-list' rather
+ 	than prepending them.  Don't add them if they're already in the
+ 	list.
+
+	* packages/info.el (Info-directory-list): various fixes to the
+ 	directory list handling.
+	* (Info-localdir-heading-regexp) added.
+	
+	* '' removed the unrequired defcustom of `Info-default-directory-
+ 	list'
+
+1997-10-11  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/about.el: New faces, new entries.
+
+	* prim/profile.el (profile-results): Rename.
+	(pretty-print-profiling-info): Ditto.
+	From Kyle Jones <kyle_jones@wonderworks.com>
+
+1997-10-10  SL Baur  <steve@altair.xemacs.org>
+
+	* utils/highlight-headers.el (highlight-headers-citation-header-regexp):
+	Correct doc string.
+	From Kazuyoshi Furutaka <furutaka@Flux.tokai.jaeri.go.jp>
+
+1997-10-10  Martin Buchholz  <mrb@eng.sun.com>
+
+	* packages/bookmark.el:
+	* packages/iswitchb.el:
+	* utils/speedbar.el:
+	* utils/xemacs-build-report.el: 
+	  - change Xemacs --> XEmacs
+
+1997-10-09  Colin Rafferty  <craffert@ml.com>
+
+	* modes/lazy-shot.el (lazy-shot-shot-function): Undid a breakage.
+
+1997-10-09  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* prim/help.el (function-called-at-point): Added docstring.
+	(function-at-point): Ditto.
+	(describe-function-arglist): Commented out -- seems unused.
+	(find-function): ALL find-function stuff moved to "find-func.el"
+
+	* prim/find-func.el: new file created from functions previously in 
+	"help.el".
+
+1997-10-09  SL Baur  <steve@altair.xemacs.org>
+
+	* pcl-cvs/pcl-cvs.el (cvs-changelog-ours-p): Grok new ChangeLog
+	format.
+
+	* prim/startup.el (user-init-directory): New name for
+	`emacs-user-extension-dir'.
+	(load-user-init-file): Use it.
+
+Mon Oct  6 19:12:51 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/Release 5.19
+
+Mon Oct  6 19:09:17 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-engine.el (c-guess-basic-syntax):
+	CASE 5F: extern-lang-close relpos should be
+	element 0 of inclass-p, not element 1.
+
+	* cc-mode/cc-cmds.el (c-progress-init, c-progress-fini):
+	Be silent if c-progress-interval
+	is nil.
+
+	* cc-mode/cc-vars.el (c-progress-interval): Document new semantics
+
+Fri Oct  3 23:10:04 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-engine.el (c-beginning-of-statement-1):
+	Watch out for keywords which have a
+	preceding underscore.
+
+Fri Sep 26 23:30:58 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-menus.el: Patches to Imenu support given by 
+	"Masatake (jet) YAMATO" <masata-y@is.aist-nara.ac.jp>.
+	(Jan Dubois) jan.dubois@ibm.net
+
+	* cc-mode/cc-cmds.el (c-comment-line-break-function):
+	Fix for when comment starts at
+	comment-column and there is non-whitespace preceding this on the
+	current line.
+
+	* cc-mode/cc-mode.el (c-submit-bug-report): Remove
+	c-recognize-knr-p.  Add c-comment-continuation-stars.
+
+Mon Sep 22 15:47:02 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode/cc-styles.el (c-initialize-builtin-style):
+	Only use copy-tree if it is
+	funcall-able.  This is the right patch, and was given by Erik Naggum
+	<erik@naggum.no>
+
+1997-10-08  SL Baur  <steve@altair.xemacs.org>
+
+	* x11/x-menubar.el (file-menu-filter): Reverse sense of bounds
+	test.
+	From: Didier Verna <verna@inf.enst.fr>
+
+	* prim/format.el (format-annotate-function): Reverse sync to Emacs 
+	19.
+
+1997-10-08  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/profile.el (profile-align): New function.
+
+	* prim/help.el (describe-function): Use `buffer-string' with a
+	BUFFER argument, instead of `save-excursion'+`buffer-string'.
+	(describe-variable): Ditto.
+	(describe-variable): Use `when'.
+
+	* modes/lisp-mode.el: Indent `display-message' and
+	`display-warning' better.
+
+	* prim/help.el: Customized find-function stuff.
+	(help-with-tutorial): Use point-at-{bol,eol}.
+	(with-displaying-help-buffer): Use `with-current-buffer'.
+
+	* prim/keymap.el (event-apply-modifier): Use `vconcat'.
+	(define-prefix-command): Use the NAME argument to
+	`make-sparse-keymap'.
+	(suppress-keymap): Use `incf'.
+
+	* prim/help.el (key-or-menu-binding): Document it.
+
+	* prim/keymap.el (insert-key-binding): Use `key-or-menu-binding'
+	from help.el.
+
+	* prim/help.el (built-in-variable-doc): Use `case'.
+	(describe-function-1): Assign to `file-name' instead of `home'.
+
+	* prim/profile.el (profiling-results): Handle strings correctly.
+
+	* prim/profile.el (profile): Expand FORMS only once.
+
+1997-10-08  Colin Rafferty  <craffert@ml.com>
+
+	* prim/lisp-file-db.el (lookup-lisp-file-db): Made it stop on
+	failure.
+
+1997-10-08  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/lisp-file-db.el: New file.
+	From Raymond Toy <toy@rtp.ericsson.se>
+
+1997-10-08  Colin Rafferty  <craffert@ml.com>
+
+	* modes/lazy-shot.el: Customified.  Made it handle long lines
+	better.
+
+1997-10-08  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/startup.el (load-user-init-file): Remove reference to
+	.xemacs as a file.
+
+1997-10-07  SL Baur  <steve@altair.xemacs.org>
+
+	* utils/thing.el (thing-filename): Deal with point at end of
+	buffer.
+
+1997-10-07  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* psgml/psgml.el (sgml-mode-map): modify defin-key statements to
+ 	use the new and improved key designator syntax. Rebound
+ 	'sgml-split-element to a similar key as the global 'split-line
+ 	binding.
+
+1997-10-07  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* utils/thing.el (thing-symbol): Return nil if `end' is nil.
+
+1997-10-07  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* modes/cperl-mode.el: Fixed the help toggle menuitem, and added
+ 	an autoload cookie.
+	* modes/perl-mode.el: ditch the autoload in favor of cperl-mode.
+
+1997-10-07  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* packages/etags.el (add-to-tag-completion-table): Better support
+ 	for Scheme code.  Parse scheme definitions and identifiers
+ 	with colons correctly.
+
+1997-10-07  SL Baur  <steve@altair.xemacs.org>
+
+	* mule/mule-cmds.el (read-input-method-name): Use a default if
+	available.
+	From Didier Verna <verna@inf.enst.fr>
+
+	* prim/about.el (about-url-alist): Update jwz's home page.
+
+1997-10-07  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* x11/x-menubar.el (default-menubar): Handle pending-delete
+ 	correctly.
+
+1997-10-06  SL Baur  <steve@altair.xemacs.org>
+
+	* utils/font.el: Don't need devices.el on XEmacs.
+
+1997-10-05  SL Baur  <steve@altair.xemacs.org>
+
+	* utils/mail-utils.el (rmail-dont-reply-to-names): Snarf from
+	rmail.el.
+
+1997-10-04  SL Baur  <steve@altair.xemacs.org>
+
+	* efs/dired.el (dired-mail-reader): Default to VM instead of old,
+	broken rmail.
+
 1997-09-29  Karl M. Hegbloom  <karlheg@inetarena.com>
 
 	* prim/files.el (auto-mode-alist): make `.cl' a lisp-mode

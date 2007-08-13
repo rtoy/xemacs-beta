@@ -73,21 +73,21 @@ The frame system uses this to open frames to display messages while
 XEmacs loads the user's initialization file.")
 
 (defvar after-init-hook nil
-  "Functions to call after loading the init file (`~/.emacs').
+  "*Functions to call after loading the init file (`~/.xemacs/init.el').
 The call is not protected by a condition-case, so you can set `debug-on-error'
-in `.emacs', and put all the actual code on `after-init-hook'.")
+in `init.el', and put all the actual code on `after-init-hook'.")
 
 (defvar term-setup-hook nil
-  "Functions to be called after loading terminal-specific Lisp code.
-See `run-hooks'.  This variable exists for users to set,
-so as to override the definitions made by the terminal-specific file.
-XEmacs never sets this variable itself.")
+  "*Functions to be called after loading terminal-specific Lisp code.
+See `run-hooks'.  This variable exists for users to set, so as to
+override the definitions made by the terminal-specific file.  XEmacs
+never sets this variable itself.")
 
 (defvar keyboard-type nil
   "The brand of keyboard you are using.
-This variable is used to define
-the proper function and keypad keys for use under X.  It is used in a
-fashion analogous to the environment value TERM.")
+This variable is used to define the proper function and keypad keys
+for use under X.  It is used in a fashion analogous to the environment
+value TERM.")
 
 (defvar window-setup-hook nil
   "Normal hook run to initialize window system display.
@@ -98,13 +98,13 @@ the user's init file.")
   "Major mode command symbol to use for the initial *scratch* buffer.")
 
 (defvar init-file-user nil
-  "Identity of user whose `.emacs' file is or was read.
+  "Identity of user whose `~/.xemacs/init.el' file is or was read.
 The value is nil if no init file is being used; otherwise, it may be either
 the null string, meaning that the init file was taken from the user that
 originally logged in, or it may be a string containing a user's name.
 
 In either of the latter cases, `(concat \"~\" init-file-user \"/\")'
-evaluates to the name of the directory where the `.emacs' file was
+evaluates to the name of the directory where the `init.el' file was
 looked for.
 
 Setting `init-file-user' does not prevent Emacs from loading
@@ -114,11 +114,14 @@ Setting `init-file-user' does not prevent Emacs from loading
 
 (defvar site-start-file (purecopy "site-start")
   "File containing site-wide run-time initializations.
-This file is loaded at run-time before `~/.emacs'.  It contains inits
-that need to be in place for the entire site, but which, due to their
-higher incidence of change, don't make sense to load into XEmacs'
-dumped image.  Thus, the run-time load order is: 1. file described in
-this variable, if non-nil; 2. `~/.emacs'; 3. `default.el'.
+This file is loaded at run-time before `~/.xemacs/init.el'.  It
+contains inits that need to be in place for the entire site, but
+which, due to their higher incidence of change, don't make sense to
+load into XEmacs' dumped image.  Thus, the run-time load order is:
+
+  1. file described in this variable, if non-nil;
+  2. `~/.xemacs/init.el';
+  3. `/path/to/xemacs/lisp/default.el'.
 
 Don't use the `site-start.el' file for things some users may not like.
 Put them in `default.el' instead, so that users can more easily
@@ -140,7 +143,7 @@ is less convenient.")
 This is initialized based on `mail-host-address',
 after your init file is read, in case it sets `mail-host-address'.")
 
-(defvar auto-save-list-file-prefix "~/.saves-"
+(defvar auto-save-list-file-prefix "~/.xemacs/.saves-"
   "Prefix for generating auto-save-list-file-name.
 Emacs's pid and the system name will be appended to
 this prefix to create a unique file name.")
@@ -555,19 +558,22 @@ If this is nil, no message will be displayed.")
 	    (setq term (substring term 0 hyphend))
 	  (setq term nil))))))
 
-(defconst emacs-user-extension-dir "/.xemacs/"
+(defconst user-init-directory "/.xemacs/"
   "Directory where user initialization and user-installed packages may go.")
+(define-obsolete-variable-alias
+  'emacs-user-extension-dir
+  'user-init-directory)
 
 (defun load-user-init-file (init-file-user)
   "This function actually reads the init files.
-First try .xemacs, then try .emacs, but only load one of the two."
+First try .xemacs/init, then try .emacs, but only load one of the two."
   (when init-file-user
     (setq user-init-file
 	  (cond
 	   ((eq system-type 'ms-dos)
-	    (concat "~" init-file-user emacs-user-extension-dir "init.el"))
+	    (concat "~" init-file-user user-init-directory "init.el"))
 	   (t
-	    (concat "~" init-file-user emacs-user-extension-dir "init.el"))))
+	    (concat "~" init-file-user user-init-directory "init.el"))))
     (unless (file-exists-p (expand-file-name user-init-file))
       (setq user-init-file
 	    (cond
@@ -576,14 +582,12 @@ First try .xemacs, then try .emacs, but only load one of the two."
 	     (t
 	      (concat "~" init-file-user "/.emacs")))))
     (load user-init-file t t t)
-    (when (string= custom-file (concat "~"
+    (let ((default-custom-file (concat "~"
 				       init-file-user
-				       emacs-user-extension-dir
-				       "options.el"))
-      (load (concat "~"
-		    init-file-user
-		    emacs-user-extension-dir
-		    "options.el") t t))
+				       user-init-directory
+				       "options.el")))
+      (when (string= custom-file default-custom-file)
+	(load default-custom-file t t)))
     (unless inhibit-default-init
       (let ((inhibit-startup-message nil))
 	;; Users are supposed to be told their rights.
@@ -1168,6 +1172,10 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
 	  (and root
 	       (let ((f (expand-file-name "info" root)))
 		 (and (file-directory-p f) (file-name-as-directory f)))))
+	 (packages
+	  (and root
+	       (let ((f (expand-file-name "packages" root)))
+		 (and (file-directory-p f) (file-name-as-directory f)))))
 	 (lock
 	  (and root
 	       (boundp 'lock-directory)
@@ -1193,7 +1201,7 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
     ;; 1996/12/6 by MORIOKA Tomohiko <morioka@jaist.ac.jp>
     ;;	define `default-load-path' for file-detect.el
     (setq default-load-path load-path)
-    
+
     ;; add site-lisp dir to load-path
     (when site-lisp
       ;; If the site-lisp dir isn't on the load-path, add it to the end.
@@ -1271,19 +1279,32 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
       (setq data-directory (file-name-as-directory etc)))
 
     ;; If `configure' specified an info dir, use it.
+    ;; #### The above comment is suspect.
     (or (boundp 'Info-default-directory-list)
 	(setq Info-default-directory-list nil))
+
+    ;; Add additional system directories.
+    (setq Info-default-directory-list
+	  (append Info-default-directory-list
+		  (split-string infopath-internal ":")))
+
+    (let ((infopath (getenv "INFOPATH")))
+      (when infopath
+	(setq Info-default-directory-list
+	      (append Info-default-directory-list
+		      (split-string infopath ":")))))
+
     (cond (configure-info-directory
 	   (setq configure-info-directory (file-name-as-directory
 					   configure-info-directory))
 	   (or (member configure-info-directory Info-default-directory-list)
 	       (setq Info-default-directory-list
-		     (append Info-default-directory-list
-			     (list configure-info-directory))))))
+		     (append (list configure-info-directory)
+			     Info-default-directory-list)))))
     ;; If we've guessed the info dir, use that (too).
     (when (and info (not (member info Info-default-directory-list)))
       (setq Info-default-directory-list
-	    (append Info-default-directory-list (list info))))
+	    (append (list info) Info-default-directory-list)))
 
     ;; Default the lock dir to being a sibling of the data-directory.
     ;; If superlock isn't set, or is set to a file in a nonexistent

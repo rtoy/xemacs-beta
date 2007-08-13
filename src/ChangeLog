@@ -1,3 +1,128 @@
+1997-10-11  SL Baur  <steve@altair.xemacs.org>
+
+	* callproc.c: New variable infopath-internal.
+	(complex_vars_of_callproc): Declare and initialized it.
+
+	* paths.h.in: New variable PATH_INFOPATH.
+
+1997-10-10  Martin Buchholz  <mrb@eng.sun.com>
+
+	* systty.h:
+	  - change Xemacs --> XEmacs
+
+	* buffer.c:
+	* editfns.c:
+	* msdos.c:
+	  - Remove bogus FSF-origin \n\ sequences.
+
+1997-10-09  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* doprnt.c (parse_doprnt_spec): parse `*' field width
+	  and precision specs and set up spec forwarding.
+
+	* doprnt.c (emacs_doprnt_1): implement `*' by
+	  forwarding flags, precision and field width data from a
+	  spec to a subsequent spec.
+
+	* editfns.c: document new `*' field width and
+	  precision spec.
+
+1997-10-09  SL Baur  <steve@altair.xemacs.org>
+
+	* database.c (Fclose_database): Rename C function.
+	(Fdatabase_last_error): Ditto.
+	(Fopen_database): Ditto.
+	(Fput_database): Ditto.
+	(Fremove_database): Ditto.
+	(Fget_database): Ditto.
+	(syms_of_dbm): Reflect above changes.
+	From Martin Buchholz <mrb@Eng.Sun.COM>
+
+1997-10-08  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* events.c (Fmake_event): Allow only frames as channel.
+
+1997-10-07  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* extents.c (print_extent_1): Fixed typo.
+
+1997-10-07  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* insdel.c (buffer_replace_char): if doing delete/insert
+	  because of characters with deiffering byte lengths,move
+	  point forward with the insertion if it was moved backwrad
+	  to equal the insertion point by the earlier deletion.
+
+1997-10-06  SL Baur  <steve@altair.xemacs.org>
+
+	* window.c (Fset_window_dedicated_p): register -> REGISTER.
+
+	* unexalpha.c (update_dynamic_symbols): register-> REGISTER.
+
+	* sysdep.c: Global change: register -> REGISTER.
+
+	* strcat.c (strcat): register -> REGISTER.
+
+	* search.c: Global change: register -> REGISTER.
+
+	* regex.c: Global change: register -> REGISTER.
+	- Ensure REGISTER is always defined.
+	
+	* nt.c: Global change: register -> REGISTER.
+
+	* linuxplay.c: Global change: register -> REGISTER.
+
+	* input-method-xlib.c (best_style): register -> REGISTER.
+
+	* gifalloc.c: Global change: register -> REGISTER.
+	- Ensure REGISTER is always defined.
+	
+	* getloadavg.c (getloadavg): register -> REGISTER.
+
+	* eval.c (unwind_to_catch): [Unused variable] register -> REGISTER.
+
+	* cmds.c (Fpoint_at_bol): register -> REGISTER.
+
+	* chartab.c (check_category_char): register -> REGISTER.
+
+	* buffer.c (assoc_ignore_text_properties): [Unused function]
+	register -> REGISTER.
+
+	* alloca.c: Global change: register -> REGISTER.
+
+	* xmu.h (XmuCopyISOLatin1Lowered): Global change: const -> CONST.
+
+	* gif_lib.h: Global change: const -> CONST.
+
+	* balloon_help.h (balloon_help_move_to_pointer): const -> CONST.
+
+	* xmu.c: Global change: const -> CONST.
+
+	* unexsol2.c (unexec): const -> CONST.
+
+	* unexhp9k3.c (unexec_error): const -> CONST.
+
+	* unexfreebsd.c (unexec_error): const -> CONST.
+
+	* sunOS-fix.c (mbstowcs): const-> CONST.
+	(wcstombs): Ditto.
+
+	* strcpy.c (strcpy): const -> CONST.
+
+	* strcmp.c: Global change: const -> CONST.
+
+	* strcat.c (strcat): const -> CONST.
+
+	* realpath.c (realpath): const -> CONST.
+
+	* keymap.c (where_is_recursive_mapper): const -> CONST.
+
+	* extents.c (extent_priority_sort_function): const -> CONST.
+
+	* dgif_lib.c (DGifOpenFileName): const -> CONST.
+
+	* balloon_help.c: Global change: const -> CONST.
+
 1997-10-03  SL Baur  <steve@altair.xemacs.org>
 
 	* lisp.h: Nuke register declarations.
@@ -598,7 +723,7 @@ Sun Sep 21 14:14:44 1997  Kyle Jones  <kyle_jones@wonderworks.com>
 	* Makefile.in: 
 	* s/*.h:
 	* m/*.h:
-	* src/config.h.in:
+	* config.h.in:
 	* src/emacs.c:
 	* version.sh:
 	* configure.in: Another rewrite.

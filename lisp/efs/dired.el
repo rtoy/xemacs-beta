@@ -372,7 +372,7 @@ Use \\[dired-omit-toggle] to see these files. (buffer local)")
 (make-variable-buffer-local 'dired-omit-files)
 
 ;;;###autoload
-(defvar dired-mail-reader 'rmail
+(defvar dired-mail-reader 'vm
   "*Mail reader used by dired for dired-read-mail \(\\[dired-read-mail]\).
 The symbols 'rmail and 'vm are the only two allowed values.")
 

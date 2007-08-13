@@ -407,8 +407,8 @@ static size_t sndcnvnop(void **data,size_t *sz,void **outbuf)
 /* Convert 8 bit unsigned stereo data to 8 bit unsigned mono data */
 static size_t sndcnv8U_2mono(void **data,size_t *sz,void **outbuf)
 {
-  register unsigned char *src;
-  register unsigned char *dest;
+  REGISTER unsigned char *src;
+  REGISTER unsigned char *dest;
   int rc,count;
 
   count = *sz / 2;
@@ -428,8 +428,8 @@ static size_t sndcnv8U_2mono(void **data,size_t *sz,void **outbuf)
 /* Convert 8 bit signed stereo data to 8 bit signed mono data */
 static size_t sndcnv8S_2mono(void **data,size_t *sz,void **outbuf)
 {
-  register unsigned char *src;
-  register unsigned char *dest;
+  REGISTER unsigned char *src;
+  REGISTER unsigned char *dest;
   int rc,count;
 
   count = *sz / 2;
@@ -449,8 +449,8 @@ static size_t sndcnv8S_2mono(void **data,size_t *sz,void **outbuf)
 /* Convert 8 bit signed stereo data to 8 bit unsigned mono data */
 static size_t sndcnv2monounsigned(void **data,size_t *sz,void **outbuf)
 {
-  register unsigned char *src;
-  register unsigned char *dest;
+  REGISTER unsigned char *src;
+  REGISTER unsigned char *dest;
   int rc,count;
 
   count = *sz / 2;
@@ -470,8 +470,8 @@ static size_t sndcnv2monounsigned(void **data,size_t *sz,void **outbuf)
 /* Convert 8 bit signed mono data to 8 bit unsigned mono data */
 static size_t sndcnv2unsigned(void **data,size_t *sz,void **outbuf)
 {
-  register unsigned char *src;
-  register unsigned char *dest;
+  REGISTER unsigned char *src;
+  REGISTER unsigned char *dest;
   int rc,count;
 
   count = *sz;
@@ -497,7 +497,7 @@ static __inline__ signed char int2ulaw(int i)
       6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
       7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
       7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7};
-    register int bits,logi;
+    REGISTER int bits,logi;
 
     /* unrolling this condition (hopefully) improves execution speed */
     if (i < 0) {
@@ -549,8 +549,8 @@ static size_t sndcnvULaw_2mono(void **data,size_t *sz,void **outbuf)
        +60,   +56,   +52,   +48,   +44,   +40,   +36,   +32,
        +28,   +24,   +20,   +16,   +12,    +8,    +4,    +0};
 
-  register unsigned char *src;
-  register unsigned char *dest;
+  REGISTER unsigned char *src;
+  REGISTER unsigned char *dest;
   int rc,count;
 
   count = *sz / 2;
@@ -574,8 +574,8 @@ static size_t sndcnvULaw_2mono(void **data,size_t *sz,void **outbuf)
    signed mono data */
 static size_t sndcnv16_2monoLE(void **data,size_t *sz,void **outbuf)
 {
-  register unsigned char *src;
-  register unsigned char *dest;
+  REGISTER unsigned char *src;
+  REGISTER unsigned char *dest;
   int rc,count;
   signed short i;
 
@@ -602,8 +602,8 @@ static size_t sndcnv16_2monoLE(void **data,size_t *sz,void **outbuf)
    signed mono data */
 static size_t sndcnv16_2monoBE(void **data,size_t *sz,void **outbuf)
 {
-  register unsigned char *src;
-  register unsigned char *dest;
+  REGISTER unsigned char *src;
+  REGISTER unsigned char *dest;
   int rc,count;
   signed short i;
 
@@ -629,8 +629,8 @@ static size_t sndcnv16_2monoBE(void **data,size_t *sz,void **outbuf)
 /* Convert 16 bit little endian signed data to 8 bit unsigned data */
 static size_t sndcnv2byteLE(void **data,size_t *sz,void **outbuf)
 {
-  register unsigned char *src;
-  register unsigned char *dest;
+  REGISTER unsigned char *src;
+  REGISTER unsigned char *dest;
   int rc,count;
 
   count = *sz / 2;
@@ -650,8 +650,8 @@ static size_t sndcnv2byteLE(void **data,size_t *sz,void **outbuf)
 /* Convert 16 bit big endian signed data to 8 bit unsigned data */
 static size_t sndcnv2byteBE(void **data,size_t *sz,void **outbuf)
 {
-  register unsigned char *src;
-  register unsigned char *dest;
+  REGISTER unsigned char *src;
+  REGISTER unsigned char *dest;
   int rc,count;
 
   count = *sz / 2;
@@ -672,8 +672,8 @@ static size_t sndcnv2byteBE(void **data,size_t *sz,void **outbuf)
    mono data */
 static size_t sndcnv2monobyteLE(void **data,size_t *sz,void **outbuf)
 {
-  register unsigned char *src;
-  register unsigned char *dest;
+  REGISTER unsigned char *src;
+  REGISTER unsigned char *dest;
   int rc,count;
 
   count = *sz / 4;
@@ -695,8 +695,8 @@ static size_t sndcnv2monobyteLE(void **data,size_t *sz,void **outbuf)
    mono data */
 static size_t sndcnv2monobyteBE(void **data,size_t *sz,void **outbuf)
 {
-  register unsigned char *src;
-  register unsigned char *dest;
+  REGISTER unsigned char *src;
+  REGISTER unsigned char *dest;
   int rc,count;
 
   count = *sz / 4;

@@ -370,17 +370,20 @@ This variable is ignored unless running under XEmacs."
   :type 'boolean
   :group 'info)
 
-(defcustom Info-default-directory-list nil
-  "*List of default directories to search for Info documentation
-files.  This value is used as the default for `Info-directory-list'.
-It is set in startup.el.  The first directory in this list must
-contain a `dir' file that will become the basis for the toplevel Info
-directory."
-  :type '(repeat directory)
-  :group 'info)
+(defvar Info-default-directory-list nil
+  "*List of directories to search for Info documents, and `dir' or `localdir' files.
+The value of `Info-default-directory-list' will be initialized to a
+reasonable default by the startup code, and usually doesn't need to be
+changed in your personal configuration, though you may do so if you like.
 
-(defcustom Info-additional-directory-list nil
-  "List of additional directories to search for Info documentation
+The first directory on this list must contain a `dir' file like the one
+supplied with XEmacs, which will be used as the (dir)Top node.
+
+For more information, see the documentation to the variable:
+`Info-directory-list'.")
+
+(defcustom Info-additional-search-directory-list nil
+  "*List of additional directories to search for Info documentation
 files.  These directories are not searched for merging the `dir'
 file. An example might be something like:
 \"/usr/local/lib/xemacs/packages/lisp/calc/\""
@@ -390,18 +393,20 @@ file. An example might be something like:
 (defvar Info-directory-list
   (let ((path (getenv "INFOPATH")))
     (if path
-	(let ((list nil)
- 	      idx)
-	  (while (> (length path) 0)
-	    (setq idx (or (string-match path-separator path) (length path))
-		  list (cons (substring path 0 idx) list)
-		  path (substring path (min (1+ idx)
-					    (length path)))))
-	  (nreverse list))
-      (reverse Info-default-directory-list)))
+	(split-string path path-separator)
+      Info-default-directory-list))
   "List of directories to search for Info documentation files.
 Default is to use the environment variable INFOPATH if it exists,
-else to use Info-default-directory-list.")
+else to use `Info-default-directory-list'.
+The first directory in this list, the \"dir\" file there will become
+the (dir)Top node of the Info documentation tree.")
+
+(defcustom Info-localdir-heading-regexp
+    "^Locally installed XEmacs Packages:?"
+  "The menu part of localdir files will be inserted below this topic
+heading."
+  :type 'regexp
+  :group 'info)
 
 ;; Is this right for NT?  .zip, with -c for to stdout, right?
 (defvar Info-suffix-list '( ("" . nil) 
@@ -448,6 +453,7 @@ Marker points nowhere if file has no tag table.")
 (defvar Info-index-first-alternative nil)
 
 (defcustom Info-annotations-path '("~/.xemacs/info.notes"
+                                   "~/.infonotes"
 				   "/usr/lib/info.notes")
   "*Names of files that contain annotations for different Info nodes.
 By convention, the first one should reside in your personal directory.
@@ -534,9 +540,9 @@ further (recursive) error recovery.  TRYFILE is ??"
 		    (list default-directory)) ; then just try current directory.
 		   ((file-name-absolute-p fname)
 		    '(nil))		; No point in searching for an absolute file name
-		   (Info-additional-directory-list
+		   (Info-additional-search-directory-list
 		    (append Info-directory-list
-			    Info-additional-directory-list))
+			    Info-additional-search-directory-list))
 		   (t Info-directory-list))))
 	;; Search the directory list for file FNAME.
 	(while (and dirs (not found))
@@ -743,8 +749,8 @@ actually get any text from."
 				    (equal (cdr elt) curr)))
 			       Info-dir-file-attributes))))
       (insert Info-dir-contents)
-    (let ((dirs Info-directory-list)
-	  buffers buffer others nodes dirs-done)
+    (let ((dirs (reverse Info-directory-list))
+	  buffers lbuffers buffer others nodes dirs-done)
 
       (setq Info-dir-file-attributes nil)
 
@@ -777,16 +783,25 @@ actually get any text from."
 		    (save-excursion
 		      (or buffers
 			  (message "Composing main Info directory..."))
-		      (set-buffer (generate-new-buffer "info dir"))
-		      (when (string-match "localdir" file)
-			(insert "localdir\n"))
+		      (set-buffer (generate-new-buffer
+				   (if (string-match "localdir" file)
+				       "localdir"
+				     "info dir")))
 		      (insert-file-contents file)
-		      (setq buffers (cons (current-buffer) buffers)
-			    Info-dir-file-attributes
+		      (if (string-match "localdir" (buffer-name))
+			  (setq lbuffers (cons (current-buffer) lbuffers))
+			(setq buffers (cons (current-buffer) buffers)))
+		      (setq Info-dir-file-attributes
 			    (cons (cons file attrs)
 				  Info-dir-file-attributes))))))
 	  (or (cdr dirs) (setq Info-dir-contents-directory (car dirs)))
 	  (setq dirs (cdr dirs))))
+      
+      ;; ensure that the localdir files are inserted last, and reverse
+      ;; the list of them so that when they get pushed in, they appear
+      ;; in the same order they got specified in the path, from top to
+      ;; bottom.
+      (nconc buffers (nreverse lbuffers))
       
       (or buffers
 	  (error "Can't find the Info directory node"))
@@ -794,7 +809,10 @@ actually get any text from."
       ;; others.  Yes, that is really what this is supposed to do.
       ;; If it doesn't work, fix it.
       (setq buffer (car buffers)
-	    others (cdr buffers))
+	    ;; reverse it since they are pushed down from the top. the
+	    ;; `Info-default-directory-list'/INFOPATH can be specified
+	    ;; in natural order this way.
+	    others (nreverse (cdr buffers)))
 
       ;; Insert the entire original dir file as a start; note that we've
       ;; already saved its default directory to use as the default
@@ -805,25 +823,22 @@ actually get any text from."
       (while others
 	(let ((other (car others))
 	      (info-buffer (current-buffer)))
-	  (if (with-current-buffer other
-		(goto-char (point-min))
-		(when (looking-at "localdir")
-		  (forward-line 1)
-		  (delete-region (point-min) (point))
-		  t))		
+	  (if (string-match "localdir" (buffer-name other))
 	      (save-excursion
 		(set-buffer info-buffer)
 		(goto-char (point-max))
 		(cond
-		 ((re-search-backward "^ *\\* *Locals *: *\n" nil t)
+		 ((re-search-backward "^ *\\* *Locals *: *$" nil t)
 		  (delete-region (match-beginning 0) (match-end 0)))
-		 ((re-search-backward "^[ \t]*Local" nil t)
+		 ;; look for a line like |Local XEmacs packages:
+		 ;; or mismatch on some text ...
+		 ((re-search-backward Info-localdir-heading-regexp nil t)
 		  ;; This is for people who underline topic headings with
 		  ;; equal signs or dashes.
 		  (when (save-excursion
 			  (forward-line 1)
 			  (beginning-of-line)
-			  (looking-at "^[ \t]*[-=]+"))
+			  (looking-at "^[ \t]*[-=*]+"))
 		    (forward-line 1))
 		  (forward-line 1)
 		  (beginning-of-line))
@@ -2285,7 +2300,7 @@ At end of the node's text, moves to the next node."
   "Keymap containing Info commands.")
 (if Info-mode-map
     nil
-  (setq Info-mode-map (make-keymap))
+  (setq Info-mode-map (make-sparse-keymap))
   (suppress-keymap Info-mode-map)
   (define-key Info-mode-map "." 'beginning-of-buffer)
   (define-key Info-mode-map " " 'Info-scroll-next)
@@ -2341,6 +2356,7 @@ At end of the node's text, moves to the next node."
   (define-key Info-mode-map 'delete 'Info-scroll-prev)
   (define-key Info-mode-map 'button2 'Info-follow-clicked-node)
   (define-key Info-mode-map 'button3 'Info-select-node-menu))
+
 
 ;; Info mode is suitable only for specially formatted data.
 (put 'info-mode 'mode-class 'special)

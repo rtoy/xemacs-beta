@@ -208,7 +208,7 @@ following in your .emacs:
 
 ;; Is it XEmacs?
 (defconst bookmark-xemacsp
-  (string-match "\\(Lucid\\|Xemacs\\)" emacs-version))
+  (string-match "\\(Lucid\\|XEmacs\\)" emacs-version))
 
 
 ;; Added  for lucid emacs  compatibility, db

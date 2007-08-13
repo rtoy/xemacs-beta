@@ -749,6 +749,9 @@ of the start of the containing expression."
 (put 'with-temp-buffer 'lisp-indent-function 0)
 (put 'with-output-to-string 'lisp-indent-function 0)
 (put 'with-output-to-temp-buffer 'lisp-indent-function 1)
+(put 'display-message 'lisp-indent-function 1)
+(put 'display-warning 'lisp-indent-function 1)
+(put 'global-set-key 'lisp-indent-function 1)
 
 (defun indent-sexp (&optional endpos)
   "Indent each line of the list starting just after point.

@@ -233,14 +233,6 @@ Return the value of the configuration parameter CONFIG_SYMBOL." nil nil)
 
 ;;;***
 
-;;;### (autoloads (docref-setup) "docref" "utils/docref.el")
-
-(autoload 'docref-setup "docref" "\
-Process docref cross-references in the current buffer.
-See also \\(f@docref-subst)." t nil)
-
-;;;***
-
 ;;;### (autoloads nil "easymenu" "utils/easymenu.el")
 
 ;;;***
@@ -492,6 +484,26 @@ value of \"vt100-nam\" is treated the same as \"vt100\"." nil nil)
 
 ;;;***
 
+;;;### (autoloads (x-font-build-cache font-default-size-for-device font-default-encoding-for-device font-default-registry-for-device font-default-family-for-device font-default-object-for-device font-default-font-for-device font-create-object) "font" "utils/font.el")
+
+(autoload 'font-create-object "font" nil nil nil)
+
+(autoload 'font-default-font-for-device "font" nil nil nil)
+
+(autoload 'font-default-object-for-device "font" nil nil nil)
+
+(autoload 'font-default-family-for-device "font" nil nil nil)
+
+(autoload 'font-default-registry-for-device "font" nil nil nil)
+
+(autoload 'font-default-encoding-for-device "font" nil nil nil)
+
+(autoload 'font-default-size-for-device "font" nil nil nil)
+
+(autoload 'x-font-build-cache "font" nil nil nil)
+
+;;;***
+
 ;;;### (autoloads (forms-find-file-other-window forms-find-file forms-mode) "forms" "utils/forms.el")
 
 (autoload 'forms-mode "forms" "\
@@ -672,6 +684,10 @@ Otherwise, (the default) use a smaller, somewhat faster, and
 often correct parser.")
 
 (autoload 'mail-file-babyl-p "mail-utils" nil nil nil)
+
+(defvar rmail-dont-reply-to-names nil "\
+*A regexp specifying names to prune of reply to messages.
+A value of nil means exclude your own name only.")
 
 (autoload 'mail-fetch-field "mail-utils" "\
 Return the value of the header field FIELD-NAME.

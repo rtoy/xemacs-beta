@@ -148,16 +148,72 @@ deactivates the region.
 
 ** Info "dir" functionality merged from Emacs-19.34
 
+  ------------------  DRAFT ------------------
+
+At the time it is dumped, XEmacs will initialize the value of
+`Info-default-directory-list' from the value of the environment
+variable INFOPATH, which it inherits from the Makefile.  The Makefile
+gets the value from `configure'.
+
+ #### BETA Note: if the package startup stuff moves or changes, this
+                 next paragraph may need fixing.
+
+At runtime, the XEmacs startup code will loop through that list and
+collect all of the directories in it that satisfy `file-directory-p',
+and then appends any site package info directories found... ?? How do
+you want this worded? XXXXX !!!! (bright red bold DRAFT)
+
+When you start the info reader, `Info-directory-list' is initialized
+from either the environment variable "INFOPATH", if it exists, or
+`Info-default-directory-list'.  The first directory in this list must
+contain a "dir" file like the one supplied with XEmacs.  Note that if
+an INFOPATH variable is used, that only the directories in that path
+will be searched; no package info paths will be appended, as `Info-
+default-directory-list' will be ignored in that case.
+
 All of the directories on `Info-directory-list' will be searched for
 "dir" files, which may be full fledged Info files containing subnodes
-as well as menus.  They are merged to become one directory, with menus
-in like-named subnodes being coalesced from the several "dir" files.
+as well as menus.  They are merged to become one Info directory, with
+menus in like-named subnodes being coalesced from the several "dir"
+files.
 
-"localdir" files are looked for too, secondary to "dir"'s.  If there's
-no "dir" in a directory, a "localdir" will be looked for.  There can
-be one of either "dir" or "localdir" in each of the directories in
-`Info-directory-list', which is initialized from `Info-default-
-directory-list', which you may customize through the Options menu.
+ BETA Note: I have not tested this very thouroughly.  Does anyone out
+ there actually have a dir file with real `info' subnodes in it?  I
+ will create one and try it as I learn how. - karlheg
+
+"localdir" files are looked for also, secondary to "dir"'s. A localdir
+file should look like a section of the Info directory menu:
+
+ |
+ |* Gnus::                The all seeing all knowing News and Mail
+ |                         interface for XEmacs.
+ |* Calc::                HP-48 alike Calculator that can do algebra
+ |
+
+The info reader will insert its contents into the main Info directory
+either at the end of the (dir)Top node, beginning at and replacing a
+line that looks like:
+
+ |
+ |* Locals:
+ |
+
+ BETA-Note:  Coming soon...
+
+ ... or, below a line that contains the exact text:
+
+ |
+ |Locally installed XEmacs Packages
+ |
+
+ ... by default.  (This text is configurable--- see:
+ `M-x customize-variable Info-localdir-heading-regexp'
+
+The `Info-localdir-heading-regexp' may be underlined with *'s, ='s, or
+-'s, like any Info topic header.  When `Info-fontify' is non-nil, the
+underlineing characters will be elided and the topic heading itself
+will be given a face, according to `Info-title-face-alist'.
+
 
 ** Abbreviations can now contain non-word characters.
 

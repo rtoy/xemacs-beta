@@ -38,7 +38,11 @@ libsrc = ../lib-src/
 etcdir = ../etc/
 
 ## Here are the things that we expect ../configure to edit.
+prefix=@prefix@
 srcdir=@srcdir@
+version=@version@
+infodir=@infodir@
+infopath=@infopath@
 CC=@CC@
 CPP=@CPP@
 CFLAGS=@CFLAGS@

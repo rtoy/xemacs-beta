@@ -1,3 +1,21 @@
+1997-10-10  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* custom/wid-edit.el (variable-link): New widget.
+	(widget-variable-link-action): New function.
+	(function-link): New widget.
+	(widget-function-link-action): New function.
+
+1997-10-10  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* prim/modeline.el (modeline-minor-mode-menu): menus are toggles
+	not strings now.
+
+1997-10-10  SL Baur  <steve@altair.xemacs.org>
+
+	* psgml-html.el (html-quote-region): Grow bounds when performing
+	substitutions.
+	From Adrian Aichner <aichner@ecf.teradyne.com>
+
 1997-09-26  SL Baur  <steve@altair.xemacs.org>
 
 	* iso-sgml.el: Correct email address.

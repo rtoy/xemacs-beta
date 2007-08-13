@@ -2847,7 +2847,7 @@ sys_close (int fd)
 {
 #ifdef INTERRUPTIBLE_CLOSE
   int did_retry = 0;
-  register int rtnval;
+  REGISTER int rtnval;
 
   while ((rtnval = close (fd)) == -1
 	 && (errno == EINTR))
@@ -5407,7 +5407,7 @@ sys_sleep (int timeval)
 #endif /* 0 */
 
 void
-bzero (register char *b, register int length)
+bzero (REGISTER char *b, REGISTER int length)
 {
   short zero = 0;
   long max_str = 65535;
@@ -5423,7 +5423,7 @@ bzero (register char *b, register int length)
 
 /* Saying `void' requires a declaration, above, where bcopy is used
    and that declaration causes pain for systems where bcopy is a macro.  */
-bcopy (register char *b1, register char *b2, register int length)
+bcopy (REGISTER char *b1, REGISTER char *b2, REGISTER int length)
 {
   long max_str = 65535;
 
@@ -5438,7 +5438,7 @@ bcopy (register char *b1, register char *b2, register int length)
 }
 
 int
-bcmp (register char *b1, register char *b2, register int length)
+bcmp (REGISTER char *b1, REGISTER char *b2, REGISTER int length)
 /* This could be a macro! */
 {
   struct dsc$descriptor_s src1 = {length, DSC$K_DTYPE_T, DSC$K_CLASS_S, b1};

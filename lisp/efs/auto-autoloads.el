@@ -146,7 +146,7 @@ Special value 'always suppresses confirmation.")
 *If non-nil un-interesting files will be omitted from this dired buffer.
 Use \\[dired-omit-toggle] to see these files. (buffer local)")
 
-(defvar dired-mail-reader 'rmail "\
+(defvar dired-mail-reader 'vm "\
 *Mail reader used by dired for dired-read-mail (\\[dired-read-mail]).
 The symbols 'rmail and 'vm are the only two allowed values.")
 

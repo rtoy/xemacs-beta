@@ -1,3 +1,71 @@
+1997-10-11  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in (src/paths.h): Update PATH_INFOPATH
+	(infopath): New shell variable.
+	(infopath_user_defined): Ditto.
+
+	* configure.in (infodir_user_defined): Spelling fixes.
+
+1997-10-10  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* configure.in: added options and option help docs for infopath
+ 	and lockdir
+	* '' added a line to the report for infopath and lockdir
+
+	* NEWS: Draft entry for the info changes.
+
+1997-10-10  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* Makefile.in.in (INFOPATH): Added variable and put it into
+ 	DUMPENV.
+
+1997-10-11  SL Baur  <steve@altair.xemacs.org>
+
+	* packages/info/localdir: New directory and file.
+
+	* packages/README: New directory & file.
+
+1997-10-10  Martin Buchholz  <mrb@eng.sun.com>
+
+	* Makefile.in: Add `make configure' target
+
+	* etc/BETA: 
+	  - remove Chuck as contact name
+	  - random small improvements
+	  - remove I/me references - the message should be that XEmacs
+	    maintenance is an inclusive community effort.
+
+1997-10-10  SL Baur  <steve@altair.xemacs.org>
+
+	* etc/BETA (Prerequisite): Add further documentation for
+	package installation.
+
+1997-10-07  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 19.16-pre7 is released.
+
+1997-10-05  Damon Lipparelli  <lipp@aa.net>
+
+	* Makefile.in (install-arch-dep, install-arch-indep): Move the
+	commands for symlink'ing the system-independent bits into the
+	system-dependent directory structure from "install-arch-indep" to
+	"install-arch-dep".
+
+1997-10-06  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* Makefile.in (blddir): variable from "configure".
+	(finder): use it.
+
+1997-10-05  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in (GENERATED_LISP): New variable.
+	(all): Force dependency on finder-inf.el.
+	(lisp/utils/finder-inf.el): new rule.
+
+1997-10-04  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 19.16-pre6 is released.
+
 1997-10-04  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.3-beta27 is released.

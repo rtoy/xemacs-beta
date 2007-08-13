@@ -30,7 +30,6 @@
 ;;; The emacsen compatibility package - load it up before anything else
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'cl)
-(require 'devices)
 
 (eval-and-compile
   (condition-case ()

@@ -113,7 +113,7 @@ the `message-headers' face."
   :group 'highlight-headers)
 
 (defcustom highlight-headers-highlight-citation-too nil
-  "*Whether the whole citation line should go in the `mesage-cited-text' face.
+  "*Whether the whole citation line should go in the `message-cited-text' face.
 If nil, the text matched by `highlight-headers-citation-regexp' is in the
 default face, and the remainder of the line is in the message-cited-text face."
   :type 'boolean

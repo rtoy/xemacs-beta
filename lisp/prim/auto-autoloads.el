@@ -120,6 +120,56 @@ This function works by modifying `process-environment'." t nil)
 
 ;;;***
 
+;;;### (autoloads (find-function-at-point find-function-on-key find-function-other-frame find-function-other-window find-function) "find-func" "prim/find-func.el")
+
+(autoload 'find-function "find-func" "\
+Find the definition of the function near point in the current window.
+
+Finds the Emacs Lisp library containing the definition of the function
+near point (selected by `find-function-function') in a buffer and
+places point before the definition.  Point is saved in the buffer if
+it is one of the current buffers.
+
+The library where FUNCTION is defined is searched for in
+`find-function-source-path', if non `nil', otherwise in `load-path'." t nil)
+
+(autoload 'find-function-other-window "find-func" "\
+Find the definition of the function near point in the other window.
+
+Finds the Emacs Lisp library containing the definition of the function
+near point (selected by `find-function-function') in a buffer and
+places point before the definition.  Point is saved in the buffer if
+it is one of the current buffers.
+
+The library where FUNCTION is defined is searched for in
+`find-function-source-path', if non `nil', otherwise in `load-path'." t nil)
+
+(autoload 'find-function-other-frame "find-func" "\
+Find the definition of the function near point in the another frame.
+
+Finds the Emacs Lisp library containing the definition of the function
+near point (selected by `find-function-function') in a buffer and
+places point before the definition.  Point is saved in the buffer if
+it is one of the current buffers.
+
+The library where FUNCTION is defined is searched for in
+`find-function-source-path', if non `nil', otherwise in `load-path'." t nil)
+
+(autoload 'find-function-on-key "find-func" "\
+Find the function that KEY invokes.  KEY is a string.
+Point is saved if FUNCTION is in the current buffer." t nil)
+
+(autoload 'find-function-at-point "find-func" "\
+Find directly the function at point in the other window." t nil)
+
+(define-key ctl-x-4-map "F" 'find-function-other-window)
+
+(define-key ctl-x-5-map "F" 'find-function-other-frame)
+
+(define-key ctl-x-map "K" 'find-function-on-key)
+
+;;;***
+
 ;;;### (autoloads nil "itimer-autosave" "prim/itimer-autosave.el")
 
 ;;;***
@@ -236,9 +286,23 @@ Type \\[describe-mode] in that buffer for a list of commands." t nil)
 
 ;;;***
 
-;;;### (autoloads (profile-key-sequence profile pretty-print-profiling-info) "profile" "prim/profile.el")
+;;;### (autoloads (package-admin-add-binary-package package-admin-add-single-file-package) "package-admin" "prim/package-admin.el")
 
-(autoload 'pretty-print-profiling-info "profile" "\
+(autoload 'package-admin-add-single-file-package "package-admin" "\
+Install a single file Lisp package into XEmacs package hierarchy.
+`file' should be the full path to the lisp file to install.
+`destdir' should be a simple directory name.
+The optional `pkg-dir' can be used to override the default package hiearchy
+\(last package-path)." t nil)
+
+(autoload 'package-admin-add-binary-package "package-admin" "\
+Install a pre-bytecompiled XEmacs package into package hierarchy." t nil)
+
+;;;***
+
+;;;### (autoloads (profile-key-sequence profile profiling-results) "profile" "prim/profile.el")
+
+(autoload 'profiling-results "profile" "\
 Print profiling info INFO to STREAM in a pretty format.
 If INFO is omitted, the current profiling info is retrieved using
  `get-profiling-info'.
@@ -252,7 +316,7 @@ Profiling state here means that if profiling was not in effect when
 PROFILE was called, it will be turned off after FORMS are evaluated.
 Otherwise, profiling will be left running.
 
-Returns the profiling info, printable by `pretty-print-profiling-info'." nil 'macro)
+Returns the profiling info, printable by `profiling-results'." nil 'macro)
 
 (autoload 'profile-key-sequence "profile" "\
 Dispatch the key sequence KEYS and profile the execution.

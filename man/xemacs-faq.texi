@@ -666,6 +666,13 @@ There is another cyrillic mode for both GNU Emacs and XEmacs by Dmitrii
 <URL:http://camelot.mssm.edu/~manin/cyr.el>.
 @end quotation
 
+Rebecca Ore <rebecca.ore@@op.net> writes:
+
+@quotation
+The fullest resource I found on Russian language use (in and out of
+XEmacs) is <URL:http://sunsite.oit.unc.edu/sergei/Software/Software.html>
+@end quotation
+
 @node Q1.4.1, Q1.4.2, Q1.3.7, Introduction
 @section What is a @file{.emacs} and is there a sample one?
 

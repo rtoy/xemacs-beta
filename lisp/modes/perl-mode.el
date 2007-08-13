@@ -238,7 +238,7 @@ create a new comment.")
   "Invoked on entry to perl-mode.")
 
 
-;;;###autoload
+;;; bluck. ;;;###autoload
 (defun perl-mode ()
   "Major mode for editing Perl code.
 Expression and list commands understand all Perl brackets.

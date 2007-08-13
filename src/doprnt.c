@@ -54,6 +54,7 @@ struct printf_spec
   unsigned int zero_flag:1;
   unsigned int h_flag:1;
   unsigned int l_flag:1;
+  unsigned int forwarding_precision:1;
   char converter; /* converter character or 0 for dummy marker
 		     indicating literal text at the end of the
 		     specification */
@@ -168,6 +169,14 @@ parse_off_posnum (CONST Bufbyte *start, CONST Bufbyte *end, int *returned_num)
     fmt++;							\
   } while (0)
 
+#define RESOLVE_FLAG_CONFLICTS(spec)				\
+  do {								\
+    if (spec.space_flag && spec.plus_flag)			\
+      spec.space_flag = 0;					\
+    if (spec.zero_flag && spec.space_flag)			\
+      spec.zero_flag = 0;					\
+  } while (0)
+
 static printf_spec_dynarr *
 parse_doprnt_spec (CONST Bufbyte *format, Bytecount format_length)
 {
@@ -240,17 +249,56 @@ parse_doprnt_spec (CONST Bufbyte *format, Bytecount format_length)
 
 	  /* Parse off the minimum field width */
 	  fmt--; /* back up */
-	  fmt = parse_off_posnum (fmt, fmt_end, &spec.minwidth);
-	  if (spec.minwidth == -1)
-	    spec.minwidth = 0;
+
+	  /*
+	   * * means the field width was passed as an argument.
+	   * Mark the current spec as one that forwards its
+	   * field width and flags to the next spec in the array.
+	   * Then create a new spec and continue with the parsing.
+	   */
+	  if (fmt != fmt_end && *fmt == '*')
+	    {
+	      spec.converter = '*';
+	      RESOLVE_FLAG_CONFLICTS(spec);
+	      Dynarr_add (specs, spec);
+	      memset (&spec, 0, sizeof (spec));
+	      spec.argnum = ++prev_argnum;
+	      fmt++;
+	    }
+	  else
+	    {
+	      fmt = parse_off_posnum (fmt, fmt_end, &spec.minwidth);
+	      if (spec.minwidth == -1)
+		spec.minwidth = 0;
+	    }
 
 	  /* Parse off any precision specified */
 	  NEXT_ASCII_BYTE (ch);
 	  if (ch == '.')
 	    {
-	      fmt = parse_off_posnum (fmt, fmt_end, &spec.precision);
-	      if (spec.precision == -1)
-		spec.precision = 0;
+	      /*
+	       * * means the precision was passed as an argument.
+	       * Mark the current spec as one that forwards its
+	       * fieldwidth, flags and precision to the next spec in
+	       * the array.  Then create a new spec and continue
+	       * with the parse.
+	       */
+	      if (fmt != fmt_end && *fmt == '*')
+		{
+		  spec.converter = '*';
+		  spec.forwarding_precision = 1;
+		  RESOLVE_FLAG_CONFLICTS(spec);
+		  Dynarr_add (specs, spec);
+		  memset (&spec, 0, sizeof (spec));
+		  spec.argnum = ++prev_argnum;
+		  fmt++;
+		}
+	      else
+		{
+		  fmt = parse_off_posnum (fmt, fmt_end, &spec.precision);
+		  if (spec.precision == -1)
+		    spec.precision = 0;
+		}
 	      NEXT_ASCII_BYTE (ch);
 	    }
 	  else
@@ -272,11 +320,7 @@ parse_doprnt_spec (CONST Bufbyte *format, Bytecount format_length)
 	  spec.converter = ch;
 	}
 
-      if (spec.space_flag && spec.plus_flag)
-	spec.space_flag = 0;
-      if (spec.zero_flag && spec.space_flag)
-	spec.zero_flag = 0;
-
+      RESOLVE_FLAG_CONFLICTS(spec);
       Dynarr_add (specs, spec);
     }
 
@@ -433,6 +477,36 @@ emacs_doprnt_1 (Lisp_Object stream, CONST Bufbyte *format_nonreloc,
       if (ch == '%')
 	{
 	  doprnt_1 (stream, (Bufbyte *) &ch, 1, 0, -1, 0, 0);
+	  continue;
+	}
+
+      /*
+       * * as converter means the field width, precision was specified
+       * as an argument.  Extract the data and forward it to the
+       * next spec, to which it will apply.
+       */
+      if (ch == '*')
+	{
+	  struct printf_spec *nextspec = Dynarr_atp (specs, i + 1);
+	  Lisp_Object obj = largs[spec->argnum - 1];
+
+	  if (INTP (obj))
+	    {
+	      if (spec->forwarding_precision)
+		{
+		  nextspec->precision = XINT (obj);
+		  nextspec->minwidth = spec->minwidth;
+		}
+	      else
+		{
+		  nextspec->minwidth = XINT (obj);
+		}
+	      nextspec->minus_flag = spec->minus_flag;
+	      nextspec->plus_flag = spec->plus_flag;
+	      nextspec->space_flag = spec->space_flag;
+	      nextspec->number_flag = spec->number_flag;
+	      nextspec->zero_flag = spec->zero_flag;
+	    }
 	  continue;
 	}
 

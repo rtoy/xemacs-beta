@@ -1,11 +1,11 @@
 ;;; custom-load.el --- automatically extracted custom dependencies
 
-;; Created by SL Baur on Sat Oct  4 18:11:48 1997
+;; Created by SL Baur on Thu Oct  9 20:52:25 1997
 
 ;;; Code:
 
 (custom-put 'mouse 'custom-loads '("mouse"))
-(custom-put 'minibuffer 'custom-loads '("minibuf" "simple"))
+(custom-put 'minibuffer 'custom-loads '("simple" "minibuf"))
 (custom-put 'log-message 'custom-loads '("simple"))
 (custom-put 'environment 'custom-loads '("frame" "minibuf" "modeline" "sound"))
 (custom-put 'sound 'custom-loads '("sound"))
@@ -13,13 +13,14 @@
 (custom-put 'mail 'custom-loads '("simple"))
 (custom-put 'editing-basics 'custom-loads '("cmdloop" "simple" "files" "lisp"))
 (custom-put 'help-appearance 'custom-loads '("help"))
-(custom-put 'lisp 'custom-loads '("lisp"))
+(custom-put 'lisp 'custom-loads '("lisp" "find-func"))
 (custom-put 'help 'custom-loads '("help"))
 (custom-put 'keyboard 'custom-loads '("cmdloop"))
 (custom-put 'warnings 'custom-loads '("simple"))
 (custom-put 'backup 'custom-loads '("files"))
 (custom-put 'frames 'custom-loads '("frame" "window-xemacs" "gui"))
 (custom-put 'abbrev 'custom-loads '("files"))
+(custom-put 'find-function 'custom-loads '("find-func"))
 (custom-put 'dired 'custom-loads '("files"))
 (custom-put 'killing 'custom-loads '("simple"))
 (custom-put 'paren-blinking 'custom-loads '("simple"))

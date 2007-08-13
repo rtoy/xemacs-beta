@@ -160,8 +160,9 @@ lisp/           Contain directories which either have straight lisp code
                 or are self-contained packages of their own."
   ;; Info files
   (if (and (null path-only) (file-directory-p (concat package "/info")))
-      (setq Info-default-directory-list
-	    (cons (concat package "/info/") Info-default-directory-list)))
+      (let ((dir (concat package "/info/")))
+	(when (not (member dir Info-default-directory-list))
+	  (nconc Info-default-directory-list (list dir)))))
   ;; Data files
   (if (and (null path-only) (file-directory-p (concat package "/etc")))
       (setq data-directory-list

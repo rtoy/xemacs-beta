@@ -60,7 +60,7 @@
   "Version number of xemacs-build-report.")
 
 (defgroup xemacs-build-report nil
-  "Package automating the process of sending Xemacs Build Reports.")
+  "Package automating the process of sending XEmacs Build Reports.")
 
 (defcustom xemacs-build-report-destination
   "xemacs-beta@xemacs.org"

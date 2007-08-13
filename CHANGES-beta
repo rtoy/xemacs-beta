@@ -1,4 +1,25 @@
 							-*- indented-text -*-
+to 20.3 beta28 "Reykjavik"
+-- about.el additions and updates
+-- See etc/BETA for initial package documentation
+-- Miscellaneous patches from Martin Buchholz, Kyle Jones and Hrvoje Niksic
+-- info changes from Karl Hegbloom (see etc/NEWS for details)
+-- delbs.el is now a single file package
+-- New package adding utility scripts added to lib-src
+-- docref.el is now a single file package
+-- cc-mode-5.19 Courtesy of Barry Warsaw
+-- standardize on const as CONST, register as REGISTER
+-- mh-e is now an XEmacs package
+-- Rmail is now an XEmacs package
+-- Miscellaneous bug fixes
+
+to 20.3 beta27 "Skopje"
+-- register declarations nuked by default
+-- Miscellaneous patches from Martin Buchholz, Karl Hegbloom and Hrvoje Niksic
+-- VC is now an XEmacs package
+-- W3 is now an XEmacs package
+-- Miscellaneous bug fixes
+
 to 20.3 beta26 "Riga"
 -- register declarations nuked by default
 -- Miscellaneous patches from Martin Buchholz, Karl Hegbloom and Hrvoje Niksic

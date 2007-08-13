@@ -384,7 +384,7 @@ keyboard input of @sc{ASCII} characters in combination with certain
 modifiers.  XEmacs does not use this (a more general mechanism is
 used that does not distinguish between @sc{ASCII} keys and other
 keys), so you will never find character codes above 255 in a
-non-@sc{MULE} Xemacs.
+non-@sc{MULE} XEmacs.
 
   Individual characters are not often used in programs.  It is far more
 common to work with @emph{strings}, which are sequences composed of

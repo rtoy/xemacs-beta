@@ -160,6 +160,14 @@ public static void main(String[] args) throws java.io.IOException
   (insert (buffer-string))
   (delete-region 8 9))
 
+(defbug 5
+  (interactive)
+  (with-temp-buffer
+    (insert "abc")
+    (forward-char -1)
+    (subst-char-in-region 1 4 ?b ?\344)
+    (if (not (= (point) 3))
+	(message "Bug!  point should equal 3 but is %d" (point)))))
 
 ;;; crash popup frames FIXED
 ;;(global-set-key

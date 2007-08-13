@@ -311,8 +311,11 @@ The return value is a string."
 		       ))
     (if (> (length input-method) 0)
 	input-method
-      (if inhibit-null
-	  (error "No valid input method is specified")))))
+      ;; If we have a default, use it, otherwise check inhibit-null
+      (if default
+	  default
+	(if inhibit-null
+	    (error "No valid input method is specified"))))))
 
 (defun activate-input-method (input-method)
   "Turn INPUT-METHOD on.

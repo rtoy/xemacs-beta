@@ -1396,7 +1396,7 @@ unwind_to_catch (struct catchtag *c, Lisp_Object val)
 {
 #if 0 /* FSFmacs */
   /* #### */
-  register int last_time;
+  REGISTER int last_time;
 #endif
 
   /* Unwind the specbind, catch, and handler stacks back to CATCH

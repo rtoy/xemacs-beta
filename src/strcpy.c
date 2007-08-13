@@ -24,6 +24,10 @@ Boston, MA 02111-1307, USA.  */
    Here are correct versions by hbs@lucid.com.
 */
 
+# include <config.h>
+# ifndef REGISTER	/* Strictly enforced in 20.3 */
+# define REGISTER
+# endif
 
 #define ALIGNED(x) (!(((unsigned long) (x)) & (sizeof (unsigned long) - 1)))
 
@@ -31,6 +35,7 @@ Boston, MA 02111-1307, USA.  */
 #define HIGH_BIT_P(c) ((c) & hi_bit)
 #define HAS_ZERO(c) (((((c) + magic) ^ (c)) & not_magic) != not_magic)
 
+/* CONST IS LOSING, but const is part of the interface of strcpy */
 char *
 strcpy (char *to, const char *from)
 {
@@ -51,7 +56,7 @@ strcpy (char *to, const char *from)
           if (HAS_ZERO(c)) 
             {
               to = (char *) to1;
-              from = (const char *) from1;
+              from = (CONST char *) from1;
               goto slow_loop;
             }
           else

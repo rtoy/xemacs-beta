@@ -448,6 +448,14 @@ installed copy of movemail is usually in the directory
 mode of the installed copy; changing the group and mode of the build
 directory copy is ineffective.
 
+** XEmacs crashes on Digital Unix when dealing with large compilation
+buffers.
+
+This is a known problem with the regexp code, that uses alloca
+extensively, and overflows the stack in case of complex regexp
+matches.  As a workaround, you can recompile with REGEX_MALLOC
+defined.
+
 ** On Solaris, C-x doesn't get through to Emacs when you use the console.
 
 This is a Solaris feature (at least on Intel x86 cpus).  Type C-r

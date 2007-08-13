@@ -31,8 +31,8 @@ The XEmacs beta list is managed by the SmartList mailing list package,
 and the usual SmartList commands work.  Do not send mailing list
 requests to the main address (xemacs-beta@xemacs.org), always send
 them to xemacs-beta-request@xemacs.org.  If you have problems with the
-list itself, they should be brought to the attention of the Mailing
-List manager Chuck Thompson <cthomp@xemacs.org>.
+list itself, they should be brought to the attention of the XEmacs
+Mailing List manager Steve Baur <steve@xemacs.org>.
 
 
 ** Beta Release Schedule
@@ -45,10 +45,6 @@ Pacific Time (Universal Time minus 8 hours).  For weekday betas, the
 release time is generally in the vicinity of 8PM to Midnight US
 Pacific Time on the listed day.
 
-While 19.15 and 20.x are in parallel development, a simultaneous
-release day implies a release of 20.x first, followed a few hours
-later by 19.15.
-
 Betas are nominally a week apart, scheduled on every Saturday.
 Midweek releases are made when a serious enough problem warrants it.
 
@@ -57,7 +53,7 @@ Midweek releases are made when a serious enough problem warrants it.
 =====================
 
 The best way to get problems fixed in XEmacs is to submit good problem
-reports.  Since this is beta software problems are certain to exist.
+reports.  Since this is beta software, problems are certain to exist.
 Please read through all of part II of the XEmacs FAQ for an overview
 of problem reporting.  Other items which are most important are:
 
@@ -70,7 +66,7 @@ of problem reporting.  Other items which are most important are:
     problem is actually occurring.
  
 2.  Attempt to recreate the problem starting with an invocation of
-    XEmacs with `xemacs -q -no-site-file'.  Quite often problems are
+    XEmacs with `xemacs -q -no-site-file'.  Quite often, problems are
     due to package interdependencies, and the like.  An actual bug in
     XEmacs should be reproducible in a default configuration without
     loading any special packages (or the one or two specific packages
@@ -100,21 +96,21 @@ shell command:
 
 $ gunzip -c /tmp/xemacs-20.4-b10-20.4-b11.patch.gz | patch -p1
 
-After patching check to see that no patches were missed by doing
+After patching, check to see that no patches were missed by doing
 $ find . -name \*.rej -print
 
 Any rejections should be treated as serious problems to be resolved
-before starting compilation.
+before building XEmacs.
 
 After seeing that there were no rejections, issue the commands
 
 $ ./config.status --recheck
 $ make beta
 
-and go play minesweep for awhile on an older XEmacs while the binary
+and go play minesweep for a while on an older XEmacs while the binary
 is rebuilt.
 
-** Building an XEmacs from a full distribution
+** Building XEmacs from a full distribution
 ==============================================
 
 Locate a convenient place where you have at least 100MB of free space
@@ -122,25 +118,27 @@ and issue the command
 
 $ gunzip -c /tmp/xemacs-20.4-b11.tar.gz | tar xvf -
 
-(or the simpler `tar zxvf /tmp/xemacs-20.4-b11.tar.gz' if you use GNU
-tar).
+(or simply `tar zxvf /tmp/xemacs-20.4-b11.tar.gz' if you use GNU tar).
 
 cd to the top level directory and issue an appropriate configure
-command.  The maintainer uses the following at the time of this
+command.  One maintainer uses the following at the time of this
 writing:
 
-./configure --with-offix --with-mule=yes --with-dialogs=athena3d \
+./configure \
 	--cflags="-m486 -g -O4 -fno-strength-reduce -malign-loops=2 \
-	-malign-jumps=2 -malign-functions=2" --with-sound=no \
-	--with-xface=yes --error-checking=all --debug=yes \
-	--with-scrollbars=athena3d \
-	--with-canna=yes --with-wnn=yes --wnn-includes=/usr/X11R6/include/wnn
+		  -malign-jumps=2 -malign-functions=2" \
+        --with-sound=no --with=offix \
+	--error-checking=all --debug=yes \
+	--with-scrollbars=athena3d --with-dialogs=athena3d \
+	--with-mule --with-canna --with-wnn
 
-Save the output from configure that looks something like:
+Part of the configure output is a summary that looks something like:
+
 Configured for `i586-unknown-linux2.0.28'.
 
-  Where should the build process find the source code?    /usr/src/xemacs-20.0
+  Where should the build process find the source code?    /usr/src/xemacs-20.4
   What installation prefix should install use?            /usr/local
+  Where should XEmacs look for packages?		  ~/.xemacs:/usr/local/lib/xemacs/packages
   What operating system and machine description files should XEmacs use?
         `s/linux.h' and `m/intel386.h'
   What compiler should XEmacs be built with?              gcc -m486 -g -O4 -fno-strength-reduce -malign-loops=2 -malign-jumps=2 -malign-functions=2
@@ -150,14 +148,17 @@ Configured for `i586-unknown-linux2.0.28'.
   Where do we find X Windows header files?                /usr/X11R6/include
   Where do we find X Windows libraries?                   /usr/X11R6/lib
   Compiling in support for XAUTH.
-  Compiling in support for XPM.
-  Compiling in support for X-Face headers.
   Compiling in support for GIF image conversion.
+  Compiling in support for XPM images.
+  Compiling in support for X-Face message headers.
   Compiling in support for JPEG image conversion.
   Compiling in support for PNG image conversion.
+  Compiling in support for TIFF image conversion (not implemented).
   Compiling in support for Berkeley DB.
   Compiling in support for GNU DBM.
   Compiling in Mule (multi-lingual) support.
+  Compiling in support for the WNN input method on Mule.
+    Using WNN version 6.
   Compiling in support for OffiX.
   Using the Lucid menubar.
   Using the Athena-3d scrollbar.
@@ -181,7 +182,7 @@ xemacs-beta@xemacs.org.  The build report should include
 4. The configuration report illustrated above
 
    For convenience all of the above items are placed in a file called
-   `Installation' in the top level source directory.
+   `Installation' in the top level build directory.
 
 5. Any other unusual items you feel should be brought to the attention
    of the developers.
@@ -189,11 +190,10 @@ xemacs-beta@xemacs.org.  The build report should include
 ** Creating patches for submission
 ==================================
 
-When making patches you should use the `-c', or preferably if your
-diff supports it, `-u'.  Using ordinary diffs like this are
-notoriously prone to error (and this one won't in fact work, since
-I've already applied a patch to this file so the line numbers probably
-don't match up any more).
+When making patches you should use the `-c' option, or preferably, if
+your diff supports it, `-u'.  Using ordinary (context-free) diffs are
+notoriously prone to error, since line numbers tend to change when
+others make changes to the same source file.
 
 $ diff -u old-file.c new-file.c
 
@@ -201,16 +201,19 @@ $ diff -u old-file.c new-file.c
 
 $ diff -c old-file.c new-file.c
 
-Also, it is helpful for me if you create the patch in the top level of
-the XEmacs source directory:
+Also, it is helpful if you create the patch in the top level of the
+XEmacs source directory:
 
-$ diff -u lwlib/xlwmenu.c~ lwlib/xlwmenu.c
+$ cp -p lwlib/xlwmenu.c lwlib/xlwmenu.c.orig
+  hack, hack, hack....
+$ diff -u lwlib/xlwmenu.c.orig lwlib/xlwmenu.c
 
-I prefer patches to be accompanied by an update (either a raw entry or
-a patch) to the appropriate ChangeLog file, but it is not required.
+It is preferrable for patches to be accompanied by an update (raw
+entry preferred) to the appropriate ChangeLog file.
 
 Also note that if you cut & paste from an xterm to an XEmacs mail buffer
-you will probably lose due to tab expansion.  The best thing to do is to
+you will probably lose due to tab expansion.  The best thing to do is
+to use an XEmacs shell buffer to run the diff commands, or ...
 M-x cd to the appropriate directory, and issue the command `C-u M-!' from
 within XEmacs.
 
@@ -222,9 +225,9 @@ to dump time when building.
 Packages are searched by default under /usr/local/lib/xemacs/packages/.
 The summary message in configure will tell you where XEmacs is looking 
 for them.  The packages hierarchy differs from site-lisp in that you
-do not have install XEmacs to use it, indeed, the package path is
+do not have to install XEmacs to use it.  Indeed, the package path is
 searched prior to dump time so that installed packages have the same
-status as lisp distributed in the xemacs base tarball.
+status as lisp distributed in the xemacs core tarball.
 
 The structure of each directory in the package search path should look
 like the base installed directory (ie. have etc/, info/, and lisp/,).
@@ -255,7 +258,55 @@ AUCTeX and Gnus have package tarballs in
 that you can simply untar in a package directory to install.
 
 Karl Hegbloom has a set of packages in
-	[I lost the reference]
+	[sorry - reference has been lost]
 that work the same way.
 
-This is not how package installation will work in released 20.3.
+** Packages directory on the FTP Site
+=====================================
+
+The packages directory
+	ftp://ftp.xemacs.org/pub/xemacs/beta/packages-20.3/
+
+is divided into subdirectory by the major type of package.
+
+drwxr-xr-x   2 beta-f   beta-f      1024 Oct 10 00:43 binary-packages
+drwxr-xr-x   2 beta-f   beta-f       512 Oct 10 00:44 package-sources
+drwxr-xr-x   2 beta-f   beta-f       512 Oct  9 23:08 single-file-packages
+drwxr-xr-x   2 beta-f   beta-f       512 Oct 10 00:44 utils
+
+** Support Utilities (utils)
+============================
+
+The utils directory contains tools to deal with current Lisp sources that
+have not had yet gotten XEmacs package integration.  The script `xpackage.sh'
+is used with Quassia Gnus.  Edit the appropriate variables at the top of
+the script to reflect the local configuration and run it in the top level
+directory of a Quassia Gnus source tree to install an update to Quassia Gnus.
+
+** Source Installable Packages (package-sources)
+================================================
+
+This directory contains tarballs of Lisp packages that contain full support
+for installing as an XEmacs package.  To install them, one should untar
+them to someplace convenient (like /var/tmp), and issue the appropriate make
+command to install.
+
+** Binary package installation (binary-packages)
+================================================
+
+Prerequisite:  XEmacs 20.3-beta28.
+
+Binary packages are complete entities that can be untarred at the top
+level of an XEmacs package hierarchy and work at runtime.  To install files
+in this directory, run the command `M-x package-admin-add-binary-package'
+and fill in appropriate values to the prompts.
+
+** Single file package installation
+===================================
+
+Prerequisite:  XEmacs 20.3-beta28.
+
+These are single file, self-contained lisp packages that don't need a
+separate directory.  To install something from this directory, run
+the command `M-x package-admin-add-single-file-package' and fill in the
+prompts.

@@ -1,3 +1,24 @@
+1997-10-10  Martin Buchholz  <mrb@eng.sun.com>
+
+	* config.values.in:  Run config.values.sh
+
+1997-10-09  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in (PKG_SCRIPTS): Add new package manipulation
+	scripts.
+
+	* add-little-package.sh: New file.  Support script to install
+	single file packages.
+
+	* Makefile.in.in (distclean): Reverse change -- do not remove
+	config.values.in.
+	Suggested by: Martin Buchholz <mrb@Eng.Sun.COM>
+
+1997-10-06  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in (distclean): Remove config.values.in.
+	From Martin Buchholz <mrb@Eng.Sun.COM>
+
 1997-10-04  SL Baur  <steve@altair.xemacs.org>
 
 	* update-autoloads.sh (mule_p): W3 is a package now.

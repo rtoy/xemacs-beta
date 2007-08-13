@@ -261,8 +261,7 @@ Optional arg TUTORIAL specifies the tutorial file; default is \"TUTORIAL\"."
       (insert-file-contents (expand-file-name tutorial data-directory))
       (goto-char (point-min))
       (search-forward "\n<<")
-      (beginning-of-line)
-      (delete-region (point) (progn (end-of-line) (point)))
+      (delete-region (point-at-bol) (point-at-eol))
       (let ((n (- (window-height (selected-window))
 		  (count-lines (point-min) (point))
 		  6)))
@@ -276,12 +275,14 @@ Optional arg TUTORIAL specifies the tutorial file; default is \"TUTORIAL\"."
       (goto-char (point-min))
       (set-buffer-modified-p nil))))
 
-;; used by describe-key and describe-key-briefly
+;; used by describe-key, describe-key-briefly, insert-key-binding, etc.
 
 (defun key-or-menu-binding (key &optional menu-flag)
-  ;; KEY          is any value returned by next-command-event
-  ;; MENU-FLAG    is a symbol that should be set to T if KEY is a menu event,
-  ;;		  or NIL otherwise
+  "Return the command invoked by KEY.
+Like `key-binding', but handles menu events and toolbar presses correctly.
+KEY is any value returned by `next-command-event'.
+MENU-FLAG is a symbol that should be set to T if KEY is a menu event,
+ or NIL otherwise"
   (let (defn)
     (and menu-flag (set menu-flag nil))
     ;; If the key typed was really a menu selection, grab the form out
@@ -295,12 +296,12 @@ Optional arg TUTORIAL specifies the tutorial file; default is \"TUTORIAL\"."
 			 (list (event-function event) (event-object event))
 		       (cdr event)))
 	  (and menu-flag (set menu-flag t))
-	  (if (eq (car defn) 'eval)
-	      (setq defn (car (cdr defn))))
-	  (if (eq (car-safe defn) 'call-interactively)
-	      (setq defn (car (cdr defn))))
-	  (if (and (consp defn) (null (cdr defn)))
-	      (setq defn (car defn))))
+	  (when (eq (car defn) 'eval)
+	    (setq defn (car (cdr defn))))
+	  (when (eq (car-safe defn) 'call-interactively)
+	    (setq defn (car (cdr defn))))
+	  (when (and (consp defn) (null (cdr defn)))
+	    (setq defn (car defn))))
       ;; else
       (setq defn (key-binding key)))
     ;; kludge: if a toolbar button was pressed on, try to find the
@@ -405,26 +406,24 @@ the window."
                  (set-buffer standard-output)
                  (help-mode))))
       (let ((helpwin (get-buffer-window "*Help*")))
-        (if helpwin
-            (progn
-              (save-excursion
-                (set-buffer (window-buffer helpwin))
-		;;If the *Help* buffer is already displayed on this
-		;; frame, don't override the previous configuration
-		(if help-not-visible
-		    (set-frame-property (selected-frame)
-					'help-window-config winconfig)))
-              (if help-selects-help-window
-                  (select-window helpwin))
-              (cond ((eq helpwin (selected-window))
-                     (display-message 'command
-                      (substitute-command-keys "Type \\[help-mode-quit] to remove help window, \\[scroll-up] to scroll the help.")))
-                    (was-one-window
-                     (display-message 'command
-                      (substitute-command-keys "Type \\[delete-other-windows] to remove help window, \\[scroll-other-window] to scroll the help.")))
-                    (t
-                     (display-message 'command
-                      (substitute-command-keys "Type \\[switch-to-buffer-other-window] to restore the other window, \\[scroll-other-window] to scroll the help."))))))))))
+        (when helpwin
+	  (with-current-buffer (window-buffer helpwin)
+	    ;; If the *Help* buffer is already displayed on this
+	    ;; frame, don't override the previous configuration
+	    (when help-not-visible
+	      (set-frame-property (selected-frame)
+				  'help-window-config winconfig)))
+	  (when help-selects-help-window
+	    (select-window helpwin))
+	  (cond ((eq helpwin (selected-window))
+		 (display-message 'command
+		   (substitute-command-keys "Type \\[help-mode-quit] to remove help window, \\[scroll-up] to scroll the help.")))
+		(was-one-window
+		 (display-message 'command
+		   (substitute-command-keys "Type \\[delete-other-windows] to remove help window, \\[scroll-other-window] to scroll the help.")))
+		(t
+		 (display-message 'command
+		   (substitute-command-keys "Type \\[switch-to-buffer-other-window] to restore the other window, \\[scroll-other-window] to scroll the help.")))))))))
 
 (defun describe-key (key)
   "Display documentation of the function invoked by KEY.
@@ -740,12 +739,12 @@ The number of messages shown is controlled by `view-lossage-message-count'."
 	  (while (or (equal event help-key)
 		     (eq char ??)
 		     (eq 'help-command (key-binding event))
-		     (eq char ? )
+		     (eq char ?\ )
 		     (eq 'scroll-up (key-binding event))
 		     (eq char ?\177)
 		     (and (not (eq char ?b))
 			  (eq 'scroll-down (key-binding event))))
-	    (if (or (eq char ? )
+	    (if (or (eq char ?\ )
 		    (eq 'scroll-up (key-binding event)))
 		(scroll-up))
 	    (if (or (eq char ?\177)
@@ -767,10 +766,10 @@ The number of messages shown is controlled by `view-lossage-message-count'."
  	  (call-interactively defn)
  	(ding)))))
 
-;; Return a function which is called by the list containing point.
-;; If that gives no function, return a function whose name is around point.
-;; If that doesn't give a function, return nil.
 (defun function-called-at-point ()
+  "Return the function which is called by the list containing point.
+If that gives no function, return the function whose name is around point.
+If that doesn't give a function, return nil."
   (or (condition-case ()
 	  (save-excursion
 	    (save-restriction
@@ -796,22 +795,60 @@ The number of messages shown is controlled by `view-lossage-message-count'."
 	      (set-syntax-table stab)))
 	(error nil))))
 
-;; default to nil for the non-hackers?
+(defun function-at-point ()
+  "Return the function whose name is around point.
+If that gives no function, return the function which is called by the
+list containing point.  If that doesn't give a function, return nil."
+  (or (condition-case ()
+	  (let ((stab (syntax-table)))
+	    (unwind-protect
+		(save-excursion
+		  (set-syntax-table emacs-lisp-mode-syntax-table)
+		  (or (not (zerop (skip-syntax-backward "_w")))
+		      (eq (char-syntax (char-after (point))) ?w)
+		      (eq (char-syntax (char-after (point))) ?_)
+		      (forward-sexp -1))
+		  (skip-chars-forward "`'")
+		  (let ((obj (read (current-buffer))))
+		    (and (symbolp obj) (fboundp obj) obj)))
+	      (set-syntax-table stab)))
+	(error nil))
+      (condition-case ()
+	  (save-excursion
+	    (save-restriction
+	      (narrow-to-region (max (point-min) (- (point) 1000)) (point-max))
+	      (backward-up-list 1)
+	      (forward-char 1)
+	      (let (obj)
+		(setq obj (read (current-buffer)))
+		(and (symbolp obj) (fboundp obj) obj))))
+	(error nil))))
+
+;; Default to nil for the non-hackers?  Not until we find a way to
+;; distinguish hackers from non-hackers automatically!
 (defcustom describe-function-show-arglist t
   "*If non-nil, describe-function will show its arglist,
 unless the function is autoloaded."
   :type 'boolean
   :group 'help-appearance)
 
+(defcustom find-function-function 'function-at-point
+  "*The function used by `describe-function', `where-is' and
+`find-function' to select the function near point.
+
+For example `function-at-point' or `function-called-at-point'."
+  :type 'function
+  :group 'help)
+
 (defun describe-function-find-file (function)
   (let ((files load-history)
-	     file)
-	 (while files
-	   (if (memq function (cdr (car files)))
-	       (setq file (car (car files))
-		     files nil))
-	   (setq files (cdr files)))
-	 file))
+	file)
+    (while files
+      (if (memq function (cdr (car files)))
+	  (setq file (car (car files))
+		files nil))
+      (setq files (cdr files)))
+    file))
 
 (defun describe-function (function)
   "Display the full documentation of FUNCTION (a symbol).
@@ -830,10 +867,8 @@ value of `find-function-function'."
   (with-displaying-help-buffer
    (lambda ()
      (describe-function-1 function standard-output)
-     (save-excursion
-       (set-buffer standard-output)
-       ;; Return the text we displayed.
-       (buffer-string)))))
+     ;; Return the text we displayed.
+     (buffer-string nil nil standard-output))))
 
 (defun function-obsolete-p (function)
   "Return non-nil if FUNCTION is obsolete."
@@ -908,8 +943,8 @@ value of `find-function-function'."
 	(setq file-name (compiled-function-annotation def)))
     (if (eq 'macro (car-safe def))
 	(setq fndef (cdr def)
-	      home (and (compiled-function-p (cdr def))
-			(compiled-function-annotation (cdr def)))
+	      file-name (and (compiled-function-p (cdr def))
+			     (compiled-function-annotation (cdr def)))
 	      macrop t)
       (setq fndef def))
     (if aliases (princ aliases stream))
@@ -1010,23 +1045,24 @@ value of `find-function-function'."
 		 (terpri stream))))))))
 
 
-(defun describe-function-arglist (function)
-  (interactive (list (or (function-called-at-point)
-			 (error "no function call at point"))))
-  (let ((b nil))
-    (unwind-protect
-	(save-excursion
-	  (set-buffer (setq b (get-buffer-create " *arglist*")))
-	  (buffer-disable-undo b)
-	  (erase-buffer)
-	  (describe-function-1 function b t)
-	  (goto-char (point-min))
-	  (end-of-line)
-	  (or (eobp) (delete-char 1))
-	  (just-one-space)
-	  (end-of-line)
-	  (message (buffer-substring (point-min) (point))))
-      (and b (kill-buffer b)))))
+;;; ## this doesn't seem to be used for anything
+;; (defun describe-function-arglist (function)
+;;   (interactive (list (or (function-called-at-point)
+;; 			 (error "no function call at point"))))
+;;   (let ((b nil))
+;;     (unwind-protect
+;; 	(save-excursion
+;; 	  (set-buffer (setq b (get-buffer-create " *arglist*")))
+;; 	  (buffer-disable-undo b)
+;; 	  (erase-buffer)
+;; 	  (describe-function-1 function b t)
+;; 	  (goto-char (point-min))
+;; 	  (end-of-line)
+;; 	  (or (eobp) (delete-char 1))
+;; 	  (just-one-space)
+;; 	  (end-of-line)
+;; 	  (message (buffer-substring (point-min) (point))))
+;;       (and b (kill-buffer b)))))
 
 
 (defun variable-at-point ()
@@ -1073,25 +1109,23 @@ value of `find-function-function'."
 (defun built-in-variable-doc (variable)
   "Return a string describing whether VARIABLE is built-in."
   (let ((type (built-in-variable-type variable)))
-    (cond ((eq type 'integer) "a built-in integer variable")
-	  ((eq type 'const-integer) "a built-in constant integer variable")
-	  ((eq type 'boolean) "a built-in boolean variable")
-	  ((eq type 'const-boolean) "a built-in constant boolean variable")
-	  ((eq type 'object) "a simple built-in variable")
-	  ((eq type 'const-object) "a simple built-in constant variable")
-	  ((eq type 'const-specifier) "a built-in constant specifier variable")
-	  ((eq type 'current-buffer) "a built-in buffer-local variable")
-	  ((eq type 'const-current-buffer)
-	   "a built-in constant buffer-local variable")
-	  ((eq type 'default-buffer)
-	   "a built-in default buffer-local variable")
-	  ((eq type 'selected-console) "a built-in console-local variable")
-	  ((eq type 'const-selected-console)
-	   "a built-in constant console-local variable")
-	  ((eq type 'default-console)
-	   "a built-in default console-local variable")
-	  (type "an unknown type of built-in variable?")
-	  (t "a variable declared in Lisp"))))
+    (case type
+      (integer "a built-in integer variable")
+      (const-integer "a built-in constant integer variable")
+      (boolean "a built-in boolean variable")
+      (const-boolean "a built-in constant boolean variable")
+      (object "a simple built-in variable")
+      (const-object "a simple built-in constant variable")
+      (const-specifier "a built-in constant specifier variable")
+      (current-buffer "a built-in buffer-local variable")
+      (const-current-buffer "a built-in constant buffer-local variable")
+      (default-buffer "a built-in default buffer-local variable")
+      (selected-console "a built-in console-local variable")
+      (const-selected-console "a built-in constant console-local variable")
+      (default-console "a built-in default console-local variable")
+      (t
+       (if type "an unknown type of built-in variable?"
+	 "a variable declared in Lisp")))))
 
 (defun describe-variable (variable)
   "Display the full documentation of VARIABLE (a symbol)."
@@ -1159,16 +1193,14 @@ value of `find-function-function'."
        (let ((doc (documentation-property variable 'variable-documentation))
 	     (obsolete (variable-obsoleteness-doc origvar))
 	     (compatible (variable-compatibility-doc origvar)))
-	 (if obsolete
-	     (progn
-	       (princ obsolete)
-	       (terpri)
-	       (terpri)))
-	 (if compatible
-	     (progn
-	       (princ compatible)
-	       (terpri)
-	       (terpri)))
+	 (when obsolete
+	   (princ obsolete)
+	   (terpri)
+	   (terpri))
+	 (when compatible
+	   (princ compatible)
+	   (terpri)
+	   (terpri))
 	 ;; don't bother to print anything if variable is obsolete and aliased.
 	 (when (or (not obsolete) (not aliases))
 	   (if doc
@@ -1176,15 +1208,13 @@ value of `find-function-function'."
 	       (princ doc)
 	     (princ "not documented as a variable."))
 	   (terpri)))
-       (save-excursion
-	 (set-buffer standard-output)
-	 ;; Return the text we displayed.
-	 (buffer-string))))))
+       ;; Return the text we displayed.
+       (buffer-string nil nil standard-output)))))
 
 (defun sorted-key-descriptions (keys &optional separator)
   "Sort and separate the key descriptions for KEYS.
 The sorting is done by length (shortest bindings first), and the bindings
-are separated with SEPARATOR (`, ' by default)."
+are separated with SEPARATOR (\", \" by default)."
   (mapconcat 'key-description
 	     (sort keys #'(lambda (x y)
 			    (< (length x) (length y))))
@@ -1210,53 +1240,8 @@ value of `find-function-function'."
       (message "%s is not on any keys" definition)))
   nil)
 
-;; Synched with Emacs 19.35
-;; Moved to packages.el
-;(defun locate-library (library &optional nosuffix path interactive-call)
-;  "Show the precise file name of Emacs library LIBRARY.
-;This command searches the directories in `load-path' like `M-x load-library'
-;to find the file that `M-x load-library RET LIBRARY RET' would load.
-;Optional second arg NOSUFFIX non-nil means don't add suffixes `.elc' or `.el'
-;to the specified name LIBRARY.
+;; `locate-library' moved to "packages.el"
 
-;If the optional third arg PATH is specified, that list of directories
-;is used instead of `load-path'."
-;  (interactive (list (read-string "Locate library: ")
-;                     nil nil
-;                     t))
-;  (let (result)
-;    (catch 'answer
-;      (mapcar
-;       (lambda (dir)
-;         (mapcar
-;          (lambda (suf)
-;            (let ((try (expand-file-name (concat library suf) dir)))
-;              (and (file-readable-p try)
-;                   (null (file-directory-p try))
-;                   (progn
-;                     (setq result try)
-;                     (throw 'answer try)))))
-;          (if nosuffix
-;              '("")
-;            (let ((basic '(".elc" ".el" ""))
-;                  (compressed '(".Z" ".gz" "")))
-;              ;; If autocompression mode is on,
-;              ;; consider all combinations of library suffixes
-;              ;; and compression suffixes.
-;              (if (rassq 'jka-compr-handler file-name-handler-alist)
-;                  (apply 'nconc
-;                         (mapcar (lambda (compelt)
-;                                   (mapcar (lambda (baselt)
-;                                             (concat baselt compelt))
-;                                           basic))
-;                                 compressed))
-;                basic)))))
-;       (or path load-path)))
-;    (and interactive-call
-;         (if result
-;             (message "Library is file %s" result)
-;           (message "No library %s in search path" library)))
-;    result))
 
 ;; Functions ported from C into Lisp in XEmacs
 
@@ -1323,207 +1308,13 @@ after the listing is made.)"
                   (princ (car pid) stream)
                   (princ "@" stream)
                   (princ (cdr pid) stream))
-                (let ((cmd (process-command p)))
-                  (while cmd
-                    (princ (car cmd) stream)
-                    (setq cmd (cdr cmd))
-                    (if cmd (princ " " stream)))))
+	      (let ((cmd (process-command p)))
+		(while cmd
+		  (princ (car cmd) stream)
+		  (setq cmd (cdr cmd))
+		  (if cmd (princ " " stream)))))
             (terpri stream)))))))
 
-
-;; find-function stuff
-
-(defvar find-function-function 'function-at-point
-  "*The function used by `describe-function', `where-is' and
-`find-function' to select the function near point.
-
-For example `function-at-point' or `function-called-at-point'.")
-
-(defvar find-function-source-path nil
-  "The default list of directories where find-function searches.
-
-If this variable is `nil' then find-function searches `load-path' by
-default.")
-
-
-(defun find-function-noselect (function)
-  "Returns a pair `(buffer . point)' pointing to the definition of FUNCTION.
-
-Finds the Emacs Lisp library containing the definition of FUNCTION
-in a buffer and the point of the definition.  The buffer is
-not selected.
-
-The library where FUNCTION is defined is searched for in
-`find-function-source-path', if non `nil', otherwise in `load-path'."
-  (and (subrp (symbol-function function))
-       (error "%s is a primitive function" function))
-  (if (not function)
-      (error "You didn't specify a function"))
-  (let ((def (symbol-function function))
-	library aliases)
-    (while (symbolp def)
-      (or (eq def function)
-	  (if aliases
-	      (setq aliases (concat aliases
-				    (format ", which is an alias for %s"
-					    (symbol-name def))))
-	    (setq aliases (format "an alias for %s" (symbol-name def)))))
-      (setq function (symbol-function function)
-	    def (symbol-function function)))
-    (if aliases
-	(message aliases))
-    (setq library
-	  (cond ((eq (car-safe def) 'autoload)
-		 (nth 1 def))
-		((describe-function-find-file function))
-		((compiled-function-p def)
-		 (substring (compiled-function-annotation def) 0 -4))))
-    (if (null library)
-	(error (format "Don't know where `%s' is defined" function)))
-    (if (string-match "\\.el\\(c\\)\\'" library)
-	(setq library (substring library 0 (match-beginning 1))))
-    (let* ((path find-function-source-path)
-	   (filename (if (file-exists-p library)
-			 library
-		       (if (string-match "\\(\\.el\\)\\'" library)
-			   (setq library (substring library 0
-						    (match-beginning
-						     1))))
-		       (or (locate-library (concat library ".el") t path)
-			   (locate-library library t path)))))
-      (if (not filename)
-	  (error "The library \"%s\" is not in the path." library))
-      (with-current-buffer (find-file-noselect filename)
-	(save-match-data
-	  (let (;; avoid defconst, defgroup, defvar (any others?)
-		(regexp
-		 (format "^\\s-*(def[^cgv\W]\\w+\\*?\\s-+%s\\s-" function))
-		(syntable (syntax-table)))
-	    (set-syntax-table emacs-lisp-mode-syntax-table)
-	    (goto-char (point-min))
-	    (if (prog1
-		    (re-search-forward regexp nil t)
-		  (set-syntax-table syntable))
-		(progn
-		  (beginning-of-line)
-		  (cons (current-buffer) (point)))
-	      (error "Cannot find definition of `%s'" function))))))))
-
-(defun function-at-point ()
-  (or (condition-case ()
-	  (let ((stab (syntax-table)))
-	    (unwind-protect
-		(save-excursion
-		  (set-syntax-table emacs-lisp-mode-syntax-table)
-		  (or (not (zerop (skip-syntax-backward "_w")))
-		      (eq (char-syntax (char-after (point))) ?w)
-		      (eq (char-syntax (char-after (point))) ?_)
-		      (forward-sexp -1))
-		  (skip-chars-forward "`'")
-		  (let ((obj (read (current-buffer))))
-		    (and (symbolp obj) (fboundp obj) obj)))
-	      (set-syntax-table stab)))
-	(error nil))
-      (condition-case ()
-	  (save-excursion
-	    (save-restriction
-	      (narrow-to-region (max (point-min) (- (point) 1000)) (point-max))
-	      (backward-up-list 1)
-	      (forward-char 1)
-	      (let (obj)
-		(setq obj (read (current-buffer)))
-		(and (symbolp obj) (fboundp obj) obj))))
-	(error nil))))
-
-(defun find-function-read-function ()
-  "Read and return a function, defaulting to the one near point.
-
-The function named by `find-function-function' is used to select the
-default function."
-  (let ((fn (funcall find-function-function))
-	(enable-recursive-minibuffers t)
-	val)
-    (setq val (completing-read
-	       (if fn
-		   (format "Find function (default %s): " fn)
-		 "Find function: ")
-	       obarray 'fboundp t nil 'function-history))
-    (list (if (equal val "")
-	      fn (intern val)))))
-
-(defun find-function-do-it (function switch-fn)
-  "find elisp FUNCTION in a buffer and display it with SWITCH-FN.
-Point is saved in the buffer if it is one of the current buffers."
-  (let ((orig-point (point))
-	(orig-buffers (buffer-list))
-	(buffer-point (find-function-noselect function)))
-    (if buffer-point
-	(progn
-	  (funcall switch-fn (car buffer-point))
-	  (if (memq (car buffer-point) orig-buffers)
-	      (push-mark orig-point))
-	  (goto-char (cdr buffer-point))
-	  (recenter 0)))))
-
-(defun find-function (function)
-  "Find the definition of the function near point in the current window.
-
-Finds the Emacs Lisp library containing the definition of the function
-near point (selected by `find-function-function') in a buffer and
-places point before the definition.  Point is saved in the buffer if
-it is one of the current buffers.
-
-The library where FUNCTION is defined is searched for in
-`find-function-source-path', if non `nil', otherwise in `load-path'."
-  (interactive (find-function-read-function))
-  (find-function-do-it function 'switch-to-buffer))
-
-(defun find-function-other-window (function)
-  "Find the definition of the function near point in the other window.
-
-Finds the Emacs Lisp library containing the definition of the function
-near point (selected by `find-function-function') in a buffer and
-places point before the definition.  Point is saved in the buffer if
-it is one of the current buffers.
-
-The library where FUNCTION is defined is searched for in
-`find-function-source-path', if non `nil', otherwise in `load-path'."
-  (interactive (find-function-read-function))
-  (find-function-do-it function 'switch-to-buffer-other-window))
-
-(defun find-function-other-frame (function)
-  "Find the definition of the function near point in the another frame.
-
-Finds the Emacs Lisp library containing the definition of the function
-near point (selected by `find-function-function') in a buffer and
-places point before the definition.  Point is saved in the buffer if
-it is one of the current buffers.
-
-The library where FUNCTION is defined is searched for in
-`find-function-source-path', if non `nil', otherwise in `load-path'."
-  (interactive (find-function-read-function))
-  (find-function-do-it function 'switch-to-buffer-other-frame))
-
-(defun find-function-on-key (key)
-  "Find the function that KEY invokes.  KEY is a string.
-Point is saved if FUNCTION is in the current buffer."
-  (interactive "kFind function on key: ")
-  (let ((defn (key-or-menu-binding key)))
-    (if (or (null defn) (integerp defn))
-        (message "%s is undefined" (key-description key))
-      (if (and (consp defn) (not (eq 'lambda (car-safe defn))))
-	  (message "runs %s" (prin1-to-string defn))
-	(find-function-other-window defn)))))
-
-(defun find-function-at-point ()
-  "Find directly the function at point in the other window."
-  (interactive)
-  (let ((symb (function-at-point)))
-    (when symb
-      (find-function-other-window symb))))
-
-(define-key ctl-x-map "F" 'find-function)
-(define-key ctl-x-4-map "F" 'find-function-other-window)
-(define-key ctl-x-5-map "F" 'find-function-other-frame)
+;; `find-function' et al moved to "find-func.el"
 
 ;;; help.el ends here

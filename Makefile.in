@@ -92,6 +92,7 @@ bindir=@bindir@
 ## ${lispdir} and ${etcdir} are subdirectories of this.
 datadir=@datadir@
 
+## Where to find XEmacs packages.
 pkgdir=@pkgdir@
 
 ## Where to install and expect the files that XEmacs modifies as it runs.
@@ -109,7 +110,7 @@ libdir=@libdir@
 mandir=@mandir@
 manext=.1
 
-## Where to install and expect the info files describing XEmacs.	In the
+## Where to install and expect the info files describing XEmacs.  In the
 ## past, this defaulted to a subdirectory of ${prefix}/lib/xemacs, but
 ## since there are now many packages documented with the texinfo
 ## system, it is inappropriate to imply that it is part of XEmacs.
@@ -119,11 +120,19 @@ infodir=@infodir@
 ## configuration time.
 infodir_user_defined=@infodir_user_defined@
 
+## Document me.
+## See callproc.c for code which references this.
+infopath=@infopath@
+infopath_user_defined=@infopath_user_defined@
+
 ## Where to find the source code.  The source code for XEmacs's C kernel is
 ## expected to be in ${srcdir}/src, and the source code for XEmacs's
 ## utility programs is expected to be in ${srcdir}/lib-src.  This is
 ## set by the configure script's `--srcdir' option.
 srcdir=@srcdir@
+
+## Where the build is done.
+blddir=@blddir@
 
 ## ==================== XEmacs-specific directories ====================
 
@@ -219,8 +228,9 @@ INSTALL_ARCH_DEP_SUBDIR = @INSTALL_ARCH_DEP_SUBDIR@
 COPYDIR = ${srcdir}/etc ${srcdir}/lisp
 COPYDESTS = ${etcdir} ${lispdir}
 GENERATED_HEADERS = src/paths.h src/Emacs.ad.h src/puresize-adjust.h src/config.h lwlib/config.h
+GENERATED_LISP = lisp/utils/finder-inf.el
 
-all:	${GENERATED_HEADERS} ${MAKE_SUBDIR}
+all:	${GENERATED_HEADERS} ${MAKE_SUBDIR} ${GENERATED_LISP}
 
 ## For performance and consistency, no built-in rules
 .SUFFIXES:
@@ -235,6 +245,12 @@ beta: clean all-elc finder
 ## This would run `make-xemacsdist' if I were really confident that everything
 ## was turnkey.
 dist: all-elc info
+
+## Convenience target for XEmacs maintainers
+## Updates configure from configure.in and updates config.values.in
+configure: configure.in
+	autoconf
+	/bin/sh lib-src/config.values.sh
 
 ## Build XEmacs and recompile out-of-date and missing .elc files along
 ## the way.
@@ -253,7 +269,12 @@ custom-loads:
 
 finder: src
 	@(cd lisp/utils; \
-		../../src/xemacs -batch -q -no-site-file \
+		${blddir}/src/xemacs -batch -q -no-site-file \
+		-l finder -f finder-compile-keywords )
+
+lisp/utils/finder-inf.el: FRC.lisp.utils.finder-inf.el
+	@(cd lisp/utils; \
+		${blddir}/src/xemacs -batch -q -no-site-file \
 		-l finder -f finder-compile-keywords )
 
 ## We force the rebuilding of src/paths.h because the user might give
@@ -287,6 +308,10 @@ src/paths.h: Makefile ${srcdir}/src/paths.h.in FRC.src.paths.h
 	 if test "${infodir_user_defined}" = "yes"; \
 	   then echo    '#define PATH_INFO "${infodir}"'; \
 	   else echo '/* #define PATH_INFO "${infodir}" */'; \
+	fi; \
+	 if test "${infopath_user_defined}" = "yes"; \
+	   then echo    '#define PATH_INFOPATH "${infopath}"'; \
+	   else echo '/* #define PATH_INFOPATH "${infopath}" */'; \
 	fi; ) >> src/paths.h.tmp; \
 	sh ${srcdir}/move-if-change src/paths.h.tmp src/paths.h
 
@@ -314,6 +339,7 @@ lib-src: FRC.lib-src
 lwlib:	FRC.lwlib
 dynodump: FRC.dynodump
 FRC.src FRC.lib-src FRC.lwlib FRC.dynodump pkg-src/FRC.tree-x:
+FRC.lisp.utils.finder-inf.el:
 
 .RECURSIVE: ${SUBDIR}
 
@@ -388,6 +414,19 @@ install-arch-dep: mkdir
 	${INSTALL_PROGRAM} src/xemacs ${bindir}/xemacs-${version}
 	-chmod 0755 ${bindir}/xemacs-${version}
 	cd ${bindir} && $(RM) ./xemacs && ${LN_S} xemacs-${version} ./xemacs
+	if test "${prefix}" != "${exec_prefix}"; then \
+           test ! -d ${exec_prefix}/lib/xemacs && \
+                $(LN_S) ${prefix}/lib/xemacs ${exec_prefix}/lib/xemacs; \
+           test ! -d ${exec_prefix}/lib/xemacs-${version}/etc && \
+                $(LN_S) ${prefix}/lib/xemacs-${version}/etc \
+                        ${exec_prefix}/lib/xemacs-${version}/etc; \
+           test ! -d ${exec_prefix}/lib/xemacs-${version}/info && \
+                $(LN_S) ${prefix}/lib/xemacs-${version}/info \
+                        ${exec_prefix}/lib/xemacs-${version}/info; \
+           test ! -d ${exec_prefix}/lib/xemacs-${version}/lisp && \
+                $(LN_S) ${prefix}/lib/xemacs-${version}/lisp \
+                        ${exec_prefix}/lib/xemacs-${version}/lisp; \
+	fi
 
 install-arch-indep: mkdir
 	-@set ${COPYDESTS} ; \
@@ -427,19 +466,6 @@ install-arch-indep: mkdir
 	    ${INSTALL_DATA} ${srcdir}/etc/$${page}.1 ${mandir}/$${page}${manext} ; \
 	    chmod 0644 ${mandir}/$${page}${manext} ; \
 	  done
-	if test "${prefix}" != "${exec_prefix}"; then \
-           test ! -d ${exec_prefix}/lib/xemacs && \
-                $(LN_S) ${prefix}/lib/xemacs ${exec_prefix}/lib/xemacs; \
-           test ! -d ${exec_prefix}/lib/xemacs-${version}/etc && \
-                $(LN_S) ${prefix}/lib/xemacs-${version}/etc \
-                        ${exec_prefix}/lib/xemacs-${version}/etc; \
-           test ! -d ${exec_prefix}/lib/xemacs-${version}/info && \
-                $(LN_S) ${prefix}/lib/xemacs-${version}/info \
-                        ${exec_prefix}/lib/xemacs-${version}/info; \
-           test ! -d ${exec_prefix}/lib/xemacs-${version}/lisp && \
-                $(LN_S) ${prefix}/lib/xemacs-${version}/lisp \
-                        ${exec_prefix}/lib/xemacs-${version}/lisp; \
-	fi
 	@echo "If you would like to save approximately 15M of disk space, do"
 	@echo "make gzip-el"
 	@echo "or you may run "

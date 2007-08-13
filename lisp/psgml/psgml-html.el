@@ -740,17 +740,20 @@ get those characters to appear literally in the output."
     (while (search-forward "&" end t)
       (forward-char -1)
       (delete-char 1)
-      (insert "&amp;"))
+      (insert "&amp;")
+      (setq end (+ 4 end)))
     (goto-char begin)
     (while (search-forward "<" end t)
       (forward-char -1)
       (delete-char 1)
-      (insert "&lt;"))
+      (insert "&lt;")
+      (setq end (+ 3 end)))
     (goto-char begin)
     (while (search-forward ">" end t)
       (forward-char -1)
       (delete-char 1)
-      (insert "&gt;"))))
+      (insert "&gt;")
+      (setq end (+ 3 end)))))
 
 ;;{{{ html-helper-insert-new-buffer-strings
 

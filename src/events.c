@@ -435,8 +435,7 @@ WARNING, the event object returned may be a reused one; see the function
       plist = Fcdr (plist);
       if (EQ (prop, Qchannel))
 	{
-	  if (!DEVICEP (val) && !CONSOLEP (val) && !FRAMEP (val)
-	      && !NILP (val))
+	  if (!FRAMEP (val) && !NILP (val))
 	    signal_simple_error ("Invalid event channel", val);
 	  EVENT_CHANNEL (e) = val;
 	}

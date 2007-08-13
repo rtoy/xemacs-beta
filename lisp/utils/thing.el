@@ -165,11 +165,13 @@ message and returns `nil'."
   (cond ((memq (char-syntax (char-after here)) '(?_ ?w))
          (setq *last-thing* 'symbol)
          (let ((end (scan-sexps here 1)))
-           (thing-region (min here (scan-sexps end -1)) end)))))
+           (if end
+	       (thing-region (min here (scan-sexps end -1)) end))))))
 
 (defun thing-filename (here)
   "Return start and end of filename at HERE."
-  (cond ((memq (char-syntax (char-after here)) '(?w ?_ ?.))
+  (cond ((and (memq (char-syntax (char-after here)) '(?w ?_ ?.))
+	      (< here (point-max)))
          (let (start end)
 	   (save-excursion
 	     (goto-char here)

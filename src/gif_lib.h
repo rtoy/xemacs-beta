@@ -133,7 +133,7 @@ int EGifCloseFile(GifFileType *GifFile);
 * (GIF_LIB file DGIF_LIB.C).						      *
 ******************************************************************************/
 
-GifFileType *DGifOpenFileName(const char *GifFileName);
+GifFileType *DGifOpenFileName(CONST char *GifFileName);
 GifFileType *DGifOpenFileHandle(int GifFileHandle);
 int DGifSlurp(GifFileType *GifFile);
 int DGifGetScreenDesc(GifFileType *GifFile);
@@ -260,25 +260,25 @@ extern void FreeSavedImages(GifFileType *GifFile);
 extern unsigned char AsciiTable[][GIF_FONT_WIDTH];
 
 extern void DrawText(SavedImage *Image,
-		     const int x, const int y,
-		     const char *legend,
-		     const int color);
+		     CONST int x, CONST int y,
+		     CONST char *legend,
+		     CONST int color);
 
 extern void DrawBox(SavedImage *Image,
-		     const int x, const int y,
-		     const int w, const int d,
-		     const int color);
+		     CONST int x, CONST int y,
+		     CONST int w, CONST int d,
+		     CONST int color);
 
 void DrawRectangle(SavedImage *Image,
-		     const int x, const int y,
-		     const int w, const int d,
-		     const int color);
+		     CONST int x, CONST int y,
+		     CONST int w, CONST int d,
+		     CONST int color);
 
 extern void DrawBoxedText(SavedImage *Image,
-		     const int x, const int y,
-		     const char *legend,
-		     const int border,
-		     const int bg,
-		     const int fg);
+		     CONST int x, CONST int y,
+		     CONST char *legend,
+		     CONST int border,
+		     CONST int bg,
+		     CONST int fg);
 
 #endif /* GIF_LIB_H */

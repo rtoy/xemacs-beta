@@ -2802,7 +2802,16 @@ buffer_replace_char (struct buffer *b, Bufpos pos, Emchar ch,
     }
   else
     {
-      /* must implement as deletion followed by insertion. */
+      /*
+       * Must implement as deletion followed by insertion.
+       *
+       * Make a note to move point forward later in the one situation
+       * where it is needed, a delete/insert one position behind
+       * point.  Point will drift backward by one position and stay
+       * there otherwise.
+       */
+      int movepoint = (pos == BUF_PT (b) - 1);
+
       buffer_delete_range (b, pos, pos + 1, 0);
       /* Defensive steps in case the before-change-functions fuck around */
       if (!BUFFER_LIVE_P (b))
@@ -2818,7 +2827,13 @@ buffer_replace_char (struct buffer *b, Bufpos pos, Emchar ch,
       if (pos < BUF_BEGV (b))
 	/* no more characters in buffer! */
 	return;
-      buffer_insert_string_1 (b, pos, newstr, Qnil, 0, newlen, 0);
+      /*
+       * -1 as the pos argument means to move point forward with the
+       * insertion, which we must do if the deletion moved point
+       * backward so that it now equals the insertion point.
+       */
+      buffer_insert_string_1 (b, (movepoint ? -1 : pos),
+			      newstr, Qnil, 0, newlen, 0);
     }
 }
 

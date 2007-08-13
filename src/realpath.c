@@ -59,10 +59,10 @@ extern int errno;
 #define MAX_READLINKS 32
 
 #ifdef __STDC__
-char *realpath(const char *path, char resolved_path [])
+char *realpath(CONST char *path, char resolved_path [])
 #else
 char *realpath(path, resolved_path)
-const char *path;
+CONST char *path;
 char resolved_path [];
 #endif
 {

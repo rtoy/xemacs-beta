@@ -44,8 +44,8 @@ SUBDIR = xemacs lispref new-users-guide internals tm gnats
 
 srcs = cc-mode cl custom ediff efs external-widget forms \
 	hm--html-mode \
-	hyperbole ilisp info ispell mailcrypt mh-e oo-browser \
-	pcl-cvs ph psgml psgml-api rmail standards supercite term \
+	hyperbole ilisp info ispell mailcrypt oo-browser \
+	pcl-cvs ph psgml psgml-api standards supercite term \
 	termcap texinfo vhdl-mode viper vm widget xemacs-faq
 
 info = $(srcs:%=../info/%.info)

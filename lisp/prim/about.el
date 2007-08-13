@@ -72,7 +72,10 @@
     (mly      "Richard Mlynarik"  "mly@adoc.xerox.com")
     (morioka  "MORIOKA Tomohiko"  "morioka@jaist.ac.jp")
     (mrb      "Martin Buchholz"   "mrb@sun.eng.com")
+    (pez      "Peter Pezaris"	  "pez@dwwc.com")
     (piper    "Andy Piper"        "andy@parallax.co.uk")
+    (rickc    "Rick Campbell"     "rickc@lehman.com")
+    (rossini  "Anthony Rossini"	  "rossini@stat.sc.edu")
     (shelton  "Vin Shelton"	  "acs@acm.org")
     (sperber  "Michael Sperber"   "sperber@informatik.uni-tuebingen.de")
     (slb      "SL Baur"           "steve@xemacs.org")
@@ -93,10 +96,11 @@
     (cc-mode   . "http://www.python.org/ftp/emacs/")
     (dkindred  . "http://www.cs.cmu.edu/People/dkindred/me.html")
     (dmoore    . "http://oj.egbt.org/dmoore/")
-    (jwz       . "http://www.netscape.com/people/jwz/")
+    (jwz       . "http://people.netscape.com/jwz/")
     (kazz      . "http://www.imasy.or.jp/~kazz/")
     (kyle      . "http://www.wonderworks.com/kyle/")
     (larsi     . "http://www.ifi.uio.no/~larsi/")
+    (pez       . "http://www.dwwc.com/")
     (shelton   . "http://www.upa.org/")
     (wget      . "ftp://gnjilux.cc.fer.hr/pub/unix/util/wget/")
     (xemacs    . "http://www.xemacs.org/"))
@@ -823,6 +827,13 @@ restaurants with friends, and has, in the past, involved dyeing his
 hair various colours (see ")
      (about-url-link 'ajc "Visit Andrew's home page")
      (widget-insert ".\n"))
+    (rickc
+     (widget-insert "\
+The hacker formerly known as Rick Busdiecker develops and maintains
+libraries for financial applications at Lehman Brothers during
+daylight hours.  In the evenings he maintains three children, and
+when he ought to be sleeping he co-maintains ILISP, builds XEmacs
+betas, and tinkers with various personal hacking projects..\n"))
     (kazz
      (widget-insert "\
 Kazz is the XEmacs lead on BSD (especially FreeBSD).
@@ -850,6 +861,14 @@ habit.
 See ")
      (about-url-link 'dkindred "Visit Darrell's WWW page")
      (widget-insert ".\n"))
+    (pez
+     (widget-insert "\
+Author of SQL Mode, edit-toolbar, mailtool-mode, and various other
+small packages with varying degrees of usefulness.  Peter has
+recently left Wall Street to start Daedalus World Wide Corporation,
+a software development firm.  See ")
+     (about-url-link 'pez "Daedalus on the web")
+     (widget-insert ".\n"))
     (dv
      (widget-insert "\
 I'm currently working (Ph.D.) on the cognitive aspects of
@@ -860,6 +879,17 @@ and the operator, in order to detect the intentions of the latter.
 Otherwise, I'm, say, 35.82% professional Jazz guitar player,
 which means that's not the way I earn my crust, but things may very
 well reverse in the future ...\n"))
+    (rossini
+     (widget-insert "\
+Author of the first XEmacs FAQ, as well as minor priest in the
+movement to get every statistician in the world to use XEmacs for
+statistical programming and data analysis.  Current development lead
+for ESS (Emacs Speaks Statistics), a mode and inferior mode for
+statistical programming and data analysis for SAS, S, S-PLUS, R,
+XLispStat; configurable for nearly any other statistical
+language/package one might want.  In spare time, acts as a
+Ph.D. (bio)statistician for money and amusement.  Current position:
+Assistant Professor of Statistics at the University of South Carolina.\n"))
 
 ))
 
@@ -1030,6 +1060,21 @@ and the operator, in order to detect the intentions of the latter.
 Otherwise, I'm, say, 35.82% professional Jazz guitar player,
 which means that's not the way I earn my crust, but things may very
 well reverse in the future ...\n")
+    (about-show-linked-info 'pez "\
+Author of SQL Mode, edit-toolbar, mailtool-mode, and various other
+small packages with varying degrees of usefulness.\n")
+    (about-show-linked-info 'rickc "\
+The hacker formerly known as Rick Busdiecker, author of ILISP.\n")
+    (about-show-linked-info 'rossini "\
+Author of the first XEmacs FAQ, as well as minor priest in the
+movement to get every statistician in the world to use XEmacs for
+statistical programming and data analysis.  Current development lead
+for ESS (Emacs Speaks Statistics), a mode and inferior mode for
+statistical programming and data analysis for SAS, S, S-PLUS, R,
+XLispStat; configurable for nearly any other statistical
+language/package one might want.  In spare time, acts as a
+Ph.D. (bio)statistician for money and amusement.  Current position:
+Assistant Professor of Statistics at the University of South Carolina.")
     (flet ((print-short (name addr &optional shortinfo)
 	     (concat (about-with-face name 'italic)
 		     (about-tabs name)
@@ -1100,8 +1145,6 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Rick Braumoeller" "rickb@mti.sgi.com")
        (print-short "Matthew J. Brown" "mjb@doc.ic.ac.uk")
        (print-short "Alastair Burt" "burt@dfki.uni-kl.de")
-       (print-short "Rick Busdiecker" "rfb@lehman.com")
-       (print-short "Rick Campbell" "rickc@lehman.com")
        (print-short "Richard Caley" "rjc@cstr.edinburgh.ac.uk")
        (print-short "Stephen Carney" "carney@gvc.dec.com")
        (print-short "Lorenzo M. Catucci" "lorenzo@argon.roma2.infn.it")
@@ -1206,6 +1249,7 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Simon Marshall" "simon@gnu.ai.mit.edu")
        (print-short "Dave Mason" "dmason@plg.uwaterloo.ca")
        (print-short "Jaye Mathisen" "mrcpu@cdsnet.net")
+       (print-short "Jason McLaren" "mclaren@math.mcgill.ca")
        (print-short "Michael McNamara" "mac@silicon-sorcery.com")
        (print-short "Michael Meissner" "meissner@osf.org")
        (print-short "David M. Meyer" "meyer@ns.uoregon.edu")
@@ -1233,7 +1277,6 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Jens-U H Petersen" "petersen@kurims.kyoto-u.ac.jp")
        (print-short "Joel Peterson" "tarzan@aosi.com")
        (print-short "Thomas A. Peterson" "tap@src.honeywell.com")
-       (print-short "Peter Pezaris" "pez@dwwc.com")
        (print-short "Tibor Polgar" "tlp00@eng.amdahl.com")
        (print-short "Frederic Poncin" "fp@info.ucl.ac.be")
        (print-short "E. Rehmi Post" "rehmi@asylum.sf.ca.us")
@@ -1246,7 +1289,6 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Art Rijos" "art.rijos@SNET.com")
        (print-short "Russell Ritchie" "ritchier@britannia-life.co.uk")
        (print-short "Roland" "rol@darmstadt.gmd.de")
-       (print-short "Anthony Rossini" "rossini@math.sc.edu")
        (print-short "Mike Russell" "mjruss@rchland.vnet.ibm.com")
        (print-short "Jan Sandquist" "etxquist@iqa.ericsson.se")
        (print-short "Marty Sasaki" "sasaki@spdcc.com")

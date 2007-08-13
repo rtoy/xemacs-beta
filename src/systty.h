@@ -353,7 +353,7 @@ static struct sensemode {
 /* XEmacs backward-compatibility.  Is 0 always a reasonable argument? */
 #define EMACS_GET_PROCESS_GROUP() EMACS_GETPGRP (0)
 
-/* Xemacs addition? */
+/* XEmacs addition? */
 
 /* EMACS_SEPARATE_PROCESS_GROUP () creates a separate process group for the
    running process. */

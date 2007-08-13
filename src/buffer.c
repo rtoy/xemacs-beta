@@ -401,12 +401,12 @@ will be signaled.
    and don't ever QUIT.  */
 
 static Lisp_Object
-assoc_ignore_text_properties (register Lisp_Object key, Lisp_Object list)
+assoc_ignore_text_properties (REGISTER Lisp_Object key, Lisp_Object list)
 {
-  register Lisp_Object tail;
+  REGISTER Lisp_Object tail;
   for (tail = list; !NILP (tail); tail = Fcdr (tail))
     {
-      register Lisp_Object elt, tem;
+      REGISTER Lisp_Object elt, tem;
       elt = Fcar (tail);
       tem = Fstring_equal (Fcar (elt), key);
       if (!NILP (tem))
@@ -2005,9 +2005,9 @@ don't call any before-change or after-change functions.
   /* FSF Emacs has the following additional doc at the end of
      before-change-functions and after-change-functions:
 
-That's because these variables are temporarily set to nil.\n\
-As a result, a hook function cannot straightforwardly alter the value of\n\
-these variables.  See the Emacs Lisp manual for a way of\n\
+That's because these variables are temporarily set to nil.
+As a result, a hook function cannot straightforwardly alter the value of
+these variables.  See the Emacs Lisp manual for a way of
 accomplishing an equivalent result by using other variables.
 
      But this doesn't apply under XEmacs because things are

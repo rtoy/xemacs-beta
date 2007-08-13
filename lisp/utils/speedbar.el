@@ -5,7 +5,7 @@
 ;; Author: Eric M. Ludlam <zappo@gnu.ai.mit.edu>
 ;; Version: 0.5
 ;; Keywords: file, tags, tools
-;; X-RCS: $Id: speedbar.el,v 1.3 1997/07/26 22:09:58 steve Exp $
+;; X-RCS: $Id: speedbar.el,v 1.4 1997/10/12 01:39:54 steve Exp $
 ;;
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -298,7 +298,7 @@ In this case it is the originating buffer.")
   "*Non-nil show files we can't expand with a ? in the expand button.
 nil means don't show the file in the list.")
 
-;; Xemacs timers aren't based on idleness.  Therefore tune it down a little
+;; XEmacs timers aren't based on idleness.  Therefore tune it down a little
 ;; or suffer mightilly!
 (defvar speedbar-update-speed (if speedbar-xemacsp 5 1)
   "*Idle time in seconds needed before speedbar will update itself.
@@ -310,7 +310,7 @@ Navigation commands included expanding/contracting nodes, and moving
 between different directories.")
 
 (defvar speedbar-frame-parameters (list
-				   ;; Xemacs fails to delete speedbar
+				   ;; XEmacs fails to delete speedbar
 				   ;; if minibuffer is off.
 				   ;(cons 'minibuffer
 				   ; (if speedbar-xemacsp t nil))
@@ -1141,7 +1141,7 @@ Files can be renamed to new names or moved to new directories."
 TIMEOUT is the number of seconds until the speedbar timer is called
 again."
   (cond
-   ;; Xemacs
+   ;; XEmacs
    (speedbar-xemacsp
     (if speedbar-timer
 	(progn (delete-itimer speedbar-timer)

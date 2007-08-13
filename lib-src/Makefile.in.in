@@ -73,8 +73,10 @@ UTILITIES= make-path wakeup profile make-docfile digest-doc \
 
 ## Like UTILITIES, but they are not system-dependent, and should not be
 ## deleted by the distclean target.
-TM_SCRIPTS=tm-au tm-file tm-html tm-image tm-mpeg tm-plain tm-ps tmdecode
-SCRIPTS= rcs2log vcdiff gzip-el.sh install-sid send-pr $(TM_SCRIPTS)
+GEN_SCRIPTS = rcs2log vcdiff gzip-el.sh install-sid send-pr
+TM_SCRIPTS = tm-au tm-file tm-html tm-image tm-mpeg tm-plain tm-ps tmdecode
+PKG_SCRIPTS = add-little-package.sh add-big-package.sh
+SCRIPTS = $(GEN_SCRIPTS) $(TM_SCRIPTS) $(PKG_SCRIPTS)
 
 EXECUTABLES= ${UTILITIES} ${INSTALLABLES} ${SCRIPTS} ${INSTALLABLE_SCRIPTS}
 

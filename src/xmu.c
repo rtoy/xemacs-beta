@@ -56,10 +56,10 @@
 #include <ctype.h>
 
 
-int XmuCursorNameToIndex (const char *name)
+int XmuCursorNameToIndex (CONST char *name)
 {
-    static const struct _CursorName {
-	const char	*name;
+    static CONST struct _CursorName {
+	CONST char	*name;
 	unsigned int	shape;
     } cursor_names[] = {
 			{"x_cursor",		XC_X_cursor},
@@ -140,7 +140,7 @@ int XmuCursorNameToIndex (const char *name)
 			{"watch",		XC_watch},
 			{"xterm",		XC_xterm},
     };
-    const struct _CursorName *table;
+    CONST struct _CursorName *table;
     int i;
     char tmp[40];
 
@@ -371,7 +371,7 @@ int XmuReadBitmapData (
 }
 
 
-int XmuReadBitmapDataFromFile (const char *filename,
+int XmuReadBitmapDataFromFile (CONST char *filename,
 			       /* Remaining args are RETURNED */
 			       unsigned int *width,
 			       unsigned int *height,

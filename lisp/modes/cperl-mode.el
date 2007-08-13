@@ -34,9 +34,10 @@
 ;;; XEmacs changes by Peter Arius arius@informatik.uni-erlangen.de
 ;;; XEmacs 'delete key behavior handling added for XEmacs 20.x by
 ;;; Gary D. Foster <Gary.Foster@corp.sun.com>
+;;; Karl M. Hegbloom <karlheg@inetarena.com>
 
 ;; Original Vendor Version Number:  (mostly based on...)
-;; $Id: cperl-mode.el,v 1.13 1997/09/20 22:15:08 steve Exp $
+;; $Id: cperl-mode.el,v 1.14 1997/10/12 01:39:40 steve Exp $
 
 ;; Increment the final digit once per XEmacs-only revision, the other
 ;; for merges.  (sound ok?)
@@ -935,7 +936,7 @@ progress indicator for indentation (with `imenu' loaded).
 
 
 ;;; Probably it is too late to set these guys already, but it can help later:
-
+;;; ####
 (setq auto-mode-alist
       (append '(("\\.\\([pP][Llm]\\|al\\)\\'" . perl-mode))  auto-mode-alist ))
 (and (boundp 'interpreter-mode-alist)
@@ -1153,8 +1154,9 @@ The expansion is entirely correct because it uses the C preprocessor."
 
 ;; provide an alias for working with emacs 19.  the perl-mode that comes
 ;; with it is really bad, and this lets us seamlessly replace it.
-;;;;;###autoload here please.
-(fset 'perl-mode 'cperl-mode)
+;;;###autoload
+(defalias 'perl-mode 'cperl-mode)
+;;;###autoload
 (defun cperl-mode ()
   "Major mode for editing Perl code.
 Expression and list commands understand all C brackets.
@@ -4413,7 +4415,7 @@ in subdirectories too."
     (save-excursion
       (cond (inbuffer nil)		; Already there
 	    ((file-exists-p tags-file-name)
-	     (visit-tags-table-buffer tags-file-name))
+	     (visit-tags-table-buffer))
 	    (t (set-buffer (find-file-noselect tags-file-name))))
       (cond
        (dir
@@ -5517,9 +5519,6 @@ We suppose that the regexp is scanned already."
 
 ;; Part from the original `cperl-lazy-*', and part from `eldoc'
 ;; Karl M. Hegbloom <karlheg@inetarena.com>
-
-(defvar cperl-help nil
-  "Non-nil means that the lazy-help handlers are installed now.")
 
 (defun cperl-help (&optional arg)
   (interactive "p")

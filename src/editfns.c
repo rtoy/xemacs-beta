@@ -1409,7 +1409,7 @@ BUFFER defaults to the current buffer.
 
 /* Third argument in FSF is INHERIT:
 
-"The optional third arg INHERIT, if non-nil, says to inherit text properties\n\
+"The optional third arg INHERIT, if non-nil, says to inherit text properties
 from adjoining text, if those properties are sticky."
 
 Jamie thinks this is bogus. */
@@ -1926,6 +1926,15 @@ An optional minimum field width may be specified after any flag characters
   added on the left (or on the right, if the `-' flag is specified), as
   necessary.  Padding is done with spaces, or with zeroes if the `0' flag
   is specified.
+If the field width is specified as `*', the field width is assumed to have
+  been specified as an argument.  Any repositioning specification that
+  would normally specify the argument to be converted will now specify
+  where to find this field width argument, not where to find the argument
+  to be converted.  If there is no repositioning specification, the normal
+  next argument is used.  The argument to be converted will be the next
+  argument after the field width argument unless the precision is also
+  specified as `*' (see below).
+
 An optional period character and precision may be specified after any
   minimum field width.  It specifies the minimum number of digits to
   appear in %d, %i, %o, %x, and %X conversions (the number is padded
@@ -1935,6 +1944,13 @@ An optional period character and precision may be specified after any
   maximum number of non-padding characters printed in %s and %S
   conversions.  The default precision for floating-point conversions
   is six.
+If the precision is specified as `*', the precision is assumed to have been
+  specified as an argument.  The argument used will be the next argument
+  after the field width argument, if any.  If the field width was not
+  specified as an argument, any repositioning specification that would
+  normally specify the argument to be converted will now specify where to
+  find the precision argument.  If there is no repositioning specification,
+  the normal next argument is used.
 
 The ` ' and `+' flags mean prefix non-negative numbers with a space or
   plus sign, respectively.

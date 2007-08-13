@@ -1,6 +1,6 @@
 ;;; custom-load.el --- automatically extracted custom dependencies
 
-;; Created by SL Baur on Sat Oct  4 18:11:37 1997
+;; Created by SL Baur on Thu Oct  9 20:52:16 1997
 
 ;;; Code:
 
@@ -20,7 +20,7 @@
 (custom-put 'fortran-indent 'custom-loads '("fortran"))
 (custom-put 'docs 'custom-loads '("texinfo"))
 (custom-put 'lisp-indent 'custom-loads '("cl-indent"))
-(custom-put 'tools 'custom-loads '("hideshow" "make-mode"))
+(custom-put 'tools 'custom-loads '("hideshow" "lazy-shot" "make-mode"))
 (custom-put 'lisp 'custom-loads '("lisp-mode" "cl-indent" "strokes"))
 (custom-put 'reftex 'custom-loads '("reftex"))
 (custom-put 'outlines 'custom-loads '("hideshow" "outl-mouse" "whitespace-mode"))
@@ -38,6 +38,7 @@
 (custom-put 'abbrev 'custom-loads '("abbrev"))
 (custom-put 'f90-indent 'custom-loads '("f90"))
 (custom-put 'strokes 'custom-loads '("strokes"))
+(custom-put 'lazy-shot 'custom-loads '("lazy-shot"))
 (custom-put 'archive-lzh 'custom-loads '("arc-mode"))
 (custom-put 'scribe 'custom-loads '("scribe"))
 (custom-put 'archive 'custom-loads '("arc-mode"))

@@ -61,13 +61,11 @@ Local Packages:
 * ILISP::	Multi-dialect inferior LISP interface.
 * Ispell::	Interactive spelling corrector.
 * Mailcrypt::	Emacs interface to cryptographic functions for mail and news.
-* MH-E::	Emacs interface to MH, a mail-handling package.
 * OO-Browser::	The Multi-Language Object-Oriented Browser.
 * PCL-CVS::	An XEmacs-based front end to CVS.
 * PH::		Client interface to the CCSO white pages directory system
 * PSGML::	A powerful mode for HTML and other SGML documents.
 * PSGML-API::	PSGML, the API documentation.
-* Rmail::	An older mail reader for Emacs.
 * Standards::	The GNU coding standards.
 * Supercite::	Lets you cite parts of messages you're replying to.
 * Term::	ANSI-compatible terminal emulator.

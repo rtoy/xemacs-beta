@@ -203,7 +203,7 @@ readdir (DIR *dirp)
     _strlwr (dir_static.d_name);
   else if (!NILP (Vwin32_downcase_file_names))
     {
-      register char *p;
+      REGISTER char *p;
       for (p = dir_static.d_name; *p; p++)
 	if (*p >= 'a' && *p <= 'z')
 	  break;
@@ -397,7 +397,7 @@ srandom (int seed)
 
 static void
 normalize_filename (fp, path_sep)
-     register char *fp;
+     REGISTER char *fp;
      char path_sep;
 {
   char sep;
@@ -455,7 +455,7 @@ normalize_filename (fp, path_sep)
 /* Destructively turn backslashes into slashes.  */
 void
 dostounix_filename (p)
-     register char *p;
+     REGISTER char *p;
 {
   normalize_filename (p, '/');
 }
@@ -463,7 +463,7 @@ dostounix_filename (p)
 /* Destructively turn slashes into backslashes.  */
 void
 unixtodos_filename (p)
-     register char *p;
+     REGISTER char *p;
 {
   normalize_filename (p, '\\');
 }
@@ -473,8 +473,8 @@ unixtodos_filename (p)
    although this code isn't going to ever change.)  */
 int
 crlf_to_lf (n, buf)
-     register int n;
-     register unsigned char *buf;
+     REGISTER int n;
+     REGISTER unsigned char *buf;
 {
   unsigned char *np = buf;
   unsigned char *startp = buf;
@@ -837,9 +837,9 @@ map_win32_filename (const char * name, const char ** pPath)
 
   if (is_fat_volume (name, &path)) /* truncate to 8.3 */
     {
-      register int left = 8;	/* maximum number of chars in part */
-      register int extn = 0;	/* extension added? */
-      register int dots = 2;	/* maximum number of dots allowed */
+      REGISTER int left = 8;	/* maximum number of chars in part */
+      REGISTER int extn = 0;	/* extension added? */
+      REGISTER int dots = 2;	/* maximum number of dots allowed */
 
       while (name < path)
 	*str++ = *name++;	/* skip past UNC header */

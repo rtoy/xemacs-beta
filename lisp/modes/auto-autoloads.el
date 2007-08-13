@@ -250,7 +250,143 @@ For use inside Lisp programs, see also `c-macro-expansion'." t nil)
 
 ;;;***
 
-;;;### (autoloads nil "cperl-mode" "modes/cperl-mode.el")
+;;;### (autoloads (cperl-mode) "cperl-mode" "modes/cperl-mode.el")
+
+(defalias 'perl-mode 'cperl-mode)
+
+(autoload 'cperl-mode "cperl-mode" "\
+Major mode for editing Perl code.
+Expression and list commands understand all C brackets.
+Tab indents for Perl code.
+Paragraphs are separated by blank lines only.
+Delete converts tabs to spaces as it moves back.
+
+Various characters in Perl almost always come in pairs: {}, (), [],
+sometimes <>. When the user types the first, she gets the second as
+well, with optional special formatting done on {}.  (Disabled by
+default.)  You can always quote (with \\[quoted-insert]) the left
+\"paren\" to avoid the expansion. The processing of < is special,
+since most the time you mean \"less\". Cperl mode tries to guess
+whether you want to type pair <>, and inserts is if it
+appropriate. You can set `cperl-electric-parens-string' to the string that
+contains the parenths from the above list you want to be electrical.
+Electricity of parenths is controlled by `cperl-electric-parens'.
+You may also set `cperl-electric-parens-mark' to have electric parens
+look for active mark and \"embrace\" a region if possible.'
+
+CPerl mode provides expansion of the Perl control constructs:
+   if, else, elsif, unless, while, until, for, and foreach.
+=========(Disabled by default, see `cperl-electric-keywords'.)
+The user types the keyword immediately followed by a space, which causes
+the construct to be expanded, and the user is positioned where she is most
+likely to want to be.
+eg. when the user types a space following \"if\" the following appears in
+the buffer:
+            if () {     or   if ()
+            }                 {
+                              }
+and the cursor is between the parentheses.  The user can then type some
+boolean expression within the parens.  Having done that, typing
+\\[cperl-linefeed] places you, appropriately indented on a new line
+between the braces. If CPerl decides that you want to insert
+\"English\" style construct like
+            bite if angry;
+it will not do any expansion. See also help on variable 
+`cperl-extra-newline-before-brace'.
+
+\\[cperl-linefeed] is a convenience replacement for typing carriage
+return. It places you in the next line with proper indentation, or if
+you type it inside the inline block of control construct, like
+            foreach (@lines) {print; print}
+and you are on a boundary of a statement inside braces, it will
+transform the construct into a multiline and will place you into an
+appropriately indented blank line. If you need a usual 
+`newline-and-indent' behaviour, it is on \\[newline-and-indent], 
+see documentation on `cperl-electric-linefeed'.
+
+\\{cperl-mode-map}
+
+Setting the variable `cperl-font-lock' to t switches on
+font-lock-mode, `cperl-electric-lbrace-space' to t switches on
+electric space between $ and {, `cperl-electric-parens-string' is the
+string that contains parentheses that should be electric in CPerl (see
+also `cperl-electric-parens-mark' and `cperl-electric-parens'),
+setting `cperl-electric-keywords' enables electric expansion of
+control structures in CPerl. `cperl-electric-linefeed' governs which
+one of two linefeed behavior is preferable. You can enable all these
+options simultaneously (recommended mode of use) by setting
+`cperl-hairy' to t. In this case you can switch separate options off
+by setting them to `null'. Note that one may undo the extra whitespace
+inserted by semis and braces in `auto-newline'-mode by consequent
+\\[cperl-electric-backspace].
+
+If your site has perl5 documentation in info format, you can use commands
+\\[cperl-info-on-current-command] and \\[cperl-info-on-command] to access it.
+These keys run commands `cperl-info-on-current-command' and
+`cperl-info-on-command', which one is which is controlled by variable
+`cperl-info-on-command-no-prompt' (in turn affected by `cperl-hairy').
+
+Even if you have no info-format documentation, short one-liner-style
+help is available on \\[cperl-get-help]. 
+
+It is possible to show this help automatically after some idle
+time. This is regulated by variable `cperl-lazy-help-time'.  Default
+with `cperl-hairy' is 5 secs idle time if the value of this variable
+is nil.  It is also possible to switch this on/off from the
+menu. Requires `run-with-idle-timer'.
+
+Use \\[cperl-lineup] to vertically lineup some construction - put the
+beginning of the region at the start of construction, and make region
+span the needed amount of lines.
+
+Variables `cperl-pod-here-scan', `cperl-pod-here-fontify',
+`cperl-pod-face', `cperl-pod-head-face' control processing of pod and
+here-docs sections. In a future version results of scan may be used
+for indentation too, currently they are used for highlighting only.
+
+Variables controlling indentation style:
+ `cperl-tab-always-indent'
+    Non-nil means TAB in CPerl mode should always reindent the current line,
+    regardless of where in the line point is when the TAB command is used.
+ `cperl-auto-newline'
+    Non-nil means automatically newline before and after braces,
+    and after colons and semicolons, inserted in Perl code. The following
+    \\[cperl-electric-backspace] will remove the inserted whitespace.
+    Insertion after colons requires both this variable and 
+    `cperl-auto-newline-after-colon' set. 
+ `cperl-auto-newline-after-colon'
+    Non-nil means automatically newline even after colons.
+    Subject to `cperl-auto-newline' setting.
+ `cperl-indent-level'
+    Indentation of Perl statements within surrounding block.
+    The surrounding block's indentation is the indentation
+    of the line on which the open-brace appears.
+ `cperl-continued-statement-offset'
+    Extra indentation given to a substatement, such as the
+    then-clause of an if, or body of a while, or just a statement continuation.
+ `cperl-continued-brace-offset'
+    Extra indentation given to a brace that starts a substatement.
+    This is in addition to `cperl-continued-statement-offset'.
+ `cperl-brace-offset'
+    Extra indentation for line if it starts with an open brace.
+ `cperl-brace-imaginary-offset'
+    An open brace following other text is treated as if it the line started
+    this far to the right of the actual line indentation.
+ `cperl-label-offset'
+    Extra indentation for line that is a label.
+ `cperl-min-label-indent'
+    Minimal indentation for line that is a label.
+
+Settings for K&R and BSD indentation styles are
+  `cperl-indent-level'                5    8
+  `cperl-continued-statement-offset'  5    8
+  `cperl-brace-offset'               -5   -8
+  `cperl-label-offset'               -5   -8
+
+If `cperl-indent-level' is 0, the statement after opening brace in column 0 is indented on `cperl-brace-offset'+`cperl-continued-statement-offset'.
+
+Turning on CPerl mode calls the hooks in the variable `cperl-mode-hook'
+with no args." t nil)
 
 ;;;***
 
@@ -571,7 +707,7 @@ Decode XPM image between START and END." nil nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.11 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.12 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -967,53 +1103,7 @@ no args, if that value is non-nil." t nil)
 
 ;;;***
 
-;;;### (autoloads (perl-mode) "perl-mode" "modes/perl-mode.el")
-
-(autoload 'perl-mode "perl-mode" "\
-Major mode for editing Perl code.
-Expression and list commands understand all Perl brackets.
-Tab indents for Perl code.
-Comments are delimited with # ... \\n.
-Paragraphs are separated by blank lines only.
-Delete converts tabs to spaces as it moves back.
-\\{perl-mode-map}
-Variables controlling indentation style:
- perl-tab-always-indent
-    Non-nil means TAB in Perl mode should always indent the current line,
-    regardless of where in the line point is when the TAB command is used.
- perl-tab-to-comment
-    Non-nil means that for lines which don't need indenting, TAB will
-    either delete an empty comment, indent an existing comment, move 
-    to end-of-line, or if at end-of-line already, create a new comment.
- perl-nochange
-    Lines starting with this regular expression are not auto-indented.
- perl-indent-level
-    Indentation of Perl statements within surrounding block.
-    The surrounding block's indentation is the indentation
-    of the line on which the open-brace appears.
- perl-continued-statement-offset
-    Extra indentation given to a substatement, such as the
-    then-clause of an if or body of a while.
- perl-continued-brace-offset
-    Extra indentation given to a brace that starts a substatement.
-    This is in addition to `perl-continued-statement-offset'.
- perl-brace-offset
-    Extra indentation for line if it starts with an open brace.
- perl-brace-imaginary-offset
-    An open brace following other text is treated as if it were
-    this far to the right of the start of its line.
- perl-label-offset
-    Extra indentation for line that is a label.
-
-Various indentation styles:       K&R  BSD  BLK  GNU  LW
-  perl-indent-level                5    8    0    2    4
-  perl-continued-statement-offset  5    8    4    2    4
-  perl-continued-brace-offset      0    0    0    0   -4
-  perl-brace-offset               -5   -8    0    0    0
-  perl-brace-imaginary-offset      0    0    4    0    0
-  perl-label-offset               -5   -8   -2   -2   -2
-
-Turning on Perl mode runs the normal hook `perl-mode-hook'." t nil)
+;;;### (autoloads nil "perl-mode" "modes/perl-mode.el")
 
 ;;;***
 
@@ -1929,7 +2019,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.11 $
+vhdl-mode $Revision: 1.12 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the

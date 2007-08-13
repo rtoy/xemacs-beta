@@ -56,7 +56,9 @@ Boston, MA 02111-1307, USA.  */
 /* On A-50/60/70/80, data space has high order byte use. */
 #define VALBITS 26
 #define VALMASK (((1<<VALBITS) - 1) | 0x60000000)
-#define XTYPE(a) ((enum Lisp_Type) (((a) >> VALBITS) & GCTYPEMASK))
+/* XEmacs: markbit is between type bits and value bits */
+/* #define XTYPE(a) ((enum Lisp_Type) (((a) >> VALBITS) & GCTYPEMASK)) */
+#define XTYPE(a) ((enum Lisp_Type) (((a) >> ((VALBITS) + 1)) & GCTYPEMASK))
 
 #endif /* pfa50, pfa70 */
 

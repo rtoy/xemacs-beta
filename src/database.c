@@ -194,7 +194,7 @@ finalize_database (void *header, int for_disksave)
   db->funcs->close (db);
 }
 
-DEFUN ("close-database", Fdatabase_close, 1, 1, 0, /*
+DEFUN ("close-database", Fclose_database, 1, 1, 0, /*
 Close database OBJ.
 */
        (obj))
@@ -492,7 +492,7 @@ static DB_FUNCS berk_func_block =
 };
 #endif /* HAVE_BERKELEY_DB */
 
-DEFUN ("database-last-error", Fdatabase_error, 0, 1, 0, /*
+DEFUN ("database-last-error", Fdatabase_last_error, 0, 1, 0, /*
 Return the last error associated with database OBJ.
 */
        (obj))
@@ -505,7 +505,7 @@ Return the last error associated with database OBJ.
   return XDATABASE (obj)->funcs->last_error (XDATABASE (obj));
 }
 
-DEFUN ("open-database", Fmake_database, 1, 5, 0, /*
+DEFUN ("open-database", Fopen_database, 1, 5, 0, /*
 Open database FILE, using database method TYPE and SUBTYPE, with
 access rights ACCESS and permissions MODE.  ACCESS can be any
 combination of 'r' 'w' and '+', for read, write, and creation flags.
@@ -612,7 +612,7 @@ combination of 'r' 'w' and '+', for read, write, and creation flags.
   return retval;
 }
 
-DEFUN ("put-database", Fputdatabase, 3, 4, 0, /*
+DEFUN ("put-database", Fput_database, 3, 4, 0, /*
 Store KEY and VAL in DATABASE.  If optional fourth arg REPLACE is
 non-nil, replace any existing entry in the database.
 */
@@ -629,7 +629,7 @@ non-nil, replace any existing entry in the database.
   }
 }
 
-DEFUN ("remove-database", Fremdatabase, 2, 2, 0, /*
+DEFUN ("remove-database", Fremove_database, 2, 2, 0, /*
 Remove KEY from DATABASE.
 */
        (key, dbase))
@@ -640,7 +640,7 @@ Remove KEY from DATABASE.
   return XDATABASE (dbase)->funcs->rem (XDATABASE (dbase), key) ? Qt : Qnil;
 }
 
-DEFUN ("get-database", Fgetdatabase, 2, 3, 0, /*
+DEFUN ("get-database", Fget_database, 2, 3, 0, /*
 Find value for KEY in DATABASE.
 If there is no corresponding value, return DEFAULT (defaults to nil).
 */
@@ -684,18 +684,18 @@ syms_of_dbm (void)
   defsymbol (&Qrecno, "recno");
 #endif
 
-  DEFSUBR (Fmake_database);
+  DEFSUBR (Fopen_database);
   DEFSUBR (Fdatabasep);
   DEFSUBR (Fmapdatabase);
-  DEFSUBR (Fputdatabase);
-  DEFSUBR (Fgetdatabase);
-  DEFSUBR (Fremdatabase);
+  DEFSUBR (Fput_database);
+  DEFSUBR (Fget_database);
+  DEFSUBR (Fremove_database);
   DEFSUBR (Fdatabase_type);
   DEFSUBR (Fdatabase_subtype);
-  DEFSUBR (Fdatabase_error);
+  DEFSUBR (Fdatabase_last_error);
   DEFSUBR (Fdatabase_live_p);
   DEFSUBR (Fdatabase_file_name);
-  DEFSUBR (Fdatabase_close);
+  DEFSUBR (Fclose_database);
 }
 
 void

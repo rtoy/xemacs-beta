@@ -103,7 +103,7 @@ Batch usage: xemacs -batch -l cus-dep.el -f Custom-make-dependencies DIRS"
     (let ((enable-local-eval nil)
 	  (hash (make-hash-table :test 'eq)))
       (dolist (dir subdirs)
-	(message "Processing %s" dir)
+	(princ (format "Processing %s\n" dir))
 	(let ((cusload-file (expand-file-name cusload-base-file dir))
 	      (files (directory-files dir t "\\`[^=].*\\.el\\'")))
 	  ;; A trivial optimization: if no files in the directory is
@@ -112,7 +112,7 @@ Batch usage: xemacs -batch -l cus-dep.el -f Custom-make-dependencies DIRS"
 		   (dolist (file files t)
 		     (when (file-newer-than-file-p file cusload-file)
 		       (return nil))))
-	      (message "No changes need to be written.")
+	      (princ "(No changes need to be written)\n")
 	    ;; Process directory
 	    (dolist (file files)
 	      (when (file-exists-p file)
@@ -130,33 +130,41 @@ Batch usage: xemacs -batch -l cus-dep.el -f Custom-make-dependencies DIRS"
 			  (eval expr)
 			  (setf (gethash (nth 1 expr) hash) name)))
 		    (error nil)))))
-	    (message "Generating %s..." cusload-base-file)
-	    (with-temp-file cusload-file
-	      (insert ";;; " cusload-base-file
-		      " --- automatically extracted custom dependencies\n"
-		      "\n;; Created by " (user-full-name) " on "
-		      (current-time-string) "\n\n;;; Code:\n\n")
-	      (mapatoms
-	       (lambda (sym)
-		 (let ((members (get sym 'custom-group))
-		       item where found)
-		   (when members
-		     (while members
-		       (setq item (car (car members))
-			     members (cdr members)
-			     where (gethash item hash))
-		       (unless (or (null where)
-				   (member where found))
-			 (if found
-			     (insert " ")
-			   (insert "(custom-put '" (symbol-name sym)
-				   " 'custom-loads '("))
-			 (prin1 where (current-buffer))
-			 (push where found)))
-		     (when found
-		       (insert "))\n"))))))
-	      (insert "\n;;; custom-load.el ends here\n"))
-	    (clrhash hash)))))))
+	    (cond
+	     ((zerop (hash-table-count hash))
+	      (princ "(No customization dependencies")
+	      (when (file-exists-p cusload-file)
+		(princ (format ", deleting %s" cusload-file))
+		(delete-file cusload-file))
+	      (princ ")\n"))
+	     (t
+	      (princ (format "Generating %s...\n" cusload-base-file))
+	      (with-temp-file cusload-file
+		(insert ";;; " cusload-base-file
+			" --- automatically extracted custom dependencies\n"
+			"\n;; Created by " (user-full-name) " on "
+			(current-time-string) "\n\n;;; Code:\n\n")
+		(mapatoms
+		 (lambda (sym)
+		   (let ((members (get sym 'custom-group))
+			 item where found)
+		     (when members
+		       (while members
+			 (setq item (car (car members))
+			       members (cdr members)
+			       where (gethash item hash))
+			 (unless (or (null where)
+				     (member where found))
+			   (if found
+			       (insert " ")
+			     (insert "(custom-put '" (symbol-name sym)
+				     " 'custom-loads '("))
+			   (prin1 where (current-buffer))
+			   (push where found)))
+		       (when found
+			 (insert "))\n"))))))
+		(insert "\n;;; custom-load.el ends here\n"))
+	      (clrhash hash)))))))))
 
 (provide 'cus-dep)
 

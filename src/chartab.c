@@ -1592,7 +1592,7 @@ int
 check_category_char (Emchar ch, Lisp_Object table,
 		     unsigned int designator, unsigned int not)
 {
-  register Lisp_Object temp;
+  REGISTER Lisp_Object temp;
   struct Lisp_Char_Table *ctbl;
 #ifdef ERROR_CHECK_TYPECHECK
   if (NILP (Fcategory_table_p (table)))

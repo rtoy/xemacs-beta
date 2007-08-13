@@ -3656,7 +3656,7 @@ where_is_recursive_mapper (Lisp_Object map, void *arg)
 	  if (! c->keys_so_far_malloced)
 	    {
 	      struct key_data *new = xnew_array (struct key_data, size);
-	      memcpy ((void *)new, (const void *)c->keys_so_far,
+	      memcpy ((void *)new, (CONST void *)c->keys_so_far,
 		      c->keys_so_far_total_size * sizeof (struct key_data));
 	    }
 	  else

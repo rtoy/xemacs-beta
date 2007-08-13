@@ -47,7 +47,15 @@
 (defvar lazy-shot-mode nil)
 
 
-(defvar lazy-shot-step-size (* 1 124)) ;; Please test diffent sizes
+(defgroup lazy-shot nil
+  "Lazy-shot customizations"
+  :group 'tools
+  :prefix "lazy-shot-")
+
+(defcustom lazy-shot-step-size 1024	; Please test diffent sizes
+  "Minimum size of each fontification shot."
+  :type 'integer
+  :group 'lazy-shot)
 
 ;;;###autoload
 (defun lazy-shot-mode (&optional arg)
@@ -104,15 +112,23 @@ With arg, turn Lazy Lock mode on if and only if arg is positive."
                        'lazy-shot-shot-function))
        extent))
 
+(defun lazy-shot-next-line (pos &optional buffer)
+  "Return the next end-of-line from POS in BUFFER."
+  (save-excursion
+    (goto-char pos buffer)
+    (forward-line 1 buffer)
+    (point buffer)))
+
 (defun lazy-shot-install-extents (fontifying)
   ;;
   ;; Add hook if lazy-shot.el is deferring or is fontifying on scrolling.
-     (when fontifying
-     (let ((start  (point-min)))
-      (while (< start (point-max))
-         (lazy-shot-install-extent start
-           (min (point-max) (+ start lazy-shot-step-size)))
-         (setq start (+ start lazy-shot-step-size))))))
+  (when fontifying
+    (let ((max (point-max)))
+      (do* ((start (point-min) end)
+	    (end (min max (lazy-shot-next-line (+ start lazy-shot-step-size)))
+		 (min max (lazy-shot-next-line (+ start lazy-shot-step-size)))))
+	  ((>= start max))
+	(lazy-shot-install-extent start end)))))
 
 (defun lazy-shot-install ()
   (make-local-variable 'font-lock-fontified)

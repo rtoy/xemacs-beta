@@ -2616,6 +2616,7 @@ extent_fragment_delete (struct extent_fragment *ef)
   xfree (ef);
 }
 
+/* Note:  CONST is losing, but `const' is part of the interface of qsort() */
 static int
 extent_priority_sort_function (const void *humpty, const void *dumpty)
 {
@@ -3006,7 +3007,7 @@ print_extent_1 (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       write_c_string (" ", printcharfun);
     }
 
-  sprintf (bp, "0x%p", ext);
+  sprintf (buf, "0x%p", ext);
   write_c_string (buf, printcharfun);
 }
 

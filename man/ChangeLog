@@ -1,3 +1,12 @@
+1997-10-07  SL Baur  <steve@altair.xemacs.org>
+
+	* xemacs-faq.texi (Q1.3.7): Update Russion URLs.
+	From Rebecca Ore <rebecca.ore@op.net>
+
+	* lispref/databases.texi (Connecting to a Database): Describe
+	valid types of `type' and `subtype'.
+	From Raymond Toy <toy@rtp.ericsson.se>
+
 1997-10-01  Karl M. Hegbloom  <karlheg@inetarena.com>
 
 	* lispref/commands.texi (Keyboard Macros): fixed typo.  Changed

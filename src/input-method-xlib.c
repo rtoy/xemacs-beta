@@ -616,7 +616,7 @@ BetterStyle (XIMStyle s, XIMStyle t)
 static XIMStyle
 best_style (XIMStyles *user, XIMStyles *xim)
 {
-  register int i, j;
+  REGISTER int i, j;
   for (i=0 ; i<user->count_styles ; i++)
     {
       for (j=0 ; j<xim->count_styles ; j++)

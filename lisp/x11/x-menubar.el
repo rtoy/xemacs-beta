@@ -29,7 +29,8 @@
 
 ;;; Warning-free compile
 (eval-when-compile
-  (defvar language-environment-list))
+  (defvar language-environment-list)
+  (require 'pending-del))
 
 (defconst default-menubar
   (purecopy-menubar
@@ -191,12 +192,10 @@
 	:style toggle :selected (not case-fold-search)]
        ["Case Matching Replace" (setq case-replace (not case-replace))
 	:style toggle :selected case-replace]
-       ["Auto Delete Selection" (if (memq 'pending-delete-pre-hook
-					  pre-command-hook)
-				    (pending-delete-off nil)
-				  (pending-delete-on nil))
+       ["Auto Delete Selection" (pending-delete-mode
+				 (if pending-delete-mode 0 1))
 	:style toggle
-	:selected (memq 'pending-delete-pre-hook pre-command-hook)]
+	:selected (and (boundp 'pending-delete-mode) pending-delete-mode)]
        ["Active Regions" (setq zmacs-regions (not zmacs-regions))
 	:style toggle :selected zmacs-regions]
        ["Mouse Paste At Text Cursor" (setq mouse-yank-at-point
@@ -772,7 +771,7 @@ The name of the current buffer is only appended to the menu items if
 	    (and put-buffer-names-in-file-menu
 		 (member name '("Save" "Revert Buffer" "Print Buffer"
 				"Pretty-Print Buffer" "Delete Buffer"))
-		 (>= 4 (length item))
+		 (>= (length item) 4)
 		 (aset item 3 bufname))
 	    (and (string= "Save" name)
 		 (aset item 2 (buffer-modified-p)))
@@ -1157,10 +1156,8 @@ of changing and saving faces via cu-edit-faces.el & custom.el.")
 	 '(overwrite-mode 1))
      `(setq-default case-fold-search ,(default-value 'case-fold-search))
      case-replace
-     (if (memq 'pending-delete-pre-hook pre-command-hook)
-	 '(progn
-	    (require 'pending-del)
-	    (pending-delete-on nil)))
+     (if pending-delete-mode
+	 '(pending-delete-mode 1))
      zmacs-regions
      mouse-yank-at-point
      require-final-newline

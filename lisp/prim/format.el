@@ -110,12 +110,11 @@ MODE-FN, if specified, is called when visiting a file with that format.")
 
 ;;; Basic Functions (called from Lisp)
 
-(defun format-annotate-function (format from to orig-buf)
+(defun format-annotate-function (format from to)
   "Returns annotations for writing region as FORMAT.
 FORMAT is a symbol naming one of the formats defined in `format-alist',
 it must be a single symbol, not a list like `buffer-file-format'.
 FROM and TO delimit the region to be operated on in the current buffer.
-ORIG-BUF is the original buffer that the data came from.
 This function works like a function on `write-region-annotate-functions':
 it either returns a list of annotations, or returns with a different buffer
 current, which contains the modified text to write.
@@ -133,10 +132,10 @@ For most purposes, consider using `format-encode-region' instead."
 	      (copy-to-buffer copy-buf from to)
 	      (set-buffer copy-buf)
 	      (format-insert-annotations write-region-annotations-so-far from)
-	      (funcall to-fn (point-min) (point-max) orig-buf)
+	      (funcall to-fn (point-min) (point-max))
 	      nil)
 	  ;; Otherwise just call function, it will return annotations.
-	  (funcall to-fn from to orig-buf)))))
+	  (funcall to-fn from to)))))
 
 (defun format-decode (format length &optional visit-flag)
   ;; This function is called by insert-file-contents whenever a file is read.

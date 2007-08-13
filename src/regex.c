@@ -39,6 +39,10 @@
 #include <config.h>
 #endif
 
+#ifndef REGISTER	/* Rigidly enforced as of 20.3 */
+#define REGISTER
+#endif
+
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE 1
 #endif
@@ -182,7 +186,7 @@ static char re_syntax_table[CHAR_SET_SIZE];
 static void
 init_syntax_once (void)
 {
-   register int c;
+   REGISTER int c;
    static int done = 0;
 
    if (done)
@@ -743,8 +747,8 @@ print_partial_compiled_pattern (unsigned char *start, unsigned char *end)
 	case charset:
         case charset_not:
           {
-            register int c, last = -100;
-	    register int in_range = 0;
+            REGISTER int c, last = -100;
+	    REGISTER int in_range = 0;
 
 	    printf ("/charset [%s",
 	            (re_opcode_t) *(p - 1) == charset_not ? "^" : "");
@@ -1816,7 +1820,7 @@ static boolean common_op_match_null_string_p (unsigned char **p,
 					      unsigned char *end,
 					      register_info_type *reg_info);
 static int bcmp_translate (CONST unsigned char *s1, CONST unsigned char *s2,
-			   register int len, char *translate);
+			   REGISTER int len, char *translate);
 static int re_match_2_internal (struct re_pattern_buffer *bufp,
 				CONST char *string1, int size1,
 				CONST char *string2, int size2, int pos,
@@ -1901,13 +1905,13 @@ regex_compile (CONST char *pattern, int size, reg_syntax_t syntax,
      make sure to coerce to unsigned char before assigning, so we won't
      get bitten by negative numbers here. */
   /* XEmacs change: used to be unsigned char. */
-  register EMACS_INT c, c1;
+  REGISTER EMACS_INT c, c1;
 
   /* A random temporary spot in PATTERN.  */
   CONST char *p1;
 
   /* Points to the end of the buffer, where we should append.  */
-  register unsigned char *b;
+  REGISTER unsigned char *b;
 
   /* Keeps track of unclosed groups.  */
   compile_stack_type compile_stack;
@@ -3181,8 +3185,8 @@ store_op2 (re_opcode_t op, unsigned char *loc, int arg1, int arg2)
 static void
 insert_op1 (re_opcode_t op, unsigned char *loc, int arg, unsigned char *end)
 {
-  register unsigned char *pfrom = end;
-  register unsigned char *pto = end + 3;
+  REGISTER unsigned char *pfrom = end;
+  REGISTER unsigned char *pto = end + 3;
 
   while (pfrom != loc)
     *--pto = *--pfrom;
@@ -3197,8 +3201,8 @@ static void
 insert_op2 (re_opcode_t op, unsigned char *loc, int arg1, int arg2,
 	    unsigned char *end)
 {
-  register unsigned char *pfrom = end;
-  register unsigned char *pto = end + 5;
+  REGISTER unsigned char *pfrom = end;
+  REGISTER unsigned char *pto = end + 5;
 
   while (pfrom != loc)
     *--pto = *--pfrom;
@@ -3402,11 +3406,11 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
   DECLARE_DESTINATION
   /* We don't push any register information onto the failure stack.  */
 
-  register char *fastmap = bufp->fastmap;
+  REGISTER char *fastmap = bufp->fastmap;
   unsigned char *pattern = bufp->buffer;
   unsigned long size = bufp->used;
   unsigned char *p = pattern;
-  register unsigned char *pend = pattern + size;
+  REGISTER unsigned char *pend = pattern + size;
 
 #ifdef REL_ALLOC
   /* This holds the pointer to the failure stack, when
@@ -3934,8 +3938,8 @@ re_search_2 (struct re_pattern_buffer *bufp, CONST char *string1,
 	     int range, struct re_registers *regs, int stop)
 {
   int val;
-  register char *fastmap = bufp->fastmap;
-  register char *translate = bufp->translate;
+  REGISTER char *fastmap = bufp->fastmap;
+  REGISTER char *translate = bufp->translate;
   int total_size = size1 + size2;
   int endpos = startpos + range;
 #ifdef REGEX_BEGLINE_CHECK
@@ -4278,7 +4282,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
 
   /* Where we are in the pattern, and the end of the pattern.  */
   unsigned char *p = bufp->buffer;
-  register unsigned char *pend = p + bufp->used;
+  REGISTER unsigned char *pend = p + bufp->used;
 
   /* Mark the opcode just after a start_memory, so we can test for an
      empty subpattern when we get to the stop_memory.  */
@@ -4726,7 +4730,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
 	case charset:
 	case charset_not:
 	  {
-	    register unsigned char c;
+	    REGISTER unsigned char c;
 	    boolean not = (re_opcode_t) *(p - 1) == charset_not;
 
             DEBUG_PRINT2 ("EXECUTING charset%s.\n", not ? "_not" : "");
@@ -4753,7 +4757,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
 	case charset_mule:
 	case charset_mule_not:
 	  {
-	    register Emchar c;
+	    REGISTER Emchar c;
 	    boolean not = (re_opcode_t) *(p - 1) == charset_mule_not;
 
             DEBUG_PRINT2 ("EXECUTING charset_mule%s.\n", not ? "_not" : "");
@@ -4966,7 +4970,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
            followed by the numeric value of <digit> as the register number.  */
         case duplicate:
 	  {
-	    register CONST char *d2, *dend2;
+	    REGISTER CONST char *d2, *dend2;
 	    int regno = *p++;   /* Get which register to match against.  */
 	    DEBUG_PRINT2 ("EXECUTING duplicate %d.\n", regno);
 
@@ -5165,7 +5169,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
           EXTRACT_NUMBER_AND_INCR (mcnt, p);
           DEBUG_PRINT2 ("EXECUTING maybe_pop_jump %d.\n", mcnt);
           {
-	    register unsigned char *p2 = p;
+	    REGISTER unsigned char *p2 = p;
 
             /* Compare the beginning of the repeat with what in the
                pattern follows its end. If we can establish that there
@@ -5216,7 +5220,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
             else if ((re_opcode_t) *p2 == exactn
 		     || (bufp->newline_anchor && (re_opcode_t) *p2 == endline))
 	      {
-		register unsigned char c
+		REGISTER unsigned char c
                   = *p2 == (unsigned char) endline ? '\n' : p2[2];
 
                 if ((re_opcode_t) p1[3] == exactn && p1[5] != c)
@@ -5247,7 +5251,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
             else if ((re_opcode_t) *p2 == charset)
 	      {
 #ifdef DEBUG
-		register unsigned char c
+		REGISTER unsigned char c
                   = *p2 == (unsigned char) endline ? '\n' : p2[2];
 #endif
 
@@ -5934,9 +5938,9 @@ common_op_match_null_string_p (unsigned char **p, unsigned char *end,
 
 static int
 bcmp_translate (CONST unsigned char *s1, CONST unsigned char *s2,
-		register int len, char *translate)
+		REGISTER int len, char *translate)
 {
-  register CONST unsigned char *p1 = s1, *p2 = s2;
+  REGISTER CONST unsigned char *p1 = s1, *p2 = s2;
   while (len)
     {
       if (translate[*p1++] != translate[*p2++]) return 1;

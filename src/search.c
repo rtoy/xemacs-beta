@@ -276,7 +276,7 @@ looking_at_1 (Lisp_Object string, struct buffer *buf, int posix)
   Lisp_Object val;
   Bytind p1, p2;
   Bytecount s1, s2;
-  register int i;
+  REGISTER int i;
   struct re_pattern_buffer *bufp;
 
   if (running_asynch_code)
@@ -716,13 +716,13 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 	    Lisp_Object string, Lisp_Object lim)
 {
   /* This function has been Mule-ized. */
-  register Bufbyte *p, *pend;
-  register Emchar c;
+  REGISTER Bufbyte *p, *pend;
+  REGISTER Emchar c;
   /* We store the first 256 chars in an array here and the rest in
      a range table. */
   unsigned char fastmap[0400];
   int negate = 0;
-  register int i;
+  REGISTER int i;
   struct Lisp_Char_Table *syntax_table =
     XCHAR_TABLE (buf->mirror_syntax_table);
 
@@ -945,7 +945,7 @@ search_command (Lisp_Object string, Lisp_Object bound, Lisp_Object no_error,
 		int RE, int posix)
 {
   /* This function has been Mule-ized, except for the trt table handling. */
-  register Bufpos np;
+  REGISTER Bufpos np;
   Bufpos lim;
   EMACS_INT n = direction;
   struct buffer *buf;
@@ -1065,17 +1065,17 @@ search_buffer (struct buffer *buf, Lisp_Object string, Bufpos bufpos,
   /* This function has been Mule-ized, except for the trt table handling. */
   Bytecount len = XSTRING_LENGTH (string);
   Bufbyte *base_pat = XSTRING_DATA (string);
-  register EMACS_INT *BM_tab;
+  REGISTER EMACS_INT *BM_tab;
   EMACS_INT *BM_tab_base;
-  register int direction = ((n > 0) ? 1 : -1);
-  register Bytecount dirlen;
+  REGISTER int direction = ((n > 0) ? 1 : -1);
+  REGISTER Bytecount dirlen;
   EMACS_INT infinity;
   Bytind limit;
   EMACS_INT k;
   Bytecount stride_for_teases = 0;
-  register Bufbyte *pat = 0;
-  register Bufbyte *cursor, *p_limit, *ptr2;
-  register EMACS_INT i, j;
+  REGISTER Bufbyte *pat = 0;
+  REGISTER Bufbyte *cursor, *p_limit, *ptr2;
+  REGISTER EMACS_INT i, j;
   Bytind p1, p2;
   Bytecount s1, s2;
   Bytind pos, lim;
@@ -2304,8 +2304,8 @@ LIST should have been created by calling `match-data' previously.
        (list))
 {
   /* This function has been Mule-ized. */
-  register int i;
-  register Lisp_Object marker;
+  REGISTER int i;
+  REGISTER Lisp_Object marker;
 
   if (running_asynch_code)
     save_search_regs ();
@@ -2423,8 +2423,8 @@ Return a regexp string which matches exactly STRING and nothing else.
        (str))
 {
   /* This function has been Mule-ized. */
-  register Bufbyte *in, *out, *end;
-  register Bufbyte *temp;
+  REGISTER Bufbyte *in, *out, *end;
+  REGISTER Bufbyte *temp;
 
   CHECK_STRING (str);
 
@@ -2499,7 +2499,7 @@ syms_of_search (void)
 void
 vars_of_search (void)
 {
-  register int i;
+  REGISTER int i;
 
   for (i = 0; i < REGEXP_CACHE_SIZE; ++i)
     {

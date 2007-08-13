@@ -57,6 +57,7 @@ Lisp_Object Vbinary_process_output;
 Lisp_Object Vexec_path, Vexec_directory, Vdata_directory, Vdoc_directory;
 Lisp_Object Vdata_directory_list;
 Lisp_Object Vconfigure_info_directory, Vsite_directory;
+Lisp_Object Vinfopath_internal;
 
 /* The default base directory XEmacs is installed under. */
 Lisp_Object Vprefix_directory;
@@ -1222,10 +1223,22 @@ This is the name of the directory in which the build procedure installed
 Emacs's info files; the default value for Info-default-directory-list
 includes this.
 */ );
+
 #ifdef PATH_INFO
   Vconfigure_info_directory =
     Ffile_name_as_directory (build_string (PATH_INFO));
 #else
   Vconfigure_info_directory = Qnil;
+#endif
+
+  DEFVAR_LISP ("infopath-internal", &Vinfopath_internal /*
+The configured initial value of Info-default-directory-list.
+*/ );
+
+#ifdef PATH_INFOPATH
+  Vinfopath_internal = build_string (PATH_INFOPATH);
+#else
+  Vinfopath_internal =
+    build_string ("/usr/info:/usr/local/info:/usr/lib/texmf/doc/info:/usr/local/lib/texmf/doc/info");
 #endif
 }

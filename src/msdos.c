@@ -1125,8 +1125,8 @@ int total_doskeys;		/* Total number of elements stored into recent_doskeys */
 Lisp_Object recent_doskeys; /* A vector, holding the last 100 keystrokes */
 
 DEFUN ("recent-doskeys", Frecent_doskeys, 0, 0, 0, /*
-Return vector of last 100 keyboard input values seen in dos_rawgetc.\n\
-Each input key receives two values in this vector: first the ASCII code,\n\
+Return vector of last 100 keyboard input values seen in dos_rawgetc.
+Each input key receives two values in this vector: first the ASCII code,
 and then the scan code.
 */
        ())

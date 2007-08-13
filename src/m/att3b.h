@@ -116,7 +116,9 @@ extern int sign_extend_temp;
 /* On 3b2/5/15, data space has high order bit on. */
 #define VALBITS 27
 #define VALMASK (((1<<VALBITS) - 1) | (1 << 31))
-#define XTYPE(a) ((enum Lisp_Type) (((a) >> VALBITS) & GCTYPEMASK))
+/* XEmacs: markbit is between type bits and value bits */
+/* #define XTYPE(a) ((enum Lisp_Type) (((a) >> VALBITS) & GCTYPEMASK)) */
+#define XTYPE(a) ((enum Lisp_Type) (((a) >> ((VALBITS) + 1)) & GCTYPEMASK))
   
 #endif /* 3b2, 3b5 or 3b15 */
 

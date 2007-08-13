@@ -46,7 +46,7 @@ Copyright @copyright{} 1995, 1996 Free Software Foundation, Inc.
 @comment The title is printed in a large font.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@center @titlefont{CC Mode 5.18}
+@center @titlefont{CC Mode 5.19}
 @sp 2
 @center @subtitlefont{A GNU Emacs mode for editing C and C-like languages}
 @sp 2
@@ -1142,7 +1142,8 @@ perversely formatted code.  @emph{Don't} try to indent this stuff!}.
 Some provision has been made to at least inform you as to the progress
 of the re-indentation.  The variable @code{c-progress-interval} controls
 how often a progress message is displayed.  Set this variable to
-@code{nil} to inhibit progress messages.
+@code{nil} to inhibit progress messages, including messages normally
+printed when indentation is started and completed.
 
 Also, except as noted below, re-indentation is always driven by the
 same mechanisms that control on-the-fly indentation of code.  @xref{New
