@@ -1,3 +1,8 @@
+1997-10-12  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/package-admin.el (package-admin-add-binary-package):
+	Correctly deal with package-paths with a single directory.
+
 1997-10-11  SL Baur  <steve@altair.xemacs.org>
 
 	* prim/startup.el (set-default-load-path): Look for `packages'

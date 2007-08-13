@@ -500,6 +500,11 @@ emacs_doprnt_1 (Lisp_Object stream, CONST Bufbyte *format_nonreloc,
 	      else
 		{
 		  nextspec->minwidth = XINT (obj);
+		  if (XINT(obj) < 0)
+		    {
+		      spec->minus_flag = 1;
+		      nextspec->minwidth = - nextspec->minwidth;
+		    }
 		}
 	      nextspec->minus_flag = spec->minus_flag;
 	      nextspec->plus_flag = spec->plus_flag;

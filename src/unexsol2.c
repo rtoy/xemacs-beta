@@ -20,7 +20,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-/* #pragma ident "@(#) $Id: unexsol2.c,v 1.2 1997/10/12 01:40:18 steve Exp $" */
+/* #pragma ident "@(#) $Id: unexsol2.c,v 1.3 1997/10/13 03:35:33 steve Exp $" */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -36,7 +36,7 @@ unexec(char *new_name, char *old_name, unsigned int data_start,
        unsigned int bss_start, unsigned int entry_address)
 {
   void *handle;
-  void (*func)(CONST char *file);
+  void (*func)(const char *file);
 
   if ((handle = dlopen (DYNODUMP_SO, RTLD_LAZY)) == NULL)
     {
@@ -45,7 +45,7 @@ unexec(char *new_name, char *old_name, unsigned int data_start,
       exit (1);
     }
 
-  if ((func = (void (*)(CONST char *)) dlsym (handle, DYNODUMP_SYM)) == NULL)
+  if ((func = (void (*)(const char *)) dlsym (handle, DYNODUMP_SYM)) == NULL)
     {
       fprintf (stderr, "unexec(): dlsym(%s): %s \n",
 	       (char *) DYNODUMP_SYM, dlerror());

@@ -1,4 +1,14 @@
+1997-10-12  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.4-beta1 is released.
+
+	* XEmacs 19.16-pre9 is released.
+
+	* XEmacs 19.16-pre8 is released.
+
 1997-10-11  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta28 is released.
 
 	* Makefile.in (src/paths.h): Update PATH_INFOPATH
 	(infopath): New shell variable.

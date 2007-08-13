@@ -63,7 +63,10 @@ The optional `pkg-dir' can be used to override the default package hiearchy
   "Install a pre-bytecompiled XEmacs package into package hierarchy."
   (interactive "fPackage tarball: ")
   (when (null pkg-dir)
-    (setq pkg-dir (cadr package-path)))
+    (when (or (not (listp package-path))
+	      (not package-path))
+      (error "No package path"))
+    (setq pkg-dir (car (last package-path))))
 
   (let ((buf (get-buffer-create package-admin-temp-buffer)))
     (call-process "add-big-package.sh"

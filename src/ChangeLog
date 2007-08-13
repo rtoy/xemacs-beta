@@ -1,4 +1,24 @@
+1997-10-12  SL Baur  <steve@altair.xemacs.org>
+
+	* src/s/freebsd.h: Add X11 guard for building without X11.
+	From Hrvoje Niksic <hniksic@srce.hr>
+
+1997-10-12  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* src/doprnt.c (emacs_doprnt_1): if forwarded field width
+	  is negative, set minus_flag and make the field width
+	  positive.  Makes (format "%*s" -10 "abc") work like
+	  (format "%-*s" 10 "abc").
+
+1997-10-12  SL Baur  <steve@altair.xemacs.org>
+
+	* unexsol2.c (unexec): CONST isn't defined here.
+	From Adrian Aichner <aichner@ecf.teradyne.com>
+	
 1997-10-11  SL Baur  <steve@altair.xemacs.org>
+
+	* realpath.c (realpath): CONST IS LOSING but removing it conflicts 
+	with system headers.
 
 	* callproc.c: New variable infopath-internal.
 	(complex_vars_of_callproc): Declare and initialized it.

@@ -1,4 +1,8 @@
 							-*- indented-text -*-
+to 20.4 beta1 "Century"
+-- Version fork, package work will be carried on in this branch
+-- Miscellaneous bug fixes
+
 to 20.3 beta28 "Reykjavik"
 -- about.el additions and updates
 -- See etc/BETA for initial package documentation
