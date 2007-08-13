@@ -217,7 +217,7 @@ extern Lisp_Object Qmouse_leave_buffer_hook;
 
 /* Defined in callproc.c */
 extern Lisp_Object Vexec_path, Vexec_directory, Vdata_directory,
-		   Vdoc_directory, Vsite_directory;
+		   Vdoc_directory;
 
 
 /* Defined in casefiddle.c */
@@ -239,6 +239,15 @@ Lisp_Object Fcapitalize_word (Lisp_Object arg, Lisp_Object buffer);
 
 extern Lisp_Object Vascii_downcase_table, Vascii_upcase_table;
 extern Lisp_Object Vascii_canon_table, Vascii_eqv_table;
+extern Lisp_Object Vmirror_ascii_downcase_table, Vmirror_ascii_upcase_table;
+extern Lisp_Object Vmirror_ascii_canon_table, Vmirror_ascii_eqv_table;
+
+
+/* Defined in chartab.c */
+Lisp_Object Fmake_char_table (Lisp_Object type);
+Lisp_Object Fput_char_table (Lisp_Object from, Lisp_Object to,
+			     Lisp_Object table);
+Lisp_Object Fcopy_char_table (Lisp_Object table);
 
 
 /* Defined in cmdloop.c */
@@ -675,7 +684,7 @@ Lisp_Object call2_trapping_errors (CONST char *warning_string,
 				   Lisp_Object function,
 				   Lisp_Object object1,
 				   Lisp_Object object2);
-Lisp_Object call_with_suspended_errors (lisp_fn_t fun,
+Lisp_Object call_with_suspended_errors (Lisp_Object (*fun)(),
 					Lisp_Object retval,
 					Lisp_Object class,
 					Error_behavior errb,
@@ -912,7 +921,9 @@ Lisp_Object Finsert_file_contents_internal (Lisp_Object filename,
 					    Lisp_Object visit,
 					    Lisp_Object beg,
 					    Lisp_Object end,
-						   Lisp_Object replace);
+					    Lisp_Object replace,
+					    Lisp_Object codesys,
+					    Lisp_Object used_codesys);
 Lisp_Object Fdo_auto_save (Lisp_Object nomsg, Lisp_Object current_only);
 Lisp_Object Fverify_visited_file_modtime (Lisp_Object buffer);
 Lisp_Object Funhandled_file_name_directory (Lisp_Object filename);
@@ -974,11 +985,14 @@ Lisp_Object Fsubstring (Lisp_Object str, Lisp_Object s, Lisp_Object e);
 Lisp_Object Fnthcdr (Lisp_Object n, Lisp_Object list);
 Lisp_Object Fnth (Lisp_Object n, Lisp_Object list);
 Lisp_Object Fmember (Lisp_Object elt, Lisp_Object list);
+Lisp_Object Fold_member (Lisp_Object measles_mumps, Lisp_Object and_rubella);
 Lisp_Object Fmemq (Lisp_Object elt, Lisp_Object list);
+Lisp_Object Fold_memq (Lisp_Object typhoid, Lisp_Object dysentery);
 Lisp_Object memq_no_quit (Lisp_Object elt, Lisp_Object list);
 Lisp_Object Fassoc (Lisp_Object elt, Lisp_Object list);
 Lisp_Object assoc_no_quit (Lisp_Object key, Lisp_Object alist);
 Lisp_Object Fassq (Lisp_Object key, Lisp_Object alist);
+Lisp_Object Fold_assq (Lisp_Object syphilis, Lisp_Object gonorrhea);
 Lisp_Object assq_no_quit (Lisp_Object key, Lisp_Object alist);
 Lisp_Object Frassoc (Lisp_Object key, Lisp_Object alist);
 Lisp_Object Frassq (Lisp_Object key, Lisp_Object alist);
@@ -1013,6 +1027,7 @@ void external_plist_put (Lisp_Object *plist, Lisp_Object property,
 int external_remprop (Lisp_Object *plist, Lisp_Object property,
 		      int laxp, Error_behavior errb);
 Lisp_Object Fequal (Lisp_Object one, Lisp_Object two);
+Lisp_Object Fold_equal (Lisp_Object ebola, Lisp_Object marburg);
 int internal_equal (Lisp_Object, Lisp_Object, int depth);
 Lisp_Object Ffillarray (Lisp_Object array, Lisp_Object init);
 Lisp_Object Fnconc (int nargs, Lisp_Object *args);
@@ -1149,7 +1164,6 @@ extern Lisp_Object Qpopup;
 extern Lisp_Object Qactually_requested;
 extern Lisp_Object Qafter;
 extern Lisp_Object Qall;
-extern Lisp_Object Qand;
 extern Lisp_Object Qassoc;
 extern Lisp_Object Qat;
 extern Lisp_Object Qautodetect;
@@ -1221,12 +1235,10 @@ extern Lisp_Object Qmodifiers;
 extern Lisp_Object Qmotion;
 extern Lisp_Object Qname;
 extern Lisp_Object Qnone;
-extern Lisp_Object Qnot;
 extern Lisp_Object Qnothing;
 extern Lisp_Object Qnotice;
 extern Lisp_Object Qobject;
 extern Lisp_Object Qonly;
-extern Lisp_Object Qor;
 extern Lisp_Object Qother;
 extern Lisp_Object Qpath;
 extern Lisp_Object Qpointer;
@@ -1240,6 +1252,11 @@ extern Lisp_Object Qresource;
 extern Lisp_Object Qreturn;
 extern Lisp_Object Qreverse;
 extern Lisp_Object Qright;
+extern Lisp_Object Qold_assoc;
+extern Lisp_Object Qold_delete;
+extern Lisp_Object Qold_delq;
+extern Lisp_Object Qold_rassoc;
+extern Lisp_Object Qold_rassq;
 extern Lisp_Object Qsearch;
 extern Lisp_Object Qsimple;
 extern Lisp_Object Qspace;
@@ -1350,7 +1367,10 @@ Lisp_Object Fread_from_string (Lisp_Object string,
 Lisp_Object Fload_internal (Lisp_Object filename,
 			    Lisp_Object missing_ok,
 			    Lisp_Object nomessage,
-				   Lisp_Object nosuffix);
+			    Lisp_Object nosuffix,
+			    Lisp_Object codesys,
+			    Lisp_Object used_codesys);
+void ebolify_bytecode_constants (Lisp_Object vector);
 void close_load_descs (void);
 int locate_file (Lisp_Object path, 
 		 Lisp_Object str, CONST char *suffix, 
@@ -1463,6 +1483,13 @@ extern Lisp_Object Vmocklisp_arguments, Qmocklisp, Qmocklisp_arguments;
 Lisp_Object ml_apply (Lisp_Object function, Lisp_Object args);
 
 
+/* Defined in mule-*.c */
+Lisp_Object Ffind_charset (Lisp_Object charset);
+Lisp_Object Fget_coding_system (Lisp_Object coding_system);
+Lisp_Object Ffind_coding_system (Lisp_Object coding_system);
+Lisp_Object Fcoding_system_property (Lisp_Object coding_system,
+				     Lisp_Object property);
+extern Lisp_Object Qmnemonic;
 
 
 /* Defined in objects-tty.c */
@@ -1688,7 +1715,6 @@ void kill_buffer_local_variables (struct buffer *buf);
 Lisp_Object Fmake_local_variable (Lisp_Object object);
 int symbol_value_buffer_local_info (Lisp_Object symbol, struct buffer *);
 Lisp_Object find_symbol_value (Lisp_Object symbol);
-Lisp_Object find_symbol_value_quickly (Lisp_Object symbol_cons, int find_it_p);
 Lisp_Object top_level_value (Lisp_Object symbol);
 Lisp_Object Fkill_local_variable (Lisp_Object symbol);
 Lisp_Object Fmake_variable_buffer_local (Lisp_Object variable);

@@ -1310,7 +1310,7 @@ as a list of strings."
 
 (defun gopher-telnet-object (obj oldbuf)
   "Start a telnet session to a gopher object.
-If gopher-telnet-command is non-nil, then that is a command to start
+If gopher-telnet-command is nonnil, then that is a command to start
 a telnet session in a subprocess.  Otherwise, the emacs-lisp telnet
 package is used."
   
@@ -1547,9 +1547,7 @@ document, otherwise T.
 							gopher-port-aliases))))
 			    (setq try-again t)
 			  (ding)
-			  (message (format "%s: %s"
-					   (nth 0 errinfo)
-					   (nth 1 errinfo)))
+			  (message "%s: %s" (nth 0 errinfo) (nth 1 errinfo))
 			  ))))
 	     p)))
 

@@ -207,7 +207,8 @@ Returns t if expansion took place.
 
       /* Find the initial.  */
       while (pos < BUF_PT (buf)
-             && !WORD_SYNTAX_P (buf->syntax_table, BUF_FETCH_CHAR (buf, pos)))
+             && !WORD_SYNTAX_P (XCHAR_TABLE (buf->mirror_syntax_table),
+				BUF_FETCH_CHAR (buf, pos)))
         pos++;
 
       /* Change just that.  */

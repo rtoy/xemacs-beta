@@ -1669,44 +1669,22 @@ See `default-toolbar-height' for more information.
 			 toolbar_size_changed_in_frame);
 
   /* #### this is ugly. */
-  /* sb - even uglier to make this work without console tty support, ugh. */
-  elt = Qnil;
-#ifdef HAVE_TTY
   elt = list1 (Fcons (list1 (Qtty), Qzero));
-#endif
 #ifdef HAVE_X_WINDOWS
-  if (!EQ(elt, Qnil))
-    elt = Fcons (Fcons (list1 (Qx), make_int (DEFAULT_TOOLBAR_HEIGHT)), elt);
-  else
-    elt = list1 (Fcons (list1 (Qx), make_int (DEFAULT_TOOLBAR_HEIGHT)));
+  elt = Fcons (Fcons (list1 (Qx), make_int (DEFAULT_TOOLBAR_HEIGHT)), elt);
 #endif
 #ifdef HAVE_NEXTSTEP
-  if (!EQ(elt, Qnil))
-    elt = Fcons (Fcons (list1 (Qns), make_int (DEFAULT_TOOLBAR_HEIGHT)), elt);
-  else
-    elt = list1 (Fcons (list1 (Qns), make_int (DEFAULT_TOOLBAR_HEIGHT)));
+  elt = Fcons (Fcons (list1 (Qns), make_int (DEFAULT_TOOLBAR_HEIGHT)), elt);
 #endif
-  if (!EQ(elt, Qnil))
-    set_specifier_fallback (Vdefault_toolbar_height, elt);
-
-  elt = Qnil;
-#ifdef HAVE_TTY
+  set_specifier_fallback (Vdefault_toolbar_height, elt);
   elt = list1 (Fcons (list1 (Qtty), Qzero));
-#endif
 #ifdef HAVE_X_WINDOWS
-  if (!EQ(elt, Qnil))
-    elt = Fcons (Fcons (list1 (Qx), make_int (DEFAULT_TOOLBAR_WIDTH)), elt);
-  else
-    elt = list1 (Fcons (list1 (Qx), make_int (DEFAULT_TOOLBAR_WIDTH)));
+  elt = Fcons (Fcons (list1 (Qx), make_int (DEFAULT_TOOLBAR_WIDTH)), elt);
 #endif
 #ifdef HAVE_NEXTSTEP
-  if (!EQ(elt, Qnil))
-    elt = Fcons (Fcons (list1 (Qns), make_int (DEFAULT_TOOLBAR_WIDTH)), elt);
-  else
-    elt = list1 (Fcons (list1 (Qns), make_int (DEFAULT_TOOLBAR_WIDTH)));
+  elt = Fcons (Fcons (list1 (Qns), make_int (DEFAULT_TOOLBAR_WIDTH)), elt);
 #endif
-  if (!EQ(elt, Qnil))
-    set_specifier_fallback (Vdefault_toolbar_width, elt);
+  set_specifier_fallback (Vdefault_toolbar_width, elt);
 
   set_specifier_fallback (Vtoolbar_size[TOP_TOOLBAR], Vdefault_toolbar_height);
   elt = list1 (Fcons (Qnil, Qzero));

@@ -7,7 +7,7 @@
 # variables VERSION, EMACS, DATADIR and comment out the Emacs-specific
 # versions.
 
-VERSION = 19.34
+VERSION = 19.30
 EMACS = emacs-$(VERSION)
 #VERSION = 19.14
 #EMACS = xemacs-$(VERSION)  
@@ -25,13 +25,16 @@ MAKEINFO = makeinfo
 INSTALL = install
 
 # --------- ONLY AUTHORIZED PERSONNEL BEYOND THIS POINT!!! ------------
-EDIFF    = ediff-init.el ediff-help.el ediff-diff.el ediff-merg.el \
-           ediff-wind.el ediff-util.el ediff-mult.el ediff-vers.el \
-           ediff-ptch.el ediff.el ediff-hook.el ediff-tbar.el
-EDIFFelc = ediff-init.elc ediff-help.elc ediff-diff.elc ediff-merg.elc \
-           ediff-wind.elc ediff-util.elc ediff-mult.elc ediff-vers.elc \
-           ediff-ptch.elc ediff.elc ediff-hook.elc ediff-tbar.elc
+EDIFF    = ediff-init.el ediff-diff.el ediff-merg.el ediff-wind.el \
+           ediff-util.el ediff-mult.el ediff-vers.el ediff-ptch.el \
+	   ediff.el ediff-hook.el
+EDIFFelc = ediff-init.elc ediff-diff.elc ediff-merg.elc ediff-wind.elc \
+	   ediff-util.elc ediff-mult.elc ediff-vers.elc ediff-ptch.elc \
+	   ediff.elc ediff-hook.elc
 
+PRELOADS = -l ./ediff-init.el -l ./ediff-diff.el -l ./ediff-wind.el \
+	   -l ./ediff-merg.el -l ./ediff-mult.el -l ./ediff-util.el \
+	   -l ./ediff.el 
 
 all: hello elc goodbye dvi info
 
@@ -64,49 +67,41 @@ ediff-init.elc: ediff-init.el
 	@echo ""
 	$(EMACS) -batch -f batch-byte-compile ediff-init.el
 
-ediff-help.elc: ediff-help.el
-	@echo ""
-	$(EMACS) -batch -f batch-byte-compile ediff-help.el
-
 ediff-hook.elc: ediff-hook.el
 	@echo ""
 	$(EMACS) -batch -f batch-byte-compile ediff-hook.el
 
-ediff-tbar.elc: ediff-tbar.el
-	@echo ""
-	$(EMACS) -batch -f batch-byte-compile ediff-tbar.el
-
 ediff-diff.elc: ediff-init.el ediff-diff.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile ediff-diff.el
+	$(EMACS) -batch $(PRELOADS) -f batch-byte-compile ediff-diff.el
 
 ediff-merg.elc: ediff-init.el ediff-merg.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile ediff-merg.el
+	$(EMACS) -batch $(PRELOADS) -f batch-byte-compile ediff-merg.el
 
 ediff-mult.elc: ediff-init.el ediff-mult.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile ediff-mult.el
+	$(EMACS) -batch $(PRELOADS) -f batch-byte-compile ediff-mult.el
 
 ediff-vers.elc: ediff-init.el ediff-vers.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile ediff-vers.el
+	$(EMACS) -batch $(PRELOADS) -f batch-byte-compile ediff-vers.el
 
 ediff-ptch.elc: ediff-init.el ediff-ptch.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile ediff-ptch.el
+	$(EMACS) -batch $(PRELOADS) -f batch-byte-compile ediff-ptch.el
 
 ediff.elc: ediff-init.el ediff.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile ediff.el
+	$(EMACS) -batch $(PRELOADS) -f batch-byte-compile ediff.el
 
 ediff-util.elc: ediff-init.el ediff-util.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile ediff-util.el
+	$(EMACS) -batch $(PRELOADS) -f batch-byte-compile ediff-util.el
 
 ediff-wind.elc: ediff-init.el ediff-wind.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile ediff-wind.el
+	$(EMACS) -batch $(PRELOADS) -f batch-byte-compile ediff-wind.el
 
 ediff.dvi: ediff.texi
 	@echo ""
@@ -141,7 +136,7 @@ install: all
 	$(INSTALL) -m444 $(EDIFF) $(LISPDIR)
 	$(INSTALL) -m644 ediff*.elc $(LISPDIR)
 	$(INSTALL) -m644 ediff.dvi $(ETCDIR)
-	$(INSTALL) -m444 ediff ediff-? $(INFODIR)
+	$(INSTALL) -m444 ediff.info* $(INFODIR)
 	@echo ""
 	@echo "Please move ediff.texi to emacs-distribution-directory/man/"
 	@echo ""

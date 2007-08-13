@@ -250,58 +250,13 @@ Thus, this does not include the shell's current directory.")
 (defvar shell-mode-hook nil
   "*Hook for customising Shell mode.")
 
-
-;; font-locking
-(defvar shell-prompt-face 'shell-prompt-face
-  "Face for shell prompts.")
-(defvar shell-option-face 'shell-option-face
-  "Face for command line options.")
-(defvar shell-output-face 'shell-output-face
-  "Face for generic shell output.")
-(defvar shell-output-2-face 'shell-output-2-face
-  "Face for grep-like output.")
-(defvar shell-output-3-face 'shell-output-3-face
-  "Face for [N] output where N is a number.")
-
-(make-face shell-prompt-face)
-(make-face shell-option-face)
-(make-face shell-output-face)
-(make-face shell-output-2-face)
-(make-face shell-output-3-face)
-
-(defun shell-font-lock-mode-hook ()
-  (or (face-differs-from-default-p shell-prompt-face)
-      (copy-face 'font-lock-keyword-face shell-prompt-face))
-  (or (face-differs-from-default-p shell-option-face)
-      (copy-face 'font-lock-comment-face shell-option-face))
-  (or (face-differs-from-default-p shell-output-face)
-      (copy-face 'italic shell-output-face))
-  (or (face-differs-from-default-p shell-output-2-face)
-      (copy-face 'font-lock-string-face shell-output-2-face))
-  (or (face-differs-from-default-p shell-output-3-face)
-      (copy-face 'font-lock-string-face shell-output-3-face))
-  ;; we only need to do this once
-  (remove-hook 'font-lock-mode-hook 'shell-font-lock-mode-hook))
-(add-hook 'font-lock-mode-hook 'shell-font-lock-mode-hook)
-
-(defvar shell-prompt-pattern-for-font-lock nil
-  "If non-nil, pattern to use to font-lock the prompt.
-When nil, shell-prompt-pattern will be used.  Set this to a regular
-expression if you want the font-locked pattern to be different then
-the shell's prompt pattern.")
-
 (defvar shell-font-lock-keywords
-  (list '(eval . (cons (if shell-prompt-pattern-for-font-lock
-			   shell-prompt-pattern-for-font-lock
-			 shell-prompt-pattern)
-		       shell-prompt-face))
-	'("[ \t]\\([+-][^ \t\n>]+\\)" 1 shell-option-face)
-	'("^[^ \t\n]+:.*" . shell-output-2-face)
-	'("^\\[[1-9][0-9]*\\]" . shell-output-3-face)
-	'("^[^\n]+.*$" . shell-output-face))
+  (list (cons shell-prompt-pattern 'font-lock-keyword-face)
+	'("[ \t]\\([+-][^ \t\n]+\\)" 1 font-lock-comment-face)
+	'("^[^ \t\n]+:.*" . font-lock-string-face)
+	'("^\\[[1-9][0-9]*\\]" . font-lock-string-face))
   "Additional expressions to highlight in Shell mode.")
 (put 'shell-mode 'font-lock-defaults '(shell-font-lock-keywords t))
-
 
 ;;; Basic Procedures
 ;;; ===========================================================================

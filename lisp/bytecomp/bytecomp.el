@@ -1,14 +1,15 @@
 ;;; bytecomp.el --- compilation of Lisp code into byte code.
 
 ;;; Copyright (C) 1985-1987, 1991-1994 Free Software Foundation, Inc.
+;;; Copyright (C) 1996 Ben Wing.
 
-;; Author: Jamie Zawinski <jwz@netscape.com>
+;; Author: Jamie Zawinski <jwz@lucid.com>
 ;;	Hallvard Furuseth <hbf@ulrik.uio.no>
 ;; Keywords: internal
 
 ;; Subsequently modified by RMS and others.
 
-(defconst byte-compile-version (purecopy  "2.25; 1-Sep-94."))
+(defconst byte-compile-version (purecopy  "2.25 XEmacs; 22-Mar-96."))
 
 ;; This file is part of XEmacs.
 
@@ -103,13 +104,9 @@
 ;;;					    a macro to a lambda or vice versa,
 ;;;					    or redefined to take other args)
 ;;;				'obsolete  (obsolete variables and functions)
-;;;				'pedantic  (references to Emacs-compatible
-;;;					    symbols)
-;;; (RMS calls the following option byte-compile-compatibility but
-;;;  our name is better)
-;;; byte-compile-emacs18-compatibility	Whether the compiler should
+;;; byte-compile-emacs19-compatibility	Whether the compiler should
 ;;;				generate .elc files which can be loaded into
-;;;				generic emacs 18.
+;;;				generic emacs 19.
 ;;; emacs-lisp-file-regexp	Regexp for the extension of source-files;
 ;;;				see also the function byte-compile-dest-file.
 ;;; byte-compile-overwrite-file	If nil, delete old .elc files before saving.
@@ -196,8 +193,6 @@
 ;;;	it's a synergistic result of macroexpansion.  Need some way to note
 ;;;	that a varref is being optimized away?  Of course it would be nice to
 ;;;	optimize away the binding too, someday, but it's unsafe today.
-;;;  o	Is it time to finally delete all of that egregious v18 compatibility
-;;;	code yet?
 ;;;  o	(See byte-optimize.el for the optimization TODO list.)
 
 (require 'backquote)
@@ -208,7 +203,7 @@
 
 (eval-when-compile
   (defvar byte-compile-single-version nil
-    "If this is true, the choice of emacs version (v18 or v19) byte-codes will
+    "If this is true, the choice of emacs version (v19 or v20) byte-codes will
 be hard-coded into bytecomp when it compiles itself.  If the compiler itself
 is compiled with optimization, this causes a speedup.")
 
@@ -219,13 +214,6 @@ is compiled with optimization, this causes a speedup.")
 	 (defmacro byte-compile-single-version () nil)
 	 (defmacro byte-compile-version-cond (cond) cond)))
   )
-
-;;; The crud you see scattered through this file of the form
-;;;   (or (and (boundp 'epoch::version) epoch::version)
-;;;	  (string-lessp emacs-version "19"))
-;;; is because the Epoch folks couldn't be bothered to follow the
-;;; normal emacs version numbering convention.
-
 
 (defvar emacs-lisp-file-regexp (if (eq system-type 'vax-vms)
 				   (purecopy "\\.EL\\(;[0-9]+\\)?$")
@@ -275,8 +263,9 @@ You may want to redefine `byte-compile-dest-file' if you change this.")
   (and (not noninteractive) (> (device-baud-rate) search-slow-speed))
   "*Non-nil means print messages describing progress of byte-compiler.")
 
-(defvar byte-compile-emacs18-compatibility nil
-  "*Non-nil means generate output that can run in Emacs 18.")
+(defvar byte-compile-emacs19-compatibility
+  (not (emacs-version>= 20))
+  "*Non-nil means generate output that can run in Emacs 19.")
 
 (defvar byte-optimize t
   "*Enables optimization in the byte compiler.
@@ -301,7 +290,13 @@ compatibility.")
 ;; byte code that can't be read by XEmacs 19.13 or before or FSF 19.28 or
 ;; before.
 ;;
-;; Therefore, neither is enabled for 19.14.
+;; Therefore, neither is enabled for 19.14.  Both are enabled for 20.0
+;; because we have no reason to be conservative about changing the
+;; way things work. (Ben)
+
+;; However, I don't think that defaulting byte-compile-dynamic to nil
+;; is a compatibility issue - rather it is a performance issue.
+;; Therefore I am setting byte-compile-dynamic back to nil. (mrb)
 
 (defvar byte-compile-dynamic nil
   "*If non-nil, compile function bodies so they load lazily.
@@ -315,7 +310,7 @@ For example, add  -*-byte-compile-dynamic: t;-*- on the first line.
 When this option is true, if you load the compiled file and then move it,
 the functions you loaded will not be able to run.")
 
-(defvar byte-compile-dynamic-docstrings nil
+(defvar byte-compile-dynamic-docstrings (emacs-version>= 20)
   "*If non-nil, compile doc strings for lazy access.
 We bury the doc strings of functions and variables
 inside comments in the file, and bring them into core only when they
@@ -355,7 +350,6 @@ Elements of the list may be:
   redefine	function cell redefined from a macro to a lambda or vice
 		versa, or redefined to take a different number of arguments.
   obsolete	use of an obsolete function or variable.
-  pedantic	warn of use of compatible symbols.
 
 The default set is specified by `byte-compile-default-warnings' and
 normally encompasses all possible warnings.
@@ -504,9 +498,8 @@ Each element is (INDEX . VALUE)")
 		     (get 'byte-code-vector 'tmp-compile-time-value)
 		     'byte-stack+-info
 		     (get 'byte-stack+-info 'tmp-compile-time-value))
-    ;; emacs-18 has no REMPROP.
-    (put 'byte-code-vector 'tmp-compile-time-value nil)
-    (put 'byte-stack+-info 'tmp-compile-time-value nil)))
+    (remprop 'byte-code-vector 'tmp-compile-time-value)
+    (remprop 'byte-stack+-info 'tmp-compile-time-value)))
 
 
 ;; unused: 0-7
@@ -528,8 +521,8 @@ Each element is (INDEX . VALUE)")
 (byte-defop  58  0 byte-consp)
 (byte-defop  59  0 byte-stringp)
 (byte-defop  60  0 byte-listp)
-(byte-defop  61 -1 byte-eq)
-(byte-defop  62 -1 byte-memq)
+(byte-defop  61 -1 byte-old-eq)
+(byte-defop  62 -1 byte-old-memq)
 (byte-defop  63  0 byte-not)
 (byte-defop  64  0 byte-car)
 (byte-defop  65  0 byte-cdr)
@@ -562,9 +555,9 @@ Each element is (INDEX . VALUE)")
 (byte-defop  92 -1 byte-plus)
 (byte-defop  93 -1 byte-max)
 (byte-defop  94 -1 byte-min)
-(byte-defop  95 -1 byte-mult) ; v19 only
+(byte-defop  95 -1 byte-mult)
 (byte-defop  96  1 byte-point)
-(byte-defop  97  1 byte-mark-OBSOLETE) ; no longer generated as of v18
+(byte-defop  97 -1 byte-eq) ; new as of v20
 (byte-defop  98  0 byte-goto-char)
 (byte-defop  99  0 byte-insert)
 (byte-defop 100  1 byte-point-max)
@@ -574,18 +567,17 @@ Each element is (INDEX . VALUE)")
 (byte-defop 104  1 byte-preceding-char)
 (byte-defop 105  1 byte-current-column)
 (byte-defop 106  0 byte-indent-to)
-(byte-defop 107  0 byte-scan-buffer-OBSOLETE) ; no longer generated as of v18
+(byte-defop 107 -1 byte-equal) ; new as of v20
 (byte-defop 108  1 byte-eolp)
 (byte-defop 109  1 byte-eobp)
 (byte-defop 110  1 byte-bolp)
 (byte-defop 111  1 byte-bobp)
 (byte-defop 112  1 byte-current-buffer)
 (byte-defop 113  0 byte-set-buffer)
-(byte-defop 114  1 byte-read-char-OBSOLETE)
-(byte-defop 115  0 byte-set-mark-OBSOLETE)
+(byte-defop 114  1 byte-read-char-OBSOLETE) ;obsolete as of v19
+(byte-defop 115 -1 byte-memq) ; new as of v20
 (byte-defop 116  1 byte-interactive-p)
 
-;; These ops are new to v19
 (byte-defop 117  0 byte-forward-char)
 (byte-defop 118  0 byte-forward-word)
 (byte-defop 119 -1 byte-skip-chars-forward)
@@ -645,13 +637,10 @@ otherwise pop it")
 ;; Unbinds standard-output and makes the temp buffer visible.
 (byte-defop 145 -1 byte-temp-output-buffer-show)
 
-;; these ops are new to v19
-
 ;; To unbind back to the beginning of this frame.
 ;; Not used yet, but will be needed for tail-recursion elimination.
 (byte-defop 146  0 byte-unbind-all)
 
-;; these ops are new to v19
 (byte-defop 147 -2 byte-set-marker)
 (byte-defop 148  0 byte-match-beginning)
 (byte-defop 149  0 byte-match-end)
@@ -659,11 +648,11 @@ otherwise pop it")
 (byte-defop 151  0 byte-downcase)
 (byte-defop 152 -1 byte-string=)
 (byte-defop 153 -1 byte-string<)
-(byte-defop 154 -1 byte-equal)
+(byte-defop 154 -1 byte-old-equal)
 (byte-defop 155 -1 byte-nthcdr)
 (byte-defop 156 -1 byte-elt)
-(byte-defop 157 -1 byte-member)
-(byte-defop 158 -1 byte-assq)
+(byte-defop 157 -1 byte-old-member)
+(byte-defop 158 -1 byte-old-assq)
 (byte-defop 159  0 byte-nreverse)
 (byte-defop 160 -1 byte-setcar)
 (byte-defop 161 -1 byte-setcdr)
@@ -679,7 +668,6 @@ otherwise pop it")
 
 ;; These are not present in FSF.
 ;;
-;; New to v19.  These store their arg in the next byte.
 (byte-defop 170  0 byte-rel-goto)
 (byte-defop 171 -1 byte-rel-goto-if-nil)
 (byte-defop 172 -1 byte-rel-goto-if-not-nil)
@@ -690,7 +678,13 @@ otherwise pop it")
 (byte-defop 176 nil byte-concatN)
 (byte-defop 177 nil byte-insertN)
 
-;; unused: 178-191
+;; unused: 178-181
+
+;; these ops are new to v20
+(byte-defop 182 -1 byte-member)
+(byte-defop 183 -1 byte-assq)
+
+;; unused: 184-191
 
 (byte-defop 192  1 byte-constant	"for reference to a constant")
 ;; codes 193-255 are consumed by byte-constant.
@@ -780,7 +774,8 @@ otherwise pop it")
 				 (cons (lsh off -8)
 				       (cons (logand off 255)
 					     (cons byte-constant2 bytes))))))
-			 ((<= byte-listN (symbol-value op))
+			 ((and (<= byte-listN (symbol-value op))
+			       (<= (symbol-value op) byte-insertN))
 			  (setq pc (+ 2 pc))
 			  (cons off (cons (symbol-value op) bytes)))
 			 ((< off 6)
@@ -798,7 +793,7 @@ otherwise pop it")
       (setq lap (cdr lap)))
     ;;(if (not (= pc (length bytes)))
     ;;    (error "Compiler error: pc mismatch - %s %s" pc (length bytes)))
-    (cond ((not (byte-compile-version-cond byte-compile-emacs18-compatibility))
+    (cond (t ;; starting with Emacs 19.
 	   ;; Make relative jumps
 	   (setq patchlist (nreverse patchlist))
 	   (while (progn
@@ -954,23 +949,13 @@ otherwise pop it")
 			       (car new)
 			     (format "use %s instead." (car new)))))
     (funcall (or (cdr new) 'byte-compile-normal-call) form)))
-
-;;; Used by make-obsolete.
-(defun byte-compile-compatible (form)
-  (let ((new (get (car form) 'byte-compatible-info)))
-    (if (memq 'pedantic byte-compile-warnings)
-	(byte-compile-warn "%s is provided for compatibility; %s" (car form)
-			   (if (stringp (car new))
-			       (car new)
-			     (format "use %s instead." (car new)))))
-    (funcall (or (cdr new) 'byte-compile-normal-call) form)))
 
 ;; Compiler options
 
 (defconst byte-compiler-legal-options
   '((optimize byte-optimize (t nil source byte) val)
-    (file-format byte-compile-emacs18-compatibility (emacs18 emacs19)
-		 (eq val 'emacs18))
+    (file-format byte-compile-emacs19-compatibility (emacs19 emacs20)
+		 (eq val 'emacs19))
     (delete-errors byte-compile-delete-errors (t nil) val)
     (verbose byte-compile-verbose (t nil) val)
     (new-bytecodes byte-compile-new-bytecodes (t nil) val)
@@ -982,14 +967,14 @@ otherwise pop it")
 (defconst byte-compiler-obsolete-options
   '((new-bytecodes t)))
 
-;; Inhibit v18/v19 selectors if the version is hardcoded.
+;; Inhibit v19/v20 selectors if the version is hardcoded.
 ;; #### This should print a warning if the user tries to change something 
 ;; than can't be changed because the running compiler doesn't support it.
 (cond
  ((byte-compile-single-version)
   (setcar (cdr (cdr (assq 'file-format byte-compiler-legal-options)))
-	  (if (byte-compile-version-cond byte-compile-emacs18-compatibility)
-	      '(emacs18) '(emacs19)))))
+	  (if (byte-compile-version-cond byte-compile-emacs19-compatibility)
+	      '(emacs19) '(emacs20)))))
 
 ;; now we can copy it.
 (setq byte-compiler-legal-options (purecopy byte-compiler-legal-options))
@@ -1239,20 +1224,18 @@ otherwise pop it")
 		(not (eq (car rest) 'new-scope)))
       (setq cell (car rest))
       (if (and (= 0 (logand byte-compile-referenced-bit (cdr cell)))
-	       ;; Don't warn about declared-but-unused arguments,
-	       ;; for two reasons: first, the arglist structure
-	       ;; might be imposed by external forces, and we don't
-	       ;; have (declare (ignore x)) yet; and second, inline
-	       ;; expansion produces forms like
+	       ;; Don't warn about declared-but-unused arguments, for two
+	       ;; reasons: first, the arglist structure might be imposed by
+	       ;; external forces, and we don't have (declare (ignore x)) yet;
+	       ;; and second, inline expansion produces forms like
 	       ;;   ((lambda (arg) (byte-code "..." [arg])) x)
-	       ;; which we can't (ok, well, don't) recognise as
-	       ;; containing a reference to arg, so every inline
-	       ;; expansion would generate a warning.  (If we had
-	       ;; `ignore' then inline expansion could emit an
-	       ;; ignore declaration.)
+	       ;; which we can't (ok, well, don't) recognise as containing a
+	       ;; reference to arg, so every inline expansion would generate
+	       ;; a warning.  (If we had `ignore' then inline expansion could
+	       ;; emit an ignore declaration.)
 	       (= 0 (logand byte-compile-arglist-bit (cdr cell)))
-	       ;; Don't warn about defvars because this is a
-	       ;; legitimate special binding.
+	       ;; Don't warn about defvars because this is a legitimate special
+	       ;; binding.
 	       (not (byte-compile-defvar-p (car cell))))
 	  (setq unreferenced (cons (car cell) unreferenced)))
       (setq rest (cdr rest)))
@@ -1292,8 +1275,8 @@ otherwise pop it")
 		;;
 		(byte-compile-verbose byte-compile-verbose)
 		(byte-optimize byte-optimize)
-		(byte-compile-emacs18-compatibility
-		 byte-compile-emacs18-compatibility)
+		(byte-compile-emacs19-compatibility
+		 byte-compile-emacs19-compatibility)
 		(byte-compile-dynamic byte-compile-dynamic)
 		(byte-compile-dynamic-docstrings
 		 byte-compile-dynamic-docstrings)
@@ -1670,7 +1653,7 @@ With argument, insert value in current buffer after the form."
     (goto-char 1)
     ;;
     ;; The magic number of .elc files is ";ELC", or 0x3B454C43.  After that is
-    ;; the file-format version number (18 or 19) as a byte, followed by some
+    ;; the file-format version number (19 or 20) as a byte, followed by some
     ;; nulls.  The primary motivation for doing this is to get some binary
     ;; characters up in the first line of the file so that `diff' will simply
     ;; say "Binary files differ" instead of actually doing a diff of two .elc
@@ -1681,7 +1664,7 @@ With argument, insert value in current buffer after the form."
     ;;
     (insert
      ";ELC"
-     (if (byte-compile-version-cond byte-compile-emacs18-compatibility) 18 19)
+     (if (byte-compile-version-cond byte-compile-emacs19-compatibility) 19 20)
      "\000\000\000\n"
      )
     (insert ";;; compiled by "
@@ -1696,29 +1679,68 @@ With argument, insert value in current buffer after the form."
        ((eq byte-optimize 'byte) "byte-level optimization only")
        (byte-optimize "optimization is on")
        (t "optimization is off"))
-     (if (byte-compile-version-cond byte-compile-emacs18-compatibility)
-	 "; compiled with Emacs 18 compatibility.\n"
+     (if (byte-compile-version-cond byte-compile-emacs19-compatibility)
+	 "; compiled with Emacs 19 compatibility.\n"
        ".\n"))
-   (if (not (byte-compile-version-cond byte-compile-emacs18-compatibility))
-       (insert ";;; this file uses opcodes which do not exist in Emacs 18.\n"
+   (if (not (byte-compile-version-cond byte-compile-emacs19-compatibility))
+       (insert ";;; this file uses opcodes which do not exist in Emacs 19.\n"
 	       ;; Have to check if emacs-version is bound so that this works
 	       ;; in files loaded early in loadup.el.
 	       "\n(if (and (boundp 'emacs-version)\n"
 	       "\t (or (and (boundp 'epoch::version) epoch::version)\n"
-		(if dynamic-docstrings
-		    "\t     (string-lessp emacs-version \"19.14\")))\n"
-		  "\t     (string-lessp emacs-version \"19\")))\n")
-		"    (error \"`"
-		;; prin1-to-string is used to quote backslashes.
-		(substring (prin1-to-string (file-name-nondirectory filename))
-			   1 -1)
-		(if dynamic-docstrings
-		    "' was compiled for XEmacs 19.14/Emacs 19.29 or later\"))\n\n"
-		  "' was compiled for Emacs 19\"))\n\n"))
-      (insert "(or (boundp 'current-load-list) (setq current-load-list nil))\n"
-	      "\n")
-      )))
+	       "\t     (string-lessp emacs-version \"20\")))\n"
+	       "    (error \"`"
+	       ;; prin1-to-string is used to quote backslashes.
+	       (substring (prin1-to-string (file-name-nondirectory filename))
+			  1 -1)
+	       "' was compiled for Emacs 20\"))\n\n"))
+   (insert "(or (boundp 'current-load-list) (setq current-load-list nil))\n"
+	   "\n")
+   (if (and (byte-compile-version-cond byte-compile-emacs19-compatibility)
+	    dynamic-docstrings)
+       (insert ";;; this file uses opcodes which do not exist prior to\n"
+	       ";;; XEmacs 19.14/GNU Emacs 19.29 or later."
+	       ;; Have to check if emacs-version is bound so that this works
+	       ;; in files loaded early in loadup.el.
+	       "\n(if (and (boundp 'emacs-version)\n"
+	       "\t (or (and (boundp 'epoch::version) epoch::version)\n"
+	       "\t     (and (not (string-match \"XEmacs\" emacs-version))\n"
+	       "\t          (string-lessp emacs-version \"19.29\"))n"
+	       "\t     (string-lessp emacs-version \"19.14\")))\n"
+	       "    (error \"`"
+	       ;; prin1-to-string is used to quote backslashes.
+	       (substring (prin1-to-string (file-name-nondirectory filename))
+			  1 -1)
+	       "' was compiled for XEmacs 19.14/Emacs 19.29 or later\"))\n\n"
+	       )
+      ))
 
+  ;; back in the inbuffer; determine and set the coding system for the .elc
+  ;; file if under Mule.  If there are any extended characters in the
+  ;; input file, use `escape-quoted' to make sure that both binary and
+  ;; extended characters are output properly and distinguished properly.
+  ;; Otherwise, use `no-conversion' for maximum portability with non-Mule
+  ;; Emacsen.
+  (if (featurep 'mule)
+      (if (save-excursion
+	    (set-buffer byte-compile-inbuffer)
+	    (goto-char (point-min))
+	    ;; mrb- There must be a better way than skip-chars-forward
+	    (skip-chars-forward (concat (char-to-string 0) "-"
+					(char-to-string 255)))
+	    (eq (point) (point-max)))
+	  (setq file-coding-system 'no-conversion)
+	(insert ";;;###coding system: escape-quoted\n")
+	(setq file-coding-system 'escape-quoted)
+	;; Lazy loading not yet implemented for MULE files
+	;; mrb - Fix this someday.
+	(save-excursion
+	  (set-buffer byte-compile-inbuffer)
+	  (setq byte-compile-dynamic nil 
+		byte-compile-dynamic-docstrings nil))
+	;;(external-debugging-output (prin1-to-string (buffer-local-variables))))
+	))
+  )
 
 
 (defun byte-compile-output-file-form (form)
@@ -2089,8 +2111,7 @@ list that represents a doc string reference.
 	    ;; No doc string.  Provide -1 as the "doc string index"
 	    ;; so that no element will be treated as a doc string.
 	    (byte-compile-output-docform
-	     (if (byte-compile-version-cond byte-compile-emacs18-compatibility)
-		 "\n(fset '" "\n(defalias '")
+	     "\n(defalias '"
 	     name
 	     (cond ((atom code)
 		    (if macrop '(" '(macro . #[" -1 "])") '(" #[" -1 "]")))
@@ -2110,8 +2131,7 @@ list that represents a doc string reference.
 	  ;; Output the form by hand, that's much simpler than having
 	  ;; b-c-output-file-form analyze the defalias.
 	  (byte-compile-output-docform
-	   (if (byte-compile-version-cond byte-compile-emacs18-compatibility)
-	       "\n(fset '" "\n(defalias '")
+	   "\n(defalias '"
 	   name
 	   (cond ((atom code) ; compiled-function-p
 		  (if macrop '(" '(macro . #[" 4 "])") '(" #[" 4 "]")))
@@ -2243,16 +2263,11 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 ;; Given a function made by byte-compile-lambda, make a form which produces it.
 (defun byte-compile-byte-code-maker (fun)
   (cond
-   ((byte-compile-version-cond byte-compile-emacs18-compatibility)
-    ;; Return (quote (lambda ...)).
-    (list 'quote (byte-compile-byte-code-unmake fun)))
    ;; ## atom is faster than compiled-func-p.
    ((atom fun)				; compiled-function-p
-    ;; generate-emacs19-bytecodes must be on, otherwise byte-compile-lambda
-    ;; would have produced a lambda.
     fun)
-   ;; b-c-lambda didn't produce a compiled-function, so it's either a trivial
-   ;; function, or this is Emacs 18, or generate-emacs19-bytecodes is off.
+   ;; b-c-lambda didn't produce a compiled-function, so it must be a trivial
+   ;; function.
    ((let (tmp)
       (if (and (setq tmp (assq 'byte-code (cdr-safe (cdr fun))))
 	       (null (cdr (memq tmp fun))))
@@ -2276,22 +2291,6 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 				  (list 'quote (nth 1 interactive))))))))
 	;; a non-compiled function (probably trivial)
 	(list 'quote fun))))))
-
-;; Turn a function into an ordinary lambda.  Needed for v18 files.
-(defun byte-compile-byte-code-unmake (function)
-  (if (consp function)
-      function	; It already is a lambda.
-
-    (nconc (list 'lambda (compiled-function-arglist function))
-	   (let ((doc (documentation function t)))
-	     (if doc (list doc)))
-	   (if (commandp function)
-	       (list (compiled-function-interactive function)))
-	   (list (list 'byte-code
-		       (compiled-function-instructions function)
-		       (compiled-function-constants function)
-		       (compiled-function-stack-depth function))))))
-
 
 ;; Byte-compile a lambda-expression and return a valid function.
 ;; The value is usually a compiled function but may be the original
@@ -2354,9 +2353,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
       (if (memq 'unused-vars byte-compile-warnings)
 	  ;; done compiling in this scope, warn now.
 	  (byte-compile-warn-about-unused-variables))
-      (if (and (eq 'byte-code (car-safe compiled))
-	       (not (byte-compile-version-cond
-		     byte-compile-emacs18-compatibility)))
+      (if (eq 'byte-code (car-safe compiled))
 	  (apply 'make-byte-code
 		 (append (list arglist)
 			 ;; byte-string, constants-vector, stack depth
@@ -2496,7 +2493,15 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 		    ((and maycall
 			  ;; Allow a funcall if at most one atom follows it.
 			  (null (nthcdr 3 rest))
-			  (setq tmp (get (car (car rest)) 'byte-opcode-invert))
+			  (setq tmp
+				;; XEmacs change for rms funs
+				(or (and
+				     (byte-compile-version-cond
+				      byte-compile-emacs19-compatibility)
+				     (get (car (car rest))
+					  'byte-opcode19-invert))
+				    (get (car (car rest))
+					 'byte-opcode-invert)))
 			  (or (null (cdr rest))
 			      (and (memq output-type '(file progn t))
 				   (cdr (cdr rest))
@@ -2555,8 +2560,8 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 	       (byte-compile-warn "%s called as a function" fn))
 	   (if (and handler
 		    (or (not (byte-compile-version-cond
-			      byte-compile-emacs18-compatibility))
-			(not (get (get fn 'byte-opcode) 'emacs19-opcode))))
+			      byte-compile-emacs19-compatibility))
+			(not (get (get fn 'byte-opcode) 'emacs20-opcode))))
 	       (funcall handler form)
 	     (if (memq 'callargs byte-compile-warnings)
 		 (byte-compile-callargs-warn form))
@@ -2593,13 +2598,6 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 	     (memq 'obsolete byte-compile-warnings))
 	(let ((ob (get var 'byte-obsolete-variable)))
 	  (byte-compile-warn "%s is an obsolete variable; %s" var
-			     (if (stringp ob)
-				 ob
-			       (format "use %s instead." ob)))))
-    (if (and (get var 'byte-compatible-variable)
-	     (memq 'pedantic byte-compile-warnings))
-	(let ((ob (get var 'byte-compatible-variable)))
-	  (byte-compile-warn "%s is provided for compatibility; %s" var
 			     (if (stringp ob)
 				 ob
 			       (format "use %s instead." ob)))))
@@ -2702,11 +2700,11 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 		      ''byte-opcode-invert (list 'quote function)))
 	fnform))))
 
-(defmacro byte-defop-compiler19 (function &optional compile-handler)
+(defmacro byte-defop-compiler20 (function &optional compile-handler)
   ;; Just like byte-defop-compiler, but defines an opcode that will only
-  ;; be used when byte-compile-emacs18-compatibility is false.
+  ;; be used when byte-compile-emacs19-compatibility is false.
   (if (and (byte-compile-single-version)
-	   byte-compile-emacs18-compatibility)
+	   byte-compile-emacs19-compatibility)
       ;; #### instead of doing nothing, this should do some remprops,
       ;; #### to protect against the case where a single-version compiler
       ;; #### is loaded into a world that has contained a multi-version one.
@@ -2717,8 +2715,33 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 	  (or (car (cdr-safe function))
 	      (intern (concat "byte-"
 		        (symbol-name (or (car-safe function) function))))))
-	''emacs19-opcode t)
+	''emacs20-opcode t)
       (list 'byte-defop-compiler function compile-handler))))
+
+;; XEmacs addition:
+(defmacro byte-defop-compiler-rmsfun (function &optional compile-handler)
+  ;; for functions like `eq' that compile into different opcodes depending
+  ;; on the Emacs version: byte-old-eq for v19, byte-eq for v20.
+  (let ((opcode (intern (concat "byte-" (symbol-name function))))
+	(opcode19 (intern (concat "byte-old-" (symbol-name function))))
+	(fnform
+	 (list 'put (list 'quote function) ''byte-compile
+	       (list 'quote
+		     (or (cdr (assq compile-handler
+				    '((2 . byte-compile-two-args-19->20)
+				      )))
+			 compile-handler
+			 (intern (concat "byte-compile-"
+					 (symbol-name function))))))))
+    (list 'progn fnform
+	  (list 'put (list 'quote function)
+		''byte-opcode (list 'quote opcode))
+	  (list 'put (list 'quote function)
+		''byte-opcode19 (list 'quote opcode19))
+	  (list 'put (list 'quote opcode)
+		''byte-opcode-invert (list 'quote function))
+	  (list 'put (list 'quote opcode19)
+		''byte-opcode19-invert (list 'quote function)))))
 
 (defmacro byte-defop-compiler-1 (function &optional compile-handler)
   (list 'byte-defop-compiler (list function nil) compile-handler))
@@ -2740,7 +2763,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 (byte-defop-compiler (dot-max byte-point-max)	0+1)
 (byte-defop-compiler (dot-min byte-point-min)	0+1)
 (byte-defop-compiler point		0+1)
-;;(byte-defop-compiler mark		0) ;; obsolete
+(byte-defop-compiler-rmsfun eq		2)
 (byte-defop-compiler point-max		0+1)
 (byte-defop-compiler point-min		0+1)
 (byte-defop-compiler following-char	0+1)
@@ -2749,17 +2772,19 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 ;; FSF has special function here; generalized here by the 1+2 stuff.
 (byte-defop-compiler (indent-to-column byte-indent-to) 1+2)
 (byte-defop-compiler indent-to		1+2)
+(byte-defop-compiler-rmsfun equal	2)
 (byte-defop-compiler eolp		0+1)
 (byte-defop-compiler eobp		0+1)
 (byte-defop-compiler bolp		0+1)
 (byte-defop-compiler bobp		0+1)
 (byte-defop-compiler current-buffer	0)
 ;;(byte-defop-compiler read-char	0) ;; obsolete
+(byte-defop-compiler-rmsfun memq	2)
 (byte-defop-compiler interactive-p	0)
-(byte-defop-compiler19 widen		0+1)
-(byte-defop-compiler19 end-of-line    0-1+1)
-(byte-defop-compiler19 forward-char   0-1+1)
-(byte-defop-compiler19 forward-line   0-1+1)
+(byte-defop-compiler widen		0+1)
+(byte-defop-compiler end-of-line	0-1+1)
+(byte-defop-compiler forward-char	0-1+1)
+(byte-defop-compiler forward-line	0-1+1)
 (byte-defop-compiler symbolp		1)
 (byte-defop-compiler consp		1)
 (byte-defop-compiler stringp		1)
@@ -2777,18 +2802,18 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 (byte-defop-compiler char-after		1+1)
 (byte-defop-compiler set-buffer		1)
 ;;(byte-defop-compiler set-mark		1) ;; obsolete
-(byte-defop-compiler19 forward-word	1+1)
-(byte-defop-compiler19 char-syntax	1+1)
-(byte-defop-compiler19 nreverse		1)
-(byte-defop-compiler19 car-safe		1)
-(byte-defop-compiler19 cdr-safe		1)
-(byte-defop-compiler19 numberp		1)
-(byte-defop-compiler19 integerp		1)
-(byte-defop-compiler19 skip-chars-forward     1-2+1)
-(byte-defop-compiler19 skip-chars-backward    1-2+1)
-;;(byte-defop-compiler (eql byte-eq) 	2)
-(byte-defop-compiler eq 	 	2)
-(byte-defop-compiler memq		2)
+(byte-defop-compiler forward-word	1+1)
+(byte-defop-compiler char-syntax	1+1)
+(byte-defop-compiler nreverse		1)
+(byte-defop-compiler car-safe		1)
+(byte-defop-compiler cdr-safe		1)
+(byte-defop-compiler numberp		1)
+(byte-defop-compiler integerp		1)
+(byte-defop-compiler skip-chars-forward     1-2+1)
+(byte-defop-compiler skip-chars-backward    1-2+1)
+(byte-defop-compiler (eql byte-eq) 	2)
+(byte-defop-compiler20 old-eq 	 	2)
+(byte-defop-compiler20 old-memq		2)
 (byte-defop-compiler cons		2)
 (byte-defop-compiler aref		2)
 (byte-defop-compiler (= byte-eqlsign)	2)
@@ -2799,39 +2824,42 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 (byte-defop-compiler get		2+1)
 (byte-defop-compiler nth		2)
 (byte-defop-compiler substring		2-3)
-(byte-defop-compiler19 (move-marker byte-set-marker) 2-3)
-(byte-defop-compiler19 set-marker	2-3)
-(byte-defop-compiler19 match-beginning	1)
-(byte-defop-compiler19 match-end	1)
-(byte-defop-compiler19 upcase		1+1)
-(byte-defop-compiler19 downcase		1+1)
-(byte-defop-compiler19 string=		2)
-(byte-defop-compiler19 string<		2)
-(byte-defop-compiler19 (string-equal byte-string=) 2)
-(byte-defop-compiler19 (string-lessp byte-string<) 2)
-(byte-defop-compiler19 equal		2)
-(byte-defop-compiler19 nthcdr		2)
-(byte-defop-compiler19 elt		2)
-(byte-defop-compiler19 member		2)
-(byte-defop-compiler19 assq		2)
-(byte-defop-compiler19 (rplaca byte-setcar) 2)
-(byte-defop-compiler19 (rplacd byte-setcdr) 2)
-(byte-defop-compiler19 setcar		2)
-(byte-defop-compiler19 setcdr		2)
+(byte-defop-compiler (move-marker byte-set-marker) 2-3)
+(byte-defop-compiler set-marker		2-3)
+(byte-defop-compiler match-beginning	1)
+(byte-defop-compiler match-end		1)
+(byte-defop-compiler upcase		1+1)
+(byte-defop-compiler downcase		1+1)
+(byte-defop-compiler string=		2)
+(byte-defop-compiler string<		2)
+(byte-defop-compiler (string-equal byte-string=) 2)
+(byte-defop-compiler (string-lessp byte-string<) 2)
+(byte-defop-compiler20 old-equal	2)
+(byte-defop-compiler nthcdr		2)
+(byte-defop-compiler elt		2)
+(byte-defop-compiler20 old-member	2)
+(byte-defop-compiler20 old-assq		2)
+(byte-defop-compiler (rplaca byte-setcar) 2)
+(byte-defop-compiler (rplacd byte-setcdr) 2)
+(byte-defop-compiler setcar		2)
+(byte-defop-compiler setcdr		2)
 ;; buffer-substring now has its own function.  This used to be
 ;; 2+1, but now all args are optional.
-(byte-defop-compiler19 buffer-substring)
-(byte-defop-compiler19 delete-region	2+1)
-(byte-defop-compiler19 narrow-to-region	2+1)
-(byte-defop-compiler19 (% byte-rem)	2)
+(byte-defop-compiler buffer-substring)
+(byte-defop-compiler delete-region	2+1)
+(byte-defop-compiler narrow-to-region	2+1)
+(byte-defop-compiler (% byte-rem)	2)
 (byte-defop-compiler aset		3)
+
+(byte-defop-compiler-rmsfun member	2)
+(byte-defop-compiler-rmsfun assq	2)
 
 (byte-defop-compiler max		byte-compile-associative)
 (byte-defop-compiler min		byte-compile-associative)
 (byte-defop-compiler (+ byte-plus)	byte-compile-associative)
-(byte-defop-compiler19 (* byte-mult)	byte-compile-associative)
+(byte-defop-compiler (* byte-mult)	byte-compile-associative)
 
-;;####(byte-defop-compiler19 move-to-column	1)
+;;####(byte-defop-compiler move-to-column	1)
 (byte-defop-compiler-1 interactive byte-compile-noop)
 (byte-defop-compiler-1 domain byte-compile-domain)
 
@@ -2843,7 +2871,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 ;; actual call to `mod'.  So be careful of compiling new code with an old
 ;; compiler.  Note also that `%' is more efficient than `mod' because the 
 ;; former is byte-coded and the latter is not.
-;;(byte-defop-compiler19 (mod byte-rem) 2)
+;;(byte-defop-compiler (mod byte-rem) 2)
 
 
 (defun byte-compile-subr-wrong-args (form n)
@@ -2956,6 +2984,16 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 	  ((or (= len 3) (= len 4)) (byte-compile-normal-call form))
 	  (t (byte-compile-subr-wrong-args form "1-3")))))
 
+;; XEmacs: used for functions that have a different opcode in v19 than v20.
+;; this includes `eq', `equal', and other old-ified functions.
+(defun byte-compile-two-args-19->20 (form)
+  (if (not (= (length form) 3))
+      (byte-compile-subr-wrong-args form 2)
+    (byte-compile-form (car (cdr form)))  ;; Push the arguments
+    (byte-compile-form (nth 2 form))
+    (if t ;(byte-compile-version-cond byte-compile-emacs19-compatibility)
+	(byte-compile-out (get (car form) 'byte-opcode19) 0)
+      (byte-compile-out (get (car form) 'byte-opcode) 0))))
 
 (defun byte-compile-noop (form)
   (byte-compile-constant nil))
@@ -2988,8 +3026,8 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 (byte-defop-compiler insert)
 (byte-defop-compiler-1 function byte-compile-function-form)
 (byte-defop-compiler-1 - byte-compile-minus)
-(byte-defop-compiler19 (/ byte-quo) byte-compile-quo)
-(byte-defop-compiler19 nconc)
+(byte-defop-compiler (/ byte-quo) byte-compile-quo)
+(byte-defop-compiler nconc)
 (byte-defop-compiler-1 beginning-of-line)
 
 (defun byte-compile-buffer-substring (form)
@@ -3011,8 +3049,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 	   (mapcar 'byte-compile-form (cdr form))
 	   (byte-compile-out
 	    (aref [byte-list1 byte-list2 byte-list3 byte-list4] (1- count)) 0))
-	  ((and (< count 256) (not (byte-compile-version-cond
-				    byte-compile-emacs18-compatibility)))
+	  ((< count 256)
 	   (mapcar 'byte-compile-form (cdr form))
 	   (byte-compile-out 'byte-listN count))
 	  (t (byte-compile-normal-call form)))))
@@ -3027,8 +3064,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 	  ;; Concat of one arg is not a no-op if arg is not a string.
 	  ((= count 0)
 	   (byte-compile-form ""))
-	  ((and (< count 256) (not (byte-compile-version-cond
-				    byte-compile-emacs18-compatibility)))
+	  ((< count 256)
 	   (mapcar 'byte-compile-form (cdr form))
 	   (byte-compile-out 'byte-concatN count))
 	  ((byte-compile-normal-call form)))))
@@ -3108,20 +3144,12 @@ If FORM is a lambda or a macro, byte-compile it as a function."
   (byte-compile-constant
    (cond ((symbolp (nth 1 form))
 	  (nth 1 form))
-	 ;; If we're not allowed to use #[] syntax, then output a form like
-	 ;; '(lambda (..) (byte-code ..)) instead of a call to make-byte-code.
-	 ;; In this situation, calling make-byte-code at run-time will usually
-	 ;; be less efficient than processing a call to byte-code.
-	 ((byte-compile-version-cond byte-compile-emacs18-compatibility)
-	  (byte-compile-byte-code-unmake (byte-compile-lambda (nth 1 form))))
 	 ((byte-compile-lambda (nth 1 form))))))
 
 (defun byte-compile-insert (form)
   (cond ((null (cdr form))
 	 (byte-compile-constant nil))
-	((and (not (byte-compile-version-cond
-		    byte-compile-emacs18-compatibility))
-	      (<= (length form) 256))
+	((<= (length form) 256)
 	 (mapcar 'byte-compile-form (cdr form))
 	 (if (cdr (cdr form))
 	     (byte-compile-out 'byte-insertN (length (cdr form)))

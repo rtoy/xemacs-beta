@@ -348,7 +348,12 @@ tty_output_display_block (struct window *w, struct display_line *dl, int block,
 			   columns. */
 			for (i = 0; i < rb->object.dglyph.xoffset;)
 			  {
+#ifdef MULE
+			    Emchar ch = charptr_emchar (temptemp);
+			    i += XCHARSET_COLUMNS (CHAR_CHARSET (ch));
+#else
 			    i++; /* telescope this */
+#endif
 			    INC_CHARPTR (temptemp);
 			  }
 
@@ -424,16 +429,18 @@ tty_output_vertical_divider (struct window *w, int clear)
   int y2 = WINDOW_TEXT_BOTTOM (w);
   unsigned char divv = '|';
 
-  tty_turn_on_face (w, MODELINE_INDEX);
+  tty_turn_on_face (w, DEFAULT_INDEX);
   for (line = y1; line < y2; line++)
     {
       cmgoto (f, line, WINDOW_TEXT_LEFT (w) - 1);
       send_string_to_tty_console (c, &divv, 1);
       TTY_INC_CURSOR_X (c, 1);
     }
+  tty_turn_off_face (w, DEFAULT_INDEX);
 
   /* Draw the divider in the modeline. */
   cmgoto (f, y2, WINDOW_TEXT_LEFT (w) - 1);
+  tty_turn_on_face (w, MODELINE_INDEX);
   send_string_to_tty_console (c, &divv, 1);
   TTY_INC_CURSOR_X (c, 1);
   tty_turn_off_face (w, MODELINE_INDEX);
@@ -915,7 +922,6 @@ reset_tty_modes (struct console *c)
   if (!CONSOLE_TTY_P (c))
     return;
 
-  OUTPUT1_IF (c, TTY_SD (c).orig_pair);
   OUTPUT1_IF (c, TTY_SD (c).keypad_off);
   OUTPUT1_IF (c, TTY_SD (c).cursor_normal);
   OUTPUT1_IF (c, TTY_SD (c).end_motion);
@@ -1067,11 +1073,8 @@ tty_ring_bell (struct device *d, int volume, int pitch, int duration)
 {
   struct console *c = XCONSOLE (DEVICE_CONSOLE (d));
 
-  if (volume)
-    {
-      OUTPUT1 (c, TTY_SD (c).audio_bell);
-      Lstream_flush (XLSTREAM (CONSOLE_TTY_DATA (c)->outstream));
-    }
+  OUTPUT1 (c, TTY_SD (c).audio_bell);
+  Lstream_flush (XLSTREAM (CONSOLE_TTY_DATA (c)->outstream));
 }
 
 
@@ -1201,7 +1204,6 @@ init_tty_for_redisplay (struct device *d, char *terminal_type)
   TTY_SD (c).turn_on_bold = tgetstr ("md", &bufptr);
   TTY_SD (c).turn_on_dim = tgetstr ("mh", &bufptr);
   TTY_SD (c).turn_off_attributes = tgetstr ("me", &bufptr);
-  TTY_SD (c).orig_pair = tgetstr ("op", &bufptr);
 
   TTY_SD (c).visual_bell = tgetstr ("vb", &bufptr);
   TTY_SD (c).audio_bell = tgetstr ("bl", &bufptr);
@@ -1269,9 +1271,7 @@ init_tty_for_redisplay (struct device *d, char *terminal_type)
        color, too. */
     char foobuf[500];
     char *fooptr = foobuf;
-    if ((tgetstr ("AB", &fooptr) && tgetstr ("AF", &fooptr)) ||
-        (tgetstr ("Sf", &fooptr) && tgetstr ("Sb", &fooptr)) ||
-        ((tgetnum ("Co") > 0) && (tgetnum ("pa") > 0)))
+    if (tgetstr ("AB", &fooptr) && tgetstr ("AF", &fooptr))
       DEVICE_CLASS (d) = Qcolor;
     else
       DEVICE_CLASS (d) = Qmono;
@@ -1329,34 +1329,34 @@ static struct fkey_table keys[] =
   {"kD", "delete"},	/* terminfo */
   {"kB", "backtab"},	/* terminfo */
   /*
-   * "kp-backtab", "kp-space", "kp-tab" --- no termcaps
+   * "kp_backtab", "kp_space", "kp_tab" --- no termcaps
    */
-  {"@8", "kp-enter"},	/* terminfo */
+  {"@8", "kp_enter"},	/* terminfo */
   /*
-   * "kp-f1", "kp-f2", "kp-f3" "kp-f4",
-   * "kp-multiply", "kp-add", "kp-separator",
-   * "kp-subtract", "kp-decimal", "kp-divide", "kp-0";
+   * "kp_f1", "kp_f2", "kp_f3" "kp_f4",
+   * "kp_multiply", "kp_add", "kp_separator",
+   * "kp_subtract", "kp_decimal", "kp_divide", "kp_0";
    * --- no termcaps for any of these.
    */
-  {"K4", "kp-1"},	/* terminfo */
+  {"K4", "kp_1"},	/* terminfo */
   /*
-   * "kp-2" --- no termcap
+   * "kp_2" --- no termcap
    */
-  {"K5", "kp-3"},	/* terminfo */
+  {"K5", "kp_3"},	/* terminfo */
   /*
-   * "kp-4" --- no termcap
+   * "kp_4" --- no termcap
    */
-  {"K2", "kp-5"},	/* terminfo */
+  {"K2", "kp_5"},	/* terminfo */
   /*
-   * "kp-6" --- no termcap
+   * "kp_6" --- no termcap
    */
-  {"K1", "kp-7"},	/* terminfo */
+  {"K1", "kp_7"},	/* terminfo */
   /*
-   * "kp-8" --- no termcap
+   * "kp_8" --- no termcap
    */
-  {"K3", "kp-9"},	/* terminfo */
+  {"K3", "kp_9"},	/* terminfo */
   /*
-   * "kp-equal" --- no termcap
+   * "kp_equal" --- no termcap
    */
   {"k1", "f1"},
   {"k2", "f2"},

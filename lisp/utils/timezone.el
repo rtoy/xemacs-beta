@@ -129,9 +129,6 @@ Optional argument TIMEZONE specifies a time zone."
   "Make time string from HOUR, MINUTE, and SECOND."
   (format "%02d:%02d:%02d" hour minute second))
 
-;;;###autoload
-(define-error 'invalid-date "Invalid date string")
-
 (defun timezone-parse-date (date)
   "Parse DATE and return a vector [YEAR MONTH DAY TIME TIMEZONE].
 19 is prepended to year if necessary.  Timezone may be nil if nothing.
@@ -143,8 +140,6 @@ Understands the following styles:
  (5) 22-AUG-1993 10:59:12.82
  (6) Thu, 11 Apr 16:17:12 91 [MET]
  (7) Mon, 6  Jul 16:47:20 T 1992 [MET]"
-  (condition-case nil
-      (progn
   ;; Get rid of any text properties.
   (and (stringp date)
        (or (text-properties-at 0 date)
@@ -196,16 +191,7 @@ Understands the following styles:
 		(substring date (match-beginning year) (match-end year)))
 	  ;; It is now Dec 1992.  8 years before the end of the World.
 	  (if (< (length year) 4)
-	      ;; 2 digit years are bogus, so guess the century
-	      (let ((yr (string-to-int year)))
-		(when (>= yr 100)
-		  ;; What does a three digit year mean?
-		  (setq yr (- yr 100)))
-		(setq year (format "%d%02d"
-				   (if (< yr 70)
-				       20
-				     19)
-				   yr))))
+	      (setq year (concat "19" (substring year -2 nil))))
 	  (let ((string (substring date
 				   (match-beginning month)
 				   (+ (match-beginning month) 3))))
@@ -224,10 +210,7 @@ Understands the following styles:
     (if year
 	(vector year month day time zone)
       (vector "0" "0" "0" "0" nil))
-    )
-  )
-    (t (signal 'invalid-date (list date))))
-)
+    ))
 
 (defun timezone-parse-time (time)
   "Parse TIME (HH:MM:SS) and return a vector [hour minute second].

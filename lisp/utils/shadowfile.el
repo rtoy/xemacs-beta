@@ -25,7 +25,7 @@
 ;; LCD Archive Entry:
 ;; shadowfile|Boris Goldowsky|boris@gnu.ai.mit.edu|
 ;; Helps you keep identical copies of files in multiple places.|
-;; $Date: 1997/02/22 22:08:03 $ |$Revision: 1.2 $|~/misc/shadowfile.el.Z|
+;; $Date: 1996/12/18 22:43:01 $ |$Revision: 1.1.1.1 $|~/misc/shadowfile.el.Z|
 
 ;;; Synched up with: FSF 19.30.
 
@@ -84,7 +84,7 @@
 ;;; Code:
 
 (provide 'shadowfile)
-(require 'efs-auto)
+(require 'ange-ftp)
 
 (setq find-file-visit-truename t)	; makes life easier with symbolic links
 
@@ -297,7 +297,7 @@ be matched against the primary of site2."
 
 (defun shadow-get-user (site)
   "Returns the default username for a site."
-  (efs-get-user (shadow-site-primary site)))
+  (ange-ftp-get-user (shadow-site-primary site)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Filename manipulation
@@ -306,21 +306,21 @@ be matched against the primary of site2."
 (defun shadow-parse-fullpath (fullpath)
   "Parse PATH into \(site user path) list,
 or leave it alone if it already is one.  Returns nil if the argument is not a
-full efs ftp pathname."
+full ange-ftp pathname."
   (if (listp fullpath)
       fullpath
-    (efs-ftp-name fullpath)))
+    (ange-ftp-ftp-name fullpath)))
 
 (defun shadow-parse-path (path)
   "Parse any PATH into \(site user path) list.
-Argument can be a simple path, full efs ftp path, or already a hup list."
+Argument can be a simple path, full ange-ftp path, or already a hup list."
   (or (shadow-parse-fullpath path)
       (list shadow-system-name
 	    (user-login-name)
 	    path)))
 
 (defsubst shadow-make-fullpath (host user path)
-  "Make an efs style fullpath out of HOST, USER (optional), and PATH.
+  "Make an ange-ftp style fullpath out of HOST, USER (optional), and PATH.
 This is probably not as general as it ought to be."
   (concat "/" 
 	  (if user (concat user "@"))
@@ -385,7 +385,7 @@ name that includes it.  Filename should be absolute and true."
 (defun shadow-same-site (pattern file)
   "True if the site of PATTERN and of FILE are on the same site.
 If usernames are supplied, they must also match exactly.  PATTERN and FILE may
-be lists of host, user, path, or efs ftp pathnames.  FILE may also be just a
+be lists of host, user, path, or ange-ftp pathnames.  FILE may also be just a
 local filename."
   (let ((pattern-sup (shadow-parse-fullpath pattern))
 	(file-sup    (shadow-parse-path file)))
@@ -398,7 +398,7 @@ local filename."
  "Returns t if PATTERN matches FILE.
 If REGEXP is supplied and nonnil, the pathname part of the pattern is a regular
 expression, otherwise it must match exactly.  The sites and usernames must
-match---see shadow-same-site.  The pattern must be in full efs ftp format, but
+match---see shadow-same-site.  The pattern must be in full ange-ftp format, but
 the file can be any valid filename.  This function does not do any filename
 expansion or contraction, you must do that yourself first."
  (let* ((pattern-sup (shadow-parse-fullpath pattern))
@@ -552,7 +552,7 @@ shadow-regexp-groups."
 
 (defun shadow-make-group (regexp sites usernames)
   "Makes a description of a file group---
-actually a list of regexp efs ftp file names---from REGEXP \(name of file to
+actually a list of regexp ange-ftp file names---from REGEXP \(name of file to
 be shadowed), list of SITES, and corresponding list of USERNAMES for each
 site."
   (if sites
@@ -793,14 +793,14 @@ look for files that have been changed and need to be copied to other systems."
 
 ;(shadow-when (string-match "Lucid" emacs-version)
 ;  (require 'symlink-fix)
-;  (require 'efs-auto)
+;  (require 'ange-ftp)
 ;  (require 'map-ynp)
 ;  (if (not (fboundp 'file-truename))
 ;      (fset 'shadow-expand-file-name 
 ;	    (symbol-function 'symlink-expand-file-name)))
-;  (if (not (fboundp 'efs-ftp-name))
-;      (fset 'efs-ftp-name
-;	    (symbol-function 'efs-ftp-path))))
+;  (if (not (fboundp 'ange-ftp-ftp-name))
+;      (fset 'ange-ftp-ftp-name
+;	    (symbol-function 'ange-ftp-ftp-path))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Hook us up

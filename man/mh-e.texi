@@ -1,5 +1,5 @@
 \input texinfo   @c -*-texinfo-*-
-@c $Id: mh-e.texi,v 1.1.1.1 1996/12/18 03:35:54 steve Exp $
+@c $Id: mh-e.texi,v 1.1.1.1 1996/12/18 22:43:45 steve Exp $
 @c Time-stamp: <95/04/14 19:05:01 gildea>
 @c %**start of header
 @setfilename ../info/mh-e.info

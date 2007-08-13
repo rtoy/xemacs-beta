@@ -84,12 +84,12 @@ key and mouse strokes within the extent's text, and the @code{mouse-face}
 property controls whether the extent is highlighted when the mouse moves
 over it.  @xref{Extents and Events}.
 
-  An extent can optionally have a @dfn{begin-glyph} or @dfn{end-glyph}
-(but not both at one time) associated with it.  A begin-glyph or
+  An extent can optionally have a @dfn{start-glyph} or @dfn{end-glyph}
+(but not both at one time) associated with it.  A start-glyph or
 end-glyph is a pixmap or string that will be displayed either at the
 start or end of an extent or in the margin of the line that the start
 or end of the extent lies in, depending on the extent's layout policy.
-Begin-glyphs and end-glyphs are used to implement annotations, and you
+Start-glyphs and end-glyphs are used to implement annotations, and you
 should use the annotation API functions in preference to the 
 lower-level extent functions.  For more information, @xref{Annotations}.
 
@@ -553,9 +553,17 @@ Extents}.
 kill, yank, and undo commands will restore or copy it.  @xref{Duplicable
 Extents}.
 
+@item replicating
+(Boolean) Meaningful only in conjunction with @code{duplicable}.  If
+set, actions that cause an extent to be copied from a buffer to a string
+cause the original extent to be recorded in the copy (as the copied
+extent's parent), so that when the extent is copied back into the
+buffer, @code{eq}ness between the original extent and the re-inserted
+extent is maintained whenever possible. @xref{Duplicable Extents}.
+
 @item unique
-(Boolean) Meaningful only in conjunction with @code{duplicable}.
-When this is set, there may be only one instance of
+(Boolean) Meaningful only in conjunction with @code{duplicable} and
+@code{replicating}.  When this is set, there may be only one instance of
 this extent attached at a time.  @xref{Duplicable Extents}.
 
 @item invisible
@@ -757,7 +765,8 @@ all deriving their properties from one root extent.  Note, however,
 that you cannot create an inheritance loop -- this is explicitly
 disallowed.
 
-  Parent extents are used to implement the extents over the modeline.
+  Parent extents are used to implement the ``replicating'' property
+(@pxref{Duplicable Extents}) and extents over the modeline.
 
 @defun set-extent-parent extent parent
 This function sets the parent of @var{extent} to @var{parent}.
@@ -784,13 +793,29 @@ to any children of @var{extent}, until no more children can be found.
 @node Duplicable Extents
 @section Duplicable Extents
 @cindex duplicable extent
+@cindex replicating extents
 @cindex unique extents
 @cindex extent replica
 @cindex extent, duplicable
+@cindex extent, replicating
 @cindex extent, unique
 
   If an extent has the @code{duplicable} property, it will be copied into
 strings, so that kill, yank, and undo commands will restore or copy it.
+
+  If a duplicable extent also has the @code{replicating} property, the
+extent itself is not actually copied; rather, a pointer to it is
+stored, along with the start and end positions of the extent. (This
+is done by making the copied extent a child of the original extent.
+Formerly, this was done by creating a special object called an
+@dfn{extent replica}.  Extent replicas no longer exist, but all the
+functionality is available in a cleaner and more general fashion
+using the @code{replicating} property.) This means that, e.g.,
+if you copy a replacting extent into the kill ring, then change the
+properties of the extent, then paste the kill-ring text back into the
+buffer, the newly-inserted extent will have the property changes you
+just made to the original extent, and not the property values at the
+time the text was copied into the kill ring.
 
 Specifically:
 
@@ -812,8 +837,42 @@ extents will be remembered and reinserted later when the text is pasted
 back into a buffer.
 
 @item
+If a duplicable extent has the @code{replicating} property, then when
+it is copied into a string, the parent of the new extent is set to the
+extent it was copied from.
+
+@item
+When an extent with the @code{replicating} property is copied from
+a string back into a buffer:
+
+@itemize @minus
+@item
+If the extent's parent was detached from this buffer, it is reattached
+at the new range.
+
+@item
+If the extent's parent is attached to this buffer and is contiguous with
+or overlaps the new range, it is simply extended to include that range.
+Note that in this case the extent's @code{paste-function} is not called
+(see below).
+
+@item
+If the extent's parent was detached from another buffer, it is copied
+as if by @code{copy-extent} and attached at the new range.
+
+@item
+If the extent's parent is attached to another buffer, or is attached to
+this buffer and does not overlap the new range, it is copied as if by
+@code{copy-extent} and attached at the new range.  However, if the
+extent's parent has the @code{unique} property, this action is inhibited
+and nothing happens.
+@end itemize
+
+@item
 When @code{concat} is called on strings, the extents in the strings are
-copied into the resulting string.
+copied into the resulting string.  If two or more replicating extents
+with the same parent end up overlapping or abutting in the resulting
+string, they are merged into a single extent.
 
 @item
 When @code{substring} is called on a string, the relevant extents
@@ -824,8 +883,10 @@ When a duplicable extent is detached by @code{detach-extent} or string
 deletion, or inserted by @code{insert-extent} or string insertion, the
 action is recorded by the undo mechanism so that it can be undone later.
 Note that if an extent gets detached and then a later undo causes the
-extent to get reinserted, the new extent will not be `eq' to the original
-extent.
+extent to get reinserted, the new extent will be `eq' to the original
+extent if and only if the extent has the @code{replicating} property
+set.  This is the same as what happens when a string is cut and then
+pasted back in.
 
 @item
 Extent motion, face changes, and attachment via @code{make-extent} are

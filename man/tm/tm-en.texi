@@ -1,13 +1,13 @@
 \input texinfo.tex
 @setfilename tm-en.info
-@settitle{tm 7.100 Manual (English Version)}
+@settitle{tm 7.90 Manual (English Version)}
 @titlepage
-@title tm 7.100 Manual (English Version)
+@title tm 7.90 Manual (English Version)
 @author MORIOKA Tomohiko <morioka@@jaist.ac.jp>
-@subtitle 1996/12/25
+@subtitle 1996/10/15
 @end titlepage
 @node Top, Introduction, (dir), (dir)
-@top tm 7.100 Manual (English Version)
+@top tm 7.90 Manual (English Version)
 
 @ifinfo
 
@@ -18,7 +18,6 @@ This file documents tm, a MIME package for GNU Emacs.
 * Introduction::                What is tm?
 * Setting::                     
 * Bug report::                  How to report bug and about mailing list of tm
-* Acknowledgments::             
 * Concept Index::               
 * Variable Index::              
 @end menu
@@ -27,7 +26,7 @@ This file documents tm, a MIME package for GNU Emacs.
 @chapter What is tm?
 
 The tm package is a set of modules to enjoy MIME on GNU Emacs.  Using
-tm, you can@refill
+tm, you can
 
 @itemize @bullet
 @item
@@ -51,8 +50,6 @@ tm-MUA for GNUS (@ref{(tm-gnus-en)})
 @item
 tm-MUA for mh-e (@ref{(tm-mh-e-en)})
 @item
-tm-MUA for VM (@ref{(tm-vm-en)})
-@item
 mime/viewer-mode (@ref{(tm-view-en)})
 @item
 mime/editor-mode (@ref{(tm-edit-en)})
@@ -61,38 +58,87 @@ mime/editor-mode (@ref{(tm-edit-en)})
 
 
 @menu
+* What is MIME?::               
+* How is MIME?::                
 * Glossary::                    
 @end menu
 
-@node Glossary,  , Introduction, Introduction
+@node What is MIME?, How is MIME?, Introduction, Introduction
+@section What is MIME?
+
+@cindex{MIME}@strong{MIME} stands for @cindex{Multipurpose Internet Mail
+Extensions}@strong{Multipurpose Internet Mail Extensions}, it is a
+proposed internet standard for including content and headers other than
+(ASCII) plain text in messages.@refill
+
+Current MIME standard consists of RFC 1521 and RFC 1522.  RFC 1521
+describes multipurpose content in message bodies, while RFC 1522
+describes multilingual characters in headers.
+
+
+@node How is MIME?, Glossary, What is MIME?, Introduction
+@section How is MIME?
+
+In multipurpose message side, MIME can represent various contents such
+as images, sounds, videos, ... as against traditional Internet mail/news
+message can represent only (us-ascii (@ref{us-ascii})) plain
+text.@refill
+
+Interestingly, MIME can send ``procedure'', such as ftp (@ref{FTP}), ftp
+mail, file extraction, applying patch, ...@refill
+
+# Of course, it has security problem.@refill
+
+These various kinds of contents are defined by media types written in
+@cindex{Content-Type}@strong{Content-Type} (@ref{Content-Type field})
+field.  Namely MIME message has information about content in header.  So
+if reader defines processes for each content-type (@ref{content-type}),
+he/she can display image, or play video or sound, or get file by ftp, or
+extract file, ... only read the message.@refill
+
+In addition, MIME message can represent message includes plural parts,
+called @cindex{Multipart}@strong{Multipart} (@ref{multipart}) message.
+So it is possible to include picture and sound in one message.@refill
+
+MIME seems have philosophy of ``declaration''.  In other words, MIME is
+a message description language to represent various kinds of things uses
+us-ascii (@ref{us-ascii}) as its ``alphabet''.  Encoded-word defined in
+RFC 1522 (@ref{encoded-word}) is same.@refill
+
+In addition, MUA displays only what it can understand and ignore what
+can not understand.  So content is saved from non-supported MUA and
+MUA is saved from unknown data.
+
+
+@node Glossary,  , How is MIME?, Introduction
 @section Glossary
 
 
 @menu
 * 7bit::                        
 * 8bit::                        
-* 94-character set::            
-* 96-character set::            
-* 94x94-character set::         
+* 94 character set::            94 $BJ8;z=89g(B
+* 96 character set::            96 $BJ8;z=89g(B
+* 94x94 character set::         94$B!_(B94 $BJ8;z=89g(B
 * ASCII::                       
 * Base64::                      
 * binary::                      
+* Character Set::               Character Set$B!JJ8;z=89g!K(B
 * cn-gb::                       cn-gb, gb2312
 * cn-big5::                     cn-big5, big5
-* CNS 11643::                   CNS 11643-1992
-* coded character set::         Coded character set, Character code
-* code extension::              Code extension
+* CNS::                         CNS 11643-1992
+* Coded character set::         Coded character set$B!JId9f2=J8;z=89g!K(B, Character code$B!JJ8;zId9f!K(B
+* Code extension::              Code extension$B!JId9f3HD%!K(B
 * Content-Disposition::         Content-Disposition field
+* content-type::                
 * Content-Type field::          
 * Emacs::                       
 * encoded-word::                
 * encapsulation::               
-* entity::                      Entity
 * euc-kr::                      
 * FTP::                         FTP 
 * GB 2312::                     GB 2312-1980
 * GB 8565.2::                   GB 8565.2-1988
-* graphic character set::       Graphic Character Set
 * hz-gb2312::                   
 * ISO 2022::                    
 * iso-2022-cn::                 
@@ -121,7 +167,6 @@ mime/editor-mode (@ref{(tm-edit-en)})
 * JIS X0212::                   JIS X0212-1990
 * koi8-r::                      
 * KS C5601::                    KS C5601-1987
-* media type::                  
 * message::                     
 * message/rfc822::              
 * method::                      
@@ -146,12 +191,9 @@ mime/editor-mode (@ref{(tm-edit-en)})
 * RFC 934::                     
 * RFC 1036::                    
 * RFC 1153::                    
+* RFC 1521::                    RFC 1521 
 * RFC 1557::                    
 * RFC 1922::                    
-* RFC 2045::                    
-* RFC 2046::                    
-* RFC 2048::                    
-* RFC 2049::                    
 * plain text::                  
 * Security multipart::          
 * text/enriched::               
@@ -163,100 +205,96 @@ mime/editor-mode (@ref{(tm-edit-en)})
 
 @node 7bit, 8bit, Glossary, Glossary
 @subsection 7bit
-@cindex 7bit (textual) string
-@cindex 7bit data
-@cindex 7bit
 
-@strong{7bit} means any integer between 0 .. 127.@refill
+$B$3$3$G$O(B 0 $B$+$i(B 127 $B$N@0?t$r;X$7$^$9!#(B@refill
 
-Any data represented by 7bit integers is called @strong{7bit data}.@refill
+0 $B$+$i(B 127 $B$N@0?t$NNs$GI=8=$G$-$k$h$&$J(B data $B$r(B ``7bit $B$N(B data'' $B$H8F$S(B
+$B$^$9!#(B@refill
 
-Textual string consisted of Control characters between 0 .. 31 and 127,
-and space represented by 32, and graphic characters between 33 .. 236
-are called @strong{7bit (textual) string}.@refill
+$B$^$?!"(B0 $B$+$i(B 31 $B$*$h$S(B 127 $B$GI=8=$5$l$k@)8fJ8;z$H(B 32 $B$GI=8=$5$l$k6uGr$H(B 
+33 $B$+$i(B 126 $B$GI=8=$5$l$k?^7AJ8;z$+$i$J$kJ8;zNs$N$3$H$r(B ``7bit $B$NJ8;zNs(B'' 
+$B$H8F$S$^$9!J$3$l$O(B ISO 2022 (@ref{ISO 2022}) $B$N!V(B7 $BC10L7O!W$HF1MM$G$9!K!#(B
 
-Traditional Internet MTA (@ref{MTA}) can translate 7bit data, so it is
-no need to translate by Quoted-Printable (@ref{Quoted-Printable}) or
-Base64 (@ref{Base64}) for 7bit data.@refill
+$BEAE}E*$J(B Internet $B$N(B MTA (@ref{MTA}) $B$O(B 7bit $B$N(B data $B$rE>Aw$G$-$k$N$G!"(B
+7bit $B$N(B data $B$O(B Quoted-Printable (@ref{Quoted-Printable}) $B$d(B Base64
+(@ref{Base64}) $B$H$$$C$?JQ49$r9T$o$J$/$F$b$=$N$^$^E>Aw$G$-$^$9!#(B@refill
 
-However if there are too long lines, it can not translate by 7bit MTA
-even if it is 7bit data.  RFC 821 (@ref{RFC 821}) and RFC 2045 (@ref{RFC 2045}) require lines in 7bit data must be less than 998 bytes.  So if a
-``7bit data'' has a line more than 999 bytes, it is regarded as binary
-(@ref{binary}).  For example, Postscript file should be encoded by
-Quoted-Printable.
+$B$7$+$7!"(B7bit $B$G$"$l$P$I$s$J(B data $B$G$bNI$$$H$O$$$($^$;$s!#$J$<$J$i!"#19T(B
+$B$ND9$5$,$"$^$j$KD9$$$H!"(BMTA $B$O$=$N(B message $B$rE>Aw$9$k$3$H$,$G$-$J$$$+$i(B
+$B$G$9!#$A$J$_$K!"(BRFC 821 (@ref{RFC 821}) $B$O#19T$O2~9TJ8;z$r=|$$$F(B 998
+byte $B0JFb$G$"$k$3$H$r5a$a$F$$$^$9!#$h$C$F!"$3$l0J>e$N9T$,4^$^$l$k2DG=@-(B
+$B$N$"$k(B data, $BNc$($P!"(BPostscript $B$N(B data $B$J$I$O(B Quoted-Printable $BEy$G(B 
+encode$B$9$kI,MQ$,$"$j$^$9!#(B
 
 
-@node 8bit, 94-character set, 7bit, Glossary
+@node 8bit, 94 character set, 7bit, Glossary
 @subsection 8bit
-@cindex 8bit (textual) string
-@cindex 8bit data
-@cindex 8bit
 
-@strong{8bit} means any integer between 0 .. 255.@refill
+$B$3$3$G$O(B 0 $B$+$i(B 255 $B$N@0?t$r;X$7$^$9!#(B@refill
 
-Any data represented by 8bit integers is called @strong{8bit data}.@refill
+0 $B$+$i(B 255 $B$N@0?t$NNs$GI=8=$G$-$k$h$&$J(B data $B$r(B ``8bit $B$N(B data'' $B$H8F$S(B
+$B$^$9!#(B@refill
 
-Textual string consisted of Control characters between 0 .. 31, 127, and
-128 .. 159, and space represented by 32, and graphic characters between
-33 .. 236 and 160 .. 255 are called @strong{8bit (textual) string}.@refill
+$B$^$?!"(B0 $B$+$i(B 31, 127 $B$*$h$S(B 128 $B$+$i(B 159 $B$GI=8=$5$l$k@)8fJ8;z$H(B 32 $B$GI=(B
+$B8=$5$l$k6uGr$H(B 33 $B$+$i(B 126 $B$H(B 160 $B$+$i(B 255 $B$GI=8=$5$l$k?^7AJ8;z$+$i$J$k(B
+$BJ8;zNs$N$3$H$r(B ``8bit $B$NJ8;zNs(B'' $B$H8F$S$^$9!J$3$l$O(B ISO 2022 (@ref{ISO
+2022}) $B$N!V(B8 $BC10L7O!W$HF1MM$G$9!K!#(B@refill
 
-For example, iso-8859-1 (@ref{iso-8859-1}) or euc-kr (@ref{euc-kr}) are
-coded-character-set represented by 8bit textual string.@refill
+iso-8859-1 (@ref{iso-8859-1}) $B$d(B euc-kr (@ref{euc-kr}) $B$H$$$C$?Id9f2=J8(B
+$B;z=89g$O(B 8bit $B$NJ8;zNs$G$9!#(B@refill
 
-Traditional Internet MTA (@ref{MTA}) can translate only 7bit
-(@ref{7bit}) data, so if a 8bit data will be translated such MTA, it
-must be encoded by Quoted-Printable (@ref{Quoted-Printable}) or Base64
-(@ref{Base64}).@refill
+$BEAE}E*$J(B Internet $B$N(B MTA (@ref{MTA}) $B$O(B 7bit (@ref{7bit}) $B$N(B data $B$7$+E>(B
+$BAw$G$-$J$$$N$G!"$=$&$7$?(B MTA $B$r7PM3$9$k>l9g!"(BQuoted-Printable
+(@ref{Quoted-Printable}) $B$d(B Base64 (@ref{Base64}) $B$H$$$C$?JQ49$r9T$o$J$/(B
+$B$F$O$J$j$^$;$s!#(B@refill
 
-However 8bit MTA are increasing today.@refill
+$B$7$+$7!":G6a$G$O(B 8bit $B$NJ8;zNs$r$=$N$^$^DL$9$3$H$,$G$-$k(B MTA $B$bEP>l$7$F(B
+$B$-$?$N$G!"$=$N$^$^Aw$k$3$H$,$G$-$k>l9g$bA}$($F$-$^$7$?!#(B@refill
 
-However if there are too long lines, it can not translate by 8bit MTA
-even if it is 8bit data.  RFC 2045 (@ref{RFC 2045}) require lines in
-8bit data must be less than 998 bytes.  So if a ``8bit data'' has a line
-more than 999 bytes, it is regarded as binary (@ref{binary}), so it must
-be encoded by Base64 or Quoted-Printable.
+$B$7$+$7!"(B8bit $B$G$"$l$P$I$s$J(B data $B$G$bNI$$$H$O$$$($^$;$s!#$J$<$J$i!"#19T(B
+$B$ND9$5$,$"$^$j$KD9$$$H!"(BMTA $B$O$=$N(B message $B$rE>Aw$9$k$3$H$,$G$-$J$$$+$i(B
+$B$G$9!#$A$J$_$K!"(BRFC 821 $B$O#19T$O2~9TJ8;z$r=|$$$F(B 998 byte $B0JFb$G$"$k$3$H(B
+$B$r5a$a$F$$$^$9!#$h$C$F!"$3$l0J>e$N9T$,4^$^$l$k2DG=@-$N$"$k(B data, $BNc$($P!"(B
+Postscript $B$N(B data $B$J$I$O(B Quoted-Printable $BEy$G(B encode$B$9$kI,MQ$,$"$j$^$9!#(B
+@refill
 
+$B$^$?!"$3$&$7$?M}M3$+$i!"#19T$,(B 999 byte $B0J>e$N9T$,B8:_$9$k2DG=@-$N$"$k(B
+data $B$O(B @cindex{binary}@strong{binary} (@ref{binary}) $B$H8F$V$3$H$K$7$^$9!#(B
 
-@node 94-character set, 96-character set, 8bit, Glossary
-@subsection 94-character set
-@cindex 94-character set
-
-@strong{94-character set} is a kind of 1 byte graphic character set
-(@ref{graphic character set}), each characters are in positions 02/01
-(33) to 07/14 (126) or 10/01 (161) to 15/14 (254).  (ex. ASCII
-(@ref{ASCII}), JIS X0201-Latin)
+$B$A$J$_$K!"(B7bit $B$GI=8=$G$-$k(B data $B$O(B 8bit $B$G$bI=8=$G$-$^$9!#$h$C$F!"(B
+``8bit'' $B$H8@$C$?>l9g!"#19T$,(B 998 byte $B0J2<$NG$0U$N(B data $B$r;X$9$3$H$,(B
+$B$"$j$^$9!#(B
 
 
-@node 96-character set, 94x94-character set, 94-character set, Glossary
-@subsection 96-character set
-@cindex 96-character set
+@node 94 character set, 96 character set, 8bit, Glossary
+@subsection 94 $BJ8;z=89g(B
 
-@strong{96-character set} is a kind of 1 byte graphic character set
-(@ref{graphic character set}), each characters are in positions 02/00
-(32) to 07/15 (126) or 10/00 (160) to 15/15 (255). (ex. ISO 8859)
+33 $B$+$i(B 126 $B$NHO0O$N(B 1 byte $B$+$i$J$k(B $BJ8;z=89g(B(@ref{Character set})$B!#(B
+ASCII (@ref{ASCII}) $B$d(B JIS X0201-Latin $B$O$=$N0l<o!#(B
 
 
-@node 94x94-character set, ASCII, 96-character set, Glossary
-@subsection 94x94-character set
-@cindex 94x94-character set
+@node 96 character set, 94x94 character set, 94 character set, Glossary
+@subsection 96 $BJ8;z=89g(B
 
-@strong{94x94-character set} is a kind of 2 byte graphic character set
-(@ref{graphic character set}), each bytes are in positions 02/01 (33) to
-07/14 (126) or 10/01 (161) to 15/14 (254).  (ex. JIS X0208 (@ref{JIS X0208}), GB 2312 (@ref{GB 2312}))
+32 $B$+$i(B 127 $B$NHO0O$N(B 1 byte $B$+$i$J$k(B $BJ8;z=89g(B(@ref{Character set})$B!#(BISO
+8859 $B%7%j!<%:$O$=$N0l<o!#(B
 
 
-@node ASCII, Base64, 94x94-character set, Glossary
+@node 94x94 character set, ASCII, 96 character set, Glossary
+@subsection 94$B!_(B94 $BJ8;z=89g(B
+
+33 $B$+$i(B 126 $B$NHO0O$N(B 2 byte $B$+$i$J$k(B $BJ8;z=89g(B(@ref{Character set})$B!#(BJIS
+X0208 (@ref{JIS X0208}) $B$d(B GB 2312 (@ref{GB 2312}) $B$O$=$N0l<o!#(B
+
+
+@node ASCII, Base64, 94x94 character set, Glossary
 @subsection ASCII
-@cindex ANSI X3.4:1986
-@cindex ASCII
-@cindex ASCII
 
-@strong{ASCII} is a 94-character set (@ref{94-character set}) contains
-primary latin characters (A-Z, a-z), numbers and some characters.  It is
-a standard of the United States of America.  It is a variant of ISO 646
-(@ref{ISO 646}).
+$B%"%a%j%+O"K.$G;H$o$l$kJ8;z$rId9f2=$7$?(B 94 $BJ8;z=89g(B(@ref{94 character
+set})$B!#(BA-Z, a-z $B$N(B Latin $BJ8;z$H?t;z!"4v$D$+$N5-9f$+$i$J$k!#(BISO 646
+(@ref{ISO 646}) $B$N0l$D!#(B
 
-
+@cindex{ASCII}@cindex{ANSI X3.4:1986}
 @noindent
 [ASCII]
 @quotation
@@ -268,60 +306,67 @@ Interchange'', ANSI X3.4:1986.
 
 @node Base64, binary, ASCII, Glossary
 @subsection Base64
-@cindex pad
-@cindex Base64
 
-@strong{Base64} is a transfer encoding method of MIME (@ref{MIME})
-defined in RFC 2045 (@ref{RFC 2045}).@refill
+RFC 1521 (@ref{RFC 1521}) $B$GDj5A$5$l$F$$$k(B MIME (@ref{MIME}) $B$K$*$1$k(B 
+binary data (@ref{binary}) $B$N(B network $B$G$NJQ49K!$N#1$D!#(B@refill
 
-The encoding process represents 24-bit groups of input bits as output
-strings of 4 encoded characters.  Encoded characters represent integer 0
-.. 63 or @strong{pad}.  Base64 data must be 4 * n bytes, so pad is used
-to adjust size.@refill
+$B!X(B64 $B?J?t!Y$H$$$&0UL#$G!"(B3 byte $B$N(B data $B$r(B 0 $B$+$i(B 63 $B$N?t$rI=$9(B ASCII
+(@ref{ASCII}) 4 $BJ8;z$KJQ49$9$kJ}K!!#!J$b$7!"(B4 $BJ8;z$K$J$i$J$1$l$P(B 
+@cindex{pad}@strong{pad} $B$H8F$P$l$k5M$aJ*$r$7$FD9$5$rD4@0$9$k!K(B@refill
 
-These 65 characters are subset of all versions of ISO 646, including
-US-ASCII, and all versions of EBCDIC.  So it is safe even if it is
-translated by non-Internet gateways.
+$B$3$N(B 65 $B<oN`$NJ8;z$O(B ASCII $B$H(B EBCDIC $B$N6&DLItJ,$+$iA*$P$l$F$*$j!"(B
+Internet $B0J30$N(B network $B$r7PM3$9$k>l9g$G$b0BA4$KE>Aw$G$-$k$h$&$K@_7W$5(B
+$B$l$F$$$k!#(B
 
 
-@node binary, cn-gb, Base64, Glossary
+@node binary, Character Set, Base64, Glossary
 @subsection binary
-@cindex binary
 
-Any byte stream is called @strong{binary}.@refill
+$BG$0U$N(B byte $BNs$r(B @cindex{binary}@strong{binary} $B$H8F$V$3$H$K$7$^$9!#(B
+@refill
 
-It does not require structureof lines.  It differs from from 8bit
-(@ref{8bit}).@refill
+8bit (@ref{8bit}) $B$H0[$J$k$N$O(B data $B$K9T$N9=B$$r2>Dj$7$J$$$3$H$G$9!#(B
 
-In addition, if line structured data contain too long line (more than
-998 bytes), it is regarded as binary.
+$B$^$?!"9T$N9=B$$,$"$C$F$b!"(B999 byte $B0J>e$+$i$J$k9T$,$"$k>l9g$b(B binary$B$H8F(B
+$B$V$3$H$K$7$^$9!#(B@refill
+
+$B$A$J$_$K!"(B7bit (@ref{7bit}) $B$d(B 8bit $B$GI=8=$G$-$k(B data $B$O(B binary $B$G$bI=8=(B
+$B$G$-$^$9!#$h$C$F!"(B@cindex{binary data}@strong{binary data} $B$H8@$C$?>l9g!"(B
+$BG$0U$N(B data $B$r;X$9$3$H$,$"$j$^$9!#(B
 
 
-@node cn-gb, cn-big5, binary, Glossary
+@node Character Set, cn-gb, binary, Glossary
+@subsection Character Set$B!JJ8;z=89g!K(B
+
+$BId9f2=J8;z=89g(B(@ref{Coded character set})$B!#C"$7!"$3$3$G$O(B $BId9f3HD%(B
+(@ref{Code extension}) $B$5$l$F$J$$J8;z=89g$H$$$&%K%e%"%s%9$r9~(B
+$B$a$F$$$k!#(B
+
+
+@node cn-gb, cn-big5, Character Set, Glossary
 @subsection cn-gb, gb2312
 
-A MIME charset (@ref{MIME charset}) for simplified Chinese mainly used
-in the Chinese mainland.@refill
+$BCf9qBgN&$G$i$l$F$$$k4JBN;z$GI=5-$5$l$kCf9q8l$rI=8=$9$k$?$a$N(B MIME
+charset (@ref{MIME charset}) $B$N#1$D!#(B@refill
 
-It is a 8bit (@ref{8bit}) coded character set (@ref{coded character set}) based on ISO 2022 (@ref{ISO 2022}).  It extends ASCII
-(@ref{ASCII}) to combine GB 2312 (@ref{GB 2312}).@refill
+ISO 2022 (@ref{ISO 2022}) $B$K4p$$$F(B ASCII (@ref{ASCII}) $B$K(B GB 2312
+(@ref{GB 2312}) $B$r(B 8bit (@ref{8bit}) $B$GId9f3HD%(B (@ref{Code extension})$B$7(B
+$B$F$$$k!#(B@refill
 
-It is defined in RFC 1922 (@ref{RFC 1922}).
+RFC 1922 (@ref{RFC 1922}) $B$GDj5A$5$l$F$$$k!#(B
 
 
-@node cn-big5, CNS 11643, cn-gb, Glossary
+@node cn-big5, CNS, cn-gb, Glossary
 @subsection cn-big5, big5
-@cindex BIG5
 
-A MIME charset (@ref{MIME charset}) for traditional Chinese mainly used
-in Taiwan and Hon Kong.@refill
+$BBfOQ$d9a9A$GMQ$$$i$l$F$$$k<g$KHKBN;z$GI=5-$5$l$kCf9q8l$rI=8=$9$k$?$a$N(B 
+MIME charset (@ref{MIME charset}) $B$N#1$D!#(B@refill
 
-It is a 8bit (@ref{8bit}) coded character set (@ref{coded character set}) not based on ISO 2022 (@ref{ISO 2022}).  It is a de-fact
-standard.@refill
+ISO 2022 (@ref{ISO 2022}) $B$K4p$+$J$$(B 8bit (@ref{8bit}) $B$NId9f2=J8;z=89g(B
+(@ref{Coded character set})$B$G(B de-fact standard $B$G$"$k!#(BRFC 1922
+(@ref{RFC 1922}) $B$GDj5A$5$l$F$$$k!#(B@refill
 
-It is defined in RFC 1922 (@ref{RFC 1922}).@refill
-
-cf. 
+cf. @cindex{BIG5}
 @noindent
 [BIG5]
 @quotation
@@ -329,47 +374,21 @@ Institute for Information Industry, ``Chinese Coded Character Set in
 Computer'', March 1984.
 @end quotation
 
-It corresponds to CNS 11643 (@ref{CNS 11643}).
+CNS 11643-1986 (@ref{CNS}) $B$HBP1~4X78$,$"$k!#(B
 
 
-@node CNS 11643, coded character set, cn-big5, Glossary
+@node CNS, Coded character set, cn-big5, Glossary
 @subsection CNS 11643-1992
-@cindex CNS        11643:1992
-@cindex CNS 11643-1992
 
-Graphic character sets (@ref{graphic character set}) for Chinese mainly
-written by traditional Chinese mainly used in Taiwan and Hong Kong.  It
-is a standard of Taiwan.  Currently there are seven 94x94-character set
-(@ref{94x94-character set}).@refill
+$BBfOQ$d9a9A$GMQ$$$i$l$F$$$k<g$KHKBN;z$GI=5-$5$l$kCf9q8l$rI=8=$9$k$?$a$N(B 
+$BJ8;z=89g(B(@ref{Character set})$B!#BfOQ$NI8=`!#8=:_!"(B94$B!_(B94 (@ref{94x94
+character set}) $B$NLL$,Bh#1LL$+$iBh#7LL$^$G$"$k!#(B@refill
 
-Final byte of ISO 2022 (@ref{ISO 2022}) are following:
+ISO 2022 (@ref{ISO 2022}) $B$G$N=*C<J8;z$O!"Bh#1LL$,(B `G', $BBh#2LL$,(B `H', $BBh(B
+$B#3LL$,(B `I', $BBh#4LL$,(B `J', $BBh#5LL$,(B `K', $BBh#6LL$,(B `L', $BBh#7LL$,(B `M' $B$G$"(B
+$B$k!#(B
 
-@table @samp
-@item plane 1
-04/07 (`G')
-
-@item plane 2
-04/08 (`H')
-
-@item plane 3
-04/09 (`I')
-
-@item plane 4
-04/10 (`J')
-
-@item plane 5
-04/11 (`K')
-
-@item plane 6
-04/12 (`L')
-
-@item plane 7
-04/13 (`M')
-
-@end table
-
-
-
+@cindex{CNS 11643-1992}@cindex{CNS        11643:1992}
 @noindent
 [CNS 11643-1992]
 @quotation
@@ -379,30 +398,26 @@ Final byte of ISO 2022 (@ref{ISO 2022}) are following:
 
 
 
-@node coded character set, code extension, CNS 11643, Glossary
-@subsection Coded character set, Character code
+@node Coded character set, Code extension, CNS, Glossary
+@subsection Coded character set$B!JId9f2=J8;z=89g!K(B, Character code$B!JJ8;zId9f!K(B
 
-A set of unambiguous rules that establishes a character set and the
-one-to-one relationship between the characters of the set and their
-bit combinations.
+$BJ8;z$H(B byte $BNs$H#1BP#1$KBP1~IU$1$k[#Kf$G$J$$5,B'$N=89g!#(B
 
 
-@node code extension, Content-Disposition, coded character set, Glossary
-@subsection Code extension
+@node Code extension, Content-Disposition, Coded character set, Glossary
+@subsection Code extension$B!JId9f3HD%!K(B
 
-The techniques for the encoding of characters that are not included in
-the character set of a given code. (ex. ISO 2022 (@ref{ISO 2022}))
+$BM?$($i$l$?J8;z=89g(B(@ref{Character set})$B$K4^$^$l$F$$$J$$J8;z$NId9f2=$N$?(B
+$B$a$KMQ$$$k<jK!!#(BISO 2022 (@ref{ISO 2022}) $B$O$=$N#1$D!#(B
 
 
-@node Content-Disposition, Content-Type field, code extension, Glossary
+@node Content-Disposition, content-type, Code extension, Glossary
 @subsection Content-Disposition field
-@cindex RFC 1806
-@cindex Experimental
 
-A field to specify presentation of entity or file name.  It is an
-extension for MIME (@ref{MIME}).@refill
+Content $B$NI=<($N;EJ}$d(B file $BL>$rI=8=$9$k$?$a$N(B field. MIME (@ref{MIME}) 
+$B$N3HD%$N#1$D!#(B@refill
 
-
+@cindex{Experimental}@cindex{RFC 1806}
 @noindent
 [RFC 1806]
 @quotation
@@ -413,31 +428,68 @@ Experimental.
 
 
 
-@node Content-Type field, Emacs, Content-Disposition, Glossary
-@subsection Content-Type field
-@cindex parameter
-@cindex subtype
-@cindex type
+@node content-type, Content-Type field, Content-Disposition, Glossary
+@subsection content-type
 
-Header field to represent information about body, such as media type
-(@ref{media type}), MIME charset (@ref{MIME charset}).  It is defined in
-RFC 2045 (@ref{RFC 2045}).
+MIME (@ref{MIME}) $B$K$*$1$k(B part (@ref{part}) $B$N<oN`!#(B
+@cindex{type}@strong{type} $B$H(B @cindex{subtype}@strong{subtype} $B$+$i$J$k!#(B
+RFC 1521 (@ref{RFC 1521}) $B$GDj5A$5$l$F$$$k!#(B@refill
+
+type $B$OI8=`$G$O(B @cindex{application}@strong{application},
+@cindex{audio}@strong{audio}, @cindex{image}@strong{image},
+@cindex{message}@strong{message}, @cindex{multipart}@strong{multipart}
+(@ref{multipart}), @cindex{text}@strong{text},
+@cindex{video}@strong{video} $B$,Dj5A$5$l!"$=$l$>$l$K$O(B 
+application/octet-stream, audio/basic, image/jpeg, multipart/mixed
+(@ref{multipart/mixed}), text/plain (@ref{text/plain}), video/mpeg $B$J$I(B
+$B$N$5$^$6$^$J(B subtype $B$,Dj5A$5$l$F$$$k!#(B
+
+@noindent
+@strong{[$BCm0U(B]}
+@quotation
+
+$B$3$3$G$O!"(Btext/plain $B$J$I$N(B type/subtype $B$NAH$r$7$P$7$P(B 
+@cindex{content-type/subtype}@strong{content-type/subtype} $B$H=q$/!#(B
+@end quotation
+
+
+content-type $B$O!"(BRFC 1521 $B$GDj5A$5$l$F$$$k$b$N$K2C$($F!"EPO?$9$k$3$H$b$G(B
+$B$-$k!#8=:_!"EPO?$5$l$F$$$k$b$N$O(B MEDIA TYPES
+(ftp://ftp.isi.edu/in-notes/iana/assignments/media-types) $B$G;2>H$G$-$k!#(B
+
+$B$^$?!"(Btype $B$b$7$/$O(B subtype $B$K!"A0$K(B `x-' $B$rIU$1$?(B 
+@cindex{x-token}@strong{x-token} $B$rMQ$$$k$3$H$K$h$j!"EPO?$5$l$F$$$J$$$b(B
+$B$N$r;dE*$KMQ$$$k$3$H$b$G$-$k!#$7$+$7!"EvA3$N$3$H$J$,$i!"$3$&$7$?;dE*$J(B 
+content-type $B$ONJ2r$rF@$?<T$N4V$G$7$+2r<a$G$-$J$$$N$GMxMQ$K$OCm0U$9$k$3(B
+$B$H!#(B@refill
+
+(cf. @ref{Content-Type field})
+
+
+
+@node Content-Type field, Emacs, content-type, Glossary
+@subsection Content-Type field
+
+Header field to represent information about part, such as content-type
+(@ref{content-type}), MIME charset (@ref{MIME charset}).  It is defined
+in RFC 1521 (@ref{RFC 1521}).
 
 @noindent
 @strong{[Memo]}
 @quotation
 
 Historically, Content-Type field was proposed in RFC 1049.  In it,
-Content-Type did not distinguish type and subtype.  However MIME parser
-may be able to accept RFC 1049 based Content-Type as unknown type.
+Content-Type did not distinguish type and subtype.  However RFC 1521
+parser may be able to accept RFC 1049 based Content-Type as unknown
+type.
 @end quotation
 
 
 Content-Type field is defined as following:
 
 @quotation
-``Content-Type'' ``:'' @strong{type} ``/''
-@strong{subtype} *( ``;'' @strong{parameter} )
+``Content-Type'' ``:'' @cindex{type}@strong{type} ``/''
+@cindex{subtype}@strong{subtype} *( ``;'' @cindex{parameter}@strong{parameter} )
 @end quotation
 
 
@@ -488,70 +540,50 @@ Content-Type: application/octet-stream
 @node Emacs, encoded-word, Content-Type field, Glossary
 @subsection Emacs
 
-In this document, `Emacs' means GNU Emacs released by FSF, and `emacs'
-means any variants of GNU Emacs.
+$B$3$3$G$O(B `Emacs' $B$G(B FSF $B$,G[I[$7$F$$$k(B GNU Emacs $B$r;X$7!"(B`emacs' $B$G(B
+GNU Emacs $B$NJQ<o$NAm>N$H$9$k!#(B
 
 
 @node encoded-word, encapsulation, Emacs, Glossary
 @subsection encoded-word
-@cindex RFC 2047
-@cindex Standards Track
-@cindex RFC 2047
 
 Representation non ASCII (@ref{ASCII}) characters in header.  It is
-defined in @strong{RFC 2047}.@refill
+defined in @cindex{RFC 1522}@strong{RFC 1522}.@refill
 
-
+@cindex{Standards Track}@cindex{RFC 1522}
 @noindent
-[RFC 2047]
+[RFC 1522]
 @quotation
-K. Moore, ``MIME (Multipurpose Internet Mail Extensions) Part Three:
-Message Header Extensions for Non-ASCII Text'', November 1996, Standards
-Track (obsolete RFC 1521,1522,1590).
+K. Moore, ``MIME (Multipurpose Internet Mail Extensions) Part Two:
+Message Header Extensions for Non-ASCII Text'', September 1993,
+Standards Track.
 @end quotation
 
 
 
-@node encapsulation, entity, encoded-word, Glossary
+@node encapsulation, euc-kr, encoded-word, Glossary
 @subsection encapsulation
 
-Method to insert whole Internet message (@ref{RFC 822}) into another
-Internet message.@refill
+Internet mail (@ref{RFC 822}) $B$rB>$N5-;v$K$^$k$4$HF~$l$kJ}K!!#(B@refill
 
-For example, it is used to forward a message.@refill
+$BNc$($P!"5-;v$rE>Aw$7$?$j$9$k$N$KMQ$$$k!#(B@refill
 
 (cf. @ref{message/rfc822})
 
 
 
-@node entity, euc-kr, encapsulation, Glossary
-@subsection Entity
-
-Header fields and contents of a message or one of the parts in the body
-of a multipart (@ref{multipart}) entity.
-
-@noindent
-@strong{[Memo]}
-@quotation
-
-In this document, `entity' might be called ``part''.
-@end quotation
-
-
-
-@node euc-kr, FTP, entity, Glossary
+@node euc-kr, FTP, encapsulation, Glossary
 @subsection euc-kr
-@cindex KS C 5861:1992
-@cindex euc-kr
 
-A MIME charset (@ref{MIME charset}) for Korean.@refill
+$B4Z9q8l$rI=8=$9$k$?$a$N(B MIME charset (@ref{MIME charset}) $B$N#1$D!#(B
 
-It is a 8bit (@ref{8bit}) coded character set (@ref{coded character set}) based on ISO 2022 (@ref{ISO 2022}).  It extends ASCII
-(@ref{ASCII}) to combine KS C5601 (@ref{KS C5601}).@refill
+ISO 2022 (@ref{ISO 2022}) $B$K4p$$$F(B ASCII (@ref{ASCII}) $B$K(BKS C5601
+(@ref{KS C5601}) $B$r(B 8bit (@ref{8bit}) $B$GId9f3HD%(B (@ref{Code extension})
+$B$7$F$$$k!#(B@refill
 
-It is defined in RFC 1557 (@ref{RFC 1557}).@refill
+RFC 1557 (@ref{RFC 1557}) $B$GDj5A$5$l$F$$$k!#(B@refill
 
-cf. 
+cf. @cindex{euc-kr}@cindex{KS C 5861:1992}
 @noindent
 [euc-kr]
 @quotation
@@ -563,11 +595,11 @@ C 5861:1992.
 
 @node FTP, GB 2312, euc-kr, Glossary
 @subsection FTP 
-@cindex RFC 959
-@cindex STD 9
-@cindex FTP
 
+Internet $B$G(B file $B$rE>Aw$9$k$?$a$N(B protocol $B$N#1$D!#(BRFC 959 $B$GDj5A$5$l$F(B
+$B$$$k!#(B@refill
 
+@cindex{FTP}@cindex{STD 9}@cindex{RFC 959}
 @noindent
 [FTP: RFC 959]
 @quotation
@@ -579,34 +611,30 @@ STD 9.
 
 @node GB 2312, GB 8565.2, FTP, Glossary
 @subsection GB 2312-1980
-@cindex GB 2312:1980
-@cindex GB 2312
 
-A 94x94-character set (@ref{94x94-character set}) for Chinese mainly
-written by simplified Chinese mainly used in the Chinese mainland.  It
-is a standard of China.@refill
+$BCf9qBgN&$GMQ$$$i$l$F$$$k4JBN;z$GI=5-$5$l$kCf9q8l$rI=$9$?$a$N(B 94$B!_(B94 $BJ8;z(B
+$B=89g(B(@ref{94x94 character set})$B!#Cf9q$N9q2HI8=`!#(BISO 2022 (@ref{ISO
+2022}) $B$G$N=*C<J8;z$O(B `A'.@refill
 
-Final byte of ISO 2022 (@ref{ISO 2022}) is 04/01 (`A').
+$B$3$l$O(B GB $B$K$*$1$k4pK\=8$G$"$k!#(B
 
-
+@cindex{GB 2312}@cindex{GB 2312:1980}
 @noindent
 [GB 2312]
 @quotation
-``Code of Chinese Graphic Character Set for Information Interchange -
-Primary Set'', GB 2312:1980.
+$B!X?.B)8r49MQ4A;zJTb{;zId=8(B -- $B4pK\=8!Y(B, ``Code of Chinese Graphic
+Character Set for Information Interchange - Primary Set'', GB 2312:1980.
 @end quotation
 
 
 
-@node GB 8565.2, graphic character set, GB 2312, Glossary
+@node GB 8565.2, hz-gb2312, GB 2312, Glossary
 @subsection GB 8565.2-1988
-@cindex GB 8565.2:1988
-@cindex GB 8565.2
 
-A 94x94-character set (@ref{94x94-character set}) for Chinese as
-supplement to GB 2312 (@ref{GB 2312}).  It is a standard of China.
+$BCf9q8l$N$?$a$NJd=uJ8;z=89g(B(@ref{Character set})$B!#Cf9q$N9q2HI8=`!#(BGB 2312
+(@ref{GB 2312}) $B$N6u$-ItJ,$KJd=<$9$k$h$&$KDj5A$5$l$?$i$7$$!#(B
 
-
+@cindex{GB 8565.2}@cindex{GB 8565.2:1988}
 @noindent
 [GB 8565.2]
 @quotation
@@ -616,30 +644,19 @@ Part 2: Graphic Characters used with Primary Set'', GB 8565.2:1988.
 
 
 
-@node graphic character set, hz-gb2312, GB 8565.2, Glossary
-@subsection Graphic Character Set
-
-Coded character set (@ref{coded character set}) for graphic characters.
-
-
-@node hz-gb2312, ISO 2022, graphic character set, Glossary
+@node hz-gb2312, ISO 2022, GB 8565.2, Glossary
 @subsection hz-gb2312
-@cindex RFC 1843
-@cindex Informational
-@cindex RFC 1842
-@cindex Informational
 
-A MIME charset (@ref{MIME charset}) for simplified Chinese mainly used
-in the Chinese mainland.@refill
+$BCf9qBgN&$GMQ$$$i$l$F$$$k4JBN;z$GI=5-$5$l$kCf9q8l$rI=8=$9$k$?$a$N(B MIME
+charset (@ref{MIME charset}) $B$N#1$D!#(B@refill
 
-It extends ASCII (@ref{ASCII}) to combine GB 2312 (@ref{GB 2312}), its
-technique is like iso-2022-jp (@ref{iso-2022-jp}), but it is designed to
-be ASCII printable to use special form for ESC sequence to designate GB
-2312 to G0.@refill
+ASCII (@ref{ASCII}) $B$K(B GB 2312 (@ref{GB 2312}) $B$r(B 7bit $B$GId9f3HD%(B
+(@ref{Code extension})$B$7$?$b$N$r(B ASCII printable $B$K$J$k$h$&$K9)IW$7$F$$(B
+$B$k!#(B@refill
 
-It is defined in RFC 1842 and 1843.
+RFC 1842, 1843 $B$GDj5A$5$l$F$$$k!#(B
 
-
+@cindex{Informational}@cindex{RFC 1842}
 @noindent
 [RFC 1842]
 @quotation
@@ -648,7 +665,7 @@ Characters-Based Chinese Character Encoding for Internet Messages'',
 August 1995, Informational.
 @end quotation
 
-
+@cindex{Informational}@cindex{RFC 1843}
 @noindent
 [RFC 1843]
 @quotation
@@ -660,13 +677,14 @@ Chinese and ASCII characters'', August 1995, Informational.
 
 @node ISO 2022, iso-2022-cn, hz-gb2312, Glossary
 @subsection ISO 2022
-@cindex ISO/IEC 2022:1994
-@cindex ISO 2022
 
-It is a standard for character code structure and code extension
-(@ref{code extension}) technique.
+$BId9f3HD%(B(@ref{Code extension})$B$N$?$a$N9q:]I8=`!#(B@refill
 
+$B$3$l$rMQ$$$FJ#?t$NJ8;z=89g(B(@ref{Character set})$B$rAH9g$;$F(B 7bit
+(@ref{7bit}) $B$J$$$7(B 8bit (@ref{8bit}) $B$N(B $BId9f2=J8;z=89g(B(@ref{Coded
+character set}) $B$r:n$k$3$H$,$G$-$k!#(B
 
+@cindex{ISO 2022}@cindex{ISO/IEC 2022:1994}
 @noindent
 [ISO 2022]
 @quotation
@@ -680,59 +698,56 @@ techniques'', ISO/IEC 2022:1994.
 @node iso-2022-cn, iso-2022-cn-ext, ISO 2022, Glossary
 @subsection iso-2022-cn
 
-A MIME charset (@ref{MIME charset}) for Chinese.@refill
+$BCf9q8l$rI=8=$9$k$?$a$N(B MIME charset (@ref{MIME charset}) $B$N#1$D!#(B
 
-It is a 7bit (@ref{7bit}) coded character set (@ref{coded character set}) based on ISO 2022 (@ref{ISO 2022}).  It extends ASCII
-(@ref{ASCII}) to combine GB 2312 (@ref{GB 2312}) and/or CNS 11643 plain
-1, plain 2 (@ref{CNS 11643}).@refill
+ISO 2022 (@ref{ISO 2022}) $B$K4p$$$F(B ASCII (@ref{ASCII}) $B$K(B GB 2312
+(@ref{GB 2312}), CNS 11643 plain 1, plain 2 (@ref{CNS}) $B$r(B 7bit
+(@ref{7bit}) $B$GId9f3HD%(B (@ref{Code extension})$B$7$F$$$k!#(B@refill
 
-It is defined in RFC 1922 (@ref{RFC 1922}).
+RFC 1922 (@ref{RFC 1922}) $B$GDj5A$5$l$F$$$k!#(B
 
 
 @node iso-2022-cn-ext, iso-2022-jp, iso-2022-cn, Glossary
 @subsection iso-2022-cn-ext
 
-A MIME charset (@ref{MIME charset}) for Chinese.@refill
+$BCf9q8l$rI=8=$9$k$?$a$N(B MIME charset (@ref{MIME charset}) $B$N#1$D!#(B
 
-It is a 7bit (@ref{7bit}) coded character set (@ref{coded character set}) based on ISO 2022 (@ref{ISO 2022}).  It extends ASCII
-(@ref{ASCII}) to combine GB 2312 (@ref{GB 2312}), CNS 11643 plain 1 .. 7
-(@ref{CNS 11643}), ISO-IR-165 (@ref{ISO-IR-165}) and other Chinese
-graphic character sets.@refill
+ISO 2022 (@ref{ISO 2022}) $B$K4p$$$F(B ASCII (@ref{ASCII}) $B$K(B GB 2312
+(@ref{GB 2312}), CNS 11643 plain 1 .. 7 (@ref{CNS}), ISO-IR-165
+(@ref{ISO-IR-165}) $BEy$r(B 7bit (@ref{7bit}) $B$GId9f3HD%(B (@ref{Code
+extension})$B$7$F$$$k!#(B@refill
 
-It is defined in RFC 1922 (@ref{RFC 1922}).@refill
+RFC 1922 (@ref{RFC 1922}) $B$GDj5A$5$l$F$$$k!#(B@refill
 
 @noindent
 @strong{[Memo]}
 @quotation
-MULE 2.3 and current XEmacs/mule can not use it correctly.
+MULE 2.3 $B$*$h$S!"8=:_$N(B XEmacs/mule $B$G$O@5$7$/07$&$3$H$O$G$-$J$$!#(B
 
-Emacs/mule can use it.
+Emacs/mule $B$G$OMxMQ2DG=$G$"$k!#(B
 @end quotation
 
 
 
 @node iso-2022-jp, iso-2022-jp-2, iso-2022-cn-ext, Glossary
 @subsection iso-2022-jp
-@cindex RFC 1468
-@cindex iso-2022-jp
 
-A MIME charset (@ref{MIME charset}) for Japanese.@refill
+$BF|K\8l$rI=8=$9$k$?$a$N(B MIME charset (@ref{MIME charset}) $B$N0l$D!#(B
 
-It is a 7bit (@ref{7bit}) coded character set (@ref{coded character set}) based on old ISO 2022 (@ref{ISO 2022}).  It switches ASCII
-(@ref{ASCII}), JIS X0201-Latin, JIS X0208-1978 (@ref{JIS C6226}) and JIS
-X0208-1983 (@ref{JIS X0208}).@refill
+$B8E$$(B ISO 2022 (@ref{ISO 2022}) $B$K4p$$$F(B ASCII (@ref{ASCII}), JIS
+X0201-Latin, JIS X0208-1978 (@ref{JIS C6226-1978}), JIS X0208-1983
+(@ref{JIS X0208}) $B$r@Z$jBX$($k(B 7bit (@ref{7bit}) $BJ8;zId9f!#(B@refill
 
-It is defined in RFC 1468.@refill
+RFC 1468 $B$GDj5A$5$l$F$$$k!#(B@refill
 
 @noindent
 @strong{[Memo]}
 @quotation
-JIS X0208-1997? will define it in annex as non-ISO 2022 (@ref{ISO 2022})
-encoding.
+JIS X0208-1996? $B$G$O(B ISO 2022 (@ref{ISO 2022}) $B$HFHN)$KDj5A$5$l$kM=Dj!#(B
 @end quotation
 
 
-
+@cindex{iso-2022-jp}@cindex{RFC 1468}
 @noindent
 [iso-2022-jp: RFC 1468]
 @quotation
@@ -744,16 +759,13 @@ for Internet Messages'', June 1993.
 
 @node iso-2022-jp-2, iso-2022-kr, iso-2022-jp, Glossary
 @subsection iso-2022-jp-2
-@cindex RFC 1554
-@cindex Informational
-@cindex iso-2022-jp-2
 
-A MIME charset (@ref{MIME charset}), which is a multilingual extension
-of iso-2022-jp (@ref{iso-2022-jp}).@refill
+iso-2022-jp (@ref{iso-2022-jp}) $B$r3HD%$7$?(B MIME charset (@ref{MIME
+charset}) $B$N0l$D!#(B@refill
 
-It is defined in RFC 1554.
+RFC 1554 $B$GDj5A$5$l$F$$$k!#(B
 
-
+@cindex{iso-2022-jp-2}@cindex{Informational}@cindex{RFC 1554}
 @noindent
 [iso-2022-jp-2: RFC 1554]
 @quotation
@@ -766,21 +778,24 @@ ISO-2022-JP'', December 1993, Informational.
 @node iso-2022-kr, ISO 646, iso-2022-jp-2, Glossary
 @subsection iso-2022-kr
 
-A MIME charset (@ref{MIME charset}) for Korean language (Hangul
-script).@refill
+$B4Z9q8l$rI=8=$9$k$?$a$N(B MIME charset (@ref{MIME charset}) $B$N#1$D!#(B
 
-It is based on ISO 2022 (@ref{ISO 2022}) code extension (@ref{code extension}) technique to extend ASCII (@ref{ASCII}) to use KS C5601
-(@ref{KS C5601}) as 7bit (@ref{7bit}) text.@refill
+ISO 2022 (@ref{ISO 2022}) $B$K4p$$$F(B ASCII (@ref{ASCII}) $B$K(B KS C5601
+(@ref{KS C5601}) $B$r(B 7bit (@ref{7bit}) $B$GId9f3HD%(B (@ref{Code extension})
+$B$7$F$$$k!#(B@refill
 
-It is defined in RFC 1557 (@ref{RFC 1557}).
+RFC 1557 (@ref{RFC 1557}) $B$GDj5A$5$l$F$$$k!#(B
 
 
 @node ISO 646, ISO 8859-1, iso-2022-kr, Glossary
 @subsection ISO 646
-@cindex ISO/IEC 646:1991
-@cindex ISO 646
 
+$B3F9q$G6&DL$K;H$($k:G>.8BEY$NJ8;z=89g(B(@ref{Character set})$B$rDj$a$?$b$N!#(B
+94 $BJ8;z=89g(B (@ref{94 character set})$B$N#1$D!#(BISO 646 IRV$B!J9q:]4p=`HG!K$r(B
+$B85$K4v$D$+$NJ8;z$O3F9q$G0c$&J8;z$r3dEv$k$3$H$r5v$7$F$$$F!"4v$D$+$NJQ<o$,(B
+$BB8:_$9$k!#(BASCII (@ref{ASCII}) $B$d(B JIS X0201-Latin $B$O$=$N0l<o!#(B
 
+@cindex{ISO 646}@cindex{ISO/IEC 646:1991}
 @noindent
 [ISO 646]
 @quotation
@@ -793,10 +808,11 @@ ISO/IEC 646:1991.
 
 @node ISO 8859-1, iso-8859-1, ISO 646, Glossary
 @subsection ISO 8859-1
-@cindex ISO 8859-1:1987
-@cindex ISO 8859-1
 
+$B@>2$=t8l$GMQ$$$i$l$k3HD%(B Latin $BJ8;z$d5-9f$+$i$J$k(B 96 $BJ8;z=89g(B(@ref{96
+character set})$B!#(B
 
+@cindex{ISO 8859-1}@cindex{ISO 8859-1:1987}
 @noindent
 [ISO 8859-1]
 @quotation
@@ -809,23 +825,23 @@ Latin Alphabet No.1'', ISO 8859-1:1987.
 
 @node iso-8859-1, ISO 8859-2, ISO 8859-1, Glossary
 @subsection iso-8859-1
-@cindex iso-8859-1
 
-@strong{iso-8859-1} is a MIME charset (@ref{MIME charset}) for
-west-European languages written by Latin script.@refill
+$B@>2$=t8l$J$I$rI=8=$9$k$?$a$N(B MIME charset (@ref{MIME charset}) $B$N#1$D!#(B
 
-It is a 8bit (@ref{8bit}) coded character set (@ref{coded character set}) based on ISO 2022 (@ref{ISO 2022}).  It extends ASCII
-(@ref{ASCII}) to combine ISO 8859-1 (@ref{ISO 8859-1}).@refill
+ISO 2022 (@ref{ISO 2022}) $B$K4p$$$F!"(BASCII (@ref{ASCII}) $B$K(B ISO 8859-1
+(@ref{ISO 8859-1}) $B$r(B 8bit (@ref{8bit}) $B$GId9f3HD%(B (@ref{Code
+extension})$B$7$F$$$k!#(B@refill
 
-It is defined in RFC 2046 (@ref{RFC 2046}).
+RFC 1521 (@ref{RFC 1521}) $B$GDj5A$5$l$F$$$k!#(B
 
 
 @node ISO 8859-2, iso-8859-2, iso-8859-1, Glossary
 @subsection ISO 8859-2
-@cindex ISO 8859-2:1987
-@cindex ISO 8859-2
 
+$BEl2$=t8l$GMQ$$$i$l$k3HD%(B Latin $BJ8;z$d5-9f$+$i$J$k(B 96 $BJ8;z=89g(B(@ref{96
+character set})$B!#(B
 
+@cindex{ISO 8859-2}@cindex{ISO 8859-2:1987}
 @noindent
 [ISO 8859-2]
 @quotation
@@ -838,23 +854,20 @@ Latin alphabet No.2'', ISO 8859-2:1987.
 
 @node iso-8859-2, ISO 8859-3, ISO 8859-2, Glossary
 @subsection iso-8859-2
-@cindex iso-8859-2
 
-@strong{iso-8859-2} is a MIME charset (@ref{MIME charset}) for
-east-European languages written by Latin script.@refill
+$BEl2$=t8l$rI=8=$9$k$?$a$N(B MIME charset (@ref{MIME charset}) $B$N#1$D!#(B
 
-It is a 8bit (@ref{8bit}) coded character set (@ref{coded character set}) based on ISO 2022 (@ref{ISO 2022}).  It extends ASCII
-(@ref{ASCII}) to combine ISO 8859-2 (@ref{ISO 8859-2}).@refill
+ISO 2022 (@ref{ISO 2022}) $B$K4p$$$F!"(BASCII (@ref{ASCII}) $B$K(B ISO 8859-2
+(@ref{ISO 8859-2}) $B$r(B 8bit (@ref{8bit}) $B$GId9f3HD%(B (@ref{Code
+extension})$B$7$F$$$k!#(B@refill
 
-It is defined in RFC 2046 (@ref{RFC 2046}).
+RFC 1521 (@ref{RFC 1521}) $B$GDj5A$5$l$F$$$k!#(B
 
 
 @node ISO 8859-3, ISO 8859-4, iso-8859-2, Glossary
 @subsection ISO 8859-3
-@cindex ISO 8859-3:1988
-@cindex ISO 8859-3
 
-
+@cindex{ISO 8859-3}@cindex{ISO 8859-3:1988}
 @noindent
 [ISO 8859-3]
 @quotation
@@ -867,10 +880,8 @@ Latin alphabet No.3'', ISO 8859-3:1988.
 
 @node ISO 8859-4, ISO 8859-5, ISO 8859-3, Glossary
 @subsection ISO 8859-4
-@cindex ISO 8859-4:1988
-@cindex ISO 8859-4
 
-
+@cindex{ISO 8859-4}@cindex{ISO 8859-4:1988}
 @noindent
 [ISO 8859-4]
 @quotation
@@ -883,10 +894,10 @@ Latin alphabet No.4'', ISO 8859-4:1988.
 
 @node ISO 8859-5, iso-8859-5, ISO 8859-4, Glossary
 @subsection ISO 8859-5
-@cindex ISO 8859-5:1988
-@cindex ISO 8859-5
 
+$B%-%j%kJ8;z$d5-9f$+$i$J$k(B 96 $BJ8;z=89g(B(@ref{96 character set})$B!#(B
 
+@cindex{ISO 8859-5}@cindex{ISO 8859-5:1988}
 @noindent
 [ISO 8859-5]
 @quotation
@@ -899,23 +910,20 @@ Latin/Cyrillic alphabet'', ISO 8859-5:1988.
 
 @node iso-8859-5, ISO 8859-6, ISO 8859-5, Glossary
 @subsection iso-8859-5
-@cindex iso-8859-5
 
-@strong{iso-8859-5} is a MIME charset (@ref{MIME charset}) for Cyrillic
-script.@refill
+$B%-%j%kJ8;z$rI=8=$9$k$?$a$N(B MIME charset (@ref{MIME charset}) $B$N#1$D!#(B
 
-It is a 8bit (@ref{8bit}) coded character set (@ref{coded character set}) based on ISO 2022 (@ref{ISO 2022}).  It extends ASCII
-(@ref{ASCII}) to combine ISO 8859-5 (@ref{ISO 8859-5}).@refill
+ISO 2022 (@ref{ISO 2022}) $B$K4p$$$F!"(BASCII (@ref{ASCII}) $B$K(B ISO 8859-5
+(@ref{ISO 8859-5}) $B$r(B 8bit (@ref{8bit}) $B$GId9f3HD%(B (@ref{Code
+extension})$B$7$F$$$k!#(B@refill
 
-It is defined in RFC 2046 (@ref{RFC 2046}).
+RFC 1521 (@ref{RFC 1521}) $B$GDj5A$5$l$F$$$k!#(B
 
 
 @node ISO 8859-6, ISO 8859-7, iso-8859-5, Glossary
 @subsection ISO 8859-6
-@cindex ISO 8859-6:1987
-@cindex ISO 8859-6
 
-
+@cindex{ISO 8859-6}@cindex{ISO 8859-6:1987}
 @noindent
 [ISO 8859-6]
 @quotation
@@ -928,10 +936,10 @@ Latin/Arabic alphabet'', ISO 8859-6:1987.
 
 @node ISO 8859-7, iso-8859-7, ISO 8859-6, Glossary
 @subsection ISO 8859-7
-@cindex ISO 8859-7:1987
-@cindex ISO 8859-7
 
+$B%.%j%7%"J8;z$d5-9f$+$i$J$k(B 96 $BJ8;z=89g(B(@ref{96 character set})$B!#(B
 
+@cindex{ISO 8859-7}@cindex{ISO 8859-7:1987}
 @noindent
 [ISO 8859-7]
 @quotation
@@ -944,20 +952,16 @@ Latin/Greek alphabet'', ISO 8859-7:1987.
 
 @node iso-8859-7, ISO 8859-8, ISO 8859-7, Glossary
 @subsection iso-8859-7
-@cindex RFC 1947
-@cindex Informational
-@cindex iso-8859-7
-@cindex iso-8859-7
 
-@strong{iso-8859-7} is a MIME charset (@ref{MIME charset}) for Greek
-script.@refill
+$B%.%j%7%"8l$rI=8=$9$k$?$a$N(B MIME charset (@ref{MIME charset}) $B$N#1$D!#(B
 
-It is a 8bit (@ref{8bit}) coded character set (@ref{coded character set}) based on ISO 2022 (@ref{ISO 2022}).  It extends ASCII
-(@ref{ASCII}) to combine ISO 8859-7 (@ref{ISO 8859-7}).@refill
+ISO 2022 (@ref{ISO 2022}) $B$K4p$$$F!"(BASCII (@ref{ASCII}) $B$K(B ISO 8859-7
+(@ref{ISO 8859-7}) $B$r(B 8bit (@ref{8bit}) $B$GId9f3HD%(B (@ref{Code
+extension})$B$7$F$$$k!#(B@refill
 
-It is defined in RFC 1947.
+RFC 1947 $B$GDj5A$5$l$F$$$k!#(B
 
-
+@cindex{iso-8859-7}@cindex{Informational}@cindex{RFC 1947}
 @noindent
 [iso-8859-7: RFC 1947]
 @quotation
@@ -969,10 +973,8 @@ May 1996, Informational.
 
 @node ISO 8859-8, ISO 8859-9, iso-8859-7, Glossary
 @subsection ISO 8859-8
-@cindex ISO 8859-8:1988
-@cindex ISO 8859-8
 
-
+@cindex{ISO 8859-8}@cindex{ISO 8859-8:1988}
 @noindent
 [ISO 8859-8]
 @quotation
@@ -985,10 +987,8 @@ Latin/Hebrew alphabet'', ISO 8859-8:1988.
 
 @node ISO 8859-9, ISO-IR-165, ISO 8859-8, Glossary
 @subsection ISO 8859-9
-@cindex ISO 8859-9:1990
-@cindex ISO 8859-9
 
-
+@cindex{ISO 8859-9}@cindex{ISO 8859-9:1990}
 @noindent
 [ISO 8859-9]
 @quotation
@@ -1002,47 +1002,43 @@ Latin alphabet No.5'', ISO 8859-9:1990.
 @node ISO-IR-165, JIS X0201, ISO 8859-9, Glossary
 @subsection ISO-IR-165, CCITT Extended GB 
 
-A 94x94-character set (@ref{94x94-character set}) for Chinese mainly
-written by simplified Chinese mainly used in the Chinese mainland
-registered by CCITT.@refill
+CCITT $B$,EPO?$7$?!"Cf9qBgN&$GMQ$$$i$l$F$$$k4JBN;z$GI=5-$5$l$kCf9q8l$rI=8=(B
+$B$9$k$?$a$N(B 94$B!_(B94 $BJ8;z=89g(B(@ref{94x94 character set})$B!#(B@refill
 
-It consists of GB 2312 (@ref{GB 2312}), GB 8565.2 (@ref{GB 8565.2}) and
-additional 150 characters.@refill
+GB 2312 (@ref{GB 2312}) $B$H(B GB 8565 $BI=#2(B (@ref{GB 8865.2}) $B$K(B 150 $BJ8;z$[(B
+$B$I$rDI2C$7$?$b$N$i$7$$!#(B@refill
 
-Final byte of ISO 2022 (@ref{ISO 2022}) is 04/05 (`E').
+ISO 2022 (@ref{ISO 2022}) $B$G$N=*C<J8;z$O(B `E' $B$G$"$k!#(B
 
 
 @node JIS X0201, JIS C6226, ISO-IR-165, Glossary
 @subsection JIS X0201
-@cindex JIS X 0201:1997?  draft
-@cindex JIS X0201-1997?
-@cindex JIS        X 0201-1976:
-@cindex JIS X0201-1976
-@cindex JIS C6220-1976
 
-It defines two 94-character set (@ref{94-character set}), for Latin
-script (a variant of ISO 646 (@ref{ISO 646})) and Katakana script, and
-7bit and 8bit coded character set (@ref{coded character set})s.@refill
+ISO 646 (@ref{ISO 646}) $B$NJQ<o$N#1$D$G$"$k(B Latin $BJ8;z=89g$H(B 1 byte $B$N%+(B
+$B%?%+%JJ8;z=89g$+$i$J$k!#(B@refill
 
-It was renamed from @strong{JIS C6220-1976}.
+$B85$O(B @cindex{JIS C6220-1976}@strong{JIS C6220-1976} $B$H8@$C$?$,(B @cindex{JIS
+X0201}@strong{JIS
+X0201} $B$KHV9f$,JQ99$5$l$?!#(B
 
-
+@cindex{JIS X0201-1976}@cindex{JIS        X 0201-1976:}
 @noindent
 [JIS X0201-1976]
 @quotation
-Japanese Standards Association, ``Code for Information Interchange'',
-JIS X 0201-1976:.
+$BF|K\5,3J6(2q(B (Japanese Standards Association),$B!X>pJs8r49MQId9f!Y(B, ``Code
+for Information Interchange'', JIS X 0201-1976:.
 @end quotation
 
 
-In addition, revised version will be published in 1997.
+$B$^$?!"(B1996 $BG/$K2~DjHG$,=P$kM=Dj!#(B
 
-
+@cindex{JIS X0201-1996?}@cindex{JIS X 0201:1996?        draft}
 @noindent
-[JIS X0201-1997?]
+[JIS X0201-1996?]
 @quotation
-Japanese Standards Association, ``7-bit and 8-bit coded character sets
-for information interchange'', JIS X 0201:1997?  draft.
+$BF|K\5,3J6(2q(B (Japanese Standards Association),$B!X#70C%H5Z$S#80C%H$N>p(B
+$BJs8r49MQId9f2=J8;z=89g!Y(B, ``7-bit and 8-bit coded character sets for
+information interchange'', JIS X 0201:1996?  draft.
 @end quotation
 
 
@@ -1050,8 +1046,8 @@ for information interchange'', JIS X 0201:1997?  draft.
 @node JIS C6226, JIS X0208, JIS X0201, Glossary
 @subsection JIS C6226-1978
 
-A 94x94-character set (@ref{94x94-character set}) for Japanese.  It was
-renamed to JIS X0208-1978.@refill
+$BF|K\8l$rI=$9$?$a$K:n$i$l$?(B 94$B!_(B94 $BJ8;z=89g(B(@ref{94x94 character set})$B!#(B
+$BF|K\$N9q2HI8=`!#(BJIS X0208-1978 $B$H$b$$$&!#(B@refill
 
 (cf. @ref{JIS X0208})
 
@@ -1059,54 +1055,49 @@ renamed to JIS X0208-1978.@refill
 
 @node JIS X0208, JIS X0212, JIS C6226, Glossary
 @subsection JIS X0208
-@cindex JIS X        0208:1997? draft
-@cindex JIS X0208-1997?
-@cindex JIS        X0208:1983,1990
-@cindex JIS X0208-1983,1990
-@cindex JIS C6226:1978
-@cindex JIS X0208-1978
 
-A 94x94-character set (@ref{94x94-character set}) for Japanese.
-Japanese standard.  It was published in 1978, and revised in 1983 and
-1990.  In the Internet message, 1983 edition is major.@refill
+$BF|K\8l$rI=$9$?$a$K:n$i$l$?(B 94$B!_(B94 $BJ8;z=89g(B(@ref{94x94 character set})$B!#(B
+$BF|K\$N9q2HI8=`!#(B1978 $BG/HG!"(B1983 $BG/HG!"(B1990 $BG/HG$,$"$k$,!"(BInternet $B$G$O(B 
+1983 $BG/HG$,$b$C$H$bNI$/;H$o$l$F$$$k!#(B@refill
 
-JIS X0208 contains some symbols, numbers, primary Latin script, Hiragana
-script, Katakana script, Greek script, Cyrillic script, box drawing
-parts, Kanji (Ideographic characters used in Japanese).  Notice that
-some symbols and box drawing parts were added in 1983 and some Kanjis
-were changed or swapped code points.  So 1978 edition and 1983 edition
-are regarded as different graphic character set.@refill
+JIS X0208 $B$O5-9f!"?t;z!"%m!<%^;z!"$R$i$,$J!"%+%?%+%J!"%.%j%7%cJ8;z!"%-%j(B
+$B%kJ8;z!"7S@~AG!"Bh#1?e=`!"Bh#2?e=`$N4A;z$,4^$^$l$k!#C"$7!"(B1983 $BG/HG$N0l(B
+$BIt$N5-9f$H7S@~AG$O(B 1978 $BG/HG$K$O$J$$!#$^$?!"0lIt$N4A;z$N;z7A$,(B 1983 $BG/HG(B
+$B$G$OJQ99$5$l!"$^$?!"Bh#1?e=`$HBh#2?e=`$,F~$lBX$o$C$F$$$?$j$9$k!#$3$N$?$a!"(B
+1978 $BG/HG$H(B 1983 $BG/HG$O0[$J$kJ8;z=89g$H$7$F07$o$l$k!#(B@refill
 
-1990 edition added some characters, so designation of 1990 edition
-requires `identify revised registration' sequence, ESC 02/06 4/0 as
-prefix of designation sequence.
+1990 $BG/$N2~Dj$G$O(B 1983 $BG/HG$KBP$9$kDI2C$,9T$o$l$?!#$3$N$?$a!"(B1990 $BG/HG(B
+$B$r;X<($9$k>l9g$OA0$K99?7%7!<%1%s%9$rMQ$$$k!#(B
 
-
+@cindex{JIS X0208-1978}@cindex{JIS C6226:1978}
 @noindent
 [JIS X0208-1978]
 @quotation
-Japanese Standards Association, ``Code of the Japanese graphic character
-set for information interchange'', JIS C6226:1978.
+$BF|K\5,3J6(2q(B (Japanese Standards Association),$B!X>pJs8r49MQ4A;zId9f7O!Y(B,
+``Code of the Japanese graphic character set for information
+interchange'', JIS C6226:1978.
 @end quotation
 
-
+@cindex{JIS X0208-1983,1990}@cindex{JIS X0208:1983,1990}
 @noindent
 [JIS X0208-1983,1990]
 @quotation
-Japanese Standards Association, ``Code of the Japanese graphic character
-set for information interchange'', JIS X0208:1983,1990.
+$BF|K\5,3J6(2q(B (Japanese Standards Association),$B!X>pJs8r49MQ4A;zId9f7O!Y(B,
+``Code of the Japanese graphic character set for information
+interchange'', JIS X0208:1983,1990.
 @end quotation
 
 
-In addition, revised version will be published in 1997. (It does not
-change graphic character set)
+$B$^$?!"(B1996 $BG/$K2~DjHG$,=PHG$5$l$kM=Dj!#!J;z7A$NJQ99$O9T$o$l$J$$$N$GJ8(B
+$B;z=89g$H$7$F$O(B 1990 $BG/HG$HF10l$G$"$k!K(B
 
-
+@cindex{JIS X0208-1996?}@cindex{JIS X 0208:1996? draft}
 @noindent
-[JIS X0208-1997?]
+[JIS X0208-1996?]
 @quotation
-Japanese Standards Association, ``7-bit and 8-bit double byte coded
-Kanji sets for information interchange'', JIS X 0208:1997? draft.
+$BF|K\5,3J6(2q(B (Japanese Standards Association),$B!X#70C%H5Z$S#80C%H$N(B 
+$B#2/set/ipe/ps6/WorkSpaces/xemacs-20.0-working/editor/man/tm/SCCS/s.tm-en.texi$%H>pJs8r49MQId9f2=4A;z=89g!Y(B, ``7-bit and 8-bit double byte coded
+Kanji sets for information interchange'', JIS X 0208:1996? draft.
 @end quotation
 
 
@@ -1114,26 +1105,23 @@ Kanji sets for information interchange'', JIS X 0208:1997? draft.
 @node JIS X0212, koi8-r, JIS X0208, Glossary
 @subsection JIS X0212-1990
 
-A 94x94-character set (@ref{94x94-character set}) for Japanese as
-supplement to JIS X0208 (@ref{JIS X0208}).  It is a standard of
-Japan.@refill
-
-Final byte of ISO 2022 (@ref{ISO 2022}) is 04/04 (`D').
+JIS X0208 (@ref{JIS X0208}) $B$K$J$+$C$?J8;z$r=8$a$?(B 94$B!_(B94 $BJ8;z=89g(B
+(@ref{94x94 character set})$B!#!VJd=u4A;z!W$H$b8F$P$l$k!#F|K\$N9q2HI8=`!#(B
+ISO 2022 (@ref{ISO 2022}) $B$G$N=*C<J8;z$O(B `D'.
 
 
 @node koi8-r, KS C5601, JIS X0212, Glossary
 @subsection koi8-r
-@cindex RFC 1489
 
-A MIME charset (@ref{MIME charset}) for Cyrillic script for Russian or
-other languages.@refill
+$B%m%7%d8lEy$GMQ$$$i$l$k%-%j%kJ8;z$rI=8=$9$k$?$a$N(B MIME charset (@ref{MIME
+charset}) $B$N#1$D!#(B@refill
 
-It is a 1 byte 8bit (@ref{8bit}) coded character set (@ref{coded character set}), not based on ISO 2022 (@ref{ISO 2022}).  It is a
-de-fact standard.@refill
+ISO 2022 (@ref{ISO 2022}) $B$K4p$+$J$$(B 8bit (@ref{8bit}) $B$NId9f2=J8;z=89g(B
+(@ref{Coded character set})$B$G(B de-fact standard $B$G$"$k!#(B
 
-It is defined in RFC 1489.@refill
+RFC 1489 $B$GDj5A$5$l$F$$$k!#(B@refill
 
-
+@cindex{RFC 1489}
 @noindent
 [RFC 1489]
 @quotation
@@ -1142,15 +1130,13 @@ A. Chernov, ``Registration of a Cyrillic Character Set'', July 1993.
 
 
 
-@node KS C5601, media type, koi8-r, Glossary
+@node KS C5601, message, koi8-r, Glossary
 @subsection KS C5601-1987
-@cindex KS C 5601:1987
-@cindex KS C5601
 
-A 94x94-character set (@ref{94x94-character set}) for Korean language
-(Hangul script).  Korean Standard.  Final byte of ISO 2022 (@ref{ISO 2022}) is 04/03 (`C').
+$B4Z9q8l$rI=$9$?$a$N(B 94$B!_(B94 $BJ8;z=89g(B(@ref{94x94 character set})$B!#4Z9q$N9q(B
+$B2HI8=`!#(BISO 2022 (@ref{ISO 2022}) $B$G$N=*C<J8;z$O(B `C'.
 
-
+@cindex{KS C5601}@cindex{KS C 5601:1987}
 @noindent
 [KS C5601]
 @quotation
@@ -1160,88 +1146,28 @@ Interchange (Hangul and Hanja)'', KS C 5601:1987.
 
 
 
-@node media type, message, KS C5601, Glossary
-@subsection media type
-@cindex x-token
-@cindex message
-@cindex multipart
-@cindex application
-@cindex video
-@cindex audio
-@cindex image
-@cindex text
-@cindex subtype
-@cindex type
-@cindex media type
-
-@strong{media type} specifies the nature of the data in the body of MIME
-(@ref{MIME}) entity (@ref{entity}).  It consists of @strong{type} and
-@strong{subtype}.  It is defined in RFC 2046 (@ref{RFC 2046}).@refill
-
-Currently there are following types:
-
-@itemize @bullet
-@item
-@strong{text}
-@item
-@strong{image}
-@item
-@strong{audio}
-@item
-@strong{video}
-@item
-@strong{application}
-@item
-@strong{multipart} (@ref{multipart})
-@item
-@strong{message}
-@end itemize
-
-
-And there are various subtypes, for example, application/octet-stream,
-audio/basic, image/jpeg, multipart/mixed (@ref{multipart/mixed}),
-text/plain (@ref{text/plain}), video/mpeg...@refill
-
-You can refer registered media types at MEDIA TYPES
-(ftp://ftp.isi.edu/in-notes/iana/assignments/media-types).@refill
-
-In addition, you can use private type or subtype using @strong{x-token},
-which as the prefix `x-'.  However you can not use them in
-public.@refill
-
-(cf. @ref{Content-Type field})
-
-
-
-@node message, message/rfc822, media type, Glossary
+@node message, message/rfc822, KS C5601, Glossary
 @subsection message
 
-In this document, it means mail defined in RFC 822 (@ref{RFC 822}) and
-news message defined in RFC 1036 (@ref{RFC 1036}).
+$B$3$3$G$O(B RFC 822 (@ref{RFC 822}) $B$GDj5A$5$l$k(B mail $B$H(B RFC 1036 (@ref{RFC
+1036}) $B$GDj5A$5$l$k(B news $B5-;v$NAm>N$H$7$FMQ$$$k!#(B
 
 
 @node message/rfc822, method, message, Glossary
 @subsection message/rfc822
-@cindex message/rfc822
 
-@strong{message/rfc822} indicates that the body contains an encapsulated
-message, with the syntax of an RFC 822 (@ref{RFC 822}) message.  It is
-the replacement of traditional RFC 934 (@ref{RFC 934}) encapsulation.
-It is defined in RFC 2046 (@ref{RFC 2046}).
+$BEAE}E*$J(B RFC 934 (@ref{RFC 934}) $B$KBe$o$j!"(BRFC 822 (@ref{RFC 822}) $B$GDj(B
+$B5A$5$l$k(B mail $B$rI=$9(B MIME $B$N7A<0!#(BRFC 1521 (@ref{RFC 1521}) $B$GDj5A$5$l$F(B
+$B$$$k!#(B
 
 
 @node method, MIME, message/rfc822, Glossary
 @subsection method
-@cindex external method
-@cindex internal method
 
-Application program of tm-view to process for specified media type
-(@ref{media type}) when user plays an entity.@refill
-
-There are two kinds of methods, @strong{internal method} and
-@strong{external method}.  Internal method is written by Emacs Lisp.
-External method is written by C or script languages and called by
-asynchronous process call.@refill
+tm $B$GFCDj$N<oN`$N(B data $B$r:F@8$7$?$H$-<B:]$K$=$N=hM}$r9T$J$&(B
+program. Emacs Lisp $B$G=q$+$l$?(B @cindex{internal method}@strong{internal
+method} $B$H(B C $B$d(B script $B8@8l$J$I$G=q$+$l$?(B @cindex{external
+method}@strong{external method} $B$,$"$k!#(B@refill
 
 (cf. @ref{(tm-view-en)method})
 
@@ -1249,60 +1175,38 @@ asynchronous process call.@refill
 
 @node MIME, MIME charset, method, Glossary
 @subsection MIME
-@cindex Multipurpose Internet Mail Extensions
 
-MIME stands for @strong{Multipurpose Internet Mail Extensions}, it is an
-extension for RFC 822 (@ref{RFC 822}).@refill
+@cindex{Multipurpose Internet Mail Extensions}@strong{Multipurpose
+Internet Mail Extensions} $B$NN,$G!"(BInternet $B$N(B mail $B$d(B news $B$G(B us-ascii
+plain text (@ref{us-ascii}) $B0J30$NJ8;z$r;H$&$?$a$N(B RFC 822 (@ref{RFC
+822}) $B$KBP$9$k3HD%!#(B@refill
 
-According to RFC 2045:@refill
+RFC 1521 (@ref{RFC 1521}) $B$H(B RFC 1522 (@ref{encoded-word}) $B$GDj5A$5$l$F(B
+$B$$$k!#(B@refill
 
-STD 11, RFC 822, defines a message representation protocol specifying
-considerable detail about US-ASCII message headers, and leaves the
-message content, or message body, as flat US-ASCII text.  This set of
-documents, collectively called the Multipurpose Internet Mail
-Extensions, or MIME, redefines the format of messages to allow
-for@refill
+(cf. @ref{What is MIME?})
 
-@enumerate
-@item
-textual message bodies in character sets other than US-ASCII,
-@item
-an extensible set of different formats for non-textual message
-bodies,
-@item
-multi-part message bodies, and
-@item
-textual header information in character sets other than US-ASCII.
-@end enumerate
-
-
-It is defined in RFC 2045 (@ref{RFC 2045}), RFC 2046 (@ref{RFC 2046}),
-RFC 2047 (@ref{encoded-word}), RFC 2048 (@ref{RFC 2048}) and RFC 2049
-(@ref{RFC 2049}).
 
 
 @node MIME charset, MTA, MIME, Glossary
 @subsection MIME charset
 
-Coded character set (@ref{coded character set}) used in Content-Type
-field (@ref{Content-Type field}) or charset parameter of encoded-word
-(@ref{encoded-word}).@refill
+Content-Type field (@ref{Content-Type field}) $B$d(B encoded-word
+(@ref{encoded-word}) $B$N(B charset parameter $B$GMQ$$$i$l$kEPO?$5$l$?Id9f2=J8(B
+$B;z=89g(B (@ref{Coded character set})$B!#(B@refill
 
-It is defined in RFC 2045 (@ref{RFC 2045}).@refill
+RFC 1521 (@ref{RFC 1521}) $B$GDj5A$5$l$F$$$k!#(B@refill
 
-iso-2022-jp (@ref{iso-2022-jp}) or euc-kr (@ref{euc-kr}) are kinds of
-it.  (In this document, MIME charsets are written by small letters to
-distinguish graphic character set (@ref{graphic character set}).  For
-example, ISO 8859-1 is a graphic character set, and iso-8859-1 is a MIME
-charset)
+iso-2022-jp (@ref{iso-2022-jp}) $B$d(B euc-kr (@ref{euc-kr}) $B$O$=$N#1$D!#(B
+$B!J$3$3$G$O!"(BMIME charset $B$OJ8;z=89g(B (@ref{Character set})$B$H6hJL$7$F>.J8(B
+$B;z$G=q$$$F$$$k!K(B
 
 
 @node MTA, MUA, MIME charset, Glossary
 @subsection MTA
-@cindex Message Transfer Agent
 
-@strong{Message Transfer Agent}.  It means mail transfer programs
-(ex. sendmail) and news servers.@refill
+@cindex{Message Transfer Agent}@strong{Message Transfer Agent} $B$NN,$G!"(B
+sendmail $B$J$I$N(B mail $BG[Aw(B program $B$H(B news server $B$NAm>N!#(B@refill
 
 (cf. @ref{MUA})
 
@@ -1310,10 +1214,9 @@ charset)
 
 @node MUA, MULE, MTA, Glossary
 @subsection MUA
-@cindex Message User Agent
 
-@strong{Message User Agent}.  It means mail readers and news
-readers.@refill
+@cindex{Message User Agent}@strong{Message User Agent} $B$NN,$G!"(Bmail
+reader $B$H(B news reader $B$NAm>N!#(B@refill
 
 (cf. @ref{MTA})
 
@@ -1321,46 +1224,35 @@ readers.@refill
 
 @node MULE, multipart, MUA, Glossary
 @subsection MULE
-@cindex XEmacs/mule
-@cindex Emacs/mule
-@cindex MULE
-@cindex mule
-@cindex MULE
 
-Multilingual extension of GNU Emacs (@ref{Emacs}) by HANDA Ken'ichi et
-al.
+$BH>ED(B $B7u0l;a$i$,:n$C$?!"B?8@8l$5$l$?(B Emacs (@ref{Emacs}).@refill
 
+[MULE] Nishikimi M., Handa K. and Tomura S., ``Mule: MULtilingual
+Enhancement to GNU Emacs'', Proc. of INET'93, August, 1993.@refill
 
-@noindent
-[MULE]
-@quotation
-Nishikimi M., Handa K. and Tomura S., ``Mule: MULtilingual Enhancement
-to GNU Emacs'', Proc. of INET'93, August, 1993.
-@end quotation
+$B8=:_!"(BMULE $B$N5!G=$r(B Emacs $B$K(B merge $B$9$k:n6H$,9T$o$l$F$*$j!"(Balpha $BHG(B
+(ftp://etlport.etl.go.jp/pub/mule/mule-19.33-gamma.taz) $B$,B8:_$9$k!#(B
 
-Now, FSF and HANDA Ken'ichi et al. are working to merge MULE feature
-into Emacs, there is alpha version of mule merged emacs
-(ftp://etlport.etl.go.jp/pub/mule/mule-19.33-delta.taz).@refill
+$B$=$NB>!"(BXEmacs $B$K(B merge $B$7$?$b$N$bB8:_$9$k!#(B@refill
 
-In addition, there is XEmacs with mule feature.@refill
+$B$3$N$?$a!"8=:_$G$OB?8@8l(B Emacs $B$O!"85!9$N(B MULE $B$r4^$a$F#3<oN`$"$k$3$H$K(B
+$B$J$k!#(B@refill
 
-So now, there are 3 kinds of mule variants.@refill
-
-In this document, @strong{mule} means any mule variants,
-@strong{MULE} means original MULE (..2.3),
-@strong{Emacs/mule} means mule merged Emacs,
-@strong{XEmacs/mule} means XEmacs with mule feature.
+$B$=$3$G!"$3$3$G$O!"B?8@8l(B Emacs $B$NAm>N$r(B @cindex{mule}@strong{mule}, $B85!9(B
+$B$N(B MULE $B$r(B @cindex{MULE}@strong{MULE}, mule $B5!G=$r(B merge $B$7$?(B Emacs $B$r(B
+@cindex{Emacs/mule}@strong{Emacs/mule}, mule $B5!G=$r(B merge $B$7$?(B XEmacs $B$r(B 
+@cindex{XEmacs/mule}@strong{XEmacs/mule} $B$H8F$V$3$H$K$9$k!#(B
 
 
 @node multipart, multipart/alternative, MULE, Glossary
 @subsection Multipart
-@cindex multipart
 
-@strong{multipart} means media type (@ref{media type}) to insert
-multiple entities (@ref{entity}) in a single body.  Or it also indicates
-a message consists of multiple entities.@refill
+$B#1$D$N(B message (@ref{message}) $B$KJ#?t$N(B part $B$rF~$l$k$?$a$N(B MIME
+(@ref{MIME}) $B$K$*$1$kI=8=K!!"$b$7$/$O!"J#?t$N(B part $B$+$i$J$k(B message $B$r;X(B
+$B$9!#(B(cf. @ref{content-type}) @refill
 
-There are following subtypes registered in RFC 2046 (@ref{RFC 2046}):
+$B8=:_!"Dj5A$5$l$F$$$k(B @cindex{multipart}@strong{multipart} $B$H$7$F$O!"(BRFC
+1521 (@ref{RFC 1521}) $B$GDj5A$5$l$?(B
 
 @itemize @bullet
 @item
@@ -1374,7 +1266,7 @@ multipart/parallel (@ref{multipart/parallel})
 @end itemize
 
 @noindent
-and registered in RFC 1847 (@ref{Security multipart}):
+$B$N$[$+(B RFC 1847 (@ref{Security multipart}) $B$GDj5A$5$l$?(B
 
 @itemize @bullet
 @item
@@ -1383,45 +1275,41 @@ multipart/signed (@ref{multipart/signed})
 multipart/encrypted (@ref{multipart/encrypted})
 @end itemize
 
+@noindent
+$B$J$I$,$"$k!#(B
 
 
 @node multipart/alternative, multipart/digest, multipart, Glossary
 @subsection multipart/alternative
-@cindex multipart/digest
 
-@strong{multipart/digest} is one of multipart (@ref{multipart}) media
-types.  This type is syntactically identical to multipart/mixed
-(@ref{multipart/mixed}), but the semantics are different.  In
-particular, each of the body parts is an ``alternative'' version of the
-same information.@refill
+multipart (@ref{multipart}) $B$N#1$D$G!"F1$8>pJs$r0[$C$?7A<0$GF~$l!"A*Br;h(B
+$B$H$9$k>l9g$KMQ$$$k!#(B@refill
 
-(cf. @ref{RFC 2046})
+(cf. @ref{RFC 1521})
 
 
 
 @node multipart/digest, multipart/encrypted, multipart/alternative, Glossary
 @subsection multipart/digest
-@cindex multipart/digest
 
-@strong{multipart/digest} is one of multipart (@ref{multipart}) media
-types.  This type is syntactically identical to multipart/mixed
-(@ref{multipart/mixed}), but the semantics are different.  In
-particular, in a digest, the default Content-Type value for a body part
-is changed from text/plain (@ref{text/plain}) to message/rfc822
-(@ref{message/rfc822}).@refill
+multipart (@ref{multipart}) $B$N#1$D$G!"4^$^$l$k(B part $B$N(B default $B$N(B
+content-type (@ref{content-type}) $B$,(B multipart/mixed
+(@ref{multipart/mixed}) $B$J$I$N>l9g(B text/plain (@ref{text/plain}) $B$G$"$k(B
+$B$N$KBP$7!"(B@cindex{multipart/digest}@strong{multipart/digest}$B$G$O(B 
+message/rfc822 (@ref{message/rfc822}) $B$,MQ$$$i$l$kE@$,0[$J$k!#(B@refill
 
-This is the replacement of traditional RFC 1153 (@ref{RFC 1153}) based
-encapsulation (@ref{encapsulation}).@refill
+$B$3$l$OEAE}E*$J(B RFC 1153 (@ref{RFC 1153}) $B$K4p$E$/(B encapsulation
+(@ref{encapsulation}) $B$KBe$o$k$b$N$G$"$k!#(B@refill
 
-(cf. @ref{RFC 2046})
+(cf. @ref{RFC 1521})
 
 
 
 @node multipart/encrypted, multipart/mixed, multipart/digest, Glossary
 @subsection multipart/encrypted
 
-It is a Security multipart (@ref{Security multipart}) defined in RFC
-1847, used to represent encrypted message.@refill
+RFC 1847 $B$GDj5A$5$l$?(B Security multipart (@ref{Security multipart}) $B$N#1(B
+$B$D$G!"0E9f2=$5$l$?(B message $B$rI=8=$9$k$N$KMQ$$$k!#(B@refill
 
 (cf. @ref{PGP/MIME})
 
@@ -1430,33 +1318,28 @@ It is a Security multipart (@ref{Security multipart}) defined in RFC
 @node multipart/mixed, multipart/parallel, multipart/encrypted, Glossary
 @subsection multipart/mixed
 
-Primary and default subtype of multipart (@ref{multipart}), it is used
-when the body parts are independent and need to be bundled in a
-particular order.@refill
+multipart (@ref{multipart}) $B$N<gMW$J(B subtype $B$G!"J#?t$N(B part $B$r=g=xIU$1(B
+$B$FJB$Y$k>l9g$KMQ$$$k!#(B@refill
 
-(cf. @ref{RFC 2046})
+(cf. @ref{RFC 1521})
 
 
 
 @node multipart/parallel, multipart/signed, multipart/mixed, Glossary
 @subsection multipart/parallel
-@cindex multipart/parallel
 
-@strong{multipart/parallel} is a subtype of multipart (@ref{multipart}).
-This type is syntactically identical to multipart/mixed
-(@ref{multipart/mixed}), but the semantics are different.  In
-particular, in a parallel entity, the order of body parts is not
-significant.@refill
+multipart (@ref{multipart}) $B$N#1$D$G!"J#?t$N(B part $B$r=g=xIU$1$:$K4^$a$k>l(B
+$B9g$KMQ$$$k!#(B@refill
 
-(cf. @ref{RFC 2046})
+(cf. @ref{RFC 1521})
 
 
 
 @node multipart/signed, PGP, multipart/parallel, Glossary
 @subsection multipart/signed
 
-It is a Security multipart (@ref{Security multipart}) defined in RFC
-1847, used to represent signed message.@refill
+RFC 1847 $B$GDj5A$5$l$?(B Security multipart (@ref{Security multipart}) $B$N#1(B
+$B$D$G!"EE;R=pL>$rI=8=$9$k$N$KMQ$$$k!#(B@refill
 
 (cf. @ref{PGP/MIME})
 
@@ -1464,22 +1347,19 @@ It is a Security multipart (@ref{Security multipart}) defined in RFC
 
 @node PGP, PGP-kazu, multipart/signed, Glossary
 @subsection PGP
-@cindex RFC 1991
-@cindex Informational
-@cindex PGP
-@cindex Pretty Good Privacy
 
-A public key encryption program by Phil Zimmermann.  It provides
-encryption and signature for message (@ref{message}).  PGP stands for
-@strong{Pretty Good Privacy}.@refill
+Phil Zimmermann $B;a$,:n@.$7$?8x3+800E9f=hM}7O$N#1$D!#(Bmessage
+(@ref{message}) $B$N0E9f2=$dEE;R=pL>$r9T$&$3$H$,$G$-$k!#(BPretty Good
+Privacy $B$NN,!#(B@refill
 
-Traditional PGP uses RFC 934 (@ref{RFC 934}) encapsulation
-(@ref{encapsulation}).  It is conflict with MIME (@ref{MIME}).  So
-PGP/MIME (@ref{PGP/MIME}) is defined.  On the other hand, PGP-kazu
-(@ref{PGP-kazu}) was proposed to use PGP encapsulation in MIME.  But it
-is obsoleted.@refill
+$BEAE}E*$J(B PGP $B$G$O(B encapsulation (@ref{encapsulation}) $B$K(B RFC 934
+(@ref{RFC 934})$B$K=`$8$?J}K!$rMQ$$$k!#$3$l$O(B MIME (@ref{MIME}) $B$HL7=b$9$k(B
+$B$N$G(B PGP/MIME (@ref{PGP/MIME}) $B$,Ds0F$5$l$F$$$k!#0lJ}!"(BMIME $B$K$*$$$F(B PGP 
+$B$N(Bencapsulation $B$rMQ$$$kJ}K!(B (cf. @ref{PGP-kazu})
+ $B$bMxMQ$5$l$F$-$?!#$7$+$7!":#8e$O(B PGP/MIME $B$KE}0l$7$F$$$/J}$,K>$^$7$$!#(B
+@refill
 
-
+@cindex{PGP}@cindex{Informational}@cindex{RFC 1991}
 @noindent
 [PGP: RFC 1991]
 @quotation
@@ -1492,41 +1372,52 @@ Formats'', August 1996, Informational.
 
 @node PGP-kazu, PGP/MIME, PGP, Glossary
 @subsection PGP-kazu
-@cindex application/pgp
-@cindex PGP-kazu
 
-In this document, @strong{PGP-kazu} means a method to use traditional
-PGP encapsulation in MIME (@ref{MIME}), proposed by YAMAMOTO
-Kazuhiko.@refill
+$B;3K\(B $BOBI'(B $B;a$,Ds0F$7$?(B MIME (@ref{MIME}) $B$G(B PGP (@ref{PGP}) $B$rMxMQ$9$k$?(B
+$B$a$NJ}K!$r$3$3$G$O(B @cindex{PGP-kazu}@strong{PGP-kazu} $B$H8F$V$3$H$K$9$k!#(B
 
-PGP-kazu defines a media type (@ref{media type}),
-@strong{application/pgp}.@refill
+PGP-kazu $B$O(B @cindex{application/pgp}@strong{application/pgp} $B$H$$$&(B 
+content-type (@ref{content-type}) $B$rDj5A$9$k!#(B@refill
 
-In application/pgp entity, PGP encapsulation (@ref{encapsulation}) is
-used.  PGP encapsulation conflicts with MIME, so it requires
-PGP-processing to read as MIME message.@refill
+application/pgp $B$N(B part $B$G$O(B PGP $B$N(B encapsulation (@ref{encapsulation}) 
+$B$,MQ$$$i$l$k!#(BPGP $B$N(B encapsulation (cf. @ref{RFC 934})
+ $B$H(B MIME $B$N(B encapsulation $B$OL7=b$9$k$N$G!"(BPGP $B$N(B encapsulation $B$r2r$+$J(B
+$B$$8B$j!"Cf$K4^$^$l$?(B MIME message $B$rFI$`$3$H$,$G$-$J$/$J$k!#B($A!"(B
+PGP-kazu $B$KBP1~$7$F$$$J$$(B MIME $B$KBP1~$7$?(B MUA (@ref{MUA}) $B$O$=$N(B part $B$,(B
+$BFI$a$J$/$J$k!#$=$NBe$o$j!"(BMIME $B$KBP1~$7$F$$$J$$(B PGP $BBP1~$N(B MUA
+(@ref{MUA}) $B$G$b(B message $B$rFI$`$3$H$,$G$-$k!#(B@refill
 
-It was obsoleted, so you should use PGP/MIME (@ref{PGP/MIME}).  However
-if you want to use traditional PGP message, it might be available.
+PGP-kazu $B$G$O(B MUA $B$O(B PGP $B$N$H(B MIME $B$N$H$$$&#2$D$N(B encapsulation $B$rCN$i$J(B
+$B$1$l$P$J$i$J$$!#$^$?!"(Bapplication/pgp part $B$r(B parse $B$9$k$?$a$K$O!"$^$:!"(B
+pgp $B$N=hM}$r9T$o$J$1$l$P$J$i$J$$$N$G!"(Bparse $B=hM}$,J#;($K$J$k!#(B@refill
+
+$B$^$?!"(BInternet $B$G$O:#8e(B PGP/MIME (@ref{PGP/MIME}) $B$NJ}8~$GI8=`2=$7$F$$$3(B
+$B$&$H$$$&$3$H$G9g0U$,<h$l$F$$$k!#$h$C$F!":#8e$O(B PGP-kazu $B$OMQ$$$J$$$N$,K>(B
+$B$^$7$$!#(B@refill
+
+[draft-kazu-pgp-mime-00.txt] Yamamoto K., ``PGP MIME Integration'',
+October, 1995
 
 
 @node PGP/MIME, Quoted-Printable, PGP-kazu, Glossary
 @subsection PGP/MIME
-@cindex RFC 2015
-@cindex Standards Track
-@cindex PGP/MIME
 
-PGP (@ref{PGP}) and MIME (@ref{MIME}) integration proposed by Michael
-Elkins.@refill
+Michael Elkins $B;a$,Ds0F$7$?(B MIME (@ref{MIME}) $B$G(B PGP (@ref{PGP}) $B$rMxMQ(B
+$B$9$k$?$a$NJ}K!!#(B@refill
 
-It is based on RFC 1847 (@ref{Security multipart}), so it is harmonious
-with MIME, but it is not compatible with traditional PGP encapsulation.
-However MIME MUA can read PGP/MIME signed message even if it does not
-support PGP/MIME.@refill
+RFC 1847 (@ref{Security multipart}) $B$K4p$-!"(BMIME $B$N(B multipart $B$K$h$k(B 
+encapsulation (@ref{encapsulation}) $B$r9T$&!#$3$N$?$a!"(BMIME $B$N<+A3$J3HD%(B
+$B$K$J$C$F$$$k!#$7$+$7!"EAE}E*$J(B PGP$B$H$N8_49@-$,<:$o$l$F$$$k!#(B@refill
 
-PGP/MIME (@ref{PGP/MIME}) will be standard of PGP message.
+PGP/MIME $B$G$O(B PGP-kazu (@ref{PGP-kazu}) $B$H0[$J$j!"(BMIME $B$N(B encapsulation 
+$B$N$_$rMQ$$$k!#$^$?!"$3$N$?$a!"(BPGP $B$N=hM}$r9T$&A0$K(B message $B$N(B parse $B$r9T(B
+$B$&$3$H$,$G$-$k!#(B@refill
 
+Internet $B$G$O:#8e(B PGP/MIME (@ref{PGP/MIME}) $B$NJ}8~$GI8=`2=$7$F$$$3$&$H$$(B
+$B$&$3$H$G9g0U$,<h$l$F$$$k!#$h$C$F!":#8e$O(B PGP $B$rMQ$$$k>l9g$O(B PGP/MIME$B$rMQ(B
+$B$$$k$N$,K>$^$7$$!#(B
 
+@cindex{PGP/MIME}@cindex{Standards Track}@cindex{RFC 2015}
 @noindent
 [PGP/MIME: RFC 2015]
 @quotation
@@ -1538,25 +1429,26 @@ M. Elkins, ``MIME Security with Pretty Good Privacy (PGP)'', October
 
 @node Quoted-Printable, RFC 821, PGP/MIME, Glossary
 @subsection Quoted-Printable
-@cindex Quoted-Printable
 
-@strong{Quoted-Printable} is a transfer encoding method of MIME
-(@ref{MIME}) defined in RFC 2045 (@ref{RFC 2045}).@refill
+RFC 1521 (@ref{RFC 1521}) $B$GDj5A$5$l$F$$$k(B MIME (@ref{MIME}) $B$K$*$1$k(B 
+binary data (@ref{binary}) $B$N(B network $B$G$NJQ49K!$N#1$D!#(B@refill
 
-If the data being encoded are mostly US-ASCII text, the encoded form of
-the data remains largely recognizable by humans.@refill
+`=' $B$d@)8fJ8;z$d(B 128 $B0J>e$NJ8;z$J$I$O(B `=AF' $B$N$h$&$K(B `=' $B$N8e$KB3$/(B 16 
+$B?J?t$GI=8=$9$k!#$3$N$?$a!"(BASCII (@ref{ASCII}) $BJ8;zCf?4$N(B data $B$G$O(B 
+Base64 (@ref{Base64}) $B$KHf$Y$k$H2DFI@-$,9b$/$J$k2DG=@-$,$"$k!#(B@refill
 
-(cf. @ref{Base64})
-
+$B$7$+$7$J$,$i!"(BEBCDIC $B$K$OB8:_$7$J$$J8;z$rMxMQ$9$k>l9g!"(BEBCDIC $B$rMxMQ$7(B
+$B$F$$$k(B network $B$G$O0BA4$KE>Aw$9$k$3$H$,$G$-$:!"(BBase64 $B$KHf$Y$F0BA4@-$O(B
+$BDc$$!#(B
 
 
 @node RFC 821, RFC 822, Quoted-Printable, Glossary
 @subsection RFC 821
-@cindex RFC 821
-@cindex STD 10
-@cindex SMTP
 
+@cindex{SMTP}@strong{SMTP} $B$H8F$P$l$k(B Internet mail $B$NG[AwK!$NI8=`$rDj$a(B
+$B$F$$$k(B RFC.
 
+@cindex{SMTP}@cindex{STD 10}@cindex{RFC 821}
 @noindent
 [SMTP: RFC 821]
 @quotation
@@ -1567,24 +1459,21 @@ J. Postel, ``Simple Mail Transfer Protocol'', August 1982, STD 10.
 
 @node RFC 822, RFC 934, RFC 821, Glossary
 @subsection RFC 822
-@cindex RFC 822
-@cindex STD 11
-@cindex Internet mail
-@cindex Internet message
-@cindex message header
 
-A RFC defines format of Internet mail message, mainly @strong{message header}.
+Internet mail $B$N<g$K(B @cindex{message header}@strong{message header} $B$K4X$9$k7A<0$K(B
+$B4X$9$kI8=`$rDj$a$F$$$k(B RFC.
 
 @noindent
 @strong{[Memo]}
 @quotation
 
-news message is based on RFC 822, so @strong{Internet message} may be
-more suitable than @strong{Internet mail} .
+news message $B$b$3$l$K=`$8$F$$$k$N$G!"(B@cindex{Internet
+mail}@strong{Internet mail} $B$H=q$/$h$j$b!"(B@cindex{Internet
+message}@strong{Internet message} $B$H=q$$$?J}$,NI$$$+$b$7$l$J$$!#(B
 @end quotation
 
 
-
+@cindex{STD 11}@cindex{RFC 822}
 @noindent
 [RFC 822]
 @quotation
@@ -1596,16 +1485,16 @@ August 1982, STD 11.
 
 @node RFC 934, RFC 1036, RFC 822, Glossary
 @subsection RFC 934
-@cindex RFC 934
-@cindex encapsulation
 
-A RFC defines an @strong{encapsulation} (@ref{encapsulation}) method for
-Internet mail (@ref{RFC 822}).@refill
+Internet mail (@ref{RFC 822}) $B$N(B 
+@cindex{encapsulation}@strong{encapsulation} (@ref{encapsulation}) $B$NJ}(B
+$BK!$rDj$a$?(B RFC.@refill
 
-It conflicts with MIME (@ref{MIME}), so you should use message/rfc822
-(@ref{message/rfc822}).
+MIME (@ref{MIME}) $B$HL7=b$9$k$N$G!"8=:_$G$O(B message/rfc822
+(@ref{message/rfc822}) $B$rMQ$$$k$Y$-$G$"$k!#(B
 
 
+@cindex{RFC 934}
 @noindent
 [RFC 934]
 @quotation
@@ -1617,14 +1506,12 @@ Encapsulation'', January 1985.
 
 @node RFC 1036, RFC 1153, RFC 934, Glossary
 @subsection RFC 1036
-@cindex RFC 1036
-@cindex USENET
 
-A RFC defines format of USENET message.  It is a subset of RFC 822
-(@ref{RFC 822}).  It is not Internet standard, but a lot of netnews
-excepting Usenet uses it.
+USENET $B$G$N(B message $B$N7A<0$rDj$a$?(B RFC. RFC 822 (@ref{RFC 822})$B$N(B subset 
+$B$K$J$C$F$$$k!#(BInternet $B$NI8=`$G$O$J$$$,!"(BUSENET $B0J30$N(B netnews $B$G$b$3$l(B
+$B$K=`$8$F$$$k$b$N$,B?$$!#(B
 
-
+@cindex{USENET}@cindex{RFC 1036}
 @noindent
 [USENET: RFC 1036]
 @quotation
@@ -1634,11 +1521,21 @@ December 1987, (obsolete RFC 850).
 
 
 
-@node RFC 1153, RFC 1557, RFC 1036, Glossary
+@node RFC 1153, RFC 1521, RFC 1036, Glossary
 @subsection RFC 1153
-@cindex RFC 1153
+
+$BJ#?t$N(B Internet mail (@ref{RFC 822}) $B$r(B 
+@cindex{encapsulation}@strong{encapsulation} (@ref{encapsulation}) $B$9$k(B
+$B$?$a$NJ}K!$rDj$a$?(B RFC. RFC 934 (@ref{RFC 934}) $B$rMQ$$$k!#(B@refill
+
+MIME (@ref{MIME}) $B$HL7=b$9$k$N$G!"8=:_$G$O(B message/rfc822
+(@ref{message/rfc822}) $B$rMQ$$$?(B multipart (@ref{multipart}) $B$rMQ$$$k$Y$-(B
+$B$G$"$k!#(B@refill
+
+(cf. @ref{multipart/digest})
 
 
+@cindex{RFC 1153}
 @noindent
 [RFC 1153]
 @quotation
@@ -1647,15 +1544,32 @@ F. Wancho, ``Digest Message Format'', April 1990.
 
 
 
-@node RFC 1557, RFC 1922, RFC 1153, Glossary
+@node RFC 1521, RFC 1557, RFC 1153, Glossary
+@subsection RFC 1521 
+
+MIME (@ref{MIME}) $B$rDj5A$7$F$$$k(B RFC $B$N#1$D!#(B
+
+@cindex{Standards Track}@cindex{RFC 1521}
+@noindent
+[RFC 1521]
+@quotation
+N. Borenstein and N. Freed, ``MIME (Multipurpose Internet Mail
+Extensions) Part One: Mechanisms for Specifying and Describing the
+Format of Internet Message Bodies'', September 1993, Standards Track
+(obsolete RFC 1341).
+@end quotation
+
+
+(RFC 1522 (@ref{encoded-word}))
+
+
+@node RFC 1557, RFC 1922, RFC 1521, Glossary
 @subsection RFC 1557
-@cindex RFC 1557
-@cindex Informational
 
-A RFC defines MIME charset (@ref{MIME charset})s for Korean, euc-kr
-(@ref{euc-kr}) and iso-2022-kr (@ref{iso-2022-kr}).
+euc-kr (@ref{euc-kr}) $B$H(B iso-2022-kr (@ref{iso-2022-kr}) $B$H$$$&4Z9q8l$N(B
+$B$?$a$N(B MIME charset (@ref{MIME charset}) $B$rDj5A$7$F$$$k(B RFC.
 
-
+@cindex{Informational}@cindex{RFC 1557}
 @noindent
 [RFC 1557]
 @quotation
@@ -1665,23 +1579,19 @@ Messages'', December 1993, Informational.
 
 
 
-@node RFC 1922, RFC 2045, RFC 1557, Glossary
+@node RFC 1922, plain text, RFC 1557, Glossary
 @subsection RFC 1922
-@cindex RFC 1922
-@cindex Informational
-@cindex charset-extension
-@cindex charset-edition
 
-A RFC defines MIME charset (@ref{MIME charset})s for Chinese,
 iso-2022-cn (@ref{iso-2022-cn}), iso-2022-cn-ext
-(@ref{iso-2022-cn-ext}), cn-gb (@ref{cn-gb}), cn-big5 (@ref{cn-big5}),
-etc.@refill
+(@ref{iso-2022-cn-ext}), cn-gb (@ref{cn-gb}), cn-big5 (@ref{cn-big5}) $B$H(B
+$B$$$C$?Cf9q8l$N$?$a$N(B MIME charset (@ref{MIME charset}) $B$rDj5A$7$F$$$k(B 
+RFC.@refill
 
-In addition, it defines additional parameters of Content-Type field
-(@ref{Content-Type field}) field, @strong{charset-edition} and
-@strong{charset-extension}.
+$B$3$l$K2C$($F!"(B@cindex{charset-edition}@strong{charset-edition} $B$H(B 
+@cindex{charset-extension}@strong{charset-extension} $B$H$$$&(B Content-Type
+field (@ref{Content-Type field}) $B$N(B parameter $B$rDj5A$7$F$$$k!#(B
 
-
+@cindex{Informational}@cindex{RFC 1922}
 @noindent
 [RFC 1922]
 @quotation
@@ -1692,96 +1602,25 @@ Informational.
 
 
 
-@node RFC 2045, RFC 2046, RFC 1922, Glossary
-@subsection RFC 2045
-@cindex RFC 2045
-@cindex Standards Track
-
-
-@noindent
-[RFC 2045]
-@quotation
-N. Freed and N. Borenstein, ``Multipurpose Internet Mail Extensions
-(MIME) Part One: Format of Internet Message Bodies'', November 1996,
-Standards Track (obsolete RFC 1521, 1522, 1590).
-@end quotation
-
-
-
-@node RFC 2046, RFC 2048, RFC 2045, Glossary
-@subsection RFC 2046
-@cindex RFC 2046
-@cindex Standards Track
-
-
-@noindent
-[RFC 2046]
-@quotation
-N. Freed and N. Borenstein, ``Multipurpose Internet Mail Extensions
-(MIME) Part Two: Media Types'', November 1996, Standards Track (obsolete
-RFC 1521, 1522, 1590).
-@end quotation
-
-
-
-@node RFC 2048, RFC 2049, RFC 2046, Glossary
-@subsection RFC 2048
-@cindex RFC 2048
-@cindex Standards Track
-
-
-@noindent
-[RFC 2048]
-@quotation
-N. Freed, J. Klensin and J. Postel, ``Multipurpose Internet Mail
-Extensions (MIME) Part Four: Registration Procedures'', November 1996,
-Standards Track (obsolete RFC 1521, 1522, 1590).
-@end quotation
-
-
-
-@node RFC 2049, plain text, RFC 2048, Glossary
-@subsection RFC 2049
-@cindex RFC 2049
-@cindex Standards Track
-
-
-@noindent
-[RFC 2049]
-@quotation
-N. Freed and N. Borenstein, ``Multipurpose Internet Mail Extensions
-(MIME) Part Five: Conformance Criteria and Examples'', November 1996,
-Standards Track (obsolete RFC 1521, 1522, 1590).
-@end quotation
-
-
-
-@node plain text, Security multipart, RFC 2049, Glossary
+@node plain text, Security multipart, RFC 1922, Glossary
 @subsection plain text
 
-A textual data represented by only coded character set (@ref{coded character set}).  It does not have information about font or
-typesetting.  (cf. @ref{text/plain})
+$B=qBN$dAHHG$K4X$9$k>pJs$r;}$?$J$$(B $BJ8;zId9f(B(@ref{Coded character set})$B$N$_(B
+$B$GI=8=$5$l$k(B text $B>pJs!#(B(cf. @ref{text/plain})
 
 
 
 @node Security multipart, text/enriched, plain text, Glossary
 @subsection Security multipart
-@cindex RFC 1847
-@cindex Standards Track
-@cindex Security multipart
-@cindex multipart/encrypted
-@cindex multipart/signed
 
-A format to represent signed/encrypted message in MIME
-(@ref{MIME}).@refill
+MIME (@ref{MIME}) $B$G0E9f$dEE;R=qL>$rMQ$$$k$?$a$N7A<0!#(B
+@cindex{multipart/signed}@strong{multipart/signed}
+(@ref{multipart/signed}) $B$H(B 
+@cindex{multipart/encrypted}@strong{multipart/encrypted}
+(@ref{multipart/encrypted}) $B$H$$$&(B multipart $B$rMQ$$$k!#(BMOSS $B$d(B PGP/MIME
+(@ref{PGP/MIME}) $B$O$3$l$K4p$$$F$$$k!#(B
 
-It defines two multipart media types, @strong{multipart/signed}
-(@ref{multipart/signed}) and @strong{multipart/encrypted}
-(@ref{multipart/encrypted}).@refill
-
-MOSS and PGP/MIME (@ref{PGP/MIME}) are based on it.
-
-
+@cindex{Security multipart}@cindex{Standards Track}@cindex{RFC 1847}
 @noindent
 [Security multipart: RFC 1847]
 @quotation
@@ -1794,10 +1633,12 @@ Multiparts for MIME: Multipart/Signed and Multipart/Encrypted'', October
 
 @node text/enriched, text/plain, Security multipart, Glossary
 @subsection text/enriched
-@cindex RFC 1896
-@cindex text/enriched
 
+RFC 1521 (@ref{RFC 1521}) $B$GDj5A$5$l$?(B 
+@cindex{text/richtext}@strong{text/richtext} $B$KBe$o$C$F!"=qBN$dAHHG$K4X(B
+$B$9$k>pJs$r;}$C$?(B text$B$rI=8=$9$k$?$a$N(B content-type (@ref{content-type}).
 
+@cindex{text/enriched}@cindex{RFC 1896}
 @noindent
 [text/enriched: RFC 1896]
 @quotation
@@ -1809,38 +1650,35 @@ February 1996, (obsolete RFC 1563).
 
 @node text/plain, tm-kernel, text/enriched, Glossary
 @subsection text/plain
-@cindex text/plain
 
-@strong{text/plain} is a media type (@ref{media type}) for plain text
-(@ref{plain text}), defined in RFC 2046 (@ref{RFC 2046}).@refill
+RFC 1521 (@ref{RFC 1521}) $B$GDj5A$5$l$?!"(Bplain text (@ref{plain text}) $B$r(B
+$BI=8=$9$k$?$a$N(B content-type (@ref{content-type}).@refill
 
-The default media type of ``text/plain; charset=us-ascii'' for Internet
-mail describes existing Internet practice.  That is, it is the type of
-body defined by RFC 822 (@ref{RFC 822}).@refill
-
-(cf. @ref{MIME charset}) (cf. @ref{us-ascii})
-
+$BHs(B MIME message $B$J$I$N(B content-type $B$,Dj5A$5$l$J$$(B part $B$O(B MIME charset
+(@ref{MIME charset}) $B$,(B us-ascii (@ref{us-ascii}) $B$G$"$k(B 
+@cindex{text/plain}@strong{text/plain} $B$N(B part $B$G$"$k$H8+Pv$5$l$k$3$H$K(B
+$B$J$C$F$$$k!#(B
 
 
 @node tm-kernel, tm-MUA, text/plain, Glossary
 @subsection tm-kernel, tm
 
-A libraries to provide user interface about MIME (@ref{MIME}) for emacs.
-tm stands for `tools for MIME'.
+Emacs $B$G(B MIME (@ref{MIME}) $B$rMxMQ$9$k$?$a$N(B user interface $B$rDs6!$9$k(B 
+library $B72!#(B`tools for MIME' $B$NN,!#(B
 
 @noindent
-@strong{[Unimportant notice(^-^;]}
+@strong{[$B$I$&$G$bNI$$$3$H(B(^-^;]}
 @quotation
 
 @itemize @bullet
 @item
- tm may not stand for ``tiny-mime''(^-^;
+ tm $B$O(B ``tiny-mime'' $B$NN,$8$c$J$$$i$7$$$>(B (^-^;
   
 @item
- tm may not stand for initial of an author (^-^;
+ tm $B$O:n<T$N%$%K%7%c%k$8$c$J$$$i$7$$$>(B (^-^;
   
 @item
- ``Tools for MIME'' may be strained (^-^;
+ ``Tools for MIME'' $B$NN,$H$$$&$N$O$3$8$D$1$i$7$$$>(B (^-^;
 @end itemize
 @end quotation
 
@@ -1848,50 +1686,46 @@ tm stands for `tools for MIME'.
 
 @node tm-MUA, us-ascii, tm-kernel, Glossary
 @subsection tm-MUA
-@cindex tm-rmail
-@cindex tm-vm
-@cindex gnus-mime
-@cindex tm-gnus
-@cindex tm-mh-e
-@cindex tm oomori package
 
-MUA (@ref{MUA}) or MUA extender using tm (@ref{tm-kernel}).@refill
+tm (@ref{tm-kernel}) $B$rMQ$$$?(B MUA (@ref{MUA}) $B$b$7$/$O(B MUA $B$KBP$9$k(B 
+extender.@refill
 
-@strong{tm oomori package} has following extenders:
+@cindex{tm $BBg@9$j(B package}@strong{tm $BBg@9$j(B package} $B$K$O(B
 
 @itemize @bullet
 @item
-@strong{tm-mh-e} (@ref{(tm-mh-e-en)})
- for mh-e (@ref{(mh-e)})
+mh-e (@ref{(mh-e)}) $BMQ$N(B @cindex{tm-mh-e}@strong{tm-mh-e}
 @item
-@strong{tm-gnus} (@ref{(tm-gnus_en)}) for GNUS
+GNUS $BMQ$N(B @cindex{tm-gnus}@strong{tm-gnus}
 @item
-@strong{gnus-mime} (@ref{(gnus-mime-en)}) for Gnus
+Gnus $BMQ$N(B @cindex{gnus-mime}@strong{gnus-mime} (@ref{(gnus-mime-en)})
 @item
-@strong{tm-vm} (@ref{(tm-vm-en)}) for VM
+VM $BMQ$N(B @cindex{tm-vm}@strong{tm-vm}
 @item
-@strong{tm-rmail} for RMAIL
+RMAIL $BMQ$N(B @cindex{tm-rmail}@strong{tm-rmail}
 @end itemize
 
+@noindent
+$B$,4^$^$l$F$$$k!#(B
+
+$BFHN)$7$?(B MUA $B$H$7$F$O(B cmail (@ref{(cmail)}) $B$,(B tm $B$rMxMQ2DG=$G$"$k!#(B
 
 
 @node us-ascii,  , tm-MUA, Glossary
 @subsection us-ascii
-@cindex ASCII
-@cindex us-ascii
 
-A MIME charset (@ref{MIME charset}) for primary Latin script mainly
-written by English or other languages.@refill
+$B%"%a%j%+O"K.$J$I$G;H$o$l$k1Q8l$J$I$rI=8=$9$k$?$a$N(B MIME charset
+(@ref{MIME charset}) $B$N#1$D!#(B@refill
 
-It is a 7bit coded character set (@ref{coded character set}) based on
-ISO 2022 (@ref{ISO 2022}), it contains only ASCII (@ref{ASCII}) and code
-extension (@ref{code extension}) is not allowed.@refill
+ASCII (@ref{ASCII}) $B$N$_$+$i$J$j(B ISO 2022 (@ref{ISO 2022}) $B$K$h$kId9f3H(B
+$BD%(B (@ref{Code extension})$B$O5v$5$l$J$$!#(B@refill
 
-It is standard coded character set of Internet mail.  If MIME charset is
-not specified, @strong{us-ascii} is used as default.@refill
+Internet mail $B$K$*$1$kI8=`$NId9f2=J8;z=89g(B(@ref{Coded character set})$B$G(B
+$B$"$j!"L@<(E*$K(B MIME charset $B$,<($5$l$J$$>l9g$O86B'$H$7$F(B 
+@cindex{us-ascii}@strong{us-ascii} $B$,;H$o$l$k!#(B@refill
 
-In addition, @strong{ASCII} of RFC 822 (@ref{RFC 822}) should be
-interpreted as us-ascii.
+$B$^$?!"(BRFC 822 (@ref{RFC 822}) $B$K$*$1$k(B @cindex{ASCII}@strong{ASCII} $B$O(B 
+us-ascii $B$r;X$9$b$N$H2r<a$9$Y$-$G$"$k!#(B
 
 
 @node Setting, Bug report, Introduction, Top
@@ -1914,9 +1748,8 @@ setup including MIME encoding using @file{tm-edit.el}, while
 
 @node mime-setup, tm-setup, Setting, Setting
 @section Normal setting
-@cindex mime-setup
 
-If you want normal setting, please use @strong{mime-setup}.
+If you want normal setting, please use @cindex{mime-setup}@strong{mime-setup}.
 For example, please insert following into @file{~/.emacs}:
 
 @lisp
@@ -1937,9 +1770,10 @@ wrong!)
 
 @node signature, Notice about GNUS, mime-setup, mime-setup
 @subsection signature
-@cindex automatic signature selection tool
 
-You can set up the @strong{automatic signature selection tool} using @file{mime-setup}. If you want to
+You can set up the @cindex{automatic signature selection
+tool}@strong{automatic signature selection
+tool} using @file{mime-setup}. If you want to
 automatically select the signature file depending on how the message
 headers show, add lines like shown below to your .emacs (Refer to the
 reference manual of @file{signature.el} for more details).
@@ -2019,12 +1853,11 @@ signature is @kbd{C-c C-s} (like mh-e (@ref{(mh-e)})) instead of
 
 @node tm-setup, setting for VM, mime-setup, Setting
 @section Setting not to use tm-edit
-@cindex tm-setup
 
-@strong{tm-setup} only sets up tm-MUA (@ref{tm-MUA})s.  In other words,
-it is a setting to avoid to use tm-edit.  If you don't want to compose
-MIME message or want to use other MIME composer, please use it instead
-of @file{mime-setup.el}.@refill
+@cindex{tm-setup}@strong{tm-setup} only sets up tm-MUA (@ref{tm-MUA})s.
+In other words, it is a setting to avoid to use tm-edit.  If you don't
+want to compose MIME message or want to use other MIME composer, please
+use it instead of @file{mime-setup.el}.@refill
 
 For example, please insert following into @file{~/.emacs}:
 
@@ -2046,10 +1879,8 @@ If you use @file{mime-setup.el}, you you don't need to load
 
 @node setting for VM, manual setting, tm-setup, Setting
 @section Setting for VM
-@cindex BBDB
-@cindex vm
 
-If you use @strong{vm}, please insert following in
+If you use @cindex{vm}@strong{vm}, please insert following in
 @file{~/.vm}:
 
 @lisp
@@ -2062,8 +1893,8 @@ If you use @strong{vm}, please insert following in
 @strong{[Notice]}
 @quotation
 
-If you use @strong{BBDB}, please insert @code{(require 'tm-vm)}
-@strong{after} @code{(bbdb-insinuate-vm)}.
+If you use @cindex{BBDB}@strong{BBDB}, please insert @code{(require
+'tm-vm)} @strong{after} @code{(bbdb-insinuate-vm)}.
 @end quotation
 
 
@@ -2092,9 +1923,8 @@ following setting:
 
 
 
-@node Bug report, Acknowledgments, Setting, Top
+@node Bug report, Concept Index, Setting, Top
 @chapter How to report bug and about mailing list of tm
-@cindex good bug report
 
 If you write bug-reports and/or suggestions for improvement, please
 send them to the tm Mailing List:
@@ -2111,11 +1941,11 @@ Notice that, we does not welcome bug reports about too old version.
 Bugs in old version might be fixed.  So please try latest version at
 first.@refill
 
-You should write @strong{good bug report}.  If you write only ``tm does
-not work'', we can not find such situations.  At least, you should write
-name, type, variants and version of OS, emacs, tm and MUA, and setting.
-In addition, if error occurs, to send backtrace is very
-important. (cf. @ref{(emacs)Bugs}) @refill
+You should write @cindex{good bug report}@strong{good bug report}.  If
+you write only ``tm does not work'', we can not find such situations.
+At least, you should write name, type, variants and version of OS,
+emacs, tm and MUA, and setting.  In addition, if error occurs, to send
+backtrace is very important. (cf. @ref{(emacs)Bugs}) @refill
 
 Bug may not appear only your environment, but also in a lot of
 environment (otherwise it might not bug).  Therefor if you send mail to
@@ -2128,9 +1958,9 @@ e-mail to:
 
 @itemize @bullet
 @item
- Japanese <tm-ja-admin@@chamonix.jaist.ac.jp>
+ $BF|K\8l(B <tm-ja-admin@@chamonix.jaist.ac.jp>
 @item
- English  <tm-en-admin@@chamonix.jaist.ac.jp>
+ $B1Q8l(B <tm-en-admin@@chamonix.jaist.ac.jp>
 @end itemize
 
 @noindent
@@ -2138,35 +1968,7 @@ Since the user registration is done manually, please write the mail
 body in human-recognizable language (^_^).
 
 
-@node Acknowledgments, Concept Index, Bug report, Top
-@chapter Acknowledgments
-
-I thank MASUTANI Yasuhiro.  He requested me a lot of important features
-and gave me a lot of suggestions when tm-view was born.  tm-view is
-based on his influence.@refill
-
-I thank ENAMI Tsugutomo for work of @file{mime.el}, which is an origin
-of @file{tm-ew-d.el} and @file{mel-b.el}, and permission to rewrite for
-tm.@refill
-
-I thank OKABE Yasuo for work of internal method for LaTeX and automatic
-assembling method for message/partial.  I thank UENO Hiroshi for work of
-internal method for tar archive.@refill
-
-I thank UMEDA Masanobu for his work of @file{mime.el}, which is the
-origin of tm-edit, and permission to rewrite his work as tm-edit.@refill
-
-I thank KOBAYASHI Shuhei for his work as a tm maintainer.  In addition,
-he often points out or suggests about conformity with RFCs.@refill
-
-I thank Oscar Figueiredo for his work as the maintainer of tm-vm.  He
-improves tm-vm and wrote a good manual of tm-vm.@refill
-
-Last of all, I thank members of two tm mailing lists, Japanese and
-English version.
-
-
-@node Concept Index, Variable Index, Acknowledgments, Top
+@node Concept Index, Variable Index, Bug report, Top
 @chapter Concept Index
 
 @printindex cp

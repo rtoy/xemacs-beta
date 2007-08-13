@@ -1,5 +1,5 @@
 ;;; psgml-api.el --- Extra API functions for PSGML
-;; $Id: psgml-api.el,v 1.1.1.2 1996/12/18 03:47:13 steve Exp $
+;; $Id: psgml-api.el,v 1.1.1.1 1996/12/18 22:43:36 steve Exp $
 
 ;; Copyright (C) 1994 Lennart Staflin
 

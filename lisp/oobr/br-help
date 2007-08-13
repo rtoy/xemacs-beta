@@ -7,7 +7,7 @@ OO-Browser Keyboard Help                  {H} displays mouse help
 
 {m} / {M} match classes/entries {H}       mouse help       {h}     this help
 {i}       class info            {w}       where class      {M-c}   class stat
-{q}       exit OO-Browser       {C-u q}   quit OO-Browser  {M-e}   Env   stat
+{q}       exit browser          {C-u q}   quit browser     {M-e}   Env   stat
 {x}       exit level            {b}       list buffers, select one to display
 
 --- Viewing ----
@@ -49,7 +49,7 @@ OO-Browser Keyboard Help                  {H} displays mouse help
 --- Miscellaneous ---
 
 {C-c ^}   add file to Env
-{C-c C-d} delete Env class      {C-c #}   OO-Browser version and credits
+{C-c C-d} delete Env class      {C-c #}   browser version number
 {C-c C-w} write browser buffer  {C-c C-k} kill viewer buffer, show help
 {C-x -}   narrow windows by 10  {C-x +}   widen windows by 10
 

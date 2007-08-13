@@ -6,12 +6,12 @@
 ;; KEYWORDS:     oop, tools
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          InfoDock Associates
+;; ORG:          Motorola Inc.
 ;;
 ;; ORIG-DATE:     5-Sep-92 at 23:31:03
-;; LAST-MOD:     20-Feb-97 at 06:59:33 by Bob Weiner
+;; LAST-MOD:     25-Oct-95 at 01:38:41 by Bob Weiner
 ;;
-;; Copyright (C) 1992, 1993, 1994, 1997  Free Software Foundation, Inc.
+;; Copyright (C) 1992-19945 Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.
@@ -44,7 +44,7 @@ It must end with a directory separator character.")
 (if (fboundp 'member)
     (fset 'br-member 'member)
   (defun br-member (elt list)
-    "Return non-nil if ELT is an element of LIST.  Comparison done with `equal'.
+    "Return non-nil if ELT is an element of LIST.  Comparison done with 'equal'.
 The value is actually the tail of LIST whose car is ELT."
     (while (and list (not (equal (car list) elt)))
       (setq list (cdr list)))

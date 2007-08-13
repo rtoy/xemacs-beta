@@ -1,10 +1,10 @@
 ;;; tm-play.el --- decoder for tm-view.el
 
-;; Copyright (C) 1994,1995,1996,1997 Free Software Foundation, Inc.
+;; Copyright (C) 1994,1995,1996 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1995/9/26 (separated from tm-view.el)
-;; Version: $Id: tm-play.el,v 1.8 1997/03/26 04:34:05 steve Exp $
+;; Version: $Id: tm-play.el,v 1.1.1.1 1996/12/18 22:43:37 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia
 
 ;; This file is part of tm (Tools for MIME).
@@ -27,6 +27,19 @@
 ;;; Code:
 
 (require 'tm-view)
+
+(defvar mime-viewer/external-progs "/usr/local/share/tm"
+  "*Directory containing tm external methods.")
+
+(add-to-list 'exec-path mime-viewer/external-progs)
+
+(let ((paths (parse-colon-path (getenv "PATH"))))
+  (or (member mime-viewer/external-progs paths)
+      (setenv "PATH"
+	      (mapconcat (function identity)
+			 (append paths (list mime-viewer/external-progs))
+			 path-separator))
+      ))
 
   
 ;;; @ content decoder
@@ -269,43 +282,16 @@
 ;;;
 
 (defvar mime-article/coding-system-alist
-  (list (cons 'mh-show-mode *noconv*)
-	(cons t (mime-charset-to-coding-system default-mime-charset))
-	))
+  (and (boundp 'MULE)
+       '((mh-show-mode . *noconv*)
+	 (t            . *ctext*)
+	 )))		 
 
-(cond ((boundp 'MULE) ; for MULE 2.3 or older
-       (defun mime-article::write-region (start end file)
-	 (let ((file-coding-system
-		(cdr
-		 (or (assq major-mode mime-article/coding-system-alist)
-		     (assq t mime-article/coding-system-alist)
-		     ))))
-	   (write-region start end file)
-	   ))
-       )
-      ((featurep 'mule) ; for Emacs/mule and XEmacs/mule
-       (defun mime-article::write-region (start end file)
-	 (let ((coding-system-for-write
-		(cdr
-		 (or (assq major-mode mime-article/coding-system-alist)
-		     (assq t mime-article/coding-system-alist)
-		     ))))
-	   (write-region start end file)
-	   ))
-       )
-      ((boundp 'NEMACS) ; for NEmacs
-       (defun mime-article::write-region (start end file)
-	 (let ((kanji-fileio-code
-		(cdr
-		 (or (assq major-mode mime-article/kanji-code-alist)
-		     (assq t mime-article/kanji-code-alist)
-		     ))))
-	   (write-region start end file)
-	   ))
-       )
-      (t ; for Emacs 19 or older and XEmacs without mule
-       (defalias 'mime-article::write-region 'write-region)
-       ))
+(defvar mime-article/kanji-code-alist
+  (and (boundp 'NEMACS)
+       '((mh-show-mode . nil)
+	 (t            . 2)
+	 ))) 
 
 (defun mime-article/decode-message/partial (beg end cal)
   (goto-char beg)
@@ -314,134 +300,100 @@
 	 (id (cdr (assoc "id" cal)))
 	 (number (cdr (assoc "number" cal)))
 	 (total (cdr (assoc "total" cal)))
+	 (the-buf (current-buffer))
 	 file
 	 (mother mime::article/preview-buffer)
-         )
-    (or (file-exists-p root-dir)
+	 (win-conf (save-excursion
+		     (set-buffer mother)
+		     mime::preview/original-window-configuration))
+	 )
+    (if (not (file-exists-p root-dir))
 	(make-directory root-dir)
-	)
+      )
     (setq id (replace-as-filename id))
     (setq root-dir (concat root-dir "/" id))
-    (or (file-exists-p root-dir)
+    (if (not (file-exists-p root-dir))
 	(make-directory root-dir)
-	)
+      )
     (setq file (concat root-dir "/FULL"))
-    (if (file-exists-p file)
-	(let ((full-buf (get-buffer-create "FULL"))
-	      (pwin (or (get-buffer-window mother)
-			(get-largest-window)))
-	      )
-	  (save-window-excursion
-	    (set-buffer full-buf)
-	    (erase-buffer)
-	    (as-binary-input-file (insert-file-contents file))
-	    (setq major-mode 'mime/show-message-mode)
-	    (mime/viewer-mode mother)
+    (if (not (file-exists-p file))
+	(progn
+	  (re-search-forward "^$")
+	  (goto-char (1+ (match-end 0)))
+	  (setq file (concat root-dir "/" number))
+	  (let ((file-coding-system
+		 (cdr
+		  (or (assq major-mode mime-article/coding-system-alist)
+		      (assq t mime-article/coding-system-alist)
+		      )))
+		(kanji-fileio-code
+		 (cdr
+		  (or (assq major-mode mime-article/kanji-code-alist)
+		      (assq t mime-article/kanji-code-alist)
+		      )))
+		)
+	    (write-region (point) (point-max) file)
 	    )
-	  (set-window-buffer pwin
-			     (save-excursion
-			       (set-buffer full-buf)
-			       mime::article/preview-buffer))
-	  (select-window pwin)
+	  (if (get-buffer mime/temp-buffer-name)
+	      (kill-buffer mime/temp-buffer-name)
+	    )
+	  (switch-to-buffer mime/temp-buffer-name)
+	  (let ((i 1)
+		(max (string-to-int total))
+		(file-coding-system-for-read (if (boundp 'MULE)
+						 *noconv*))
+		kanji-fileio-code)
+	    (catch 'tag
+	      (while (<= i max)
+		(setq file (concat root-dir "/" (int-to-string i)))
+		(if (not (file-exists-p file))
+		    (progn
+		      (switch-to-buffer the-buf)
+		      (throw 'tag nil)
+		      ))
+		(insert-file-contents file)
+		(goto-char (point-max))
+		(setq i (1+ i))
+		)
+	      ;;(delete-other-windows)
+	      (let ((buf (current-buffer)))
+		(write-file (concat root-dir "/FULL"))
+		(set-window-configuration win-conf)
+		(let ((win (get-buffer-window mother)))
+		  (if win
+		      (select-window win)
+		    ))
+		(set-window-buffer (selected-window) buf)
+		;;(set-window-buffer buf)
+		(setq major-mode 'mime/show-message-mode)
+		)
+	      (mime/viewer-mode mother)
+	      (pop-to-buffer (current-buffer))
+	      ))
 	  )
-      (re-search-forward "^$")
-      (goto-char (1+ (match-end 0)))
-      (setq file (concat root-dir "/" number))
-      (mime-article::write-region (point) (point-max) file)
-      (let ((total-file (concat root-dir "/CT")))
-	(setq total
-	      (if total
-		  (progn
-		    (or (file-exists-p total-file)
-			(save-excursion
-			  (set-buffer
-			   (get-buffer-create mime/temp-buffer-name))
-			  (erase-buffer)
-			  (insert total)
-			  (write-file total-file)
-			  (kill-buffer (current-buffer))
-			  ))
-		    (string-to-number total)
-		    )
-		(and (file-exists-p total-file)
-		     (save-excursion
-		       (set-buffer (find-file-noselect total-file))
-		       (prog1
-			   (and (re-search-forward "[0-9]+" nil t)
-				(string-to-number
-				 (buffer-substring (match-beginning 0)
-						   (match-end 0)))
-				)
-			 (kill-buffer (current-buffer))
-			 )))
-		)))
-      (if (and total (> total 0))
-	  (catch 'tag
-	    (save-excursion
-	      (set-buffer (get-buffer-create mime/temp-buffer-name))
-	      (let ((full-buf (current-buffer)))
-		(erase-buffer)
-		(let ((i 1))
-		  (while (<= i total)
-		    (setq file (concat root-dir "/" (int-to-string i)))
-		    (or (file-exists-p file)
-			(throw 'tag nil)
-			)
-		    (as-binary-input-file (insert-file-contents file))
-		    (goto-char (point-max))
-		    (setq i (1+ i))
-		    ))
-		(as-binary-output-file (write-file (concat root-dir "/FULL")))
-		(let ((i 1))
-		  (while (<= i total)
-		    (let ((file (format "%s/%d" root-dir i)))
-		      (and (file-exists-p file)
-			   (delete-file file)
+      (progn
+	;;(delete-other-windows)
+	(set-window-configuration win-conf)
+	(select-window (or (get-buffer-window mother)
+			   (get-buffer-window
+			    (save-excursion
+			      (set-buffer mother)
+			      mime::preview/article-buffer))
+			   (get-largest-window)
 			   ))
-		    (setq i (1+ i))
-		    ))
-		(let ((file (expand-file-name "CT" root-dir)))
-		  (and (file-exists-p file)
-		       (delete-file file)
-		       ))
-		(save-window-excursion
-		  (setq major-mode 'mime/show-message-mode)
-		  (mime/viewer-mode mother)
-		  )
-		(let ((pwin (or (get-buffer-window mother)
-				(get-largest-window)
-				))
-		      (pbuf (save-excursion
-			      (set-buffer full-buf)
-			      mime::article/preview-buffer)))
-		  (set-window-buffer pwin pbuf)
-		  (select-window pwin)
-		  )))))
-      )))
+	(as-binary-input-file
+	 (set-buffer (get-buffer-create "FULL"))
+	 (insert-file-contents file)
+	 )
+	(setq major-mode 'mime/show-message-mode)
+	(mime/viewer-mode mother)
+	;;(pop-to-buffer (current-buffer))
+	))
+    ))
 
 
 ;;; @ rot13-47
 ;;;
-
-(unless (boundp 'view-mode-map)
-  (require 'view))
-
-(defconst mime-view-text/plain-mode-map (copy-keymap view-mode-map))
-(define-key mime-view-text/plain-mode-map
-  "q" (function mime-view-text/plain-exit))
-
-(defun mime-view-text/plain-mode ()
-  "\\{mime-view-text/plain-mode-map}"
-  (setq buffer-read-only t)
-  (setq major-mode 'mime-view-text/plain-mode)
-  (setq mode-name "MIME-View text/plain")
-  (use-local-map mime-view-text/plain-mode-map)
-  )
-
-(defun mime-view-text/plain-exit ()
-  (interactive)
-  (kill-buffer (current-buffer))
-  )
 
 (defun mime-article/decode-caesar (beg end cal)
   (let* ((cnum (mime-article/point-content-number beg))
@@ -453,14 +405,7 @@
 	 (mode major-mode)
 	 str)
     (setq str (buffer-substring beg end))
-    (let ((pwin (or (get-buffer-window mother)
-		    (get-largest-window)))
-	  (buf (get-buffer-create new-name))
-	  )
-      (set-window-buffer pwin buf)
-      (set-buffer buf)
-      (select-window pwin)
-      )
+    (switch-to-buffer new-name)
     (setq buffer-read-only nil)
     (erase-buffer)
     (insert str)
@@ -478,8 +423,7 @@
       (goto-char (point-max))
       (tm:caesar-region)
       )
-    (set-buffer-modified-p nil)
-    (mime-view-text/plain-mode)
+    (view-mode)
     ))
 
 

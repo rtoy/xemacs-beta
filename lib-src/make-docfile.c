@@ -33,9 +33,6 @@ Boston, MA 02111-1307, USA.  */
  Then comes F for a function or V for a variable.
  Then comes the function or variable name, terminated with a newline.
  Then comes the documentation for that function or variable.
-
- Added 19.15/20.1:  `-i site-packages' allow installer to dump extra packages
- without modifying Makefiles, etc.
  */
 
 #define NO_SHORTNAMES   /* Tell config not to load remap.h */
@@ -77,7 +74,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* Stdio stream for output to the DOC file.  */
 static FILE *outfile;
-static char *extra_elcs = NULL;
 
 enum
 {
@@ -134,42 +130,6 @@ xmalloc (unsigned int size)
   return result;
 }
 
-
-static char *
-next_extra_elc(char *extra_elcs)
-{
-  static FILE *fp = NULL;
-  static char line_buf[BUFSIZ];
-  char *p = line_buf+1;
-
-  if (!fp) {
-    if (!extra_elcs) {
-      return NULL;
-    } else if (!(fp = fopen(extra_elcs, "r"))) {
-      /* It is not an error if this file doesn't exist. */
-      /*fatal("error opening site package file list", 0);*/
-      return NULL;
-    }
-    fgets(line_buf, BUFSIZ, fp);
-  }
-
-again:
-  if (!fgets(line_buf, BUFSIZ, fp)) {
-    fclose(fp);
-    fp = NULL;
-    return NULL;
-  }
-  line_buf[0] = '\0';
-  if (strlen(p) <= 2 || strlen(p) >= (BUFSIZ - 5)) {
-    /* reject too short or too long lines */
-    goto again;
-  }
-  p[strlen(p) - 2] = '\0';
-  strcat(p, ".elc");
-
-  return p;
-}
-
 
 int
 main (int argc, char **argv)
@@ -215,11 +175,6 @@ main (int argc, char **argv)
       i += 2;
     }
 
-  if (argc > (i + 1) && !strcmp(argv[i], "-i")) {
-    extra_elcs = argv[i + 1];
-    i += 2;
-  }
-
   if (outfile == 0)
     fatal ("No output file specified", "");
 
@@ -235,15 +190,6 @@ main (int argc, char **argv)
 	/* err_count seems to be {mis,un}used */
 	err_count += scan_file (argv[i]);
     }
-
-  if (extra_elcs) {
-    char *p;
-
-    while ((p = next_extra_elc(extra_elcs)) != NULL) {
-      err_count += scan_file(p);
-    }
-  }
-
   putc ('\n', outfile);
 #ifndef VMS
   exit (err_count > 0);
@@ -881,17 +827,8 @@ scan_lisp_file (CONST char *filename, CONST char *mode)
 	      /* Skip until the first newline; remember the two previous chars. */
 	      while (c != '\n' && c >= 0)
 		{
-		  /* ### Kludge -- Ignore any ESC x x ISO2022 sequences */
-		  if (c == 27)
-		    {
-		      getc (infile);
-		      getc (infile);
-		      goto nextchar;
-		    }
-		  
 		  c2 = c1;
 		  c1 = c;
-		nextchar:
 		  c = getc (infile);
 		}
 	  
@@ -1023,7 +960,7 @@ scan_lisp_file (CONST char *filename, CONST char *mode)
 	    }
 	}
 
-#if 0 /* causes crash */
+#ifdef DEBUG
       else if (! strcmp (buffer, "if") ||
 	       ! strcmp (buffer, "byte-code"))
 	;

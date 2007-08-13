@@ -19,11 +19,11 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: FSF 19.34.
+;;; Synched up with: FSF 19.30.
 
 ;;; Commentary:
 
@@ -48,8 +48,6 @@ contiguous.
 
 Usually the records are rearranged in order of ascending sort key.
 If REVERSE is non-nil, they are rearranged in order of descending sort key.
-The variable `sort-fold-case' determines whether alphabetic case affects
-the sort order.
 
 The next four arguments are functions to be called to move point
 across a sort record.  They will be called many times from within sort-subr.
@@ -77,43 +75,42 @@ same as ENDRECFUN."
     (save-excursion
       (if messages (message "Finding sort keys..."))
       (let* ((sort-lists (sort-build-lists nextrecfun endrecfun
-					   startkeyfun endkeyfun))
-	     (old (reverse sort-lists))
+                                           startkeyfun endkeyfun))
+             (old (reverse sort-lists))
 	     (case-fold-search sort-fold-case))
-	(if (null sort-lists)
-	    ()
-	  (or reverse (setq sort-lists (nreverse sort-lists)))
-	  (if messages (message "Sorting records..."))
-	  (setq sort-lists
-		(if (fboundp 'sortcar)
-		    (sortcar sort-lists
-			     (cond ((numberp (car (car sort-lists)))
+        (if (null sort-lists)
+            ()
+          (or reverse (setq sort-lists (nreverse sort-lists)))
+          (if messages (message "Sorting records..."))
+          (setq sort-lists
+                (if (fboundp 'sortcar)
+                    (sortcar sort-lists
+                             (cond ((numberp (car (car sort-lists)))
 				    ;; This handles both ints and floats.
-				    '<)
-				   ((consp (car (car sort-lists)))
+                                    '<)
+                                   ((consp (car (car sort-lists)))
 				    (function
 				     (lambda (a b)
 				       (> 0 (compare-buffer-substrings 
 					     nil (car a) (cdr a)
 					     nil (car b) (cdr b))))))
-				   (t
-				    'string<)))
-		  (sort sort-lists
-			(cond ((numberp (car (car sort-lists)))
+                                   (t
+                                    'string<)))
+                    (sort sort-lists
+                          (cond ((numberp (car (car sort-lists)))
 			       'car-less-than-car)
-			      ((consp (car (car sort-lists)))
-			       (function
-				(lambda (a b)
-				  (> 0 (compare-buffer-substrings
-					nil (car (car a)) (cdr (car a))
-					nil (car (car b)) (cdr (car b)))))))
-			      (t
-			       (function
-				(lambda (a b)
-				  (string< (car a) (car b)))))))))
-	  (if reverse (setq sort-lists (nreverse sort-lists)))
-	  (if messages (message "Reordering buffer..."))
-	  (sort-reorder-buffer sort-lists old)))
+                                ((consp (car (car sort-lists)))
+                                 (function (lambda (a b)
+                                   (> 0 (compare-buffer-substrings 
+                                          nil (car (car a)) (cdr (car a))
+                                          nil (car (car b)) (cdr (car b)))))))
+                                (t
+                                 (function
+                                  (lambda (a b)
+                                   (string< (car a) (car b)))))))))
+            (if reverse (setq sort-lists (nreverse sort-lists)))
+            (if messages (message "Reordering buffer..."))
+            (sort-reorder-buffer sort-lists old)))
       (if messages (message "Reordering buffer... Done"))))
   nil)
 
@@ -142,7 +139,7 @@ same as ENDRECFUN."
 		      (let ((start (point)))
 			(funcall (or endkeyfun
 				     (prog1 endrecfun (setq done t))))
-			(cons start (point))))))
+                        (cons start (point))))))
       ;; Move to end of this record (start of next one, or end of buffer).
       (cond ((prog1 done (setq done nil)))
 	    (endrecfun (funcall endrecfun))
@@ -196,9 +193,7 @@ same as ENDRECFUN."
 (defun sort-lines (reverse beg end) 
   "Sort lines in region alphabetically; argument means descending order.
 Called from a program, there are three arguments:
-REVERSE (non-nil means reverse order), BEG and END (region to sort).
-The variable `sort-fold-case' determines whether alphabetic case affects
-the sort order."
+REVERSE (non-nil means reverse order), BEG and END (region to sort)."
   (interactive "P\nr")
   (save-excursion
     (save-restriction
@@ -210,28 +205,23 @@ the sort order."
 (defun sort-paragraphs (reverse beg end)
   "Sort paragraphs in region alphabetically; argument means descending order.
 Called from a program, there are three arguments:
-REVERSE (non-nil means reverse order), BEG and END (region to sort).
-The variable `sort-fold-case' determines whether alphabetic case affects
-the sort order."
+REVERSE (non-nil means reverse order), BEG and END (region to sort)."
   (interactive "P\nr")
   (save-excursion
     (save-restriction
       (narrow-to-region beg end)
       (goto-char (point-min))
       (sort-subr reverse
-		 (function
-		  (lambda ()
-		    (while (and (not (eobp)) (looking-at paragraph-separate))
-		      (forward-line 1))))
+		 (function (lambda ()
+                   (while (and (not (eobp)) (looking-at paragraph-separate))
+                     (forward-line 1))))
 		 'forward-paragraph))))
 
 ;;;###autoload
 (defun sort-pages (reverse beg end)
   "Sort pages in region alphabetically; argument means descending order.
 Called from a program, there are three arguments:
-REVERSE (non-nil means reverse order), BEG and END (region to sort).
-The variable `sort-fold-case' determines whether alphabetic case affects
-the sort order."
+REVERSE (non-nil means reverse order), BEG and END (region to sort)."
   (interactive "P\nr")
   (save-excursion
     (save-restriction
@@ -262,8 +252,6 @@ Specified field must contain a number in each line of the region.
 With a negative arg, sorts by the ARGth field counted from the right.
 Called from a program, there are three arguments:
 FIELD, BEG and END.  BEG and END specify region to sort.
-The variable `sort-fold-case' determines whether alphabetic case affects
-the sort order.
 If you want to sort floating-point numbers, try `sort-float-fields'."
   (interactive "p\nr")
   (sort-fields-1 field beg end
@@ -279,7 +267,6 @@ If you want to sort floating-point numbers, try `sort-float-fields'."
 				  (point))))))
 		 nil))
 
-;; This function is commented out of 19.34.
 ;;;###autoload
 (defun sort-float-fields (field beg end)
   "Sort lines in region numerically by the ARGth field of each line.
@@ -361,6 +348,7 @@ FIELD, BEG and END.  BEG and END specify region to sort."
     ;; Position at the front of the field
     ;; even if moving backwards.
     (skip-chars-backward "^ \t\n")))
+
 
 (defvar sort-regexp-fields-regexp)
 (defvar sort-regexp-record-end)
@@ -396,9 +384,6 @@ If a match for KEY is not found within a record then that record is ignored.
 
 With a negative prefix arg sorts in reverse order.
 
-The variable `sort-fold-case' determines whether alphabetic case affects
-the sort order.
-
 For example: to sort lines in the region by the first word on each line
  starting with the letter \"f\",
  RECORD-REGEXP would be \"^.*$\" and KEY would be \"\\\\=\\<f\\\\w*\\\\>\""
@@ -433,7 +418,7 @@ sRegexp specifying key within record: \nr")
 					(setq n 0))
 				       (t (throw 'key nil)))
 				 (condition-case ()
-				     (if (fboundp 'compare-buffer-substrings)
+				     (if (fboundp 'buffer-substring-lessp)
 					 (cons (match-beginning n)
 					       (match-end n))
 					 (buffer-substring (match-beginning n)
@@ -451,8 +436,6 @@ For the purpose of this command, the region includes
 the entire line that point is in and the entire line the mark is in.
 The column positions of point and mark bound the range of columns to sort on.
 A prefix argument means sort into reverse order.
-The variable `sort-fold-case' determines whether alphabetic case affects
-the sort order.
 
 Note that `sort-columns' rejects text that contains tabs,
 because tabs could be split across the specified columns
@@ -473,12 +456,12 @@ Use \\[untabify] to convert tabs to spaces before sorting."
       (setq col-start (min col-beg1 col-end1))
       (setq col-end (max col-beg1 col-end1))
       (if (search-backward "\t" beg1 t)
-	  (error "sort-columns does not work with tabs.  Use M-x untabify."))
+	  (error
+	   "sort-columns does not work with tabs.  Use M-x untabify."))
       (if (not (eq system-type 'vax-vms))
 	  ;; Use the sort utility if we can; it is 4 times as fast.
 	  (call-process-region beg1 end1 "sort" t t nil
 			       (if reverse "-rt\n" "-t\n")
-			       ;; XEmacs (use int-to-string conversion)
 			       (concat "+0." (int-to-string col-start))
 			       (concat "-0." (int-to-string col-end)))
 	;; On VMS, use Emacs's own facilities.

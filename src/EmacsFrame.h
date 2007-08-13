@@ -275,6 +275,13 @@ Boston, MA 02111-1307, USA.  */
 #define XtCUseBackingStore (String) "UseBackingStore"
 #endif
 
+#define XtNximStyles "ximStyles"
+#define XtCXimStyles "XimStyles"
+#define XtRXimStyles "XimStyles"
+
+#define XtNximForeground "ximForeground"
+#define XtNximBackground "ximBackground"
+
 /* scrollbar placement types; like in ScrolledW.h */
 #define EM_TOP		1
 #define EM_BOTTOM	0

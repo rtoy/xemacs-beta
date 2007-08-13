@@ -1,5 +1,5 @@
 \input texinfo  @comment -*-Texinfo-*-
-@setfilename vm.info
+@setfilename ../info/vm.info
 @settitle VM User's Manual
 @iftex
 @finalout
@@ -49,7 +49,7 @@ are preserved on all copies.
 @end titlepage
 @page
 @ifinfo
-@node Top, Introduction,, (DIR)
+@node Top, Introduction, (dir), (dir)
 
 This manual documents the VM mail reader, a Lisp program which runs as a
 subsystem under Emacs.  The manual is divided into the following
@@ -70,6 +70,7 @@ chapters.
 * Reading Digests::	How to read digests under VM.
 * Summaries::		How to view and customize the summary of a folder.
 * Miscellaneous::	Various customization variables undescribed elsewhere.
+* License::             The GNU General Public License
 
 Indices:
 
@@ -79,7 +80,7 @@ Indices:
 @end menu
 @end ifinfo
 
-@node License, Introduction, Variable Index, Top
+@node License, , , Top
 @unnumbered License
 
 @unnumbered GNU GENERAL PUBLIC LICENSE
@@ -382,7 +383,7 @@ Ty Coon, President of Vice
 
 That's all there is to it!
 
-@node Introduction, Starting Up, License, Top
+@node Introduction, Starting Up, Top, Top
 @unnumbered Introduction
 
 VM (View Mail) is an Emacs subsystem that allows UNIX mail to be read
@@ -1389,7 +1390,7 @@ used with VM.
 @unnumbered Command Index
 @printindex fn
 
-@node Variable Index, Introduction, Command Index, Top
+@node Variable Index, , Command Index, Top
 @unnumbered Variable Index
 @printindex vr
 

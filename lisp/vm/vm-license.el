@@ -21,7 +21,7 @@
   (interactive)
   (require 'info)
   (let ((pop-up-windows (eq vm-mutable-windows t))
-	(pop-up-frames (and vm-mutable-frames vm-frame-per-help)))
+	(pop-up-frames vm-mutable-frames))
     (or 
      (condition-case ()
 	 (progn (Info-goto-node "(vm)License") t)

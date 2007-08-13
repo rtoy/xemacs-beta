@@ -17,7 +17,7 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: Not in FSF. (Completely divergent from FSF menu-bar.el)
@@ -196,52 +196,61 @@ If some menu in the ITEM-PATH-LIST does not exist, an error is signalled."
 	(cons result parent)))))
 
 (defun add-menu-item-1 (leaf-p menu-path new-item before)
-  (if before (setq before (downcase before)))
-  (let* ((item-name (if (vectorp new-item) (aref new-item 0) (car new-item)))
+  ;; This code looks like it could be cleaned up some more
+  ;; Do we really need 6 calls to find-menu-item?
+  (when before (setq before (downcase before)))
+  (let* ((item-name
+	  (cond ((vectorp new-item) (aref new-item 0))
+		((consp   new-item) (car  new-item))
+		(t nil)))
 	 (menubar current-menubar)
 	 (menu (condition-case ()
 		   (car (find-menu-item menubar menu-path))
 		 (error nil)))
-	 (item-found (cond ((not (listp menu))
-		      (signal 'error (list (gettext "not a submenu")
-					   menu-path)))
-		     (menu
-		      (find-menu-item (cdr menu) (list item-name)))
-		     (t
-		      (find-menu-item menubar (list item-name)))
-		     )))
-    (or menubar
-	(error "`current-menubar' is nil: can't add menus to it."))
-    (or menu
-	(let ((rest menu-path)
-	      (so-far menubar))
-	  (while rest
-;;;	    (setq menu (car (find-menu-item (cdr so-far) (list (car rest)))))
-	    (setq menu
-		  (if (eq so-far menubar)
-		      (car (find-menu-item so-far (list (car rest))))
-		    (car (find-menu-item (cdr so-far) (list (car rest))))))
-	    (or menu
-		(let ((rest2 so-far))
-		  (while (and (cdr rest2) (car (cdr rest2)))
-		    (setq rest2 (cdr rest2)))
-		  (setcdr rest2
-		  (nconc (list (setq menu (list (car rest))))
-			 (cdr rest2)))))
-	    (setq so-far menu)
-	    (setq rest (cdr rest)))))
+	 (item-found (cond
+		      ((null item-name)
+		       nil)
+		      ((not (listp menu))
+		       (signal 'error (list (gettext "not a submenu")
+					    menu-path)))
+		      (menu
+		       (find-menu-item (cdr menu) (list item-name)))
+		      (t
+		       (find-menu-item menubar (list item-name)))
+		      )))
+    (unless menubar
+      (error "`current-menubar' is nil: can't add menus to it."))
+    (unless menu
+      (let ((rest menu-path)
+	    (so-far menubar))
+	(while rest
+;;;	  (setq menu (car (find-menu-item (cdr so-far) (list (car rest)))))
+	  (setq menu
+		(if (eq so-far menubar)
+		    (car (find-menu-item so-far (list (car rest))))
+		  (car (find-menu-item (cdr so-far) (list (car rest))))))
+	  (unless menu
+	    (let ((rest2 so-far))
+	      (while (and (cdr rest2) (car (cdr rest2)))
+		(setq rest2 (cdr rest2)))
+	      (setcdr rest2
+		      (nconc (list (setq menu (list (car rest))))
+			     (cdr rest2)))))
+	  (setq so-far menu)
+	  (setq rest (cdr rest)))))
     (if (and item-found (car item-found))
 	;; hack the item in place.
 	(if menu
+	    ;; Isn't it very bad form to use nsubstitute for side effects?
 	    (nsubstitute new-item (car item-found) menu)
 	  (setq current-menubar (nsubstitute new-item
 					     (car item-found)
 					     current-menubar)))
       ;; OK, we have to add the whole thing...
       ;; if BEFORE is specified, try to add it there.
-      (or menu (setq menu current-menubar))
-      (if before
-	  (setq before (car (find-menu-item menu (list before)))))
+      (unless menu (setq menu current-menubar))
+      (when before
+	(setq before (car (find-menu-item menu (list before)))))
       (let ((rest menu)
 	    (added-before nil))
 	(while rest
@@ -250,13 +259,13 @@ If some menu in the ITEM-PATH-LIST does not exist, an error is signalled."
 		(setcdr rest (cons new-item (cdr rest)))
 		(setq rest nil added-before t))
 	    (setq rest (cdr rest))))
-	(if (not added-before)
-	    ;; adding before the first item on the menubar itself is harder
-	    (if (and (eq menu menubar) (eq before (car menu)))
-		(setq menu (cons new-item menu)
-		      current-menubar menu)
-	      ;; otherwise, add the item to the end.
-	      (nconc menu (list new-item))))))
+	(when (not added-before)
+	  ;; adding before the first item on the menubar itself is harder
+	  (if (and (eq menu menubar) (eq before (car menu)))
+	      (setq menu (cons new-item menu)
+		    current-menubar menu)
+	    ;; otherwise, add the item to the end.
+	    (nconc menu (list new-item))))))
     (set-menubar-dirty-flag)
     new-item))
 

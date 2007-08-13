@@ -1149,7 +1149,7 @@ argument.  If called with two strings, then no prompting is done.  You
 must pass at least OLD when calling from Lisp.
 
 While you are entering the new name, consecutive C-w's insert
-consecutive words from the text of the buffer into the new bookmark
+consectutive words from the text of the buffer into the new bookmark
 name."
   (interactive (bookmark-completing-read "Old bookmark name"))
   (bookmark-maybe-historicize-string old)
@@ -1296,7 +1296,7 @@ for a file, defaulting to the file defined by variable
   (save-excursion
     (save-window-excursion
       (if (>= (device-baud-rate) 9600)
-          (message (format "Saving bookmarks to file %s..." file)))
+          (message "Saving bookmarks to file %s..." file))
       (set-buffer (let ((enable-local-variables nil))
                     (find-file-noselect file)))
       (goto-char (point-min))
@@ -1313,7 +1313,7 @@ for a file, defaulting to the file defined by variable
         (write-file file)
         (kill-buffer (current-buffer))
         (if (>= (device-baud-rate) 9600)
-            (message (format "Saving bookmarks to file %s... done." file)))
+            (message "Saving bookmarks to file %s... done." file))
         ))))
 
 
@@ -1344,7 +1344,7 @@ explicitly."
       (save-excursion
         (save-window-excursion
           (if (and (null no-msg) (>= (device-baud-rate) 9600))
-              (message (format "Loading bookmarks from %s..." file)))
+              (message "Loading bookmarks from %s..." file))
           (set-buffer (let ((enable-local-variables nil))
                         (find-file-noselect file)))
           (goto-char (point-min))
@@ -1359,11 +1359,11 @@ explicitly."
                   (setq bookmark-alist
                         (append blist (if (not revert) bookmark-alist)))
                   (bookmark-bmenu-surreptitiously-rebuild-list)) 
-              (error (format "Invalid bookmark list in %s." file))))
+              (error "Invalid bookmark list in %s." file)))
           (kill-buffer (current-buffer)))
 	(if (and (null no-msg) (>= (device-baud-rate) 9600))
-            (message (format "Loading bookmarks from %s... done" file))))
-    (error (format "Cannot read bookmark file %s." file))))
+            (message "Loading bookmarks from %s... done" file)))
+    (error "Cannot read bookmark file %s." file)))
 
 
 
@@ -1454,7 +1454,7 @@ deletion, or > if it is flagged for displaying."
     (bookmark-maybe-sort-alist)
     (mapcar
      (lambda (full-record)
-       ;; if a bookmark has an annotation, precede it with a "*"
+       ;; if a bookmark has an annotation, preceed it with a "*"
        ;; in the list of bookmarks.
        (let ((annotation (bookmark-get-annotation
                           (bookmark-name-from-full-record full-record))))
@@ -1481,7 +1481,7 @@ deletion, or > if it is flagged for displaying."
   "Major mode for editing a list of bookmarks.
 Each line describes one of the bookmarks in Emacs.
 Letters do not insert themselves; instead, they are commands.
-Bookmark names preceded by a \"*\" have annotations.
+Bookmark names preceeded by a \"*\" have annotations.
 \\<bookmark-bmenu-mode-map>
 \\[bookmark-bmenu-mark] -- mark bookmark to be displayed.
 \\[bookmark-bmenu-select] -- select bookmark of line point is on.
@@ -2078,7 +2078,7 @@ passed as an argument.  If called with two strings, then no prompting
 is done.  You must pass at least OLD-BOOKMARK when calling from Lisp.
 
 While you are entering the new name, consecutive C-w's insert
-consecutive words from the text of the buffer into the new bookmark
+consectutive words from the text of the buffer into the new bookmark
 name.
 
 Warning: this function only takes an EVENT as argument.  Use the

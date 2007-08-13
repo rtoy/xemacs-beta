@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the XEmacs Lisp Reference Manual.
-@c Copyright (C) 1990, 1991, 1992, 1993, 1994, 1997 Free Software Foundation, Inc. 
+@c Copyright (C) 1990, 1991, 1992, 1993, 1994 Free Software Foundation, Inc. 
 @c See the file lispref.texi for copying conditions.
 @setfilename ../../info/minibuf.info
 @node Minibuffers, Command Loop, Read and Print, Top
@@ -319,7 +319,7 @@ Please edit: (forward-word 1)@point{}
 @noindent
 Typing @key{RET} right away would exit the minibuffer and evaluate the
 expression, thus moving point forward one word.
-@code{edit-and-eval-command} returns @code{t} in this example.
+@code{edit-and-eval-command} returns @code{nil} in this example.
 @end defun
 
 @node Minibuffer History
@@ -394,18 +394,6 @@ A history list for arguments that are shell commands.
 @defvar read-expression-history
 A history list for arguments that are Lisp expressions to evaluate.
 @end defvar
-
-@defvar Info-minibuffer-history
-A history list for Info mode's minibuffer.
-@end defvar
-
-@defvar Manual-page-minibuffer-history
-A history list for @code{manual-entry}.
-@end defvar
-
-  There are many other minibuffer history lists, defined by various
-libraries.  An @kbd{M-x apropos} search for @samp{history} should prove
-fruitful in discovering them.
 
 @node Completion
 @section Completion

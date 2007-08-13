@@ -1,10 +1,11 @@
 ;;; tm-pgp.el --- tm-view internal methods for PGP.
 
-;; Copyright (C) 1995,1996,1997 MORIOKA Tomohiko
+;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
+;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1995/12/7
-;; Version: $Id: tm-pgp.el,v 1.5 1997/02/16 01:29:33 steve Exp $
+;; Version: $Id: tm-pgp.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia, PGP, security
 
 ;; This file is part of tm (Tools for MIME).
@@ -28,18 +29,20 @@
 
 ;;    This module is based on 2 drafts about PGP MIME integration:
 
-;;	- RFC 2015: "MIME Security with Pretty Good Privacy (PGP)"
+;;	- draft-elkins-pem-pgp-04.txt
+;;		``MIME Security with Pretty Good Privacy (PGP)''
 ;;		by Michael Elkins <elkins@aero.org> (1996/6)
 ;;
-;;	- draft-kazu-pgp-mime-00.txt: "PGP MIME Integration"
-;;		by Kazuhiko Yamamoto <kazu@is.aist-nara.ac.jp>
-;;			(1995/10; expired)
+;;	- draft-kazu-pgp-mime-00.txt
+;;		``PGP MIME Integration''
+;;		by Kazuhiko Yamamoto <kazu@is.aist-nara.ac.jp> (1995/10)
 ;;
-;;    These drafts may be contrary to each other.  You should decide
-;;  which you support.  (Maybe you should use PGP/MIME)
+;;    These drafts may be contrary to each other. You should decide
+;;  which you support.
 
 ;;; Code:
 
+(require 'mailcrypt)
 (require 'tm-play)
 
 
@@ -50,22 +53,19 @@
 (defun mime-article/view-application/pgp (beg end cal)
   (let* ((cnum (mime-article/point-content-number beg))
 	 (cur-buf (current-buffer))
-	 (p-win (or (get-buffer-window mime::article/preview-buffer)
-		    (get-largest-window)))
 	 (new-name (format "%s-%s" (buffer-name) cnum))
 	 (mother mime::article/preview-buffer)
 	 (mode major-mode)
-	 code-converter
-	 (str (buffer-substring beg end))
-	 )
-    (set-buffer (get-buffer-create new-name))
+	 code-converter str)
+    (setq str (buffer-substring beg end))
+    (switch-to-buffer new-name)
     (erase-buffer)
     (insert str)
     (cond ((progn
 	     (goto-char (point-min))
 	     (re-search-forward "^-+BEGIN PGP SIGNED MESSAGE-+$" nil t)
 	     )
-	   (funcall (pgp-function 'verify))
+	   (mc-verify)
 	   (goto-char (point-min))
 	   (delete-region
 	    (point-min)
@@ -91,7 +91,7 @@
 	     (goto-char (point-min))
 	     (re-search-forward "^-+BEGIN PGP MESSAGE-+$" nil t)
 	     )
-	   (as-binary-process (funcall (pgp-function 'decrypt)))
+	   (as-binary-process (mc-decrypt))
 	   (goto-char (point-min))
 	   (delete-region (point-min)
 			  (and
@@ -101,8 +101,7 @@
 	   ))
     (setq major-mode 'mime/show-message-mode)
     (setq mime::article/code-converter code-converter)
-    (save-window-excursion (mime/viewer-mode mother))
-    (set-window-buffer p-win mime::article/preview-buffer)
+    (mime/viewer-mode mother)
     ))
 
 (set-atype 'mime/content-decoding-condition
@@ -118,7 +117,7 @@
 
 ;;; @ Internal method for application/pgp-signature
 ;;;
-;;; It is based on RFC 2015.
+;;; It is based on draft-elkins-pem-pgp-02.txt
 
 (defvar tm-pgp::default-language 'en
   "*Symbol of language for pgp.
@@ -187,7 +186,15 @@ It should be ISO 639 2 letter language code such as en, ja, ...")
       (while (re-search-forward "\n" nil t)
 	(replace-match "\r\n")
 	)
-      (as-binary-output-file (write-file orig-file))
+      (let ((mc-flag nil)                   ; for Mule
+	    (file-coding-system *noconv*)
+	    kanji-flag                      ; for NEmacs
+	    (emx-binary-mode t)             ; for OS/2
+	    jka-compr-compression-info-list ; for jka-compr
+	    jam-zcat-filename-list          ; for jam-zcat
+	    require-final-newline)
+	(write-file orig-file)
+	)
       (kill-buffer (current-buffer))
       )
     (save-excursion
@@ -203,7 +210,16 @@ It should be ISO 639 2 letter language code such as en, ja, ...")
       (set-buffer (setq kbuf (get-buffer-create mime/temp-buffer-name)))
       (insert str)
       (mime-decode-region (point-min)(point-max) encoding)
-      (as-binary-output-file (write-file sig-file))
+      (let ((mc-flag nil)                   ; for Mule
+	    (file-coding-system *noconv*)
+	    kanji-flag                      ; for NEmacs
+	    (emx-binary-mode t)             ; for OS/2
+	    jka-compr-compression-info-list ; for jka-compr
+	    jam-zcat-filename-list          ; for jam-zcat
+	    require-final-newline)
+	(write-file sig-file)
+	)
+      ;;(get-buffer-create mime/output-buffer-name)
       (or (mime::article/call-pgp-to-check-signature
 	   mime/output-buffer-name orig-file)
 	  (let (pgp-id)
@@ -227,7 +243,7 @@ It should be ISO 639 2 letter language code such as en, ja, ...")
 		      (format "Key %s not found; attempt to fetch? " pgp-id))
 		     )
 		(progn
-		  (funcall (pgp-function 'fetch-key) (cons nil pgp-id))
+		  (mc-pgp-fetch-key (cons nil pgp-id))
 		  (mime::article/call-pgp-to-check-signature
 		   mime/output-buffer-name orig-file)
 		  ))
@@ -248,7 +264,7 @@ It should be ISO 639 2 letter language code such as en, ja, ...")
 
 ;;; @ Internal method for application/pgp-encrypted
 ;;;
-;;; It is based on RFC 2015.
+;;; It is based on draft-elkins-pem-pgp-02.txt
 
 (defun mime-article/decrypt-pgp (beg end cal)
   (let* ((cnum (mime-article/point-content-number beg))
@@ -274,7 +290,9 @@ It should be ISO 639 2 letter language code such as en, ja, ...")
 
 ;;; @ Internal method for application/pgp-keys
 ;;;
-;;; It is based on RFC 2015.
+;;; It is based on draft-elkins-pem-pgp-02.txt
+
+(autoload 'mc-snarf-keys "mc-toplev")
 
 (defun mime-article/add-pgp-keys (beg end cal)
   (let* ((cnum (mime-article/point-content-number beg))
@@ -295,7 +313,7 @@ It should be ISO 639 2 letter language code such as en, ja, ...")
 	(delete-region (point-min) (match-end 0))
       )
     (mime-decode-region (point-min)(point-max) encoding)
-    (funcall (pgp-function 'snarf-keys))
+    (mc-snarf-keys)
     (kill-buffer (current-buffer))
     ))
 

@@ -112,7 +112,7 @@ extern unsigned int lim_data;
 
 #ifdef NO_LIM_DATA
 static void
-get_lim_data (void)
+get_lim_data ()
 {
   lim_data = -1;
 }
@@ -121,7 +121,7 @@ get_lim_data (void)
 #ifdef USG
 
 static void
-get_lim_data (void)
+get_lim_data ()
 {
   extern long ulimit ();
     
@@ -145,7 +145,7 @@ get_lim_data (void)
 #ifdef WINDOWSNT
 
 static void
-get_lim_data (void)
+get_lim_data ()
 {
   extern unsigned long data_region_size;
   lim_data = data_region_size;
@@ -156,7 +156,7 @@ get_lim_data (void)
 
 #ifdef MSDOS
 void
-get_lim_data (void)
+get_lim_data ()
 {
   _go32_dpmi_meminfo info;
 
@@ -165,7 +165,7 @@ get_lim_data (void)
 }
 #else /* not MSDOS */
 static void
-get_lim_data (void)
+get_lim_data ()
 {
   lim_data = vlimit (LIM_DATA, -1);
 }
@@ -174,7 +174,7 @@ get_lim_data (void)
 #else /* BSD4_2 */
 
 static void
-get_lim_data (void)
+get_lim_data ()
 {
   struct rlimit XXrlimit;
 

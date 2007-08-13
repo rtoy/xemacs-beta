@@ -1,30 +1,30 @@
+;;;
 ;;; richtext.el -- read and save files in text/richtext format
-
-;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
-
-;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Created: 1995/7/15
-;; Version: $Id: richtext.el,v 1.3 1997/02/02 05:06:17 steve Exp $
-;; Keywords: wp, faces, MIME, multimedia
-
-;; This file is not part of GNU Emacs yet.
-
-;; This program is free software; you can redistribute it and/or
-;; modify it under the terms of the GNU General Public License as
-;; published by the Free Software Foundation; either version 2, or (at
-;; your option) any later version.
-
-;; This program is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
-
-;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
-
-;;; Code:
+;;;
+;;; Copyright (C) 1995 Free Software Foundation, Inc.
+;;; Copyright (C) 1995 MORIOKA Tomohiko
+;;;
+;;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
+;;; Created: 1995/7/15
+;;; Version:
+;;;	$Id: richtext.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $
+;;; Keywords: wp, faces, MIME, multimedia
+;;;
+;;; This file is part of GNU Emacs.
+;;;
+;;; GNU Emacs is free software; you can redistribute it and/or modify
+;;; it under the terms of the GNU General Public License as published by
+;;; the Free Software Foundation; either version 2, or (at your option)
+;;; any later version.
+;;;
+;;; GNU Emacs is distributed in the hope that it will be useful,
+;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;; GNU General Public License for more details.
+;;;
+;;; You should have received a copy of the GNU General Public License
+;;; along with GNU Emacs; see the file COPYING.  If not, write to
+;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
 (require 'enriched)
 
@@ -143,7 +143,7 @@ Return value is \(begin end name positive-p), or nil if none was found."
       (narrow-to-region from to)
       (goto-char from)
       (let ((file-width (enriched-get-file-width))
-	    (use-hard-newlines t))
+	    (use-hard-newlines t) pc nc)
 	(enriched-remove-header)
 	
 	(goto-char from)
@@ -164,8 +164,11 @@ Return value is \(begin end name positive-p), or nil if none was found."
 				  'richtext-next-annotation)
 
 	;; Fill paragraphs
-	(if (and file-width		; possible reasons not to fill:
-		 (= file-width (enriched-text-width))) ; correct wd.
+	(if (or (and file-width		; possible reasons not to fill:
+		     (= file-width (enriched-text-width))) ; correct wd.
+		(null enriched-fill-after-visiting) ; never fill
+		(and (eq 'ask enriched-fill-after-visiting) ; asked & declined
+		     (not (y-or-n-p "Re-fill for current display width? "))))
 	    ;; Minimally, we have to insert indentation and justification.
 	    (enriched-insert-indentation)
 	  (if enriched-verbose (message "Filling paragraphs..."))
@@ -178,5 +181,3 @@ Return value is \(begin end name positive-p), or nil if none was found."
 ;;;
 
 (provide 'richtext)
-
-;;; richtext.el ends here

@@ -28,7 +28,7 @@
 
 ;;; Change Log:
 
-;; $Id: mh-utils.el,v 1.1.1.2 1996/12/18 03:46:49 steve Exp $
+;; $Id: mh-utils.el,v 1.1.1.1 1996/12/18 22:43:21 steve Exp $
 
 ;;; Code:
 

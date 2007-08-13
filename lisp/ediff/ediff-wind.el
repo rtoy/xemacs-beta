@@ -1,6 +1,6 @@
 ;;; ediff-wind.el --- window manipulation utilities
 
-;; Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1994, 1995, 1996 Free Software Foundation, Inc.
 
 ;; Author: Michael Kifer <kifer@cs.sunysb.edu>
 
@@ -22,8 +22,8 @@
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Code:
-	 
-(provide 'ediff-wind)
+
+(require 'ediff-init)
 
 ;; Compiler pacifier
 (defvar icon-title-format)
@@ -35,30 +35,7 @@
 (defvar right-toolbar-width)
 (defvar default-menubar)
 (defvar frame-icon-title-format)
-(defvar ediff-diff-status)
-
-(eval-when-compile
-  (let ((load-path (cons (expand-file-name ".") load-path)))
-    (or (featurep 'ediff-init)
-	(load "ediff-init.el" nil nil 'nosuffix))
-    (or (featurep 'ediff-util)
-	(load "ediff-util.el" nil nil 'nosuffix))
-    (or (featurep 'ediff-help)
-	(load "ediff-help.el" nil nil 'nosuffix))
-    (or (featurep 'ediff-tbar)
-	(load "ediff-tbar.el" 'noerror nil 'nosuffix))
-    ))
 ;; end pacifier
-
-(require 'ediff-init)
-
-;; be careful with ediff-tbar
-(if ediff-xemacs-p
-    (condition-case nil
-	(require 'ediff-tbar)
-      (error
-       (defun ediff-compute-toolbar-width () 0)))
-  (defun ediff-compute-toolbar-width () 0))
 
 
 (defvar ediff-window-setup-function (if (ediff-window-display-p)
@@ -535,12 +512,8 @@ into icons, regardless of the window manager.")
     
     (if use-same-frame
 	(let ((window-min-height 1))
-	  (if (and (eq frame-A frame-B)
-		   (eq frame-B frame-C)
-		   (frame-live-p frame-A))
-	      (select-frame frame-A)
-	    ;; avoid dedicated and non-splittable windows
-	    (ediff-skip-unsuitable-frames))
+	  ;; avoid dedicated and non-splittable windows
+	  (ediff-skip-unsuitable-frames)
 	  (delete-other-windows)
 	  (setq merge-window-lines
 		(max 2 (round (* (window-height) merge-window-share))))
@@ -702,10 +675,8 @@ into icons, regardless of the window manager.")
     
     (if use-same-frame
 	(let (wind-width-or-height) ; this affects 3way setups only
-	  (if (and (eq frame-A frame-B) (frame-live-p frame-A))
-	      (select-frame frame-A)
-	    ;; avoid dedicated and non-splittable windows
-	    (ediff-skip-unsuitable-frames))
+	  ;; avoid dedicated and non-splittable windows
+	  (ediff-skip-unsuitable-frames)
 	  (delete-other-windows)
 	  (switch-to-buffer buf-A)
 	  (setq wind-A (selected-window))
@@ -882,21 +853,17 @@ into icons, regardless of the window manager.")
     ;; 1 more line for the modeline
     (setq lines (1+ (count-lines (point-min) (point-max)))
 	  fheight lines
-	  fwidth (max (+ (ediff-help-message-line-length) 2)
-		      (ediff-compute-toolbar-width))
-	  adjusted-parameters ;;(append
-	  (list
-	   ;; possibly change surrogate minibuffer
-	   (cons 'minibuffer
-		 (minibuffer-window
-		  designated-minibuffer-frame))
-	   (cons 'width fwidth)
-	   (cons 'height fheight))
-	  ;;(funcall
-	   ;;ediff-control-frame-position-function
-	   ;;ctl-buffer fwidth fheight)
-	  ;;)
-	  )
+	  fwidth (+ (ediff-help-message-line-length) 2)
+	  adjusted-parameters (append (list
+				       ;; possibly change surrogate minibuffer
+				       (cons 'minibuffer
+					     (minibuffer-window
+					      designated-minibuffer-frame))
+				       (cons 'width fwidth)
+				       (cons 'height fheight))
+				      (funcall
+				       ediff-control-frame-position-function
+				       ctl-buffer fwidth fheight)))
     (if ediff-use-long-help-message
 	(setq adjusted-parameters
 	      (cons '(auto-raise . nil) adjusted-parameters)))
@@ -905,12 +872,13 @@ into icons, regardless of the window manager.")
     ;; are changed. 
     (if ediff-xemacs-p
 	(progn
-	  (set-specifier top-toolbar-height (list ctl-frame 2))
-	  (sit-for 0)
 	  (set-specifier top-toolbar-height (list ctl-frame 0))
-	  ;;(set-specifier bottom-toolbar-height (list ctl-frame 0))
+	  (set-specifier bottom-toolbar-height (list ctl-frame 0))
 	  (set-specifier left-toolbar-width (list ctl-frame 0))
 	  (set-specifier right-toolbar-width (list ctl-frame 0))
+	  ;; XEmacs needed a redisplay, as it had trouble setting
+	  ;; height correctly otherwise.
+	  ;;(sit-for 0)
 	  ))
     
     ;; Under OS/2 (emx) we have to call modify frame parameters twice, in order
@@ -921,11 +889,8 @@ into icons, regardless of the window manager.")
     (if (memq system-type '(emx windows-nt windows-95))
 	(modify-frame-parameters ctl-frame adjusted-parameters))
       
-    ;; make or zap toolbar (if not requested)
-    (ediff-make-bottom-toolbar ctl-frame)
-    
     (goto-char (point-min))
-
+    
     (modify-frame-parameters ctl-frame adjusted-parameters)
     (make-frame-visible ctl-frame)
     
@@ -943,12 +908,6 @@ into icons, regardless of the window manager.")
 	   (raise-frame ctl-frame)))
     
     (set-window-dedicated-p (selected-window) t)
-
-    ;; Now move the frame. We must do it separately due to an obscure bug in
-    ;; XEmacs
-    (modify-frame-parameters
-     ctl-frame
-     (funcall ediff-control-frame-position-function ctl-buffer fwidth fheight))
       
     ;; synchronize so the cursor will move to control frame
     ;; per RMS suggestion
@@ -974,7 +933,6 @@ into icons, regardless of the window manager.")
     (ediff-eval-in-buffer ctl-buffer
       (run-hooks 'ediff-after-setup-control-frame-hook))
     ))
-
     
 (defun ediff-destroy-control-frame (ctl-buffer)
   (ediff-eval-in-buffer ctl-buffer
@@ -1101,9 +1059,9 @@ It assumes that it is called from within the control buffer."
     
     ;; control buffer format
     (setq mode-line-format
-	  (if (ediff-narrow-control-frame-p)
-	      (list "   " mode-line-buffer-identification)
-	    (list "-- " mode-line-buffer-identification "        Quick Help")))
+	  (list (if (ediff-narrow-control-frame-p) "   " "-- ")
+		mode-line-buffer-identification
+		"      Quick Help"))
     ;; control buffer id
     (setq mode-line-buffer-identification 
 	  (if (ediff-narrow-control-frame-p)
@@ -1231,7 +1189,7 @@ It assumes that it is called from within the control buffer."
 	    (or (not ediff-3way-job)
 		(eq (window-buffer C-wind) ediff-buffer-C))
 	    (string= ediff-window-config-saved
-		     (format "%S%S%S%S%S%S%S"
+		     (format "\%S\%S\%S\%S\%S\%S\%S"
 			     ctl-wind A-wind B-wind C-wind
 			     ediff-split-window-function
 			     (ediff-multiframe-setup-p)
@@ -1241,7 +1199,9 @@ It assumes that it is called from within the control buffer."
 ;;; Local Variables:
 ;;; eval: (put 'ediff-defvar-local 'lisp-indent-hook 'defun)
 ;;; eval: (put 'ediff-eval-in-buffer 'lisp-indent-hook 1)
-;;; eval: (put 'ediff-eval-in-buffer 'edebug-form-spec '(form body))
 ;;; End:
+
+(provide 'ediff-wind)
+
 
 ;;; ediff-wind.el ends here

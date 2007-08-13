@@ -114,16 +114,12 @@ value of this flag.")
   "Maximum number of saved comments in the comment ring.")
 
 ;;; XEmacs - This is dumped into loaddefs.el already.
-;(defvar diff-switches "-c"
-;  "*A string or list of strings specifying switches to be passed to diff.")
+;; (defvar diff-switches "-c"
+;;   "*A string or list of strings specifying switches to be passed to diff.")
 
 ;;;###autoload
 (defvar vc-checkin-hook nil
   "*List of functions called after a checkin is done.  See `run-hooks'.")
-
-;;;###autoload
-(defvar vc-before-checkin-hook nil
-  "*List of functions called before a checkin is done.  See `run-hooks'.")
 
 (defvar vc-make-buffer-writable-hook nil
   "*List of functions called when a buffer is made writable.  See `run-hooks.'
@@ -684,19 +680,13 @@ lock steals will raise an error.
 	   (delete-window)
 	   (kill-buffer (current-buffer))))))
 
-(defun vc-start-entry (file rev comment msg action &optional after-hook before-hook)
+(defun vc-start-entry (file rev comment msg action &optional after-hook)
   ;; Accept a comment for an operation on FILE revision REV.  If COMMENT
   ;; is nil, pop up a VC-log buffer, emit MSG, and set the
   ;; action on close to ACTION; otherwise, do action immediately.
   ;; Remember the file's buffer in vc-parent-buffer (current one if no file).
   ;; AFTER-HOOK specifies the local value for vc-log-operation-hook.
-  ;; BEFORE-HOOK specifies a hook to run before even asking for the
-  ;; checkin comments.
   (let ((parent (if file (find-file-noselect file) (current-buffer))))
-    (when before-hook
-      (save-excursion
-	(set-buffer parent)
-	(run-hooks before-hook)))
     (if comment
 	(set-buffer (get-buffer-create "*VC-log*"))
       (pop-to-buffer (get-buffer-create "*VC-log*")))
@@ -727,7 +717,7 @@ level to check it in under.  COMMENT, if specified, is the checkin comment."
   (vc-start-entry file rev
 		  (or comment (not vc-initial-comment))
 		  "Enter initial comment." 'vc-backend-admin
-		  nil 'vc-before-checkin-hook))
+		  nil))
 
 (defun vc-checkout (file &optional writable)
   "Retrieve a copy of the latest version of the given file."
@@ -785,7 +775,7 @@ COMMENT is a comment string; if omitted, a buffer is
 popped up to accept a comment."
   (vc-start-entry file rev comment
 		  "Enter a change comment." 'vc-backend-checkin
-		  'vc-checkin-hook 'vc-before-checkin-hook))
+		  'vc-checkin-hook))
 
 ;;; Here is a checkin hook that may prove useful to sites using the
 ;;; ChangeLog facility supported by Emacs.
@@ -1160,8 +1150,8 @@ scan the entire tree of subdirectories of the current directory."
 	  (vc-file-tree-walk subfunction)
 	(vc-dir-all-files subfunction)))
     (save-excursion
-      (dired (cons dir (nreverse filelist))
-     	     dired-listing-switches)
+      (dired (make-string-stringlist (cons dir (nreverse filelist)))
+     	     dired-listing-switches) 
       (rename-buffer (generate-new-buffer-name "VC-DIRED"))
       (setq dired-buf (current-buffer))
       (setq nonempty (not (zerop (buffer-size)))))
@@ -1424,11 +1414,6 @@ A prefix argument means do not revert the buffer afterwards."
     nil					;CC
     )
   )
-
-;;;###autoload
-(defun vc-rename-this-file (new)
-  (interactive "FVC rename file to: ")
-  (vc-rename-file buffer-file-name new))
 
 ;;;###autoload
 (defun vc-update-change-log (&rest args)
@@ -2030,7 +2015,7 @@ with RCS)."
     file
     (vc-do-command 0 "prs" file 'MASTER)
     (vc-do-command 0 "rlog" file 'MASTER)
-    (vc-do-command 0 "cvs" file 'WORKFILE "log")
+    (vc-do-command 0 "cvs" file 'WORKFILE "rlog")
     (vc-do-command 0 "cleartool" file 'WORKFILE "lshistory")))
 
 (defun vc-backend-assign-name (file name)

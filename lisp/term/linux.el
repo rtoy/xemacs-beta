@@ -17,9 +17,8 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
 ;;;; Code:
 
@@ -56,24 +55,24 @@
 (define-key function-key-map "\e[4~" [end])
 (define-key function-key-map "\e[5~" [prior])
 (define-key function-key-map "\e[6~" [next])
-(define-key function-key-map "\e[G" [kp-5])
+(define-key function-key-map "\e[G" [kp_5])
 
-(define-key function-key-map "\eOp" [kp-0])
-(define-key function-key-map "\eOq" [kp-1])
-(define-key function-key-map "\eOr" [kp-2])
-(define-key function-key-map "\eOs" [kp-3])
-(define-key function-key-map "\eOt" [kp-4])
-(define-key function-key-map "\eOu" [kp-5])
-(define-key function-key-map "\eOv" [kp-6])
-(define-key function-key-map "\eOw" [kp-7])
-(define-key function-key-map "\eOx" [kp-8])
-(define-key function-key-map "\eOy" [kp-9])
+(define-key function-key-map "\eOp" [kp_0])
+(define-key function-key-map "\eOq" [kp_1])
+(define-key function-key-map "\eOr" [kp_2])
+(define-key function-key-map "\eOs" [kp_3])
+(define-key function-key-map "\eOt" [kp_4])
+(define-key function-key-map "\eOu" [kp_5])
+(define-key function-key-map "\eOv" [kp_6])
+(define-key function-key-map "\eOw" [kp_7])
+(define-key function-key-map "\eOx" [kp_8])
+(define-key function-key-map "\eOy" [kp_9])
 
-(define-key function-key-map "\eOl" [kp-add])
-(define-key function-key-map "\eOS" [kp-subtract])
-(define-key function-key-map "\eOM" [kp-enter])
-(define-key function-key-map "\eOR" [kp-multiply])
-(define-key function-key-map "\eOQ" [kp-divide])
-(define-key function-key-map "\eOn" [kp-decimal])
-(define-key function-key-map "\eOP" [kp-numlock])
+(define-key function-key-map "\eOl" [kp_add])
+(define-key function-key-map "\eOS" [kp_subtract])
+(define-key function-key-map "\eOM" [kp_enter])
+(define-key function-key-map "\eOR" [kp_multiply])
+(define-key function-key-map "\eOQ" [kp_divide])
+(define-key function-key-map "\eOn" [kp_decimal])
+(define-key function-key-map "\eOP" [kp_numlock])
 

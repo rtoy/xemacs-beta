@@ -463,73 +463,74 @@ Used to decide whether to save completions.")
 	   string-to-coerce)
 	  )))
 
-;; Tests -
-;; (cmpl-merge-string-cases "AbCdEf456" "abc")     --> AbCdEf456
-;; (cmpl-merge-string-cases "abcdef456" "ABC")     --> ABCDEF456
-;; (cmpl-merge-string-cases "ABCDEF456" "Abc")     --> Abcdef456
-;; (cmpl-merge-string-cases "ABCDEF456" "abc")     --> abcdef456
+;;; Tests -
+;;; (cmpl-merge-string-cases "AbCdEf456" "abc")     --> AbCdEf456
+;;; (cmpl-merge-string-cases "abcdef456" "ABC")     --> ABCDEF456
+;;; (cmpl-merge-string-cases "ABCDEF456" "Abc")     --> Abcdef456
+;;; (cmpl-merge-string-cases "ABCDEF456" "abc")     --> abcdef456
 
 
 (defun cmpl-hours-since-origin ()
   (let ((time (current-time)))
-     (floor (+ (* 65536.0 (nth 0 time)) (nth 1 time)) 3600)))
+    (truncate
+     (+ (* (/ (car time) 3600.0) (lsh 1 16))
+	(/ (nth 2 time) 3600.0)))))
 
-;;---------------------------------------------------------------------------
-;; "Symbol" parsing functions
-;;---------------------------------------------------------------------------
-;; The functions symbol-before-point, symbol-under-point, etc. quickly return
-;; an appropriate symbol string.  The strategy is to temporarily change
-;; the syntax table to enable fast symbol searching.  There are three classes
-;; of syntax in these "symbol" syntax tables ::
-;;
-;; syntax (?_) - "symbol" chars (e.g. alphanumerics)
-;; syntax (?w) - symbol chars to ignore at end of words (e.g. period).  
-;; syntax (? ) - everything else
-;;
-;; Thus by judicious use of scan-sexps and forward-word, we can get
-;; the word we want relatively fast and without consing.  
-;;
-;; Why do we need a separate category for "symbol chars to ignore at ends" ?
-;; For example, in LISP we want starting :'s trimmed 
-;; so keyword argument specifiers also define the keyword completion.  And,
-;; for example, in C we want `.' appearing in a structure ref. to
-;; be kept intact in order to store the whole structure ref.; however, if 
-;; it appears at the end of a symbol it should be discarded because it is
-;; probably used as a period.
+;;;---------------------------------------------------------------------------
+;;; "Symbol" parsing functions
+;;;---------------------------------------------------------------------------
+;;; The functions symbol-before-point, symbol-under-point, etc. quickly return
+;;; an appropriate symbol string.  The strategy is to temporarily change
+;;; the syntax table to enable fast symbol searching.  There are three classes
+;;; of syntax in these "symbol" syntax tables ::
+;;;
+;;; syntax (?_) - "symbol" chars (e.g. alphanumerics)
+;;; syntax (?w) - symbol chars to ignore at end of words (e.g. period).  
+;;; syntax (? ) - everything else
+;;;
+;;; Thus by judicious use of scan-sexps and forward-word, we can get
+;;; the word we want relatively fast and without consing.  
+;;;
+;;; Why do we need a separate category for "symbol chars to ignore at ends" ?
+;;; For example, in LISP we want starting :'s trimmed 
+;;; so keyword argument specifiers also define the keyword completion.  And,
+;;; for example, in C we want `.' appearing in a structure ref. to
+;;; be kept intact in order to store the whole structure ref.; however, if 
+;;; it appears at the end of a symbol it should be discarded because it is
+;;; probably used as a period.
 
-;; Here is the default completion syntax ::
-;; Symbol chars :: A-Z a-z 0-9 @ / \ * + ~ $ < > %
-;; Symbol chars to ignore at ends :: _ : . -
-;; Separator chars. :: <tab> <space> ! ^ & ( ) = ` | { } [ ] ; " ' #
-;;                     , ? <Everything else>
+;;; Here is the default completion syntax ::
+;;; Symbol chars :: A-Z a-z 0-9 @ / \ * + ~ $ < > %
+;;; Symbol chars to ignore at ends :: _ : . -
+;;; Separator chars. :: <tab> <space> ! ^ & ( ) = ` | { } [ ] ; " ' #
+;;;                     , ? <Everything else>
 
-;; Mode specific differences and notes ::
-;;  LISP diffs ->
-;;    Symbol chars :: ! & ? = ^
-;;
-;; C diffs ->
-;;   Separator chars :: + * / : %
-;;  A note on the hyphen (`-').  Perhaps the hyphen should also be a separator
-;; char., however, we wanted to have completion symbols include pointer 
-;; references.  For example, "foo->bar" is a symbol as far as completion is
-;; concerned.
-;;
-;; FORTRAN diffs ->
-;;   Separator chars :: + - * / :
-;;
-;; Pathname diffs ->
-;;   Symbol chars :: .
-;;  Of course there is no pathname "mode" and in fact we have not implemented
-;; this table.  However, if there was such a mode, this is what it would look
-;; like.
+;;; Mode specific differences and notes ::
+;;;  LISP diffs ->
+;;;    Symbol chars :: ! & ? = ^
+;;;
+;;; C diffs ->
+;;;   Separator chars :: + * / : %
+;;;  A note on the hyphen (`-').  Perhaps the hyphen should also be a separator
+;;; char., however, we wanted to have completion symbols include pointer 
+;;; references.  For example, "foo->bar" is a symbol as far as completion is
+;;; concerned.
+;;;
+;;; FORTRAN diffs ->
+;;;   Separator chars :: + - * / :
+;;;
+;;; Pathname diffs ->
+;;;   Symbol chars :: .
+;;;  Of course there is no pathname "mode" and in fact we have not implemented
+;;; this table.  However, if there was such a mode, this is what it would look
+;;; like.
 
-;;-----------------------------------------------
-;; Table definitions
-;;-----------------------------------------------
+;;;-----------------------------------------------
+;;; Table definitions
+;;;-----------------------------------------------
 
 (defun cmpl-make-standard-completion-syntax-table ()
-  ;; XEmacs change:  Left the original code alone. -sb
-  (let ((table (make-vector 256 0)) ;; default syntax is whitespace
+  (let ((table (make-syntax-table)) ;; default syntax is whitespace
 	i)
     ;; alpha chars
     (setq i 0)
@@ -2037,26 +2038,25 @@ Prefix args ::
 	 ))))
 
 
-;;-----------------------------------------------
-;; C file completion parsing
-;;-----------------------------------------------
-;; C :
-;;  Looks for #define or [<storage class>] [<type>] <name>{,<name>}
-;; or structure, array or pointer defs.
-;; It gets most of the definition names.
-;;
-;; As you might suspect by now, we use some symbol table hackery
-;;
-;; Symbol separator chars (have whitespace syntax) --> , ; * = (
-;; Opening char --> [ {
-;; Closing char --> ] }
-;; opening and closing must be skipped over
-;; Whitespace chars (have symbol syntax)
-;; Everything else has word syntax
+;;;-----------------------------------------------
+;;; C file completion parsing
+;;;-----------------------------------------------
+;;; C :
+;;;  Looks for #define or [<storage class>] [<type>] <name>{,<name>}
+;;; or structure, array or pointer defs.
+;;; It gets most of the definition names.
+;;;
+;;; As you might suspect by now, we use some symbol table hackery
+;;;
+;;; Symbol separator chars (have whitespace syntax) --> , ; * = (
+;;; Opening char --> [ {
+;;; Closing char --> ] }
+;;; opening and closing must be skipped over
+;;; Whitespace chars (have symbol syntax)
+;;; Everything else has word syntax
 
 (defun cmpl-make-c-def-completion-syntax-table ()
-  ;; XEmacs change
-  (let ((table (make-vector 256 0))
+  (let ((table (make-syntax-table))
 	(whitespace-chars '(?  ?\n ?\t ?\f  ?\v ?\r))
 	;; unfortunately the ?( causes the parens to appear unbalanced
 	(separator-chars '(?, ?* ?= ?\( ?\;

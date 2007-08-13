@@ -1,5 +1,5 @@
 ;;; dgnushack.el --- a hack to set the load path for byte-compiling
-;; Copyright (C) 1994,95,96,97 Free Software Foundation, Inc.
+;; Copyright (C) 1994,95,96 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@ifi.uio.no>
 ;; Version: 4.19
@@ -26,52 +26,45 @@
 
 ;;; Code:
 
-(fset 'facep 'ignore)
-
 (require 'cl)
-(require 'bytecomp)
-(push "." load-path)
-(require 'lpath)
+(setq load-path (cons "." load-path))
+
+(setq custom-file "/THIS FILE DOES NOT eXiST!")
 
 (defalias 'device-sound-enabled-p 'ignore)
 (defalias 'play-sound-file 'ignore)
 (defalias 'nndb-request-article 'ignore)
 (defalias 'efs-re-read-dir 'ignore)
 (defalias 'ange-ftp-re-read-dir 'ignore)
-(defalias 'define-mail-user-agent 'ignore)
-
-(eval-and-compile
-  (unless (string-match "XEmacs" emacs-version)
-    (fset 'get-popup-menu-response 'ignore)
-    (fset 'event-object 'ignore)
-    (fset 'x-defined-colors 'ignore)
-    (fset 'read-color 'ignore)))
-
-(setq byte-compile-warnings
-      '(free-vars unresolved callargs redefine obsolete))
 
 (defun dgnushack-compile ()
-  ;;(setq byte-compile-dynamic t)
+  ;(setq byte-compile-dynamic t)
   (let ((files (directory-files "." nil ".el$"))
 	(xemacs (string-match "XEmacs" emacs-version))
-	;;(byte-compile-generate-call-tree t)
-	byte-compile-warnings file elc)
-    (condition-case ()
-	(require 'w3-forms)
-      (error (setq files (delete "nnweb.el" files))))
-    (while (setq file (pop files))
-      (when (or (not (member file '("gnus-xmas.el" "gnus-picon.el"
+	byte-compile-warnings file)
+    (while files
+      (setq file (car files)
+	    files (cdr files))
+      (cond 
+       ((or (string= file "custom.el") (string= file "browse-url.el"))
+	(setq byte-compile-warnings nil))
+       (xemacs
+	(setq byte-compile-warnings 
+	      '(free-vars unresolved callargs redefine)))
+       (t
+	(setq byte-compile-warnings 
+	      '(free-vars unresolved callargs redefine obsolete))))
+      (when (or (not (member file '("gnus-xmas.el" "gnus-picon.el" 
 				    "messagexmas.el" "nnheaderxm.el"
 				    "smiley.el")))
 		xemacs)
-	(when (or (not (file-exists-p (setq elc (concat file "c"))))
-		  (file-newer-than-file-p file elc))
-	  (ignore-errors
-	    (byte-compile-file file)))))))
+	(condition-case ()
+	    (byte-compile-file file)
+	  (error nil))))))
 
 (defun dgnushack-recompile ()
   (require 'gnus)
   (byte-recompile-directory "." 0))
 
-;;; dgnushack.el ends here
+;;; dgnushack.el ends here  
 

@@ -74,6 +74,11 @@ Lisp_Object Qread_number;
 Lisp_Object Qread_string;
 Lisp_Object Qevents_to_keys;
 
+#ifdef MULE
+Lisp_Object Qread_coding_system;
+Lisp_Object Qread_non_nil_coding_system;
+#endif
+
 /* ARGSUSED */
 DEFUN ("interactive", Finteractive, 0, UNEVALLED, 0, /*
 Specify a way of parsing arguments for interactive use of a function.
@@ -122,6 +127,8 @@ S -- Any symbol.
 v -- Variable name: symbol that is user-variable-p.
 x -- Lisp expression read but not evaluated.
 X -- Lisp expression read and evaluated.
+z -- Coding system. (Always nil if no Mule support.)
+Z -- Coding system, nil if no prefix arg. (Always nil if no Mule support.)
 In addition, if the string begins with `*'
  then an error is signaled if the buffer is read-only.
  This happens before reading any arguments.
@@ -740,7 +747,7 @@ when reading the arguments.
 	  case 'n':		/* Read number from minibuffer.  */
 	    {
 	    read_number:
-	      args[argnum] = call2 (Qread_number, PROMPT (), Qnil);
+	      args[argnum] = call2 (Qread_number, PROMPT (), Qt);
 	      /* numbers are too boring to go on command history */
 	      /* arg_from_tty = 1; */
               break;
@@ -844,6 +851,34 @@ when reading the arguments.
 	      arg_from_tty = 1;
 	      break;
 	    }
+	  case 'Z':		/* Coding-system symbol or nil if no prefix */
+	    {
+#ifdef MULE
+	      if (NILP (prefix))
+		{
+		  args[argnum] = Qnil;
+		}
+	      else 
+		{
+		  args[argnum] =
+		    call1 (Qread_non_nil_coding_system, PROMPT ());
+		  arg_from_tty = 1;
+		}
+#else
+	      args[argnum] = Qnil;
+#endif
+	      break;
+	    }
+	  case 'z':		/* Coding-system symbol */
+	    {
+#ifdef MULE
+	      args[argnum] = call1 (Qread_coding_system, PROMPT ());
+	      arg_from_tty = 1;
+#else
+	      args[argnum] = Qnil;
+#endif
+	      break;
+	    }
 
 	    /* We have a case for `+' so we get an error
 	       if anyone tries to define one here.  */
@@ -943,6 +978,10 @@ syms_of_callint (void)
   defsymbol (&Qread_command, "read-command");
   defsymbol (&Qread_number, "read-number");
   defsymbol (&Qread_expression, "read-expression");
+#ifdef MULE
+  defsymbol (&Qread_coding_system, "read-coding-system");
+  defsymbol (&Qread_non_nil_coding_system, "read-non-nil-coding-system");
+#endif
   defsymbol (&Qevents_to_keys, "events-to-keys");
   defsymbol (&Qcommand_debug_status, "command-debug-status");
   defsymbol (&Qenable_recursive_minibuffers, "enable-recursive-minibuffers");

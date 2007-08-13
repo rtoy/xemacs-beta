@@ -182,14 +182,18 @@ default the local keymap of the current buffer is used."
 	       (setq keymap (car keymaps))
 	       (cond ((vm-mouse-xemacs-mouse-p)
 		      (define-key keymap 'button1 command)
-		      (define-key keymap 'button2 command))
+		      (define-key keymap 'button2 command)
+		      (define-key keymap 'button3 command))
 		     ((vm-mouse-fsfemacs-mouse-p)
 		      (define-key keymap [down-mouse-1] 'ignore)
 		      (define-key keymap [drag-mouse-1] 'ignore)
 		      (define-key keymap [mouse-1] command)
 		      (define-key keymap [drag-mouse-2] 'ignore)
 		      (define-key keymap [down-mouse-2] 'ignore)
-		      (define-key keymap [mouse-2] command)))
+		      (define-key keymap [mouse-2] command)
+		      (define-key keymap [drag-mouse-3] 'ignore)
+		      (define-key keymap [down-mouse-3] 'ignore)
+		      (define-key keymap [mouse-3] command)))
 	       (setq keymaps (cdr keymaps)))))
       (setq w (vm-get-buffer-window (current-buffer)))
       (setq q list
@@ -262,9 +266,7 @@ default the local keymap of the current buffer is used."
     (if (not multi-word)
 	(define-key minibuffer-local-map "\r"
 	  'vm-minibuffer-complete-word-and-exit))
-    ;; evade the XEmacs dialog box, yeccch.
-    (let ((use-dialog-box nil))
-      (read-string prompt))))
+    (read-string prompt)))
 
 (defvar last-nonmenu-event)
 
@@ -272,7 +274,7 @@ default the local keymap of the current buffer is used."
   ;; handle alist
   (if (consp (car completion-list))
       (setq completion-list (nreverse (mapcar 'car completion-list))))
-  (if (and completion-list (vm-mouse-support-possible-here-p))
+  (if (and completion-list (vm-mouse-support-possible-p))
       (cond ((and (vm-mouse-xemacs-mouse-p)
 		  (or (button-press-event-p last-command-event)
 		      (button-release-event-p last-command-event)
@@ -317,7 +319,7 @@ Line editing keys are:
 	      (set-buffer input-buffer)
 	      (while t
 		(erase-buffer)
-		(message "%s%s" prompt
+		(vm-unsaved-message "%s%s" prompt
 				    (vm-truncate-string xxx (buffer-size)))
 		(while (not (memq (setq char (read-char)) '(?\C-m ?\C-j)))
 		  (if (setq form
@@ -333,11 +335,11 @@ Line editing keys are:
 			  (eval form)
 			(error t))
 		    (insert char))
-		  (message "%s%s" prompt
+		  (vm-unsaved-message "%s%s" prompt
 				      (vm-truncate-string xxx (buffer-size))))
 		(cond ((and confirm string)
 		       (cond ((not (string= string (buffer-string)))
-			      (message
+			      (vm-unsaved-message
 			       (concat prompt
 				       (vm-truncate-string xxx (buffer-size))
 				       " [Mismatch... try again.]"))
@@ -347,22 +349,20 @@ Line editing keys are:
 			     (t (throw 'return-value string))))
 		      (confirm
 		       (setq string (buffer-string))
-		       (message
+		       (vm-unsaved-message
 			(concat prompt
 				(vm-truncate-string xxx (buffer-size))
 				" [Retype to confirm...]"))
 		       (sit-for 2))
 		      (t
-		       (message "")
+		       (vm-unsaved-message "")
 		       (throw 'return-value (buffer-string))))))
 	  (and input-buffer (kill-buffer input-buffer)))))))
 
 (defun vm-keyboard-read-file-name (prompt &optional dir default
 					  must-match initial history)
   "Like read-file-name, except HISTORY's value is unaltered."
-  (let ((oldvalue (symbol-value history))
-	;; evade the XEmacs dialog box, yeccch.
-	(use-dialog-box nil))
+  (let ((oldvalue (symbol-value history)))
     (unwind-protect
 	(condition-case nil
 	    (read-file-name prompt dir default must-match initial history)
@@ -380,7 +380,7 @@ Line editing keys are:
 				 must-match initial history)
   "Like read-file-name, except a mouse interface is used if a mouse
 click mouse triggered the current command."
-  (if (vm-mouse-support-possible-here-p)
+  (if (vm-mouse-support-possible-p)
       (cond ((and (vm-mouse-xemacs-mouse-p)
 		  (or (button-press-event-p last-command-event)
 		      (button-release-event-p last-command-event)

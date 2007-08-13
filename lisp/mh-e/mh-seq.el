@@ -25,7 +25,7 @@
 
 ;;; Change Log:
 
-;; $Id: mh-seq.el,v 1.1.1.1 1996/12/18 03:34:38 steve Exp $
+;; $Id: mh-seq.el,v 1.1.1.1 1996/12/18 22:43:21 steve Exp $
 
 ;;; Code:
 

@@ -64,12 +64,6 @@ Boston, MA 02111-1307, USA.  */
 
 extern void memory_warnings (void *, void (*warnfun) (CONST char *));
 
-#ifndef SYSTEM_MALLOC
-extern void *(*__malloc_hook)(size_t);
-extern void *(*__realloc_hook)(void *, size_t);
-extern void (*__free_hook)(void *);
-#endif  /* not SYSTEM_MALLOC */
-
 /* Command line args from shell, as list of strings */
 Lisp_Object Vcommand_line_args;
 
@@ -84,10 +78,6 @@ Lisp_Object Vsystem_type;
 /* Variable whose value is string giving configuration built for.  */
 Lisp_Object Vsystem_configuration;
   
-/* Version numbers and strings */
-Lisp_Object Vemacs_major_version;
-Lisp_Object Vemacs_minor_version;
-
 /* The name under which XEmacs was invoked, with any leading directory
    names discarded.  */
 Lisp_Object Vinvocation_name;
@@ -179,12 +169,11 @@ fatal_error_signal (int sig)
   /* If fatal error occurs in code below, avoid infinite recursion.  */
   if (! fatal_error_in_progress)
     {
-      fatal_error_in_progress = dont_check_for_quit = 1;
+      fatal_error_in_progress = 1;
       shut_down_emacs (sig, Qnil);
       stderr_out("\nLisp backtrace follows:\n\n");
       Fbacktrace(Qexternal_debugging_output, Qt);
       
-# if 0	/* This is evil, rarely useful, and causes grief in some cases. */
       /* Check for Sun-style stack printing via /proc */
       {
         CONST char *pstack = "/usr/proc/bin/pstack";
@@ -197,7 +186,6 @@ fatal_error_signal (int sig)
             system(buf);
           }
       }
-# endif
     }
 #ifdef VMS
   LIB$STOP (SS$_ABORT);
@@ -373,6 +361,15 @@ Return the directory name in which the Emacs executable was located.
 # undef RUN_TIME_REMAP
 #endif
 
+#if defined (MULE) && defined (MSDOS) && defined (EMX)
+/* Setup all of files be input/output'ed with binary translation mdoe. */
+asm ("	.text");
+asm ("L_setbinmode:");
+asm ("	movl	$1, __fmode_bin");
+asm ("	ret");
+asm ("	.stabs	\"___CTOR_LIST__\", 23, 0, 0, L_setbinmode");
+#endif
+
 /* Test whether the next argument in ARGV matches SSTR or a prefix of
    LSTR (at least MINLEN characters).  If so, then if VALPTR is non-null
    (the argument is supposed to have a value) store in *VALPTR either
@@ -443,21 +440,12 @@ main_1 (int argc, char **argv, char **envp)
   int skip_args = 0;
   Lisp_Object load_me;
   int inhibit_window_system;
-#ifdef NeXT
-  extern int malloc_cookie;
-#endif
-
-#ifndef SYSTEM_MALLOC
-  /* Make sure that any libraries we link against haven't installed a 
-     hook for a gmalloc of a potentially incompatible version. */
-  __malloc_hook = NULL;
-  __realloc_hook = NULL;
-  __free_hook = NULL;
-#endif /* not SYSTEM_MALLOC */
 
   noninteractive = 0;
 
 #ifdef NeXT
+  extern int malloc_cookie;
+  
   /* 19-Jun-1995 -baw
    * NeXT secret magic, ripped from Emacs-for-NS by Carl Edman
    * <cedman@princeton.edu>.  Note that even Carl doesn't know what this
@@ -595,7 +583,7 @@ main_1 (int argc, char **argv, char **envp)
 	dup (0);
 	if (! isatty (0))
 	  fatal ("%s: not a tty", term);
-
+ 
 	stderr_out ("Using %s", ttyname (0));
 	inhibit_window_system = 1;	/* -t => -nw */
       }
@@ -608,7 +596,7 @@ main_1 (int argc, char **argv, char **envp)
   /* Handle the -batch switch, which means don't do interactive display.  */
   if (argmatch (argv, argc, "-batch", "--batch", 5, NULL, &skip_args))
     noninteractive = 1;
- 
+
   /* Partially handle the -version and -help switches: they imply -batch,
      but are not removed from the list. */
   if (argmatch (argv, argc, "-help", "--help",   3, NULL, &skip_args) ||
@@ -763,6 +751,7 @@ main_1 (int argc, char **argv, char **envp)
       syms_of_callproc ();
       syms_of_casefiddle ();
       syms_of_casetab ();
+      syms_of_chartab ();
       syms_of_cmdloop ();
       syms_of_cmds ();
       syms_of_console ();
@@ -879,6 +868,19 @@ main_1 (int argc, char **argv, char **envp)
 #endif
 #endif /* HAVE_NEXTSTEP */
 
+#ifdef MULE
+      syms_of_mule ();
+      syms_of_mule_ccl ();
+      syms_of_mule_charset ();
+      syms_of_mule_coding ();
+#ifdef HAVE_WNN
+      syms_of_mule_wnn ();
+#endif
+#ifdef HAVE_CANNA
+      syms_of_mule_canna ();
+#endif /* HAVE_CANNA */
+#endif /* MULE */
+
 #ifdef SYMS_SYSTEM
       SYMS_SYSTEM;
 #endif
@@ -982,6 +984,7 @@ main_1 (int argc, char **argv, char **envp)
 
       structure_type_create ();
 
+      structure_type_create_chartab ();
       structure_type_create_faces ();
       structure_type_create_rangetab ();
 
@@ -1010,6 +1013,9 @@ main_1 (int argc, char **argv, char **envp)
 	 */
 
       lstream_type_create ();
+#ifdef MULE
+      lstream_type_create_mule_coding ();
+#endif
       lstream_type_create_print ();
 
       /* Now initialize most variables.
@@ -1098,6 +1104,13 @@ main_1 (int argc, char **argv, char **envp)
       vars_of_indent ();
       vars_of_insdel ();
       vars_of_intl ();
+#ifdef HAVE_XIM
+#ifdef XIM_MOTIF
+      vars_of_input_method_motif ();
+#else /* XIM_XLIB */
+      vars_of_input_method_xlib ();
+#endif
+#endif /* HAVE_XIM */
       vars_of_keymap ();
       vars_of_lread ();
       vars_of_lstream ();
@@ -1168,6 +1181,18 @@ main_1 (int argc, char **argv, char **envp)
 #endif
 #endif
 
+#ifdef MULE
+      vars_of_mule ();
+      vars_of_mule_charset ();
+      vars_of_mule_coding ();
+#ifdef HAVE_WNN
+      vars_of_mule_wnn ();
+#endif
+#ifdef HAVE_CANNA
+      vars_of_mule_canna ();
+#endif /* HAVE_CANNA */
+#endif /* MULE */
+
 #ifdef ENERGIZE
       vars_of_energize ();
 #endif
@@ -1225,9 +1250,17 @@ main_1 (int argc, char **argv, char **envp)
       /* Depends on hashtables and specifiers. */
       complex_vars_of_faces ();
 
+#ifdef MULE
+      /* These two depend on hashtables and various variables declared
+	 earlier.  The second may also depend on the first. */
+      complex_vars_of_mule_charset ();
+      complex_vars_of_mule_coding ();
+#endif
+
       /* This calls allocate_glyph(), which creates specifiers
 	 and also relies on a variable (Vthe_nothing_vector) initialized
-	 above. */
+	 above.  It also calls make_ext_string(), which under Mule
+         could require that the charsets be initialized. */
       complex_vars_of_glyphs ();
 
       /* This relies on the glyphs just created in the previous function,
@@ -1257,6 +1290,10 @@ main_1 (int argc, char **argv, char **envp)
 #ifdef ENERGIZE
       complex_vars_of_energize ();
 #endif
+
+      /* This calls Fcopy_category_table() under Mule, which calls who
+         knows what. */
+      complex_vars_of_chartab ();
 
       /* This calls set_string_char(), which (under Mule) depends on the
 	 charsets being initialized. */
@@ -1306,6 +1343,9 @@ main_1 (int argc, char **argv, char **envp)
 	 not matter. */
       reinit_alloc ();
       reinit_eval ();
+#ifdef MULE_REGEXP
+      reinit_mule_category ();
+#endif
     }
 
   /* Now do further initialization/setup of stuff that is not needed by the
@@ -1393,7 +1433,7 @@ main_1 (int argc, char **argv, char **envp)
     {
       /* Handle -l loadup-and-dump, args passed by Makefile. */
       if (argc > 2 + skip_args && !strcmp (argv[1 + skip_args], "-l"))
-	load_me = build_string (argv[2 + skip_args]);
+        load_me = build_string (argv[2 + skip_args]);
 #ifdef CANNOT_DUMP
       /* Unless next switch is -nl, load "loadup.el" first thing.  */
       if (!(argc > 1 + skip_args && !strcmp (argv[1 + skip_args], "-nl")))
@@ -1517,7 +1557,6 @@ sort_args (int argc, char **argv)
   int to = 1;
   int from;
   int i;
-  int end_of_options_p = 0;
 
   /* Categorize all the options,
      and figure out which argv elts are option arguments.  */
@@ -1525,11 +1564,7 @@ sort_args (int argc, char **argv)
     {
       options[from] = -1;
       priority[from] = 0;
-      /* Pseudo options "--" and "run-temacs" indicate end of options */
-      if (!strcmp (argv[from], "--") ||
-	  !strcmp (argv[from], "run-temacs"))
-	end_of_options_p = 1;
-      if (!end_of_options_p && argv[from][0] == '-')
+      if (argv[from][0] == '-')
 	{
 	  int match, thislen;
 	  char *equals;
@@ -1656,7 +1691,7 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
    useful when used as part of the `make all-elc' command. --ben]
    This will \"restart\" emacs with the specified command-line arguments.
  */
-       (int nargs, Lisp_Object *args))
+     (int nargs, Lisp_Object *args))
 {
   int ac;
   Extbyte *wampum;
@@ -1725,39 +1760,42 @@ main (int argc, char **argv, char **envp)
   suppress_early_backtrace = 0;
   lim_data = 0; /* force reinitialization of this variable */
 
-  /* Lisp_Object must fit in a word; check VALBITS and GCTYPEBITS */
-  assert (sizeof (Lisp_Object) == sizeof (void *));
-
+  if (sizeof (Lisp_Object) != sizeof (void *))
+    abort (); /* Lisp_Object must fit in a word;
+		 check VALBITS and GCTYPEBITS */
   if (!initialized)
-    {
-      run_temacs_argc = 0;
-      if (! SETJMP (run_temacs_catch))
-	main_1 (vol_argc, vol_argv, vol_envp);
-      /* run-emacs-from-temacs called */
-      vol_argc = run_temacs_argc;
-      vol_argv = run_temacs_argv;
+  {
+    run_temacs_argc = 0;
+    if (! SETJMP (run_temacs_catch))
+      main_1 (vol_argc, vol_argv, vol_envp);
+    /* run-emacs-from-temacs called */
+    vol_argc = run_temacs_argc;
+    run_temacs_argc = 0;
+    vol_argv = run_temacs_argv;
 #ifdef _SCO_DS
-      /* This makes absolutely no sense to anyone involved.  There are
-	 several people using this stuff.  We've compared versions on
-	 everything we can think of.  We can find no difference.
-	 However, on both my systems environ is a plain old global
-	 variable initialized to zero.  _environ is the one that
-	 contains pointers to the actual environment.
-	
-	 Since we can't figure out the difference (and we're hours
-	 away from a release), this takes a very cowardly approach and
-	 is bracketed with both a system specific preprocessor test
-	 and a runtime "do you have this problem" test
-	
-	 06/20/96 robertl@dgii.com */
-      {
-	extern char *_environ;
-	if ((unsigned) environ == 0)
-	  environ=_environ;
-      }
-#endif /* _SCO_DS */
-      vol_envp = environ;
+    /*
+    This makes absolutely no sense to anyone involved.
+    There are several people using this stuff.  We've
+    compared versions on everything we can think of.  We
+    can find no difference.  However, on both my systems
+    environ is a plain old global variable initialized to
+    zero.  _environ is the one that contains pointers to
+    the actual environment.
+    Since we can't figure out the difference (and we're
+    hours away from a release), this takes a very cowardly
+    approach and is bracketed with both a system specific
+    preprocessor test and a runtime "do you have this
+    problem" test
+    06/20/96 robertl@dgii.com
+    */
+    {
+    extern char *_environ ;
+    if ((unsigned) environ == 0)
+      environ=_environ;
     }
+#endif /* _SCO_DS */
+    vol_envp = environ;
+  }
   run_temacs_argc = -1;
 
   main_1 (vol_argc, vol_argv, vol_envp);
@@ -2126,6 +2164,7 @@ Non-nil return value means XEmacs is running without interactive terminal.
    in one session without having to recompile. */
 /* #define ASSERTIONS_DONT_ABORT */
 
+#ifdef USE_ASSERTIONS
 /* This highly dubious kludge ... shut up Jamie, I'm tired of your slagging. */
 
 DOESNT_RETURN
@@ -2138,6 +2177,7 @@ assert_failed (CONST char *file, int line, CONST char *expr)
   abort ();
 #endif
 }
+#endif /* USE_ASSERTIONS */
 
 #ifdef QUANTIFY
 DEFUN ("quantify-start-recording-data",
@@ -2240,25 +2280,6 @@ Value is symbol indicating type of operating system you are using.
 Value is string indicating configuration XEmacs was built for.
 */ );
   Vsystem_configuration = Fpurecopy (build_string (EMACS_CONFIGURATION));
-
-  /* emacs-major-version and emacs-minor-version work correctly in the */
-  /* real XEmacs source code ... */
-  DEFVAR_LISP ("emacs-major-version", &Vemacs_major_version /*
-Major version number of this version of Emacs, as an integer.
-Warning: this variable did not exist in Emacs versions earlier than:
-  FSF Emacs:   19.23
-  XEmacs:      19.10
-*/ );
-  Vemacs_major_version = make_int (19);
-
-  DEFVAR_LISP ("emacs-minor-version", &Vemacs_minor_version /*
-Minor version number of this version of Emacs, as an integer.
-Warning: this variable did not exist in Emacs versions earlier than:
-  FSF Emacs:   19.23
-  XEmacs:      19.10
-*/ );
-  Vemacs_minor_version = make_int (16);
-
 
   DEFVAR_BOOL ("noninteractive", &noninteractive1 /*
 Non-nil means XEmacs is running without interactive terminal.

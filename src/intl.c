@@ -263,7 +263,7 @@ extern int load_in_progress;
 
 DEFUN ("set-domain", Fset_domain, 1, 1, 0, /*
 Specify the domain used for translating messages in this source file.
-The domain declaration may only appear at top-level, and should precede
+The domain declaration may only appear at top-level, and should preceed
 all function and variable definitions.
 
 The presence of this declaration in a compiled file effectively sets the

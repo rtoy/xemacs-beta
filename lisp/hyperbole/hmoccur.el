@@ -6,22 +6,22 @@
 ;; KEYWORDS:     hypermedia, matching
 ;;
 ;; AUTHOR:       Markus Freericks <mfx@cs.tu-berlin.de> / Bob Weiner
-;; ORG:          Technical University of Berlin         / InfoDock Associates
+;; ORG:          Technical University of Berlin         / Brown U.
 ;;
 ;; ORIG-DATE:     1-Aug-91
-;; LAST-MOD:     31-Oct-96 at 22:35:01 by Bob Weiner
+;; LAST-MOD:     14-Apr-95 at 16:04:43 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
 ;;
 ;; Copyright (C) 1991, Markus Freericks
-;; Copyright (C) 1991-1996, Free Software Foundation, Inc.
+;; Copyright (C) 1991-1995, Free Software Foundation, Inc.
 ;; Developed with support from Motorola Inc.
 ;;
 ;; DESCRIPTION:  
 ;;
 ;; Modified by Bob Weiner to allow selection of a set of files within a
-;; single directory to search.  By default, {M-x moccur RET} searches
+;; single directory to search.  By default, {M-x moccur RTN} searches
 ;; current buffers with files attached.
 ;;
 ;; Date: 1 Aug 91 15:47:27 GMT

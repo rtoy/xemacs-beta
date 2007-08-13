@@ -31,6 +31,9 @@ Boston, MA 02111-1307, USA.  */
 #include "process.h"
 #include "sysdep.h"
 #include "window.h"
+#ifdef MULE
+#include "mule-coding.h"
+#endif
 
 #include "sysfile.h"
 #include "systime.h"
@@ -49,7 +52,7 @@ Lisp_Object Vbinary_process_output;
 #endif /* DOS_NT */
 
 Lisp_Object Vexec_path, Vexec_directory, Vdata_directory, Vdoc_directory;
-Lisp_Object Vconfigure_info_directory, Vsite_directory;
+Lisp_Object Vconfigure_info_directory;
 
 /* The default base directory XEmacs is installed under. */
 Lisp_Object Vprefix_directory;
@@ -184,7 +187,6 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
   char *bufptr = buf;
   int bufsize = 16384;
   int speccount = specpdl_depth ();
-  struct gcpro gcpro1;
   char **new_argv
     = (char **) alloca ((max (2, nargs - 2)) * sizeof (char *));
   
@@ -200,7 +202,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 
   error_file = Qt;
 
-#if defined (NO_SUBPROCESSES)
+#ifdef NO_SUBPROCESSES
   /* Without asynchronous processes we cannot have BUFFER == 0.  */
   if (nargs >= 3 && !INTP (args[2]))
     error ("Operating system cannot handle asynchronous subprocesses");
@@ -224,8 +226,8 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 
     GCPRO2 (current_dir, path);   /* Caller gcprotects args[] */
     current_dir = current_buffer->directory;
-    current_dir = Funhandled_file_name_directory (current_dir);
-    current_dir = expand_and_dir_to_file (current_dir, Qnil);
+    current_dir = expand_and_dir_to_file
+      (Funhandled_file_name_directory (current_dir), Qnil);
 #if 0
   /* I don't know how RMS intends this crock of shit to work, but it
      breaks everything in the presence of ange-ftp-visited files, so
@@ -239,16 +241,11 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 
   if (nargs >= 2 && ! NILP (args[1]))
     {
-      struct gcpro gcpro1;
-      GCPRO1 (current_buffer->directory);
       infile = Fexpand_file_name (args[1], current_buffer->directory);
-      UNGCPRO;
       CHECK_STRING (infile);
     }
   else
     infile = build_string (NULL_DEVICE);
-
-  GCPRO1 (infile);		/* Fexpand_file_name might trash it */
 
   if (nargs >= 3)
     {
@@ -286,8 +283,6 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     }
   else 
     buffer = Qnil;
-
-  UNGCPRO;
 
   display = ((nargs >= 4) ? args[3] : Qnil);
 
@@ -451,7 +446,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 	close (fd[0]);
 	if (fd1 >= 0)
 	  close (fd1);
-	report_file_error ("Cannot open", Fcons(error_file, Qnil));
+	report_file_error ("Cannot open", error_file);
       }
 
     fork_error = Qnil;
@@ -506,7 +501,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     {
       if (fd[0] >= 0)
 	close (fd[0]);
-#if defined (NO_SUBPROCESSES)
+#ifdef NO_SUBPROCESSES
       /* If Emacs has been built with asynchronous subprocess support,
 	 we don't need to do this, I think because it will then have
 	 the facilities for handling SIGCHLD.  */
@@ -540,6 +535,13 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     if (EQ (buffer, Qt))
       XSETBUFFER (buffer, current_buffer);
     instream = make_filedesc_input_stream (fd[0], 0, -1, LSTR_ALLOW_QUIT);
+#ifdef MULE
+    instream =
+      make_decoding_input_stream
+	(XLSTREAM (instream),
+	 Fget_coding_system (Vprocess_input_coding_system));
+    Lstream_set_character_mode (XLSTREAM (instream));
+#endif /* MULE */
     GCPRO1 (instream);
     while (1)
       {
@@ -657,7 +659,7 @@ child_setup (int in, int out, int err, char **new_argv,
     nice (- emacs_priority);
 #endif
 
-#if !defined (NO_SUBPROCESSES)
+#ifndef NO_SUBPROCESSES
   /* Close Emacs's descriptors that this process should not have.  */
   close_process_descs ();
 #endif /* not NO_SUBPROCESSES */
@@ -869,7 +871,7 @@ getenv_internal (CONST Bufbyte *var,
       
       if (STRINGP (entry)
 	  && XSTRING_LENGTH (entry) > varlen
-	  && XSTRING_BYTE (entry, varlen) == '='
+	  && string_byte (XSTRING (entry), varlen) == '='
 #ifdef WINDOWSNT
 	  /* NT environment variables are case insensitive.  */
 	  && ! memicmp (XSTRING_DATA (entry), var, varlen)
@@ -954,7 +956,6 @@ init_callproc (void)
   if (!initialized)
     {
       Vdata_directory = Qnil;
-      Vsite_directory = Qnil;
       Vdoc_directory  = Qnil;
       Vexec_path      = Qnil;
     }
@@ -962,7 +963,6 @@ init_callproc (void)
 #endif
     {
       char *data_dir = egetenv ("EMACSDATA");
-      char *site_dir = egetenv ("EMACSSITE");
       char *doc_dir  = egetenv ("EMACSDOC");
     
 #ifdef PATH_DATA
@@ -972,10 +972,6 @@ init_callproc (void)
 #ifdef PATH_DOC
       if (!doc_dir)
 	doc_dir = (char *) PATH_DOC;
-#endif
-#ifdef PATH_SITE
-      if (!site_dir)
-	site_dir = (char *) PATH_SITE;
 #endif
     
       if (data_dir)
@@ -988,11 +984,6 @@ init_callproc (void)
 	  (build_string (doc_dir));
       else
 	Vdoc_directory = Qnil;
-      if (site_dir)
-	Vsite_directory = Ffile_name_as_directory
-	  (build_string (site_dir));
-      else
-	Vsite_directory = Qnil;
 
       /* Check the EMACSPATH environment variable, defaulting to the
 	 PATH_EXEC path from paths.h.  */
@@ -1047,24 +1038,6 @@ init_callproc (void)
 	     XSTRING_DATA (Vdata_directory));
 #else
 	  Vdata_directory = Qnil;
-#endif
-	}
-    }
-  
-  if (!NILP (Vsite_directory))
-    {
-      tempdir = Fdirectory_file_name (Vsite_directory);
-      if (access ((char *) XSTRING_DATA (tempdir), 0) < 0)
-	{
-	  /* If the hard-coded path is bogus, fail silently.
-	     This will allow the normal heuristics to make an attempt. */
-#if 0
-	  warn_when_safe
-	    (Qpath, Qwarning,
-	     "Warning: machine-independent site dir (%s) does not exist.\n",
-	     XSTRING_DATA (Vsite_directory));
-#else
-	  Vsite_directory = Qnil;
 #endif
 	}
     }
@@ -1154,11 +1127,6 @@ especially executable programs intended for Emacs to invoke.
 
   DEFVAR_LISP ("data-directory", &Vdata_directory /*
 Directory of architecture-independent files that come with XEmacs,
-intended for Emacs to use.
-*/ );
-
-  DEFVAR_LISP ("site-directory", &Vsite_directory /*
-Directory of architecture-independent files that do not come with XEmacs,
 intended for Emacs to use.
 */ );
 

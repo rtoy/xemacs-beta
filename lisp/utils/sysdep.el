@@ -4,14 +4,30 @@
 
 ;; Author: Ben Wing <wing@666.com>
 ;; Keywords: lisp, tools
-;; Version: 0.001
+
+;; This file is part of XEmacs.
+
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: Not in FSF.
 
 ;; The purpose of this file is to eliminate the cruftiness that
 ;; would otherwise be required of packages that want to run on multiple
 ;; versions of Emacs.  The idea is that we make it look like we're running
-;; the latest version of XEmacs (currently 19.12) by emulating all the
+;; the latest version of XEmacs (currently 19.14) by emulating all the
 ;; missing functions.
 
 ;; #### This file does not currently do any advising but should.
@@ -366,7 +382,7 @@ win32	A connection to a machine running Microsoft Windows NT or
 	Windows 95.  Not currently implemented.
 pc	A direct-write MS-DOS frame.  Not currently implemented.
 
-PROPS should be an plist of properties, as in the call to `make-frame'.
+PROPS should be a plist of properties, as in the call to `make-frame'.
 
 If a connection to CONNECTION already exists, it is reused; otherwise,
 a new connection is opened."

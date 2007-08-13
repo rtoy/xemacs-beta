@@ -41,15 +41,11 @@ Lisp_Object Vself_insert_face;
 /* This is the command that set up Vself_insert_face.  */
 Lisp_Object Vself_insert_face_command;
 
-/* t means beep when movement would take point past (point-min) or */
-/* (point-max) */
-int signal_error_on_buffer_boundary;
 
 DEFUN ("forward-char", Fforward_char, 0, 2, "_p", /*
 Move point right ARG characters (left if ARG negative).
 On reaching end of buffer, stop and signal error.
-Error signaling is suppressed if `signal-error-on-buffer-boundary'
-is nil.  If BUFFER is nil, the current buffer is assumed.
+If BUFFER is nil, the current buffer is assumed.
 */
        (arg, buffer))
 {
@@ -71,18 +67,12 @@ is nil.  If BUFFER is nil, the current buffer is assumed.
     if (new_point < BUF_BEGV (buf))
       {
 	BUF_SET_PT (buf, BUF_BEGV (buf));
-	if (signal_error_on_buffer_boundary)
-	  Fsignal (Qbeginning_of_buffer, Qnil);
-	else
-	  return Qnil;
+	Fsignal (Qbeginning_of_buffer, Qnil);
       }
     if (new_point > BUF_ZV (buf))
       {
 	BUF_SET_PT (buf, BUF_ZV (buf));
-	if (signal_error_on_buffer_boundary)
-	  Fsignal (Qend_of_buffer, Qnil);
-	else
-	  return Qnil;
+	Fsignal (Qend_of_buffer, Qnil);
       }
 
     BUF_SET_PT (buf, new_point);
@@ -94,8 +84,7 @@ is nil.  If BUFFER is nil, the current buffer is assumed.
 DEFUN ("backward-char", Fbackward_char, 0, 2, "_p", /*
 Move point left ARG characters (right if ARG negative).
 On attempt to pass beginning or end of buffer, stop and signal error.
-Error signaling is suppressed if `signal-error-on-buffer-boundary'
-is nil.  If BUFFER is nil, the current buffer is assumed.
+If BUFFER is nil, the current buffer is assumed.
 */
        (arg, buffer))
 {
@@ -145,31 +134,6 @@ If BUFFER is nil, the current buffer is assumed.
   return make_int (negp ? - shortage : shortage);
 }
 
-DEFUN ("point-at-bol", Fpoint_at_bol, 0, 2, 0, /*
-Return the character position of the first character on the current line.
-With argument N not nil or 1, move forward N - 1 lines first.
-If scan reaches end of buffer, return that position.
-This function does not move point.
-*/
-       (arg, buffer))
-{
-  struct buffer *b = decode_buffer (buffer, 1);
-  register int orig, end;
-
-  XSETBUFFER (buffer, b);
-  if (NILP (arg))
-    arg = make_int (1);
-  else
-    CHECK_INT (arg);
-
-  orig = BUF_PT(b);
-  Fforward_line (make_int (XINT (arg) - 1), buffer);
-  end = BUF_PT(b);
-  BUF_SET_PT(b, orig);
-
-  return make_int (end);
-}
-
 DEFUN ("beginning-of-line", Fbeginning_of_line, 0, 2, "_p", /*
 Move point to beginning of current line.
 With argument ARG not nil or 1, move forward ARG - 1 lines first.
@@ -180,15 +144,21 @@ If BUFFER is nil, the current buffer is assumed.
 {
   struct buffer *b = decode_buffer (buffer, 1);
 
-  BUF_SET_PT(b, XINT (Fpoint_at_bol(arg, buffer)));
+  XSETBUFFER (buffer, b);
+  if (NILP (arg))
+    arg = make_int (1);
+  else
+    CHECK_INT (arg);
+
+  Fforward_line (make_int (XINT (arg) - 1), buffer);
   return Qnil;
 }
 
-DEFUN ("point-at-eol", Fpoint_at_eol, 0, 2, 0, /*
-Return the character position of the last character on the current line.
-With argument N not nil or 1, move forward N - 1 lines first.
-If scan reaches end of buffer, return that position.
-This function does not move point.
+DEFUN ("end-of-line", Fend_of_line, 0, 2, "_p", /*
+Move point to end of current line.
+With argument ARG not nil or 1, move forward ARG - 1 lines first.
+If scan reaches end of buffer, stop there without error.
+If BUFFER is nil, the current buffer is assumed.
 */
        (arg, buffer))
 {
@@ -201,21 +171,8 @@ This function does not move point.
   else
     CHECK_INT (arg);
 
-  return make_int (find_before_next_newline (buf, BUF_PT (buf), 0,
+  BUF_SET_PT (buf, find_before_next_newline (buf, BUF_PT (buf), 0,
 					     XINT (arg) - (XINT (arg) <= 0)));
-}
-
-DEFUN ("end-of-line", Fend_of_line, 0, 2, "_p", /*
-Move point to end of current line.
-With argument ARG not nil or 1, move forward ARG - 1 lines first.
-If scan reaches end of buffer, stop there without error.
-If BUFFER is nil, the current buffer is assumed.
-*/
-       (arg, buffer))
-{
-  struct buffer *b = decode_buffer (buffer, 1);
-
-  BUF_SET_PT(b, XINT (Fpoint_at_eol (arg, buffer)));
   return Qnil;
 }
 
@@ -341,11 +298,11 @@ internal_self_insert (Emchar c1, int noautofill)
   REGISTER enum syntaxcode synt;
   REGISTER Emchar c2;
   Lisp_Object overwrite;
-  Lisp_Object syntax_table;
+  struct Lisp_Char_Table *syntax_table;
   struct buffer *buf = current_buffer;
   
   overwrite = buf->overwrite_mode;
-  syntax_table = buf->syntax_table;
+  syntax_table = XCHAR_TABLE (buf->mirror_syntax_table);
 
 #if 0
   /* No, this is very bad, it makes undo *always* undo a character at a time
@@ -460,9 +417,6 @@ syms_of_cmds (void)
   DEFSUBR (Fbeginning_of_line);
   DEFSUBR (Fend_of_line);
 
-  DEFSUBR (Fpoint_at_bol);
-  DEFSUBR (Fpoint_at_eol);
-
   DEFSUBR (Fdelete_char);
   DEFSUBR (Fdelete_backward_char);
 
@@ -490,10 +444,4 @@ Function called, if non-nil, whenever a close parenthesis is inserted.
 More precisely, a char with closeparen syntax is self-inserted.
 */ );
   Vblink_paren_function = Qnil;
-
-  DEFVAR_BOOL ("signal-error-on-buffer-boundary", &signal_error_on_buffer_boundary /*
-t means beep when movement would take point past (point-min) or
-\(point-max).
-*/ );
-  signal_error_on_buffer_boundary = 1;
 }

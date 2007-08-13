@@ -1,18 +1,17 @@
 **** EDIFF -- a comprehensive interface to diff for Emacs 19 and XEmacs 19
 
-**** This version of Ediff requires *at least* Emacs 19.34 or XEmacs 19.14
+**** This version of Ediff requires *at least* Emacs 19.30 or XEmacs 19.14
 
 This directory:
 
 README	    	-- This file
 Makefile	-- Automated installation file
 ediff.texi	-- Manual in Texinfo format
-ediff, ediff-?	-- The Info files
+ediff.info*	-- The Info files
 ediff.dvi	-- Manual in DVI format
 
 ediff.el    	-- Ediff Emacs Lisp code
 ediff-init.el	-- Ediff Emacs Lisp code
-ediff-help.el	-- Ediff Emacs Lisp code
 ediff-wind.el	-- Ediff Emacs Lisp code
 ediff-util.el	-- Ediff Emacs Lisp code
 ediff-diff.el	-- Ediff Emacs Lisp code
@@ -20,9 +19,7 @@ ediff-merg.el	-- Ediff Emacs Lisp code
 ediff-mult.el   -- Ediff Emacs Lisp code
 ediff-vers.el	-- Ediff Emacs Lisp code
 ediff-ptch.el	-- Ediff Emacs Lisp code
-ediff-tbar.el	-- Ediff Emacs Lisp code -- for XEmacs only
 ediff-hook.el	-- Ediff Emacs Lisp code
-toolbar/	-- Ediff toolbar icons   -- for XEmacs only
 
 
 To install Ediff do:
@@ -58,17 +55,42 @@ Then do the following:
    for Emacs 18). An even better thing would be to edit Makefile directly
    as indicated in the comments there.
 
-4. Under XEmacs, copy the icons in the `toolbar' directory into
-   the-directory-where-xemacs-installed/etc/toolbar/
+For manual installation, copy ediff*.elc into a directory on your load-path.
 
-Normally, all Ediff menus and autoloads are already defined in Emacs, so you
+For more details, read documentation at the beginning of the file ediff.el
+
+To install on-line documentation, you need to install the Info files
+by copying 
+
+ediff.info*
+
+into your Info directory (which is emacs-root-dir/info,
+if emacs-root-dir is the root directory of the installation).
+
+Then edit the file 
+
+emacs-root-dir/info/dir
+
+to include the root menu item for Ediff (check how other menu
+items look like in this file). 
+
+In Emacs, this item should look like this:
+
+*  Ediff: (ediff.info).  A Visual Interface to Unix Diff and Patch Utilities
+
+In XEmacs, it looks like:
+
+*  Ediff::        A Visual Interface to Unix Diff and Patch Utilities
+
+
+Normally, all Ediff menus and autoloads are already defined in Emacs, so u
 don't need to define anything in your .emacs to run Ediff.
 However, if it was announced that this distribution of Ediff contains
-new features, you may need to put 
+new features, you may have to put 
 
 (require 'ediff-hook)
 
 in your .emacs to take advantage of these new features. This doesn't load
-Ediff, but readies Emacs for the things to come. When this version of
-Ediff gets installed in the standard Emacs distribution, you can remove
+Ediff, but readies it for any taks u assign to it. When this version of
+Ediff gets installed in the standard Emacs distribution, you may remove
 the above require-statement (but leaving it in does no harm).

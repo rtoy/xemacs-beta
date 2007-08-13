@@ -1,0 +1,544 @@
+
+@node Coding-system
+@section Coding-system
+
+@noindent
+`coding-system' is a method for encoding several
+character-sets and represented by a symbol which has
+properties of 'coding-system and 'eol-type.
+
+You can specify different coding-system on file I/O, process
+I/O, output to terminal (if not running on X), input from
+keyboard (if not running on X).
+
+
+@menu
+* Structure::   Structure of coding-system
+	  o Property 'coding-system
+	  o Property 'eol-type
+	  o Property 'post-read-conversion
+	  o Property 'pre-write-conversion
+* Creation::   How to create coding-system?
+* Predefined coding-system::
+* Automatic conversion::
+	  o Category of coding-system
+	  o How automatic conversion works?
+	  o Priority of category
+* Mode-line::   How coding-system is shown in mode-line?::
+* ISO2022 restriction::
+* Big5::        Special treatment of Big5
+@end menu
+
+@node Structure
+@subsection Structure of coding-system
+
+@subsubsection Property 'coding-system
+
+The value of the property 'coding-system is a vector:
+@quotation
+  [ TYPE MNEMONIC DOCUMENT DUMMY FLAGS ]
+@end quotation
+or the other coding-system.  Contents of the vector are:
+@example
+  TYPE:	nil: no conversion, t: automatic conversion,
+	0:Internal, 1:Shift-JIS, 2:ISO2022, 3:Big5, 4:CCL.
+  MNEMONIC: a character shown at mode-line to indicate the coding-system.
+  DOCUMENT: a describing documents for the coding-system.
+  DUMMY: always nil (for backward compatibility)
+  FLAGS (option): more precise information about the coding-system,
+    If TYPE is 2 (ISO2022), FLAGS should be a list of:
+      LB-G0, LB-G1, LB-G2, LB-G3:
+	Leading character of charset initially designated to G? graphic set,
+	nil means G? is not designated initially,
+	lb-invalid means G? can never be designated to,
+	if (- leading-char) is specified, it is designated on output,
+      SHORT: non-nil - allow such as \"ESC $ B\", nil - always \"ESC $ \( B\",
+      ASCII-EOL: non-nil - designate ASCII to g0 at end of line on output,
+      ASCII-CNTL: non-nil - designate ASCII to g0 at control codes on output
+      SEVEN: non-nil - use 7-bit environment on output,
+      LOCK-SHIFT: non-nil - use locking-shift (SO/SI) instead of single-shift
+	or designation by escape sequence,
+      USE-ROMAN: non-nil - designate JIS0201-1976-Roman instead of ASCII,
+      USE-OLDJIS: non-nil - designate JIS0208-1976 instead of JIS0208-1983,
+      NO-ISO6429: non-nil - don't use ISO6429's direction specification,
+  If TYPE is 3 (Big5), FLAGS `t' means Big5-ETen, `nil' means Big5-HKU,
+  If TYPE is 4 (private), FLAGS should be a cons of CCL programs
+    for encoding and decoding.  See documentation of CCL for more detail.
+@end example
+
+@subsubsection Property 'eol-type
+
+The value of the property 'eol-type is:
+  nil: no conversion for end-of-line type
+  1:   LF
+  2:   CRLF
+  3:   CR
+  vector of length 3: automatic detection of end-of-line type.
+	1st element: coding-system of eol-type LF
+	2nd element: coding-system of eol-type CRLF
+	3rd element: coding-system of eol-type CR
+
+@subsubsection Property 'post-read-conversion
+
+The value of the property 'post-read-conversion is a
+function to convert some text just read into a buffer.  When
+the function is called, the text has already been converted
+according to 'coding-system and 'eol-type of the
+coding-system.  The argument of the function is the region
+(START and END) of inserted text.
+
+@subsection Property 'pre-write-conversion
+
+The value of the property 'pre-write-conversion is a
+function to convert some text just before writing it out.
+After the function is called, the text is converted accoding
+to 'coding-system and 'eol-type of the coding-system.  The
+argument of the function is the region (START and END) of
+the text.
+
+@node Creation
+@subsection How to create coding-system?
+
+Mule provides a function `make-coding-system' to create a
+coding-system.
+
+FUNCTION make-coding-system: NAME TYPE MNEMONIC DOC &optional EOL-TYPE FLAGS
+
+Register symbol NAME as a coding-system whose 'coding-system
+property is a vector [ TYPE MNEMONIC DOC nil FLAGS ] and
+'eol-type property is EOL-TYPE.  If `t' is specified as
+EOL-TYPE, the value of 'eol-type property is a vector of
+generated coding-systems whose 'eol-type properties are 1
+(LF), 2 (CRLF), and 3 (CR).  The names of generated
+coding-systems are NAMEunix, NAMEdos, and NAMEmac respectively.
+
+Just to make an alias of some coding-system, call a fucntion
+`copy-coding-system'.
+
+FUNCTION copy-coding-system: ORIGINAL ALIAS
+
+Make the same coding-system as ORIGINAL and name it ALIAS.
+If 'eol-type property of ORIGINAL is a vector, coding-systems
+ALIASunix, ALIASdos, and ALIASmac are generated, and
+'eol-type property of ALIAS becomes a vector of them.
+
+@node Predefined coding-system
+@subsection Predefined coding-system
+
+See lisp/mule.el.
+
+@node Automatic conversion
+@subsection Automatic conversion
+
+@subsubsection Category of coding-system
+
+Mule has a facility to detect coding-system of text
+automatically, however, what mule actually detect is not a
+coding-system itself but a category of coding-system.  A
+category is also represented by a symbol and a value should
+be an actual coding-system.
+
+There are eight categories:
+@table @asis
+@item *coding-category-internal*:
+	coding-system used in a buffer
+@item *coding-category-sjis*
+	Shift-JIS
+@item *coding-category-iso-7*
+	ISO2022 variation with the following feature:
+	  o no locking shift, single shift
+	  o only G0 is used
+@item *coding-category-iso-8-1*
+	ISO2022 variation with the following feature:
+	  o no locking shift
+	  o designation sequence is allowed only for G0 and G1
+	  o G1 is used only for 1-byte character set
+@item *coding-category-iso-8-2*
+	ISO2022 variation with the following feature:
+	  o no locking shift
+	  o designation sequence is allowed only for G0 and G1
+	  o G1 is used only for 2-byte character set
+@item *coding-category-iso-else*
+	ISO2022 variation which doesn't satisfy any of above.
+@item *coding-category-big5*
+	Big5 (ETen or HKU)
+@item *coding-category-bin*
+	Any other coding-system which uses MSB.
+@end table
+
+The values of these symbols are pre-defined as follows:
+
+@example
+----- lisp/mule.el -----------------------------------------
+(defvar *coding-category-internal* '*internal*)
+(defvar *coding-category-sjis* '*sjis*)
+(defvar *coding-category-iso-7* '*junet*)
+(defvar *coding-category-iso-8-1* '*ctext*)
+(defvar *coding-category-iso-8-2* '*euc-japan*)
+(defvar *coding-category-iso-else* '*iso-2022-ss2-7*)
+(defvar *coding-category-big5* '*big5-eten*)
+(defvar *coding-category-bin* '*noconv*)
+------------------------------------------------------------
+@end example
+
+but, some of them are overridden in such language specific
+files as japanese.el, chinese.el, etc.
+
+@subsubsection How automatic conversion works?
+
+When coding-system `*autoconv*' is specified on reading text
+(this is the default), mule tries to detect a category of
+coding-system by which text are encoded.  If an appropriate
+category is found, it converts text according to a
+coding-system bound to the cateogry.  If the 'eol-type
+property of the coding-system is a vector of coding-systems
+and Mule detects a type of end-of-line (LF, CRLF, or CR) of
+the text, one of those coding-system is used.
+
+Automatic conversion occurs both on reading from files and
+inputing from process.  In the latter case, if some
+coding-system is found, output-coding-system of the process
+is also set to the found coding-system.
+
+@subsubsection Priority of cateogry
+
+In the case that more than two categories are found, the
+category of the highest priority is selected.
+
+A priority of category is pre-defined as follows:
+
+@example
+----- lisp/mule.el -----------------------------------------
+(set-coding-priority
+ '(*coding-category-iso-8-2*
+   *coding-category-sjis*
+   *coding-category-iso-8-1*
+   *coding-category-big5*
+   *coding-category-iso-7*
+   *coding-category-iso-else*
+   *coding-category-bin*
+   *coding-category-internal*))
+------------------------------------------------------------
+@end example
+
+The function `set-coding-priority' put a property 'priority
+to each element of the argument from 0 to 7 (smaller number
+has higher priority).  Some language specific files may
+override this priority.
+
+@node Mode-line
+@subsection How coding-system is shown in mode-line?
+
+Each coding-system has unique mnemonic (one character).
+By default, mnemonic of `file-coding-system' of a buffer is
+shown at the left of mode-line of the buffer.  In addition,
+the mnemonic is followed by an another mnemonic to show
+eol-type of the coding-system.  This mnemonic is defined as
+follows:
+	".": LF
+	":": CRLF
+	"'": CR
+	"_": not yet desided
+	"-": nil (for coding-system of nil, *noconv*, or *internal*)
+So, usual appearance of mode-line for a buffer which is
+visiting a file (*junet* encoding on Unix system) is:
+
+@example
+	    +-- mnemonic of file-coding-system
+	    |+-- mnemonic of eol-type
+	    VV
+	[--]J.:----Mule: filename
+@end example
+
+The left most bracket is the indicator for inputing method.
+
+When a buffer is attaced to some process, coding-system
+for input and output of the process are also shown as
+follows:
+
+@example
+	    +-- mnemonic of file-coding-system
+	    |+-- mnemonic of eol-type of file-coding-system
+	    ||+-- mnemonic of input-coding-system of a process
+	    |||+-- mnemonic of eol-type of input-coding-system
+	    ||||+-- mnemonic of output-coding-system of a process
+	    |||||+-- mnemonic of eol-type of output-coding-system
+	    VVVVVV
+	[--]+_+.--:--**-Mule: *shell*
+@end example
+
+This means that Mule is now communicating with shell with
+coding-systems *autoconv*unix ("+.") for input and nil
+("--") for output.
+
+@node ISO2022 restriction
+@subsection ISO2022 restriction
+
+For decoding to Type 2 (ISO2022), we have the following
+restrictions:
+
+@table @asis
+@item Locking-Shift:
+Use SI and SO only when decoding with a coding-system
+whose LOCK-SHIFT and SEVEN is t.
+
+@item Single-Shift:
+Use SS2 and SS3 (if SEVEN is nil) or ESC N and ESC O (if
+SEVEN is t).
+
+@item Invocation:
+G0 is always invoked to GL, G1 to GR (but only if SEVEN is
+nil).  G2 and G3 are invoked to GL by Single-Shift of SS2
+and SS3.
+
+@item Unofficial use of ESC sequence for designation:
+If SEVEN is t, LOCK-SHIFT is nil, and designation to G2
+and G3 are prohibited, we should designate all character
+sets to G0 (and hence invoke to GL).  To designate 96
+char-set to G0, we use "ESC , <F>".  For instance, to
+designate ISO8859-1 to G0, we use "ESC , A".
+
+@item Unofficial use of ESC sequence for composit character:
+To indicate the start and end of composit character, we
+use ESC 0 (start) and ESC 1 (end).
+
+@item Text direction specifier of ISO6429
+We use ISO6429's ESC sequence "ESC [ 2 ]" to change text
+direction to right-to-left, and "ESC [ 0 ]" to revert it
+to left-to-right.
+@end table
+
+@node Big5
+@subsection Special treatment of Big5
+
+As far as I know, there's several different codes called
+Big5.  The most famous ones are Big5-ETen and
+Big5-HKU-form2.  Since both of them use a code range 0xa140
+- 0xfefe (in each row, columns (second byte) 0x7f - 0xa0 is
+skipped) and number of characters is more than 13000, it's
+impossible to treat each of them as a single character-set
+in the current Mule system.  So, Mule treat them in a quite
+irregular manner as described below:
+
+@enumerate
+@item
+Mule does not treats them as a different character set,
+but as the same character set called Big5.
+	Caution!! Big5 is a different character set from GB.
+
+@item
+Mule divides Big5 into two sub-character-sets:
+	0xa140 - 0xc67e (Level 1)
+	0xc6a1 - 0xfefe (Level 2)
+and allocates two leading-chars lc-big5-1 and lc-big5-2 to
+them.  (See character.txt)
+
+@item
+Usually, each leading-char (or character-set) has unique
+character category.  But lc-big5-1 and lc-big5-2 has the
+same character category of mnemonic 't'.  So, regular
+expression "\\ct" matches any Big5 (Level 1 and Level 2)
+characters.  (See syntax.txt)
+
+@item
+If you specify ISO2022 type coding-system on output,
+Mule converts Big5 code using unofficial final-characters
+'0' (for Level 1) and '1' (for Level 2).
+
+@item
+You can use either fonts of ETen or HKU for displaying
+Big5 code.  Mule judges which font is used by examining
+existence of character whose code point is 0xC6A1.  If it
+exists, the font is HKU, else the fonts is ETen.
+@end enumerate
+
+@node Syntax
+@section Syntax and Category of character
+
+@subsection Syntax
+
+Mule can define syntax of all multi-byte characters by
+@code{modify-syntax-entry}.
+
+The first argument of @code{modify-syntax-entry should} be one of below:
+@enumerate
+@item
+ASCII character
+@item
+multi-byte character
+@item
+leading character of multi-byte character
+@item
+partially defined characters returned by:
+
+@quotation
+@code{(make-character leading-char arg)}
+@end quotation
+@end enumerate
+
+There's a restriction of specifying matching character within 
+second argument.  If the first argument specifies multi-byte
+character or leading char of multi-byte character, the
+matching character should have the same leading character.  If
+the character is 2-byte code, the first-byte of it should
+also be the same with the first-byte of first argument.
+
+@subsection Category
+
+Like syntax, category also defines characteristics of
+characters.  The differences are:
+@enumerate
+@item
+Each Character can have more than one category.
+@item
+User can define new type of category as he wishes.
+	Example: See japanese.el
+@item
+@code{char-category} returns all mnemonics of the character by string.
+@item
+For regular expression search, you can use the \cm or \Cm (any mnemonics
+comes at the place of 'm') instead of \sm and \Sm.
+@end enumerate
+
+@node Font
+@section Font
+
+FONTSET is a set of fonts which have the same height and style.  A
+fontset should hopefully contain enough fonts to display a character of
+various character sets.
+
+Mule uses fontset instead of font.  You can specify fontset at any place
+where you can specify font.  You can still specify font, in which case,
+a fontset which include the font is searched and used.
+
+Like font, fontset is also a string specifying the name.
+
+@menu
+* Initial fontsets::	Fontsets which Mule have at startup time.
+* Specify fontset::     How to specify a fontset?
+* Manage fontset::      How to create or modify a fontset?
+@end menu
+
+@node Initial fontsets
+@subsection Initial fontsets
+
+@subsubsection "default-fontset"
+
+Mule automatically creates a fontset named "default-fontset" at startup
+time.  Each font in this fontset is specifed by a very generic name such
+as "-*-fixed-medium-r-*--16-*-iso8859-1" for ASCII and
+"-*-fixed-medium-r-*--*-jisx0208.1983-*" for JISX0208 (Kanji).
+These values are defined in @file{lisp/term/x-win.el}.
+
+If there's no other fontsets specifed by X's resource, "default-fontset"
+is used for the first frame of Mule.
+
+In most cases, this is enough.  You probably don't have to have any
+other fontsets.
+
+@subsubsection  X's resourse
+
+Mule also creates fontsets specified in X's resource "fontSetList (class
+FontSetList)".  The value is a comma separated list of fontset names.
+
+@example
+*FontSetList: 16,24
+@end example
+
+The actual contents of each fontset is specified by "fontSet-xxx (class
+FontSet-xxx)" where "xxx" is a name of the corresponding fontset.  The
+value of this resource is a comma separated list of font names.
+
+@example
+*FontSet-16: -etl-fixed-medium-r-*--24-*-iso8859-1
+@end example
+
+Each font name should not contain wild card `*' or `?' in
+CHARSET_REGSTRY field because a character set for this font is
+recognized by this field.  This means that you don't have to care about
+the order of font names.
+
+For instance,
+
+@example
+*FontSet-16:\
+        -etl-fixed-medium-r-*--16-*-iso8859-1\
+	-ming-fixed-medium-r-*--*-*-jisx0208.1983-*
+@end example
+
+is enough to tell Mule that the fontset "16" contains ASCII font and
+JISX0208 font.  Please note that the second name has only wild card in
+PIXEL_SIZE field.  Since Mule try to open a font of the same PIXEL_SIZE
+as ASCII font of the same fontset, you'ld better not specify actual
+value in PIXEL_SIZE field except for ASCII font.
+
+As for fonts not listed in the specification of fontset, corresponding
+font names in "default fontset" is used.
+
+The first fontset in FontSetList is used for the first frame of Mule.
+If you want to use "default-fontset" while specifying other fontsets in
+the resource, please put "default-fontset" at the first of the value.
+
+@example
+*FontSetList: default-fontset,16,24
+@end example
+
+In this case, you don't have to have the resource
+"FontSet-default-fontset".
+
+@node Specify fontset
+@subsection How to specify a fontset?
+
+You can specify fontset at any place where you can sepcify font.
+
+To change the fontset used for the first frame of Mule:
+
+@enumerate
+@item
+command line arguments "-fn xxx" or "-font xxx"
+
+If this argument exits, fontset is searched in the following order:
+@enumerate
+@item
+A fontset whose name is "xxx".
+@item
+A fontset which contains ASCII font "xxx".
+@item
+Create a new fontset "xxx" which contains ASCII font "xxx".
+@end enumerate
+
+@item
+In your ~/.emacs,
+
+@example
+(setcdr (assoc 'font default-frame-alist) "xxx")
+@end example
+
+@end enumerate
+
+To change a fontset after Mule started:
+
+@enumerate
+@item
+By the command
+
+@example
+M-x set-default-fontset<CR>xxx<CR>
+@end example
+
+@item
+By @key{Ctl-Mouse-3}
+
+@end enumerate
+
+@node Manage fontset
+@subsection How to create or modify a fontset?
+
+You can create a new fontset by `new-fontset' and modify an
+existing fontset by `set-fontset-font'.
+
+You can get a list of fontset currently created by
+`fonset-list'.
+
+You can check if a fontset is already created or not by
+`fonsetp'.

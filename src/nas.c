@@ -51,15 +51,16 @@
  *			be sure all play has finished.
  */
 
-#if __STDC__ || defined (STDC_HEADERS)
-#    include <stdlib.h>
-#    include <stdarg.h>
-#    include <string.h>
+#ifdef STDC_HEADERS
+#include <stdlib.h>
+#include <stdarg.h>
+#include <string.h>
 #endif
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+
 
 #include <stdio.h>
 #include <config.h> /* for CONST in syssignal.h (neal@ctd.comsat.com) */

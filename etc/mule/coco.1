@@ -1,0 +1,73 @@
+.TH COCO 1 "1994 Dec 15"
+.UC 4
+.SH NAME
+coco -- code converter for any of Mule's code
+.SH SYNOPSIS
+.B coco
+[
+.I -hlvq
+] [[
+.I INCODE
+]
+.I OUTCODE
+] <
+.I infile
+>
+.I outtile
+.br
+.SH DESCRIPTION
+.I coco
+runs as a filter for code conversion among any coding-systems
+which Mule can handle.
+.PP
+.SH OPTIONS
+.TP
+.BI \-h
+Print help message.
+.TP
+.BI \-l
+List all valid INCODE and OUTCODE.
+.TP
+.BI \-v
+Print verbose information about conversion.
+.TP
+.BI \-q
+Just investigate a coding-system of
+.I infile
+.TP
+.BI INCODE
+Indicate coding-system of
+.I infile,
+defaults to *autoconv*, which means coding-system of
+.I infile
+is detected automatically.
+.TP
+.BI OUTCODE
+Indicate coding-system of
+.I outfile,
+defaults to *internal*.
+.PP
+.SH MISC
+.I coco
+uses two data files, CHARSETS and CODINGS.  These are
+created while installing
+.I mule.
+So, priority of coding-systems handled by
+.I coco
+is the same as what handled by
+.I mule.
+.PP
+.SH FILES
+/usr/local/lib/emacs/$VERSION/etc/CHARSETS - A file which contains
+information of character sets and fonts.
+
+/usr/local/lib/emacs/$VERSION/etc/CODINGS - A file which
+contains information of coding-systems and priorities.
+
+.PP
+.SH SEE ALSO
+mule(1)
+.SH AUTHORS
+.PP
+This program was written by Ken'ichi HANDA of
+Electrotechnical Laboratory, JAPAN.

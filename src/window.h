@@ -274,12 +274,12 @@ struct window_mirror
 #endif
 
   /* Flag indicating whether a subwindow is currently being displayed. */
-  unsigned int subwindows_being_displayed :1;
+  int subwindows_being_displayed :1;
 
   /* Keep track of the truncation status in this window so we can
      detect when it has changed.  #### Magic variables would be a huge
      win here. */
-  unsigned int truncate_win :1;
+  int truncate_win :1;
 };
 
 #ifdef emacs  /* some things other than emacs want the structs */

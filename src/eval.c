@@ -41,16 +41,6 @@ int always_gc;
 
 struct backtrace *backtrace_list;
 
-/* Note you must always fill all of the fields in a backtrace structure
-   before pushing them on the backtrace_list.  The profiling code depends
-   on this. */
-
-#define PUSH_BACKTRACE(bt) \
-  do { (bt).next = backtrace_list; backtrace_list = &(bt); } while (0)
-
-#define POP_BACKTRACE(bt) \
-  do { backtrace_list = (bt).next; } while (0)
-
 /* This is the list of current catches (and also condition-cases).
    This is a stack: the most recent catch is at the head of the
    list.  Catches are created by declaring a 'struct catchtag'
@@ -228,7 +218,7 @@ static Lisp_Object Vcondition_handlers;
 /* Used for error catching purposes by throw_or_bomb_out */
 static int throw_level;
 
-static Lisp_Object primitive_funcall (lisp_fn_t fn, int nargs,
+static Lisp_Object primitive_funcall (Lisp_Object (*fn) (), int nargs,
 				      Lisp_Object args[]);
 
 
@@ -413,8 +403,9 @@ static Lisp_Object
 do_debug_on_exit (Lisp_Object val)
 {
   /* This is falsified by call_debugger */
+  int old_debug_on_next_call = debug_on_next_call;
   Lisp_Object v = call_debugger (list2 (Qexit, val));
-
+  debug_on_next_call = old_debug_on_next_call;
   return ((!UNBOUNDP (v)) ? v : val);
 }
 
@@ -664,7 +655,7 @@ Returns the value of THEN or the value of the last of the ELSE's.
 THEN must be one expression, but ELSE... can be zero or more expressions.
 If COND yields nil, and there are no ELSE's, the value is nil.
 */
-       (args))
+  (args))
 {
   /* This function can GC */
   Lisp_Object cond;
@@ -926,7 +917,7 @@ DEFUN ("while", Fwhile, 1, UNEVALLED, 0, /*
 The order of execution is thus TEST, BODY, TEST, BODY and so on
 until TEST returns nil.
 */
-       (args))
+(args))
 {
   /* This function can GC */
   Lisp_Object test, body, tem;
@@ -1757,7 +1748,7 @@ If you want to establish an error handler that is called with the
 Lisp stack, bindings, etc. as they were when `signal' was called,
 rather than when the handler was set, use `call-with-condition-handler'.
 */
-       (args))
+     (args))
 {
   /* This function can GC */
   return Fcondition_case_3 (Fcar (Fcdr (args)),
@@ -1781,7 +1772,7 @@ returns, `signal' continues as if the handler were never invoked.
 (It continues to look for handlers established earlier than this one,
 and invokes the standard error-handler if none is found.)
 */
-       (int nargs, Lisp_Object *args))  /* Note!  Args side-effected! */
+(int nargs, Lisp_Object *args)) /* Note!  Args side-effected! */
 {
   /* This function can GC */
   int speccount = specpdl_depth_counter;
@@ -2063,8 +2054,9 @@ static Lisp_Object
 call_with_suspended_errors_1 (Lisp_Object opaque_arg)
 {
   Lisp_Object *kludgy_args = (Lisp_Object *) get_opaque_ptr (opaque_arg);
-  return (primitive_funcall ((lisp_fn_t) get_opaque_ptr (kludgy_args[0]),
-			     XINT (kludgy_args[1]), kludgy_args + 2));
+  return (primitive_funcall
+	  ((Lisp_Object (*)()) get_opaque_ptr (kludgy_args[0]),
+	   XINT (kludgy_args[1]), kludgy_args + 2));
 }
 
 static Lisp_Object
@@ -2097,7 +2089,7 @@ restore_current_error_state (Lisp_Object error_state)
 */
 
 Lisp_Object
-call_with_suspended_errors (lisp_fn_t fun, Lisp_Object retval,
+call_with_suspended_errors (Lisp_Object (*fun)(), Lisp_Object retval,
 			    Lisp_Object class, Error_behavior errb,
 			    int nargs, ...)
 {
@@ -2592,17 +2584,18 @@ when reading the arguments.
 #ifdef EMACS_BTL
       backtrace.id_number = 0;
 #endif
+      backtrace.next = backtrace_list;
+      backtrace_list = &backtrace;
       backtrace.function = &Qcall_interactively;
       backtrace.args = &cmd;
       backtrace.nargs = 1;
       backtrace.evalargs = 0;
       backtrace.pdlcount = specpdl_depth ();
       backtrace.debug_on_exit = 0;
-      PUSH_BACKTRACE (backtrace);
 
       final = Fcall_interactively (cmd, record, keys);
 
-      POP_BACKTRACE (backtrace);
+      backtrace_list = backtrace.next;
       return (final);
     }
   else if (STRINGP (final) || VECTORP (final))
@@ -2926,12 +2919,13 @@ Evaluate FORM and return its value.
   backtrace.id_number = 0;
 #endif
   backtrace.pdlcount = specpdl_depth_counter;
+  backtrace.next = backtrace_list;
+  backtrace_list = &backtrace;
   backtrace.function = &original_fun; /* This also protects them from gc */
   backtrace.args = &original_args;
   backtrace.nargs = UNEVALLED;
   backtrace.evalargs = 1;
   backtrace.debug_on_exit = 0;
-  PUSH_BACKTRACE (backtrace);
 
   if (debug_on_next_call)
     do_debug_on_call (Qt);
@@ -2987,8 +2981,7 @@ Evaluate FORM and return its value.
 	  backtrace.args = vals;
 	  backtrace.nargs = nargs;
 
-	  val = ((Lisp_Object (*) (int, Lisp_Object *)) (subr_function (subr)))
-	    (nargs, vals);
+	  val = ((subr_function (subr)) (nargs, vals));
 
           /* Have to duplicate this code because if the
            *  debugger is called it must be in a scope in
@@ -3007,7 +3000,7 @@ Evaluate FORM and return its value.
 #endif
           if (backtrace.debug_on_exit)
             val = do_debug_on_exit (val);
-	  POP_BACKTRACE (backtrace);
+          backtrace_list = backtrace.next;
 	  UNGCPRO;
           return (val);
 	}
@@ -3080,7 +3073,7 @@ Evaluate FORM and return its value.
 #endif
   if (backtrace.debug_on_exit)
     val = do_debug_on_exit (val);
-  POP_BACKTRACE (backtrace);
+  backtrace_list = backtrace.next;
   return (val);
 }
 
@@ -3115,12 +3108,15 @@ funcall_recording_as (Lisp_Object recorded_as, int nargs,
   backtrace.id_number = 0;
 #endif
   backtrace.pdlcount = specpdl_depth_counter;
+  backtrace.next = backtrace_list;
   backtrace.function = &args[0];
   backtrace.args = &args[1];
   backtrace.nargs = nargs;
   backtrace.evalargs = 0;
   backtrace.debug_on_exit = 0;
-  PUSH_BACKTRACE (backtrace);
+  /* XEmacs: make sure this is done last so we don't get race
+     conditions in the profiling code. */
+  backtrace_list = &backtrace;
 
   if (debug_on_next_call)
     do_debug_on_call (Qlambda);
@@ -3158,8 +3154,7 @@ funcall_recording_as (Lisp_Object recorded_as, int nargs,
 
       if (max_args == MANY)
 	{
-	  val = ((Lisp_Object (*) (int, Lisp_Object *)) (subr_function (subr)))
-	    (nargs, args + 1);
+	  val = ((subr_function (subr)) (nargs, args + 1));
 	}
 
       else if (max_args > nargs)
@@ -3209,7 +3204,7 @@ funcall_recording_as (Lisp_Object recorded_as, int nargs,
   lisp_eval_depth--;
   if (backtrace.debug_on_exit)
     val = do_debug_on_exit (val);
-  POP_BACKTRACE (backtrace);
+  backtrace_list = backtrace.next;
   return val;
 }
 
@@ -3436,47 +3431,50 @@ Thus, (apply '+ 1 2 '(3 4)) returns 10.
 }
 
 
-/* Define proper types and argument lists simultaneously */
-#define PRIMITIVE_FUNCALL(n) ((Lisp_Object (*) (PRIMITIVE_FUNCALL_##n)
-#define PRIMITIVE_FUNCALL_0  void)) (fn)) (
-#define PRIMITIVE_FUNCALL_1  Lisp_Object)) (fn)) (args[0]
-#define PRIMITIVE_FUNCALL_2  Lisp_Object, PRIMITIVE_FUNCALL_1,  args[1]
-#define PRIMITIVE_FUNCALL_3  Lisp_Object, PRIMITIVE_FUNCALL_2,  args[2]
-#define PRIMITIVE_FUNCALL_4  Lisp_Object, PRIMITIVE_FUNCALL_3,  args[3]
-#define PRIMITIVE_FUNCALL_5  Lisp_Object, PRIMITIVE_FUNCALL_4,  args[4]
-#define PRIMITIVE_FUNCALL_6  Lisp_Object, PRIMITIVE_FUNCALL_5,  args[5]
-#define PRIMITIVE_FUNCALL_7  Lisp_Object, PRIMITIVE_FUNCALL_6,  args[6]
-#define PRIMITIVE_FUNCALL_8  Lisp_Object, PRIMITIVE_FUNCALL_7,  args[7]
-#define PRIMITIVE_FUNCALL_9  Lisp_Object, PRIMITIVE_FUNCALL_8,  args[8]
-#define PRIMITIVE_FUNCALL_10 Lisp_Object, PRIMITIVE_FUNCALL_9,  args[9]
-#define PRIMITIVE_FUNCALL_11 Lisp_Object, PRIMITIVE_FUNCALL_10, args[10]
-#define PRIMITIVE_FUNCALL_12 Lisp_Object, PRIMITIVE_FUNCALL_11, args[11]
-
 static Lisp_Object
-primitive_funcall (lisp_fn_t fn, int nargs, Lisp_Object args[])
+primitive_funcall (Lisp_Object (*fn) (), int nargs, Lisp_Object args[])
 {
   switch (nargs)
     {
-    case 0:  return PRIMITIVE_FUNCALL(0);
-    case 1:  return PRIMITIVE_FUNCALL(1);
-    case 2:  return PRIMITIVE_FUNCALL(2);
-    case 3:  return PRIMITIVE_FUNCALL(3);
-    case 4:  return PRIMITIVE_FUNCALL(4);
-    case 5:  return PRIMITIVE_FUNCALL(5);
-    case 6:  return PRIMITIVE_FUNCALL(6);
-    case 7:  return PRIMITIVE_FUNCALL(7);
-    case 8:  return PRIMITIVE_FUNCALL(8);
-    case 9:  return PRIMITIVE_FUNCALL(9);
-    case 10: return PRIMITIVE_FUNCALL(10);
-    case 11: return PRIMITIVE_FUNCALL(11);
-    case 12: return PRIMITIVE_FUNCALL(12);
+    case 0:
+      return ((*fn) ());
+    case 1:
+      return ((*fn) (args[0]));
+    case 2:
+      return ((*fn) (args[0], args[1]));
+    case 3:
+      return ((*fn) (args[0], args[1], args[2]));
+    case 4:
+      return ((*fn) (args[0], args[1], args[2], args[3]));
+    case 5:
+      return ((*fn) (args[0], args[1], args[2], args[3], args[4]));
+    case 6:
+      return ((*fn) (args[0], args[1], args[2], args[3], args[4], args[5]));
+    case 7:
+      return ((*fn) (args[0], args[1], args[2], args[3], args[4], args[5],
+		     args[6]));
+    case 8:
+      return ((*fn) (args[0], args[1], args[2], args[3], args[4], args[5],
+		     args[6], args[7]));
+    case 9:
+      return ((*fn) (args[0], args[1], args[2], args[3], args[4], args[5],
+		     args[6], args[7], args[8]));
+    case 10:
+      return ((*fn) (args[0], args[1], args[2], args[3], args[4], args[5],
+		     args[6], args[7], args[8], args[9]));
+    case 11:
+      return ((*fn) (args[0], args[1], args[2], args[3], args[4], args[5],
+		     args[6], args[7], args[8], args[9], args[10]));
+    case 12:
+      return ((*fn) (args[0], args[1], args[2], args[3], args[4], args[5],
+		     args[6], args[7], args[8], args[9], args[10], args[11]));
+    default:
+      /* Someone has created a subr that takes more arguments than
+	 is supported by this code.  We need to either rewrite the
+	 subr to use a different argument protocol, or add more
+	 cases to this switch.  */
+      abort ();
     }
-
-  /* Someone has created a subr that takes more arguments than is
-     supported by this code.  We need to either rewrite the subr to
-     use a different argument protocol, or add more cases to this
-     switch.  */
-  abort ();
   return Qnil;	/* suppress compiler warning */
 }
 
@@ -3613,6 +3611,10 @@ If byte-compiled OBJECT is lazy-loaded, fetch it now.
       tem = read_doc_string (XCOMPILED_FUNCTION (object)->bytecodes);
       if (!CONSP (tem))
 	signal_simple_error ("invalid lazy-loaded byte code", tem);
+      /* v18 or v19 bytecode file.  Need to Ebolify. */
+      if (XCOMPILED_FUNCTION (object)->flags.ebolified
+	  && VECTORP (XCDR (tem)))
+	ebolify_bytecode_constants (XCDR (tem));
       /* VERY IMPORTANT to purecopy here!!!!!
 	 See load_force_doc_string_unwind. */
       XCOMPILED_FUNCTION (object)->bytecodes = Fpurecopy (XCAR (tem));

@@ -33,6 +33,7 @@ static char * xemacs-cap-workshop_xpm[] = {
 "                   ..XXX         ",
 "                                 ",
 "                                 ",
+"                                 ",
 "         X        X              ",
 " X  X  X X     XX X              ",
 " X  X  X X  X X   XXX   XX  XXX  ",
@@ -40,5 +41,4 @@ static char * xemacs-cap-workshop_xpm[] = {
 "  X X X  XX     X X  X X  X X  X ",
 "   X X   X X    X X  X X  X X  X ",
 "   X X   X  X XX  X  X  XX  XXX  ",
-"                            X    ",
-"                                 "};
+"                            X    "};

@@ -1,5 +1,5 @@
 ;;; nnheaderxm.el --- making Gnus backends work under XEmacs
-;; Copyright (C) 1996,97 Free Software Foundation, Inc.
+;; Copyright (C) 1996 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@ifi.uio.no>
 ;; Keywords: news
@@ -25,9 +25,6 @@
 
 ;;; Code:
 
-(eval-and-compile
-  (autoload 'nnheader-insert-file-contents "nnheader"))
-
 (defun nnheader-xmas-run-at-time (time repeat function &rest args)
   (start-itimer
    "nnheader-run-at-time"
@@ -38,8 +35,28 @@
 (defun nnheader-xmas-cancel-timer (timer)
   (delete-itimer timer))
 
-(defun nnheader-xmas-cancel-function-timers (function)
-  )
+;; Written by Erik Naggum <erik@naggum.no>.
+;; Saved by Steve Baur <steve@miranova.com>.
+(defun nnheader-xmas-insert-file-contents-literally (filename &optional visit beg end replace)
+  "Like `insert-file-contents', q.v., but only reads in the file.
+A buffer may be modified in several ways after reading into the buffer due
+to advanced Emacs features, such as file-name-handlers, format decoding,
+find-file-hooks, etc.
+  This function ensures that none of these modifications will take place."
+  (let (                                ; (file-name-handler-alist nil)
+        (format-alist nil)
+        (after-insert-file-functions nil)
+        (find-buffer-file-type-function 
+         (if (fboundp 'find-buffer-file-type)
+             (symbol-function 'find-buffer-file-type)
+           nil)))
+    (unwind-protect
+        (progn
+          (fset 'find-buffer-file-type (lambda (filename) t))
+          (insert-file-contents filename visit beg end replace))
+      (if find-buffer-file-type-function
+          (fset 'find-buffer-file-type find-buffer-file-type-function)
+        (fmakunbound 'find-buffer-file-type)))))
 
 (defun nnheader-xmas-find-file-noselect (filename &optional nowarn rawfile)
   "Read file FILENAME into a buffer and return the buffer.
@@ -57,20 +74,21 @@ The buffer is not selected, just returned to the caller."
 	   (truename (abbreviate-file-name (file-truename filename)))
 	   (number (nthcdr 10 (file-attributes truename)))
 	   ;; Find any buffer for a file which has same truename.
-	   (other (and (not buf)
+	   (other (and (not buf) 
 		       (get-file-buffer filename)))
 	   error)
       ;; Let user know if there is a buffer with the same truename.
-      (when other
-	(or nowarn
-	    (string-equal filename (buffer-file-name other))
-	    (message "%s and %s are the same file"
-		     filename (buffer-file-name other)))
-	;; Optionally also find that buffer.
-	(when (or (and (boundp 'find-file-existing-other-name)
-		       find-file-existing-other-name)
-		  find-file-visit-truename)
-	  (setq buf other)))
+      (if other
+	  (progn
+	    (or nowarn
+		(string-equal filename (buffer-file-name other))
+		(message "%s and %s are the same file"
+			 filename (buffer-file-name other)))
+	    ;; Optionally also find that buffer.
+	    (if (or (and (boundp 'find-file-existing-other-name)
+			 find-file-existing-other-name)
+		    find-file-visit-truename)
+		(setq buf other))))
       (if buf
 	  (or nowarn
 	      (verify-visited-file-modtime buf)
@@ -107,7 +125,7 @@ The buffer is not selected, just returned to the caller."
 	  (erase-buffer)
 	  (if rawfile
 	      (condition-case ()
-		  (nnheader-insert-file-contents filename t)
+		  (nnheader-insert-file-contents-literally filename t)
 		(file-error
 		 ;; Unconditionally set error
 		 (setq error t)))
@@ -125,22 +143,23 @@ The buffer is not selected, just returned to the caller."
 	  ;; the file was found in.
 	  (and (eq system-type 'vax-vms)
 	       (let (logical)
-		 (when (string-match ":" (file-name-directory filename))
-		   (setq logical (substring (file-name-directory filename)
-					    0 (match-beginning 0))))
+		 (if (string-match ":" (file-name-directory filename))
+		     (setq logical (substring (file-name-directory filename)
+					      0 (match-beginning 0))))
 		 (not (member logical find-file-not-true-dirname-list)))
 	       (setq buffer-file-name buffer-file-truename))
-	  (when find-file-visit-truename
-	    (setq buffer-file-name
-		  (setq filename
-			(expand-file-name buffer-file-truename))))
+	  (if find-file-visit-truename
+	      (setq buffer-file-name
+		    (setq filename
+			  (expand-file-name buffer-file-truename))))
 	  ;; Set buffer's default directory to that of the file.
 	  (setq default-directory (file-name-directory filename))
 	  ;; Turn off backup files for certain file names.  Since
 	  ;; this is a permanent local, the major mode won't eliminate it.
-	  (when (not (funcall backup-enable-predicate buffer-file-name))
-	    (make-local-variable 'backup-inhibited)
-	    (setq backup-inhibited t))
+	  (and (not (funcall backup-enable-predicate buffer-file-name))
+	       (progn
+		 (make-local-variable 'backup-inhibited)
+		 (setq backup-inhibited t)))
 	  (if rawfile
 	      nil
 	    (after-find-file error (not nowarn)))))
@@ -148,8 +167,11 @@ The buffer is not selected, just returned to the caller."
 
 (fset 'nnheader-run-at-time 'nnheader-xmas-run-at-time)
 (fset 'nnheader-cancel-timer 'nnheader-xmas-cancel-timer)
-(fset 'nnheader-cancel-function-timers 'nnheader-xmas-cancel-function-timers)
 (fset 'nnheader-find-file-noselect 'nnheader-xmas-find-file-noselect)
+(fset 'nnheader-insert-file-contents-literally
+      (if (fboundp 'insert-file-contents-literally)
+	  'insert-file-contents-literally
+	'nnheader-xmas-insert-file-contents-literally))
 
 (provide 'nnheaderxm)
 

@@ -584,7 +584,9 @@ If BUFFER is nil, the current buffer is assumed.
        (buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  return BUF_PT (b) == BUF_BEGV (b) ? Qt : Qnil;
+  if (BUF_PT (b) == BUF_BEGV (b))
+    return Qt;
+  return Qnil;
 }
 
 DEFUN ("eobp", Feobp, 0, 1, 0, /*
@@ -595,7 +597,9 @@ If BUFFER is nil, the current buffer is assumed.
        (buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  return BUF_PT (b) == BUF_ZV (b) ? Qt : Qnil;
+  if (BUF_PT (b) == BUF_ZV (b))
+    return Qt;
+  return Qnil;
 }
 
 int
@@ -631,42 +635,20 @@ If BUFFER is nil, the current buffer is assumed.
   return Qnil;
 }
 
-DEFUN ("char-after", Fchar_after, 0, 2, 0, /*
+DEFUN ("char-after", Fchar_after, 1, 2, 0, /*
 Return character in BUFFER at position POS.
 POS is an integer or a buffer pointer.
 If POS is out of range, the value is nil.
 If BUFFER is nil, the current buffer is assumed.
-if POS is nil, the value of point is assumed.
 */
        (pos, buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  Bufpos n = (NILP (pos) ? BUF_PT (b) :
-	      get_buffer_pos_char (b, pos, GB_NO_ERROR_IF_BAD));
+  Bufpos n = get_buffer_pos_char (b, pos, GB_NO_ERROR_IF_BAD);
 
   if (n < 0 || n == BUF_ZV (b))
     return Qnil;
-  return make_char (BUF_FETCH_CHAR (b, n));
-}
-
-DEFUN ("char-before", Fchar_before, 0, 2, 0, /*
-Return character in BUFFER before position POS.
-POS is an integer or a buffer pointer.
-If POS is out of range, the value is nil.
-If BUFFER is nil, the current buffer is assumed.
-if POS is nil, the value of point is assumed.
-*/
-       (pos, buffer))
-{
-  struct buffer *b = decode_buffer (buffer, 1);
-  Bufpos n = ((NILP (pos) ? BUF_PT (b) :
-	       get_buffer_pos_char (b, pos, GB_NO_ERROR_IF_BAD)));
-
-  n--;
-  
-  if (n < BUF_BEGV (b))
-    return Qnil;
-  return make_char (BUF_FETCH_CHAR (b, n));
+  return (make_char (BUF_FETCH_CHAR (b, n)));
 }
 
 
@@ -920,11 +902,10 @@ size_t emacs_strftime (char *string, size_t max, CONST char *format,
 static long difftm (CONST struct tm *a, CONST struct tm *b);
 
 
-DEFUN ("format-time-string", Fformat_time_string, 1, 2, 0, /*
+DEFUN ("format-time-string", Fformat_time_string, 2, 2, 0, /*
 Use FORMAT-STRING to format the time TIME.
 TIME is specified as (HIGH LOW . IGNORED) or (HIGH . LOW), as from
-`current-time' and `file-attributes'.  If TIME is not specified it
-defaults to the current time.
+`current-time' and `file-attributes'.
 FORMAT-STRING may contain %-sequences to substitute parts of the time.
 %a is replaced by the abbreviated name of the day of week.
 %A is replaced by the full name of the day of week.
@@ -1582,7 +1563,7 @@ From START to END, replace FROMCHAR with TOCHAR each time it occurs.
 If optional arg NOUNDO is non-nil, don't record this change for undo
 and don't mark the buffer as really changed.
 */
-       (start, end, fromchar, tochar, noundo))
+  (start, end, fromchar, tochar, noundo))
 {
   /* This function can GC */
   Bufpos pos, stop;
@@ -2036,7 +2017,7 @@ this function always acts as if LEAVE_MARKERS is non-nil.)
 
 Transposing beyond buffer boundaries is an error.
 */
-       (startr1, endr1, startr2, endr2, leave_markers))
+  (startr1, endr1, startr2, endr2, leave_markers))
 {
   Bufpos start1, end1, start2, end2;
   Charcount len1, len2;
@@ -2109,7 +2090,6 @@ syms_of_editfns (void)
   DEFSUBR (Ffollowing_char);
   DEFSUBR (Fpreceding_char);
   DEFSUBR (Fchar_after);
-  DEFSUBR (Fchar_before);
   DEFSUBR (Finsert);
   DEFSUBR (Finsert_string);
   DEFSUBR (Finsert_before_markers);
@@ -2175,7 +2155,7 @@ More specifically:
 set-mark-command (C-SPC) pushes a mark and activates the region.  Moving the
 cursor with normal motion commands (C-n, C-p, etc) will cause the region
 between point and the recently-pushed mark to be highlighted.  It will
-remain highlighted until some non-motion command is executed.
+remain highlighted until some non-motion comand is executed.
 
 exchange-point-and-mark (\\[exchange-point-and-mark]) activates the region.  So if you mark a
 region and execute a command that operates on it, you can reactivate the

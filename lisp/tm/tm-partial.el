@@ -1,11 +1,11 @@
 ;;; tm-partial.el --- Grabbing all MIME "message/partial"s.
 
-;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
+;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
 
 ;; Author: OKABE Yasuo @ Kyoto University
 ;;         MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Version:
-;;	$Id: tm-partial.el,v 1.4 1997/02/04 02:36:07 steve Exp $ 
+;;	$Id: tm-partial.el,v 1.1.1.1 1996/12/18 22:43:37 steve Exp $ 
 ;; Keywords: mail, news, MIME, multimedia, message/partial
 
 ;; This file is a part of tm (Tools for MIME).
@@ -21,8 +21,8 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; along with this program; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Code:
@@ -34,16 +34,16 @@
    
 ;; display Article at the cursor in Subject buffer.
 (defun tm-partial/preview-article (target)
-  (save-window-excursion
-    (let ((f (assq target tm-partial/preview-article-method-alist)))
-      (if f
-	  (funcall (cdr f))
-	(error "Fatal. Unsupported mode")
-	))))
+  (let ((f (assq target tm-partial/preview-article-method-alist)))
+    (if f
+	(funcall (cdr f))
+      (error "Fatal. Unsupported mode")
+      )))
 
 (defun mime-article/grab-message/partials (beg end cal)
   (interactive)
   (let* ((id (cdr (assoc "id" cal)))
+	 (buffer (generate-new-buffer id))
 	 (mother mime::article/preview-buffer)
 	 (target (cdr (assq 'major-mode cal)))
 	 (article-buffer (buffer-name (current-buffer)))
@@ -63,41 +63,43 @@
     (if (or (file-exists-p full-file)
 	    (not (y-or-n-p "Merge partials?"))
 	    )
-	(mime-article/decode-message/partial beg end cal)
+	(progn
+	  (kill-buffer buffer)
+	  (mime-article/decode-message/partial beg end cal)
+	  )
       (let (cinfo the-id parameters)
 	(setq subject-id (std11-field-body "Subject"))
 	(if (string-match "[0-9\n]+" subject-id)
 	    (setq subject-id (substring subject-id 0 (match-beginning 0)))
 	  )
-	(save-excursion
-	  (set-buffer subject-buf)
-	  (while (search-backward subject-id nil t))
-	  (catch 'tag
-	    (while t
-	      (tm-partial/preview-article target)
-	      (set-buffer article-buffer)
-	      (set-buffer mime::article/preview-buffer)
-	      (setq cinfo
-		    (mime::preview-content-info/content-info
-		     (car mime::preview/content-list)))
-	      (setq parameters (mime::content-info/parameters cinfo))
-	      (setq the-id (assoc-value "id" parameters))
-	      (if (equal the-id id)
-		  (progn
-		    (set-buffer article-buffer)
-		    (mime-article/decode-message/partial
-		     (point-min)(point-max) parameters)
-		    (if (file-exists-p full-file)
-			(throw 'tag nil)
-		      )
-		    ))
-	      (if (not (progn
-			 (set-buffer subject-buf)
-			 (end-of-line)
-			 (search-forward subject-id nil t)
-			 ))
-		  (error "not found")
-		)
+	(pop-to-buffer subject-buf)
+	(while (search-backward subject-id nil t)
+	  )
+	(catch 'tag
+	  (while t
+	    (tm-partial/preview-article target)
+	    (pop-to-buffer article-buffer)
+	    (switch-to-buffer mime::article/preview-buffer)
+	    (setq cinfo
+		  (mime::preview-content-info/content-info
+		   (car mime::preview/content-list)))
+	    (setq parameters (mime::content-info/parameters cinfo))
+	    (setq the-id (assoc-value "id" parameters))
+	    (if (equal the-id id)
+		(progn
+		  (switch-to-buffer article-buffer)
+		  (mime-article/decode-message/partial
+		   (point-min)(point-max) parameters)
+		  (if (file-exists-p full-file)
+		      (throw 'tag nil)
+		    )
+		  ))
+	    (if (not (progn
+		       (pop-to-buffer subject-buf)
+		       (end-of-line)
+		       (search-forward subject-id nil t)
+		       ))
+		(error "not found")
 	      )
 	    ))))))
 

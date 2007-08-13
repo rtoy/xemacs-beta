@@ -1,8 +1,6 @@
 ;;; dbx.el --- run dbx under Emacs
-
 ;; Copyright (C) 1988 Free Software Foundation, Inc.
-
-;; Author: Masanobu UMEDA (umerin@flab.fujitsu.junet)
+;; Main author Masanobu UMEDA (umerin@flab.fujitsu.junet)
 ;; Keywords: c, unix, tools, debugging
 
 ;; This file is part of XEmacs.
@@ -18,13 +16,9 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
-
-;;; Synched up with: Not in FSF
-
-;;; Code:
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 (require 'comint)
 
@@ -167,7 +161,3 @@ BEGIN bounds the search. If QUIET, just return nil (no error) if fail."
 		(1+ (count-lines 1 (point))))))
     (process-send-string dbx-process
 			 (concat "stop at \"" file-name "\":" line "\n"))))
-
-(provide 'dbx)
-
-;;; dbx.el ends here

@@ -1,5 +1,5 @@
 ;;; messagexmas.el --- XEmacs extensions to message
-;; Copyright (C) 1996,97 Free Software Foundation, Inc.
+;; Copyright (C) 1996 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@ifi.uio.no>
 ;; Keywords: mail, news
@@ -27,7 +27,7 @@
 
 (require 'nnheader)
 
-(defvar message-xmas-dont-activate-region t
+(defvar message-xmas-dont-activate-region nil
   "If t, don't activate region after yanking.")
 
 (defvar message-xmas-glyph-directory nil
@@ -43,7 +43,7 @@ If it is non-nil, it must be a toolbar.  The five legal values are
 `default-toolbar', `top-toolbar', `bottom-toolbar',
 `right-toolbar', and `left-toolbar'.")
 
-(defvar message-toolbar
+(defvar message-toolbar 
   '([message-spell ispell-message t "Spell"]
     [message-help (Info-goto-node "(Message)Top") t "Message help"])
   "The message buffer toolbar.")
@@ -91,34 +91,6 @@ If it is non-nil, it must be a toolbar.  The five legal values are
   (exchange-point-and-mark message-xmas-dont-activate-region))
 
 (fset 'message-exchange-point-and-mark 'message-xmas-exchange-point-and-mark)
-
-(defun message-xmas-maybe-fontify ()
-  (when (and (featurep 'font-lock)
-	     font-lock-auto-fontify)
-    (turn-on-font-lock)))
-
-(defun message-xmas-make-caesar-translation-table (n)
-  "Create a rot table with offset N."
-  (let ((i -1)
-	(table (make-string 256 0))
-	(a (char-int ?a))
-	(A (char-int ?A)))
-    (while (< (incf i) 256)
-      (aset table i i))
-    (concat
-     (substring table 0 A)
-     (substring table (+ A n) (+ A n (- 26 n)))
-     (substring table A (+ A n))
-     (substring table (+ A 26) a)
-     (substring table (+ a n) (+ a n (- 26 n)))
-     (substring table a (+ a n))
-     (substring table (+ a 26) 255))))
-
-(when (>= emacs-major-version 20)
-  (fset 'message-make-caesar-translation-table
-	'message-xmas-make-caesar-translation-table))
-
-(add-hook 'message-mode-hook 'message-xmas-maybe-fontify)
 
 (provide 'messagexmas)
 

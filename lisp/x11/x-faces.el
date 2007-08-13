@@ -20,8 +20,9 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;; This file does the magic to parse X font names, and make sure that the
 ;; default and modeline attributes of new frames are specified enough.
@@ -167,19 +168,11 @@ If it fails, it returns nil."
 If it fails, it returns nil."
   (try-font-name (x-frob-font-weight font "medium") device))
 
-(defvar *try-oblique-before-italic-fonts* nil
-  "*If NIL, italic fonts are searched before oblique fonts.  If
-non-NIL, oblique fonts are tried before italic fonts.  This is mostly
-applicable to adobe-courier fonts")
-
 (defun x-make-font-italic (font &optional device)
   "Given an X font specification, this attempts to make an `italic' font.
 If it fails, it returns nil."
-  (if *try-oblique-before-italic-fonts*
-      (or (try-font-name (x-frob-font-slant font "o") device)
-	  (try-font-name (x-frob-font-slant font "i") device))
-    (or (try-font-name (x-frob-font-slant font "i") device)
-	(try-font-name (x-frob-font-slant font "o") device))))
+  (or (try-font-name (x-frob-font-slant font "i") device)
+      (try-font-name (x-frob-font-slant font "o") device)))
 
 (defun x-make-font-unitalic (font &optional device)
   "Given an X font specification, this attempts to make a non-italic font.
@@ -379,8 +372,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 ;;; state where signalling an error or entering the debugger would likely
 ;;; result in a crash.
 
-(defun x-init-face-from-resources (face &optional locale set-anyway)
-
+(defun x-init-face-from-resources (face locale)
   ;;
   ;; These are things like "attributeForeground" instead of simply
   ;; "foreground" because people tend to do things like "*foreground",
@@ -393,8 +385,7 @@ Otherwise, it returns the next larger version of this font that is defined."
   ;; "face.attributeForeground", but they're the way they are for
   ;; hysterical reasons. (jwz)
 
-  (let* ((append (if set-anyway nil 'append))
-	 (face-sym (face-name face))
+  (let* ((face-sym (face-name face))
 	 (name (symbol-name face-sym))
 	 (fn (x-get-resource-and-maybe-bogosity-check
 	      (concat name ".attributeFont")
@@ -469,32 +460,29 @@ Otherwise, it returns the next larger version of this font that is defined."
     ;; done when the instancing actually happens, but I'm not
     ;; sure how it should actually be dealt with.
     (if fn
-	(set-face-font face fn locale nil append))
+	(set-face-font face fn locale nil 'append))
     ;; Kludge-o-rooni.  Set the foreground and background resources for
     ;; X devices only -- otherwise things tend to get all messed up
     ;; if you start up an X frame and then later create a TTY frame.
     (if fg
-	(set-face-foreground face fg locale 'x append))
+	(set-face-foreground face fg locale 'x 'append))
     (if bg
-	(set-face-background face bg locale 'x append))
+	(set-face-background face bg locale 'x 'append))
     (if bgp
-	(set-face-background-pixmap face bgp locale nil append))
+	(set-face-background-pixmap face bgp locale nil 'append))
     (if ulp
-	(set-face-underline-p face ulp locale nil append))
+	(set-face-underline-p face ulp locale nil 'append))
     (if stp
-	(set-face-strikethru-p face stp locale nil append))
+	(set-face-strikethru-p face stp locale nil 'append))
     (if hp
-	(set-face-highlight-p face hp locale nil append))
+	(set-face-highlight-p face hp locale nil 'append))
     (if dp
-	(set-face-dim-p face dp locale nil append))
+	(set-face-dim-p face dp locale nil 'append))
     (if bp
-	(set-face-blinking-p face bp locale nil append))
+	(set-face-blinking-p face bp locale nil 'append))
     (if rp
-	(set-face-reverse-p face rp locale nil append))
+	(set-face-reverse-p face rp locale nil 'append))
     ))
-
-;; GNU Emacs compatibility. (move to obsolete.el?)
-(defalias 'make-face-x-resource-internal 'x-init-face-from-resources)
 
 ;;; x-init-global-faces is responsible for ensuring that the
 ;;; default face has some reasonable fallbacks if nothing else is
@@ -508,7 +496,7 @@ Otherwise, it returns the next larger version of this font that is defined."
   (or (face-foreground 'default 'global)
       (set-face-foreground 'default "black" 'global 'x))
   (or (face-background 'default 'global)
-      (set-face-background 'default "gray80" 'global 'x)))
+      (set-face-background 'default "white" 'global 'x)))
 
 ;;; x-init-device-faces is responsible for initializing default
 ;;; values for faces on a newly created device.
@@ -590,8 +578,8 @@ Otherwise, it returns the next larger version of this font that is defined."
 	    (progn
 	      (or fg (set-face-foreground 'default "white" device))
 	      (or bg (set-face-background 'default "black" device)))
-	  (or fg (set-face-foreground 'default "white" device))
-	  (or bg (set-face-background 'default "black" device)))))
+	  (or fg (set-face-foreground 'default "black" device))
+	  (or bg (set-face-background 'default "white" device)))))
 
   ;; Don't look at reverseVideo now or initialize the modeline.  This
   ;; is done on a per-frame basis at the appropriate time.

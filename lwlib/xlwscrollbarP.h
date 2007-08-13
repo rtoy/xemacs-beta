@@ -14,11 +14,11 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with GNU Emacs; see the file COPYING.  If not, write to
+the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 /* Created by Douglas Keller <dkeller@vnet.ibm.com> */
+/* Last changed 02/05/95 */
 
 #ifndef _XlwScrollBarP_h
 #define _XlwScrollBarP_h
@@ -27,104 +27,85 @@ Boston, MA 02111-1307, USA.  */
 /*
 ** Widget class
 */
-typedef struct
-{
-  int dummy_field;	/* keep compiler happy */
+typedef struct {
+	int dummy_field;	/* keep compiler happy */
 } XlwScrollBarClassPart;
 
-typedef struct _XlwScrollbarClassRec
-{
-  CoreClassPart	core_class;
-  XlwScrollBarClassPart scrollbar_class;
+typedef struct _XlwScrollbarClassRec {
+    CoreClassPart	  core_class;
+    XlwScrollBarClassPart scrollbar_class;
 } XlwScrollBarClassRec;
 
 
 /*
 ** Widget instance
 */
-typedef struct
-{
-  /* resources */
-  XtCallbackList valueChangedCBL;
-  XtCallbackList incrementCBL;
-  XtCallbackList decrementCBL;
-  XtCallbackList pageIncrementCBL;
-  XtCallbackList pageDecrementCBL;
-  XtCallbackList toTopCBL;
-  XtCallbackList toBottomCBL;
-  XtCallbackList dragCBL;
+typedef struct {
 
-  Pixel		foreground;
+    /* resources */
+    XtCallbackList      valueChangedCBL;
+    XtCallbackList      incrementCBL;
+    XtCallbackList      decrementCBL;
+    XtCallbackList      pageIncrementCBL;
+    XtCallbackList      pageDecrementCBL;
+    XtCallbackList      toTopCBL;
+    XtCallbackList      toBottomCBL;
+    XtCallbackList      dragCBL;
 
-  Pixel		topShadowColor;
-  Pixel		bottomShadowColor;
+    Pixel               foreground;
 
-  Pixel		troughColor;
+    Pixel               topShadowColor;
+    Pixel               bottomShadowColor;
 
-  Pixel		armColor;
-  Pixel		armTopShadowColor;
-  Pixel		armBottomShadowColor;
+    Pixel               troughColor;
 
-  Pixmap	topShadowPixmap;
-  Pixmap	bottomShadowPixmap;
+    Pixel               armColor;
+    Pixel               armTopShadowColor;
+    Pixel               armBottomShadowColor;
 
-  int		shadowThickness;
+    Pixmap              topShadowPixmap;
+    Pixmap              bottomShadowPixmap;
 
-  Boolean	showArrows;
+    int                 shadowThickness;
 
-  int		minimum;
-  int		maximum;
-  int		sliderSize;
-  int		value;
-  int		pageIncrement;
-  int		increment;
+    Boolean             showArrows;
 
-  int		initialDelay;
-  int		repeatDelay;
+    int                 minimum;
+    int                 maximum;
+    int                 sliderSize;
+    int                 value;
+    int                 pageIncrement;
+    int                 increment;
 
-  unsigned char	orientation;
+    int                 initialDelay;
+    int                 repeatDelay;
 
-  char		*sliderStyle;
-  char		*arrowPosition;
+    unsigned char       orientation;
 
-  /* private */
-  Pixmap	grayPixmap;
+    char               *knobStyle;
+    char               *arrowPosition;
 
-  GC		backgroundGC;
-  GC		topShadowGC;
-  GC		bottomShadowGC;
+    /* private */
+    Pixmap              grayPixmap;
 
-  int		above, ss, below;
-  int		lastY;
+    GC                  backgroundGC;
+    GC                  topShadowGC;
+    GC                  bottomShadowGC;
 
-  enum {
-    ARM_NONE,
-    ARM_SLIDER,
-    ARM_UP,
-    ARM_DOWN,
-    ARM_PAGEUP,
-    ARM_PAGEDOWN
-  } 		armed;
+    int                 above, ss, below;
+    int                 lastY;
 
-  enum {
-    FORCED_SCROLL_NONE,
-    FORCED_SCROLL_DOWNRIGHT,
-    FORCED_SCROLL_UPLEFT
-  } 		forced_scroll;
+    int                 armed;
 
-  int		savedValue;
+    int                 savedValue;
 
-  Boolean	fullRedrawNext;
-
-  Boolean	timerActive;
-  XtIntervalId	timerId;
+    Boolean             fullRedrawNext;
 
 } XlwScrollBarPart;
 
-typedef struct _XlwScrollBarRec
-{
-  CorePart          core;
-  XlwScrollBarPart  sb;
+typedef struct _XlwScrollBarRec {
+    CorePart          core;
+    XlwScrollBarPart  sb;
 } XlwScrollBarRec;
 
-#endif /* _XlwScrollBarP_h */
+#endif

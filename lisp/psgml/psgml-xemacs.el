@@ -1,5 +1,5 @@
 ;;;; psgml-xemacs.el --- Part of SGML-editing mode with parsing support
-;; $Id: psgml-xemacs.el,v 1.1.1.2 1996/12/18 03:47:15 steve Exp $
+;; $Id: psgml-xemacs.el,v 1.1.1.1 1996/12/18 22:43:37 steve Exp $
 
 ;; Copyright (C) 1994 Lennart Staflin
 

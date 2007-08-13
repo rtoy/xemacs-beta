@@ -38,9 +38,6 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef HAVE_TTY
 #include "console-tty.h"
-#else
-#include "syssignal.h"
-#include "systty.h"
 #endif /* HAVE_TTY */
 
 #include "console-stream.h"
@@ -453,7 +450,6 @@ child_setup_tty (int out)
 #ifdef OLCUC
   s.main.c_oflag &= ~OLCUC;	/* Disable upcasing on output.  */
 #endif
-  s.main.c_oflag &= ~TAB3;	/* Disable tab expansion */
 #if defined (CSIZE) && defined (CS8)
   s.main.c_cflag = (s.main.c_cflag & ~CSIZE) | CS8; /* Don't strip 8th bit */
 #endif
@@ -582,7 +578,6 @@ sys_subshell (void)
   Lisp_Object dir;
   unsigned char *str = 0;
   int len;
-  struct gcpro gcpro1;
 
   saved_handlers[0].code = SIGINT;
   saved_handlers[1].code = SIGQUIT;
@@ -602,11 +597,8 @@ sys_subshell (void)
   dir = Fsymbol_value (Qdefault_directory);
   if (!STRINGP (dir))
     goto xyzzy;
-
-  GCPRO1 (dir);
-  dir = Funhandled_file_name_directory (dir);
-  dir = expand_and_dir_to_file (dir, Qnil);
-  UNGCPRO;
+  
+  dir = expand_and_dir_to_file (Funhandled_file_name_directory (dir), Qnil);
   str = (unsigned char *) alloca (XSTRING_LENGTH (dir) + 2);
   len = XSTRING_LENGTH (dir);
   memcpy (str, XSTRING_DATA (dir), len);
@@ -735,20 +727,6 @@ sys_suspend (void)
      while we wait.  */
   sys_subshell ();
 
-#endif
-}
-
-/* Suspend a process if possible; give terminal to its superior.  */
-void
-sys_suspend_process (process)
-    int process;
-{
-    /* I don't doubt that it is possible to suspend processes on
-     * VMS machines or thost that use USG_JOBCTRL,
-     * but I don't know how to do it, so...
-     */
-#if defined (SIGTSTP) && !defined (MSDOS)
-    kill(process, SIGTSTP);
 #endif
 }
 
@@ -3064,7 +3042,47 @@ sys_readdir (DIR *dirp)
   while (!(errno = 0, rtnval = readdir (dirp))
 	 && (errno == EINTR))
     ;
+#ifndef MULE
   return rtnval;
+#else /* MULE */
+  if (rtnval == NULL)           /* End of directory */
+    return NULL;
+  {
+    Extcount external_len;
+    int ascii_filename_p = 1;
+    CONST Extbyte * CONST external_name = (CONST Extbyte *) rtnval->d_name;
+    
+    /* Optimize for the common all-ASCII case, computing len en passant */
+    for (external_len = 0; external_name[external_len] ; external_len++)
+      {
+        if (!BYTE_ASCII_P (external_name[external_len]))
+          ascii_filename_p = 0;
+      }
+    if (ascii_filename_p)
+      return rtnval;
+
+    { /* Non-ASCII filename */
+      static bufbyte_dynarr *internal_DIRENTRY;
+      CONST Bufbyte *internal_name;
+      Bytecount internal_len;
+      if (!internal_DIRENTRY)
+        internal_DIRENTRY = Dynarr_new (Bufbyte);
+      else
+        Dynarr_reset (internal_DIRENTRY);
+
+      Dynarr_add_many (internal_DIRENTRY, (Bufbyte *) rtnval,
+                       offsetof (DIRENTRY, d_name));
+
+      internal_name =
+        convert_from_external_format (external_name, external_len,
+                                      &internal_len, FORMAT_FILENAME);
+
+      Dynarr_add_many (internal_DIRENTRY, internal_name, internal_len);
+      Dynarr_add (internal_DIRENTRY, 0); /* zero-terminate */
+      return (DIRENTRY *) Dynarr_atp (internal_DIRENTRY, 0);
+    }
+  }
+#endif /* MULE */
 }
 #endif /* ENCAPSULATE_READDIR */
 

@@ -51,7 +51,11 @@ Boston, MA 02111-1307, USA.  */
 
 /* junk stolen from IntrinsicI.h */
 
-extern void _XtAllocError( String /* alloc_type */);
+extern void _XtAllocError(
+#if NeedFunctionPrototypes
+    String	/* alloc_type */
+#endif
+);
 
 /* junk ungraciously copied from Shell.c */
 

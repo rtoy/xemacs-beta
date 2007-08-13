@@ -1,36 +1,11 @@
-/******************************************************************************
-**       File: default.css
+/*       File: default.css
 **    Purpose: Default Stylesheet for Emacs-W3
-**       Info: Copyright (c) 1995 - 1996 William M. Perry <wmperry@spry.com>
-**             Copyright (c) 1997 Free Software Foundation, Inc.
+**       Info: Copyright (c) 1995 William M. Perry <wmperry@spry.com>
 **    Created: William M. Perry <wmperry@spry.com>, Aug-31-1995
 ** Maintainer: William M. Perry <wmperry@spry.com>
 **
 **  This contains the top level fallback default styles for Emacs-w3
-**
-******************************************************************************
-**
-** To specify device-dependent styles, you must mark a section with
-** @media devicetype { ... }
-** If you are not using 'devicetype', then anything within the { ... }
-** is ignored.
-**
-** These sections are currently defined by
-** http://www.w3.org/pub/WWW/Style/Group/WD-PRINT-961220
-** 
-**    print  - output for paged opaque material, and for documents viewed
-**             on screen in print preview mode
-**    screen - a continuous presentation of computer screens
-** projector - paged presentation for projected presentations
-**   braille - for braille tactile feedback devices
-**    speech - aural presentation
-**       all - the default value, applies to all output devices
-**
-** There are a few special Emacs-W3 sections
-**
-**  emacs - only include this chunk if you are using Emacs 19
-** xemacs - only include this chunk if you are using XEmacs
-******************************************************************************/
+*/
 
 /*
 ** Headers
@@ -39,7 +14,7 @@
 h1,h2,h3,
 h4,h5,h6  {
 	    display: block;
-            font-family : serif;
+            font-family : utopia charter times itc-zapf-chancery inja;
             font-weight : bold;
           }
 
@@ -47,92 +22,58 @@ h4,h5,h6  {
 ** Since Emacs-19 doesn't handle mixed-sized fonts very well just yet,
 ** we only use them under XEmacs.  Hopefully, this will change soon.
 */
-@media xemacs {
-      h1  { font-size : +12pt }
-      h2  { font-size : +6pt  }
-      h3  { font-size : +4pt  }
-      h5  { font-size : -2pt  }
-      h6  { font-size : -4pt  }
-/*
-** Emacs-19 also doesn't handle how Emacs-W3 changes this type of font
-** very well, so lets only do it under XEmacs for now.  Emacs-19 can only
-** do monospaced fonts anyway, so its redundant.
-*/
-   pre,xmp,
-  plaintext { font-family: monospace }
-key,code,tt { font-family: monospace }
-} // @media xemacs
+
+:xemacs:
+      h1  { font-size : 24pt }
+      h2  { font-size : 18pt }
+      h3  { font-size : 16pt }
+      h4  { font-size : 14pt }
+      h5  { font-size : 12pt }
+      h6  { font-size : 10pt }
 
 /*
 ** Best we can do under Emacs-19 is use the default font and try to make
 ** the headers stand out somehow.
 */
 
-@media emacs {
+:emacs:
 h1,h2,h3,
-h4,h5,h6  { 
-            text-decoration: underline;
-	    color: blue;
-          }
+h4,h5,h6  { font-style: small-caps; text-decoration: underline }
 
-strong,em { color: red         }
-      dfn { font-style: italic }
- s,strike { color: green       }
-
-} // @media emacs
-
+:normal:
        p  { display: block }
- pre,xmp  { display: block; white-space: pre; }
-blockquote{ display: block; margin-left: 5em; margin-right: 5em; }
-
-/*
-** How to draw form elements.
-** This is an extension in Emacs-W3 (and perhaps soon E-Scape)
-** Since there are so many different types of input fields, you should be
-** able to control formatting based on that.  Enter pseudo-classes.
-**
-** This functionality will be removed as soon as the W3C comes up with
-** the standard way to do this, perhaps in CSS level 2.
-*/
-input:text,
-input:integer,
-input:float,
-input:url,
-input:text    { text-decoration: underline; }
-input:submit  { color: green;  text-decoration: none; }
-input:reset   { color: red;    text-decoration: none; }
-input:button  { color: yellow; text-decoration: none; }
-input:image   { text-decoration: none; }
 
 /*
 ** List formatting instructions
 */
 
-       ul { display: block;     }
-       ol { display: block;     }
-       dl { display: block;     }
-      dir { display: block;     }
-     menu { display: block;     }
-       dt { font-weight: bold; display: list-item }
-       dd { display: list-item; margin-left: 5em; }
-       li { display: list-item; margin-left: 5em; }
-    ul li { list-style: circle; }
-    ol li { list-style: decimal; }
+ dl,ul,ol {
+ 	    display: block;
+	    margin-left: 5em
+	  }
 
-/* These are to make nested list items look better */
-ul ul,ol ul,ol ol,ul ol { display: line; }
+       li { display: list-item }
+       dt { font-weight: bold; display: block }
+       dd { insert-before: 3em; display: list-item }
+
+/*
+** All items that require fixed-width fonts
+*/
+
+   pre,xmp,
+  plaintext { font-family: monospace; display: block }
+key,code,tt { font-family: monospace }
 
 /*
 ** All logical emphasis tags, the way god intended
 */
 
-        div { display: line;                }
-  strong,em { font-weight: bold             }
-        dfn { font-style: italic            }
+  strong,em { font-weight: bold }
+        dfn { font-style: italic }
    s,strike { text-decoration: line-through }
-        sub { text-position: sub            }
-        sup { text-position: sup            }
-     secret { text-transform: rot13         }
+        sub { text-position: sub }
+        sup { text-position: sup }
+     secret { text-transform: rot13 }
 
 /*
 ** Physical emphasis - spawn of evil
@@ -141,51 +82,48 @@ ul ul,ol ul,ol ol,ul ol { display: line; }
 	  i { font-style: italic }
           u { text-decoration: underline }
       blink { text-decoration: blink }
-     center { display: line; text-align: center; }
+
 /*
 ** Various and sundry
 */
-         br { display: line }
-         hr { display: line; text-align: center; }
+         br { display: list-item }
+         hr { display: list-item }
+    hr[SRC] { replace: {SRC} }
 
 
 /*
 ** Hypertext link coloring
 */
 
-a:link    { color: #FF0000 }
-a:visited { color: #B22222 }
-a:active  { color: #FF0000 }
-
-/*
-** Table formatting
-*/
-table     { display: block;    }
-   th     { display: block; font-weight: bold; text-align: center; }
-   td     { display: block; text-align: left; }
-caption   { display: block; text-align: center; }
+a         { cursor: hand2  }
+a.link    { color: #FF0000 }
+a.visited { color: #B22222 }
+a.active  { color: #FF0000 }
 
 /*
 ** Various other character-level formatting issues
 */
 
- address { text-align: right; display: line; }
-abstract { font-style: bold & italic ; text-align : indent }
-   quote { font-style: italic ; text-align : indent }
+ address { align : right }
+abstract { font-style : bold & italic ; align : indent }
+   quote { font-style : italic ; align : indent }
 
 /*
 ** Now for monochrome defaults
+** Anything up to the next :xxx: media descriptor is only used if
+** you are on that type of media.
 */
-@media mono {
-   a:link { color: black; text-decoration: underline }
-a:visited { color: black; text-decoration: underline }
- a:active { color: white }
-} // @media mono
+:mono:
+   a.link { color: black; text-decoration: underline }
+a.visited { color: black; text-decoration: underline }
+ a.active { color: white }
+
 /*
 ** All the TTY specific formatting
 */
 
-@media tty {
+:tty:
+
 /*
 ** First, handle some stuff for generic TTYs to emulate our old
 ** behaviour with w3-delimit-links and a subset of w3-delimit-emphasis
@@ -197,27 +135,20 @@ h4,h5,h6 {
            insert-after: *
          }
 
-a:visited{
-           insert-before: "{{";
-           insert-after: "}}"
+a.visited{
+           insert.before: "{{";
+           insert.after: "}}"
          }
 
-a:link   {
-           insert-before: "[[";
-           insert-after: "]]"
+a.link   {
+           insert.before: "[[";
+           insert.after: "]]"
          }
 
-input:text,
-input:integer,
-input:float,
-input:url,
-input:text    { insert-before: "[{"; insert-after: "}]"; }
-select { insert-before: "[{"; insert-after: "}]"; }
+/* End Generic TTY */
 
-} // @media tty
+:ansi-tty:
 
-
-@media ansi-tty {
 /*
 ** Now comes the cool TTY stuff.  You will need to be using XEmacs 19.14
 ** or later (or Emacs 19.30 under DOS) in order to get any benefit from
@@ -241,38 +172,6 @@ select { insert-before: "[{"; insert-after: "}]"; }
 
 h1,h2,h3,
 h4,h5,h6  { color : cyan     }
-a:visited { color : magenta  }
-   a:link { color : red      }
- a:active { color : yellow   }
-} // @media ansi-tty
-
-@media speech {
-h1,h2,h3,
-h4,h5,h6 { voice-family: paul; stress: 2; richness: 9; }
-      h1 { pitch: 1; pitch-range: 9; }
-      h2 { pitch: 2; pitch-range: 8; }
-      h3 { pitch: 3; pitch-range: 7; }
-      h4 { pitch: 4; pitch-range: 6; }
-      h5 { pitch: 5; pitch-range: 5; }
-      h6 { pitch: 6; pitch-range: 4; }
-
-li,dt,dd { pitch: 6; richness: 6; }
-      dt { stress: 8; }
-
-pre,xmp,plaintext,key,code,tt { pitch: 1; 
-				pitch-range: 1;
-				stress: 1;
-				richness: 8;
-			      }
-      em { pitch: 6; pitch-range: 6; stress: 6; richness: 5; }
-  strong { pitch: 6; pitch-range: 6; stress: 9; richness: 9; }
-     dfn { pitch: 7; pitch-range: 6; stress: 6; }
-s,strike { richness: 0; }
-       i { pitch: 6; pitch-range: 6; stress: 6; richness: 5 }
-       b { pitch: 6; pitch-range: 6; stress: 9; richness: 9; }
-       u { richness: 0; }
-   a:link { voice-family: harry; }
-a:visited { voice-family: betty;}
- a:active { voice-family: betty; pitch-range: 8; pitch: 8 }
-
-} // @media speech
+a.visited { color : magenta  }
+   a.link { color : red      }
+ a.active { color : yellow   }

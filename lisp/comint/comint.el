@@ -355,8 +355,6 @@ This is to work around a bug in Emacs process signalling.")
 (put 'comint-scroll-show-maximum-output 'permanent-local t)
 (put 'comint-ptyp 'permanent-local t)
 
-
-
 (defun comint-mode ()
   "Major mode for interacting with an inferior interpreter.
 Interpreter name is same as buffer name, sans the asterisks.
@@ -538,7 +536,7 @@ Entry to this mode runs the hooks on `comint-mode-hook'."
      ["Expand Directory Reference" shell-replace-by-expanded-directory
       :active t :included (eq 'shell-mode major-mode)]
      "---"
-     ["Send INT" comint-interrupt-subjob t]
+     ["Send INT"  comint-interrupt-subjob t]
      ["Send STOP" comint-stop-subjob t]
      ["Send CONT" comint-continue-subjob t]
      ["Send QUIT" comint-quit-subjob t]
@@ -569,7 +567,7 @@ Entry to this mode runs the hooks on `comint-mode-hook'."
     ["Next Input matching Regexp..." 'comint-next-matching-input t]
     ["List Command History" comint-dynamic-list-input-ring t]
     "----"
-    ["Send INT" comint-interrupt-subjob t]
+    ["Send INT"  comint-interrupt-subjob t]
     ["Send STOP" comint-stop-subjob t]
     ["Send CONT" comint-continue-subjob t]
     ["Send QUIT" comint-quit-subjob t]
@@ -590,8 +588,7 @@ Entry to this mode runs the hooks on `comint-mode-hook'."
   "*Maximum number of entries to display on the Comint command-history menu.")
 
 (defun comint-history-menu-filter (menu)
-  (let ((histmenu (comint-make-history-menu)))
-    (append menu histmenu)))
+  (append menu (comint-make-history-menu)))
 
 (defun comint-make-history-menu ()
   (if (or (not (ring-p comint-input-ring))
@@ -602,11 +599,13 @@ Entry to this mode runs the hooks on `comint-mode-hook'."
 	  (index (1- (ring-length comint-input-ring)))
 	  (count 0))
       ;; We have to build up a list ourselves from the ring vector.
+      ;; We don't want the entries to get translated in a Mule
+      ;; environment, so we use the `suffix' field of the menu entries.
       (while (and (>= index 0)
 		  (and comint-history-menu-max
 		       (< count comint-history-menu-max)))
 	(setq hist (ring-ref comint-input-ring index)
-	      menu (cons (vector hist (list 'comint-menu-history hist) t)
+	      menu (cons (vector "" (list 'comint-menu-history hist) t hist)
 			 menu)
 	      count (1+ count)
 	      index (1- index)))
@@ -1034,7 +1033,7 @@ See `comint-magic-space' and `comint-replace-by-expanded-history-before-point'.
 Returns t if successful."
   (interactive)
   (if (and comint-input-autoexpand
-	   (string-match "!\\|^\\^" (funcall comint-get-old-input))
+	   (string-match "[!^]" (funcall comint-get-old-input))
 	   (save-excursion (beginning-of-line)
 			   (looking-at comint-prompt-regexp)))
       ;; Looks like there might be history references in the command.
@@ -1348,9 +1347,7 @@ Similarly for Soar, Scheme, etc."
 	  (set-marker comint-last-input-start pmark)
 	  (set-marker comint-last-input-end (point))
 	  (set-marker (process-mark proc) (point))
-	  (comint-input-done)
 	  (funcall comint-input-sender proc input)
-	  (comint-input-setup)
 	  ;; XEmacs - A kludge to prevent the delay between insert and
 	  ;; process output affecting the display.  A case for a
 	  ;; comint-send-input-hook?
@@ -1358,28 +1355,6 @@ Similarly for Soar, Scheme, etc."
 			      (concat input "\n"))
 	  (comint-output-filter proc "")
 	  )))))
-(defun comint-input-done ()
-  "Finalized comint-input-extent so nothing more is added."
-  (if (not comint-input-extent)
-      (comint-input-setup))
-  (set-extent-property comint-input-extent 'start-closed nil)
-  (set-extent-property comint-input-extent 'end-closed nil)
-  (set-extent-property comint-input-extent 'detachable t)
-  )
-
-(defun comint-input-setup ()
-  "Insure the comint-input-extent is ready."
-  (require 'comint-xemacs)
-  (setq comint-input-extent (make-extent (point) (point-max)))
-  (set-extent-property comint-input-extent 'detachable nil)
-  (set-extent-property comint-input-extent 'start-closed t)
-  (set-extent-property comint-input-extent 'end-closed t)
-  (set-extent-face comint-input-extent 'comint-input-face)
-  )
-
-(defvar comint-input-extent nil
-  "Current extent used for displaying text in buffer.");
-(make-variable-buffer-local 'comint-input-extent)
 
 ;; The purpose of using this filter for comint processes
 ;; is to keep comint-last-input-end from moving forward
@@ -1395,9 +1370,6 @@ Similarly for Soar, Scheme, etc."
 		opoint (point)
 		obeg (point-min)
 		oend (point-max))
-	  ;; Keep stuff being output (before input) from using input-extent
-	  (if comint-input-extent
-	      (set-extent-property comint-input-extent 'start-closed nil))
 	  (let ((buffer-read-only nil)
 		(nchars (length string))
 		(ostart nil))
@@ -1422,11 +1394,6 @@ Similarly for Soar, Scheme, etc."
 	    (set-marker comint-last-output-start ostart)
 	    (set-marker (process-mark process) (point))
 	    (redraw-modeline))
-	  ;; Now insure everything inserted after (user input) is in extent
-	  (if (not comint-input-extent)
-	      (comint-input-setup))
-	  (set-extent-endpoints comint-input-extent (point) (point-max))
-	  (set-extent-property comint-input-extent 'start-closed t)
 
 	  (narrow-to-region obeg oend)
 	  (goto-char opoint)
@@ -2031,7 +1998,7 @@ See `comint-prompt-regexp'."
 ;;; want them present in specific modes.
 
 (defvar comint-completion-autolist nil
-  "*If non-nil, automatically list possibilities on partial completion.
+  "*If non-nil, automatically list possiblities on partial completion.
 This mirrors the optional behavior of tcsh.")
 
 (defvar comint-completion-addsuffix t

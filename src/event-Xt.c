@@ -47,6 +47,13 @@ Boston, MA 02111-1307, USA.  */
 #include <X11/CoreP.h>		/* Numerous places access the fields of
 				   a core widget directly.  We could
 				   use XtVaGetValues(), but ... */
+#ifdef HAVE_XIM
+#ifdef XIM_MOTIF
+#include <Xm/Xm.h>
+#endif
+#include "lstream.h"
+#include "mule-coding.h"
+#endif
 
 static void enqueue_Xt_dispatch_event (Lisp_Object event);
 
@@ -532,9 +539,9 @@ clear_sticky_modifiers (struct device *d)
   struct x_device *xd = DEVICE_X_DATA (d);
 
   xd->need_to_add_mask = 0;
-  xd->last_downkey     = 0;
-  xd->release_time     = 0;
-  xd->down_mask        = 0;
+  xd->last_downkey = 0;
+  xd->release_time = 0;
+  xd->down_mask = 0;
 }
 
 static int
@@ -592,8 +599,18 @@ emacs_Xt_mapping_action (Widget w, XEvent* event)
 /*                  X to Emacs event conversion                         */
 /************************************************************************/
 
+#if (defined(sun) || defined(__sun)) && defined(__GNUC__)
+# define SUNOS_GCC_L0_BUG
+#endif
+
+#ifdef SUNOS_GCC_L0_BUG
+static void
+x_to_emacs_keysym_sunos_bug (Lisp_Object *return_value_sunos_bug, /* #### */
+                             XKeyPressedEvent *event, int simple_p)
+#else /* !SUNOS_GCC_L0_BUG */
 static Lisp_Object
 x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
+#endif /* !SUNOS_GCC_L0_BUG */
      /* simple_p means don't try too hard (ASCII only) */
 {
   char *name;
@@ -602,35 +619,128 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
      passing in 0) to avoid crashes on German IRIX */
   char dummy[256];
 
-  /* ### FIX this by replacing with calls to XmbLookupString.
-     XLookupString should never be called. --mrb */
+#ifdef HAVE_XIM
+  int len;
+  char buffer[64];
+  char *bufptr = buffer;
+  int   bufsiz = sizeof (buffer);
+  Status status;
+#endif
+
+#ifdef SUNOS_GCC_L0_BUG
+# define return(lose) \
+  do {*return_value_sunos_bug = (lose); goto return_it; } while (0)
+#endif
+
+#ifdef HAVE_XIM
+#ifdef XIM_MOTIF
+#define LOOKUPSTRING \
+  len = XmImMbLookupString (XtWindowToWidget (event->display, event->window), \
+			  event, bufptr, bufsiz, &keysym, &status);
+#else /* XIM_XLIB */
+#define LOOKUPSTRING \
+  len = XmbLookupString \
+    (FRAME_X_XIC (x_window_to_frame \
+		  (get_device_from_display (event->display), event->window)), \
+     event, bufptr, bufsiz, &keysym, &status);
+#endif /* XIM_XLIB */
+ LOOKUPSTRING;
+ check_status:
+
+#ifdef DEBUG_XEMACS
+  if (x_debug_events > 0)
+    {
+      stderr_out ("   status=");
+#define print_status_when(S) if (status == S) stderr_out (#S)
+      print_status_when (XLookupKeySym);
+      print_status_when (XLookupBoth);
+      print_status_when (XLookupChars);
+      print_status_when (XLookupNone);
+      print_status_when (XBufferOverflow);
+      
+      if (status == XLookupKeySym || status == XLookupBoth)
+	stderr_out (" keysym=%s",  XKeysymToString (keysym));
+      if (status == XLookupChars  || status == XLookupBoth)
+	{
+	  if (len != 1)
+	    {
+	      int j;
+	      stderr_out (" chars=\"");
+	      for (j=0; j<len; j++)
+		stderr_out ("%c", bufptr[j]);
+	      stderr_out ("\"");
+	    }
+	  else if (bufptr[0] <= 32 || bufptr[0] >= 127)
+	    stderr_out (" char=0x%x", bufptr[0]);
+	  else
+	    stderr_out (" char=%c", bufptr[0]);
+	}
+      stderr_out ("\n");
+    }
+#endif /* DEBUG_XEMACS */
+
+  switch (status)
+    {
+    case XLookupKeySym:
+    case XLookupBoth: break;
+
+    case XLookupChars:
+      {
+	/* Generate multiple emacs events */
+	struct device *d = get_device_from_display (event->display);
+        Emchar ch;
+        Lisp_Object instream =
+          make_fixed_buffer_input_stream ((unsigned char *) bufptr, len);
+
+        /* ### Use Fget_coding_system (Vcomposed_input_coding_system) */
+        instream =
+	  make_decoding_input_stream (XLSTREAM (instream),
+				      Fget_coding_system (Qautodetect));
+        
+        while ((ch = Lstream_get_emchar (XLSTREAM (instream))) != EOF)
+          {
+            Lisp_Object emacs_event = Fmake_event ();
+            XEVENT (emacs_event)->channel	      = DEVICE_CONSOLE (d);
+            XEVENT (emacs_event)->event_type	      = key_press_event;
+            XEVENT (emacs_event)->timestamp	      = event->time;
+            XEVENT (emacs_event)->event.key.modifiers = 0;
+            XEVENT (emacs_event)->event.key.keysym    = make_char (ch);
+            enqueue_Xt_dispatch_event (emacs_event);
+          }
+        Lstream_close (XLSTREAM (instream));
+	return Qnil;
+      }
+    case XLookupNone: return Qnil;
+    case XBufferOverflow:
+      bufptr = alloca (len+1);
+      bufsiz = len+1;
+      LOOKUPSTRING;
+      goto check_status;
+    }
+#else /* ! HAVE_XIM */
   XLookupString (event, dummy, 200, &keysym, 0);
+#endif /* HAVE_XIM */
 
   if (keysym >= XK_exclam && keysym <= XK_asciitilde)
     /* We must assume that the X keysym numbers for the ASCII graphic
        characters are the same as their ASCII codes.  */
-    return make_char (keysym);
+    return (make_char (keysym));
 
   switch (keysym)
     {
       /* These would be handled correctly by the default case, but by
 	 special-casing them here we don't garbage a string or call intern().
 	 */
-    case XK_BackSpace:	return QKbackspace;
-    case XK_Tab:	return QKtab;
-    case XK_Linefeed:	return QKlinefeed;
-    case XK_Return:	return QKreturn;
-    case XK_Escape:	return QKescape;
-    case XK_space:	return QKspace;
-    case XK_Delete:	return QKdelete;
-    case 0:		return Qnil;
-      /* This kludge prevents bogus Xlib compose conversions.
-         Don't ask why. The following case must be removed when we
-         switch to using XmbLookupString */
-    case XK_Multi_key: XLookupString (event, dummy, 200, &keysym, 0);
-      /* Fallthrough!! */
+    case XK_BackSpace:	return (QKbackspace);
+    case XK_Tab:	return (QKtab);
+    case XK_Linefeed:	return (QKlinefeed);
+    case XK_Return:	return (QKreturn);
+    case XK_Escape:	return (QKescape);
+    case XK_space:	return (QKspace);
+    case XK_Delete:	return (QKdelete);
+    case 0:		return (Qnil);
     default:
-      if (simple_p) return Qnil;
+      if (simple_p) return (Qnil);
       /* #### without return_value_sunos_bug, %l0 (GCC struct return pointer)
        * ####  gets roached (top 8 bits cleared) around this call.
        */
@@ -640,34 +750,44 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
 	{
 	  char buf [255];
 	  sprintf (buf, "unknown_keysym_0x%X", (int) keysym);
-	  return KEYSYM (buf);
+	  return (KEYSYM (buf));
 	}
       /* If it's got a one-character name, that's good enough. */
-      if (!name[1])
-	return make_char (name[0]);
+      if (!name[1]) return (make_char (name[0]));
       
       /* If it's in the "Keyboard" character set, downcase it.
 	 The case of those keysyms is too totally random for us to
 	 force anyone to remember them.
 	 The case of the other character sets is significant, however.
-       */
-      if ((((unsigned int) keysym) & (~0x1FF)) == ((unsigned int) 0xFE00))
+	 */
+      if ((((unsigned int) keysym) & (~0xFF)) == ((unsigned int) 0xFF00))
 	{
 	  char buf [255];
 	  char *s1, *s2;
-	  for (s1 = name, s2 = buf; *s1; s1++, s2++) {
-	    if (*s1 == '_') {
-	      *s2 = '-';
-	    } else {
-	      *s2 = tolower (* (unsigned char *) s1);
-	    }
-	  }
+	  for (s1 = name, s2 = buf; *s1; s1++, s2++)
+	    *s2 = tolower (* (unsigned char *) s1);
 	  *s2 = 0;
-	  return KEYSYM (buf);
+	  return (KEYSYM (buf));
 	}
-      return KEYSYM (name);
+      return (KEYSYM (name));
     }
+#ifdef SUNOS_GCC_L0_BUG
+# undef return
+ return_it:
+  return;
+#endif
 }
+
+#ifdef SUNOS_GCC_L0_BUG
+/* #### */
+static Lisp_Object
+x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
+{
+  Lisp_Object return_value_sunos_bug;
+  x_to_emacs_keysym_sunos_bug (&return_value_sunos_bug, event, simple_p);
+  return (return_value_sunos_bug);
+}
+#endif
 
 static void
 set_last_server_timestamp (struct device *d, XEvent *x_event)
@@ -748,7 +868,7 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 	     turn C-x into C-X, which would suck.
 	   - the event was a mouse event. */
 	if (modifiers || ! key_event_p)
-	  *state &= (~LockMask);
+          *state &= (~LockMask);
 
 	shift_p = *state & ShiftMask;
 	lock_p  = *state & LockMask;
@@ -769,7 +889,7 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 	       store it here, but we really don't care about the frame. */
 	    emacs_event->channel = DEVICE_CONSOLE (d);
 	    keysym = x_to_emacs_keysym (&x_event->xkey, 0);
-
+	    
 	    /* If the emacs keysym is nil, then that means that the
 	       X keysym was NoSymbol, which probably means that
 	       we're in the midst of reading a Multi_key sequence,
@@ -822,16 +942,16 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 	    if (! frame)
 	      return 0;	/* not for us */
 	    XSETFRAME (emacs_event->channel, frame);
-
+            
 	    emacs_event->event_type = (x_event->type == ButtonPress) ?
 	      button_press_event : button_release_event;
-
+            
 	    emacs_event->event.button.modifiers = modifiers;
-            emacs_event->timestamp              = ev->time;
-            emacs_event->event.button.button    = ev->button;
-            emacs_event->event.button.x	        = ev->x;
-            emacs_event->event.button.y	        = ev->y;
-          }
+	    emacs_event->timestamp		= ev->time;
+	    emacs_event->event.button.button	= ev->button;
+	    emacs_event->event.button.x		= ev->x;
+	    emacs_event->event.button.y		= ev->y;
+	  }
       }
     break;
       
@@ -936,6 +1056,7 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
   return 1;
 }
 
+
 
 /************************************************************************/
 /*                           magic-event handling                       */
@@ -944,6 +1065,10 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 static void
 handle_focus_event_1 (struct frame *f, int in_p)
 {
+#ifdef HAVE_XIM
+  XIM_focus_event (f, in_p);
+#endif /* HAVE_XIM */
+
   /* On focus change, clear all memory of sticky modifiers
      to avoid non-intuitive behavior. */
   clear_sticky_modifiers (XDEVICE (FRAME_DEVICE (f)));
@@ -990,48 +1115,6 @@ emacs_Xt_handle_focus_event (XEvent *event)
        a frame is destroyed. */
     return;
   handle_focus_event_1 (f, event->type == FocusIn);
-}
-
-/* both MapNotify and VisibilityNotify can cause this
-   JV is_visible has the same semantics as f->visible*/
-static void
-change_frame_visibility (struct frame *f, int is_visible)
-{
-  Lisp_Object frame = Qnil;
-
-  XSETFRAME (frame, f);
-
-  if (!FRAME_VISIBLE_P (f) && is_visible)
-    {
-      FRAME_VISIBLE_P (f) = is_visible;
-      /* This improves the double flicker when uniconifying a frame
-	 some.  A lot of it is not showing a buffer which has changed
-	 while the frame was iconified.  To fix it further requires
-	 the good 'ol double redisplay structure. */
-      MARK_FRAME_WINDOWS_STRUCTURE_CHANGED (f);
-      va_run_hook_with_args (Qmap_frame_hook, 1, frame);
-#ifdef EPOCH
-      dispatch_epoch_event (f, event, Qx_map);
-#endif
-    }
-  else if (FRAME_VISIBLE_P (f) && !is_visible) 
-    {
-      FRAME_VISIBLE_P (f) = 0;
-      va_run_hook_with_args (Qunmap_frame_hook, 1, frame);
-#ifdef EPOCH
-      dispatch_epoch_event (f, event, Qx_unmap);
-#endif
-    }
-  else if (FRAME_VISIBLE_P (f) * is_visible < 0)
-    {
-      FRAME_VISIBLE_P(f) = - FRAME_VISIBLE_P(f);
-      if (FRAME_REPAINT_P(f))
-	      MARK_FRAME_WINDOWS_STRUCTURE_CHANGED (f);
-      va_run_hook_with_args (Qmap_frame_hook, 1, frame);
-#ifdef EPOCH
-      dispatch_epoch_event (f, event, Qx_map);
-#endif
-    }
 }
 
 static void
@@ -1090,14 +1173,34 @@ handle_map_event (struct frame *f, XEvent *event)
 	 rather than consulting some internal (and likely
 	 inaccurate) state flag.  Therefore, ignoring the MapNotify
 	 is correct. */
-      if (!FRAME_VISIBLE_P (f) && NILP (Fframe_iconified_p (frame)))
+      if (!f->visible && NILP (Fframe_iconified_p (frame)))
 #endif
-      change_frame_visibility (f, 1);
+      if (!f->visible)
+	{
+	  f->visible = 1;
+	  /* This improves the double flicker when uniconifying a frame
+	     some.  A lot of it is not showing a buffer which has changed
+	     while the frame was iconified.  To fix it further requires
+	     the good 'ol double redisplay structure. */
+	  MARK_FRAME_WINDOWS_STRUCTURE_CHANGED (f);
+	  va_run_hook_with_args (Qmap_frame_hook, 1, frame);
+#ifdef EPOCH
+	  dispatch_epoch_event (f, event, Qx_map);
+#endif
+	}
     }
   else
     {
       FRAME_X_TOTALLY_VISIBLE_P (f) = 0;
-      change_frame_visibility (f, 0);
+      if (f->visible)
+	{
+	  f->visible = 0;
+	  va_run_hook_with_args (Qunmap_frame_hook, 1, frame);
+#ifdef EPOCH
+	  dispatch_epoch_event (f, event, Qx_unmap);
+#endif
+	}
+
       /* Calling Fframe_iconified_p is the only way we have to
          correctly update FRAME_ICONIFIED_P */
       Fframe_iconified_p (frame);
@@ -1123,7 +1226,7 @@ handle_client_message (struct frame *f, XEvent *event)
 	 this is so that clicking on the close-box will make emacs prompt
 	 using a dialog box instead of the minibuffer if there are unsaved
 	 buffers.
-       */
+	 */
       enqueue_misc_user_event (frame, Qeval,
 			       list3 (Qdelete_frame, frame, Qt));
     }
@@ -1243,27 +1346,17 @@ emacs_Xt_handle_magic_event (struct Lisp_Event *emacs_event)
       break;
       
     case VisibilityNotify: /* window visiblity has changed */
-      if (event->xvisibility.window == XtWindow (FRAME_X_SHELL_WIDGET (f)))
-	{
-	  FRAME_X_TOTALLY_VISIBLE_P (f) =
-	    (event->xvisibility.state == VisibilityUnobscured);
-	  /* Note that the fvwm pager only sends VisibilityNotify when
-	     changing pages. Is this all we need to do ? JV */
-	  /* Nope.  We must at least trigger a redisplay here.  
-             Since this case seems similar to MapNotify, I've 
-             factored out some code to change_frame_visibility(). 
-	     This triggers the necessary redisplay and runs
-	     (un)map-frame-hook.  - dkindred@cs.cmu.edu */
-	  /* Changed it again to support the tristate visibility flag */
-	  change_frame_visibility (f, (event->xvisibility.state
-				       != VisibilityFullyObscured) ? 1 : -1);
-	}
+      if (event->xvisibility.state == VisibilityUnobscured)
+	FRAME_X_TOTALLY_VISIBLE_P (f) = 1;
+      else
+	FRAME_X_TOTALLY_VISIBLE_P (f) = 0;
       break;
       
     case ConfigureNotify:
 #ifdef HAVE_XIM
       XIM_SetGeometry (f);
 #endif
+#if 0
       /* ### If the following code fails to work, simply always call
          x_smash_bastardly_shell_position always.  In this case we no
          longer rely on the data in the events, merely on their
@@ -1281,6 +1374,7 @@ emacs_Xt_handle_magic_event (struct Lisp_Event *emacs_event)
           FRAME_X_SHELL_WIDGET (f)->core.y = ev->y;
         }
       }
+#endif
       break;
 
     default:
@@ -2521,6 +2615,11 @@ init_event_Xt_late (void) /* called when already initialized */
   completed_timeouts = 0;
 
   event_stream = Xt_event_stream;
+  
+#ifdef HAVE_XIM
+  Initialize_Locale();
+#endif /* HAVE_XIM */
+  
   XtToolkitInitialize ();
   Xt_app_con = XtCreateApplicationContext ();
   XtAppSetFallbackResources (Xt_app_con, (String *) x_fallback_resources);
@@ -2538,4 +2637,12 @@ init_event_Xt_late (void) /* called when already initialized */
 		         EmacsXtCvtStringToPixel,
 			 (XtConvertArgList) colorConvertArgs,
 			 2, XtCacheByDisplay, EmacsFreePixel);
+
+#ifdef XIM_XLIB
+  XtAppSetTypeConverter (Xt_app_con, XtRString, XtRXimStyles,
+		         EmacsXtCvtStringToXIMStyles,
+			 NULL, 0,
+			 XtCacheByDisplay, EmacsFreeXIMStyles);
+#endif /* XIM_XLIB */
+  
 }

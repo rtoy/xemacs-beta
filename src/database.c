@@ -71,7 +71,7 @@ struct database_struct
   XEMACS_DB_TYPE type;
   int mode;
   int ackcess;
-  int dberrno;
+  int errno;
   void *db_handle;
   DB_FUNCS *funcs;
 };
@@ -100,7 +100,7 @@ new_database (void)
   dbase->db_handle = NULL;
   dbase->ackcess = 0;
   dbase->mode = 0;
-  dbase->dberrno = 0;
+  dbase->errno = 0;
   dbase->type = DB_UNKNOWN;
   return (dbase);
 }
@@ -322,7 +322,7 @@ new_dbm_file (CONST char *file, Lisp_Object subtype, int ackcess, int mode)
 static Lisp_Object
 dbm_lasterr (struct database_struct *dbp)
 {
-  char *temp = strerror (dbp->dberrno);
+  char *temp = strerror (dbp->errno);
   return (make_string ((unsigned char *) temp, strlen (temp)));
 }
 
@@ -405,7 +405,7 @@ berkdb_open (CONST char *file, Lisp_Object subtype, int ackcess, int mode)
 static Lisp_Object
 berkdb_lasterr (struct database_struct *dbp)
 {
-  char *temp = strerror (dbp->dberrno);
+  char *temp = strerror (dbp->errno);
   return (make_string ((unsigned char *) temp, strlen (temp)));
 }
 
@@ -424,7 +424,7 @@ berkdb_get (struct database_struct *db, Lisp_Object key)
   if (!status)
     return (make_string (valdatum.data, valdatum.size));
 
-  db->dberrno = (status == 1) ? -1 : errno;
+  db->errno = (status == 1) ? -1 : errno;
   return (Qnil);
 }
 
@@ -444,7 +444,7 @@ berkdb_put (struct database_struct *db,
   valdatum.size = XSTRING_LENGTH (val);
   status = dbp->put (dbp, &keydatum, &valdatum, NILP (replace)
 		     ? R_NOOVERWRITE : 0);
-  db->dberrno = (status == 1) ? -1 : errno;
+  db->errno = (status == 1) ? -1 : errno;
   return status;
 }
 
@@ -462,7 +462,7 @@ berkdb_remove (struct database_struct *db, Lisp_Object key)
   if (!status)
     return 0;
   
-  db->dberrno = (status == 1) ? -1 : errno;
+  db->errno = (status == 1) ? -1 : errno;
   return 1;
 }
 
@@ -543,10 +543,8 @@ combination of 'r' 'w' and '+', for read, write, and creation flags.
   DB_FUNCS *funcblock;
   struct database_struct *dbase = NULL;
   void *db = NULL;
-  struct gcpro gcpro1;
 
-  GCPRO1 (file);
-  file = Fexpand_file_name (file, Qnil);
+  CHECK_STRING (file);
 
   if (NILP (ackcess))
     {
@@ -624,8 +622,6 @@ combination of 'r' 'w' and '+', for read, write, and creation flags.
   dbase->db_handle = db;
   dbase->funcs = funcblock;
   XSETDATABASE (retval, dbase);
-
-  UNGCPRO;
 
   return (retval);
 }

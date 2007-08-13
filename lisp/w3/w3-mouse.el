@@ -1,12 +1,11 @@
-;;; w3-menu.el --- Mouse specific functions for emacs-w3
+;;; w3-xemac.el --- XEmacs specific functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/03/23 03:08:58
-;; Version: 1.8
+;; Created: 1996/06/30 18:09:28
+;; Version: 1.2
 ;; Keywords: mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
 ;;; This file is part of GNU Emacs.
 ;;;
@@ -21,9 +20,8 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;;; Boston, MA 02111-1307, USA.
+;;; along with GNU Emacs; see the file COPYING.  If not, write to
+;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'w3-vars)
 
@@ -55,24 +53,21 @@ the mouse click, opening it in another frame."
 
 (defvar w3-mouse-button1 (cond
 			  ((and w3-running-xemacs (featurep 'mouse)) 'button1)
-			  (w3-running-xemacs nil)
+			  (w3-running-xemacs 'return)
 			  (t 'mouse-1)))
 (defvar w3-mouse-button2 (cond
 			  ((and w3-running-xemacs (featurep 'mouse)) 'button2)
-			  (w3-running-xemacs nil)
+			  (w3-running-xemacs 'return)
 			  (t 'mouse-2)))
 (defvar w3-mouse-button3 (cond
 			  ((and w3-running-xemacs (featurep 'mouse)) 'button3)
-			  (w3-running-xemacs nil) 
+			  (w3-running-xemacs (list 'meta ?`)) 
 			  (t 'mouse-3)))
 
-(if w3-mouse-button2
-    (define-key w3-mode-map (vector w3-mouse-button2) 'w3-widget-button-click))
-(if w3-mouse-button3
-    (define-key w3-mode-map (vector w3-mouse-button3) 'w3-popup-menu))
-(if w3-mouse-button2
-    (define-key w3-mode-map (vector (list 'shift w3-mouse-button2))
-      'w3-follow-mouse-other-frame))
+(define-key w3-mode-map (vector w3-mouse-button2) 'w3-widget-button-click)
+(define-key w3-mode-map (vector w3-mouse-button3) 'w3-popup-menu)
+(define-key w3-mode-map (vector (list 'shift w3-mouse-button2))
+  'w3-follow-mouse-other-frame)
 
 (define-key w3-netscape-emulation-minor-mode-map (vector w3-mouse-button1)
   'w3-widget-button-click)
@@ -81,9 +76,7 @@ the mouse click, opening it in another frame."
 
 (if w3-running-FSF19
     (progn
-      (define-key w3-mode-map [mouse-movement] 'w3-mouse-handler)
-      (if w3-popup-menu-on-mouse-3
-	  (define-key w3-mode-map [down-mouse-3] 'w3-popup-menu))))
-
+      (define-key w3-mode-map [down-mouse-3] 'w3-popup-menu)
+      (define-key w3-mode-map [mouse-movement] 'w3-mouse-handler)))
   
 (provide 'w3-mouse)

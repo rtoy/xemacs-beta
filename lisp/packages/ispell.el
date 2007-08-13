@@ -789,11 +789,8 @@ You can set this variable in hooks in your init file -- eg:
      (not (boundp 'epoch::version))
      (defalias 'ispell 'ispell-buffer))
 
-
-;; XEmacs: \M-$ for whatever reason, drives `make autoloads' bonkers
-
 ;;;###autoload
-(define-key global-map [(meta ?\$)] 'ispell-word)
+(define-key global-map "\M-$" 'ispell-word)
 
 ;;;###autoload
 (defun ispell-word (&optional following quietly continue)
@@ -1270,8 +1267,7 @@ SPC:   Accept word this time.
 	       (enlarge-window 2)
 	       ;; Make sure we display the minibuffer
 	       ;; in this window, not some other.
-	       (if (fboundp 'set-minibuffer-window)
-		   (set-minibuffer-window (selected-window)))
+	       (set-minibuffer-window (selected-window))
 	       (insert (concat help-1 "\n" help-2 "\n" help-3))))
 	(sit-for 5)
 	(erase-buffer)))))

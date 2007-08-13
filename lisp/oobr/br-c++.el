@@ -6,12 +6,12 @@
 ;; KEYWORDS:     c, oop, tools
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          InfoDock Associates
+;; ORG:          Motorola Inc.
 ;;
 ;; ORIG-DATE:     7-Dec-89
-;; LAST-MOD:     21-Feb-97 at 17:21:28 by Bob Weiner
+;; LAST-MOD:     21-Sep-95 at 12:28:56 by Bob Weiner
 ;;
-;; Copyright (C) 1989-1995, 1997  Free Software Foundation, Inc.
+;; Copyright (C) 1989-1995  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.

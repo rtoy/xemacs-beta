@@ -6,19 +6,19 @@
 ;; KEYWORDS:     c, oop, tools
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          InfoDock Associates
+;; ORG:          Motorola Inc.
 ;;
 ;; ORIG-DATE:    12-Dec-89
-;; LAST-MOD:     21-Feb-97 at 16:14:24 by Bob Weiner
+;; LAST-MOD:     20-Sep-95 at 14:18:40 by Bob Weiner
 ;;
-;; Copyright (C) 1989-1995, 1997  Free Software Foundation, Inc.
+;; Copyright (C) 1989-1995  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.
 ;;
 ;; DESCRIPTION:  
 ;;
-;;    Use `c++-browse' to invoke the C++ OO-Browser.  Prefix arg prompts for
+;;    Use 'c++-browse' to invoke the C++ OO-Browser.  Prefix arg prompts for
 ;;    name of Environment file.
 ;;
 ;; DESCRIP-END.
@@ -85,7 +85,7 @@ file name.  See also the file \"br-help\"."
 (fset 'c++-class-list-filter 'identity)
 
 (defun c++-mode-setup ()
-  "Load best available C++ major mode and set `br-lang-mode' to the function that invokes it."
+  "Load best available C++ major mode and set 'br-lang-mode' to the function that invokes it."
   (fset 'br-lang-mode
 	(cond ((or (featurep 'cc-mode) (featurep 'c++-mode))
 	       'c++-mode)

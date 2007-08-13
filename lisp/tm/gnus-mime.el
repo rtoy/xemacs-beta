@@ -1,10 +1,10 @@
 ;;; gnus-mime.el --- MIME extensions for Gnus
 
-;; Copyright (C) 1996,1997 Free Software Foundation, Inc.
+;; Copyright (C) 1996 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1996/8/6
-;; Version: $Revision: 1.7 $
+;; Version: $Revision: 1.1.1.1 $
 ;; Keywords: news, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is not part of GNU Emacs yet.
@@ -33,7 +33,7 @@
 ;;;
 
 (defconst gnus-mime-RCS-ID
-  "$Id: gnus-mime.el,v 1.7 1997/03/16 05:55:40 steve Exp $")
+  "$Id: gnus-mime.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $")
 
 (defconst gnus-mime-version
   (get-version-string gnus-mime-RCS-ID))
@@ -64,7 +64,36 @@ The function is called from the article buffer.")
 ;;;
 
 (require 'gnus)
+(autoload 'gnus-decode-rfc1522			"gnus-art-mime")
+(autoload 'gnus-article-preview-mime-message	"gnus-art-mime")
+(autoload 'gnus-article-decode-encoded-word	"gnus-art-mime")
+(autoload 'gnus-set-summary-default-charset	"gnus-sum-mime")
+;;(autoload 'gnus-get-newsgroup-headers		"gnus-sum-mime")
+;;(autoload 'gnus-get-newsgroup-headers-xover	"gnus-sum-mime")
 (require 'gnus-charset)
+
+
+;;; @ for tm-partial
+;;;
+
+(defun gnus-mime-partial-preview-function ()
+  (gnus-summary-preview-mime-message (gnus-summary-article-number))
+  )
+
+(call-after-loaded
+ 'tm-partial
+ (function
+  (lambda ()
+    (set-atype 'mime/content-decoding-condition
+	       '((type . "message/partial")
+		 (method . mime-article/grab-message/partials)
+		 (major-mode . gnus-original-article-mode)
+		 (summary-buffer-exp . gnus-summary-buffer)
+		 ))
+    (set-alist 'tm-partial/preview-article-method-alist
+	       'gnus-original-article-mode
+	       'gnus-mime-partial-preview-function)
+    )))
 
 
 ;;; @ end
@@ -72,16 +101,17 @@ The function is called from the article buffer.")
 
 (provide 'gnus-mime)
 
-(or gnus-is-red-gnus-or-later
-    (require 'gnus-mime-old)
-    )
-
-(call-after-loaded 'gnus-art (lambda ()
-			       (require 'gnus-art-mime)
-			       ))
-(call-after-loaded 'gnus-sum (lambda ()
-			       (require 'gnus-sum-mime)
-			       ))
+(if gnus-is-red-gnus-or-later
+    (progn
+      (call-after-loaded 'gnus-art (lambda ()
+				     (require 'gnus-art-mime)
+				     ))
+      (call-after-loaded 'gnus-sum (lambda ()
+				     (require 'gnus-sum-mime)
+				     ))
+      )
+  (require 'gnus-mime-old)
+  )
 
 (run-hooks 'gnus-mime-load-hook)
 

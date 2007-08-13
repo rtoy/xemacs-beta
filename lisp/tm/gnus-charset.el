@@ -5,7 +5,7 @@
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1996/8/6
 ;; Version:
-;;	$Id: gnus-charset.el,v 1.4 1997/03/16 05:55:40 steve Exp $
+;;	$Id: gnus-charset.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $
 ;; Keywords: news, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is not part of GNU Emacs yet.
@@ -83,50 +83,14 @@
   (call-after-loaded
    'nnheader
    (lambda ()
-     (defun nnheader-find-file-noselect (&rest args)
-       (as-binary-input-file
-        (let ((format-alist nil)
-              (auto-mode-alist (nnheader-auto-mode-alist))
-              (default-major-mode 'fundamental-mode)
-              (after-insert-file-functions ; for jam-code-guess
-               (if (memq 'jam-code-guess-after-insert-file-function
-                         after-insert-file-functions)
-                   '(jam-code-guess-after-insert-file-function))))
-          (apply 'find-file-noselect args)))
+     (defun nnheader-find-file-noselect (filename &optional nowarn rawfile)
+       (as-binary-input-file (find-file-noselect filename nowarn rawfile))
        )
-     ;; Red Gnus 0.67 or later
-     (defun nnheader-insert-file-contents
+     (defun nnheader-insert-file-contents-literally
        (filename &optional visit beg end replace)
        (as-binary-input-file
-        (let ((format-alist nil)
-              (auto-mode-alist (nnheader-auto-mode-alist))
-              (default-major-mode 'fundamental-mode)
-              (enable-local-variables nil)
-              (after-insert-file-functions ; for jam-code-guess
-               (if (memq 'jam-code-guess-after-insert-file-function
-                         after-insert-file-functions)
-                   '(jam-code-guess-after-insert-file-function))))
-          (insert-file-contents filename visit beg end replace))
-        )
-       ;; for gnspool on OS/2
-       (while (re-search-forward "\r$" nil t)
-	 (replace-match "")
-	 )
-       )
-     ;; imported from Red Gnus 0.66
-     (or (fboundp 'nnheader-auto-mode-alist)
-         (defun nnheader-auto-mode-alist ()
-           (let ((alist auto-mode-alist)
-                 out)
-             (while alist
-               (when (listp (cdar alist))
-                 (push (car alist) out))
-               (pop alist))
-             (nreverse out)))
-         )
-     ;; alias for Old Gnus
-     (defalias 'nnheader-insert-file-contents-literally
-       'nnheader-insert-file-contents)
+	(insert-file-contents-literally filename visit beg end replace)
+	))
      ))
   (call-after-loaded
    'nnmail
@@ -149,7 +113,7 @@
      ))
   (defun gnus-prepare-save-mail-function ()
     (setq file-coding-system *noconv*
-	  buffer-file-coding-system 'no-conversion)
+	  coding-system-for-write 'no-conversion)
     )
   (add-hook 'nnmail-prepare-save-mail-hook
 	    'gnus-prepare-save-mail-function)

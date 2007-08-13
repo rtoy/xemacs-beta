@@ -1399,10 +1399,7 @@ values.  For compatibility, (values A B C) is a synonym for (list A B C)."
   (cond ((eq (car-safe spec) 'special)
 	 (if (boundp 'byte-compile-bound-variables)
 	     (setq byte-compile-bound-variables
-		   ;; todo: this should compute correct binding bits vs. 0
-		   (append (mapcar #'(lambda (v) (cons v 0)) 
-				   (cdr spec))
-			   byte-compile-bound-variables))))
+		   (append (cdr spec) byte-compile-bound-variables))))
 
 	((eq (car-safe spec) 'inline)
 	 (while (setq spec (cdr spec))

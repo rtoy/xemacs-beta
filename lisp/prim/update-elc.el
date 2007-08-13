@@ -12,7 +12,7 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: Not in FSF.
@@ -48,11 +48,10 @@
     (progn
       (setq command-line-args
 	    (cons (car command-line-args)
-		  (append
-		   '("-l" "loadup-el.el" "run-temacs"
-		     "-batch" "-q" "-no-site-file"
-		     "-l" "bytecomp" "-f" "batch-byte-compile")
-		   update-elc-files-to-compile)))
+		  (append '("-l" "loadup-el.el" "run-temacs"
+			    "-batch" "-q" "-no-site-file" "-f"
+			    "batch-byte-compile")
+			  update-elc-files-to-compile)))
       (load "loadup-el.el")))
 
 (kill-emacs)

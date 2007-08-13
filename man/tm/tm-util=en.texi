@@ -1,0 +1,153 @@
+@c $Id: tm-util=en.texi,v 1.1.1.1 1996/12/18 22:43:52 steve Exp $
+
+@node customize, Bug report, encoded-word, Top
+@comment  node-name,  next,  previous,  up
+@chapter customize
+
+@menu
+* fields::
+* available functions::
+* example::
+@end menu
+
+@node fields, available functions, customize, customize
+@comment  node-name,  next,  previous,  up
+@section fields
+@cindex field-list
+@cindex field-regexp
+
+tm-view.el and tm-edit.el uses pair of @strong{field-list} and
+@strong{field-regexp} to display or choose fields of message header.
+
+tm has functions to set such pair.
+
+
+@defun tm:add-fields sym field-list &optional regexp-sym
+
+It adds @var{field-list} to field-list indicated by symbol @var{sym}.
+@end defun
+
+
+@defun tm:delete-fields sym field-list &optional regexp-sym
+
+It removes @var{field-list} from field-list indicated by symbol
+@var{sym}.
+@end defun
+
+
+@node available functions, example, fields, customize
+@comment  node-name,  next,  previous,  up
+@section available functions
+
+
+@defun add-path path &rest options
+
+It adds @var{path} to @code{load-path}.
+
+In default, it adds expanded path to top of @code{load-path} if there
+is @var{path} under @code{default-load-path}.
+
+If @code{'all-paths} is specified in @var{options}, it searches
+@var{path} from all of @code{load-path} instead of
+only @code{default-load-path}.
+
+If @code{'append} is specifies in @var{options}, it adds to end of
+@code{load-path}.
+@end defun
+
+
+@defun call-after-loaded module func &optional hook-name
+
+It calls function @var{func} if @var{module} is already provided.
+
+Otherwise, it add-hooks to @var{hook-name}.
+
+Default value of @var{hook-name} is @code{MODULE-load-hook}.
+@end defun
+
+
+@node example,  , available functions, customize
+@comment  node-name,  next,  previous,  up
+@section example
+
+@subsection message header display (1)
+
+If you would like to hide "Mail-From", "Expires", "Xref", "Approved",
+"Sender" and "X-.*" headers, please specify:
+
+@lisp
+(call-after-loaded
+ 'tm-view
+ (lambda ()
+   (tm:add-fields
+    'mime-viewer/ignored-field-list
+    '("Mail-From" "Expires" "Xref" "Approved" "Sender" "X-.*")
+     )))
+@end lisp
+
+@subsection message header display (2)
+
+If you want to display only "From", ".*To", "Subject", ".*Date" and
+"Newsgroups" , please specify:
+
+@lisp
+(setq mime-viewer/ignored-field-list '(".+"))
+(setq mime-viewer/visible-field-list
+      '("From" ".*To" "Subject" ".*Date" "Newsgroups"))
+@end lisp
+
+
+@subsection hilit19
+
+example to add faces using hilit19.
+
+@lisp
+(cond (window-system
+       (require 'hilit19)
+       (let* ((csubject-patterns '(("^\\[.+\\]$" nil msg-subject)))
+	      (header-patterns '(("^Subject:.*$" nil msg-subject)
+				 ("^From:.*$" nil msg-from)
+				 ("^--text follows this line--$"
+				  nil msg-separator)
+				 ("^[A-Za-z][A-Za-z0-9-]+:" nil msg-header)
+				 ))
+	      (body-patterns '(("^\\(In article\\|[ \t]*\\w*[]<>@}|]\\).*$"
+				nil msg-quote)))
+	      (message-patterns (append ;;csubject-patterns
+				 header-patterns
+				 body-patterns))
+	      )
+	 (hilit-set-mode-patterns 'msg-header header-patterns)
+	 (hilit-set-mode-patterns 'msg-body body-patterns)
+	 (hilit-set-mode-patterns 'mime/viewer-mode
+				  message-patterns
+				  'hilit-rehighlight-message)
+	 )
+       (add-hook 'mime-viewer/content-header-filter-hook
+		 (lambda ()
+		   (if (not (eq mime::preview/original-major-mode
+				'gnus-original-article-mode))
+		       (hilit-rehighlight-buffer-quietly)
+		     )))
+       (add-hook 'mime-viewer/plain-text-preview-hook
+		 (lambda ()
+		   (if (not (eq mime::preview/original-major-mode
+				'gnus-original-article-mode))
+		       (hilit-rehighlight-buffer-quietly)
+		     )))
+       ))
+@end lisp
+
+
+@subsection browse-url
+
+setting example for browse-url.el included in Gnus.
+
+@lisp
+(setq browse-url-browser-function
+      (if (eq window-system 'x)
+	  'browse-url-netscape
+	'browse-url-w3))
+(autoload browse-url-browser-function "browse-url"
+  "Ask a WWW browser to show a URL." t)
+@end lisp

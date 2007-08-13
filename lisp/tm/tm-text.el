@@ -8,7 +8,7 @@
 ;;;
 ;;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;;; Version:
-;;;	$Id: tm-text.el,v 1.3 1996/12/29 00:15:15 steve Exp $
+;;;	$Id: tm-text.el,v 1.1.1.1 1996/12/18 22:43:37 steve Exp $
 ;;; Keywords: mail, news, MIME, multimedia, text
 ;;;
 ;;; This file is part of tm (Tools for MIME).

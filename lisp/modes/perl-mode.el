@@ -34,7 +34,7 @@
 ;; To enter perl-mode automatically, add (autoload 'perl-mode "perl-mode")
 ;; to your .emacs file and change the first line of your perl script to:
 ;; #!/usr/bin/perl --	 # -*-Perl-*-
-;; With arguments to perl:
+;; With argments to perl:
 ;; #!/usr/bin/perl -P-	 # -*-Perl-*-
 ;; To handle files included with do 'filename.pl';, add something like
 ;; (setq auto-mode-alist (append (list (cons "\\.pl\\'" 'perl-mode))
@@ -708,6 +708,4 @@ With argument, repeat that many times; negative args move backward."
   (perl-beginning-of-function)
   (backward-paragraph))
 
-(provide 'perl-mode)
-
-;;; perl-mode.el ends here
+;;;;;;;; That's all, folks! ;;;;;;;;;

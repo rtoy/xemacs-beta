@@ -57,6 +57,9 @@ Boston, MA 02111-1307, USA.  */
 #include "toolbar.h"
 #include "window.h"
 
+#ifdef MULE
+#include "mule-coding.h"
+#endif
 
 /* Note: We have to be careful throughout this code to properly handle
    and differentiate between Bufbytes and Emchars.
@@ -105,10 +108,6 @@ typedef struct position_redisplay_data_type
 			       Used to optimize some lookups -- we
 			       only have to do some things when
 			       the charset changes. */
-  face_index last_findex;   /* The face index of the previous character.
-			       Needed to ensure the validity of the
-			       last_charset optimization. */
-  
   int last_char_width;	/* The width of the previous character. */
   int font_is_bogus;	/* If true, it means we couldn't instantiate
 			   the font for this charset, so we substitute
@@ -277,8 +276,8 @@ static void create_right_glyph_block (struct window *w,
 				      struct display_line *dl);
 static void regenerate_window (struct window *w, Bufpos start_pos,
 			       Bufpos point, int type);
-static Bufpos regenerate_window_point_center (struct window *w, Bufpos point,
-					      int type);
+static void regenerate_window_point_center (struct window *w, Bufpos point,
+					    int type);
 int window_half_pixpos (struct window *w);
 int line_at_center (struct window *w, int type, Bufpos start, Bufpos point);
 Bufpos point_at_center (struct window *w, int type, Bufpos start,
@@ -465,7 +464,6 @@ Lisp_Object Qredisplay_end_trigger_functions, Vredisplay_end_trigger_functions;
 #ifndef INHIBIT_REDISPLAY_HOOKS
 /* #### Chuck says: I think this needs more thought.
    Think about this for 19.14. */
-/* 19.16:  We're still thinking, I guess.  -slb */
 Lisp_Object Vpre_redisplay_hook, Vpost_redisplay_hook;
 Lisp_Object Qpre_redisplay_hook, Qpost_redisplay_hook;
 #endif
@@ -479,7 +477,6 @@ Lisp_Object Vminimum_line_ascent, Vminimum_line_descent;
 Lisp_Object Vuse_left_overflow, Vuse_right_overflow;
 Lisp_Object Vtext_cursor_visible_p;
 
-int column_number_start_at_one;
 
 /***************************************************************************/
 /*									   */
@@ -852,8 +849,7 @@ add_emchar_rune (pos_data *data)
   else
     {
       Lisp_Object charset = CHAR_CHARSET (data->ch);
-      if (!EQ (charset, data->last_charset) ||
-	  data->findex != data->last_findex)
+      if (!EQ (charset, data->last_charset))
 	{
 	  /* OK, we need to do things the hard way. */
 	  struct window *w = XWINDOW (data->window);
@@ -879,8 +875,6 @@ add_emchar_rune (pos_data *data)
 	    data->last_char_width = -1;
 	  data->new_ascent  = max (data->new_ascent,  (int) fi->ascent);
 	  data->new_descent = max (data->new_descent, (int) fi->descent);
-	  data->last_charset = charset;
-	  data->last_findex = data->findex;
 	}
 
       width = data->last_char_width;
@@ -1880,7 +1874,6 @@ create_text_block (struct window *w, struct display_line *dl,
   data.bi_bufpos = bi_start_pos;
   data.pixpos = dl->bounds.left_in;
   data.last_charset = Qunbound;
-  data.last_findex = DEFAULT_INDEX;
   data.result_str = Qnil;
 
   /* Set the right boundary adjusting it to take into account any end
@@ -1904,10 +1897,7 @@ create_text_block (struct window *w, struct display_line *dl,
     }
   else if (MINI_WINDOW_P (w) && !active_minibuffer)
     data.cursor_type = NO_CURSOR;
-  else if (w == XWINDOW (FRAME_SELECTED_WINDOW (f)) &&
-	   EQ(DEVICE_CONSOLE(d), Vselected_console) &&
-	   d == XDEVICE(CONSOLE_SELECTED_DEVICE(XCONSOLE(DEVICE_CONSOLE(d))))&&
-	   f == XFRAME(DEVICE_SELECTED_FRAME(d)))
+  else if (w == XWINDOW (FRAME_SELECTED_WINDOW (device_selected_frame (d))))
     {
       data.bi_cursor_bufpos = BI_BUF_PT (b);
       data.cursor_type = CURSOR_ON;
@@ -2428,7 +2418,7 @@ done:
 	      /* If the cursor is past the truncation line then we
                  make it appear on the truncation glyph.  If we've hit
                  the end of the buffer then we also make the cursor
-                 appear unless eob is immediately preceded by a
+                 appear unless eob is immediately preceeded by a
                  newline.  In that case the cursor should actually
                  appear on the next line. */
 	      if (data.cursor_type == CURSOR_ON 
@@ -2650,7 +2640,6 @@ create_overlay_glyph_block (struct window *w, struct display_line *dl)
   data.cursor_x = -1;
   data.findex = DEFAULT_INDEX;
   data.last_charset = Qunbound;
-  data.last_findex = DEFAULT_INDEX;
   data.result_str = Qnil;
 
   Dynarr_reset (data.db->runes);
@@ -3578,7 +3567,6 @@ generate_formatted_string_db (Lisp_Object format_str, Lisp_Object result_str,
   data.max_pixpos = max_pixpos;
   data.cursor_type = NO_CURSOR;
   data.last_charset = Qunbound;
-  data.last_findex = DEFAULT_INDEX;
   data.result_str = result_str;
   data.is_modeline = 1;
   XSETWINDOW (data.window, w);
@@ -4788,10 +4776,9 @@ regenerate_window_incrementally (struct window *w, Bufpos startp,
 }
 
 /* Given a window and a point, update the given display lines such
-   that point is displayed in the middle of the window. 
-   Return the window's new start position. */
+   that point is displayed in the middle of the window. */
 
-static Bufpos
+static void
 regenerate_window_point_center (struct window *w, Bufpos point, int type)
 {
   Bufpos startp;
@@ -4804,7 +4791,7 @@ regenerate_window_point_center (struct window *w, Bufpos point, int type)
   regenerate_window (w, startp, point, type);
   Fset_marker (w->start[type], make_int (startp), w->buffer);
 
-  return startp;
+  return;
 }
 
 /* Given a window and a set of display lines, return a boolean
@@ -4926,8 +4913,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
   int echo_active = 0;
   int startp = 1;
   int pointm;
-  int selected_in_its_frame;
-  int selected_globally;
+  int selected;
   int skip_output = 0;
   int truncation_changed;
   int inactive_minibuffer =
@@ -4954,13 +4940,9 @@ redisplay_window (Lisp_Object window, int skip_selected)
     }
 
   /* Is this window the selected window on its frame? */
-  selected_in_its_frame = (w == XWINDOW (FRAME_SELECTED_WINDOW (f)));
-  selected_globally =
-      selected_in_its_frame &&
-      EQ(DEVICE_CONSOLE(d), Vselected_console) &&
-      XDEVICE(CONSOLE_SELECTED_DEVICE(XCONSOLE(DEVICE_CONSOLE(d)))) == d &&
-      XFRAME(DEVICE_SELECTED_FRAME(d)) == f;
-  if (skip_selected && selected_in_its_frame)
+  selected =
+    (w == XWINDOW (FRAME_SELECTED_WINDOW (device_selected_frame (d))));
+  if (skip_selected && selected)
     return;
 
   /* It is possible that the window is not fully initialized yet. */
@@ -4979,7 +4961,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
     pointm = 1;
   else
     {
-      if (selected_globally)
+      if (selected)
 	{
 	  pointm = BUF_PT (b);
 	}
@@ -5016,7 +4998,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
   if (!MINI_WINDOW_P (w)
       && !EQ (Fmarker_buffer (w->start[CURRENT_DISP]), w->buffer))
     {
-      startp = regenerate_window_point_center (w, pointm, DESIRED_DISP);
+      regenerate_window_point_center (w, pointm, DESIRED_DISP);
 
       goto regeneration_done;
     }
@@ -5051,7 +5033,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
 	{
 	  pointm = point_at_center (w, DESIRED_DISP, 0, 0);
 
-	  if (selected_globally)
+	  if (selected)
 	    BUF_SET_PT (b, pointm);
 
 	  Fset_marker (w->pointm[DESIRED_DISP], make_int (pointm),
@@ -5079,7 +5061,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
       /* Check if the cursor has actually moved. */
       if (EQ (Fmarker_buffer (w->last_point[CURRENT_DISP]), w->buffer)
 	  && pointm == marker_position (w->last_point[CURRENT_DISP])
-	  && selected_globally
+	  && selected
 	  && !w->windows_changed
 	  && !f->clip_changed
 	  && !f->extents_changed
@@ -5119,7 +5101,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
 		      goto regeneration_done;
 		    }
 		}
-	      else if (!selected_in_its_frame && !f->point_changed)
+	      else if (!selected && !f->point_changed)
 		{
 		  if (f->modeline_changed)
 		    regenerate_modeline (w);
@@ -5150,7 +5132,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
 	       startp < marker_position (w->last_start[CURRENT_DISP]))
 	   || (startp == BUF_ZV (b)))
     {
-      startp = regenerate_window_point_center (w, pointm, DESIRED_DISP);
+      regenerate_window_point_center (w, pointm, DESIRED_DISP);
 
       goto regeneration_done;
     }
@@ -5188,9 +5170,11 @@ redisplay_window (Lisp_Object window, int skip_selected)
      back onto the screen. */
   if (scroll_step)
     {
-      startp = vmotion (w, startp,
+      Bufpos bufpos;
+
+      bufpos = vmotion (w, startp,
 			(pointm < startp) ? -scroll_step : scroll_step, 0);
-      regenerate_window (w, startp, pointm, DESIRED_DISP);
+      regenerate_window (w, bufpos, pointm, DESIRED_DISP);
 
       if (point_visible (w, pointm, DESIRED_DISP))
 	goto regeneration_done;
@@ -5198,7 +5182,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
 
   /* We still haven't managed to get the screen drawn with point on
      the screen, so just center it and be done with it. */
-  startp = regenerate_window_point_center (w, pointm, DESIRED_DISP);
+  regenerate_window_point_center (w, pointm, DESIRED_DISP);
 
 
 regeneration_done:
@@ -5262,7 +5246,7 @@ reset_buffer_changes (void)
     {
       struct frame *f = XFRAME (XCAR (frmcons));
 
-      if (FRAME_REPAINT_P (f))
+      if (FRAME_VISIBLE_P (f))
 	map_windows (f, reset_buffer_changes_mapfun, 0);
     }
 }
@@ -5467,7 +5451,7 @@ redisplay_device (struct device *d)
   if (f->icon_changed || f->windows_changed)
     update_frame_icon (f);
 
-  if (FRAME_REPAINT_P (f))
+  if (FRAME_VISIBLE_P (f))
     {
       if (f->buffers_changed || f->clip_changed || f->extents_changed
 	  || f->faces_changed || f->frame_changed || f->menubar_changed
@@ -5501,7 +5485,7 @@ redisplay_device (struct device *d)
       if (f->icon_changed || f->windows_changed)
 	update_frame_icon (f);
 
-      if (FRAME_REPAINT_P (f))
+      if (FRAME_VISIBLE_P (f))
 	{
 	  if (f->buffers_changed || f->clip_changed || f->extents_changed
 	      || f->faces_changed || f->frame_changed || f->menubar_changed
@@ -5673,10 +5657,7 @@ window_line_number (struct window *w, int type)
   struct device *d = XDEVICE (XFRAME (w->frame)->device);
   struct buffer *b = XBUFFER (w->buffer);
   Bufpos end =
-    (((w == XWINDOW (FRAME_SELECTED_WINDOW (device_selected_frame (d)))) &&
-      EQ(DEVICE_CONSOLE(d), Vselected_console) &&
-      XDEVICE(CONSOLE_SELECTED_DEVICE(XCONSOLE(DEVICE_CONSOLE(d)))) == d &&
-      EQ(DEVICE_SELECTED_FRAME(d), w->frame))
+    ((w == XWINDOW (FRAME_SELECTED_WINDOW (device_selected_frame (d))))
      ? BUF_PT (b)
      : marker_position (w->pointm[type]));
   int lots = 999999999;
@@ -5722,7 +5703,7 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
       /* print the current column */
     case 'c':
       {
-	int col = current_column (b) + (column_number_start_at_one != 0);
+	int col = current_column (b);
 	int temp = col;
 	int size = 2;
 	char *buf;
@@ -5742,6 +5723,21 @@ decode_mode_spec (struct window *w, Emchar spec, int type)
 	goto decode_mode_spec_done;
       }
 
+#ifdef MULE
+      /* print the file coding system */
+    case 'C':
+      {
+        Lisp_Object codesys = b->file_coding_system;
+        /* Be very careful here not to get an error. */
+	if (NILP (codesys) || SYMBOLP (codesys) || CODING_SYSTEMP (codesys))
+          {
+            codesys = Ffind_coding_system (codesys);
+	    if (CODING_SYSTEMP (codesys))
+              obj = Fcoding_system_property (codesys, Qmnemonic);
+          }
+      }
+      break;
+#endif
 
       /* print the current line number */
     case 'l':
@@ -6646,8 +6642,7 @@ start_with_line_at_pixpos (struct window *w, Bufpos point, int pixpos)
 {
   struct buffer *b = XBUFFER (w->buffer);
   int cur_elt;
-  Bufpos cur_pos, prev_pos = point;
-  int point_line_height;
+  Bufpos cur_pos;
   int pixheight = pixpos - WINDOW_TEXT_TOP (w);
 
   validate_line_start_cache (w);
@@ -6657,9 +6652,6 @@ start_with_line_at_pixpos (struct window *w, Bufpos point, int pixpos)
   /* #### See comment in update_line_start_cache about big minibuffers. */
   if (cur_elt < 0)
     return point;
-
-  point_line_height = Dynarr_atp (w->line_start_cache, cur_elt)->height;
-
   while (1)
     {
       cur_pos = Dynarr_atp (w->line_start_cache, cur_elt)->start;
@@ -6671,12 +6663,7 @@ start_with_line_at_pixpos (struct window *w, Bufpos point, int pixpos)
       if (pixheight < 0)
 	{
 	  w->line_cache_validation_override--;
-	  if (-pixheight > point_line_height)
-	    /* We can't make the target line cover pixpos, so put it
-	       above pixpos.  That way it will at least be visible. */
-	    return prev_pos;  
-	  else
-	    return cur_pos;
+	  return cur_pos;
 	}
 
       cur_elt--;
@@ -6702,7 +6689,6 @@ start_with_line_at_pixpos (struct window *w, Bufpos point, int pixpos)
 	  cur_elt = point_in_line_start_cache (w, cur_pos, 2) - 1;
 	  assert (cur_elt >= 0);
 	}
-      prev_pos = cur_pos;
     }
 }
 
@@ -7530,7 +7516,7 @@ pixel_to_glyph_translation (struct frame *f, int x_coord, int y_coord,
 		      else
 			*closest =
 			  Dynarr_atp (db->runes,
-				      Dynarr_length (db->runes) - 2)->bufpos;
+				      Dynarr_length (db->runes) - 1)->bufpos;
 		    }
 
 		  if (dl->modeline)
@@ -7760,7 +7746,7 @@ Ensure that all minibuffers are correctly showing the echo area.
 	{
 	  struct frame *f = XFRAME (XCAR (frmcons));
 
-	  if (FRAME_REPAINT_P (f) && FRAME_HAS_MINIBUF_P (f))
+	  if (FRAME_VISIBLE_P (f) && FRAME_HAS_MINIBUF_P (f))
 	    {
 	      Lisp_Object window = FRAME_MINIBUF_WINDOW (f);
 	      redisplay_window (window, 0);
@@ -7844,7 +7830,7 @@ Normally, redisplay is preempted as normal if input arrives.  However,
 if optional second arg NO-PREEMPT is non-nil, redisplay will not stop for
 input and is guaranteed to proceed to completion.
 */
-       (device, no_preempt))
+     (device, no_preempt))
 {
   struct device *d = decode_device (device);
   Lisp_Object frmcons;
@@ -7910,7 +7896,7 @@ DEFUN ("force-cursor-redisplay", Fforce_cursor_redisplay, 0, 1, 0, /*
 Force an immediate update of the cursor on FRAME.
 FRAME defaults to the selected frame if omitted.
 */
-       (frame))
+  (frame))
 {
   redisplay_redraw_cursor (decode_frame (frame), 1);
   return Qnil;
@@ -8221,9 +8207,11 @@ It is up to you to set this variable if your terminal can do that.
 */ );
   no_redraw_on_reenter = 0;
 
+  /* #### This should be removed in 19.14 */
   DEFVAR_LISP ("window-system", &Vwindow_system /*
 A symbol naming the window-system under which Emacs is running,
 such as `x', or nil if emacs is running on an ordinary terminal.
+This variable is OBSOLETE and will be removed in a future version.
 */ );
   Vwindow_system = Qnil;
 
@@ -8310,11 +8298,6 @@ is not valid when these functions are called.
 See `set-window-redisplay-end-trigger'.
 */ );
   Vredisplay_end_trigger_functions = Qnil;
-
-  DEFVAR_BOOL ("column-number-start-at-one", &column_number_start_at_one /*
-Non-nil means column display number starts at 1.
-*/ );
-  column_number_start_at_one = 1;
 }
 
 void
@@ -8414,5 +8397,4 @@ This is a specifier; use `set-specifier' to change it.
 				      text_cursor_visible_p),
 			 text_cursor_visible_p_changed,
 			 0, 0);
-
 }

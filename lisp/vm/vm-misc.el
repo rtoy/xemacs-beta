@@ -1,5 +1,5 @@
 ;;; Miscellaneous functions for VM
-;;; Copyright (C) 1989-1997 Kyle E. Jones
+;;; Copyright (C) 1989, 1990, 1991, 1993, 1994 Kyle E. Jones
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -70,106 +70,27 @@ The new version of the list, minus the deleted strings, is returned."
 		      (if (or (null (string-match "^[\t\f\n\r ]+$" s))
 			      (not (string= s "")))
 			  (setq list (cons s list)))
-		      (skip-chars-forward ",\t\f\n\r ")
+		      (forward-char 1)
+		      (skip-chars-forward "\t\f\n\r ")
 		      (setq start (point)))
 		     ((= char ?\")
+		      (forward-char 1)
 		      (re-search-forward "[^\\]\"" nil 0))
 		     ((= char ?\()
 		      (let ((parens 1))
 			(forward-char 1)
 			(while (and (not (eobp)) (not (zerop parens)))
-			  (re-search-forward "[()]" nil 0)
-			  (cond ((or (eobp)
-				     (= (char-after (- (point) 2)) ?\\)))
+			  (re-search-forward "[^\\][()]" nil 0)
+			  (cond ((eobp))
 				((= (preceding-char) ?\()
 				 (setq parens (1+ parens)))
-				(t
+				((= (preceding-char) ?\))
 				 (setq parens (1- parens)))))))))
 	     (setq s (buffer-substring start (point)))
 	     (if (and (null (string-match "^[\t\f\n\r ]+$" s))
 		      (not (string= s "")))
 		 (setq list (cons s list)))
 	     (nreverse list)) ; jwz: fixed order
-	(and work-buffer (kill-buffer work-buffer)))))))
-
-(defun vm-parse-structured-header (string &optional sepchar keep-quotes)
-  (if (null string)
-      ()
-    (let ((work-buffer nil))
-      (save-excursion
-       (unwind-protect
-	   (let ((list nil)
-		 (nonspecials "^\"\\( \t\n\r\f")
-		 start s char sp+sepchar)
-	     (if sepchar
-		 (setq nonspecials (concat nonspecials (list sepchar))
-		       sp+sepchar (concat "\t\f\n\r " (list sepchar))))
-	     (setq work-buffer (generate-new-buffer "*vm-work*"))
-	     (buffer-disable-undo work-buffer)
-	     (set-buffer work-buffer)
-	     (insert string)
-	     (goto-char (point-min))
-	     (skip-chars-forward "\t\f\n\r ")
-	     (setq start (point))
-	     (while (not (eobp))
-	       (skip-chars-forward nonspecials)
-	       (setq char (following-char))
-	       (cond ((looking-at "[ \t\n\r\f]")
-		      (delete-char 1))
-		     ((= char ?\\)
-		      (forward-char 1)
-		      (if (not (eobp))
-			  (forward-char 1)))
-		     ((and sepchar (= char sepchar))
-		      (setq s (buffer-substring start (point)))
-		      (if (or (null (string-match "^[\t\f\n\r ]+$" s))
-			      (not (string= s "")))
-			  (setq list (cons s list)))
-		      (skip-chars-forward sp+sepchar)
-		      (setq start (point)))
-		     ((looking-at " \t\n\r\f")
-		      (skip-chars-forward " \t\n\r\f"))
-		     ((= char ?\")
-		      (let ((done nil))
-			(if keep-quotes
-			    (forward-char 1)
-			  (delete-char 1))
-			(while (not done)
-			  (if (null (re-search-forward "[\\\"]" nil t))
-			      (setq done t)
-			    (setq char (char-after (1- (point))))
-			    (cond ((char-equal char ?\\)
-				   (delete-char -1)
-				   (if (eobp)
-				       (setq done t)
-				     (forward-char 1)))
-				  (t (if (not keep-quotes)
-					 (delete-char -1))
-				     (setq done t)))))))
-		     ((= char ?\()
-		      (let ((done nil)
-			    (pos (point))
-			    (parens 1))
-			(forward-char 1)
-			(while (not done)
-			  (if (null (re-search-forward "[\\()]" nil t))
-			      (setq done t)
-			    (setq char (char-after (1- (point))))
-			    (cond ((char-equal char ?\\)
-				   (if (eobp)
-				       (setq done t)
-				     (forward-char 1)))
-				  ((char-equal char ?\()
-				   (setq parens (1+ parens)))
-				  (t
-				   (setq parens (1- parens)
-					 done (zerop parens))))))
-			(delete-region pos (point))))))
-	     (setq s (buffer-substring start (point)))
-	     (if (and (null (string-match "^[\t\f\n\r ]+$" s))
-		      (not (string= s "")))
-		 (setq list (cons s list)))
-	     (nreverse list))
 	(and work-buffer (kill-buffer work-buffer)))))))
 
 (defun vm-write-string (where string)
@@ -184,12 +105,6 @@ The new version of the list, minus the deleted strings, is returned."
 	    (setq temp-buffer (generate-new-buffer "*vm-work*"))
 	    (set-buffer temp-buffer)
 	    (insert string)
-	    ;; correct for VM's uses of this function---
-	    ;; writing out message separators
-	    (setq buffer-file-type nil)
-	    ;; Tell XEmacs/MULE to pick the correct newline conversion.
-	    (and vm-xemacs-mule-p
-		 (set-file-coding-system 'no-conversion nil))
 	    (write-region (point-min) (point-max) where t 'quiet))
 	(and temp-buffer (kill-buffer temp-buffer))))))
 
@@ -217,13 +132,6 @@ The new version of the list, minus the deleted strings, is returned."
 	   (vm-set-su-end-of (car mp) nil)
 	   (setq mp (cdr mp))))))
 
-(defun vm-check-for-killed-presentation ()
-  (and (bufferp vm-presentation-buffer-handle)
-       (null (buffer-name vm-presentation-buffer-handle))
-       (progn
-	 (setq vm-presentation-buffer-handle nil
-	       vm-presentation-buffer nil))))
-
 (defun vm-check-for-killed-folder ()
   (and (bufferp vm-mail-buffer) (null (buffer-name vm-mail-buffer))
        (setq vm-mail-buffer nil)))
@@ -232,8 +140,8 @@ The new version of the list, minus the deleted strings, is returned."
   '(while vm-folder-read-only
      (signal 'folder-read-only (list (current-buffer)))))
 
-(put 'folder-read-only 'error-conditions '(folder-read-only error))
-(put 'folder-read-only 'error-message "Folder is read-only")
+;; XEmacs change
+(define-error 'folder-read-only "Folder is read-only")
 
 (defmacro vm-error-if-virtual-folder ()
   '(and (eq major-mode 'vm-virtual-mode)
@@ -298,10 +206,10 @@ The new version of the list, minus the deleted strings, is returned."
 			      (make-list (- length vlength) fill)))
       vector )))
 
-(defun vm-obarray-to-string-list (blobarray)
+(defun vm-obarray-to-string-list (obarray)
   (let ((list nil))
     (mapatoms (function (lambda (s) (setq list (cons (symbol-name s) list))))
-	      blobarray)
+	      obarray)
     list ))
 
 (defun vm-mapcar (function &rest lists)
@@ -330,15 +238,6 @@ The new version of the list, minus the deleted strings, is returned."
 	(setq prev p p (cdr p))))
     list ))
 
-(defun vm-delete-directory-file-names (list)
-  (vm-delete 'file-directory-p list))
-
-(defun vm-delete-backup-file-names (list)
-  (vm-delete 'backup-file-name-p list))
-
-(defun vm-delete-auto-save-file-names (list)
-  (vm-delete 'auto-save-file-name-p list))
-
 (defun vm-delete-duplicates (list &optional all hack-addresses)
   "Delete duplicate equivalent strings from the list.
 If ALL is t, then if there is more than one occurrence of a string in the list,
@@ -355,7 +254,6 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	    (if hack-addresses
 		(nth 1 (funcall vm-chop-full-name-function (car list)))
 	      (car list))
-	    sym-string (or sym-string "-unparseable-garbage-")
 	    sym (intern sym-string hashtable))
       (if (boundp sym)
 	  (and all (setcar (symbol-value sym) nil))
@@ -394,11 +292,9 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
       (set-buffer buffer)
       (vm-mapc 'set variables values))))
 
-(put 'folder-empty 'error-conditions '(folder-empty error))
-(put 'folder-empty 'error-message "Folder is empty")
-(put 'unrecognized-folder-type 'error-conditions
-     '(unrecognized-folder-type error))
-(put 'unrecognized-folder-type 'error-message "Unrecognized folder type")
+;; XEmacs change
+(define-error 'folder-empty  "Folder is empty")
+(define-error 'unrecognized-folder-type "Unrecognized folder type")
 
 (defun vm-error-if-folder-empty ()
   (while (null vm-message-list)
@@ -420,43 +316,40 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	   return-value ))
 	((vectorp object) (apply 'vector (mapcar 'vm-copy object)))
 	((stringp object) (copy-sequence object))
-	((markerp object) (copy-marker object))
 	(t object)))
 
-(defun vm-multiple-frames-possible-p () 
-  (cond (vm-xemacs-p 
-	 (or (memq 'win (device-matching-specifier-tag-list))
-	     (featurep 'tty-frames)))
-        (vm-fsfemacs-19-p 
-         (fboundp 'make-frame))))
- 
-(defun vm-mouse-support-possible-p () 
-  (cond (vm-xemacs-p 
-         (featurep 'window-system)) 
-        (vm-fsfemacs-19-p 
-         (fboundp 'track-mouse))))
- 
-(defun vm-mouse-support-possible-here-p ()
-  (cond (vm-xemacs-p
-	 (memq 'win (device-matching-specifier-tag-list)))
-	(vm-fsfemacs-19-p
-	 (eq window-system 'x))))
+(defun vm-xemacs-p ()
+  (let ((case-fold-search nil))
+    (string-match "XEmacs" emacs-version)))
+
+(defun vm-fsfemacs-19-p ()
+  (and (string-match "^19" emacs-version)
+       (not (string-match "XEmacs\\|Lucid" emacs-version))))
+
+;; make-frame might be defined and still not work.  This would
+;; be true since the user could be running on a tty and using
+;; XEmacs 19.12, or using FSF Emacs 19.28 (or prior FSF Emacs versions).
+;;
+;; make-frame works on ttys in FSF Emacs 19.29, but other than
+;; looking at the version number I don't know a sane way to
+;; test for it without just running make-frame.  I'll just
+;; let it not work for now... someone will complain eventually
+;; and I'll think of something.
+(defun vm-multiple-frames-possible-p ()
+  (or (and (boundp 'window-system) (not (eq window-system nil)))
+      (and (fboundp 'device-type) (eq (device-type) 'x))))
+
+(defun vm-mouse-support-possible-p ()
+  (vm-multiple-frames-possible-p))
 
 (defun vm-menu-support-possible-p ()
-  (cond (vm-xemacs-p
-	 (featurep 'menubar))
-	(vm-fsfemacs-19-p
-	 (fboundp 'menu-bar-mode))))
- 
-(defun vm-toolbar-support-possible-p ()
-  (and vm-xemacs-p (featurep 'toolbar)))
+  (or (and (boundp 'window-system) (eq window-system 'x))
+      (and (fboundp 'device-type) (eq (device-type) 'x))))
 
-(defun vm-multiple-fonts-possible-p ()
-  (cond (vm-xemacs-p
-	 (eq (device-type) 'x))
-	(vm-fsfemacs-19-p
-	 (or (eq window-system 'x)
-	     (eq window-system 'win32)))))
+(defun vm-toolbar-support-possible-p ()
+  (and (vm-xemacs-p)
+       (vm-multiple-frames-possible-p)
+       (featurep 'toolbar)))
 
 (defun vm-run-message-hook (message &optional hook-variable)
   (save-excursion
@@ -472,10 +365,9 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
       (apply function args)
     (error nil)))
 
-(put 'beginning-of-folder 'error-conditions '(beginning-of-folder error))
-(put 'beginning-of-folder 'error-message "Beginning of folder")
-(put 'end-of-folder 'error-conditions '(end-of-folder error))
-(put 'end-of-folder 'error-message "End of folder")
+;; XEmacs change
+(define-error 'beginning-of-folder "Beginning of folder")
+(define-error 'end-of-folder "End of folder")
 
 (defun vm-trace (&rest args)
   (save-excursion
@@ -503,15 +395,13 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	;; save this work so we won't have to do it again
 	(setq vm-sortable-date-alist
 	      (cons (cons string
-			  (condition-case nil
-			      (timezone-make-date-sortable
-			       (format "%s %s %s %s %s"
-				       (aref vect 1)
-				       (aref vect 2)
-				       (aref vect 3)
-				       (aref vect 4)
-				       (aref vect 5)))
-			    (error "1970010100:00:00")))
+			  (timezone-make-date-sortable
+			   (format "%s %s %s %s %s"
+				   (aref vect 1)
+				   (aref vect 2)
+				   (aref vect 3)
+				   (aref vect 4)
+				   (aref vect 5))))
 		    vm-sortable-date-alist))
 	;; return result
 	(cdr (car vm-sortable-date-alist)))))
@@ -567,8 +457,16 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	   (get-file-buffer (file-truename file)))))
 
 (defun vm-set-region-face (start end face)
-  (let ((e (vm-make-extent start end)))
-    (vm-set-extent-property e 'face face)))
+  (cond ((fboundp 'make-overlay)
+	 (let ((o (make-overlay start end)))
+	   (overlay-put o 'face face)))
+	((fboundp 'make-extent)
+	 (let ((o (make-extent start end)))
+	   (set-extent-property o 'face face)))))
+
+(defun vm-unsaved-message (&rest args)
+  (let ((message-log-max nil))
+    (apply (function message) args)))
 
 (defun vm-default-buffer-substring-no-properties (beg end &optional buffer)
   (let ((s (if buffer
@@ -582,181 +480,9 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 (fset 'vm-buffer-substring-no-properties
   (cond ((fboundp 'buffer-substring-no-properties)
 	 (function buffer-substring-no-properties))
-	(vm-xemacs-p
+	((vm-xemacs-p)
 	 (function buffer-substring))
 	(t (function vm-default-buffer-substring-no-properties))))
 
 (defun vm-buffer-string-no-properties ()
   (vm-buffer-substring-no-properties (point-min) (point-max)))
-
-(defun vm-insert-region-from-buffer (buffer &optional start end)
-  (let ((target-buffer (current-buffer)))
-    (set-buffer buffer)
-    (save-restriction
-      (widen)
-      (or start (setq start (point-min)))
-      (or end (setq end (point-max)))
-      (set-buffer target-buffer)
-      (insert-buffer-substring buffer start end)
-      (set-buffer buffer))
-    (set-buffer target-buffer)))
-
-(if (not (fboundp 'vm-extent-property))
-    (if (fboundp 'overlay-get)
-	(fset 'vm-extent-property 'overlay-get)
-      (fset 'vm-extent-property 'extent-property)))
-
-(if (not (fboundp 'vm-set-extent-property))
-    (if (fboundp 'overlay-put)
-	(fset 'vm-set-extent-property 'overlay-put)
-      (fset 'vm-set-extent-property 'set-extent-property)))
-
-(if (not (fboundp 'vm-set-extent-endpoints))
-    (if (fboundp 'move-overlay)
-	(fset 'vm-set-extent-endpoints 'move-overlay)
-      (fset 'vm-set-extent-endpoints 'set-extent-endpoints)))
-
-(if (not (fboundp 'vm-make-extent))
-    (if (fboundp 'make-overlay)
-	(fset 'vm-make-extent 'make-overlay)
-      (fset 'vm-make-extent 'make-extent)))
-
-(if (not (fboundp 'vm-extent-end-position))
-    (if (fboundp 'overlay-end)
-	(fset 'vm-extent-end-position 'overlay-end)
-      (fset 'vm-extent-end-position 'extent-end-position)))
-
-(if (not (fboundp 'vm-extent-start-position))
-    (if (fboundp 'overlay-start)
-	(fset 'vm-extent-start-position 'overlay-start)
-      (fset 'vm-extent-start-position 'extent-start-position)))
-
-(if (not (fboundp 'vm-detach-extent))
-    (if (fboundp 'delete-overlay)
-	(fset 'vm-detach-extent 'delete-overlay)
-      (fset 'vm-detach-extent 'detach-extent)))
-
-(if (not (fboundp 'vm-extent-properties))
-    (if (fboundp 'overlay-properties)
-	(fset 'vm-extent-properties 'overlay-properties)
-      (fset 'vm-extent-properties 'extent-properties)))
-
-(defun vm-copy-extent (e)
-  (let ((props (vm-extent-properties e))
-	(ee (vm-make-extent (vm-extent-start-position e)
-			    (vm-extent-end-position e))))
-    (while props
-      (vm-set-extent-property ee (car props) (car (cdr props)))
-      (setq props (cdr (cdr props))))))
-
-(defun vm-make-tempfile-name ()
-  (let ((done nil) (pid (emacs-pid)) filename)
-    (while (not done)
-      (setq filename (format "%s/vm%d.%d" vm-temp-file-directory pid
-			     vm-tempfile-counter)
-	    vm-tempfile-counter (1+ vm-tempfile-counter)
-	    done (not (file-exists-p filename))))
-    filename ))
-
-(defun vm-insert-char (char &optional count ignored buffer)
-  (condition-case nil
-      (progn
-	(insert-char char count ignored buffer)
-	(fset 'vm-insert-char 'insert-char))
-    (wrong-number-of-arguments
-     (fset 'vm-insert-char 'vm-xemacs-compatible-insert-char)
-     (vm-insert-char char count ignored buffer))))
-
-(defun vm-xemacs-compatible-insert-char (char &optional count ignored buffer)
-  (if (and buffer (eq buffer (current-buffer)))
-      (insert-char char count)
-    (save-excursion
-      (set-buffer buffer)
-      (insert-char char count))))
-
-(defun vm-symbol-lists-intersect-p (list1 list2)
-  (catch 'done
-    (while list1
-      (and (memq (car list1) list2)
-	   (throw 'done t))
-      (setq list1 (cdr list1)))
-    nil ))
-
-(defun vm-set-buffer-variable (buffer var value)
-  (save-excursion
-    (set-buffer buffer)
-    (set var value)))
-
-(defun vm-buffer-variable-value (buffer var)
-  (save-excursion
-    (set-buffer buffer)
-    (symbol-value var)))
-
-(defsubst vm-with-string-as-temp-buffer (string function)
-  (let ((work-buffer nil))
-    (unwind-protect
-	(save-excursion
-	  (setq work-buffer (generate-new-buffer " *work*"))
-	  (set-buffer work-buffer)
-	  (insert string)
-	  (funcall function)
-	  (buffer-string))
-      (and work-buffer (kill-buffer work-buffer)))))
-
-(defmacro vm-with-virtual-selector-variables (&rest forms)
-  (append '(let ((any 'vm-vs-any)
-		 (and 'vm-vs-and)
-		 (or 'vm-vs-or)
-		 (not 'vm-vs-not)
-		 (header 'vm-vs-header)
-		 (label 'vm-vs-label)
-		 (text 'vm-vs-text)
-		 (recipient 'vm-vs-recipient)
-		 (author 'vm-vs-author)
-		 (subject 'vm-vs-subject)
-		 (sent-before 'vm-vs-sent-before)
-		 (sent-after 'vm-vs-sent-after)
-		 (more-chars-than 'vm-vs-more-chars-than)
-		 (less-chars-than 'vm-vs-less-chars-than)
-		 (more-lines-than 'vm-vs-more-lines-than)
-		 (less-lines-than 'vm-vs-less-lines-than)
-		 (new 'vm-vs-new)
-		 (unread 'vm-vs-unread)
-		 (read 'vm-vs-read)
-		 (deleted 'vm-vs-deleted)
-		 (replied 'vm-vs-replied)
-		 (forwarded 'vm-vs-forwarded)
-		 (filed 'vm-vs-filed)
-		 (written 'vm-vs-written)
-		 (edited 'vm-vs-edited)
-		 (marked 'vm-vs-marked)))
-	  forms))
-
-(defun vm-string-assoc (elt list)
-  (let ((case-fold-search t)
-	(found nil)
-	(elt (regexp-quote elt)))
-    (while (and list (not found))
-      (if (and (equal 0 (string-match elt (car (car list))))
-	       (= (match-end 0) (length (car (car list)))))
-	  (setq found t)
-	(setq list (cdr list))))
-    (car list)))
-
-(defun vm-string-member (elt list)
-  (let ((case-fold-search t)
-	(found nil)
-	(elt (regexp-quote elt)))
-    (while (and list (not found))
-      (if (and (equal 0 (string-match elt (car list)))
-	       (= (match-end 0) (length (car list))))
-	  (setq found t)
-	(setq list (cdr list))))
-    list))
-
-(defmacro vm-assert (expression)
-  (list 'or expression
-	(list 'progn
-	      (list 'setq 'debug-on-error t)
-	      (list 'error "assertion failed: %S"
-		    (list 'quote expression)))))

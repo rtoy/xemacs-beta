@@ -5,7 +5,7 @@
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1996/8/6
 ;; Version:
-;;	$Id: message-mime.el,v 1.4 1997/02/02 05:06:18 steve Exp $
+;;	$Id: message-mime.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $
 ;; Keywords: news, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is not part of GNU Emacs yet.
@@ -43,12 +43,6 @@
 	  (concat message-included-forward-headers "\\|^Content-Type:"))
     )
 
-(or (string-match message-included-forward-headers
-                  "Content-Transfer-Encoding:")
-    (setq message-included-forward-headers
-	  (concat message-included-forward-headers
-                  "\\|^Content-Transfer-Encoding:"))
-    )
 
 ;;; @ for tm-edit
 ;;;

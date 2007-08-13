@@ -262,8 +262,7 @@
   "Find the window directly below us, if any.  This is probably the 
  window from which enlarge-window would steal lines."
   (if (or (not (string-match "XEmacs" emacs-version))
-	  (and (= emacs-major-version 19)
-	       (< emacs-minor-version 12)))
+	  (< emacs-minor-version 12))
       (let* ((bottom (nth 3 (window-edges window)))
 	     (window* nil)
 	     (win window))
@@ -280,8 +279,7 @@
 (defun ilisp-find-top-left-most-window ()
   "Return the leftmost topmost window on the current screen."
   (if (or (not (string-match "XEmacs" emacs-version))
-	  (and (= emacs-major-version 19)
-	       (< emacs-minor-version 12)))
+	  (< emacs-minor-version 12))
       (let* ((window* (selected-window))
 	     (edges* (window-edges window*))
 	     (win nil)

@@ -17,7 +17,7 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: Not in FSF.
@@ -293,34 +293,32 @@ Example:  (add-minor-mode 'view-minor-mode \" View\" view-mode-map)"
 
 (defun modeline-minor-mode-menu (event)
   (interactive "e")
-  (save-excursion
-    (set-buffer (event-buffer event))
-    (popup-menu-and-execute-in-window
-     (cons (format "Minor Mode Commands for %S:"
-		   (buffer-name (event-buffer event)))
-	   (apply 'nconc
-		  (mapcar
-		   #'(lambda (x)
-		       (let* ((toggle-sym (car x))
-			      (toggle-fun
-			       (or (get toggle-sym
-					'modeline-toggle-function)
-				   (and (fboundp toggle-sym)
-					(commandp toggle-sym)
-					toggle-sym))))
-			 (if (not toggle-fun) nil
-			   (list (vector
-				  (concat (if (and (boundp toggle-sym)
-						   (symbol-value toggle-sym))
-					      "turn off " "turn on ")
-					  (if (symbolp toggle-fun)
-					      (symbol-name toggle-fun)
-					    (symbol-name toggle-sym)))
-
-				  toggle-fun
-				  t)))))
-		   minor-mode-alist)))
-     event)))
+  (popup-menu-and-execute-in-window
+   (cons (format "Minor Mode Commands for %S:"
+		 (buffer-name (event-buffer event)))
+	 (apply 'nconc
+		(mapcar
+		 #'(lambda (x)
+		     (let* ((toggle-sym (car x))
+			    (toggle-fun
+			     (or (get toggle-sym
+				      'modeline-toggle-function)
+				 (and (fboundp toggle-sym)
+				      (commandp toggle-sym)
+				      toggle-sym))))
+		       (if (not toggle-fun) nil
+			 (list (vector
+				(concat (if (and (boundp toggle-sym)
+						 (symbol-value toggle-sym))
+					    "turn off " "turn on ")
+					(if (symbolp toggle-fun)
+					    (symbol-name toggle-fun)
+					  (symbol-name toggle-sym)))
+				
+				toggle-fun
+				t)))))
+		 minor-mode-alist)))
+   event))
 
 (defvar modeline-minor-mode-map (make-sparse-keymap 'modeline-minor-mode-map)
   "Keymap consulted for mouse-clicks on the minor-mode modeline list.")
@@ -396,7 +394,7 @@ Normally nil in most modes, since there is no process to display.")
 (defvar modeline-modified-map (make-sparse-keymap 'modeline-modified-map)
   "Keymap consulted for mouse-clicks on the modeline-modified string.")
 (define-key modeline-modified-map 'button2
-  (make-modeline-command-wrapper 'vc-toggle-read-only))
+  (make-modeline-command-wrapper 'toggle-read-only))
 
 (defvar modeline-modified-extent (make-extent nil nil)
   "Extent covering the modeline-modified string.")
@@ -421,21 +419,20 @@ Normally nil in most modes, since there is no process to display.")
 (set-extent-property modeline-narrowed-extent 'help-echo
 		     "button2 widens the buffer")
 
-(setq-default modeline-format
-	      (list (purecopy "")
-		    (cons modeline-modified-extent
-			  'modeline-modified)
-		    (cons modeline-buffer-id-extent
-			  'modeline-buffer-identification)
-		    (purecopy "   ")
-		    'global-mode-string
-		    (purecopy "   %[(")
-		    (cons modeline-minor-mode-extent
-			  (list "" 'mode-name 'minor-mode-alist))
-		    (cons modeline-narrowed-extent "%n")
-		    'modeline-process
-		    (purecopy ")%]----")
-		    (purecopy '(line-number-mode "L%l--"))
-		    (purecopy '(column-number-mode "C%c--"))
-		    (purecopy '(-3 . "%p"))
-		    (purecopy "-%-")))
+(setq-default
+ modeline-format
+ (list
+  (purecopy "")
+  (cons modeline-modified-extent 'modeline-modified)
+  (cons modeline-buffer-id-extent 'modeline-buffer-identification)
+  (purecopy "   ")
+  'global-mode-string
+  (purecopy "   %[(")
+  (cons modeline-minor-mode-extent (list "" 'mode-name 'minor-mode-alist))
+  (cons modeline-narrowed-extent "%n")
+  'modeline-process
+  (purecopy ")%]----")
+  (purecopy '(line-number-mode "L%l--"))
+  (purecopy '(column-number-mode "C%c--"))
+  (purecopy '(-3 . "%p"))
+  (purecopy "-%-")))

@@ -18,7 +18,7 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: FSF 19.30.
@@ -294,25 +294,23 @@ or if the window is the only window of its frame."
 		      ;			       'menu-bar-lines params)
 		      0)))
 	  (unwind-protect
-	      (let ((shrinkee (or window w)))
-		(set-buffer (window-buffer shrinkee))
+	      (progn
+		(select-window (or window w))
 		(goto-char (point-min))
 		(while (pos-visible-in-window-p
 			(- (point-max)
-			   (if ignore-final-newline 1 0))
-			shrinkee)
+			   (if ignore-final-newline 1 0)))
 		  ;; defeat file locking... don't try this at home, kids!
 		  (setq buffer-file-name nil)
 		  (insert ?\n) (setq n (1+ n)))
 		(if (> n 0)
 		    (shrink-window (min (1- n)
-					(- (window-height shrinkee)
-					   window-min-height))
-				   nil
-				   shrinkee)))
+					(- (window-height)
+					   window-min-height)))))
 	    (delete-region (point-min) (point))
 	    (set-buffer-modified-p modified)
 	    (goto-char p)
+	    (select-window w)
 	    ;; Make sure we unbind buffer-read-only
 	    ;; with the proper current buffer.
 	    (set-buffer buffer))))))

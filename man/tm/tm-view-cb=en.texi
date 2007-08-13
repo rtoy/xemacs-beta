@@ -1,0 +1,57 @@
+@c $Id: tm-view-cb=en.texi,v 1.1.1.1 1996/12/18 22:43:52 steve Exp $
+
+@node content-body, content-separator, content-header, MIME display
+@comment  node-name,  next,  previous,  up
+@subsubsection content-body
+@cindex content-body
+
+Content-body represents content of the message. tm-view does not
+display raw content body. For example, if a content has binary, it is
+hidden. If a content has richtext, it is formated. Namely content body
+is hidden or formated.
+
+Function @code{mime-viewer/body-visible-p} is a judge function whether
+content-body of a content is displayed. If it returns @code{nil},
+content-body is hidden. In default, it returns non-@code{nil} when
+content-type of a content is a member of variable
+@code{mime-viewer/default-showing-Content-Type-list}.
+
+When content-body of a content is displayed, content-body is formated
+by content-filter. Content-filter is searched from variable
+@code{mime-viewer/content-filter-alist}. At this time, major-mode of
+the article buffer is used as the key.
+
+If it is not found, function @code{mime-viewer/default-content-filter}
+is called.
+
+
+@defvar mime-viewer/default-showing-Content-Type-list
+
+List of content-type. If content-type of a content is a member of this
+variable, its body is displayed.
+@end defvar
+
+
+@deffn{Function} mime-viewer/body-visible-p rcnum cinfo &optional ctype
+
+Return non-@code{nil}, if content-type of a content is displayed.
+@var{rcnum} is reversed-content-number of a content. @var{cinfo} is
+content-info of the message. If you know content-type of a content,
+you can specify it as argument @var{ctype}.
+@end deffn
+
+
+@defvar mime-viewer/content-filter-alist
+
+Association-list whose key is major-mode of a article buffer, value is
+content-filter.
+@end defvar
+
+
+@deffn{Function} mime-viewer/default-content-filter rcnum cinfo ctype params subj
+
+It is called when content-body of a content should be displayed and
+content-filter is not found in @code{mime-viewer/content-filter-alist}.
+
+In default, it does nothing.
+@end deffn

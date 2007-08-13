@@ -286,42 +286,6 @@ actually occur.")
 ;	(setq mail-alias-modtime modtime
 ;	      mail-aliases t))))
 
-;; Courtesy of Per Abrahamsen <abraham@dina.kvl.dk> in an attempt to make
-;; Emacs and XEmacs less stupid about default mail addresses.
-
-;; We trust the administrator if he has set `mail-host-address'.
-;; We trust the user if he has already customized `user-mail-address'.
-(defcustom query-user-mail-address (and (not mail-host-address)
-					(not user-mail-address))
-  "If non-nil, prompt the user for his mail address."
-  :group 'message
-  :type 'boolean)
-
-;;;###autoload
-(defun user-mail-address ()
-  "Query the user for his mail address, unless it is already known."
-  (interactive)
-  (when (and (not noninteractive) query-user-mail-address)
-    (let ((addr (or user-mail-address
-		    (concat (user-login-name) "@"
-				    (or mail-host-address
-					(system-name))))))
-      (setq user-mail-address
-	    (read-string "Your mail address? " (cons addr 0)))
-      (setq query-user-mail-address nil)
-      ;; TODO: Run sanity check from Gnus here.
-      (when (y-or-n-p "Save address for future sessions? ")
-	(put 'user-mail-address 'saved-value
-	     (list user-mail-address))
-	(put 'query-user-mail-address 'saved-value '(nil))
-        (require 'cus-edit)
-	(custom-save-all))))
-  (if user-mail-address
-      user-mail-address
-    (setq user-mail-address (concat (user-login-name) "@"
-                                    (or mail-host-address
-                                        (system-name))))))
-
 (defun mail-setup (to subject in-reply-to cc replybuffer actions)
   (or mail-default-reply-to
       (setq mail-default-reply-to (getenv "REPLYTO")))
@@ -878,8 +842,13 @@ back to the user from the mailer."
       (narrow-to-region b e)
       (rmail-maybe-set-message-counters))))
 
+;;; Load VM into the compilation environment but not the load environment.
 (eval-when-compile
-  (require 'vm-misc))
+ (or (and (boundp 'loading-vm-kludge) loading-vm-kludge)
+     ;; nastiness to avoid circular provide/require dependency nonsense
+     (fboundp 'vm-spool-files)
+     (let ((loading-vm-kludge t))
+       (require 'vm))))
 
 (defun mail-do-fcc-vm-internal (buffer)
   (or (eq major-mode 'vm-mode) (error "this only works in vm-mode"))
@@ -1005,8 +974,10 @@ back to the user from the mailer."
 	  t)
       (or soft
 	  (progn (goto-char end)
-		 (insert field ": \n")
-		 (forward-char -1)))
+		 ;; #### FSF has the next two clauses reversed.
+		 ;; which is correct?
+		 (skip-chars-backward "\n")
+		 (insert "\n" field ": ")))
       nil)))
 
 (defun mail-text ()
@@ -1270,7 +1241,6 @@ The seventh argument ACTIONS is a list of actions to take
 
 ;;; Do not execute these when sendmail.el is loaded,
 ;;; only in loaddefs.el.
-;;; Do not autoload, this package is obsolete. -sb
 ;;;###autoload (define-key ctl-x-map "m" 'mail)
 ;;;###autoload (define-key ctl-x-4-map "m" 'mail-other-window)
 ;;;###autoload (define-key ctl-x-5-map "m" 'mail-other-frame)

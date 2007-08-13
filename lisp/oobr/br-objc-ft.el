@@ -6,12 +6,12 @@
 ;; KEYWORDS:     c, oop, tools
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          InfoDock Associates
+;; ORG:          Motorola Inc.
 ;;
 ;; ORIG-DATE:    03-Oct-90
-;; LAST-MOD:     31-Oct-96 at 17:03:48 by Bob Weiner
+;; LAST-MOD:      5-May-95 at 15:57:14 by Bob Weiner
 ;;
-;; Copyright (C) 1990-1996  Free Software Foundation, Inc.
+;; Copyright (C) 1990-1995  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.
@@ -104,7 +104,7 @@ Returns a regular expression."
 
 (defun objc-feature-implementors (ftr-name)
   "Return unsorted list of Objective-C feature tags which implement FTR-NAME."
-  (objc-feature-matches (regexp-quote ftr-name)))
+  (objc-feature-matches ftr-name))
 
 (defun objc-feature-locate-p (feature-tag &optional regexp-flag)
   "Leaves point at the start of FEATURE-TAG's definition in the current buffer.
@@ -148,32 +148,6 @@ Optional REGEXP-FLAG means FEATURE-TAG is a regular expression."
 	       (recenter 0)
 	       (goto-char start)
 	       t))))
-
-(defun objc-feature-map-class-tags (function class)
-  "Apply FUNCTION to all feature tags from CLASS and return a list of the results.
-Feature tags come from the file named by br-feature-tags-file."
-  (let ((obuf (current-buffer))
-	(class-tag (concat "\n" class objc-type-tag-separator))
-	(results)
-	search-function)
-    (if (= (aref class 0) ?\[)
-	;; Default class of protocols or categories.  Use a string match
-	;; for speed.
-	(setq search-function 'search-forward
-	      class-tag (concat "\n" class objc-type-tag-separator))
-      (setq search-function 're-search-forward
-	    class-tag
-	    ;; Include methods defined in any of the class' categories.
-	    (concat "^" class "\\(([^\)]*)\\)?" objc-type-tag-separator)))
-    (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
-    (goto-char 1)
-    (while (funcall search-function class-tag nil t)
-      (setq results (cons (funcall function) results))
-      ;; Might have deleted current tag and would miss next tag unless point
-      ;; is moved backwards.
-      (backward-char))
-    (set-buffer obuf)
-    results))
 
 (defun objc-feature-name-to-regexp (name)
   "Converts feature NAME into a regular expression matching the feature's name tag."
@@ -316,12 +290,6 @@ SIGNATURE may be a feature tag line or a signature extracted from source code."
 				 "\\([ \t\n]*//.*[\n]\\)*[ \t\n]*{"))
 	     pat)))))
 
-(defun objc-feature-tag-regexp (class feature-name)
-  "Return a regexp that matches to the feature tag entry for CLASS' FEATURE-NAME."
-  (concat "^" (regexp-quote class) objc-type-tag-separator
-	  br-feature-type-regexp " "
-	  (regexp-quote feature-name) "\\(" objc-type-tag-separator "\\|\\'\\)"))
-
 (defun objc-feature-tree-command-p (class-or-signature)
   "Display definition of CLASS-OR-SIGNATURE if a signature and return t, else return nil."
   (if (br-in-browser) (br-to-view-window))
@@ -350,10 +318,26 @@ SIGNATURE may be a feature tag line or a signature extracted from source code."
 	   (objc-sort-features (nreverse categories))))))
 
 (defun objc-list-features (class &optional indent)
-  "Return sorted list of Objective-C feature tags lexically defined in CLASS.
-Optional INDENT is unused but is required for multi-language OO-Browser conformance."
-  (objc-sort-features
-   (nreverse (objc-feature-map-class-tags 'br-feature-current class))))
+  "Return sorted list of Objective-C features lexically defined in CLASS."
+  (let ((obuf (current-buffer))
+	(features)
+	class-tag
+	search-function)
+    (if (= (aref class 0) ?\[)
+	;; Default class of protocols or categories.  Use a string match
+	;; for speed.
+	(setq search-function 'search-forward
+	      class-tag (concat "\n" class objc-type-tag-separator))
+      (setq search-function 're-search-forward
+	    class-tag
+	    ;; Include methods defined in any of the class' categories.
+	    (concat "^" class "\\(([^\)]*)\\)?" objc-type-tag-separator)))
+    (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
+    (goto-char 1)
+    (while (funcall search-function class-tag nil t)
+      (setq features (cons (br-feature-current) features)))
+    (set-buffer obuf)
+    (objc-sort-features (nreverse features))))
 
 (defun objc-list-protocols (class)
   "Return sorted list of Objective-C CLASS protocols."
@@ -566,56 +550,29 @@ Commented element definitions also return nil."
 	 (= ?\{ (save-excursion (goto-char (match-end 0))
 				(preceding-char))))))
 
-(defun objc-feature-display (class-list signature ftr-regexp &optional other-win)
-  "Display routine definition derived from CLASS-LIST, matching SIGNATURE (string) and FTR-REGEXP (regexp matching SIGNATURE).
-Use routine tags table to locate a match.  Caller must use 'set-buffer'
-to restore prior buffer when a match is not found."
-  (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
-  (let  ((classes class-list)
-	 (found-ftr)
-	 (class))
-    (if (null class-list)
-	nil
-      (while (and (not found-ftr) classes)
-	(setq class (car classes)
-	      found-ftr (br-feature-found-p
-			 (br-feature-file signature)
-			 ftr-regexp nil other-win t)
-	      classes (if found-ftr nil (cdr classes))))
-      (if found-ftr
-	  (or class t)
-	(objc-feature-display
-	 (apply 'append (mapcar (function (lambda (cl) (br-get-parents cl)))
-				class-list))
-	 signature
-	 ftr-regexp
-	 other-win)))))
+(defun objc-feature-partial-name (feature-tag)
+  "Extract the feature name without its class name from FEATURE-TAG."
+  (objc-feature-signature-to-name feature-tag))
 
 (defun objc-feature-lessp (tag1 tag2)
   (string-lessp (objc-feature-partial-name tag1)
 		(objc-feature-partial-name tag2)))
 
-(defun objc-feature-map-tags (function regexp)
-  "Apply FUNCTION to all current feature tags that match REGEXP and return a list of the results.
-Feature tags come from the file named by br-feature-tags-file."
-  (let ((identifier-chars (concat "[" objc-identifier-chars "]*"))
-	(results))
-    (setq regexp (format "^[^%s \n]+%s%s %s%s" objc-type-tag-separator
-			 objc-type-tag-separator br-feature-type-regexp
-			 regexp objc-type-tag-separator))
-    ;; Ensure match to feature names only; also handle "^" and "$" meta-chars
+(defun objc-feature-matches (name)
+  "Return an unsorted list of feature tags whose names match in whole to NAME."
+  ;; Ensure match to feature names only.
+  (let ((regexp (format "^[^%s \n]+%s%s %s%s" objc-type-tag-separator
+			objc-type-tag-separator br-feature-type-regexp
+			(regexp-quote name) objc-type-tag-separator))
+	(features))
     (save-excursion
-      (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
+      (set-buffer
+       (funcall br-find-file-noselect-function br-feature-tags-file))
       (goto-char 1)
       (while (re-search-forward regexp nil t)
-	(setq results (cons (funcall function) results))))
-    results))
-
-(defun objc-feature-matches (regexp)
-  "Return an unsorted list of feature tags whose names match in part or whole to REGEXP.
-^ and $ characters may be used to match to the beginning and end of a feature name,
-respectively."
-  (objc-feature-map-tags 'br-feature-current regexp))
+	(save-excursion
+	  (setq features (cons (br-feature-current) features))))
+      features)))
 
 (defun objc-feature-normalize (routine class)
   (let* ((len (length routine))
@@ -653,15 +610,36 @@ respectively."
 	    objc-type-tag-separator
 	    normal-feature)))
 
-(defun objc-feature-partial-name (feature-tag)
-  "Extract the feature name without its class name from FEATURE-TAG."
-  (objc-feature-signature-to-name feature-tag))
-
 (defun objc-feature-tag-class (feature-signature)
   "Extract the class name from FEATURE-SIGNATURE."
     (if (string-match objc-type-tag-separator feature-signature)
 	(substring feature-signature 0 (match-beginning 0))
       ""))
+
+(defun objc-feature-tags-lookup (class-list signature ftr-regexp &optional other-win)
+  "Display routine definition derived from CLASS-LIST, matching SIGNATURE (string) and FTR-REGEXP (regexp matching SIGNATURE).
+Use routine tags table to locate a match.  Caller must use 'set-buffer'
+to restore prior buffer when a match is not found."
+  (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
+  (let  ((classes class-list)
+	 (found-ftr)
+	 (class))
+    (if (null class-list)
+	nil
+      (while (and (not found-ftr) classes)
+	(setq class (car classes)
+	      found-ftr (br-feature-found-p
+			 (br-feature-file signature)
+			 ftr-regexp nil other-win t)
+	      classes (if found-ftr nil (cdr classes))))
+      (if found-ftr
+	  (or class t)
+	(objc-feature-tags-lookup
+	 (apply 'append (mapcar (function (lambda (cl) (br-get-parents cl)))
+				class-list))
+	 signature
+	 ftr-regexp
+	 other-win)))))
 
 (defun objc-files-with-source (class)
   "Use CLASS to compute set of files that match to an Objective-C source file regexp.
@@ -685,7 +663,7 @@ Return as a list."
 	(if (and br-feature-tags-file
 		 (file-exists-p br-feature-tags-file)
 		 (file-readable-p br-feature-tags-file))
-	    (objc-feature-display
+	    (objc-feature-tags-lookup
 	     class-list signature ftr-regexp other-win)
 	  ;; Only works if features are in same directory as class def.
 	  (objc-scan-ancestors-feature class-list ftr-regexp other-win))

@@ -8,7 +8,7 @@
 ;; AUTHOR:       Bob Weiner
 ;;
 ;; ORIG-DATE:    21-Oct-95 at 15:17:07
-;; LAST-MOD:      6-Mar-97 at 01:17:04 by Bob Weiner
+;; LAST-MOD:      3-Nov-95 at 19:44:10 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
@@ -122,7 +122,7 @@ display all levels of cells."
   "Show NUM lines per cell."
   (if (and (integerp num) (>= num 0))
       nil
-    (error "(kvspec:show-lines-per-cell): Invalid lines per cell, `%d'" num))
+    (error "(kvspec:show-lines-per-cell): Invalid lines per cell, '%d'" num))
   (kview:set-attr kview 'lines-to-show num)
   (let (start end count)
     (if (zerop num)
@@ -181,7 +181,7 @@ VIEW-SPEC is a string or t, which means recompute the current view spec.  See
 ;;; ************************************************************************
 
 (defun kvspec:blank-lines ()
-  "Turn blank lines on or off according to `kvspec:current'."
+  "Turn blank lines on or off according to 'kvspec:current'."
   (let ((modified-p (buffer-modified-p))
 	(buffer-read-only))
       (if (string-match "b" kvspec:current)
@@ -234,12 +234,12 @@ VIEW-SPEC is a string or t, which means recompute the current view spec.  See
 				       kvspec:label-type-alist)))))))))
 
 (defun kvspec:elide ()
-  "Turn ellipses display following clipped cells on or off according to `kvspec:current'."
+  "Turn ellipses display following clipped cells on or off according to 'kvspec:current'."
   (setq selective-display-ellipses
 	(if (string-match "e" kvspec:current) t)))
 
 (defun kvspec:hide-levels ()
-  "Show a set number of cell levels according to `kvspec:current'."
+  "Show a set number of cell levels according to 'kvspec:current'."
   ;; "l" means use value of kview:default-levels-to-show.
   ;; "l0" means show all levels.
   (let (levels)
@@ -256,7 +256,7 @@ VIEW-SPEC is a string or t, which means recompute the current view spec.  See
       (kvspec:levels-to-show levels))))
 
 (defun kvspec:lines-to-show ()
-  "Show a set number of lines per cell according to `kvspec:current'."
+  "Show a set number of lines per cell according to 'kvspec:current'."
   ;; "c" means use value of kview:default-lines-to-show.
   ;; "c0" means show all lines.
   (cond ((not (string-match "c\\([0-9]+\\)?" kvspec:current))
@@ -270,7 +270,7 @@ VIEW-SPEC is a string or t, which means recompute the current view spec.  See
 	(t (kvspec:show-lines-per-cell kview:default-lines-to-show))))
 
 (defun kvspec:numbering ()
-  "Set the type of numbering (label) display according to `kvspec:current'."
+  "Set the type of numbering (label) display according to 'kvspec:current'."
   (if (not (string-match "n\\([.*~0-2]\\)?" kvspec:current))
       nil
     ;; "n"  means use value of kview:default-label-type.
@@ -297,25 +297,11 @@ VIEW-SPEC is a string or t, which means recompute the current view spec.  See
       nil
     (setq mode-line-format (copy-sequence mode-line-format))
     (let ((elt (or (memq 'mode-line-buffer-identification mode-line-format)
-		   (memq 'modeline-buffer-identification
-			 mode-line-format))))
-      (if elt
-	  (setcdr elt (cons 'kvspec:string (cdr elt)))
-	;;
-	;; XEmacs 19.14 introduced extents into the modeline that we
-	;; must work around.
-	(if (and hyperb:xemacs-p (string-lessp "19.14" hyperb:xemacs-p))
-	    (let ((mf modeline-format)
-		  elt)
-	      (while mf
-		(setq elt (car mf))
-		(if (and (consp elt) (eq (cdr elt) 'modeline-buffer-identification))
-		    (progn (setcdr mf (cons 'kvspec:string (cdr mf)))
-			   (setq mf nil)))
-		(setq mf (cdr mf)))))))))
+		   (memq 'modeline-buffer-identification mode-line-format))))
+      (setcdr elt (cons 'kvspec:string (cdr elt))))))
 
 (defun kvspec:update-view ()
-  "Update view according to current setting of local `kvspec:current' variable."
+  "Update view according to current setting of local 'kvspec:current' variable."
   (let ((modified-p (buffer-modified-p))
 	(buffer-read-only))
     (save-excursion
@@ -374,7 +360,7 @@ the view spec settings.")
 
 (defvar kvspec:string-format " <|%s>"
   "Format of the kview spec modeline display.
-It must contain a `%s' which is replaced with the current set of view spec
+It must contain a '%s' which is replaced with the current set of view spec
 characters at run-time.")
 
 (provide 'kvspec)

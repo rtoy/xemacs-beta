@@ -6,10 +6,10 @@
 ;; KEYWORDS:     faces, hypermedia
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          InfoDock Associates
+;; ORG:          Brown U.
 ;;
 ;; ORIG-DATE:    21-Aug-92
-;; LAST-MOD:     26-Feb-97 at 01:58:01 by Bob Weiner
+;; LAST-MOD:     24-Oct-95 at 19:55:08 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; It is for use with XEmacs, a modified version of GNU Emacs V19.
@@ -69,7 +69,7 @@ Call (hproperty:set-item-highlight <color>) to change value.")
 
 (defun hproperty:but-add (start end face)
   "Add between START and END a button using FACE in current buffer.
-If `hproperty:but-emphasize-p' is non-nil when this is called, emphasize that
+If 'hproperty:but-emphasize-p' is non-nil when this is called, emphasize that
 button is selectable whenever the mouse cursor moves over it."
   (let ((but (make-extent start end)))
     (set-extent-face but face)
@@ -96,7 +96,7 @@ expression which matches an entire button string.
 If REGEXP-MATCH is non-nil, only buttons matching this argument are
 highlighted.
 
-If `hproperty:but-emphasize-p' is non-nil when this is called, emphasize that
+If 'hproperty:but-emphasize-p' is non-nil when this is called, emphasize that
 button is selectable whenever the mouse cursor moves over it."
   (interactive)
   (hproperty:but-clear)

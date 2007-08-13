@@ -361,7 +361,7 @@ Each entry should be (SUFFIX . STRING); if STRING contains %s, that is
 changed to name of the file to decode, otherwise the file is given to
 the command as standard input.  If STRING is nil, no decoding is done.")
 
-(defvar Info-footnote-tag "Note"
+(defvar Info-footnote-tag "See"
   "*Symbol that identifies a footnote or cross-reference.
 All \"*Note\" references will be changed to use this word instead.")
 
@@ -834,19 +834,17 @@ to read a file name from the minibuffer."
 
 (defun Info-set-mode-line ()
   (setq modeline-buffer-identification
-	(list (cons modeline-buffer-id-left-extent "Info: ")
-	      (cons modeline-buffer-id-right-extent
-		    (concat
-		     "("
-		     (if Info-current-file
-			 (let ((name (file-name-nondirectory Info-current-file)))
-			   (if (string-match "\\.info$" name)
-			       (substring name 0 -5)
-			     name))
-		       "")
-		     ")"
-		     (or Info-current-node ""))))))
-	
+	(concat
+	 "Info:  ("
+	 (if Info-current-file
+	     (let ((name (file-name-nondirectory Info-current-file)))
+	       (if (string-match "\\.info$" name)
+		   (substring name 0 -5)
+		 name))
+	   "")
+	 ")"
+	 (or Info-current-node ""))))
+
 ;; Go to an info node specified with a filename-and-nodename string
 ;; of the sort that is found in pointers in nodes.
 
@@ -1826,13 +1824,11 @@ Info-annotations-path) is to be edited; default is 1."
   (interactive)
   (if Info-standalone
       (save-buffers-kill-emacs)
-    (bury-buffer (current-buffer))
-    (if (and (featurep 'toolbar)
-	     (eq toolbar-info-frame (selected-frame)))
-	(condition-case nil
-	    (delete-frame toolbar-info-frame)
-	  (error (bury-buffer)))
-      (switch-to-buffer (other-buffer (current-buffer))))))
+    (switch-to-buffer (prog1 (other-buffer (current-buffer))
+			(bury-buffer (current-buffer))
+			(if (featurep 'toolbar)
+			    (if (frame-live-p toolbar-info-frame)
+				(delete-frame toolbar-info-frame)))))))
 
 (defun Info-undefined ()
   "Make command be undefined in Info."

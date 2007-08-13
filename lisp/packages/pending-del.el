@@ -48,19 +48,15 @@ t enables all messages")
 	t)))
 
 (defun pending-delete-pre-hook ()
-  ;; don't ever signal an error in pre-command-hook!
-  (condition-case e
-      (let ((type (and (symbolp this-command)
-		       (get this-command 'pending-delete))))
-	(cond ((eq type 'kill)
-	       (delete-active-region t))
-	      ((eq type 'supersede)
-	       (if (delete-active-region ())
-		   (setq this-command '(lambda () (interactive)))))
-	      (type
-	       (delete-active-region ()))))
-    (error
-     (warn "Error caught in `pending-delete-pre-hook': %s" e))))
+  (let ((type (and (symbolp this-command)
+		   (get this-command 'pending-delete))))
+    (cond ((eq type 'kill)
+	   (delete-active-region t))
+	  ((eq type 'supersede)
+	   (if (delete-active-region ())
+	       (setq this-command '(lambda () (interactive)))))
+	  (type
+	   (delete-active-region ())))))
 
 (put 'self-insert-command 'pending-delete t)
 

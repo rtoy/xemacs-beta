@@ -27,7 +27,7 @@
 
 ;;; Change Log:
 
-;; $Id: mh-funcs.el,v 1.1.1.1 1996/12/18 03:34:38 steve Exp $
+;; $Id: mh-funcs.el,v 1.1.1.1 1996/12/18 22:43:21 steve Exp $
 
 ;;; Code:
 

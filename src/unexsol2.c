@@ -20,7 +20,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-/* #pragma ident "@(#) $Id: unexsol2.c,v 1.1.1.2 1996/12/18 03:48:53 steve Exp $" */
+/* #pragma ident "@(#) $Id: unexsol2.c,v 1.1.1.1 1996/12/18 22:44:08 steve Exp $" */
 
 #include <stdlib.h>
 #include <stdio.h>

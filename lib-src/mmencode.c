@@ -22,6 +22,7 @@ WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES.
 static void
 output64chunk(int c1, int c2, int c3, int pads, FILE *outfile);
 
+extern char *index();
 static char basis_64[] =
    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -42,7 +43,7 @@ static char index_64[128] = {
 char64(c)
 char c;
 {
-    char *s = (char *) strchr(basis_64, c);
+    char *s = (char *) index(basis_64, c);
     if (s) return(s-basis_64);
     return(-1);
 }
@@ -266,7 +267,7 @@ char c;
 {
     char *s;
     if (islower(c)) c = toupper(c);
-    s = (char *) strchr(basis_hex, c);
+    s = (char *) index(basis_hex, c);
     if (s) return(s-basis_hex);
     return(-1);
 }

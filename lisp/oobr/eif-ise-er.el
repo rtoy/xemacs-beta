@@ -6,12 +6,12 @@
 ;; KEYWORDS:     oop, tools
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          InfoDock Associates
+;; ORG:          Motorola Inc.
 ;;
 ;; ORIG-DATE:     7-Dec-89 at 00:17:18
-;; LAST-MOD:     31-Oct-96 at 22:39:09 by Bob Weiner
+;; LAST-MOD:     17-Apr-95 at 12:39:18 by Bob Weiner
 ;;
-;; Copyright (C) 1989-1996  Free Software Foundation, Inc.
+;; Copyright (C) 1989-1995  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.
@@ -42,7 +42,7 @@
 ;;
 ;;   To reset the {C-x `} key to parse non-Eiffel error messages, use:
 ;;
-;;           {M-x load-lib RET compile RET}
+;;           {M-x load-lib RTN compile RTN}
 ;;
 ;; DESCRIP-END.
 
@@ -140,7 +140,7 @@ location."
 	      (message "Rebuilding Eiffel system class locations table...Done")
 	      (setq filename (br-class-path class-name))
 	      (if (null filename)
-		  (error (format "'%s' not in lookup table, use {M-x br-build-paths-htable RET} to update."
+		  (error (format "'%s' not in lookup table, use {M-x br-build-paths-htable RTN} to update."
 				 class-name)))))
 	;; Locate the erring file and line.
 	(if (and (equal filename last-filename)

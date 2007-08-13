@@ -1,0 +1,2633 @@
+\input texinfo  @c -*-texinfo-*-
+@setfilename ../info/languages
+@settitle Foreign Languages
+
+@titlepage
+@sp 6
+@ceter @titlefont{Foreign Languages}
+@sp 4
+@center Version 2.1
+@sp 5
+@center TAKAHASHI Naoto
+@center ntakahas@@etl.go.jp
+@page
+
+@end titlepage
+
+@node Top, , , (mule)
+@section Foreign Languages
+
+This document describes how to read and write various Asian and European
+languages in Mule.
+
+@menu
+* Chinese::                             Simplified and Traditional Hanzi 
+* Japanese::                            Hiragana, Katakana, Kanji
+* Korean::                              Hangul and Hanja
+* Thai::                                Thai
+* Vietnamese::                          Vietnamese
+* Latin Script Languages::              French, German, Swedish, etc.
+* Cyrillic Script Languages::           Russian, Bulgarian, Ukrainian, etc.
+* Greek::                               Greek
+* Hebrew::                              Hebrew
+* Arabic Script Languages::             Arabic, Farsi, etc.
+* Ethiopic Languages::                  Amharic, Tigrigna, etc.
+* IPA::                                 International Phonetic Alphabet
+@end menu
+
+@comment ============================================================
+@node Chinese, Japanese, , Top
+@section Chinese
+
+  This section describes how to read and write Chinese (both simplified
+and traditional hanzi) in Mule.  To make Chinese the primary
+environment, the following line should be included in the
+@file{$MULE/lisp/site-init.el} file at the compile time:
+
+@lisp
+(set-primary-environment 'chinese)
+@end lisp
+
+If your system administrator did not do this setting, you have to
+include the above line in your @file{~/.emacs} file.
+
+  To print Chinese text, see the online manual @samp{m2ps(1)}
+and @xref{Top, , m2ps, m2ps}.
+
+@menu
+* Chinese Character Sets::      GB and BIG5
+* Chinese Fonts::               Running Mule as an X client program
+* Coding-system for Chinese::   File I/O and Process Communication
+* Using cWnn::                  Network wide hanzi conversion server
+* Quail for Chinese::           Simple input method
+* Running Mule in cxterm::      Using cxterm's input method
+* PIG-mode::                    Yet another mode for Chinese
+* Chinese News::                How to read alt.chinese.text[.big5]
+@end menu
+
+@comment ------------------------------------------------------------
+@node Chinese Character Sets, Chinese Fonts, , Chinese
+@subsection Chinese Character Sets
+
+  There are two character sets for Chinese, i.e., GB and BIG5.  GB is
+for the simplified characters used in P.R.C.  On the other hand, BIG5 is
+for the traditional characters used in Hong Kong and Taiwan.  Mule can
+handle both of them.  You can make a file which contains both GB
+characters and BIG5 characters, but care should be taken in this case.
+If you want to make such files, see @xref{Coding-system for Chinese}.
+
+@quotation
+[NOTE] BIG5 roughly corresponds to the first and the second plains of
+CNS 11643.  CNS stands for Chinese National Standard, which defines a
+Chinese character set.  Although Mule can also read/write/display CNS
+character sets, input methods for CNS is not yet available.
+@end quotation
+
+@comment ------------------------------------------------------------
+@node Chinese Fonts, Coding-system for Chinese, Chinese Character Sets, Chinese
+@subsection Chinese Fonts
+
+  Unless you have a terminal that supports GB/BIG5 and will run Mule
+exclusively on it, you have to use the X window system on which
+appropriate GB/BIG5 fonts are installed.  You should be able to read the
+following two lines if Chinese fonts are appropriately installed:
+
+@example
+GB :    $AVPND(B $AFUM(;0(B $A::So(B $ADc:C(B
+BIG5 :  $(0GnM$(B $(0N]0*Hd(B $(0*/=((B $(0+$)p(B
+@end example
+
+  If you cannot read the above lines, get Chinese fonts from Mule's FTP
+sites (see FAQ-Mule) and install them.  In addition to GB and BIG5
+fonts, you also need SiSheng fonts if you want to use cWnn to input
+Chinese.  (For cWnn, see @xref{Using cWnn}.)
+
+  Bear in mind that all fonts used in Mule must be of fixed width.
+Furthermore, the width of the Chinese characters must be exactly twice
+as wide as the ASCII characters, and the width of the Sisheng characters
+must be the same as the ASCII characters.  For the detail of font
+specification, see @xref{Font, , Font, mule}.
+
+@comment ------------------------------------------------------------
+@node Coding-system for Chinese, Using cWnn, Chinese Fonts, Chinese
+@subsection Coding-system for Chinese
+
+  When you read/write a file containing Chinese characters, you must
+specify what kind of format is used.  In the world of Mule, this format
+is called @dfn{coding-system}.  You must specify an appropriate
+coding-system in your @file{~/.emacs} file, depending on your needs.  We
+will explain three cases one by one.
+
+@enumerate
+@item
+To edit files containing GB and ASCII
+
+  There are several ways to distinguish GB characters from ASCII
+characters.  The most frequently used method utilises the 8th bit as a
+flag.  If the 8th bit is set to 1, the character represents a GB.
+Otherwise, an ASCII.  This method is adopted in cxterm. If you use
+exclusively GB and ASCII, this method would be convenient.  This is the
+default coding-system in Mule's Chinese environment.
+
+@item
+To edit files containing BIG5 and ASCII
+
+  If you want to use BIG5 as the primary coding-system, add the
+following lines in your @file{~/.emacs} file:
+
+@lisp
+(set-default-file-coding-system '*big5*)
+(set-display-coding-system '*big5*)
+(set-keyboard-coding-system '*big5*)
+(setq-default quail-current-package (assoc "py-b5" quail-package-alist))
+@end lisp
+
+@item
+To edit files containing GB, BIG5 and ASCII
+
+  First of all, be aware of this fact: Mule seems to be the only
+software that can handle GB and BIG5 simultaneously.  You cannot display
+GB and BIG5 simultaneouly in cxterm, for example.
+
+  If you dare to include GB and BIG5 in the same file, we recommend you
+to include the following line in your @file{~/.emacs} file:
+
+@lisp
+(set-default-file-coding-system *junet*)
+@end lisp
+
+  With this coding-system, you can include not only GB and BIG5, but
+also Japanese, Hangul, European languages, etc. in a single file.  The
+coding-system @code{*junet*} inserts special codes, called @dfn{escape
+sequences}, at the boundaries of two different character sets.  The 8th
+bits are always set to zero.
+
+  You can also use the next one instead of using @code{*junet*}:
+
+@lisp
+(set-default-file-coding-system *euc-china*)
+@end lisp
+
+  In this case, GB characters are saved with their 8th bits set to one.
+All other character sets are saved with their 8th bits set to zero, and
+are distinguished from one another by escape sequences.
+
+  Yet another alternative is the following:
+
+@lisp
+(set-default-file-coding-system *ctext*)
+@end lisp
+
+  You cannot specify *big5* as file-coding-system if the file contains
+both GB and BIG5.
+
+@end enumerate
+
+@comment ------------------------------------------------------------
+@node Using cWnn, Quail for Chinese, Coding-system for Chinese, Chinese
+@subsection Using cWnn
+
+  The primary method for inputing Chinese is to communicate with cserver
+of cWnn via Egg system.  cserver is a network-wide pinyin-hanzi
+conversion server.  It receives pinyin sequences and returns hanzis.
+
+  To use cserver, cWnn (version 4.108 or later) should have been
+installed.  cWnn is bound to Wnn, and available from FTP sites of Mule.
+SiSheng fonts are also necessary. (See @xref{Chinese Fonts}.)
+
+  Note that the current version of Egg supports only GB characters.
+If you want to input BIG5, or if you cannot use cserver for some
+reason, see @xref{Quail for Chinese}.
+
+  To use cserver, you must specify the hostname on which cserver is
+running.  Add the following lines in your @file{~/.emacs} file:
+
+@lisp
+(set-cwnn-host-name "hostname")
+@end lisp
+
+  @code{"hostname"} must be replaced by the real hostname on which
+cserver is really running.
+
+  To input chinese, type @kbd{C-\}.  Make sure that the mode-line has
+changed.  Now you can enter pinyin.  You may type several words at once.
+Then hit @key{SPC} to convert what you entered.  If the resulting hanzi
+is different from what you want, hit @key{SPC} again.  Each time you hit
+@key{SPC}, cserver returns another alternative.
+
+  Here are some important key bindings in the conversion mode:
+
+@table @kbd
+@item SPC
+get another alternative
+
+@item RET
+confirm (accept that hanzi)
+
+@item C-f
+move to next word
+
+@item C-b
+move to previous word
+
+@item C-i
+make current word shorter
+
+@item C-o
+make current word longer
+
+@item C-g
+quit
+@end table
+
+  At the very first time of usig cserver, you may be asked if you
+want to make dictionaries.  Just type @kbd{yes} to all questions.
+
+  To quit from Chinese input mode, type @kbd{C-\} again.
+
+  For more information, see @xref{Top, , Egg, egg}.
+
+@comment ------------------------------------------------------------
+@node Quail for Chinese, Running Mule in cxterm, Using cWnn, Chinese
+@subsection Quail for Chinese
+
+  For those who want to input BIG5 or who cannot use cserver for some
+reason, Mule provides another input method called @dfn{quail}.  Quail is
+included in the standard distribution of Mule.  If you are familiar with
+cxterm, it would be very easy to use quail, as quail supports all of the
+input method provided by X11R5 cxterm.
+
+  All input methods called @samp{XXX.tit} in X11R5 cxterm are already
+registered in Mule.  To use some of them, just type @kbd{C-]} and select 
+a package you want by @kbd{M-s}.  The following packages are avairalbe
+now.
+
+@example
+py, tonepy, sw, punct, qj, ccdospy, ctcps3, etzy, py-b5, zozy, qj-b5,
+punct-b5
+@end example
+
+  In the document of X11R5 cxterm, each input method is explained as
+follows.  (Quoted from @file{cxterm/dict/tit/README}.)
+
+[GB input methods]
+
+@table @asis
+@item py
+Standard PinYin input method
+
+@item qj
+Quan Jiao -- double-byte ASCII in GB coding
+
+@item punct
+Punctuation marks input table
+
+@item sw
+CCDOS style ShouWei input method (first & last part)
+
+@item tonepy
+Standard PinYin input method with tone 1-5
+
+@item ccdospy
+CCDOS style abbreviated PinYin input method
+
+@item ctlau
+Sidney Lau's Cantonese transcription scheme
+@end table
+
+[BIG5 input methods]
+
+@table @asis
+@item py-b5
+Standard PinYin input method with tones
+
+@item qj-b5
+Quan Jiao -- double-byte ASCII in BIG5 coding
+
+@item punct-b5
+Punctuation marks input table
+
+@item ctlaob
+Sidney Lau's Cantonese transcription scheme
+
+@item zozy
+ETen ZhuYin (phonetic) input in second keyboard layout as in ZeroOne,
+DACHEN system, etc.
+
+@item etzy
+ETen ZhuYin (phonetic) input in ETen keyboard layout
+@end table
+
+  In quail, you can toggle ASCII input mode and Chinese input mode by
+typing @kbd{C-]}.  @kbd{M-z} in quail-mode shows a help.
+
+@quotation
+[NOTE] You can easily create a quail-package from cxterm's tit format
+file.  Please try the following command from your shell,
+
+@example
+@samp{% mule -batch -l quail/tit -f batch-tit-to-quail [dirname|filename] ...}
+@end example
+@end quotation
+
+@comment ------------------------------------------------------------
+@node Running Mule in cxterm, PIG-mode, Quail for Chinese, Chinese
+@subsection Running Mule in cxterm
+
+  You can use various hanzi input method of cxterm by running Mule in a
+cxterm window.  In this case you can use the latest veresion of cxterm.
+To run Mule in a cxterm window, execute the following command:
+
+@example
+@samp{% mule -nw}
+@end example
+
+  Make sure that you have configured cxterm so that it matches Mule's
+coding-system.  Set cxterm to GB-mode if you use *euc-china* in Mule; to
+BIG5-mode if you use *big5*.  Note that you cannot use GB and BIG5
+simultaneously in cxterm.
+
+@comment ------------------------------------------------------------
+@node PIG-mode, Chinese News, Running Mule in cxterm, Chinese
+@subsection PIG-mode
+
+  PIG-mode is a very convenient system.  It converts several characters
+at once, accepts abbreviated pinyin input, etc.  It is available via
+anonymous FTP from the following sites:
+
+@example
+etlport.etl.go.jp [192.31.197.99]: /pub/mule/contrib
+sh.wide.ad.jp [133.4.11.11]: /JAPAN/mule/mule-1.0/contrib
+ftp.mei.co.jp [132.182.49.2]:/public/free/gnu/emacs/Mule/contrib
+ftp.funet.fi [128.214.6.100]:/pub/gnu/emacs/mule/mule-1.0/contrib
+@end example
+
+  A useful readme file is included.
+
+  According to burt@@dfki.uni-kl.de, the definition of the following
+function is missing:
+
+@lisp
+(defun pig-parse-cz (string)
+ (let ((indx 0) list)
+  (while (string-match "\\([^0-5]+[0-5]\\)-*" string indx)
+   (setq list (cons (substring string (match-beginning 1) (match-end 1))
+                    list)) 
+   (setq indx (match-end 0)))
+  (nreverse list)))
+@end lisp
+
+@comment ------------------------------------------------------------
+@node Chinese News, , PIG-mode, Chinese
+@subsection Chinese News
+
+  It is possible to read the articles posted to @samp{alt.chinese.text}
+and @samp{alt.chinese.text.big5} if you use @code{GNUS} and
+@code{gnusutil} together in Mule.
+
+  Add the following line in your @file{~/.emacs} file:
+
+@lisp
+(setq gnus-group-mode-hook 'gnusutil-initialize)
+@end lisp
+
+  Now you can read @samp{alt.chinese.text} and
+@samp{alt.chinese.text.big5} in hanzi.
+
+  Once you install gnusutil, no special procedure is required to post an
+article to those newsgroups.  You can write your article in hanzi and
+can post it as if it were written in ASCII.  gnusutil automatically
+converts your hanzi article to appropriate format.  Use a GB input
+method for @samp{alt.chinese.text}, and a BIG5 input method for
+@samp{alt.chinese.text.big5}.
+
+@comment ============================================================
+@node Japanese, Korean, Chinese, Top
+@section Japanese
+
+[IN PREPARATION]
+
+  This section describes how to read and write Japanese in Mule.  To
+make Japanese the primary environment, the following line should be
+included in the @file{$MULE/lisp/site-init.el} file at the compile time:
+
+@lisp
+(set-primary-environment 'japanese)
+@end lisp
+
+  If your system administrator did not do this setting, you have to
+include the above line in your @file{~/.emacs} file.
+
+  To print Japanese text, see the online manual @samp{m2ps(1)}
+and @xref{Top, , m2ps, m2ps}.
+
+@comment ============================================================
+@node Korean, Thai, Japanese, Top
+@section Korean
+
+  This section describes how to read and write Korean in Mule.  To make
+Korean the primary environment, the following line should be included
+in the @file{$MULE/lisp/site-init.el} file at the compile time:
+
+@lisp
+(set-primary-environment 'korean)
+@end lisp
+
+  If your system administrator did not do this setting, you have to
+include the above line in your @file{~/.emacs} file.
+
+  To print Korean text, see the online manual @samp{m2ps(1)}
+and @xref{Top, , m2ps, m2ps}.
+
+@menu
+* Korean Character Set::        KSC5601
+* Inputing Hangul::             Quail Package for Hangul
+* Inputing Hanja::              Quail Package for Hanja
+@end menu
+
+@comment ------------------------------------------------------------
+@node Korean Character Set, Inputing Hangul, , Korean
+@subsection Korean Character Set
+
+  Mule uses the KSC5601 character set for displaying Korean.  Unless you
+have a terminal that supports KSC5601 and will run Mule exclusively on
+it, you have use the X window system on which appropriate KSC5601 fonts
+are installed.
+
+  If the Korean fonts have been properly installed, you should be able
+to read the following text:
+
+@example
+Mule $(C@:(B GNU Emacs $(C8&(B $(C:9<v@G(B $(C>p>n?!(B $(C4k@@GR(B $(C<v(B $(C@V557O(B $(C0-H-GQ(B $(C?!5pEM(B
+$(C@T4O4Y(B.
+GNU Emacs Ver.18 $(C@;(B $(C1bCJ7N(B $(CGQ(B Mule Ver.1 $(C0z(B GNU Emacs Ver.19 $(C8&(B $(C1bCJ(B
+$(C7N(B $(CGQ(B Mule Ver.2 $(C0!(B $(C@V=@4O4Y(B. $(C1]HD4B(B Mule Ver.2 $(C88(B $(C039_@L(B $(C0h<S5I(B $(C0M(B
+$(C@T4O4Y(B.
+@end example
+
+  Bear in mind that all fonts used in Mule must be of fixed width.
+Furthermore, the width of the Korean characters must be exactly twice as
+wide as the ASCII characters.  For the detail of font specification, see
+@xref{Font, , Font, mule}.
+
+  In most cases, the coding-system that you want to use for file I/O
+would be either @code{*iso-2022-kr*} or @code{*euc-korea*}.
+
+  @code{*iso-2022-kr*} is the coding-system that is used in Korea for
+e-mail communication.  It is a 7-bit encoding and uses locking shift.
+In the current version of Mule, it is the default file-coding-system for
+Korean.
+
+  On the other hand, @code{*euc-korea*} is an 8-bit encoding.  If the
+8th bit is set to zero, it represents an ASCII character; if set to one,
+a Korean character.  If you rarely use other character sets, this
+coding-system would be useful.  To use @code{*euc-korea*} for file I/O,
+add the following line in your @file{~/.emacs} file:
+
+@lisp
+(set-default-file-coding-system *euc-korea*)
+@end lisp
+
+  Another frequently used coding-system is @code{*junet*}.  It is the
+default coding-system in the @samp{mule@@etl.go.jp} mailing list for
+multilingual communication.  To use @code{*junet*} for file I/O, add the
+following line to your @file{~/.emacs} file:
+
+@lisp
+(set-default-file-coding-system *junet*)
+@end lisp
+
+@comment ------------------------------------------------------------
+@node inputing Hangul, Inputing Hanja, Korean Character Set, Korean
+@subsection Inputing Hangul
+
+  To input Hangul, use the Quail system.  The Quail system converts one
+or more ASCII characters into a Hangul.  There are two different
+@dfn{Quail packages} for Hangul, namely @code{hangul} and
+@code{hangul3}.
+
+  @code{hangul} uses the translation table below:
+
+@example
+$(CGQ1[(B: $(C$!(B $(C$"(B $(C$$(B $(C$'(B $(C$((B $(C$)(B $(C$1(B $(C$2(B $(C$3(B $(C$5(B $(C$6(B $(C$7(B $(C$8(B $(C$9(B $(C$:(B $(C$;(B $(C$<(B 
+KEY:   r  R  s  e  E  f  a  q  Q  t  T  d  w  W  c  z  x 
+
+$(CGQ1[(B: $(C$=(B $(C$>(B $(C$?(B $(C$A(B $(C$C(B $(C$D(B $(C$F(B $(C$E(B $(C$G(B $(C$K(B $(C$L(B $(C$P(B $(C$Q(B $(C$S(B $(C$@(B $(C@g(B
+KEY:   v  g  k  i  j  p  P  u  h  y  n  b  m  l  o  O
+@end example
+
+  Here are some examples:
+
+@example
+<key sequence>        r       k       r       k
+<string inserted>    $(C$!(B      $(C0!(B      $(C0"(B      $(C0!0!(B
+
+<key sequence>        r       k       r    <M-SPC>    k
+<string inserted>    $(C$!(B      $(C0!(B      $(C0"(B      $(C0"(B      $(C0"$?(B
+@end example
+
+  On the other hand, @code{hangul3} uses the translation table below:
+
+@example
+$(CCJ<:(B:  $(C$!(B  $(C$"(B  $(C$$(B  $(C$'(B  $(C$((B  $(C$)(B  $(C$1(B  $(C$2(B  $(C$3(B  $(C$5(B  $(C$6(B  $(C$7(B  $(C$8(B  $(C$9(B  $(C$:(B  $(C$;(B  $(C$<(B
+KEY :   k  kk   h   u  uu   y   i   ;  ;;   n  nn   j   l  ll   o   0   '
+
+$(CCJ<:(B:  $(C$=(B  $(C$>(B  $(C$?(B  $(C$@(B  $(C$A(B  $(C$B(B  $(C$C(B  $(C$D(B  $(C$E(B  $(C$F(B  $(C$G(B  $(C$H(B  $(C$I(B  $(C$J(B  $(C$K(B  $(C$L(B  $(C$M(B
+KEY :   p   m   f   r   6   R   t   c   e   7   v  /f  /r  /d   4   b  9t
+also:                                           /                   9
+
+$(CCJ<:(B:  $(C$N(B  $(C$O(B  $(C$P(B  $(C$Q(B  $(C$R(B  $(C$S(B  $(C$!(B  $(C$"(B  $(C$#(B  $(C$$(B  $(C$%(B  $(C$&(B  $(C$'(B  $(C$)(B  $(C$*(B  $(C$+(B  $(C$)(B
+KEY :  9c  9d   5   g   8   d   x   F  xq   s  s!   S   A   w   D   C  w3
+
+$(CCJ<:(B:  $(C$-(B  $(C$.(B  $(C$0(B  $(C$1(B  $(C$2(B  $(C$4(B  $(C$5(B  $(C$6(B  $(C$7(B  $(C$8(B  $(C$:(B  $(C$;(B  $(C$<(B  $(C$=(B  $(C$>(B
+KEY :  wq  wW   V   z   3   X   q   2   a   !   Z   E   W   Q   1
+@end example
+
+  An example follows:
+
+@example
+<key sequence>        k       f       x
+<string inserted>    $(C$!(B      $(C0!(B      $(C0"(B
+@end example
+
+  Hit @kbd{C-]} to turn into quail-mode.  If you do not see the string
+@samp{[$(CGQ1[(B 2$(C9z=D(B]} or @samp{[$(CGQ1[(B 3$(C9z=D(B]} in the mode-line, then hit
+@kbd{M-s} and specify the package name @samp{hangul} or @samp{hangul3}.
+@key{SPC} works as the completion key.  If you hit @key{RET} without
+specifying a package name, the default package (shown in the
+parentheses) will be used.
+
+  To exit quail-mode, hit @kbd{C-]} once again.
+
+  For the detail of the Quail system, see @xref{Usage of Quail, , ,
+quail}.
+
+@comment ------------------------------------------------------------
+@node Inputing Hanja, , Inputing Hangul, Korean
+@subsection Inputing Hanja
+
+  To input Hanja, also use the Quail system.  The package name for Hanja
+input is @code{hanja-ksc}.  To specify this package, hit @kbd{M-s} in
+quail-mode and input @kbd{hanja-ksc}.  Make sure the mode-line shows the
+string "2$(C9z=D(BKSC$(CySm.(B".
+
+  For the detail of the Quail system, see @xref{Usage of Quail, , ,
+quail}.
+
+@comment ============================================================
+@node Thai, Vietnamese, Korean, Top
+@section Thai
+
+  This section describes how to read and write Thai in Mule.  To make
+Thai the primary environment, the following line should be included
+in the @file{$MULE/lisp/site-init.el} file at the compile time:
+
+@lisp
+(set-primary-environment 'thai)
+@end lisp
+
+  If your system administrator did not do this setting, you have to
+include the above line in your @file{~/.emacs} file.
+
+  To print Thai text, see the online manual @samp{m2ps(1)}
+and @xref{Top, , m2ps, m2ps}.
+
+@menu
+* Thai Character Set::          Character Set, Fonts, Coding-system
+* Inputing Thai::               Quail Package for Thai
+@end menu
+
+@comment ------------------------------------------------------------
+@node Thai Character Set, Inputing Thai, , Thai
+@subsection Thai Character Set
+
+  Mule uses the TIS620 character set for displaying Thai.  Unless you
+have a terminal that supports TIS620 and will run Mule exclusively on
+it, you have to use the X window system on which appropriate TIS620
+fonts are installed.
+
+  Furthermore, you have to increase Mule's line spaces to display vowels
+and tone marks.  If you are using a 12x24 pixels ASCII font, start up
+Mule with the following command:
+
+@example
+@samp{% mule -lsp 5+0}
+@end example
+
+  If the Thai fonts have been properly installed, you should be able to
+read the following text, which contains both ASCII and Thai characters:
+
+@example
+Mule 0,T$W1M(B editor GNU Emacs 0,T7Uh106Y1!`0>Th1A$GRAJRARC6c0Ki1c0*i1d04i10!Q1:@RIRKERB(B ,Tf(B ,T@RIR(B
+0,T;Q1(0(X10:Q1909Ui1(B 0,TAU1(B Mule 0,TCXh19(B 1 0,T+Vh1'c0*i1(B GNU Emacs 0,TCXh19(B 18 ,T`0;g190R9(B ,TaEP(B Mule 0,TCXh19(B 2 0,T+Vh1'c0*i1(B
+GNU Emacs 0,TCXh19(B 19 ,T`0;g190R9(B  ,T`)>RP(B Mule 0,TCXh19(B 2 ,T`07h1R09Qi1907Uh1(P06Y1!0>Q129R;0CQ1:;0CX1'05h1Md;(B
+@end example
+
+  Bear in mind that all fonts used in Mule must be of fixed width.
+Furthermore, the width of the Thai characters must be the same as
+the ASCII characters.  For the detail of font specification, see
+@xref{Font, , Font, mule}.
+
+  In most cases, the coding-system that you want to use in file I/O
+would be either @code{*tis620*} or @code{*junet*}.
+
+  @code{*tis620*} is an 8-bit encoding.  If the 8th bit is set to
+zero, it represents an ASCII character; if set to one, a Thai
+character.  In the current version of Mule, it is the primary
+coding-system for Thai.  If you rarely use other character sets,
+this coding-system would be useful.
+
+  On the other hand, @code{*junet*} is a 7-bit encoding and uses escape
+sequences.  It is the default coding-system in the
+@samp{mule@@etl.go.jp} mailing list for multilingual communication.  To
+use @code{*junet*} for file I/O, add the following line to your
+@file{~/.emacs} file:
+
+@lisp
+(set-default-file-coding-system *junet*)
+@end lisp
+
+@comment ------------------------------------------------------------
+@node Inputing Thai, , Thai Character Set, Thai
+@subsection Inputing Thai
+
+  To input Thai characters, use the Quail system.  The Quail system
+converts one or more ASCII characters into a Thai character.
+
+  Hit @kbd{C-]} to turn into quail-mode.  If you do not see the string
+@samp{[Thai]} in the mode-line, then hit @kbd{M-s} and specify the
+package name @samp{thai}.  @key{SPC} works as the completion key.  If
+you hit @key{RET} without specifying a package name, the default package
+(shown in the parentheses) will be used.
+
+  The Thai keymap in quail-mode looks like this:
+
+@example
+,TE(B# /,Tq(B _,Tr(B ,T@s(B ,T6t(B ,TXY(B ,TV0Qi1(B ,T$u(B ,T5v(B ,T(w(B ,T"x(B ,T*y(B ,T_o(B ,T#%(B
+ ,Tfp(B ,Td(B\" ,TS.(B ,T>1(B ,TP8(B ,TQm(B ,TUj(B ,TC3(B ,T9O(B ,TB-(B ,T:0(B ,TE(B,
+  ,T?D(B ,TK&(B ,T!/(B ,T4b(B ,T`,(B ,Tig(B ,Thk(B ,TRI(B ,TJH(B ,TG+(B ,T'F(B
+   ,T<(B( ,T;(B) ,Ta)(B ,TMN(B ,TTZ(B ,TWl(B 0,T7n1(B ,TA2(B ,TcL(B ,T=(B?
+@end example
+
+  The difference from the ordinal Thai keyboards are:
+
+@itemize @bullet
+@item
+@samp{,T_(B} and @samp{,To(B} are assigned to @key{\} and @key{|}
+
+@item
+@samp{,T#(B} and @samp{,T%(B} are assigned to @key{`} and @key{~}
+
+@item
+We don't know where to assign characters @samp{,Tz(B} and @samp{,T{(B}
+@end itemize
+
+  To exit quail-mode, hit @kbd{C-]} once again.
+
+  For the detail of the Quail system, see @xref{Usage of Quail, , ,
+quail}.
+
+@comment ============================================================
+@node Vietnamese, Latin Script Languages, Thai, Top
+@section Vietnamese
+
+  This section describes how to read and write Vietnamese in Mule.  To
+make Vietnamese the primary environment, the following line should be
+included in the @file{$MULE/lisp/site-init.el} file at the compile time:
+
+@lisp
+(set-primary-environment 'viet)
+@end lisp
+
+  If your system administrator did not do this setting, you have to
+include the above line in your @file{~/.emacs} file.
+
+  To print Vietnamese text, see the online manual @samp{m2ps(1)}
+and @xref{Top, , m2ps, m2ps}.  Note that you have to use @code{coco} (COde
+COnversion library) to print Vietnamese text.  The best way is to use the
+@code{any2ps} shell script.  Both coco and any2ps can be found in Mule
+FTP sites.
+
+@menu
+* Vietnamese Character Set::    Character Set, Fonts, Coding-system
+* Inputing Vietnamese::         Quail Package for Vietnamese
+@end menu
+
+@comment ------------------------------------------------------------
+@node Vietnamese Character Set, Inputing Vietnamese, , Vietnamese
+@subsection Vietnamese Character Set
+
+  Mule supports both VISCII and VSCII fonts to display Vietnamese text.
+Unless you have a terminal that supports either VISCII or VSCII, and
+will run Mule exclusively on it, you have to use the X window system on
+which appropriate Vietnamese fonts are installed.
+
+  The default is set to VISCII.  If you have a VISCII terminal or VISCII
+fonts for the X window system, you do not have to do anything special.
+On the other hand, if you are going to use either a VSCII terminal or
+VSCII fonts, include the following two lines in your @file{~/.emacs}
+file:
+
+@lisp
+(x-set-ccl lc-vn-1 ccl-x-vn-1-vscii)
+(x-set-ccl lc-vn-2 ccl-x-vn-2-vscii)
+@end lisp
+
+  If the fonts have been properly installed, you should be able to read
+the following text, which contains both ASCII and Vietnamese characters:
+
+@example
+Mule l,1`(B m,15(Bt s,1q(B gia c,1t(Bng v,1+(B ,1p(Ba ng,1t(Bn ng,1f(B cho GNU Emacs [MULtilingual
+Enhancement to GNU Emacs].  Kh,1t(Bng nh,1f(Bng n,1s(B c,1s(B th,1,(B x,1X(B l,1}(B ch,1f(B ASCII (7
+bit) v,1`(B ISO Latin-1 (8 bit) m,1`(B c,1r(Bn c,1s(B th,1,(B x,1X(B l,1}(B Nh,1'(Bt ng,1f(B, Hoa ng,1f(B, H,1`(Bn
+ng,1f(B (16 bit) m,1c(B h,1s(Ba theo ti,1j(Bu chu,1&(Bn ISO2022 v,1`(B c,1a(Bc d,18(B b,1d(Bn (th,1m(B d,1x(B nh,1_(B
+EUC, Compound Text).  ,2p,1/(Bi v,1>(Bi Hoa ng,1f(B, Mule c,1s(B th,1,(B ph,1x(Bc v,1x(B cho c,1d(B GB l,1g(Bn
+Big5.  Ngo,1`(Bi ra, hi,1.(Bn nay ch,1z(Bng t,1t(Bi c,1{(Bng ph,1x(Bc v,1x(B cho ch,1f(B Th,1a(Bi d,1q(Ba tr,1j(Bn
+TIS620 m,1#(Bc d,1%(Bu ti,1j(Bu chu,1&(Bn n,1`(By kh,1t(Bng tu,1b(Bn theo ISO nh,1_(Bng r,1$(Bt ph,11(B th,1t(Bng ,17(B
+Th,1a(Bi Lan.
+@end example
+
+  Bear in mind that all fonts used in Mule must be of fixed width.
+Furthermore, the width of the Vietnamese characters must be the same as
+the ASCII characters.  For the detail of font specification, see
+@xref{Font, , Font, mule}.
+
+  Mule supports three coding-systems for Vietnamese, i.e.,
+@code{*viscii*}, @code{*vscii*} and @code{*viqr*}.  These are all 8-bit
+coding systems.  The coding-system is independent of the fonts.  For
+example, you can use a VISCII font to display text written in *vscii*,
+and vice versa.  The default coding-system is set to *viscii*.  If you
+want to change this, include either
+
+@lisp
+(setq *coding-category-bin* '*vscii*)
+(set-default-file-coding-system '*vscii*)
+@end lisp
+
+or
+
+@lisp
+(setq *coding-category-bin* '*viqr*)
+(set-default-file-coding-system '*viqr*)
+@end lisp
+
+in your @file{~/.emacs} file.
+
+  All of the three coding-systems can represent only Vietnames and
+ASCII.  If you want to use other foreign languages at the same time, add
+the following line in your @file{~/.emacs} file:
+
+@lisp
+(set-default-file-coding-system '*junet*)
+@end lisp
+
+The @code{*junet*} coding-system is a 7-bit encoding and uses escape
+sequences.  It is the default coding-system in the
+@samp{mule@@etl.go.jp} mailing list for multilingual communication.
+
+@comment ------------------------------------------------------------
+@node Inputing Vietnamese, , Vietnamese Character Set, Vietnamese
+@subsection Inputing Vietnamese
+
+  To input Vietnamese characters, use the Quail system.  The Quail
+system converts one or more ASCII characters into a Vietnamese
+character.
+
+  Hit @kbd{C-]} to turn into quail-mode.  If you do not see the string
+@samp{[VIQR]} in the mode-line, then hit @kbd{M-s} and specify the
+package name @samp{viqr}.  @key{SPC} works as the completion key.  If
+you hit @key{RET} without specifying a package name, the default package
+(shown in the parentheses) will be used.
+
+  The following table shows how to put diacritical marks:
+
+@example
+   effect   | postfix | examples
+------------+---------+----------
+   breve    |    (    | a( -> ,1e(B
+ circumflex |    ^    | a^ -> ,1b(B
+   horn     |    +    | o+ -> ,1=(B
+------------+---------+----------
+   acute    |    '    | a' -> ,1a(B
+   grave    |    `    | a` -> ,1`(B
+ hook above |    ?    | a? -> ,1d(B
+   tilde    |    ~    | a~ -> ,1c(B
+  dot below |    .    | a. -> ,1U(B
+------------+---------+----------
+   d bar    |   dd    | dd -> ,1p(B
+------------+---------+----------
+ no compose |    \    | a\. -> a.
+------------+---------+----------
+ combination|   (~    | a(~ -> ,1G(B
+@end example
+
+  To exit quail-mode, hit @kbd{C-]} once again.
+
+  For the detail of the Quail system, see @xref{Usage of Quail, , ,
+quail}.
+
+@comment ============================================================
+@node Latin Script Languages, Cyrillic Script Languages, Vietnamese, Top
+@section Latin Script Languages
+
+  This section describes how to read and write Latin script languages
+(roughly speaking, European languages) in Mule.  To make Latin script
+the primary environment, the following line should be included in the
+@file{$MULE/lisp/site-init.el} file at the compile time:
+
+@lisp
+(set-primary-environment 'european)
+@end lisp
+
+  If your system administrator did not do this setting, you have to
+include the above line in your @file{~/.emacs} file.
+
+  By default, the above line makes Mule use ISO 8859-1 (aka Latin-1 or
+CTEXT) as the primary character set.  If you want to use latin-2,
+latin-3, etc., see @xref{Other Latin Character Sets}.
+
+  To print Latin script text, see the online manual @samp{m2ps(1)}
+and @xref{Top, , m2ps, m2ps}.
+
+@menu
+* Latin-1::                     aka ISO 8859-1 and CTEXT
+* Other Latin Character Sets::  Latin-2, Latin-3, Latin-4 and Latin-5
+@end menu
+
+@comment ------------------------------------------------------------
+@node Latin-1, Other Latin Character Sets, , Latin Script Languages
+@subsection Latin-1
+
+@menu
+* Displaying Latin-1::
+* Inputing Latin-1::
+
+@comment ............................................................
+@node Displaying Latin-1, Inputing Latin-1, , Latin-1
+@subsubsection Displaying Latin-1
+
+  Unless you have a terminal that supports ISO 8859-1 and will run Mule
+exclusively on it, you have to use the X window system on which
+appropriate ISO 8859-1 fonts are installed.  Most, if not all, X window
+systems have ISO 8859-1 fonts by default, so you do not need to worry
+about it too much.  If ISO 8859-1 fonts are already available on your
+system, you should be able to read the following French sentence that
+contains many accented characters:
+
+@example
+,A+(BTout Fran,Ag(Bais de bon go,A{(Bt, m,Aj(Bme r,Ai(Bsident de Capharna,A|(Bm, doit payer la
+d,An(Bme ,A`(B No,Ak(Bl ou ,A`(B P,Ab(Bques, en esp,Ah(Bces, en gn,At(Ble ou en ma,Ao(Bs.,A;(B
+@end example
+
+  Bear in mind that all fonts used in Mule must be of fixed width.  For
+the detail of font specification, see @xref{Font, , Font, mule}.
+
+  In most cases, the coding-system that you want to use in file I/O
+would be either @code{*ctext*} or @code{*junet*}.
+
+  @code{*ctext*} is an 8-bit encoding.  If the 8th bit is set to zero,
+it represents an ASCII character.  If the 8th bit is set to one, it
+represents a Latin-1 character.  In the current version of Mule, it is
+the primary coding-system for Latin-1 text.  If you rarely use other
+coding-systems, this one would be useful.  You can use the name
+@code{*iso-8859-1*} as an alias for @code{*ctext*}.  There is no
+difference between the two names.
+
+  On the other hand, @code{*junet*} is a 7-bit encoding and uses escape
+sequences.  It is the default coding-system in the
+@samp{mule@@etl.go.jp} mailing list for multilingual communication.  To
+use @code{*junet*} for file I/O, add the following line to your
+@file{~/.emacs} file:
+
+@lisp
+(set-default-file-coding-system *junet*)
+@end lisp
+
+@comment ............................................................
+@node Inputing Latin-1, , Displaying Latin-1, Latin-1
+@subsubsection Inputing Latin-1
+
+  Some keyboards directly generate 8-bit codes for ISO 8859-1
+characters.  In such cases, you can input ISO 8859-1 characters without
+difficulty.
+
+  Even if your keyboard does not generate 8-bit codes, you can input ISO
+8859-1 characters using the Quail system.  The Quail system converts one
+or more ASCII characters into an ISO 8859-1 character.  A number of
+conversion tables are provided for this purpose.  Each conversion table
+is called a @dfn{package}.
+
+  Hit @kbd{C-]} to turn into quail-mode.  Then hit @kbd{M-s} and specify
+the package name that you want to use (see below).  @key{SPC} works as
+the completion key.  If you hit @key{RET} without specifying a package
+name, the default package (shown in the parentheses) will be used.
+
+  The Quail packages are divided into two groups.  The first one is for
+naive users.  Most of the accented letters can be input by composing two
+characters.  For example, you will get an @samp{,Ai(B} (@samp{e} with acute
+accent) by typing an @samp{e} followed by a @samp{'} (single quote).
+
+@example
+PACKAGE NAME    LANGUAGE
+--------------------------------
+latin-1         general purpose
+british         British
+danish          Danish
+finnish         Finnish
+french          French
+german          German
+icelandic       Icelandic
+italian         Italian
+norwegian       Norwegian
+scandinavian    Swedish, Norwegian, Danish, Icelandic and Finnish
+spanish         Spanish
+swedish         Swedish
+@end example
+
+  The second package group was made for those who find the first package
+group too awkward.  The principle of this group is @dfn{the less
+strokes, the better}.  Most of the special characters in each language
+are allocated to somewhere on the keyboard so that you can type them
+with a single stroke.  You can type very quickly once you learn the
+layout by heart.
+
+@example
+PACKAGE NAME    LANGUAGE
+-------------------------------
+azerty          French
+dnsh            Danish
+dvorak          English
+fnnsh           Finnish
+frnch           French
+grmn            German
+iclndc          Icelandic
+itln            Italian
+nrwgn           Norwegian
+spnsh           Spanish
+swdsh           Swedish
+@end example
+
+  To see the composition table or the keyboard mapping of a package,
+select that package and hit @kbd{M-z}.  To exit quail-mode, hit
+@kbd{C-]} once again.
+
+  For the detail of the Quail system, see @xref{Usage of
+Quail, , , quail}.
+
+@comment ------------------------------------------------------------
+@node Other Latin Character Sets, , Latin-1, Latin Script Languages
+@subsection Other Latin Character Sets
+
+@menu
+* Displaying Other Latin Character Sets::
+* Inputing Other Latin Character Sets::
+@end menu
+
+@comment ............................................................
+@node Displaying Other Latin Character Sets, Inputing Other Latin Character Sets, , Other Latin Character Sets
+@subsubsection Displaying Other Latin Character Sets
+
+  Unless you have a terminal that supports ISO 8859-x and will run Mule
+exclusively on it, you have to use the X window system on which
+appropriate ISO 8859-x fonts are installed.  Use the following lines to
+check whether the fonts have been installed or not.  All the lines
+contain four vowels (@samp{A}, @samp{E}, @samp{I} and @samp{U}) with
+acute accent both in upper case and in lower case:
+
+@example
+ISO 8859-2 (Latin-2): ,BA(B ,Ba(B ,BI(B ,Bi(B ,BM(B ,Bm(B ,BZ(B ,Bz(B
+ISO 8859-3 (Latin-3): ,CA(B ,Ca(B ,CI(B ,Ci(B ,CM(B ,Cm(B ,CZ(B ,Cz(B
+ISO 8859-4 (Latin-4): ,DA(B ,Da(B ,DI(B ,Di(B ,DM(B ,Dm(B ,DZ(B ,Dz(B
+ISO 8859-9 (Latin-5): ,MA(B ,Ma(B ,MI(B ,Mi(B ,MM(B ,Mm(B ,MZ(B ,Mz(B
+@end example
+
+  Bear in mind that all fonts used in Mule must be of fixed width.
+Furthermore, the width of the ISO 8859-x characters must be the same as
+the ASCII characters.  For the detail of font specification, see
+@xref{Font, , Font, mule}.
+
+  In most cases, the coding-system that you want to use in file I/O
+would be either @code{*junet*} or @code{*iso-8859-x*}, where x = 2, 3, 4
+or 9.
+
+  @code{*junet*} is a 7-bit encoding and uses escape sequences.  It is
+the default coding-system in the @samp{mule@@etl.go.jp} mailing list for
+multilingual communication.  To use @code{*junet*} for file I/O, add the
+following line to your @file{~/.emacs} file:
+
+@lisp
+(set-default-file-coding-system *junet*)
+@end lisp
+
+  On the other hand, @code{*iso-8859-x*} is an 8-bit encoding.  If the
+8th bit is set to zero, it represents an ASCII character; if set to one,
+a ISO 8859-x character.  If you use only one character set (other than
+ASCII), this coding-system would be useful.  To use this coding-system
+for file I/O, add ONE of the following lines to your @file{~/.emacs}
+file:
+
+@lisp
+(set-default-file-coding-system *iso-8859-2*)
+(set-default-file-coding-system *iso-8859-3*)
+(set-default-file-coding-system *iso-8859-4*)
+(set-default-file-coding-system *iso-8859-9*)
+@end lisp
+
+[NOTE] Latin-5 is another name for ISO 8859-9, not for ISO 8859-5.  ISO
+8859-5 is a Latin/Cyrillic character set.
+
+@comment ............................................................
+@node Inputing Other Latin Character Sets, , Displaying Other Latin Character Sets, Other Latin Character Sets
+@subsubsection Inputing Other Latin Character Sets
+
+  To input Latin-x characters, use the Quail system.  The Quail system
+converts one or more ASCII characters into a Latin-x character.  A
+number of conversion tables are provided for this purpose.  Each
+conversion table is called a @dfn{package}.
+
+  Hit @kbd{C-]} to turn into quail-mode.  Then hit @kbd{M-s} and specify
+the package name that you want to use (see below).  @key{SPC} works as the
+completion key.  If you hit @key{RET} without specifying a package name,
+the default package (shown in the parentheses) will be used.
+
+  Here is the table of Quail packages for Latin-x characters:
+
+@example
+PACKAGE NAME    TARGET LANGUAGE
+------------------------------------------------------
+latin-2         all Latin-2 (ISO 8859-2) languages
+latin-3         all Latin-3 (ISO 8859-3) languages
+latin-4         all Latin-4 (ISO 8859-4) languages
+latin-5         all Latin-5 (ISO 8859-9) languages
+esperanto       specific to Esperanto (Latin-3 coding)
+turkish         spacific to Turkish (Latin-3 coding)
+@end example
+
+  To see the conversion table of a package, select that package and hit
+@kbd{M-z}.  You can exit quail-mode by @kbd{C-]}.  For the detail of the
+Quail system, see @xref{Usage of Quail, , , quail}.
+
+@comment ============================================================
+@node Cyrillic Script Languages, Greek, Latin Script Languages, Top
+@section Cyrillic Script Languages
+
+  This section describes how to read and write Cyrillic script languages
+in Mule.  To make Cyrillic script the primary environment, the following
+line should be included in the @file{$MULE/lisp/site-init.el} file at
+the compile time:
+
+@lisp
+(set-primary-environment 'cyrillic)
+@end lisp
+
+  If your system administrator did not do this setting, you have to
+include the above line in your @file{~/.emacs} file.
+
+  To print Cyrillic text, see the online manual @samp{m2ps(1)}
+and @xref{Top, , m2ps, m2ps}.
+
+@menu
+* Displaying Cyrillic::
+* Other Coding-systems for Russian::
+* Inputing Cyrillic::
+@end menu
+
+@comment ------------------------------------------------------------
+@node Displaying Cyrillic, Other Coding-systems for Russian, , Cyrillic Script Languages
+@subsection Displaying Cyrillic
+
+  Mule uses the right half of the ISO 8859-5 character set for
+displaying Cyrillic.  Unless you have a terminal that supports ISO
+8859-5 and will run Mule exclusively on it, you have to use the X window
+system on which appropriate ISO 8859-5 fonts are installed.
+
+  If the Cyrillic fonts have been properly installed, you should be able
+to read the following Ukrainian folk song:
+
+@example
+,L2WoR(B ,LQX(B ,Lo(B ,LQP]Tc`c(B
+,LBP(B ,LY(B ,LWPS`PR(B, ,Li^(B ,LW]PR(B.
+,LGU`UW(B ,Lbc(B ,LQP]Tc`c(B
+,L1P]Tc`Xab^\(B ,LabPR(B.
+@end example
+
+  Bear in mind that all fonts used in Mule must be of fixed width.
+Furthermore, the width of the Cyrillic characters must be the same as
+the ASCII characters.  For the detail of font specification, see
+@xref{Font, , Font, mule}.
+
+  In most cases, the coding-system that you want to use in file I/O
+would be either @code{*iso-8859-5*} or @code{*junet*}.
+
+  @code{*iso-8859-5*} is an 8-bit encoding.  If the 8th bit is set to
+zero, it represents an ASCII character; if set to one, a Cyrillic
+character.  In the current version of Mule, it is the primary
+coding-system for Cyrillic.  If you rarely use other character sets,
+this coding-system would be useful.
+
+  On the other hand, @code{*junet*} is a 7-bit encoding and uses escape
+sequences.  It is the default coding-system in the
+@samp{mule@@etl.go.jp} mailing list for multilingual communication.  To
+use @code{*junet*} for file I/O, add the following line to your
+@file{~/.emacs} file:
+
+@lisp
+(set-default-file-coding-system *junet*)
+@end lisp
+
+@comment ------------------------------------------------------------
+@node Other Coding-systems for Russian, Inputing Cyrillic, Displaying Cyrillic, Cyrillic Script Languages
+@subsection Other Coding-systems for Russian
+
+  If you need only Russian, two other coding-systems are available in
+addition to @code{*junet*} and @code{*iso-8859-5*}, namely,
+@code{*koi8*} and @code{*alternativnyj*}.  Both of them are of 8-bit
+encoding.
+
+  @code{*koi8*} is the coding system used in the @samp{relcom.*} netnews
+groups.  They say it is widely used in the world of UNIX systems, too.
+If you want to use @code{*koi8*} as the default character set, include
+the following line in your @file{~/.emacs} file:
+
+@lisp
+(set-cyrillic-environment-koi8)
+@end lisp
+
+  It is possible to read the news articles posted to @samp{relcom.*} if
+you use @code{GNUS} and @code{gnusutil} together in Mule.  For this
+purpose, add the following lines in your @file{~/.emacs} file (in
+addition to the above setting):
+
+@lisp
+(setq gnus-group-mode-hook 'gnusutil-initialize)
+(autoload 'gnusutil-initialize "gnusutil")
+(autoload 'gnusutil-add-group "gnusutil")
+(gnusutil-add-group "relcom" '*koi8*)
+@end lisp
+
+  @code{*alternativnyj*} is the coding-system widely used in DOS
+systems.  It is basically the same as so called CP866.  If you want to
+read and write Russian text always in this DOS format, include the
+following line in your @file{~/.emacs} file:
+
+@lisp
+(set-cyrillic-environment-alternativnyj)
+@end lisp
+
+@comment ------------------------------------------------------------
+@node Inputing Cyrillic, , Other Coding-systems for Russian, Cyrillic Script Languages
+@subsection Inputing Cyrillic
+
+  To input Cyrillic characters, use the Quail system.  The Quail system
+converts one or two ASCII characters into a Cyrillic character.  A
+number of conversion tables are provided for this purpose.  Each
+conversion table is called a @dfn{package}.
+
+  Hit @kbd{C-]} to turn into quail-mode.  Then hit @kbd{M-s} and specify
+the package name that you want to use (see below).  @key{SPC} works as the
+completion key.  If you hit @key{RET} without specifying a package name,
+the default package (shown in the parentheses) will be used.
+
+  Here is the table of Quail packages for Cyrillic characters:
+
+@example
+PACKAGE NAME    LANGUAGES           NOTES
+-----------------------------------------------------------------
+jcuken          Russian             standard layout for Russian
+macedonian      Macedonian          JUS.I.K1.004
+serbian         Serbian             JUS.I.K1.005
+byelorussian    Byelorussian        derived from JUS.I.K1
+ukrainian       Ukrainian           derived from JUS.I.K1
+yawerty         general purpose     based on Roman transcription
+@end example
+
+  To see the conversion table of a package, select that package and hit
+@kbd{M-z}.  You can exit quail-mode by @kbd{C-]}.  For the detail of the
+Quail system, see @xref{Usage of Quail, , , quail}.
+
+@comment ============================================================
+@node Greek, Hebrew, Cyrillic Script Languages, Top
+@section Greek
+
+  This section describes how to read and write Greek in Mule.  To make
+Greek the primary environment, the following line should be included in
+the @file{$MULE/lisp/site-init.el} file at the compile time:
+
+@lisp
+(set-primary-environment 'greek)
+@end lisp
+
+  If your system administrator did not do this setting, you have to
+include the above line in your @file{~/.emacs} file.
+
+  To print Greek text, see the online manual @samp{m2ps(1)}
+and @xref{Top, , m2ps, m2ps}.
+
+@menu
+* Greek Character Set::         Character Set, Fonts, Coding-system
+* Inputing Greek::              Quail Package for Greek
+@end menu
+
+@comment ------------------------------------------------------------
+@node Greek Character Set, Inputing Greek, , Greek
+@subsection Greek Character Set
+
+  Mule uses the right half of the ISO 8859-7 character set for
+displaying Greek.  Unless you have a terminal that supports ISO 8859-7
+and will run Mule exclusively on it, you have to use the X window system
+on which appropriate ISO 8859-7 fonts are installed.
+
+  If the Greek fonts have been properly installed, you should be able to
+read the following poem:
+
+@example
+,FK_co(B ,Faj|la(B
+,Fha(B ,Fido}le(B ,Ftir(B ,Falucdaki]r(B ,Fm(B',Famh_foum(B
+,Fta(B ,Fl\qlaqa(B ,Fma(B ,Fk\lpoum(B ,Fstom(B ,F^kio(B
+,Ftg(B ,Fh\kassa(B ,Fma(B ,Fjulat_fei(B
+,Fk_co(B ,Faj|la(B,
+,Fma(B ,Fsgjyho}le(B ,Fk_co(B ,Fxgk|teqa(B.
+@end example
+
+  Bear in mind that all fonts used in Mule must be of fixed width.
+Furthermore, the width of the Greek characters must be the same as the
+ASCII characters.  For the detail of font specification, see @xref{Font,
+, Font, mule}.
+
+  In most cases, the coding-system that you want to use in file I/O
+would be either @code{*iso-8859-7*} or @code{*junet*}.
+
+  @code{*iso-8859-7*} is an 8-bit encoding.  If the 8th bit is set to
+zero, it represents an ASCII character; if set to one, a Greek
+character.  In the current version of Mule, it is the primary
+coding-system for Greek.  If you rarely use other languages, this
+coding-system would be useful.
+
+  On the other hand, @code{*junet*} is a 7-bit encoding and uses escape
+sequences.  It is the default coding-system in the
+@samp{mule@@etl.go.jp} mailing list for multilingual communication.  To
+use @code{*junet*} for file I/O, add the following line to your
+@file{~/.emacs} file:
+
+@lisp
+(set-default-file-coding-system *junet*)
+@end lisp
+
+@comment ------------------------------------------------------------
+@node Inputing Greek, , Greek Character Set, Greek
+@subsection Inputing Greek
+
+  To input Greek characters, use the Quail system.  Hit @kbd{C-]} to
+turn into quail-mode.  If you do not see the string @samp{[,FEkkgmij\(B]} in
+the mode-line, then hit @kbd{M-s} and specify the package name
+@samp{greek}.  @key{SPC} works as the completion key.  If you hit
+@key{RET} without specifying a package name, the default package (shown
+in the parentheses) will be used.
+
+  The Greek keymap in quail-mode looks like this:
+
+@example
+1!  2@  3#  4$  5%  6^  7&  8*  9(  0)  -_  =+  `~
+ ,F7/(B  ,FrS(B  ,FeE(B  ,FqQ(B  ,FtT(B  ,FuU(B  ,FhH(B  ,FiI(B  ,FoO(B  ,FpP(B  [{  ]}
+  ,FaA(B  ,FsS(B  ,FdD(B  ,FvV(B  ,FcC(B  ,FgG(B  ,FnN(B  ,FjJ(B  ,FkK(B  ,F4((B  '"  \|
+   ,FfF(B  ,FwW(B  ,FxX(B  ,FyY(B  ,FbB(B  ,FmM(B  ,FlL(B  ,;  .:  /?  
+@end example
+
+  The keys @kbd{,F4(B} (@kbd{;} on ASCII keyboard) and @kbd{,F((B} (@kbd{:} on
+ASCII keyboard) work as dead keys.  For example,
+
+@example
+@samp{,Fa(B} + @samp{,F4(B} becomes @samp{,F\(B}
+@samp{,Fi(B} + @samp{,F((B} becomes @samp{,Fz(B}
+@samp{,Fi(B} + @samp{,F((B} + @samp{,F4(B} becomes @samp{,F@(B}
+@end example
+
+  To exit quail-mode, hit @kbd{C-]} once again.
+
+  For the detail of the Quail system, see @xref{Usage of Quail, , ,
+quail}.
+
+@comment ============================================================
+@node Hebrew, Arabic Script Languages, Greek, Top
+@section Hebrew
+
+  This section describes how to read and write Hebrew in Mule.  To make
+Hebrew the primary environment, the following line should be included in
+the @file{$MULE/lisp/site-init.el} file at the compile time:
+
+@lisp
+(set-primary-environment 'hebrew)
+@end lisp
+
+  If your system administrator did not do this setting, you have to
+include the above line in your @file{~/.emacs} file.
+
+  To print Hebrew text, see the online manual @samp{m2ps(1)}
+and @xref{Top, , m2ps, m2ps}.
+
+@menu
+* Hebrew Character Set::
+* Display-direction for Hebrew::
+* Inputing Hebrew::
+* Hebrew Cut and Paste::
+@end menu
+
+@comment ------------------------------------------------------------
+@node Hebrew Character Set, Display-direction for Hebrew, , Hebrew
+@subsection Hebrew Character Set
+
+  Mule uses the right half of the ISO 8859-8 character set for
+displaying Hebrew.  Unless you have a terminal that supports ISO 8859-8
+and will run Mule exclusively on it, you have to use the X window system
+on which appropriate ISO 8859-8 fonts are installed.
+
+  If the Hebrew fonts have been properly installed, you should be able to
+read the following Hebrew alphabet:
+
+@example
+[2],H`abcdefghijklmnopqrstuvwxyz[0](B
+@end example
+
+  Bear in mind that all fonts used in Mule must be of fixed width.
+Furthermore, the width of the Hebrew characters must be the same as the
+ASCII characters.  For the detail of font specification, see @xref{Font,
+, Font, mule}.
+
+  In most cases, the coding-system that you want to use in file I/O
+would be either @code{*junet*} or @code{*iso-8859-8*}.
+
+  @code{*junet*}is a 7-bit encoding and uses escape sequences.  It is
+the default coding-system in the @samp{mule@@etl.go.jp} mailing list for
+multilingual communication.  To use @code{*junet*} for file I/O, add the
+following line to your @file{~/.emacs} file:
+
+@lisp
+(set-default-file-coding-system *junet*)
+@end lisp
+
+  On the other hand, @code{*iso-8859-8*} is an 8-bit encoding.  If the
+8th bit is set to zero, it represents an ASCII character; if set to one,
+a Hebrew character.  In the current version of Mule, it is the primary
+coding-system for Hebrew.  If you rarely use other languages, this
+coding-system would be useful.  You do not need to any special
+configuration for using this coding-system.
+
+  *iso-8859-8* does not inserts text direction specifiers.  If you want
+to use the text direction specifier defined in ISO 6429, namely
+@dfn{@key{ESC} [ 2 ]} to change the direction to right-to-left and
+@dfn{@key{ESC} [ 0 ]} to revert it to left-to-right, include the
+following line in your @file{~/.emacs} file:
+
+@lisp
+(set-default-file-coding-system *ctext-hebrew*)
+@end lisp
+
+@comment ------------------------------------------------------------
+@node Display-direction for Hebrew, Inputing Hebrew, Hebrew Character Set, Hebrew
+@subsection Display-direction for Hebrew
+
+  In Mule, each buffer has a buffer local variable called
+@code{display-direction}.  If this variable is set to @code{nil} (this
+is the default), the lines begin from the left edge of the screen.  On
+the other hand, if @code{display-direction} is non-@code{nil}, the lines
+are aligned to the right and texts are written from right to left.
+
+  We strongly recommend you to turn on @dfn{visual-mode} by
+
+@example
+M-x visual-mode
+@end example
+
+when you edit Hebrew text.  For the detail of @code{display-direction}
+and the cursor motion in visual-mode, see @xref{Top, , Right-to-left
+writing, R2L}.
+
+@comment ------------------------------------------------------------
+@node Inputing Hebrew, Hebrew Cut and Paste, Display-direction for Hebrew, Hebrew
+@subsection Inputing Hebrew
+
+  To input Hebrew characters, use the Quail system.  Hit @kbd{C-]} to
+turn into quail-mode.  If you do not see the string @samp{[HEBREW]} in
+the mode-line, then hit @kbd{M-s} and specify the package name
+@samp{hebrew}.  @key{SPC} works as the completion key.  If you hit
+@key{RET} without specifying a package name, the default package (shown
+in the parentheses) will be used.
+
+  The Hebrew keymap in quail-mode looks like this:
+
+@example
+1[2]![0]  2[2]@[0]  3[2]#[0]  4[2]$[0]  5[2]%[0]  6[2]^[0]  7[2]&[0]  8[2]*[0]  9[2]([0]  0[2])[0]  [2]-_[0]  [2]=+[0]  [2];~[0]  [2]\|[0]           
+ [2]/[0]Q  [2]'[0]W  [2],Hw[0](BE  [2],Hx[0](BR  [2],H`[0](BT  [2],Hh[0](BY  [2],He[0](BU  [2],Ho[0](BI  [2],Hm[0](BO  [2],Ht[0](BP  [2][{[0]  [2]]}[0]                  
+  [2],Hy[0](BA  [2],Hc[0](BS  [2],Hb[0](BD  [2],Hk[0](BF  [2],Hr[0](BG  [2],Hi[0](BH  [2],Hg[0](BJ  [2],Hl[0](BK  [2],Hj[0](BL  [2],Hs(B:[0]  [2],"[0]                     
+   [2],Hf[0](BZ  [2],Hq[0](BX  [2],Ha[0](BC  [2],Hd[0](BV  [2],Hp[0](BB  [2],Hn[0](BN  [2],Hv[0](BM  [2],Hz(B<[0]  [2],Hu(B>[0]  [2].?[0]                        
+@end example
+
+  With @key{SFT} keys, you can input upper case ASCII characters even
+in hebrew inputing mode.  To input lower case ASCII characters, you have 
+to exit hebrew mode by @kbd{C-]}.  To  exit quail-mode, hit  @kbd{C-]}
+once again.
+
+  For the detail of the Quail system, see @xref{Usage of Quail, , ,
+quail}.
+
+@comment ------------------------------------------------------------
+@node Hebrew Cut and Paste, , Inputing Hebrew, Hebrew
+@subsection Hebrew Cut and Paste
+
+  Use @kbd{C-d} to delete the character under the cursor.
+
+  @key{DEL} key behave differently according to the value of
+@code{display-direction}: if the value is @code{nil} (aligned to left),
+it deletes a character on the left of the cursor; if the value is
+non-@code{nil} (aligned to right), it deletes a character on the right
+of the cursor.  If the @code{display-direction} and the input character
+direction are the same, lastly input character can be deleted with
+@key{DEL} key, no matter what the value of @code{display-direction} is.
+
+  The following four commands remove the specified stretch of string and
+put it in the @code{kill-ring}:
+
+@example
+@kbd{M-d}   or @kbd{M-x visual-kill-word}
+@kbd{M-DEL} or @kbd{M-x visual-backward-kill-word}
+@kbd{C-k}   or @kbd{M-x visual-kill-line}
+@kbd{C-w}   or @kbd{M-x visual-kill-region}
+@end example
+
+  @kbd{M-w} (or @kbd{M-x visual-copy-region-as-kill}) also puts the
+specified stretch of string in the @code{kill-ring}, but the original
+text is left unchanged.
+
+  The strings in the @code{kill-ring} can be reinserted in buffer by
+@kbd{C-y} (or @kbd{M-x visual-yank}) and @kbd{M-y} (or @kbd{M-x
+visual-yank-pop}).
+
+  Make sure that you are in quail-mode with Hebrew package when you kill
+or yank something, otherwise unexpected region might be deleted or a
+garbage string might be inserted in the buffer.
+
+@comment ============================================================
+@node Arabic Script Languages, Ethiopic Languages, Hebrew, Top
+@section Arabic Script Languages
+
+  Mule supports Arabic and Farsi (Persian).  In this section we describe
+How to display, input and edit these Arabic Script Languages.  To make
+Arabic script the primary environment, the following line should be
+included in the @file{$MULE/lisp/site-init.el} file at the compile time:
+
+@lisp
+(set-primary-environment 'arabic)
+@end lisp
+
+  If your system administrator did not do this setting, you have to
+include the above line in your @file{~/.emacs} file.
+
+* ARABIC TOGGLING COMMAND HAS BEEN CHANGED FROM @kbd{C-]} TO @kbd{M-\}.
+
+  To print Arabic text, see the online manual @samp{m2ps(1)} and
+@xref{Top, , m2ps, m2ps}.
+
+  Please note that the current version of m2ps does not support r2l
+printing direction (aligned to right).  Even if you try to print a file
+which was created in a right-aligned buffer, it will be printed in
+left-aligned.  In the worst cases, you will get wrong word order in the
+hardcopy.
+
+@menu
+* Arabic Character Set::
+* Arabic-mode::
+* Display-direction in Arabic-mode::
+* Inputing Arabic Characters::
+* Arabic Cut and Paste::
+@end menu
+
+@comment ------------------------------------------------------------
+@node Arabic Character Set, Arabic-mode, , Arabic Script Languages
+@subsection Arabic Character Set
+
+  Mule uses its own Arabic code and Arabic Fonts.  You have to start
+Mule as an X client, i.e., without the @samp{-nw} option, to use Arabic.
+Mule requires the following three fonts to display Arabic:
+
+@example
+@file{etl??-arabic0.bdf}       Arabic Digits
+@file{etl??-arabic1.bdf}       Narrow Characters (alif, etc.)
+@file{etl??-arabic2.bdf}       Wide Characters (siin, etc)
+@end example
+
+  The @samp{??} part indicates the font size.  You will find 16 pixels
+fonts and 24 pixels fonts on Mule FTP sites.
+
+  Furthermore, you have to increase Mule's line spaces because the
+heights of Arabic characters vary greatly.  If you are using 16 pixels
+fonts, start up Mule with:
+
+@example
+@samp{% mule -lsp 0+9}
+@end example
+
+Or if you are using 24 pixels fonts, start up Mule with:
+
+@example
+@samp{% mule -lsp 0+12}
+@end example
+
+  If the fonts are properly installed, you should be able to read the
+following famous words:
+
+@quotation
+[2](3U(4?(3G![;=!8RYa(4Z(3&[0](B
+@end quotation
+
+  For the Arabic non-spacing marks, only two of them, i.e., hamza and
+madda, are available up to now.  Any other marks, e.g. fatHa (short
+`a'), Damma (short `u'), kasra (short `i'), shadda (doubling sign),
+sukuun (pure consonant sign), waSla (joining hamza), etc., cannot be
+displayed.  It seems that short vowels and waSla are not necessary to
+write ordinary Arabic text, but shadda is often marked in today's
+printings.  Please let us know if shadda is really indispensable, in
+that case we will try to implement it.
+
+@comment ------------------------------------------------------------
+@node Arabic-mode, Display-direction in Arabic-mode, Arabic Character Set, Arabic Script Languages
+@subsection Arabic-mode
+
+  You use @dfn{arabic-mode} to input and edit Arabic texts.  This
+section describes the features of arabic-mode in detail.
+
+  Hit @kbd{C-]} to enter arabic-mode.  Now you can input Arabic
+characters from your keyboard.  Hitting @kbd{C-]} again makes your
+keyboard produce ASCII characters, but you are still in arabic-mode.
+Another @kbd{C-]} makes your keyboard produce Arabic again.  If you want
+to exit arabic-mode completely, hit @kbd{C-c C-c}.  See the figure
+below:
+
+@example
+                           C-c C-c
+     +----------------------------------------------+
+     |   +--------------------+                     |
+     |   |      C-c C-c       |                     |
+     V   V                    |                     |
++-------------+         +------------+   C-]   +-----------+
+|             |   C-]   |arabic-mode | ------> |arabic-mode|
+|initial state| ------> |    with    |         |   with    |
+|             |         |Arabic input| <------ |ASCII input|
++-------------+         +------------+   C-]   +-----------+
+@end example
+
+  The string @samp{[2](3JG:a=[0](B} in the mode-line indicates that you are in
+arabic-mode and the keyboard produces Arabic characters; @samp{Arabic}
+indicates that you are in arabic-mode and the keyboard produces ASCII
+characters.
+
+[NOTE] The previous version of arabic-mode was using so called
+visual-mode to help Arabic editing and ASCII input.  The current
+version, however, maintains everything by itself.
+
+@comment ------------------------------------------------------------
+@node Display-direction in Arabic-mode, Inputing Arabic Characters, Arabic-mode, Arabic Script Languages
+@subsection Display-direction in Arabic-mode
+
+  In Mule, each buffer has a buffer local variable called
+@code{display-direction}.  If this variable is set to @code{nil} (this
+is the default), the lines begin from the left edge of the screen.  On
+the other hand, if @code{display-direction} is non-@code{nil}, the lines
+are aligned to the right and texts are written from right to left.  You
+can toggle the display direction by @kbd{C-x C-k r}.
+
+  For the detail of @code{display-direction} and the cursor motion in
+arabic-mode, see @xref{Top, , Right-to-left writing, R2L}.
+
+@comment ------------------------------------------------------------
+@node Inputing Arabic Characters, Arabic Cut and Paste, Display-direction in Arabic-mode, Arabic Script Languages
+@subsection Inputing Arabic Characters
+
+  In arabic-mode, you can input Arabic characters and Arabic digits from
+keyboard.  Two keyboard layouts are provided to input Arabic characters.
+You can select whichever you like.  When you are in Arabic-mode, you can
+see the keyboard layout by @kbd{C-z}.
+
+  The first keyboard layout was contributed by a Farsi speaker.  It looks 
+like this:
+
+@example
+                    +-------------------+
+                    | shifted      alt  |
+                    | unshifted   ASCII |
+                    +-------------------+
+
++----------------------------------------------------------------+
+|[2](3"[0](B   |    |    |    |    |    |    |    |[2](3#[0](B   |[2](3$[0](B   |    |    |    |
+|(2"(B  1|(2#(B  2|(2$(B  3|(2%(B  4|(2&(B  5|(2'(B  6|(2((B  7|(2)(B  8|(2*(B  9|(2!(B  0|   -|   =|   `|
++----------------------------------------------------------------+
+  |    |    |    |    |    |    |    |    |    |    |    |    |
+  |[2](4A[0](B q|[2](4=[0](B w|[2](4S[0](B e|[2](4Q[0](B r|[2](4O[0](B t|[2](4M[0](B y|[2](3Z[0](B  u|   i|[2](41[0](B o|[2](4-[0](B p|[2](4)[0](B [|[2](4g[0](B ]|
+  +-------------------------------------------------------------+
+    |    |    |    |[2](4e[0](B  |[2](3.[0](B   |    |    |    |    |  [2](4k[0](B|    |[2](3,[0](B   |
+    |[2](49[0](B a|[2](45[0](B s|[2](4_[0](B d|[2](4#[0](B f|[2](38[0](B  g|[2](4%[0](B h|[2](4Y[0](B j|[2](4[[0](B k|[2](3T[0](B  l|[2](4U[0](B ;|   '|   \|
+    +-----------------------------------------------------------+
+      |    |    |    |[2](30[0](B  [2](3-[0](B|[2](3h[0](B   |    |    |[2](3*[0](B   |[2](3+[0](B   |[2](3)[0](B   |
+      |[2](4I[0](B z|[2](4E[0](B x|[2](3D[0](B  c|[2](3B[0](B  v|[2](3H[0](B  b|[2](3F[0](B  n|[2](3^[0](B  m|[2](3%[0](B  ,|[2](3&[0](B  .|   /|
+      +-------------------------------------------------+
+@end example
+
+  To use this keyboard layout, include the following line in your
+@file{~/.emacs} file:
+
+@lisp
+(setq arabic-input-keymap 'arabic-key-1)
+@end lisp
+
+  The second layout is based on phonetic transcription and looks like
+the following:
+
+@example
+       Left  : ASCII-mode   Right : arabic-mode
+       Upper : shifted      Lower : unshifted
+
++----------------------------------------------------------------+
+|! [2](3"[0](B |@   |#   |$   |%   |^   |&   |*   |( [2](3#[0](B |) [2](3$[0](B |_   |+   |~ [2](3+[0](B |
+|1 (2"(B |2 (2#(B |3 (2$(B |4 (2%(B |5 (2&(B |6 (2'(B |7 (2((B |8 (2)(B |9 (2*(B |0 (2!(B |-   |=   |` [2](4M[0](B|
++----------------------------------------------------------------+
+  |Q   |W   |E   |R   |T [2](4E[0](B|Y   |U   |I   |O   |P   |{   |}   |
+  |q [2](4S[0](B|w [2](3^[0](B |e   |r [2](3F[0](B |t [2](4%[0](B|y [2](4_[0](B|u   |i   |o [2](3<[0](B |p   |[   |]   |
+  +-------------------------------------------------------------+
+    |A [2](4][0](B|S [2](4=[0](B|D [2](4A[0](B|F   |G [2](4O[0](B|H [2](4-[0](B|J   |K [2](41[0](B|L   |: [2](3'[0](B |" [2](3-[0](B || [2](3,[0](B |
+    |a [2](38[0](B |s [2](45[0](B|d [2](3B[0](B |f [2](4Q[0](B|g   |h [2](3Z[0](B |j [2](4)[0](B|k [2](4U[0](B|l [2](4Y[0](B|; [2](3([0](B |' [2](3*[0](B |\   |
+    +-----------------------------------------------------------+
+      |Z [2](4I[0](B|X   |C   |V   |B   |N   |M   |<   |>   |? [2](3)[0](B |
+      |z [2](3H[0](B |x [2](3D[0](B |c [2](4'[0](B|v   |b [2](4#[0](B|n [2](4[[0](B|m [2](3T[0](B |, [2](3%[0](B |. [2](3&[0](B |/ [2](49[0](B|
+      +-------------------------------------------------+
+
+COMBINATIONS:
+a ~      madda above alif
+a '      hamza above alif
+w '      hamza above waaw
+a ' '    hamza below alif
+y '      hamza above yaa
+"        isolated hamza
+@end example
+
+  To use this keyboard layout, include the following line in your
+@file{~/.emacs} file:
+
+@lisp
+(setq arabic-input-keymap 'arabic-key-0)
+@end lisp
+
+  No matter which layout you use, appropriate ligature is automatically
+generated whenever a character is input.  The special ligature for
+@samp{laam} + @samp{alif} will be generated whenever an @samp{alif} is
+input on the left of a @samp{laam}.  If you want to cut the connection
+between two adjacent Arabic characters, type a @kbd{|} (vertical bar) at
+that point in arabic-mode.  An input of a character preceded by a
+@kbd{|} produces a glyph which is not connected to its right adjacent.
+Typing a @kbd{_} (underscore) connects the two characters at that point,
+if possible.
+
+  When @code{display-direction} is @code{nil} (i.e., lines are aligned to
+left), the cursor stays at the same position after an Arabic character
+is inserted. It moves to the right after an Arabic digit or an ASCII
+character is inserted.
+
+  When @code{display-direction} is non-@code{nil} (i.e., lines are
+aligned to right), the cursor moves to the left after an Arabic
+character is inserted. It stays at the same position after an Arabic
+digit or an ASCII character is inserted.
+
+  To input ASCII characters or ASCII digits, you have to exit
+arabic-mode by hitting @kbd{C-]}.
+
+@comment ------------------------------------------------------------
+@node Arabic Cut and Paste, , Inputing Arabic Characters, Arabic Script Languages
+@subsection Cut and Paste
+
+  Use @kbd{C-d} to delete the character under the cursor.  If you are in
+arabic-mode, the necessary ligature will be re-generated after the
+character is deleted.
+
+  @key{DEL} key behave differently according to the value of
+@code{display-direction}: if the value is @code{nil} (aligned to left),
+it deletes a character on the left of the cursor; if the value is
+non-@code{nil} (aligned to right), it deletes a character on the right
+of the cursor.  If the @code{display-direction} and the input character
+direction are the same, lastly input character can be deleted with
+@key{DEL} key, no matter what the value of @code{display-direction} is.
+
+  The following four commands remove the specified stretch of string and
+put it in the @code{kill-ring}:
+
+@example
+@kbd{M-d}   or @kbd{M-x arabic-kill-word}
+@kbd{M-DEL} or @kbd{M-x arabic-backward-kill-word}
+@kbd{C-k}   or @kbd{M-x arabic-kill-line}
+@kbd{C-w}   or @kbd{M-x arabic-kill-region}
+@end example
+
+  @kbd{M-w} (or @kbd{M-x arabic-copy-region-as-kill}) also puts the
+specified stretch of string in the @code{kill-ring}, but the original
+text is left unchanged.
+
+  The strings in the @code{kill-ring} can be reinserted in buffer by
+@kbd{C-y} (or @kbd{M-x arabic-yank}) and @kbd{M-y} (or @kbd{M-x
+arabic-yank-pop}).
+
+  Make sure that you are in arabic-mode when you kill or yank something,
+otherwise ligature is not maintained, or in the worst case, unexpected
+region will be deleted or a garbage string will be inserted in the
+buffer.
+
+@comment ============================================================
+@node Ethiopic Languages, IPA, Arabic Script Languages, Top
+@section Ethiopic Languages
+
+  This section @footnote{This section and the Ethiopic support routines
+have been written by Daniel Yaqob, Yonas Fisseha and Takahashi Naoto.} 
+describes how to read and write Ethiopic languages (Ge'ez script
+languages) in Mule.  To make Ethiopic the primary environment, the
+following line should be included in the @file{$MULE/lisp/site-init.el}
+file at the compile time @footnote{You also need to increase the value
+of @code{BASE_PURESIZE}, which is defined in the
+@file{$MULE/src/puresize.h} file, by 10000 or so.} :
+
+@lisp
+(set-primary-environment 'ethio)
+@end lisp
+
+  If your system administrator did not include the above line, you have
+to include it in your @file{~/.emacs} file.
+
+  To print Ethiopic text, see the online manual @samp{m2ps(1)} and
+@xref{Top, , m2ps, m2ps}.  Note that you have to use @code{coco} (COde
+COnverting library) to print Ethiopic text.  The best way is to use the
+@code{any2ps} shell script.  Both coco and any2ps can be found in Mule
+FTP sites.
+
+@menu
+* Ethiopic Fonts::
+* Editing Ethiopic Text::
+* ASCII Transcription for Ethiopic::
+* Ethiopic Mail::
+* Configuration for Ethiopic::
+* Function Keys for Ethiopic::
+@end menu
+
+@comment ------------------------------------------------------------
+@node Ethiopic Fonts, Editing Ethiopic Text, , Ethiopic Languages
+@subsection Ethiopic Fonts
+
+  Currently only 16 dot font is available for displaying Ethiopic.  You
+can get it from Mule's FTP sites.  The name of the font is
+@samp{ethiom16d75.bdf}.
+
+  You must invoke Mule as an X client if you want to use Ethiopic.
+First, make sure that the environment variable DISPLAY is properly set.
+Then invoke Mule from a shell window with the following command :
+
+@example
+% mule -fn 16
+@end example
+
+  If the Ethiopic font has been properly installed, you should be able
+to read the following text:
+
+@quotation
+$(2"g!)"K"^"<(B "Taste of Ethiopia"
+
+$(2"g"S#9!6(B $(2#J"8(B $(2"X!f$2!4(B $(2!!!)#<#9!6(B $(2$$"&!A!1(B $(2!&!."((B
+
+$(2$$!+"#!D!!#"!V(B $(2!Q"X"`!&(B $(2"S$)!a!W!^!d(B $(2!)"+!g!^$R(B
+
+- $(2"\!!!V(B $(2!F!6"8#'(B $(2$$"/"@(B $(2"$#%!V(B
+- $(2"\!!!V(B $(2!F!6"8#'(B $(2!a"8(B $(2$$"H!f"'(B $(2#E$)!f!.(B $(2$$#9!F"H(B $(2"$#%!V(B
+- $(2"S!f"((B $(2!Q"h!&(B $(2$$"H"q!6(B $(2!.!f"i$'(B $(2!E"i$)!f#>(B $(2$J#J"#!6(B
+- $(2"S!."H!V(B $(2!F!6"8#'(B $(2!/#&(B $(2$'!!(B $(2#J"^(B
+
+$(2$W(B) $(2$$"/"@(B $(2"$#%!R(B $(2!A"\!!!V(B $(2!Q"h!&(B $(2!F!6"8#'(B $(2#J"^(B $(2!Q!G"l!W(B $(2$)#!!)".!&$P(B
+
+$(2$X(B) $(2$$"H!f"'#J(B $(2#E$)!.(B $(2$$#9!F"D(B $(2"$#%!V(B $(2#>!,!9(B $(2$$"H"q!6(B $(2!)!f"i$'(B $(2!E"i$)!f#>(B
+$(2$J#J"#!6(B $(2$)#9!D!A!V!d(B $(2!A!F!%!f"#!6(B $(2#J"H"0(B $(2!Q#H"`")(B $(2!A"F"`!f(B $(2#J"H"0(B 
+$(2$)#!!)".!&$P(B
+
+$(2$Y(B) $(2"\!!!R(B $(2!B"m#K!^(B $(2!Q"g"(!a#J(B $(2"g(B2 $(2"X"H"g(B 3 $(2#!!f(B $(2"X!f"%$'#!!2(B $(2$)#!!)".!"$P(B
+
+$(2$Z(B) $(2#!!b(B $(2"g"#!1"H(B $(2!A"e!$(B $(2#!"H(B $(2!Q!F!'(B $(2$$#!!1!1#J!f(B $(2#J"^(B $(2"g"\!!!R!.(B $(2"F"`!g!^(B $(2#J"H"0(B
+$(2!,"@"C"H$P(B
+
+$(2$[(B) $(2"\!!!R!.(B $(2"X"`!&(B ($(2"/"@(B $(2"X!d(B $(2"H!f"'(B/$(2#9!F"H(B) $(2"S#!!$#&!'(B $(2!)!!#J"H!d(B $(2"X"`!"(B $(2"h"@(B 
+$(2"X"H"i!&(B $(2"(!1"H(B $(2!!(B2 $(2"C#b!V(B $(2$'"`!&(B $(2!,"H#!!)"0$P(B
+
+$(2$\(B) $(2"g!s$'(B $(2!A"e!$(B 425 $(2"%#>!3"H(B F $(2!A!/#!(B $(2!)#<#9!3$'(B $(2"S$$!6(B $(2"X!f"&$)#9!D(B $(2!W!'(B
+$(2"X$$"g"#!b(B $(2"X!f$2!4#J!f(B $(2!)#<#9!6$P(B
+@end quotation
+
+  Bear in mind that all fonts used in Mule must be of fixed width.
+Furthermore, the width of the Ethiopic characters must be exactly twice
+as wide as the ASCII characters.  For the detail of font specification,
+see @xref{Font, , Font, mule}.
+
+@comment ------------------------------------------------------------
+@node Editing Ethiopic Text, ASCII Transcription for Ethiopic, Ethiopic Fonts, Ethiopic Languages
+@subsection Editing Ethiopic Text
+
+@menu
+* Quail-mode for Ethiopic::
+* Fidel Input::
+* Ethiopic Punctuation Input::
+* Ethiopic Numeric Input::
+* Ethiopic Special Characters::
+@end menu
+
+@comment ............................................................
+@node Quail-mode for Ethiopic, Fidel Input, , Editing Ethiopic Text
+@subsubsection Entering and Leaving Ethiopic mode
+
+  Use the Quail system to input Ethiopic.  Hit @kbd{C-]} to enter
+quail-mode.  If you do not see the string @samp{ETHIO} in the mode-line,
+then hit @kbd{M-s} and specify the package name @samp{ethio}.  @key{SPC}
+works as the completion key.  If you hit @key{RET} without specifying a
+package name, the default package (shown in the parentheses) will be
+used.  To exit quail-mode, hit @kbd{C-]} once again.
+
+  For the detail of the Quail system, see @xref{Usage of Quail, , ,
+quail}.
+
+@comment ............................................................
+@node Fidel Input, Ethiopic Punctuation Input, Quail-mode for Ethiopic, Editing Ethiopic Text
+@subsubsection Fidel Input
+
+$(2"[(B. About Consonants
+
+  In quail-mode with the Ethiopic package, you can input Ethiopic
+characters from the alphabetic region of the keyboard.  To input ASCII
+characters you have to exit ethiopic-mode by hitting @kbd{C-]}.  A table
+of the first form consonants from the extended Fidel is given in the
+table below.  The key assignments are made to the closest phonetical
+match between the Ethiopic and Latin letters.
+
+@example
+ he =  $(2"[(B    `ke  =  $(2#m(B
+ le =  $(2!!(B     Ke  =  $(2"s(B
+ He =  $(2#{(B     Xe  =  $(2#t(B
+ me =  $(2!)(B     we  =  $(2#E(B
+`se =  $(2#Q(B     `e  =  $(2#_(B
+ re =  $(2!1(B     ze  =  $(2!q(B
+ se =  $(2"C(B     Ze  =  $(2!y(B
+ xe =  $(2!9(B     ye  =  $(2$$(B
+ qe =  $(2#!(B     de  =  $(2"#(B
+ Qe =  $(2#-(B     De  =  $(2$+(B
+ be =  $(2!A(B     je  =  $(2$2(B
+ ve =  $(2!I(B     ge  =  $(2#9(B
+ te =  $(2!Q(B     Ge  =  $(2$9(B
+ ce =  $(2!Y(B     Te  =  $(2"+(B
+`he =  $(2#f(B     Ce  =  $(2"3(B
+ ne =  $(2!a(B     Pe  =  $(2$@(B
+ Ne =  $(2!i(B     Se  =  $(2"K(B
+e,a =  $(2"S(B    `Se  =  $(2#X(B
+ ke =  $(2"g(B     fe  =  $(2";(B
+@end example
+
+  Characters beginning with a @samp{`} are usually a phonetic twin of
+some other letter in the Fidel and may be represented with a @samp{2} as
+shown below:
+
+@example
+s2e = `se = $(2#Q(B
+@end example
+
+  The extra character @samp{`} or @samp{2} is given to the twin that
+occurs less commonly in typical modern writing.  The @samp{`} was found
+to be more natural to read in Latin vs @samp{2} (@samp{2} will be easier
+to type on some keyboards).
+
+  In a few instances where uppercase keyboard letters would have no
+Ethiopic assignment, these keys (B, F, J, L, M, R, V, and Y) were made
+equivalent to their lowercase counter parts (i.e. L = l, m = M, etc).
+
+$(2!!(B. About Vowels
+
+  When a key corresponding to a consonant is first struck, you will see
+the sixth form of the character appear on the screen with a small
+underline, @samp{_}.  You may then type a vowel to modify the syllabic
+form of the consonant, or type any non-vowel character to terminate the
+entry of the letter (the underline goes away).  The new character typed
+will also appear on the screen.  A small table for the input system is
+given now :
+
+@example
+Consonants:
+me   mu   mi   ma   mE   m    mo   mWa
+$(2!)(B   $(2!*(B   $(2!+(B   $(2!,(B   $(2!-(B   $(2!.(B   $(2!/(B   $(2!0(B
+
+Independent Vowels:
+e/a  u/U  i    A    E    I   o/O   e3
+$(2"S(B   $(2"T(B   $(2"U(B   $(2"V(B   $(2"W(B   $(2"X(B   $(2"Y(B   $(2"Z(B
+
+Independent Vowels Following a 6th Form Consonant:
+         l'e   l'u   l'i   l'A   l'E   l'I   l'o
+also --> l'a   lU                      lI    lO
+         $(2!&"S(B  $(2!&"T(B  $(2!&"U(B  $(2!&"V(B  $(2!&"W(B  $(2!&"X(B  $(2!&"Y(B 
+
+Consonants With 12 forms:
+hWe  hWu/hW'  hWi   hWa   hWE 
+$(2"b(B     $(2"c(B     $(2"d(B    $(2"e(B    $(2"f(B
+@end example
+
+  [A NOTE ON FORMS 8 - 12] In different geographic regions, and at
+different times within the same region, people have been taught two
+different sounds for form 9 (@samp{$(2"c(B} in the above).  Phonetical keyed
+input is permitted for both ways a person may have been taught.
+
+  In some Ethiopian languages extend Fidel glyphs for labiovelar forms
+are required.  This is known to be true for the Gurage languages in
+particular.  The complete set of additional characters required for
+these languages was not known to the makers of the Ethiopic extension
+for Mule at the of this release.  Extended forms (8-12) of the @samp{w}
+series are provided to model the labiovelar sounds with a base consonant
+when a unique labiovelar glyph is not available for the consonant.  For
+example : bWe -> $(2!F#L(B, pWE -> $(2$L#P(B.
+
+  Once entered you may edit the vowel form of a letter by placing the
+cursor over the letter you wish to change and striking @key{[F6]}. See
+@xref{Function keys for ethiopic}.
+
+@comment ............................................................
+@node Ethiopic Punctuation input, Ethiopic Numeric Input, Fidel Input, Editing Ethiopic Text
+@subsubsection Ethiopic Punctuation input
+
+  All Ethiopic and Latin punctuations are available in quail-mode with
+the Ethiopic package.  The Ethiopic punctuations may be entered by
+typing the Latin equivalent from the keyboard.  Hitting the same
+punctuation key twice will replace the Ethiopic version with the Latin.
+A small table follows :
+
+@example
+.   ->  $(2$P(B 
+,   ->  $(2$Q(B 
+;   ->  $(2$R(B 
+:   ->  $(2$S(B 
+*   ->  $(2$T(B 
+<<  ->  $(2$U(B  
+>>  ->  $(2$V(B  
+::  ->  $(2$O(B
+@end example
+
+  In the last 4 cases in the table, Ethiopic punctuation is entered
+based upon the similarity between the appearence of the keyboard and
+Ethiopic symbols.  The last item in the table is an input for an
+Ethiopic word separator (a space @dfn{ }).  Here two keystrokes of
+the colon @key{:} key are required to enter the Ethiopic space, and 3
+keystrokes of the colon are then required to return to the Latin
+@samp{:}.
+
+  You may use the space bar to enter Ethiopic spaces by first going into
+an @dfn{Ethiopic space mode}.  To do so hit the @key{[F2]} key 2 times.
+Notice in the mode-line indicator near the bottom of the editor that
+each time you hit the @key{[F2]} key that the symbols @samp{_},
+@samp{$(2$N(B}, and @samp{$(2$O(B} will change.  These are your space-mode indicators.
+The first, @samp{_}, is the default for Latin font width blank spaces (8
+pixels) the 2nd is for Ethiopic font width blank spaces (16 pixels) and
+finally the last, @samp{$(2$O(B}, indicates to you that the space bar will
+now use the Ethiopic word separator.
+
+  You may change the word separator in a specified @dfn{region} of text
+by @kbd{S-[F2]}.  Doing so will convert all blank spaces into the
+Ethiopic word separators or, if you choose, to the double width Ethiopic
+blank space.  You may convert among the 3 word separators within a
+region of text at any time.
+
+@comment ............................................................
+@node Ethiopic Numeric Input, Ethiopic Special Characters, Ethiopic Punctuation Input, Editing Ethiopic Text
+@subsubsection Ethiopic Numeric Input
+
+  Both the Arabic (ASCII) and Ethiopic numerals are available in
+quail-mode with the Ethiopic package.  The Arabic numbers are the defualt
+when you strike the number keys of the keyboard.  Enter the
+@dfn{Ethiopic number mode} by pressing @key{[F1]}.  Notice that the
+Arabic @samp{1} changes to the Ethiopic @samp{$(2$W(B} in the mode-line.
+This is your numeral mode indicator.  Striking @key{[F1]} again returns
+you to the @dfn{Arabic numeral mode}.
+
+  Typing the number keys in Ethiopic numeral mode will render the
+numerals on the screen.  You may enter Ethiopic numbers like Arabic
+numbers with 0's to obtain the multiples of ten for numbers 1 - 9 up to
+a multiple of 100,000.  This limit is chosen as it will be the largest
+value that two numbers together may represent.
+
+@comment ............................................................
+@node Ethiopic Special Characters, , Ethiopic Numeric Input, Editing Ethiopic Text
+@subsection Ethiopic Special Characters
+
+  Special icons, glyphs, and ligatures may be available at the end of
+your font's address table.  You may enter them on screen, and into your
+document, with the @key{[F8]} key followed by a number.  For this moment
+the available icons are African continent and the region in which Ge'ez
+script is native to (collectively, the nations of Eritrea and Ethiopia).
+
+@comment ------------------------------------------------------------
+@node ASCII Transcription for Ethiopic, Ethiopic Mail, Editing Ethiopic Text, Ethiopic Languages
+@subsection ASCII Transcription for Ethiopic
+
+@menu
+* Basic SERA::
+* Mixed Script in SERA::
+* Customising SERA::
+* SERA for file I/O::
+@end menu
+
+@comment ............................................................
+@node Basic SERA, Mixed Script in SERA, , ASCII Transcription for Ethiopic
+@subsubsection Basic SERA
+
+  When written systematically, ASCII files (a file composed with the
+characters avaialable from a common English keyboard) may be
+interpretted by Mule and viewed as Ethiopic text.  Likewise, an Ethiopic
+document may be written out by Mule into ASCII for importation
+elsewhere.
+
+  Mule uses @dfn{SERA} (System for Ethiopic Representation in ASCII) as
+its Latin representation system of the Fidel to provide compatibility
+with other networks and PC softwares, and to allow users without Mule
+the ability to read easily Ethiopic documents composed with the editor.
+Though independent from file I/O, SERA has been applied as the input
+method (IM) for Mule as well, hence much of the system has already been
+discussed.  Current documents on SERA with detailed explanation of the
+system can be found in the @file{/pub/languages/ethiopia/email}
+directory at the ftp.rpi.edu archive.
+
+  A sample text of SERA is given below.  This is the transcription of
+the text in @xref{Ethiopic Fonts}.
+
+@example
+kemeSehafu \"Taste of Ethiopia"\
+
+ke'ager wC Injera lemegager yedabere lmd
+
+yemidebalequt teIhl aynetocna meTenoc;
+
+- hulet brCqo yeTEf duqEt
+- hulet brCqo neC yesndE weynm yegebs duqEt
+- and tekul yeskWar mnkiya bEkiyng pawder
+- amst brCqo moq yale wha
+
+\1) yeTEf duqEtu behulet tekul brCqo wha tebokto yqemeTal.
+
+\2) yesndEw weym yegebsu duqEt gmaxe yeskWar menkiya bEkiyng
+pawder ygebabetna beblEnder wsT tewahdo besahn wsT 
+yqemeTal.
+
+\3) huletu bukowoc tekednew ke2 Iske 3 qen Indiyaqeru yqemeTalu.
+
+\4) qenu kederes behWala qes teblo yeqererewn wha kehuletum sahnoc wsT
+mafses.
+
+\5) huletum Ihl (TEf Ina sndE/gebs) aqelaqlo melewsna Ihlu kuf 
+Iskil dres le2 se`at yahl masqemeT.
+
+\6) keziya behWala 425 digris \F \ bemoqe megageriya ayer Indaygeba tolo
+Iyekedenu Injerawn megager.
+@end example
+
+  If struck alone, @key{[F4]} will convert the entire document into
+Ethiopic text.  It is assumed that the text begins in Ethiopic. If the
+beginning of the document should start with Latin script, use @kbd{C-u
+[F4]} to make the appropriate conversion.  You may also use @kbd{S-[F4]}
+to convert only the specified region.  @kbd{[F5]}, @kbd{C-u [F5]}, and
+@kbd{S-[F5]} converts back into SERA-Latin with the same rules applying
+for @key{[F4]}.
+
+@comment ............................................................
+@node Mixed Script in SERA, Customising SERA, Basic SERA, ASCII Transcription for Ethiopic
+@subsubsection Mixed Script in SERA
+
+  There are some special rules that apply when you mix both Latin and
+Ethiopic.  The rules will be more important when composing a SERA file
+outside of Mule. At a glance, the escape rules given below may appear
+inconsistent.  Their practical use should become apparent when working
+with them, as they are designed in part to go naturally with their
+frequency of use.
+
+  @samp{\}, except followed by some special characters described below,
+toggles the script interpretation mode (Ethiopic<->Latin).  An
+alphabetic character may not be used as an escape sequence following the
+@samp{\}.  The predefined escape sequences may have different
+functions in the two script modes.  When followed by a blank space
+@samp{ }, the script mode toggles and the space is deleted.
+
+@table @asis
+@item \\
+Sends @samp{\} from either mode.
+
+@item \.  \,  \;  \:
+Sends the equivalent punctuation of the OTHER mode to the screen.
+
+@item \_  \*  \<  \>  \1 ... \9
+Sends the defined Ethiopic character from both modes.
+
+@item \|  \'  \`
+In Ethiopic mode @samp{|}, @samp{'} or @samp{`} is sent to the screen.
+In Latin mode, the toggle is made to Ethiopic and @samp{|},@samp{`} or
+@samp{'} is treated as the first char in the text segment and treated
+with the normal rules (i.e. just the stanard toggle into Ethiopic).
+
+@item \!
+The @dfn{Hard Mode Toggle}.  The switch toggles modes but treats all
+text until the ending @samp{\!} as one script.  This allows extended use
+of @samp{\} and @samp{\~} without the requirement for @samp{\\} and
+@samp{\\~} but at the cost of using only one script within the text
+region.
+
+@item \~x
+If @samp{x} is undefined in application, then @samp{x} is ignored. and
+nothing appears when transliterated.  Also true if @samp{x} is a blank
+space @samp{ }.
+
+@item \~e  \~E  \~a  \~A
+Sends the icon of Ge'ez Homelands, its inverse image, African continent and
+its invers image, respectively.
+@end table
+
+@comment ............................................................
+@node Customising SERA, SERA for file I/O, Mixed Script in SERA, ASCII Transcription for Ethiopic
+@subsubsection Customising SERA
+
+  Fidel is a highly phonetical script set, but not perfect.  In a few
+instances among the languages that use Fidel for its written script, a
+letter will not have a sound consistant with its form class.  The
+clearest example for this is in Amharic where the first form @dfn{h}s
+will have a sound equivalent to that of the fourth form (@samp{$(2"[(B},
+@samp{$(2#{(B}, @samp{$(2#f(B} sound the same as @samp{$(2"^(B}, @samp{$(2#~(B}, @samp{$(2#i(B}).
+To model in Latin the different sounds associated with a particular
+Fidel member, SERA allows for duplicity of the Latin representation.
+One such important instance is the choice of @samp{e} AND @samp{a} to
+represent the first lone vowel letter @samp{$(2"S(B}.  @samp{a} is the
+natural choice in Amharic and @samp{e} is more logical in most
+languages.  Both @samp{a} and @samp{e} are recoginized for @samp{$(2"S(B}
+when converting Latin->Ethiopic; but the user must decide on a choise of
+@samp{a} or @samp{e} for converting Ethiopic->Latin.
+
+  The default conversion in mule is to write @samp{$(2"S(B} as @samp{a}.  You
+may set Mule to always convert @samp{$(2"S(B} as @samp{e} by adding the line
+below to your @file{~/.emacs} file:
+
+@lisp
+(setq ethio-use-tigrigna-style t)
+@end lisp
+
+  As discussed before (@xref{Fidel Input}), the natural choise of
+@samp{Wu} or @samp{W'} for 9th form characters will differ between
+people.  @samp{Wu} is the default conversion into Latin, but you may
+change this to @samp{W'} by adding the following line to your
+@file{~/.emacs} file:
+
+@lisp
+(setq ethio-W-sixth-always t)
+@end lisp
+
+  SERA also permits @samp{'} as a separator between two Latin vowels
+when the user thinks it aids clarity.  The deault in Mule is not to
+insert @samp{'} between vowels, you may change this by again adding the
+following line to your @file{~/.emacs} file:
+
+@lisp
+(setq ethio-quote-vowel-always t)
+@end lisp
+
+  As discussed before (see @xref{Ethiopic Numeric Input}), Ethiopic
+numerals may be written in several forms and interpreted in the same
+way.  Likewise you have these same choices for SERA output.
+
+  For example, consider the Latin sequence @samp{\10\9\100\80\7} for
+@samp{$(2$`$_$i$g$](B}.  The Latin form is considered to be in the lowest
+level of reduction, or @dfn{reduction-level 0}.  You can choose to write
+out in reduction-level 0 by including the following line in your
+@file{~/.emacs} file:
+
+@lisp
+(setq ethio-numeric-reduction 0)
+@end lisp
+
+  The next level in reduction is the form @samp{\109100807} which can be
+set by:
+
+@lisp
+(setq ethio-numeric-reduction 1)
+@end lisp
+
+  The final level in reduction is the form @samp{\10900807} which can be
+set by:
+
+@lisp
+(setq ethio-numeric-reduction 2)
+@end lisp
+
+  These three reduction levels for numbers are offered, because it can
+not be known at this time which may ultimately become the preferred
+form.
+
+@comment ............................................................
+@node SERA for file I/O, , Customising SERA, ASCII Transcription for Ethiopic
+@subsubsection SERA for file I/O::
+
+  Whenever you find a file (by @kbd{C-x C-f}) whose name ends in
+@file{.sera}, Mule assumes that the file is written in SERA, and
+automatically converts the contents into Fidel.
+
+  Likewise, if you save a buffer to a file with the @file{.sera}
+extension, the contents will be converted into SERA before actually
+written.
+
+  Note that the old two hooks for SERA I/O, i.e.,
+@code{fidel-to-sera-for-disksave} and @code{sera-to-fidel-for-disksave},
+have been removed.
+
+@comment ------------------------------------------------------------
+@node Ethiopic Mail, Configuration for Ethiopic, ASCII Transcription for Ethiopic, Ethiopic Languages
+@subsection Ethiopic Mail
+
+  By default, Mule uses the *junet* coding-system for sending and
+receiving mail.  It is a 7-bit coding with escape sequences, so there
+should be no difficulty in mail transmission unless the code @samp{ESC}
+is not removed by MTA (mail transfer agent).
+
+  Nonetheless, it would be safer to use the SERA format for mail
+transmission.  In addition to the safety, users who do not have Mule
+will benefit from using SERA for mail.
+
+  If you include the line
+
+@lisp
+(add-hook 'mail-send-hook 'fidel-to-sera-mail)
+@end lisp
+
+in your @file{~/.emacs} file, Ge'ez characters in mail body will be
+automatically converted into SERA when you send mail from mail-mode.
+You can write mail in the Ge'ez script and send it as if it were written
+in SERA.  The markers @samp{<sera>} and @samp{</sera>} are automatically
+inserted at the beginning and the end of mail body so that the mail
+receiver can read it in Ge'ez, even without Mule, by using @code{eview}
+program.
+
+  If you want to preview the SERA transcription before you actually send 
+the mail, hit @kbd{C-[F5]} in the @samp{*mail*} buffer.  Hit @kbd{C-[F4]}
+to go back to Fidel.
+
+  Likewise, if you include the line
+
+@lisp
+(add-hook 'rmail-show-message-hook 'sera-to-fidel-mail)
+@end lisp
+
+in your @file{~/.emacs} file, all mails that contain the @samp{<sera>}
+marker are automatically converted into the Ge'ez script when you read
+them with @code{rmail}.
+
+  When you receive mail in SERA but without @samp{</sera>}, you can
+convert it into Ge'ez by hitting @kbd{C-[F4]}.  In rmail-mode, this key
+is always active and you can use it even without setting the hooks
+above.  @kbd{C-[F4]} first searches the marker @samp{<sera>} and the
+termination marker @samp{</sera>}.  If found, only the portion between
+the two markers is converted in Ge'ez.  Otherwise it skips the header
+part by looking for the first blank line, then convert the rest of the
+buffer.  If there is no blank line, it prints a message and no
+conversion is done.
+
+  For backward compatibility, Mule regards the markers @samp{<ethiopic>}
+and @samp{<>} as aliases of @samp{<sera>} and @samp{</sera>}.  But the
+usage of @samp{<ethiopic>} and @samp{<>} is not recommended.
+
+@comment ------------------------------------------------------------
+@node Configuration for Ethiopic, Function Keys for Ethiopic, Ethiopic Mail, Ethiopic Languages
+@subsection Configuration for Ethiopic
+
+  To use Ethiopic most easily, you may want to create the
+@file{~/.emacs} file in your home directory that contains the following
+line:
+
+@lisp
+(set-primary-environment 'ethio)
+@end lisp
+
+  Here are the lines that you might want to include in your
+@file{~/.emacs} file:
+
+@table @asis
+@item (setq ethio-use-tigrigna-style t)
+Writes SERA output with @samp{e} in place of @samp{a} for the first 
+form vowel @samp{$(2"S(B}.
+
+@item (setq ethio-quote-vowel-always t)
+When writing SERA output @samp{'} is inserted between two adjacent
+vowels.
+
+@item (setq ethio-W-sixth-always t)
+Writes SERA output with 9th form Fidel characters represented
+with @samp{W'} and not @samp{Wu}.
+
+@item (setq ethio-numeric-reduction #)
+Sets level of reduction for numeral representation in SERA.  @samp{#}
+must be replaced by 0, 1 or 2.  The Ethiopic number @samp{$(2$[$i(B} will be
+@samp{\5\100} if # is 0, @samp{\5100} if 1, @samp{\500} if 2.
+
+@item (add-hook 'rmail-show-message-hook 'sera-to-fidel-mail)
+When in rmail-mode will convert Ethiopic email marked by @samp{<sera>}
+immediately into Ge'ez text without waiting for the @kbd{C-@key{[F4]}}
+key to be struck.
+
+@item (add-hook 'mail-send-hook 'fidel-to-sera-mail)
+Will convert Ge'ez email into SERA when send it out from mail-mode.
+
+@item (add-hook 'news-inews-hook 'fidel-to-sera-mail)
+Will convert Ge'ez news article into SERA format when posting news
+in gnus mode.
+@end table
+
+@comment ------------------------------------------------------------
+@node Function keys for Ethiopic, , Configuration for Ethiopic, Ethiopic Languages
+@subsection Function keys for Ethiopic
+
+Some function keys have been mentioned in the above.  A complete list
+of the function keys available is presented separately here.
+
+@table @asis
+@item @key{[F1]} or @kbd{M-x ethio-toggle-digit}
+toggles Arabic digit input and Ethiopic digit input.  The current input
+mode is indicated by the character @samp{1} or @samp{$(2$W(B} in the mode
+line, next to the @samp{ETHIO} string.  In Ethiopic mode, you can input
+up to 1000000 (\1000000) by continuous zeros.  To input 2000000
+(\2000000), for example, you have to type @samp{21000000}.  The default
+is Arabic digit.  (Available only in quail-mode.)
+
+@item @key{[F2]} or @kbd{M-x ethio-toggle-space}
+toggles space characters (one of the three below) for keyboard
+input.
+
+@enumerate a
+@item
+@samp{ } - Single width ASCII space.  Mode line Indicator is @samp{_}.
+
+@item
+@samp{$(2$N(B}  - Double width Ethiopic blank.  Mode line Indicator is @samp{$(2$N(B}.
+
+@item
+@samp{$(2$O(B}  - Ethiopic word separator.  Mode line Indicator is @samp{$(2$O(B}.
+@end enumerate
+
+Each time you hit @key{[F2]}, the space character changes a -> b -> c ->
+a and so on.  The default is ASCII space.  (Available only in
+quail-mode.)
+
+@item @key{[F3]} or @kbd{M-x ethio-toggle-punctuation}
+toggles Latin punctuation input and Ethiopic punctuation input.  The
+mode line indicator is @samp{.} (Latin) and @samp{$(2$P(B} (Ethiopic).  The
+default is Ethiopic punctuations.  (Available only in quail-mode.)
+
+@item @key{[F4]} or @kbd{M-x sera-to-fidel-buffer}
+performs SERA to Fidel conversion in the current buffer.  It assumes
+that the buffer begins in Ethiopic.  To convert a text which begins in
+Latin, use @kbd{C-u @key{[F4]}}.  You can continuously enter any large
+Ethiopic numbers, for example,
+\5500000000000000000000000000000700000000000000000000.
+
+@item S-@key{[F4]} or @kbd{M-x sera-to-fidel-region}
+performs SERA to Fidel conversion in the specified region.  It assumes
+that the buffer begins in Ethiopic.  To convert a text which begins in
+Latin, use @kbd{C-u S-@key{[F4]}}.
+
+@item C-@key{[F4]} or @kbd{M-x sera-to-fidel-marker}
+If the buffer contains the markers @samp{<sera>} and @samp{</sera>},
+converts the segment between the two markers from SERA to Fidel in Ethio
+start mode.  The markers will not be removed.
+
+@item C-@key{[F4]} (in rmail-mode or Mali-mode) or @kbd{M-x sera-to-fidel-mail}
+Does SERA to FIDEL conversion for reading/writing mail.  If the buffer
+contains the markers @samp{<sera>} and @samp{</sera>}, converts the
+segment between the two markers in Ethio start mode and the
+@samp{Subject:} field in ASCII start mode.  Conversion will be performed
+even if the current buffer is read-only.
+
+Usually, this function is used as a hook.  When invoked interactively
+and there is no markers, it converts both the whole body and the
+@samp{Subject:} field in Ethio start mode.
+
+For backward compatibility, @samp{<ethiopic>} and @samp{<>} can be used
+instead of @samp{<sera>} and @samp{</sera>}.
+
+@item @key{[F5]} or @kbd{M-x fidel-to-sera-buffer}
+performs Fidel to SERA conversion in the current buffer.  The converted
+region begins in Ethiopic mode. (If the first character of the original
+text is a Latin alphabet, @samp{\ } will be inserted at the beginning to
+turn into Latin mode.)  To produce a SERA text that begins in Latin, use
+@kbd{C-u @key{[F5]}}.  By default, the first lone vowel @samp{$(2"S(B} is
+transcribed by @samp{a}.  If you want it to be @samp{e}, put the
+following line in your .emacs file:
+
+@lisp
+(setq ethio-use-tigrigna-style t)
+@end lisp
+
+Also by default, the lone vowels are preceded by an apostrophe
+@samp{'} only if the preceding character is a 6th form consonant.
+If you want the lone vowels always preceded by an apostrophe,
+put the following line in your @file{~/.emacs} file:
+
+@lisp
+(setq ethio-quote-vowel-always t)
+@end lisp
+
+@item S-@key{[F5]} or @kbd{M-x fidel-to-sera-region}
+performs Fidel to SERA conversion in the specified region.  The converted
+region begins in Ethiopic mode. (If the first character of the original
+text is a Latin alphabet, @samp{\ } will be inserted at the beginning to
+turn into Latin mode.)  To produce a SERA text that begins in Latin, use
+@kbd{C-u S-@key{[F5]}}.
+
+@item C-@key{[F5]} or @kbd{M-x fidel-to-sera-marker}
+If the buffer contains the markers @samp{<sera>} and @samp{</sera>},
+converts the segment between the two markers from Fidel to SERA in Ethio
+start mode.  The markers will not be removed.
+
+@item C-@key{[F5]} (in rmail-mode or Mail-mode) or @kbd{M-x fidel-to-sera-mail}
+Does Fidel to SERA conversion for reading/writing mail and news.
+Intended to be used for mail-send-hook and news-inews-hook, but can be
+invoked interactively, too.
+
+If the buffer contains at least one Ethiopic character, then it
+
+1) inserts the string @samp{<sera>} right after the head-body
+separating line,
+2) inserts @samp{</sera>} at the end of the buffer,
+3) converts the body into SERA in Ethiopic start mode, and
+4) converts the @samp{Subject:} field in ASCII start mode.
+
+If there is no separating line, @samp{<sera>} will be put at the
+beginning of buffer and does not look for the @samp{Subject:} field.
+
+@item @key{[F6]} or @kbd{M-x ethio-modify-vowel}
+is the vowel modification key.  Hit this key when the cursor is on a
+Fidel letter.  Then you will be asked a new vowel.  Hit one of the seven
+characters below from the keyboard:
+
+@example
+e  u  i  a  E  '  o
+@end example
+
+You will get a new letter whose consonant is the same as the
+original, but with the new vowel that you selected.  An
+apostrophe @samp{'} changes the character to the sixth form (lone
+consonant).
+
+If the cursor is on the Wa-form of letter having only 8 forms, selecting
+a vowel other than @samp{a} changes the original into the combination of
+two characters, namely, the sixth form of the original character and the
+wW utility letter whose vowel is the newly selected one. See @xref{Fidel 
+Input}.
+
+@item @key{[F7]} or @kbd{M-x ethio-replace-space}
+replaces the spaces between two Ethiopic characters in the specified
+region.  You will be asked the new space character.  Answer by typing 1,
+2 or 3.  1 means the single width ASCII space.  2 means the double width
+Ethiopic blank.  3 means the traditional Ethiopic word separater.  This
+command is independent from the space selection for keyboard input.
+
+@item @key{[F8]} or @kbd{M-x ethio-input-special-character}
+inputs graphical images in font file.  A menu will appear in
+mini-buffer.
+@end table
+
+@comment ============================================================
+@node IPA, , Ethiopic Languages, Top
+@section IPA
+
+  International Phonetic Alphabet (IPA for short) is not a language, but
+we describe its usage in Mule here as a matter of convenience.
+
+  To print text that contains IPA characters, see the online manual
+@samp{m2ps(1)} and @xref{Top, , m2ps, m2ps}.
+
+@menu
+* IPA Character Set::           IPA Characters and IPA Fonts
+* Inputing IPA::                Quail Package for IPA
+@end menu
+
+@comment ------------------------------------------------------------
+@node IPA Character Set, Inputing IPA, , IPA
+@subsection IPA Character Set
+
+  Mule defines a private character set to represent a subset of 1989's
+version of IPA.  It consists of the consonant signs used in English,
+French, German and Italian, and all vowels signs in the table.  For the
+detail of the included characters, see @xref{Inputing IPA}.
+
+  To use this character set, you have to start Mule as an X client.  The
+fonts for this purpose are found in Mule's FTP sites.  Their names are:
+
+@example
+@file{etl14-ipa.bdf}
+@file{etl16-ipa.bdf}
+@file{etl24-ipa.bdf}
+@end example
+
+  If the IPA fonts have been properly installed, you should be able to
+read the following line:
+
+@quotation
+,0I!J(B ,0!K(B ,0'(B ,0Z% S(B ,0V!BS(B ,0!S(B ,0p% p@ rp" (B ,0Dp$V'DB'K(B
+@end quotation
+
+  Bear in mind that all fonts used in Mule must be of fixed width.
+Furthermore, the width of the IPA symbols must be the same as the ASCII
+characters.  For the detail of font specification, see @xref{Font, ,
+Font, mule}.
+
+@comment ------------------------------------------------------------
+@node Inputing IPA, , IPA Character Set, IPA
+@subsection Inputing IPA
+
+  To input IPA characters, use the Quail system.  Hit @kbd{C-]} to turn
+into quail-mode.  If you do not see the string @samp{[IPA]} at the left
+end of mode-line, then hit @kbd{M-s} and specify the package name
+@samp{ipa}.  @key{SPC} works as the completion key.  If you hit
+@key{RET} without specifying a package name, the default package (shown
+in the parentheses) will be used.  To exit quail-mode, hit @kbd{C-]}
+once again.
+
+  For the detail of the Quail system, see @xref{Usage of Quail, , ,
+quail}.
+
+  Here are the key bindings for IPA characters in quail-mode:
+
+@example
+key             description             example
+-----------------------------------------------------------
+i               small letter i          i in ici (F)
+I               small capital I         i in bit (E)
+e               small letter e          e' in the' (F)
+E or \3         rounded small epsilon   e in end (Am. E)
+ae              a+e ligature            a in cat (E)
+a               small a in printing     a in patte (F)
+A or o|         small a in manuscript   o in hop (Am. E)
+/v              upside-down small v     u in cup (Am. E)
+&               small gamma
+/m              upside-down small m
+i-              small i with bar
+/e              schwa (upside-down e)   a in about (E)
+/a              upside-down pr. a       a in china (E)
+y               small letter y          u in sur (F)
+Y               small capital Y         u" in du"nn (G)
+o/              small phi               eu in deux (F)
+oe              o+e ligature            oe in boeuf (F)
+OE              O+E ligature
+/A or |o        upside-down man. a      o in hop (E)
+/c              upside-down small c     a in all (E)
+o               small letter o          o in pot (F)
+U               upside-down cap. omega  oo in book (E)
+u               small letter u          ou in pour (F)
+u-              small u with bar        u in hus (Norwegian)
+o-              small o with bar        o" in do"rr (Swedish)
+e- or e|        r coloured schwa        er in letter (Am. E)
+oe~             tilde above o+e         un (F)
+/c~             tilde above u-d. c      on in bon (F)
+E~ or /3~       tilde above epsilon     ain in pain (F)
+A~ or o|~       tilde above man. a      an in blanc (F)
+-----------------------------------------------------------
+p               small letter p          p in paon (F)
+b               small letter b          b in banc (F)
+t               small letter t          t in table (E)
+d               small letter d          d in date (E)
+k               small letter k          c in computer (E)
+g               small letter g          g in get (E)
+f               small letter f          f in feel (E)
+v               small letter v          v in veal (E)
+th              small theta             th in three (E)
+dh              small icelandic edh     th in this (E)
+s               small letter s          s in sea (E)
+z               small letter z          z in zero (E)
+sh              integral mark           sh in shell (E)
+zh or 3         voiced sh               j in je (F)
+c,              c with cedilla          ch in ich (G)
+x               small letter x          x in ach (G)
+/R              upside-down capital R   r in Paris (Parisian F)
+h               small letter h          h in hat (E)
+m               small letter m          m in make (E)
+n               small setter n          n in net (E)
+gn              n with long left leg    gn in signe (F)
+ng              n with long right leg   ng in song (E)
+r               small letter r          rr in carro (I)
+R               small capital R         rr in harren (G)
+/r              upside-down small r     r in red (E)
+j               small letter j          y in you (E)
+l               small letter l          l in light (E)
+/y              upside-down small y     gl in foglio (I)
+L               small capital L         ll in tell (E)
+/h              upside-down small h     u in nuit (F)
+w               small letter w          w in we (E)
+M               upside-down capital W   wh in what (E)
+-----------------------------------------------------------
+'               acute                   primary accent
+`               grave                   secondary accent
+:               colon                   long
+@end example
+
+@contents
+@bye

@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the XEmacs Lisp Reference Manual.
-@c Copyright (C) 1990, 1991, 1992, 1993, 1997 Free Software Foundation, Inc. 
+@c Copyright (C) 1990, 1991, 1992, 1993 Free Software Foundation, Inc. 
 @c Copyright (C) 1995 Sun Microsystems.
 @c See the file lispref.texi for copying conditions.
 @setfilename ../../info/menu.info
@@ -15,7 +15,6 @@
 * Modifying Menus::	Modifying a menu description.
 * Pop-Up Menus::	Functions for specifying pop-up menus.
 * Menu Filters::	Filter functions for the default menubar.
-* Menu Accelerators::	Using and controlling menu accelerator keys
 * Buffers Menu::	The menu that displays the list of buffers.
 @end menu
 
@@ -39,7 +38,7 @@ parent.  In this case, the string will be displayed at the top of the
 menu if @code{popup-menu-titles} is non-@code{nil}.
 
 Immediately following the first element there may optionally be up
-to four keyword-value pairs, as follows:
+to three keyword-value pairs, as follows:
 
 @table @code
 @item :included @var{form}
@@ -60,11 +59,6 @@ may already be displayed.  Vile and terrible things will happen if a
 menu filter function changes the current buffer, window, or frame.  It
 also should not raise, lower, or iconify any frames.  Basically, the
 filter function should have no side-effects.
-
-@item :accelerator @var{key}
-A menu accelerator is a keystroke which can be pressed while the menu is
-visible which will immediately activate the item.  @var{key} must be a char
-or the symbol name of a key.  @xref{Menu Accelerators}.
 @end table
 
 The rest of the menu consists of elements as follows:
@@ -222,11 +216,6 @@ will be omitted entirely.
 @item :config @var{symbol}
 This is an efficient shorthand for @code{:included (memq @var{symbol}
 menubar-configuration)}.  See the variable @code{menubar-configuration}.
-
-@item :accelerator @var{key}
-A menu accelerator is a keystroke which can be pressed while the menu is
-visible which will immediately activate the item.  @var{key} must be a char
-or the symbol name of a key.  @xref{Menu Accelerators}.
 @end table
 
 @defvar menubar-configuration
@@ -586,136 +575,6 @@ where the mouse is clicked.
 @defun popup-menubar-menu event
 This function pops up a copy of menu that also appears in the menubar.
 @end defun
-
-@node Menu Accelerators
-@section Menu Accelerators
-@cindex menu accelerators
-@cindex keyboard menu accelerators
-
-Menu accelerators are keyboard shortcuts for accessing the menubar.
-Accelerator keys can be specified for menus as well as for menu items.  An
-accelerator key for a menu is used to activate that menu when it appears as a
-submenu of another menu.  An accelerator key for a menu item is used to
-activate that item.
-
-@menu
-* Creating Menu Accelerators::	How to add accelerator keys to a menu.
-* Keyboard Menu Traversal::	How to use and modify the keys which are used
-				to traverse the menu structure.
-* Menu Accelerator Functions::	Functions for working with menu accelerators.
-@end menu
-
-@node Creating Menu Accelerators
-@subsection Creating Menu Accelerators
-
-Menu accelerators are specified as part of the menubar format using the
-:accelerator tag to specify a key or by placing "%_" in the menu or menu item
-name prior to the letter which is to be used as the accelerator key.  The
-advantage of the second method is that the menu rendering code then knows to
-draw an underline under that character, which is the canonical way of
-indicating an accelerator key to a user.
-
-For example, the command
-
-@example
-(add-submenu nil '("%_Test"
-		   ["One" (insert "1") :accelerator ?1 :active t]
-		   ["%_Two" (insert "2") t]
-		   ["%_3" (insert "3") t]))
-@end example
-
-will add a new menu to the top level menubar.  The new menu can be reached
-by pressing "t" while the top level menubar is active.  When the menu is
-active, pressing "1" will activate the first item and insert the character
-"1" into the buffer.  Pressing "2" will activate the second item and insert
-the character "2" into the buffer.  Pressing "3" will activate the third item
-and insert the character "3" into the buffer.
-
-It is possible to activate the top level menubar itself using accelerator keys.
-@xref{Menu Accelerator Functions}.
-
-@node Keyboard Menu Traversal
-@subsection Keyboard Menu Traversal
-
-In addition to immediately activating a menu or menu item, the keyboard can
-be used to traverse the menus without activating items.  The keyboard arrow
-keys, the return key and the escape key are defined to traverse the menus in a
-way that should be familiar to users of any of a certain family of popular PC
-operating systems.
-
-This behaviour can be changed by modifying the bindings in
-menu-accelerator-map.  At this point, the online help is your best bet
-for more information about how to modify the menu traversal keys.
-
-@node Menu Accelerator Functions
-@subsection Menu Accelerator Functions
-
-@defun accelerate-menu
-Make the menubar immediately active and place the cursor on the left most entry
-in the top level menu.  Menu items can be selected as usual.
-@end defun
-
-@defvar menu-accelerator-enabled
-Whether menu accelerator keys can cause the menubar to become active.
-
-If @code{menu-force} or @code{menu-fallback}, then menu accelerator keys can
-be used to activate the top level menu.  Once the menubar becomes active, the
-accelerator keys can be used regardless of the value of this variable.
-
-@code{menu-force} is used to indicate that the menu accelerator key takes
-precedence over bindings in the current keymap(s).  @code{menu-fallback} means
-that bindings in the current keymap take precedence over menu accelerator keys.
-Thus a top level menu with an accelerator of "T" would be activated on a
-keypress of Meta-t if @var{menu-accelerator-enabled} is @code{menu-force}.
-However, if @var{menu-accelerator-enabled} is @code{menu-fallback}, then
-Meta-t will not activate the menubar and will instead run the function
-transpose-words, to which it is normally bound.
-
-The default value is @code{nil}.
-
-See also @var{menu-accelerator-modifiers} and @var{menu-accelerator-prefix}.
-@end defvar
-
-@defvar menu-accelerator-map
-Keymap consulted to determine the commands to run in response to keypresses
-occurring while the menubar is active.  @xref{Keyboard Menu Traversal}.
-@end defvar
-
-@defvar menu-accelerator-modifiers
-A list of modifier keys which must be pressed in addition to a valid menu
-accelerator in order for the top level menu to be activated in response to
-a keystroke.  The default value of @code{(meta)} mirrors the useage of the alt key
-as a menu accelerator in popular PC operating systems.
-
-The modifier keys in @var{menu-accelerator-modifiers} must match exactly the
-modifiers present in the keypress.  The only exception is that the shift
-modifier is accepted in conjunction with alphabetic keys even if it is not
-a menu accelerator modifier.
-
-See also @var{menu-accelerator-enabled} and @var{menu-accelerator-prefix}.
-@end defvar
-
-@defvar menu-accelerator-prefix
-Prefix key(s) that must be typed before menu accelerators will be activated.
-Must be a valid key descriptor.
-
-The default value is @code{nil}.
-@end defvar
-
-@example
-(setq menu-accelerator-prefix ?\C-x)
-(setq menu-accelerator-modifiers '(meta control))
-(setq menu-accelerator-enabled 'menu-force)
-(add-submenu nil '("%_Test"
-		   ["One" (insert "1") :accelerator ?1 :active t]
-		   ["%_Two" (insert "2") t]
-		   ["%_3" (insert "3") t]))
-@end example
-
-will add the menu "Test" to the top level menubar.  Pressing C-x followed by
-C-M-T will activate the menubar and display the "Test" menu.  Pressing
-C-M-T by itself will not activate the menubar.  Neither will pressing C-x
-followed by anything else.
 
 @node Buffers Menu
 @section Buffers Menu

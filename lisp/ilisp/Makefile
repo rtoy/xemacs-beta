@@ -58,11 +58,6 @@ LoadFiles = ilisp-def.elc ilisp-el.elc ilisp-sym.elc \
 compile:
 	$(EMACS) -batch -l ilisp-mak.el
 
-elc: $(LoadFiles)
-
-$(LoadFiles) :
-	$(EMACS) -batch -l ilisp-mak.el
-
 tags:
 	etags *.el
 

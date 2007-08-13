@@ -198,9 +198,7 @@ arguments compiles from `load-path'."
 	     (directory-files d nil "^[^=].*\\.el$")))))
        dirs)
       (insert "))\n\n(provide 'finder-inf)\n\n;;; finder-inf.el ends here\n")
-      (condition-case nil
-	  (kill-buffer "*finder-scratch*")
-	(t nil))
+      (kill-buffer "*finder-scratch*")
       (eval-current-buffer) ;; So we get the new keyword list immediately
       (basic-save-buffer))))
 
@@ -212,7 +210,7 @@ arguments compiles from `load-path'."
 
 (defun finder-insert-at-column (column &rest strings)
   "Insert list of STRINGS, at column COLUMN."
-  (if (>= (current-column) column) (insert "\n"))
+  (if (> (current-column) column) (insert "\n"))
   (move-to-column column)
   (let ((col (current-column)))
     (if (< col column)

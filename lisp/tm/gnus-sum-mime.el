@@ -1,11 +1,11 @@
 ;;; gnus-sum-mime.el --- MIME extension for summary mode of Gnus
 
-;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
+;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1996/8/6
 ;; Version:
-;;	$Id: gnus-sum-mime.el,v 1.5 1997/03/16 05:55:40 steve Exp $
+;;	$Id: gnus-sum-mime.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $
 ;; Keywords: news, MIME, multimedia, multilingual, encoded-word
 
 ;; This file is not part of GNU Emacs yet.
@@ -21,14 +21,14 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; along with this program; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Code:
 
 (require 'gnus-mime)
-(require 'gnus-sum)
+(require 'gnus-art-mime)
 
 
 ;;; @ summary filter
@@ -94,29 +94,6 @@
   (function gnus-summary-preview-mime-message))
 (define-key gnus-summary-mode-map "\e\r"
   (function gnus-summary-scroll-down))
-
-
-;;; @ for tm-partial
-;;;
-
-(defun gnus-mime-partial-preview-function ()
-  (gnus-summary-preview-mime-message (gnus-summary-article-number))
-  )
-
-(call-after-loaded
- 'tm-partial
- (function
-  (lambda ()
-    (set-atype 'mime/content-decoding-condition
-	       '((type . "message/partial")
-		 (method . mime-article/grab-message/partials)
-		 (major-mode . gnus-original-article-mode)
-		 (summary-buffer-exp . gnus-summary-buffer)
-		 ))
-    (set-alist 'tm-partial/preview-article-method-alist
-	       'gnus-original-article-mode
-	       'gnus-mime-partial-preview-function)
-    )))
 
 
 ;;; @ end

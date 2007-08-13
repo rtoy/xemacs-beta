@@ -15,9 +15,8 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with GNU Emacs; see the file COPYING.  If not, write to
+the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifdef NeXT
 #undef __STRICT_BSD__ /* ick */
@@ -36,7 +35,7 @@ Boston, MA 02111-1307, USA.  */
 #define alloca __builtin_alloca
 #endif
 
-#if ((!__GNUC__) && !defined(__hpux)) && !defined(_AIX) && !defined (_SCO_DS) && !defined (__USLC__) && !defined(sinix) && !defined(_SEQUENT_)
+#if ((!__GNUC__) && !defined(__hpux)) && !defined(_AIX) && !defined (_SCO_DS) && !defined (__USLC__) && !defined(sinix)
 #include <alloca.h>
 #endif
 
@@ -1254,8 +1253,7 @@ lw_get_widget_id (Widget w)
 void
 lw_set_keyboard_focus (Widget parent, Widget w)
 {
-#if defined(NEED_MOTIF) && !defined(LESSTIF_VERSION)
-  /* This loses with Lesstif v0.75a */
+#ifdef NEED_MOTIF
   xm_set_keyboard_focus (parent, w);
 #else
   XtSetKeyboardFocus (parent, w);

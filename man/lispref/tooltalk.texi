@@ -217,7 +217,7 @@ define any semantics for @var{type}, so only the participants in the
 protocol you're using need to agree what types mean (if anything).
 Conventionally @code{string} is used for strings and @code{int} for 32
 bit integers.  Arguments can initialized by providing a value or with
-@code{set-tooltalk-message-attribute}; the latter is necessary if you
+@code{set-tooltalk-message-attribute}; the latter is neccessary if you
 want to initialize the argument with a string that can contain embedded
 nulls (use @code{arg_bval}).
 @refill

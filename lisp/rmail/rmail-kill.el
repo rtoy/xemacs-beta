@@ -1,31 +1,3 @@
-;;; rmail-kill.el --- Mail filtering for rmail
-
-;; Copyright status unknown
-
-;; Author: Unknown
-;; Keywords: mail
-
-;; This file is part of XEmacs.
-
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
-
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
-
-;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
-
-;;; Synched up with: Not in FSF.
-
-;;; Commentary:
-;; This is the Original Notice on this file:
 ;; GNU Emacs and this file "rmail-kill.el", is distributed in the hope
 ;; that it will be useful, but WITHOUT ANY WARRANTY.  No author or
 ;; distributor accepts responsibility to anyone for the consequences
@@ -41,7 +13,6 @@
 ;; named COPYING.  Among other things, the copyright notice and this
 ;; notice must be preserved on all copies.
 
-;;; Code:
 (setq rmail-message-filter 'rmail-maybe-execute-message
       rmail-mode-hook '((lambda ()
 			  (define-key rmail-mode-map "e" 'rmail-extract-rejected-message)
@@ -152,7 +123,3 @@ prompt for a field name."
 (defun read-string-with-default (prompt default)
   (let ((s (read-string prompt)))
     (if (string= s "") default s)))
-
-(provide 'rmail-kill)
-
-;;; rmail-kill.el ends here

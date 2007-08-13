@@ -1,33 +1,33 @@
-;;;_. icomplete.el - minibuffer completion incremental feedback
+;;; icomplete.el --- minibuffer completion with incremental feedback
 
-;; Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
+;;; Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
 
-;; Author: Ken Manheimer <klm@python.org>
-;; Maintainer: Ken Manheimer <klm@python.org>
-;; Version: $Id: icomplete.el,v 1.4 1997/09/17 01:51:04 steve Exp $
-;; Created: Mar 1993 klm@nist.gov - first release to usenet
-;; Keywords: help, abbrev
+;;; Author: Ken Manheimer <klm@nist.gov>
+;;; Maintainer: Ken Manheimer <klm@nist.gov>
+;;; Version: $Id: icomplete.el,v 1.1.1.1 1996/12/18 22:42:52 steve Exp $
+;;; Created: Mar 1993 klm@nist.gov - first release to usenet
+;;; Keywords: help, abbrev
 
-;; This file is part of GNU Emacs.
+;;; Hacked for XEmacs: David Hughes 7th September 1995
 
-;; GNU Emacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
+;; This file is part of XEmacs.
+
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
-;; This file is also part of XEmacs.
-;; Hacked for XEmacs: David Hughes 7th September 1995
-;; With some integration and refinement by Ken Manheimer, May 1997
+;;; Synched up with: FSF 19.34.
 
 ;;; Commentary:
 
@@ -72,13 +72,6 @@
 (provide 'icomplete)
 
 ;;;_* User Customization variables
-(defvar icomplete-compute-delay .3
-  "*Completions-computation stall, used only with large-number
-completions - see `icomplete-delay-completions-threshold'.")
-(defvar icomplete-delay-completions-threshold 400
-  "*Pending-completions number over which to apply icomplete-compute-delay.")
-(defvar icomplete-max-delay-chars 3
-  "*Maximum number of initial chars to apply icomplete compute delay.")
 
 ;;;_* Initialization
 ;;;_  = icomplete-minibuffer-setup-hook
@@ -97,9 +90,6 @@ with other packages.  For instance:
 
 will constrain rsz-mini to a maximum minibuffer height of 3 lines when
 icompletion is occurring.")
-
-(if (string-match "XEmacs\\|Lucid" emacs-version)
-    (add-hook 'icomplete-minibuffer-setup-hook 'icomplete-exhibit))
 
 ;;;_ + Internal Variables
 ;;;_  = icomplete-mode
@@ -128,30 +118,25 @@ minibuffer completion.")
 (add-hook 'icomplete-post-command-hook 'icomplete-exhibit)
 
 ;; XEmacs addition
-(defvar icomplete-show-key-bindings (string-match "XEmacs\\|Lucid"
-						  emacs-version)
+(defvar icomplete-show-key-bindings t
   "When non-nil show key bindings as well as completion when matching
-a command.  Currently working only for XEmacs - see `icomplete-get-keys'.")
+a command.")
 
+;; XEmacs addition
 (defun icomplete-get-keys (func-name)
-  "Return the keys `func-name' is bound to as a string, or nil if none.
-NOTE that this depends on `owindow' minbuf setting and `current-local-map'
-taking arg, both present in XEmacs but not present in mainline GNU Emacs
-19.34."
+  "Return the keys `func-name' is bound to as a string."
   (when (commandp func-name)
-    (save-excursion
-      ;; Depends on dynamic scope from read-from-minibuffer :-(
-      (let* ((sym (intern func-name))
-	     (buf (set-buffer (window-buffer owindow)))
-	     (keys (where-is-internal sym (current-local-map buf))))
-	(if keys
-	    (concat "<"
-		    (mapconcat 'key-description
-			       (sort keys
-				     #'(lambda (x y)
-					 (< (length x) (length y))))
-			       ", ")
-		">"))))))
+    (let* ((sym (intern func-name))
+	   (keys (where-is-internal sym)))
+      (concat "<"
+	      (if keys
+		  (mapconcat 'key-description
+			     (sort '([next] [kp_next] [(control v)])
+				   #'(lambda (x y)
+				       (< (length x) (length y))))
+			     ", ")
+		"Unbound")
+	      ">"))))
 
 ;;;_ > icomplete-mode (&optional prefix)
 ;;;###autoload
@@ -225,7 +210,6 @@ and `minibuffer-setup-hook'."
 ;;;_ > icomplete-exhibit ()
 (defun icomplete-exhibit ()
   "Insert icomplete completions display.
-
 Should be run via minibuffer `post-command-hook'.  See `icomplete-mode'
 and `minibuffer-setup-hook'."
   (if (icomplete-simple-completing-p)
@@ -241,22 +225,7 @@ and `minibuffer-setup-hook'."
 	      (make-local-variable 'icomplete-eoinput))
 	  (setq icomplete-eoinput (point))
                                         ; Insert the match-status information:
-	  (if (and (> (point-max) 1)
-		   (or
-		    ;; Don't bother with delay after certain number of chars:
-		    (> (point-max) icomplete-max-delay-chars)
-		    ;; Don't delay if alternatives number is small enough:
-		    (if minibuffer-completion-table
-			(cond ((numberp minibuffer-completion-table)
-			       (< minibuffer-completion-table
-				  icomplete-delay-completions-threshold))
-			      ((sequencep minibuffer-completion-table)
-			       (< (length minibuffer-completion-table)
-				  icomplete-delay-completions-threshold))
-			      ))
-		    ;; Delay - give some grace time for next keystroke, before
-		    ;; embarking on computing completions:
-		    (sit-for icomplete-compute-delay)))
+	  (if (> (point-max) 1)
 	      (insert-string
 	       (icomplete-completions contents
 				      minibuffer-completion-table
@@ -281,13 +250,7 @@ one of \(), \[], or \{} pairs.  The choice of brackets is as follows:
 
 The displays for unambiguous matches have ` [Matched]' appended
 \(whether complete or not), or ` \[No matches]', if no eligible
-matches exist.  \(In XEmacs, keybindings for matched commands, if any,
-are exhibited within the square braces.)"
-
-  ;; 'all-completions' doesn't like empty
-  ;; minibuffer-completion-table's (ie: (nil))
-  (if (and (listp candidates) (null (car candidates)))
-      (setq candidates nil))
+matches exist."
 
   (let ((comps (all-completions name candidates predicate))
                                         ; "-determined" - only one candidate
@@ -297,71 +260,53 @@ are exhibited within the square braces.)"
         (open-bracket-prospects "{")
         (close-bracket-prospects "}")
         )
-    (catch 'input
-      (cond ((null comps) (format " %sNo matches%s"
-				  open-bracket-determined
+    (cond ((null comps) (format " %sNo matches%s"
+				open-bracket-determined
+				close-bracket-determined))
+	  ((null (cdr comps))           ;one match
+	   (concat (if (and (> (length (car comps))
+			       (length name)))
+		       (concat open-bracket-determined
+			       (substring (car comps) (length name))
+			       close-bracket-determined)
+		     "")
+		   " [Matched]"
+	   ;; XEmacs
+		   (if (and icomplete-show-key-bindings
+			    (commandp (car comps)))
+		       (icomplete-get-keys (car comps))
+		     "")
+		   ))
+	  (t                            ;multiple matches
+	   (let* ((most (try-completion name candidates predicate))
+		  (most-len (length most))
+		  most-is-exact
+		  (alternatives
+		   (apply
+		    (function concat)
+		    (cdr (apply
+			  (function nconc)
+			  (mapcar '(lambda (com)
+				     (if (= (length com) most-len)
+					 ;; Most is one exact match,
+					 ;; note that and leave out
+					 ;; for later indication:
+					 (progn
+					   (setq most-is-exact t)
+					   ())
+				       (list ","
+					     (substring com
+							most-len))))
+				  comps))))))
+	     (concat (and (> most-len (length name))
+			  (concat open-bracket-determined
+				  (substring most (length name))
 				  close-bracket-determined))
-	    ((null (cdr comps))		;one match
-	     (concat (if (and (> (length (car comps))
-				 (length name)))
-			 (concat open-bracket-determined
-				 (substring (car comps) (length name))
-				 close-bracket-determined)
-		       "")
-		     " [Matched"
-		     (let ((keys (and icomplete-show-key-bindings
-				      (commandp (intern-soft (car comps)))
-				      (icomplete-get-keys (car comps)))))
-		       (if keys
-			   (concat "; " keys)
-			 ""))
-		     "]"))
-	    (t				;multiple matches
-	     (let* ((most
-		     (try-completion name candidates
-				     (and predicate
-					  ;; Wrap predicate in impatience - ie,
-					  ;; `throw' up when pending input is
-					  ;; noticed.  Adds some overhead to
-					  ;; predicate, but should be worth it.
-					  (function
-					   (lambda (item)
-					     (if (input-pending-p)
-						 (throw 'input "")
-					       (apply predicate
-						      item nil)))))))
-		    (most-len (length most))
-		    most-is-exact
-		    (alternatives
-		     (substring 
-		      (apply (function concat)
-			     (mapcar (function
-				      (lambda (com)
-					(if (input-pending-p)
-					    (throw 'input ""))
-					(if (= (length com) most-len)
-					    ;; Most is one exact match,
-					    ;; note that and leave out
-					    ;; for later indication:
-					    (progn
-					      (setq most-is-exact t)
-					      ())
-					  (concat ","
-						  (substring com
-							     most-len)))))
-				     comps))
-		      1)))
-	       (concat (and (> most-len (length name))
-			    (concat open-bracket-determined
-				    (substring most (length name))
-				    close-bracket-determined))
-		       open-bracket-prospects
-		       (if most-is-exact
-			   ;; Add a ',' at the front to indicate "complete but
-			   ;; not unique":
-			   (concat "," alternatives)
-			 alternatives)
-		       close-bracket-prospects)))))))
+		     open-bracket-prospects
+		     (if most-is-exact
+			 (concat "," alternatives)
+		       alternatives)
+		     close-bracket-prospects))))))
 
 ;;;_ + Initialization
 ;;; If user hasn't setq-default icomplete-mode to nil, then setup for

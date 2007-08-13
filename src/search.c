@@ -41,7 +41,7 @@ Boston, MA 02111-1307, USA.  */
 #include "regex.h"
 
 
-#define REGEXP_CACHE_SIZE 20
+#define REGEXP_CACHE_SIZE 5
 
 /* If the regexp is non-nil, then the buffer contains the compiled form
    of that regexp, suitable for searching.  */
@@ -78,6 +78,14 @@ struct regexp_cache *searchbuf_head;
    to call re_set_registers after compiling a new pattern or after
    setting the match registers, so that the regex functions will be
    able to free or re-allocate it properly.  */
+
+/* Note: things get trickier under Mule because the values returned from
+   the regexp routines are in Bytinds but we need them to be in Bufpos's.
+   We take the easy way out for the moment and just convert them immediately.
+   We could be more clever by not converting them until necessary, but
+   that gets real ugly real fast since the buffer might have changed and
+   the positions might be out of sync or out of range.
+   */
 static struct re_registers search_regs;
 
 /* The buffer in which the last search was performed, or
@@ -551,6 +559,23 @@ bi_scan_buffer (struct buffer *buf, Emchar target, Bytind st, Bytind en,
   
   if (count > 0)
     {
+#ifdef MULE
+      /* Due to the Mule representation of characters in a buffer,
+	 we can simply search for characters in the range 0 - 127
+	 directly.  For other characters, we do it the "hard" way.
+	 Note that this way works for all characters but the other
+	 way is faster. */
+      if (target >= 0200)
+	{
+	  while (st < lim && count > 0)
+	    {
+	      if (BI_BUF_FETCH_CHAR (buf, st) == target)
+		count--;
+	      INC_BYTIND (buf, st);
+	    }
+	}
+      else
+#endif
 	{
 	  while (st < lim && count > 0)
 	    {
@@ -579,6 +604,18 @@ bi_scan_buffer (struct buffer *buf, Emchar target, Bytind st, Bytind en,
     }
   else
     {
+#ifdef MULE
+      if (target >= 0200)
+	{
+	  while (st > lim && count < 0)
+	    {
+	      DEC_BYTIND (buf, st);
+	      if (BI_BUF_FETCH_CHAR (buf, st) == target)
+		count++;
+	    }
+	}
+      else
+#endif
 	{
 	  while (st > lim && count < 0)
 	    {
@@ -686,7 +723,8 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
   unsigned char fastmap[0400];
   int negate = 0;
   register int i;
-  Lisp_Object syntax_table = buf->syntax_table;
+  struct Lisp_Char_Table *syntax_table =
+    XCHAR_TABLE (buf->mirror_syntax_table);
 
   CHECK_STRING (string);
 
@@ -1492,7 +1530,8 @@ wordify (Lisp_Object buffer, Lisp_Object string)
   Charcount i, len;
   EMACS_INT punct_count = 0, word_count = 0;
   struct buffer *buf = decode_buffer (buffer, 0);
-  Lisp_Object syntax_table = buf->syntax_table;
+  struct Lisp_Char_Table *syntax_table =
+    XCHAR_TABLE (buf->mirror_syntax_table);
 
   CHECK_STRING (string);
   len = string_char_length (XSTRING (string));
@@ -1674,8 +1713,7 @@ See also the functions `match-beginning', `match-end' and `replace-match'.
   return search_command (regexp, bound, no_error, count, buffer, -1, 1, 1);
 }
 
-DEFUN ("posix-search-forward", Fposix_search_forward, 1, 5,
-       "sPosix search: ", /*
+DEFUN ("posix-search-forward", Fposix_search_forward, 1, 5, "sPosix search: ", /*
 Search forward from point for regular expression REGEXP.
 Find the longest match in accord with Posix regular expression rules.
 Set point to the end of the occurrence found, and return point.
@@ -1753,7 +1791,7 @@ and you do not need to specify it.)
   Emchar c, prevc;
   Charcount inslen;
   struct buffer *buf;
-  Lisp_Object syntax_table;
+  struct Lisp_Char_Table *syntax_table;
   int mc_count;
   Lisp_Object buffer;
   int_dynarr *ul_action_dynarr = 0;
@@ -1785,7 +1823,7 @@ and you do not need to specify it.)
       buf = XBUFFER (buffer);
     }
 
-  syntax_table = buf->syntax_table;
+  syntax_table = XCHAR_TABLE (buf->mirror_syntax_table);
   
   case_action = nochange;	/* We tried an initialization */
 				/* but some C compilers blew it */
@@ -2415,6 +2453,16 @@ Return a regexp string which matches exactly STRING and nothing else.
   return make_string (temp, out - temp);
 }
 
+DEFUN ("set-word-regexp", Fset_word_regexp, 1, 1, 0, /*
+Set the regexp to be used to match a word in regular-expression searching.
+#### Not yet implemented.  Currently does nothing.
+#### Do not use this yet.  Its calling interface is likely to change.
+*/
+       (regexp))
+{
+  return Qnil;
+}
+
 
 /************************************************************************/
 /*                            initialization                            */
@@ -2449,6 +2497,7 @@ syms_of_search (void)
   DEFSUBR (Fmatch_data);
   DEFSUBR (Fstore_match_data);
   DEFSUBR (Fregexp_quote);
+  DEFSUBR (Fset_word_regexp);
 }
 
 void

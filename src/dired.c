@@ -53,22 +53,23 @@ If FILES-ONLY is the symbol t, then only the \"files\" in the directory
 */
        (dirname, full, match, nosort, files_only))
 {
-  /* This function can GC.  GC checked 1997.04.06. */
+  /* This function can GC */
   DIR *d;
   Bytecount dirname_length;
   Lisp_Object list, name, dirfilename = Qnil;
   Lisp_Object handler;
-  Lisp_Object errstring;
   struct re_pattern_buffer *bufp;
 
-  char statbuf [4096];			/* BOGUS -- fixed in 20.3 */
+  char statbuf [MAXNAMLEN+2];
   char *statbuf_tail;
   Lisp_Object tail_cons = Qnil;
-  char slashfilename[4096];		/* BOGUS -- fixed in 20.3 */
+  char slashfilename[MAXNAMLEN+2];
   char *filename = slashfilename;
 
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
-  GCPRO4 (dirname, dirfilename, tail_cons, errstring);
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
+
+  /* #### Needs more gcpro's */
+  GCPRO5 (dirname, match, files_only, tail_cons, dirfilename);
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
@@ -84,8 +85,6 @@ If FILES-ONLY is the symbol t, then only the \"files\" in the directory
 		    nosort);
   }
 
-  /* #### why do we do Fexpand_file_name after file handlers here,
-     but earlier everywhere else? */
   dirname = Fexpand_file_name (dirname, Qnil);
   dirfilename = Fdirectory_file_name (dirname);
 
@@ -93,10 +92,6 @@ If FILES-ONLY is the symbol t, then only the \"files\" in the directory
     /* XEmacs: this should come before the opendir() because it might error. */
     Lisp_Object name_as_dir = Ffile_name_as_directory (dirname);
     CHECK_STRING (name_as_dir);
-    if (XSTRING_LENGTH(name_as_dir) >= sizeof (statbuf))
-      {
-	report_file_error("Directory name too long", list1(name_as_dir));
-      }
     memcpy (statbuf, ((char *) XSTRING_DATA (name_as_dir)),
            XSTRING_LENGTH (name_as_dir));
     statbuf_tail = statbuf + XSTRING_LENGTH (name_as_dir);
@@ -139,14 +134,8 @@ If FILES-ONLY is the symbol t, then only the \"files\" in the directory
   dirname_length = XSTRING_LENGTH (dirname);
 #ifndef VMS
   if (dirname_length == 0
-      || !IS_ANY_SEP (XSTRING_BYTE (dirname, dirname_length - 1)))
+      || !IS_ANY_SEP (string_byte (XSTRING (dirname), dirname_length - 1)))
   {
-    if ((filename - slashfilename) >= (sizeof (slashfilename) - 1))
-      {
-	closedir(d);
-	errstring = make_string(statbuf, 255);
-	report_file_error("Directory name too long", list1(errstring));
-      }
     *filename++ = DIRECTORY_SEP;
     dirname_length++;
   }
@@ -164,13 +153,6 @@ If FILES-ONLY is the symbol t, then only the \"files\" in the directory
 	{
 	  int result;
 	  Lisp_Object oinhibit_quit = Vinhibit_quit;
-	  if (((filename - slashfilename) + len) >=
-	      (sizeof (slashfilename) - 1))
-	    {
-	      closedir(d);
-	      errstring = make_string(slashfilename, 255);
-	      report_file_error("Directory name too long", list1(errstring));
-	    }
 	  strncpy (filename, dp->d_name, len);
 	  filename[len] = 0;
 	  /* re_search can now QUIT, so prevent it to avoid
@@ -186,14 +168,6 @@ If FILES-ONLY is the symbol t, then only the \"files\" in the directory
 		  int dir_p;
 		  struct stat st;
 
-		  if (((statbuf_tail - statbuf) + len) >=
-		      (sizeof (statbuf) - 1))
-		    {
-		      closedir(d);
-		      errstring = make_string(statbuf, 255);
-		      report_file_error("Directory name too long",
-					list1(errstring));
-		    }
 		  memcpy (statbuf_tail, filename, len);
 		  statbuf_tail [len] = 0;
 
@@ -251,7 +225,7 @@ to the names of directories.
 */
        (file, dirname))
 {
-  /* This function can GC.  GC checked 1996.04.06. */
+  /* This function can GC */
   Lisp_Object handler;
 
   /* If the directory name has special constructs in it,
@@ -280,16 +254,12 @@ to the names of directories.
 */
        (file, dirname))
 {
-  /* This function can GC. GC checked 1997.06.04. */
+  /* This function can GC */
   Lisp_Object handler;
-  struct gcpro gcpro1;
 
-  GCPRO1 (dirname);
-  dirname = Fexpand_file_name (dirname, Qnil);
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
   handler = Ffind_file_name_handler (dirname, Qfile_name_all_completions);
-  UNGCPRO;
   if (!NILP (handler))
     return call3 (handler, Qfile_name_all_completions, file,
 		  dirname);
@@ -645,7 +615,7 @@ If file does not exist, returns nil.
 */
        (filename))
 {
-  /* This function can GC. GC checked 1997.06.04. */
+  /* This function can GC */
   Lisp_Object values[12];
   Lisp_Object dirname = Qnil;
   struct stat s;
@@ -653,23 +623,20 @@ If file does not exist, returns nil.
   Lisp_Object handler;
   struct gcpro gcpro1, gcpro2;
 
-  GCPRO2 (filename, dirname);
+  GCPRO1 (filename);
   filename = Fexpand_file_name (filename, Qnil);
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
   handler = Ffind_file_name_handler (filename, Qfile_attributes);
+  UNGCPRO;
   if (!NILP (handler))
-    {
-      UNGCPRO;
-      return call2 (handler, Qfile_attributes, filename);
-    }
+    return call2 (handler, Qfile_attributes, filename);
 
   if (lstat ((char *) XSTRING_DATA (filename), &s) < 0)
-    {
-      UNGCPRO;
-      return Qnil;
-    }
+    return Qnil;
+
+  GCPRO2 (filename, dirname);
 
 #ifdef BSD4_2
   dirname = Ffile_name_directory (filename);

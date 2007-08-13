@@ -27,6 +27,10 @@ Boston, MA 02111-1307, USA.  */
 #include "console-tty.h"
 #include "insdel.h"
 #include "objects-tty.h"
+#ifdef MULE
+#include "device.h"
+#include "mule-charset.h"
+#endif
 
 /* An alist mapping from color names to a cons of (FG-STRING, BG-STRING). */
 Lisp_Object Vtty_color_alist;
@@ -222,12 +226,26 @@ tty_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object name,
   str += 6;
   if (*str)
     {
+#ifdef MULE
+      if (*str != '/')
+	return 0;
+      str++;
+      charset = Ffind_charset (intern ((CONST char *) str));
+      if (NILP (charset))
+	return 0;
+#else
       return 0;
+#endif
     }
 
   /* Don't allocate the data until we're sure that we will succeed. */
   f->data = malloc_type (struct tty_font_instance_data);
   FONT_INSTANCE_TTY_CHARSET (f) = charset;
+#ifdef MULE
+  if (CHARSETP (charset))
+    f->width = XCHARSET_COLUMNS (charset);
+  else
+#endif
     f->width = 1;
 
   f->proportional_p = 0;
@@ -264,6 +282,59 @@ tty_list_fonts (Lisp_Object pattern, Lisp_Object device)
   return list1 (build_string ("normal"));
 }
 
+#ifdef MULE
+
+static int
+tty_font_spec_matches_charset (struct device *d, Lisp_Object charset,
+			       CONST Bufbyte *nonreloc, Lisp_Object reloc,
+			       Bytecount offset, Bytecount length)
+{
+  CONST Bufbyte *the_nonreloc = nonreloc;
+  
+  if (!the_nonreloc)
+    the_nonreloc = XSTRING_DATA (reloc);
+  fixup_internal_substring (nonreloc, reloc, offset, &length);
+  the_nonreloc += offset;
+  
+  if (UNBOUNDP (charset))
+    return !memchr (the_nonreloc, '/', length);
+  the_nonreloc = memchr (the_nonreloc, '/', length);
+  if (!the_nonreloc)
+    return 0;
+  the_nonreloc++;
+  {
+    struct Lisp_String *s =
+      symbol_name (XSYMBOL (XCHARSET_NAME (charset)));
+    return !strcmp ((CONST char *) the_nonreloc,
+		    (CONST char *) string_data (s));
+  }
+}
+
+/* find a font spec that matches font spec FONT and also matches
+   (the registry of) CHARSET. */
+static Lisp_Object
+tty_find_charset_font (Lisp_Object device, Lisp_Object font,
+		       Lisp_Object charset)
+{
+  Bufbyte *fontname = XSTRING_DATA (font);
+
+  if (strchr ((CONST char *) fontname, '/'))
+    {
+      if (tty_font_spec_matches_charset (XDEVICE (device), charset, 0,
+					 font, 0, -1))
+	return font;
+      return Qnil;
+    }
+
+  if (UNBOUNDP (charset))
+    return font;
+
+  return concat3 (font, build_string ("/"),
+		  Fsymbol_name (XCHARSET_NAME (charset)));
+}
+
+#endif /* MULE */
+
 
 /************************************************************************/
 /*                            initialization                            */
@@ -299,6 +370,10 @@ console_type_create_objects_tty (void)
   CONSOLE_HAS_METHOD (tty, print_font_instance);
   CONSOLE_HAS_METHOD (tty, finalize_font_instance);
   CONSOLE_HAS_METHOD (tty, list_fonts);
+#ifdef MULE
+  CONSOLE_HAS_METHOD (tty, font_spec_matches_charset);
+  CONSOLE_HAS_METHOD (tty, find_charset_font);
+#endif
 }
 
 void

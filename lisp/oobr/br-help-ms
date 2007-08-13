@@ -28,9 +28,13 @@ Objective-C   class declaration           show class def
 or C++ File   func or method declaration  show definition
               include file                show include file
 
+Python        module name in import       open the module.py file
+	      statement
+
 OO-Browser mouse support is available for the X window system, OpenWindows,
 NEXTSTEP, SunView and Apollo's Display Manager.  By default, the shift-middle
 (or shift-left button on a 2 button mouse) and the shift-right button are
 used as the Action and Assist Keys, respectively.  Under InfoDock, the middle
 mouse button also serves as the Action Key.
+
 

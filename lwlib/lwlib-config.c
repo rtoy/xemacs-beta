@@ -14,16 +14,17 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with GNU Emacs; see the file COPYING.  If not, write to
+the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
+
 
 /* This is a kludge to make sure emacs can only link against a version of
    lwlib that was compiled in the right way.  Emacs references symbols which
    correspond to the way it thinks lwlib was compiled, and if lwlib wasn't
    compiled in that way, then somewhat meaningful link errors will result.
    The alternatives to this range from obscure link errors, to obscure
-   runtime errors that look a lot like bugs. */
+   runtime errors that look a lot like bugs.
+ */
 
 #include "lwlib.h"
 

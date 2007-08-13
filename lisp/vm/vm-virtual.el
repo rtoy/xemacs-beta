@@ -1,5 +1,5 @@
 ;;; Virtual folders for VM
-;;; Copyright (C) 1990-1997 Kyle E. Jones
+;;; Copyright (C) 1990, 1993, 1994, 1995 Kyle E. Jones
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -31,197 +31,218 @@
 ;;
 ;; The messages in new-messages must all be in the same real folder.
 (defun vm-build-virtual-message-list (new-messages)
-  (vm-with-virtual-selector-variables
-   (let ((clauses (cdr vm-virtual-folder-definition))
-	 (message-set (make-vector 311 0))
-	 (vbuffer (current-buffer))
-	 (mirrored vm-virtual-mirror)
-	 (case-fold-search t)
-	 (tail-cons (vm-last vm-message-list))
-	 (new-message-list nil)
-	 virtual location-vector
-	 message mp folders folder
-	 selectors sel-list selector arglist i
-	 real-buffers-used)
-     ;; Since there is at most one virtual message in the folder
-     ;; buffer of a virtual folder, the location data vector (and
-     ;; the markers in it) of all virtual messages in a virtual
-     ;; folder is shared.  We initialize the vector here if it
-     ;; hasn't been created already.
-     (if vm-message-list
-	 (setq location-vector (vm-location-data-of (car vm-message-pointer)))
-       (setq i 0
-	     location-vector (make-vector vm-location-data-vector-length nil))
-       (while (< i vm-location-data-vector-length)
-	 (aset location-vector i (vm-marker nil))
-	 (vm-increment i)))
-     ;; To keep track of the messages in a virtual folder to
-     ;; prevent duplicates we create and maintain a set that
-     ;; contain all the real messages.
-     (setq mp vm-message-list)
-     (while mp
-       (intern (vm-message-id-number-of (vm-real-message-of (car mp)))
-	       message-set)
-       (setq mp (cdr mp)))
-     ;; now select the messages
-     (save-excursion
-       (while clauses
-	 (setq folders (car (car clauses))
-	       selectors (cdr (car clauses)))
-	 (while folders
-	   (setq folder (car folders))
-	   (and (stringp folder)
-		(setq folder (expand-file-name folder vm-folder-directory)))
-	   (and (listp folder)
-		(setq folder (eval folder)))
-	   (cond
-	    ((null folder)
-	     ;; folder was a s-expr which returned nil
-	     ;; skip it
-	     nil )
-	    ((and (stringp folder) (file-directory-p folder))
-	     (setq folders (nconc folders
-				  (vm-delete-backup-file-names
-				   (vm-delete-auto-save-file-names
-				    (vm-delete-directory-file-names
-				     (directory-files folder t nil)))))))
-	    ((or (null new-messages)
-		 ;; If we're assimilating messages into an
-		 ;; existing virtual folder, only allow selectors
-		 ;; that would be normally applied to this folder.
-		 (and (bufferp folder)
-		      (eq (vm-buffer-of (car new-messages)) folder))
-		 (and (stringp folder)
-		      (eq (vm-buffer-of (car new-messages))
-			  ;; letter bomb protection
-			  ;; set inhibit-local-variables to t for v18 Emacses
-			  ;; set enable-local-variables to nil
-			  ;; for newer Emacses
-			  (let ((inhibit-local-variables t)
-				(enable-local-variables nil))
-			    (find-file-noselect folder)))))
-	     (set-buffer (or (and (bufferp folder) folder)
-			     (vm-get-file-buffer folder)
-			     (let ((inhibit-local-variables t)
-				   (enable-local-variables nil))
-			       (find-file-noselect folder))))
-	     (if (eq major-mode 'vm-virtual-mode)
-		 (setq virtual t
-		       real-buffers-used
-		       (append vm-real-buffers real-buffers-used))
-	       (setq virtual nil)
-	       (if (not (memq (current-buffer) real-buffers-used))
-		   (setq real-buffers-used (cons (current-buffer)
-						 real-buffers-used)))
-	       (if (not (eq major-mode 'vm-mode))
-		   (vm-mode)))
-	     ;; change (sexpr) into ("/file" "/file2" ...)
-	     ;; this assumes that there will never be (sexpr sexpr2)
-	     ;; in a virtual folder spec.
-	     (if (bufferp folder)
-		 (if virtual
-		     (setcar (car clauses)
-			     (delq nil
-				   (mapcar 'buffer-file-name vm-real-buffers)))
-		   (if buffer-file-name
-		       (setcar (car clauses) (list buffer-file-name)))))
-	     ;; if new-messages non-nil use it instead of the
-	     ;; whole message list
-	     (setq mp (or new-messages vm-message-list))
-	     (while mp
-	       (if (and (not (intern-soft
-			      (vm-message-id-number-of
-			       (vm-real-message-of (car mp)))
-			      message-set))
-			(if virtual
-			    (save-excursion
-			      (set-buffer
-			       (vm-buffer-of
-				(vm-real-message-of
-				 (car mp))))
-			      (apply 'vm-vs-or (car mp) selectors))
-			  (apply 'vm-vs-or (car mp) selectors)))
-		   (progn
-		     (intern
-		      (vm-message-id-number-of
-		       (vm-real-message-of (car mp)))
+  (let ((clauses (cdr vm-virtual-folder-definition))
+
+	(message-set (make-vector 311 0))
+	(vbuffer (current-buffer))
+	(mirrored vm-virtual-mirror)
+	(case-fold-search t)
+	(tail-cons (vm-last vm-message-list))
+	(new-message-list nil)
+
+	;; selectors
+	(any 'vm-vs-any)
+	(and 'vm-vs-and)
+	(or 'vm-vs-or)
+	(not 'vm-vs-not)
+	(header 'vm-vs-header)
+	(label 'vm-vs-label)
+	(text 'vm-vs-text)
+	(recipient 'vm-vs-recipient)
+	(author 'vm-vs-author)
+	(subject 'vm-vs-subject)
+	(sent-before 'vm-vs-sent-before)
+	(sent-after 'vm-vs-sent-after)
+	(more-chars-than 'vm-vs-more-chars-than)
+	(less-chars-than 'vm-vs-less-chars-than)
+	(more-lines-than 'vm-vs-more-lines-than)
+	(less-lines-than 'vm-vs-less-lines-than)
+	(new 'vm-vs-new)
+	(unread 'vm-vs-unread)
+	(read 'vm-vs-read)
+	(deleted 'vm-vs-deleted)
+	(replied 'vm-vs-replied)
+	(forwarded 'vm-vs-forwarded)
+	(filed 'vm-vs-filed)
+	(written 'vm-vs-written)
+	(edited 'vm-vs-edited)
+	(marked 'vm-vs-marked)
+
+	virtual location-vector
+	message mp folders folder
+	selectors sel-list selector arglist i
+	real-buffers-used)
+    ;; Since there is at most one virtual message in the folder
+    ;; buffer of a virtual folder, the location data vector (and
+    ;; the markers in it) of all virtual messages in a virtual
+    ;; folder is shared.  We initialize the vector here if it
+    ;; hasn't been created already.
+    (if vm-message-list
+	(setq location-vector (vm-location-data-of (car vm-message-pointer)))
+      (setq i 0
+	    location-vector (make-vector vm-location-data-vector-length nil))
+      (while (< i vm-location-data-vector-length)
+	(aset location-vector i (vm-marker nil))
+	(vm-increment i)))
+    ;; To keep track of the messages in a virtual folder to
+    ;; prevent duplicates we create and maintain a set that
+    ;; contain all the real messages.
+    (setq mp vm-message-list)
+    (while mp
+      (intern (vm-message-id-number-of (vm-real-message-of (car mp)))
+	      message-set)
+      (setq mp (cdr mp)))
+    ;; now select the messages
+    (save-excursion
+      (while clauses
+	(setq folders (car (car clauses))
+	      selectors (cdr (car clauses)))
+	(while folders
+	  (setq folder (car folders))
+	  (and (stringp folder)
+	       (setq folder (expand-file-name folder vm-folder-directory)))
+	  (and (listp folder)
+	       (setq folder (eval folder)))
+	  (cond
+	   ((null folder)
+	    ;; folder was a s-expr which returned nil
+	    ;; skip it
+	    nil )
+	   ((and (stringp folder) (file-directory-p folder))
+	    (setq folders (nconc folders
+				 (vm-delete-backup-file-names
+				  (vm-delete-auto-save-file-names
+				   (vm-delete-directory-file-names
+				    (directory-files folder t nil)))))))
+	   ((or (null new-messages)
+		;; If we're assimilating messages into an
+		;; existing virtual folder, only allow selectors
+		;; that would be normally applied to this folder.
+		(and (bufferp folder)
+		     (eq (vm-buffer-of (car new-messages)) folder))
+		(and (stringp folder)
+		     (eq (vm-buffer-of (car new-messages))
+			 ;; letter bomb protection
+			 ;; set inhibit-local-variables to t for v18 Emacses
+			 ;; set enable-local-variables to nil for newer Emacses
+			 (let ((inhibit-local-variables t)
+			       (enable-local-variables nil))
+			   (find-file-noselect folder)))))
+	    (set-buffer (or (and (bufferp folder) folder)
+			    (vm-get-file-buffer folder)
+			    (find-file-noselect folder)))
+	    (if (eq major-mode 'vm-virtual-mode)
+		(setq virtual t
+		      real-buffers-used
+		      (append vm-real-buffers real-buffers-used))
+	      (setq virtual nil)
+	      (if (not (memq (current-buffer) real-buffers-used))
+		  (setq real-buffers-used (cons (current-buffer)
+						real-buffers-used)))
+	      (if (not (eq major-mode 'vm-mode))
+		  (vm-mode)))
+	    ;; change (sexpr) into ("/file" "/file2" ...)
+	    ;; this assumes that there will never be (sexpr sexpr2)
+	    ;; in a virtual folder spec.
+	    (if (bufferp folder)
+		(if virtual
+		    (setcar (car clauses)
+			    (delq nil
+				  (mapcar 'buffer-file-name vm-real-buffers)))
+		  (if buffer-file-name
+		      (setcar (car clauses) (list buffer-file-name)))))
+	    ;; if new-messages non-nil use it instead of the
+	    ;; whole message list
+	    (setq mp (or new-messages vm-message-list))
+	    (while mp
+	      (if (and (not (intern-soft
+			     (vm-message-id-number-of
+			      (vm-real-message-of (car mp)))
+			     message-set))
+		       (if virtual
+			   (save-excursion
+			     (set-buffer
+			      (vm-buffer-of
+			       (vm-real-message-of
+				(car mp))))
+			     (apply 'vm-vs-or (vm-real-message-of (car mp))
+				    selectors))
+			 (apply 'vm-vs-or (car mp) selectors)))
+		  (progn
+		    (intern
+		     (vm-message-id-number-of
+		      (vm-real-message-of (car mp)))
 		      message-set)
-		     (setq message (copy-sequence
-				    (vm-real-message-of (car mp))))
-		     (if mirrored
-			 ()
-		       (vm-set-mirror-data-of
-			message
-			(make-vector vm-mirror-data-vector-length nil))
-		       (vm-set-virtual-messages-sym-of
-			message (make-symbol "<v>"))
-		       (vm-set-virtual-messages-of message nil)
-		       (vm-set-attributes-of
-			message
-			(make-vector vm-attributes-vector-length nil)))
-		     (vm-set-location-data-of message location-vector)
-		     (vm-set-softdata-of
-		      message
-		      (make-vector vm-softdata-vector-length nil))
-		     (vm-set-real-message-sym-of
-		      message
-		      (vm-real-message-sym-of (car mp)))
-		     (vm-set-message-type-of message vm-folder-type)
-		     (vm-set-message-id-number-of message
-						  vm-message-id-number)
-		     (vm-increment vm-message-id-number)
-		     (vm-set-buffer-of message vbuffer)
-		     (vm-set-reverse-link-sym-of message (make-symbol "<--"))
-		     (vm-set-reverse-link-of message tail-cons)
-		     (if (null tail-cons)
-			 (setq new-message-list (list message)
-			       tail-cons new-message-list)
-		       (setcdr tail-cons (list message))
-		       (if (null new-message-list)
-			   (setq new-message-list (cdr tail-cons)))
-		       (setq tail-cons (cdr tail-cons)))))
-	       (setq mp (cdr mp)))))
-	   (setq folders (cdr folders)))
-	 (setq clauses (cdr clauses))))
-     ;; this doesn't need to work currently, but it might someday
-     ;; (if virtual
-     ;;	    (setq real-buffers-used (vm-delete-duplicates real-buffers-used)))
-     (vm-increment vm-modification-counter)
-     ;; Until this point the user doesn't really have a virtual
-     ;; folder, as the virtual messages haven't been linked to the
-     ;; real messages, virtual buffers to the real buffers, and no
-     ;; message list has been installed.
-     ;;
-     ;; Now we tie it all together, with this section of code being
-     ;; uninterruptible.
-     (let ((inhibit-quit t)
-	   (label-obarray vm-label-obarray))
-       (if (null vm-real-buffers)
-	   (setq vm-real-buffers real-buffers-used))
-       (save-excursion
-	 (while real-buffers-used
-	   (set-buffer (car real-buffers-used))
-	   ;; inherit the global label lists of all the associated
-	   ;; real folders.
-	   (mapatoms (function (lambda (x) (intern (symbol-name x)
-						   label-obarray)))
-		     vm-label-obarray)
-	   (if (not (memq vbuffer vm-virtual-buffers))
-	       (setq vm-virtual-buffers (cons vbuffer vm-virtual-buffers)))
-	   (setq real-buffers-used (cdr real-buffers-used))))
-       (setq mp new-message-list)
-       (while mp
-	 (vm-set-virtual-messages-of
-	  (vm-real-message-of (car mp))
-	  (cons (car mp) (vm-virtual-messages-of (car mp))))
-	 (setq mp (cdr mp)))
-       (if vm-message-list
-	   (progn
-	     (vm-set-summary-redo-start-point new-message-list)
-	     (vm-set-numbering-redo-start-point new-message-list))
-	 (vm-set-summary-redo-start-point t)
-	 (vm-set-numbering-redo-start-point t)
-	 (setq vm-message-list new-message-list))))))
+		    (setq message (copy-sequence
+				   (vm-real-message-of (car mp))))
+		    (if mirrored
+			()
+		      (vm-set-mirror-data-of
+		       message
+		       (make-vector vm-mirror-data-vector-length nil))
+		      (vm-set-virtual-messages-sym-of
+		       message (make-symbol "<v>"))
+		      (vm-set-virtual-messages-of message nil)
+		      (vm-set-attributes-of
+		       message
+		       (make-vector vm-attributes-vector-length nil)))
+		    (vm-set-location-data-of message location-vector)
+		    (vm-set-softdata-of
+		     message
+		     (make-vector vm-softdata-vector-length nil))
+		    (vm-set-real-message-sym-of
+		     message
+		     (vm-real-message-sym-of (car mp)))
+		    (vm-set-message-type-of message vm-folder-type)
+		    (vm-set-message-id-number-of message
+						 vm-message-id-number)
+		    (vm-increment vm-message-id-number)
+		    (vm-set-buffer-of message vbuffer)
+		    (vm-set-reverse-link-sym-of message (make-symbol "<--"))
+		    (vm-set-reverse-link-of message tail-cons)
+		    (if (null tail-cons)
+			(setq new-message-list (list message)
+			      tail-cons new-message-list)
+		      (setcdr tail-cons (list message))
+		      (if (null new-message-list)
+			  (setq new-message-list (cdr tail-cons)))
+		      (setq tail-cons (cdr tail-cons)))))
+	      (setq mp (cdr mp)))))
+	  (setq folders (cdr folders)))
+	(setq clauses (cdr clauses))))
+; this doesn't need to work currently, but it might someday
+;    (if virtual
+;	(setq real-buffers-used (vm-delete-duplicates real-buffers-used)))
+    (vm-increment vm-modification-counter)
+    ;; Until this point the user doesn't really have a virtual
+    ;; folder, as the virtual messages haven't been linked to the
+    ;; real messages, virtual buffers to the real buffers, and no
+    ;; message list has been installed.
+    ;;
+    ;; Now we tie it all together, with this section of code being
+    ;; uninterruptible.
+    (let ((inhibit-quit t))
+      (if (null vm-real-buffers)
+	  (setq vm-real-buffers real-buffers-used))
+      (save-excursion
+	(while real-buffers-used
+	  (set-buffer (car real-buffers-used))
+	  (if (not (memq vbuffer vm-virtual-buffers))
+	      (setq vm-virtual-buffers (cons vbuffer vm-virtual-buffers)))
+	  (setq real-buffers-used (cdr real-buffers-used))))
+      (setq mp new-message-list)
+      (while mp
+	(vm-set-virtual-messages-of
+	 (vm-real-message-of (car mp))
+	 (cons (car mp) (vm-virtual-messages-of (car mp))))
+	(setq mp (cdr mp)))
+      (if vm-message-list
+	  (progn
+	    (vm-set-summary-redo-start-point new-message-list)
+	    (vm-set-numbering-redo-start-point new-message-list))
+	(vm-set-summary-redo-start-point t)
+	(vm-set-numbering-redo-start-point t)
+	(setq vm-message-list new-message-list)))))
 
 (defun vm-create-virtual-folder (selector &optional arg read-only)
   "Create a new virtual folder from messages in the current folder.
@@ -248,13 +269,7 @@ Prefix arg means the new virtual folder should be visited read only."
 	   (list name
 		 (list (list (list 'get-buffer (buffer-name)))
 		       (if arg (list selector arg) (list selector))))))
-    (vm-visit-virtual-folder name read-only))
-  ;; have to do this again here because the known virtual
-  ;; folder menu is now hosed because we installed it while
-  ;; vm-virtual-folder-alist was bound to the temp value above
-  (if vm-use-menus
-      (vm-menu-install-known-virtual-folders-menu)))
-
+    (vm-visit-virtual-folder name read-only)))
 
 (defun vm-apply-virtual-folder (name &optional read-only)
   "Apply the selectors of a named virtual folder to the current folder
@@ -281,12 +296,7 @@ Prefix arg means the new virtual folder should be visited read only."
       (setq clauses (cdr clauses)))
     (setcar vfolder (format "%s/%s" (buffer-name) (car vfolder)))
     (setq vm-virtual-folder-alist (list vfolder))
-    (vm-visit-virtual-folder (car vfolder) read-only))
-  ;; have to do this again here because the known virtual
-  ;; folder menu is now hosed because we installed it while
-  ;; vm-virtual-folder-alist was bound to the temp value above
-  (if vm-use-menus
-      (vm-menu-install-known-virtual-folders-menu)))
+    (vm-visit-virtual-folder (car vfolder) read-only)))
 
 (defun vm-toggle-virtual-mirror ()
   (interactive)
@@ -342,6 +352,15 @@ Prefix arg means the new virtual folder should be visited read only."
   (vm-display nil nil '(vm-virtual-help) '(vm-virtual-help))
   (message "VV = visit, VA = apply selectors, VC = create, VM = toggle virtual mirror"))
 
+(defun vm-delete-directory-file-names (list)
+  (vm-delete 'file-directory-p list))
+
+(defun vm-delete-backup-file-names (list)
+  (vm-delete 'backup-file-name-p list))
+
+(defun vm-delete-auto-save-file-names (list)
+  (vm-delete 'auto-save-file-name-p list))
+
 (defun vm-vs-or (m &rest selectors)
   (let ((result nil) selector arglist)
     (while selectors
@@ -388,8 +407,8 @@ Prefix arg means the new virtual folder should be visited read only."
   (save-excursion
     (save-restriction
       (widen)
-      (goto-char (vm-headers-of (vm-real-message-of m)))
-      (re-search-forward arg (vm-text-of (vm-real-message-of m)) t))))
+      (goto-char (vm-headers-of m))
+      (re-search-forward arg (vm-text-of m) t))))
 
 (defun vm-vs-label (m arg)
   (vm-member arg (vm-labels-of m)))
@@ -398,8 +417,8 @@ Prefix arg means the new virtual folder should be visited read only."
   (save-excursion
     (save-restriction
       (widen)
-      (goto-char (vm-text-of (vm-real-message-of m)))
-      (re-search-forward arg (vm-text-end-of (vm-real-message-of m)) t))))
+      (goto-char (vm-text-of m))
+      (re-search-forward arg (vm-text-end-of m) t))))
 
 (defun vm-vs-more-chars-than (m arg)
   (> (string-to-int (vm-su-byte-count m)) arg))
@@ -466,8 +485,6 @@ Prefix arg means the new virtual folder should be visited read only."
 				vm-label-obarray)
 			       nil)))))
 		(t (setq arg (read-string prompt))))))
-    (or (fboundp (intern (concat "vm-vs-" (symbol-name selector))))
-	(error "Invalid selector"))
     (list selector arg)))
 
 ;; clear away links between real and virtual folders when
@@ -519,28 +536,22 @@ Prefix arg means the new virtual folder should be visited read only."
 	       (setq vm-real-buffers (delq b vm-real-buffers))
 	       ;; set the message pointer to a new value if it is
 	       ;; now invalid.
-	       (cond
-		((and vm-message-pointer
-		      (equal "Q" (vm-message-id-number-of
-				  (car vm-message-pointer))))
-		 (vm-garbage-collect-message)
-		 (setq vmp vm-message-pointer)
-		 (while (and vm-message-pointer
-			     (equal "Q" (vm-message-id-number-of
-					 (car vm-message-pointer))))
-		   (setq vm-message-pointer
-			 (cdr vm-message-pointer)))
-		 ;; if there were no good messages ahead, try going
-		 ;; backward.
-		 (if (null vm-message-pointer)
-		     (progn
-		       (setq vm-message-pointer vmp)
-		       (while (and vm-message-pointer
-				   (equal "Q" (vm-message-id-number-of
-					       (car vm-message-pointer))))
-			 (setq vm-message-pointer
-			       (vm-reverse-link-of
-				(car vm-message-pointer))))))))
+	       (setq vmp vm-message-pointer)
+	       (while (and vm-message-pointer
+			   (equal "Q" (vm-message-id-number-of
+				       (car vm-message-pointer))))
+		 (setq vm-message-pointer
+		       (cdr vm-message-pointer)))
+	       ;; if there were no good messages ahead, try going
+	       ;; backward.
+	       (if (null vm-message-pointer)
+		   (progn
+		     (setq vm-message-pointer vmp)
+		     (while (and vm-message-pointer
+				 (equal "Q" (vm-message-id-number-of
+					     (car vm-message-pointer))))
+		       (setq vm-message-pointer
+			     (vm-reverse-link-of (car vm-message-pointer))))))
 	       ;; expunge the virtual messages associated with
 	       ;; real messages that are going away.
 	       (setq vm-message-list

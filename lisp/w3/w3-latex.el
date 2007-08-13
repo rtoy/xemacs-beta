@@ -5,7 +5,7 @@
 ;; Keywords: hypermedia, printing, typesetting
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 1996, 1997 by Stephen Peters <speters@cygnus.com>
+;;; Copyright (c) 1996 by Stephen Peters <speters%samsun@us.oracle.com>
 ;;;
 ;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
@@ -20,9 +20,8 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;;; Boston, MA 02111-1307, USA.
+;;; along with GNU Emacs; see the file COPYING.  If not, write to
+;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Elisp code to convert a W3 parse tree into a LaTeX buffer.
 ;;;
@@ -38,8 +37,23 @@
 ;;; 3) This still doesn't handle tables.
 ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require 'w3-cus)
 (require 'w3-print)
+
+(defvar w3-latex-print-links nil
+  "*If non-nil, prints the URLs of hypertext links as endnotes at the end of
+the document.  If `footnote', prints the URL's as footnotes on a page.")
+
+(defvar w3-latex-use-latex2e nil
+  "*If non-nil, configures LaTeX parser to use LaTeX2e syntax.  A `nil' 
+value indicates that LaTeX 2.0.9 compatibility will be used instead.")
+
+(defvar w3-latex-packages nil
+  "*List of LaTeX packages to include.  Currently this is only used if 
+`w3-latex-use-latex2e' is non-nil.")
+
+(defvar w3-latex-use-maketitle nil
+  "*Non-nil makes the LaTeX parser use real LaTeX title pages for
+document titles.")
 
 ;; Internal variables - do not touch!
 (defvar w3-latex-current-url nil "What URL we are formatting")

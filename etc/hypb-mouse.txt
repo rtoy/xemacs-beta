@@ -37,13 +37,12 @@ Mouse-only Control
     Otherwise                   Action Key Hook            Assist Key Hook
 
 Special Modes
-  C,C++,Objective-C,Java Modes  Jumps to id/include def    Jumps to next def
-  Java Cross-Reference Tag      Jumps to identifier def    Jumps to next def
+  C/C++ Mode                    Jumps to id/include def    Jumps to next def
   Assembly Language Mode        Jumps to id/include def    Jumps to next def
-  Any Lisp or Fortran Mode      Jumps to id def            Jumps to next def
+  Any Lisp mode                 Jumps to id def            Jumps to next def
   Emacs Lisp Compiler Error     Jumps to def with error    <- same
-  Grep or Occur Match           Jumps to match source line <- same
-  Multi-buffer Occur Match      Jumps to match source line <- same
+  Grep or Occur match           Jumps to match source line <- same
+  Multi-buffer occur match      Jumps to match source line <- same
   Outline Major/Minor Modes     Collapses, expands, and moves outline entries
   Man Apropos                   Displays man page entry    <- same
   Man Pages                     Follows cross refs, file refs and C code refs

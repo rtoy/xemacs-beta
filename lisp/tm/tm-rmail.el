@@ -1,30 +1,30 @@
-;;; tm-rmail.el --- MIME extension for RMAIL
-
-;; Copyright (C) 1994,1995,1996,1997 Free Software Foundation, Inc.
-
-;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; modified by KOBAYASHI Shuhei <shuhei-k@jaist.ac.jp>
-;; Created: 1994/8/30
-;; Version: $Revision: 1.3 $
-;; Keywords: mail, MIME, multimedia, multilingual, encoded-word
-
-;; This file is not part of tm (Tools for MIME).
-
-;; This program is free software; you can redistribute it and/or
-;; modify it under the terms of the GNU General Public License as
-;; published by the Free Software Foundation; either version 2, or (at
-;; your option) any later version.
-
-;; This program is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
-
-;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
-
+;;;
+;;; Copyright (C) 1995 Free Software Foundation, Inc.
+;;; Copyright (C) 1994 .. 1996 MORIOKA Tomohiko
+;;;
+;;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
+;;; modified by KOBAYASHI Shuhei <shuhei-k@jaist.ac.jp>
+;;; Created: 1994/8/30
+;;; Version:
+;;;	$Revision: 1.1.1.1 $
+;;; Keywords: mail, MIME, multimedia, multilingual, encoded-word
+;;;
+;;; This file is part of tm (Tools for MIME).
+;;;
+;;; This program is free software; you can redistribute it and/or
+;;; modify it under the terms of the GNU General Public License as
+;;; published by the Free Software Foundation; either version 2, or
+;;; (at your option) any later version.
+;;;
+;;; This program is distributed in the hope that it will be useful,
+;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;;; General Public License for more details.
+;;;
+;;; You should have received a copy of the GNU General Public License
+;;; along with This program.  If not, write to the Free Software
+;;; Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;;;
 ;;; Code:
 
 (require 'tl-list)
@@ -40,7 +40,7 @@
 ;;;
 
 (defconst tm-rmail/RCS-ID
-  "$Id: tm-rmail.el,v 1.3 1997/02/16 01:29:34 steve Exp $")
+  "$Id: tm-rmail.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $")
 (defconst tm-rmail/version (get-version-string tm-rmail/RCS-ID))
 
 (defvar tm-rmail/decode-all nil)
@@ -120,8 +120,6 @@
 
 (add-hook 'rmail-show-message-hook 'tm-rmail/preview-message-if-you-need)
 
-(load "rmailsum")
-
 (cond ((fboundp 'rmail-summary-rmail-update)
        ;; for Emacs 19 or later
        (or (fboundp 'tm:rmail-summary-rmail-update)
@@ -189,16 +187,8 @@
 
 (defun tm-rmail/quitting-method-to-article ()
   (setq tm-rmail/decode-all nil)
-  (let ((buffer
-	 (mime::preview-content-info/buffer
-	  (mime-preview/point-pcinfo (point))))
-	)
-    (mime-viewer/kill-buffer)
-
-    ;;  Make sure we return to RMAIL buffer
-    (if buffer
-	(switch-to-buffer buffer))
-    ))
+  (mime-viewer/kill-buffer)
+  )
 
 (defalias 'tm-rmail/quitting-method 'tm-rmail/quitting-method-to-article)
 
@@ -371,7 +361,7 @@ GNUS. The message will be appended if being composed."
 		   'mail-mode (function
 			       (lambda ()
 				 (interactive)
-				 (funcall send-mail-function)
+				 (sendmail-send-it)
 				 )))
 	)))
     )))

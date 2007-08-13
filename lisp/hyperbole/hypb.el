@@ -6,15 +6,15 @@
 ;; KEYWORDS:     extensions, hypermedia
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          InfoDock Associates
+;; ORG:          Brown U.
 ;;
 ;; ORIG-DATE:     6-Oct-91 at 03:42:38
-;; LAST-MOD:     22-Feb-97 at 14:30:10 by Bob Weiner
+;; LAST-MOD:     30-Oct-95 at 21:23:19 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
 ;;
-;; Copyright (C) 1991-1995, 1997  Free Software Foundation, Inc.
+;; Copyright (C) 1991-1995, Free Software Foundation, Inc.
 ;; Developed with support from Motorola Inc.
 ;;
 ;; DESCRIPTION:  
@@ -82,7 +82,7 @@ Global keymap is used unless optional KEYMAP is given."
     (concat "{"
 	    (if (string= keys "")
 		(concat (funcall get-keys 'execute-extended-command nil)
-			" " (symbol-name cmd-sym) " RET")
+			" " (symbol-name cmd-sym) " RTN")
 	      keys)
 	    "}"))
   (error "(hypb:cmd-key-string): Invalid cmd-sym arg: %s." cmd-sym)))
@@ -425,7 +425,7 @@ purposes.  See the documentation of `set-mark' for more information."
   )
 
 (defun hypb:replace-match-string (regexp str newtext &optional literal)
-  "Replaces all matches for REGEXP in STR with NEWTEXT string and returns the result.
+  "Replaces all matches for REGEXP in STR with NEWTEXT string.
 Optional LITERAL non-nil means do a literal replacement.
 Otherwise treat \\ in NEWTEXT string as special:
   \\& means substitute original matched text,
@@ -533,58 +533,6 @@ nor nil it means to not count the minibuffer window even if it is active."
   "Return non-nil iff OBJ is an Emacs V19 byte compiled object."
   (or (and (fboundp 'compiled-function-p) (compiled-function-p obj))
       (and (fboundp 'byte-code-function-p) (byte-code-function-p obj))))
-
-;;; ************************************************************************
-;;; About Hyperbole Setup
-;;; ************************************************************************
-
-;;;###autoload
-(defun hypb:display-file-with-logo (&optional file)
-  "Display an optional text FILE with the InfoDock Associates logo prepended.
-Without file, logo is prepended to the current buffer."
-  ;; 
-  (if file
-      ;; This function is defined in hversion.el when needed.
-      (id-browse-file file))
-  (if (next-extent (current-buffer))
-      ;; Images have already been inserted, don't do it again.
-      nil
-    (let* ((ida-logo (make-glyph (expand-file-name "ida-logo.xpm" data-directory)))
-	   (buffer-read-only)
-	   extent)
-      (goto-char (point-min))
-      (indent-to (startup-center-spaces ida-logo))
-      (insert "\n\n")
-      (setq extent (make-extent (- (point) 3) (- (point) 2)))
-      (set-extent-end-glyph extent ida-logo)
-      (set-extent-property extent 'help-echo "Visit InfoDock Associates")
-      (set-extent-property extent 'keymap hypb:ida-logo-keymap))
-    (goto-char (point-min))
-    (skip-syntax-forward "-")
-    (set-window-start (selected-window) 1)
-    (set-buffer-modified-p nil)))
-
-(defvar hypb:ida-logo-keymap
-  (let ((map (make-sparse-keymap)))
-    (cond (hyperb:emacs19-p
-	   (define-key map [button-1]  'hypb:ida-home-page)
-	   (define-key map [button-2]  'hypb:ida-home-page)
-	   (define-key map "\C-m"      'hypb:ida-home-page))
-	  (hyperb:lemacs-p
-	   (define-key map 'button1  'hypb:ida-home-page)
-	   (define-key map 'button2  'hypb:ida-home-page)
-	   (define-key map '(return) 'hypb:ida-home-page)))
-    map)
-  "Keymap used when on the InfoDock Associates logo glyph.")
-
-(defun hypb:ida-home-page ()
-  "Visit InfoDock Associates home web page."
-  (interactive)
-  (funcall
-   (if (boundp 'highlight-headers-follow-url-function)
-       highlight-headers-follow-url-function
-     'w3-fetch)
-   "http://www.infodock.com/"))
 
 ;;; ************************************************************************
 ;;; Private functions

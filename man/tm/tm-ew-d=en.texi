@@ -1,0 +1,32 @@
+@c $Id: tm-ew-d=en.texi,v 1.1.1.1 1996/12/18 22:43:52 steve Exp $
+
+@node encoded-word decoding, article-buffer, function to preview, Functions of tm-view
+@comment  node-name,  next,  previous,  up
+@subsection encoded-word decoding
+@cindex encoded-word
+@cindex non-ASCII field
+@cindex message header
+
+tm-view can decode encoded-word defined in RFC 1522.
+
+
+@deffn{Command} mime/decode-message-header
+
+It decodes encoded-words in message header of current buffer.
+@end deffn
+
+
+@deffn{Command} mime-eword/decode-region beg end &optional unfolding
+
+It decodes encoded-words in region @var{beg} to @var{end}.
+
+If @var{unfolding} is non-nil, folded fields are unfolded.
+@end deffn
+
+
+@deffn{Function} mime-eword/decode-string str
+
+It decodes encoded-words in @var{str}.
+
+Folded string is unfolded.
+@end deffn

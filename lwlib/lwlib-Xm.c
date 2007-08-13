@@ -15,9 +15,8 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with GNU Emacs; see the file COPYING.  If not, write to
+the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -112,7 +111,7 @@ make_destroyed_instance (char* name, char* type, Widget widget, Widget parent,
 			 Boolean pop_up_p)
 {
   destroyed_instance* instance =
-    (destroyed_instance*) malloc (sizeof (destroyed_instance));
+    (destroyed_instance*)malloc (sizeof (destroyed_instance));
   instance->name = safe_strdup (name);
   instance->type = safe_strdup (type);
   instance->widget = widget;
@@ -153,8 +152,8 @@ resource_string (Widget widget, char *name)
   XtResource resource;
   char *result = NULL;
   
-  resource.resource_name  = "labelString";
-  resource.resource_class = "LabelString"; /* #### should be Xmsomething... */
+  resource.resource_name = (String) "labelString";
+  resource.resource_class = (String) "LabelString"; /* #### should be Xmsomething... */
   resource.resource_type = XtRString;
   resource.resource_size = sizeof (String);
   resource.resource_offset = 0;
@@ -280,7 +279,7 @@ xm_update_label (widget_instance* instance, Widget widget, widget_value* val)
 	}
 
       XtSetArg (al [ac], XmNlabelString, built_string); ac++;
-      XtSetArg (al [ac], XmNlabelType, XmSTRING);	ac++;
+      XtSetArg (al [ac], XmNlabelType, XmSTRING); ac++;
     }
   
   if (val->key)
@@ -459,9 +458,9 @@ make_menu_in_widget (widget_instance* instance, Widget widget,
     {    
       ac = 0;
       button = 0;
-      XtSetArg (al [ac], XmNsensitive, cur->enabled);		ac++;
-      XtSetArg (al [ac], XmNalignment, XmALIGNMENT_BEGINNING);	ac++;
-      XtSetArg (al [ac], XmNuserData, cur->call_data);		ac++;
+      XtSetArg (al [ac], XmNsensitive, cur->enabled); ac++;
+      XtSetArg (al [ac], XmNalignment, XmALIGNMENT_BEGINNING); ac++;
+      XtSetArg (al [ac], XmNuserData, cur->call_data); ac++;
 
       switch (cur->type)
 	{
@@ -668,7 +667,7 @@ xm_update_menu (widget_instance* instance, Widget widget, widget_value* val,
 static void
 xm_update_text (widget_instance* instance, Widget widget, widget_value* val)
 {
-  XmTextSetString (widget, val->value ? val->value : "");
+  XmTextSetString (widget, val->value ? val->value : (char *) "");
   XtRemoveAllCallbacks (widget, XmNactivateCallback);
   XtAddCallback (widget, XmNactivateCallback, xm_generic_callback, instance);
   XtRemoveAllCallbacks (widget, XmNvalueChangedCallback);
@@ -680,7 +679,7 @@ static void
 xm_update_text_field (widget_instance* instance, Widget widget,
 		      widget_value* val)
 {
-  XmTextFieldSetString (widget, val->value ? val->value : "");
+  XmTextFieldSetString (widget, val->value ? val->value : (char *) "");
   XtRemoveAllCallbacks (widget, XmNactivateCallback);
   XtAddCallback (widget, XmNactivateCallback, xm_generic_callback, instance);
   XtRemoveAllCallbacks (widget, XmNvalueChangedCallback);
@@ -784,7 +783,7 @@ xm_update_one_widget (widget_instance* instance, Widget widget,
   /* Common to all widget types */
   XtVaSetValues (widget,
 		 XmNsensitive, val->enabled,
-		 XmNuserData,  val->call_data,
+		 XmNuserData, val->call_data,
 		 0);
 
 #if defined (DIALOGS_MOTIF) || defined (MENUBARS_MOTIF)
@@ -1041,12 +1040,12 @@ make_dialog (char* name, Widget parent, Boolean pop_up_p,
   if (pop_up_p)
     {
       ac = 0;
-      XtSetArg(al[ac], XmNtitle, shell_title);		ac++;
-      XtSetArg(al[ac], XtNallowShellResize, True);	ac++;
-      XtSetArg(al[ac], XmNdeleteResponse, XmUNMAP);	ac++;
-      result = XmCreateDialogShell (parent, "dialog", al, ac);
+      XtSetArg(al[ac], XmNtitle, shell_title); ac++;
+      XtSetArg(al[ac], XtNallowShellResize, True); ac++;
+      XtSetArg(al[ac], XmNdeleteResponse, XmUNMAP); ac++;
+      result = XmCreateDialogShell (parent, (char *) "dialog", al, ac);
 
-      XtSetArg(al[ac], XmNautoUnmanage, FALSE);		ac++;
+      XtSetArg(al[ac], XmNautoUnmanage, FALSE); ac++;
 /*      XtSetArg(al[ac], XmNautoUnmanage, TRUE); ac++; */ /* ####is this ok? */
       XtSetArg(al[ac], XmNnavigationType, XmTAB_GROUP); ac++;
       form = XmCreateForm (result, (char *) shell_title, al, ac);
@@ -1054,30 +1053,30 @@ make_dialog (char* name, Widget parent, Boolean pop_up_p,
   else
     {
       ac = 0;
-      XtSetArg(al[ac], XmNautoUnmanage, FALSE);		ac++;
+      XtSetArg(al[ac], XmNautoUnmanage, FALSE); ac++;
       XtSetArg(al[ac], XmNnavigationType, XmTAB_GROUP); ac++;
       form = XmCreateForm (parent, (char *) shell_title, al, ac);
       result = form;
     }
 
   ac = 0;
-  XtSetArg(al[ac], XmNpacking, XmPACK_COLUMN);		ac++;
-  XtSetArg(al[ac], XmNorientation, XmVERTICAL);		ac++;
+  XtSetArg(al[ac], XmNpacking, XmPACK_COLUMN); ac++;
+  XtSetArg(al[ac], XmNorientation, XmVERTICAL); ac++;
   XtSetArg(al[ac], XmNnumColumns, left_buttons + right_buttons + 1); ac++;
-  XtSetArg(al[ac], XmNmarginWidth, 0);			ac++;
-  XtSetArg(al[ac], XmNmarginHeight, 0);			ac++;
-  XtSetArg(al[ac], XmNspacing, 13);			ac++;
-  XtSetArg(al[ac], XmNadjustLast, False);		ac++;
-  XtSetArg(al[ac], XmNalignment, XmALIGNMENT_CENTER);	ac++;
-  XtSetArg(al[ac], XmNisAligned, True);			ac++;
-  XtSetArg(al[ac], XmNtopAttachment, XmATTACH_NONE);	ac++;
-  XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_FORM);	ac++;
-  XtSetArg(al[ac], XmNbottomOffset, 13);		ac++;
-  XtSetArg(al[ac], XmNleftAttachment, XmATTACH_FORM);	ac++;
-  XtSetArg(al[ac], XmNleftOffset, 13);			ac++;
-  XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM);	ac++;
-  XtSetArg(al[ac], XmNrightOffset, 13);			ac++;
-  row = XmCreateRowColumn (form, "row", al, ac);
+  XtSetArg(al[ac], XmNmarginWidth, 0); ac++;
+  XtSetArg(al[ac], XmNmarginHeight, 0); ac++;
+  XtSetArg(al[ac], XmNspacing, 13); ac++;
+  XtSetArg(al[ac], XmNadjustLast, False); ac++;
+  XtSetArg(al[ac], XmNalignment, XmALIGNMENT_CENTER); ac++;
+  XtSetArg(al[ac], XmNisAligned, True); ac++;
+  XtSetArg(al[ac], XmNtopAttachment, XmATTACH_NONE); ac++;
+  XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_FORM); ac++;
+  XtSetArg(al[ac], XmNbottomOffset, 13); ac++;
+  XtSetArg(al[ac], XmNleftAttachment, XmATTACH_FORM); ac++;
+  XtSetArg(al[ac], XmNleftOffset, 13); ac++;
+  XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM); ac++;
+  XtSetArg(al[ac], XmNrightOffset, 13); ac++;
+  row = XmCreateRowColumn (form, (char *) "row", al, ac);
   
   n_children = 0;
   for (i = 0; i < left_buttons; i++)
@@ -1088,7 +1087,7 @@ make_dialog (char* name, Widget parent, Boolean pop_up_p,
       if (i == 0)
 	{
 	  XtSetArg(al[ac], XmNhighlightThickness, 1); ac++;
-	  XtSetArg(al[ac], XmNshowAsDefault, TRUE);   ac++;
+	  XtSetArg(al[ac], XmNshowAsDefault, TRUE); ac++;
 	}
       XtSetArg(al[ac], XmNnavigationType, XmTAB_GROUP); ac++;
       children [n_children] = XmCreatePushButton (row, button_name, al, ac);
@@ -1116,7 +1115,7 @@ make_dialog (char* name, Widget parent, Boolean pop_up_p,
   /* invisible seperator button */
   ac = 0;
   XtSetArg (al[ac], XmNmappedWhenManaged, FALSE); ac++;
-  children [n_children] = XmCreateLabel (row, "separator_button",
+  children [n_children] = XmCreateLabel (row, (char *) "separator_button",
 					 al, ac);
   DO_DND_KLUDGE (children [n_children]);
   n_children++;
@@ -1136,98 +1135,101 @@ make_dialog (char* name, Widget parent, Boolean pop_up_p,
   XtManageChildren (children, n_children);
   
   ac = 0;
-  XtSetArg(al[ac], XmNtopAttachment, XmATTACH_NONE);		ac++;
-  XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_WIDGET);	ac++;
-  XtSetArg(al[ac], XmNbottomOffset, 13);			ac++;
-  XtSetArg(al[ac], XmNbottomWidget, row);			ac++;
-  XtSetArg(al[ac], XmNleftAttachment, XmATTACH_FORM);		ac++;
-  XtSetArg(al[ac], XmNleftOffset, 0);				ac++;
-  XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM);		ac++;
-  XtSetArg(al[ac], XmNrightOffset, 0);				ac++;
-  separator = XmCreateSeparator (form, "", al, ac);
+  XtSetArg(al[ac], XmNtopAttachment, XmATTACH_NONE); ac++;
+  XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_WIDGET); ac++;
+  XtSetArg(al[ac], XmNbottomOffset, 13); ac++;
+  XtSetArg(al[ac], XmNbottomWidget, row); ac++;
+  XtSetArg(al[ac], XmNleftAttachment, XmATTACH_FORM); ac++;
+  XtSetArg(al[ac], XmNleftOffset, 0); ac++;
+  XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM); ac++;
+  XtSetArg(al[ac], XmNrightOffset, 0); ac++;
+  separator = XmCreateSeparator (form, (char *) "", al, ac);
 
   ac = 0;
-  XtSetArg(al[ac], XmNlabelType, XmPIXMAP);			ac++;
-  XtSetArg(al[ac], XmNtopAttachment, XmATTACH_FORM);		ac++;
-  XtSetArg(al[ac], XmNtopOffset, 13);				ac++;
-  XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_NONE);		ac++;
-  XtSetArg(al[ac], XmNleftAttachment, XmATTACH_FORM);		ac++;
-  XtSetArg(al[ac], XmNleftOffset, 13);				ac++;
-  XtSetArg(al[ac], XmNrightAttachment, XmATTACH_NONE);		ac++;
+  XtSetArg(al[ac], XmNlabelType, XmPIXMAP); ac++;
+  XtSetArg(al[ac], XmNtopAttachment, XmATTACH_FORM); ac++;
+  XtSetArg(al[ac], XmNtopOffset, 13); ac++;
+  XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_NONE); ac++;
+  XtSetArg(al[ac], XmNleftAttachment, XmATTACH_FORM); ac++;
+  XtSetArg(al[ac], XmNleftOffset, 13); ac++;
+  XtSetArg(al[ac], XmNrightAttachment, XmATTACH_NONE); ac++;
   icon = XmCreateLabel (form, (char *) icon_name, al, ac);
   DO_DND_KLUDGE (icon);
 
   ac = 0;
-  XtSetArg(al[ac], XmNmappedWhenManaged, FALSE);		ac++;
-  XtSetArg(al[ac], XmNtopAttachment, XmATTACH_WIDGET);		ac++;
-  XtSetArg(al[ac], XmNtopOffset, 6);				ac++;
-  XtSetArg(al[ac], XmNtopWidget, icon);				ac++;
-  XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_WIDGET);	ac++;
-  XtSetArg(al[ac], XmNbottomOffset, 6);				ac++;
-  XtSetArg(al[ac], XmNbottomWidget, separator);			ac++;
-  XtSetArg(al[ac], XmNleftAttachment, XmATTACH_NONE);		ac++;
-  XtSetArg(al[ac], XmNrightAttachment, XmATTACH_NONE);		ac++;
-  icon_separator = XmCreateLabel (form, "", al, ac);
+  XtSetArg(al[ac], XmNmappedWhenManaged, FALSE); ac++;
+  XtSetArg(al[ac], XmNtopAttachment, XmATTACH_WIDGET); ac++;
+  XtSetArg(al[ac], XmNtopOffset, 6); ac++;
+  XtSetArg(al[ac], XmNtopWidget, icon); ac++;
+  XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_WIDGET); ac++;
+  XtSetArg(al[ac], XmNbottomOffset, 6); ac++;
+  XtSetArg(al[ac], XmNbottomWidget, separator); ac++;
+  XtSetArg(al[ac], XmNleftAttachment, XmATTACH_NONE); ac++;
+  XtSetArg(al[ac], XmNrightAttachment, XmATTACH_NONE); ac++;
+  icon_separator = XmCreateLabel (form, (char *) "", al, ac);
   DO_DND_KLUDGE (icon_separator);
 
   if (text_input_slot)
     {
       ac = 0;
-      XtSetArg(al[ac], XmNcolumns, 50);				ac++;
-      XtSetArg(al[ac], XmNtopAttachment, XmATTACH_NONE);	ac++;
-      XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_WIDGET);	ac++;
-      XtSetArg(al[ac], XmNbottomOffset, 13);			ac++;
-      XtSetArg(al[ac], XmNbottomWidget, separator);		ac++;
-      XtSetArg(al[ac], XmNleftAttachment, XmATTACH_WIDGET);	ac++;
-      XtSetArg(al[ac], XmNleftOffset, 13);			ac++;
-      XtSetArg(al[ac], XmNleftWidget, icon); 			ac++;
-      XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM);	ac++;
-      XtSetArg(al[ac], XmNrightOffset, 13);			ac++;
-      value = XmCreateTextField (form, "value", al, ac);
+      XtSetArg(al[ac], XmNcolumns, 50); ac++;
+      XtSetArg(al[ac], XmNtopAttachment, XmATTACH_NONE); ac++;
+      XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_WIDGET); ac++;
+      XtSetArg(al[ac], XmNbottomOffset, 13); ac++;
+      XtSetArg(al[ac], XmNbottomWidget, separator); ac++;
+      XtSetArg(al[ac], XmNleftAttachment, XmATTACH_WIDGET); ac++;
+      XtSetArg(al[ac], XmNleftOffset, 13); ac++;
+      XtSetArg(al[ac], XmNleftWidget, icon); ac++;
+      XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM); ac++;
+      XtSetArg(al[ac], XmNrightOffset, 13); ac++;
+      value = XmCreateTextField (form, (char *) "value", al, ac);
       DO_DND_KLUDGE (value);
     }
   else if (radio_box)
     {
       Widget radio_butt;
       ac = 0;
-      XtSetArg(al[ac], XmNmarginWidth, 0);			ac++;
-      XtSetArg(al[ac], XmNmarginHeight, 0);			ac++;
-      XtSetArg(al[ac], XmNspacing, 13);				ac++;
-      XtSetArg(al[ac], XmNalignment, XmALIGNMENT_CENTER);	ac++;
-      XtSetArg(al[ac], XmNorientation, XmHORIZONTAL);		ac++;
-      XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_WIDGET);	ac++;
-      XtSetArg(al[ac], XmNbottomOffset, 13);			ac++;
-      XtSetArg(al[ac], XmNbottomWidget, separator);		ac++;
-      XtSetArg(al[ac], XmNleftAttachment, XmATTACH_WIDGET);	ac++;
-      XtSetArg(al[ac], XmNleftOffset, 13);			ac++;
-      XtSetArg(al[ac], XmNleftWidget, icon);			ac++;
-      XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM);	ac++;
-      XtSetArg(al[ac], XmNrightOffset, 13);			ac++;
-      value = XmCreateRadioBox (form, "radiobutton1", al, ac);
+      XtSetArg(al[ac], XmNmarginWidth, 0); ac++;
+      XtSetArg(al[ac], XmNmarginHeight, 0); ac++;
+      XtSetArg(al[ac], XmNspacing, 13); ac++;
+      XtSetArg(al[ac], XmNalignment, XmALIGNMENT_CENTER); ac++;
+      XtSetArg(al[ac], XmNorientation, XmHORIZONTAL); ac++;
+      XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_WIDGET); ac++;
+      XtSetArg(al[ac], XmNbottomOffset, 13); ac++;
+      XtSetArg(al[ac], XmNbottomWidget, separator); ac++;
+      XtSetArg(al[ac], XmNleftAttachment, XmATTACH_WIDGET); ac++;
+      XtSetArg(al[ac], XmNleftOffset, 13); ac++;
+      XtSetArg(al[ac], XmNleftWidget, icon); ac++;
+      XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM); ac++;
+      XtSetArg(al[ac], XmNrightOffset, 13); ac++;
+      value = XmCreateRadioBox (form, (char *) "radiobutton1", al, ac);
       ac = 0;
       i = 0;
-      radio_butt = XmCreateToggleButtonGadget (value, "radio1", al, ac);
+      radio_butt = XmCreateToggleButtonGadget (value, (char *) "radio1",
+					       al, ac);
       children [i++] = radio_butt;
-      radio_butt = XmCreateToggleButtonGadget (value, "radio2", al, ac);
+      radio_butt = XmCreateToggleButtonGadget (value, (char *) "radio2",
+					       al, ac);
       children [i++] = radio_butt;
-      radio_butt = XmCreateToggleButtonGadget (value, "radio3", al, ac);
+      radio_butt = XmCreateToggleButtonGadget (value, (char *) "radio3",
+					       al, ac);
       children [i++] = radio_butt;
       XtManageChildren (children, i);
     }
   else if (list)
     {
       ac = 0;
-      XtSetArg(al[ac], XmNvisibleItemCount, 5);			ac++;
-      XtSetArg(al[ac], XmNtopAttachment, XmATTACH_NONE);	ac++;
-      XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_WIDGET);	ac++;
-      XtSetArg(al[ac], XmNbottomOffset, 13);			ac++;
-      XtSetArg(al[ac], XmNbottomWidget, separator);		ac++;
-      XtSetArg(al[ac], XmNleftAttachment, XmATTACH_WIDGET);	ac++;
-      XtSetArg(al[ac], XmNleftOffset, 13);			ac++;
-      XtSetArg(al[ac], XmNleftWidget, icon);			ac++;
-      XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM);	ac++;
-      XtSetArg(al[ac], XmNrightOffset, 13);			ac++;
-      value = XmCreateScrolledList (form, "list", al, ac);
+      XtSetArg(al[ac], XmNvisibleItemCount, 5); ac++;
+      XtSetArg(al[ac], XmNtopAttachment, XmATTACH_NONE); ac++;
+      XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_WIDGET); ac++;
+      XtSetArg(al[ac], XmNbottomOffset, 13); ac++;
+      XtSetArg(al[ac], XmNbottomWidget, separator); ac++;
+      XtSetArg(al[ac], XmNleftAttachment, XmATTACH_WIDGET); ac++;
+      XtSetArg(al[ac], XmNleftOffset, 13); ac++;
+      XtSetArg(al[ac], XmNleftWidget, icon); ac++;
+      XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM); ac++;
+      XtSetArg(al[ac], XmNrightOffset, 13); ac++;
+      value = XmCreateScrolledList (form, (char *) "list", al, ac);
 
       /* this is the easiest way I found to have the dble click in the
 	 list activate the default button */
@@ -1235,19 +1237,19 @@ make_dialog (char* name, Widget parent, Boolean pop_up_p,
     }
   
   ac = 0;
-  XtSetArg(al[ac], XmNalignment, XmALIGNMENT_BEGINNING);	ac++;
-  XtSetArg(al[ac], XmNtopAttachment, XmATTACH_FORM);		ac++;
-  XtSetArg(al[ac], XmNtopOffset, 13);				ac++;
-  XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_WIDGET);	ac++;
-  XtSetArg(al[ac], XmNbottomOffset, 13);			ac++;
+  XtSetArg(al[ac], XmNalignment, XmALIGNMENT_BEGINNING); ac++;
+  XtSetArg(al[ac], XmNtopAttachment, XmATTACH_FORM); ac++;
+  XtSetArg(al[ac], XmNtopOffset, 13); ac++;
+  XtSetArg(al[ac], XmNbottomAttachment, XmATTACH_WIDGET); ac++;
+  XtSetArg(al[ac], XmNbottomOffset, 13); ac++;
   XtSetArg(al[ac], XmNbottomWidget,
 	   text_input_slot || radio_box || list ? value : separator); ac++;
-  XtSetArg(al[ac], XmNleftAttachment, XmATTACH_WIDGET);		ac++;
-  XtSetArg(al[ac], XmNleftOffset, 13);				ac++;
-  XtSetArg(al[ac], XmNleftWidget, icon);			ac++;
-  XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM);		ac++;
-  XtSetArg(al[ac], XmNrightOffset, 13);				ac++;
-  message = XmCreateLabel (form, "message", al, ac);
+  XtSetArg(al[ac], XmNleftAttachment, XmATTACH_WIDGET); ac++;
+  XtSetArg(al[ac], XmNleftOffset, 13); ac++;
+  XtSetArg(al[ac], XmNleftWidget, icon); ac++;
+  XtSetArg(al[ac], XmNrightAttachment, XmATTACH_FORM); ac++;
+  XtSetArg(al[ac], XmNrightOffset, 13); ac++;
+  message = XmCreateLabel (form, (char *) "message", al, ac);
   DO_DND_KLUDGE (message);
   
   if (list)
@@ -1486,7 +1488,7 @@ make_menubar (widget_instance* instance)
   Arg al[10];
   int ac = 0;
 
-  XtSetArg(al[ac], XmNmarginHeight, 0);	   ac++;
+  XtSetArg(al[ac], XmNmarginHeight, 0); ac++;
   XtSetArg(al[ac], XmNshadowThickness, 3); ac++;
 
   return XmCreateMenuBar (instance->parent, instance->info->name, al, ac);
@@ -1522,28 +1524,52 @@ make_scrollbar (widget_instance *instance, int vertical)
 {
   Arg al[20];
   int ac = 0;
-  static XtCallbackRec callbacks[2] =
-  { {xm_scrollbar_callback, NULL}, {NULL, NULL} };
+  Widget scrollbar;
 
-  callbacks[0].closure  = (XtPointer) instance;
-  
-  XtSetArg (al[ac], XmNminimum,       1); ac++;
+  XtSetArg (al[ac], XmNminimum, 1); ac++;
   XtSetArg (al[ac], XmNmaximum, INT_MAX); ac++;
-  XtSetArg (al[ac], XmNincrement,     1); ac++;
+  XtSetArg (al[ac], XmNincrement, 1); ac++;
   XtSetArg (al[ac], XmNpageIncrement, 1); ac++;
-  XtSetArg (al[ac], XmNborderWidth,   0); ac++;
-  XtSetArg (al[ac], XmNorientation, vertical ? XmVERTICAL : XmHORIZONTAL); ac++;
+  XtSetArg (al[ac], XmNborderWidth, 0); ac++;
+  if (vertical)
+    {
+      XtSetArg (al[ac], XmNorientation, XmVERTICAL); ac++;
+    }
+  else
+    {
+      XtSetArg (al[ac], XmNorientation, XmHORIZONTAL); ac++;
+    }
 
-  XtSetArg (al[ac], XmNdecrementCallback,	callbacks); ac++;
-  XtSetArg (al[ac], XmNdragCallback,		callbacks); ac++;
-  XtSetArg (al[ac], XmNincrementCallback,	callbacks); ac++;
-  XtSetArg (al[ac], XmNpageDecrementCallback,	callbacks); ac++;
-  XtSetArg (al[ac], XmNpageIncrementCallback,	callbacks); ac++;
-  XtSetArg (al[ac], XmNtoBottomCallback,	callbacks); ac++;
-  XtSetArg (al[ac], XmNtoTopCallback,		callbacks); ac++;
-  XtSetArg (al[ac], XmNvalueChangedCallback,	callbacks); ac++;
+  scrollbar =
+    XmCreateScrollBar (instance->parent, instance->info->name, al, ac);
 
-  return XmCreateScrollBar (instance->parent, instance->info->name, al, ac);
+  XtRemoveAllCallbacks (scrollbar, XmNdecrementCallback);
+  XtRemoveAllCallbacks (scrollbar, XmNdragCallback);
+  XtRemoveAllCallbacks (scrollbar, XmNincrementCallback);
+  XtRemoveAllCallbacks (scrollbar, XmNpageDecrementCallback);
+  XtRemoveAllCallbacks (scrollbar, XmNpageIncrementCallback);
+  XtRemoveAllCallbacks (scrollbar, XmNtoBottomCallback);
+  XtRemoveAllCallbacks (scrollbar, XmNtoTopCallback);
+  XtRemoveAllCallbacks (scrollbar, XmNvalueChangedCallback);
+
+  XtAddCallback(scrollbar, XmNdecrementCallback, xm_scrollbar_callback,
+		(XtPointer) instance);
+  XtAddCallback(scrollbar, XmNdragCallback, xm_scrollbar_callback,
+		(XtPointer) instance);
+  XtAddCallback(scrollbar, XmNincrementCallback, xm_scrollbar_callback,
+		(XtPointer) instance);
+  XtAddCallback(scrollbar, XmNpageDecrementCallback, xm_scrollbar_callback,
+		(XtPointer) instance);
+  XtAddCallback(scrollbar, XmNpageIncrementCallback, xm_scrollbar_callback,
+		(XtPointer) instance);
+  XtAddCallback(scrollbar, XmNtoBottomCallback, xm_scrollbar_callback,
+		(XtPointer) instance);
+  XtAddCallback(scrollbar, XmNtoTopCallback, xm_scrollbar_callback,
+		(XtPointer) instance);
+  XtAddCallback(scrollbar, XmNvalueChangedCallback, xm_scrollbar_callback,
+		(XtPointer) instance);
+
+  return scrollbar;
 }
 
 static Widget

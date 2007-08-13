@@ -2986,7 +2986,7 @@ keymap.  Leaves merge in fast mode."
 ;; a list of variables.  The argument is a list of symbols (the names of
 ;; the variables).  A list element can also be a list of two functions,
 ;; the first of which (when called with no arguments) gets the value, and
-;; the second (when called with a value as an argument) sets the value.
+;; the second (when called with a value as an argment) sets the value.
 ;; A "function" is anything that funcall can handle as an argument.
 
 (defun emerge-save-variables (vars)

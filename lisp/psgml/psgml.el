@@ -1,13 +1,11 @@
 ;;; psgml.el --- SGML-editing mode with parsing support
-;; $Id: psgml.el,v 1.5 1997/08/30 02:40:00 steve Exp $
+;; $Id: psgml.el,v 1.1.1.1 1996/12/18 22:43:37 steve Exp $
 
 ;; Copyright (C) 1993, 1994, 1995, 1996 Lennart Staflin
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
 
 ;; Author: Lennart Staflin <lenst@lysator.liu.se>
 ;; 	James Clark <jjc@clark.com>
-;; Maintainer: Lennart Staflin <lenst@lysator.liu.se>
-;; Keywords: languages
 
 ;; 
 ;; This program is free software; you can redistribute it and/or
@@ -52,7 +50,7 @@
 
 ;;; Code:
 
-(defconst psgml-version "1.0.1"
+(defconst psgml-version "1.0a12"
   "Version of psgml package.")
 
 (defconst psgml-maintainer-address "lenst@lysator.liu.se")
@@ -71,6 +69,19 @@
 (defvar sgml-mode-abbrev-table nil
   "Abbrev table in use in sgml-mode.")
 (define-abbrev-table 'sgml-mode-abbrev-table ())
+
+;;; Wing addition
+(defvar sgml-mode-syntax-table nil
+  "Syntax table used in sgml mode.")
+
+(if sgml-mode-syntax-table
+    ()
+  (setq sgml-mode-syntax-table (make-syntax-table))
+  (modify-syntax-entry ?< "(>" sgml-mode-syntax-table)
+  (modify-syntax-entry ?> ")<" sgml-mode-syntax-table)
+  (modify-syntax-entry ?\" ".   " sgml-mode-syntax-table)
+  (modify-syntax-entry ?\\ ".   " sgml-mode-syntax-table)
+  (modify-syntax-entry ?'  "w   " sgml-mode-syntax-table))
 
 (defvar sgml-running-xemacs
   (not (not (string-match "Lucid\\|XEmacs" emacs-version))))
@@ -317,7 +328,7 @@ addition to the directories listed here.")
 			     ;; Wing change
 			     (concat "%S:" (directory-file-name
 					    sgml-data-directory)
-				     "/%o/%c/%d")))
+				     "%o/%c/%d")))
   
   "*Mapping from public identifiers to file names.
 This is a list of possible file names.  To find the file for a public
@@ -410,7 +421,7 @@ Example:
 
 (defvar sgml-custom-dtd nil
   "Menu entries to be added to the DTD menu.
-The value should be a list of entries to be added to the DTD menu.
+The value should be a list of entrys to be added to the DTD menu.
 Every entry should be a list. The first element of the entry is a string
 used as the menu entry.  The second element is a string containing a
 doctype declaration (this can be nil if no doctype).  The rest of the
@@ -442,9 +453,7 @@ Example:
 ;;; Its error messages can be parsed by next-error.
 ;;; The -s option suppresses output.
 
-(defvar sgml-validate-command (concat "nsgmls -s -m "
-				      sgml-data-directory
-				      "/CATALOG %s %s")
+(defvar sgml-validate-command "nsgmls -s %s %s"
   "*The shell command to validate an SGML document.
 
 This is a `format' control string that by default should contain two
@@ -991,7 +1000,7 @@ To tag a region with the mouse, use transient mark mode or secondary selection.
 
 Structure editing:
 \\[sgml-backward-element]  Moves backwards over the previous element.
-\\[sgml-forward-element]  Moves forward over the next element.
+\\[sgml-forward-element]  Moves forward over the nex element.
 \\[sgml-down-element]  Move forward and down one level in the element structure.
 \\[sgml-backward-up-element]  Move backward out of this element level.
 \\[sgml-beginning-of-element]  Move to after the start tag of the current element.
@@ -1035,7 +1044,7 @@ sgml-indent-step  How much to increament indent for every element level.
 sgml-indent-data  If non-nil, indent in data/mixed context also.
 sgml-set-face     If non-nil, psgml will set the face of parsed markup.
 sgml-markup-faces The faces used when the above variable is non-nil.
-sgml-system-path  List of directories used to look for system identifiers.
+sgml-system-path  List of directorys used to look for system identifiers.
 sgml-public-map  Mapping from public identifiers to file names.
 sgml-offer-save  If non-nil, ask about saving modified buffers before
 		\\[sgml-validate] is run.
@@ -1077,7 +1086,8 @@ All bindings:
   (make-local-variable 'indent-line-function)
   (setq indent-line-function 'sgml-indent-line)
   (make-local-variable 'mode-line-format)
-  ;; Modify mode-line-format with susbt (sugested by wing)
+  ;; wing change: use `subst' rather than duplicating the whole
+  ;; mode-line-format.  XEmacs 19.14 changes the default mode-line-format.
   (setq mode-line-format
 	(subst '("" mode-name sgml-active-dtd-indicator) 'mode-name
 	       mode-line-format))
@@ -1439,4 +1449,4 @@ If it is something else complete with ispell-complete-word." t)
  (t
   (require 'psgml-other)))
 
-;;; psgml.el ends here
+;;; psgml.el ends HERE

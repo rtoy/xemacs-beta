@@ -8,7 +8,7 @@
 ;; AUTHOR:       Bob Weiner & Kellie Clark
 ;;
 ;; ORIG-DATE:    6/30/93
-;; LAST-MOD:      6-Mar-97 at 01:15:42 by Bob Weiner
+;; LAST-MOD:      3-Nov-95 at 19:25:57 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
@@ -69,7 +69,7 @@ It provides the following keys:
 				       minor-mode-alist)
 	  minor-mode-alist (set:remove '(selective-display " Otl")
 				       minor-mode-alist)
-	;; Remove indication that buffer is narrowed.
+	;; Remove indication that buffer is ;; narrowed.
 	mode-line-format (copy-sequence mode-line-format)
 	mode-line-format (set:remove "%n" mode-line-format)))
   ;;
@@ -157,7 +157,7 @@ the end of the text and `fill-column'."
 	(opoint (point-marker))
 	(bocp)
 	start)
-    (setq start (kotl-mode:start-of-line))
+    (setq start (kotl-mode:beginning-of-line))
     (if (setq bocp (kotl-mode:bocp))
 	(progn
 	  ;; Add a temporary fill-prefix since this is the 1st line of the cell
@@ -522,7 +522,7 @@ Interactively, second arg is non-nil if prefix arg is supplied."
           ((and (markerp val) (marker-position val))
            (princ (marker-position val) (current-buffer)))
           (t
-           (error "Register `%c' does not contain text" register))))
+           (error "Register '%c' does not contain text" register))))
   (if (not arg) (exchange-point-and-mark)))
 
 (defun kotl-mode:just-one-space ()
@@ -1296,7 +1296,7 @@ See `forward-paragraph' for more information."
   (setq zmacs-region-stays t) ;; Maintain region highlight for XEmacs.
   (or arg (setq arg 1))
   (or (integer-or-marker-p arg)
-      (error "(kotl-mode:beginning-of-cell): Wrong type arg, integer-or-marker, `%s'" arg))
+      (error "(kotl-mode:beginning-of-cell): Wrong type arg, integer-or-marker, '%s'" arg))
   (if (= arg 1)
       (goto-char (kcell-view:start))
     (kotl-mode:backward-cell (1- arg)))
@@ -1311,7 +1311,7 @@ See `forward-paragraph' for more information."
   (setq zmacs-region-stays t) ;; Maintain region highlight for XEmacs.
   (or arg (setq arg 1))
   (or (integer-or-marker-p arg)
-      (error "(kotl-mode:start-of-line): Wrong type arg, integer-or-marker, `%s'" arg))
+      (error "(kotl-mode:start-of-line): Wrong type arg, integer-or-marker, '%s'" arg))
   (forward-line (1- arg))
   (if (eolp)
       nil
@@ -1319,9 +1319,7 @@ See `forward-paragraph' for more information."
 		    (beginning-of-line))))
   (point))
 
-;;; This ensures that the key bound to `beginning-of-line' is replaced in
-;;; kotl-mode.
-(fset 'kotl-mode:beginning-of-line 'kotl-mode:start-of-line)
+(defalias 'kotl-mode:beginning-of-line 'kotl-mode:start-of-line)
 
 (defun kotl-mode:beginning-of-tree ()
   "Move point to the level 1 root of the current cell's tree.
@@ -1371,7 +1369,7 @@ Leave point at the start of the cell."
   (setq zmacs-region-stays t) ;; Maintain region highlight for XEmacs.
   (or arg (setq arg 1))
   (or (integer-or-marker-p arg)
-      (error "(kotl-mode:end-of-cell): Wrong type arg, integer-or-marker, `%s'" arg))
+      (error "(kotl-mode:end-of-cell): Wrong type arg, integer-or-marker, '%s'" arg))
   (if (= arg 1)
       (goto-char (kcell-view:end-contents))
     (kotl-mode:forward-cell (1- arg)))
@@ -1386,7 +1384,7 @@ Leave point at the start of the cell."
   (setq zmacs-region-stays t) ;; Maintain region highlight for XEmacs.
   (or arg (setq arg 1))
   (or (integer-or-marker-p arg)
-      (error "(kotl-mode:finish-of-line): Wrong type arg, integer-or-marker, `%s'" arg))
+      (error "(kotl-mode:finish-of-line): Wrong type arg, integer-or-marker, '%s'" arg))
   (forward-line (1- arg))
   (end-of-line)
   ;; May have to move backwards to before label if support labels
@@ -1542,7 +1540,7 @@ part of the paragraph, or the end of the buffer."
   (point))
 
 (defun kotl-mode:goto-cell (cell-ref &optional error-p)
-  "Move point to start of cell given by CELL-REF.  (See `kcell:ref-to-id'.)
+  "Move point to start of cell given by CELL-REF.  (See 'kcell:ref-to-id'.)
 Return point iff CELL-REF is found within current view.
 With a prefix argument, CELL-REF is assigned the argument value for use
 as an idstamp.
@@ -1556,7 +1554,7 @@ interactively when CELL-REF is not found."
 	   (read-string "Goto cell label or id: "))))
   (setq cell-ref
 	(or (kcell:ref-to-id cell-ref)
-	    (error "(kotl-mode:goto-cell): Invalid cell reference, `%s'" cell-ref)))
+	    (error "(kotl-mode:goto-cell): Invalid cell reference, '%s'" cell-ref)))
   (let* ((opoint (point))
 	 (found)
 	 cell-id kvspec)
@@ -1591,7 +1589,7 @@ interactively when CELL-REF is not found."
 	    (t (goto-char opoint)
 	       nil))
       (if (and (not found) (or error-p (interactive-p)))
-	  (error "(kotl-mode:goto-cell): No `%s' cell in this view" cell-ref)
+	  (error "(kotl-mode:goto-cell): No '%s' cell in this view" cell-ref)
 	;; Activate any viewspec associated with cell-ref.
 	(if kvspec (kvspec:activate kvspec))))
     found))
@@ -2251,10 +2249,10 @@ confirmation."
      (setq attribute (intern attribute)
 	   value (kcell-view:get-attr attribute))
      (if value
-	 (setq value (read-minibuffer
+	 (setq value (read-expression
 		      (format "Change value of \"%s\" to: " attribute)
 		      (prin1-to-string value)))
-       (setq value (read-minibuffer
+       (setq value (read-expression
 		    (format "Set value of \"%s\" to: " attribute))))
      (list attribute value nil)))
   (kcell-view:set-attr attribute value pos)
@@ -2560,7 +2558,7 @@ Does not delete newline at end of line."
 	  (prog1
 	      (buffer-substring bol eol)
 	    (delete-region bol eol)))
-      (error "(kotl-mode:delete-line): Invalid position, `%d'" (point)))))
+      (error "(kotl-mode:delete-line): Invalid position, '%d'" (point)))))
 
 (defun kotl-mode:indent-line (arg)
   ;; Disallow the indent-line command.
@@ -2621,7 +2619,7 @@ newlines at end of tree."
 
 (defun kotl-mode:print-attributes (kview)
   "Print to the `standard-output' stream the attributes of the current visible kcell. 
-Takes argument KVIEW (so it can be used with `kview:map-tree' and so that
+Takes argument KVIEW (so it can be used with 'kview:map-tree' and so that
 KVIEW is bound correctly) but always operates upon the current view."
   ;; Move to start of visible cell to avoid printing attributes for an
   ;; invisible kcell which point may be over.

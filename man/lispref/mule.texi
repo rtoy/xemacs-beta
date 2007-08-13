@@ -203,11 +203,11 @@ the actual charset object.
 A documentation string describing the charset.
 @item registry
 A regular expression matching the font registry field for this character
-set.  For example, both the @code{ascii} and @code{latin-iso8859-1}
-charsets use the registry @code{"ISO8859-1"}.  This field is used to
-choose an appropriate font when the user gives a general font
-specification such as @samp{-*-courier-medium-r-*-140-*}, i.e. a
-14-point upright medium-weight Courier font.
+set.  For example, both the @code{ascii} and @code{latin-1} charsets
+use the registry @code{"ISO8859-1"}.  This field is used to choose
+an appropriate font when the user gives a general font specification
+such as @samp{-*-courier-medium-r-*-140-*}, i.e. a 14-point upright
+medium-weight Courier font.
 @item dimension
 Number of position codes used to index a character in the character set.
 XEmacs/MULE can only handle character sets of dimension 1 or 2.
@@ -251,8 +251,8 @@ position codes 33 through 126 map to font indices 33 through 126; with
 it set to 1, position codes 33 through 126 map to font indices 161
 through 254 (i.e. the same number but with the high bit set).  For
 example, for a font whose registry is ISO8859-1, the left half of the
-font (octets 0x20 - 0x7F) is the @code{ascii} charset, while the right
-half (octets 0xA0 - 0xFF) is the @code{latin-iso8859-1} charset.
+font (octets 0x20 - 0x7F) is the @code{ascii} charset, while the
+right half (octets 0xA0 - 0xFF) is the @code{latin-1} charset.
 @item ccl-program
 A compiled CCL program used to convert a character in this charset into
 an index into the font.  This is in addition to the @code{graphic}
@@ -404,22 +404,22 @@ Name                    Type  Fi Gr Dir Registry
 --------------------------------------------------------------
 ascii                    94    B  0  l2r ISO8859-1
 control-1                94       0  l2r ---
-latin-iso8859-1          94    A  1  l2r ISO8859-1
-latin-iso8859-2          96    B  1  l2r ISO8859-2
-latin-iso8859-3          96    C  1  l2r ISO8859-3
-latin-iso8859-4          96    D  1  l2r ISO8859-4
-cyrillic-iso8859-5       96    L  1  l2r ISO8859-5
-arabic-iso8859-6         96    G  1  r2l ISO8859-6
-greek-iso8859-7          96    F  1  l2r ISO8859-7
-hebrew-iso8859-8         96    H  1  r2l ISO8859-8
-latin-iso8859-9          96    M  1  l2r ISO8859-9
-thai-tis620              96    T  1  l2r TIS620
-katakana-jisx0201        94    I  1  l2r JISX0201.1976
-latin-jisx0201           94    J  0  l2r JISX0201.1976
+latin-1                  94    A  1  l2r ISO8859-1
+latin-2                  96    B  1  l2r ISO8859-2
+latin-3                  96    C  1  l2r ISO8859-3
+latin-4                  96    D  1  l2r ISO8859-4
+cyrillic                 96    L  1  l2r ISO8859-5
+arabic                   96    G  1  r2l ISO8859-6
+greek                    96    F  1  l2r ISO8859-7
+hebrew                   96    H  1  r2l ISO8859-8
+latin-5                  96    M  1  l2r ISO8859-9
+thai                     96    T  1  l2r TIS620
+japanese-jisx0201-kana   94    I  1  l2r JISX0201.1976
+japanese-jisx0201-roman  94    J  0  l2r JISX0201.1976
 japanese-jisx0208-1978   94x94 @@  0  l2r JISX0208.1978
 japanese-jisx0208        94x94 B  0  l2r JISX0208.19(83|90)
 japanese-jisx0212        94x94 D  0  l2r JISX0212
-chinese-gb2312           94x94 A  0  l2r GB2312
+chinese-gb               94x94 A  0  l2r GB2312
 chinese-cns11643-1       94x94 G  0  l2r CNS11643.1
 chinese-cns11643-2       94x94 H  0  l2r CNS11643.2
 chinese-big5-1           94x94 0  0  l2r Big5
@@ -473,13 +473,13 @@ This function returns the octet (i.e. position code) numbered @var{n}
 (should be 0 or 1) of char @var{ch}.  @var{n} defaults to 0 if omitted.
 @end defun
 
-@defun find-charset-region start end &optional buffer
+@defun charsets-in-region start end &optional buffer
 This function returns a list of the charsets in the region between
 @var{start} and @var{end}.  @var{buffer} defaults to the current buffer
 if omitted.
 @end defun
 
-@defun find-charset-string string
+@defun charsets-in-string string
 This function returns a list of the charsets in @var{string}.
 @end defun
 
@@ -777,8 +777,8 @@ in the file.
 @item no-conversion
 No conversion.  Use this for binary files and such.  On output, graphic
 characters that are not in ASCII or Latin-1 will be replaced by a
-@samp{?}. (For a no-conversion-encoded buffer, these characters will
-only be present if you explicitly insert them.)
+@samp{?}. (For a no-conversion-encoded buffer, these characters will only be
+present if you explicitly insert them.)
 @item shift-jis
 Shift-JIS (a Japanese encoding commonly used in PC operating systems).
 @item iso2022

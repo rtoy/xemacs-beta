@@ -1,5 +1,5 @@
 ;;; Commands to undo message attribute changes in VM
-;;; Copyright (C) 1989-1995 Kyle E. Jones
+;;; Copyright (C) 1989, 1990, 1993, 1994 Kyle E. Jones
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -360,8 +360,13 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 		       (vm-buffer-of
 			 (vm-real-message-of m)))
 		      vm-folder-read-only))))
+      (aset (vm-attributes-of m) attr-index flag)
+      (vm-mark-for-summary-update m)
       (cond
        ((not norecord)
+	(if (eq vm-flush-interval t)
+	    (vm-stuff-virtual-attributes m)
+	  (vm-set-modflag-of m t))
 	(setq vmp (cons (vm-real-message-of m) (vm-virtual-messages-of m)))
 	(while vmp
 	  (if (eq (vm-attributes-of m) (vm-attributes-of (car vmp)))
@@ -378,14 +383,7 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 	    (vm-undo-record (list function (car m-list) (not flag)))
 	    (vm-undo-boundary)
 	    (vm-increment vm-modification-counter))
-	  (setq m-list (cdr m-list)))))
-      (aset (vm-attributes-of m) attr-index flag)
-      (vm-mark-for-summary-update m)
-      (if (not norecord)
-	  (if (eq vm-flush-interval t)
-	      (vm-stuff-virtual-attributes m)
-	    (vm-set-modflag-of m t)))))))
-
+	  (setq m-list (cdr m-list)))))))))
 
 (defun vm-set-labels (m labels)
   (let ((m-list nil)
@@ -399,6 +397,12 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 		       (vm-buffer-of
 			 (vm-real-message-of m)))
 		      vm-folder-read-only))))
+      (vm-set-labels-of m labels)
+      (vm-set-label-string-of m nil)
+      (vm-mark-for-summary-update m)
+      (if (eq vm-flush-interval t)
+	  (vm-stuff-virtual-attributes m)
+	(vm-set-modflag-of m t))
       (setq vmp (cons (vm-real-message-of m) (vm-virtual-messages-of m)))
       (while vmp
 	(if (eq (vm-attributes-of m) (vm-attributes-of (car vmp)))
@@ -415,14 +419,7 @@ COUNT-1 messages to be altered.  COUNT defaults to one."
 	  (vm-undo-record (list 'vm-set-labels m old-labels))
 	  (vm-undo-boundary)
 	  (vm-increment vm-modification-counter))
-	(setq m-list (cdr m-list)))
-      (vm-set-labels-of m labels)
-      (vm-set-label-string-of m nil)
-      (vm-mark-for-summary-update m)
-      (if (eq vm-flush-interval t)
-	  (vm-stuff-virtual-attributes m)
-	(vm-set-modflag-of m t))))))
-
+	(setq m-list (cdr m-list)))))))
 
 (defun vm-set-new-flag (m flag &optional norecord)
   (vm-set-xxxx-flag m flag norecord 'vm-set-new-flag 0))

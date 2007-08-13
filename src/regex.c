@@ -31,6 +31,8 @@
    (2) Rel-alloc is disabled when the MMAP version of rel-alloc is
        being used, because it's too slow -- all those calls to mmap()
        add humongous overhead.
+   (3) Lots and lots of changes for Mule.  They are bracketed by
+       `#ifdef MULE' or with comments that have `XEmacs' in them.
  */
 
 /* AIX requires this to be the first thing in the file. */
@@ -42,6 +44,11 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
+
+/* We assume non-Mule if emacs isn't defined. */
+#ifndef emacs
+#undef MULE
 #endif
 
 /* We need this for `regex.h', and perhaps for the Emacs include files.  */
@@ -78,10 +85,25 @@
 #define DEBUG
 #endif
 
+#ifdef MULE
+
+Lisp_Object Vthe_lisp_rangetab;
+
+void
+complex_vars_of_regex (void)
+{
+  Vthe_lisp_rangetab = Fmake_range_table ();
+  staticpro (&Vthe_lisp_rangetab);
+}
+
+#else /* not MULE */
+
 void
 complex_vars_of_regex (void)
 {
 }
+
+#endif /* not MULE */
 
 #else  /* not emacs */
 
@@ -222,7 +244,14 @@ init_syntax_once (void)
 #define ISASCII_1(c) isascii(c)
 #endif
 
+#ifdef MULE
+/* The IS*() macros can be passed any character, including an extended
+   one.  We need to make sure there are no crashes, which would occur
+   otherwise due to out-of-bounds array references. */
+#define ISASCII(c) (((unsigned EMACS_INT) (c)) < 0x100 && ISASCII_1 (c))
+#else
 #define ISASCII(c) ISASCII_1 (c)
+#endif
 
 #ifdef isblank
 #define ISBLANK(c) (ISASCII (c) && isblank (c))
@@ -506,6 +535,20 @@ typedef enum
 	/* Matches any character whose syntax is not that specified.  */
   notsyntaxspec
 #endif /* emacs */
+
+#ifdef MULE
+    /* need extra stuff to be able to properly work with XEmacs/Mule
+       characters (which may take up more than one byte) */
+
+  ,charset_mule, /* Matches any character belonging to specified set.
+		    The set is stored in "unified range-table
+		    format"; see rangetab.c.  Unlike the `charset'
+		    opcode, this can handle arbitrary characters. */
+
+  charset_mule_not   /* Same parameters as charset_mule, but match any
+			character that is not one of those specified.  */
+#endif
+       
 } re_opcode_t;
 
 /* Common operations on the compiled pattern.  */
@@ -736,6 +779,41 @@ print_partial_compiled_pattern (unsigned char *start, unsigned char *end)
 	    p += 1 + *p;
 	  }
 	  break;
+
+#ifdef MULE
+	case charset_mule:
+        case charset_mule_not:
+          {
+	    int nentries, i;
+
+	    printf ("/charset_mule [%s",
+	            (re_opcode_t) *(p - 1) == charset_mule_not ? "^" : "");
+	    nentries = unified_range_table_nentries (p);
+	    for (i = 0; i < nentries; i++)
+	      {
+		EMACS_INT first, last;
+		Lisp_Object dummy_val;
+
+		unified_range_table_get_range (p, i, &first, &last,
+					       &dummy_val);
+		if (first < 0x100)
+		  putchar (first);
+		else
+		  printf ("(0x%x)", first);
+		if (first != last)
+		  {
+		    putchar ('-');
+		    if (last < 0x100)
+		      putchar (last);
+		    else
+		      printf ("(0x%x)", last);
+		  }
+	      }
+	    putchar (']');
+	    p += unified_range_table_bytes_used (p);
+	  }
+	  break;
+#endif
 
 	case begline:
 	  printf ("/begline");
@@ -985,6 +1063,9 @@ static CONST char *re_error_msgid[] =
 #ifdef emacs
     "Invalid syntax designator",		/* REG_ESYNTAX */
 #endif
+#ifdef MULE
+    "Ranges may not span charsets",		/* REG_ERANGESPAN */
+#endif
   };
 
 /* Avoiding alloca during matching, to placate r_alloc.  */
@@ -1044,7 +1125,7 @@ static CONST char *re_error_msgid[] =
 #if defined (MATCH_MAY_ALLOCATE)
 /* 4400 was enough to cause a crash on Alpha OSF/1,
    whose default stack limit is 2mb.  */
-int re_max_failures = 20000;
+int re_max_failures = 4000;
 #else
 int re_max_failures = 2000;
 #endif
@@ -1267,10 +1348,7 @@ typedef struct
 #endif
 
 /* We push at most this many items on the stack.  */
-/* We used to use (num_regs - 1), which is the number of registers
-   this regexp will save; but that was changed to 5
-   to avoid stack overflow for a regexp with lots of parens.  */
-#define MAX_FAILURE_ITEMS (5 * NUM_REG_ITEMS + NUM_NONREG_ITEMS)
+#define MAX_FAILURE_ITEMS ((num_regs - 1) * NUM_REG_ITEMS + NUM_NONREG_ITEMS)
 
 /* We actually push this many items.  */
 #define NUM_FAILURE_ITEMS						\
@@ -1438,10 +1516,57 @@ static char reg_unset_dummy;
 /* Go backwards one character in the pattern.  */
 #define PATUNFETCH p--
 
+#ifdef MULE
+
+#define PATFETCH_EXTENDED(emch)						\
+  do {if (p == pend) return REG_EEND;					\
+    assert (p < pend);							\
+    emch = charptr_emchar ((CONST Bufbyte *) p);			\
+    INC_CHARPTR (p);							\
+    if (translate && emch < 0x80)					\
+      emch = (Emchar) (unsigned char) translate[emch];			\
+  } while (0)
+
+#define PATFETCH_RAW_EXTENDED(emch)					\
+  do {if (p == pend) return REG_EEND;					\
+    assert (p < pend);							\
+    emch = charptr_emchar ((CONST Bufbyte *) p);			\
+    INC_CHARPTR (p);							\
+  } while (0)
+
+#define PATUNFETCH_EXTENDED DEC_CHARPTR (p)
+
+#define PATFETCH_EITHER(emch)			\
+  do {						\
+    if (has_extended_chars)			\
+      PATFETCH_EXTENDED (emch);			\
+    else					\
+      PATFETCH (emch);				\
+  } while (0)
+
+#define PATFETCH_RAW_EITHER(emch)		\
+  do {						\
+    if (has_extended_chars)			\
+      PATFETCH_RAW_EXTENDED (emch);		\
+    else					\
+      PATFETCH_RAW (emch);			\
+  } while (0)
+
+#define PATUNFETCH_EITHER			\
+  do {						\
+    if (has_extended_chars)			\
+      PATUNFETCH_EXTENDED (emch);		\
+    else					\
+      PATUNFETCH (emch);			\
+  } while (0)
+
+#else /* not MULE */
+
 #define PATFETCH_EITHER(emch) PATFETCH (emch)
 #define PATFETCH_RAW_EITHER(emch) PATFETCH_RAW (emch)
 #define PATUNFETCH_EITHER PATUNFETCH
 
+#endif /* not MULE */
 
 /* If `translate' is non-null, return translate[D], else just D.  We
    cast the subscript to translate because some data is declared as
@@ -1449,6 +1574,12 @@ static char reg_unset_dummy;
    when we use a character as a subscript we must make it unsigned.  */
 #define TRANSLATE(d) (translate ? translate[(unsigned char) (d)] : (d))
 
+#ifdef MULE
+
+#define TRANSLATE_EXTENDED_UNSAFE(emch) \
+  (translate && emch < 0x80 ? translate[emch] : (emch))
+
+#endif
 
 /* Macros for outputting the compiled pattern into `buffer'.  */
 
@@ -1589,8 +1720,25 @@ typedef struct
   (b[((unsigned char) (c)) / BYTEWIDTH]		\
    |= 1 << (((unsigned char) c) % BYTEWIDTH))
 
+#ifdef MULE
+
+/* Set the "bit" for character C in a range table. */
+#define SET_RANGETAB_BIT(c) put_range_table (rtab, c, c, Qt)
+
+/* Set the "bit" for character c in the appropriate table. */
+#define SET_EITHER_BIT(c)			\
+  do {						\
+    if (has_extended_chars)			\
+      SET_RANGETAB_BIT (c);			\
+    else					\
+      SET_LIST_BIT (c);				\
+  } while (0)
+
+#else /* not MULE */
+
 #define SET_EITHER_BIT(c) SET_LIST_BIT (c)
 
+#endif
 
 
 /* Get the next unsigned number in the uncompiled pattern.  */
@@ -1634,6 +1782,13 @@ static boolean group_in_compile_stack (compile_stack_type compile_stack,
 static reg_errcode_t compile_range (CONST char **p_ptr, CONST char *pend,
 				    char *translate, reg_syntax_t syntax,
 				    unsigned char *b);
+#ifdef MULE
+static reg_errcode_t compile_extended_range (CONST char **p_ptr,
+					     CONST char *pend,
+					     char *translate,
+					     reg_syntax_t syntax,
+					     Lisp_Object rtab);
+#endif
 static boolean group_match_null_string_p (unsigned char **p,
 					  unsigned char *end,
 					  register_info_type *reg_info);
@@ -2011,6 +2166,10 @@ regex_compile (CONST char *pattern, int size, reg_syntax_t syntax,
           {
 	    /* XEmacs change: this whole section */
             boolean had_char_class = false;
+#ifdef MULE
+	    boolean has_extended_chars = false;
+	    REGISTER Lisp_Object rtab = Qnil;
+#endif
 
             if (p == pend) FREE_STACK_RETURN (REG_EBRACK);
 
@@ -2040,6 +2199,29 @@ regex_compile (CONST char *pattern, int size, reg_syntax_t syntax,
                 && (syntax & RE_HAT_LISTS_NOT_NEWLINE))
               SET_LIST_BIT ('\n');
 
+#ifdef MULE
+	  start_over_with_extended:
+	    if (has_extended_chars)
+	      {
+		/* There are extended chars here, which means we need to start
+		   over and shift to unified range-table format. */
+		if (b[-2] == charset)
+		  b[-2] = charset_mule;
+		else
+		  b[-2] = charset_mule_not;
+		b--;
+		p = p1; /* go back to the beginning of the charset, after
+			   a possible ^. */
+		rtab = Vthe_lisp_rangetab;
+		Fclear_range_table (rtab);
+
+		/* charset_not matches newline according to a syntax bit.  */
+		if ((re_opcode_t) b[-1] == charset_mule_not
+		    && (syntax & RE_HAT_LISTS_NOT_NEWLINE))
+		  SET_EITHER_BIT ('\n');
+	      }
+#endif /* MULE */
+
             /* Read in characters and ranges, setting map bits.  */
             for (;;)
               {
@@ -2047,12 +2229,31 @@ regex_compile (CONST char *pattern, int size, reg_syntax_t syntax,
 
                 PATFETCH_EITHER (c);
 
+#ifdef MULE
+		if (c >= 0x80 && !has_extended_chars)
+		  {
+		    has_extended_chars = 1;
+		    /* Frumble-bumble, we've found some extended chars.
+		       Need to start over, process everything using
+		       the general extended-char mechanism, and need
+		       to use charset_mule and charset_mule_not instead
+		       of charset and charset_not. */
+		    goto start_over_with_extended;
+		  }
+#endif /* MULE */
                 /* \ might escape characters inside [...] and [^...].  */
                 if ((syntax & RE_BACKSLASH_ESCAPE_IN_LISTS) && c == '\\')
                   {
                     if (p == pend) FREE_STACK_RETURN (REG_EESCAPE);
 
                     PATFETCH_EITHER (c1);
+#ifdef MULE
+		    if (c1 >= 0x80 && !has_extended_chars)
+		      {
+		        has_extended_chars = 1;
+		        goto start_over_with_extended;
+                      }
+#endif /* MULE */
                     SET_EITHER_BIT (c1);
                     continue;
                   }
@@ -2079,7 +2280,18 @@ regex_compile (CONST char *pattern, int size, reg_syntax_t syntax,
                   {
                     reg_errcode_t ret;
 
-		    ret = compile_range (&p, pend, translate, syntax, b);
+#ifdef MULE
+		    if (* (unsigned char *) p >= 0x80 && !has_extended_chars)
+		      {
+		        has_extended_chars = 1;
+		        goto start_over_with_extended;
+                      }
+                    if (has_extended_chars)
+		      ret = compile_extended_range (&p, pend, translate,
+						    syntax, rtab);
+		    else
+#endif /* MULE */
+		      ret = compile_range (&p, pend, translate, syntax, b);
                     if (ret != REG_NOERROR) FREE_STACK_RETURN (ret);
                   }
 
@@ -2090,7 +2302,18 @@ regex_compile (CONST char *pattern, int size, reg_syntax_t syntax,
 		    /* Move past the `-'.  */
                     PATFETCH (c1);
 
-		    ret = compile_range (&p, pend, translate, syntax, b);
+#ifdef MULE
+		    if (* (unsigned char *) p >= 0x80 && !has_extended_chars)
+		      {
+		        has_extended_chars = 1;
+		        goto start_over_with_extended;
+                      }
+                    if (has_extended_chars)
+		      ret = compile_extended_range (&p, pend, translate,
+						    syntax, rtab);
+		    else
+#endif /* MULE */
+		      ret = compile_range (&p, pend, translate, syntax, b);
                     if (ret != REG_NOERROR) FREE_STACK_RETURN (ret);
                   }
 
@@ -2190,6 +2413,18 @@ regex_compile (CONST char *pattern, int size, reg_syntax_t syntax,
                   }
               }
 
+#ifdef MULE
+	    if (has_extended_chars)
+	      {
+		/* We have a range table, not a bit vector. */
+		int bytes_needed =
+		  unified_range_table_bytes_needed (rtab);
+		GET_BUFFER_SPACE (bytes_needed);
+		unified_range_table_copy_data (rtab, b);
+		b += unified_range_table_bytes_used (b);
+		break;
+	      }
+#endif /* MULE */
             /* Discard any (non)matching list bytes that are all 0 at the
                end of the map.  Decrease the map-length byte too.  */
             while ((int) b[-1] > 0 && b[b[-1] - 1] == 0) 
@@ -2960,6 +3195,69 @@ compile_range (CONST char **p_ptr, CONST char *pend, char *translate,
   
   return REG_NOERROR;
 }
+
+#ifdef MULE
+
+static reg_errcode_t
+compile_extended_range (CONST char **p_ptr, CONST char *pend, char *translate,
+			reg_syntax_t syntax, Lisp_Object rtab)
+{
+  Emchar this_char;
+
+  CONST char *p = *p_ptr;
+  EMACS_INT range_start, range_end;
+  
+  if (p == pend)
+    return REG_ERANGE;
+
+  p--; /* back to '-' */
+  DEC_CHARPTR (p); /* back to start of range */
+  /* We also want to fetch the endpoints without translating them; the 
+     appropriate translation is done in the bit-setting loop below.  */
+  range_start = charptr_emchar ((CONST Bufbyte *) p);
+  range_end = charptr_emchar ((CONST Bufbyte *) (*p_ptr));
+  INC_CHARPTR (*p_ptr);
+
+  /* If the start is after the end, the range is empty.  */
+  if (range_start > range_end)
+    return syntax & RE_NO_EMPTY_RANGES ? REG_ERANGE : REG_NOERROR;
+
+  /* Can't have ranges spanning different charsets, except maybe for
+     ranges entirely witin the first 256 chars. */
+     
+  if ((range_start >= 0x100 || range_end >= 0x100)
+      && CHAR_LEADING_BYTE (range_start) !=
+      CHAR_LEADING_BYTE (range_end))
+    return REG_ERANGESPAN;
+
+  /* As advertised, translations only work over the 0 - 0x7F range.
+     Making this kind of stuff work generally is much harder.
+     Iterating over the whole range like this would be way efficient
+     if the range encompasses 10,000 chars or something.  You'd have
+     to do something like this:
+
+     range_table a;
+     range_table b;
+     map over translation table in [range_start, range_end] of
+       (put the mapped range in a;
+        put the translation in b)
+     invert the range in a and truncate to [range_start, range_end]
+     compute the union of a, b
+     union the result into rtab
+   */
+  for (this_char = range_start;
+       this_char <= range_end && this_char < 0x80; this_char++)
+    {
+      SET_RANGETAB_BIT (TRANSLATE (this_char));
+    }
+
+  if (this_char <= range_end)
+    put_range_table (rtab, this_char, range_end, Qt);
+  
+  return REG_NOERROR;
+}
+
+#endif /* MULE */
 
 /* re_compile_fastmap computes a ``fastmap'' for the compiled pattern in
    BUFP.  A fastmap records which of the (1 << BYTEWIDTH) possible
@@ -3058,6 +3356,8 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
 
 
         case charset:
+	  /* XEmacs: Under Mule, these bit vectors will
+	     only contain values for characters below 0x80. */
           for (j = *p++ * BYTEWIDTH - 1; j >= 0; j--)
 	    if (p[j / BYTEWIDTH] & (1 << (j % BYTEWIDTH)))
               fastmap[j] = 1;
@@ -3066,13 +3366,83 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
 
 	case charset_not:
 	  /* Chars beyond end of map must be allowed.  */
+#ifdef MULE
+	  for (j = *p * BYTEWIDTH; j < 0x80; j++)
+            fastmap[j] = 1;
+	  /* And all extended characters must be allowed, too. */
+	  for (j = 0x80; j < 0xA0; j++)
+	    fastmap[j] = 1;
+#else
 	  for (j = *p * BYTEWIDTH; j < (1 << BYTEWIDTH); j++)
             fastmap[j] = 1;
+#endif
 
 	  for (j = *p++ * BYTEWIDTH - 1; j >= 0; j--)
 	    if (!(p[j / BYTEWIDTH] & (1 << (j % BYTEWIDTH))))
               fastmap[j] = 1;
           break;
+
+#ifdef MULE
+	case charset_mule:
+	  {
+	    int nentries;
+	    int i;
+
+	    nentries = unified_range_table_nentries (p);
+	    for (i = 0; i < nentries; i++)
+	      {
+		EMACS_INT first, last;
+		Lisp_Object dummy_val;
+		int jj;
+		Bufbyte strr[MAX_EMCHAR_LEN];
+
+		unified_range_table_get_range (p, i, &first, &last,
+					       &dummy_val);
+		for (jj = first; jj <= last && jj < 0x80; jj++)
+		  fastmap[jj] = 1;
+		/* Ranges below 0x100 can span charsets, but there
+		   are only two (Control-1 and Latin-1), and
+		   either first or last has to be in them. */
+		set_charptr_emchar (strr, first);
+		fastmap[*strr] = 1;
+		if (last < 0x100)
+		  {
+		    set_charptr_emchar (strr, last);
+		    fastmap[*strr] = 1;
+		  }
+	      }
+	  }
+	  break;
+
+	case charset_mule_not:
+	  {
+	    int nentries;
+	    int i;
+
+	    nentries = unified_range_table_nentries (p);
+	    for (i = 0; i < nentries; i++)
+	      {
+		EMACS_INT first, last;
+		Lisp_Object dummy_val;
+		int jj;
+		int smallest_prev = 0;
+
+		unified_range_table_get_range (p, i, &first, &last,
+					       &dummy_val);
+		for (jj = smallest_prev; jj < first && jj < 0x80; jj++)
+		  fastmap[jj] = 1;
+		smallest_prev = last + 1;
+		if (smallest_prev >= 0x80)
+		  break;
+	      }
+	    /* Calculating which leading bytes are actually allowed
+	       here is rather difficult, so we just punt and allow
+	       all of them. */
+	    for (i = 0x80; i < 0xA0; i++)
+	      fastmap[i] = 1;
+	  }
+	  break;
+#endif /* MULE */
 
 
 	case wordchar:
@@ -3081,7 +3451,9 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
 	  goto matchsyntax;
 #else
 	  for (j = 0; j < (1 << BYTEWIDTH); j++)
-	    if (SYNTAX_UNSAFE (regex_emacs_buffer->syntax_table, j) == Sword)
+	    if (SYNTAX_UNSAFE
+		(XCHAR_TABLE
+		 (regex_emacs_buffer->mirror_syntax_table), j) == Sword)
 	      fastmap[j] = 1;
 	  break;
 #endif
@@ -3093,7 +3465,9 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
 	  goto matchnotsyntax;
 #else
 	  for (j = 0; j < (1 << BYTEWIDTH); j++)
-	    if (SYNTAX_UNSAFE (regex_emacs_buffer->syntax_table, j) != Sword)
+	    if (SYNTAX_UNSAFE
+		(XCHAR_TABLE
+		 (regex_emacs_buffer->mirror_syntax_table), j) != Sword)
 	      fastmap[j] = 1;
 	  break;
 #endif
@@ -3104,8 +3478,15 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
 	    int fastmap_newline = fastmap['\n'];
 
 	    /* `.' matches anything ...  */
+#ifdef MULE
+	    /* "anything" only includes bytes that can be the
+	       first byte of a character. */
+	    for (j = 0; j < 0xA0; j++)
+	      fastmap[j] = 1;
+#else
 	    for (j = 0; j < (1 << BYTEWIDTH); j++)
 	      fastmap[j] = 1;
+#endif
 
 	    /* ... except perhaps newline.  */
 	    if (!(bufp->syntax & RE_DOT_NEWLINE))
@@ -3124,20 +3505,84 @@ re_compile_fastmap (struct re_pattern_buffer *bufp)
         case syntaxspec:
 	  k = *p++;
 	  matchsyntax:
-	  for (j = 0; j < (1 << BYTEWIDTH); j++)
-	    if (SYNTAX_UNSAFE (regex_emacs_buffer->syntax_table, j) ==
+#ifdef MULE
+	  for (j = 0; j < 0x80; j++)
+	    if (SYNTAX_UNSAFE
+		(XCHAR_TABLE
+		 (regex_emacs_buffer->mirror_syntax_table), j) ==
 		(enum syntaxcode) k)
 	      fastmap[j] = 1;
+	  for (j = 0x80; j < 0xA0; j++)
+	    {
+	      if (j == PRE_LEADING_BYTE_PRIVATE_1
+		  || j == PRE_LEADING_BYTE_PRIVATE_2)
+		/* too complicated to calculate this right */
+		fastmap[j] = 1;
+	      else
+		{
+		  int multi_p;
+		  Lisp_Object cset;
+
+		  cset = CHARSET_BY_LEADING_BYTE (j);
+		  if (CHARSETP (cset))
+		    {
+		      if (charset_syntax (regex_emacs_buffer, cset,
+					  &multi_p)
+			  == Sword || multi_p)
+			fastmap[j] = 1;
+		    }
+		}
+	    }
+#else /* ! MULE */
+	  for (j = 0; j < (1 << BYTEWIDTH); j++)
+	    if (SYNTAX_UNSAFE
+		(XCHAR_TABLE
+		 (regex_emacs_buffer->mirror_syntax_table), j) ==
+		(enum syntaxcode) k)
+	      fastmap[j] = 1;
+#endif /* ! MULE */
 	  break;
 
 
 	case notsyntaxspec:
 	  k = *p++;
 	  matchnotsyntax:
-	  for (j = 0; j < (1 << BYTEWIDTH); j++)
-	    if (SYNTAX_UNSAFE (regex_emacs_buffer->syntax_table, j) !=
+#ifdef MULE
+	  for (j = 0; j < 0x80; j++)
+	    if (SYNTAX_UNSAFE
+		(XCHAR_TABLE
+		 (regex_emacs_buffer->mirror_syntax_table), j) !=
 		(enum syntaxcode) k)
 	      fastmap[j] = 1;
+	  for (j = 0x80; j < 0xA0; j++)
+	    {
+	      if (j == PRE_LEADING_BYTE_PRIVATE_1
+		  || j == PRE_LEADING_BYTE_PRIVATE_2)
+		/* too complicated to calculate this right */
+		fastmap[j] = 1;
+	      else
+		{
+		  int multi_p;
+		  Lisp_Object cset;
+
+		  cset = CHARSET_BY_LEADING_BYTE (j);
+		  if (CHARSETP (cset))
+		    {
+		      if (charset_syntax (regex_emacs_buffer, cset,
+					  &multi_p)
+			  != Sword || multi_p)
+			fastmap[j] = 1;
+		    }
+		}
+	    }
+#else /* ! MULE */
+	  for (j = 0; j < (1 << BYTEWIDTH); j++)
+	    if (SYNTAX_UNSAFE
+		(XCHAR_TABLE
+		 (regex_emacs_buffer->mirror_syntax_table), j) !=
+		(enum syntaxcode) k)
+	      fastmap[j] = 1;
+#endif /* ! MULE */
 	  break;
 
 
@@ -3559,7 +4004,8 @@ re_search_2 (struct re_pattern_buffer *bufp, CONST char *string1,
 
 /* Test if CH is a word-constituent character. (XEmacs change) */
 #define WORDCHAR_P_UNSAFE(ch)						   \
-  (SYNTAX_UNSAFE (regex_emacs_buffer->syntax_table, ch) == Sword)
+  (SYNTAX_UNSAFE (XCHAR_TABLE (regex_emacs_buffer->mirror_syntax_table),   \
+                               ch) == Sword)
 
 /* Free everything we malloc.  */
 #ifdef MATCH_MAY_ALLOCATE
@@ -4120,9 +4566,35 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
 	    if (!not) goto fail;
             
 	    SET_REGS_MATCHED ();
-            d++;
+            INC_CHARPTR (d); /* XEmacs change */
 	    break;
 	  }
+
+#ifdef MULE
+	case charset_mule:
+	case charset_mule_not:
+	  {
+	    register Emchar c;
+	    boolean not = (re_opcode_t) *(p - 1) == charset_mule_not;
+
+            DEBUG_PRINT2 ("EXECUTING charset_mule%s.\n", not ? "_not" : "");
+
+	    PREFETCH ();
+	    c = charptr_emchar ((CONST Bufbyte *) d);
+	    c = TRANSLATE_EXTENDED_UNSAFE (c); /* The character to match.  */
+
+	    if (EQ (Qt, unified_range_table_lookup (p, c, Qnil)))
+	      not = !not;
+
+	    p += unified_range_table_bytes_used (p);
+	      
+	    if (!not) goto fail;
+            
+	    SET_REGS_MATCHED ();
+	    INC_CHARPTR (d);
+	    break;
+	  }
+#endif
 
 
         /* The beginning of a group is represented by start_memory.
@@ -4600,19 +5072,10 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
                   = *p2 == (unsigned char) endline ? '\n' : p2[2];
 #endif
 
-#if 1
-                /* dmoore@ucsd.edu - emacs 19.34 uses this: */
-
                 if ((re_opcode_t) p1[3] == exactn
-                    && ! ((int) p2[1] * BYTEWIDTH > (int) p1[5]
-                          && (p2[2 + p1[5] / BYTEWIDTH]
-                              & (1 << (p1[5] % BYTEWIDTH)))))
-#else
-                if ((re_opcode_t) p1[3] == exactn
-                    && ! ((int) p2[1] * BYTEWIDTH > (int) p1[4]
-                          && (p2[1 + p1[4] / BYTEWIDTH]
-                              & (1 << (p1[4] % BYTEWIDTH)))))
-#endif
+		    && ! ((int) p2[1] * BYTEWIDTH > (int) p1[4]
+			  && (p2[1 + p1[4] / BYTEWIDTH]
+			      & (1 << (p1[4] % BYTEWIDTH)))))
                   {
   		    p[-3] = (unsigned char) pop_failure_jump;
                     DEBUG_PRINT3 ("  %c != %c => pop_failure_jump.\n",
@@ -4920,8 +5383,9 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
 
 	    PREFETCH ();
 	    emch = charptr_emchar ((CONST Bufbyte *) d);
-	    matches = (SYNTAX_UNSAFE (regex_emacs_buffer->syntax_table,
-				      emch) == (enum syntaxcode) mcnt);
+	    matches = (SYNTAX_UNSAFE
+		       (XCHAR_TABLE (regex_emacs_buffer->mirror_syntax_table),
+			emch) == (enum syntaxcode) mcnt);
 	    INC_CHARPTR (d);
 	    if (matches != should_succeed)
 	      goto fail;

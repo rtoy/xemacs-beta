@@ -641,6 +641,20 @@ x_set_frame_text_value (struct frame *f, Bufbyte *value,
   String old_XtValue = NULL;
   Arg av[2];
 
+#ifdef MULE
+  Bufbyte *ptr;
+  /* Optimize for common ASCII case */
+  for (ptr = value; *ptr; ptr++)
+    if (!BYTE_ASCII_P (*ptr))
+      {
+        CONST char * tmp;
+        encoding = DEVICE_XATOM_COMPOUND_TEXT (XDEVICE (FRAME_DEVICE (f)));
+        GET_C_CHARPTR_EXT_CTEXT_DATA_ALLOCA ((CONST char *) value, tmp);
+        new_XtValue = (String) tmp;
+        break;
+      }
+#endif /* MULE */
+
   /* ### Caching is device-independent - belongs in update_frame_title. */
   XtSetArg (av[0], Xt_resource_name, &old_XtValue);
   XtGetValues (FRAME_X_SHELL_WIDGET (f), av, 1);
@@ -1038,7 +1052,7 @@ Start a CDE drag from a buffer.
       if (XQueryPointer (display, RootWindow (display, DefaultScreen (display)),
 			 &root_window, &child_window, &root_x, &root_y,
 			 &win_x, &win_y, &keys_and_buttons) == False)
-	return Qnil;
+	  return Qnil;
 
       Ctext = xstrdup ((char *) XSTRING_DATA (text));
 
@@ -1073,10 +1087,10 @@ Start a CDE drag from a buffer.
       dnd_destroy_cb_rec[1].closure  = NULL;
 
       CurrentDragWidget =
-      DtDndDragStart (Wuh, &event, DtDND_BUFFER_TRANSFER, 1, XmDROP_COPY,
-		      dnd_convert_cb_rec,
-		      dnd_destroy_cb_rec,
-		      NULL, 0);
+	DtDndDragStart (Wuh, &event, DtDND_BUFFER_TRANSFER, 1, XmDROP_COPY,
+			dnd_convert_cb_rec,
+			dnd_destroy_cb_rec,
+			NULL, 0);
       return Qt;
     }
   return Qnil;
@@ -1107,8 +1121,8 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
       for (ii = 0; ii < transferInfo->dropData->numItems; ii++) 
 	{
 	  filePath = transferInfo->dropData->data.files[ii];
-	  /* ### Mule-izing required */
-	  path = make_string ((Bufbyte *)filePath, strlen (filePath));
+          /* ### Mule-izing required */
+	  path = make_string (filePath, strlen (filePath));
 	  va_run_hook_with_args (Qdrag_and_drop_functions, 2, frame, path);
 	}
     }
@@ -1122,16 +1136,16 @@ x_cde_transfer_callback (Widget widget, XtPointer clientData,
  	{
  	  filePath = transferInfo->dropData->data.buffers[ii].name;
 	  /* ### Mule-izing required */
-	  path = (filePath == NULL) ? Qnil
-	    : make_string ((Bufbyte *)filePath, strlen (filePath));
+ 	  path = (filePath == NULL) ? Qnil
+	    : make_string (filePath, strlen (filePath));
  	  buf = transferInfo->dropData->data.buffers[ii].bp;
- 	  data = make_string ((Bufbyte *)buf,
-			      transferInfo->dropData->data.buffers[ii].size);
+ 	  data = make_string(buf,
+ 			     transferInfo->dropData->data.buffers[ii].size);
  	  va_run_hook_with_args(Qdrag_and_drop_functions, 3, frame, path,
-				data);
+ 				data);
  	}
-	drag_not_done = 0;
-	unbind_to(speccount, Qnil);
+      drag_not_done = 0;
+      unbind_to(speccount, Qnil);
     }
 
   UNGCPRO;
@@ -1646,7 +1660,7 @@ x_create_widgets (struct frame *f, Lisp_Object lisp_window_id,
       char *string;
 
       CHECK_STRING (lisp_window_id);
-      string = (char *) XSTRING_DATA (lisp_window_id);
+      string = (char *) (XSTRING_DATA (lisp_window_id));
       if (string[0] == '0' && (string[1] == 'x' || string[1] == 'X'))
 	sscanf (string+2, "%lxu", &window_id);
 #if 0
@@ -1826,6 +1840,10 @@ x_popup_frame (struct frame *f)
 	x_wm_hack_wm_protocols (shell_widget);
       }
 
+#ifdef HAVE_XIM
+  XIM_init_frame (f);
+#endif /* HAVE_XIM */
+  
 #ifdef HACK_EDITRES
   /* Allow XEmacs to respond to EditRes requests.  See the O'Reilly Xt */
   /* Instrinsics Programming Manual, Motif Edition, Aug 1993, Sect 14.14, */
@@ -2000,8 +2018,6 @@ x_get_frame_parent (struct frame *f)
   Widget parentwid = 0;
   Arg av[1];
 
-  /* We may be passed a dangling deleted frame */
-  /* I do not know how to test for this. -sb */
   XtSetArg (av[0], XtNtransientFor, &parentwid);
   XtGetValues (FRAME_X_SHELL_WIDGET (f), av, 1);
   /* find the frame whose wid is parentwid */
@@ -2073,7 +2089,7 @@ x_set_frame_position (struct frame *f, int xoff, int yoff)
 		 XtNx, xoff,
 		 XtNy, yoff,
 		 0);
-
+  
   /* Sometimes you will find that
 
      (set-frame-position (selected-frame) -50 -50)
@@ -2184,7 +2200,7 @@ x_raise_frame_1 (struct frame *f, int force)
   unsigned int flags;
   Display *display = DEVICE_X_DISPLAY (XDEVICE (f->device));
 
-  if (FRAME_VISIBLE_P(f) || force)
+  if (f->visible || force)
     {
       emacs_window = XtWindow (FRAME_X_SHELL_WIDGET (f));
       /* first raises all the dialog boxes, then put emacs just below the 
@@ -2223,7 +2239,7 @@ x_lower_frame (struct frame *f)
   XWindowChanges xwc;
   unsigned int flags;
   
-  if (FRAME_VISIBLE_P(f))
+  if (f->visible)
     {
       xwc.stack_mode = Below;
       flags = CWStackMode;
@@ -2239,7 +2255,7 @@ x_make_frame_visible (struct frame *f)
 {
   Display *display = DEVICE_X_DISPLAY (XDEVICE (f->device));
 
-  if (!FRAME_VISIBLE_P(f))
+  if (!f->visible)
     XMapRaised (display, XtWindow (FRAME_X_SHELL_WIDGET (f)));
   else
     x_raise_frame_1 (f, 0);
@@ -2251,7 +2267,7 @@ x_make_frame_invisible (struct frame *f)
 {
   Display *display = DEVICE_X_DISPLAY (XDEVICE (f->device));
 
-  if (!FRAME_VISIBLE_P(f))
+  if (!f->visible)
     return;
 
   if (!XWithdrawWindow (display,
@@ -2267,40 +2283,15 @@ x_frame_visible_p (struct frame *f)
   XWindowAttributes xwa;
   int result;
 
-  /* JV:
-     This is bad, very bad :-(
-     It is not compatible with our tristate visible and
-     it should never ever change the visibility for us, this leads to
-     the frame-freeze problem under fvwm because with the pager
-
-     Mappedness != Viewability != Visibility != Emacs f->visible
-
-     This first unequalness is the reason for the frame freezing problem
-     under fvwm (it happens when the frame is another fvwm-page)
-
-     The second unequalness happen when it is on the same fvwm-page
-     but in an invisible part of the visible screen.
-
-     For now we just return the XEmacs internal value --- which might not be up
-     to date. Is that a problem? ---. Otherwise we should
-     use async visibility like in standard Emacs.
-     */
-
-#if 0
   if (!XGetWindowAttributes (display,
 			     XtWindow (FRAME_X_SHELL_WIDGET (f)),
 			     &xwa))
     result = 0;
   else
     result = xwa.map_state == IsViewable;
-  /* In this implementation it should at least be != IsUnmapped
-     JV */
 
   f->visible = result;
   return result;
-#endif
-  
-  return f->visible;
 }
 
 static int
@@ -2329,7 +2320,6 @@ x_focus_on_frame (struct frame *f)
 {
   XWindowAttributes xwa;
   Widget shell_widget;
-  int viewable;
 
   assert (FRAME_X_P (f));
 
@@ -2353,15 +2343,9 @@ x_focus_on_frame (struct frame *f)
   if (XGetWindowAttributes (XtDisplay (shell_widget),
 			    XtWindow (shell_widget),
 			    &xwa))
-    /* JV: it is bad to change the visibility like this, so we don't for the
-       moment, at least change_frame_visibility should be called
-       Note also that under fvwm a frame can me Viewable (and thus Mapped)
-       but still X-invisible 
-    f->visible = xwa.map_state == IsViewable; */
-    viewable = xwa.map_state == IsViewable;
-
+    f->visible = xwa.map_state == IsViewable;
       
-  if (viewable)
+  if (f->visible)
     {
       Window focus;
       int revert_to;

@@ -1,6 +1,6 @@
 ;;; ediff-merg.el --- merging utilities
 
-;; Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1994, 1995, 1996 Free Software Foundation, Inc.
 
 ;; Author: Michael Kifer <kifer@cs.sunysb.edu>
 
@@ -22,24 +22,6 @@
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Code:
-
-(provide 'ediff-merg)
-
-;; compiler pacifier
-(defvar ediff-window-A)
-(defvar ediff-window-B)
-(defvar ediff-window-C)
-(defvar ediff-merge-window-share)
-(defvar ediff-window-config-saved)
-
-(eval-when-compile
-  (let ((load-path (cons (expand-file-name ".") load-path)))
-    (or (featurep 'ediff-init)
-	(load "ediff-init.el" nil nil 'nosuffix))
-    (or (featurep 'ediff-util)
-	(load "ediff-util.el" nil nil 'nosuffix))
-    ))
-;; end pacifier
 
 (require 'ediff-init)
 
@@ -282,10 +264,6 @@ Combining is done according to the specifications in variable
 	)))
   
 
-;;; Local Variables:
-;;; eval: (put 'ediff-defvar-local 'lisp-indent-hook 'defun)
-;;; eval: (put 'ediff-eval-in-buffer 'lisp-indent-hook 1)
-;;; eval: (put 'ediff-eval-in-buffer 'edebug-form-spec '(form body))
-;;; End:
+(provide 'ediff-merg)
 
 ;; ediff-merg.el ends here

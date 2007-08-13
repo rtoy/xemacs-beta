@@ -32,6 +32,9 @@ Boston, MA 02111-1307, USA.  */
 #include "redisplay.h"
 #include "sysdep.h"
 #include "window.h"             /* minibuf_level */
+#ifdef MULE
+#include "mule-coding.h"
+#endif
 
 #ifdef HAVE_LIBGEN_H            /* Must come before sysfile.h */
 #include <libgen.h>
@@ -112,19 +115,13 @@ Lisp_Object Qcompute_buffer_file_truename;
 DOESNT_RETURN
 report_file_error (CONST char *string, Lisp_Object data)
 {
-  /* #### dmoore - This uses current_buffer, better make sure no one
-     has GC'd the current buffer.  File handlers are giving me a headache
-     maybe I'll just always protect current_buffer around all of those
-     calls. */
-
   /* mrb: #### Needs to be fixed at a lower level; errstring needs to
      be MULEized.  The following at least prevents a crash... */
   Lisp_Object errstring = build_ext_string (strerror (errno), FORMAT_BINARY);
 
   /* System error messages are capitalized.  Downcase the initial
      unless it is followed by a slash.  */
-  if (string_char_length (XSTRING (errstring)) >= 2
-      && string_char (XSTRING (errstring), 1) != '/')
+  if (string_char (XSTRING (errstring), 1) != '/')
     set_string_char (XSTRING (errstring), 0,
 		     DOWNCASE (current_buffer,
 			       string_char (XSTRING (errstring), 0)));
@@ -340,7 +337,6 @@ use the standard functions without calling themselves recursively.
 */
        (filename, operation))
 {
-  /* This function does not GC */
   /* This function must not munge the match data.  */
   Lisp_Object chain, inhibited_handlers;
 
@@ -375,19 +371,9 @@ use the standard functions without calling themselves recursively.
 static Lisp_Object
 call2_check_string (Lisp_Object fn, Lisp_Object arg0, Lisp_Object arg1)
 {
-  /* This function can call lisp */
+  /* This function can GC */
   Lisp_Object result = call2 (fn, arg0, arg1);
   CHECK_STRING (result);
-  return (result);
-}
-
-static Lisp_Object
-call2_check_string_or_nil (Lisp_Object fn, Lisp_Object arg0, Lisp_Object arg1)
-{
-  /* This function can call lisp */
-  Lisp_Object result = call2 (fn, arg0, arg1);
-  if (!NILP (result))
-    CHECK_STRING (result);
   return (result);
 }
 
@@ -395,7 +381,7 @@ static Lisp_Object
 call3_check_string (Lisp_Object fn, Lisp_Object arg0, 
                     Lisp_Object arg1, Lisp_Object arg2)
 {
-  /* This function can call lisp */
+  /* This function can GC */
   Lisp_Object result = call3 (fn, arg0, arg1, arg2);
   CHECK_STRING (result);
   return (result);
@@ -411,7 +397,7 @@ on VMS, perhaps instead a string ending in `:', `]' or `>'.
 */
        (file))
 {
-  /* This function can GC.  GC checked 1997.04.06. */
+  /* This function can GC */
   Bufbyte *beg;
   Bufbyte *p;
   Lisp_Object handler;
@@ -422,8 +408,14 @@ on VMS, perhaps instead a string ending in `:', `]' or `>'.
      call the corresponding file handler.  */
   handler = Ffind_file_name_handler (file, Qfile_name_directory);
   if (!NILP (handler))
-    return (call2_check_string_or_nil (handler, Qfile_name_directory,
-				       file));
+    {
+      Lisp_Object retval = call2 (handler, Qfile_name_directory,
+				  file);
+
+      if (!NILP (retval))
+	CHECK_STRING (retval);
+      return retval;
+    }
 
 #ifdef FILE_SYSTEM_CASE
   file = FILE_SYSTEM_CASE (file);
@@ -479,7 +471,7 @@ or the entire name if it contains no slash.
 */
        (file))
 {
-  /* This function can GC.  GC checked 1997.04.06. */
+  /* This function can GC */
   Bufbyte *beg, *p, *end;
   Lisp_Object handler;
 
@@ -513,9 +505,9 @@ If FILENAME is a directly usable file itself, return
 The `call-process' and `start-process' functions use this function to
 get a current directory to run processes in.
 */
-       (filename))
+  (filename))
 {
-  /* This function can GC.  GC checked 1997.04.06. */
+  /* This function can GC */
   Lisp_Object handler;
 
   /* If the file name has special constructs in it,
@@ -615,7 +607,7 @@ On VMS, converts \"[X]FOO.DIR\" to \"[X.FOO]\", etc.
 */
        (file))
 {
-  /* This function can GC.  GC checked 1997.04.06. */
+  /* This function can GC */
   char *buf;
   Lisp_Object handler;
 
@@ -801,7 +793,7 @@ it returns a file name such as \"[X]Y.DIR.1\".
 */
        (directory))
 {
-  /* This function can GC.  GC checked 1997.04.06. */
+  /* This function can GC */
   char *buf;
   Lisp_Object handler;
 
@@ -869,7 +861,7 @@ See also the function `substitute-in-file-name'.
 */
        (name, defalt))
 {
-  /* This function can GC.  GC checked 1997.04.06. */
+  /* This function can GC */
   Bufbyte *nm;
   
   Bufbyte *newdir, *p, *o;
@@ -919,11 +911,7 @@ See also the function `substitute-in-file-name'.
 
   if (!NILP (defalt))
     {
-      struct gcpro gcpro1;
-
-      GCPRO1 (defalt);		/* might be current_buffer->directory */
       handler = Ffind_file_name_handler (defalt, Qexpand_file_name);
-      UNGCPRO;
       if (!NILP (handler))
 	return call3 (handler, Qexpand_file_name, name, defalt);
     }
@@ -938,15 +926,15 @@ See also the function `substitute-in-file-name'.
      Putting this call here avoids all that crud.
 
      The EQ test avoids infinite recursion.  */
-  if (! NILP(defalt) && !EQ (defalt, name)
+  if (! NILP (defalt) && !EQ (defalt, name)
       /* This saves time in a common case.  */
       && ! (XSTRING_LENGTH (defalt) >= 3
-	    && (IS_DIRECTORY_SEP (XSTRING_BYTE (defalt, 0))
-		|| IS_DEVICE_SEP (XSTRING_BYTE (defalt, 1)))))
+	    && IS_DIRECTORY_SEP (string_byte (XSTRING (defalt), 0))
+	    && IS_DEVICE_SEP (string_byte (XSTRING (defalt), 1))))
     {
       struct gcpro gcpro1;
 
-      GCPRO1 (defalt);		/* may be current_buffer->directory */
+      GCPRO1 (name);
       defalt = Fexpand_file_name (defalt, Qnil);
       UNGCPRO;
     }
@@ -959,8 +947,6 @@ See also the function `substitute-in-file-name'.
   name = FILE_SYSTEM_CASE (name);
 #endif
 
-  /* #### dmoore - this is ugly, clean this up.  Looks like nm
-     pointing into name should be safe during all of this, though. */
   nm = XSTRING_DATA (name);
   
 #ifdef MSDOS
@@ -1398,14 +1384,16 @@ No component of the resulting pathname will be a symbolic link, as
 */
        (filename, defalt))
 {
-  /* This function can GC.  GC checked 1997.04.06. */
+  /* This function can GC */
+  struct gcpro gcpro1;
   Lisp_Object expanded_name;
   Lisp_Object handler;
-  struct gcpro gcpro1;
 
   CHECK_STRING (filename);
 
+  GCPRO1 (filename);
   expanded_name = Fexpand_file_name (filename, defalt);
+  UNGCPRO;
 
   if (!STRINGP (expanded_name))
     return Qnil;
@@ -1489,7 +1477,7 @@ No component of the resulting pathname will be a symbolic link, as
 
     {
       int rlen = strlen (resolved_path);
-      if (elen > 0 && XSTRING_BYTE (expanded_name, elen - 1) == '/'
+      if (elen > 0 && string_byte (XSTRING (expanded_name), elen - 1) == '/'
           && !(rlen > 0 && resolved_path[rlen - 1] == '/'))
 	{
 	  if (rlen + 1 > countof (resolved_path))
@@ -1525,7 +1513,6 @@ duplicates what `expand-file-name' does.
 */
        (string))
 {
-  /* This function can GC.  GC checked 1997.04.06. */
   Bufbyte *nm;
 
   Bufbyte *s, *p, *o, *x, *endp;
@@ -1541,8 +1528,14 @@ duplicates what `expand-file-name' does.
      call the corresponding file handler.  */
   handler = Ffind_file_name_handler (string, Qsubstitute_in_file_name);
   if (!NILP (handler))
-    return (call2_check_string_or_nil (handler, Qsubstitute_in_file_name,
-				       string));
+    {
+      Lisp_Object retval = call2 (handler, Qsubstitute_in_file_name,
+				  string);
+
+      if (!NILP (retval))
+	CHECK_STRING (retval);
+      return retval;
+    }
 
   nm = XSTRING_DATA (string);
 #ifdef MSDOS
@@ -1736,16 +1729,16 @@ duplicates what `expand-file-name' does.
 Lisp_Object
 expand_and_dir_to_file (Lisp_Object filename, Lisp_Object defdir)
 {
-  /* This function can call lisp */
+  /* This function can GC */
   Lisp_Object abspath;
   struct gcpro gcpro1;
 
+  GCPRO1 (filename);
   abspath = Fexpand_file_name (filename, defdir);
-  GCPRO1 (abspath);
 #ifdef VMS
   {
     Bufbyte c =
-      XSTRING_BYTE (abspath, XSTRING_LENGTH (abspath) - 1);
+      string_byte (XSTRING (abspath), XSTRING_LENGTH (abspath) - 1);
     if (c == ':' || c == ']' || c == '>')
       abspath = Fdirectory_file_name (abspath);
   }
@@ -1753,8 +1746,10 @@ expand_and_dir_to_file (Lisp_Object filename, Lisp_Object defdir)
   /* Remove final slash, if any (unless path is root).
      stat behaves differently depending!  */
   if (XSTRING_LENGTH (abspath) > 1
-      && IS_DIRECTORY_SEP (XSTRING_BYTE (abspath, XSTRING_LENGTH (abspath) - 1))
-      && !IS_DEVICE_SEP (XSTRING_BYTE (abspath, XSTRING_LENGTH (abspath) - 2)))
+      && IS_DIRECTORY_SEP (string_byte (XSTRING (abspath),
+					XSTRING_LENGTH (abspath) - 1))
+      && !IS_DEVICE_SEP (string_byte (XSTRING (abspath),
+				      XSTRING_LENGTH (abspath) - 2)))
     /* We cannot take shortcuts; they might be wrong for magic file names.  */
     abspath = Fdirectory_file_name (abspath);
 #endif
@@ -1774,7 +1769,6 @@ static void
 barf_or_query_if_file_exists (Lisp_Object absname, CONST char *querystring,
 			      int interactive, struct stat *statptr)
 {
-  /* This function can call lisp */
   struct stat statbuf;
 
   /* stat is a good way to tell whether the file exists,
@@ -1782,24 +1776,19 @@ barf_or_query_if_file_exists (Lisp_Object absname, CONST char *querystring,
   if (stat ((char *) XSTRING_DATA (absname), &statbuf) >= 0)
     {
       Lisp_Object tem;
+      struct gcpro gcpro1;
 
+      GCPRO1 (absname);
       if (interactive)
-	{
-	  Lisp_Object prompt;
-	  struct gcpro gcpro1;
-
-	  prompt = emacs_doprnt_string_c
+        tem = call1
+	  (Qyes_or_no_p,
+	   (emacs_doprnt_string_c
 	    ((CONST Bufbyte *) GETTEXT ("File %s already exists; %s anyway? "),
 	     Qnil, -1, XSTRING_DATA (absname),
-	     GETTEXT (querystring));
-	     
-	  GCPRO1 (prompt);
-	  tem = call1 (Qyes_or_no_p, prompt);
-	  UNGCPRO;
-	}
+	     GETTEXT (querystring))));
       else
         tem = Qnil;
-
+      UNGCPRO;
       if (NILP (tem))
 	Fsignal (Qfile_already_exists,
 		 list2 (build_translated_string ("File already exists"),
@@ -1826,9 +1815,9 @@ Fourth arg KEEP-TIME non-nil means give the new file the same
 last-modified time as the old one.  (This works on only some systems.)
 A prefix arg makes KEEP-TIME non-nil.
 */
-       (filename, newname, ok_if_already_exists, keep_time))
+       (filename, newname, ok_if_already_exists, keep_date))
 {
-  /* This function can GC.  GC checked 1997.04.06. */
+  /* This function can GC */
   int ifd, ofd, n;
   char buf[16 * 1024];
   struct stat st, out_st;
@@ -1854,7 +1843,7 @@ A prefix arg makes KEEP-TIME non-nil.
   {
     UNGCPRO;
     return call5 (handler, Qcopy_file, filename, newname,
-		  ok_if_already_exists, keep_time);
+		  ok_if_already_exists, keep_date);
   }
 
   /* When second argument is a directory, copy the file into it.
@@ -1870,7 +1859,8 @@ A prefix arg makes KEEP-TIME non-nil.
       args[1] = Qnil; args[2] = Qnil;
       NGCPRO1 (*args); 
       ngcpro1.nvars = 3;
-      if (XSTRING_BYTE (newname, XSTRING_LENGTH (newname) - 1) != '/')
+      if (string_byte (XSTRING (newname),
+		       XSTRING_LENGTH (newname) - 1) != '/')
 	args[i++] = build_string ("/");
       args[i++] = Ffile_name_nondirectory (filename);
       newname = Fconcat (i, args);
@@ -1954,7 +1944,7 @@ A prefix arg makes KEEP-TIME non-nil.
 
     if (input_file_statable_p)
     {
-      if (!NILP (keep_time))
+      if (!NILP (keep_date))
       {
         EMACS_TIME atime, mtime;
         EMACS_SET_SECS_USECS (atime, st.st_atime, 0);
@@ -1994,19 +1984,21 @@ Create a directory.  One argument, a file name string.
 */
        (dirname))
 {
-  /* This function can GC.  GC checked 1997.04.06 */
+  /* This function can GC */
   char dir [MAXPATHLEN];
   Lisp_Object handler;
+
   struct gcpro gcpro1;
   
+  GCPRO1 (dirname);
   CHECK_STRING (dirname);
   dirname = Fexpand_file_name (dirname, Qnil);
 
-  GCPRO1 (dirname);
   handler = Ffind_file_name_handler (dirname, Qmake_directory_internal);
   UNGCPRO;
   if (!NILP (handler))
-    return (call2 (handler, Qmake_directory_internal, dirname));
+    return (call2 (handler, Qmake_directory_internal,
+		   dirname));
  
   if (XSTRING_LENGTH (dirname) > (sizeof (dir) - 1))
     {
@@ -2038,15 +2030,14 @@ Delete a directory.  One argument, a file name or directory name string.
 */
        (dirname))
 {
-  /* This function can GC.  GC checked 1997.04.06. */
+  /* This function can GC */
   Lisp_Object handler;
   struct gcpro gcpro1;
   
-  CHECK_STRING (dirname);
-
   GCPRO1 (dirname);
-  dirname = Fexpand_file_name (dirname, Qnil);
-  dirname =  Fdirectory_file_name (dirname);
+  CHECK_STRING (dirname);
+  dirname =
+    Fdirectory_file_name (Fexpand_file_name (dirname, Qnil));
 
   handler = Ffind_file_name_handler (dirname, Qdelete_directory);
   UNGCPRO;
@@ -2065,14 +2056,14 @@ If file has multiple names, it continues to exist with the other names.
 */
        (filename))
 {
-  /* This function can GC.  GC checked 1997.04.06. */
+  /* This function can GC */
   Lisp_Object handler;
   struct gcpro gcpro1;
   
+  GCPRO1 (filename);
   CHECK_STRING (filename);
   filename = Fexpand_file_name (filename, Qnil);
 
-  GCPRO1 (filename);
   handler = Ffind_file_name_handler (filename, Qdelete_file);
   UNGCPRO;
   if (!NILP (handler))
@@ -2094,7 +2085,6 @@ internal_delete_file_1 (Lisp_Object ignore, Lisp_Object ignore2)
 int
 internal_delete_file (Lisp_Object filename)
 {
-  /* This function can GC.  GC checked 1997.04.06. */
   return NILP (condition_case_1 (Qt, Fdelete_file, filename,
 				 internal_delete_file_1, Qnil));
 }
@@ -2110,7 +2100,7 @@ This is what happens in interactive use with M-x.
 */
        (filename, newname, ok_if_already_exists))
 {
-  /* This function can GC.  GC checked 1997.04.06. */
+  /* This function can GC */
   Lisp_Object handler;
   struct gcpro gcpro1, gcpro2;
 
@@ -2203,7 +2193,7 @@ This is what happens in interactive use with M-x.
 */
        (filename, newname, ok_if_already_exists))
 {
-  /* This function can GC.  GC checked 1997.04.06. */
+  /* This function can GC */
   Lisp_Object handler;
   struct gcpro gcpro1, gcpro2;
 
@@ -2260,7 +2250,7 @@ This happens for interactive use with M-x.
 */
        (filename, linkname, ok_if_already_exists))
 {
-  /* This function can GC.  GC checked 1997.06.04. */
+  /* This function can GC */
   Lisp_Object handler;
   struct gcpro gcpro1, gcpro2;
 
@@ -2270,7 +2260,7 @@ This happens for interactive use with M-x.
   /* If the link target has a ~, we must expand it to get
      a truly valid file name.  Otherwise, do not expand;
      we want to permit links to relative file names.  */
-  if (XSTRING_BYTE (filename, 0) == '~') /* #### Un*x-specific */
+  if (string_byte (XSTRING (filename), 0) == '~') /* #### Un*x-specific */
     filename = Fexpand_file_name (filename, Qnil);
   linkname = Fexpand_file_name (linkname, Qnil);
 
@@ -2368,7 +2358,6 @@ On Unix, this is a name starting with a `/' or a `~'.
 */
        (filename))
 {
-  /* This function does not GC */
   Bufbyte *ptr;
 
   CHECK_STRING (filename);
@@ -2448,14 +2437,16 @@ See also `file-readable-p' and `file-attributes'.
 */
        (filename))
 {
-  /* This function can call lisp */
+  /* This function can GC */
   Lisp_Object abspath;
   Lisp_Object handler;
   struct stat statbuf;
   struct gcpro gcpro1;
   
+  GCPRO1 (filename);
   CHECK_STRING (filename);
   abspath = Fexpand_file_name (filename, Qnil);
+  UNGCPRO;
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
@@ -2476,8 +2467,9 @@ Return t if FILENAME can be executed by you.
 For a directory, this means you can access files in that directory.
 */
        (filename))
+
 {
-  /* This function can call lisp */
+  /* This function can GC */
   Lisp_Object abspath;
   Lisp_Object handler;
   struct gcpro gcpro1;
@@ -2505,14 +2497,16 @@ See also `file-exists-p' and `file-attributes'.
 */
        (filename))
 {
-  /* This function can call lisp */
+  /* This function can GC */
   Lisp_Object abspath;
   Lisp_Object handler;
   int desc;
   struct gcpro gcpro1;
   
+  GCPRO1 (filename);
   CHECK_STRING (filename);
   abspath = Fexpand_file_name (filename, Qnil);
+  UNGCPRO;
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
@@ -2536,14 +2530,16 @@ Return t if file FILENAME can be written or created by you.
 */
        (filename))
 {
-  /* This function can call lisp */
+  /* This function can GC */
   Lisp_Object abspath, dir;
   Lisp_Object handler;
   struct stat statbuf;
   struct gcpro gcpro1;
   
+  GCPRO1 (filename);
   CHECK_STRING (filename);
   abspath = Fexpand_file_name (filename, Qnil);
+  UNGCPRO;
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
@@ -2558,16 +2554,10 @@ Return t if file FILENAME can be written or created by you.
 	    ? Qt : Qnil);
 
 
-  GCPRO1 (abspath);
   dir = Ffile_name_directory (abspath);
-  UNGCPRO;
 #if defined (VMS) || defined (MSDOS)
   if (!NILP (dir))
-    {
-      GCPRO1(dir);
-      dir = Fdirectory_file_name (dir);
-      UNGCPRO;
-    }
+    dir = Fdirectory_file_name (dir);
 #endif /* VMS or MSDOS */
   return (check_writable (!NILP (dir) ? (char *) XSTRING_DATA (dir)
 			  : "")
@@ -2581,7 +2571,7 @@ Otherwise returns nil.
 */
        (filename))
 {
-  /* This function can call lisp */
+  /* This function can GC */
 #ifdef S_IFLNK
   char *buf;
   int bufsize;
@@ -2590,14 +2580,14 @@ Otherwise returns nil.
   Lisp_Object handler;
   struct gcpro gcpro1;
   
+  GCPRO1 (filename);
   CHECK_STRING (filename);
   filename = Fexpand_file_name (filename, Qnil);
+  UNGCPRO;
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
-  GCPRO1 (filename);
   handler = Ffind_file_name_handler (filename, Qfile_symlink_p);
-  UNGCPRO;
   if (!NILP (handler))
     return call2 (handler, Qfile_symlink_p, filename);
 
@@ -2633,13 +2623,13 @@ if the directory so specified exists and really is a directory.
 */
        (filename))
 {
-  /* This function can call lisp */
+  /* This function can GC */
   Lisp_Object abspath;
   struct stat st;
   Lisp_Object handler;
   struct gcpro gcpro1;
   
-  GCPRO1 (current_buffer->directory);
+  GCPRO1 (filename);
   abspath = expand_and_dir_to_file (filename,
 				    current_buffer->directory);
   UNGCPRO;
@@ -2667,8 +2657,9 @@ searchable directory.
 */
        (filename))
 {
-  /* This function can call lisp */
+  /* This function can GC */
   Lisp_Object handler;
+  struct gcpro gcpro1;
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
@@ -2677,10 +2668,15 @@ searchable directory.
     return call2 (handler, Qfile_accessible_directory_p,
 		  filename);
 
+  GCPRO1 (filename);
   if (NILP (Ffile_directory_p (filename)))
+    {
+      UNGCPRO;
       return (Qnil);
-  else
-    return Ffile_executable_p (filename);
+    }
+  handler = Ffile_executable_p (filename);
+  UNGCPRO;
+  return (handler);
 }
 
 DEFUN ("file-regular-p", Ffile_regular_p, 1, 1, 0, /*
@@ -2689,21 +2685,15 @@ This is the sort of file that holds an ordinary stream of data bytes.
 */
        (filename))
 {
-  /* This function can call lisp */
-  Lisp_Object abspath;
+  REGISTER Lisp_Object abspath;
   struct stat st;
   Lisp_Object handler;
-  struct gcpro gcpro1;
 
-  GCPRO1 (current_buffer->directory);
   abspath = expand_and_dir_to_file (filename, current_buffer->directory);
-  UNGCPRO;
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
-  GCPRO1 (abspath);
   handler = Ffind_file_name_handler (abspath, Qfile_regular_p);
-  UNGCPRO;
   if (!NILP (handler))
     return call2 (handler, Qfile_regular_p, abspath);
 
@@ -2717,13 +2707,13 @@ Return mode bits of FILE, as an integer.
 */
        (filename))
 {
-  /* This function can call lisp */
+  /* This function can GC */
   Lisp_Object abspath;
   struct stat st;
   Lisp_Object handler;
   struct gcpro gcpro1;
   
-  GCPRO1 (current_buffer->directory);
+  GCPRO1 (filename);
   abspath = expand_and_dir_to_file (filename,
 				    current_buffer->directory);
   UNGCPRO;
@@ -2752,16 +2742,15 @@ Only the 12 low bits of MODE are used.
 */
        (filename, mode))
 {
-  /* This function can call lisp */
+  /* This function can GC */
   Lisp_Object abspath;
   Lisp_Object handler;
-  struct gcpro gcpro1;
+  struct gcpro gcpro1, gcpro2;
   
-  GCPRO1 (current_buffer->directory);
+  GCPRO2 (filename, mode);
   abspath = Fexpand_file_name (filename, current_buffer->directory);
-  UNGCPRO;
-
   CHECK_INT (mode);
+  UNGCPRO;
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
@@ -2828,25 +2817,27 @@ otherwise, if FILE2 does not exist, the answer is t.
 */
        (file1, file2))
 {
-  /* This function can call lisp */
+  /* This function can GC */
   Lisp_Object abspath1, abspath2;
   struct stat st;
   int mtime1;
   Lisp_Object handler;
-  struct gcpro gcpro1, gcpro2, gcpro3;
+  struct gcpro gcpro1, gcpro2;
 
   CHECK_STRING (file1);
   CHECK_STRING (file2);
 
   abspath1 = Qnil;
-  abspath2 = Qnil;
-
-  GCPRO3 (abspath1, abspath2, current_buffer->directory);
-  abspath1 = expand_and_dir_to_file (file1, current_buffer->directory);
-  abspath2 = expand_and_dir_to_file (file2, current_buffer->directory);
+  GCPRO2 (abspath1, file2);
+  abspath1 = expand_and_dir_to_file (file1,
+				     current_buffer->directory);
+  abspath2 = expand_and_dir_to_file (file2,
+				     current_buffer->directory);
+  UNGCPRO;
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
+  GCPRO2 (abspath1, abspath2);
   handler = Ffind_file_name_handler (abspath1, Qfile_newer_than_file_p);
   if (NILP (handler))
     handler = Ffind_file_name_handler (abspath2, Qfile_newer_than_file_p);
@@ -2876,39 +2867,36 @@ Lisp_Object Qfind_buffer_file_type;
 #define READ_BUF_SIZE (1 << 15)
 
 DEFUN ("insert-file-contents-internal",
-       Finsert_file_contents_internal, 1, 5, 0, /*
-Insert contents of file FILENAME after point.
-Returns list of absolute file name and length of data inserted.
-If second argument VISIT is non-nil, the buffer's visited filename
-and last save file modtime are set, and it is marked unmodified.
-If visiting and the file does not exist, visiting is completed
-before the error is signaled.
+       Finsert_file_contents_internal, 1, 7, 0, /*
+Insert contents of file FILENAME after point; no coding-system frobbing.
+This function is identical to `insert-file-contents' except for the
+handling of the CODESYS and USED-CODESYS arguments under
+XEmacs/Mule. (When Mule support is not present, both functions are
+identical and ignore the CODESYS and USED-CODESYS arguments.)
 
-The optional third and fourth arguments BEG and END
-specify what portion of the file to insert.
-If VISIT is non-nil, BEG and END must be nil.
-If optional fifth argument REPLACE is non-nil,
-it means replace the current buffer contents (in the accessible portion)
-with the file contents.  This is better than simply deleting and inserting
-the whole thing because (1) it preserves some marker positions
-and (2) it puts less data in the undo list.
+If support for Mule exists in this Emacs, the file is decoded according
+to CODESYS; if omitted, no conversion happens.  If USED-CODESYS is non-nil,
+it should be a symbol, and the actual coding system that was used for the
+decoding is stored into it.  It will in general be different from CODESYS
+if CODESYS specifies automatic encoding detection or end-of-line detection.
+
+Currently BEG and END refer to byte positions (as opposed to character
+positions), even in Mule. (Fixing this is very difficult.)
 */
-       (filename, visit, beg, end, replace))
+     (filename, visit, beg, end, replace, codesys, used_codesys))
 {
-  /* This function can call lisp */
-  /* #### dmoore - this function hasn't been checked for gc recently */
+  /* This function can GC */
   struct stat st;
   int fd;
   int saverrno = 0;
   Charcount inserted = 0;
   int speccount;
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
   Lisp_Object handler = Qnil, val;
   int total;
   Bufbyte read_buf[READ_BUF_SIZE];
   int mc_count;
   struct buffer *buf = current_buffer;
-  Lisp_Object curbuf;
   int not_regular = 0;
 
   if (buf->base_buffer && ! NILP (visit))
@@ -2919,12 +2907,7 @@ and (2) it puts less data in the undo list.
 
   val = Qnil;
 
-  /* #### dmoore - should probably check in various places to see if
-     curbuf was killed and if so signal an error? */
-
-  XSETBUFFER (curbuf, buf);
-
-  GCPRO5 (filename, val, visit, handler, curbuf);
+  GCPRO4 (filename, val, visit, handler);
   
   mc_count = (NILP (replace)) ?
     begin_multiple_change (buf, BUF_PT  (buf), BUF_PT (buf)) :
@@ -2940,10 +2923,15 @@ and (2) it puts less data in the undo list.
   handler = Ffind_file_name_handler (filename, Qinsert_file_contents);
   if (!NILP (handler))
     {
-      val = call6 (handler, Qinsert_file_contents, filename,
-		   visit, beg, end, replace);
+      val = call8 (handler, Qinsert_file_contents, filename,
+		   visit, beg, end, replace, codesys, used_codesys);
       goto handled;
     }
+
+#ifdef MULE
+  if (!NILP (used_codesys))
+    CHECK_SYMBOL (used_codesys);
+#endif
 
   if ( (!NILP (beg) || !NILP (end)) && !NILP (visit) )
     error ("Attempt to visit less than an entire file");
@@ -3164,6 +3152,12 @@ and (2) it puts less data in the undo list.
 
     NGCPRO1 (stream);
     Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
+#ifdef MULE
+    stream = make_decoding_input_stream
+      (XLSTREAM (stream), Fget_coding_system (codesys));
+    Lstream_set_character_mode (XLSTREAM (stream));
+    Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
+#endif
 
     record_unwind_protect (close_stream_unwind, stream);
 
@@ -3193,6 +3187,13 @@ and (2) it puts less data in the undo list.
 	inserted  += cc_inserted;
 	cur_point += cc_inserted;
       }
+#ifdef MULE
+    if (!NILP (used_codesys))
+      {
+	Fset (used_codesys,
+	      XCODING_SYSTEM_NAME (decoding_stream_coding_system (XLSTREAM (stream))));
+      }
+#endif
     NUNGCPRO;
   }
 
@@ -3326,27 +3327,18 @@ build_annotations_unwind (Lisp_Object buf)
   return Qnil;
 }
 
-DEFUN ("write-region-internal", Fwrite_region_internal, 3, 6,
+DEFUN ("write-region-internal", Fwrite_region_internal, 3, 7,
        "r\nFWrite region to file: ", /*
-Write current region into specified file.
-When called from a program, takes three arguments:
-START, END and FILENAME.  START and END are buffer positions.
-Optional fourth argument APPEND if non-nil means
-  append to existing file contents (if any).
-Optional fifth argument VISIT if t means
-  set the last-save-file-modtime of buffer to this file's modtime
-  and mark buffer not modified.
-If VISIT is a string, it is a second file name;
-  the output goes to FILENAME, but the buffer is marked as visiting VISIT.
-  VISIT is also the file name to lock and unlock for clash detection.
-If VISIT is neither t nor nil nor a string,
-  that means do not print the \"Wrote file\" message.
-Kludgy feature: if START is a string, then that string is written
-to the file, instead of any buffer contents, and END is ignored.
+Write current region into specified file; no coding-system frobbing.
+This function is identical to `write-region' except for the handling
+of the CODESYS argument under XEmacs/Mule. (When Mule support is not
+present, both functions are identical and ignore the CODESYS argument.)
+If support for Mule exists in this Emacs, the file is encoded according
+to the value of CODESYS.  If this is nil, no code conversion occurs.
 */
-       (start, end, filename, append, visit, lockname))
+       (start, end, filename, append, visit, lockname, codesys))
 {
-  /* This function can call lisp */
+  /* This function can GC */
   int desc;
   int failure;
   int save_errno = 0;
@@ -3364,16 +3356,14 @@ to the file, instead of any buffer contents, and END is ignored.
   struct buffer *given_buffer;
   Bufpos start1, end1;
 
-  /* #### dmoore - if Fexpand_file_name or handlers kill the buffer,
-     we should signal an error rather than blissfully continuing
-     along.  ARGH, this function is going to lose lose lose.  We need
-     to protect the current_buffer from being destroyed, but the
-     multiple return points make this a pain in the butt. */
-
 #ifdef DOS_NT
   int buffer_file_type
     = NILP (current_buffer->buffer_file_type) ? O_TEXT : O_BINARY;
 #endif /* DOS_NT */
+
+#ifdef MULE
+  codesys = Fget_coding_system (codesys);
+#endif /* MULE */
 
   if (current_buffer->base_buffer && ! NILP (visit))
     error ("Cannot do file visiting in an indirect buffer");
@@ -3384,7 +3374,6 @@ to the file, instead of any buffer contents, and END is ignored.
   {
     Lisp_Object handler;
     struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
-
     GCPRO5 (start, filename, visit, visit_file, lockname);
 
     if (visiting_other)
@@ -3407,8 +3396,8 @@ to the file, instead of any buffer contents, and END is ignored.
 
     if (!NILP (handler))
       {
-        Lisp_Object val = call6 (handler, Qwrite_region, start, end, 
-                                 filename, append, visit);
+        Lisp_Object val = call7 (handler, Qwrite_region, start, end, 
+                                 filename, append, visit, codesys);
 	if (visiting)
 	  {
 	    BUF_SAVE_MODIFF (current_buffer) = BUF_MODIFF (current_buffer);
@@ -3424,11 +3413,8 @@ to the file, instead of any buffer contents, and END is ignored.
 #ifdef CLASH_DETECTION
   if (!auto_saving)
     {
-      Lisp_Object curbuf;
-      struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
-
-      XSETBUFFER (curbuf, current_buffer);
-      GCPRO5 (start, filename, visit_file, lockname, curbuf);
+      struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
+      GCPRO4 (start, filename, visit_file, lockname);
       lock_file (lockname);
       UNGCPRO;
     }
@@ -3483,8 +3469,7 @@ to the file, instead of any buffer contents, and END is ignored.
 	desc = open (fn_data, O_RDWR, 0);
 	if (desc < 0)
 	  desc = creat_copy_attrs ((STRINGP (current_buffer->filename)
-				    ? (char *)
-				    XSTRING_DATA (current_buffer->filename)
+				    ? (char *) XSTRING_DATA (current_buffer->filename)
 				    : 0),
 				   fn_data);
       }
@@ -3611,6 +3596,12 @@ to the file, instead of any buffer contents, and END is ignored.
     outstream = make_filedesc_output_stream (desc, 0, -1, 0);
     Lstream_set_buffering (XLSTREAM (outstream),
 			   LSTREAM_BLOCKN_BUFFERED, 65536);
+#ifdef MULE
+    outstream =
+      make_encoding_output_stream ( XLSTREAM (outstream), codesys);
+    Lstream_set_buffering (XLSTREAM (outstream),
+			   LSTREAM_BLOCKN_BUFFERED, 65536);
+#endif
     if (STRINGP (start))
       {
 	instream = make_lisp_string_input_stream (start, 0, -1);
@@ -3861,6 +3852,22 @@ a_write (Lisp_Object outstream, Lisp_Object instream, int pos,
 	nextpos = XINT (tem);
       else
 	nextpos = INT_MAX;
+#ifdef MULE
+      /* If there are annotations left and we have Mule, then we
+	 have to do the I/O one emchar at a time so we can
+	 determine when to insert the annotation. */
+      if (!NILP (*annot))
+	{
+	  Emchar ch;
+	  while (pos != nextpos && (ch = Lstream_get_emchar (instr)) != EOF)
+	    {
+	      if (Lstream_put_emchar (outstr, ch) < 0)
+		return -1;
+	      pos++;
+	    }
+	}
+      else
+#endif
 	{
 	  while (pos != nextpos)
 	    {
@@ -3973,7 +3980,7 @@ This means that the file has not been changed since it was visited or saved.
 */
        (buf))
 {
-  /* This function can call lisp */
+  /* This function can GC */
   struct buffer *b;
   struct stat st;
   Lisp_Object handler;
@@ -4039,7 +4046,7 @@ An argument specifies the modification time value to use
 */
        (time_list))
 {
-  /* This function can call lisp */
+  /* This function can GC */
   if (!NILP (time_list))
     {
       time_t the_time;
@@ -4051,10 +4058,11 @@ An argument specifies the modification time value to use
       Lisp_Object filename;
       struct stat st;
       Lisp_Object handler;
-      struct gcpro gcpro1, gcpro2, gcpro3;
+      struct gcpro gcpro1, gcpro2;
       
-      GCPRO3 (filename, time_list, current_buffer->filename);
-      filename = Fexpand_file_name (current_buffer->filename, Qnil);
+      GCPRO2 (filename, time_list);
+      filename = Fexpand_file_name (current_buffer->filename,
+				    Qnil);
 
       /* If the file name has special constructs in it,
 	 call the corresponding file handler.  */
@@ -4078,7 +4086,7 @@ it will be used if it is either an integer or a cons of two integers.
 */
        (buf, in_time))
 {
-  /* This function can call lisp */
+  /* This function can GC */
   unsigned long time_to_use = 0;
   int set_time_to_use = 0;
   struct stat st;
@@ -4106,16 +4114,16 @@ it will be used if it is either an integer or a cons of two integers.
   if (!set_time_to_use)
     {
       Lisp_Object filename = Qnil;
-      struct gcpro gcpro1;
-      GCPRO1 (filename);
-      /* #### dmoore - do we need to protect XBUFFER (buf)->filename?
-	 What if a ^(*&^&*^*& handler renames a buffer?  I think I'm
-	 getting a headache now. */
+      struct gcpro gcpro1, gcpro2;
+      GCPRO2 (buf, filename);
 
       if (STRINGP (XBUFFER (buf)->filename))
-        filename = Fexpand_file_name (XBUFFER (buf)->filename, Qnil);
+        filename = Fexpand_file_name (XBUFFER (buf)->filename,
+				      Qnil);
       else
         filename = Qnil;
+  
+      UNGCPRO;
 
       if (!NILP (filename) && !NILP (Ffile_exists_p (filename)))
         {
@@ -4123,6 +4131,7 @@ it will be used if it is either an integer or a cons of two integers.
 
 	  /* If the file name has special constructs in it,
 	     call the corresponding file handler.  */
+	  GCPRO1 (filename);
 	  handler = Ffind_file_name_handler (filename, Qset_buffer_modtime);
 	  UNGCPRO;
 	  if (!NILP (handler))
@@ -4137,14 +4146,11 @@ it will be used if it is either an integer or a cons of two integers.
 	    }
         }
       else
-	{
-	  UNGCPRO;
-  	  time_to_use = time ((time_t *) 0);
-	}
+	time_to_use = time ((time_t *) 0);
     }
 
   XBUFFER (buf)->modtime = time_to_use;
-  
+
   return Qnil;
 }
 
@@ -4152,19 +4158,19 @@ it will be used if it is either an integer or a cons of two integers.
 static Lisp_Object
 auto_save_error (Lisp_Object condition_object, Lisp_Object ignored)
 {
-  /* This function can call lisp */
+  /* This function can GC */
   if (gc_in_progress)
-    return Qnil;
-  /* Don't try printing an error message after everything is gone! */
-  if (preparing_for_armageddon)
     return Qnil;
   clear_echo_area (selected_frame (), Qauto_saving, 1);
   Fding (Qt, Qauto_save_error, Qnil);
-  message ("Auto-saving...error for %s", XSTRING_DATA (current_buffer->name));
+  message ("Auto-saving...error for %s",
+	   XSTRING_DATA (current_buffer->name));
   Fsleep_for (make_int (1));
-  message ("Auto-saving...error!for %s", XSTRING_DATA (current_buffer->name));
+  message ("Auto-saving...error!for %s",
+	   XSTRING_DATA (current_buffer->name));
   Fsleep_for (make_int (1));
-  message ("Auto-saving...error for %s", XSTRING_DATA (current_buffer->name));
+  message ("Auto-saving...error for %s",
+	   XSTRING_DATA (current_buffer->name));
   Fsleep_for (make_int (1));
   return Qnil;
 }
@@ -4172,8 +4178,7 @@ auto_save_error (Lisp_Object condition_object, Lisp_Object ignored)
 static Lisp_Object
 auto_save_1 (Lisp_Object ignored)
 {
-  /* This function can call lisp */
-  /* #### I think caller is protecting current_buffer? */
+  /* This function can GC */
   struct stat st;
   Lisp_Object fn = current_buffer->filename;
   Lisp_Object a  = current_buffer->auto_save_file_name;
@@ -4193,27 +4198,14 @@ auto_save_1 (Lisp_Object ignored)
     auto_save_mode_bits = 0600;
 
   return
-    Fwrite_region_internal (Qnil, Qnil, a, Qnil, Qlambda, Qnil);
-}
-
-static Lisp_Object
-auto_save_expand_name_error (Lisp_Object condition_object, Lisp_Object ignored)
-{
-  /* #### this function should spew an error message about not being
-     able to open the .saves file. */
-  return Qnil;
-}
-
-static Lisp_Object
-auto_save_expand_name (Lisp_Object name)
-{
-  struct gcpro gcpro1;
-
-  /* note that caller did NOT gc protect name, so we do it. */
-  /* #### dmoore - this might not be neccessary, if condition_case_1
-     protects it.  but I don't think it does. */
-  GCPRO1 (name);
-  RETURN_UNGCPRO (Fexpand_file_name (name, Qnil));
+    /* !!#### need to deal with this 'escape-quoted everywhere */
+    Fwrite_region_internal (Qnil, Qnil, a, Qnil, Qlambda, Qnil,
+#ifdef MULE
+			    Qescape_quoted
+#else
+			    Qnil
+#endif
+			    );
 }
 
 
@@ -4253,20 +4245,18 @@ Non-nil second argument means save only current buffer.
 */
        (no_message, current_only))
 {
-  /* This function can call lisp */
-  struct buffer *b;
+  /* This function can GC */
+  struct buffer *old = current_buffer, *b;
   Lisp_Object tail, buf;
   int auto_saved = 0;
   int do_handled_files;
   Lisp_Object oquit = Qnil;
   Lisp_Object listfile = Qnil;
-  Lisp_Object old;
   int listdesc = -1;
   int speccount = specpdl_depth ();
-  struct gcpro gcpro1, gcpro2, gcpro3;
+  struct gcpro gcpro1, gcpro2;
 
-  XSETBUFFER (old, current_buffer);
-  GCPRO3 (oquit, listfile, old);
+  GCPRO2 (oquit, listfile);
   check_quit (); /* make Vquit_flag accurate */
   /* Ordinarily don't quit within this function,
      but don't make it impossible to quit (in case we get hung in I/O).  */
@@ -4282,10 +4272,7 @@ Non-nil second argument means save only current buffer.
   run_hook (Qauto_save_hook);
 
   if (GC_STRINGP (Vauto_save_list_file_name))
-    listfile = condition_case_1 (Qt,
-				 auto_save_expand_name,
-				 Vauto_save_list_file_name,
-				 auto_save_expand_name_error, Qnil);
+    listfile = Fexpand_file_name (Vauto_save_list_file_name, Qnil);
 
   /* Make sure auto_saving is reset. */
   record_unwind_protect (do_auto_save_unwind_2, make_int (auto_saving));
@@ -4378,7 +4365,7 @@ Non-nil second argument means save only current buffer.
 	      if (!auto_saved && GC_STRINGP (listfile) && listdesc < 0)
 		{
 #ifdef DOS_NT
-		  listdesc = open ((char *) XSTRING_DATA (listfile), 
+		  listdesc = open ((char *) XSTRING_DATA (listfile),
 				   O_WRONLY | O_TRUNC | O_CREAT | O_TEXT,
 				   S_IREAD | S_IWRITE);
 #else /* not DOS_NT */
@@ -4421,36 +4408,14 @@ Non-nil second argument means save only current buffer.
 		  write (listdesc, "\n", 1);
 		}
 
-	      /* dmoore - In a bad scenario we've set b=XBUFFER(buf)
-		 based on values in Vbuffer_alist.  auto_save_1 may
-		 cause lisp handlers to run.  Those handlers may kill
-		 the buffer and then GC.  Since the buffer is killed,
-		 it's no longer in Vbuffer_alist so it might get reaped
-		 by the GC.  We also need to protect tail. */
-	      /* #### There is probably a lot of other code which has
-		 pointers into buffers which may get blown away by
-		 handlers. */
-	      {
-		struct gcpro gcpro1, gcpro2;
-		GCPRO2 (buf, tail);
-		condition_case_1 (Qt,
-				  auto_save_1, Qnil,
-				  auto_save_error, Qnil);
-		UNGCPRO;
-	      }
-	      /* Handler killed our saved current-buffer!  Pick any. */
-	      if (!BUFFER_LIVE_P (XBUFFER (old)))
-		XSETBUFFER (old, current_buffer);
-
-	      set_buffer_internal (XBUFFER (old));
+	      condition_case_1 (Qt,
+				auto_save_1, Qnil,
+				auto_save_error, Qnil);
 	      auto_saved++;
-	      
-	      /* Handler killed their own buffer! */
-	      if (!BUFFER_LIVE_P(b))
-		continue;
-
 	      b->auto_save_modified = BUF_MODIFF (b);
 	      b->save_length = make_int (BUF_SIZE (b));
+	      set_buffer_internal (old);
+
 	      EMACS_GET_TIME (after_time);
 	      /* If auto-save took more than 60 seconds,
 		 assume it was an NFS failure that got a timeout.  */

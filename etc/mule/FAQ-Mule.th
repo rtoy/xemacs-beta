@@ -1,0 +1,1797 @@
+-*- Indented-Text -*-
+
+,T$S6RA07Uh106Y1!6RA0:h1MB (Frequently Asked Questions ,TK0CW1M FAQ) ,TaEP$S5M:JSK0CQ1:(B Mule
+,T)0:Q1:0GQ1907Uh1(B 30 0,TJT1'KR$A ,T$.,TH. 1994
+
+
+FAQ 0,T9Ui10(Q147S0"Vi19`0>Wh1MCG:CGA$S6RA07Uh106Y1!6RA0:h1MB ,Tf ,T>0Ci1MA$S5M:`0>Wh1Mc0Ki10'h1RBa0!h1!RC0Mi1R'0MT1'(B
+,TM09Vh1'(B FAQ ,T)0:Q1:09Ui1`;0EUh1B9a;E'd;(R! FAQ ,T)0:Q1:0!h1M9 ,Tf ,TAR!  ,T!0CX13R04Y10KQ1G0"i1M "0,TGT108U10Mh1R9aEP
+,Tb$C'J0Ci1R'"M' FAQ 0,T9Ui1(B"
+
+,T`CR>BRBRA07Uh1(P5CG(JM:$GRA06Y1!05i1M'"M'`09Wi1MKR"M'`M!JRC)0:Q1:09Ui1M0BYh15EM4  ,Ta05h1KR!07h1R9>:0JTh1'07Uh1(B
+0,T<T14>ER4c4 ,Tf ,Tc9`M!JRC ,TK0CW1M05i1M'!RC`J9M0KQ1G0"i1M`0>Th1A`05T1A  ,T!0CX13Ra0(i1'c0Ki17CR:04i1GB
+
+,T!0CX13R04Y1$S6RA07Uh1(B A-12 ,TJSK0CQ1:0GT108U1KR`M!JRC FAQ 0,T9Ui1(B ,T)0:Q1:0Eh1R0JX14(B
+
+,T"M"M:0$X13KERB ,Tf 0,T7h1R907Uh1d04i1c0Ki1$GRA0*h1GB`K0EW1Mc9!RC0(Q147S`M!JRC FAQ ,T)0:Q1:09Ui1d0Gi1(B ,T3 0,T7Uh109Ui104i1GB
+
+--
+Takahiro Maebashi <maebashi@mcs.meitetsu.co.jp>
+translated into Thai by thai-group@cs.titech.ac.jp
+
+----------------------------------------------------------------------
+
+,T$S`05W1M9!!
+,TCRB!RC FAQ 0,T9Ui1(B  0,TAU1C0KQ1J@RIR0-Uh10;Xh19(B ,T@RIR0(U19(B ,TaEP@RIRER05T19;9M0BYh1(B  ,TKR!`7M0Cl10AT109Q1E"M'07h1R9
+,Td0Ah1JRARC6aJ4'0MQ1!ICc9@RIR`K0Eh1R09Ui1d04i1(B 0,T!g1MR((P`0Kg19`0;g1905Q1GK09Q1'0JW1Ma;E! ,Tf ,Td04i1(B
+----------------------------------------------------------------------
+
+		      0,TGT108U10Mh1R9aEPb$C'J0Ci1R'"M' FAQ 0,T9Ui1(B
+
+,Tc9!C03U107Uh107h1R90Mh1R9 FAQ 0,T9Ui104i1GB Mule  0,T7h1R9(PJRARC6`0EW1M!0Mh1R9`)>RP$S6RAd04i1b4B0;i1M9$S0JQh1'(B
+"M-2 C-x $"  0,T6i1R05i1M'!RC04Y1$S5M:04i1GB 0,T!g1JRARC6!4 "C-x $" 0,TJQh1'c0Ki1!0EQ1:d;`0;g19M0Bh1R'`04T1A
+
+,T!0CX13R0JQh1'(B "M-C-s ^X-XX:" ,T`GER07Uh105i1M'!RC0$i19KR$S6RA`E"07Uh1(B X-XX  0,T6i1RKR!0$i19KRd0Ah1>:0!g1c0Ki1(B
+,TEM'!4 "C-r" 0,T5h1Md;`0CWh1MB ,Tf  0,T6i1R>:a0Ei1G0!g1c0Ki1!4(B ESC ,T`0>Wh1MK0BX14!RC0$i19KR
+
+,T`M!JRC Mule FAQ ,T)0:Q1:09Ui1(B ,Ta0:h1'MM!`0;g19JM'0Jh1G9cK0-h1(B ,Tf
+
+0,TJh1G907Uh1(B 1: ,T$S6RAJSK0CQ1:07X1!@RIRb4BCGA
+0,TJh1G907Uh1(B 2: ,T$S6RAJSK0CQ1:@RIR`)>RPa05h1EP@RIR
+
+,Tc90Jh1G9K09Vh1'(B ,Tf 0,TBQ1'a0:h1'MM!`0;g195M9 (section)  ,Tc90Jh1G907Uh1(B 1 ,T(Pa0:h1'5M95RA`09Wi1MKR"M'
+,T$S6RA  ,Tc90Jh1G907Uh1(B 2 ,Ta0:h1'5RA@RIR  ,T`CRd04i1c0Jh1$S6RA:R'$S6RA0+Vh1'0AU1`09Wi1MKR$0Ei1RB0!Q19(B ,Td0Gi1c907Qi1'(B
+,TJM'0Jh1G9 0,T!g1`0>Wh1Mc0Ki1JRARC6KR0"i1M0AY1E07Uh105i1M'!RCd04i1b4B0'h1RB
+
+
+----------------------------------------------------------------------
+
+	       Mule FAQ 0,TJh1G907Uh1(B 1: ,T$S6RAJSK0CQ1:07X1!@RIRb4BCGA
+
+
+0,T"i1M0AY1E07Qh1Gd;
+
+A-1: Mule 0,T$W1MMPdC?
+  
+  Mule 0,T$W1M editor GNU Emacs 0,T7Uh106Y1!`0>Th1A$GRAJRARC6c0Ki1c0*i1d04i10!Q1:@RIRKERB ,Tf ,T@RIR
+  0,T;Q1(0(X10:Q1909Ui1(B 0,TAU1(B Mule 0,TCXh19(B 1 0,T+Vh1'c0*i1(B GNU Emacs 0,TCXh19(B 18 ,T`0;g190R9 ,TaEP Mule 0,TCXh19(B 2 0,T+Vh1'c0*i1(B
+  GNU Emacs 0,TCXh19(B 19 ,T`0;g190R9  ,T`)>RP Mule 0,TCXh19(B 2 ,T`07h1R09Qi1907Uh1(P06Y1!0>Q129R;0CQ1:;0CX1'05h1Md;
+  
+  Mule 0,TAU10(X14`04h1904Q1'05h1Md;09Ui1(B
+   * ,TJRARC6c0*i1(B Mule ,Td04i1d0Ah1`)>RP0!Q1:0MQ1!"CP ASCII (7 0,T:T17(B) 0,TMQ1!"CP ISO Latin-1 (8
+     0,T:T17(B) ,T`07h1R09Qi19(B ,Ta05h10BQ1'c0*i1d04i10!Q1:C0KQ1J"M'05Q1G0MQ1!IC ,T@RIR0-Uh10;Xh19(B ,T@RIR0(U19(B ,T@RIR`!RK0EU1(B (16 0,T:T17(B)
+     ,TaEPJRARC6`0!g1:05Q1GK09Q1'0JW1M"M'@RIR`K0Eh1R09Ui1<JA0!Q19d0Gi1c90:Q1?`?M0Cl1(B (buffer) ,T`04U1BG
+   * ,TJRARC605Qi1'C0KQ1J0MQ1!IC`)>RP`(RP('d04i10!Q1:(B ,T!RC`0!g1:aEP0Mh1R9a0?i1A0"i1M0AY1E (file
+     input/output) ,T!RCaJ4'<E7R'(M ,T!RC0CQ1:0"i1M0AY1E7R'0$U10Bl1:M0Cl14(B ,TaEP ,T!RC05T1405h1MCPK0Gh1R'
+     ,T!CP:G9!RC (inter-process communication)
+   * ,TJRARC6c0*i1d04i1c!0Ei1`0$U1B'0!Q1:(B GNU Emacs 0,T5i19)0:Q1:(B  ,Tc9!C03U107Uh1d0Ah105i1M'!RCc0*i1@RIR0MWh19(B
+
+  ,T!0CX13R0Mh1R9 $MULE/README.Mule
+  
+A-2: ,T(PKR Mule ,Td04i1(R!07Uh1dK9?
+  
+  ,TJRARC6KR Mule 0,T<h1R97R' anonymous ftp ,Td04i1(R!
+  
+  	etlport.etl.go.jp [192.31.197.99]: /pub/mule
+  	ftp.mei.co.jp [132.182.49.2]: /public/free/gnu/emacs/Mule
+	ftp.iij.ad.jp [192.244.176.50]: /pub/misc/mule
+  	sh.wide.ad.jp [133.4.11.11]: /JAPAN/mule
+  	ftp.funet.fi [128.214.6.100]: /pub/gnu/emacs/mule
+  
+  ,T!0CX13Rc0*i1(B 3 ,Ta0Kh1'K0EQ1'c9!C03U107Uh1(B access ,T(R!@RB9M!;CP`7H0-Uh10;Xh19(B  ,Tc9!C03U107Uh1(B access ,T(R!
+  0,TBX1bC; ftp.funet.fi 0,T9h1R(P04U107Uh10JX14(B
+  
+  0,T7Uh1aK0Eh1'(B ftp ,T`K0Eh1R09Ui10AU1(B Mule 0,T*X14a(!0(h1RB (distribution) ,TJA0:Y1C03l1a::c90CY1;"M'a0?i1A0"i1M0AY1E
+  tar (mule-2.0.tar.gz) ,TaEP0Jh1G9;P (patch) (diff-19.25-2.0.gz) ,TCGA 2 ,Ta::
+  ,TJSK0CQ1:0<Yi107Uh10AU1(B GNU Emacs ,TM0BYh1a0Ei1G ,T!0CX13R`MR`0>U1B'a05h10Jh1G9`0>Th1A`05T1Aa0!i1d"`07h1R09Qi19(B  ,TKR!>:a0?i1A
+  0,T"i1M0AY1E;P (patch file) (patch-2.0-*.gz) 0,T!g1!0CX13R`0>Th1A (apply) ,Ta0?i1A0"i1M0AY1E`K0Eh1R09Qi19(B
+  0,T4i1GB   ,T9M!(R!09Ui1(B ,T`CR0BQ1'0AU1?M905l1a::05h1R' ,Tf ,TaEP library ,T@RIR elisp ,Td0Gi1c9aK0Eh1'(B ftp
+  ,T`K0Eh1R09Ui10MU1!04i1GB
+  
+  ,T!0CX13R0Mh1R9CRBEP`0MU1B4`0>Th1A`05T1A(R! $MULE/README.Mule
+  
+A-3: 0,TCXh19cK0Ah10Eh1R0JX14"M' Mule 0,T$W1M0CXh1907Uh1`07h1RdC?
+  
+  0,TCXh19cK0Ah10Eh1R0JX14"M' Mule 0,T$W1M0CXh1907Uh1(B 2.0 (UTSUSEMI) ,Tb4Bc0*i1(B GNU Emacs 0,TCXh19(B 19.25 ,T`0;g19(B
+  ,T0R9
+  
+A-4: Mule ,T(P06Y1!CGA`0"i1Rd;0!Q1:(B GNU Emacs ,Tc9M9R$5K0CW1M`;0Eh1R?
+  
+  0,T<Yi1`0"U1B9 GNU Emacs 0,T$W1M R.M.Stallman ,TJ09Q1:J09X19!RCc0*i1C0KQ1J Unicode ,Tc9!RCc0*i1@RIR
+  ,T9R9R*R05T1`0;g19M0Bh1R'AR!  0,T6i1RKR! Mule ,TJRARC6c0*i1(B Unicode ,Td04i1(B 0,T!g1(PCGA Mule ,T`0;g19(B
+  0,TJh1G9K09Vh1'"M' GNU Emacs  ,Ta05h1c90;Q1(0(X10:Q19(B ,T`CR0BQ1'd0Ah1JRARC6c0*i1(B Unicode 0,T!Q1:(B Mule ,Td04i1(B
+  
+A-5: 0,TAU1a<907Uh1(P`MR Mule ,Td;CGA0!Q1:(B Epoch (,TK0CW1M Nepoch) ,TdKA?
+  
+  Mule 0,TCXh19(B 2 (0,T9h1R(P`0;g19(B GNU Emacs 0,TCXh19(B 19 ,TAR!!0Gh1R) ,TJRARC6aB!!CM: (frame)
+  ,T`)>RPJSK0CQ1:a05h1EP0:Q1?`?M0Cl1aEP`0>Th1A0JU1c0Ki10!Q1:05Q1G0MQ1!ICd04i1`K0AW1M90!Q1:(B Epoch ,TM0BYh1a0Ei1G
+  
+A-6: 0,TAU1a<907Uh1(P`MR Mule ,Td;CGA0!Q1:(B Demacs ,TdKA?
+  
+  Demacs ,Td04i106Y1!CGAd0Gi1c9(B Mule 0,TCXh19(B 1.x ,Ta0Ei1G  ,T!0CX13R0Mh1R90$Yh10AW1M05T1405Qi1'(B (installation
+  manual) INSTALL.dos
+  
+A-7: ,Tc0*i1(B Mule 0,TCXh19(B 2 ,T(P0AU1MPdC04U10"Vi19(B ,T`0AWh1M`07U1B:0!Q1:(B Mule 0,TCXh19(B 1?
+  
+  0,T!g1$'(P`0;g195C'07Uh1(B ",TJRARC6c0*i1$GRAJRARC607Uh1`0>Th1Ad0Gi1c9(B GNU Emacs 0,TCXh19(B 19 ,Td04i1(B"  ,T$'(P
+  ,T`0"U1B9$GRAJRARC6`K0Eh1R09Ui1E'd0Ah1KA4c907Uh109Ui1(B  ,Ta05h1K0EQ1!(B ,Tf 0,T!g10$W1M 0,TAU1!CM: (frame) ,Td04i1KERB ,Tf
+  ,T!CM:`K0AW1M9 Epoch ,TaEP0AU1$GRAJRARC6 face (0,T4Y1$S6RA0"i1M F-5) ,TaEP0MWh19(B ,Tf ,T`0>Th1A0"Vi19(B
+  
+A-8: 0,TAU1(B Mailing list ,TJSK0CQ1:(B Mule ,TdKA?
+  
+  0,T;Q1(0(X10:Q190AU1(B mailing list ,TM0BYh1JM'a0Kh1'07Uh1`0;g19@RIR0MQ1'!DI0$W1M
+  
+  mule@etl.go.jp
+     ,Tb4B;!05T1(B ,Tc0*i1@RIR0MQ1'!DI`0;g19@RIRK0EQ1!(B
+  mule-vn@etl.go.jp
+     0,T>Y14`0!Uh1BG0!Q1:`0CWh1M'!RCc0*i1@RIR`0GU1B49RA ,Tb4Bc0*i1@RIR0MQ1'!DI`0;g19@RIRK0EQ1!(B
+  
+  ,T9M!(R!09Ui1(B 0,TBQ1'0AU1(B mailing list ,TJSK0CQ1:74JM: Mule ,T:9CP::05h1R' ,Tf
+  mule-jp@etl.go.jp
+     ,Tb4B;!05T1(B ,Tc0*i1@RIR0-Uh10;Xh19`0;g19@RIRK0EQ1!(B
+  
+  ,T!0CX13Rc0*i1(B Newsgroup fj.editor.mule  0,T6i1R05i1M'!RC0>Y140$X1B`0CWh1M' Mule ,T`0;g19@RIR0-Uh10;Xh19(B
+  
+  0,T7h1R907Uh105i1M'!RC`0"i1R0Ch1GA mailing list ,T`K0Eh1R09Ui1(B ,T!0CX13R0Jh1'0MT1`E$7CM09T1!0Jl1`A0El1d;0BQ1'(B
+  
+  mule-request@etl.go.jp
+  
+  ,T`CRd0Ah10AU107Uh1M0BYh1(B (address) ,TM0Bh1R'`0*h19(B mule-jp-request ,TaB!`)>RP
+  
+A-9: ,T$GC(P7SM0Bh1R'dC 0,T6i1R05i1M'!RC(PCRB'R90"i1M:!>0Ch1M' (bug report) ,T"M' Mule?
+  
+  ,T!0CX13Rc0*i1(B Newsgroup (fj.editor.mule) ,Tc9!RCCRB'R90"i1M:!>0Ch1M'K0CW1M0"i1M`J9Mc9!RC
+  ,Ta0!i1d""M' Mule 0,T4i1GB@RIR0-Uh10;Xh19(B  ,TJSK0CQ1:0<Yi107Uh1d0Ah1JRARC60Mh1R9 Newsgroup 0,T9Ui1(B ,T!0CX13Ra0(i1'd;07Uh1(B
+  mule@etl.go.jp ,Tb4Bc0*i1@RIR0MQ1'!DI
+  
+A-10: 0,TAU10$Yh10AW1MJSK0CQ1:(B Mule ,T`0;g19@RIR0-Uh10;Xh19(B (0,TMQ1'!DI/,T`!RK0EU1(B/0,T(U19(B) ,TdKA?
+  
+  ,TJRARC6a0:h1'(B 0,T$Yh10AW1M ,T`M!JRC05h1R' ,Tf ,TJSK0CQ1:(B Mule ,T$0Ch1RG ,Tf ,Td04i1`0;g19(B
+  
+    * 0,T$Yh10AW1MMM9dE09l1(B (Online manual)
+    * 0,T$Yh10AW1Ma:: texinfo
+    * FAQ
+    * Tutorial
+    * ,T`M!JRC07Uh1M0BYh1c9d4`C$7M0CU1(B doc
+  
+  0,T6V1'a0Ai10Gh1R Mule 0,TCXh190;Q1(0(X10:Q19(P`0;g190CXh19(B 2 ,Ta05h10!g10AU1`M!JRC:R'M0Bh1R'  0,T7Uh10BQ1'd0Ah1d04i106Y1!a0!i1d"(R!
+  ,T`M!JRC0CXh19(B 1 ,T`04T1A
+  
+  * 0,T$Yh10AW1MMM9dE09l1(B (Online manual)
+  
+    0,TAU10$Yh10AW1MMM9dE09l1`0;g19@RIR0MQ1'!DIc90CY1;"M' man  ,Tb4B07Qh1Gd;0<Yi104Y1aECP:: (system admin)
+    ,T(P05T1405Qi1'c0Ki1JRARC604Y10$Yh10AW1M09Ui1d04i104i1GB$S0JQh1'(B man  ,TK0CW1MMR((P0!g1M;0;Ui1(B (copy) ,Ta0?i1A0"i1M0AY1E
+    $MULE/etc/mule.1 ,Td;d0Gi1c9d4`C$7M0CU1"M' man ,T`M'0!g1d04i1(B
+  
+  * 0,T$Yh10AW1Ma:: texinfo
+  
+    0,TAU1$SM08T1:RB$GRAJRARC605h1R' ,Tf ,TaEP$SM08T1:RB0HQ1>07l1`)>RP"M' Mule ,T`0!g1:d0Gi1c90CY1;"M'0$Yh10AW1M
+    ,Ta:: texinfo  ,Tc9d4`C$7M0CU1(B $MULE/man 0,TAU105i19)0:Q1:(B (source) ,Ta:: texinfo ,TaEP
+    ,Tc9d4`C$7M0CU1(B $MULE/info 0,TAU10"i1M$GRA07Uh10<h1R9!RC0(Q14`0CU1B'd0Gi1a0Ei1G`0!g1:M0BYh1(B
+  
+  * FAQ
+  
+    0,T$W1M`M!JRC07Uh107h1R9!S0EQ1'0Mh1R9M0BYh109Ui1(B  ,TaEP0BQ1'0AU1`M!JRCM0BYh1c9d4`C!7M0CU1(B $MULE/etc 0,T4Q1'09Ui1(B
+    
+                FAQ-Mule          ,T)0:Q1:@RIR0MQ1'!DI
+		FAQ-Mule.jp	  ,T)0:Q1:@RIR0-Uh10;Xh19(B
+		FAQ-Mule.kr	  ,T)0:Q1:@RIR`!RK0EU1(B
+		FAQ-Mule.cn	  ,T)0:Q1:@RIR0(U19(B
+  
+  * Tutorial
+  
+    0,TAU1(B tutorial ,T`0;g19@RIR0-Uh10;Xh19aEP`!RK0EU1(B  ,T`0AWh1MM0BYh1:9(B Mule ,T`GER0JQh1'$S0JQh1'(B C-h T (M-x
+    help-with-tutorial-for-mule) 0,T!g1(P0AU10"i1M$GRA6RA@RIR07Uh105i1M'!RC  (,T(P0AU1CRB!RC
+    ,T"M'@RIR07Uh1`0EW1M!d04i1c0Ki1(B ,T`0AWh1M!4 space bar)
+  
+  * ,T`M!JRC07Uh1M0BYh1c9d4`C$7M0CU1(B doc
+  
+    0,TAU1`M!JRCM08T1:RB$GRAJRARC6 ,TaEP05Q1GM0Bh1R'0"i1M$GRAM0BYh1c9d4`C$7M0CU1(B $MULE/doc
+    0,T5Qi1'a05h1J0AQ1B Mule 0,TCXh19(B 1 ,T`M!JRC0Jh1G9cK0-h1c9d4`C$7M0CU109Ui1(B ,Td04i106Y1!0(Q14c0Ki1`0;g190$Yh10AW1Ma::
+    texinfo ,Ta0Ei1G  ,TaEP0AU1`M!JRC@RIR`0GU1B49RAM0BYh1c9d4`C$7M0CU1(B $MULE/doc/viet
+  
+A-11: ,TMPdC0$W1M07Uh1AR"M'0*Wh1M Mule?
+  
+  ,T(R! ",T>(9R09X1!CA07Uh1ARaEP0GT108U10Mh1R90HQ1>07l1`)>RP"M' UNIX" :-)
+  
+    [Mule] (,T$S0JQh1'(B UNIX) <,TA0BY1E>
+    ,T`0;g19$S0Bh1M"M' "MUltiLingual Enhancement to GNU Emacs"  ,T$S0Gh1R Mule 0,TBQ1'(B
+    ,TKARB06V1'(B ,TER(S>G!K09Vh1'(B ,T$904Wi1M ,T$90KQ1G0CQi19(B 0,T4i1GB  ,T5C'0!Q1:0*Wh1M0JQ150Gl1c90*X14"M' GNU ,TaEP0BQ1'c0Ki1(B
+    ,T$GRAKARBc97R'E:`K0AW1M90!Q1:0*Wh1M gawk 0,TMU1!04i1GB (0,T4Y1`0>Th1A`05T1A: Demacs, Emacs, gawk, 
+    Nemacs)
+  
+  0,T*Wh1M09Ui106Y1!`J9Mb4B0$X13(B Hironobu Suzuki (0,TNT1bCb90:X1(B 0,T+X10+Y10!T1(B) <hironobu@sra.co.jp>
+  
+A-12: ,T`M!JRC)0:Q1:09Ui1(B (,TCRB!RC Mule FAQ) ,T)0:Q1:0Eh1R0JX14KRd04i1(R!dK9?
+  
+  0,TAU1(B Mule FAQ ,T`0;g19@RIR0MQ1'!DI ,T@RIR0-Uh10;Xh19(B ,T@RIR`!RK0EU1(B ,TaEP@RIR0(U19(B  ,Ta0?i1A0"i1M0AY1E`K0Eh1R09Ui106Y1!(B
+  ,Ta(!0(h1RBc90*Wh1M"M'
+
+                FAQ-Mule          ,T)0:Q1:@RIR0MQ1'!DI
+		FAQ-Mule.jp	  ,T)0:Q1:@RIR0-Uh10;Xh19(B
+		FAQ-Mule.kr	  ,T)0:Q1:@RIR`!RK0EU1(B
+		FAQ-Mule.cn	  ,T)0:Q1:@RIR0(U19(B
+  
+  ,Tb4B0AU1@RIR0-Uh10;Xh19`0;g1905i19)0:Q1:(B  ,T)0:Q1:0MWh19(B ,Tf 0,T(V1'MR((P0AU1!RC0Eh1R0*i1R0:i1R'
+  
+  ,TJRARC6KR Mule FAQ ,Td04i1b4B0GT108U105h1R' ,Tf 0,T4Q1'09Ui1(B
+  
+  * ,T(R! Network News  ,T`M!JRC Mule FAQ ,T(P06Y1!;CP!RH (post) ,Td;0BQ1'(B newsgroup
+    fj.editor.mule ,Tb4Bd0Ah1!SK94CPBP`GERa09h19M9
+  
+  * ,T(R! anonymous FTP  ,TJRARC6KRd04i1(R! anonymous FTP 0,T"i1R'0Eh1R'
+  
+    etlport.etl.go.jp: /pub/mule/READMEDIR
+    sh.wide.ad.jp: /JAPAN/mule/READMEDIR
+  
+  * ,T(R!a0?i1A0"i1M0AY1Ea(!0(h1RB (distribution) ,T"M' Mule  ,T`M!JRC FAQ ,T)0:Q1:cK0Ah10Eh1R0JX14(B
+    ,T5M907Uh1`0;T1405Q1G (release) 0,TCXh19cK0Ah1(B ,T(P06Y1!`0!g1:d0Gi1c9(B etc/FAQ-Mule.*
+  
+A-13: 0,T*h1GB:M!0JTh1'07Uh1(B Mule 2.0 0,TBQ1'7Sd0Ah1d04i1(B
+  
+  0,TJTh1'05h1Md;09Ui10$W1M0JTh1'07Uh1(B Mule 2.0 0,TBQ1'7Sd0Ah1d04i1(B  ,T!0CX13RCM0CXh1905h1Md;
+  
+    o lisp/picture.el ,TaEP lisp/rect.el 0,TCXh19@RIR9R9R*R05T1(B
+    o ,T7Sc0Ki1(B XMENU ,T`0;g19a::@RIR9R9R*R05T1(B
+    o ,TaJ4'<E:9$M9b+E (console) ,T"M'`$0CWh1M' Sun
+
+
+,T!RCJ0Ci1R'aEP!RC05T1405Qi1'(B
+
+B-1: 0,TAU105Q1G`0EW1M! (option) ,T"M'$S0JQh1'(B configure ,TMPdC0:i1R'?
+  
+  ,TJRARC604Y1d04i104i1GB$S0JQh1'(B configure --help
+  
+B-2: ,T(P05i1M'7SM0Bh1R'dC  0,T6i1R05i1M'!RCJ0Ci1R' Mule ,TJSK0CQ1:CP:: X Window ,T:9`$0CWh1M' SunOS
+ 4.1.x?
+  
+  ,T(S`0;g19(P05i1M'J0Ci1R' static link 0,T!h1M907Uh1(P0JQh1'(B make ,TJSK0CQ1:(B Mule ,T:9`$0CWh1M' SunOS
+  4.1.x  ,Tc9!C03U107Uh1d0Ah10AU1(B library ,TJSK0CQ1:(B static link ,Tc0Ki1`0>Th1A
+  
+    #define  ForceNormalLib YES
+  
+  ,TE'd;c9 site.def 0,T!h1M9 ,T5M907Uh1J0Ci1R' X ,T`0>Wh1MJ0Ci1R' libX11.a ,Ta:: static link
+  
+B-3: ,T(P05i1M'7SM0Bh1R'dC 0,T6i1R05i1M'!RCc0*i1(B Wnn ,TK0CW1M Canna ,Tc9 Mule?
+  
+  ,T!0CX13R!SK94 --wnn ,TK0CW1M --canna ,Tc905Q1G`0EW1M! (option) ,T"M'$S0JQh1'(B configure  ,TaEP
+  0,T5i1M'!SK94d4`C$7M0CU107Uh10AU1(B library 0,T5T1405Qi1'M0BYh104i1GB05Q1G`0EW1M! --wnn-include=XXXX 0,T4i1GB
+  
+B-4: 0,TAU10"i1M$GRA0Gh1R "Pure Lisp storage exhausted" ,Ta0Ei1G0!g1K0BX14$MAd>0El1(B (compile)
+ ,Td;`)B ,Tf ,T`EB
+  
+  0,T$X13(B Ken'ichi Handa (,T`$90MT10(T1(B 0,TNQ194P) <handa@etl.go.jp> ,T`0"U1B9d0Gi10Gh1R
+  
+    0,T9Qh19`0;g19`>CRP0Gh1R 0,T$h1R PURESIZE 0,T7Uh1!SK94d0Gi1c9(B puresize.h 0,TAU10$h1R09i1MB`0!T19d;(B ,T(S`0;g19(P
+    0,T5i1M'`0>Th1A0$h1R ,Tb4B0"Vi19M0BYh10!Q1:*09T14"M'CP::  ,TaEP06i1RKR!05T1405Qi1'@RIR05h1R' ,Tf (,T`0*h19(B ,T@RIR0-Uh10;Xh19(B
+    ,T@RIR0(U19(B) ,Td0Gi1KERB@RIR ,Tc9 site-init.el 0,T!g1(P05i1M'`0>Th1A0$h1R09Ui1c0Ki1AR!0"Vi190MU1!(B  ,TK0CW1MMR((P
+    ,TEM'c0*i10GT108U1`0>Th1A0$h1R09Ui1`0;g19`07h1R05Q1G ,Ta0Ei1GEM'$MAd>0El1(B (compile) 0,T4Y10!h1M9  0,T6i1Rd0Ah10AU10;Q1-KR 0,T!g1c0Ki1(B
+    0,T5Qi1'0$h1Rc0Ki10JY1'!0Gh1R0$h1R07Uh1aJ4'd0Gi1c90"i1M$GRA Pure Bytes Used XXXXX ,T`0Eg1!09i1MB  ,Ta0Ei1G`A$
+    (make) ,TcK0Ah10!g1d04i1(B
+  
+B-5: 0,TAU10"i1M$GRA0Gh1R "Undefined Symbol: __des_crypt" ,Ta0Ei1G0!g1K0BX14$MAd>0El1(B (compile) 
+ ,Td;`)B ,Tf ,T`EB
+  
+  0,T$X13(B Masato Minda (,TAR+Rb5P 0,TAT194P) <minmin@astec.co.jp> ,T`0"U1B9d0Gi10Gh1R
+  
+    0,TMQ1909Ui1`0;g19`>CRP0Gh1R7S static link ,Td0Gi107Uh1(B JLE1.1.1 ,T"M'`$0CWh1M' SunOS ,T!CP0AQ1'(B
+  
+    0,TGT108U1a0!i1d"(B
+        ,T`0>Th1A0Jh1G9;P (patch) ,Tc0Ki1(B JLE (,T$'0EW1A0Jh1G9;P ID)
+	,T`;0EUh1B9`0;g190CXh19cK0Ah1!0Gh1R JLE1.1.1 rev B
+	,T`0ET1!c0*i1(B JLE :-)
+  
+    ,Td0Ah1`$BEM'`K0AW1M90!Q19$0CQ1:(B ,Ta05h106i1RJ0Ci1R'0?Q1'0!l10*Q19(B (function) ,T`;0Eh1R ,Tf 0,T*Wh1M _des_crypt
+    ,Td0Gi1(B  ,Ta0Ei1G link ,T`0"i1Rd;0!g1MR((Pa0!i10;Q1-KR09Ui1d04i1(B
+  
+B-6: ,T`GERc0*i1(B shell mode ,T:9 Mule 0,T7Uh1$MAd>0El1(B (compile) 0,T4i1GB GCC ,T(P0AU1(B ^M 0,T5T1407Uh107i1RB
+ ,T:CC07Q1404i1GB
+  
+  0,T$X13(B Ishikawa Ichiro (0,TMT10*T1$PGP 0,TMT10(T1b0Ch1(B) <ichiro@ccsr.u-tokyo.ac.jp> ,T`0"U1B9d0Gi1(B
+  0,TGh1R
+  
+    ,T`0AWh1M0!h1M90!g10AU10;Q1-KRa::09Ui10!Q1:(B emacs 0,TCXh19(B 19 ,T`K0AW1M90!Q19(B (mule 0,T7Uh1(B compile 0,T4i1GB gcc 0,T!g1(B
+    ,Td0Ah17S'R9)  ,Tc95M909Qi19(B 0,T4Y1`K0AW1M9(P`0;g19`>CRP0Gh1R05T1405Qi1'(B (install) gcc ,Td0Ah106Y1!05i1M'
+    (,T`>CRPc0*i1(B sed ,T"M' JLE ,Tc95M905T1405Qi1'(B)
+  
+  ,T`GER07Uh105T1405Qi1'(B GCC ,T:9 JLE ,T(P05T1405Qi1'a0?i1A0"i1M0AY1E header (fixincludes) ,Td04i1d0Ah106Y1!05i1M'
+  ,T`09Wh1M'AR(R!0"i1M:!>0Ch1M' (bug) ,T"M' sed   ,T!0CX13Rc0*i1(B sed ,T"M' GNU ,Ta79 ,Tc9!RC05T1405Qi1'(B
+  
+B-7: ,T$MAd>0El1(B (compile) Mule ,Td04i1`0CU1B:0Ci1MB5RA;!05T1a0Ei1G  ,Ta05h1c0Jh1@RIR0MWh199M!(R!@RIR
+ 0,TMQ1'!DId0Ah1d04i1(B
+  
+  ,T(S`0;g19(P05i1M'CP0:X1@RIR07Uh105i1M'!RC(Pc0*i1(B ,Td0Gi1c9(B site-init.el ,T5M905T1405Qi1'(B  ,T`>CRP0Gh1Rc95M9
+  ,TaC! (default) ,T(Pd0Ah10AU1a0?i1A0"i1M0AY1E site-init.el ,TM0BYh1(B  0,T(V1'd0Ah1JRARC6c0*i1@RIR0MWh199M!(R!
+  ,T@RIR0MQ1'!DId04i1(B
+  
+  0,T5Q1GM0Bh1R'`0*h19(B 0,T6i1R05i1M'!RCc0*i1@RIR0-Uh10;Xh19aEP@RIR0(U19(B  0,T!g1(P05i1M'c0Jh1(B
+        (load "japanese")
+        (load "chinese")
+  ,Td0Gi1c9(B lisp/site-init.el ,Ta0Ei1G0$h1MBJ0Ci1R' Mule
+  
+  ,Tc9!C03U107Uh1d0Ah1d04i1bKE4 (load) ,Td0Gi1c9(B site-init.el  0,T!g10BQ1'JRARC6bKE4`M'05h1R'KR!d04i104i1GB
+  ,T$S0JQh1'(B
+    M-x load-library RET japanese RET
+  
+  ,TM09Vh1'(B  ,T@RIR07Uh1bKE4`0"i1Rd;`0;g190MQ190JX1407i1RB ,T(P06W1M`0;g19@RIR`0CTh1A05i19(B (default)  ,TKR!05i1M'!RC
+  ,T(P`;0EUh1B9  0,T!g1c0Ki1c0*i1$S0JQh1'(B
+    M-x its:select-mode
+  ,TJRARC6c0*i1!RC`05T1A`05g1A (completion) ,Tc9!RC`0EW1M!0*Wh1M"M'bKA4d04i1(B
+  
+  ,Ta05h106i1RKR!bKE4@RIRd0Gi1AR!`0!T19d;(B  0,T!g1MR((P7Sc0Ki1`0!T140"i1M0<T14>ER4 (error) 0,TGh1R "Pure
+  Lisp storage exhausted" ,Tc95M907Uh1$MAd>0El1(B (compile) ,Td04i1(B  ,T!0CX13R04Y1$S6RA0"i1M B-4
+  ,TJSK0CQ1:0GT108U1a0!i1d"(B
+  
+B-8: ,TMBR!(P`0!g1:<E"M'$S0JQh1'(B configure ,Td0Gi1JSK0CQ1:$MAd>0El1(B (compile) 0,T!Q1:`$0CWh1M'0MWh19(B
+  
+  ,T7Sd04i1b4B!RC`;0EUh1B90*Wh1M config.status ,Tc0Ki1`0;g190*Wh1M0MWh19(B  ,TK0CW1MMR((P$MAd>0El1(B (compile)
+  ,TcK0Ah1(B ,Tc9d4`C$7M0CU10MWh1907Uh1d0Ah1c0*h1d4`C$7M0CU107Uh1`0!g1:(B source ,Td0Gi10!g1d04i1(B
+  
+B-9: 0,T6i1R$MAd>0El1(B (compile) 0,T!Q1:`$0CWh1M'0MWh19a0Ei1G  ,TMBR!(P`A$ (make) 0,T7Uh1`$0CWh1M'`04T1A0MU1!07U1(B
+ ,T(P05i1M'0JQh1'(B configure ,TcK0Ah10MU1!$0CQi1'(B ,Tc0*h1K0CW1M`;0Eh1R?
+  
+  0,T6i1R(Pd0Ah1`;0EUh1B905Q1G`0EW1M! (option) ,T"M'`04T1Aa0Ei1GEP0!g1(B  0,TJQh1'a0$h1(B config.status 0,T7Uh1`0!g1:d0Gi1(B
+  ,T`04T1A0!g1>M
+  
+B-10: 0,T6i1R05i1M'!RC(P$MAd>0El1(B (compile) ,Tc9d4`C$7M0CU107Uh1d0Ah1d04i1`0!g1:(B source ,Td0Gi1(B ,T(P05i1M'7S
+ ,TM0Bh1R'dC?
+  
+  ,T!0CX13RCP0:X105Q1G`0EW1M! --srcdir=(0,T*Wh1Md4`C$7M0CU107Uh10AU1(B source ,TM0BYh1(B)  0,T"i1M$GCCP0GQ1'0!g10$W1M 0,T6i1R`$B
+  0,TJQh1'(B configure ,Td0Gi1c9d4`C$7M0CU107Uh10AU1(B source ,TM0BYh1(B 0,T!g1(S`0;g19(P05i1M'0JQh1'(B make distclean
+  0,T!h1M9
+  
+B-11: 0,T6i1R`<0MT1-(P05i1M'0JQh1'(B configure ,TcK0Ah10MU1!$0CQi1'K09Vh1'(B 0,T!g1(S`0;g19(P05i1M'c0Jh105Q1G`0EW1M! (option)
+ 0,T7Uh1:CC07Q14$S0JQh1'(B (command line) ,TcK0Ah1KA4`EBc0*h1dKA?
+  
+  0,TJQh1'a0$h1(B ./config.status --recheck 0,T!g1d04i1(B  ,T`09Wh1M'(R! config.status ,T`0;g19(B shell
+  script 0,T6i1R05i1M'!RC(Pa0!i105Q1G`0EW1M! (argument) ,T"M' configure 0,T!g1JRARC6a0!i1d04i1b4B!RC
+  ,Ta0!i1a0?i1A0"i1M0AY1E09Ui1b4B5C'  ,TK0CW1M(P`0Eh19EG4ERB`MR$GRAJRARC605Q14a;P (cut & paste) ,T"M'
+  ,T`7M0Cl10AT109Q1E ,TAR05Q1405Q1G`0EW1M! (argument) ,Tc0Jh1c0Ki1(B configure ,TcK0Ah10MU1!$0CQi1'0!g1d04i1(B
+  
+B-12: ,TEM'0JQh1'(B configure 0,T4Y1a0Ei1G  ,Ta05h105Q1G`0EW1M! (option) ,Tc0*i1d0Ah1d04i1`EBa0Ai1a05h105Q1G`04U1BG
+  
+  ,T$'`0;g19`>CRPc0*i1CP::;0/T10:Q105T1!RC (OS) 0,T7Uh105T14AR0!Q1:(B JLE ,T"M' Sun ,TM0BYh1(B  0,T4Y1`K0AW1M9 JLE ,T(P0AU1(B
+  0,TGT108U1c0*i1$S0JQh1'aEP library ,Ta5!05h1R'(R!$90MWh19(B ,TaEP0AU10"i1M:!>0Ch1M' (bug) ,TM0BYh1AR!07U1`04U1BG
+  ,Ta0Ai1a05h1(B ,T!RC05T1405Qi1'(B GCC 0,T!g10BQ1'0Ei1A`KEGd04i10:h1MB ,Tf ,T:9 JLE
+  
+  ,T!C03U109Ui1`0;g19`>CRP0Gh1R$S0JQh1'(B 'tr - _' ,T7S'R9d04i1d0Ah106Y1!05i1M'  ,Tc0Ki1`;0EUh1B9$S0JQh1'(B tr - _ ,Tc9
+  configure ,T`0;g19(B tr \- _ ,TK0CW1Mc0*i1$S0JQh1'(B
+      setenv LANG C
+  ,TK0CW1M
+      unsetenv LANG
+  0,T!h1M9 (,TJSK0CQ1:(B csh)
+  
+B-13: 0,TAU1$M0Cl104Q1A0>l1(B (core dump) ,T`GER`A$ (make) ,T:9`$0CWh1M' Solaris2 + X11R6
+  
+  ,T`0;g19`>CRP0Gh1R Mule 0,TCXh19(B 2.0 ,TaEP GNU Emacs 0,TCXh19(B 19.25 ,Tc0*i10!Q1:(B multi thread ,Td0Ah1d04i1(B
+  
+  ,T(S`0;g19(P05i1M'`0EW1M!7SCPK0Gh1R'
+
+    1) ,T`GER`A$ (make) X11R6 ,Tc0Ki1c0Jh1(B
+         #define ThreadedX NO
+      ,Td0Gi1c9(B site.def  0,T$W1M7Sc0Ki1(B X11R6 ,Td0Ah1`0;g19a::(B multi thread
+    2) ,T7S link 0,T!Q1:(B libX11.a ,Td0Ah1c0*h1(B libX11.so.6 (,T7Sa::09Ui1(B ,T(P7Sc0Ki1d0Ah1(B link 0,T!Q1:(B
+    libthread.so.1)
+
+
+,T`0!Uh1BG0!Q1:0GT108U1c0*i1@RIR05h1R' ,Tf
+
+C-1: ,T@RIR07Uh1c0*i1d04i10!Q1:(B Mule 0,TAU1MPdC0:i1R'?
+  
+  0,T5Q14AR(R! $MULE/README.Mule:
+  
+  0. ,T@RIR0MQ1'!DI
+  
+    0,T>T1A0>l1E'd;d04i1`EB :-)
+  
+  1. ,T@RIR0-Uh10;Xh19(B
+  
+    ,TJSK0CQ1:@RIR0-Uh10;Xh19(B ,T`CRa9P9Sc0Ki107h1R905T1405Qi1'b;Ca!CA Wnn 0,TCXh19(B 4.108 ,TK0CW1McK0Ah1!0Gh1R (,TMR(
+    ,T(P(S`0;g1905i1M'c0*i1(B Wnn 4.109p1 ,Td0Ah1c0*h1(B Wnn4.108 ,TJSK0CQ1:`$0CWh1M':R'`$0CWh1M')  ,TCP::
+    TAMAGO (EGG) 0,T7Uh105T1405Qi1'M0BYh1c9(B Mule ,T(P05T1405h1M0!Q1:(B jserver ,T"M' Wnn 0,T+Vh1'(P7Sc0Ki107h1R9
+    ,TJRARC60;i1M90"i1M$GRA@RIR0-Uh10;Xh19d04i1b4BJP4G!  ,T!0CX13R0Mh1R9 $MULE/info/egg ,TJSK0CQ1:0GT108U1c0*i1(B
+    ,TCP:: TAMAGO (EGG)
+    
+    0,T7h1R9JRARC6c0*i1(B Mule ,Td04i107Qi1':9(B X window ,TaEP:9`7M0Cl10AT109Q1E@RIR0-Uh10;Xh19(B (,TCGA06V1'(B kterm
+    ,TaEP exterm)  ,Tc9!C03U1K0EQ1'(B 0,T7h1R9JRARC6c0*i10GT108U10;i1M90"i1M0AY1E`0"i1R (inputting method)
+    ,Tc4 ,Tf 0,T7Uh10AU1M0BYh1a0Ei1G:9`7M0Cl10AT109Q1E09Qi19d04i1(B  0,T5Q1GM0Bh1R'"M'0GT108U10;i1M90"i1M0AY1E`0"i1R`K0Eh1R09Ui1d04i1a0!h1(B
+        * sj3-egg, CANNA                  ,TCGAM0BYh1c9(B Mule
+        * SKK, boiled-egg                 ,TM0BYh1c9d4`C$7M0CU1(B 'contrib'
+  
+  2. ,T@RIR0(U19(B
+  
+    ,TJSK0CQ1:@RIR0(U19(B ,T`CRa9P9Sc0Ki107h1R905T1405Qi1'b;Ca!CA Wnn 0,TCXh19(B 4.108 ,TK0CW1McK0Ah1!0Gh1R (,TMR(
+    ,T(P(S`0;g1905i1M'c0*i1(B Wnn 4.109p1 ,Td0Ah1c0*h1(B Wnn4.108 ,TJSK0CQ1:`$0CWh1M':R'`$0CWh1M')  ,TCP::
+    TAMAGO (EGG) 0,T7Uh105T1405Qi1'M0BYh1c9(B Mule ,T(P05T1405h1M0!Q1:(B cserver ,T"M' cWnn 0,T+Vh1'(P7Sc0Ki107h1R9
+    ,TJRARC60;i1M90"i1M$GRA@RIR0(U19d04i1b4BJP4G!  ,T!0CX13R0Mh1R9 $MULE/info/egg ,TJSK0CQ1:0GT108U1c0*i1(B
+    ,TCP:: EGG
+    
+    0,T7h1R9JRARC6c0*i1(B Mule ,Td04i107Qi1':9(B X window ,TaEP:9`7M0Cl10AT109Q1E@RIR0(U19(B (,TCGA06V1'(B cxterm
+    ,TaEP exterm)  ,Tc9!C03U1K0EQ1'(B 0,T7h1R9JRARC6c0*i10GT108U10;i1M90"i1M0AY1E`0"i1R (inputting method)
+    ,Tc4 ,Tf 0,T7Uh10AU1M0BYh1a0Ei1G:9`7M0Cl10AT109Q1E09Qi19d04i1(B
+    
+    ,TCP:: Quail (,TCGAM0BYh1c9(B Mule) ,T(P0*h1GBc0Ki107h1R9c0Jh10"i1M$GRA@RIR0(U19b4B0GT108U1(B
+	GB: PINYIN, PINYIN_with_TONE, CCDOSPY, SW
+	Big5: PINYIN, ETZY, ZOZY
+    ,Td04i104i1GB  ,T!0CX13R0Mh1R9 $MULE/info/quail ,TJSK0CQ1:0GT108U1c0*i1(B
+  
+  0,T<Yi107Uh10Mh1R9 News ,Tc9!0EXh1A alt.chinese.text ,TaEP alt.chinese.text.big 0,TBQ1'JRARC6
+  ,Tc0*i1;CPbB*09l1(R! GNUS (,Tb;Ca!CA0Mh1R9 News ,T`0"U1B904i1GB@RIR Emacslisp)  ,T>0Ci1MA07Qi1'(B 
+  gnusutil.el (,TCGAM0BYh1c9(B Mule 0,T5Qi1'a05h10CXh19(B 2) ,Td04i1(B  ,Tb;Ca!CA09Ui1(P0*h1GB ,T`0"i1RC0KQ1J/,T6M4C0KQ1J
+  (encode/decode) ,Ta:: HZ/zW ,TK0CW1M Big5 ,Td;0BQ1'(B/,TMM!(R! ,TC0KQ1J@RBc9"M' Mule ,Tb4B
+  0,TMQ15b90AQ105T1(B
+  
+  3. ,T@RIR`!RK0EU1(B
+  
+    ,TJRARC60;i1M9@RIR`!RK0EU1d04i104i1GB quail/hangul.el  ,T!0CX13R0Mh1R9 'info/quail'
+    ,TJSK0CQ1:0GT108U1c0*i1(B  0,T7h1R9JRARC6c0*i1(B Mule ,Td04i107Qi1':9(B X window ,TaEP:9`7M0Cl10AT109Q1E@RIR`!RK0EU1(B
+    (,TCGA06V1'(B exterm ,TaEP0MWh19(B ,Tf)
+  
+  4. ,T@RIR0BX1bC;
+  
+    ,TJRARC60;i1M9@RIR0BX1bC;d04i1KERB0GT108U104i1GBCP:: Quail (,TM0BYh1c9(B Mule) ,Tc9"3P09Ui1JRARC60;i1M9
+        Latin1, Latin2,.. Latin5, Greek (ISO8859-7),
+        Hebrew (ISO8859-8), Cyrillic (ISO8859-5)
+    ,T!0CX13R0Mh1R9 $MULE/info/quail ,TJSK0CQ1:0GT108U1c0*i1(B  ,TaEP0BQ1'JRARC6c0*i1@RIR0NT1::0CY1(B (Hebrew)
+    0,T+Vh1'`0"U1B9(R!"GRd;0+i1RBd04i104i1GB  ,TKR0"i1M0AY1E`0>Th1A`05T1Ad04i1(R! $MULE/info/R2L
+  
+  5. ,T@RIRd7B
+  
+    ,TJSK0CQ1:@RIRd7B  Mule ,Tc0*i1C0KQ1JAR5C0R9@RIRd7B"M' ,TJ.,TA.,TM. (TIS620) ,T`0;g190>Wi190R9
+    0,T7h1R9JRARC60;i1M90"i1M0AY1Ed04i104i1GBCP:: Quail (0,T+Vh1'CGAM0BYh1c9b;Ca!CA Mule)  ,T!0CX13R0Mh1R9
+    $MULE/info/quail ,TJSK0CQ1:0GT108U1c0*i1(B   ,Tb;Ca!CA0Jh1G907Uh1c0*i1JSK0CQ1:0;i1M90"i1M0AY1E@RIRd7B"M'
+    ,TCP:: Quail 0,T*Wh1M `thai'  ,T?M905l1?0CU1(B ,T@RIRd7BC0KQ1J TIS620 ,T"9R4 12x29 0,T(X14(B 0,TAU1M0BYh1c9(B
+    ,Ta0?i1A0"i1M0AY1E `fonts/ETL.tar.gz'  0,T6i1Rc0*i1?M905l109Ui10Ch1GA0!Q1:?M905l1(B ASCII ,T"9R4 12x24 0,T(X14(B
+    0,T7h1R9$GC(P`0>Th1ACPBPCPK0Gh1R':CC07Q14b4B05Qi1'05Q1G`0EW1M!c9:CC07Q14$S0JQh1'(B (command line
+    argument) ,T`0;g19(B -lsp 5+
+  
+  6. ,T@RIR`0GU1B49RA
+  
+    ,TJSK0CQ1:@RIR`0GU1B49RA Mule ,Tc0*i1(B two-table-VISCII ,T`0;g190>Wi190R9 0,T$W1Ma0:h1'5RCR'C0KQ1J
+    VISCII ,TMM!`0;g19JM'0Jh1G9 0,T5Q1G`0Eg1!aEP05Q1GcK0-h1(B  Mule ,TJRARC60Mh1R9`0"U1B9d04i107Qi1'(B VISCII
+    VIQR ,TaEP VSCII  0,TGT108U10;i1M90"i1M0AY1E:CC0(X1d0Gi1a0Ei1Gc9CP:: Quail (,TM0BYh1c9(B Mule) ,T!0CX13R0Mh1R9
+    $MULE/info/quail ,TJSK0CQ1:0GT108U1c0*i1(B  0,T*Wh1M"M'a>$`!(0$W1M `viet' ,T:9 X window  0,T7h1R9
+    ,Tc0*i1JRARC6c0*i1d04i107Qi1'?M905l1(B VISCII ,TaEP VSCII  ,T?M905l1?0CU1JSK0CQ1:(B VISCII 0,TAU1M0BYh1c9a0?i1A
+    0,T"i1M0AY1E `fonts/ETL.tar.gz' 0,T+Vh1'MM!a::c0Ki1c0*i10!Q1:?M905l1(B ETL 0,TMWh19(B ,Tf ,Td04i1M0Bh1R'`KARPJA
+  
+C-2: 0,TAU1@RIR:R'@RIR07Uh1`0"U1B9(R!"GRd;0+i1RB  ,Tc0*i1@RIR`K0Eh1R09Ui10!Q1:(B Mule ,Td04i1K0CW1M`;0Eh1R?
+  
+  0,T;Q1(0(X10:Q19c0*i1d04i10!Q1:@RIR0NT1::0CY1(B (Hebrew) ,TaEP@RIRMRCR0:T1$(B (Arabic)  ,TJRARC6c0*i1b;Ca!CA
+  quail/hebrew.el ,TJSK0CQ1:!RC0;i1M90"i1M0AY1E@RIR0NT1::0CY1(B  ,T!0CX13R04Y1`M!JRC
+  highlight-reverse-direction ,TaEP r2l-double-cursor  ,T9M!(R!09Ui1(B 0,TBQ1'0AU1a<907Uh1(P
+  0,T>Q129R Mule ,Tc0Ki1c0*i1d04i10!Q1:@RIR`;M0Cl1`0+U1B0MU1!04i1GB
+  
+C-3: 0,T*X14C0KQ1J07Uh1`0!Uh1BG0"i1M'0!Q1:(B Mule 0,TAU1MPdC0:i1R'?  ,TaEP`0!Uh1BG0"i1M'M0Bh1R'dC?
+  
+  Mule ,Tc0*i10*X14C0KQ1J04Q1'09Ui1(B
+  
+   * ,TC0KQ1J@RBc9 (internal code) ,Tc0*i1c90:Q1?`?M0Cl1"M' Mule
+   * ,TC0KQ1J05Q1G kanji MS ,TK0CW1M Shift JIS (,TJSK0CQ1:@RIR0-Uh10;Xh19`07h1R09Qi19(B)
+   * ,T(S>G!07Uh1c0*i1(B ISO2022 ,T`0;g190R9 (,TCGA06V1'(B JIS [JUNET], EUC, CTEXT)
+   * Big5 (,TJSK0CQ1:@RIR0(U19`07h1R09Qi19(B)
+  
+  ,TJRARC605Qi1'0*X14C0KQ1J`K0Eh1R09Ui1(B  ,Td04i10!Q1:(B ,T!RC`0!g1:aEP0Mh1R9a0?i1A0"i1M0AY1E (file input/output)
+  ,T!RCaJ4'<E7R'(M ,T!RC0CQ1:0"i1M0AY1E7R'0$U10Bl1:M0Cl14(B ,TaEP ,T!RC05T1405h1MCPK0Gh1R'!CP:G9!RC
+  (inter-process communication) ,Tc9 Mule
+  
+C-4: ,T7SdA"9R4"M'a0?i1A0"i1M0AY1E07Uh1aJ4':9 *Buffer List* 0,T!Q1:"9R4"M'a0?i1A0"i1M0AY1E07Uh1`0!g1:(0CT1'(B
+ 0,T5h1R'0!Q19AR!?
+  
+  ,Tc9 Mule ,T(P`0!g1:0*X1405Q1G0MQ1!IC (character set) ,Ta05h1EP0*X14(B ,Td0Gi1c90CY1;"M'C0KQ1J@RBc9
+  (internal code) ,Tb4B0AU10MQ1!IC9S (leading character) ,T!S0!Q1:d0Gi1(B  ,T9M!(R!0MQ1!IC
+  ASCII ,Ta0Ei1G 0,TMQ1!IC0MWh19(P0AU10MQ1!IC9S!S0!Q1:M0BYh10"i1R'K09i1R`JAM  0,T4Q1'09Qi19(B 0,TMQ1!IC 8 0,T:T17`0*h19(B Latin-1
+  ,T(P06Y1!`0!g1:`0;g19(B 2 ,Td:07l1(B  0,TMQ1!IC 16 0,T:T17`0*h1905Q1G kanji (,T@RIR0-Uh10;Xh19(B) ,T(P06Y1!`0!g1:`0;g19(B 3 ,Td:07l1(B
+  0,T6i1R`0!g1:(B (save) ,Ta0?i1A0"i1M0AY1E04i1GBC0KQ1J@RBc9 0,T!g1(Pd04i1"9R407Uh15C'0!Q19(B  ,Ta05h106i1R`0!g1:04i1GBC0KQ1J0MWh19(B 0,T!g1(B
+  ,T`0;g19d;d04i1(B 0,T7Uh1(P0AU1"9R405h1R'0!Q19(B
+  
+C-5: 0,T5Qi1'(B (setq keyboard-coding-system *euc-japan*) ,Ta0Ei1G ,Ta05h1d0Ah17S'R9
+  
+  ,Td0Ah1$GCc0*i1(B setq 0,T5Qi1'0$h1R"M' keyboard-coding-system ,Tb4B5C'  ,T!0CX13Rc0*i10?Q1'0!l10*Q19(B
+  set-keyboard-coding-system ,Tc9!RC05Qi1'a79(B  ,TJSK0CQ1:(B display-coding-system
+  ,TaEP file-coding-system 0,T!g1`0*h19`04U1BG0!Q19(B
+  
+C-6: ,Tc0*i1(B set-keyboard-coding-system 0,T5Qi1'(B *autoconv*, *big5-hku*,
+ *big5-eten*, *internal* ,Td0Ah1d04i1(B
+  
+  0,TMQ1909Ui1`0;g190"i1M!SK94 (specification) ,T"M' Mule
+  
+C-7: ,TMBR!c0Ki1aJ4'<E EC ,T@RIR0-Uh10;Xh19(B ,T@RIR0(U19(B ,T@RIR`!RK0EU1(B 0,T4i1GBC0KQ1J EUC ,Td04i1>0Ci1MA0!Q19(B
+  
+  ,T7Sd0Ah1d04i1(B ,T`09Wh1M'(R!C0KQ1J EUC ,T"M'a05h1EP@RIRM0BYh1c90*X14C0KQ1J`04U1BG0!Q19(B  ,T!0CX13Rc0*i1C0KQ1J *junet*
+  ,TK0CW1M *ctext* ,Ta79 0,T6i1R05i1M'!RCaJ4'<E07X1!@RIR>0Ci1MA0!Q19(B
+  
+C-8: 0,TAU1`M!JRC`0!Uh1BG0!Q1:0*X14C0KQ1J07Uh1c0*i10!Q1:(B Mule ,TdKA?
+  
+  0,TAU1(B 0,T$W1M`M!JRC ISO 2022 ,TK0CW1M JIS X0202 (,T@RIR0-Uh10;Xh19(B)  ,T$SM08T1:RB0Bh1M"M'`M!JRC09Ui10AU1`0;g19(B
+  0,T$Yh10AW1Ma:: texinfo ,TaEP $MULE/info/ISO2022
+  
+C-9: 0,T6i1R(Pc0*i10MQ1!IC0MWh199M!(R! ASCII ,Tc9 incremental search
+  
+  ,T(Pc0*i10MQ1!IC0MWh199M!`K09W1M(R! ASCII ,Tc9 incremental search (isearch) ,Td04i1(B 0,T6i1RbKE4
+  (load) isearch-ext.el ,Td0Gi10!h1M9  ,T@RBc9 isearch 0,T!g1(PJRARC6!4 C-\ ,T`0>Wh1M`0CU1B!
+  TAMAGO ,TK0CW1M C-] ,T`0>Wh1M`0CU1B! quail ,TaEP0;i1M9@RIR05h1R' ,Tf ,Td04i1(B
+  
+C-10: ,T(PKR?M905l107Uh1c0*i10!Q1:@RIR05h1R' ,Tf ,Tc9 Mule ,Td04i1(R!07Uh1dK9?
+  
+  ,TKR0<h1R97R' anonymous FTP ,Td04i1(R!
+  
+    etlport.etl.go.jp: /pub/mule/fonts
+    sh.wide.ad.jp: /JAPAN/mule/fonts
+  
+  ,Tc9 FTP 0,T9Ui1(P0AU1?M905l105h1R' ,Tf 0,T4Q1'09Ui1(B
+  
+  ./Chinese/ or Chinese.tar.gz
+	gb16fs.bdf	-- ,T?M905l1(B GB ,T"9R4 16x16 0,T(X14(B
+	gb24st.bdf	-- ,T?M905l1(B GB ,T"9R4 24x24 0,T(X14(B
+	taipei16.bdf	-- ,T?M905l1(B BIG5 (ETen) ,T"9R4 16x16 0,T(X14(B
+	taipei24.bdf	-- ,T?M905l1(B BIG5 (ETen) ,T"9R4 24x24 0,T(X14(B
+  
+  ./Japanese/ or Japanese.tar.gz
+	k14.bdf		-- ,T?M905l1(B JISX0208.1983 ,T"9R4 14x14 0,T(X14(B
+	k16.bdf		-- ,T?M905l1(B JISX0208.1990 ,T"9R4 16x16 0,T(X14(B
+	jiskan16.bdf	-- ,T?M905l1(B JISX0208.1983 ,T"9R4 16x16 0,T(X14(B
+	jiskan24.bdf	-- ,T?M905l1(B JISX0208.1983 ,T"9R4 24x24 0,T(X14(B
+	min-1-16.bdf	-- ,T?M905l1(B JISX0212.1990 (HojoKanji) ,T"9R4 16x16 0,T(X14(B
+	min-1-24.bdf	-- ,T?M905l1(B JISX0212.1990 (HojoKanji) ,T"9R4 24x24 0,T(X14(B
+	8x16rk.bdf	-- ,T?M905l1(B JISX0201.1976 (Kana) ,T"9R4 8x16 0,T(X14(B
+	12x24rk.bdf	-- ,T?M905l1(B JISX0201.1976 (Kana) ,T"9R4 12x24 0,T(X14(B
+  
+  ./Korean/ or Korean.tar.gz
+	hanglm16.bdf	-- ,T?M905l1(B KSC5601.1987 ,T"9R4 16x16 0,T(X14(B
+	hanglm24.bdf	-- ,T?M905l1(B KSC5601.1987 ,T"9R4 24x24 0,T(X14(B
+  
+  ./ETL/ or ETL.tar.gz
+	etl{14,16,24}-latin1.bdf	-- ,T?M905l1(B ISO8859-1 (Latin-1)
+	etl{14,16,24}-latin2.bdf	-- ,T?M905l1(B ISO8859-2 (Latin-2)
+	etl{14,16,24}-latin3.bdf	-- ,T?M905l1(B ISO8859-3 (Latin-3)
+	etl{14,16,24}-latin4.bdf	-- ,T?M905l1(B ISO8859-4 (Latin-4)
+	etl{14,16,24}-cyrillic.bdf	-- ,T?M905l1(B ISO8859-5 (Cyrillic)
+	etl{14,16,24}-greek.bdf		-- ,T?M905l1(B ISO8859-7 (Greek)
+	etl{14,16,24}-hebrew.bdf	-- ,T?M905l1(B ISO8859-8 (Hebrew)
+	etl{14,16,24}-latin5.bdf	-- ,T?M905l1(B ISO8859-9 (Latin-5)
+	etl{14,16,24}-swedish.bdf	-- ,T?M905l1(B SEN850200 (Swedish)
+	etl{14,16,24}-ipa.bdf		-- ,T?M905l1(B IPA
+	etl{14,16,24}-sisheng.bdf	-- ,T?M905l1(B SiSheng (Chinese Radical)
+	etl{16,24}-viscii.bdf		-- ,T?M905l1(B VISCII 1.1 (Vietnamese)
+	etl{14,24}-koi.bdf		-- ,T?M905l1(B KOI (Cyrillic)
+	etl{16,24}-arabic{0,1,2}.bdf	-- ,T?M905l1(B Arabic
+	etl24-thai.bdf			-- ,T?M905l1(B TIS620 (,T@RIRd7B)
+  
+  ,T9M!(R!09Ui1(B 0,TBQ1'0AU1?M905l1(B JIS KSC ,TaEP GB 0,TMU1!KERB?M905l1(B ,TM0BYh1c9(B X11R6
+  
+  ,T?M905l1<9G! (supplementary) ,T"M'05Q1G Kanji  0,TAU1M0BYh1c9(B Japanese.tar.gz 0,T"i1R':9
+  ,TaEP0BQ1'0AU10MU1!0*X14K09Vh1'0+Vh1'05h1R'(R!?M905l109Ui1(B ,T;CP!RH (post) ,Td;07Uh1(B Newsgroup fj.sources
+  
+  From: yasuoka@kudpc.kyoto-u.ac.jp (Koichi Yasuoka)
+  Newsgroups: fj.sources
+  Subject: 16x16 JIS Supplementary Kanji Font (1/6)
+  Date: 28 Jul 1994 00:06:12 +0900
+  Organization: Data Processing Center, Kyoto University, Kyoto, Japan.
+  Message-ID: <315t54$et5@kudpc.kudpc.kyoto-u.ac.jp>
+  
+  ,TK0EQ1'(R!09Qi19(B 0,T!g10AU10Jh1G9;P (patch) ,T`0>Th1A0MU1!KERB0MQ19(B  ,T$GC(P`0>Th1A (apply) 0,TJh1G9`K0Eh1R09Ui104i1GB
+  
+C-11: 0,TMQ1!IC07Uh1aJ4':9 quail-help 0,T!Q1:0MQ1!IC07Uh10;i1M9`0"i1Rd;(0CT1'05h1R'0!Q19(B ,T`0;g190"i1M:!>0Ch1M' (bug)
+ ,TK0CW1M`;0Eh1R?
+  
+  ,T!0CX13R5CG(JM:04Y10Gh1R 0,T5Q1Ga;C (variable) *quail-keyboard-translate-table* 0,T6Y1!(B
+  0,T5Qi1'd0Gi106Y1!05i1M'K0CW1Md0Ah1(B  0,T5Q1Ga;C09Ui1c95M9`0CTh1A05i19(B (default) ,T(PaJ4'a<90<Q1'0$U10Bl1:M0Cl14(B
+  (keyboard map) ,Tb4BJAA05T10Gh1R 0,T$U10Bl1:M0Cl1407Uh1c0*i1M0BYh1`0;g19(B vt100  ,Tb4B`)>RPM0Bh1R'0BTh1'(B ,T`0AWh1Mc0*i1(B
+  0,T$U10Bl1:M0Cl14a::(B JIS ,T(S`0;g19(P05i1M'`0>Th1A
+  
+        (setq *quail-keyboard-translate-table*
+              *quail-keyboard-translate-table-jis*)
+  
+  ,Td0Gi1c9(B .emacs   ,T!0CX13R0Mh1R9CRBEP`0MU1B4(R! info/kbd-trans
+  
+C-12: ,TMBR!(P0>T1A0>l10"i1M$GRA07Uh1`0"U1B904i1GB Mule
+  
+  ,TJRARC6c0*i1b;Ca!CA m2ps ,Tc9d4`C$7M0CU1(B lib-src ,T"M' Mule ,T`;0EUh1B9a0?i1A0"i1M0AY1E0+Vh1'0AU1(B
+  ,T@RIRKERB@RIR ,Tc0Ki1`0;g19@RIR07Uh10>T1A0>l104i1GB`$0CWh1M'0>T1A0>l1a::(B Postscript ,Td04i1(B  ,Ta05h1(Pc0*i1d04i10!Q1:(B
+  ,Ta0?i1A0"i1M0AY1E0+Vh1'`0!g1:(B (save) 0,T4i1GBC0KQ1J@RBc9 (internal code) ,T"M' Mule ,T`07h1R09Qi19(B
+  
+  m2ps ,T(Pc0*i1a0?i1A0"i1M0AY1E BDF ,T"M' X ,T`0;g19?M905l1(B ,TJ0Ci1R'a<90<Q1'0:T17(B (bitmap) ,T"M'05Q1G0MQ1!IC
+  ,Ta0Ei1G0Jh1'd;0BQ1'`$0CWh1M'0>T1A0>l1(B  0,T(V1'7Sc0Ki10>T1A0>l1@RIRKERB ,Tf ,T@RIRd04i1(B 0,T6V1'a0Ai1(Pd0Ah10AU1?M905l1"M'a05h1EP
+  ,T@RIRc9`$0CWh1M'0>T1A0>l1(B  ,T!0CX13R0Mh1R9CRBEP`0MU1B4(R!0$Yh10AW1MMM09l1dE09l1(B (online manual) ,T"M'
+  m2ps (m2ps.1)
+  
+C-13: 0,TMh1R90*Wh1Ma0?i1A0"i1M0AY1E07Uh10AU1C0KQ1J ,T@RIR0-Uh10;Xh19(B 0,T(U19(B ,T`!RK0EU1(B ,TK0CW1MC0KQ1J 2 ,Td:07l1(B ,Td0Ah1d04i1(B
+  
+  ,T(P05i1M'c0Jh1(B --mcpatch ,Tc9$S0JQh1'(B configure ,T`0>Wh1Mc0Ki1JRARC6c0*i10*Wh1Ma0?i1A0"i1M0AY1Ec9C0KQ1J0MWh19(B
+  ,T9M!`K09W1M(R! ASCII ,Td04i1M0Bh1R'06Y1!05i1M' ,TaEP(S`0;g19(P05i1M'CP0:X10*X14C0KQ1J"M'0*Wh1Ma0?i1A0"i1M0AY1E`K0Eh1R
+  0,T9Qi19(B ,TaEP`0>Th1A0*X14$S0JQh1'0"i1R'0Eh1R'd0Gi1c9(B site-init.el (,Tc0*i1(B *autoconv* ,Td0Ah1d04i1(B)
+  
+    ;;; 0,T5Q1GM0Bh1R': ,Tc0*i1C0KQ1J@RIR`!RK0EU1(B EUC ,Tc90*Wh1Ma0?i1A0"i1M0AY1E
+    (if (fboundp 'set-pathname-coding-system)
+        (set-pathname-coding-system *euc-korea*))
+  
+C-14: ,T*09T14"M' eol (end-of-line) 0,T7Uh106Y1!05Q140JT19b4B0MQ15b90AQ105T1(B 0,T<T14d;(R!"M'`04T1A ,T`GER07Uh10Mh1R9
+ ,Ta0?i1A0"i1M0AY1E`0"i1RAR
+  
+  Mule 0,TCXh190;Q1(0(X10:Q19(P05Q140JT19*09T14"M' eol ,Tb4B0MQ15b90AQ105T1(B ,T`0AWh1M>: CR/LF/CR+LF 0,TMQ19aC!0JX14(B
+  ,T`>CRP)P09Qi19(B 0,T6i1Ra0?i1A0"i1M0AY1E07Uh10AU1*09T14"M' eol ,Ta:: LF ,Ta05h1(::CC07Q14aC!04i1GB CR 0,T!g1(P06Y1!05Q140JT19(B
+  0,TGh1R`0;g19(B ...*dos ,Tb4B0MQ15b90AQ105T1(B  ,TK0CW1Ma0?i1A0"i1M0AY1E07U10AU1(B eol ,Ta:: CR+LF 0,T7Uh1(::CC07Q14aC!04i1GB
+  CR 0,T!g1(P06Y1!05Q140JT190Gh1R`0;g19(B ...*mac  0,T4Q1'09Qi19(B ,T(S`0;g19(P05i1M'CP0:X1*09T14"M'a0?i1A0"i1M0AY1E0Gh1R`0;g19(B
+  *autoconv*{unix,dos,mac} ,TK0EQ1'(R!0;i1M9$S0JQh1'(B \C-u\C-x\C-f (\C-u M-x
+  find-file) ,T`GER0Mh1R9a0?i1A0"i1M0AY1E;CP`@709Ui1(B
+  
+  ,TJR`K05X1"M'!RC05Q140JT19;CP`@7"M'CP::`0"i1RC0KQ1J (coding-system) ,TK0CW1M*09T14"M' eol
+  (eol-type) 0,T<T14(B 0,TAU1M0BYh1(B 3 ,TJR`K05X1(B 0,T4Q1'09Ui1(B
+  
+  1) 0,TAU1C0KQ1JK0CW1M*09T14"M' eol ,TKERB0MQ19;90!Q19M0BYh1(B
+  2) ,TK0CW1M0Gh1Rb*$d0Ah104U1(B 0,TMh1R9d;`(M0!Q1:"M:"M' block ,T>M04U1(B
+  3) priority ,T"M'CP::`0"i1RC0KQ1J (coding-system) 0,T<T14(B
+
+
+,T!RC05Qi1'J@R>aG40Ei1MA (environment) 0,TJh1G905Q1G
+
+D-1: ,Td0Ah1MBR!c0Ki1c0Jh1:CC07Q14cK0Ah1`0>Th1A ,T`GER0JQh1'(B next-line ,T5C'07i1RB0JX14"M'0:Q1?`?M0Cl1(B (buffer)
+  
+  ,T7Sd04i1b4B (setq next-line-add-newlines nil)
+  
+D-2: ,TCS$R-`0JU1B'`05W1M9 ,T`GER0JQh1'(B previous-line 0,T7Uh1:CC07Q14:90JX14"M'0:Q1?`?M0Cl1(B (buffer) 
+  
+  ,T!0CX13Rc0Jh10*X14$S0JQh1'0"i1R'0Eh1R'`0>Th1Ac9 .emacs (,Tc0*i1d04i105Qi1'a05h1(B emacs 0,TCXh19(B 19.26 ,T`0;g1905i19d;(B)
+  
+    (defun previous-line (arg)
+      (interactive "p")
+      (condition-case nil
+	  (line-move (- arg))
+	(beginning-of-buffer)))
+  
+D-3: ,TCS$R-`A09Y1:R0Cl1(B (menu bar) ,TaEP:R0Cl1`0EWh1M9 (scroll bar)
+  
+  ,TE:MM!d04i104i1GB (menu-bar-mode 0) ,TaEP (scroll-bar-mode -1) ,T5RAES04Q1:(B  ,T!0CX13R
+  0,TJQh1'(B (toggle-scroll-bar -1) 0,T6i1R(PE:`0>U1B':R0Cl1`0EWh1M9"M'!CM: (frame) 0,T7Uh1`0;T14M0BYh1(B
+  ,T5M909Ui1(B
+  
+D-4: 0,TJQh1'(B (setq xxx-hook yyyy) ,Ta0Ei1G ,Ta05h10!g105Qi1'(B hook ,Td0Ah1d04i1(B
+  
+  ,T$'(P`0;g19`>CRPd;`0"U1B907Q1:(B hook 0,TMWh19(B  ,T!0CX13Rc0*i1(B add-hook ,Ta7907Uh1(Pc0*i1(B setq ,Tc9!RC05Qi1'(B
+  hook ,T`0>Wh1MK0EU1!`0EUh1B'0;Q1-KR09Ui1(B
+  
+  (0,T5Q1GM0Bh1R')
+    (add-hook 'c-mode-hook '(lambda () (setq tab-width 4)))
+  
+  ,Tb4B;!05T1(B (default) ,T$S0JQh1'(B add-hook ,T(P`05T1A hook ,T`0"i1Rd;0"i1R'K09i1R"M'`04T1A  ,Ta05h106i1R
+  ,TCP0:X105Q1G`0EW1M! (argument) 0,T7Uh1(B 3 0,TGh1R t 0,T!g1(P`0>Th1A (append) ,T`0"i1Rd;0"i1R'K0EQ1'"M' hook
+  
+D-5: ,Tc0*i1(B .emacs 0,TCh1GA ,TJSK0CQ1:07Qi1'(B Mule-1.x ,TaEP Mule-2.x ,Td04i1dKA?
+  
+  ,T`09Wh1M'(R! 0,T5i19)0:Q1:(B emacs ,T"M' Mule-1.x ,TaEP Mule-2.x 0,T5h1R'0CXh190!Q19(B 0,T(V1'7Sc0Ki10AU10"i1M!SK94
+  (specification) ,T`;0EUh1B9d;AR!  ,TaEP0AU1bM!RJ07Uh1(P`0!T140"i1M0<T14>ER4 (error) ,TKR!c0*i10Ch1GA
+  0,T!Q19b4Bd0Ah1a0!i1d"(B  ,Ta05h1JRARC6c0*i10Ch1GA0!Q19d04i1c9`0"U1B904Q1'09Ui1(B
+  
+    (if (eq (string-to-int emacs-version) 18)
+       (0,TJh1G907Uh105i1M'!RCc0Ki17SJSK0CQ1:(B Mule-1.x))
+    (if (eq (string-to-int emacs-version) 19)
+       (0,TJh1G907Uh105i1M'!RCc0Ki17SJSK0CQ1:(B Mule-1.x))
+  
+D-6: ,T`GERc0*i1:9CP:: X Window ,Ta0Ei1G!40;Xh1A BS ,T(Pd04i1$S0JQh1'"M'0;Xh19(B DEL ,Ta79 ,T`0;g19`>CRP
+ ,TMPdC?  0,T6i1R(P7Sc0Ki1`0;g19`K0AW1M95M907Uh1c0*i107Uh1`7M0Cl10AT109Q1E ,T(P05i1M'7SM0Bh1R'dC?
+  
+  ,T:9`7M0Cl10AT109Q1E 0,T;Xh1A BS ,T(P0Jh1'C0KQ1J ^H ,TaEP0;Xh1A DEL ,T(P0Jh1'C0KQ1J ^?  ,TaEPd0Ah1aB!0"i1Ma5!05h1R'
+  ,TCPK0Gh1R' BS 0,T!Q1:(B ^H ,TK0CW1M DEL 0,T!Q1:(B ^?  ,Ta05h1:9(B X ,T`CRJRARC6aB!0"i1Ma5!05h1R'd04i1(B
+  ,T`09Wh1M'(R! 0,T;Xh1A BS 0,T6Y1!c0*i1c90EQ1!I3P"M'0;Xh1A DEL 0,T$h1M90"i1R'0:h1MB  0,T(V1'7Sc0Ki1c0Jh10"i1M!SK94d0Gi1a::09Ui1(B
+  
+  0,T6i1R(P7Sc0Ki1`0;g19`K0AW1M95M907Uh1c0*i107Uh1`7M0Cl10AT109Q1E 0,T!g1c0Ki1c0Jh1(B
+  
+    (if (eq window-system 'x)
+        (progn
+          (define-key function-key-map [backspace] [8])
+          (put 'backspace 'ascii-character 8)))
+  
+  ,Td0Gi1c9(B .emacs   ,TaEP06i1R`0;g19`7M0Cl10AT109Q1E ,T!RCJ0EQ1:0;Xh1A BS 0,T!Q1:(B DEL 0,T9Qi19(B ,T(P7Sd04i104i1GB!RCbKE4
+  "term/bobcat"   ,Ta05h1!RCbKE4a0?i1A0"i1M0AY1E09Ui1(B ,Tc0*i1d0Ah1d04i10!Q1:(B X  ,T!0CX13Rc0Jh10*X14$S0JQh1'05h1Md;09Ui1(B ,Td0Gi1c9(B
+  .emacs ,Ta790*X14$S0JQh1'0"i1R':9
+  
+    (cond ((eq window-system 'x)
+	   (define-key function-key-map [delete] [8])
+	   (put 'delete 'ascii-character 8))
+	  ((null window-system)
+	   (load "term/bobcat")))
+
+
+0,TMT1`E$7CM09T1!0Jl1`A0El1(B ,TaEP 0,T9T1G0Jl1(B (Mail & News)
+
+E-1: 0,T6i1R!4 C-c C-y ,T5M907Uh1`0"U1B90MT1`E$7CM09T1!0Jl1`A0El1K0CW1M09T1G0Jl1M0BYh1(B  0,TJQ1-0EQ1!I03l10Mi1R'0MT1'(B (citation 
+ mark) ,T(P!ERB`0;g19(B "   " ,Td;  0,T6i1R05i1M'!RC`;0EUh1B9c0Ki1`0;g19(B "> " 0,T5i1M'7SM0Bh1R'dC?
+  
+  ,TJRARC6c0*i1(B Supercite 0,T5Qi1'0JQ1-0EQ1!I03l10Mi1R'0MT1'c0Ki1`0;g19(B "> " ,Td04i1(B  Supercite 0,TBQ1'0AU1$GRA
+  ,TJRARC60MU1!KERBM0Bh1R' ,TaEP0BQ1';0CQ1:a05h1'(B (customize) 0,TJQ1-0EQ1!I03l10Mi1R'0MT1'd04i10MU1!KERBa::
+  ,T!0CX13R04Y1CRBEP`0MU1B4(R!$S6RA07Uh1(B E-2 0,T6V1'(B E-4
+  
+E-2: 0,T6i1R05i1M'!RCc0Jh10*Wh1Md0Gi1c90JQ1-0EQ1!I03l10Mi1R'0MT1'(B (citation mark) 0,T5i1M'7SM0Bh1R'dC?
+  
+  0,T5Qi1'd04i1b4Bc0*i10*X14$S0JQh1'0"i1R'0Eh1R'  0,TGT108U105Qi1'09Ui1d04i1AR(R!0$X13(B ksakai@mtl.t.u-tokyo.ac.jp
+  ,TJRARC6E::CC07Q1407Uh1d0Ah1(S`0;g19d04i1(B ,T5RA07Uh105i1M'!RC(Pc0*i1(B  ,TaEPa0!i1(B 3 ,T:CC07Q140Eh1R'0JX14d04i15RA
+  ,T$GRA05i1M'!RC (0,T4Y1CRBEP`0MU1B4(R!0$Yh10AW1M"M' Supercite)
+  
+    ;;  sc
+    (autoload 'sc-cite-original     "supercite" "Supercite 3.1" t)
+    (autoload 'sc-submit-bug-report "supercite" "Supercite 3.1" t)
+    (autoload 'sc-perform-overloads "sc-oloads" "Supercite 3.1" t)
+    (setq mail-citation-hook 'sc-cite-original)
+    (setq mail-yank-hooks 'sc-cite-original)    ; for all but MH-E
+    (setq mh-yank-hooks 'sc-cite-original)      ; for MH-E (0,TCXh19cK0Ah1!0Gh1R 3.7)
+    (setq news-reply-mode-hook 'sc-perform-overloads) ; for RNEWS,GNEWS,GNUS
+    (setq mail-setup-hook 'sc-perform-overloads)      ; for RMAIL,PCMAIL,GNUS!
+    (setq gnews-ready-hook 'sc-perform-overloads)     ; for GNEWS
+  
+    (setq sc-electric-references-p nil)
+    (setq sc-preferred-header-style 1)
+    (setq sc-citation-leader "")
+  
+E-3: 0,T6i1R(P05Qi1'0JQ1-0EQ1!I03l10Mi1R'0MT1'(B (citation mark) ,Tc0Ki1`0;g19(B "> " ,Tb4B0MQ15b90AQ105T1(B ,T(P05i1M'7S
+ ,TM0Bh1R'dC?
+  
+  ,T`0>Th1A0GT108U105Qi1'(B (setting) ,T5RA$S6RA E-2 ,Ta0Ei1G`0>Th1A:CC07Q140"i1R'0Eh1R'0!g1c0*i1d04i1(B
+  
+    (setq sc-nested-citation-p t)
+  
+  ,Ta05h10GT108U109Ui1(P7Sc0Ki1d0Ah1JRARC6c0Jh10*Wh1ME'd;c90JQ1-0EQ1!I03l10Mi1R'0MT1'd04i1(B
+  
+E-4: ,Tc9 Supercite 0,T6i1R05i1M'!RC(Pc0*i1`$0CWh1M'KARB0MWh19`0;g190JQ1-0EQ1!I03l10Mi1R'0MT1'`0CTh1A05i19(B (default
+ citation mark) ,T9M!(R!(R!0JQ1-0EQ1!I03l1`0CTh1A05i19`04T1A ,T(P05i1M'7SM0Bh1R'dC?
+  
+  0,TAU1b;Ca!CA sc-register-2.3.1 0,T+Vh1'`0"U1B9b4B 0,T$X13(B 0,TNT1bC`+P@0,T?Y10(T10+U1CM!0+l1(B
+  (yoichi@s5g.ksp.fujixerox.co.jp) ,TJSK0CQ1:0(X14;CPJ'0$l109Ui1(B  ,T`GERc0*i1c0Ki105T1405Qi1'(B
+  sc-register ,Ta0Ei1G`0>Th1A:CC07Q140"i1R'0Eh1R'
+  
+    (setq sc-load-hook '(lambda () (require 'sc-register)))
+    (setq sc-preferred-attribution 'registeredname)
+  
+  ,Tc0*i1c9`GER07Uh105i1M'!RCc0Jh1@RIR0-Uh10;Xh19E'd;c90JQ1-0EQ1!I03l10Mi1R'0MT1'(B (citation mark) ,TK0CW1M0CYi10JV1!(B
+  ,TCS$R-`GER05i1M'`0EW1M!05Q1G`0EW1M!`05T1A`05g1A (completion)
+  
+  ,Ta05h1(B sc-register ,Tc0*i1d0Ah1d04i10!Q1:(B Supercite 0,TCXh19cK0Ah1!0Gh1R 3.0   Supercite 0,TCXh1905h1Md;
+  ,T(PCGA$GRAJRARC6"M' sc-register ,T`0"i1Rd;d0Gi104i1GB
+  
+E-5: ,T>M`;0EUh1B9(R! Supercite 0,TCXh19(B 2.3 ,T`0;g190CXh1907Uh105T14AR04i1GB0$W1M0CXh19(B 3.1 ,Ta0Ei1G ,T`GERc0*i1(B
+ sc-yank-original 0,T!g1(P06Y1!(B fill-paragraph ,Td;04i1GB
+  
+  0,TCYi10JV1!(P`0;g190"i1M!SK9407Uh1d0Ah10$h1MB04U19P$0CQ1:(B  ,T7SdA(P7Sc0Ki1$CM:$0EX1A (backward compatible)
+  0,T$h1R`0CTh1A05i19(B (default value) ,T"M'0CXh190!h1M9 ,Tf ,Td0Ah1d04i1K0CW1M0BQ1'd'(B  ,T`MR`0;g190Gh1R ,Tc0Ki105Qi1'(B
+  
+    (setq sc-auto-fill-region-p nil)
+  
+  ,Td0Gi1c9(B .emacs 0,T!h1M9 ,Ta0Ei1G(Pa0!i10;Q1-KR fill-paragraph ,Td04i1$0CQ1:(B
+  
+E-6: RMAIL ,T7S'R9d0Ah106Y1!05i1M'
+  
+  0,T$X13(B Takeki Shigehara (,T7R`!0!T1(B 0,T*T1`'NRCP) <takeki@nalgo.snet.or.jp> ,T`0"U1B9
+  ,Td0Gi10Gh1R
+  
+    ,T!0CX13R`0>Th1A0*X14$S0JQh1'0"i1R'0Eh1R'd0Gi1c9(B site-init.el ,TJSK0CQ1:`$0CWh1M' NEC EWS4800
+    EWX-UX/V(Rel 4.2) (,TMR((P`0;g190!Q1:`$0CWh1M' SVR4 0,T7X1!`$0CWh1M'04i1GB0!g1d04i1(B)
+  
+    (setq rmail-spool-directory "/var/mail/")
+    (setq sendmail-program "/usr/ucblib/sendmail")
+    (setq manual-program "/usr/ucb/man")
+  
+    ,TaEP05i1M'7Sc0Ki1d4`C$7M0CU1(B /var/mail 0,TMh1R9`0"U1B9 (read/write) ,Td04i1JSK0CQ1:0<Yi1c0*i1(B
+    (users) 0,T7X1!$9(B
+  
+    chmod 777 /var/mail
+  
+E-7: ,T`GERc0*i1(B GNUS ,Ta0Ei1GJAA05T10Gh1R(PE'0"i1M$GRA;CP!RH (post) ,Tc9 fj.test  ,T7SdA0$h1R
+ ,T`0CTh1A05i19(B (default value) ,T"M' distribution ,Td0Ah1`0;g19(B fj
+  
+  0,T"i1M!SK94 (specification) 0,T6Y1!`;0EUh1B9c0Ki1`0;g19a::09Ui1a0Ei1G  ,TM09Vh1'(B 0,T$h1R`0CTh1A05i19(B (default
+  value) ,T"M' distribution ,T(P06Y1!05Qi1'c0Ki1`0;g190$h1RaC!c9CRB!RC (list)
+  gnus-local-distributions 0,T!h1M9  ,Ta0Ei1G`0EW1M!0$h1R0MWh19(B ,Tf ,Td04i1a::`05T1A`05g1A (completion)
+
+
+,T!RCaJ4'<E:9(M
+
+F-1: ,TaJ4'@RIR0-Uh10;Xh19(B (,T@RIR0(U19(B ,T@RIR`!RK0EU1(B) 0,T4i1GB Mule ,T:9 X Window ,Td0Ah1d04i1(B
+  
+  ,T(P05i1M'05Qi1'(B resource ,Tc0Ki1`0;g19a::0"i1R'0Eh1R'  ,TaEPM0Bh1R0EW1A05Qi1'0$h1R FontSet-xxx ,T5RA0*X14?M905l1(B
+  (font set) 0,T7Uh105Qi1'd0Gi1c9(B FontSetList 0,T4i1GB
+  
+    ! Mule-2.0
+    *FontSetList: 16,24
+    *FontSet-16:\
+        -*-fixed-medium-r-*--16-*-iso8859-1,\
+        -*-fixed-medium-r-*--16-*-iso8859-2,\
+        -*-fixed-medium-r-*--16-*-iso8859-3,\
+        -*-fixed-medium-r-*--16-*-iso8859-4,\
+        -*-fixed-medium-r-*--16-*-iso8859-5,\
+        -*-fixed-medium-r-*--16-*-iso8859-7,\
+        -*-fixed-medium-r-*--16-*-iso8859-8,\
+        -*-fixed-medium-r-*--16-*-iso8859-9,\
+        -*-fixed-medium-r-*--16-*-viscii1.1-1,\
+        -*-fixed-medium-r-*--16-*-mulearabic-0,\
+        -*-fixed-medium-r-*--16-*-mulearabic-1,\
+        -*-fixed-medium-r-*--16-*-mulearabic-2,\
+        -*-fixed-medium-r-*--16-*-muleipa-1,\
+        -*-fixed-medium-r-*--16-*-jisx0201.1976-*,\
+        -*-fixed-medium-r-*--16-*-jisx0208.1983-*,\
+        -*-fixed-medium-r-*--16-*-jisx0212.1990-*,\
+        -*-medium-r-*--16-*-gb2312.1980-*,\
+        -*-mincho-medium-r-*--16-*-ksc5601.1987-*,\
+        -*-fixed-medium-r-*--16-*-tis620.2529-1
+    *FontSet-24:\
+        -*-fixed-medium-r-*--24-*-iso8859-1,\
+        -*-fixed-medium-r-*--24-*-iso8859-2,\
+        -*-fixed-medium-r-*--24-*-iso8859-3,\
+        -*-fixed-medium-r-*--24-*-iso8859-4,\
+        -*-fixed-medium-r-*--24-*-iso8859-5,\
+        -*-fixed-medium-r-*--24-*-iso8859-7,\
+        -*-fixed-medium-r-*--24-*-iso8859-8,\
+        -*-fixed-medium-r-*--24-*-iso8859-9,\
+        -*-fixed-medium-r-*--24-*-viscii1.1-1,\
+        -*-fixed-medium-r-*--24-*-mulearabic-0,\
+        -*-fixed-medium-r-*--24-*-mulearabic-1,\
+        -*-fixed-medium-r-*--24-*-mulearabic-2,\
+        -*-fixed-medium-r-*--24-*-muleipa-1,\
+        -*-fixed-medium-r-*--24-*-jisx0201.1976-*,\
+        -*-fixed-medium-r-*--24-*-jisx0208.1983-*,\
+        -*-fixed-medium-r-*--24-*-jisx0212.1990-*,\
+        -*-medium-r-*--24-*-gb2312.1980-*,\
+        -*-mincho-medium-r-*--24-*-ksc5601.1987-*,\
+        -*-fixed-medium-r-*--24-*-tis620.2529-1
+  
+F-2: ,T`GERc0*i1(B Mule ,T:9 X ,T?M905l1:R'0Jh1G9(PaK0Gh1'(B ,Td0Ah1`0;g190CY1;0Ch1R' 0,T4Y1d0Ah1JGB'RA
+  
+  0,T$X13(B TAKAHASHI Naoto (,T7R!RNR0*T1(B ,T9RbMb5P) <ntakahas@etl.go.jp> ,TaEP 0,T$X13(B
+  Ken'ichi Handa (0,TNQ194P ,T`$90MT10(T1(B) <handa@etl.go.jp> ,T`0"U1B9d0Gi10Gh1R
+  
+    Mule ,T(PJ0Ci1R'0GT19b40Gl1(B (window) ,T5RA$GRA!0Gi1R'"M'?M905l1(B ASCII 0,T!h1M9  ,T!RC07Uh1?M905l1(B
+    ,T:R'0Jh1G904Y1aK0Gh1'd;09Qi19(B ,T`0;g19`>CRP0Gh1R?M905l10MQ1909Qi190AU1$GRA!0Gi1R'd0Ah15C'0!Q1:$GRA!0Gi1R'"M'?M905l1(B
+    ASCII  ,T$GRA!0Gi1R'"M'?M905l1@RIR0-Uh10;Xh19(B ,T@RIR0(U19(B ,TaEP@RIR`!RK0EU1(B 0,T9Qi19(P05i1M'!0Gi1R'`0;g19(B 2
+    ,T`07h1R"M'?M905l1(B ASCII ,TaEP?M905l10MWh19(P05i1M'!0Gi1R'`07h1R0!Q190!Q1:?M905l1(B ASCII
+  
+    ,T!RC07Uh1?M905l1d0Ah1`0;g190CY1;0Ch1R'04Y1d0Ah1JGB'RA09Qi19(B ,T$'`0;g19`>CRP$GRAJRARC6c9!RC0Bh1M"BRB
+    (scaling) 0,TMQ15b90AQ105T1(B  0,T6i1R?M905l107Uh1!SK94d0Gi109Qi19(B ,T`0;g19d;5RA0CY1;a::(B XLFD ,Ta05h1d0Ah10AU1M0BYh1(0CT1'(B
+    ,Tb;Ca!CA X server ,T(P`0EW1M!0Bh1M"BRB?M905l10MWh19`07h1R07Uh10CYi10(Q1!(B ,TARc0*i15RA$GRA`KARPJA
+    0,T5Q1GM0Bh1R'`0*h19(B  0,T6i1R`0EW1M!?M905l1(B
+          "-*-fixed-medium-r-*--*-*-*-*-*-*-jisx0208.1983-*"
+    0,T+Vh1'`0;g19d;5RA XLFD 0,T!g1(Pc0*i1!RC0Bh1M"BRB0MQ15b90AQ105T1d04i1(B  ,Ta05h106i1R`0EW1M!
+          "-*-fixed-medium-r-*--*-*-jisx0208.1983-*"
+    ,T5RA07Uh1c0*i1c9(B mule-init.el 0,T+Vh1'd0Ah15C'5RA XLFD (,T`09Wh1M'(R!(S9G9$M0EQ1A09l109i1MBd;) 0,T!g1(B
+    ,T(Pd0Ah106Y1!0Bh1M"BRB0MQ15b90AQ105T1(B  0,TMQ1909Ui1`0;g19`0>U1B'$GRA0CYi10JV1!(R!;CPJ:!RC03l1`07h1R09Qi19(B
+  
+F-3: 0,T6i1R05i1M'!RCc0Ki1"9R4`0CTh1A05i19(B (default) ,T"M'?M905l1`0;g19(B 14 0,T(X14(B ,T5M907Uh1`0CU1B! Mule ,T(P
+ 0,T5i1M'7SM0Bh1R'dC?
+  
+  0,T$h1RaC!0JX14"M' Emacs*FontSetList: ,Tc9 X resource ,T(P06Y1!c0*i1`0;g190$h1R`0CTh1A05i19(B
+  (default)  0,T4Q1'09Qi19(B 0,T6i1R05i1M'!RCc0Ki1"9R4`0CTh1A05i19`0;g19(B 14 0,T(X14(B 0,T!g1c0Ki1c0Jh1`E" 14 ,Td0Gi15C'0$h1RaC!
+  ,Tc9 FontSetList ,Ta0Ei1G`0"U1B9 FontSet-14 ,T5RA05Q1GM0Bh1R'c9$S6RA F-1 0,T!g1c0*i1d04i1(B
+  
+  ,TM0Bh1R`0"U1B90$h1Rc9 resource ,T`0;g19(B emacs*FontSetList: ,TK0CW1M Mule*FontSetList:
+  0,T$X13(B SANETO Takanori (,T+R`9b5P ,T7R!Rb90CT1(B) <sanewo@cep.sony.co.jp> ,T`0"U1B9d0Gi1(B
+  0,TGh1R
+  
+    ,TM08T1:RBd04i10Gh1R Emacs ,T`0;g190*Wh1M class 0,TJh1G9 mule ,T`0;g190*Wh1M instance
+  
+    Emacs ,T`0;g190*Wh1M07Uh1b;Ca!CAc9!0EXh1A Emacs ,Tc0*i10!Q1907Qh1Gd;  0,T7Qi1'(B mule 0,T7Qi1'(B nemacs epoch
+    nepoch ,TaEPa09h19M9 ,TCGA07Qi1'05i19)0:Q1:(B GNU emacs 0,T5h1R'0!g1`0;g19(B Emacs
+    
+    0,TJh1G90*Wh1M instance 0,T9Qi19(B ,T`0;g190*Wh1MJSK0CQ1:a0:h1'aB!b;Ca!CAa05h1EPb;Ca!CA  0,T6V1'a0Ai1(P`;0EUh1B9
+    0,T*Wh1M mule ,T`0;g19(B hoge 0,T$h1R07Uh105Qi1'd0Gi1c9(B Emacs*... 0,T!g10BQ1'(P0AU1<E ,Ta05h10$h1R mule*... 0,T9Qi19(P
+    ,Td0Ah10AU1<E  0,T6i1R!SK9407Qi1'0$h1Rc90*Wh1M instance ,TaEP0*Wh1M class ,Td0Gi1(B 0,T$h1Rc90*Wh1M instance ,T(P
+    0,T6Y1!`0EW1M!ARc0*i10!h1M9
+  
+    ,TJRARC6!SK940*Wh1M instance ,Tc0Ki10*Q14`(9(B ,Td04i104i1GB05Q1G`0EW1M! (option) -rn name ,TK0CW1M
+    ,T!RC05Qi1'0$h1R05Q1Ga;CJ@R>aG40Ei1MA (environment variable) WM_RES_NAME  ,Tc9!C03U107Uh1(B
+    ,Td0Ah10AU107Qi1'05Q1G`0EW1M! (option) ,TaEP05Q1Ga;CJ@R>aG40Ei1MA 0,T!g1(Pc0*i10*Wh1M$S0JQh1'(B (command name)
+    ,T`0;g190*Wh1M instance
+  
+F-4: ,TK0EQ1'(R!05Qi1'(B visible-bell 0,T4i1GB$S0JQh1'(B (setq visible-bell t) ,Ta0Ei1G  0,TJh1G907Uh1(B
+ ,T!CP>0CT1:(B (flash) 0,T9Qi19(B ,T!0Gi1R'a0$h1(B 1/4 ,TaEPM0BYh15C'!ER'"M'(M  0,TMQ1909Ui1`0;g190"i1M!SK94
+ (specification) ,Tc0*h1dKA?
+  
+  ,T`0;g190"i1M!SK94 (specification) ,T$0CQ1:(B  ,T`;0EUh1B9`0;g19a::09Ui1(B 0,T5Qi1'a05h1(B GNU Emacs 0,TCXh19(B 18.58 
+  
+F-5: face 0,T$W1MMPdC?
+  
+  ,T`0;g19$GRAJRARC6c9!RCc0*i1?M905l1K0CW1M0JU1aB!!0EXh1A ,T`GERaJ4'<E05Q1G0MQ1!IC05h1R' ,Tf ,T:9CP:: X
+  Window  Mule 2.x ,Tc0*i1$GRAJRARC609Ui1c9!RC!0EQ1:0JU1"RG4S"M':CC07Q14bKA4 (mode line)
+  ,Tb;Ca!CA07Uh1c0*i1$GRAJRARC6 face 0,T9Ui1(B 0,TAU1(B hilit19.el ,TaEP font-lock.el
+  
+F-6: ,TMPdC0$W1M terminal face?  ,TaEP06i1R(Pc0*i1(B terminal face ,T(P05i1M'7SM0Bh1R'dC?
+  
+  ,Tc9 emacs ,TJ0AQ1B0!h1M9  face ,T`0;g19`0>U1B'$GRAJRARC607Uh1`MRd0Gi1c0*i1`GER`0"U1B90CY1;(B ,T:9CP:: X
+  Window ,T`07h1R09Qi19(B  ,Ta05h1c90;Q1(0(X10:Q19(B Mule 0,TBQ1'JRARC6c0*i1(B face ,Tc9!RC`0"U1B90CY1;b4BMR0HQ1B
+  termcap ,Td04i104i1GB  ,T`CR`0CU1B!$GRAJRARC609Ui10Gh1R terminal face (,T`K05X107Uh105i1M'05Qi1'0*Wh1M ,T`0;g19(B
+  ,T`>CRP05i1M'KR0*Wh1MJSK0CQ1:05Q1G`0EW1M!"M' configure ,TaEP compile switch)
+  
+  ,T!0CX13RCP0:X1(B --terminal-face ,T5C'$S0JQh1'(B configure 0,T6i1R05i1M'!RC(Pc0*i1$GRAJRARC609Ui1(B
+  
+F-7: ,T`GERc0*i1(B Mule ,T:9 X ,T(P0AU1CPBP`0Gi19CPK0Gh1R':CC07Q14(B  0,T6i1R(PE4CPBPCPK0Gh1R':CC07Q1409Ui1(B
+ ,T(P05i1M'7SM0Bh1R'dC?
+  
+  ,Tc0Ki1`0"U1B9
+  
+    Emacs*lineSpace:		0+0
+  
+  ,Td0Gi1c9(B X resource ,TK0CW1MCP0:X105Q1G`0EW1M! (option) -lsp 0+0 ,Tc9:CC07Q14$S0JQh1'(B (command
+  line) ,T`GER`0CU1B!  ,Tc9 Mule 0,TCXh19(B 1 0,TAU10?Q1'0!l10*Q1907Uh17SK09i1R07Uh109Ui10*Wh1M x-set-linespace ,TM0BYh1(B ,Ta05h1(B
+  ,Td0Ah10AU10?Q1'0!l10*Q1909Ui1c9(B Mule 0,TCXh19(B 2
+
+
+,Ta>$`!( (package) Emacs Lisp
+
+G-1: ,Tb;Ca!CA lisp 0,T*Wh1M xxx ,T`$Bc0*i1d04i1:9(B Mule 0,TCXh19(B 1.x ,Ta05h15M909Ui1c0*i1d0Ah1d04i1a0Ei1G  ,T$GC7S
+ ,TM0Bh1R'dC?
+  
+  0,TMQ1909Ui1`0;g19`>CRP0Gh1R Mule 1.x 0,T9Qi19(B ,Tc0*i1(B GNU Emacs 18.59 ,T`0;g190R9 ,Ta05h1(B Mule 2.x ,Tc0*i1(B
+  GNU Emacs 19 ,T`0;g190R9 0,T"i1M!SK94 (specification) 0,T(V1'05h1R'0!Q19AR!  ,Ta05h1M0Bh1R'dC0!g104U1(B
+  ,Tb;Ca!CAKERB0MQ190!g1JRARC67S'R9d04i1:9(B Emacs 19  ,T!0CX13R5CG(JM:04Q1'09Ui1(B
+  
+    1. ,Tb;Ca!CA lisp ,TKERBb;Ca!CA ,Td04i106Y1!CGA`0"i1R`0;g19AR5C0R9"M' Mule 2.x ,Ta0Ei1G
+       ,Tb;Ca!CA`K0Eh1R09Ui10Bh1MA7S'R9d04i104U1:9(B Mule 2.x  ,T!0CX13R5CG(JM:04Y10!h1M90Gh1R0AU1b;Ca!CA
+       ,T`K0Eh1R09Ui1(B ,TM0BYh1c9d4`C$7M0CU1(B lisp ,TAR5C0R9a0Ei1GK0CW1Md0Ah1(B  0,T6i1R0AU1(B 0,T!g1c0Ki107Ti1'b;Ca!CA07Uh10AU1M0BYh1(B
+       0,T!h1M9`04T1A  ,Ta0Ei1Gc0*i1b;Ca!CAAR5C0R9a79
+    
+    2. 0,T6V1'a0Ai1(Pd0Ah1d04i1a(!ARa::AR5C0R9  ,Ta05h1b;Ca!CAKERBb;Ca!CA 0,T!g106Y1!a0!i1c0Ki1c0*i1d04i1a0Ei1G
+       0,T4i1GB$GRA>BRBRA"M'0<Yi1`0"U1B9  0,T5Q1GM0Bh1R'`0*h19(B archie  ,T!0CX13RKRb;Ca!CA0CXh19cK0Ah107Uh10JX14(B
+       ,TARc0*i1a79(B
+    
+    3. 0,T5Q1GM0Bh1R'`0*h19(B ,Tb;Ca!CA shell-mode 0,T+Vh1'd04i106Y1!;0CQ1:;0CX1'd;KERB0CY1;a::(B 0,T!g106Y1!;0CQ1:;0CX1'(B
+       ,Tc0Ki1c0*i1d04i1JP4G!0"Vi19AR!07U1`04U1BGc90CXh19(B 2   0,T4Q1'09Qi19(B ,T!RCEM'c0*i1b;Ca!CAAR5C0R904Y1(B 0,T!g109h1R
+       ,T(P`0;g190GT108U107Uh104U10GT108U1K09Vh1'(B
+    
+    4. 0,T6i1Rd0Ah1M0Bh1R'09Qi19(B 0,T!g1a0!i1d"(B (port) ,Tc0Ki1c0*i1d04i1(B 0,T4i1GB05Q1G`M'`6MP
+  
+G-2: 0,T6i1R(P`05T1A0JU1c0Ki1$S`)>RP (reserved word) ,TK0CW1MKARB`K05X1(B (comment) ,Tc9@RIR C
+ ,T(P05i1M'7SM0Bh1R'dC?
+  
+  ,Tc0Ki1c0*i1(B hilit19.el ,TK0CW1M font-lock.el
+  
+G-3: hilit19.el ,Tc0*i1M0Bh1R'dC?
+  
+  ,T`0>U1B'a0$h1bKE4 (load) ,Ta0?i1A0"i1M0AY1E09Ui1`0"i1Rd;0!g1c0*i1d04i1(B  ,TaEP06i1R05i1M'!RC(Pc0*i1(B hilit19 ,Ta0$h1c9(B
+  ,TbKA4 (mode) ,T:R'bKA4`07h1R09Qi19(B 0,T!g1c0Ki1c0Jh10*Wh1MbKA409Qi19d0Gi1c9(B hilit-mode-enable-list
+  ,TK0CW1M06i1R`0"U1B90Gh1R
+  
+    (setq hilit-mode-enable-list
+          '(not text-mode emacs-lisp-mode sgml-mode c-mode c++-mode)
+  
+  0,T!g1(PJRARC6!SK94bKA407Uh1d0Ah105i1M'!RC(Pc0*i1(B hilit19 ,Td04i1(B
+  
+  hilit19 0,TAU10"i1M`0JU1B07Uh10Gh1R ,TK0EQ1'(R!0;i1M90"i1M0AY1E`0"i1Rd;a0Ei1G ,T(P05i1M'!4 C-S-l 0,T6V1'(P0AU1<E  0,T+Vh1'a0!i1(B
+  ,Td04i1b4Bc0*i1(B font-lock 0,T!Q1:bKA407Uh105i1M'!RCc0*i1b4B`)>RP
+  
+G-4: font-lock.el ,Tc0*i1M0Bh1R'dC?
+  
+  ,Tc0Ki1`0"U1B9 (setq emacs-lisp-mode-hook '(lambda () (font-lock-mode 1)))
+  ,TE'c9 .emacs ,TJSK0CQ1:bKA4 (mode) ,Ta05h1EPbKA407Uh105i1M'!RC(Pc0*i1(B font-lock
+  
+  ,Tb4B0$h1R`0CTh1A05i19(B (default) font-lock ,T(Pd0Ah1aJ4'0JU1(B  ,Ta05h1JRARC605Qi1'(B face 0,T4Q1'05Q1GM0Bh1R'
+  0,T"i1R'0Eh1R'c0Ki1aJ4'0JU1d04i1(B
+  
+    (add-hook 'font-lock-mode-hook
+	      '(lambda ()
+		 (make-face 'keyword-face)
+		 (set-face-foreground 'keyword-face "tomato")
+		 (setq font-lock-keyword-face 'keyword-face)
+  
+		 (make-face 'comment-face)
+		 (set-face-foreground 'comment-face "violetred4")
+		 (setq font-lock-comment-face 'comment-face)
+  
+		 (make-face 'string-face)
+		 (set-face-foreground 'string-face "darkgreen")
+		 (setq font-lock-string-face 'string-face)
+  
+		 (make-face 'function-face)
+		 (set-face-foreground 'function-face "blueviolet")
+		 (setq font-lock-function-name-face 'function-face)
+  
+		 (make-face 'c-type-face)
+		 (set-face-foreground 'c-type-face "darkolivegreen")
+		 (setq font-lock-type-face 'c-type-face)
+		 ))
+  
+  0,TAU1b;Ca!CA0+Vh1'0>Q129R(R! font-lock ,T7Sc0Ki10AU10JU1aEPb790JU1`7R (gray scale) ,TaEPa0!i1c0Ki1(B
+  ,T`0Cg1G0"Vi190*Wh1M fast-lock  ,TJRARC6KRd04i1(R!aK0Eh1'(B anonymous ftp  ,Tb;Ca!CA`K0Eh1R09Ui1(B
+  ,T(P06Y1!CGA`0"i1R0!Q1:(B emacs ,Tc9M9R$5
+  
+G-5: ,T7Sc0Ki1(B c-mode ,Tc0*i10'h1RB!0Gh1R09Ui1d04i1dKA?
+  
+  ,T!0CX13Rc0*i1(B cc-mode ,Ta79  0,T+Vh1'(PJRARC6c0*i10Bh1MK09i1R (indent) ,Tc9a::05h1R' ,Tf ,Tc0*i1(B C++ ,TaEP
+  0,TMWh19(B ,Tf ,Td04i10'h1RB0"Vi190MU1!KERBM0Bh1R'
+  
+G-6: ,Td0Ah10AU1a>$`!(07Uh17Sc0Ki1c0*i1(B RCS ,Td04i1b4B0MQ15b90AQ105T1K0CW1M?
+  
+  0,TAU1b;Ca!CA0*Wh1M vc.el  0,T+Vh1'05Qi1'd0Gi1c0Ki1c0*i1d04i1M0BYh1a0Ei1Gc9 Mule 0,TCXh19(B 2.x  0,T6i1Rc0*i1(B find-file ,TKR
+  ,Td?0El107Uh1`0!g1:d0Gi104i1GB RCS ,TbKA4 (mode) vc 0,T!g1(P06Y1!`0CU1B!b4B0MQ15b90AQ105T1(B  ,T`GER0JQh1'(B C-x C-q 0,T!g1(B
+  ,T(P7S ci -u ,TK0CW1M co -l ,Tc0Ki1`M'5RAJ6R9!RC03l1(B  ,T`0>U1B'a0$h109Ui10!g1$'(P>Mc0*i1d04i1a0Ei1G  ,T!0CX13R
+  0,TMh1R9 info 0,T6i1R05i1M'!RC(P0CYi1`0>Th1Ac9CRBEP`0MU1B4
+  
+G-7: 0,T6i1R(P05Qi1'c0Ki10$U10Bl1:M0Cl14c0Jh1C0KQ1JM0Bh1R'`0*h19(B 'ESC $ B $' ,Tc0Ki1b4B5C' ,T(P05i1M'7SM0Bh1R'dC?
+  
+  ,Tc0Ki1c0*i1(B keyboard.el  0,T5Qi1'(B set-keyboard-coding-system ,Tc0Ki1`0;g19(B *junet* ,Ta0Ei1G
+  0,T$U10Bl1`0"i1Rd;5C' ,Tf ,Td04i1`EB
+  
+G-8: ,TK0EQ1'(R!bKE4 (load) ,Tb;Ca!CA0JX14b;C4 ange-ftp ,Ta0Ei1G0JQh1'(B M-! (shell-command)
+ ,Td0Ah1d04i1(B  ,T`0;g19`>CRPMPdC?
+  
+  0,T?Q1'0!l10*Q19KERB0?Q1'0!l10*Q19(P06Y1!`;0EUh1B9d; ,TK0EQ1'(R!bKE4 (load) ,Tb;Ca!CA ange-ftp  ,Tc90?Q1'0!l10*Q19(B
+  ,T`K0Eh1R09Qi190AU10?Q1'0!l10*Q19(B write-region ,TaEP insert-file-contents ,T"M' Mule 0,T+Vh1'(P06Y1!(B
+  ,Ta0!i1d"!RC05Qi1'05Q1G`0EW1M! (argument) ,TCGAM0BYh104i1GB
+  
+  ,Tc9 Mule ,T$S0JQh1'(B shell-command ,T(Pc0*i105Q1G`0EW1M! (argument) 0,T+Vh1'06Y1!`0>Th1A`0"i1Rd; ,T`GER
+  ,T`0CU1B! write-region ,TaEP insert-file-contents  ,Ta05h1(B ,T$S0JQh1'(B write-region
+  0,T7Uh106Y1!a0!i1d"b4B ange-ftp ,T(Pd0Ah10CYi1$GRAKARB"M'05Q1G`0EW1M!09Ui1(B ,T`EB7Sc0Ki1`0!T140"i1M0<T14>ER4
+  (error)  0,T(V1'7Sc0Ki1d0Ah1JRARC60JQh1'(B shell-command ,Td04i1(B
+  
+  0,T$X13(B Masayuki Kuwada (,TAR+R0BY10!T1(B 0,T$X1GR4P) <kuwada@soliton.ee.uec.ac.jp> ,T`0"U1B9 
+  0,TGT108U1a0!i1d0Gi10Gh1R
+  
+    ,Tc0Ki1`0>Th1A &rest coding-system ,T`0"i1Rd;5C'07i1RB0JX14"M'05Q1G`0EW1M! (argument) ,Tc9
+    ,T;CPbB$!SK94 (definition) ,T"M'$S0JQh1'(B ange-ftp-write-region ,TaEP
+    ange-ftp-insert-file-contents (,Tc0*i1d04i107Qi1'0!Q1:(B Emacs ,TaEP Nemacs)
+  
+    [0,T"i1M$GCCP0GQ1'(B] 0,TGT108U1a0!i109Ui1c0*i1d04i10!Q1:(B ange-ftp 0,TCXh19(B
+    RCS:          !Header: ange-ftp.el,v 4.20 92/08/14 17:04:34 ange Exp !
+    ,T`07h1R09Qi19(B  ,T`09Wh1M'(R!05Q1G`0EW1M! (argument) ,T`;0EUh1B9d;5RA0CXh19"M' ange-ftp ,T!0CX13R
+    0,THV1!IR0GT108U1a0!i1d"JSK0CQ1:0CXh190MWh19(B ,T(R!05Q1GM0Bh1R'0"i1R'0Eh1R'
+  
+    ,T@RBc90?Q1'0!l10*Q19(B ange-ftp-write-region ,T(Pc0*i1(B ange-ftp-real-write-region
+    ,TM0BYh1(B 2 ,Ta0Kh1'(B  ,Tc0Ki1a0!i1d"a05h1EPa0Kh1'04Q1'09Ui1(B
+    (ange-ftp-real-write-region start end temp nil visit)
+      -->
+    (apply 'ange-ftp-real-write-region start end temp nil
+	   visit coding-system)
+    
+    (ange-ftp-real-write-region start end filename append visit)
+      -->
+    (apply 'ange-ftp-real-write-region start end filename append
+           visit coding-system)
+    
+    ,TaEPc90?Q1'0!l10*Q19(B ange-ftp-insert-file-contents 0,T!g1(Pc0*i1(B
+    ange-ftp-real-insert-file-contents ,TM0BYh1(B 2 ,Ta0Kh1'(B  ,Tc0Ki1a0!i1d"a05h1EPa0Kh1'04Q1'09Ui1(B
+    (ange-ftp-real-insert-file-contents temp visit)
+      -->
+    (apply 'ange-ftp-real-insert-file-contents
+           temp visit
+           coding-system)
+  
+    (ange-ftp-real-insert-file-contents filename visit)
+      -->
+    (apply 'ange-ftp-real-insert-file-contents
+           filename visit coding-system)
+
+
+,T!RCb;Ca!CA@RIR Emacs lisp
+
+H-1: Mule ,Tc0*i1$S0JQh1'07X1!$S0JQh1'(B (upper compatible) ,T"M' Emacs ,Td04i1dKA?
+  
+  0,T6V1'a0Ai10Gh1R Mule ,T(P`0"U1B9b4Bc0*i1(B GNU Emacs ,T`0;g190R9  ,Ta05h104Y1(R!CP04Q1:(B (level) ,T"M'@RIR
+  Emacs lisp ,Ta0Ei1G ,T(P>:0Gh1R0AU1M0BYh1`0Eg1!09i1MB07Uh1c0*i10Ch1GA0!Q19d0Ah1d04i1(B  ,T9M!(R!09Ui1(B Mule 0,T!g10BQ1'05h1R'(R!
+  0,TCh1R'`0!h1R0$W1M Nemacs (Nihongo Emacs) ,TM0BYh10$h1M90"i1R'AR!
+  
+  0,T$X13(B Enami Tsugutomo (,T`M9R0AT1(B 0,T+V10'X1b7bAP) <enami@sys.ptg.sony.co.jp> ,Tc0Ki10"i1M
+  ,Ta9P9S`0!Uh1BG0!Q1:$GRAa5!05h1R'"M' Mule 0,T!Q1:(B Nemacs/Emacs ,Td0Gi104Q1'09Ui1(B
+  
+    * 0,TAU1:R'0?Q1'0!l10*Q1907Uh10AU1`0>U1B':9 Nemacs ,TK0CW1M Mule ,T`07h1R09Qi19(B
+    * 0,TAU10Jh1G907Uh1a0!i1d"(B ,T`0*h19(B ,T`0>Th1A05Q1G`0EW1M! (argument) ,T`0>Wh1Mc0Ki1c0*i1(B Mule ,Td04i10!Q1:KERB ,Tf ,T@RIR
+    * ,Ta0?i1A0"i1M0AY1E07Uh10<h1R9!RC7S byte compile ,T"M' Nemacs 0,T!Q1:(B Mule ,Tc0*i10Ch1GA0!Q19d0Ah1d04i1(B
+      ,T`09Wh1M'(R!C0KQ1J@RBc9"M'0MQ1!IC07Uh1d0Ah1c0*h1(B ASCII 0,T5h1R'0!Q19(B (,Ta05h1(B byte code ,T$'`K0AW1M90!Q19(B)
+    * ,Ta0?i1A0"i1M0AY1E07Uh10AU10$h1R$'07Uh10MQ1!"CP (character constant) 0,T7Uh1$MAd>0El1(B (compile) ,Ta0Ei1G
+      ,T"M' Mule 1.x ,TaEP Mule 2.x ,Tc0*i104i1GB0!Q19d0Ah1d04i1(B  ,T`09Wh1M'(R!0GT108U1`0"U1B90$h1R$'07Uh10MQ1!"CP
+      ,T`;0EUh1B9d;
+    * ,T`>CRP0Gh1R0CXh19"M' emacs 0,T7Uh1c0*i1`0;g190R905h1R'0!Q19(B
+  
+H-2: 0,T*h1GB:M!0"i1M$GCCP0GQ1'(B ,Tc9!RCa0!i1b;Ca!CAJSK0CQ1:(B Mule 1.x ,Tc0Ki1c0*i1d04i10!Q1:(B Mule 2.x
+ 0,T4i1GB
+  
+  ,T$GCCP0GQ1'0(X1405h1R' ,Tf 0,T4Q1'09Ui1(B
+  
+   o 0,T*Wh1M auto-fill-hook ,T`;0EUh1B9d;`0;g19(B auto-fill-function ,Ta0Ei1G
+   o ,Tb$C'J0Ci1R'"M' keymap ,T`;0EUh1B9d;`0Eg1!09i1MB
+   o ,TM0Bh1R0EW1A`;0EUh1B90*Wh1M05Q1Ga;C07Uh1d0Ah1d04i1c0*i1a0Ei1G (obsolete)
+       unread-command-char -> unread-command-event
+  ,TaEP0MWh19(B ,Tf
+
+
+
+----------------------------------------------------------------------
+
+	       Mule FAQ 0,TJh1G907Uh1(B 2: ,T$S6RAJSK0CQ1:@RIR`)>RPa05h1EP@RIR
+
+,T`0!Uh1BG0!Q1:@RIR0(U19(B
+
+CN-1: ,T$MAd>0El1(B (compile) Mule ,Td04i1`0CU1B:0Ci1MB5RA;!05T1a0Ei1G  ,Ta05h1c0*i1@RIR0(U19d0Ah1d04i1(B
+  
+  ,T(S`0;g19(P05i1M'CP0:X1@RIR07Uh105i1M'!RC(Pc0*i1(B ,Td0Gi1c9(B site-init.el ,T5M905T1405Qi1'(B  ,T`>CRP0Gh1Rc95M9
+  ,TaC! (default) ,T(Pd0Ah10AU1a0?i1A0"i1M0AY1E site-init.el ,TM0BYh1(B  0,T(V1'd0Ah1JRARC6c0*i1@RIR0MWh199M!(R!
+  ,T@RIR0MQ1'!DId04i1(B
+  
+  ,TKR!05i1M'!RC(Pc0*i1@RIR0(U19(B  ,T!0CX13Rc0Jh1(B (load "chinese") ,Td0Gi1c9(B lisp/site-init.el
+  0,T!h1M9  ,Ta0Ei1G0$h1MBJ0Ci1R' Mule
+  
+CN-2: ,T(P0;i1M90"i1M0AY1E@RIR0(U19d04i1M0Bh1R'dC?
+  
+  ,T(P0;i1M90"i1M0AY1E@RIR0(U19(B ,Td04i1b4Bc0*i1CP:: "TAMAGO"  TAMAGO ,T(P05T1405h1M0!Q1:(B cserver ,T"M'
+  cWnn 0,T+Vh1'(P7Sc0Ki1JRARC60;i1M90"i1M$GRA@RIR0(U19d04i1M0Bh1R'JP4G!  0,TJQh1'$S0JQh1'(B M-x
+  load-library RET chinese RET ,Ta0Ei1G`0EW1M!bKA4 (mode) PinYin 0,T!g1(P7Sc0Ki1(B
+  ,TJRARC60;i1M90"i1M0AY1E04i1GB PinYin ,Td04i1(B
+  
+  ,T9M!(R!09Ui1(B Mule 0,TBQ1'0AU1CP:: quail 0,T+Vh1'c0*i10!Q1:5RCR'a;E' (conversion table) 0,TGT108U1!RC
+  0,T;i1M90"i1M0AY1Ec9 `cxterm/dic/tit' ,Td04i107X1!*09T14(B
+  
+CN-3: ,T7SM0Bh1R'dC 0,T6V1'(PaJ4'<E@RIR0-Uh10;Xh19(B ,T@RIR0(U19(B ,T@RIR`!RK0EU1(B EC 0,T4i1GBC0KQ1J EUC ,Td04i1>0Ci1MA
+ 0,T!Q19(B 
+  
+  ,T7Sd0Ah1d04i1(B ,T`09Wh1M'(R!C0KQ1J EUC ,T"M'a05h1EP@RIRM0BYh1c90*X14C0KQ1J`04U1BG0!Q19(B  ,T!0CX13Rc0*i1C0KQ1J *junet*
+  ,TK0CW1M *ctext* ,Ta79 0,T6i1R05i1M'!RCaJ4'<E07X1!@RIR>0Ci1MA0!Q19(B
+  
+CN-4: 0,T6i1R(P05i1M'!RC0;i1M90"i1M0AY1E05Q1G@RIR0(U19E'c9 icremenatal search
+  
+  ,T(Pc0*i10MQ1!IC0MWh199M!`K09W1M(R! ASCII ,Tc9 incremental search (isearch) ,Td04i1(B 0,T6i1RbKE4
+  (load) isearch-ext.el ,Td0Gi10!h1M9  ,T@RBc9 isearch 0,T!g1(PJRARC6!4 C-\ ,T`0>Wh1M`0CU1B!
+  EGG ,TK0CW1M C-] ,T`0>Wh1M`0CU1B! quail ,TaEP0;i1M9@RIR05h1R' ,Tf ,Td04i1(B
+  
+CN-5: 0,TMh1R90*Wh1Ma0?i1A0"i1M0AY1E07Uh10AU1C0KQ1J@RIR0(U19d0Ah1d04i1(B
+  
+  ,T(P05i1M'c0Jh1(B --mcpatch ,Tc9$S0JQh1'(B configure ,T`0>Wh1Mc0Ki1JRARC6c0*i10*Wh1Ma0?i1A0"i1M0AY1Ec9C0KQ1J0MWh19(B
+  ,T9M!`K09W1M(R! ASCII ,Td04i1M0Bh1R'06Y1!05i1M' ,TaEP(S`0;g19(P05i1M'CP0:X10*X14C0KQ1J"M'0*Wh1Ma0?i1A0"i1M0AY1E`K0Eh1R
+  0,T9Qi19(B ,TaEP`0>Th1A0*X14$S0JQh1'0"i1R'0Eh1R'd0Gi1c9(B site-init.el (,Tc0*i1(B *autoconv* ,Td0Ah1d04i1(B)
+
+    ;;; 0,T5Q1GM0Bh1R': ,Tc0*i1C0KQ1J@RIR0(U19(B EUC ,Tc90*Wh1Ma0?i1A0"i1M0AY1E
+    (if (fboundp 'set-pathname-coding-system)
+        (set-pathname-coding-system *euc-china*))
+  
+CN-6: ,T(P0Mh1R9 Newsgroup alt.chinese.text[.big5] 0,T4i1GB@RIR0(U19d04i1dKA?
+  
+  alt.chinese.text ,Tc0*i1(B ~{ ,TaEP ~} ,Ta79 'ESC $ A' (designate ,T@RIR0(U19d;0BQ1'(B
+  G0) ,TaEP 'ESC ( B' (designate ASCII ,Td;0BQ1'(B G0)  ,T`CR`0CU1B!!RCc0Jh1C0KQ1Ja::09Ui10Gh1R
+  ,T!RCc0Jh1C0KQ1Ja:: Hz (Hz encoding)  ,T(PJRARC60Mh1R9 Newsgroup 0,T9Ui1c9(B Mule ,Td04i15RA
+  ,T;!05T1(B  ,Tb4B!RCc0*i1(B GNUS ,TaEP gnusutil.el ,TK0EQ1'(R!bKE4 chinese.el  ,T!0CX13RbKE4
+  gnusutil.el 0,T!h1M907Uh1(P`0CU1B! GNUS  ,Tb;Ca!CA gnusutil.el 0,T6Y1!CGAd0Gi1c9AR5C0R9"M'
+  Mule 0,T5Qi1'a05h10CXh19(B 2 ,T`0;g1905i19d;(B
+
+
+,T`0!Uh1BG0!Q1:@RIR0-Uh10;Xh19(B
+
+JP-1: ,Tc0*i1(B Mule ,T(P0AU1MPdC04U10"Vi19`0AWh1M ,T`07U1B:0!Q1:(B Nemacs (Nihongo Emacs)?  ,TK0CW1M0Gh1R0AU10:i1R'
+ ,TdKA 0,T7Uh1c0*i1(B Nemacs ,T(P04U1!0Gh1R?  0,T6i1R0AU1(B ,Tc9!C03U1dK90:i1R'?
+  
+  ,Tc0*i1(B Mule 0,TAU10"i1M04U1:R'M0Bh1R'04Q1'09Ui1(B
+   * ,Td0Ah1`0>U1B'a0$h1@RIR0MQ1'!DIK0CW1M0-Uh10;Xh19`07h1R09Qi19(B  ,Ta05h1JRARC6c0*i1@RIR0MWh19(B ,Tf ,Td04i10MU1!KERB@RIR ,Tb4B
+     ,TJRARC6c0*i10Ch1GA0!Q19d04i1(B
+   * ,TJRARC6c0Jh10$X13JA0:Q105T1(B (attribute) ,Tc9!RCaJ4'<E@RBc90:Q1?`?M0Cl1d04i1(B  0,T6i1R$GRAJRARC6
+     ,T"M'`7M0Cl10AT109Q1EMS9GB 0,T!g1(PJRARC6c0*i1$GRAJRARC6c9!RCaJ4'0$X13JA0:Q105T105h1R' ,Tf ,Ta0Ai1a05h1:9(B
+     ,T`7M0Cl10AT109Q1E07Qh1Gd; 0,T+Vh1'05h1R'(R! Nemacs
+   * ,TJRARC6c0*i1(B "TAMAGO 0,TCXh19(B KATANA"  0,T+Vh1'0AU1$GRAJRARC6c9!RCa;E'05Q1G0MQ1!ICJSK0CQ1:!RC
+     0,T;i1M90"i1M0AY1E@RIR0-Uh10;Xh1904U1!0Gh1R "TAMAGO" ,T"M' Nemacs
+   * Nemacs ,Tc0*i1(B GNU Emacs 18.55 ,T`0;g190R9 ,Ta05h1(B Mule 0,TCXh19(B 2 ,Tc0*i1(B Emacs 0,TCXh19(B 19
+     ,T`0;g190R9
+   * Mule 0,TAU105Q1G$MAd>0El1(B (compiler) regular expression ,T$GRAJRARC60JY1'05T1405Qi1'M0BYh1(B
+  
+  ,Tc97R'!0EQ1:0!Q19(B  ,T`09Wh1M'(R! Mule ,T`0;g19b;Ca!CA07Uh10+Q1:0+i1M9!0Gh1R Nemacs ,TAR!  0,T6i1R70CQ1>BR!C
+  ,T"M'`$0CWh1M'0AU1(S0!Q14(B  ,TaEP05i1M'!RCc0*i1`0>U1B'@RIR0-Uh10;Xh19`0>Th1A`07h1R09Qi19(B  ,T!RCc0*i1(B Nemacs 0,T!g1MR((P04U1(B
+  ,T!0Gh1R
+  
+  ,T9M!(R!09Qi19(B  Mule 0,T!Q1:(B Nemacs 0,TBQ1'd0Ah1JRARC6c0*i10Ch1GA0!Q19d04i1(B (compatible)  ,Tb;Ca!CA07Uh1(B
+  0,T>Q129Rd0Gi1JSK0CQ1:(B Nemacs 0,T(V1'MR((Pc0*i10!Q1:(B Mule ,Td0Ah1d04i1(B
+  
+JP-2: Nemacs ,T(PKRBd;K0CW1M?
+  
+  ,Ta09h19M9 ,T$S5M:0$W1Md0Ah1(B  ,Ta05h1(Pd0Ah10AU1!RC0>Q129R0MU1!05h1Md; 0,T+Vh1'09Qh190!g1KARB$GRA0Gh1R 0,TCXh1907i1RB0JX14"M'
+  Nemacs 0,T$W1M0CXh19(B 3.3.2
+  
+JP-3: 0,TAU1(B mailing list ,T"M' Mule 0,T+Vh1'b05i15M:0!Q1904i1GB@RIR0-Uh10;Xh19dKA?
+  
+  ,T!0CX13Rc0*i1(B Newsgroup (fj.editor.mule) ,Tc9!RC0>Y140$X1B04i1GB@RIR0-Uh10;Xh19(B (0,T4Y1$S6RA07Uh1(B A-8)
+  
+JP-4: 0,TAU10$Yh10AW1M@RIR0-Uh10;Xh19JSK0CQ1:(B Mule ,TdKA?
+  
+  ,T!0CX13R04Y1$S6RA07Uh1(B A-10  ,T`M!JRCaEP0$Yh10AW1M@RIR0-Uh10;Xh19JSK0CQ1:(B Mule 0,TAU104Q1'09Ui1(B
+  
+  * 0,T$Yh10AW1Ma:: texinfo 0,TAU1M0BYh1c9(B $MULE/man
+  
+    mule-jp.texi	0,T$Yh10AW1Ma:: texinfo ,T"M' Mule
+    egg-jp.texi		0,T$Yh10AW1Ma:: texinfo ,T"M' "TAMAGO"
+    canna-jp.texi	0,T$Yh10AW1Ma:: texinfo ,T"M' "CANNA"
+  
+  * FAQ
+  
+    0,T$W1M`M!JRC07Uh107h1R9!S0EQ1'0Mh1R9M0BYh109Ui1(B  0,TAU1M0BYh107Uh1(B $MULE/etc/FAQ-Mule.jp
+  
+  * Tutorial
+  
+    ,T`0CU1B! Tutorial ,T@RIR0-Uh10;Xh19:9(B Mule ,Td04i104i1GB$S0JQh1'(B C-h T (M-x
+    help-with-tutorial-for-mule) 
+  
+  * ,T`M!JRCc9d4`C$7M0CU1(B doc
+  
+    ,T@RBc9d4`C$7M0CU1(B $MULE/doc 0,TAU1`M!JRCM08T1:RB$GRAJRARC605h1R' ,Tf ,TaEP05Q1GM0Bh1R'
+    0,T"i1M$GRAM0BYh1(B  ,Ta0?i1A0"i1M0AY1E07Uh1E'07i1RB04i1GB .jp ,T`0;g19@RIR0-Uh10;Xh19(B
+  
+JP-5: ,T$MAd>0El1(B (compile) Mule ,Td04i1`0CU1B:0Ci1MB5RA;!05T1a0Ei1G  ,Ta05h1c0*i1@RIR0-Uh10;Xh19d0Ah1d04i1(B
+  
+  ,T(S`0;g19(P05i1M'CP0:X1@RIR07Uh105i1M'!RC(Pc0*i1(B ,Td0Gi1c9(B site-init.el ,T5M905T1405Qi1'(B  ,T`>CRP0Gh1Rc95M9
+  ,TaC! (default) ,T(Pd0Ah10AU1a0?i1A0"i1M0AY1E site-init.el ,TM0BYh1(B  0,T(V1'd0Ah1JRARC6c0*i1@RIR0MWh199M!(R!
+  ,T@RIR0MQ1'!DId04i1(B
+  
+  ,T!0CX13Rc0Jh1(B (load "japanese") ,Td0Gi1c9(B lisp/site-init.el  ,Ta0Ei1G0$h1MBJ0Ci1R' Mule ,TKR!
+  0,T5i1M'!RC(Pc0*i1@RIR0-Uh10;Xh19(B
+  
+JP-6: ,TaJ4'<E@RIR0-Uh10;Xh1904i1GB Mule ,T:9CP:: X Window ,Td0Ah1d04i1(B
+  
+  ,T(P05i1M'05Qi1'(B resource ,Tc0Ki1`0;g19a::0"i1R'0Eh1R'  ,TaEPM0Bh1R0EW1A05Qi1'0$h1R FontSet-xxx ,T5RA0*X14?M905l1(B
+  (font set) 0,T7Uh105Qi1'd0Gi1c9(B FontSetList 0,T4i1GB
+  
+    ! Mule-2.0
+    *FontSetList: 14,16,24
+    *FontSet-14:\
+        -*-fixed-medium-r-*--14-*-iso8859-1,\
+        -*-fixed-medium-r-*--14-*-iso8859-2,\
+        -*-fixed-medium-r-*--14-*-iso8859-3,\
+        -*-fixed-medium-r-*--14-*-iso8859-4,\
+        -*-fixed-medium-r-*--14-*-iso8859-5,\
+        -*-fixed-medium-r-*--14-*-iso8859-7,\
+        -*-fixed-medium-r-*--14-*-iso8859-8,\
+        -*-fixed-medium-r-*--14-*-iso8859-9,\
+        -*-fixed-medium-r-*--14-*-viscii1.1-1,\
+        -*-fixed-medium-r-*--14-*-mulearabic-0,\
+        -*-fixed-medium-r-*--14-*-mulearabic-1,\
+        -*-fixed-medium-r-*--14-*-mulearabic-2,\
+        -*-fixed-medium-r-*--14-*-muleipa-1,\
+        -*-fixed-medium-r-*--14-*-jisx0201.1976-*,\
+        -*-fixed-medium-r-*--14-*-jisx0208.1983-*,\
+        -*-fixed-medium-r-*--14-*-jisx0212.1990-*,\
+        -*-medium-r-*--14-*-gb2312.1980-*,\
+        -*-mincho-medium-r-*--14-*-ksc5601.1987-*,\
+        -*-fixed-medium-r-*--14-*-tis620.2529-1
+    *FontSet-16:\
+        -*-fixed-medium-r-*--16-*-iso8859-1,\
+        -*-fixed-medium-r-*--16-*-iso8859-2,\
+        -*-fixed-medium-r-*--16-*-iso8859-3,\
+        -*-fixed-medium-r-*--16-*-iso8859-4,\
+        -*-fixed-medium-r-*--16-*-iso8859-5,\
+        -*-fixed-medium-r-*--16-*-iso8859-7,\
+        -*-fixed-medium-r-*--16-*-iso8859-8,\
+        -*-fixed-medium-r-*--16-*-iso8859-9,\
+        -*-fixed-medium-r-*--16-*-viscii1.1-1,\
+        -*-fixed-medium-r-*--16-*-mulearabic-0,\
+        -*-fixed-medium-r-*--16-*-mulearabic-1,\
+        -*-fixed-medium-r-*--16-*-mulearabic-2,\
+        -*-fixed-medium-r-*--16-*-muleipa-1,\
+        -*-fixed-medium-r-*--16-*-jisx0201.1976-*,\
+        -*-fixed-medium-r-*--16-*-jisx0208.1983-*,\
+        -*-fixed-medium-r-*--16-*-jisx0212.1990-*,\
+        -*-medium-r-*--16-*-gb2312.1980-*,\
+        -*-mincho-medium-r-*--16-*-ksc5601.1987-*,\
+        -*-fixed-medium-r-*--16-*-tis620.2529-1
+    *FontSet-24:\
+        -*-fixed-medium-r-*--24-*-iso8859-1,\
+        -*-fixed-medium-r-*--24-*-iso8859-2,\
+        -*-fixed-medium-r-*--24-*-iso8859-3,\
+        -*-fixed-medium-r-*--24-*-iso8859-4,\
+        -*-fixed-medium-r-*--24-*-iso8859-5,\
+        -*-fixed-medium-r-*--24-*-iso8859-7,\
+        -*-fixed-medium-r-*--24-*-iso8859-8,\
+        -*-fixed-medium-r-*--24-*-iso8859-9,\
+        -*-fixed-medium-r-*--24-*-viscii1.1-1,\
+        -*-fixed-medium-r-*--24-*-mulearabic-0,\
+        -*-fixed-medium-r-*--24-*-mulearabic-1,\
+        -*-fixed-medium-r-*--24-*-mulearabic-2,\
+        -*-fixed-medium-r-*--24-*-muleipa-1,\
+        -*-fixed-medium-r-*--24-*-jisx0201.1976-*,\
+        -*-fixed-medium-r-*--24-*-jisx0208.1983-*,\
+        -*-fixed-medium-r-*--24-*-jisx0212.1990-*,\
+        -*-medium-r-*--24-*-gb2312.1980-*,\
+        -*-mincho-medium-r-*--24-*-ksc5601.1987-*,\
+        -*-fixed-medium-r-*--24-*-tis620.2529-1
+  
+JP-7: ,T(P0;i1M90"i1M0AY1E@RIR0-Uh10;Xh19d04i1M0Bh1R'dC?
+  
+  ,T`CRd04i10(Q14`50CU1BACP::0;i1M90"i1M0AY1E@RIR0-Uh10;Xh19(B ,Td0Gi104Q1'09Ui1(B
+  
+     * TAMAGO (EGG) 0,TCXh19(B TAKANA
+     * sj3-egg
+     * Canna
+  
+  0,T7X1!CP::`0;g19!RC0;i1M90"i1M0AY1E@RIR0-Uh10;Xh19a::`;0EUh1B905Q1G0MQ1!ICbC0AQ19(B (Romaji) ,T`0;g1905Q1G0MQ1!IC
+  Kanji ,Tb4Bc0*i10HY190Bl1:0CT1!RC (server) Kana-Kanji 0,T<h1R9`$0CW1M0"h1RB0"i1M0AY1E (network)
+  ,T!0CX13R0Mh1R90$Yh10AW1M"M'a05h1EPCP:: ,TJSK0CQ1:CRBEP`0MU1B4   0,T!h1M9(Pc0*i1(B ,T(S`0;g19(P05i1M'J0Ci1R' Mule
+  ,T`0>Wh1Mc0Ki1c0*i1d04i10!Q1:CP::`K0Eh1R09Ui1(B
+  
+     * ,T!RC0;i1M90"i1M0AY1Ea:: T-CODE ,Tb4BMR0HQ1B quail
+  
+  ,T`0;g190GT108U10;i1M90"i1M0AY1Eb4Bd0Ah105i1M'MR0HQ1B0HY190Bl1:0CT1!RC (server) ,Ta;E' Kana-Kanji   ,TK0EQ1'(R!
+  ,TbKE4 lisp/quail/tcode.el 0,T!g1(PJRARC6J0EQ1:(B (toggle) ,TbKA4 ASCII 0,T!Q1:(B T-CODE
+  ,Td04i1b4B0;Xh1A C-]
+
+  ,TK0CW1M(Pc0*i1(B "SKK" ,TJSK0CQ1:!RC0;i1M90"i1M0AY1E@RIR0-Uh10;Xh190!g1d04i1(B  ,TJRARC6c0*i1b;Ca!CA09Ui1d04i1:9(B Mule
+  ,Tb4Bd0Ah105i1M'05Qi1'MPdC0>T1`HI07Qi1'0JTi19(B  ,TJRARC6c0*i1(B Mule ,Ta::0;T14@RBc9`M' ,TK0CW1Ma::05T1405h1M0!Q1:(B
+  0,THY190Bl1:0CT1!RC (server) ,T>(9R09X1!CA0!g1d04i1(B   ,T!0CX13Rc0*i1(B SKK 0,TCXh19cK0Ah1!0Gh1R 7.18.1  ,Tc9!C03U107Uh1c0*i1(B 
+  0,T!Q1:(B Mule 0,TCXh19(B 2
+  
+JP-8: "TAMAGO" 0,T$W1MMPdC?
+  
+  TAMAGO ,T`0;g19CP::JSK0CQ1:!RC0;i1M90"i1M0AY1E@RIR0-Uh10;Xh19(B ,TK0CW1M@RIR0(U19(B  ,Tb4Bc0*i10HY190Bl1:0CT1!RC
+  (server) ,Ta;E' 0,T*Wh1M Wnn 0,T<h1R9`$0CW1M0"h1RB0"i1M0AY1E (network)  ,T:R'07U10!g1`0CU1B!CP::09Ui10Gh1R EGG
+  0,T+Vh1'`0;g19$Sa;E@RIR0MQ1'!DI"M' TAMAGO
+   
+   "TAMAGO" ,T;CP!M:04i1GB0Jh1G9cK0-h1(B ,Tf ,TJRA0Jh1G90$W1M 1) 0,TJh1G90;i1M90"i1M0AY1EJRB0MQ1!"CP (string)
+   ,TK0CW1M 0,TJh1G9a;E'0MQ1!ICbC0AQ19(B (Romaji) ,T`0;g1905Q1G Kana  2) 0,TJh1G9a;E'05Q1G Kana ,T`0;g1905Q1G
+   Kanji (,TaEP0Jh1G9a;E'05Q1G Kana ,T`0;g1905Q1G Hanzi ,T@RIR0(U19(B)  3) ,TCP::a0!i1d"(B (edit)
+   ,T@RIR0-Uh10;Xh19(B   0,TJh1G90;i1M90"i1M0AY1EJRB0MQ1!"CP ,Tc0*i1d04i1d0Ah1`0>U1B'0!Q1:05Q1G Hiragana ,TK0CW1M Katakana
+   ,TK0CW1M Pinyin ,T`07h1R09Qi19(B  ,Ta05h10BQ1'c0*i1d04i10!Q1:05Q1G Hangul ,TaEP@RIR0MWh19(B ,Tf 0,TMU1!04i1GB
+  
+JP-9: "TAKANA" 0,T$W1MMPdC
+  
+  0,T$X13(B Toshiaki SHINGU (,Tb70*T1MR0!T1(B 0,T*T1'0'X1(B) <shingu@cpr.canon.co.jp> ,T!0Eh1RGd0Gi10Gh1R
+  
+    0,TMQ1909Ui1`0;g19(B "TAMAGO" ,TJSK0CQ1:(B library Wnn 0,TCXh19(B 4  0,T5Qi1'0*Wh1Mb4B`MR>BR'0$l1aC!"M'
+    ,T;CPbB$ "TAmagoyo KAshikoko NA--re" (,Ta;E0Gh1R "TAMAGO ,T`0Mk1B  ,T(')ER40"Vi19(B")
+    0,TJTh1'07Uh1`0>Th1A0"Vi19(R! "TAMAGO" ,T`04T1A0!g10$W1MJRARC6
+  
+      ,Ta;E'G0EU1cK0-h1(B/,TG0EU1`0Eg1!(B (Dai-Bunsetsu/Sho-Bunsetsu)
+      ,Ta;E'!0EQ1:(R!05Q1G Kanji --> 0,T5Q1G Kana
+      ,TE'7P`0:U1B9 (register) ,Tc9>(9R09X1!CA"M'$S (,T`0*h19(B ,T$S9RA) ,T"M' jserver 0,TCXh19(B 4 
+      0,T5Qi1'!RCc0*i1(B/,Td0Ah1c0*i1(B (enable/disable) ,T$S ,Tb4Bd0Ah105i1M'E:MM!(R!>(9R09X1!CA
+      0,T5Qi1'!RC06Uh1(B (frequency) ,Tc9!RCc0*i1(B ,T"M'a05h1EP$S
+      0,T5Qi1'KARB`K05X1(B (comment) ,Td0Gi1c9>(9R09X1!CA
+  
+    ,Td04i1(B
+  
+  ,TMR(0>Y14d04i10Gh1R "TAKANA" ,Td0Ah1c0*h1(B "TAMAGO" 0,TMQ19cK0Ah1(B ,Ta05h1`0;g190JTh1'07Uh17Sc0Ki1(B "TAMAGO" ,T`0!h1'0"Vi19(B
+  ,Tc9M9R$5 "TAMAGO" ,T(P06Y1!CGA`0"i1Rd0Gi1`0;g19(B "0,TCXh19(B TAKANA" ,TaEP(Pd0Ah10>Q129R (support) 
+  Wnn 0,TCXh19(B 3 ,TaEP library ,T"M' Wnn 0,TCXh19(B 4 0,T+Vh1'c0*i1d04i1(B (compatible) 0,T!Q1:0CXh19(B 3 0,TMU1!05h1Md;
+  
+JP-10: sj3-egg 0,T$W1MMPdC?
+  
+  ,T`0;g19(B "TAMAGO" ,TJSK0CQ1:05T1405h1M0JWh1MJRC0!Q1:(B sj3serv 0,T+Vh1'CGAM0BYh1c9(B contrib ,T"M' X11R5/R6 
+  0,TAU10"i1M04U15C'0AU1;CP0JT1708T1@R>c9!RCa;E'0JY1'(B
+  
+JP-11: Canna 0,T$W1MMPdC?
+  
+  ,T`0;g19CP::a;E'05Q1G Kana ,T`0;g1905Q1G Kanji ,Ta:: server-client  ,Tb4B(PJRARC6c0*i10HY190Bl1(B
+  ,T:0CT1!RC (server) ,Ta;E'"M' "Canna" 0,T4i1GB user interface 0,T7Uh1$0Ei1RB$0EV1'0!Q1:"M'
+  "TAMAGO" ,T:9 Mule
+
+JP-12: "SKK" 0,T$W1MMPdC?
+  
+  0,T$X13(B Masahiko Sato (,TAR+R0NT1b!P ,T+Rb05i1(B) <masahiko@sato.riec.tohoku.ac.jp>
+  ,T!0Eh1RGd0Gi10Gh1R
+  
+    "SKK" ,T`0;g19CP::0;i1M90"i1M0AY1E@RIR0-Uh10;Xh1907Uh10AU1;CP0JT1708T1@R>aEP$GRA`0Cg1G0JY1'JSK0CQ1:(B Mule ,TaEP
+    ,TJRARC67Sc0Ki10<Yi1`0"U1B9 0,T;i1M90"i1M0AY1Ec90CY1;a::;CPbB$07Uh105i1M'!RCd04i1(B  "SKK" ,Ta;E'd04i104i1GB$GRA
+    ,T`0Cg1G0JY1'(B  ,T`>CRP0Gh1R(Pd0Ah10GT1`$CRP0Kl1dGBR!C03l1"M';CPbB$  ,Ta05h1(Pc0Ki10<Yi1c0*i1CP0:X15SaK09h1'`0CTh1A
+    Okurigana ,T`M' 0,T(V1'JRARC6a;E'0CY1;;CPbB$d04i106Y1!05i1M'M0Bh1R'0AU1;CP0JT1708T1@R>   ,T9M!(R!09Ui1(B
+    ,T!RCE'7P`0:U1B9 (register) ,T$S  0,TBQ1'd0Ah1MR0HQ1B0"i1M0AY1E"M'K09i1R07Uh1"M'$S  0,T+Vh1'(P7Sc0Ki10<Yi1c0*i1(B
+    ,Tc0*i1>(9R09X1!CAd04i10'h1RB0"Vi19(B  ,TaEP0BQ1'JRARC6`0CU1B90GT108U1c0*i1(B "SKK" 0,T<h1R97R' Tutorial ,Td04i104i1GB
+    ,TCPBP`GER0MQ190JQi19(B
+  
+JP-13: ,T`GER0;i1M90"i1M0AY1E05Q1G Kanji ,TKR!0CYi1`0>U1B'0CY1;0Ch1R' ,Ta05h1d0Ah10CYi1$S0Mh1R9 ,T(P0;i1M9d04i1M0Bh1R'dC?
+  
+  "TAMAGO" ,TJRARC60;i1M90"i1M0AY1Ed04i1b4Bc0*i1(B Bushu (radical) (M-x busyu-input) ,TaEP
+  Kakusuu (stroke) (M-x kakusuu-input) 0,TMU1!04i1GB  0,T(V1'JRARC6c0*i1$GRAJRARC60MQ1909Ui1(B
+  0,T;i1M905Q1G Kanji 0,T<h1R97R' mini-buffer ,Tb4BCP0:X1CR!"M'05Q1GK09Q1'0JW1M (radical) ,TK0CW1M
+  ,T(S9G90"U14(B (stroke) ,Td04i104i1GB
+  
+JP-14: ,Tc0*i1!RC05Q14a;P (cut & paste) 0,T4i1GB mouse ,T:9 kterm ,Td0Ah1d04i1(B
+  
+  ,Tc9!C03U107Uh1`0CU1B! Mule ,T:9 kterm ,TKR!05Qi1'(B keyboard-coding-system ,Td0Ah15C'0!Q1:(B ,TbKA4
+  Kanji ,T"M' kterm 0,T!g1(Pd0Ah1JRARC6a;P (paste) ,Td04i1(B  ,T!0CX13R05Qi1'(B
+  keyboard-coding-system ,T"M' Mule ,Tc0Ki15C'0!Q1:bKA4"M' Kanji ,T"M' kterm
+  
+JP-15: ,T(P0;i1M90"i1M0AY1E0<h1R9 kinput2 ,Td04i1dKA?
+  
+  ,TJRARC60;i1M90"i1M0AY1E(R! kinput2 ,Td;0BQ1'(B Mule 0,T7Uh17S'R9M0BYh1:9(B kterm ,Td04i1(B  ,Tc9!RC09Ui1(B ,T(P05i1M'
+  0,T5Qi1'(B keyboard-coding-system ,Tc0Ki15C'0!Q1:bKA4"M' Kanji ,T"M' kterm 0,T4i1GB
+  
+JP-16: 0,T5Qi1'(B (setq keyboard-coding-system *euc-japan*) ,Ta0Ei1G  ,Ta05h1d0Ah17S'R9
+  
+  ,Td0Ah1$GCc0*i1(B setq 0,T5Qi1'0$h1R"M' keyboard-coding-system ,Tb4B5C'  ,T!0CX13Rc0*i10?Q1'0!l10*Q19(B
+  set-keyboard-coding-system ,Tc9!RC05Qi1'a79(B  ,TJSK0CQ1:(B display-coding-system
+  ,TaEP file-coding-system 0,T!g1`0*h19`04U1BG0!Q19(B
+  
+JP-17: ,TMBR!c0Ki1aJ4'<E EC ,T@RIR0-Uh10;Xh19(B ,T@RIR0(U19(B ,T@RIR`!RK0EU1(B 0,T4i1GBC0KQ1J EUC ,Td04i1>0Ci1MA0!Q19(B
+  
+  ,T7Sd0Ah1d04i1(B ,T`09Wh1M'(R!C0KQ1J EUC ,T"M'a05h1EP@RIRM0BYh1c90*X14C0KQ1J`04U1BG0!Q19(B  ,T!0CX13Rc0*i1C0KQ1J *junet*
+  ,TK0CW1M *ctext* ,Ta79 0,T6i1R05i1M'!RCaJ4'<E07X1!@RIR>0Ci1MA0!Q19(B
+  
+JP-18: 0,T6i1R(P05i1M'!RC0;i1M90"i1M0AY1E05Q1G Kanji ,TE'c9 incremenatal search
+  
+  ,T(Pc0*i10MQ1!IC0MWh199M!`K09W1M(R! ASCII ,Tc9 incremental search (isearch) ,Td04i1(B 0,T6i1RbKE4
+  (load) isearch-ext.el ,Td0Gi10!h1M9  ,T@RBc9 isearch 0,T!g1(PJRARC6!4 C-\ ,T`0>Wh1M`0CU1B!
+  EGG ,TK0CW1M C-] ,T`0>Wh1M`0CU1B! quail ,TaEP0;i1M9@RIR05h1R' ,Tf ,Td04i1(B
+  
+JP-19: 0,T6i1R05i1M'!RC(P0;i1M90"i1M0AY1E05Q1G katakana ,T!0Gi1R'`07h1R`04U1BG (JIS X0201 Katakana)
+  
+  0,T$X13(B Ken Shibata (,T`$9 0,T*T1:R5P) <shibata@sgi.co.jp> ,T`0"U1B9d0Gi10Gh1R
+  
+    0,TAU1b;Ca!CA emacs lisp 0,T*Wh1M jisx0201.el ,TaEP its/han-kata.el ,TCGA 2
+    ,Tb;Ca!CA ,T`50CU1BAd0Gi1JSK0CQ1:!RC0;i1M90"i1M0AY1E05Q1G katakana ,T!0Gi1R'`07h1R`04U1BG (JIS X0201
+    Katakana) ,TJSK0CQ1:(B Mule   ,T$S0JQh1'(B fence-hankaku ,T"M' jisx0201.el (,Tc9bKA4
+    fence ,T!4 M-x) ,T(Pa;E'05Q1G katana ,TK0CW1M hiragana ,T!0Gi1R'JM'`07h1R07Uh10;i1M9d0Gi1a0Ei1G07Qi1'(B
+    ,TKA4 ,T`0;g1905Q1G katakana ,T!0Gi1R'`07h1R`04U1BG ,TaEP$S0JQh1'(B its:select-hankaku-katakana
+    (,Tc9bKA4 ,T;!05T1!4(B C-x C-k x ,Tc9bKA4 fence ,T!4 M-C-x) ,T(Pa;E'05Q1G0MQ1!ICbC0AQ19(B
+    (romaji) ,T`0;g1905Q1G katakana ,T!0Gi1R'`07h1R`04U1BG
+  
+    ,T9M!(R!09Ui1(B  ,Tc9 jisx0201.el 0,TBQ1'0AU1$S0JQh1'(B hankaku-katakana-region ,TaEP
+    zenkaku-katana-region (,TaEP paragraph, sentence, word) 0,T+Vh1'`0;g19a::a;E'
+    0,T7Qi1'KA4c9$0CQi1'`04U1BG  ,T`09Wh1M'(R! its/han-kata.el ,T(PbKE4 (load) jisx0201.el
+    ,TM0BYh1a0Ei1G  0,T4Q1'09Qi19(B ,T!0CX13R`0EW1M!bKE4b;Ca!CAc4b;Ca!CAK09Vh1'b4B!RC05Qi1'(B .emacs ,Td04i15RA
+    0,T5i1M'!RC  ,TaEP`09Wh1M'(R!b;Ca!CA lisp 0,T9Ui1(B 0,T$h1M90"i1R'0!T19`GERc9!RCbKE4  0,T<Yi107Uh1(P0;i1M9
+    0,T"i1M0AY1E05Q1G katakana ,T!0Gi1R'`07h1R`04U1BG0:h1MB ,Tf 0,T(V1'$GCbKE4 ,Td0Gi1c9(B site-init.el ,T`EB
+    ,Ta0Ei1G$MAd>0El1(B (compile) ,TcK0Ah1(B
+  
+    ,TCG:CGA0"Qi195M9!RC0;i1M90"i1M0AY1Ed04i104Q1'09Ui1(B
+  
+    1) ,Tc9bKA4 fence  0,T6i1R(P`;0EUh1B905Q1G kana 0,T7Uh10;i1M9d0Gi104i1GBa0Ei1Gc0Ki1`0;g1905Q1G katakana ,T!0Gi1R'
+       ,T`07h1R`04U1BG  ,Tc0Ki1!4(B M-x
+       0,T6i1R(P`;0EUh1B905Q1G katakana ,T!0Gi1R'`07h1R`04U1BG!0EQ1:`0;g19(B 0,T5Q1G hiragana (katakana)
+       ,T!0Gi1R'JM'`07h1R ,Tc0Ki1!4(B M-h (M-k)
+  
+    2) ,Tc9bKA4;!05T1(B 0,T6i1R(P`;0EUh1B905Q1G0MQ1!ICbC0AQ19(B (Romaji) ,Tc0Ki1`0;g1905Q1G katakana ,T!0Gi1R'`07h1R 
+       ,T`04U1BG  ,Tc0Ki1!4(B C-x C-k x
+       0,T6i1R(P`;0EUh1B9!0EQ1:`0;g19bKA4 hiragana ,T!0Gi1R'JM'`07h1R ,Tc0Ki1!4(B C-x C-k h
+  
+    3) ,Tc9bKA4 fence 0,T6i1R(P`;0EUh1B9`0;g19bKA405Q1G0MQ1!ICbC0AQ19!0Gi1R'`07h1R`04U1BG katakana
+       ,Tc0Ki1!4(B M-C-x
+       0,T6i1R(P`;0EUh1B9!0EQ1:`0;g19bKA405Q1G0MQ1!ICbC0AQ19!0Gi1R'JM'`07h1R hiragana ,Tc0Ki1!4(B M-C-h
+       (0,T6i1R0$X13J0EQ1:0;Xh1A BS 0,T!Q1:(B DEL ,Tb4B bobcat.el ,TK0CW1Mb;Ca!CA0MWh19(B ,TaEP!40;Xh1A META
+       0,T4i1GB!RC!40;Xh1A ESC ,TES04Q1:0;Xh1A M-C-h ,T(PKARB06V1'(B ESC DEL
+  
+JP-20: ,T`GER07Uh1c0*i1(B "TAMAGO" 0,T6i1R05i1M'!RC(Pc0Ki105i1M'0;i1M905Q1G hiragane "ん" 0,T4i1GB "nn" ,T(P
+ 0,T5i1M'7SM0Bh1R'dC?
+  
+  ,Tc0Jh1$S0JQh1'0"i1R'0Eh1R'd0Gi1c9(B .emacs 0,T!g1`0;g190MQ19c0*i1d04i1(B
+  
+        (setq enable-double-n-syntax t)
+  
+JP-21: 0,TMh1R90*Wh1Ma0?i1A0"i1M0AY1E07Uh10AU1C0KQ1J@RIR0-Uh10;Xh19d0Ah1d04i1(B
+  
+  ,T(P05i1M'c0Jh1(B --mcpatch ,Tc9$S0JQh1'(B configure ,T`0>Wh1Mc0Ki1JRARC6c0*i10*Wh1Ma0?i1A0"i1M0AY1Ec9C0KQ1J0MWh19(B
+  ,T9M!`K09W1M(R! ASCII ,Td04i1M0Bh1R'06Y1!05i1M' ,TaEP(S`0;g19(P05i1M'CP0:X10*X14C0KQ1J"M'0*Wh1Ma0?i1A0"i1M0AY1E`K0Eh1R
+  0,T9Qi19(B ,TaEP`0>Th1A0*X14$S0JQh1'0"i1R'0Eh1R'd0Gi1c9(B site-init.el (,Tc0*i1(B *autoconv* ,Td0Ah1d04i1(B)
+
+    ;;; 0,T5Q1GM0Bh1R': ,Tc0*i1C0KQ1J@RIR0-Uh10;Xh19(B EUC ,Tc90*Wh1Ma0?i1A0"i1M0AY1E
+    (if (fboundp 'set-pathname-coding-system)
+        (set-pathname-coding-system *euc-japan*))
+  
+JP-22: 0,T6i1R(Pc0*i107Qi1'(B Wnn ,TaEP Canna ,T>0Ci1MA0!Q19(B ,T(P05i1M'7SM0Bh1R'dC?
+  
+  0,T$X13(B Sakai Kiyotaka (,T+Rd! 0,T$T1bBP7R!P) <ksakai@mtl.t.u-tokyo.ac.jp> ,T`0"U1B9
+  ,Td0Gi10Gh1R
+  
+    0,T!h1M90MWh19(B ,T5M907Uh1$MAd>0El1(B (compile) Mule ,T(P05i1M'!SK94 (define) 0,T7Qi1'(B EGG ,TaEP
+    CANNA ,Tc9 mconfig.h
+  
+    0,T5h1Md; ,Tc0Ki10<Yi107Uh1c0*i1(B Canna ,TM0BYh1(B ,T`;0EUh1B90"i1M$GRAc9 .emacs 0,T7Uh1`0"U1B90Gh1R
+  
+     (if (and (boundp 'CANNA) CANNA)
+        (progn
+         (load-library "canna")
+         (canna)
+         ... ))
+  
+    ,Tc0Ki1`0;g19(B
+  
+     (if (and (boundp 'CANNA) CANNA)
+        (progn
+          (setq canna-server "mercury")
+          (cond ((boundp 'egg-version)
+                 (require 'can-n-egg)
+                 (can-n-egg))
+                (t
+                 (require 'canna)
+	         (canna)))
+          ... ))
+  
+    ,Ta0$h109Ui1(B 0,T!g1(PJRARC6`0CU1B! Wnn ,Td04i1b4B!RC!4 \C-\ ,TaEP Canna ,Td04i1b4B!RC!4 \C-o
+  
+JP-23: Mule ,Tc0*i1$S0JQh1'"M' Nemacs ,Td04i1d0Ah1$C:07X1!$S0JQh1'(B (upper compatible) ,TK0CW1M?
+  
+  0,T6i1R04Y1(R!CP04Q1:(B (level) ,T"M'@RIR emacs lisp ,Ta0Ei1G ,T(P>:0Gh1R05h1R'(R! Nemacs ,TM0BYh1AR!
+  0,T7U1`04U1BG
+  
+  0,T$X13(B Enami Tsugutomo (,T`M9R0AT1(B 0,T+V10'X1b7bAP) <enami@sys.ptg.sony.co.jp> ,Tc0Ki10"i1M
+  ,Ta9P9S`0!Uh1BG0!Q1:$GRAa5!05h1R'"M' Mule 0,T!Q1:(B Nemacs/Emacs ,Td0Gi104Q1'09Ui1(B
+  
+    * 0,TAU1:R'0?Q1'0!l10*Q1907Uh10AU1`0>U1B':9 Nemacs ,TK0CW1M Mule ,T`07h1R09Qi19(B
+    * 0,TAU10Jh1G907Uh1a0!i1d"(B ,T`0*h19(B ,T`0>Th1A05Q1G`0EW1M! (argument) ,T`0>Wh1Mc0Ki1c0*i1(B Mule ,Td04i10!Q1:KERB ,Tf ,T@RIR
+    * ,Ta0?i1A0"i1M0AY1E07Uh10<h1R9!RC7S byte compile ,T"M' Nemacs 0,T!Q1:(B Mule ,Tc0*i10Ch1GA0!Q19d0Ah1d04i1(B
+      ,T`09Wh1M'(R!C0KQ1J@RBc9"M'0MQ1!IC07Uh1d0Ah1c0*h1(B ASCII 0,T5h1R'0!Q19(B (,Ta05h1(B byte code ,T$'`K0AW1M90!Q19(B)
+    * ,T`>CRP0Gh1R0CXh19"M' emacs 0,T7Uh1c0*i1`0;g190R905h1R'0!Q19(B (,Ta0$h1`)>RP$S0JQh1'(B current-column
+      ,TK0CW1M`;0Eh1R?)
+  
+JP-24: ,Tc0*i1(B .emacs 0,TCh1GA ,TJSK0CQ1:07Qi1'(B Nemacs ,TaEP Mule ,Td04i1dKA?
+  
+  0,TAU1$S0JQh1':R'$S0JQh1'"M' Mule 0,T!Q1:(B Nemacs 0,T7Uh1c0*i10Ch1GA0!Q19d0Ah1d04i1(B  0,T(V1'MR((P7Sc0Ki1`0!T140"i1M0<T14>ER4
+  (error) ,Td04i1(B ,TKR!c0*i10Ch1GA0!Q19b4Bd0Ah1a0!i1d"(B
+  
+  ,Ta05h106i1RKR!a0:h1'0Jh1G9"M' Mule ,TaEP0Jh1G9"M' Nemacs ,T5RA05Q1GM0Bh1R'0"i1R'0Eh1R' 0,T!g1(PJRARC6c0*i1(B
+  0,TCh1GA0!Q19d04i1(B
+  
+      (if (boundp 'MULE)
+        (0,T*X14$S0JQh1'JSK0CQ1:(B Mule))
+      (if (boundp 'NEMACS)
+        (0,T*X14$S0JQh1'JSK0CQ1:(B Nemacs))
+  
+  ,Tc90$Yh10AW1Ma:: texinfo ,T"M' Mule 0,TAU105Q1GM0Bh1R' .emacs 0,T+Vh1'JRARC6c0*i10Ch1GA0!Q19d04i1CPK0Gh1R'
+  Mule 0,T!Q1:(B Nemacs  ,T!0CX13RKR0Mh1R9`0>Th1A`05T1Ad04i1(B
+  
+  ,Ta05h170Gh1R ,Td0Ah1JRARC6c0*i10Jh1G9"M' byte-compile 0,TCh1GA0!Q19d04i1(B  ,T`0!Uh1BG0!Q1:0(X1409Ui1(B 0,T$X13(B Enami
+  Tsugutomo (,T`M9R0AT1(B 0,T+V10'X1b7bAP) <enami@sys.ptg.sony.co.jp> ,T`0"U1B9d0Gi10Gh1R
+  
+    0,T6V1'a0Ai1(P7Sc0Ki1(B ~/.emacs ,Tc0*i10Ch1GA0!Q19d04i107Qi1'(B Nemacs ,TaEP Mule ,Ta0Ei1G  0,T!g10BQ1'$'05i1M'aB!
+    ,Ta0?i1A0"i1M0AY1E07Uh106Y1!(B byte-compile ,T`0;g19$9EP0Jh1G90!Q19(B
+  
+    0,T6V1'a0Ai1(P`0CU1B!0Gh1R`0;g19JRB0MQ1!"CP"M'05Q1G Kanji ,T`K0AW1M90!Q19(B  ,Ta05h106i1Rd0Ah1a0!i10Jh1G9"M' byte
+    compile 0,T!g1$'(Pc0*i1d0Ah1d04i1(B ,TJR`K05X1(R!C0KQ1J@RBc9 (internal code) ,T"M'0MQ1!IC07Uh1d0Ah1c0*h1(B
+    ASCII ,T"M' Nemacs 0,T!Q1:(B Mule 0,T5h1R'0!Q19(B
+  
+JP-25: ,T`$Bc0*i1(B Nemacs ,Td04i1`0;g19;!05T1(B ,Ta05h1>M`;0EUh1B9`0;g19(B Mule 0,T!g1`(M0"i1M$GRA0Gh1R "Symbol's
+ function definition: define-program-kanji-code"  ,T$GC(P7SM0Bh1R'dC?
+  
+  0,T$X13(B Atsushi Furuta (0,TMQ170+V10*T1(B 0,T?Y10CX15P) <furuta@srarc2.sra.co.jp> ,T`0"U1B9d0Gi10Gh1R
+  
+    define-program-kanji-code ,T`0;g190?Q1'0!l10*Q19(B (function) 0,T7Uh10AU1M0BYh1:9(B Nemacs ,T`07h1R09Qi19(B
+    0,T(V1'd0Ah1JRARC6c0*i1:9(B Mule ,Td04i1(B  ,Ta05h10AU10?Q1'0!l10*Q19(B define-program-coding-system 0,T+Vh1'(B
+    ,T(P7SK09i1R07Uh109Ui1a79(B  0,T5Q1GM0Bh1R'`0*h19(B ,Tc0Ki1`0"U1B9a0!i104Q1'09Ui1(B
+  
+        (define-program-kanji-code nil ".*inc.*" 2)
+                |
+                V
+        (define-program-coding-system nil ".*inc.*" *junet*)
+  
+    ,TaEPc97S9M'`04U1BG0!Q19(B ,Tc9!C03U107Uh10AU10?Q1'0!l10*Q19K0CW1M05Q1Ga;C (variable) 0,T7Uh10AU1$S0Gh1R
+    "kanji-code" ,TM0BYh1(B 0,T!g1(P0AU10?Q1'0!l10*Q19K0CW1M05Q1Ga;C 0,T7Uh1c0*i1$S0Gh1R "coding-system" ,Ta79$S0Gh1R
+    "kanji-code" ,Tc9 Mule 0,T+Vh1'7SK09i1R07Uh1`04U1BG0!Q19(B  ,T9M!(R!09Ui1(B 0,TBQ1'0AU105Q1Ga;C0*Wh1M "mc-flag"
+    0,T+Vh1'(P7SK09i1R07Uh1a79(B "kanji-flag"
+  
+  0,TBQ1'0AU1a>$`!((B (package) 0,T+Vh1'(P7Sc0Ki1b;Ca!CA07Uh1`0"U1B9JSK0CQ1:(B Nemacs ,T7S'R9d04i1`0;g19;!05T1(B
+  ,T:9 Mule 0,TMU1!04i1GB  0,T$X13(B Ken'ichi Handa (,T`$90MT10(T1(B 0,TNQ194P) <handa@etl.go.jp> ,T`0"U1B9
+  ,Td0Gi10Gh1R
+  
+    From: handa@etlken.etl.go.jp (Kenichi Handa)
+    Newsgroups: fj.editor.mule,fj.editor.emacs
+    Subject: nemacs -> mule
+    Message-ID: <HANDA.93Oct15215300@etlken.etl.go.jp>
+    Date: 15 Oct 93 21:53:00 GMT
+  
+    ,Ta>$`!( (package) 0,T"i1R'0Eh1R'06Y1!J0Ci1R'0"Vi19(B ,T(R!$GRA0Ch1GA0AW1M"M'JAR0*T1!"M' mailing
+    list ,T`0>Wh1M0*h1GBc0Ki1!RCbB!0Bi1RB(R! Nemacs ,Td;0BQ1'(B Mule ,T`0;g19d;d04i10'h1RB0"Vi19(B
+  
+    ,TJSK0CQ1:0<Yi107Uh1c0*i1(B .emacs ,Ta:: Nemacs ,TM0BYh1`04T1A ,T"Mc0Ki1c0Jh1a0?i1A0"i1M0AY1E .el ,TJM'a0?i1A0"i1R'0Eh1R'
+    ,Td0Gi1c9(B path ,TJSK0CQ1:bKE4 ,Ta0Ei1Ga0!i1(B .emacs 0,T4Q1'05Q1GM0Bh1R'0"i1R'0Eh1R'  0,T!g1(PJRARC6c0*i10GT108U105Qi1'(B
+    (configuration) ,Ta:: Nemacs ,T`04T1Ad04i15RA;!05T1(B
+    	(load-library "nemacs-pre")
+    	... 0,T*X14$S0JQh1'"M' .emacs ,T`04T1A
+    	(load-library "nemacs-post")
+    0,TAQh19c(d04i10Gh1R ,T!RCa0!i1a::09Ui1(Pd0Ah17S$GRA`0JU1BKRBc4 ,Tf ,Tc0Ki10!Q1:(B Nemacs
+  
+    ,Tb;Ca!CA09Ui10BQ1'd0Ah1`J0Cg1(JA0:Y1C03l1(B ,TaEP`CR!S0EQ1'CM$S6RA;CP`@7
+         ",Tc90GT108U105Qi1'`0!h1R"M' Nemacs ,T<A05Qi1'd0Gi1M0Bh1R'09Ui1(B  ,Tc9 Mule ,T$GC(P05Qi1'M0Bh1R'dC"
+    ,T(R!07X1!(B ,Tf 0,T7h1R9M0BYh1(B
+  
+  0,T7h1R9JRARC6KR nemacs-pre.el ,TaEP nemacs-post.el ,Td04i17R' FTP ,T(R!
+  etlport.etl.go.jp:/pub/mule/contrib/lisp
+  
+JP-26: 0,T6i1R(Pc0*i1(B Supercite 0,T!Q1:@RIR0-Uh10;Xh19(B
+  
+  0,T6i1R(Pc0*i1a0$h1`0>U1B'@RIR0MQ1'!DI  0,TGT108U105Qi1'(B ,Tc9$S6RA07Uh1(B E-2 0,T!g109h1R(P`0>U1B'>M  ,Tc9!C03U107Uh105i1M'!RCc0*i1(B
+  ,T@RIR0-Uh10;Xh1904i1GB 0,T!g1(S`0;g19(P05i1M'`;0EUh1B9a;E'0GT108U105Qi1'(B (configuration) 0,TJh1G905Q1G  (,Tc90Jh1G9"M'
+  ,T!RC05Qi1'(B sc-cite-regexp)
+  
+  0,T$X13(B Yoichi HIROSE (,TbB0MT10(T1(B 0,TNT1bC`+P) <yoichi@esasd.ksp.fujixerox.co.jp>
+  ,T`0"U1B9d0Gi10Gh1R
+  
+    0,TGT108U1a0:h1'aB! (category) ,TJSK0CQ1:!RC0(Q1:0$Yh1(B (match) 0,T"i1M$GRA@RIR0-Uh10;Xh19(B 0,T7Uh1c0*i1M0BYh10!Q1:(B
+    Nemacs ,T`;0EUh1B9a;E'd;  ,Ta05h10$X13(Pd0Ah1`0!Uh1BG0"i1M' 0,T6i1R0$X13d0Ah1d04i1c0*i10GT108U1a0:h1'aB!c9!RC!SK94
+    regular expression ,TM0BYh10!h1M9`04T1A
+  
+    ,T!0CX13R04Y105Q1GM0Bh1R' regular expression 0,T"i1R'0Eh1R'  ,Tc9 Nemacs 0,T*X14$S0JQh1'(P0$h1M90"i1R'BRG
+    ,Ta05h10JQi19E'AR!07U1`04U1BGc9 Mule  ,T!0CX13R0Mh1R9`0>Th1A`05T1A(R! char-category ,Tc9 info
+  
+    ,T`>CRP)P09Qi19(B 0,T(V1'(S`0;g19(P05i1M'a0!i1d"(B sc-cite-regexp 0,T4Q1'05Q1GM0Bh1R'0"i1R'0Eh1R' ,TKR!05i1M'!RC
+    ,Tc0*i1(B sc 0,T!Q1:@RIR0-Uh10;Xh19c9(B Mule
+  
+    0,T5Q1GM0Bh1R'!RC05Qi1'(B sc-cite-regexp
+    (if (boundp 'MULE)
+        (setq sc-cite-regexp "\\s *\\([a-zA-Z0-9_]\\|\\cj\\)*>+\\s *")
+      (setq sc-cite-regexp "\\s *\\([a-zA-Z0-9_]\\|\\cc\\|\\cC\\|\\ch\\|\\cH\\|\\ck\\|\\cK\\|\\ca\\|\\cg\\|\\cr\\|\\cu\\)*>+\\s *"))
+  
+JP-27: dired ,T7S'R9d0Ah1d04i15RA;!05T1(B
+  
+  dired 0,T5i1M'!RC<E0EQ1>08l1"M'$S0JQh1'(B ls  0,T6i1RKR!<E0EQ1>08l1`0;g19@RIR0-Uh10;Xh19(B 0,T!g1(Pd0Ah1JRARC67S'R9d04i1(B
+  ,T5RA;!05T1(B
+  
+  0,T$X13(B Akira Kon (,TMR0!T1CP ,T$') <kon@quincy.d1.bs2.mt.nec.co.jp> ,T`0"U1B9d0Gi104Q1'09Ui1(B
+  
+    ,T`09Wh1M'(R! ,T`$0CWh1M'"M'<A`0;g19(B SVR4  0,T6i1R05Qi1'(B LANG ,Tc0Ki1`0;g19@RIR0-Uh10;Xh19(B  ,T$S0JQh1'(B ls 0,T!g1(Pc0Ki1(B
+    ,T<E0EQ1>08l1`0;g19(B (0,T$W1M0AU10GQ19`GER`0;g19@RIR0-Uh10;Xh19(B)
+  
+    -rw-rw-r--   1 kon      com         1002 10月30日 00時22分 .bashrc
+    -rw-r--r--   1 kon      com        26387 11月18日 10時06分 .emacs
+  
+    ,Ta05h1`09Wh1M'(R!c9 dired.el 0,TAU10*X14$S0JQh1'(B
+  
+    (defun dired-get-filename (&optional localp no-error-if-not-filep)
+      (...,TEPd0Gi1(B...)
+        (beginning-of-line)
+        (if (re-search-forward
+           "\\(Jan\\|Feb\\|Mar\\|Apr\\|May\\|Jun\\|Jul\\|Aug\\|Sep\\|Oct\\|Nov\\|Dec\\)[ ]+[0-9]+"
+	     eol t)
+            (progn (skip-chars-forward " ")
+  
+    ,TM0BYh1(B  ,TJ0CX1;0!g10$W1M ,Tc0*i10!Q1:<E0EQ1>08l1@RIR0-Uh10;Xh19"M' ls -l ,Td0Ah1d04i1(B
+  
+    ,TJSK0CQ1:!RCa0!i1d"(B dired 0,T!g17S0'h1RB ,Tf ,Td04i104Q1'05Q1GM0Bh1R'0"i1R'0Eh1R'  ,Ta05h1d0Ah10CYi10Gh1R(P0AU1$S0JQh1'0MWh19(B 0,T7Uh1c0*i1(B
+    ,T<E0EQ1>08l1"M'$S0JQh1'(B UNIX ,Tc9b;Ca!CA Emacs lisp ,TM0BYh10MU1!K0CW1M`;0Eh1R
+  
+--- dired.el.orig	Mon Nov 22 23:32:13 1993
++++ dired.el	Mon Nov 22 23:33:03 1993
+@@ -42,10 +42,13 @@
+       (erase-buffer)
+       (setq dirname (expand-file-name dirname))
+       (if (file-directory-p dirname)
+-	  (call-process "ls" nil buffer nil
+-			dired-listing-switches dirname)
++	  (call-process "env" nil buffer nil
++			"LC_MESSAGES=C" "LC_DATE=C" "LANG=C"
++			"ls" dired-listing-switches dirname)
+ 	(let ((default-directory (file-name-directory dirname)))
+-	  (call-process shell-file-name nil buffer nil
++	  (call-process "env" nil buffer nil
++			"LC_MESSAGES=C" "LC_DATE=C" "LANG=C"
++			shell-file-name 
+ 			shell-command-option
+ 			(concat "ls " dired-listing-switches " "
+ 				     (file-name-nondirectory dirname)))))
+  
+JP-28: 0,TMh1R905Q1GK09Q1'0JW1MK0EQ1'(R!05Q1G katakana ,T`07h1R`04U1BG "KONNICHIWA" ,Tc9a0?i1A0"i1M0AY1E
+ $MULE/doc/demo ,Td0Ah1d04i1(B  ,T(P05i1M'7SM0Bh1R'dC?
+  
+  0,T$X13(B Azuma OKAMOTO (,TMR0+V1AP ,TbM!RbAb05i1(B) <lfo@sayori.dais.is.tohoku.ac.jp>
+  ,T`0"U1B9d0Gi10Gh1R
+  
+    ,T`09Wh1M'(R! 0,TJh1G909Qi19c0*i1C0KQ1J ESC $ ( D 0,T(V1'(S`0;g1905i1M'c0*i1?M905l1(B JISX0212 ,Tc9!RCaJ4'<E
+  
+    0,T6i1RKR!d0Ah1d04i1`0>Th1A?M905l109Ui1d0Gi1(B 0,T!g1$'(PaJ4'<Ed0Ah1d04i1(B :-)
+  
+JP-29: 0,TAU1?M905l1?0CU1"M' JIS X0212 (,T?M905l1<9G! JIS Kanji) ,TdKA?
+  
+  ,T?M905l1?0CU1"M' JIS X0212 (,T?M905l1<9G! JIS Kanji) 0,TAU1M0BYh107Uh1(B
+
+        etlport.etl.go.jp:/pub/mule/fonts/Japanese.tar.gz
+  
+  ,T9M!(R!09Ui1(B 0,TBQ1'0AU1?M905l1$9EP0*X140!Q1:?M905l109Ui1(B 0,TJh1'(B (post) ,Td;07Uh1(B fj.sources
+  
+  From: yasuoka@kudpc.kyoto-u.ac.jp (Koichi Yasuoka)
+  Newsgroups: fj.sources
+  Subject: 16x16 JIS Supplementary Kanji Font (1/6)
+  Date: 28 Jul 1994 00:06:12 +0900
+  Organization: Data Processing Center, Kyoto University, Kyoto, Japan.
+  Message-ID: <315t54$et5@kudpc.kudpc.kyoto-u.ac.jp>
+  
+  ,TK0EQ1'(R!09Qi19(B 0,T!g10AU10Jh1G9;P (patch) ,T`0>Th1A0MU1!KERB0MQ19(B  ,T$GC(P`0>Th1A (apply) 0,TJh1G9`K0Eh1R09Ui104i1GB
+
+
+,T`0!Uh1BG0!Q1:05Q1G0MQ1!ICER05T19(B (Latin)
+
+LT-1: ISO 8859 文字を入力するには?
+LT-1: 0,T6i1R(P0;i1M90"i1M0AY1E05Q1G0MQ1!IC ISO 8859
+  
+  ,TJRARC6c0*i105Q1G0MQ1!IC"M' Latin-1 (ISO8859-1) 0,T6V1'(B Latin-5 (ISO8859-9) 0,T!Q1:(B Mule 
+  ,Td04i1(B  ,TJRARC6c0*i1CP:: quail 0,T;i1M90"i1M0AY1E05Q1G0MQ1!IC`K0Eh1R09Ui1d04i1(R!0$U10Bl1:M0Cl14(B ASCII 0,T7Qh1Gd;
+  
+  ,T`CRd04i1`50CU1BAa0?i1A0"i1M0AY1Ed0Gi1(B 5 ,Ta0?i1A ,TJSK0CQ1:!RC0;i1M90"i1M0AY1E05Q1G0MQ1!IC5RA07Uh1!SK94d0Gi1b4B
+  ISO 8859 0,T4Q1'09Ui1(B
+  
+  * quail/latin.el : ,T@RIR05h1R' ,Tf 0,T7Uh1c0*i105Q1G0MQ1!ICER05T19(B (,TJSK0CQ1:$90>T1A0>l10*i1R)
+  
+    ,T`0;g19b;Ca!CAJSK0CQ1:0<Yi10KQ14cK0Ah1(B  0,T5Q1G0MQ1!IC07Uh10AU10JQ1-0EQ1!I03l105T14M0BYh1(B ,TJRARC60;i1M9d04i1b4B!RCCGA05Q1G
+    0,TMQ1!ICJM'05Q1G`0"i1R04i1GB0!Q19(B  0,T5Q1GM0Bh1R'`0*h19(B 0,T5Q1G ,Ai (0,T5Q1G e 0,T7Uh10AU1(B acute) ,TJRARC60;i1M9d04i1b4B
+    0,T>T1A0>l1(B e ,T5RA04i1GB ' (single quote ,T`$0CWh1M'KARB`0;T14$S0>Y14`04Uh1BG)
+    
+    ,T@RIR		0,T*Wh1Ma>$`!(
+    ----------------------------------
+    ,T@RIR`49AR0Cl1!(B		danish
+    ,T@RIR Esperanto	esperanto
+    ,T@RIR Finland	finnish
+    ,T@RIR=0CQh1'`HJ		french
+    ,T@RIR`BMC0AQ19(B		german
+    ,T@RIR Iceland	icelandic
+    ,T@RIR0MT15R0EU1(B		italian
+    ,T@RIR9M0Cl1`G0Bl1(B		norwegian
+    ,T@RIRJ`;9		spanish
+    ,T@RIRJ0GU1`49(B		swedish
+    ,T@RIR05X1C0!U1(B		turkish
+    ,T@RIR0MQ1'!DI
+      (,Td0Ah1c0*h1@RIRM`A0CT10!Q19(B)	british
+    ISO 8859-1		latin-1
+    ISO 8859-2		latin-2
+    ISO 8859-3		latin-3
+    ISO 8859-4		latin-4
+    ISO 8859-9		latin-5
+  
+  
+  * quail/ltn.el : ,T@RIR05h1R' ,Tf 0,T7Uh1c0*i105Q1G0MQ1!ICER05T19(B (,TJSK0CQ1:$90>T1A0>l1`0Cg1G)
+  
+    ,T`0;g19b;Ca!CAJSK0CQ1:0<Yi107Uh1`0:Wh1M!RC0;i1M90"i1M0AY1Ea:: quail/latin.el  ,TJ0Ci1R'(R!K0EQ1!!RC07Uh1(B
+    0,TGh1R ",T!40;Xh1A0BTh1'09i1MB$0CQi1'0BTh1'04U1(B"  0,T5Q1GK09Q1'0JW1Ma7:07X1!05Q1G"M'a05h1EP@RIR ,T(P06Y1!!SK94d0Gi107Uh10;Xh1Ac4
+    0,T;Xh1AK09Vh1'(B  ,T`0AWh1M(S5SaK09h1'd04i1(B 0,T!g1(PJRARC60>T1A0>l1d04i1M0Bh1R'CG4`0Cg1G
+  
+    ,T@RIR		0,T*Wh1Ma>$`!(
+    ----------------------------------
+    ,T@RIR`49AR0Cl1!(B		dnsh
+    ,T@RIR Finland	fnnsh
+    ,T@RIR=0CQh1'`HJ		frnch, azerty
+    ,T@RIR`BMC0AQ19(B		grmn
+    ,T@RIR Iceland	iclndc
+    ,T@RIR0MT15R0EU1(B		itln
+    ,T@RIR9M0Cl1`G0Bl1(B		nrwgn
+    ,T@RIRJ`;9		spnsh
+    ,T@RIRJ0GU1`49(B		swdsh
+  
+  
+  * quail/cyrillic.el : ,TJSK0CQ1:@RIR07Uh1c0*i105Q1G0MQ1!IC Cyrillic
+  
+    ,T@RIR		0,T*Wh1Ma>$`!(	,TKARB`K05X1(B
+    -------------------------------------------------------
+    ,T@RIR0CQ1J`0+U1B		jcuken		,T`0CU1B'5SaK09h1'0;Xh1A5RAAR5C0R90CQ1J`0+U1B
+			jis-russian	,T`0CU1B'5SaK09h1'0;Xh1A5RAAR5C0R90CQ1J`0+U1B
+					,Ta05h1c0*i1C0KQ1J JIS
+    ,T@RIR Macedonia	macedonian	JUS.I.K1.004
+    ,T@RIR`0+T10Cl1:(B (Serb)	serbian		JUS.I.K1.005
+    ,T@RIR Byelorussia	byelorussian	,T(S>G! JUS.I.K1
+    ,T@RIR0BY1`$C9		ukrainian	,T(S>G! JUS.I.K1
+    ISO 8859-5          yawerty		0,T!g1M;0;Ui1AR(R!05Q1G0MQ1!ICER05T19(B
+  
+  
+  * quail/greek.el : ,TJSK0CQ1:@RIR!0CU1!(B
+  
+    ,T@RIR		0,T*Wh1Ma>$`!(	,TKARB`K05X1(B
+    -------------------------------------------------------
+    ,T@RIR!0CU1!(B		greek
+			jis-greek	,T`K0AW1M90!Q1:(B greek ,Ta05h1c0*i1C0KQ1J JIS
+  
+  
+  * quail/hebrew.el : ,TJSK0CQ1:@RIR0NU1::0CY1(B (Hebrew)
+  
+    ,T@RIR		0,T*Wh1Ma>$`!(
+    --------------------------------
+    ,T@RIR0NU1::0CY1(B (Hebrew)	hebrew
+  
+  
+  ,TK0EQ1'(R!bKE4a0?i1A0"i1M0AY1E0+Vh1'0AU1a>$`!(07Uh105i1M'!RCCGAM0BYh1a0Ei1G  0,T!g1(PJRARC6`;0EUh1B9`0;g19bKA4
+  quail-minor-mode ,TK0CW1M`;0EUh1B9!0EQ1:`0;g19bKA4;!05T1(B ,Td04i1b4B!4 C-]  0,T6i1R(P`0EW1M!0*Wh1Ma>$`!(
+  ,T`)>RP`(RP(' ,T`GERM0BYh1c9bKA4 quail-minor-mode 0,T!g1c0Ki1!4(B M-s ,TK0CW1M0JQh1'$S0JQh1'(B
+  (quail-use-package "0,T*Wh1Ma>$`!(")   ,T9M!(R!09Ui1(B 0,TBQ1'JRARC604Y1(B Help 0,T'h1RB ,Tf ,Td04i1b4B
+  ,T!4 M-z
+  
+  0,T5Q1GM0Bh1R':
+  
+  1) ,TJSK0CQ1:0<Yi107Uh1`0CTh1A`0CU1B9@RIR`BMC0AQ19cK0Ah1(B ,Tf ,TaEP05i1M'!RC(P0;i1M90"i1M0AY1E@RIR`BMC0AQ19(B 0,T!g1c0Ki1c0Jh1(B
+     ,TJM':CC07Q140"i1R'0Eh1R'd0Gi1c9(B .emacs
+     
+     (load "quail/latin")
+     (quail-use-package "german")
+     
+  2) 0,T6i1R05i1M'!RCc0*i1@RIR=0CQh1'`HJ ,Tb4Bc0Ki15SaK09h1'0$U10Bl1:M0Cl14`0;g19a::(B azerty 0,T!g1c0Ki1c0Jh1JM':CC07Q14(B
+     0,T"i1R'0Eh1R'd0Gi1c9(B .emacs
+     
+     (load "quail/ltn")
+     (quail-use-package "azerty")
+  
+LT-2: 0,T6i1R05i1M'!RC(PaJ4'<E05Q1G0MQ1!IC Latin-1 ,T:9`7M0Cl10AT109Q1E05Q1G0MQ1!IC (character
+ terminal) ,T(P05i1M'7SM0Bh1R'dC?
+  
+  0,T$X13(B TAKAHASHI Naoto (,T7R!RNR0*T1(B ,T9RbMb5P) <ntakahas@etl.go.jp> ,T`0"U1B9d0Gi10Gh1R
+  
+    0,T6i1R(PaJ4'<E05Q1G0MQ1!IC Latin-1 ,Tc9 Mule ,T:9`7M0Cl10AT109Q1E05Q1G0MQ1!IC 0,T!g1c0Ki105Qi1'(B
+    display-coding-system ,T`0;g19(B *ctext*   ,T7Sd04i1b4B!RCc0Jh1(B
+  
+      (setq display-coding-system *ctext*)
+  
+    ,Td0Gi1c9(B .emacs  ,TK0CW1M06i1RKR!M0BYh1c9(B Mule 0,T!g1c0Ki10>T1A0>l1$S0JQh1'(B M-x
+    set-display-coding-system 0,T!g1(P0AU1(B prompt ,T6RA0Gh1R Display-coding-system: 
+    ,Ta0Ei1G0(V1'0$h1MB0>T1A0>l1(B *ctext* ,TE'd;0!g1d04i1(B
+  
+    ,T9M!(R!09Ui1(B  0,T6i1Rc0*i1CP:: X Window ,TM0BYh1(B ,Ta05h10JQh1'(B Mule ,Tb4Bc0*i105Q1G`0EW1M! (option) -nw 0,T!g1(B
+    ,T(S`0;g1905i1M'7S0GT108U1`04U1BG0!Q19(B
+  
+    ,Td0Ah10Gh1Ra::c40!g15RA  ,T(P0AU1`0'Wh1M9d"M0BYh10Gh1R ,T`7M0Cl10AT109Q1E05Q1G0MQ1!IC07Uh1c0*i1M0BYh1(S`0;g19(P05i1M'aJ4'<E
+    0,T5Q1G0MQ1!IC Latin-1 ,Td04i1(B

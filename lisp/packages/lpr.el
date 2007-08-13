@@ -95,9 +95,6 @@ The variable `lpr-page-header-program' specifies the program to use.")
   (interactive "r")
   (print-region-1 start end lpr-switches t))
 
-;; XEmacs change
-(require 'message)	; Until We can get some sensible autoloads, or
-			; message-flatten-list gets put somewhere decent.
 (defun print-region-1 (start end switches page-headers)
   ;; On some MIPS system, having a space in the job name
   ;; crashes the printer demon.  But using dashes looks ugly
@@ -109,7 +106,6 @@ The variable `lpr-page-header-program' specifies the program to use.")
 	(binary-process-input buffer-file-type)
 	(binary-process-output buffer-file-type)
 	(width tab-width)
-	nswitches
 	switch-string)
     (save-excursion
       (if page-headers
@@ -120,18 +116,9 @@ The variable `lpr-page-header-program' specifies the program to use.")
 					 (list lpr-headers-switches)
 				        lpr-headers-switches)
 				     switches))))
-      (setq nswitches (message-flatten-list    ; XEmacs
-		       (mapcar '(lambda (arg)  ; Dynamic evaluation
-				  (cond ((stringp arg) arg)
-					((functionp arg) (apply arg nil))
-					((symbolp arg) (eval arg))
-					((consp arg) (apply (car arg)
-							    (cdr arg)))
-					(t nil)))
-			       switches)))
       (setq switch-string
-	    (if nswitches (concat " with options "
-				 (mapconcat 'identity nswitches " "))
+	    (if switches (concat " with options "
+				 (mapconcat 'identity switches " "))
 	      ""))
       (message "Spooling%s..." switch-string)
       (if (/= tab-width 8)
@@ -163,7 +150,7 @@ The variable `lpr-page-header-program' specifies the program to use.")
 			   ;; These belong in pr if we are using that.
 			   (and lpr-add-switches lpr-headers-switches
 				(list "-T" title))
-			   nswitches)))
+			   switches)))
       (if (markerp end)
 	  (set-marker end nil))
       (message "Spooling%s...done" switch-string))))

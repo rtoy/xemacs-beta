@@ -1,0 +1,10 @@
+#!/bin/sh
+# Usage: any2ps [-in coding-system ] [options_of_m2ps ..] <infile >outfile
+
+CODING=
+if [ "$1" = "-in" -a -n "$2" ] ; then
+  CODING=$2;
+  shift; shift;
+fi
+
+coco ${CODING} '*internal*' | m2ps $*

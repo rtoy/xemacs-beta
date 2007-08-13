@@ -23,7 +23,6 @@
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
   (vm-error-if-folder-empty)
-  (message "Clearing all marks...")
   (let ((mp vm-message-list))
     (while mp
       (if (vm-mark-of (car mp))
@@ -33,8 +32,7 @@
       (setq mp (cdr mp))))
   (vm-display nil nil '(vm-clear-all-marks)
 	      '(vm-clear-all-marks marking-message))
-  (vm-update-summary-and-mode-line)
-  (message "Clearing all marks... done"))
+  (vm-update-summary-and-mode-line))
 
 (defun vm-mark-all-messages ()
   "Mark all messages in the current folder."
@@ -42,7 +40,6 @@
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
   (vm-error-if-folder-empty)
-  (message "Marking all messages...")
   (let ((mp vm-message-list))
     (while mp
       (vm-set-mark-of (car mp) t)
@@ -50,8 +47,7 @@
       (setq mp (cdr mp))))
   (vm-display nil nil '(vm-mark-all-messages)
 	      '(vm-mark-all-messages marking-message))
-  (vm-update-summary-and-mode-line)
-  (message "Marking all messages... done"))
+  (vm-update-summary-and-mode-line))
 
 (defun vm-mark-message (count)
   "Mark the current message.
@@ -101,61 +97,6 @@ previous N-1 messages."
   (vm-display nil nil '(vm-unmark-message)
 	      '(vm-unmark-message marking-message))
   (vm-update-summary-and-mode-line))
-
-(defun vm-mark-summary-region ()
-  "Mark all messages with summary lines contained in the region."
-  (interactive)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
-  (if (null vm-summary-buffer)
-      (error "No summary."))
-  (set-buffer vm-summary-buffer)
-  (if (not (mark))
-      (error "The region is not active now"))
-  (vm-mark-or-unmark-summary-region t)
-  (vm-display nil nil '(vm-mark-summary-region)
-	      '(vm-mark-summary-region marking-message))
-  (vm-update-summary-and-mode-line))
-
-(defun vm-unmark-summary-region ()
-  "Remove marks from messages with summary lines contained in the region."
-  (interactive)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
-  (if (null vm-summary-buffer)
-      (error "No summary."))
-  (set-buffer vm-summary-buffer)
-  (if (not (mark))
-      (error "The region is not active now"))
-  (vm-mark-or-unmark-summary-region nil)
-  (vm-display nil nil '(vm-unmark-summary-region)
-	      '(vm-unmark-summary-region marking-message))
-  (vm-update-summary-and-mode-line))
-
-(defun vm-mark-or-unmark-summary-region (markit)
-  ;; The folder buffers copy of vm-message-list has already been
-  ;; propagated to the summary buffer.
-  (let ((mp vm-message-list)
-	(beg (point))
-	(end (mark))
-	tmp m)
-    (if (> beg end)
-	(setq tmp beg beg end end tmp))
-    (while mp
-      (setq m (car mp))
-      (if (not (eq (not markit) (not (vm-mark-of m))))
-	  (if (or (and (>  (vm-su-end-of m) beg)
-		       (<  (vm-su-end-of m) end))
-		  (and (>= (vm-su-start-of m) beg)
-		       (<  (vm-su-start-of m) end))
-		  (and (>= beg (vm-su-start-of m))
-		       (<  beg (vm-su-end-of m))))
-	      (progn
-		(vm-set-mark-of m markit)
-		(vm-mark-for-summary-update m t))))
-      (setq mp (cdr mp)))))
 
 (defun vm-mark-or-unmark-messages-with-selector (val selector arg)
   (let ((mlist vm-message-list)
@@ -347,12 +288,10 @@ variable vm-virtual-folder-alist for more information."
 
 (defun vm-next-command-uses-marks ()
   "Does nothing except insure that the next VM command will operate only
-on the marked messages in the current folder.  This only works for
-commands bound to key, menu or button press events.  M-x vm-command will
-not work."
+on the marked messages in the current folder."
   (interactive)
   (setq this-command 'vm-next-command-uses-marks)
-  (message "Next command uses marks...")
+  (vm-unsaved-message "Next command uses marks...")
   (vm-display nil nil '(vm-next-command-uses-marks)
 	      '(vm-next-command-uses-marks)))
 

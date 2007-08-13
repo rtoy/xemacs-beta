@@ -1,14 +1,13 @@
 ;;; images.el --- Automatic image converters
 ;; Author: wmperry
-;; Created: 1997/03/11 19:28:30
-;; Version: 1.10
+;; Created: 1996/06/30 18:00:34
+;; Version: 1.2
 ;; Keywords: images
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1995 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996, 1997 Free Software Foundation Inc.
 ;;;
-;;; This file is part of GNU Emacs.
+;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
 ;;; GNU Emacs is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -21,21 +20,15 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;;; Boston, MA 02111-1307, USA.
+;;; along with GNU Emacs; see the file COPYING.  If not, write to
+;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; The emacsen compatibility package - load it up before anything else
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require 'mule-sysdp)
-
 (eval-and-compile
-  (if (not (and (string-match "XEmacs" emacs-version)
-		(or (> emacs-major-version 19)
-		    (>= emacs-minor-version 14))))
-      (require 'w3-sysdp)))
+  (load-library "w3-sysdp"))
 
 (defvar image-temp-stack nil "Do no touch - internal storage.")
 (defvar image-converters nil "Storage for the image converters.")
@@ -151,13 +144,12 @@ to a suitable internal image format will be carried out."
 	      (while chain
 		(cond
 		 ((stringp (car chain))
-		  (let ((file-coding-system mule-no-coding-system))
-		    (call-process-region
-		     (point-min) (point-max)
-		     shell-file-name t
-		     (list (current-buffer) nil)
-		     shell-command-switch
-		     (car chain))))
+		  (shell-command-on-region (point-min) (point-max)
+					   (concat
+					    "/bin/sh -c '"
+					    (car chain)
+					    " 2> /dev/null"
+					    "'") t))
 		 ((and (symbolp (car chain)) (fboundp (car chain)))
 		  (funcall (car chain) (point-min) (point-max))))
 		(setq chain (cdr chain)))
@@ -170,7 +162,7 @@ to a suitable internal image format will be carried out."
 (defun image-register-netpbm-utilities ()
   "Register all the netpbm utility packages converters."
   (interactive)
-  (if (image-converter-registered-p 'pgm 'pbm)
+  (if (image-converter-registered-p 'xpm 'gif)
       nil
     (image-register-converter 'pgm 'pbm "pgmtopbm")
     (image-register-converter 'ppm 'pgm "ppmtopgm")

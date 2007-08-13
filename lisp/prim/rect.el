@@ -18,11 +18,11 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: FSF 19.34.
+;;; Synched up with: FSF 19.30.
 
 ;;; Commentary:
 
@@ -54,23 +54,22 @@ Point is at the end of the segment of this line within the rectangle."
      (forward-line 1)
      (setq endlinepos (point-marker)))
     (if (< endcol startcol)
-	;; XEmacs
 	(let ((tem startcol))
 	  (setq startcol endcol endcol tem)))
     (save-excursion
       (goto-char startlinepos)
       (while (< (point) endlinepos)
-	(let (startpos begextra endextra)
-	  (move-to-column startcol coerce-tabs)
-	  (setq begextra (- (current-column) startcol))
-	  (setq startpos (point))
-	  (move-to-column endcol coerce-tabs)
-	  (setq endextra (- endcol (current-column)))
-	  (if (< begextra 0)
-	      (setq endextra (+ endextra begextra)
-		    begextra 0))
+        (let (startpos begextra endextra)
+          (move-to-column startcol coerce-tabs)
+          (setq begextra (- (current-column) startcol))
+          (setq startpos (point))
+          (move-to-column endcol coerce-tabs)
+          (setq endextra (- endcol (current-column)))
+          (if (< begextra 0)
+              (setq endextra (+ endextra begextra)
+                    begextra 0))
           (apply function startpos begextra endextra extra-args))
-	(forward-line 1)))
+        (forward-line 1)))
     (- endcol startcol)))
 
 (defun delete-rectangle-line (startdelpos ignore ignore)
@@ -98,7 +97,7 @@ Point is at the end of the segment of this line within the rectangle."
 	(setq line (concat (spaces-string begextra)
 			   line
 			   (spaces-string endextra))))
-    (setcdr lines (cons line (cdr lines))))) ; XEmacs
+    (setcdr lines (cons line (cdr lines)))))
 
 (defconst spaces-strings
   (purecopy '["" " " "  " "   " "    " "     " "      " "       " "        "]))
@@ -114,8 +113,9 @@ Point is at the end of the segment of this line within the rectangle."
 ;;;###autoload
 (defun delete-rectangle (start end)
   "Delete (don't save) text in rectangle with point and mark as corners.
-The same range of columns is deleted in each line starting with the line
-where the region begins and ending with the line where the region ends."
+The same range of columns is deleted in each line
+starting with the line where the region begins
+and ending with the line where the region ends."
   (interactive "r")
   (operate-on-rectangle 'delete-rectangle-line start end t))
 
@@ -162,8 +162,8 @@ But in programs you might prefer to use `delete-extract-rectangle'."
 ;;;###autoload
 (defun insert-rectangle (rectangle)
   "Insert text of RECTANGLE with upper left corner at point.
-RECTANGLE's first line is inserted at point, its second
-line is inserted at a point vertically under point, etc.
+RECTANGLE's first line is inserted at point,
+its second line is inserted at a point vertically under point, etc.
 RECTANGLE should be a list of strings.
 After this command, the mark is at the upper left corner
 and point is at the lower right corner."
@@ -213,7 +213,7 @@ This command does not delete or overwrite any existing text.
 
 Called from a program, takes three args; START, END and STRING."
   (interactive "r\nsString rectangle: ")
-  (operate-on-rectangle 'string-rectangle-line start end t string)) ; XEmacs
+  (operate-on-rectangle 'string-rectangle-line start end t string))
 
 ;; XEmacs: add string arg
 (defun string-rectangle-line (startpos begextra endextra string)
@@ -249,6 +249,13 @@ When called from a program, requires two args which specify the corners."
 			  (point)))
     ;; Reindent out to same column that we were at.
     (indent-to column)))
+
+;(defun rectangle-coerce-tab (column)
+;  (let ((aftercol (current-column))
+;	(indent-tabs-mode nil))
+;    (delete-char -1)
+;    (indent-to aftercol)
+;    (backward-char (- aftercol column))))
 
 (provide 'rect)
 

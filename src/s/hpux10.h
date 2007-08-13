@@ -2,7 +2,7 @@
 
 /* System description file for hpux version 10.  */
 
-#include "hpux9-shr.h"
+#include "hpux9shr.h"
 
 /* We have to go this route, rather than hpux9's approach of renaming the
    functions via macros.  The system's stdlib.h has fully prototyped

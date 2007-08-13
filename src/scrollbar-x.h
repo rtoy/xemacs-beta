@@ -42,8 +42,7 @@ struct x_scrollbar_data
   /* Pointer to the scrollbar widget this structure describes. */
   Widget widget;
 
-#if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID) || \
-    defined (LWLIB_SCROLLBARS_ATHENA3D)
+#if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID)
   /* Recorded starting position for Motif-like scrollbar drags. */
   int vdrag_orig_value;
   Bufpos vdrag_orig_window_start;
@@ -59,8 +58,7 @@ struct x_scrollbar_data
 #define SCROLLBAR_X_POS_DATA(i) (SCROLLBAR_X_DATA (i)->pos_data)
 #define SCROLLBAR_X_WIDGET(i) (SCROLLBAR_X_DATA (i)->widget)
 
-#if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID) || \
-    defined (LWLIB_SCROLLBARS_ATHENA3D)
+#if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID)
 #define SCROLLBAR_X_VDRAG_ORIG_VALUE(i) \
   (SCROLLBAR_X_DATA (i)->vdrag_orig_value)
 #define SCROLLBAR_X_VDRAG_ORIG_WINDOW_START(i) \

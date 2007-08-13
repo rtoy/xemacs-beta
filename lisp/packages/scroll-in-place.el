@@ -17,7 +17,7 @@
 ;;;;
 ;;;; You should have received a copy of the GNU General Public License along
 ;;;; with GNU Emacs.  If you did not, write to the Free Software Foundation,
-;;;; Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+;;;; Inc., 675 Mass Ave., Cambridge, MA 02139, USA.
 
 ;;; Synched up with: Not in FSF.
 
@@ -461,9 +461,6 @@
 ;;;;   invoke scrolling commands (although many filters move point around,
 ;;;;   which will also confuse `scroll-window-in-place').
 
-;; sb -- Added turn-on and turn-off hook functions to prepare for making this
-;;  a standardly dumped package with XEmacs.
-
 ;; (provide 'scroll-in-place) at the end of this file.
 
 
@@ -626,16 +623,6 @@ Subsequent \"in place\" scrolling commands try to make up this debt.")
 function `pos-visible-in-window-p' that returns `nil' when given `(point-max)'
 and `(point-max)' is on the last line of the window.  Currently, this flag is
 set for all versions of Epoch 4 and for Lucid GNU Emacs 19.8.")
-
-
-;; Hook functions to make turning the mode on and off easier.
-(defun turn-on-scroll-in-place ()
-  "Unconditionally turn on scroll-in-place mode."
-  (set (make-local-variable 'scroll-in-place) t))
-
-(defun turn-off-scroll-in-place ()
-  "Unconditionally turn on scroll-in-place mode."
-  (set (make-local-variable 'scroll-in-place) nil))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1556,21 +1543,10 @@ call this function from other code."
   ;; recover.
   (setq scroll-boundary-error-command this-command
 	scroll-boundary-error-point initial-point)
-  (when signal-error-on-buffer-boundary
-    (signal (if (< lines 0) 'beginning-of-buffer 'end-of-buffer)
-	    nil)))
+  (signal (if (< lines 0) 'beginning-of-buffer 'end-of-buffer)
+	  nil))
 
 
-;;; Some convenience redefinitions for modes that don't like scroll-in-place
-(add-hook 'vm-mode-hook 'turn-off-scroll-in-place)
-(add-hook 'vm-select-message-hook 'turn-off-scroll-in-place)
-(add-hook 'vm-summary-mode-hook 'turn-off-scroll-in-place)
-
-(add-hook 'list-mode-hook 'turn-off-scroll-in-place)
-
-;; This doesn't work with Red Gnus
-;; (add-hook 'gnus-article-mode-hook 'turn-off-scroll-in-place)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
@@ -1581,4 +1557,5 @@ call this function from other code."
 
 (provide 'scroll-in-place)
 
-;;; scroll-in-place.el ends here
+;; End of file.
+

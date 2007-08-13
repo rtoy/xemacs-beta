@@ -1,4 +1,4 @@
-;;; $Id: cookie.el,v 1.1.1.2 1996/12/18 03:45:29 steve Exp $
+;;; $Id: cookie.el,v 1.1.1.1 1996/12/18 22:42:58 steve Exp $
 ;;; cookie.el -- Utility to display cookies in buffers
 
 ;; Copyright (C) 1991-1995   Free Software Foundation

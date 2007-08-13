@@ -73,15 +73,13 @@ The sound file must be in the Sun/NeXT U-LAW format except under Linux
 where WAV files are also supported.
   DEVICE defaults to the selected device.
 */
-       (file, volume, device))
+     (file, volume, device))
 {
-  /* This function can call lisp */
+  /* This function can GC */
   int vol;
 #if defined (HAVE_NATIVE_SOUND) || defined (HAVE_NAS_SOUND)
   struct device *d = decode_device (device);
 #endif
-  struct gcpro gcpro1;
-
   CHECK_STRING (file);
   if (NILP (volume))
     vol = bell_volume;
@@ -91,14 +89,12 @@ where WAV files are also supported.
       vol = XINT (volume);
     }
 
-  GCPRO1 (file);
   file = Fexpand_file_name (file, Qnil);
   if (NILP (Ffile_readable_p (file)))
     if (NILP (Ffile_exists_p (file)))
       error ("file does not exist.");
     else
       error ("file is unreadable.");
-  UNGCPRO;
 
 #ifdef HAVE_NAS_SOUND
   if (DEVICE_CONNECTED_TO_NAS_P (d))
@@ -355,6 +351,7 @@ DEFUN ("wait-for-sounds", Fwait_for_sounds, 0, 1, 0, /*
 Wait for all sounds to finish playing on DEVICE.
 */
        (device))
+
 {
 #ifdef HAVE_NAS_SOUND
   struct device *d = decode_device (device);

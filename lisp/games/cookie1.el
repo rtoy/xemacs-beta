@@ -20,11 +20,11 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: FSF 19.34.
+;;; Synched up with: FSF 19.28.
 
 ;;; Commentary:
 
@@ -106,7 +106,7 @@ and subsequent calls on the same file won't go to disk."
     (if sym
 	(symbol-value sym)
       (setq sym (intern phrase-file cookie-cache))
-      (message "%s" startmsg)
+      (message startmsg)
       (save-excursion
 	(let ((buf (generate-new-buffer "*cookie*"))
 	      (result nil))
@@ -117,7 +117,6 @@ and subsequent calls on the same file won't go to disk."
 	  (while (progn (skip-chars-forward " \t\n\r\f") (not (eobp)))
 	    (let ((beg (point)))
 	      (re-search-forward cookie-delimiter)
-	      ;; XEmacs change
 	      ;; DBC --- here's the change
 	      ;; This used to be (buffer-substring beg (1- (point))),
 	      ;; which only worked if the regexp matched was one
@@ -126,7 +125,7 @@ and subsequent calls on the same file won't go to disk."
 						   (match-beginning 0))
 				 result))))
 	  (kill-buffer buf)
-	  (message "%s" endmsg)
+	  (message endmsg)
 	  (set sym (apply 'vector result)))))))
 
 (defun read-cookie (prompt phrase-file startmsg endmsg &optional require-match)

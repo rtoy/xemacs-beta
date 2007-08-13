@@ -1,6 +1,6 @@
 ;;;#ident "@(#)OrigId: pcl-cvs-startup.el,v 1.4 1993/05/31 18:40:33 ceder Exp "
 ;;;
-;;;#ident "@(#)cvs/contrib/pcl-cvs:$Name:  $:$Id: pcl-cvs-startup.el,v 1.1.1.1 1996/12/18 03:32:27 steve Exp $"
+;;;#ident "@(#)cvs/contrib/pcl-cvs:$Name: r20-0b30 $:$Id: pcl-cvs-startup.el,v 1.1.1.1 1996/12/18 22:42:58 steve Exp $"
 ;;;
 (autoload 'cvs-update "pcl-cvs"
 	  "Run a 'cvs update' in the current working directory. Feed the

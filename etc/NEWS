@@ -1,7 +1,4 @@
 -*- mode:outline; minor-mode:outl-mouse -*-
-C-c TAB         This shows subheadings (if any) of current heading.
-C-c C-s         Show _all_ the text and headings under current heading
-
 
 * Introduction
 ==============
@@ -15,32 +12,28 @@ There are five sections.
 
     Using Outline Mode..........briefly explains how to use outline mode
 
-    XEmacs Release Notes........detailed changes to this release
-
-    Future Plans for XEmacs.....what's next
-
     The History of XEmacs.......some historical notes
 
-    A Long List of Packages.....all the stuff in XEmacs
+    What's Different?...........new or changed capabilities
 
-    What Changed................between versions and also FSF GNU Emacs
+    XEmacs Release Notes........details of the changes between releases
 
-New users should look at the next section on "Using Outline Mode".
-You will be more efficient when you can navigate quickly through this
-file.  Users who want to know which capabilities have been introduced
-in this release should look at the "XEmacs Release Notes."  Users
-interested in some of the details of how XEmacs differs from GNU Emacs
-should read the section "What Changed?".
+New users should look at the next section on "Using Outline Mode".  You will
+be more efficient when you can navigate quickly through this file.  Users
+interested in some of the details of how XEmacs differs from FSF GNU Emacs
+should read the section "What's Different?".  Users who would to know which
+capabilities have been introduced in each release should look at the
+appropriate subsection of the "XEmacs Release Notes."
 
-    N.B.  The term "FSF GNU Emacs" refers to any release of Emacs
-    Version 19 from the Free Software Foundation's GNU Project. (We do
-    not say just "GNU Emacs" because Richard M. Stallman ["RMS"]
-    thinks that this term is too generic; although we sometimes say
-    e.g. "GNU Emacs 19.30" to refer to a specific version of FSF GNU
-    Emacs.  The term "XEmacs" refers to this program or to its
-    predecessors "Era", "Epoch", and "Lucid Emacs".  The predecessor
-    of all these program is called "Emacs 18".  When no particular
-    version is implied, "Emacs" will be used.
+    N.B.  The term "FSF GNU Emacs" refers to any release of Emacs Version 19
+    from the Free Software Foundation's GNU Project. (We do not say just
+    "GNU Emacs" because Richard M. Stallman ["RMS"] thinks that this term
+    is too generic; although we sometimes say e.g. "GNU Emacs 19.30" to refer
+    to a specific version of FSF GNU Emacs.  We do not say merely "Emacs", as
+    RMS prefers, because that is clearly an even more generic term.) The term
+    "XEmacs" refers to this program or to its predecessors "Era" and
+    "Lucid Emacs".  The predecessor of all these program is called "Emacs 18".
+    When no particular version is implied, "Emacs" will be used.
 
 
 * Using Outline Mode
@@ -55,492 +48,41 @@ outline mode with menus is the simplest and is just as effective as using
 keystrokes.  There are menus for outline mode on the menubar as well as in
 popup menus activated by pressing mouse button 3.
 
-Try the following to help you read this file.
+Experiment with the menu commands.  Menu items under "Headings" allow
+you to navigate from heading to heading.  Menu items under "Show" make
+visible portions of the outline while menu items under "Hide" do the
+opposite.
 
-C-c C-q         This hides everything but the very top level headings
-                You can then move to an interesting section
-C-c TAB         This shows subheadings (if any) of current heading.
-C-c C-s         Show _all_ the text and headings under current heading
-C-c C-d         Hide _all_ the text and headings under current heading
+A special minor mode called "outl-mouse" has been automatically enabled.  In
+this minor mode, glyphs appear which, when clicked on, will alternately hide
+or show sections of the outline.
 
-It's then easy to navigate through the file alternating between
-showing, C-C C-s, and hiding, C-c C-d, the text.  Also, use the "Show"
-and "Hide" menus displayed to get access to the same commands.
-                
 You may at any time press `C-h m' to get a listing of the outline mode key
-bindings.
+bindings.  They are reproduced here:
+
+Commands:
+C-c C-n   outline-next-visible-heading      move by visible headings
+C-c C-p   outline-previous-visible-heading
+C-c C-f   outline-forward-same-level        similar but skip subheadings
+C-c C-b   outline-backward-same-level
+C-c C-u   outline-up-heading		    move from subheading to heading
+
+C-c C-t	make all text invisible (not headings).
+M-x show-all	make everything in buffer visible.
+
+The remaining commands are used when point is on a heading line.
+They apply to some of the body or subheadings of that heading.
+C-c C-d   hide-subtree	make body and subheadings invisible.
+C-c C-s   show-subtree	make body and subheadings visible.
+C-c tab   show-children	make direct subheadings visible.
+		 No effect on body, or subheadings 2 or more levels down.
+		 With arg N, affects subheadings N levels down.
+C-c C-c	   make immediately following body invisible.
+C-c C-e	   make it visible.
+C-c C-l	   make body under heading and under its subheadings invisible.
+		     The subheadings remain visible.
+C-c C-k  make all subheadings at all levels visible.x1
 
-* XEmacs Release Notes
-======================
-
-** Major Differences Between 19.15 and 19.16
-============================================
-
-Many bugs have been fixed.  XEmacs 19.16 is a bug-fix release only.  No
-new features have been added.
-
--- shell-command did not respect its output-buffer argument.
-
--- When using CVS in conjunction with frame-icon, an error
-   would occur when a frame was iconified.
-
--- dired did not properly protect its data structures durin
-   garbage collection.
-
--- y-or-n-p-minibuf could crash XEmacs 19.15.
-
--- overlay-lists did not always return a pair of lists.
-
--- Starting with the -nw option did not prevent XEmacs 19.15 from
-   attempting to connect to a tooltalk server.
-
--- XEmacs 19.15 could not be built on a DUNIX4.0 system.
-
--- appt.el did not respect the user's hooks.
-
--- outline-mode did not work in a tty-only XEmacs 19.15.
-
--- MD5 checksum generation did not work on a 64-bit machine.
-
--- XEmacs 19.15 ignored the user's mail path.
-
--- The rcompile package checked for ange-ftp instead of efs.
-
--- vc-directory did not work.
-
--- Sometimes clicking on a modeline did not advance to the
-   next or previous buffer as it should have.
-
--- The variable enable-local-variables was sometimes ignored.
-
--- pending-del did not respect the user's hooks.
-
--- CRiSP mode was synchronized with FSF emacs.
-
--- The performance of font-lock was improved.
-
--- There were numerous holes in the garbage collection.
-
--- There were 2 minor bugs with using XEmacs 19.15 on a tty.
-
--- XEmacs 19.15 ignored certain dead_key events.
-
--- XEmacs 19.15 had minor fontification problems with java.
-
--- mark-pop did not always restore the mark properly.
-
--- smtpmail.el had a couple of minor bugs.
-
--- telnet-mode did not always respond to the telnet prompt.
-
--- gomoku was broken in XEmacs 19.15.
-
--- recover-all files did not work in XEmacs 19.15.
-
--- transient-mark-mode and skeleton.el did not work together.
-
--- Footnotes were not properly formatted in info.
-
---  Configuration of XEmacs 19.15 did not work on Sequent
-    computers, because they do not have a working version of alloca.
-
--- In XEmacs 19.15 it was impossible to compile with Lucid
-   scrollbars without Motif.
-
--- XEmacs 19.15 would erroneously report an internal error on
-   certain types of minibuffer input.
-
--- When using virtual screens with your X server, sometimes
-   iconify-frame would cause XEmacs 19.15 to lose one of the frames.
-
--- server-kill-buffer always returned nil.
-
--- The :filter keyword on a menubar could crash XEmacs 19.15.
-
--- psgml-mode did not respect the user's hooks.
-
--- Many bugs in efs mode were fixed.
-
--- sh-script.el could hang XEmacs.
-
--- Options could not be saved after fonts were changed in
-   XEmacs 19.15.
-
--- read-from-string could not read "1.".
-
--- dired was confused about where chown lives on Linux.
-
--- Edebug did not work on floating point numbers.
-
--- first-change-hook saved the wrong buffer, so unwinding the
-   stack could result in the wrong buffer's being restored.
-
--- pcl-cvs was incompatible with live-icon.
-
--- save-buffer deactivated the zmacs region.
-
--- When running a sub-process, if the standard error could
-   not be opened, the error was reported incorectly.
-
--- shell-command-on-region had a bogus test for the active
-   region.
-
--- get-frame-for-buffer ignored relevant properties.
-
--- make-database did not correctly expand its filename
-   argument.
-
--- A few minor improvements were made to the optimizer in the
-   byte-compiler.
-
--- kill-region could get confused when the beginning of the
-   region was after the end of the region.
-
--- movemail was upgraded to the same version which shipped
-   with XEmacs 20.2; this version understands Linux file locking.
-
--- The regexp cache size was too small.
-
--- The "save as" dialog was buggy.
-
--- Minor bugs in sendmail mode.
-
--- tm did not understand the png image format.
-
--- set-text-properties only removed the first text property.
-
--- add-log.el has been upgraded to the version supported by
-   FSF emacs 20.1.
-
--- When tags-loop-continue was called inappropriately, the
-   wrong error message resulted.
-
--- Frame creation was buggy, and could crash XEmacs.
-
--- PNG support did not work on Linux.
-
--- Asynchronous process output did not always work.
-
--- x-compose.el did not support the degree sign or the
-   grave keysym.
-
--- mh-invisible-headers did not work.
-
--- Creating a tty frame could crash XEmacs 19.15.
-
--- detach-extent could crash XEmacs.
-
--- The minibuffer could get the read-only attribute.
-
--- When the mouse was in the right side of the frame, its
-   position could be reported incorrectly.
-
--- lib-complete didn't work with compressed files.
-
--- getloadavg.c was brought into sync with the XEmacs 20.2
-   version.
-
-** Major Differences Between 19.14 and 19.15
-============================================
-
-Many bugs have been fixed.  An effort has been made to eradicate all
-XEmacs crashes, although we are not quite done yet.  The overall
-quality of XEmacs should be higher than any previous release.  XEmacs
-now compiles with nary a warning with some compilers.
-
-User visible changes:
-
--- EFS replaces ange-ftp for remote file manipulation capability.
-
--- TM (Tools for Mime) now comes with XEmacs.  This provides MIME
-   (Multi-purpose Internet Multi-media Extensions?) support for Mail
-   and News.  The primary author is Morioka Tomohiko.
-
--- There is a new way to customize faces and (some) variables.
-   Try it with `M-x customize RET', or from the Options->Customize menu.
-   Documented in <URL:info:custom>.
-
--- The AUC TeX environment for editing and running TeX is now bundled.
-   (Per Abrahamsen.)
-   Enable with (require 'tex-site) in your .emacs file.
-   Documented in <URL:info:auctex>.
-
--- New user option `init-face-from-resources'.
-   If you don't set faces with X resources, you can speed up the
-   initialization of new faces by setting this to nil.
-
--- `column.el' removed, use `column-number-mode' instead.
-
--- Command line processing should work much better now - no more order
-   dependencies.
-
--- html mode now defaults to using HTML-3.2
-
--- VM now has a native MIME mode
-
--- The traditional time.el package now has optional modeline graphics
-
--- The XEmacs Logo has been changed courtesy of Jens Lautenbacher
-
--- Default background changed to gray80
-
--- The XEmacs build procedure has been changed to make it easier than
-   ever to include new packages to be dumped with the binary
-
--- cc-mode is no longer auto-loaded.  (require 'cc-mode) is now needed
-   before you customize cc-mode in your .emacs.
-
--- blink-cursor-mode is somewhat more useable now that the cursor
-   stops blinking during keyboard activity.
-
--- Dired is now part of efs and went from version 6.X to 7.9.
-   Keybindings have been synced with FSF Emacs, there are more menus and
-   items in menus are sometimes grouped differently.  Any personnal
-   customization to dired will probably have to be checked.
-
-   If you are a 19.14 user and use its dired a lot, expect to get mad at
-   'c', 'r' and '^' keybindings."
-
-
-** New Packages
-------------
-
-Noteworthy new packages:
-        redo
-        igrep
-        uniquify
-        auctex
-
-
--- Many new packages have been added:
-*** auctex (Per Abrahamsen)
-*** customize  (Per Abrahamsen))
-*** m4-mode 1.8 (Andrew Csillag)
-*** crisp.el - crisp/brief emulation (Gary D. Foster)
-     Minor mode emulation for Borland's Brief/Crisp editor
-*** Johan Vroman's iso-acc.el has been ported to XEmacs by Alexandre Oliva
-*** psgml-1.01 (Lennart Staflin, James Clark)
-*** python-mode.el 2.90 (Barry Warsaw)
-*** vrml-mode.el (Ben Wing)
-*** enriched.el, face-menu.el (Boris Goldowsky, Michael Sperber)
-*** sh-script.el (Daniel Pfeiffer)
-*** decipher.el (Christopher J. Madsen)
-*** mic-paren.el (Mikael Sjödin)
-*** xrdb-mode.el 1.21 (Barry Warsaw)
-*** redo.el 1.01 (Kyle Jones)
-*** edmacro.el (ported by Hrvoje Niksic)
-*** verilog-mode.el (Michael McNamara)
-*** webjump.el-1.4 (Neil W. Van Dyke)
-*** overlay.el (Joseph Nuspl support for Emacs overlay API)
-*** browse-cltl2.el 1.1 (Holger Schauer)
-*** mine.el 1.17 (Jacques Duthen)
-*** igrep.el 2.56 (Kevin Rodgers)
-*** speedbar.el (Eric Ludlam)
-*** frame-icon.el (Michael Lamoureux)
-*** winmgr-mode.el (David Konerding, Stefan Strobel & Barry Warsaw)
-*** whitespace-mode.el (Heiko Muenkel)
-*** detached-minibuf.el (Alvin Shelton)
-
-** Updated Packages
-------------
-
-Most packages have been updated to the latest available versions.
-(thanks go to countless maintainers):
-
-*** ediff 2.64 (Michael Kifer)
-*** Gnus Gnus 5.4.36 (Lars Magne Ingebrigtsen)
-
-**** nntp.el has been totally rewritten in an asynchronous fashion.
-
-**** Article prefetching functionality has been moved up into
-Gnus.
-
-**** Scoring can now be performed with logical operators like
-`and', `or', `not', and parent redirection.
-
-**** Article washing status can be displayed in the
-article mode line.
-
-**** gnus.el has been split into many smaller files.
-
-**** Suppression of duplicate articles based on Message-ID.
-
-(setq gnus-suppress-duplicates t)
-
-**** New variables for specifying what score and adapt files
-are to be considered home score and adapt files.  See
-`gnus-home-score-file' and `gnus-home-adapt-files'.
-
-**** Groups can inherit group parameters from parent topics.
-
-**** Article editing has been revamped and is now usable.
-
-**** Signatures can be recognized in more intelligent fashions.
-See `gnus-signature-separator' and `gnus-signature-limit'.
-
-**** Summary pick mode has been made to look more nn-like.
-Line numbers are displayed and the `.' command can be
-used to pick articles.
-
-**** Commands for moving the .newsrc.eld from one server to
-another have been added.
-
-    `M-x gnus-change-server'
-
-**** A way to specify that "uninteresting" fields be suppressed when
-generating lines in buffers.
-
-**** Several commands in the group buffer can be undone with
-`M-C-_'.
-
-**** Scoring can be done on words using the new score type `w'.
-
-**** Adaptive scoring can be done on a Subject word-by-word basis:
-
-    (setq gnus-use-adaptive-scoring '(word))
-
-**** Scores can be decayed.
-
-    (setq gnus-decay-scores t)
-
-**** Scoring can be performed using a regexp on the Date header.  The
-Date is normalized to compact ISO 8601 format first.
-
-**** A new command has been added to remove all data on articles from
-the native server.
-
-   `M-x gnus-group-clear-data-on-native-groups'
-
-**** A new command for reading collections of documents
-(nndoc with nnvirtual on top) has been added -- `M-C-d'.
-
-**** Process mark sets can be pushed and popped.
-
-**** A new mail-to-news backend makes it possible to post
-even when the NNTP server doesn't allow posting.
-
-**** A new backend for reading searches from Web search engines
-(DejaNews, Alta Vista, InReference) has been added.
-
-    Use the `G w' command in the group buffer to create such
-    a group.
-
-**** Groups inside topics can now be sorted using the standard
-sorting functions, and each topic can be sorted independently.
-
-    See the commands under the `T S' submap.
-
-**** Subsets of the groups can be sorted independently.
-
-    See the commands under the `G P' submap.
-
-**** Cached articles can be pulled into the groups.
-
-    Use the `Y c' command.
-
-**** Score files are now applied in a more reliable order.
-
-**** Reports on where mail messages end up can be generated.
-
-    `M-x nnmail-split-history'
-
-**** More hooks and functions have been added to remove junk
-from incoming mail before saving the mail.
-
-    See `nnmail-prepare-incoming-header-hook'.
-
-**** The nnml mail backend now understands compressed article files.
-*** w3 3.0.71  (Bill Perry)
-    - Major upgrade to Emacs/W3, including
-      - Much fuller stylesheet support
-      - Tables support
-      - Frames support
-      - better asynchronous downloads
-      - now uses the widget library for consistent look of form elements
-      - Much much much faster
-*** ilisp 5.8 (Chris McConnell, Ivan Vasquez, Marco Antoniotti, Rick
-     Campbell)
-*** VM 6.22     (Kyle Jones)
-*** etags 11.78 (Francesco Potorti`)
-*** ksh-mode.el 2.9
-*** vhdl-mode.el 2.73 (Rod Whitby)
-*** id-select.el 1.4.5 (Bob Weiner)
-*** EDT/TPU emulation modes should work now for the first time.
-*** viper 2.93 (Michael Kifer) is now the `official' vi emulator for XEmacs.
-*** big-menubar should work much better now.
-*** mode-motion+.el 3.16
-*** backup-dir 2.0 (Greg Klanderman)
-*** ps-print.el-3.05 (Jacques Duthen Prestataire)
-*** lazy-lock-1.16 (Simon Marshall)
-*** fast-lock.el 3.10.2 (Simon Marshall)
-*** reporter 3.3 (Barry Warsaw)
-*** hm--html-menus 5.4 (Heiko Muenkel)
-*** cc-mode 4.387 (Barry Warsaw)
-*** elp 2.37 (Barry Warsaw)
-*** itimer.el-1.05 (Kyle Jones)
-*** floating-toolbar.el-1.02 (Kyle Jones)
-*** balloon-help.el-1.05 (Kyle Jones)
-*** hyperbole-4.023 (Bob Weiner)
-*** cperl-mode-1.31+
-*** OO-Browser 2.10 (Bob Weiner)
-
-** Changes at Lisp level
-------------
-
--- New `widget' library for inserting UI components in buffers.
-   Documented in <URL:info:widget>.
-
--- New `custom' library for declaring user options and faces.
-   Documented in <URL:info:custom>.
-
--- New function `make-empty-face'.
-   Like `make-face', but doesn't query the resource database.
-
--- New function x-keysym-on-keyboard-p helps determine keyboard
-   characteristics for key rebinding:
-
-  x-keysym-on-keyboard-p: (KEYSYM &optional DEVICE)
-    -- a built-in function.
-  Return true if KEYSYM names a key on the keyboard of DEVICE.
-  More precisely, return true if pressing a physical key
-  on the keyboard of DEVICE without any modifier keys generates KEYSYM.
-  Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
-  /usr/lib/X11/XKeysymDB, or whatever the equivalents are on your system.
-
--- Usage of keysyms of the form kp_0 is deprecated and one should use
-   the Emacs compatible kp-0 instead.
-
-
--- preceding-char and following-char have been obsoleted.  Use the
-   much safer and correct functions char-after and char-before instead.
-
--- Many symbols present for compatibility with GNU Emacs no longer
-   generate bytecompiler warning messages
-
--- Installed info files are now compressed (support courtesy of Joseph J Nuspl)
-
--- (load-average) works on Solaris, even if you're not root. Thanks to
-   Hrvoje Niksic.
-
--- OffiX drag-and-drop support added
-
--- lots of syncing with 19.34 elisp files, most by Steven Baur
-
--- M-: (eval-expression) is now enabled by default since it is much
-   more difficult to type.
-
--- new variables:
-        signal-error-on-buffer-boundary
-
-
-* Future Plans for XEmacs
-==========================
-
-This is the end of the line for XEmacs v19.  No new development is planned
-on this source tree.  XEmacs 20.1 will contain the functionality in 19.15,
-and development will continue with XEmacs 20.2. The major new `feature'
-planned in 20.2 will be the introduction of separable packages and the
-capability to download and use an XEmacs lite distribution.
 
 * The History of XEmacs
 =======================
@@ -557,2242 +99,245 @@ continues strong.  Recently, Amdahl Corporation and INS Engineering have
 both contributed significantly to the development of XEmacs.
 
 
-* A Long List of Packages
-=======================
-
-This section gives a detailed list of packages included with XEmacs.
-It's long!  Of particular interest are: games, gnus, modes, packages,
-and utils.
-
-** auctex       - Super TeX
-*** auctex/auc-old.el
-This file contains an alternative keymapping, compatible with
-older versions of AUC TeX.  You are strongly suggested to try the
-new keyboard layout, as we would like this file to go away
-eventually.
-*** auctex/bib-cite.el
-Commentary:
-
-This package is used in various TeX modes to display or edit references
-associated with \cite commands, or matching \ref and \label commands.
-*** auctex/font-latex.el
-Commentary:
-*** auctex/style/german.el
-Commentary:
-
-`german.sty' use `"' to give next character an umlaut.
-*** auctex/style/harvard.el
-Commentary:
-
-Harvard citation style is from Peter Williams available on the CTAN
-servers
-*** auctex/style/plfonts.el
-Commentary:
-
-`plfonts.sty' use `"' to make next character Polish.
-`plfonts.sty' <C> L. Holenderski, IIUW, lhol@mimuw.edu.pl
-*** auctex/style/plhb.el
-Commentary:
-
-`plhb.sty' use `"' to make next character Polish.
-`plhb.sty' <C> J. S. Bie\'n, IIUW, jsbien@mimuw.edu.pl
-
-
-** bytecomp     - Byte compile Emacs Lisp files
-*** bytecomp/byte-optimize.el
-Commentary:
-
-========================================================================
-"No matter how hard you try, you can't make a racehorse out of a pig.
-You can, however, make a faster pig."
-
-Or, to put it another way, the emacs byte compiler is a VW Bug.  This code
-makes it be a VW Bug with fuel injection and a turbocharger...  You're
-still not going to make it go faster than 70 mph, but it might be easier
-to get it there.
-
-*** bytecomp/bytecomp-runtime.el
-Commentary:
-
-interface to selectively inlining functions.
-This only happens when source-code optimization is turned on.
-*** bytecomp/bytecomp.el
-Commentary:
-
-The Emacs Lisp byte compiler.  This crunches lisp source into a sort
-of p-code which takes up less space and can be interpreted faster.
-The user entry points are byte-compile-file and byte-recompile-directory.
-*** bytecomp/disass.el
-Commentary:
-
-The single entry point, `disassemble', disassembles a code object generated
-by the Emacs Lisp byte-compiler.  This doesn't invert the compilation
-operation, not by a long shot, but it's useful for debugging.
-
-** calendar     - Calendars, diaries and appointments
-*** calendar/calendar.el
-Commentary:
-
-This collection of functions implements a calendar window.  It
-generates a calendar for the current month, together with the previous
-and coming months, or for any other three-month period.  The calendar
-can be scrolled forward and backward in the window to show months in
-the past or future; the cursor can move forward and backward by days,
-weeks, or months, making it possible, for instance, to jump to the
-date a specified number of days, weeks, or months from the date under
-the cursor.  The user can display a list of holidays and other notable
-days for the period shown; the notable days can be marked on the
-calendar, if desired.  The user can also specify that dates having
-corresponding diary entries (in a file that the user specifies) be
-marked; the diary entries for any date can be viewed in a separate
-window.  The diary and the notable days can be viewed independently of
-the calendar.  Dates can be translated from the (usual) Gregorian
-calendar to the day of the year/days remaining in year, to the ISO
-commercial calendar, to the Julian (old style) calendar, to the Hebrew
-calendar, to the Islamic calendar, to the French Revolutionary calendar,
-to the Mayan calendar, and to the astronomical (Julian) day number.
-When floating point is available, times of sunrise/sunset can be displayed,
-as can the phases of the moon.  Appointment notification for diary entries
-is available.
-*** calendar/cal-dst.el
-Commentary:
-
-This collection of functions implements the features of calendar.el and
-holiday.el that deal with daylight savings time.
-*** calendar/cal-french.el
-Commentary:
-
-This collection of functions implements the features of calendar.el and
-diary.el that deal with the French Revolutionary calendar.
-*** calendar/cal-mayan.el
-Commentary:
-
-This collection of functions implements the features of calendar.el and
-diary.el that deal with the Mayan calendar.  It was written jointly by
-*** calendar/cal-x.el
-Commentary:
-
-This collection of functions implements dedicated frames in x-windows for
-calendar.el.
-*** calendar/cal-xemacs.el
-Commentary:
-
-This collection of functions implements menu bar and popup menu support for
-calendar.el.
-*** calendar/diary-ins.el
-Commentary:
-
-This collection of functions implements the diary insertion features as
-described in calendar.el.
-*** calendar/solar.el
-Commentary:
-
-This collection of functions implements the features of calendar.el,
-diary.el, and holiday.el that deal with times of day, sunrise/sunset, and
-eqinoxes/solstices.
-
-** cl           - Common Lisp compatibility with Emacs Lisp
-*** cl/cl-compat.el
-Commentary:
-
-These are extensions to Emacs Lisp that provide a degree of
-Common Lisp compatibility, beyond what is already built-in
-in Emacs Lisp.
-
-** comint       - For running shells, telnet, rsh, gdb, dbx under Emacs
-*** comint/comint-xemacs.el
-Commentary:
-
-Declare customizable faces for comint outside the main code so it can
-be dumped with XEmacs.
-*** comint/comint.el
-Commentary:
-
-This file defines a general command-interpreter-in-a-buffer package
-(comint mode). The idea is that you can build specific process-in-a-buffer
-modes on top of comint mode -- e.g., lisp, shell, scheme, T, soar, ....
-This way, all these specific packages share a common base functionality,
-and a common set of bindings, which makes them easier to use (and
-saves code, implementation time, etc., etc.).
-
-Several packages are already defined using comint mode:
-- shell.el defines a shell-in-a-buffer mode.
-- cmulisp.el defines a simple lisp-in-a-buffer mode.
-
-- The file cmuscheme.el defines a scheme-in-a-buffer mode.
-- The file tea.el tunes scheme and inferior-scheme modes for T.
-- The file soar.el tunes lisp and inferior-lisp modes for Soar.
-- cmutex.el defines tex and latex modes that invoke tex, latex, bibtex,
-  previewers, and printers from within emacs.
-- background.el allows csh-like job control inside emacs.
-*** comint/gdb.el
-Commentary:
-
-A facility is provided for the simultaneous display of the source code
-in one window, while using gdb to step through a function in the
-other.  A small arrow in the source window, indicates the current
-line.
-*** comint/gud.el
-Commentary:
-*** comint/history.el
-Commentary:
-
-suggested generic history stuff  -- tale
-
-This is intended to provided easy access to a list of elements
-being kept as a history ring.
-*** comint/inf-lisp.el
-Commentary:
-
-This file defines a a lisp-in-a-buffer package (inferior-lisp
-mode) built on top of comint mode.  This version is more
-featureful, robust, and uniform than the Emacs 18 version.  The
-key bindings are also more compatible with the bindings of Hemlock
-and Zwei (the Lisp Machine emacs).
-*** comint/kermit.el
-Commentary:
-
-I'm not sure, but I think somebody asked about running kermit under shell
-mode a while ago.  Anyway, here is some code that I find useful.  The result
-is that I can log onto machines with primitive operating systems (VMS and
-ATT system V :-), and still have the features of shell-mode available for
-command history, etc.  It's also handy to be able to run a file transfer in
-an emacs window.  The transfer is in the "background", but you can also
-monitor or stop it easily.
-*** comint/rlogin.el
-Commentary:
-
-Support for remote logins using `rlogin'.
-This program is layered on top of shell.el; the code here only accounts
-for the variations needed to handle a remote process, e.g. directory
-tracking and the sending of some special characters.
-*** comint/shell.el
-Commentary:
-
-This file defines a a shell-in-a-buffer package (shell mode) built
-on top of comint mode.  This is actually cmushell with things
-renamed to replace its counterpart in Emacs 18.  cmushell is more
-featureful, robust, and uniform than the Emacs 18 version.
-*** comint/telnet.el
-Commentary:
-
-This mode is intended to be used for telnet or rsh to a remode host;
-`telnet' and `rsh' are the two entry points.  Multiple telnet or rsh
-sessions are supported.
-
-** custom       - Allow's user to customize Emacs
-*** custom/custom.el
-Commentary:
-
-This file only contain the code needed to declare and initialize
-user options.  The code to customize options is autoloaded from
-`cus-edit.el'.
-
-The code implementing face declarations is in `cus-face.el'
-
-** edebug       - Emacs Lisp debugger
-*** edebug/cl-read.el
-Commentary:
-
-Please send bugs and comments to the author.
-
-This package replaces the standard Emacs Lisp reader (implemented
-as a set of built-in Lisp function in C) by a flexible and
-customizable Common Lisp like one (implemented entirely in Emacs
-Lisp). During reading of Emacs Lisp source files, it is about 40%
-slower than the built-in reader, but there is no difference in
-loading byte compiled files - they dont contain any syntactic sugar
-and are loaded with the built in subroutine `load'.
-
-** ediff        - Compare and merge files with graphical difference display
-*** ediff/ediff.el
-Commentary:
-
-Never read that diff output again!
-Apply patch interactively!
-Merge with ease!
-
-This package provides a convenient way of simultaneous browsing through
-the differences between a pair (or a triple) of files or buffers.  The
-files being compared, file-A, file-B, and file-C (if applicable) are
-shown in separate windows (side by side, one above the another, or in
-separate frames), and the differences are highlighted as you step
-through them.  You can also copy difference regions from one buffer to
-another (and recover old differences if you change your mind).
-
-Ediff also supports merging operations on files and buffers, including
-merging using ancestor versions. Both comparison and merging operations can
-be performed on directories, i.e., by pairwise comparison of files in those
-directories.
-
-** efs          - Remote file access (replaces ange-ftp)
-See online manual.
-
-** electric     - The "electric" commands; these implement temporary
-windows for help, list-buffers, etc.
-
-*** electric/ehelp.el
-Commentary:
-
-This package provides a pre-packaged `Electric Help Mode' for
-browsing on-line help screens.  There is one entry point,
-`with-electric-help'; all you have to give it is a no-argument
-function that generates the actual text of the help into the current
-buffer.
-
-** emulators    - Various emulations: mocklisp, teco, TPU/EDT, WordStar
-*** emulators/mlconvert.el
-Commentary:
-
-This package converts Mocklisp code written under a Gosling or UniPress
-Emacs for use with GNU Emacs.  The translated code will require runtime
-support from the mlsupport.el equivalent.
-*** emulators/mlsupport.el
-Commentary:
-
-This package provides equivalents of certain primitives from Gosling
-Emacs (including the commercial UniPress versions).  These have an
-ml- prefix to distinguish them from native GNU Emacs functions with
-similar names.  The package mlconvert.el translates Mocklisp code
-to use these names.
-*** emulators/teco.el
-Commentary:
-
-This code has been tested some, but no doubt contains a zillion bugs.
-You have been warned.
-
-Written by Dale R. Worley based on a C implementation by Matt Fichtenbaum.
-Please send comments, bug fixes, enhancements, etc. to drw@math.mit.edu.
-*** emulators/tpu-edt.el
-Commentary:
-
-%% TPU-edt -- Emacs emulating TPU emulating EDT
-
-%% Introduction
-
-   TPU-edt emulates the popular DEC VMS editor EDT (actually, it emulates
-   DEC TPU's EDT emulation, hence the name TPU-edt).
-*** emulators/tpu-extras.el
-Commentary:
-
- Use the functions defined here to customize TPU-edt to your tastes by
- setting scroll margins and/or turning on free cursor mode.  Here's an
- example for your .emacs file.
-*** emulators/ws-mode.el
-Commentary:
-
-This emulates WordStar, with a major mode.
-
-** energize     - Interface to now-defunct Lucid's C/C++ integrated
-environment XEmacs (nee Lucid Emacs) saw birth explicitly to serve
-Energize.
-
-** eos          - SPARCworks
-
-** eterm        - Full terminal emulation under Emacs
-*** eterm/term.el
-Commentary:
-
-This file defines a general command-interpreter-in-a-buffer package
-(term mode). The idea is that you can build specific process-in-a-buffer
-modes on top of term mode -- e.g., lisp, shell, scheme, T, soar, ....
-This way, all these specific packages share a common base functionality,
-and a common set of bindings, which makes them easier to use (and
-saves code, implementation time, etc., etc.).
-*** eterm/tgud.el
-Commentary:
-
-The ancestral gdb.el was by W. Schelter <wfs@rascal.ics.utexas.edu>
-It was later rewritten by rms.  Some ideas were due to Masanobu.
-Grand Unification (sdb/dbx support) by Eric S. Raymond <esr@thyrsus.com>
-The overloading code was then rewritten by Barry Warsaw <bwarsaw@cen.com>,
-who also hacked the mode to use comint.el.  Shane Hartman <shane@spr.com>
-added support for xdb (HPUX debugger).  Rick Sladkey <jrs@world.std.com>
-wrote the GDB command completion code.  Dave Love <d.love@dl.ac.uk>
-added the IRIX kluge and re-implemented the Mips-ish variant.
-Then hacked by Per Bothner <bothner@cygnus.com> to use term.el.
-*** eterm/tshell.el
-Commentary:
-
-This file defines a a shell-in-a-buffer package (shell mode) built
-on top of term mode.  This is actually cmushell with things
-renamed to replace its counterpart in Emacs 18.  cmushell is more
-featureful, robust, and uniform than the Emacs 18 version.
-
-** games        - blackbox, mines, decipher, doctor, ...
-*** games/blackbox.el
-Commentary:
-
-The object of the game is to find four hidden balls by shooting rays
-into the black box.  There are four possibilities: 1) the ray will
-pass thru the box undisturbed, 2) it will hit a ball and be absorbed,
-3) it will be deflected and exit the box, or 4) be deflected immediately,
-not even being allowed entry into the box.
-*** games/conx.el
-Commentary:
-
-conx.el: Yet Another Dissociator.
-
-Select a buffer with a lot of text in it.  Say M-x conx-buffer
-or M-x conx-region.  Repeat on as many other bodies of text as
-you like.
-
-M-x conx will use the word-frequency tree the above generated
-to produce random sentences in a popped-up buffer.  It will pause
-at the end of each paragraph for two seconds; type ^G to stop it.
-*** games/cookie1.el
-Commentary:
-
-Support for random cookie fetches from phrase files, used for such
-critical applications as emulating Zippy the Pinhead and confounding
-the NSA Trunk Trawler.
-*** games/decipher.el
-Commentary:
-
-This package is designed to help you crack simple substitution
-ciphers where one letter stands for another.  It works for ciphers
-with or without word divisions.  (You must set the variable
-decipher-ignore-spaces for ciphers without word divisions.)
-*** games/dissociate.el
-Commentary:
-
-The single entry point, `dissociated-press', applies a travesty
-generator to the current buffer.  The results can be quite amusing.
-*** games/doctor.el
-Commentary:
-
-The single entry point `doctor', simulates a Rogerian analyst using
-phrase-production techniques similar to the classic ELIZA demonstration
-of pseudo-AI.
-*** games/flame.el
-Commentary:
-
-"Flame" program.  This has a chequered past.
-*** games/gomoku.el
-Gomoku is a game played between two players on a rectangular board.     Each
-player, in turn, marks a free square of its choice. The winner is the first
-one to mark five contiguous squares in any direction (horizontally,
-vertically or diagonally).
-
-*** games/hanoi.el
-Commentary:
-
-Solves the Towers of Hanoi puzzle while-U-wait.
-
-The puzzle: Start with N rings, decreasing in sizes from bottom to
-top, stacked around a post.  There are two other posts.  Your mission,
-should you choose to accept it, is to shift the pile, stacked in its
-original order, to another post.
-*** games/life.el
-Commentary:
-
-A demonstrator for John Horton Conway's "Life" cellular automaton
-in Emacs Lisp.  Picks a random one of a set of interesting Life
-patterns and evolves it according to the familiar rules.
-*** games/mine.el
-Commentary:
-
-The object of this classical game is to locate the hidden mines.
-To do this, you hit the squares on the game board that do not
-contain mines, and you mark the squares that do contain mines.
-*** games/mpuz.el
-Commentary:
-
-When this package is loaded, `M-x mpuz' generates a random multiplication
-puzzle.  This is a multiplication example in which each digit has been
-consistently replaced with some letter.  Your job is to reconstruct
-the original digits.  Type `?' while the mode is active for detailed help.
-*** games/spook.el
-Commentary:
-
- Just before sending mail, do M-x spook.
- A number of phrases will be inserted into your buffer, to help
- give your message that extra bit of attractiveness for automated
- keyword scanners.
-*** games/studly.el
-Commentary:
-
-Functions to studlycapsify a region, word, or buffer.  Possibly the
-esoteric significance of studlycapsification escapes you; that is,
-you suffer from autostudlycapsifibogotification.  Too bad.
-*** games/yow.el
-Commentary:
-
-Important pinheadery for GNU Emacs.
-
-See cookie1.el for implementation.  Note --- the `n' argument of yow
-from the 18.xx implementation is no longer; we only support *random*
-random access now.
-
-** gnus         - The ultimate News and Mail reader
-See online manual
-*** gnus/gnus-audio.el
-Commentary:
-This file provides access to sound effects in Gnus.
-Prerelease:  This file is partially stripped to support earcons.el
-You can safely ignore most of it until Red Gnus.  **Evil Laugh**
-*** gnus/gnus-gl.el
-Commentary:
-*** gnus/gnus-undo.el
-Commentary:
-
-This package allows arbitrary undoing in Gnus buffers.  As all the
-Gnus buffers aren't very text-oriented (what is in the buffers is
-just some random representation of the actual data), normal Emacs
-undoing doesn't work at all for Gnus.
-*** gnus/mailheader.el
-Commentary:
-
-This package provides an abstraction to RFC822-style messages, used in
-mail news, and some other systems.  The simple syntactic rules for such
-headers, such as quoting and line folding, are routinely reimplemented
-in many individual packages.  This package removes the need for this
-redundancy by representing message headers as association lists,
-offering functions to extract the set of headers from a message, to
-parse individual headers, to merge sets of headers, and to format a set
-of headers.
-*** gnus/message.el
-Commentary:
-
-This mode provides mail-sending facilities from within Emacs.  It
-consists mainly of large chunks of code from the sendmail.el,
-gnus-msg.el and rnewspost.el files.
-*** gnus/nnheader.el
-Commentary:
-
-These macros may look very much like the ones in GNUS 4.1.  They
-are, in a way, but you should note that the indices they use have
-been changed from the internal GNUS format to the NOV format.  The
-makes it possible to read headers from XOVER much faster.
-
-** hm--html-menus - Menus and popups for writing/viewing html documents
-
-** hyperbole    - Personal database
-
-** ilisp        - A comint-based package for interacting with inferior
-lisp processes.
-
-
-** iso          - Implement various ISO character standards
-*** iso/iso-acc.el
-Commentary:
-
-Function `iso-accents-mode' activates a minor mode in which
-typewriter "dead keys" are emulated.  The purpose of this emulation
-is to provide a simple means for inserting accented characters
-according to the ISO-8859-1 character set.
-*** iso/iso-ascii.el
-Commentary:
-
-This code sets up to display ISO 8859/1 characters on plain
-ASCII terminals.  The display strings for the characters are
-more-or-less based on TeX.
-*** iso/iso-cvt.el
-Commentary:
-
-This lisp code serves two purposes, both of which involve
-the translation of various conventions for representing European
-character sets to ISO 8859-1.
-
-** mailcrypt    - Encrypting/decrypting of mail messages
-
-** mel          - MIME encoding library (see also TM)
-
-** mh-e         - Emacs interface to MH mail reader
-*** mh-e/mh-e.el
-Commentary:
-
-mh-e is an Emacs interface to the MH mail system.
-
-** modes        - How to edit files: Ada, asm, awk, bib, cperl, eiffel, ...
-*** modes/arc-mode.el
-Commentary:
-
-NAMING: "arc" is short for "archive" and does not refer specifically
-to files whose name end in ".arc"
-
-ARCHIVE TYPES: Currently only the archives below are handled, but the
-structure for handling just about anything is in place.
-
-                       Arc     Lzh     Zip     Zoo
-                       --------------------------------
-View listing           Intern  Intern  Intern  Intern
-Extract member         Y       Y       Y       Y
-Save changed member    Y       Y       Y       Y
-Add new member         N       N       N       N
-Delete member          Y       Y       Y       Y
-Rename member          Y       Y       N       N
-Chmod                  -       Y       Y       -
-Chown                  -       Y       -       -
-Chgrp                  -       Y       -       -
-*** modes/asm-mode.el
-Commentary:
-
-This minor mode is based on text mode.  It defines a private abbrev table
-that can be used to save abbrevs for assembler mnemonics.
-*** modes/auto-show.el
-Commentary:
-
-This file provides functions that
-automatically scroll the window horizontally when the point moves
-off the left or right side of the window.
-*** modes/awk-mode.el
-Commentary:
-
-Sets up C-mode with support for awk-style #-comments and a lightly
-hacked syntax table.
-*** modes/bib-mode.el
-Commentary:
-
-  GNU Emacs code to help maintain databases compatible with (troff)
-  refer and lookbib.  The file bib-file should be set to your
-  bibliography file.  Keys are automagically inserted as you type,
-  and appropriate keys are presented for various kinds of entries.
-*** modes/bibtex.el
-*** modes/cc-compat.el
-Commentary:
-
-Boring old c-mode.el (BOCM) is confusion and brain melt. cc-mode.el
-is clarity of thought and purity of chi. If you are still unwilling
-to accept enlightenment, this might help, or it may prolong your
-agony.
-*** modes/cc-guess.el
-Commentary:
-
-This file contains routines that help guess the cc-mode style in a
-particular region of C, C++, or Objective-C code.  It is provided
-for example and experimentation only.  It is not supported in
-anyway.  Some folks have asked for a style guesser and the best way
-to show my thoughts on the subject is with this sample code.  Feel
-free to improve upon it in anyway you'd like.  Please send me the
-results.  Note that style guessing is lossy!
-*** modes/cc-lobotomy.el
-Commentary:
-
-Every effort has been made to improve the performance of
-cc-mode. However, due to the nature of the C, C++, and Objective-C
-language definitions, a trade-off is often required between
-accuracy of construct recognition and speed. I believe it is always
-best to be correct, and that the mode is currently fast enough for
-most normal usage.  Others disagree.  I have no intention of
-including these hacks in the main distribution.  When cc-mode
-version 5 comes out, it will include a rewritten indentation engine
-so that performance will be greatly improved automatically.  This
-was not included in this release of version 4 so that Emacs 18
-could still be supported.  Note that this implies that cc-mode
-version 5 will *not* work on Emacs 18!
-*** modes/cc-mode.el
-Commentary:
-
-This package provides modes in GNU Emacs for editing C, C++,
-Objective-C, and Java code. It is intended to be a replacement for
-c-mode.el (a.k.a. BOCM -- Boring Old C-Mode), c++-mode.el,
-cplus-md.el, and cplus-md1.el, all of which are in some way
-ancestors of this file.  A number of important improvements have
-been made, briefly: complete K&R C, ANSI C, `ARM' C++, Objective-C,
-and Java support with consistent indentation across all modes, more
-intuitive indentation controlling variables, compatibility across
-all known Emacsen, nice new features, and tons of bug fixes.  This
-package is called "CC Mode" to distinguish it from its ancestors,
-but there is no cc-mode command.  Usage and programming details are
-contained in an accompanying texinfo manual.
-*** modes/cl-indent.el
-Commentary:
-
-This package supplies a single entry point, common-lisp-indent-function,
-which performs indentation in the preferred style for Common Lisp code.
-*** modes/cperl-mode.el Can't find any Commentary section
-*** modes/eiffel3.el    Can't find any Commentary section
-*** modes/enriched.el   Can't find any Commentary section
-*** modes/executable.el
-Commentary:
-
-executable.el is used by certain major modes to insert a suitable
-#! line at the beginning of the file, if the file does not already
-have one.
-
-*** modes/f90.el
-Commentary:
-
-Smart mode for editing F90 programs in FREE FORMAT.
-Knows about continuation lines, named structured statements, and other
-new features in F90 including HPF (High Performance Fortran) structures.
-The basic feature is to provide an accurate indentation of F90 programs.
-In addition, there are many more features like automatic matching of all
-end statements, an auto-fill function to break long lines, a join-lines
-function which joins continued lines etc etc.
- To facilitate typing, a fairly complete list of abbreviations is provided.
-   For example, `i is short-hand for integer (if abbrev-mode is on).
-
-*** modes/follow.el
-Commentary:
-
-`Follow mode' is a minor mode for Emacs 19 and XEmacs which
-combines windows into one tall virtual window.
-
-The feeling of a "virtual window" has been accomplished by the use
-of two major techniques:
-
- * The windows always displays adjacent sections of the buffer.
-  This means that whenever one window is moved, all the
-  others will follow.  (Hence the name Follow Mode.)
-
- * Should the point (cursor) end up outside a window, another
-  window displaying that point is selected, if possible.  This
-  makes it possible to walk between windows using normal cursor
-  movement commands.
-*** modes/fortran.el
-Commentary:
-
-Fortran mode has been upgraded and is now maintained by Stephen A. Wood
-(saw@cebaf.gov).  It now will use either fixed format continuation line
-markers (character in 6th column), or tab format continuation line style
-(digit after a TAB character.)  A auto-fill mode has been added to
-automatically wrap fortran lines that get too long.
-
-We acknowledge many contributions and valuable suggestions by
-Lawrence R. Dodd, Ralf Fassel, Ralph Finch, Stephen Gildea,
-Dr. Anil Gokhale, Ulrich Mueller, Mark Neale, Eric Prestemon,
-Gary Sabot and Richard Stallman.
-*** modes/hideif.el
-Commentary:
-
-Hide-ifdef suppresses the display of code that the preprocessor wouldn't
-pass through.  The support of constant expressions in #if lines is
-limited to identifiers, parens, and the operators: &&, ||, !, and
-"defined".  Please extend this.
-*** modes/hideshow.el
-Commentary:
-
-This file provides `hs-minor-mode'.  When active, six commands:
-  hs-{hide,show}-{all,block}, hs-show-region and hs-minor-mode
-are available.  They implement block hiding and showing.  Blocks are
-defined in mode-specific way.  In c-mode or c++-mode, they are simply
-curly braces, while in lisp-ish modes they are parens.  Multi-line
-comments (c-mode) can also be hidden.  The command M-x hs-minor-mode
-toggles the minor mode or sets it (similar to outline minor mode).
-See documentation for each command for more info.
-*** modes/icon.el
-Commentary:
-
-A major mode for editing the Icon programming language.
-*** modes/ksh-mode.el
-
-
-Description:
-  sh, ksh, and bash script editing commands for emacs.
-
-  This major mode assists shell script writers with indentation
-  control and control structure construct matching in much the same
-  fashion as other programming language modes. Invoke describe-mode
-  for more information.
-*** modes/lisp-mnt.el
-Commentary:
-
-This minor mode adds some services to Emacs-Lisp editing mode.
-
-First, it knows about the header conventions for library packages.
-One entry point supports generating synopses from a library directory.
-Another can be used to check for missing headers in library files.
-*** modes/lisp-mode.el
-Commentary:
-
-The base major mode for editing Lisp code (used also for Emacs Lisp).
-This mode is documented in the Emacs manual
-*** modes/m4-mode.el
-Commentary:
-
-A smart editing mode for m4 macro definitions.  It seems to have most of the
-syntax right (sexp motion commands work, but function motion commands don't).
-It also sets the font-lock syntax stuff for colorization
-*** modes/mail-abbrevs.el       Can't find any Commentary section
-*** modes/make-mode.el
-Commentary:
-
-A major mode for editing makefiles.  The mode knows about Makefile
-syntax and defines M-n and M-p to move to next and previous productions.
-*** modes/modula2.el
-Commentary:
-
-A major mode for editing Modula-2 code.  It provides convenient abbrevs
-for Modula-2 keywords, knows about the standard layout rules, and supports
-a native compile command.
-*** modes/nroff-mode.el
-Commentary:
-
-This package is a major mode for editing nroff source code.  It knows
-about various nroff constructs, ms, mm, and me macros, and will fill
-and indent paragraphs properly in their presence.  It also includes
-a command to count text lines (excluding nroff constructs), a command
-to center a line, and movement commands that know how to skip macros.
-*** modes/old-c-mode.el
-Commentary:
-
-A smart editing mode for C code.  It knows a lot about C syntax and tries
-to position the cursor according to C layout conventions.  You can
-change the details of the layout style with option variables.  Load it
-and do M-x describe-mode for details.
-*** modes/outl-mouse.el Can't find any Commentary section
-*** modes/outline.el
-Commentary:
-
-This package is a major mode for editing outline-format documents.
-An outline can be `abstracted' to show headers at any given level,
-with all stuff below hidden.  See the Emacs manual for details.
-*** modes/pascal.el
-
-Emacs should enter Pascal mode when you find a Pascal source file.
-When you have entered Pascal mode, you may get more info by pressing
-C-h m. You may also get online help describing various functions by:
-C-h f <Name of function you want described>
-*** modes/perl-mode.el
-*** modes/picture.el
-Commentary:
-
-This code provides the picture-mode commands documented in the Emacs
-manual.  The screen is treated as a semi-infinite quarter-plane with
-support for rectangle operations and `etch-a-sketch' character
-insertion in any of eight directions.
-*** modes/postscript.el Can't find any Commentary section
-modes/prolog.el
-Commentary:
-
-This package provides a major mode for editing Prolog.  It knows
-about Prolog syntax and comments, and can send regions to an inferior
-Prolog interpreter process.
-*** modes/python-mode.el
-Commentary:
-
-This is a major mode for editing Python programs.  It was developed
-by Tim Peters after an original idea by Michael A. Guravage.  Tim
-subsequently left the net; in 1995, Barry Warsaw inherited the
-mode and is the current maintainer.
-*** modes/rexx-mode.el  Can't find any Commentary section
-*** modes/rsz-minibuf.el
-Commentary:
-
-This package allows the entire contents (or as much as possible) of the
-minibuffer to be visible at once when typing.  As the end of a line is
-reached, the minibuffer will resize itself.  When the user is done
-typing, the minibuffer will return to its original size.
-*** modes/scheme.el
-Commentary:
-
-Adapted from Lisp mode by Bill Rozas, jinx@prep.
-Initially a query replace of Lisp mode, except for the indentation
-of special forms.  Probably the code should be merged at some point
-so that there is sharing between both libraries.
-*** modes/scribe.el     Can't find any Commentary section
-*** modes/sendmail.el
-Commentary:
-
-This mode provides mail-sending facilities from within Emacs.  It is
-documented in the Emacs user's manual.
-*** modes/sh-script.el
-Commentary:
-
-Major mode for editing shell scripts.  Bourne, C and rc shells as well
-as various derivatives are supported and easily derived from.  Structured
-statements can be inserted with one command or abbrev.  Completion is
-available for filenames, variables known from the script, the shell and
-the environment as well as commands.
-*** modes/simula.el
-Commentary:
-
-A major mode for editing the Simula language.  It knows about Simula
-syntax and standard indentation commands.  It also provides convenient
-abbrevs for Simula keywords.
-*** modes/tcl.el
-Commentary:
-
-Major mode for editing Tcl
-*** modes/texinfo.el    Can't find any Commentary section
-*** modes/text-mode.el
-Commentary:
-
-This package provides the fundamental text mode documented in the
-Emacs user's manual.
-*** modes/two-column.el Can't find any Commentary section
-*** modes/verilog-mode.el
-Commentary:
-
-A major mode for editing Verilog HDL source code. When you have
-entered Verilog mode, you may get more info by pressing C-h m. You
-may also get online help describing various functions by: C-h f
-<Name of function you want described>
-*** modes/view-less.el
-Commentary:
-
-This mode is for browsing files without changing them.  Keybindings
-similar to those used by the less(1) program are used.
-*** modes/view.el
-Commentary:
-
-This package provides the `view' minor mode documented in the Emacs
-user's manual.
-
-XEmacs: We don't autoload this because we use `view-less' instead.
-*** modes/vrml-mode.el
-Commentary:
-
-Mostly bastardized from tcl.el.
-*** modes/whitespace-mode.el
-Commentary:
-
-        This is a minor mode, which highlights whitespaces (blanks and
-        tabs) with different faces, so that it is easier to
-        distinguish between them.
-        Toggle the mode with: M-x whitespace-mode
-        or with: M-x whitespace-incremental-mode
-        The second one should be used in big files.
-*** modes/winmgr-mode.el
-Commentary:
-
-This package is a major mode for editing window configuration files and
-also defines font-lock keywords for such files.
-*** modes/xpm-mode.el   Can't find any Commentary section
-modes/xrdb-mode.el      Can't find any Commentary section
-
-** mu           - Message Utilities library (part of the Tools for MIME).
-
-** ns           - NeXTstep
-
-** oobr         - Browser for Object Oriented languages
-*** oobr/br-c++-ft.el   Can't find any Commentary section
-
-** packages     - Lot's of stuff: array, baloon help, version control, ...
-*** packages/add-log.el
-Commentary:
-
-This facility is documented in the Emacs Manual.
-*** packages/apropos.el
-Commentary:
-
-The ideas for this package were derived from the C code in
-src/keymap.c and elsewhere.  The functions in this file should
-always be byte-compiled for speed.  Someone should rewrite this in
-C (as part of src/keymap.c) for speed.
-*** packages/array.el
-Commentary:
-
-Commands for editing a buffer interpreted as a rectangular array
-or matrix of whitespace-separated strings.  You specify the array
-dimensions and some other parameters at startup time.
-*** packages/auto-save.el       Can't find any Commentary section
-packages/autoinsert.el
-Commentary:
-
- The following defines an association list for text to be
- automatically inserted when a new file is created, and a function
- which automatically inserts these files; the idea is to insert
- default text much as the mode is automatically set using
- auto-mode-alist.
-*** packages/avoid.el
-Commentary:
-
-For those who are annoyed by the mouse pointer obscuring text,
-this mode moves the mouse pointer - either just a little out of
-the way, or all the way to the corner of the frame.
-To use, load or evaluate this file and type M-x mouse-avoidance-mode .
-To set up permanently, put this file on your .emacs:
-*** packages/backup-dir.el      Can't find any Commentary section
-*** packages/balloon-help.el    Can't find any Commentary section
-*** packages/big-menubar.el     Can't find any Commentary section
-*** packages/blink-cursor.el
-*** packages/blink-paren.el     Can't find any Commentary section
-*** packages/bookmark.el        Can't find any Commentary section
-*** packages/buff-menu.el
-Commentary:
-
-Edit, delete, or change attributes of all currently active Emacs
-buffers from a list summarizing their state.  A good way to browse
-any special or scratch buffers you have loaded, since you can't find
-them by filename.  The single entry point is `Buffer-menu-mode',
-normally bound to C-x C-b.
-*** packages/chistory.el
-Commentary:
-
-This really has nothing to do with list-command-history per se, but
-its a nice alternative to C-x ESC ESC (repeat-complex-command) and
-functions as a lister if given no pattern.  It's not important
-enough to warrant a file of its own.
-*** packages/cmuscheme.el
-Commentary:
-
-   This is a customisation of comint-mode (see comint.el)
-*** packages/crypt.el
-Commentary:
-
-NOTE: Apparently not being maintained by the author, who now
-uses jka-compr.el. --ben (1/26/96)
-Included patch (1/26/96)
-
-Code for handling all sorts of compressed and encrypted files.|
-*** packages/cu-edit-faces.el   Can't find any Commentary section
-*** packages/dabbrev.el
-Commentary:
-
-The purpose with this package is to let you write just a few
-characters of words you've written earlier to be able to expand
-them.
-*** packages/desktop.el
-Commentary:
-
-Save the Desktop, i.e.,
-        - some global variables
-      - the list of buffers with associated files.  For each buffer also
-                - the major mode
-                - the default directory
-                - the point
-                - the mark & mark-active
-                - buffer-read-only
-                - some local variables
-*** packages/fast-lock.el
-Commentary:
-
-Lazy Lock mode is a Font Lock support mode.
-It makes visiting a file in Font Lock mode faster by restoring its face text
-properties from automatically saved associated Font Lock cache files.
-*** packages/font-lock.el
-Font-lock-mode is a minor mode that causes your comments to be
-displayed in one face, strings in another, reserved words in another,
-documentation strings in another, and so on.
-*** packages/func-menu.el       Can't find any Commentary section
-*** packages/generic-sc.el      Can't find any Commentary section
-*** packages/gnuserv.el Can't find any Commentary section
-*** packages/gopher.el
-Commentary:
-OPERATING INSTRUCTIONS
-
-To use, `M-x gopher'.  To specify a different root server, use
-`C-u M-x gopher'.  If you want to use bookmarks, set the variable
-gopher-support-bookmarks appropriately.
-*** packages/hexl.el
-Commentary:
-
-This package implements a major mode for editing binary files.  It uses
-a program called hexl, supplied with the GNU Emacs distribution, that
-can filter a binary into an editable format or from the format back into
-binary.  For full instructions, invoke `hexl-mode' on an empty buffer and
-do `M-x describe-mode'.
-*** packages/hyper-apropos.el
-Commentary:
-
- Rather than run apropos and print all the documentation at once,
- I find it easier to view a "table of contents" first, then
- get the details for symbols as you need them.
-*** packages/icomplete.el
-Commentary:
-
-Loading this package implements a more fine-grained minibuffer
-completion feedback scheme.  Prospective completions are concisely
-indicated within the minibuffer itself, with each successive
-keystroke.
-*** packages/igrep.el   Can't find any Commentary section
-*** packages/info.el    Can't find any Commentary section
-*** packages/informat.el        Can't find any Commentary section
-*** packages/ispell.el
-Commentary:
-*** packages/jka-compr.el
-Commentary:
-
-This package implements low-level support for reading, writing,
-and loading compressed files.  It hooks into the low-level file
-I/O functions (including write-region and insert-file-contents) so
-that they automatically compress or uncompress a file if the file
-appears to need it (based on the extension of the file name).
-Packages like Rmail, VM, GNUS, and Info should be able to work
-with compressed files without modification.
-*** packages/lazy-lock.el
-Commentary:
-
-Purpose:
-
-To make visiting buffers in `font-lock-mode' faster by making fontification
-be demand-driven and stealthy.
-Fontification only occurs when, and where, necessary.
-*** packages/ledit.el
-Commentary:
-
-This is a major mode for editing Liszt.  See etc/LEDIT for details.
-*** packages/lispm-fonts.el     Can't find any Commentary section
-*** packages/lpr.el
-Commentary:
-
-Commands to send the region or a buffer your printer.  Entry points
-are `lpr-buffer', `print-buffer', lpr-region', or `print-region'; option
-variables include `lpr-switches' and `lpr-command'.
-*** packages/makeinfo.el
-Commentary:
-
-The Texinfo mode `makeinfo' related commands are:
-*** packages/makesum.el
-Commentary:
-
-Displays a nice human-readable summary of all keybindings in a
-two-column format.
-*** packages/man.el     Can't find any Commentary section
-*** packages/metamail.el
-Commentary:
-
-Note: Metamail does not have all options which is compatible with
-the environment variables.  For that reason, matamail.el have to
-hack the environment variables.  In addition, there is no way to
-display all header fields without extra informative body messages
-which are suppressed by "-q" option.
-
-The idea of using metamail to process MIME messages is from
-gnus-mime.el by Spike <Spike@world.std.com>.
-*** packages/mic-paren.el       Can't find any Commentary section
-*** packages/mime-compose.el    Can't find any Commentary section
-*** packages/mode-motion+.el    Can't find any Commentary section
-*** packages/netunam.el
-Commentary:
-
-Use the Remote File Access (RFA) facility of HP-UX from Emacs.
-*** packages/page-ext.el
-Commentary:
-
-You may use these commands to handle an address list or other
-small data base.
-*** packages/paren.el
-Commentary:
-
-Purpose of this package:
-
-  This package highlights matching parens (or whole sexps) for easier
-  editing of source code, particularly lisp source code.
-*** packages/pending-del.el     Can't find any Commentary section
-*** packages/ps-print.el
-Commentary:
-
-This package provides printing of Emacs buffers on PostScript
-printers; the buffer's bold and italic text attributes are
-preserved in the printer output.  Ps-print is intended for use with
-Emacs 19 or Lucid Emacs, together with a fontifying package such as
-font-lock or hilit.
-*** packages/rcompile.el
-Commentary:
-
-This package is for running a remote compilation and using emacs to parse
-the error messages. It works by rsh'ing the compilation to a remote host
-and parsing the output. If the file visited at the time remote-compile was
-called was loaded remotely (ange-ftp), the host and user name are obtained
-by the calling ange-ftp-ftp-name on the current directory. In this case the
-next-error command will also ange-ftp the files over. This is achieved
-automatically because the compilation-parse-errors function uses
-default-directory to build it's file names. If however the file visited was
-loaded locally, remote-compile prompts for a host and user and assumes the
-files mounted locally (otherwise, how was the visited file loaded).
-*** packages/recent-files.el    Can't find any Commentary section
-*** packages/refbib.el
-Commentary:
-
-Use: from a buffer containing the refer-style bibliography,
-  M-x r2b-convert-buffer
-Program will prompt for an output buffer name, and will log
-warnings during the conversion process in the buffer *Log*.
-*** packages/remote.el  Can't find any Commentary section
-*** packages/reportmail.el      Can't find any Commentary section
-*** packages/resume.el
-Commentary:
-
-The purpose of this library is to handle command line arguments
-when you resume an existing Emacs job.
-
-You can't get the benefit of this library by using the `emacs' command,
-since that always starts a new Emacs job.  Instead you must use a
-command called `edit' which knows how to resume an existing Emacs job
-if you have one, or start a new Emacs job if you don't have one.
-
-To define the `edit' command, run the script etc/emacs.csh (if you use CSH),
-or etc/emacs.bash if you use BASH.  You would normally do this in your
-login script.
-*** packages/saveconf.el        Can't find any Commentary section
-*** packages/saveplace.el
-Commentary:
-
-Automatically save place in files, so that visiting them later
-(even during a different Emacs session) automatically moves point
-to the saved position, when the file is first found.  Uses the
-value of buffer-local variable save-place to determine whether to
-save position or not.
-*** packages/sccs.el    Can't find any Commentary section
-*** packages/scroll-in-place.el Can't find any Commentary section
-*** packages/server.el
-Commentary:
-
-This Lisp code is run in Emacs when it is to operate as
-a server for other processes.
-
-*** packages/shell-font.el      Can't find any Commentary section
-*** packages/spell.el
-Commentary:
-
-This mode provides an Emacs interface to the UNIX spell(1) program.
-Entry points are `spell-buffer', `spell-word', `spell-region' and
-`spell-string'.  These facilities are documented in the Emacs user's
-manual.
-*** packages/supercite.el       Can't find any Commentary section
-*** packages/tar-mode.el        Can't find any Commentary section
-*** packages/terminal.el        Can't find any Commentary section
-*** packages/tex-latin1.el      Can't find any Commentary section
-*** packages/texinfmt.el        Can't find any Commentary section
-*** packages/texnfo-tex.el      Can't find any Commentary section
-*** packages/texnfo-upd.el
-Commentary:
-*** packages/time-stamp.el
-Commentary:
-
-If you put a time stamp template anywhere in the first 8 lines of a file,
-it can be updated every time you save the file.  See the top of
-time-stamp.el for a sample.  The template looks like one of the following:
-    Time-stamp: <>
-    Time-stamp: " "
-The time stamp is written between the brackets or quotes, resulting in
-    Time-stamp: <95/01/18 10:20:51 gildea>
-*** packages/time.el
-Commentary:
-
-Facilities to display current time/date and a new-mail indicator
-in the Emacs mode line.  The single entry point is `display-time'.
-*** packages/uncompress.el
-Commentary:
-
-This package can be used to arrange for automatic uncompress of
-files packed with the UNIX compress(1) utility when they are visited.
-All that's necessary is to load it.  This can conveniently be done from
-your .emacs file.
-*** packages/underline.el
-Commentary:
-
-This package deals with the primitive form of underlining
-consisting of prefixing each character with "_\^h".  The entry
-point `underline-region' performs such underlining on a region.
-The entry point `ununderline-region' removes it.
-*** packages/upd-copyr.el       Can't find any Commentary section
-*** packages/vc.el
-Commentary:
-
-This mode is fully documented in the Emacs user's manual.
-
-Supported version-control systems presently include SCCS, RCS, and CVS.
-The RCS lock-stealing code doesn't work right unless you use RCS 5.6.2
-or newer.  Currently (January 1994) that is only a beta test release.
-Even initial checkins will fail if your RCS version is so old that ci
-doesn't understand -t-; this has been known to happen to people running
-NExTSTEP 3.0.
-*** packages/webjump.el
-Change Log:
-*** packages/webster-ucb.el     Can't find any Commentary section
-*** packages/webster.el Can't find any Commentary section
-*** packages/xscheme.el Can't find any Commentary section
-
-
-** pcl-cvs      - Front end to CVS (see also vc -- version control)
-*** pcl-cvs/cookie.el
-Commentary:
-
-    Introduction
-    ============
-
-Cookie is a package that implements a connection between an
-dll (a doubly linked list) and the contents of a buffer.
-Possible uses are dired (have all files in a list, and show them),
-buffer-list, kom-prioritize (in the LysKOM elisp client) and
-others.  pcl-cvs.el uses cookie.el.
-*** pcl-cvs/dll-debug.el
-Commentary:
-
-This is a plug-in replacement for dll.el.  It is dreadfully
-slow, but it facilitates debugging.  Don't trust the comments in
-this file too much.
-(provide 'dll)
-
-*** pcl-cvs/dll.el
-Commentary:
-
-A doubly linked list consists of one cons cell which holds the tag
-'DL-LIST in the car cell and a pointer to a dummy node in the cdr
-cell. The doubly linked list is implemented as a circular list
-with the dummy node first and last. The dummy node is recognized
-by comparing it to the node which the cdr of the cons cell points
-to.
-
-*** pcl-cvs/elib-node.el
-Commentary:
-
-A node is implemented as an array with three elements, using
-(elt node 0) as the left pointer
-(elt node 1) as the right pointer
-(elt node 2) as the data
-*** pcl-cvs/pcl-cvs-startup.el  Can't find any Commentary section
-*** pcl-cvs/pcl-cvs-xemacs.el   Can't find any Commentary section
-*** pcl-cvs/pcl-cvs.el  Can't find any Commentary section
-*** pcl-cvs/string.el
-Commentary:
-
-
-This file is part of the elisp library Elib.
-It implements simple generic string functions for use in other
-elisp code: replace regexps in strings, split strings on regexps.
-
-** prim         - Lots of XEmacs primitives (see Emacs-Lisp manual).
-*** prim/about.el       Can't find any Commentary section
-*** prim/advocacy.el    Can't find any Commentary section
-*** prim/auto-autoloads.el      Can't find any Commentary section
-*** prim/backquote.el   Can't find any Commentary section
-*** prim/buffer.el      Can't find any Commentary section
-*** prim/case-table.el  Can't find any Commentary section
-*** prim/cleantree.el
-Commentary:
-
-This code is derived from Gnus based on a suggestion by
- David Moore <dmoore@ucsd.edu>
-*** prim/cmdloop.el     Can't find any Commentary section
-*** prim/cmdloop1.el    Can't find any Commentary section
-*** prim/console.el     Can't find any Commentary section
-*** prim/custom-load.el Can't find any Commentary section
-*** prim/debug.el
-Commentary:
-
-This is a major mode documented in the Emacs manual.
-*** prim/device.el      Can't find any Commentary section
-*** prim/dialog.el      Can't find any Commentary section
-*** prim/disp-table.el  Can't find any Commentary section
-*** prim/env.el
-Commentary:
-
-UNIX processes inherit a list of name-to-string associations from their
-parents called their `environment'; these are commonly used to control
-program options.  This package permits you to set environment variables
-to be passed to any sub-process run under XEmacs.
-*** prim/events.el      Can't find any Commentary section
-*** prim/extents.el     Can't find any Commentary section
-*** prim/faces.el       Can't find any Commentary section
-*** prim/files.el
-Commentary:
-
-Defines most of XEmacs's file- and directory-handling functions,
-including basic file visiting, backup generation, link handling,
-ITS-id version control, load- and write-hook handling, and the like.
-*** prim/fill.el
-Commentary:
-
-All the commands for filling text.  These are documented in the XEmacs
-Reference Manual.
-*** prim/float-sup.el   Can't find any Commentary section
-*** prim/format.el
-Commentary:
-
-This file defines a unified mechanism for saving & loading files stored
-in different formats.  `format-alist' contains information that directs
-Emacs to call an encoding or decoding function when reading or writing
-files that match certain conditions.
-*** prim/frame.el       Can't find any Commentary section
-*** prim/glyphs.el      Can't find any Commentary section
-*** prim/gui.el Can't find any Commentary section
-*** prim/help.el
-Commentary:
-
-This code implements XEmacs's on-line help system, the one invoked by
-`M-x help-for-help'.
-*** prim/inc-vers.el    Can't find any Commentary section
-*** prim/indent.el
-Commentary:
-
-Commands for making and changing indentation in text.  These are
-described in the XEmacs Reference Manual.
-*** prim/isearch-mode.el        Can't find any Commentary section
-*** prim/itimer-autosave.el
-Commentary:
-
-itimer-driven auto-saves
-*** prim/itimer.el      Can't find any Commentary section
-*** prim/keydefs.el     Can't find any Commentary section
-*** prim/keymap.el      Can't find any Commentary section
-*** prim/lisp.el
-Commentary:
-
-Lisp editing commands to go with Lisp major mode.
-*** prim/loaddefs.el
-Commentary:
-
-You should never need to write autoloads by hand and put them here.
-
-It is no longer necessary.  Instead use autoload.el to maintain them
-for you.  Just insert ";;;###autoload" before defuns or defmacros you
-want to be autoloaded, or other forms you want copied into loaddefs.el
-(defvars, key definitions, etc.).
-*** prim/loadup-el.el   Can't find any Commentary section
-*** prim/loadup.el
-Commentary:
-
-This is loaded into a bare Emacs to make a dumpable one.
-*** prim/macros.el
-Commentary:
-
-Extension commands for keyboard macros.  These permit you to assign
-a name to the last-defined keyboard macro, expand and insert the
-lisp corresponding to a macro, query the user from within a macro,
-or apply a macro to each line in the reason.
-
-This file is largely superseded by edmacro.el as of XEmacs 20.1. -sb
-*** prim/menubar.el     Can't find any Commentary section
-*** prim/minibuf.el
-Commentary:
-
-Written by Richard Mlynarik 2-Oct-92
-*** prim/misc.el        Can't find any Commentary section
-*** prim/mode-motion.el Can't find any Commentary section
-*** prim/modeline.el    Can't find any Commentary section
-*** prim/mouse.el       Can't find any Commentary section
-*** prim/novice.el
-Commentary:
-
-This mode provides a hook which is, by default, attached to various
-putatively dangerous commands in a (probably futile) attempt to
-prevent lusers from shooting themselves in the feet.
-*** prim/objects.el     Can't find any Commentary section
-*** prim/obsolete.el    Can't find any Commentary section
-*** prim/options.el
-Commentary:
-
-This code provides functions to list and edit the values of all global
-option variables known to loaded Emacs Lisp code.  There are two entry
-points, `list-options' and `edit' options'.  The latter enters a major
-mode specifically for editing option values.  Do `M-x describe-mode' in
-that context for more details.
-*** prim/overlay.el     Can't find any Commentary section
-*** prim/page.el
-Commentary:
-
-This code provides the page-oriented movement and selection commands
-documented in the XEmacs Reference Manual.
-*** prim/paragraphs.el
-Commentary:
-
-This package provides the paragraph-oriented commands documented in the
-XEmacs Reference Manual.
-*** prim/process.el     Can't find any Commentary section
-*** prim/profile.el     Can't find any Commentary section
-*** prim/rect.el
-Commentary:
-
-This package provides the operations on rectangles that are ocumented
-in the XEmacs Reference Manual.
-*** prim/register.el
-Commentary:
-
-This package of functions emulates and somewhat extends the venerable
-TECO's `register' feature, which permits you to save various useful
-pieces of buffer state to named variables.  The entry points are
-documented in the XEmacs Reference Manual.
-*** prim/replace.el
-Commentary:
-
-This package supplies the string and regular-expression replace functions
-documented in the XEmacs Reference Manual.
-
-All the gettext calls are for XEmacs I18N3 message catalog support.
-*** prim/reposition.el
-Commentary:
-
-Reposition-window makes an entire function definition or comment visible,
-or, if it is already visible, places it at the top of the window;
-additional invocations toggle the visibility of comments preceding the
-code.  For the gory details, see the documentation for reposition-window;
-rather than reading that, you may just want to play with it.
-
-This tries pretty hard to do the recentering correctly; the precise
-action depends on what the buffer looks like.  If you find a situation
-where it doesn't behave well, let me know.  This function is modeled
-after one of the same name in ZMACS, but the code is all-new and the
-behavior in some situations differs.
-*** prim/scrollbar.el   Can't find any Commentary section
-*** prim/simple.el
-Commentary:
-
-A grab-bag of basic XEmacs commands not specifically related to some
-major mode or to file-handling.
-*** prim/sort.el
-Commentary:
-
-This package provides the sorting facilities documented in the XEmacs
-Reference Manual.
-*** prim/sound.el       Can't find any Commentary section
-*** prim/specifier.el   Can't find any Commentary section
-*** prim/startup.el     Can't find any Commentary section
-*** prim/subr.el
-Commentary:
-
-There's not a whole lot in common now with the FSF version,
-be wary when applying differences.  I've left in a number of lines
-of commentary just to give diff(1) something to synch itself with to
-provide useful context diffs. -sb
-*** prim/symbols.el
-Commentary:
-
-The idea behind magic variables is that you can specify arbitrary
-behavior to happen when setting or retrieving a variable's value.  The
-purpose of this is to make it possible to cleanly provide support for
-obsolete variables (e.g. unread-command-event, which is obsolete for
-unread-command-events) and variable compatibility
-(e.g. suggest-key-bindings, the FSF equivalent of
-teach-extended-commands-p and teach-extended-commands-timeout).
-*** prim/syntax.el      Can't find any Commentary section
-*** prim/tabify.el
-Commentary:
-
-Commands to optimize spaces to tabs or expand tabs to spaces in a region
-(`tabify' and `untabify').  The variable tab-width does the obvious.
-*** prim/toolbar.el     Can't find any Commentary section
-*** prim/undo-stack.el  Can't find any Commentary section
-*** prim/update-elc.el  Can't find any Commentary section
-*** prim/userlock.el
-Commentary:
-
-This file is autoloaded to handle certain conditions
-detected by the file-locking code within XEmacs.
-The two entry points are `ask-user-about-lock' and
-`ask-user-about-supersession-threat'.
-*** prim/window.el      Can't find any Commentary section
-
-** psgml        - SGML/HTML editing mode
-*** psgml/iso-sgml.el   Can't find any Commentary section
-*** psgml/psgml-api.el
-Commentary:
-
-Provides some extra functions for the API to PSGML.
-
-*** psgml/psgml-charent.el
-Commentary:
-
- Functions to convert character entities into displayable characters
- and displayable characters back into character entities.
-
-*** psgml/psgml-debug.el        Can't find any Commentary section
-*** psgml/psgml-dtd.el
-Commentary:
-
-Part of major mode for editing the SGML document-markup language.
-
-*** psgml/psgml-edit.el
-Commentary:
-
-Part of major mode for editing the SGML document-markup language.
-
-*** psgml/psgml-fs.el
-Commentary:
-
-The function `style-format' formats the SGML-file in the current
-buffer according to the style defined in the file `psgml-style.fs'
-(or the file given by the variable `fs-style').
-
-To try it load this file and open the test file example.sgml. Then
-run the emacs command `M-x style-format'.
-
-The style file should contain a single Lisp list. The elements of
-this list, are them self lists, describe the style for an element type.
-The sublists begin with the generic identifier for the element types and
-the rest of the list are characteristic/value pairs.
-
-E.g.  ("p"  block t  left 4  top 2)
-
-Defines the style for p-elements to be blocks with left margin 4 and
-at least to blank lines before the block.
-
-*** psgml/psgml-html.el
-Commentary:
-
-Parts were taken from html-helper-mode and from code by Alastair Burt.
-
-Feb 18 1997, Heiko Muenkel: Added the hook variable html-mode-hook.
-;       With that you can now use the hm--html-minor-mode together
-;       with this mode. For that you've to add the following line
-;       to your ~/.emacs:
-;               (add-hook 'html-mode-hook 'hm--html-minor-mode)
-*** psgml/psgml-info.el
-Commentary:
-
-This file is an addon to the PSGML package.
-
-This file contains some commands to print out information about the
-current DTD.
-*** psgml/psgml-other.el
-Commentary:
-
-Part of psgml.el. Code not compatible with XEmacs.
-
-*** psgml/psgml-parse.el
-Commentary:
-
-Part of major mode for editing the SGML document-markup language.
-
-*** psgml/psgml-xemacs.el
-Commentary:
-
-Part of psgml.el
-
-Menus for use with XEmacs
-
-*** psgml/psgml.el
-Commentary:
-
-Major mode for editing the SGML document-markup language.
-*** psgml/tempo.el
-Commentary:
-
-This file provides a simple way to define powerful templates, or
-macros, if you wish. It is mainly intended for, but not limited to,
-other programmers to be used for creating shortcuts for editing
-certain kind of documents. It was originally written to be used by
-a HTML editing mode written by Nelson Minar <nelson@santafe.edu>,
-and his html-helper-mode.el is probably the best example of how to
-use this program.
-
-** rmail        - Reading Mail (see also VM and GNUS)
-*** rmail/rmail-kill.el
-Commentary:
-*** rmail/rmail-xemacs.el
-Commentary:
-
-Right button pops up a menu of commands in Rmail and Rmail summary buffers.
-Middle button selects indicated mail message in Rmail summary buffer
-*** rmail/rmail.el      Can't find any Commentary section
-*** rmail/rmailedit.el  Can't find any Commentary section
-*** rmail/rmailkwd.el   Can't find any Commentary section
-*** rmail/rmailmsc.el   Can't find any Commentary section
-*** rmail/rmailout.el   Can't find any Commentary section
-*** rmail/rmailsort.el  Can't find any Commentary section
-*** rmail/rmailsum.el
-Commentary:
-
-  Provided all commands from rmail-mode in rmail-summary-mode and made key
-  bindings in both modes wholly compatible.
-*** rmail/undigest.el
-Commentary:
-
-See Internet RFC 934
-*** rmail/unrmail.el    Can't find any Commentary section
-
-** sunpro       - Additional code for interfacing with SunPro products.
-*** sunpro/sunpro-init.el       Can't find any Commentary section
-*** sunpro/sunpro-keys.el       Can't find any Commentary section
-*** sunpro/sunpro-load.el       Can't find any Commentary section
-*** sunpro/sunpro-menubar.el
-Commentary:
- Creates the default SunPro menubars.
-*** sunpro/sunpro-sparcworks.el
-Commentary:
-
-Called from the SPARCworks Manager with the command:
-
-   xemacs -q -l sunpro-sparcworks $SUNPRO_SWM_TT_ARGS $SUNPRO_SWM_GUI_ARGS
-
-** term         - Terminal specific initialization: vt100, wyse, ...
-*** term/AT386.el
-Commentary:
-
-Uses the Emacs 19 terminal initialization features --- won't work with 18.
-*** term/apollo.el      Can't find any Commentary section
-*** term/bg-mouse.el    Can't find any Commentary section
-*** term/bobcat.el      Can't find any Commentary section
-*** term/internal.el    Can't find any Commentary section
-*** term/keyswap.el
-Commentary:
-
-This package is meant to be called by other terminal packages.
-*** term/linux.el       Can't find any Commentary section
-*** term/lk201.el       Can't find any Commentary section
-*** term/news.el
-Commentary:
-
-Uses the Emacs 19 terminal initialization features --- won't work with 18.
-*** term/pc-win.el      Can't find any Commentary section
-*** term/scoansi.el     Can't find any Commentary section
-*** term/sun-mouse.el
-Commentary:
-*** term/sun.el
-Commentary:
-
-The function key sequences for the console have been converted for
-use with function-key-map, but the *tool stuff hasn't been touched.
-*** term/sup-mouse.el   Can't find any Commentary section
-*** term/tty-init.el
-Commentary:
-*** term/tvi970.el
-Commentary:
-
-Uses the Emacs 19 terminal initialization features --- won't work with 18.
-*** term/vt-control.el
-Commentary:
-
- The functions contained in this file send various VT control codes
- to the terminal where emacs is running.  The following functions are
- available.
-*** term/vt100-led.el   Can't find any Commentary section
-*** term/vt100.el
-Commentary:
-
-Uses the Emacs 19 terminal initialization features --- won't work with 18.
-
-Handles all VT100 clones, including the Apollo terminal.  Also handles
-the VT200 --- its PF- and arrow- keys are different, but all those
-are really set up by the terminal initialization code, which mines them
-out of termcap.  This package is here to define the keypad comma, dash
-and period (which aren't in termcap's repertoire) and the function for
-changing from 80 to 132 columns & vv.
-*** term/vt102.el       Can't find any Commentary section
-*** term/vt125.el       Can't find any Commentary section
-*** term/vt200.el       Can't find any Commentary section
-*** term/vt201.el       Can't find any Commentary section
-*** term/vt220.el       Can't find any Commentary section
-*** term/vt240.el       Can't find any Commentary section
-*** term/vt300.el       Can't find any Commentary section
-*** term/vt320.el       Can't find any Commentary section
-*** term/vt400.el       Can't find any Commentary section
-*** term/vt420.el       Can't find any Commentary section
-*** term/win32-win.el
-Commentary:
-
-win32-win.el:  this file is loaded from ../lisp/startup.el when it recognizes
-that win32 windows are to be used.  Command line switches are parsed and those
-pertaining to win32 are processed and removed from the command line.  The
-win32 display is opened and hooks are set for popping up the initial window.
-
-startup.el will then examine startup files, and eventually call the hooks
-which create the first window (s).
-*** term/wyse50.el
-Commentary:
-
-The Wyse50 is ergonomically wonderful, but its escape-sequence design sucks
-rocks.  The left-arrow key emits a backspace (!) and the down-arrow a line
-feed (!!).  Thus, you have to unbind some commonly-used Emacs keys to
-enable the arrows.
-*** term/xterm.el       Can't find any Commentary section
-
-** tl           - Tiny Library (Part of the Tools for MIME).
-*** tl/bitmap.el        Can't find any Commentary section
-*** tl/cless.el Can't find any Commentary section
-*** tl/emu-e19.el       Can't find any Commentary section
-*** tl/emu-orig.el      Can't find any Commentary section
-*** tl/emu-xemacs.el    Can't find any Commentary section
-*** tl/emu.el   Can't find any Commentary section
-*** tl/file-detect.el   Can't find any Commentary section
-*** tl/filename.el      Can't find any Commentary section
-*** tl/mu-cite.el
-Commentary:
-*** tl/mu-comment.el
-Commentary:
-
-     type `C-c C-q' at the beginning of S-expression you want to
-     comment out.
-*** tl/mu-replace.el
-Commentary:
-*** tl/range.el Can't find any Commentary section
-*** tl/richtext.el      Can't find any Commentary section
-*** tl/std11-parse.el   Can't find any Commentary section
-*** tl/std11.el Can't find any Commentary section
-*** tl/texi-util.el     Can't find any Commentary section
-*** tl/tinyrich.el      Can't find any Commentary section
-*** tl/tl-822.el        Can't find any Commentary section
-*** tl/tl-atype.el      Can't find any Commentary section
-*** tl/tl-list.el       Can't find any Commentary section
-*** tl/tl-misc.el       Can't find any Commentary section
-*** tl/tl-num.el        Can't find any Commentary section
-*** tl/tl-seq.el        Can't find any Commentary section
-*** tl/tl-str.el        Can't find any Commentary section
-*** tl/tu-comment.el
-Commentary:
-*** tl/tu-replace.el
-Commentary:
-
-** tm           - Tools for MIME -- integrates in VM, RMAIL, GNUS
-*** tm/gnus-art-mime.el Can't find any Commentary section
-*** tm/gnus-charset.el  Can't find any Commentary section
-*** tm/gnus-mime-old.el Can't find any Commentary section
-*** tm/gnus-mime.el     Can't find any Commentary section
-*** tm/gnus-msg-mime.el Can't find any Commentary section
-*** tm/gnus-sum-mime.el Can't find any Commentary section
-*** tm/message-mime.el  Can't find any Commentary section
-*** tm/mime-setup.el    Can't find any Commentary section
-*** tm/sc-setup.el      Can't find any Commentary section
-*** tm/signature.el     Can't find any Commentary section
-*** tm/tm-bbdb.el       Can't find any Commentary section
-*** tm/tm-def.el        Can't find any Commentary section
-*** tm/tm-edit-mc.el    Can't find any Commentary section
-*** tm/tm-edit.el
-Commentary:
-
-This is an Emacs minor mode for editing Internet multimedia
-messages formatted in MIME (RFC 2045, 2046, 2047, 2048 and 2049).
-All messages in this mode are composed in the tagged MIME format,
-that are described in the following examples.  The messages
-composed in the tagged MIME format are automatically translated
-into a MIME compliant message when exiting the mode.
-*** tm/tm-ew-d.el       Can't find any Commentary section
-*** tm/tm-ew-e.el       Can't find any Commentary section
-*** tm/tm-file.el       Can't find any Commentary section
-*** tm/tm-ftp.el        Can't find any Commentary section
-*** tm/tm-gd3.el        Can't find any Commentary section
-*** tm/tm-gnus.el       Can't find any Commentary section
-*** tm/tm-gnus4.el      Can't find any Commentary section
-*** tm/tm-gnus5.el      Can't find any Commentary section
-*** tm/tm-html.el       Can't find any Commentary section
-*** tm/tm-image.el
-Commentary:
-        If you use this program with MULE, please install
-        etl8x16-bitmap.bdf font included in tl package.
-*** tm/tm-latex.el      Can't find any Commentary section
-*** tm/tm-mail.el       Can't find any Commentary section
-*** tm/tm-mh-e.el       Can't find any Commentary section
-*** tm/tm-orig.el       Can't find any Commentary section
-*** tm/tm-parse.el      Can't find any Commentary section
-*** tm/tm-partial.el    Can't find any Commentary section
-*** tm/tm-pgp.el
-Commentary:
-
-   This module is based on 2 drafts about PGP MIME integration:
-*** tm/tm-play.el       Can't find any Commentary section
-*** tm/tm-rmail.el      Can't find any Commentary section
-*** tm/tm-setup.el      Can't find any Commentary section
-*** tm/tm-sgnus.el      Can't find any Commentary section
-*** tm/tm-tar.el        Can't find any Commentary section
-*** tm/tm-text.el       Can't find any Commentary section
-*** tm/tm-view.el       Can't find any Commentary section
-*** tm/tm-vm.el
-Commentary:
-
-     Plese insert `(require 'tm-vm)' in your ~/.vm file.
-*** tm/tmh-comp.el      Can't find any Commentary section
-
-** tooltalk     - Support for Tooltalk protocol
-*** tooltalk/tooltalk-init.el   Can't find any Commentary section
-*** tooltalk/tooltalk-load.el   Can't find any Commentary section
-*** tooltalk/tooltalk-macros.el Can't find any Commentary section
-*** tooltalk/tooltalk-util.el   Can't find any Commentary section
-
-** utils        - Lots of stuff
-*** utils/abbrevlist.el Can't find any Commentary section
-*** utils/advice.el
-Commentary:
-
-This package implements a full-fledged Lisp-style advice mechanism
-for Emacs Lisp. Advice is a clean and efficient way to modify the
-behavior of Emacs Lisp functions without having to keep  personal
-modified copies of such functions around. A great number of such
-modifications can be achieved by treating the original function as a
-black box and specifying a different execution environment for it
-with a piece of advice. Think of a piece of advice as a kind of fancy
-hook that you can attach to any function/macro/subr.
-*** utils/annotations.el        Can't find any Commentary section
-*** utils/assoc.el
-Commentary:
-
-Association list utilities providing insertion, deletion, sorting
-fetching off key-value pairs in association lists.
-*** utils/atomic-extents.el     Can't find any Commentary section
-*** utils/autoload.el
-Commentary:
-
-This code helps GNU Emacs maintainers keep the loaddefs.el file up to
-date.  It interprets magic cookies of the form ";;;###autoload" in
-lisp source files in various useful ways.  To learn more, read the
-source; if you're going to use this, you'd better be able to.
-*** utils/bench.el
-Commentary:
-
-Adapted from Shane Holder's bench.el by steve@altair.xemacs.org.
-
-To run
-Extract the shar file in /tmp, or modify bench-lisp-file to
-point to the gnus.el file.
-At the shell prompt emacs -q --no-site-file <= don't load users .emacs or site-
-file
-M-x byte-compile-file "/tmp/bench.el"
-M-x load-file "/tmp/bench.elc"
-In the scratch buffer (bench 1)
-
-
-All bench marks must be named bench-mark-<something>
-Results are put in bench-mark-<something-times which is a list of
- times for the runs.
-If the bench mark is not simple then there needs to be a
- corresponding bench-handler-<something>
-*** utils/blessmail.el
-Commentary:
-
-This is loaded into a bare Emacs to create the blessmail script,
-which (on systems that need it) is used during installation
-to give appropriate permissions to movemail.
-
-It has to be done from lisp in order to be sure of getting the
-correct value of rmail-spool-directory.
-*** utils/browse-cltl2.el       Can't find any Commentary section
-*** utils/browse-url.el
-Commentary:
-
-This package provides functions which read a URL (Uniform Resource
-Locator) from the minibuffer, defaulting to the URL around point,
-and ask a World-Wide Web browser to load it.  It can also load the
-URL associated with the current buffer.  Different browsers use
-different methods of remote control so there is one function for
-each supported browser.  If the chosen browser is not running, it
-is started.  Currently there is support for:
-
-*** utils/crontab.el    Can't find any Commentary section
-*** utils/delbackspace.el       Can't find any Commentary section
-*** utils/derived.el
-Commentary:
-
-GNU Emacs is already, in a sense, object oriented -- each object
-(buffer) belongs to a class (major mode), and that class defines
-the relationship between messages (input events) and methods
-(commands) by means of a keymap.
-
-In the mean time, this package offers most of the advantages of
-full inheritance with the existing major modes.  The macro
-`define-derived-mode' allows the user to make a variant of an existing
-major mode, with its own keymap.  The new mode will inherit the key
-bindings of its parent, and will, in fact, run its parent first
-every time it is called.  For example, the commands
-*** utils/detached-minibuf.el
-Commentary:
-
-WARNING. DANGER.  This file reportedly crashes 19.14, use it only with a
-recent XEmacs.
-
-Version: 1.1
-*** utils/docref.el
-Commentary:
-
-This package allows you to use a simple form of cross references in
-your Emacs Lisp documentation strings. Cross-references look like
-\\(type@[label@]data), where type defines a method for retrieving
-reference informatin, data is used by a method routine as an argument,
-and label "represents" the reference in text. If label is absent, data
-is used instead.
-*** utils/easymenu.el   Can't find any Commentary section
-*** utils/edmacro.el
-Commentary:
-
-Usage:
-
-The `C-x C-k' (`edit-kbd-macro') command edits a keyboard macro
-in a special buffer.  It prompts you to type a key sequence,
-which should be one of:
-*** utils/eldoc.el
-Commentary:
-
-This program was inspired by the behavior of the "mouse documentation
-window" on many Lisp Machine systems; as you type a function's symbol
-name as part of a sexp, it will print the argument list for that
-function.  Behavior is not identical; for example, you need not actually
-type the function name, you need only move point around in a sexp that
-calls it.  Also, if point is over a documented variable, it will print
-the one-line documentation for that variable instead, to remind you of
-that variable's meaning.
-*** utils/elp.el
-Commentary:
-
-If you want to profile a bunch of functions, set elp-function-list
-to the list of symbols, then do a M-x elp-instrument-list.  This
-hacks those functions so that profiling information is recorded
-whenever they are called.  To print out the current results, use
-M-x elp-results.  If you want output to go to standard-output
-instead of a separate buffer, setq elp-use-standard-output to
-non-nil.  With elp-reset-after-results set to non-nil, profiling
-information will be reset whenever the results are displayed.  You
-can also reset all profiling info at any time with M-x
-elp-reset-all.
-*** utils/facemenu.el
-Commentary:
-
-This file defines a menu of faces (bold, italic, etc) which allows you to
-set the face used for a region of the buffer.  Some faces also have
-keybindings, which are shown in the menu.  Faces with names beginning with
-"fg:" or "bg:", as in "fg:red", are treated specially.
-Such faces are assumed to consist only of a foreground (if "fg:") or
-background (if "bg:") color.  They are thus put into the color submenus
-rather than the general Face submenu.  These faces can also be
-automatically created by selecting the "Other..." menu items in the
-"Foreground" and "Background" submenus.
-*** utils/find-gc.el
-Commentary:
-
-Produce in unsafe-list the set of all functions that may invoke GC.
-This expects the Emacs sources to live in emacs-source-directory.
-It creates a temporary working directory /tmp/esrc.
-*** utils/finder.el
-Commentary:
-
-This mode uses the Keywords library header to provide code-finding
-services by keyword.
-*** utils/floating-toolbar.el
-Commentary:
-
-The command `floating-toolbar' pops up a small frame
-containing a toolbar.  The command should be bound to a
-button-press event.  If the mouse press happens over an
-extent that has a non-nil 'floating-toolbar property, the
-value of that property is the toolbar instantiator that will
-be displayed.  Otherwise the toolbar displayed is taken from
-the variable `floating-toolbar'.  This variable can be made
-buffer local to produce buffer local floating toolbars.
-*** utils/flow-ctrl.el
-Commentary:
-
-Terminals that use XON/XOFF flow control can cause problems with
-GNU Emacs users.  This file contains Emacs Lisp code that makes it
-easy for a user to deal with this problem, when using such a
-terminal.
-
-*** utils/foldout.el
-Commentary:
-
-This file provides folding editor extensions for outline-mode and
-outline-minor-mode buffers.  What's a "folding editor"?  Read on...
-
-Imagine you're in an outline-mode buffer and you've hidden all the text and
-subheadings under your level-1 headings.  You now want to look at the stuff
-hidden under one of these headings.  Normally you'd do C-c C-e (show-entry)
-to expose the body or C-c C-i to expose the child (level-2) headings.
-
-With foldout, you do C-c C-z (foldout-zoom-subtree).  This exposes the body
-and child subheadings and narrows the buffer so that only the level-1
-heading, the body and the level-2 headings are visible.  If you now want to
-look under one of the level-2 headings, position the cursor on it and do C-c
-C-z again.  This exposes the level-2 body and its level-3 child subheadings
-and narrows the buffer again.  You can keep on zooming in on successive
-subheadings as much as you like.  A string in the modeline tells you how
-deep you've gone.
-*** utils/forms-d2.el   Can't find any Commentary section
-*** utils/forms-pass.el Can't find any Commentary section
-*** utils/forms.el
-Commentary:
-
-Visit a file using a form.
-
-Forms mode means visiting a data file which is supposed to consist
-of records each containing a number of fields.  The records are
-separated by a newline, the fields are separated by a user-defined
-field separator (default: TAB).
-When shown, a record is transferred to an Emacs buffer and
-presented using a user-defined form.  One record is shown at a
-time.
-*** utils/frame-icon.el
-Commentary:
-*** utils/hide-copyleft.el      Can't find any Commentary section
-*** utils/highlight-headers.el  Can't find any Commentary section
-*** utils/id-select.el  Can't find any Commentary section
-*** utils/lib-complete.el       Can't find any Commentary section
-*** utils/live-icon.el  Can't find any Commentary section
-*** utils/loadhist.el
-Commentary:
-
-These functions exploit the load-history system variable.
-*** utils/mail-extr.el
-Commentary:
-
-   mail-extract-address-components: (address)
-
-   Given an RFC-822 ADDRESS, extract full name and canonical address.
-   Returns a list of the form (FULL-NAME CANONICAL-ADDRESS).
-   If no name can be extracted, FULL-NAME will be nil.
-   ADDRESS may be a string or a buffer.  If it is a buffer, the visible
-    (narrowed) portion of the buffer will be interpreted as the address.
-    (This feature exists so that the clever caller might be able to avoid
-    consing a string.)
-   If ADDRESS contains more than one RFC-822 address, only the first is
-    returned.
-
-*** utils/mail-utils.el
-Commentary:
-
-Utility functions for mail and netnews handling.  These handle fine
-points of header parsing.
-*** utils/mailpost.el
-Commentary:
-
-Yet another mail interface.  this for the rmail system to provide
- the missing sendmail interface on systems without /usr/lib/sendmail,
-  but with /usr/uci/post.
-*** utils/map-ynp.el
-Commentary:
-
-map-y-or-n-p is a general-purpose question-asking function.
-It asks a series of y/n questions (a la y-or-n-p), and decides to
-applies an action to each element of a list based on the answer.
-The nice thing is that you also get some other possible answers
-to use, reminiscent of query-replace: ! to answer y to all remaining
-questions; ESC or q to answer n to all remaining questions; . to answer
-y once and then n for the remainder; and you can get help with C-h.
-*** utils/meese.el
-Commentary:
-This file is grossly misnamed.  It should be called reno.el.
-*** utils/passwd.el     Can't find any Commentary section
-*** utils/pp.el Can't find any Commentary section
-*** utils/pretty-print.el       Can't find any Commentary section
-*** utils/redo.el
-Commentary:
-
-Emacs' normal undo system allows you to undo an arbitrary
-number of buffer changes.  These undos are recorded as ordinary
-buffer changes themselves.  So when you break the chain of
-undos by issuing some other command, you can then undo all
-the undos.  The chain of recorded buffer modifications
-therefore grows without bound, truncated only at garbage
-collection time.
-
-*** utils/regi.el       Can't find any Commentary section
-*** utils/reporter.el
-Commentary:
-Lisp Package Authors
-====================
-Reporter was written primarily for Emacs Lisp package authors so
-that their users can easily report bugs.  When invoked,
-reporter-submit-bug-report will set up an outgoing mail buffer with
-the appropriate bug report address, including a lisp expression the
-maintainer of the package can eval to completely reproduce the
-environment in which the bug was observed (e.g. by using
-eval-last-sexp).  This package proved especially useful during my
-development of cc-mode, which is highly dependent on its
-configuration variables.
-*** utils/rfc822.el     Can't find any Commentary section
-*** utils/ring.el
-Commentary:
-
-This code defines a ring data structure. A ring is a
-    (hd-index length . vector)
-list. You can insert to, remove from, and rotate a ring. When the ring
-fills up, insertions cause the oldest elts to be quietly dropped.
-*** utils/shadowfile.el Can't find any Commentary section
-*** utils/skeleton.el
-Commentary:
-
-A very concise language extension for writing structured statement
-skeleton insertion commands for programming language modes.  This
-originated in shell-script mode and was applied to ada-mode's
-commands which shrunk to one third.  And these commands are now
-user configurable.
-*** utils/smtpmail.el
-Commentary:
-
-Send Mail to smtp host from smtpmail temp buffer.
-*** utils/soundex.el
-Commentary:
-
-The Soundex algorithm maps English words into representations of
-how they sound.  Words with vaguely similar sound map to the same string.
-*** utils/speedbar.el
-Commentary:
-
-  The speedbar provides a frame in which files, and locations in
-files are displayed.  These items can be clicked on with mouse-2
-in order to make the last active frame display that file location.
-*** utils/symbol-syntax.el      Can't find any Commentary section
-*** utils/sysdep.el     Can't find any Commentary section
-*** utils/text-props.el
-Commentary:
-
-This is a nearly complete implementation of the FSF19 text properties API.
-Please let me know if you notice any differences in behavior between
-this implementation and the FSF implementation.
-*** utils/thing.el      Can't find any Commentary section
-*** utils/timezone.el   Can't find any Commentary section
-*** utils/tq.el
-Commentary:
-
-manages receiving a stream asynchronously,
-parsing it into transactions, and then calling
-handler functions
-
-Our basic structure is the queue/process/buffer triple.  Each entry
-of the queue is a regexp/closure/function triple.  We buffer
-bytes from the process until we see the regexp at the head of the
-queue.  Then we call the function with the closure and the
-collected bytes.
-*** utils/trace.el
-Commentary:
-
-A simple trace package that utilizes advice.el. It generates trace
-information in a Lisp-style fashion and inserts it into a trace output
-buffer. Tracing can be done in the background (or silently) so that
-generation of trace output won't interfere with what you are currently
-doing.
-*** utils/tree-menu.el  Can't find any Commentary section
-*** utils/uniquify.el
-Commentary:
-
-Emacs's standard method for making buffer names unique adds <2>, <3>,
-etc. to the end of (all but one of) the buffers.  This file replaces
-that behavior, for buffers visiting files and dired buffers, with a
-uniquification that adds parts of the file name until the buffer names
-are unique.  For instance, buffers visiting /u/mernst/tmp/Makefile and
-/usr/projects/zaphod/Makefile would be named Makefile|tmp and
-Makefile|zaphod, respectively (instead of Makefile and Makefile<2>).
-Other buffer name styles are also available.
-*** utils/xbm-button.el Can't find any Commentary section
-*** utils/xpm-button.el Can't find any Commentary section
-
-** viper        - VI emulator
-*** viper/viper-ex.el   Can't find any Commentary section
-*** viper/viper-init.el Can't find any Commentary section
-*** viper/viper-keym.el Can't find any Commentary section
-*** viper/viper-macs.el Can't find any Commentary section
-*** viper/viper-mous.el Can't find any Commentary section
-*** viper/viper-util.el Can't find any Commentary section
-*** viper/viper.el      Can't find any Commentary section
-
-** vm           - Mail reader
-See the online documentation.
-
-** vms          - Stuff for Emacs under VMS
-vms/vms-patch.el        Can't find any Commentary section
-*** vms/vmsproc.el      Can't find any Commentary section
-*** vms/vmsx.el Can't find any Commentary section
-
-** w3           - World Wide Web browser under Emacs
-See the online documentation.
-
-** x11          - X11 specific stuff: compose keys, menubars, toolbar, ...
-*** x11/x-compose.el    Can't find any Commentary section
-*** x11/x-faces.el      Can't find any Commentary section
-*** x11/x-font-menu.el
-Commentary:
-
-Creates three menus, "Font", "Size", and "Weight", and puts them on the
-"Options" menu.  The contents of these menus are the superset of those
-properties available on any fonts, but only the intersection of the three
-sets is selectable at one time.
-*** x11/x-init.el
-Commentary:
-*** x11/x-iso8859-1.el  Can't find any Commentary section
-*** x11/x-menubar.el
-Commentary:
-*** x11/x-misc.el       Can't find any Commentary section
-*** x11/x-mouse.el      Can't find any Commentary section
-*** x11/x-scrollbar.el  Can't find any Commentary section
-*** x11/x-select.el     Can't find any Commentary section
-*** x11/x-toolbar.el    Can't find any Commentary section
-*** x11/x-win-sun.el
-Commentary:
-
-This file is loaded by x-win.el at run-time when we are sure that XEmacs
-is running on the display of a Sun.
-
-The Sun X server (both the MIT and OpenWindows varieties) have extremely
-stupid names for their keypad and function keys.  For example, the key
-labeled 3 / PgDn, with R15 written on the front, is actually called F35.
-*** x11/x-win-xfree86.el        Can't find any Commentary section
-
-
-* What Changed
+** Why Haven't XEmacs and FSF GNU Emacs Merged?
+===============================================
+
+This question comes up again and again on comp.emacs.xemacs and other
+newsgroups and mailing lists.  Recently in fact there was a long, heated
+thread about this issue.
+
+Here is what one XEmacs developer said about this issue.
+
+DISCLAIMER: This is provided for informational purposes only and does
+_NOT_ necessarily represent the opinions of any of the other XEmacs
+developers or of any of the organizations involved.  Keep in mind
+that this is a highly charged issue with differing and strongly-held
+opinions held by the various parties involved.
+
+   Subject: Re: elisp code in GNU Emacs/XEmacs
+   From: wing@666.com (Ben Wing)
+   Message-ID: <wingDqGwLH.K6w@netcom.com>
+   Date: Fri, 26 Apr 1996 11:44:05 GMT
+   
+   In article <9xo91fmordx.fsf@bcarsf26.nortel.ca>, Stephane Boucher
+   <sbo@bcarsf26.nortel.ca> wrote:
+   
+       Well, I don't think the number of volunteers is greater by having 2
+       Emacsen. I think your affirmation holds true because of the
+       inhability of the various parties involved to work together and
+       compromise. If people could all work together, I don't think there
+       would be any benifit in having 2 Emacsen. It may seem profitable
+       right now, but in the long run, I think everyone looses. The time
+       everyone spends porting back and forth, and imitating what the other
+       has done is not spent to do new features. I've presonnally
+       experienced a project split in the past, and in the end everyone
+       lost. 
+       
+       I don't want to try to blame anybody for the current fiasco. But we do
+       have a fiasco. That is unfortunate. There are so many contributors
+       out there that if everyone worked together we might be looking
+       forward to having, say, threads in Emacs. But instead, as someone
+       told me not that long ago, maybe we'll soon see a new editor come out
+       based on Java. Threads will be part of it at no extra cost, and those
+       people still using Emacs will continue to curse at the fact that they
+       can't start GNUS while typing an E-mail, and the various Emacs
+       contributors will continue to argue among themselves, nitpicking
+       about how to get the perfect solution, rather than try to move
+       forward. Meanwhile, people will enjoy using a new state of the art
+       editor. 
+   
+   Don't think we're just being needlessly perverse by continuing to have
+   XEmacs. I'm well aware of the problems in having a project split, and
+   don't think for a minute that we haven't tried (extremely hard, in
+   fact) to come up with a merge.
+   
+   Unfortunately, as I have said before, the odds of this happening are
+   quite low due to severe conflicts (both technical, procedural, and
+   philosophical) between RMS and the XEmacs developers. If we were to
+   assent to even half of what RMS wants in a merged Emacs, it would take
+   years of work to produce the merged Emacs, and the result would be
+   less powerful than the existing XEmacs.
+   
+   Since so many people seem so misinformed about this problem, I'll go
+   ahead and state the fundamental dividing issues:
+   
+    1. RMS does not believe in data abstraction, and cannot be convinced
+       of the folly of this. This by itself is such a huge division that
+       it makes a merge basically unthinkable. Because of this, FSF Emacs
+       is basically unmaintainable by anyone other than RMS. RMS has
+       consented to all the data abstraction I want provided that I take
+       sole responsibility for writing this code (which basically means
+       I'd have to write almost all of the code or rewrite most of his
+       code), and provided that he can use this issue as a bargaining
+       chip to get concessions of his own.
+    2. RMS sees the merge process as a series of mutual concessions
+       traded back and forth. IMHO this is reasonable for a peace treaty
+       but absurd for a piece of software -- we have to have technical
+       agreement on the major issues involved, and the chance of that
+       happening is basically nil.
+    3. RMS has insisted in full backwards compatibility with all aspects
+       of FSF Emacs, no matter how ugly; and furthermore, this backwards
+       compatibility must work fast enough to make existing code run
+       without problem. This basically means that there would have to be
+       parallel C implementations of events, keymaps, and many other data
+       structures. This not only will take months or years of extra work
+       to implement, but poses some fundamental technical problems due to
+       the non-abstractedness of FSF Emacs (e.g. in FSF Emacs keymaps are
+       conses or vectors and a lot of code depends on this, and
+       reconciling this with XEmacs's primitive keymap type is difficult
+       to impossible).
+    4. RMS will not even consent to neutral names for the two editors. He
+       objects to call his editor FSF Emacs because for some unfathomable
+       reason he finds it insulting. He suggests just Emacs, which I find
+       not only insulting (XEmacs is just as much Emacs as is FSF Emacs)
+       but also quite confusing. He will not even consent to calling his
+       editor GNU Emacs without also referring to XEmacs as GNU XEmacs --
+       basically a Borg-like assimilation attempt at making XEmacs a GNU
+       product, which it is not. (None of the developers of Lucid Emacs
+       and XEmacs were or are sanctioned by GNU, and none of us got the
+       least bit of assistance or cooperation in doing our work. In fact,
+       RMS actively made it harder by choosing to ignore all work
+       previously done in XEmacs and adding his own incompatible
+       interfaces for functionality already in XEmacs. This makes it
+       quite difficult to track FSF Emacs and keep a sane API.) He has
+       stated many times, and continues to assert, that most or all of
+       the work done on Lucid Emacs and XEmacs was done primarily as a
+       testing ground for potential features to be added to FSF Emacs.
+       All of the developers of Lucid Emacs and XEmacs assert that this
+       is patently false -- so why does RMS continue to insist that this
+       is the case?
+
+   ben
+   --
+   "... then the day came when the risk to remain tight in a bud was
+   more painful than the risk it took to blossom." -- Anais Nin
+
+
+** Why Another Version of Emacs?  (The Lucid, Inc. Point of View)
+=================================================================
+
+Lucid's latest product, Energize, is a C/C++ development environment.
+Rather than invent (and force our users to learn) a new user-interface, we
+chose to build part of our environment on top of the world's best editor,
+GNU Emacs.  (Though our product is commercial, the work we did on is
+free software, and is useful without having to purchase our product.)
+
+We needed a version of Emacs with mouse-sensitive regions, multiple fonts,
+the ability to mark sections of a buffer as read-only, the ability to detect
+which parts of a buffer has been modified, and many other features.
+
+*** Why Not Epoch or GNU Emacs?
+-------------------------------
+
+For our purposes, the existing version of Epoch was not sufficient; it did
+not allow us to put arbitrary pixmaps/icons in buffers, `undo' did not
+restore changes to regions, regions did not overlap and merge their
+attributes in the way we needed, and several other things.
+
+We could have devoted our time to making Epoch do what we needed (and, in
+fact, we spent some time doing that in 1990) but, since the Free Software
+Foundation planned to include Epoch-like features in their Version 19, we
+decided that our efforts would be better spent improving GNU Emacs
+instead of Epoch.
+
+Our original hope was that our changes to GNU Emacs would be
+incorporated into the "official" v19.  However, scheduling conflicts arose,
+and we found that, given the amount of work still remaining to be done, we
+didn't have the time or manpower to do the level of coordination that would
+be necessary to get our changes accepted by the Free Software Foundation.
+Consequently, we released our work as a forked branch of Emacs, instead of
+delaying any longer.
+
+Roughly a year after Lucid Emacs 19.0 was released, a beta version of the
+Free Software Foundation branch of Emacs 19 was released.  This version
+was better in some areas, and worse in others, as reflects the differing
+focus of our development efforts.
+
+We planned to continue developing and supporting Lucid Emacs, and merging in
+bug fixes and new features from the Free Software Foundation branch as
+appropriate; we did not plan to discard any of the functionality that we
+implemented which Richard Stallman of the Free Software Foundation has
+chosen not to include in his version.
+
+However, events have overtaken us, and Lucid, Inc. has effectively ceased
+doing business and is (September 1994) in the process of being sold.  Our
+efforts on Lucid Emacs have also ceased and we've turned over the continued
+enhancement of Lucid Emacs to the University of Illinois under Chuck
+Thompson, a member of the Lucid Emacs team and a maintainer of Epoch.
+At the same time, Lucid Emacs has been renamed XEmacs to reflect the
+substantial contribution of the University of Illinois with the support of
+Sun Microsystems.
+
+Certain elements of Lucid Emacs, or derivatives of them, have been ported to
+the FSF GNU Emacs.  We have not been doing work in this direction, because
+we feel that Lucid Emacs has a cleaner and more extensible substrate, and
+that any kind of merger between the two branches would be far easier by
+merging the Free Software Foundation changes into our version than the other
+way around.
+
+We were working closely with the Epoch developers to merge in the
+remaining Epoch functionality which Lucid Emacs does not yet have.  Epoch
+and Lucid Emacs will soon be one and the same thing.  Work is being done on
+a compatibility package which will allow Epoch 4 code to run in XEmacs with
+little or no change.  (As of 19.8, Lucid Emacs is running a descendant of
+the Epoch redisplay engine.)
+
+** Why Another Version of Emacs?  (The SunPro Point of View)
+============================================================
+
+Emacs 18 has been around for a long, long time.  Version 19 was supposed to
+be the successor to Emacs 18 with X support.  It was going to be available
+"real soon" for a long time (some people remember hearing about v19 as early
+as 1984!), but it never came out.  v19 development was going very, very
+slowly, and from the outside it seemed that it was not moving at all.  In
+the meantime other people gave up waiting for v19 and decided to build their
+own X-aware Emacsen.  The most important of these was probably Epoch, which
+came from the University of Illinois and was based on v18.
+
+Around three years ago we decided that we wanted an integrated editor.  We
+contracted with the University of Illinois to provide a number of basic
+enhancements to the functionality in Epoch.  The University of Illinois
+initially was planning to deliver this on top of Epoch code.
+
+In the meantime (actually some time before we talked with the University of
+Illinois) Lucid had decided that it also wanted to provide an integrated
+environment with an integrated editor.  Lucid decided that the Version 19
+basis was a better one than Version 18 and thus decided not to use Epoch but
+instead work with Richard Stallman, the head of the Free Software Foundation
+and principle author of Emacs, on getting Version 19 out.  At some point
+Stallman and Lucid parted ways.  Lucid kept working and got a Version 19 out
+that they called Lucid Emacs 19.
+
+After Lucid's v19 came out it became clear to us (the University of Illinois
+and SunPro) that the right thing to do was to push for an integration of
+both Lucid Emacs and Epoch, and to get the deliverables that we were asking
+from the University of Illinois on top of this integrated platform.  Through
+the last two years, SunPro has been actively supporting this product and has
+been investing a comparable amount of effort into it as Lucid has.
+Substantial portions of the current code have originated under the support
+of SunPro, either directly in SunPro, or in the University of Illinois but
+paid for by us.  This code was kept away from Lucid for a while, but later
+was made available to them.  Initially Lucid didn't know that we were
+supporting UofI, but later we were open about it.
+
+Eventually, all development source trees were synched up.  Currently, there
+is basically no difference in the source trees between what is at the
+University of Illinois and SunPro.
+
+SunPro originally called the integrated product ERA, for "Emacs Rewritten
+Again".  At some point, SunPro and Lucid came to an agreement to find a name
+for the product that was not specific to either company.  An additional
+constraint that Lucid placed on the name was that it must contain the word
+"Emacs" in it -- thus "ERA" was not acceptable.  The agreed-upon name was
+"XEmacs", and this is what the product has been called starting with the
+19.11 release.
+
+
+* What's Different?
 ===================
 
 
-** Differences between XEmacs and GNU Emacs 19
+** Differences between XEmacs and FSF GNU Emacs 19
 ==================================================
 
 In XEmacs, events are first-class objects.  FSF 19 represents them as
@@ -2802,7 +347,7 @@ ancient ASCII code used to represent a particular overlapping subset of them.
 In XEmacs, keymaps are first-class opaque objects.  FSF 19 represents them as
 complicated combinations of association lists and vectors.  If you use the
 advertised functional interface to manipulation of keymaps, the same code
-will work in XEmacs, Emacs 18, and GNU Emacs 19; if your code depends
+will work in XEmacs, Emacs 18, and FSF GNU Emacs 19; if your code depends
 on the underlying implementation of keymaps, it will not.
 
 XEmacs uses "extents" to represent all non-textual aspects of buffers;
@@ -2847,7 +392,7 @@ scrollbars.  A look-alike Motif scrollbar is provided for those who
 don't have Motif. (Even for those who do, the look-alike may be preferable
 as it is faster.)
 
-If you're running on a machine with audio hardware, you can specify sound
+If you're running on a machine with audio hardware, you can specify sound 
 files for XEmacs to play instead of the default X beep.  See the documentation
 of the function load-sound-file and the variable sound-alist.
 
@@ -2870,95 +415,95 @@ well to a number of window systems.
 
 NOTE: All timestamps are measured as milliseconds since Emacs started.
 
- key_press_event
-    event_channel       A token representing which keyboard generated it.
-                        For this kind of event, this is a frame object.
-                        (This is for eventual support of multiple displays.)
-    timestamp           When it happened
-    key                 What keysym this is; an integer or a symbol.
-                        If this is an integer, it will be in the printing
-                        ASCII range: >32 and <127.
-    modifiers           Bucky-bits on that key: control, meta, etc.
-                        For most keys, Shift is not a bit; that is implicit
-                        in the keyboard layout.
+ key_press_event	
+    event_channel	A token representing which keyboard generated it.
+			For this kind of event, this is a frame object.
+			(This is for eventual support of multiple displays.)
+    timestamp		When it happened
+    key			What keysym this is; an integer or a symbol.
+			If this is an integer, it will be in the printing
+			ASCII range: >32 and <127.
+    modifiers		Bucky-bits on that key: control, meta, etc.
+			For most keys, Shift is not a bit; that is implicit
+			in the keyboard layout.
 
  button_press_event
  button_release_event
-    event_channel       A token representing which mouse generated it.
-                        For this kind of event, this is a frame object.
-    timestamp           When it happened
-    button              What button went down or up.
-    modifiers           Bucky-bits on that button: shift, control, meta, etc.
-    x, y                Where it was at the button-state-change (in pixels).
+    event_channel	A token representing which mouse generated it.
+			For this kind of event, this is a frame object.
+    timestamp		When it happened
+    button		What button went down or up.
+    modifiers		Bucky-bits on that button: shift, control, meta, etc.
+    x, y		Where it was at the button-state-change (in pixels).
 
  pointer_motion_event
-    event_channel       A token representing which mouse generated it.
-                        For this kind of event, this is a frame object.
-    timestamp           When it happened
-    x, y                Where it was after it moved (in pixels).
-    modifiers           Bucky-bits down when the motion was detected.
-                        (Possibly not all window systems will provide this?)
+    event_channel	A token representing which mouse generated it.
+			For this kind of event, this is a frame object.
+    timestamp		When it happened
+    x, y		Where it was after it moved (in pixels).
+    modifiers		Bucky-bits down when the motion was detected.
+			(Possibly not all window systems will provide this?)
 
  process_event
-    timestamp           When it happened
-    process             the emacs "process" object in question
+    timestamp		When it happened
+    process		the emacs "process" object in question
 
  timeout_event
-    timestamp           Now (really, when the timeout was signaled)
-    interval_id         The ID returned when the associated call to
-                        add_timeout_cb() was made
-        ------ the rest of the fields are filled in by Emacs -----
-    id_number           The Emacs timeout ID for this timeout (more
-                        than one timeout event can have the same value
-                        here, since Emacs timeouts, as opposed to
-                        add_timeout_cb() timeouts, can resignal
-                        themselves)
-    function            An elisp function to call when this timeout is
-                        processed.
-    object              The object passed to that function.
+    timestamp		Now (really, when the timeout was signaled)
+    interval_id		The ID returned when the associated call to
+			add_timeout_cb() was made
+	------ the rest of the fields are filled in by Emacs -----
+    id_number		The Emacs timeout ID for this timeout (more
+			than one timeout event can have the same value
+			here, since Emacs timeouts, as opposed to
+			add_timeout_cb() timeouts, can resignal
+			themselves)
+    function		An elisp function to call when this timeout is
+			processed.
+    object		The object passed to that function.
 
  eval_event
-    timestamp           When it happened
-    function            An elisp function to call with this event object.
-    object              Anything.
-                        This kind of event is used internally; sometimes the
-                        window system interface would like to inform emacs of
-                        some user action (such as focusing on another frame)
-                        but needs that to happen synchronously with the other
-                        user input, like keypresses.  This is useful when
-                        events are reported through callbacks rather
-                        than in the standard event stream.
+    timestamp		When it happened
+    function		An elisp function to call with this event object.
+    object		Anything.
+			This kind of event is used internally; sometimes the
+			window system interface would like to inform emacs of
+			some user action (such as focusing on another frame)
+			but needs that to happen synchronously with the other
+			user input, like keypresses.  This is useful when
+			events are reported through callbacks rather
+			than in the standard event stream.
 
  misc_user_event
-    timestamp           When it happened
-    function            An elisp function to call with this event object.
-    object              Anything.
-                        This is similar to an eval_event, except that it is
-                        generated by user actions: selections in the
-                        menubar or scrollbar actions.  It is a "command"
-                        event, like key and mouse presses (and unlike mouse
-                        motion, process output, and enter and leave window
-                        hooks).  In many ways, eval_events are not the same
-                        as keypresses or misc_user_events.
+    timestamp		When it happened
+    function		An elisp function to call with this event object.
+    object		Anything.
+			This is similar to an eval_event, except that it is
+			generated by user actions: selections in the
+			menubar or scrollbar actions.  It is a "command"
+			event, like key and mouse presses (and unlike mouse
+			motion, process output, and enter and leave window
+			hooks).  In many ways, eval_events are not the same
+			as keypresses or misc_user_events.
 
  magic_event
-                        No user-serviceable parts within.  This is for things
-                        like KeymapNotify and ExposeRegion events and so on
-                        that emacs itself doesn't care about, but which it
-                        must do something with for proper interaction with
-                        the window system.
+			No user-serviceable parts within.  This is for things
+			like KeymapNotify and ExposeRegion events and so on
+			that emacs itself doesn't care about, but which it
+			must do something with for proper interaction with
+			the window system.
 
-                        Magic_events are handled somewhat asynchronously, just
-                        like subprocess filters.  However, occasionally a
-                        magic_event needs to be handled synchronously; in that
-                        case, the asynchronous handling of the magic_event will
-                        push an eval_event back onto the queue, which will be
-                        handled synchronously later.  This is one of the
-                        reasons why eval_events exist; I'm not entirely happy
-                        with this aspect of this event model.
+			Magic_events are handled somewhat asynchronously, just
+			like subprocess filters.  However, occasionally a 
+			magic_event needs to be handled synchronously; in that
+			case, the asynchronous handling of the magic_event will
+			push an eval_event back onto the queue, which will be 
+			handled synchronously later.  This is one of the
+			reasons why eval_events exist; I'm not entirely happy
+			with this aspect of this event model.
 
 
-The function `next-event' blocks and returns one of the above-described
+The function `next-event' blocks and returns one of the above-described 
 event objects.  The function `dispatch-event' takes an event and processes
 it in the appropriate way.
 
@@ -2990,7 +535,7 @@ a non-ASCII character, a button click, a menu selection, etc.
 The variable `unread-command-char' no longer exists, and has been replaced
 by `unread-command-events'.  With the new event model, it is incorrect for
 code to do (setq unread-command-char (read-char)), because all user-input
-can't be represented as ASCII characters.  *** This is an incompatible
+can't be represented as ASCII characters.  *** This is an incompatible 
 change.  Code which sets `unread-command-char' must be updated to use the
 combination of `next-command-event' and `unread-command-events' instead.
 
@@ -3009,12 +554,12 @@ to ^G.  All redisplay happens in the main thread of the process.
 Instead of keymaps being alists or obarrays, they are a new primary data
 type.  The only user access to the contents of a keymap is through the
 existing keymap-manipulation functions, and a new function, map-keymap.
-This means that existing code that manipulates keymaps may need to
+This means that existing code that manipulates keymaps may need to 
 be changed.
 
 One of our goals with the new input and keymap code was to make more
 character combinations available for binding, besides just ASCII and
-function keys.  We want to be able bind different commands to Control-a
+function keys.  We want to be able bind different commands to Control-a 
 and Control-Shift-a; we also want it to be possible for the keys Control-h
 and Backspace (and Control-M and Return, and Control-I and Tab, etc) to
 be distinct.
@@ -3024,10 +569,10 @@ is help.  The answer is to play around with the keyboard-translate-table, or
 be lucky enough to have a system administrator who has done this for you
 already; but if it were possible to bind backspace and C-h to different
 things, then (under a window manager at least) both backspace and delete
-would delete a character, and ^H would be help.  There's no need to deal
+would delete a character, and ^H would be help.  There's no need to deal 
 with xmodmap, kbd-translate-table, etc.
 
-Here are some more examples: suppose you want to bind one function to Tab,
+Here are some more examples: suppose you want to bind one function to Tab, 
 and another to Control-Tab.  This can't be done if Tab and Control-I are the
 same thing.  What about control keys that have no ASCII equivalent, like
 Control-< ?  One might want that to be bound to set-mark-at-point-min.  We
@@ -3036,8 +581,8 @@ kill-backward-word.  Again, this can't be done if Backspace and C-h are
 indistinguishable.
 
 The user represents keys as a string of ASCII characters (when possible and
-convenient), or as a vector of event objects, or as a vector of "key
-description lists", that looks like (control a), or (control meta delete)
+convenient), or as a vector of event objects, or as a vector of "key 
+description lists", that looks like (control a), or (control meta delete) 
 or (shift f1).  The order of the modifier-names is not significant, so
 (meta control x) and (control meta x) are the same.
 
@@ -3045,7 +590,7 @@ or (shift f1).  The order of the modifier-names is not significant, so
 into a keymap.  When Emacs wants to return a key sequence (this-command-keys,
 recent-keys, keyboard-macros, and read-key-sequence, for example) it returns
 a vector of event objects.  Keyboard macros can also be represented as ASCII
-strings or as vectors of key description lists.
+strings or as vectors of key description lists.  
 
 This is an incompatible change: code which calls `this-command-keys',
 `recent-keys', `read-key-sequence', or manipulates keyboard-macros probably
@@ -3153,29 +698,29 @@ The first element of each menu item is the string to print on the menu.
 
 The second element is the callback function; if it is a symbol, it is
 invoked with `call-interactively.'  If it is a list, it is invoked with
-`eval'.
+`eval'.  
 
 If the second element is a symbol, then the menu also displays the key that
 is bound to that command (if any).
 
 The third element of the menu items determines whether the item is selectable.
 It may be t, nil, or a form to evaluate.  Also, a hook is run just before a
-menu is exposed, which can be used to change the value of these slots.
+menu is exposed, which can be used to change the value of these slots. 
 For example, there is a hook that makes the "undo" menu item be selectable
-only in the cases when `advertised-undo' would not signal an error.
+only in the cases when `advertised-undo' would not signal an error.  
 
 Menus may have other menus nested within them; they will cascade.
 
 There are utility functions for adding items to menus, deleting items,
 disabling them, etc.
 
-The function `popup-menu' takes a menu description and pops it up.
+The function `popup-menu' takes a menu description and pops it up.  
 
-The function `popup-dialog-box' takes a dialog-box description and pops
+The function `popup-dialog-box' takes a dialog-box description and pops 
 it up.  Dialog box descriptions look a lot like menu descriptions.
 
-The menubar, menu, and dialog-box code is implemented as a library,
-with an interface which hides the toolkit that implements it.
+The menubar, menu, and dialog-box code is implemented as a library, 
+with an interface which hides the toolkit that implements it.  
 
 
 *** Isearch Changes
@@ -3186,8 +731,8 @@ and causing a few incompatible changes.
 
  -  the old isearch-*-char variables are no longer supported.  In the old
     system, one could make ^A mean "repeat the search" by doing something
-    like (setq search-repeat-char ?C-a).  In the new system, this is
-    accomplished with
+    like (setq search-repeat-char ?C-a).  In the new system, this is 
+    accomplished with 
 
        (define-key isearch-mode-map "\C-a" 'isearch-repeat-forward)
 
@@ -3226,7 +771,7 @@ don't show up, and the copyleft notice isn't shown.
 
 The default values for load-path, exec-path, lock-directory, and
 Info-directory-list are not (necessarily) built into Emacs, but are
-computed at startup time.
+computed at startup time.  
 
 First, Emacs looks at the directory in which its executable file resides:
 
@@ -3275,8 +820,8 @@ As does this:
     /usr/local/xemacs/info/
 
 This configuration might be used for a multi-architecture installation; assume
-that $LOCAL refers to a directory which contains only files specific to a
-particular architecture (i.e., executables) and $SHARED refers to those files
+that $LOCAL refers to a directory which contains only files specific to a 
+particular architecture (i.e., executables) and $SHARED refers to those files 
 which are not machine specific (i.e., lisp code and documentation.)
 
     $LOCAL/bin/xemacs@ -> $LOCAL/xemacs-19.14/xemacs*
@@ -3801,7 +1346,7 @@ other Xt "Widgets" in the XEmacs window.  Also, XEmacs understands the
 standard Xt command-line arguments.
 
 XEmacs understands the X11 "Selection" mechanism; it's possible to define
-and customize selection converter functions and new selection types from
+and customize selection converter functions and new selection types from 
 Emacs Lisp, without having to recompile XEmacs.
 
 XEmacs provides support for ToolTalk on systems that have it.
@@ -3837,7 +1382,7 @@ XEmacs understands truenames, and can be configured to notice when you are
 visiting two names of the same file.  See the variables find-file-use-truenames
 and find-file-compare-truenames.
 
-If you're running on a machine with audio hardware, you can specify sound
+If you're running on a machine with audio hardware, you can specify sound 
 files for XEmacs to play instead of the default X beep.  See the documentation
 of the function load-sound-file and the variable sound-alist.
 
@@ -3868,6 +1413,25 @@ There are many more specifics in the "Miscellaneous Changes" section, below.
 
 The online Emacs Manual and Emacs-Lisp Manual are now both relatively
 up-to-date.
+
+* XEmacs Release Notes
+======================
+
+** Future Plans for XEmacs
+==========================
+
+For the curious, the biggest changes in 19.15 will include integration
+of TM (a MIME package for VM and GNUS), EFS (the next generation of
+ange-ftp), and Auc-TeX, and a "lite" distribution that includes a
+minimal base and a set of optional packages (which will include TM,
+EFS, and Auc-TeX, as well as all of the large packages currently
+distributed with XEmacs).  There will also still be a full distribution
+that includes all the optional packages.
+
+In the longer term, we are also working on a separate branch of XEmacs that
+includes full Asian-language ("MULE") support.  This work is currently in
+beta and is being supported by Sun Microsystems.
+
 
 ** Major Differences Between 19.13 and 19.14
 ============================================
@@ -4029,10 +1593,10 @@ Significant Lisp-level changes:
 -- The `face' property of extents and text properties can now
    be a list.
 
--- The `mouse-face' property from GNU Emacs is now supported.
+-- The `mouse-face' property from FSF GNU Emacs is now supported.
    It supersedes the `highlight' property.
 
--- `enriched' and `facemenu' packages from GNU Emacs have been ported.
+-- `enriched' and `facemenu' packages from FSF GNU Emacs have been ported.
 
 -- New functions for easier creation of dialog boxes:
    `get-dialog-box-response', `message-box', and `message-or-box'.
@@ -4257,7 +1821,7 @@ ada-mode:  major mode for editing Ada source
 
 arc-mode:  simple editing of archives
 
-auto-show-mode:  automatically scrolls horizontally to keep point on-screen
+auto-show-mode:  automatically scrolls horizontally to keep point on-screen 
 
 completion:  dynamic word completion mode
 
@@ -4270,9 +1834,9 @@ easymenu:  menu support package
 live-icon:  makes frame icons represent the current frame contents
 
 mailcrypt 3.2:  mail encryption with PGP; included but v2.4 is still
-                the default
+		the default
 
-two-column:  for editing two-column text
+two-column:  for editing two-column text 
 
 
 ** Major Differences Between 19.11 and 19.12
@@ -4651,11 +2215,11 @@ device API.  For example, `window-system' is obsoleted by
 `device-type', and `x-color-display-p' and friends are obsoleted by
 `device-class'.
 
-*** NOTE **: The obsolete variable `window-system' is going
+** NOTE **: The obsolete variable `window-system' is going
 to be deleted soon, probably in 19.14.  Please correct all
 your code to use `device-type'.
 
-*** INCOMPATIBLE CHANGE **: The function `x-display-visual-class'
+** INCOMPATIBLE CHANGE **: The function `x-display-visual-class'
 returns different values from previous versions of XEmacs.
 
 
@@ -4683,12 +2247,12 @@ for which SIGIO is broken (e.g. IRIX 5.3 and older versions of Linux).
 In addition, the SIGIO support has been fixed for many systems on
 which it didn't always work properly before (e.g. HPUX and Solaris).
 
-
+   
 
 *** Events
 ----------
 
-*** INCOMPATIBLE CHANGE **: Many event functions have been changed to
+** INCOMPATIBLE CHANGE **: Many event functions have been changed to
 accept and return windows instead of frames.
 
 New function: `event-live-p', specifying whether `deallocate-event'
@@ -4821,7 +2385,7 @@ and width of a character in a particular face.
 *** Fonts, Colors
 -----------------
 
-*** INCOMPATIBLE CHANGE **: The old "font" and "pixel" objects are gone.
+** INCOMPATIBLE CHANGE **: The old "font" and "pixel" objects are gone.
 In place are new objects "font specifier", "font instance", "color
 specifier", and "color instance".  Functions `font-name', `pixel-name'
 (an obsolete alias for `color-name'), etc. are now convenience
@@ -4866,7 +2430,7 @@ further restricted to a particular device type or class.  The way in
 which faces can be controlled is now based on the general and powerful
 specifier mechanism; see above.
 
-*** INCOMPATIBLE CHANGE **: The glyph and pixmap API has been completely
+** INCOMPATIBLE CHANGE **: The glyph and pixmap API has been completely
 overhauled.  A new Lisp object "glyph" is provided and should be used
 where the old "pixmap" object would have been used.  The pixmap object
 exists no longer.  There are also new Lisp objects "image specifier"
@@ -4898,7 +2462,7 @@ superseded by the specifier variables `left-margin-width' and
 `right-margin-width', allowing much more flexible control through the
 specifier mechanism.
 
-*** INCOMPATIBLE CHANGE **: The variable `use-left-overflow',
+** INCOMPATIBLE CHANGE **: The variable `use-left-overflow',
 for controlling annotations in the left margin, is now a specifier
 variable instead of a buffer-local variable.  (There is also a new
 variable `use-right-overflow', that is complementary.)
@@ -4927,7 +2491,7 @@ developed by RSA, inc.
 *** Keymaps
 -----------
 
-The GNU Emacs concept of `function-key-map' is now partially
+The FSF GNU Emacs concept of `function-key-map' is now partially
 implemented.  This allows conversion of function-key escape sequences
 such as `ESC [ 1 1 ~' into an equivalent human-readable keysym such as
 `F1'.  This work will be completed in 19.14.  The function-key map is
@@ -4939,7 +2503,7 @@ extent-local keymaps, etc.  As a side effect of this, menu items will
 now correctly show the keyboard equivalent for commands that are
 available through a minor-mode keymap, extent-local keymap, etc.
 
-*** INCOMPATIBLE CHANGE **: The modifier key "Symbol" has
+** INCOMPATIBLE CHANGE **: The modifier key "Symbol" has
 been renamed to "Alt", for compatibility with the rest of the world.
 Keep in mind that on many keyboards, the key labelled "Alt" actually
 generates the "Meta" modifier.  (On Sun keyboards, however, the key
@@ -4956,10 +2520,10 @@ provided for easier customization of mouse behavior.  For example, you
 can now easily specify an action to be invoked on single-click
 (i.e. down-up without appreciable motion), double-click, drag-up, etc.
 
-Some code from GNU Emacs has been ported over, generalizing some of
+Some code from FSF GNU Emacs has been ported over, generalizing some of
 the X-specific mouse stuff.
 
-*** INCOMPATIBLE CHANGE **: The function `set-mouse-position' accepts
+** INCOMPATIBLE CHANGE **: The function `set-mouse-position' accepts
 a window instead of a frame.
 
 New function `mouse-position' that obsoletes and is more powerful than
@@ -5001,7 +2565,7 @@ requiring direct IP reachability.
 
 Windows 95 is still not out yet.
 
-*** INCOMPATIBLE CHANGE **: The functions `locate-window-from-coordinates'
+** INCOMPATIBLE CHANGE **: The functions `locate-window-from-coordinates'
 and `window-edges' have been eliminated.  It no longer makes sense to
 work with windows in terms of character positions, because windows can
 (and often do) have many differently-sized fonts in them, because the
@@ -5045,10 +2609,51 @@ Various other new system configurations are supported.
 
 
 
+*** Packages
+------------
+
+Most packages have been updated to the latest available versions.
+
+
+Some of the new Emacs Lisp packages ---
+
+Hyperbole: the everyday information manager.  Provides a Rolodex,
+	   allows links to be embedded in text, etc.
+
+OOBR: a sophisticated class browser for object-oriented languages.
+
+viper: a better VI emulator that allows Emacs and VI features
+       to coexist happily.
+
+hm--html-menus: a sophisticated package for editing HTML code,
+		from Heiko Muenkel.
+
+ksh-mode.el: for editing shell scripts.
+
+lazy-lock.el: a lazy, on-the-fly fontifier.
+
+paren.el: an improved matching paren highlighter
+
+
+
+Major changes to existing packages --
+
+VM: has a toolbar, many other nice features.
+
+w3: has a toolbar, many other nice features.
+
+ediff: provides three-way merging, has a better user interface.
+
+info: has a toolbar.
+
+highlight-headers.el: now highlights URL's and makes them active so
+		      that when clicked either Netscape 1.1 is called
+		      or Emacs W3 is run.
+
 
 ** Major Differences Between 19.10 and 19.11
 ============================================
-
+  
 The name has changed from "Lucid Emacs" to "XEmacs".  Along with this is a
 new canonical ftp site: cs.uiuc.edu:/pub/xemacs.
 
@@ -5149,7 +2754,7 @@ Some default key bindings have changed to match FSF19; the new bindings are
         C-x -                   shrink-window-if-larger-than-buffer
         C-x +                   balance-windows
 
-The variable allow-deletion-of-last-visible-screen has been removed, since
+The variable allow-deletion-of-last-visible-screen has been removed, since 
 it was widely hated.  You can now always delete the last visible screen if
 there are other iconified screens in existence.
 
@@ -5174,7 +2779,7 @@ respective toolkits.
 There is now an implementation of dialog boxes based on the Athena
 widgets, as well as the existing Motif implementation.
 
-This release works with Motif 1.2 as well as 1.1.  If you link with Motif,
+This release works with Motif 1.2 as well as 1.1.  If you link with Motif, 
 you do not also need to link with Athena.
 
 If you compile lwlib with both USE_MOTIF and USE_LUCID defined (which is the
@@ -5182,7 +2787,7 @@ recommended configuration) then the Lucid menus will draw text using the Motif
 string-drawing library, instead of the Xlib one.  The reason for this is that
 one can take advantage of the XmString facilities for including non-Latin1
 characters in resource specifications.  However, this is a user-visible change
-in that, in this configuration, the menubar will use the "*fontList" resource
+in that, in this configuration, the menubar will use the "*fontList" resource 
 in preference to the "*font" resource, if it is set.
 
 It's possible to make extents which are copied/pasted by kill and undo.
@@ -5206,7 +2811,7 @@ There are menus in Dired, Tar, Comint, Compile, and Grep modes.
 There is a menu of window management commands on the right mouse button over
 the modelines.
 
-Popup menus now have titles at the top; this is controlled by the new
+Popup menus now have titles at the top; this is controlled by the new 
 variable `popup-menu-titles'.
 
 The `Find' key on Sun keyboards will search for the next (or previous)
@@ -5221,7 +2826,7 @@ W3, the emacs interface to the World Wide Web, is included.
 
 Felix Lee's GNUS speedups have been installed, including his new version of
 nntp.el which makes GNUS efficiently utilize the NNTP XOVER command if
-available (which is much faster.)
+available (which is much faster.)  
 
 GNUS should also be much friendlier to new users: it starts up much faster,
 and doesn't (necessarily) subscribe you to every single newsgroup.
@@ -5250,7 +2855,7 @@ The `iconic' screen parameter works when passed to x-create-screen.
 The user's manual now documents Lucid Emacs 19.9.
 
 The relocating buffer allocator is turned on by default; this means that when
-buffers are killed, their storage will be returned to the operating system,
+buffers are killed, their storage will be returned to the operating system, 
 and the size of the emacs process will shrink.
 
 CAVEAT: code which contains calls to certain `face' accessor functions will
@@ -5273,28 +2878,28 @@ Work In Progress:
    - If you define I18N3 at compile-time, then all messages printed by lemacs
      will be filtered through the gettext() library routine, to enable the use
      of locale-specific translation catalogues.  The current implementation of
-     this is quite dependent on Solaris 2, and has a very large impact on
+     this is quite dependent on Solaris 2, and has a very large impact on 
      existing code, therefore we are going to be making major changes soon.
      (You'll notice calls to `gettext' and `GETTEXT' scattered around much of
      the lisp and C code; ignore it, this will be going away.)
 
    - If you define I18N4 at compile-time, then lemacs will internally use a
      wide representation of characters, enabling the use of large character
-     sets such as Kanji.  This code is very OS dependent: it requires X11R5,
+     sets such as Kanji.  This code is very OS dependent: it requires X11R5, 
      and several OS-supplied library routines for reading and writing wide
      characters (getwc(), putwc(), and a few others.)  Performance is also a
      problem.  This code is also scheduled for a major overhaul, with the
-     intent of improving performance and portability.
+     intent of improving performance and portability.  
 
      Our eventual goal is to merge with MULE, or at least provide the same base
-     level of functionality.  If you would like to help out with this, let us
+     level of functionality.  If you would like to help out with this, let us 
      know.
 
- - Other work-in-progress includes Motif drag-and-drop support, ToolTalk
-   support, and support for embedding an Emacs widget inside another
+ - Other work-in-progress includes Motif drag-and-drop support, ToolTalk 
+   support, and support for embedding an Emacs widget inside another 
    application (where it can function as that other application's text-entry
    area).  This code has not been extensively tested, and may (or may not)
-   have portability problems, but it's there for the adventurous.  Comments,
+   have portability problems, but it's there for the adventurous.  Comments, 
    suggestions, bug reports, and especially fixes are welcome.  But have no
    expectations that this experimental code will work at all.
 
@@ -5413,16 +3018,16 @@ helpful if you would send me context diffs (diff -c) against version 19.6.
 Prototypes have been added for all functions.  Emacs compiles in the strict
 ANSI modes of lcc and gcc, so portability should be vastly improved.
 
-Many many many many core leaks have been plugged, especially in screen
+Many many many many core leaks have been plugged, especially in screen 
 creation and deletion.
 
 The float support reworked to be more portable and ANSI conformant.  This
-resulted in these new configuration parameters: HAVE_INVERSE_HYPERBOLIC,
-HAVE_CBRT, HAVE_RINT, FLOAT_CHECK_ERRNO, FLOAT_CATCH_SIGILL,
+resulted in these new configuration parameters: HAVE_INVERSE_HYPERBOLIC, 
+HAVE_CBRT, HAVE_RINT, FLOAT_CHECK_ERRNO, FLOAT_CATCH_SIGILL, 
 FLOAT_CHECK_DOMAIN.  Let us know if you had to change the defaults on your
 architecture.
 
-The SunOS unexec has been rewritten, and now works with either static or
+The SunOS unexec has been rewritten, and now works with either static or 
 dynamic libraries, depending on whether -Bstatic or -Bdynamic were specified
 at link-time.
 
@@ -5434,17 +3039,17 @@ nice we are?  Go buy our product.)
 
 If compiled with Motif support, one can pop up dialog boxes from emacs lisp.
 We encourage someone to contribute Athena an version of this code; it
-shouldn't be much work.
+shouldn't be much work.  
 
 If dialog boxes are available, then y-or-n-p and yes-or-no-p use dialog boxes
-instead of the minibuffer if invoked as a result of a command that was
+instead of the minibuffer if invoked as a result of a command that was 
 executed from a menu instead of from the keyboard.
 
 Multiple screen support works better; check out doc of get-screen-for-buffer.
 
 The default binding of backspace is the same as delete.  (C-h is still help.)
 
-A middle click while the minibuffer is active does completion if you click on
+A middle click while the minibuffer is active does completion if you click on 
 a highlighted completion, otherwise it executes the global binding of button2.
 
 New versions of Barry Warsaw's c++-mode and syntax.c.  Font-lock-mode works
@@ -5470,7 +3075,7 @@ If you set ctl-arrow to an integer, you can control exactly which characters
 are printable.  (There will be a less crufty way to do this eventually.)
 
 Menubars can now be buffer local; the function set-screen-menubar no longer
-exists.  Look at GNUS and VM for examples of how to do this, or read
+exists.  Look at GNUS and VM for examples of how to do this, or read 
 menubar.el.
 
 When emacs is reading from the minibuffer with completions, any completions
@@ -5478,7 +3083,7 @@ which are visible on the screen will highlight when the mouse moves over them;
 clicking middle on a completion is the same as typing it at the minibuffer.
 Some implications of this:  The *Completions* buffer is always mousable.  If
 you're using the completion feature of find-tag, your source code will be
-mousable when you type M-.  Dired buffers will be mousable as soon as you
+mousable when you type M-.  Dired buffers will be mousable as soon as you 
 type ^X^F.  And so on.
 
 The old isearch code has been replaced with a descendant of Dan LaLiberte's
@@ -5501,7 +3106,7 @@ are not automatically added to the load-path, so you can use this to avoid
 accidentally inflicting experimental software on your users.
 
 I've tried to incorporate all of the portability patches that were sent to
-me; I tried to solve some of the problems in different ways than the
+me; I tried to solve some of the problems in different ways than the 
 patches did, so let me know if I missed something.
 
 Some systems will need to define NEED_STRDUP, NEED_REALPATH, HAVE_DREM, or
@@ -5519,8 +3124,7 @@ pending-del.el: Certain commands implicitly delete the highlighted region:
                 that region with the typed character.
 
 font-lock.el:   A code-highlighting package, driven off of syntax tables, so
-                that it understands block comments, strings, etc.  The
+                that it understands block comments, strings, etc.  The 
                 insertion hook is used to fontify text as you type it in.
 
 shell-font.el:  Displays your shell-buffer prompt in boldface.
-

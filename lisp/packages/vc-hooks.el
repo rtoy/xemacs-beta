@@ -538,7 +538,7 @@ Returns t if checkout was successful, nil otherwise."
 	                    current-menubar
 			    (car (find-menu-item current-menubar '("Tools")))
 			    (add-submenu '("Tools") vc-menu "Compare")
-			    (add-menu-item '("Tools") "---" nil nil "Compare"))
+			    (add-menu-button '("Tools") "---" "Compare"))
 	      ))
 
 ;; #### called by files.el.  Define it like this until we're merged.

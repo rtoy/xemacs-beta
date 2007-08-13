@@ -1,0 +1,321 @@
+\input texinfo  @c -*-texinfo-*-
+@setfilename ../info/R2L
+@settitle Right-to-left writing
+
+@titlepage
+@sp 6
+@center @titlefont{Right-to-left writing}
+@sp 4
+@center Version 2.0
+@sp 5
+@center Ken'ichi HANDA
+@center handa@@etl.go.jp
+@page
+
+@end titlepage
+
+@comment ============================================================
+@node Top, , , (mule)
+@section Right-to-left writing
+
+  This document describes how Mule handles a text written from right to
+left.
+
+@menu
+* Right-to-left Character Set::
+* Direction of Buffer::
+* Cursor Motion::
+* LR Commands::
+@ignore
+* Double cursor::
+* Highlighing::
+* Visual inputting::
+@end ignore
+@end menu
+
+@comment ============================================================
+@node Right-to-left Character Set, Direction of Buffer, , Top
+@section Right-to-left Character Set
+
+  In Mule, each character set has the attribute @dfn{direction}.  The
+value is either 0 (l2r, left-to-right) or 1 (r2l, right-to-left).  For
+the moment, Mule has four r2l character sets, namely, Hebrew
+(ISO8859-8), ASCII-r2l (private) Arabic1 (private) and Arabic2
+(private).  ASCII-r2l is for providing r2l space and punctuation
+characters to Hebrew.  Consecutive r2l characters are shown from right
+to left on the screen.
+
+Hereafter, we denote r2l characters by capital letters and l2r
+characters by lowercase letters in strings.  Punctuation marks (e.g.,
+period) mean normal ASCII characters.  For r2l space and punctuations,
+we use the letter @samp{_} (underscore).
+
+@comment ============================================================
+@node Direction of Buffer, Cursor Motion, Right-to-left character set, Top
+@section Direction of buffer
+
+  Each buffer also has the attribute @dfn{direction} (buffer local
+variable @code{display-direction}).  By default, the value is @code{nil}
+(means l2r direction).  Provided that a buffer contains:
+
+@example
+this is a DESREVER word.
+@end example
+
+  If @code{display-direction} is @code{nil} (this is the default), what
+you see on your screen is:
+
+@example
++---------------------------------+
+|this is a DESREVER word.         |
+|                                 |
++---------------------------------+
+@end example
+
+but, if the direction is non-@code{nil}, what you see is:
+
+@example
++---------------------------------+
+|          word.DESREVERthis is a |
+|                                 |
++---------------------------------+
+@end example
+
+  If you are in visual-mode, the value of @code{display-direction} is
+reflected in the mode-line.  The string @samp{L2R} means
+@code{display-direction} is @code{nil}; @samp{R2L} means non-@code{nil}.
+In visual-mode, you can set @code{display-direction} to @code{nil} by
+typing @kbd{C-c <}, and to @code{t} (this means non-@code{nil}) by
+typing @kbd{C-c >}.
+
+  If you read a file that has the extension @file{.l2r}, the buffer
+automatically turns into visual-mode and @code{display-direction} is set
+to @code{nil}.  Likewise, if a file has the extension @file{.r2l}, the
+buffer automatically goes in visual-mode and @code{display-direction} is
+set to @code{t}.
+
+@comment ============================================================
+@node Cursor Motion, LR commands, Direction of Buffer, Top
+@section Cursor Motion
+
+  If you are not in visual-mode and type @kbd{C-f} (or @kbd{M-x
+forward-char}, the cursor moves as follows:
+
+@example
+|this is a DESREVER word.      |
+        ^
+|this is a DESREVER word.      |
+         ^
+|this is a DESREVER word.      |
+          ^
+|this is a DESREVER word.      |
+                  ^
+|this is a DESREVER word.      |
+                 ^
+|this is a DESREVER word.      |
+                ^
+|this is a DESREVER word.      |
+               ^
+|this is a DESREVER word.      |
+              ^
+|this is a DESREVER word.      |
+             ^
+|this is a DESREVER word.      |
+            ^
+|this is a DESREVER word.      |
+           ^
+|this is a DESREVER word.      |
+                   ^
+|this is a DESREVER word.      |
+                    ^
+|this is a DESREVER word.      |
+                     ^
+@end example
+
+  This is rather complicated and misleading.  To avoid confusions, the
+following cursor motion commands are prepared in visual-mode to handle
+bi-directional texts easily.  All these commands accept an additional
+prefix numeric argument.
+
+@table @asis
+@item @kbd{C-f} or @kbd{M-x visual-forward-char}
+Move the cursor visually forward in characters.
+
+@item @kbd{C-b} or @kbd{M-x visual-backward-char}
+Move the cursor visually backward in characters.
+
+@item @kbd{C-p}, @kbd{@key{UP}} or @kbd{M-x visual-previous-line}
+Move the cursor up in lines.
+
+@item @kbd{C-n}, @kbd{@key{DOWN}} or @kbd{M-x visual-next-line}
+Move the cursor down in lines.
+
+@item @kbd{C-a} or @kbd{M-x visual-beginning-of-line}
+Move the cursor to the visual beginning of the current line.
+
+@item @kbd{M-f} or @kbd{M-x visual-forward-word}
+Move the cursor visually forward in words.
+
+@item @kbd{M-b} or @kbd{M-x visual-backward-word}
+Move the cursor visually backward in words.
+
+@item @kbd{M-<}, @kbd{HOME} or @kbd{M-x visual-beginning-of-buffer}
+Move the cursor to the visual beginning of the current buffer.
+
+@item @kbd{M->}, @kbd{END} or @kbd{M-x visual-end-of-buffer}
+Move the cursor to the visual end of the current buffer.
+@end table
+
+  Note that ordinary cursor motion commands (@code{forward-char},
+@code{backward-char}, etc.) behave according to the @dfn{logical order}
+of the text, whilst the above commands behave according to the
+@dfn{visual order}.  Compare the difference of the two @kbd{C-f}
+commands.  (You can exit visual-mode by typing @kbd{C-c C-c}.)
+
+  Some of you may be confused by the words @dfn{forward} and
+@dfn{backward}.  Here is a summary:
+
+@example
+display-direction       nil             non-nil
+------------------------------------------------
+forward                 right           left
+backward                left            right
+@end example
+
+@comment ============================================================
+@node LR Commands, , Cursor Motion, Top
+@section LR Commands
+
+  If you have been using Emacs or Mule for a long time, it is possible
+that @kbd{C-b} and @dfn{move to left} are so strongly associated in your
+mind that you want to move the cursor to left by @kbd{C-b} no matter how
+@code{display-direction} is set.  Likewise, you may want to move the
+cursor to the right, to the left-most column and to the right-most
+column by @kbd{C-f}, @kbd{C-a} and @kbd{C-e}, respectively.
+
+  In such cases, include the following line in your @file{~/.emacs}
+file:
+
+@lisp
+(setq visual-use-lr-commands t)
+@end lisp
+
+  This lisp command enables so called @dfn{LR commands}.  LR commands
+act according to the absolute screen direction (such as @dfn{left} or
+@dfn{right}) rather than the relative direction (@dfn{forward} or
+@dfn{backward}).
+
+@table @asis
+@item @kbd{C-b}, @kbd{@key{LEFT}} or @kbd{M-x visual-move-to-left-char}
+Move the cursor to the left in characters.
+
+@item @kbd{C-f}, @kbd{@key{RIGHT}} or @kbd{M-x visual-move-to-right-char}
+Move the cursor to the right in characters.
+
+@item @kbd{M-b}, @kbd{@key{M-LEFT}} or @kbd{M-x visual-move-to-left-word}
+Move the cursor to the left in words.
+
+@item @kbd{M-f}, @kbd{@key{M-RIGHT}} or @kbd{M-x visual-move-to-right-word}
+Move the cursor to the right in words.
+
+@item @kbd{C-a} or @kbd{M-x visual-left-end-of-line}
+Move the cursor to the left-most column of the current line.
+
+@item @kbd{C-e} or @kbd{M-x visual-right-end-of-line}
+Move the cursor to the right-most column of the current line.
+@end table
+
+  As a matter of fact, the four keys, @key{LEFT}, @key{RIGHT},
+@key{M-LEFT} and @key{M-RIGHT} are active even though your
+@file{~/.emacs} file does not contain the @code{setq} line above.  So if
+you are confused, use the arrow keys.
+
+@ignore
+
+@node Double cursor, Highlighing, Direction of buffer, Top
+@section Double cursor
+
+If the value of 'r2l-double-cursor' is non-nil, when POINT
+is in between r2l char and l2r (normal) char, two cursor are
+displayed to denote insertion points for both types of
+character.  For instance, in the above example, when you
+move POINT forward one by one, the cursor changes as
+follows:
+
+@example
+        |this is a WERBEH word.      |
+                ^
+        |this is a WERBEH word.      |
+                 ^
+        |this is a WERBEH word.      |
+                  ^     ^
+        |this is a WERBEH word.      |
+                       ^
+        |this is a WERBEH word.      |
+                      ^
+        |this is a WERBEH word.      |
+                     ^
+        |this is a WERBEH word.      |
+                    ^
+        |this is a WERBEH word.      |
+                   ^
+        |this is a WERBEH word.      |
+                   ^     ^
+        |this is a WERBEH word.      |
+                          ^
+@end example
+
+@node Highlighing, Visual inputting, Double cursor, Top
+@section Highlighing characters of reverse direction
+
+If the value of 'highlight-reverse-direction' is non-nil
+(default), a character whose direction is different from
+that of the current buffer is highlighted by gray-color (or
+background mesh).
+
+@node Visual inputting, , Highlighing, Top
+@section Visual inputting
+
+As mentioned above, cursor motion in r2l text is rather complicated.
+Further, even with the double cursor function, you may need some time
+to learn inserting/deleting characters in an r2l text.
+
+To faciliate the manipulation of r2l texts, quail provides a set of
+functions which make cursor motion and insertion/deletion behave as
+you expect.
+
+        visually-forward-char         
+          Function: Move cursor visually forward by ARG chars.
+        
+        visually-backward-char        
+          Function: Move cursor visually backward by ARG chars.
+        
+        visually-beginning-of-line    
+          Function: Move cursor to the visually beginning of line.
+        
+        visually-insert-char          
+          Function: With argument CH, call VISUALLY-INSERT-CHAR ARG times.
+        
+        visually-backward-delete-char 
+          Function: Delete ARG chars visually before cursor.
+        
+        visually-delete-char          
+          Function: Delete ARG chars under cursor.
+
+ These functions behave as if the whole buffer were filled with
+characters of same direction: for example, when the buffer direction
+is l2r, visually-forward-char moves the cursor to the right (or left,
+if the buffer direction is r2l) step by step; visually-insert-char
+puts the typed character just under the cursor and moves the cursor to
+the right (left) by one column; visually-backward-delete-char removes
+the character left (right) to the cursor, etc.
+
+In quail/hebrew.el these visual functions are called via appropriate
+quail cursor motion functions.  As quail cursor motion functions are
+bound to appropriate keys, you will not be puzzled by the complicated
+cursor behaviours as long as you use the hebrew package of quail-mode.
+
+@end ignore
+
+@contents
+@bye

@@ -38,9 +38,7 @@ but it requires separator lines between paragraphs.
 A value of nil means that any change in indentation starts a new paragraph.")
 
 (defconst sentence-end-double-space t
-  "*Non-nil means a single space does not end a sentence.
-This variable applies only to filling, not motion commands.  To
-change the behavior of motion commands, see `sentence-end'.")
+  "*Non-nil means a single space does not end a sentence.")
 
 (defconst colon-double-space nil
   "*Non-nil means put two spaces after a colon when filling.")
@@ -206,7 +204,7 @@ Normally performs justification according to the `current-justification'
 function, but with a prefix arg, does full justification instead.
 
 From a program, optional third arg JUSTIFY can specify any type of
-justification.  Fourth arg NOSQUEEZE non-nil means not to make spaces
+ustification.  Fourth arg NOSQUEEZE non-nil means not to make spaces
 between words canonical before filling.  Fifth arg SQUEEZE-AFTER, if non-nil,
 means don't canonicalize spaces before that position.
 
@@ -695,8 +693,7 @@ otherwise it is made canonical."
 			   (point) (min (point-max) (+ (length fill-prefix)
 						       (point))))))
 	      (forward-char (length fill-prefix))
-	    ;; XEmacs bug fix
-	    (if (and adaptive-fill-mode adaptive-fill-regexp
+	    (if (and adaptive-fill-mode 
 		     (looking-at adaptive-fill-regexp))
 		(goto-char (match-end 0))))
 	  (setq fp-end (point))

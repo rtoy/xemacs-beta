@@ -15,22 +15,20 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: FSF 19.34 [Partially].
+;;; Synched up with: FSF 19.30.
 
 ;;; Commentary:
 
 ;; This package supplies the string and regular-expression replace functions
 ;; documented in the XEmacs Reference Manual.
 
-;; All the gettext calls are for XEmacs I18N3 message catalog support.
-
 ;;; Code:
 
-(defconst case-replace t "\
+(defvar case-replace t "\
 *Non-nil means `query-replace' should preserve case in replacements.
 What this means is that `query-replace' will change the case of the
 replacement text so that it matches the text that was replaced.
@@ -147,9 +145,6 @@ before rotating to the next."
   "Replace occurrences of FROM-STRING with TO-STRING.
 Preserve case in each match if `case-replace' and `case-fold-search'
 are non-nil and FROM-STRING has no uppercase letters.
-\(Preserving case means that if the string matched is all caps, or capitalized,
-then its replacement is upcased or capitalized.)
-
 Third arg DELIMITED (prefix arg if interactive), if non-nil, means replace
 only matches surrounded by word boundaries.
 
@@ -257,8 +252,8 @@ Applies to lines after point."
 (if occur-mode-map
     ()
   (setq occur-mode-map (make-sparse-keymap))
-  (set-keymap-name occur-mode-map 'occur-mode-map) ; XEmacs
-  (define-key occur-mode-map 'button2 'occur-mode-mouse-goto) ; XEmacs
+  (set-keymap-name occur-mode-map 'occur-mode-map)
+  (define-key occur-mode-map 'button2 'occur-mode-mouse-goto)
   (define-key occur-mode-map "\C-c\C-c" 'occur-mode-goto-occurrence)
   (define-key occur-mode-map "\C-m" 'occur-mode-goto-occurrence))
 
@@ -276,26 +271,15 @@ Alternatively, click \\[occur-mode-mouse-goto] on an item to go to it.
   (kill-all-local-variables)
   (use-local-map occur-mode-map)
   (setq major-mode 'occur-mode)
-  (setq mode-name (gettext "Occur")) ; XEmacs
+  (setq mode-name (gettext "Occur"))
   (make-local-variable 'occur-buffer)
   (make-local-variable 'occur-nlines)
   (make-local-variable 'occur-pos-list)
-  (require 'mode-motion) ; XEmacs
-  (setq mode-motion-hook 'mode-motion-highlight-line) ; XEmacs
+  (require 'mode-motion)
+  (setq mode-motion-hook 'mode-motion-highlight-line)
   (run-hooks 'occur-mode-hook))
 
-;; FSF Version of next function:
-;  (let (buffer pos)
-;    (save-excursion
-;      (set-buffer (window-buffer (posn-window (event-end event))))
-;      (save-excursion
-;       (goto-char (posn-point (event-end event)))
-;       (setq pos (occur-mode-find-occurrence))
-;       (setq buffer occur-buffer)))
-;    (pop-to-buffer buffer)
-;    (goto-char (marker-position pos))))
-
-(defun occur-mode-mouse-goto (event)
+(defun occur-mode-mouse-goto (e)
   "Go to the occurrence highlighted by mouse.
 This function is only reasonable when bound to a mouse key in the occur buffer"
   (interactive "e")
@@ -304,12 +288,11 @@ This function is only reasonable when bound to a mouse key in the occur buffer"
     ;; preserve the window/frame setup
     (unwind-protect
 	(progn
-	  (mouse-set-point event)
+	  (mouse-set-point e)
 	  (occur-mode-goto-occurrence))
       (select-frame frame-save)
       (select-window window-save))))
 
-;; Called occur-mode-find-occurrence in FSF
 (defun occur-mode-goto-occurrence ()
   "Go to the occurrence the current line describes."
   (interactive)
@@ -340,7 +323,7 @@ This function is only reasonable when bound to a mouse key in the occur buffer"
 	(error "No occurrence on this line"))
     (or pos
 	(error "No occurrence on this line"))
-    ;; XEmacs: don't raise window unless it isn't visible
+    ;; don't raise window unless it isn't visible
     ;; allow for the possibility that the occur buffer is on another frame
     (or (and window
 	     (window-live-p window)
@@ -361,7 +344,7 @@ A positive number means to include that many lines both before and after.")
 ;;; Damn you Jamie, this is utter trash.
 (defvar list-matching-lines-whole-buffer t
   "If t, occur operates on whole buffer, otherwise occur starts from point.
-default is t.")
+default is nil.")
 
 (define-function 'occur 'list-matching-lines)
 (defun list-matching-lines (regexp &optional nlines)
@@ -372,8 +355,8 @@ If a match spreads across multiple lines, all those lines are shown.
 If variable `list-matching-lines-whole-buffer' is non-nil, the entire buffer is
 searched, otherwise search begins at point.
 
-Each line is displayed with NLINES lines before and after, or -NLINES
-before if NLINES is negative.
+Each line is displayed with NLINES lines before and after,
+or -NLINES before if NLINES is negative.
 NLINES defaults to `list-matching-lines-default-context-lines'.
 Interactively it is the prefix arg.
 
@@ -381,7 +364,6 @@ The lines are shown in a buffer named `*Occur*'.
 It serves as a menu to find any of the occurrences in this buffer.
 \\[describe-mode] in that buffer will explain how."
   (interactive
-   ;; XEmacs change
    (list (let* ((default (or (symbol-near-point)
 			     (and regexp-history
 				  (car regexp-history))))
@@ -414,8 +396,6 @@ It serves as a menu to find any of the occurrences in this buffer.
 	(buffer (current-buffer))
 	(linenum 1)
 	(prevpos (point-min))
-	;; The rest of this function is very different from FSF.
-	;; Presumably that's due to Jamie's misfeature
         (final-context-start (make-marker)))
     (if (not list-matching-lines-whole-buffer)
 	(save-excursion
@@ -440,7 +420,7 @@ It serves as a menu to find any of the occurrences in this buffer.
       (save-excursion
 	(if list-matching-lines-whole-buffer
 	    (beginning-of-buffer))
-	(message (format "Searching for %s ..." regexp))
+	(message "Searching for %s ..." regexp)
 	;; Find next match, but give up if prev match was at end of buffer.
 	(while (and (not (= prevpos (point-max)))
 		    (re-search-forward regexp nil t))
@@ -518,27 +498,24 @@ It serves as a menu to find any of the occurrences in this buffer.
 
 ;; It would be nice to use \\[...], but there is no reasonable way
 ;; to make that display both SPC and Y.
-(defconst query-replace-help
-  (purecopy
-   "Type Space or `y' to replace one match, Delete or `n' to skip to next,
+(defvar query-replace-help (purecopy
+  "Type Space or `y' to replace one match, Delete or `n' to skip to next,
 RET or `q' to exit, Period to replace one match and exit,
 Comma to replace but not move point immediately,
 C-r to enter recursive edit (\\[exit-recursive-edit] to get out again),
 C-w to delete match and recursive edit,
 C-l to clear the frame, redisplay, and offer same replacement again,
 ! to replace all remaining matches with no more questions,
-^ to move point back to previous match."
-)
+^ to move point back to previous match.")
   "Help message while in query-replace")
 
-(defvar query-replace-map nil
+(defvar	query-replace-map nil
   "Keymap that defines the responses to questions in `query-replace'.
 The \"bindings\" in this map are not commands; they are answers.
 The valid answers include `act', `skip', `act-and-show',
 `exit', `act-and-exit', `edit', `delete-and-edit', `recenter',
 `automatic', `backup', `exit-prefix', and `help'.")
 
-;; Why does it seem that ever file has a different method of doing this?
 (if query-replace-map
     nil
     (let ((map (make-sparse-keymap)))
@@ -575,14 +552,12 @@ The valid answers include `act', `skip', `act-and-show',
 
 (autoload 'isearch-highlight "isearch")
 
-;; XEmacs
 (defun perform-replace-next-event (event)
   (if isearch-highlight
       (let ((aborted t))
 	(unwind-protect
 	    (progn
-	      (if (match-beginning 0)
-		  (isearch-highlight (match-beginning 0) (match-end 0)))
+	      (isearch-highlight (match-beginning 0) (match-end 0))
 	      (next-command-event event)
 	      (setq aborted nil))
 	  (isearch-dehighlight aborted)))
@@ -600,8 +575,8 @@ which will run faster and probably do exactly what you want."
   (or map (setq map query-replace-map))
   (let* ((event (make-event))
 	 (nocasify (not (and case-fold-search case-replace
-			    (string-equal from-string
-					  (downcase from-string)))))
+			     (string-equal from-string
+					   (downcase from-string)))))
 	 (literal (not regexp-flag))
 	 (search-function (if regexp-flag 're-search-forward 'search-forward))
 	 (search-string from-string)
@@ -634,196 +609,186 @@ which will run faster and probably do exactly what you want."
 				    "\\b")))
     (push-mark)
     (undo-boundary)
-    (unwind-protect
-	;; Loop finding occurrences that perhaps should be replaced.
-	(while (and keep-going
-		    (not (eobp))
-		    (let ((case-fold-search qr-case-fold-search))
-		      (funcall search-function search-string nil t))
-		    ;; If the search string matches immediately after
-		    ;; the previous match, but it did not match there
-		    ;; before the replacement was done, ignore the match.
-		    (if (or (eq lastrepl (point))
-			    (and regexp-flag
-				 (eq lastrepl (match-beginning 0))
-				 (not match-again)))
-			(if (eobp)
-			    nil
-			  ;; Don't replace the null string 
-			  ;; right after end of previous replacement.
-			  (forward-char 1)
-			  (let ((case-fold-search qr-case-fold-search))
-			    (funcall search-function search-string nil t)))
-		      t))
+    ;; Loop finding occurrences that perhaps should be replaced.
+    (while (and keep-going
+		(not (eobp))
+		(let ((case-fold-search qr-case-fold-search))
+		  (funcall search-function search-string nil t))
+		;; If the search string matches immediately after
+		;; the previous match, but it did not match there
+		;; before the replacement was done, ignore the match.
+		(if (or (eq lastrepl (point))
+			(and regexp-flag
+			     (eq lastrepl (match-beginning 0))
+			     (not match-again)))
 
-	  ;; Save the data associated with the real match.
-	  (setq real-match-data (match-data))
+		    (if (eobp)
+			nil
+		      ;; Don't replace the null string 
+		      ;; right after end of previous replacement.
+		      (forward-char 1)
+		      (let ((case-fold-search qr-case-fold-search))
+			(funcall search-function search-string nil t)))
+		  t))
+      ;; Save the data associated with the real match.
+      (setq real-match-data (match-data))
 
-	  ;; Before we make the replacement, decide whether the search string
-	  ;; can match again just after this match.
-	  (if regexp-flag
-	      (progn 
-		(setq match-again (looking-at search-string))
-		;; XEmacs addition
-		(store-match-data real-match-data)))
-	  ;; If time for a change, advance to next replacement string.
-	  (if (and (listp replacements)
-		   (= next-rotate-count replace-count))
-	      (progn
-		(setq next-rotate-count
-		      (+ next-rotate-count repeat-count))
-		(setq next-replacement (nth replacement-index replacements))
-		(setq replacement-index (% (1+ replacement-index) (length replacements)))))
-	  (if (not query-flag)
-	      (progn
-		(store-match-data real-match-data)
-		(replace-match next-replacement nocasify literal)
-		(setq replace-count (1+ replace-count)))
-	    (undo-boundary)
-	    (let ((help-form
-		   '(concat (format "Query replacing %s%s with %s.\n\n"
-				    (if regexp-flag (gettext "regexp ") "")
-				    from-string next-replacement)
-			    (substitute-command-keys query-replace-help)))
-		  done replaced def)
-	      ;; Loop reading commands until one of them sets done,
-	      ;; which means it has finished handling this occurrence.
-	      (while (not done)
-		;; Don't fill up the message log
-		;; with a bunch of identical messages.
-		;; XEmacs change
-		(display-message 'prompt
-				 (format message from-string next-replacement))
-		(perform-replace-next-event event)
-		(setq def (lookup-key map (vector event)))
-		;; Restore the match data while we process the command.
-		(store-match-data real-match-data)
-		(cond ((eq def 'help)
-		       (with-output-to-temp-buffer (gettext "*Help*")
-			 (princ (concat
-				 (format "Query replacing %s%s with %s.\n\n"
-					 (if regexp-flag "regexp " "")
-					 from-string next-replacement)
-				 (substitute-command-keys
-				  query-replace-help)))
+      ;; Before we make the replacement, decide whether the search string
+      ;; can match again just after this match.
+      (if regexp-flag
+	  (progn 
+            (setq match-again (looking-at search-string))
+            (store-match-data real-match-data)))
+
+      ;; If time for a change, advance to next replacement string.
+      (if (and (listp replacements)
+	       (= next-rotate-count replace-count))
+	  (progn
+	    (setq next-rotate-count
+		  (+ next-rotate-count repeat-count))
+	    (setq next-replacement (nth replacement-index replacements))
+	    (setq replacement-index (% (1+ replacement-index) (length replacements)))))
+      (if (not query-flag)
+	  (progn
+	    (store-match-data real-match-data)
+	    (replace-match next-replacement nocasify literal)
+	    (setq replace-count (1+ replace-count)))
+	(undo-boundary)
+	(let ((help-form
+	       '(concat (format "Query replacing %s%s with %s.\n\n"
+				(if regexp-flag (gettext "regexp ") "")
+				from-string next-replacement)
+                           (substitute-command-keys query-replace-help)))
+              (done nil)
+              (replaced nil)
+              def)
+          ;; Loop reading commands until one of them sets done,
+	  ;; which means it has finished handling this occurrence.
+	  (while (not done)
+	    ;; Don't fill up the message log
+	    ;; with a bunch of identical messages.
+	    (display-message 'prompt
+			     (format message from-string next-replacement))
+            (perform-replace-next-event event)
+            (setq def (lookup-key map (vector event)))
+	    ;; Restore the match data while we process the command.
+	    (store-match-data real-match-data)
+	    (cond ((eq def 'help)
+		   (with-output-to-temp-buffer (gettext "*Help*")
+		     (princ (concat
+			     (format "Query replacing %s%s with %s.\n\n"
+				     (if regexp-flag "regexp " "")
+				     from-string next-replacement)
+			      (substitute-command-keys
+				   query-replace-help)))
 			 (save-excursion
 			   (set-buffer standard-output)
 			   (help-mode))))
-		      ((eq def 'exit)
-		       (setq keep-going nil)
-		       (setq done t))
-		      ((eq def 'backup)
-		       (if stack
-			   (let ((elt (car stack)))
-			     (goto-char (car elt))
-			     (setq replaced (eq t (cdr elt)))
-			     (or replaced
-				 (store-match-data (cdr elt)))
-			     (setq stack (cdr stack)))
+		  ((eq def 'exit)
+		   (setq keep-going nil)
+		   (setq done t))
+		  ((eq def 'backup)
+                   (if stack
+                       (let ((elt (car stack)))
+                         (goto-char (car elt))
+                         (setq replaced (eq t (cdr elt)))
+                         (or replaced
+                             (store-match-data (cdr elt)))
+                         (setq stack (cdr stack)))
+                       (progn
 			 (message "No previous match")
 			 (ding 'no-terminate)
-			 (sit-for 1)))
-		      ((eq def 'act)
-		       (or replaced
-			   (replace-match next-replacement nocasify literal))
-		       (setq done t replaced t))
-		      ((eq def 'act-and-exit)
-		       (or replaced
-			   (replace-match next-replacement nocasify literal))
-		       (setq keep-going nil)
-		       (setq done t replaced t))
-		      ((eq def 'act-and-show)
-		       (if (not replaced)
-			   (progn
-			     (replace-match next-replacement nocasify literal)
-			     (store-match-data nil)
-			     (setq replaced t))))
-		      ((eq def 'automatic)
-		       (or replaced
-			   (replace-match next-replacement nocasify literal))
-		       (setq done t query-flag nil replaced t))
-		      ((eq def 'skip)
-		       (setq done t))
-		      ((eq def 'recenter)
-		       (recenter nil))
-		      ((eq def 'edit)
-		       (store-match-data
-			(prog1 (match-data)
-			  (save-excursion (recursive-edit))))
-		       ;; Before we make the replacement,
-		       ;; decide whether the search string
-		       ;; can match again just after this match.
-		       (if regexp-flag
-			   (setq match-again (looking-at search-string))))
-		      ((eq def 'delete-and-edit)
-		       (delete-region (match-beginning 0) (match-end 0))
-		       (store-match-data (prog1 (match-data)
-					   (save-excursion (recursive-edit))))
-		       (setq replaced t))
-		      ;; Note: we do not need to treat `exit-prefix'
-		      ;; specially here, since we reread
-		      ;; any unrecognized character.
-		      (t
-		       (setq this-command 'mode-exited)
-		       (setq keep-going nil)
-		       (setq unread-command-events
-			     (cons event unread-command-events))
-		       (setq done t))))
-	      ;; Record previous position for ^ when we move on.
-	      ;; Change markers to numbers in the match data
-	      ;; since lots of markers slow down editing.
-	      (setq stack
-		    (cons (cons (point)
-				(or replaced
-				    (mapcar
-				     #'(lambda (elt)
-					 (if (markerp elt)
-					     (prog1 (marker-position elt)
-					       (set-marker elt nil))
-					   elt))
-				     (match-data))))
-			  stack))
-	      (if replaced (setq replace-count (1+ replace-count)))))
-	  (setq lastrepl (point)))
-      (replace-dehighlight))
+			 (sit-for 1))))
+		  ((eq def 'act)
+		   (or replaced
+		       (replace-match next-replacement nocasify literal))
+		   (setq done t replaced t))
+		  ((eq def 'act-and-exit)
+		   (or replaced
+		       (replace-match next-replacement nocasify literal))
+		   (setq keep-going nil)
+		   (setq done t replaced t))
+		  ((eq def 'act-and-show)
+		   (if (not replaced)
+		       (progn
+			 (replace-match next-replacement nocasify literal)
+			 (setq replaced t))))
+		  ((eq def 'automatic)
+		   (or replaced
+		       (replace-match next-replacement nocasify literal))
+		   (setq done t query-flag nil replaced t))
+		  ((eq def 'skip)
+		   (setq done t))
+		  ((eq def 'recenter)
+		   (recenter nil))
+		  ((eq def 'edit)
+		   (store-match-data
+		    (prog1 (match-data)
+		      (save-excursion (recursive-edit))))
+		   ;; Before we make the replacement,
+		   ;; decide whether the search string
+		   ;; can match again just after this match.
+		   (if regexp-flag
+		       (setq match-again (looking-at search-string))))
+		  ((eq def 'delete-and-edit)
+		   (delete-region (match-beginning 0) (match-end 0))
+		   (store-match-data (prog1 (match-data)
+		      (save-excursion (recursive-edit))))
+		   (setq replaced t))
+		  ;; Note: we do not need to treat `exit-prefix'
+		  ;; specially here, since we reread
+		  ;; any unrecognized character.
+		  (t
+		   (setq this-command 'mode-exited)
+		   (setq keep-going nil)
+		   (setq unread-command-events
+			 (cons event unread-command-events))
+		   (setq done t))))
+	  ;; Record previous position for ^ when we move on.
+	  ;; Change markers to numbers in the match data
+	  ;; since lots of markers slow down editing.
+	  (setq stack
+		(cons (cons (point)
+			    (or replaced
+				(mapcar
+				 #'(lambda (elt)
+				     (if (markerp elt)
+					 (prog1 (marker-position elt)
+					   (set-marker elt nil))
+				       elt))
+				 (match-data))))
+		      stack))
+	  (if replaced (setq replace-count (1+ replace-count)))))
+      (setq lastrepl (point)))
     (or unread-command-events
 	(message "Replaced %d occurrence%s"
 		 replace-count
 		 (if (= replace-count 1) "" "s")))
     (and keep-going stack)))
 
-(defvar query-replace-highlight nil
-  "*Non-nil means to highlight words during query replacement.")
+; FSF 19.30 original:
+; (defun match-string (num &optional string)
+;   "Return string of text matched by last search.
+; NUM specifies which parenthesized expression in the last regexp.
+;  Value is nil if NUMth pair didn't match, or there were less than NUM pairs.
+; Zero means the entire text matched by the whole regexp or whole string.
+; STRING should be given if the last search was by `string-match' on STRING."
+;   (if (match-beginning num)
+;       (if string
+;           (substring string (match-beginning num) (match-end num))
+;         (buffer-substring (match-beginning num) (match-end num)))))
 
-(defvar replace-overlay nil)
-
-(defun replace-dehighlight ()
-  (and replace-overlay
-       (progn
-	 (delete-overlay replace-overlay)
-	 (setq replace-overlay nil))))
-
-(defun replace-highlight (start end)
-  (and query-replace-highlight
-       (progn
-	 (or replace-overlay
-	     (progn
-	       (setq replace-overlay (make-overlay start end))
-	       (overlay-put replace-overlay 'face
-			    (if (internal-find-face 'query-replace)
-				'query-replace 'region))))
-	 (move-overlay replace-overlay start end (current-buffer)))))
-
-(defun match-string (num &optional string)
-  "Return string of text matched by last search.
-NUM specifies which parenthesized expression in the last regexp.
- Value is nil if NUMth pair didn't match, or there were less than NUM pairs.
-Zero means the entire text matched by the whole regexp or whole string.
-STRING should be given if the last search was by `string-match' on STRING."
-  (if (match-beginning num)
-      (if string
-          (substring string (match-beginning num) (match-end num))
-        (buffer-substring (match-beginning num) (match-end num)))))
+;; #### - this could stand to be in C...
+(defmacro match-string (n &optional string)
+  "Returns the Nth subexpression matched by the last regular expression
+search.  The second argument, STRING, must be specified if the last
+regular expression search was done with `string-match'."
+  ;; #### - note that match-beginning is byte coded, so it's more efficient
+  ;; to just call it twice than it is to let-bind its return value... --Stig
+  `(and (match-beginning ,n)
+	,(if string
+	     `(substring ,string (match-beginning ,n) (match-end ,n))
+	   `(buffer-substring (match-beginning ,n) (match-end ,n)))))
 
 (defmacro save-match-data (&rest body)
   "Execute BODY forms, restoring the global value of the match data."

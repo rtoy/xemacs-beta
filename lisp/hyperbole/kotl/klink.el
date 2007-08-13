@@ -8,7 +8,7 @@
 ;; AUTHOR:       Bob Weiner & Kellie Clark
 ;;
 ;; ORIG-DATE:    15-Nov-93 at 12:15:16
-;; LAST-MOD:      6-Mar-97 at 01:19:19 by Bob Weiner
+;; LAST-MOD:      1-Nov-95 at 23:07:37 by Bob Weiner
 ;;
 ;; DESCRIPTION:  
 ;;
@@ -65,7 +65,7 @@
 (defun klink:create (reference)
   "Insert at point an implicit link to REFERENCE.
 REFERENCE should be a cell-ref or a string containing \"filename, cell-ref\".
-See documentation for `kcell:ref-to-id' for valid cell-ref formats."
+See documentation for 'kcell:ref-to-id' for valid cell-ref formats."
   (interactive
    ;; Don't change the name or delete default-dir used here.  It is referenced
    ;; in "hargs.el" for argument getting.
@@ -98,12 +98,12 @@ See documentation for `kcell:ref-to-id' for valid cell-ref formats."
 	   (if cell-ref (insert ", " cell-ref))
 	   (insert ">"))
 	  (cell-ref (insert "<@ " cell-ref ">"))
-	  (t  (error "(klink:create) Invalid reference, `%s'" reference)))))
+	  (t  (error "(klink:create) Invalid reference, '%s'" reference)))))
 
 (defun klink:at-p ()
   "Return non-nil iff point is within a klink.
-See documentation for the `actypes::link-to-kotl' function for valid klink
-formats.  Value returned is a list of: link-label, link-start-position, and
+See documentation for the `link-to-kotl' function for valid klink formats.
+Value returned is a list of: link-label, link-start-position, and
 link-end-position, (including delimiters)."
   (let (bol klink referent)
     (if (and
@@ -127,17 +127,7 @@ link-end-position, (including delimiters)."
 	 (setq klink (hbut:label-p t "<" ">" t))
 	 (stringp (setq referent (car klink)))
 	 ;; Eliminate matches to e-mail address like, <user@domain>.
-	 (not (string-match "[^<> \t\n][!&@]" referent))
-	 ;; Eliminate matches to URLs
-	 (not (string-match "\\`[a-zA-Z]+:" referent))
-	 ;; Don't match to <HTML> and </SGML> tags.
-	 (not (and (memq major-mode
-			 (if (boundp 'id-select-markup-modes)
-			     id-select-markup-modes
-			   '(html-mode sgml-mode)))
-		   ;; Assume , followed by a number is a klink.
-		   (not (string-match ",\\s *[0-9]" referent))
-		   (string-match "\\`[a-zA-Z!/]" referent))))
+	 (not (string-match "[^<> \t\n][!&@]" referent)))
 	klink)))
 
 ;;; ************************************************************************
@@ -161,7 +151,7 @@ LINK may be of any of the following forms, with or without delimiters:
   < [-!&] pathname >
   < @ cell-ref >
 
-See documentation for `kcell:ref-to-id' for valid cell-ref formats."
+See documentation for 'kcell:ref-to-id' for valid cell-ref formats."
 
   (interactive "sKotl link specifier: ")
   (or (stringp link) (error "(link-to-kotl): Non-string link argument, %s"
@@ -216,7 +206,7 @@ optional pair of <> delimiters:
   |viewspec
   :augment-viewspec (ignored for now)
 
-See documentation for `kcell:ref-to-id' for valid cell-ref formats."
+See documentation for 'kcell:ref-to-id' for valid cell-ref formats."
 
   (or (stringp reference)
       (error "(klink:parse): Non-string reference argument, %s"

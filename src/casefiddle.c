@@ -36,7 +36,8 @@ casify_object (struct buffer *buf, enum case_action flag, Lisp_Object obj)
   REGISTER Emchar c;
   REGISTER Charcount i, len;
   REGISTER int inword = flag == CASE_DOWN;
-  Lisp_Object syntax_table = buf->syntax_table;
+  struct Lisp_Char_Table *syntax_table =
+    XCHAR_TABLE (buf->mirror_syntax_table);
 
   while (1)
     {
@@ -141,7 +142,8 @@ casify_region (struct buffer *buf, enum case_action flag, Lisp_Object b,
   Bufpos start, end;
   REGISTER Emchar c;
   REGISTER int inword = flag == CASE_DOWN;
-  Lisp_Object syntax_table = buf->syntax_table;
+  struct Lisp_Char_Table *syntax_table =
+    XCHAR_TABLE (buf->mirror_syntax_table);
   int mccount;
 
   if (EQ (b, e))

@@ -9,7 +9,7 @@
 ;; ORG:          Motorola Inc.
 ;;
 ;; ORIG-DATE:     7-Apr-94 at 17:17:39 by Bob Weiner
-;; LAST-MOD:     10-Mar-97 at 12:17:08 by Bob Weiner
+;; LAST-MOD:      3-Nov-95 at 23:14:34 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
@@ -66,9 +66,7 @@ browser that is used."
 	     '(highlight-headers-follow-url-netscape
 	       highlight-headers-follow-url-mosaic))
        (require 'highlight-headers))
-  (if window-system
-      (funcall action-key-url-function url)
-    (w3-fetch url)))
+  (funcall action-key-url-function url))
 
 (defun www-url:help (&optional but)
   "Displays history list of www nodes previously visited with the W3 browser."

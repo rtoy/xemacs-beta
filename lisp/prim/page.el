@@ -17,11 +17,11 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: FSF 19.34.
+;;; Synched up with: FSF 19.30.
 
 ;;; Commentary:
 
@@ -34,7 +34,7 @@
   "Move forward to page boundary.  With arg, repeat, or go back if negative.
 A page boundary is any line whose beginning matches the regexp
 `page-delimiter'."
-  (interactive "_p") ; XEmacs
+  (interactive "_p")
   (or count (setq count 1))
   (while (and (> count 0) (not (eobp)))
     ;; In case the page-delimiter matches the null string,
@@ -45,24 +45,26 @@ A page boundary is any line whose beginning matches the regexp
       (goto-char (point-max)))
     (setq count (1- count)))
   (while (and (< count 0) (not (bobp)))
-    ;; In case the page-delimiter matches the null string,
-    ;; don't find a match without moving.
-    (and (save-excursion (re-search-backward page-delimiter nil t))
-	 (= (match-end 0) (point))
-	 (goto-char (match-beginning 0)))
     (forward-char -1)
-    (if (re-search-backward page-delimiter nil t)
-	;; We found one--move to the end of it.
-	(goto-char (match-end 0))
-      ;; We found nothing--go to beg of buffer.
-      (goto-char (point-min)))
+    (let (result (end (point)))
+      ;; If we find a match that ends where we started searching,
+      ;; look for another one.
+      (while (and (setq result (re-search-backward page-delimiter nil t))
+		  (= (match-end 0) end))
+	;; Just search again.
+	)
+      (if result
+	  ;; We found one--move to the end of it.
+	  (goto-char (match-end 0))
+	;; We found nothing--go to beg of buffer.
+	(goto-char (point-min))))
     (setq count (1+ count))))
 
 (defun backward-page (&optional count)
   "Move backward to page boundary.  With arg, repeat, or go fwd if negative.
 A page boundary is any line whose beginning matches the regexp
 `page-delimiter'."
-  (interactive "_p") ; XEmacs
+  (interactive "p")
   (or count (setq count 1))
   (forward-page (- count)))
 
@@ -112,11 +114,10 @@ thus showing a page other than the one point was originally in."
 			(if (and (eolp) (not (bobp)))
 			    (forward-line 1))
 			(point)))))
-(put 'narrow-to-page 'disabled t)
 
 (defun count-lines-page ()
   "Report number of lines on current page, and how many are before or after point."
-  (interactive "_") ; XEmacs
+  (interactive "_")
   (save-excursion
     (let ((opoint (point)) beg end
 	  total before after)
@@ -134,7 +135,7 @@ thus showing a page other than the one point was originally in."
 
 (defun what-page ()
   "Print page and line number of point."
-  (interactive "_") ; XEmacs
+  (interactive "_")
   (save-restriction
     (widen)
     (save-excursion

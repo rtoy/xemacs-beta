@@ -928,6 +928,4 @@ This also does some trivial optimizations to make the form prettier."
 
 (run-hooks 'cl-extra-load-hook)
 
-(provide 'cl-extra)
-
 ;;; cl-extra.el ends here

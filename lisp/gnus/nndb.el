@@ -1,5 +1,5 @@
 ;;; nndb.el --- nndb access for Gnus
-;; Copyright (C) 1996,97 Free Software Foundation, Inc.
+;; Copyright (C) 1996 Free Software Foundation, Inc.
 
 ;; Author: Kai Grossjohann <grossjohann@ls6.informatik.uni-dortmund.de>
 ;; Keywords: news
@@ -29,9 +29,6 @@
 
 ;;-
 ;; Register nndb with known select methods.
-
-(require 'gnus)
-(require 'nnmail)
 
 (setq gnus-valid-select-methods
       (cons '("nndb" mail address respool prompt-address)
@@ -126,7 +123,7 @@
 ; get new mail from somewhere -- maybe this is not needed?
 ; --> todo
 
-(deffoo nndb-request-create-group (group &optional server args)
+(deffoo nndb-request-create-group (group &optional server)
   "Creates a group if it doesn't exist yet."
   (nntp-send-command "^[23].*\n" "MKGROUP" group))
 
@@ -135,10 +132,10 @@
 (deffoo nndb-request-expire-articles
   (articles &optional group server force)
   "Expires ARTICLES from GROUP on SERVER.
-If FORCE, delete regardless of expiration date, otherwise use normal
+If FORCE, delete regardless of exiration date, otherwise use normal
 expiry mechanism."
   (let (msg art)
-    (nntp-possibly-change-group group server) ;;-
+    (nntp-possibly-change-server group server) ;;-
     (while articles
       (setq art (pop articles))
       (nntp-send-command "^\\([23]\\|^423\\).*\n" "DATE" art)
@@ -146,9 +143,9 @@ expiry mechanism."
       ;; CCC we shouldn't be using the variable nndb-status-string?
       (if (string-match "^423" (nnheader-get-report 'nndb))
           ()
-        (unless (string-match "\\([0-9]+\\) \\([0-9]+\\)$" msg)
-	  (error "Not a valid response for DATE command: %s"
-		 msg))
+        (or (string-match "\\([0-9]+\\) \\([0-9]+\\)$" msg)
+            (error "Not a valid response for DATE command: %s"
+                   msg))
         (if (nnmail-expired-article-p
              group
              (list (string-to-int
@@ -179,18 +176,21 @@ Optional LAST is ignored."
                                    server
                                    t))
     result))
-
+  
 (deffoo nndb-request-accept-article (group server &optional last)
   "The article in the current buffer is put into GROUP."
-  (nntp-possibly-change-group group server) ;;-
+  (nntp-possibly-change-server group server) ;;-
   (let (art statmsg)
     (when (nntp-send-command "^[23].*\r?\n" "ACCEPT" group)
       (nnheader-insert "")
       (nntp-encode-text)
-      (nntp-send-buffer "^[23].*\n")
+      (nntp-send-region-to-server (point-min) (point-max))
+      ;; 1.2a NNTP's post command is buggy. "^M" (\r) is not
+      ;;  appended to end of the status message.
+      (nntp-wait-for-response "^[23].*\n")
       (setq statmsg (nntp-status-message))
-      (unless (string-match "^\\([0-9]+\\)" statmsg)
-	(error "nndb: %s" statmsg))
+      (or (string-match "^\\([0-9]+\\)" statmsg)
+          (error "nndb: %s" statmsg))
       (setq art (substring statmsg
                            (match-beginning 1)
                            (match-end 1)))
@@ -198,14 +198,17 @@ Optional LAST is ignored."
       (list art))))
 
 (deffoo nndb-request-replace-article (article group buffer)
-  "ARTICLE is the number of the article in GROUP to be replaced
+  "ARTICLE is the number of the article in GROUP to be replaced 
 with the contents of the BUFFER."
   (set-buffer buffer)
   (let (art statmsg)
     (when (nntp-send-command "^[23].*\r?\n" "REPLACE" (int-to-string article))
       (nnheader-insert "")
       (nntp-encode-text)
-      (nntp-send-buffer "^[23].*\n")
+      (nntp-send-region-to-server (point-min) (point-max))
+      ;; 1.2a NNTP's post command is buggy. "^M" (\r) is not
+      ;;  appended to end of the status message.
+      (nntp-wait-for-response "^[23].*\n")
 ;      (setq statmsg (nntp-status-message))
 ;      (or (string-match "^\\([0-9]+\\)" statmsg)
 ;          (error "nndb: %s" statmsg))

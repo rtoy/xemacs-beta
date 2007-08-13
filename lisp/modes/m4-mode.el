@@ -28,7 +28,7 @@
 ;; It also sets the font-lock syntax stuff for colorization
 
 ;; By Drew Csillag (drew@staff.prodigy.com)
-;; $Id: m4-mode.el,v 1.2 1997/02/02 05:05:40 steve Exp $
+;; $Id: m4-mode.el,v 1.1.1.1 1996/12/18 22:42:49 steve Exp $
 
 ;; History:
 
@@ -69,7 +69,7 @@
 ;;; Code:
 
 ;;path to the m4 program
-(defvar m4-program "/usr/bin/m4")
+(defvar m4-program "/usr/local/bin/m4")
 
 ;;thank god for make-regexp.el!
 (defvar m4-font-lock-keywords

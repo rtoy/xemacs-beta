@@ -1,12 +1,8 @@
-;;; minibuf.el -- Minibuffer support functions for XEmacs
-
+;;; minibuf.el
 ;; Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Tinker Systems
 ;; Copyright (C) 1995, 1996 Ben Wing
  
-;; Author: Richard Mlynarik
-;; Keywords: internal
-
 ;; This file is part of XEmacs.
 
 ;; XEmacs is free software; you can redistribute it and/or modify it
@@ -20,12 +16,12 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: all the minibuffer history stuff is synched with
-;;; 19.34.  Not sure about the rest.
+;;; 19.30.  Not sure about the rest.
 
 ;;; Commentary:
 
@@ -161,10 +157,6 @@ minibuffer is reinvoked while it is the selected window.")
     (define-key map "\M-?" 'comint-dynamic-list-completions)
     map)
   "Minibuffer keymap used by shell-command and related commands.")
-
-(defvar use-dialog-box t
-  "Variable controlling usage of the dialog box.  If nil, the dialog box
-will never be used, even in response to mouse events.")
 
 (defvar minibuffer-electric-file-name-behavior t
   "If non-nil, slash and tilde in certain places cause immediate deletion.
@@ -267,8 +259,6 @@ Each minibuffer output is added with
 (defvar minibuffer-history-minimum-string-length 3
   "If this variable is non-nil, a string will not be added to the
 minibuffer history if its length is less than that value.")
-
-(define-error 'input-error "Keyboard input error")
 
 (defun read-from-minibuffer (prompt &optional initial-contents
                                     keymap
@@ -409,7 +399,6 @@ See also the variable completion-highlight-first-word-only for control over
                                   (if minibuffer-exit-hook
                                       (run-hooks 'minibuffer-exit-hook))
                                   (buffer-string)))
-                    (histval val)
                       (err nil))
                  (if readp
                      (condition-case e
@@ -422,10 +411,7 @@ See also the variable completion-highlight-first-word-only for control over
                            ;; total total kludge
                            (if (stringp v) (setq v (list 'quote v)))
                            (setq val v))
-                       (end-of-file
-			(setq err
-			      '(input-error "End of input before end of expression")))
-		       (error (setq err e))))
+                       (error (setq err e))))
                  ;; Add the value to the appropriate history list unless
                  ;; it's already the most recent element, or it's only
                  ;; two characters long.
@@ -434,12 +420,12 @@ See also the variable completion-highlight-first-word-only for control over
 		     (let ((list (symbol-value minibuffer-history-variable)))
 		       (or (eq list t)
 			   (null val)
-			   (and list (equal histval (car list)))
+			   (and list (equal val (car list)))
 			   (and (stringp val)
 				minibuffer-history-minimum-string-length
 				(< (length val)
 				   minibuffer-history-minimum-string-length))
-			   (set minibuffer-history-variable (cons histval list)))))
+			   (set minibuffer-history-variable (cons val list)))))
                  (if err (signal (car err) (cdr err)))
                  val))))
       ;; stupid display code requires this for some reason
@@ -1221,7 +1207,9 @@ If N is negative, find the previous or Nth previous match."
 	  (let ((elt (nth (1- minibuffer-history-position)
 			  (symbol-value minibuffer-history-variable))))
 	    (insert
-	     (if (not (stringp elt))
+	     (if (and minibuffer-history-sexp-flag
+		      ;; total kludge
+		      (not (stringp elt)))
 		 (let ((print-level nil))
 		   (condition-case nil
 		       (let ((print-readably t)
@@ -1714,7 +1702,9 @@ DIR defaults to current buffer's directory default."
                ;; complete?
                (if (not orig)
                    nil
-		 (file-directory-p string)))
+		 (and (file-directory-p string)
+		      ;; So "foo" is ambiguous between "foo/" and "foobar/"
+		      (equal string (file-name-as-directory string)))))
               ((eq action 't)
                ;; all completions
                (funcall dirs #'(lambda (n)
@@ -1769,29 +1759,25 @@ whether it is a file(/result) or a directory (/result/)."
 
 (defun mouse-file-display-completion-list (window dir minibuf user-data)
   (let ((standard-output (window-buffer window)))
-    (condition-case nil
-	(display-completion-list 
-	 (directory-files dir nil nil nil t)
-	 :window-width (* 2 (window-width window))
-	 :activate-callback
-	 'mouse-read-file-name-activate-callback
-	 :user-data user-data
-	 :reference-buffer minibuf
-	 :help-string "")
-      (t nil))))
+    (display-completion-list 
+     (directory-files dir nil nil nil t)
+     :window-width (* 2 (window-width window))
+     :activate-callback
+     'mouse-read-file-name-activate-callback
+     :user-data user-data
+     :reference-buffer minibuf
+     :help-string "")))
 
 (defun mouse-directory-display-completion-list (window dir minibuf user-data)
   (let ((standard-output (window-buffer window)))
-    (condition-case nil
-	(display-completion-list
-	 (delete "." (directory-files dir nil nil nil 1))
-	 :window-width (window-width window)
-	 :activate-callback
-	 'mouse-read-file-name-activate-callback
-	 :user-data user-data
-	 :reference-buffer minibuf
-	 :help-string "")
-      (t nil))))
+    (display-completion-list
+     (delete "." (directory-files dir nil nil nil 1))
+     :window-width (window-width window)
+     :activate-callback
+     'mouse-read-file-name-activate-callback
+     :user-data user-data
+     :reference-buffer minibuf
+     :help-string "")))
 
 (defun mouse-read-file-name-activate-callback (event extent user-data)
   (let* ((file (extent-string extent))
@@ -2017,16 +2003,10 @@ something mousy but which wasn't actually invoked using the mouse.")
   "If non-nil, questions should be asked with a dialog box instead of the
 minibuffer.  This looks at `last-command-event' to see if it was a mouse
 event, and checks whether dialog-support exists and the current device
-supports dialog boxes.
-
-The dialog box is totally disabled if the variable `use-dialog-box'
-is set to nil."
+supports dialog boxes."
   (and (featurep 'dialog)
        (device-on-window-system-p)
-       use-dialog-box
        (or force-dialog-box-use
 	   (button-press-event-p last-command-event)
 	   (button-release-event-p last-command-event)
 	   (misc-user-event-p last-command-event))))
-
-;;; minibuf.el ends here

@@ -23,19 +23,20 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: FSF 19.34.
+;;; Synched up with: FSF 19.30.
 
 ;;; Commentary:
 
-;; Steve Strassmann <straz@media-lab.media.mit.edu> didn't write
-;; this, and even if he did, he really didn't mean for you to use it
-;; in an anarchistic way.
-;;
-;; To use this:
-;;  Just before sending mail, do M-x spook.
-;;  A number of phrases will be inserted into your buffer, to help
-;;  give your message that extra bit of attractiveness for automated
-;;  keyword scanners.
+; Steve Strassmann <straz@media-lab.media.mit.edu> didn't write
+; this, and even if he did, he really didn't mean for you to use it
+; in an anarchistic way.
+; May 1987
+
+; To use this:
+;  Just before sending mail, do M-x spook.
+;  A number of phrases will be inserted into your buffer, to help
+;  give your message that extra bit of attractiveness for automated
+;  keyword scanners.
 
 ;;; Code:
 

@@ -38,8 +38,9 @@ Boston, MA 02111-1307, USA.  */
 #if !defined(HAVE_SOCKETS) && !defined(HAVE_SYSVIPC)
 #include <stdio.h>
 
-int
-main (int argc, char *argv[])
+main (argc, argv)
+     int argc;
+     char **argv;
 {
   fprintf (stderr, "%s: Sorry, the Emacs server is supported only\n",
 	   argv[0]);
@@ -62,8 +63,10 @@ main (int argc, char *argv[])
 extern char *strerror ();
 extern int errno;
 
-int
-main (int argc, char *argv[])
+void
+main (argc, argv)
+     int argc;
+     char **argv;
 {
   char system_name[256];
   int s, i;
@@ -177,7 +180,7 @@ main (int argc, char *argv[])
   while ((str = fgets (string, BUFSIZ, out)))
     printf ("%s", str);
   
-  return 0;
+  exit (0);
 }
 
 #else /* This is the SYSV IPC section */
@@ -192,8 +195,10 @@ char *getwd ();
 char *getcwd (), *getenv ();
 #endif
 
-int
-main (int argc, char *argv[])
+void
+main (argc, argv)
+     int argc;
+     char **argv;
 {
   int s;
   key_t key;
@@ -330,7 +335,8 @@ main (int argc, char *argv[])
 
 #ifndef HAVE_STRERROR
 char *
-strerror (int errnum)
+strerror (errnum)
+     int errnum;
 {
   extern char *sys_errlist[];
   extern int sys_nerr;

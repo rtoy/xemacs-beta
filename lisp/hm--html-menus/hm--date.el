@@ -1,4 +1,4 @@
-;;; $Id: hm--date.el,v 1.1.1.2 1996/12/18 03:46:46 steve Exp $
+;;; $Id: hm--date.el,v 1.1.1.1 1996/12/18 22:43:20 steve Exp $
 ;;;
 ;;; Copyright (C) 1993, 1996  Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de

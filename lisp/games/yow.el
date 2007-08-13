@@ -1,6 +1,6 @@
 ;;; yow.el --- quote random zippyisms
 
-;; Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1993, 1994 Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
 ;; Author: Richard Mlynarik
@@ -23,7 +23,7 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: FSF 19.34.
+;;; Synched up with: FSF 19.30.
 
 ;;; Commentary:
 
@@ -38,16 +38,15 @@
 (require 'cookie1)
 
 (defvar yow-file (concat data-directory "yow.lines")
-   "File containing pertinent Pinhead Phrases.")
-
-(defconst yow-load-message "Am I CONSING yet?...")
-(defconst yow-after-load-message "I have SEEN the CONSING!!")
+   "File containing Pertinent Pinhead Phrases.")
 
 ;;;###autoload
 (defun yow (&optional insert)
   "Return or display a random Zippy quotation.  With prefix arg, insert it."
   (interactive "P")
-  (let ((yow (cookie yow-file yow-load-message yow-after-load-message)))
+  (let ((yow (cookie
+	      yow-file
+              "Am I CONSING yet?..." "I have SEEN the CONSING!!")))
     (cond (insert
 	   (insert yow))
 	  ((not (interactive-p))
@@ -66,63 +65,30 @@
 (defun read-zippyism (prompt &optional require-match)
   "Read a Zippyism from the minibuffer with completion, prompting with PROMPT.
 If optional second arg is non-nil, require input to match a completion."
-  (read-cookie prompt yow-file yow-load-message yow-after-load-message
+  (read-cookie prompt yow-file
+	       "Am I CONSING yet?..." "I have SEEN the CONSING!!"
 	       require-match))
-
 ;;;###autoload
 (defun insert-zippyism (&optional zippyism)
   "Prompt with completion for a known Zippy quotation, and insert it at point."
   (interactive (list (read-zippyism "Pinhead wisdom: " t)))
   (insert zippyism))
-
-;;;###autoload
-(defun apropos-zippy (regexp)
-  "Return a list of all Zippy quotes matching REGEXP.
-If called interactively, display a list of matches."
-  (interactive "sApropos Zippy (regexp): ")
-  ;; Make sure yows are loaded
-  (cookie yow-file yow-load-message yow-after-load-message)
-  (let* ((case-fold-search t)
-	 (cookie-table-symbol (intern yow-file cookie-cache))
-	 (string-table (symbol-value cookie-table-symbol))
-	 (matches nil)
-	 (len (length string-table))
-	 (i 0))
-    (save-match-data
-      (while (< i len)
-	(and (string-match regexp (aref string-table i))
-	     (setq matches (cons (aref string-table i) matches)))
-	(setq i (1+ i))))
-    (and matches
-	 (setq matches (sort matches 'string-lessp)))
-    (and (interactive-p)
-	 (cond ((null matches)
-		(message "No matches found."))
-	       (t
-		(let ((l matches))
-		  (with-output-to-temp-buffer "*Zippy Apropos*"
-		    (while l
-		      (princ (car l))
-		      (setq l (cdr l))
-		      (and l (princ "\n\n"))))))))
-    matches))
-
 
-;; Yowza!! Feed zippy quotes to the doctor. Watch results.
-;; fun, fun, fun. Entertainment for hours...
-;;
-;; written by Kayvan Aghaiepour
+; Yowza!! Feed zippy quotes to the doctor. Watch results.
+; fun, fun, fun. Entertainment for hours...
+;
+; written by Kayvan Aghaiepour
 
 ;;;###autoload
 (defun psychoanalyze-pinhead ()
   "Zippy goes to the analyst."
   (interactive)
   (doctor)				; start the psychotherapy
-  (message "")
+  (message nil)
   (switch-to-buffer "*doctor*")
   (sit-for 0)
   (while (not (input-pending-p))
-    (insert-string (yow))
+    (insert (yow))
     (sit-for 0)
     (doctor-ret-or-read 1)
     (doctor-ret-or-read 1)))

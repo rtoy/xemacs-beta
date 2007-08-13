@@ -722,7 +722,7 @@ set_buffer_type_for_emacs_buffer (Lisp_Object emacs_buf, Editor *editor,
 	XSETSTRING (type, XSYMBOL (type)->name);
 
       if (STRINGP (type))
-	type_string = (char *) XSTRING_DATA (type);
+	type_string = (char *)XSTRING_DATA (type);
 
       type_string = copy_string (type_string);
 
@@ -1665,8 +1665,9 @@ read_energize_buffer_data (Connection *conn, CBuffer *cbu, Editor *editor,
   if (!NILP (buffer_name))
     {
       if (modifying_p
-	  && strcmp ((char*) XSTRING_DATA (buffer_name),
-		     (char*) XSTRING_DATA (XBUFFER (binfo->emacs_buffer)->name)))
+	  && strcmp ((char*)XSTRING_DATA (buffer_name),
+		     (char*)
+		     string_data (XSTRING (XBUFFER (binfo->emacs_buffer)->name))))
 	rename_the_buffer (buffer_name);
     }
 
@@ -2134,7 +2135,8 @@ write_energize_buffer_data (BufferInfo *binfo)
 						    BUF_BEG (current_buffer),
 						    BUF_Z (current_buffer));
       CNeedOutputSize (conn, XSTRING_LENGTH (string) + 9);
-      CWriteVstringLen (conn, XSTRING_DATA (string), XSTRING_LENGTH (string));
+      CWriteVstringLen (conn, XSTRING_DATA (string),
+			XSTRING_LENGTH (string));
     }
 
   /* write the extents */
@@ -2526,7 +2528,7 @@ confirmation before executing the command.
 
   /* ignore the flags for now */
   execute_energize_menu (buffer, extent_to_data (extent_obj),
-			 (char*) XSTRING_DATA (v->contents [0]),
+			 (char*)XSTRING_DATA (v->contents [0]),
 			 lisp_to_word (v->contents [1]),
 			 XINT (v->contents [3]),
 			 selection,
@@ -2553,7 +2555,7 @@ See also 'energize-list-menu'.
   CHECK_STRING (command);
 
   execute_energize_menu (buffer, extent_to_data (extent_obj),
-			 (char*) XSTRING_DATA (command), 0, 0, selection,
+			 (char*)XSTRING_DATA (command), 0, 0, selection,
 			 no_confirm);
 
   return Qt;

@@ -294,9 +294,8 @@ prefix argument will cause you to be prompted for a core file to debug."
       (and (eq major-mode 'gdb-mode)	; doesn't work w/ energize yet
 	   (setq current-gdb-buffer (current-buffer))
 	   ;; XEmacs change:
-	   (progn
-	     (make-local-hook 'kill-buffer-hook)
-	     (add-hook 'kill-buffer-hook 'gdbsrc-reset nil t)))
+	   (make-local-hook 'kill-buffer-hook)
+	   (add-hook 'kill-buffer-hook 'gdbsrc-reset nil t))
       (error "Cannot determine current-gdb-buffer"))
 ;;;   (set-process-filter 
 ;;;    (get-buffer-process current-gdb-buffer) 'gdbsrc-mode-filter)
@@ -373,22 +372,19 @@ containing c source code."
 (defun gdb-call-from-src (command)
   "Send associated gdb process COMMAND displaying source in this window."
   (setq gdbsrc-call-p t)
-    (let ((src-win (selected-window))
-	  (buf (or gdbsrc-associated-buffer current-gdb-buffer)))
-      (or (buffer-name buf)
-	  (error "GDB buffer deleted"))
-      (pop-to-buffer buf)
-      (goto-char (point-max))
-      (beginning-of-line)
-      ;; Go past gdb prompt 
-      (re-search-forward
-       gdb-prompt-pattern (save-excursion (end-of-line) (point))  t)
-      ;; Delete any not-supposed-to-be-there text
-      (delete-region (point) (point-max)) 
-      (insert command)
-      (comint-send-input)
-      (select-window src-win)
-      ))
+  (let ((buf (or gdbsrc-associated-buffer current-gdb-buffer)))
+    (or (buffer-name buf)
+	(error "GDB buffer deleted"))
+    (pop-to-buffer buf))
+  (goto-char (point-max))
+  (beginning-of-line)
+  ;; Go past gdb prompt 
+  (re-search-forward
+   gdb-prompt-pattern (save-excursion (end-of-line) (point))  t)
+  ;; Delete any not-supposed-to-be-there text
+  (delete-region (point) (point-max)) 
+  (insert command)
+  (comint-send-input))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -503,7 +499,7 @@ selection-extent, nil otherwise."
 	 epnt
 	 extent
 	 (eq (window-buffer ewin)
-	     (extent-object extent))
+	     (extent-buffer extent))
 	 (extent-start-position extent)
 	 (> epnt (extent-start-position extent))
 	 (> (extent-end-position extent) epnt))))
@@ -514,7 +510,7 @@ primary selection-extent, nil otherwise."
   ;; stig@hackvan.com
   (and extent		; FIXME - I'm such a sinner...
        (eq (current-buffer) 
-	   (extent-object extent))
+	   (extent-buffer extent))
        (> (point) (extent-start-position extent))
        (>= (extent-end-position extent) (point))))
 
@@ -564,8 +560,8 @@ buffer.  "
   (let ((gbuf (or gdbsrc-associated-buffer current-gdb-buffer)))
     (cond ((eq (current-buffer) gbuf)
 	   (and gdb-arrow-extent
-		(extent-object gdb-arrow-extent)
-		(progn (pop-to-buffer (extent-object gdb-arrow-extent))
+		(extent-buffer gdb-arrow-extent)
+		(progn (pop-to-buffer (extent-buffer gdb-arrow-extent))
 		       (goto-char (extent-start-position gdb-arrow-extent)))))
 	  ((buffer-name gbuf) (pop-to-buffer gbuf))
 	  ((y-or-n-p "No debugger.  Start a new one? ")
@@ -844,7 +840,7 @@ continues.  This can be bound to either a key or a mouse button."
   (ad-set-arg 2 'source) ; tell it not to select the gdb window
   ad-do-it
   (save-excursion
-    (let* ((buf (extent-object gdb-arrow-extent))
+    (let* ((buf (extent-buffer gdb-arrow-extent))
 	   (win (get-buffer-window buf)))
       (setq gdbsrc-last-src-buffer buf)
       (select-window win)

@@ -250,7 +250,7 @@ select_console_1 (Lisp_Object console)
   /* perhaps this should do something more complicated */
   Vselected_console = console;
 
-  /* #### Schedule this to be removed in some future version */
+  /* #### Schedule this to be removed in 19.14 */
 #ifdef HAVE_X_WINDOWS
   if (CONSOLE_X_P (XCONSOLE (console)))
     Vwindow_system = Qx;
@@ -273,23 +273,12 @@ time this function is called.
 */
        (console))
 {
-  Lisp_Object device;
-
   CHECK_LIVE_CONSOLE (console);
 
-  device = CONSOLE_SELECTED_DEVICE (XCONSOLE (console));
-  if (!NILP (device))
-    {
-      struct device *d = XDEVICE (device);
-      Lisp_Object frame = DEVICE_SELECTED_FRAME (d);
-      if (!NILP (frame))
-	{
-	  struct frame *f = XFRAME(frame);
-	  Fselect_window (FRAME_SELECTED_WINDOW (f));
-	}
-      else
-	error ("Can't select console with no frames.");
-    }
+  /* select the console's selected frame's selected window.  This will call
+     selected_frame_1(). */
+  if (!NILP (CONSOLE_SELECTED_DEVICE (XCONSOLE (console))))
+    Fselect_window (FRAME_SELECTED_WINDOW (XFRAME (DEVICE_SELECTED_FRAME (XDEVICE (CONSOLE_SELECTED_DEVICE (XCONSOLE (console)))))));
   else
     error ("Can't select a console with no devices");
   return Qnil;
@@ -326,7 +315,7 @@ DEFUN ("console-type", Fconsole_type, 0, 1, 0, /*
 Return the type of the specified console (e.g. `x' or `tty').
 Value is `tty' for a tty console (a character-only terminal),
 `x' for a console that is an X display,
-`ns' for a console that is a NeXTstep connection (not yet implemented),
+`ns' for a console that is a NeXTstep connection (not yet implemeted),
 `win32' for a console that is a Windows or Windows NT connection (not yet
   implemented),
 `pc' for a console that is a direct-write MS-DOS connection (not yet
@@ -914,88 +903,6 @@ stuff_buffered_input (Lisp_Object stuffstring)
 # endif
 #endif /* BSD */
 }
-#ifdef HAVE_TTY
-extern Lisp_Object Fconsole_tty_controlling_process(Lisp_Object console);
-#endif
-
-DEFUN ("suspend-console", Fsuspend_console, 0, 1, "", /*
-Suspend a console.  For tty consoles, it sends a signal to suspend
-the process in charge of the tty, and removes the devices and
-frames of that console from the display.
-
-If optional arg CONSOLE is non-nil, it is the console to be suspended.
-Otherwise it is assumed to be the selected console.
-
-Some operating systems cannot stop processes and resume them later.
-On such systems, who knows what will happen.
-*/
-       (console))
-{
-  Lisp_Object devcons;
-  Lisp_Object framecons;
-  struct console *c;
-  struct gcpro gcpro1;
-
-#ifdef HAVE_TTY
-  if (NILP (console))
-      console=Fselected_console();
-
-  GCPRO1 (console);
-
-  c = decode_console(console);
-
-  if (CONSOLE_TTY_P (c)) 
-  {
-    CONSOLE_DEVICE_LOOP (devcons, c)
-      {
-	struct device *d = XDEVICE (XCAR (devcons)); 
-	DEVICE_FRAME_LOOP (framecons, d)
-	  {
-	    Fmake_frame_invisible(XCAR(framecons), Qt);
-	  }
-      }
-    reset_one_console(c);
-    sys_suspend_process(XINT(Fconsole_tty_controlling_process(console)));
-  }
-
-  UNGCPRO;
-#endif
-  return Qnil;
-}
-
-DEFUN ("resume-console", Fresume_console, 1, 1, "", /*
-Re-initialize a previously suspended console.  For tty consoles,
-do stuff to the tty to make it sane again.
-*/
-       (console))
-{
-  Lisp_Object devcons;
-  Lisp_Object framecons;
-  struct console *c;
-  struct gcpro gcpro1, gcpro2, gcpro3;
-
-#ifdef HAVE_TTY
-  GCPRO2 (console, devcons);
-
-  c = decode_console(console);
-
-  if (CONSOLE_TTY_P(c)) 
-  {
-    CONSOLE_DEVICE_LOOP (devcons, c)
-      {
-	struct device *d = XDEVICE (XCAR (devcons)); 
-	DEVICE_FRAME_LOOP (framecons, d)
-	  {
-	    Fmake_frame_visible(XCAR(framecons));
-	  }
-      }
-    init_one_console(c);
-  }
-
-  UNGCPRO;
-#endif
-  return Qnil;
-}
 
 DEFUN ("set-input-mode", Fset_input_mode, 3, 5, 0, /*
 Set mode of reading keyboard input.
@@ -1011,7 +918,7 @@ Optional fifth arg CONSOLE specifies console to make changes to; nil means
  the selected console.
 See also `current-input-mode'.
 */
-       (ignored, flow, meta, quit, console))
+     (ignored, flow, meta, quit, console))
 {
   struct console *con = decode_console (console);
   int meta_key = 1;
@@ -1100,9 +1007,7 @@ syms_of_console (void)
   DEFSUBR (Fconsole_enable_input);
   DEFSUBR (Fconsole_disable_input);
   DEFSUBR (Fconsole_on_window_system_p);
-  DEFSUBR (Fsuspend_console);
-  DEFSUBR (Fresume_console);
-  
+
   DEFSUBR (Fsuspend_emacs);
   DEFSUBR (Fset_input_mode);
   DEFSUBR (Fcurrent_input_mode);

@@ -14,9 +14,8 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
 ;;; Synched up with: Not in FSF. (Completely divergent from FSF scroll-bar.el)
 
@@ -40,7 +39,8 @@
 This is the little arrow to the left of the scrollbar.  One argument is
 passed, the scrollbar's window.  You can advise this function to
 change the scrollbar behavior."
-  (when (window-live-p window)
+  (if (not (window-live-p window))
+      nil
     (scrollbar-set-hscroll window (- (window-hscroll window) 1))
     (setq zmacs-region-stays t)
     nil))
@@ -50,7 +50,8 @@ change the scrollbar behavior."
 This is the little arrow to the right of the scrollbar.  One argument is
 passed, the scrollbar's window.  You can advise this function to
 change the scrollbar behavior."
-  (when (window-live-p window)
+  (if (not (window-live-p window))
+      nil
     (scrollbar-set-hscroll window (+ (window-hscroll window) 1))
     (setq zmacs-region-stays t)
     nil))
@@ -60,7 +61,8 @@ change the scrollbar behavior."
 \(The way this is done can vary from scrollbar to scrollbar.\) One argument is
 passed, the scrollbar's window.  You can advise this function to
 change the scrollbar behavior."
-  (when (window-live-p window)
+  (if (not (window-live-p window))
+      nil
     (scrollbar-set-hscroll window (- (window-hscroll window)
 				     (- (window-width window) 2)))
     (setq zmacs-region-stays t)
@@ -71,7 +73,8 @@ change the scrollbar behavior."
 \(The way this is done can vary from scrollbar to scrollbar.\) One argument is
 passed, the scrollbar's window.  You can advise this function to
 change the scrollbar behavior."
-  (when (window-live-p window)
+  (if (not (window-live-p window))
+      nil
     (scrollbar-set-hscroll window (+ (window-hscroll window)
 				     (- (window-width window) 2)))
     (setq zmacs-region-stays t)
@@ -82,7 +85,8 @@ change the scrollbar behavior."
 \(The way this is done can vary from scrollbar to scrollbar.\). One argument is
 passed, the scrollbar's window.  You can advise this function to
 change the scrollbar behavior."
-  (when (window-live-p window)
+  (if (not (window-live-p window))
+      nil
     (scrollbar-set-hscroll window 0)
     (setq zmacs-region-stays t)
     nil))
@@ -92,7 +96,8 @@ change the scrollbar behavior."
 \(The way this is done can vary from scrollbar to scrollbar.\). One argument is
 passed, the scrollbar's window.  You can advise this function to
 change the scrollbar behavior."
-  (when (window-live-p window)
+  (if (not (window-live-p window))
+      nil
     (scrollbar-set-hscroll window 'max)
     (setq zmacs-region-stays t)
     nil))
@@ -103,8 +108,9 @@ One argument is passed, a cons containing the scrollbar's window and a value
 representing how many columns the thumb is slid over.  You can advise
 this function to change the scrollbar behavior."
   (let ((window (car data))
-	(value  (cdr data)))
-    (when (and (window-live-p window) (integerp value))
+	(value (cdr data)))
+    (if (not (or (window-live-p window) (integerp value)))
+	nil
       (scrollbar-set-hscroll window value)
       (setq zmacs-region-stays t)
       nil)))

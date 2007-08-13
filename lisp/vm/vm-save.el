@@ -35,8 +35,7 @@
 	(let (header alist tuple-list)
 	  (setq alist auto-folder-alist)
 	  (while alist
-	    (setq header (vm-get-header-contents (car mp) (car (car alist))
-						 ", "))
+	    (setq header (vm-get-header-contents (car mp) (car (car alist))))
 	    (if (null header)
 		()
 	      (setq tuple-list (cdr (car alist)))
@@ -98,7 +97,7 @@ The saved messages are flagged as `filed'."
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
   (vm-error-if-folder-empty)
-  (message "Archiving...")
+  (vm-unsaved-message "Archiving...")
   (let ((auto-folder)
 	(archived 0))
     (unwind-protect
@@ -132,16 +131,18 @@ The saved messages are flagged as `filed'."
 			      (vm-number-of (car vm-message-pointer))
 			      auto-folder)))
 		 (let ((vm-delete-after-saving vm-delete-after-archiving))
-		   (vm-save-message auto-folder)
+		   (if (not (string-equal auto-folder "/dev/null"))
+		       (vm-save-message auto-folder))
 		   (vm-increment archived)
-		   (message "%d archived, still working..." archived)))
+		   (vm-unsaved-message "%d archived, still working..."
+				       archived)))
 	    (setq done (eq vm-message-pointer stop-point)
 		  vm-message-pointer (cdr vm-message-pointer))))
       ;; fix mode line
       (intern (buffer-name) vm-buffers-needing-display-update)
       (vm-update-summary-and-mode-line))
     (if (zerop archived)
-	(message "No messages were archived")
+	(message "No messages archived")
       (message "%d message%s archived"
 	       archived (if (= 1 archived) "" "s")))))
 
@@ -432,9 +433,8 @@ vm-save-message instead (normally bound to `s')."
     (setq vm-last-written-file file)))
 
 (defun vm-pipe-message-to-command (command prefix-arg)
-  "Runs a shell command with some or all of the contents of the
-current message as input.
-By default, the entire message is used.
+  "Run shell command with the some or all of the current message as input.
+By default the entire message is used.
 With one \\[universal-argument] the text portion of the message is used.
 With two \\[universal-argument]'s the header portion of the message is used.
 With three \\[universal-argument]'s the visible header portion of the message
@@ -486,7 +486,7 @@ Output, if any, is displayed.  The message is not altered."
 	(let ((pop-up-windows (and pop-up-windows (eq vm-mutable-windows t))))
 	  (call-process-region (point-min) (point-max)
 			       (or shell-file-name "sh")
-			       nil buffer nil shell-command-switch command)))
+			       nil buffer nil "-c" command)))
       (setq mlist (cdr mlist)))
      (set-buffer buffer)
      (if (not (zerop (buffer-size)))
@@ -495,74 +495,12 @@ Output, if any, is displayed.  The message is not altered."
        (vm-display nil nil '(vm-pipe-message-to-command)
 		   '(vm-pipe-message-to-command)))))
 
-(defun vm-print-message (&optional count)
-  "Print the current message
-Prefix arg N means print the current message and the next N - 1 messages.
-Prefix arg -N means print the current message and the previous N - 1 messages.
+(defun vm-print-message ()
+  "Print the current message."
+  (interactive)
+  (vm-pipe-message-to-command
+   (mapconcat (function identity)
+	      (nconc (list vm-print-command) vm-print-command-switches)
+	      " ")
+   '(64)))
 
-The variable `vm-print-command' controls what command is run to
-print the message, and `vm-print-command-switches' is a list of switches
-to pass to the command.
-
-When invoked on marked messages (via vm-next-command-uses-marks),
-each marked message is printed, one message per vm-print-command invocation.
-
-Output, if any, is displayed.  The message is not altered."
-  (interactive "p")
-  (vm-follow-summary-cursor)
-  (vm-select-folder-buffer)
-  (vm-check-for-killed-summary)
-  (vm-error-if-folder-empty)
-  (or count (setq count 1))
-  (let ((buffer (get-buffer-create "*Shell Command Output*"))
-	(command (mapconcat (function identity)
-			    (nconc (list vm-print-command)
-				   vm-print-command-switches)
-			    " "))
-	(m nil)
-	(pop-up-windows (and pop-up-windows (eq vm-mutable-windows t)))
-	(mlist (vm-select-marked-or-prefixed-messages count)))
-    (set-buffer buffer)
-    (erase-buffer)
-    (while mlist
-      (setq m (vm-real-message-of (car mlist)))
-      (set-buffer (vm-buffer-of m))
-      (if (and vm-display-using-mime (vectorp (vm-mm-layout m)))
-	  (let ((work-buffer nil))
-	    (unwind-protect
-		(progn
-		  (setq work-buffer (generate-new-buffer "*vm-work*"))
-		  (set-buffer work-buffer)
-		  (vm-insert-region-from-buffer
-		   (vm-buffer-of m) (vm-vheaders-of m) (vm-text-of m))
-		  (vm-decode-mime-encoded-words)
-		  (goto-char (point-max))
-		  (let ((vm-auto-displayed-mime-content-types
-			 '("text" "multipart"))
-			(vm-mime-internal-content-types
-			 '("text" "multipart"))
-			(vm-mime-external-content-types-alist nil))
-		    (vm-decode-mime-layout (vm-mm-layout m)))
-		  (let ((pop-up-windows (and pop-up-windows
-					     (eq vm-mutable-windows t))))
-		    (call-process-region (point-min) (point-max)
-					 (or shell-file-name "sh")
-					 nil buffer nil
-					 shell-command-switch command)))
-	      (and work-buffer (kill-buffer work-buffer))))
-	(save-restriction
-	  (widen)
-	  (narrow-to-region (vm-vheaders-of m) (vm-text-end-of m))
-	  (let ((pop-up-windows (and pop-up-windows
-				     (eq vm-mutable-windows t))))
-	    (call-process-region (point-min) (point-max)
-				 (or shell-file-name "sh")
-				 nil buffer nil
-				 shell-command-switch command))))
-      (setq mlist (cdr mlist)))
-    (set-buffer buffer)
-    (if (not (zerop (buffer-size)))
-	(vm-display buffer t '(vm-pipe-message-to-command)
-		    '(vm-pipe-message-to-command))
-      (vm-display nil nil '(vm-pipe-message-to-command)
-		  '(vm-pipe-message-to-command)))))

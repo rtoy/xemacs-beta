@@ -5,47 +5,42 @@
 ;; Author: Daniel LaLiberte <liberte@cs.uiuc.edu>
 ;; Keywords: lisp
 
-;; This file is part of XEmacs.
+;; This file is part of GNU Emacs.
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
+;; GNU Emacs is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; GNU Emacs is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with GNU Emacs; see the file COPYING.  If not, write to
+;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-;;; Synched up with: Not in FSF
+;;;; Commentary:
 
-;;; Commentary:
+;;; eval-region, eval-buffer, and eval-current-buffer are redefined in
+;;; Lisp to allow customizations by Lisp code.  eval-region calls
+;;; `read', `eval', and `prin1', so Lisp replacements of these
+;;; functions will affect eval-region and anything else that calls it.
+;;; eval-buffer and eval-current-buffer are redefined in Lisp to call
+;;; eval-region on the buffer.  
 
-;; eval-region, eval-buffer, and eval-current-buffer are redefined in
-;; Lisp to allow customizations by Lisp code.  eval-region calls
-;; `read', `eval', and `prin1', so Lisp replacements of these
-;; functions will affect eval-region and anything else that calls it.
-;; eval-buffer and eval-current-buffer are redefined in Lisp to call
-;; eval-region on the buffer.  
+;;; Because of dynamic binding, all local variables are protected from
+;;; being seen by eval by giving them funky names.  But variables in
+;;; routines that call eval-region are similarly exposed.
 
-;; Because of dynamic binding, all local variables are protected from
-;; being seen by eval by giving them funky names.  But variables in
-;; routines that call eval-region are similarly exposed.
+;;; Perhaps this should be one of several files in an `elisp' package
+;;; that replaces Emacs Lisp subroutines with Lisp versions of the
+;;; same.
 
-;; Perhaps this should be one of several files in an `elisp' package
-;; that replaces Emacs Lisp subroutines with Lisp versions of the
-;; same.
-
-;; Eval-region may be installed, after loading, by calling:
-;; (elisp-eval-region-install).  Installation can be undone with:
-;; (elisp-eval-region-uninstall).
-
-;;; Code:
+;;; Eval-region may be installed, after loading, by calling:
+;;; (elisp-eval-region-install).  Installation can be undone with:
+;;; (elisp-eval-region-uninstall).
 
 '(defpackage "elisp-eval-region"
    (:nicknames "elisp")
@@ -214,6 +209,7 @@ This version calls `eval-region' on the whole buffer."
     (set-buffer (or (get-buffer elisp-bufname) 
 		    (error "No such buffer: %s" elisp-bufname)))
     (eval-region (point-min) (point-max) elisp-printflag)))
+
 
 (provide 'eval-reg)
 

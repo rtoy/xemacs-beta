@@ -1,0 +1,224 @@
+/******************************************************************************
+**       File: default.css
+**    Purpose: Default Stylesheet for Emacs-W3
+**       Info: Copyright (c) 1995 William M. Perry <wmperry@spry.com>
+**    Created: William M. Perry <wmperry@spry.com>, Aug-31-1995
+** Maintainer: William M. Perry <wmperry@spry.com>
+**
+**  This contains the top level fallback default styles for Emacs-w3
+**
+******************************************************************************
+**
+** To specify device-dependent styles, you must mark a section with
+** :devicetype:
+** If you are not using 'devicetype', then anything up to the next
+** :xxx: media descriptor is ignored.
+**
+** There are a few special Emacs-W3 sections
+**
+**  emacs - only include this chunk if you are using Emacs 19
+** xemacs - only include this chunk if you are using XEmacs
+** normal - always include this chunk (useful for switching out of another 
+**          device-type block
+******************************************************************************/
+
+/*
+** Headers
+*/
+
+h1,h2,h3,
+h4,h5,h6  {
+	    display: block;
+            font-family : serif;
+            font-weight : bold;
+          }
+
+/*
+** Since Emacs-19 doesn't handle mixed-sized fonts very well just yet,
+** we only use them under XEmacs.  Hopefully, this will change soon.
+*/
+
+:xemacs:
+      h1  { font-size : +10pt }
+      h2  { font-size : +6pt  }
+      h3  { font-size : +3pt  }
+      h4  {                   } /* Do nothing, normal sized font, just bold */
+      h5  { font-size : -3pt  }
+      h6  { font-size : -6pt  }
+
+/*
+** Emacs-19 also doesn't handle how Emacs-W3 changes this type of font
+** very well, so lets only do it under XEmacs for now.  Emacs-19 can only
+** do monospaced fonts anyway, so its redundant.
+*/
+   pre,xmp,
+  plaintext { font-family: monospace; display: block }
+key,code,tt { font-family: monospace }
+
+/*
+** Best we can do under Emacs-19 is use the default font and try to make
+** the headers stand out somehow.
+*/
+
+:emacs:
+h1,h2,h3,
+h4,h5,h6  { 
+            font-style: small-caps;
+            text-decoration: underline;
+	    color: blue;
+          }
+
+strong,em { color: red         }
+      dfn { font-style: italic }
+ s,strike { color: green       }
+
+:normal:
+       p  { display: block }
+
+/*
+** List formatting instructions
+*/
+
+ dl,ul,ol {
+ 	    display: block;
+	    margin-left: 5em
+	  }
+
+       li { display: list-item }
+       dt { font-weight: bold; display: block }
+       dd { insert-before: 3em; display: list-item }
+
+/*
+** All logical emphasis tags, the way god intended
+*/
+
+  strong,em { font-weight: bold             }
+        dfn { font-style: italic            }
+   s,strike { text-decoration: line-through }
+        sub { text-position: sub            }
+        sup { text-position: sup            }
+     secret { text-transform: rot13         }
+
+/*
+** Physical emphasis - spawn of evil
+*/
+          b { font-weight: bold }
+	  i { font-style: italic }
+          u { text-decoration: underline }
+      blink { text-decoration: blink }
+
+/*
+** Various and sundry
+*/
+         br { display: list-item }
+         hr { display: list-item }
+    hr[SRC] { replace: {SRC} }
+
+
+/*
+** Hypertext link coloring
+*/
+
+a         { cursor: hand2  }
+a:link    { color: #FF0000 }
+a:visited { color: #B22222 }
+a:active  { color: #FF0000 }
+
+/*
+** Various other character-level formatting issues
+*/
+
+ address { align : right }
+abstract { font-style : bold & italic ; align : indent }
+   quote { font-style : italic ; align : indent }
+
+/*
+** Now for monochrome defaults
+*/
+:mono:
+   a:link { color: black; text-decoration: underline }
+a:visited { color: black; text-decoration: underline }
+ a:active { color: white }
+
+/*
+** All the TTY specific formatting
+*/
+
+:tty:
+
+/*
+** First, handle some stuff for generic TTYs to emulate our old
+** behaviour with w3-delimit-links and a subset of w3-delimit-emphasis
+*/
+
+h1,h2,h3,
+h4,h5,h6 {
+           insert.before: *;
+           insert.after: *
+         }
+
+a:visited{
+           insert.before: "{{";
+           insert.after: "}}"
+         }
+
+a:link   {
+           insert.before: "[[";
+           insert.after: "]]"
+         }
+
+/* End Generic TTY */
+
+:ansi-tty:
+
+/*
+** Now comes the cool TTY stuff.  You will need to be using XEmacs 19.14
+** or later (or Emacs 19.30 under DOS) in order to get any benefit from
+** these whatsoever.  But if you are using one of these, wow, cool, eh?
+**
+** ANSI specifies these colors, and most (all?) TTYs that support color
+** will generally have 2 versions.  One normal and one bright or 'standout'
+** version.
+**
+**  Color     R     G     B
+** --------------------------
+**   white - 1.0 , 1.0 , 1.0
+**    cyan - 0.0 , 1.0 , 1.0
+** magenta - 1.0 , 0.0 , 1.0
+**    blue - 0.0 , 0.0 , 1.0
+**  yellow - 1.0 , 1.0 , 0.0
+**   green - 0.0 , 1.0 , 0.0
+**     red - 1.0 , 0.0 , 0.0
+**   black - 0.0 , 0.0 , 0.0
+*/
+
+h1,h2,h3,
+h4,h5,h6  { color : cyan     }
+a:visited { color : magenta  }
+   a:link { color : red      }
+ a:active { color : yellow   }
+
+:speech:
+h1,h2,h3,
+h4,h5,h6 { voice-family: paul; stress: 8; }
+      h1 { pitch: 9; pitch-range: 9; }
+      h2 { pitch: 8; pitch-range: 8; }
+      h3 { pitch: 7; pitch-range: 7; }
+      h4 { pitch: 6; pitch-range: 6; }
+   h5,h6 { pitch: 5; pitch-range: 5; }
+      li { pitch: 6; richness: 6; }
+      dt { voice-family: harry;   }
+      dd { pitch: 6; richness: 6; }
+pre,xmp,
+plaintext { pitch: 1; pitch-range: 1; stress: 1; richness: 9; }
+key,code,
+       tt { pitch: 1; pitch-range: 1; stress: 1; richness: 9; }
+strong,em { pitch: 6; stress: 8; pitch-range: 9; }
+      dfn { pitch: 7; pitch-range: 6; stress: 6; }
+ s,strike { richness: 9; }
+        b { pitch: 6; pitch-range: 9; stress: 8; }
+        i { pitch: 7; pitch-range: 6; stress: 6; }
+        u { richness: 0; }
+a:link    { voice-family: harry;  }
+a:visited { voice-family: betty;  }
+a:active  { voice-family: ursula; }

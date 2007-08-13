@@ -14,11 +14,11 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;; created by jwz, 13-jun-92.
-;; changed by Heiko Muenkel, 12-jun-1997: Added a grave keysym.
 
 ;; Under X, when the user types a character that is ISO-8859/1 but not ASCII,
 ;; it comes in as a symbol instead of as a character code.  This keeps things
@@ -30,7 +30,7 @@
 
 ;; It puts the same property on the keypad keys, so that (read-char) will
 ;; think that they are the same as the digit characters.  However, those
-;; keys are bound to one-character keyboard macros, so that `kp-9' will, by
+;; keys are bound to one-character keyboard macros, so that `kp_9' will, by
 ;; default, do the same thing that `9' does, in whatever the current mode is.
 
 ;; The standard case and syntax tables are set in prim/iso8859-1.el, since
@@ -93,7 +93,6 @@ possible, in the interest of portability.")
  ;; distributions.  If a vendor varies from this, adjustments will need
  ;; to be made...
 
- (grave			?\140)
  (nobreakspace		?\240)
  (exclamdown		?\241)
  (cent			?\242)
@@ -117,9 +116,9 @@ possible, in the interest of portability.")
  (acute			?\264)	; Why is there an acute keysym that is 
  (mu			?\265)	; distinct from apostrophe/quote, but 
  (paragraph		?\266)	; no grave keysym that is distinct from
- (periodcentered	?\267)	; backquote? 
- (cedilla		?\270)  ; I've added the grave keysym, because it's
- (onesuperior		?\271)  ; used in x-compose (Heiko Muenkel).
+ (periodcentered	?\267)	; backquote?
+ (cedilla		?\270)
+ (onesuperior		?\271)
  (masculine		?\272)
  (guillemotright	?\273)
  (onequarter		?\274)

@@ -1,6 +1,6 @@
-;;; tm-ew-d.el --- RFC 2047 based encoded-word decoder for GNU Emacs
+;;; tm-ew-d.el --- RFC 1522 based MIME encoded-word decoder for GNU Emacs
 
-;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
+;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
 
 ;; Author: ENAMI Tsugutomo <enami@sys.ptg.sony.co.jp>
 ;;         MORIOKA Tomohiko <morioka@jaist.ac.jp>
@@ -9,8 +9,8 @@
 ;; Original: 1992/07/20 ENAMI Tsugutomo's `mime.el'.
 ;;	Renamed: 1993/06/03 to tiny-mime.el.
 ;;	Renamed: 1995/10/03 from tiny-mime.el. (split off encoder)
-;; Version: $Revision: 1.5 $
-;; Keywords: encoded-word, MIME, multilingual, header, mail, news
+;; Version: $Revision: 1.1.1.1 $
+;; Keywords: mail, news, MIME, RFC 1522, multilingual, encoded-word
 
 ;; This file is part of tm (Tools for MIME).
 
@@ -35,14 +35,13 @@
 (require 'std11)
 (require 'mel)
 (require 'tm-def)
-(require 'tl-str)
 
 
 ;;; @ version
 ;;;
 
 (defconst tm-ew-d/RCS-ID
-  "$Id: tm-ew-d.el,v 1.5 1997/03/16 05:55:41 steve Exp $")
+  "$Id: tm-ew-d.el,v 1.1.1.1 1996/12/18 22:43:37 steve Exp $")
 (defconst mime/eword-decoder-version (get-version-string tm-ew-d/RCS-ID))
 
 
@@ -123,13 +122,12 @@ such as a version of Net$cape). [tm-ew-d.el]"
 	  (mime/unfolding)
 	)
       (goto-char (point-min))
-      (while (re-search-forward (concat "\\(" mime/encoded-word-regexp "\\)"
-                                        "\\(\n?[ \t]\\)+"
-                                        "\\(" mime/encoded-word-regexp "\\)")
-                                nil t)
-	(replace-match "\\1\\6")
-        (goto-char (point-min))
+      (while (re-search-forward
+	      (concat (regexp-quote "?=") "\\s +" (regexp-quote "=?"))
+	      nil t)
+	(replace-match "?==?")
 	)
+      (goto-char (point-min))
       (let (charset encoding text)
 	(while (re-search-forward mime/encoded-word-regexp nil t)
 	  (insert (mime/decode-encoded-word
@@ -159,15 +157,14 @@ such as a version of Net$cape). [tm-ew-d.el]"
   (let (field beg end)
     (while (re-search-forward std11-field-head-regexp nil t)
       (setq beg (match-beginning 0)
-            end (std11-field-end))
+	    end (std11-field-end))
       (setq field (buffer-substring beg end))
       (if (string-match mime/encoded-word-regexp field)
-          (save-restriction
-            (narrow-to-region (goto-char beg) end)
-            (while (re-search-forward "\n\\([ \t]\\)" nil t)
-              (replace-match
-               (match-string 1))
-              )
+	  (save-restriction
+	    (narrow-to-region (goto-char beg) end)
+	    (while (re-search-forward "\n[ \t]+" nil t)
+	      (replace-match " ")
+	      )
 	    (goto-char (point-max))
 	    ))
       )))
@@ -196,15 +193,8 @@ as a version of Net$cape). [tm-ew-d.el]"
 		(text
 		 (substring word (match-beginning 3) (match-end 3))
 		 ))
-            (condition-case err
-                (mime/decode-encoded-text charset encoding text must-unfold)
-              (error
-               (and (add-text-properties 0 (length word)
-					 (and tm:warning-face
-					      (list 'face tm:warning-face))
-					 word)
-                    word)))
-            ))
+	    (mime/decode-encoded-text charset encoding text must-unfold)
+	    ))
       word))
 
 
@@ -225,31 +215,22 @@ as a version of Net$cape). [tm-ew-d.el]"
   (let ((cs (mime-charset-to-coding-system charset)))
     (if cs
 	(let ((dest
-               (cond
-                ((string-equal "B" encoding)
-                 (if (and (string-match mime/B-encoded-text-regexp string)
-                          (string-equal string (match-string 0 string)))
-                     (base64-decode-string string)
-                   (error "Invalid encoded-text %s" string)))
-                ((string-equal "Q" encoding)
-                 (if (and (string-match mime/Q-encoded-text-regexp string)
-                          (string-equal string (match-string 0 string)))
-                     (q-encoding-decode-string string)
-                   (error "Invalid encoded-text %s" string)))
-                (t
-                 (error "Invalid encoding %s" encoding)
-                 )))
-              )
+	       (cond ((string-equal "B" encoding)
+		      (base64-decode-string string))
+		     ((string-equal "Q" encoding)
+		      (q-encoding-decode-string string))
+		     (t (message "unknown encoding %s" encoding)
+			nil))))
 	  (if dest
 	      (progn
 		(setq dest (decode-coding-string dest cs))
 		(if must-unfold
 		    (mapconcat (function
 				(lambda (chr)
-				  (cond
-                                   ((eq chr ?\n) "")
-                                   ((eq chr ?\t) " ")
-                                   (t (char-to-string chr)))
+				  (if (eq chr ?\n)
+				      ""
+				    (char-to-string chr)
+				    )
 				  ))
 			       (std11-unfold-string dest)
 			       "")

@@ -1,6 +1,6 @@
 ;;;; psgml-info.el
 ;;; Last edited: Wed Mar 20 21:24:16 1996 by lenst@triton.lstaflin.pp.se (Lennart Staflin)
-;;; $Id: psgml-info.el,v 1.1.1.2 1996/12/18 03:47:14 steve Exp $
+;;; $Id: psgml-info.el,v 1.1.1.1 1996/12/18 22:43:36 steve Exp $
 
 ;; Copyright (C) 1994, 1995 Lennart Staflin
 

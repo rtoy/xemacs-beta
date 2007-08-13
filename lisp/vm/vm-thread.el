@@ -42,83 +42,38 @@ will be visible."
 	;; no need to schedule reindents of reparented messages
 	;; unless there were already messages present.
 	(schedule-reindents message-list)
-	m parent parent-sym id id-sym date refs old-parent-sym)
+	parent parent-sym id id-sym date)
     (while mp
-      (setq m (car mp)
-	    parent (vm-th-parent m)
-	    id (vm-su-message-id m)
+      (setq parent (vm-th-parent (car mp))
+	    id (vm-su-message-id (car mp))
 	    id-sym (intern id vm-thread-obarray)
-	    date (vm-so-sortable-datestring m))
-      (put id-sym 'messages (cons m (get id-sym 'messages)))
+	    date (vm-so-sortable-datestring (car mp)))
+      (put id-sym 'messages (cons (car mp) (get id-sym 'messages)))
       (if (and (null (cdr (get id-sym 'messages)))
 	       schedule-reindents)
 	  (vm-thread-mark-for-summary-update (get id-sym 'children)))
       (if parent
 	  (progn
 	    (setq parent-sym (intern parent vm-thread-obarray))
-	    (cond ((or (not (boundp id-sym))
-		       (null (symbol-value id-sym))
-		       (eq (symbol-value id-sym) parent-sym))
-		   (set id-sym parent-sym))
-		  (t
-		   (setq old-parent-sym (symbol-value id-sym))
-		   (put old-parent-sym 'children
-			(let ((kids (get old-parent-sym 'children))
-			      (msgs (get id-sym 'messages)))
-			  (while msgs
-			    (setq kids (delq m kids)
-				  msgs (cdr msgs)))
-			  kids ))
-		   (set id-sym parent-sym)
-		   (if schedule-reindents
-		       (vm-thread-mark-for-summary-update
-			(get id-sym 'messages)))))
+	    (if (not (boundp id-sym))
+		(set id-sym parent-sym))
 	    (put parent-sym 'children
-		 (cons m (get parent-sym 'children))))
-	(if (not (boundp id-sym))
-	    (set id-sym nil)))
-      ;; use the references header to set parenting information
-      ;; for ancestors of this message.  This does not override
-      ;; a parent pointer for a message if it already exists.
-      (if (cdr (setq refs (vm-th-references m)))
-	  (let (parent-sym id-sym msgs)
-	    (setq parent-sym (intern (car refs) vm-thread-obarray)
-		  refs (cdr refs))
-	    (while refs
-	      (setq id-sym (intern (car refs) vm-thread-obarray))
-	      (if (and (boundp id-sym) (symbol-value id-sym))
-		  nil
-		(set id-sym parent-sym)
-		(if (setq msgs (get id-sym 'messages))
-		    (put parent-sym 'children
-			 (append msgs (get parent-sym 'children))))
-		(if schedule-reindents
-		    (vm-thread-mark-for-summary-update msgs)))
-	      (setq parent-sym id-sym
-		    refs (cdr refs)))))
+		 (cons (car mp) (get parent-sym 'children))))
+	(set id-sym nil))
+      ;; we need to make sure the asets below are an atomic group.
       (if vm-thread-using-subject
-	  ;; inhibit-quit because we need to make sure the asets
-	  ;; below are an atomic group.
 	  (let* ((inhibit-quit t)
-		 (subject (vm-so-sortable-subject m))
+		 (subject (vm-so-sortable-subject (car mp)))
 		 (subject-sym (intern subject vm-thread-subject-obarray)))
-	    ;; if this subject never seen before create the
-	    ;; information vector.
 	    (if (not (boundp subject-sym))
 		(set subject-sym
-		     (vector id-sym (vm-so-sortable-datestring m)
-			     nil (list m)))
-	      ;; this subject seen before 
+		     (vector id-sym (vm-so-sortable-datestring (car mp))
+			     nil (list (car mp))))
 	      (aset (symbol-value subject-sym) 3
-		    (cons m (aref (symbol-value subject-sym) 3)))
+		    (cons (car mp) (aref (symbol-value subject-sym) 3)))
 	      (if (string< date (aref (symbol-value subject-sym) 1))
 		  (let* ((vect (symbol-value subject-sym))
 			 (i-sym (aref vect 0)))
-		    ;; optimization: if we know that this message
-		    ;; already has a parent, then don't bother
-		    ;; adding it to the list of child messages
-		    ;; since we know that it will be threaded and
-		    ;; unthreaded using the parent information.
 		    (if (or (not (boundp i-sym))
 			    (null (symbol-value i-sym)))
 			(aset vect 2 (append (get i-sym 'messages)
@@ -133,35 +88,26 @@ will be visible."
 		    (if schedule-reindents
 			(let ((inhibit-quit nil))
 			  (vm-thread-mark-for-summary-update (aref vect 2)))))
-		;; optimization: if we know that this message
-		;; already has a parent, then don't bother adding
-		;; it to the list of child messages, since we
-		;; know that it will be threaded and unthreaded
-		;; using the parent information.
 		(if (null parent)
 		    (aset (symbol-value subject-sym) 2
-			  (cons m (aref (symbol-value subject-sym) 2))))))))
+			  (cons (car mp)
+				(aref (symbol-value subject-sym) 2))))))))
       (setq mp (cdr mp) n (1+ n))
       (if (zerop (% n modulus))
-	  (message "Building threads... %d" n)))
+	  (vm-unsaved-message "Building threads... %d" n)))
     (if (> n modulus)
-	(message "Building threads... done"))))
+	(vm-unsaved-message "Building threads... done"))))
 
 (defun vm-thread-mark-for-summary-update (message-list)
-  (let (m)
-    (while message-list
-      (setq m (car message-list))
-      ;; if thread-list is null then we've already marked this
-      ;; message, or it doesn't need marking.
-      (if (null (vm-thread-list-of m))
-	  nil
-	(vm-mark-for-summary-update m t)
-	(vm-set-thread-list-of m nil)
-	(vm-set-thread-indentation-of m nil)
-	(vm-thread-mark-for-summary-update
-	 (get (intern (vm-su-message-id m) vm-thread-obarray)
-	      'children)))
-      (setq message-list (cdr message-list)))))
+  (while message-list
+    (vm-mark-for-summary-update (car message-list) t)
+    (vm-set-thread-list-of (car message-list) nil)
+    (vm-set-thread-indentation-of (car message-list) nil)
+    (vm-thread-mark-for-summary-update
+     (get (intern (vm-su-message-id (car message-list))
+		  vm-thread-obarray)
+	  'children))
+    (setq message-list (cdr message-list))))
 
 (defun vm-thread-list (message)
   (let ((done nil)
@@ -176,7 +122,8 @@ will be visible."
 	(setq loop-sym (intern (symbol-name id-sym) vm-thread-loop-obarray))
 	(if (boundp loop-sym)
 	    ;; loop detected, bail...
-	    (setq done t)
+	    (setq done t
+		  thread-list (cdr thread-list))
 	  (set loop-sym t)
 	  (if (and (boundp id-sym) (symbol-value id-sym))
 	      (progn
@@ -206,34 +153,33 @@ will be visible."
 ;; remove message struct from thread data.
 ;;
 ;; optional second arg non-nil means forget information that
-;; might be different if the message contents changed.
+;; might be different if the mesage contents changed.
 ;;
-;; message must be a real (non-virtual) message
+;; message must be a real message
 (defun vm-unthread-message (message &optional message-changing)
   (save-excursion
     (let ((mp (cons message (vm-virtual-messages-of message)))
-	  m id-sym subject-sym vect p-sym)
+	  id-sym subject-sym vect p-sym)
       (while mp
-	(setq m (car mp))
 	(let ((inhibit-quit t))
-	  (vm-set-thread-list-of m nil)
-	  (vm-set-thread-indentation-of m nil)
-	  (set-buffer (vm-buffer-of m))
-	  (setq id-sym (intern (vm-su-message-id m) vm-thread-obarray)
-		subject-sym (intern (vm-so-sortable-subject m)
+	  (vm-set-thread-list-of (car mp) nil)
+	  (vm-set-thread-indentation-of (car mp) nil)
+	  (set-buffer (vm-buffer-of (car mp)))
+	  (setq id-sym (intern (vm-su-message-id (car mp)) vm-thread-obarray)
+		subject-sym (intern (vm-so-sortable-subject (car mp))
 				    vm-thread-subject-obarray))
 	  (if (boundp id-sym)
 	      (progn
-		(put id-sym 'messages (delq m (get id-sym 'messages)))
+		(put id-sym 'messages (delq (car mp) (get id-sym 'messages)))
 		(vm-thread-mark-for-summary-update (get id-sym 'children))
 		(setq p-sym (symbol-value id-sym))
 		(and p-sym (put p-sym 'children
-				(delq m (get p-sym 'children))))
+				(delq (car mp) (get p-sym 'children))))
 		(if message-changing
 		    (set id-sym nil))))
 	  (if (and (boundp subject-sym) (setq vect (symbol-value subject-sym)))
 	      (if (not (eq id-sym (aref vect 0)))
-		  (aset vect 2 (delq m (aref vect 2)))
+		  (aset vect 2 (delq (car mp) (aref vect 2)))
 		(if message-changing
 		    (if (null (cdr (aref vect 3)))
 			(makunbound subject-sym)
@@ -245,7 +191,7 @@ will be visible."
 			(while p
 			  (if (and (string-lessp (vm-so-sortable-datestring (car p))
 						 oldest-date)
-				   (not (eq m (car p))))
+				   (not (eq (car mp) (car p))))
 			      (setq oldest-msg (car p)
 				    oldest-date (vm-so-sortable-datestring (car p))))
 			  (setq p (cdr p)))
@@ -254,28 +200,24 @@ will be visible."
 			(aset vect 1 oldest-date)
 			(setq children (delq oldest-msg (aref vect 2)))
 			(aset vect 2 children)
-			(aset vect 3 (delq m (aref vect 3)))
+			(aset vect 3 (delq (car mp) (aref vect 3)))
 			;; I'm not sure there aren't situations
 			;; where this might loop forever.
 			(let ((inhibit-quit nil))
 			  (vm-thread-mark-for-summary-update children))))))))
 	  (setq mp (cdr mp))))))
 
-(defun vm-th-references (m)
-  (or (vm-references-of m)
-      (vm-set-references-of
-       m
-       (let (references)
-	 (setq references (vm-get-header-contents m "References:" " "))
-	 (and references (vm-parse references "[^<]*\\(<[^>]+>\\)"))))))
-
 (defun vm-th-parent (m)
   (or (vm-parent-of m)
       (vm-set-parent-of
        m
-       (or (car (vm-last (vm-th-references m)))
+       (or (let (references)
+	     (setq references (vm-get-header-contents m "References:"))
+	     (and references
+		  (car (vm-last
+			(vm-parse references "[^<]*\\(<[^>]+>\\)")))))
 	   (let (in-reply-to)
-	     (setq in-reply-to (vm-get-header-contents m "In-Reply-To:" " "))
+	     (setq in-reply-to (vm-get-header-contents m "In-Reply-To:"))
 	     (and in-reply-to
 		  (car (vm-parse in-reply-to "[^<]*\\(<[^>]+>\\)"))))))))
 

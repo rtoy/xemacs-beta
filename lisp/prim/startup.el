@@ -21,89 +21,12 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: FSF 19.28.
+;;; Synched up with: FSF 19.34.
 
 ;;; Code:
-
-(defun command-line-do-help (arg)
-  "Print this message and exit."
-  (let ((standard-output 'external-debugging-output))
-    (princ (emacs-version))
-    (princ "\n\n")
-    (cond ((fboundp 'x-create-frame)
-	   (princ "XEmacs")
-	   (princ " accepts all standard X Toolkit command line options.\
-  In addition,\nthe "))
-	  (t (princ "The ")))
-    (princ "following options are processed in the order encountered:\n\n")
-    (let ((l command-switch-alist)
-	  (insert (function (lambda (&rest x)
-			      (princ "  ")
-			      (let ((len 2))
-				(while x
-				  (princ (car x))
-				  (setq len (+ len (length (car x))))
-				  (setq x (cdr x)))
-				(if (>= len 24)
-				    (progn (terpri) (setq len 0)))
-				(while (< len 24)
-				  (princ " ")
-				  (setq len (1+ len))))))))
-      (while l
-        (let ((name (car (car l)))
-              (fn (cdr (car l)))
-	      doc arg cons)
-	  (cond
-	   ((and (symbolp fn) (get fn 'undocumented)) nil)
-	   (t
-	    (setq doc (documentation fn))
-	    (if (member doc '(nil "")) (setq doc "(undocumented)"))
-	    (cond ((string-match "\n\\(<.*>\\)\n?\\'" doc)
-		   ;; Doc of the form "The frobber switch\n<arg1> <arg2>"
-		   (setq arg (substring doc (match-beginning 1) (match-end 1))
-			 doc (substring doc 0 (match-beginning 0))))
-		  ((string-match "\n+\\'" doc)
-		   (setq doc (substring doc 0 (match-beginning 0)))))
-	    (if (and (setq cons (rassq fn command-switch-alist))
-		     (not (eq cons (car l))))
-		(setq doc (format "Same as %s." (car cons))))
-	    (if arg
-		(funcall insert name " " arg)
-	      (funcall insert name))
-	    (princ doc)
-	    (terpri))))
-        (setq l (cdr l))))
-    (princ "\
-  +N <file>             Start displaying <file> at line N.
-
-These options are processed only if they appear before all other options:
-
-  -t <device>           Use TTY <device> instead of the terminal for input
-                        and output.  This implies the -nw option.
-  -batch                Execute noninteractively (messages go to stderr).
-                        This option must be first in the list after -t.
-  -nw                   Inhibit the use of any window-system-specific
-                        display code: use the current tty.
-  -debug-init           Enter the debugger if an error in the init file occurs.
-  -unmapped             Do not map the initial frame.
-  -no-site-file         Do not load the site-specific init file (site-start.el).
-  -no-init-file         Do not load the user-specific init file (~/.emacs).
-  -q                    Same as -no-init-file.
-  -user <user>          Load user's init file instead of your own.
-  -u <user>             Same as -user.")
-
-    (princ "
-
-Anything else is considered a file name, and is placed into a buffer for
-editing.
-
-XEmacs has an online tutorial and manuals.  Type ^Ht (Control-h t) after
-starting XEmacs to run the tutorial.  Type ^Hi to enter the manual browser.\n")
-    (kill-emacs 0)
-    ))
 
 ;;; -batch, -t, and -nw are processed by main() in emacs.c and are 
 ;;; never seen by lisp code.
@@ -116,7 +39,7 @@ starting XEmacs to run the tutorial.  Type ^Hi to enter the manual browser.\n")
 
 (defvar command-line-processed nil "t once command line has been processed")
 
-(defconst startup-message-timeout 1200) ; More or less disable the timeout
+(defconst startup-message-timeout 120)
 
 (defconst inhibit-startup-message nil
   "*Non-nil inhibits the initial startup message.
@@ -124,24 +47,18 @@ This is for use in your personal init file, once you are familiar
 with the contents of the startup message.")
 
 ;; #### FSFmacs randomness
-;(defconst inhibit-startup-echo-area-message nil
-;  "*Non-nil inhibits the initial startup echo area message.
-;Inhibition takes effect only if your `.emacs' file contains
-;a line of this form:
-; (setq inhibit-startup-echo-area-message \"YOUR-USER-NAME\")
-;If your `.emacs' file is byte-compiled, use the following form instead:
-; (eval '(setq inhibit-startup-echo-area-message \"YOUR-USER-NAME\"))
-;Thus, someone else using a copy of your `.emacs' file will see
-;the startup message unless he personally acts to inhibit it.")
+;;(defconst inhibit-startup-echo-area-message nil
+;;  "*Non-nil inhibits the initial startup echo area message.
+;;Inhibition takes effect only if your `.emacs' file contains
+;;a line of this form:
+;; (setq inhibit-startup-echo-area-message \"YOUR-USER-NAME\")
+;;If your `.emacs' file is byte-compiled, use the following form instead:
+;; (eval '(setq inhibit-startup-echo-area-message \"YOUR-USER-NAME\"))
+;;Thus, someone else using a copy of your `.emacs' file will see
+;;the startup message unless he personally acts to inhibit it.")
 
 (defconst inhibit-default-init nil
   "*Non-nil inhibits loading the `default' library.")
-
-(defconst command-switch-alist nil
-  "Alist of command-line switches.
-Elements look like (SWITCH-STRING . HANDLER-FUNCTION).
-HANDLER-FUNCTION receives switch name as sole arg;
-remaining command-line args are in the variable `command-line-args-left'.")
 
 (defvar command-line-args-left nil
   "List of command-line args not yet processed.") ; bound by `command-line'
@@ -210,10 +127,10 @@ option or by setting `inhibit-default-init' in their own init files,
 but inhibiting `site-start.el' requires `--no-site-file', which
 is less convenient.")
 
-;(defconst iso-8859-1-locale-regexp "8859[-_]?1"
-;  "Regexp that specifies when to enable the ISO 8859-1 character set.
-;We do that if this regexp matches the locale name
-;specified by the LC_ALL, LC_CTYPE and LANG environment variables.")
+;;(defconst iso-8859-1-locale-regexp "8859[-_]?1"
+;;  "Regexp that specifies when to enable the ISO 8859-1 character set.
+;;We do that if this regexp matches the locale name
+;;specified by the LC_ALL, LC_CTYPE and LANG environment variables.")
 
 (defvar mail-host-address nil
   "*Name of this machine, for purposes of naming users.")
@@ -240,41 +157,134 @@ after, and will not be true at any time before.")
 (defvar initial-frame-unmapped-p nil)
 
 
+
+(defvar command-switch-alist
+  (purecopy
+   '(("-help"	. command-line-do-help)
+     ("-flags"	. command-line-do-help)
+     ("-h"	. command-line-do-help)
+     ("-?"	. command-line-do-help)
+     ("-version". command-line-do-version)
+     ("-V"	. command-line-do-version)
+     ("-funcall". command-line-do-funcall)
+     ("-f"	. command-line-do-funcall)
+     ("-e"	. command-line-do-funcall-1)
+     ("-eval"	. command-line-do-eval)
+     ("-load"	. command-line-do-load)
+     ("-l"	. command-line-do-load)
+     ("-insert"	. command-line-do-insert)
+     ("-i"	. command-line-do-insert)
+     ("-kill"	. command-line-do-kill)
+     ;; Options like +35 are handled specially.
+     ;; Window-system, site, or package-specific code might add to this.
+     ;; X11 handles its options by letting Xt remove args from this list.
+     ))
+  "Alist of command-line switches.
+Elements look like (SWITCH-STRING . HANDLER-FUNCTION).
+HANDLER-FUNCTION receives switch name as sole arg;
+remaining command-line args are in the variable `command-line-args-left'.")
+
 ;;; default switches
 ;;; Note: these doc strings are semi-magical.
+
+(defun command-line-do-help (arg)
+  "Print the XEmacs usage message and exit."
+  (let ((standard-output 'external-debugging-output))
+    (princ (concat "\n" (emacs-version) "\n\n"))
+    (princ
+     (if (featurep 'x)
+	 (concat "XEmacs accepts all standard X Toolkit command line options.\n"
+		 "In addition, the")
+       "The"))
+    (princ " following options are accepted:
+
+  -t <device>           Use TTY <device> instead of the terminal for input
+                        and output.  This implies the -nw option.
+  -nw                   Inhibit the use of any window-system-specific
+                        display code: use the current tty.
+  -batch                Execute noninteractively (messages go to stderr).
+  -debug-init           Enter the debugger if an error in the init file occurs.
+  -unmapped             Do not map the initial frame.
+  -no-site-file         Do not load the site-specific init file (site-start.el).
+  -no-init-file         Do not load the user-specific init file (~/.emacs).
+  -q                    Same as -no-init-file.
+  -user <user>          Load user's init file instead of your own.
+  -u <user>             Same as -user.\n")
+   (let ((l command-switch-alist)
+	  (insert (lambda (&rest x)
+		    (princ "  ")
+		    (let ((len 2))
+		      (while x
+			(princ (car x))
+			(incf len (length (car x)))
+			(setq x (cdr x)))
+		      (when (>= len 24)
+			(terpri) (setq len 0))
+		      (while (< len 24)
+			(princ " ")
+			(incf len))))))
+      (while l
+        (let ((name (car (car l)))
+              (fn (cdr (car l)))
+	      doc arg cons)
+	  (cond
+	   ((and (symbolp fn) (get fn 'undocumented)) nil)
+	   (t
+	    (setq doc (documentation fn))
+	    (if (member doc '(nil "")) (setq doc "(undocumented)"))
+	    (cond ((string-match "\n\\(<.*>\\)\n?\\'" doc)
+		   ;; Doc of the form "The frobber switch\n<arg1> <arg2>"
+		   (setq arg (substring doc (match-beginning 1) (match-end 1))
+			 doc (substring doc 0 (match-beginning 0))))
+		  ((string-match "\n+\\'" doc)
+		   (setq doc (substring doc 0 (match-beginning 0)))))
+	    (if (and (setq cons (rassq fn command-switch-alist))
+		     (not (eq cons (car l))))
+		(setq doc (format "Same as %s." (car cons))))
+	    (if arg
+		(funcall insert name " " arg)
+	      (funcall insert name))
+	    (princ doc)
+	    (terpri))))
+        (setq l (cdr l))))
+    (princ "\
+  +N <file>             Start displaying <file> at line N.
+
+Anything else is considered a file name, and is placed into a buffer for
+editing.
+
+XEmacs has an online tutorial and manuals.  Type ^Ht (Control-h t) after
+starting XEmacs to run the tutorial.  Type ^Hi to enter the manual browser.
+Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
+
+    (kill-emacs 0)))
 
 (defun command-line-do-funcall (arg)
   "Invoke the named lisp function with no arguments.
 <function>"
-  (let ((fn (intern (car command-line-args-left))))
-    (setq command-line-args-left (cdr command-line-args-left))
-    (funcall fn)))
+  (funcall (intern (pop command-line-args-left))))
 (fset 'command-line-do-funcall-1 'command-line-do-funcall)
 (put 'command-line-do-funcall-1 'undocumented t)
 
 (defun command-line-do-eval (arg)
   "Evaluate the lisp form.  Quote it carefully.
 <form>"
-  (let ((form (car command-line-args-left)))
-    (setq command-line-args-left (cdr command-line-args-left))
-    (eval (read form))))
+  (eval (read (pop command-line-args-left))))
 
 (defun command-line-do-load (arg)
   "Load the named file of Lisp code into XEmacs.
 <file>"
-  (let ((file (car command-line-args-left)))
+  (let ((file (pop command-line-args-left)))
     ;; Take file from default dir if it exists there;
     ;; otherwise let `load' search for it.
     (if (file-exists-p (expand-file-name file))
 	(setq file (expand-file-name file)))
-    (load file nil t))
-  (setq command-line-args-left (cdr command-line-args-left)))
+    (load file nil t)))
 
 (defun command-line-do-insert (arg)
   "Insert file into the current buffer.
 <file>"
-  (insert-file-contents (car command-line-args-left))
-  (setq command-line-args-left (cdr command-line-args-left)))
+  (insert-file-contents (pop command-line-args-left)))
 
 (defun command-line-do-kill (arg)
   "Exit XEmacs."
@@ -282,26 +292,9 @@ after, and will not be true at any time before.")
 
 (defun command-line-do-version (arg)
   "Print version info and exit."
-  (princ (concat (emacs-version) "\n") 'external-debugging-output)
+  (princ (concat (emacs-version) "\n"))
   (kill-emacs 0))
 
-(setq command-switch-alist
-      (purecopy
-       '(("-help"	. command-line-do-help)
-	 ("-version"	. command-line-do-version)
-	 ("-funcall"	. command-line-do-funcall)
-         ("-f"		. command-line-do-funcall)
-	 ("-e"		. command-line-do-funcall-1)
-	 ("-eval"	. command-line-do-eval)
-	 ("-load"	. command-line-do-load)
-	 ("-l"		. command-line-do-load)
-	 ("-insert"	. command-line-do-insert)
-	 ("-i"		. command-line-do-insert)
-	 ("-kill"	. command-line-do-kill)
-	 ;; Options like +35 are handled specially.
-	 ;; Window-system, site, or package-specific code might add to this.
-	 ;; X11 handles its options by letting Xt remove args from this list.
-	 )))
 
 ;;; Processing the command line and loading various init files
 
@@ -334,21 +327,21 @@ after, and will not be true at any time before.")
 	This probably means that XEmacs is picking up an old version of
 	the lisp library, or that some .elc files are not up-to-date.\n"
 		 stream)))
-    (if (not suppress-early-error-handler-backtrace)
-	(let ((print-length 1000)
-	      (print-level 1000)
-	      (print-escape-newlines t)
-	      (print-readably nil))
-	  (if (getenv "EMACSLOADPATH")
-	      (princ (format "\n$EMACSLOADPATH is %s" (getenv "EMACSLOADPATH"))
-		     stream))
-	  (princ (format "\nexec-directory is %S" exec-directory) stream)
-	  (princ (format "\ndata-directory is %S" data-directory) stream)
-	  (princ (format "\ndoc-directory is %S" doc-directory) stream)
-	  (princ (format "\nload-path is %S" load-path) stream)
-	  (princ "\n\n" stream)))
-    (if (not suppress-early-error-handler-backtrace)
-	(backtrace stream t)))
+    (when (not suppress-early-error-handler-backtrace)
+      (let ((print-length 1000)
+	    (print-level 1000)
+	    (print-escape-newlines t)
+	    (print-readably nil))
+	(when (getenv "EMACSLOADPATH")
+	  (princ (format "\n$EMACSLOADPATH is %s" (getenv "EMACSLOADPATH"))
+		 stream))
+	(princ (format "\nexec-directory is %S" exec-directory) stream)
+	(princ (format "\ndata-directory is %S" data-directory) stream)
+	(princ (format "\ndoc-directory is %S" doc-directory) stream)
+	(princ (format "\nload-path is %S" load-path) stream)
+	(princ "\n\n" stream)))
+    (when (not suppress-early-error-handler-backtrace)
+      (backtrace stream t)))
   (kill-emacs -1))
 
 (defun normal-top-level ()
@@ -356,13 +349,13 @@ after, and will not be true at any time before.")
       (message "Back to top level.")
     (setq command-line-processed t)
     ;; Canonicalize HOME (PWD is canonicalized by init_buffer in buffer.c)
-    (if (not (eq system-type 'vax-vms))
-        (let ((value (getenv "HOME")))
-          (if (and value
-                   (< (length value) (length default-directory))
-                   (equal (file-attributes default-directory)
-                          (file-attributes value)))
-              (setq default-directory (file-name-as-directory value)))))
+    (unless (eq system-type 'vax-vms)
+      (let ((value (getenv "HOME")))
+	(if (and value
+		 (< (length value) (length default-directory))
+		 (equal (file-attributes default-directory)
+			(file-attributes value)))
+	    (setq default-directory (file-name-as-directory value)))))
     (setq default-directory (abbreviate-file-name default-directory))
     (initialize-xemacs-paths)
     (unwind-protect
@@ -381,35 +374,35 @@ after, and will not be true at any time before.")
       (and term-setup-hook
 	   (run-hooks 'term-setup-hook))
       (setq term-setup-hook nil)
-;      ;; Modify the initial frame based on what .emacs puts into
-;      ;; ...-frame-alist.
+      ;;      ;; Modify the initial frame based on what .emacs puts into
+      ;;      ;; ...-frame-alist.
       (frame-notice-user-settings)
-;      ;;####FSFmacs junk
-;      ;; Now we know the user's default font, so add it to the menu.
-;      (if (fboundp 'font-menu-add-default)
-;	  (font-menu-add-default))
-      (and window-setup-hook
-	   (run-hooks 'window-setup-hook))
+      ;;      ;;####FSFmacs junk
+      ;;      ;; Now we know the user's default font, so add it to the menu.
+      ;;      (if (fboundp 'font-menu-add-default)
+      ;;	  (font-menu-add-default))
+      (when window-setup-hook
+	(run-hooks 'window-setup-hook))
       (setq window-setup-hook nil))
-      ;;####FSFmacs junk
-;      (or menubar-bindings-done
-;	  (precompute-menubar-bindings))
+    ;;####FSFmacs junk
+    ;;      (or menubar-bindings-done
+    ;;	  (precompute-menubar-bindings))
     ))
 
 ;;####FSFmacs junk
 ;;; Precompute the keyboard equivalents in the menu bar items.
-;(defun precompute-menubar-bindings ()
-;  (if (eq window-system 'x)
-;      (let ((submap (lookup-key global-map [menu-bar])))
-;	(while submap
-;	  (and (consp (car submap))
-;	       (symbolp (car (car submap)))
-;	       (stringp (car-safe (cdr (car submap))))
-;	       (keymapp (cdr (cdr (car submap))))
-;	       (x-popup-menu nil (cdr (cdr (car submap)))))
-;	  (setq submap (cdr submap))))))
+;;(defun precompute-menubar-bindings ()
+;;  (if (eq window-system 'x)
+;;      (let ((submap (lookup-key global-map [menu-bar])))
+;;	(while submap
+;;	  (and (consp (car submap))
+;;	       (symbolp (car (car submap)))
+;;	       (stringp (car-safe (cdr (car submap))))
+;;	       (keymapp (cdr (cdr (car submap))))
+;;	       (x-popup-menu nil (cdr (cdr (car submap)))))
+;;	  (setq submap (cdr submap))))))
 
-(defun command-line-early ()
+(defun command-line-early (args)
   ;; This processes those switches which need to be processed before
   ;; starting up the window system.
 
@@ -428,51 +421,52 @@ after, and will not be true at any time before.")
 	       (string= vc "simple"))
 	   (setq version-control 'never))))
 
-;;####FSFmacs
-;  (if (let ((ctype
-;	     ;; Use the first of these three envvars that has a nonempty value.
-;	     (or (let ((string (getenv "LC_ALL")))
-;		   (and (not (equal string "")) string))
-;		 (let ((string (getenv "LC_CTYPE")))
-;		   (and (not (equal string "")) string))
-;		 (let ((string (getenv "LANG")))
-;		   (and (not (equal string "")) string)))))
-;	(and ctype
-;	     (string-match iso-8859-1-locale-regexp ctype)))
-;      (progn 
-;	(standard-display-european t)
-;	(require 'iso-syntax)))
+  ;;####FSFmacs
+  ;;  (if (let ((ctype
+  ;;	     ;; Use the first of these three envvars that has a nonempty value.
+  ;;	     (or (let ((string (getenv "LC_ALL")))
+  ;;		   (and (not (equal string "")) string))
+  ;;		 (let ((string (getenv "LC_CTYPE")))
+  ;;		   (and (not (equal string "")) string))
+  ;;		 (let ((string (getenv "LANG")))
+  ;;		   (and (not (equal string "")) string)))))
+  ;;	(and ctype
+  ;;	     (string-match iso-8859-1-locale-regexp ctype)))
+  ;;      (progn 
+  ;;	(standard-display-european t)
+  ;;	(require 'iso-syntax)))
 
-  (let ((done nil))
-    ;; Figure out which user's init file to load,
-    ;; either from the environment or from the options.
-    (setq init-file-user (if (noninteractive) nil (user-login-name)))
-    ;; If user has not done su, use current $HOME to find .emacs.
-    (and init-file-user (string= init-file-user (user-real-login-name))
-	 (setq init-file-user ""))
+  ;; Figure out which user's init file to load,
+  ;; either from the environment or from the options.
+  (setq init-file-user (if (noninteractive) nil (user-login-name)))
+  ;; If user has not done su, use current $HOME to find .emacs.
+  (and init-file-user (string= init-file-user (user-real-login-name))
+       (setq init-file-user ""))
 
-    (while (and (not done) command-line-args-left)
-      (let ((argi (car command-line-args-left)))
-	(cond ((or (string-equal argi "-q")
-		   (string-equal argi "-no-init-file"))
-	       (setq init-file-user nil
-		     command-line-args-left (cdr command-line-args-left)))
-	      ((string-equal argi "-no-site-file")
-	       (setq site-start-file nil
-		     command-line-args-left (cdr command-line-args-left)))
-	      ((or (string-equal argi "-u")
-		   (string-equal argi "-user"))
-	       (setq command-line-args-left (cdr command-line-args-left)
-		     init-file-user (car command-line-args-left)
-		     command-line-args-left (cdr command-line-args-left)))
-              ((string-equal argi "-debug-init")
-               (setq init-file-debug t
-                     command-line-args-left (cdr command-line-args-left)))
-              ((string-equal argi "-unmapped")
-               (setq initial-frame-unmapped-p t
-                     command-line-args-left (cdr command-line-args-left)))
- 	      (t (setq done t)))))))
-
+  ;; Allow (at least) these arguments anywhere in the command line
+  (let ((new-args nil)
+	(arg      nil))
+    (while args
+      (setq arg (pop args))
+      (cond
+       ((or (string= arg "-q")
+	    (string= arg "-no-init-file"))
+	(setq init-file-user nil))
+       ((string= arg "-no-site-file")
+	(setq site-start-file nil))
+       ((or (string= arg "-u")
+	    (string= arg "-user"))
+	(setq init-file-user (pop args)))
+       ((string= arg "-debug-init")
+	(setq init-file-debug t))
+       ((string= arg "-unmapped")
+	(setq initial-frame-unmapped-p t))
+       ((or (string= arg "--") (string= arg "-"))
+	(while args
+	  (push (pop args) new-args)))
+       (t (push arg new-args))))
+    
+    (nreverse new-args)))
 
 (defun command-line ()
   (let ((command-line-args-left (cdr command-line-args)))
@@ -486,24 +480,23 @@ after, and will not be true at any time before.")
       ;; may affect that.  I think it's ok to do this before establishing
       ;; the X connection, and maybe someday things like -nw can be
       ;; handled here instead of down in C.
-      (command-line-early)
+      (setq command-line-args-left (command-line-early command-line-args-left))
 
       ;; Setup the toolbar icon directory
-      (if (featurep 'toolbar)
-          (init-toolbar-location))
+      (when (featurep 'toolbar)
+	(init-toolbar-location))
 
-      ;; Initialize the built-in glyphs and the default specifier
-      ;; lists
-      (if (not noninteractive)
-	  (init-glyphs))
+      ;; Initialize the built-in glyphs and default specifier lists
+      (when (not noninteractive)
+	(init-glyphs))
 
       ;; Run the window system's init function.  tty is considered to be
       ;; a type of window system for this purpose.  This creates the
       ;; initial (non stdio) device.
-      (if (and initial-window-system (not noninteractive))
-	  (funcall (intern (concat "init-"
-				   (symbol-name initial-window-system)
-				   "-win"))))
+      (when (and initial-window-system (not noninteractive))
+	(funcall (intern (concat "init-"
+				 (symbol-name initial-window-system)
+				 "-win"))))
 
       ;; When not in batch mode, this creates the first visible frame,
       ;; and deletes the stdio device.
@@ -519,19 +512,19 @@ after, and will not be true at any time before.")
     (load-init-file)
     
     ;; If *scratch* exists and init file didn't change its mode, initialize it.
-    (if (get-buffer "*scratch*")
-	(save-excursion
-	  (set-buffer "*scratch*")
-	  (if (eq major-mode 'fundamental-mode)
-	      (funcall initial-major-mode))))
+    (when (get-buffer "*scratch*")
+      (save-excursion
+	(set-buffer "*scratch*")
+	(when (eq major-mode 'fundamental-mode)
+	  (funcall initial-major-mode))))
 
     ;; Load library for our terminal type.
     ;; User init file can set term-file-prefix to nil to prevent this.
     ;; Note that for any TTY's opened subsequently, the TTY init
     ;; code will run this.
-    (if (and (eq 'tty (console-type))
-	     (not (noninteractive)))
-	(load-terminal-library))
+    (when (and (eq 'tty (console-type))
+	       (not (noninteractive)))
+      (load-terminal-library))
 
     ;; Process the remaining args.
     (command-line-1)
@@ -540,39 +533,37 @@ after, and will not be true at any time before.")
     ;; until after the splash screen.
     (setq inhibit-warning-display nil)
     ;; If -batch, terminate after processing the command options.
-    (if (noninteractive) (kill-emacs t))))
+    (when (noninteractive) (kill-emacs t))))
 
 (defun load-terminal-library ()	      
-  (and term-file-prefix
-       (let ((term (getenv "TERM"))
-	     hyphend)
-	 (while (and term
-		     (not (load (concat term-file-prefix term) t t)))
-	   ;; Strip off last hyphen and what follows, then try again
-	   (if (setq hyphend (string-match "[-_][^-_]+\\'" term))
-	       (setq term (substring term 0 hyphend))
-	     (setq term nil))))))
+  (when term-file-prefix
+    (let ((term (getenv "TERM"))
+	  hyphend)
+      (while (and term
+		  (not (load (concat term-file-prefix term) t t)))
+	;; Strip off last hyphen and what follows, then try again
+	(if (setq hyphend (string-match "[-_][^-_]+\\'" term))
+	    (setq term (substring term 0 hyphend))
+	  (setq term nil))))))
 
 (defun load-user-init-file (init-file-user)
   ;; This function actually reads the init files.
-  (if init-file-user
-      (progn
-	(setq user-init-file 
-	      (cond 
-	       ((eq system-type 'ms-dos)
-		(concat "~" init-file-user "/_emacs"))
-	       ((eq system-type 'vax-vms) 
-		"sys$login:.emacs")
-	       (t 
-		(concat "~" init-file-user "/.emacs"))))
-	(load user-init-file t t t)
-	(or inhibit-default-init
-	    (let ((inhibit-startup-message nil))
-	      ;; Users are supposed to be told their rights.
-	      ;; (Plus how to get help and how to undo.)
-	      ;; Don't you dare turn this off for anyone
-	      ;; except yourself.
-	      (load "default" t t))))))
+  (when init-file-user
+    (setq user-init-file
+	  (cond
+	   ((eq system-type 'ms-dos)
+	    (concat "~" init-file-user "/_emacs"))
+	   ((eq system-type 'vax-vms)
+	    "sys$login:.emacs")
+	   (t
+	    (concat "~" init-file-user "/.emacs"))))
+    (load user-init-file t t t)
+    (unless inhibit-default-init
+      (let ((inhibit-startup-message nil))
+	;; Users are supposed to be told their rights.
+	;; (Plus how to get help and how to undo.)
+	;; Don't you dare turn this off for anyone except yourself.
+	(load "default" t t)))))
 
 ;;; Load user's init file and default ones.
 (defun load-init-file ()
@@ -581,8 +572,8 @@ after, and will not be true at any time before.")
   ;; Run the site-start library if it exists.  The point of this file is
   ;; that it is run before .emacs.  There is no point in doing this after
   ;; .emacs; that is useless.
-  (if site-start-file
-      (load site-start-file t t))
+  (when site-start-file
+    (load site-start-file t t))
 
   ;; Sites should not disable this.  Only individuals should disable
   ;; the startup message.
@@ -609,13 +600,12 @@ after, and will not be true at any time before.")
       (or (eq debug-on-error debug-on-error-initial)
 	  (setq debug-on-error-should-be-set t
 		debug-on-error-from-init-file debug-on-error)))
-    (if debug-on-error-should-be-set
-	(setq debug-on-error debug-on-error-from-init-file)))
+    (when debug-on-error-should-be-set
+      (setq debug-on-error debug-on-error-from-init-file)))
 
   (setq init-file-loaded t)
 
   ;; Do this here in case the init file sets mail-host-address.
-  ;; Don't do this here unless noninteractive, it is frequently wrong. -sb
   (or user-mail-address
       (setq user-mail-address (concat (user-login-name) "@"
 				      (or mail-host-address
@@ -633,91 +623,91 @@ a new format, when variables have changed, etc."
 
 (defun command-line-1 ()
   (if (null command-line-args-left)
-      (cond ((and (not inhibit-startup-message) (not (noninteractive))
+      (unless (or inhibit-startup-message
+		  noninteractive
 		  ;; Don't clobber a non-scratch buffer if init file
 		  ;; has selected it.
-		  (string= (buffer-name) "*scratch*")
-		  (not (input-pending-p)))
+		  (not (string= (buffer-name) "*scratch*"))
+		  (input-pending-p))
 
-	     ;; If there are no switches to process, run the term-setup-hook
-	     ;; before displaying the copyright notice; there may be some need
-	     ;; to do it before doing any output.  If we're not going to
-	     ;; display a copyright notice (because other options are present)
-	     ;; then this is run after those options are processed.
-	     (run-hooks 'term-setup-hook)
-	     ;; Don't let the hook be run twice.
-	     (setq term-setup-hook nil)
+	;; If there are no switches to process, run the term-setup-hook
+	;; before displaying the copyright notice; there may be some need
+	;; to do it before doing any output.  If we're not going to
+	;; display a copyright notice (because other options are present)
+	;; then this is run after those options are processed.
+	(run-hooks 'term-setup-hook)
+	;; Don't let the hook be run twice.
+	(setq term-setup-hook nil)
 
-             (let ((timeout nil))
-               (unwind-protect
-                    ;; Guts of with-timeout
-                    (catch 'timeout
-                      (setq timeout (add-timeout startup-message-timeout
-                                                 #'(lambda (ignore)
-                                                     (condition-case nil
-                                                         (throw 'timeout t)
-                                                       (error nil)))
-                                                 nil))
-                      (startup-splash-frame)
-                      (or nil ;; (pos-visible-in-window-p (point-min))
-                          (goto-char (point-min)))
-                      (sit-for 0)
-                      (setq unread-command-event (next-command-event)))
-                 (if timeout (disable-timeout timeout))
-                 (save-excursion
-                   ;; In case the XEmacs server has already selected
-                   ;; another buffer, erase the one our message is in.
-		   (progn
-		     (set-buffer (get-buffer "*scratch*"))
-		     (erase-buffer)
-		     (set-buffer-modified-p nil)))))))
+	(let ((timeout nil))
+	  (unwind-protect
+	      ;; Guts of with-timeout
+	      (catch 'timeout
+		(setq timeout (add-timeout startup-message-timeout
+					   (lambda (ignore)
+					     (condition-case nil
+						 (throw 'timeout t)
+					       (error nil)))
+					   nil))
+		(startup-splash-frame)
+		(or nil;; (pos-visible-in-window-p (point-min))
+		    (goto-char (point-min)))
+		(sit-for 0)
+		(setq unread-command-event (next-command-event)))
+	    (when timeout (disable-timeout timeout))
+	    (save-excursion
+	      ;; In case the XEmacs server has already selected
+	      ;; another buffer, erase the one our message is in.
+	      (set-buffer (get-buffer "*scratch*"))
+	      (erase-buffer)
+	      (set-buffer-modified-p nil)))))
+    
+    ;; Command-line-options exist
     (let ((dir command-line-default-directory)
 	  (file-count 0)
-	  first-file-buffer
-	  (line nil))
+	  (line nil)
+	  (end-of-options nil)
+	  first-file-buffer file-p arg tem)
       (while command-line-args-left
-	(let ((argi (car command-line-args-left))
-	      tem)
-	  (setq command-line-args-left (cdr command-line-args-left))
-	  (or (cond (line 
-		     nil)
-		    ((setq tem (or (assoc argi command-switch-alist)
-				   (and (string-match "\\`--" argi)
-					(assoc (substring argi 1)
-					       command-switch-alist))))
-		     (funcall (cdr tem) argi)
-		     t)
-		    ((string-match "\\`\\+[0-9]+\\'" argi)
-		     (setq line (string-to-int argi))
-		     t)
-		    ((or (equal argi "-") (equal argi "--"))
-		     ;; "- file" means don't treat "file" as a switch
-		     ;;  ("+0 file" has the same effect; "-" added
-		     ;;   for unixoidiality).
-		     ;; This is worthless; the `unixoid' way is "./file". -jwz
-		     (setq line 0))
-		    (t
-		     nil))
-	      (progn
-		(setq file-count (1+ file-count))
-		(setq argi (expand-file-name argi dir))
-		(if (= file-count 1)
-		    (setq first-file-buffer (progn (find-file argi)
-						   (current-buffer)))
-		  (if noninteractive
-		      (find-file argi)
-		    (find-file-other-window argi)))
-		(or (null line)
-		    (zerop line)
-		    (goto-line line))
-		(setq line 0)))))
+	(setq arg (pop command-line-args-left))
+	(cond
+	 (end-of-options
+	  (setq file-p t))
+	 ((setq tem (when (eq (aref arg 0) ?-)
+		      (or (assoc arg command-switch-alist)
+			  (assoc (substring arg 1)
+				 command-switch-alist))))
+	  (funcall (cdr tem) arg))
+	 ((string-match "\\`\\+[0-9]+\\'" arg)
+	  (setq line (string-to-int arg)))
+	 ;; "- file" means don't treat "file" as a switch
+	 ;;  ("+0 file" has the same effect; "-" added
+	 ;;   for unixoidiality).
+	 ;; This is worthless; the `unixoid' way is "./file". -jwz
+	 ((or (string= arg "-") (string= arg "--"))
+	  (setq end-of-options t))
+	 (t
+	  (setq file-p t)))
+	
+	(when file-p
+	  (setq file-p nil)
+	  (incf file-count)
+	  (setq arg (expand-file-name arg dir))
+	  (cond
+	   ((= file-count 1) (setq first-file-buffer
+				   (progn (find-file arg) (current-buffer))))
+	   (noninteractive (find-file arg))
+	   (t (find-file-other-window arg)))
+	  (when line
+	    (goto-line line)
+	    (setq line nil))))
       ;; If 3 or more files visited, and not all visible,
       ;; show user what they all are.
-      (if (and (not noninteractive)
-	       (> file-count 2))
-	  (or (get-buffer-window first-file-buffer)
-	      (progn (other-window 1)
-		     (buffer-menu nil)))))))
+      (when (and (not noninteractive)
+		 (> file-count 2)
+		 (not (get-buffer-window first-file-buffer)))
+	(other-window 1)
+	(buffer-menu nil)))))
 
 (defvar startup-presentation-hack-keymap
   (let ((map (make-sparse-keymap)))
@@ -737,61 +727,42 @@ a new format, when variables have changed, etc."
          (setq e (extent-property e 'startup-presentation-hack))
          (if (consp e)
              (apply (car e) (cdr e))
-           (progn
-             (while (keymapp (indirect-function e))
-               (let ((map e)
-                     (overriding-local-map (indirect-function e)))
-                 (setq e (read-key-sequence
-                          (let ((p (keymap-prompt map t)))
-                            (cond ((symbolp map)
-                                   (if p 
-                                       (format "%s %s " map p)
-                                       (format "%s " map p)))
-                                  (p)
-                                  (t
-                                   (prin1-to-string map))))))
-                 (if (and (button-release-event-p (elt e 0))
-                          (null (key-binding e)))
-                     (setq e map)       ; try again
-                     (setq e (key-binding e)))))
-             (call-interactively e))))))
+	   (while (keymapp (indirect-function e))
+	     (let ((map e)
+		   (overriding-local-map (indirect-function e)))
+	       (setq e (read-key-sequence
+			(let ((p (keymap-prompt map t)))
+			  (cond ((symbolp map)
+				 (if p 
+				     (format "%s %s " map p)
+				   (format "%s " map)))
+				(p)
+				(t
+				 (prin1-to-string map))))))
+	       (if (and (button-release-event-p (elt e 0))
+			(null (key-binding e)))
+		   (setq e map)		; try again
+		 (setq e (key-binding e)))))
+	   (call-interactively e)))))
 
 (defun startup-presentation-hack-help (e)
   (setq e (extent-property e 'startup-presentation-hack))
   (if (consp e)
       (format "Evaluate %S" e)
-      (symbol-name e)))
+    (symbol-name e)))
 
 (defun splash-frame-present-hack (e v)
-;  (set-extent-property e 'mouse-face 'highlight)
-;  (set-extent-property e 'keymap
-;                       startup-presentation-hack-keymap)
-;  (set-extent-property e 'startup-presentation-hack v)
-;  (set-extent-property e 'help-echo
-;                       'startup-presentation-hack-help))
+  ;;  (set-extent-property e 'mouse-face 'highlight)
+  ;;  (set-extent-property e 'keymap
+  ;;                       startup-presentation-hack-keymap)
+  ;;  (set-extent-property e 'startup-presentation-hack v)
+  ;;  (set-extent-property e 'help-echo
+  ;;                       'startup-presentation-hack-help))
   )
-
-(defun splash-hack-version-string ()
-  (save-excursion
-    (save-restriction
-      (goto-char (point-min))
-      (re-search-forward "^XEmacs" nil t)
-      (narrow-to-region (point-at-bol) (point-at-eol))
-      (goto-char (point-min))
-      (when (re-search-forward " \\[Lucid\\]" nil t)
-	(delete-region (match-beginning 0) (match-end 0)))
-      (when (re-search-forward "[^(][^)]*-[^)]*-" nil t)
-	(delete-region (1+ (match-beginning 0)) (match-end 0))
-	(insert "("))
-      (goto-char (point-max))
-      (search-backward " " nil t)
-      (when (search-forward "." nil t)
-	(delete-region (1- (point)) (point-max))))))
 
 (defun splash-frame-present (l)
   (cond ((stringp l)
-         (insert l)
-	 (splash-hack-version-string))
+         (insert l))
         ((eq (car-safe l) 'face)
          ;; (face name string)
          (let ((p (point)))
@@ -804,7 +775,7 @@ a new format, when variables have changed, etc."
                 (p (point))
                 (k (where-is-internal c nil t)))
            (insert (if k (key-description k)
-                       (format "M-x %s" c)))
+		     (format "M-x %s" c)))
            (if (fboundp 'set-extent-face)
                (let ((e (make-extent p (point))))
                  (set-extent-face e 'bold)
@@ -815,7 +786,7 @@ a new format, when variables have changed, etc."
            (splash-frame-present (elt l 2))
            (if (fboundp 'set-extent-face)
                (splash-frame-present-hack (make-extent p (point))
-                                           (elt l 1)))))
+					  (elt l 1)))))
 	((consp l)
 	 (mapcar 'splash-frame-present l))
         (t
@@ -849,15 +820,10 @@ a new format, when variables have changed, etc."
 
 (defun startup-splash-frame-body ()
   `("\n" ,(emacs-version) "\n"
-    ,@(if (string-match "beta" emacs-version)
-	  `( (face (bold blue) ( "This is an Experimental version of XEmacs. "
-				 " Type " (key describe-beta)
-				 " to see what this means.\n")))
-	`( "\n"))
     (face bold-italic "\
-Copyright (C) 1985-1997 Free Software Foundation, Inc.
+Copyright (C) 1985-1996 Free Software Foundation, Inc.
 Copyright (C) 1990-1994 Lucid, Inc.
-Copyright (C) 1993-1997 Sun Microsystems, Inc. All Rights Reserved.
+Copyright (C) 1993-1996 Sun Microsystems, Inc. All Rights Reserved.
 Copyright (C) 1994-1996 Board of Trustees, University of Illinois
 Copyright (C) 1995-1996 Ben Wing\n\n")
     
@@ -867,12 +833,12 @@ Sun provides support for the WorkShop/XEmacs integration package only.
 All other XEmacs packages are provided to you \"AS IS\".
 For full details, type " (key describe-no-warranty)
 " to refer to the GPL Version 2, dated June 1991.\n\n"
-,@(let ((lang (or (getenv "LANG") (getenv "LC_ALL"))))
+,@(let ((lang (or (getenv "LC_ALL") (getenv "LC_MESSAGES") (getenv "LANG"))))
     (if (and
          (not (featurep 'mule))         ; Already got mule?
          (not (eq 'tty (console-type))) ; No Mule support on tty's yet
          lang                           ; Non-English locale?
-         (not (string-equal lang "C"))
+         (not (string= lang "C"))
          (not (string-match "^en" lang))
          (locate-file "xemacs-mule" exec-path)) ; Comes with Sun WorkShop
         '( "\
@@ -894,7 +860,7 @@ XEmacs, by either running the command `xemacs-mule', or by using the X resource
     "To get out of XEmacs, type " (key save-buffers-kill-emacs) ".\n"
     "Type " (key help-with-tutorial) " for a tutorial on using XEmacs.\n"
     "Type " (key info) " to enter Info, "
-    "which you can use to read online documentation.\n"
+    "which you can use to read online documentation.\n\n"
     (face (bold red) ( "\
 For tips and answers to frequently asked questions, see the XEmacs FAQ.
 \(It's on the Help menu, or type " (key xemacs-local-faq) " [a capital F!].\)"))))
@@ -908,23 +874,23 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
     (insert (if cramped-p "\n" "\n\n"))
     (splash-frame-present-hack (make-extent p (point)) 'about-xemacs))
 
-  (let ((after-change-functions nil)) ; no font-lock, thank you
+  (let ((after-change-functions nil))	; no font-lock, thank you
     (dolist (l (startup-splash-frame-body))
       (splash-frame-present l)))
   (set-buffer-modified-p nil))
 
-;  (let ((present-file
-;         #'(lambda (f)
-;             (splash-frame-present
-;	      (list 'funcall
-;		    (list 'find-file-other-window
-;			  (expand-file-name f data-directory))
-;		    f)))))
-;    (insert "For customization examples, see the files ")
-;    (funcall present-file "sample.emacs")
-;    (insert " and ")
-;    (funcall present-file "sample.Xdefaults")
-;    (insert (format "\nin the directory %s." data-directory)))
+;;  (let ((present-file
+;;         #'(lambda (f)
+;;             (splash-frame-present
+;;	      (list 'funcall
+;;		    (list 'find-file-other-window
+;;			  (expand-file-name f data-directory))
+;;		    f)))))
+;;    (insert "For customization examples, see the files ")
+;;    (funcall present-file "sample.emacs")
+;;    (insert " and ")
+;;    (funcall present-file "sample.Xdefaults")
+;;    (insert (format "\nin the directory %s." data-directory)))
 
 
 ;;;; Computing the default load-path, etc.
@@ -968,13 +934,13 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
 
 
 ;; extremely low-tech debugging, since this happens so early in startup.
-;(or (fboundp 'orig-file-directory-p)
-;    (fset 'orig-file-directory-p (symbol-function 'file-directory-p)))
-;(defun file-directory-p (path)
-;  (send-string-to-terminal (format "PROBING %S" path))
-;  (let ((v (orig-file-directory-p path)))
-;    (send-string-to-terminal (format " -> %S\n" v))
-;    v))
+;;(or (fboundp 'orig-file-directory-p)
+;;    (fset 'orig-file-directory-p (symbol-function 'file-directory-p)))
+;;(defun file-directory-p (path)
+;;  (send-string-to-terminal (format "PROBING %S" path))
+;;  (let ((v (orig-file-directory-p path)))
+;;    (send-string-to-terminal (format " -> %S\n" v))
+;;    v))
 
 (defun startup-make-version-dir ()
   (let ((version (and (string-match "\\`[^0-9]*\\([0-9]+\\.[0-9]+\\)"
@@ -1075,7 +1041,7 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
      nil)))
 
 (defun find-emacs-root-internal (path)
-;;  (send-string-to-terminal (format "FINDING ROOT FOR %S\n" path))
+  ;;  (send-string-to-terminal (format "FINDING ROOT FOR %S\n" path))
   ;; first look for lisp/prim and lib-src; then just look for lib-src.
   ;; XEmacs can run (kind of) if the lisp directory is omitted, which
   ;; some people might want to do for space reasons.
@@ -1110,138 +1076,117 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
 	 (lisp (and root
 		    (let ((f (expand-file-name "lisp" root)))
 		      (and (file-directory-p f) f))))
-	 (site-lisp (and root
-			 (or
-			  (let ((f (expand-file-name "xemacs/site-lisp" root)))
-			    (and (file-directory-p f) f))
-			  (let ((f (expand-file-name "../xemacs/site-lisp"
-						     root)))
-			    (and (file-directory-p f) f))
-			  ;; the next two are for --run-in-place
-			  (let ((f (expand-file-name "site-lisp" root)))
-			    (and (file-directory-p f) f))
-			  (let ((f (expand-file-name "lisp/site-lisp" root)))
-			    (and (file-directory-p f) f))
-			  )))
-	 (lib-src (and root
-		       (or
-			(let ((f (expand-file-name
-				  (concat "lib-src/" system-configuration)
-				  root)))
-			  (and (file-directory-p f) f))
-			(let ((f (expand-file-name "lib-src" root)))
-			  (and (file-directory-p f) f))
-			(let ((f (expand-file-name system-configuration root)))
-			  (and (file-directory-p f) f)))))
-	 (etc  (and root
-		    (let ((f (expand-file-name "etc" root)))
-		      (and (file-directory-p f) f))))
-	 (info (and root
-		    (let ((f (expand-file-name "info" root)))
-		      (and (file-directory-p f) (file-name-as-directory f)))))
-	 (lock (and root
-		    (boundp 'lock-directory)
-		    (if (and lock-directory (file-directory-p lock-directory))
-			(file-name-as-directory lock-directory)
-		      (or
-		       (let ((f (expand-file-name "xemacs/lock" root)))
-			 (and (file-directory-p f)
-			      (file-name-as-directory f)))
-		       (let ((f (expand-file-name "../xemacs/lock" root)))
-			 (and (file-directory-p f)
-			      (file-name-as-directory f)))
-		       (let ((f (expand-file-name "lock" root)))
-			 (and (file-directory-p f)
-			      (file-name-as-directory f)))
-		       ;; if none of them exist, make the "guess" be
-		       ;; the one that set-default-load-path-warning
-		       ;; will suggest.
-		       (file-name-as-directory
-			(expand-file-name "../xemacs/lock" root))
-		       )))))
-
-    ;; 1996/12/6 by MORIOKA Tomohiko <morioka@jaist.ac.jp>
-    ;;	define `default-load-path' for file-detect.el
-    (setq default-load-path load-path)
-
+	 (site-lisp
+	  (and root
+	       (or
+		(let ((f (expand-file-name "xemacs/site-lisp" root)))
+		  (and (file-directory-p f) f))
+		(let ((f (expand-file-name "../xemacs/site-lisp" root)))
+		  (and (file-directory-p f) f))
+		;; the next two are for --run-in-place
+		(let ((f (expand-file-name "site-lisp" root)))
+		  (and (file-directory-p f) f))
+		(let ((f (expand-file-name "lisp/site-lisp" root)))
+		  (and (file-directory-p f) f))
+		)))
+	 (lib-src
+	  (and root
+	       (or
+		(let ((f (expand-file-name
+			  (concat "lib-src/" system-configuration)
+			  root)))
+		  (and (file-directory-p f) f))
+		(let ((f (expand-file-name "lib-src" root)))
+		  (and (file-directory-p f) f))
+		(let ((f (expand-file-name system-configuration root)))
+		  (and (file-directory-p f) f)))))
+	 (etc
+	  (and root
+	       (let ((f (expand-file-name "etc" root)))
+		 (and (file-directory-p f) f))))
+	 (info
+	  (and root
+	       (let ((f (expand-file-name "info" root)))
+		 (and (file-directory-p f) (file-name-as-directory f)))))
+	 (lock
+	  (and root
+	       (boundp 'lock-directory)
+	       (if (and lock-directory (file-directory-p lock-directory))
+		   (file-name-as-directory lock-directory)
+		 (or
+		  (let ((f (expand-file-name "xemacs/lock" root)))
+		    (and (file-directory-p f)
+			 (file-name-as-directory f)))
+		  (let ((f (expand-file-name "../xemacs/lock" root)))
+		    (and (file-directory-p f)
+			 (file-name-as-directory f)))
+		  (let ((f (expand-file-name "lock" root)))
+		    (and (file-directory-p f)
+			 (file-name-as-directory f)))
+		  ;; if none of them exist, make the "guess" be
+		  ;; the one that set-default-load-path-warning
+		  ;; will suggest.
+		  (file-name-as-directory
+		   (expand-file-name "../xemacs/lock" root))
+		  )))))
     ;; add site-lisp dir to load-path
-    (if site-lisp
-	(progn
-	  ;; If the site-lisp dir isn't on the load-path, add it to the end.
-	  (or (member site-lisp load-path)
-	      (setq load-path (append load-path (list site-lisp))))
-	  ;; Also add any direct subdirectories of the site-lisp directory
-	  ;; to the load-path.  But don't add dirs whose names begin
-	  ;; with dot or hyphen.
-	  (let ((files (directory-files site-lisp nil "^[^-.]" nil 'dirs-only))
-		file)
-	    (while files
-	      (setq file (car files))
-	      (if (and (not (member file '("RCS" "CVS" "SCCS")))
-		       (setq file (expand-file-name file site-lisp))
-		       (not (member file load-path)))
-		  (setq load-path
-			(nconc load-path
-			       (list (file-name-as-directory file)))))
-	      (setq files (cdr files))))
-	  ))
+    (when site-lisp
+      ;; If the site-lisp dir isn't on the load-path, add it to the end.
+      (or (member site-lisp load-path)
+	  (setq load-path (append load-path (list site-lisp))))
+      ;; Also add any direct subdirectories of the site-lisp directory
+      ;; to the load-path.  But don't add dirs whose names begin
+      ;; with dot or hyphen.
+      (let ((files (directory-files site-lisp nil "^[^-.]" nil 'dirs-only))
+	    file)
+	(while files
+	  (setq file (car files))
+	  (if (and (not (member file '("RCS" "CVS" "SCCS")))
+		   (setq file (expand-file-name file site-lisp))
+		   (not (member file load-path)))
+	      (setq load-path
+		    (nconc load-path
+			   (list (file-name-as-directory file)))))
+	  (setq files (cdr files)))))
+
     ;; add lisp dir to load-path
-    (if lisp
-	(progn
-	  ;; If the lisp dir isn't on the load-path, add it to the end.
-	  (or (member lisp load-path)
-	      (setq load-path (append load-path (list lisp))))
-	  ;; Also add any direct subdirectories of the lisp directory
-	  ;; to the load-path.  But don't add dirs whose names begin
-	  ;; with dot or hyphen.
-	  (let ((files (directory-files lisp nil "^[^-.]" nil 'dirs-only))
-		file)
-	    (while files
-	      (setq file (car files))
-	      (if (and (not (member file '("RCS" "CVS" "SCCS")))
-		       (setq file (expand-file-name file lisp))
-		       (not (member file load-path)))
-		  (setq load-path
-			(nconc load-path
-			       (list (file-name-as-directory file)))))
-	      (setq files (cdr files))))))
-
-    ;; 1996/12/6 by MORIOKA Tomohiko <morioka@jaist.ac.jp>
-    ;;	define `default-load-path' for file-detect.el
-    (setq default-load-path
-	  (append default-load-path
-		  (if site-lisp
-		      (list site-lisp))
-		  (if lisp
-		      (list lisp)
-		    )
-		  ))
-
-    ;; 1997/03/06 by Jeff Miller <jmiller@bayserve.net>
-    ;; initialize 'site-directory'.  This is the site-lisp dir used by 
-    ;; XEmacs
-     (if site-lisp
-        (setq site-directory (file-name-as-directory site-lisp))
-         )
+    (when lisp
+      ;; If the lisp dir isn't on the load-path, add it to the end.
+      (or (member lisp load-path)
+	  (setq load-path (append load-path (list lisp))))
+      ;; Also add any direct subdirectories of the lisp directory
+      ;; to the load-path.  But don't add dirs whose names begin
+      ;; with dot or hyphen.
+      (let ((files (directory-files lisp nil "^[^-.]" nil 'dirs-only))
+	    file)
+	(while files
+	  (setq file (car files))
+	  (when (and (not (member file '("RCS" "CVS" "SCCS")))
+		     (setq file (expand-file-name file lisp))
+		     (not (member file load-path)))
+	    (setq load-path
+		  (nconc load-path
+			 (list (file-name-as-directory file)))))
+	  (setq files (cdr files)))))
 
     ;; If running from the build directory, always prefer the exec-directory
-    ;; that is here over the one that came from paths.h.
-    (if (or (and (null exec-directory) lib-src)
-	    (and (equal lib-src (expand-file-name "lib-src" root))
-		 (not (equal exec-directory lib-src))))
-	(setq exec-directory (file-name-as-directory lib-src)))
-    (if (or (and (null doc-directory) lib-src)
-	    (and (equal lib-src (expand-file-name "lib-src" root))
-		 (not (equal doc-directory lib-src))))
-	(setq doc-directory (file-name-as-directory lib-src)))
+    ;; that is here over to the one that came from paths.h.
+    (when (or (and (null exec-directory) lib-src)
+	      (and (string= lib-src (expand-file-name "lib-src" root))
+		   (not (string= exec-directory lib-src))))
+      (setq exec-directory (file-name-as-directory lib-src)))
+    (when (or (and (null doc-directory) lib-src)
+	      (and (string= lib-src (expand-file-name "lib-src" root))
+		   (not (string= doc-directory lib-src))))
+      (setq doc-directory (file-name-as-directory lib-src)))
 
-    (if exec-directory
-	(or (member exec-directory exec-path)
-	    (setq exec-path (append exec-path (list exec-directory)))))
-    (if (or (and (null data-directory) etc)
-	    (and (equal etc (expand-file-name "etc" root))
-		 (not (equal data-directory etc))))
-	(setq data-directory (file-name-as-directory etc)))
+    (when exec-directory
+      (or (member exec-directory exec-path)
+	  (setq exec-path (append exec-path (list exec-directory)))))
+    (when (or (and (null data-directory) etc)
+	      (and (string= etc (expand-file-name "etc" root))
+		   (not (string= data-directory etc))))
+      (setq data-directory (file-name-as-directory etc)))
 
 
 
@@ -1256,24 +1201,23 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
 		     (append Info-default-directory-list
 			     (list configure-info-directory))))))
     ;; If we've guessed the info dir, use that (too).
-    (if (and info (not (member info Info-default-directory-list)))
-	(setq Info-default-directory-list
-	      (append Info-default-directory-list (list info))))
+    (when (and info (not (member info Info-default-directory-list)))
+      (setq Info-default-directory-list
+	    (append Info-default-directory-list (list info))))
 
     ;; Default the lock dir to being a sibling of the data-directory.
     ;; If superlock isn't set, or is set to a file in a nonexistent
     ;; directory, derive it from the lock dir.
-    (if (boundp 'lock-directory)
-	(progn
-	  (setq lock-directory lock)
-	  (cond ((null lock-directory)
-		 (setq superlock-file nil))
-		((or (null superlock-file)
-		     (not (file-directory-p
-			   (file-name-directory superlock-file))))
-		 (setq superlock-file
-		       (expand-file-name "!!!SuperLock!!!"
-					 lock-directory))))))
+    (when (boundp 'lock-directory)
+      (setq lock-directory lock)
+      (cond ((null lock-directory)
+	     (setq superlock-file nil))
+	    ((or (null superlock-file)
+		 (not (file-directory-p
+		       (file-name-directory superlock-file))))
+	     (setq superlock-file
+		   (expand-file-name "!!!SuperLock!!!"
+				     lock-directory)))))
 
     (set-default-load-path-warning)))
 
@@ -1281,24 +1225,19 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
 (defun set-default-load-path-warning ()
   (let ((lock (if (boundp 'lock-directory) lock-directory 't))
 	warnings message guess)
-    (if (and (stringp lock) (not (file-directory-p lock)))
-	(setq lock nil))
+    (when (and (stringp lock) (not (file-directory-p lock)))
+      (setq lock nil))
     (cond
      ((not (and exec-directory data-directory doc-directory load-path lock))
       (save-excursion
 	(set-buffer (get-buffer-create " *warning-tmp*"))
 	(erase-buffer)
 	(buffer-disable-undo (current-buffer))
-	(if (null lock)
-	    (setq warnings (cons "lock-directory" warnings)))
-	(if (null exec-directory)
-	    (setq warnings (cons "exec-directory" warnings)))
-	(if (null data-directory)
-	    (setq warnings (cons "data-directory" warnings)))
-	(if (null doc-directory)
-	    (setq warnings (cons "doc-directory" warnings)))
-	(if (null load-path)
-	    (setq warnings (cons "load-path" warnings)))
+	(when (null lock)           (push "lock-directory" warnings))
+	(when (null exec-directory) (push "exec-directory" warnings))
+	(when (null data-directory) (push "data-directory" warnings))
+	(when (null doc-directory)  (push "doc-directory"  warnings))
+	(when (null load-path)      (push "load-path"      warnings))
 	(cond ((cdr (cdr warnings))
 	       (setq message (apply 'format "%s, %s, and %s" warnings)))
 	      ((cdr warnings)
@@ -1317,82 +1256,80 @@ For tips and answers to frequently asked questions, see the XEmacs FAQ.
 			(and (string-match "/[^/]+\\'" invocation-directory)
 			     (substring invocation-directory 0
 					(match-beginning 0)))))
-	(if (and guess
-		 (or
-		  ;; parent of a terminal bin/<configuration> pair (hack hack).
-		  (string-match (concat "/bin/"
-					(regexp-quote system-configuration)
-					"/?\\'")
-				guess)
-		  ;; parent of terminal src, lib-src, etc, or lisp dir.
-		  (string-match
-		   "/\\(bin\\|src\\|lib-src\\|etc\\|lisp\\)[^/]*/?\\'"
-				guess)))
-	    (setq guess (substring guess 0 (match-beginning 0))))
+	(when (and guess
+		   (or
+		    ;; parent of a terminal bin/<configuration> pair (hack hack).
+		    (string-match (concat "/bin/"
+					  (regexp-quote system-configuration)
+					  "/?\\'")
+				  guess)
+		    ;; parent of terminal src, lib-src, etc, or lisp dir.
+		    (string-match
+		     "/\\(bin\\|src\\|lib-src\\|etc\\|lisp\\)[^/]*/?\\'"
+		     guess)))
+	  (setq guess (substring guess 0 (match-beginning 0))))
 
 	;; If neither the exec nor lisp dirs are around, then "guess" that
 	;; the new configure-style lib dir should be used.  Otherwise, if
 	;; only one of them appears to be missing, or it's just lock,
 	;; then guess it to be a sibling of whatever already exists.
-	(if (and (null exec-directory) (null load-path))
-	    (setq guess (expand-file-name (startup-make-version-dir) guess)))
+	(when (and (null exec-directory) (null load-path))
+	  (setq guess (expand-file-name (startup-make-version-dir) guess)))
 
-	(if (or (null exec-directory) (null load-path))
-	    (insert
-	     "\n\nWithout both exec-directory and load-path, XEmacs will "
-	     "be very broken.  "))
-	(if (and (null exec-directory) guess)
-	    (insert
-	     "Consider making a symbolic link from "
-	     (expand-file-name system-configuration guess)
-	     " to wherever the appropriate XEmacs exec-directory "
-	     "directory is"))
-	(if (and (null data-directory) guess)
-	    (insert
-	     (if exec-directory
-		 "\n\nConsider making a symbolic link " ", and ")
-	     "from "
-	     (expand-file-name "etc" (if load-path
-					 (file-name-directory
-					  (directory-file-name
-					   (car load-path)))
-				       guess))
-	     " to wherever the appropriate XEmacs data-directory is"))
-	(if (and (null load-path) guess)
-	    (insert
-	     (if (and exec-directory data-directory)
-		 "Consider making a symbolic link "
-	       ", and ")
-	     "from "
-	     (expand-file-name "lisp" guess)
-	     " to wherever the appropriate XEmacs lisp library is"))
+	(when (or (null exec-directory) (null load-path))
+	  (insert
+	   "\n\nWithout both exec-directory and load-path, XEmacs will "
+	   "be very broken.  "))
+	(when (and (null exec-directory) guess)
+	  (insert
+	   "Consider making a symbolic link from "
+	   (expand-file-name system-configuration guess)
+	   " to wherever the appropriate XEmacs exec-directory "
+	   "directory is"))
+	(when (and (null data-directory) guess)
+	  (insert
+	   (if exec-directory
+	       "\n\nConsider making a symbolic link " ", and ")
+	   "from "
+	   (expand-file-name "etc" (if load-path
+				       (file-name-directory
+					(directory-file-name
+					 (car load-path)))
+				     guess))
+	   " to wherever the appropriate XEmacs data-directory is"))
+	(when (and (null load-path) guess)
+	  (insert
+	   (if (and exec-directory data-directory)
+	       "Consider making a symbolic link "
+	     ", and ")
+	   "from "
+	   (expand-file-name "lisp" guess)
+	   " to wherever the appropriate XEmacs lisp library is"))
 	(insert ".")
 
-	(if (null lock)
-	    (progn
-	      (insert
-	       "\n\nWithout lock-directory set, file locking won't work.  ")
-	      (if guess
-		  (insert
-		   "Consider creating "
-		   (expand-file-name "../xemacs/lock"
-				     (or (find-emacs-root-internal
-					  (concat invocation-directory
-						  invocation-name))
-					 guess))
-		   " as a directory or symbolic link for use as the lock "
-		   "directory.  (This directory must be globally writable.)"
-		   ))))
+	(when (null lock)
+	  (insert
+	   "\n\nWithout lock-directory set, file locking won't work.  ")
+	  (when guess
+	    (insert
+	     "Consider creating "
+	     (expand-file-name "../xemacs/lock"
+			       (or (find-emacs-root-internal
+				    (concat invocation-directory
+					    invocation-name))
+				   guess))
+	     " as a directory or symbolic link for use as the lock "
+	     "directory.  (This directory must be globally writable.)"
+	     )))
 
-        (if (fboundp 'fill-region)
-            ;; Might not be bound in the cold load environment...
-	    (let ((fill-column 76))
-	      (fill-region (point-min) (point-max))))
+	(when (fboundp 'fill-region)
+	  ;; Might not be bound in the cold load environment...
+	  (let ((fill-column 76))
+	    (fill-region (point-min) (point-max))))
 	(goto-char (point-min))
 	(princ "\nWARNING:\n" 'external-debugging-output)
 	(princ (buffer-string) 'external-debugging-output)
 	(erase-buffer)
 	t)))))
-
 
 ;;; startup.el ends here

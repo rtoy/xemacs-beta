@@ -38,34 +38,34 @@
 ;; and such.
 
 ;; Make F1 invoke help
-(global-set-key [f1] 'help-command)
+(global-set-key 'f1 'help-command)
 ;; Make F2 be `undo'
-(global-set-key [f2] 'undo)
+(global-set-key 'f2 'undo)
 ;; Make F3 be `find-file'
 ;; Note: it does not currently work to say
 ;;   (global-set-key 'f3 "\C-x\C-f")
 ;; The reason is that macros can't do interactive things properly.
 ;; This is an extremely longstanding bug in Emacs.  Eventually,
 ;; it will be fixed. (Hopefully ..)
-(global-set-key [f3] 'find-file)
+(global-set-key 'f3 'find-file)
 
 ;; Make F4 be "mark", F5 be "copy", F6 be "paste"
 ;; Note that you can set a key sequence either to a command or to another
 ;; key sequence.
-(global-set-key [f4] 'set-mark-command)
-(global-set-key [f5] "\M-w")
-(global-set-key [f6] "\C-y")
+(global-set-key 'f4 'set-mark-command)
+(global-set-key 'f5 "\M-w")
+(global-set-key 'f6 "\C-y")
 
 ;; Shift-F4 is "pop mark off of stack"
 (global-set-key '(shift f4) (lambda () (interactive) (set-mark-command t)))
 
 ;; Make F7 be `save-buffer'
-(global-set-key [f7] 'save-buffer)
+(global-set-key 'f7 'save-buffer)
 
 ;; Make F8 be "start macro", F9 be "end macro", F10 be "execute macro"
-(global-set-key [f8] 'start-kbd-macro)
-(global-set-key [f9] 'end-kbd-macro)
-(global-set-key [f10] 'call-last-kbd-macro)
+(global-set-key 'f8 'start-kbd-macro)
+(global-set-key 'f9 'end-kbd-macro)
+(global-set-key 'f10 'call-last-kbd-macro)
 
 ;; Here's an alternative binding if you don't use keyboard macros:
 ;; Make F8 be `save-buffer' followed by `delete-window'.
@@ -97,6 +97,21 @@
 
        ;; When running ispell, consider all 1-3 character words as correct.
        (setq ispell-extra-args '("-W" "3"))
+
+       ;; Change the way the buffer name is displayed in the
+       ;; modeline.  The variable for this is called
+       ;; 'modeline-buffer-identification but was called
+       ;; 'mode-line-buffer-identification in older XEmacsen.
+       (if (boundp 'modeline-buffer-identification)
+	   ;; Note that if you want to put more than one form in the
+	   ;; `THEN' clause of an IF-THEN-ELSE construct, you have to
+	   ;; surround the forms with `progn'.  You don't have to
+	   ;; do this for the `ELSE' clauses.
+	   (progn
+	     (setq-default modeline-buffer-identification '("XEmacs: %17b"))
+	     (setq         modeline-buffer-identification '("XEmacs: %17b")))
+	 (setq-default mode-line-buffer-identification '("XEmacs: %17b"))
+	 (setq         mode-line-buffer-identification '("XEmacs: %17b")))
 
        (cond ((or (not (fboundp 'device-type))
 		  (equal (device-type) 'x))
@@ -169,11 +184,6 @@
 
 	      ;; Change the pointer used when the mouse is over a modeline
 	      (set-glyph-image modeline-pointer-glyph "leftbutton")
-
-	      ;; Change the continuation glyph face so it stands out more
-	      (and (fboundp 'set-glyph-property)
-		   (boundp 'continuation-glyph)
-		   (set-glyph-property continuation-glyph 'face 'bold))
 
 	      ;; Change the pointer used during garbage collection.
 	      ;;
@@ -263,39 +273,6 @@
 
        ))
 
-;; Oh, and here's a cute hack you might want to put in the sample .emacs
-;; file: it changes the color of the window if it's not on the local
-;; machine, or if it's running as root:
-
-;; local emacs background:  whitesmoke
-;; remote emacs background: palegreen1
-;; root emacs background:   coral2
-(cond
- ((and (string-match "XEmacs" emacs-version)
-       (eq window-system 'x)
-       (boundp 'emacs-major-version)
-       (= emacs-major-version 19)
-       (>= emacs-minor-version 12))
-  (let* ((root-p (eq 0 (user-uid)))
-	 (dpy (or (getenv "DISPLAY") ""))
-	 (remote-p (not
-		    (or (string-match "^\\(\\|unix\\|localhost\\):" dpy)
-			(let ((s (system-name)))
-			  (if (string-match "\\.\\(netscape\\|mcom\\)\\.com" s)
-			      (setq s (substring s 0 (match-beginning 0))))
-			  (string-match (concat "^" (regexp-quote s)) dpy)))))
-	 (bg (cond (root-p "coral2")
-		   (remote-p "palegreen1")
-		   (t nil))))
-    (cond (bg
-	   (let ((def (color-name (face-background 'default)))
-		 (faces (face-list)))
-	     (while faces
-	       (let ((obg (face-background (car faces))))
-		 (if (and obg (equal def (color-name obg)))
-		     (set-face-background (car faces) bg)))
-	       (setq faces (cdr faces)))))))))
-
 ;;; Older versions of emacs did not have these variables
 ;;; (emacs-major-version and emacs-minor-version.)
 ;;; Let's define them if they're not around, since they make
@@ -353,60 +330,17 @@
 
 
 ;;; ********************
-;;; Load efs, which uses the FTP protocol as a pseudo-filesystem.
+;;; Load ange-ftp, which uses the FTP protocol as a pseudo-filesystem.
 ;;; When this is loaded, the pathname syntax /user@host:/remote/path
 ;;; refers to files accessible through ftp.
 ;;;
 (require 'dired)
-;; compatible ange-ftp/efs initialization derived from code
-;; from John Turner <turner@lanl.gov>
-;; As of 19.15, efs is bundled instead of ange-ftp.
-;; NB: doesn't handle 20.0 properly, efs didn't appear until 20.1.
-;;
-;; The environment variable EMAIL_ADDRESS is used as the password
-;; for access to anonymous ftp sites, if it is set.  If not, one is
-;; constructed using the environment variables USER and DOMAINNAME
-;; (e.g. turner@lanl.gov), if set.
+(require 'ange-ftp)
+(setq ange-ftp-default-user "anonymous"      ; id to use for /host:/remote/path
+      ange-ftp-generate-anonymous-password t ; use $USER@`hostname`
+      ange-ftp-binary-file-name-regexp "."   ; always transfer in binary mode
+      )
 
-(if (and running-xemacs
-	 (or (and (= emacs-major-version 20) (>= emacs-minor-version 1))
-	     (and (= emacs-major-version 19) (>= emacs-minor-version 15))))
-    (progn
-      (message "Loading and configuring bundled packages... efs")
-      (require 'efs-auto)
-      (if (getenv "USER")
-	  (setq efs-default-user (getenv "USER")))
-      (if (getenv "EMAIL_ADDRESS")
-	  (setq efs-generate-anonymous-password (getenv "EMAIL_ADDRESS"))
-	(if (and (getenv "USER")
-		 (getenv "DOMAINNAME"))
-	    (setq efs-generate-anonymous-password
-		  (concat (getenv "USER")"@"(getenv "DOMAINNAME")))))
-      (setq efs-auto-save 1))
-  (progn
-    (message "Loading and configuring bundled packages... ange-ftp")
-    (require 'ange-ftp)
-    (if (getenv "USER")
-	(setq ange-ftp-default-user (getenv "USER")))
-    (if (getenv "EMAIL_ADDRESS")
-	(setq ange-ftp-generate-anonymous-password (getenv "EMAIL_ADDRESS"))
-      (if (and (getenv "USER")
-	       (getenv "DOMAINNAME"))
-	  (setq ange-ftp-generate-anonymous-password
-		(concat (getenv "USER")"@"(getenv "DOMAINNAME")))))
-    (setq ange-ftp-auto-save 1)
-    )
-  )
-
-;;; ********************
-;;; Load the default-dir.el package which installs fancy handling
-;;;  of the initial contents in the minibuffer when reading
-;;; file names.
-
-(if (and running-xemacs
-	 (or (and (= emacs-major-version 20) (>= emacs-minor-version 1))
-	     (and (= emacs-major-version 19) (>= emacs-minor-version 15))))
-    (require 'default-dir))
 
 ;;; ********************
 ;;; Load the auto-save.el package, which lets you put all of your autosave
@@ -415,8 +349,8 @@
 (setq auto-save-directory (expand-file-name "~/autosave/")
       auto-save-directory-fallback auto-save-directory
       auto-save-hash-p nil
-      efs-auto-save t
-      efs-auto-save-remotely nil
+      ange-ftp-auto-save t
+      ange-ftp-auto-save-remotely nil
       ;; now that we have auto-save-timeout, let's crank this up
       ;; for better interactive response.
       auto-save-interval 2000
@@ -630,6 +564,7 @@
 (resize-minibuffer-mode)
 (setq resize-minibuffer-window-exactly nil)
 
+ 
 ;;; ********************
 ;;; W3 is a browser for the World Wide Web, and takes advantage of the very
 ;;; latest redisplay features in XEmacs.  You can access it simply by typing 

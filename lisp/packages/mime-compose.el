@@ -594,7 +594,6 @@ appropriate."
    (save-excursion (re-search-backward 
                     (concat "--" (mime-primary-boundary))) (point))
    (- (point) 1))
-  (insert "\n")
   (let ((start (point)) end (seldisp selective-display))
     (next-line 1)
     (save-excursion

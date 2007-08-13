@@ -70,6 +70,34 @@ Lisp_Object Qfloatp;
 Lisp_Object Qnumberp, Qnumber_or_marker_p, Qnumber_char_or_marker_p;
 
 Lisp_Object Qweak_listp;
+
+#ifdef DEBUG_XEMACS
+
+int debug_issue_ebola_notices;
+
+int debug_ebola_backtrace_length;
+
+int
+eq_with_ebola_notice (Lisp_Object obj1, Lisp_Object obj2)
+{
+  if (((CHARP (obj1) && INTP (obj2)) || (CHARP (obj2) && INTP (obj1)))
+      && (debug_issue_ebola_notices >= 2
+	  || XREALINT (obj1) == XREALINT (obj2)))
+    {
+      stderr_out ("Ebola warning!! (");
+      Fprinc (obj1, Qexternal_debugging_output);
+      stderr_out (" and ");
+      Fprinc (obj2, Qexternal_debugging_output);
+      stderr_out (")\n");
+      debug_short_backtrace (debug_ebola_backtrace_length);
+    }
+
+  return EQ (obj1, obj2);
+}
+
+#endif /* DEBUG_XEMACS */
+
+
 
 Lisp_Object
 wrong_type_argument (Lisp_Object predicate, Lisp_Object value)
@@ -177,7 +205,8 @@ Lisp_Object
 make_char (Emchar num)
 {
   Lisp_Object val;
-  val = make_int (num);
+  /* Don't use XSETCHAR here -- it's defined in terms of make_char ().  */
+  XSETOBJ (val, Lisp_Char, num);
   return val;
 }
 
@@ -188,7 +217,26 @@ T if the two args are the same Lisp object.
 */
        (obj1, obj2))
 {
-  return EQ (obj1, obj2) ? Qt : Qnil;
+  return EQ_WITH_EBOLA_NOTICE (obj1, obj2) ? Qt : Qnil;
+}
+
+DEFUN ("old-eq", Fold_eq, 2, 2, 0, /*
+T if the two args are (in most cases) the same Lisp object.
+
+Special kludge: A character is considered `old-eq' to its equivalent integer
+even though they are not the same object and are in fact of different
+types.  This is ABSOLUTELY AND UTTERLY HORRENDOUS but is necessary to
+preserve byte-code compatibility with v19.  This kludge is known as the
+\"char-int confoundance disease\" and appears in a number of other
+functions with `old-foo' equivalents.
+
+Do not use this function!
+*/
+       (obj1, obj2))
+{
+  /* The miscreant responsible for this blasphemy is known as
+     Richard M. Stallman, and he will burn in hell for it. */
+  return HACKEQ_UNSAFE (obj1, obj2) ? Qt : Qnil;
 }
 
 DEFUN ("null", Fnull, 1, 1, 0, /*
@@ -346,17 +394,87 @@ t if OBJECT is a byte-compiled function object.
 
 DEFUN ("characterp", Fcharacterp, 1, 1, 0, /*
 t if OBJECT is a character.
-A character is an integer that can be inserted into a buffer with
-`insert-char'.  All integers are considered valid characters and are
-modded with 256 to get the actual character to use.
+Unlike in FSF Emacs, a character is its own primitive type.
+Any character can be converted into an equivalent integer using
+`char-int'.  To convert the other way, use `int-char'; however,
+only some integers can be converted into characters.  Such an integer
+is called a `char-int'; see `char-int-p'.
+
+Some functions that work on integers (e.g. the comparison functions
+<, <=, =, /=, etc. and the arithmetic functions +, -, *, etc.)
+accept characters and implicitly convert them into integers.  In
+general, functions that work on characters also accept char-ints and
+implicitly convert them into characters.  WARNING: Neither of these
+behaviors is very desirable, and they are maintained for backward
+compatibility with old E-Lisp programs that confounded characters and
+integers willy-nilly.  These behaviors may change in the future; therefore,
+do not rely on them.  Instead, use the character-specific functions such
+as `char='.
 */
        (object))
 {
   return CHARP (object) ? Qt : Qnil;
 }
 
+DEFUN ("char-int", Fchar_int, 1, 1, 0, /*
+Convert a character into an equivalent integer.
+The resulting integer will always be non-negative.  The integers in
+the range 0 - 255 map to characters as follows:
+
+0 - 31		Control set 0
+32 - 127	ASCII
+128 - 159	Control set 1
+160 - 255	Right half of ISO-8859-1
+
+If support for Mule does not exist, these are the only valid character
+values.  When Mule support exists, the values assigned to other characters
+may vary depending on the particular version of XEmacs, the order in which
+character sets were loaded, etc., and you should not depend on them.
+*/
+       (ch))
+{
+  CHECK_CHAR (ch);
+  return make_int (XCHAR (ch));
+}
+
+DEFUN ("int-char", Fint_char, 1, 1, 0, /*
+Convert an integer into the equivalent character.
+Not all integers correspond to valid characters; use `char-int-p' to
+determine whether this is the case.  If the integer cannot be converted,
+nil is returned.
+*/
+       (integer))
+{
+  CHECK_INT (integer);
+  if (CHAR_INTP (integer))
+    return make_char (XINT (integer));
+  else
+    return Qnil;
+}
+
+DEFUN ("char-int-p", Fchar_int_p, 1, 1, 0, /*
+t if OBJECT is an integer that can be converted into a character.
+See `char-int'.
+*/
+       (object))
+{
+  return CHAR_INTP (object) ? Qt : Qnil;
+}
+
+DEFUN ("char-or-char-int-p", Fchar_or_char_int_p, 1, 1, 0, /*
+t if OBJECT is a character or an integer that can be converted into one.
+*/
+       (object))
+{
+  return CHAR_OR_CHAR_INTP (object) ? Qt : Qnil;
+}
+
 DEFUN ("char-or-string-p", Fchar_or_string_p, 1, 1, 0, /*
-t if OBJECT is a character or a string.
+t if OBJECT is a character (or a char-int) or a string.
+It is semi-hateful that we allow a char-int here, as it goes against
+the name of this function, but it makes the most sense considering the
+other steps we take to maintain compatibility with the old character/integer
+confoundedness in older versions of E-Lisp.
 */
        (object))
 {
@@ -377,6 +495,22 @@ t if OBJECT is an integer or a marker (editor pointer).
        (object))
 {
   return INTP (object) || MARKERP (object) ? Qt : Qnil;
+}
+
+DEFUN ("integer-or-char-p", Finteger_or_char_p, 1, 1, 0, /*
+t if OBJECT is an integer or a character.
+*/
+       (object))
+{
+  return INTP (object) || CHARP (object) ? Qt : Qnil;
+}
+
+DEFUN ("integer-char-or-marker-p", Finteger_char_or_marker_p, 1, 1, 0, /*
+t if OBJECT is an integer, character or a marker (editor pointer).
+*/
+       (object))
+{
+  return INTP (object) || CHARP (object) || MARKERP (object) ? Qt : Qnil;
 }
 
 DEFUN ("natnump", Fnatnump, 1, 1, 0, /*
@@ -411,6 +545,17 @@ t if OBJECT is a number or a marker.
   return INT_OR_FLOATP (object) || MARKERP (object) ? Qt : Qnil;
 }
 
+DEFUN ("number-char-or-marker-p", Fnumber_char_or_marker_p, 1, 1, 0, /*
+t if OBJECT is a number, character or a marker.
+*/
+       (object))
+{
+  return (INT_OR_FLOATP (object) ||
+	  CHARP         (object) ||
+	  MARKERP       (object))
+    ? Qt : Qnil;
+}
+
 #ifdef LISP_FLOAT_TYPE
 DEFUN ("floatp", Ffloatp, 1, 1, 0, /*
 t if OBJECT is a floating point number.
@@ -430,6 +575,7 @@ Return a symbol representing the type of OBJECT.
   if (SYMBOLP  (object)) return Qsymbol;
   if (KEYWORDP (object)) return Qkeyword;
   if (INTP     (object)) return Qinteger;
+  if (CHARP    (object)) return Qcharacter;
   if (STRINGP  (object)) return Qstring;
   if (VECTORP  (object)) return Qvector;
   
@@ -875,7 +1021,7 @@ arithcompare (Lisp_Object num1, Lisp_Object num2, enum comparison comparison)
 	}
     }
 #endif /* LISP_FLOAT_TYPE */
-    
+      
   switch (comparison)
     {
     case equal:         return XINT (num1) == XINT (num2) ? Qt : Qnil;
@@ -891,7 +1037,7 @@ arithcompare (Lisp_Object num1, Lisp_Object num2, enum comparison comparison)
 }
 
 DEFUN ("=", Feqlsign, 2, 2, 0, /*
-T if two args, both numbers or markers, are equal.
+T if two args, both numbers, characters or markers, are equal.
 */
        (num1, num2))
 {
@@ -900,7 +1046,7 @@ T if two args, both numbers or markers, are equal.
 
 DEFUN ("<", Flss, 2, 2, 0, /*
 T if first arg is less than second arg.
-Both must be numbers or markers.
+Both must be numbers, characters or markers.
 */
        (num1, num2))
 {
@@ -909,7 +1055,7 @@ Both must be numbers or markers.
 
 DEFUN (">", Fgtr, 2, 2, 0, /*
 T if first arg is greater than second arg.
-Both must be numbers or markers.
+Both must be numbers, characters or markers.
 */
        (num1, num2))
 {
@@ -918,7 +1064,7 @@ Both must be numbers or markers.
 
 DEFUN ("<=", Fleq, 2, 2, 0, /*
 T if first arg is less than or equal to second arg.
-Both must be numbers or markers.
+Both must be numbers, characters or markers.
 */
        (num1, num2))
 {
@@ -927,7 +1073,7 @@ Both must be numbers or markers.
 
 DEFUN (">=", Fgeq, 2, 2, 0, /*
 T if first arg is greater than or equal to second arg.
-Both must be numbers or markers.
+Both must be numbers, characters or markers.
 */
        (num1, num2))
 {
@@ -936,12 +1082,82 @@ Both must be numbers or markers.
 
 DEFUN ("/=", Fneq, 2, 2, 0, /*
 T if first arg is not equal to second arg.
-Both must be numbers or markers.
+Both must be numbers, characters or markers.
 */
        (num1, num2))
 {
   return arithcompare (num1, num2, notequal);
 }
+
+#if 0
+/* I tried implementing Common Lisp multi-arg comparison functions,
+   but failed because the byte-compiler needs to be hacked as well. */
+
+static Lisp_Object
+arithcompare_many (enum comparison comparison, int nargs, Lisp_Object *args)
+{
+  REGISTER int argnum;
+  for (argnum = 1; argnum < nargs; argnum++)
+    if (EQ (arithcompare ( args[argnum-1], args[argnum], comparison), Qnil))
+      return Qnil;
+
+  return Qt;
+}
+
+xxxDEFUN ("=", Feqlsign, 1, MANY, 0, /*
+T if all the arguments are equal.
+The arguments may be numbers, characters or markers.
+*/
+       (int nargs, Lisp_Object *args))
+{
+  return arithcompare (equal, nargs, args);
+}
+
+xxxDEFUN ("<", Flss, 1, MANY, 0, /*
+T if the sequence of arguments is monotonically increasing.
+The arguments may be numbers, characters or markers.
+*/
+       (int nargs, Lisp_Object *args))
+{
+  return arithcompare (less, nargs, args);
+}
+
+xxxDEFUN (">", Fgtr, 1, MANY, 0, /*
+T if the sequence of arguments is monotonically decreasing.
+The arguments may be numbers, characters or markers.
+*/
+       (int nargs, Lisp_Object *args))
+{
+  return arithcompare (grtr, nargs, args);
+}
+
+xxxDEFUN ("<=", Fleq, 1, MANY, 0, /*
+T if the sequence of arguments is monotonically nondecreasing.
+The arguments may be numbers, characters or markers.
+*/
+       (int nargs, Lisp_Object *args))
+{
+  return arithcompare (less_or_equal, nargs, args);
+}
+
+xxxDEFUN (">=", Fgeq, 1, MANY, 0, /*
+T if the sequence of arguments is monotonically nonincreasing.
+The arguments may be numbers, characters or markers.
+*/
+       (int nargs, Lisp_Object *args))
+{
+  return arithcompare_many (grtr_or_equal, nargs, args);
+}
+
+xxxDEFUN ("/=", Fneq, 1, MANY, 0, /*
+T if the sequence of arguments is monotonically increasing.
+The arguments may be numbers, characters or markers.
+*/
+       (int nargs, Lisp_Object *args))
+{
+  return arithcompare_many (notequal, nargs, args);
+}
+#endif /* 0 - disabled for now */
 
 DEFUN ("zerop", Fzerop, 1, 1, 0, /*
 T if NUMBER is zero.
@@ -1051,6 +1267,7 @@ It ignores leading spaces and tabs.
 enum arithop
   { Aadd, Asub, Amult, Adiv, Alogand, Alogior, Alogxor, Amax, Amin };
 
+
 #ifdef LISP_FLOAT_TYPE
 static Lisp_Object
 float_arith_driver (double accum, int argnum, enum arithop code, int nargs,
@@ -1100,7 +1317,7 @@ float_arith_driver (double accum, int argnum, enum arithop code, int nargs,
 	case Alogand:
 	case Alogior:
 	case Alogxor:
-	  return wrong_type_argument (Qinteger_or_marker_p, val);
+	  return wrong_type_argument (Qinteger_char_or_marker_p, val);
 	case Amax:
 	  if (!argnum || isnan (next) || next > accum)
 	    accum = next;
@@ -1188,7 +1405,7 @@ arith_driver (enum arithop code, int nargs, Lisp_Object *args)
 
 DEFUN ("+", Fplus, 0, MANY, 0, /*
 Return sum of any number of arguments.
-The arguments should all be numbers or markers.
+The arguments should all be numbers, characters or markers.
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1196,7 +1413,7 @@ The arguments should all be numbers or markers.
 }
 
 DEFUN ("-", Fminus, 0, MANY, 0, /*
-Negate number or subtract numbers or markers.
+Negate number or subtract numbers, characters or markers.
 With one arg, negates it.  With more than one arg,
 subtracts all but the first from the first.
 */
@@ -1207,7 +1424,7 @@ subtracts all but the first from the first.
 
 DEFUN ("*", Ftimes, 0, MANY, 0, /*
 Return product of any number of arguments.
-The arguments should all be numbers or markers.
+The arguments should all be numbers, characters or markers.
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1216,7 +1433,7 @@ The arguments should all be numbers or markers.
 
 DEFUN ("/", Fquo, 2, MANY, 0, /*
 Return first argument divided by all the remaining arguments.
-The arguments must be numbers or markers.
+The arguments must be numbers, characters or markers.
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1225,7 +1442,7 @@ The arguments must be numbers or markers.
 
 DEFUN ("%", Frem, 2, 2, 0, /*
 Return remainder of first arg divided by second.
-Both must be integers or markers.
+Both must be integers, characters or markers.
 */
        (num1, num2))
 {
@@ -1256,7 +1473,7 @@ fmod (double f1, double f2)
 DEFUN ("mod", Fmod, 2, 2, 0, /*
 Return X modulo Y.
 The result falls between zero (inclusive) and Y (exclusive).
-Both X and Y must be numbers or markers.
+Both X and Y must be numbers, characters or markers.
 If either argument is a float, a float will be returned.
 */
        (x, y))
@@ -1306,8 +1523,9 @@ If either argument is a float, a float will be returned.
 
 DEFUN ("max", Fmax, 1, MANY, 0, /*
 Return largest of all the arguments.
-All arguments must be numbers or markers.
-The value is always a number; markers are converted to numbers.
+All arguments must be numbers, characters or markers.
+The value is always a number; markers and characters are converted
+to numbers.
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1316,8 +1534,9 @@ The value is always a number; markers are converted to numbers.
 
 DEFUN ("min", Fmin, 1, MANY, 0, /*
 Return smallest of all the arguments.
-All arguments must be numbers or markers.
-The value is always a number; markers are converted to numbers.
+All arguments must be numbers, characters or markers.
+The value is always a number; markers and characters are converted
+to numbers.
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1326,7 +1545,7 @@ The value is always a number; markers are converted to numbers.
 
 DEFUN ("logand", Flogand, 0, MANY, 0, /*
 Return bitwise-and of all the arguments.
-Arguments may be integers, or markers converted to integers.
+Arguments may be integers, or markers or characters converted to integers.
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1335,7 +1554,7 @@ Arguments may be integers, or markers converted to integers.
 
 DEFUN ("logior", Flogior, 0, MANY, 0, /*
 Return bitwise-or of all the arguments.
-Arguments may be integers, or markers converted to integers.
+Arguments may be integers, or markers or characters converted to integers.
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1344,7 +1563,7 @@ Arguments may be integers, or markers converted to integers.
 
 DEFUN ("logxor", Flogxor, 0, MANY, 0, /*
 Return bitwise-exclusive-or of all the arguments.
-Arguments may be integers, or markers converted to integers.
+Arguments may be integers, or markers or characters converted to integers.
 */
        (int nargs, Lisp_Object *args))
 {
@@ -1362,14 +1581,14 @@ In this case, the sign bit is duplicated.
   CHECK_INT (count);
 
   return make_int (XINT (count) > 0 ?
-		 XINT (value) << XINT (count) :
-		 XINT (value) >> -XINT (count));
+		   XINT (value) <<  XINT (count) :
+		   XINT (value) >> -XINT (count));
 }
 
 DEFUN ("lsh", Flsh, 2, 2, 0, /*
 Return VALUE with its bits shifted left by COUNT.
 If COUNT is negative, shifting is actually to the right.
-In this case,  zeros are shifted in on the left.
+In this case, zeros are shifted in on the left.
 */
        (value, count))
 {
@@ -1378,16 +1597,17 @@ In this case,  zeros are shifted in on the left.
   CHECK_INT_COERCE_CHAR (value);
   CHECK_INT (count);
 
-  if (XINT (count) > 0)
-    XSETINT (val, (EMACS_UINT) XUINT (value) << XINT (count));
-  else
-    XSETINT (val, (EMACS_UINT) XUINT (value) >> -XINT (count));
+  {
+    int C_count = XINT (count);
+    EMACS_UINT C_value = (EMACS_UINT) XUINT (value);
+    XSETINT (val, C_count > 0 ? C_value << C_count : C_value >> -C_count);
+  }
   return val;
 }
 
 DEFUN ("1+", Fadd1, 1, 1, 0, /*
 Return NUMBER plus one.  NUMBER may be a number or a marker.
-Markers are converted to integers.
+Markers and characters are converted to integers.
 */
        (number))
 {
@@ -1403,7 +1623,7 @@ Markers are converted to integers.
 
 DEFUN ("1-", Fsub1, 1, 1, 0, /*
 Return NUMBER minus one.  NUMBER may be a number or a marker.
-Markers are converted to integers.
+Markers and characters are converted to integers.
 */
        (number))
 {
@@ -1477,8 +1697,8 @@ weak_list_equal (Lisp_Object o1, Lisp_Object o2, int depth)
   struct weak_list *w1 = XWEAK_LIST (o1);
   struct weak_list *w2 = XWEAK_LIST (o2);
 
-  return (w1->type != w2->type &&
-    internal_equal (w1->list, w2->list, depth + 1));
+  return (w1->type == w2->type) &&
+    internal_equal (w1->list, w2->list, depth + 1);
 }
 
 static unsigned long
@@ -1757,6 +1977,7 @@ decode_weak_list_type (Lisp_Object symbol)
   CHECK_SYMBOL (symbol);
   if (EQ (symbol, Qsimple))	 return WEAK_LIST_SIMPLE;
   if (EQ (symbol, Qassoc))	 return WEAK_LIST_ASSOC;
+  if (EQ (symbol, Qold_assoc))	 return WEAK_LIST_ASSOC;  /* EBOLA ALERT! */
   if (EQ (symbol, Qkey_assoc))	 return WEAK_LIST_KEY_ASSOC;
   if (EQ (symbol, Qvalue_assoc)) return WEAK_LIST_VALUE_ASSOC;
 
@@ -1977,16 +2198,15 @@ syms_of_data (void)
   defsymbol (&Qchar_or_string_p, "char-or-string-p");
   defsymbol (&Qmarkerp, "markerp");
   defsymbol (&Qinteger_or_marker_p, "integer-or-marker-p");
-  /* HACK for 19.x only. */
-  defsymbol (&Qinteger_char_or_marker_p, "integer-or-marker-p");
+  defsymbol (&Qinteger_or_char_p, "integer-or-char-p");
+  defsymbol (&Qinteger_char_or_marker_p, "integer-char-or-marker-p");
 
 #ifdef LISP_FLOAT_TYPE
   defsymbol (&Qfloatp, "floatp");
 #endif /* LISP_FLOAT_TYPE */
   defsymbol (&Qnumberp, "numberp");
   defsymbol (&Qnumber_or_marker_p, "number-or-marker-p");
-  /* HACK for 19.x only. */
-  defsymbol (&Qnumber_char_or_marker_p, "number-or-marker-p");
+  defsymbol (&Qnumber_char_or_marker_p, "number-char-or-marker-p");
 
   defsymbol (&Qcdr, "cdr");
 
@@ -1995,6 +2215,7 @@ syms_of_data (void)
   DEFSUBR (Fwrong_type_argument);
 
   DEFSUBR (Feq);
+  DEFSUBR (Fold_eq);
   DEFSUBR (Fnull);
   DEFSUBR (Flistp);
   DEFSUBR (Fnlistp);
@@ -2002,10 +2223,17 @@ syms_of_data (void)
   DEFSUBR (Fatom);
   DEFSUBR (Fchar_or_string_p);
   DEFSUBR (Fcharacterp);
+  DEFSUBR (Fchar_int_p);
+  DEFSUBR (Fchar_int);
+  DEFSUBR (Fint_char);
+  DEFSUBR (Fchar_or_char_int_p);
   DEFSUBR (Fintegerp);
   DEFSUBR (Finteger_or_marker_p);
+  DEFSUBR (Finteger_or_char_p);
+  DEFSUBR (Finteger_char_or_marker_p);
   DEFSUBR (Fnumberp);
   DEFSUBR (Fnumber_or_marker_p);
+  DEFSUBR (Fnumber_char_or_marker_p);
 #ifdef LISP_FLOAT_TYPE
   DEFSUBR (Ffloatp);
 #endif /* LISP_FLOAT_TYPE */
@@ -2083,4 +2311,30 @@ vars_of_data (void)
 {
   /* This must not be staticpro'd */
   Vall_weak_lists = Qnil;
+
+#ifdef DEBUG_XEMACS
+  DEFVAR_INT ("debug-issue-ebola-notices", &debug_issue_ebola_notices /*
+If non-nil, note when your code may be suffering from char-int confoundance.
+That is to say, if XEmacs encounters a usage of `eq', `memq', `equal',
+etc. where a int and a char with the same value are being compared,
+it will issue a notice on stderr to this effect, along with a backtrace.
+In such situations, the result would be different in XEmacs 19 versus
+XEmacs 20, and you probably don't want this.
+
+Note that in order to see these notices, you have to byte compile your
+code under XEmacs 20 -- any code byte-compiled under XEmacs 19 will
+have its chars and ints all confounded in the byte code, making it
+impossible to accurately determine Ebola infection.
+*/ );
+
+  debug_issue_ebola_notices = 2; /* #### temporary hack */
+
+  DEFVAR_INT ("debug-ebola-backtrace-length",
+	      &debug_ebola_backtrace_length /*
+Length (in stack frames) of short backtrace printed out in Ebola notices.
+See `debug-issue-ebola-notices'.
+*/ );
+  debug_ebola_backtrace_length = 8;
+
+#endif /* DEBUG_XEMACS */
 }

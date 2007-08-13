@@ -31,11 +31,20 @@ Boston, MA 02111-1307, USA.  */
 #undef sgi
 #undef NeXT
 
+#ifdef USE_GNU_MAKE
+/* For performance and consistency, no built-in rules */
+.SUFFIXES:
+#endif
+.SUFFIXES: .c .o .i .h
 dot = .
 /* On Xenix and the IBM RS6000, double-dot gets screwed up.  */
 lispdir = ${srcdir}/$(dot)$(dot)/lisp/
 libsrc = $(dot)$(dot)/lib-src/
 etcdir = $(dot)$(dot)/etc/
+/* This allows you to put the Mule files in a separate location.
+   Change this if you so desire. */
+muledirfromsrc = $(dot)
+MULESRCDIR = ${srcdir}/${muledirfromsrc}
 
 /* Here are the things that we expect ../configure to edit. */
 srcdir=@srcdir@
@@ -68,12 +77,11 @@ SHELL=/bin/sh
 vpath %.c @srcdir@
 vpath %.h @srcdir@
 /* now list files that should NOT be searched in the srcdir.
-   This includes any .c or .h that is built from something else
+   This includes any .c or .h built from something else
    (e.g. a .in file). */
 vpath config.h
 vpath paths.h
 vpath Emacs.ad.h
-vpath puresize_adjust.h
 #else
 VPATH=@srcdir@
 #endif
@@ -108,7 +116,7 @@ MAKE = MAKE_COMMAND
 CC = C_COMPILER
 #endif
 
-/* Some machines do not find the standard C libraries in the usual place.  */
+/* Some machines do not have the standard C libraries in the usual place. */
 #ifndef ORDINARY_LINK
 #ifndef LIB_STANDARD
 #define LIB_STANDARD -lc
@@ -245,7 +253,7 @@ STARTFILES =
 #define C_OPTIMIZE_SWITCH -O
 #endif
 
-/* cc switches needed to make "asm" keyword work.
+/* cc switches needed to make the "asm" keyword work.
    Nothing special needed on most machines.  */
 #ifndef C_SWITCH_ASM
 #define C_SWITCH_ASM
@@ -254,7 +262,11 @@ STARTFILES =
 ILD=/cadillac1/code/bin.sun4/ild
 
 PURIFY_PROG=purify
+PURIFY_FLAGS=-chain-length=16 -ignore-signals=SIGPOLL -log-file=puremacs.log \
+             -messages=batch -show-directory=yes -windows=yes \
+             -cache-dir=. -always-use-cache-dir=yes
 QUANTIFY_PROG=quantify
+QUANTIFY_FLAGS=-windows=no -record-data=no
 PURECOV_PROG=purecov
 #ifdef  QUANTIFY
 #define QUANTIFY_INCLUDES -I/local/include
@@ -293,42 +305,28 @@ SHORT=
 #ifdef HAVE_NATIVE_SOUND
 # if defined (SOLARIS2)
 #   define SOUND_CFLAGS		C_SWITCH_SITE -I/usr/demo/SOUND/include
-#   define SOUND_LIBS		${native_sound_lib}
 #   define SOUND_OBJS		sunplay.o
-# else /* !SOLARIS2 */
-#   if defined (SPARC)
-#     define SOUND_CFLAGS	C_SWITCH_SITE -I/usr/demo/SOUND
-#     define SOUND_LIBS		${native_sound_lib}
-#     define SOUND_OBJS		sunplay.o
-# else /* !SUNOS4 */
-#   if defined (IRIX4) || defined (IRIX5) || defined (IRIX6)
-#     define SOUND_CFLAGS
-#     define SOUND_LIBS		-laudio
-#     define SOUND_OBJS		sgiplay.o
-# else /* !IRIX */
-#   if defined (hp9000s800)
-#     ifdef USE_GCC
-#       define SOUND_CFLAGS	-Dconst= -Dvolatile= -I/usr/audio/examples
-#     else /* ! USE_GCC */
-#       define SOUND_CFLAGS	+e -I/usr/audio/examples 
-#    endif /* USE_GCC */
-#    define SOUND_LIBS		-lAlib	
-#    define SOUND_OBJS		hpplay.o
-# else /* !HP9000S800 */
-#   if defined (LINUX) || defined(__FreeBSD__)
-#     define SOUND_CFLAGS
-#     define SOUND_LIBS
-#     define SOUND_OBJS		linuxplay.o
-# else /* !LINUX */
+# elif defined (SPARC)
+#   define SOUND_CFLAGS	C_SWITCH_SITE -I/usr/demo/SOUND
+#   define SOUND_OBJS		sunplay.o
+# elif defined (IRIX4) || defined (IRIX5)
+#   define SOUND_CFLAGS
+#   define SOUND_OBJS		sgiplay.o
+# elif defined (hp9000s800)
+#   ifdef USE_GCC
+#     define SOUND_CFLAGS	-Dconst= -Dvolatile= -I/usr/audio/examples
+#   else /* ! USE_GCC */
+#     define SOUND_CFLAGS	+e -I/usr/audio/examples 
+#   endif /* USE_GCC */
+#   define SOUND_OBJS		hpplay.o
+# elif defined (LINUX)
+#   define SOUND_CFLAGS
+#   define SOUND_OBJS		linuxplay.o
+# else
   ERROR!!  HAVE\_NATIVE\_SOUND can only be defined on Solaris, SunOS, SGI, hp9000s800, or Linux
-#     endif /* !LINUX */
-#    endif /* !HP9000S800 */
-#   endif /* !IRIX */
-#  endif /* !SUNOS4 */
-# endif /* !SOLARIS2 */
+# endif /* OS */
 #else /* !HAVE_NATIVE_SOUND */
 # define SOUND_CFLAGS
-# define SOUND_LIBS
 # define SOUND_OBJS
 #endif /* ! HAVE_NATIVE_SOUND */
 
@@ -373,13 +371,15 @@ CONN_DIR=../connection
 
 #ifdef HAVE_PNG
 # ifdef HAVE_PNG_GNUZ
-#  define PNG_LIBS -lpng -lgz
+PNG_LIBS = -lpng -lgz
 # else
-#  define PNG_LIBS -lpng -lz
+PNG_LIBS = -lpng -lz
 # endif
-#else
-# define PNG_LIBS
-#endif
+#endif /* HAVE_PNG */
+
+#if defined (HAVE_LIBKSTAT) && defined (HAVE_KSTAT_H)
+LIB_KSTAT = -lkstat
+#endif /* KSTAT */
 
 #ifdef HAVE_DATABASE
 
@@ -416,6 +416,25 @@ CONN_DIR=../connection
 JPEG_LIBS = -ljpeg
 #endif
 
+#define NO_GNU_LINKER
+
+#ifdef DYNODUMP
+#ifdef __GNUC__
+#undef NO_GNU_LINKER
+#define NO_GNU_LINKER -fno-gnu-linker
+#endif
+DYNODUMPBUILDDIR = $(dot)$(dot)/dynodump
+#define DYNODUMP_DEPS $(DYNODUMPBUILDDIR)/dynodump.so
+#else
+#define DYNODUMP_DEPS
+#endif
+
+#ifdef MULE
+#define MULE_INC -I${MULESRCDIR}
+#else
+#define MULE_INC
+#endif
+
 /* If you want to debug, you can add C_DEBUG_SWITCH to this list.
    If you want to optimize, you can add C_OPTIMIZE_SWITCH to the list.  */
 
@@ -429,7 +448,7 @@ JPEG_LIBS = -ljpeg
    since it may have -I options that should override those two.  */
 
 CPPFLAGS=-Demacs -DHAVE_CONFIG_H $(MYCPPFLAG) -I. \
-	   -I${srcdir} LCCFLAGS C_SWITCH_MACHINE C_SWITCH_SYSTEM \
+	   -I${srcdir} MULE_INC LCCFLAGS C_SWITCH_MACHINE C_SWITCH_SYSTEM \
 	   C_SWITCH_SITE C_SWITCH_X_SITE C_SWITCH_X_MACHINE \
 	   C_SWITCH_X_SYSTEM $(LIBX11_INCLUDES) QUANTIFY_INCLUDES 
 ALL_CFLAGS=$(CPPFLAGS) ${CFLAGS}
@@ -442,15 +461,20 @@ ALL_CFLAGS=$(CPPFLAGS) ${CFLAGS}
 
 LDFLAGS = LD_SWITCH_SITE LD_SWITCH_X_SITE LD_SWITCH_SYSTEM \
 	  LD_SWITCH_X_SYSTEM LD_SWITCH_MACHINE \
-	  -L. $(LIBX11_LDFLAGS) ENERGIZE_LDFLAGS XILDOFF
+	  -L. $(LIBX11_LDFLAGS) ENERGIZE_LDFLAGS XILDOFF NO_GNU_LINKER
 
 #ifdef HAVE_NEXTSTEP
+.SUFFIXES: .m
 .m.o:
 	$(CC) -c $(ALL_CFLAGS) $<
 #endif
 
 .c.o:
 	$(CC) -c $(ALL_CFLAGS) $<
+
+/* Create preprocessor output (debugging purposes only) */
+.c.i:
+	$(CC) -P $(CPPFLAGS) $<
 
 
 #ifndef LIBX11_MACHINE
@@ -494,9 +518,19 @@ LWLIBSRCDIR = ${srcdir}/$(dot)$(dot)/lwlib
 #else
 #define GUI_X_OBJS
 #endif
+
+#ifndef HAVE_XIM
+#define INPUT_METHOD_X_OBJS
+#elif defined(XIM_MOTIF)
+#define INPUT_METHOD_X_OBJS input-method-motif.o
+#else
+#define INPUT_METHOD_X_OBJS input-method-xlib.o
+#endif
+
 #define XOBJS console-x.o device-x.o DIALOG_X_OBJS event-Xt.o frame-x.o \
 	      glyphs-x.o GUI_X_OBJS MENUBAR_X_OBJS objects-x.o redisplay-x.o \
-	      SCROLLBAR_X_OBJS TOOLBAR_X_OBJS xgccache.o xselect.o
+              SCROLLBAR_X_OBJS TOOLBAR_X_OBJS INPUT_METHOD_X_OBJS xgccache.o \
+	      xselect.o
 
 #ifdef HAVE_XMU
 #define XMU_OBJS
@@ -510,6 +544,43 @@ XMU_LIB = -lXmu
 #else
 #define EPOCH_OBJS
 #endif
+
+#ifdef MULE
+
+/* We ignore mule-mcpath.o for the moment. */
+
+# ifdef HAVE_CANNA
+#  define CANNA_OBJS mule-canna.o
+#  define CANNA_OBJ_SRC ${muledirfromsrc}/mule-canna.c
+#  define LIB_CANNA -lcanna
+# else
+#  define CANNA_OBJS
+#  define CANNA_OBJ_SRC
+#  define LIB_CANNA
+# endif
+# ifdef HAVE_WNN
+#  define WNN_OBJS mule-wnnfns.o
+#  define WNN_OBJ_SRC ${muledirfromsrc}/mule-wnnfns.c
+# else
+#  define WNN_OBJS
+#  define WNN_OBJ_SRC
+# endif
+/* Chuck says that you have to have at least one specified actual
+   object file per line. */
+mule_objs=	mule.o mule-ccl.o CANNA_OBJS \
+		WNN_OBJS mule-charset.o mule-coding.o
+mule_obj_src=	${muledirfromsrc}/mule.c \
+		${muledirfromsrc}/mule-ccl.c CANNA_OBJ_SRC \
+		WNN_OBJ_SRC ${muledirfromsrc}/mule-charset.c \
+		${muledirfromsrc}/mule-coding.c
+
+#else /* not MULE */
+
+mule_objs=
+mule_obj_src=
+#define LIB_CANNA
+
+#endif /* not MULE */
 
 /* LWLIBSRCDIR is defined above regardless of X being used or not.
    This avoids having to conditionalize the dependencies on lwlib.h */
@@ -545,14 +616,11 @@ USAGE_TRACKING_LIBS =
 
 #ifdef LWLIB_USES_MOTIF
 TOOLKIT_LIBS = -lXm
-#ifdef LWLIB_USES_ATHENA
-TOOLKIT_LIBS = -lXm -lXaw
-#endif /* LWLIB_USES_ATHENA */
 #else /* ! LWLIB_USES_MOTIF */
 TOOLKIT_LIBS = -lXaw
 #endif /* ! LWLIB_USES_MOTIF */
 
-LIBX11_LIBS = -llw $(TOOLKIT_LIBS) $(XPM_LIBS) $(XFACE_LIBS) $(JPEG_LIBS) PNG_LIBS $(USAGE_TRACKING_LIBS) 
+LIBX11_LIBS = -llw $(TOOLKIT_LIBS) $(XPM_LIBS) $(XFACE_LIBS) $(JPEG_LIBS) $(PNG_LIBS) $(USAGE_TRACKING_LIBS) 
 
 #ifdef AIX4
 #define LIBI18N -li18n
@@ -601,14 +669,9 @@ LIBX=  $(LIBX11_LIBS) $(XMU_LIB) -lXt -lXext -lX11 LIBX11_MACHINE LIBX11_SYSTEM 
 #define NSOBJS console-ns.o device-ns.o DIALOG_NS_OBJS event-ns.o frame-ns.o \
 	       glyphs-ns.o MENUBAR_NS_OBJS nsselect.o objects-ns.o \
 	       redisplay-ns.o SCROLLBAR_NS_OBJS TOOLBAR_NS_OBJS
-
 #else
 # define NSOBJS
 #endif /* HAVE_NEXTSTEP */
-
-#ifdef DYNODUMP
-DYNODUMPBUILDDIR = $(dot)$(dot)/dynodump
-#endif
 
 #ifndef ORDINARY_LINK
 /* Fix linking if compiled with GCC.  */
@@ -621,9 +684,9 @@ DYNODUMPBUILDDIR = $(dot)$(dot)/dynodump
    these same versions allow you to pass arbitrary flags on to the
    linker, so there is no reason not to use it as a linker.
 
-   Well, it is not quite perfect.  The "-nostdlib" keeps GCC from
-   searching for libraries in its internal directories, so we have to
-   ask GCC explicitly where to find libgcc.a.  */
+   Well, it is not quite perfect.  The "-nostdlib" option keeps GCC
+   from searching for libraries in its internal directories, so we
+   have to ask GCC explicitly where to find libgcc.a.  */
 
 #ifndef LINKER
 #define LINKER $(CC) -nostdlib
@@ -824,7 +887,7 @@ LD=ld
    if they all come out null. */
 
 objs=	abbrev.o alloc.o blocktype.o buffer.o bytecode.o \
-	callint.o callproc.o casefiddle.o casetab.o cmdloop.o \
+	callint.o callproc.o casefiddle.o casetab.o chartab.o cmdloop.o \
 	cmds.o console.o console-stream.o \
 	data.o DATABASE_OBJS DEBUG_OBJS device.o DIALOG_OBJS dired.o doc.o \
 	doprnt.o dynarr.o \
@@ -835,7 +898,7 @@ objs=	abbrev.o alloc.o blocktype.o buffer.o bytecode.o \
 	general.o getloadavg.o GIF_OBJS glyphs.o GUI_OBJS \
 	hash.o \
 	indent.o inline.o insdel.o intl.o \
-	keymap.o $(RTC_PATCH_O) \
+	keymap.o \
 	lread.o lstream.o \
 	macros.o marker.o md5.o MENUBAR_OBJS minibuf.o MOCKLISPOBJS \
 	NAS_OBJS NSOBJS \
@@ -917,13 +980,13 @@ allocaobjs = @ALLOCA@
 #  define EXTERNAL_WIDGET_OBJS ExternalShell.o extw-Xt-nonshared.o extw-Xlib-nonshared.o
 
 /* Now we try to figure out how to link a shared library.
-   If we can not figure it out, leave EXTW_LINK undefined and a shared
+   If we cannot figure it out, leave EXTW_LINK undefined and a shared
    library will not be created. */
 
 # ifdef USE_GCC
 #  ifdef USG5
 #   define EXTW_LINK(objs, output) $(CC) -shared objs -Xlinker -z -Xlinker text -o output
-   /* I can not figure out how to do shared a.out libraries, so just punt. */
+   /* I cannot figure out how to do shared a.out libraries, so just punt. */
 #  elif !defined (LINUX) || defined (__ELF__)
 #   define EXTW_LINK(objs, output) $(CC) -shared objs -o output
 #  endif
@@ -982,7 +1045,7 @@ otherobjs= $(termcapobjs) BTLOBJS lastfile.o $(mallocobjs) $(rallocobjs) $(alloc
 #endif
 
 #ifdef HAVE_X_WINDOWS
-/* lisp files that are preloaded if compiled with support for X Windows */
+/* lisp files preloaded if compiled with support for X Windows */
 # ifdef HAVE_TOOLBARS
 #  define X11_TOOLBAR_LISP ${lispdir}x11/x-toolbar.elc
 # else
@@ -999,27 +1062,73 @@ otherobjs= $(termcapobjs) BTLOBJS lastfile.o $(mallocobjs) $(rallocobjs) $(alloc
 #  define X11_SCROLLBAR_LISP
 # endif
 #define X11_LISP X11_MENUBAR_LISP \
-                ${lispdir}x11/x-faces.elc \
-                ${lispdir}x11/x-iso8859-1.elc ${lispdir}x11/x-mouse.elc \
-                ${lispdir}x11/x-select.elc X11_SCROLLBAR_LISP \
-		X11_TOOLBAR_LISP ${lispdir}x11/x-misc.elc \
-		${lispdir}x11/x-init.elc
+	${lispdir}x11/x-faces.elc \
+	${lispdir}x11/x-iso8859-1.elc ${lispdir}x11/x-mouse.elc \
+	${lispdir}x11/x-select.elc X11_SCROLLBAR_LISP \
+	X11_TOOLBAR_LISP ${lispdir}x11/x-misc.elc \
+	${lispdir}x11/x-init.elc
 #else
 #define X11_LISP
 #endif
 
 #ifdef HAVE_NEXTSTEP
-/* lisp files that are preloaded if compiled with support for NeXTstep */
+/* lisp files preloaded if compiled with support for NeXTstep */
 #define NS_LISP 
 #else
 #define NS_LISP
 #endif
 
 #ifdef HAVE_TTY
-/* lisp files that are preloaded if compiled with support for NeXTstep */
+/* lisp files preloaded if compiled with support for NeXTstep */
 #define TTY_LISP ${lispdir}term/tty-init.elc
 #else
 #define TTY_LISP
+#endif
+
+#ifdef MULE
+#ifdef HAVE_X_WINDOWS
+# define MULE_X11_LISP ${lispdir}mule/mule-x-init.elc
+#else
+# define MULE_X11_LISP
+#endif
+#define MULE_TM_LISP \
+	${lispdir}tl/mime-setup.elc \
+	${lispdir}tl/tl-misc.elc \
+	${lispdir}tl/tl-str.elc \
+	${lispdir}tl/tl-list.elc \
+	${lispdir}tl/tl-seq.elc \
+	${lispdir}tl/tl-atype.elc \
+	${lispdir}tl/file-detect.elc \
+	${lispdir}tl/emu.elc \
+	${lispdir}tl/emu-x20.elc \
+	${lispdir}tl/emu-xemacs.elc \
+	${lispdir}tm/tm-setup.elc \
+	${lispdir}mule/cyrillic.elc
+#define MULE_LISP \
+	${lispdir}mule/mule-load.elc ${lispdir}mule/mule-coding.elc \
+	${lispdir}mule/mule-charset.elc ${lispdir}mule/mule-files.elc \
+	${lispdir}mule/mule-category.elc ${lispdir}mule/mule-misc.elc \
+	${lispdir}mule/mule-ccl.elc ${lispdir}mule/mule-init.elc \
+	MULE_X11_LISP \
+	MULE_TM_LISP \
+	${lispdir}mule/arabic-hooks.elc \
+	${lispdir}mule/chinese-hooks.elc \
+	${lispdir}mule/cyrillic-hooks.elc \
+	${lispdir}mule/ethiopic-hooks.elc \
+	${lispdir}mule/european-hooks.elc \
+	${lispdir}mule/greek-hooks.elc \
+	${lispdir}mule/hebrew-hooks.elc	\
+	${lispdir}mule/ipa-hooks.elc \
+	${lispdir}mule/japanese-hooks.elc \
+	${lispdir}mule/korean-hooks.elc \
+	${lispdir}mule/thai-hooks.elc \
+	${lispdir}mule/vietnamese-hooks-1.elc \
+	${lispdir}mule/vietnamese-hooks-2.elc
+
+#define NOMULE_LISP
+#else
+#define MULE_LISP
+#define NOMULE_LISP ${lispdir}prim/files-nomule.elc
 #endif
 
 #ifdef EPOCH
@@ -1029,61 +1138,57 @@ otherobjs= $(termcapobjs) BTLOBJS lastfile.o $(mallocobjs) $(rallocobjs) $(alloc
 #endif
 
 #ifdef ENERGIZE
-/* Lisp files that are preloaded if compiled with support for Energize
- */
-#define ENERGIZE_LISP ${lispdir}comint/gdb.elc \
-                ${lispdir}comint/comint.elc ${lispdir}comint/shell.elc \
-                ${lispdir}utils/ring.elc ${lispdir}packages/compile.elc \
-                ${lispdir}modes/view-less.elc ${lispdir}emulators/evi.elc \
-		${lispdir}packages/font-lock.elc ${lispdir}packages/fast-lock.elc \
-                ${lispdir}dired/dired.elc ${lispdir}dired/dired-x.elc \
-                ${lispdir}dired/dired-lucid.elc ${lispdir}prim/userlock.elc \
-                ${lispdir}energize/energize-init.elc \
-                ${lispdir}energize/energize-mode.elc \
-                ${lispdir}energize/energize-windows.elc \
-                ${lispdir}energize/energize-menus.elc \
-                ${lispdir}energize/energize-shell.elc \
-                ${lispdir}energize/energize-visit-use.elc \
-                ${lispdir}energize/energize-vi.elc \
-                ${lispdir}energize/energize-font-lock.elc \
-                ${lispdir}energize/energize-advice.elc
+/* Lisp files preloaded if compiled with support for Energize */
+#define ENERGIZE_LISP \
+	${lispdir}comint/gdb.elc \
+	${lispdir}comint/comint.elc ${lispdir}comint/shell.elc \
+	${lispdir}utils/ring.elc ${lispdir}packages/compile.elc \
+	${lispdir}modes/view-less.elc ${lispdir}emulators/evi.elc \
+	${lispdir}packages/font-lock.elc ${lispdir}packages/fast-lock.elc \
+	${lispdir}dired/dired.elc ${lispdir}dired/dired-x.elc \
+	${lispdir}dired/dired-lucid.elc ${lispdir}prim/userlock.elc \
+	${lispdir}energize/energize-init.elc \
+	${lispdir}energize/energize-mode.elc \
+	${lispdir}energize/energize-windows.elc \
+	${lispdir}energize/energize-menus.elc \
+	${lispdir}energize/energize-shell.elc \
+	${lispdir}energize/energize-visit-use.elc \
+	${lispdir}energize/energize-vi.elc \
+	${lispdir}energize/energize-font-lock.elc \
+	${lispdir}energize/energize-advice.elc
 #else
 #define ENERGIZE_LISP
 #endif
 
 #ifdef SUNPRO
-/* Lisp files that are preloaded if compiled with support for SunPro
-   products */
-#define SUNPRO_LISP ${lispdir}packages/sccs.elc \
-		${lispdir}sunpro/sunpro-init.elc \
-		${lispdir}sunpro/sunpro-menubar.elc \
-		${lispdir}sunpro/sunpro-keys.elc \
-		${lispdir}eos/sun-eos-init.elc \
-		${lispdir}eos/sun-eos-load.elc \
-		${lispdir}eos/sun-eos-common.elc \
-		${lispdir}eos/sun-eos-editor.elc \
-		${lispdir}eos/sun-eos-browser.elc \
-		${lispdir}eos/sun-eos-debugger.elc \
-		${lispdir}eos/sun-eos-debugger-extra.elc \
-		${lispdir}comint/comint.elc \
-		${lispdir}utils/ring.elc \
-		${lispdir}eos/sun-eos-toolbar.elc \
-		${lispdir}eos/sun-eos-menubar.elc \
-		${lispdir}utils/annotations.elc \
-		${lispdir}modes/cc-mode.elc \
-		${lispdir}modes/imenu.elc \
-		${lispdir}utils/reporter.elc \
-		${lispdir}prim/loaddefs.elc
+/* Lisp files preloaded if compiled with support for SunPro products */
+#define SUNPRO_LISP \
+	${lispdir}packages/sccs.elc \
+	${lispdir}sunpro/sunpro-init.elc \
+	${lispdir}sunpro/sunpro-menubar.elc \
+	${lispdir}sunpro/sunpro-keys.elc \
+	${lispdir}eos/sun-eos-init.elc \
+	${lispdir}eos/sun-eos-load.elc \
+	${lispdir}eos/sun-eos-common.elc \
+	${lispdir}eos/sun-eos-editor.elc \
+	${lispdir}eos/sun-eos-browser.elc \
+	${lispdir}eos/sun-eos-debugger.elc \
+	${lispdir}eos/sun-eos-debugger-extra.elc \
+	${lispdir}comint/comint.elc \
+	${lispdir}utils/ring.elc \
+	${lispdir}eos/sun-eos-toolbar.elc \
+	${lispdir}eos/sun-eos-menubar.elc \
+	${lispdir}utils/annotations.elc
 #else
 #define SUNPRO_LISP	${lispdir}prim/loaddefs.elc
 #endif
 
 #ifdef TOOLTALK
-/* Lisp files that are preloaded if compiled with support for Tooltalk
- */
-#define TOOLTALK_LISP ${lispdir}tooltalk/tooltalk-macros.elc \
-		${lispdir}tooltalk/tooltalk-util.elc \
-		${lispdir}tooltalk/tooltalk-init.elc
+/* Lisp files preloaded if compiled with support for Tooltalk */
+#define TOOLTALK_LISP \
+	${lispdir}tooltalk/tooltalk-macros.elc \
+	${lispdir}tooltalk/tooltalk-util.elc \
+	${lispdir}tooltalk/tooltalk-init.elc
 #else
 #define TOOLTALK_LISP
 #endif
@@ -1115,24 +1220,23 @@ otherobjs= $(termcapobjs) BTLOBJS lastfile.o $(mallocobjs) $(rallocobjs) $(alloc
 #define DIALOG_LISP
 #endif
 #ifdef HAVE_WINDOW_SYSTEM
-#define MOUSE_LISP ${lispdir}prim/gui.elc ${lispdir}prim/mouse.elc \
-		   ${lispdir}prim/mode-motion.elc
+#define MOUSE_LISP \
+	${lispdir}prim/gui.elc \
+	${lispdir}prim/mouse.elc \
+	${lispdir}prim/mode-motion.elc
 #else
 #define MOUSE_LISP
 #endif
 
 /* List of Lisp files loaded into the dumped Emacs.
    Every file that is loaded from loadup.el must be enumerated
-   here, or the functions will not have docstrings.
+   here, or the functions will have no docstrings.
    This is dumb - this list should be generated automatically.
-   [Note: "version.el" is included in the doc separately, but is not listed
+   [Note: "version.el" is included in the doc separately, but is not listed 
     here because we do not want things to appear to be out-of-date just 
     because the version number has been incremented. -- D.N.G. 8/28/93]
  */
-/* loaddefs is now included handled by the SUNPRO_LISP define because
-   SparcWorks support requires an altered version. */
-lisp=   ${lispdir}paths.el \
-	${lispdir}prim/loaddefs.elc ${lispdir}prim/auto-autoloads.elc \
+lisp=   ${lispdir}paths.el ${lispdir}prim/loaddefs.elc \
         ${lispdir}prim/loadup.el ${lispdir}prim/subr.elc \
         ${lispdir}prim/cmdloop.elc CMDLOOP_LISP \
 	${lispdir}utils/text-props.elc MOUSE_LISP \
@@ -1157,30 +1261,28 @@ lisp=   ${lispdir}paths.el \
         ${lispdir}prim/paragraphs.elc ${lispdir}modes/lisp-mode.elc \
         ${lispdir}modes/text-mode.elc ${lispdir}prim/fill.elc \
         ${lispdir}prim/isearch-mode.elc ${lispdir}prim/misc.elc \
-	${lispdir}packages/vc-hooks.elc \
+	${lispdir}modes/cc-mode.elc ${lispdir}packages/vc-hooks.elc \
         ${lispdir}prim/replace.elc ${lispdir}prim/specifier.elc \
         ${lispdir}modes/auto-show.elc SUNPRO_LISP TTY_LISP \
         ${lispdir}bytecomp/bytecomp-runtime.elc FLOAT_LISP EPOCH_LISP \
-        ${lispdir}prim/itimer.elc ${lispdir}prim/itimer-autosave.elc \
-	${lispdir}ediff/ediff-hook.elc \
-	${lispdir}custom/widget.elc ${lispdir}prim/custom-load.elc \
-	${lispdir}custom/custom.elc \
+        ${lispdir}prim/itimer.elc ${lispdir}ediff/ediff-hook.elc \
 	${lispdir}packages/fontl-hooks.elc SCROLLBAR_LISP \
 	${lispdir}prim/buffer.elc MENUBAR_LISP \
-	${lispdir}packages/buff-menu.elc DIALOG_LISP \
+	${lispdir}packages/buff-menu.elc DIALOG_LISP MULE_LISP NOMULE_LISP \
 	${lispdir}modes/abbrev.elc X11_LISP NS_LISP ENERGIZE_LISP TOOLTALK_LISP
 
 /* Other Lisp files that are not dumped out but where it is convenient
-   (or required?) for them to be byte-compiled early, before xemacs
-   is dumped out.  Do not list them in ${lisp} because then the doc-snarfing
-   routines get confused. */
+   (or required?) for them to be byte-compiled early, before xemacs is
+   dumped out.  Avoid listing them in ${lisp} because then the
+   doc-snarfing routines get confused. */
 otherlisp= ${lispdir}bytecomp/bytecomp.elc \
 	   ${lispdir}bytecomp/byte-optimize.elc \
 	   ${lispdir}utils/advice.elc
 
-LIBES = NAS_LIBS SOUND_LIBS SOCKS_LIBS ENERGIZE_LIBS LIB_CDE LIB_OFFIX_DND \
+LIBES = NAS_LIBS ${native_sound_lib} SOCKS_LIBS ENERGIZE_LIBS LIB_CDE LIB_OFFIX_DND \
 	LIB_TOOLTALK $(LIBX) \
-	LIBS_SYSTEM LIBS_MACHINE LIBS_TERMCAP LIB_INTL QUANTIFY_LIBS \
+	LIBS_SYSTEM LIBS_MACHINE LIBS_TERMCAP \
+	LIB_CANNA LIB_INTL QUANTIFY_LIBS $(LIB_KSTAT) \
 	DATABASE_LIBS LIBS_DEBUG $(GNULIB_VAR) LIB_MATH LIB_STANDARD \
 	$(GNULIB_VAR)
 
@@ -1222,53 +1324,36 @@ release: temacs ${lisp} ${libsrc}DOC MOFILE OTHER_FILES
 	-if [ -w ${srcdir}/../lisp ]; then \
 	  w=`pwd`; cd ${srcdir}; $${w}/temacs -nl -batch -l inc-vers; \
 	else true; fi
-	@touch SATISFIED
-	-$(DUMPENV) ./temacs -nl -batch -l loadup.el dump
-	@if [ ! -f SATISFIED ]; then \
-		$(MAKE) release; \
-	fi
-	@/bin/rm -f SATISFIED
+	$(DUMPENV) ./temacs -nl -batch -l loadup.el dump
 #else /* ! defined (HAVE_SHM) */
 	-if [ -w ${srcdir}/../lisp ]; then \
 	  w=`pwd`; cd ${srcdir}; $${w}/temacs -batch -l inc-vers; \
 	else true; fi
-	@touch SATISFIED
-	-$(DUMPENV) ./temacs -batch -l loadup.el dump
-	@if [ ! -f SATISFIED ]; then \
-		$(MAKE) release; \
-	fi
-	@/bin/rm -f SATISFIED
+	$(DUMPENV) ./temacs -batch -l loadup.el dump
 #endif /* ! defined (HAVE_SHM) */
 	touch release
 #endif /* ! defined (CANNOT_DUMP) */
 
 xemacs: temacs ${libsrc}DOC ${lisp} MOFILE OTHER_FILES
-	@touch SATISFIED
-	-$(DUMPENV) ./temacs -batch -l loadup.el dump
-	@if [ ! -f SATISFIED ]; then \
-		$(MAKE) xemacs; \
-	fi
-	@/bin/rm -f SATISFIED
+	$(DUMPENV) ./temacs -batch -l loadup.el dump
 
 xemacs-no-site-file: temacs ${libsrc}DOC ${lisp} MOFILE OTHER_FILES
-	@touch SATISFIED
-	-$(DUMPENV) ./temacs -batch -l loadup.el dump no-site-file
-	@if [ -f SATISFIED ]; then \
-		$(MAKE) xemacs-no-site-file; \
-	fi
-	@/bin/rm -f SATISFIED
+	$(DUMPENV) ./temacs -batch -l loadup.el dump no-site-file
 
 obj_src = $(objs:.o=.c)
 
+#ifdef DYNODUMP
+$(DYNODUMPBUILDDIR)/dynodump.so: force
+	cd ${DYNODUMPBUILDDIR} && ${MAKE} ${MFLAGS}
+#endif
 
 #ifdef NO_DOC_FILE
 ${libsrc}DOC: ${libsrc}make-docfile
 #else
-${libsrc}DOC: ${libsrc}make-docfile ${obj_src} ${lisp}
+${libsrc}DOC: ${libsrc}make-docfile ${obj_src} ${mule_obj_src} ${lisp}
 #endif
 	rm -f ${libsrc}DOC
-	${libsrc}make-docfile -d ${srcdir} -i ${libsrc}../site-packages \
-		${obj_src} \
+	${libsrc}make-docfile -d ${srcdir} ${obj_src} ${mule_obj_src} \
 	        ${mallocdocsrc} ${rallocdocsrc} ${lispdir}version.el \
 		${lisp} > ${libsrc}DOC
 
@@ -1276,6 +1361,35 @@ dump_elcs: dump-elcs
 
 dump-elcs: temacs
 	$(LOADPATH) ./temacs -batch -l ../prim/update-elc.el $(lisp) $(otherlisp)
+
+#ifdef I18N3
+
+# if defined(SPARC) && !defined(USG)
+   xgettext=		 /usr/openwin/bin/xgettext
+   xgettext_args=	 -o emacs -m_X messages
+   msgfmt=		 /usr/openwin/bin/msgfmt
+# else
+   xgettext=		 xgettext
+   xgettext_args=	 -s -d emacs -M_X messages
+   msgfmt=		 msgfmt
+#endif
+
+${modir}emacs.po: ${libsrc}make-msgfile ${libsrc}make-po ${objs} ${mule_objs} ${lisp}
+	${libsrc}make-msgfile -o ${libsrc}messages ${objs} ${mule_objs} ${lisp} ${otherlisp}
+	cd ${libsrc}; ${xgettext} ${xgettext_args}
+	rm -f ${modir}emacs.po
+	cd ${libsrc}; ${libsrc}make-po -a ${modir}emacs.po DOC
+
+${modir}emacs.mo: ${modir}emacs.po
+	cd ${modir}; ${msgfmt} -o emacs.mo emacs.po
+
+${libsrc}make-msgfile:
+	cd ${libsrc}; ${MAKE} ${MFLAGS} make-msgfile
+
+${libsrc}make-po:
+	cd ${libsrc}; ${MAKE} ${MFLAGS} make-po
+
+#endif /* I18N3 */
 
 ${libsrc}make-docfile:
 	cd ${libsrc}; ${MAKE} ${MFLAGS} make-docfile
@@ -1297,29 +1411,18 @@ force:
 $(LWLIBBUILDDIR)/liblw.a: force
 	cd ${LWLIBBUILDDIR}; ${MAKE} ${MFLAGS}
 
-#ifdef DYNODUMP
-$(DYNODUMPBUILDDIR)/dynodump.so: force
-	cd ${DYNODUMPBUILDDIR}; ${MAKE} ${MFLAGS}
-#endif
-
 /* Some systems define this to cause parallel Make-ing.  */
 #ifndef MAKE_PARALLEL
 #define MAKE_PARALLEL
 #endif
 
-#ifdef DYNODUMP
-#define DYNODUMP_DEPS $(DYNODUMPBUILDDIR)/dynodump.so
-#else
-#define DYNODUMP_DEPS
-#endif
-
 #define TEMACS_DEPS       MAKE_PARALLEL $(LOCALCPP) $(SHORT) $(STARTFILES) \
-			  ${objs} ${otherobjs} OBJECTS_SYSTEM \
+			  ${objs} ${mule_objs} ${otherobjs} OBJECTS_SYSTEM \
 			  OBJECTS_MACHINE LWLIB_DEPS DYNODUMP_DEPS prefix-args
 
 #define TEMACS_LINK_ARGS  YMF_PASS_LDFLAGS \
 		(${STARTFLAGS} ${LDFLAGS} LD_SWITCH_CALL_SHARED) -o $@ \
-		${STARTFILES} ${objs} ${otherobjs} OBJECTS_SYSTEM \
+		${STARTFILES} ${objs} ${mule_objs} ${otherobjs} OBJECTS_SYSTEM \
 		OBJECTS_MACHINE ${LIBES}
 
 temacs_deps: TEMACS_DEPS
@@ -1330,28 +1433,11 @@ temacs: TEMACS_DEPS
 cemacs: TEMACS_DEPS
 	$(LD) $(ENERGIZEP) TEMACS_LINK_ARGS
 
-rtc_patch.o:
-	rtc_patch_area -o $@
-
-rtcmacs: TEMACS_DEPS rtc_patch.o
-	rm -f temacs; $(MAKE) $(MAKE_FLAGS) temacs RTC_PATCH_O=rtc_patch.o
-	mv temacs rtcmacs
-
-rtcrun: rtcmacs
-	dbx -q -C -c \
-	'dbxenv rtc_error_log_file_name /dev/fd/1; \
-	dbxenv suppress_startup_message 5.0; \
-	ignore POLL; \
-	check -access; \
-	suppress rui; \
-	runargs -batch -l loadup.el run-temacs -q; \
-	run' rtcmacs
-
 puremacs: TEMACS_DEPS
-	$(PURIFY_PROG) $(LD) TEMACS_LINK_ARGS
+	$(PURIFY_PROG) $(PURIFY_FLAGS) $(LD) TEMACS_LINK_ARGS
 
 quantmacs: TEMACS_DEPS
-	$(QUANTIFY_PROG) $(LD) TEMACS_LINK_ARGS
+	$(QUANTIFY_PROG) $(QUANTIFY_FLAGS) $(LD) TEMACS_LINK_ARGS
 
 covmacs: TEMACS_DEPS
 	$(PURECOV_PROG) $(LD) TEMACS_LINK_ARGS
@@ -1461,9 +1547,9 @@ localcpp:
 	cd ${cppdir}; ${MAKE} ${MFLAGS} EMACS=-DEMACS
 	ln ${cppdir}cpp localcpp  /* Name where ALL_CFLAGS will refer to it */
 /* cc appears to be cretinous and require all of these to exist
-   if -B is specified -- we can not use one local pass and let the
+   if -B is specified -- we cannot use one local pass and let the
    others be the standard ones.  What a loser.
-   We can not even use ln, since they are probably
+   We cannot even use ln, since they are probably
    on different disks.  */
 	cp /lib/ccom localccom
 	-cp /lib/optim localoptim
@@ -1481,11 +1567,6 @@ shortnames:
 config.h: ${srcdir}/config.h.in
 	@echo "The file config.h needs to be set up from config.h.in."
 	@echo "Consult the file \`INSTALL' for instructions for building Emacs."
-	exit 1
-
-puresize_adjust.h: ${srcdir}/puresize.h
-	@echo "The file puresize_adjust still needs to be generated."
-	@echo "Please run 'make' from the top-level."
 	exit 1
 
 paths.h: ${srcdir}/paths.h.in
@@ -1575,6 +1656,23 @@ nas.o: ${srcdir}/nas.c
 	$(CC) -c $(ALL_CFLAGS) NAS_CFLAGS $<
 #endif /* HAVE_NAS_SOUND */
 
+#ifdef MULE
+
+mule-canna.o: ${MULESRCDIR}/mule-canna.c
+	$(CC) -c $(ALL_CFLAGS) ${MULESRCDIR}/mule-canna.c
+mule-wnnfns.o: ${MULESRCDIR}/mule-wnnfns.c
+	$(CC) -c $(ALL_CFLAGS) ${MULESRCDIR}/mule-wnnfns.c
+mule.o: ${MULESRCDIR}/mule.c
+	$(CC) -c $(ALL_CFLAGS) ${MULESRCDIR}/mule.c
+mule-ccl.o: ${MULESRCDIR}/mule-ccl.c
+	$(CC) -c $(ALL_CFLAGS) ${MULESRCDIR}/mule-ccl.c
+mule-charset.o: ${MULESRCDIR}/mule-charset.c
+	$(CC) -c $(ALL_CFLAGS) ${MULESRCDIR}/mule-charset.c
+mule-coding.o: ${MULESRCDIR}/mule-coding.c
+	$(CC) -c $(ALL_CFLAGS) ${MULESRCDIR}/mule-coding.c
+
+#endif
+
 /* System-specific programs to be made.
    OTHER_FILES, OBJECTS_SYSTEM and OBJECTS_MACHINE
    select which of these should be compiled.  */
@@ -1589,11 +1687,11 @@ clean: mostlyclean
 /**/# This is used in making a distribution.
 /**/# Do not use it on development directories!
 distclean: clean versionclean
-	rm -f config.h paths.h puresize_adjust.h Emacs.ad.h Makefile Makefile.in .pure
+	rm -f config.h paths.h Emacs.ad.h Makefile Makefile.in .pure
 realclean: distclean
 	rm -f TAGS
 versionclean:
-	-rm -f xemacs emacs-* ${libsrc}DOC*
+	-rm -f xemacs ${libsrc}DOC
 extraclean: realclean
 	-rm -f *~ \#* m/?*~ s/?*~
 
@@ -1617,6 +1715,26 @@ relock:
 .SUFFIXES: .dep
 
 obj_dep = $(objs:.o=.dep)
+mule_obj_dep = $(mule_objs:.o=.dep)
+
+#ifdef MULE
+
+/* Ugh, there should be a better way of handling this. */
+
+mule-canna.dep: ${MULESRCDIR}/mule-canna.c
+	$(CC) -MM $(ALL_CFLAGS) ${MULESRCDIR}/mule-canna.c > mule-canna.dep
+mule-wnnfns.dep: ${MULESRCDIR}/mule-wnnfns.c
+	$(CC) -MM $(ALL_CFLAGS) ${MULESRCDIR}/mule-wnnfns.c > mule-wnnfns.dep
+mule.dep: ${MULESRCDIR}/mule.c
+	$(CC) -MM $(ALL_CFLAGS) ${MULESRCDIR}/mule.c > mule.dep
+mule-ccl.dep: ${MULESRCDIR}/mule-ccl.c
+	$(CC) -MM $(ALL_CFLAGS) ${MULESRCDIR}/mule-ccl.c > mule-ccl.dep
+mule-charset.dep: ${MULESRCDIR}/mule-charset.c
+	$(CC) -MM $(ALL_CFLAGS) ${MULESRCDIR}/mule-charset.c > mule-charset.dep
+mule-coding.dep: ${MULESRCDIR}/mule-coding.c
+	$(CC) -MM $(ALL_CFLAGS) ${MULESRCDIR}/mule-coding.c > mule-coding.dep
+
+#endif /* MULE */
 
 gnu-depend: $(obj_dep)
 	/* #### Needs a bit of work: it doesn't see the object files that
@@ -1629,8 +1747,20 @@ gnu-depend: $(obj_dep)
 
 depend:
 	: > depend.tmp
-	makedepend -f depend.tmp -Dsubprocesses -DMOCKLISP_SUPPORT -DHAVE_X_WINDOWS -- $(CPPFLAGS) $(ALL_CFLAGS) -- *.c
+	makedepend -f depend.tmp -Dsubprocesses -DMOCKLISP_SUPPORT \
+		   -DHAVE_X_WINDOWS -DMULE -- $(CPPFLAGS) $(ALL_CFLAGS) \
+		   -- *.c
 	sh ${libsrc}process-depends.sh < depend.tmp > depend.out
+	egrep '^mule|[^a-zA-Z]mule' depend.out > /tmp/depend1.$$
+	grep -v '^mule' depend.out | grep -v '[^a-zA-Z]mule' > /tmp/depend2.$$
+	echo '#ifdef MULE' > depend.out
+	cat /tmp/depend1.$$ >> depend.out
+	/* The things you have to do to pay homage to the lexer God ...
+	   truly frightening. */
+	echo '#endif /''* MULE *''/' >> depend.out
+	echo '' >> depend.out
+	cat /tmp/depend2.$$ >> depend.out
+	rm -f /tmp/depend1.$$ /tmp/depend2.$$
 
 /* Manually-generated dependencies (makedepend misbehaves on these) */
 
@@ -1702,6 +1832,145 @@ unexsunos4.o: config.h
 
 /* Dependencies generated by 'make depend' */
 
+#ifdef MULE
+EmacsFrame.o: mule-charset.h
+abbrev.o: mule-charset.h
+alloc.o: mule-charset.h
+buffer.o: mule-charset.h
+bytecode.o: mule-charset.h
+callint.o: mule-charset.h
+callproc.o: mule-charset.h
+callproc.o: mule-coding.h
+casefiddle.o: mule-charset.h
+casetab.o: mule-charset.h
+chartab.o: mule-charset.h
+cmdloop.o: mule-charset.h
+cmds.o: mule-charset.h
+console-tty.o: mule-charset.h
+console-tty.o: mule-coding.h
+console.o: mule-charset.h
+data.o: mule-charset.h
+device-tty.o: mule-charset.h
+device-x.o: mule-charset.h
+device.o: mule-charset.h
+dialog-x.o: mule-charset.h
+dired.o: mule-charset.h
+doc.o: mule-charset.h
+doprnt.o: mule-charset.h
+editfns.o: mule-charset.h
+emacs.o: mule-charset.h
+eval.o: mule-charset.h
+event-Xt.o: mule-charset.h
+event-stream.o: mule-charset.h
+event-stream.o: mule-coding.h
+events.o: mule-charset.h
+extents.o: mule-charset.h
+faces.o: mule-charset.h
+fileio.o: mule-charset.h
+fileio.o: mule-coding.h
+filelock.o: mule-charset.h
+fns.o: mule-charset.h
+font-lock.o: mule-charset.h
+frame-x.o: mule-charset.h
+frame.o: mule-charset.h
+glyphs-x.o: mule-charset.h
+glyphs.o: mule-charset.h
+gui-x.o: mule-charset.h
+indent.o: mule-charset.h
+inline.o: mule-charset.h
+inline.o: mule-coding.h
+input-method-xlib.o: mule-charset.h
+input-method-xlib.o: mule-coding.h
+insdel.o: mule-charset.h
+keymap.o: mule-charset.h
+lread.o: mule-charset.h
+lread.o: mule-coding.h
+lstream.o: mule-charset.h
+macros.o: mule-charset.h
+marker.o: mule-charset.h
+md5.o: mule-charset.h
+menubar-x.o: mule-charset.h
+minibuf.o: mule-charset.h
+mocklisp.o: mule-charset.h
+mule-canna.o: blocktype.h
+mule-canna.o: buffer.h
+mule-canna.o: bufslots.h
+mule-canna.o: config.h
+mule-canna.o: dynarr.h
+mule-canna.o: mule-charset.h
+mule-ccl.o: blocktype.h
+mule-ccl.o: buffer.h
+mule-ccl.o: bufslots.h
+mule-ccl.o: config.h
+mule-ccl.o: dynarr.h
+mule-ccl.o: mule-charset.h
+mule-ccl.o: mule-coding.h
+mule-charset.o: blocktype.h
+mule-charset.o: buffer.h
+mule-charset.o: bufslots.h
+mule-charset.o: chartab.h
+mule-charset.o: config.h
+mule-charset.o: dynarr.h
+mule-charset.o: elhash.h
+mule-charset.o: lstream.h
+mule-charset.o: mule-charset.h
+mule-coding.o: blocktype.h
+mule-coding.o: buffer.h
+mule-coding.o: bufslots.h
+mule-coding.o: config.h
+mule-coding.o: dynarr.h
+mule-coding.o: elhash.h
+mule-coding.o: insdel.h
+mule-coding.o: lstream.h
+mule-coding.o: mule-charset.h
+mule-coding.o: mule-coding.h
+mule-mcpath.o: blocktype.h
+mule-mcpath.o: buffer.h
+mule-mcpath.o: bufslots.h
+mule-mcpath.o: config.h
+mule-mcpath.o: dynarr.h
+mule-mcpath.o: mule-charset.h
+mule-mcpath.o: sysfile.h
+mule-wnnfns.o: blocktype.h
+mule-wnnfns.o: buffer.h
+mule-wnnfns.o: bufslots.h
+mule-wnnfns.o: config.h
+mule-wnnfns.o: dynarr.h
+mule-wnnfns.o: mule-charset.h
+mule-wnnfns.o: redisplay.h
+mule-wnnfns.o: scrollbar.h
+mule-wnnfns.o: window.h
+mule.o: blocktype.h
+mule.o: config.h
+mule.o: dynarr.h
+mule.o: regex.h
+objects-tty.o: mule-charset.h
+objects-x.o: mule-charset.h
+objects.o: mule-charset.h
+print.o: mule-charset.h
+process.o: mule-charset.h
+process.o: mule-coding.h
+redisplay-output.o: mule-charset.h
+redisplay-tty.o: mule-charset.h
+redisplay-x.o: mule-charset.h
+redisplay-x.o: mule-coding.h
+redisplay.o: mule-charset.h
+redisplay.o: mule-coding.h
+regex.o: mule-charset.h
+scrollbar.o: mule-charset.h
+search.o: mule-charset.h
+sound.o: mule-charset.h
+specifier.o: mule-charset.h
+symbols.o: mule-charset.h
+syntax.o: mule-charset.h
+sysdep.o: mule-charset.h
+toolbar-x.o: mule-charset.h
+toolbar.o: mule-charset.h
+tooltalk.o: mule-charset.h
+undo.o: mule-charset.h
+window.o: mule-charset.h
+xselect.o: mule-charset.h
+#endif /* MULE */
 
 EmacsFrame.o: $(LWLIBSRCDIR)/lwlib.h
 EmacsFrame.o: EmacsFrame.h
@@ -1748,6 +2017,7 @@ EmacsShell.o: xintrinsicp.h
 abbrev.o: blocktype.h
 abbrev.o: buffer.h
 abbrev.o: bufslots.h
+abbrev.o: chartab.h
 abbrev.o: commands.h
 abbrev.o: config.h
 abbrev.o: dynarr.h
@@ -1761,6 +2031,7 @@ alloc.o: blocktype.h
 alloc.o: buffer.h
 alloc.o: bufslots.h
 alloc.o: bytecode.h
+alloc.o: chartab.h
 alloc.o: config.h
 alloc.o: conslots.h
 alloc.o: console.h
@@ -1772,7 +2043,7 @@ alloc.o: extents.h
 alloc.o: frame.h
 alloc.o: frameslots.h
 alloc.o: glyphs.h
-alloc.o: puresize.h puresize_adjust.h
+alloc.o: puresize.h
 alloc.o: redisplay.h
 alloc.o: scrollbar.h
 alloc.o: specifier.h
@@ -1786,6 +2057,7 @@ blocktype.o: dynarr.h
 buffer.o: blocktype.h
 buffer.o: buffer.h
 buffer.o: bufslots.h
+buffer.o: chartab.h
 buffer.o: commands.h
 buffer.o: config.h
 buffer.o: conslots.h
@@ -1810,6 +2082,7 @@ buffer.o: window.h
 bytecode.o: blocktype.h
 bytecode.o: buffer.h
 bytecode.o: bufslots.h
+bytecode.o: chartab.h
 bytecode.o: config.h
 bytecode.o: dynarr.h
 bytecode.o: syntax.h
@@ -1847,6 +2120,7 @@ callproc.o: window.h
 casefiddle.o: blocktype.h
 casefiddle.o: buffer.h
 casefiddle.o: bufslots.h
+casefiddle.o: chartab.h
 casefiddle.o: commands.h
 casefiddle.o: config.h
 casefiddle.o: dynarr.h
@@ -1858,6 +2132,14 @@ casetab.o: bufslots.h
 casetab.o: config.h
 casetab.o: dynarr.h
 casetab.o: opaque.h
+chartab.o: blocktype.h
+chartab.o: buffer.h
+chartab.o: bufslots.h
+chartab.o: chartab.h
+chartab.o: commands.h
+chartab.o: config.h
+chartab.o: dynarr.h
+chartab.o: syntax.h
 cm.o: blocktype.h
 cm.o: config.h
 cm.o: conslots.h
@@ -1895,6 +2177,7 @@ cmdloop.o: window.h
 cmds.o: blocktype.h
 cmds.o: buffer.h
 cmds.o: bufslots.h
+cmds.o: chartab.h
 cmds.o: commands.h
 cmds.o: config.h
 cmds.o: dynarr.h
@@ -2415,6 +2698,7 @@ fns.o: toolbar.h
 font-lock.o: blocktype.h
 font-lock.o: buffer.h
 font-lock.o: bufslots.h
+font-lock.o: chartab.h
 font-lock.o: config.h
 font-lock.o: dynarr.h
 font-lock.o: insdel.h
@@ -2607,6 +2891,7 @@ inline.o: blocktype.h
 inline.o: buffer.h
 inline.o: bufslots.h
 inline.o: bytecode.h
+inline.o: chartab.h
 inline.o: config.h
 inline.o: conslots.h
 inline.o: console-x.h
@@ -2635,6 +2920,26 @@ inline.o: systime.h
 inline.o: toolbar.h
 inline.o: window.h
 inline.o: xintrinsic.h
+input-method-xlib.o: EmacsFrame.h
+input-method-xlib.o: blocktype.h
+input-method-xlib.o: buffer.h
+input-method-xlib.o: bufslots.h
+input-method-xlib.o: config.h
+input-method-xlib.o: conslots.h
+input-method-xlib.o: console-x.h
+input-method-xlib.o: console.h
+input-method-xlib.o: device.h
+input-method-xlib.o: dynarr.h
+input-method-xlib.o: frame.h
+input-method-xlib.o: frameslots.h
+input-method-xlib.o: insdel.h
+input-method-xlib.o: lstream.h
+input-method-xlib.o: redisplay.h
+input-method-xlib.o: scrollbar.h
+input-method-xlib.o: specifier.h
+input-method-xlib.o: toolbar.h
+input-method-xlib.o: window.h
+input-method-xlib.o: xintrinsic.h
 insdel.o: blocktype.h
 insdel.o: buffer.h
 insdel.o: bufslots.h
@@ -2917,7 +3222,7 @@ profile.o: systime.h
 pure.o: blocktype.h
 pure.o: config.h
 pure.o: dynarr.h
-pure.o: puresize.h puresize_adjust.h
+pure.o: puresize.h
 ralloc.o: blocktype.h
 ralloc.o: config.h
 ralloc.o: dynarr.h
@@ -3030,6 +3335,7 @@ redisplay.o: window.h
 regex.o: blocktype.h
 regex.o: buffer.h
 regex.o: bufslots.h
+regex.o: chartab.h
 regex.o: config.h
 regex.o: dynarr.h
 regex.o: regex.h
@@ -3076,6 +3382,7 @@ scrollbar.o: window.h
 search.o: blocktype.h
 search.o: buffer.h
 search.o: bufslots.h
+search.o: chartab.h
 search.o: commands.h
 search.o: config.h
 search.o: dynarr.h
@@ -3147,6 +3454,7 @@ symbols.o: dynarr.h
 syntax.o: blocktype.h
 syntax.o: buffer.h
 syntax.o: bufslots.h
+syntax.o: chartab.h
 syntax.o: commands.h
 syntax.o: config.h
 syntax.o: dynarr.h

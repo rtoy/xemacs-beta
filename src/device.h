@@ -139,6 +139,16 @@ struct device
      instances. */
   Lisp_Object font_instance_cache;
 
+#ifdef MULE
+  /* This is a bi-level cache, where the hash table in this slot here
+     indexes charset objects to key-weak hash tables, which in turn
+     index font names to more specific font names that match the
+     given charset's registry.  This speeds up the horrendously
+     slow XListFonts() operation that needs to be done in order
+     to determine an appropriate font. */
+  Lisp_Object charset_font_cache;
+#endif
+
   /* This is a bi-level cache, where the hash table in this slot here
      indexes image-instance-type masks (there are currently 6
      image-instance types and thus 64 possible masks) to key-weak hash

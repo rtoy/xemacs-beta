@@ -25,7 +25,7 @@
 
 ;;; Change Log:
 
-;; $Id: mh-comp.el,v 1.1.1.1 1996/12/18 03:34:36 steve Exp $
+;; $Id: mh-comp.el,v 1.1.1.1 1996/12/18 22:43:20 steve Exp $
 
 ;;; Code:
 

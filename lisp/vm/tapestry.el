@@ -1,5 +1,5 @@
 ;;; Tools to configure your GNU Emacs windows
-;;; Copyright (C) 1991, 1993, 1994, 1995, 1997 Kyle E. Jones 
+;;; Copyright (C) 1991, 1993, 1994, 1995 Kyle E. Jones 
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -20,12 +20,7 @@
 
 (provide 'tapestry)
 
-(defvar tapestry-version "1.08")
-
-;; Pass state information between the tapestry-set-window-map
-;; and tapestry-set-buffer-map stages.  UGH.  The reason for this
-;; is explained in tapestry-set-buffer-map.
-(defvar tapestry-windows-changed nil)
+(defvar tapestry-version "1.07")
 
 (defun tapestry (&optional frame-list)
   "Returns a list containing complete information about the current
@@ -74,7 +69,6 @@ window.  If no window entirely within the ROOT-WINDOW-EDGES edge
 coordinates can be found, the window with the greatest overlap of
 ROOT-WINDOW-EDGES will be used."
   (let ((sf (tapestry-selected-frame))
-	(tapestry-windows-changed nil)
 	frame-list frame-map other-maps other-map)
     (setq frame-map (nth 0 map)
 	  other-maps (nth 1 map))
@@ -201,14 +195,12 @@ ROOT-WINDOW-EDGES will be used."
 		       (delete-window inside-w)))
 		  (t (setq root-window overlap-w))))
 	  (tapestry-apply-window-map map map-width map-height root-window)
-	  (setq tapestry-windows-changed t)
 	  root-window )
       (if (tapestry-windows-match-map map map-width map-height)
 	  (tapestry-first-window)
 	(delete-other-windows)
 	(setq root-window (selected-window))
 	(tapestry-apply-window-map map map-width map-height root-window)
-	(setq tapestry-windows-changed t)
 	root-window ))))
 
 (defun tapestry-buffer-map ()
@@ -222,50 +214,16 @@ ROOT-WINDOW-EDGES will be used."
 	    w-list (cdr w-list)))
     (nreverse list)))
 
-;; This version of tapestry-set-buffer-map unconditionally set
-;; the window buffer.  This confused XEmacs 19.14's scroll-up
-;; function when scrolling VM presentation buffers.
-;; end-of-buffer was never signaled after a scroll.  You can
-;; duplicate this by creating a buffer that can be displayed
-;; fully in the current window and then run
-;;
-;;    (progn
-;;      (set-window-buffer (selected-window) (current-buffer))
-;;      (scroll-up nil))
-;;;;;;;;;;;
-;;(defun tapestry-set-buffer-map (buffer-map &optional first-window)
-;;  (let ((w-list (tapestry-window-list first-window)) wb)
-;;    (while (and w-list buffer-map)
-;;      (setq wb (car buffer-map))
-;;      (set-window-buffer
-;;       (car w-list)
-;;       (if (car wb)
-;;	   (or (get-file-buffer (car wb))
-;;	       (find-file-noselect (car wb)))
-;;	 (get-buffer-create (nth 1 wb))))
-;;      (setq w-list (cdr w-list)
-;;	    buffer-map (cdr buffer-map)))))
-
 (defun tapestry-set-buffer-map (buffer-map &optional first-window)
-  (let ((w-list (tapestry-window-list first-window))
-	current-wb proposed-wb cell)
+  (let ((w-list (tapestry-window-list first-window)) wb)
     (while (and w-list buffer-map)
-      (setq cell (car buffer-map)
-	    proposed-wb (if (car cell)
-			    (or (get-file-buffer (car cell))
-				(find-file-noselect (car cell)))
-			  (get-buffer-create (nth 1 cell)))
-	    current-wb (window-buffer (car w-list)))
-      ;; Setting the window buffer to the same value it already
-      ;; has seems to confuse XEmacs' scroll-up function.  But
-      ;; _not_ setting after windows torn down seem to cause
-      ;; window point to sometimes drift away from point at
-      ;; redisplay time.  The solution (hopefully!) is to track
-      ;; when windows have been rearranged and unconditionally do
-      ;; the set-window-buffer, otherwise do it only if the
-      ;; window buffer and the prosed window buffer differ.
-      (if (or tapestry-windows-changed (not (eq proposed-wb current-wb)))
-	  (set-window-buffer (car w-list) proposed-wb))
+      (setq wb (car buffer-map))
+      (set-window-buffer
+       (car w-list)
+       (if (car wb)
+	   (or (get-file-buffer (car wb))
+	       (find-file-noselect (car wb)))
+	 (get-buffer-create (nth 1 wb))))
       (setq w-list (cdr w-list)
 	    buffer-map (cdr buffer-map)))))
 

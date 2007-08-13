@@ -47,6 +47,9 @@ Boston, MA 02111-1307, USA.  */
 
 #include "sysproc.h" /* for select() */
 
+#ifdef MULE
+#include "mule-coding.h" /* for CCL conversion */
+#endif
 
 /* X_DIVIDER_LINE_WIDTH is the width of the line drawn in the gutter.
    X_DIVIDER_SPACING is the amount of blank space on each side of the line.
@@ -144,6 +147,10 @@ separate_textual_runs (unsigned char *text_storage,
 					  MULE is not defined */
   int runs_so_far = 0;
   int i;
+#ifdef MULE
+  struct ccl_program char_converter;
+  int need_ccl_conversion = 0;
+#endif
 
   for (i = 0; i < len; i++)
     {
@@ -172,6 +179,14 @@ separate_textual_runs (unsigned char *text_storage,
 	    }
 	  runs_so_far++;
 	  prev_charset = charset;
+#ifdef MULE
+	  {
+	    Lisp_Object ccl_prog = XCHARSET_CCL_PROGRAM (charset);
+	    need_ccl_conversion = !NILP (ccl_prog);
+	    if (need_ccl_conversion)
+	      set_ccl_program (&char_converter, ccl_prog, 0, 0, 0);
+	  }
+#endif
 	}
 
       if (graphic == 0)
@@ -184,6 +199,17 @@ separate_textual_runs (unsigned char *text_storage,
 	  byte1 |= 0x80;
 	  byte2 |= 0x80;
 	}
+#ifdef MULE
+      if (need_ccl_conversion)
+	{
+	  char_converter.reg[0] = byte1;
+	  char_converter.reg[1] = byte2;
+	  char_converter.ic = 0; /* start at beginning each time */
+	  ccl_driver (&char_converter, 0, 0, 0, 0);
+	  byte1 = char_converter.reg[0];
+	  byte2 = char_converter.reg[1];
+	}
+#endif
       *text_storage++ = (unsigned char) byte1;
       if (dimension == 2)
 	*text_storage++ = (unsigned char) byte2;
@@ -827,6 +853,10 @@ x_output_string (struct window *w, struct display_line *dl,
       cachel = WINDOW_FACE_CACHEL (w, findex);
     }
   
+#ifdef HAVE_XIM
+  if (cursor && focus && (cursor_start == clip_start) && cursor_height)
+    XIM_SetSpotLocation (f, xpos - 2, dl->ypos + dl->descent - 2);
+#endif /* HAVE_XIM */
 
   bg_pmap = cachel->background_pixmap;
   if (!IMAGE_INSTANCEP (bg_pmap)
@@ -1120,7 +1150,6 @@ x_output_x_pixmap (struct frame *f, struct Lisp_Image_Instance *p, int x,
   GC gc;
   XGCValues gcv;
   unsigned long pixmap_mask;
-  int need_clipping = (clip_x || clip_y);
 
   if (!override_gc)
     {
@@ -1138,27 +1167,14 @@ x_output_x_pixmap (struct frame *f, struct Lisp_Image_Instance *p, int x,
 	  gcv.clip_y_origin = y - pixmap_offset;
 	  pixmap_mask |= (GCFunction | GCClipMask | GCClipXOrigin |
 			  GCClipYOrigin);
-	  /* Can't set a clip rectangle below because we already have a mask.
-	     We could conceivably create a new clipmask by zeroing out
-	     everything outside the clip region.  Is it worth it? 
-	     Is it possible to get an equivalent effect by changing the
-	     args to XCopyArea below rather than messing with a clip box?
-	     - dkindred@cs.cmu.edu */
-	  need_clipping = 0; 
 	}
 
       gc = gc_cache_lookup (DEVICE_X_GC_CACHE (d), &gcv, pixmap_mask);
     }
   else
-    {
-      gc = override_gc;
-      /* override_gc might have a mask already--we don't want to nuke it.
-	 Maybe we can insist that override_gc have no mask, or use
-	 one of the suggestions above. */
-      need_clipping = 0;
-    }
+    gc = override_gc;
 
-  if (need_clipping)
+  if (clip_x || clip_y)
     {
       XRectangle clip_box[1];
 
@@ -1193,7 +1209,7 @@ x_output_x_pixmap (struct frame *f, struct Lisp_Image_Instance *p, int x,
 		  1L);
     }
 
-  if (need_clipping)
+  if (clip_x || clip_y)
     {
       XSetClipMask (dpy, gc, None);
       XSetClipOrigin (dpy, gc, 0, 0);
@@ -2063,13 +2079,18 @@ x_output_eol_cursor (struct window *w, struct display_line *dl, int xpos)
     default_face_font_info (window, &defascent, 0, &defheight, 0, 0);
   }
   
-  /* make sure the cursor is entirely contained between y and y+height */
-  cursor_height = min (defheight, height);
-  cursor_y = max (y, min (y + height - cursor_height, 
-			  dl->ypos - defascent));
+  cursor_y = dl->ypos - defascent;
+  if (cursor_y < y)
+    cursor_y = y;
+  cursor_height = defheight;
+  if (cursor_y + cursor_height > y + height)
+    cursor_height = y + height - cursor_y;
   
   if (focus)
     {
+#ifdef HAVE_XIM
+      XIM_SetSpotLocation (f, x - 2 , cursor_y + cursor_height - 2);
+#endif /* HAVE_XIM */
   
       if (NILP (bar_cursor_value))
 	{

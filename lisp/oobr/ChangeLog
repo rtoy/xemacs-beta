@@ -1,185 +1,31 @@
-Fri Feb 21 16:45:14 1997  Bob Weiner  <weiner@infodock.com>
+Sat May 3 22:00:00 1996  Harri Pasanen <pa@tekla.fi>
 
-* br-c-tags (etags): 
-* br-c-ft.el (c-build-element-tags): Added support for Microcruft OSs.
+* added python-browse.el, br-python.el, br-python-ft.el, plus
+  modified the documentation in various places to reflect that addition.
 
-* br-menu.el (id-popup-br-menu):
-             (id-menubar-br):  Updated Mail-List-Request entries to new format.
-
-* br.el (br-in-browser): Tightened tests to require 3 or more windows to
-    be in the OO-Browser.  This could eliminate a problem that prevents
-    restoration of the browser display if the variable, `br-in-browser',
-    is somehow left non-nil after the browser display is dismantled,
-    e.g. if a user simply deletes all other windows.
-
-Thu Feb 20 07:22:17 1997  Bob Weiner  <weiner@infodock.com>
-
-* br-lib.el (br-scan-mode): Added this to eliminate execution of any
-    mode-specific hooks, such as syntax highlighting, when scanning files
-    to build Environments.
-
-Wed Feb 19 11:03:07 1997  Bob Weiner  <weiner@infodock.com>
-
-* br-init.el (br-init-autoloads): Added autoload of hypb:display-file-with-logo.
-
-Thu Dec  5 17:51:43 1996  Bob Weiner  <weiner@infodock.com>
-
-* Makefile:
-  MANIFEST:
-  oo-browser.texi:
-  python-browse.el:
-  br-python.el:
-  br-python-ft.el:
-  br-env.el (br-env-lang-avector): Added Python language support from
-    Harri Pasanen <pa@tekla.fi>, with a few modifications.
-
-Wed Nov 13 00:08:25 1996  Bob Weiner  <weiner@infodock.com>
-
-* br-java-ft.el (java-type-modifier-keyword): Removed "threadsafe" since
-    deleted from java language.
-
-Tue Nov 12 15:12:28 1996  Bob Weiner  <weiner@infodock.com>
-
-* java-brows.el (java-mode-setup): Added support for new Java mode in cc-mode.el.
-
-Mon Nov 11 17:23:57 1996  Bob Weiner  <weiner@infodock.com>
-
-* br-menu.el (id-menubar-br): Added Show-Inherited-Features under Options.
-
-* br-c++-ft.el (c++-feature-def-p): Modified to handle multi-line virtual
-    method declarations.
-
-* br-java-ft.el (java-feature-locate-p): Eliminated unneeded C++ :: carryover logic.
-                (java-scan-features): 
-                (java-feature-def-p): 
-		(java-feature-name-to-regexp):
-                (java-feature-tree-command-p): 
-		(java-feature-add-prefix): 
-		(java-feature-def-p): 
-                (java-feature-decl-or-def): Added attribute handling support.
-
-Sun Nov  3 19:49:26 1996  Bob Weiner  <weiner@infodock.com>
-
-* br-env.el (br-env-load): Modified to load language-specific libraries if
-    not already loaded.
-
-Fri Nov  1 12:56:53 1996  Bob Weiner  <weiner@infodock.com>
-
-* br-java.el (java-class-modifier-keyword): Removed `protected' which is
-    not a valid class modifier.
-* br-java-ft.el (java-include-dirs): 
-                (java-cpp-include-dirs): 
-		(java-include-regexp): 
-                (java-include-file): Deleted this stuff which never
-    should have been here, since Java doesn't use includes per se.
-                (java-code-file-regexp): Added support for 3-character
-    suffix-impaired users.
-                (java-feature-def-pat): Eliminated unneeded C++ carryover logic.
-		(java-type-modifier-keyword): Added `volatile' in
-    preparation for handling of attributes.
-                (java-abstract-method-regexp): Changed to original value in
-    preparation for handling of attributes.
-
-Thu Oct 31 14:25:02 1996  Bob Weiner  <weiner@infodock.com>
-
-* br-lib.el (br-find-file): Fixed to ensure not to use listing windows
-    when in the OO-Browser.
-
-* br-ftr.el (br-edit-feature): 
-            (br-feature-tag-and-file): Added to allow feature editing and
-    tag lookup by specifying class and feature name as separate arguments.
-
-* br-java-ft.el (java-feature-signature-to-name): Modified to use
-    java-type-tag-separator instead of "." as a separator between the class
-    and feature name, since this caused a failure when tried to do
-    completion on feature names with br-feature-complete.
-                (java-tag-fields-regexp): Made final occurrence of
-    java-type-tag-separator optional since it is not included if the
-    regexp came from a completion.
-
-* br-ftr.el (br-edit-feature-from-tag): Renamed from `br-edit-feature' so
-    can reuse that name with a simpler set of arguments.
-
-Wed Oct 30 19:50:34 1996  Bob Weiner  <weiner@infodock.com>
-
-* br-lib.el (br-real-delete-class): Altered to also delete feature tags.
-    This is called by the br-delete command.
-            (br-setup-functions): Added "feature-map-class-tags" and
-    "feature-tag-regexp".
-* br-*-ft.el (*-delete-features): Added to delete a class' features.
-             (*-feature-tag-regexp): Added to return a tag regexp from
-    class and feature name.
-             (*-feature-map-class-tags): Added to map over the feature
-    tags of a single class.
-
-* br-objc-ft.el (objc-feature-matches): Modified to take a regexp to
-    conform with other languages.
-* br-*-ft.el (*-feature-map-tags): Added this function to map over a set
-    of entries in a feature tags file and return the results.
-             (*-feature-matches): Fixed bug that failed to properly
-    delimit identifier character ranges with square brackets, causing all
-    but exact matches to fail.
-
-* br-java-ft.el (java-feature-display): Renamed from java-feature-tags-lookup.
-* br-objc-ft.el (objc-feature-display): Renamed from objc-feature-tags-lookup.
-* br-c++-ft.el  (c++-feature-display):  Renamed from c++-feature-tags-lookup.
-
-* br-lib.el (br-add-class): 
-            (br-real-add-class): Fixed bug that did not add features of a
-    class when br-add-class was called interactively.  Added the
-    optional add-features argument to handle this.
-
-* br-java-ft.el (java-return-type-identifier): Fixed bug that neglected
-    to allow the open square bracket of an array return identifier and
-    thus caused the scanner to miss methods with such return values.
-
-Tue Oct 22 23:16:02 1996  Bob Weiner  <weiner@infodock.com>
-
-* tree-x/intf.c (InitializeInterface): Renabled use of backing store
-    in DBLcreate_double_buffer call to eliminate nasty bug on some
-    platforms that blackened the whole window after drawing the tree.
-    This may not have completely fixed the problem though.
-
-Fri Sep 20 22:21:30 1996  Bob Weiner  <weiner@freya.yggdrasil.com (Bob Weiner)>
-
-* Changed `cs.uiuc.edu' to `xemacs.org', the new OO-Browser distribution site.
-
-==============================================================================
-* V2.10 changes ^^^^:
-==============================================================================
-
-This version was made by XEmacs maintainers to include Python support
-and update a few documentation references.  It was a separate branch
-from the mainline development that we synchronized with in the next
-release.
-
-==============================================================================
-* V2.9.12 changes ^^^^:
-==============================================================================
-
-Wed Oct 25 04:49:51 1995  Bob Weiner  <weiner@infodock.com>
+Wed Oct 25 04:49:51 1995  Bob Weiner  <weiner@mot.com>
 
 * BR-README: Reformatted with a table of contents for easy viewing.
              Rewrote Installation / Configuration section.
 
-Sun Oct 22 00:41:50 1995  Bob Weiner  <weiner@infodock.com>
+Sun Oct 22 00:41:50 1995  Bob Weiner  <weiner@mot.com>
 
 * br-menu.el (br-menubar-menu): Fixed bug when current-menubar was
     nil, would not display menubar entry under Emacs 19 even though it
     should.
 
-Sat Oct 21 02:02:27 1995  Bob Weiner  <weiner@infodock.com>
+Sat Oct 21 02:02:27 1995  Bob Weiner  <weiner@mot.com>
 
 * br-c-tags (tags_file): Fixed bug that erased first comma in a structure
     or enum entries, preventing the browser from displaying the source for
     such entries.
 
-* br-init.el (br-after-term-init): Changed call of `hmouse-setup' to
-    `hmouse-shift-buttons' which fixes bug of mouse keys not being
+* br-init.el (br-after-term-init): Changed call of 'hmouse-setup' to
+    'hmouse-shift-buttons' which fixes bug of mouse keys not being
     initialized properly and hmouse-setup function being undefined when a
     full Hyperbole distribution is not available.
 
-Wed Oct  4 13:41:52 1995  Bob Weiner  <weiner@infodock.com>
+Wed Oct  4 13:41:52 1995  Bob Weiner  <weiner@mot.com>
 
 * br-java-ft.el (java-feature-parens-grpn): 
 	         (java-feature-decl-or-def): Added support for new
@@ -187,7 +33,7 @@ Wed Oct  4 13:41:52 1995  Bob Weiner  <weiner@infodock.com>
       public Connection(String host, int port)
 	throws UnknownHostException, InputOutputException {}
 
-Wed Sep 27 15:39:51 1995  Bob Weiner  <weiner@infodock.com>
+Wed Sep 27 15:39:51 1995  Bob Weiner  <weiner@mot.com>
 
 * hasht.el (hash-delete): Modified to deal with XEmacs different handling
     of initially unbound symbols.
@@ -198,12 +44,12 @@ Wed Sep 27 15:39:51 1995  Bob Weiner  <weiner@infodock.com>
 * V2.9.11 changes ^^^^:
 ==============================================================================
 
-Fri Sep 22 10:12:26 1995  Bob Weiner  <weiner@infodock.com>
+Fri Sep 22 10:12:26 1995  Bob Weiner  <weiner@mot.com>
 
 * br-java.el (java-get-package-name): Fixed problem with nil package name
     being used as hash table key.
 
-Thu Sep 21 12:16:48 1995  Bob Weiner  <weiner@infodock.com>
+Thu Sep 21 12:16:48 1995  Bob Weiner  <weiner@mot.com>
 
 * br.el (br-add-class-file): Signal error if file is not readable.
 * br-lib.el (br-real-add-class): 
@@ -213,7 +59,7 @@ Thu Sep 21 12:16:48 1995  Bob Weiner  <weiner@infodock.com>
     stop if encountered an unreadable file or invalid link.  Now just
     displays a message.
 
-Wed Sep 20 12:30:37 1995  Bob Weiner  <weiner@infodock.com>
+Wed Sep 20 12:30:37 1995  Bob Weiner  <weiner@mot.com>
 
 * br.el (br-report-bug): Added to send a message to oo-browser discussion
     list and bound to {C-c C-b}.
@@ -259,7 +105,7 @@ Wed Sep 20 12:30:37 1995  Bob Weiner  <weiner@infodock.com>
 * V2.9.10 changes ^^^^:
 ==============================================================================
 
-Thu Sep 14 11:37:40 1995  Bob Weiner  <weiner@infodock.com>
+Thu Sep 14 11:37:40 1995  Bob Weiner  <weiner@mot.com>
 
 * br-env.el (br-env-browse): Modified to specify non-existing
     Environments, so can be called by {M-x oo-browser}.
@@ -274,7 +120,7 @@ Thu Sep 14 11:37:40 1995  Bob Weiner  <weiner@infodock.com>
     location.  Immediately hitting {RET} when prompted browses the most
     recently browsed Environment, if any.
 
-Wed Sep 13 11:21:17 1995  Bob Weiner  <weiner@infodock.com>
+Wed Sep 13 11:21:17 1995  Bob Weiner  <weiner@mot.com>
 
 * man/oo-browser.texi (Customization): Documented br-skip-dir-regexps and
     br-file-dir-regexp variables.
@@ -283,7 +129,7 @@ Wed Sep 13 11:21:17 1995  Bob Weiner  <weiner@infodock.com>
     a language-specific one, since all languages had the same value.  Also
     modified value to handle one character directory names.
 
-Tue Sep 12 16:05:26 1995  Bob Weiner  <weiner@infodock.com>
+Tue Sep 12 16:05:26 1995  Bob Weiner  <weiner@mot.com>
 
 * br.el (br-interrupt): Fixed bug that prevented burying of browser
     buffers when {q} is invoked.
@@ -295,12 +141,12 @@ Tue Sep 12 16:05:26 1995  Bob Weiner  <weiner@infodock.com>
 * V2.9.9 changes ^^^^:
 ==============================================================================
 
-Mon Aug 28 18:16:57 1995  Bob Weiner  <weiner@infodock.com>
+Mon Aug 28 18:16:57 1995  Bob Weiner  <weiner@mot.com>
 
 * tree-x/tree.c (MakeNode): Use memset when SYSV is defined instead of BSD
     bzero call.
 
-Sat Aug 26 15:19:41 1995  Bob Weiner  <weiner@infodock.com>
+Sat Aug 26 15:19:41 1995  Bob Weiner  <weiner@mot.com>
 
 * man/oo-browser.texi (Java Specifics): Added this section.
 
@@ -308,7 +154,7 @@ Sat Aug 26 15:19:41 1995  Bob Weiner  <weiner@infodock.com>
 * br-java-ft.el: Fixed comment handling for many routines, identifier
     regexp definition, and handling of / native method listing prefix.
 
-Fri Aug 25 19:35:03 1995  Bob Weiner  <weiner@infodock.com>
+Fri Aug 25 19:35:03 1995  Bob Weiner  <weiner@mot.com>
 
 * br-java-ft.el:  Removed wrong references to :: scoping modifier left
     over from C++ code.
@@ -317,11 +163,11 @@ Fri Aug 25 19:35:03 1995  Bob Weiner  <weiner@infodock.com>
 * V2.9.8 changes ^^^^:
 ==============================================================================
 
-Thu Aug 24 17:10:46 1995  Bob Weiner  <weiner@infodock.com>
+Thu Aug 24 17:10:46 1995  Bob Weiner  <weiner@mot.com>
 
 * br-lib.el (br-delete-space): Fixed bug in handling multi-line strings.
 
-Wed Aug 23 11:41:25 1995  Bob Weiner  <weiner@infodock.com>
+Wed Aug 23 11:41:25 1995  Bob Weiner  <weiner@mot.com>
 
 * MANIFEST: 
   Makefile:
@@ -340,31 +186,31 @@ Wed Aug 23 11:41:25 1995  Bob Weiner  <weiner@infodock.com>
 * V2.9.7 changes ^^^^:
 ==============================================================================
 
-Fri Jul 14 15:28:17 1995  Bob Weiner  <weiner@infodock.com>
+Fri Jul 14 15:28:17 1995  Bob Weiner  <weiner@mot.com>
 
 * Makefile (distclean): Modified to remove unneeded object and binary
     files from tree-x and tree-nx.
 
-Thu Jul 13 11:30:57 1995  Bob Weiner  <weiner@infodock.com>
+Thu Jul 13 11:30:57 1995  Bob Weiner  <weiner@mot.com>
 
 * br-lib.el (br-add-to-paths-htable): Don't add class if already in the table.
 
-Wed Jul 12 14:33:44 1995  Bob Weiner  <weiner@infodock.com>
+Wed Jul 12 14:33:44 1995  Bob Weiner  <weiner@mot.com>
 
 * br.el (br-add-class-file): Simplified and corrected errors when class
     already existed in Environment.
 
-Tue Jul 11 14:18:23 1995  Bob Weiner  <weiner@infodock.com>
+Tue Jul 11 14:18:23 1995  Bob Weiner  <weiner@mot.com>
 
 * tree-x/intf.c (NewTree_CB): Allocated an extra char for string terminator.
 
-Fri Jun  2 10:14:19 1995  Bob Weiner  <weiner@infodock.com>
+Fri Jun  2 10:14:19 1995  Bob Weiner  <weiner@mot.com>
 
 * br-c++.el (c++-identifier): Fixed to match to "class< template<T> >"
     expressions, i.e. nested <<>>.  Only handles a single template
     parameter, however.
 
-Thu Jun  1 10:26:38 1995  Bob Weiner  <weiner@infodock.com>
+Thu Jun  1 10:26:38 1995  Bob Weiner  <weiner@mot.com>
 
 * tree-x/Makefile: Rewrote for increased configurability.
 
@@ -372,7 +218,7 @@ Thu Jun  1 10:26:38 1995  Bob Weiner  <weiner@infodock.com>
 * V2.9.6 changes ^^^^:
 ==============================================================================
 
-Fri May 19 08:59:14 1995  Bob Weiner  <weiner@infodock.com>
+Fri May 19 08:59:14 1995  Bob Weiner  <weiner@mot.com>
 
 * eif-calls.el (eif-reserved-words): Added new Eiffel V3 keywords.
 
@@ -391,7 +237,7 @@ Fri May 19 08:59:14 1995  Bob Weiner  <weiner@infodock.com>
 * V2.9.5 changes ^^^^:
 ==============================================================================
 
-Tue May 16 11:54:33 1995  Bob Weiner  <weiner@infodock.com>
+Tue May 16 11:54:33 1995  Bob Weiner  <weiner@mot.com>
 
 * br-env.el (br-env-lang-avector): Changed "CLOS" to "Lisp" since the
     browser can browse non-OO Lisp, too.
@@ -400,7 +246,7 @@ Tue May 16 11:54:33 1995  Bob Weiner  <weiner@infodock.com>
 * V2.9.4 changes ^^^^:
 ==============================================================================
 
-Fri May 12 13:44:21 1995  Bob Weiner  <weiner@infodock.com>
+Fri May 12 13:44:21 1995  Bob Weiner  <weiner@mot.com>
 
 * br-env.el (br-env-stats): 
    	    (br-env-save): 
@@ -412,7 +258,7 @@ Fri May 12 13:44:21 1995  Bob Weiner  <weiner@infodock.com>
             (br-env-load): Prompt to rebuild obsolete C++, Objective-C and
     Eiffel environments which do not have version numbers.
 
-Thu May 11 11:11:04 1995  Bob Weiner  <weiner@infodock.com>
+Thu May 11 11:11:04 1995  Bob Weiner  <weiner@mot.com>
 
 * br-c-ft.el (c-build-element-tags): Fixed to handle an empty buffer.
 
@@ -425,7 +271,7 @@ Thu May 11 11:11:04 1995  Bob Weiner  <weiner@infodock.com>
 * br-env.el (br-env-select-lang): Tightened check for use of dialog box so
     won't be even if popup-dialog-box is defined by lmenu.el under GNU Emacs.
 
-* br.el (br-window-setup): Fixed to clear frame `unsplittable' property if
+* br.el (br-window-setup): Fixed to clear frame 'unsplittable' property if
     set.
 
 * br-eif-ft.el (eif-feature-signature-to-regexp): Fixed bug which
@@ -439,7 +285,7 @@ Tue May  9 22:32:15 1995  Bob Weiner  <weiner@mot.com (Bob Weiner)>
 
 * Makefile (install): Changed to install documentation.
 
-Mon May  8 18:21:33 1995  Bob Weiner  <weiner@infodock.com>
+Mon May  8 18:21:33 1995  Bob Weiner  <weiner@mot.com>
 
 * man/oo-browser.texi (Using the Mouse): 
 * br-init.el (br-after-term-init): 
@@ -450,10 +296,10 @@ Mon May  8 18:21:33 1995  Bob Weiner  <weiner@infodock.com>
 * V2.9.2 changes ^^^^:
 ==============================================================================
 
-Fri May  5 12:30:08 1995  Bob Weiner  <weiner@infodock.com>
+Fri May  5 12:30:08 1995  Bob Weiner  <weiner@mot.com>
 
 * Makefile: Removed building of Info and Postscript versions of the
-    OO-Browser manual from default `make'.  Use `make info' and `make ps',
+    OO-Browser manual from default 'make'.  Use 'make info' and 'make ps',
     respectively.
 
 * br.el (br-toggle-c-tags): 
@@ -464,7 +310,7 @@ Fri May  5 12:30:08 1995  Bob Weiner  <weiner@infodock.com>
     increased speed of feature listing by including feature name in tag
     lines.  Also added in C element browsing.
 
-Thu May  4 13:32:38 1995  Bob Weiner  <weiner@infodock.com>
+Thu May  4 13:32:38 1995  Bob Weiner  <weiner@mot.com>
 
 * br-c++-ft.el (c++-feature-def-pat): 
 * br-compl.el  (br-class-completions): 
@@ -472,13 +318,13 @@ Thu May  4 13:32:38 1995  Bob Weiner  <weiner@infodock.com>
 
 * br-c++-ft.el (c++-type-def-modifier): 
 	       (c++-member-modifier-keyword):
-               (c++-type-modifier-keyword): Added `mutable' keyword, for
+               (c++-type-modifier-keyword): Added 'mutable' keyword, for
     objects which are never const.
-	       (c++-type-modifier-keyword): Added `explicit' keyword, for new
+	       (c++-type-modifier-keyword): Added 'explicit' keyword, for new
     constructors and operators which do not allow implicit argument
     conversions.
 
-Wed May  3 11:06:13 1995  Bob Weiner  <weiner@infodock.com>
+Wed May  3 11:06:13 1995  Bob Weiner  <weiner@mot.com>
 
 * br-lib.el (br-setup-constants): Added "type-tag-separator" so could be
     referenced outside of language-specific files.
@@ -503,10 +349,10 @@ Wed May  3 11:06:13 1995  Bob Weiner  <weiner@infodock.com>
 
 * br-c-tags: Added to build feature tags for default C construct classes.
 
-Tue May  2 11:08:53 1995  Bob Weiner  <weiner@infodock.com>
+Tue May  2 11:08:53 1995  Bob Weiner  <weiner@mot.com>
 
 * br-c++-ft.el (c++-operator-identifier): Added support for new C++
-    `delete' and `new' array operators which end with [].
+    'delete' and 'new' array operators which end with [].
 
 * br-lib.el (br-get-htable): 
 * br-env.el (br-build-parents-htable): 
@@ -527,7 +373,7 @@ Tue May  2 11:08:53 1995  Bob Weiner  <weiner@infodock.com>
 * Makefile (tags): Replaced all - with underscore in variable names to
     satisfy the AIX sh.
 
-Fri Apr 28 12:02:01 1995  Bob Weiner  <weiner@infodock.com>
+Fri Apr 28 12:02:01 1995  Bob Weiner  <weiner@mot.com>
 
 * br-c++-ft.el (c++-list-features): Rewrote to accomodate C construct browsing.
     (c++-element-type-alist): Added.
@@ -543,7 +389,7 @@ Fri Apr 28 12:02:01 1995  Bob Weiner  <weiner@infodock.com>
 * br-menu.el (br-menubar-menu): Fixed bug that prevented OO-Browser popup
    from coming up under XEmacs.
 
-Thu Apr 27 17:36:06 1995  Bob Weiner  <weiner@infodock.com>
+Thu Apr 27 17:36:06 1995  Bob Weiner  <weiner@mot.com>
 
 * br-c++-ft.el (c++-return-type-identifier): Allowed spaces between
     template parameters.
@@ -552,11 +398,11 @@ Thu Apr 27 17:36:06 1995  Bob Weiner  <weiner@infodock.com>
     no features.
 
 * br-c++-ft.el (c++-feature-decl-or-def): Updated to avoid undesired
-    matches to `enum var {};' and related sorts of constructs for now
+    matches to 'enum var {};' and related sorts of constructs for now
     since we don't deal with them and they would end up in the default
     [function] class improperly. 
 
-Wed Apr 26 11:32:07 1995  Bob Weiner  <weiner@infodock.com>
+Wed Apr 26 11:32:07 1995  Bob Weiner  <weiner@mot.com>
 
 * br-lib.el (br-setup-functions): 
 * br.el (br-mode-map): Added br-view-friend bound to {M-v}.  For now, just
@@ -584,18 +430,18 @@ Wed Apr 26 11:32:07 1995  Bob Weiner  <weiner@infodock.com>
   br-c++.el:    Rewrote to handle a wider variety of template-based
     definitions.
 
-Tue Apr 25 14:35:54 1995  Bob Weiner  <weiner@infodock.com>
+Tue Apr 25 14:35:54 1995  Bob Weiner  <weiner@mot.com>
 
 * br-c++-ft.el (c++-operator-identifier): Fixed to support overloading of
     operators [] and ().
 
-Mon Apr 24 14:52:11 1995  Bob Weiner  <weiner@infodock.com>
+Mon Apr 24 14:52:11 1995  Bob Weiner  <weiner@mot.com>
 
 * br-c++-ft.el: Rewrote to cache feature name within each tag entry, to
     speed up feature entry listings.
   br-c++-ft.el (c++-scan-features-in-class): Fixed to list this feature
-    `operator int() { return i; }', as `operator int' instead of just
-    `int'.
+    'operator int() { return i; }', as 'operator int' instead of just
+    'int'.
 
 * br-eif-ft.el  (eif-type-tag-separator): 
   br-objc-ft.el (objc-type-tag-separator): 
@@ -603,11 +449,11 @@ Mon Apr 24 14:52:11 1995  Bob Weiner  <weiner@infodock.com>
     support inclusion of more information in feature tag entries.  | could
     interfere with this in some languages.
 
-Mon Apr 17 17:23:33 1995  Bob Weiner  <weiner@infodock.com>
+Mon Apr 17 17:23:33 1995  Bob Weiner  <weiner@mot.com>
 
 * br-ftr.el (br-feature-clear-signatures): Fixed V19 version to use
     optional buf-nm parameter when given.
-            (br-feature-type-regexp): Added `>' character used by Eiffel
+            (br-feature-type-regexp): Added '>' character used by Eiffel
     deferred features.
 
 * br-eif.el:
@@ -621,14 +467,14 @@ Mon Apr 17 17:23:33 1995  Bob Weiner  <weiner@infodock.com>
 * V2.9 changes ^^^^:
 ==============================================================================
 
-Fri Apr 14 15:31:17 1995  Bob Weiner  <weiner@infodock.com>
+Fri Apr 14 15:31:17 1995  Bob Weiner  <weiner@mot.com>
 
 * man/oo-browser.ps: Removed from the distribution.  Too large; users who
     need it can build it themselves.
 
 * *.el: Added KEYWORDS: header.
 
-Thu Apr 13 14:30:30 1995  Bob Weiner  <weiner@infodock.com>
+Thu Apr 13 14:30:30 1995  Bob Weiner  <weiner@mot.com>
 
 * br-c++.el (c++-get-classes-from-source): Made the scanner tolerate class
     definitions that don't end with a semicolon.
@@ -646,26 +492,26 @@ Thu Apr 13 14:30:30 1995  Bob Weiner  <weiner@infodock.com>
 	       (c++-pure-virtual-function-regexp): Added support for
      including pure virtual functions in class member listings.
 
-Wed Apr 12 17:07:38 1995  Bob Weiner  <weiner@infodock.com>
+Wed Apr 12 17:07:38 1995  Bob Weiner  <weiner@mot.com>
 
 * br-c++-ft.el (c++-type-identifier-group): 
                (c++-feature-decl-or-def): Fixed bug in regexp that could
     cause a definition of "main()" to show up as "- n" in a listing buffer
     since the wrong group would grab "mai".
 
-Tue Apr 11 12:55:11 1995  Bob Weiner  <weiner@infodock.com>
+Tue Apr 11 12:55:11 1995  Bob Weiner  <weiner@mot.com>
 
 * br-clos-ft.el (clos-element-tag-list): Fixed to ignore any parameters
     following an &keyword since these cannot be specialized (given a specific
     type).  Also assigned all methods which are not specialized to CLOS
-    default class `t'.
+    default class 't'.
 
 * BR-README: Clarified autoload directions.
 
 * br-c++-ft.el (c++-feature-decl-or-def): Allowed for whitespace following
    the :: scoping operator.  Some people actually use it.
 
-* br.el (br-feature-signature-regexp): Added a `:' to this expression
+* br.el (br-feature-signature-regexp): Added a ':' to this expression
    since this is used by C++ feature completions.
 
 * hmouse-br.el (smart-br): 
@@ -679,16 +525,16 @@ Tue Apr 11 12:55:11 1995  Bob Weiner  <weiner@infodock.com>
 * V2.8.6 changes ^^^^:
 ==============================================================================
 
-Sat Apr  8 13:53:43 1995  Bob Weiner  <weiner@infodock.com>
+Sat Apr  8 13:53:43 1995  Bob Weiner  <weiner@mot.com>
 
 * man/oo-browser.texi (Top): Added credits.
 
-Fri Apr  7 11:57:20 1995  Bob Weiner  <weiner@infodock.com>
+Fri Apr  7 11:57:20 1995  Bob Weiner  <weiner@mot.com>
 
 * man/oo-browser.texi: Changed name from oobr.texi so that filename need
     not be included in Info directory listings.
 
-Thu Apr  6 10:20:07 1995  Bob Weiner  <weiner@infodock.com>
+Thu Apr  6 10:20:07 1995  Bob Weiner  <weiner@mot.com>
 
 * man/oobr.texi (Using the Mouse): Added a paragraph on the
     InfoDock/XEmacs menus.
@@ -701,7 +547,7 @@ Thu Apr  6 10:20:07 1995  Bob Weiner  <weiner@infodock.com>
            (BATCHFLAGS): Removed -no-site-file so addition of the
     OO-Browser directory to load-path may be done in site-start.el.
 
-Wed Apr  5 17:11:31 1995  Bob Weiner  <weiner@infodock.com>
+Wed Apr  5 17:11:31 1995  Bob Weiner  (weiner@mot.com)
 
 * br-c++.el (c++-parent-regexp): Added an extra c++-comment-regexp
     so that class parents with following C++ comments are found:
@@ -710,7 +556,7 @@ Wed Apr  5 17:11:31 1995  Bob Weiner  <weiner@infodock.com>
 	  // silly set of comments
 	  {}
 
-Wed Apr  5 09:07:35 1995  Bob Weiner  <weiner@infodock.com>
+Wed Apr  5 09:07:35 1995  Bob Weiner  <weiner@mot.com>
 
 * br-tree.el (br-tree-x-load-tree-file): Coerced string to int for concat.
 
@@ -718,24 +564,24 @@ Wed Apr  5 09:07:35 1995  Bob Weiner  <weiner@infodock.com>
 * V2.8.5 changes ^^^^:
 ==============================================================================
 
-Mon Apr  3 18:16:35 1995  Bob Weiner  <weiner@infodock.com>
+Mon Apr  3 18:16:35 1995  Bob Weiner  <weiner@mot.com>
 
 * br.el (br-inherited-features): Added this command to show all features
     of a class.
         (br-inherited-features-flag): Added to control whether
-    `br-features' displays all inherited features or just lexically
+    'br-features' displays all inherited features or just lexically
     included ones.  Default is t, all inherited features.
 
-Sun Apr  2 18:08:23 1995  Bob Weiner  <weiner@infodock.com>
+Sun Apr  2 18:08:23 1995  Bob Weiner  <weiner@mot.com>
 
 * br-menu.el: Added this file of menus for the OO-Browser from InfoDock
     and adapted for use under standard XEmacs.
 
-Sat Apr  1 14:43:00 1995  Bob Weiner  <weiner@infodock.com>
+Sat Apr  1 14:43:00 1995  Bob Weiner  <weiner@mot.com>
 
 * br-c++-ft.el (c++-func-args-regexp): 
 	       (c++-func-args-string): Modified to add optional spaces
-    between a C++ type and `*' or `&' characters since the spacing
+    between a C++ type and '*' or '&' characters since the spacing
     sometimes varies between declaration and definition, e.g. declaration
     is "func(const List<T>&);" and def is "func(const List<T> &id) {}".
 
@@ -744,7 +590,7 @@ Sat Apr  1 14:43:00 1995  Bob Weiner  <weiner@infodock.com>
 * br-ftr.el    (br-find-feature): 
   br-c++-ft.el (c++-feature-tags-lookup): Modified to call br-edit-feature.
 
-Fri Mar 31 13:44:57 1995  Bob Weiner  <weiner@infodock.com>
+Fri Mar 31 13:44:57 1995  Bob Weiner  <weiner@mot.com>
 
 * br-c++-ft.el (c++-class-decl-p): Fixed to properly match to template classes.
 
@@ -758,7 +604,7 @@ Fri Mar 31 13:44:57 1995  Bob Weiner  <weiner@infodock.com>
 * V2.8.4 changes ^^^^:
 ==============================================================================
 
-Tue Mar 28 15:13:51 1995  Bob Weiner  <weiner@infodock.com>
+Tue Mar 28 15:13:51 1995  Bob Weiner  <weiner@mot.com>
 
 * br-c++-ft.el (c++-type-identifier): 
   br-c++.el (c++-identifier): Updated to handle C++ names with multiple
@@ -771,7 +617,7 @@ Tue Mar 28 15:13:51 1995  Bob Weiner  <weiner@infodock.com>
     Renamed sample TREE to TREE.objc.
     Added sample TREE.c++ file as example of browsing C++ template classes.
 
-Mon Mar 27 01:07:18 1995  Bob Weiner  <weiner@infodock.com>
+Mon Mar 27 01:07:18 1995  Bob Weiner  <weiner@mot.com>
 
 * br-start.el (br-member): Use builtin member function when available.
 
@@ -784,7 +630,7 @@ Mon Mar 27 01:07:18 1995  Bob Weiner  <weiner@infodock.com>
 	    (c++-get-parent-name): Added for template support.
 * br-c++-ft.el (c++-scan-features-in-class): Added for template support.
 
-Sun Mar 26 14:06:10 1995  Bob Weiner  <weiner@infodock.com>
+Sun Mar 26 14:06:10 1995  Bob Weiner  <weiner@mot.com>
 
 * br-c++-ft.el (c++-add-default-classes): Added.
 * c++-browse.el (c++-browse-setup): Added hook which calls
@@ -809,7 +655,7 @@ Sun Mar 26 01:03:38 1995  Bob Weiner  <weiner@meltdown.valhalla (Bob Weiner)>
 * br.el (br-match-entries): Replaced invalid call to br-filter with
     br-match-entries.
 
-Sat Mar 25 16:15:20 1995  Bob Weiner  <weiner@infodock.com>
+Sat Mar 25 16:15:20 1995  Bob Weiner  <weiner@mot.com>
 
 * Makefile (elc): Cleaned up user output produced by this target.
 
@@ -820,7 +666,7 @@ Sat Mar 25 16:15:20 1995  Bob Weiner  <weiner@infodock.com>
 * V2.8.3 changes ^^^^:
 ==============================================================================
 
-Fri Mar 24 10:42:11 1995  Bob Weiner  <weiner@infodock.com>
+Fri Mar 24 10:42:11 1995  Bob Weiner  <weiner@mot.com>
 
 * br-c++-ft.el (c++-scan-features): Fixed so skips to end of a feature
     definition before looking for another.  This prevents matches to things
@@ -834,7 +680,7 @@ Fri Mar 24 10:42:11 1995  Bob Weiner  <weiner@infodock.com>
 * Makefile (elc): Rewrote in a portable manner so that one emacs
     invocation builds all elc files.
 
-Thu Mar 23 17:32:50 1995  Bob Weiner  <weiner@infodock.com>
+Thu Mar 23 17:32:50 1995  Bob Weiner  <weiner@mot.com>
 
 * br.el (br-browse): Fixed so br-mode-hook and language-specific hook is
     run each time the browser is invoked, not just the first time in an
@@ -852,13 +698,13 @@ Thu Mar 23 17:32:50 1995  Bob Weiner  <weiner@infodock.com>
     Also fixed bug that failed to bury browser buffers when using this
     command.
 
-Wed Mar 22 03:20:39 1995  Bob Weiner  <weiner@infodock.com>
+Wed Mar 22 03:20:39 1995  Bob Weiner  <weiner@mot.com>
 
 * Makefile (EMACS): Changed default setting of this variable to XEMACS.
 
 * hmouse-br.el: Renamed a bunch of Hyperbole functions and variables.
 
-Tue Mar 21 01:05:28 1995  Bob Weiner  <weiner@infodock.com>
+Tue Mar 21 01:05:28 1995  Bob Weiner  <weiner@mot.com>
 
 * hasht.el (hash-replace): Fixed omission of argument to (error) call.
     This was causing {C-c C-d}, br-delete to fail.
@@ -880,7 +726,7 @@ Tue Mar 21 01:05:28 1995  Bob Weiner  <weiner@infodock.com>
             (br-env-rebuild): Added prompt to build in background when
     called interactively.
 
-Mon Mar 20 00:16:46 1995  Bob Weiner  <weiner@infodock.com>
+Mon Mar 20 00:16:46 1995  Bob Weiner  <weiner@mot.com>
 
 * br-eif.el (eif-get-parents-from-source): Rewrote to support Eiffel 3
     inheritance clauses.
@@ -903,34 +749,34 @@ Mon Mar 20 00:16:46 1995  Bob Weiner  <weiner@infodock.com>
 
                 (clos-feature-name-to-regexp): Rewrote to work properly.
 
-Sun Mar 19 23:46:34 1995  Bob Weiner  <weiner@infodock.com>
+Sun Mar 19 23:46:34 1995  Bob Weiner  <weiner@mot.com>
 
 * br-clos.el (clos-type-identifier-chars): Added back [] characters so
     that default class features will be shown properly in listing buffers.
 
-Fri Mar 17 12:46:06 1995  Bob Weiner  <weiner@infodock.com>
+Fri Mar 17 12:46:06 1995  Bob Weiner  <weiner@mot.com>
 
 * Makefile (elc): Rewrote to compile all out of date .elc files with one
     invocation of Emacs.
 
-Thu Mar 16 12:33:24 1995  Bob Weiner  <weiner@infodock.com>
+Thu Mar 16 12:33:24 1995  Bob Weiner  <weiner@mot.com>
 
 * br-init.el (br-after-term-init): Eliminated need to load set.el.
     Provides faster startup.
 
-* br-vers.el: Added this file and `br-version' variable so can get OO-Browser
+* br-vers.el: Added this file and 'br-version' variable so can get OO-Browser
     version number programmatically.
 
-Wed Mar 15 14:13:19 1995  Bob Weiner  <weiner@infodock.com>
+Wed Mar 15 14:13:19 1995  Bob Weiner  <weiner@mot.com>
 
-* br-init.el (br-after-term-init): Renamed all `smart-*-meta*' functions
-    to `smart-*-assist*'.
+* br-init.el (br-after-term-init): Renamed all 'smart-*-meta*' functions
+    to 'smart-*-assist*'.
 
 ==============================================================================
 * V2.8.1 changes ^^^^:
 ==============================================================================
 
-Fri Mar 10 14:40:55 1995  Bob Weiner  <weiner@infodock.com>
+Fri Mar 10 14:40:55 1995  Bob Weiner  <weiner@footloose>
 
 	* OO-Browser V2.8 is released.
 
@@ -945,7 +791,7 @@ Fri Mar 10 14:40:55 1995  Bob Weiner  <weiner@infodock.com>
         (br-next-class-window): 
         (br-prev-class-window): Renamed to br-*-listing-window.
 
-Mon Mar  6 12:04:30 1995  Bob Weiner  <weiner@infodock.com>
+Mon Mar  6 12:04:30 1995  Bob Weiner  (weiner@footloose)
 
 * br-lib.el (br-setup-constants): Removed br-show-features setting from
     here so that it is a global setting that applies to all languages.
@@ -958,7 +804,7 @@ Mon Mar  6 12:04:30 1995  Bob Weiner  <weiner@infodock.com>
    an invalid command.  Also fixed bug in handling long feature signatures
    which come in as multiple output strings.
 
-Sun Mar  5 12:24:28 1995  Bob Weiner  <weiner@infodock.com>
+Sun Mar  5 12:24:28 1995  Bob Weiner  <weiner@avatar>
 
 * Makefile (tags): Added tree-x and tree-nx source tags into TAGS build.
 
@@ -981,7 +827,7 @@ Sun Mar  5 12:24:28 1995  Bob Weiner  <weiner@infodock.com>
    like when applied to a whole listing.  This also makes producing
    graphical displays of a listing simpler.
 
-Sat Mar  4 14:38:45 1995  Bob Weiner  <weiner@infodock.com>
+Sat Mar  4 14:38:45 1995  Bob Weiner  <weiner@avatar>
 
 * br-objc-ft.el (objc-list-categories): 
   	        (objc-list-protocols): Added to support category and
@@ -989,7 +835,7 @@ Sat Mar  4 14:38:45 1995  Bob Weiner  <weiner@infodock.com>
 * br-lib.el (br-setup-functions): Added per-language "list-features" and
     "list-protocols" functions.
 
-Fri Mar  3 14:00:24 1995  Bob Weiner  <weiner@infodock.com>
+Fri Mar  3 14:00:24 1995  Bob Weiner  <weiner@avatar>
 
 * br.el (br-mode-map): Added {C} = br-categories and {P} = br-protocols.
         (br-categories): Added to show class categories.
@@ -1010,7 +856,7 @@ Fri Mar  3 14:00:24 1995  Bob Weiner  <weiner@infodock.com>
     'identity for all languages except Objective-C where protocols and
     class categories are filtered out.
 
-Fri Mar  3 02:03:42 1995  Bob Weiner  <weiner@infodock.com>
+Fri Mar  3 02:03:42 1995  Bob Weiner  <weiner@footloose>
 
 * br-lib.el (br-real-build-al)
     (br-search-directory): Modified scanning message to lead with
@@ -1021,7 +867,7 @@ Fri Mar  3 02:03:42 1995  Bob Weiner  <weiner@infodock.com>
   br-objc.el
   objc-brows.el: Numerous changes to support category and protocol browsing.
 
-Thu Mar  2 00:16:49 1995  Bob Weiner  <weiner@infodock.com>
+Thu Mar  2 00:16:49 1995  Bob Weiner  <weiner@footloose>
 
 * br.el (br-interrupt):
         (br-quit):       Added test to ensure that are in the OO-Browser
@@ -1040,7 +886,7 @@ Thu Mar  2 00:16:49 1995  Bob Weiner  <weiner@infodock.com>
 
 * br.el (br-sort-options): Added to control the way listing buffers are sorted.
 
-Wed Mar  1 10:40:54 1995  Bob Weiner  <weiner@infodock.com>
+Wed Mar  1 10:40:54 1995  Bob Weiner  <weiner@footloose>
 
 * br-compl.el (br-all-classes): Rewrote to omit sort in most cases, since
     many functions that call this will do their own sorting.
@@ -1057,14 +903,14 @@ Wed Mar  1 10:40:54 1995  Bob Weiner  <weiner@infodock.com>
 	br-find       Use br-edit-entry instead.         {C-u e}
 	br-routines   br-features                   r       f
 
-Tue Feb 28 10:11:04 1995  Bob Weiner  <weiner@infodock.com>
+Tue Feb 28 10:11:04 1995  Bob Weiner  <weiner@footloose>
 
 * hasht.el (hash-length):
            (hash-size): Changed these 2 functions to return size of the
     hash-table structure rather than number of elements.
            (hash-count): Added this to return number of elements in hash-table.
 
-* br-clos-ft.el (clos-element-tag-list): Renamed from `clos-element-tag' and
+* br-clos-ft.el (clos-element-tag-list): Renamed from 'clos-element-tag' and
     changed to return a list of tags since one method definition may
     generate features in many classes.
 
@@ -1074,12 +920,12 @@ Tue Feb 28 10:11:04 1995  Bob Weiner  <weiner@infodock.com>
     vectors, so that copy routines know how to copy symbol values from the
     hash table obarray.
 
-Sun Feb 26 17:03:37 1995  Bob Weiner  <weiner@infodock.com>
+Sun Feb 26 17:03:37 1995  Bob Weiner  <weiner@footloose>
 
 * man/oobr.texi (Browsing Implementors): 
                 (Browsing Elements): Added these two sections.
 
-Sat Feb 25 12:10:29 1995  Bob Weiner  <weiner@infodock.com>
+Sat Feb 25 12:10:29 1995  Bob Weiner  <weiner@footloose>
 
 * br.el (br-find): Added support for CLOS element lookup.
 
@@ -1092,13 +938,13 @@ Sat Feb 25 12:10:29 1995  Bob Weiner  <weiner@infodock.com>
 * Makefile: Changed so that elc target just rebuilds out of date elc
   files, not all elc files.  all-elc now does that.
 
-Fri Feb 24 17:19:37 1995  Bob Weiner  <weiner@infodock.com>
+Fri Feb 24 17:19:37 1995  Bob Weiner  (weiner@footloose)
 
 * br-compl.el (br-buffer-menu): Rewrote to handle case where filename is
     stripped from path listed under File section in Buffer-menu.  Use
     buffer names instead.  Slower, but correct in more cases.
 
-Thu Feb 23 10:51:53 1995  Bob Weiner  <weiner@infodock.com>
+Thu Feb 23 10:51:53 1995  Bob Weiner  <weiner@footloose>
 
 * man/oobr.texi (Glossary): Added a number of OO terms.
 
@@ -1117,7 +963,7 @@ Thu Feb 23 10:51:53 1995  Bob Weiner  <weiner@infodock.com>
   	        (objc-feature-matches): Fixed these functions so that
     br-implementors works properly for Objective-C.
 
-Wed Feb 22 14:31:55 1995  Bob Weiner  <weiner@infodock.com>
+Wed Feb 22 14:31:55 1995  Bob Weiner  <weiner@footloose>
 
 * br-lib.el (br-build-lib-htable): Added (run-hooks 'br-after-build-lib-hook).
             (br-build-sys-htable): Added (run-hooks 'br-after-build-sys-hook).
@@ -1128,14 +974,14 @@ Wed Feb 22 14:31:55 1995  Bob Weiner  <weiner@infodock.com>
     classes, since the elements in these classes change as the system
     evolves.
 
-Tue Feb 21 14:38:47 1995  Bob Weiner  <weiner@infodock.com>
+Tue Feb 21 14:38:47 1995  Bob Weiner  <weiner@footloose>
 
 * br-tree.el
   man/oobr.texi
   br-help
-  br.el (br-mode-map): Renamed `br-tree-routines-toggle' to
-    `br-tree-features-toggle' and moved key binding from {M-r} to {M-f}.
-    Renamed `br-show-routines' to `br-show-features'.
+  br.el (br-mode-map): Renamed 'br-tree-routines-toggle' to
+    'br-tree-features-toggle' and moved key binding from {M-r} to {M-f}.
+    Renamed 'br-show-routines' to 'br-show-features'.
 
 * *.el: Changed all -ftr- to -feature-.
 * br*[fr]t.el: Clarified many symbol names within these files.
@@ -1144,42 +990,42 @@ Tue Feb 21 14:38:47 1995  Bob Weiner  <weiner@infodock.com>
   br-clos-rt.el: Added these 2 files to support feature browsing in CLOS
     and BWlib, my own object system which looks like CLOS.
 
-Fri Feb 17 00:12:37 1995  Bob Weiner  <weiner@infodock.com>
+Fri Feb 17 00:12:37 1995  Bob Weiner  <weiner@footloose>
 
 * br-objc-rt.el (objc-scan-routines-in-class): 
 * br-c++-rt.el  (c++-scan-routines-in-class): Fixed bug that failed to save
     normalized form of routine for return.
 
-Mon Feb 13 11:18:46 1995  Bob Weiner  <weiner@infodock.com>
+Mon Feb 13 11:18:46 1995  Bob Weiner  (weiner@footloose)
 
 * br-init.el (br-after-term-init): Don't load menus-oobr under tty InfoDock.
 
-Sun Feb 12 16:09:29 1995  Bob Weiner  <weiner@infodock.com>
+Sun Feb 12 16:09:29 1995  Bob Weiner  <weiner@footloose>
 
 * br-clos.el (clos-src-file-regexp): Updated to scan .el files, so
     will-read CLOS-like definitions in Emacs Lisp code.  Normal CLOS code
     directories will not contain any such code, so will not be affected.
 
-Thu Feb  9 13:19:38 1995  Bob Weiner  <weiner@infodock.com>
+Thu Feb  9 13:19:38 1995  Bob Weiner  <weiner@footloose>
 
 * hasht.el (hash-make): Modified to accept an integer as the first
     argument, meaning create an empty hash table with that minimum size.
 
-Mon Jan  9 12:00:40 1995  Bob Weiner  <weiner@infodock.com>
+Mon Jan  9 12:00:40 1995  Bob Weiner  <weiner@meltdown>
 
 * br-c++.el (c++-in-c-comment-p):
             (c++-to-comments-begin): Fixed to avoid treating //*** comments
     as multi-line comments.
 
-* br-env.el (br-env-copy): Changed `intern-soft' to `intern' to avert bug
+* br-env.el (br-env-copy): Changed 'intern-soft' to 'intern' to avert bug
     that appears when try to set an as yet undefined symbol.
 
-Tue Jan  3 16:49:44 1995  Bob Weiner  <weiner@infodock.com>
+Tue Jan  3 16:49:44 1995  Bob Weiner  (weiner@meltdown)
 
 * br-c++.el (c++-src-file-regexp): Modified to handle .cpp and .hpp
     suffixes used by someone on OS/2.
 
-Wed Dec 21 16:30:27 1994  Bob Weiner  <weiner@infodock.com>
+Wed Dec 21 16:30:27 1994  Bob Weiner  <bweiner@sun29>
 
 * br-mouse.el
   MAKE-DIST
@@ -1191,19 +1037,19 @@ Wed Dec 21 16:30:27 1994  Bob Weiner  <weiner@infodock.com>
     add of oobr/hypb/ directory to load-path when full Hyperbole system is
     not available.
 
-Fri Dec 16 19:15:51 1994  Bob Weiner  <weiner@infodock.com>
+Fri Dec 16 19:15:51 1994  Bob Weiner  (weiner@meltdown)
 
 * br-env.el (br-env-browse): Added this function to invoke the appropriate
     language OO-Browser given an Environment as an argument.  This can be
     used to support OO-Browser invocation by mouse clicking on Env file
     names.
 
-Fri Dec 16 19:58:24 1994  Bob Weiner  <weiner@infodock.com>
+Fri Dec 16 19:58:24 1994  Bob Weiner  <bweiner@sun29>
 
 * br-init.el (br-after-term-init2): Changed so menus are only loaded under
     XEmacs-based InfoDock.
 
-Thu Dec 15 22:26:15 1994  Bob Weiner  <weiner@infodock.com>
+Thu Dec 15 22:26:15 1994  Bob Weiner  <bweiner@sun29>
 
 * tree-x/intf.c: Added (XtPointer) coercions for 4th arg of XtAddCallback
     calls to suppress compiler warnings.
@@ -1215,7 +1061,7 @@ Thu Dec 15 22:26:15 1994  Bob Weiner  <weiner@infodock.com>
     clicking on a declaration in a .h file jumps to the associated
     definition in a source file.
 
-Thu Dec 15 12:37:31 1994  Bob Weiner  <weiner@infodock.com>
+Thu Dec 15 12:37:31 1994  Bob Weiner  (bweiner@sun29)
 
 * tree-x/intf.c: Rewrote to handle X displays of varying sizes.
 
@@ -1223,10 +1069,10 @@ Thu Dec 15 12:37:31 1994  Bob Weiner  <weiner@infodock.com>
   br-c++-ft.el  (c++-feature-def-pat): Rewrote to simplify and to eliminate
     call to read-from-string, which may be unreliable in this usage.
 
-* tree-x/input.c (GetNextToken): Changed `char c' to `int c', otherwise,
+* tree-x/input.c (GetNextToken): Changed 'char c' to 'int c', otherwise,
     cannot detect EOF and all possible chars.
 
-Fri Dec  9 18:05:50 1994  Bob Weiner  <weiner@infodock.com>
+Fri Dec  9 18:05:50 1994  Bob Weiner  (bweiner@sun29)
 
 * br-objc-rt.el (objc-routine-normalize): Rewrote to reduce strings of
     spaces to one space.
@@ -1249,7 +1095,7 @@ Fri Dec  9 18:05:50 1994  Bob Weiner  <weiner@infodock.com>
 * br-env.el (br-env-force-load): Fixed paren bug which caused use of wrong
     file name for Envir when default was accepted.
 
-Thu Dec  1 13:44:25 1994  Bob Weiner  <weiner@infodock.com>
+Thu Dec  1 13:44:25 1994  Bob Weiner  (bweiner@sun468)
 
 * br.el: br-listing-window-p
 	 br-non-listing-window-p - Added these predicate macros to centralize
@@ -1261,33 +1107,33 @@ Thu Dec  1 13:44:25 1994  Bob Weiner  <weiner@infodock.com>
 
 * BR-README: Updated installation and build directions.
 * Makefile:  Added HYPERBOLE mouse support file dependencies and changed
-    `dist' target so it actually produces a standalone tar file
+    'dist' target so it actually produces a standalone tar file
     distribution of the OO-Browser.
 
 ==============================================================================
 * V2.8 changes ^^^^:
 ==============================================================================
 
-Mon Oct 24 21:28:09 1994  Bob Weiner  <weiner@infodock.com>
+Mon Oct 24 21:28:09 1994  Bob Weiner  (bweiner@sun285)
 
 * Makefile: Added for automated building of the OO-Browser.  See the
     documentation at the top of this file for instructions on usage.
 
-Sun Oct 23 20:28:37 1994  Bob Weiner  <weiner@infodock.com>
+Sun Oct 23 20:28:37 1994  Bob Weiner  (weiner@sun166)
 
 * br-lib.el (br-relative-path): Added so that relative pathnames do not
     come out longer than absolute ones.
 
-Sun Oct 23 15:45:28 1994  Bob Weiner  <weiner@infodock.com>
+Sun Oct 23 15:45:28 1994  Bob Weiner  (bweiner@sun285)
 
 * man/br-user.texi: Renamed to oobr.texi, along with oobr.info.
 
-Thu Oct 20 15:47:15 1994  Bob Weiner  <weiner@infodock.com>
+Thu Oct 20 15:47:15 1994  Bob Weiner  (bweiner@sun285)
 
 * br-env.el (br-env-select-lang): Added popup-dialog box for language
     selection under XEmacs when command is invoked via the mouse.
 
-Wed Oct 19 18:21:45 1994  Bob Weiner  <weiner@infodock.com>
+Wed Oct 19 18:21:45 1994  Bob Weiner  (bweiner@sun285)
 
 * br-env.el (br-env-lang-var): Changed Environment file name from:
     (concat br-env-dir ".br-" lang-prefix "env")
@@ -1298,17 +1144,17 @@ Wed Oct 19 18:21:45 1994  Bob Weiner  <weiner@infodock.com>
 * br-ftr.el (br-ftr-tags-init): Changed br-ftr-tags-file from using "-m"
     suffix to using "-FTR" suffix.
 
-Wed Sep 21 14:52:39 1994  Bob Weiner  <weiner@infodock.com>
+Wed Sep 21 14:52:39 1994  Bob Weiner  (weiner@sun166)
 
 * br-ftr.el (br-ftr-found-p): Fixed bug that could cause return value of
     nil when feature was found and source file of feature definition was
     read from disk the first time.
 
-Wed Sep 21 11:45:26 1994  Bob Weiner  <weiner@infodock.com>
+Wed Sep 21 11:45:26 1994  Bob Weiner  (bweiner@sun1)
 
 * br.el (br-mode): Added (run-hooks 'br-mode-hook).
 
-Wed Mar 30 21:07:37 1994  Bob Weiner  <weiner@infodock.com>
+Wed Mar 30 21:07:37 1994  Bob Weiner  (weiner@sun285)
 
 * br.el (br-feature): Fixed to trigger an error if can't find match within
     source code for a feature declaration tag.
@@ -1327,32 +1173,32 @@ Wed Mar 30 21:07:37 1994  Bob Weiner  <weiner@infodock.com>
 * c++-browse.el (c++-browse-setup): Added conditional for cc-mode, new
     name for C++ mode under Emacs.
 
-Thu Aug 19 21:05:00 1993  Bob Weiner  <weiner@infodock.com>
+Thu Aug 19 21:05:00 1993  Bob Weiner  (weiner@info)
 
-* br-lib.el:   Fixed `br-real-build-alists-br' to not erase routine tags file
+* br-lib.el:   Fixed 'br-real-build-alists-br' to not erase routine tags file
     when called.  This would lead to an empty routine file if sys paths had
     methods but lib paths was built after and it did not have methods.
-  br-env.el:   Updated `br-env-build' to delete br-ftr-tags-file and its
-    buffer before doing build since is no longer done in `br-real-build-alist-br'.
+  br-env.el:   Updated 'br-env-build' to delete br-ftr-tags-file and its
+    buffer before doing build since is no longer done in 'br-real-build-alist-br'.
 
-Sat Apr 24 15:29:46 1993  Bob Weiner  <weiner@infodock.com>
+Sat Apr 24 15:29:46 1993  Bob Weiner  (weiner at localhost)
 
 *  br-xbr.el:  Renamed to br-tree.el.
    xbr:        Renamed to tree-x
    tree-nx:    Added for NEXTSTEP graphical browsing.
 
-Fri Apr 23 12:34:32 1993  Bob Weiner  <weiner@infodock.com>
+Fri Apr 23 12:34:32 1993  Bob Weiner  (weiner@info)
 
-*  br-init.el, br-lib.el: Added `br-skip-dir-regexps' to make list of
+*  br-init.el, br-lib.el: Added 'br-skip-dir-regexps' to make list of
    directories skipped by browser file scans programmable.
 
-Sat May  4 07:02:58 1991  Bob Weiner  <weiner@infodock.com>
+Sat May  4 07:02:58 1991  Bob Weiner  (rsw at barney)
 
 *  br-lib.el, br-eif.el: Added
      (let ((inhibit-local-variables nil))
    to prevent setting from prompting user when files are read in.
 
-Mon Dec 24 07:21:37 1990  Bob Weiner  <weiner@infodock.com>
+Mon Dec 24 07:21:37 1990  Bob Weiner  (rsw at tahiti)
 
 * br.el:  Modified (br-help) to remove local keymap so normal movement
 	   commands work within help buffers.
@@ -1361,7 +1207,7 @@ Mon Dec 24 07:21:37 1990  Bob Weiner  <weiner@infodock.com>
 V2.6 changes ^^^^:
 ==============================================================================
 
-Thu Dec 20 19:04:32 1990  Bob Weiner  <weiner@infodock.com>
+Thu Dec 20 19:04:32 1990  Bob Weiner  (rsw at slate)
 
 ** br.el, br-lib.el, br-init.el:  Added full support for use of non-Emacs
       browser viewers and editors.  All such tools are handled as
@@ -1376,62 +1222,62 @@ Thu Dec 20 19:04:32 1990  Bob Weiner  <weiner@infodock.com>
 
 ** br-xtree.el:  Renamed to br-xbr.el.
 
-Wed Dec 19 15:24:55 1990  Bob Weiner  <weiner@infodock.com>
+Wed Dec 19 15:24:55 1990  Bob Weiner  (rsw at delay)
 
 ** br-xtree.el:  Added support for multiple simultaneous xtree browsing
      sessions and optimized context time maximally when outside of
      OO-Browser UI and pretty well when in UI (just have to sort
      classes in order to display).
 
-Mon Dec 17 01:16:49 1990  Bob Weiner  <weiner@infodock.com>
+Mon Dec 17 01:16:49 1990  Bob Weiner  (rsw at tahiti)
 
 ** br.el:  Added {H} (br-help-ms) command to display mouse help.
-   br-lib.el: Added `br-keep-viewed-classes' flag which if nil
+   br-lib.el: Added 'br-keep-viewed-classes' flag which if nil
      deletes each class file as a new one is viewed.  By default, is nil.
      t value leaves viewed classes around for further manipulation.
 
-Wed Oct 17 22:12:00 1990  Bob Weiner  <weiner@infodock.com>
+Wed Oct 17 22:12:00 1990  Bob Weiner  (rsw at slate)
 
 ** br.el:  Improved ordering of large class lists by using UNIX "sort".
 
-Mon Oct 15 01:26:56 1990  Bob Weiner  <weiner@infodock.com>
+Mon Oct 15 01:26:56 1990  Bob Weiner  (rsw at tahiti)
 
-** eif-calls.el:  br-info-class did not work since `eif-try-for-routine-call'
+** eif-calls.el:  br-info-class did not work since 'eif-try-for-routine-call'
      used the wrong parameters for string matching.  Fixed.
 
-Sat Oct  6 15:12:36 1990  Bob Weiner  <weiner@infodock.com>
+Sat Oct  6 15:12:36 1990  Bob Weiner  (rsw at betty)
 
 ** br-eif-ft.el:  Created this file.  Allows selection of a feature name in a
      class export clause and moves point to feature definition if within the
      same source file.  Also goes to class def when class name is selected.
 
-Mon Oct  1 18:13:46 1990  Bob Weiner  <weiner@infodock.com>
+Mon Oct  1 18:13:46 1990  Bob Weiner  (rsw at tahiti)
 
-** hash.el: Removed sorting of value elements in `hash-make' function.
-   br-eif.el: Sorted class list elements in `eif-real-build-paths-alist'.
-   br-lib.el: Removed list reversal from `br-real-build-parents-alist'
-     and `br-real-build-alists-br'.
+** hash.el: Removed sorting of value elements in 'hash-make' function.
+   br-eif.el: Sorted class list elements in 'eif-real-build-paths-alist'.
+   br-lib.el: Removed list reversal from 'br-real-build-parents-alist'
+     and 'br-real-build-alists-br'.
      Sorted each set of classes in path list construction in
-     `br-real-build-al'.
+     'br-real-build-al'.
    These changes fixed display of parents so that they are listed in the same
      order as they are in the source file.
 
-** br-env.el: Eliminated use of `br-use-children-htable'; now assume always
+** br-env.el: Eliminated use of 'br-use-children-htable'; now assume always
      true. This option added virtually no value.
 
-Wed Sep 26 14:07:34 1990  Bob Weiner  <weiner@infodock.com>
+Wed Sep 26 14:07:34 1990  Bob Weiner  (rsw at tahiti)
 
-** br.el: Fixed `br-narrow-to-class' to work with info-browse class names.
-          Added error handling into `br-view' for when class which is
+** br.el: Fixed 'br-narrow-to-class' to work with info-browse class names.
+          Added error handling into 'br-view' for when class which is
 	  referenced but not defined in environment is selected.
 
-** br-env.el:  Modified `br-env-set-htables' function to add class
+** br-env.el:  Modified 'br-env-set-htables' function to add class
      names that are referenced but not defined into the library part of the
      environment.
 
-Tue Sep 25 13:22:57 1990  Bob Weiner  <weiner@infodock.com>
+Tue Sep 25 13:22:57 1990  Bob Weiner  (rsw at tahiti)
 
-** br-c++-ft.el:  Added `c++-include-dirs' variable used to set extra include
+** br-c++-ft.el:  Added 'c++-include-dirs' variable used to set extra include
      directories to search.
 
 ** br-c++-ft.el:  Created this file.  Allows selection of a class declaration
@@ -1444,7 +1290,7 @@ Tue Sep 25 13:22:57 1990  Bob Weiner  <weiner@infodock.com>
      searching of sets of Info manuals.
 
 **  br-lib.el:
-    br.el:      Modified `br-view' and `br-find-class' slightly to accomodate
+    br.el:      Modified 'br-view' and 'br-find-class' slightly to accomodate
       special needs of the Info browser.
 
 ** br-clos.el:
@@ -1452,59 +1298,59 @@ Tue Sep 25 13:22:57 1990  Bob Weiner  <weiner@infodock.com>
    br-smt.el
    smt-browse.el:  Tested and added CLOS and Smalltalk browser support.
 
-Fri Sep 21 00:26:17 1990  Bob Weiner  <weiner@infodock.com>
+Fri Sep 21 00:26:17 1990  Bob Weiner  (rsw at tahiti)
 
-** br.el:  Stored current window line in `*br-level-hist*' in order to make
-    `br-exit-level' position all lines in buffer exited to, exactly as they
+** br.el:  Stored current window line in '*br-level-hist*' in order to make
+    'br-exit-level' position all lines in buffer exited to, exactly as they
     were before.
 
-** br.el:  Switched default at browser startup `br-browse' and when refresh
-     screen `br-refresh' or rebuild environments `br-sys-rebuild' and
-    `br-lib-rebuild' to display all classes rather than just the top-level
+** br.el:  Switched default at browser startup 'br-browse' and when refresh
+     screen 'br-refresh' or rebuild environments 'br-sys-rebuild' and
+    'br-lib-rebuild' to display all classes rather than just the top-level
     classes as they did before.  This prevents novice confusion over where his
     classes are and allows easier access to all users.
 
-Tue Sep 18 16:37:59 1990  Bob Weiner  <weiner@infodock.com>
+Tue Sep 18 16:37:59 1990  Bob Weiner  (rsw at delay)
 
-** br-c++.el:  Fixed def of `c++-identifier' to allow `~' as first identifier
+** br-c++.el:  Fixed def of 'c++-identifier' to allow '~' as first identifier
      character to account for destructor functions.
 
-** br.el:  Added `br-interrupt' function.  Is used by `br-quit' and
-     `br-view-full-screen' to bury all browser buffers. 
+** br.el:  Added 'br-interrupt' function.  Is used by 'br-quit' and
+     'br-view-full-screen' to bury all browser buffers. 
 
-Fri Sep 14 03:04:31 1990  Bob Weiner  <weiner@infodock.com>
+Fri Sep 14 03:04:31 1990  Bob Weiner  (rsw at tahiti)
 
 ** br-c++.el:  Kept from matching translated C source files that end in ..[cC].
 
 ** br-init.el:  Made browser Lisp files autoload when needed, so eliminated
-     conditional flags which enabled each language, e.g. `br-use-eif'.
+     conditional flags which enabled each language, e.g. 'br-use-eif'.
      Put browser invocation key bindings at top of file so user can easily
      change them.
 
-Mon Sep  3 16:32:16 1990  Bob Weiner  <weiner@infodock.com>
+Mon Sep  3 16:32:16 1990  Bob Weiner  (rsw at tahiti)
 
-** br-mouse.el:  Modified `smart-br' to display browser help when a blank class
+** br-mouse.el:  Modified 'smart-br' to display browser help when a blank class
      listing buffer is clicked in.
-     Added `smart-br-cmd-select' function.  Make note in user manual that
+     Added 'smart-br-cmd-select' function.  Make note in user manual that
      messages will disappear from minibuffer once release the mouse button
      under some window systems, to see message, simply hold the button down
      until you have read the message.
 
-** br-init.el: Changed `br-mouse-setup' to use `smart-key-mouse' rather than
-     `smart-key' under SunView and Apollo DM.
+** br-init.el: Changed 'br-mouse-setup' to use 'smart-key-mouse' rather than
+     'smart-key' under SunView and Apollo DM.
 
-** br.el: Changed `br-help' function so that it uses `br-mode' as the major
+** br.el: Changed 'br-help' function so that it uses 'br-mode' as the major
      mode for the browser help buffer.  This is necessary to support the direct
      selection of commands from the help buffer.
 
-Sat Sep  1 19:49:25 1990  Bob Weiner  <weiner@infodock.com>
+Sat Sep  1 19:49:25 1990  Bob Weiner  (rsw at tahiti)
 
-** br.el: Made `br-mode' function interactive.
+** br.el: Made 'br-mode' function interactive.
 
-Thu Aug 30 23:41:02 1990  Bob Weiner  <weiner@infodock.com>
+Thu Aug 30 23:41:02 1990  Bob Weiner  (rsw at tahiti)
 
 ** br-mouse.el: Fixed so would work properly with X windows.  Changed
-     `smart-key' and `smart-key-meta' so they take a single optional arg
+     'smart-key' and 'smart-key-meta' so they take a single optional arg
      list rather than individual args that end up grouped into a list.
      This works better for X and is unused by most other window systems.
 
@@ -1515,35 +1361,35 @@ Thu Aug 30 23:41:02 1990  Bob Weiner  <weiner@infodock.com>
 
 * Changes for version 1.2.4
 
-Wed Aug 29 18:03:12 1990  Bob Weiner <weiner@infodock.com>
+Wed Aug 29 18:03:12 1990  Bob Weiner (rsw at tahiti))
 
-** Fixed problem with `br-add-class-file' in "br.el" that set
+** Fixed problem with 'br-add-class-file' in "br.el" that set
      children-htable values improperly.
 
 
-Thu Aug 16 03:31:54 1990  Bob Weiner  <weiner@infodock.com>
+Thu Aug 16 03:31:54 1990  Bob Weiner  (rsw at tahiti)
 
-** Modified `br-find-class' in "br-lib.el" in the case when
-    `br-narrow-view-to-class' is set to nil.  Previously, it just moved
+** Modified 'br-find-class' in "br-lib.el" in the case when
+    'br-narrow-view-to-class' is set to nil.  Previously, it just moved
     point to the beginning of the file in which the desired class was found.
     Now places point at the start of the class.
 
-** Changed default value of `<lang>-narrow-view-to-class' to nil for all
+** Changed default value of '<lang>-narrow-view-to-class' to nil for all
      languages.
 
 
 * Changes for version 1.2.3
 
-Mon Aug  6 00:58:29 1990  Bob Weiner  <weiner@infodock.com>
+Mon Aug  6 00:58:29 1990  Bob Weiner  (rsw at tahiti)
 
 ** Changed all filenames to be 14 or fewer chars.
 
 
 * Changes for version 1.2.2, from 1.2.1
 
-Wed Jul 25 1990  Bob Weiner    <weiner@infodock.com>
+Wed Jul 25 1990  Bob Weiner    (rsw at tahiti)
 
-** Fixed `br-where' bound to {w} in "br.el" so when called with a prefix
+** Fixed 'br-where' bound to {w} in "br.el" so when called with a prefix
      argument, displays class path properly.
 
 ** Added (require 'compile) to "eif-ise-er.el" so that key definition in
@@ -1551,11 +1397,11 @@ Wed Jul 25 1990  Bob Weiner    <weiner@infodock.com>
      was autoloaded.  Without this change, error parsing failed the first time
      it was invoked in each Emacs session.
 
-** Added `eiffel-find-feature' and `eif-find-feature' to "br-eif.el".  Not yet
+** Added 'eiffel-find-feature' and 'eif-find-feature' to "br-eif.el".  Not yet
      bound to keys, more work must be done in order to do this.
 
 ** Changed get parents code in Eiffel to support comments between class
-     names in `inherit' clause (also changed `eif-parent-regexp' for same
+     names in 'inherit' clause (also changed 'eif-parent-regexp' for same
      reason).
 
 

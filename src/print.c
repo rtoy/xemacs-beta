@@ -590,85 +590,6 @@ Output stream is STREAM, or value of `standard-output' (which see).
   return obj;
 }
 
-# include "emacsfns.h"
-static void print_error_message (Lisp_Object data, Lisp_Object stream);
-/* Synched with Emacs 19.34 */
-DEFUN ("error-message-string", Ferror_message_string, 1, 1, 0, /*
-Convert an error value (ERROR-SYMBOL . DATA) to an error message.
-*/
-  (obj))
-{
-  struct buffer *old = XBUFFER(Fcurrent_buffer());
-  Lisp_Object original, printcharfun, value;
-  struct gcpro gcpro1;
-
-  print_error_message (obj, Vprin1_to_string_buffer);
-
-  set_buffer_internal (XBUFFER (Vprin1_to_string_buffer));
-  value = Fbuffer_substring (Fpoint_min(Fcurrent_buffer()),
-			     Fpoint_max(Fcurrent_buffer()),
-			     Fcurrent_buffer());
-
-  GCPRO1 (value);
-  Ferase_buffer (Fcurrent_buffer());
-  set_buffer_internal (old);
-  UNGCPRO;
-
-  return value;
-}
-
-/* Print an error message for the error DATA
-   onto Lisp output stream STREAM (suitable for the print functions).  */
-
-static void
-print_error_message (Lisp_Object data, Lisp_Object stream)
-{
-  Lisp_Object errname, errmsg, file_error, tail;
-  struct gcpro gcpro1;
-  int i;
-
-  errname = Fcar (data);
-
-  if (EQ (errname, Qerror))
-    {
-      data = Fcdr (data);
-      if (!CONSP (data)) data = Qnil;
-      errmsg = Fcar (data);
-      file_error = Qnil;
-    }
-  else
-    {
-      errmsg = Fget (errname, Qerror_message, Qnil);
-      file_error = Fmemq (Qfile_error,
-			  Fget (errname, Qerror_conditions, Qnil));
-    }
-
-  /* Print an error message including the data items.  */
-
-  tail = Fcdr_safe (data);
-  GCPRO1 (tail);
-
-  /* For file-error, make error message by concatenating
-     all the data items.  They are all strings.  */
-  if (!NILP (file_error) && !NILP (tail))
-    errmsg = XCONS (tail)->car, tail = XCONS (tail)->cdr;
-
-  if (STRINGP (errmsg))
-    Fprinc (errmsg, stream);
-  else
-    write_string_1 ((CONST Bufbyte *)"Peculiar error", 14, stream);
-
-  for (i = 0; CONSP (tail); tail = Fcdr (tail), i++)
-    {
-      write_string_1 ((CONST Bufbyte *)(i ? ", " : ": "), 2, stream);
-      if (!NILP (file_error))
-	Fprinc (Fcar (tail), stream);
-      else
-	Fprin1 (Fcar (tail), stream);
-    }
-  UNGCPRO;
-}
-
 #ifdef LISP_FLOAT_TYPE
 
 Lisp_Object Vfloat_output_format;
@@ -853,6 +774,45 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     case Lisp_Int:
       {
 	sprintf (buf, "%d", XINT (obj));
+	write_c_string (buf, printcharfun);
+	break;
+      }
+
+    case Lisp_Char:
+      {
+	/* God intended that this be #\..., you know. */
+	Emchar ch = XCHAR (obj);
+	write_c_string ("?", printcharfun);
+	if (ch == '\n')
+	  strcpy (buf, "\\n");
+	else if (ch == '\r')
+	  strcpy (buf, "\\r");
+	else if (ch == '\t')
+	  strcpy (buf, "\\t");
+	else if (ch < 32)
+	  sprintf (buf, "\\^%c", ch + 64);
+	else if (ch == 127)
+	  strcpy (buf, "\\^?");
+	else if (ch >= 128 && ch < 160)
+	  {
+	    Bytecount i;
+	    strcpy (buf, "\\^");
+	    i = set_charptr_emchar ((unsigned char *) (buf + 2), ch + 64);
+	    buf[2+i] = '\0';
+	  }
+	else if (ch < 127
+		 && !isdigit (ch)
+		 && !isalpha (ch)
+		 && ch != '^') /* must not backslash this or it will
+				  be interpreted as the start of a
+				  control char */
+	  sprintf (buf, "\\%c", ch);
+	else
+	  {
+	    Bytecount i;
+	    i = set_charptr_emchar ((unsigned char *) buf, ch);
+	    buf[i] = '\0';
+	  }
 	write_c_string (buf, printcharfun);
 	break;
       }
@@ -1476,7 +1436,6 @@ syms_of_print (void)
   DEFSUBR (Fprin1_to_string);
   DEFSUBR (Fprinc);
   DEFSUBR (Fprint);
-  DEFSUBR (Ferror_message_string);
   DEFSUBR (Fterpri);
   DEFSUBR (Fwrite_char);
   DEFSUBR (Falternate_debugging_output);
@@ -1575,7 +1534,7 @@ Uninterned symbols are those which are not present in `obarray', that is,
 those which were made with `make-symbol' or by calling `intern' with a
 second argument.
 
-When print-gensym is true, such symbols will be preceded by \"#:\", which
+When print-gensym is true, such symbols will be preceeded by \"#:\", which
 causes the reader to create a new symbol instead of interning and returning
 an existing one.  Beware: the #: syntax creates a new symbol each time it is
 seen, so if you print an object which contains two pointers to the same

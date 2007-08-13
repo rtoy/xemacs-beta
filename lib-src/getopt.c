@@ -74,7 +74,7 @@
 
 /* This is for other GNU distributions with internationalized messages.
    The GNU C Library itself does not yet support such messages.  */
-#if defined (HAVE_LIBINTL_H)
+#if defined (I18N3) && defined (HAVE_LIBINTL_H)
 # include <libintl.h>
 #else
 # define gettext(msgid) (msgid)

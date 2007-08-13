@@ -74,7 +74,7 @@ Lisp_Object Vall_specifiers;
    in specifiers that can inherit from other specifiers, but it's
    not yet implemented.
 
-   #### Look into this some day. */
+   #### Look into this for 19.14. */
 lisp_dynarr current_specifiers;
 
 static void recompute_cached_specifier_everywhere (Lisp_Object specifier);
@@ -513,7 +513,7 @@ A domain is used to instance a specifier (i.e. determine the specifier's
 value in that domain).  Valid domains are a window, frame, or device.
 (nil is not valid.)
 */
-       (domain))
+     (domain))
 {
   /* This cannot GC. */
   if ((DEVICEP (domain) && DEVICE_LIVE_P (XDEVICE (domain))) ||
@@ -530,7 +530,7 @@ Valid locale types are 'global, 'device, 'frame, 'window, and 'buffer.
 (Note, however, that in functions that accept either a locale or a locale
 type, 'global is considered an individual locale.)
 */
-       (locale_type))
+     (locale_type))
 {
   /* This cannot GC. */
   if (EQ (locale_type, Qglobal) ||
@@ -686,7 +686,7 @@ all tags in the tag set attached to that instantiator.
 Most of the time, a tag set is not specified, and the instantiator
 gets a null tag set, which matches all devices.
 */
-       (tag_set))
+     (tag_set))
 {
   Lisp_Object rest;
 
@@ -1048,10 +1048,10 @@ check_valid_instantiator (Lisp_Object instantiator,
 	  struct gcpro gcpro1;
 
 	  GCPRO1 (opaque);
-	  retval = call_with_suspended_errors
-	    ((lisp_fn_t) call_validate_method,
-	     Qnil, Qspecifier, errb, 2, opaque, instantiator);
-	  
+	  retval = call_with_suspended_errors (call_validate_method,
+					       Qnil,
+					       Qspecifier, errb, 2,
+					       opaque, instantiator);
 	  free_opaque_ptr (opaque);
 	  UNGCPRO;
 	}
@@ -1918,7 +1918,7 @@ no instantiators will be screened out.) If EXACT-P is non-nil, however,
 TAG-SET must be equal to an instantiator's tag set for the instantiator
 to be returned.
 */
-       (specifier, locale, tag_set, exact_p))
+     (specifier, locale, tag_set, exact_p))
 {
   struct specifier_spec_list_closure cl;
   struct gcpro gcpro1, gcpro2;
@@ -2151,10 +2151,10 @@ check_valid_specifier_matchspec (Lisp_Object matchspec,
 	  struct gcpro gcpro1;
 
 	  GCPRO1 (opaque);
-	  retval = call_with_suspended_errors
-	    ((lisp_fn_t) call_validate_matchspec_method,
-	     Qnil, Qspecifier, errb, 2, opaque, matchspec);
-	  
+	  retval = call_with_suspended_errors (call_validate_matchspec_method,
+					       Qnil,
+					       Qspecifier, errb, 2,
+					       opaque, matchspec);
 	  free_opaque_ptr (opaque);
 	  UNGCPRO;
 	}
@@ -2275,10 +2275,11 @@ specifier_instance_from_inst_list (Lisp_Object specifier,
 	  Lisp_Object val = XCDR (tagged_inst);
 
 	  if (HAS_SPECMETH_P (sp, instantiate))
-	    val = call_with_suspended_errors
-	      ((lisp_fn_t) RAW_SPECMETH (sp, instantiate),
-	       Qunbound, Qspecifier, errb, 5, specifier,
-	       matchspec, domain, XCDR (tagged_inst), depth);
+	    val = call_with_suspended_errors (RAW_SPECMETH (sp, instantiate),
+					      Qunbound, Qspecifier, errb,
+					      5, specifier, matchspec, domain,
+					      XCDR (tagged_inst),
+					      depth);
 
 	  if (!UNBOUNDP (val))
 	    {
@@ -2344,8 +2345,6 @@ specifier_instance (Lisp_Object specifier, Lisp_Object matchspec,
   else if (DEVICEP (domain))
     device = domain;
   else
-    /* #### dmoore - dammit, this should just signal an error or something
-       shouldn't it? */
     abort ();
 
   if (NILP (buffer) && !NILP (window))
@@ -2771,6 +2770,7 @@ DEFINE_SPECIFIER_TYPE (generic);
 
    What really needs to be done is to write a function
    `make-specifier-type' that creates new specifier types.
+   #### I'll look into this for 19.14.
  */
 
 "A generic specifier is a generalized kind of specifier with user-defined\n"

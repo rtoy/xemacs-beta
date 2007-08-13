@@ -1,18 +1,14 @@
 \input texinfo
 @c
-@c FILE:         hyperbole.texi
-@c SUMMARY:      The Hyperbole User Manual for V4
-@c USAGE:        Hardcopy man from TeX; Info man from `texinfo-format-buffer'.
+@c FILE:         hypb.texi
+@c SUMMARY:      The Hyperbole User Manual for V3
+@c USAGE:        Hardcopy man from TeX; Info man from 'texinfo-format-buffer'.
 @c
 @c AUTHOR:       Bob Weiner
-@c
-@c ORG:          InfoDock Associates.  We sell corporate support and
-@c               development contracts for InfoDock, Emacs and XEmacs.
-@c               E-mail: <info@infodock.com>  Web: http://www.infodock.com
-@c               Tel: +1 408-243-3300
+@c ORG:          Brown U.
 @c
 @c ORIG-DATE:     6-Nov-91 at 11:18:03
-@c LAST-MOD:     17-Mar-97 at 21:36:15 by Bob Weiner
+@c LAST-MOD:      3-Nov-95 at 23:55:27 by Bob Weiner
 
 @c %**start of header (This is for running Texinfo on a region.)
 @setfilename ../info/hyperbole.info
@@ -31,38 +27,19 @@
 @center Everyday Information Management
 @sp 5
 @center Bob Weiner
-@center InfoDock Associates
 @sp 1
-@center E-mail: <hyperbole@@infodock.com>  (This is a mailing list.)
+@center E-mail: <hyperbole@@hub.ucsb.edu>  (This is a mail list.)
 @sp 2
-@center Edition 4.023
+@center Edition 4.01
 @sp 2
-@center March 17, 1997
+@center November 3, 1995
 
 @page
 @vskip 0pt plus 1filll
-Copyright @copyright{} 1991, 1992, 1993, 1994, 1995, 1996, 1997  Free Software Foundation, Inc.
+Copyright @copyright{} 1991, 1992, 1993, 1994, 1995  Free Software Foundation, Inc.
 
 All trademarks referenced herein are trademarks of their respective
 holders.
-
-InfoDock Associates, the developer of Hyperbole and InfoDock (an industrial
-quality turn-key version of XEmacs), donates its work on Hyperbole to the
-Free Software Foundation and makes it freely available for worldwide
-distribution.
-
-InfoDock Associates is a commercial firm dedicated to radical productivity
-improvement in technical environments, whether in software development or
-other knowledge intensive disciplines.  Our initial offerings include high
-quality commercial support, training, books and custom package development
-for InfoDock, XEmacs or GNU Emacs on a variety of platforms.
-
-@example
-  E-mail: <info@@infodock.com>
-  Web:    http://www.infodock.com
-  Tel:    +1 408-243-3300
-@end example
-
 @setchapternewpage odd
 @end titlepage
 @page
@@ -73,30 +50,13 @@ for InfoDock, XEmacs or GNU Emacs on a variety of platforms.
 
 @ifinfo
 @noindent
-Copyright @copyright{} 1991, 1992, 1993, 1994, 1995, 1996, 1997  Free Software Foundation, Inc.
+Copyright @copyright{} 1991, 1992, 1993, 1994, 1995  Free Software Foundation, Inc.
 
 All trademarks referenced herein are trademarks of their respective holders.
 
-InfoDock Associates, the developer of Hyperbole and InfoDock (an industrial
-quality turn-key version of XEmacs), donates its work on Hyperbole to the
-Free Software Foundation and makes it freely available for worldwide
-distribution.
-
-InfoDock Associates is a commercial firm dedicated to radical productivity
-improvement in technical environments, whether in software development or
-other knowledge intensive disciplines.  Our initial offerings include high
-quality commercial support, training, books and custom package development
-for InfoDock, XEmacs or GNU Emacs on a variety of platforms.
-
-@example
-  E-mail: <info@@infodock.com>
-  Web:    http://www.infodock.com
-  Tel:    +1 408-243-3300
-@end example
-
 @end ifinfo
 This edition of the Hyperbole User Manual is for use with any version
-4.02 or greater of Hyperbole.
+4.01 or greater of Hyperbole.
 
 Hyperbole is free software; you can use it, redistribute it and/or modify it
 without fee under the terms of the GNU General Public License as published by
@@ -115,9 +75,11 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 @cindex InfoDock, obtaining
 @cindex Hyperbole, obtaining
 @cindex anonymous ftp
-Hyperbole was designed and written by Bob Weiner of InfoDock Associates.
-Motorola, Inc@. helped fund early work.  For information on how to
-obtain Hyperbole, @ref{Obtaining}.
+Hyperbole was designed and written by Bob Weiner.  Motorola,
+Inc@. funded and donated this work for free redistribution as part of
+the InfoDock integrated software engineering and productivity toolset.
+For information on how to obtain Hyperbole, @ref{Obtaining}.  InfoDock
+can be found at the same location.
 
 This manual explains user operation and summarizes basic developer
 facilities of Hyperbole.  This major release of Hyperbole concentrates
@@ -131,17 +93,19 @@ manipulation within bodies of information.
 @cindex Emacs 19
 @cindex Epoch
 @cindex XEmacs
-Hyperbole (pronounced Hi-per-bo-lee) is an open, efficient, programmable
-information management and hypertext system.  It is intended for
-everyday work on any UNIX platform supported by GNU Emacs.  It works
-well with the versions of Emacs that support multiple X or NEXTSTEP
-windows: Emacs 19, XEmacs and Epoch.  Hyperbole allows hypertext buttons
-to be embedded within unstructured and structured files, mail messages
-and news articles.  It offers intuitive mouse-based control of
-information display within multiple windows.  It also provides
-point-and-click access to Info manuals, ftp archives, Wide-Area
-Information Servers (WAIS), and the World-Wide Web (WWW) hypertext
-system through encapsulations of software that support these protocols.
+@cindex Lucid Emacs
+Hyperbole (pronounced Hi-purr-boe-lee) is an open, efficient,
+programmable information management and hypertext system.  It is
+intended for everyday work on any UNIX platform supported by GNU Emacs.
+It works well with the versions of Emacs that support multiple X or
+NEXTSTEP windows: Emacs 19, XEmacs (formerly called Lucid Emacs) and
+Epoch.  Hyperbole allows hypertext buttons to be embedded within
+unstructured and structured files, mail messages and news articles.  It
+offers intuitive mouse-based control of information display within
+multiple windows.  It also provides point-and-click access to Info
+manuals, ftp archives, Wide-Area Information Servers (WAIS), and the
+World-Wide Web (WWW) hypertext system through encapsulations of software
+that support these protocols.
 
 @noindent
 Hyperbole consists of four parts:
@@ -478,8 +442,8 @@ archive entries.
 @section   Mail Lists
 
 If you maintain or use Hyperbole, you should consider joining one of the
-two Hyperbole mailing lists.  @xref{Menus}, and the description
-of the the Msg/ menu item, for a convenient means of joining and mailing
+two Hyperbole interest mailing lists.  @xref{Menus}, and the description
+of the Msg/ menu item, for a convenient means of joining and mailing
 to these lists.
 
 @cindex mail lists
@@ -492,8 +456,8 @@ for before you mail to any of them.
 @cindex subscribing to a mail list
 @cindex unsubscribing from a mail list
 @format
-<hyperbole-request@@infodock.com>
-<hyperbole-announce-request@@infodock.com>
+<hyperbole-request@@hub.ucsb.edu>
+<hyperbole-announce-request@@hub.ucsb.edu>
 @end format
 
 @display
@@ -504,24 +468,22 @@ such a request to a Hyperbole mail list or people will wonder why you
 don't know that all Internet mail lists have a -request address for
 administrative requests.@refill
 
-Use the following formats in the @emph{body} of your message to execute requests,
-where you substitute your own values for the <> delimited items and items
-enclosed in [] are optional.
+Use the following formats on your subject line to execute requests,
+where you substitute your own values for the <> delimited items.@refill
 
-     subscribe <mail-list-name> [<your-email-address>]
-       or
-     unsubscribe <mail-list-name> [<your-email-address>]
+   Subject: Subscribe '<' <user@@domain> '>' (<your name>).
+   Subject: Unsubscribe '<' <user@@domain> '>'.
+
+To change your address, you must unsubscribe your old address in one
+message and then subscribe your new address in another message.@refill
 
 For example:
 
-     To: hyperbole-request@@infodock.com
-     Subject: Used if a human happens to read your mail.
+   To: hyperbole-announce-request@@hub.ucsb.edu
+   Subject: Unsubscribe <joe@@any.com>.
 
-     subscribe hyperbole joe@@nowhere.gov
-
-   To change your address, you must unsubscribe your old address with
-   once command and subscribe your new address with another command, though
-   you can embed multiple commands on separate lines within a single message.
+   To: hyperbole-announce-request@@hub.ucsb.edu
+   Subject: Subscribe <joe@@any.com> (Joe Williams).
 @end display
 
 @noindent
@@ -530,7 +492,7 @@ not to both.
 
 @cindex hyperbole mail list
 @format
-<hyperbole@@infodock.com>
+<hyperbole@@hub.ucsb.edu>
 @end format
 
 @display
@@ -575,7 +537,7 @@ messages that ask for, but provide no information.@refill
 
 @cindex hyperbole-announce mail list
 @format
-<hyperbole-announce@@infodock.com>
+<hyperbole-announce@@hub.ucsb.edu>
 @end format
 
 @display
@@ -673,9 +635,14 @@ load it.  (If you are familiar with Emacs Lisp, @ref{Hook Variables}.)
 @node Obtaining, Building, Installation, Installation
 @section   Obtaining
 
+@cindex InfoDock
 @cindex ftp
 @cindex anonymous ftp
-Hyperbole can be obtained via anonymous ftp on the Internet from:
+Hyperbole is actually part of an integrated tool framework that we have
+developed called InfoDock.  InfoDock provides a modern user interface on top
+of Emacs, information management, and powerful software development tools,
+all in one package.  Hyperbole or InfoDock can be obtained via anonymous
+ftp on the Internet from:
 
 @file{ftp://ftp.xemacs.org/pub/infodock}.
 
@@ -697,7 +664,7 @@ be created.  Unpacking the Hyperbole archive will create the
 Ftp to ftp.xemacs.org  (Internet Host ID = 128.174.252.16):
 
 @example
-   prompt> ftp ftp.xemacs.org  (If this doesn't work, try `ftp xemacs.org'.)
+   prompt> ftp ftp.xemacs.org
 @end example
 
 @noindent
@@ -716,7 +683,7 @@ a password.
 Move to the Hyperbole directory:
 
 @example
-   ftp> cd pub/xemacs/infodock
+   ftp> cd pub/infodock
 @end example
 
 @noindent
@@ -964,18 +931,12 @@ in the minibuffer window.
 @node Configuring,  , Installing, Installation
 @section   Configuring
 
-@cindex menu, Cust
-@cindex customization
-Major Hyperbole user options can be set from the window-system-based
-Customization submenu below the Hyperbole menu.  Alternatively, the
-minibuffer-based menu, Cust/ may be used.
-
 @cindex configuration
 @vindex file, hyperbole.el
 @vindex file, hsite.el
-There are many additional Hyperbole configuration options that may be
-changed by editing the @file{hyperbole.el} and @file{hsite.el} files in
-the @file{hyperbole/} directory.  The following sections discuss the
+There are many Hyperbole configuration options that may be changed by
+editing the @file{hyperbole.el} and @file{hsite.el} files in the
+@file{hyperbole/} directory.  The following sections discuss the
 configuration options most likely to be of interest to users.
 
 @menu
@@ -1203,46 +1164,43 @@ in response to simple mouse clicks.
 @cindex ibtypes, list of
 @noindent
 See @file{hibtypes.el} for complete examples.  Standard implicit button
-types are listed below in the order in which Hyperbole tries to match
-to the types when looking for an implicit button.
+types include (in alphabetical order):
 
 @table @code
 
-@item doc-id
-@findex ibtypes::doc-id
-@cindex online library
-@cindex document identifier
-Displays an index entry for a site-specific document given its id.  Ids
-must be delimited by `doc-id-start' and `doc-id-end' and must match the
-function given by `doc-id-p'.  This permits creation of catalogued
-online libraries.  See @file{$@{hyperb:dir@}/hib-doc-id.el} for more
-information.@refill
+@item annot-bib
+@findex ibtypes::annot-bib
+@cindex bibliography
+@cindex reference
+Displays annotated bibliography entries referenced internally, delimeters = [].
+References must be delimited by square brackets, must begin with a
+word constituent character, and must not be in buffers whose
+names begin with a ' ' or '*' character.
 
 @item completion
 @findex ibtypes::completion
 @cindex completion
 Inserts completion at point into minibuffer or other window.
 
-@item Info-node
-@findex ibtypes::Info-node
-@cindex Info node
-Makes "(file)node" buttons display the associated Info node.
+@item dir-summary
+@findex ibtypes::dir-summary
+@vindex file, MANIFEST
+@vindex file, DIR
+Detects filename buttons in files named "MANIFEST" or "DIR".
+Displays selected files.
+Each file name must be at the beginning of the line and must be followed
+by one or more spaces and then another non-space, non-parenthesis, non-brace
+character.
 
-@item mail-address
-@findex ibtypes::mail-address
-@cindex e-mail address
-@cindex rolodex address
-@cindex address
-If on an e-mail address in a specific buffer type, mail to that address
-in another window. Applies to the rolodex match buffer, any buffer
-attached to a file in @var{rolo-file-list}, or any buffer with @file{mail}
-or @file{rolo} (case-insensitive) within its name.
-
-@item patch-msg
-@findex ibtypes::patch-msg
-@cindex patch output
-Jumps to source code associated with output from the @code{patch}
-program.  Patch applies diffs to source code.
+@item doc-id
+@findex ibtypes::doc-id
+@cindex online library
+@cindex document identifier
+Displays an index entry for a site-specific document given its id.  Ids
+must be delimited by 'doc-id-start' and 'doc-id-end' and must match the
+function given by 'doc-id-p'.  This permits creation of catalogued
+online libraries.  See @file{$@{hyperb:dir@}/hib-doc-id.el} for more
+information.@refill
 
 @item elisp-compiler-msg
 @findex ibtypes::elisp-compiler-msg
@@ -1251,13 +1209,6 @@ program.  Patch applies diffs to source code.
 @cindex compiler error
 Jumps to source code for definition associated with byte-compiler error
 message.  Works when activated anywhere within an error line.
-
-@item grep-msg
-@findex ibtypes::grep-msg
-@cindex grep
-@cindex compiler error
-Jumps to line associated with grep or compilation error msgs.
-Messages are recognized in any buffer.
 
 @item debugger-source
 @findex ibtypes::debugger-source
@@ -1269,6 +1220,70 @@ Messages are recognized in any buffer.
 @cindex source line
 Jumps to source line associated with debugger stack frame or breakpoint lines.
 This works with gdb, dbx, and xdb.  Such lines are recognized in any buffer.
+
+@item grep-msg
+@findex ibtypes::grep-msg
+@cindex grep
+@cindex compiler error
+Jumps to line associated with grep or compilation error msgs.
+Messages are recognized in any buffer.
+
+@item hyp-address
+@findex ibtypes::hyp-address
+@cindex Hyperbole mail list
+Turns a Hyperbole e-mail list address into an implicit button which
+inserts Hyperbole environment information.
+Useful when sending mail to a Hyperbole mail list.  See also the
+documentation for @code{actypes::hyp-config}.
+
+@item hyp-source
+@findex ibtypes::hyp-source
+@cindex Hyperbole report
+Turns source location entries in Hyperbole reports into buttons that jump to the associated location.
+
+@item Info-node
+@findex ibtypes::Info-node
+@cindex Info node
+Makes "(file)node" buttons display the associated Info node.
+
+@item kbd-key
+@findex ibtypes::kbd-key
+@cindex key sequence
+Executes a key sequence delimited by curly braces.
+Key sequences should be in human readable form, e.g@. @{@kbd{C-b}@}.
+Forms such as @{@}, @{@}, and @{^b@} will not be recognized.
+
+@item klink
+@findex ibtypes::klink
+@cindex klink
+@cindex koutline link
+@cindex kcell link
+Follows a link delimited by <> to a koutline cell.
+See documentation for @code{actypes::link-to-kotl} for valid link
+specifiers.
+
+@item mail-address
+@findex ibtypes::mail-address
+@cindex e-mail address
+@cindex rolodex address
+@cindex address
+If on an e-mail address in a specific buffer type, mail to that address
+in another window. Applies to the rolodex match buffer, any buffer
+attached to a file in @var{rolo-file-list}, or any buffer with @file{mail}
+or @file{rolo} (case-insensitive) within its name.
+
+@item man-apropos
+@findex ibtypes::man-apropos
+@item UNIX manual
+@item man pages
+@item man apropos
+Makes man apropos entries display associated man pages when selected.
+
+@item patch-msg
+@findex ibtypes::patch-msg
+@cindex patch output
+Jumps to source code associated with output from the @code{patch}
+program.  Patch applies diffs to source code.
 
 @item pathname
 @findex ibtypes::pathname
@@ -1283,45 +1298,12 @@ This works with gdb, dbx, and xdb.  Such lines are recognized in any buffer.
 @cindex link, pathname
 Makes a delimited, valid pathname display the path entry.
 Also works for delimited and non-delimited ange-ftp and efs pathnames.
-Also works for delimited and non-delimited ange-ftp and efs pathnames.
-Emacs Lisp library files (filenames that end in .el and .elc) are looked up
-using the load-path directory list.
-
-@noindent
 See @code{hpath:at-p} function documentation for possible delimiters.
 See @var{hpath:suffixes} variable documentation for suffixes that are
 added to or removed from pathname when searching for a valid match.
-See @code{hpath:find} function documentation for special file
-display options.
-
-@item klink
-@findex ibtypes::klink
-@cindex klink
-@cindex koutline link
-@cindex kcell link
-Follows a link delimited by <> to a koutline cell.
-See documentation for @code{actypes::link-to-kotl} for valid link
-specifiers.
-
-@item man-apropos
-@findex ibtypes::man-apropos
-@item UNIX manual
-@item man pages
-@item man apropos
-Makes man apropos entries display associated man pages when selected.
-
-@item hyp-source
-@findex ibtypes::hyp-source
-@cindex Hyperbole report
-Turns source location entries in Hyperbole reports into buttons that jump to the associated location.
-
-@item hyp-address
-@findex ibtypes::hyp-address
-@cindex Hyperbole mail list
-Turns a Hyperbole e-mail list address into an implicit button which
-inserts Hyperbole environment information.
-Useful when sending mail to a Hyperbole mail list.  See also the
-documentation for @code{actypes::hyp-config}.
+See @code{hpath:find} function documentation and
+@var{hpath:display-alist} and @var{hpath:find-alist} variable
+documentation for special file display options.
 
 @item rfc
 @findex ibtypes::rfc
@@ -1336,22 +1318,14 @@ following formats are recognized: RFC822, rfc-822, and RFC 822.  The
 @var{hpath:rfc} variable specifies the location from which to retrieve
 RFCs."
 
-@item kbd-key
-@findex ibtypes::kbd-key
-@cindex key sequence
-Executes a key sequence delimited by curly braces.
-Key sequences should be in human readable form, e.g@. @{@kbd{C-b}@}.
-Forms such as @{@}, @{@}, and @{^b@} will not be recognized.
-
-@item dir-summary
-@findex ibtypes::dir-summary
-@vindex file, MANIFEST
-@vindex file, DIR
-Detects filename buttons in files named "MANIFEST" or "DIR".
-Displays selected files.
-Each file name must be at the beginning of the line and must be followed
-by one or more spaces and then another non-space, non-parenthesis, non-brace
-character.
+@item rfc-toc
+@findex ibtypes::rfc-toc
+@cindex Internet RFC
+@cindex Request For Comment
+@cindex RFC
+@cindex table of contents
+Summarizes contents of an Internet rfc from anywhere within rfc buffer.
+Each line in summary may be selected to jump to section.
 
 @item text-toc
 @findex ibtypes::text-toc
@@ -1365,34 +1339,6 @@ entry must begin with some whitespace followed by one or more asterisk
 characters.  Each file section name line must start with one or more
 asterisk characters at the very beginning of the line.
 
-@item cscope
-@findex ibtypes::cscope
-@cindex C/C++ call trees
-@cindex C/C++ cross-reference
-@cindex Cscope
-Jumps to C/C++ source line associated with Cscope C analyzer output line.
-Requires pre-loading of the cscope.el Lisp library available from the Emacs
-Lisp archives and the commercial cscope program available from UNIX System
-Laboratories.  Otherwise, does nothing.
-
-@item rfc-toc
-@findex ibtypes::rfc-toc
-@cindex Internet RFC
-@cindex Request For Comment
-@cindex RFC
-@cindex table of contents
-Summarizes contents of an Internet rfc from anywhere within rfc buffer.
-Each line in summary may be selected to jump to section.
-
-@item annot-bib
-@findex ibtypes::annot-bib
-@cindex bibliography
-@cindex reference
-Displays annotated bibliography entries referenced internally, delimeters = [].
-References must be delimited by square brackets, must begin with a
-word constituent character, and must not be in buffers whose
-names begin with a ` ' or `*' character.
-
 @item www-url
 @findex ibtypes::www-url
 @cindex URL
@@ -1404,15 +1350,6 @@ names begin with a ` ' or `*' character.
 When not in a w3 browser buffer, follow any non-ftp url (link) at point.
 The variable, @var{action-key-url-function}, can be used to customize
 the url browser that is used.
-
-@item function-in-buffer
-@findex ibtypes::function-in-buffer
-@cindex functions
-@cindex func-menu
-Return function name defined within this buffer that point is within or
-after, else nil.   This triggers only when the func-menu.el package has
-been loaded and the current major mode is one handled by func-menu.
-
 @end table
 
 The Hyperbole Smart Keys offer extensive additional context-sensitive
@@ -1471,15 +1408,15 @@ Executes an external window-based SHELL-CMD string asynchronously.
 
 @item hyp-config
 @findex actypes::hyp-config
-Inserts Hyperbole configuration info at end of current buffer or optional OUT-BUF.
+Inserts Hyperbole configuration info at end of optional OUT-BUF or current.
 
 @item hyp-request
 @findex actypes::hyp-request
-Inserts Hyperbole mail list request help into current buffer or optional OUT-BUF.
+Inserts Hyperbole mail list request help into optional OUT-BUF or current.
 
 @item hyp-source
 @findex actypes::hyp-source
-Displays a buffer or file from a line beginning with `hbut:source-prefix'.
+Displays a buffer or file from a line beginning with 'hbut:source-prefix'.
 
 @item kbd-key
 @findex actypes::kbd-key
@@ -1490,7 +1427,7 @@ Returns t if a KEY-SEQUENCE has a binding, else nil.
 @findex actypes::link-to-buffer-tmp
 Displays a BUFFER in another window.
 Link is generally only good for current Emacs session.
-Use `link-to-file' instead for a permanent link.
+Use 'link-to-file' instead for a permanent link.
 
 @item link-to-directory
 @findex actypes::link-to-directory
@@ -1517,14 +1454,12 @@ With POINT, buffer is displayed with POINT at the top of the window.
 
 @item link-to-file-line
 @findex actypes::link-to-file-line
-Displays a file given by PATH scrolled to LINE-NUM.
+Displays a PATH in another window scrolled to LINE-NUM.
 
 @item link-to-kcell
 @findex actypes::link-to-kcell
-Displays FILE with kcell given by CELL-REF at window top.
-See documentation for `kcell:ref-to-id' for valid cell-ref formats.
-
-@noindent
+Displays FILE with kcell given by CELL-REF at the top of the window.
+CELL-REF may be a kcell's display label or its permanant idstamp.
 If FILE is nil, the current buffer is used.
 If CELL-REF is nil, the first cell in the view is shown.
 
@@ -1541,10 +1476,11 @@ LINK may be of any of the following forms, with or without delimiters:
 @noindent
 See documentation for @code{kcell:ref-to-id} for valid cell-ref formats.
 
+
 @item link-to-Info-node
 @findex actypes::link-to-Info-node
 Displays an Info NODE in another window.
-NODE must be a string of the form `(file)nodename'.
+NODE must be a string of the form '(file)nodename'.
 
 @item link-to-mail
 @findex actypes::link-to-mail
@@ -2174,17 +2110,17 @@ within your @file{~/.emacs} file.  For example, @code{(global-set-key
 @cindex menubar, Hyperbole menu
 Under InfoDock, XEmacs, and Emacs 19, pulldown and popup menus are
 available to invoke Hyperbole commands, including those from the rolodex
-and the outliner.  These menus operate like any other application menus
-and are fairly self-explanatory.  Use the Quit command on the Hyperbole
-menubar menu to get rid of the menu if you do not need it.  Invoking
-Hyperbole again will add the menu back to the menubar.
+and the outliner.  These menus operate like any other X window menus.
+Use the Quit command on the Hyperbole menubar menu to get rid of the
+menu if you do not need it.  Invoking Hyperbole again will add the menu
+back to the menubar.
 
 @cindex minibuffer menus
 This section discusses only the specialized @dfn{minibuffer menus} that
-appear in the minibuffer window and that work with all Emacs versions on
-all display devices.  Minibuffer menu items may be selected from either
-the keyboard or via mouse clicks.  When used with the keyboard, they
-provide rapid command access similar to key bindings.
+appear in the minibuffer window and that work with all Emacs versions.
+Minibuffer menu items may be selected from either the keyboard or via
+mouse clicks.  When used with the keyboard, they provide rapid command
+access similar to key bindings.
 
 @kindex C-h h
 @vindex action-key-default-function
@@ -2196,7 +2132,7 @@ minibuffer and should look mostly like so:
 
 @noindent
 @example
-Hy4>  Act Butfile/ Cust/ Doc/ Ebut/ Gbut/ Hist Ibut/ Msg/ Otl/ Rolo/ Win/
+Hy4>  Act Butfile/ Doc/ Ebut/ Gbut/ Hist Ibut/ Msg/ Otl/ Rolo/ Win/
 @end example
 
 @noindent
@@ -2216,35 +2152,20 @@ Display a local or global file of buttons, providing easy access.
 @file{HYPB} for a local button file and @file{~/.hyperb/HYPB} for your
 global file.  These are good places to start your button creation testing.
 
-@cindex menu, Cust
-@cindex customization
-@cindex option settings
-@item Cust/
-Customizes Hyperbole by setting major options.
-This includes where Hyperbole link referents are displayed, where URLs
-are displayed, whether the date stamps are added to rolodex entries, and
-whether to use proportional or windowful scrolling when a Smart Key is
-pressed at the end of a line.  @xref{Configuring}.
-
 @cindex menu, EBut
 @item Ebut/
-All explicit button commands.  The window-system-based Hyperbole
-menu includes a menu item that activates each explicit button found
-in the current buffer.
+All explicit button commands.
 
 @cindex menu, Doc
 @cindex menu, Types
 @item Doc/
-Hyperbole documentation quick access.  Contains About item describing
-Hyperbole and a Demo item which demonstrates a number of Hyperbole
-features.  It also contains the Types/ submenu for documentation on
-Hyperbole implicit button and action types.
+Hyperbole documentation quick access.  Contains Types/ submenu for
+documentation on Hyperbole implicit button and action types.
 
 @cindex menu, Global Buttons
 @item Gbut/
 All global button commands.  Global buttons are accessed by name
-rather than by direct selection.  The window-system-based Hyperbole
-menu also includes a menu item that activates each global button.
+rather than by direct selection.
 
 @cindex menu, History
 @cindex history
@@ -2257,9 +2178,9 @@ All implicit button commands.
 
 @cindex menu, Message
 @item Msg/
-Hyperbole-specific mail and news messaging support commands.  Use this
-to send mail to a Hyperbole mail list or to add/modify/delete your entry
-on a list.
+Hyperbole-specific mail and news messaging support commands.
+Use this to send mail to the Hyperbole discussion list or to
+add/modify your entry on a Hyperbole mail list.
 
 @cindex menu, Outliner
 @item Otl/
@@ -2396,6 +2317,8 @@ commands available in the outliner.
 The Otl/ menu entry on the Hyperbole top-level menu provides access to
 a number of major outliner commands:
 
+@example
+@group
 @cindex outliner commands
 @cindex Koutliner commands
 @findex kotl-mode:show-all
@@ -2410,8 +2333,6 @@ a number of major outliner commands:
 @findex kotl-mode:top-cells
 @findex kvspec:activate
 @cindex menu, Outline
-@example
-@group
 Menu Item    Command                    Description
 ====================================================================
 All          kotl-mode:show-all         Expand all cells
@@ -3078,7 +2999,7 @@ sequence.  @xref{Links}.
 The current view spec is saved whenever the outline is saved.  The next
 time the outline is read in, this will be the initial view.
 
-The rest of this section documents the the view spec characters that are
+The rest of this section documents the view spec characters that are
 presently supported and explains how to invoke a view spec.  There is no
 user-level way to add your own view spec characters, so all character
 codes are reserved for future use.
@@ -3379,19 +3300,17 @@ Here is an example of a simple rolodex file.
 @end group
 @end example
 
-We call rolodex records, @dfn{entries}.  Entries begin with a delimiter
-of one or more `*' characters at the beginning of a line.  Entries may
+We call rolodex records, @dfn{entries}.  Entries begin with a delimiter,
+some number of `*' characters at the beginning of a line.  Entries may
 be arranged in a hierarchy, where child entries begin with one more `*'
-character than do their parents.  Top level entries begin with a single
+characters than do their parents.  Top level entries begin with a single
 `*'.
 
 Beyond this initial delimiter, entries are completely free-form text.
 It is best to use a "lastname, firstname" format, however, when adding
 contact entries into a rolodex.  Then the rolodex system will
 automatically keep your entries alphabetized as you enter them.  You'll
-also be able to sort them whenever you desire.  This is what the
-rolodex will use if you accept the default entry that it prompts you
-with when adding a new entry.
+also be able to sort them whenever you desire.
 
 Any search done on the rolodex scans the full text of each entry.
 During a search, the rolodex file header separator lines and anything in
@@ -3428,6 +3347,8 @@ The Rolo/ menu entry on the Hyperbole top-level menu provides the
 user interface to the rolodex.  The rolo menu provides access to the
 following commands:
 
+@example
+@group
 @cindex rolodex commands
 @cindex Wrolo commands
 @findex rolo-add
@@ -3440,8 +3361,6 @@ following commands:
 @findex rolo-fgrep
 @findex rolo-word
 @findex rolo-yank
-@example
-@group
 Menu Item       Command               Description
 ====================================================================
 Add             rolo-add              Adds a rolodex entry
@@ -3494,23 +3413,9 @@ Thus, "Underlings" as a search pattern will find an entry containing
 @section   Rolo Keys
 
 @kindex e
-@cindex rolodex, editing
-@cindex datestamps
-@cindex rolodex, datestamps
-@cindex customization, rolodex datestamps
-@cindex menu, Toggle-Rolo-Dates
-@cindex customization, rolodex edits
-@cindex customization, rolodex additions
-@vindex wrolo-edit-hook
-@vindex wrolo-add-hook
+@cindex rolodex, editing an entry
 Use the @{@kbd{e}@} key to edit the entry at point within the rolodex
-source file.  A datestamp will be automatically added or updated at the
-end of the entry, unless this feature has been turned off via the
-Cust/Toggle-Rolo-Dates menu item.  The variable, @var{wrolo-edit-hook},
-is evaluated after the update of the entry datestamp.  This allows
-programmed modification of the way rolodex edits work.  The variable,
-@var{wrolo-add-hook}, works the same way but is evaluated when a new
-entry is first added.
+source file.
 
 @cindex wrolo menu
 @cindex rolodex keys
@@ -3573,7 +3478,7 @@ Move to the next entry at any level.
 Move to the previous entry at any level.
 @kindex u
 @item u
-Move the the previous entry one level up.
+Move to the previous entry one level up.
 @kindex .
 @kindex <
 @item .
@@ -3619,8 +3524,8 @@ saved.  If you would rather always save files yourself, use this
 setting: @code{(setq rolo-save-buffers-after-use nil)}.
 
 @vindex rolo-email-format
-When adding an entry from within a buffer that contains a mail message,
-the rolodex add function will extract the sender's name and e-mail address
+When adding an entry from within a buffer containing a mail message, the
+rolodex add function will extract the sender's name and e-mail address
 and prompt you with the name as a default.  If you accept it, it will
 enter the name and the email address using the format given by the
 @var{rolo-email-format} variable.  See its documentation if you want to
@@ -3683,6 +3588,8 @@ window configuration commands:
 WinConfig>  AddName  DeleteName  RestoreName  PopRing  SaveRing  YankRing
 @end display
 
+@example
+@group
 @cindex wconfig commands
 @cindex window configuration commands
 @findex wconfig-add-by-name
@@ -3691,8 +3598,6 @@ WinConfig>  AddName  DeleteName  RestoreName  PopRing  SaveRing  YankRing
 @findex wconfig-delete-pop
 @findex wconfig-ring-save
 @findex wconfig-yank-pop
-@example
-@group
 Menu Item       Command                   Description
 ====================================================================
 AddName         wconfig-add-by-name       Name current wconfig
@@ -4671,10 +4576,10 @@ operations in this section apply only if you have mouse support within
 Hyperbole.  The Smart Key operations in, @ref{Smart Keyboard Keys},
 apply to both mouse and keyboard Smart Key usage.
 
-@cindex drag, side edge
-@cindex side drag
 @format
 @group
+@cindex drag, side edge
+@cindex side drag
 If dragged from a side-by-side window edge or from the immediate left of
 a vertical scroll bar:
   ACTION or ASSIST
@@ -4696,10 +4601,10 @@ If dragged from inside one window to another:
 @end format
 
 @page
-@cindex drag, horizontal
-@cindex horizontal drag
 @format
 @group
+@cindex drag, horizontal
+@cindex horizontal drag
 If dragged horizontally within a single window while depressed
 (hmouse-x-drag-sensitivity sets the minimal horizontal movement which
 registers a drag):
@@ -4711,10 +4616,10 @@ registers a drag):
 @end group
 @end format
 
-@cindex depress, modeline
-@cindex modeline depress
 @format
 @group
+@cindex depress, modeline
+@cindex modeline depress
 If depressed within a window mode line:
   ACTION
      (1) clicked on left edge of a window's modeline,
@@ -4724,7 +4629,7 @@ If depressed within a window mode line:
          modeline clicked belongs to a window displaying Info, the Info
          buffer is hidden;
      (3) clicked anywhere in the middle of a window's modeline,
-	 the functions listed in `assist-key-modeline-hook' are
+	 the functions listed in 'assist-key-modeline-hook' are
          called;
      (4) dragged vertically from modeline to within a window,
          the modeline is moved to point of key release, thereby resizing
@@ -4745,10 +4650,10 @@ If depressed within a window mode line:
 @end format
 
 @page
-@cindex drag, vertical
-@cindex vertical drag
 @format
 @group
+@cindex drag, vertical
+@cindex vertical drag
 If dragged vertically within a single window while depressed
 (hmouse-y-drag-sensitivity sets the minimal vertical movement which
 registers a drag):
@@ -4757,10 +4662,10 @@ registers a drag):
 @end group
 @end format
 
-@cindex drag, diagonal
-@cindex diagonal drag
 @format
 @group
+@cindex drag, diagonal
+@cindex diagonal drag
 If dragged diagonally within a single window while depressed
 (hmouse-x-diagonal-sensitivity and hmouse-y-diagonal-sensitivity set the
 minimal diagonal movement which registers a drag):
@@ -4802,22 +4707,13 @@ When reading a Hyperbole menu item or a Hyperbole completion-based argument:
 @end group
 @end format
 
-@format
-@group
-If in ID-edit mode (a package from InfoDock Associates that supports
-rapid killing, copying, ynaking and display-management):
-  ACTION or ASSIST
-     Yanks (pastes) last selected region at point.
-@end group
-@end format
-
 @vindex smart-scroll-proportional
 @cindex proportional scrolling
 @cindex scrolling
-@cindex click, end of line
-@cindex end of line click
 @format
 @group
+@cindex click, end of line
+@cindex end of line click
 When pressed at the end of a line but not the end of a buffer:
   ACTION
      Scrolls up according to value of smart-scroll-proportional.  If
@@ -4836,33 +4732,13 @@ When pressed at the end of a line but not the end of a buffer:
 
 @format
 @group
-When pressed on a Smart Menu item:
-  ACTION
-    Activates item.
-  ASSIST
-    Displays help for item.
-@end group
-@end format
-
 @cindex click, button
 @cindex button click
-@format
-@group
 When pressed on a Hyperbole button:
   ACTION
      Activates button.
   ASSIST
      Displays help for button, typically a summary of its attributes.
-@end group
-@end format
-
-@format
-@group
-If Smart Menu package has been loaded and `hkey-always-display-menu' is
-non-nil:
-  ACTION or ASSIST
-     Pops up a window with a Smart Menu of commands.
-     Menu displayed is selected by (smart-menu-choose-menu).
 @end group
 @end format
 
@@ -4902,6 +4778,16 @@ When pressed within a Hyperbole outliner buffer (kotl-mode):
 @end group
 @end format
 
+@format
+@group
+When pressed on a Smart Menu item:
+  ACTION
+    Activates item.
+  ASSIST
+    Displays help for item.
+@end group
+@end format
+
 @page
 @format
 @group
@@ -4913,16 +4799,66 @@ When pressed at the end of a Help buffer:
 
 @format
 @group
+When pressed within an OO-Browser listing window:
+  ACTION
+     (1) in a blank buffer or at the end of a buffer, browser help
+         information is displayed in the viewer window;
+     (2) at the beginning of a (non-single char) class name, the class'
+         ancestors are listed;
+     (3) at the end of an entry line, scrolls listing up;
+     (4) on the '...', following a class name, point is moved to the class
+         descendency expansion;
+     (5) before an element name, the implementor classes of the name are
+         listed;
+     (6) anywhere else on an entry line, the source is displayed for editing.
+  ASSIST
+     (1) in a blank buffer, a selection list of buffer files is displayed;
+     (2) at the beginning of a (non-single char) entry, the class'
+         descendants are listed;
+     (3) at the end of an entry line, scrolls listing down;
+     (4) on the '...', following a class name, point is moved to the class
+         expansion;
+     (5) anywhere else on a class entry line, lists the class' elements;
+     (6) anywhere else on an element line, lists the element's implementor
+         classes;
+     (7) on a blank line following all entries, the current listing buffer
+         is exited.
+@end group
+@end format
+
+@format
+@group
+When pressed within an OO-Browser Command Help Menu buffer:
+  ACTION
+     Executes an OO-Browser command whose key binding is at point.
+  ASSIST
+     Displays help for an OO-Browser command whose key binding is at point.
+@end group
+@end format
+
+@format
+@group
+When pressed on an identifier within an OO-Browser source file:
+  ACTION
+     Tries to display identifier definition.
+  ASSIST
+     Not applicable.
+@end group
+@end format
+
+@page
+@format
+@group
 When pressed within a C source code file:
   ACTION
      Jumps to the definition of selected C construct:
-     (1) on a `#include' statement, the include file is displayed;
+     (1) on a '#include' statement, the include file is displayed;
          Look for include file in directory lists
-         `smart-c-cpp-include-dirs' and `smart-c-include-dirs'.
+         'smart-c-cpp-include-dirs' and 'smart-c-include-dirs'.
      (2) on a C identifier, the identifier definition is displayed,
-         assuming the identifier is found within an `etags' generated tag file
+         assuming the identifier is found within an 'etags' generated tag file
          in the current directory or any of its ancestor directories.
-     (3) if `smart-c-use-lib-man' is non-nil, the C identifier is
+     (3) if 'smart-c-use-lib-man' is non-nil, the C identifier is
          recognized as a library symbol, and a man page is found for the
          identifier, then the man page is displayed.
   ASSIST
@@ -4937,11 +4873,50 @@ When pressed within an assembly source code file:
      Jumps to the definition of selected assembly construct:
      (1) on an include statement, the include file is displayed;
          Look for include file in directory list
-         `smart-asm-include-dirs'.
+         'smart-asm-include-dirs'.
      (2) on an identifier, the identifier definition is displayed,
-         assuming the identifier is found within an `etags' generated
+         assuming the identifier is found within an 'etags' generated
 	 tag file in the current directory or any of its ancestor
 	 directories.
+  ASSIST
+     Jumps to the next tag matching an identifier at point.
+@end group
+@end format
+
+@page
+@format
+@group
+When pressed within a C++ source code file:
+  ACTION
+     Jumps to the definition of selected C+ construct:
+     (1) on a '#include' statement, the include file is displayed;
+         Look for include file in directory lists
+         'smart-c-cpp-include-dirs' and 'smart-c-include-dirs'.
+     (2) on a C++ identifier, the identifier definition is displayed,
+         assuming the identifier is found within an 'etags' generated tag file
+         in the current directory or any of its ancestor directories.
+     (3) if 'smart-c-use-lib-man' is non-nil, the C++ identifier is
+         recognized as a library symbol, and a man page is found for the
+         identifier, then the man page is displayed.
+  ASSIST
+     Jumps to the next tag matching an identifier at point.
+@end group
+@end format
+
+@format
+@group
+When pressed within a Objective-C source code file:
+  ACTION
+     Jumps to the definition of selected C+ construct:
+     (1) on a '#include' statement, the include file is displayed;
+         Look for include file in directory lists
+         'smart-c-cpp-include-dirs' and 'smart-c-include-dirs'.
+     (2) on an Objective-C identifier, the identifier definition is displayed,
+         assuming the identifier is found within an 'etags' generated tag file
+         in the current directory or any of its ancestor directories.
+     (3) if 'smart-c-use-lib-man' is non-nil, the Objective-C identifier is
+         recognized as a library symbol, and a man page is found for the
+         identifier, then the man page is displayed.
   ASSIST
      Jumps to the next tag matching an identifier at point.
 @end group
@@ -4953,7 +4928,7 @@ When pressed within an assembly source code file:
 When pressed on a Lisp symbol within a Lisp code buffer:
   ACTION
      Jumps to the definition of any selected Lisp construct.
-     If on an Emacs Lisp require, load, or autoload clause and `find-library'
+     If on an Emacs Lisp require, load, or autoload clause and 'find-library'
      from load-library package by Hallvard Furuseth <hallvard@@ifi.uio.no> has
      been loaded, jumps to library source, if possible.
   ASSIST
@@ -4963,74 +4938,16 @@ When pressed on a Lisp symbol within a Lisp code buffer:
 @end group
 @end format
 
-@page
-@format
-@group
-When pressed within a Java source code file:
-  ACTION
-     Jumps to the definition of selected Java construct:
-     (1) within a commented @@see cross-reference, the referent is
-         displayed;
-     (2) on a `package' or `import' statement, the referent is
-         displayed; Look for referent files in the directory list
-         `smart-java-package-dirs'.
-     (3) on an Java identifier, the identifier definition is displayed,
-         assuming the identifier is found within an `etags' generated
-         tag file in the current directory or any of its ancestor
-         directories."
-  ASSIST
-     Jumps to the next tag matching an identifier at point.
-@end group
-@end format
-
-@format
-@group
-When pressed within a C++ source code file:
-  ACTION
-     Jumps to the definition of selected C++ construct:
-     (1) on a `#include' statement, the include file is displayed;
-         Look for include file in directory lists
-         `smart-c-cpp-include-dirs' and `smart-c-include-dirs'.
-     (2) on a C++ identifier, the identifier definition is displayed,
-         assuming the identifier is found within an `etags' generated tag file
-         in the current directory or any of its ancestor directories.
-     (3) if `smart-c-use-lib-man' is non-nil, the C++ identifier is
-         recognized as a library symbol, and a man page is found for the
-         identifier, then the man page is displayed.
-  ASSIST
-     Jumps to the next tag matching an identifier at point.
-@end group
-@end format
-
 @format
 @group
 When the OO-Browser has been loaded and the press is within a C++ buffer:
   ACTION or ASSIST
      Jumps to the definition of selected C++ construct via OO-Browser support.
-     (1) on a `#include' statement, the include file is displayed;
+     (1) on a '#include' statement, the include file is displayed;
          Look for include file in directory lists
-         `smart-c-cpp-include-dirs' and `smart-c-include-dirs'.
+         'smart-c-cpp-include-dirs' and 'smart-c-include-dirs'.
      (2) within a method declaration, its definition is displayed;
      (3) on a class name, the class definition is shown.
-@end group
-@end format
-
-@format
-@group
-When pressed within a Objective-C source code file:
-  ACTION
-     Jumps to the definition of selected C+ construct:
-     (1) on a `#include' statement, the include file is displayed;
-         Look for include file in directory lists
-         `smart-c-cpp-include-dirs' and `smart-c-include-dirs'.
-     (2) on an Objective-C identifier, the identifier definition is displayed,
-         assuming the identifier is found within an `etags' generated tag file
-         in the current directory or any of its ancestor directories.
-     (3) if `smart-c-use-lib-man' is non-nil, the Objective-C identifier is
-         recognized as a library symbol, and a man page is found for the
-         identifier, then the man page is displayed.
-  ASSIST
-     Jumps to the next tag matching an identifier at point.
 @end group
 @end format
 
@@ -5041,19 +4958,11 @@ Objective-C buffer:
   ACTION or ASSIST
      Jumps to the definition of selected Objective-C construct via
      OO-Browser support.
-     (1) on a `#include' statement, the include file is displayed;
+     (1) on a '#include' statement, the include file is displayed;
          Look for include file in directory lists
-         `smart-c-cpp-include-dirs' and `smart-c-include-dirs'.
+         'smart-c-cpp-include-dirs' and 'smart-c-include-dirs'.
      (2) within a method declaration, its definition is displayed;
      (3) on a class name, the class definition is shown.
-@end group
-@end format
-
-@format
-@group
-When pressed within a Fortran source code file:
-  ACTION or ASSIST
-     Jumps to the next tag matching an identifier at point.
 @end group
 @end format
 
@@ -5099,60 +5008,20 @@ When pressed within a man page apropos buffer:
 @end group
 @end format
 
-@page
 @format
 @group
-When pressed within an OO-Browser listing window:
-  ACTION
-     (1) in a blank buffer or at the end of a buffer, browser help
-         information is displayed in the viewer window;
-     (2) at the beginning of a (non-single char) class name, the class'
-         ancestors are listed;
-     (3) at the end of an entry line, scrolls listing up;
-     (4) on the `...', following a class name, point is moved to the class
-         descendency expansion;
-     (5) before an element name, the implementor classes of the name are
-         listed;
-     (6) anywhere else on an entry line, the source is displayed for editing.
-  ASSIST
-     (1) in a blank buffer, a selection list of buffer files is displayed;
-     (2) at the beginning of a (non-single char) entry, the class'
-         descendants are listed;
-     (3) at the end of an entry line, scrolls listing down;
-     (4) on the `...', following a class name, point is moved to the class
-         expansion;
-     (5) anywhere else on a class entry line, lists the class' elements;
-     (6) anywhere else on an element line, lists the element's implementor
-         classes;
-     (7) on a blank line following all entries, the current listing buffer
-         is exited.
-@end group
-@end format
-
-@format
-@group
-When pressed within an OO-Browser Command Help Menu buffer:
-  ACTION
-     Executes an OO-Browser command whose key binding is at point.
-  ASSIST
-     Displays help for an OO-Browser command whose key binding is at point.
-@end group
-@end format
-
-@format
-@group
-When pressed on an identifier within an OO-Browser source file:
-  ACTION
-     Tries to display identifier definition.
-  ASSIST
-     Not applicable.
+If Smart Menu package has been loaded and 'hkey-always-display-menu' is
+non-nil:
+  ACTION or ASSIST
+     Pops up a window with a Smart Menu of commands.
+     Menu displayed is selected by (smart-menu-choose-menu).
 @end group
 @end format
 
 @page
 @format
 @group
-If pressed within an outline-mode buffer or when `selective-display' is
+If pressed within an outline-mode buffer or when 'selective-display' is
 non-nil:
   ACTION
      Collapses, expands, and moves outline entries.
@@ -5177,10 +5046,10 @@ non-nil:
 @end group
 @end format
 
-@cindex click, Info
-@cindex Info browsing
 @format
 @group
+@cindex click, Info
+@cindex Info browsing
 If pressed within an Info manual node:
   ACTION
      (1) the first line of an Info Menu Entry or Cross Reference, the desired
@@ -5188,9 +5057,9 @@ If pressed within an Info manual node:
      (2) the Up,Next,or Previous entries of a Node Header (first line),
          the desired node is found;
      (3) the File entry of a Node Header (first line),
-         the `Top' node within that file is found;
+         the 'Top' node within that file is found;
      (4) at the end of the current node, the Next node is found (this will
-         descend subtrees if the function `Info-global-next' is bound);
+         descend subtrees if the function 'Info-global-next' is bound);
      (5) anywhere else (e.g@. at the end of a line), the current node entry is
          scrolled up a windowful.
   ASSIST
@@ -5199,7 +5068,7 @@ If pressed within an Info manual node:
      (2) the Up,Next,or Previous entries of a Node Header (first line),
          the last node in the history list is found;
      (3) the File entry of a Node Header (first line),
-         the `DIR' root-level node is found;
+         the 'DIR' root-level node is found;
      (4) at the end of the current node, the Previous node is found (this will
          return from subtrees if the function 'Info-global-prev is bound);
      (5) anywhere else (e.g@. at the end of a line), the current node entry is
@@ -5210,8 +5079,8 @@ If pressed within an Info manual node:
 @page
 @format
 @group
-If pressed within a Hyperbole-supported mail reader, `hmail:reader', or mail
-summary mode, `hmail:lister', buffer at:
+If pressed within a Hyperbole-supported mail reader, 'hmail:reader', or mail
+summary mode, 'hmail:lister', buffer at:
   ACTION
      (1) a msg buffer, within the first line or at the end of a message,
          the next undeleted message is displayed;
@@ -5237,10 +5106,10 @@ summary mode, `hmail:lister', buffer at:
 @end group
 @end format
 
-@cindex click, GNUS
-@cindex GNUS browsing
 @format
 @group
+@cindex click, GNUS
+@cindex GNUS browsing
 If pressed within a GNUS listing of newsgroups buffer at:
   ACTION
      (1) a GNUS-GROUP line, that newsgroup is read;
@@ -5290,10 +5159,10 @@ If pressed within a GNUS newsreader article buffer at:
 @end format
 
 @page
-@cindex click, buffer menu
-@cindex buffer menu
 @format
 @group
+@cindex click, buffer menu
+@cindex buffer menu
 If pressed within a listing of buffers (Buffer-menu-mode):
   ACTION
      (1) on the first column of an entry, the selected buffer is marked for
@@ -5315,10 +5184,10 @@ If pressed within a listing of buffers (Buffer-menu-mode):
 @end group
 @end format
 
-@cindex click, dired
-@cindex dired browsing
 @format
 @group
+@cindex click, dired
+@cindex dired browsing
 If pressed within a dired-mode buffer:
   ACTION
      (1) within an entry line, the selected file/directory is displayed
@@ -5327,9 +5196,9 @@ If pressed within a dired-mode buffer:
          performed, they are executed after user verification, otherwise, this
          dired invocation is quit.
   ASSIST
-     (1) on a `~' character, all backup files in the directory are marked for
+     (1) on a '~' character, all backup files in the directory are marked for
          deletion;
-     (2) on a `#' character, all auto-save files in the directory are marked
+     (2) on a '#' character, all auto-save files in the directory are marked
          for deletion;
      (3) anywhere else within an entry line, the current entry is marked for
          deletion;
@@ -5339,11 +5208,11 @@ If pressed within a dired-mode buffer:
 @end format
 
 @page
+@format
+@group
 @cindex click, tar
 @cindex tar archive browsing
 @cindex extracting from tar files
-@format
-@group
 If pressed within a tar-mode buffer:
   ACTION
      (1) within an entry line, the selected file/directory is displayed
@@ -5358,12 +5227,12 @@ If pressed within a tar-mode buffer:
 @end group
 @end format
 
-@cindex man page references
 @format
 @group
+@cindex man page references
 If pressed on a cross reference within a man page entry section labeled
 NAME, SEE ALSO, or PACKAGES USED, or within a man page C routine
-specification (see `smart-man-c-routine-ref') and man page buffer
+specification (see 'smart-man-c-routine-ref') and man page buffer
 has either an attached file or else a @var{man-path} local variable
 containing its pathname:
   ACTION or ASSIST
@@ -5371,12 +5240,12 @@ containing its pathname:
 @end group
 @end format
 
+@format
+@group
 @cindex click, world-wide web
 @cindex W3
 @cindex URL
 @cindex world-wide web
-@format
-@group
 If pressed on a world-wide web universal resource locator:
   ACTION
      Displays the URL referent at point.
@@ -5385,10 +5254,10 @@ If pressed on a world-wide web universal resource locator:
 @end group
 @end format
 
-@cindex game, gomoku
-@cindex gomoku
 @format
 @group
+@cindex game, gomoku
+@cindex gomoku
 If pressed in a Gomoku game buffer.
   ACTION
      Makes a move at the space pointed to.
@@ -5397,10 +5266,10 @@ If pressed in a Gomoku game buffer.
 @end group
 @end format
 
-@cindex click, wrolo matches
-@cindex wrolo matches
 @format
 @group
+@cindex click, wrolo matches
+@cindex wrolo matches
 If pressed within an entry in the wrolo match display buffer:
   ACTION or ASSIST
      The entry is edited in the other window.
@@ -5662,7 +5531,7 @@ Move point forward ARG (or 1) words and return point.
 
 @findex kotl-mode:goto-cell
 @item kotl-mode:goto-cell  @{@kbd{C-c g}@}
-Move point to start of cell given by CELL-REF.  (See `kcell:ref-to-id'.)
+Move point to start of cell given by CELL-REF.  (See 'kcell:ref-to-id'.)
 Return point iff CELL-REF is found within current view.
 With a prefix argument, CELL-REF is assigned the argument value for use
 as an idstamp.
@@ -5956,7 +5825,7 @@ how to subscribe.
 @cindex Hyperbole version
 If you find any errors in Hyperbole's operation or documentation, feel
 free to report them to the Hyperbole discussion list:
-<hyperbole@@infodock.com>.  Be sure to use the Msg/Compose-Hypb-Mail
+<hyperbole@@hub.ucsb.edu>.  Be sure to use the Msg/Compose-Hypb-Mail
 minibuffer menu item whenever you send a message to the mail list since
 it will insert important system version information for you.
 

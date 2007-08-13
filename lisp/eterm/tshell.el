@@ -258,17 +258,14 @@ Thus, this does not include the shell's current directory.")
        (define-key tshell-mode-map "\t" 'term-dynamic-complete)
        (define-key tshell-mode-map "\M-?"
 	 'term-dynamic-list-filename-completions)
-;;; XEmacs change [JTL]: We don't have define-key-after   
-;;;		         (and we don't need it ...)
-;;;       (define-key-after (lookup-key tshell-mode-map [menu-bar completion])
-;;;	 [complete-env-variable] '("Complete Env. Variable Name" .
-;;;				   tshell-dynamic-complete-environment-variable)
-;;;	    'complete-file)
-;;;	  (define-key-after (lookup-key tshell-mode-map [menu-bar completion])
-;;;	    [expand-directory] '("Expand Directory Reference" .
-;;;				 tshell-replace-by-expanded-directory)
-;;;	    'complete-expand)
-       ))
+       (define-key-after (lookup-key tshell-mode-map [menu-bar completion])
+	 [complete-env-variable] '("Complete Env. Variable Name" .
+				   tshell-dynamic-complete-environment-variable)
+	 'complete-file)
+       (define-key-after (lookup-key tshell-mode-map [menu-bar completion])
+	 [expand-directory] '("Expand Directory Reference" .
+			      tshell-replace-by-expanded-directory)
+	 'complete-expand)))
 
 (defvar tshell-mode-hook '()
   "*Hook for customising Tshell mode.")

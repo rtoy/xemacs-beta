@@ -1,30 +1,27 @@
 ;;; easymenu.el - Easy menu support for Emacs 19 and XEmacs.
 ;; 
-;; $Id: easymenu.el,v 1.2 1997/01/04 21:20:12 steve Exp $
+;; $Id: easymenu.el,v 1.1.1.1 1996/12/18 22:43:01 steve Exp $
 ;;
 ;; LCD Archive Entry:
 ;; easymenu|Per Abrahamsen|abraham@iesd.auc.dk|
 ;; Easy menu support for XEmacs|
-;; $Date: 1997/01/04 21:20:12 $|$Revision: 1.2 $|~/misc/easymenu.el.gz|
+;; $Date: 1996/12/18 22:43:01 $|$Revision: 1.1.1.1 $|~/misc/easymenu.el.gz|
 
 ;; Copyright (C) 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
-
-;; This file is part of XEmacs.
-
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
+;;
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
-
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
-
+;; 
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;; 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; if not, write to the Free Software
-;; Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with this program; if not, write to the Free Software
+;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 ;;; Synched up with: Not synched with FSF.
 ;;; In RMS's typical lame-ass way, he removed all support for
@@ -57,7 +54,7 @@
 ;;
 ;; - Function: easy-menu-change PATH NAME ITEMS
 ;;     Change an existing menu.
-;;     The menu must already exist an be visible on the menu bar.
+;;     The menu must already exist and be visible on the menu bar.
 ;;     PATH is a list of strings used for locating the menu on the menu bar. 
 ;;     NAME is the name of the menu.  
 ;;     ITEMS is a list of menu items, as defined in `easy-menu-define'.

@@ -308,18 +308,6 @@ menu_item_descriptor_to_widget_value (Lisp_Object desc,
 }
 
 
-#ifdef LWLIB_MENUBARS_LUCID
-int in_menu_callback;
-
-Lisp_Object
-restore_in_menu_callback(Lisp_Object val)
-{
-    in_menu_callback = XINT(val);
-    return Qnil;
-}
-#endif /* LWLIB_MENUBARS_LUCID */
-
-
 /* The order in which callbacks are run is funny to say the least.
    It's sometimes tricky to avoid running a callback twice, and to
    avoid returning prematurely.  So, this function returns true
@@ -348,18 +336,12 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
   struct device *d = get_device_from_display (XtDisplay (widget));
   struct frame *f = x_any_window_to_frame (d, XtWindow (widget));
   Lisp_Object rest = Qnil;
-  Lisp_Object frame;
   int any_changes = 0;
-  int count;
 
   if (!f)
     f = x_any_window_to_frame (d, XtWindow (XtParent (widget)));
   if (!f)
     return;
-
-  /* make sure f is the selected frame */
-  XSETFRAME (frame, f);
-  Fselect_frame (frame);
 
   if (client_data)
     {
@@ -370,22 +352,8 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
 
       assert (hack_wv->type == INCREMENTAL_TYPE);
       VOID_TO_LISP (submenu_desc, hack_wv->call_data);
-
-      /*
-       * #### Fix the menu code so this isn't necessary.
-       *
-       * Protect against reentering the menu code otherwise we will
-       * crash later when the code gets confused at the state
-       * changes.
-       */
-      count = specpdl_depth ();
-      record_unwind_protect (restore_in_menu_callback,
-			     make_int (in_menu_callback));
-      in_menu_callback = 1;
       wv = menu_item_descriptor_to_widget_value (submenu_desc, SUBMENU_TYPE,
-						 1, 0);
-      unbind_to (count, Qnil);
-
+						 1, 1);
       if (!wv)
 	{
 	  wv = xmalloc_widget_value ();
@@ -465,20 +433,12 @@ compute_menubar_data (struct frame *f, Lisp_Object menubar, int deep_p)
     data = 0;
   else
     {
-      Lisp_Object old_buffer;
-      int count = specpdl_depth ();
-
-      old_buffer = Fcurrent_buffer ();
-      record_unwind_protect (Fset_buffer, old_buffer);
-      Fset_buffer ( XWINDOW (FRAME_SELECTED_WINDOW (f))->buffer);
       data = menu_item_descriptor_to_widget_value (menubar, MENUBAR_TYPE,
 						   deep_p, 0);
 #ifdef ENERGIZE
       if (data)
 	set_panel_button_sensitivity (f, data);
 #endif
-      Fset_buffer (old_buffer);
-      unbind_to (count, Qnil);
     }
   return data;
 }
@@ -673,9 +633,9 @@ x_update_frame_menubar_internal (struct frame *f)
      || (!EQ (XFRAME_MENUBAR_DATA (f)->last_menubar_buffer,
 	      XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f))->buffer)));
 
-  Boolean menubar_was_visible = XtIsManaged (FRAME_X_MENUBAR_WIDGET (f));
-  Boolean menubar_will_be_visible = menubar_was_visible;
-  Boolean menubar_visibility_changed;
+  int menubar_was_visible = XtIsManaged (FRAME_X_MENUBAR_WIDGET (f));
+  int menubar_will_be_visible = menubar_was_visible;
+  int menubar_visibility_changed;
   Cardinal new_num_top_widgets = 1; /* for the menubar */
   Widget container = FRAME_X_CONTAINER_WIDGET (f);
   

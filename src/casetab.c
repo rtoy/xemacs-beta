@@ -45,6 +45,10 @@ Boston, MA 02111-1307, USA.  */
 Lisp_Object Qcase_table_p;
 Lisp_Object Vascii_downcase_table, Vascii_upcase_table;
 Lisp_Object Vascii_canon_table, Vascii_eqv_table;
+#ifdef MULE
+Lisp_Object Vmirror_ascii_downcase_table, Vmirror_ascii_upcase_table;
+Lisp_Object Vmirror_ascii_canon_table, Vmirror_ascii_eqv_table;
+#endif
 Lisp_Object Qtranslate_table;
 
 static void compute_trt_inverse (Lisp_Object trt, Lisp_Object inverse);
@@ -129,6 +133,12 @@ CANONICALIZE maps each character to a canonical equivalent;
 EQUIVALENCES is a map that cyclicly permutes each equivalence class
  (of characters with the same canonical equivalent); it may be nil,
  in which case it is deduced from CANONICALIZE.
+
+BUG: Under XEmacs/Mule, translations to or from non-ASCII characters
+ (this includes chars in the range 128 - 255) are ignored by
+ the string/buffer-searching routines.  Thus, `case-fold-search'
+ will not correctly conflate a-umlaut and A-umlaut even if the
+ case tables call for this.
 */
        (table))
 {
@@ -143,6 +153,43 @@ See `set-case-table' for more info on case tables.
 {
   return set_case_table (table, 1);
 }
+
+#ifdef MULE
+
+static Lisp_Object
+make_mirror_trt_table (Lisp_Object table)
+{
+  Lisp_Object new_table;
+
+  if (!STRING256_P (table))
+    {
+#ifdef DEBUG_XEMACS
+      /* This should be caught farther up. */
+      abort ();
+#else
+      signal_simple_error ("Invalid translate table", table);
+#endif
+    }
+
+  new_table = MAKE_MIRROR_TRT_TABLE ();
+  {
+    int i;
+
+    for (i = 0; i < 256; i++)
+      {
+	Emchar newval = string_char (XSTRING (table), i);
+	if ((i >= 128 && newval != i)
+	    || (i < 128 && newval >= 128))
+	  {
+	    newval = (Emchar) i;
+	  }
+	SET_MIRROR_TRT_TABLE_CHAR_1 (new_table, i, newval);
+      }
+  }
+  return new_table;
+}
+
+#endif /* MULE */
 
 static Lisp_Object
 set_case_table (Lisp_Object table, int standard)
@@ -194,6 +241,12 @@ set_case_table (Lisp_Object table, int standard)
       Vascii_upcase_table = up;
       Vascii_canon_table = canon;
       Vascii_eqv_table = eqv;
+#ifdef MULE
+      Vmirror_ascii_downcase_table = make_mirror_trt_table (down);
+      Vmirror_ascii_upcase_table = make_mirror_trt_table (up);
+      Vmirror_ascii_canon_table = make_mirror_trt_table (canon);
+      Vmirror_ascii_eqv_table = make_mirror_trt_table (eqv);
+#endif
     }
   else
     {
@@ -201,6 +254,12 @@ set_case_table (Lisp_Object table, int standard)
       buf->upcase_table = up;
       buf->case_canon_table = canon;
       buf->case_eqv_table = eqv;
+#ifdef MULE
+      buf->mirror_downcase_table = make_mirror_trt_table (down);
+      buf->mirror_upcase_table = make_mirror_trt_table (up);
+      buf->mirror_case_canon_table = make_mirror_trt_table (canon);
+      buf->mirror_case_eqv_table = make_mirror_trt_table (eqv);
+#endif
     }
   return table;
 }
@@ -268,6 +327,12 @@ complex_vars_of_casetab (void)
 
       SET_TRT_TABLE_CHAR_1 (tem, i, lowered);
     }
+  
+#ifdef MULE
+  tem = make_mirror_trt_table (tem);
+  Vmirror_ascii_downcase_table = tem;
+  Vmirror_ascii_canon_table = tem;
+#endif
 
   tem = MAKE_TRT_TABLE ();
   Vascii_upcase_table = tem;
@@ -281,4 +346,9 @@ complex_vars_of_casetab (void)
       SET_TRT_TABLE_CHAR_1 (tem, i, flipped);
     }
 
+#ifdef MULE
+  tem = make_mirror_trt_table (tem);
+  Vmirror_ascii_upcase_table = tem;
+  Vmirror_ascii_eqv_table = tem;
+#endif
 }

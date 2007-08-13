@@ -15,8 +15,9 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; The selection code requires us to use certain symbols whose names are
 ;;; all upper-case; this may seem tasteless, but it makes there be a 1:1
@@ -26,13 +27,15 @@
 
 ;;; Code:
 
-(defvar x-selected-text-type 'STRING
+(defvar x-selected-text-type
+  (if (featurep 'mule) 'COMPOUND_TEXT 'STRING)
   "The type atom used to obtain selections from the X server.")
 
 (defun x-get-selection (&optional type data-type)
   "Return the value of an X Windows selection.
 The argument TYPE (default `PRIMARY') says which selection, 
-and the argument DATA-TYPE (default `STRING') says how to convert the data."
+and the argument DATA-TYPE (default `STRING', or `COMPOUND_TEXT' under Mule)
+says how to convert the data."
   (or type (setq type 'PRIMARY))
   (or data-type (setq data-type x-selected-text-type))
   (let ((text (x-get-selection-internal type data-type)))
@@ -257,7 +260,7 @@ secondary selection instead of the primary selection."
 
 (defun xselect-kill-buffer-hook ()
   ;; Probably the right thing is to write a C function to return a list
-  ;; of the selections which emacs owns, since it could concievably own
+  ;; of the selections which emacs owns, since it could conceivably own
   ;; a user-defined selection type that we've never heard of.
   (xselect-kill-buffer-hook-1 'PRIMARY)
   (xselect-kill-buffer-hook-1 'SECONDARY)
@@ -420,6 +423,10 @@ into Emacs."
     (if (stringp outval)
 	(cons 'STRING outval)
       outval)))
+
+(defun xselect-convert-to-compound-text (selection type value)
+  ;; converts to compound text automatically
+  (xselect-convert-to-text selection type value))
 
 (defun xselect-convert-to-length (selection type value)
   (let ((value
@@ -597,6 +604,7 @@ into Emacs."
 (setq selection-converter-alist
       '((TEXT . xselect-convert-to-text)
 	(STRING . xselect-convert-to-string)
+	(COMPOUND_TEXT . xselect-convert-to-compound-text)
 	(TARGETS . xselect-convert-to-targets)
 	(LENGTH . xselect-convert-to-length)
 	(DELETE . xselect-convert-to-delete)

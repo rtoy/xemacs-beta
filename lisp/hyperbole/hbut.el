@@ -6,15 +6,15 @@
 ;; KEYWORDS:     extensions, hypermedia
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          InfoDock Associates
+;; ORG:          Brown U.
 ;;
 ;; ORIG-DATE:    18-Sep-91 at 02:57:09
-;; LAST-MOD:     17-Feb-97 at 15:31:03 by Bob Weiner
+;; LAST-MOD:     25-Oct-95 at 04:12:59 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
 ;;
-;; Copyright (C) 1991-1996, Free Software Foundation, Inc.
+;; Copyright (C) 1991-1995, Free Software Foundation, Inc.
 ;; Developed with support from Motorola Inc.
 ;;
 ;; DESCRIPTION:  
@@ -45,17 +45,6 @@ Nil disables saving.")
 (defconst ebut:max-len 100
   "Maximum length of a hyper-button label.")
 
-
-(defun ebut:act (label)
-  "Activates Hyperbole explicit button with LABEL from the current buffer."
-  (interactive (list (hargs:read-match "Activate explicit button labeled: "
-				       (ebut:alist)
-				       nil t nil 'ebut)))
-  (let* ((lbl-key (hbut:label-to-key label))
-	 (but (ebut:get lbl-key)))
-    (if but
-	(hbut:act but)
-      (error "(ebut:act): No explicit button labeled: %s" label))))
 
 (defun    ebut:alist (&optional file)
   "Returns alist with each element a list containing a button label.
@@ -348,7 +337,7 @@ positions at which the starting button delimiter begins and ends."
 				   ;; Normalize label spacing
 				   (ebut:key-to-label
 				    (ebut:label-to-key lbl))))))))
-	  (if loc-p buts (if buts (nreverse (set:create buts))))))))
+	  (if loc-p buts (nreverse (set:create buts)))))))
 
 (fset    'map-ebut 'ebut:map)
 (defun    ebut:map (but-func &optional start-delim end-delim
@@ -623,7 +612,7 @@ Inserts INSTANCE-STR after END, before ending delimiter."
 (defun gbut:act (label)
   "Activates Hyperbole global button with LABEL."
   (interactive (list (hargs:read-match "Activate global button labeled: "
-				       (mapcar 'list (gbut:label-list))
+				       (mapcar 'list (gbut:lbl-list))
 				       nil t nil 'ebut)))
   (let* ((lbl-key (hbut:label-to-key label))
 	 (but (ebut:get lbl-key nil gbut:file)))
@@ -634,17 +623,13 @@ Inserts INSTANCE-STR after END, before ending delimiter."
 (defun gbut:help (label)
   "Displays help for Hyperbole global button with LABEL."
   (interactive (list (hargs:read-match "Report on global button labeled: "
-				       (mapcar 'list (gbut:label-list))
+				       (mapcar 'list (gbut:lbl-list))
 				       nil t nil 'ebut)))
   (let* ((lbl-key (hbut:label-to-key label))
 	 (but (ebut:get lbl-key nil gbut:file)))
     (if but
 	(hbut:report but)
       (error "(gbut:help): No global button labeled: %s" label))))
-
-(defun gbut:label-list ()
-  "Returns list of global button labels."
-  (mapcar 'hbut:key-to-label (gbut:key-list)))
 
 ;;; ------------------------------------------------------------------------
 (defun gbut:key-list ()
@@ -660,6 +645,10 @@ Inserts INSTANCE-STR after END, before ending delimiter."
 		(while (setq gbuts (cons (car (read (current-buffer))) gbuts)))
 	      (error nil))
 	    gbuts)))))
+
+(defun gbut:lbl-list ()
+  "Returns list of global button labels."
+  (mapcar 'hbut:key-to-label (gbut:key-list)))
 
 ;;; ========================================================================
 ;;; hattr class
@@ -786,7 +775,7 @@ Suitable for use as part of 'write-file-hooks'."
 (fset    'hattr:summarize 'hattr:report)
 
 (defvar   hattr:filename
-  (if hyperb:microcruft-os-p "_hypb" ".hypb")
+  (if (memq system-type '(ms-windows windows-nt ms-dos)) "_hypb" ".hypb")
   "Per directory file name in which explicit button attributes are stored.
 If you change its value, you will be unable to use buttons created by
 others who use a different value!")
@@ -797,8 +786,8 @@ others who use a different value!")
 
 (defun    hbut:act (hbut)
   "Performs action for explicit or implicit Hyperbole button symbol HBUT."
-  (if hbut (apply 'actype:act (hattr:get hbut 'actype)
-		  (hattr:get hbut 'args))))
+  (and hbut (apply 'actype:act (hattr:get hbut 'actype)
+		   (hattr:get hbut 'args))))
 
 (defun    hbut:action (hbut)
   "Returns appropriate action for Hyperbole button symbol HBUT."
@@ -976,7 +965,7 @@ Returns number of buttons reported on or nil if none."
   "Returns Hyperbole source buffer or file given at point.
 If a file, always returns a full path if optional FULL is non-nil."
   (goto-char (match-end 0))
-  (cond ((looking-at "#<buffer \"?\\([^ \n\"]+\\)\"?>")
+  (cond ((looking-at "#<buffer \\([^ \n]+\\)>")
 	 (get-buffer (buffer-substring (match-beginning 1)
 				       (match-end 1))))
 	((looking-at "\".+\"")
@@ -1124,10 +1113,9 @@ With optional KEY-ONLY, returns only the label key for button."
 
 (defun    ibut:label-set (label &optional start end)
   "Sets current implicit button attributes from LABEL and START, END position.
-Returns label.  START and END are optional.  When given, they specify the
-region in the buffer to flash when this implicit button is activated or
-queried for its attributes.  If LABEL is a list, it is assumed to contain all
-arguments."
+START and END are optional.  When given, they specify the region in the buffer
+to flash when this implicit button is activated or queried for its attributes.
+If LABEL is a list, it is assumed to contain all arguments."
   (cond ((stringp label)
 	 (hattr:set 'hbut:current 'lbl-key (hbut:label-to-key label))
 	 (and start (hattr:set    'hbut:current 'lbl-start start))
@@ -1137,7 +1125,7 @@ arguments."
 	 (hattr:set    'hbut:current 'lbl-start    (nth 1 label))
 	 (hattr:set    'hbut:current 'lbl-end      (nth 2 label)))
 	(t (error "(ibut:label-set): Invalid label arg: '%s'" label)))
-  label)
+  t)
 
 ;;; ========================================================================
 ;;; ibtype class - Implicit button types

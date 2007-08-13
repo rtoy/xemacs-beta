@@ -1,5 +1,5 @@
 ;;; Macros and functions dealing with accessing VM message struct fields
-;;; Copyright (C) 1989-1997 Kyle E. Jones
+;;; Copyright (C) 1989, 1990, 1991, 1993, 1994, 1995 Kyle E. Jones
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -81,11 +81,6 @@
 ;; summary for unmirrored virtual message
 (defmacro vm-virtual-summary-of (message)
   (list 'aref (list 'aref message 1) 15))
-;; MIME layout information; types, ids, positions, etc. of all MIME entities
-(defmacro vm-mime-layout-of (message)
-  (list 'aref (list 'aref message 1) 16))
-(defmacro vm-mime-encoded-header-flag-of (message)
-  (list 'aref (list 'aref message 1) 17))
 ;; message attribute vector
 (defmacro vm-attributes-of (message) (list 'aref message 2))
 (defmacro vm-new-flag (message) (list 'aref (list 'aref message 2) 0))
@@ -139,15 +134,10 @@
 ;; sortable subject, re: garbage removed
 (defmacro vm-sortable-subject-of (message)
   (list 'aref (list 'aref message 3) 17))
-;; tokenized summary entry
 (defmacro vm-summary-of (message)
   (list 'aref (list 'aref message 3) 18))
-;; parent of this message, as determined by threading
 (defmacro vm-parent-of (message)
   (list 'aref (list 'aref message 3) 19))
-;; message IDs parsed from References header
-(defmacro vm-references-of (message)
-  (list 'aref (list 'aref message 3) 20))
 ;; extra data shared by virtual messages if vm-virtual-mirror is non-nil
 (defmacro vm-mirror-data-of (message) (list 'aref message 4))
 ;; if message is being edited, this is the buffer being used.
@@ -212,10 +202,6 @@
   (list 'aset (list 'aref message 1) 14 data))
 (defmacro vm-set-virtual-summary-of (message summ)
   (list 'aset (list 'aref message 1) 15 summ))
-(defmacro vm-set-mime-layout-of (message layout)
-  (list 'aset (list 'aref message 1) 16 layout))
-(defmacro vm-set-mime-encoded-header-flag-of (message flag)
-  (list 'aset (list 'aref message 1) 17 flag))
 (defmacro vm-set-attributes-of (message attrs) (list 'aset message 2 attrs))
 ;; The other routines in attributes group are part of the undo system.
 (defun vm-set-edited-flag-of (message flag)
@@ -267,8 +253,6 @@
   (list 'aset (list 'aref message 3) 18 val))
 (defmacro vm-set-parent-of (message val)
   (list 'aset (list 'aref message 3) 19 val))
-(defmacro vm-set-references-of (message val)
-  (list 'aset (list 'aref message 3) 20 val))
 (defmacro vm-set-mirror-data-of (message data)
   (list 'aset message 4 data))
 (defmacro vm-set-edit-buffer-of (message buf)

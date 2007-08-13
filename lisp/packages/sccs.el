@@ -164,7 +164,7 @@ FILE is the file being visited to put in the modeline."
 (defun sccs-do-command (buffer command file &rest flags)
   "  Execute an SCCS command, notifying the user and checking for errors."
   (setq file (expand-file-name file))
-  (message (format "Running %s on %s..." command file))
+  (message "Running %s on %s..." command file)
   (or sccs-bin-directory (sccs-init-bin-directory))
   (let ((status
 	 (save-window-excursion
@@ -187,9 +187,9 @@ FILE is the file being visited to put in the modeline."
 		 nil)
 	     t))))
     (if status
-	(message (format "Running %s...OK" command))
+	(message "Running %s...OK" command)
       (pop-to-buffer buffer)
-      (error (format "Running %s...FAILED" command))))
+      (error "Running %s...FAILED" command)))
   (if file (sccs-mode-line file)))
 
 (defun sccs-shell-command (command)
@@ -445,7 +445,7 @@ Or, if given a prefix argument, with another specified revision."
 	  (goto-char (point-min))
 	  (delete-file old)
 	  (if (equal (point-min) (point-max))
-	      (message (format "No changes to %s since last get." file))
+	      (message "No changes to %s since last get." file)
 	      (pop-to-buffer "*SCCS*")
 	      )
 	  )
@@ -476,7 +476,7 @@ Or, if given a prefix argument, with another specified revision."
   (set-buffer-modified-p nil)
   (goto-char (point-min))
   (if (equal (point-min) (point-max))
-      (message (format "No changes to %s between %s and %s." file rel1 rel2))
+      (message "No changes to %s between %s and %s." file rel1 rel2)
     (pop-to-buffer "*SCCS*")
     )
   )

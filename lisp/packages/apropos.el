@@ -66,34 +66,22 @@
   "*Whether the apropos commands should do more.
 Slows them down more or less.  Set this non-nil if you have a fast machine.")
 
-;; XEmacs addition
-(defvar apropos-symbol-face (if (boundp 'font-lock-keyword-face)
-				font-lock-keyword-face
-			      'bold)
+(defvar apropos-symbol-face 'bold
   "*Face for symbol name in apropos output or `nil'.  
 This looks good, but slows down the commands several times.")
 
-;; XEmacs addition
-(defvar apropos-keybinding-face (if (boundp 'font-lock-string-face)
-				    font-lock-string-face
-				  'underline)
+(defvar apropos-keybinding-face 'underline
   "*Face for keybinding display in apropos output or `nil'.  
 This looks good, but slows down the commands several times.")
 
-;; XEmacs addition
-(defvar apropos-label-face (if (boundp 'font-lock-comment-face)
-			       font-lock-comment-face
-			     'italic)
+(defvar apropos-label-face 'italic
   "*Face for label (Command, Variable ...) in apropos output or `nil'.
 If this is `nil' no mouse highlighting occurs.
 This looks good, but slows down the commands several times.
 When this is a face name, as it is initially, it gets transformed to a
 text-property list for efficiency.")
 
-;; XEmacs addition
-(defvar apropos-property-face (if (boundp 'font-lock-variable-name-face)
-				  font-lock-variable-name-face
-				'bold-italic)
+(defvar apropos-property-face 'bold-italic
   "*Face for property name in apropos output or `nil'.  
 This looks good, but slows down the commands several times.")
 
@@ -105,8 +93,7 @@ This looks good, but slows down the commands several times.")
 (defvar apropos-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map [(control m)] 'apropos-follow)
-    (define-key map [(button2up)] 'apropos-mouse-follow)
-    (define-key map [(button2)] 'undefined)
+    (define-key map [(button2)] 'apropos-mouse-follow)
     map)
   "Keymap used in Apropos mode.")
 
@@ -123,8 +110,6 @@ This looks good, but slows down the commands several times.")
 (defvar apropos-item ()
   "Current item in or for apropos-accumulator.")
 
-(defvar apropos-mode-hook nil) ; XEmacs
-
 (defun apropos-mode ()
   "Major mode for following hyperlinks in output of apropos commands.
 
@@ -133,8 +118,7 @@ This looks good, but slows down the commands several times.")
   (kill-all-local-variables)
   (use-local-map apropos-mode-map)
   (setq major-mode 'apropos-mode
-	mode-name "Apropos")
-  (run-hooks 'apropos-mode-hook)) ; XEmacs
+	mode-name "Apropos"))
 
 
 ;; For auld lang syne:
@@ -476,8 +460,7 @@ found."
 	  (sort apropos-accumulator (lambda (a b)
 				      (string-lessp (car a) (car b)))))
     (and apropos-label-face
-	 (or (symbolp apropos-label-face)
-	     (facep apropos-label-face)) ; XEMacs
+	 (symbolp apropos-label-face)
 	 (setq apropos-label-face `(face ,apropos-label-face
 					 mouse-face highlight)))
     (with-output-to-temp-buffer "*Apropos*"
@@ -644,7 +627,5 @@ found."
     (insert (apropos-format-plist symbol "\n  "))
     (princ ")")
     (print-help-return-message)))
-
-(provide 'apropos) ; XEmacs
 
 ;;; apropos.el ends here

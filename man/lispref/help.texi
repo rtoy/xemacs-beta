@@ -77,12 +77,14 @@ function @code{documentation-property} knows how to extract it.
 @end itemize
 
 @cindex @file{DOC} (documentation) file
+@cindex @file{emacs/etc/DOC-@var{version}}
+@cindex @file{etc/DOC-@var{version}}
 To save space, the documentation for preloaded functions and variables
 (including primitive functions and autoloaded functions) is stored in
-the @dfn{internal doc file} @file{DOC}.  The documentation for functions
-and variables loaded during the XEmacs session from byte-compiled files
-is stored in those very same byte-compiled files (@pxref{Docs and
-Compilation}).
+the @dfn{internal doc file} @file{emacs/etc/DOC-@var{version}}.  The
+documentation for functions and variables loaded during the XEmacs
+session from byte-compiled files is stored in those very same
+byte-compiled files (@pxref{Docs and Compilation}).
 
 XEmacs does not keep documentation strings in memory unless necessary.
 Instead, XEmacs maintains, for preloaded symbols, an integer offset into
@@ -248,17 +250,18 @@ documentation strings stored in the file @var{filename}, and records
 them in the in-core function definitions and variable property lists in
 place of the actual strings.  @xref{Building XEmacs}.
 
-  XEmacs finds the file @var{filename} in the @file{lib-src} directory.
-When the dumped XEmacs is later executed, the same file is found in the
-directory @code{doc-directory}.  The usual value for @var{filename} is
-@file{DOC}, but this can be changed by modifying the variable
-@code{internal-doc-file-name}.
+  XEmacs finds the file @var{filename} in the @file{xemacs/lib-src}
+directory.  When the dumped XEmacs is later executed, the same file is
+found in the directory @code{doc-directory}.  Usually @var{filename} is
+@file{"DOC-@var{version}"}, but this can be changed by modifying the
+variable @code{internal-doc-file-name}.
 @end defun
 
 @defvar internal-doc-file-name
 This variable holds the name of the file containing documentation
-strings of built-in symbols, usually @file{DOC}.  The full pathname of
-the internal doc file is @samp{(concat doc-directory internal-doc-file-name)}.
+strings of built-in symbols, usually @file{"DOC-@var{version}"}.  The
+full pathname of the internal doc file is @samp{(concat doc-directory
+internal-doc-file-name)}.
 @end defvar
 
 @defvar doc-directory

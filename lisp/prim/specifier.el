@@ -21,7 +21,7 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: Not in FSF.
@@ -119,7 +119,7 @@ will be used for.
 
 Canonicalizing means converting to the full form for an inst-list, i.e.
 `((TAG-SET . INSTANTIATOR) ...)'.  This function accepts a single
-inst-pair or any abbreviation thereof or a list of (possibly
+inst-pair or any abbrevation thereof or a list of (possibly
 abbreviated) inst-pairs. (See `canonicalize-inst-pair'.)
 
 If NOERROR is non-nil, signal an error if the inst-list is invalid;
@@ -127,7 +127,7 @@ otherwise return t."
 
   ;; OK, the possibilities are:
   ;;
-  ;; a) an inst-pair or various abbreviations thereof
+  ;; a) an inst-pair or various abbrevations thereof
   ;; b) a list of (a)
   (let ((result (canonicalize-inst-pair inst-list specifier-type t)))
     (if (not (eq result t))
@@ -176,7 +176,7 @@ If NOERROR is nil, signal an error if the specification is invalid;
 otherwise return t."
   ;; OK, the possibilities are:
   ;;
-  ;; a) an inst-list or some abbreviation thereof
+  ;; a) an inst-list or some abbrevation thereof
   ;; b) a cons of a locale and an inst-list
   (let ((result (canonicalize-inst-list spec specifier-type t)))
     (if (not (eq result t))

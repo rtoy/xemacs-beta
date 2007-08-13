@@ -9,7 +9,7 @@
 ;; ORG:          Brown U.
 ;;
 ;; ORIG-DATE:     9-Oct-91 at 18:38:05
-;; LAST-MOD:      6-Dec-96 at 12:35:29 by Bob Weiner
+;; LAST-MOD:      4-Nov-95 at 04:37:50 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.

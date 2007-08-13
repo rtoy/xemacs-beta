@@ -96,25 +96,11 @@ static unsigned char truncator_bits[] = {
 static unsigned char continuer_bits[] = {
    0x00, 0xbc, 0xfc, 0xe0, 0xe0, 0x72, 0x3e, 0x1e, 0x1e, 0x3e};
 
-#if 0
 /* Three dots indicating truncation */
 #define truncator_width 7
 #define truncator_height 8
 static unsigned char truncator_bits[] = {
    0x06, 0x06, 0x00, 0x18, 0x18, 0x00, 0x60, 0x60};
-#endif
-
-/* A Right pointing Arrow */
-#define truncator_width 8
-#define truncator_height 10
-static unsigned char truncator_bits[] = {
-  0x00, 0x18, 0x30, 0x60, 0xff, 0xff, 0x60, 0x30, 0x18, 0x00};
-
-/* A Left pointing Arrow */
-#define hscroll_width 8
-#define hscroll_height 10
-static unsigned char hscroll_bits[] = {
-  0x00, 0x18, 0x0c, 0x06, 0xff, 0xff, 0x06, 0x0c, 0x18, 0x00};
 
 #if 0
 #define rarrow_width 12

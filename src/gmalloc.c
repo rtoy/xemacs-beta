@@ -258,7 +258,7 @@ extern __ptr_t __default_morecore __P ((ptrdiff_t __size));
 extern void (*__after_morecore_hook) __P ((void));
 
 /* Nonzero if `malloc' has been called and done its initialization.  */
-    /* extern int __malloc_initialized; */
+extern int __malloc_initialized;
 
 /* Hooks for debugging versions.  */
 extern void (*__free_hook) __P ((__ptr_t __ptr));
@@ -351,9 +351,7 @@ Boston, MA 02111-1307, USA.
 #if defined (__GNU_LIBRARY__) || defined (_LIBC)
 #include <stddef.h>
 #include <sys/cdefs.h>
-#if ! (defined (__GLIBC__) && (__GLIBC__ >= 2))
 extern size_t __getpagesize __P ((void));
-#endif
 #else
 #include "getpagesize.h"
 #define	 __getpagesize()	getpagesize()
@@ -433,7 +431,7 @@ __malloc_size_t _chunks_free;
 __malloc_size_t _bytes_free;
 
 /* Are you experienced?  */
-static int __malloc_initialized;
+int __malloc_initialized;
 
 void (*__after_morecore_hook) __P ((void));
 
@@ -1299,9 +1297,7 @@ extern __ptr_t __sbrk __P ((ssize_t increment));
 #ifdef __GNU_LIBRARY__
 /* It is best not to declare this and cast its result on foreign operating
    systems with potentially hostile include files.  */
-#if !(defined(linux) && defined(sparc))
 extern __ptr_t __sbrk __P ((int increment));
-#endif
 #endif
 #endif
 

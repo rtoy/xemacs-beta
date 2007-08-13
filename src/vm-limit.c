@@ -50,7 +50,7 @@ static void (*warn_function) (CONST char *);
 /* Get more memory space, complaining if we're near the end. */
 
 static void
-check_memory_limits (void)
+check_memory_limits ()
 {
   extern POINTER (*__morecore) ();
 

@@ -1,5 +1,5 @@
 ;;; recent-files.el --- Maintain menu of recently opened files.
-;;; $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs-19/lisp/packages/recent-files.el,v 1.1.1.1 1996/12/18 03:31:56 steve Exp $
+;;; $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs/lisp/packages/Attic/recent-files.el,v 1.1.1.1 1996/12/18 22:42:54 steve Exp $
 ;;;
 ;;; Copyright (C) 1994, 1995 Juergen Nickelsen <nickel@cs.tu-berlin.de>
 ;;;
@@ -18,8 +18,9 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: Not in FSF.
 ;;;
@@ -364,7 +365,7 @@ If the buffer has changed, the menu must be rebuilt.")
   "Return a string identifying the current verion of recent-files.
 If called interactively, show it in the echo area."
   (interactive)
-  (let ((version "$Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs-19/lisp/packages/recent-files.el,v 1.1.1.1 1996/12/18 03:31:56 steve Exp $"))
+  (let ((version "$Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs/lisp/packages/Attic/recent-files.el,v 1.1.1.1 1996/12/18 22:42:54 steve Exp $"))
     (if (interactive-p)
 	(message version)
       version)))

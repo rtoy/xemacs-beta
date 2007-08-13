@@ -8,10 +8,10 @@
 ;; KEYWORDS:     hypermedia, mouse
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          InfoDock Associates
+;; ORG:          Brown U.
 ;;
 ;; ORIG-DATE:    04-Feb-89
-;; LAST-MOD:     20-Feb-97 at 11:55:00 by Bob Weiner
+;; LAST-MOD:      1-Nov-95 at 20:45:57 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
@@ -81,16 +81,9 @@
      ((hargs:select-p hkey-value) .
       (hargs:select-p hkey-value 'assist)))
     ;;
-    ;; The ID-edit package supports rapid killing, copying, yanking and
-    ;; display management. It is available only as a part of InfoDock.
-    ;; It is not included with Hyperbole.
-    ((and (boundp 'id-edit-mode) id-edit-mode
-	  (not buffer-read-only)) .
-     ((id-edit-yank) . (id-edit-yank)))
-    ;;
     ((if (not (eobp))
-	 (or (eolp) (if selective-display
-			(= (following-char) ?\^M)))) .
+	  (or (eolp) (if selective-display
+			 (= (following-char) ?\^M)))) .
      ((smart-scroll-up) . (smart-scroll-down)))
     ;;
     ((eq major-mode 'smart-menu-mode) . 
@@ -100,9 +93,8 @@
     ((if (fboundp 'hbut:at-p) (or (hbut:at-p) (hbut:label-p))) .
      ((hui:hbut-act 'hbut:current) . (hui:hbut-help 'hbut:current)))
     ;;
-    ;; The Smart Menu system provides menus within Emacs on a dumb terminal.
-    ;; It is a part of InfoDock, but may also be obtained as a separate
-    ;; package.  It is not included with Hyperbole.
+    ;; The Smart Menu system provides menus within Emacs running on a dumb
+    ;; terminal.  It is part of InfoDock and is not available separately.
     ((and (fboundp 'smart-menu-choose-menu)
 	  (setq hkey-value (and hkey-always-display-menu
 				(smart-menu-choose-menu)))
@@ -128,8 +120,8 @@
     ((eq major-mode 'kotl-mode) . 
      ((kotl-mode:action-key) . (kotl-mode:help-key)))
     ;;
-    ;; Rdb-mode Supports direct selection and viewing on in-memory relational
-    ;; databases.  Rdb-mode is available only as a part of InfoDock.
+    ;; Support direct selection and viewing on in-memory relational databases.
+    ;; Rdb-mode has not been publicly released.
     ;; It is not included with Hyperbole.
     ((eq major-mode 'rdb-mode) . ((smart-rdb) . (smart-rdb-assist)))
     ;;
@@ -137,38 +129,44 @@
     ((if (= (point) (point-max)) (string-match "Help\\*$" (buffer-name))) .
      ((hkey-help-hide) . (hkey-help-hide)))
     ;;
+    ;; Support the OO-Browser, a part of InfoDock, XEmacs, and soon to be a
+    ;; part of Emacs.
+    ((or (br-in-browser) (eq major-mode 'br-mode)) .
+     ((smart-br-dispatch) . (smart-br-assist-dispatch)))
+    ;;
     ((and (memq major-mode '(c-mode c++-c-mode))
-	  buffer-file-name (smart-c-at-tag-p)) .
+	  buffer-file-name (setq hkey-value (smart-c-at-tag-p))) .
      ((smart-c) . (smart-c nil 'next-tag)))
     ;;
     ((and (eq major-mode 'asm-mode)
-	  buffer-file-name (smart-asm-at-tag-p)) .
+	  buffer-file-name (setq hkey-value (smart-asm-at-tag-p))) .
      ((smart-asm) . (smart-asm nil 'next-tag)))
     ;;
     ((if (smart-lisp-mode-p) (smart-lisp-at-tag-p)) .
      ((smart-lisp) . (smart-lisp 'next-tag)))
     ;;
-    ((and (eq major-mode 'java-mode) buffer-file-name
-	  (or (smart-java-at-tag-p)
-	      ;; Also handle Java @see cross-references.
-	      (looking-at "@see[ \t]+")
-	      (save-excursion
-		(and (re-search-backward "[@\n\r\f]" nil t)
-		     (looking-at "@see[ \t]+"))))) .
-     ((smart-java) . (smart-java nil 'next-tag)))
-    ;;
     ((and (eq major-mode 'c++-mode) buffer-file-name
 	  ;; Don't use smart-c++-at-tag-p here since it will prevent #include
 	  ;; lines from matching.
-	  (smart-c-at-tag-p)) .
-     ((smart-c++) . (smart-c++ nil 'next-tag)))
+	  (setq hkey-value (smart-c-at-tag-p))) .
+     ( ;; Only fboundp if OO-Browser has been loaded.
+      (if (fboundp 'c++-to-definition)
+	  (smart-c++-oobr) (smart-c++)) .
+      (if (fboundp 'c++-to-definition)
+	  (smart-c++-oobr)
+	(smart-c++ nil 'next-tag))))
     ;;
     ((and (eq major-mode 'objc-mode) buffer-file-name
-	  (smart-objc-at-tag-p)) .
-     ((smart-objc) . (smart-objc nil 'next-tag)))
+	  (setq hkey-value (smart-objc-at-tag-p))) .
+     ( ;; Only fboundp if OO-Browser has been loaded.
+      (if (fboundp 'objc-to-definition)
+	  (smart-objc-oobr) (smart-objc)) .
+      (if (fboundp 'objc-to-definition)
+	  (smart-objc-oobr)
+	(smart-objc nil 'next-tag))))
     ;;
     ((and (eq major-mode 'fortran-mode)
-	  buffer-file-name (smart-fortran-at-tag-p)) .
+	  buffer-file-name (setq hkey-value (smart-fortran-at-tag-p))) .
      ((smart-fortran) . (smart-fortran nil 'next-tag)))
     ;;
     ((eq major-mode 'occur-mode) .
@@ -227,11 +225,6 @@
     ;; Gomoku game
     ((eq major-mode 'gomoku-mode) . 
      ((gomoku-human-plays) . (gomoku-human-takes-back)))
-    ;;
-    ;; Support the OO-Browser, a part of InfoDock and XEmacs, and an add on
-    ;; to Emacs.  It is not included with Hyperbole.
-    ((or (br-in-browser) (eq major-mode 'br-mode)) .
-     ((smart-br-dispatch) . (smart-br-assist-dispatch)))
     ;;
     ;; Outline minor mode is on and usable.
     (selective-display .
@@ -433,7 +426,7 @@ If key is pressed:
 		      (dired-do-flagged-delete))
 		     (t (error "(smart-dired): No Dired expunge function.")))
 	     (dired-quit))))
-	(t (hpath:find (dired-get-filename)))))
+	(t (hpath:find-other-window (dired-get-filename)))))
 
 (defun smart-dired-assist ()
   "Uses a single assist-key or mouse assist-key to manipulate directory entries.
@@ -458,7 +451,7 @@ If assist-key is pressed:
 	 (goto-char (point-max)))
 	((looking-at "~") (dired-flag-backup-files))
 	((looking-at "#") (dired-flag-auto-save-files))
-	(t (dired-flag-file-deletion 1))))
+	(t (dired-flag-file-deleted 1))))
 
 ;;; ************************************************************************
 ;;; smart-gnus functions

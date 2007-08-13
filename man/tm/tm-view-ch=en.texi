@@ -1,0 +1,68 @@
+@c $Id: tm-view-ch=en.texi,v 1.1.1.1 1996/12/18 22:43:52 steve Exp $
+
+@node content-header, content-body, content-subject, MIME display
+@comment  node-name,  next,  previous,  up
+@subsubsection content-header
+@cindex content-header
+
+A content header shows the header portion of a content in the preview
+buffer.
+
+When the function @code{mime-viewer/header-visible-p} returns @code{t}
+for content-number of a content, content-header is displayed. This
+judge function returns @code{t} when a content is root or content-type
+of its parent is a member of the variable
+@code{mime-viewer/childrens-header-showing-Content-Type-list}.
+
+If you want to change this condition, please redefine it.
+
+When content-header is displayed, content-header are formated by
+content-header-filter. Content-header-filter is searched from variable
+@code{mime-viewer/content-header-filter-alist}. Its key is major-mode
+of the article buffer. If not found, function
+@code{mime-viewer/default-content-header-filter} is called.
+
+
+@defvar mime-viewer/childrens-header-showing-Content-Type-list
+
+List of content-type. If content-type of parent of a content is a
+member of this variable, its content-header is displayed. Default
+value is "message/rfc822".
+
+This variable is referred by the function
+@code{mime-viewer/header-visible-p}.
+@end defvar
+
+
+@deffn{Function} mime-viewer/header-visible-p rcnum cinfo &optional ctype
+
+Returns @code{t} if a content is displayed.
+
+@var{cnum} is content-number. @var{cinfo} is content-info. If you know 
+content-type, you can specify by @var{ctype}.
+@end deffn
+
+
+@defvar mime-viewer/content-header-filter-alist
+
+Association-list whose key is major-mode of a article buffer, value is
+content-header-filter.
+@end defvar
+
+
+@deffn{Function} mime-viewer/default-content-header-filter
+
+It is called when content-header-filter is not found in variable
+@code{mime-viewer/content-header-filter-alist}.
+@end deffn
+
+
+@defvar mime-viewer/ignored-field-list
+
+List of regular expression to represent invisible fields.
+
+Variable @code{mime-viewer/ignored-field-regexp} is created from it.
+
+Please use function @code{tm:add-fields} or @code{tm:delete-fields} to 
+set it.
+@end defvar

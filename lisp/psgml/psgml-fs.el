@@ -2,7 +2,7 @@
 ;; Copyright (C) 1995 Lennart Staflin
 
 ;; Author: Lennart Staflin <lenst@lysator.liu.se>
-;; Version: $Id: psgml-fs.el,v 1.1.1.2 1996/12/18 03:47:13 steve Exp $
+;; Version: $Id: psgml-fs.el,v 1.1.1.1 1996/12/18 22:43:36 steve Exp $
 ;; Keywords: 
 ;; Last edited: Thu Mar 21 22:32:27 1996 by lenst@triton.lstaflin.pp.se (Lennart Staflin)
 

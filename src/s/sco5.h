@@ -52,7 +52,7 @@ Boston, MA 02111-1307, USA.  */
 #ifndef __GNUC__
 #define LINKER cc -Xc
 #else
-#define LINKER gcc
+#define LINKER gcc -Xc
 #endif
 
 #undef LIBX11_SYSTEM
@@ -85,8 +85,8 @@ could #define sco and I think everything would work. rjl */
 #define C_OPTIMIZE_SWITCH -O3 -Xc
 #define C_DEBUG_SWITCH -g -Xc
 #else
-#define C_OPTIMIZE_SWITCH -O99 -m486 -fomit-frame-pointer
-#define C_DEBUG_SWITCH -g
+#define C_OPTIMIZE_SWITCH -O99 -m486 -fomit-frame-pointer -Xc
+#define C_DEBUG_SWITCH -g -Xc
 #endif
 
 /* configure can't get this right linking fails unless -lsocket is used.  */
@@ -100,11 +100,7 @@ could #define sco and I think everything would work. rjl */
 #undef BROKEN_TIOCGWINSZ
 #define NEED_PTEM_H
 
-#ifndef __GNUC__
 #define START_FILES pre-crt0.o /usr/ccs/lib/crt1.o /usr/ccs/lib/values-Xc.o
-#else
-#define START_FILES pre-crt0.o /usr/ccs/lib/crt1.o
-#endif
 #define LIB_STANDARD -lc
 
 /* Send signals to subprocesses by "typing" signal chars at them.  */

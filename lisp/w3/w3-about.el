@@ -1,14 +1,13 @@
 ;;; w3-about.el --- About pages for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/02/18 23:36:35
-;; Version: 1.8
+;; Created: 1996/06/30 18:02:26
+;; Version: 1.3
 ;; Keywords: hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
-;;; This file is part of GNU Emacs.
+;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
 ;;; GNU Emacs is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -21,9 +20,8 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;;; Boston, MA 02111-1307, USA.
+;;; along with GNU Emacs; see the file COPYING.  If not, write to
+;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun w3-about (url)
@@ -35,7 +33,9 @@
       (save-excursion
 	(set-buffer (get-buffer-create url-working-buffer))
 	(erase-buffer)
-	(setq url-current-mime-viewer (mm-mime-info "text/html" nil 5)
+	(setq url-current-type "about"
+	      url-current-file node
+	      url-current-mime-viewer (mm-mime-info "text/html" nil 5)
 	      url-current-mime-headers '(("content-type" . "text/html")))
 	(cond
 	 ((string= "" node)
@@ -78,11 +78,11 @@
 	 ((string= "style" node)
 	  (insert
 	   "
-/* This is the stylesheet for the about pages for Emacs-w3 */
+-- This is the stylesheet for the about pages for Emacs-w3 --
 
-address,h1,h2,h3,h4,h5,h6 { text-align: center }
-wired { color: yellow }
-wired { background: red }
+address,h1,h2,h3,h4,h5,h6 { align:\"center\" }
+wired { color:yellow }
+wired { background:red }
 "))
 	 ((string= "license" node)
 	  (kill-buffer (current-buffer))

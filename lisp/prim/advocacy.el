@@ -18,7 +18,7 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;;###autoload
@@ -69,7 +69,7 @@ when praising XEmacs")
 (defun praise-be-unto-emacs (&optional arg)
   (interactive "_p")
   (error "Obsolete function.  Use `praise-be-unto-xemacs'."))
-(make-compatible 'praise-be-unto-emacs "use praise-be-unto-xemacs")
+(make-obsolete 'praise-be-unto-emacs "use praise-be-unto-xemacs")
 
 ;;;###autoload
 (defun all-hail-xemacs (&optional arg)
@@ -81,6 +81,4 @@ when praising XEmacs")
 (defun all-hail-emacs (&optional arg)
   (interactive "_p")
   (error "Obsolete function.  Use `all-hail-xemacs'."))
-(make-compatible 'all-hail-emacs "use all-hail-xemacs")
-
-;;; advocacy.el ends here
+(make-obsolete 'all-hail-emacs "use all-hail-xemacs")

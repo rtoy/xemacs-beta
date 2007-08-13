@@ -49,55 +49,6 @@
 
 (require 'executable)
 
-;;; interpreter-mode-alist is not compatible between Emacs and XEmacs.
-;;; So fake it.
-
-(defvar sh-interpreter-mode-alist
-  '(("perl" . perl-mode)
-    ("perl5" . perl-mode)
-    ("wish" . tcl-mode)
-    ("wishx" . tcl-mode)
-    ("tcl" . tcl-mode)
-    ("tclsh" . tcl-mode)
-    ("awk" . awk-mode)
-    ("mawk" . awk-mode)
-    ("nawk" . awk-mode)
-    ("gawk" . awk-mode)
-    ("scm" . scheme-mode)
-    ("ash" . sh-mode)
-    ("bash" . sh-mode)
-    ("csh" . sh-mode)
-    ("dtksh" . sh-mode)
-    ("es" . sh-mode)
-    ("itcsh" . sh-mode)
-    ("jsh" . sh-mode)
-    ("ksh" . sh-mode)
-    ("oash" . sh-mode)
-    ("pdksh" . sh-mode)
-    ("rc" . sh-mode)
-    ("sh" . sh-mode)
-    ("sh5" . sh-mode)
-    ("tcsh" . sh-mode)
-    ("wksh" . sh-mode)
-    ("wsh" . sh-mode)
-    ("zsh" . sh-mode)
-    ("tail" . text-mode)
-    ("more" . text-mode)
-    ("less" . text-mode)
-    ("pg" . text-mode))
-  "Alist mapping interpreter names to major modes.
-This alist applies to files whose first line starts with `#!'.
-Each element looks like (INTERPRETER . MODE).
-The car of each element is compared with
-the name of the interpreter specified in the first line.
-If it matches, mode MODE is selected.")
-
-(defvar sh-mode-hook nil
-  "*Hook run by `sh-mode'.")
-
-(defvar sh-set-shell-hook nil
-  "*Hook run by `sh-set-shell'.")
-
 (defvar sh-ancestor-alist
   '((ash . sh)
     (bash . jsh)
@@ -382,8 +333,8 @@ The actual command ends at the end of the first \\(grouping\\).")
   "Word to delimit here documents.")
 
 (defvar sh-test
-  '((sh "[  ]" . 2)
-    (ksh88 "[[  ]]" . 3))
+  '((sh "[  ]" . 3)
+    (ksh88 "[[  ]]" . 4))
   "Initial input in Bourne if, while and until skeletons.  See `sh-feature'.")
 
 
@@ -721,15 +672,6 @@ with your script for an edit-interpret-debug cycle."
 ;;;###autoload
 (defalias 'shell-script-mode 'sh-mode)
 
-;;; XEmacs
-(put 'sh-mode 'font-lock-defaults
-     `((sh-font-lock-keywords
-	sh-font-lock-keywords-1
-	sh-font-lock-keywords-2)
-       ,sh-font-lock-keywords-only
-       nil
-       ((?/ . "w") (?~ . "w") (?. . "w") (?- . "w") (?_ . "w"))))
-     
 
 (defun sh-font-lock-keywords (&optional keywords)
   "Function to get simple fontification based on `sh-font-lock-keywords'.
@@ -777,8 +719,7 @@ This adds rules for comments and assignments."
 Makes this script executable via `executable-set-magic'.
 Calls the value of `sh-set-shell-hook' if set."
   (interactive (list (completing-read "Name or path of shell: "
-				      ;; XEmacs change
-				      sh-interpreter-mode-alist
+				      interpreter-mode-alist
 				      (lambda (x) (eq (cdr x) 'sh-mode)))
 		     (eq executable-query 'function)
 		     t))
@@ -788,10 +729,8 @@ Calls the value of `sh-set-shell-hook' if set."
   (setq sh-shell-file (executable-set-magic shell (sh-feature sh-shell-arg)))
   (setq require-final-newline (sh-feature sh-require-final-newline)
 ;;;	local-abbrev-table (sh-feature sh-abbrevs)
-	font-lock-defaults-computed nil
-	;; Next two lines kill XEmacs
-	;font-lock-keywords nil		; force resetting
-	;font-lock-syntax-table nil
+	font-lock-keywords nil		; force resetting
+	font-lock-syntax-table nil
 	comment-start-skip (concat (sh-feature sh-comment-prefix) "#+[\t ]*")
 	mode-line-process (format "[%s]" sh-shell)
 	sh-shell-variables nil
@@ -803,9 +742,7 @@ Calls the value of `sh-set-shell-hook' if set."
     (setq shell (cdr shell)))
   (and (boundp 'font-lock-mode)
        font-lock-mode
-       ;; Gnu Emacs, doesn't work
        (font-lock-mode (font-lock-mode 0)))
-       ;; (font-lock-fontify-buffer))
   (run-hooks 'sh-set-shell-hook))
 
 
@@ -926,7 +863,6 @@ Lines containing only comments are considered empty."
   (interactive)
   (let ((previous (save-excursion
 		    (while (and (not (bobp))
-				(not (eq (point-min) (point-at-bol)))
 				(progn
 				  (forward-line -1)
 				  (back-to-indentation)

@@ -113,7 +113,9 @@ typedef unsigned short mode_t;
 /* The following are glommed from the hp9000s800.h file */
 #define STACK_DIRECTION 1
 #endif
-
+/* Axel Seibert <seibert@leo.org> says the following is necessary due
+   to configure problems. */
+#undef REL_ALLOC
 #undef SYSV_SYSTEM_DIR
 #undef NONSYSTEM_DIR_LIBRARY
 #define signal_handler_t int
@@ -121,6 +123,7 @@ typedef unsigned short mode_t;
 #undef BSD_TERMIOS
 #undef HAVE_TERMIOS
 #undef HAVE_TERMIO
+#undef HAVE_MMAP
 #define NO_TERMIO
 #define TAB3 XTABS
 #define C_OPTIMIZE_SWITCH -pipe

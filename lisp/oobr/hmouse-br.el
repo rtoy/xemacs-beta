@@ -6,12 +6,12 @@
 ;; KEYWORDS:     mouse, oop, tools
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          InfoDock Associates
+;; ORG:          Motorola Inc.
 ;;
 ;; ORIG-DATE:    Sep-04-90
-;; LAST-MOD:     20-Feb-97 at 07:05:21 by Bob Weiner
+;; LAST-MOD:      1-Nov-95 at 20:32:56 by Bob Weiner
 ;;
-;; Copyright (C) 1990-1995, 1997  Free Software Foundation, Inc.
+;; Copyright (C) 1990-1995  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.

@@ -1,6 +1,6 @@
 ;;;;\filename dump.el
 ;;;\Last edited: Sun Mar 24 19:17:42 1996 by lenst@triton.lstaflin.pp.se (Lennart Staflin)
-;;;\RCS $Id: psgml-debug.el,v 1.1.1.2 1996/12/18 03:47:13 steve Exp $
+;;;\RCS $Id: psgml-debug.el,v 1.1.1.1 1996/12/18 22:43:36 steve Exp $
 ;;;\author {Lennart Staflin}
 ;;;\maketitle
 

@@ -50,6 +50,7 @@ void syms_of_callint (void);
 void syms_of_callproc (void);
 void syms_of_casefiddle (void);
 void syms_of_casetab (void);
+void syms_of_chartab (void);
 void syms_of_cmdloop (void);
 void syms_of_cmds (void);
 void syms_of_console_tty (void);
@@ -99,6 +100,12 @@ void syms_of_menubar_x (void);
 void syms_of_menubar (void);
 void syms_of_minibuf (void);
 void syms_of_mocklisp (void);
+void syms_of_mule (void);
+void syms_of_mule_canna (void);
+void syms_of_mule_ccl (void);
+void syms_of_mule_charset (void);
+void syms_of_mule_coding (void);
+void syms_of_mule_wnn (void);
 void syms_of_objects_tty (void);
 void syms_of_objects_x (void);
 void syms_of_objects (void);
@@ -153,6 +160,7 @@ void specifier_type_create_toolbar (void);
 /* Initialize the structure types (dump-time only). */
 
 void structure_type_create (void);
+void structure_type_create_chartab (void);
 void structure_type_create_faces (void);
 void structure_type_create_rangetab (void);
 
@@ -164,6 +172,7 @@ void image_instantiator_format_create_glyphs_x (void);
 /* Initialize the lstream types (dump-time only). */
 
 void lstream_type_create (void);
+void lstream_type_create_mule_coding (void);
 void lstream_type_create_print (void);
 
 /* Allow for Fprovide() (dump-time only). */
@@ -215,6 +224,8 @@ void vars_of_glyphs_x (void);
 void vars_of_glyphs (void);
 void vars_of_gui_x (void);
 void vars_of_gui (void);
+void vars_of_input_method_motif (void);
+void vars_of_input_method_xlib (void);
 void vars_of_indent (void);
 void vars_of_insdel (void);
 void vars_of_intl (void);
@@ -227,6 +238,11 @@ void vars_of_menubar_x (void);
 void vars_of_menubar (void);
 void vars_of_minibuf (void);
 void vars_of_mocklisp (void);
+void vars_of_mule (void);
+void vars_of_mule_canna (void);
+void vars_of_mule_charset (void);
+void vars_of_mule_coding (void);
+void vars_of_mule_wnn (void);
 void vars_of_objects (void);
 void vars_of_objects_tty (void);
 void vars_of_objects_x (void);
@@ -266,6 +282,8 @@ void complex_vars_of_search (void);
 void complex_vars_of_event_stream (void);
 void complex_vars_of_extents (void);
 void complex_vars_of_faces (void);
+void complex_vars_of_mule_charset (void);
+void complex_vars_of_mule_coding (void);
 void complex_vars_of_glyphs (void);
 void complex_vars_of_glyphs_x (void);
 void complex_vars_of_alloc (void);
@@ -275,6 +293,7 @@ void complex_vars_of_frame (void);
 void complex_vars_of_energize (void);
 void complex_vars_of_casetab (void);
 void complex_vars_of_syntax (void);
+void complex_vars_of_chartab (void);
 void complex_vars_of_buffer (void);
 void complex_vars_of_console (void);
 void complex_vars_of_minibuf (void);

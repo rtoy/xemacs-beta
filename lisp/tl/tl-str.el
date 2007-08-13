@@ -1,9 +1,10 @@
 ;;; tl-str.el --- Emacs Lisp Library module about string
 
-;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
+;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: tl-str.el,v 1.3 1997/02/02 05:06:17 steve Exp $
+;; Version:
+;;	$Id: tl-str.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $
 ;; Keywords: string
 
 ;; This file is part of tl (Tiny Library).
@@ -205,8 +206,40 @@
       (substring filename 0 (match-beginning 0))
     filename))
 
-(autoload 'replace-as-filename "filename"
-  "Return safety filename from STRING.")
+(defvar filename-special-char-range
+  (nconc '((0 . 31))
+	 (string-to-int-list "!\"$")
+	 (list (cons (char-int ?&) (char-int ?*)))
+	 (string-to-int-list "/;<>?")
+	 (list (cons (char-int ?\[) (char-int ?^)))
+	 (string-to-int-list "`")
+	 (list (cons (char-int ?{) (char-int ?})))
+	 '((127 . 159)))
+  "*Range of characters which is not available in file name. [tl-str.el]")
+
+(defvar filename-space-char-range '(9 32 160)
+  "*Range of characters which indicates space. These characters
+are replaced to `_' by function `replace-as-filename' [tl-str.el]")
+
+(defun replace-as-filename (str)
+  "Return safety filename from STR. [tl-str.el]"
+  (let (sf)
+    (mapconcat (function
+		(lambda (chr)
+		  (cond ((member-of-range chr filename-space-char-range)
+			 (if sf
+			     ""
+			   (setq sf t)
+			   "_"))
+			((member-of-range chr filename-special-char-range)
+			 "")
+			(t
+			 (setq sf nil)
+			 (char-to-string chr)
+			 ))
+		  ))
+	       (string-to-char-list str)
+	       "")))
 
 
 ;;; @ symbol

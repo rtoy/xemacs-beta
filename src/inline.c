@@ -68,7 +68,6 @@ Boston, MA 02111-1307, USA.  */
 #include "gui-x.h"
 #endif
 
-#ifdef TOOLTALK
-#include <tt_c.h>
-#include "tooltalk.h"
+#ifdef MULE
+#include "mule-coding.h"
 #endif

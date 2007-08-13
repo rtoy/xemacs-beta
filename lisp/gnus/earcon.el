@@ -30,30 +30,19 @@
     (defvar running-xemacs (string-match "XEmacs\\|Lucid" emacs-version)))
 
 (require 'gnus)
-(require 'gnus-audio)
-(require 'gnus-art)
+(require 'gnus-sound)
 (eval-when-compile (require 'cl))
 
-(defgroup earcon nil
-  "Turn ** sounds ** into noise."
-  :group 'gnus-visual)
+(defvar earcon-auto-play nil
+  "When True, automatially play sounds as well as buttonize them.")
 
-(defcustom earcon-auto-play nil
-  "When True, automatically play sounds as well as buttonize them."
-  :type 'boolean
-  :group 'earcon)
+(defvar earcon-prefix "**"
+  "The start of an earcon")
 
-(defcustom earcon-prefix "**"
-  "String denoting the start of an earcon."
-  :type 'string
-  :group 'earcon)
+(defvar earcon-suffix "**"
+  "The end of an earcon")
 
-(defcustom earcon-suffix "**"
-  "String denoting the end of an earcon."
-  :type 'string
-  :group 'earcon)
-
-(defcustom earcon-regexp-alist
+(defvar earcon-regexp-alist
   '(("boring" 1 "Boring.au")
     ("evil[ \t]+laugh" 1 "Evil_Laugh.au")
     ("gag\\|puke" 1 "Puke.au")
@@ -62,7 +51,7 @@
     ("sob\\|boohoo" 1 "cry.wav")
     ("drum[ \t]*roll" 1 "drumroll.au")
     ("blast" 1 "explosion.au")
-    ("flush\\|plonk!*" 1 "flush.au")
+    ("flush" 1 "flush.au")
     ("kiss" 1 "kiss.wav")
     ("tee[ \t]*hee" 1 "laugh.au")
     ("shoot" 1 "shotgun.wav")
@@ -70,11 +59,7 @@
     ("cackle" 1 "witch.au")
     ("yell\\|roar" 1 "yell2.au")
     ("whoop-de-doo" 1 "whistle.au"))
-  "A list of regexps to map earcons to real sounds."
-  :type '(repeat (list regexp
-		       (integer :tag "Match")
-		       (string :tag "Sound")))
-  :group 'earcon)
+  "A list of regexps to map earcons to real sounds.")
 
 (defvar earcon-button-marker-list nil)
 (make-variable-buffer-local 'earcon-button-marker-list)
@@ -142,7 +127,7 @@ If N is negative, move backward instead."
        gnus-article-button-face
        (gnus-overlay-put (gnus-make-overlay from to)
 			 'face gnus-article-button-face))
-  (gnus-add-text-properties
+  (gnus-add-text-properties 
    from to
    (nconc (and gnus-article-mouse-face
 	       (list gnus-mouse-face-prop gnus-article-mouse-face))
@@ -169,7 +154,7 @@ If N is negative, move backward instead."
     (goto-char marker)
     (let* ((entry (earcon-button-entry))
 	   (inhibit-point-motion-hooks t)
-	   (fun 'gnus-audio-play)
+	   (fun 'gnus-sound-play)
 	   (args (list (nth 2 entry))))
       (cond
        ((fboundp fun)
@@ -208,10 +193,10 @@ If N is negative, move backward instead."
       (setq beg (point))
       (while (setq entry (pop alist))
 	(setq regexp (concat (regexp-quote earcon-prefix)
-			     ".*\\("
-			     (car entry)
-			     "\\).*"
-			     (regexp-quote earcon-suffix)))
+			      ".*\\("
+			      (car entry)
+			      "\\).*"
+			      (regexp-quote earcon-suffix)))
 	(goto-char beg)
 	(while (re-search-forward regexp nil t)
 	  (let* ((start (and entry (match-beginning 1)))
@@ -221,7 +206,7 @@ If N is negative, move backward instead."
 	     start end 'earcon-button-push
 	     (car (push (set-marker (make-marker) from)
 			earcon-button-marker-list)))
-	    (gnus-audio-play (caddr entry))))))))
+	    (gnus-sound-play (caddr entry))))))))
 
 ;;;###autoload
 (defun gnus-earcon-display ()

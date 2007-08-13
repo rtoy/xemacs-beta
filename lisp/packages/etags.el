@@ -807,8 +807,8 @@ Is of the form (TAG POINT TAG-TABLE TAG-TABLE ...).")
   "Form for `tags-loop-continue' to eval to change one file.")
 
 (defvar tags-loop-scan
-  '(error "%s" (substitute-command-keys
-		"No \\[tags-search] or \\[tags-query-replace] in progress."))
+  '(error (substitute-command-keys
+           "No \\[tags-search] or \\[tags-query-replace] in progress."))
   "Form for `tags-loop-continue' to eval to scan one file.
 If it returns non-nil, this file needs processing by evalling
 \`tags-loop-operate'.  Otherwise, move on to the next file.")

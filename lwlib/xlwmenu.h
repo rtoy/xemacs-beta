@@ -10,35 +10,35 @@
 #include "lwlib.h"
 
 /* Resource names used by the XlwMenu widget */
-#define XtNbuttonForeground "buttonForeground"
-#define XtCButtonForeground "ButtonForeground"
-#define XtNmargin "margin"
-#define XtNhorizontalSpacing "horizontalSpacing"
-#define XtNverticalSpacing "verticalSpacing"
-#define XtNarrowSpacing "arrowSpacing"
-#define XtNmenu "menu"
-#define XtCMenu "Menu"
-#define XtNopen "open"
-#define XtNselect "select"
-#define XtNmenuBorderWidth "menuBorderWidth"
-#define XtNhorizontal "horizontal"
-#define XtCHorizontal "Horizontal"
+#define XtNbuttonForeground (String) "buttonForeground"
+#define XtCButtonForeground (String) "ButtonForeground"
+#define XtNmargin (String) "margin"
+#define XtNhorizontalSpacing (String) "horizontalSpacing"
+#define XtNverticalSpacing (String) "verticalSpacing"
+#define XtNarrowSpacing (String) "arrowSpacing"
+#define XtNmenu (String) "menu"
+#define XtCMenu (String) "Menu"
+#define XtNopen (String) "open"
+#define XtNselect (String) "select"
+#define XtNmenuBorderWidth (String) "menuBorderWidth"
+#define XtNhorizontal (String) "horizontal"
+#define XtCHorizontal (String) "Horizontal"
 #ifndef XtNcursor
-#define XtNcursor "cursor"
+#define XtNcursor (String) "cursor"
 #endif
 #ifndef XtCCursor
-#define XtCCursor "Cursor"
+#define XtCCursor (String) "Cursor"
 #endif
 #ifndef XtNuseBackingStore
-#define XtNuseBackingStore "useBackingStore"
+#define XtNuseBackingStore (String) "useBackingStore"
 #endif
 #ifndef XtCUseBackingStore
-#define XtCUseBackingStore "UseBackingStore"
+#define XtCUseBackingStore (String) "UseBackingStore"
 #endif
-#define XtNbounceDown "bounceDown"
-#define XtCBounceDown "BounceDown"
-#define XtNresourceLabels "resourceLabels"
-#define XtCResourceLabels "ResourceLabels"
+#define XtNbounceDown (String) "bounceDown"
+#define XtCBounceDown (String) "BounceDown"
+#define XtNresourceLabels (String) "resourceLabels"
+#define XtCResourceLabels (String) "ResourceLabels"
 
 /* Motif-compatible resource names */
 #ifndef XmNshadowThickness

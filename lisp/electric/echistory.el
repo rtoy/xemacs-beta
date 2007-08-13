@@ -4,7 +4,6 @@
 
 ;; Author: K. Shane Hartman
 ;; Maintainer: FSF
-;; Keywords: extensions
 
 ;; This file is part of XEmacs.
 
@@ -20,10 +19,9 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-;;; Synched up with: FSF 19.34.
+;;; Synched up with: FSF 19.30.
 
 ;;; Code:
 
@@ -33,7 +31,7 @@
 ;;;###autoload
 (defun Electric-command-history-redo-expression (&optional noconfirm)
   "Edit current history line in minibuffer and execute result.
-With prefix arg NOCONFIRM, execute current line as-is without editing."
+With prefix argument NOCONFIRM, execute current line as-is without editing."
   (interactive "P")
   (let (todo)
     (save-excursion
@@ -46,7 +44,6 @@ With prefix arg NOCONFIRM, execute current line as-is without editing."
 (defvar electric-history-map ())
 (if electric-history-map
     ()
-  ;; XEmacs
   (setq electric-history-map (make-keymap))
   (set-keymap-name electric-history-map 'electric-history-map)
   (set-keymap-default-binding electric-history-map 'Electric-history-undefined)
@@ -67,8 +64,8 @@ With prefix arg NOCONFIRM, execute current line as-is without editing."
   (define-key electric-history-map "\C-c\C-c" 'Electric-history-quit)
   (define-key electric-history-map "\C-]" 'Electric-history-quit)
   (define-key electric-history-map "\C-z" 'suspend-emacs)
-  (define-key electric-history-map (char-to-string help-char) 'Helper-help)
-  ;; XEmacs
+;;  (define-key electric-history-map "\C-h" 'Helper-help)
+  (define-key electric-history-map '(control h) 'Helper-help)
   (define-key electric-history-map 'backspace 'previous-line)
   (define-key electric-history-map "?" 'Helper-describe-bindings)
   (define-key electric-history-map "\e>" 'end-of-buffer)
@@ -101,6 +98,12 @@ Combines typeout Command History list window with menu like selection
 of an expression from the history for re-evaluation in the *original* buffer.
 
 The history displayed is filtered by `list-command-history-filter' if non-nil.
+
+This pops up a window with the Command History listing.  If the very
+next character typed is Space, the listing is killed and the previous
+window configuration is restored.  Otherwise, you can browse in the
+Command History with  Return  moving down and  Delete  moving up, possibly
+selecting an expression to be redone with Space or quitting with `Q'.
 
 Like Emacs-Lisp mode except that characters do not insert themselves and
 Tab and Linefeed do not indent.  Instead these commands are provided:
@@ -150,7 +153,7 @@ The Command History listing is recomputed each time this mode is invoked."
   "Quit Electric Command History, restoring previous window configuration."
   (interactive)
   (if (boundp 'electric-history-in-progress)
-      (progn (message "")
+      (progn (message nil)
 	     (throw 'electric-history-quit nil))))
 
 ;;; echistory.el ends here

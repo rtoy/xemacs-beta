@@ -1,12 +1,11 @@
 ;;; w3-e19.el --- Emacs 19.xx specific functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/03/12 20:07:18
-;; Version: 1.19
+;; Created: 1996/07/11 04:49:02
+;; Version: 1.3
 ;; Keywords: faces, help, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
 ;;; This file is part of GNU Emacs.
 ;;;
@@ -21,9 +20,8 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;;; Boston, MA 02111-1307, USA.
+;;; along with GNU Emacs; see the file COPYING.  If not, write to
+;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -31,62 +29,100 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'w3-forms)
 (require 'font)
-(require 'w3-script)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Help menu
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defvar w3-e19-hotlist-menu nil "A menu for hotlists.")
-(defvar w3-e19-links-menu nil "A buffer-local menu for hyperlinks.")
-(defvar w3-e19-nav-menu nil "A buffer-local menu for html based <link> tags.")
-(mapcar 'make-variable-buffer-local
-	'(w3-e19-hotlist-menu w3-e19-links-menu w3-e19-nav-menu))
+(defvar w3-links-menu nil "Menu for w3-mode in emacs 19.")
+(make-variable-buffer-local 'w3-links-menu)
+
+(defun w3-add-hotlist-menu ()
+  ;; Add the hotlist menu to this buffer - used when it changes.
+  (let ((hot-menu (make-sparse-keymap "w3-hotlist"))
+	(ctr 0)
+	(hot w3-hotlist))
+    (while hot
+      (define-key hot-menu (vector (intern (concat "w3-hotlist-"
+						   (int-to-string ctr))))
+	(cons (car (car hot))
+	      (list 'lambda () '(interactive)
+		    (list 'w3-fetch (car (cdr (car hot)))))))
+      (setq ctr (1+ ctr)
+	    hot (cdr hot)))
+    (setq w3-e19-hotlist-menu hot-menu)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Functions to build menus of urls
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defun w3-e19-show-hotlist-menu ()
-  (interactive)
-  (let ((keymap (easy-menu-create-keymaps "Hotlist"
-					  (w3-menu-hotlist-constructor nil)))
-	(x nil)
-	(y nil))
-    (setq x (x-popup-menu t keymap)
-	  y (and x (lookup-key keymap (apply 'vector x))))
-    (if (and x y)
-	(funcall y))))
+(defun w3-e19-show-hotlist-menu (e)
+  (interactive "e")
+  (if w3-html-bookmarks
+      (popup-menu w3-html-bookmarks)
+    (let* ((x (condition-case ()
+		  (x-popup-menu e w3-e19-hotlist-menu)
+		(error nil)))		; to trap for empty menus
+	   (y (and x (lookup-key w3-e19-hotlist-menu (apply 'vector x)))))
+      (if (and x y)
+	  (funcall y)))))
 
-(defun w3-e19-show-links-menu ()
-  (interactive)
+(defun w3-e19-show-links-menu (e)
+  (interactive "e")
   (if (not w3-e19-links-menu)
       (w3-build-FSF19-menu))
-  (let (x y)
-    (setq x (x-popup-menu t w3-e19-links-menu)
-	  y (and x (lookup-key w3-e19-links-menu (apply 'vector x))))
-    (if (and x y)
-	(funcall y))))
-
-(defun w3-e19-show-navigate-menu ()
-  (interactive)
-  (if (not w3-e19-nav-menu)
-      (w3-build-FSF19-menu))
-  (let (x y)
-    (setq x (x-popup-menu t w3-e19-nav-menu)
-	  y (and x (lookup-key w3-e19-nav-menu (apply 'vector x))))
+  (let* ((x (condition-case ()
+		(x-popup-menu e w3-e19-links-menu)
+	      (error nil)))		; to trap for empty menus
+	 (y (and x (lookup-key w3-e19-links-menu (apply 'vector x)))))
     (if (and x y)
 	(funcall y))))
 
 (defun w3-build-FSF19-menu ()
   ;; Build emacs19 menus from w3-links-list
-  (let ((links (w3-menu-html-links-constructor nil))
-	(hlink (w3-menu-links-constructor nil)))
-    (setq w3-e19-nav-menu (easy-menu-create-keymaps "Navigate" links)
-	  w3-e19-links-menu (easy-menu-create-keymaps "Links" hlink))))
+  (let* ((ctr 0)
+	 (menu-ctr 0)
+	 (tmp nil)
+	 (widgets (w3-only-links))
+	 (widget nil)
+	 (href nil)
+	 (menus nil))
+     (setq tmp (make-sparse-keymap "Links"))
+     (while widgets
+       (setq widget (car widgets)
+	     widgets (cdr widgets)
+	     href (widget-get widget 'href))
+       (if (> ctr w3-max-menu-length)
+	   (setq menus (cons tmp menus)
+		 ctr 0
+		 tmp (make-sparse-keymap
+		      (concat "Links" (int-to-string
+				       (setq menu-ctr
+					     (1+ menu-ctr)))))))
+       (let ((ttl (w3-fix-spaces
+		   (buffer-substring
+		    (widget-get widget :from)
+		    (widget-get widget :to))))
+	     (key (vector (intern (concat "link"
+					  (int-to-string
+					   (setq ctr (1+ ctr))))))))
+	 (if (and (> (length ttl) 0) href)
+	     (define-key tmp key 
+	       (cons ttl
+		     (list 'lambda () '(interactive)
+			   (list 'w3-fetch href)))))))
+     (if (not menus)
+	 (setq w3-e19-links-menu tmp)
+       (setq w3-e19-links-menu (make-sparse-keymap "LinkMenu")
+	     menus (nreverse (cons tmp menus))
+	     ctr 0)
+       (while menus
+	 (define-key w3-e19-links-menu
+	   (vector (intern (concat "SubMenu" ctr)))
+	   (cons "More..." (car menus)))
+	 (setq menus (cdr menus)
+	       ctr (1+ ctr))))))
 
 (defun w3-setup-version-specifics ()
   ;; Set up routine for emacs 19
-  (require 'lmenu) ; for popup-menu
-  )
+  (require 'lmenu))
 
 (defun w3-store-in-clipboard (str)
   "Store string STR in the Xwindows clipboard"
@@ -97,30 +133,37 @@
     (ns-store-pasteboard-internal str))
    (t nil)))
 
-(defun w3-e19-no-read-only (st nd)
-  ;; Make sure we don't yank any read-only data out of this buffer
-  (let ((inhibit-read-only t))
-    (put-text-property st nd 'read-only nil)))
-
 (defun w3-mode-version-specifics ()
   ;; Emacs 19 specific stuff for w3-mode
   (make-local-variable 'track-mouse)
-  (set (make-local-variable 'buffer-access-fontify-functions) 'w3-e19-no-read-only)
-  (if w3-track-mouse (setq track-mouse t)))
+  (if w3-track-mouse (setq track-mouse t))
+  (if (or (memq (device-type) '(x pm ns)))
+      (w3-build-FSF19-menu)))
 
 (defun w3-mouse-handler (e)
   "Function to message the url under the mouse cursor"
   (interactive "e")
   (let* ((pt (posn-point (event-start e)))
 	 (good (eq (posn-window (event-start e)) (selected-window)))
-	 (mouse-events nil))
-    (if (not (and good pt (number-or-marker-p pt)))
-	nil
-      (widget-echo-help pt)
-      ;; Need to handle onmouseover, on mouseout
-      (setq mouse-events (w3-script-find-event-handlers pt 'mouse))
-      (if (assq 'onmouseover mouse-events)
-	  (w3-script-evaluate-form (cdr (assq 'onmouseover mouse-events)))))))
+	 (widget (and good pt (number-or-marker-p pt) (widget-at pt)))
+	 (link (and widget (widget-get widget 'href)))
+	 (form (and widget (widget-get widget 'w3-form-data)))
+	 (imag nil) ; (nth 1 (memq 'w3graphic props))))
+	 )
+    (cond
+     (link (message "%s" link))
+     (form
+      (cond
+       ((eq 'submit (w3-form-element-type form))
+	(message "Submit form to %s"
+		 (cdr-safe (assq 'action (w3-form-element-action form)))))
+       ((eq 'reset (w3-form-element-type form))
+	(message "Reset form contents"))
+       (t
+	(message "Form entry (name=%s, type=%s)" (w3-form-element-name form)
+		 (w3-form-element-type form)))))
+     (imag (message "Inlined image (%s)" (car imag)))
+     (t (message "")))))
 
 (defun w3-color-values (color)
   (cond

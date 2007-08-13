@@ -214,7 +214,7 @@ struct console_methods
 
 #ifdef HAVE_SCROLLBARS
   /* scrollbar methods */
-  int (*inhibit_scrollbar_slider_size_change_method) (void);
+  int (*inhibit_scrollbar_thumb_size_change_method) (void);
   void (*free_scrollbar_instance_method) (struct scrollbar_instance *);
   void (*release_scrollbar_instance_method) (struct scrollbar_instance *);
   void (*create_scrollbar_instance_method) (struct frame *, int,

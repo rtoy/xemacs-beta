@@ -27,13 +27,7 @@ only marked messages are undeleted, other messages are ignored." t nil)
 
 (autoload (quote vm-kill-subject) "vm-delete" "Delete all messages with the same subject as the current message.
 Message subjects are compared after ignoring parts matched by
-the variables vm-subject-ignored-prefix and vm-subject-ignored-suffix.
-
-The optional prefix argument ARG specifies the direction to move
-if vm-move-after-killing is non-nil.  The default direction is
-forward.  A positive prefix argument means move forward, a
-negative arugment means move backward, a zero argument means
-don't move at all." t nil)
+the variables vm-subject-ignored-prefix and vm-subject-ignored-suffix." t nil)
 
 (autoload (quote vm-expunge-folder) "vm-delete" "Expunge messages with the `deleted' attribute.
 For normal folders this means that the deleted messages are
@@ -61,36 +55,6 @@ DISCARD-REGEXP should be a regexp that matches headers to be discarded.
 KEEP-LIST and DISCARD-REGEXP are used to order and trim the headers
 to be forwarded.  See the docs for vm-reorder-message-headers
 to find out how KEEP-LIST and DISCARD-REGEXP are used." nil nil)
-
-(autoload (quote vm-mime-encapsulate-messages) "vm-digest" "Encapsulate the messages in MESSAGE-LIST as per the MIME spec.
-The resulting digest is inserted at point in the current buffer.
-Point is not moved.
-
-MESSAGE-LIST should be a list of message structs (real or virtual).
-These are the messages that will be encapsulated.
-KEEP-LIST should be a list of regexps matching headers to keep.
-DISCARD-REGEXP should be a regexp that matches headers to be discarded.
-KEEP-LIST and DISCARD-REGEXP are used to order and trim the headers
-to be forwarded.  See the docs for vm-reorder-message-headers
-to find out how KEEP-LIST and DISCARD-REGEXP are used.
-
-If ALWAYS-USE-DIGEST is non-nil, always encapsulate for a multipart/digest.
-Otherwise if there are fewer than two messages to be encapsulated
-leave off the multipart boundary strings.  The caller is assumed to
-be using message/rfc822 or message/news encoding instead.
-
-If multipart/digest encapsulation is done, the function returns
-the multipart boundary parameter (string) that should be used in
-the Content-Type header.  Otherwise nil is returned." nil nil)
-
-(autoload (quote vm-mime-burst-message) "vm-digest" "Burst messages from the digest message M.
-M should be a message struct for a real message.
-MIME encoding is expected.  Somewhere within the MIME layout
-there must be at least one part of type message/news, message/rfc822 or
-multipart/digest.  If there are multiple parts matching those types,
-all of them will be burst." nil nil)
-
-(autoload (quote vm-mime-burst-layout) "vm-digest" nil nil nil)
 
 (autoload (quote vm-rfc934-char-stuff-region) "vm-digest" "Quote RFC 934 message separators between START and END.
 START and END are buffer positions in the current buffer.
@@ -135,6 +99,19 @@ KEEP-LIST and DISCARD-REGEXP are used to order and trim the headers
 to be forwarded.  See the docs for vm-reorder-message-headers
 to find out how KEEP-LIST and DISCARD-REGEXP are used." nil nil)
 
+(autoload (quote vm-rfc1521-encapsulate-messages) "vm-digest" "Encapsulate the messages in MESSAGE-LIST as per RFC 1521 (MIME).
+The resulting digest is inserted at point in the current buffer.
+MIME headers at point-max are added/updated.
+Point is not moved.
+
+MESSAGE-LIST should be a list of message structs (real or virtual).
+These are the messages that will be encapsulated.
+KEEP-LIST should be a list of regexps matching headers to keep.
+DISCARD-REGEXP should be a regexp that matches headers to be discarded.
+KEEP-LIST and DISCARD-REGEXP are used to order and trim the headers
+to be forwarded.  See the docs for vm-reorder-message-headers
+to find out how KEEP-LIST and DISCARD-REGEXP are used." nil nil)
+
 (autoload (quote vm-rfc1153-or-rfc934-burst-message) "vm-digest" "Burst messages from the digest message M.
 M should be a message struct for a real message.
 If RFC1153 is non-nil, assume the digest is of the form specified by
@@ -162,13 +139,11 @@ all marked messages will be burst." t nil)
 
 (autoload (quote vm-burst-rfc1153-digest) "vm-digest" "Burst an RFC 1153 style digest" t nil)
 
-(autoload (quote vm-burst-mime-digest) "vm-digest" "Burst a MIME digest" t nil)
+(autoload (quote vm-burst-rfc1521-digest) "vm-digest" "Burst an RFC 1521 (MIME) style digest" t nil)
 
 (autoload (quote vm-guess-digest-type) "vm-digest" "Guess the digest type of the message M.
 M should be the message struct of a real message.
-Returns either \"rfc934\", \"rfc1153\" or \"mime\"." nil nil)
-
-(autoload (quote vm-digest-get-header-contents) "vm-digest" nil nil nil)
+Returns either \"rfc934\", \"rfc1153\", or  \"rfc1521\"." nil nil)
 
 (autoload (quote vm-easy-menu-define) "vm-easymenu" "Define a menu bar submenu in maps MAPS, according to MENU.
 The menu keymap is stored in symbol SYMBOL, both as its value
@@ -231,7 +206,7 @@ as a solid horizontal line.
 A menu item can be a list.  It is treated as a submenu.
 The first element should be the submenu name.  That's used as the
 menu item in the top-level menu.  The cdr of the submenu list
-is a list of menu items, as above." nil (quote macro))
+is a list of menu items, as above." nil t)
 
 (autoload (quote vm-easy-menu-do-define) "vm-easymenu" nil nil nil)
 
@@ -335,8 +310,8 @@ Also mark the current buffer as needing a display update.
 START-POINT should be a cons in vm-message-list or just t.
  (t means start from the beginning of vm-message-list.)
 If START-POINT is closer to the head of vm-message-list than
-vm-summary-redo-start-point or is equal to t, then
-vm-summary-redo-start-point is set to match it." nil nil)
+vm-numbering-redo-start-point or is equal to t, then
+vm-numbering-redo-start-point is set to match it." nil nil)
 
 (autoload (quote vm-mark-for-summary-update) "vm-folder" "Mark message M for a summary update.
 Also mark M's buffer as needing a display update. Any virtual
@@ -356,14 +331,11 @@ and thread indentation." nil nil)
 (autoload (quote vm-do-needed-mode-line-update) "vm-folder" "Do a modeline update for the current folder buffer.
 This means setting up all the various vm-ml attribute variables
 in the folder buffer and copying necessary variables to the
-folder buffer's summary and presentation buffers, and then
-forcing Emacs to update all modelines.
+folder buffer's summary buffer, and then forcing Emacs to update
+all modelines.
 
-If a virtual folder being updated has no messages, then
-erase-buffer is called on its buffer.
-
-If any type of folder is empty, erase-buffer is called
-on its presentation buffer, if any." nil nil)
+Also if a virtual folder being updated has no messages,
+erase-buffer is called on its buffer." nil nil)
 
 (autoload (quote vm-update-summary-and-mode-line) "vm-folder" "Update summary and mode line for all VM folder and summary buffers.
 Really this updates all the visible status indicators.
@@ -557,8 +529,6 @@ vm-folder-type is initialized here." nil nil)
 
 (autoload (quote vm-stuff-attributes) "vm-folder" nil nil nil)
 
-(autoload (quote vm-stuff-folder-attributes) "vm-folder" nil nil nil)
-
 (autoload (quote vm-stuff-babyl-attributes) "vm-folder" nil nil nil)
 
 (autoload (quote vm-babyl-attributes-string) "vm-folder" nil nil nil)
@@ -599,15 +569,11 @@ Buffer Menu." t nil)
 (autoload (quote vm-quit-just-iconify) "vm-folder" "Iconify the frame and bury the current VM folder and summary buffers.
 The folder is not altered and Emacs is still visiting it." t nil)
 
-(autoload (quote vm-quit-no-change) "vm-folder" "Quit visiting the current folder without saving changes made to the folder." t nil)
+(autoload (quote vm-quit-no-change) "vm-folder" "Exit VM without saving changes made to the folder." t nil)
 
-(autoload (quote vm-quit) "vm-folder" "Quit visiting the current folder, saving changes.  Deleted messages are not expunged." t nil)
+(autoload (quote vm-quit) "vm-folder" "Quit VM, saving changes.  Deleted messages are not expunged." t nil)
 
 (autoload (quote vm-start-itimers-if-needed) "vm-folder" nil nil nil)
-
-(autoload (quote vm-timer-using) "vm-folder" nil nil nil)
-
-(autoload (quote vm-check-mail-itimer-function) "vm-folder" nil nil nil)
 
 (autoload (quote vm-get-mail-itimer-function) "vm-folder" nil nil nil)
 
@@ -649,12 +615,6 @@ run vm-expunge-folder followed by vm-save-folder." t nil)
 (autoload (quote vm-spool-move-mail) "vm-folder" nil nil nil)
 
 (autoload (quote vm-gobble-crash-box) "vm-folder" nil nil nil)
-
-(autoload (quote vm-compute-spool-files) "vm-folder" nil nil nil)
-
-(autoload (quote vm-spool-check-mail) "vm-folder" nil nil nil)
-
-(autoload (quote vm-check-for-spooled-mail) "vm-folder" nil nil nil)
 
 (autoload (quote vm-get-spooled-mail) "vm-folder" nil nil nil)
 
@@ -700,10 +660,6 @@ TYPE may be one of the following symbol values:
 
 Interactively TYPE will be read from the minibuffer." t nil)
 
-(autoload (quote vm-garbage-collect-folder) "vm-folder" nil nil nil)
-
-(autoload (quote vm-garbage-collect-message) "vm-folder" nil nil nil)
-
 (autoload (quote vm-show-copying-restrictions) "vm-license" nil t nil)
 
 (autoload (quote vm-show-no-warranty) "vm-license" "Display \"NO WARRANTY\" section of the GNU General Public License." t nil)
@@ -721,12 +677,6 @@ previous N-1 messages." t nil)
 Numeric prefix argument N means unmark the current message and the next
 N-1 messages.  A negative N means unmark the current message and the
 previous N-1 messages." t nil)
-
-(autoload (quote vm-mark-summary-region) "vm-mark" "Mark all messages with summary lines contained in the region." t nil)
-
-(autoload (quote vm-unmark-summary-region) "vm-mark" "Remove marks from messages with summary lines contained in the region." t nil)
-
-(autoload (quote vm-mark-or-unmark-summary-region) "vm-mark" nil nil nil)
 
 (autoload (quote vm-mark-or-unmark-messages-with-selector) "vm-mark" nil nil nil)
 
@@ -759,9 +709,7 @@ variable vm-virtual-folder-alist for more information." t nil)
 (autoload (quote vm-mark-or-unmark-messages-same-author) "vm-mark" nil nil nil)
 
 (autoload (quote vm-next-command-uses-marks) "vm-mark" "Does nothing except insure that the next VM command will operate only
-on the marked messages in the current folder.  This only works for
-commands bound to key, menu or button press events.  M-x vm-command will
-not work." t nil)
+on the marked messages in the current folder." t nil)
 
 (autoload (quote vm-marked-messages) "vm-mark" nil nil nil)
 
@@ -787,8 +735,6 @@ set to the command name so that window configuration will be done." nil nil)
 
 (autoload (quote vm-menu-can-undo-p) "vm-menu" nil nil nil)
 
-(autoload (quote vm-menu-can-decode-mime-p) "vm-menu" nil nil nil)
-
 (autoload (quote vm-menu-yank-original) "vm-menu" nil t nil)
 
 (autoload (quote vm-menu-can-send-mail-p) "vm-menu" nil nil nil)
@@ -809,15 +755,7 @@ set to the command name so that window configuration will be done." nil nil)
 
 (autoload (quote vm-menu-popup-context-menu) "vm-menu" nil t nil)
 
-(autoload (quote vm-menu-goto-event) "vm-menu" nil nil nil)
-
 (autoload (quote vm-menu-popup-url-browser-menu) "vm-menu" nil t nil)
-
-(autoload (quote vm-menu-popup-mailto-url-browser-menu) "vm-menu" nil t nil)
-
-(autoload (quote vm-menu-popup-mime-dispose-menu) "vm-menu" nil t nil)
-
-(autoload (quote vm-menu-popup-content-disposition-menu) "vm-menu" nil t nil)
 
 (autoload (quote vm-menu-popup-fsfemacs-menu) "vm-menu" nil t nil)
 
@@ -873,566 +811,245 @@ matching a regexp in RE-HIDDEN-FILE-LIST are suppressed.
 If INCLUDE-CURRENT-DIR non nil, then an additional command
 for the current directory (.) is inserted." nil nil)
 
-(autoload (quote vm-location-data-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-location-data-of) "vm-message" nil nil t)
 
-(autoload (quote vm-start-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-start-of) "vm-message" nil nil t)
 
-(autoload (quote vm-headers-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-headers-of) "vm-message" nil nil t)
 
 (autoload (quote vm-vheaders-of) "vm-message" nil nil nil)
 
 (autoload (quote vm-text-of) "vm-message" nil nil nil)
 
-(autoload (quote vm-text-end-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-text-end-of) "vm-message" nil nil t)
 
-(autoload (quote vm-end-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-end-of) "vm-message" nil nil t)
 
-(autoload (quote vm-softdata-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-softdata-of) "vm-message" nil nil t)
 
-(autoload (quote vm-number-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-number-of) "vm-message" nil nil t)
 
-(autoload (quote vm-padded-number-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-padded-number-of) "vm-message" nil nil t)
 
-(autoload (quote vm-mark-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-mark-of) "vm-message" nil nil t)
 
-(autoload (quote vm-su-start-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-su-start-of) "vm-message" nil nil t)
 
-(autoload (quote vm-su-end-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-su-end-of) "vm-message" nil nil t)
 
-(autoload (quote vm-real-message-sym-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-real-message-sym-of) "vm-message" nil nil t)
 
-(autoload (quote vm-real-message-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-real-message-of) "vm-message" nil nil t)
 
-(autoload (quote vm-reverse-link-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-reverse-link-of) "vm-message" nil nil t)
 
-(autoload (quote vm-message-type-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-message-type-of) "vm-message" nil nil t)
 
-(autoload (quote vm-message-id-number-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-message-id-number-of) "vm-message" nil nil t)
 
-(autoload (quote vm-buffer-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-buffer-of) "vm-message" nil nil t)
 
-(autoload (quote vm-thread-indentation-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-thread-indentation-of) "vm-message" nil nil t)
 
-(autoload (quote vm-thread-list-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-thread-list-of) "vm-message" nil nil t)
 
-(autoload (quote vm-babyl-frob-flag-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-babyl-frob-flag-of) "vm-message" nil nil t)
 
-(autoload (quote vm-saved-virtual-attributes-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-saved-virtual-attributes-of) "vm-message" nil nil t)
 
-(autoload (quote vm-saved-virtual-mirror-data-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-saved-virtual-mirror-data-of) "vm-message" nil nil t)
 
-(autoload (quote vm-virtual-summary-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-virtual-summary-of) "vm-message" nil nil t)
 
-(autoload (quote vm-mime-layout-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-attributes-of) "vm-message" nil nil t)
 
-(autoload (quote vm-mime-encoded-header-flag-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-new-flag) "vm-message" nil nil t)
 
-(autoload (quote vm-attributes-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-unread-flag) "vm-message" nil nil t)
 
-(autoload (quote vm-new-flag) "vm-message" nil nil (quote macro))
+(autoload (quote vm-deleted-flag) "vm-message" nil nil t)
 
-(autoload (quote vm-unread-flag) "vm-message" nil nil (quote macro))
+(autoload (quote vm-filed-flag) "vm-message" nil nil t)
 
-(autoload (quote vm-deleted-flag) "vm-message" nil nil (quote macro))
+(autoload (quote vm-replied-flag) "vm-message" nil nil t)
 
-(autoload (quote vm-filed-flag) "vm-message" nil nil (quote macro))
+(autoload (quote vm-written-flag) "vm-message" nil nil t)
 
-(autoload (quote vm-replied-flag) "vm-message" nil nil (quote macro))
+(autoload (quote vm-forwarded-flag) "vm-message" nil nil t)
 
-(autoload (quote vm-written-flag) "vm-message" nil nil (quote macro))
+(autoload (quote vm-edited-flag) "vm-message" nil nil t)
 
-(autoload (quote vm-forwarded-flag) "vm-message" nil nil (quote macro))
+(autoload (quote vm-redistributed-flag) "vm-message" nil nil t)
 
-(autoload (quote vm-edited-flag) "vm-message" nil nil (quote macro))
+(autoload (quote vm-cache-of) "vm-message" nil nil t)
 
-(autoload (quote vm-redistributed-flag) "vm-message" nil nil (quote macro))
+(autoload (quote vm-byte-count-of) "vm-message" nil nil t)
 
-(autoload (quote vm-cache-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-weekday-of) "vm-message" nil nil t)
 
-(autoload (quote vm-byte-count-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-monthday-of) "vm-message" nil nil t)
 
-(autoload (quote vm-weekday-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-month-of) "vm-message" nil nil t)
 
-(autoload (quote vm-monthday-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-year-of) "vm-message" nil nil t)
 
-(autoload (quote vm-month-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-hour-of) "vm-message" nil nil t)
 
-(autoload (quote vm-year-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-zone-of) "vm-message" nil nil t)
 
-(autoload (quote vm-hour-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-full-name-of) "vm-message" nil nil t)
 
-(autoload (quote vm-zone-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-from-of) "vm-message" nil nil t)
 
-(autoload (quote vm-full-name-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-message-id-of) "vm-message" nil nil t)
 
-(autoload (quote vm-from-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-line-count-of) "vm-message" nil nil t)
 
-(autoload (quote vm-message-id-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-subject-of) "vm-message" nil nil t)
 
-(autoload (quote vm-line-count-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-vheaders-regexp-of) "vm-message" nil nil t)
 
-(autoload (quote vm-subject-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-to-of) "vm-message" nil nil t)
 
-(autoload (quote vm-vheaders-regexp-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-to-names-of) "vm-message" nil nil t)
 
-(autoload (quote vm-to-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-month-number-of) "vm-message" nil nil t)
 
-(autoload (quote vm-to-names-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-sortable-datestring-of) "vm-message" nil nil t)
 
-(autoload (quote vm-month-number-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-sortable-subject-of) "vm-message" nil nil t)
 
-(autoload (quote vm-sortable-datestring-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-summary-of) "vm-message" nil nil t)
 
-(autoload (quote vm-sortable-subject-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-parent-of) "vm-message" nil nil t)
 
-(autoload (quote vm-summary-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-mirror-data-of) "vm-message" nil nil t)
 
-(autoload (quote vm-parent-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-edit-buffer-of) "vm-message" nil nil t)
 
-(autoload (quote vm-references-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-virtual-messages-of) "vm-message" nil nil t)
 
-(autoload (quote vm-mirror-data-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-modflag-of) "vm-message" nil nil t)
 
-(autoload (quote vm-edit-buffer-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-labels-of) "vm-message" nil nil t)
 
-(autoload (quote vm-virtual-messages-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-label-string-of) "vm-message" nil nil t)
 
-(autoload (quote vm-modflag-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-location-data-of) "vm-message" nil nil t)
 
-(autoload (quote vm-labels-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-start-of) "vm-message" nil nil t)
 
-(autoload (quote vm-label-string-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-headers-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-location-data-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-vheaders-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-start-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-text-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-headers-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-text-end-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-vheaders-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-end-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-text-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-softdata-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-text-end-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-number-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-end-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-padded-number-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-softdata-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-mark-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-number-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-su-start-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-padded-number-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-su-end-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-mark-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-real-message-sym-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-su-start-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-reverse-link-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-su-end-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-reverse-link-sym-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-real-message-sym-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-message-type-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-reverse-link-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-message-id-number-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-reverse-link-sym-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-buffer-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-message-type-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-thread-indentation-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-message-id-number-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-thread-list-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-buffer-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-babyl-frob-flag-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-thread-indentation-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-saved-virtual-attributes-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-thread-list-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-saved-virtual-mirror-data-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-babyl-frob-flag-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-virtual-summary-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-saved-virtual-attributes-of) "vm-message" nil nil (quote macro))
-
-(autoload (quote vm-set-saved-virtual-mirror-data-of) "vm-message" nil nil (quote macro))
-
-(autoload (quote vm-set-virtual-summary-of) "vm-message" nil nil (quote macro))
-
-(autoload (quote vm-set-mime-layout-of) "vm-message" nil nil (quote macro))
-
-(autoload (quote vm-set-mime-encoded-header-flag-of) "vm-message" nil nil (quote macro))
-
-(autoload (quote vm-set-attributes-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-attributes-of) "vm-message" nil nil t)
 
 (autoload (quote vm-set-edited-flag-of) "vm-message" nil nil nil)
 
-(autoload (quote vm-set-cache-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-cache-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-byte-count-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-byte-count-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-weekday-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-weekday-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-monthday-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-monthday-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-month-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-month-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-year-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-year-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-hour-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-hour-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-zone-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-zone-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-full-name-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-full-name-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-from-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-from-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-message-id-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-message-id-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-line-count-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-line-count-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-subject-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-subject-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-vheaders-regexp-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-vheaders-regexp-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-to-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-to-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-to-names-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-to-names-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-month-number-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-month-number-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-sortable-datestring-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-sortable-datestring-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-sortable-subject-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-sortable-subject-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-summary-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-summary-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-parent-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-parent-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-references-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-mirror-data-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-mirror-data-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-edit-buffer-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-edit-buffer-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-virtual-messages-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-virtual-messages-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-virtual-messages-sym-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-virtual-messages-sym-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-modflag-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-modflag-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-labels-of) "vm-message" nil nil t)
 
-(autoload (quote vm-set-labels-of) "vm-message" nil nil (quote macro))
-
-(autoload (quote vm-set-label-string-of) "vm-message" nil nil (quote macro))
+(autoload (quote vm-set-label-string-of) "vm-message" nil nil t)
 
 (autoload (quote vm-make-message) "vm-message" nil nil nil)
 
 (autoload (quote vm-find-and-set-text-of) "vm-message" nil nil nil)
 
 (autoload (quote vm-virtual-message-p) "vm-message" nil nil nil)
-
-(autoload (quote vm-mime-error) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mm-layout-type) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mm-layout-qtype) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mm-layout-encoding) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mm-layout-id) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mm-layout-description) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mm-layout-disposition) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mm-layout-qdisposition) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mm-layout-header-start) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mm-layout-body-start) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mm-layout-body-end) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mm-layout-parts) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mm-layout-cache) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mm-layout-display-error) "vm-mime" nil nil nil)
-
-(autoload (quote vm-set-mm-layout-type) "vm-mime" nil nil nil)
-
-(autoload (quote vm-set-mm-layout-cache) "vm-mime" nil nil nil)
-
-(autoload (quote vm-set-mm-layout-display-error) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mm-layout) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mm-encoded-header) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-Q-decode-region) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-Q-encode-region) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-B-encode-region) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-crlf-to-lf-region) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-lf-to-crlf-region) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-charset-decode-region) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-transfer-decode-region) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-base64-decode-region) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-base64-encode-region) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-qp-decode-region) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-qp-encode-region) "vm-mime" nil nil nil)
-
-(autoload (quote vm-decode-mime-message-headers) "vm-mime" nil nil nil)
-
-(autoload (quote vm-decode-mime-encoded-words) "vm-mime" nil nil nil)
-
-(autoload (quote vm-decode-mime-encoded-words-in-string) "vm-mime" nil nil nil)
-
-(autoload (quote vm-reencode-mime-encoded-words) "vm-mime" nil nil nil)
-
-(autoload (quote vm-reencode-mime-encoded-words-in-string) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-get-header-contents) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-parse-entity) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-parse-entity-safe) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-get-xxx-parameter) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-get-parameter) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-get-disposition-parameter) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-insert-mime-body) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-insert-mime-headers) "vm-mime" nil nil nil)
-
-(autoload (quote vm-make-presentation-copy) "vm-mime" nil nil nil)
-
-(autoload (quote vm-determine-proper-charset) "vm-mime" nil nil nil)
-
-(autoload (quote vm-determine-proper-content-transfer-encoding) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-types-match) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-can-display-internal) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-can-convert) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-convert-undisplayable-layout) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-should-display-button) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-should-display-internal) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-find-external-viewer) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-delete-button-maybe) "vm-mime" nil nil nil)
-
-(autoload (quote vm-decode-mime-message) "vm-mime" "Decode the MIME objects in the current message.
-
-The first time this command is run on a message, decoding is done.
-The second time, buttons for all the objects are displayed instead.
-The third time, the raw, undecoded data is displayed.
-
-If decoding, the decoded objects might be displayed immediately, or
-buttons might be displayed that you need to activate to view the
-object.  See the documentation for the variables
-
-    vm-auto-displayed-mime-content-types
-    vm-mime-internal-content-types
-    vm-mime-external-content-types-alist
-
-to see how to control whether you see buttons or objects.
-
-If the variable vm-mime-display-function is set, then its value
-is called as a function with no arguments, and none of the
-actions mentioned in the preceding paragraphs are done.  At the
-time of the call, the current buffer will be the presentation
-buffer for the folder and a copy of the current message will be
-in the buffer.  The function is expected to make the message
-`MIME presentable' to the user in whatever manner it sees fit." t nil)
-
-(autoload (quote vm-decode-mime-layout) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-button-text) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-internal-text/html) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-internal-text/plain) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-internal-text/enriched) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-external-generic) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-internal-application/octet-stream) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-button-application) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-button-image) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-button-audio) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-button-video) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-button-message) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-button-multipart) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-internal-multipart/mixed) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-internal-multipart/alternative) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-button-multipart/parallel) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-internal-multipart/digest) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-button-message/rfc822) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-internal-message/rfc822) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-internal-message/partial) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-internal-image-xxxx) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-internal-image/gif) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-internal-image/jpeg) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-internal-image/png) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-internal-image/tiff) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-internal-audio/basic) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-button-xxxx) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-run-display-function-at-point) "vm-mime" nil t nil)
-
-(autoload (quote vm-mime-set-extent-glyph-for-type) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-insert-button) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-rewrite-failed-button) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-send-body-to-file) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-pipe-body-to-command) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-pipe-body-to-queried-command) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-pipe-body-to-queried-command-discard-output) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-send-body-to-printer) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-body-as-text) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-display-body-using-external-viewer) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-scrub-description) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-layout-description) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-layout-contains-type) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-find-digests-in-layout) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-plain-message-p) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-text-type-p) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-charset-internally-displayable-p) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-find-message/partials) "vm-mime" nil nil nil)
-
-(autoload (quote vm-message-at-point) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-make-multipart-boundary) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-attach-file) "vm-mime" "Attach a file to a VM composition buffer to be sent along with the message.
-The file is not inserted into the buffer and MIME encoded until
-you execute vm-mail-send or vm-mail-send-and-exit.  A visible tag
-indicating the existence of the attachment is placed in the
-composition buffer.  You can move the attachment around or remove
-it entirely with normal text editing commands.  If you remove the
-attachment tag, the attachment will not be sent.
-
-First argument, FILE, is the name of the file to attach.  Second
-argument, TYPE, is the MIME Content-Type of the file.  Optional
-third argument CHARSET is the character set of the attached
-document.  This argument is only used for text types, and it is
-ignored for other types.  Optional fourth argument DESCRIPTION
-should be a one line description of the file.
-
-When called interactively all arguments are read from the
-minibuffer.
-
-This command is for attaching files that do not have a MIME
-header section at the top.  For files with MIME headers, you
-should use vm-mime-attach-mime-file to attach such a file.  VM
-will extract the content type information from the headers in
-this case and not prompt you for it in the minibuffer." t nil)
-
-(autoload (quote vm-mime-attach-mime-file) "vm-mime" "Attach a MIME encoded file to a VM composition buffer to be sent
-along with the message.
-
-The file is not inserted into the buffer until you execute
-vm-mail-send or vm-mail-send-and-exit.  A visible tag indicating
-the existence of the attachment is placed in the composition
-buffer.  You can move the attachment around or remove it entirely
-with normal text editing commands.  If you remove the attachment
-tag, the attachment will not be sent.
-
-The sole argument, FILE, is the name of the file to attach.
-When called interactively the FILE argument is read from the
-minibuffer.
-
-This command is for attaching files that have a MIME
-header section at the top.  For files without MIME headers, you
-should use vm-mime-attach-file to attach such a file.  VM
-will interactively query you for the file type information." t nil)
-
-(autoload (quote vm-mime-attach-object) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-attachment-disposition-at-point) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-set-attachment-disposition-at-point) "vm-mime" nil nil nil)
-
-(autoload (quote vm-disallow-overlay-endpoint-insertion) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-fake-attachment-overlays) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-default-type-from-filename) "vm-mime" nil nil nil)
-
-(autoload (quote vm-remove-mail-mode-header-separator) "vm-mime" nil nil nil)
-
-(autoload (quote vm-add-mail-mode-header-separator) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-transfer-encode-region) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-transfer-encode-layout) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-encode-composition) "vm-mime" "MIME encode the current mail composition buffer.
-Attachment tags added to the buffer with vm-mime-attach-file are expanded
-and the approriate content-type and boundary markup information is added." t nil)
-
-(autoload (quote vm-mime-xemacs-encode-composition) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-fsfemacs-encode-composition) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-fragment-composition) "vm-mime" nil nil nil)
-
-(autoload (quote vm-mime-preview-composition) "vm-mime" "Show how the current composition buffer might be displayed
-in a MIME-aware mail reader.  VM copies and encodes the current
-mail composition buffer and displays it as a mail folder.
-Type `q' to quit this temp folder and return to composing your
-message." t nil)
-
-(autoload (quote vm-mime-composite-type-p) "vm-mime" nil nil nil)
 
 (autoload (quote vm-minibuffer-complete-word) "vm-minibuf" nil t nil)
 
@@ -1497,35 +1114,31 @@ The new version of the list, minus the deleted strings, is returned." nil nil)
 
 (autoload (quote vm-parse-addresses) "vm-misc" nil nil nil)
 
-(autoload (quote vm-parse-structured-header) "vm-misc" nil nil nil)
-
 (autoload (quote vm-write-string) "vm-misc" nil nil nil)
 
-(autoload (quote vm-marker) "vm-misc" nil nil (quote macro))
+(autoload (quote vm-marker) "vm-misc" nil nil t)
 
-(autoload (quote vm-increment) "vm-misc" nil nil (quote macro))
+(autoload (quote vm-increment) "vm-misc" nil nil t)
 
-(autoload (quote vm-decrement) "vm-misc" nil nil (quote macro))
+(autoload (quote vm-decrement) "vm-misc" nil nil t)
 
-(autoload (quote vm-select-folder-buffer) "vm-misc" nil nil (quote macro))
+(autoload (quote vm-select-folder-buffer) "vm-misc" nil nil t)
 
 (autoload (quote vm-check-for-killed-summary) "vm-misc" nil nil nil)
 
-(autoload (quote vm-check-for-killed-presentation) "vm-misc" nil nil nil)
-
 (autoload (quote vm-check-for-killed-folder) "vm-misc" nil nil nil)
 
-(autoload (quote vm-error-if-folder-read-only) "vm-misc" nil nil (quote macro))
+(autoload (quote vm-error-if-folder-read-only) "vm-misc" nil nil t)
 
-(autoload (quote vm-error-if-virtual-folder) "vm-misc" nil nil (quote macro))
+(autoload (quote vm-error-if-virtual-folder) "vm-misc" nil nil t)
 
-(autoload (quote vm-build-threads-if-unbuilt) "vm-misc" nil nil (quote macro))
+(autoload (quote vm-build-threads-if-unbuilt) "vm-misc" nil nil t)
 
 (autoload (quote vm-abs) "vm-misc" nil nil nil)
 
-(autoload (quote vm-save-restriction) "vm-misc" nil nil (quote macro))
+(autoload (quote vm-save-restriction) "vm-misc" nil nil t)
 
-(autoload (quote vm-save-buffer-excursion) "vm-misc" nil nil (quote macro))
+(autoload (quote vm-save-buffer-excursion) "vm-misc" nil nil t)
 
 (autoload (quote vm-last) "vm-misc" nil nil nil)
 
@@ -1540,12 +1153,6 @@ The new version of the list, minus the deleted strings, is returned." nil nil)
 (autoload (quote vm-mapc) "vm-misc" nil nil nil)
 
 (autoload (quote vm-delete) "vm-misc" nil nil nil)
-
-(autoload (quote vm-delete-directory-file-names) "vm-misc" nil nil nil)
-
-(autoload (quote vm-delete-backup-file-names) "vm-misc" nil nil nil)
-
-(autoload (quote vm-delete-auto-save-file-names) "vm-misc" nil nil nil)
 
 (autoload (quote vm-delete-duplicates) "vm-misc" "Delete duplicate equivalent strings from the list.
 If ALL is t, then if there is more than one occurrence of a string in the list,
@@ -1564,17 +1171,17 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 
 (autoload (quote vm-copy) "vm-misc" nil nil nil)
 
+(autoload (quote vm-xemacs-p) "vm-misc" nil nil nil)
+
+(autoload (quote vm-fsfemacs-19-p) "vm-misc" nil nil nil)
+
 (autoload (quote vm-multiple-frames-possible-p) "vm-misc" nil nil nil)
 
 (autoload (quote vm-mouse-support-possible-p) "vm-misc" nil nil nil)
 
-(autoload (quote vm-mouse-support-possible-here-p) "vm-misc" nil nil nil)
-
 (autoload (quote vm-menu-support-possible-p) "vm-misc" nil nil nil)
 
 (autoload (quote vm-toolbar-support-possible-p) "vm-misc" nil nil nil)
-
-(autoload (quote vm-multiple-fonts-possible-p) "vm-misc" nil nil nil)
 
 (autoload (quote vm-run-message-hook) "vm-misc" nil nil nil)
 
@@ -1594,33 +1201,11 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 
 (autoload (quote vm-set-region-face) "vm-misc" nil nil nil)
 
+(autoload (quote vm-unsaved-message) "vm-misc" nil nil nil)
+
 (autoload (quote vm-default-buffer-substring-no-properties) "vm-misc" nil nil nil)
 
 (autoload (quote vm-buffer-string-no-properties) "vm-misc" nil nil nil)
-
-(autoload (quote vm-insert-region-from-buffer) "vm-misc" nil nil nil)
-
-(autoload (quote vm-copy-extent) "vm-misc" nil nil nil)
-
-(autoload (quote vm-make-tempfile-name) "vm-misc" nil nil nil)
-
-(autoload (quote vm-insert-char) "vm-misc" nil nil nil)
-
-(autoload (quote vm-xemacs-compatible-insert-char) "vm-misc" nil nil nil)
-
-(autoload (quote vm-symbol-lists-intersect-p) "vm-misc" nil nil nil)
-
-(autoload (quote vm-set-buffer-variable) "vm-misc" nil nil nil)
-
-(autoload (quote vm-buffer-variable-value) "vm-misc" nil nil nil)
-
-(autoload (quote vm-with-virtual-selector-variables) "vm-misc" nil nil (quote macro))
-
-(autoload (quote vm-string-assoc) "vm-misc" nil nil nil)
-
-(autoload (quote vm-string-member) "vm-misc" nil nil nil)
-
-(autoload (quote vm-assert) "vm-misc" nil nil (quote macro))
 
 (autoload (quote vm-mouse-fsfemacs-mouse-p) "vm-mouse" nil nil nil)
 
@@ -1632,7 +1217,7 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 
 (autoload (quote vm-mouse-button-3) "vm-mouse" nil t nil)
 
-(autoload (quote vm-mouse-3-help) "vm-mouse" nil nil nil)
+(autoload (quote vm-mouse-3-help) "vm-mouse" "Use mouse button 3 to see a menu of options." nil nil)
 
 (autoload (quote vm-mouse-get-mouse-track-string) "vm-mouse" nil nil nil)
 
@@ -1646,19 +1231,13 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 
 (autoload (quote vm-mouse-send-url-to-netscape) "vm-mouse" nil nil nil)
 
-(autoload (quote vm-mouse-send-url-to-netscape-new-window) "vm-mouse" nil nil nil)
-
 (autoload (quote vm-mouse-send-url-to-mosaic) "vm-mouse" nil nil nil)
-
-(autoload (quote vm-mouse-send-url-to-mosaic-new-window) "vm-mouse" nil nil nil)
 
 (autoload (quote vm-mouse-install-mouse) "vm-mouse" nil nil nil)
 
 (autoload (quote vm-run-background-command) "vm-mouse" nil nil nil)
 
 (autoload (quote vm-run-command) "vm-mouse" nil nil nil)
-
-(autoload (quote vm-run-command-on-region) "vm-mouse" nil nil nil)
 
 (autoload (quote vm-mouse-read-file-name) "vm-mouse" "Like read-file-name, except uses a mouse driven interface.
 HISTORY argument is ignored." nil nil)
@@ -1756,14 +1335,6 @@ Prefix N scrolls backward N lines." t nil)
 
 (autoload (quote vm-url-help) "vm-page" nil nil nil)
 
-(autoload (quote vm-energize-urls-in-message-region) "vm-page" nil nil nil)
-
-(autoload (quote vm-highlight-headers-maybe) "vm-page" nil nil nil)
-
-(autoload (quote vm-energize-headers-and-xfaces) "vm-page" nil nil nil)
-
-(autoload (quote vm-narrow-for-preview) "vm-page" nil nil nil)
-
 (autoload (quote vm-preview-current-message) "vm-page" nil nil nil)
 
 (autoload (quote vm-show-current-message) "vm-page" nil nil nil)
@@ -1781,73 +1352,13 @@ as necessary." t nil)
 
 (autoload (quote vm-pop-move-mail) "vm-pop" nil nil nil)
 
-(autoload (quote vm-pop-check-mail) "vm-pop" nil nil nil)
-
-(autoload (quote vm-pop-make-session) "vm-pop" nil nil nil)
-
-(autoload (quote vm-pop-end-session) "vm-pop" nil nil nil)
-
-(autoload (quote vm-pop-stat-timer) "vm-pop" nil nil nil)
-
-(autoload (quote vm-pop-stat-x-box) "vm-pop" nil nil nil)
-
-(autoload (quote vm-pop-stat-x-currmsg) "vm-pop" nil nil nil)
-
-(autoload (quote vm-pop-stat-x-maxmsg) "vm-pop" nil nil nil)
-
-(autoload (quote vm-pop-stat-x-got) "vm-pop" nil nil nil)
-
-(autoload (quote vm-pop-stat-x-need) "vm-pop" nil nil nil)
-
-(autoload (quote vm-pop-stat-y-box) "vm-pop" nil nil nil)
-
-(autoload (quote vm-pop-stat-y-currmsg) "vm-pop" nil nil nil)
-
-(autoload (quote vm-pop-stat-y-maxmsg) "vm-pop" nil nil nil)
-
-(autoload (quote vm-pop-stat-y-got) "vm-pop" nil nil nil)
-
-(autoload (quote vm-pop-stat-y-need) "vm-pop" nil nil nil)
-
-(autoload (quote vm-set-pop-stat-timer) "vm-pop" nil nil nil)
-
-(autoload (quote vm-set-pop-stat-x-box) "vm-pop" nil nil nil)
-
-(autoload (quote vm-set-pop-stat-x-currmsg) "vm-pop" nil nil nil)
-
-(autoload (quote vm-set-pop-stat-x-maxmsg) "vm-pop" nil nil nil)
-
-(autoload (quote vm-set-pop-stat-x-got) "vm-pop" nil nil nil)
-
-(autoload (quote vm-set-pop-stat-x-need) "vm-pop" nil nil nil)
-
-(autoload (quote vm-set-pop-stat-y-box) "vm-pop" nil nil nil)
-
-(autoload (quote vm-set-pop-stat-y-currmsg) "vm-pop" nil nil nil)
-
-(autoload (quote vm-set-pop-stat-y-maxmsg) "vm-pop" nil nil nil)
-
-(autoload (quote vm-set-pop-stat-y-got) "vm-pop" nil nil nil)
-
-(autoload (quote vm-set-pop-stat-y-need) "vm-pop" nil nil nil)
-
-(autoload (quote vm-pop-start-status-timer) "vm-pop" nil nil nil)
-
-(autoload (quote vm-pop-stop-status-timer) "vm-pop" nil nil nil)
-
-(autoload (quote vm-pop-report-retrieval-status) "vm-pop" nil nil nil)
+(autoload (quote vm-pop-process-filter) "vm-pop" nil nil nil)
 
 (autoload (quote vm-pop-send-command) "vm-pop" nil nil nil)
 
 (autoload (quote vm-pop-read-response) "vm-pop" nil nil nil)
 
-(autoload (quote vm-pop-read-past-dot-sentinel-line) "vm-pop" nil nil nil)
-
 (autoload (quote vm-pop-read-stat-response) "vm-pop" nil nil nil)
-
-(autoload (quote vm-pop-read-list-response) "vm-pop" nil nil nil)
-
-(autoload (quote vm-pop-ask-about-large-message) "vm-pop" nil nil nil)
 
 (autoload (quote vm-pop-retrieve-to-crashbox) "vm-pop" nil nil nil)
 
@@ -1901,8 +1412,6 @@ as having been replied to, if appropriate." t nil)
 (autoload (quote vm-mail-send) "vm-reply" "Just like mail-send except that VM flags the appropriate message(s)
 as replied to, forwarded, etc, if appropriate." t nil)
 
-(autoload (quote vm-mail-mode-get-header-contents) "vm-reply" nil nil nil)
-
 (autoload (quote vm-rename-current-mail-buffer) "vm-reply" nil nil nil)
 
 (autoload (quote vm-mail-mark-replied) "vm-reply" nil nil nil)
@@ -1955,10 +1464,10 @@ you can change the recipient address before resending the message." t nil)
 The current message will be copied to a Mail mode buffer and you
 can edit the message and send it as usual.
 
-NOTE: since you are doing a resend, a Resent-To header is provided
-for you to fill in the new recipient list.  If you don't fill in
-this header, what happens when you send the message is undefined.
-You may also create a Resent-Cc header." t nil)
+NOTE: since you are doing a resend, a Resent-To header is
+provided for you to fill in.  If you don't fill it in, when you
+send the message it will go to the original recipients listed in
+the To and Cc headers.  You may also create a Resent-Cc header." t nil)
 
 (autoload (quote vm-send-digest) "vm-reply" "Send a digest of all messages in the current folder to recipients.
 The type of the digest is specified by the variable vm-digest-send-type.
@@ -1977,7 +1486,7 @@ only marked messages will be put into the digest." t nil)
 
 (autoload (quote vm-send-rfc1153-digest) "vm-reply" "Like vm-send-digest but always sends an RFC 1153 digest." t nil)
 
-(autoload (quote vm-send-mime-digest) "vm-reply" "Like vm-send-digest but always sends an MIME (multipart/digest) digest." t nil)
+(autoload (quote vm-send-rfc1521-digest) "vm-reply" "Like vm-send-digest but always sends an RFC 1521 (MIME) digest." t nil)
 
 (autoload (quote vm-continue-composing-message) "vm-reply" "Find and select the most recently used mail composition buffer.
 If the selected buffer is already a Mail mode buffer then it is
@@ -1985,8 +1494,6 @@ buried before beginning the search.  Non Mail mode buffers and
 unmodified Mail buffers are skipped.  Prefix arg means unmodified
 Mail mode buffers are not skipped.  If no suitable buffer is
 found, the current buffer remains selected." t nil)
-
-(autoload (quote vm-mail-to-mailto-url) "vm-reply" nil nil nil)
 
 (autoload (quote vm-mail-internal) "vm-reply" nil nil nil)
 
@@ -2012,7 +1519,7 @@ found, the current buffer remains selected." t nil)
 
 (autoload (quote vm-send-rfc1153-digest-other-frame) "vm-reply" "Like vm-send-rfc1153-digest, but run in a newly created frame." t nil)
 
-(autoload (quote vm-send-mime-digest-other-frame) "vm-reply" "Like vm-send-mime-digest, but run in a newly created frame." t nil)
+(autoload (quote vm-send-rfc1521-digest-other-frame) "vm-reply" "Like vm-send-rfc1521-digest, but run in a newly created frame." t nil)
 
 (autoload (quote vm-match-data) "vm-save" nil nil nil)
 
@@ -2056,9 +1563,8 @@ The saved messages are flagged as `written'.
 This command should NOT be used to save message to mail folders; use
 vm-save-message instead (normally bound to `s')." t nil)
 
-(autoload (quote vm-pipe-message-to-command) "vm-save" "Runs a shell command with some or all of the contents of the
-current message as input.
-By default, the entire message is used.
+(autoload (quote vm-pipe-message-to-command) "vm-save" "Run shell command with the some or all of the current message as input.
+By default the entire message is used.
 With one \\[universal-argument] the text portion of the message is used.
 With two \\[universal-argument]'s the header portion of the message is used.
 With three \\[universal-argument]'s the visible header portion of the message
@@ -2070,18 +1576,7 @@ one message per command invocation.
 
 Output, if any, is displayed.  The message is not altered." t nil)
 
-(autoload (quote vm-print-message) "vm-save" "Print the current message
-Prefix arg N means print the current message and the next N - 1 messages.
-Prefix arg -N means print the current message and the previous N - 1 messages.
-
-The variable `vm-print-command' controls what command is run to
-print the message, and `vm-print-command-switches' is a list of switches
-to pass to the command.
-
-When invoked on marked messages (via vm-next-command-uses-marks),
-each marked message is printed, one message per vm-print-command invocation.
-
-Output, if any, is displayed.  The message is not altered." t nil)
+(autoload (quote vm-print-message) "vm-save" "Print the current message." t nil)
 
 (autoload (quote vm-isearch-forward) "vm-search" "Incrementally search forward through the current folder's messages.
 Usage is identical to the standard Emacs incremental search.
@@ -2199,7 +1694,7 @@ mode, a major mode for reading mail.
 
 Prefix arg or optional second arg READ-ONLY non-nil indicates
 that the folder should be considered read only.  No attribute
-changes, message additions or deletions will be allowed in the
+changes, messages additions or deletions will be allowed in the
 visited folder.
 
 Visiting the primary inbox causes any contents of the system mailbox to
@@ -2219,7 +1714,7 @@ See the documentation for vm-mode for more information." t nil)
 
 (autoload (quote vm-mode) "vm-startup" "Major mode for reading mail.
 
-This is VM 6.34.
+This is VM 5.96 (beta).
 
 Commands:
    h - summarize folder contents
@@ -2259,7 +1754,7 @@ Commands:
 
    @ - digestify and mail entire folder contents (the folder is not modified)
    * - burst a digest into individual messages, and append and assimilate these
-       messages into the current folder.
+       message into the current folder.
 
    G - sort messages by various keys
 
@@ -2282,23 +1777,20 @@ Commands:
    x - exit VM with no change to the folder
 
  M N - use marks; the next vm command will affect only marked messages
-       if it makes sense for the command to do so.  These commands
-       apply and remove marks to messages.
+       if it makes sense for the command to do so
 
        M M - mark the current message
        M U - unmark the current message
        M m - mark all messages
        M u - unmark all messages
-       M C - mark messages matched by a virtual folder selector
-       M c - unmark messages matched by a virtual folder selector
+       M C - mark messages matches by a virtual folder selector
+       M c - unmark messages matches by a virtual folder selector
        M T - mark thread tree rooted at the current message
        M t - unmark thread tree rooted at the current message
        M S - mark messages with the same subject as the current message
        M s - unmark messages with the same subject as the current message
        M A - mark messages with the same author as the current message
        M a - unmark messages with the same author as the current message
-       M R - mark messages within the point/mark region in the summary
-       M r - unmark messages within the point/mark region in the summary
 
        M ? - partial help for mark commands
 
@@ -2318,7 +1810,7 @@ Commands:
  V ? - help for virtual folder commands
 
  C-_ - undo, special undo that retracts the most recent
-             changes in message attributes and labels.  Expunges,
+             changes in message attributes and labels.  Expunges
              message edits, and saves cannot be undone.  C-x u is
              also bound to this command.
 
@@ -2345,21 +1837,17 @@ Variables:
    vm-arrived-message-hook
    vm-arrived-messages-hook
    vm-auto-center-summary
-   vm-auto-decode-mime-messages
-   vm-auto-displayed-mime-content-types
    vm-auto-folder-alist
    vm-auto-folder-case-fold-search
    vm-auto-get-new-mail
    vm-auto-next-message
    vm-berkeley-mail-compatibility
-   vm-burst-digest-messages-inherit-labels
    vm-check-folder-types
+   vm-convert-folder-types
    vm-circular-folders
    vm-confirm-new-folders
    vm-confirm-quit
-   vm-convert-folder-types
    vm-crash-box
-   vm-crash-box-suffix
    vm-default-folder-type
    vm-delete-after-archiving
    vm-delete-after-bursting
@@ -2370,7 +1858,6 @@ Variables:
    vm-digest-preamble-format
    vm-digest-send-type
    vm-display-buffer-hook
-   vm-display-using-mime
    vm-edit-message-hook
    vm-folder-directory
    vm-folder-read-only
@@ -2380,76 +1867,42 @@ Variables:
    vm-forwarding-digest-type
    vm-forwarding-subject-format
    vm-frame-parameter-alist
-   vm-frame-per-completion
    vm-frame-per-composition
-   vm-frame-per-edit
    vm-frame-per-folder
-   vm-frame-per-help
-   vm-frame-per-summary
    vm-highlighted-header-face
    vm-highlighted-header-regexp
    vm-honor-page-delimiters
-   vm-image-directory
    vm-in-reply-to-format
    vm-included-text-attribution-format
    vm-included-text-discard-header-regexp
    vm-included-text-headers
    vm-included-text-prefix
+   vm-inhibit-startup-message
    vm-invisible-header-regexp
    vm-jump-to-new-messages
    vm-jump-to-unread-messages
-   vm-keep-crash-boxes
    vm-keep-sent-messages
-   vm-mail-check-interval
+   vm-keep-crash-boxes
    vm-mail-header-from
    vm-mail-mode-hook
-   vm-make-crash-box-name
-   vm-make-spool-file-name
-   vm-mime-8bit-composition-charset
-   vm-mime-8bit-text-transfer-encoding
-   vm-mime-alternative-select-method
-   vm-mime-attachment-auto-type-alist
-   vm-mime-attachment-save-directory
-   vm-mime-avoid-folding-content-type
-   vm-mime-base64-decoder-program
-   vm-mime-base64-decoder-switches
-   vm-mime-base64-encoder-program
-   vm-mime-base64-encoder-switches
-   vm-mime-button-face
-   vm-mime-charset-font-alist
-   vm-mime-default-face-charsets
-   vm-mime-digest-discard-header-regexp
-   vm-mime-digest-headers
-   vm-mime-display-function
-   vm-mime-external-content-types-alist
-   vm-mime-ignore-mime-version
-   vm-mime-internal-content-types
-   vm-mime-max-message-size
    vm-mode-hook
    vm-mosaic-program
-   vm-mosaic-program-switches
    vm-move-after-deleting
-   vm-move-after-killing
    vm-move-after-undeleting
    vm-move-messages-physically
-   vm-mutable-frames
    vm-mutable-windows
+   vm-mutable-frames
    vm-netscape-program
-   vm-netscape-program-switches
-   vm-pop-bytes-per-session
-   vm-pop-max-message-size
+   vm-options-file
    vm-pop-md5-program
-   vm-pop-messages-per-session
-   vm-popup-menu-on-mouse-3
-   vm-preferences-file
    vm-preview-lines
    vm-preview-read-messages
    vm-primary-inbox
    vm-quit-hook
    vm-recognize-pop-maildrops
    vm-reply-hook
-   vm-reply-ignored-addresses
    vm-reply-ignored-reply-tos
+   vm-reply-ignored-addresses
    vm-reply-subject-prefix
    vm-resend-bounced-discard-header-regexp
    vm-resend-bounced-headers
@@ -2467,10 +1920,8 @@ Variables:
    vm-select-new-message-hook
    vm-select-unread-message-hook
    vm-send-digest-hook
-   vm-send-using-mime
    vm-skip-deleted-messages
    vm-skip-read-messages
-   vm-spool-file-suffixes
    vm-spool-files
    vm-startup-with-summary
    vm-strip-reply-headers
@@ -2480,17 +1931,14 @@ Variables:
    vm-summary-mode-hook
    vm-summary-redo-hook
    vm-summary-show-threads
+   vm-summary-subject-no-newlines
    vm-summary-thread-indent-level
-   vm-tale-is-an-idiot
-   vm-temp-file-directory
-   vm-toolbar-pixmap-directory
    vm-trust-From_-with-Content-Length
    vm-undisplay-buffer-hook
    vm-unforwarded-header-regexp
    vm-url-browser
    vm-url-search-limit
    vm-use-menus
-   vm-use-toolbar
    vm-virtual-folder-alist
    vm-virtual-mirror
    vm-visible-headers
@@ -2532,25 +1980,15 @@ vm-visit-virtual-folder." nil nil)
 
 (autoload (quote vm-visit-virtual-folder-other-window) "vm-startup" "Like vm-visit-virtual-folder, but run in a different window." t nil)
 
-(autoload (quote vm-mail) "vm-startup" "Send a mail message from within VM, or from without.
-Optional argument TO is a string that should contain a comma separated
-recipient list." t nil)
+(autoload (quote vm-mail) "vm-startup" "Send a mail message from within VM, or from without." t nil)
 
-(autoload (quote vm-mail-other-frame) "vm-startup" "Like vm-mail, but run in a newly created frame.
-Optional argument TO is a string that should contain a comma separated
-recipient list." t nil)
+(autoload (quote vm-mail-other-frame) "vm-startup" "Like vm-mail, but run in a newly created frame." t nil)
 
-(autoload (quote vm-mail-other-window) "vm-startup" "Like vm-mail, but run in a different window.
-Optional argument TO is a string that should contain a comma separated
-recipient list." t nil)
+(autoload (quote vm-mail-other-window) "vm-startup" "Like vm-mail, but run in a different window." t nil)
 
 (autoload (quote vm-submit-bug-report) "vm-startup" "Submit a bug report, with pertinent information to the VM bug list." t nil)
 
 (autoload (quote vm-load-init-file) "vm-startup" nil t nil)
-
-(autoload (quote vm-check-emacs-version) "vm-startup" nil nil nil)
-
-(autoload (quote vm-set-debug-flags) "vm-startup" nil nil nil)
 
 (autoload (quote vm-session-initialization) "vm-startup" nil nil nil)
 
@@ -2672,8 +2110,6 @@ will be visible." t nil)
 
 (autoload (quote vm-unthread-message) "vm-thread" nil nil nil)
 
-(autoload (quote vm-th-references) "vm-thread" nil nil nil)
-
 (autoload (quote vm-th-parent) "vm-thread" nil nil nil)
 
 (autoload (quote vm-th-thread-indentation) "vm-thread" nil nil nil)
@@ -2691,12 +2127,6 @@ will be visible." t nil)
 (autoload (quote vm-toolbar-autofile-message) "vm-toolbar" nil t nil)
 
 (autoload (quote vm-toolbar-can-recover-p) "vm-toolbar" nil nil nil)
-
-(autoload (quote vm-toolbar-can-decode-mime-p) "vm-toolbar" nil nil nil)
-
-(autoload (quote vm-toolbar-can-quit-p) "vm-toolbar" nil nil nil)
-
-(autoload (quote vm-toolbar-mail-waiting-p) "vm-toolbar" nil nil nil)
 
 (autoload (quote vm-toolbar-update-toolbar) "vm-toolbar" nil nil nil)
 
@@ -2811,32 +2241,7 @@ COUNT-1 messages to be altered.  COUNT defaults to one." t nil)
 
 (autoload (quote vm-set-new-flag-in-vector) "vm-undo" nil nil nil)
 
-(autoload (quote vm-user-composition-folder-buffer) "vm-user" "Returns the folder buffer associated with the current buffer.
-The current buffer must be a composition buffer created by VM for
-a reply, resend or forward.
-
-Nil is returned if the current buffer is not assocaited with any
-VM folder.
-
-Note that the buffer returned might be a virtual folder buffer,
-which might have several underlying real folders associated with
-it.  To get the list of real folder buffers associated with a
-composition buffer, use vm-user-composition-real-folder-buffers
-instead." nil nil)
-
-(autoload (quote vm-user-composition-real-folder-buffers) "vm-user" "Returns a list of the real folder buffers associated with the current
-buffer.  The current buffer must be a composition buffer created
-by VM for a reply, resend or forward." nil nil)
-
 (autoload (quote vm-spool-files) "vm-vars" nil nil nil)
-
-(autoload (quote vm-xemacs-p) "vm-vars" nil nil nil)
-
-(autoload (quote vm-xemacs-mule-p) "vm-vars" nil nil nil)
-
-(autoload (quote vm-fsfemacs-19-p) "vm-vars" nil nil nil)
-
-(autoload (quote vm-note-emacs-version) "vm-vars" nil nil nil)
 
 (autoload (quote vm-version) "vm-version" "Returns the value of the variable vm-version." nil nil)
 
@@ -2856,6 +2261,12 @@ Prefix arg means the new virtual folder should be visited read only." t nil)
 (autoload (quote vm-toggle-virtual-mirror) "vm-virtual" nil t nil)
 
 (autoload (quote vm-virtual-help) "vm-virtual" nil t nil)
+
+(autoload (quote vm-delete-directory-file-names) "vm-virtual" nil nil nil)
+
+(autoload (quote vm-delete-backup-file-names) "vm-virtual" nil nil nil)
+
+(autoload (quote vm-delete-auto-save-file-names) "vm-virtual" nil nil nil)
 
 (autoload (quote vm-vs-or) "vm-virtual" nil nil nil)
 
@@ -2931,6 +2342,8 @@ Prefix arg means the new virtual folder should be visited read only." t nil)
 
 (autoload (quote vm-set-window-configuration) "vm-window" nil nil nil)
 
+(autoload (quote vm-record-current-window-configuration) "vm-window" nil nil nil)
+
 (autoload (quote vm-save-window-configuration) "vm-window" "Name and save the current window configuration.
 With this command you associate the current window setup with an
 action.  Each time you perform this action VM will duplicate this
@@ -2947,7 +2360,11 @@ configurations and then the default configuration.  The first
 configuration found is the one that is applied.
 
 The value of vm-mutable-windows must be non-nil for VM to use
-window configurations." t nil)
+window configurations.
+
+If vm-mutable-frames is non-nil and Emacs is running under X
+windows, then VM will use all existing frames.  Otherwise VM will
+restrict its changes to the frame in which it was started." t nil)
 
 (autoload (quote vm-buffer-to-label) "vm-window" nil nil nil)
 
@@ -2968,7 +2385,7 @@ Run the hooks in vm-iconify-frame-hook before doing so." t nil)
 
 (autoload (quote vm-frame-loop) "vm-window" nil nil nil)
 
-(autoload (quote vm-maybe-delete-windows-or-frames-on) "vm-window" nil nil nil)
+(autoload (quote vm-delete-windows-or-frames-on) "vm-window" nil nil nil)
 
 (autoload (quote vm-replace-buffer-in-windows) "vm-window" nil nil nil)
 
@@ -2982,17 +2399,9 @@ Run the hooks in vm-iconify-frame-hook before doing so." t nil)
 
 (autoload (quote vm-set-hooks-for-frame-deletion) "vm-window" nil nil nil)
 
-(autoload (quote vm-created-this-frame-p) "vm-window" nil nil nil)
-
 (autoload (quote vm-delete-buffer-frame) "vm-window" nil nil nil)
 
-(autoload (quote vm-register-frame) "vm-window" nil nil nil)
-
 (autoload (quote vm-goto-new-frame) "vm-window" nil nil nil)
-
-(autoload (quote vm-goto-new-summary-frame-maybe) "vm-window" nil nil nil)
-
-(autoload (quote vm-goto-new-folder-frame-maybe) "vm-window" nil nil nil)
 
 (autoload (quote vm-warp-mouse-to-frame-maybe) "vm-window" nil nil nil)
 

@@ -94,6 +94,16 @@ Boston, MA 02111-1307, USA.  */
     MARKED_SLOT (abbrev_table);
     /* This buffer's syntax table.  */
     MARKED_SLOT (syntax_table);
+    /* Massaged values from the syntax table, for faster lookup. */
+    MARKED_SLOT (mirror_syntax_table);
+
+#ifdef MULE
+    /* This buffer's category table. */
+    MARKED_SLOT (category_table);
+
+    /* This buffer's coding system. */
+    MARKED_SLOT (file_coding_system);
+#endif /* MULE */
 
     /* Values of several buffer-local variables.
 
@@ -121,6 +131,23 @@ Boston, MA 02111-1307, USA.  */
     MARKED_SLOT (case_canon_table);
     /* Char-table of equivalences for case-folding search.  */
     MARKED_SLOT (case_eqv_table);
+
+#ifdef MULE
+    /* #### The purpose of these bogos is to deal with the fact that
+       the Boyer-Moore and regex searching routines don't know how to
+       deal with translating multi-byte characters.  Fixing this is hard,
+       so instead we maintain these mirror tables that have all incorrect
+       mappings (see casetab.c) sanitized out of them.  If we don't do
+       this, we may get weird and unpredictable results in the presence
+       of extended chars and extended mappings, and it could even lead
+       to a crash.
+
+       #### Eventually we should deal with this properly. */
+    MARKED_SLOT (mirror_downcase_table);
+    MARKED_SLOT (mirror_upcase_table);
+    MARKED_SLOT (mirror_case_canon_table);
+    MARKED_SLOT (mirror_case_eqv_table);
+#endif
 
     /* #### This ought to be a specifier: */
     /* Non-nil means do not display continuation lines.  */

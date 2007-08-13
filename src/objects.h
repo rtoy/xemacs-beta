@@ -154,6 +154,12 @@ DECLARE_LRECORD (font_instance, struct Lisp_Font_Instance);
 #define CHECK_FONT_INSTANCE(x) CHECK_RECORD (x, font_instance)
 #define CONCHECK_FONT_INSTANCE(x) CONCHECK_RECORD (x, font_instance)
 
+#ifdef MULE
+int font_spec_matches_charset (struct device *d, Lisp_Object charset,
+			       CONST Bufbyte *nonreloc,
+			       Lisp_Object reloc, Bytecount offset,
+			       Bytecount length);
+#endif
 
 Lisp_Object Fmake_font_instance (Lisp_Object name, Lisp_Object device,
 				 Lisp_Object no_error);

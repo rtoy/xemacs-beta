@@ -60,26 +60,11 @@
 (define-key key-translation-map [(alt backspace)]
   [intercepted_alt_backspace])
 (define-key global-map 'intercepted_alt_backspace 'backward-kill-sentence)
-(if (boundp 'c-mode-map)
-    (mapcar (lambda (map)
-		(define-key map [(alt backspace)] 'backward-kill-sexp))
-	    (list
-	     c-mode-map c++-mode-map objc-mode-map java-mode-map
-	     emacs-lisp-mode-map lisp-mode-map minibuffer-local-map))
-  (setq after-load-alist
-	(append '(("cc-mode"
-		   (mapcar (lambda (map)
-			     (define-key map
-			       [(alt backspace)]
-			       'backward-kill-sexp)
-			     (define-key map [(alt delete)] 'kill-sexp))
-			   (list
-			    c-mode-map
-			    c++-mode-map
-			    objc-mode-map
-			    java-mode-map))))
-		after-load-alist)))
-
+(mapcar #'(lambda (map)
+	    (define-key map [(alt backspace)] 'backward-kill-sexp))
+	(list
+	 c-mode-map c++-mode-map objc-mode-map java-mode-map
+	 emacs-lisp-mode-map lisp-mode-map minibuffer-local-map))
 
 ;; (meta shift) backspace paragraph before cursor
 (global-set-key [(meta shift backspace)] 'backward-kill-paragraph)
@@ -97,19 +82,11 @@
 (define-key key-translation-map [(alt delete)]
   [intercepted_alt_delete])
 (define-key global-map 'intercepted_alt_delete 'kill-sentence)
-(mapcar (lambda (map)
-	  (define-key map [(alt delete)] 'kill-sexp))
+(mapcar #'(lambda (map)
+	    (define-key map [(alt delete)] 'kill-sexp))
 	(list
+	 c-mode-map c++-mode-map objc-mode-map java-mode-map
 	 emacs-lisp-mode-map lisp-mode-map minibuffer-local-map))
-(when (boundp 'c-mode-map)
-  (mapcar (lambda (map)
-	      (define-key map [(alt delete)] 'kill-sexp))
-	  (list
-	   c-mode-map c++-mode-map objc-mode-map java-mode-map)))
 
 ;; (meta shift) delete next paragraph
 (global-set-key [(meta shift delete)] 'kill-paragraph)
-
-(provide 'delbackspace)
-
-;;; delbackspace.el ends here

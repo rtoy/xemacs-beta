@@ -40,40 +40,6 @@ For a current copy of this directory, or to have yourself listed, ask:
 ** Please keep the entries in this file alphabetical **
 
 
-Altrasoft	<info@altrasoft.com>
-4880 Stevens Creek Blvd., Suite 205
-San Jose, CA  95129-1034
-+1 408 243 3300
-http://www.altrasoft.com
-
-Altrasoft provides corporate-quality support, development and user
-documentation for GNU Emacs, XEmacs and InfoDock.  (InfoDock is a turnkey
-information management and software development toolset built atop emacs,
-written by one of our associates.)  Emacs distributions for a variety of
-platforms are also available, as is support for other emacs variants, such as
-those often found on PCs.
-
-Our unique focus on emacs-related work allows us to attract expert talent in
-this area to keep you on the leading edge of productivity, especially if you
-do software development work.  We do the porting, patching, coding,
-integrating, debugging, documenting and testing so that your people spend
-much more productive time on their mainline tasks.
-
-Standard support packages include help on all aspects of the packages
-supported, including all tools shipped as a standard part of the original
-package distribution.  In general, we want to give you an unbelievably strong
-level of support, so where we can, we will also answer questions concerning
-any add-on Lisp code that is used at your site.  Setup and customization
-help, bug fixes, and announcements of new releases are, of course, included.
-
-Support rates start at $1,000 USD, for single user support for one year.
-Discounts are available for group contracts.  We also offer Golden Support
-contracts for those who need the absolute best in mission-critical support;
-contact us for details.  Hourly development rates and fixed bid work are
-available.
-
-Updated 20-March-1997.
-
 Joseph Arceneaux        	<jla@ai.mit.edu>
 PO Box 460633			http://www.samsara.com/~jla
 San Francisco, CA  94146-0633

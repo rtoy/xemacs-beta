@@ -85,8 +85,7 @@ static XtResource resources[] = {
      offset (scrollbar_height), XtRImmediate, (XtPointer)-1},
   {XtNscrollBarPlacement, XtCScrollBarPlacement, XtRScrollBarPlacement,
       sizeof(unsigned char), offset(scrollbar_placement), XtRImmediate,
-#if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID) || \
-    defined (LWLIB_SCROLLBARS_ATHENA3D)
+#if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID)
       (XtPointer) XtBOTTOM_RIGHT
 #else
       (XtPointer) XtBOTTOM_LEFT
@@ -103,10 +102,10 @@ static XtResource resources[] = {
   {XtNrightToolBarWidth, XtCRightToolBarWidth, XtRInt, sizeof (int),
      offset (right_toolbar_width), XtRImmediate, (XtPointer)-1},
   {XtNtopToolBarShadowColor, XtCTopToolBarShadowColor, XtRPixel, sizeof(Pixel),
-     offset(top_toolbar_shadow_pixel), XtRString, (String) "#000000"},
+     offset(top_toolbar_shadow_pixel), XtRString, (String) "Gray90"},
   {XtNbottomToolBarShadowColor, XtCBottomToolBarShadowColor, XtRPixel,
      sizeof(Pixel), offset(bottom_toolbar_shadow_pixel), XtRString,
-     (String) "#000000"},
+     (String) "Gray40"},
   {XtNbackgroundToolBarColor, XtCBackgroundToolBarColor, XtRPixel,
      sizeof(Pixel), offset(background_toolbar_pixel), XtRString,
      (String) "Gray75"},
@@ -496,40 +495,27 @@ _CvtStringToScrollBarPlacement (XrmValuePtr args,   /* unused */
 				XrmValuePtr fromVal,
 				XrmValuePtr toVal)
 {
-#define done(address, type) \
-toVal->size = sizeof(type); \
-toVal->addr = (XtPointer) address; \
-return /* `;' supplied by caller */
-
   XrmQuark q;
-  char lowerName[1000];
+  char *lowerName = (char *) alloca (strlen ( (char *) fromVal->addr) + 1);
   
-  XmuCopyISOLatin1Lowered (lowerName, (char*)fromVal->addr);
-  q = XrmStringToQuark(lowerName);
-  if (q == XrmStringToQuark ("top_left"))
-    {
-      cvt_string_scrollbar_placement = XtTOP_LEFT;
-      done (&cvt_string_scrollbar_placement, unsigned char);
-    }
-  if (q == XrmStringToQuark ("bottom_left"))
-    {
-      cvt_string_scrollbar_placement = XtBOTTOM_LEFT;
-      done (&cvt_string_scrollbar_placement, unsigned char);
-    }
-  if (q == XrmStringToQuark ("top_right"))
-    {
-      cvt_string_scrollbar_placement = XtTOP_RIGHT;
-      done (&cvt_string_scrollbar_placement, unsigned char);
-    }
-  if (q == XrmStringToQuark ("bottom_right"))
-    {
-      cvt_string_scrollbar_placement = XtBOTTOM_RIGHT;
-      done (&cvt_string_scrollbar_placement, unsigned char);
-    }
-  XtStringConversionWarning (fromVal->addr, "scrollBarPlacement");
+  XmuCopyISOLatin1Lowered (lowerName, (char *) fromVal->addr);
+  q = XrmStringToQuark (lowerName);
+  
+  toVal->size = sizeof (cvt_string_scrollbar_placement);
+  toVal->addr = (XtPointer) &cvt_string_scrollbar_placement;
+  cvt_string_scrollbar_placement =
+    q == XrmStringToQuark ("top_left")     ? XtTOP_LEFT     :
+    q == XrmStringToQuark ("bottom_left")  ? XtBOTTOM_LEFT  :
+    q == XrmStringToQuark ("top_right")    ? XtTOP_RIGHT    :
+    q == XrmStringToQuark ("bottom_right") ? XtBOTTOM_RIGHT :
+    0;
+
+  if (cvt_string_scrollbar_placement != 0)
+    return;
+  
   toVal->addr = NULL;
   toVal->size = 0;
-#undef done
+  XtStringConversionWarning (fromVal->addr, "scrollBarPlacement");
 }
 
 static void

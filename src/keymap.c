@@ -21,8 +21,9 @@ along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-/* Synched up with: Not synched with FSF.  Substantially different
-   from FSF. */
+/* Synched up with: Mule 2.0.  Not synched with FSF.  Substantially
+   different from FSF. */
+
 
 #include <config.h>
 #include "lisp.h"
@@ -46,12 +47,12 @@ Boston, MA 02111-1307, USA.  */
 		   Keymaps can thus be arranged in a hierarchy.
 
    table	   A hash table, hashing keysyms to their bindings.
-		   As in the rest of emacs, a keysym is either a symbol or
-		   an integer, which is an ASCII code (of one of the printing
-		   ASCII characters: not 003 meaning C-c, for instance).
-		   It can also be an integer representing a modifier
-		   combination; this will be greater than or equal to
-		   (1 << 16).
+   		   It will be one of the following:
+
+		   -- a symbol, e.g. 'home
+		   -- a character, representing something printable
+		      (not ?\C-c meaning C-c, for instance)
+		   -- an integer representing a modifier combination
 
    inverse_table   A hash table, hashing bindings to the list of keysyms
 		   in this keymap which are bound to them.  This is to make
@@ -83,29 +84,29 @@ Boston, MA 02111-1307, USA.  */
    keymap hierarchy as well. (This lets us use EQable objects as hash keys.)
    Each combination of modifiers (e.g. control-hyper) gets its own submap
    off of the main map.  The hash key for a modifier combination is
-   a large integer, computed by MAKE_MODIFIER_HASH_KEY().
+   an integer, computed by MAKE_MODIFIER_HASH_KEY().
    
    If the key `C-a' was bound to some command, the hierarchy would look like
 
-      keymap-1: associates the integer (MOD_CONTROL << 16) with keymap-2
+      keymap-1: associates the integer MOD_CONTROL with keymap-2
       keymap-2: associates "a" with the command
 
    Similarly, if the key `C-H-a' was bound to some command, the hierarchy
    would look like
 
-      keymap-1: associates the integer ((MOD_CONTROL | MOD_HYPER) << 16)
+      keymap-1: associates the integer (MOD_CONTROL | MOD_HYPER)
                 with keymap-2
       keymap-2: associates "a" with the command
 
    Note that a special exception is made for the meta modifier, in order
    to deal with ESC/meta lossage.  Any key combination containing the
    meta modifier is first indexed off of the main map into the meta
-   submap (with hash key (MOD_META << 16)) and then indexed off of the
+   submap (with hash key MOD_META) and then indexed off of the
    meta submap with the meta modifier removed from the key combination.
    For example, when associating a command with C-M-H-a, we'd have
 
-      keymap-1: associates the integer (MOD_META << 16) with keymap-2
-      keymap-2: associates the integer ((MOD_CONTROL | MOD_HYPER) << 16)
+      keymap-1: associates the integer MOD_META with keymap-2
+      keymap-2: associates the integer (MOD_CONTROL | MOD_HYPER)
                 with keymap-3
       keymap-3: associates "a" with the command
 
@@ -119,7 +120,7 @@ Boston, MA 02111-1307, USA.  */
    Note that this new model of keymaps takes much of the magic away from
    the Escape key: the value of the variable `esc-map' is no longer indexed
    in the `global-map' under the ESC key.  It's indexed under the integer
-   (MOD_META << 16).  This is not user-visible, however; none of the "bucky"
+   MOD_META.  This is not user-visible, however; none of the "bucky"
    maps are.
 
    There is a hack in Flookup_key() that makes (lookup-key global-map "\^[")
@@ -177,10 +178,8 @@ struct keymap
 #define KEYMAPP(x) RECORDP (x, keymap)
 #define CHECK_KEYMAP(x) CHECK_RECORD (x, keymap)
 
-/* Hash key is shifted so it can't conflict with eight-bit
-   string-char constituents */
-#define MAKE_MODIFIER_HASH_KEY(modifier) (make_int ((modifier) << 16))
-#define MODIFIER_HASH_KEY_BITS(x) ((INTP((x))) ? (XINT ((x)) >> 16) : 0)
+#define MAKE_MODIFIER_HASH_KEY(modifier) make_int (modifier)
+#define MODIFIER_HASH_KEY_BITS(x) (INTP (x) ? XINT (x) : 0)
 
 
 
@@ -228,9 +227,6 @@ Lisp_Object Qbutton0, Qbutton1, Qbutton2, Qbutton3, Qbutton4, Qbutton5,
 Lisp_Object Qbutton0up, Qbutton1up, Qbutton2up, Qbutton3up, Qbutton4up,
   Qbutton5up, Qbutton6up, Qbutton7up;
 Lisp_Object Qmenu_selection;
-/* Emacs compatibility */
-Lisp_Object Qdown_mouse_1, Qdown_mouse_2, Qdown_mouse_3;
-Lisp_Object Qmouse_1, Qmouse_2, Qmouse_3;
 
 /* Kludge kludge kludge */
 Lisp_Object QLFD, QTAB, QRET, QESC, QDEL, QSPC, QBS;
@@ -439,7 +435,7 @@ make_key_description (CONST struct key_data *key, int prettify)
   Lisp_Object keysym = key->keysym;
   unsigned int modifiers = key->modifiers;
 
-  if (prettify && INTP (keysym))
+  if (prettify && CHARP (keysym))
     {
       /* This is a little slow, but (control a) is prettier than (control 65).
 	 It's now ok to do this for digit-chars too, since we've fixed the
@@ -1238,29 +1234,39 @@ Return the number of bindings in the keymap.
 /*                        Defining keys in keymaps                      */
 /************************************************************************/
 
+/* Given a keysym (should be a symbol, int, char), make sure it's valid
+   and perform any necessary canonicalization. */
+
 static void
-define_key_check_keysym (Lisp_Object spec,
-                         Lisp_Object *keysym, unsigned int modifiers)
+define_key_check_and_coerce_keysym (Lisp_Object spec,
+				    Lisp_Object *keysym,
+				    unsigned int modifiers)
 {
   /* Now, check and massage the trailing keysym specifier. */
   if (SYMBOLP (*keysym))
     {
-      if (string_length (XSYMBOL (*keysym)->name) == 1)
+      if (string_char_length (XSYMBOL (*keysym)->name) == 1)
 	{
-	  *keysym = make_int (string_char (XSYMBOL (*keysym)->name, 0));
+	  Lisp_Object ream_gcc_up_the_ass =
+	    make_char (string_char (XSYMBOL (*keysym)->name, 0));
+	  *keysym = ream_gcc_up_the_ass;
 	  goto fixnum_keysym;
 	}
     }
-  else if (INTP (*keysym))
+  else if (CHAR_OR_CHAR_INTP (*keysym))
     {
+      CHECK_CHAR_COERCE_INT (*keysym);
     fixnum_keysym:
-      if (XINT (*keysym) < ' ' || XINT (*keysym) > 255)
-	signal_simple_error ("keysym must be in the range 32 - 255",
-			     *keysym);
+      if (XCHAR (*keysym) < ' '
+	  /* || (XCHAR (*keysym) >= 128 && XCHAR (*keysym) < 160) */)
+	/* yuck!  Can't make the above restriction; too many compatibility
+	   problems ... */
+	signal_simple_error ("keysym char must be printable", *keysym);
       /* #### This bites!  I want to be able to write (control shift a) */
       if (modifiers & MOD_SHIFT)
-	signal_simple_error ("the `shift' modifier may not be applied to ASCII keysyms",
-			     spec);
+	signal_simple_error
+	  ("the `shift' modifier may not be applied to ASCII keysyms",
+	   spec);
     }
   else
     {
@@ -1268,49 +1274,83 @@ define_key_check_keysym (Lisp_Object spec,
 			   *keysym);
     }
 
-  /* Code semi-snarfed from v20. */
   if (SYMBOLP (*keysym))
     {
       char *name = (char *)
 	string_data (XSYMBOL (*keysym)->name);
 
-      if (!strncmp(name, "kp_", 3)) {
-	/* Likewise, the obsolete keysym binding of kp_.* should not lose. */
-	char temp[50];
+      /* FSFmacs uses symbols with the printed representation of keysyms in
+	 their names, like 'M-x, and we use the syntax '(meta x).  So, to avoid
+	 confusion, notice the M-x syntax and signal an error - because
+	 otherwise it would be interpreted as a regular keysym, and would even
+	 show up in the list-buffers output, causing confusion to the naive.
 
-	strncpy(temp, name, sizeof (temp));
-	temp[sizeof (temp) - 1] = '\0';
-	temp[2] = '-';
-	*keysym = Fintern_soft(make_string((Bufbyte *)temp,
-					   strlen(temp)),
-			       Qnil);
-      }
-      /* Emacs compatibility */
-      else if (EQ(*keysym, Qdown_mouse_1))
-	*keysym = Qbutton1;
-      else if (EQ(*keysym, Qdown_mouse_2))
-	*keysym = Qbutton2;
-      else if (EQ(*keysym, Qdown_mouse_3))
-	*keysym = Qbutton3;
-      else if (EQ(*keysym, Qmouse_1))
-	*keysym = Qbutton1up;
-      else if (EQ(*keysym, Qmouse_2))
-	*keysym = Qbutton2up;
-      else if (EQ(*keysym, Qmouse_3))
-	*keysym = Qbutton3up;
+	 We can get away with this because none of the X keysym names contain
+	 a hyphen (some contain underscore, however).
+
+	 It might be useful to reject keysyms which are not x-valid-keysym-
+	 name-p, but that would interfere with various tricks we do to
+	 sanitize the Sun keyboards, and would make it trickier to
+	 conditionalize a .emacs file for multiple X servers.
+	 */
+      if (((int) strlen (name) >= 2 && name[1] == '-')
+#if 1
+          ||
+	  /* Ok, this is a bit more dubious - prevent people from doing things
+	     like (global-set-key 'RET 'something) because that will have the
+	     same problem as above.  (Gag!)  Maybe we should just silently
+	     accept these as aliases for the "real" names?
+	     */
+	  (string_length (XSYMBOL (*keysym)->name) < 4 &&
+	   (!strcmp (name, "LFD") ||
+	    !strcmp (name, "TAB") ||
+	    !strcmp (name, "RET") ||
+	    !strcmp (name, "ESC") ||
+	    !strcmp (name, "DEL") ||
+	    !strcmp (name, "SPC") ||
+	    !strcmp (name, "BS")))
+#endif /* unused */
+          )
+	signal_simple_error
+          ("Invalid (FSF Emacs) key format (see doc of define-key)",
+	   *keysym);
+
+      /* #### Ok, this is a bit more dubious - make people not lose if they
+	 do things like (global-set-key 'RET 'something) because that would
+	 otherwise have the same problem as above.  (Gag!)  We silently
+	 accept these as aliases for the "real" names.
+	 */
+      else if (EQ (*keysym, QLFD))
+	*keysym = QKlinefeed;
+      else if (EQ (*keysym, QTAB))
+	*keysym = QKtab;
+      else if (EQ (*keysym, QRET))
+	*keysym = QKreturn;
+      else if (EQ (*keysym, QESC))
+	*keysym = QKescape;
+      else if (EQ (*keysym, QDEL))
+	*keysym = QKdelete;
+      else if (EQ (*keysym, QBS))
+	*keysym = QKbackspace;
     }
 }
 
+
 /* Given any kind of key-specifier, return a keysym and modifier mask.
+   Proper canonicalization is performed:
+
+   -- integers are converted into the equivalent characters.
+   -- one-character strings are converted into the equivalent characters.
  */
+
 static void
 define_key_parser (Lisp_Object spec, struct key_data *returned_value)
 {
-  if (INTP (spec))
+  if (CHAR_OR_CHAR_INTP (spec))
     {
       struct Lisp_Event event;
       event.event_type = empty_event;
-      character_to_event (XINT (spec), &event,
+      character_to_event (XCHAR_OR_CHAR_INT (spec), &event,
 			  XCONSOLE (Vselected_console), 0);
       returned_value->keysym = event.event.key.keysym;
       returned_value->modifiers = event.event.key.modifiers;
@@ -1363,7 +1403,7 @@ define_key_parser (Lisp_Object spec, struct key_data *returned_value)
       /* Be nice, allow = to mean (=) */
       if (bucky_sym_to_bucky_bit (spec) != 0)
         signal_simple_error ("Key is a modifier name", spec);
-      define_key_check_keysym (spec, &spec, 0);
+      define_key_check_and_coerce_keysym (spec, &spec, 0);
       returned_value->keysym = spec;
       returned_value->modifiers = 0;
     }
@@ -1398,7 +1438,7 @@ define_key_parser (Lisp_Object spec, struct key_data *returned_value)
       if (!NILP (rest))
         signal_simple_error ("dotted list", spec);
 
-      define_key_check_keysym (spec, &keysym, modifiers);
+      define_key_check_and_coerce_keysym (spec, &keysym, modifiers);
       returned_value->keysym = keysym;
       returned_value->modifiers = modifiers;
     }
@@ -1406,81 +1446,6 @@ define_key_parser (Lisp_Object spec, struct key_data *returned_value)
     {
       signal_simple_error ("unknown key-sequence specifier",
 			   spec);
-    }
-
-  /* Convert single-character symbols into ints, since that's the
-     way the events arrive from the keyboard... */
-  if (SYMBOLP (returned_value->keysym) &&
-      string_length (XSYMBOL (returned_value->keysym)->name) == 1)
-    {
-      returned_value->keysym =
-	make_int (string_char (XSYMBOL (returned_value->keysym)->name, 0));
-
-      /* Detect bogus (user-provided) keysyms like '\?C-a;
-         We can't do that for '\?M-a because that interferes with
-         legitimate 8-bit input. */
-      if (XINT (returned_value->keysym) < ' ' ||
-	  XINT (returned_value->keysym) > 255)
-	signal_simple_error ("keysym must be in the range 32 - 255",
-			     returned_value->keysym);
-    }
-
-  if (SYMBOLP (returned_value->keysym))
-    {
-      char *name = (char *) string_data (XSYMBOL (returned_value->keysym)->name);
-
-      /* FSFmacs uses symbols with the printed representation of keysyms in
-	 their names, like 'M-x, and we use the syntax '(meta x).  So, to avoid
-	 confusion, notice the M-x syntax and signal an error - because
-	 otherwise it would be interpreted as a regular keysym, and would even
-	 show up in the list-buffers output, causing confusion to the naive.
-
-	 We can get away with this because none of the X keysym names contain
-	 a hyphen (some contain underscore, however).
-
-	 It might be useful to reject keysyms which are not x-valid-keysym-
-	 name-p, but that would interfere with various tricks we do to
-	 sanitize the Sun keyboards, and would make it trickier to
-	 conditionalize a .emacs file for multiple X servers.
-	 */
-      if (((unsigned int) strlen (name) >= 2 && name[1] == '-')
-#if 1
-          ||
-	  /* Ok, this is a bit more dubious - prevent people from doing things
-	     like (global-set-key 'RET 'something) because that will have the
-	     same problem as above.  (Gag!)  Maybe we should just silently
-	     accept these as aliases for the "real" names?
-	     */
-	  (string_length (XSYMBOL (returned_value->keysym)->name) < 4 &&
-	   (!strcmp (name, "LFD") ||
-	    !strcmp (name, "TAB") ||
-	    !strcmp (name, "RET") ||
-	    !strcmp (name, "ESC") ||
-	    !strcmp (name, "DEL") ||
-	    !strcmp (name, "SPC") ||
-	    !strcmp (name, "BS")))
-#endif /* unused */
-          )
-	signal_simple_error ("invalid keysym (see doc of define-key)",
-			     returned_value->keysym);
-
-      /* #### Ok, this is a bit more dubious - make people not lose if they
-	 do things like (global-set-key 'RET 'something) because that would
-	 otherwise have the same problem as above.  (Gag!)  We silently
-	 accept these as aliases for the "real" names.
-	 */
-      else if (EQ (returned_value->keysym, QLFD))
-	returned_value->keysym = QKlinefeed;
-      else if (EQ (returned_value->keysym, QTAB))
-	returned_value->keysym = QKtab;
-      else if (EQ (returned_value->keysym, QRET))
-	returned_value->keysym = QKreturn;
-      else if (EQ (returned_value->keysym, QESC))
-	returned_value->keysym = QKescape;
-      else if (EQ (returned_value->keysym, QDEL))
-	returned_value->keysym = QKdelete;
-      else if (EQ (returned_value->keysym, QBS))
-	returned_value->keysym = QKbackspace;
     }
 }
 
@@ -1539,14 +1504,15 @@ event_matches_key_specifier_p (struct Lisp_Event *event,
   struct gcpro gcpro1;
 
   if (event->event_type != key_press_event || NILP (key_specifier) ||
-      (INTP (key_specifier) && XINT (key_specifier) < 0))
+      (INTP (key_specifier) && !CHAR_INTP (key_specifier)))
     return 0;
 
   /* if the specifier is an integer such as 27, then it should match
      both of the events 'escape' and 'control ['.  Calling
      Fcharacter_to_event() will only match 'escape'. */
-  if (INTP (key_specifier))
-    return XINT (key_specifier) == event_to_character (event, 0, 0, 0);
+  if (CHAR_OR_CHAR_INTP (key_specifier))
+    return (XCHAR_OR_CHAR_INT (key_specifier)
+	    == event_to_character (event, 0, 0, 0));
 
   /* Otherwise, we cannot call event_to_character() because we may
      be dealing with non-ASCII keystrokes.  In any case, if I ask
@@ -1677,7 +1643,7 @@ ensure_meta_prefix_char_keymapp (Lisp_Object keys, int indx,
   struct key_data meta_key;
 
   if (NILP (Vmeta_prefix_char) ||
-      (INTP (Vmeta_prefix_char) && XINT (Vmeta_prefix_char) < 0))
+      (INTP (Vmeta_prefix_char) && !CHAR_INTP (Vmeta_prefix_char)))
     return;
 
   define_key_parser (Vmeta_prefix_char, &meta_key);
@@ -1700,17 +1666,15 @@ ensure_meta_prefix_char_keymapp (Lisp_Object keys, int indx,
     abort ();
   if (EQ (keys, new_keys))
     sprintf (buf, GETTEXT ("can't bind %s: %s has a non-keymap binding"),
-	     (char *) string_data (XSTRING (Fkey_description (keys))),
-	     (char *) string_data (XSTRING
-				   (Fsingle_key_description 
-				    (Vmeta_prefix_char))));
+	     (char *) XSTRING_DATA (Fkey_description (keys)),
+	     (char *) XSTRING_DATA (Fsingle_key_description
+				    (Vmeta_prefix_char)));
   else
     sprintf (buf, GETTEXT ("can't bind %s: %s %s has a non-keymap binding"),
-	     (char *) string_data (XSTRING (Fkey_description (keys))),
-	     (char *) string_data (XSTRING (Fkey_description (new_keys))),
-	     (char *) string_data (XSTRING
-				   (Fsingle_key_description
-				    (Vmeta_prefix_char))));
+	     (char *) XSTRING_DATA (Fkey_description (keys)),
+	     (char *) XSTRING_DATA (Fkey_description (new_keys)),
+	     (char *) XSTRING_DATA (Fsingle_key_description
+				    (Vmeta_prefix_char)));
   signal_simple_error (buf, mpc_binding);
 }
 
@@ -1827,8 +1791,8 @@ these features.
   if (VECTORP (keys))
     size = vector_length (XVECTOR (keys));
   else if (STRINGP (keys))
-    size = string_length (XSTRING (keys));
-  else if (INTP (keys) || SYMBOLP (keys) || CONSP (keys))
+    size = string_char_length (XSTRING (keys));
+  else if (CHAR_OR_CHAR_INTP (keys) || SYMBOLP (keys) || CONSP (keys))
     {
       if (!CONSP (keys)) keys = list1 (keys);
       size = 1;
@@ -1867,12 +1831,7 @@ these features.
       if (STRINGP (keys))
 	c = make_char (string_char (XSTRING (keys), idx));
       else
-	{
-	  c = vector_data (XVECTOR (keys)) [idx];
-	  if (INTP (c) &&
-	      (XINT (c) < ' ' || XINT (c) > 127))
-	    args_out_of_range_3 (c, make_int (32), make_int (127));
-	}
+	c = vector_data (XVECTOR (keys)) [idx];
 
       define_key_parser (c, &raw_key1);
 
@@ -2110,7 +2069,7 @@ lookup_keys (Lisp_Object keymap, int nkeys, Lisp_Object *keys,
   if (nkeys == 0)
     return Qnil;
 
-  if (nkeys < (countof (kkk)))
+  if (nkeys > (countof (kkk)))
     raw_keys = kkk;
   else
     raw_keys = (struct key_data *) alloca (sizeof (struct key_data) * nkeys);
@@ -2189,7 +2148,7 @@ it takes to reach a non-prefix command.
                           vector_data (XVECTOR (keys)),
                           !NILP (accept_default));
     }
-  else if (SYMBOLP (keys) || INTP (keys) || CONSP (keys))
+  else if (SYMBOLP (keys) || CHAR_OR_CHAR_INTP (keys) || CONSP (keys))
     {
       return lookup_keys (keymap, 1, &keys,
 			  !NILP (accept_default));
@@ -2381,11 +2340,8 @@ get_relevant_keymaps (Lisp_Object keys,
 
 	      if (!EQ (buffer, Vmouse_grabbed_buffer)) /* already pushed */
 		{
-		  Lisp_Object map = XBUFFER (buffer)->keymap;
-
 		  get_relevant_minor_maps (buffer, &closure);
-		  if (!NILP(map))
-		    relevant_map_push (map, &closure);
+		  relevant_map_push (XBUFFER (buffer)->keymap, &closure);
 		}
 	    }
 	}
@@ -2624,8 +2580,6 @@ event_binding (Lisp_Object event0, int accept_default)
   assert (EVENTP (event0));
 
   nmaps = get_relevant_keymaps (event0, countof (maps), maps);
-  if (nmaps > countof (maps))
-    nmaps = countof (maps);
   return (process_event_binding_result
 	  (lookup_events (event0, nmaps, maps, accept_default)));
 }
@@ -2814,14 +2768,22 @@ map_keymap_sort_predicate (Lisp_Object obj1, Lisp_Object obj2,
   if (! bit1 && SYMBOLP (obj1))
     {
       Lisp_Object code = Fget (obj1, Vcharacter_set_property, Qnil);
-      if (INTP (code))
-	obj1 = code, sym1_p = 1;
+      if (CHAR_OR_CHAR_INTP (code))
+	{
+	  obj1 = code;
+	  CHECK_CHAR_COERCE_INT (obj1);
+	  sym1_p = 1;
+	}
     }
   if (! bit2 && SYMBOLP (obj2))
     {
       Lisp_Object code = Fget (obj2, Vcharacter_set_property, Qnil);
-      if (INTP (code))
-	obj2 = code, sym2_p = 1;
+      if (CHAR_OR_CHAR_INTP (code))
+	{
+	  obj2 = code;
+	  CHECK_CHAR_COERCE_INT (obj2);
+	  sym2_p = 1;
+	}
     }
 
   /* all symbols (non-ASCIIs) come after characters (ASCIIs) */
@@ -2962,7 +2924,7 @@ the keymap will be passed to the mapper function in a canonical order.
 Otherwise, they will be passed in hash (that is, random) order, which is
 faster.
 */
-       (function, keymap, sort_first))
+     (function, keymap, sort_first))
 {
   /* This function can GC */
   struct gcpro gcpro1, gcpro2;
@@ -3144,7 +3106,8 @@ Control characters turn into \"C-foo\" sequences, meta into \"M-foo\"
 */
        (keys))
 {
-  if (INTP (keys) || CONSP (keys) || SYMBOLP (keys) || EVENTP (keys))
+  if (CHAR_OR_CHAR_INTP (keys) || CONSP (keys) || SYMBOLP (keys)
+      || EVENTP (keys))
     {
       return Fsingle_key_description (keys);
     }
@@ -3187,7 +3150,7 @@ of a key read from the user rather than a character from a buffer.
   if (SYMBOLP (key))
     key = Fcons (key, Qnil); /* sleaze sleaze */
 
-  if (EVENTP (key) || CHARP (key))
+  if (EVENTP (key) || CHAR_OR_CHAR_INTP (key))
     {
       char buf [255];
       if (!EVENTP (key))
@@ -3220,8 +3183,12 @@ of a key read from the user rather than a character from a buffer.
 	  else if (EQ (keysym, Qhyper)) strcpy (bufp, "H-"), bufp += 2;
 	  else if (EQ (keysym, Qalt))	strcpy (bufp, "A-"), bufp += 2;
 	  else if (EQ (keysym, Qshift)) strcpy (bufp, "Sh-"), bufp += 3;
-	  else if (INTP (keysym))
-	    *bufp = XINT (keysym), bufp++, *bufp = 0;
+	  else if (CHAR_OR_CHAR_INTP (keysym))
+	    {
+	      bufp += set_charptr_emchar ((Bufbyte *) bufp,
+					  XCHAR_OR_CHAR_INT (keysym));
+	      *bufp = 0;
+	    }
 	  else
 	    {
 	      CHECK_SYMBOL (keysym);
@@ -3261,10 +3228,10 @@ of a character from a buffer rather than a key read from the user.
   unsigned int c;
   Lisp_Object ctl_arrow = current_buffer->ctl_arrow;
   int ctl_p = !NILP (ctl_arrow);
-  int printable_min = (INTP (ctl_arrow)
-		       ? XINT (ctl_arrow)
-		       : ((EQ (ctl_arrow, Qt) || EQ (ctl_arrow, Qnil))
-			  ? 256 : 160));
+  Emchar printable_min = (CHAR_OR_CHAR_INTP (ctl_arrow)
+			  ? XCHAR_OR_CHAR_INT (ctl_arrow)
+			  : ((EQ (ctl_arrow, Qt) || NILP (ctl_arrow))
+			     ? 256 : 160));
 
   if (EVENTP (chr))
     {
@@ -3298,6 +3265,18 @@ of a character from a buffer rather than a key read from the user.
   else if (c >= 0200 || c < 040)
     {
       *p++ = '\\';
+#ifdef MULE
+      /* !!#### This syntax is not readable.  It will
+	 be interpreted as a 3-digit octal number rather
+	 than a 7-digit octal number. */
+      if (c >= 0400)
+	{
+	  *p++ = '0' + ((c & 07000000) >> 18);
+	  *p++ = '0' + ((c & 0700000) >> 15);
+	  *p++ = '0' + ((c & 070000) >> 12);
+	  *p++ = '0' + ((c & 07000) >> 9);
+	}
+#endif
       *p++ = '0' + ((c & 0700) >> 6);
       *p++ = '0' + ((c & 0070) >> 3);
       *p++ = '0' + ((c & 0007));
@@ -3990,13 +3969,21 @@ elide_next_two_p (Lisp_Object list)
   if (SYMBOLP (s1))
     {
       Lisp_Object code = Fget (s1, Vcharacter_set_property, Qnil);
-      if (INTP (code)) s1 = code;
+      if (CHAR_OR_CHAR_INTP (code))
+	{
+	  s1 = code;
+	  CHECK_CHAR_COERCE_INT (s1);
+	}
       else return 0;
     }
   if (SYMBOLP (s2))
     {
       Lisp_Object code = Fget (s2, Vcharacter_set_property, Qnil);
-      if (INTP (code)) s2 = code;
+      if (CHAR_OR_CHAR_INTP (code))
+	{
+	  s2 = code;
+	  CHECK_CHAR_COERCE_INT (s2);
+	}
       else return 0;
     }
 
@@ -4201,12 +4188,6 @@ syms_of_keymap (void)
   defsymbol (&Qbutton5up, "button5up");
   defsymbol (&Qbutton6up, "button6up");
   defsymbol (&Qbutton7up, "button7up");
-  defsymbol (&Qmouse_1, "mouse-1");
-  defsymbol (&Qmouse_2, "mouse-2");
-  defsymbol (&Qmouse_3, "mouse-3");
-  defsymbol (&Qdown_mouse_1, "down-mouse-1");
-  defsymbol (&Qdown_mouse_2, "down-mouse-2");
-  defsymbol (&Qdown_mouse_3, "down-mouse-3");
   defsymbol (&Qmenu_selection, "menu-selection");
   defsymbol (&QLFD, "LFD");
   defsymbol (&QTAB, "TAB");

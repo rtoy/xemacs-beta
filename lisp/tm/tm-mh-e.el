@@ -6,7 +6,7 @@
 ;;         OKABE Yasuo <okabe@kudpc.kyoto-u.ac.jp>
 ;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1993/11/21 (obsolete mh-e-mime.el)
-;; Version: $Revision: 1.3 $
+;; Version: $Revision: 1.1.1.1 $
 ;; Keywords: mail, MH, MIME, multimedia, encoded-word, multilingual
 
 ;; This file is part of tm (Tools for MIME).
@@ -48,7 +48,7 @@
 ;;;
 
 (defconst tm-mh-e/RCS-ID
-  "$Id: tm-mh-e.el,v 1.3 1997/08/21 06:24:13 steve Exp $")
+  "$Id: tm-mh-e.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $")
 
 (defconst tm-mh-e/version (get-version-string tm-mh-e/RCS-ID))
 
@@ -73,26 +73,20 @@
   ;; Display message NUMBER of FOLDER.
   ;; Sets the current buffer to the show buffer.
   (set-buffer folder)
+  (or show-buffer
+      (setq show-buffer mh-show-buffer))
   ;; Bind variables in folder buffer in case they are local
-  (let ((formfile mhl-formfile)
-	(clean-message-header mh-clean-message-header)
-	(invisible-headers mh-invisible-headers)
-	(visible-headers mh-visible-headers)
-	(msg-filename (mh-msg-filename msg-num))
-	(show-buffer mh-show-buffer)
-	)
+  (let ((msg-filename (mh-msg-filename msg-num)))
     (if (not (file-exists-p msg-filename))
 	(error "Message %d does not exist" msg-num))
     (set-buffer show-buffer)
     (cond ((not (equal msg-filename buffer-file-name))
 	   ;; Buffer does not yet contain message.
-	   (mh-unvisit-file)
+	   (clear-visited-file-modtime)
+	   (unlock-buffer)
+	   (setq buffer-file-name nil)	; no locking during setup
 	   (setq buffer-read-only nil)
 	   (erase-buffer)
-	   ;; Changing contents, so this hook needs to be reinitialized.
-	   ;; pgp.el uses this.
-	   (if (boundp 'write-contents-hooks) ;Emacs 19
-	       (setq write-contents-hooks nil))
 	   (if mode
 	       (let* ((aname (concat "article-" folder))
 		      (abuf (get-buffer aname))
@@ -120,21 +114,18 @@
 		 (mime/viewer-mode nil nil nil
 				   aname (concat "show-" folder))
 		 (goto-char (point-min))
-		 (let ( (buffer-read-only nil) )
-		   (cond (clean-message-header
-			  (mh-clean-msg-header (point-min)
-					       invisible-headers
-					     visible-headers)
-			  (goto-char (point-min)))
-			 (t
-			  (mh-start-of-uncleaned-message))))
-		 (goto-char (point-min))
 		 )
-	     (progn
-	       (if formfile
+	     (let ((clean-message-header mh-clean-message-header)
+		   (invisible-headers mh-invisible-headers)
+		   (visible-headers mh-visible-headers)
+		   )
+	       ;; 1995/9/21
+	       ;;   modified by ARIURA <ariura@cc.tuat.ac.jp>
+	       ;;   to support mhl.
+	       (if mhl-formfile
 		   (mh-exec-lib-cmd-output "mhl" "-nobell" "-noclear"
-					   (if (stringp formfile)
-					       (list "-form" formfile))
+					   (if (stringp mhl-formfile)
+					       (list "-form" mhl-formfile))
 					   msg-filename)
 		 (insert-file-contents msg-filename))
 	       ;; end
@@ -154,14 +145,11 @@
 	       (setq buffer-file-name msg-filename)
 	       (mh-show-mode)
 	       ))
-	   (set-buffer-modified-p nil)
 	   (or (eq buffer-undo-list t)	;don't save undo info for prev msgs
 	       (setq buffer-undo-list nil))
-	   (set-buffer-auto-saved)
-	   ;; the parts of set-visited-file-name we want to do (no locking)
+;;; Added by itokon (02/19/96)
 	   (setq buffer-file-name msg-filename)
-	   (setq buffer-backed-up nil)
-	   (auto-save-mode 1)
+;;;
 	   (set-mark nil)
 	   (setq mode-line-buffer-identification
 		 (list (format mh-show-buffer-mode-line-buffer-id
@@ -225,6 +213,16 @@ With arg, turn MIME processing on if arg is positive."
 	tm-mh-e/decode-encoded-word)
     (mh-header-display)
     ))
+
+(defun tm-mh-e/scroll-up-msg (&optional arg)
+  (interactive)
+  (mh-page-msg (or arg 1))
+  )
+
+(defun tm-mh-e/scroll-down-msg (&optional arg)
+  (interactive)
+  (mh-page-msg (- (or arg 1)))
+  )
 
 (defun tm-mh-e/burst-multipart/digest ()
   "Burst apart the current message, which should be a multipart/digest.
@@ -293,7 +291,7 @@ digest are inserted into the folder after that message."
     (goto-char (point-max))
     (setq mh-show-buffer buf)
     (apply (function mh-send)
-	   (std11-field-bodies '("From" "cc" "Subject") ""))
+	   (std11-field-bodies '("To" "cc" "Subject") ""))
     (setq mh-sent-from-folder buf)
     (setq mh-sent-from-msg 1)
     (let ((last (point)))
@@ -342,6 +340,8 @@ digest are inserted into the folder after that message."
 (define-key mh-folder-mode-map "." (function tm-mh-e/show))
 (define-key mh-folder-mode-map "," (function tm-mh-e/header-display))
 (define-key mh-folder-mode-map "\e," (function tm-mh-e/raw-display))
+(define-key mh-folder-mode-map "\r" (function tm-mh-e/scroll-up-msg))
+(define-key mh-folder-mode-map "\e\r" (function tm-mh-e/scroll-down-msg))
 (define-key mh-folder-mode-map "\C-c\C-b"
   (function tm-mh-e/burst-multipart/digest))
 

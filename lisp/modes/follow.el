@@ -49,7 +49,7 @@
 ;; side-by-side window are used. The user can, with the help of Follow
 ;; mode, use two full-height windows as though they would have been
 ;; one. Imagine yourself editing a large function, or section of text,
-;; and being able to use 144 lines instead of the normal 72... (your
+;; and beeing able to use 144 lines instead of the normal 72... (your
 ;; mileage may vary).
 
 ;; The latest version, and a demonstration, are avaiable at:
@@ -734,7 +734,7 @@ Follow mode comes to its prime when used on a large screen and two
 side-by-side window are used. The user can, with the help of Follow
 mode, use two full-height windows as though they would have been
 one. Imagine yourself editing a large function, or section of text,
-and being able to use 144 lines instead of the normal 72... (your
+and beeing able to use 144 lines instead of the normal 72... (your
 mileage may vary).
 
 To split one large window into two side-by-side windows, the commands
@@ -2345,8 +2345,8 @@ report this using the `follow-submit-feedback' function."
 ;;; called from other places, e.g. `post-command-hook' and
 ;;; `post-command-idle-hook'.
 
-;; If this function is called it is too late for this window, but
-;; we might save other windows from being recentered.
+;; If this function is called it is to late for this window, but
+;; we might save other windows from beeing recentered.
 
 (if (and follow-avoid-tail-recenter-p (boundp 'window-scroll-functions))
     (add-hook 'window-scroll-functions 'follow-avoid-tail-recenter t))

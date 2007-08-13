@@ -252,10 +252,34 @@ do						\
   (buf)->text->bufz = (val);			\
 } while (0)
 
+/* Under Mule, we maintain two sentinels in the buffer: one at the
+   beginning of the gap, and one at the end of the buffer.  This
+   allows us to move forward, examining bytes looking for the
+   end of a character, and not worry about running off the end.
+   We do not need corresponding sentinels when moving backwards
+   because we do not have to look past the beginning of a character
+   to find the beginning of the character.
+
+   Every time we change the beginning of the gap, we have to
+   call SET_GAP_SENTINEL().
+
+   Every time we change the total size (characters plus gap)
+   of the buffer, we have to call SET_END_SENTINEL().
+ */
+   
+
+#ifdef MULE
+# define GAP_CAN_HOLD_SIZE_P(buf, len) (BUF_GAP_SIZE (buf) >= (len) + 1)
+# define SET_GAP_SENTINEL(buf) (*BUF_GPT_ADDR (buf) = 0)
+# define BUF_END_SENTINEL_SIZE 1
+# define SET_END_SENTINEL(buf) \
+  (*(BUF_BEG_ADDR (buf) + BUF_GAP_SIZE (buf) + BI_BUF_Z (buf) - 1) = 0)
+#else
 # define GAP_CAN_HOLD_SIZE_P(buf, len) (BUF_GAP_SIZE (buf) >= (len))
 # define SET_GAP_SENTINEL(buf)
 # define BUF_END_SENTINEL_SIZE 0
 # define SET_END_SENTINEL(buf)
+#endif
 
 
 /************************************************************************/
@@ -263,6 +287,821 @@ do						\
 /************************************************************************/
 
 /* Optimization.  Do it.  Live it.  Love it.  */
+
+#ifdef MULE
+
+/* We include the basic functions here that require no specific
+   knowledge of how data is Mule-encoded into a buffer other
+   than the basic (00 - 7F), (80 - 9F), (A0 - FF) scheme.
+   Anything that requires more specific knowledge goes into
+   mule-charset.c. */
+
+/* Given a pointer to a text string and a length in bytes, return
+   the equivalent length in characters. */
+
+Charcount
+bytecount_to_charcount (CONST Bufbyte *ptr, Bytecount len)
+{
+  Charcount count = 0;
+  CONST Bufbyte *end = ptr + len;
+
+#if (LONGBITS == 32 || LONGBITS == 64)
+
+# if (LONGBITS == 32)
+#  define LONG_BYTES 4
+#  define ALIGN_MASK 0xFFFFFFFCU
+#  define HIGH_BIT_MASK 0x80808080U
+# else
+#  define LONG_BYTES 8
+#  define ALIGN_MASK 0xFFFFFFFFFFFFFFF8U
+   /* I had a dream, I was being overrun with early Intel processors ... */
+#  define HIGH_BIT_MASK 0x8080808080808080U
+# endif
+
+  /* When we have a large number of bytes to scan, we can be trickier
+     and significantly faster by scanning them in chunks of the CPU word
+     size (assuming that they're all ASCII -- we cut out as soon as
+     we find something non-ASCII). */
+  if (len >= 12)
+    {
+      /* Determine the section in the middle of the string that's
+	 amenable to this treatment.  Everything has to be aligned
+	 on CPU word boundaries. */
+      CONST Bufbyte *aligned_ptr =
+	(CONST Bufbyte *) (((unsigned long) (ptr + LONG_BYTES - 1)) &
+			   ALIGN_MASK);
+      CONST Bufbyte *aligned_end =
+	(CONST Bufbyte *) (((unsigned long) end) & ALIGN_MASK);
+
+      /* Handle unaligned stuff at the beginning. */
+      while (ptr < aligned_ptr)
+	{
+	  if (!BYTE_ASCII_P (*ptr))
+	    goto bail;
+	  count++, ptr++;
+	}
+      /* Now do it. */
+      while (ptr < aligned_end)
+	{
+	  
+	  if ((* (unsigned long *) ptr) & HIGH_BIT_MASK)
+	    goto bail;
+	  ptr += LONG_BYTES;
+	  count += LONG_BYTES;
+	}
+    }
+
+#endif /* LONGBITS == 32 || LONGBITS == 64 */
+
+ bail:
+  while (ptr < end)
+    {
+      count++;
+      INC_CHARPTR (ptr);
+    }
+#ifdef ERROR_CHECK_BUFPOS
+  /* Bomb out if the specified substring ends in the middle
+     of a character.  Note that we might have already gotten
+     a core dump above from an invalid reference, but at least
+     we will get no farther than here. */
+  assert (ptr == end);
+#endif
+
+  return count;
+}
+
+/* Given a pointer to a text string and a length in characters, return
+   the equivalent length in bytes. */
+
+Bytecount
+charcount_to_bytecount (CONST Bufbyte *ptr, Charcount len)
+{
+  CONST Bufbyte *newptr = ptr;
+
+  while (len > 0)
+    {
+      INC_CHARPTR (newptr);
+      len--;
+    }
+  return newptr - ptr;
+}
+
+/* The next two functions are the actual meat behind the
+   bufpos-to-bytind and bytind-to-bufpos conversions.  Currently
+   the method they use is fairly unsophisticated; see buffer.h.
+
+   Note that bufpos_to_bytind_func() is probably the most-called
+   function in all of XEmacs.  Therefore, it must be FAST FAST FAST.
+   This is the reason why so much of the code is duplicated.
+
+   Similar considerations apply to bytind_to_bufpos_func(), although
+   less so because the function is not called so often.
+   
+   #### At some point this should use a more sophisticated method;
+   see buffer.h. */
+
+static int not_very_random_number;
+
+Bytind
+bufpos_to_bytind_func (struct buffer *buf, Bufpos x)
+{
+  Bufpos bufmin;
+  Bufpos bufmax;
+  Bytind bytmin;
+  Bytind bytmax;
+  int size;
+  int forward_p;
+  Bytind retval;
+  int diff_so_far;
+  int add_to_cache = 0;
+
+  /* Check for some cached positions, for speed. */
+  if (x == BUF_PT (buf))
+    return BI_BUF_PT (buf);
+  if (x == BUF_ZV (buf))
+    return BI_BUF_ZV (buf);
+  if (x == BUF_BEGV (buf))
+    return BI_BUF_BEGV (buf);
+
+  bufmin = buf->text->mule_bufmin;
+  bufmax = buf->text->mule_bufmax;
+  bytmin = buf->text->mule_bytmin;
+  bytmax = buf->text->mule_bytmax;
+  size = (1 << buf->text->mule_shifter) + !!buf->text->mule_three_p;
+
+  /* The basic idea here is that we shift the "known region" up or down
+     until it overlaps the specified position.  We do this by moving
+     the upper bound of the known region up one character at a time,
+     and moving the lower bound of the known region up as necessary
+     when the size of the character just seen changes.
+
+     We optimize this, however, by first shifting the known region to
+     one of the cached points if it's close by. (We don't check BEG or
+     Z, even though they're cached; most of the time these will be the
+     same as BEGV and ZV, and when they're not, they're not likely
+     to be used.) */
+
+  if (x > bufmax)
+    {
+      Bufpos diffmax = x - bufmax;
+      Bufpos diffpt = x - BUF_PT (buf);
+      Bufpos diffzv = BUF_ZV (buf) - x;
+      /* #### This value could stand some more exploration. */
+      Charcount heuristic_hack = (bufmax - bufmin) >> 2;
+
+      /* Check if the position is closer to PT or ZV than to the
+	 end of the known region. */
+      
+      if (diffpt < 0)
+	diffpt = -diffpt;
+      if (diffzv < 0)
+	diffzv = -diffzv;
+
+      /* But also implement a heuristic that favors the known region
+	 over PT or ZV.  The reason for this is that switching to
+	 PT or ZV will wipe out the knowledge in the known region,
+	 which might be annoying if the known region is large and
+	 PT or ZV is not that much closer than the end of the known
+	 region. */
+      
+      diffzv += heuristic_hack;
+      diffpt += heuristic_hack;
+      if (diffpt < diffmax && diffpt <= diffzv)
+	{
+	  bufmax = bufmin = BUF_PT (buf);
+	  bytmax = bytmin = BI_BUF_PT (buf);
+	  /* We set the size to 1 even though it doesn't really
+	     matter because the new known region contains no
+	     characters.  We do this because this is the most
+	     likely size of the characters around the new known
+	     region, and we avoid potential yuckiness that is
+	     done when size == 3. */
+	  size = 1;
+	}
+      if (diffzv < diffmax)
+	{
+	  bufmax = bufmin = BUF_ZV (buf);
+	  bytmax = bytmin = BI_BUF_ZV (buf);
+	  size = 1;
+	}
+    }
+#ifdef ERROR_CHECK_BUFPOS
+  else if (x >= bufmin)
+    abort ();
+#endif
+  else
+    {
+      Bufpos diffmin = bufmin - x;
+      Bufpos diffpt = BUF_PT (buf) - x;
+      Bufpos diffbegv = x - BUF_BEGV (buf);
+      /* #### This value could stand some more exploration. */
+      Charcount heuristic_hack = (bufmax - bufmin) >> 2;
+
+      if (diffpt < 0)
+	diffpt = -diffpt;
+      if (diffbegv < 0)
+	diffbegv = -diffbegv;
+
+      /* But also implement a heuristic that favors the known region --
+	 see above. */
+      
+      diffbegv += heuristic_hack;
+      diffpt += heuristic_hack;
+
+      if (diffpt < diffmin && diffpt <= diffbegv)
+	{
+	  bufmax = bufmin = BUF_PT (buf);
+	  bytmax = bytmin = BI_BUF_PT (buf);
+	  /* We set the size to 1 even though it doesn't really
+	     matter because the new known region contains no
+	     characters.  We do this because this is the most
+	     likely size of the characters around the new known
+	     region, and we avoid potential yuckiness that is
+	     done when size == 3. */
+	  size = 1;
+	}
+      if (diffbegv < diffmin)
+	{
+	  bufmax = bufmin = BUF_BEGV (buf);
+	  bytmax = bytmin = BI_BUF_BEGV (buf);
+	  size = 1;
+	}
+    }
+
+  diff_so_far = x > bufmax ? x - bufmax : bufmin - x;
+  if (diff_so_far > 50)
+    {
+      /* If we have to move more than a certain amount, then look
+	 into our cache. */
+      int minval = INT_MAX;
+      int found = 0;
+      int i;
+
+      add_to_cache = 1;
+      /* I considered keeping the positions ordered.  This would speed
+	 up this loop, but updating the cache would take longer, so
+	 it doesn't seem like it would really matter. */
+      for (i = 0; i < 16; i++)
+	{
+	  int diff = buf->text->mule_bufpos_cache[i] - x;
+
+	  if (diff < 0)
+	    diff = -diff;
+	  if (diff < minval)
+	    {
+	      minval = diff;
+	      found = i;
+	    }
+	}
+
+      if (minval < diff_so_far)
+	{
+	  bufmax = bufmin = buf->text->mule_bufpos_cache[found];
+	  bytmax = bytmin = buf->text->mule_bytind_cache[found];
+	  size = 1;
+	}
+    }
+
+  /* It's conceivable that the caching above could lead to X being
+     the same as one of the range edges. */
+  if (x >= bufmax)
+    {
+      Bytind newmax;
+      Bytecount newsize;
+
+      forward_p = 1;
+      while (x > bufmax)
+	{
+	  newmax = bytmax;
+	  
+	  INC_BYTIND (buf, newmax);
+	  newsize = newmax - bytmax;
+	  if (newsize != size)
+	    {
+	      bufmin = bufmax;
+	      bytmin = bytmax;
+	      size = newsize;
+	    }
+	  bytmax = newmax;
+	  bufmax++;
+	}
+      retval = bytmax;
+
+      /* #### Should go past the found location to reduce the number
+	 of times that this function is called */
+    }
+  else /* x < bufmin */
+    {
+      Bytind newmin;
+      Bytecount newsize;
+
+      forward_p = 0;
+      while (x < bufmin)
+	{
+	  newmin = bytmin;
+	  
+	  DEC_BYTIND (buf, newmin);
+	  newsize = bytmin - newmin;
+	  if (newsize != size)
+	    {
+	      bufmax = bufmin;
+	      bytmax = bytmin;
+	      size = newsize;
+	    }
+	  bytmin = newmin;
+	  bufmin--;
+	}
+      retval = bytmin;
+
+      /* #### Should go past the found location to reduce the number
+	 of times that this function is called
+         */
+    }
+
+  /* If size is three, than we have to max sure that the range we
+     discovered isn't too large, because we use a fixed-length
+     table to divide by 3. */
+
+  if (size == 3)
+    {
+      int gap = bytmax - bytmin;
+      buf->text->mule_three_p = 1;
+      buf->text->mule_shifter = 1;
+
+      if (gap > MAX_BYTIND_GAP_SIZE_3)
+	{
+	  if (forward_p)
+	    {
+	      bytmin = bytmax - MAX_BYTIND_GAP_SIZE_3;
+	      bufmin = bufmax - MAX_BUFPOS_GAP_SIZE_3;
+	    }
+	  else
+	    {
+	      bytmax = bytmin + MAX_BYTIND_GAP_SIZE_3;
+	      bufmax = bufmin + MAX_BUFPOS_GAP_SIZE_3;
+	    }
+	}
+    }
+  else
+    {
+      buf->text->mule_three_p = 0;
+      if (size == 4)
+	buf->text->mule_shifter = 2;
+      else
+	buf->text->mule_shifter = size - 1;
+    }
+
+  buf->text->mule_bufmin = bufmin;
+  buf->text->mule_bufmax = bufmax;
+  buf->text->mule_bytmin = bytmin;
+  buf->text->mule_bytmax = bytmax;
+
+  if (add_to_cache)
+    {
+      int replace_loc;
+
+      /* We throw away a "random" cached value and replace it with
+	 the new value.  It doesn't actually have to be very random
+	 at all, just evenly distributed.
+
+	 #### It would be better to use a least-recently-used algorithm
+	 or something that tries to space things out, but I'm not sure
+	 it's worth it to go to the trouble of maintaining that. */
+      not_very_random_number += 621;
+      replace_loc = not_very_random_number & 15;
+      buf->text->mule_bufpos_cache[replace_loc] = x;
+      buf->text->mule_bytind_cache[replace_loc] = retval;
+    }
+
+  return retval;
+}
+
+/* The logic in this function is almost identical to the logic in
+   the previous function. */
+
+Bufpos
+bytind_to_bufpos_func (struct buffer *buf, Bytind x)
+{
+  Bufpos bufmin;
+  Bufpos bufmax;
+  Bytind bytmin;
+  Bytind bytmax;
+  int size;
+  int forward_p;
+  Bufpos retval;
+  int diff_so_far;
+  int add_to_cache = 0;
+
+  /* Check for some cached positions, for speed. */
+  if (x == BI_BUF_PT (buf))
+    return BUF_PT (buf);
+  if (x == BI_BUF_ZV (buf))
+    return BUF_ZV (buf);
+  if (x == BI_BUF_BEGV (buf))
+    return BUF_BEGV (buf);
+
+  bufmin = buf->text->mule_bufmin;
+  bufmax = buf->text->mule_bufmax;
+  bytmin = buf->text->mule_bytmin;
+  bytmax = buf->text->mule_bytmax;
+  size = (1 << buf->text->mule_shifter) + !!buf->text->mule_three_p;
+
+  /* The basic idea here is that we shift the "known region" up or down
+     until it overlaps the specified position.  We do this by moving
+     the upper bound of the known region up one character at a time,
+     and moving the lower bound of the known region up as necessary
+     when the size of the character just seen changes.
+
+     We optimize this, however, by first shifting the known region to
+     one of the cached points if it's close by. (We don't check BI_BEG or
+     BI_Z, even though they're cached; most of the time these will be the
+     same as BI_BEGV and BI_ZV, and when they're not, they're not likely
+     to be used.) */
+
+  if (x > bytmax)
+    {
+      Bytind diffmax = x - bytmax;
+      Bytind diffpt = x - BI_BUF_PT (buf);
+      Bytind diffzv = BI_BUF_ZV (buf) - x;
+      /* #### This value could stand some more exploration. */
+      Bytecount heuristic_hack = (bytmax - bytmin) >> 2;
+
+      /* Check if the position is closer to PT or ZV than to the
+	 end of the known region. */
+      
+      if (diffpt < 0)
+	diffpt = -diffpt;
+      if (diffzv < 0)
+	diffzv = -diffzv;
+
+      /* But also implement a heuristic that favors the known region
+	 over BI_PT or BI_ZV.  The reason for this is that switching to
+	 BI_PT or BI_ZV will wipe out the knowledge in the known region,
+	 which might be annoying if the known region is large and
+	 BI_PT or BI_ZV is not that much closer than the end of the known
+	 region. */
+      
+      diffzv += heuristic_hack;
+      diffpt += heuristic_hack;
+      if (diffpt < diffmax && diffpt <= diffzv)
+	{
+	  bufmax = bufmin = BUF_PT (buf);
+	  bytmax = bytmin = BI_BUF_PT (buf);
+	  /* We set the size to 1 even though it doesn't really
+	     matter because the new known region contains no
+	     characters.  We do this because this is the most
+	     likely size of the characters around the new known
+	     region, and we avoid potential yuckiness that is
+	     done when size == 3. */
+	  size = 1;
+	}
+      if (diffzv < diffmax)
+	{
+	  bufmax = bufmin = BUF_ZV (buf);
+	  bytmax = bytmin = BI_BUF_ZV (buf);
+	  size = 1;
+	}
+    }
+#ifdef ERROR_CHECK_BUFPOS
+  else if (x >= bytmin)
+    abort ();
+#endif
+  else
+    {
+      Bytind diffmin = bytmin - x;
+      Bytind diffpt = BI_BUF_PT (buf) - x;
+      Bytind diffbegv = x - BI_BUF_BEGV (buf);
+      /* #### This value could stand some more exploration. */
+      Bytecount heuristic_hack = (bytmax - bytmin) >> 2;
+
+      if (diffpt < 0)
+	diffpt = -diffpt;
+      if (diffbegv < 0)
+	diffbegv = -diffbegv;
+
+      /* But also implement a heuristic that favors the known region --
+	 see above. */
+      
+      diffbegv += heuristic_hack;
+      diffpt += heuristic_hack;
+
+      if (diffpt < diffmin && diffpt <= diffbegv)
+	{
+	  bufmax = bufmin = BUF_PT (buf);
+	  bytmax = bytmin = BI_BUF_PT (buf);
+	  /* We set the size to 1 even though it doesn't really
+	     matter because the new known region contains no
+	     characters.  We do this because this is the most
+	     likely size of the characters around the new known
+	     region, and we avoid potential yuckiness that is
+	     done when size == 3. */
+	  size = 1;
+	}
+      if (diffbegv < diffmin)
+	{
+	  bufmax = bufmin = BUF_BEGV (buf);
+	  bytmax = bytmin = BI_BUF_BEGV (buf);
+	  size = 1;
+	}
+    }
+
+  diff_so_far = x > bytmax ? x - bytmax : bytmin - x;
+  if (diff_so_far > 50)
+    {
+      /* If we have to move more than a certain amount, then look
+	 into our cache. */
+      int minval = INT_MAX;
+      int found = 0;
+      int i;
+
+      add_to_cache = 1;
+      /* I considered keeping the positions ordered.  This would speed
+	 up this loop, but updating the cache would take longer, so
+	 it doesn't seem like it would really matter. */
+      for (i = 0; i < 16; i++)
+	{
+	  int diff = buf->text->mule_bytind_cache[i] - x;
+
+	  if (diff < 0)
+	    diff = -diff;
+	  if (diff < minval)
+	    {
+	      minval = diff;
+	      found = i;
+	    }
+	}
+
+      if (minval < diff_so_far)
+	{
+	  bufmax = bufmin = buf->text->mule_bufpos_cache[found];
+	  bytmax = bytmin = buf->text->mule_bytind_cache[found];
+	  size = 1;
+	}
+    }
+
+  /* It's conceivable that the caching above could lead to X being
+     the same as one of the range edges. */
+  if (x >= bytmax)
+    {
+      Bytind newmax;
+      Bytecount newsize;
+
+      forward_p = 1;
+      while (x > bytmax)
+	{
+	  newmax = bytmax;
+	  
+	  INC_BYTIND (buf, newmax);
+	  newsize = newmax - bytmax;
+	  if (newsize != size)
+	    {
+	      bufmin = bufmax;
+	      bytmin = bytmax;
+	      size = newsize;
+	    }
+	  bytmax = newmax;
+	  bufmax++;
+	}
+      retval = bufmax;
+
+      /* #### Should go past the found location to reduce the number
+	 of times that this function is called */
+    }
+  else /* x <= bytmin */
+    {
+      Bytind newmin;
+      Bytecount newsize;
+
+      forward_p = 0;
+      while (x < bytmin)
+	{
+	  newmin = bytmin;
+	  
+	  DEC_BYTIND (buf, newmin);
+	  newsize = bytmin - newmin;
+	  if (newsize != size)
+	    {
+	      bufmax = bufmin;
+	      bytmax = bytmin;
+	      size = newsize;
+	    }
+	  bytmin = newmin;
+	  bufmin--;
+	}
+      retval = bufmin;
+
+      /* #### Should go past the found location to reduce the number
+	 of times that this function is called
+         */
+    }
+
+  /* If size is three, than we have to max sure that the range we
+     discovered isn't too large, because we use a fixed-length
+     table to divide by 3. */
+
+  if (size == 3)
+    {
+      int gap = bytmax - bytmin;
+      buf->text->mule_three_p = 1;
+      buf->text->mule_shifter = 1;
+
+      if (gap > MAX_BYTIND_GAP_SIZE_3)
+	{
+	  if (forward_p)
+	    {
+	      bytmin = bytmax - MAX_BYTIND_GAP_SIZE_3;
+	      bufmin = bufmax - MAX_BUFPOS_GAP_SIZE_3;
+	    }
+	  else
+	    {
+	      bytmax = bytmin + MAX_BYTIND_GAP_SIZE_3;
+	      bufmax = bufmin + MAX_BUFPOS_GAP_SIZE_3;
+	    }
+	}
+    }
+  else
+    {
+      buf->text->mule_three_p = 0;
+      if (size == 4)
+	buf->text->mule_shifter = 2;
+      else
+	buf->text->mule_shifter = size - 1;
+    }
+
+  buf->text->mule_bufmin = bufmin;
+  buf->text->mule_bufmax = bufmax;
+  buf->text->mule_bytmin = bytmin;
+  buf->text->mule_bytmax = bytmax;
+
+  if (add_to_cache)
+    {
+      int replace_loc;
+
+      /* We throw away a "random" cached value and replace it with
+	 the new value.  It doesn't actually have to be very random
+	 at all, just evenly distributed.
+
+	 #### It would be better to use a least-recently-used algorithm
+	 or something that tries to space things out, but I'm not sure
+	 it's worth it to go to the trouble of maintaining that. */
+      not_very_random_number += 621;
+      replace_loc = not_very_random_number & 15;
+      buf->text->mule_bufpos_cache[replace_loc] = retval;
+      buf->text->mule_bytind_cache[replace_loc] = x;
+    }
+
+  return retval;
+}
+
+/* Text of length BYTELENGTH and CHARLENGTH (in different units)
+   was inserted at bufpos START. */
+
+static void
+buffer_mule_signal_inserted_region (struct buffer *buf, Bufpos start,
+				    Bytecount bytelength,
+				    Charcount charlength)
+{
+  int size = (1 << buf->text->mule_shifter) + !!buf->text->mule_three_p;
+  int i;
+
+  /* Adjust the cache of known positions. */
+  for (i = 0; i < 16; i++)
+    {
+      if (buf->text->mule_bufpos_cache[i] > start)
+	{
+	  buf->text->mule_bufpos_cache[i] += charlength;
+	  buf->text->mule_bytind_cache[i] += bytelength;
+	}
+    }
+
+  if (start >= buf->text->mule_bufmax)
+    return;
+
+  /* The insertion is either before the known region, in which case
+     it shoves it forward; or within the known region, in which case
+     it shoves the end forward. (But it may make the known region
+     inconsistent, so we may have to shorten it.) */
+
+  if (start <= buf->text->mule_bufmin)
+    {
+      buf->text->mule_bufmin += charlength;
+      buf->text->mule_bufmax += charlength;
+      buf->text->mule_bytmin += bytelength;
+      buf->text->mule_bytmax += bytelength;
+    }
+  else
+    {
+      Bufpos end = start + charlength;
+      /* the insertion point divides the known region in two.
+	 Keep the longer half, at least, and expand into the
+	 inserted chunk as much as possible. */
+
+      if (start - buf->text->mule_bufmin > buf->text->mule_bufmax - start)
+	{
+	  Bytind bytestart = (buf->text->mule_bytmin
+			      + size * (start - buf->text->mule_bufmin));
+	  Bytind bytenew;
+
+	  while (start < end)
+	    {
+	      bytenew = bytestart;
+	      INC_BYTIND (buf, bytenew);
+	      if (bytenew - bytestart != size)
+		break;
+	      start++;
+              bytestart = bytenew;
+	    }
+	  if (start != end)
+	    {
+	      buf->text->mule_bufmax = start;
+	      buf->text->mule_bytmax = bytestart;
+	    }
+	  else
+	    {
+	      buf->text->mule_bufmax += charlength;
+	      buf->text->mule_bytmax += bytelength;
+	    }
+	}
+      else
+	{
+	  Bytind byteend = (buf->text->mule_bytmin
+			    + size * (start - buf->text->mule_bufmin)
+			    + bytelength);
+	  Bytind bytenew;
+
+	  buf->text->mule_bufmax += charlength;
+	  buf->text->mule_bytmax += bytelength;
+
+	  while (end > start)
+	    {
+	      bytenew = byteend;
+	      DEC_BYTIND (buf, bytenew);
+	      if (byteend - bytenew != size)
+		break;
+	      end--;
+              byteend = bytenew;
+	    }
+	  if (start != end)
+	    {
+	      buf->text->mule_bufmin = end;
+	      buf->text->mule_bytmin = byteend;
+	    }
+	}
+    }
+}
+
+/* Text from START to END (equivalent in Bytinds: from BI_START to
+   BI_END) was deleted. */
+
+static void
+buffer_mule_signal_deleted_region (struct buffer *buf, Bufpos start,
+				   Bufpos end, Bytind bi_start,
+				   Bytind bi_end)
+{
+  int i;
+
+  /* Adjust the cache of known positions. */
+  for (i = 0; i < 16; i++)
+    {
+      /* After the end; gets shoved backward */
+      if (buf->text->mule_bufpos_cache[i] > end)
+	{
+	  buf->text->mule_bufpos_cache[i] -= end - start;
+	  buf->text->mule_bytind_cache[i] -= bi_end - bi_start;
+	}
+      /* In the range; moves to start of range */
+      else if (buf->text->mule_bufpos_cache[i] > start)
+	{
+	  buf->text->mule_bufpos_cache[i] = start;
+	  buf->text->mule_bytind_cache[i] = bi_start;
+	}
+    }
+
+  /* We don't care about any text after the end of the known region. */
+
+  end = min (end, buf->text->mule_bufmax);
+  bi_end = min (bi_end, buf->text->mule_bytmax);
+  if (start >= end)
+    return;
+
+  /* The end of the known region offsets by the total amount of deletion,
+     since it's all before it. */
+
+  buf->text->mule_bufmax -= end - start;
+  buf->text->mule_bytmax -= bi_end - bi_start;
+
+  /* Now we don't care about any text after the start of the known region. */
+
+  end = min (end, buf->text->mule_bufmin);
+  bi_end = min (bi_end, buf->text->mule_bytmin);
+  if (start >= end)
+    return;
+
+  buf->text->mule_bufmin -= end - start;
+  buf->text->mule_bytmin -= bi_end - bi_start;
+}
+
+#endif /* MULE */
 
 #ifdef ERROR_CHECK_BUFPOS
 
@@ -1219,7 +2058,7 @@ signal_first_change (struct buffer *buf)
 {
   /* This function can GC */
   Lisp_Object buffer;
-  XSETBUFFER (buffer, current_buffer);
+  XSETBUFFER (buffer, buf);
 
   if (!in_first_change)
     {
@@ -1281,7 +2120,6 @@ signal_before_change (struct buffer *buf, Bufpos start, Bufpos end)
       /* Now in any case run the before-change-functions if any.  */
 
       if (!preparing_for_armageddon &&
-	  !EQ (buffer, Vprin1_to_string_buffer) &&
 	  (!NILP (symbol_value_in_buffer (Qbefore_change_functions, buffer)) ||
 	   /* Obsolete, for compatibility */
 	   !NILP (symbol_value_in_buffer (Qbefore_change_function, buffer))))
@@ -1340,7 +2178,6 @@ signal_after_change (struct buffer *buf, Bufpos start, Bufpos orig_end,
 	}
 
       if (!preparing_for_armageddon &&
-	  !EQ (buffer, Vprin1_to_string_buffer) &&
 	  (!NILP (symbol_value_in_buffer (Qafter_change_functions, buffer)) ||
 	   /* Obsolete, for compatibility */
 	   !NILP (symbol_value_in_buffer (Qafter_change_function, buffer))))
@@ -1376,18 +2213,10 @@ prepare_to_modify_buffer (struct buffer *buf, Bufpos start, Bufpos end,
 			  int lockit)
 {
   /* This function can GC */
-  /* dmoore - This function can also kill the buffer buf, the current
-     buffer, and do anything it pleases.  So if you call it, be
-     careful. */
-  Lisp_Object buffer;
-  struct gcpro gcpro1;
-
   barf_if_buffer_read_only (buf, start, end);
 
   /* if this is the first modification, see about locking the buffer's
      file */
-  XSETBUFFER (buffer, buf);
-  GCPRO1 (buffer);
   if (!NILP (buf->filename) && lockit &&
       BUF_SAVE_MODIFF (buf) >= BUF_MODIFF (buf))
     {
@@ -1396,6 +2225,8 @@ prepare_to_modify_buffer (struct buffer *buf, Bufpos start, Bufpos end,
 	/* Make binding buffer-file-name to nil effective.  */
 	lock_file (buf->file_truename);
 #else
+      Lisp_Object buffer;
+      XSETBUFFER (buffer, buf);
       /* At least warn if this file has changed on disk since it was visited.*/
       if (NILP (Fverify_visited_file_modtime (buffer))
 	  && !NILP (Ffile_exists_p (buf->filename)))
@@ -1403,11 +2234,6 @@ prepare_to_modify_buffer (struct buffer *buf, Bufpos start, Bufpos end,
 			 buf->filename);
 #endif /* not CLASH_DETECTION */
     }
-  UNGCPRO;
-
-  /* #### dmoore - is this reasonable in case of buf being killed above? */
-  if (!BUFFER_LIVE_P (buf))
-    return;
 
   signal_before_change (buf, start, end);
 
@@ -1566,6 +2392,10 @@ buffer_insert_string_1 (struct buffer *buf, Bufpos pos,
   SET_BOTH_BUF_ZV (buf, BUF_ZV (buf) + cclen, BI_BUF_ZV (buf) + length);
   SET_BOTH_BUF_Z (buf, BUF_Z (buf) + cclen, BI_BUF_Z (buf) + length);
   SET_GAP_SENTINEL (buf);
+
+#ifdef MULE
+  buffer_mule_signal_inserted_region (buf, pos, length, cclen);
+#endif
 
   process_extents_for_insertion (make_buffer (buf), ind, length);
   /* We know the gap is at IND so the cast is OK. */
@@ -1779,6 +2609,10 @@ buffer_delete_range (struct buffer *buf, Bufpos from, Bufpos to, int flags)
   SET_BI_BUF_GPT (buf, bi_from);
   SET_GAP_SENTINEL (buf);
 
+#ifdef MULE
+  buffer_mule_signal_deleted_region (buf, from, to, bi_from, bi_to);
+#endif
+
 #ifdef ERROR_CHECK_EXTENTS
   sledgehammer_extent_check (bufobj);
 #endif
@@ -1840,6 +2674,9 @@ buffer_replace_char (struct buffer *b, Bufpos pos, Emchar ch,
 	}
       memcpy (BUF_BYTE_ADDRESS (b, pos), newstr, newlen);
       signal_after_change (b, pos, pos + 1, pos + 1);
+
+      /* We do not have to adjust the Mule data; we just replaced a
+	 character with another of the same number of bytes. */
     }
   else
     {
@@ -1950,16 +2787,37 @@ void
 find_charsets_in_bufbyte_string (unsigned char *charsets, CONST Bufbyte *str,
 				 Bytecount len)
 {
+#ifndef MULE
   /* Telescope this. */
   charsets[0] = 1;
+#else
+  CONST Bufbyte *strend = str + len;
+  memset (charsets, 0, NUM_LEADING_BYTES);
+
+  while (str < strend)
+    {
+      charsets[CHAR_LEADING_BYTE (charptr_emchar (str)) - 128] = 1;
+      INC_CHARPTR (str);
+    }
+#endif
 }
 
 void
 find_charsets_in_emchar_string (unsigned char *charsets, CONST Emchar *str,
 				Charcount len)
 {
+#ifndef MULE
   /* Telescope this. */
   charsets[0] = 1;
+#else
+  int i;
+
+  memset (charsets, 0, NUM_LEADING_BYTES);
+  for (i = 0; i < len; i++)
+    {
+      charsets[CHAR_LEADING_BYTE (str[i]) - 128] = 1;
+    }
+#endif
 }
 
 int
@@ -1970,7 +2828,12 @@ bufbyte_string_displayed_columns (CONST Bufbyte *str, Bytecount len)
 
   while (str < end)
     {
+#ifdef MULE
+      Emchar ch = charptr_emchar (str);
+      cols += XCHARSET_COLUMNS (CHAR_CHARSET (ch));
+#else
       cols++;
+#endif
       INC_CHARPTR (str);
     }
 
@@ -2099,6 +2962,22 @@ init_buffer_text (struct buffer *b, int indirect_p)
       SET_BOTH_BUF_Z (b, 1, 1);
       SET_GAP_SENTINEL (b);
       SET_END_SENTINEL (b);
+#ifdef MULE
+      {
+	int i;
+	
+	b->text->mule_bufmin = b->text->mule_bufmax = 1;
+	b->text->mule_bytmin = b->text->mule_bytmax = 1;
+	b->text->mule_shifter = 0;
+	b->text->mule_three_p = 0;
+	
+	for (i = 0; i < 16; i++)
+	  {
+	    b->text->mule_bufpos_cache[i] = 1;
+	    b->text->mule_bytind_cache[i] = 1;
+	  }
+      }
+#endif
 
       BUF_MODIFF (b) = 1;
       BUF_SAVE_MODIFF (b) = 1;

@@ -1,6 +1,6 @@
 ;;; viper-keym.el --- Viper keymaps
 
-;; Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1994, 1995, 1996 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -21,62 +21,9 @@
 
 ;; Code
 
-(provide 'viper-keym)
-
-;; compiler pacifier
-(defvar vip-always)
-(defvar vip-current-state)
-(defvar vip-mode-string)
-(defvar vip-expert-level)
-(defvar vip-ex-style-editing-in-insert)
-(defvar vip-ex-style-motion)
-
-(eval-when-compile
-  (let ((load-path (cons (expand-file-name ".") load-path)))
-    (or (featurep 'viper-util)
-	(load "viper-util.el" nil nil 'nosuffix))
-    ))
-;; end pacifier
-
 (require 'viper-util)
 
-
 ;;; Variables
-
-(defvar vip-toggle-key "\C-z"
-  "The key used to change states from emacs to Vi and back.
-In insert mode, this key also functions as Meta. 
-Must be set in .vip file or prior to loading Viper.
-This setting cannot be changed interactively.")
-
-(defvar vip-ESC-key "\e" 
-  "Key used to ESC. 
-Must be set in .vip file or prior to loading Viper.
-This setting cannot be changed interactively.")
-  
-;;; Emacs keys in other states.  
-
-(defvar vip-want-emacs-keys-in-insert t
-  "*Set to nil if you want complete Vi compatibility in insert mode.
-Complete compatibility with Vi is not recommended for power use of Viper.")
-
-(defvar vip-want-emacs-keys-in-vi t
-  "*Set to nil if you want complete Vi compatibility in Vi mode.
-Full Vi compatibility is not recommended for power use of Viper.")
-
-(defvar vip-no-multiple-ESC  t
-  "*If true, multiple ESC in Vi mode will cause bell to ring.
-This is set to t on a windowing terminal and to 'twice on a dumb
-terminal (unless the user level is 1, 2, or 5). On a dumb terminal, this
-enables cursor keys and is generally more convenient, as terminals usually
-don't have a convenient Meta key.
-Setting vip-no-multiple-ESC to nil will allow as many multiple ESC,
-as is allowed by the major mode in effect.") 
-
-(defvar vip-want-ctl-h-help nil
-  "*If t then C-h is bound to help-command in insert mode, if nil then it is
-bound to delete-backward-char.")
-
 
 ;;; Keymaps
 
@@ -230,8 +177,6 @@ vip-insert-basic-map. Not recommended, except for novice users.")
   (if vip-xemacs-p [(shift tab)] [S-tab]) 'vip-insert-tab)
 (define-key vip-insert-basic-map "\C-v" 'quoted-insert)
 (define-key vip-insert-basic-map "\C-?" 'vip-del-backward-char-in-insert)
-(define-key vip-insert-basic-map "\C-\\" 'vip-alternate-Meta-key)
-(define-key vip-insert-basic-map vip-toggle-key 'vip-escape-to-vi)
 (define-key vip-insert-basic-map "\C-c\M-p"
   'vip-insert-prev-from-insertion-ring)
 (define-key vip-insert-basic-map "\C-c\M-n"
@@ -240,8 +185,8 @@ vip-insert-basic-map. Not recommended, except for novice users.")
 
 ;; Replace keymap
 (define-key vip-replace-map "\C-t" 'vip-forward-indent)
-(define-key vip-replace-map "\C-j" 'vip-replace-state-carriage-return)
-(define-key vip-replace-map "\C-m" 'vip-replace-state-carriage-return)
+(define-key vip-replace-map "\C-j" 'vip-replace-state-exit-cmd)
+(define-key vip-replace-map "\C-m" 'vip-replace-state-exit-cmd)
 (define-key vip-replace-map "\C-?" 'vip-del-backward-char-in-replace)
 
 
@@ -250,15 +195,16 @@ vip-insert-basic-map. Not recommended, except for novice users.")
 
 (define-key vip-vi-basic-map "\C-^" 
   (function (lambda () (interactive) (vip-ex "e#"))))
-(define-key vip-vi-basic-map "\C-b" 'vip-scroll-screen-back)
+(define-key vip-vi-basic-map "\C-b" 'vip-scroll-back)
 (define-key vip-vi-basic-map "\C-d" 'vip-scroll-up)
 (define-key vip-vi-basic-map "\C-e" 'vip-scroll-up-one)
-(define-key vip-vi-basic-map "\C-f" 'vip-scroll-screen)
+(define-key vip-vi-basic-map "\C-f" 'vip-scroll)
 (define-key vip-vi-basic-map "\C-m" 'vip-next-line-at-bol)
 (define-key vip-vi-basic-map "\C-u" 'vip-scroll-down)
 (define-key vip-vi-basic-map "\C-y" 'vip-scroll-down-one)
 (define-key vip-vi-basic-map "\C-s" 'vip-isearch-forward)
 (define-key vip-vi-basic-map "\C-r" 'vip-isearch-backward)
+;(define-key vip-vi-basic-map "\C-\\" 'universal-argument)
 (define-key vip-vi-basic-map "\C-c/" 'vip-toggle-search-style)
 (define-key vip-vi-basic-map "\C-cg" 'vip-info-on-file)
 
@@ -333,7 +279,7 @@ vip-insert-basic-map. Not recommended, except for novice users.")
 (define-key vip-vi-basic-map "\\" 'vip-escape-to-emacs)
 (define-key vip-vi-basic-map "[" 'vip-brac-function)
 (define-key vip-vi-basic-map "]" 'vip-ket-function)
-(define-key vip-vi-basic-map "\C-\\" 'vip-alternate-Meta-key)
+(define-key vip-vi-basic-map "_" 'vip-alternate-ESC)
 (define-key vip-vi-basic-map "^" 'vip-bol-and-skip-white)
 (define-key vip-vi-basic-map "`" 'vip-goto-mark)
 
@@ -375,10 +321,9 @@ vip-insert-basic-map. Not recommended, except for novice users.")
 (define-key vip-vi-basic-map "}" 'vip-forward-paragraph)
 (define-key vip-vi-basic-map "~" 'vip-toggle-case)
 (define-key vip-vi-basic-map "\C-?" 'vip-backward-char)
-(define-key vip-vi-basic-map "_" 'vip-nil)
   
 ;;; Escape from Emacs to Vi for one command
-(global-set-key "\C-c\\" 'vip-escape-to-vi)  ; everywhere
+(global-set-key "\M-\C-z" 'vip-escape-to-vi)  ;; in emacs-state
 
 ;;; This is vip-vi-diehard-map. Used when vip-vi-diehard-minor-mode is on.
 
@@ -398,11 +343,10 @@ vip-insert-basic-map. Not recommended, except for novice users.")
 (define-key vip-vi-diehard-map "\C-v" 'vip-nil)
 (define-key vip-vi-diehard-map "\C-w" 'vip-nil)
 (define-key vip-vi-diehard-map "@" 'vip-nil)
-(define-key vip-vi-diehard-map "_" 'vip-nil)
 (define-key vip-vi-diehard-map "*" 'vip-nil)
 (define-key vip-vi-diehard-map "#" 'vip-nil)
 (define-key vip-vi-diehard-map "\C-_" 'vip-nil)
-(define-key vip-vi-diehard-map "\C-]" 'vip-nil) ; This is actually tags.
+(define-key vip-vi-diehard-map "\C-]" 'vip-nil);; This is actually tags.
 
 
 ;;; Minibuffer keymap
@@ -424,28 +368,8 @@ vip-insert-basic-map. Not recommended, except for novice users.")
 (define-key ex-read-filename-map " " 'vip-complete-filename-or-exit)
 (define-key ex-read-filename-map "!" 'vip-handle-!)
 
-;; Some other maps
-(defvar vip-slash-and-colon-map (make-sparse-keymap)
-  "This map redefines `/' and `:' to behave as in Vi.
-Useful in some modes, such as Gnus, MH, etc.")
-(define-key vip-slash-and-colon-map ":" 'vip-ex)
-(define-key vip-slash-and-colon-map "/" 'vip-search-forward)
 
-(defvar vip-comint-mode-modifier-map (make-sparse-keymap)
-  "This map modifies comint mode.")
-(define-key vip-comint-mode-modifier-map "\C-m" 'comint-send-input)
-(define-key vip-comint-mode-modifier-map "\C-d" 'comint-delchar-or-maybe-eof)
-
-(defvar vip-dired-modifier-map (make-sparse-keymap)
-  "This map modifies Dired behavior.")
-(define-key vip-dired-modifier-map ":" 'vip-ex)
-(define-key vip-dired-modifier-map "/" 'vip-search-forward)
-
-(defvar vip-help-modifier-map (make-sparse-keymap)
-  "This map modifies Help mode behavior.")
-(define-key vip-help-modifier-map "q" (if vip-xemacs-p 'help-mode-quit))
-
-
+	  
 
 ;;; Code
 
@@ -487,8 +411,8 @@ Usage:
 (defun vip-zap-local-keys ()
   "Unconditionally reset Viper vip-*-local-user-map's.
 Rarely useful, but if u made a mistake by switching to a mode that adds
-undesirable local keys, e.g., comint-mode, then this function can restore
-sanity."
+undesirable local keys, e.g., comint-mode, then this function can return
+you to sanity."
   (interactive)
   (setq vip-vi-local-user-map (make-sparse-keymap)
 	vip-need-new-vi-local-map nil
@@ -623,5 +547,7 @@ form ((key . function) (key . function) ... )."
 		       (define-key map (eval (car p)) (cdr p)))) 
 	   alist))
 
+
+(provide 'viper-keym)
 
 ;;;  viper-keym.el ends here

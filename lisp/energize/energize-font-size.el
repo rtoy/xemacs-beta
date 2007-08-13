@@ -14,9 +14,8 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
 (defconst energize-x-modify-font-regexp
   "-\\([^-]+-[^-]+\\)-\\([^-]+\\)-\\([^-]+\\)-\\([^-]+\\)-\\([^-]+\\)-\\([^-]+\\)-\\([^-]+\\)-\\([^-]+\\)-\\([^-]+\\)-\\([^-]+\\)-\\([^-]+\\)-\\([^-]+\\)-\\([^-]+\\)"
@@ -53,7 +52,7 @@
     (and new-font
 	 (condition-case a
 	     (set-face-font face new-font)
-	   (error (message (format "%S" a)) (sit-for 0))))))
+	   (error (message "%S" a) (sit-for 0))))))
 
 (defun energize-set-font-size (size)
   (interactive "sSet new font size to: ")
@@ -92,8 +91,8 @@
   (let ((font-desc (cdr (assoc family energize-font-families-parameters)))
 	(faces (list-faces)))
     (if (null font-desc)
-	(error (format "Unknown font family %s, use one of %s" family
-		       (mapcar 'car energize-font-families-parameters))))
+	(error "Unknown font family %s, use one of %s" family
+	       (mapcar 'car energize-font-families-parameters)))
     (while faces
       (let* ((face (car faces))
 	     (font (face-font face))

@@ -166,7 +166,11 @@ column_at_point (struct buffer *buf, Bufpos init_pos, int cur_col)
 		  - (displayed_glyphs->begin_columns
 		     + displayed_glyphs->end_columns));
 #else /* XEmacs */
+#ifdef MULE
+	  col += XCHARSET_COLUMNS (CHAR_CHARSET (c));
+#else
 	  col ++;
+#endif /* MULE */
 #endif /* XEmacs */
 	}
     }
@@ -400,7 +404,11 @@ Returns the actual column that it moved to.
 		  - (displayed_glyphs->begin_columns
 		     + displayed_glyphs->end_columns));
 #else /* XEmacs */
+#ifdef MULE
+	  col += XCHARSET_COLUMNS (CHAR_CHARSET (c));
+#else
 	  col ++;
+#endif /* MULE */
 #endif /* XEmacs */
 	}
 

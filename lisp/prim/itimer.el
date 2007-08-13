@@ -1,83 +1,67 @@
-;;; Interval timers for GNU Emacs
-;;; Copyright (C) 1988, 1991, 1993, 1997 Kyle E. Jones
+;;; Interval timers for XEmacs
+;;; Copyright (C) 1988, 1991, 1993 Kyle E. Jones
+;;; Modified 5 Feb 91 by Jamie Zawinski <jwz@lucid.com> for Lucid Emacs
+;;; And again, 15 Dec 93.
 ;;;
-;;; This program is free software; you can redistribute it and/or modify
-;;; it under the terms of the GNU General Public License as published by
-;;; the Free Software Foundation; either version 2, or (at your option)
-;;; any later version.
-;;;
-;;; This program is distributed in the hope that it will be useful,
-;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
-;;;
-;;; A copy of the GNU General Public License can be obtained from this
-;;; program's author (send electronic mail to kyle@uunet.uu.net) or from
-;;; the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA
-;;; 02139, USA.
-;;;
-;;; Send bug reports to kyle_jones@wonderworks.com
+;; This file is part of XEmacs.
 
-(provide 'itimer)
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
 
-;; `itimer' feature means Emacs-Lisp programmers get:
-;;    itimerp
-;;    itimer-live-p
-;;    itimer-value
-;;    itimer-restart
-;;    itimer-function
-;;    itimer-uses-arguments
-;;    itimer-function-arguments
-;;    set-itimer-value
-;;    set-itimer-restart
-;;    set-itimer-function
-;;    set-itimer-uses-arguments
-;;    set-itimer-function-arguments
-;;    get-itimer
-;;    start-itimer
-;;    read-itimer
-;;    delete-itimer
-;;    activate-itimer
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
+
+;;; Synched up with: Not in FSF.
+
+;;;
+;;; Send bug reports to kyle@uunet.uu.net.
+
+;; The original v18 version of this file worked by having an external program
+;; wake up once a second to generate an interrupt for emacs; then an emacs
+;; process filter was used to schedule timers. 
+;;
+;; This version works by associating with each timer a "timeout" object,
+;; since the XEmacs/Lucid Emacs event loop has the concept of timers built 
+;; in to it.  There is no single scheduler function; instead, each timer 
+;; re-sets itself as it is invoked.
+
+;; `itimer' feature means Emacs-Lisp programers get:
+;;    itimerp, itimer-value, itimer-restart, itimer-function,
+;;    set-itimer-value, set-itimer-restart, set-itimer-function
+;;    get-itimer, start-itimer, read-itimer, delete-itimer
 ;;
 ;; Interactive users get these commands:
-;;    edit-itimers
-;;    list-itimers
-;;    start-itimer
+;;    edit-itimers, list-itimers, start-itimer
 ;;
 ;; See the doc strings of these functions for more information.
 
-(defvar itimer-version "1.05"
+(defvar itimer-version "1.00"
   "Version number of the itimer package.")
 
 (defvar itimer-list nil
   "List of all active itimers.")
 
-(defvar itimer-process nil
-  "Process that drives all itimers, if a subprocess is being used.")
+;; not needed in XEmacs
+;(defvar itimer-process nil
+;  "Process that drives all itimers.")
 
-(defvar itimer-timer nil
-  "Emacs internal timer that drives the itimer system, if a subprocess
-is not being used to drive the system.")
-
-(defvar itimer-timer-last-wakeup nil
-  "The time the timer driver function last ran.")
-
-(defvar itimer-short-interval (if (featurep 'lisp-float-type) 1e-3 1)
-  "Interval used for scheduling an event a very short time in the future.
-Used internally to make the scheduler wake up early.
-Unit is seconds.")
-
-;; This value is maintained internally; it does not determine
-;; itimer granularity.  Itimer granularity is 1 second if your
-;; Emacs doens't support floats or your system doesn't have a
-;; clock with microsecond granularity.  Otherwise granularity is
-;; to the microsend, although you can't possibly get timers to be
-;; executed with this kind of accuracy in practice.  There will
-;; be delays due to system and Emacs internal activity that delay
-;; dealing with syunchronous events and process output.
-(defvar itimer-next-wakeup itimer-short-interval
-  "Itimer process will wakeup to service running itimers within this
-many seconds.")
+;; This value is maintained internally; it does not determine itimer
+;; granularity.  Itimer granularity is 1 second, plus delays due to
+;; system and Emacs internal activity that delay dealing with process
+;; output.
+;; not needed in XEmacs
+;(defvar itimer-process-next-wakeup 1
+;  "Itimer process will wakeup to service running itimers within this
+;many seconds.")
 
 (defvar itimer-edit-map nil
   "Keymap used when in Itimer Edit mode.")
@@ -101,10 +85,10 @@ many seconds.")
 ;; macros must come first... or byte-compile'd code will throw back its
 ;; head and scream.
 
-(defmacro itimer-decrement (variable)
+(defmacro itimer-decf (variable)
   (list 'setq variable (list '1- variable)))
 
-(defmacro itimer-increment (variable)
+(defmacro itimer-incf (variable)
   (list 'setq variable (list '1+ variable)))
 
 (defmacro itimer-signum (n)
@@ -134,19 +118,15 @@ wrong-type-argument.  This is a macro."
 	      (list t (list 'signal ''wrong-type-argument
 			    (list 'list ''string-or-itimer-p var))))))
 
-(defmacro check-nonnegative-number (var)
-  "If VAR is not bound to a number, signal wrong-type-argument.
-If VAR is not bound to a positive number, signal args-out-of-range.
+(defmacro itimer-check-natnum (var)
+  "If VAR is not bound to a non-negative number, signal wrong-type-argument.
 This is a macro."
   (list 'setq var
-	(list 'if (list 'not (list 'numberp var))
+	(list 'if (list 'natnump var) var
 	      (list 'signal ''wrong-type-argument
-		    (list 'list ''natnump var))
-	      (list 'if (list '< var 0)
-		    (list 'signal ''args-out-of-range (list 'list var))
-		    var))))
+		    (list 'list ''natnump var)))))
 
-(defmacro check-string (var)
+(defmacro itimer-check-string (var)
   "If VAR is not bound to a string, signal wrong-type-argument.
 This is a macro."
   (list 'setq var
@@ -158,14 +138,10 @@ This is a macro."
 
 (defun itimerp (obj)
   "Returns non-nil iff OBJ is an itimer."
-  (and (consp obj) (eq (length obj) 8)))
-
-(defun itimer-live-p (obj)
-  "Returns non-nil iff OBJ is an itimer and is active.
-``Active'' means Emacs will run it when it expires.
-`activate-timer' must be called on a itimer to make it active.
-Itimers started with `start-itimer' are automatically active."
-  (and (itimerp obj) (memq obj itimer-list)))
+  (and (consp obj) (stringp (car obj)) (eq (length obj)
+					   5 ; for XEmacs
+					   ;4 ; original version
+					   )))
 
 (defun itimer-name (itimer)
   "Returns the name of ITIMER."
@@ -189,107 +165,82 @@ This function is called each time ITIMER expires."
   (check-itimer itimer)
   (nth 3 itimer))
 
-(defun itimer-is-idle (itimer)
-  "Returns non-nil if ITIMER is an idle timer.
-Normal timers expire after a set interval.  Idle timers expire
-only after Emacs has been idle for a specific interval.  ``Idle''
-means no command events within the interval."
+;; XEmacs-specific
+(defun itimer-id (itimer)
+  "Returns the timeout-id of ITIMER."
   (check-itimer itimer)
   (nth 4 itimer))
 
-(defun itimer-uses-arguments (itimer)
-  "Returns non-nil if the function of ITIMER will be called with arguments.
-ITIMER's function is called with the arguments each time ITIMER expires.
-The arguments themselves are retrievable with `itimer-function-arguments'."
-  (check-itimer itimer)
-  (nth 5 itimer))
-
-(defun itimer-function-arguments (itimer)
-  "Returns the function arguments of ITIMER as a list.
-ITIMER's function is called with these argument each timer ITIMER expires."
-  (check-itimer itimer)
-  (nth 6 itimer))
-
-(defun itimer-recorded-run-time (itimer)
-  (check-itimer itimer)
-  (nth 7 itimer))
-
-(defun set-itimer-value (itimer value)
+(defun set-itimer-value (itimer value
+				;; XEmacs doesn't need this
+				;; &optional nowakeup
+				)
   "Set the timeout value of ITIMER to be VALUE.
 Itimer will expire is this many seconds.
-If your version of Emacs supports floating point numbers then
-VALUE can be a floating point number.  Otherwise it
-must be an integer.
 Returns VALUE."
+;; Optional third arg NOWAKEUP non-nil means do not wakeup the itimer
+;; process to recompute a correct wakeup time, even if it means this
+;; itimer will expire late.  itimer-process-filter uses this option.
+;; This is not meant for ordinary usage, which is why it is not
+;; mentioned in the doc string.
   (check-itimer itimer)
-  (check-nonnegative-number value)
+  (itimer-check-natnum value)
   (let ((inhibit-quit t))
-    ;; If the itimer is in the active list, and under the new
-    ;; timeout value would expire before we would normally
-    ;; wakeup, wakeup now and recompute a new wakeup time.
-    (or (and (< value itimer-next-wakeup)
-	     (and (itimer-name itimer) (get-itimer (itimer-name itimer)))
-	     (progn (itimer-driver-wakeup)
-		    (setcar (cdr itimer) value)
-		    (itimer-driver-wakeup)
-		    t ))
-	(setcar (cdr itimer) value))
-    value))
 
-;; Same as set-itimer-value but does not wakeup the driver.
-;; Only should be used by the drivers when processing expired timers.
-(defun set-itimer-value-internal (itimer value)
-  (check-itimer itimer)
-  (check-nonnegative-number value)
-  (setcar (cdr itimer) value))
+;    ;; If we're allowed to wakeup the itimer process,
+;    ;; and the itimer process's next wakeup needs to be recomputed,
+;    ;; and the itimer is running, then we wakeup the itimer process.
+;    (or (and (not nowakeup) (< value itimer-process-next-wakeup)
+;	     (get-itimer (itimer-name itimer))
+;	     (progn (itimer-process-wakeup)
+;		    (setcar (cdr itimer) value)
+;		    (itimer-process-wakeup)))
+;	(setcar (cdr itimer) value))
+
+    ;; the XEmacs way:
+    (if (itimer-id itimer)
+	(deactivate-itimer itimer))
+    (setcar (cdr itimer) value)
+    (activate-itimer itimer)
+
+    value))
 
 (defun set-itimer-restart (itimer restart)
   "Set the restart value of ITIMER to be RESTART.
 If RESTART is nil, ITIMER will not restart when it expires.
-If your version of Emacs supports floating point numbers then
-RESTART can be a floating point number.  Otherwise it
-must be an integer.
 Returns RESTART."
   (check-itimer itimer)
-  (if restart (check-nonnegative-number restart))
-  (setcar (cdr (cdr itimer)) restart))
+  (if restart (itimer-check-natnum restart))
+  (and restart (< restart 1) (signal 'args-out-of-range (list restart)))
+;;  (setcar (cdr (cdr itimer)) restart)
+  ;; the XEmacs way
+  (let ((was-active (itimer-id itimer))
+	(inhibit-quit t))
+    (if was-active
+	(deactivate-itimer itimer))
+    (setcar (cdr (cdr itimer)) restart)
+    (if was-active
+	(progn
+	  (setcar (cdr itimer) restart)
+	  (if restart
+	      (activate-itimer itimer)))))
+  restart)
 
 (defun set-itimer-function (itimer function)
   "Set the function of ITIMER to be FUNCTION.
 FUNCTION will be called when itimer expires.
 Returns FUNCTION."
   (check-itimer itimer)
-  (setcar (nthcdr 3 itimer) function))
+  (setcar (cdr (cdr (cdr itimer))) function))
 
-(defun set-itimer-is-idle (itimer flag)
-  "Sets flag that says whether ITIMER is an idle timer.
-If FLAG is non-nil, then ITIMER will eb considered an idle timer.
-Returns FLAG."
+;; XEmacs-specific
+(defun set-itimer-id (itimer id)
   (check-itimer itimer)
-  (setcar (nthcdr 4 itimer) flag))
-
-(defun set-itimer-uses-arguments (itimer flag)
-  "Sets flag that says whether the function of ITIMER is called with arguments.
-If FLAG is non-nil, then the function will be called with one argument,
-otherwise the function will be called with no arguments.
-Returns FLAG."
-  (check-itimer itimer)
-  (setcar (nthcdr 5 itimer) flag))
-
-(defun set-itimer-function-arguments (itimer &optional arguments)
-  "Set the function arguments of ITIMER to be ARGUMENTS.
-The function of ITIMER will be called with ARGUMENTS when itimer expires.
-Returns ARGUMENTS."
-  (check-itimer itimer)
-  (setcar (nthcdr 6 itimer) arguments))
-
-(defun set-itimer-recorded-run-time (itimer time)
-  (check-itimer itimer)
-  (setcar (nthcdr 7 itimer) time))
+  (setcar (cdr (cdr (cdr (cdr itimer)))) id))
 
 (defun get-itimer (name)
   "Return itimer named NAME, or nil if there is none."
-  (check-string name)
+  (itimer-check-string name)
   (assoc name itimer-list))
 
 (defun read-itimer (prompt &optional initial-input)
@@ -302,113 +253,66 @@ Optional second arg INITIAL-INPUT non-nil is inserted into the
 (defun delete-itimer (itimer)
   "Deletes ITIMER.  ITIMER may be an itimer or the name of one."
   (check-itimer-coerce-string itimer)
+  (deactivate-itimer itimer)  ;; for XEmacs
   (setq itimer-list (delq itimer itimer-list)))
 
-(defun start-itimer (name function value &optional restart
-		     is-idle with-args &rest function-arguments)
+;jwz: this is preloaded so don't ;;;###autoload
+(defun start-itimer (name function value &optional restart)
   "Start an itimer.
-Arguments are
-  NAME, FUNCTION, VALUE &optional RESTART, IS-IDLE, WITH-ARGS, &rest FUNCTION-ARGUMENTS.
+Args are NAME, FUNCTION, VALUE &optional RESTART.
 NAME is an identifier for the itimer.  It must be a string.  If an itimer
   already exists with this name, NAME will be modified slightly to until
   it is unique.
-FUNCTION should be a function (or symbol naming one).  It
-  will be called each time the itimer expires with arguments of
-  FUNCTION-ARGUMENTS.  The function can access the itimer that
-  invoked it through the variable `current-itimer'.  If WITH-ARGS
-  is nil then FUNCTION is called with no arguments.  This is for
-  backward compatibility with older versions of the itimer
-  package which always called FUNCTION with no arguments.
+FUNCTION should be a function (or symbol naming one) of no arguments.  It
+  will be called each time the itimer expires.  The function can access
+  itimer that invoked it through the variable `current-itimer'.
 VALUE is the number of seconds until this itimer expires.
-  If your version of Emacs supports floating point numbers then
-  you can VALUE can be a floating point number.  Otherwise it
-  must be an integer.
 Optional fourth arg RESTART non-nil means that this itimer should be
   restarted automatically after its function is called.  Normally an itimer
   is deleted at expiration after its function has returned. 
   If non-nil RESTART should be a number indicating the value at which the
   itimer should be set at restart time.
-Optional fifth arg IS-IDLE specified if this is an idle timer.
-  Normal timers eexpire after a set interval.  Idle timers expire
-  only after Emacs has been idle for specific interval.  ``Idle''
-  means no command events within the interval.
 Returns the newly created itimer."
   (interactive
    (list (completing-read "Start itimer: " itimer-list)
 	 (read (completing-read "Itimer function: " obarray 'fboundp))
 	 (let (value)
-	   (while (or (not (numberp value)) (< value 0))
+	   (while (not (natnump value))
 	     (setq value (read-from-minibuffer "Itimer value: " nil nil t)))
 	   value)
 	 (let ((restart t))
-	   (while (and restart (or (not (numberp restart)) (< restart 0)))
-	     (setq restart (read-from-minibuffer "Itimer restart: "
-						 nil nil t)))
-	   restart)
-	 ;; hard to imagine the user specifying these interactively
-	 nil
-	 nil ))
-  (check-string name)
-  (check-nonnegative-number value)
-  (if restart (check-nonnegative-number restart))
+	   (while (and restart (not (natnump restart)))
+	     (setq restart (read-from-minibuffer "Itimer restart: " nil nil t)))
+	   restart)))
+  (itimer-check-string name)
+  (itimer-check-natnum value)
+  (if restart (itimer-check-natnum restart))
   ;; Make proposed itimer name unique if it's not already.
   (let ((oname name)
 	(num 2))
     (while (get-itimer name)
       (setq name (concat oname "<" num ">"))
-      (itimer-increment num)))
-  (activate-itimer (list name value restart function is-idle
-			 with-args function-arguments (list 0 0 0)))
-  (car itimer-list))
-
-(defun make-itimer ()
-  "Create an unactivated itimer.
-The itimer will not begin running until activated with `activate-itimer'.
-Set the itimer's expire interval with `set-itimer-value'.
-Set the itimer's function interval with `set-itimer-function'.
-Once this is done, the timer can be activated."
-  (list nil 0 nil 'ignore nil nil nil (list 0 0 0)))
-
-(defun activate-itimer (itimer)
-  "Activate ITIMER, which was previously created with `make-itimer'.
-ITIMER will be added to the global list of running itimers,
-its FUNCTION will be called when it expires, and so on."
-  (check-itimer itimer)
-  (if (memq itimer itimer-list)
-      (error "itimer already activated"))
-  (if (not (numberp (itimer-value itimer)))
-      (error "itimer timeout value not a number: %s" (itimer-value itimer)))
-  (if (<= (itimer-value itimer) 0)
-      (error "itimer timeout value not positive: %s" (itimer-value itimer)))
-  ;; If there's no itimer driver/process, start one now.
-  ;; Otherwise wake up the itimer driver so that seconds slept before
-  ;; the new itimer is created won't be counted against it.
-  (if (or itimer-process itimer-timer)
-      (itimer-driver-wakeup)
-    (itimer-driver-start))
-  ;; Roll a unique name for the timer if it doesn't have a name
-  ;; already.
-  (if (not (stringp (car itimer)))
-      (let ((name "itimer-0")
-	    (oname "itimer-")
-	    (num 1))
-	(while (get-itimer name)
-	  (setq name (concat oname "<" num ">"))
-	  (itimer-increment num))
-	(setcar itimer name))
-    ;; signal an error if the timer's name matches an already
-    ;; activated timer.
-    (if (get-itimer (itimer-name itimer))
-	(error "itimer named \"%s\" already existing and activated"
-	       (itimer-name itimer))))
+      (itimer-incf num)))
+;  ;; If there's no itimer process, start one now.
+;  ;; Otherwise wake up the itimer process so that seconds slept before
+;  ;; the new itimer is created won't be counted against it.
+;  (if itimer-process
+;      (itimer-process-wakeup)
+;    (itimer-process-start))
   (let ((inhibit-quit t))
     ;; add the itimer to the global list
-    (setq itimer-list (cons itimer itimer-list))
-    ;; If the itimer process is scheduled to wake up too late for
-    ;; the itimer we wake it up to calculate a correct wakeup
-    ;; value giving consideration to the newly added itimer.
-    (if (< (itimer-value itimer) itimer-next-wakeup)
-	(itimer-driver-wakeup))))
+    (setq itimer-list
+	  (cons (list name value restart function nil) ; extra slot for XEmacs
+		itimer-list))
+;    ;; If the itimer process is scheduled to wake up too late for the itimer
+;    ;; we wake it up to calculate a correct wakeup value giving consideration
+;    ;; to the newly added itimer.
+;    (if (< value itimer-process-next-wakeup)
+;	(itimer-process-wakeup)))
+    ;; for XEmacs
+    (activate-itimer (car itimer-list))
+    )
+  (car itimer-list))
 
 ;; User level functions to list and modify existing itimers.
 ;; Itimer Edit major mode, and the editing commands thereof.
@@ -427,32 +331,19 @@ commands to manipulate itimers; see the documentation for
     (itimer-edit-mode)
     (setq buffer-read-only nil)
     (erase-buffer)
-    (insert
-"Name                  Value   Restart   Function            Idle   Arguments"
-"\n"
-"----                  -----   -------   --------            ----   --------")
+    (insert "Name                  Value     Restart   Function\n"
+	    "----                  -----     -------   --------")
     (if (null itimer-edit-start-marker)
 	(setq itimer-edit-start-marker (point)))
     (while itimers
       (newline 1)
       (prin1 (itimer-name (car itimers)))
       (tab-to-tab-stop)
-      (insert (itimer-truncate-string
-	       (format "%5.5s" (itimer-value (car itimers))) 5))
+      (prin1 (itimer-value (car itimers)))
       (tab-to-tab-stop)
-      (insert (itimer-truncate-string
-	       (format "%5.5s" (itimer-restart (car itimers))) 5))
+      (prin1 (itimer-restart (car itimers)))
       (tab-to-tab-stop)
-      (insert (itimer-truncate-string
-	       (format "%.19s" (itimer-function (car itimers))) 19))
-      (tab-to-tab-stop)
-      (if (itimer-is-idle (car itimers))
-	  (insert "yes")
-	(insert "no"))
-      (tab-to-tab-stop)
-      (if (itimer-uses-arguments (car itimers))
-	  (prin1 (itimer-function-arguments (car itimers)))
-	(prin1 'NONE))
+      (prin1 (itimer-function (car itimers)))
       (setq itimers (cdr itimers)))
     ;; restore point
     (goto-char opoint)
@@ -468,8 +359,8 @@ This major mode provides commands to manipulate itimers; see the documentation
 for `itimer-edit-mode' for more information."
   (interactive)
   ;; since user is editing, make sure displayed data is reasonably up-to-date
-  (if (or itimer-process itimer-timer)
-      (itimer-driver-wakeup))
+;  (if itimer-process
+;      (itimer-process-wakeup))
   (list-itimers)
   (select-window (get-buffer-window "*Itimer List*"))
   (goto-char itimer-edit-start-marker)
@@ -482,7 +373,7 @@ for `itimer-edit-mode' for more information."
 ;; no point in making this interactive.
 (defun itimer-edit-mode ()
   "Major mode for manipulating itimers.
-Attributes of running itimers are changed by moving the cursor to the
+Atrributes of running itimers are changed by moving the cursor to the
 desired field and typing `s' to set that field.  The field will then be
 set to the value read from the minibuffer.
 
@@ -498,12 +389,12 @@ x      start a new itimer
   (setq major-mode 'itimer-edit-mode
 	mode-name "Itimer Edit"
 	truncate-lines t
-	tab-stop-list '(22 32 40 60 67))
+	tab-stop-list '(22 32 42))
   (abbrev-mode 0)
   (auto-fill-mode 0)
-  (buffer-flush-undo (current-buffer))
+  (buffer-disable-undo (current-buffer))
   (use-local-map itimer-edit-map)
-  (set-syntax-table emacs-lisp-mode-syntax-table))
+  (and lisp-mode-syntax-table (set-syntax-table lisp-mode-syntax-table)))
 
 (put 'itimer-edit-mode 'mode-class 'special)
 
@@ -544,41 +435,30 @@ x      start a new itimer
 		    ;; and use this info to determine which field the user
 		    ;; wants to modify.
 		    (beginning-of-line)
-		    (while (and (>= opoint (point)) (< n 6))
+		    (while (and (>= opoint (point)) (< n 4))
 		      (forward-sexp 2)
 		      (backward-sexp)
-		      (itimer-increment n))
+		      (itimer-incf n))
 		    (cond ((eq n 1) (error "Cannot change itimer name."))
 			  ((eq n 2) 'value)
 			  ((eq n 3) 'restart)
-			  ((eq n 4) 'function)
-			  ((eq n 5) 'is-idle)
-			  (t 'function-argument)))))
+			  ((eq n 4) 'function)))))
     (cond ((eq field 'value)
-	   (let ((prompt "Set itimer value: "))
-	     (while (not (natnump field-value))
-	       (setq field-value (read-from-minibuffer prompt nil nil t)))))
+	   ;; XEmacs: rewritten for I18N3 snarfing
+	   (while (not (natnump field-value))
+	     (setq field-value (read-from-minibuffer "Set itimer value: "
+						     nil nil t))))
 	  ((eq field 'restart)
-	   (let ((prompt "Set itimer restart: "))
-	     (while (and field-value (not (natnump field-value)))
-	       (setq field-value (read-from-minibuffer prompt nil nil t)))))
+	   (while (and field-value (not (natnump field-value)))
+	     (setq field-value (read-from-minibuffer "Set itimer restart: "
+						     nil nil t))))
 	  ((eq field 'function)
-	   (let ((prompt "Set itimer function: "))
-	     (while (not (or (and (symbolp field-value) (fboundp field-value))
-			     (and (consp field-value)
-				  (memq (car field-value) '(lambda macro)))))
-	       (setq field-value
-		     (read (completing-read prompt obarray 'fboundp nil))))))
-	  ((eq field 'is-idle)
-	   (setq field-value (not (itimer-is-idle itimer))))
-	  ((eq field 'function-argument)
-	   (let ((prompt "Set itimer function argument: "))
-	     (setq field-value (read-expression prompt))
-	     (cond ((not (listp field-value))
-		    (setq field-value (list field-value))))
-	     (if (null field-value)
-		 (set-itimer-uses-arguments itimer nil)
-	       (set-itimer-uses-arguments itimer t)))))
+	   (while (not (or (and (symbolp field-value) (fboundp field-value))
+			   (and (consp field-value)
+				(memq (car field-value) '(lambda macro)))))
+	     (setq field-value
+		   (read (completing-read "Set itimer function: "
+					  obarray 'fboundp nil))))))
     ;; set the itimer field
     (funcall (intern (concat "set-itimer-" (symbol-name field)))
 	     itimer field-value)
@@ -623,7 +503,7 @@ x      start a new itimer
 	       (progn
 		 (forward-sexp 2)
 		 (backward-sexp)))
-	   (itimer-decrement count)))
+	   (itimer-decf count)))
 	((< (itimer-signum count) 0)
 	 (while (not (zerop count))
 	   (backward-sexp)
@@ -635,7 +515,7 @@ x      start a new itimer
 	       (progn
 		 (goto-char (point-max))
 		 (backward-sexp)))
-	   (itimer-increment count)))))
+	   (itimer-incf count)))))
 
 (defun itimer-edit-previous-field (count)
   (interactive "p")
@@ -648,205 +528,210 @@ x      start a new itimer
 	  ((eq forw-back (point)) t)
 	  (t (backward-sexp)))))
 
-(defun itimer-truncate-string (str len)
-  (if (<= (length str) len)
-      str
-    (substring str 0 len)))
 
 ;; internals of the itimer implementation.
 
-(defun itimer-run-expired-timers (time-elapsed)
-  (let ((itimers (copy-sequence itimer-list))
-	(itimer)
-	(next-wakeup 600)
-	(idle-time)
-	(last-event-time)
-	(recorded-run-time)
-	;; process filters can be hit by stray C-g's from the user,
-	;; so we must protect this stuff appropriately.
-	;; Quit's are allowed from within itimer functions, but we
-	;; catch them and print a message.
-	(inhibit-quit t))
-    (setq next-wakeup 600)
-    (if (and (boundp 'last-input-time) (consp last-input-time))
-	(setq last-event-time (list (car last-input-time)
-				    (cdr last-input-time)
-				    0)
-	      idle-time (itimer-time-difference (current-time)
-						last-event-time))
-      ;; no way to do this under FSF Emacs yet.
-      (setq last-event-time '(0 0 0)
-	    idle-time 0))
-    (while itimers
-      (setq itimer (car itimers))
-      (if (itimer-is-idle itimer)
-	  (setq recorded-run-time (itimer-recorded-run-time itimer))
-	(set-itimer-value-internal itimer (max 0 (- (itimer-value itimer)
-						    time-elapsed))))
-      (if (if (itimer-is-idle itimer)
-	      (or (> (itimer-time-difference recorded-run-time
-					     last-event-time)
-		     0)
-		  (< idle-time (itimer-value itimer)))
-	    (> (itimer-value itimer) 0))
-	  (setq next-wakeup
-		(if (itimer-is-idle itimer)
-		    (if (< idle-time (itimer-value itimer))
-			(min next-wakeup (- (itimer-value itimer) idle-time))
-		      (min next-wakeup (itimer-value itimer)))
-		  (min next-wakeup (itimer-value itimer))))
-	(and (itimer-is-idle itimer)
-	     (set-itimer-recorded-run-time itimer (current-time)))
-	;; itimer has expired, we must call its function.
-	;; protect our local vars from the itimer function.
-	;; allow keyboard quit to occur, but catch and report it.
-	;; provide the variable `current-itimer' in case the function
-	;; is interested.
-	(unwind-protect
-	    (condition-case condition-data
-		(save-match-data
-		  (let* ((current-itimer itimer)
-			 (quit-flag nil)
-			 (inhibit-quit nil)
-			 ;; for FSF Emacs timer.el emulation under XEmacs.
-			 ;; eldoc expect this to be done, apparently.
-			 (this-command nil)
-			 itimer itimers time-elapsed)
-		    (if (itimer-uses-arguments current-itimer)
-			(apply (itimer-function current-itimer)
-			       (itimer-function-arguments current-itimer))
-		      (funcall (itimer-function current-itimer)))))
-	      (error (message "itimer \"%s\" signaled: %s" (itimer-name itimer)
-			      (prin1-to-string condition-data)))
-	      (quit (message "itimer \"%s\" quit" (itimer-name itimer))))
-	  ;; restart the itimer if we should, otherwise delete it.
-	  (if (null (itimer-restart itimer))
-	      (delete-itimer itimer)
-	    (set-itimer-value-internal itimer (itimer-restart itimer))
-	    (setq next-wakeup (min next-wakeup (itimer-value itimer))))))
-      (setq itimers (cdr itimers)))
-    ;; if user is editing itimers, update displayed info
-    (if (eq major-mode 'itimer-edit-mode)
-	(list-itimers))
-    next-wakeup ))
-
 (defun itimer-process-filter (process string)
-  ;; If the itimer process dies and generates output while doing
-  ;; so, we may be called before the process-sentinel.  Sanity
-  ;; check the output just in case...
-  (if (not (string-match "^[0-9]" string))
-      (progn (message "itimer process gave odd output: %s" string)
-	     ;; it may be still alive and waiting for input
-	     (process-send-string itimer-process "3\n"))
-    ;; if there are no active itimers, return quickly.
-    (if itimer-list
-	(let ((wakeup nil))
-	  (unwind-protect
-	      (setq wakeup (itimer-run-expired-timers (string-to-int string)))
-	    (and (null wakeup) (process-send-string process "1\n")))
-	  (setq itimer-next-wakeup wakeup))
-      (setq itimer-next-wakeup 600))
-    ;; tell itimer-process when to wakeup again
-    (process-send-string itimer-process
-			 (concat (int-to-string itimer-next-wakeup)
-				 "\n"))))
+  (error "itimer-process-filter is not used in XEmacs")
+;  ;; If the itimer process dies and generates output while doing
+;  ;; so, we may be called before the process-sentinel.  Sanity
+;  ;; check the output just in case...
+;  (if (not (string-match "^[0-9]" string))
+;      (progn (message "itimer process gave odd output: %s" string)
+;	     ;; it may be still alive and waiting for input
+;	     (process-send-string itimer-process "3\n"))
+;    ;; if there are no active itimers, return quickly.
+;    (if itimer-list
+;	(let ((time-elapsed (string-to-int string))
+;	      (itimers itimer-list)
+;	      (itimer)
+;	      ;; process filters can be hit by stray C-g's from the user,
+;	      ;; so we must protect this stuff appropriately.
+;	      ;; Quit's are allowed from within itimer functions, but we
+;	      ;; catch them.
+;	      (inhibit-quit t))
+;	  (setq itimer-process-next-wakeup 600)
+;	  (while itimers
+;	    (setq itimer (car itimers))
+;	    (set-itimer-value itimer (max 0 (- (itimer-value itimer) time-elapsed)) t)
+;	    (if (> (itimer-value itimer) 0)
+;		(setq itimer-process-next-wakeup
+;		      (min itimer-process-next-wakeup (itimer-value itimer)))
+;	      ;; itimer has expired, we must call its function.
+;	      ;; protect our local vars from the itimer function.
+;	      ;; allow keyboard quit to occur, but catch and report it.
+;	      ;; provide the variable `current-itimer' in case the function
+;	      ;; is interested.
+;	      (condition-case condition-data
+;		  (let* ((current-itimer itimer)
+;			 itimer itimers time-elapsed
+;			 quit-flag inhibit-quit)
+;		    (funcall (itimer-function current-itimer)))
+;		(error (message "itimer \"%s\" signaled: %s" (itimer-name itimer)
+;				(prin1-to-string condition-data)))
+;		(quit (message "itimer \"%s\" quit" (itimer-name itimer))))
+;	      ;; restart the itimer if we should, otherwise delete it.
+;	      (if (null (itimer-restart itimer))
+;		  (delete-itimer itimer)
+;		(set-itimer-value itimer (itimer-restart itimer) t)
+;		(setq itimer-process-next-wakeup
+;		      (min itimer-process-next-wakeup (itimer-value itimer)))))
+;	    (setq itimers (cdr itimers)))
+;	  ;; if user is editing itimers, update displayed info
+;	  (if (eq major-mode 'itimer-edit-mode)
+;	      (list-itimers)))
+;      (setq itimer-process-next-wakeup 600))
+;    ;; tell itimer-process when to wakeup again
+;    (process-send-string itimer-process
+;			 (concat (int-to-string itimer-process-next-wakeup)
+;				 "\n")))
+  )
 
 (defun itimer-process-sentinel (process message)
-  (let ((inhibit-quit t))
-    (if (eq (process-status process) 'stop)
-	(continue-process process)
-      ;; not stopped, so it must have died.
-      ;; cleanup first...
-      (delete-process process)
-      (setq itimer-process nil)
-      ;; now, if there are any active itimers then we need to immediately
-      ;; start another itimer process, otherwise we can wait until the next
-      ;; start-itimer call, which will start one automatically.
-      (if (null itimer-list)
-	  ()
-	;; there may have been an error message in the echo area;
-	;; give the user at least a little time to read it.
-	(sit-for 2)
-	(message "itimer process %s... respawning." (substring message 0 -1))
-	(itimer-process-start)))))
+  (error "itimer-process-sentinel is not used in XEmacs")
+;  (let ((inhibit-quit t))
+;    (if (eq (process-status process) 'stop)
+;	(continue-process process)
+;      ;; not stopped, so it must have died.
+;      ;; cleanup first...
+;      (delete-process process)
+;      (setq itimer-process nil)
+;      ;; now, if there are any active itimers then we need to immediately
+;      ;; start another itimer process, otherwise we can wait until the next
+;      ;; start-itimer call,  which will start one automatically.
+;      (if (null itimer-list)
+;	  ()
+;	;; there may have been an error message in the echo area;
+;	;; give the user at least a little time to read it.
+;	(sit-for 2)
+;	(message "itimer process %s... respawning." (substring message 0 -1))
+;	(itimer-process-start))))
+  )
 
 (defun itimer-process-start ()
-  (let ((inhibit-quit t)
-	(process-connection-type nil))
-    (setq itimer-process (start-process "itimer" nil "itimer"))
-    (process-kill-without-query itimer-process)
-    (set-process-filter itimer-process 'itimer-process-filter)
-    (set-process-sentinel itimer-process 'itimer-process-sentinel)
-    ;; Tell itimer process to wake up quickly, so that a correct
-    ;; wakeup time can be computed.  Zero loses because of
-    ;; underlying itimer implementations that use 0 to mean
-    ;; `disable the itimer'.
-    (setq itimer-next-wakeup itimer-short-interval)
-    (process-send-string itimer-process
-			 (format "%s\n" itimer-next-wakeup))))
+  (error "itimer-process-start is not used in XEmacs")
+;  (let ((inhibit-quit t)
+;	(process-connection-type nil))
+;    (setq itimer-process (start-process "itimer" nil "itimer"))
+;    (process-kill-without-query itimer-process)
+;    (set-process-filter itimer-process 'itimer-process-filter)
+;    (set-process-sentinel itimer-process 'itimer-process-sentinel)
+;    ;; Tell itimer process to wake up quickly, so that a correct wakeup
+;    ;; time can be computed.  Zero instead of one here loses because of
+;    ;; underlying itimer implementations that use 0 to mean `disable the
+;    ;; itimer'.
+;    (setq itimer-process-next-wakeup 1)
+;    (process-send-string itimer-process "1\n"))
+  )
 
 (defun itimer-process-wakeup ()
-  (interrupt-process itimer-process)
-  (accept-process-output))
+  (error "itimer-process-wakeup is not used in XEmacs")
+;  (interrupt-process itimer-process)
+;  (accept-process-output)
+  )
 
-(defun itimer-timer-start ()
+
+;; XEmacs-specific code
+
+(defun activate-itimer (itimer)
   (let ((inhibit-quit t))
-    (setq itimer-next-wakeup itimer-short-interval
-	  itimer-timer-last-wakeup (current-time)
-	  itimer-timer (add-timeout itimer-short-interval
-				    'itimer-timer-driver nil nil))))
+    (set-itimer-id itimer
+		  (add-timeout (itimer-value itimer)
+			       'itimer-callback
+			       itimer
+			       (itimer-restart itimer))))
+  itimer)
 
-(defun itimer-timer-wakeup ()
-  (let ((inhibit-quit t))
-    (cond ((fboundp 'disable-timeout)
-	   (disable-timeout itimer-timer))
-	  ((fboundp 'cancel-timer)
-	   (cancel-timer itimer-timer)))
-    (setq itimer-timer (add-timeout itimer-short-interval
-				    'itimer-timer-driver nil nil))))
+(defun deactivate-itimer (itimer)
+  (let ((inhibit-quit t)
+	(id (itimer-id itimer)))
+    (and id (disable-timeout id))
+    (set-itimer-id itimer nil))
+  itimer)
 
-(defun itimer-time-difference (t1 t2)
-  (let (usecs secs 65536-secs carry)
-    (setq usecs (- (nth 2 t1) (nth 2 t2)))
-    (if (< usecs 0)
-	(setq carry 1
-	      usecs (+ usecs 1000000))
-      (setq carry 0))
-    (setq secs (- (nth 1 t1) (nth 1 t2) carry))
-    (if (< secs 0)
-	 (setq carry 1
-	       secs (+ secs 65536))
-      (setq carry 0))
-    (setq 65536-secs (- (nth 0 t1) (nth 0 t2) carry))
-    ;; loses for interval larger than the maximum signed Lisp integer.
-    ;; can't really be helped.
-    (+ (* 65536-secs 65536)
-       secs
-       (/ usecs (if (featurep 'lisp-float-type) 1e6 1000000)))))
+(defun itimer-callback (current-itimer)
+  (funcall (itimer-function current-itimer)))
 
-(defun itimer-timer-driver (&rest ignored)
-  ;; inhibit quit because if the user quits at an inopportune
-  ;; time, the timer process won't bne launched again and the
-  ;; system stops working.  itimer-run-expired-timers allows
-  ;; individual timer function to be aborted, so the user can
-  ;; escape a feral timer function.
-  (let* ((inhibit-quit t)
-	 (now (current-time))
-	 (elapsed (itimer-time-difference now itimer-timer-last-wakeup))
-	 (sleep nil))
-    (setq itimer-timer-last-wakeup now)
-    (unwind-protect
-	(setq sleep (itimer-run-expired-timers elapsed))
-      (and (null sleep) (add-timeout 1 'itimer-timer-driver nil nil)))
-    (setq itimer-next-wakeup sleep
-	  itimer-timer (add-timeout sleep 'itimer-timer-driver nil nil))))
+
+;;; itimer-driven auto-saves
 
-(defun itimer-driver-start ()
-  (if (fboundp 'add-timeout)
-      (itimer-timer-start)
-    (itimer-process-start)))
+;jwz: this is preloaded so don't ;;;###autoload
+(defvar auto-save-timeout 30
+  "*Number of seconds idle time before auto-save.
+Zero or nil means disable auto-saving due to idleness.
 
-(defun itimer-driver-wakeup ()
-  (if (fboundp 'add-timeout)
-      (itimer-timer-wakeup)
-    (itimer-process-wakeup)))
+The actual amount of idle time between auto-saves is logarithmically related
+to the size of the current buffer.  This variable is the number of seconds
+after which an auto-save will happen when the current buffer is 50k or less;
+the timeout will be 2 1/4 times this in a 200k buffer, 3 3/4 times this in a
+1000k buffer, and 4 1/2 times this in a 2000k buffer.
+
+See also the variable `auto-save-interval', which controls auto-saving based
+on the number of characters typed.")
+
+;jwz: this is preloaded so don't ;;;###autoload
+(defvar auto-gc-threshold (/ gc-cons-threshold 3)
+  "*GC when this many bytes have been consed since the last GC, 
+and the user has been idle for `auto-save-timeout' seconds.")
+
+(defun auto-save-itimer ()
+  "For use as a itimer callback function.
+Auto-saves and garbage-collects based on the size of the current buffer
+and the value of `auto-save-timeout', `auto-gc-threshold', and the current
+keyboard idle-time."
+  (if (or (null auto-save-timeout)
+	  (<= auto-save-timeout 0)
+	  (eq (minibuffer-window) (selected-window)))
+      nil
+    (let ((buf-size (1+ (ash (buffer-size) -8)))
+	  (delay-level 0)
+	  (now (current-time))
+	  delay)
+      (while (> buf-size 64)
+	(setq delay-level (1+ delay-level)
+	      buf-size (- buf-size (ash buf-size -2))))
+      (if (< delay-level 4)
+	  (setq delay-level 4))
+      ;; delay_level is 4 for files under around 50k, 7 at 100k, 9 at 200k,
+      ;; 11 at 300k, and 12 at 500k, 15 at 1 meg, and 17 at 2 meg.
+      (setq delay (/ (* delay-level auto-save-timeout) 4))
+      (let ((idle-time (if (or (not (consp last-input-time))
+			       (/= (car now) (car last-input-time)))
+			   (1+ delay)
+			 (- (car (cdr now)) (cdr last-input-time)))))
+	(and (> idle-time delay)
+	     (do-auto-save))
+	(and (> idle-time auto-save-timeout)
+	     (> (consing-since-gc) auto-gc-threshold)
+	     (garbage-collect)))))
+  ;; Look at the itimer that's currently running; if the user has changed
+  ;; the value of auto-save-timeout, modify this itimer to have the correct
+  ;; restart time.  There will be some latency between when the user changes
+  ;; this variable and when it takes effect, but it will happen eventually.
+  (let ((self (get-itimer "auto-save")))
+    (or self (error "auto-save-itimer can't find itself"))
+    (if (and auto-save-timeout (> auto-save-timeout 4))
+	(or (= (itimer-restart self) (/ auto-save-timeout 4))
+	    (set-itimer-restart self (/ auto-save-timeout 4)))))
+  nil)
+
+(defun itimer-init-auto-gc ()
+  (or noninteractive ; may be being run from after-init-hook in -batch mode.
+      (get-itimer "auto-save")
+      ;; the time here is just the first interval; if the user changes it
+      ;; later, it will adjust.
+      (let ((time (max 2 (/ (or auto-save-timeout 30) 4))))
+	(start-itimer "auto-save" 'auto-save-itimer time time))))
+
+(cond (purify-flag
+       ;; This file is being preloaded into an emacs about to be dumped.
+       ;; So arrange for the auto-save itimer to be started once emacs
+       ;; is launched.
+       (add-hook 'after-init-hook 'itimer-init-auto-gc))
+      (t
+       ;; Otherwise, this file is being loaded into a normal, interactive
+       ;; emacs.  Start the auto-save timer now.
+       (itimer-init-auto-gc)))
+
+
+(provide 'itimer)

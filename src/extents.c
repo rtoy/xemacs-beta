@@ -445,6 +445,7 @@ Lisp_Object Qread_only;
 /* Qhighlight defined in general.c */
 Lisp_Object Qunique;
 Lisp_Object Qduplicable;
+Lisp_Object Qreplicating;
 Lisp_Object Qdetachable;
 Lisp_Object Qpriority;
 Lisp_Object Qmouse_face;
@@ -1578,8 +1579,7 @@ extent_endpoint_bufpos (EXTENT extent, int endp)
    descendants. */
 
 static void
-extent_changed_for_redisplay (EXTENT extent, int descendants_too,
-			      int invisibility_change)
+extent_changed_for_redisplay (EXTENT extent, int descendants_too)
 {
   Lisp_Object object;
   Lisp_Object rest;
@@ -1598,8 +1598,7 @@ extent_changed_for_redisplay (EXTENT extent, int descendants_too,
 	     if there are any circularities here, so we sure as hell better
 	     ensure that there aren't. */
 	  LIST_LOOP (rest, XWEAK_LIST_LIST (children))
-	    extent_changed_for_redisplay (XEXTENT (XCAR (rest)), 1,
-					  invisibility_change);
+	    extent_changed_for_redisplay (XEXTENT (XCAR (rest)), 1);
 	}
     }
 
@@ -1628,8 +1627,6 @@ extent_changed_for_redisplay (EXTENT extent, int descendants_too,
     b = XBUFFER (object);
     BUF_FACECHANGE (b)++;
     MARK_EXTENTS_CHANGED;
-    if (invisibility_change)
-      MARK_CLIP_CHANGED;
     buffer_extent_signal_changed_region (b,
 					 extent_endpoint_bufpos (extent, 0),
 					 extent_endpoint_bufpos (extent, 1));
@@ -1642,16 +1639,14 @@ extent_changed_for_redisplay (EXTENT extent, int descendants_too,
    the extent has any displayable attributes. */
 
 static void
-extent_maybe_changed_for_redisplay (EXTENT extent, int descendants_too,
-				    int invisibility_change)
+extent_maybe_changed_for_redisplay (EXTENT extent, int descendants_too)
 {
   /* Retrieve the ancestor for efficiency */
   EXTENT anc = extent_ancestor (extent);
   if (!NILP (extent_face (anc)) || !NILP (extent_begin_glyph (anc)) ||
       !NILP (extent_end_glyph (anc)) || !NILP (extent_mouse_face (anc)) ||
-      !NILP (extent_invisible (anc)) || invisibility_change)
-    extent_changed_for_redisplay (extent, descendants_too,
-				  invisibility_change);
+      !NILP (extent_invisible (anc)))
+    extent_changed_for_redisplay (extent, descendants_too);
 }
 
 static EXTENT
@@ -1799,8 +1794,7 @@ extent_attach (EXTENT extent)
   extent_list_insert (el, extent);
   soe_insert (extent_object (extent), extent);
   /* only this extent changed */
-  extent_maybe_changed_for_redisplay (extent, 0,
-				      !NILP (extent_invisible (extent)));
+  extent_maybe_changed_for_redisplay (extent, 0);
 }
 
 static void
@@ -1813,8 +1807,7 @@ extent_detach (EXTENT extent)
   el = extent_extent_list (extent);
 
   /* call this before messing with the extent. */
-  extent_maybe_changed_for_redisplay (extent, 0,
-				      !NILP (extent_invisible (extent)));
+  extent_maybe_changed_for_redisplay (extent, 0);
   extent_list_delete (el, extent);
   soe_delete (extent_object (extent), extent);
   set_extent_start (extent, -1);
@@ -1975,10 +1968,8 @@ map_extents_bytind (Bytind from, Bytind to,
       assert (!extent_detached_p (after));
     }
 
-  el = buffer_or_string_extent_list (obj);
-  if (!el || !extent_list_num_els(el))
+  if (!buffer_or_string_extent_list (obj))
     return;
-  el = 0;
 
   st = buffer_or_string_bytind_to_memind (obj, from);
   en = buffer_or_string_bytind_to_memind (obj, to);
@@ -2324,9 +2315,8 @@ adjust_extents (Lisp_Object obj, Memind from, Memind to, int amount)
 #endif
   el = buffer_or_string_extent_list (obj);
 
-  if (!el || !extent_list_num_els(el))
+  if (!el)
     return;
-
   /* IMPORTANT! Compute the starting positions of the extents to
      modify BEFORE doing any modification!  Otherwise the starting
      position for the second time through the loop might get
@@ -2526,7 +2516,7 @@ extent_find_end_of_run (Lisp_Object obj, Bytind pos, int outside_accessible)
     buffer_or_string_absolute_end_byte (obj) :
       buffer_or_string_accessible_end_byte (obj);
 
-  if (!bel || !extent_list_num_els(bel))
+  if (!bel)
     return limit;
 
   sel = buffer_or_string_stack_of_extents_force (obj)->extents;
@@ -2566,7 +2556,7 @@ extent_find_beginning_of_run (Lisp_Object obj, Bytind pos,
     buffer_or_string_absolute_begin_byte (obj) :
       buffer_or_string_accessible_begin_byte (obj);
 
-  if (!bel || !extent_list_num_els(bel))
+  if (!bel)
     return limit;
 
   sel = buffer_or_string_stack_of_extents_force (obj)->extents;
@@ -2966,11 +2956,12 @@ print_extent_1 (char *buf, Lisp_Object extent_obj)
   if (!NILP (extent_read_only (anc))) *bp++ = '%';
   if (!NILP (extent_mouse_face (anc))) *bp++ = 'H';
   if (extent_unique_p (anc)) *bp++ = 'U';
+  else if (extent_replicating_p (anc)) *bp++ = 'R';
   else if (extent_duplicable_p (anc)) *bp++ = 'D';
   if (!NILP (extent_invisible (anc))) *bp++ = 'I';
 
   if (!NILP (extent_read_only (anc)) || !NILP (extent_mouse_face (anc)) ||
-      extent_unique_p (anc) ||
+      extent_unique_p (anc) || extent_replicating_p (anc) ||
       extent_duplicable_p (anc) || !NILP (extent_invisible (anc)))
     *bp++ = ' ';
 
@@ -3519,15 +3510,7 @@ See `extent-parent'.
       e->flags.has_parent = 1;
     }
   /* changing the parent also changes the properties of all children. */
-  {
-    int old_invis = (!NILP (cur_parent) &&
-		     !NILP (extent_invisible (XEXTENT (cur_parent))));
-    int new_invis = (!NILP (parent) &&
-		     !NILP (extent_invisible (XEXTENT (parent))));
-
-    extent_maybe_changed_for_redisplay (e, 1, new_invis != old_invis);
-  }
-
+  extent_maybe_changed_for_redisplay (e, 1);
   return Qnil;
 }
 
@@ -4020,7 +4003,7 @@ If optional arg PROPERTY is non-nil, only extents with that property set
 on them will be visited.  If optional arg VALUE is non-nil, only extents
 whose value for that property is `eq' to VALUE will be visited.
 */
-       (function, object, from, to, maparg, flags, property, value))
+  (function, object, from, to, maparg, flags, property, value))
 {
   /* This function can GC */
   struct slow_map_extents_arg closure;
@@ -4379,7 +4362,7 @@ Note that in all cases, the start-openness and end-openness of the extents
 considered is ignored.  If you want to pay attention to those properties,
 you should use `map-extents', which gives you more control.
 */
-       (pos, object, property, before, at_flag))
+     (pos, object, property, before, at_flag))
 {
   Bytind position;
   EXTENT before_extent;
@@ -4428,7 +4411,6 @@ verify_extent_mapper (EXTENT extent, void *arg)
   if (CONSP (closure->iro) && !NILP (Fmemq (prop, closure->iro)))
     return 0;
 
-#if 0 /* Nobody seems to care for this any more -sb */
   /* Allow deletion if the extent is completely contained in
      the region being deleted.
      This is important for supporting tokens which are internally
@@ -4440,7 +4422,6 @@ verify_extent_mapper (EXTENT extent, void *arg)
       extent_start (extent) >= closure->start &&
       extent_end (extent) <= closure->end)
     return 0;
-#endif
 
   while (1)
     Fsignal (Qbuffer_read_only, (list1 (closure->object)));
@@ -4626,7 +4607,7 @@ set_extent_invisible (EXTENT extent, Lisp_Object value)
   if (!EQ (extent_invisible (extent), value))
     {
       set_extent_invisible_1 (extent, value);
-      extent_changed_for_redisplay (extent, 1, 1);
+      extent_changed_for_redisplay (extent, 1);
     }
 }
 
@@ -4783,16 +4764,18 @@ list.
 */
        (extent, face))
 {
-  EXTENT e = decode_extent(extent, 0);
+  EXTENT e;
   Lisp_Object orig_face = face;
 
+  CHECK_EXTENT (extent);
+  e = XEXTENT (extent);
   /* retrieve the ancestor for efficiency and proper redisplay noting. */
   e = extent_ancestor (e);
 
   face = memoize_extent_face_internal (face);
 
   extent_face (e) = face;
-  extent_changed_for_redisplay (e, 1, 0);
+  extent_changed_for_redisplay (e, 1);
 
   return orig_face;
 }
@@ -4832,7 +4815,7 @@ list.
   face = memoize_extent_face_internal (face);
 
   set_extent_mouse_face (e, face);
-  extent_changed_for_redisplay (e, 1, 0);
+  extent_changed_for_redisplay (e, 1);
 
   return orig_face;
 }
@@ -4854,7 +4837,7 @@ set_extent_glyph (EXTENT extent, Lisp_Object glyph, int endp,
       extent_end_glyph_layout (extent) = layout;
     }
 
-  extent_changed_for_redisplay (extent, 1, 0);
+  extent_changed_for_redisplay (extent, 1);
 }
 
 static Lisp_Object
@@ -4956,7 +4939,7 @@ Access this using the `extent-begin-glyph-layout' function.
   EXTENT e = decode_extent (extent, 0);
   e = extent_ancestor (e);
   extent_begin_glyph_layout (e) = symbol_to_glyph_layout (layout);
-  extent_maybe_changed_for_redisplay (e, 1, 0);
+  extent_maybe_changed_for_redisplay (e, 1);
   return layout;
 }
 
@@ -4969,7 +4952,7 @@ Access this using the `extent-end-glyph-layout' function.
   EXTENT e = decode_extent (extent, 0);
   e = extent_ancestor (e);
   extent_end_glyph_layout (e) = symbol_to_glyph_layout (layout);
-  extent_maybe_changed_for_redisplay (e, 1, 0);
+  extent_maybe_changed_for_redisplay (e, 1);
   return layout;
 }
 
@@ -5008,7 +4991,7 @@ Extents are created with priority 0; priorities may be negative.
   CHECK_INT (pri);
   e = extent_ancestor (e);
   set_extent_priority (e, XINT (pri));
-  extent_maybe_changed_for_redisplay (e, 1, 0);
+  extent_maybe_changed_for_redisplay (e, 1);
   return pri;
 }
 
@@ -5092,13 +5075,26 @@ The following symbols have predefined meanings:
                     string into a buffer, the extents are copied back
                     into the buffer.
                     
- unique             Meaningful only in conjunction with `duplicable'.
-                    When this is set, there may be only one instance
-                    of this extent attached at a time: if it is copied
-                    to the kill ring and then yanked, the extent is
-                    not copied.  If, however, it is killed (removed
-                    from the buffer) and then yanked, it will be
-                    re-attached at the new position.
+ replicating        Meaningful only in conjunction with `duplicable'.
+                    If this flag is set, extents that are copied from
+                    buffers into strings are made children of the
+                    original extent.  When the string is pasted back
+                    into a buffer, the same extent (i.e. the `eq'
+                    predicate applies) that was originally in the
+                    buffer will be used if possible -- i.e. if the
+                    extent is detached or the paste location abuts or
+                    overlaps the extent.  This behavior is compatible
+                    with the old "extent replica" behavior and was
+                    apparently required by Energize.
+                    
+ unique             Meaningful only in conjunction with `duplicable'
+                    and `replicating'.  When this is set, there may be
+                    only one instance of this extent attached at a
+                    time: if it is copied to the kill ring and then
+                    yanked, the extent is not copied.  If, however, it
+                    is killed (removed from the buffer) and then
+                    yanked, it will be re-attached at the new
+                    position.
                     
  invisible          If the value is non-nil, text under this extent
                     may be treated as not present for the purpose of
@@ -5154,7 +5150,7 @@ The following symbols have predefined meanings:
                     `inside-margin', or `outside-margin') of the extent's
                     begin glyph.
 
- end-glyph-layout The layout policy of the extent's end glyph.
+ end-glyph-layout   The layout policy of the extent's end glyph.
 */
        (extent, property, value))
 {
@@ -5168,6 +5164,8 @@ The following symbols have predefined meanings:
     extent_unique_p (e) = !NILP (value);
   else if (EQ (property, Qduplicable))
     extent_duplicable_p (e) = !NILP (value);
+  else if (EQ (property, Qreplicating))
+    extent_replicating_p (e) = !NILP (value);
   else if (EQ (property, Qinvisible))
     set_extent_invisible (e, value);
   else if (EQ (property, Qdetachable))
@@ -5254,6 +5252,7 @@ See `set-extent-property' for the built-in property names.
   else if (EQ (property, Qend_open))	 RETURN_FLAG (end_open);
   else if (EQ (property, Qunique))	 RETURN_FLAG (unique);
   else if (EQ (property, Qduplicable))	 RETURN_FLAG (duplicable);
+  else if (EQ (property, Qreplicating))	 RETURN_FLAG (replicating);
   else if (EQ (property, Qdetachable))	 RETURN_FLAG (detachable);
 #undef RETURN_FLAG
   /* Support (but don't document...) the obvious antonyms. */
@@ -5356,6 +5355,7 @@ Do not modify this list; use `set-extent-property' instead.
   result = Fcons (sym, Fcons (Qt, result))
   CONS_FLAG (end_open, Qend_open);
   CONS_FLAG (start_open, Qstart_open);
+  CONS_FLAG (replicating, Qreplicating);
   CONS_FLAG (detachable, Qdetachable);
   CONS_FLAG (duplicable, Qduplicable);
   CONS_FLAG (unique, Qunique);
@@ -5388,14 +5388,14 @@ do_highlight (Lisp_Object extent_obj, int highlight_p)
     {
       /* do not recurse on descendants.  Only one extent is highlighted
 	 at a time. */
-      extent_changed_for_redisplay (XEXTENT (Vlast_highlighted_extent), 0, 0);
+      extent_changed_for_redisplay (XEXTENT (Vlast_highlighted_extent), 0);
     }
   Vlast_highlighted_extent = Qnil;
   if (!NILP (extent_obj)
       && BUFFERP (extent_object (XEXTENT (extent_obj)))
       && highlight_p)
     {
-      extent_changed_for_redisplay (XEXTENT (extent_obj), 0, 0);
+      extent_changed_for_redisplay (XEXTENT (extent_obj), 0);
       Vlast_highlighted_extent = extent_obj;
     }
 }
@@ -5615,6 +5615,14 @@ add_string_extents_mapper (EXTENT extent, void *arg)
 				     end + closure->from))
 	return 0;
       e = copy_extent (extent, start, end, closure->string);
+      if (extent_replicating_p (extent))
+	{
+	  Lisp_Object e_obj = Qnil, extent_obj = Qnil;
+
+	  XSETEXTENT (e_obj, e);
+	  XSETEXTENT (extent_obj, extent);
+	  Fset_extent_parent (e_obj, extent_obj);
+	}
     }
 
   return 0;
@@ -5682,12 +5690,62 @@ splice_in_string_extents_mapper (EXTENT extent, void *arg)
   if (!extent_duplicable_p (extent))
     return 0;
 
-  if (!inside_undo &&
-      !run_extent_paste_function (extent, new_start, new_end,
-				  closure->buffer))
-    return 0;
-  copy_extent (extent, new_start, new_end, closure->buffer);
+  if (!extent_replicating_p (extent))
+    {
+      if (!inside_undo &&
+	  !run_extent_paste_function (extent, new_start, new_end,
+				      closure->buffer))
+	return 0;
+      copy_extent (extent, new_start, new_end, closure->buffer);
+    }
+  else
+    {
+      Bytind parstart = 0;
+      Bytind parend = 0;
+      Lisp_Object parent_obj = extent_parent (extent);
+      EXTENT parent;
 
+      if (!EXTENTP (parent_obj))
+	return 0;
+      parent = XEXTENT (parent_obj);
+      if (!EXTENT_LIVE_P (parent))
+	return 0;
+
+      if (!extent_detached_p (parent))
+	{
+	  parstart = extent_endpoint_bytind (parent, 0);
+	  parend = extent_endpoint_bytind (parent, 1);
+	}
+
+/* #### remove this crap */
+#ifdef ENERGIZE
+      /* Energize extents like toplevel-forms can only be pasted 
+	 in the buffer they come from.  This should be parametrized
+	 in the generic extent objects.  Right now just silently
+	 skip the extents if it's not from the same buffer.
+	 */
+      if (!EQ (extent_object (parent), closure->buffer)
+	  && energize_extent_data (parent))
+	return 0;
+#endif
+	  
+      /* If this is a `unique' extent, and it is currently attached
+	 somewhere other than here (non-overlapping), then don't copy
+	 it (that's what `unique' means).  If however it is detached,
+	 or if we are inserting inside/adjacent to the original
+	 extent, then insert_extent() will simply reattach it, which
+	 is what we want.
+	 */
+      if (extent_unique_p (parent)
+	  && !extent_detached_p (parent)
+	  && (!EQ (extent_object (parent), closure->buffer)
+	      || parend > new_end
+	      || parstart < new_start))
+	return 0;
+  
+      insert_extent (parent, new_start, new_end,
+		     closure->buffer, !inside_undo);
+    }
   return 0;
 }
 
@@ -5740,6 +5798,13 @@ copy_string_extents_1_mapper (EXTENT extent, void *arg)
   struct copy_string_extents_1_arg *closure = 
     (struct copy_string_extents_1_arg *) arg;
 
+  if (extent_replicating_p (extent) &&
+      EQ (extent_parent (extent), closure->parent_in_question))
+    {
+      closure->found_extent = extent;
+      return 1; /* stop mapping */
+    }
+
   return 0;
 }
 
@@ -5763,6 +5828,35 @@ copy_string_extents_mapper (EXTENT extent, void *arg)
   new_start = old_start + closure->new_pos - closure->old_pos;
   new_end = old_end + closure->new_pos - closure->old_pos;
 
+  if (extent_replicating_p (extent))
+    {
+      struct copy_string_extents_1_arg closure_1;
+
+      closure_1.parent_in_question = extent_parent (extent);
+      closure_1.found_extent = 0;
+
+      /* When adding a replicating extent, we need to make sure
+	 that there isn't an existing replicating extent referring
+	 to the same parent extent that abuts or overlaps.  If so,
+	 we merge with that extent rather than adding anew. */
+      map_extents_bytind (closure->old_pos, closure->old_pos + closure->length,
+			  copy_string_extents_1_mapper,
+			  (void *) &closure, closure->new_string, 0,
+			  /* get all extents that abut the region */
+			  ME_END_CLOSED | ME_ALL_EXTENTS_CLOSED);
+      if (closure_1.found_extent)
+	{
+	  Bytecount exstart =
+	    extent_endpoint_bytind (closure_1.found_extent, 0);
+	  Bytecount exend =
+	    extent_endpoint_bytind (closure_1.found_extent, 1);
+	  exstart = min (exstart, new_start);
+	  exend = max (exend, new_end);
+	  set_extent_endpoints (closure_1.found_extent, exstart, exend, Qnil);
+	  return 0;
+	}
+    }
+      
   copy_extent (extent,
 	       old_start + closure->new_pos - closure->old_pos,
 	       old_end + closure->new_pos - closure->old_pos,
@@ -6184,9 +6278,6 @@ put_text_prop (Bytind start, Bytind end, Lisp_Object object,
 		      ME_ALL_EXTENTS_CLOSED | ME_END_CLOSED |
 		      /* it might QUIT or error if the user has
 			 fucked with the extent plist. */
-		      /* #### dmoore - I think this should include
-			 ME_MIGHT_MOVE_SOE, since the callback function
-			 might recurse back into map_extents_bytind. */
 		      ME_MIGHT_THROW |
 		      ME_MIGHT_MODIFY_EXTENTS);
 
@@ -6374,15 +6465,9 @@ Used as the `paste-function' property of `text-prop' extents.
   if (NILP (prop))
     signal_simple_error ("internal error: no text-prop", extent);
   val = Fextent_property (extent, prop, Qnil);
-#if 0
-  /* removed by bill perry, 2/9/97
-  ** This little bit of code would not allow you to have a text property
-  ** with a value of Qnil.  This is bad bad bad.
-  */
   if (NILP (val))
     signal_simple_error_2 ("internal error: no text-prop",
 			   extent, prop);
-#endif
   Fput_text_property (from, to, prop, val, Qnil);
   return Qnil; /* important! */
 }
@@ -6574,6 +6659,7 @@ syms_of_extents (void)
   /* defsymbol (&Qhighlight, "highlight"); in faces.c */
   defsymbol (&Qunique, "unique");
   defsymbol (&Qduplicable, "duplicable");
+  defsymbol (&Qreplicating, "replicating");
   defsymbol (&Qdetachable, "detachable");
   defsymbol (&Qpriority, "priority");
   defsymbol (&Qmouse_face, "mouse-face");

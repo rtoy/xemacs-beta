@@ -1,0 +1,45 @@
+@c $Id: tm-view-p=en.texi,v 1.1.1.1 1996/12/18 22:43:52 steve Exp $
+
+@node preview-buffer,  , article-buffer, Mechanism of tm-view
+@comment  node-name,  next,  previous,  up
+@subsection preview-buffer
+
+@defvar mime::preview/mother-buffer
+
+Mother buffer of this preview-buffer.
+@end defvar
+
+
+@defvar mime::preview/content-list
+
+List of preview-content-info to represent structure of this
+preview-buffer.
+@end defvar
+
+
+@defvar mime::preview/article-buffer
+
+article-buffer corresponded by this preview-buffer.
+@end defvar
+
+
+@defvar mime::preview/original-major-mode
+
+major-mode of original buffer.
+@end defvar
+
+
+@defvar mime::preview/original-window-configuration
+
+window-configuration just before made this preview-buffer.
+@end defvar
+
+
+@defun mime-preview/point-pcinfo point &optional pcl
+
+In a region of preview-buffer managed by preview-content-info
+@var{pcl}, it returns preview-content-info corresponded by
+@var{point}.
+
+Default value of @var{cinfo} is @code{mime::preview/content-list}.
+@end defun

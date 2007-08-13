@@ -1,7 +1,7 @@
 
 Emacs Tooltalk API Summary
 
-The Emacs Lisp interface to Tooltalk is similar, at least in spirit,
+The Emacs Lisp interface to Tooltalk is similar, atleast in spirit,
 to the standard C Tootalk API.  Only the message and pattern parts
 of the API are supported at present, more of the API could be added
 if needed.  The Lisp interface departs from the C API in a few ways:
@@ -195,7 +195,7 @@ define any semantics for type, so only the participants in the
 protocol you're using need to agree what types mean (if anything).
 Conventionally "string" is used for strings and "int" for 32 bit integers.
 Arguments can initialized by providing a value or with
-set-tooltalk-message-attribute, the latter is necessary if you
+set-tooltalk-message-attribute, the latter is neccessary if you
 want to initialize the argument with a string that can contain
 embedded nulls (use 'arg_bval).
 
@@ -210,7 +210,7 @@ preferred to create and initialize a message.
 
 (destroy-tooltalk-message msg)
 
-Apply tt_message_destroy to the message.  It's not necessary
+Apply tt_message_destroy to the message.  It's not neccessary
 to destroy messages after they've been proccessed by a message or 
 pattern callback, the Lisp/Tooltalk callback machinery does this
 for you.

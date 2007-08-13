@@ -75,7 +75,7 @@ static int waiting_for_user_input_p;
 
 static int interrupts_slowed_down;
 
-#define SLOWED_DOWN_INTERRUPTS_SECS 15
+#define SLOWED_DOWN_INTERRUPTS_SECS 5
 #define NORMAL_QUIT_CHECK_TIMEOUT_MSECS 250
 #define NORMAL_SIGCHLD_CHECK_TIMEOUT_MSECS 250
 
@@ -376,9 +376,7 @@ int stop_character; /* #### not currently implemented */
 static SIGTYPE
 interrupt_signal (int sig)
 {
-  /* This function can call lisp */
-  /* #### we should NOT be calling lisp from a signal handler, boys
-     and girls */
+  /* This function can GC (?!) */
   /* Must preserve main program's value of errno.  */
   int old_errno = errno;
 

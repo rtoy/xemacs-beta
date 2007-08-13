@@ -63,7 +63,7 @@
 ;;; Modified by James Larus, BBN, July 1984 and UCB, 1984 & 1985.
 ;;; Rewritten for GNU Emacs, James Larus 1985.  larus@ginger.berkeley.edu
 ;;; Modified by Stephen Gildea 1988.  gildea@lcs.mit.edu
-(defconst mh-e-RCS-id "$Id: mh-e.el,v 1.1.1.1 1996/12/18 03:34:37 steve Exp $")
+(defconst mh-e-RCS-id "$Id: mh-e.el,v 1.1.1.1 1996/12/18 22:43:21 steve Exp $")
 
 ;;; Code:
 

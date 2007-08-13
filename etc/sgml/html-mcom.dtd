@@ -3,7 +3,7 @@
         Document Type Definition for the HyperText Markup Language (HTML DTD)
 	with Netscape Communications Corp Extensions
 
-	$Id: html-mcom.dtd,v 1.1.1.1 1996/12/18 03:43:03 steve Exp $
+	$Id: html-mcom.dtd,v 1.1.1.1 1996/12/18 22:42:23 steve Exp $
 
 	Author: Daniel W. Connolly <connolly@w3.org>
 	See Also: html.decl, ISOlat1.sgml

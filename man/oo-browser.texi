@@ -1,19 +1,14 @@
-\input psfig.sty
+\input psfig
 \input texinfo  @c -*-texinfo-*-
 
 @c
 @c SUMMARY:      The OO-Browser User Manual for V2
-@c USAGE:        Hardcopy man from TeX; Info man from `texinfo-format-buffer'.
+@c USAGE:        Hardcopy man from TeX; Info man from 'texinfo-format-buffer'.
 @c
 @c AUTHOR:       Bob Weiner
-@c
-@c ORG:          InfoDock Associates.  We sell corporate support and
-@c               development contracts for InfoDock, Emacs and XEmacs.
-@c               E-mail: <info@infodock.com>  Web: http://www.infodock.com
-@c               Tel: +1 408-243-3300
-@c
+@c ORG:          Motorola Inc., PPG
 @c ORIG-DATE:    10-Apr-90
-@c LAST-MOD:     21-Feb-97 at 18:36:33 by Bob Weiner
+@c LAST-MOD:      2-May-96 at 23:36:02 by Harri Pasanen
 @c
 @c DESCRIPTION:  
 @c DESCRIP-END.
@@ -35,38 +30,19 @@
 @center The Multi-language Object-Oriented Code Browser
 @sp 5
 @center Bob Weiner
-@center InfoDock Associates
-@sp 1
-@center E-mail: <oo-browser@@infodock.com>  (This is a mailing list.)
+@center Motorola Inc.
+@center E-mail: <oo-browser@@hub.ucsb.edu>  (This is a mailing list.)
 @sp 2
-@center Edition 2.10
+@center Edition 2.9.12
 @sp 2
-@center February 19, 1997
+@center May 1996
 
 @page
 @vskip 0pt plus 1filll
-Copyright @copyright{} 1989-1997  Free Software Foundation, Inc.
+Copyright @copyright{} 1989-1995  Free Software Foundation, Inc.
 
 All trademarks referenced herein are trademarks of their respective
 holders.
-
-InfoDock Associates, the developer of the OO-Browser and InfoDock (an
-industrial quality turn-key version of XEmacs), donates its work on
-the OO-Browser to the Free Software Foundation and makes it freely
-available for worldwide distribution.
-
-InfoDock Associates is a commercial firm dedicated to radical productivity
-improvement in technical environments, whether in software development or
-other knowledge intensive disciplines.  Our initial offerings include high
-quality commercial support, training, books and custom package development
-for InfoDock, XEmacs or GNU Emacs on a variety of platforms.
-
-@example
-  E-mail: <info@@infodock.com>
-  Web:    http://www.infodock.com
-  Tel:    +1 408-243-3300
-@end example
-
 @setchapternewpage on
 @end titlepage
 @page
@@ -77,31 +53,13 @@ for InfoDock, XEmacs or GNU Emacs on a variety of platforms.
 
 @ifinfo
 @noindent
-Copyright @copyright{} 1989-1997  Free Software Foundation, Inc.
+Copyright @copyright{} 1989-1996  Free Software Foundation, Inc.
 
 All trademarks referenced herein are trademarks of their respective holders.
 
-InfoDock Associates, the developer of the OO-Browser and InfoDock (an
-industrial quality turn-key version of XEmacs), donates its work on
-the OO-Browser to the Free Software Foundation and makes it freely
-available for worldwide distribution.
-
-InfoDock Associates is a commercial firm dedicated to radical productivity
-improvement in technical environments, whether in software development or
-other knowledge intensive disciplines.  Our initial offerings include high
-quality commercial support, training, books and custom package development
-for InfoDock, XEmacs or GNU Emacs on a variety of platforms.
-
-@example
-  E-mail: <info@@infodock.com>
-  Web:    http://www.infodock.com
-  Tel:    +1 408-243-3300
-@end example
-
 @end ifinfo
-
 This edition of the OO-Browser User Manual is for use with any version
-2.10 or greater of the OO-Browser.  The OO-Browser is available for
+2.9.12 or greater of the OO-Browser.  The OO-Browser is available for
 free use, distribution, and modification under the terms of version 2 or
 later of the GNU Public License (GPL).  No representations are made
 about the suitability of this software for any purpose.  It is provided
@@ -111,18 +69,19 @@ about the suitability of this software for any purpose.  It is provided
 @cindex InfoDock, obtaining
 @cindex OO-Browser, obtaining
 @cindex anonymous ftp
-The OO-Browser was designed and written by Bob Weiner of InfoDock
-Associates.  Motorola, Inc@. help fund early work.  Torgeir Veimo and
-Mark Stern helped write the X OO-Browser core.  Don Yacktman helped
-write the NEXTSTEP OO-Browser core.  Jeff Sparkes helped with the Java
-language support.  Harri Pasanen helped with the Python language
-support.
+The OO-Browser was designed and written by Bob Weiner.  Motorola,
+Inc. funded and donated this work for free redistribution as part of the
+InfoDock integrated productivity toolset.  Torgeir Veimo and Mark Stern
+helped write the X OO-Browser core.  Don Yacktman helped write the
+NEXTSTEP OO-Browser core.  Jeff Sparkes helped with the Java language
+support.  Harri Pasanen implemented the Python language support, and
+updated the documentation to reflect that addition.
 
 @vindex file, BR-README
 @cindex README file
 @cindex installation
 The OO-Browser and InfoDock can be obtained via anonymous ftp on the
-Internet from: @file{ftp://ftp.xemacs.org/pub/infodock}.
+Internet from: @file{/anonymous@@ftp.xemacs.org:/pub/infodock}.
 Installation instructions for the OO-Browser can be found in the
 @file{BR-README} file in the OO-Browser distribution.
 
@@ -203,8 +162,6 @@ Using the OO-Browser
 OO-Browser Options
 
 * External Viewing::            Using An External Viewer or Editor
-* Inherited Features::          Toggling Inherited Feature Display
-* Graphical Add Features::      Add Features to a Graphical View
 * Keep Viewed Classes::         
 * Inhibit Version::             Inhibit Version Screen
 * Invert Ancestors::            Invert Ancestor Trees
@@ -258,10 +215,10 @@ Python Specifics
 
 @cindex OO-Browser
 @cindex Smalltalk
-The @dfn{OO-Browser} (pronounced owe-owe-browse-er) is a multi-windowed,
-interactive, object-oriented class browser designed for professional
-use.  Its user interface is similar to the well-known Smalltalk browsers
-@cite{[Goldberg 83]}, yet it is much more flexible and easy to use.
+The @dfn{OO-Browser} is a multi-windowed, interactive, object-oriented
+class browser designed for professional use.  Its user interface is
+similar to the well-known Smalltalk browsers @cite{[Goldberg 83]}, yet
+it is much more flexible and easy to use.
 
 @cindex Eiffel
 @cindex C++
@@ -275,10 +232,9 @@ use.  Its user interface is similar to the well-known Smalltalk browsers
 The OO-Browser is unique in several respects:
 @itemize @bullet
 @item
-It currently supports seven object-oriented languages (C++, CLOS (Lisp),
-Eiffel, Java, Objective-C, Python and Smalltalk), one
-non-object-oriented language (C), and one documentation language, (GNU
-Info).
+It currently supports seven object-oriented languages (Eiffel, C++,
+Objective-C, CLOS (Lisp), Java, Python and Smalltalk), one non-object-oriented
+language (C), and one documentation language, (GNU Info).
 
 @item
 It may be used for both system exploration and for browsing purposes as
@@ -326,7 +282,7 @@ buffers displayed in the viewer window.
 @end iftex
 @ifinfo
 Mouse click on the following filename to view a picture of
-the textual OO-Browser: @file{im/oobr-text.eps}.  Under InfoDock, use the
+the textual OO-Browser: "im/oobr-text.eps".  Under InfoDock, use the
 middle mouse button.  Under Emacs with the Hyperbole system loaded, use
 the shift-middle mouse button or shift-left on a two button mouse.
 Otherwise, there is no built-in way to view the picture.
@@ -602,8 +558,7 @@ Environment, e.g@. to bring back the last Environment browsed under that
 language.  The language-specific browser invocation commands are:
 @{@kbd{M-x eif-browse @key{RET}}@}, @{@kbd{M-x c++-browse @key{RET}}@},
 @{@kbd{M-x info-browse @key{RET}}@}, @{@kbd{M-x clos-browse
-@key{RET}}@}, @{@kbd{M-x objc-browse @key{RET}}@},
-@{@kbd{M-x python-browse @key{RET}}@}.@refill
+@key{RET}}@}, @{@kbd{M-x objc-browse @key{RET}}@}, @{@kbd{M-x python-browse @key{RET}}@}.@refill
 
 @cindex Environment file
 @cindex prefix argument
@@ -1261,7 +1216,7 @@ When the command is invoked (first time through the loop), if the
 will match to all classes referenced in the Environment.
 
 If you want a regular expression to match to whole class names
-exclusively, begin it with a `^' and end it with a `$' character which
+exclusively, begin it with a '^' and end it with a '$' character which
 match to beginning of name and end of name, respectively.  Thus, "^....$"
 would match to class names with exactly four characters.  A string
 match always matches to any class name that contains the matching
@@ -1297,7 +1252,7 @@ When the command is invoked (first time through the loop), if the
 will match to all entries in the listing, so no filtering will be done.
 
 If you want a regular expression to match to whole entries
-exclusively, begin it with a `^' and end it with a `$' character which
+exclusively, begin it with a '^' and end it with a '$' character which
 match to beginning of line and end of line, respectively.  Thus, "^....$"
 would match to entry lines with exactly four characters.  A string
 match always matches to any entry that contains the matching string.
@@ -1375,10 +1330,10 @@ default behavior.
 @cindex Eiffel, short
 @cindex Eiffel, flat
 @{@kbd{M-x eif-info-use-short}@} will instead cause the
-@code{(br-entry-info)} command to run the Eiffel `short' command on a
+@code{(br-entry-info)} command to run the Eiffel 'short' command on a
 class, thereby displaying its specification.
 @{@kbd{M-x eif-info-use-flat}@}, will cause the command to run
-the Eiffel `flat' command on a class, thereby displaying its complete
+the Eiffel 'flat' command on a class, thereby displaying its complete
 feature set.  Use @{@kbd{M-x eif-info-use-calls}@} to reset this command
 to its default behavior.
 
@@ -1457,7 +1412,7 @@ OO-Browser Features}, and the description of
 The X interface to the OO-Browser is called, @dfn{xoobr}.  It provides a
 simple but effective means of navigating through OO-Browser hierarchy
 and element relations.  (The NEXTSTEP OO-Browser is very similar to the
-X version, so the documentation herein also applies to it.)
+X version, so use the documentation herein if you need any help with it.)
 
 Any number of xoobr sessions may be established at the same time.  Each
 one is used to gain a particular view on an Environment.  The textual
@@ -1475,20 +1430,8 @@ Here is a picture of the X OO-Browser.
 @end iftex
 @ifinfo
 If running under the X window system, Action Key click on the following
-filename to view a picture of the X OO-Browser: @file{im/oobr-x.xwd}.
+filename to view a picture of the X OO-Browser: "im/oobr-x.xwd".
 @end ifinfo
-
-@kindex M-f
-@findex br-tree-features-toggle
-@cindex xoobr, displaying features
-@cindex descendancy view
-@{@kbd{M-f}@} @code{(br-tree-features-toggle)} or the menu item,
-@emph{Options/Graphical-Add-Features}, is used before creating a
-graphical descendency view to determine whether or not to include the
-features of each class in the listing as child nodes of the class.
-It toggles between showing features and not showing them in descendancy
-views.  The setting applies across all OO-Browser languages.  The
-default setting is not to add features to the view.
 
 @kindex M-g
 @findex br-tree-graph
@@ -1503,10 +1446,21 @@ the need to alter that setting.
 @cindex xoobr, descendants
 @{@kbd{M-d}@} @code{(br-tree)} selects the current class and displays
 its descendancy graph in tree-form by starting a new xoobr session.
-With a prefix argument, @{@kbd{C-u M-d}@}, it displays descendancy trees
+With a prefix argument, @{@kbd{C-u M-d}@}, displays descendancy trees
 for all classes at the current browser level.  They are all grouped
-under an imaginary root node so as to maintain the concept of one
+under some imaginary joining node so as to maintain the concept of one
 tree per xoobr view.
+
+@kindex M-f
+@findex br-tree-features-toggle
+@cindex xoobr, displaying features
+@cindex descendancy view
+@{@kbd{M-f}@} @code{(br-tree-features-toggle)} is used before creating a
+graphical descendency view to determine whether or not to include the
+features of each class in the listing as child nodes of the class.
+It toggles between showing features and not showing them in descendancy
+views.  The setting applies across all OO-Browser languages.  The
+default setting is to not add features to the view.
 
 @cindex xoobr, view
 Xoobr views are meant to complement the textual browser interface.
@@ -1557,8 +1511,6 @@ sessions started from within the current editor session.
 
 @menu
 * External Viewing::            Using An External Viewer or Editor
-* Inherited Features::          Toggling Inherited Features Display
-* Graphical Add Features::      Add Features to a Graphical View
 * Keep Viewed Classes::         
 * Inhibit Version::             Inhibit Version Screen
 * Invert Ancestors::            Invert Ancestor Trees
@@ -1567,7 +1519,7 @@ sessions started from within the current editor session.
 * Sort Options::                Controlling Class Listing Order
 @end menu
 
-@node External Viewing, Inherited Features, Options, Options
+@node External Viewing, Keep Viewed Classes, Options, Options
 @comment  node-name,  next,  previous,  up
 @section Using an External Viewer or Editor
 
@@ -1621,34 +1573,7 @@ variables are already null):
 @end display
 
 
-@node Inherited Features, Graphical Add Features, External Viewing, Options
-@comment  node-name,  next,  previous,  up
-@section Toggling Inherited Features Display
-
-@cindex inherited features
-@cindex feature options
-By default, when the OO-Browser lists features of a class, it shows both
-the ones lexically defined within the class source text and the ones
-inherited from ancestor classes.  Each feature is listed below the class
-in which it is originally defined, for clarity.  Sometimes it is useful
-to see only the lexically defined features of a class.  In such cases,
-the menu item, @emph{Options/Show-Inherited-Features}, toggles this
-setting.  If you want this on by default, you can add the following
-line to a personal initialization file:
-
-@display
-       @code{(setq br-inherited-features-flag nil)}
-@end display
-
-
-@node Graphical Add Features, Keep Viewed Classes, Inherited Features, Options
-@comment  node-name,  next,  previous,  up
-@section Add Features to a Graphical View
-
-@xref{Graphical Browsing,  , Graphical OO-Browser Interfaces}.
-
-
-@node Keep Viewed Classes, Inhibit Version, Graphical Add Features, Options
+@node Keep Viewed Classes, Inhibit Version, External Viewing, Options
 @comment  node-name,  next,  previous,  up
 @section Keep Viewed Classes
 
@@ -1666,20 +1591,19 @@ buffers when you want to trim down the number with which you are dealing.
 
 @findex br-toggle-keep-viewed
 @vindex br-keep-viewed-classes
-The value of the @var{br-keep-viewed-classes} flag may be easily toggled
-with the @code{(br-toggle-keep-viewed)} command or with the menu item,
-@emph{Options/Keep-Viewed-Classes}.
+The value of the @var{br-keep-viewed-classes} flag may be easily
+toggled with the @code{(br-toggle-keep-viewed)} command bound to
+@{@kbd{V}@}.
 
 
 @node Inhibit Version, Invert Ancestors, Keep Viewed Classes, Options
 @section Inhibit Version Screen
 
 @vindex br-inhibit-version
-After you are familiar with the opening OO-Browser version and credits
-screen, you may want to disable its display each time the browser is
-started.  This is done by setting @var{br-inhibit-version} non-nil, as
-in the following line that would go in your personal OO-Browser
-initialization file:
+After you are familiar with the opening OO-Browser version screen, you may
+want to disable its display each time the browser is started.  This is done by
+setting @var{br-inhibit-version} non-nil, as in the following line that
+would go in your personal OO-Browser initialization file:
 
 @example
 	@code{(setq br-inhibit-version t)}
@@ -1691,8 +1615,8 @@ initialization file:
 @cindex support
 @noindent
 This option has no effect on the display of the help screen which
-is displayed after the version screen.  Even with this option set, you
-may display the version screen at any time from within a browser listing
+follows the version screen.  Even with this option set, you may display
+the version screen at any time from within a browser listing
 window by using @{@kbd{C-c #}@} @code{(br-version)}.
 
 
@@ -2036,7 +1960,7 @@ following places:  first, the directories listed in the variable
 current environment.  The variable @var{c++-cpp-include-dirs} should
 hold a list of the standard directories searched by your C++ pre-processor.
 Each directory entry must end with a directory separator.  On UNIX
-systems, this is the `/' character.
+systems, this is the '/' character.
 
 @node C++ Settings,  , C++ Element Selection, C++ Specifics
 @subsection C++ Settings
@@ -2143,7 +2067,7 @@ list to uniquely distinguish them from other elements, e.g@. functions.
 
 Eiffel support has now been updated to Eiffel version 3, to the best
 of our knowledge.  If you find any problems, please report them
-to <oo-browser@@infodock.com> (this is a public mailing list).
+to <oo-browser@@hub.ucsb.edu> (this is a public mailing list).
 
 @menu
 * Eiffel Listings::
@@ -2208,11 +2132,11 @@ definition would still be located properly.
 @subsection Eiffel Settings
 
 @findex eif-get-parents-from-source
-Be sure that the `inherit' and `feature' clauses in your classes begin in
+Be sure that the 'inherit' and 'feature' clauses in your classes begin in
 column 0; otherwise the browser parser will not work properly.  If you prefer
 some other indentation style, you will need to slightly alter
 @code{(eif-get-parents-from-source)} in @file{br-eif.el}; specifically,
-the lines that contain `^inherit' and `^feature'.
+the lines that contain '^inherit' and '^feature'.
 
 @cindex Eiffel, error parsing
 @cindex error parsing
@@ -2234,10 +2158,6 @@ parsing these Eiffel error messages is included in
 @section Java Specifics
 
 @cindex Java feature listings
-@cindex Java attribute
-@cindex attribute, Java
-Java attribute names are precededed by @code{"= "} in feature listings.
-
 @cindex abstract method
 @cindex method, abstract
 @cindex deferred function
@@ -2361,7 +2281,7 @@ following places:  first, the directories listed in the variable
 current environment.  The variable @var{objc-cpp-include-dirs} should
 hold a list of the standard directories searched by your Objective-C
 pre-processor.  Each directory entry must end with a directory
-separator.  On UNIX systems, this is the `/' character.
+separator.  On UNIX systems, this is the '/' character.
 
 @node Objective-C Settings, Python Specifics, Objective-C Element Selection, Objective-C Specifics
 @subsection Objective-C Settings
@@ -2382,20 +2302,18 @@ special file suffixes you use to it.@refill
 @node Python Specifics, Python Module Lookup, Objective-C Settings, Languages
 @section Python Specifics
 
-@cindex Python doc strings
-The OO-Browser supports browsing Python classes and methods.
-Documentation strings for classes or methods may be displayed
-from a listing buffer with the @{@kbd{i}@} key.
+The OO-Browser supports browsing Python classes, methods, and
+documentation strings for both. The class info key 'i' is used to
+display class or method documentation string, if that is available.
 
-Python method names are preceded by the @code{"- "} string in listing
-buffers.
+Python methods appear in class feature listings.  The method
+name is preceded by the @code{"- "} string.
 
-@cindex Python functions
-Global functions are grouped under the default class @code{[function]} to 
+Global functions are grouped under the imaginary class @code{[functions]} to 
 distinguish them from classes or class methods.
 
-Nested classes are not recognized by the browser, nor are run-time
-modifications to classes.
+Known bugs: nested classes are not recognized.  As browsing is based on
+analyzing the source code, run-time modifications are lost.
 
 @menu
 * Python Module Lookup::       Source Code Element Selection
@@ -2405,26 +2323,24 @@ modifications to classes.
 @node Python Module Lookup, Python Settings , Python Specifics, Python Specifics
 @subsection Python Module Lookup
 
-The @file{br-help-ms} file summarizes mouse key operation within the
-browser.  Use @{@kbd{H}@}, the @code{(br-help-ms)} command, to display
-this help when point is within a listing window.
+The @file{br-help-ms} file uses a table format to summarize mouse
+control within the browser, it may be displayed within the browser via
+the @{@kbd{H}@} @code{(br-help-ms)} command.
 
-@cindex Python import statement
-An Action Key press on a module name within a Python import statement
-will display the source for the module, if it is found within the
-current Environment.
+Clicking on a module name in an import statement using the Action Key
+will open the specified module, if it is found in the search path.
 
 @node Python Settings,  , Python Module Lookup, Python Specifics
 @subsection Python Settings
-
 @vindex python-import-dirs
-A press of the Action Key on an import statement, tries to display the
-module to be imported.  First, the module is looked up within the
-current Environment directories.  If not found, the path
-@file{/usr/local/lib/python} is searched.  Modify
-the variable, @var{python-import-dirs}, to alter the set of paths
-searched after the Environment directories..
-
+@cindex class definition keywords
+When a module name in an import statement is clicked using 
+the Action Key, OO-Browser tries to open the module.py file.  By default,
+it looks for the module file in the environment directories, and from the path
+@code{/usr/local/lib/python}. If you have installed Python libraries
+elsewhere, or wish to include other modules in the search path, you will
+need to modify the definition of @var{python-import-dirs} in
+@file{br-python-ft.el}.
 
 @c   ***************************
 @c          Appendices
@@ -2438,32 +2354,28 @@ searched after the Environment directories..
 @itemize @bullet
 
 @item
-Support for C, C++, Common Lisp and its Object System (CLOS), Eiffel,
-Java, Objective-C, Python and Smalltalk class browsing is included.
-Additionally, support for browsing large amounts of material in Info
-format by node name (a popular online documentation format with cross
-references and hierarchical structure) is included.  All languages
-provide class browsing via either a textual or a graphical interface.
+Support for Eiffel, C++, Objective-C, Smalltalk, Java and Common Lisp
+and its Object System (CLOS) is included.  Additionally, support for
+browsing large amounts of material in Info format by node name (a
+popular online documentation format with cross references and
+hierarchical structure) is include.  All languages provide class
+browsing via either a textual or a graphical interface.
 
 @item
-Method and typically attribute browsing is supported for all languages
-except Smalltalk.  CLOS supports browsing all elements defined with
-(def* constructs.  In-source feature browsing is also supported for all
-of these languages.  One simply selects a feature name to jump to its
-corresponding source.  Method name overloading in C++ and inherited
-feature renaming in Eiffel are fully supported.
+Method browsing is supported for C++, Objective-C, Eiffel and CLOS.
+CLOS supports browsing all elements defined with (def* constructs.
+In-source feature browsing is also supported for all of these languages.
+One simply selects a feature name to jump to its corresponding source.
+Method name overloading in C++ and inherited feature renaming in Eiffel
+are fully supported.
 
 @item
 C code browsing is supported for C++, Objective-C and C source code.
-
 @item
 Objective-C category and formal protocol browsing are supported.
 
 @item
 C++ parameterized template classes and methods are supported.
-
-@item
-Java abstract and native (externally defined) methods are supported.
 
 @item
 Building Environments is fast compared to many other tools and browser
@@ -2496,9 +2408,8 @@ group by specifying a root directory below which all class files are
 found, including those in subdirectories.
 
 @item
-The OO-Browser uses class source code only, hence no compiler is
-necessary for proper browser operation.  This allows one to explore
-class libraries without the need for additional tools.
+The browser uses class source code only, hence no compiler is necessary for
+proper browser operation.
 
 @item
 Library (stable) and System (in development) classes may be maintained and
@@ -2518,7 +2429,7 @@ Statistics on classes and Environments may be displayed.
 Language-specific class information may be shown.  Presently this feature is
 supported only for Eiffel.  A listing of class parents, attributes,
 routines and best guess (highly accurate) list of routine calls may be
-displayed.  Outputs from the Eiffel `short' and `flat' commands may also be
+displayed.  Outputs from the Eiffel 'short' and 'flat' commands may also be
 shown.
 
 @item
@@ -2526,21 +2437,6 @@ Machine-independent mouse support is included along with an extremely
 intuitive point and click interface.  The OO-Browser is pre-configured
 for use with the X window system, NEXTSTEP, Sunview or Apollo's DM
 window system under InfoDock, Emacs V19, XEmacs, Epoch, and Emacs V18.
-Online mouse usage help is always one key away.  (Don't try that level
-of platform independence with Java!)
-
-@item
-X and NEXTSTEP hierarchy display browsers are included.  They provide
-views of class inheritance structure and lexically included elements,
-which allows for quick random access to entire Environments.  A click on
-a class or element name immediately jumps to it in the editor, providing
-rapid, visual browsing.  One can pop up several graphical browsers to
-gain several views of classes in the same or in multiple environments.
-All graphical browsers can communicate with a single textual browser, so
-one can quickly display and edit classes from different environments
-(even different languages).  Multiple inheritance is handled through
-repetition of nodes throughout the tree; repeated nodes are followed by
-ellipses to indicate multiple inheritance.
 
 @item
 Popup and pulldown command menus are available under InfoDock, Emacs V19
@@ -2681,11 +2577,11 @@ Interactively prompt for the Environment file name or use optional
 ENV-FILE.  Interactively prompt for the Environment language to use or
 use optional LANG-PREFIX as language indicator.  Return the name of the
 Envir spec file created.  Do not build the Environment.  Use
-`br-env-build' to construct an Environment from its specification.
+'br-env-build' to construct an Environment from its specification.
 
 @findex br-env-load
 @item br-env-load  @{@kbd{C-c C-l}@}
-Load browser Environment or spec from optional ENV-FILE or `br-env-file'.
+Load browser Environment or spec from optional ENV-FILE or 'br-env-file'.
 Non-nil PROMPT means prompt user before building tables.
 Non-nil NO-BUILD means skip build of Environment entirely.
 Return t if load is successful, else nil.
@@ -2697,7 +2593,7 @@ Rescan System and Library sources associated with the current Environment.
 @findex br-env-save
 @item br-env-save  @{@kbd{C-c C-s}@}
 Save changed Environment to file given by optional SAVE-FILE or
-`br-env-file'.
+'br-env-file'.
 
 @findex br-env-stats
 @item br-env-stats  @{@kbd{M-e}@}
@@ -2987,8 +2883,7 @@ Unambiguously tells the browser what to include in the construction of
 an Environment.@refill
 
 @item Feature
-An method, attribute, or other component of a class.  Features may be
-public or private and in some languages, non-inheritable.
+An element (method/attribute/component) of a class.
 
 @item Formal Protocol
 See @code{Protocol}.@refill

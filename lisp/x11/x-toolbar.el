@@ -16,129 +16,55 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
-
-;;
-;; Miscellaneous toolbar functions, useful for users to redefine, in
-;; order to get different behaviour.
-;;
-
-(defvar toolbar-open-function 'find-file
-  "*Function to call when the open icon is selected.")
-
-(defun toolbar-open ()
-  (interactive)
-  (call-interactively toolbar-open-function))
-
-(defvar toolbar-dired-function 'dired
-  "*Function to call when the dired icon is selected.")
-
-(defun toolbar-dired ()
-  (interactive)
-  (call-interactively toolbar-dired-function))
-
-(defvar toolbar-save-function 'save-buffer
-  "*Function to call when the save icon is selected.")
-
-(defun toolbar-save ()
-  (interactive)
-  (call-interactively toolbar-save-function))
-
-(defvar toolbar-print-function 'lpr-buffer
-  "*Function to call when the print icon is selected.")
-
-(defun toolbar-print ()
-  (interactive)
-  (call-interactively toolbar-print-function))
-
-(defvar toolbar-cut-function 'x-kill-primary-selection
-  "*Function to call when the cut icon is selected.")
-
-(defun toolbar-cut ()
-  (interactive)
-  (call-interactively toolbar-cut-function))
-
-(defvar toolbar-copy-function 'x-copy-primary-selection
-  "*Function to call when the copy icon is selected.")
-
-(defun toolbar-copy ()
-  (interactive)
-  (call-interactively toolbar-copy-function))
-
-(defvar toolbar-paste-function 'x-yank-clipboard-selection
-  "*Function to call when the paste icon is selected.")
-
-(defun toolbar-paste ()
-  (interactive)
-  (call-interactively toolbar-paste-function))
-
-(defvar toolbar-undo-function 'undo
-  "*Function to call when the undo icon is selected.")
-
-(defun toolbar-undo ()
-  (interactive)
-  (call-interactively toolbar-undo-function))
-
-(defvar toolbar-replace-function 'query-replace
-  "*Function to call when the replace icon is selected.")
-
-(defun toolbar-replace ()
-  (interactive)
-  (call-interactively toolbar-replace-function))
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;
 ;; toolbar ispell variables and defuns
 ;;
 
-(defvar toolbar-ispell-function
-  (lambda ()
-    (interactive)
-    (if (region-active-p)
-	(ispell-region (region-beginning) (region-end))
-      (ispell-buffer)))
-  "*Function to call when the ispell icon is selected.")
-
 (defun toolbar-ispell ()
   "Intelligently spell the region or buffer."
   (interactive)
-  (call-interactively toolbar-ispell-function))
+  (if (region-active-p)
+      (ispell-region (region-beginning) (region-end))
+    (ispell-buffer)))
 
 ;;
 ;; toolbar mail variables and defuns
 ;;
 
-(defmacro toolbar-external (process &rest args)
-  `(lambda () (interactive) (call-process ,process nil 0 nil ,@args)))
+(defvar toolbar-use-separate-mail-frame nil
+  "If non-nil run mail in a separate frame.")
 
-(defvar toolbar-mail-commands-alist
-  `((vm		. vm)
-    (gnus	. gnus-no-server)
-    (rmail	. rmail)
-    (mh		. mh-rmail)
-    (pine	. ,(toolbar-external "xterm" "-e" "pine")) ; *gag*
-    (elm	. ,(toolbar-external "xterm" "-e" "elm"))
-    (mutt	. ,(toolbar-external "xterm" "-e" "mutt"))
-    (exmh	. ,(toolbar-external "exmh"))
-    ;; How to turn on netscape mail, command-line??
-    (netscape	. ,(toolbar-external "netscape")))
-  "Alist of mail readers and their commands.
-The car of the alist is the mail reader, and the cdr is the form
-used to start it.")
+(defvar toolbar-mail-frame nil
+  "The frame in which mail is displayed.")
 
-(defvar toolbar-mail-reader 'vm
-  "*Mail reader toolbar will invoke.
-The legal values are `vm' and `gnus', but you can add your own values
-by customizing `toolbar-mail-commands-alist'.")
-
+(defvar toolbar-mail-command 'vm
+  "The mail reader to run.")
 
 (defun toolbar-mail ()
   "Run mail in a separate frame."
   (interactive)
-  (let ((command (assq toolbar-mail-reader toolbar-mail-commands-alist)))
-    (if (not command)
-	(error "Uknown mail reader %s" toolbar-mail-reader))
-    (funcall (cdr command))))
+  (if (not toolbar-use-separate-mail-frame)
+      (funcall toolbar-mail-command)
+    (if (or (not toolbar-mail-frame)
+	    (not (frame-live-p toolbar-mail-frame)))
+	(progn
+	  (setq toolbar-mail-frame (make-frame))
+	  (add-hook 'vm-quit-hook
+		    '(lambda ()
+		       (save-excursion
+			 (if (frame-live-p toolbar-mail-frame)
+			     (delete-frame toolbar-mail-frame)))))
+	  (select-frame toolbar-mail-frame)
+	  (raise-frame toolbar-mail-frame)
+	  (funcall toolbar-mail-command)))
+    (if (frame-iconified-p toolbar-mail-frame)
+	(deiconify-frame toolbar-mail-frame))
+    (select-frame toolbar-mail-frame)
+    (raise-frame toolbar-mail-frame)))
 
 ;;
 ;; toolbar info variables and defuns
@@ -175,69 +101,39 @@ by customizing `toolbar-mail-commands-alist'.")
   )
 
 (defvar compile-command)
-(defvar toolbar-compile-already-run nil)
 
 (defun toolbar-compile ()
   "Run compile without having to touch the keyboard."
   (interactive)
   (require 'compile)
-  (if toolbar-compile-already-run
-      (compile compile-command)
-    (setq toolbar-compile-already-run t)
-    (popup-dialog-box
-     `(,(concat "Compile:\n        " compile-command)
-       ["Compile" (compile compile-command) t]
-       ["Edit command" compile t]
-       nil
-       ["Cancel" (message "Quit") t]))))
+  (popup-dialog-box
+   `(,(concat "Compile:\n        " compile-command)
+     ["Compile" (compile compile-command) t]
+     ["Edit command" compile t]
+     nil
+     ["Cancel" (message "Quit") t])))
 
 ;;
 ;; toolbar news variables and defuns
 ;;
 
-(defvar toolbar-news-commands-alist
-  `((gnus	. gnus)			; M-x all-hail-gnus
-    (rn		. ,(toolbar-external "xterm" "-e" "rn"))
-    (nn		. ,(toolbar-external "xterm" "-e" "nn"))
-    (trn	. ,(toolbar-external "xterm" "-e" "trn"))
-    (xrn	. ,(toolbar-external "xrn"))
-    (slrn	. ,(toolbar-external "xterm" "-e" "slrn"))
-    (pine	. ,(toolbar-external "xterm" "-e" "pine")) ; *gag*
-    (tin	. ,(toolbar-external "xterm" "-e" "tin")) ; *gag*
-    (netscape	. ,(toolbar-external "netscape" "news:")))
-  "Alist of news readers and their commands.
-Each list element is a pair.  The car of the pair is the mail
-reader, and the cdr is the form used to start it.")
-
-(defvar toolbar-news-reader 'gnus
-  "*News reader toolbar will invoke.
-The legal values are gnus, rn, nn, trn, xrn, slrn, pine and netscape.
-You can add your own values by customizing `toolbar-news-commands-alist'.")
-
-(defvar toolbar-news-use-separate-frame t
-  "*Whether Gnus is invoked in a separate frame.")
-
 (defvar toolbar-news-frame nil
   "The frame in which news is displayed.")
 
-(defvar toolbar-news-frame-properties nil
-  "The properties of the frame in which news is displayed.")
-
 (defun toolbar-news ()
-  "Run Gnus in a separate frame."
+  "Run GNUS in a separate frame."
   (interactive)
-  (when (or (not toolbar-news-frame)
-	    (not (frame-live-p toolbar-news-frame)))
-    (setq toolbar-news-frame (make-frame toolbar-news-frame-properties))
-    (add-hook 'gnus-exit-gnus-hook
-	      (lambda ()
-		(when (frame-live-p toolbar-news-frame)
-		  (if (cdr (frame-list))
-		      (delete-frame toolbar-news-frame))
-                  (setq toolbar-news-frame nil))))
-    (select-frame toolbar-news-frame)
-    (raise-frame toolbar-news-frame)
-    (gnus))
+  (if (or (not toolbar-news-frame)
+	  (not (frame-live-p toolbar-news-frame)))
+      (progn
+	(setq toolbar-news-frame (make-frame))
+	(add-hook 'gnus-exit-gnus-hook
+		  '(lambda ()
+		     (if (frame-live-p toolbar-news-frame)
+			 (delete-frame toolbar-news-frame))))
+	(select-frame toolbar-news-frame)
+	(raise-frame toolbar-news-frame)
+	(gnus)))
   (if (frame-iconified-p toolbar-news-frame)
       (deiconify-frame toolbar-news-frame))
   (select-frame toolbar-news-frame)
@@ -306,45 +202,38 @@ You can add your own values by customizing `toolbar-news-commands-alist'.")
   (set-specifier default-toolbar initial-toolbar-spec))
   
 (defvar initial-toolbar-spec
-  '(;[toolbar-last-win-icon	pop-window-configuration
-				;;; #### illicit knowledge?
-				;;; #### these don't work right!
-				;;; #### not consistent.
-				;;; I don't know what's wrong;
-				;;; perhaps `selected-frame' is
-				;;; wrong sometimes when this
-				;;; is evaluated.  Note that I
-				;;; even tried to kludge-fix this
-				;;; by calls to `set-specifier-dirty-flag'
-				;;; in pop-window-configuration
-				;;; and such.
-				;(frame-property (selected-frame)
-				;		'window-config-stack)
-	;			t
-	;			"Most recent window config"]
-    ;[toolbar-next-win-icon	unpop-window-configuration
-				;;; #### illicit knowledge?
-				;(frame-property (selected-frame)
-				;		'window-config-unpop-stack)
-	;			t
-	;			"Undo \"Most recent window config\""]
-    [toolbar-file-icon		toolbar-open	t	"Open a file"	]
-    [toolbar-folder-icon	toolbar-dired	t	"View directory"]
-    [toolbar-disk-icon		toolbar-save	t	"Save buffer"	]
-    [toolbar-printer-icon	toolbar-print	t	"Print buffer"	]
-    [toolbar-cut-icon		toolbar-cut	t	"Kill region"]
-    [toolbar-copy-icon		toolbar-copy	t	"Copy region"]
-    [toolbar-paste-icon		toolbar-paste	t 	"Paste from clipboard"]
-    [toolbar-undo-icon		toolbar-undo	t	"Undo edit"	]
+  '(;;[toolbar-last-win-icon	pop-window-configuration
+    ;;(frame-property (selected-frame)
+    ;;		'window-config-stack) t	"Most recent window config"]
+    ;; #### Illicit knowledge?
+    ;; #### These don't work right - not consistent!
+    ;; I don't know what's wrong; perhaps `selected-frame' is wrong
+    ;; sometimes when this is evaluated.  Note that I even tried to
+    ;; kludge-fix this by calls to `set-specifier-dirty-flag' in
+    ;; pop-window-configuration and such.
+    
+    ;;[toolbar-next-win-icon	unpop-window-configuration
+    ;;(frame-property (selected-frame)
+    ;;	'window-config-unpop-stack) t "Undo \"Most recent window config\""]
+    ;; #### Illicit knowledge?
+    
+    [toolbar-file-icon		find-file	t	"Open a file"	]
+    [toolbar-folder-icon	dired		t	"View directory"]
+    [toolbar-disk-icon		save-buffer	t	"Save buffer"	]
+    [toolbar-printer-icon	lpr-buffer	t	"Print buffer"	]
+    [toolbar-cut-icon		x-kill-primary-selection t "Kill region"]
+    [toolbar-copy-icon		x-copy-primary-selection t "Copy region"]
+    [toolbar-paste-icon		x-yank-clipboard-selection t
+				"Paste from clipboard"]
+    [toolbar-undo-icon		undo		t	"Undo edit"	]
     [toolbar-spell-icon		toolbar-ispell	t	"Spellcheck"	]
-    [toolbar-replace-icon	toolbar-replace	t	"Replace text"	]
+    [toolbar-replace-icon	query-replace	t	"Replace text"	]
     [toolbar-mail-icon		toolbar-mail	t	"Mail"		]
     [toolbar-info-icon		toolbar-info	t	"Information"	]
     [toolbar-compile-icon	toolbar-compile	t	"Compile"	]
     [toolbar-debug-icon		toolbar-debug	t	"Debug"		]
     [toolbar-news-icon		toolbar-news	t	"News"		])
   "The initial toolbar for a buffer.")
-
 
 (defun x-init-toolbar-from-resources (locale)
   (x-init-specifier-from-resources
@@ -359,5 +248,3 @@ You can add your own values by customizing `toolbar-news-commands-alist'.")
   (x-init-specifier-from-resources
    right-toolbar-width 'natnum locale
    '("rightToolBarWidth" . "RightToolBarWidth")))
-
-;;; x-toolbar.el ends here

@@ -1,6 +1,6 @@
 ;;; viper-ex.el --- functions implementing the Ex commands for Viper
 
-;; Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1994, 1995, 1996 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -19,35 +19,14 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
+
 ;; Code
-
-(provide 'viper-ex)
-
-;; Compiler pacifier
-(defvar read-file-name-map)
-(defvar vip-use-register)
-(defvar vip-s-string)
-(defvar vip-shift-width)
-(defvar vip-ex-history)
-(defvar vip-related-files-and-buffers-ring)
-(defvar vip-local-search-start-marker)
-(defvar vip-expert-level)
-(defvar vip-custom-file-name)
-(defvar vip-case-fold-search)
-
-(eval-when-compile
-  (let ((load-path (cons (expand-file-name ".") load-path)))
-    (or (featurep 'viper-util)
-	(load "viper-util.el" nil nil 'nosuffix))
-    (or (featurep 'viper-keym)
-	(load "viper-keym.el" nil nil 'nosuffix))
-    (or (featurep 'viper)
-	(load "viper.el" nil nil 'nosuffix))
-    ))
-;; end pacifier
 
 (require 'viper-util)
 
+;; Compiler pacifier
+(defvar read-file-name-map)
+;; end compiler pacifier
 
 ;;; Variables
 
@@ -306,7 +285,6 @@ reversed.")
 ;; A token has a type, \(command, address, end-mark\), and a value
 (defun vip-get-ex-token ()
   (save-window-excursion
-    (setq vip-ex-work-buf (get-buffer-create vip-ex-work-buf-name)) 
     (set-buffer vip-ex-work-buf)
     (skip-chars-forward " \t|")
     (cond ((looking-at "#")
@@ -442,7 +420,6 @@ reversed.")
 		     "!*")))
 	
     (save-window-excursion ;; put cursor at the end of the Ex working buffer
-      (setq vip-ex-work-buf (get-buffer-create vip-ex-work-buf-name)) 
       (set-buffer vip-ex-work-buf)
       (goto-char (point-max)))
     (cond ((vip-looking-back quit-regex1) (exit-minibuffer))
@@ -520,7 +497,8 @@ reversed.")
 			      map)))
     (save-window-excursion
       ;; just a precaution
-      (setq vip-ex-work-buf (get-buffer-create vip-ex-work-buf-name)) 
+      (or (vip-buffer-live-p vip-ex-work-buf)
+	  (setq vip-ex-work-buf (get-buffer-create vip-ex-work-buf-name)))
       (set-buffer vip-ex-work-buf)
       (delete-region (point-min) (point-max))
       (insert com-str "\n")
@@ -540,8 +518,6 @@ reversed.")
 		   (t
 		    (vip-execute-ex-command)
 		    (save-window-excursion
-		      (setq vip-ex-work-buf
-			    (get-buffer-create vip-ex-work-buf-name))
 		      (set-buffer vip-ex-work-buf)
 		      (skip-chars-forward " \t")
 		      (cond ((looking-at "|")
@@ -578,7 +554,6 @@ reversed.")
 ;; Get a regular expression and set `ex-variant', if found
 (defun vip-get-ex-pat ()
   (save-window-excursion
-    (setq vip-ex-work-buf (get-buffer-create vip-ex-work-buf-name))
     (set-buffer vip-ex-work-buf)
     (skip-chars-forward " \t")
     (if (looking-at "!")
@@ -615,7 +590,6 @@ reversed.")
 ;; get an ex command
 (defun vip-get-ex-command ()
   (save-window-excursion
-    (setq vip-ex-work-buf (get-buffer-create vip-ex-work-buf-name)) 
     (set-buffer vip-ex-work-buf)
     (if (looking-at "/") (forward-char 1))
     (skip-chars-forward " \t")
@@ -631,7 +605,6 @@ reversed.")
 ;; Get an Ex option g or c
 (defun vip-get-ex-opt-gc (c)
   (save-window-excursion
-    (setq vip-ex-work-buf (get-buffer-create vip-ex-work-buf-name)) 
     (set-buffer vip-ex-work-buf)
     (if (looking-at (format "%c" c)) (forward-char 1))
     (skip-chars-forward " \t")
@@ -658,8 +631,7 @@ reversed.")
 
 ;; Get an ex-address as a marker and set ex-flag if a flag is found
 (defun vip-get-ex-address ()
-  (let ((address (point-marker))
-	(cont t))
+  (let ((address (point-marker)) (cont t))
     (setq ex-token "")
     (setq ex-flag nil)
     (while cont
@@ -744,7 +716,6 @@ reversed.")
   (setq ex-count nil)
   (setq ex-flag nil)
   (save-window-excursion
-    (setq vip-ex-work-buf (get-buffer-create vip-ex-work-buf-name)) 
     (set-buffer vip-ex-work-buf)
     (skip-chars-forward " \t")
     (if (looking-at "[a-zA-Z]")
@@ -770,7 +741,6 @@ reversed.")
 	ex-count nil
 	ex-flag nil)
   (save-window-excursion
-    (setq vip-ex-work-buf (get-buffer-create vip-ex-work-buf-name)) 
     (set-buffer vip-ex-work-buf)
     (skip-chars-forward " \t")
     (if (looking-at "!")
@@ -832,7 +802,6 @@ reversed.")
 	  ex-cmdfile nil)
     (save-excursion
       (save-window-excursion
-	(setq vip-ex-work-buf (get-buffer-create vip-ex-work-buf-name)) 
 	(set-buffer vip-ex-work-buf)
 	(skip-chars-forward " \t")
 	(if (looking-at "!")
@@ -1198,14 +1167,12 @@ reversed.")
   (if (null (setq file (get-file-buffer ex-file)))
       (progn 
 	(ex-find-file ex-file)
-	(or (eq major-mode 'dired-mode)
-	    (vip-change-state-to-vi))
+	(vip-change-state-to-vi)
 	(goto-char (point-min)))
     (switch-to-buffer file))
   (if ex-offset
       (progn
 	(save-window-excursion
-	  (setq vip-ex-work-buf (get-buffer-create vip-ex-work-buf-name)) 
 	  (set-buffer vip-ex-work-buf)
 	  (delete-region (point-min) (point-max))
 	  (insert ex-offset "\n")
@@ -1214,16 +1181,13 @@ reversed.")
 	(beginning-of-line)))
   (ex-fixup-history vip-last-ex-prompt ex-file))
 
-;; Find-file FILESPEC if it appears to specify a single file.
-;; Otherwise, assume that FILES{EC is a wildcard.
-;; In this case, split it into substrings separated by newlines.
+;; Splits the string FILESPEC into substrings separated by newlines.
 ;; Each line is assumed to be a file name. find-file's each file thus obtained.
 (defun ex-find-file (filespec)
-  (let ((nonstandard-filename-chars "[^-a-zA-Z0-9_./,~$\\]"))
-    (cond ((file-exists-p filespec) (find-file filespec))
-	  ((string-match nonstandard-filename-chars  filespec)
-	   (funcall ex-nontrivial-find-file-function filespec))
-	  (t (find-file filespec)))
+  (let ((nonstandard-filename-chars "[^a-zA-Z0-9_.-/,\\]"))
+    (if (string-match nonstandard-filename-chars  filespec)
+	(funcall ex-nontrivial-find-file-function filespec)
+      (find-file filespec))
     ))
 
 
@@ -1277,7 +1241,6 @@ reversed.")
 	    (forward-line -1)
 	    (end-of-line)))))
     (save-window-excursion
-      (setq vip-ex-work-buf (get-buffer-create vip-ex-work-buf-name)) 
       (set-buffer vip-ex-work-buf)
       (setq com-str (buffer-substring (1+ (point)) (1- (point-max)))))
     (while marks
@@ -1349,7 +1312,6 @@ reversed.")
 	(setq ex-addresses
 	      (cons (point) nil)))
     (save-window-excursion
-      (setq vip-ex-work-buf (get-buffer-create vip-ex-work-buf-name)) 
       (set-buffer vip-ex-work-buf)
       (skip-chars-forward " \t")
       (if (looking-at "[a-z]")
@@ -1484,7 +1446,6 @@ reversed.")
 (defun ex-quit ()
   ;; skip "!", if it is q!. In Viper q!, w!, etc., behave as q, w, etc.
   (save-excursion
-    (setq vip-ex-work-buf (get-buffer-create vip-ex-work-buf-name)) 
     (set-buffer vip-ex-work-buf)
     (if (looking-at "!") (forward-char 1)))
   (if (< vip-expert-level 3)
@@ -1718,7 +1679,6 @@ reversed.")
 ;; special meaning
 (defun ex-get-inline-cmd-args (regex-forw &optional chars-back replace-str)
   (save-excursion
-    (setq vip-ex-work-buf (get-buffer-create vip-ex-work-buf-name)) 
     (set-buffer vip-ex-work-buf)
     (goto-char (point-min))
     (re-search-forward regex-forw nil t)
@@ -1852,7 +1812,6 @@ Please contact your system administrator. "
 (defun ex-tag ()
   (let (tag)
     (save-window-excursion
-      (setq vip-ex-work-buf (get-buffer-create vip-ex-work-buf-name)) 
       (set-buffer vip-ex-work-buf)
       (skip-chars-forward " \t")
       (set-mark (point))
@@ -1874,12 +1833,7 @@ Please contact your system administrator. "
 (defun ex-write (q-flag)
   (vip-default-ex-addresses t)
   (vip-get-ex-file)
-  (let ((end (car ex-addresses))
-	(beg (car (cdr ex-addresses))) 
-	(orig-buf (current-buffer))
-	(orig-buf-file-name (buffer-file-name))
-	(orig-buf-name (buffer-name))
-	(buff-changed-p (buffer-modified-p))
+  (let ((end (car ex-addresses)) (beg (car (cdr ex-addresses))) 
 	temp-buf writing-same-file region
 	file-exists writing-whole-file)
     (if (> beg end) (error vip-FirstAddrExceedsSecond))
@@ -1902,9 +1856,8 @@ Please contact your system administrator. "
 	       buffer-file-name
 	       (not (file-directory-p buffer-file-name)))
 	  (setq ex-file
-		(concat (file-name-as-directory ex-file)
-			(file-name-nondirectory buffer-file-name))))
-      
+		(concat ex-file (file-name-nondirectory buffer-file-name))))
+
       (setq file-exists (file-exists-p ex-file)
 	    writing-same-file (string= ex-file (buffer-file-name)))
 
@@ -1912,58 +1865,35 @@ Please contact your system administrator. "
 	  (if (not (buffer-modified-p))
 	      (message "(No changes need to be saved)")
 	    (save-buffer)
-	    (save-restriction
-		 (widen)
-		 (ex-write-info file-exists ex-file (point-min) (point-max))
-		 ))
-	;; writing some other file or portion of the current file
-	(cond ((and file-exists
-		    (not writing-same-file)
-		    (not (yes-or-no-p
-			  (format "File %s exists. Overwrite? " ex-file))))
-	       (error "Quit"))
-	      ((and writing-whole-file (not ex-append))
-	       (unwind-protect
-		   (progn
-		     (set-visited-file-name ex-file)
-		     (set-buffer-modified-p t)
-		     (save-buffer))
-		 ;; restore the buffer file name
-		 (set-visited-file-name orig-buf-file-name)
-		 (set-buffer-modified-p buff-changed-p)
-		 ;; If the buffer wasn't visiting a file, restore buffer name.
-		 ;; Name could've been changed by packages such as uniquify.
-		 (or orig-buf-file-name
-		     (progn
-		       (unlock-buffer)
-		       (rename-buffer orig-buf-name))))
-	       (save-restriction
-		 (widen)
-		 (ex-write-info
-		  file-exists ex-file (point-min) (point-max))))
-	      (t ; writing a region
-	       (unwind-protect 
-		   (save-excursion
-		     (vip-enlarge-region beg end)
-		     (setq region (buffer-substring (point) (mark t)))
-		     ;; create temp buffer for the region
-		     (setq temp-buf (get-buffer-create " *ex-write*"))
-		     (set-buffer temp-buf)
-		     (set-visited-file-name ex-file 'noquerry)
-		     (erase-buffer)
-		     (if (and file-exists ex-append)
-			 (insert-file-contents ex-file))
-		     (goto-char (point-max))
-		     (insert region)
-		     (save-buffer)
-		     (ex-write-info
-		      file-exists ex-file (point-min) (point-max))
-		     ))
-	       (set-buffer temp-buf)
-	       (set-buffer-modified-p nil)
-	       (kill-buffer temp-buf))
+	    (ex-write-info file-exists ex-file beg end))
+	;; writing some other file or portion of the currents
+	;; file---create temp buffer for it
+	;; disable undo in that buffer, for efficiency
+	(buffer-disable-undo (setq temp-buf (create-file-buffer ex-file)))
+	(unwind-protect 
+	    (save-excursion
+	      (if (and file-exists
+		       (not writing-same-file)
+		       (not (yes-or-no-p
+			     (format "File %s exists. Overwrite? " ex-file))))
+		  (error "Quit")
+		(vip-enlarge-region beg end)
+		(setq region (buffer-substring (point) (mark t)))
+		(set-buffer temp-buf)
+		(set-visited-file-name ex-file)
+		(erase-buffer)
+		(if (and file-exists ex-append)
+		    (insert-file-contents ex-file))
+		(goto-char (point-max))
+		(insert region)
+		(save-buffer)
+		(ex-write-info file-exists ex-file (point-min) (point-max))
+		)
+	      (set-buffer temp-buf)
+	      (set-buffer-modified-p nil)
+	      (kill-buffer temp-buf)
 	      ))
-      (set-buffer orig-buf)
+	)
       ;; this prevents the loss of data if writing part of the buffer
       (if (and (buffer-file-name) writing-same-file)
 	  (set-visited-file-modtime))
@@ -2015,7 +1945,6 @@ Please contact your system administrator. "
 (defun ex-command ()
   (let (command)
     (save-window-excursion
-      (setq vip-ex-work-buf (get-buffer-create vip-ex-work-buf-name)) 
       (set-buffer vip-ex-work-buf)
       (skip-chars-forward " \t")
       (setq command (buffer-substring (point) (point-max)))
@@ -2074,5 +2003,7 @@ Please contact your system administrator. "
 	(kill-buffer " *vip-info*")))
     ))
 
+
+(provide 'viper-ex)
 
 ;;;  viper-ex.el ends here

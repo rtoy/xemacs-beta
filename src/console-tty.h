@@ -43,7 +43,6 @@ struct tty_console
   int infd, outfd;
   Lisp_Object instream, outstream;
   Lisp_Object terminal_type;
-  Lisp_Object controlling_process;
   char *term_entry_buffer;
 
   /* Physical location of cursor on this console. */
@@ -167,8 +166,6 @@ struct tty_console
       CONST char *end_motion;		/* rmcup, te */
       CONST char *keypad_on;		/* smkx, ks */
       CONST char *keypad_off;		/* rmkx, ke */
-
-      CONST char *orig_pair;		/* op, op */
     } sd;
   
   /* costs of various operations */
@@ -190,8 +187,8 @@ struct tty_console
   struct emacs_tty old_tty;
   
   /* Is this TTY our controlling terminal? */
-  unsigned int controlling_terminal :1;
-  unsigned int is_stdio :1;
+  int controlling_terminal :1;
+  int is_stdio :1;
 };
 
 #define CONSOLE_TTY_DATA(c) CONSOLE_TYPE_DATA (c, tty)

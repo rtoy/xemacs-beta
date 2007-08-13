@@ -17,9 +17,8 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
 ;;; Synched up with: FSF 19.30.
 
@@ -29,19 +28,11 @@
 
 ; Parts were taken from html-helper-mode and from code by Alastair Burt.
 
-; If you'd like to use the hm--html-minor-mode together with this
-; mode, you have to put the following line to your ~/.emacs:
-;	(add-hook 'html-mode-hook 'hm--html-minor-mode)
-
 ;;; Code:
-
-(defvar html-auto-sgml-entity-conversion nil
-  "*Control automatic sgml entity to ISO-8859-1 conversion")
 
 (require 'psgml)
 (require 'derived)
-(when html-auto-sgml-entity-conversion
-  (require 'iso-sgml))
+(require 'iso-sgml)
 (require 'tempo)			;essential part of html-helper-mode
 
 ;;{{{ user variables
@@ -75,10 +66,10 @@ Override this for your own timestamp styles.")
     "  </head>\n"
     "\n"
     "  <body>\n"
-    "    <h1>" (s title) "</h1>\n\n"
+    "      <h1>" (s title) "</h1>\n\n"
     p
-    "\n\n    <hr>\n"
-    "    <address>" html-helper-address-string "</address>\n"
+    "\n\n      <hr>\n"
+    "      <address>" html-helper-address-string "</address>\n"
     (html-helper-return-created-string)
     html-helper-timestamp-start
     html-helper-timestamp-end
@@ -153,7 +144,7 @@ Add to this with `html-helper-add-type-to-alist'.")
   "Major mode for editing HTML documents.
 This is based on PSGML mode, and has a sophisticated SGML parser in it.
 It knows how to properly indent HTML/SGML documents, and it can do
-  a form of document validation (use \\[sgml-next-trouble-spot] to find
+  a form of document validation (use \\[sgml-next-trouble-spot\\] to find
   the next error in your document).
 Commands beginning with C-z insert various types of HTML tags
   (prompting for the required information); to iconify or suspend,
@@ -207,14 +198,6 @@ More specifically:
 
   (set (make-local-variable 'sgml-custom-markup)
        '(("<A>" "<A HREF=\"\">\r</a>")))
-
-  ;; Set up the syntax table.
-  (modify-syntax-entry ?< "(>" html-mode-syntax-table)
-  (modify-syntax-entry ?> ")<" html-mode-syntax-table)
-  (modify-syntax-entry ?\" ".   " html-mode-syntax-table)
-  (modify-syntax-entry ?\\ ".   " html-mode-syntax-table)
-  (modify-syntax-entry ?'  "w   " html-mode-syntax-table)
-
   ; sigh ...  need to call this now to get things working.
   (sgml-build-custom-menus)
   (add-submenu nil sgml-html-menu "SGML")

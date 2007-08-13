@@ -17,9 +17,12 @@
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;; General Public License for more details.
 
+;;; Synched up with: Not in FSF.
+
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Change Log:
 ;;
@@ -102,7 +105,7 @@ If optional arg DEFAULT is provided, then it is a string to insert as
 the default choice (it is not, of course, displayed.)
 
 If running under X, the keyboard will be grabbed (with XGrabKeyboard())
-to reduce the possibility that eavesdropping is occuring.
+to reduce the possibility that evesdropping is occuring.
 
 When reading a password, all keys self-insert, except for:
 \\<read-passwd-map>
@@ -183,7 +186,9 @@ characters are typed.  There's not currently a way around this."
 	(passwd-ungrab-keyboard)
 	(passwd-insecure-display)
 	(passwd-kill-buffer input)
-	(message "")
+	(if (fboundp 'clear-message) ;XEmacs
+	    (clear-message)
+	  (message ""))
 	))))
 
 
@@ -367,7 +372,9 @@ characters are typed.  There's not currently a way around this."
   (let ((inhibit-quit t)
 	str)
     (while (or (null str) (keymapp (key-binding str)))
-      (message prompt)
+      (if (fboundp 'display-message)
+	  (display-message 'prompt prompt)
+	(message prompt))
       (setq str (concat str (char-to-string (read-char)))))
     (setq quit-flag nil)
     str))

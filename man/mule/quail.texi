@@ -1,0 +1,261 @@
+\input texinfo	@c -*-texinfo-*-
+@setfilename ../info/quail
+@settitle QUAIL -- Imputting methods of multilingual text
+
+@titlepage
+@sp 6
+@center @titlefont{QUAIL -- Imputting methods of multilingual text}
+@sp 4
+@center Version 2.0
+@sp 5
+@center Ken'ichi HANDA
+@center handa@@etl.go.jp
+@page
+
+@end titlepage
+
+@node Top, , , (mule)
+@section QUAIL -- Imputting methods of multilingual text
+
+Quail is a simple key-translation system which allows users
+to input any multilingual text from normal ASCII keyboard.
+
+We provide several quail-packages, each package corresponds
+to one inputting methods.  For instance, the file
+lisp/quail/py.el provides a package for inputting Chinese by
+PinYin.  lisp/quail/hangul.el provides a package for
+inputting Korean.
+
+@menu
+* Usage of Quail::
+* Structure of Quail::  For quail package writers.
+@end menu
+
+@node Usage of Quail, Structure of Quail, , Top
+@section Usage of Quail
+
+You can load several packages at once but only the
+translation rules defined in the current package are
+effective.  Quail-mode is toggled by C-].  When you enter in
+quail-mode, the current package is shown at the left of modeline as:
+@quotation
+@code{[xxxxx]}
+@end quotation
+where xxxxx is the multilingual text for the current
+package.  In quail-mode, M-s changes the current package
+(normal completion is performed by hitting <SPC> or <TAB>).
+
+In quail-mode, all graphic keys you type is translated
+according to the rules of the current package.  Brief
+description about the rules and key-bindings are shown by
+M-z.
+
+While there are more than one candidates for what you type,
+the first candidate is shown in buffer with underscore.  By
+M-n and M-p you can select any other candidate.  M-i shows
+list of candidates (showing each candidate with index number
+[two digits]).  You can select one also by typing these
+digits.
+
+Once you select a desired candidate, please just type a key
+for another character.  The underscore moves to the next key
+automatically.  But, in some packages (e.g. hangul),
+there are rules something like:
+@example
+	ab  -> A
+	aba -> B
+	b   -> C
+@end example
+
+In this case, if you type "abab", quail will enter "AA".  If
+what you want is "BC", you must explicitly tell the division
+point of the character by hitting <SPC>.  In this example,
+you should have typed "aba<SPC>b".
+
+Here's the summary of command keys:
+@example
+------------------------------------------------------------
+C-]:	Exit from quail-mode.
+DEL:	Delete characters backward in quail-mode.
+M-i:	Show list of candidates.
+M-n:	Select next candidate.
+M-p:	Select previous candidate.
+M-s:	Select quail-package.
+M-z:	Show brief description of the current quail-pacakge.
+------------------------------------------------------------
+@end example
+
+@node Structure of Quail, , Usage of Quail, Top
+@section Structure of Quail
+
+#### NOT COMPLETED, NOT UPDATED ####
+
+This section is intended to help emacslisper who try to
+debug or enhance 'quail' system.  The original code quail.el
+is located under the directory mule/lisp/quail.el.
+
+Quail serves as a front end processor for inputing
+multilingual text from normal ASCII keyboard.  By defining a
+translation table which maps ASCII string to multilingual
+string, you can input any text from ASCII keyboard.
+
+For the momemnt, translation table for Chinese inputing
+distributed with X.V11R5/contrib/cxterm are supported in
+mule/lisp/quail/XXXX.el files.  You can use the system also
+for inputing various Korean/European characters.
+
+Quail system registers translation table in keymap of Emacs,
+thus table lookup is done just by calling function
+@code{lookup-key}, and new registration is done just by calling
+function 'define-key'.  Keymap is represented as a
+structured association list.  For instance, a translation
+table of the form ("a" -> "A" or "a", "ab" -> "AB", "c" ->
+"C") is represented as follows:
+
+@example
+  (keymap . ((?a . (keymap . ((?\377 . '(0 "A" "a")
+			      (?b . (keymap . ((?\377 . '(0 "AB")))))))))
+	     (?c . (keymap . ((?\377 . '(0 "C")))))))
+@end example
+
+As you see, the final string of translation is registered
+under the tag of ?\377.  Hence, the following program
+creates the map above.
+
+@example
+	(setq m (make-sparce-keymap))
+	(define-key m "a\377" '(0 "A" "a") t)
+	(define-key m "ab\377" '(0 "AB") t)
+	(define-key m "c\377" '(0 "C") t)
+@end example
+
+Each '0' means that the first candidate in the list is
+selected at first.  In this case, according to your typing,
+buffer contents changes as follows:
+
+@example
+	Type:	a	M-n	b	c	a	b
+	Buffer:	A	a	AB	ABc	ABca	ABcab
+	Uline:	-	-	--	  -	   -
+@end example
+
+where Uline shows which characters are displayed with
+underline.  While underline is shown, we say that quail is
+in 'translation state'.  We assumed that M-n is bound to
+@code{quail-next-candidate}.
+
+The last argument of @code{define-key} 't' means that meta
+characters in the key-string are processed as is (not as ESC
++ char), which is a Mule specific facility.  Since keymaps
+can be nested, you can share one keymap (say m) with two
+other keymaps (say m1 and m2) by:
+
+@example
+	(define-key m1 "x" m)
+	(define-key m2 "y" m)
+@end example
+
+This means the translation ("xa" -> "A" or "a", "xab" ->
+"AB", "xac" -> "C") in map m1 and ("ya" -> "A" or "a", "yab"
+-> "AB", "yac" -> "C") in m2.
+
+We call a keymap which satisfies the description above as a
+'quail-map' here after.  Quail handles a quail-map with
+additional information as a 'quail-package'.  Each
+quail-package holds the following information as a list:
+
+@enumerate
+@item
+name (string [ASCII only]): Name of the package.
+
+@item
+prompt (string [any characters]): 
+A string shown in mode-line as a name of quail mode.
+
+@item
+quail-map: A quail map described above.
+
+@item
+showkey (alist):
+An alist of character typed and corresponding string to be shown in echo
+area.  For instance, quail-package namede "ccdospy" has the following
+showkey:
+
+@example
+ '((?a . "zh") (?f . "en") (?g ."eng") (?h . "ang") (?i . "ch") (?j . "an")
+   (?k . "ao") (?l . "ai") (?s . "ong") (?u . "sh") (?y . "ing") (?v . "yu"))
+@end example
+
+This says that if you type 'a', "zh" is shown in echo area.
+If 'f' is followed by 'a', "zhen" is shown.
+
+@item
+document (string): A document shown by quail-help command.
+
+@item
+mode-map (keymap): 
+A keymap to control quail mode.  This defaults to
+@code{quail-mode-default-map}.  Prefix character is restricted to ESC only,
+which means you can not define such key sequence as "\C-xi" in this map.
+In addition, defining '!' through '~' are no use because those keys are
+overridden by @code{quail-self-insert-command}.
+
+@item
+nolearn (flag):
+A flag to control learning facility of quail.  If this flag is non-nil,
+quail does not remeber the last selection of candidate string for the
+later selection.
+
+@item
+deterministic (flag):
+A flag to specify that only one target string is defined in the
+quail-map for each key sequence (i.e. no alternative candidates).  If
+this flag is non-nil, quail automatically exit from the translation
+state when a target string for a key sequence is found.
+@end enumerate
+
+All packages defined are in @code{quail-package-alist} (see
+document of quail-define-package).
+
+Users are recommended not to modify quail-map directly but
+to use quail-defrule function (see document of quail-defrule).
+
+You may find the example of defining quail package and
+defining translation rule of the package in
+lisp/quail/latin.el
+
+Quail system works as one of a minor mode so that it works
+under any major modes.  But, the way of handling non-quail
+commands are very different from that of the other minor
+modes.  All keys typed are eaten by the system because, in
+quail mode, keys except for invoking quail specific commands
+are bound to 'quail-non-quail-command.  The function, at
+first, resets quail translation status (we'll explain it
+below), then, checks the original binding of the key in
+local map or global map and invokes the command bound to the
+key.
+
+Quail keeps the current state of transformation with the
+following variables:
+
+@itemize
+@item @code{quail-overlay}
+
+Keep points of start and end of a string inserted by
+the system.  The string is one of below.
+
+@item @code{quail-current-key}
+
+A key string typed so far for the current translation.
+When there's no translation for the key, this string
+is inserted in a buffer temporally.
+
+@item @code{quail-current-str}
+
+A string translated from @code{quail-current-key}.  In addition,
+attribute region is set automatically around the sting inserted in a
+buffer.
+@end itemize
+
+@contents
+@bye

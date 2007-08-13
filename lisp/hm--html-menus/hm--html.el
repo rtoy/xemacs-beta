@@ -1,6 +1,6 @@
-;;; $Id: hm--html.el,v 1.6 1997/03/26 22:42:39 steve Exp $
+;;; $Id: hm--html.el,v 1.1.1.1 1996/12/18 22:43:20 steve Exp $
 ;;;
-;;; Copyright (C) 1993 - 1997  Heiko Muenkel
+;;; Copyright (C) 1993, 1994, 1995, 1996  Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
 ;;;
 ;;;  This program is free software; you can redistribute it and/or modify
@@ -27,14 +27,28 @@
 ;;;	Put this file in one of your load path directories.
 ;;;
 
-(defun hm--html-set-marker-at-position (&optional position)
-  "Creates a new marker and set the marker at the POSITION.
-If POSITION is nil, then the marker is set at the current point.
-The return value is the marker."
-  (let ((marker (make-marker)))
-    (if position
-	(set-marker marker position)
-      (set-marker marker (point)))))
+;(require 'hm--date)
+;(require 'adapt)
+  
+
+;;; Indentation
+
+(defun hm--html-indent-region (begin end)
+  "Indents the region between BEGIN and END according to the major mode."
+  (when (< end begin)
+    (let ((a end))
+      (setq end start)
+      (setq start a)))
+  (save-excursion
+    (goto-char begin)
+    (let ((old-point))
+      (while (and (<= (point) end)
+		  (not (eq (point) old-point)))
+	(setq old-point (point))
+	(indent-according-to-mode)
+	(forward-line)
+	))))
+
 
 ;;; Functions for adding html commands which consists of a start and a
 ;;; end tag and some text between them. (Basicfunctions)
@@ -54,12 +68,16 @@ and the third parameter specifies the function which insert the end tag.
 The second parameter is the string for the start tag and the fourth parameter
 is the string for the end tag. The third and fourth parameters are optional.
 The fifth parameter is optional. If it exists, it specifies a function which
-inserts the sixth parameter (the middle-start-tag) between the start and the
-end tag."
+inserts the sixth parameter (the middle-start-tag) between the start and the end
+tag."
+;  (interactive "aFunction, which adds the HTML start tag: \n\
+;aFunction, which adds the HTML end tag: \n\
+;sThe HTML start tag: \n\
+;sThe HTML end tag: ")
   (eval (list function-insert-start-tag start-tag))
   (if function-insert-middle-start-tag
       (eval (list function-insert-middle-start-tag middle-start-tag)))
-  (let ((position (hm--html-set-marker-at-position (point))))
+  (let ((position (point)))
     (if function-insert-middle-end-tag
       (eval (list function-insert-middle-end-tag middle-end-tag)))
     (if function-insert-end-tag
@@ -71,9 +89,8 @@ end tag."
 				    start-tag
 				    function-insert-end-tag
 				    end-tag
-				    &optional
-				    function-insert-middle-tag
-				    middle-tag)
+				    &optional function-insert-middle-tag
+				    &optional middle-tag)
   "Adds the start and the end html tag to the active region.
 The first parameter specifies the funtion which insert the start tag
 and the third parameter specifies the function which insert the end tag.
@@ -82,8 +99,12 @@ is the string for the end tag.
 The fifth parameter is optional. If it exists, it specifies a function which
 inserts the sixth parameter (the middle-tag) between the start and the end
 tag."
+;  (interactive "aFunction, which adds the html start tag: \n\
+;aFunction, which adds the html end tag: \n\
+;sThe HTML start tag: \n\
+;sThe HTML end tag: ")
   (save-window-excursion
-    (let ((start (hm--html-set-marker-at-position (region-beginning)))
+    (let ((start (region-beginning))
 	  (end (region-end)))
       (goto-char end)
       (eval (list function-insert-end-tag end-tag))
@@ -100,6 +121,7 @@ The parameter must be a string (i.e. \"<B>\")"
   (let ((start (point)))
     (insert tag)
     (hm--html-indent-region start (point))))
+;    (html-maybe-deemphasize-region start (- (point) 1))))
 
 
 (defun hm--html-insert-end-tag (tag)
@@ -108,6 +130,7 @@ The parameter must be a string (i.e. \"</B>\")"
   (let ((start (point)))
     (insert tag)
     (hm--html-indent-region start (point))))
+;    (html-maybe-deemphasize-region start (- (point) 1))))
 
 
 (defun hm--html-insert-start-tag-with-newline (tag)
@@ -117,6 +140,7 @@ The parameter must be a string (i.e. \"<PRE>\")"
     (insert tag)
     (hm--html-indent-region start (point))
     )
+;    (html-maybe-deemphasize-region start (- (point) 1)))
   (insert "\n"))
 
 
@@ -127,6 +151,7 @@ The parameter must be a string (i.e. \"</PRE>\")"
   (let ((start (point)))
     (insert tag)
     (hm--html-indent-region start (point))))
+;    (html-maybe-deemphasize-region start (- (point) 1))))
 
 
 
@@ -148,12 +173,6 @@ The parameter must be a string (i.e. \"</PRE>\")"
   (interactive)
   (hm--html-add-tags-to-region 'hm--html-insert-start-tag "<LI> "
 			       'hm--html-insert-end-tag " </LI>"))
-
-(defun hm--html-add-basefont (size)
-  "Adds the HTML tag for a basefont."
-  (interactive (list (hm--html-read-font-size t)))
-  (hm--html-add-tags 'hm--html-insert-start-tag 
-		     (concat "<BASEFONT SIZE=" size ">")))
 
 (defun hm--html-add-line-break ()
   "Adds the HTML tag for a line break."
@@ -190,108 +209,6 @@ The parameter must be a string (i.e. \"</PRE>\")"
   (interactive)
   (hm--html-add-tags 'hm--html-insert-start-tag "<P>"))
   
-(defun hm--html-add-doctype ()
-  "Adds the tag with the doctype."
-  (interactive)
-  (goto-char (point-min))
-  (hm--html-add-tags 'hm--html-insert-start-tag
-		     (concat "<!DOCTYPE HTML PUBLIC \""
-			     hm--html-html-doctype-version
-			     "\">"))
-  (newline))
-
-(defun hm--html-search-place-for-element-in-head (end-point)
-  "Searches the point for inserting an element between the head tags."
-  (let ((point (point)))
-    (if (and end-point (< (point) end-point))
-	(point)
-      (goto-char (point-min))
-      (if (re-search-forward
-	   (concat ;"\\(<title\\)\\|\\(<head\\)\\|\\(<html\\)\\|"
-	    "\\(<title\\)\\|"
-	    "\\(<isindex\\)\\|\\(<base\\)\\|\\(<link\\)\\|"
-	    "\\(<meta\\)")
-	   end-point
-	   t)
-	  (beginning-of-line)
-	end-point))))
-
-(defun hm--html-add-isindex (prompt)
-  "Inserts the isindex tag. PROMPT is the value of the prompt attribute."
-  (interactive "sPrompt: ")
-  (save-excursion
-    (let ((point (point))
-	  (case-fold-search t)
-	  (head-end-point))
-      (goto-char (point-min))
-      (setq head-end-point (when (re-search-forward
-				  "\\(</head\\)\\|\\(<body\\)\\|\\(</html\\)")
-			     (beginning-of-line)
-			     (point)))
-      (goto-char (point-min))
-      (cond ((re-search-forward "<isindex[^>]*>" head-end-point t)
-	     (delete-region (match-beginning 0) (match-end 0)))
-	    (t (goto-char point)
-	       (hm--html-search-place-for-element-in-head head-end-point)))
-      (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
-			 (concat "<ISINDEX "
-				 (if (and prompt
-					  (not (string= prompt "")))
-				     (concat " PROMPT=\"" prompt "\">")
-				   ">"))))))
-				   
-(defun hm--html-add-base (href)
-  "Inserts the base tag. HREF is the value of the href attribute."
-  (interactive (list (hm--html-read-url "URL of this document: "
-					nil
-					nil
-					t
-					nil)))
-  (save-excursion
-    (let ((point (point))
-	  (case-fold-search t)
-	  (head-end-point))
-      (goto-char (point-min))
-      (setq head-end-point (when (re-search-forward
-				  "\\(</head\\)\\|\\(<body\\)\\|\\(</html\\)")
-			     (beginning-of-line)
-			     (point)))
-      (goto-char (point-min))
-      (cond ((re-search-forward "<base[^>]*>" head-end-point t)
-	     (delete-region (match-beginning 0) (match-end 0)))
-	    (t (goto-char point)
-	       (hm--html-search-place-for-element-in-head head-end-point)))
-      (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
-			 (concat "<BASE "
-				 (if (and href
-					  (not (string= href "")))
-				     (concat " HREF=\"" href "\">")
-				   ">"))))))
-
-(defun hm--html-add-meta (name content &optional name-instead-of-http-equiv)
-  "Inserts the meta tag."
-  (interactive (list (completing-read "Name: " hm--html-meta-name-alist)
-		     (read-string "Content: ")))
-  (save-excursion
-    (let ((point (point))
-	  (case-fold-search t)
-	  (head-end-point))
-      (goto-char (point-min))
-      (setq head-end-point (when (re-search-forward
-				  "\\(</head\\)\\|\\(<body\\)\\|\\(</html\\)")
-			     (beginning-of-line)
-			     (point)))
-      (goto-char point)
-      (hm--html-search-place-for-element-in-head head-end-point)
-      (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
-			 (concat "<META "
-				 (if name-instead-of-http-equiv
-				     "NAME=\""
-				   "HTTP-EQUIV=\"")
-				 name
-				 "\" CONTENT=\""
-				 content
-				 "\">")))))
 
 
 ;;; Functions which include something in HTML- documents
@@ -346,7 +263,9 @@ URL will be used as the default URL for the external viewer."
   (let ((alttype
 	 (string-to-int
 	  (completing-read 
+;	   "0: No ALT atribute, 1: ALT=\"\", 2: ALT=Text, 3: ALT=External Viewer: "
 	   "0: No ALT atribute, 1: ALT=\"\", 2: ALT=Text: "
+;	   '(("0") ("1") ("2") ("3"))
 	   '(("0") ("1") ("2"))
 	   nil
 	   t
@@ -360,125 +279,13 @@ URL will be used as the default URL for the external viewer."
 				     (string-match
 				      "\\."
 				      (file-name-nondirectory url)))))
+;	  ((= alttype 3) (concat "<A HREF=\""
+;				 url
+;				 "\">"
+;				 (file-name-nondirectory url)
+;				 "</A>"))
 	  )))
 
-(defun hm--html-read-alignment (prompt)
-  "Read the value for the align attribute."
-  (upcase (completing-read prompt
-			   '(("left") ("right") ("top") ("bottom") ("middle"))
-			   nil
-			   t
-			   "left")))
-
-(defvar hm--html-shape-history nil
-  "History variable for reading the shape of an image map.")
-
-(defun hm--html-read-shape ()
-  "Reads the shap for an area element."
-  (upcase(completing-read "The shape of the area: "
-			  '(("rect") ("circle") ("poly"))
-			  nil
-			  t
-			  (or (car hm--html-shape-history) "rect")
-			  'hm--html-shape-history)))
-
-(defun hm--html-read-rect-coords ()
-  "Reads rectangle coordinates for the area element."
-  (concat (read-string "Left x position of the rectangle: ") ", "
-	  (read-string "Top y position of the rectangle: ") ", "
-	  (read-string "Right x position of the rectangle: ") ", "
-	  (read-string "Bottom y position of the rectangle: ")))
-
-(defun hm--html-read-circle-coords ()
-  "Reads circle coordinates for the area element."
-  (concat (read-string "x position of the center of the circle: ") ", "
-	  (read-string "y position of the center of the circle: ") ", "
-	  (read-string "Radius: ")))
-
-(defun hm--html-read-one-poly-coordinate (&optional empty-string-prompt)
-  "Reads one poly coordinate pair."
-  (let* ((x (read-string (concat "x coordinate"
-				  (or empty-string-prompt "")
-				  ": ")))
-	 (y (unless (string= "" x)
-	      (read-string "y coordinate: "))))
-    (if (string= "" x)
-	""
-      (concat x ", " y))))
-
-(defun hm--html-read-more-poly-coordinates ()
-  "Reads poly coordinates until an empty string is given."
-  (let ((coord (hm--html-read-one-poly-coordinate
-		" (Empty string for no further coords!)")))
-    (cond ((string= "" coord) "")
-	  (t (concat ", " coord (hm--html-read-more-poly-coordinates))))))
-
-(defun hm--html-read-poly-coords ()
-  "Reads poly coordinates for the area element."
-  (concat (hm--html-read-one-poly-coordinate) ", "
-	  (hm--html-read-one-poly-coordinate) ", "
-	  (hm--html-read-one-poly-coordinate)
-	  (hm--html-read-more-poly-coordinates)))
-
-(defun hm--html-add-area (href alt shape coords)
-  "Adds the tags for an area at the current point."
-  (interactive (let* ((href (hm--html-read-url "Url for the image area: "))
-		      (alt (hm--html-read-altenate href))
-		      (shape (hm--html-read-shape))
-		      (coords (cond ((string= shape "RECT")
-				     (hm--html-read-rect-coords))
-				    ((string= shape "CIRCLE")
-				     (hm--html-read-circle-coords))
-				    ((string= shape "POLY")
-				     (hm--html-read-poly-coords))
-				    (t (error "No function to read \""
-					      shape
-					      "\" coordinates!")))))
-		 (list href alt shape coords)))
-  (hm--html-add-tags 'hm--html-insert-end-tag-with-newline
-		     (concat "<AREA"
-			     " HREF=\"" href "\""
-			     (if alt
-				 (concat "\nALT=\"" alt "\"")
-			       "")
-			     "\nSHAPE=" shape
-			     "\nCOORDS=\"" coords "\""
-			     ">")))
-
-
-(when (adapt-emacs19p)
-      (defvar :ask ':ask))
-
-(defvar hm--html-use-image-as-map ':ask
-  "Internal variable of `hm--html-add-image'.
-nil => insert the image element without an usemap attribute.
-t => insert the image element with an usemap attribute.
-:ask => ask, if the image element should have an usemap attribute.")
-
-(defun hm--html-add-image (href alt alignment mapname)
-  "Add an image."
-  (interactive (let* ((href (hm--html-read-url "Image URL: "))
-		      (alt (hm--html-read-altenate href))
-		      (alignment (hm--html-read-alignment
-				  "Alignment of the image: "))
-		      (use-as-map (if (eq hm--html-use-image-as-map ':ask)
-				      (y-or-n-p
-				       "Use the image as a map with links? ")
-				    hm--html-use-image-as-map))
-		      (mapname (and use-as-map (hm--html-read-mapname))))
-		 (list href alt alignment mapname)))
-  (hm--html-add-tags 
-   'hm--html-insert-start-tag
-   (concat "<IMG ALIGN=" alignment
-	   "\nHREF=\"" href "\""
-	   (if alt
-	       (concat "\nALT=\"" alt "\"")
-	     "")
-	   (if mapname
-	       (concat "\nUSEMAP=\"#" mapname "\"")
-	     "")
-	   ">")))
-	   
 
 (defun hm--html-add-image-bottom (href alt)
   "Add an image, bottom aligned."
@@ -555,6 +362,70 @@ This tag must be added between <APPLET> and </APPLET>."
 			     value
 			     "\">")))
 		     
+
+(defun hm--html-add-server-side-include-file (file)
+  "This function adds a server side include file directive in the buffer.
+The directive is only supported by the NCSA http daemon."
+  (interactive "FInclude File: ")
+  (let ((start (point)))
+    (if (string= file "")
+	(error "ERROR: No filename specified !")
+      (insert "<INC SRV \"" file "\">"))))
+;      (html-maybe-deemphasize-region (1+ start) (1- (point))))))
+  
+
+(defun hm--html-add-server-side-include-command-with-isindex-parameter 
+  (command)
+  "This function adds a server side include command directive in the buffer.
+The include command uses the \"isindex\"- parameter for the specified command."
+  (interactive (list 
+		(completing-read "Include Command: "
+				 hm--html-server-side-include-command-alist)))
+  (hm--html-add-server-side-include-command command t))
+
+
+(defun hm--html-add-server-side-include-command (command &optional srvurl)
+  "This function adds a server side include command directive in the buffer.
+The directive is only supported by the NCSA http daemon.
+If SRVURL is t, then the attribute srvurl instead of srv is used for the 
+include command. With srvurl, the include command uses the \"isindex\"-
+parameter for the specified command."
+  (interactive (list 
+		(completing-read "Include Command: "
+				 hm--html-server-side-include-command-alist)))
+  (let ((start (point))
+	(attribute (if srvurl "SRVURL" "SRV")))
+    (if (string= command "")
+	(error "ERROR: No command specified !")
+      (if (= ?| (string-to-char command))
+	  (insert "<INC " attribute" \"" command "\">")
+	(insert "<INC " attribute " \"|" command "\">")))))
+;	(html-maybe-deemphasize-region (1+ start) (1- (point)))))))
+  
+
+;(defun hm--html-add-server-side-include-command-with-parameter (command 
+;								parameter)
+;  "This function adds a server side include command directive in the buffer.
+;The directive is only supported by the NCSA http daemon."
+;  (interactive (list 
+;		(completing-read 
+;		 "Include Command: "
+;		 hm--html-server-side-include-command-with-parameter-alist)
+;		(read-string "Parameterlist sepearted by '?': ")))
+;  (let ((start (point)))
+;    (if (string= command "")
+;	(error "ERROR: No command specified !")
+;      (if (string= parameter "")
+;	  (error "ERROR: No parameter specified !")
+;	(if (= ?| (string-to-char command))
+;	    (if (= ?? (string-to-char parameter))
+;		(insert "<INC SRVURL \"" command parameter "\">")
+;	      (insert "<INC SRVURL \"" command "?" parameter "\">"))
+;	  (if (= ?? (string-to-char parameter))
+;	      (insert "<INC SRVURL \"|" command parameter "\">")
+;	    (insert "<INC SRVURL \"|" command "?" parameter "\">")))
+;	(html-maybe-deemphasize-region (1+ start) (1- (point)))))))
+  
 
 
 ;;; Functions, which adds tags of the form <starttag> ... </endtag>
@@ -826,23 +697,6 @@ This tag must be added between <APPLET> and </APPLET>."
 			       " -->"))
 
 
-(defun hm--html-add-document-division (alignment)
-  "Adds the HTML tags for document division at the current point."
-  (interactive (list (hm--html-read-alignment "Alignment of the division: ")))
-  (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
-		     (concat "<DIV ALIGN=\"" alignment "\">")
-		     'hm--html-insert-end-tag-with-newline
-		     "</DIV>"))
-
-
-(defun hm--html-add-document-division-to-region (alignment)
-  "Adds the HTML tags for document division to the region."
-  (interactive (list (hm--html-read-alignment "Alignment of the division: ")))
-  (hm--html-add-tags-to-region 'hm--html-insert-start-tag-with-newline
-			       (concat "<DIV ALIGN=\"" alignment "\">")
-			       'hm--html-insert-end-tag-with-newline
-			       "</DIV>"))
-
 
 (defun hm--html-add-preformated ()
   "Adds the HTML tags for preformated text at the point in the current buffer."
@@ -862,6 +716,24 @@ This tag must be added between <APPLET> and </APPLET>."
 			       "</PRE>"))
 
 
+(defun hm--html-add-plaintext ()
+  "Adds the HTML tags for plaintext."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
+		     "<XMP>"
+		     'hm--html-insert-end-tag-with-newline
+		     "</XMP>"))
+
+
+(defun hm--html-add-plaintext-to-region ()
+  "Adds the HTML tags for plaintext to the region."
+  (interactive)
+  (hm--html-add-tags-to-region 'hm--html-insert-start-tag-with-newline
+			       "<XMP>"
+			       'hm--html-insert-end-tag-with-newline
+			       "</XMP>"))
+
+
 (defun hm--html-add-blockquote ()
   "Adds the HTML tags for blockquote."
   (interactive)
@@ -879,56 +751,41 @@ This tag must be added between <APPLET> and </APPLET>."
 			       'hm--html-insert-end-tag-with-newline
 			       "</BLOCKQUOTE>"))
 
-(defun hm--html-add-script ()
-  "Adds the HTML tags for script."
+(defun hm--html-add-abstract ()
+  "Adds the HTML tags for abstract text at the point in the current buffer."
   (interactive)
   (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
-		     "<SCRIPT>"
+		     "<ABSTRACT>"
 		     'hm--html-insert-end-tag-with-newline
-		     "</SCRIPT>"))
+		     "</ABSTRACT>"))
 
 
-(defun hm--html-add-script-to-region ()
-  "Adds the HTML tags for script to the region."
+(defun hm--html-add-abstract-to-region ()
+  "Adds the HTML tags for abstract text to the region."
   (interactive)
   (hm--html-add-tags-to-region 'hm--html-insert-start-tag-with-newline
-			       "<SCRIPT>"
+			       "<ABSTRACT>"
 			       'hm--html-insert-end-tag-with-newline
-			       "</SCRIPT>"))
-
-(defun hm--html-add-style ()
-  "Adds the HTML tags for style."
-  (interactive)
-  (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
-		     "<STYLE>"
-		     'hm--html-insert-end-tag-with-newline
-		     "</STYLE>"))
+			       "</ABSTRACT>"))
 
 
-(defun hm--html-add-style-to-region ()
-  "Adds the HTML tags for style to the region."
-  (interactive)
-  (hm--html-add-tags-to-region 'hm--html-insert-start-tag-with-newline
-			       "<STYLE>"
-			       'hm--html-insert-end-tag-with-newline
-			       "</STYLE>"))
 
 (defun hm--html-add-strikethru ()
   "Adds the HTML tags for Strikethru at the point in the current buffer."
   (interactive)
   (hm--html-add-tags 'hm--html-insert-start-tag
-		     "<STRIKE>"
+		     "<S>"
 		     'hm--html-insert-end-tag
-		     "</STRIKE>"))
+		     "</S>"))
 
 
 (defun hm--html-add-strikethru-to-region ()
   "Adds the HTML tags for Strikethru to the region."
   (interactive)
   (hm--html-add-tags-to-region 'hm--html-insert-start-tag
-			       "<STRIKE>"
+			       "<S>"
 			       'hm--html-insert-end-tag
-			       "</STRIKE>"))
+			       "</S>"))
 
 
 (defun hm--html-add-superscript ()
@@ -967,6 +824,60 @@ This tag must be added between <APPLET> and </APPLET>."
 			       "</SUB>"))
 
 
+(defun hm--html-add-quote ()
+  "Adds the HTML tags for Quote at the point in the current buffer."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     "<Q>"
+		     'hm--html-insert-end-tag
+		     "</Q>"))
+
+
+(defun hm--html-add-quote-to-region ()
+  "Adds the HTML tags for Quote to the region."
+  (interactive)
+  (hm--html-add-tags-to-region 'hm--html-insert-start-tag
+			       "<Q>"
+			       'hm--html-insert-end-tag
+			       "</Q>"))
+
+
+(defun hm--html-add-person ()
+  "Adds the HTML tags for Person at the point in the current buffer."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     "<PERSON>"
+		     'hm--html-insert-end-tag
+		     "</PERSON>"))
+
+
+(defun hm--html-add-person-to-region ()
+  "Adds the HTML tags for Person to the region."
+  (interactive)
+  (hm--html-add-tags-to-region 'hm--html-insert-start-tag
+			       "<PERSON>"
+			       'hm--html-insert-end-tag
+			       "</PERSON>"))
+
+
+(defun hm--html-add-instance ()
+  "Adds the HTML tags for Instance at the point in the current buffer."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     "<INS>"
+		     'hm--html-insert-end-tag
+		     "</INS>"))
+
+
+(defun hm--html-add-instance-to-region ()
+  "Adds the HTML tags for Instance to the region."
+  (interactive)
+  (hm--html-add-tags-to-region 'hm--html-insert-start-tag
+			       "<INS>"
+			       'hm--html-insert-end-tag
+			       "</INS>"))
+
+
 (defun hm--html-add-option ()
   "Adds the HTML tags for Option at the point in the current buffer."
   (interactive)
@@ -985,81 +896,262 @@ This tag must be added between <APPLET> and </APPLET>."
 			       "</OPT>"))
 
 
-(defun hm--html-read-font-size (&optional only-absolute-size)
-  "Reads the size for the FONT element.
-It returns nil, if the size should not be changed."
-  (let ((size
-	 (if only-absolute-size
-	     (completing-read "The absolute font size (1 .. 7): "
-			      '(("7") ("6") ("5") ("4") ("3") ("2") ("1"))
-			      nil
-			      t
-			      "4")
-	   (completing-read "The relative (+/-) or absolute font size: "
-			    '(("-7") ("-6") ("-5") ("-4") ("-3") ("-2") ("-1")
-			      ("+7") ("+6") ("+5") ("+4") ("+3") ("+2") ("+1")
-			      ("7") ("6") ("5") ("4") ("3") ("2") ("1")
-			      ("use-basefont"))
-			    nil
-			    t
-			    "use-basefont-size"))))
-    (if (string= size "use-basefont-size")
-	nil
-      size)))
-	
-(defun hm--html-read-font-color ()
-  "Reads the size for the FONT element.
-It returns nil, if the color should not be changed."
-  (let ((color
-	 (completing-read "The font color: "
-			  '(("Black") ("Silver") ("Gray") ("White") ("Maroon")
-			    ("Green") ("Lime") ("Olive") ("Yellow") ("Navy")
-			    ("Red") ("Purple") ("Fuchsia") ("Blue") ("Teal")
-			    ("Aqua") ("dont-set-color"))
-			  nil
-			  nil
-			  "dont-set-color")))
-    (if (string= color "dont-set-color")
-	nil
-      color)))
-	
-
-(defun hm--html-add-font (size color)
-  "Adds the HTML tags for Font at the point in the current buffer."
-  (interactive (list (hm--html-read-font-size)
-		     (hm--html-read-font-color)))
-  (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
-		     (concat "<FONT"
-			     (if size 
-				 (concat " SIZE=" size)
-			       "")
-			     (if color
-				 (concat " COLOR=" color)
-			       "")
-			     ">")
-		     'hm--html-insert-end-tag-with-newline
-		     "</FONT>"))
+(defun hm--html-add-publication ()
+  "Adds the HTML tags for Publication at the point in the current buffer."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     "<PUB>"
+		     'hm--html-insert-end-tag
+		     "</PUB>"))
 
 
-(defun hm--html-add-font-to-region (size color)
-  "Adds the HTML tags for Font to the region."
-  (interactive (list (hm--html-read-font-size)
-		     (hm--html-read-font-color)))
-  (hm--html-add-tags-to-region 'hm--html-insert-start-tag-with-newline
-			       (concat "<FONT"
-				       (if size 
-					   (concat " SIZE=" size)
-					 "")
-				       (if color
-					   (concat " COLOR=" color)
-					 "")
-				       ">")
-			       'hm--html-insert-end-tag-with-newline
-			       "</FONT>"))
+(defun hm--html-add-publication-to-region ()
+  "Adds the HTML tags for Publication to the region."
+  (interactive)
+  (hm--html-add-tags-to-region 'hm--html-insert-start-tag
+			       "<PUB>"
+			       'hm--html-insert-end-tag
+			       "</PUB>"))
+
+
+(defun hm--html-add-author ()
+  "Adds the HTML tags for Author at the point in the current buffer."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     "<AUTHOR>"
+		     'hm--html-insert-end-tag
+		     "</AUTHOR>"))
+
+
+(defun hm--html-add-author-to-region ()
+  "Adds the HTML tags for Author to the region."
+  (interactive)
+  (hm--html-add-tags-to-region 'hm--html-insert-start-tag
+			       "<AUTHOR>"
+			       'hm--html-insert-end-tag
+			       "</AUTHOR>"))
+
+
+(defun hm--html-add-editor ()
+  "Adds the HTML tags for Editor at the point in the current buffer."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     "<EDITOR>"
+		     'hm--html-insert-end-tag
+		     "</EDITOR>"))
+
+
+(defun hm--html-add-editor-to-region ()
+  "Adds the HTML tags for Editor to the region."
+  (interactive)
+  (hm--html-add-tags-to-region 'hm--html-insert-start-tag
+			       "<EDITOR>"
+			       'hm--html-insert-end-tag
+			       "</EDITOR>"))
+
+
+(defun hm--html-add-credits ()
+  "Adds the HTML tags for Credits at the point in the current buffer."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     "<CREDITS>"
+		     'hm--html-insert-end-tag
+		     "</CREDITS>"))
+
+
+(defun hm--html-add-credits-to-region ()
+  "Adds the HTML tags for Credits to the region."
+  (interactive)
+  (hm--html-add-tags-to-region 'hm--html-insert-start-tag
+			       "<CREDITS>"
+			       'hm--html-insert-end-tag
+			       "</CREDITS>"))
+
+
+(defun hm--html-add-copyright ()
+  "Adds the HTML tags for Copyright at the point in the current buffer."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     "<COPYRIGHT>"
+		     'hm--html-insert-end-tag
+		     "</COPYRIGHT>"))
+
+
+(defun hm--html-add-copyright-to-region ()
+  "Adds the HTML tags for Copyright to the region."
+  (interactive)
+  (hm--html-add-tags-to-region 'hm--html-insert-start-tag
+			       "<COPYRIGHT>"
+			       'hm--html-insert-end-tag
+			       "</COPYRIGHT>"))
+
+
+(defun hm--html-add-isbn ()
+  "Adds the HTML tags for ISBN at the point in the current buffer."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     "<ISBN>"
+		     'hm--html-insert-end-tag
+		     "</ISBN>"))
+
+
+(defun hm--html-add-isbn-to-region ()
+  "Adds the HTML tags for ISBN to the region."
+  (interactive)
+  (hm--html-add-tags-to-region 'hm--html-insert-start-tag
+			       "<ISBN>"
+			       'hm--html-insert-end-tag
+			       "</ISBN>"))
+
+
+(defun hm--html-add-acronym ()
+  "Adds the HTML tags for Acronym at the point in the current buffer."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     "<ACRONYM>"
+		     'hm--html-insert-end-tag
+		     "</ACRONYM>"))
+
+
+(defun hm--html-add-acronym-to-region ()
+  "Adds the HTML tags for Acronym to the region."
+  (interactive)
+  (hm--html-add-tags-to-region 'hm--html-insert-start-tag
+			       "<ACRONYM>"
+			       'hm--html-insert-end-tag
+			       "</ACRONYM>"))
+
+
+(defun hm--html-add-abbrevation ()
+  "Adds the HTML tags for Abbrevation at the point in the current buffer."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     "<ABBREV>"
+		     'hm--html-insert-end-tag
+		     "</ABBREV>"))
+
+
+(defun hm--html-add-abbrev-to-region ()
+  "Adds the HTML tags for Abbrev to the region."
+  (interactive)
+  (hm--html-add-tags-to-region 'hm--html-insert-start-tag
+			       "<ABBREV>"
+			       'hm--html-insert-end-tag
+			       "</ABBREV>"))
+
+
+(defun hm--html-add-command ()
+  "Adds the HTML tags for Command at the point in the current buffer."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     "<CMD>"
+		     'hm--html-insert-end-tag
+		     "</CMD>"))
+
+
+(defun hm--html-add-command-to-region ()
+  "Adds the HTML tags for Command to the region."
+  (interactive)
+  (hm--html-add-tags-to-region 'hm--html-insert-start-tag
+			       "<CMD>"
+			       'hm--html-insert-end-tag
+			       "</CMD>"))
+
+
+(defun hm--html-add-argument ()
+  "Adds the HTML tags for Argument at the point in the current buffer."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     "<ARG>"
+		     'hm--html-insert-end-tag
+		     "</ARG>"))
+
+
+(defun hm--html-add-argument-to-region ()
+  "Adds the HTML tags for Argument to the region."
+  (interactive)
+  (hm--html-add-tags-to-region 'hm--html-insert-start-tag
+			       "<ARG>"
+			       'hm--html-insert-end-tag
+			       "</ARG>"))
+
+
+(defun hm--html-add-literature ()
+  "Adds the HTML tags for Literature at the point in the current buffer."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     "<LIT>"
+		     'hm--html-insert-end-tag
+		     "</LIT>"))
+
+
+(defun hm--html-add-literature-to-region ()
+  "Adds the HTML tags for Literature to the region."
+  (interactive)
+  (hm--html-add-tags-to-region 'hm--html-insert-start-tag
+			       "<LIT>"
+			       'hm--html-insert-end-tag
+			       "</LIT>"))
+
+
+(defun hm--html-add-footnote ()
+  "Adds the HTML tags for Footnote at the point in the current buffer."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     "<FOOTNOTE>"
+		     'hm--html-insert-end-tag
+		     "</FOOTNOTE>"))
+
+
+(defun hm--html-add-footnote-to-region ()
+  "Adds the HTML tags for Footnote to the region."
+  (interactive)
+  (hm--html-add-tags-to-region 'hm--html-insert-start-tag
+			       "<FOOTNOTE>"
+			       'hm--html-insert-end-tag
+			       "</FOOTNOTE>"))
+
+
+(defun hm--html-add-margin ()
+  "Adds the HTML tags for Margin at the point in the current buffer."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag
+		     "<MARGIN>"
+		     'hm--html-insert-end-tag
+		     "</MARGIN>"))
+
+
+(defun hm--html-add-margin-to-region ()
+  "Adds the HTML tags for Margin to the region."
+  (interactive)
+  (hm--html-add-tags-to-region 'hm--html-insert-start-tag
+			       "<MARGIN>"
+			       'hm--html-insert-end-tag
+			       "</MARGIN>"))
+
+
+
 
 
 ;;; Lists
 
+
+(defun hm--html-add-listing ()
+  "Adds the HTML tags for listing."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
+		     "<LISTING>"
+		     'hm--html-insert-end-tag-with-newline
+		     "</LISTING>"))
+
+
+(defun hm--html-add-listing-to-region ()
+  "Adds the HTML tags for listing to the region."
+  (interactive)
+  (hm--html-add-tags-to-region 'hm--html-insert-start-tag-with-newline
+			       "<LISTING>"
+			       'hm--html-insert-end-tag-with-newline
+			       "</LISTING>"))
 
 (defun hm--html-add-center ()
   "Adds the HTML tags for center at the current point."
@@ -1077,49 +1169,6 @@ It returns nil, if the color should not be changed."
 			       'hm--html-insert-end-tag-with-newline
 			       "</CENTER>"))
 
-
-(defvar hm--html-mapname-history nil
-  "The history variable for the function `hm--html-read-mapname'.")
-
-(defun hm--html-read-mapname ()
-  "Reads the name of an image map."
-  (let ((name (read-string "The name of the image map: "
-			   (or (car hm--html-mapname-history)
-			       "map")
-			   'hm--html-mapname-history)))
-    name))
-
-(defun hm--html-add-image-map ()
-  "Adds an image and a map element."
-  (interactive)
-  (let* ((href (hm--html-read-url "Image URL: "))
-	 (alt (hm--html-read-altenate href))
-	 (alignment (hm--html-read-alignment
-		     "Alignment of the image: "))
-	 (mapname (hm--html-read-mapname)))
-    (hm--html-add-image href alt alignment mapname)
-    (newline)
-    (hm--html-add-map mapname)
-    (call-interactively 'hm--html-add-area)))
-
-(defun hm--html-add-map (name)
-  "Adds the HTML tags for map at the current point."
-  (interactive (list (hm--html-read-mapname)))
-  (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
-		     (concat "<MAP NAME=\"" name "\">")
-		     'hm--html-insert-end-tag
-		     "</MAP>")
-  (end-of-line 0))
-
-(defun hm--html-add-map-to-region (name)
-  "Adds the HTML tags for map to the region."
-  (interactive (list (hm--html-read-mapname)))
-  (hm--html-add-tags-to-region 'hm--html-insert-start-tag-with-newline
-			       (concat "<MAP NAME=\"" name "\">")
-			       'hm--html-insert-end-tag-with-newline
-			       "</MAP>"))
-
-
 (defun hm--html-add-numberlist ()
   "Adds the HTML tags for a numbered list at the point in the current buffer."
   (interactive)
@@ -1128,9 +1177,7 @@ It returns nil, if the color should not be changed."
 		     'hm--html-insert-end-tag-with-newline
 		     "</OL>"
 		     'hm--html-insert-start-tag
-		     "<LI> "
-		     'hm--html-insert-end-tag
-		     " </LI>"))
+		     "<LI> "))
   
 (defun hm--html-add-numberlist-to-region ()
   "Adds the HTML tags for a numbered list to the region."
@@ -1138,7 +1185,9 @@ It returns nil, if the color should not be changed."
   (hm--html-add-tags-to-region 'hm--html-insert-start-tag-with-newline
 			       "<OL>"
 			       'hm--html-insert-end-tag-with-newline
-			       "</OL>"))
+			       "</OL>"
+			       'hm--html-insert-start-tag
+			       "<LI> "))
 
 
 (defun hm--html-add-directory-list ()
@@ -1149,9 +1198,7 @@ It returns nil, if the color should not be changed."
 		     'hm--html-insert-end-tag-with-newline
 		     "</DIR>"
 		     'hm--html-insert-start-tag
-		     "<LI> "
-		     'hm--html-insert-end-tag
-		     " </LI>"))
+		     "<LI> "))
   
 (defun hm--html-add-directorylist-to-region ()
   "Adds the HTML tags for a directory list to the region."
@@ -1159,7 +1206,9 @@ It returns nil, if the color should not be changed."
   (hm--html-add-tags-to-region 'hm--html-insert-start-tag-with-newline
 			       "<DIR>"
 			       'hm--html-insert-end-tag-with-newline
-			       "</DIR>"))
+			       "</DIR>"
+			       'hm--html-insert-start-tag
+			       "<LI> "))
 
 
 (defun hm--html-add-list ()
@@ -1170,9 +1219,7 @@ It returns nil, if the color should not be changed."
 			       'hm--html-insert-end-tag-with-newline
 			       "</UL>"
 			       'hm--html-insert-start-tag
-			       "<LI> "
-			       'hm--html-insert-end-tag
-			       " </LI>"))
+			       "<LI> "))
 
 
 (defun hm--html-add-list-to-region ()
@@ -1181,7 +1228,20 @@ It returns nil, if the color should not be changed."
   (hm--html-add-tags-to-region 'hm--html-insert-start-tag-with-newline
 			       "<UL>"
 			       'hm--html-insert-end-tag-with-newline
-			       "</UL>"))
+			       "</UL>"
+			       'hm--html-insert-start-tag
+			       "<LI> "))
+
+
+(defun hm--html-add-menu ()
+  "Adds the HTML tags for a menu."
+  (interactive)
+  (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
+		     "<MENU>"
+		     'hm--html-insert-end-tag-with-newline
+		     "</MENU>"
+		     'hm--html-insert-start-tag
+		     "<LI> "))
 
 
 (defun hm--html-add-menu ()
@@ -1205,16 +1265,18 @@ It returns nil, if the color should not be changed."
 			       'hm--html-insert-end-tag-with-newline
 			       "</MENU>"))
 
+;			       'hm--html-insert-start-tag
+;			       "<LI> "))
+
 
 (defun hm--html-add-description-title-and-entry ()
   "Adds a definition title and entry.
 Assumes we're at the end of a previous entry."
   (interactive)
   (hm--html-add-description-title)
-  (let ((position (point))
-	(case-fold-search t))
-    (search-forward "</dt>")
-    (hm--html-add-description-entry)
+  (let ((position (point)))
+    (search-forward "</DT>")
+    (hm--html-add-only-description-entry)
     (goto-char position)))
 
 
@@ -1240,6 +1302,9 @@ It also inserts a tag for the description title."
 			       "<DL>"
 			       'hm--html-insert-end-tag-with-newline
 			       "</DL>"))
+
+;			       'hm--html-insert-start-tag
+;			       "<DT> "))
   
 
 (defun hm--html-add-description-title ()
@@ -1302,33 +1367,29 @@ It also inserts a tag for the description title."
 (defun hm--html-make-signature-link-string (signature-file-name)
   "Returns a string which is a link to a signature file."
   (concat
-   "<A NAME=\""
+   "<A Name="
    hm--html-signature-reference-name
-   "\"\nHREF=\""
+   " HREF=\""
    signature-file-name
    "\">"))
-
+   
 
 (defun hm--html-delete-old-signature ()
   "Searches for the old signature and deletes it, if the user want it"
   (save-excursion
     (goto-char (point-min))
-    (let ((case-fold-search t))
-      (if (re-search-forward (concat "<address>[ \t\n]*"
-				     "<a[ \t\n]+name=[ \t\n]*\"?"
-				     hm--html-signature-reference-name
-				     "\"?[ \t\n]+href=[ \t\n]*\"")
-			     nil
-			     t)
-	  (let ((signature-start (match-beginning 0))
-		(signature-end (progn
-				 (re-search-forward "</address>[ \t]*[\n]?"
-						    nil
-						    t) 
-				 (point))))
-	    (when (yes-or-no-p "Delete the old signature (yes or no) ?")
-	      (delete-region signature-start signature-end)
-	      (hm--html-indent-line)))))))
+    (if (search-forward (concat "<address> "
+				"<a name="
+				hm--html-signature-reference-name
+				" href=\"")
+			nil
+			t)
+	(let ((signature-start (match-beginning 0))
+	      (signature-end (progn
+			       (search-forward "</address>" nil t) 
+			       (point))))
+	  (if (yes-or-no-p "Delete the old signature (yes or no) ?")
+	      (delete-region signature-start signature-end))))))
 
 
 (defun hm--html-set-point-for-signature ()
@@ -1337,18 +1398,17 @@ It searches from the end to the beginning of the file. At first it
 tries to use the point before the </body> tag then the point before
 the </html> tag and the the end of the file."
   (goto-char (point-max))
-  (let ((case-fold-search t))
-    (cond ((search-backward "</body>" nil t)
-	   (end-of-line 0)
-	   (if (> (current-column) 0)
-	       (newline 1)))
-	  ((search-backward "</html>" nil t)
-	   (end-of-line 0)
-	   (if (> (current-column) 0)
-	       (newline 2)))
-	  ((> (current-column) 0)
-	   (newline 2))
-	  (t))))
+  (cond ((search-backward "</body>" nil t)
+	 (end-of-line 0)
+	 (if (> (current-column) 0)
+	     (newline 2)))
+	((search-backward "</html>" nil t)
+	 (end-of-line 0)
+	 (if (> (current-column) 0)
+	     (newline 2)))
+	((> (current-column) 0)
+	 (newline 2))
+	(t)))
 
 
 (defun hm--html-add-signature ()
@@ -1361,10 +1421,10 @@ the </html> tag and the the end of the file."
 	(save-excursion
 	  (hm--html-delete-old-signature)
 	  (hm--html-set-point-for-signature)
-	  (hm--html-add-tags 'hm--html-insert-start-tag-with-newline
-			     "<ADDRESS>"
+	  (hm--html-add-tags 'hm--html-insert-start-tag
+			     "<ADDRESS> "
 			     'hm--html-insert-end-tag
-			     "</A>\n</ADDRESS>"
+			     "</A></ADDRESS>"
 			     'hm--html-insert-start-tag
 			     (hm--html-make-signature-link-string
 			      hm--html-signature-file)
@@ -1407,11 +1467,10 @@ tag <HEAD> and sets the point after the tag, if it exists, or searches for
 the tag <HTML>. If this tag exists, the point is set to the position after
 this tag or the beginning of the file otherwise."
   (goto-char (point-min))
-  (let ((case-fold-search t))
-    (cond ((search-forward-regexp "<isindex[^>]*>" nil t) (newline))
-	  ((search-forward-regexp "<head[^>]*>" nil t) (newline))
-	  ((search-forward-regexp "<html[^>]*>" nil t) (newline))
-	  (t))))
+  (cond ((search-forward-regexp "<isindex>" nil t) (newline))
+	((search-forward-regexp "<head>" nil t) (newline))
+	((search-forward-regexp "<html>" nil t) (newline))
+	(t)))
 
 
 (defun hm--html-add-title (title)
@@ -1419,34 +1478,32 @@ this tag or the beginning of the file otherwise."
   (interactive "sTitle: ")
   (save-excursion
     (goto-char (point-min))
-    (let ((case-fold-search t))
-      (if (search-forward "<title>" nil t)
-	  (let ((point-after-start-tag (point)))
-	    (if (not (search-forward "</title>" nil t))
-		nil
-	      (goto-char (- (point) 8))
-	      (delete-backward-char (- (point) point-after-start-tag))
-	      (let ((start (point)))
-		(insert title " (" (hm--date) ")")
-		(goto-char start))))
-	;; Noch kein <TITLE> im Buffer vorhanden
-	(hm--html-set-point-for-title)
-	(hm--html-add-tags 'hm--html-insert-start-tag
-			   "<TITLE>"
-			   'hm--html-insert-end-tag
-			   "</TITLE>"
-			   'insert 
-			   (concat title " (" (hm--date) ")"))
-	(forward-char 8)
-	(newline 1)
-	))))
+    (if (search-forward "<title>" nil t)
+	(let ((point-after-start-tag (point)))
+	  (if (not (search-forward "</title>" nil t))
+	      nil
+	    (goto-char (- (point) 8))
+	    (delete-backward-char (- (point) point-after-start-tag))
+	    (let ((start (point)))
+	      (insert title " (" (hm--date) ")")
+	      (goto-char start))))
+      ;; Noch kein <TITLE> im Buffer vorhanden
+      (hm--html-set-point-for-title)
+      (hm--html-add-tags 'hm--html-insert-start-tag
+			 "<TITLE>"
+			 'hm--html-insert-end-tag
+			 "</TITLE>"
+			 'insert 
+			 (concat title " (" (hm--date) ")"))
+      (forward-char 8)
+      (newline 1)
+      )))
 
 
 (defun hm--html-add-title-to-region ()
   "Adds the HTML tags for a title to the region."
   (interactive)
-  (let ((title (buffer-substring (region-beginning) (region-end)))
-	(case-fold-search t))
+  (let ((title (buffer-substring (region-beginning) (region-end))))
     (save-excursion
       (goto-char (point-min))
       (if (search-forward "<title>" nil t)
@@ -1471,17 +1528,14 @@ this tag or the beginning of the file otherwise."
 
 (defun hm--html-add-html ()
   "Adds the HTML tags <HTML> and </HTML> in the buffer.
-The tag <HTML> will be inserted at the beginning (after the
-<!DOCTYPE ...>, if it is already there.) and </HTML> at the
+The tag <HTML> will be inserted at the beginning and </HTML> at the
 end of the file." 
   (interactive)
-  (let ((new-cursor-position nil)
-	(case-fold-search t))
+  (let ((new-cursor-position nil))
     (save-excursion
       (goto-char (point-min))
       (if (search-forward "<html>" nil t)
 	  (error "There is an old tag <HTML> in the current buffer !")
-	(re-search-forward "<!DOCTYPE[^>]*>[ \t\n]*" nil t)
 	(hm--html-add-tags 'hm--html-insert-start-tag-with-newline "<HTML>")
 ;	(newline 1)
 	)
@@ -1496,13 +1550,10 @@ end of the file."
 
 (defun hm--html-add-head ()
   "Adds the HTML tags <HEAD> and </HEAD> in the buffer.
-The tags will be inserted after <HTML> or at the beginning
-of the file after <DOCTYPE...> (if it is already there).
+The tags will be inserted after <HTML> or at the beginning of the file.
 The function also looks for the tags <BODY> and </TITLE>." 
   (interactive)
-  (let ((case-fold-search t))
     (goto-char (point-min))
-    (re-search-forward "<!DOCTYPE[^>]*>[ \t\n]*" nil t)
     (if (search-forward "<html>" nil t)
 	(if (search-forward "<head>" nil t)
 	    (error "There is an old tag <HEAD> in the current buffer !")
@@ -1535,7 +1586,7 @@ The function also looks for the tags <BODY> and </TITLE>."
 	  (hm--html-add-tags 'hm--html-insert-start-tag-with-newline 
 			     "<HEAD>"
 			     'hm--html-insert-end-tag-with-newline 
-			     "</HEAD>"))))))
+			     "</HEAD>")))))
 
 
 (defun hm--html-add-head-to-region ()
@@ -1551,7 +1602,6 @@ The function also looks for the tags <BODY> and </TITLE>."
   "Adds the HTML tags <BODY> and </BODY> in the buffer.
 The tags will be inserted before </HTML> or at the end of the file." 
   (interactive)
-  (let ((case-fold-search t))
     (goto-char (point-max))
     (if (search-backward "</html>" nil t)
 	(progn
@@ -1560,7 +1610,7 @@ The tags will be inserted before </HTML> or at the end of the file."
 	    (if (search-backward "<body>" nil t)
 		(error "There is an old tag <BODY> in the current buffer !")))
 	  (forward-char -1)))
-    (let ((end-tag-position (set-marker (make-marker) (point))))
+    (let ((end-tag-position (point)))
       (if (search-backward "</head>" nil t)
 	  (progn
 	    (forward-char 7)
@@ -1568,7 +1618,7 @@ The tags will be inserted before </HTML> or at the end of the file."
 	    (hm--html-add-tags 'hm--html-insert-start-tag-with-newline 
 			       "<BODY>")
 	    (let ((cursor-position (point)))
-	      (goto-char end-tag-position)
+	      (goto-char (+ end-tag-position 8))
 	      (hm--html-add-tags 'hm--html-insert-end-tag-with-newline 
 				 "</BODY>")
 	      (goto-char cursor-position)
@@ -1576,7 +1626,7 @@ The tags will be inserted before </HTML> or at the end of the file."
 	(if (not (= (current-column) 0))
 	    (newline))
 	(hm--html-add-tags 'hm--html-insert-start-tag-with-newline "<BODY>"
-			   'hm--html-insert-end-tag-with-newline "</BODY>")))))
+			   'hm--html-insert-end-tag-with-newline "</BODY>"))))
 
 
 (defun hm--html-add-body-to-region ()
@@ -1590,27 +1640,33 @@ The tags will be inserted before </HTML> or at the end of the file."
 
 (defun hm--html-add-title-and-header (title)
   "Adds the HTML tags for a title and a header in the current buffer."
+;  (interactive "sTitle and Header String: \nnHeader Size (1 .. 6): ")
+;  (if (> size 6)
+;      (message "The size must be a number from 1 to 6 !")
   (interactive "sTitle and Header String: ")
-  (let ((case-fold-search t))
-    (hm--html-add-title title)
-    (save-excursion
-      (goto-char (point-min))
-      (search-forward "</title>" nil t)
-      (if (search-forward "</head>" nil t)
-	  (progn
-	    (search-forward "<body>" nil t)
-	    (newline 1))
-	(if (search-forward "<body>" nil t)
-	    (newline 1)
-	  (if (string= (what-line) "Line 1")
-	      (progn
-		(end-of-line)
-		(newline 1)))))
-      (hm--html-add-header 1 title))))
+  (hm--html-add-title title)
+  (save-excursion
+    (goto-char (point-min))
+    (search-forward "</title>" nil t)
+    (if (search-forward "</head>" nil t)
+	(progn
+	  (search-forward "<body>" nil t)
+	  (newline 1))
+      (if (search-forward "<body>" nil t)
+	  (newline 1)
+	(if (string= (what-line) "Line 1")
+	    (progn
+	      (end-of-line)
+	      (newline 1)))))
+    (hm--html-add-header 1 title)))
 
 
 (defun hm--html-add-title-and-header-to-region ()
   "Adds the HTML tags for a title and a header to the region."
+;The parameter 'size' spezifies the size of the header.";"
+;  (interactive "nSize (1 .. 6): ")
+;  (if (> size 6)
+;      (message "The size must be a number from 1 to 6 !")
   (interactive)
   (let ((title (buffer-substring (region-beginning) (region-end))))
     (hm--html-add-header-to-region 1)
@@ -1623,19 +1679,17 @@ The frame consists of the elements html, head, body, title,
 header and the signature. The parameter TITLE specifies the
 title and the header of the document."
   (interactive "sTitle and Header String: ")
-  (let ((case-fold-search t))
-    (hm--html-add-doctype)
-    (hm--html-add-html)
-    (hm--html-add-head)
-    (hm--html-add-body)
-    (hm--html-add-title-and-header title)
-    (if hm--html-signature-file
-	(hm--html-add-signature))
-    (goto-char (point-min))
-    (search-forward "</h1>" nil t)
-    (forward-line 1)
-    (if hm--html-automatic-created-comment
-	(hm--html-insert-created-comment))))
+   (hm--html-add-html)
+   (hm--html-add-head)
+   (hm--html-add-body)
+   (hm--html-add-title-and-header title)
+   (if hm--html-signature-file
+       (hm--html-add-signature))
+   (goto-char (point-min))
+   (search-forward "</h1>" nil t)
+   (forward-line 1)
+   (if hm--html-automatic-created-comment
+      (hm--html-insert-created-comment)))
 
 
 (defun hm--html-add-full-html-frame-with-region ()
@@ -1645,7 +1699,6 @@ header and the signature. The function uses the region as
 the string for the title and the header of the document."
   (interactive)
   (hm--html-add-title-and-header-to-region)
-  (hm--html-add-doctype)
   (hm--html-add-html)
   (hm--html-add-head)
   (hm--html-add-body)
@@ -1664,7 +1717,12 @@ the string for the title and the header of the document."
 
 (defun hm--html-add-link-target (name)
   "Adds the HTML tags for a link target at point in the current buffer."
+;  (interactive "sName (or RET for numeric): ")
   (interactive "sName: ")
+;  (and (string= name "")
+;       (progn
+;         (setq html-link-counter (1+ html-link-counter))
+;         (setq name (format "%d" html-link-counter))))
   (hm--html-add-tags 'hm--html-insert-start-tag
 		     (concat "<A NAME=\"" name "\">")
 		     'hm--html-insert-end-tag
@@ -1676,21 +1734,39 @@ the string for the title and the header of the document."
 (defun hm--html-mark-example (parameter-list)
   "Marks the example of the parameterlist in the current buffer.
 It returns the example extent."
-  (let ((case-fold-search t))
-    (if (hm--html-get-example-from-parameter-list parameter-list)
-	(progn
-	  (search-forward (hm--html-get-example-from-parameter-list 
-			   parameter-list))
-	  (let ((extent (make-extent (match-beginning 0)
-				     (match-end 0))))
-	    (set-extent-face extent 'hm--html-help-face)
-	    extent)))))
+  (if (hm--html-get-example-from-parameter-list parameter-list)
+      (progn
+	(search-forward (hm--html-get-example-from-parameter-list 
+			 parameter-list))
+	(let ((extent (make-extent (match-beginning 0)
+				   (match-end 0))))
+	  (set-extent-face extent 'hm--html-help-face)
+	  extent))))
 
 
 (defun hm--html-unmark-example (extent)
   "Unmarks the example for the current question."
   (if extent
       (delete-extent extent)))
+
+;      )
+;  ;; For the Emacs 19
+;  (defun hm--html-mark-example (parameter-list)
+;    "Marks the example of the parameterlist in the current buffer.
+;It returns the example extent."
+;    	(if (hm--html-get-example-from-parameter-list parameter-list)
+;	    (progn
+;	      (search-forward (hm--html-get-example-from-parameter-list 
+;			       parameter-list))
+;	      (put-text-property (match-beginning 0)
+;				 (match-end 0)
+;				 'face
+;				 'hm--html-help-face))))
+;
+;
+;  (defun hm--html-unmark-example (extent)
+;    "Unmarks the example for the current question."
+;    t))
 
 
 (defun hm--html-write-alist-in-buffer (alist)
@@ -1796,6 +1872,11 @@ If REQUIRE-MATCH is t, the filename with path must match an existing file."
 					 nil)))
 	(hm--html-unmark-example marked-object)
 	(hm--html-delete-wrong-path-prefix filename))
+;	(if (not hm--html-delete-wrong-path-prefix)
+;	    filename
+;	  (if (string-match hm--html-delete-wrong-path-prefix filename)
+;	      (substring filename (match-end 0))
+;	    filename)))
     ""))
 
 
@@ -1829,6 +1910,7 @@ also nil it returns an empty string."
 (defun hm--html-generate-help-buffer-faces ()
   "Generates faces for the add-link-help-buffer."
   (if (not (facep 'hm--html-help-face))
+;  (if (not hm--html-faces-exist)
       (progn
 	(setq hm--html-faces-exist t)
 	(make-face 'hm--html-help-face)
@@ -1945,58 +2027,58 @@ ANCHOR-PARAMETER-LIST are lists with a prompt string, an alist, a default
 value and an example string. The ANCHOR-PARAMETER-LIST has as an additional
 element an anchor seperator string. All these elements are used to read and
 construct the link."
-;  (let ((point nil))
-  (save-window-excursion
-    (let ((html-buffer (current-buffer))
-	  (html-help-buffer (hm--html-generate-add-link-help-buffer
-			     scheme-parameter-list
-			     host-name:port-parameter-list
-			     servername:port-parameter-list
-			     path+file-parameter-list
-			     anchor-parameter-list))
-	  (scheme (hm--html-completing-read scheme-parameter-list))
-	  (hostname:port (hm--html-completing-read 
-			  host-name:port-parameter-list))
-	  (servername:port (hm--html-completing-read 
-			    servername:port-parameter-list))
-	  (path+file (hm--html-read-filename path+file-parameter-list))
-	  (anchor (hm--html-completing-read anchor-parameter-list))
-;	  (hrefname (setq html-link-counter (1+ html-link-counter)))
-	  (anchor-seperator 
-	   (hm--html-get-anchor-seperator-from-parameter-list
-	    anchor-parameter-list)))
-      (if (not (string= scheme ""))
-	  (if (string= hostname:port "")
-	      (setq scheme (concat scheme ":"))
-	    (setq scheme (concat scheme "://"))))
-      (if (and (not (string= hostname:port ""))
-	       (not (string= servername:port ""))
-	       (not (string= (substring servername:port 0 1) "/")))
-	  (setq servername:port (concat "/" servername:port)))
-      (if (and (not (string= path+file ""))
-	       (not (string= "/" (substring path+file 0 1))))
-	  (setq path+file (concat "/" path+file)))
-      (if (not (string= anchor ""))
-	  (setq anchor (concat anchor-seperator anchor)))
-      (kill-buffer  html-help-buffer)
-      (pop-to-buffer html-buffer)
-      (eval (list function-add-tags 
-		  ''hm--html-insert-start-tag
-		  (concat "<A"
+  (let ((point nil))
+    (save-window-excursion
+      (let ((html-buffer (current-buffer))
+	    (html-help-buffer (hm--html-generate-add-link-help-buffer
+			       scheme-parameter-list
+			       host-name:port-parameter-list
+			       servername:port-parameter-list
+			       path+file-parameter-list
+			       anchor-parameter-list))
+	    (scheme (hm--html-completing-read scheme-parameter-list))
+	    (hostname:port (hm--html-completing-read 
+			    host-name:port-parameter-list))
+	    (servername:port (hm--html-completing-read 
+			      servername:port-parameter-list))
+	    (path+file (hm--html-read-filename path+file-parameter-list))
+	    (anchor (hm--html-completing-read anchor-parameter-list))
+;	    (hrefname (setq html-link-counter (1+ html-link-counter)))
+	    (anchor-seperator 
+	     (hm--html-get-anchor-seperator-from-parameter-list
+	      anchor-parameter-list)))
+	(if (not (string= scheme ""))
+	    (if (string= hostname:port "")
+		(setq scheme (concat scheme ":"))
+	      (setq scheme (concat scheme "://"))))
+	(if (and (not (string= hostname:port ""))
+		 (not (string= servername:port ""))
+		 (not (string= (substring servername:port 0 1) "/")))
+	    (setq servername:port (concat "/" servername:port)))
+	(if (and (not (string= path+file ""))
+		 (not (string= "/" (substring path+file 0 1))))
+	    (setq path+file (concat "/" path+file)))
+	(if (not (string= anchor ""))
+	    (setq anchor (concat anchor-seperator anchor)))
+	(kill-buffer  html-help-buffer)
+	(pop-to-buffer html-buffer)
+	(eval (list function-add-tags 
+		    ''hm--html-insert-start-tag
+		    (concat "<A"
 ;		            "<A Name="
 ;			    hrefname
-			  " HREF=\""
-			  scheme
-			  hostname:port
-			  servername:port
-			  path+file
-			  anchor
-			  "\">")
-		  ''hm--html-insert-end-tag
-		  "</A>")))
-;    (setq point (point))))
-; (goto-char (point)))
-    ))
+			    " HREF=\""
+			    scheme
+			    hostname:port
+			    servername:port
+			    path+file
+			    anchor
+			    "\">")
+		    ''hm--html-insert-end-tag
+		    "</A>")))
+      (setq point (point))))
+  (goto-char (point)))
+
 
 (defun hm--html-add-info-link-1 (function-add-tags)
   "Internal function. Adds the HTML tags for a link on a GNU Info file."
@@ -2338,8 +2420,7 @@ This function uses the new direct WAIS support instead of a WAIS gateway."
 	   (file-exists-p proggate-allowed-file))
       (save-window-excursion
 	(let ((alist nil)
-	      (buffername (find-file-noselect proggate-allowed-file))
-	      (case-fold-search t))
+	      (buffername (find-file-noselect proggate-allowed-file)))
 	  (set-buffer buffername)
 	  (toggle-read-only)
 	  (goto-char (point-min))
@@ -2473,7 +2554,7 @@ this gateway."
 (defun hm--html-make-newsgroup-alist ()
   "Makes a hm--html-make-newsgroup-alist from a .newsrc.el file.
 The function looks at the environment variable NNTPSERVER.
-If this variable exists, it tries to open the file with the Name
+If this variable exists, it trys to open the file with the Name
 ~/$NNTPSERVER.el. If this file exists, the alist of the file is
 returned as the newsgroup-alist. If the file doesn't exist, it
 tries to use the file ~/$NNTPSERVER to make the alist. The function
@@ -2494,8 +2575,7 @@ returns '((\"\"))"
 		'((""))
 	      (save-window-excursion
 		(let ((alist nil)
-		      (buffername (find-file-noselect newsrc-file))
-		      (case-fold-search t))
+		      (buffername (find-file-noselect newsrc-file)))
 		  (set-buffer buffername)
 		  (toggle-read-only)
 		  (goto-char (point-min))		  
@@ -2593,13 +2673,13 @@ returns '((\"\"))"
 (defun hm--html-add-mail-box-link ()
   "Adds the HTML tags for a link to a mail box."
   (interactive)
-  (hm--html-add-mail-box-link-1 'hm--html-add-tags))
+  (hm--html-add-mail-link-1 'hm--html-add-tags))
 
 
 (defun hm--html-add-mail-box-link-to-region ()
   "Adds the HTML tags for a link to a mail box to the region."
   (interactive)
-  (hm--html-add-mail-box-link-1 'hm--html-add-tags-to-region))
+  (hm--html-add-mail-link-1 'hm--html-add-tags-to-region))
 
 
 (defun hm--html-add-mailto-link-1 (function-add-tags)
@@ -2650,14 +2730,11 @@ returns '((\"\"))"
 
 (defun hm--html-add-relative-link (relative-file-path)
   "Adds the HTML tags for a relative link at the current point."
-  (interactive (list (file-relative-name
-		      (read-file-name "Relative Filename: "
-				      nil
-				      nil
-				      nil
-				      "")
-		      default-directory)
-		     ))
+  (interactive (list (read-file-name "Relative Filename: "
+				     nil
+				     nil
+				     nil
+				     "")))
   (hm--html-add-tags 'hm--html-insert-start-tag
 		     (concat "<A HREF=\""
 			     relative-file-path
@@ -2667,12 +2744,11 @@ returns '((\"\"))"
 
 (defun hm--html-add-relative-link-to-region (relative-file-path)
   "Adds the HTML tags for a relative link to the region."
-  (interactive (list (file-relative-name
-		      (read-file-name "Relative Filename: "
-				      nil
-				      nil
-				      nil
-				      ""))))
+  (interactive (list (read-file-name "Relative Filename: "
+				     nil
+				     nil
+				     nil
+				     "")))
   (hm--html-add-tags-to-region 'hm--html-insert-start-tag
 			       (concat "<A HREF=\""
 				       relative-file-path
@@ -2699,6 +2775,7 @@ Mark is set after anchor."
   (interactive "sNode Link to: ")
   (hm--html-add-tags-to-region 'hm--html-insert-start-tag
 			       (concat "<A HREF=\""
+;				       (read-string "Link to: ")
 				       link-object
 				       "\">")
 			       'hm--html-insert-end-tag
@@ -2741,8 +2818,7 @@ Mark is set after anchor."
       (if (re-search-forward 
 	   (concat
 	    "\\((\\)"
-	    "\\([ \t]*[0-3]?[0-9]-[A-Z][a-z][a-z]-[0-9][0-9][0-9][0-9]"
-	    "[ \t]*\\)"
+	    "\\([ \t]*[0-3]?[0-9]-[A-Z][a-z][a-z]-[0-9][0-9][0-9][0-9][ \t]*\\)"
 	    "\\()[ \t\n]*</title>\\)") 
 	   end-of-head
 	   t)
@@ -2771,25 +2847,25 @@ noerror is nil."
       (if (not (search-forward "</title>" end-of-head t))
 	  (if (not noerror)
 	      (error "ERROR: Please insert a title in the document !"))
-;	(let ((end-of-title-position (point)))
-	(if (search-forward "<!-- Created by: " end-of-head t)
-	    (if (yes-or-no-p 
-		 "Replace the old comment \"<!-- Created by: \" ")
-		(progn
-		  (goto-char (match-beginning 0))
-		  (kill-line)
-		  (hm--html-add-comment)
-		  (insert "Created by: " 
-			  (or hm--html-username (user-full-name))
-			  ", "
-			  (hm--date))))
-	  (newline)
-	  (hm--html-add-comment)
-	  (insert "Created by: " 
-		  (or hm--html-username (user-full-name))
-		  ", "
-		  (hm--date)
-		  ))))))
+	(let ((end-of-title-position (point)))
+	  (if (search-forward "<!-- Created by: " end-of-head t)
+	      (if (yes-or-no-p 
+		   "Replace the old comment \"<!-- Created by: \" ")
+		  (progn
+		    (goto-char (match-beginning 0))
+		    (kill-line)
+		    (hm--html-add-comment)
+		    (insert "Created by: " 
+			    (or hm--html-username (user-full-name))
+			    ", "
+			    (hm--date))))
+	    (newline)
+	    (hm--html-add-comment)
+	    (insert "Created by: " 
+		    (or hm--html-username (user-full-name))
+		    ", "
+		    (hm--date)
+		    )))))))
 
 
 (defun hm--html-insert-changed-comment-1 (newline username)
@@ -2798,6 +2874,7 @@ Inserts a newline if NEWLINE is t, before the comment is inserted.
 USERNAME is the name to be inserted in the comment."
   (if newline
       (progn
+;	(end-of-line)
 	(newline)))
   (hm--html-add-comment)
   (insert "Changed by: " username ", " (hm--date)))
@@ -2863,45 +2940,34 @@ else in such a line !"
 ;;; Functions to insert templates
 
 (defvar hm--html-template-file-history nil
-  "Historyvariable for the template files in the `hm--html-mode'.")
+  "Historvariable for the template files.")
 
 (defun hm--html-insert-template (filename)
-  "Inserts a templatefile.
-It uses `tmpl-insert-template-file' to insert
-the templates. The variables `tmpl-template-dir-list',
-`tmpl-automatic-expand' and `tmpl-history-variable-name' are
-overwritten by `hm--html-template-dir',
-`hm--html-automatic-expand-templates' and `hm--html-template-file-history'."
-  (interactive (list nil))
-  (let ((tmpl-template-dir-list (if (listp hm--html-template-dir)
-				    hm--html-template-dir
-				  (list hm--html-template-dir)))
-	(tmpl-automatic-expand hm--html-automatic-expand-templates)
-	(tmpl-history-variable-name 'hm--html-template-file-history))
-    (if filename
-	(tmpl-insert-template-file filename)
-      (call-interactively 'tmpl-insert-template-file))
-    ))
+  "Inserts a templatefile."
+  (interactive (list
+		(let ((file-name-history hm--html-template-file-history))
+		  (read-file-name "Templatefile: "
+				  hm--html-template-dir
+				  nil
+				  t
+				  nil))))
+;				'hm--html-template-file-history)))
+  (insert-file (expand-file-name filename))
+  (if hm--html-automatic-expand-templates
+      (tmpl-expand-templates-in-buffer))
+  (if hm--html-automatic-created-comment
+      (hm--html-insert-created-comment t)))
+		  
 
-(defun hm--html-insert-template-from-fixed-dirs (filename)
-  "Inserts a templatefile.
-It uses `tmpl-insert-template-file-from-fixed-dirs' to insert
-the templates. The variables `tmpl-template-dir-list',
-`tmpl-automatic-expand', `tmpl-filter-regexp' and
-`tmpl-history-variable-name' are overwritten by
-`hm--html-template-dir', `hm--html-automatic-expand-templates',
-`hm--html-template-filter-regexp' and `hm--html-template-file-history'."
-  (interactive (list nil))
-  (let ((tmpl-template-dir-list (if (listp hm--html-template-dir)
-				    hm--html-template-dir
-				  (list hm--html-template-dir)))
-	(tmpl-automatic-expand hm--html-automatic-expand-templates)
-	(tmpl-filter-regexp hm--html-template-filter-regexp)
-	(tmpl-history-variable-name 'hm--html-template-file-history))
-    (if filename
-	(tmpl-insert-template-file-from-fixed-dirs filename)
-      (call-interactively 'tmpl-insert-template-file-from-fixed-dirs))
-    ))
+
+;;; Functions for highlighting
+
+;(defun hm--html-toggle-use-highlighting ()
+;  "Toggles the variable html-use-highlighting."
+;  (interactive)
+;  (if html-use-highlighting
+;      (setq html-use-highlighting nil)
+;    (setq html-use-highlighting t)))
 
 
 ;;; Functions for font lock mode
@@ -2920,7 +2986,42 @@ the templates. The variables `tmpl-template-dir-list',
 	    (copy-face 'font-lock-doc-string-face 'font-lock-string-face)
 	    (set-face-underline-p 'font-lock-string-face t)))
       (setq font-lock-comment-face 'font-lock-comment-face)
+      ;; (setq font-lock-doc-string-face 'font-lock-doc-string-face)
       (setq font-lock-string-face 'font-lock-string-face)))
+
+
+;(defun hm--html-set-font-lock-color ()
+;  "Sets the color for the font lock mode in HTML mode.
+;This color is used to highlight HTML expressions."
+;    (interactive)
+;    (setq hm--html-font-lock-color
+;	  (completing-read "Color: "
+;			   '(("grey80")
+;			     ("black")
+;			     ("red")
+;			     ("yellow")
+;			     ("blue"))
+;			   nil
+;			   nil
+;			   "black"))
+;    (set-face-foreground 'font-lock-comment-face hm--html-font-lock-color)
+;    (set-face-foreground 'font-lock-string-face hm--html-font-lock-color))
+
+
+;;; Functions which determine if an active region exists
+  
+;(defvar hm--region-active nil
+;  "t   : Region is active.
+;nil: Region is inactive.")
+;
+;
+;(defun hm--set-hm--region-active ()
+;  (setq hm--region-active t))
+;
+;
+;(defun hm--unset-hm--region-active ()
+;  (setq hm--region-active nil))
+
 
 
 ;;; Functions to insert forms
@@ -3376,14 +3477,12 @@ The number of cells can also be given as prefix argument."
       (error "ERROR: There must be at least one cell in a row!"))
   (hm--html-add-tags
    'hm--html-insert-end-tag-with-newline
-   (concat "<TR>"
-	   (mapconcat '(lambda (entry)
-			 (concat "<TH" entry))
-		      (hm--html-table-read-cell-entries-and-alignments
-		       1 
-		       no-of-cells)
-		      " </TH>")
-	   " </TH></TR>")))
+   (concat
+    (mapconcat '(lambda (entry)
+		  (concat "<TH" entry))
+	       (hm--html-table-read-cell-entries-and-alignments 1 no-of-cells)
+	       " ")
+    " <TR>")))
 
 
 (defun hm--html-add-first-table-row (no-of-cells)
@@ -3395,18 +3494,17 @@ The number of cells can also be given as prefix argument."
       (error "ERROR: There must be at least one cell in a row!"))
   (hm--html-add-tags 
    'hm--html-insert-end-tag-with-newline
-   (concat "<TR><TD"
-	   (car (hm--html-table-read-cell-entries-and-alignments 1 1))
-	   " </TD>"
+   (concat "<TD" (car (hm--html-table-read-cell-entries-and-alignments 1 1))
+	   " "
 	   (if (<= no-of-cells 1)
-	       "</TR>"
+	       "<TR>"
 	     (concat
 	      (mapconcat '(lambda (entry)
 			    (concat "<TD" entry))
 			  (hm--html-table-read-cell-entries-and-alignments 
 			   2 no-of-cells)
-			 " </TD>")
-	      " </TD></TR>")))))
+			 " ")
+	      " <TR>")))))
 
 
 (defun hm--html-table-get-previous-alignments ()
@@ -3415,15 +3513,12 @@ The row must be a data row and not a header row!
 An example for the return list: '(\"left\" \"default\" \"center\" \"right\")"
   (save-excursion
     (let* ((point-of-view (point))
-	   (case-fold-search t)
-	   (end-of-last-row (search-backward "</tr>" (point-min) t))
-	   (begin-of-last-row (progn (search-backward "<tr" (point-min) t)
-				     (re-search-forward "<t[dh]"
-							point-of-view t)
+	   (end-of-last-row (search-backward "<tr>" nil t))
+	   (begin-of-last-row (progn (search-backward "<tr" nil t)
+				     (search-forward "<td" nil t)
 				     (match-beginning 0)))
 	   (alignment-list nil))
-      (goto-char begin-of-last-row)
-      (if (not (re-search-forward "<t[dh]" end-of-last-row t))
+      (if (not (search-forward "<td" end-of-last-row t))
 	  (error "Error: No previous data row found!")
 	(goto-char end-of-last-row)
 	(while (> (point) begin-of-last-row)
@@ -3455,13 +3550,13 @@ from existing rows of the table."
 	 (no-of-cells (length old-alignment-list)))
     (hm--html-add-tags
      'hm--html-insert-end-tag-with-newline
-     (concat "<TR><TD" (car (hm--html-table-read-cell-entries-and-alignments 
-			     1 
-			     1
-			     old-alignment-list))
-	     " </TD>"
+     (concat "<TD" (car (hm--html-table-read-cell-entries-and-alignments 
+			 1 
+			 1
+			 old-alignment-list))
+	     " "
 	     (if (<= no-of-cells 1)
-		 "</TR>"
+		 "<TR>"
 	       (concat
 		(mapconcat '(lambda (entry)
 			      (concat "<TD" entry))
@@ -3469,8 +3564,8 @@ from existing rows of the table."
 			    2 
 			    no-of-cells
 			    (cdr old-alignment-list))
-			   " </TD>")
-		" </TD></TR>"))))))
+			   " ")
+		" <TR>"))))))
 
 
 (defun hm--html-add-row-entry (alignment)
@@ -3537,36 +3632,34 @@ from existing rows of the table."
   "Adds a colspawn attribute to a table cell.
 A prefix arg is used as no of COLUMNS."
   (interactive "NNo of columns, spaned by this cell: ")
-  (let ((case-fold-search t))
-    (save-excursion
-      (if (and (search-backward "<" nil t)
-	       (search-forward-regexp "<[ \t\n]*\\(th\\)\\|\\(td\\)" nil t))
-	  (if (search-forward-regexp "\\([ \t\n]+colspan=\\)\\([^ \t\n>]*\\)"
-				     nil
-				     t)
-	      (progn
-		(delete-region (match-beginning 2) (match-end 2))
-		(insert (format "\"%d\"" columns)))
-	    (insert (format " colspan=\"%d\"" columns)))
-	(error "ERROR: Point not in a table cell!")))))
+  (save-excursion
+    (if (and (search-backward "<" nil t)
+	     (search-forward-regexp "<[ \t\n]*\\(th\\)\\|\\(td\\)" nil t))
+	(if (search-forward-regexp "\\([ \t\n]+colspan=\\)\\([^ \t\n>]*\\)"
+				   nil
+				   t)
+	    (progn
+	      (delete-region (match-beginning 2) (match-end 2))
+	      (insert (format "\"%d\"" columns)))
+	  (insert (format " colspan=\"%d\"" columns)))
+      (error "ERROR: Point not in a table cell!"))))
 	     
 
 (defun hm--html-table-add-rowspan-attribute (rows)
   "Adds a rowspan attribute to a table cell.
 A prefix arg is used as no of ROWS."
   (interactive "NNo of rows, spaned by this cell: ")
-  (let ((case-fold-search t))
-    (save-excursion
-      (if (and (search-backward "<" nil t)
-	       (search-forward-regexp "<[ \t\n]*\\(th\\)\\|\\(td\\)" nil t))
-	  (if (search-forward-regexp "\\([ \t\n]+rowspan=\\)\\([^ \t\n>]*\\)"
-				     nil
-				     t)
-	      (progn
-		(delete-region (match-beginning 2) (match-end 2))
-		(insert (format "\"%d\"" rows)))
-	    (insert (format " rowspan=\"%d\"" rows)))
-	(error "ERROR: Point not in a table cell!")))))
+  (save-excursion
+    (if (and (search-backward "<" nil t)
+	     (search-forward-regexp "<[ \t\n]*\\(th\\)\\|\\(td\\)" nil t))
+	(if (search-forward-regexp "\\([ \t\n]+rowspan=\\)\\([^ \t\n>]*\\)"
+				   nil
+				   t)
+	    (progn
+	      (delete-region (match-beginning 2) (match-end 2))
+	      (insert (format "\"%d\"" rows)))
+	  (insert (format " rowspan=\"%d\"" rows)))
+      (error "ERROR: Point not in a table cell!"))))
 
 
 ;;; ISO-Characters for Emacs HTML-mode (Berthold Crysmann)
@@ -4024,9 +4117,7 @@ the number should be removed."
 (defun hm--html-view-www-package-docu ()
   "View the WWW documentation of the package."
   (interactive)
-  (w3-fetch (concat "http://www.tnt.uni-hannover.de"
-		    "/~muenkel/software/own/hm--html-menus/overview.html")))
-
+  (w3-fetch "http://www.tnt.uni-hannover.de:80/data/info/www/tnt/soft/info/www/html-editors/hm--html-menus/overview.html"))
 
 ;;;
 ;   Bug reporting
@@ -4080,16 +4171,21 @@ the number should be removed."
 	   'hm--html-template-dir
 	   'hm--html-url-alist
 	   'hm--html-user-config-file
-	   'hm--html-site-config-file
 	   'hm--html-username
 	   'hm--html-wais-hostname:port-alist
 	   'hm--html-wais-hostname:port-default
 	   'hm--html-wais-path-alist
 	   'hm--html-wais-servername:port-alist
 	   'hm--html-wais-servername:port-default
+;	   'html-deemphasize-color
 	   'html-document-previewer
+;	   'html-document-previewer-args
+;	   'html-emphasize-color
+;	   'html-quotify-hrefs-on-find
 	   'hm--html-region-mode
 	   'html-sigusr1-signal-value
+;	   'html-use-font-lock
+;	   'html-use-highlighting
 	   )
      nil
      nil
@@ -4106,9 +4202,11 @@ the number should be removed."
 
       (add-hook 'zmacs-activate-region-hook
 		'hm--html-switch-region-modes-on)
+;		(function (lambda () (hm--html-region-mode 1))))
 
       (add-hook 'zmacs-deactivate-region-hook
 		'hm--html-switch-region-modes-off)
+;		(function (lambda () (hm--html-region-mode -1))))
 
       )
 
@@ -4116,11 +4214,26 @@ the number should be removed."
 
   (add-hook 'activate-mark-hook 
 	    'hm--html-switch-region-modes-on)
+;	    (function (lambda () (hm--html-region-mode t))))
   
   (add-hook 'deactivate-mark-hook
 	    'hm--html-switch-region-modes-off)
+;	    (function (lambda () (hm--html-region-mode nil))))
 
   )
+
+
+;(add-hook 'hm--html-mode-hook
+;	  (function
+;	   (lambda ()
+;	     (make-variable-buffer-local 'write-file-hooks)
+;	     (add-hook 'write-file-hooks 
+;		       'hm--html-maybe-new-date-and-changed-comment))))
+	  
+;(add-hook 'zmacs-activate-region-hook 'hm--set-hm--region-active)
+;
+;(add-hook 'zmacs-deactivate-region-hook 'hm--unset-hm--region-active)
+
 
 
 ;;;
@@ -4130,11 +4243,8 @@ the number should be removed."
 (defun hm--html-load-config-files ()
   "Load the html configuration files.
 First, the system config file (detemined by the environment variable
-HTML_CONFIG_FILE; normaly hm--html-configuration.el(c)) is loaded.
-At second a site config file is loaded, if the environment variable
-HTML_SITE_CONFIG_FILE or the lisp variable `hm--html-site-config-file'
-is set to such a file.
-At least the user config file (determined by the environment variable
+HTML_CONFIG_FILE; normaly hm--html-configuration.el(c)) is loaded and
+after that the user config file (determined by the environment variable
 HTML_USER_CONFIG_FILE; normaly the file ~/.hm--html-configuration.el(c)).
 If no HTML_CONFIG_FILE exists, then the file hm--html-configuration.el(c)
 is searched in one of the lisp load path directories.
@@ -4149,17 +4259,6 @@ also doesn't exist, then the file ~/.hm--html-configuration.el(c) is used."
 	     (getenv "HTML_CONFIG_FILE"))))
       (load-library (expand-file-name (getenv "HTML_CONFIG_FILE")))
     (load-library "hm--html-configuration"))
-
-  ;; at second the site config file
-  (if (and (stringp (getenv "HTML_SITE_CONFIG_FILE"))
-	      (file-exists-p
-	       (expand-file-name
-		(getenv "HTML_SITE_CONFIG_FILE"))))
-      (load-file (expand-file-name (getenv "HTML_SITE_CONFIG_FILE")))
-    (when (and (boundp 'hm--html-site-config-file)
-	       (stringp hm--html-site-config-file)
-	       (file-exists-p (expand-file-name hm--html-site-config-file)))
-      (load-file (expand-file-name hm--html-site-config-file))))
   
   ;; and now the user config file 
   (cond ((and (stringp (getenv "HTML_USER_CONFIG_FILE"))
@@ -4181,6 +4280,76 @@ also doesn't exist, then the file ~/.hm--html-configuration.el(c) is used."
 	)
   )
 			  
+
+
+;(hm--html-load-config-files)
+
+;;; Definition of the minor mode html-region-mode
+
+;(defvar html-region-mode nil
+;  "*t, if the minor mode html-region-mode is on and nil otherwise.")
+
+;(make-variable-buffer-local 'html-region-mode)
+
+;(defvar html-region-mode-map nil "")
+
+;(hm--html-load-config-files)
+
+;(if hm--html-use-old-keymap
+;    (progn
+
+;;(setq minor-mode-alist (cons '(html-region-mode " Region") minor-mode-alist))
+;(or (assq 'html-region-mode minor-mode-alist)
+;    (setq minor-mode-alist
+;	  (purecopy
+;	   (append minor-mode-alist
+;		   '((html-region-mode " Region"))))))
+
+;(defun html-region-mode (on)
+;  "Turns the minor mode html-region-mode on or off.
+;The function turns the html-region-mode on, if ON is t and off otherwise."
+;  (if (string= mode-name "HTML")
+;      (if on
+;	  ;; html-region-mode on
+;	  (progn
+;	    (setq html-region-mode t)
+;	    (use-local-map html-region-mode-map))
+;	;; html-region-mode off
+;	(setq html-region-mode nil)
+;	(use-local-map html-mode-map))))
+
+;))
+
+
+
+
+
+;;;
+; Set font lock color
+; (hm--html-font-lock-color should be defined in hm--html-configuration.el
+; oder .hm--html-configuration.el)
+;
+;(require 'font-lock)
+;(load-library "font-lock")
+;(set-face-foreground 'font-lock-comment-face hm--html-font-lock-color)
+
+
+;(hm--html-generate-help-buffer-faces)
+
+
+
+
+;;;;;;;;
+;(setq hm--html-hostname-search-string 
+;      "[-a-zA-Z0-9]*\\.[-a-zA-Z0-9]*\\.[-a-zA-Z0-9.]*")
+;
+;(defun hm--html-get-next-hostname ()
+;  (interactive)
+;  (search-forward-regexp hm--html-hostname-search-string)
+;  (buffer-substring (match-beginning 0) (match-end 0)))
+;
+
+;;; Announce the feature hm--html-configuration
 
 ;;; quotify href
 

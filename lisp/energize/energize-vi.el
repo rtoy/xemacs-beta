@@ -226,7 +226,7 @@
 
 (defun energize-external-editor-filter (process output)
   (beep)
-  (message (format "%s" output)))
+  (message "%s" output))
 
 (defun energize-vi-filter (process output)
   ;; this will only get called if energize_vi (or the xterm) print error msgs

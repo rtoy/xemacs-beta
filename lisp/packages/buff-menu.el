@@ -3,7 +3,6 @@
 ;; Copyright (C) 1985, 86, 87, 93, 94, 95 Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
-;; Keywords: extensions
 
 ;; This file is part of XEmacs.
 
@@ -18,11 +17,11 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: FSF 19.34 except as noted.
+;;; Synched up with: FSF 19.30 except as noted.
 
 ;;; Commentary:
 
@@ -70,7 +69,7 @@
     ()
   (setq Buffer-menu-mode-map (make-keymap))
   (suppress-keymap Buffer-menu-mode-map t)
-  (set-keymap-name Buffer-menu-mode-map 'Buffer-menu-mode-map) ; XEmacs
+  (set-keymap-name Buffer-menu-mode-map 'Buffer-menu-mode-map)
   (define-key Buffer-menu-mode-map "q" 'Buffer-menu-quit)
   (define-key Buffer-menu-mode-map "v" 'Buffer-menu-select)
   (define-key Buffer-menu-mode-map "2" 'Buffer-menu-2-window)
@@ -137,8 +136,8 @@ Letters do not insert themselves; instead, they are commands.
   (setq revert-buffer-function 'Buffer-menu-revert-function)
   (setq truncate-lines t)
   (setq buffer-read-only t)
-  (make-local-variable 'mouse-track-click-hook) ; XEmacs
-  (add-hook 'mouse-track-click-hook 'Buffer-menu-maybe-mouse-select) ; XEmacs
+  (make-local-variable 'mouse-track-click-hook)
+  (add-hook 'mouse-track-click-hook 'Buffer-menu-maybe-mouse-select)
   (run-hooks 'buffer-menu-mode-hook))
 
 (defun Buffer-menu-revert-function (ignore1 ignore2)
@@ -254,7 +253,7 @@ and then move up one line.  Prefix arg means move that many lines."
     (forward-line 1)))
 
 (defun Buffer-menu-save ()
-  "Mark buffer on this line to be saved by \\<Buffer-menu-mode-map>\\[Buffer-menu-execute] command."
+  "Mark buffer on this line to be saved by \\[Buffer-menu-execute] command."
   (interactive)
   (beginning-of-line)
   (if (looking-at " [-M]")		;header lines
@@ -367,7 +366,6 @@ in the selected frame."
   (switch-to-buffer (Buffer-menu-buffer t))
   (bury-buffer (other-buffer))
   (delete-other-windows)
-  ;; XEmacs:
   ;; This is to get w->force_start set to nil.  Don't ask me, I only work here.
   (set-window-buffer (selected-window) (current-buffer)))
 
@@ -376,17 +374,16 @@ in the selected frame."
   (interactive "e")
   (let (buffer)
     (save-excursion
-      (set-buffer (event-buffer event)) ; XEmacs
+      (set-buffer (event-buffer event))
       (save-excursion
-	(goto-char (event-point event)) ; XEmacs
+	(goto-char (event-point event))
 	(setq buffer (Buffer-menu-buffer t))))
-    (select-window (event-window event)) ; XEmacs
+    (select-window (event-window event))
     (if (and (window-dedicated-p (selected-window))
 	     (eq (selected-window) (frame-root-window)))
 	(switch-to-buffer-other-frame buffer)
       (switch-to-buffer buffer))))
 
-;; XEmacs
 (defun Buffer-menu-maybe-mouse-select (event &optional click-count)
   (interactive "e")
   (and (>= click-count 2)
@@ -446,7 +443,6 @@ The current window remains selected."
             (delete-char 1)
             (insert char))))))
 
-;; XEmacs
 (defvar Buffer-menu-popup-menu
   '("Buffer Commands"
     ["Select Buffer"			Buffer-menu-select		t]
@@ -461,7 +457,6 @@ The current window remains selected."
     ["Delete/Save Marked Buffers"	Buffer-menu-execute		t]
     ))
 
-;; XEmacs
 (defun Buffer-menu-popup-menu (event)
   (interactive "e")
   (mouse-set-point event)
@@ -477,22 +472,16 @@ The current window remains selected."
       (error "no buffer on this line"))))
 
 
-;; XEmacs
 (defvar list-buffers-header-line
   (purecopy (concat " MR Buffer           Size  Mode         File\n"
                     " -- ------           ----  ----         ----\n")))
 
-;; XEmacs
 (defvar list-buffers-identification 'default-list-buffers-identification
   "String used to identify this buffer, or a function of one argument
 to generate such a string.  This variable is always buffer-local.")
 (make-variable-buffer-local 'list-buffers-identification)
 
-;; XEmacs
-;;;###autoload
-(defvar list-buffers-directory nil)
-
-;;;###autoload
+(defvar list-buffers-directory)
 (make-variable-buffer-local 'list-buffers-directory)
 
 ;; #### not synched
@@ -593,7 +582,6 @@ to generate such a string.  This variable is always buffer-local.")
       (Buffer-menu-mode)
       (if (not (bufferp current))
           (goto-char current)))))
-;(define-key ctl-x-map "\C-b" 'list-buffers)
 
 (defun list-buffers (&optional files-only)
   "Display a list of names of existing buffers.
@@ -603,7 +591,7 @@ Non-null optional arg FILES-ONLY means mention only file buffers.
 
 The M column contains a * for buffers that are modified.
 The R column contains a % for buffers that are read-only."
-  (interactive (list (if current-prefix-arg t nil))) ; XEmacs
+  (interactive (list (if current-prefix-arg t nil)))
   (display-buffer (list-buffers-noselect files-only)))
 
 ;; #### not synched

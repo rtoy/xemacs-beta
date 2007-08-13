@@ -19,7 +19,7 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: Not in FSF.
@@ -33,7 +33,7 @@
 This is equivalent to the type of the device's console.
 Value is `tty' for a tty device (a character-only terminal),
 `x' for a device that is a screen on an X display,
-`ns' for a device that is a NeXTstep connection (not yet implemented),
+`ns' for a device that is a NeXTstep connection (not yet implemeted),
 `win32' for a device that is a Windows or Windows NT connection (not yet
   implemented),
 `pc' for a device that is a direct-write MS-DOS screen (not yet implemented),
@@ -43,19 +43,15 @@ Value is `tty' for a tty device (a character-only terminal),
   (if (not (device-live-p device)) 'dead
     (console-type (device-console device))))
 
-(defun make-tty-device (&optional tty terminal-type controlling-process)
+(defun make-tty-device (&optional tty terminal-type)
   "Create a new device on TTY.
   TTY should be the name of a tty device file (e.g. \"/dev/ttyp3\" under
 SunOS et al.), as returned by the `tty' command.  A value of nil means
 use the stdin and stdout as passed to XEmacs from the shell.
   If TERMINAL-TYPE is non-nil, it should be a string specifying the
 type of the terminal attached to the specified tty.  If it is nil,
-the terminal type will be inferred from the TERM environment variable.
-  If CONTROLLING-PROCESS is non-nil, it should be an integer
-specifying the process id of the process in control of the specified tty.  If
-it is nil, it is assumes to be the value returned by emacs-pid."
-  (make-device 'tty tty (list 'terminal-type terminal-type 
-			      'controlling-process controlling-process)))
+the terminal type will be inferred from the TERM environment variable."
+  (make-device 'tty tty (list 'terminal-type terminal-type)))
 
 (defun make-x-device (&optional display)
   "Create a new device connected to DISPLAY."
@@ -70,6 +66,3 @@ the toolbar, glyphs, etc."
 
 (defalias 'valid-device-type-p 'valid-console-type-p)
 (defalias 'device-type-list 'console-type-list)
-(defalias 'device-pixel-depth 'device-bitplanes)
-
-;;; device.el ends here

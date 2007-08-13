@@ -1,4 +1,4 @@
-;;; $Id: eiffel3.el,v 1.1.1.3 1996/12/18 04:03:07 steve Exp $
+;;; $Id: eiffel3.el,v 1.1.1.1 1996/12/18 22:42:46 steve Exp $
 ;;;--------------------------------------------------------------------------
 ;;; TowerEiffel -- Copyright (c) 1993-1996 Tower Technology Corporation. 
 ;;; All Rights Reserved.
@@ -1770,7 +1770,7 @@ only that line is indented"
     (modify-syntax-entry ?> "." table)
     (modify-syntax-entry ?& "." table)
     (modify-syntax-entry ?| "." table)
-    (modify-syntax-entry ?\; "." table)
+    (modify-syntax-entry ?; "." table)
     (modify-syntax-entry ?: "." table)
     (modify-syntax-entry ?! "." table)
     (modify-syntax-entry ?. "." table)

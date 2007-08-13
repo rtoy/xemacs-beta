@@ -22,6 +22,11 @@
 ## screwed up by makedepend.  We just put those in by hand at
 ## the top of the dependency list.
 
+## For Mule, we need to do some additional processing: conversion
+## to MULESRCDIR (at least so that the include files don't get
+## wiped out by the next stage) and removing the mule/ prefix
+## from the object file names.
+
 ## The awk stage puts one dependency per line.  Then we pass
 ## the result through sort and uniq (makedepend is supposed
 ## to not put in duplicate dependencies, but it does so
@@ -35,6 +40,8 @@ sed -e '
 1d
 s/ \/[^ ]*\/lwlib\// $(LWLIBSRCDIR)\//g
 s/\.\.\/etc\//${srcdir}\/${etcdir}/g
+s/^mule\///g
+s/ mule\// $(MULESRCDIR)\/mule\//g
 s/ \/[^ ]*\.h//g
 s/ \/[^ ]*gray//g
 s/ [a-z][^ ]*\/[^ ]*\.h//g

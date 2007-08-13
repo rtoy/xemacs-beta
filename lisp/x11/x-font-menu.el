@@ -19,8 +19,9 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Commentary:
 ;;;
@@ -117,7 +118,7 @@
   "*If non-nil, then the font menu will try to show only bitmap fonts.")
 
 ;;;###autoload
-(defvar font-menu-this-frame-only-p nil
+(defvar font-menu-this-frame-only-p t
   "*If non-nil, then changing the default font from the font menu will only
 affect one frame instead of all frames.")
 

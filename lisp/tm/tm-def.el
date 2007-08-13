@@ -1,9 +1,9 @@
 ;;; tm-def.el --- definition module for tm
 
-;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
+;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: tm-def.el,v 1.6 1997/03/16 05:55:41 steve Exp $
+;; Version: $Id: tm-def.el,v 1.1.1.1 1996/12/18 22:43:37 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia, definition
 
 ;; This file is part of tm (Tools for MIME).
@@ -104,26 +104,19 @@
     (tl:overlay-put overlay 'face face)
     ))
 
-(defvar tm:button-face 'bold
-  "Face used for content-button or URL-button of MIME-Preview buffer.
-\[tm-def.el]")
-
-(defvar tm:mouse-face 'highlight
-  "Face used for MIME-preview buffer mouse highlighting. [tm-def.el]")
-
-(defvar tm:warning-face nil
-  "Face used for invalid encoded-word.")
+(setq tm:button-face 'bold)
+(setq tm:mouse-face 'highlight)
 
 (defun tm:add-button (from to func &optional data)
   "Create a button between FROM and TO with callback FUNC and data DATA."
   (and tm:button-face
        (tl:overlay-put (tl:make-overlay from to) 'face tm:button-face))
-  (add-text-properties from to
-		       (append (and tm:mouse-face
-				    (list 'mouse-face tm:mouse-face))
-			       (list 'tm-callback func)
-			       (and data (list 'tm-data data))
-			       ))
+  (tl:add-text-properties from to
+			  (append (and tm:mouse-face
+				       (list 'mouse-face tm:mouse-face))
+				  (list 'tm-callback func)
+				  (and data (list 'tm-data data))
+				  ))
   )
 
 (defvar tm:mother-button-dispatcher nil)
@@ -170,46 +163,6 @@
     ))
 
 
-;;; @ PGP
-;;;
-
-(defvar pgp-function-alist
-  '(
-    ;; for tm-pgp
-    (verify		mc-verify			"mc-toplev")
-    (decrypt		mc-decrypt			"mc-toplev")
-    (fetch-key		mc-pgp-fetch-key		"mc-pgp")
-    (snarf-keys		mc-snarf-keys			"mc-toplev")
-    ;; for tm-edit
-    (mime-sign		tm:mc-pgp-sign-region		"tm-edit-mc")
-    (traditional-sign	mc-pgp-sign-region		"mc-pgp")
-    (encrypt		tm:mc-pgp-encrypt-region	"tm-edit-mc")
-    (insert-key		mc-insert-public-key		"mc-toplev")
-    )
-  "Alist of service names vs. corresponding functions and its filenames.
-Each element looks like (SERVICE FUNCTION FILE).
-
-SERVICE is a symbol of PGP processing.  It allows `verify', `decrypt',
-`fetch-key', `snarf-keys', `mime-sign', `traditional-sign', `encrypt'
-or `insert-key'.
-
-Function is a symbol of function to do specified SERVICE.
-
-FILE is string of filename which has definition of corresponding
-FUNCTION.")
-
-(defmacro pgp-function (method)
-  "Return function to do service METHOD."
-  (` (car (cdr (assq (, method) (symbol-value 'pgp-function-alist)))))
-  )
-
-(mapcar (function
-	 (lambda (method)
-	   (autoload (second method)(third method))
-	   ))
-	pgp-function-alist)
-
-
 ;;; @ definitions about MIME
 ;;;
 
@@ -226,22 +179,15 @@ FUNCTION.")
 ;;; @@ Base64
 ;;;
 
-(defconst base64-token-regexp "[A-Za-z0-9+/]")
-(defconst base64-token-padding-regexp "[A-Za-z0-9+/=]")
+(defconst base64-token-regexp "[A-Za-z0-9+/=]")
 
 (defconst mime/B-encoded-text-regexp
-  (concat "\\(\\("
+  (concat "\\("
 	  base64-token-regexp
 	  base64-token-regexp
 	  base64-token-regexp
 	  base64-token-regexp
-	  "\\)*"
-	  base64-token-regexp
-	  base64-token-regexp
-	  base64-token-padding-regexp
-	  base64-token-padding-regexp
-          "\\)"))
-
+	  "\\)+"))
 (defconst mime/B-encoding-and-encoded-text-regexp
   (concat "\\(B\\)\\?" mime/B-encoded-text-regexp))
 

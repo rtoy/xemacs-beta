@@ -268,7 +268,7 @@ Has to be called after Emacs has been connected to Energize"
 	      (progn
 		(message "Energizing buffer %s..." (buffer-name buffer))
 		(find-file-noselect filename))
-	    (message (format "Buffer %s not Energized." (buffer-name buffer)))
+	    (message "Buffer %s not Energized." (buffer-name buffer))
 	    (sit-for 1)))))
       (message nil)))))
 

@@ -18,7 +18,7 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: FSF 19.30.
@@ -46,7 +46,7 @@
 (fset 'help-command help-map)
 
 (let ((ch help-char))
-  (if (integerp ch)
+  (if (or (characterp ch) (integerp ch))
       (setq ch (char-to-string ch)))
   (define-key help-map ch 'help-for-help))
 (define-key help-map "?" 'help-for-help)
@@ -59,7 +59,6 @@
 (define-key help-map "A" 'command-apropos)
 
 (define-key help-map "b" 'describe-bindings)
-(define-key help-map "B" 'describe-beta)
 (define-key help-map "\C-p" 'describe-pointer)
 
 (define-key help-map "c" 'describe-key-briefly)
@@ -182,12 +181,12 @@ Commands:
 (define-key help-mode-map "q" 'help-mode-quit)
 
 (defun help-mode-quit ()
-  "Exits from help mode, possibly restoring the previous window configuration."
+  "Exits from help mode, possiblely restoring the previous window configuration."
   (interactive)
-  (cond ((frame-property (selected-frame) 'help-window-config)
-	   (set-window-configuration
-	    (frame-property (selected-frame) 'help-window-config))
-	   (set-frame-property  (selected-frame) 'help-window-config nil))
+  (cond ((local-variable-p 'help-window-config (current-buffer))
+         (let ((config help-window-config))
+	   (kill-local-variable 'help-window-config)
+	   (set-window-configuration config)))
         ((one-window-p)
 	 (bury-buffer))
         (t
@@ -347,6 +346,8 @@ If FUNCTION is nil, applies `message' to it, thus printing it."
 This just displays the buffer in another window, rather than selecting
 the window.")
 
+(defvar help-window-config nil)
+
 ;; Use this function for displaying help when C-h something is pressed
 ;; or in similar situations.  Do *not* use it when you are displaying
 ;; a help message and then prompting for input in the minibuffer --
@@ -357,12 +358,7 @@ the window.")
 ;;; requirement of caller to code a lambda form in THUNK -- mrb
 (defun with-displaying-help-buffer (thunk)
   (let ((winconfig (current-window-configuration))
-        (was-one-window (one-window-p))
-	(help-not-visible
-	 (not (and (windows-of-buffer "*Help*") ;shortcut
-		   (member (selected-frame)
-			   (mapcar 'window-frame
-				   (windows-of-buffer "*Help*")))))))
+        (was-one-window (one-window-p)))
     (prog1 (with-output-to-temp-buffer "*Help*"
              (prog1 (funcall thunk)
                (save-excursion
@@ -373,11 +369,7 @@ the window.")
             (progn
               (save-excursion
                 (set-buffer (window-buffer helpwin))
-		;;If the *Help* buffer is already displayed on this
-		;; frame, don't override the previous configuration
-		(if help-not-visible
-		    (set-frame-property (selected-frame)
-					'help-window-config winconfig)))
+                (set (make-local-variable 'help-window-config) winconfig))
               (if help-selects-help-window
                   (select-window helpwin))
               (cond ((eq helpwin (selected-window))
@@ -393,7 +385,7 @@ the window.")
 (defun describe-key (key)
   "Display documentation of the function invoked by KEY.
 KEY is a string, or vector of events.
-When called interactively, KEY may also be a menu selection."
+When called interactvely, KEY may also be a menu selection."
   (interactive "kDescribe key: ")
   (let ((defn (key-or-menu-binding key)))
     (if (or (null defn) (integerp defn))
@@ -471,13 +463,6 @@ describes the minor mode."
   (interactive)
   (find-file-read-only
    (expand-file-name "DISTRIB" data-directory)))
-
-(defun describe-beta ()
-  "Display info on how to deal with Beta versions of XEmacs."
-  (interactive)
-  (find-file-read-only
-   (expand-file-name "BETA" data-directory))
-  (goto-char (point-min)))
 
 (defun describe-copying ()
   "Display info on how you may redistribute copies of XEmacs."
@@ -695,14 +680,12 @@ instead, to ensure that you get the most up-to-date information."
 		     (eq char ? )
 		     (eq 'scroll-up (key-binding event))
 		     (eq char ?\177)
-		     (and (not (eq char ?b))
-			  (eq 'scroll-down (key-binding event))))
+		     (eq 'scroll-down (key-binding event)))
 	    (if (or (eq char ? )
 		    (eq 'scroll-up (key-binding event)))
 		(scroll-up))
 	    (if (or (eq char ?\177)
-		    (and (not (eq char ?b))
-			 (eq 'scroll-down (key-binding event))))
+		    (eq 'scroll-down (key-binding event)))
 		(scroll-down))
 	    ;; write this way for I18N3 snarfing
 	    (if (pos-visible-in-window-p (point-max))
@@ -795,19 +778,6 @@ not an autoload.")
 		    (car obsolete)
 		  (format "use `%s' instead." (car obsolete)))))))
 
-(defun function-compatible-p (function)
-  "Return non-nil if FUNCTION is present for Emacs compatibility."
-  (not (null (get function 'byte-compatible-info))))
-
-(defun function-compatibility-doc (function)
-  "If FUNCTION is Emacs compatible, return a string describing this."
-  (let ((compatible (get function 'byte-compatible-info)))
-    (if compatible
-	(format "Emacs Compatible; %s"
-		(if (stringp (car compatible))
-		    (car compatible)
-		  (format "use `%s' instead." (car compatible)))))))
-
 ;Here are all the possibilities below spelled out, for the benefit
 ;of the I18N3 snarfer.
 ;
@@ -839,7 +809,7 @@ not an autoload.")
 	 file-name
          (doc (or (documentation function)
                   (gettext "not documented")))
-	 aliases home kbd-macro-p fndef macrop)
+	 aliases kbd-macro-p fndef macrop)
     (while (symbolp def)
       (or (eq def function)
 	  (if aliases
@@ -849,8 +819,6 @@ not an autoload.")
 					    (symbol-name def))))
 	    (setq aliases (format "an alias for %s, " (symbol-name def)))))
       (setq def (symbol-function def)))
-    (if (compiled-function-p def)
-	(setq home (compiled-function-annotation def)))
     (if (eq 'macro (car-safe def))
 	(setq fndef (cdr def)
 	      macrop t)
@@ -910,10 +878,8 @@ not an autoload.")
 	(setq file-name (describe-function-find-file function)))
     (if file-name
 	(princ (format ".\n  -- loads from \"%s\"" file-name) stream))
-    (if home
-	(princ (format ".\n  -- loaded from %s" home)))
-    (princ "." stream)
-    (terpri stream)
+    (princ ".")
+    (terpri)
     (cond (kbd-macro-p
 	   (princ "These characters are executed:\n\n\t" stream)
 	   (princ (key-description def) stream)
@@ -926,23 +892,17 @@ not an autoload.")
 	   ;; If the function is obsolete and is aliased, don't
 	   ;; even bother to report the documentation, as a further
 	   ;; encouragement to use the new function.
-	   (let ((obsolete (function-obsoleteness-doc function))
-		 (compatible (function-compatibility-doc function)))
+	   (let ((obsolete (function-obsoleteness-doc function)))
 	     (if obsolete
 		 (progn
 		   (princ obsolete stream)
-		   (terpri stream)
-		   (terpri stream)))
-	     (if compatible
-		 (progn
-		   (princ compatible stream)
 		   (terpri stream)
 		   (terpri stream)))
 	     (if (not (and obsolete aliases))
 		 (progn
 		   (princ doc stream)
 		   (or (eq ?\n (aref doc (1- (length doc))))
-		       (terpri stream)))))))))
+		       (terpri)))))))))
 
 
 (defun describe-function-arglist (function)
@@ -992,19 +952,6 @@ not an autoload.")
 		(if (stringp obsolete)
 		    obsolete
 		  (format "use `%s' instead." obsolete))))))
-
-(defun variable-compatible-p (variable)
-  "Return non-nil if VARIABLE is Emacs compatible."
-  (not (null (get variable 'byte-compatible-variable))))
-
-(defun variable-compatibility-doc (variable)
-  "If VARIABLE is Emacs compatible, return a string describing this."
-  (let ((compatible (get variable 'byte-compatible-variable)))
-    (if compatible
-	(format "Emacs Compatible; %s"
-		(if (stringp compatible)
-		    compatible
-		  (format "use `%s' instead." compatible))))))
 
 (defun built-in-variable-doc (variable)
   "Return a string describing whether VARIABLE is built-in."
@@ -1096,16 +1043,10 @@ not an autoload.")
        (princ "Documentation:")
        (terpri)
        (let ((doc (documentation-property variable 'variable-documentation))
-	     (obsolete (variable-obsoleteness-doc origvar))
-	     (compatible (variable-compatibility-doc origvar)))
+	     (obsolete (variable-obsoleteness-doc origvar)))
 	 (if obsolete
 	     (progn
 	       (princ obsolete)
-	       (terpri)
-	       (terpri)))
-	 (if compatible
-	     (progn
-	       (princ compatible)
 	       (terpri)
 	       (terpri)))
 	 ;; don't bother to print anything if variable is obsolete and aliased.
@@ -1144,52 +1085,22 @@ Argument is a command definition, usually a symbol with a function definition."
         (message "%s is not on any keys" definition)))
   nil)
 
-;; Synched with Emacs 19.35
-(defun locate-library (library &optional nosuffix path interactive-call)
-  "Show the precise file name of Emacs library LIBRARY.
+(defun locate-library (library &optional nosuffix)
+  "Show the full path name of XEmacs library LIBRARY.
 This command searches the directories in `load-path' like `M-x load-library'
 to find the file that `M-x load-library RET LIBRARY RET' would load.
 Optional second arg NOSUFFIX non-nil means don't add suffixes `.elc' or `.el'
-to the specified name LIBRARY.
-
-If the optional third arg PATH is specified, that list of directories
-is used instead of `load-path'."
-  (interactive (list (read-string "Locate library: ")
-                     nil nil
-                     t))
-  (let (result)
-    (catch 'answer
-      (mapcar
-       (lambda (dir)
-         (mapcar
-          (lambda (suf)
-            (let ((try (expand-file-name (concat library suf) dir)))
-              (and (file-readable-p try)
-                   (null (file-directory-p try))
-                   (progn
-                     (setq result try)
-                     (throw 'answer try)))))
-          (if nosuffix
-              '("")
-            (let ((basic '(".elc" ".el" ""))
-                  (compressed '(".Z" ".gz" "")))
-              ;; If autocompression mode is on,
-              ;; consider all combinations of library suffixes
-              ;; and compression suffixes.
-              (if (rassq 'jka-compr-handler file-name-handler-alist)
-                  (apply 'nconc
-                         (mapcar (lambda (compelt)
-                                   (mapcar (lambda (baselt)
-                                             (concat baselt compelt))
-                                           basic))
-                                 compressed))
-                basic)))))
-       (or path load-path)))
-    (and interactive-call
-         (if result
-             (message "Library is file %s" result)
-           (message "No library %s in search path" library)))
-    result))
+to the specified name LIBRARY (a la calling `load' instead of `load-library')."
+  (interactive "sLocate library: \nP")
+  ;; Let's accept both symbols and strings, since they're often equivalent
+  (when (symbolp library)
+    (setq library (symbol-name library)))
+  ;; XEmacs: We have the nifty `locate-file' so we use it.
+  (let ((file (locate-file library load-path (if nosuffix nil ".elc:.el:"))))
+    (if file
+	(message "Library is file %s" file)
+      (message "No library %s in search path" library))
+    file))
 
 ;; Functions ported from C into Lisp in XEmacs
 

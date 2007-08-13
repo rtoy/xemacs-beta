@@ -69,8 +69,9 @@ static int current_lock_owner_1 (CONST char *);
 
 #ifndef HAVE_LONG_FILE_NAMES
 
-#define MAKE_LOCK_NAME(lock, file)					\
-  (lock = (char *) alloca (14 + XSTRING_LENGTH (Vlock_directory) + 1),	\
+#define MAKE_LOCK_NAME(lock, file)					    \
+  (lock = (char *) alloca (14 + XSTRING_LENGTH (Vlock_directory) + \
+			   1),						    \
    fill_in_lock_short_file_name (lock, (file)))
 
 static void
@@ -106,7 +107,7 @@ fill_in_lock_short_file_name (REGISTER char *lockfile, REGISTER Lisp_Object fn)
     int need_slash = 0;
 
     /* in case lock-directory doesn't end in / */
-    if (XSTRING_BYTE (Vlock_directory,
+    if (string_byte (XSTRING (Vlock_directory),
 		     XSTRING_LENGTH (Vlock_directory) - 1) != '/')
       need_slash = 1;
 
@@ -121,9 +122,9 @@ fill_in_lock_short_file_name (REGISTER char *lockfile, REGISTER Lisp_Object fn)
 #else /* defined HAVE_LONG_FILE_NAMES */
 
 /* +2 for terminating null and possible extra slash */
-#define MAKE_LOCK_NAME(lock, file)					\
-  (lock = (char *) alloca (XSTRING_LENGTH (file) +			\
-			   XSTRING_LENGTH (Vlock_directory) + 2),	\
+#define MAKE_LOCK_NAME(lock, file)				\
+  (lock = (char *) alloca (XSTRING_LENGTH (file) +		\
+			   XSTRING_LENGTH (Vlock_directory) + 2),\
    fill_in_lock_file_name (lock, (file)))
 
 static void
@@ -196,11 +197,7 @@ lock_file_owner_name (CONST char *lfname)
 void
 lock_file (Lisp_Object fn)
 {
-  /* This function can GC. */
-  /* dmoore - and can destroy current_buffer and all sorts of other
-     mean nasty things with pointy teeth.  If you call this make sure
-     you protect things right. */
-
+  /* This function can GC */
   REGISTER Lisp_Object attack, orig_fn;
   REGISTER char *lfname;
   struct gcpro gcpro1, gcpro2;
@@ -339,11 +336,6 @@ current_lock_owner_1 (CONST char *lfname)
 void
 unlock_file (Lisp_Object fn)
 {
-  /* This function can GC. */
-  /* dmoore - and can destroy current_buffer and all sorts of other
-     mean nasty things with pointy teeth.  If you call this make sure
-     you protect things right. */
-
   REGISTER char *lfname;
   if (NILP (Vlock_directory) || NILP (Vsuperlock_file)) return;
   CHECK_STRING (fn);
@@ -400,13 +392,9 @@ lock_superlock (CONST char *lfname)
 void
 unlock_all_files (void)
 {
-  /* This function can GC. */
-
-  Lisp_Object tail;
+  REGISTER Lisp_Object tail;
   REGISTER struct buffer *b;
-  struct gcpro gcpro1;
 
-  GCPRO1 (tail);
   for (tail = Vbuffer_alist; GC_CONSP (tail);
        tail = XCDR (tail))
     {
@@ -415,7 +403,6 @@ unlock_all_files (void)
 	  BUF_SAVE_MODIFF (b) < BUF_MODIFF (b))
 	unlock_file (b->file_truename);
     }
-  UNGCPRO;
 }
 
 
@@ -427,10 +414,6 @@ or else nothing is done if current buffer isn't visiting a file.
        (fn))
 {
   /* This function can GC */
-  /* dmoore - and can destroy current_buffer and all sorts of other
-     mean nasty things with pointy teeth.  If you call this make sure
-     you protect things right. */
-
   if (NILP (fn))
     fn = current_buffer->file_truename;
   CHECK_STRING (fn);
@@ -446,11 +429,6 @@ if it should normally be locked.
 */
        ())
 {
-  /* This function can GC */
-  /* dmoore - and can destroy current_buffer and all sorts of other
-     mean nasty things with pointy teeth.  If you call this make sure
-     you protect things right. */
-
   if (BUF_SAVE_MODIFF (current_buffer) < BUF_MODIFF (current_buffer)
       && STRINGP (current_buffer->file_truename))
     unlock_file (current_buffer->file_truename);
@@ -463,10 +441,6 @@ if it should normally be locked.
 void
 unlock_buffer (struct buffer *buffer)
 {
-  /* This function can GC */
-  /* dmoore - and can destroy current_buffer and all sorts of other
-     mean nasty things with pointy teeth.  If you call this make sure
-     you protect things right. */
   if (BUF_SAVE_MODIFF (buffer) < BUF_MODIFF (buffer)
       && STRINGP (buffer->file_truename))
     unlock_file (buffer->file_truename);

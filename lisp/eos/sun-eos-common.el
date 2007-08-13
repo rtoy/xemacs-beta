@@ -358,7 +358,7 @@
 	       (graphics (eos::annotation-get-glyph type device-type))
 	       (face (eos::annotation-get-face type device-type))
 	       )
-	  (setq anot (make-annotation graphics (point) 'outside-margin))
+	  (setq anot (make-annotation graphics (point) 'whitespace))
 	  (set-annotation-data anot uid)
 	  (set-extent-face anot face)
 	  (eos::add-to-annotation-list anot type)

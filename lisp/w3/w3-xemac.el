@@ -1,12 +1,11 @@
 ;;; w3-xemac.el --- XEmacs specific functions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/03/09 01:59:33
-;; Version: 1.16
+;; Created: 1996/07/21 06:38:10
+;; Version: 1.4
 ;; Keywords: faces, help, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
 ;;; This file is part of GNU Emacs.
 ;;;
@@ -21,17 +20,14 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;;; Boston, MA 02111-1307, USA.
+;;; along with GNU Emacs; see the file COPYING.  If not, write to
+;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (require 'w3-imap)
 (require 'images)
 (require 'w3-widget)
 (require 'w3-menu)
-(require 'w3-forms)
-(require 'w3-script)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Enhancements For XEmacs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -40,14 +36,25 @@
   (interactive "e")
   (let* ((pt (event-point e))
 	 (good (eq (event-window e) (selected-window)))
-	 (mouse-events))
-    (if (not (and good pt (number-or-marker-p pt)))
-	nil
-      (if (and inhibit-help-echo w3-track-mouse)
-	  (widget-echo-help pt))
-      (setq mouse-events (w3-script-find-event-handlers pt 'mouse))
-      (if (assq 'onmouseover mouse-events)
-	  (w3-script-evaluate-form (cdr (assq 'onmouseover mouse-events)))))))
+	 (widget (and good pt (number-or-marker-p pt) (widget-at pt)))
+	 (link (and widget (widget-get widget 'href)))
+	 (form (and widget (widget-get widget 'w3-form-data)))
+	 (imag nil)
+	 )
+    (cond
+     (link (message "%s" link))
+     (form
+      (cond
+       ((eq 'submit (w3-form-element-type form))
+	(message "Submit form to %s"
+		 (cdr-safe (assq 'action (w3-form-element-action form)))))
+       ((eq 'reset (w3-form-element-type form))
+	(message "Reset form contents"))
+       (t
+	(message "Form entry (name=%s, type=%s)" (w3-form-element-name form)
+		 (w3-form-element-type form)))))
+     (imag (message "Inlined image (%s)" (car imag)))
+     (t (message "")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Functions to build menus of urls
@@ -69,24 +76,6 @@
 	(if current-menubar
 	    (add-submenu '("Help") (cons "WWW" (cdr w3-menu-help-menu))))))
 
-  ;; FIXME FIXME: Do sexy things to the default modeline for Emacs-W3
-  
-  ;; The following is a workaround for XEmacs 19.14 and XEmacs 20.0
-  ;; The text property implementation is badly broken - you could not have
-  ;; a text property with a `nil' value.  Bad bad bad.
-  (if (or (and (= emacs-major-version 20)
-	       (= emacs-minor-version 0))
-	  (and (= emacs-major-version 19)
-	       (= emacs-minor-version 14)))
-      (defun text-prop-extent-paste-function (ext from to)
-	(let ((prop (extent-property ext 'text-prop nil))
-	      (val nil))
-	  (if (null prop)
-	      (error "Internal error: no text-prop"))
-	  (setq val (extent-property ext prop nil))
-	  (put-text-property from to prop val nil)
-	  nil))
-    )
   )
 
 (defun w3-store-in-clipboard (str)
@@ -139,16 +128,15 @@
 
 (defun w3-mode-version-specifics ()
   "XEmacs specific stuff for w3-mode"
-  (if (featurep 'mouse)
-      (progn
-	(if (not w3-track-mouse)
-	    (setq inhibit-help-echo nil))
-	(setq mode-motion-hook 'w3-mouse-handler)))
-  (case (device-type)
-    ((tty stream)			; TTY or batch
-     nil)
-    (otherwise
-     (w3-add-toolbar-to-buffer)))
+  (cond
+   ((not w3-track-mouse)
+    (setq inhibit-help-echo nil))
+   (inhibit-help-echo
+    (setq mode-motion-hook 'w3-mouse-handler))
+   (t nil))
+  (if (eq (device-type) 'tty)
+      nil
+    (w3-add-toolbar-to-buffer))
   (setq mode-popup-menu w3-popup-menu))
 
 (require 'w3-toolbar)

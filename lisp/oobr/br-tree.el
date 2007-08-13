@@ -6,12 +6,12 @@
 ;; KEYWORDS:     mouse, oop, tools
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          InfoDock Associates
+;; ORG:          Motorola Inc.
 ;;
 ;; ORIG-DATE:    12-Oct-90
-;; LAST-MOD:     20-Feb-97 at 07:01:02 by Bob Weiner
+;; LAST-MOD:      5-Jun-95 at 12:00:10 by Bob Weiner
 ;;
-;; Copyright (C) 1990-1995, 1997  Free Software Foundation, Inc.
+;; Copyright (C) 1990-1995  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.
@@ -106,14 +106,14 @@ With optional prefix ARG, a descendency tree for each class in current buffer."
 	    (format "(OO-Browser):  Illegal command: %s" cmd)))))
 
 (defun br-tree-features-toggle ()
-  "Toggle between showing and hiding features when `br-tree' is invoked to display descendants graphically."
+  "Toggle between showing and hiding features when 'br-tree' is invoked to display descendants graphically."
   (interactive)
   (setq br-show-features (not br-show-features))
   (message "New graphical OO-Browsers will %sshow features."
 	   (if br-show-features "" "not ")))
 
 (defun br-tree-kill ()
-  "Kill all current `Tree' sub-processes."
+  "Kill all current 'Tree' sub-processes."
   (interactive)
   (if (br-kill-process-group br-tree-name br-tree-num
 			     "Tree displays")
@@ -224,7 +224,7 @@ OFFSET spaces from its parent (which must be greater than zero, default 2)."
 
 (defun br-tree-build-features (c expand-subtree indent offset)
   "Each language under which this function is called must define its own
-version of `br-list-features' and `br-feature-signature-to-name'."
+version of 'br-list-features' and 'br-feature-signature-to-name'."
   (let ((features) (ch))
     (and expand-subtree
 	 (setq features
@@ -281,7 +281,7 @@ version of `br-list-features' and `br-feature-signature-to-name'."
 	    (br-tree-do-cmd br-lang-px br-env-nm
 			    br-cmd-nm br-node-nm))
 	(beep)
-	(message "`%s': invalid command from graphical browser"
+	(message "'%s': invalid command from graphical browser"
 		 br-cmd-str)
 	(setq br-cmd-str nil)))))
 

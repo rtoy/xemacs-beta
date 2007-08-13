@@ -16,7 +16,7 @@
 ;; Edit SGML or HTML buffers with ISO 8859-1 (Latin-1) display|
 ;; 10-May-1995|1.4|~/misc/iso-sgml.el.Z|
 
-;; $Id: iso-sgml.el,v 1.1.1.2 1996/12/18 03:47:13 steve Exp $
+;; $Id: iso-sgml.el,v 1.1.1.1 1996/12/18 22:43:36 steve Exp $
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -56,7 +56,7 @@
 
 ;; Code:
 
-(defconst isosgml-version "$Id: iso-sgml.el,v 1.1.1.2 1996/12/18 03:47:13 steve Exp $"
+(defconst isosgml-version "$Id: iso-sgml.el,v 1.1.1.1 1996/12/18 22:43:36 steve Exp $"
   "iso-sgml RCS version number")
 
 (defvar isosgml-modes-list '(html-mode html-helper-mode sgml-mode)
@@ -228,8 +228,8 @@
 ;; iso-sgml.el ends here
 
 ; $Log: iso-sgml.el,v $
-; Revision 1.1.1.2  1996/12/18 03:47:13  steve
-; XEmacs 19.15-b2
+; Revision 1.1.1.1  1996/12/18 22:43:36  steve
+; XEmacs 20.0 -- Beta 30
 ;
 ; Revision 1.4  1995/05/10  06:19:41  lepied
 ; 	* protect code with unwind-protect to prevent errors

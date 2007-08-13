@@ -322,13 +322,25 @@ be automatic inheritance."
 (defun derived-mode-merge-syntax-tables (old new)
   "Merge an old syntax table into a new one.
 Where the new table already has an entry, nothing is copied from the old one."
-  ;; XEmacs change (no set-char-table-parent)
-  (let ((idx 0)
-	(end (min (length new) (length old))))
-    (while (< idx end)
-      (if (not (aref new idx))
-	  (aset new idx (aref old idx)))
-      (setq idx (1+ idx)))))
+  ;; 20.x
+  (if (fboundp 'map-char-table)
+      ;; we use map-char-table not map-syntax-table so we can explicitly
+      ;; check for inheritance.
+      (map-char-table
+       #'(lambda (key value)
+	   (if (eq ?@ (char-syntax-from-code value))
+	       (map-char-table #'(lambda (key1 value1)
+				   (put-char-table key1 value1 new))
+			       old
+			       key)))
+       new)
+    ;; pre-20.0
+    (let ((idx 0)
+	  (end (min (length new) (length old))))
+      (while (< idx end)
+	(if (not (aref new idx))
+	    (aset new idx (aref old idx)))
+	(setq idx (1+ idx))))))
 
 ;; Merge an old abbrev table into a new one.
 ;; This function requires internal knowledge of how abbrev tables work,

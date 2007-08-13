@@ -3,11 +3,11 @@
 ;; Copyright (C) 1993, 1994, 1996 Free Software Foundation, Inc.
 
 ;; Author: Johan Vromans <jv@mh.nl>
-;; Maintainer: Alexandre Oliva <oliva@dcc.unicamp.br>
+;; Version: 1.7 (modified)
+;; Maintainer: FSF
 ;; Keywords: i18n
-;; Adapted to XEmacs 19.14 by Alexandre Oliva <oliva@dcc.unicamp.br>
-;; $Revision: 1.3 $
-;; $Date: 1997/02/09 23:51:31 $
+;; Adapted for XEmacs 19.14 by Alexandre Oliva <oliva@dcc.unicamp.br>
+;; Last update: Oct 10, 1996
 
 ;; This file is part of GNU Emacs.
 
@@ -41,16 +41,15 @@
 ;;   "  (second)    -> diaeresis
 ;;   ^  (caret)     -> circumflex
 ;;   ~  (tilde)     -> tilde over the character
-;;   /  (slash)     -> slash through the character
-;;   .  (dot)       -> dot over the character
-;;   ,  (cedilla)   -> cedilla under the character (except on default mode)
-;;                  Also:  /A is A-with-ring and /E is AE ligature.
+;;   /  (slash)     -> slash through the character.
+;;   ,  (cedilla)   -> cedilla under the character (except on default mode).
+;;		  Also:  /A is A-with-ring and /E is AE ligature.
 ;;
 ;; The action taken depends on the key that follows the pseudo accent.
 ;; In general: 
 ;;
 ;;   pseudo-accent + appropriate letter -> accented letter
-;;   pseudo-accent + space -> pseudo-accent (except comma)
+;;   pseudo-accent + space -> pseudo-accent (except for comma)
 ;;   pseudo-accent + pseudo-accent -> accent (if available)
 ;;   pseudo-accent + other -> pseudo-accent + other
 ;;
@@ -73,13 +72,9 @@
 (if (fboundp 'read-event) ()
   (defun read-event () (event-key (next-command-event))))
 
-(if (fboundp 'character-to-event)
-    (defun iso-char-to-event (ch)
-      "returns an event containing the given character"
-      (character-to-event (list ch)))
-  (defun iso-char-to-event (ch)
-    "returns the character itself"
-    ch))
+;; needed to work on GNU Emacs (had to use this function on XEmacs)
+(if (fboundp 'character-to-event) ()
+  (defun character-to-event (ch &optional event console meta) ch))
 
 ;; needed for compatibility with XEmacs 19.14 and GNU Emacs 19.30
 (if (fboundp 'this-single-command-keys) ()
@@ -89,7 +84,25 @@
 	(this-command-keys))
     (defun this-single-command-keys () (this-command-keys))))
 
-;; end of compatibility modules
+(if (string-match "Lucid" (version))
+    (progn
+      (global-set-key [quoted-insert-for-iso-acc] 'quoted-insert)
+      (defun iso-generate-char (char)
+	"inserts the octal representation of char into unread-command-events,\nand then returns the pseudo-key quoted-insert-for-iso-acc (which should be mapped to quoted-insert).\n\nCan be used in keymaps to generate characters from 128 to 255."
+	(setq unread-command-events
+	      (append
+	       (mapcar 'character-to-event (list
+					    (+ 48 (/ char 64))
+					    (+ 48 (% (/ char 8) 8))
+					    (+ 48 (% char 8))))
+	       unread-command-events))
+	[quoted-insert-for-iso-acc])
+      )
+  (defun iso-generate-char (char)
+    "Just returns a vector with the given character.\n\nNot necessary in the GNU Emacs implementation"
+    (vector char))
+  )
+
 
 (defvar iso-languages
   '(("portuguese"
@@ -100,8 +113,7 @@
      (?^ (?A . ?\302) (?E . ?\312) (?O . ?\324) (?a . ?\342) (?e . ?\352)
 	 (?o . ?\364) (?\  . ?^) (space . ?^))
      (?\" (?U . ?\334) (?u . ?\374) (?\  . ?\") (space . ?\"))
-     (?\~ (?A . ?\303) (?O . ?\325) (?a . ?\343) (?o . ?\365) (?\  . ?\~)
-	  (space . ?\~))
+     (?\~ (?A . ?\303) (?O . ?\325) (?a . ?\343) (?o . ?\365) (?\  . ?\~) (space . ?\~))
      (?, (?c . ?\347) (?C . ?\307)))
     
     ("irish"
@@ -110,44 +122,17 @@
 	 (?\  . ?') (space . ?')))
     
     ("french"
-     (?' (?E . ?\311) (?C . ?\307) (?e . ?\351) (?c . ?\347) (?\  . ?')
-	 (space . ?'))
-     (?` (?A . ?\300) (?E . ?\310) (?a . ?\340) (?e . ?\350) (?\  . ?`)
-	 (space . ?`))
+     (?' (?A . ?\301) (?E . ?\311) (?I . ?\315) (?O . ?\323) (?U . ?\332)
+	 (?C . ?\307) (?a . ?\341) (?e . ?\351) (?i . ?\355) (?o . ?\363)
+	 (?u . ?\372) (?c . ?\347) (?\  . ?') (space . ?'))
+     (?` (?A . ?\300) (?E . ?\310) (?a . ?\340) (?e . ?\350) (?\  . ?`) (space . ?`))
      (?^ (?A . ?\302) (?E . ?\312) (?I . ?\316) (?O . ?\324) (?U . ?\333)
 	 (?a . ?\342) (?e . ?\352) (?i . ?\356) (?o . ?\364) (?u . ?\373)
 	 (?\  . ?^) (space . ?^))
-     (?\" (?E . ?\313) (?I . ?\317)  
-          (?e . ?\353) (?i . ?\357) (?\  . ?\") (space . ?\"))
-     (?\~ (?< . ?\253) (?> . ?\273) (?C . ?\307) (?c . ?\347) (?\  . ?\~)
-	  (space . ?\~))
+     (?\" (?U . ?\334) (?u . ?\374) (?\  . ?\") (space . ?\"))
+     (?\~ (?A . ?\303) (?O . ?\325) (?a . ?\343) (?o . ?\365) (?\  . ?\~) (space . ?\~))
      (?, (?c . ?\347) (?C . ?\307)))
     
-   ;;; ISO-8859-3, developed by D. Dale Gulledge <ddg@cci.com>
-    ("latin-3"
-     (?' (?A . ?\301) (?E . ?\311) (?I . ?\315) (?O . ?\323)
-	 (?U . ?\332) (?a . ?\341) (?e . ?\351) (?i . ?\355)
-     	 (?o . ?\363) (?u . ?\372) (?\  . ?') (space . ?'))
-     (?. (?C . ?\305) (?G . ?\325) (?I . ?\251) (?Z . ?\257)
-	 (?c . ?\345) (?g . ?\365) (?z . ?\277))
-     (?\" (?A . ?\304) (?E . ?\313) (?I . ?\317) (?O . ?\326)
-	  (?U . ?\334) (?a . ?\344) (?e . ?\353) (?i . ?\357)
-	  (?o ?\366) (?u ?\374) (?\  . ?\") (space . ?\"))
-     (?\/ (?\/ . ?\260) (?\  . ?/) (space . ?/))
-     (?\~ (?C . ?\307) (?G . ?\253) (?N . ?\321) (?S . ?\252)
-          (?U . ?\335) (?\~ . ?\270) (?c . ?\347) (?g . ?\273)
-	  (?h . ?\261) (?n . ?\361) (?u . ?\375)
-	  (?\  . ?~) (space . ?~))
-     (?^ (?A . ?\302) (?C . ?\306) (?E . ?\312) (?G . ?\330)
-	 (?H . ?\246) (?I . ?\316) (?J . ?\254) (?O . ?\324)
-	 (?S . ?\336) (?U . ?\333) (?a . ?\342) (?c . ?\346)
-	 (?e . ?\352) (?g . ?\370) (?h . ?\266) (?i . ?\356)
-	 (?j . ?\274) (?o . ?\364) (?s . ?\376) (?u . ?\373)
-	 (?\  . ?^) (space . \^))
-     (?` (?A . ?\300) (?E . ?\310) (?I . ?\314) (?O . ?\322)
-	 (?U . ?\331) (?a . ?\340) (?e . ?\350) (?i . ?\354)
-	 (?o . ?\362) (?u . ?\371) (?\  . ?`) (space . ?`)))
-
     ("latin-2"
      (?' (?A . ?\301) (?C . ?\306) (?D . ?\320) (?E . ?\311) (?I . ?\315)
 	 (?L . ?\305) (?N . ?\321) (?O . ?\323) (?R . ?\300) (?S . ?\246)
@@ -224,9 +209,9 @@ Setting this variable makes it local to the current buffer.
 See the function `iso-accents-mode'.")
 (make-variable-buffer-local 'iso-accents-mode)
 
-(defvar iso-accents-enable '(?' ?` ?^ ?\" ?~ ?/ ?, ?.)
+(defvar iso-accents-enable '(?' ?` ?^ ?\" ?~ ?/ ?,)
   "*List of accent keys that become prefixes in ISO Accents mode.
-The default is (?' ?` ?^ ?\" ?~ ?/ ?, ?.), which contains all the supported
+The default is (?' ?` ?^ ?\" ?~ ?/ ?,), which contains all the supported
 accent keys.  If you set this variable to a list in which some of those
 characters are missing, the missing ones do not act as accents.
 
@@ -264,11 +249,10 @@ the language you choose).")
 	 (entry (cdr (assq second-char list))))
     (if entry
 	;; Found it: return the mapped char
-        (vector (iso-char-to-event entry))
+	(iso-generate-char entry)
       ;; Otherwise, advance and schedule the second key for execution.
-      (setq unread-command-events (cons (iso-char-to-event second-char)
-					unread-command-events))
-      (vector (iso-char-to-event first-char)))))
+      (setq unread-command-events (list (character-to-event second-char)))
+      (vector first-char))))
 
 ;; It is a matter of taste if you want the minor mode indicated
 ;; in the mode line...
@@ -319,8 +303,7 @@ and a negative argument disables it."
 It selects the customization based on the specifications in the
 `iso-languages' variable."
   (interactive (list (completing-read "Language: " iso-languages nil t)))
-  (let ((table (assoc language iso-languages))
-	tail)
+  (let ((table (assoc language iso-languages)) tail)
     (if (not table)
 	(error "Unknown language '%s'" language)
       (setq iso-language language
@@ -333,8 +316,7 @@ It selects the customization based on the specifications in the
       ;; accent prefixes in this language.
       (setq tail iso-accents-list)
       (while tail
-	(define-key key-translation-map (vector (iso-char-to-event
-						 (car (car tail))))
+	(define-key key-translation-map (vector (car (car tail)))
 	  'iso-accents-accent-key)
 	(setq tail (cdr tail))))))
 

@@ -62,14 +62,12 @@ starting with the current one.  Deleted messages are skipped and don't count."
 	     ;; If not suggestions, use same file as last time.
 	     (or answer rmail-last-rmail-file))))
      (list (setq rmail-last-rmail-file
-		 (if default-file
-		     (read-file-name
-		      (concat "Output message to Rmail file: (default "
-			      (file-name-nondirectory default-file)
-			      ") ")
-		      (file-name-directory default-file)
-		      default-file)
-		   (read-file-name "Output message to Rmail file: ")))
+		 (read-file-name
+			    (concat "Output message to Rmail file: (default "
+				    (file-name-nondirectory default-file)
+				    ") ")
+			    (file-name-directory default-file)
+			    default-file))
 	   (prefix-numeric-value current-prefix-arg))))
   (or count (setq count 1))
   (setq file-name

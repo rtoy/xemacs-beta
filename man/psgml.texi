@@ -7,7 +7,7 @@
 @syncodeindex vr cp
 @synindex ky cp
 @c %**end of header
-@c $Id: psgml.texi,v 1.2 1997/01/04 21:20:22 steve Exp $
+@c $Id: psgml.texi,v 1.1.1.1 1996/12/18 22:43:46 steve Exp $
 
 @ifinfo
 @format
@@ -199,7 +199,7 @@ To install PSGML you first need to uncompress and unpack the source
 archive.  This is done with the @code{gunzip} and @code{tar} commands.
 
 @example
-gunzip psgml-1.0.1.tar.gz; tar xf psgml-1.0.1.tar
+gunzip psgml-1.0a12.tar.gz; tar xf psgml-1.0a12.tar
 @end example
 
 This should create a subdirectory to the current directory with the

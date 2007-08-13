@@ -1,5 +1,5 @@
 ;;; nndraft.el --- draft article access for Gnus
-;; Copyright (C) 1995,96,97 Free Software Foundation, Inc.
+;; Copyright (C) 1995,96 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@ifi.uio.no>
 ;; Keywords: news
@@ -63,7 +63,7 @@
 	  'headers
 	(while articles
 	  (set-buffer buf)
-	  (when (nndraft-request-article
+	  (when (nndraft-request-article 
 		 (setq article (pop articles)) group server (current-buffer))
 	    (goto-char (point-min))
 	    (if (search-forward "\n\n" nil t)
@@ -83,7 +83,7 @@
   (nnoo-change-server 'nndraft server defs)
   (unless (assq 'nndraft-directory defs)
     (setq nndraft-directory server))
-  (cond
+  (cond 
    ((not (file-exists-p nndraft-directory))
     (nndraft-close-server)
     (nnheader-report 'nndraft "No such file or directory: %s"
@@ -98,7 +98,7 @@
 
 (deffoo nndraft-request-article (id &optional group server buffer)
   (when (numberp id)
-    ;; We get the newest file of the auto-saved file and the
+    ;; We get the newest file of the auto-saved file and the 
     ;; "real" file.
     (let* ((file (nndraft-article-filename id))
 	   (auto (nndraft-auto-save-file-name file))
@@ -106,10 +106,10 @@
 	   (nntp-server-buffer (or buffer nntp-server-buffer)))
       (when (and (file-exists-p newest)
 		 (nnmail-find-file newest))
-	(save-excursion
+	(save-excursion 
 	  (set-buffer nntp-server-buffer)
 	  (goto-char (point-min))
-	  ;; If there's a mail header separator in this file,
+	  ;; If there's a mail header separator in this file, 
 	  ;; we remove it.
 	  (when (re-search-forward
 		 (concat "^" mail-header-separator "$") nil t)
@@ -163,7 +163,7 @@
   (nndraft-execute-nnmh-command
    `(nnmh-request-newgroups ,date ,server)))
 
-(deffoo nndraft-request-expire-articles
+(deffoo nndraft-request-expire-articles 
   (articles group &optional server force)
   (let ((res (nndraft-execute-nnmh-command
 	      `(nnmh-request-expire-articles
@@ -203,14 +203,14 @@
 (deffoo nndraft-close-group (group &optional server)
   t)
 
-(deffoo nndraft-request-create-group (group &optional server args)
+(deffoo nndraft-request-create-group (group &optional server)
   (if (file-exists-p nndraft-directory)
       (if (file-directory-p nndraft-directory)
 	  t
 	nil)
     (condition-case ()
 	(progn
-	  (gnus-make-directory nndraft-directory)
+	  (make-directory nndraft-directory t)
 	  t)
       (file-error nil))))
 
@@ -219,8 +219,8 @@
 
 (defun nndraft-execute-nnmh-command (command)
   (let ((dir (expand-file-name nndraft-directory)))
-    (when (string-match "/$" dir)
-      (setq dir (substring dir 0 (match-beginning 0))))
+    (and (string-match "/$" dir)
+	 (setq dir (substring dir 0 (match-beginning 0))))
     (string-match "/[^/]+$" dir)
     (let ((group (substring dir (1+ (match-beginning 0))))
           (nnmh-directory (substring dir 0 (1+ (match-beginning 0))))

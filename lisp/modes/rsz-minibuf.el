@@ -10,7 +10,7 @@
 ;;; Keywords: minibuffer, window, frames, display
 ;;; Status: Known to work in FSF GNU Emacs 19.23 and Lucid Emacs 19.9.
 
-;;; $Id: rsz-minibuf.el,v 1.3 1997/03/09 02:37:22 steve Exp $
+;;; $Id: rsz-minibuf.el,v 1.1.1.1 1996/12/18 22:42:48 steve Exp $
 
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -112,7 +112,7 @@ The variable `resize-minibuffer-window-exactly' determines whether the
 minibuffer window should ever be shrunk to make it no larger than needed to
 display its contents.
 
-When using a window system, it is possible for a minibuffer to be the sole
+When using a window system, it is possible for a minibuffer to tbe the sole
 window in a frame.  Since that window is already its maximum size, the only
 way to make more text visible at once is to increase the size of the frame.
 The variable `resize-minibuffer-frame' controls whether this should be
@@ -159,16 +159,10 @@ counterparts."
 	     (add-hook 'minibuffer-exit-hook 'resize-minibuffer-frame-restore
 		       nil t)
 	     (make-local-hook 'post-command-hook)
-	     (add-hook 'post-command-hook 'resize-minibuffer-frame nil t)
-	     (unless (and (boundp 'icomplete-mode)
-			  icomplete-mode)
-	       (resize-minibuffer-frame)))))
+	     (add-hook 'post-command-hook 'resize-minibuffer-frame nil t))))
      (t
       (make-local-hook 'post-command-hook)
-      (add-hook 'post-command-hook 'resize-minibuffer-window nil t)
-      (unless (and (boundp 'icomplete-mode)
-		   icomplete-mode)
-	(resize-minibuffer-window)))))))
+      (add-hook 'post-command-hook 'resize-minibuffer-window nil t))))))
 
 (defun resize-minibuffer-count-window-lines (&optional start end)
   "Return number of window lines occupied by text in region.

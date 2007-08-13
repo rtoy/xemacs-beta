@@ -20,6 +20,9 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Mule 2.0, FSF 19.30. */
 
+/* This file has been Mule-ized. */
+
+
 /* Authorship:
 
    FSF: long ago.
@@ -37,6 +40,8 @@ hacked on by jwz@lucid.com 17-jun-91
 by Hallvard:
   o  added relative jump instructions;
   o  all conditionals now only do QUIT if they jump.
+
+   Ben Wing: some changes for Mule, June 1995.
  */
 
 #include <config.h>
@@ -51,7 +56,7 @@ by Hallvard:
  *
  * define BYTE_CODE_METER to enable generation of a byte-op usage histogram. 
  */
-/* #define BYTE_CODE_SAFE */
+#define BYTE_CODE_SAFE
 /* #define BYTE_CODE_METER */
 
 
@@ -96,8 +101,8 @@ Lisp_Object Qbyte_code;
 #define Bconsp 072
 #define Bstringp 073
 #define Blistp 074
-#define Beq 075
-#define Bmemq 076
+#define Bold_eq 075
+#define Bold_memq 076
 #define Bnot 077
 #define Bcar 0100
 #define Bcdr 0101
@@ -133,7 +138,7 @@ Lisp_Object Qbyte_code;
 #define Bmult 0137
 
 #define Bpoint 0140
-#define Bmark 0141 /* no longer generated as of v18 */
+#define Beq 0141 /* was Bmark, but no longer generated as of v18 */
 #define Bgoto_char 0142
 #define Binsert 0143
 #define Bpoint_max 0144
@@ -143,7 +148,7 @@ Lisp_Object Qbyte_code;
 #define Bpreceding_char 0150
 #define Bcurrent_column 0151
 #define Bindent_to 0152
-#define Bscan_buffer 0153 /* No longer generated as of v18 */
+#define Bequal 0153 /* was Bscan_buffer, but no longer generated as of v18 */
 #define Beolp 0154
 #define Beobp 0155
 #define Bbolp 0156
@@ -151,7 +156,7 @@ Lisp_Object Qbyte_code;
 #define Bcurrent_buffer 0160
 #define Bset_buffer 0161
 #define Bread_char 0162 /* No longer generated as of v19 */
-#define Bset_mark 0163 /* this loser is no longer generated as of v18 */
+#define Bmemq 0163 /* was Bset_mark, but no longer generated as of v18 */
 #define Binteractive_p 0164 /* Needed since interactive-p takes unevalled args */
 
 #define Bforward_char 0165
@@ -196,11 +201,11 @@ Lisp_Object Qbyte_code;
 
 #define Bstringeqlsign 0230
 #define Bstringlss 0231
-#define Bequal 0232
+#define Bold_equal 0232
 #define Bnthcdr 0233
 #define Belt 0234
-#define Bmember 0235
-#define Bassq 0236
+#define Bold_member 0235
+#define Bold_assq 0236
 #define Bnreverse 0237
 #define Bsetcar 0240
 #define Bsetcdr 0241
@@ -221,17 +226,15 @@ Lisp_Object Qbyte_code;
 #define BlistN 0257
 #define BconcatN 0260
 #define BinsertN 0261
+#define Bmember 0266 /* new in v20 */
+#define Bassq 0267 /* new in v20 */
 
 #define Bconstant 0300
 #define CONSTANTLIM 0100
 
 /* Fetch the next byte from the bytecode stream */
 
-#ifdef V20_SLOW_WAY
 #define FETCH (massaged_code[pc++])
-#else /* !V20_SLOW_WAY */
-#define FETCH *pc++
-#endif /* !V20_SLOW_WAY */
 
 /* Fetch two bytes from the bytecode stream
  and make a 16-bit number out of them */
@@ -274,11 +277,7 @@ If the third argument is incorrect, Emacs may crash.
   int prev_op;
 #endif
   REGISTER int op;
-#ifdef V20_SLOW_WAY
   int pc;
-#else /* !V20_SLOW_WAY */
-  REGISTER Bufbyte *pc;
-#endif /* !V20_SLOW_WAY */
   Lisp_Object *stack;
   REGISTER Lisp_Object *stackp;
   Lisp_Object *stacke;
@@ -287,15 +286,8 @@ If the third argument is incorrect, Emacs may crash.
 #ifdef BYTE_CODE_SAFE
   REGISTER int const_length = vector_length (XVECTOR (vector));
 #endif
-#ifdef V20_SLOW_WAY
   REGISTER Emchar *massaged_code;
   int massaged_code_len;
-#else /* !V20_SLOW_WAY */
-  /* Cached address of beginning of string, valid if BYTESTR data not
-     relocated.  */
-  REGISTER Bufbyte *strbeg;
-  REGISTER struct Lisp_String *detagged_string;
-#endif /* !V20_SLOW_WAY */
 
   CHECK_STRING (bytestr);
   if (!VECTORP (vector))
@@ -311,7 +303,6 @@ If the third argument is incorrect, Emacs may crash.
   stack = stackp;
   stacke = stackp + XINT (maxdepth);
 
-#ifdef V20_SLOW_WAY
   /* Initialize the pc-register and convert the string into a fixed-width
      format for easier processing.  */
   massaged_code =
@@ -323,39 +314,17 @@ If the third argument is incorrect, Emacs may crash.
 				      massaged_code);
   massaged_code[massaged_code_len] = 0;
   pc = 0;
-#else /* !V20_SLOW_WAY */
-  /* Initialize the pc-pointer by fetching from the string.  */
-  detagged_string = XSTRING (bytestr);
-  pc = string_data (detagged_string);
-  strbeg = pc;
-#endif /* !V20_SLOW_WAY */
-
+  
   while (1)
     {
 #ifdef BYTE_CODE_SAFE
       if (stackp > stacke)
 	error ("Byte code stack overflow (byte compiler bug), pc %d, depth %d",
-#ifdef V20_SLOW_WAY
 	       pc, stacke - stackp);
-#else /* !V20_SLOW_WAY */
-	       pc - string_data (detagged_string), stacke - stackp);
-#endif /* !V20_SLOW_WAY */
       if (stackp < stack)
 	error ("Byte code stack underflow (byte compiler bug), pc %d",
-#ifdef V20_SLOW_WAY
 	       pc);
-#else /* !V20_SLOW_WAY */
-	       pc - string_data (detagged_string));
-#endif /* !V20_SLOW_WAY */
 #endif
-
-#ifndef V20_SLOW_WAY
-      if (strbeg != string_data (detagged_string))
-	{
-	  pc = pc - strbeg + string_data (detagged_string);
-          strbeg = string_data (detagged_string);
-	}
-#endif /* !V20_SLOW_WAY */
 
 #ifdef BYTE_CODE_METER
       prev_op = this_op;
@@ -473,11 +442,7 @@ If the third argument is incorrect, Emacs may crash.
 	case Bgoto:
 	  QUIT;
 	  op = FETCH2;    /* pc = FETCH2 loses since FETCH2 contains pc++ */
-#ifdef V20_SLOW_WAY
 	  pc = op;
-#else /* !V20_SLOW_WAY */
-	  pc = string_data (detagged_string) + op;
-#endif /* !V20_SLOW_WAY */
 	  break;
 
 	case Bgotoifnil:
@@ -485,11 +450,7 @@ If the third argument is incorrect, Emacs may crash.
 	  if (NILP (POP))
 	    {
 	      QUIT;
-#ifdef V20_SLOW_WAY
 	      pc = op;
-#else /* !V20_SLOW_WAY */
-	      pc = string_data (detagged_string) + op;
-#endif /* !V20_SLOW_WAY */
 	    }
 	  break;
 
@@ -498,11 +459,7 @@ If the third argument is incorrect, Emacs may crash.
 	  if (!NILP (POP))
 	    {
 	      QUIT;
-#ifdef V20_SLOW_WAY
 	      pc = op;
-#else /* !V20_SLOW_WAY */
-	      pc = string_data (detagged_string) + op;
-#endif /* !V20_SLOW_WAY */
 	    }
 	  break;
 
@@ -511,11 +468,7 @@ If the third argument is incorrect, Emacs may crash.
 	  if (NILP (TOP))
 	    {
 	      QUIT;
-#ifdef V20_SLOW_WAY
 	      pc = op;
-#else /* !V20_SLOW_WAY */
-	      pc = string_data (detagged_string) + op;
-#endif /* !V20_SLOW_WAY */
 	    }
 	  else DISCARD (1);
 	  break;
@@ -525,35 +478,21 @@ If the third argument is incorrect, Emacs may crash.
 	  if (!NILP (TOP))
 	    {
 	      QUIT;
-#ifdef V20_SLOW_WAY
 	      pc = op;
-#else /* !V20_SLOW_WAY */
-	      pc = string_data (detagged_string) + op;
-#endif /* !V20_SLOW_WAY */
 	    }
 	  else DISCARD (1);
 	  break;
 
 	case BRgoto:
 	  QUIT;
-#ifdef V20_SLOW_WAY
 	  pc += massaged_code[pc] - 127;
-#else /* !V20_SLOW_WAY */
-	  /* pc += *pc - 127; */
-	  pc = (unsigned char *) ((unsigned long) pc + *pc - 127);
-#endif /* !V20_SLOW_WAY */
 	  break;
 
 	case BRgotoifnil:
 	  if (NILP (POP))
 	    {
 	      QUIT;
-#ifdef V20_SLOW_WAY
 	      pc += massaged_code[pc] - 128;
-#else /* !V20_SLOW_WAY */
-	      /* pc += *pc - 128; */
-	      pc = (unsigned char *) ((unsigned long) pc + *pc - 128);
-#endif /* !V20_SLOW_WAY */
 	    }
 	  pc++;
 	  break;
@@ -562,12 +501,7 @@ If the third argument is incorrect, Emacs may crash.
 	  if (!NILP (POP))
 	    {
 	      QUIT;
-#ifdef V20_SLOW_WAY
 	      pc += massaged_code[pc] - 128;
-#else /* !V20_SLOW_WAY */
-	      /* pc += *pc - 128; */
-	      pc = (unsigned char *) ((unsigned long) pc + *pc - 128);
-#endif /* !V20_SLOW_WAY */
 	    }
 	  pc++;
 	  break;
@@ -577,12 +511,7 @@ If the third argument is incorrect, Emacs may crash.
 	  if (NILP (TOP))
 	    {
 	      QUIT;
-#ifdef V20_SLOW_WAY
 	      pc += op - 128;
-#else /* !V20_SLOW_WAY */
-	      /* pc += op - 128; */
-	      pc = (unsigned char *) ((unsigned long) pc + op - 128);
-#endif /* !V20_SLOW_WAY */
 	    }
 	  else DISCARD (1);
 	  break;
@@ -592,12 +521,7 @@ If the third argument is incorrect, Emacs may crash.
 	  if (!NILP (TOP))
 	    {
 	      QUIT;
-#ifdef V20_SLOW_WAY
 	      pc += op - 128;
-#else /* !V20_SLOW_WAY */
-	      /* pc += op - 128; */
-	      pc = (unsigned char *) ((unsigned long) pc + op - 128);
-#endif /* !V20_SLOW_WAY */
 	    }
 	  else DISCARD (1);
 	  break;
@@ -705,12 +629,22 @@ If the third argument is incorrect, Emacs may crash.
 
 	case Beq:
 	  v1 = POP;
+	  TOP = ((EQ_WITH_EBOLA_NOTICE (v1, TOP)) ? Qt : Qnil);
+	  break;
+
+	case Bold_eq:
+	  v1 = POP;
 	  TOP = ((HACKEQ_UNSAFE (v1, TOP)) ? Qt : Qnil);
 	  break;
 
 	case Bmemq:
 	  v1 = POP;
 	  TOP = Fmemq (TOP, v1);
+	  break;
+
+	case Bold_memq:
+	  v1 = POP;
+	  TOP = Fold_memq (TOP, v1);
 	  break;
 
 	case Bnot:
@@ -1008,8 +942,7 @@ If the third argument is incorrect, Emacs may crash.
 	  break;
 
 	case Bread_char:
-	  PUSH (call0 (Qread_char));
-	  QUIT;
+	  error ("read-char is an obsolete byte code");
 	  break;
 
 	case Binteractive_p:
@@ -1042,8 +975,9 @@ If the third argument is incorrect, Emacs may crash.
 	  CHECK_CHAR_COERCE_INT (TOP);
 	  TOP = make_char (syntax_code_spec
 			   [(int) SYNTAX
-			    (current_buffer->syntax_table,
-			    XCHAR (TOP))]);
+			    (XCHAR_TABLE
+			     (current_buffer->mirror_syntax_table),
+			     XCHAR (TOP))]);
 	  break;
 
 	case Bbuffer_substring:
@@ -1106,6 +1040,11 @@ If the third argument is incorrect, Emacs may crash.
 	  TOP = Fequal (TOP, v1);
 	  break;
 
+	case Bold_equal:
+	  v1 = POP;
+	  TOP = Fold_equal (TOP, v1);
+	  break;
+
 	case Bnthcdr:
 	  v1 = POP;
 	  TOP = Fnthcdr (TOP, v1);
@@ -1132,9 +1071,19 @@ If the third argument is incorrect, Emacs may crash.
 	  TOP = Fmember (TOP, v1);
 	  break;
 
+	case Bold_member:
+	  v1 = POP;
+	  TOP = Fold_member (TOP, v1);
+	  break;
+
 	case Bassq:
 	  v1 = POP;
 	  TOP = Fassq (TOP, v1);
+	  break;
+
+	case Bold_assq:
+	  v1 = POP;
+	  TOP = Fold_assq (TOP, v1);
 	  break;
 
 	case Bnreverse:
@@ -1179,18 +1128,6 @@ If the third argument is incorrect, Emacs may crash.
 	case Bintegerp:
 	  TOP = ((INTP (TOP)) ? Qt : Qnil);
 	  break;
-
-#ifdef BYTE_CODE_SAFE
-	case Bset_mark:
-	  error ("set-mark is an obsolete bytecode");
-	  break;
-	case Bscan_buffer:
-	  error ("scan-buffer is an obsolete bytecode");
-	  break;
-	case Bmark:
-	  error ("mark is an obsolete bytecode");
-	  break;
-#endif
 
 	default:
 #ifdef BYTE_CODE_SAFE

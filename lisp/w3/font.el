@@ -1,14 +1,13 @@
 ;;; font.el --- New font model
 ;; Author: wmperry
-;; Created: 1997/03/26 20:08:55
-;; Version: 1.40
+;; Created: 1996/08/11 16:40:36
+;; Version: 1.8
 ;; Keywords: faces
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1995, 1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
-;;; This file is part of GNU Emacs.
+;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
 ;;; GNU Emacs is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -21,17 +20,15 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;;; Boston, MA 02111-1307, USA.
+;;; along with GNU Emacs; see the file COPYING.  If not, write to
+;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; The emacsen compatibility package - load it up before anything else
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (eval-and-compile
-  (unless (string-match "XEmacs" emacs-version)
-    (require 'w3-sysdp))
+  (load-library "w3-sysdp")
   (require 'cl))
 
 (require 'disp-table)
@@ -49,20 +46,13 @@
 (defconst font-running-xemacs (string-match "XEmacs" (emacs-version))
   "Whether we are running in XEmacs or not.")
 
-(defmacro define-font-keywords (&rest keys)
-  (`
-   (eval-and-compile
-     (let ((keywords (quote (, keys))))
-       (while keywords
-	 (or (boundp (car keywords))
-	     (set (car keywords) (car keywords)))
-	 (setq keywords (cdr keywords)))))))  
+(defmacro defkeyword (keyword &optional docstring)
+  (list 'defconst keyword (list 'quote keyword)
+	(or docstring "A keyword")))
 
 (defconst font-window-system-mappings
   '((x        . (x-font-create-name x-font-create-object))
     (ns       . (ns-font-create-name ns-font-create-object))
-    (win32    . (x-font-create-name x-font-create-object))
-    (pm       . (x-font-create-name x-font-create-object)) ; Change? FIXME
     (tty      . (tty-font-create-plist tty-font-create-object)))
   "An assoc list mapping device types to the function used to create
 a font name from a font structure.")
@@ -135,60 +125,27 @@ for use in the 'weight' field of an X font string.")
     )
   "A list of font family mappings.")
 
-(define-font-keywords :family :style :size :registry :encoding)
+(defkeyword :family "Keyword specifying the font family of a FONTOBJ.")
 
-(define-font-keywords
-  :weight :extra-light :light :demi-light :medium :normal :demi-bold
-  :bold :extra-bold)
+(defkeyword :weight "Keyword specifying the font weight of a FONTOBJ.")
+ (defkeyword :extra-light)
+ (defkeyword :light)
+ (defkeyword :demi-light)
+ (defkeyword :medium)
+ (defkeyword :normal)
+ (defkeyword :demi-bold)
+ (defkeyword :bold)
+ (defkeyword :extra-bold)
 
-(defvar font-style-keywords nil)
-
-(defsubst set-font-family (fontobj family)
-  (aset fontobj 1 family))
-
-(defsubst set-font-weight (fontobj weight)
-  (aset fontobj 3 weight))
-
-(defsubst set-font-style (fontobj style)
-  (aset fontobj 5 style))
-
-(defsubst set-font-size (fontobj size)
-  (aset fontobj 7 size))
-
-(defsubst set-font-registry (fontobj reg)
-  (aset fontobj 9 reg))
-
-(defsubst set-font-encoding (fontobj enc)
-  (aset fontobj 11 enc))
-
-(defsubst font-family (fontobj)
-  (aref fontobj 1))
-
-(defsubst font-weight (fontobj)
-  (aref fontobj 3))
-
-(defsubst font-style (fontobj)
-  (aref fontobj 5))
-
-(defsubst font-size (fontobj)
-  (aref fontobj 7))
-
-(defsubst font-registry (fontobj)
-  (aref fontobj 9))
-
-(defsubst font-encoding (fontobj)
-  (aref fontobj 11))
+(defkeyword :style "Keyword specifying the font style of a FONTOBJ.")
+(defkeyword :size "Keyword specifying the font size of a FONTOBJ.")
+(defkeyword :registry "Keyword specifying the registry of a FONTOBJ.")
+(defkeyword :encoding "Keyword specifying the encoding of a FONTOBJ.")
 
 (eval-when-compile
   (defmacro define-new-mask (attr mask)
     (`
      (progn
-       (setq font-style-keywords
-	     (cons (cons (quote (, attr))
-			 (cons
-			  (quote (, (intern (format "set-font-%s-p" attr))))
-			  (quote (, (intern (format "font-%s-p" attr))))))
-		   font-style-keywords))
        (defconst (, (intern (format "font-%s-mask" attr))) (<< 1 (, mask))
 	 (, (format
 	     "Bitmask for whether a font is to be rendered in %s or not."
@@ -199,18 +156,17 @@ for use in the 'weight' field of an X font string.")
 		      (, (intern (format "font-%s-mask" attr)))))
 	     t
 	   nil))
-       (defun (, (intern (format "set-font-%s-p" attr))) (fontobj val)
+       (defun (, (intern (format "font-set-%s-p" attr))) (fontobj val)
 	 (, (format "Set whether FONTOBJ will be renderd in `%s' or not."
 		    attr))
-	 (cond
-	  (val
-	   (set-font-style fontobj (| (font-style fontobj)
-				      (, (intern
-					  (format "font-%s-mask" attr))))))
-	  (((, (intern (format "font-%s-p" attr))) fontobj)
-	   (set-font-style fontobj (- (font-style fontobj)
-				      (, (intern
-					  (format "font-%s-mask" attr))))))))
+	 (if val
+	     (set-font-style fontobj (| (font-style fontobj)
+					(, (intern
+					    (format "font-%s-mask" attr)))))
+	   (set-font-style fontobj (logxor (font-style fontobj)
+					   (, (intern
+					       (format "font-%s-mask"
+						       attr)))))))
        ))))
 
 (let ((mask 0))
@@ -249,28 +205,6 @@ for use in the 'weight' field of an X font string.")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Utility functions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defsubst set-font-style-by-keywords (fontobj styles)
-  (make-local-variable 'font-func)
-  (declare (special font-func))
-  (if (listp styles)
-      (while styles
-	(setq font-func (car-safe (cdr-safe (assq (car styles) font-style-keywords)))
-	      styles (cdr styles))
-	(and (fboundp font-func) (funcall font-func fontobj t)))
-    (setq font-func (car-safe (cdr-safe (assq styles font-style-keywords))))
-    (and (fboundp font-func) (funcall font-func fontobj t))))
-
-(defsubst font-properties-from-style (fontobj)
-  (let ((style (font-style fontobj))
-	(todo font-style-keywords)
-	type func retval)
-    (while todo
-      (setq func (cdr (cdr (car todo)))
-	    type (car (pop todo)))
-      (if (funcall func fontobj)
-	  (setq retval (cons type retval))))
-    retval))
-
 (defun unique (list)
   (let ((retval)
 	(cur))
@@ -294,14 +228,10 @@ for use in the 'weight' field of an X font string.")
       w2))))
 
 (defun font-spatial-to-canonical (spec &optional device)
-  "Convert SPEC (in inches, millimeters, points, or picas) into points"
-  ;; 1 in = 6 pa = 25.4 mm = 72 pt
-  (cond
-   ((numberp spec)
-    spec)
-   ((null spec)
-    nil)
-   (t
+  "Convert SPEC (in inches, millimeters, points, or picas) into pixels"
+  ;; 1 in = 25.4 mm = 72 pt = 6 pa
+  (if (numberp spec)
+      spec
     (let ((num nil)
 	  (type nil)
 	  ;; If for any reason we get null for any of this, default
@@ -330,21 +260,30 @@ for use in the 'weight' field of an X font string.")
       (setq num (string-to-number spec))
       (cond
        ((member type '("pixel" "px" "pix"))
-	(setq retval (* num (/ pix-width mm-width) (/ 25.4 72.0))))
+	(setq retval num
+	      num nil))
        ((member type '("point" "pt"))
-	(setq retval num))
+	(setq retval (+ (* (/ pix-width mm-width)
+			   (/ 25.4 72.0)
+			   num))))
        ((member type '("pica" "pa"))
-	(setq retval (* num 12.0)))
+	(setq retval (* (/ pix-width mm-width)
+			(/ 25.4 6.0)
+			num)))
        ((member type '("inch" "in"))
-	(setq retval (* num 72.0)))
+	(setq retval (* (/ pix-width mm-width)
+			(/ 25.4 1.0)
+			num)))
        ((string= type "mm")
-	(setq retval (* num (/ 72.0 25.4))))
+	(setq retval (* (/ pix-width mm-width)
+			num)))
        ((string= type "cm")
-	(setq retval (* num 10 (/ 72.0 25.4))))
-       (t
-	(setq retval num))
+	(setq retval (* (/ pix-width mm-width)
+			10
+			num)))
+       (t (setq retval num))
        )
-      retval))))
+      retval)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -352,28 +291,63 @@ for use in the 'weight' field of an X font string.")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun make-font (&rest args)
   (vector :family
-	  (if (stringp (plist-get args :family))
-	      (list (plist-get args :family))
-	    (plist-get args :family))
+	  (if (stringp (nth 1 (memq :family args)))
+	      (list (nth 1 (memq :family args)))
+	    (nth 1 (memq :family args)))
 	  :weight
-	  (plist-get args :weight)
+	  (nth 1 (memq :weight args))
 	  :style
-	  (if (numberp (plist-get args :style))
-	      (plist-get args :style)
+	  (if (numberp (nth 1 (memq :style args)))
+	      (nth 1 (memq :style args))
 	    0)
 	  :size
-	  (plist-get args :size)
+	  (nth 1 (memq :size args))
 	  :registry
-	  (plist-get args :registry)
+	  (nth 1 (memq :registry args))
 	  :encoding
-	  (plist-get args :encoding)))
+	  (nth 1 (memq :encoding args))))
+
+(defsubst set-font-family (fontobj family)
+  (aset fontobj 1 family))
+
+(defsubst set-font-weight (fontobj weight)
+  (aset fontobj 3 weight))
+
+(defsubst set-font-style (fontobj style)
+  (aset fontobj 5 style))
+
+(defsubst set-font-size (fontobj size)
+  (aset fontobj 7 size))
+
+(defsubst set-font-registry (fontobj reg)
+  (aset fontobj 9 reg))
+
+(defsubst set-font-encoding (fontobj enc)
+  (aset fontobj 11 enc))
+
+(defsubst font-family (fontobj)
+  (aref fontobj 1))
+
+(defsubst font-weight (fontobj)
+  (aref fontobj 3))
+
+(defsubst font-style (fontobj)
+  (aref fontobj 5))
+
+(defsubst font-size (fontobj)
+  (aref fontobj 7))
+
+(defsubst font-registry (fontobj)
+  (aref fontobj 9))
+
+(defsubst font-encoding (fontobj)
+  (aref fontobj 11))
 
 (defun font-create-name (fontobj &optional device)
   (let* ((type (device-type device))
 	 (func (car (cdr-safe (assq type font-window-system-mappings)))))
     (and func (fboundp func) (funcall func fontobj device))))
 
-;;;###autoload
 (defun font-create-object (fontname &optional device)
   (let* ((type (device-type device))
 	 (func (car (cdr (cdr-safe (assq type font-window-system-mappings))))))
@@ -426,7 +400,7 @@ for use in the 'weight' field of an X font string.")
 ;;; The window-system dependent code (TTY-style)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun tty-font-create-object (fontname &optional device)
-  (make-font :size "12pt"))
+  )
 
 (defun tty-font-create-plist (fontobj &optional device)
   (let ((styles (font-style fontobj))
@@ -472,47 +446,46 @@ for use in the 'weight' field of an X font string.")
 	   ))))
 
 (defun x-font-create-object (fontname &optional device)
-  (let ((case-fold-search t))
-    (if (or (not (stringp fontname))
-	    (not (string-match font-x-font-regexp fontname)))
-	(make-font)
-      (let ((family nil)
-	    (style nil)
-	    (size nil)
-	    (weight  (match-string 1 fontname))
-	    (slant   (match-string 2 fontname))
-	    (swidth  (match-string 3 fontname))
-	    (adstyle (match-string 4 fontname))
-	    (pxsize  (match-string 5 fontname))
-	    (ptsize  (match-string 6 fontname))
-	    (retval nil)
-	    (case-fold-search t)
-	    )
-	(if (not (string-match x-font-regexp-foundry-and-family fontname))
-	    nil
-	  (setq family (list (downcase (match-string 1 fontname)))))
-	(if (string= "*" weight)  (setq weight  nil))
-	(if (string= "*" slant)   (setq slant   nil))
-	(if (string= "*" swidth)  (setq swidth  nil))
-	(if (string= "*" adstyle) (setq adstyle nil))
-	(if (string= "*" pxsize)  (setq pxsize  nil))
-	(if (string= "*" ptsize)  (setq ptsize  nil))
-	(if ptsize (setq size (/ (string-to-int ptsize) 10)))
-	(if (and (not size) pxsize) (setq size (concat pxsize "px")))
-	(if weight (setq weight (intern-soft (concat ":" (downcase weight)))))
-	(if (and adstyle (not (equal adstyle "")))
-	    (setq family (append family (list (downcase adstyle)))))
-	(setq retval (make-font :family family
-				:weight weight
-				:size size))
-	(set-font-bold-p retval (eq :bold weight))
-	(cond
-	 ((null slant) nil)
-	 ((member slant '("i" "I"))
-	  (set-font-italic-p retval t))
-	 ((member slant '("o" "O"))
-	  (set-font-oblique-p retval t)))
-	retval))))
+  (if (or (not (stringp fontname))
+	  (not (string-match font-x-font-regexp fontname)))
+      (make-font)
+    (let ((family nil)
+	  (style nil)
+	  (size nil)
+	  (weight  (match-string 1 fontname))
+	  (slant   (match-string 2 fontname))
+	  (swidth  (match-string 3 fontname))
+	  (adstyle (match-string 4 fontname))
+	  (pxsize  (match-string 5 fontname))
+	  (ptsize  (match-string 6 fontname))
+	  (retval nil)
+	  (case-fold-search t)
+	  )
+      (if (not (string-match x-font-regexp-foundry-and-family fontname))
+	  nil
+	(setq family (list (match-string 1 fontname))))
+      (if (string= "*" weight)  (setq weight  nil))
+      (if (string= "*" slant)   (setq slant   nil))
+      (if (string= "*" swidth)  (setq swidth  nil))
+      (if (string= "*" adstyle) (setq adstyle nil))
+      (if (string= "*" pxsize)  (setq pxsize  nil))
+      (if (string= "*" ptsize)  (setq ptsize  nil))
+      (if ptsize (setq size (format "%dpt" (/ (string-to-int ptsize) 10))))
+      (if (and (not size) pxsize) (setq size (concat pxsize "px")))
+      (if weight (setq weight (intern-soft (concat ":" (downcase weight)))))
+      (if (and adstyle (not (equal adstyle "")))
+	  (setq family (append family (list adstyle))))
+      (setq retval (make-font :family family
+			      :weight weight
+			      :size size))
+      (font-set-bold-p retval (eq :bold weight))
+      (cond
+       ((null slant) nil)
+       ((member slant '("i" "I"))
+	(font-set-italic-p retval t))
+       ((member slant '("o" "O"))
+	(font-set-oblique-p retval t)))
+      retval)))
 
 (defun x-font-families-for-device (&optional device no-resetp)
   (condition-case ()
@@ -530,23 +503,18 @@ for use in the 'weight' field of an X font string.")
 		(normal (mapcar (function (lambda (x) (if x (aref x 0))))
 				(aref menu 1))))
 	    (sort (unique (nconc scaled normal)) 'string-lessp))))
-    (cons "monospace" (mapcar 'car font-family-mappings))))
+    (mapcar 'car font-family-mappings)))
 
 (defvar font-default-cache nil)
 
-;;;###autoload
 (defun font-default-font-for-device (&optional device)
   (or device (setq device (selected-device)))
   (if font-running-xemacs
       (font-truename
        (make-font-specifier
 	(face-font-name 'default device)))
-    (let ((font (cdr-safe (assq 'font (frame-parameters device)))))
-      (if (and (fboundp 'fontsetp) (fontsetp font))
-	  (aref (get-font-info (aref (cdr (get-fontset-info font)) 0)) 2)
-	font))))
-	  
-;;;###autoload
+    (cdr-safe (assq 'font (frame-parameters device)))))
+
 (defun font-default-object-for-device (&optional device)
   (let ((font (font-default-font-for-device device)))
     (or (cdr-safe 
@@ -557,26 +525,25 @@ for use in the 'weight' field of an X font string.")
 					 font-default-cache))
 	  (cdr-safe (assoc font font-default-cache))))))
 
-;;;###autoload
 (defun font-default-family-for-device (&optional device)
   (or device (setq device (selected-device)))
   (font-family (font-default-object-for-device device)))
 
-;;;###autoload
 (defun font-default-size-for-device (&optional device)
   (or device (setq device (selected-device)))
   ;; face-height isn't the right thing (always 1 pixel too high?)
   ;; (if font-running-xemacs
   ;;    (format "%dpx" (face-height 'default device))
   (font-size (font-default-object-for-device device)))
-
+       
 (defun x-font-create-name (fontobj &optional device)
   (if (and (not (or (font-family fontobj)
 		    (font-weight fontobj)
 		    (font-size fontobj)
 		    (font-registry fontobj)
 		    (font-encoding fontobj)))
-	   (= (font-style fontobj) 0))
+	   (not (font-bold-p fontobj))
+	   (not (font-italic-p fontobj)))
       (face-font 'default)
     (or device (setq device (selected-device)))
     (let ((family (or (font-family fontobj)
@@ -584,9 +551,7 @@ for use in the 'weight' field of an X font string.")
 		      (x-font-families-for-device device)))
 	  (weight (or (font-weight fontobj) :medium))
 	  (style (font-style fontobj))
-	  (size (or (if font-running-xemacs
-			(font-size fontobj))
-		    (font-default-size-for-device device)))
+	  (size (or (font-size fontobj) (font-default-size-for-device device)))
 	  (registry (or (font-registry fontobj) "*"))
 	  (encoding (or (font-encoding fontobj) "*")))
       (if (stringp family)
@@ -619,22 +584,16 @@ for use in the 'weight' field of an X font string.")
 		(if (= ?- (aref cur-family (1- x)))
 		    (aset cur-family (1- x) ? ))
 		(setq x (1- x))))
-	    ;; We treat oblique and italic as equivalent.  Don't ask.
-	    (let ((slants '("o" "i")))
-	      (while (and slants (not done))
-		(setq font-name (format "-*-%s-%s-%s-*-*-*-%s-*-*-*-*-%s-%s"
-					cur-family weight
-					(if (or (font-italic-p fontobj)
-						(font-oblique-p fontobj))
-					    (car slants)
-					  "r")
-					(if size
-					    (int-to-string (* 10 size)) "*")
-					registry
-					encoding
-					)
-		      slants (cdr slants)
-		      done (try-font-name font-name device))))))
+	    (setq font-name (format "-*-%s-%s-%s-*-*-%s-*-*-*-*-*-%s-%s"
+				    cur-family weight
+				    (if (font-italic-p fontobj)
+					"i"
+				      "r")
+				    (if size (int-to-string size) "*")
+				    registry
+				    encoding
+				    )
+		  done (try-font-name font-name device))))
 	(if done font-name)))))
 
 
@@ -645,17 +604,16 @@ for use in the 'weight' field of an X font string.")
   ;; For right now, assume we are going to have the same storage for
   ;; device fonts for NS as we do for X.  Is this a valid assumption?
   (or device (setq device (selected-device)))
-  (if (boundp 'device-fonts-cache)
-      (let ((menu (or (cdr-safe (assq device device-fonts-cache)))))
-	(if (and (not menu) (not no-resetp))
-	    (progn
-	      (reset-device-font-menus device)
-	      (ns-font-families-for-device device t))
-	  (let ((scaled (mapcar (function (lambda (x) (if x (aref x 0))))
-				(aref menu 0)))
-		(normal (mapcar (function (lambda (x) (if x (aref x 0))))
-				(aref menu 1))))
-	    (sort (unique (nconc scaled normal)) 'string-lessp))))))
+  (let ((menu (or (cdr-safe (assq device device-fonts-cache)))))
+    (if (and (not menu) (not no-resetp))
+	(progn
+	  (reset-device-font-menus device)
+	  (ns-font-families-for-device device t))
+      (let ((scaled (mapcar (function (lambda (x) (if x (aref x 0))))
+			    (aref menu 0)))
+	    (normal (mapcar (function (lambda (x) (if x (aref x 0))))
+			    (aref menu 1))))
+	(sort (unique (nconc scaled normal)) 'string-lessp)))))
 
 (defun ns-font-create-name (fontobj &optional device)
   (let ((family (or (font-family fontobj)
@@ -668,7 +626,7 @@ for use in the 'weight' field of an X font string.")
     ;; Create a font, wow!
     (if (stringp family)
 	(setq family (list family)))
-    (if (or (symbolp style) (numberp style))
+    (if (symbolp style)
 	(setq style (list style)))
     (setq weight (font-higher-weight weight (car-safe (memq :bold style))))
     (if (stringp size)
@@ -697,78 +655,51 @@ for use in the 'weight' field of an X font string.")
       (if done font-name))))
 
 
-;;; Cache building code
-;;;###autoload
-(defun x-font-build-cache (&optional device)
-  (let ((hashtable (make-hash-table :test 'equal :size 15))
-	(fonts (mapcar 'x-font-create-object
-		       (x-list-fonts "-*-*-*-*-*-*-*-*-*-*-*-*-*-*")))
-	(plist nil)
-	(cur nil))
-    (while fonts
-      (setq cur (car fonts)
-	    fonts (cdr fonts)
-	    plist (cl-gethash (car (font-family cur)) hashtable))
-      (if (not (memq (font-weight cur) (plist-get plist 'weights)))
-	  (setq plist (plist-put plist 'weights (cons (font-weight cur)
-						      (plist-get plist 'weights)))))
-      (if (not (member (font-size cur) (plist-get plist 'sizes)))
-	  (setq plist (plist-put plist 'sizes (cons (font-size cur)
-						    (plist-get plist 'sizes)))))
-      (if (and (font-oblique-p cur)
-	       (not (memq 'oblique (plist-get plist 'styles))))
-	  (setq plist (plist-put plist 'styles (cons 'oblique (plist-get plist 'styles)))))
-      (if (and (font-italic-p cur)
-	       (not (memq 'italic (plist-get plist 'styles))))
-	  (setq plist (plist-put plist 'styles (cons 'italic (plist-get plist 'styles)))))
-      (cl-puthash (car (font-family cur)) plist hashtable))
-    hashtable))
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Now overwrite the original copy of set-face-font with our own copy that
 ;;; can deal with either syntax.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; ###autoload
 (defun font-set-face-font (&optional face font &rest args)
-  (cond
-   ((and (vectorp font) (= (length font) 12))
-    (let ((font-name (font-create-name font)))
-      (set-face-property face 'font-specification font)
-      (cond
-       ((null font-name)		; No matching font!
-	nil)
-       ((listp font-name)		; For TTYs
-	(let (cur)
-	  (while font-name
-	    (setq cur (car font-name)
-		  font-name (cdr font-name))
-	    (apply 'set-face-property face (car cur) (cdr cur) args))))
-       (font-running-xemacs
-	(apply 'set-face-font face font-name args)
-	(apply 'set-face-underline-p face (font-underline-p font) args)
-	(if (and (or (font-smallcaps-p font) (font-bigcaps-p font))
-		 (fboundp 'set-face-display-table))
-	    (apply 'set-face-display-table
-		   face font-caps-display-table args))
-	(apply 'set-face-property face 'strikethru (or
-						    (font-linethrough-p font)
-						    (font-strikethru-p font))
-	       args))
-       (t
-	(condition-case nil
-	    (apply 'set-face-font face font-name args)
-	  (error
-	   (let ((args (car-safe args)))
-	     (and (or (font-bold-p font)
-		      (memq (font-weight font) '(:bold :demi-bold)))
-		  (make-face-bold face args t))
-	     (and (font-italic-p font) (make-face-italic face args t)))))
-	(apply 'set-face-underline-p face (font-underline-p font) args)))))
-   (t
-    ;; Let the original set-face-font signal any errors
-    (set-face-property face 'font-specification nil)
-    (apply 'set-face-font face font args))))
+  (if (interactive-p)
+      (call-interactively 'font-original-set-face-font)
+    (cond
+     ((and (vectorp font) (= (length font) 12))
+      (let ((font-name (font-create-name font)))
+	(set-face-property face 'font-specification font)
+	(cond
+	 ((null font-name)		; No matching font!
+	  nil)
+	 ((listp font-name)		; For TTYs
+	  (let (cur)
+	    (while font-name
+	      (setq cur (car font-name)
+		    font-name (cdr font-name))
+	      (apply 'set-face-property face (car cur) (cdr cur) args))))
+	 (font-running-xemacs
+	  (apply 'font-original-set-face-font face font-name args)
+	  (apply 'set-face-underline-p face (font-underline-p font) args)
+	  (if (and (or (font-smallcaps-p font) (font-bigcaps-p font))
+		   (fboundp 'set-face-display-table))
+	      (apply 'set-face-display-table
+		     face font-caps-display-table args))
+	  (apply 'set-face-property face 'strikethru (or
+						      (font-linethrough-p font)
+						      (font-strikethru-p font))
+		 args))
+	 (t
+	  (condition-case nil
+	      (apply 'font-original-set-face-font face font-name args)
+	    (error
+	     (let ((args (car-safe args)))
+	       (and (or (font-bold-p font)
+			(memq (font-weight font) '(:bold :demi-bold)))
+		    (make-face-bold face args t))
+	       (and (font-italic-p font) (make-face-italic face args t)))))
+	  (apply 'set-face-underline-p face (font-underline-p font) args)))))
+     (t
+      ;; Let the original set-face-font signal any errors
+      (set-face-property face 'font-specification nil)
+      (apply 'font-original-set-face-font face font args)))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -974,9 +905,9 @@ The list (R G B) is returned, or an error is signaled if the lookup fails."
   (list r g b) ))
 
 (defsubst font-rgb-color-p (obj)
-  (or (and (vectorp obj)
-	   (= (length obj) 4)
-	   (eq (aref obj 0) 'rgb))))
+  (and (vectorp obj)
+       (= (length obj) 4)
+       (eq (aref obj 0) 'rgb)))
 
 (defsubst font-rgb-color-red (obj) (aref obj 1))
 (defsubst font-rgb-color-green (obj) (aref obj 2))
@@ -991,14 +922,14 @@ RGB values for color names are looked up in the rgb.txt file.
 The variable x-library-search-path is use to locate the rgb.txt file."
   (let ((case-fold-search t))
     (cond
-     ((and (font-rgb-color-p color) (floatp (aref color 1)))
+     ((font-rgb-color-p color)
+      (list (* 65535 (font-rgb-color-red color))
+	    (* 65535 (font-rgb-color-green color))
+	    (* 65535 (font-rgb-color-blue color))))
+     ((and (vectorp color) (= 3 (length color)) (floatp (aref color 0)))
       (list (* 65535 (aref color 0))
  	    (* 65535 (aref color 1))
  	    (* 65535 (aref color 2))))
-     ((font-rgb-color-p color)
-      (list (font-rgb-color-red color)
-	    (font-rgb-color-green color)
-	    (font-rgb-color-blue color)))
      ((and (vectorp color) (= 3 (length color)))
       (list (aref color 0) (aref color 1) (aref color 2)))
      ((and (listp color) (= 3 (length color)) (floatp (car color)))
@@ -1068,44 +999,55 @@ The variable x-library-search-path is use to locate the rgb.txt file."
 (defun font-normalize-color (color &optional device)
   "Return an RGB tuple, given any form of input.  If an error occurs, black
 is returned."
-  (case (device-type device)
-   ((x pm)
-    (apply 'format "#%02x%02x%02x" (font-color-rgb-components color)))
-   (win32
-    (let* ((rgb (font-color-rgb-components color))
-	   (color (apply 'format "#%02x%02x%02x" rgb)))
-      (win32-define-rgb-color (nth 0 rgb) (nth 1 rgb) (nth 2 rgb) color)
-      color))
-   (tty
+  (cond
+   ((eq (device-type device) 'x)
+    (apply 'format "#%04x%04x%04x" (font-color-rgb-components color)))
+   ((eq (device-type device) 'tty)
     (apply 'font-tty-find-closest-color (font-color-rgb-components color)))
-   (ns
+   ((eq (device-type device) 'ns)
     (let ((vals (mapcar (function (lambda (x) (>> x 8)))
 			(font-color-rgb-components color))))
-      (apply 'format "RGB%02x%02x%02xff" vals)))
-   (otherwise
-    color)))
+      (apply 'format "RGB%02x%02x%02ff" vals)))
+   (t "black")))
 
 (defun font-set-face-background (&optional face color &rest args)
   (interactive)
-  (condition-case nil
-      (cond
-       ((or (font-rgb-color-p color)
-	    (string-match "^#[0-9a-fA-F]+$" color))
-	(apply 'set-face-background face
-	       (font-normalize-color color) args))
-       (t
-	(apply 'set-face-background face color args)))
-    (error nil)))
+  (if (interactive-p)
+      (call-interactively 'font-original-set-face-background)
+    (cond
+     ((font-rgb-color-p color)
+      (apply 'font-original-set-face-background face
+	     (font-normalize-color color) args))
+     (t
+      (apply 'font-original-set-face-background face color args)))))
 
 (defun font-set-face-foreground (&optional face color &rest args)
   (interactive)
-  (condition-case nil
-      (cond
-       ((or (font-rgb-color-p color)
-	    (string-match "^#[0-9a-fA-F]+$" color))
-	(apply 'set-face-foreground face (font-normalize-color color) args))
-       (t
-	(apply 'set-face-foreground face color args)))
-    (error nil)))
+  (if (interactive-p)
+      (call-interactively 'font-original-set-face-foreground)
+    (cond
+     ((font-rgb-color-p color)
+      (apply 'font-original-set-face-foreground face
+	     (font-normalize-color color) args))
+     (t
+      (apply 'font-original-set-face-foreground face color args)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Do the actual overwriting of some functions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro font-overwrite-fn (func)
+  (` (let ((our-func (intern (format "font-%s" (, func))))
+	   (new-func (intern (format "font-original-%s" (, func))))
+	   (old-func (and (fboundp (, func)) (symbol-function (, func)))))
+       (if (not (fboundp new-func))
+	   (progn
+	     (if old-func
+		 (fset new-func old-func)
+	       (fset new-func 'ignore))
+	     (fset (, func) our-func))))))
+
+(font-overwrite-fn 'set-face-foreground)
+(font-overwrite-fn 'set-face-background)
+(font-overwrite-fn 'set-face-font)
 
 (provide 'font)

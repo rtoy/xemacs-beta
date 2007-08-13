@@ -4,7 +4,7 @@
 @settitle psgml-api
 @c @setchapternewpage odd
 @c %**end of header
-@c $Id: psgml-api.texi,v 1.1.1.2 1996/12/18 03:47:33 steve Exp $
+@c $Id: psgml-api.texi,v 1.1.1.1 1996/12/18 22:43:47 steve Exp $
 
 @ifinfo
 @format

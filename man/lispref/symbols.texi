@@ -170,7 +170,7 @@ They inform programmers who read the code that certain symbols are
 @emph{intended} to be used as variables, or as functions.  In addition,
 utilities such as @file{etags} and @file{make-docfile} recognize
 definitions, and add appropriate information to tag tables and the
-@file{DOC} file. @xref{Accessing Documentation}.
+@file{emacs/etc/DOC-@var{version}} file. @xref{Accessing Documentation}.
 
 @node Creating Symbols
 @section Creating and Interning Symbols

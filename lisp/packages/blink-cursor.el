@@ -38,28 +38,14 @@
       (or blink-cursor-last-selected-window
 	  (setq blink-cursor-last-selected-window window))
       (if (eq window blink-cursor-last-selected-window)
-
-	  (if (specifier-instance text-cursor-visible-p window)
-	      (if (let ((current-time (current-time)))
-		    (or (> (car current-time) (car last-input-time))
-			(> (cadr current-time) (cdr last-input-time))))
-		  ;; turn cursor off only if more than a second since
-		  ;; last input
-		  (set-specifier text-cursor-visible-p nil window))
-	    (set-specifier text-cursor-visible-p t window))
-
+	  (set-specifier text-cursor-visible-p
+			 (not (specifier-instance text-cursor-visible-p
+						  window))
+			 window)
 	(remove-specifier text-cursor-visible-p
 			  blink-cursor-last-selected-window)
 	(setq blink-cursor-last-selected-window window)
 	(set-specifier text-cursor-visible-p nil window)))))
-
-; Turn on cursor after every command
-(defun blink-cursor-post-command-hook ()
-  (let ((inhibit-quit t)
-	(window (selected-window)))
-    (if blink-cursor-lost-focus
-	nil
-      (set-specifier text-cursor-visible-p t window))))
 
 (defun blink-cursor-reenable-cursor ()
   (if blink-cursor-last-selected-window
@@ -77,7 +63,6 @@
 
 (add-hook 'deselect-frame-hook 'blink-cursor-deselect-frame-hook)
 (add-hook 'select-frame-hook 'blink-cursor-select-frame-hook)
-(add-hook 'post-command-hook 'blink-cursor-post-command-hook)
 
 (defvar blink-cursor-timeout 1.0)
 (defvar blink-cursor-timeout-id nil)
@@ -111,11 +96,4 @@ each TIMEOUT secs (can be a float)."
   (if blink-cursor-mode
       (setq blink-cursor-timeout-id
 	    (add-timeout (/ (float timeout) 2) 'blink-cursor-callback nil
-        (/ (float timeout) 2))))
-  ; initialize last-input-time
-  (if (not last-input-time)
-      (setq last-input-time (cons 0 0))))
-
-(provide 'blink-cursor)
-
-;;; blink-cursor.el ends here
+			 (/ (float timeout) 2)))))

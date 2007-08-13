@@ -185,9 +185,9 @@ Saves the file part into the master buffer."
 	     (set-extent-property x 'read-only t)
 	     (set-buffer buf)
 	     (set-buffer-modified-p nil)
-	     (message (format "Wrote file part %s on %s"
-			      (buffer-name buf)
-			      (buffer-name (extent-buffer x))))
+	     (message "Wrote file part %s on %s"
+		      (buffer-name buf)
+		      (buffer-name (extent-buffer x)))
 	     t)))
     retval))
 

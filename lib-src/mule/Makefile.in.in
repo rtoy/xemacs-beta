@@ -1,0 +1,78 @@
+/* Extra targets from the Mule lib-src/Makefile.in.in.  Put them
+   here until we figure out what to do with them. */
+
+srcdir=@srcdir@
+SHELL=/bin/sh
+
+CC=@CC@
+CFLAGS=@CFLAGS@
+CPP=@CPP@
+RANLIB=@RANLIB@
+
+xesrcdir = ${srcdir}/../../src
+xeobjdir = ../../src
+
+INCLUDES = -I. -I${srcdir}/.. -I${xesrcdir}
+@SET_MAKE@
+
+RM = rm -f
+
+#define THIS_IS_YMAKEFILE
+#define NOT_C_CODE
+#include "../../src/config.h"
+
+#ifdef MULE
+PROGS = coco m2ps
+#else
+PROGS =
+#endif
+
+all :: $(PROGS)
+
+FRC.mostlyclean:
+mostlyclean: FRC.mostlyclean
+	-$(RM) *.o \#* $(PROGS)
+clean: mostlyclean
+distclean: clean
+	-$(RM) Makefile Makefile.in
+realclean: distclean
+extraclean: distclean
+	-$(RM) *~
+
+IMPORT_H = ${xeobjdir}/config.h ${xeobjdir}/paths.h \
+	   ${xesrcdir}/mule-charset.h ${xesrcdir}/mule-coding.h
+
+bdf.o: ${srcdir}/bdf.c ${srcdir}/bdf.h ${srcdir}/mulelib.h Makefile $(IMPORT_H)
+	$(CC) -c $(INCLUDES) ${srcdir}/bdf.c
+
+m2ps.o: ${srcdir}/m2ps.c ${srcdir}/bdf.h ${srcdir}/mulelib.h $(IMPORT_H)
+	$(CC) -c $(INCLUDES) ${srcdir}/m2ps.c
+
+fakelisp.o: ${srcdir}/fakelisp.c ${srcdir}/fakelisp.h
+	$(CC) -c $(INCLUDES) ${srcdir}/fakelisp.c
+
+mule-charset.o: ${xesrcdir}/mule-charset.c ${xesrcdir}/mule-charset.h ${srcdir}/fakelisp.h
+	$(CC) -c $(INCLUDES) ${xesrcdir}/mule-charset.c
+
+mule-coding.o: ${xesrcdir}/mule-coding.c ${xesrcdir}/mule-coding.h ${xesrcdir}/mule-charset.h\
+		${srcdir}/fakelisp.h
+	$(CC) -c $(INCLUDES) ${xesrcdir}/mule-coding.c
+
+mule-ccl.o: ${xesrcdir}/mule-ccl.c ${xesrcdir}/mule-charset.h ${xesrcdir}/mule-coding.h
+	$(CC) -c $(INCLUDES) ${xesrcdir}/mule-ccl.c
+
+mulelib.o: ${srcdir}/mulelib.c ${srcdir}/mulelib.h ${srcdir}/fakelisp.h $(IMPORT_H)
+	$(CC) -c $(INCLUDES) ${srcdir}/mulelib.c
+
+M2PSOBJ = bdf.o m2ps.o fakelisp.o mule-charset.o mule-coding.o mule-ccl.o mulelib.o
+
+m2ps: $(M2PSOBJ)
+	$(CC) $(LINK_CFLAGS) $(M2PSOBJ) $(LOADLIBES) -o $@
+
+coco.o: ${srcdir}/coco.c ${srcdir}/mulelib.h $(IMPORT_H)
+	$(CC) -c $(INCLUDES) ${srcdir}/coco.c
+
+COCOOBJ = coco.o fakelisp.o mule-charset.o mule-coding.o mule-ccl.o mulelib.o
+
+coco: $(COCOOBJ)
+	$(CC) $(LINK_CFLAGS) $(COCOOBJ) $(LOADLIBES) -o $@

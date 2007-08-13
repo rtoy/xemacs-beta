@@ -17,31 +17,25 @@
 # the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 
-# The japanese texinfo files requires the very latest 20.0 xemacs
-EMACS = xemacs
-NAMES = tm tm-edit tm-view gnus-mime tm-mh-e
-NAMES_EN = $(NAMES:%=%-en) tm-vm-en
-NAMES_JA = $(NAMES:%=%-ja)
-NAMES_ALL = $(NAMES_EN) $(NAMES_JA)
-#NAMES_ALL = $(NAMES_EN)
-INFOS = $(NAMES_ALL:%=../../info/%.info)
-DVIS  = $(NAMES_EN:%=%.dvi)
+NAMES = tm_en gnus-mime_en tm-mh-e_en
+INFOS = $(NAMES:%=../../info/%.info)
+DVIS  = $(NAMES:%=%.dvi)
 
 TEXI2DVI = texi2dvi
 
 # List of all the texinfo files in the manual:
 
+srcs = tm-edit-en.texi   tm-ew-d=en.texi    tm-ew=en.texi      tm-util=en.texi \
+       tm-view-a=en.texi tm-view-cb=en.texi tm-view-ch=en.texi tm-view-cs=en.texi \
+       tm-view-m=en.texi tm-view-p=en.texi  tm-view=en.texi    tm-en.texi
+
 all : info
 info : $(INFOS)
 
-../../info/%-en.info : %-en.texi
-	makeinfo -o $@ $<
+../../info/tm_en.info : $(srcs)
 
-../../info/%-ja.info : %-ja.texi
-	$(EMACS) -batch -q -no-site-file $< -eval '(cd "../../info")' \
-	    -l texinfmt -f texinfo-format-buffer \
-	    -eval '(setq file-coding-system (quote iso-2022-7))' \
-	    -eval '(save-buffer 0)'
+../../info/%.info : %.texi
+	makeinfo -o $@ $<
 
 dvi: $(DVIS)
 .texi.dvi :

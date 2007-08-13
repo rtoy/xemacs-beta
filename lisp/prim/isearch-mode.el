@@ -19,7 +19,7 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: Not synched with FSF.
@@ -194,7 +194,6 @@ thing searched for.")
 
     (define-key map "\C-w" 'isearch-yank-word)
     (define-key map "\C-y" 'isearch-yank-line)
-    (define-key map "\M-y" 'isearch-yank-kill)
 
     ;; Define keys for regexp chars * ? |
     (define-key map "*" 'isearch-*-char)
@@ -352,7 +351,7 @@ The bindings, more precisely:
 ;; Type \\[isearch-edit-string] to edit the search string in the minibuffer.
 ;;  Terminate editing and return to incremental searching with CR.
 
-  (interactive "_P")
+  (interactive "P")
   (isearch-mode t (not (null regexp-p)) nil (not (interactive-p))))
 
 (defun isearch-forward-regexp ()
@@ -360,7 +359,7 @@ The bindings, more precisely:
 Do incremental search forward for regular expression.
 Like ordinary incremental search except that your input
 is treated as a regexp.  See \\[isearch-forward] for more info."
-  (interactive "_")
+  (interactive)
   (isearch-mode t t nil (not (interactive-p))))
 
 (defun isearch-backward (&optional regexp-p)
@@ -368,7 +367,7 @@ is treated as a regexp.  See \\[isearch-forward] for more info."
 Do incremental search backward.
 With a prefix argument, do an incremental regular expression search instead.
 See \\[isearch-forward] for more information."
-  (interactive "_P")
+  (interactive "P")
   (isearch-mode nil (not (null regexp-p)) nil (not (interactive-p))))
 
 (defun isearch-backward-regexp ()
@@ -376,17 +375,13 @@ See \\[isearch-forward] for more information."
 Do incremental search backward for regular expression.
 Like ordinary incremental search except that your input
 is treated as a regexp.  See \\[isearch-forward] for more info."
-  (interactive "_")
+  (interactive)
   (isearch-mode nil t nil (not (interactive-p))))
 
-;; This function is way wrong, because you can't scroll the help
-;; screen; as soon as you press a key, it's gone.  I don't know of a
-;; good way to fix it, though.  -hniksic
+
 (defun isearch-mode-help ()
-  (interactive "_")
-  (let ((w (selected-window)))
-    (describe-function 'isearch-forward)
-    (select-window w))
+  (interactive)
+  (describe-function 'isearch-forward)
   (isearch-update))
 
 
@@ -833,8 +828,7 @@ If no previous match was done, just beep."
 
 
 (defun isearch-yank (chunk)
-  ;; Helper for isearch-yank-* functions.  CHUNK can be a string or a
-  ;; function.
+  ;; Helper for isearch-yank-word and isearch-yank-line
   (let ((word (if (stringp chunk)
 		  chunk
 		(save-excursion
@@ -870,11 +864,6 @@ If no previous match was done, just beep."
   "Pull rest of line from buffer into search string."
   (interactive)
   (isearch-yank 'end-of-line))
-
-(defun isearch-yank-kill ()
-  "Pull rest of line from kill ring into search string."
-  (interactive)
-  (isearch-yank (current-kill 0)))
 
 (defun isearch-yank-sexp ()
   "Pull next expression from buffer into search string."
@@ -1285,7 +1274,6 @@ If there is no completion possible, say so and continue searching."
 (put 'isearch-printing-char			'isearch-command t)
 (put 'isearch-yank-word				'isearch-command t)
 (put 'isearch-yank-line				'isearch-command t)
-(put 'isearch-yank-kill				'isearch-command t)
 (put 'isearch-yank-sexp				'isearch-command t)
 (put 'isearch-*-char				'isearch-command t)
 (put 'isearch-*-char				'isearch-command t)
@@ -1554,7 +1542,7 @@ currently matches the search-string.")
 
 (defun isearch-no-upper-case-p (string)
   "Return t if there are no upper case chars in string.
-But upper case chars preceded by \\ do not count since they
+But upper case chars preceeded by \\ do not count since they
 have special meaning in a regexp."
   ;; this incorrectly returns t for "\\\\A"
   (let ((case-fold-search nil))

@@ -21,6 +21,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.28. */
 
+/* This file has been Mule-ized. */
+
 #include <config.h>
 #include "lisp.h"
 
@@ -28,6 +30,31 @@ Boston, MA 02111-1307, USA.  */
 #include "commands.h"
 #include "insdel.h"
 #include "syntax.h"
+
+/* Here is a comment from Ken'ichi HANDA <handa@etl.go.jp>
+   explaining the purpose of the Sextword syntax category:
+
+Japanese words are not separated by spaces, which makes finding word
+boundaries very difficult.  Theoretically it's impossible without
+using natural language processing techniques.  But, by defining
+pseudo-words as below (much simplified for letting you understand it
+easily) for Japanese, we can have a convenient forward-word function
+for Japanese.
+
+	A Japanese word is a sequence of characters that consists of
+	zero or more Kanji characters followed by zero or more
+	Hiragana characters.
+
+Then, the problem is that now we can't say that a sequence of
+word-constituents makes up a WORD.  For instance, both Hiragana "A"
+and Kanji "KAN" are word-constituents but the sequence of these two
+letters can't be a single word.
+
+So, we introduced Sextword for Japanese letters.  A character of
+Sextword is a word-constituent but a word boundary may exist between
+two such characters.  */
+
+/* Mule 2.4 doesn't seem to have Sextword - I'm removing it -- mrb */
 
 Lisp_Object Qsyntax_table_p;
 
@@ -91,7 +118,7 @@ static Bufpos
 find_defun_start (struct buffer *buf, Bufpos pos)
 {
   Bufpos tem;
-  Lisp_Object syntaxtab = buf->syntax_table;
+  struct Lisp_Char_Table *mirrortab = XCHAR_TABLE (buf->mirror_syntax_table);
 
   /* Use previous finding, if it's valid and applies to this inquiry.  */
   if (buf == find_start_buffer
@@ -110,7 +137,7 @@ find_defun_start (struct buffer *buf, Bufpos pos)
   while (tem > BUF_BEGV (buf))
     {
       /* Open-paren at start of line means we found our defun-start.  */
-      if (SYNTAX (syntaxtab, BUF_FETCH_CHAR (buf, tem)) == Sopen)
+      if (SYNTAX (mirrortab, BUF_FETCH_CHAR (buf, tem)) == Sopen)
 	break;
       /* Move to beg of previous line.  */
       tem = find_next_newline (buf, tem, -2);
@@ -132,7 +159,7 @@ Any vector of 256 elements will do.
 */
        (obj))
 {
-  if (VECTORP (obj) && vector_length (XVECTOR (obj)) == 0400)
+  if (CHAR_TABLEP (obj) && XCHAR_TABLE_TYPE (obj) == CHAR_TABLE_TYPE_SYNTAX)
     return Qt;
   return Qnil;
 }
@@ -173,11 +200,10 @@ It is a copy of the TABLE, which defaults to the standard syntax table.
        (table))
 {
   if (NILP (Vstandard_syntax_table))
-    /* Can only be null during initialization */
-    return make_vector (0400, Qzero);
+    return Fmake_char_table (Qsyntax);
 
   table = check_syntax_table (table, Vstandard_syntax_table);
-  return Fcopy_sequence (table);
+  return Fcopy_char_table (table);
 }
 
 DEFUN ("set-syntax-table", Fset_syntax_table, 1, 2, 0, /*
@@ -190,6 +216,7 @@ BUFFER defaults to the current buffer if omitted.
   struct buffer *buf = decode_buffer (buffer, 0);
   table = check_syntax_table (table, Qnil);
   buf->syntax_table = table;
+  buf->mirror_syntax_table = XCHAR_TABLE (table)->mirror_table;
   /* Indicate that this buffer now has a specified syntax table.  */
   buf->local_var_flags |= XINT (buffer_local_flags.syntax_table);
   return table;
@@ -200,32 +227,28 @@ BUFFER defaults to the current buffer if omitted.
    This is used by modify-syntax-entry, and other things. */
 
 CONST unsigned char syntax_spec_code[0400] =
-  { 0377, 0377, 0377, 0377, 0377, 0377, 0377, 0377,
-    0377, 0377, 0377, 0377, 0377, 0377, 0377, 0377,
-    0377, 0377, 0377, 0377, 0377, 0377, 0377, 0377,
-    0377, 0377, 0377, 0377, 0377, 0377, 0377, 0377,
-    (char) Swhitespace, 0377, (char) Sstring, 0377,
-        (char) Smath, 0377, 0377, (char) Squote,
-    (char) Sopen, (char) Sclose, 0377, 0377,
+{ 0377, 0377, 0377, 0377, 0377, 0377, 0377, 0377,
+  0377, 0377, 0377, 0377, 0377, 0377, 0377, 0377,
+  0377, 0377, 0377, 0377, 0377, 0377, 0377, 0377,
+  0377, 0377, 0377, 0377, 0377, 0377, 0377, 0377,
+  (char) Swhitespace, 0377, (char) Sstring, 0377,
+      (char) Smath, 0377, 0377, (char) Squote,
+  (char) Sopen, (char) Sclose, 0377, 0377,
 	0377, (char) Swhitespace, (char) Spunct, (char) Scharquote,
-    0377, 0377, 0377, 0377, 0377, 0377, 0377, 0377,
-    0377, 0377, 0377, 0377,
+  0377, 0377, 0377, 0377, 0377, 0377, 0377, 0377,
+  0377, 0377, 0377, 0377,
 	(char) Scomment, 0377, (char) Sendcomment, 0377,
-    (char) Sinherit, 0377, 0377, 0377, 0377, 0377, 0377, 0377,   /* @, A ... */
-    0377, 0377, 0377, 0377, 0377, 0377, 0377, 0377,
-    0377, 0377, 0377, 0377, 0377, 0377, 0377, (char) Sword,
-    0377, 0377, 0377, 0377, (char) Sescape, 0377, 0377, (char) Ssymbol,
-    0377, 0377, 0377, 0377, 0377, Sextword, 0377, 0377,   /* `, a, ... */
-    0377, 0377, 0377, 0377, 0377, 0377, 0377, 0377,
-    0377, 0377, 0377, 0377, 0377, 0377, 0377, (char) Sword,
-    0377, 0377, 0377, 0377, 0377, 0377, 0377, 0377
-  };
+  (char) Sinherit, 0377, 0377, 0377, 0377, 0377, 0377, 0377,   /* @, A ... */
+  0377, 0377, 0377, 0377, 0377, 0377, 0377, 0377,
+  0377, 0377, 0377, 0377, 0377, 0377, 0377, (char) Sword,
+  0377, 0377, 0377, 0377, (char) Sescape, 0377, 0377, (char) Ssymbol,
+  0377, 0377, 0377, 0377, 0377, 0377, 0377, 0377,   /* `, a, ... */
+  0377, 0377, 0377, 0377, 0377, 0377, 0377, 0377,
+  0377, 0377, 0377, 0377, 0377, 0377, 0377, (char) Sword,
+  0377, 0377, 0377, 0377, 0377, 0377, 0377, 0377
+};
 
-CONST unsigned char syntax_code_spec[] =
-  {
-    ' ', '.', 'w', '_', '(', ')', '\'', '\"', '$', '\\', '/', '<', '>', '@',
-    'e', '\0'
-  };
+CONST unsigned char syntax_code_spec[] =  " .w_()'\"$\\/<>@";
 
 DEFUN ("syntax-designator-chars", Fsyntax_designator_chars, 0, 0, 0, /*
 Return a string of the recognized syntax designator chars.
@@ -247,22 +270,41 @@ syntax table.
 */
        (ch, table))
 {
+  struct Lisp_Char_Table *mirrortab;
+
   CHECK_CHAR_COERCE_INT (ch);
   table = check_syntax_table (table, current_buffer->syntax_table);
-
-  return make_int (syntax_code_spec[(int) SYNTAX (table, XINT (ch))]);
+  mirrortab = XCHAR_TABLE (XCHAR_TABLE (table)->mirror_table);
+  return make_char (syntax_code_spec[(int) SYNTAX (mirrortab, XCHAR (ch))]);
 }
 
+#ifdef MULE
+
+enum syntaxcode
+charset_syntax (struct buffer *buf, Lisp_Object charset, int *multi_p_out)
+{
+  *multi_p_out = 1;
+  /* #### get this right */
+  return Spunct;
+}
+
+#endif
 
 Lisp_Object
 syntax_match (Lisp_Object table, Emchar ch)
 {
-  unsigned char stringterm = ((SYNTAX_CODE (table, ch) >> 8) & 0377);
+  Lisp_Object code = CHAR_TABLE_VALUE_UNSAFE (XCHAR_TABLE (table), ch);
+  Lisp_Object code2 = code;
 
-  if (stringterm == 0)
-    return Qnil;
+  if (CONSP (code))
+    code2 = XCAR (code);
+  if (SYNTAX_FROM_CODE (XINT (code2)) == Sinherit)
+    code = CHAR_TABLE_VALUE_UNSAFE (XCHAR_TABLE (Vstandard_syntax_table),
+				    ch);
+  if (CONSP (code))
+    return XCDR (code);
   else
-    return make_char (stringterm);
+    return Qnil;
 }
 
 DEFUN ("matching-paren", Fmatching_paren, 1, 2, 0, /*
@@ -272,17 +314,30 @@ syntax table.
 */
        (ch, table))
 {
+  struct Lisp_Char_Table *mirrortab;
   int code;
-  CHECK_CHAR_COERCE_INT (ch);
 
+  CHECK_CHAR_COERCE_INT (ch);
   table = check_syntax_table (table, current_buffer->syntax_table);
-  code = SYNTAX (table, XCHAR (ch));
+  mirrortab = XCHAR_TABLE (XCHAR_TABLE (table)->mirror_table);
+  code = SYNTAX (mirrortab, XCHAR (ch));
   if (code == Sopen || code == Sclose || code == Sstring)
     return syntax_match (table, XCHAR (ch));
   return Qnil;
 }
 
 
+
+INLINE int
+word_constituent_p (struct buffer *buf, Bufpos pos,
+		    struct Lisp_Char_Table *tab)
+{
+  enum syntaxcode code = SYNTAX_UNSAFE (tab, BUF_FETCH_CHAR (buf, pos));
+  return ((words_include_escapes &&
+	   (code == Sescape || code == Scharquote))
+	  || (code == Sword));
+}
+
 /* Return the position across COUNT words from FROM.
    If that many words cannot be found before the end of the buffer, return 0.
    COUNT negative means scan backward and stop at word beginning.  */
@@ -290,82 +345,47 @@ syntax table.
 Bufpos
 scan_words (struct buffer *buf, Bufpos from, int count)
 {
-  Bufpos beg = BUF_BEGV (buf);
-  Bufpos end = BUF_ZV (buf);
-  enum syntaxcode code;
-  Lisp_Object table = buf->syntax_table;
-  
+  Bufpos limit = count > 0 ? BUF_ZV (buf) : BUF_BEGV (buf);
+  struct Lisp_Char_Table *mirrortab = XCHAR_TABLE (buf->mirror_syntax_table);
   while (count > 0)
     {
       QUIT;
   
       while (1)
 	{
-	  Emchar ch;
-	  if (from == end)
-	    {
-	      return 0;
-	    }
-	  ch = BUF_FETCH_CHAR (buf, from);
-	  code = SYNTAX_UNSAFE (table, ch);
-	  if (words_include_escapes
-	      && (code == Sescape || code == Scharquote))
-	    break;
-	  if (code == Sword || code == Sextword)
+	  if (from == limit)
+	    return 0;
+	  if (word_constituent_p (buf, from, mirrortab))
 	    break;
 	  from++;
 	}
 
       QUIT;
 
-      while (1)
+      while ((from != limit) && word_constituent_p (buf, from, mirrortab))
 	{
-	  Emchar ch;
-	  if (from == end) break;
-	  ch = BUF_FETCH_CHAR (buf, from);
-	  code = SYNTAX_UNSAFE (table, ch);
-	  if (!(words_include_escapes
-		&& (code == Sescape || code == Scharquote)))
-	    if (code != Sword && code != Sextword)
-	      break;
 	  from++;
 	}
-
       count--;
     }
+  
   while (count < 0)
     {
       QUIT;
 
       while (1)
 	{
-	  Emchar ch;
-	  if (from == beg)
-	    {
-	      return 0;
-	    }
-	  ch = BUF_FETCH_CHAR (buf, from - 1);
-	  code = SYNTAX_UNSAFE (table, ch);
-	  if (words_include_escapes
-	      && (code == Sescape || code == Scharquote))
-	    break;
-	  if (code == Sword || code == Sextword)
+	  if (from == limit)
+	    return 0;
+	  if (word_constituent_p (buf, from - 1, mirrortab))
 	    break;
 	  from--;
 	}
 
       QUIT;
 
-      while (1)
+      while ((from != limit) && word_constituent_p (buf, from - 1, mirrortab))
 	{
-	  Emchar ch;
-	  if (from == beg) break;
-	  ch = BUF_FETCH_CHAR (buf, from - 1);
-	  code = SYNTAX_UNSAFE (table, ch);
-	  if (!(words_include_escapes
-		&& (code == Sescape || code == Scharquote)))
-	    if (code != Sword && code != Sextword)
-	      break;
 	  from--;
 	}
       count++;
@@ -407,7 +427,7 @@ find_start_of_comment (struct buffer *buf, Bufpos from, Bufpos stop, int mask)
 {
   Emchar c;
   enum syntaxcode code;
-  Lisp_Object table = buf->syntax_table;
+  struct Lisp_Char_Table *mirrortab = XCHAR_TABLE (buf->mirror_syntax_table);
 
   /* Look back, counting the parity of string-quotes,
      and recording the comment-starters seen.
@@ -434,22 +454,22 @@ find_start_of_comment (struct buffer *buf, Bufpos from, Bufpos stop, int mask)
       from--;
 
       c = BUF_FETCH_CHAR (buf, from);
-      code = SYNTAX_UNSAFE (table, c);
+      code = SYNTAX_UNSAFE (mirrortab, c);
 
       /* is this a 1-char comment end sequence? if so, try
 	 to see if style matches previously extracted mask */
       if (code == Sendcomment)
 	{
-	  styles_match_p = SYNTAX_STYLES_MATCH_1CHAR_P (table, c, mask);
+	  styles_match_p = SYNTAX_STYLES_MATCH_1CHAR_P (mirrortab, c, mask);
 	}
 
       /* otherwise, is this a 2-char comment end sequence? */
       else if (from >= stop
-	       && SYNTAX_END_P (table, c, BUF_FETCH_CHAR (buf, from+1)))
+	       && SYNTAX_END_P (mirrortab, c, BUF_FETCH_CHAR (buf, from+1)))
 	{
 	  code = Sendcomment;
 	  styles_match_p =
-	    SYNTAX_STYLES_MATCH_END_P (table, c,
+	    SYNTAX_STYLES_MATCH_END_P (mirrortab, c,
 				       BUF_FETCH_CHAR (buf, from+1),
 				       mask);
 	}
@@ -457,14 +477,14 @@ find_start_of_comment (struct buffer *buf, Bufpos from, Bufpos stop, int mask)
       /* or are we looking at a 1-char comment start sequence
 	 of the style matching mask? */
       else if (code == Scomment
-	       && SYNTAX_STYLES_MATCH_1CHAR_P (table, c, mask))
+	       && SYNTAX_STYLES_MATCH_1CHAR_P (mirrortab, c, mask))
 	{
 	  styles_match_p = 1;
 	}
 		    
       /* or possibly, a 2-char comment start sequence */
       else if (from >= stop
-	       && SYNTAX_STYLES_MATCH_START_P (table, c,
+	       && SYNTAX_STYLES_MATCH_START_P (mirrortab, c,
 					       BUF_FETCH_CHAR (buf, from+1),
 					       mask))
 	{
@@ -541,7 +561,7 @@ static Bufpos
 find_end_of_comment (struct buffer *buf, Bufpos from, Bufpos stop, int mask)
 {
   int c;
-  Lisp_Object table = buf->syntax_table;
+  struct Lisp_Char_Table *mirrortab = XCHAR_TABLE (buf->mirror_syntax_table);
 
   while (1)
     {
@@ -550,8 +570,8 @@ find_end_of_comment (struct buffer *buf, Bufpos from, Bufpos stop, int mask)
 	  return -1;
 	}
       c = BUF_FETCH_CHAR (buf, from);
-      if (SYNTAX_UNSAFE (table, c) == Sendcomment
-	  && SYNTAX_STYLES_MATCH_1CHAR_P (table, c, mask))
+      if (SYNTAX_UNSAFE (mirrortab, c) == Sendcomment
+	  && SYNTAX_STYLES_MATCH_1CHAR_P (mirrortab, c, mask))
 	/* we have encountered a comment end of the same style
 	   as the comment sequence which began this comment
 	   section */
@@ -559,7 +579,7 @@ find_end_of_comment (struct buffer *buf, Bufpos from, Bufpos stop, int mask)
 
       from++;
       if (from < stop
-	  && SYNTAX_STYLES_MATCH_END_P (table, c,
+	  && SYNTAX_STYLES_MATCH_END_P (mirrortab, c,
 					BUF_FETCH_CHAR (buf, from), mask))
 	/* we have encountered a comment end of the same style
 	   as the comment sequence which began this comment
@@ -594,7 +614,7 @@ Optional argument BUFFER defaults to the current buffer.
   enum syntaxcode code;
   int count;
   struct buffer *buf = decode_buffer (buffer, 0);
-  Lisp_Object table = buf->syntax_table;
+  struct Lisp_Char_Table *mirrortab = XCHAR_TABLE (buf->mirror_syntax_table);
 
   CHECK_INT (n);
   count = XINT (n);
@@ -617,7 +637,7 @@ Optional argument BUFFER defaults to the current buffer.
 	    }
 
 	  c = BUF_FETCH_CHAR (buf, from);
-	  code = SYNTAX (table, c);
+	  code = SYNTAX (mirrortab, c);
 
 	  if (code == Scomment)
 	    {
@@ -626,11 +646,11 @@ Optional argument BUFFER defaults to the current buffer.
 		 we must record the comment style this character begins
 		 so that later, only a comment end of the same style actually
 		 ends the comment section */
-	      mask = SYNTAX_COMMENT_1CHAR_MASK (table, c);
+	      mask = SYNTAX_COMMENT_1CHAR_MASK (mirrortab, c);
 	    }
 
 	  else if (from < stop
-		   && SYNTAX_START_P (table, c, BUF_FETCH_CHAR (buf, from+1)))
+		   && SYNTAX_START_P (mirrortab, c, BUF_FETCH_CHAR (buf, from+1)))
 	    {
 	      /* we have encountered a 2char comment start sequence and we 
 		 are ignoring all text inside comments. we must record
@@ -638,7 +658,7 @@ Optional argument BUFFER defaults to the current buffer.
 		 only a comment end of the same style actually ends
 		 the comment section */
 	      code = Scomment;
-	      mask = SYNTAX_COMMENT_MASK_START (table, c,
+	      mask = SYNTAX_COMMENT_MASK_START (mirrortab, c,
 						BUF_FETCH_CHAR (buf, from+1));
 	      from++;
 	    }
@@ -690,25 +710,25 @@ Optional argument BUFFER defaults to the current buffer.
 	    }
 	      
 	  c = BUF_FETCH_CHAR (buf, from);
-	  code = SYNTAX (table, c);
+	  code = SYNTAX (mirrortab, c);
 
 	  if (code == Sendcomment)
 	    {
 	      /* we have found a single char end comment. we must record
 		 the comment style encountered so that later, we can match
 		 only the proper comment begin sequence of the same style */
-	      mask = SYNTAX_COMMENT_1CHAR_MASK (table, c);
+	      mask = SYNTAX_COMMENT_1CHAR_MASK (mirrortab, c);
 	    }
 
 	  else if (from > stop
-		   && SYNTAX_END_P (table, BUF_FETCH_CHAR (buf, from - 1), c)
+		   && SYNTAX_END_P (mirrortab, BUF_FETCH_CHAR (buf, from - 1), c)
 		   && !char_quoted (buf, from - 1))
 	    {
 	      /* We must record the comment style encountered so that
 		 later, we can match only the proper comment begin
 		 sequence of the same style.  */
 	      code = Sendcomment;
-	      mask = SYNTAX_COMMENT_MASK_END (table,
+	      mask = SYNTAX_COMMENT_MASK_END (mirrortab,
 					      BUF_FETCH_CHAR (buf, from - 1),
 					      c);
 	      from--;
@@ -721,8 +741,8 @@ Optional argument BUFFER defaults to the current buffer.
             }
 
 	  else if (code != Swhitespace
-		   && SYNTAX (table, c) != Scomment
-		   && SYNTAX (table, c) != Sendcomment)
+		   && SYNTAX (mirrortab, c) != Scomment
+		   && SYNTAX (mirrortab, c) != Sendcomment)
 	    {
 	      BUF_SET_PT (buf, from + 1);
 	      return Qnil;
@@ -747,7 +767,8 @@ scan_lists (struct buffer *buf, Bufpos from, int count, int depth,
   int mathexit = 0;
   enum syntaxcode code;
   int min_depth = depth;    /* Err out if depth gets less than this. */
-  Lisp_Object table = buf->syntax_table;
+  Lisp_Object syntaxtab = buf->syntax_table;
+  struct Lisp_Char_Table *mirrortab = XCHAR_TABLE (buf->mirror_syntax_table);
 
   if (depth > 0) min_depth = 0;
 
@@ -761,18 +782,18 @@ scan_lists (struct buffer *buf, Bufpos from, int count, int depth,
           int mask = 0;         /* mask for finding matching comment style */
 
 	  c = BUF_FETCH_CHAR (buf, from);
-	  code = SYNTAX_UNSAFE (table, c);
+	  code = SYNTAX_UNSAFE (mirrortab, c);
 	  from++;
 
 	  /* a 1-char comment start sequence */
 	  if (code == Scomment && parse_sexp_ignore_comments)
 	    {
-	      mask = SYNTAX_COMMENT_1CHAR_MASK (table, c);
+	      mask = SYNTAX_COMMENT_1CHAR_MASK (mirrortab, c);
 	    }
 
 	  /* else, a 2-char comment start sequence? */
 	  else if (from < stop
-		   && SYNTAX_START_P (table, c, BUF_FETCH_CHAR (buf, from))
+		   && SYNTAX_START_P (mirrortab, c, BUF_FETCH_CHAR (buf, from))
 		   && parse_sexp_ignore_comments)
 	    {
 	      /* we have encountered a comment start sequence and we 
@@ -781,12 +802,12 @@ scan_lists (struct buffer *buf, Bufpos from, int count, int depth,
 		 only a comment end of the same style actually ends
 		 the comment section */
 	      code = Scomment;
-	      mask = SYNTAX_COMMENT_MASK_START (table, c,
+	      mask = SYNTAX_COMMENT_MASK_START (mirrortab, c,
 						BUF_FETCH_CHAR (buf, from));
 	      from++;
 	    }
 	  
-	  if (SYNTAX_PREFIX_UNSAFE (table, c))
+	  if (SYNTAX_PREFIX_UNSAFE (mirrortab, c))
 	    continue;
 
 	  switch (code)
@@ -797,13 +818,12 @@ scan_lists (struct buffer *buf, Bufpos from, int count, int depth,
 	      from++;
 	      /* treat following character as a word constituent */
 	    case Sword:
-	    case Sextword:
 	    case Ssymbol:
 	      if (depth || !sexpflag) break;
 	      /* This word counts as a sexp; return at end of it. */
 	      while (from < stop)
 		{
-		  switch (SYNTAX (table, BUF_FETCH_CHAR (buf, from)))
+		  switch (SYNTAX (mirrortab, BUF_FETCH_CHAR (buf, from)))
 		    {
 		    case Scharquote:
 		    case Sescape:
@@ -811,7 +831,6 @@ scan_lists (struct buffer *buf, Bufpos from, int count, int depth,
 		      if (from == stop) goto lose;
 		      break;
 		    case Sword:
-		    case Sextword:
 		    case Ssymbol:
 		    case Squote:
 		      break;
@@ -870,7 +889,7 @@ scan_lists (struct buffer *buf, Bufpos from, int count, int depth,
               {
 		/* XEmacs change: call syntax_match on character */
                 Emchar ch = BUF_FETCH_CHAR (buf, from - 1);
-		Lisp_Object stermobj = syntax_match (table, ch);
+		Lisp_Object stermobj = syntax_match (syntaxtab, ch);
 		Emchar stringterm;
 
 		if (CHARP (stermobj))
@@ -884,7 +903,7 @@ scan_lists (struct buffer *buf, Bufpos from, int count, int depth,
 		      goto lose;
 		    if (BUF_FETCH_CHAR (buf, from) == stringterm)
 		      break;
-		    switch (SYNTAX (table, BUF_FETCH_CHAR (buf, from)))
+		    switch (SYNTAX (mirrortab, BUF_FETCH_CHAR (buf, from)))
 		      {
 		      case Scharquote:
 		      case Sescape:
@@ -931,18 +950,18 @@ scan_lists (struct buffer *buf, Bufpos from, int count, int depth,
 	    from--;
 
 	  c = BUF_FETCH_CHAR (buf, from);
-	  code = SYNTAX_UNSAFE (table, c);
+	  code = SYNTAX_UNSAFE (mirrortab, c);
 
 	  if (code == Sendcomment && parse_sexp_ignore_comments)
 	    {
 	      /* we have found a single char end comment. we must record
 		 the comment style encountered so that later, we can match
 		 only the proper comment begin sequence of the same style */
-	      mask = SYNTAX_COMMENT_1CHAR_MASK (table, c);
+	      mask = SYNTAX_COMMENT_1CHAR_MASK (mirrortab, c);
 	    }
 
 	  else if (from > stop
-		   && SYNTAX_END_P (table, BUF_FETCH_CHAR (buf, from-1), c)
+		   && SYNTAX_END_P (mirrortab, BUF_FETCH_CHAR (buf, from-1), c)
 		   && !char_quoted (buf, from - 1)
 		   && parse_sexp_ignore_comments)
 	    {
@@ -950,19 +969,18 @@ scan_lists (struct buffer *buf, Bufpos from, int count, int depth,
 		 later, we can match only the proper comment begin
 		 sequence of the same style */
 	      code = Sendcomment;
-	      mask = SYNTAX_COMMENT_MASK_END (table,
+	      mask = SYNTAX_COMMENT_MASK_END (mirrortab,
 					      BUF_FETCH_CHAR (buf, from - 1),
 					      c);
 	      from--;
 	    }
 
-	  if (SYNTAX_PREFIX_UNSAFE (table, c))
+	  if (SYNTAX_PREFIX_UNSAFE (mirrortab, c))
 	    continue;
 
 	  switch (((quoted) ? Sword : code))
 	    {
 	    case Sword:
-	    case Sextword:
 	    case Ssymbol:
 	      if (depth || !sexpflag) break;
 	      /* This word counts as a sexp; count object finished after 
@@ -976,9 +994,8 @@ scan_lists (struct buffer *buf, Bufpos from, int count, int depth,
 		    from--;
 		  if (! (quoted
                          || (syncode =
-			     SYNTAX (table, BUF_FETCH_CHAR (buf, from - 1)))
+			     SYNTAX (mirrortab, BUF_FETCH_CHAR (buf, from - 1)))
 			 == Sword
-                         || syncode == Sextword
 			 || syncode == Ssymbol
 			 || syncode == Squote))
             	    goto done2;
@@ -1022,7 +1039,7 @@ scan_lists (struct buffer *buf, Bufpos from, int count, int depth,
               {
 		/* XEmacs change: call syntax_match() on character */
                 Emchar ch = BUF_FETCH_CHAR (buf, from);
-		Lisp_Object stermobj = syntax_match (table, ch);
+		Lisp_Object stermobj = syntax_match (syntaxtab, ch);
 		Emchar stringterm;
 
 		if (CHARP (stermobj))
@@ -1070,10 +1087,10 @@ char_quoted (struct buffer *buf, Bufpos pos)
   enum syntaxcode code;
   Bufpos beg = BUF_BEGV (buf);
   int quoted = 0;
-  Lisp_Object table = buf->syntax_table;
+  struct Lisp_Char_Table *mirrortab = XCHAR_TABLE (buf->mirror_syntax_table);
 
   while (pos > beg
-	 && ((code = SYNTAX (table, BUF_FETCH_CHAR (buf, pos - 1)))
+	 && ((code = SYNTAX (mirrortab, BUF_FETCH_CHAR (buf, pos - 1)))
 	     == Scharquote
 	     || code == Sescape))
     pos--, quoted = !quoted;
@@ -1152,11 +1169,11 @@ Optional arg BUFFER defaults to the current buffer.
   struct buffer *buf = decode_buffer (buffer, 0);
   Bufpos beg = BUF_BEGV (buf);
   Bufpos pos = BUF_PT (buf);
-  Lisp_Object table = buf->syntax_table;
+  struct Lisp_Char_Table *mirrortab = XCHAR_TABLE (buf->mirror_syntax_table);
 
   while (pos > beg && !char_quoted (buf, pos - 1)
-	 && (SYNTAX (table, BUF_FETCH_CHAR (buf, pos - 1)) == Squote
-	     || SYNTAX_PREFIX (table, BUF_FETCH_CHAR (buf, pos - 1))))
+	 && (SYNTAX (mirrortab, BUF_FETCH_CHAR (buf, pos - 1)) == Squote
+	     || SYNTAX_PREFIX (mirrortab, BUF_FETCH_CHAR (buf, pos - 1))))
     pos--;
 
   BUF_SET_PT (buf, pos);
@@ -1189,9 +1206,10 @@ scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
 			   when the depth becomes negative.  */
   int mindepth;		/* Lowest DEPTH value seen.  */
   int start_quoted = 0;		/* Nonzero means starting after a char quote */
-  Lisp_Object table = buf->syntax_table;
   Lisp_Object tem;
   int mask;				     /* comment mask */
+  Lisp_Object syntaxtab = buf->syntax_table;
+  struct Lisp_Char_Table *mirrortab = XCHAR_TABLE (buf->mirror_syntax_table);
 
   if (NILP (oldstate))
     {
@@ -1252,7 +1270,7 @@ scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
     {
       QUIT;
 
-      code = SYNTAX (table, BUF_FETCH_CHAR (buf, from));
+      code = SYNTAX (mirrortab, BUF_FETCH_CHAR (buf, from));
       from++;
 
       if (code == Scomment)
@@ -1260,21 +1278,21 @@ scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
 	  /* record the comment style we have entered so that only the
 	     comment-ender sequence (or single char) of the same style
 	     actually terminates the comment section. */
-	  mask = SYNTAX_COMMENT_1CHAR_MASK (table,
+	  mask = SYNTAX_COMMENT_1CHAR_MASK (mirrortab,
 					    BUF_FETCH_CHAR (buf, from-1));
 	  state.comstyle = (mask == SYNTAX_COMMENT_STYLE_B);
 	  state.comstart = from - 1;
 	}
       
       else if (from < end &&
-	       SYNTAX_START_P (table, BUF_FETCH_CHAR (buf, from-1),
+	       SYNTAX_START_P (mirrortab, BUF_FETCH_CHAR (buf, from-1),
 			       BUF_FETCH_CHAR (buf, from)))
 	{
 	  /* Record the comment style we have entered so that only
 	     the comment-end sequence of the same style actually
 	     terminates the comment section.  */
 	  code = Scomment;
-	  mask = SYNTAX_COMMENT_MASK_START (table,
+	  mask = SYNTAX_COMMENT_MASK_START (mirrortab,
                                             BUF_FETCH_CHAR (buf, from-1),
 					    BUF_FETCH_CHAR (buf, from));
 	  state.comstyle = (mask == SYNTAX_COMMENT_STYLE_B);
@@ -1282,7 +1300,7 @@ scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
 	  from++;
 	}
 
-      if (SYNTAX_PREFIX (table, BUF_FETCH_CHAR (buf, from - 1)))
+      if (SYNTAX_PREFIX (mirrortab, BUF_FETCH_CHAR (buf, from - 1)))
 	continue;
       switch (code)
 	{
@@ -1296,14 +1314,13 @@ scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
 	  goto symstarted;
 	  /* treat following character as a word constituent */
 	case Sword:
-	case Sextword:
 	case Ssymbol:
 	  if (stopbefore) goto stop;  /* this arg means stop at sexp start */
 	  curlevel->last = from - 1;
 	symstarted:
 	  while (from < end)
 	    {
-	      switch (SYNTAX (table, BUF_FETCH_CHAR (buf, from)))
+	      switch (SYNTAX (mirrortab, BUF_FETCH_CHAR (buf, from)))
 		{
 		case Scharquote:
 		case Sescape:
@@ -1311,7 +1328,6 @@ scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
 		  if (from == end) goto endquoted;
 		  break;
 		case Sword:
-		case Sextword:
 		case Ssymbol:
 		case Squote:
 		  break;
@@ -1353,7 +1369,7 @@ scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
 	    error ("Nesting too deep for parser");
 	  curlevel->prev = -1;
 	  curlevel->last = -1;
-	  if (targetdepth == depth) goto done;
+	  if (!--targetdepth) goto done;
 	  break;
 
 	case Sclose:
@@ -1363,7 +1379,7 @@ scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
 	  if (curlevel != levelstart)
 	    curlevel--;
 	  curlevel->prev = curlevel->last;
-	  if (targetdepth == depth) goto done;
+	  if (!++targetdepth) goto done;
 	  break;
 
 	case Sstring:
@@ -1374,7 +1390,7 @@ scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
 	    /* XEmacs change: call syntax_match() on character */
             ch = BUF_FETCH_CHAR (buf, from - 1);
 	    {
-	      Lisp_Object stermobj = syntax_match (table, ch);
+	      Lisp_Object stermobj = syntax_match (syntaxtab, ch);
 
 	      if (CHARP (stermobj))
 		state.instring = XCHAR (stermobj);
@@ -1387,7 +1403,7 @@ scan_sexps_forward (struct buffer *buf, struct lisp_parse_state *stateptr,
 	    {
 	      if (from >= end) goto done;
 	      if (BUF_FETCH_CHAR (buf, from) == state.instring) break;
-	      switch (SYNTAX (table, BUF_FETCH_CHAR (buf, from)))
+	      switch (SYNTAX (mirrortab, BUF_FETCH_CHAR (buf, from)))
 		{
 		case Scharquote:
 		case Sescape:
@@ -1507,6 +1523,86 @@ Sixth arg COMMENTSTOP non-nil means stop at the start of a comment.
   }
 }
 
+
+/* Updating of the mirror syntax table.
+
+   Each syntax table has a corresponding mirror table in it.
+   Whenever we make a change to a syntax table, we call
+   update_syntax_table() on it.
+
+   #### We really only need to map over the changed range.
+
+   If we change the standard syntax table, we need to map over
+   all tables because any of them could be inheriting from the
+   standard syntax table.
+
+   When `set-syntax-table' is called, we set the buffer's mirror
+   syntax table as well.
+   */
+
+struct cmst_arg
+{
+  Lisp_Object mirrortab;
+  int check_inherit;
+};
+
+static int
+cmst_mapfun (struct chartab_range *range, Lisp_Object val, void *arg)
+{
+  struct cmst_arg *closure = (struct cmst_arg *) arg;
+
+  if (CONSP (val))
+    val = XCAR (val);
+  if (SYNTAX_FROM_CODE (XINT (val)) == Sinherit
+      && closure->check_inherit)
+    {
+      struct cmst_arg recursive;
+
+      recursive.mirrortab = closure->mirrortab;
+      recursive.check_inherit = 0;
+      map_char_table (XCHAR_TABLE (Vstandard_syntax_table), range,
+				   cmst_mapfun, &recursive);
+    }
+  else
+    put_char_table (XCHAR_TABLE (closure->mirrortab), range, val);
+  return 0;
+}
+
+static void
+update_just_this_syntax_table (struct Lisp_Char_Table *ct)
+{
+  struct chartab_range range;
+  struct cmst_arg arg;
+  
+  arg.mirrortab = ct->mirror_table;
+  arg.check_inherit = (CHAR_TABLEP (Vstandard_syntax_table)
+		       && ct != XCHAR_TABLE (Vstandard_syntax_table));
+  range.type = CHARTAB_RANGE_ALL;
+  map_char_table (ct, &range, cmst_mapfun, &arg);
+}
+
+/* Called from chartab.c when a change is made to a syntax table.
+   If this is the standard syntax table, we need to recompute
+   *all* syntax tables (yuck).  Otherwise we just recompute this
+   one. */
+
+void
+update_syntax_table (struct Lisp_Char_Table *ct)
+{
+  /* Don't be stymied at startup. */
+  if (CHAR_TABLEP (Vstandard_syntax_table)
+      && ct == XCHAR_TABLE (Vstandard_syntax_table))
+    {
+      Lisp_Object syntab;
+
+      for (syntab = Vall_syntax_tables; !NILP (syntab);
+	   syntab = XCHAR_TABLE (syntab)->next_table)
+	update_just_this_syntax_table (XCHAR_TABLE (syntab));
+    }
+  else
+    update_just_this_syntax_table (ct);
+}
+
 
 /************************************************************************/
 /*                            initialization                            */
@@ -1555,9 +1651,6 @@ Non-nil means `forward-word', etc., should treat escape chars part of words.
 void
 complex_vars_of_syntax (void)
 {
-  struct Lisp_Vector *v;
-  int i;
-
   /* Set this now, so first buffer creation can refer to it. */
   /* Make it nil before calling copy-syntax-table
      so that copy-syntax-table will know not to try to copy from garbage */
@@ -1569,33 +1662,68 @@ complex_vars_of_syntax (void)
 						      Smax, Qnil, 1);
   staticpro (&Vsyntax_designator_chars_string);
 
-  v = XVECTOR (Vstandard_syntax_table);
-  
-  for (i = 'a'; i <= 'z'; i++)
-    v->contents[i] = make_int ((int) Sword);
-  for (i = 'A'; i <= 'Z'; i++)
-    v->contents[i] = make_int ((int) Sword);
-  for (i = '0'; i <= '9'; i++)
-    v->contents[i] = make_int ((int) Sword);
-  v->contents['$'] = make_int ((int) Sword);
-  v->contents['%'] = make_int ((int) Sword);
-  
-  v->contents['('] = make_int ((int) Sopen + (')' << 8));
-  v->contents[')'] = make_int ((int) Sclose + ('(' << 8));
-  v->contents['['] = make_int ((int) Sopen + (']' << 8));
-  v->contents[']'] = make_int ((int) Sclose + ('[' << 8));
-  v->contents['{'] = make_int ((int) Sopen + ('}' << 8));
-  v->contents['}'] = make_int ((int) Sclose + ('{' << 8));
-  v->contents['"'] = make_int ((int) Sstring);
-  v->contents['\\'] = make_int ((int) Sescape);
-  
-  {
-    CONST char *p;
+  fill_char_table (XCHAR_TABLE (Vstandard_syntax_table),
+		   make_int (Spunct));
 
-    for (p = "_-+*/&|<>="; *p; p++)
-      v->contents[(int) *p] = make_int ((int) Ssymbol);
+  {
+    Emchar i;
+
+    for (i = 0; i <= 32; i++)
+      Fput_char_table (make_char (i), make_int ((int) Swhitespace),
+		       Vstandard_syntax_table);
+    for (i = 127; i <= 159; i++)
+      Fput_char_table (make_char (i), make_int ((int) Swhitespace),
+		       Vstandard_syntax_table);
+
+    for (i = 'a'; i <= 'z'; i++)
+      Fput_char_table (make_char (i), make_int ((int) Sword),
+		       Vstandard_syntax_table);
+    for (i = 'A'; i <= 'Z'; i++)
+      Fput_char_table (make_char (i), make_int ((int) Sword),
+		       Vstandard_syntax_table);
+    for (i = '0'; i <= '9'; i++)
+      Fput_char_table (make_char (i), make_int ((int) Sword),
+		       Vstandard_syntax_table);
+    Fput_char_table (make_char ('$'), make_int ((int) Sword),
+		     Vstandard_syntax_table);
+    Fput_char_table (make_char ('%'), make_int ((int) Sword),
+		     Vstandard_syntax_table);
+
+    {
+      Fput_char_table (make_char ('('), Fcons (make_int ((int) Sopen),
+					       make_char (')')),
+		       Vstandard_syntax_table);
+      Fput_char_table (make_char (')'), Fcons (make_int ((int) Sclose),
+					       make_char ('(')),
+		       Vstandard_syntax_table);
+      Fput_char_table (make_char ('['), Fcons (make_int ((int) Sopen),
+					       make_char (']')),
+		       Vstandard_syntax_table);
+      Fput_char_table (make_char (']'), Fcons (make_int ((int) Sclose),
+					       make_char ('[')),
+		       Vstandard_syntax_table);
+      Fput_char_table (make_char ('{'), Fcons (make_int ((int) Sopen),
+					       make_char ('}')),
+		       Vstandard_syntax_table);
+      Fput_char_table (make_char ('}'), Fcons (make_int ((int) Sclose),
+					       make_char ('{')),
+		       Vstandard_syntax_table);
+    }
+
+    Fput_char_table (make_char ('"'), make_int ((int) Sstring),
+		     Vstandard_syntax_table);
+    Fput_char_table (make_char ('\\'), make_int ((int) Sescape),
+		     Vstandard_syntax_table);
     
-    for (p = ".,;:?!#@~^'`"; *p; p++)
-      v->contents[(int) *p] = make_int ((int) Spunct);
+    {
+      CONST char *p;
+      for (p = "_-+*/&|<>="; *p; p++)
+	Fput_char_table (make_char (*p), make_int ((int) Ssymbol),
+			 Vstandard_syntax_table);
+
+      for (p = ".,;:?!#@~^'`"; *p; p++)
+	Fput_char_table (make_char (*p), make_int ((int) Spunct),
+			 Vstandard_syntax_table);
+    }
   }
 }

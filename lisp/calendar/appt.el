@@ -18,9 +18,8 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
 ;;; 29-nov-89	created by Neil Mager <neilm@juliet.ll.mit.edu>.
 ;;; 23-feb-91	hacked upon by Jamie Zawinski <jwz@lucid.com>.
@@ -139,7 +138,7 @@
 ;;;     up so that you get a notification twenty minutes before each appt,
 ;;;     then a notification should come at 3:10 for the first appt, and at
 ;;;     3:15 for the second.  Currently, no notifications are generated for an
-;;;     appointment until all preceding appointments have completely expired.
+;;;     appointment until all preceeding appointments have completely expired.
 ;;;
 ;;;  o  If there are two appointments at the same time, all but the first are
 ;;;     ignored (not announced.)
@@ -438,7 +437,7 @@ notifications to be given via messages in a pop-up frame."
   (let ((n (length (appt-diary-entries))))
     (cond ((= n 0) (message "no appointments today."))
 	  ((= n 1) (message "1 appointment today."))
-	  (t (message (format "%d appointments today." n))))))
+	  (t (message "%d appointments today." n)))))
 
 (defun appt-make-list ()
   "Don't call this directly; call appt-initialize or appt-diary-entries."
@@ -685,41 +684,40 @@ notifications to be given via messages in a pop-up frame."
 
 ;;; Patching in to existing time code to install our hook.
 
+(defvar display-time-hook nil
+  "*List of functions to be called when the time is updated on the mode line.")
+
+(setq display-time-hook 'appt-check)
 
 (defvar display-time-hook-installed nil)
 
 (defun install-display-time-hook ()
- (unless display-time-hook-installed	; only do this stuff once!
-   (unless (boundp 'display-time-hook)	; Need to wrapper it.
-     (defvar display-time-hook nil
-       "*List of functions to be called when the time is updated on the mode line.")
-     (let ((old-fn (if (or (featurep 'reportmail)
-			   ;; old reportmail without a provide statement
-			   (and (fboundp 'display-time-filter-18-55)
-				(fboundp 'display-time-filter-18-57)))
-		       (if (and (featurep 'itimer)  ; XEmacs reportmail.el
-				(fboundp 'display-time-timer-function))
-			   'display-time-timer-function
-			 ;; older reportmail, or no timer.el.
-			 (if (string-match "18\\.5[0-5]" (emacs-version))
-			     'display-time-filter-18-55
-			   'display-time-filter-18-57))
-		     ;; othewise, time.el
-		     (if (and (featurep 'itimer)
-			      (fboundp 'display-time-function)) ; XEmacs
-			 'display-time-function
-		       'display-time-filter))))
+ (if display-time-hook-installed         ;; only do this stuff once!
+    nil
+  (let ((old-fn (if (or (featurep 'reportmail)
+			;; old reportmail without a provide statement
+			(and (fboundp 'display-time-filter-18-55)
+			     (fboundp 'display-time-filter-18-57)))
+		    (if (and (featurep 'itimer)  ; XEmacs reportmail.el
+			     (fboundp 'display-time-timer-function))
+			'display-time-timer-function
+		      ;; older reportmail, or no timer.el.
+		      (if (string-match "18\\.5[0-5]" (emacs-version))
+			  'display-time-filter-18-55
+			'display-time-filter-18-57))
+		  ;; othewise, time.el
+		  (if (and (featurep 'itimer)
+			   (fboundp 'display-time-function)) ; XEmacs
+		      'display-time-function
+		    'display-time-filter))))
     ;; we're about to redefine it...
-       (fset 'old-display-time-filter (symbol-function old-fn))
-       (fset old-fn
-	     '(lambda (&rest args)  ;; ...here's the revised definition
-		"Revised version of the original function: this version calls a hook."
-		(apply 'old-display-time-filter args)
-		(run-hooks 'display-time-hook)))))
-   (setq display-time-hook-installed t)
-   (if (fboundp 'add-hook)
-       (add-hook 'display-time-hook 'appt-check)
-     (setq display-time-hook (cons appt-check display-time-hook)))
-   ))
+    (fset 'old-display-time-filter (symbol-function old-fn))
+    (fset old-fn
+	  (function (lambda (&rest args)  ;; ...here's the revised definition
+	    "Revised version of the original function: this version calls a hook."
+	    (apply 'old-display-time-filter args)
+	    (run-hooks 'display-time-hook)))))
+  (setq display-time-hook-installed t)
+  ))
 
 (provide 'appt)

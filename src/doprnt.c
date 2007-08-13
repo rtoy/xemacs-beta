@@ -46,13 +46,13 @@ struct printf_spec
 		 is 2, etc.  This is to handle %##$x-type specs. */
   int minwidth;
   int precision;
-  unsigned int minus_flag:1;
-  unsigned int plus_flag:1;
-  unsigned int space_flag:1;
-  unsigned int number_flag:1;
-  unsigned int zero_flag:1;
-  unsigned int h_flag:1;
-  unsigned int l_flag:1;
+  int minus_flag:1;
+  int plus_flag:1;
+  int space_flag:1;
+  int number_flag:1;
+  int zero_flag:1;
+  int h_flag:1;
+  int l_flag:1;
   char converter; /* converter character or 0 for dummy marker
 		     indicating literal text at the end of the
 		     specification */
@@ -445,15 +445,6 @@ emacs_doprnt_1 (Lisp_Object stream, CONST Bufbyte *format_nonreloc,
 	  if (!largs)
 	    {
 	      string = Dynarr_at (args, spec->argnum - 1).bp;
-	      /* error() can be called with null string arguments.
-		 E.g., in fileio.c, the return value of strerror()
-		 is never checked.  We'll print (null), like some
-		 printf implementations do.  Would it be better (and safe)
-		 to signal an error instead?  Or should we just use the 
-                 empty string?  -dkindred@cs.cmu.edu 8/1997
-	       */
-	      if (!string)
-		string = (Bufbyte *) "(null)";
 	      string_len = strlen ((char *) string);
 	    }
 	  else
@@ -496,6 +487,8 @@ emacs_doprnt_1 (Lisp_Object stream, CONST Bufbyte *format_nonreloc,
 	  else
 	    {
 	      Lisp_Object obj = largs[spec->argnum - 1];
+	      if (CHARP (obj))
+		CHECK_INT_COERCE_CHAR (obj);
 	      if (!INT_OR_FLOATP (obj))
 		{
 		  error ("format specifier %%%c doesn't match argument type",

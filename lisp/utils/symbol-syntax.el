@@ -77,15 +77,14 @@
     result))
 
 (defun make-symbol-syntax-table (in-table)
-  (let ((osyn (syntax-table))
-	(out-table (copy-syntax-table in-table))
-	(i 0)
-	(syntax nil))
-    (while (< i 256)
-      (setq syntax (aref out-table i))
-      (if (eq 3 (logand 255 syntax))
-	  (aset out-table i (logior 2 (logand (lognot 255) syntax))))
-      (setq i (1+ i)))
+  (let ((out-table (copy-syntax-table in-table)))
+    (map-syntax-table
+     #'(lambda (key value)
+	 (if (eq ?_ (char-syntax-from-code value))
+	     (put-char-table key (set-char-syntax-in-code value ?w)
+			     out-table))
+	 nil)
+     out-table)
     out-table))
 
 ;; stuff for examining contents of syntax tables
@@ -109,16 +108,15 @@
 		(error "bad argument non-symbol"))
 	    (while (symbolp table)
 	      (setq table (symbol-value table)))
-	    (set-syntax-table table)
-	    (while (< i 256)
-	      (if (eq syntax (char-syntax i))
-		  (setq chars (cons (format "%c" i) chars)))
-	      (setq i (1+ i)))
-	    (setq schars (cons (list table-symbol
-				     (mapconcat 'identity (nreverse chars) ""))
+	    (map-syntax-table
+	     #'(lambda (key value)
+		 (if (eq syntax (char-syntax-from-code value))
+		     (setq chars (cons key chars)))
+		 nil)
+	     table)
+	    (setq schars (cons (list table-symbol (nreverse chars))
 			       schars)))
-	  (setq tables (cdr tables)))
-      (set-syntax-table osyn))
+	  (setq tables (cdr tables))))
     (nreverse schars)))
 
 (provide 'symbol-syntax)

@@ -78,7 +78,7 @@ Valid values are nil, `blink-paren', `paren', and `sexp'.
 		and shell quoting.
 
 This variable is global by default, but you can make it buffer-local and
-highlight parentheses differently in different major modes.")
+highlight parentheses differrently in different major modes.")
 
 (make-face 'paren-match)
 (or (face-differs-from-default-p 'paren-match)
@@ -263,12 +263,8 @@ and the following faces:
 		(and (/= (char-syntax (char-after beg)) ?\\)
 		     (/= (char-syntax (char-after beg)) ?\$)
 		     ;; XEmacs change
-		     (matching-paren (char-after beg))
 		     (/= (char-after (1- end))
-			 (logand (lsh (aref (syntax-table)
-					    (char-after beg))
-				      -8)
-				 255))))
+			 (matching-paren (char-after beg)))))
 	  (if (eq paren-mode 'sexp)
 	      (setq paren-extent (make-extent beg end))))
 	(and mismatch
@@ -312,7 +308,7 @@ and the following faces:
 ;;;###autoload
 (defun paren-set-mode (arg &optional quiet)
   "Cycles through possible values for `paren-mode', force off with negative arg.
-When called from lisp, a symbolic value for `paren-mode' can be passed directly.
+When called from lisp, a symbolic value for `paren-mode' can be pased directly.
 See also `paren-mode' and `paren-highlight'."
   (interactive "P")
   (let* ((paren-modes '(blink-paren paren sexp))

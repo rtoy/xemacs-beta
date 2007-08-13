@@ -616,10 +616,20 @@ face_property_matching_instance (Lisp_Object face, Lisp_Object property,
 	  if (NILP (memq_no_quit (charset,
 				  XFACE (face)->charsets_warned_about)))
 	    {
+#ifdef MULE
+	      warn_when_safe
+		(Qfont, Qwarning,
+		 "Unable to instantiate font for face %s, charset %s",
+		 string_data (symbol_name
+			      (XSYMBOL (XFACE (face)->name))),
+		 string_data (symbol_name
+			      (XSYMBOL (XCHARSET_NAME (charset)))));
+#else
 	      warn_when_safe (Qfont, Qwarning,
 			      "Unable to instantiate font for face %s",
 			      string_data (symbol_name
 					   (XSYMBOL (XFACE (face)->name))));
+#endif
 	      XFACE (face)->charsets_warned_about =
 		Fcons (charset, XFACE (face)->charsets_warned_about);
 	    }
@@ -1217,26 +1227,6 @@ update_face_cachel_data (struct face_cachel *cachel,
       FROB (background);
       FROB (display_table);
       FROB (background_pixmap);
-
-      /*
-       * A face's background pixmap will override the face's
-       * background color.  But the background pixmap of the
-       * default face should not override the background color of
-       * a face if the background color has been specified or
-       * inherited.
-       *
-       * To accomplish this we remove the background pixmap of the
-       * cachel and mark it as having been specified so that cachel
-       * merging won't override it later.
-       */
-      if (! default_face
-	  && cachel->background_specified
-	  && ! cachel->background_pixmap_specified)
-	{
-	  cachel->background_pixmap = Qunbound;
-	  cachel->background_pixmap_specified = 1;
-	}
-
 #undef FROB
 
       ensure_face_cachel_contains_charset (cachel, domain, Vcharset_ascii);

@@ -156,7 +156,13 @@ struct x_device
 
      So we just set it to all zeros. */
 
-  XComposeStatus x_compose_status;
+  /* No X Server ever used this, AFAIK -- mrb */
+  /* XComposeStatus x_compose_status; */
+
+#ifdef HAVE_XIM
+  XIM	     xim;		
+  XIMStyles *xim_styles;
+#endif /* HAVE_XIM */
 
   /* stuff for sticky modifiers: */
 
@@ -178,7 +184,13 @@ struct x_device
   (DEVICE_X_DATA (d)->global_mouse_timestamp)
 #define DEVICE_X_LAST_SERVER_TIMESTAMP(d) \
   (DEVICE_X_DATA (d)->last_server_timestamp)
-#define DEVICE_X_X_COMPOSE_STATUS(d) (DEVICE_X_DATA (d)->x_compose_status)
+/* #define DEVICE_X_X_COMPOSE_STATUS(d)
+   (DEVICE_X_DATA (d)->x_compose_status) */
+#ifdef HAVE_XIM
+#define DEVICE_X_XIM(d) (DEVICE_X_DATA (d)->xim)
+#define DEVICE_X_XIM_STYLES(d) (DEVICE_X_DATA (d)->xim_styles)
+#define DEVICE_X_FONTSET(d)    (DEVICE_X_DATA (d)->fontset)
+#endif /* HAVE_XIM */
 
 /* allocated in Xatoms_of_xfns in xfns.c */
 #define DEVICE_XATOM_WM_PROTOCOLS(d) (DEVICE_X_DATA (d)->Xatom_WM_PROTOCOLS)
@@ -259,7 +271,7 @@ struct x_frame
   int desired_psheet_count;
   Lisp_Object current_psheet_buffer;
   Lisp_Object desired_psheet_buffer;
-#endif /* ENERGIZE */
+#endif
 
   /*************************** Miscellaneous **************************/
 
@@ -278,13 +290,21 @@ struct x_frame
   /* geometry string that ought to be freed. */
   char *geom_free_me_please;
 
+#ifdef HAVE_XIM
+  XPoint   xic_spot;		/* Spot Location cache */
+#ifdef XIM_XLIB
+  XIC xic;
+  /* Could get these at any time by asking xic, but... */
+  XIMStyle xic_style;		/* XIM Style cache */
+#endif /* XIM_XLIB */
+#endif /* HAVE_XIM */
 
   int old_toolbar_size[4];
 
   /* 1 if the frame is completely visible on the display, 0 otherwise.
      if 0 the frame may have been iconified or may be totally
      or partially hidden by another X window */
-  unsigned int totally_visible_p :1;
+  int totally_visible_p :1;
 
   /* NB: Both of the following flags are derivable from the 'shell'
      field above, but it's easier if we also have them separately here. */
@@ -292,13 +312,13 @@ struct x_frame
   /* Are we a top-level frame?  This means that our shell is a
      TopLevelShell, and we should do certain things to interact with
      the window manager. */
-  unsigned int top_level_frame_p :1;
+  int top_level_frame_p :1;
 
 #ifdef EXTERNAL_WIDGET
   /* Are we using somebody else's window for our shell window?  This
      means that our shell is an ExternalShell.  If this flag is set, then
      `top_level_frame_p' will never be set. */
-  unsigned int external_window_p :1;
+  int external_window_p :1;
 #endif /* EXTERNAL_WIDGET */
 };
 
@@ -347,6 +367,14 @@ struct x_frame
 #ifdef EXTERNAL_WIDGET
 #define FRAME_X_EXTERNAL_WINDOW_P(f) (FRAME_X_DATA (f)->external_window_p)
 #endif
+
+#ifdef HAVE_XIM
+#define FRAME_X_XIC_SPOT(f)  (FRAME_X_DATA (f)->xic_spot)
+#ifdef XIM_XLIB
+#define FRAME_X_XIC(f)	     (FRAME_X_DATA (f)->xic)
+#define FRAME_X_XIC_STYLE(f) (FRAME_X_DATA (f)->xic_style)
+#endif /* XIM_XLIB */
+#endif /* HAVE_XIM */
 
 /* This needs to go in an include file that's included by inline.c
    in order for the error-checking functions to get defined. */
@@ -433,6 +461,49 @@ void x_init_modifier_mapping (struct device *d);
 Lisp_Object x_atom_to_symbol (struct device *d, Atom atom);
 Atom symbol_to_x_atom (struct device *d, Lisp_Object sym,
 		       int only_if_exists);
+
+#ifdef HAVE_XIM
+/* Locale */
+void Initialize_Locale (void);
+
+/* X Input Method `methods' */
+void XIM_init_device     (struct device *d);
+void XIM_init_frame	 (struct frame *f);
+void XIM_SetSpotLocation (struct frame *f, int x, int y);
+void XIM_SetGeometry	 (struct frame *f);
+void XIM_focus_event	 (struct frame *f, int in_p);
+
+#ifdef XIM_XLIB
+/* XtTypeConverter */
+Boolean EmacsXtCvtStringToXIMStyles (
+  Display     *dpy,
+  XrmValuePtr  args,
+  Cardinal    *num_args,
+  XrmValuePtr  from,
+  XrmValuePtr  to_in_out,
+  XtPointer   *converter_data);
+
+/* XtDestructor */
+void EmacsFreeXIMStyles (
+  XtAppContext app,
+  XrmValuePtr  to,
+  XtPointer    converter_data,
+  XrmValuePtr  args,
+  Cardinal    *num_args);
+
+#ifdef DEBUG_XEMACS
+void describe_Window	 (Window win);
+void describe_XFontSet	 (XFontSet font_set);
+void describe_XIM	 (XIM im);
+void describe_XIMStyle	 (XIMStyle   style);
+void describe_XIMStyles	 (XIMStyles *styles);
+void describe_XIC	 (XIC ic);
+void describe_event_mask (unsigned long mask);
+void describe_XRectangle (char *name, XRectangle *rect);
+void describe_Status	 (Status status);
+#endif /* DEBUG_XEMACS */
+#endif /* XIM_XLIB */
+#endif /* HAVE_XIM */
 
 #ifdef EPOCH
 extern Lisp_Object Qx_property_change, Qx_client_message, Qx_map, Qx_unmap;

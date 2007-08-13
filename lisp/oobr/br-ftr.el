@@ -6,12 +6,12 @@
 ;; KEYWORDS:     oop, tools
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          InfoDock Associates
+;; ORG:          Motorola Inc.
 ;;
 ;; ORIG-DATE:    20-Aug-91 at 18:16:36
-;; LAST-MOD:     20-Feb-97 at 07:02:51 by Bob Weiner
+;; LAST-MOD:     25-Aug-95 at 16:54:53 by Bob Weiner
 ;;
-;; Copyright (C) 1991-1996, Free Software Foundation, Inc.
+;; Copyright (C) 1991-1995, Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.
@@ -24,30 +24,29 @@
 ;;; ************************************************************************
 
 (defconst br-feature-type-regexp "[-+=@%>1/]"
-  "Regular expression which matches the first non-whitespace character in an OO-Browser feature listing.")
+  "Regular expression which matches the first non-whitespace characters in an OO-Browser feature listing.")
 
 ;;; ************************************************************************
 ;;; Public functions
 ;;; ************************************************************************
 
-(defun br-edit-feature (class feature-name &optional other-win view-only)
-  "Edit the definition of CLASS' FEATURE-NAME, optionally in some OTHER-WIN if non-nil.
-With optional VIEW-ONLY non-nil, view the feature definition instead of editing it.
-Return the pathname of the feature definition if found, else nil."
-  (interactive
-   (list nil (br-feature-complete 'must-match "Edit feature definition:")
-	 nil nil))
-  (let ((tag-and-file (br-feature-tag-and-file
-		       (if (null class)
-			   ;; Assume feature-name includes prepended class in
-			   ;; proper format, e.g. when called interactively.
-			   (regexp-quote feature-name)
-			 (br-feature-tag-regexp class feature-name)))))
-    (if tag-and-file (br-edit-feature-from-tag
-		      (car tag-and-file) (cdr tag-and-file) other-win view-only))))
+(defun br-find-feature (&optional feature-entry view-only other-win)
+  "Display feature definition for FEATURE-ENTRY in VIEW-ONLY mode if non-nil.
+Return feature path if FEATURE-ENTRY is successfully displayed, nil
+otherwise.  Can also signal an error when called interactively."
+  (interactive)
+  (and (interactive-p) (setq view-only current-prefix-arg))
+  (let ((feature-path))
+    (setq feature-entry
+	  (br-feature-signature-and-file
+	   (or feature-entry
+	       (br-feature-complete 'must-match "Show feature definition:")))
+	  feature-path (cdr feature-entry)
+	  feature-entry (car feature-entry))
+    (br-edit-feature feature-entry feature-path other-win view-only)))
 
-(defun br-edit-feature-from-tag (tag-entry feature-path &optional other-win view-only)
-  "Edit feature for OO-Browser TAG-ENTRY of file FEATURE-PATH, optionally in OTHER-WIN if non-nil.
+(defun br-edit-feature (tag-entry feature-path &optional other-win view-only)
+  "Edit feature for OO-Browser TAG-ENTRY of file FEATURE-PATH, optionally in OTHER-WIN.
 With optional VIEW-ONLY, view feature definition instead of editing it.
 Return FEATURE-PATH if feature definition is found, else nil."
   (let ((err))
@@ -66,35 +65,17 @@ Return FEATURE-PATH if feature definition is found, else nil."
 		 ((interactive-p)
 		  (setq err
 			(format
-			 "(OO-Browser):  No `%s' feature defined in Environment."
+			 "(OO-Browser):  No '%s' feature defined in Environment."
 			 tag-entry)
 			feature-path nil))))
 	  ((interactive-p)
 	   (setq err
 		 (format
-		  "(OO-Browser):  `%s' - src file not found or not readable, %s"
+		  "(OO-Browser):  '%s' - src file not found or not readable, %s"
 		  tag-entry feature-path)
 		 feature-path nil)))
     (if err (error err))
     feature-path))
-
-(defun br-find-feature (&optional feature-entry view-only other-win)
-  "Display feature definition for FEATURE-ENTRY in VIEW-ONLY mode if non-nil.
-Return feature path if FEATURE-ENTRY is successfully displayed, nil
-otherwise.  Can also signal an error when called interactively."
-  (interactive)
-  (and (interactive-p) (setq view-only current-prefix-arg))
-  (let ((feature-path))
-    (setq feature-entry
-	  (br-feature-signature-and-file
-	   (or feature-entry
-	       (br-feature-complete 'must-match
-				    (if view-only
-					"View feature definition:"
-				      "Edit feature definition:"))))
-	  feature-path (cdr feature-entry)
-	  feature-entry (car feature-entry))
-    (br-edit-feature-from-tag feature-entry feature-path other-win view-only)))
 
 (defun br-find-feature-entry ()
   "Return feature entry that point is within or nil."
@@ -162,7 +143,7 @@ Optional PROMPT is intial prompt string for user."
 			   (not (looking-at "\^L\\|\\'")))
 		 (setq ftr-alist (cons (cons (br-feature-signature-to-name
 					      (br-feature-current)
-					      t t)
+					      t)
 					     nil)
 				       ftr-alist)))))
 	   (kill-buffer ftr-buf)
@@ -213,7 +194,7 @@ Return nil if not found, otherwise display it and return non-nil."
 	(goto-char (point-min))
 	(setq found-def 
 	      (cond (deferred-class
-		     (br-feature-locate-p feature-tag deferred-class))
+		      (br-feature-locate-p feature-tag deferred-class))
 		    (regexp-flag
 		     (br-feature-locate-p feature-tag regexp-flag))
 		    (t (br-feature-locate-p feature-tag))))
@@ -360,7 +341,7 @@ buffer."
 ;;; ************************************************************************
 
 (defun br-feature-tags-init ()
-  "Set up `br-feature-tags-file' for writing."
+  "Set up 'br-feature-tags-file' for writing."
   (setq br-feature-tags-completions nil
 	br-feature-tags-file (br-feature-tags-file-name br-env-file)
 	br-tags-file (concat br-env-file "-TAGS"))
@@ -371,7 +352,7 @@ buffer."
   (concat env-file "-FTR"))
 
 (defun br-feature-tags-save ()
-  "Filter out extraneous lines and save `br-feature-tags-file'."
+  "Filter out extraneous lines and save 'br-feature-tags-file'."
   (let ((obuf (current-buffer)))
     (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
     (goto-char (point-min))
@@ -420,19 +401,6 @@ Assumes the tag table is the current buffer."
     (let ((start (point)))
       (end-of-line)
       (buffer-substring start (point)))))
-
-(defun br-feature-tag-and-file (feature-tag-regexp)
-  "Return a cons (FEATURE-TAG . FEATURE-DEF-FILENAME) for the first tag match of FEATURE-TAG-REGEXP, or nil.
-Use br-feature-tag-regexp to create FEATURE-TAG-REGEXP.
-Feature tags come from the file named by br-feature-tags-file."
-  (let ((obuf (current-buffer))
-	result)
-    (unwind-protect
-	(progn
-	  (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
-	  (setq result (br-feature-def-file feature-tag-regexp))
-	  (if result (cons (br-feature-current) result)))
-      (set-buffer obuf))))
 
 ;;; ************************************************************************
 ;;; Private variables

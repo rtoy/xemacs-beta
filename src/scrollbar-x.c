@@ -41,14 +41,12 @@ static void x_update_vertical_scrollbar_callback (Widget widget, LWLIB_ID id,
 static void x_update_horizontal_scrollbar_callback (Widget widget, LWLIB_ID id,
 						    XtPointer client_data);
 
-/* Used to prevent changing the size of the slider while drag
+/* Used to prevent changing the size of the thumb while drag
    scrolling, under Motif.  This is necessary because the Motif
-   scrollbar is incredibly stupid about updating the slider and causes
+   scrollbar is incredibly stupid about updating the thumb and causes
    lots of flicker if it is done too often.  */
-static int inhibit_slider_size_change;
-int stupid_vertical_scrollbar_drag_hack;
+static int inhibit_thumb_size_change;
 
-/* Doesn't work with athena */
 #if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID)
 static int vertical_drag_in_progress;
 #endif
@@ -56,11 +54,10 @@ static int vertical_drag_in_progress;
 
 /* A device method. */
 static int
-x_inhibit_scrollbar_slider_size_change (void)
+x_inhibit_scrollbar_thumb_size_change (void)
 {
-  /* Doesn't work with Athena */
 #if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID)
-  return inhibit_slider_size_change;
+  return inhibit_thumb_size_change;
 #else
   return 0;
 #endif
@@ -106,8 +103,7 @@ x_create_scrollbar_instance (struct frame *f, int vertical,
   SCROLLBAR_X_ID (instance) = new_lwlib_id ();
   sprintf (buffer, "scrollbar_%d", SCROLLBAR_X_ID (instance));
   SCROLLBAR_X_NAME (instance) = xstrdup (buffer);
-#if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID) || \
-    defined (LWLIB_SCROLLBARS_ATHENA3D)
+#if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID)
   SCROLLBAR_X_VDRAG_ORIG_VALUE (instance) = -1;
 #endif
 
@@ -129,11 +125,11 @@ x_create_scrollbar_instance (struct frame *f, int vertical,
     }
 }
 
-#define UPDATE_DATA_FIELD(field)				\
-  if (new_##field >= 0 &&					\
-      SCROLLBAR_X_POS_DATA (inst).field != new_##field) {	\
-    SCROLLBAR_X_POS_DATA (inst).field = new_##field;		\
-    inst->scrollbar_instance_changed = 1;			\
+#define UPDATE_DATA_FIELD(field)					\
+  if (new_##field >= 0 &&						\
+      SCROLLBAR_X_POS_DATA (inst).field != new_##field) {		\
+    SCROLLBAR_X_POS_DATA (inst).field = new_##field;			\
+    inst->scrollbar_instance_changed = 1;				\
   }
 
 /* A device method. */
@@ -161,7 +157,6 @@ x_update_scrollbar_instance_values (struct window *w,
   UPDATE_DATA_FIELD (scrollbar_x);
   UPDATE_DATA_FIELD (scrollbar_y);
 
-  /* This doesn't work with Athena, why? */
 #if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID)
   if (w && !vertical_drag_in_progress)
     {
@@ -249,7 +244,7 @@ x_update_scrollbar_instance_status (struct window *w, int active, int size,
 				    struct scrollbar_instance *instance)
 {
   struct frame *f = XFRAME (w->frame);
-  Boolean managed = XtIsManaged (SCROLLBAR_X_WIDGET (instance));
+  char managed = XtIsManaged (SCROLLBAR_X_WIDGET (instance));
 
   if (active && size)
     {
@@ -287,11 +282,6 @@ x_update_scrollbar_instance_status (struct window *w, int active, int size,
     }
   else if (managed)
     {
-#if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID)
-      /* This isn't needed with Athena Scrollbars.  It might not be needed */
-      /* with Motif scrollbars (it is apparently needed with Lesstif). */
-      XtUngrabKeyboard (SCROLLBAR_X_WIDGET (instance), CurrentTime);
-#endif
       XtUnmanageChild (SCROLLBAR_X_WIDGET (instance));
     }
 }
@@ -542,8 +532,7 @@ x_update_vertical_scrollbar_callback (Widget widget, LWLIB_ID id,
          Depending on where you click the size of the page varies.
          Motif always does a standard Emacs page. */
     case SCROLLBAR_PAGE_UP:
-#if !defined (LWLIB_SCROLLBARS_MOTIF) && !defined (LWLIB_SCROLLBARS_LUCID) && \
-    !defined (LWLIB_SCROLLBARS_ATHENA3D)
+#if !defined (LWLIB_SCROLLBARS_MOTIF) && !defined (LWLIB_SCROLLBARS_LUCID)
       {
 	double tmp = ((double) data->slider_value /
 		      (double) SCROLLBAR_X_POS_DATA(instance).scrollbar_height);
@@ -562,8 +551,7 @@ x_update_vertical_scrollbar_callback (Widget widget, LWLIB_ID id,
       break;
 
     case SCROLLBAR_PAGE_DOWN:
-#if !defined (LWLIB_SCROLLBARS_MOTIF) && !defined (LWLIB_SCROLLBARS_LUCID) && \
-    !defined (LWLIB_SCROLLBARS_ATHENA3D)
+#if !defined (LWLIB_SCROLLBARS_MOTIF) && !defined (LWLIB_SCROLLBARS_LUCID)
       {
 	double tmp = ((double) data->slider_value /
 		      (double) SCROLLBAR_X_POS_DATA(instance).scrollbar_height);
@@ -596,14 +584,12 @@ x_update_vertical_scrollbar_callback (Widget widget, LWLIB_ID id,
 
 
     case SCROLLBAR_CHANGE:
-      inhibit_slider_size_change = 0;
+      inhibit_thumb_size_change = 0;
 #if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID)
       vertical_drag_in_progress = 0;
       SCROLLBAR_X_VDRAG_ORIG_VALUE (instance) = data->slider_value;
       SCROLLBAR_X_VDRAG_ORIG_WINDOW_START (instance) =
 	XINT (Fwindow_start (win));
-#else
-      stupid_vertical_scrollbar_drag_hack = 0;
 #endif
       break;
 
@@ -611,7 +597,7 @@ x_update_vertical_scrollbar_callback (Widget widget, LWLIB_ID id,
       {
 	int value;
 
-	inhibit_slider_size_change = 1;
+	inhibit_thumb_size_change = 1;
 
 #if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID)
 	/* Doing drags with Motif-like scrollbars is a mess, since we
@@ -681,7 +667,6 @@ x_update_vertical_scrollbar_callback (Widget widget, LWLIB_ID id,
 	      }
 	  }
 #else
-	stupid_vertical_scrollbar_drag_hack = 0;
 	value = data->slider_value;
 #endif
 
@@ -747,13 +732,13 @@ x_update_horizontal_scrollbar_callback (Widget widget, LWLIB_ID id,
       signal_special_Xt_user_event (win, Qscrollbar_to_right, win);
       break;
     case SCROLLBAR_CHANGE:
-      inhibit_slider_size_change = 0;
+      inhibit_thumb_size_change = 0;
       break;
     case SCROLLBAR_DRAG:
-      inhibit_slider_size_change = 1;
+      inhibit_thumb_size_change = 1;
       /* #### Fix the damn toolkit code so they all work the same way.
          Lucid is the one mostly wrong.*/
-#if defined (LWLIB_SCROLLBARS_LUCID) || defined (LWLIB_SCROLLBARS_ATHENA3D)
+#if defined (LWLIB_SCROLLBARS_LUCID)
       signal_special_Xt_user_event (win, Qscrollbar_horizontal_drag,
 				    (Fcons
 				     (win, make_int (data->slider_value))));
@@ -839,7 +824,7 @@ x_compute_scrollbar_instance_usage (struct device *d,
 void
 console_type_create_scrollbar_x (void)
 {
-  CONSOLE_HAS_METHOD (x, inhibit_scrollbar_slider_size_change);
+  CONSOLE_HAS_METHOD (x, inhibit_scrollbar_thumb_size_change);
   CONSOLE_HAS_METHOD (x, free_scrollbar_instance);
   CONSOLE_HAS_METHOD (x, release_scrollbar_instance);
   CONSOLE_HAS_METHOD (x, create_scrollbar_instance);
@@ -863,5 +848,4 @@ vars_of_scrollbar_x (void)
 #elif defined (LWLIB_SCROLLBARS_ATHENA)
   Fprovide (intern ("athena-scrollbars"));
 #endif
-  stupid_vertical_scrollbar_drag_hack = 1;
 }

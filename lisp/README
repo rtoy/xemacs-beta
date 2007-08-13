@@ -80,24 +80,18 @@ These are the main subdirectories:
 
 Some packages are fairly large; those have been given their own	directories:
 
-	auctex		A package for editing TeX documents.
-
 	bytecomp	The XEmacs-lisp compiler.
 
 	calendar	A calendar and appointment manager.
 
-	cl		Common Lisp compatibility code.
-
 	comint		General code for interacting with inferior processes,
 			like shell buffers and lisp interpreters.
 
-	custom		User environment customization code.
+	dired		The directory editor.
 
 	edebug		A source-level debugger for Elisp.
 
 	ediff		A comprehensive visual interface to diff and patch.
-
-	efs		The directory editor, remote FTP frontend.
 
 	electric	The "electric" commands; these implement temporary
 			windows for help, list-buffers, etc.
@@ -109,7 +103,7 @@ Some packages are fairly large; those have been given their own	directories:
 	eterm		A merge of the comint shell mode with an
 			ANSI-compatible terminal-emulator.
 
-	gnus		A network news and mail reader.
+	gnus		An NNTP-based newsreader; version 3.14.
 
 	hm--html-menus	Menu interface to html-mode.
 
@@ -118,39 +112,22 @@ Some packages are fairly large; those have been given their own	directories:
 	ilisp		A comint-based package for interacting with inferior
 			lisp processes.
 
-	iso		ISO Latin language support.
-
-	mailcrypt	Package for dealing with PGP encrypted messages.
-
-	mel		MIME encoding library (part of the Tools for MIME).
-
 	mh-e		An interface to the MH-E mail handling system.
-
-	mu		Message Utilities library (part of the Tools for
-			MIME).
-
-	ns		NeXTStep support.
 
 	oobr		An Object-Oriented class browser.
 
 	pcl-cvs		An interface to the Concurrent Version System.
 
-	psgml		General purpose SGML editing support with extra
-			support for editing HTML.
-
 	rmail		A BABYL-format mail reader.
 
 	sunpro		Additional code for interfacing with SunPro products.
-
-	tl		Tiny Library (Part of the Tools for MIME).
-
-	tm		Tools for MIME.  MIME support for emacs lisp based
-			news and mail readers.
 
 	tooltalk	An inteface to the ToolTalk communication protocol.
 
 	viper		A full-featured VI emulator.
 
 	vm		View Mail, an UNIX-format alternative to RMAIL.
+
+	url		A Uniform Resource Locator retrieval tool.
 
 	w3		A World Wide Web interface.

@@ -7,7 +7,7 @@
 # variables VERSION, EMACS, DATADIR and comment out the Emacs-specific
 # versions.
 
-VERSION = 19.34
+VERSION = 19.31
 EMACS = emacs-$(VERSION)
 #VERSION = 19.14
 #EMACS = xemacs-$(VERSION)
@@ -26,9 +26,12 @@ INSTALL = install
 
 # --------- ONLY AUTHORIZED PERSONNEL BEYOND THIS POINT!!! ------------
 VIPER = viper.el viper-util.el viper-mous.el viper-ex.el \
-        viper-macs.el viper-keym.el viper-init.el
+        viper-macs.el viper-keym.el
 VIPERelc = viper-util.elc viper-mous.elc viper-ex.elc viper-macs.elc \
-	   viper-keym.elc viper.elc viper-init.elc
+	   viper-keym.elc viper.elc
+
+PRELOADS = -l viper-util.el -l viper-ex.el -l viper-mous.el \
+	   -l viper-macs.el -l viper-keym.el -l viper.el
 
 all: dvi info hello elc goodbye
 
@@ -89,33 +92,29 @@ viperCard.dvi: viperCard.tex
 	@echo ""
 	$(TeX) viperCard.tex
 
-viper-init.elc: viper-init.el
-	@echo ""
-	$(EMACS) -batch -f batch-byte-compile viper-init.el
-
-viper-util.elc: viper-util.el viper-init.el
+viper-util.elc: viper-util.el
 	@echo ""
 	$(EMACS) -batch -f batch-byte-compile viper-util.el
 
-viper-ex.elc: viper-ex.el viper-util.el viper-init.el
+viper-ex.elc: viper-ex.el viper-util.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile viper-ex.el
+	$(EMACS) -batch $(PRELOADS) -f batch-byte-compile viper-ex.el
 
-viper-mous.elc: viper-mous.el viper-util.el viper-init.el
+viper-mous.elc: viper-mous.el viper-util.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile viper-mous.el
+	$(EMACS) -batch $(PRELOADS) -f batch-byte-compile viper-mous.el
 
-viper-macs.elc: viper-macs.el viper-util.el viper-init.el
+viper-macs.elc: viper-macs.el viper-util.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile viper-macs.el
+	$(EMACS) -batch $(PRELOADS) -f batch-byte-compile viper-macs.el
 
-viper-keym.elc: viper-keym.el viper-util.el viper-init.el
+viper-keym.elc: viper-keym.el viper-util.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile viper-keym.el
+	$(EMACS) -batch $(PRELOADS) -f batch-byte-compile viper-keym.el
 
-viper.elc: viper.el viper-util.el viper-init.el
+viper.elc: viper.el viper-util.el
 	@echo ""
-	$(EMACS) -batch -f batch-byte-compile viper.el
+	$(EMACS) -batch $(PRELOADS) -f batch-byte-compile viper.el
 
 
 dvi: viper.dvi viperCard.dvi
@@ -125,7 +124,7 @@ info: viper.info
 install: all
 	$(INSTALL) -m444 $(VIPER) $(LISPDIR)
 	$(INSTALL) -m644 viper*.elc $(LISPDIR)
-	$(INSTALL) -m444 viper viper-? $(INFODIR)
+	$(INSTALL) -m444 viper.info* $(INFODIR)
 	$(INSTALL) -m644 viper.dvi viperCard.dvi $(ETCDIR)
 	@echo ""
 	@echo "Please move viper.texi and viper-cmd.texi to"
@@ -136,7 +135,7 @@ clean:
 	rm -f *.elc *~ core
 
 distclean: clean
- 
+
 realclean: clean
 	rm -f *.dvi viper.info*
 	rm -f viper.aux viper.cp viper.cps viper.fn viper.fns viper.ky \

@@ -19,8 +19,9 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Commentary:
 
@@ -80,11 +81,6 @@
   "Search backward the previous occurrence of the text of the selection."
   (interactive)
   (ow-find t))
-
-(defun x-initialize-compose ()
-  "Enable compose processing"
-  (when (x-keysym-on-keyboard-p "Multi_key")
-    (require 'x-compose)))
 
 ;;; Load X-server specific code.
 ;;; Specifically, load some code to repair the grievous damage that MIT and
@@ -154,19 +150,13 @@
     ;; any toolbar-related color resources.
     (if (featurep 'toolbar)
         (init-x-toolbar))
+    (if (featurep 'mule)
+        (init-mule-x-win))
     ;; these are only ever called if zmacs-regions is true.
-    (add-hook 'zmacs-deactivate-region-hook 
-	      (lambda () 
-		(if (console-on-window-system-p) 
-		    (x-disown-selection))))
-    (add-hook 'zmacs-activate-region-hook
-	      (lambda () 
-		(if (console-on-window-system-p) 
-		    (x-activate-region-as-selection))))
-    (add-hook 'zmacs-update-region-hook
-	      (lambda ()
-		  (if (console-on-window-system-p)
-		      (x-activate-region-as-selection))))
+    (add-hook 'zmacs-deactivate-region-hook 'x-disown-selection)
+    (add-hook 'zmacs-activate-region-hook   'x-activate-region-as-selection)
+    (add-hook 'zmacs-update-region-hook     'x-activate-region-as-selection)
+
     ;; Motif-ish bindings
     ;; The following two were generally unliked.
     ;;(define-key global-map '(shift delete)   'x-kill-primary-selection)
@@ -186,17 +176,16 @@
     ;; site-start-file or .emacs file, so sites and users have a
     ;; chance to override it.
     (add-hook 'before-init-hook 'x-initialize-keyboard)
-    (add-hook 'before-init-hook 'x-initialize-compose)
 
     (setq post-x-win-initted t)))
 
-(defun make-frame-on-display (display &optional parms)
+(defun make-frame-on-display (display &optional props)
   "Create a frame on the X display named DISPLAY.
 DISPLAY should be a standard display string such as \"unix:0\",
 or nil for the display specified on the command line or in the
 DISPLAY environment variable.
 
-PROPS should be an plist of properties, as in the call to `make-frame'.
+PROPS should be a plist of properties, as in the call to `make-frame'.
 
 This function opens a connection to the display or reuses an existing
 connection.
@@ -204,6 +193,6 @@ connection.
 This function is a trivial wrapper around `make-frame-on-device'."
   (interactive "sMake frame on display: ")
   (if (equal display "") (setq display nil))
-  (make-frame-on-device 'x display parms))
+  (make-frame-on-device 'x display props))
 
 ;;; x-init.el ends here

@@ -242,7 +242,7 @@ Though the keyword/value syntax is supported for dialog boxes just as in
 popup menus, the only keyword which is both meaningful and fully implemented
 for dialog box buttons is `:active'.
 */
-       (dbox_desc))
+     (dbox_desc))
 {
   int dbox_id;
   struct frame *f = selected_frame ();

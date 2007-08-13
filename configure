@@ -62,7 +62,7 @@ progname="`echo $0 | sed 's:^\./\./:\./:'`"
 #									   #
 ############################################################################
 
-run_in_place='no'
+#run_in_place='no'
 prefix='/usr/local'
 exec_prefix='${prefix}'
 bindir='${exec_prefix}/bin'
@@ -100,7 +100,7 @@ energize_version='no'
 native_sound_lib=''
 # make normal error-checking be the default in alpha and beta versions, so
 # that bugs get noticed.  Change this for released versions.
-error_check_default='no'
+error_check_default='yes'
 error_check_extents=$error_check_default
 error_check_typecheck=$error_check_default
 error_check_bufpos=$error_check_default
@@ -134,9 +134,7 @@ use_union_type='no'
 # On Sun systems, people sometimes set up the variable CPP
 # with a value that is a directory, not an executable at all.
 # Detect that case, and ignore that value.
-if [ "x$CPP" != x ] && [ -d "$CPP" ] ; then
-  CPP=
-fi
+test -n "$CPP" -a -d "$CPP" && CPP=
 
 ############################################################################
 #									   #
@@ -192,7 +190,6 @@ Compiler options:
 Installation options:
   
 --prefix=DIR		Install files below DIR.  Defaults to \`${prefix}'.
---run-in-place          Use the source tree for installation.
 
 
 Window-system options:
@@ -201,8 +198,7 @@ Window-system options:
 --with-x=no		Don't support X.
 --x-includes=DIR 	Search for X header files in DIR.
 --x-libraries=DIR	Search for X libraries in DIR.
---with-ns		Support NeXTstep windows (Doesn't work, option
-			removed in 20.3)
+--with-ns		Support NeXTstep windows (not yet implemented).
 --with-menubars=TYPE	Use TYPE menubars (lucid, motif, or no).  The Lucid
 			widgets emulate Motif (mostly) but are faster.
 			*WARNING*  The Motif menubar is currently broken.
@@ -260,18 +256,35 @@ Additional features:
 			with --with-sound=both because both sound libraries
 			are called libaudio.
 --with-epoch		Compile with additional Epoch compatibility.
-			This doesn't work yet.
 --with-mocklisp		Compile with Mocklisp support.  Don't do this
 			unless you have a Mocklisp program that you need
 			to run.
 --usage-tracking	Enable some Sun-internal code.  If you don't
 			know what this is, you don't want it.
 
+Internationalization options:
+
+--with-mule		Compile with Mule (MUlti-Lingual Emacs) support,
+			needed to suport non-Latin-1 (including Asian) languages.
+--with-xim=xlib		Compile with support for X input methods,
+--with-xim=motif (*)	Used in conjunction with Mule support.
+			Use either raw Xlib to provide XIM support, or
+			the Motif XmIm* routines (when available).
+			If the XmIm* routines are autodetected,
+			then the default is --with-xim=motif, else --with-xim=no.
+--with-canna		Compile with support for Canna (an input method
+			used in conjunction with Mule support).
+--with-wnn		Compile with support for WNN (an input method
+			used in conjunction with Mule support).
+			This doesn't work yet.
+--with-i18n3		Compile with I18N level 3 (support for message
+			translation).  This doesn't currently work.
+
 
 Debugging options:
 
 --debug			Compile with support for debugging XEmacs.
-			(Causes code-size increase and little loss of speed.)
+			(Causes code-size increase but no loss of speed.)
 --error-checking=TYPE[,TYPE]...
 			Compile with internal error-checking added.
 			Causes noticeable loss of speed.  Valid types
@@ -303,12 +316,10 @@ You may also specify any of the \`path' variables found in
 Makefile.in, including --bindir, --libdir, --lispdir, --datadir, and
 so on.  Note that we recommend against explicitly setting any of these
 variables.  See the INSTALL file for a complete list plus the reasons
-we advise not changing them.  Specifying a \'path' variable will override
-the --run-in-place value.
+we advise not changing them.
 
 If successful, ${progname} leaves its status in config.status.  If
 unsuccessful after disturbing the status quo, it removes config.status."
-
 
 ############################################################################
 #									   #
@@ -333,7 +344,7 @@ done
 ### However, it also turns out that many shells cannot expand ${10} at all.
 ### So using an index variable doesn't work either.  It is possible to use
 ### some shell magic to make 'set x "$arguments"; shift' work portably.
-while [ $# != 0 ]; do
+while test $# != 0; do
   arg="$1"; shift
   case "${arg}" in
 
@@ -370,8 +381,46 @@ while [ $# != 0 ]; do
       ## Process the option.
       case "${opt}" in
 
-        ## Has the user specified which window systems they want to support?
-        "with_x" | "with_x11" )
+      ## Process (many) boolean options
+	run_in_place	| \
+	with_x		| \
+	with_x11	| \
+	with_gcc	| \
+	with_lcc	| \
+	with_gnu_make	| \
+	with_epoch	| \
+	dynamic		| \
+	with_term	| \
+	with_cde	| \
+	with_offix	| \
+	with_xpm	| \
+	with_gif	| \
+	with_jpeg	| \
+	with_tiff	| \
+	with_socks	| \
+	with_xface	| \
+	with_xmu	| \
+	quantify	| \
+	with_ns		| \
+	with_toolbars	| \
+	with_tty	| \
+	with_i18n3	| \
+	with_mule	| \
+	with_canna	| \
+	with_wnn	| \
+	with_mocklisp	| \
+	with_energize	| \
+	with_sparcworks | \
+	with_tooltalk   | \
+	external_widget | \
+	extra_verbose   | \
+	const_is_losing | \
+	usage_tracking  | \
+	use_union_type  | \
+	debug		| \
+	use_assertions	| \
+	memory_usage_stats | \
+	no_doc_file )	
 	  ## Make sure the value given was either "yes" or "no".
 	  case "${val}" in
 	    y | ye | yes )	val=yes ;;
@@ -380,39 +429,25 @@ while [ $# != 0 ]; do
 	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
 Set it to either \`yes' or \`no'."
 	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
+	      exit 1 ;;
 	  esac
-	  eval "with_x11=\"${val}\""
-        ;;
+          eval "${opt}=\"${val}\"" ;;
 
-	## Has the user specified whether or not they want GCC or LCC?
-	"with_gcc" | "with_lcc" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-	  if [ "${with_gcc}" = "yes" ] && [ "${with_lcc}" = "yes" ] ; then
-	    (echo "${progname}: only one of --with-gcc and --with-lcc may be specified."
-	     echo "${short_usage}") >&2
-	    exit 1
-	  fi
-        ;;
-
-        ## Has the user specified a compiler to use?
-	"compiler" )
+    
+	## Options that take a user-supplied value, as in --puresize=8000000
+	srcdir		| \
+	compiler	| \
+	puresize	| \
+	native_sound_lib	| \
+	x_includes	| \
+	x_libraries	| \
+	site_includes	| \
+	site_libraries	| \
+	site_runtime_libraries  )
 	  ## If the value was omitted, get it from the next argument.
-	  if [ "${valomitted}" = "yes" ]; then
+	  if test "${valomitted}" = "yes" ; then
 	    ## Get the next argument from the argument list, if there is one.
-            if [ $# = 0 ]; then
+            if test $# = 0 ; then
 	      (echo "${progname}: You must give a value for the \`--${optname}' option, as in
     \`--${optname}=FOO'."
 	       echo "${short_usage}") >&2
@@ -420,18 +455,20 @@ Set it to either \`yes' or \`no'."
 	    fi
 	    val="$1"; shift
 	  fi
-          compiler="${val}"
+          eval "${opt}=\"${val}\""
 	;;
 
-        ## Has the user specified special GNU Make support?
-	"with_gnu_make" )
-	  ## Make sure the value given was either "yes" or "no".
+	### Options that take "yes", "no", or "default" values
+	rel_alloc | \
+	use_system_malloc )
 	  case "${val}" in
 	    y | ye | yes )	val=yes ;;
 	    n | no )		val=no  ;;
+	    d | de | def | defa | defau | defaul | default )
+				val=default ;;
 	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
+	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value or \`default'.
+Set it to either \`yes', \`no', or \`default'."
 	       echo "${short_usage}") >&2
 	      exit 1
 	    ;;
@@ -439,60 +476,34 @@ Set it to either \`yes' or \`no'."
           eval "${opt}=\"${val}\""
         ;;
 
-	## This option will not force a rebuild of the DOC
-	## file each time that a source or Lisp file has changed.
-	## If you want the DOC file rebuilt, remove it.  A side
-	## effect of this is that you may get complaints about
-	## "doc lost for function foobar" or "strange doc for
-	## function foobar", but in general these should not cause
-	## problems.
-	"no_doc_file" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
-
-	# Enable use of the union type for Lisp_Objects.
-	# mly, eat your heart out ...
-	"use_union_type" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
-
-        ## Has the user specified a source directory?
-	"srcdir" )
-	  ## If the value was omitted, get it from the next argument.
-	  if [ "${valomitted}" = "yes" ]; then
-	    ## Get the next argument from the argument list, if there is one.
-            if [ $# = 0 ]; then
-	      (echo "${progname}: You must give a value for the \`--${optname}' option, as in
-    \`--${optname}=FOO'."
-	       echo "${short_usage}") >&2
+        ## Has the user requested database support?
+        "with_database" )
+	  if test "${val}" = "no"  ; then
+	    with_database_berkdb=no
+	    with_database_dbm=no
+	    with_database_gnudbm=no
+	  else
+            ## Make sure the value given was berkdb, dbm, gnudbm, or a list
+	    for x in `echo "${val}" | sed 's/,/ /'` ; do
+	      case "${x}" in
+                b | be | ber | berk | berkd | berkdb )  with_database_berkdb=yes ;;
+                d | db | dbm )				with_database_dbm=yes ;;
+		g | gn | gnu | gnud | gnudb | gnudbm )  with_database_gnudbm=yes ;;
+		* )
+                  (echo "${progname}: the \`--${optname}' option is supposed to be either \`no'
+  or a comma-separated list of one or more of \`berkdb', \`dbm', or \`gnudbm'."
+                   echo "${short_usage}") >&2
+                  exit 1
+                ;;
+              esac
+	    done
+	    if test "${with_database_dbm}" = "yes" -a "${with_database_gnudbm}" = "yes"
+	    then
+	      (echo "${progname}: only one of \`dbm' and \`gnudbm' should be specified.") >&2
 	      exit 1
 	    fi
-	    val="$1"; shift
 	  fi
-          srcdir="${val}"
-	;;
+        ;;
 
         ## Has the user requested sound support?
 	"with_sound" )
@@ -505,298 +516,46 @@ Set it to either \`yes' or \`no'."
 	    ne | net | neta | netau | netaud | netaudi | netaudio | nas )	val=nas  ;;
 	    b | bo | bot | both )		val=both;;
 	    * )
-	      (echo "${progname}: the \`--${optname}' option should have one of the values \`native', \`nas', \`both', or \`none'."
-	       echo "${short_usage}") >&2
+	      (echo "${progname}: the \`--${optname}' option should have one of the values:"
+		echo "\`native', \`nas', \`both', or \`none'."
+		echo ""
+		echo "${short_usage}") >&2
 	      exit 1
 	    ;;
 	  esac
           eval "${opt}=\"${val}\""
         ;;
 
-        ## Has the user specified a native sound library?
-	## (the reason for this flag is that, under Suns, both NAS sound
-	## and native sound call their library libaudio.a)
-	"native_sound_lib" )
-	  ## If the value was omitted, get it from the next argument.
-	  if [ "${valomitted}" = "yes" ]; then
-	    ## Get the next argument from the argument list, if there is one.
-            if [ $# = 0 ]; then
-	      (echo "${progname}: You must give a value for the \`--${optname}' option, as in
-    \`--${optname}=FOO'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    fi
-	    val="$1"; shift
-	  fi
-          native_sound_lib="${val}"
-	;;
-
-        ## Has the user requested extra Epoch compatibility?
-	"with_epoch" )
-	  ## Make sure the value given was either "yes" or "no".
+        ## Has the user requested XIM support?
+	"with_xim" )
+	  ## value can be xlib or motif
+	  ## as a backwards compatible synonym for native
 	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
+	    y | ye | yes )			val=yes   ;;
+	    n | no | non | none )		val=no    ;;
+	    x | xl | xli | xlib )		val=xlib  ;;
+	    m | mo | mot | moti | motif )	val=motif ;;
 	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
+	      (echo "${progname}: the \`--${optname}' option should have one of the values:"
+		echo "\`motif', \`xlib', \`yes', or \`no'."
+		echo ""
+		echo "${short_usage}") >&2
 	      exit 1
 	    ;;
 	  esac
           eval "${opt}=\"${val}\""
         ;;
 
-        ## Has the user specified a change to the default linking?
-	"dynamic" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
-
-        ## Has the user specified Quantify support?
-	"quantify" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
-
-        ## Has the user requested SOCKS support?
-	"with_socks" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
-
-        ## Has the user requested TERM support?
-	"with_term" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
-
-        ## Has the user requested CDE support?
-	"with_cde" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
-
-        ## Has the user requested OffiX support?
-	"with_offix" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
-
-        ## Has the user requested XPM support?
-	"with_xpm" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
-
-        ## Has the user requested XFACE support?
-	"with_xface" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
-
-        ## Has the user requested GIF support?
-	"with_gif" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
-
-        ## Has the user requested JPEG support?
-	"with_jpeg" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
-
-        ## Has the user requested database support?
-        "with_database" )
-	  if [ "${val}" = "no" ] ; then
-	    with_database_berkdb=no
-	    with_database_dbm=no
-	    with_database_gnudbm=no
-	  else
-            ## Make sure the value given was berkdb, dbm, gnudbm, or a list
-	    for x in `echo "${val}" | sed 's/,/ /'` ; do
-	      case "${x}" in
-                b | be | ber | berk | berkd | berkdb )
-		  with_database_berkdb=yes ;;
-                d | db | dbm )
-		  with_database_dbm=yes ;;
-		g | gn | gnu | gnud | gnudb | gnudbm )
-		  with_database_gnudbm=yes ;;
-		* )
-                  (echo "${progname}: the \`--${optname}' option is supposed to be either \`no'
-  or a comma-separated list of one or more of \`berkdb', \`dbm', or \`gnudbm'."
-                   echo "${short_usage}") >&2
-                  exit 1
-                ;;
-              esac
-	    done
-	    if [ "${with_database_dbm}" = "yes" ] && [ "${with_database_gnudbm}" = "yes" ]
-	    then
-	      (echo "${progname}: only one of \`dbm' and \`gnudbm' should be specified.") >&2
-	      exit 1
-	    fi
-	  fi
-        ;;
-    
         ## Has the user requested PNG support?
 	"with_png" )
 	  ## Make sure the value given was either "yes", "no", or "gnuz".
 	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
+	    y | ye | yes )	  val=yes  ;;
+	    n | no )		  val=no   ;;
 	    g | gn | gnu | gnuz ) val=gnuz ;;
 	    * )
 	      (echo "${progname}: the \`--${optname}' option is supposed to
   be either \`yes', \`no', or \`gnuz'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
-
-        ## Has the user requested TIFF support?
-	"with_tiff" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
-
-        ## Has the user requested NeXTstep support?
-	"with_ns" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
-
-        ## Has the user requested that assertions be used?
-	"use_assertions" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
 	       echo "${short_usage}") >&2
 	      exit 1
 	    ;;
@@ -833,17 +592,17 @@ Set it to either \`yes' or \`no'."
 	      
 	      * ) bogus_error_check=yes ;;
 	    esac
-	    if [ "$bogus_error_check" -o \
-	         \( -n "$new_default" -a -n "$echeck_notfirst" \) ]; then
+	    if test "$bogus_error_check" -o \
+	         \( -n "$new_default" -a -n "$echeck_notfirst" \) ; then
 		( echo "${progname}: Valid types for the \`--${optname}' option are:"
-		if [ $error_check_default = yes ]; then
+		if test $error_check_default = yes ; then
 		  echo "\`all' (default), \`none', \`noextents', \`notypecheck', \`nobufpos', \`nogc', and \`nomalloc'."
 		else
 		  echo "\`all', \`none' (default), \`extents', \`typecheck', \`bufpos', \`gc', and \`malloc'."
 		fi
 		echo "${short_usage}" ) >&2
 		exit 1
-	    elif [ "$new_default" ]; then
+	    elif test "$new_default" ; then
 		error_check_extents=$new_default
 		error_check_typecheck=$new_default
 		error_check_bufpos=$new_default
@@ -855,209 +614,18 @@ Set it to either \`yes' or \`no'."
 	  done
 	;;
 
-        ## Has the user requested external widget support?
-	"external_widget" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
-
-        ## Has the user requested that const be used?
-	"const_is_losing" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
-
-        ## Has the user mentioned that they don't have Xmu?
-	"with_xmu" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
-
-        ## Has the user specified a value for RAW_PURESIZE?
-	"puresize" )
-	  ## If the value was omitted, get it from the next argument.
-	  if [ "${valomitted}" = "yes" ]; then
-	    ## Get the next argument from the argument list, if there is one.
-            if [ $# = 0 ]; then
-	      (echo "${progname}: You must give a value for the \`--${optname}' option, as in
-    \`--${optname}=FOO'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    fi
-	    val="$1"; shift
-	  fi
-          puresize="${val}"
-	;;
-
-        ## Has the user specified explicit instructions for rel_alloc?
-	"rel_alloc" )
-	  ## Make sure the value given was either "yes", "no", or "default".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    d | de | def | defa | defau | defaul | default )
-				val=default ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value or \`default'.
-Set it to either \`yes', \`no', or \`default'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
-
-        ## Has the user specified explicit instructions for system_malloc?
-	"use_system_malloc" )
-	  ## Make sure the value given was either "yes", "no", or "default".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    d | de | def | defa | defau | defaul | default )
-				val=default ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value or \`default'.
-Set it to either \`yes', \`no', or \`default'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
-
 	## Has the user tried to tell us where the X files are?
 	## I think these are dopey, but no less than three alpha
 	## testers, at large sites, have said they have their X files
 	## installed in odd places.
-	"x_includes" )
-	  ## If the value was omitted, get it from the next argument.
-	  if [ "${valomitted}" = "yes" ]; then
-	    ## Get the next argument from the argument list, if there is one.
-            if [ $# = 0 ]; then
-	      (echo "${progname}: You must give a value for the \`--${optname}' option, as in
-    \`--${optname}=/usr/local/X11/include'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    fi
-            val="$1"; shift
-	  fi
-	  x_includes="${val}"
-        ;;
-	"x_libraries" )
-	  ## If the value was omitted, get it from the next argument.
-	  if [ "${valomitted}" = "yes" ]; then
-	    ## Get the next argument from the argument list, if there is one.
-            if [ $# = 0 ]; then
-	      (echo "${progname}: You must give a value for the \`--${optname}' option, as in
-    \`--${optname}=/usr/local/X11/lib'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    fi
-            val="$1"; shift
-	  fi
-	  x_libraries="${val}"
-        ;;
-
-	"site_includes" )
-	  ## If the value was omitted, get it from the next argument.
-	  if [ "${valomitted}" = "yes" ]; then
-	    ## Get the next argument from the argument list, if there is one.
-            if [ $# = 0 ]; then
-	      (echo "${progname}: You must give a value for the \`--${optname}' option, as in
-    \`--${optname}=/usr/local/X11/include'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    fi
-            val="$1"; shift
-	  fi
-	  site_includes="${val}"
-	  ;;
-	
-	"site_libraries" )
-	  ## If the value was omitted, get it from the next argument.
-	  if [ "${valomitted}" = "yes" ]; then
-	    ## Get the next argument from the argument list, if there is one.
-            if [ $# = 0 ]; then
-	      (echo "${progname}: You must give a value for the \`--${optname}' option, as in
-    \`--${optname}=/usr/local/X11/lib'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    fi
-            val="$1"; shift
-	  fi
-	  site_libraries="${val}"
-        ;;
-
-	"site_runtime_libraries" )
-	  ## If the value was omitted, get it from the next argument.
-	  if [ "${valomitted}" = "yes" ]; then
-	    ## Get the next argument from the argument list, if there is one.
-            if [ $# = 0 ]; then
-	      (echo "${progname}: You must give a value for the \`--${optname}' option, as in
-    \`--${optname}=/usr/local/X11/lib'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    fi
-            val="$1"; shift
-	  fi
-	  site_runtime_libraries="${val}"
-        ;;
-
-        ## Has the user specified the developer configuration?
-        ## Note that the user still has the option of explicitly setting 
-        ## a path option.
-	"run_in_place" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
 
 	## Has the user specified one of the path options?
 	prefix | exec_prefix | bindir | datadir | statedir | libdir | \
 	mandir | infodir | lispdir | etcdir | lockdir | archlibdir | \
 	sitelispdir | docdir )
 	   ## If the value was omitted, get it from the next argument.
-	   if [ "${valomitted}" = "yes" ]; then
-	      if [ $# = 0 ]; then
+	   if test "${valomitted}" = "yes" ; then
+	      if test $# = 0 ; then
 		 (echo \
 "$progname: You must give a value for the \`--${optname}' option,";
 		  echo \
@@ -1073,33 +641,25 @@ Set it to either \`yes' or \`no'."
            ## of archlibdir.  Changing datadir will change the default value
            ## of etcdir and lispdir.  Changing statedir will change the
            ## default value of lockdir.
-           if [ "${opt}" = "exec_prefix" ]; then
-              archlibdir_user_defined='yes'
-           elif [ "${opt}" = "libdir" ]; then
-              archlibdir_user_defined='yes'
-           elif [ "${opt}" = "archlibdir" ]; then
-              archlibdir_user_defined='yes'
-           elif [ "${opt}" = "lispdir" ]; then
-              lispdir_user_defined='yes'
-           elif [ "${opt}" = "etcdir" ]; then
-              etcdir_user_defined='yes'
-           elif [ "${opt}" = "datadir" ]; then
-              lispdir_user_defined='yes'
-              etcdir_user_defined='yes'
-           elif [ "${opt}" = "statedir" ]; then
-              lockdir_user_defined='yes'
-           elif [ "${opt}" = "lockdir" ]; then
-              lockdir_user_defined='yes'
-           elif [ "${opt}" = "infodir" ]; then
-              infodir_user_defined='yes'
+           if   test "${opt}" = exec_prefix; then archlibdir_user_defined=yes
+           elif test "${opt}" = libdir     ; then archlibdir_user_defined=yes
+           elif test "${opt}" = archlibdir ; then archlibdir_user_defined=yes
+           elif test "${opt}" = lispdir    ; then lispdir_user_defined=yes
+           elif test "${opt}" = etcdir     ; then etcdir_user_defined=yes
+           elif test "${opt}" = datadir    ; then
+              lispdir_user_defined=yes
+              etcdir_user_defined=yes
+           elif test "${opt}" = statedir   ; then lockdir_user_defined=yes
+           elif test "${opt}" = lockdir    ; then lockdir_user_defined=yes
+           elif test "${opt}" = infodir    ; then infodir_user_defined=yes
            fi
 	;;
 
 	## Has the user specified values to override CFLAGS?
 	cflags )
 	   ## If the value was omitted, get it from the next argument.
-	   if [ "${valomitted}" = "yes" ]; then
-	      if [ $# = 0 ]; then
+	   if test "${valomitted}" = "yes" ; then
+	      if test $# = 0 ; then
 		 (echo \
 "$progname: You must give a value for the \`--${optname}' option,";
 		  echo \
@@ -1118,35 +678,15 @@ Set it to either \`yes' or \`no'."
 	  verbose=yes
 	;;
 
-        ## Does the user want to see the compiler output for feature tests?
-	"extra_verbose" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-	## --extra-verbose implies --verbose
-	verbose=yes
-        ;;
-
 	## --no-create added by autoconf for use by config.status
 	"no_create" )
 	;;
 
 	## Has the user asked for some help?
 	"usage" | "help" )
-	  if [ "x$PAGER" = x ]
-	  then
-	    echo "${short_usage}" | more
-	  else
-	    echo "${short_usage}" | $PAGER
+	  if test -z "$PAGER"
+	  then echo "${short_usage}" | more
+	  else echo "${short_usage}" | $PAGER
 	  fi
 	  exit
 	;;
@@ -1161,175 +701,19 @@ Set it to either \`yes' or \`no'."
 	    a | at | ath | athe | athen | athena )	val=athena ;;
 	    n | no | non | none )			val=no ;;
 	    * )
-	      (echo "${progname}: the \`--${optname}' option should have one of the values \`lucid', \`motif', \`athena', or \`no'."
-	       echo "${short_usage}") >&2
+	      (echo "${progname}: the \`--${optname}' option should have one of the values:"
+		echo "\`lucid', \`motif', \`athena', or \`no'."
+		echo ""
+		echo "${short_usage}") >&2
 	      exit 1
 	    ;;
 	  esac
 	  eval "${opt}=\"${val}\""
 	;;
 
-	## Has the user disabled toolbar support?
-	"with_toolbars" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
-
-	## Has the user disabled TTY support?
-	"with_tty" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
-
-	## Has the user specified whether or not they want to use ToolTalk?
-	"with_tooltalk" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
-
-	## Has the user specified whether or not they want Mocklisp support?
-	"with_mocklisp" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
-
-	## Has the user specified whether or not they want to use SparcWorks?
-	"with_sparcworks" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-	  if [ "${with_sparcworks}" = "yes" ]; then
-            with_tooltalk='yes'
-	  fi
-        ;;
-
-	## Does the user want usage tracking?
-	"usage_tracking" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
-
-	## Does the user want additional debugging capability?
-	"debug" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-          if [ "${debug}" = "yes" ]; then
-            use_assertions='yes'
-	    memory_usage_stats='yes'
-          fi
-        ;;
-
-	## Does the user want code for memory usage stats?
-	"memory_usage_stats" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-        ;;
-
-	## Has the user specified whether or not they want to use Energize?
-	"with_energize" )
-	  ## Make sure the value given was either "yes" or "no".
-	  case "${val}" in
-	    y | ye | yes )	val=yes ;;
-	    n | no )		val=no  ;;
-	    * )
-	      (echo "${progname}: the \`--${optname}' option is supposed to have a boolean value.
-Set it to either \`yes' or \`no'."
-	       echo "${short_usage}") >&2
-	      exit 1
-	    ;;
-	  esac
-          eval "${opt}=\"${val}\""
-	  if [ "${with_energize}" = "yes" ]; then
-	    with_menubars='lucid'
-	    with_scrollbars='motif'
-	    with_dialogs='motif'
-	    with_tooltalk='yes'
-	    internal_makefile_list="$internal_makefile_list lwlib/energize/Makefile.in"
-	  fi
-        ;;
-
         ## Fail on unrecognized arguments.
 	* )
-	  (echo "${progname}: Error: unrecognized option ${arg}"
+	  (echo "${progname}: Error: unrecognized option: ${arg}"
 	   echo ""
            echo "${short_usage}") >& 2
 	  exit 1
@@ -1356,7 +740,41 @@ done
 ### Get the arguments back.  See the diatribe on Shell Magic above.
 eval set x "$quoted_arguments"; shift
 
-if [ "${configuration}" = "" ]; then
+### Argument interdependencies
+if test "${with_energize}" = "yes" ; then
+  with_menubars="lucid"
+  with_scrollbars="motif"
+  with_dialogs="motif"
+  with_tooltalk="yes"
+  internal_makefile_list="$internal_makefile_list lwlib/energize/Makefile.in"
+fi
+
+### --extra-verbose implies --verbose
+test "${extra_verbose}" = yes && verbose=yes
+
+### Sparcworks requires tooltalk
+test "${with_sparcworks}" = yes && with_tooltalk=yes
+
+### debug implies other options
+test "${debug}" = "yes" && use_assertions=yes memory_usage_stats=yes
+
+### with_x is a synonym for with_x11
+test -n "${with_x}" && with_x11="${with_x}"
+
+### Can't specify 2 compilers
+if test "${with_gcc}" = "yes" -a "${with_lcc}" = "yes"; then
+  (echo "${progname}: only one of --with-gcc and --with-lcc may be specified."
+   echo "${short_usage}") >&2
+  exit 1
+fi
+
+### Ignore useless run-in-place flag
+if test "${run_in_place}" = "yes"; then
+   echo "configure: warning: The --run-in-place option is ignored because it is unnecessary." >&2 
+fi
+
+###########################################################################
+if test "${configuration}" = "" ; then
   echo '- You did not tell me what kind of host system you want to configure.
 - I will attempt to guess the kind of system this is.' 1>&2
   guesssys=`echo ${progname} | sed 's/configure$/config.guess/'`
@@ -1369,43 +787,32 @@ if [ "${configuration}" = "" ]; then
   fi
 fi
 
-############################################################################
-#									   #
-#                               Handle --srcdir                            #
-#									   #
-############################################################################
-
-#### Decide where the source is.
+### Find the source directory.
 case "${srcdir}" in
 
   ## If it's not specified, see if  `.' or `..' might work.
   "" )
-    confdir=`echo $0 | sed 's|//|/|' | sed 's|/[^/]*$||'`
-    if [ -f $confdir/src/lisp.h -a -f $confdir/lisp/version.el ]; then
-      srcdir="${confdir}"
-    else
-      if [ -f "./src/lisp.h" -a -f "./lisp/version.el" ]; then
-        srcdir='.'
-      else
-        if [ -f "../src/lisp.h" -a -f "../lisp/version.el" ]; then
-	  srcdir='..'
-        else
-	  (echo "\
+    for dir in "`echo $0 | sed 's|//|/|' | sed 's|/[^/]*$||'`" "." ".." ; do
+      if test -f "$dir/src/lisp.h" -a -f "$dir/lisp/version.el" ; then
+        srcdir="${dir}"
+        break
+      fi
+    done
+    if test -z "${srcdir}" ; then
+      echo "\
 ${progname}: Neither the current directory nor its parent seem to
 contain the XEmacs sources.  If you do not want to build XEmacs in its
 source tree, you should run \`${progname}' in the directory in which
 you wish to build XEmacs, using its \`--srcdir' option to say where the
-sources may be found."
-	    echo "${short_usage}") >&2
-	  exit 1
-        fi
+sources may be found.
+${short_usage}" >&2
+	exit 1
       fi
-    fi
   ;;
 
   ## Otherwise, check if the directory they specified is okay.
   * )
-    if [ ! -d "${srcdir}" -o ! -f "${srcdir}/src/lisp.h" -o ! -f "${srcdir}/lisp/version.el" ]; then
+    if test ! -d "${srcdir}" -o ! -f "${srcdir}/src/lisp.h" -o ! -f "${srcdir}/lisp/version.el" ; then
       (echo "\
 ${progname}: The directory specified with the \`--srcdir' option,
 \`${srcdir}', doesn't seem to contain the XEmacs sources.  You should
@@ -1439,9 +846,9 @@ test -n "$verbose" && echo "	"setting LN_S to ${LN_S}""
 #### have stuck the source on a read-only partition.  Instead we'll
 #### create it as an actual directory later on if it doesn't already
 #### exist.
-for dir in lisp etc man info site-lisp
+for dir in  etc lisp man info
 do
-  if [ ! -d $dir ]; then
+  if test ! -d $dir ; then
     echo Making symbolic link to ${srcdir}/$dir
     ${LN_S} ${srcdir}/$dir .
   fi
@@ -1455,7 +862,7 @@ case "${srcdir}" in
   . )
     ## We may be able to use the $PWD environment variable to make this
     ## absolute.  But sometimes PWD is inaccurate.
-    if [ "${PWD}" != "" ] && [ "`(cd ${PWD} ; sh -c pwd)`" = "`pwd`" ] ; then
+    if test "${PWD}" != "" -a "`(cd ${PWD} ; sh -c pwd)`" = "`pwd`"; then
       srcdir="$PWD"
     else
       srcdir="`(cd ${srcdir}; pwd)`"
@@ -1465,8 +872,8 @@ case "${srcdir}" in
 esac
 
 #### Check if the source directory already has a configured system in it.
-if [ `pwd` != `sh -c cd ${srcdir} && pwd` ] \
-   && [ -f "${srcdir}/src/config.h" ] ; then
+if test `pwd` != `sh -c cd ${srcdir} && pwd`  \
+   && test -f "${srcdir}/src/config.h"; then
   (echo "${progname}: WARNING: The directory tree \`${srcdir}' is being used"
    echo "   as a build directory right now; it has been configured in its own"
    echo "   right.  To configure in another directory as well, you MUST"
@@ -1483,12 +890,12 @@ vpath %.in $(srcdir)'
 fi
 
 ### Make the necessary directories, if they don't exist.
-for dir in ./src ./lib-src ./dynodump ./man ./lwlib ./lock ; do
-  if [ ! -d ${dir} ]; then
+for dir in ./src ./lib-src ./dynodump ./lwlib ./lock ; do
+  if test ! -d ${dir} ; then
     mkdir ${dir}
   fi
 done
-if [ "${with_energize}" = "yes" ] && [ ! -d ./lwlib/energize ] ; then
+if test "${with_energize}" = "yes" -a ! -d ./lwlib/energize; then
   mkdir ./lwlib/energize
 fi
 
@@ -1533,20 +940,6 @@ fi
 ### Eric Raymond says we should accept strings like "sysvr4" to mean
 ### "System V Release 4"; he writes, "The old convention encouraged
 ### confusion between `system' and `release' levels'."
-###
-### We rely on cpp to generate makefiles from Makefile.in.in templates.
-### There is at least one drawback to that. Since cpp generally has
-### built-in macro definitions like `#define unix' or `#define i386',
-### we must be careful to prevent it from substituting these occurences
-### in certain places in the makefiles. Pathnames for architecture-
-### specific files come to mind.
-### This is where CPPFLAGS_MAKEFILEGEN comes in. We try to selectively
-### disable (potentially) predefined macros that we find to be part of
-### the configuration string. 
-### This is but a poor method to help us fight off cpp, but it covers
-### those cases that used to bite me. <mdiers@logware.de>
-
-CPPFLAGS_MAKEFILEGEN=""  # we normally do not need any extra flags
 
 machine='' opsys='' unported=no need_dynodump=no
 case "${canonical}" in
@@ -1555,23 +948,19 @@ case "${canonical}" in
   *-*-netbsd* )
     opsys=netbsd
     case "${canonical}" in
-      sparc-*-netbsd*)        machine=sparc ;;
+      sparc-*-netbsd*)    machine=sparc ;;
       i[3-9]86-*-netbsd*) machine=intel386 ;;
       hp300-*-netbsd* | amiga-*-netbsd* | sun3-*-netbsd* | mac68k-*-netbsd* | da30-*-netbsd* | m68k-*-netbsd* )
                       # Yes, this is somewhat bogus.
                       machine=hp9000s300 ;;
-      pc532-*-netbsd* | ns32k-*-netbsd* )        machine=ns32000 ;;
-      pmax-*-netbsd* | mips-*-netbsd* ) machine=pmax ;;
+      pc532-*-netbsd* | ns32k-*-netbsd* )  machine=ns32000 ;;
+      pmax-*-netbsd*  | mips-*-netbsd*  )  machine=pmax ;;
     esac
   ;;
 
   ## Acorn RISCiX:
-  arm-acorn-riscix1.1* )
-    machine=acorn opsys=riscix1-1
-  ;;
-  arm-acorn-riscix1.2* | arm-acorn-riscix )
-    machine=acorn opsys=riscix1-2
-  ;;
+  arm-acorn-riscix1.1* ) machine=acorn opsys=riscix1-1 ;;
+  arm-acorn-riscix1.2* | arm-acorn-riscix ) machine=acorn opsys=riscix1-2 ;;
 
   ## Alliant machines
   ## Strictly speaking, we need the version of the alliant operating
@@ -1579,79 +968,44 @@ case "${canonical}" in
   ## configuration name doesn't tell us enough to choose the right
   ## one; we need to give alliants their own operating system name to
   ## do this right.  When someone cares, they can help us.
-  fx80-alliant-* )
-    machine=alliant4 opsys=bsd4-2
-  ;;
-  i860-alliant-* )
-    machine=alliant-2800 opsys=bsd4-3
-  ;;
+  fx80-alliant-* ) machine=alliant4     opsys=bsd4-2 ;;
+  i860-alliant-* ) machine=alliant-2800 opsys=bsd4-3 ;;
 
   ## Alpha (DEC) machines.
   ## XEmacs change: split apart into numerous files.
-  alpha-dec-osf1.3 | alpha-dec-osf2* )
-    machine=alpha opsys=decosf1-3
-  ;;
-  alpha-dec-osf1.2 | alpha-dec-osf1* )
-    machine=alpha opsys=decosf1-2
-  ;;
+  alpha-dec-osf1.3 | alpha-dec-osf2* ) machine=alpha opsys=decosf1-3 ;;
+  alpha-dec-osf1.2 | alpha-dec-osf1* ) machine=alpha opsys=decosf1-2 ;;
 
   ## XEmacs: Add switch for OSF 1 version 3 (roth@cse.ucsc.edu)
-  alpha-dec-osf3.[2-9] )
-    machine=alpha opsys=decosf3-2
-  ;;
-  alpha-dec-osf3* )
-    machine=alpha opsys=decosf3-1
-  ;;
-
   ## XEmacs: Add switch for Digital Unix version 4 (srivasta@pilgrim.umass.edu)
-  alpha-dec-osf4* )
-    machine=alpha opsys=decosf4-0
-    NON_GNU_CPP="/lib/cpp"
-  ;;
-
-  alpha-*-linux* )
-    machine=alpha opsys=linux
-  ;;
+  alpha-dec-osf3.[2-9] ) machine=alpha opsys=decosf3-2 ;;
+  alpha-dec-osf3* )      machine=alpha opsys=decosf3-1 ;;
+  alpha-dec-osf4* )      machine=alpha opsys=decosf4-0 ;;
+  alpha-*-linux* )       machine=alpha opsys=linux ;;
 
   ## Altos 3068
-  m68*-altos-sysv* )
-    machine=altos opsys=usg5-2
-  ;;
+  m68*-altos-sysv* ) machine=altos opsys=usg5-2 ;;
 
   ## Amdahl UTS
-  580-amdahl-sysv* )
-    machine=amdahl opsys=usg5-2-2
-  ;;
+  580-amdahl-sysv* ) machine=amdahl opsys=usg5-2-2 ;;
 
   ## Apollo, Domain/OS
-  m68*-apollo-* )
-    machine=apollo opsys=bsd4-3
-  ;;
+  m68*-apollo-* ) machine=apollo opsys=bsd4-3 ;;
   
   ## AT&T 3b2, 3b5, 3b15, 3b20
-  we32k-att-sysv* )
-    machine=att3b opsys=usg5-2-2
-  ;;
+  we32k-att-sysv* ) machine=att3b opsys=usg5-2-2 ;;
 
   ## AT&T 3b1 - The Mighty Unix PC!
-  m68*-att-sysv* )
-    machine=7300 opsys=usg5-2-2
-  ;;
+  m68*-att-sysv* ) machine=7300 opsys=usg5-2-2 ;;
 
   ## Bull dpx20
-  rs6000-bull-bosx* )
-    machine=ibmrs6000 opsys=aix3-2
-  ;;
+  rs6000-bull-bosx* ) machine=ibmrs6000 opsys=aix3-2 ;;
 
   ## Bull dpx2
-  m68*-bull-sysv3* )
-    machine=dpx2 opsys=usg5-3
-  ;;
+  m68*-bull-sysv3* ) machine=dpx2 opsys=usg5-3 ;;
 
   ## Bull sps7
-  m68*-bull-sysv2* )
-    machine=sps7 opsys=usg5-2
-  ;;
+  m68*-bull-sysv2* ) machine=sps7 opsys=usg5-2 ;;
 
   ## CCI 5/32, 6/32 -- see "Tahoe".
 
@@ -1659,15 +1013,12 @@ case "${canonical}" in
   ## I don't know what configuration name to use for this; config.sub
   ## doesn't seem to know anything about it.  Hey, Celerity users, get
   ## in touch with us!
-  celerity-celerity-bsd* )
-    machine=celerity opsys=bsd4-2
-  ;;
+  celerity-celerity-bsd* ) machine=celerity opsys=bsd4-2 ;;
 
   ## Clipper
   ## What operating systems does this chip run that XEmacs has been
   ## tested on?
-  clipper-* )
-    machine=clipper
+  clipper-* ) machine=clipper
     ## We'll use the catch-all code at the bottom to guess the
     ## operating system.
   ;;
@@ -1680,44 +1031,21 @@ case "${canonical}" in
   ;;
 
   ## Cubix QBx/386
-  i[3-9]86-cubix-sysv* )
-    machine=intel386 opsys=usg5-3
-  ;;
+  i[3-9]86-cubix-sysv* ) machine=intel386 opsys=usg5-3 ;;
 
   ## Cydra 5
-  cydra*-cydrome-sysv* )
-    machine=cydra5 opsys=usg5-3
-  ;;
+  cydra*-cydrome-sysv* ) machine=cydra5 opsys=usg5-3 ;;
 
   ## Data General AViiON Machines
-  i586-dg-dgux5.4R4* | i586-dg-dgux5.4.4* )
-    machine=aviion opsys=dgux5-4r4
-  ;;
-  m88k-dg-dgux5.4R3* | m88k-dg-dgux5.4.3* )
-    machine=aviion opsys=dgux5-4r3
-  ;;
-  m88k-dg-dgux5.4R2* | m88k-dg-dgux5.4.2* )
-    machine=aviion opsys=dgux5-4r2
-  ;;
-  m88k-dg-dgux* )
-    machine=aviion opsys=dgux
-  ;;
+  m88k-dg-dgux5.4R3* | m88k-dg-dgux5.4.3* ) machine=aviion opsys=dgux5-4r3 ;;
+  m88k-dg-dgux5.4R2* | m88k-dg-dgux5.4.2* ) machine=aviion opsys=dgux5-4r2 ;;
+  m88k-dg-dgux* ) machine=aviion opsys=dgux ;;
 
-  mips-dec-ultrix[0-3].* | mips-dec-ultrix4.0* | mips-dec-bsd4.2* )
-    machine=pmax opsys=bsd4-2
-  ;;
-  mips-dec-ultrix4.[12]* | mips-dec-bsd* )
-    machine=pmax opsys=bsd4-3
-  ;;
-  mips-dec-ultrix* )
-    machine=pmax opsys=ultrix4-3
-  ;;
-  mips-dec-osf* )
-    machine=pmax opsys=osf1
-  ;;
-  mips-dec-mach_bsd4.3* )
-    machine=pmax opsys=mach-bsd4-3
-  ;;
+  mips-dec-ultrix[0-3].* | mips-dec-ultrix4.0* | mips-dec-bsd4.2* ) machine=pmax opsys=bsd4-2 ;;
+  mips-dec-ultrix4.[12]* | mips-dec-bsd* ) machine=pmax opsys=bsd4-3 ;;
+  mips-dec-ultrix* )                       machine=pmax opsys=ultrix4-3 ;;
+  mips-dec-osf* )                          machine=pmax opsys=osf1 ;;
+  mips-dec-mach_bsd4.3* )                  machine=pmax opsys=mach-bsd4-3 ;;
 
   ## Motorola Delta machines
   m68k-motorola-sysv* | m68000-motorola-sysv* )
@@ -1742,40 +1070,22 @@ case "${canonical}" in
     # which really need usg5-4 instead.
     machine=delta88k opsys=usg5-4-2
   ;;
-  m88k-motorola-sysv* | m88k-motorola-m88kbcs* )
-    machine=delta88k opsys=usg5-3
-  ;;
+  m88k-motorola-sysv* | m88k-motorola-m88kbcs* ) machine=delta88k opsys=usg5-3 ;;
 
   ## Dual machines
-  m68*-dual-sysv* )
-    machine=dual opsys=usg5-2
-  ;;
-  m68*-dual-uniplus* )
-    machine=dual opsys=unipl5-2
-  ;;
+  m68*-dual-sysv*    ) machine=dual opsys=usg5-2   ;;
+  m68*-dual-uniplus* ) machine=dual opsys=unipl5-2 ;;
 
   ## Elxsi 6400
-  elxsi-elxsi-sysv* )
-    machine=elxsi opsys=usg5-2
-  ;;
+  elxsi-elxsi-sysv* ) machine=elxsi opsys=usg5-2 ;;
 
   ## Encore machines
-  ns16k-encore-bsd* )
-    machine=ns16000 opsys=umax
-  ;;
-
-  ## The GEC 93 - apparently, this port isn't really finished yet.
+  ns16k-encore-bsd* ) machine=ns16000 opsys=umax ;;
 
   ## Gould Power Node and NP1
-  pn-gould-bsd4.2* )
-    machine=gould opsys=bsd4-2
-  ;;
-  pn-gould-bsd4.3* )
-    machine=gould opsys=bsd4-3
-  ;;
-  np1-gould-bsd* )
-    machine=gould-np1 opsys=bsd4-3
-  ;;
+  pn-gould-bsd4.2* ) machine=gould     opsys=bsd4-2 ;;
+  pn-gould-bsd4.3* ) machine=gould     opsys=bsd4-3 ;;
+  np1-gould-bsd* )   machine=gould-np1 opsys=bsd4-3 ;;
 
   ## Harris Night Hawk machines running CX/UX (a 5000 looks just like a 4000
   ## as far as XEmacs is concerned).
@@ -1783,14 +1093,12 @@ case "${canonical}" in
     # Build needs to be different on 7.0 and later releases
     case "`uname -r`" in
        [56].[0-9] ) machine=nh4000 opsys=cxux ;;
-       [7].[0-9] ) machine=nh4000 opsys=cxux7 ;;
+       [7].[0-9]  ) machine=nh4000 opsys=cxux7 ;;
     esac
     NON_GNU_CPP="/lib/cpp"
   ;;
   ## Harris ecx or gcx running CX/UX (Series 1200, Series 3000)
-  m68k-harris-cxux* )
-    machine=nh3000 opsys=cxux
-  ;;
+  m68k-harris-cxux* ) machine=nh3000 opsys=cxux ;;
   ## Harris power pc NightHawk running Power UNIX (Series 6000)
   powerpc-harris-powerunix )
     machine=nh6000 opsys=powerunix
@@ -1798,151 +1106,80 @@ case "${canonical}" in
   ;;
 
   ## Honeywell XPS100
-  xps*-honeywell-sysv* )
-    machine=xps100 opsys=usg5-2
-  ;;
+  xps*-honeywell-sysv* ) machine=xps100 opsys=usg5-2 ;;
 
   ## HP 9000 series 200 or 300
-  m68*-hp-bsd* )
-    machine=hp9000s300 opsys=bsd4-3
-  ;;
-  ## HP/UX 7, 8, 9, and 10 are supported on these machines.
-  m68*-hp-hpux* )
-    NON_GNU_CPP="cc -Aa -E"
+  m68*-hp-bsd* ) machine=hp9000s300 opsys=bsd4-3 ;;
+
+  ## HP-UX on HP's
+  *-hp-hpux* )
     NON_GNU_CC="cc -Aa"
-    case "`uname -r`" in
-      ## Someone's system reports A.B8.05 for this.
-      ## I wonder what other possibilities there are.
-      *.B8.* ) machine=hp9000s300 opsys=hpux8 ;;
-      *.08.* ) machine=hp9000s300 opsys=hpux8 ;;
-      *.09.* ) machine=hp9000s300 opsys=hpux9 ;;
-      *.10.* ) machine=hp9000s300 opsys=hpux10 ;;
-      *) machine=hp9000s300 opsys=hpux ;;
+    NON_GNU_CPP="cc -Aa -E"
+
+    ### Figure out machine and opsys orthogonally
+    case "${canonical}" in
+      m68*  ) machine=hp9000s300 ;;
+      hppa* ) machine=hp800      ;;
+    esac
+
+    case "${canonical}" in
+      *-hp-hpux7*     )  opsys=hpux      ;;
+      *-hp-hpux8shr*  )  opsys=hpux8shr  ;;
+      *-hp-hpux8*     )  opsys=hpux8     ;;
+      *-hp-hpux9shr*  )  opsys=hpux9shr  ;;
+      *-hp-hpux9*     )  opsys=hpux9     ;;
+      *-hp-hpux10shr* )  opsys=hpux10shr ;;
+      *-hp-hpux10*    )  opsys=hpux10    ;;
+      * )
+        case "`uname -r`" in
+	  ## Someone's system reports A.B8.05 for this.
+	  ## I wonder what other possibilities there are.
+	  *.B8.* )  opsys=hpux8  ;;
+	  *.08.* )  opsys=hpux8  ;;
+	  *.09.* )  opsys=hpux9  ;;
+	  *.10.* )  opsys=hpux10 ;;
+	  *      )  opsys=hpux   ;;
+        esac
+      ;;
     esac
   ;;
 
-  ## HP 9000 series 700 and 800, running HP/UX
-  ## XEmacs changes here for shared.
-  hppa*-hp-hpux7* )
-    machine=hp800 opsys=hpux NON_GNU_CPP="cc -Aa -E" NON_GNU_CC="cc -Aa"
-  ;;
-  hppa*-hp-hpux8*shr* )
-    machine=hp800 opsys=hpux8*shr NON_GNU_CPP="cc -Aa -E" NON_GNU_CC="cc -Aa"
-  ;;
-  hppa*-hp-hpux8* )
-    machine=hp800 opsys=hpux8 NON_GNU_CPP="cc -Aa -E" NON_GNU_CC="cc -Aa"
-  ;;
-  hppa*-hp-hpux9*shr* )
-    machine=hp800 opsys=hpux9*shr NON_GNU_CPP="cc -Aa -E" NON_GNU_CC="cc -Aa"
-  ;;
-  hppa*-hp-hpux9* )
-    machine=hp800 opsys=hpux9 NON_GNU_CPP="cc -Aa -E" NON_GNU_CC="cc -Aa"
-  ;;
-  hppa*-hp-hpux10*shr* )
-    machine=hp800 opsys=hpux10*shr NON_GNU_CPP="cc -Aa -E" NON_GNU_CC="cc -Aa"
-  ;;
-  hppa*-hp-hpux10* )
-    machine=hp800 opsys=hpux10 NON_GNU_CPP="cc -Aa -E" NON_GNU_CC="cc -Aa"
-  ;;
-
-  ## HP 9000 series 700 and 800, running HP/UX
-  hppa*-hp-hpux* )
-    NON_GNU_CPP="cc -Aa -E" NON_GNU_CC="cc -Aa"
-    ## Cross-compilation?  Nah!
-    case "`uname -r`" in
-      ## Someone's system reports A.B8.05 for this.
-      ## I wonder what other possibilities there are.
-      *.B8.* ) machine=hp800 opsys=hpux8 ;;
-      *.08.* ) machine=hp800 opsys=hpux8 ;;
-      *.09.* ) machine=hp800 opsys=hpux9 ;;
-      *.10.* ) machine=hp800 opsys=hpux10 ;;
-      *) machine=hp800 opsys=hpux ;;
-    esac
-  ;;
-  hppa-*-nextstep* )
-    machine=hp800 opsys=nextstep
-  ;;
+  hppa-*-nextstep* ) machine=hp800 opsys=nextstep ;;
 
   ## Orion machines
-  orion-orion-bsd* )
-    machine=orion opsys=bsd4-2
-  ;;
-  clipper-orion-bsd* )
-    machine=orion105 opsys=bsd4-2
-  ;;
+  orion-orion-bsd*   ) machine=orion    opsys=bsd4-2 ;;
+  clipper-orion-bsd* ) machine=orion105 opsys=bsd4-2 ;;
 
   ## IBM machines
-  i[3-9]86-ibm-aix1.1* )
-    machine=ibmps2-aix opsys=usg5-2-2
-  ;;
-  i[3-9]86-ibm-aix1.[23]* | i[3-9]86-ibm-aix* )
-    machine=ibmps2-aix opsys=usg5-3
-  ;;
-  i370-ibm-aix*)
-    machine=ibm370aix opsys=usg5-3
-  ;;
-  rs6000-ibm-aix3.1* | powerpc-ibm-aix3.1* )
-    machine=ibmrs6000 opsys=aix3-1
-  ;;
-  rs6000-ibm-aix3.2.5 | powerpc-ibm-aix3.2.5 )
-    machine=ibmrs6000 opsys=aix3-2-5
-  ;;
-  rs6000-ibm-aix4.1* | powerpc-ibm-aix4.1*  )
-    machine=ibmrs6000 opsys=aix4-1
-  ;;
-  rs6000-ibm-aix4* | powerpc-ibm-aix4*  )
-    machine=ibmrs6000 opsys=aix4
-  ;;
-  rs6000-ibm-aix* | powerpc-ibm-aix* )
-    machine=ibmrs6000 opsys=aix3-2
-  ;;
-  romp-ibm-bsd4.3* )
-    machine=ibmrt opsys=bsd4-3
-  ;;
-  romp-ibm-bsd4.2* )
-    machine=ibmrt opsys=bsd4-2
-  ;;
-  romp-ibm-aos4.3* )
-    machine=ibmrt opsys=bsd4-3
-  ;;
-  romp-ibm-aos4.2* )
-    machine=ibmrt opsys=bsd4-2
-  ;;
-  romp-ibm-aos* )
-    machine=ibmrt opsys=bsd4-3
-  ;;
-  romp-ibm-bsd* )
-    machine=ibmrt opsys=bsd4-3
-  ;;
-  romp-ibm-aix* )
-    machine=ibmrt-aix opsys=usg5-2-2
-  ;;
-  romp-ibm-mach* )
-    machine=ibmrt opsys=mach-bsd4-3
-  ;;
+  i[3-9]86-ibm-aix1.1* ) machine=ibmps2-aix opsys=usg5-2-2 ;;
+  i[3-9]86-ibm-aix1.[23]* | i[3-9]86-ibm-aix* ) machine=ibmps2-aix opsys=usg5-3 ;;
+  i370-ibm-aix*) machine=ibm370aix opsys=usg5-3 ;;
+  rs6000-ibm-aix3.1*  | powerpc-ibm-aix3.1*  ) machine=ibmrs6000 opsys=aix3-1	;;
+  rs6000-ibm-aix3.2.5 | powerpc-ibm-aix3.2.5 ) machine=ibmrs6000 opsys=aix3-2-5	;;
+  rs6000-ibm-aix4.1*  | powerpc-ibm-aix4.1*  ) machine=ibmrs6000 opsys=aix4-1	;;
+  rs6000-ibm-aix4*    | powerpc-ibm-aix4*    ) machine=ibmrs6000 opsys=aix4	;;
+  rs6000-ibm-aix*     | powerpc-ibm-aix*     ) machine=ibmrs6000 opsys=aix3-2	;;
+  romp-ibm-bsd4.3* ) machine=ibmrt opsys=bsd4-3 ;;
+  romp-ibm-bsd4.2* ) machine=ibmrt opsys=bsd4-2 ;;
+  romp-ibm-aos4.3* ) machine=ibmrt opsys=bsd4-3 ;;
+  romp-ibm-aos4.2* ) machine=ibmrt opsys=bsd4-2 ;;
+  romp-ibm-aos*    ) machine=ibmrt opsys=bsd4-3 ;;
+  romp-ibm-bsd*    ) machine=ibmrt opsys=bsd4-3 ;;
+  romp-ibm-aix*    ) machine=ibmrt-aix opsys=usg5-2-2 ;;
+  romp-ibm-mach*   ) machine=ibmrt opsys=mach-bsd4-3 ;;
 
   ## Integrated Solutions `Optimum V'
-  m68*-isi-bsd4.2* )
-    machine=isi-ov opsys=bsd4-2
-  ;;
-  m68*-isi-bsd4.3* )
-    machine=isi-ov opsys=bsd4-3
-  ;;
+  m68*-isi-bsd4.2* ) machine=isi-ov opsys=bsd4-2 ;;
+  m68*-isi-bsd4.3* ) machine=isi-ov opsys=bsd4-3 ;;
 
   ## Intel 386 machines where we do care about the manufacturer
-  i[3-9]86-intsys-sysv* )
-    machine=is386 opsys=usg5-2-2
-  ;;
+  i[3-9]86-intsys-sysv* ) machine=is386 opsys=usg5-2-2 ;;
 
   ## Prime EXL
-  i[3-9]86-prime-sysv* )
-    machine=i386 opsys=usg5-3
-  ;;
+  i[3-9]86-prime-sysv* ) machine=i386 opsys=usg5-3 ;;
 
   ## Sequent Symmetry running Dynix
-  i[3-9]86-sequent-bsd* )
-    machine=symmetry opsys=bsd4-3
-  ;;
+  i[3-9]86-sequent-bsd* ) machine=symmetry opsys=bsd4-3 ;;
 
   ## Sequent Symmetry running DYNIX/ptx
   ## Use the old cpp rather than the newer ANSI one.
@@ -1953,14 +1190,10 @@ case "${canonical}" in
 
   ## Unspecified sysv on an ncr machine defaults to svr4.2.
   ## (Plain usg5-4 doesn't turn on POSIX signals, which we need.)
-  i[3-9]86-ncr-sysv* )
-    machine=ncr386 opsys=usg5-4-2
-  ;;
+  i[3-9]86-ncr-sysv* ) machine=ncr386 opsys=usg5-4-2 ;;
 
   ## Intel Paragon OSF/1
-  i860-intel-osf1* )
-    machine=paragon opsys=osf1 NON_GNU_CPP=/usr/mach/lib/cpp
-  ;;
+  i860-intel-osf1* ) machine=paragon opsys=osf1 NON_GNU_CPP=/usr/mach/lib/cpp ;;
 
   ## Intel 860
   i860-*-sysv4* )
@@ -1970,14 +1203,10 @@ case "${canonical}" in
   ;;
 
   ## Masscomp machines
-  m68*-masscomp-rtu* )
-    machine=masscomp opsys=rtu
-  ;;
+  m68*-masscomp-rtu* ) machine=masscomp opsys=rtu ;;
 
   ## Megatest machines
-  m68*-megatest-bsd* )
-    machine=mega68 opsys=bsd4-2
-  ;;
+  m68*-megatest-bsd* ) machine=mega68 opsys=bsd4-2 ;;
 
   ## Workstations sold by MIPS
   ## This is not necessarily all workstations using the MIPS processor -
@@ -1994,70 +1223,45 @@ case "${canonical}" in
     machine=mips4
     ## Fall through to the general code at the bottom to decide on the OS.
   ;;
-  mips-mips-riscos4* )
-    machine=mips4 opsys=bsd4-3
+  mips-mips-riscos4 )
+    machine=mips4
     NON_GNU_CC="cc -systype bsd43"
     NON_GNU_CPP="cc -systype bsd43 -E"
+    case "${canonical}" in
+      mips-mips-riscos4* ) opsys=bsd4-3  ;;
+      mips-mips-riscos5* ) opsys=riscos5 ;;
+    esac
   ;;
-  mips-mips-riscos5* )
-    machine=mips4 opsys=riscos5
-    NON_GNU_CC="cc -systype bsd43"
-    NON_GNU_CPP="cc -systype bsd43 -E"
-  ;;
-  mips-mips-bsd* )
-    machine=mips opsys=bsd4-3
-  ;;
-  mips-mips-* )
-    machine=mips opsys=usg5-2-2
-  ;;
+  mips-mips-bsd* ) machine=mips opsys=bsd4-3 ;;
+  mips-mips-*    ) machine=mips opsys=usg5-2-2 ;;
 
   ## NeXT
-  m68*-next-* | m68k-*-nextstep* )
-    machine=m68k opsys=nextstep
-  ;;
+  m68*-next-* | m68k-*-nextstep* ) machine=m68k opsys=nextstep ;;
 
   ## The complete machine from National Semiconductor
-  ns32k-ns-genix* )
-    machine=ns32000 opsys=usg5-2
-  ;;
+  ns32k-ns-genix* ) machine=ns32000 opsys=usg5-2 ;;
 
   ## NCR machines
-  m68*-ncr-sysv2* | m68*-ncr-sysvr2* )
-    machine=tower32 opsys=usg5-2-2
-  ;;
-  m68*-ncr-sysv3* | m68*-ncr-sysvr3* )
-    machine=tower32v3 opsys=usg5-3
-  ;;
+  m68*-ncr-sysv2* | m68*-ncr-sysvr2* ) machine=tower32   opsys=usg5-2-2 ;;
+  m68*-ncr-sysv3* | m68*-ncr-sysvr3* ) machine=tower32v3 opsys=usg5-3 ;;
 
   ## Nixdorf Targon 31
-  m68*-nixdorf-sysv* )
-    machine=targon31 opsys=usg5-2-2
-  ;;
+  m68*-nixdorf-sysv* ) machine=targon31 opsys=usg5-2-2 ;;
 
   ## Nu (TI or LMI)
-  m68*-nu-sysv* )
-    machine=nu opsys=usg5-2
-  ;;
+  m68*-nu-sysv* ) machine=nu opsys=usg5-2 ;;
 
   ## Plexus
-  m68*-plexus-sysv* )
-    machine=plexus opsys=usg5-2
-  ;;
+  m68*-plexus-sysv* ) machine=plexus opsys=usg5-2 ;;
 
   ## Pyramid machines
   ## I don't really have any idea what sort of processor the Pyramid has,
   ## so I'm assuming it is its own architecture.
-  pyramid-pyramid-bsd* )
-    machine=pyramid opsys=bsd4-2
-  ;;
+  pyramid-pyramid-bsd* ) machine=pyramid opsys=bsd4-2 ;;
 
   ## Sequent Balance
-  ns32k-sequent-bsd4.2* )
-    machine=sequent opsys=bsd4-2
-  ;;
-  ns32k-sequent-bsd4.3* )
-    machine=sequent opsys=bsd4-3
-  ;;
+  ns32k-sequent-bsd4.2* ) machine=sequent opsys=bsd4-2 ;;
+  ns32k-sequent-bsd4.3* ) machine=sequent opsys=bsd4-3 ;;
 
   ## Siemens Nixdorf
   mips-siemens-sysv* | mips-sni-sysv*)
@@ -2068,62 +1272,29 @@ case "${canonical}" in
 
   ## Silicon Graphics machines
   ## Iris 2500 and Iris 2500 Turbo (aka the Iris 3030)
-  m68*-sgi-iris3.5* )
-    machine=irist opsys=iris3-5
-  ;;
-  m68*-sgi-iris3.6* | m68*-sgi-iris*)
-    machine=irist opsys=iris3-6
-  ;;
+  m68*-sgi-iris3.5* ) machine=irist opsys=iris3-5 ;;
+  m68*-sgi-iris3.6* | m68*-sgi-iris*) machine=irist opsys=iris3-6 ;;
   ## Iris 4D
-  mips-sgi-irix3.* )
-    machine=iris4d opsys=irix3-3
-  ;;
-  mips-sgi-irix4.* )
-    machine=iris4d opsys=irix4-0
-  ;;
-  mips-sgi-irix6* )
-    machine=iris4d opsys=irix6-0
-    NON_GNU_CPP="cc -cckr -E"
-  ;;
-  mips-sgi-irix5.[3-9]* )
-    machine=iris4d opsys=irix5-3
-  ;;
-  mips-sgi-irix5.2* )
-    machine=iris4d opsys=irix5-2
-  ;;
-  mips-sgi-irix5.1* )
-    machine=iris4d opsys=irix5-1
-  ;;
-  mips-sgi-irix5.* | mips-sgi-irix* )
-    machine=iris4d opsys=irix5-0
-  ;;
+  mips-sgi-irix3.*      ) machine=iris4d opsys=irix3-3 ;;
+  mips-sgi-irix4.*      ) machine=iris4d opsys=irix4-0 ;;
+  mips-sgi-irix6*       ) machine=iris4d opsys=irix6-0  NON_GNU_CPP=/lib/cpp ;;
+  mips-sgi-irix5.[3-9]* ) machine=iris4d opsys=irix5-3 ;;
+  mips-sgi-irix5.2*     ) machine=iris4d opsys=irix5-2 ;;
+  mips-sgi-irix5.1*     ) machine=iris4d opsys=irix5-1 ;;
+  mips-sgi-irix*        ) machine=iris4d opsys=irix5-0 ;;
 
   ## SONY machines
-  m68*-sony-bsd4.2* )
-    machine=news opsys=bsd4-2
-  ;;
-  m68*-sony-bsd4.3* )
-    machine=news opsys=bsd4-3
-  ;;
-  m68*-sony-newsos3* | m68*-sony-news3*)
-    machine=news opsys=bsd4-3
-  ;;
-  mips-sony-bsd* | mips-sony-newsos4* | mips-sony-news4*)
-    machine=news-risc opsys=bsd4-3
-  ;;
-  mips-sony-news* )
-    machine=news-risc opsys=newsos5
-  ;;
+  m68*-sony-bsd4.2* ) machine=news opsys=bsd4-2 ;;
+  m68*-sony-bsd4.3* ) machine=news opsys=bsd4-3 ;;
+  m68*-sony-newsos3* | m68*-sony-news3*) machine=news opsys=bsd4-3 ;;
+  mips-sony-bsd* | mips-sony-newsos4* | mips-sony-news4*) machine=news-risc opsys=bsd4-3 ;;
+  mips-sony-news* ) machine=news-risc opsys=newsos5 ;;
 
   ## Stride
-  m68*-stride-sysv* )
-    machine=stride opsys=usg5-2
-  ;;
+  m68*-stride-sysv* ) machine=stride opsys=usg5-2 ;;
 
   ## Suns
-  sparc-*-linux* )
-    machine=sparc opsys=linux
-  ;;
+  sparc-*-linux* ) machine=sparc opsys=linux ;;
 
   *-*-solaris* | *-*-sunos* | *-sun-mach* | *-sun-bsd* )
     # Hardware type
@@ -2141,7 +1312,7 @@ case "${canonical}" in
     
     # Make `canonical' even more so.
     case "${canonical}" in *-sunos5*) 
-      canonical="`echo \"${canonical}\" | sed -e s/sunos5/solaris2/`";
+      canonical="`echo \"${canonical}\" | sed -e s/sunos5/solaris2/`";;
     esac
 
     # On SunOS 4, use /usr/lib/cpp,     sans dynodump, /bin/ranlib
@@ -2150,38 +1321,27 @@ case "${canonical}" in
     # function integrated.
     case "${canonical}" in
       *-sunos4* )
-        test -x /usr/lib/cpp     && NON_GNU_CPP=/usr/lib/cpp ;;
-      *-solaris2.6* )  
-        test -x /usr/ccs/lib/cpp && NON_GNU_CPP=/usr/ccs/lib/cpp
+        test -f /usr/lib/cpp     && NON_GNU_CPP=/usr/lib/cpp ;;
+      *-solaris2* )
+        test -f /usr/ccs/lib/cpp && NON_GNU_CPP=/usr/ccs/lib/cpp
         RANLIB=':'
-        need_dynodump=no ;;
-      *-solaris2* )  
-        test -x /usr/ccs/lib/cpp && NON_GNU_CPP=/usr/ccs/lib/cpp
-        RANLIB=':'
-        need_dynodump=yes ;;
+	case "${canonical}" in
+	  *-solaris2.[6-9]* ) need_dynodump=no  ;;
+	  *-solaris2*       ) need_dynodump=yes ;;
+	esac
     esac
     
-    # (NON)?_GCC_TEST_OPTIONS variables are unused.
-    # What were they supposed to do, exactly?
-    # case "${canonical}" in
-    #   *-sunos4* ) GCC_TEST_OPTIONS=-static NON_GCC_TEST_OPTIONS=-bstatic ;;
-    # esac
-
-    # FSF 19.31 has NON_GNU_CPP=/usr/lib/cpp for SunOS 4.x.
-
     case "${canonical}" in
       ## The Sun386 didn't get past 4.0.
       i[3-9]86-*-sunos4	   ) opsys=sunos4-0      ;;
-      *-sunos4*shr*	   ) opsys=sunos4-0-shr   ;;
-      *-sunos4-0*shr*	   ) opsys=sunos4-0-shr   ;;
-      *-sunos4-1*shr*	   ) opsys=sunos4-1-shr   ;;
-      *-sunos4-1-2*shr*	   ) opsys=sunos4-1-2-shr ;;
-      *-sunos4-1-3*shr*	   ) opsys=sunos4-1-3-shr ;;
-      *-sunos4-1-[4-9]*shr* ) opsys=sunos4-1-4-shr ;;
+      *-sunos4shr*	   ) opsys=sunos4-0shr   ;;
+      *-sunos4-0shr*	   ) opsys=sunos4-0shr   ;;
+      *-sunos4-1shr*	   ) opsys=sunos4-1shr   ;;
+      *-sunos4-1-2shr*	   ) opsys=sunos4-1-2shr ;;
+      *-sunos4-1-[3-9]shr* ) opsys=sunos4-1-3shr ;;
       *-sunos4.0*	   ) opsys=sunos4-0      ;;
       *-sunos4.1.2*        ) opsys=sunos4-1-2    ;;
-      *-sunos4.1.3*        ) opsys=sunos4-1-3    ;;
-      *-sunos4.1.[4-9]*	   ) opsys=sunos4-1-4    ;;
+      *-sunos4.1.[3-9]*	   ) opsys=sunos4-1-3    ;;
       *-sunos4* | *-sunos  ) opsys=sunos4-1	 ;;
 
       *-solaris2.3*	   ) opsys=sol2-3 	 ;;
@@ -2192,65 +1352,40 @@ case "${canonical}" in
       *-mach*		   ) opsys=mach-bsd4-3   ;;
       *			   ) opsys=bsd4-2	 ;;
     esac
-    ## Watch out for a compiler that we know will not work.
+
+    ## Watch out for a compiler that is guaranteed not to work.
     case "${canonical}" in
-     *-solaris* | *-sunos5* )
-		if [ "x$CC" = x/usr/ucb/cc ]; then
-		  ## /usr/ucb/cc doesn't work;
-		  ## we should find some other compiler that does work.
-		  unset CC
-		fi
-		;;
-      *) ;;
+      *-solaris* ) test "$CC" = "/usr/ucb/cc" && unset CC ;;
     esac
   ;;
-  sparc-*-nextstep* )
-    machine=sparc opsys=nextstep
-  ;;
+
+  sparc-*-nextstep* ) machine=sparc opsys=nextstep ;;
 
   ## Tadpole 68k
-  m68*-tadpole-sysv* )
-    machine=tad68k opsys=usg5-3
-  ;;
+  m68*-tadpole-sysv* ) machine=tad68k opsys=usg5-3 ;;
 
   ## Tahoe machines
-  tahoe-tahoe-bsd4.2* )
-    machine=tahoe opsys=bsd4-2
-  ;;
-  tahoe-tahoe-bsd4.3* )
-    machine=tahoe opsys=bsd4-3
-  ;;
+  tahoe-tahoe-bsd4.2* ) machine=tahoe opsys=bsd4-2 ;;
+  tahoe-tahoe-bsd4.3* ) machine=tahoe opsys=bsd4-3 ;;
 
   ## Tandem Integrity S2
-  mips-tandem-sysv* )
-    machine=tandem-s2 opsys=usg5-3
-  ;;
+  mips-tandem-sysv* ) machine=tandem-s2 opsys=usg5-3 ;;
 
   ## Tektronix XD88
-  m88k-tektronix-sysv3* )
-  machine=tekxd88 opsys=usg5-3
-  ;;
+  m88k-tektronix-sysv3* ) machine=tekxd88 opsys=usg5-3 ;;
 
   ## Tektronix 16000 box (6130?)
-  ns16k-tektronix-bsd* )
-    machine=ns16000 opsys=bsd4-2
-  ;;
+  ns16k-tektronix-bsd* ) machine=ns16000 opsys=bsd4-2 ;;
   ## Tektronix 4300
   ## src/m/tek4300.h hints that this is a m68k machine.
-  m68*-tektronix-bsd* )
-    machine=tek4300 opsys=bsd4-3
-  ;;
+  m68*-tektronix-bsd* ) machine=tek4300 opsys=bsd4-3 ;;
 
   ## Titan P2 or P3
   ## We seem to have lost the machine-description file titan.h!
-  titan-titan-sysv* )
-    machine=titan opsys=usg5-3
-  ;;
+  titan-titan-sysv* ) machine=titan opsys=usg5-3 ;;
 
   ## Ustation E30 (SS5E)
-  m68*-unisys-uniplus* )
-    machine=ustation opsystem=unipl5-2
-  ;;
+  m68*-unisys-uniplus* ) machine=ustation opsystem=unipl5-2 ;;
 
   ## Vaxen.
   vax-dec-* )
@@ -2268,21 +1403,16 @@ case "${canonical}" in
   ;;
 
   ## Whitechapel MG1
-  ns16k-whitechapel-* )
-    machine=mg1
-    ## We don't know what sort of OS runs on these; we'll let the
-    ## operating system guessing code below try.
-  ;;
+  ## We don't know what sort of OS runs on these; we'll let the
+  ## operating system guessing code below try.
+  ns16k-whitechapel-* ) machine=mg1 ;;
 
   ## Wicat
-  m68*-wicat-sysv* )
-    machine=wicat opsys=usg5-2
-  ;;
+  m68*-wicat-sysv* ) machine=wicat opsys=usg5-2 ;;
 
   ## Intel 386 machines where we don't care about the manufacturer
   i[3-9]86-*-* )
     machine=intel386
-    CPPFLAGS_MAKEFILEGEN="${CPPFLAGS_MAKEFILEGEN} -Ui386"
     case "${canonical}" in
       *-isc1.* | *-isc2.[01]* )	opsys=386-ix ;;
       *-isc2.2* )		opsys=isc2-2 ;;
@@ -2299,36 +1429,31 @@ case "${canonical}" in
       *-linux* )		opsys=linux ;;
       *-sco3.2v4* )		opsys=sco4 ; NON_GNU_CPP=/lib/cpp  ;;
       *-bsd386* | *-bsdi1* )	opsys=bsd386 ;;
-      *-bsdi3* )		opsys=bsdos3 ;;
       *-bsdi2.1* )		opsys=bsdos2-1 ;;
       *-bsdi2* )		opsys=bsdos2 ;;
       *-sco3.2v5* )		opsys=sco5 ; 
-		## This is a pain.  Like the current USL cc, SCO's cc -E
-		## tokenizes as it preprocesses, making configure very 
-		## unhappy.  Unfortunately, /lib/cpp doesn't understand
-		## flags like "-b elf", so we have to cheat in order to
-		## pick up the right defines for UNEXEC from the s-file.
-		## 01/05/95 robertl@dgii.com
-		if [ "${dynamic}" = "yes" ]; then
-			NON_GNU_CPP="/lib/cpp -D_XOPEN_SOURCE -D_SCO_ELF"  ;
-		else
-			NON_GNU_CPP="/lib/cpp -D_XOPEN_SOURCE"  ;
-		fi ;;
-      *-386bsd* )               opsys=386bsd ;;
-      *-freebsd* )              opsys=freebsd ;;
+	## This is a pain.  Like the current USL cc, SCO's cc -E
+	## tokenizes as it preprocesses, making configure very 
+	## unhappy.  Unfortunately, /lib/cpp doesn't understand
+	## flags like "-b elf", so we have to cheat in order to
+	## pick up the right defines for UNEXEC from the s-file.
+	## 01/05/95 robertl@dgii.com
+	if test "${dynamic}" = "yes" ; then
+		NON_GNU_CPP="/lib/cpp -D_XOPEN_SOURCE -D_SCO_ELF"  ;
+	else
+		NON_GNU_CPP="/lib/cpp -D_XOPEN_SOURCE"  ;
+	fi ;;
+      *-386bsd* )	        opsys=386bsd ;;
+      *-freebsd* )		opsys=freebsd ;;
       *-nextstep* )		opsys=nextstep ;;
       ## Otherwise, we'll fall through to the generic opsys code at the bottom.
     esac
   ;;
 
   ## Linux/68k
-  m68k-*-linux* )
-    machine=m68k opsys=linux
-  ;;
+  m68k-*-linux* ) machine=m68k opsys=linux ;;
 
-  * )
-    unported=yes
-  ;;
+  * ) unported=yes ;;
 esac
 
 ### If the code above didn't choose an operating system, just choose
@@ -2337,38 +1462,33 @@ esac
 ### operating system is; if you know what operating systems a machine
 ### runs, it's cleaner to make it explicit in the case statement
 ### above.
-if [ x"${opsys}" = x ]; then
+if test -z "${opsys}" ; then
   case "${canonical}" in
-    *-gnu* )				opsys=gnu ;;
-    *-bsd4.[01] )			opsys=bsd4-1 ;;
-    *-bsd4.2 )				opsys=bsd4-2 ;;
-    *-bsd4.3 )				opsys=bsd4-3 ;;
-    *-sysv0 | *-sysvr0 )		opsys=usg5-0 ;;
-    *-sysv2 | *-sysvr2 )		opsys=usg5-2 ;;
-    *-sysv2.2 | *-sysvr2.2 )		opsys=usg5-2-2 ;;
-    *-sysv3* | *-sysvr3* )		opsys=usg5-3 ;;
+    *-gnu* )			opsys=gnu    ;;
+    *-bsd4.[01] )		opsys=bsd4-1 ;;
+    *-bsd4.2 )			opsys=bsd4-2 ;;
+    *-bsd4.3 )			opsys=bsd4-3 ;;
+    *-sysv0 | *-sysvr0 )	opsys=usg5-0 ;;
+    *-sysv2 | *-sysvr2 )	opsys=usg5-2 ;;
+    *-sysv2.2 | *-sysvr2.2 )	opsys=usg5-2-2 ;;
+    *-sysv3* | *-sysvr3* )	opsys=usg5-3 ;;
     *-sysv4.1* | *-sysvr4.1* )
       NON_GNU_CPP=/usr/lib/cpp
       opsys=usg5-4 ;;
     *-sysv4.[2-9]* | *-sysvr4.[2-9]* )
-	if [ x$NON_GNU_CPP = x ]; then
-	  if [ -f /usr/ccs/lib/cpp ]; then
-	    NON_GNU_CPP=/usr/ccs/lib/cpp
-	  else
-	    NON_GNU_CPP=/lib/cpp
+	if test -z "$NON_GNU_CPP" ; then
+	  if test -f /usr/ccs/lib/cpp
+	  then NON_GNU_CPP=/usr/ccs/lib/cpp
+	  else NON_GNU_CPP=/lib/cpp
 	  fi
 	fi
 	opsys=usg5-4-2 ;;
-    *-sysv4* | *-sysvr4* )		opsys=usg5-4 ;;
-    * )
-      unported=yes
-    ;;
+    *-sysv4* | *-sysvr4* )	opsys=usg5-4 ;;
+    * )				unported=yes ;;
   esac
 fi
 
-if test "x$RANLIB" = x; then
-  RANLIB=ranlib
-fi
+test -z "$RANLIB" && RANLIB=ranlib
 
 if test ${unported} = yes; then
   (echo "${progname}: XEmacs hasn't been ported to \`${canonical}' systems."
@@ -2377,33 +1497,20 @@ if test ${unported} = yes; then
   exit 1
 fi
 
-if [ "${dynamic}" = "yes" ]; then
+if test "${dynamic}" = "yes" ; then
   case "${opsys}" in
-    hpux8		) opsys=hpux8-shr ;;
-    hpux9		) opsys=hpux9-shr ;;
-    hpux10		) opsys=hpux10-shr ;;
-    sunos4-0		) opsys=sunos4-0-shr ;;
-    sunos4-1		) opsys=sunos4-1-shr ;;
-    sunos4-1-2		) opsys=sunos4-1-2-shr ;;
-    sunos4-1-3		) opsys=sunos4-1-3-shr ;;
-    sunos4-1-4		) opsys=sunos4-1-4-shr ;;
-    sco5		) opsys=sco5-shr ;;
+    hpux8 | hpux9 | hpux10 | sunos4-0 | sunos4-1 | sunos4-1-2 | sunos4-1-3 | sco5 ) 
+    opsys="${opsys}-shr" ;;
   esac
-elif [ "${dynamic}" = "no" ]; then
+elif test "${dynamic}" = "no" ; then
   case "${opsys}" in
-    sol2		) opsys=sol2-static ;;
-    sol2-3		) opsys=sol2-3-static ;;
-    sol2-4		) opsys=sol2-4-static ;;
-    decosf1-3		) opsys=decosf1-3-static ;;
-    decosf3-1		) opsys=decosf3-1-static ;;
-    decosf3-2		) opsys=decosf3-2-static ;;
-    decosf4-0		) opsys=decosf4-0-static ;;
-    linux		) opsys=linux-static ;;
+    sol2 | sol2-3 | sol2-4 | decosf1-3 | decosf3-1 | decosf3-2 | linux )
+    opsys="${opsys}-static" ;;
   esac
 fi
 
 dynodump_arch=''
-if [ "${need_dynodump}" = "yes" ]; then
+if test "${need_dynodump}" = "yes" ; then
   case "${canonical}" in
     sparc*    ) dynodump_arch=sparc ;;
     powerpc*  ) dynodump_arch=ppc   ;;
@@ -2420,6 +1527,9 @@ opsysfile="s/${opsys}.h"
 #            Determine the compiler, set up for feature testing            #
 #									   #
 ############################################################################
+
+
+
 
 
 ac_ext=c
@@ -2486,46 +1596,37 @@ ac_compile='${CC-cc} $CFLAGS $LDFLAGS conftest.${ac_ext} -o conftest $LIBS >/dev
 
 
 
-
-
-if [ "${extra_verbose}" = "yes" ] ; then
+if test "${extra_verbose}" = "yes"  ; then
 #   This is identical to the version that A\C_LANG_C generates except that
 #   it omits the redirection of all output to /dev/null.
   ac_compile='${CC-cc} $CFLAGS $LDFLAGS conftest.${ac_ext} -o conftest $LIBS'
 fi
 
 #### Choose a compiler.
-if [ "x$CC" = x ] ; then
+if test "x$CC" = x  ; then
   cc_specified=1
 fi
 
 # Save the value of CFLAGS that the user specified.
 SPECIFIED_CFLAGS="$CFLAGS"
 
-if [ "${with_gcc}" = "yes" ] ; then
+if test "${with_gcc}" = "yes"  ; then
   CC="${compiler-gcc}"
   GCC=1
-elif [ "${with_lcc}" = "yes" ] ; then
+elif test "${with_lcc}" = "yes"  ; then
   CC="${compiler-lcc}"
   dash_r_space=' '		# this bullshit is here because lcc for solaris
 				# will not accept -Rargument.
 				# It needs -R argument instead.  Yuck yuck yuck.
-  if [ "x$NON_GNU_CPP" = x ] ; then
-    NON_GNU_CPP="yes"		# this is handled specially below...
-  fi
-elif [ "${compiler}" != "" ] ; then
-  CC="${compiler}"
-elif [ "${with_gcc}" = "no" ] ; then
-  CC="cc"
-elif [ "${with_lcc}" = "no" ] ; then
-  if [ "x$CC" = x ]
-  then CC=cc;
-  else true;
-  fi
+  test -z "$NON_GNU_CPP" && NON_GNU_CPP="yes" # this is handled specially below...
+elif test "${compiler}" != ""   ; then CC="${compiler}"
+elif test "${with_gcc}" = "no"  ; then CC="cc"
+elif test "${with_lcc}" = "no"  ; then
+  test -z "$CC" && CC=cc
 else
   case "${canonical}" in
     * )
-       if test -z "$CC"; then
+      if test -z "$CC"; then
   # Extract the first word of `gcc', so it can be a program name with args.
   set ac_dummy gcc; ac_word=$2
   test -n "$silent" || echo "checking for $ac_word"
@@ -2553,8 +1654,8 @@ if egrep yes conftest.out >/dev/null 2>&1; then
   GCC=1 # For later tests.
 fi
 rm -f conftest*
- 
-      if [ "${CC}" = "gcc" ] ; then
+
+      if test "${CC}" = "gcc"  ; then
         with_gcc="yes"
         GCC=1
       fi
@@ -2562,20 +1663,16 @@ rm -f conftest*
   esac
 fi
 
-# On Suns, sometimes $CPP names a directory.
-if [ -n "$CPP" ] && [ -d "$CPP" ] ; then
-  CPP=
-fi
+
 
 #### Some systems specify a CPP to use unless we are using GCC.
 #### Now that we know whether we are using GCC, we can decide whether
 #### to use that one.
-
-if [ "x$GCC" = x1 ] || [ "x$NON_GNU_CPP" = x ] ; then
-  true
+if test "x$NON_GNU_CPP" = x -o x$GCC = x1
+then true
 else
-  if [ "x$CPP" = x ]; then
-    if [ "${with_lcc}" = "yes" ] && [ "${NON_GNU_CPP}" = "yes" ] ; then
+  if test "x$CPP" = x ; then
+    if test "${with_lcc}" = "yes" -a "${NON_GNU_CPP}" = "yes"; then
       CPP='gcc -E -traditional' # cross fingers and hope it's there....
     else
       CPP="$NON_GNU_CPP"
@@ -2586,7 +1683,7 @@ fi
 #### Some systems specify a CC to use unless we are using GCC.
 #### Now that we know whether we are using GCC, we can decide whether
 #### to use that one.
-if [ "x$NON_GNU_CC" = x ] || [ x$GCC = x1 ] || [ x$cc_specified = x1 ]
+if test "x$NON_GNU_CC" = x -o x$GCC = x1 -o x$cc_specified = x1
 then true
 else
   CC="$NON_GNU_CC"
@@ -2596,15 +1693,8 @@ fi
 ## the "test" options, whatever the hell those are supposed to be
 ## for, and the result is that SunOS builds were always static.
 
-#if [ x$GCC = x1 ] && [ "x$GCC_TEST_OPTIONS" != x ]
-#then
-#  CC="$CC $GCC_TEST_OPTIONS"
-#fi
-#
-#if [ x$GCC = x ] && [ "x$NON_GCC_TEST_OPTIONS" != x ]
-#then
-#  CC="$CC $NON_GCC_TEST_OPTIONS"
-#fi
+# test x$GCC = x1 -a "x$GCC_TEST_OPTIONS"     != x && CC="$CC $GCC_TEST_OPTIONS"
+# test x$GCC = x  -a "x$NON_GCC_TEST_OPTIONS" != x && CC="$CC $NON_GCC_TEST_OPTIONS"
 
 ############################################################################
 #									   #
@@ -2627,11 +1717,7 @@ if test -z "$CPP"; then
 #include <stdio.h>
 Syntax Error
 EOF
-# Some shells (Coherent) do redirections in the wrong order, so need
-# the parens.
-# The exec was added by Mly to make this work under BSDI
 ac_err=`eval "(exec $ac_cpp conftest.${ac_ext} >/dev/null) 2>&1"`
-# Use test here, not brackets, to avoid strange autoconf-quoting lossage.
 if test "${extra_verbose}" = "yes"  && test -n "$ac_err"; then
   echo "$ac_err"
 fi
@@ -2645,11 +1731,7 @@ else
 #include <stdio.h>
 Syntax Error
 EOF
-# Some shells (Coherent) do redirections in the wrong order, so need
-# the parens.
-# The exec was added by Mly to make this work under BSDI
 ac_err=`eval "(exec $ac_cpp conftest.${ac_ext} >/dev/null) 2>&1"`
-# Use test here, not brackets, to avoid strange autoconf-quoting lossage.
 if test "${extra_verbose}" = "yes"  && test -n "$ac_err"; then
   echo "$ac_err"
 fi
@@ -2668,7 +1750,7 @@ test -n "$verbose" && echo "	setting CPP to $CPP"
 
 case "${canonical}" in
   *-sun-sunos* )
-    if [ "${CPP}" = "acc -E" ] ; then
+    if test "${CPP}" = "acc -E"  ; then
       CPP="acc -E -Xs"
     fi
   ;;
@@ -2808,7 +1890,7 @@ rm -f conftest*
 
 
 
-for ac_hdr in mach/mach.h sys/stropts.h sys/timeb.h sys/time.h unistd.h utime.h sys/wait.h libintl.h locale.h libgen.h linux/version.h
+for ac_hdr in mach/mach.h sys/stropts.h sys/timeb.h sys/time.h unistd.h utime.h sys/wait.h libintl.h locale.h libgen.h linux/version.h kstat.h sys/pstat.h
 do
 ac_tr_hdr=HAVE_`echo $ac_hdr | tr '[a-z]./' '[A-Z]__'`
 test -n "$silent" || echo "checking for ${ac_hdr}"
@@ -2816,11 +1898,7 @@ cat > conftest.${ac_ext} <<EOF
 #include "confdefs.h"
 #include <${ac_hdr}>
 EOF
-# Some shells (Coherent) do redirections in the wrong order, so need
-# the parens.
-# The exec was added by Mly to make this work under BSDI
 ac_err=`eval "(exec $ac_cpp conftest.${ac_ext} >/dev/null) 2>&1"`
-# Use test here, not brackets, to avoid strange autoconf-quoting lossage.
 if test "${extra_verbose}" = "yes"  && test -n "$ac_err"; then
   echo "$ac_err"
 fi
@@ -2851,11 +1929,7 @@ cat > conftest.${ac_ext} <<EOF
 #include <string.h>
 #include <float.h>
 EOF
-# Some shells (Coherent) do redirections in the wrong order, so need
-# the parens.
-# The exec was added by Mly to make this work under BSDI
 ac_err=`eval "(exec $ac_cpp conftest.${ac_ext} >/dev/null) 2>&1"`
-# Use test here, not brackets, to avoid strange autoconf-quoting lossage.
 if test "${extra_verbose}" = "yes"  && test -n "$ac_err"; then
   echo "$ac_err"
 fi
@@ -3359,28 +2433,25 @@ fi
 echo "checking for specified window system"
 
 window_system=''
-case "${with_x11}" in
-  yes )
-    window_system=${window_system}x11
-  ;;
-  no )
-    window_system=${window_system}none
+case "${with_x11}" in 
+  yes ) window_system=${window_system}x11  ;;
+  no  ) window_system=${window_system}none ;;
 esac
 
 case "${window_system}" in
   "none" | "x11" ) ;;
   "" )
     # --x-includes or --x-libraries implies --with-x11.
-    if [ -n "${x_includes}" ] || [ -n "${x_libraries}" ]; then
+    if test -n "${x_includes}" -o -n "${x_libraries}"; then
       window_system=x11
     else
       echo "  No window system specified.  Looking for X11."
       # If the user didn't specify a window system and we found X11, use it.
-      if [ -r /usr/lib/libX11.a \
+      if test -r /usr/lib/libX11.a \
          -o -d /usr/include/X11 \
          -o -d /usr/X386/include \
          -o -d /usr/X11R6/include \
-	 -o -d ${x_includes}/X11 ]; then
+	 -o -d ${x_includes}/X11 ; then
         window_system=x11
       fi
     fi
@@ -3391,13 +2462,12 @@ case "${window_system}" in
   ;;
 esac
 
-case "${window_system}" in
-  "" | "x11" )
+
+case "${window_system}" in "" | "x11" )
     ### If the user hasn't specified where we should find X, try
     ### letting autoconf figure that out.
-    if [ -z "${x_includes}" ] && [ -z "${x_libraries}" ]; then
-      
-      # If we find X, set shell vars x_includes and x_libraries to the paths.
+    if test -z "${x_includes}${x_libraries}" ; then 
+     # If we find X, set shell vars x_includes and x_libraries to the paths.
 no_x=true
 if test "x$with_x" != xno; then
 test -n "$silent" || echo "checking for X include and library files with xmkmf"
@@ -3443,11 +2513,7 @@ cat > conftest.${ac_ext} <<EOF
 #include "confdefs.h"
 #include <$x_direct_test_include>
 EOF
-# Some shells (Coherent) do redirections in the wrong order, so need
-# the parens.
-# The exec was added by Mly to make this work under BSDI
 ac_err=`eval "(exec $ac_cpp conftest.${ac_ext} >/dev/null) 2>&1"`
-# Use test here, not brackets, to avoid strange autoconf-quoting lossage.
 if test "${extra_verbose}" = "yes"  && test -n "$ac_err"; then
   echo "$ac_err"
 fi
@@ -3577,57 +2643,27 @@ test -n "$x_includes" && test -n "$verbose" && echo "	X11 headers are in $x_incl
 test -n "$x_libraries" && test -n "$verbose" && echo "	X11 libraries are in $x_libraries"
 fi
 
-      
     fi
-    if [ -n "${x_includes}" ] || [ -n "${x_libraries}" ]; then
-      window_system=x11
-    fi
+    if test -n "${x_includes}${x_libraries}" ; then window_system=x11 ; fi
   ;;
 esac
 
-[ -z "${window_system}" ] && window_system=none
+test -z "${window_system}" && window_system="none"
 
-if [ "${window_system}" = "none" ]; then
-  if [ "${with_tty}" != "yes" ]; then
+if test "${window_system}" = "none" ; then
+  if test "${with_tty}" != "yes" ; then
     echo "No window system support, and no TTY support." >&2
     echo "Unable to proceed." >&2
     exit 1
   fi
-  if [ "${with_epoch}" = "yes" ]; then
-     echo "configure: warning: --with-epoch ignored:  Not valid without X support" >&2 
-    with_epoch='no'
-  fi
-  if [ "x${with_cde}" != x ]; then
-     echo "configure: warning: --with-cde ignored:  Not valid without X support" >&2 
-    with_menubars='no'
-  fi
-  if [ "x${with_offix}" != x ]; then
-     echo "configure: warning: --with-offix ignored:  Not valid without X support" >&2 
-    with_offix='no'
-  fi
-  if [ "x${with_menubars}" != x ]; then
-     echo "configure: warning: --with-menubars ignored:  Not valid without X support" >&2 
-    with_menubars='no'
-  fi
-  if [ "x${with_scrollbars}" != x ]; then
-     echo "configure: warning: --with-scrollbars ignored:  Not valid without X support" >&2 
-    with_scrollbars='no'
-  fi
-  if [ "x${with_dialogs}" != x ]; then
-     echo "configure: warning: --with-dialogs ignored:  Not valid without X support" >&2 
-    with_dialogs='no'
-  fi
-  if [ "x${with_toolbars}" != x ]; then
-     echo "configure: warning: --with-toolbars ignored:  Not valid without X support" >&2 
-    with_toolbars='no'
-  fi
-  with_cde='no'
-  with_offix='no'
-  with_menubars='no'
-  with_scrollbars='no'
-  with_dialogs='no'
-  with_toolbars='no'
-elif [ -z "${with_toolbars}" ] ; then
+  for feature in epoch cde offix menubars scrollbars toolbars dialogs xim tiff
+  do
+    if eval "test -n \"\$with_$feature\" -a \"\$with_$feature\" != no" ; then
+       echo "configure: warning: --with-$feature ignored:  Not valid without X support" >&2
+    fi
+     eval "with_$feature=no"
+  done
+elif test -z "${with_toolbars}"  ; then
   with_toolbars='yes'
 fi
 
@@ -3635,31 +2671,31 @@ case "${canonical}" in
   *-sun-solaris* | *-sun-sunos5* ) add_runtime_flag=yes ;;
 esac
 
-if [ -n "${x_libraries}" ]; then
-    if [ "${add_runtime_flag}" ]; then
-	LD_SWITCH_X_SITE="-L${x_libraries} -R${dash_r_space}${x_libraries}"
-    else
-	LD_SWITCH_X_SITE="-L${x_libraries}"
-    fi
+if test -n "${x_libraries}" ; then
+  if test "${add_runtime_flag}" ; then
+    LD_SWITCH_X_SITE="-L${x_libraries} -R${dash_r_space}${x_libraries}"
+      else
+    LD_SWITCH_X_SITE="-L${x_libraries}"
+  fi
 fi
 # LD_SWITCH_X_SITE_AUX (from FSF) is ill-conceived.  See s/sol2*.h.
-# [ -n "${x_libraries}" ] && LD_SWITCH_X_SITE_AUX="-R${x_libraries}"
-[ -n "${x_includes}" ] && C_SWITCH_X_SITE="-I${x_includes}"
+# test -n "${x_libraries}" -a LD_SWITCH_X_SITE_AUX="-R${x_libraries}"
+test -n "${x_includes}" && C_SWITCH_X_SITE="-I${x_includes}"
 
-if [ -n "${site_libraries}" ]; then
+if test -n "${site_libraries}" ; then
   for arg in ${site_libraries}
   do
     LD_SWITCH_SITE="${LD_SWITCH_SITE} -L${arg}"
   done
 fi
-if [ -n "${site_runtime_libraries}" ]; then
+if test -n "${site_runtime_libraries}" ; then
   for arg in ${site_runtime_libraries}
   do
     LD_SWITCH_SITE="${LD_SWITCH_SITE} -L${arg}"
     LD_SWITCH_SITE="${LD_SWITCH_SITE} -R${dash_r_space}${arg}"
   done
 fi
-if [ -n "${site_includes}" ]; then
+if test -n "${site_includes}" ; then
   for arg in ${site_includes}
   do
     C_SWITCH_SITE="${C_SWITCH_SITE} -I${arg}"
@@ -3671,37 +2707,25 @@ fi
 bitmapdir=
 
 # Avoid forcing the search of /usr/include before fixed include files.
-if [ "$C_SWITCH_X_SITE" = "-I/usr/include" ]; then
-   C_SWITCH_X_SITE=" "
-fi
+test "$C_SWITCH_X_SITE" = "-I/usr/include" && C_SWITCH_X_SITE=" "
 
 # Need for check for audio/Xtutil.h.
 CPP="${CPP} ${C_SWITCH_X_SITE}"
 
 case "${window_system}" in
-  x11 )
-    HAVE_X_WINDOWS=yes
-    echo "  Using X11."
-  ;;
-  none )
-    HAVE_X_WINDOWS=no
-    echo "  Using no window system."
-  ;;
+  x11  ) HAVE_X_WINDOWS=yes; echo "  Using X11." ;;
+  none ) HAVE_X_WINDOWS=no ; echo "  Using no window system." ;;
 esac
 
 if test "${opsys}" = "hpux9"; then
   case "${x_libraries}" in
-    *X11R4* )
-      opsysfile="s/hpux9-x11r4.h"
-      ;;
+    *X11R4* ) opsysfile="s/hpux9-x11r4.h" ;;
   esac
 fi
 
-if test "${opsys}" = "hpux9-shr"; then
+if test "${opsys}" = "hpux9shr"; then
   case "${x_libraries}" in
-    *X11R4* )
-      opsysfile="s/hpux9shxr4.h"
-      ;;
+    *X11R4* ) opsysfile="s/hpux9shxr4.h" ;;
   esac
 fi
 
@@ -3820,7 +2844,7 @@ CPP=`eval "echo $CPP"`
 eval `${CPP} -Isrc ${tempcname} \
        | grep 'configure___' \
        | sed -n -e 's/^configure___ \([^=]*=\)\(.*\)$/\1"\2"/p'`
-if [ "x$SPECIFIED_CFLAGS" = x ]; then
+if test "x$SPECIFIED_CFLAGS" = x ; then
   eval `${CPP} -Isrc -DTHIS_IS_CONFIGURE ${tempcname} \
 	 | grep 'configure___' \
 	 | sed -n -e 's/^configure___ \([^=]*=\)\(.*\)$/\1"\2"/p'`
@@ -3830,7 +2854,7 @@ fi
 rm ${tempcname}
 
 # override CFLAGS if user wishes
-if [ "${cflags}" != "NO_CFLAGS_DEFINED" ]; then
+if test "${cflags}" != "NO_CFLAGS_DEFINED" ; then
   REAL_CFLAGS=${cflags}
 fi
 
@@ -3840,11 +2864,11 @@ UNEXEC_SRC="`echo ${unexec} | sed 's/\.o/.c/'`"
 # Do the opsystem or machine files prohibit the use of the GNU malloc?
 # Assume not, until told otherwise.
 GNU_MALLOC=yes
-if [ "${system_malloc}" = "yes" ]; then
+if test "${system_malloc}" = "yes" ; then
   GNU_MALLOC=no
   GNU_MALLOC_reason="
   (The GNU allocators don't work with this system configuration.)"
-elif [ "${use_system_malloc}" = "yes" ]; then
+elif test "${use_system_malloc}" = "yes" ; then
   GNU_MALLOC=no
   GNU_MALLOC_reason="
   (User chose not to use GNU allocators.)"
@@ -3891,6 +2915,40 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_LIBDNET\${ac_dB}HAVE_LIBDNET\${ac_dC}1\
 }
 
    LIBS="${LIBS} -ldnet"
+fi
+
+
+ac_save_LIBS="${LIBS}"
+LIBS="${LIBS} -lkstat"
+ac_have_lib=""
+test -n "$silent" || echo "checking for -lkstat"
+cat > conftest.${ac_ext} <<EOF
+#include "confdefs.h"
+
+int main() { return 0; }
+int t() { main();; return 0; }
+EOF
+if eval $ac_compile; then
+  rm -rf conftest*
+  ac_have_lib="1"
+
+fi
+rm -f conftest*
+LIBS="${ac_save_LIBS}"
+if test -n "${ac_have_lib}"; then
+   
+{
+test -n "$verbose" && \
+echo "	defining HAVE_LIBKSTAT"
+echo "#define" HAVE_LIBKSTAT "1" >> confdefs.h
+DEFS="$DEFS -DHAVE_LIBKSTAT=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_LIBKSTAT\${ac_dB}HAVE_LIBKSTAT\${ac_dC}1\${ac_dD}
+\${ac_uA}HAVE_LIBKSTAT\${ac_uB}HAVE_LIBKSTAT\${ac_uC}1\${ac_uD}
+\${ac_eA}HAVE_LIBKSTAT\${ac_eB}HAVE_LIBKSTAT\${ac_eC}1\${ac_eD}
+"
+}
+
+   LIBS="${LIBS} -lkstat"
 fi
 
 
@@ -3964,9 +3022,7 @@ if test "${window_system}" != "none" ; then
   if test -d /usr/X386/include; then
     HAVE_XFREE386=yes
     test -z "${C_SWITCH_X_SITE}" && C_SWITCH_X_SITE="-I/usr/X386/include"
-  elif test -f /etc/XF86Config -o \
-	    -f /etc/X11/XF86Config -o \
-	    -f /usr/X11R6/lib/X11/XF86Config; then
+  elif test -d /usr/X11R6/include; then
     HAVE_XFREE386=yes
     test -z "${C_SWITCH_X_SITE}" && C_SWITCH_X_SITE="-I/usr/X11R6/include"
   else
@@ -4204,8 +3260,7 @@ fi
     fi
   fi
 fi
-if test "${with_xauth}" = "yes" ; then
-  
+test "${with_xauth}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_XAUTH"
@@ -4217,16 +3272,15 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_XAUTH\${ac_dB}HAVE_XAUTH\${ac_dC}1\${ac
 "
 }
 
-fi
 
 #
 # See if we can find CDE.
 #
-if test "${window_system}" != "none" ; then
-  if test "${with_cde}" != "no" ; then
-    if test "${with_cde}" != "yes" ; then
-      internal_cde_lib_found='no'
-      ac_save_LIBS="${LIBS}"
+if test "${window_system}" != "none" -a \
+	"${with_cde}"      != "no"   -a \
+	"${with_cde}"      != "yes" ; then
+  internal_cde_lib_found='no'
+  ac_save_LIBS="${LIBS}"
 LIBS="${LIBS} -lDtSvc"
 ac_have_lib=""
 test -n "$silent" || echo "checking for -lDtSvc"
@@ -4249,23 +3303,19 @@ else
    :; 
 fi
 
-      if test "${internal_cde_lib_found}" = "yes" ; then
-        internal_cde_includes_found='no'
-        for arg in ${DEFS} /usr/include
-          do
-            if test -f `echo "${arg}/Dt/Dt.h" | sed 's/^\-I//'` ; then
-  	      internal_cde_includes_found='yes'
-            fi
-          done
-        if test "${internal_cde_includes_found}" = "yes" ; then
-          with_cde='yes'
-        fi
+  if test "${internal_cde_lib_found}" = "yes" ; then
+    internal_cde_includes_found='no'
+    for arg in ${DEFS} /usr/include ; do
+      if test -f `echo "${arg}/Dt/Dt.h" | sed 's/^\-I//'` ; then
+        internal_cde_includes_found='yes'
       fi
+    done
+    if test "${internal_cde_includes_found}" = "yes" ; then
+      with_cde='yes'
     fi
   fi
 fi
-if test "${with_cde}" = "yes" ; then
-  
+test "${with_cde}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_CDE"
@@ -4277,16 +3327,15 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_CDE\${ac_dB}HAVE_CDE\${ac_dC}1\${ac_dD}
 "
 }
 
-fi
 
 #
 # See if we can find OffiX.
 #
-if test "${window_system}" != "none" ; then
-  if test "${with_offix}" != "no" ; then
-    if test "${with_offix}" != "yes" ; then
-      internal_offix_lib_found='no'
-      ac_save_LIBS="${LIBS}"
+if test "${window_system}" != "none" -a \
+	"${with_offix}"    != "no"   -a \
+	"${with_offix}"    != "yes" ; then
+  internal_offix_lib_found='no'
+  ac_save_LIBS="${LIBS}"
 LIBS="${LIBS} -lDnd"
 ac_have_lib=""
 test -n "$silent" || echo "checking for -lDnd"
@@ -4309,23 +3358,17 @@ else
    :; 
 fi
 
-      if test "${internal_offix_lib_found}" = "yes" ; then
-        internal_offix_includes_found='no'
-        for arg in ${DEFS} /usr/include
-          do
-            if test -f `echo "${arg}/OffiX/DragAndDrop.h" | sed 's/^\-I//'` ; then
-  	      internal_offix_includes_found='yes'
-            fi
-          done
-        if test "${internal_offix_includes_found}" = "yes" ; then
-          with_offix='yes'
-        fi
+  if test "${internal_offix_lib_found}" = "yes" ; then
+    internal_offix_includes_found='no'
+    for arg in ${DEFS} /usr/include ; do
+      if test -f `echo "${arg}/OffiX/DragAndDrop.h" | sed 's/^\-I//'` ; then
+        internal_offix_includes_found='yes'
       fi
-    fi
+    done
+    test "${internal_offix_includes_found}" = "yes" && with_offix='yes'
   fi
 fi
-if test "${with_offix}" = "yes" ; then
-  
+test "${with_offix}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_OFFIX_DND"
@@ -4337,35 +3380,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_OFFIX_DND\${ac_dB}HAVE_OFFIX_DND\${ac_d
 "
 }
 
-fi
 
-#
-# See if we can find Xlocale.h.
-#
-with_xlocale_h='no'
-if test "${window_system}" != "none" ; then
-  for arg in ${DEFS} /usr/include
-  do
-    if test -f `echo "${arg}/X11/Xlocale.h" | sed 's/^\-I//'` ; then
-      with_xlocale_h='yes'
-    fi
-  done
-fi
-if test "${with_xlocale_h}" = "yes" ; then
-  
-{
-test -n "$verbose" && \
-echo "	defining HAVE_XLOCALE_H"
-echo "#define" HAVE_XLOCALE_H "1" >> confdefs.h
-DEFS="$DEFS -DHAVE_XLOCALE_H=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_XLOCALE_H\${ac_dB}HAVE_XLOCALE_H\${ac_dC}1\${ac_dD}
-\${ac_uA}HAVE_XLOCALE_H\${ac_uB}HAVE_XLOCALE_H\${ac_uC}1\${ac_uD}
-\${ac_eA}HAVE_XLOCALE_H\${ac_eB}HAVE_XLOCALE_H\${ac_eC}1\${ac_eD}
-"
-}
-
-fi
-
+# X window options
 if test "${window_system}" != "none" ; then
   test -n "$silent" || echo "checking the version of X11 being used"
 cat > conftest.${ac_ext} <<EOF
@@ -4386,10 +3402,8 @@ EOF
 ac_save_LIBS="${LIBS}"
 LIBS="${LIBS} ${DEFS}"
 if eval $ac_compile; then
-  ac_find_x_version=`./conftest`
-  
-    if [ "$ac_find_x_version" = "X11R4" ]; then
-       
+  case "`./conftest`" in
+    X11R4 ) 
 {
 test -n "$verbose" && \
 echo "	defining THIS_IS_X11R4"
@@ -4400,9 +3414,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}THIS_IS_X11R4\${ac_dB}THIS_IS_X11R4\${ac_dC}
 \${ac_eA}THIS_IS_X11R4\${ac_eB}THIS_IS_X11R4\${ac_eC}1\${ac_eD}
 "
 }
- 
-    elif [ "$ac_find_x_version" = "X11R5" ]; then
-       
+ ;;
+    X11R5 ) 
 {
 test -n "$verbose" && \
 echo "	defining THIS_IS_X11R5"
@@ -4413,9 +3426,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}THIS_IS_X11R5\${ac_dB}THIS_IS_X11R5\${ac_dC}
 \${ac_eA}THIS_IS_X11R5\${ac_eB}THIS_IS_X11R5\${ac_eC}1\${ac_eD}
 "
 }
- 
-    elif [ "$ac_find_x_version" = "X11R6" ]; then
-       
+ ;;
+    X11R6 ) 
 {
 test -n "$verbose" && \
 echo "	defining THIS_IS_X11R6"
@@ -4426,9 +3438,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}THIS_IS_X11R6\${ac_dB}THIS_IS_X11R6\${ac_dC}
 \${ac_eA}THIS_IS_X11R6\${ac_eB}THIS_IS_X11R6\${ac_eC}1\${ac_eD}
 "
 }
- 
-    fi
-  
+ ;;
+  esac
 fi
 LIBS=$ac_save_LIBS
 rm -f conftest*
@@ -4441,11 +3452,7 @@ cat > conftest.${ac_ext} <<EOF
 #include "confdefs.h"
 #include <${ac_hdr}>
 EOF
-# Some shells (Coherent) do redirections in the wrong order, so need
-# the parens.
-# The exec was added by Mly to make this work under BSDI
 ac_err=`eval "(exec $ac_cpp conftest.${ac_ext} >/dev/null) 2>&1"`
-# Use test here, not brackets, to avoid strange autoconf-quoting lossage.
 if test "${extra_verbose}" = "yes"  && test -n "$ac_err"; then
   echo "$ac_err"
 fi
@@ -4580,10 +3587,9 @@ fi
 #
 # see if XPM is hanging around somewhere
 #
-if test "${window_system}" != "none" ; then
-  if test "${with_xpm}" != "no" ; then
-    if test "${with_xpm}" != "yes" ; then
-      ac_save_LIBS="${LIBS}"
+test "${window_system}" != "none" -a \
+     "${with_xpm}"      != "no"   -a \
+     "${with_xpm}"      != "yes" && { ac_save_LIBS="${LIBS}"
 LIBS="${LIBS} -lXpm"
 ac_have_lib=""
 test -n "$silent" || echo "checking for -lXpm"
@@ -4605,12 +3611,9 @@ if test -n "${ac_have_lib}"; then
 else
    :; 
 fi
+ }
 
-    fi
-  fi
-fi
-if test "${with_xpm}" = "yes" ; then
-  
+test "${with_xpm}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_XPM"
@@ -4622,7 +3625,6 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_XPM\${ac_dB}HAVE_XPM\${ac_dC}1\${ac_dD}
 "
 }
 
-fi
 
 #
 # see if Xmu is hanging around somewhere
@@ -4641,8 +3643,7 @@ fi
 
 if test "${window_system}" != "none" ; then
   if test "${with_xmu}" != "no" ; then
-    if test "${with_xmu}" != "yes" ; then
-      ac_save_LIBS="${LIBS}"
+    test "${with_xmu}" != "yes" && { ac_save_LIBS="${LIBS}"
 LIBS="${LIBS} -lXmu"
 ac_have_lib=""
 test -n "$silent" || echo "checking for -lXmu"
@@ -4664,32 +3665,13 @@ if test -n "${ac_have_lib}"; then
 else
    :; 
 fi
-
-    fi
-    # On SunOS4 (and 5!) we must kludge harder to try to detect Xmu
+ }
+    # On SunOS4 we must kludge harder to try to detect Xmu
     # Upgrade to autoconf 2 and use ac_check_lib - mrb
-    if test "${with_xmu}" != "yes" ; then
+    if test "${with_xmu}" != "yes" -a -n "$OPENWINHOME" ; then
       # begin expansion of ac_have_library
       ac_save_LIBS="${LIBS}"
       LIBS="${LIBS} -lXmu -lXt -lXext -lX11 -lm"
-      ac_have_lib=""
-      cat > conftest.${ac_ext} <<EOF
-int main() { return 0; }
-EOF
-      if eval $ac_compile; then
-        rm -rf conftest*
-        ac_have_lib="1"
-      fi
-      rm -f conftest*
-      LIBS="${ac_save_LIBS}"
-      test -n "${ac_have_lib}" && with_xmu="yes"
-      # end expansion of ac_have_library
-    fi
-    # Sparc/Linux test - fp
-    if test "${with_xmu}" != "yes" -a  ${machine} = sparc -a ${opsys} = linux; then
-      # begin expansion of ac_have_library
-      ac_save_LIBS="${LIBS}"
-      LIBS="${LIBS} -lXmu -lXt -lXext -lX11 -lm -lICE -lSM"
       ac_have_lib=""
       cat > conftest.${ac_ext} <<EOF
 int main() { return 0; }
@@ -4728,8 +3710,7 @@ EOF
     fi
   fi
 fi
-if test "${with_xmu}" = "yes" ; then
-  
+test "${with_xmu}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_XMU"
@@ -4741,24 +3722,19 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_XMU\${ac_dB}HAVE_XMU\${ac_dC}1\${ac_dD}
 "
 }
 
-fi
 
 #
 # see if COMPFACE is hanging around somewhere
 #
-if test "${window_system}" != "none" ; then
-  if test "${with_xface}" != "no" ; then
-    if test "${with_xface}" != "yes" ; then
-      test -n "$silent" || echo "checking for compface.h"
+if test "${window_system}" != "none" -a \
+        "${with_xface}"    != "no"   -a \
+        "${with_xface}"    != "yes" ; then
+  test -n "$silent" || echo "checking for compface.h"
 cat > conftest.${ac_ext} <<EOF
 #include "confdefs.h"
 #include <compface.h>
 EOF
-# Some shells (Coherent) do redirections in the wrong order, so need
-# the parens.
-# The exec was added by Mly to make this work under BSDI
 ac_err=`eval "(exec $ac_cpp conftest.${ac_ext} >/dev/null) 2>&1"`
-# Use test here, not brackets, to avoid strange autoconf-quoting lossage.
 if test "${extra_verbose}" = "yes"  && test -n "$ac_err"; then
   echo "$ac_err"
 fi
@@ -4772,8 +3748,8 @@ else
 fi
 rm -f conftest*
 
-      if test "${compface_incl}" = "yes" ; then
-        ac_save_LIBS="${LIBS}"
+  if test "${compface_incl}" = "yes" ; then
+    ac_save_LIBS="${LIBS}"
 LIBS="${LIBS} -lcompface"
 ac_have_lib=""
 test -n "$silent" || echo "checking for -lcompface"
@@ -4796,12 +3772,9 @@ else
    :; 
 fi
 
-      fi
-    fi
   fi
 fi
-if test "${with_xface}" = "yes" ; then
-  
+test "${with_xface}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_XFACE"
@@ -4813,7 +3786,6 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_XFACE\${ac_dB}HAVE_XFACE\${ac_dC}1\${ac
 "
 }
 
-fi
 
 #
 # check whether we're using GIF support
@@ -4828,8 +3800,7 @@ if test "${window_system}" = "none" ; then
 elif test -z "${with_gif}" ; then
   with_gif=yes
 fi
-if test "${with_gif}" = "yes" ; then
-  
+test "${with_gif}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_GIF"
@@ -4841,11 +3812,7 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_GIF\${ac_dB}HAVE_GIF\${ac_dC}1\${ac_dD}
 "
 }
 
-fi
 
-#
-# autodetect JPEG
-#
 if test "${window_system}" = "none" ; then
   if test -z "${with_jpeg}" ; then
     with_jpeg=no
@@ -4854,18 +3821,14 @@ if test "${window_system}" = "none" ; then
     exit 1
   fi
 else
-  if test "${with_jpeg}" != "no" ; then
-    if test "${with_jpeg}" != "yes" ; then
-      test -n "$silent" || echo "checking for jpeglib.h"
+  if test "${with_jpeg}" != "no" -a \
+          "${with_jpeg}" != "yes" ; then
+    test -n "$silent" || echo "checking for jpeglib.h"
 cat > conftest.${ac_ext} <<EOF
 #include "confdefs.h"
 #include <jpeglib.h>
 EOF
-# Some shells (Coherent) do redirections in the wrong order, so need
-# the parens.
-# The exec was added by Mly to make this work under BSDI
 ac_err=`eval "(exec $ac_cpp conftest.${ac_ext} >/dev/null) 2>&1"`
-# Use test here, not brackets, to avoid strange autoconf-quoting lossage.
 if test "${extra_verbose}" = "yes"  && test -n "$ac_err"; then
   echo "$ac_err"
 fi
@@ -4879,8 +3842,7 @@ else
 fi
 rm -f conftest*
 
-      if test "${jpeglib_incl}" = "yes" ; then
-        ac_save_LIBS="${LIBS}"
+    test "${jpeglib_incl}" = "yes" && { ac_save_LIBS="${LIBS}"
 LIBS="${LIBS} -ljpeg"
 ac_have_lib=""
 test -n "$silent" || echo "checking for -ljpeg"
@@ -4902,13 +3864,10 @@ if test -n "${ac_have_lib}"; then
 else
    :; 
 fi
-
-      fi
-    fi
+ }
   fi
 fi
-if test "${with_jpeg}" = "yes" ; then
-  
+test "${with_jpeg}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_JPEG"
@@ -4920,11 +3879,7 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_JPEG\${ac_dB}HAVE_JPEG\${ac_dC}1\${ac_d
 "
 }
 
-fi
 
-#
-# autodetect PNG
-#
 if test "${window_system}" = "none" ; then
   if test -z "${with_png}" ; then
     with_png=no
@@ -4933,17 +3888,12 @@ if test "${window_system}" = "none" ; then
     exit 1
   fi
 fi
-if test -z "${with_png}" ; then
-  test -n "$silent" || echo "checking for png.h"
+test -z "${with_png}" && { test -n "$silent" || echo "checking for png.h"
 cat > conftest.${ac_ext} <<EOF
 #include "confdefs.h"
 #include <png.h>
 EOF
-# Some shells (Coherent) do redirections in the wrong order, so need
-# the parens.
-# The exec was added by Mly to make this work under BSDI
 ac_err=`eval "(exec $ac_cpp conftest.${ac_ext} >/dev/null) 2>&1"`
-# Use test here, not brackets, to avoid strange autoconf-quoting lossage.
 if test "${extra_verbose}" = "yes"  && test -n "$ac_err"; then
   echo "$ac_err"
 fi
@@ -4954,10 +3904,8 @@ else
   with_png="no"
 fi
 rm -f conftest*
-
-fi
-if test -z "${with_png}" ; then
-  ac_save_LIBS="${LIBS}"
+ }
+test -z "${with_png}" && { ac_save_LIBS="${LIBS}"
 LIBS="${LIBS} -lpng"
 ac_have_lib=""
 test -n "$silent" || echo "checking for -lpng"
@@ -4979,10 +3927,8 @@ if test -n "${ac_have_lib}"; then
 else
    :; with_png="no"
 fi
-
-fi
-if test -z "${with_png}" ; then
-  ac_save_LIBS="${LIBS}"
+ }
+test -z "${with_png}" && { ac_save_LIBS="${LIBS}"
 LIBS="${LIBS} -lz"
 ac_have_lib=""
 test -n "$silent" || echo "checking for -lz"
@@ -5004,10 +3950,8 @@ if test -n "${ac_have_lib}"; then
 else
    :; 
 fi
-
-fi
-if test -z "${with_png}" ; then
-  ac_save_LIBS="${LIBS}"
+ }
+test -z "${with_png}" && { ac_save_LIBS="${LIBS}"
 LIBS="${LIBS} -lgz"
 ac_have_lib=""
 test -n "$silent" || echo "checking for -lgz"
@@ -5029,10 +3973,9 @@ if test -n "${ac_have_lib}"; then
 else
    :; with_png="no"
 fi
-
-fi
-if test "${with_png}" = "yes" ; then
-  
+ }
+case "${with_png}" in
+  yes  ) 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_PNG"
@@ -5043,10 +3986,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_PNG\${ac_dB}HAVE_PNG\${ac_dC}1\${ac_dD}
 \${ac_eA}HAVE_PNG\${ac_eB}HAVE_PNG\${ac_eC}1\${ac_eD}
 "
 }
-
-fi
-if test "${with_png}" = "gnuz" ; then
-  
+ ;;
+  gnuz ) 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_PNG"
@@ -5057,8 +3998,7 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_PNG\${ac_dB}HAVE_PNG\${ac_dC}1\${ac_dD}
 \${ac_eA}HAVE_PNG\${ac_eB}HAVE_PNG\${ac_eC}1\${ac_eD}
 "
 }
-
-  
+ 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_PNG_GNUZ"
@@ -5069,22 +4009,10 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_PNG_GNUZ\${ac_dB}HAVE_PNG_GNUZ\${ac_dC}
 \${ac_eA}HAVE_PNG_GNUZ\${ac_eB}HAVE_PNG_GNUZ\${ac_eC}1\${ac_eD}
 "
 }
+ ;;
+esac
 
-fi
-
-#
-# autodetect TIFF (not yet implemented)
-#
-if test "${window_system}" = "none" ; then
-  if test -z "${with_tiff}" ; then
-    with_tiff=no
-  elif test "${with_tiff}" != "no" ; then
-    echo "TIFF support cannot be specified without a window system."
-    exit 1
-  fi
-fi
-if test "${with_tiff}" = "yes" ; then
-  
+test "${with_tiff}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_TIFF"
@@ -5096,11 +4024,11 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_TIFF\${ac_dB}HAVE_TIFF\${ac_dC}1\${ac_d
 "
 }
 
-fi
 
 # We use Lucid toolkit defaults for the menubars and scrollbars, but
 # if Motif is available we use it for the dialog boxes.
 if test "${window_system}" != "none" ; then
+  save_libs="${LIBS}"
   if test "x${with_dialogs}" = "x" ; then
       # We can't use ac_have_library because it simply appends -lXm to the
       # end of the link line which is insufficient since -lXm will generate
@@ -5124,7 +4052,7 @@ fi
 rm -f conftest*
 LIBS="${ac_save_LIBS}"
 if test -n "${ac_have_lib}"; then
-   :; with_dialogs="motif"
+   :; with_dialogs="motif" motif_libs="-lXm -lXt"
 else
    :; 
 fi
@@ -5150,42 +4078,147 @@ fi
 rm -f conftest*
 LIBS="${ac_save_LIBS}"
 if test -n "${ac_have_lib}"; then
-   :; with_dialogs="motif"
+   :; with_dialogs="motif" motif_libs="-lXm -lXt -lXpm -lXext"
 else
    :; 
 fi
 # end expansion of ac_have_library
     fi
-    if test "${with_dialogs}" = "motif" ; then
-      test -n "$verbose" && echo "	Found Motif"
-    fi
+    test "${with_dialogs}" = "motif" && test -n "$verbose" && echo "	Found Motif"
   fi
 fi
 
-
-if [ "${with_menubars}" = "motif" ] || [ "${with_scrollbars}" = "motif" ] \
-   || [ "${with_dialogs}" = "motif" ]; then
-  with_motif='yes'
-fi
-if [ "${with_menubars}" = "athena" ] || [ "${with_scrollbars}" = "athena" ] \
-   || [ "${with_dialogs}" = "athena" ]; then
-  with_athena='yes'
-fi
-if [ "${with_menubars}" = "athena3d" ] || [ "${with_scrollbars}" = "athena3d" ] \
-   || [ "${with_dialogs}" = "athena3d" ]; then
-  with_athena='yes'
-fi
-
 # Finish ensuring that we have values for the various toolkit items.
-if [ "x${with_menubars}" = "x" ] || [ "${with_menubars}" = "athena" ]; then
-  with_menubars='lucid'
-fi
-if [ "x${with_scrollbars}" = "x" ]; then
-    with_scrollbars='lucid'
-fi
-if [ "x${with_dialogs}" = "x" ] || [ "${with_dialogs}" = "lucid" ]; then
-    with_dialogs='athena'
-fi
+
+test "${with_menubars}"   = "motif" -o \
+     "${with_scrollbars}" = "motif" -o \
+     "${with_dialogs}"    = "motif"  && with_motif="yes"
+test "${with_menubars}"   = ""       && with_menubars="lucid"
+test "${with_menubars}"   = "athena" && with_menubars="lucid"
+test "${with_scrollbars}" = ""       && with_scrollbars="lucid"
+test "${with_dialogs}"    = ""       && with_dialogs="athena"
+test "${with_dialogs}"    = "lucid"  && with_dialogs="athena"
+
+test "${with_menubars}"   != "no"    && 
+{
+test -n "$verbose" && \
+echo "	defining HAVE_MENUBARS"
+echo "#define" HAVE_MENUBARS "1" >> confdefs.h
+DEFS="$DEFS -DHAVE_MENUBARS=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_MENUBARS\${ac_dB}HAVE_MENUBARS\${ac_dC}1\${ac_dD}
+\${ac_uA}HAVE_MENUBARS\${ac_uB}HAVE_MENUBARS\${ac_uC}1\${ac_uD}
+\${ac_eA}HAVE_MENUBARS\${ac_eB}HAVE_MENUBARS\${ac_eC}1\${ac_eD}
+"
+}
+
+test "${with_scrollbars}" != "no"    && 
+{
+test -n "$verbose" && \
+echo "	defining HAVE_SCROLLBARS"
+echo "#define" HAVE_SCROLLBARS "1" >> confdefs.h
+DEFS="$DEFS -DHAVE_SCROLLBARS=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_SCROLLBARS\${ac_dB}HAVE_SCROLLBARS\${ac_dC}1\${ac_dD}
+\${ac_uA}HAVE_SCROLLBARS\${ac_uB}HAVE_SCROLLBARS\${ac_uC}1\${ac_uD}
+\${ac_eA}HAVE_SCROLLBARS\${ac_eB}HAVE_SCROLLBARS\${ac_eC}1\${ac_eD}
+"
+}
+
+test "${with_scrollbars}" != "no"    && 
+{
+test -n "$verbose" && \
+echo "	defining HAVE_DIALOGS"
+echo "#define" HAVE_DIALOGS "1" >> confdefs.h
+DEFS="$DEFS -DHAVE_DIALOGS=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_DIALOGS\${ac_dB}HAVE_DIALOGS\${ac_dC}1\${ac_dD}
+\${ac_uA}HAVE_DIALOGS\${ac_uB}HAVE_DIALOGS\${ac_uC}1\${ac_uD}
+\${ac_eA}HAVE_DIALOGS\${ac_eB}HAVE_DIALOGS\${ac_eC}1\${ac_eD}
+"
+}
+
+
+test "${with_menubars}"   = "lucid"  && 
+{
+test -n "$verbose" && \
+echo "	defining LWLIB_MENUBARS_LUCID"
+echo "#define" LWLIB_MENUBARS_LUCID "1" >> confdefs.h
+DEFS="$DEFS -DLWLIB_MENUBARS_LUCID=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}LWLIB_MENUBARS_LUCID\${ac_dB}LWLIB_MENUBARS_LUCID\${ac_dC}1\${ac_dD}
+\${ac_uA}LWLIB_MENUBARS_LUCID\${ac_uB}LWLIB_MENUBARS_LUCID\${ac_uC}1\${ac_uD}
+\${ac_eA}LWLIB_MENUBARS_LUCID\${ac_eB}LWLIB_MENUBARS_LUCID\${ac_eC}1\${ac_eD}
+"
+}
+
+test "${with_menubars}"   = "motif"  && 
+{
+test -n "$verbose" && \
+echo "	defining LWLIB_MENUBARS_MOTIF"
+echo "#define" LWLIB_MENUBARS_MOTIF "1" >> confdefs.h
+DEFS="$DEFS -DLWLIB_MENUBARS_MOTIF=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}LWLIB_MENUBARS_MOTIF\${ac_dB}LWLIB_MENUBARS_MOTIF\${ac_dC}1\${ac_dD}
+\${ac_uA}LWLIB_MENUBARS_MOTIF\${ac_uB}LWLIB_MENUBARS_MOTIF\${ac_uC}1\${ac_uD}
+\${ac_eA}LWLIB_MENUBARS_MOTIF\${ac_eB}LWLIB_MENUBARS_MOTIF\${ac_eC}1\${ac_eD}
+"
+}
+
+test "${with_scrollbars}" = "lucid"  && 
+{
+test -n "$verbose" && \
+echo "	defining LWLIB_SCROLLBARS_LUCID"
+echo "#define" LWLIB_SCROLLBARS_LUCID "1" >> confdefs.h
+DEFS="$DEFS -DLWLIB_SCROLLBARS_LUCID=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}LWLIB_SCROLLBARS_LUCID\${ac_dB}LWLIB_SCROLLBARS_LUCID\${ac_dC}1\${ac_dD}
+\${ac_uA}LWLIB_SCROLLBARS_LUCID\${ac_uB}LWLIB_SCROLLBARS_LUCID\${ac_uC}1\${ac_uD}
+\${ac_eA}LWLIB_SCROLLBARS_LUCID\${ac_eB}LWLIB_SCROLLBARS_LUCID\${ac_eC}1\${ac_eD}
+"
+}
+
+test "${with_scrollbars}" = "motif"  && 
+{
+test -n "$verbose" && \
+echo "	defining LWLIB_SCROLLBARS_MOTIF"
+echo "#define" LWLIB_SCROLLBARS_MOTIF "1" >> confdefs.h
+DEFS="$DEFS -DLWLIB_SCROLLBARS_MOTIF=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}LWLIB_SCROLLBARS_MOTIF\${ac_dB}LWLIB_SCROLLBARS_MOTIF\${ac_dC}1\${ac_dD}
+\${ac_uA}LWLIB_SCROLLBARS_MOTIF\${ac_uB}LWLIB_SCROLLBARS_MOTIF\${ac_uC}1\${ac_uD}
+\${ac_eA}LWLIB_SCROLLBARS_MOTIF\${ac_eB}LWLIB_SCROLLBARS_MOTIF\${ac_eC}1\${ac_eD}
+"
+}
+
+test "${with_scrollbars}" = "athena" && 
+{
+test -n "$verbose" && \
+echo "	defining LWLIB_SCROLLBARS_ATHENA"
+echo "#define" LWLIB_SCROLLBARS_ATHENA "1" >> confdefs.h
+DEFS="$DEFS -DLWLIB_SCROLLBARS_ATHENA=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}LWLIB_SCROLLBARS_ATHENA\${ac_dB}LWLIB_SCROLLBARS_ATHENA\${ac_dC}1\${ac_dD}
+\${ac_uA}LWLIB_SCROLLBARS_ATHENA\${ac_uB}LWLIB_SCROLLBARS_ATHENA\${ac_uC}1\${ac_uD}
+\${ac_eA}LWLIB_SCROLLBARS_ATHENA\${ac_eB}LWLIB_SCROLLBARS_ATHENA\${ac_eC}1\${ac_eD}
+"
+}
+
+test "${with_dialogs}"    = "motif"  && 
+{
+test -n "$verbose" && \
+echo "	defining LWLIB_DIALOGS_MOTIF"
+echo "#define" LWLIB_DIALOGS_MOTIF "1" >> confdefs.h
+DEFS="$DEFS -DLWLIB_DIALOGS_MOTIF=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}LWLIB_DIALOGS_MOTIF\${ac_dB}LWLIB_DIALOGS_MOTIF\${ac_dC}1\${ac_dD}
+\${ac_uA}LWLIB_DIALOGS_MOTIF\${ac_uB}LWLIB_DIALOGS_MOTIF\${ac_uC}1\${ac_uD}
+\${ac_eA}LWLIB_DIALOGS_MOTIF\${ac_eB}LWLIB_DIALOGS_MOTIF\${ac_eC}1\${ac_eD}
+"
+}
+
+test "${with_dialogs}"    = "athena" && 
+{
+test -n "$verbose" && \
+echo "	defining LWLIB_DIALOGS_ATHENA"
+echo "#define" LWLIB_DIALOGS_ATHENA "1" >> confdefs.h
+DEFS="$DEFS -DLWLIB_DIALOGS_ATHENA=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}LWLIB_DIALOGS_ATHENA\${ac_dB}LWLIB_DIALOGS_ATHENA\${ac_dC}1\${ac_dD}
+\${ac_uA}LWLIB_DIALOGS_ATHENA\${ac_uB}LWLIB_DIALOGS_ATHENA\${ac_uC}1\${ac_uD}
+\${ac_eA}LWLIB_DIALOGS_ATHENA\${ac_eB}LWLIB_DIALOGS_ATHENA\${ac_eC}1\${ac_eD}
+"
+}
 
 
 ############################################################################
@@ -5193,6 +4226,94 @@ fi
 #                             Misc other feature tests                     #
 #									   #
 ############################################################################
+
+# Mule-dependent option processing
+if test "$with_mule" = "yes" ; then
+  # Do we have the XmIm* routines?  And if so, do we want to use them?
+  test "$with_xim" != no && test -n "$silent" || echo "checking for XIM"
+  if test -z "$with_xim" -o "$with_xim" = "yes" ; then
+    xim_save_libs="$LIBS"
+    LIBS="${motif_libs} ${LIBS}"
+    test -n "$silent" || echo "checking for XmImMbLookupString"
+cat > conftest.${ac_ext} <<EOF
+#include "confdefs.h"
+#include <ctype.h>
+int main() { return 0; }
+int t() { 
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_XmImMbLookupString) || defined (__stub___XmImMbLookupString)
+choke me
+#else
+/* Override any gcc2 internal prototype to avoid an error.  */
+extern char XmImMbLookupString(); XmImMbLookupString();
+#endif
+; return 0; }
+EOF
+if eval $ac_compile; then
+  rm -rf conftest*
+  have_XmIm=yes
+
+else
+  rm -rf conftest*
+  have_XmIm=no
+fi
+rm -f conftest*
+
+    LIBS="$xim_save_libs"
+    if   test "$have_XmIm" = "yes"; then with_xim=motif
+    elif test "$with_xim"  = "yes"; then with_xim=xlib
+    else                                 with_xim=no
+    fi
+  fi
+  if test "$with_xim" != "no" ; then
+    
+{
+test -n "$verbose" && \
+echo "	defining HAVE_XIM"
+echo "#define" HAVE_XIM "1" >> confdefs.h
+DEFS="$DEFS -DHAVE_XIM=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_XIM\${ac_dB}HAVE_XIM\${ac_dC}1\${ac_dD}
+\${ac_uA}HAVE_XIM\${ac_uB}HAVE_XIM\${ac_uC}1\${ac_uD}
+\${ac_eA}HAVE_XIM\${ac_eB}HAVE_XIM\${ac_eC}1\${ac_eD}
+"
+}
+
+    test "$with_xim" = "xlib"  && 
+{
+test -n "$verbose" && \
+echo "	defining XIM_XLIB"
+echo "#define" XIM_XLIB "1" >> confdefs.h
+DEFS="$DEFS -DXIM_XLIB=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}XIM_XLIB\${ac_dB}XIM_XLIB\${ac_dC}1\${ac_dD}
+\${ac_uA}XIM_XLIB\${ac_uB}XIM_XLIB\${ac_uC}1\${ac_uD}
+\${ac_eA}XIM_XLIB\${ac_eB}XIM_XLIB\${ac_eC}1\${ac_eD}
+"
+}
+
+    test "$with_xim" = "motif" && 
+{
+test -n "$verbose" && \
+echo "	defining XIM_MOTIF"
+echo "#define" XIM_MOTIF "1" >> confdefs.h
+DEFS="$DEFS -DXIM_MOTIF=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}XIM_MOTIF\${ac_dB}XIM_MOTIF\${ac_dC}1\${ac_dD}
+\${ac_uA}XIM_MOTIF\${ac_uB}XIM_MOTIF\${ac_uC}1\${ac_uD}
+\${ac_eA}XIM_MOTIF\${ac_eB}XIM_MOTIF\${ac_eC}1\${ac_eD}
+"
+}
+
+  fi
+else # Other internationalization features depend on Mule
+  with_mule="no"
+  for feature in xim canna wnn ; do
+    if eval "test -n \"\$with_$feature\" -a \"\$with_$feature\" != no" ; then
+      echo "configure: warning: --with-$feature ignored:  Not valid without Mule support" >&2
+    fi
+    eval "with_$feature=no"
+  done
+fi
 
 # If netdb.h doesn't declare h_errno, we must declare it by hand.
 test -n "$silent" || echo "checking for declaration of h_errno in netdb.h"
@@ -5720,11 +4841,7 @@ cat > conftest.${ac_ext} <<EOF
 #include "confdefs.h"
 #include <vfork.h>
 EOF
-# Some shells (Coherent) do redirections in the wrong order, so need
-# the parens.
-# The exec was added by Mly to make this work under BSDI
 ac_err=`eval "(exec $ac_cpp conftest.${ac_ext} >/dev/null) 2>&1"`
-# Use test here, not brackets, to avoid strange autoconf-quoting lossage.
 if test "${extra_verbose}" = "yes"  && test -n "$ac_err"; then
   echo "$ac_err"
 fi
@@ -6057,8 +5174,7 @@ else
 fi
 rm -f conftest*
 
-if test -n "$found_mmap"; then
-  
+test -n "$found_mmap" && 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_MMAP"
@@ -6070,24 +5186,9 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_MMAP\${ac_dB}HAVE_MMAP\${ac_dC}1\${ac_d
 "
 }
 
-fi
 
-
-# rel_alloc requires either GNU malloc or system malloc with mmap
-if [ "${GNU_MALLOC}" != "yes" ]; then
-  if [ "${found_mmap}" != "true" ]; then
-    rel_alloc=no
-  fi
-fi
-
-# We only turn rel_alloc on by default if mmap is available.
-if [ "${rel_alloc}" = "default" ]; then
-  if [ "${found_mmap}" = "true" ]; then
-    rel_alloc=yes
-  fi
-fi
-
-
+test "${GNU_MALLOC}" != "yes"   -a "${found_mmap}" != "true" && rel_alloc=no
+test "${rel_alloc}" = "default" -a "${found_mmap}"  = "true" && rel_alloc=yes
 
 # Check for Internet sockets.
 
@@ -6117,17 +5218,12 @@ else
 fi
 rm -f conftest*
 
-if test -n "$ok_so_far"; then
-  test -n "$silent" || echo "checking for netinet/in.h"
+test -n "$ok_so_far" && { test -n "$silent" || echo "checking for netinet/in.h"
 cat > conftest.${ac_ext} <<EOF
 #include "confdefs.h"
 #include <netinet/in.h>
 EOF
-# Some shells (Coherent) do redirections in the wrong order, so need
-# the parens.
-# The exec was added by Mly to make this work under BSDI
 ac_err=`eval "(exec $ac_cpp conftest.${ac_ext} >/dev/null) 2>&1"`
-# Use test here, not brackets, to avoid strange autoconf-quoting lossage.
 if test "${extra_verbose}" = "yes"  && test -n "$ac_err"; then
   echo "$ac_err"
 fi
@@ -6138,19 +5234,13 @@ else
   ok_so_far=
 fi
 rm -f conftest*
-
-fi
-if test -n "$ok_so_far"; then
-  test -n "$silent" || echo "checking for arpa/inet.h"
+ }
+test -n "$ok_so_far" && { test -n "$silent" || echo "checking for arpa/inet.h"
 cat > conftest.${ac_ext} <<EOF
 #include "confdefs.h"
 #include <arpa/inet.h>
 EOF
-# Some shells (Coherent) do redirections in the wrong order, so need
-# the parens.
-# The exec was added by Mly to make this work under BSDI
 ac_err=`eval "(exec $ac_cpp conftest.${ac_ext} >/dev/null) 2>&1"`
-# Use test here, not brackets, to avoid strange autoconf-quoting lossage.
 if test "${extra_verbose}" = "yes"  && test -n "$ac_err"; then
   echo "$ac_err"
 fi
@@ -6161,8 +5251,7 @@ else
   ok_so_far=
 fi
 rm -f conftest*
-
-fi
+ }
 if test -n "$ok_so_far"; then
   
 {
@@ -6236,17 +5325,12 @@ else
 fi
 rm -f conftest*
 
-  if test -n "$ok_so_far"; then
-    test -n "$silent" || echo "checking for sys/ipc.h"
+  test -n "$ok_so_far" && { test -n "$silent" || echo "checking for sys/ipc.h"
 cat > conftest.${ac_ext} <<EOF
 #include "confdefs.h"
 #include <sys/ipc.h>
 EOF
-# Some shells (Coherent) do redirections in the wrong order, so need
-# the parens.
-# The exec was added by Mly to make this work under BSDI
 ac_err=`eval "(exec $ac_cpp conftest.${ac_ext} >/dev/null) 2>&1"`
-# Use test here, not brackets, to avoid strange autoconf-quoting lossage.
 if test "${extra_verbose}" = "yes"  && test -n "$ac_err"; then
   echo "$ac_err"
 fi
@@ -6257,19 +5341,13 @@ else
   ok_so_far=
 fi
 rm -f conftest*
-
-  fi
-  if test -n "$ok_so_far"; then
-    test -n "$silent" || echo "checking for sys/msg.h"
+ }
+  test -n "$ok_so_far" && { test -n "$silent" || echo "checking for sys/msg.h"
 cat > conftest.${ac_ext} <<EOF
 #include "confdefs.h"
 #include <sys/msg.h>
 EOF
-# Some shells (Coherent) do redirections in the wrong order, so need
-# the parens.
-# The exec was added by Mly to make this work under BSDI
 ac_err=`eval "(exec $ac_cpp conftest.${ac_ext} >/dev/null) 2>&1"`
-# Use test here, not brackets, to avoid strange autoconf-quoting lossage.
 if test "${extra_verbose}" = "yes"  && test -n "$ac_err"; then
   echo "$ac_err"
 fi
@@ -6280,10 +5358,8 @@ else
   ok_so_far=
 fi
 rm -f conftest*
-
-  fi
-  if test -n "$ok_so_far"; then
-    
+ }
+  test -n "$ok_so_far" &&   
 {
 test -n "$verbose" && \
 echo "	defining HAVE_SYSVIPC"
@@ -6295,7 +5371,6 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_SYSVIPC\${ac_dB}HAVE_SYSVIPC\${ac_dC}1\
 "
 }
 
-  fi
 fi
 
 # Check for directory variants
@@ -6307,11 +5382,7 @@ cat > conftest.${ac_ext} <<EOF
 #include "confdefs.h"
 #include <dirent.h>
 EOF
-# Some shells (Coherent) do redirections in the wrong order, so need
-# the parens.
-# The exec was added by Mly to make this work under BSDI
 ac_err=`eval "(exec $ac_cpp conftest.${ac_ext} >/dev/null) 2>&1"`
-# Use test here, not brackets, to avoid strange autoconf-quoting lossage.
 if test "${extra_verbose}" = "yes"  && test -n "$ac_err"; then
   echo "$ac_err"
 fi
@@ -6322,17 +5393,13 @@ if test -z "$ac_err"; then
 fi
 rm -f conftest*
 
-if test -z "$sysv_system_dir" ; then
-  test -n "$silent" || echo "checking for sys/dir.h"
+test -z "$sysv_system_dir" &&
+  { test -n "$silent" || echo "checking for sys/dir.h"
 cat > conftest.${ac_ext} <<EOF
 #include "confdefs.h"
 #include <sys/dir.h>
 EOF
-# Some shells (Coherent) do redirections in the wrong order, so need
-# the parens.
-# The exec was added by Mly to make this work under BSDI
 ac_err=`eval "(exec $ac_cpp conftest.${ac_ext} >/dev/null) 2>&1"`
-# Use test here, not brackets, to avoid strange autoconf-quoting lossage.
 if test "${extra_verbose}" = "yes"  && test -n "$ac_err"; then
   echo "$ac_err"
 fi
@@ -6343,10 +5410,8 @@ else
   nonsystem_dir_library=yes
 fi
 rm -f conftest*
-
-fi
-if test -n "$sysv_system_dir" ; then
-  
+ }
+if   test -n "$sysv_system_dir"       ; then 
 {
 test -n "$verbose" && \
 echo "	defining SYSV_SYSTEM_DIR"
@@ -6358,8 +5423,7 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}SYSV_SYSTEM_DIR\${ac_dB}SYSV_SYSTEM_DIR\${ac
 "
 }
 
-elif test -n "$nonsystem_dir_library" ; then
-  
+elif test -n "$nonsystem_dir_library" ; then 
 {
 test -n "$verbose" && \
 echo "	defining NONSYSTEM_DIR_LIBRARY"
@@ -6373,7 +5437,6 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}NONSYSTEM_DIR_LIBRARY\${ac_dB}NONSYSTEM_DIR_
 
 fi
 
-# Check for terminal I/O variants
 
 echo "checking how to do terminal I/O"
 
@@ -6384,11 +5447,7 @@ cat > conftest.${ac_ext} <<EOF
 #include "confdefs.h"
 #include <termios.h>
 EOF
-# Some shells (Coherent) do redirections in the wrong order, so need
-# the parens.
-# The exec was added by Mly to make this work under BSDI
 ac_err=`eval "(exec $ac_cpp conftest.${ac_ext} >/dev/null) 2>&1"`
-# Use test here, not brackets, to avoid strange autoconf-quoting lossage.
 if test "${extra_verbose}" = "yes"  && test -n "$ac_err"; then
   echo "$ac_err"
 fi
@@ -6399,18 +5458,12 @@ if test -z "$ac_err"; then
 fi
 rm -f conftest*
 
-# TERMIOS systems may have termio.h, but not vice-versa, I think.
-if test -z "$have_termios" ; then
-  test -n "$silent" || echo "checking for termio.h"
+test -z "$have_termios" && { test -n "$silent" || echo "checking for termio.h"
 cat > conftest.${ac_ext} <<EOF
 #include "confdefs.h"
 #include <termio.h>
 EOF
-# Some shells (Coherent) do redirections in the wrong order, so need
-# the parens.
-# The exec was added by Mly to make this work under BSDI
 ac_err=`eval "(exec $ac_cpp conftest.${ac_ext} >/dev/null) 2>&1"`
-# Use test here, not brackets, to avoid strange autoconf-quoting lossage.
 if test "${extra_verbose}" = "yes"  && test -n "$ac_err"; then
   echo "$ac_err"
 fi
@@ -6420,10 +5473,8 @@ if test -z "$ac_err"; then
 
 fi
 rm -f conftest*
-
-fi
-if test -n "$have_termios" ; then
-  
+ }
+if   test -n "$have_termios" ; then 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_TERMIOS"
@@ -6435,8 +5486,7 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_TERMIOS\${ac_dB}HAVE_TERMIOS\${ac_dC}1\
 "
 }
 
-elif test -n "$have_termio" ; then
-  
+elif test -n "$have_termio"  ; then 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_TERMIO"
@@ -6456,11 +5506,7 @@ cat > conftest.${ac_ext} <<EOF
 #include "confdefs.h"
 #include <nlist.h>
 EOF
-# Some shells (Coherent) do redirections in the wrong order, so need
-# the parens.
-# The exec was added by Mly to make this work under BSDI
 ac_err=`eval "(exec $ac_cpp conftest.${ac_ext} >/dev/null) 2>&1"`
-# Use test here, not brackets, to avoid strange autoconf-quoting lossage.
 if test "${extra_verbose}" = "yes"  && test -n "$ac_err"; then
   echo "$ac_err"
 fi
@@ -6483,79 +5529,47 @@ fi
 rm -f conftest*
 
 
-if test -f /usr/lpp/X11/bin/smt.exp ; then
-  
+# AIX export list
+for export in /usr/lpp/X11/bin/smt.exp /usr/bin/X11/smt.exp ; do
+  if test -f "$export" ; then
+    
 {
 test -n "$verbose" && \
-echo "	defining" AIX_SMT_EXP to be "-bI:/usr/lpp/X11/bin/smt.exp"
-echo "#define" AIX_SMT_EXP "-bI:/usr/lpp/X11/bin/smt.exp" >> confdefs.h
-DEFS="$DEFS -DAIX_SMT_EXP=-bI:/usr/lpp/X11/bin/smt.exp"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}AIX_SMT_EXP\${ac_dB}AIX_SMT_EXP\${ac_dC}-bI:/usr/lpp/X11/bin/smt.exp\${ac_dD}
-\${ac_uA}AIX_SMT_EXP\${ac_uB}AIX_SMT_EXP\${ac_uC}-bI:/usr/lpp/X11/bin/smt.exp\${ac_uD}
-\${ac_eA}AIX_SMT_EXP\${ac_eB}AIX_SMT_EXP\${ac_eC}-bI:/usr/lpp/X11/bin/smt.exp\${ac_eD}
+echo "	defining" AIX_SMT_EXP to be "-bI:$export"
+echo "#define" AIX_SMT_EXP "-bI:$export" >> confdefs.h
+DEFS="$DEFS -DAIX_SMT_EXP=-bI:$export"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}AIX_SMT_EXP\${ac_dB}AIX_SMT_EXP\${ac_dC}-bI:\\\\\\\$export\${ac_dD}
+\${ac_uA}AIX_SMT_EXP\${ac_uB}AIX_SMT_EXP\${ac_uC}-bI:\\\\\\\$export\${ac_uD}
+\${ac_eA}AIX_SMT_EXP\${ac_eB}AIX_SMT_EXP\${ac_eC}-bI:\\\\\\\$export\${ac_eD}
 "
 }
 
-elif test -f /usr/bin/X11/smt.exp ; then
-  
-{
-test -n "$verbose" && \
-echo "	defining" AIX_SMT_EXP to be "-bI:/usr/bin/X11/smt.exp"
-echo "#define" AIX_SMT_EXP "-bI:/usr/bin/X11/smt.exp" >> confdefs.h
-DEFS="$DEFS -DAIX_SMT_EXP=-bI:/usr/bin/X11/smt.exp"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}AIX_SMT_EXP\${ac_dB}AIX_SMT_EXP\${ac_dC}-bI:/usr/bin/X11/smt.exp\${ac_dD}
-\${ac_uA}AIX_SMT_EXP\${ac_uB}AIX_SMT_EXP\${ac_uC}-bI:/usr/bin/X11/smt.exp\${ac_uD}
-\${ac_eA}AIX_SMT_EXP\${ac_eB}AIX_SMT_EXP\${ac_eC}-bI:/usr/bin/X11/smt.exp\${ac_eD}
-"
-}
+    break
+  fi
+done
 
-fi
-
-# Set up the CFLAGS for real compilation, so we can substitute it.
 CFLAGS="$REAL_CFLAGS"
 
-
-#### Find out which version of XEmacs this is.
-version="19.16"
-beta=""
-alpha=""
-if [ "X$beta" != "X" ]; then
-  version=${version}-b${beta}
-fi
-if [ "X$alpha" != "X" ]; then
-  version=${version}-a${alpha}
-fi
-if [ x"${version}" = x ]; then
-  echo "${progname}: can't find current emacs version in
-	\`${srcdir}/lisp/version.el'." >&2
+file="${srcdir}/lisp/version.el"
+version=`sed -ne 's/^(defconst emacs-version "\(.*\)".*/\1/p' "$file"`
+if test  -z "${version}"; then
+  echo "${progname}: can't find current emacs version in \"$file\"." >&2
   exit 1
 fi
+beta=`sed -ne 's/^.*XEmacs Lucid (beta\([0-9][0-9]*\)).*$/\1/p' "$file"`
+test -n "$beta"  && version="${version}-b${beta}"
 
-#
-# Check for sound of various sorts.
-#
+
 
 # the following needs to be fixed for SGI.
-if [ -z "${native_sound_lib}" ]; then
-  if   [ -r /usr/demo/SOUND/lib/libaudio.a ]; then
+if test -z "${native_sound_lib}" ; then
+  if   test -r /usr/demo/SOUND/lib/libaudio.a; then
     native_sound_lib=/usr/demo/SOUND/lib/libaudio.a
-  elif [ -r /usr/demo/SOUND/libaudio.a ]; then
+  elif test -r /usr/demo/SOUND/libaudio.a ; then
     native_sound_lib=/usr/demo/SOUND/libaudio.a
   else
     case "${canonical}" in
-      *-sgi-*        ) native_sound_lib=-laudio ;;
-      hppa*-hp-hpux* ) native_sound_lib=-lAlib ;;
-    esac
-  fi
-fi
-
-if [ "${with_sound}" != "native" ] && [ "${with_sound}" != "nas" ] && [ "${with_sound}" != "both" ] && [ "${with_sound}" != "no" ] ; then
-  if [ -d /usr/demo/SOUND/multimedia -o -d /usr/demo/SOUND/include/multimedia ]; then
-    with_sound="native"
-  else
-    case "${canonical}" in
-      *-sgi-* )
-       ac_save_LIBS="${LIBS}"
+      *-sgi-*        ) ac_save_LIBS="${LIBS}"
 LIBS="${LIBS} -laudio"
 ac_have_lib=""
 test -n "$silent" || echo "checking for -laudio"
@@ -6573,14 +5587,12 @@ fi
 rm -f conftest*
 LIBS="${ac_save_LIBS}"
 if test -n "${ac_have_lib}"; then
-   :; with_sound="native"
+   :; native_sound_lib="-laudio"
 else
    :; 
 fi
- 
-    ;;
-    hppa*-hp-hpux* )
-       ac_save_LIBS="${LIBS}"
+ ;;
+      hppa*-hp-hpux* ) ac_save_LIBS="${LIBS}"
 LIBS="${LIBS} -lAlib"
 ac_have_lib=""
 test -n "$silent" || echo "checking for -lAlib"
@@ -6598,21 +5610,22 @@ fi
 rm -f conftest*
 LIBS="${ac_save_LIBS}"
 if test -n "${ac_have_lib}"; then
-   :; with_sound="native"
+   :; native_sound_lib="-lAlib"
 else
    :; 
 fi
- 
-    ;;
+  ;;
     esac
   fi
 fi
+test -z "${with_sound}" -a -n "${native_sound_lib}" && with_sound="native";
 
 #### If the nas library doesn't contain the error jump point, then
 #### we force safer behaviour.
 
-if [ "${with_sound}" = "nas" ] || [ "${with_sound}" = "both" ] ;	then
-	 echo '#include "confdefs.h"
+if test "${with_sound}" = "nas" -o \
+        "${with_sound}" = "both"; then
+  echo '#include "confdefs.h"
 #include <audio/Xtutil.h>' > conftest.${ac_ext}
 eval "$ac_cpp conftest.${ac_ext} > conftest.out 2>&1"
 if egrep "AuXtErrorJump" conftest.out >/dev/null 2>&1; then
@@ -6622,13 +5635,13 @@ else
   old_nas=true
 fi
 rm -f conftest*
- 
+
 fi
 
-if [ "${with_tooltalk}" = "yes" ]; then
+if test "${with_tooltalk}" = "yes" ; then
   for arg in ${DEFS} "-I/usr/include" "-I${OPENWINHOME-/usr/openwin}/include"
   do
-    if [ -f `echo "${arg}/desktop/tt_c.h" | sed 's/^\-I//'` ]; then
+    if test -f `echo "${arg}/desktop/tt_c.h" | sed 's/^\-I//'` ; then
       C_SWITCH_X_SITE="${C_SWITCH_X_SITE} ${arg}/desktop"
     fi
   done
@@ -6636,9 +5649,9 @@ if [ "${with_tooltalk}" = "yes" ]; then
   for arg in ${LIBS} "-L/usr/lib" "-L${OPENWINHHOME-/usr/openwin}/lib"
   do
     case "${arg}" in
-	-L*) if [ -f `echo "${arg}/libtt.a" | sed 's/^\-L//'` ]; then
+	-L*) if test -f `echo "${arg}/libtt.a" | sed 's/^\-L//'` ; then
 		 dash_r=''
-		 if [ -n "${add_runtime_flag}" ]; then
+		 if test -n "${add_runtime_flag}" ; then
 		     dash_r=`echo ${arg} | sed "s/^-L/-R${dash_r_space}/"`
 		 fi
 		 LD_SWITCH_X_SITE="${LD_SWITCH_X_SITE} ${arg} ${dash_r}"
@@ -6648,12 +5661,9 @@ if [ "${with_tooltalk}" = "yes" ]; then
   done
 fi
 
-#
-# Check for ncurses.
-#
 
-if [ "${with_tty}" != "no" ] ; then
-   ac_save_LIBS="${LIBS}"
+if test "${with_tty}" != "no"  ; then
+  ac_save_LIBS="${LIBS}"
 LIBS="${LIBS} -lncurses"
 ac_have_lib=""
 test -n "$silent" || echo "checking for -lncurses"
@@ -6675,9 +5685,9 @@ if test -n "${ac_have_lib}"; then
 else
    :; have_ncurses=no
 fi
- 
-  if [ "${have_ncurses}" = "yes" ] ; then
-     
+
+  if test "${have_ncurses}" = "yes"  ; then
+    
 {
 test -n "$verbose" && \
 echo "	defining HAVE_NCURSES"
@@ -6688,17 +5698,13 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_NCURSES\${ac_dB}HAVE_NCURSES\${ac_dC}1\
 \${ac_eA}HAVE_NCURSES\${ac_eB}HAVE_NCURSES\${ac_eC}1\${ac_eD}
 "
 }
- 
-     test -n "$silent" || echo "checking for ncurses/term.h"
+
+    test -n "$silent" || echo "checking for ncurses/term.h"
 cat > conftest.${ac_ext} <<EOF
 #include "confdefs.h"
 #include <ncurses/term.h>
 EOF
-# Some shells (Coherent) do redirections in the wrong order, so need
-# the parens.
-# The exec was added by Mly to make this work under BSDI
 ac_err=`eval "(exec $ac_cpp conftest.${ac_ext} >/dev/null) 2>&1"`
-# Use test here, not brackets, to avoid strange autoconf-quoting lossage.
 if test "${extra_verbose}" = "yes"  && test -n "$ac_err"; then
   echo "$ac_err"
 fi
@@ -6711,9 +5717,8 @@ else
   have_ncurses_term_h=no
 fi
 rm -f conftest*
- 
-    if [ "${have_ncurses_term_h}" = "yes" ] ; then
-       
+
+    test "${have_ncurses_term_h}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_NCURSES_TERM_H"
@@ -6724,18 +5729,13 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_NCURSES_TERM_H\${ac_dB}HAVE_NCURSES_TER
 \${ac_eA}HAVE_NCURSES_TERM_H\${ac_eB}HAVE_NCURSES_TERM_H\${ac_eC}1\${ac_eD}
 "
 }
- 
-    fi
-     test -n "$silent" || echo "checking for ncurses/curses.h"
+
+    test -n "$silent" || echo "checking for ncurses/curses.h"
 cat > conftest.${ac_ext} <<EOF
 #include "confdefs.h"
 #include <ncurses/curses.h>
 EOF
-# Some shells (Coherent) do redirections in the wrong order, so need
-# the parens.
-# The exec was added by Mly to make this work under BSDI
 ac_err=`eval "(exec $ac_cpp conftest.${ac_ext} >/dev/null) 2>&1"`
-# Use test here, not brackets, to avoid strange autoconf-quoting lossage.
 if test "${extra_verbose}" = "yes"  && test -n "$ac_err"; then
   echo "$ac_err"
 fi
@@ -6748,23 +5748,16 @@ else
   have_ncurses_curses_h=no
 fi
 rm -f conftest*
- 
-    if [ "${have_ncurses_curses_h}" = "no" ] ; then
-      # Try again, and check for the bogus ncurses/ include bug.
-      # (i.e. ncurses/curses.h bogusly includes <unctrl.h> instead of
-      # <ncurses/unctrl.h>)
-      OLD_CPP="${CPP}"
+
+    if test "${have_ncurses_curses_h}" = "no"  ; then
+                        OLD_CPP="${CPP}"
       CPP="${CPP} -I/usr/include/ncurses"
-       test -n "$silent" || echo "checking for ncurses/curses.h"
+      test -n "$silent" || echo "checking for ncurses/curses.h"
 cat > conftest.${ac_ext} <<EOF
 #include "confdefs.h"
 #include <ncurses/curses.h>
 EOF
-# Some shells (Coherent) do redirections in the wrong order, so need
-# the parens.
-# The exec was added by Mly to make this work under BSDI
 ac_err=`eval "(exec $ac_cpp conftest.${ac_ext} >/dev/null) 2>&1"`
-# Use test here, not brackets, to avoid strange autoconf-quoting lossage.
 if test "${extra_verbose}" = "yes"  && test -n "$ac_err"; then
   echo "$ac_err"
 fi
@@ -6777,17 +5770,16 @@ else
   have_ncurses_curses_h=no
 fi
 rm -f conftest*
- 
-      if [ "${have_ncurses_curses_h}" = "yes" ] ; then
+
+      if test "${have_ncurses_curses_h}" = "yes"  ; then
         site_includes="${site_includes} /usr/include/ncurses"
 	C_SWITCH_SITE="${C_SWITCH_SITE} -I/usr/include/ncurses"
-	 test -n "$verbose" && echo "	Your system has the bogus ncurses include bug." 
+	test -n "$verbose" && echo "	Your system has the bogus ncurses include bug."
       else
 	CPP="${OLD_CPP}"
       fi
     fi
-    if [ "${have_ncurses_curses_h}" = "yes" ] ; then
-       
+    test "${have_ncurses_curses_h}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_NCURSES_CURSES_H"
@@ -6798,18 +5790,14 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_NCURSES_CURSES_H\${ac_dB}HAVE_NCURSES_C
 \${ac_eA}HAVE_NCURSES_CURSES_H\${ac_eB}HAVE_NCURSES_CURSES_H\${ac_eC}1\${ac_eD}
 "
 }
- 
-    fi
+
   fi
 fi
 
-#
-# Check for database support.
-#
 
 
-if [ "${with_database_berkdb}" != "no" ] ; then
-   ac_save_LIBS="${LIBS}"
+if test "${with_database_berkdb}" != "no"  ; then
+  ac_save_LIBS="${LIBS}"
 LIBS="${LIBS} -ldb"
 ac_have_lib=""
 test -n "$silent" || echo "checking for -ldb"
@@ -6831,9 +5819,8 @@ if test -n "${ac_have_lib}"; then
 else
    :; have_libdb=no
 fi
- 
-  if [ "${have_libdb}" = "yes" ] ; then
-     
+
+  test "${have_libdb}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_LIBDB"
@@ -6844,13 +5831,12 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_LIBDB\${ac_dB}HAVE_LIBDB\${ac_dC}1\${ac
 \${ac_eA}HAVE_LIBDB\${ac_eB}HAVE_LIBDB\${ac_eC}1\${ac_eD}
 "
 }
- 
-  fi
-  if [ "${with_database_berkdb}" != "yes" ] ; then
-    if [ "${have_libdb}" = "yes" ] ; then
+
+  if test "${with_database_berkdb}" != "yes"  ; then
+    if test "${have_libdb}" = "yes"  ; then
       with_database_berkdb=yes
     else
-       test -n "$silent" || echo "checking for dbopen"
+      test -n "$silent" || echo "checking for dbopen"
 cat > conftest.${ac_ext} <<EOF
 #include "confdefs.h"
 #include <ctype.h>
@@ -6869,24 +5855,18 @@ extern char dbopen(); dbopen();
 EOF
 if eval $ac_compile; then
   rm -rf conftest*
-  have_dbopen=yes
+  with_database_berkdb=yes
 
 else
   rm -rf conftest*
-  have_dbopen=no
+  with_database_berkdb=no
 fi
 rm -f conftest*
- 
-      if [ "${have_dbopen}" = "yes" ] ; then
-        with_database_berkdb=yes
-      else
-        with_database_berkdb=no
-      fi
+
     fi
   fi
 fi
-if [ "${with_database_berkdb}" = "yes" ]; then
-   
+test "${with_database_berkdb}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_BERKELEY_DB"
@@ -6897,11 +5877,10 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_BERKELEY_DB\${ac_dB}HAVE_BERKELEY_DB\${
 \${ac_eA}HAVE_BERKELEY_DB\${ac_eB}HAVE_BERKELEY_DB\${ac_eC}1\${ac_eD}
 "
 }
- 
-fi
 
-if [ "${with_database_gnudbm}" != "no" ] ; then
-   ac_save_LIBS="${LIBS}"
+
+if test "${with_database_gnudbm}" != "no"  ; then
+  ac_save_LIBS="${LIBS}"
 LIBS="${LIBS} -lgdbm"
 ac_have_lib=""
 test -n "$silent" || echo "checking for -lgdbm"
@@ -6923,9 +5902,8 @@ if test -n "${ac_have_lib}"; then
 else
    :; have_libgdbm=no
 fi
- 
-  if [ "${have_libgdbm}" = "yes" ] ; then
-     
+
+  test "${have_libgdbm}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_LIBGDBM"
@@ -6936,18 +5914,11 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_LIBGDBM\${ac_dB}HAVE_LIBGDBM\${ac_dC}1\
 \${ac_eA}HAVE_LIBGDBM\${ac_eB}HAVE_LIBGDBM\${ac_eC}1\${ac_eD}
 "
 }
- 
-  fi
-  if [ "${with_database_gnudbm}" != "yes" ] ; then
-    if [ "${have_libgdbm}" = "yes" ] ; then
-      with_database_gnudbm=yes
-    else
-      with_database_gnudbm=no
-    fi
-  fi
+
+  test -z "${with_database_gnudbm}" && with_database_gnudbm="${have_libgdbm}"
 fi
-if [ "${with_database_gnudbm}" = "yes" ]; then
-   
+if test "${with_database_gnudbm}" = "yes" ; then
+  
 {
 test -n "$verbose" && \
 echo "	defining HAVE_DBM"
@@ -6958,8 +5929,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_DBM\${ac_dB}HAVE_DBM\${ac_dC}1\${ac_dD}
 \${ac_eA}HAVE_DBM\${ac_eB}HAVE_DBM\${ac_eC}1\${ac_eD}
 "
 }
- 
-   
+
+  
 {
 test -n "$verbose" && \
 echo "	defining HAVE_GNU_DBM"
@@ -6970,12 +5941,12 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_GNU_DBM\${ac_dB}HAVE_GNU_DBM\${ac_dC}1\
 \${ac_eA}HAVE_GNU_DBM\${ac_eB}HAVE_GNU_DBM\${ac_eC}1\${ac_eD}
 "
 }
- 
+
   with_database_dbm=no
 fi
 
-if [ "${with_database_dbm}" != "no" ] ; then
-   ac_save_LIBS="${LIBS}"
+if test "${with_database_dbm}" != "no"  ; then
+  ac_save_LIBS="${LIBS}"
 LIBS="${LIBS} -ldbm"
 ac_have_lib=""
 test -n "$silent" || echo "checking for -ldbm"
@@ -6997,9 +5968,8 @@ if test -n "${ac_have_lib}"; then
 else
    :; have_libdbm=no
 fi
- 
-  if [ "${have_libdbm}" = "yes" ] ; then
-     
+
+  test "${have_libdbm}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_LIBDBM"
@@ -7010,13 +5980,12 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_LIBDBM\${ac_dB}HAVE_LIBDBM\${ac_dC}1\${
 \${ac_eA}HAVE_LIBDBM\${ac_eB}HAVE_LIBDBM\${ac_eC}1\${ac_eD}
 "
 }
- 
-  fi
-  if [ "${with_database_dbm}" != "yes" ] ; then
-    if [ "${have_libdbm}" = "yes" ] ; then
+
+  if test "${with_database_dbm}" != "yes"  ; then
+    if test "${have_libdbm}" = "yes"  ; then
       with_database_dbm=yes
     else
-       test -n "$silent" || echo "checking for dbm_open"
+      test -n "$silent" || echo "checking for dbm_open"
 cat > conftest.${ac_ext} <<EOF
 #include "confdefs.h"
 #include <ctype.h>
@@ -7035,24 +6004,18 @@ extern char dbm_open(); dbm_open();
 EOF
 if eval $ac_compile; then
   rm -rf conftest*
-  have_dbm_open=yes
+  with_database_dbm=yes
 
 else
   rm -rf conftest*
-  have_dbm_open=no
+  with_database_dbm=no
 fi
 rm -f conftest*
- 
-      if [ "${have_dbm_open}" = "yes" ] ; then
-        with_database_dbm=yes
-      else
-        with_database_dbm=no
-      fi
+
     fi
   fi
 fi
-if [ "${with_database_dbm}" = "yes" ]; then
-   
+test "${with_database_dbm}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_DBM"
@@ -7063,8 +6026,7 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_DBM\${ac_dB}HAVE_DBM\${ac_dC}1\${ac_dD}
 \${ac_eA}HAVE_DBM\${ac_eB}HAVE_DBM\${ac_eC}1\${ac_eD}
 "
 }
- 
-fi
+
 
 
 ############################################################################
@@ -7073,8 +6035,6 @@ fi
 #									   #
 ############################################################################
 
-### Specify what sort of things we'll be editing into Makefile and config.h.
-### Use configuration here uncanonicalized to avoid exceeding size limits.
 
 
 
@@ -7114,6 +6074,18 @@ fi
 
 
 
+
+
+{
+test -n "$verbose" && \
+echo "	defining" EMACS_VERSION to be ""${version}""
+echo "#define" EMACS_VERSION ""${version}"" >> confdefs.h
+DEFS="$DEFS -DEMACS_VERSION="${version}""
+ac_sed_defs="${ac_sed_defs}\${ac_dA}EMACS_VERSION\${ac_dB}EMACS_VERSION\${ac_dC}"${version}"\${ac_dD}
+\${ac_uA}EMACS_VERSION\${ac_uB}EMACS_VERSION\${ac_uC}"${version}"\${ac_uD}
+\${ac_eA}EMACS_VERSION\${ac_eB}EMACS_VERSION\${ac_eC}"${version}"\${ac_eD}
+"
+}
 
 
 {
@@ -7225,29 +6197,19 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}UNEXEC_SRC\${ac_dB}UNEXEC_SRC\${ac_dC}${UNEX
 
 
 
-
-# Note: as a general rule, *only* define things here that are not
-# autodetected.  For things that are autodetected, define them
-# at the point where the autodetection occurs or would occur,
-# so that the user gets immediate feedback on the results of the
-# autodetection.
-
-if [ x"${puresize}" != x ] ; then
-   
+test -n "${puresize}" && 
 {
 test -n "$verbose" && \
-echo "	defining" RAW_PURESIZE to be "${puresize}"
-echo "#define" RAW_PURESIZE "${puresize}" >> confdefs.h
-DEFS="$DEFS -DRAW_PURESIZE=${puresize}"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}RAW_PURESIZE\${ac_dB}RAW_PURESIZE\${ac_dC}${puresize}\${ac_dD}
-\${ac_uA}RAW_PURESIZE\${ac_uB}RAW_PURESIZE\${ac_uC}${puresize}\${ac_uD}
-\${ac_eA}RAW_PURESIZE\${ac_eB}RAW_PURESIZE\${ac_eC}${puresize}\${ac_eD}
+echo "	defining" PURESIZE to be "${puresize}"
+echo "#define" PURESIZE "${puresize}" >> confdefs.h
+DEFS="$DEFS -DPURESIZE=${puresize}"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}PURESIZE\${ac_dB}PURESIZE\${ac_dC}${puresize}\${ac_dD}
+\${ac_uA}PURESIZE\${ac_uB}PURESIZE\${ac_uC}${puresize}\${ac_uD}
+\${ac_eA}PURESIZE\${ac_eB}PURESIZE\${ac_eC}${puresize}\${ac_eD}
 "
 }
- 
-fi
-if [ "${HAVE_X_WINDOWS}" = "yes" ] ; then
-   
+
+test "${HAVE_X_WINDOWS}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_X_WINDOWS"
@@ -7258,10 +6220,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_X_WINDOWS\${ac_dB}HAVE_X_WINDOWS\${ac_d
 \${ac_eA}HAVE_X_WINDOWS\${ac_eB}HAVE_X_WINDOWS\${ac_eC}1\${ac_eD}
 "
 }
- 
-fi
-if [ "${HAVE_XFREE386}" = "yes" ] ; then
-   
+
+test "${HAVE_XFREE386}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_XFREE386"
@@ -7272,10 +6232,9 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_XFREE386\${ac_dB}HAVE_XFREE386\${ac_dC}
 \${ac_eA}HAVE_XFREE386\${ac_eB}HAVE_XFREE386\${ac_eC}1\${ac_eD}
 "
 }
- 
-fi
-if [ "${GNU_MALLOC}" = "yes" ] ; then
-   
+
+
+if test "${GNU_MALLOC}"  = yes; then 
 {
 test -n "$verbose" && \
 echo "	defining GNU_MALLOC"
@@ -7286,9 +6245,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}GNU_MALLOC\${ac_dB}GNU_MALLOC\${ac_dC}1\${ac
 \${ac_eA}GNU_MALLOC\${ac_eB}GNU_MALLOC\${ac_eC}1\${ac_eD}
 "
 }
- 
-elif [ "${use_system_malloc}" = "yes" ]; then
-   
+
+elif test "${use_system_malloc}" = yes; then 
 {
 test -n "$verbose" && \
 echo "	defining USE_SYSTEM_MALLOC"
@@ -7299,10 +6257,9 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}USE_SYSTEM_MALLOC\${ac_dB}USE_SYSTEM_MALLOC\
 \${ac_eA}USE_SYSTEM_MALLOC\${ac_eB}USE_SYSTEM_MALLOC\${ac_eC}1\${ac_eD}
 "
 }
- 
+
 fi
-if [ "${rel_alloc}" = "yes" ] ; then
-   
+test "${rel_alloc}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining REL_ALLOC"
@@ -7313,10 +6270,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}REL_ALLOC\${ac_dB}REL_ALLOC\${ac_dC}1\${ac_d
 \${ac_eA}REL_ALLOC\${ac_eB}REL_ALLOC\${ac_eC}1\${ac_eD}
 "
 }
- 
-fi
-if [ "${LISP_FLOAT_TYPE}" = "yes" ] ; then
-   
+
+test "${LISP_FLOAT_TYPE}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining LISP_FLOAT_TYPE"
@@ -7327,10 +6282,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}LISP_FLOAT_TYPE\${ac_dB}LISP_FLOAT_TYPE\${ac
 \${ac_eA}LISP_FLOAT_TYPE\${ac_eB}LISP_FLOAT_TYPE\${ac_eC}1\${ac_eD}
 "
 }
- 
-fi
-if [ "${with_motif}" = "yes" ] ; then
-   
+
+test "${with_motif}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining LWLIB_USES_MOTIF"
@@ -7341,206 +6294,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}LWLIB_USES_MOTIF\${ac_dB}LWLIB_USES_MOTIF\${
 \${ac_eA}LWLIB_USES_MOTIF\${ac_eB}LWLIB_USES_MOTIF\${ac_eC}1\${ac_eD}
 "
 }
- 
-fi
-if [ "${with_athena}" = "yes" ] ; then
-   
-{
-test -n "$verbose" && \
-echo "	defining LWLIB_USES_ATHENA"
-echo "#define" LWLIB_USES_ATHENA "1" >> confdefs.h
-DEFS="$DEFS -DLWLIB_USES_ATHENA=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}LWLIB_USES_ATHENA\${ac_dB}LWLIB_USES_ATHENA\${ac_dC}1\${ac_dD}
-\${ac_uA}LWLIB_USES_ATHENA\${ac_uB}LWLIB_USES_ATHENA\${ac_uC}1\${ac_uD}
-\${ac_eA}LWLIB_USES_ATHENA\${ac_eB}LWLIB_USES_ATHENA\${ac_eC}1\${ac_eD}
-"
-}
- 
-fi
-if [ "${with_menubars}" = "lucid" ] ; then
-   
-{
-test -n "$verbose" && \
-echo "	defining LWLIB_MENUBARS_LUCID"
-echo "#define" LWLIB_MENUBARS_LUCID "1" >> confdefs.h
-DEFS="$DEFS -DLWLIB_MENUBARS_LUCID=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}LWLIB_MENUBARS_LUCID\${ac_dB}LWLIB_MENUBARS_LUCID\${ac_dC}1\${ac_dD}
-\${ac_uA}LWLIB_MENUBARS_LUCID\${ac_uB}LWLIB_MENUBARS_LUCID\${ac_uC}1\${ac_uD}
-\${ac_eA}LWLIB_MENUBARS_LUCID\${ac_eB}LWLIB_MENUBARS_LUCID\${ac_eC}1\${ac_eD}
-"
-}
- 
-   
-{
-test -n "$verbose" && \
-echo "	defining HAVE_MENUBARS"
-echo "#define" HAVE_MENUBARS "1" >> confdefs.h
-DEFS="$DEFS -DHAVE_MENUBARS=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_MENUBARS\${ac_dB}HAVE_MENUBARS\${ac_dC}1\${ac_dD}
-\${ac_uA}HAVE_MENUBARS\${ac_uB}HAVE_MENUBARS\${ac_uC}1\${ac_uD}
-\${ac_eA}HAVE_MENUBARS\${ac_eB}HAVE_MENUBARS\${ac_eC}1\${ac_eD}
-"
-}
- 
-fi
-if [ "${with_menubars}" = "motif" ]; then
-   
-{
-test -n "$verbose" && \
-echo "	defining LWLIB_MENUBARS_MOTIF"
-echo "#define" LWLIB_MENUBARS_MOTIF "1" >> confdefs.h
-DEFS="$DEFS -DLWLIB_MENUBARS_MOTIF=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}LWLIB_MENUBARS_MOTIF\${ac_dB}LWLIB_MENUBARS_MOTIF\${ac_dC}1\${ac_dD}
-\${ac_uA}LWLIB_MENUBARS_MOTIF\${ac_uB}LWLIB_MENUBARS_MOTIF\${ac_uC}1\${ac_uD}
-\${ac_eA}LWLIB_MENUBARS_MOTIF\${ac_eB}LWLIB_MENUBARS_MOTIF\${ac_eC}1\${ac_eD}
-"
-}
- 
-   
-{
-test -n "$verbose" && \
-echo "	defining HAVE_MENUBARS"
-echo "#define" HAVE_MENUBARS "1" >> confdefs.h
-DEFS="$DEFS -DHAVE_MENUBARS=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_MENUBARS\${ac_dB}HAVE_MENUBARS\${ac_dC}1\${ac_dD}
-\${ac_uA}HAVE_MENUBARS\${ac_uB}HAVE_MENUBARS\${ac_uC}1\${ac_uD}
-\${ac_eA}HAVE_MENUBARS\${ac_eB}HAVE_MENUBARS\${ac_eC}1\${ac_eD}
-"
-}
- 
-fi
-if [ "${with_scrollbars}" = "lucid" ] ; then
-   
-{
-test -n "$verbose" && \
-echo "	defining LWLIB_SCROLLBARS_LUCID"
-echo "#define" LWLIB_SCROLLBARS_LUCID "1" >> confdefs.h
-DEFS="$DEFS -DLWLIB_SCROLLBARS_LUCID=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}LWLIB_SCROLLBARS_LUCID\${ac_dB}LWLIB_SCROLLBARS_LUCID\${ac_dC}1\${ac_dD}
-\${ac_uA}LWLIB_SCROLLBARS_LUCID\${ac_uB}LWLIB_SCROLLBARS_LUCID\${ac_uC}1\${ac_uD}
-\${ac_eA}LWLIB_SCROLLBARS_LUCID\${ac_eB}LWLIB_SCROLLBARS_LUCID\${ac_eC}1\${ac_eD}
-"
-}
- 
-   
-{
-test -n "$verbose" && \
-echo "	defining HAVE_SCROLLBARS"
-echo "#define" HAVE_SCROLLBARS "1" >> confdefs.h
-DEFS="$DEFS -DHAVE_SCROLLBARS=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_SCROLLBARS\${ac_dB}HAVE_SCROLLBARS\${ac_dC}1\${ac_dD}
-\${ac_uA}HAVE_SCROLLBARS\${ac_uB}HAVE_SCROLLBARS\${ac_uC}1\${ac_uD}
-\${ac_eA}HAVE_SCROLLBARS\${ac_eB}HAVE_SCROLLBARS\${ac_eC}1\${ac_eD}
-"
-}
- 
-fi
-if [ "${with_scrollbars}" = "motif" ] ; then
-   
-{
-test -n "$verbose" && \
-echo "	defining LWLIB_SCROLLBARS_MOTIF"
-echo "#define" LWLIB_SCROLLBARS_MOTIF "1" >> confdefs.h
-DEFS="$DEFS -DLWLIB_SCROLLBARS_MOTIF=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}LWLIB_SCROLLBARS_MOTIF\${ac_dB}LWLIB_SCROLLBARS_MOTIF\${ac_dC}1\${ac_dD}
-\${ac_uA}LWLIB_SCROLLBARS_MOTIF\${ac_uB}LWLIB_SCROLLBARS_MOTIF\${ac_uC}1\${ac_uD}
-\${ac_eA}LWLIB_SCROLLBARS_MOTIF\${ac_eB}LWLIB_SCROLLBARS_MOTIF\${ac_eC}1\${ac_eD}
-"
-}
- 
-   
-{
-test -n "$verbose" && \
-echo "	defining HAVE_SCROLLBARS"
-echo "#define" HAVE_SCROLLBARS "1" >> confdefs.h
-DEFS="$DEFS -DHAVE_SCROLLBARS=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_SCROLLBARS\${ac_dB}HAVE_SCROLLBARS\${ac_dC}1\${ac_dD}
-\${ac_uA}HAVE_SCROLLBARS\${ac_uB}HAVE_SCROLLBARS\${ac_uC}1\${ac_uD}
-\${ac_eA}HAVE_SCROLLBARS\${ac_eB}HAVE_SCROLLBARS\${ac_eC}1\${ac_eD}
-"
-}
- 
-fi
-if [ "${with_scrollbars}" = "athena" ] ; then
-   
-{
-test -n "$verbose" && \
-echo "	defining LWLIB_SCROLLBARS_ATHENA"
-echo "#define" LWLIB_SCROLLBARS_ATHENA "1" >> confdefs.h
-DEFS="$DEFS -DLWLIB_SCROLLBARS_ATHENA=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}LWLIB_SCROLLBARS_ATHENA\${ac_dB}LWLIB_SCROLLBARS_ATHENA\${ac_dC}1\${ac_dD}
-\${ac_uA}LWLIB_SCROLLBARS_ATHENA\${ac_uB}LWLIB_SCROLLBARS_ATHENA\${ac_uC}1\${ac_uD}
-\${ac_eA}LWLIB_SCROLLBARS_ATHENA\${ac_eB}LWLIB_SCROLLBARS_ATHENA\${ac_eC}1\${ac_eD}
-"
-}
- 
-   
-{
-test -n "$verbose" && \
-echo "	defining HAVE_SCROLLBARS"
-echo "#define" HAVE_SCROLLBARS "1" >> confdefs.h
-DEFS="$DEFS -DHAVE_SCROLLBARS=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_SCROLLBARS\${ac_dB}HAVE_SCROLLBARS\${ac_dC}1\${ac_dD}
-\${ac_uA}HAVE_SCROLLBARS\${ac_uB}HAVE_SCROLLBARS\${ac_uC}1\${ac_uD}
-\${ac_eA}HAVE_SCROLLBARS\${ac_eB}HAVE_SCROLLBARS\${ac_eC}1\${ac_eD}
-"
-}
- 
-fi
-if [ "${with_dialogs}" = "motif" ] ; then
-   
-{
-test -n "$verbose" && \
-echo "	defining LWLIB_DIALOGS_MOTIF"
-echo "#define" LWLIB_DIALOGS_MOTIF "1" >> confdefs.h
-DEFS="$DEFS -DLWLIB_DIALOGS_MOTIF=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}LWLIB_DIALOGS_MOTIF\${ac_dB}LWLIB_DIALOGS_MOTIF\${ac_dC}1\${ac_dD}
-\${ac_uA}LWLIB_DIALOGS_MOTIF\${ac_uB}LWLIB_DIALOGS_MOTIF\${ac_uC}1\${ac_uD}
-\${ac_eA}LWLIB_DIALOGS_MOTIF\${ac_eB}LWLIB_DIALOGS_MOTIF\${ac_eC}1\${ac_eD}
-"
-}
- 
-   
-{
-test -n "$verbose" && \
-echo "	defining HAVE_DIALOGS"
-echo "#define" HAVE_DIALOGS "1" >> confdefs.h
-DEFS="$DEFS -DHAVE_DIALOGS=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_DIALOGS\${ac_dB}HAVE_DIALOGS\${ac_dC}1\${ac_dD}
-\${ac_uA}HAVE_DIALOGS\${ac_uB}HAVE_DIALOGS\${ac_uC}1\${ac_uD}
-\${ac_eA}HAVE_DIALOGS\${ac_eB}HAVE_DIALOGS\${ac_eC}1\${ac_eD}
-"
-}
- 
-fi
-if [ "${with_dialogs}" = "athena" ] ; then
-   
-{
-test -n "$verbose" && \
-echo "	defining LWLIB_DIALOGS_ATHENA"
-echo "#define" LWLIB_DIALOGS_ATHENA "1" >> confdefs.h
-DEFS="$DEFS -DLWLIB_DIALOGS_ATHENA=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}LWLIB_DIALOGS_ATHENA\${ac_dB}LWLIB_DIALOGS_ATHENA\${ac_dC}1\${ac_dD}
-\${ac_uA}LWLIB_DIALOGS_ATHENA\${ac_uB}LWLIB_DIALOGS_ATHENA\${ac_uC}1\${ac_uD}
-\${ac_eA}LWLIB_DIALOGS_ATHENA\${ac_eB}LWLIB_DIALOGS_ATHENA\${ac_eC}1\${ac_eD}
-"
-}
- 
-   
-{
-test -n "$verbose" && \
-echo "	defining HAVE_DIALOGS"
-echo "#define" HAVE_DIALOGS "1" >> confdefs.h
-DEFS="$DEFS -DHAVE_DIALOGS=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_DIALOGS\${ac_dB}HAVE_DIALOGS\${ac_dC}1\${ac_dD}
-\${ac_uA}HAVE_DIALOGS\${ac_uB}HAVE_DIALOGS\${ac_uC}1\${ac_uD}
-\${ac_eA}HAVE_DIALOGS\${ac_eB}HAVE_DIALOGS\${ac_eC}1\${ac_eD}
-"
-}
- 
-fi
-if [ "${with_toolbars}" = "yes" ] ; then
-   
+
+test "${with_toolbars}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_TOOLBARS"
@@ -7551,10 +6306,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_TOOLBARS\${ac_dB}HAVE_TOOLBARS\${ac_dC}
 \${ac_eA}HAVE_TOOLBARS\${ac_eB}HAVE_TOOLBARS\${ac_eC}1\${ac_eD}
 "
 }
- 
-fi
-if [ "${with_tty}" = "yes" ] ; then
-   
+
+test "${with_tty}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_TTY"
@@ -7565,10 +6318,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_TTY\${ac_dB}HAVE_TTY\${ac_dC}1\${ac_dD}
 \${ac_eA}HAVE_TTY\${ac_eB}HAVE_TTY\${ac_eC}1\${ac_eD}
 "
 }
- 
-fi
-if [ "${with_tooltalk}" = "yes" ] ; then
-   
+
+test "${with_tooltalk}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining TOOLTALK"
@@ -7579,10 +6330,56 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}TOOLTALK\${ac_dB}TOOLTALK\${ac_dC}1\${ac_dD}
 \${ac_eA}TOOLTALK\${ac_eB}TOOLTALK\${ac_eC}1\${ac_eD}
 "
 }
- 
-fi
-if [ "$with_mocklisp" = "yes" ]; then
-   
+
+test "${with_i18n3}" = yes && 
+{
+test -n "$verbose" && \
+echo "	defining I18N3"
+echo "#define" I18N3 "1" >> confdefs.h
+DEFS="$DEFS -DI18N3=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}I18N3\${ac_dB}I18N3\${ac_dC}1\${ac_dD}
+\${ac_uA}I18N3\${ac_uB}I18N3\${ac_uC}1\${ac_uD}
+\${ac_eA}I18N3\${ac_eB}I18N3\${ac_eC}1\${ac_eD}
+"
+}
+
+test "${with_mule}" = yes && 
+{
+test -n "$verbose" && \
+echo "	defining MULE"
+echo "#define" MULE "1" >> confdefs.h
+DEFS="$DEFS -DMULE=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}MULE\${ac_dB}MULE\${ac_dC}1\${ac_dD}
+\${ac_uA}MULE\${ac_uB}MULE\${ac_uC}1\${ac_uD}
+\${ac_eA}MULE\${ac_eB}MULE\${ac_eC}1\${ac_eD}
+"
+}
+
+test "${with_canna}" = yes && 
+{
+test -n "$verbose" && \
+echo "	defining HAVE_CANNA"
+echo "#define" HAVE_CANNA "1" >> confdefs.h
+DEFS="$DEFS -DHAVE_CANNA=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_CANNA\${ac_dB}HAVE_CANNA\${ac_dC}1\${ac_dD}
+\${ac_uA}HAVE_CANNA\${ac_uB}HAVE_CANNA\${ac_uC}1\${ac_uD}
+\${ac_eA}HAVE_CANNA\${ac_eB}HAVE_CANNA\${ac_eC}1\${ac_eD}
+"
+}
+
+test "${with_wnn}" = yes && 
+{
+test -n "$verbose" && \
+echo "	defining HAVE_WNN"
+echo "#define" HAVE_WNN "1" >> confdefs.h
+DEFS="$DEFS -DHAVE_WNN=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_WNN\${ac_dB}HAVE_WNN\${ac_dC}1\${ac_dD}
+\${ac_uA}HAVE_WNN\${ac_uB}HAVE_WNN\${ac_uC}1\${ac_uD}
+\${ac_eA}HAVE_WNN\${ac_eB}HAVE_WNN\${ac_eC}1\${ac_eD}
+"
+}
+
+test "${with_mock}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining MOCKLISP_SUPPORT"
@@ -7593,10 +6390,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}MOCKLISP_SUPPORT\${ac_dB}MOCKLISP_SUPPORT\${
 \${ac_eA}MOCKLISP_SUPPORT\${ac_eB}MOCKLISP_SUPPORT\${ac_eC}1\${ac_eD}
 "
 }
- 
-fi
-if [ "${with_sparcworks}" = "yes" ] ; then
-   
+
+test "${with_sparcworks}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining SUNPRO"
@@ -7607,10 +6402,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}SUNPRO\${ac_dB}SUNPRO\${ac_dC}1\${ac_dD}
 \${ac_eA}SUNPRO\${ac_eB}SUNPRO\${ac_eC}1\${ac_eD}
 "
 }
- 
-fi
-if [ "${usage_tracking}" = "yes" ] ; then
-   
+
+test "${usage_tracking}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining USAGE_TRACKING"
@@ -7621,51 +6414,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}USAGE_TRACKING\${ac_dB}USAGE_TRACKING\${ac_d
 \${ac_eA}USAGE_TRACKING\${ac_eB}USAGE_TRACKING\${ac_eC}1\${ac_eD}
 "
 }
- 
-fi
-if [ "${with_energize}" = "yes" ] ; then
-   
-{
-test -n "$verbose" && \
-echo "	defining ENERGIZE"
-echo "#define" ENERGIZE "1" >> confdefs.h
-DEFS="$DEFS -DENERGIZE=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}ENERGIZE\${ac_dB}ENERGIZE\${ac_dC}1\${ac_dD}
-\${ac_uA}ENERGIZE\${ac_uB}ENERGIZE\${ac_uC}1\${ac_uD}
-\${ac_eA}ENERGIZE\${ac_eB}ENERGIZE\${ac_eC}1\${ac_eD}
-"
-}
- 
-  if [ "${energize_version}" = "2.X" ] ; then
-     
-{
-test -n "$verbose" && \
-echo "	defining ENERGIZE_2"
-echo "#define" ENERGIZE_2 "1" >> confdefs.h
-DEFS="$DEFS -DENERGIZE_2=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}ENERGIZE_2\${ac_dB}ENERGIZE_2\${ac_dC}1\${ac_dD}
-\${ac_uA}ENERGIZE_2\${ac_uB}ENERGIZE_2\${ac_uC}1\${ac_uD}
-\${ac_eA}ENERGIZE_2\${ac_eB}ENERGIZE_2\${ac_eC}1\${ac_eD}
-"
-}
- 
-  elif [ "${energize_version}" = "3.X" ] ; then
-     
-{
-test -n "$verbose" && \
-echo "	defining ENERGIZE_3"
-echo "#define" ENERGIZE_3 "1" >> confdefs.h
-DEFS="$DEFS -DENERGIZE_3=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}ENERGIZE_3\${ac_dB}ENERGIZE_3\${ac_dC}1\${ac_dD}
-\${ac_uA}ENERGIZE_3\${ac_uB}ENERGIZE_3\${ac_uC}1\${ac_uD}
-\${ac_eA}ENERGIZE_3\${ac_eB}ENERGIZE_3\${ac_eC}1\${ac_eD}
-"
-}
- 
-  fi
-fi
-if [ "${need_dynodump}" = "yes" ] ; then
-   
+
+test "${need_dynodump}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining DYNODUMP"
@@ -7676,10 +6426,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}DYNODUMP\${ac_dB}DYNODUMP\${ac_dC}1\${ac_dD}
 \${ac_eA}DYNODUMP\${ac_eB}DYNODUMP\${ac_eC}1\${ac_eD}
 "
 }
- 
-fi
-if [ "${need_xildoff}" = "yes" ] ; then
-   
+
+test "${need_xildoff}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining NEED_XILDOFF"
@@ -7690,10 +6438,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}NEED_XILDOFF\${ac_dB}NEED_XILDOFF\${ac_dC}1\
 \${ac_eA}NEED_XILDOFF\${ac_eB}NEED_XILDOFF\${ac_eC}1\${ac_eD}
 "
 }
- 
-fi
-if [ "${with_gcc}" = "yes" ] ; then
-   
+
+test "${with_gcc}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining USE_GCC"
@@ -7704,10 +6450,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}USE_GCC\${ac_dB}USE_GCC\${ac_dC}1\${ac_dD}
 \${ac_eA}USE_GCC\${ac_eB}USE_GCC\${ac_eC}1\${ac_eD}
 "
 }
- 
-fi
-if [ "${with_lcc}" = "yes" ] ; then
-   
+
+test "${with_lcc}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining USE_LCC"
@@ -7718,10 +6462,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}USE_LCC\${ac_dB}USE_LCC\${ac_dC}1\${ac_dD}
 \${ac_eA}USE_LCC\${ac_eB}USE_LCC\${ac_eC}1\${ac_eD}
 "
 }
- 
-fi
-if [ "${with_socks}" = "yes" ]; then
-   
+
+test "${with_socks}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_SOCKS"
@@ -7732,10 +6474,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_SOCKS\${ac_dB}HAVE_SOCKS\${ac_dC}1\${ac
 \${ac_eA}HAVE_SOCKS\${ac_eB}HAVE_SOCKS\${ac_eC}1\${ac_eD}
 "
 }
- 
-fi
-if [ "${with_term}" = "yes" ]; then
-   
+
+test "${with_term}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining HAVE_TERM"
@@ -7746,10 +6486,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_TERM\${ac_dB}HAVE_TERM\${ac_dC}1\${ac_d
 \${ac_eA}HAVE_TERM\${ac_eB}HAVE_TERM\${ac_eC}1\${ac_eD}
 "
 }
- 
-fi
-if [ "${with_epoch}" = "yes" ]; then
-   
+
+test "${with_epoch}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining EPOCH"
@@ -7760,52 +6498,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}EPOCH\${ac_dB}EPOCH\${ac_dC}1\${ac_dD}
 \${ac_eA}EPOCH\${ac_eB}EPOCH\${ac_eC}1\${ac_eD}
 "
 }
- 
-fi
-if [ "${with_sound}" = "native" -o  "${with_sound}" = "both" ]; then
-   
-{
-test -n "$verbose" && \
-echo "	defining HAVE_NATIVE_SOUND"
-echo "#define" HAVE_NATIVE_SOUND "1" >> confdefs.h
-DEFS="$DEFS -DHAVE_NATIVE_SOUND=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_NATIVE_SOUND\${ac_dB}HAVE_NATIVE_SOUND\${ac_dC}1\${ac_dD}
-\${ac_uA}HAVE_NATIVE_SOUND\${ac_uB}HAVE_NATIVE_SOUND\${ac_uC}1\${ac_uD}
-\${ac_eA}HAVE_NATIVE_SOUND\${ac_eB}HAVE_NATIVE_SOUND\${ac_eC}1\${ac_eD}
-"
-}
- 
-fi
-if [ "${with_sound}" = "nas" -o  "${with_sound}" = "both" ]; then
-   
-{
-test -n "$verbose" && \
-echo "	defining HAVE_NAS_SOUND"
-echo "#define" HAVE_NAS_SOUND "1" >> confdefs.h
-DEFS="$DEFS -DHAVE_NAS_SOUND=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_NAS_SOUND\${ac_dB}HAVE_NAS_SOUND\${ac_dC}1\${ac_dD}
-\${ac_uA}HAVE_NAS_SOUND\${ac_uB}HAVE_NAS_SOUND\${ac_uC}1\${ac_uD}
-\${ac_eA}HAVE_NAS_SOUND\${ac_eB}HAVE_NAS_SOUND\${ac_eC}1\${ac_eD}
-"
-}
- 
-fi
-if [ "${old_nas}" = "true" ] ; then
-   
-{
-test -n "$verbose" && \
-echo "	defining NAS_NO_ERROR_JUMP"
-echo "#define" NAS_NO_ERROR_JUMP "1" >> confdefs.h
-DEFS="$DEFS -DNAS_NO_ERROR_JUMP=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}NAS_NO_ERROR_JUMP\${ac_dB}NAS_NO_ERROR_JUMP\${ac_dC}1\${ac_dD}
-\${ac_uA}NAS_NO_ERROR_JUMP\${ac_uB}NAS_NO_ERROR_JUMP\${ac_uC}1\${ac_uD}
-\${ac_eA}NAS_NO_ERROR_JUMP\${ac_eB}NAS_NO_ERROR_JUMP\${ac_eC}1\${ac_eD}
-"
-}
- 
-fi
-if [ "${external_widget}" = "yes" ]; then
-   
+
+test "${external_widget}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining EXTERNAL_WIDGET"
@@ -7816,10 +6510,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}EXTERNAL_WIDGET\${ac_dB}EXTERNAL_WIDGET\${ac
 \${ac_eA}EXTERNAL_WIDGET\${ac_eB}EXTERNAL_WIDGET\${ac_eC}1\${ac_eD}
 "
 }
- 
-fi
-if [ "${with_gnu_make}" = "yes" ]; then
-   
+
+test "${with_gnu_make}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining USE_GNU_MAKE"
@@ -7830,10 +6522,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}USE_GNU_MAKE\${ac_dB}USE_GNU_MAKE\${ac_dC}1\
 \${ac_eA}USE_GNU_MAKE\${ac_eB}USE_GNU_MAKE\${ac_eC}1\${ac_eD}
 "
 }
- 
-fi
-if [ "${no_doc_file}" = "yes" ]; then
-   
+
+test "${no_doc_file}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining NO_DOC_FILE"
@@ -7844,10 +6534,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}NO_DOC_FILE\${ac_dB}NO_DOC_FILE\${ac_dC}1\${
 \${ac_eA}NO_DOC_FILE\${ac_eB}NO_DOC_FILE\${ac_eC}1\${ac_eD}
 "
 }
- 
-fi
-if [ "${const_is_losing}" = "yes" ]; then
-   
+
+test "${const_is_losing}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining CONST_IS_LOSING"
@@ -7858,10 +6546,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}CONST_IS_LOSING\${ac_dB}CONST_IS_LOSING\${ac
 \${ac_eA}CONST_IS_LOSING\${ac_eB}CONST_IS_LOSING\${ac_eC}1\${ac_eD}
 "
 }
- 
-fi
-if [ "${use_assertions}" = "yes" ]; then
-   
+
+test "${use_assertions}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining USE_ASSERTIONS"
@@ -7872,80 +6558,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}USE_ASSERTIONS\${ac_dB}USE_ASSERTIONS\${ac_d
 \${ac_eA}USE_ASSERTIONS\${ac_eB}USE_ASSERTIONS\${ac_eC}1\${ac_eD}
 "
 }
- 
-fi
-if [ "${error_check_extents}" = "yes" ]; then
-   
-{
-test -n "$verbose" && \
-echo "	defining ERROR_CHECK_EXTENTS"
-echo "#define" ERROR_CHECK_EXTENTS "1" >> confdefs.h
-DEFS="$DEFS -DERROR_CHECK_EXTENTS=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}ERROR_CHECK_EXTENTS\${ac_dB}ERROR_CHECK_EXTENTS\${ac_dC}1\${ac_dD}
-\${ac_uA}ERROR_CHECK_EXTENTS\${ac_uB}ERROR_CHECK_EXTENTS\${ac_uC}1\${ac_uD}
-\${ac_eA}ERROR_CHECK_EXTENTS\${ac_eB}ERROR_CHECK_EXTENTS\${ac_eC}1\${ac_eD}
-"
-}
- 
-fi
-if [ "${error_check_typecheck}" = "yes" ]; then
-   
-{
-test -n "$verbose" && \
-echo "	defining ERROR_CHECK_TYPECHECK"
-echo "#define" ERROR_CHECK_TYPECHECK "1" >> confdefs.h
-DEFS="$DEFS -DERROR_CHECK_TYPECHECK=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}ERROR_CHECK_TYPECHECK\${ac_dB}ERROR_CHECK_TYPECHECK\${ac_dC}1\${ac_dD}
-\${ac_uA}ERROR_CHECK_TYPECHECK\${ac_uB}ERROR_CHECK_TYPECHECK\${ac_uC}1\${ac_uD}
-\${ac_eA}ERROR_CHECK_TYPECHECK\${ac_eB}ERROR_CHECK_TYPECHECK\${ac_eC}1\${ac_eD}
-"
-}
- 
-fi
-if [ "${error_check_bufpos}" = "yes" ]; then
-   
-{
-test -n "$verbose" && \
-echo "	defining ERROR_CHECK_BUFPOS"
-echo "#define" ERROR_CHECK_BUFPOS "1" >> confdefs.h
-DEFS="$DEFS -DERROR_CHECK_BUFPOS=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}ERROR_CHECK_BUFPOS\${ac_dB}ERROR_CHECK_BUFPOS\${ac_dC}1\${ac_dD}
-\${ac_uA}ERROR_CHECK_BUFPOS\${ac_uB}ERROR_CHECK_BUFPOS\${ac_uC}1\${ac_uD}
-\${ac_eA}ERROR_CHECK_BUFPOS\${ac_eB}ERROR_CHECK_BUFPOS\${ac_eC}1\${ac_eD}
-"
-}
- 
-fi
-if [ "${error_check_gc}" = "yes" ]; then
-   
-{
-test -n "$verbose" && \
-echo "	defining ERROR_CHECK_GC"
-echo "#define" ERROR_CHECK_GC "1" >> confdefs.h
-DEFS="$DEFS -DERROR_CHECK_GC=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}ERROR_CHECK_GC\${ac_dB}ERROR_CHECK_GC\${ac_dC}1\${ac_dD}
-\${ac_uA}ERROR_CHECK_GC\${ac_uB}ERROR_CHECK_GC\${ac_uC}1\${ac_uD}
-\${ac_eA}ERROR_CHECK_GC\${ac_eB}ERROR_CHECK_GC\${ac_eC}1\${ac_eD}
-"
-}
- 
-fi
-if [ "${error_check_malloc}" = "yes" ]; then
-   
-{
-test -n "$verbose" && \
-echo "	defining ERROR_CHECK_MALLOC"
-echo "#define" ERROR_CHECK_MALLOC "1" >> confdefs.h
-DEFS="$DEFS -DERROR_CHECK_MALLOC=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}ERROR_CHECK_MALLOC\${ac_dB}ERROR_CHECK_MALLOC\${ac_dC}1\${ac_dD}
-\${ac_uA}ERROR_CHECK_MALLOC\${ac_uB}ERROR_CHECK_MALLOC\${ac_uC}1\${ac_uD}
-\${ac_eA}ERROR_CHECK_MALLOC\${ac_eB}ERROR_CHECK_MALLOC\${ac_eC}1\${ac_eD}
-"
-}
- 
-fi
-if [ "${debug}" = "yes" ]; then
-   
+
+test "${debug}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining DEBUG_XEMACS"
@@ -7956,38 +6570,8 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}DEBUG_XEMACS\${ac_dB}DEBUG_XEMACS\${ac_dC}1\
 \${ac_eA}DEBUG_XEMACS\${ac_eB}DEBUG_XEMACS\${ac_eC}1\${ac_eD}
 "
 }
- 
-fi
-if [ "${memory_usage_stats}" = "yes" ]; then
-   
-{
-test -n "$verbose" && \
-echo "	defining MEMORY_USAGE_STATS"
-echo "#define" MEMORY_USAGE_STATS "1" >> confdefs.h
-DEFS="$DEFS -DMEMORY_USAGE_STATS=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}MEMORY_USAGE_STATS\${ac_dB}MEMORY_USAGE_STATS\${ac_dC}1\${ac_dD}
-\${ac_uA}MEMORY_USAGE_STATS\${ac_uB}MEMORY_USAGE_STATS\${ac_uC}1\${ac_uD}
-\${ac_eA}MEMORY_USAGE_STATS\${ac_eB}MEMORY_USAGE_STATS\${ac_eC}1\${ac_eD}
-"
-}
- 
-fi
-if [ "${use_union_type}" != "yes" ]; then
-   
-{
-test -n "$verbose" && \
-echo "	defining NO_UNION_TYPE"
-echo "#define" NO_UNION_TYPE "1" >> confdefs.h
-DEFS="$DEFS -DNO_UNION_TYPE=1"
-ac_sed_defs="${ac_sed_defs}\${ac_dA}NO_UNION_TYPE\${ac_dB}NO_UNION_TYPE\${ac_dC}1\${ac_dD}
-\${ac_uA}NO_UNION_TYPE\${ac_uB}NO_UNION_TYPE\${ac_uC}1\${ac_uD}
-\${ac_eA}NO_UNION_TYPE\${ac_eB}NO_UNION_TYPE\${ac_eC}1\${ac_eD}
-"
-}
- 
-fi
-if [ "${quantify}" = "yes" ]; then
-   
+
+test "${quantify}" = yes && 
 {
 test -n "$verbose" && \
 echo "	defining QUANTIFY"
@@ -7998,69 +6582,170 @@ ac_sed_defs="${ac_sed_defs}\${ac_dA}QUANTIFY\${ac_dB}QUANTIFY\${ac_dC}1\${ac_dD}
 \${ac_eA}QUANTIFY\${ac_eB}QUANTIFY\${ac_eC}1\${ac_eD}
 "
 }
- 
+
+test "${memory_usage_stats}" = yes && 
+{
+test -n "$verbose" && \
+echo "	defining MEMORY_USAGE_STATS"
+echo "#define" MEMORY_USAGE_STATS "1" >> confdefs.h
+DEFS="$DEFS -DMEMORY_USAGE_STATS=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}MEMORY_USAGE_STATS\${ac_dB}MEMORY_USAGE_STATS\${ac_dC}1\${ac_dD}
+\${ac_uA}MEMORY_USAGE_STATS\${ac_uB}MEMORY_USAGE_STATS\${ac_uC}1\${ac_uD}
+\${ac_eA}MEMORY_USAGE_STATS\${ac_eB}MEMORY_USAGE_STATS\${ac_eC}1\${ac_eD}
+"
+}
+
+
+test "${error_check_extents}" = yes && 
+{
+test -n "$verbose" && \
+echo "	defining ERROR_CHECK_EXTENTS"
+echo "#define" ERROR_CHECK_EXTENTS "1" >> confdefs.h
+DEFS="$DEFS -DERROR_CHECK_EXTENTS=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}ERROR_CHECK_EXTENTS\${ac_dB}ERROR_CHECK_EXTENTS\${ac_dC}1\${ac_dD}
+\${ac_uA}ERROR_CHECK_EXTENTS\${ac_uB}ERROR_CHECK_EXTENTS\${ac_uC}1\${ac_uD}
+\${ac_eA}ERROR_CHECK_EXTENTS\${ac_eB}ERROR_CHECK_EXTENTS\${ac_eC}1\${ac_eD}
+"
+}
+
+test "${error_check_typecheck}" = yes && 
+{
+test -n "$verbose" && \
+echo "	defining ERROR_CHECK_TYPECHECK"
+echo "#define" ERROR_CHECK_TYPECHECK "1" >> confdefs.h
+DEFS="$DEFS -DERROR_CHECK_TYPECHECK=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}ERROR_CHECK_TYPECHECK\${ac_dB}ERROR_CHECK_TYPECHECK\${ac_dC}1\${ac_dD}
+\${ac_uA}ERROR_CHECK_TYPECHECK\${ac_uB}ERROR_CHECK_TYPECHECK\${ac_uC}1\${ac_uD}
+\${ac_eA}ERROR_CHECK_TYPECHECK\${ac_eB}ERROR_CHECK_TYPECHECK\${ac_eC}1\${ac_eD}
+"
+}
+
+test "${error_check_bufpos}" = yes && 
+{
+test -n "$verbose" && \
+echo "	defining ERROR_CHECK_BUFPOS"
+echo "#define" ERROR_CHECK_BUFPOS "1" >> confdefs.h
+DEFS="$DEFS -DERROR_CHECK_BUFPOS=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}ERROR_CHECK_BUFPOS\${ac_dB}ERROR_CHECK_BUFPOS\${ac_dC}1\${ac_dD}
+\${ac_uA}ERROR_CHECK_BUFPOS\${ac_uB}ERROR_CHECK_BUFPOS\${ac_uC}1\${ac_uD}
+\${ac_eA}ERROR_CHECK_BUFPOS\${ac_eB}ERROR_CHECK_BUFPOS\${ac_eC}1\${ac_eD}
+"
+}
+
+test "${error_check_gc}" = yes && 
+{
+test -n "$verbose" && \
+echo "	defining ERROR_CHECK_GC"
+echo "#define" ERROR_CHECK_GC "1" >> confdefs.h
+DEFS="$DEFS -DERROR_CHECK_GC=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}ERROR_CHECK_GC\${ac_dB}ERROR_CHECK_GC\${ac_dC}1\${ac_dD}
+\${ac_uA}ERROR_CHECK_GC\${ac_uB}ERROR_CHECK_GC\${ac_uC}1\${ac_uD}
+\${ac_eA}ERROR_CHECK_GC\${ac_eB}ERROR_CHECK_GC\${ac_eC}1\${ac_eD}
+"
+}
+
+test "${error_check_malloc}" = yes && 
+{
+test -n "$verbose" && \
+echo "	defining ERROR_CHECK_MALLOC"
+echo "#define" ERROR_CHECK_MALLOC "1" >> confdefs.h
+DEFS="$DEFS -DERROR_CHECK_MALLOC=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}ERROR_CHECK_MALLOC\${ac_dB}ERROR_CHECK_MALLOC\${ac_dC}1\${ac_dD}
+\${ac_uA}ERROR_CHECK_MALLOC\${ac_uB}ERROR_CHECK_MALLOC\${ac_uC}1\${ac_uD}
+\${ac_eA}ERROR_CHECK_MALLOC\${ac_eB}ERROR_CHECK_MALLOC\${ac_eC}1\${ac_eD}
+"
+}
+
+
+if test "${with_energize}" = yes; then
+  
+{
+test -n "$verbose" && \
+echo "	defining ENERGIZE"
+echo "#define" ENERGIZE "1" >> confdefs.h
+DEFS="$DEFS -DENERGIZE=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}ENERGIZE\${ac_dB}ENERGIZE\${ac_dC}1\${ac_dD}
+\${ac_uA}ENERGIZE\${ac_uB}ENERGIZE\${ac_uC}1\${ac_uD}
+\${ac_eA}ENERGIZE\${ac_eB}ENERGIZE\${ac_eC}1\${ac_eD}
+"
+}
+
+  test "${energize_version}" = "2.X" && 
+{
+test -n "$verbose" && \
+echo "	defining ENERGIZE_2"
+echo "#define" ENERGIZE_2 "1" >> confdefs.h
+DEFS="$DEFS -DENERGIZE_2=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}ENERGIZE_2\${ac_dB}ENERGIZE_2\${ac_dC}1\${ac_dD}
+\${ac_uA}ENERGIZE_2\${ac_uB}ENERGIZE_2\${ac_uC}1\${ac_uD}
+\${ac_eA}ENERGIZE_2\${ac_eB}ENERGIZE_2\${ac_eC}1\${ac_eD}
+"
+}
+
+  test "${energize_version}" = "3.X" && 
+{
+test -n "$verbose" && \
+echo "	defining ENERGIZE_3"
+echo "#define" ENERGIZE_3 "1" >> confdefs.h
+DEFS="$DEFS -DENERGIZE_3=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}ENERGIZE_3\${ac_dB}ENERGIZE_3\${ac_dC}1\${ac_dD}
+\${ac_uA}ENERGIZE_3\${ac_uB}ENERGIZE_3\${ac_uC}1\${ac_uD}
+\${ac_eA}ENERGIZE_3\${ac_eB}ENERGIZE_3\${ac_eC}1\${ac_eD}
+"
+}
+
 fi
 
-# ====================== Developer's configuration =======================
+test "${with_sound}" = "native" -o "${with_sound}" = "both" && 
+{
+test -n "$verbose" && \
+echo "	defining HAVE_NATIVE_SOUND"
+echo "#define" HAVE_NATIVE_SOUND "1" >> confdefs.h
+DEFS="$DEFS -DHAVE_NATIVE_SOUND=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_NATIVE_SOUND\${ac_dB}HAVE_NATIVE_SOUND\${ac_dC}1\${ac_dD}
+\${ac_uA}HAVE_NATIVE_SOUND\${ac_uB}HAVE_NATIVE_SOUND\${ac_uC}1\${ac_uD}
+\${ac_eA}HAVE_NATIVE_SOUND\${ac_eB}HAVE_NATIVE_SOUND\${ac_eC}1\${ac_eD}
+"
+}
 
-# The following assignments make sense if you're running XEmacs on a single
-# machine, one version at a time, and you want changes to the lisp and etc
-# directories in the source tree to show up immediately in your working
-# environment.  It saves a great deal of disk space by not duplicating the
-# lisp and etc directories.
+test "${with_sound}" = "nas"    -o "${with_sound}" = "both" && 
+{
+test -n "$verbose" && \
+echo "	defining HAVE_NAS_SOUND"
+echo "#define" HAVE_NAS_SOUND "1" >> confdefs.h
+DEFS="$DEFS -DHAVE_NAS_SOUND=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}HAVE_NAS_SOUND\${ac_dB}HAVE_NAS_SOUND\${ac_dC}1\${ac_dD}
+\${ac_uA}HAVE_NAS_SOUND\${ac_uB}HAVE_NAS_SOUND\${ac_uC}1\${ac_uD}
+\${ac_eA}HAVE_NAS_SOUND\${ac_eB}HAVE_NAS_SOUND\${ac_eC}1\${ac_eD}
+"
+}
 
-if [ "$run_in_place" = "yes" ]; then
-   prefix='${srcdir}'
-   exec_prefix='${srcdir}'
-   bindir='${exec_prefix}/bin/${configuration}'
-   lispdir='${srcdir}/lisp'
-   sitelispdir='${lispdir}/site-lisp'
-   etcdir='${srcdir}/etc'
-   lockdir='${srcdir}/lock'
-   archlibdir='${srcdir}/lib-src/${configuration}'
-   infodir='${srcdir}/info'
-fi
-#elif [ "$single_tree" = "1" ]; then
-#   if [ "$exec_prefix_specified" = "" ]; then
-#      exec_prefix='${prefix}'
-#   fi
-#   if [ "$bindir_specified" = "" ]; then
-#      bindir='${exec_prefix}/bin/${configuration}'
-#   fi
-#   if [ "$datadir_specified" = "" ]; then
-#      datadir='${prefix}/common'
-#   fi
-#   if [ "$statedir_specified" = "" ]; then
-#      statedir='${prefix}/common'
-#   fi
-#   if [ "$libdir_specified" = "" ]; then
-#      libdir='${bindir}'
-#   fi
-#   if [ "$lispdir_specified" = "" ]; then
-#      lispdir='${prefix}/common/lisp'
-#   fi
-#   if [ "$locallisppath_specified" = "" ]; then
-#      locallisppath='${prefix}/common/site-lisp'
-#   fi
-#   if [ "$lockdir_specified" = "" ]; then
-#      lockdir='${prefix}/common/lock'
-#   fi
-#   if [ "$archlibdir_specified" = "" ]; then
-#      archlibdir='${libdir}/etc'
-#   fi
-#   if [ "$etcdir_specified" = "" ]; then
-#      etcdir='${prefix}/common/data'
-#   fi
-#   if [ "$docdir_specified" = "" ]; then
-#      docdir='${prefix}/common/data'
-#   fi
-#fi
+test "${old_nas}"    = "true" && 
+{
+test -n "$verbose" && \
+echo "	defining NAS_NO_ERROR_JUMP"
+echo "#define" NAS_NO_ERROR_JUMP "1" >> confdefs.h
+DEFS="$DEFS -DNAS_NO_ERROR_JUMP=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}NAS_NO_ERROR_JUMP\${ac_dB}NAS_NO_ERROR_JUMP\${ac_dC}1\${ac_dD}
+\${ac_uA}NAS_NO_ERROR_JUMP\${ac_uB}NAS_NO_ERROR_JUMP\${ac_uC}1\${ac_uD}
+\${ac_eA}NAS_NO_ERROR_JUMP\${ac_eB}NAS_NO_ERROR_JUMP\${ac_eC}1\${ac_eD}
+"
+}
 
-############################################################################
-#									   #
-#                     Report on what we decided to do                      #
-#									   #
-############################################################################
+
+test "${use_union_type}"    != yes && 
+{
+test -n "$verbose" && \
+echo "	defining NO_UNION_TYPE"
+echo "#define" NO_UNION_TYPE "1" >> confdefs.h
+DEFS="$DEFS -DNO_UNION_TYPE=1"
+ac_sed_defs="${ac_sed_defs}\${ac_dA}NO_UNION_TYPE\${ac_dB}NO_UNION_TYPE\${ac_dC}1\${ac_dD}
+\${ac_uA}NO_UNION_TYPE\${ac_uB}NO_UNION_TYPE\${ac_uC}1\${ac_uD}
+\${ac_eA}NO_UNION_TYPE\${ac_eB}NO_UNION_TYPE\${ac_eC}1\${ac_eD}
+"
+}
+
+
 
 echo "
 
@@ -8077,147 +6762,85 @@ Configured for \`${canonical}'.
   Where do we find X Windows header files?                }${x_includes}${x_libraries+
   Where do we find X Windows libraries?                   }${x_libraries}"
 
-if [ -n "$site_includes" ]; then
+if test -n "$site_includes"; then
   echo "  Additional header files:                                ${site_includes}"
 fi
 
-if [ -n "$site_libraries" ] && [ -n "$site_runtime_libraries" ]; then
+if test -n "$site_libraries" -a -n "$site_runtime_libraries"; then
   echo "  Additional libraries:                                   ${site_libraries} ${site_runtime_libraries}"
-elif [ -n "$site_libraries" ]; then
+elif test -n "$site_libraries"; then
   echo "  Additional libraries:                                   ${site_libraries}"
-elif [ -n "$site_runtime_libraries" ]; then
+elif test -n "$site_runtime_libraries"; then
   echo "  Additional libraries:                                   ${site_runtime_libraries}"
 fi
 
-
-if [ "$with_socks" = "yes" ]; then
-  echo "  Compiling in support for SOCKS."
-fi
-if [ "$with_term" = "yes" ]; then
-  echo "  Compiling in support for TERM."
-fi
-if [ "$with_xauth" = "yes" ]; then
-  echo "  Compiling in support for XAUTH."
-fi
-if [ "$with_xpm" = "yes" ]; then
-  echo "  Compiling in support for XPM."
-fi
-if [ "$with_xmu" != "yes" ] && [ "$window_system" != "none" ]; then
+test "$with_socks" = yes && echo "  Compiling in support for SOCKS."
+test "$with_term"  = yes && echo "  Compiling in support for TERM."
+test "$with_xauth" = yes && echo "  Compiling in support for XAUTH."
+test "$with_xpm"   = yes && echo "  Compiling in support for XPM."
+if test "$with_xmu" != yes -a "$window_system" != none; then
   echo "  No Xmu; substituting equivalent routines."
 fi
-if [ "$with_xface" = "yes" ]; then
-  echo "  Compiling in support for X-Face headers."
-fi
-if [ "$with_gif" = "yes" ]; then
-  echo "  Compiling in support for GIF image conversion."
-fi
-if [ "$with_jpeg" = "yes" ]; then
-  echo "  Compiling in support for JPEG image conversion."
-fi
-if [ "$with_png" = "yes" ] || [ "$with_png" = "gnuz" ]; then
+test "$with_xface" = yes && echo "  Compiling in support for X-Face headers."
+test "$with_gif"   = yes && echo "  Compiling in support for GIF image conversion."
+test "$with_jpeg"  = yes && echo "  Compiling in support for JPEG image conversion."
+if test "$with_png"   = yes -o "$with_png" = gnuz; then
   echo "  Compiling in support for PNG image conversion."
 fi
-if [ "$with_png" = "gnuz" ]; then
+if test "$with_png" = gnuz; then
   echo "  (Using -lgz instead of -lz.)"
 fi
-if [ "$with_tiff" = "yes" ]; then
-  echo "  Compiling in support for TIFF image conversion (not implemented)."
-fi
-if [ "$with_epoch" = "yes" ]; then
-  echo "  Compiling in extra Epoch compatibility."
-fi
-if [ "$with_sound" = "nas" ]; then
-  echo "  Compiling in network sound support."
-fi
-if [ "$with_sound" = "native" ]; then
-  echo "  Compiling in native sound support."
-fi
-if [ "$with_sound" = "both" ]; then
-  echo "  Compiling in both network and native sound support."
-fi
-if [ "$old_nas" = true ]; then
-  echo "        nas library lacks error trapping, will play synchronously"
-fi
-if [ "$with_database_berkdb" = "yes" ]; then
-  echo "  Compiling in support for Berkeley DB."
-fi
-if [ "$with_database_dbm" = "yes" ]; then
-  echo "  Compiling in support for DBM."
-fi
-if [ "$with_database_gnudbm" = "yes" ]; then
-  echo "  Compiling in support for GNU DBM."
-fi
-if [ "$with_ncurses" = "yes" ]; then
-  echo "  Compiling in support for ncurses."
-fi
-if [ "$with_socks" = "yes" ]; then
-  echo "  Compiling in support for SOCKS."
-fi
-if [ "$with_tooltalk" = "yes" ]; then
-  echo "  Compiling in support for ToolTalk."
-fi
-if [ "$with_cde" = "yes" ]; then
-  echo "  Compiling in support for CDE."
-fi
-if [ "$with_offix" = "yes" ]; then
-  echo "  Compiling in support for OffiX."
-fi
-if [ "$with_mocklisp" = "yes" ]; then
-  echo "  Compiling in support for Mocklisp."
-fi
-if [ "$with_sparcworks" = "yes" ]; then
-  echo "  Compiling in support for SparcWorks."
-fi
-if [ "$with_energize" = "yes" ]; then
-  echo "  Compiling in support for Lucid Energize (doesn't currently work)."
-fi
-if [ "$with_menubars" = "lucid" ]; then
-  echo "  Using the Lucid menubar."
-fi
-if [ "$with_menubars" = "motif" ]; then
+test "$with_tiff"  = yes && echo "  Compiling in support for TIFF image conversion (not implemented)."
+test "$with_epoch" = yes && echo "  Compiling in extra Epoch compatibility."
+
+test "$with_sound" = nas    && echo "  Compiling in network sound support."
+test "$with_sound" = native && echo "  Compiling in native sound support."
+test "$with_sound" = both   && echo "  Compiling in both network and native sound support."
+test "$old_nas"    = true   && echo "        nas library lacks error trapping, will play synchronously"
+
+test "$with_database_berkdb" = yes && echo "  Compiling in support for Berkeley DB."
+test "$with_database_dbm"    = yes && echo "  Compiling in support for DBM."
+test "$with_database_gnudbm" = yes && echo "  Compiling in support for GNU DBM."
+
+test "$with_ncurses"  = yes && echo "  Compiling in support for ncurses."
+test "$with_socks"    = yes && echo "  Compiling in support for SOCKS."
+test "$with_tooltalk" = yes && echo "  Compiling in support for ToolTalk."
+
+test "$with_mule"     = yes && echo "  Compiling in Mule (multi-lingual) support."
+test "$with_xim"      != no && echo "  Compiling in XIM (X11R5+ I18N input method) support."
+test "$with_xim" = motif    && echo "    Using Motif to provide XIM support."
+test "$with_xim" = xlib     && echo "    Using raw Xlib to provide XIM support."
+test "$with_canna"    = yes && echo "  Compiling in support for Canna on Mule."
+test "$with_wnn"      = yes && echo "  Compiling in support for WNN on Mule (doesn't currently work)."
+test "$with_i18n3"    = yes && echo "  Compiling in I18N support, level 3 (doesn't currently work)."
+
+test "$with_cde"      = yes && echo "  Compiling in support for CDE."
+test "$with_offix"    = yes && echo "  Compiling in support for OffiX."
+test "$with_mocklisp" = yes && echo "  Compiling in support for Mocklisp."
+test "$with_sparcworks" = yes && echo "  Compiling in support for SparcWorks."
+test "$with_energize" = yes && echo "  Compiling in support for Lucid Energize (doesn't currently work)."
+test "$with_menubars" = "lucid" && echo "  Using the Lucid menubar."
+if test "$with_menubars" = "motif"; then
   echo "  Using the Motif menubar."
   echo " *WARNING*  The Motif menubar is currently buggy.  We recommend"
   echo "            that you use the Lucid menubar instead.  Re-run"
   echo "            configure with --with-menubars='lucid'."
 fi
-if [ "$with_scrollbars" = "lucid" ]; then
-  echo "  Using the Lucid scrollbar."
-fi
-if [ "$with_scrollbars" = "motif" ]; then
-  echo "  Using the Motif scrollbar."
-fi
-if [ "$with_scrollbars" = "athena" ]; then
-  echo "  Using the Athena scrollbar."
-fi
-if [ "$with_dialogs" = "motif" ]; then
-  echo "  Using the Motif dialog boxes."
-fi
-if [ "$with_dialogs" = "athena" ]; then
-  echo "  Using the Athena dialog boxes."
-fi
-if [ "${use_union_type}" = "yes" ]; then
-  echo "  Using the union type for Lisp_Objects."
-fi
-if [ "${debug}" = "yes" ]; then
-  echo "  Compiling in extra code for debugging."
-fi
-if [ "${memory_usage_stats}" = "yes" ]; then
-  echo "  Compiling in code for checking XEmacs memory usage."
-fi
-if [ "$usage_tracking" = "yes" ]; then
-  echo "  Compiling with usage tracking active (Sun internal)."
-fi
+test "$with_scrollbars" = lucid  && echo "  Using the Lucid scrollbar."
+test "$with_scrollbars" = motif  && echo "  Using the Motif scrollbar."
+test "$with_scrollbars" = athena && echo "  Using the Athena scrollbar."
+test "$with_dialogs"    = motif  && echo "  Using the Motif dialog boxes."
+test "$with_dialogs"    = athena && echo "  Using the Athena dialog boxes."
+
+test "${use_union_type}"     = yes && echo "  Using the union type for Lisp_Objects."
+test "${debug}"              = yes && echo "  Compiling in extra code for debugging."
+test "${memory_usage_stats}" = yes && echo "  Compiling in code for checking XEmacs memory usage."
+test "$usage_tracking"       = yes && echo "  Compiling with usage tracking active (Sun internal)."
 echo "
 "
 
-############################################################################
-#									   #
-#                                Now generate!                             #
-#									   #
-############################################################################
 
-# This has to be called in order for this variable to get into config.status
-  
+ 
 # Remove any trailing slashes in these variables.
 test -n "${prefix}" &&
   prefix=`echo "${prefix}" | sed 's,\([^/]\)/*$,\1,'`
@@ -8264,18 +6887,15 @@ cat > config.status <<EOF
 # This directory was configured as follows,
 # on host `(hostname || uname -n) 2>/dev/null | sed 1q`:
 #
-EOF
-sed 's/^/# /' >> config.status <<EOF
-$0 $quoted_arguments
-EOF
-cat >> config.status <<EOF
+# $0 $configure_args
+
 ac_cs_usage="Usage: config.status [--recheck] [--version] [--help]"
 for ac_option
 do
   case "\$ac_option" in
   -recheck | --recheck | --rechec | --reche | --rech | --rec | --re | --r)
-    echo running \${CONFIG_SHELL-/bin/sh} $0 $quoted_arguments --no-create
-    exec \${CONFIG_SHELL-/bin/sh} $0 $quoted_arguments --no-create ;;
+    echo running \${CONFIG_SHELL-/bin/sh} $0 $configure_args --no-create
+    exec \${CONFIG_SHELL-/bin/sh} $0 $configure_args --no-create ;;
   -version | --version | --versio | --versi | --vers | --ver | --ve | --v)
     echo "config.status generated by autoconf version 1.11"
     exit 0 ;;
@@ -8544,7 +7164,6 @@ test -n "$no_create" || ${CONFIG_SHELL-/bin/sh} ./config.status
 # src/Makefile      from ${srcdir}/src/Makefile.in
 # lwlib/Makefile    from ${srcdir}/lwlib/Makefile.in
 # lib-src/Makefile  from ${srcdir}/lib-src/Makefile.in
-# man/*/Makefile    from ${srcdir}/man/*/Makefile.in
 # dynodump/Makefile from ${srcdir}/dynodump/Makefile.in
 # and possibly
 # lwlib/energize/Makefile from ${srcdir}/lwlib/energize/Makefile.in.
@@ -8552,7 +7171,7 @@ test -n "$no_create" || ${CONFIG_SHELL-/bin/sh} ./config.status
 # file.  Only do the build if "config.status" is present, since its
 # non-presence indicates an error occured.
 status=$?
-if [ ! -f ./config.status ]; then
+if test ! -f ./config.status ; then
    exit $status
 fi
 topsrcdir=${srcdir}
@@ -8565,7 +7184,7 @@ makefile_command='echo "creating src/Makefile";
 ( cd ./src;
   rm -f junk.c;
   sed -e '\''s/^# Generated.*//'\'' -e '\''s%/\*\*/#.*%%'\'' < Makefile.in > junk.c;
-  eval `echo ${CPP} ${CPPFLAGS_MAKEFILEGEN} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
+  eval `echo ${CPP} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
   < junk.cpp							'\
 '    sed -e '\''s/^#.*//'\''					'\
 '	-e '\''s/^[ \f\t][ \f\t]*$//'\''			'\
@@ -8582,7 +7201,7 @@ lwlib_makefile_command='echo "creating lwlib/Makefile";
 ( cd ./lwlib;
   rm -f junk.c;
   sed -e '\''s/^# Generated.*//'\'' -e '\''s%/\*\*/#.*%%'\'' < Makefile.in > junk.c;
-  eval `echo ${CPP} ${CPPFLAGS_MAKEFILEGEN} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
+  eval `echo ${CPP} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
   < junk.cpp							'\
 '    sed -e '\''s/^#.*//'\''					'\
 '	-e '\''s/^[ \f\t][ \f\t]*$//'\''			'\
@@ -8599,7 +7218,7 @@ lib_src_makefile_command='echo "creating lib-src/Makefile";
 ( cd ./lib-src;
   rm -f junk.c;
   sed -e '\''s/^# Generated.*//'\'' -e '\''s%/\*\*/#.*%%'\'' < Makefile.in > junk.c;
-  eval `echo ${CPP} ${CPPFLAGS_MAKEFILEGEN} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
+  eval `echo ${CPP} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
   < junk.cpp							'\
 '    sed -e '\''s/^#.*//'\''					'\
 '	-e '\''s/^[ \f\t][ \f\t]*$//'\''			'\
@@ -8611,12 +7230,34 @@ lib_src_makefile_command='echo "creating lib-src/Makefile";
     rm -f junk.c junk.cpp;
 )'
 eval `echo $lib_src_makefile_command`
+
+# Mule utilitity programs - currently disabled
+if test "${with_mule_util}" = "yes"; then
+lib_src_mule_makefile_command='echo "creating lib-src/mule/Makefile";
+  topsrcdir='"${topsrcdir}"';
+( cd ./lib-src/mule;
+  rm -f junk.c;
+  sed -e '\''s/^# Generated.*//'\'' -e '\''s%/\*\*/#.*%%'\'' < Makefile.in > junk.c;
+  eval `echo ${CPP} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
+  < junk.cpp							'\
+'    sed -e '\''s/^#.*//'\''					'\
+'	-e '\''s/^[ \f\t][ \f\t]*$//'\''			'\
+'	-e '\''s/^ /	/'\'' 					'\
+'	| sed -n -e '\''/^..*$/p'\''				'\
+'	> Makefile.new;
+    chmod 444 Makefile.new;
+    mv -f Makefile.new Makefile;
+    rm -f junk.c junk.cpp;
+)'
+eval `echo $lib_src_mule_makefile_command`
+fi # Mule
+
 dynodump_makefile_command='echo "creating dynodump/Makefile";
   topsrcdir='"${topsrcdir}"';
 ( cd ./dynodump;
   rm -f junk.c;
   sed -e '\''s/^# Generated.*//'\'' -e '\''s%/\*\*/#.*%%'\'' < Makefile.in > junk.c;
-  eval `echo ${CPP} ${CPPFLAGS_MAKEFILEGEN} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
+  eval `echo ${CPP} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
   < junk.cpp							'\
 '    sed -e '\''s/^#.*//'\''					'\
 '	-e '\''s/^[ \f\t][ \f\t]*$//'\''			'\
@@ -8628,13 +7269,13 @@ dynodump_makefile_command='echo "creating dynodump/Makefile";
     rm -f junk.c junk.cpp;
 )'
 eval `echo $dynodump_makefile_command`
-if [ "${with_energize}" = "yes" ]; then
+if test "${with_energize}" = "yes" ; then
 energize_makefile_command='echo "creating lwlib/energize/Makefile";
   topsrcdir='"${topsrcdir}"';
 ( cd ./lwlib/energize;
   rm -f junk.c;
   sed -e '\''s/^# Generated.*//'\'' -e '\''s%/\*\*/#.*%%'\'' < Makefile.in > junk.c;
-  eval `echo ${CPP} ${CPPFLAGS_MAKEFILEGEN} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
+  eval `echo ${CPP} -I. -I${topsrcdir}/src ${CPPFLAGS} junk.c \>junk.cpp`;
   < junk.cpp							'\
 '    sed -e '\''s/^#.*//'\''					'\
 '	-e '\''s/^[ \f\t][ \f\t]*$//'\''			'\
@@ -8656,9 +7297,12 @@ fi
 echo $makefile_command >>config.new
 echo $lwlib_makefile_command >>config.new
 echo $lib_src_makefile_command >>config.new
+if test "${with_mule_util}" = "yes"; then
+  echo $lib_src_mule_makefile_command >>config.new
+fi
 echo $dynodump_makefile_command >>config.new
 echo $man_makefile_command >>config.new
-if [ "${with_energize}" = "yes" ]; then
+if test "${with_energize}" = "yes" ; then
   echo $energize_makefile_command >>config.new
 fi
 echo exit 0 >>config.new
@@ -8666,10 +7310,14 @@ mv -f config.new config.status
 chmod +x config.status
 # Don't let the fact that we just rewrote config.status make Makefile think
 # that it is now newer.  We have just rewritten all of the Makefiles as well.
-MFS="Makefile src/Makefile src/Makefile.in lib-src/Makefile lib-src/Makefile.in dynodump/Makefile dynodump/Makefile.in lwlib/Makefile lwlib/Makefile.in"
-for file in $MFS; do
-   chmod a+w $file; touch $file; chmod 444 $file
-done
+MFS="Makefile \
+ src/Makefile      src/Makefile.in \
+ lib-src/Makefile  lib-src/Makefile.in \
+ dynodump/Makefile dynodump/Makefile.in \
+ lwlib/Makefile    lwlib/Makefile.in"
+chmod a+w $MFS
+touch     $MFS
+chmod 444 $MFS
 
 if test ! -f src/gdbinit && test -f $topsrcdir/src/gdbinit; then
   echo creating src/gdbinit
@@ -8677,12 +7325,4 @@ if test ! -f src/gdbinit && test -f $topsrcdir/src/gdbinit; then
 fi
 
 exit 0
-
-# I've removed "mode: ksh" from the following.  ksh mode sucks for
-# editing this file. (It seems that ksh mode sucks in general.
-# I wonder if the new 19.29 shell-script mode is better.)
-
-# Local Variables:
-# compile-command: "autoconf"
-# End:
 

@@ -18,11 +18,11 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: FSF 19.34.
+;;; Synched up with: FSF 19.30.
 
 ;;; Commentary:
 
@@ -63,18 +63,18 @@ Argument is a character, naming the register."
   (set-register register
 		(if arg (current-frame-configuration) (point-marker))))
 
-(defun window-configuration-to-register (register &optional arg)
+(defun window-configuration-to-register (register)
   "Store the window configuration of the selected frame in register REGISTER.
 Use \\[jump-to-register] to restore the configuration.
 Argument is a character, naming the register."
-  (interactive "cWindow configuration to register: \nP")
+  (interactive "cWindow configuration to register: ")
   (set-register register (current-window-configuration)))
 
 (defun frame-configuration-to-register (register &optional arg)
   "Store the window configuration of all frames in register REGISTER.
 Use \\[jump-to-register] to restore the configuration.
 Argument is a character, naming the register."
-  (interactive "cFrame configuration to register: \nP")
+  (interactive "cFrame configuration to register: ")
   (set-register register (current-frame-configuration)))
 
 (defalias 'register-to-point 'jump-to-register)
@@ -105,6 +105,8 @@ delete any existing frames that the frame configuration doesn't mention.
       (find-file (cdr val)))
      (t
       (error "Register doesn't contain a buffer position or configuration")))))
+
+; In FSFmacs, these are commented out, too.
 
 ;(defun number-to-register (arg char)
 ;  "Store a number in a register.
@@ -140,22 +142,23 @@ The Lisp value REGISTER is a character."
   (interactive "cView register: ")
   (let ((val (get-register register)))
     (if (null val)
-	(message "Register %s is empty" (single-key-description register))
+	(message "Register %s is empty"
+		 (single-key-description register))
       (with-output-to-temp-buffer "*Output*"
 	(princ (format "Register %s contains "
 		       (single-key-description register)))
 	(cond 
-	 ((integerp val)
-	  (princ val))
+          ((integerp val)
+           (princ val))
 
-	 ((markerp val)
-	  (let ((buf (marker-buffer val)))
-	    (if (null buf)
-		(princ "a marker in no buffer")
-	      (princ (format
-		      "a buffer position:\nbuff %s, position %s"
-		      (buffer-name (marker-buffer val))
-		      (marker-position val))))))
+          ((markerp val)
+           (let ((buf (marker-buffer val)))
+             (if (null buf)
+                 (princ "a marker in no buffer")
+                 (princ (format
+                          "a buffer position:\nbuff %s, position %s"
+                          (buffer-name (marker-buffer val))
+                          (marker-position val))))))
 
 	 ((window-configuration-p val)
 	  (princ "a window configuration."))
@@ -169,46 +172,47 @@ The Lisp value REGISTER is a character."
 	  (prin1 (cdr val))
 	  (princ "."))
 
-	 ((consp val)
-	  (princ "the rectangle:\n")
+         ((consp val)
+          (princ "the rectangle:\n")
           (while val
-	    (princ (car val))
-	    (terpri)
-	    (setq val (cdr val))))
+            (princ (car val))
+            (terpri)
+            (setq val (cdr val))))
 
 	 ((stringp val)
 	  (princ "the text:\n")
 	  (princ val))
 
-	 (t
+         (t
 	  (princ "Garbage:\n")
 	  (prin1 val)))))))
 
 (defun insert-register (register &optional arg)
-  "Insert contents of register REGISTER.  (REGISTER is a character).
+  "Insert contents of register REGISTER.  REGISTER is a character.
 Normally puts point before and mark after the inserted text.
 If optional second arg is non-nil, puts mark before and point after.
 Interactively, second arg is non-nil if prefix arg is supplied."
   (interactive "*cInsert register: \nP")
   (push-mark)
   (let ((val (get-register register)))
-    (cond
-     ((consp val)
-      (insert-rectangle val))
-     ((stringp val)
-      (insert val))
-     ((integerp val)
-      (princ val (current-buffer)))
-     ((and (markerp val) (marker-position val))
-      (princ (marker-position val) (current-buffer)))
-     (t
-      (error "Register does not contain text"))))
+    (cond ((consp val)
+           (insert-rectangle val))
+          ((stringp val)
+           (insert val))
+          ((integerp val)
+           (princ val (current-buffer)))
+          ((and (markerp val) (marker-position val))
+           (princ (marker-position val) (current-buffer)))
+          (t
+           (error "Register does not contain text"))))
   ;; XEmacs: don't activate the region.  It's annoying.
   (if (not arg) (exchange-point-and-mark t)))
 
 (defun copy-to-register (register start end &optional delete-flag)
-  "Copy region into register REGISTER.  With prefix arg, delete as well.
-Called from program, takes four args: REGISTER, START, END and DELETE-FLAG.
+  "Copy region into register REGISTER.
+With prefix arg, delete as well.
+Called from program, takes four args:
+REGISTER, START, END and DELETE-FLAG.
 START and END are buffer positions indicating what to copy."
   (interactive "cCopy to register: \nr\nP")
   (set-register register (buffer-substring start end))
@@ -217,7 +221,8 @@ START and END are buffer positions indicating what to copy."
 (defun append-to-register (register start end &optional delete-flag)
   "Append region to text in register REGISTER.
 With prefix arg, delete as well.
-Called from program, takes four args: REGISTER, START, END and DELETE-FLAG.
+Called from program, takes four args:
+REGISTER, START, END and DELETE-FLAG.
 START and END are buffer positions indicating what to append."
   (interactive "cAppend to register: \nr\nP")
   (or (stringp (get-register register))
@@ -229,7 +234,8 @@ START and END are buffer positions indicating what to append."
 (defun prepend-to-register (register start end &optional delete-flag)
   "Prepend region to text in register REGISTER.
 With prefix arg, delete as well.
-Called from program, takes four args: REGISTER, START, END and DELETE-FLAG.
+Called from program, takes four args:
+REGISTER, START, END and DELETE-FLAG.
 START and END are buffer positions indicating what to prepend."
   (interactive "cPrepend to register: \nr\nP")
   (or (stringp (get-register register))
@@ -241,7 +247,8 @@ START and END are buffer positions indicating what to prepend."
 (defun copy-rectangle-to-register (register start end &optional delete-flag)
   "Copy rectangular region into register REGISTER.
 With prefix arg, delete as well.
-Called from program, takes four args: REGISTER, START, END and DELETE-FLAG.
+Called from program, takes four args:
+REGISTER, START, END and DELETE-FLAG.
 START and END are buffer positions giving two corners of rectangle."
   (interactive "cCopy rectangle to register: \nr\nP")
   (set-register register

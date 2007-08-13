@@ -72,7 +72,6 @@
 
 (provide 'avoid)
 
-;;;###autoload
 (defvar mouse-avoidance-mode nil
   "Value is t or a symbol if the mouse pointer should avoid the cursor.
 See function `mouse-avoidance-mode' for possible values.  Changing this
@@ -120,9 +119,9 @@ Only applies in mouse-avoidance-modes `animate' and `jump'.")
 
 ;(defun mouse-avoidance-point-position-test ()
 ;  (interactive)
-;  (message (format "point=%s mouse=%s" 
-;		   (cdr (mouse-avoidance-point-position))
-;		   (cdr (mouse-position)))))
+;  (message "point=%s mouse=%s" 
+;	   (cdr (mouse-avoidance-point-position))
+;	   (cdr (mouse-position))))
 
 (defun mouse-avoidance-set-mouse-position (pos)
   ;; Carefully set mouse position to given position (X . Y)
@@ -367,4 +366,4 @@ definition of \"random distance\".)"
 ;;;###autoload
 (add-minor-mode 'mouse-avoidance-mode " Avoid")
 
-;;; avoid.el ends here
+;;; End of avoid.el

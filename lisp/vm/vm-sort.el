@@ -212,13 +212,11 @@ the folder undisturbed."
       (progn
 	(vm-set-sortable-datestring-of
 	 m
-	 (condition-case nil
-	     (timezone-make-date-sortable
-	      (or (vm-get-header-contents m "Date:")
-		  (vm-grok-From_-date m)
-		  "Thu, 1 Jan 1970 00:00:00 GMT")
-	      "GMT" "GMT")
-	   (error "1970010100:00:00")))
+	 (timezone-make-date-sortable
+	  (or (vm-get-header-contents m "Date:")
+	      (vm-grok-From_-date m)
+	      "Thu, 1 Jan 1970 00:00:00 GMT")
+	  "GMT" "GMT"))
 	(vm-sortable-datestring-of m))))
 
 (defun vm-so-sortable-subject (m)
@@ -329,7 +327,7 @@ folder in the order in which the messages arrived."
 	     (setq key-funcs (cons 'vm-sort-compare-physical-order-r key-funcs)))
 	    (t (error "Unknown key: %s" key)))
       (setq key-list (cdr key-list)))
-    (message "Sorting...")
+    (vm-unsaved-message "Sorting...")
     (let ((vm-key-functions (nreverse key-funcs)))
       (setq new-message-list (sort (copy-sequence old-message-list)
 				   'vm-sort-compare-xxxxxx))
@@ -339,7 +337,7 @@ folder in the order in which the messages arrived."
 	  (setq vm-key-functions '(vm-sort-compare-physical-order)
 		physical-order-list (sort (copy-sequence old-message-list)
 					  'vm-sort-compare-xxxxxx))))
-    (message "Sorting... done")
+    (vm-unsaved-message "Sorting... done")
     (let ((inhibit-quit t))
       (setq mp-old old-message-list
 	    mp-new new-message-list)
@@ -379,7 +377,7 @@ folder in the order in which the messages arrived."
 	    ;; order header from being stuffed later.
 	    (vm-remove-message-order)
 	    (setq vm-message-order-changed nil)
-	    (message "Moving messages... ")
+	    (vm-unsaved-message "Moving messages... ")
 	    (widen)
 	    (setq mp-old physical-order-list
 		  mp-new new-message-list)
@@ -402,7 +400,7 @@ folder in the order in which the messages arrived."
 		  ;; mp-old down one message by inserting a
 		  ;; message in front of it.
 		  (setq mp-new (cdr mp-new)))))
-	    (message "Moving messages... done")
+	    (vm-unsaved-message "Moving messages... done")
 	    (vm-set-buffer-modified-p t)
 	    (vm-clear-modification-flag-undos))
 	(if (and order-did-change (not vm-folder-read-only))

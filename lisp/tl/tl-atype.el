@@ -3,7 +3,7 @@
 ;; Copyright (C) 1994,1995,1996 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: tl-atype.el,v 1.3 1996/12/29 00:15:09 steve Exp $
+;; Version: $Id: tl-atype.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $
 ;; Keywords: atype
 
 ;; This file is part of tl (Tiny Library).

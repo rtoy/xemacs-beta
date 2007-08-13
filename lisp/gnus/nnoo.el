@@ -1,5 +1,5 @@
 ;;; nnoo.el --- OO Gnus Backends
-;; Copyright (C) 1996,97 Free Software Foundation, Inc.
+;; Copyright (C) 1996 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@ifi.uio.no>
 ;; Keywords: news
@@ -25,8 +25,7 @@
 
 ;;; Code:
 
-(require 'nnheader)
-(require 'cl)
+(eval-when-compile (require 'cl))
 
 (defvar nnoo-definition-alist nil)
 (defvar nnoo-state-alist nil)
@@ -39,6 +38,7 @@
 	  `(defvar ,var ,init))
      (nnoo-define ',var ',map)))
 (put 'defvoo 'lisp-indent-function 2)
+(put 'defvoo 'lisp-indent-hook 2)
 (put 'defvoo 'edebug-form-spec '(var init &optional doc &rest map))
 
 (defmacro deffoo (func args &rest forms)
@@ -47,10 +47,11 @@
        (defun ,func ,args ,@forms)
      (nnoo-register-function ',func)))
 (put 'deffoo 'lisp-indent-function 2)
+(put 'deffoo 'lisp-indent-hook 2)
 (put 'deffoo 'edebug-form-spec '(&define name lambda-list def-body))
 
 (defun nnoo-register-function (func)
-  (let ((funcs (nthcdr 3 (assoc (nnoo-backend func)
+  (let ((funcs (nthcdr 3 (assoc (nnoo-backend func) 
 				nnoo-definition-alist))))
     (unless funcs
       (error "%s belongs to a backend that hasn't been declared" func))
@@ -58,13 +59,12 @@
 
 (defmacro nnoo-declare (backend &rest parents)
   `(eval-and-compile
-     (push (list ',backend
+     (push (list ',backend 
 		 (mapcar (lambda (p) (list p)) ',parents)
 		 nil nil)
-	   nnoo-definition-alist)
-     (push (list ',backend "*internal-non-initialized-backend*")
-	   nnoo-state-alist)))
+	   nnoo-definition-alist)))
 (put 'nnoo-declare 'lisp-indent-function 1)
+(put 'nnoo-declare 'lisp-indent-hook 1)
 
 (defun nnoo-parents (backend)
   (nth 1 (assoc backend nnoo-definition-alist)))
@@ -78,6 +78,7 @@
 (defmacro nnoo-import (backend &rest imports)
   `(nnoo-import-1 ',backend ',imports))
 (put 'nnoo-import 'lisp-indent-function 1)
+(put 'nnoo-import 'lisp-indent-hook 1)
 
 (defun nnoo-import-1 (backend imports)
   (let ((call-function
@@ -90,7 +91,7 @@
       (while functions
 	(unless (fboundp (setq function
 			       (nnoo-symbol backend (nnoo-rest-symbol
-						     (car functions)))))
+							 (car functions)))))
 	  (eval `(deffoo ,function (&rest args)
 		   (,call-function ',backend ',(car functions) args))))
 	(pop functions)))))
@@ -111,6 +112,7 @@
 (defmacro nnoo-map-functions (backend &rest maps)
   `(nnoo-map-functions-1 ',backend ',maps))
 (put 'nnoo-map-functions 'lisp-indent-function 1)
+(put 'nnoo-map-functions 'lisp-indent-hook 1)
 
 (defun nnoo-map-functions-1 (backend maps)
   (let (m margs i)
@@ -124,9 +126,9 @@
 	(incf i))
       (eval `(deffoo ,(nnoo-symbol backend (nnoo-rest-symbol (car m)))
 		 (&rest args)
-	       (nnoo-parent-function ',backend ',(car m)
+	       (nnoo-parent-function ',backend ',(car m) 
 				     ,(cons 'list (nreverse margs))))))))
-
+  
 (defun nnoo-backend (symbol)
   (string-match "^[^-]+-" (symbol-name symbol))
   (intern (substring (symbol-name symbol) 0 (1- (match-end 0)))))
@@ -144,7 +146,7 @@
 	 (parents (nth 1 def)))
     (unless def
       (error "%s belongs to a backend that hasn't been declared." var))
-    (setcar (nthcdr 2 def)
+    (setcar (nthcdr 2 def) 
 	    (delq (assq var (nth 2 def)) (nth 2 def)))
     (setcar (nthcdr 2 def)
 	    (cons (cons var (symbol-value var))
@@ -155,10 +157,10 @@
 
 (defun nnoo-change-server (backend server defs)
   (let* ((bstate (cdr (assq backend nnoo-state-alist)))
+	 (sdefs (assq backend nnoo-definition-alist))
 	 (current (car bstate))
 	 (parents (nnoo-parents backend))
-	 (bvariables (nnoo-variables backend))
-	 state def)
+	 state)
     (unless bstate
       (push (setq bstate (list backend nil))
 	    nnoo-state-alist)
@@ -173,15 +175,12 @@
 	(pop state))
       (setcar bstate server)
       (unless (cdr (assoc server (cddr bstate)))
-	(while (setq def (pop defs))
-	  (unless (assq (car def) bvariables)
-	    (nconc bvariables
- 		   (list (cons (car def) (and (boundp (car def))
- 					      (symbol-value (car def)))))))
-	  (set (car def) (cadr def))))
+	(while defs
+	  (set (caar defs) (cadar defs))
+	  (pop defs)))
       (while parents
-	(nnoo-change-server
-	 (caar parents) server
+	(nnoo-change-server 
+	 (caar parents) server 
 	 (mapcar (lambda (def) (list (car def) (symbol-value (cadr def))))
 		 (cdar parents)))
 	(pop parents))))
@@ -192,14 +191,6 @@
 	(defs (nnoo-variables backend)))
     ;; Remove the old definition.
     (setcdr (cdr bstate) (delq (assoc current (cddr bstate)) (cddr bstate)))
-    ;; If this is the first time we push the server (i. e., this is
-    ;; the nil server), then we update the default values of
-    ;; all the variables to reflect the current values.
-    (when (equal current "*internal-non-initialized-backend*")
-      (let ((defaults (nnoo-variables backend))
-	    def)
-	(while (setq def (pop defaults))
-	  (setcdr def (symbol-value (car def))))))
     (let (state)
       (while defs
 	(push (cons (caar defs) (symbol-value (caar defs)))
@@ -207,7 +198,7 @@
 	(pop defs))
       (nconc bstate (list (cons current state))))))
 
-(defsubst nnoo-current-server-p (backend server)
+(defun nnoo-current-server-p (backend server)
   (equal (nnoo-current-server backend) server))
 
 (defun nnoo-current-server (backend)
@@ -242,38 +233,19 @@
        (buffer-name nntp-server-buffer)))
 
 (defmacro nnoo-define-basics (backend)
-  "Define `close-server', `server-opened' and `status-message'."
   `(eval-and-compile
      (nnoo-define-basics-1 ',backend)))
 
 (defun nnoo-define-basics-1 (backend)
   (let ((functions '(close-server server-opened status-message)))
     (while functions
-      (eval `(deffoo ,(nnoo-symbol backend (car functions))
+      (eval `(deffoo ,(nnoo-symbol backend (car functions)) 
 		 (&optional server)
 	       (,(nnoo-symbol 'nnoo (pop functions)) ',backend server)))))
   (eval `(deffoo ,(nnoo-symbol backend 'open-server)
 	     (server &optional defs)
 	   (nnoo-change-server ',backend server defs))))
 
-(defmacro nnoo-define-skeleton (backend)
-  "Define all required backend functions for BACKEND.
-All functions will return nil and report an error."
-  `(eval-and-compile
-     (nnoo-define-skeleton-1 ',backend)))
-
-(defun nnoo-define-skeleton-1 (backend)
-  (let ((functions '(retrieve-headers
-		     request-close request-article
-		     request-group close-group
-		     request-list request-post request-list-newsgroups))
-	function fun)
-    (while (setq function (pop functions))
-      (when (not (fboundp (setq fun (nnoo-symbol backend function))))
-	(eval `(deffoo ,fun
-		   (&rest args)
-		 (nnheader-report ',backend ,(format "%s-%s not implemented"
-						     backend function))))))))
 (provide 'nnoo)
 
 ;;; nnoo.el ends here.

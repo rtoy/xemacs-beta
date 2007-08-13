@@ -99,8 +99,8 @@ int in_specifier_change_function;
 /*                          helper functions                            */
 /************************************************************************/
 
-static struct device *
-get_device_from_display_1 (Display *dpy)
+struct device *
+get_device_from_display (Display *dpy)
 {
   Lisp_Object devcons, concons;
 
@@ -111,25 +111,11 @@ get_device_from_display_1 (Display *dpy)
 	return d;
     }
 
-  return 0;
-}
+  /* Only devices we are actually managing should ever be used as an
+     argument to this function. */
+  abort ();
 
-struct device *
-get_device_from_display (Display *dpy)
-{
-  struct device *d = get_device_from_display_1 (dpy);
-
-  if (!d) {
-    /* This isn't one of our displays.  Let's crash? */
-    stderr_out
-      ("\n%s: Fatal X Condition.  Asked about display we don't own: \"%s\"\n",
-       (STRINGP (Vinvocation_name) ?
-	(char *) XSTRING_DATA (Vinvocation_name) : "xemacs"),
-       DisplayString (dpy) ? DisplayString (dpy) : "???");
-    abort();
-  }
-
-  return d;
+  return 0; /* suppress compiler warning */
 }
 
 struct device *
@@ -238,6 +224,9 @@ x_init_device (struct device *d, Lisp_Object props)
 
   allocate_x_device_struct (d);
 
+  if (NILP (Vdefault_x_device))
+    Vdefault_x_device = device;
+
   make_argc_argv (Vx_initial_argv_list, &argc, &argv);
 
   if (STRINGP (Vx_emacs_application_class) &&
@@ -261,8 +250,24 @@ x_init_device (struct device *d, Lisp_Object props)
       signal_simple_error ("X server not responding\n", display);
     }
 
-  if (NILP (Vdefault_x_device))
-    Vdefault_x_device = device;
+#ifdef MULE
+  {
+    /* Read in locale-specific resources from
+       data-directory/app-defaults/$LANG/emacs-application-class.
+       This is in addition to the standard app-defaults files, and
+       does not override resources defined elsewhere */
+    CONST char *data_dir;
+    char path[MAXPATHLEN];
+    XrmDatabase db = XtDatabase (dpy); /* ### XtScreenDatabase(dpy) ? */
+    CONST char *locale = XrmLocaleOfDatabase (db);
+    
+    if (STRINGP (Vdata_directory) && XSTRING_LENGTH (Vdata_directory) > 0)
+      GET_C_STRING_FILENAME_DATA_ALLOCA (Vdata_directory, data_dir);
+    sprintf (path, "%sapp-defaults/%s/%s", data_dir, locale, app_class);
+    if (!access (path, R_OK))
+      XrmCombineFileDatabase (path, &db, False);
+  }
+#endif
 
   if (NILP (DEVICE_NAME (d)))
     DEVICE_NAME (d) = display;
@@ -276,6 +281,9 @@ x_init_device (struct device *d, Lisp_Object props)
 					      applicationShellWidgetClass,
 					      dpy, NULL, 0);
 
+#ifdef HAVE_XIM
+  XIM_init_device(d);
+#endif /* HAVE_XIM */
 
   Vx_initial_argv_list = make_arg_list (argc, argv);
   free_argc_argv (argv);
@@ -370,8 +378,7 @@ x_delete_device (struct device *d)
       Vdefault_x_device = Qnil;
       DEVICE_LOOP_NO_BREAK (devcons, concons)
 	{
-	  if (DEVICE_X_P (XDEVICE (XCAR (devcons))) &&
-	      !EQ (device, XCAR (devcons)))
+	  if (DEVICE_X_P (XDEVICE (XCAR (devcons))))
 	    {
 	      Vdefault_x_device = XCAR (devcons);
 	      goto double_break;
@@ -593,12 +600,8 @@ x_IO_error_handler (Display *disp)
 {
   /* This function can GC */
   Lisp_Object dev;
-  struct device *d = get_device_from_display_1 (disp);
-
-  if (d)
-    XSETDEVICE (dev, d);
-  else
-    dev = Qnil;
+  struct device *d = get_device_from_display (disp);
+  XSETDEVICE (dev, d);
 
   if (NILP (find_nonminibuffer_frame_not_on_device (dev)))
     {
@@ -626,8 +629,7 @@ x_IO_error_handler (Display *disp)
          QLength (disp));
     }
 
-  if (d)
-    enqueue_magic_eval_event (io_error_delete_device, dev);
+  enqueue_magic_eval_event (io_error_delete_device, dev);
 
   return 0;
 }

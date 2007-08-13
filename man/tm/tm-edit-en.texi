@@ -1,84 +1,47 @@
-\input texinfo.tex
-@setfilename tm-edit-en.info
-@settitle{tm-edit 7.100 Reference Manual (English Version)}
-@titlepage
-@title tm-edit 7.100 Reference Manual (English Version)
-@author MORIOKA Tomohiko <morioka@@jaist.ac.jp>
-@subtitle 1996/12/25
-@end titlepage
-@node Top, Introduction, (dir), (dir)
-@top tm-edit 7.100 Reference Manual (English Version)
+@c $Id: tm-edit-en.texi,v 1.1.1.1 1996/12/18 22:43:52 steve Exp $
 
-@ifinfo
-
-This file documents tm-edit, a MIME composer for GNU Emacs.
-@end ifinfo
-
-@menu
-* Introduction::                What is tm-edit?
-* mime/editor-mode::            
-* single-part operations::      
-* enclosure operation::         
-* other operations of mime/editor-mode::  
-* tag specification for inserted file::  Default media-type or encoding for inserted file
-* transfer level::              
-* header::                      Using non-ASCII characters in header
-* PGP::                         
-* Acknowledgments::             
-* Concept Index::               
-* Function Index::              
-* Variable Index::              
-@end menu
-
-@node Introduction, mime/editor-mode, Top, Top
-@chapter What is tm-edit?
+@node tm-edit, encoded-word, tm-view, Top
+@comment  node-name,  next,  previous,  up
+@chapter tm-edit
 @cindex tm-edit
 
-@strong{tm-edit} is a general MIME composer for GNU Emacs.@refill
+tm-edit is a general MIME viewer for GNU Emacs.
 
 tm-edit is based on mime.el by UMEDA Masanobu
-<umerin@@mse.kyutech.ac.jp>, who is famous as the author of
-GNUS.  tm-edit expands following points from @file{mime.el}:
+<umerin@@mse.kyutech.ac.jp>, who is famous as the author of GNUS.
+tm-edit expands following points from mime.el:
 
 @itemize @bullet
-@item
-based on RFC 1521/1522
-@item
-Content-Disposition field (@ref{(tm-en)Content-Disposition}) (RFC 1806)
-supports
-@item
-nested multi-part message (@ref{(tm-en)multipart})
-@item
-PGP (@ref{PGP}) (PGP/MIME (RFC 2015) based on security multipart (RFC
-1847) and application/pgp based on traditional PGP)
-@item
-strength automatic specification for parameter of file type
+@item based on RFC 1521/1522
+@item Content-Disposition field (RFC 1806) supports
+@item multi-part in multi-part
+@item PGP
+@item strength automatic specification for parameter of file type
 @end itemize
 
 
-In tm-MUA (@ref{(tm-en)tm-MUA}), you can edit MIME message easily to use
-tm-edit.
+@menu
+* mime/editor-mode::
+* single-part operations::
+* enclosure operation::
+* other operations of mime/editor-mode::
+@end menu
 
 
-@node mime/editor-mode, single-part operations, Introduction, Top
-@chapter mime/editor-mode
-@cindex enclosure
-@cindex multi-part ending tag
-@cindex multi-part beginning tag
-@cindex tag
+@node mime/editor-mode, single-part operations, tm-edit, tm-edit
+@comment  node-name,  next,  previous,  up
+@section mime/editor-mode
 @cindex mime/editor-mode
 
-@strong{mime/editor-mode} is a minor mode to compose MIME message.  In
-this mode, @strong{tag} represents various kinds of data, you can edit
-multi part (@ref{(tm-en)multipart}) message.@refill
+@emph{mime/editor-mode} is a minor mode to compose MIME message.
+In this mode, @emph{tag} represents various kinds of data, you can
+edit multi-part message.
 
-There are 2 kinds of tags:
+There are 2 kinds of @emph{tag}s:
 
 @itemize @bullet
-@item
- single-part tag
-@item
- multi-part tag
+@item single-part tag
+@item multi-part tag
 @end itemize
 
 single-part tag represents single part, this form is following:
@@ -89,37 +52,36 @@ single-part tag represents single part, this form is following:
 @end example
 
 TYPE/SUBTYPE and PARAMETERS indicates type/subtype and parameters of
-Content-Type field (@ref{(tm-en)Content-Type field}).  TYPE/SUBTYPE is
-required, PARAMETERS is optional.@refill
+Content-Type field. TYPE/SUBTYPE is required, PARAMETERS is optional.
 
-ENCODING indicates Content-Transfer-Encoding field.  It is optional
-too.@refill
+ENCODING indicates Content-Transfer-Encoding field. It is optional too.
 
-OPTIONAL-FIELDS is to represent another fields except Content-Type field
-and Content-Transfer-Encoding field.@refill
+OPTIONAL-FIELDS is to represent another fields except Content-Type
+field and Content-Transfer-Encoding field.
 
-multi-part tags represent multi part (@ref{(tm-en)multipart}).  They
-consist of a pair of @strong{multi-part beginning tag} and
-@strong{multi-part ending tag}.@refill
+multi-part tags represent multi part. They consist of a pair of 
+@emph{multi-part beginning tag} and @emph{multi-part ending tag}.
 
-multi-part beginning tag's form is following:@refill
+@emph{multi-part beginning tag}'s form is following:
 
 @example
         --<<TYPE>>-@{
 @end example
 
-multi-part ending tag's form is following:@refill
+@emph{multi-part ending tag}'s form is following:
 
 @example
         --@}-<<TYPE>>
 @end example
 
 A region from multi-part beginning tag to multi-part ending tag is
-called as @strong{enclosure}.
+called as @emph{enclosure}.
 
 
-@node single-part operations, enclosure operation, mime/editor-mode, Top
-@chapter single-part operations
+@node single-part operations, enclosure operation, mime/editor-mode, tm-edit
+@comment  node-name,  next,  previous,  up
+@section single-part operations
+@cindex single-part
 
 Operations to make single-part are following:
 
@@ -128,16 +90,14 @@ Operations to make single-part are following:
 Insert single-part tag indicates text part.
 
 @item @key{C-c C-x C-i}
-Insert file as a MIME attachment.  If @kbd{C-u} is followed by it, it
-asks media-type, subtype or encoding even if their default values are
-specified. (cf. @ref{tag specification for inserted file})
+Insert file as a MIME attachment.
 
 @item @key{C-c C-x C-e}
 Insert external part.
 
 @item @key{C-c C-x C-v}
-Record audio input until @kbd{C-g} is pressed, and insert as a
-audio part. (It requires /dev/audio in default.)
+Record audio input until @key{C-g} is pressed, and insert as a audio
+part. (It requires /dev/audio in default.)
 
 @item @key{C-c C-x C-y}
 Insert current (mail or news) message. (It is MUA depended.)
@@ -145,21 +105,22 @@ Insert current (mail or news) message. (It is MUA depended.)
 @item @key{C-c C-x C-m}
 Insert mail message. (It is MUA depended.)
 
-@item @key{C-c C-x C-w}, @key{C-c C-x C-s}
+@item @key{C-c C-x C-w, C-c C-x C-s}
 Insert signature.
 
 @item @key{C-c C-x C-k}
-Insert PGP (@ref{PGP}) public key. (It requires Mailcrypt package.)
+Insert PGP public key. (It requires Mailcrypt package.)
 
 @item @key{C-c C-x t}
-Insert any single-part tag.
-
+Insert any  single-part tag.
 @end table
 
 
-
-@node enclosure operation, other operations of mime/editor-mode, single-part operations, Top
-@chapter enclosure operation
+@node enclosure operation, other operations of mime/editor-mode, single-part operations, tm-edit
+@comment  node-name,  next,  previous,  up
+@section enclosure operations
+@cindex multi-part
+@cindex enclosure
 
 Operations to make enclosure are following:
 
@@ -177,22 +138,28 @@ Enclose specified region as multipart/mixed.
 Enclose specified region as multipart/digest.
 
 @item @key{C-c C-x s}
-Digital-sign to specified region. (cf. @ref{PGP})
+Digital-sign to specified region. (*1)
 
 @item @key{C-c C-x e}
-Encrypt to specified region. (cf. @ref{PGP})
-
-@item @key{C-c C-x q}
-avoid to encode tags in specified region.  In other words, tags is
-interpreted as such string.  (In current version, it may be
-incomplete.  Maybe PGP-signature does not work for this enclosure.)
-
+Encrypt to specified region. (*1)
 @end table
 
+@b{[Notice]}
+@enumerate
+@item
+It requires Mailcrypt package and pgp package. In addition, please set
+symbol @code{pgp-elkins} or @code{pgp-kazu} to
+variable @code{mime-editor/signing-type} and
+@code{mime-editor/encrypting-type}.
+
+@code{pgp-elkins} indicates draft-elkins-pem-pgp-02.txt,
+@code{pgp-kazu} indicates draft-kazu-pgp-mime-00.txt.
+@end enumerate
 
 
-@node other operations of mime/editor-mode, tag specification for inserted file, enclosure operation, Top
-@chapter other operations of mime/editor-mode
+@node other operations of mime/editor-mode,  , enclosure operation, tm-edit
+@comment  node-name,  next,  previous,  up
+@section Another operation in mime/editor-mode.
 
 There are another operations in mime/editor-mode.
 
@@ -201,7 +168,7 @@ There are another operations in mime/editor-mode.
 Send current editing message.
 
 @item @key{C-c C-x C-p}
-Preview current editing message. (@ref{(tm-view-en)mime/viewer-mode})
+Preview current editing message.
 
 @item @key{C-c C-x C-z}
 Exit mime/editor-mode. (@key{M-x mime/edit-again} is available to
@@ -210,335 +177,25 @@ reedit.)
 @item @key{C-c C-x ?}
 Display help message.
 
-@item @key{C-c C-x /}
+@item @key{M-x mime-editor/set-split}
 Set current editing message to enable automatic splitting or not.
 Form of automatic split messages is message/partial.
 
-@item @key{C-c C-x 7}
-Set 7bit (@ref{(tm-en)7bit}) to transfer level (@ref{transfer level}).
+@item @key{M-x mime-editor/set-sign}
+Set current editing message to digital-sign or not. (*1)
 
-@item @key{C-c C-x 8}
-Set 8bit (@ref{(tm-en)8bit}) to transfer level (@ref{transfer level}).
-
-@item @key{C-c C-x v}
-Set current editing message to digital-sign or not. (cf. @ref{PGP})
-
-@item @key{C-c C-x h}
-Set current editing message to encrypt or not. (cf. @ref{PGP})
-
+@item @key{M-x mime-editor/set-encrypt}
+Set current editing message to encrypt or not. (*1)
 @end table
 
-
-
-@node tag specification for inserted file, transfer level, other operations of mime/editor-mode, Top
-@chapter Default media-type or encoding for inserted file
-
-When @kbd{C-c C-x C-i} (@code{mime-editor/insert-file}) is pressed, tag
-parameters for inserted file, such as media-type or encoding, are
-detected by variable @code{mime-file-types}.@refill
-
-When @kbd{C-u} is followed by it or parameter is not found from the
-variable, it asks from user.  (When @kbd{C-u} is followed by it,
-detected value is used as default value)@refill
-
-If you want to change default value for file names, please change
-variable @code{mime-file-types}.
-
-
-@defvar mime-file-types
-
-Specification of default value of tag for file name of inserted
-file.@refill
-
-It is a list of following list:
-
-@lisp
-	(FILE_PAT TYPE SUBTYPE PARAMS ENCODING
-	 DISPOSITION_TYPE DISPOSITION_PARAMS)
-@end lisp
-
-
-Each elements of the list are following:
-
-@table @samp
-@item FILE_PAT
-regular expression of file name
-
-@item TYPE
-media type
-
-@item SUBTYPE
-media subtype
-
-@item PARAMS
-parameters of Content-Type field
-
-@item ENCODING
-Content-Transfer-Encoding
-
-@item DISPOSITION_TYPE
-disposition-type
-
-@item DISPOSITION_PARAMS
-parameters of Content-Disposition field
-
-@end table
-
-@noindent
-Example: Specify application/rtf as default media type for
-@file{*.rtf}
-
-@lisp
-(call-after-loaded
- 'tm-edit
- (lambda ()
-   (set-alist 'mime-file-types
-	      "\\.rtf$"
-	      '("application" "rtf" nil nil
-		"attachment" (("filename" . file)))
-	      )))
-@end lisp
-@end defvar
-
-
-
-@node transfer level, header, tag specification for inserted file, Top
-@chapter transfer level
-@cindex transfer level
-
-Contents inserted in a message are represented by 7bit
-(@ref{(tm-en)7bit}), 8bit (@ref{(tm-en)8bit}) or binary
-(@ref{(tm-en)binary}).@refill
-
-If a message is translated by 7bit-through MTA (@ref{(tm-en)MTA}), there
-is no need to encode 7bit data, but 8bit and binary data must be encoded
-to 7bit data.@refill
-
-Similarly, if a message is translated by 8bit-through MTA, there is no
-need to encode 7bit or 8bit data, but binary data must be encoded to
-7bit or 8bit data.@refill
-
-@noindent
-@strong{[Memo]}
-@quotation
-EBCDIC MTA breaks 7bit data, so in this case, 7bit data must be
-encoded by base64.  But I don't know EBCDIC. (^_^;
-
-Similarly, I wish ASCII-printable only MTA and code-conversion MTA
-disappeared. (^_^;@refill
-
-Maybe there are binary-through MTA, but I think it is not major.
-@end quotation
-
-@strong{transfer level} represents how range data is
-available.  tm-edit has a variable
-@code{mime-editor/transfer-level} to represent transfer level.
-
-
-@defvar mime-editor/transfer-level
-
-transfer level.@refill
-
-If transfer level of a data is over it, a data is encoded to
-7bit.@refill
-
-Currently, 7 or 8 is available.  Default value is 7.@refill
-
-In extension plan, EBCDIC will be 5, ASCII printable only will be 6,
-binary will be 9.  But it will not be implemented.
-@end defvar
-
-
-
-@noindent
-@strong{[Memo]}
-@quotation
-transfer level is only for body, not for header (@ref{header}).  RFC
-1521 extends RFC 822 (@ref{(tm-en)RFC 822}) to use 8bit data in body,
-but it requires to use us-ascii (@ref{(tm-en)us-ascii}) in header.
-@end quotation
-
-
-
-@node header, PGP, transfer level, Top
-@chapter Using non-ASCII characters in header
-@cindex encoded-word
-
-RFC 1522 (@ref{(tm-en)RFC 1522}) defines representation of non-ASCII
-characters in header.@refill
-
-It is a format called as @strong{encoded-word}
-(@ref{(tm-en)encoded-word}), it is available to represent every
-non-ASCII characters by 7bit (@ref{(tm-en)7bit}) to declare MIME charset
-(@ref{(tm-en)MIME charset}).
-
-
-@menu
-* evil setting in header::      If you can not allow encoded-word
-* API about header::            Functions and variables about header
-@end menu
-
-@node evil setting in header, API about header, header, header
-@section If you can not allow encoded-word
-
-It is wrong to use ``raw'' non-ASCII characters in header not to use
-encoded-word.  Because there are various kinds of coded character set
-(@ref{(tm-en)Coded character set}) in the Internet, so we can not
-distinguish them if MIME charset (@ref{(tm-en)MIME charset}) is not
-declared.@refill
-
-For example, we can not distinguish iso-8859-1 (@ref{(tm-en)iso-8859-1})
-and iso-8859-2 (@ref{(tm-en)iso-8859-2}) if MIME charset is not
-declared.@refill
-
-However you can not permit to use encoded-word, please set to
-following variables:
-
-
-@defvar mime/field-encoding-method-alist
-
-Association-list to specify field encoding method.  Its key is
-field-name, value is encoding method.@refill
-
-field-name allows string or @code{t} meaning any fields.@refill
-
-Encoding method allows following: @code{nil} means no-conversion,
-@code{mime} means to convert as encoded-word, symbol represent MIME
-charset means to convert as the coded character set instead of to
-convert as encoded-word.@refill
-
-field-name is searched from string.  If it is not found, @code{t} is
-used.@refill
-
-Default value of @code{mime/field-encoding-method-alist} is
-following:
-
-@lisp
-(("X-Nsubject" . iso-2022-jp-2)
- ("Newsgroups" . nil)
- (t            . mime)
- ))
-@end lisp
-@end defvar
-
-
-In addition, if you want to specify by coded character set instead of
-field, please use @code{mime-eword/charset-encoding-alist}.
-(cf. @ref{API about header})
-
-
-
-@node API about header,  , evil setting in header, header
-@section Functions and variables about header
-
-@deffn{Command} mime/encode-message-header &optional  code-conversion
-
-It translate non-ASCII characters in message header of current buffer
-into network representation, such as encoded-words.@refill
-
-If @var{code-conversion} is non-@code{nil}, field not encoded by
-encoded-word is converted by @code{mime/field-encoding-method-alist}.
-@end deffn
-
-
-@defun mime/encode-field string
-
-It encodes @var{string} into encoded-words as a field.@refill
-
-Long lines are folded.
-@end defun
-
-
-@defun mime-eword/encode-string string  &optional  column mode
-
-It encodes @var{string} into encoded-words.@refill
-
-Long lines are folded.@refill
-
-@var{column} specifies start column.  If it is omitted, 0 is
-used.@refill
-
-@var{mode} specifies where @var{string} is in.  Available values are
-@code{text}, @code{comment}, @code{phrase}.  If it is omitted,
-@code{phrase} is used.
-@end defun
-
-
-@defvar mime-eword/charset-encoding-alist
-
-Association-list of symbol represent MIME charset vs. nil, @code{"B"} or
-@code{"Q"}.@refill
-
-@code{nil} means not to encode as encoded-word.  @code{"B"} means to use
-B-encoding.  @code{"Q"} means to use Q-encoding.
-@end defvar
-
-
-
-@node PGP, Acknowledgments, header, Top
-@chapter PGP
-@cindex PGP-kazu
-@cindex PGP/MIME
-
-tm-edit provides PGP encryption, signature and inserting public-key
-features based on @strong{PGP/MIME} (@ref{(tm-en)PGP/MIME}) (RFC 2015)
-or @strong{PGP-kazu} (@ref{(tm-en)PGP-kazu})
-(draft-kazu-pgp-mime-00.txt).@refill
-
-This feature requires pgp command and Mailcrypt package
-(@ref{(mailcrypt)}).@refill
-
-If you want to use this feature, please set @code{pgp-elkins} or
-@code{pgp-kazu} to variable @code{mimed-editor/signing-type} and
-variable @code{mime-editor/encrypting-type}.@refill
-
-If @code{pgp-elkins} is specified, PGP/MIME is used.  If
-@code{pgp-kazu} is specified, PGP-kazu is used.
-
-
-@defvar mime-editor/signing-type
-
-Format of PGP signature.@refill
-
-It allows @code{pgp-elkins} or @code{pgp-kazu}.@refill
-
-Default value is @code{nil}.
-@end defvar
-
-
-@defvar mime-editor/encrypting-type
-
-Format of PGP encryption.@refill
-
-It allows @code{pgp-elkins} or @code{pgp-kazu}.@refill
-
-Default value is @code{nil}.
-@end defvar
-
-
-
-@node Acknowledgments, Concept Index, PGP, Top
-@chapter Acknowledgments
-
-First of all, I thank UMEDA Masanobu for his work of @file{mime.el},
-which is the origin of tm-edit, and permission to rewrite his work as
-tm-edit.@refill
-
-I thank members of two tm mailing lists, Japanese and English version.
-
-
-@node Concept Index, Function Index, Acknowledgments, Top
-@chapter Concept Index
-
-@printindex cp
-
-@node Function Index, Variable Index, Concept Index, Top
-@chapter Function Index
-
-@printindex fn
-
-@node Variable Index,  , Function Index, Top
-@chapter Variable Index
-
-@printindex vr
-@bye
+@b{[Notice]}
+@enumerate
+@item
+It requires Mailcrypt package and pgp package. In addition, please set
+symbol @code{pgp-elkins} or @code{pgp-kazu} to
+variable @code{mime-editor/signing-type} and
+@code{mime-editor/encrypting-type}.
+
+@code{pgp-elkins} indicates draft-elkins-pem-pgp-02.txt,
+@code{pgp-kazu} indicates draft-kazu-pgp-mime-00.txt.
+@end enumerate

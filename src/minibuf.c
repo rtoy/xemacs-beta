@@ -22,9 +22,6 @@ Boston, MA 02111-1307, USA.  */
 /* Synched up with: Mule 2.0, FSF 19.28.  Mule-ized except as noted.
    Substantially different from FSF. */
 
-/* #### dmoore - All sorts of things in here can call lisp, like message.
-   Track all this stuff. */
-
 #include <config.h>
 #include "lisp.h"
 
@@ -235,7 +232,7 @@ regexp_ignore_completion_p (CONST Bufbyte *nonreloc,
 	  Lisp_Object re = XCAR (regexps);
 	  if (STRINGP (re)
 	      && (fast_string_match (re, nonreloc, reloc, offset,
-				     length, 0, ERROR_ME, 0) < 0))
+				     length, 0, ERROR_ME, 0) >= 0))
 	    return (1);
 	}
     }
@@ -351,12 +348,7 @@ The argument given to PREDICATE is the alist element or the symbol from the obar
 	{
 	  if (!ZEROP (bucket))
 	    {
-              struct Lisp_Symbol *next;
-	      if (!SYMBOLP (bucket)) {
-		signal_simple_error("Bad obarry passed to try-completions",
-				    bucket);
-	      }
-	      next = symbol_next (XSYMBOL (bucket));
+              struct Lisp_Symbol *next = symbol_next (XSYMBOL (bucket));
 	      elt = bucket;
 	      eltstring = Fsymbol_name (elt);
               if (next)
@@ -627,7 +619,6 @@ static Lisp_Object
 clear_echo_area_internal (struct frame *f, Lisp_Object label, int from_print,
 			  int no_restore)
 {
-  /* This function can call lisp */
   if (!NILP (Ffboundp (Qclear_message)))
     {
       Lisp_Object frame;
@@ -647,14 +638,12 @@ clear_echo_area_internal (struct frame *f, Lisp_Object label, int from_print,
 Lisp_Object
 clear_echo_area (struct frame *f, Lisp_Object label, int no_restore)
 {
-  /* This function can call lisp */
   return clear_echo_area_internal (f, label, 0, no_restore);
 }
 
 Lisp_Object
 clear_echo_area_from_print (struct frame *f, Lisp_Object label, int no_restore)
 {
-  /* This function can call lisp */
   return clear_echo_area_internal (f, label, 1, no_restore);
 }
 
@@ -663,7 +652,6 @@ echo_area_append (struct frame *f, CONST Bufbyte *nonreloc, Lisp_Object reloc,
 		  Bytecount offset, Bytecount length,
 		  Lisp_Object label)
 {
-  /* This function can call lisp */
   Lisp_Object obj;
   struct gcpro gcpro1;
   Lisp_Object frame;
@@ -711,7 +699,6 @@ echo_area_message (struct frame *f, CONST Bufbyte *nonreloc,
 		   Lisp_Object reloc, Bytecount offset, Bytecount length,
 		   Lisp_Object label)
 {
-  /* This function can call lisp */
   clear_echo_area (f, label, 1);
   echo_area_append (f, nonreloc, reloc, offset, length, label);
 }
@@ -729,7 +716,6 @@ echo_area_active (struct frame *f)
 Lisp_Object
 echo_area_status (struct frame *f)
 {
-  /* This function can call lisp */
   if (!NILP (Ffboundp (Qcurrent_message_label)))
     {
       Lisp_Object frame;
@@ -755,7 +741,7 @@ void
 message_internal (CONST Bufbyte *nonreloc, Lisp_Object reloc,
 		  Bytecount offset, Bytecount length)
 {
-  /* This function can call lisp  */
+  /* This can GC! */
   if (NILP (Vexecuting_macro))
     echo_area_message (selected_frame (), nonreloc, reloc, offset, length,
 		       Qmessage);
@@ -765,7 +751,7 @@ void
 message_append_internal (CONST Bufbyte *nonreloc, Lisp_Object reloc,
 			 Bytecount offset, Bytecount length)
 {
-  /* This function can call lisp  */
+  /* This can GC! */
   if (NILP (Vexecuting_macro))
     echo_area_append (selected_frame (), nonreloc, reloc, offset, length,
 		      Qmessage);
@@ -778,7 +764,6 @@ message_append_internal (CONST Bufbyte *nonreloc, Lisp_Object reloc,
 static void
 message_1 (CONST char *fmt, va_list args)
 {
-  /* This function can call lisp */
   if (fmt)
     {
       struct gcpro gcpro1;
@@ -797,7 +782,6 @@ message_1 (CONST char *fmt, va_list args)
 static void
 message_append_1 (CONST char *fmt, va_list args)
 {
-  /* This function can call lisp */
   if (fmt)
     {
       struct gcpro gcpro1;
@@ -816,14 +800,12 @@ message_append_1 (CONST char *fmt, va_list args)
 void
 clear_message (void)
 {
-  /* This function can call lisp */
   message_internal (0, Qnil, 0, 0);
 }
 
 void
 message (CONST char *fmt, ...)
 {
-  /* This function can call lisp */
   /* I think it's OK to pass the data of Lisp strings as arguments to
      this function.  No GC'ing will occur until the data has already
      been copied. */
@@ -839,7 +821,6 @@ message (CONST char *fmt, ...)
 void
 message_append (CONST char *fmt, ...)
 {
-  /* This function can call lisp */
   va_list args;
 
   va_start (args, fmt);
@@ -852,7 +833,6 @@ message_append (CONST char *fmt, ...)
 void
 message_no_translate (CONST char *fmt, ...)
 {
-  /* This function can call lisp */
   /* I think it's OK to pass the data of Lisp strings as arguments to
      this function.  No GC'ing will occur until the data has already
      been copied. */
@@ -910,9 +890,9 @@ Non-nil means don't consider case significant in completion.
 */ );
   completion_ignore_case = 0;
 
+  /* Worthless doc string */
   DEFVAR_LISP ("completion-regexp-list", &Vcompletion_regexp_list /*
 List of regexps that should restrict possible completions.
-Each completion has to match all regexps in this list.
 */ );
   Vcompletion_regexp_list = Qnil;
 }

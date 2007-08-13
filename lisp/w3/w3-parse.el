@@ -1,9 +1,9 @@
-;; Created by: Joe Wells, jbw@cs.bu.edu
+;; Created by: Joe Wells, jbw@csb.bu.edu
 ;; Created on: Sat Sep 30 17:25:40 1995
 ;; Filename: w3-parse.el
 ;; Purpose: Parse HTML and/or SGML for Emacs W3 browser.
 
-;; Copyright © 1995, 1996, 1997  Joseph Brian Wells
+;; Copyright © 1995, 1996  Joseph Brian Wells
 ;; Copyright © 1993, 1994, 1995 by William M. Perry (wmperry@cs.indiana.edu)
 ;; 
 ;; This program is free software; you can redistribute it and/or modify
@@ -17,9 +17,8 @@
 ;; GNU General Public License for more details.
 ;; 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with this program; if not, write to the Free Software
+;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 ;;
 ;; On November 13, 1995, the license was available at
 ;; <URL:ftp://prep.ai.mit.edu/pub/gnu/COPYING-2.0>.  It may still be
@@ -58,7 +57,6 @@
 ;; will not complain, these variables are defined with defvar.
 
 (require 'w3-vars)
-(require 'mule-sysdp)
 
 (eval-when-compile
   (defconst w3-p-s-var-list nil
@@ -117,6 +115,11 @@ for an argument to skip-chars-forward.")
   (put 'w3-p-d-open-element-stack 'variable-documentation
        "A stack of the currently open elements, with the innermost enclosing
 element on top and the outermost on bottom.")
+
+  (defvar w3-p-d-parse-tag-stream-tail-pointer)
+  (put 'w3-p-d-parse-tag-stream-tail-pointer 'variable-documentation
+       "Points to last cons cell in parse-tag stream.  We add items to tail of
+parse-tag-stream instead of head.")
 
   (defvar w3-p-d-shortrefs)
   (put 'w3-p-d-shortrefs 'variable-documentation
@@ -264,11 +267,11 @@ which must be a string to use as the error message."
     (while (progn
              (skip-chars-forward "^\"\\\t\n\r")
              (not (eobp)))
-      (insert "\\" (cdr (assq (char-after (point)) '((?\" . "\"")
-                                                     (?\\ . "\\")
-                                                     (?\t . "t")
-                                                     (?\n . "n")
-                                                     (?\r . "r")))))
+      (insert "\\" (cdr (assq (following-char) '((?\" . "\"")
+                                                 (?\\ . "\\")
+                                                 (?\t . "t")
+                                                 (?\n . "n")
+                                                 (?\r . "r")))))
       (delete-char 1))
     (insert "\"")
     (buffer-string)))
@@ -286,7 +289,15 @@ which must be a string to use as the error message."
     (put (car (car html-entities)) 'html-entity-expansion
 	 (cons 'CDATA (if (integerp (cdr (car html-entities)))
                           (char-to-string
-                           (mule-make-iso-character (cdr (car html-entities))))
+                           (let ((c (cdr (car html-entities))))
+                             (cond
+                              ((and (> c 127) (boundp 'MULE))
+                               (make-character lc-ltn1 c))
+                              ;;((and (> c 127) (featurep 'mule))
+                              ;; What???
+                              ;;)
+                              (t
+                               c))))
 			(cdr (car html-entities)))))
     (setq html-entities (cdr html-entities))))
 
@@ -430,11 +441,18 @@ which must be a string to use as the error message."
       ;; Bill wants to call w3-resolve-numeric-entity here, but I think
       ;; that functionality belongs in char-to-string.
       ;; The largest valid character in the I18N version of HTML is 65533.
-      ;; ftp://ds.internic.net/internet-drafts/draft-ietf-html-i18n-01.txt
+      ;; <URL:ftp://ds.internic.net/internet-drafts/draft-ietf-html-i18n-01.txt>
       ;; wrongo!  Apparently, mule doesn't do sane things with char-to-string
       ;; -wmp 7/9/96
       (insert (char-to-string
-               (mule-make-iso-character w3-p-s-num))))
+               (cond
+                ((and (boundp 'MULE) (> w3-p-s-num 127))
+                 (make-character lc-ltn1 w3-p-s-num))
+                ;;((and (featurep 'mule) (> w3-p-s-num 127))
+                ;;what??
+                ;;)
+                (t
+                 w3-p-s-num)))))
      ((looking-at "&#\\(re\\|rs\\|space\\|tab\\)[\ ;\n]?") ; \n should be \r
       (replace-match (assq (upcase (char-after (+ 3 (point))))
                            '(;; *** Strictly speaking, record end should be
@@ -450,7 +468,7 @@ which must be a string to use as the error message."
       ;; is not a function character in the SGML declaration.
       )
    
-     ((eq ?& (char-after (point)))
+     ((eq ?& (following-char))
       ;; We are either looking at an undefined reference or a & that does
       ;; not start a reference (in which case we should not have been called).
       ;; Skip over the &.
@@ -767,6 +785,15 @@ skip-chars-forward."
                   (if w3-p-d-null-end-tag-enabled "/" "")
                   (if w3-p-d-in-parsed-marked-section "]" "")
                   (or w3-p-d-shortref-chars ""))))
+  
+  ;; Modifies free variable:
+  ;;   w3-p-d-parse-tag-stream-tail-pointer
+  (defsubst w3-add-display-item (tag value)
+    (setcdr w3-p-d-parse-tag-stream-tail-pointer
+            (list (cons tag value)))
+    (setq w3-p-d-parse-tag-stream-tail-pointer
+          (cdr w3-p-d-parse-tag-stream-tail-pointer)))
+
 )
 
 (eval-when-compile
@@ -781,6 +808,13 @@ skip-chars-forward."
   ;;   w3-p-s-overrides, w3-p-s-undo-list, w3-p-s-var
   (defsubst w3-open-element (tag attributes)
 
+    ;; Send trailing data character item in the old current element to
+    ;; display engine.
+    (if (stringp (car-safe (w3-element-content w3-p-d-current-element)))
+        (w3-add-display-item 
+         'text 
+         (car-safe (w3-element-content w3-p-d-current-element))))
+  
     ;; Push new element on stack.
     (setq w3-p-d-open-element-stack (cons w3-p-d-current-element
                                           w3-p-d-open-element-stack))
@@ -840,7 +874,14 @@ skip-chars-forward."
          w3-p-d-current-element 
          (w3-element-content-model (car w3-p-d-open-element-stack))))
   
-    )
+    ;; Send the start-tag and attributes to the display engine.
+    (if (memq tag '(plaintext style xmp textarea))
+        ;; Garbage special-casing for old display engine.
+        ;; Nothing is sent until end-tag is found.
+        ;; The DTD will ensure no subelements of these elements.
+        nil
+      ;; Normal procedure.
+      (w3-add-display-item tag attributes)))
   )
 
 ;; The protocol for handing items to the display engine is as follows.
@@ -919,14 +960,33 @@ skip-chars-forward."
     (cond ((null w3-p-s-content))
           ((equal "\n" (car w3-p-s-content))
            (setq w3-p-s-content (cdr w3-p-s-content)))
-          )
+          ((and (stringp (car w3-p-s-content))
+                ;; Garbage special-casing for old display engine.
+                (not (memq w3-p-s-end-tag
+                           '(/plaintext /style /xmp /textarea))))
+           (w3-add-display-item 'text (car w3-p-s-content))))
   
-    (cond ;; *** Handle LISTING the way the old parser did.
+    ;; Send the end-tag to the display engine, but only if the element is
+    ;; allowed to have an end tag.
+    (cond ((memq w3-p-s-end-tag '(/plaintext /style /xmp /textarea))
+           ;; Garbage special-casing for old display engine.
+           ;; Format old display engine expects for these elements:
+           ;;   (START-TAG . ((data . DATA-CHARACTERS) . ATTRIBUTES))
+           (w3-add-display-item
+            ;; Use the *start*-tag, not the end-tag.
+            (w3-element-name w3-p-d-current-element)
+            (cons (cons 'data
+                        (condition-case nil
+                            (mapconcat 'identity w3-p-s-content "")
+                          (error "eeek!  subelement content!")))
+                  (w3-element-attributes w3-p-d-current-element))))
+          ;; *** Handle LISTING the way the old parser did.
           ((eq 'EMPTY (w3-element-content-model w3-p-d-current-element))
            ;; Do nothing, can't have an end tag.
            )
           (t
            ;; Normal case.
+           (w3-add-display-item w3-p-s-end-tag nil)
            (if (null w3-p-s-content)
                (w3-debug-html
                  :bad-style :outer
@@ -1113,19 +1173,18 @@ skip-chars-forward."
 
        ;; client-side imagemaps
        (%imagemaps . (area map))
-       (%input.fields . (input select textarea keygen label))
        ;; special action is taken for %text inside %body.content in the
        ;; content model of each element.
-       (%body.content . (%heading %block style hr div address %imagemaps))
+       (%body.content . (%heading %block hr div address %imagemaps))
 
        (%heading . (h1 h2 h3 h4 h5 h6))
 
        ;; Emacs-w3 extensions
        (%emacsw3-crud  . (pinhead flame cookie yogsothoth hype peek))
 
-       (%block . (p %list dl form %preformatted 
+       (%block . (p %list dl form %preformatted font
                     %blockquote isindex fn table fig note
-                    multicol center %block-deprecated %block-obsoleted))
+                    center %block-deprecated %block-obsoleted))
        (%list . (ul ol))
        (%preformatted . (pre))
        (%blockquote . (bq))
@@ -1135,12 +1194,12 @@ skip-chars-forward."
        ;; Why is IMG in this list?
        (%pre.exclusion . (*include img *discard tab math big small sub sup))
        
-       (%text . (*data b %notmath sub sup %emacsw3-crud %input.fields))
+       (%text . (*data b %notmath sub sup %emacsw3-crud))
        (%notmath . (%special %font %phrase %misc))
-       (%font . (i u s strike tt big small sub sup font
+       (%font . (i u s strike tt big small sub sup
                    roach secret wired)) ;; B left out for MATH
        (%phrase . (em strong dfn code samp kbd var cite blink))
-       (%special . (a img applet object font basefont br script style map math tab span bdo))
+       (%special . (a img applet font br script map math tab))
        (%misc . (q lang au person acronym abbrev ins del))
        
        (%formula . (*data %math))
@@ -1218,9 +1277,8 @@ skip-chars-forward."
         (end-tag-omissible . t))
        ;; SCRIPT - - (#PCDATA)
        ((script)
-        (content-model . XCDATA         ; not official, but allows
-                                        ; comment hiding of script, and also
-                                        ; idiots that use '</' in scripts.
+        (content-model . CDATA          ; not official, but allows
+                                        ; comment hiding of script
                        ))
        ;; TITLE - - (#PCDATA)
        ((title)
@@ -1252,7 +1310,7 @@ skip-chars-forward."
                             ((credit plaintext) *close))
                            nil)])
         (end-tag-omissible . t))
-       ((div banner center multicol)
+       ((div banner center)
         (content-model . [((%body.content)
                            nil
                            ;; Push <P> before data characters.  Non-SGML.
@@ -1269,12 +1327,6 @@ skip-chars-forward."
                            include-space
                            ((%in-text-ignore))
                            nil)]))
-       ((span bdo)
-        (content-model . [((%text)
-                           include-space
-                           nil
-                           nil)])
-        )
        ((p)
         (content-model . [((%text)
                            include-space
@@ -1404,7 +1456,7 @@ skip-chars-forward."
                             ((credit) *close))
                            nil)])
         (end-tag-omissible . t))
-       ((%emacsw3-crud basefont)
+       ((%emacsw3-crud)
         (content-model . EMPTY))
        ;; FORM - - %body.content -(FORM) +(INPUT|KEYGEN|SELECT|TEXTAREA)
        ((form)
@@ -1486,7 +1538,6 @@ skip-chars-forward."
         (content-model . [(nil
                            nil
                            (((caption) *include *next)
-                            ((%text) tr *same error)
                             ((col colgroup thead tfoot tbody tr) *retry *next))
                            (*retry *next)) ;error handling
                           ((col colgroup)
@@ -1530,7 +1581,6 @@ skip-chars-forward."
                            nil
                            (((tbody) *close)
                             ;; error handling
-                            ((td th) tr *same error)
                             ((%body.content) tr *same error))
                            nil)])
         (end-tag-omissible . t))
@@ -1539,7 +1589,7 @@ skip-chars-forward."
                            nil
                            (((tr tfoot tbody) *close)
                             ;; error handling
-                            ((%body.content %text) td *same error))
+                            ((%body.content) td *same error))
                            nil)])
         (end-tag-omissible . t))
        ((td th)
@@ -1666,9 +1716,8 @@ skip-chars-forward."
         (content-model . EMPTY))
        ;;
        ;; APPLET is a Java thing.
-       ;; OBJECT is a cougar thing
        ;; <URL:http://java.sun.com/JDK-beta/filesinkit/README>
-       ((applet object)
+       ((applet)
         ;; I really don't want to add another ANY content-model.
         (content-model . XINHERIT)
         (inclusions . (param)))
@@ -1700,8 +1749,6 @@ skip-chars-forward."
   (w3-p-s-var-def w3-p-s-tran-list)
   (w3-p-s-var-def w3-p-s-content-model)
   (w3-p-s-var-def w3-p-s-except)
-  (w3-p-s-var-def w3-p-s-baseobject)
-  (w3-p-s-var-def w3-p-s-btdt)
   ;; Uses free variables:
   ;;   w3-p-d-current-element, w3-p-d-exceptions
   ;; Destroys free variables:
@@ -1718,7 +1765,7 @@ skip-chars-forward."
                          '(CDATA RCDATA XCDATA XXCDATA))
                    (memq tag-name '(*data *space)))
               ;; *** Implement ANY.
-              (error "impossible content model lossage"))
+              (error "impossible"))
           (setq w3-p-s-includep t)
           ;; Exit loop.
           nil)
@@ -1898,7 +1945,7 @@ skip-chars-forward."
               ;; content-model.
               t)
              (t
-              (error "impossible transition")))))))
+              (error "impossible")))))))
     
       ;; Empty while loop body.
       )
@@ -1938,10 +1985,12 @@ skip-chars-forward."
 ;; %       DO NOT call any of the other functions!      %
 ;; %                                                    %
 ;; %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-(defun w3-parse-buffer (&optional buff)
+(defun w3-parse-buffer (&optional buff nodraw)
   "Parse contents of BUFF as HTML.
 BUFF defaults to the value of url-working-buffer.
 Destructively alters contents of BUFF.
+Unless optional second argument NODRAW is non-nil, calls the display
+engine on the parsed HTML.
 Returns a data structure containing the parsed information."
   
   (set-buffer (or buff url-working-buffer))
@@ -1961,6 +2010,10 @@ Returns a data structure containing the parsed information."
   
   ;; *** Should premunge line boundaries.
   ;; ********************
+  
+  ;; Prepare another buffer to draw in unless told not to.
+  (if (not nodraw)
+      (w3-prepare-draw-buffer-for-parse-buffer))
   
   (let* (
          ;; Speed hack, see the variable doc string.
@@ -1985,6 +2038,20 @@ Returns a data structure containing the parsed information."
          ;; Use a float value for 100 if possible, otherwise integer.
          ;; Determine which we can use outside of the loop for speed.
          (one-hundred (funcall (if (fboundp 'float) 'float 'identity) 100))
+         
+         ;; Speed up checking whether to do incremental display.
+         (w3-do-incremental-display (if nodraw nil w3-do-incremental-display))
+         
+         ;; Used to convert parse tree to tag stream that old display
+         ;; engine expects.  Will change when display engine is rewritten.
+         (parse-tag-stream '(*dummy))
+
+         ;; See doc string.
+         (w3-p-d-parse-tag-stream-tail-pointer parse-tag-stream)
+
+         ;; Points to cons cell in parse-tag-stream whose car is the last
+         ;; item that has been sent to display engine.
+         (parse-tag-stream-last-displayed-item parse-tag-stream)
          
          ;; The buffer which contains the HTML we are parsing.  This
          ;; variable is used to avoid using the more expensive
@@ -2071,8 +2138,9 @@ Returns a data structure containing the parsed information."
          )
     ;; Scratch variables used by macros and defsubsts we call.
     (w3-p-s-let-bindings
+      
       (w3-update-non-markup-chars)
-      (setq w3-p-s-baseobject (url-generic-parse-url (url-view-url t)))
+      
       ;; Main loop.  Handle markup as follows:
       ;;
       ;; non-empty tag: Handle the region since the previous tag as PCDATA,
@@ -2105,6 +2173,8 @@ Returns a data structure containing the parsed information."
         ;; Display progress messages if asked and/or do incremental display
         ;; of results
         (cond ((= 0 (% (setq loop-count (1+ loop-count)) 40))
+               (if w3-do-incremental-display
+                   (w3-pause))
                (if status-message-format
                    (message status-message-format
                             ;; Percentage of buffer processed.
@@ -2117,7 +2187,7 @@ Returns a data structure containing the parsed information."
         ;; character, or end of buffer.
         (cond
 
-         ((eq ?< (char-after (point)))
+         ((= ?< (following-char))
 
           ;; We are looking at a tag, comment, markup declaration, SGML marked
           ;; section, SGML processing instruction, or non-markup "<".
@@ -2126,24 +2196,17 @@ Returns a data structure containing the parsed information."
 
            ((looking-at "/?\\([a-z][-a-z0-9.]*\\)")
             ;; We are looking at a non-empty tag.
-
-            ;; Downcase it in the buffer, to save creation of a string
-            (downcase-region (match-beginning 1) (match-end 1))
+          
             (setq w3-p-d-tag-name
-                  (intern (buffer-substring (match-beginning 1)
-                                            (match-end 1))))
-            (setq w3-p-d-end-tag-p (eq ?/ (char-after (point)))
-                  between-tags-end (1- (point)))
+                  (intern (downcase (buffer-substring (match-beginning 1)
+                                                      (match-end 1)))))
+            (setq w3-p-d-end-tag-p (= ?/ (following-char)))
+            (setq between-tags-end (1- (point)))
             (goto-char (match-end 0))
           
             ;; Read the attributes from a start-tag.
-            (if w3-p-d-end-tag-p
-                (if (looking-at "[ \t\r\n/]*[<>]")
-                    nil
-                  ;; This is in here to deal with those idiots who stick
-                  ;; attribute/value pairs on end tags.  *sigh*
-                  (w3-debug-html "Evil attributes on end tag.")
-                  (skip-chars-forward "^>"))
+            (or
+             w3-p-d-end-tag-p
            
              ;; Attribute values can be:
              ;;   "STRING"   where STRING does not contain the double quote
@@ -2164,7 +2227,7 @@ Returns a data structure containing the parsed information."
                      "[ \n\r\t]*"
                      ;; The attribute name, possibly with a bad syntax
                      ;; component.
-                     "\\([a-z_][-a-z0-9.]*\\(\\([_][-a-z0-9._]*\\)?\\)\\)"
+                     "\\([a-z][-a-z0-9.]*\\(\\([_][-a-z0-9._]*\\)?\\)\\)"
                      ;; Trailing whitespace and perhaps an "=".
                      "[ \n\r\t]*\\(\\(=[ \n\r\t]*\\)?\\)")))
                
@@ -2174,12 +2237,10 @@ Returns a data structure containing the parsed information."
                         (format "Bad attribute name syntax: %s"
                                 (buffer-substring (match-beginning 1)
                                                   (match-end 1))))))
-
-               ;; Downcase it in the buffer, to save creation of a string
-               (downcase-region (match-beginning 1) (match-end 1))
+               
                (setq attr-name
-                     (intern (buffer-substring (match-beginning 1)
-                                               (match-end 1))))
+                     (intern (downcase (buffer-substring (match-beginning 1)
+                                                         (match-end 1)))))
                (goto-char (match-end 0))
                (cond
                 ((< (match-beginning 4) (match-end 4))
@@ -2192,7 +2253,7 @@ Returns a data structure containing the parsed information."
                        "\"\\([^\"]*\\)\""
                        "\\|"
                        ;; Literal with single quotes.
-                       "'\\([^']*\\)'"
+                       "'\\([^']\\)*'"
                        "\\|"
                        ;; Handle bad HTML conflicting with NET-enabling
                        ;; start-tags.
@@ -2225,8 +2286,8 @@ Returns a data structure containing the parsed information."
                                 (skip-chars-forward "^&")
                                 (not (eobp)))
                          (w3-expand-entity-at-point-maybe))
-                       (subst-char-in-region (point-min) (point-max) ?\t ? )
-                       (subst-char-in-region (point-min) (point-max) ?\n ? ))
+                       (subst-char-in-region (point-min) (point-max) ?\t 32)
+                       (subst-char-in-region (point-min) (point-max) ?\n 32))
                      ;; Set this after we have changed the size of the
                      ;; attribute.
                      (setq attribute-value-end (1+ (point-max))))
@@ -2244,13 +2305,13 @@ Returns a data structure containing the parsed information."
                        (format "Evil attribute value syntax: %s"
                                (buffer-substring (point-min) (point-max)))))
                     (t
-                     (error "impossible attribute value"))))
-                  ((memq (char-after (point)) '(?\" ?'))
+                     (error "impossible"))))
+                  ((memq (following-char) '(?\" ?'))
                    ;; Missing terminating quote character.
                    (narrow-to-region (point)
                                      (progn
                                        (forward-char 1)
-                                       (skip-chars-forward "^ \t\n\r'\"<>")
+                                       (skip-chars-forward "^ \t\n\r'\"=<>")
                                        (setq attribute-value-end (point))))
                    (w3-debug-html :nocontext
                      (format "Attribute value missing end quote: %s"
@@ -2261,7 +2322,7 @@ Returns a data structure containing the parsed information."
                    ;; make a best guess as to what the author intended.
                    (narrow-to-region (point)
                                      (progn
-                                       (skip-chars-forward "^ \t\n\r'\"<>")
+                                       (skip-chars-forward "^ \t\n\r'\"=<>")
                                        (setq attribute-value-end (point))))
                    (w3-debug-html :nocontext
                      (format "Bad attribute value syntax: %s"
@@ -2278,23 +2339,6 @@ Returns a data structure containing the parsed information."
                  ;; * smash multiple space sequences into single spaces
                  ;; * verify the syntax of each token
                  (setq attr-value (buffer-substring (point-min) (point-max)))
-                 (case attr-name
-                   (class
-                    (setq attr-value (split-string attr-value "[ ,]+")))
-                   (align
-                    (if (string-match "^[ \t\r\n]*\\(.*\\)[ \t\r\n]*$"
-                                      attr-value)
-                        (setq attr-value (downcase
-                                          (substring attr-value
-                                                     (match-beginning 1)
-                                                     (match-end 1))))
-                      (setq attr-value (downcase attr-value)))
-                    (setq attr-value (intern attr-value)))
-                   ((src href)
-                    ;; I should expand URLs here
-                    )
-                   (otherwise nil)
-                   )
                  (widen)
                  (goto-char attribute-value-end))
                 (t
@@ -2308,56 +2352,19 @@ Returns a data structure containing the parsed information."
              
                ;; Accumulate the attributes.
                (setq tag-attributes (cons (cons attr-name attr-value)
-                                          tag-attributes)))
-
-             (cond
-              ((and (eq w3-p-d-tag-name 'base)
-                    (setq w3-p-s-baseobject
-                          (or (assq 'src tag-attributes)
-                              (assq 'href tag-attributes))))
-               (setq w3-p-s-baseobject (url-generic-parse-url
-                                        (cdr w3-p-s-baseobject))))
-              ((setq w3-p-s-btdt (or (assq 'src tag-attributes)
-                                     (assq 'href tag-attributes)
-                                     (assq 'action tag-attributes)))
-               (setcdr w3-p-s-btdt (url-expand-file-name (cdr w3-p-s-btdt)
-                                                         w3-p-s-baseobject))
-               (setq w3-p-s-btdt (if (url-have-visited-url (cdr w3-p-s-btdt))
-                                     ":visited"
-                                   ":link"))
-               (if (assq 'class tag-attributes)
-                   (setcdr (assq 'class tag-attributes)
-                           (cons w3-p-s-btdt
-                                 (cdr (assq 'class tag-attributes))))
-                 (setq tag-attributes (cons (cons 'class (list w3-p-s-btdt))
-                                            tag-attributes))))
-              )
-             (if (not (eq w3-p-d-tag-name 'input))
-                 nil
-               (setq w3-p-s-btdt (concat ":"
-                                         (downcase
-                                          (or (cdr-safe
-                                               (assq 'type tag-attributes))
-                                              "text"))))
-               (if (assq 'class tag-attributes)
-                   (setcdr (assq 'class tag-attributes)
-                           (cons w3-p-s-btdt
-                                 (cdr (assq 'class tag-attributes))))
-                 (setq tag-attributes (cons (cons 'class (list w3-p-s-btdt))
-                                            tag-attributes))))
-             )
+                                          tag-attributes))))
           
             ;; Process the end of the tag.
             (skip-chars-forward " \t\n\r")
-            (cond ((eq ?> (char-after (point)))
+            (cond ((= ?> (following-char))
                    ;; Ordinary tag end.
                    (forward-char 1))
-                  ((and (eq ?/ (char-after (point)))
+                  ((and (= ?/ (following-char))
                         (not w3-p-d-end-tag-p))
                    ;; This is a NET-enabling start-tag.
                    (setq net-tag-p t)
                    (forward-char 1))
-                  ((eq ?< (char-after (point)))
+                  ((= ?< (following-char))
                    ;; *** Strictly speaking, the following text has to
                    ;; lexically be STAGO or ETAGO, which means that it
                    ;; can't match some other lexical unit.
@@ -2374,7 +2381,7 @@ Returns a data structure containing the parsed information."
            
            ((looking-at "/?>")
             ;; We are looking at an empty tag (<>, </>).
-            (setq w3-p-d-end-tag-p (eq ?/ (char-after (point))))
+            (setq w3-p-d-end-tag-p (= ?/ (following-char)))
             (setq w3-p-d-tag-name (if w3-p-d-end-tag-p
                                (w3-element-name w3-p-d-current-element)
                              ;; *** Strictly speaking, if OMITTAG NO, then
@@ -2436,7 +2443,7 @@ Returns a data structure containing the parsed information."
                   ;; declarations, a goal for the future.
                   (w3-debug-html "Bad <! syntax.")
                   (skip-chars-forward "^>")
-                  (if (eq ?> (char-after (point)))
+                  (if (= ?> (following-char))
                       (forward-char))))
                (point))))
          
@@ -2463,10 +2470,10 @@ Returns a data structure containing the parsed information."
                                             ((memq 'RCDATA keywords))
                                             ((memq 'INCLUDE keywords))
                                             ((memq 'TEMP keywords))))))
-              (or (eq ?\[ (char-after (point)))
+              (or (= ?\[ (following-char))
                   ;; I probably shouldn't even check this, since it is so
                   ;; impossible.
-                  (error "impossible ??"))
+                  (error "impossible"))
               (forward-char 1)
               (delete-region (1- (match-beginning 0)) (point))
               (cond ((eq 'IGNORE keyword)
@@ -2504,7 +2511,7 @@ Returns a data structure containing the parsed information."
              (point)
              (progn
                (skip-chars-forward "^>")
-               (if (eq ?> (char-after (point)))
+               (if (= ?> (following-char))
                    (forward-char))
                (point))))
            (t
@@ -2513,16 +2520,16 @@ Returns a data structure containing the parsed information."
             ;; again.
             )))
        
-         ((eq ?& (char-after (point)))
+         ((= ?& (following-char))
           (w3-expand-entity-at-point-maybe))
 
-         ((and (eq ?\] (char-after (point)))
+         ((and (= ?\] (following-char))
                w3-p-d-in-parsed-marked-section
                (looking-at "]]>"))
           ;; *** handle the end of a parsed marked section.
           (error "***unimplemented***"))
 
-         ((and (eq ?/ (char-after (point)))
+         ((and (= ?/ (following-char))
                w3-p-d-null-end-tag-enabled)
           ;; We are looking at a null end tag.
           (setq w3-p-d-end-tag-p t)
@@ -2555,8 +2562,8 @@ Returns a data structure containing the parsed information."
          ((looking-at (eval-when-compile
                         (concat "[" (w3-invalid-sgml-chars) "]")))
           (w3-debug-html
-            (format "Invalid SGML character: %c" (char-after (point))))
-          (insert (or (cdr-safe (assq (char-after (point))
+            (format "Invalid SGML character: %c" (following-char)))
+          (insert (or (cdr-safe (assq (following-char)
                                       ;; These characters are apparently
                                       ;; from a Windows character set.
                                       '((146 . "'")
@@ -2611,19 +2618,33 @@ Returns a data structure containing the parsed information."
               (or (setq content (w3-element-content w3-p-d-current-element))
                   ;; *** Strictly speaking, in SGML the record end is
                   ;; carriage return, not line feed.
-                  (if (eq ?\n (char-after between-tags-start))
+                  (if (= ?\n (char-after between-tags-start))
                       (setq between-tags-start (1+ between-tags-start))))
               (if (= between-tags-start (point))
                   ;; Do nothing.
                   nil
                 ;; We are definitely going to add data characters to the
                 ;; content.
+                ;; Protocol is that all but last data character item
+                ;; must have been sent to display engine.
+                (and content
+                     (stringp (car content))
+                     ;; Gross, disgusting hack to deal with old interface
+                     ;; to display engine.  Remove as soon as possible.
+                     (not (memq (w3-element-name w3-p-d-current-element)
+                                '(plaintext style xmp textarea)))
+                     (w3-add-display-item 'text (car content)))
                 (cond
                  ((and (= ?\n (preceding-char))
                        (/= between-tags-start (1- (point))))
                   (setq content (cons (buffer-substring between-tags-start
                                                         (1- (point)))
                                       content))
+                  ;; Gross, disgusting hack to deal with old interface
+                  ;; to display engine.  Remove as soon as possible.
+                  (or (memq (w3-element-name w3-p-d-current-element)
+                            '(plaintext style xmp textarea))
+                      (w3-add-display-item 'text (car content)))
                   (setq content (cons "\n" content)))
                  (t
                   (setq content (cons (buffer-substring between-tags-start
@@ -2740,7 +2761,7 @@ Returns a data structure containing the parsed information."
                                                     "</[a-z>]\\|&")
                                                   nil 'move)
                                (goto-char (match-beginning 0)))
-                           (eq ?& (char-after (point))))
+                           (= ?& (following-char)))
                     (w3-expand-entity-at-point-maybe)))))))
              (t
               ;; The element is illegal here.  We'll just discard the start
@@ -2753,20 +2774,70 @@ Returns a data structure containing the parsed information."
           (setq tag-attributes nil)
           (setq tag-end nil)))
         
+        ;; Hand items to the display engine.
+        (cond ((not nodraw)
+               (set-buffer w3-draw-buffer)
+               (while (not (eq parse-tag-stream-last-displayed-item
+                               w3-p-d-parse-tag-stream-tail-pointer))
+                 (setq parse-tag-stream-last-displayed-item
+                       (cdr parse-tag-stream-last-displayed-item))
+                 ;; We call w3-handle-single-tag from only one spot so that it
+                 ;; is reasonable to inline it, since it is a big function.
+                 (w3-handle-single-tag
+                  (car (car parse-tag-stream-last-displayed-item))
+                  (cdr (car parse-tag-stream-last-displayed-item))))
+               (set-buffer parse-buffer)))
+      
         ;; End of main while loop.
         )
     
       ;; We have finished parsing the buffer!
       (if status-message-format
           (message "%sdone" (format status-message-format 100)))
+      ;; Do this now so the user can see the full results before Emacs
+      ;; goes off and garbage-collects for an hour.  :-(
+      (if w3-do-incremental-display
+          (w3-pause))
     
       ;; *** For debugging, save the true parse tree.
       ;; *** Make this look inside *DOCUMENT.
       (setq w3-last-parse-tree
             (w3-element-content w3-p-d-current-element))
-
-      (w3-element-content w3-p-d-current-element)
+      
+      ;; Return the parse in the format expected, a stream of tags
+      ;; possibly with a buffer at the front.
+      (if nodraw
+          ;; Discard the *dummy item at start of list.
+          (cdr parse-tag-stream)
+        (cons w3-draw-buffer (cdr parse-tag-stream)))
+      
       )))
+
+
+;;;
+;;; Initialization of display engine to accept parser output.
+;;;
+
+(defun w3-prepare-draw-buffer-for-parse-buffer ()
+  (setq list-buffers-directory nil)
+  (let ((buf (get-buffer-create (url-generate-new-buffer-name
+                                 "Untitled")))
+        (info (mapcar (function (lambda (x) (cons x (symbol-value x))))
+                      w3-persistent-variables)))
+    (setq w3-draw-buffer buf)
+    (save-excursion
+      (set-window-buffer (selected-window) buf)
+      (set-buffer buf)
+      (setq w3-draw-buffer (current-buffer))
+      (erase-buffer)
+      (buffer-disable-undo (current-buffer))
+      (mapcar (function (lambda (x) (set (car x) (cdr x)))) info)
+      (setq w3-last-fill-pos (point))
+      (setq fill-column (min (- (or w3-strict-width (window-width))
+                                w3-right-border)
+                             (or w3-maximum-line-length (window-width))))
+      (setq fill-prefix "")
+      (w3-init-state))))
 
 
 

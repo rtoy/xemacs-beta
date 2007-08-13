@@ -20,7 +20,7 @@
 ;; along with this program; if not, write to: The Free Software Foundation,
 ;; Inc.; 675 Massachusetts Avenue.; Cambridge, MA 02139, USA.
 
-;; $Id: rlogin.el,v 1.1.1.1 1996/12/18 03:29:39 steve Exp $
+;; $Id: rlogin.el,v 1.1.1.1 1996/12/18 22:42:36 steve Exp $
 
 ;;; Commentary:
 

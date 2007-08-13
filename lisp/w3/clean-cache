@@ -6,7 +6,7 @@
 # Maintainer:	William M. Perry <wmperry@spry.com>
 # Created:	95/04/18 10:44:15
 # Version:	$Revision: 1.1.1.1 $
-# Modified:     $Date: 1996/12/18 03:46:20 $
+# Modified:     $Date: 1996/12/18 22:43:09 $
 # Keywords:	cache clean
 # 
 # This shell script will clean out your cache directory for emacs-w3

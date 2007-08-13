@@ -26,66 +26,67 @@ Boston, MA 02111-1307, USA.  */
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-/* #### This has been removed in 20.3. */
+/* #### This will be removed in 19.15. */
 #define LOSING_BYTECODE
 
+/* Use this to add code in a structured way to FSF-maintained source
+   files so as to make it obvious where XEmacs changes are. */
+#define XEMACS
 
 /* These are all defined in the top-level Makefile by configure.
-   They're here only for reference.  */
+   They're here only for reference. */
 
-/* Define LISP_FLOAT_TYPE if you want XEmacs to support floating-point
-   numbers. */
+/* Does XEmacs support floating-point numbers? */
 #undef LISP_FLOAT_TYPE
 
-/* Define GNU_MALLOC if you want to use the *new* GNU memory allocator. */
+/* Do you want to use the *new* GNU memory allocator? */
 #undef GNU_MALLOC
 
-/* Define USE_SYSTEM_MALLOC if you forcing the use of it. */
+/* Do you want to use the system malloc? */
 #undef USE_SYSTEM_MALLOC
 
-/* Define HAVE_TTY if you want TTY support compiled in. */
+/* Do you want TTY support compiled in? */
 #undef HAVE_TTY
 
-/* Define HAVE_X_WINDOWS if you want to use the X window system.  */
+/* Do you have the X window system and want to use it? */
 #undef HAVE_X_WINDOWS
 
-/* Define HAVE_NEXTSTEP if you want to use the NeXTstep window system.  */
+/* Do you have the the NeXTstep window system? */
 #undef HAVE_NEXTSTEP
 
-/* Define HAVE_WINDOW_SYSTEM if any windowing system is available.  */
+/* Define HAVE_WINDOW_SYSTEM if any windowing system is available. */
 #if defined (HAVE_X_WINDOWS) || defined (HAVE_NEXTSTEP)
 #define HAVE_WINDOW_SYSTEM
 #endif
 
-/* Define HAVE_UNIXOID_EVENT_LOOP if we use select() to wait for events.  */
+/* Define HAVE_UNIXOID_EVENT_LOOP if we use select() to wait for events. */
 #if defined (HAVE_X_WINDOWS) || defined (HAVE_TTY)
 #define HAVE_UNIXOID_EVENT_LOOP
 #endif
 
-/* Define this if you're using XFree386.  */
+/* Are we using XFree386? */
 #undef HAVE_XFREE386
 
 #undef THIS_IS_X11R4
 #undef THIS_IS_X11R5
 #undef THIS_IS_X11R6
 
-/* Define USER_FULL_NAME to return a string
-   that is the user's full name.
-   It can assume that the variable `pw'
-   points to the password file entry for this user.
+/* USER_FULL_NAME returns a string that is the user's full name.
+   It can assume that the variable `pw' points to the password file
+   entry for this user.
 
-   At some sites, the pw_gecos field contains
-   the user's full name.  If neither this nor any other
-   field contains the right thing, use pw_name,
-   giving the user's login name, since that is better than nothing.  */
+   At some sites, the pw_gecos field contains the user's full name.
+   If neither this nor any other field contains the right thing, use
+   pw_name, giving the user's login name, since that is better than
+   nothing. */
 #define USER_FULL_NAME pw->pw_gecos
 
 /* Define AMPERSAND_FULL_NAME if you use the convention
-   that & in the full name stands for the login id.  */
+   that & in the full name stands for the login id. */
 #undef AMPERSAND_FULL_NAME
 
 /* Some things figured out by the configure script, grouped as they are in
-   configure.in.  */
+   configure.in. */
 #undef HAVE_MACH_MACH_H
 #undef HAVE_SYS_STROPTS_H
 #undef HAVE_SYS_TIMEB_H
@@ -93,13 +94,19 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_UNISTD_H
 #undef HAVE_UTIME_H
 #undef HAVE_SYS_WAIT_H
+#undef HAVE_LIBINTL_H
 #undef HAVE_LIBGEN_H
 #undef HAVE_LOCALE_H
-#undef HAVE_X11_LOCALE_H
+#undef HAVE_X11_XLOCALE_H
 #undef HAVE_LINUX_VERSION_H
 #undef STDC_HEADERS
 #undef TIME_WITH_SYS_TIME
 #undef WORDS_BIGENDIAN
+#undef HAVE_ALLOCA_H
+#undef HAVE_VFORK_H
+#undef HAVE_KSTAT_H
+#undef HAVE_SYS_PSTAT_H
+#undef vfork
 
 #undef HAVE_LONG_FILE_NAMES
 
@@ -107,16 +114,17 @@ Boston, MA 02111-1307, USA.  */
 #define CLASH_DETECTION
 #endif
 
+#undef HAVE_LIBKSTAT
 #undef HAVE_LIBDNET
 #undef HAVE_LIBRESOLV
 
-/* Define if `sys_siglist' is declared by <signal.h>. */
+/* Is `sys_siglist' declared by <signal.h>? */
 #undef SYS_SIGLIST_DECLARED
 
-/* Define if `struct utimbuf' is declared by <utime.h>.  */
+/* Is `struct utimbuf' declared by <utime.h>? */
 #undef HAVE_STRUCT_UTIMBUF
 
-/* Define if `struct timeval' is declared by <sys/time.h>.  */
+/* Is `struct timeval' declared by <sys/time.h>? */
 #undef HAVE_TIMEVAL
 
 
@@ -124,21 +132,17 @@ Boston, MA 02111-1307, USA.  */
 #undef HAVE_TM_ZONE
 #undef HAVE_TZNAME
 
-/* Define if netdb.h declares h_errno.  */
+/* Is `h_errno' declared by <netdb.h>? */
 #undef HAVE_H_ERRNO
 
-/* Define if localtime caches TZ */
+/* Does `localtime' cache TZ? */
 #undef LOCALTIME_CACHE
 
-/* Define if gettimeofday can't accept two arguments */
+/* Can `gettimeofday' accept two arguments? */
 #undef GETTIMEOFDAY_ONE_ARGUMENT
 
-/* Define in keyword `inline' exists. */
+/* Does the keyword `inline' exist? */
 #undef HAVE_INLINE
-
-#undef HAVE_ALLOCA_H
-#undef HAVE_VFORK_H
-#undef vfork
 
 #undef HAVE_MMAP
 #undef HAVE_STRCOLL
@@ -209,96 +213,92 @@ Boston, MA 02111-1307, USA.  */
 #undef UNEXEC_SRC
 #undef AIX_SMT_EXP
 
-/* Define HAVE_SOCKS if you have the `socks' library and want XEmacs to
-   use it.  */
+/* Do you have the `socks' library and want XEmacs to use it? */
 #undef HAVE_SOCKS
 
-/* Define HAVE_TERM if you run the `term' program (e.g. under Linux) and
-   want XEmacs to use it.  */
+/* Do you run the `term' program (e.g. under Linux) and want XEmacs to
+   use it? */
 #undef HAVE_TERM
 
-/* Define HAVE_XPM if you have the `xpm' library and want XEmacs to use it. */
+/* Do you have the `xpm' library and want XEmacs to use it? */
 #undef HAVE_XPM
 
-/* Define HAVE_XFACE if you have the `compface' library and want to use it.
+/* Do you have the `compface' library and want XEmacs to use it?
    This will permit X-face pixmaps in mail and news messages to display
    quickly. */
 #undef HAVE_XFACE
 
-/* Define HAVE_GIF if you want XEmacs to support converting GIF
-   (Graphics Interchange Format) images. */
+/* Do you want XEmacs to have native support for converting
+   GIF (Graphics Interchange Format) images? */
 #undef HAVE_GIF
 
-/* Define HAVE_JPEG if you have the JPEG library and want XEmacs to use it.
+/* Do you have the JPEG library and want XEmacs to use it?
    This is for converting JPEG images. */
 #undef HAVE_JPEG
 
-/* Define HAVE_PNG if you have the PNG library and want XEmacs to use it.
+/* Do you have the PNG library and want XEmacs to use it?
    This is for converting PNG images. */
 #undef HAVE_PNG
 
-/* Define HAVE_PNG_GNUZ if you want to use -lgz instead of -lz for PNG. */
+/* Do you want to use -lgz instead of -lz for PNG. */
 #undef HAVE_PNG_GNUZ
 
-/* Define HAVE_TIFF if you have the TIFF library and want XEmacs to use it.
+/* Do you have the TIFF library and want XEmacs to use it?
    This is for converting TIFF images. */
 #undef HAVE_TIFF
 
-/* Define HAVE_XMU if you have the Xmu library.  This should always be
-   the case except on losing HPUX systems. */
+/* Do you have the Xmu library?
+   This should always be the case except on losing HP-UX systems. */
 #undef HAVE_XMU
 
-/* Define HAVE_DBM if you want to use the DBM libraries */
+/* Do you have the DBM libraries and want XEmacs to use them? */
 #undef HAVE_DBM
 
-/* Define HAVE_GNU_DBM if you want to use the GNU DBM libraries;
-   if you define this, you should also define HAVE_DBM */
+/* Do you have the GNU DBM libraries and want XEmacs to use them?
+   HAVE_GNU_DBM requires that HAVE_DBM be defined as well. */
 #undef HAVE_GNU_DBM
 
-/* Define HAVE_BERKELEY_DB if you want to use the BerkDB libraries */
+/* Do you have the BerkDB libraries and want XEmacs to use them? */
 #undef HAVE_BERKELEY_DB
 
-/* Define HAVE_LIBGDBM if you have -lgdbm (separated from HAVE_DBM
-   stuff because FreeBSD has the DBM routines in libc) */
+/* Do you have the -lgdbm library? (separated from HAVE_GNU_DBM stuff
+   because FreeBSD has the DBM routines in libc) */
 #undef HAVE_LIBGDBM
 
-/* Define HAVE_LIBDBM if you have -ldbm */
+/* Do you have the -ldbm library? */
 #undef HAVE_LIBDBM
 
-/* Define HAVE_LIBDB if you have -ldb */
+/* Do you have the -ldb library? */
 #undef HAVE_LIBDB
 
 #if defined (HAVE_DBM) || defined (HAVE_BERKELEY_DB)
 # define HAVE_DATABASE
 #endif
 
-/* Define HAVE_XAUTH if the Xauth library is present.  This will add
-   some extra functionality to gnuserv. */
+/* Do you have the Xauth library present?  This will add some extra
+   functionality to gnuserv. */
 #undef HAVE_XAUTH
 
-/* Define HAVE_XLOCALE_H if X11/Xlocale.h is present. */
-#undef HAVE_XLOCALE_H
-
-/* Define HAVE_NCURSES if -lncurses is present. */
+/* Do you have the library -lncurses ? */
 #undef HAVE_NCURSES
 
-/* Define HAVE_NCURSES_CURSES_H if ncurses/curses.h is present. */
+/* Do you have ncurses or curses.h ? */
 #undef HAVE_NCURSES_CURSES_H
 
 /* Define HAVE_NCURSES_TERM_H if ncurses/term.h is present. */
 #undef HAVE_NCURSES_TERM_H
 
-/* Define EPOCH to include extra functionality that was present in Epoch.
+/* Do you want to include extra functionality that was present in Epoch?
    This code has received only limited testing. */
 #undef EPOCH
 
 #define LOWTAGS
 
-/* Define USE_ASSERTIONS if you want the abort() to be changed to assert()
+/* Define USE_ASSERTIONS if you want the abort() to be changed to assert().
    If the assertion fails, assert_failed() will be called.  This is
    recommended for general use because it gives more info about the crash
    than just the abort() message.  Too many people "Can't find the corefile"
-   or have limited core dumps out of existence. */
+   or have limit-ed core dumps out of existence. */
 #undef USE_ASSERTIONS
 
 /* Define one or more of the following if you want lots of extra checks
@@ -346,16 +346,42 @@ Boston, MA 02111-1307, USA.  */
 /* Allow the user to override the default value of PURESIZE at configure
    time.  This must come before we include the sys files in order for
    it to be able to override any changes in them. */
-#undef RAW_PURESIZE
+#undef PURESIZE
 
+/* Define this if you want level 2 internationalization compliance
+   (localized collation and formatting).  Generally this should be
+   defined, unless your system doesn't have the strcoll() and 
+   setlocale() library routines.  This really should be defined in
+   the appropriate s/ or m/ file. */
+#undef I18N2
 
-/* Define this if you want to use the Common Desktop Environment
-*/
+/* Define this if you want level 3 internationalization compliance
+   (localized messaging).  This will cause a small runtime performance
+   penalty, as the strings are read from the message catalog(s).
+   For this you need the gettext() and dgetext() library routines.
+   WARNING, this code is under construction. */
+#undef I18N3
+
+/* Define this if you want to use the Common Desktop Environment. */
 #undef HAVE_CDE
 
-/* Define this if you want to use the OffiX Drag and Drop
-*/
+/* Define this if you want to use the OffiX Drag and Drop. */
 #undef HAVE_OFFIX_DND
+
+/* Define this if you want Mule support (multi-byte character support).
+   There may be some performance penalty, although it should be small
+   if you're working with ASCII files. */
+#undef MULE
+
+/* Do we want to use X window input methods for use with Mule? (requires X11R5)
+   If so, use raw Xlib or higher level Motif interface? */
+#undef HAVE_XIM
+#undef XIM_XLIB
+#undef XIM_MOTIF
+
+/* Non-XIM input methods for use with Mule. */
+#undef HAVE_CANNA
+#undef HAVE_WNN
 
 /* Mocklisp Support. */
 #undef MOCKLISP_SUPPORT
@@ -363,13 +389,13 @@ Boston, MA 02111-1307, USA.  */
 /* enable special GNU Make features in the Makefiles. */
 #undef USE_GNU_MAKE
 
-/* Undocumented debugging option: Don't automatically rebuild the DOC
-   file.  This saves a lot of time when you're repeatedly
+/* Debugging option: Don't automatically rebuild the DOC file.
+   This saves a lot of time when you're repeatedly
    compiling-running-crashing. */
 #undef NO_DOC_FILE
 
-  /* To eliminate use of `const' in the XEmacs sources,
-     do `#define CONST_IS_LOSING' */
+/* To eliminate use of `const' in the XEmacs sources,
+   do `#define CONST_IS_LOSING' */
 #undef CONST_IS_LOSING
 
 # undef CONST
@@ -383,18 +409,17 @@ Boston, MA 02111-1307, USA.  */
    seem to require this, probably because something with the int
    definitions isn't right with 64-bit systems.
 
-   (It's NO_UNION_TYPE instead of USE_UNION_TYPE for historical reasons.)
-*/
+   (It's NO_UNION_TYPE instead of USE_UNION_TYPE for historical reasons.) */
 #undef NO_UNION_TYPE
 
 /* The configuration script defines opsysfile to be the name of the
-   s/...h file that describes the system type you are using.  The file
-   is chosen based on the configuration name you give.
+   s/...h file that describes the system type you are using.
+   The file is chosen based on the configuration name you give.
 
    See the file ../etc/MACHINES for a list of systems and the
    configuration names to use for them.
 
-   See s/template.h for documentation on writing s/...h files.  */
+   See s/template.h for documentation on writing s/...h files. */
 #undef config_opsysfile 
 #include config_opsysfile
 
@@ -405,7 +430,7 @@ Boston, MA 02111-1307, USA.  */
    See the file ../etc/MACHINES for a list of machines and the
    configuration names to use for them.
 
-   See m/template.h for documentation on writing m/...h files.  */
+   See m/template.h for documentation on writing m/...h files. */
 #undef config_machfile
 #include config_machfile
 
@@ -428,10 +453,13 @@ typedef unsigned long EMACS_UINT;
    for the lib-src programs. */
 #undef EMACS_CONFIGURATION
 
+/* The version string from version.el. Used in #pragma ident in emacs.c */
+#undef EMACS_VERSION
+
 /* Load in the conversion definitions if this system
    needs them and the source file being compiled has not
    said to inhibit this.  There should be no need for you
-   to alter these lines.  */
+   to alter these lines. */
 
 #ifdef SHORTNAMES
 #ifndef NO_SHORTNAMES
@@ -443,35 +471,35 @@ typedef unsigned long EMACS_UINT;
    buffer space. */
 #undef REL_ALLOC
 
-/* Define LD_SWITCH_SITE to contain any special flags your loader may need.  */
+/* Define LD_SWITCH_SITE to contain any special flags your loader may need. */
 #undef LD_SWITCH_SITE
 
-/* Define C_SWITCH_SITE to contain any special flags your compiler needs.  */
+/* Define C_SWITCH_SITE to contain any special flags your compiler needs. */
 #undef C_SWITCH_SITE
 
 /* Define LD_SWITCH_X_SITE to contain any special flags your loader
    may need to deal with X Windows.  For instance, if you've defined
    HAVE_X_WINDOWS above and your X libraries aren't in a place that
    your loader can find on its own, you might want to add "-L/..." or
-   something similar.  */
+   something similar. */
 #undef LD_SWITCH_X_SITE
 
 /* Define LD_SWITCH_X_SITE_AUX with an -R option
-   in case it's needed (for Solaris, for example).  */
+   in case it's needed (for Solaris, for example). */
 #undef LD_SWITCH_X_SITE_AUX
 
 /* Define C_SWITCH_X_SITE to contain any special flags your compiler
    may need to deal with X Windows.  For instance, if you've defined
    HAVE_X_WINDOWS above and your X include files aren't in a place
    that your compiler can find on its own, you might want to add
-   "-I/..." or something similar.  */
+   "-I/..." or something similar. */
 #undef C_SWITCH_X_SITE
 
 /* Define the return type of signal handlers if the s-xxx file
-   did not already do so.  */
+   did not already do so. */
 #define RETSIGTYPE void
 
-/* SIGTYPE is the macro we actually use.  */
+/* SIGTYPE is the macro we actually use. */
 #ifndef SIGTYPE
 #define SIGTYPE RETSIGTYPE
 #define SIGRETURN return
@@ -489,8 +517,7 @@ typedef unsigned long EMACS_UINT;
 /* Define ENERGIZE to compile with support for the Energize Programming System.
    If you do this, don't forget to define ENERGIZE in lwlib/Imakefile as well.
    You will need to set your C_SWITCH_SITE and LD_SWITCH_SITE to point at the
-   Energize connection library (libconn.a) and associated header files.
- */
+   Energize connection library (libconn.a) and associated header files. */
 #undef ENERGIZE
 #undef ENERGIZE_2
 #undef ENERGIZE_3
@@ -503,15 +530,13 @@ typedef unsigned long EMACS_UINT;
    have the sound option installed for some reason, then undefine
    HAVE_NATIVE_SOUND.  (It's usually found in /usr/demo/SOUND/ on SunOS 4
    and Solaris systems; on Solaris, you may need to install the "SUNWaudmo"
-   package.)
- */
+   package.) */
 #undef HAVE_NATIVE_SOUND
 
 /* If you wish to compile with support for the Network Audio System
    system define HAVE_NAS_SOUND.
    NAS_NO_ERROR_JUMP means that the NAS libraries don't inlcude some
-   error handling changes.
- */
+   error handling changes. */
 #undef HAVE_NAS_SOUND
 #undef NAS_NO_ERROR_JUMP
 
@@ -522,7 +547,6 @@ typedef unsigned long EMACS_UINT;
 #undef TOOLTALK
 
 #undef LWLIB_USES_MOTIF
-#undef LWLIB_USES_ATHENA
 #undef LWLIB_MENUBARS_LUCID
 #undef LWLIB_MENUBARS_MOTIF
 #undef LWLIB_SCROLLBARS_LUCID
@@ -554,8 +578,7 @@ typedef unsigned long EMACS_UINT;
 
    Also, SunOS 4.1.1 contains buggy versions of strcmp and strcpy that
    sometimes reference memory past the end of the string, which can segv.
-   I don't know whether this is has been fixed as of 4.1.2 or 4.1.3.
- */
+   I don't know whether this is has been fixed as of 4.1.2 or 4.1.3. */
 #if defined (sparc) && !defined (USG)
 #define OBJECTS_SYSTEM sunOS-fix.o strcmp.o strcpy.o
 #endif
@@ -571,7 +594,7 @@ on various systems. */
 # define ENCAPSULATE_READ
 # define ENCAPSULATE_WRITE
 #endif
-#if defined (INTERRUPTIBLE_OPEN) || defined (DEBUG_ENCAPSULATION)
+#if defined (INTERRUPTIBLE_OPEN) || defined (MULE) || defined (DEBUG_ENCAPSULATION)
 # define ENCAPSULATE_OPEN
 #endif
 #if defined (INTERRUPTIBLE_CLOSE) || defined (DEBUG_ENCAPSULATION)
@@ -584,7 +607,7 @@ on various systems. */
 # define ENCAPSULATE_FREAD
 # define ENCAPSULATE_FWRITE
 #endif
-#if defined (INTERRUPTIBLE_OPEN) || defined (DEBUG_ENCAPSULATION)
+#if defined (INTERRUPTIBLE_OPEN) || defined (MULE) || defined (DEBUG_ENCAPSULATION)
 # define ENCAPSULATE_FOPEN
 #endif
 #if defined (INTERRUPTIBLE_CLOSE) || defined (DEBUG_ENCAPSULATION)
@@ -593,17 +616,15 @@ on various systems. */
 
 /* directory calls */
 
-#if defined (DEBUG_ENCAPSULATION)
+#if defined (MULE) || defined (DEBUG_ENCAPSULATION)
 # define ENCAPSULATE_CHDIR
 # define ENCAPSULATE_MKDIR
 # define ENCAPSULATE_OPENDIR
 # define ENCAPSULATE_READDIR
 # define ENCAPSULATE_RMDIR
-#endif
 
 /* file-information calls */
 
-#if defined (DEBUG_ENCAPSULATION)
 #ifdef HAVE_EACCESS
 # define ENCAPSULATE_EACCESS
 #endif
@@ -611,18 +632,25 @@ on various systems. */
 # define ENCAPSULATE_LSTAT
 # define ENCAPSULATE_READLINK
 # define ENCAPSULATE_STAT
-#endif
 
 /* file-manipulation calls */
 
-#if defined (DEBUG_ENCAPSULATION)
 # define ENCAPSULATE_CHMOD
 # define ENCAPSULATE_CREAT
 # define ENCAPSULATE_LINK
 # define ENCAPSULATE_RENAME
 # define ENCAPSULATE_SYMLINK
 # define ENCAPSULATE_UNLINK
-#endif
+# define ENCAPSULATE_EXECVP
+#endif /* defined (MULE) || defined (DEBUG_ENCAPSULATION) */
+
+#ifdef HAVE_CANNA
+#  define CANNA2
+#  define CANNA_MULE
+#  define CANNA_PURESIZE 0
+#else  /* not CANNA */
+#  define CANNA_PURESIZE 0
+#endif /* not CANNA */
 
 #if (defined (MSDOS) && defined (FEPCTRL)) || (defined (WIN32) && defined (USE_IME))
 #define HAVE_FEP

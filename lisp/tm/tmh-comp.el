@@ -1,12 +1,12 @@
 ;;; tm-mh-e.el --- tm-mh-e functions for composing messages
 
-;; Copyright (C) 1993,1994,1995,1996,1997 Free Software Foundation, Inc.
+;; Copyright (C) 1993,1994,1995,1996 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;;         OKABE Yasuo <okabe@kudpc.kyoto-u.ac.jp>
 ;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1996/2/29 (separated from tm-mh-e.el)
-;; Version: $Id: tmh-comp.el,v 1.5 1997/03/22 05:29:25 steve Exp $
+;; Version: $Id: tmh-comp.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $
 ;; Keywords: mail, MH, MIME, multimedia, encoded-word, multilingual
 
 ;; This file is part of tm (Tools for MIME).
@@ -225,9 +225,12 @@ See also documentation for `\\[mh-send]' function."
 		     (if (get-buffer name)
 			 (throw 'tag (pop-to-buffer name))
 		       )
-		     (let ((filename (mh-msg-filename msg mh-draft-folder)))
+		     (let ((file-coding-system-for-read *noconv*)
+			   (filename
+			    (mh-msg-filename msg mh-draft-folder)
+			    ))
 		       (set-buffer (get-buffer-create name))
-		       (as-binary-input-file (insert-file-contents filename))
+		       (insert-file-contents filename)
 		       (setq buffer-file-name filename)
 		       (setq code-conversion t)
 		       )
@@ -238,9 +241,9 @@ See also documentation for `\\[mh-send]' function."
 		     name))
 		  (t
 		   (prog1
-		       (as-binary-input-file
-			(mh-read-draft "clean-up" (mh-msg-filename msg) nil)
-			)
+		       (let ((file-coding-system-for-read *noconv*))
+			 (mh-read-draft "clean-up" (mh-msg-filename msg) nil)
+			 )
 		     (setq code-conversion t)
 		     ))))
 	   )
@@ -461,18 +464,14 @@ yanked message will be deleted."
 	    (delete-windows-on mh-show-buffer))
 	(set-buffer mh-show-buffer)	; Find displayed message
 	(let ((mh-ins-str
-	       (if mime::preview/article-buffer
-		   (let (mime-viewer/plain-text-preview-hook buf)
-		     (prog1
-			 (save-window-excursion
-			   (set-buffer mime::preview/article-buffer)
-			   (setq buf (mime/viewer-mode))
-			   (buffer-string)
-			   )
-		       (kill-buffer buf)
-		       ))
-		 (buffer-string)
-		 )))
+	       (let (mime-viewer/plain-text-preview-hook buf)
+		 (prog1
+		     (save-window-excursion
+		       (set-buffer mime::preview/article-buffer)
+		       (setq buf (mime/viewer-mode))
+		       (buffer-string)
+		       )
+		   (kill-buffer buf)))))
 	  (set-buffer to-buffer)
 	  (save-restriction
 	    (narrow-to-region to-point to-point)
@@ -515,31 +514,6 @@ to select message yanking function."
  'mh-insert-letter 'tm-mh-e/insert-letter mh-letter-mode-map)
 
 
-;;; @ for mu-cite
-;;;
-
-(call-after-loaded
- 'mu-cite
- (function
-  (lambda ()
-    (set-alist 'mu-cite/get-field-value-method-alist
-	       'mh-letter-mode
-	       (function
-		(lambda (name)
-		  (if (and (stringp mh-sent-from-folder)
-			   (numberp mh-sent-from-msg))
-		      (save-excursion
-			(set-buffer mh-sent-from-folder)
-			(set-buffer mh-show-buffer)
-			(and (boundp 'mime::preview/article-buffer)
-			     (bufferp mime::preview/article-buffer)
-			     (set-buffer mime::preview/article-buffer))
-			(std11-field-body name)
-			))
-		  )))
-    )))
-
-		   
 ;;; @ end
 ;;;
 

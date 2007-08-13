@@ -21,7 +21,7 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: Not in FSF.
@@ -465,8 +465,7 @@ instantiators afterwards using `set-glyph-image'."
   (and (image-instance-p object) (eq 'pointer (image-instance-type object))))
 
 (defun subwindow-image-instance-p (object)
-  "t if OBJECT is an image instance of type `subwindow'.
-Subwindows are not implemented in this version of XEmacs."
+  "t if OBJECT is an image instance of type `subwindow'."
   (and (image-instance-p object) (eq 'subwindow (image-instance-type object))))
 
 ;;;;;;;;;; the built-in glyphs
@@ -596,19 +595,17 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
   ;; initialize default image types
   (if (featurep 'x)
     (set-console-type-image-conversion-list 'x
-     `(,@(if (featurep 'xpm) '(("\\.xpm$\\'" [xpm :file nil] 2)))
-	 ("\\.xbm\\'" [xbm :file nil] 2)
-       ,@(if (featurep 'xpm) '(("\\`/\\* XPM \\*/" [xpm :data nil] 2)))
-       ,@(if (featurep 'xface) '(("\\`X-Face:" [xface :data nil] 2)))
-       ,@(if (featurep 'gif) '(("\\.gif\\'" [gif :file nil] 2)))
-       ,@(if (featurep 'gif) '(("\\`GIF8[79]" [gif :data nil] 2)))
-       ,@(if (featurep 'jpeg) '(("\\.jpe?g\\'" [jpeg :file nil] 2)))
+     `(,@(if (featurep 'xpm) '(("\.xpm$" [xpm :file nil] 2)))
+       ,@(if (featurep 'xpm) '(("^/\\* XPM \\*/" [xpm :data nil] 2)))
+       ,@(if (featurep 'xface) '(("^X-Face:" [xface :data nil] 2)))
+       ,@(if (featurep 'gif) '(("\.gif$" [gif :file nil] 2)))
+       ,@(if (featurep 'gif) '(("^GIF87" [gif :data nil] 2)))
+       ,@(if (featurep 'jpeg) '(("\.jpeg$" [jpeg :file nil] 2)))
+       ,@(if (featurep 'jpeg) '(("\.jpg$" [jpeg :file nil] 2)))
        ;; all of the JFIF-format JPEG's that I've seen begin with
        ;; the following.  I have no idea if this is standard.
-       ,@(if (featurep 'jpeg) '(("\\`\377\330\377\340\000\020JFIF"
+       ,@(if (featurep 'jpeg) '(("^\377\330\340\000\020JFIF"
 				 [jpeg :data nil] 2)))
-       ,@(if (featurep 'png) '(("\\.png\\'" [png :file nil] 2)))
-       ,@(if (featurep 'png) '(("\\`\211PNG" [png :data nil] 2)))
        ("" [autodetect :data nil] 2))))
   ;; #### this should really be formatted-string, not string but we
   ;; don't have it implemented yet
@@ -636,16 +633,12 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
 
 	;; finish initializing continuation glyph -- created internally
 	;; because it has a built-in bitmap
-	(set-glyph-image continuation-glyph "\\" 'global 'tty)
-
-	;; finish initializing continuation glyph -- created internally
-	;; because it has a built-in bitmap
-	(set-glyph-image hscroll-glyph "$" 'global 'tty)))
+	(set-glyph-image continuation-glyph "\\" 'global 'tty)))
 
   (set-glyph-image octal-escape-glyph "\\")
   (set-glyph-image control-arrow-glyph "^")
   (set-glyph-image invisible-text-glyph " ...")
-  ;; (set-glyph-image hscroll-glyph "$")
+  (set-glyph-image hscroll-glyph "$")
 
   ;; finish initializing xemacs logo -- created internally because it
   ;; has a built-in bitmap

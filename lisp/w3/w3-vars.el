@@ -1,14 +1,13 @@
 ;;; w3-vars.el,v --- All variable definitions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/03/26 20:12:26
-;; Version: 1.116
+;; Created: 1996/08/29 04:09:40
+;; Version: 1.18
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1993 - 1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
-;;; This file is part of GNU Emacs.
+;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
 ;;; GNU Emacs is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -21,19 +20,15 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;;; Boston, MA 02111-1307, USA.
+;;; along with GNU Emacs; see the file COPYING.  If not, write to
+;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Variable definitions for w3
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(require 'w3-cus)			; Grab everything that is customized
-
 (defconst w3-version-number
-  (let ((x "p3.0.75"))
+  (let ((x "p3.0.12"))
     (if (string-match "State:[ \t\n]+.\\([^ \t\n]+\\)" x)
 	(setq x (substring x (match-beginning 1) (match-end 1)))
       (setq x (substring x 1)))
@@ -41,7 +36,7 @@
      (function (lambda (x) (if (= x ?-) "." (char-to-string x)))) x ""))
   "Version # of w3-mode.")
 
-(defconst w3-version-date (let ((x "1997/03/26 20:12:26"))
+(defconst w3-version-date (let ((x "1996/08/29 04:09:40"))
 			    (if (string-match "Date: \\([^ \t\n]+\\)" x)
 				(substring x (match-beginning 1) (match-end 1))
 			      x))
@@ -54,15 +49,293 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; General configuration variables
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defvar w3-annotation-mode 'html-mode
+  "*A symbol specifying the major mode to enter when doing annotations.")
+
+(defvar w3-annotation-position 'bottom
+  "*A symbol specifying where personal annotations should appear in a buffer.
+Can be one of the symbols 'top or 'bottom.  If the symbol is eq to 'top, then
+the annotations will appear at the top of the buffer.  If 'bottom, will appear
+at the end of the buffer.")
+
+(defvar w3-auto-image-alt t
+  "*Whether emacs-w3 should create an alt attribute for an image that
+is missing it.
+If nil, emacs-w3 will not automatically create an ALT attribute.
+If t, the alt attribute will be [IMAGE(nameofimage)]
+If a string, it should be a string suitable for running through format,
+   with only one %s, which will be replaced with just the filename of the
+   graphic that is not loaded.")
+
+(defvar w3-configuration-directory "~/.w3/"
+  "*Where emacs-w3 can find its configuration files")
+
+(defvar w3-debug-html nil "*Whether to gripe about bad HTML or not.")
+
+(defvar w3-debug-buffer "*HTML Debug*"
+  "*Name of buffer to store debugging information in.")
+
+(defvar w3-default-configuration-file nil
+  "*Where per-user customizations of w3 are kept.")
+
+(defvar w3-default-action 'w3-prepare-buffer
+  "*A lisp symbol specifying what action to take for files with
+extensions that are not mapped to a MIME type in `mm-mime-extensions'.
+This is useful in case you ever run across files with weird extensions
+\(.foo, .README, .READMEFIRST, etc).  This should not be required
+anymore.
+
+Possible values: any lisp symbol.  Should be a function that takes no
+arguments.  The return value does not matter, it is ignored.  Some examples
+are:
+
+Action			Value
+----------------------------------------------
+Parse as HTML		'w3-prepare-buffer
+View as text		'indented-text-mode")
+
+(defvar w3-default-homepage nil
+  "*The url to open at startup.  It can be any valid URL.  This will
+default to the environment variable WWW_HOME if you do not set it in
+your .emacs file. If WWW_HOME is undefined, then it will default to
+the hypertext documentation for W3 at Indiana University.")
+
+(defvar w3-default-stylesheet nil
+  "*The filename of the users default stylesheet.")
+
+(defvar w3-do-blinking nil
+  "*Whether emacs-w3 should display blinking text.")
+
+(defvar w3-do-incremental-display nil
+  "*Whether to do incremental display of pages or not.")
+
+(defvar w3-documents-menu-file nil
+  "*Where the Mosaic documents-menu file is located.  This is a file
+that has extra menus for the 'Navigate' menu.  This should be in the same
+format as the Mosaic extra documents.menu.")
+
 (defvar w3-dump-to-disk nil
   "*If non-nil, all W3 pages loaded will be dumped to disk.")
 
-(defvar w3-fetch-with-default t
-  "*Whether `w3-fetch' should determine a good starting URL as a default.")
+(defvar w3-echo-link 'url
+  "Whether to display the URL of a link when tabbing through links.
+Possible values are:
+
+  url    == show the url of the target in the minibuffer
+  text   == show the text of the link in the minibuffer
+  nil    == show nothing")
+  
+(defvar w3-horizontal-rule-char ?-
+  "*The character to use to create a horizontal rule.
+Must be the character's code, not a string.  This character is
+replicated across the screen to create a division.")
+
+(defvar w3-hotlist-file nil
+  "*Hotlist filename.
+This should be the name of a file that is stored in either
+NCSA's Mosaic/X or Netscape/X format.  It is used to keep a listing
+of commonly accessed URL's without having to go through 20 levels of
+menus to get to them.")
+
+(defvar w3-html2latex-args "-s -"
+  "*Args to pass `w3-html2latex-prog'.  This should send the LaTeX source
+to standard output.")
+
+(defvar w3-html2latex-prog "html2latex"
+  "*Program to convert html to latex.")
+
+(defvar w3-icon-directory "http://cs.indiana.edu/elisp/w3/icons/"
+  "*Where to find standard icons.  Must end in a /!")
+
+(defvar w3-icon-format 'xbm
+  "*What file extension icons end in.  This is a symbol, string, or nil.
+If nil, then no file extension is used.")
+
+(defvar w3-indent-level 4
+  "*Default # of spaces to indent instead of using TABs.  This is
+necessary to preserve tabs in PRE segments yet still get smaller
+indentation for lists, etc.")
+
+(defvar w3-keep-old-buffers t
+  "*Whether to keep old buffers around when following links.")
+
+(defvar w3-latex-docstyle "{article}"
+  "*The documentstyle to use when printing/mailing converted HTML
+files in LaTeX.  Good defaults are:
+{article}, [psfig,twocolumn]{article}, etc.")
+
+(defvar w3-link-info-display-function nil
+  "*A function to call to get extra information about a link and
+include it in a buffer.  Will be placed after the link and any other
+delimiters.")
+
+(defvar w3-mail-command 'mail
+  "*This function will be called whenever w3 needs to send mail.  It should
+enter a mail-mode-like buffer in the current window.
+`w3-mail-other-window-command' will be used if w3-mutable-windows is t.
+The commands `mail-to' and `mail-subject' should still work in this
+buffer, and it should use mail-header-separator if possible.")
+
+(defvar w3-mail-other-window-command 'mail-other-window
+  "*This function will be called whenever w3 needs to send mail in
+another window.  It should enter a mail-mode-like buffer in a
+different window.  The commands `mail-to' and `mail-subject' should still
+work in this buffer, and it should use mail-header-separator if
+possible.")
+
+(defvar w3-max-inlined-image-size nil
+  "*The maximum byte size of a file to transfer as an inlined image.
+If an image is being retrieved and exceeds this size, then it will be
+cancelled.  This works best on HTTP/1.0 servers that send a
+Content-length header, otherwise the image is retrieved up until the
+max number of bytes is retrieved, then killed.")
+
+(defvar w3-max-menu-length 35
+  "*The maximum length of a pulldown menu before it will be split into
+smaller chunks, with the first part as a submenu, followed by the rest
+of the menu.")
+
+(defvar w3-max-menu-width 40 "*The maximum width of a pulldown menu choice.")
+
+(defvar w3-modeline-format
+  '("  " ("W3"
+	(w3-netscape-emulation-minor-mode
+	 " (NS)")
+	(w3-lynx-emulation-minor-mode
+	 " (Lynx)")
+	": "
+	(40 (-40 "%b"))
+	" "
+	(w3-current-isindex "[Searchable]  ")
+	"%p" "  " global-mode-string))
+  "*The modeline format string when in w3 mode")
+
+(defvar w3-mule-attribute 'underline
+  "*How to highlight items in Mule (Multi-Linugual Emacs).")
+
+(defvar w3-mutable-windows nil
+  "*Controls how new WWW documents are displayed.  If this is set to
+non-nil and pop-up-windows is non-nil, then new buffers will be shown
+in another window.  If either is nil, then it will replace the document
+in the current window.")
+
+(defvar w3-netscape-configuration-file nil
+  "*A Netscape-for-X style configuration file.  This file will only be read if
+and only if `w3-use-netscape-configuration-file' is non-nil.")
+
+(defvar w3-netscape-compatible-comments t
+  "*Whether to honor netscape-style <! > comments.
+Ye gods I wish I could turn this off by default.")
+
+(defvar w3-notify 'semibully
+  "*Selects the behavior when w3 page is ready.
+This variable may have one of the following values:
+
+newframe   -- put the w3 page in its own frame
+bully      -- make the w3 page the current buffer and only window
+semibully  -- make the w3 page the current buffer in the same window
+aggressive -- make the w3 page the current buffer in the other window
+friendly   -- display  w3page in other window but don't make current
+polite     -- don't display w3 page, but prints message when ready (beeps)
+quiet      -- like `polite', but don't beep
+meek       -- make no indication that page is ready
+
+Any other value of `w3-notify' is equivalent to `meek'.")
+
+(defvar w3-personal-annotation-directory nil
+  "*Directory where w3 looks for personal annotations.
+This is a directory that should hold the personal annotations stored in
+a Mosaic-compatible format.")
+
+(defvar w3-ppmtoxbm-command "ppmtopgm | pgmtopbm | pbmtoxbm"
+  "*The command used to convert from the portable-pixmap graphics format
+to an x bitmap.  This will only ever be used if XEmacs doesn't have support
+for XPM.")
+
+(defvar w3-ppmtoxpm-command "ppmtoxpm"
+  "*The command used to convert from the portable-pixmap graphics format
+to XPM.  The XPM _MUST_ be in version 3 format.")
+
+(defvar w3-print-command "lpr -h -d"
+  "*Print command for dvi files.
+This is usually lpr -h -d to send it to a postscript printer, but you can set
+it up so that it is any command that takes a dvi file as its last argument.")
+
+(defvar w3-reuse-buffers 'reuse
+  "What to do when following a link will re-fetch a document that has
+already been fetched into a W3 buffer.  Possible values are: nil,
+'yes, and 'no.  Nil means ask the user if we should reuse the buffer.
+ A value of 'yes means assume the user wants us to reuse the buffer.
+A value of 'no means assume the user wants us to re-fetch the document.
+
+This will also accept:
+'no 'never 'reload	==> always reload
+'yes 'reuse 'always	==> always reuse
+'ask nil		==> always ask")
+
+(defvar w3-right-border 2
+  "*Amount of space to leave on right margin of WWW buffers.
+This amount is subtracted from (window-width) for each new WWW buffer
+and used as the new fill-column.")
+
+(defvar w3-maximum-line-length nil
+  "*Maximum length of a line.  If nil, then lines can extend all the way to
+the window margin.  If a number, the smaller of this and
+(- (window-width) w3-right-border) is used.")
+
+(defvar w3-right-justify-address t
+  "*Whether to make address fields right justified, like Arena.")
+
+(defvar w3-show-headers nil
+  "*This is a list of regexps that match HTTP/1.0 headers to show at
+the end of a buffer.  All the headers being matched against will be
+in lowercase.  All matching headers will be inserted at the end of the
+buffer in a <UL> list.")
+
+(defvar w3-show-status t
+  "*Whether to show a running total of bytes transferred.  Can cause a
+large hit if using a remote X display over a slow link, or a terminal
+with a slow modem.")
+
+(defvar w3-starting-documents
+  '(("Internet Starting Points"  "http://www.ncsa.uiuc.edu/SDG/Software/Mosaic/StartingPoints/NetworkStartingPoints.html")
+    ("Internet Resources Meta-index"  "http://www.ncsa.uiuc.edu/SDG/Software/Mosaic/MetaIndex.html")
+    ("NCSA's What's New"  "http://www.ncsa.uiuc.edu/SDG/Software/Mosaic/Docs/whats-new.html"))
+  "*An assoc list of titles and URLs for quick access.  These are just
+defaults so that new users have somewhere to go.")
+
+(defvar w3-temporary-directory "/tmp" "*Where temporary files go.")
 
 (defvar w3-track-last-buffer nil
   "*Whether to track the last w3 buffer to automatically switch to with
  M-x w3.")
+
+(defvar w3-track-mouse t
+  "*Whether to track the mouse and message the url under the mouse.")
+
+(defvar w3-use-forms-index t
+  "*Non-nil means translate <ISINDEX> tags into a hypertext form.
+A single text entry box will be drawn where the ISINDEX tag appears.
+If t, the isindex handling will be the same as Mosaic for X.")
+
+(defvar w3-use-html2latex nil
+  "*This controls how HTML is converted into LaTeX for printing or mailing.
+If nil, the w3-convert-html-to-latex function is used instead of the
+html2latex in a subprocess.  The lisp function gives slightly better
+formatting in my biased opinion.")
+
+(defvar w3-use-netscape-configuration-file nil
+  "*Whether to use a netscape configuration file to determine things like
+home pages, link colors, etc.  If non-nil, then `w3-netscape-configuration-file'
+is read in at startup.")
+
+(defvar w3-honor-stylesheets t
+  "*Whether to let a document specify a CSS stylesheet.")
+
+(defvar w3-user-colors-take-precedence nil
+  "*Whether to let a document define certain colors about itself.
+Like foreground and background colors and pixmaps, color of links and
+visited links, etc.")
 
 (defvar w3-gc-cons-threshold-multiplier 1
   "Amount to temporarily multiply gc-cons-threshold by when parsing HTML.
@@ -71,6 +344,17 @@ garbage collections when parsing an HTML document, which may often speed
 up handling of a large document with many elements.  The disadvantage is
 that it allows Emacs's total memory usage to grow larger, which may result
 in later garbage collections taking more time.")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Hook Variables
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defvar w3-load-hook nil "*Hooks to be run after loading w3.")
+(defvar w3-mode-hook nil "*Hooks to be run after entering w3-mode.")
+(defvar w3-file-prepare-hook nil
+  "*Hooks to be run before preparing a buffer.")
+(defvar w3-file-done-hook nil "*Hooks to be run after preparing a buffer.")
+(defvar w3-source-file-hook nil
+  "*Hooks to be run after getting document source.")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Figure out what flavor of emacs we are running
@@ -83,8 +367,149 @@ in later garbage collections taking more time.")
   "*In FSF v19 emacs?")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Store the database of HTML general entities.
+;;; Link delimiting
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defvar w3-delimit-emphasis 'guess
+  "*Whether to use characters at the start and end of each bold/italic
+region.  Obsolete variable (almost) - all this should be specified by the
+default stylesheet.")
+
+(defvar w3-link-start-delimiter '("[[" . "{{")
+  "*Put this at front of link if w3-delimit-links is t.")
+
+(defvar w3-link-end-delimiter '("]]" . "}}")
+  "*Put this at end of link if w3-delimit-links is t.")
+
+(defvar w3-delimit-links 'guess
+  "*Put brackets around links?  If this variable is eq to 'linkname, then
+it will put the link # in brackets after the link text.  If it is nil, then
+it will not put anything.  If it is non-nil and not eq to 'linkname, then
+it will put [[ & ]] around the entire text of the link.  Is initially set
+to be t iff in normal emacs.  Nil if in XEmacs or lucid emacs, since links
+should be in different colors/fonts.")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Graphics parsing stuff
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defvar w3-graphics-always-show-entities t
+  "*Set to t to always show graphic entities, regardless of the value of
+w3-delay-image-loads.  Useful if you keep the entities locally and aren't
+worried about the transfer time on something that small.")
+
+(defvar w3-graphics-list nil
+  "*List of graphics already read in.")
+
+(defvar w3-delay-image-loads nil
+  "*Delay loading images for w3 or not?")
+
+(defvar w3-delayed-images nil
+  "*A buffer-local variable holding positions and urls of images within
+the buffer.")
+
+(defvar w3-image-mappings
+  '(
+    ("image/x-xbitmap"        . xbm)
+    ("image/xbitmap"          . xbm)
+    ("image/xbm"              . xbm)
+    ("image/jpeg"             . jpeg)
+    ("image/gif"              . gif)
+    ("image/png"              . png)
+    ("image/x-fax"            . g3fax)
+    ("image/x-raster"         . rast)
+    ("image/windowdump"       . xwd)
+    ("image/x-icon"           . icon)
+    ("image/portable-graymap" . pgm)
+    ("image/portable-pixmap"  . ppm)
+    ("image/x-pixmap"         . xpm)
+    ("image/x-xpixmap"        . xpm)
+    ("image/pict"             . pict)
+    ("image/x-rgb"            . sgi)
+    ("image/x-sgi"            . sgi)
+    ("image/x-macpaint"       . macpt)
+    ("image/x-targa"          . tga)
+    ("image/tiff"             . tiff)
+    ) "*How to map MIME types to image types for the `image' package.")
+
+(defvar w3-color-use-reducing 'guess
+  "*Whether to use ppmquant/ppmdither to do color reducing for inlined images.
+If you are using a 24bit display, you should set this to nil.")
+
+(defvar w3-color-max-red 4
+  "*Max # of red cells to allocate for inlined images.")
+
+(defvar w3-color-max-green 4
+  "*Max # of green cells to allocate for inlined images.")
+
+(defvar w3-color-max-blue 4
+  "*Max # of blue cells to allocate for inlined images.")
+
+(defvar w3-color-filter 'ppmdither
+  "*How to do color reducing on inlined images.
+This should be a symbol, either ppmdither or ppmquant.
+This variable only has any meaning if w3-color-use-reducing is non-nil.
+Possible values are:
+
+ppmquant    :== Use the ppmquant program to reduce colors.  The product
+                of w3-color-max-[red|green|blue] is used as the maximum
+                number of colors.
+ppmdither   :== Use the ppmdither program to reduce colors.
+
+any string :== Use this string as the filter.  No interpretation of it
+               is done at all.  Example is:
+               ppmquant -fs -map ~/pixmaps/colormap.ppm")
+
+(defvar w3-ppmdither-is-buggy t
+  "*The ppmdither which comes with pbmplus/netpbm releases through 
+1mar1994 at least ignores the 'maxval' in its input.  This can cause
+trouble viewing black-and-white gifs.  If this variable is set, a
+(harmless) 'pnmdepth 255' step is inserted to work around this bug.
+You can test your ppmdither by doing 
+  ppmmake white 100 100 | pnmdepth 1 | ppmdither | pnmdepth 255 | ppmhist
+If the output has a single line like this:
+  255 255 255     255     10000
+then it's safe to set this variable to nil.")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; How to look up styles
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defvar w3-style-tags-assoc
+  '(
+    (b       . ("*" . "*"))
+    (address . ("*" . "*"))
+    (byline  . ("_" . "_"))
+    (cite    . ("_" . "_"))
+    (cmd     . ("*" . "*"))
+    (dfn     . ("*" . "*"))
+    (em      . ("~" . "~"))
+    (i       . ("~" . "~"))
+    (q       . ("\"" . "\""))
+    (removed . ("" . ""))
+    (s       . ("" . ""))
+    (strong  . ("*" . "*"))
+    (sub     . ("" . ""))
+    (sup     . ("" . ""))
+    (u       . ("_" . "_"))
+    )
+  "*An assoc list of emphasis tags and their corresponding
+begin and end characters.")
+
+(defvar w3-header-chars-assoc
+  '(
+    (h1 . (?* ?* w3-upcase-region))
+    (h2 . (?* ?* w3-upcase-region))
+    (h3 . (?- ?- w3-upcase-region))
+    (h4 . (nil ?= nil))
+    (h5 . (nil ?= nil))
+    (h6 . (nil ?: nil)))
+  "*An assoc list of header tags and a list of formatting instructions.
+This list consists of 3 items - the first item is no longer used.  The
+second item is the character to insert after the header.  A <BR> is
+inserted before and after this string. And the third is a function to
+call on the region between the start and end of the header.  This will
+be called with 2 arguments, the buffer positions of the start and end
+of the headers.")
+
+;; Store the database of HTML general entities.
 (defvar w3-html-entities 
   '(
     (excl        .  33)
@@ -315,20 +740,31 @@ in later garbage collections taking more time.")
 If there is a 3rd item in the list, it is the alternative text to use
 for the image.")
 
+(defvar w3-list-chars-assoc 
+  '(
+    (ul . ("o" "*" "+" ">"))
+    (ol . ("." ")" "]" ":"))
+    (dl . ("o" "*" "+" ">")))
+  "An assoc list of characters to put at the front of list items.  It is
+keyed on the type of list, followed by a list of items.  Each item should
+be placed in the nth position of the list, where n is the nesting level it
+should be used for.  n starts at 1.")
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Menu definitions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defvar w3-navigate-menu nil)
 (defvar w3-popup-menu
   '("Emacs-W3 Commands"
-    ["Back" w3-history-backward (car (w3-history-find-url-internal (url-view-url t)))]
-    ["Forward" w3-history-forward (cdr (w3-history-find-url-internal (url-view-url t)))]
+    ["Back" w3-backward-in-history t]
+    ["Forward" w3-forward-in-history t]
     "---"
-    ["Reload"       (w3-reload-document) t]
-    ["Show Images"  (w3-load-delayed-images) w3-delayed-images]
-    "---"
-    ["Add bookmark" (w3-hotlist-add-document nil) t]
+    ["Add annotation" w3-annotation-add t]
     )
   "The shorter popup menu.")
+
+(defvar w3-documentation-root "http://www.cs.indiana.edu/elisp/w3/docs/"
+  "*Where the w3 documentation lives.  This MUST end in a slash.")
 
 (defvar w3-graphlink-menu
   '(("Open this Image (%s)"     . w3-fetch)
@@ -343,7 +779,7 @@ the URL of the link.")
 
 (defvar w3-hyperlink-menu
   '(("Open this Link (%s)"        . w3-fetch)
-    ("Add Bookmark for this Link" . w3-hotlist-add-document-at-point)
+    ("Add Bookmark for this Link" . w3-hotlist-add-document)
     ("New Window with this Link"  . w3-fetch-other-frame)
     ("Save Link As..."            . w3-download-url)
     ("Copy this Link Location to Clipboard" . w3-save-url)
@@ -357,33 +793,63 @@ the URL of the link.")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Variables internal to W3, you should not change any of these
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defvar w3-graphics-list nil
-  "*List of graphics already read in.")
-
-(defvar w3-delayed-images nil
-  "*A buffer-local variable holding positions and urls of images within
-the buffer.")
-
-(defvar w3-frameset-structure nil
-  "Frameset structure, heap of '(frameset ({cols|rows} \"<dimensions>\")) and '(<frame name> <href>)")
-
-(defvar w3-frame-name nil
-  "Frame name")
-
-(defvar w3-base-target nil
-  "Base target name")
-
-(defvar w3-target-window-distances nil
-  "Target window distances")
-
 (defvar w3-form-radio-elements nil "Internal variable - do not touch!")
 (defvar w3-form-elements nil "Internal variable - do not touch!")
+
+(defvar w3-invisible-href-list nil
+  "A list of 'invisible' graphic links in the current buffer.")
+
+(defconst w3-state-locator-variable
+  '(
+    :align
+    :background
+    :center
+    :depth
+    :figalt
+    :figdata
+    :fillcol
+    :form
+    :formnum
+    :header-start
+    :href
+    :link-args
+    :image
+    :lists
+    :map
+    :name
+    :needspace
+    :next-break
+    :nofill
+    :nowrap
+    :optarg
+    :options
+    :pre-start
+    :select
+    :secret
+    :table
+    :text-mangler
+    :title
+    :link-title
+    :w3-graphic
+    :zone
+    :label-text
+    :seen-this-url
+    )
+  "A list of all the various state kept in the drawing engine.
+This is used by the `w3-get-state' and `w3-put-state' macros.")
+
+(defvar w3-state-vector
+  (make-vector (1+ (length w3-state-locator-variable)) nil)
+  "Various state shit kept by emacs-w3.")
 
 (defvar w3-user-stylesheet nil
   "The global stylesheet for this user.")
 
 (defvar w3-current-stylesheet nil
   "The stylesheet for this document.")
+
+(defvar w3-base-alist nil
+  "An assoc list of named BASE tags in the current document.")
 
 (defvar w3-blinking-buffs nil
   "A list of buffers with blinking text in them.
@@ -395,26 +861,70 @@ displaying blinking text or not.")
   "An internal variable for the new display engine that specifies the
 last character position that was correctly filled.")
 
+(defvar w3-last-tag nil
+  "An internal variable for the new display engine that specifies the
+last tag processed.")
+
+(defvar w3-table-info nil
+  "An internal variable for the new display engine for keeping table data
+during the pre-pass parsing.")
+
+(defvar w3-current-formatter nil
+  "Current formatter function.")
+
+(defvar w3-draw-buffer nil
+  "Where we are currently drawing into.  This _must_ be a buffer object
+when it is referenced.")
+
 (defvar w3-active-faces nil "The list of active faces.")
 (defvar w3-active-voices nil "The list of active voices.")
 
+(defvar w3-netscape-variable-mappings
+  '(("PRINT_COLOR"	. ps-print-color-p)
+    ("DITHER_IMAGES"	. w3-color-use-reducing)
+    ("SOCKS_HOST"	. url-socks-host)
+    ("ORGANIZATION"	. url-user-organization)
+    ("EMAIL_ADDRESS"	. url-personal-mail-address)
+    ("REAL_NAME"	. url-user-real-name)
+    ("NEWSGROUP_DESCRIPTIONS" . url-show-newsgroup-descriptions)
+    ("NNTPSERVER"	. url-news-server)
+    ("AUTOLOAD_IMAGES"	. w3-delay-image-loads)
+    ("HOME_DOCUMENT"	. w3-default-homepage)
+    ("UNDERLINE_LINKS"	. w3-underline-links)
+    ("TMPDIR"		. url-temporary-directory))
+  "A mapping from netscape configuration file options to w3 variables.")
+     
+(defvar w3-acceptable-protocols-alist
+  '(("Gopher"                           . "gopher")
+    ("TN3270 (IBM Mainframe emulation)" . "tn3270")
+    ("Interactive Telnet Session"       . "telnet")
+    ("Local file or file over ftp"      . "file")
+    ("File on an http server"           . "http")
+    ("Usenet newsgroup/article"         . "news")
+    ("Mail session"                     . "mailto"))
+  "An assoc list of descriptive labels and the corresponding URL stub.")
+
+(defvar w3-annotation-marker "<ncsa-annotation-format-1>")
+(defvar w3-annotation-minor-mode nil "Whether we are in the minor mode.")
 (defconst w3-bug-address "wmperry@cs.indiana.edu"
   "Address of current maintainer, where to send bug reports.")
 (defvar w3-continuation '(url-uncompress url-clean-text)
   "List of functions to call to process a document completely.")
+(defvar w3-current-annotation nil "URL of document we are annotating...")
 (defvar w3-current-isindex nil "Is the current document a searchable index?")
 (defvar w3-current-last-buffer nil "Last W3 buffer seen before this one.")
-(defvar w3-current-links nil "An assoc list of <link> tags for this doc.")
-(defvar w3-current-metainfo nil "An assoc list of <meta> tags for this doc.")
+(defvar w3-current-links nil "An assoc list of <LINK> tags for this doc.")
 (defvar w3-current-source nil "Source of current document.")
 (defvar w3-current-parse nil "Parsed version of current document.")
 (defconst w3-default-continuation '(url-uncompress url-clean-text) 
   "Default action to start with - cleans text and uncompresses if necessary.")
+(defvar w3-editing-annotation nil "Are we editing an annotation or not?")
 (defvar w3-find-this-link nil "Link to go to within a document.")
 (defvar w3-hidden-forms nil "List of hidden form areas and their info.")
 (defvar w3-hotlist nil "Default hotlist.")
 (defvar w3-icon-path-cache nil "Cache of where we found icons for entities.")
 (defvar w3-last-buffer nil "The last W3 buffer visited.")
+(defvar w3-personal-annotations nil "Assoc list of personal annotations.")
 (defvar w3-print-next nil "Should we latex & print the next doc?")
 (defvar w3-roman-characters "ivxLCDMVX" "Roman numerals.")
 (defvar w3-setup-done nil "Have we been through setup code yet?")
@@ -432,6 +942,12 @@ returns.")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; buffer-local variables to keep around when going into w3-mode
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defvar w3-e19-hotlist-menu nil
+  "A menu for hotlists.")
+
+(defvar w3-e19-links-menu nil
+  "A buffer-local menu for links.")
+
 (defvar w3-id-positions nil "Internal use only.")
 (defvar w3-imagemaps nil "Internal use only.")
 
@@ -445,29 +961,45 @@ returns.")
     w3-form-elements
     url-current-callback-func
     url-current-content-length
+    url-current-file
     url-current-mime-encoding
     url-current-mime-headers
     url-current-mime-type
     url-current-mime-viewer
-    url-current-object
+    url-current-port
     url-current-referer
+    url-current-server
+    url-current-type
+    url-current-user
+    w3-e19-links-menu
     w3-current-parse
+    w3-current-annotation
     w3-current-isindex
     w3-current-last-buffer
     w3-current-links
-    w3-current-metainfo
     w3-current-source
     w3-delayed-images
     w3-hidden-forms
+    w3-invisible-href-list
+    w3-state-vector
     w3-current-stylesheet
     w3-form-labels
     w3-id-positions
     w3-imagemaps
-    w3-base-target
-    w3-target-window-distances
-    w3-frameset-structure
     )
   "A list of variables that should be preserved when entering w3-mode.")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Syntax stuff
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defvar w3-parse-args-syntax-table
+  (copy-syntax-table emacs-lisp-mode-syntax-table)
+  "A syntax table for parsing sgml attributes.")
+
+(modify-syntax-entry ?' "\"" w3-parse-args-syntax-table)
+(modify-syntax-entry ?` "\"" w3-parse-args-syntax-table)
+(modify-syntax-entry ?< "(>" w3-parse-args-syntax-table)
+(modify-syntax-entry ?> ")<" w3-parse-args-syntax-table)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Emulation stuff
@@ -490,10 +1022,17 @@ returns.")
 	 (lambda (var)
 	   (if (boundp var)
 	       (make-variable-buffer-local var)))) w3-persistent-variables)
-
+(make-variable-buffer-local 'w3-state-vector)
+(make-variable-buffer-local 'w3-current-stylesheet)
+(make-variable-buffer-local 'w3-base-alist)
+(make-variable-buffer-local 'w3-annotation-minor-mode)
+(make-variable-buffer-local 'w3-last-tag)
 (make-variable-buffer-local 'w3-last-fill-pos)
-(make-variable-buffer-local 'w3-frame-name)
+(make-variable-buffer-local 'w3-table-info)
+(make-variable-buffer-local 'w3-draw-buffer)
+(make-variable-buffer-local 'w3-current-formatter)
 (make-variable-buffer-local 'w3-active-faces)
+(make-variable-buffer-local 'w3-default-style)
 (make-variable-buffer-local 'w3-netscape-emulation-minor-mode)
 (make-variable-buffer-local 'w3-lynx-emulation-minor-mode)
 (make-variable-buffer-local 'w3-last-search-item)
@@ -503,6 +1042,8 @@ returns.")
 ;;;  Keymap definitions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar w3-mode-map (make-keymap) "Keymap to use in w3-mode.")
+(defvar w3-annotation-minor-mode-map (make-keymap) "Keymap for annotation.")
+
 (suppress-keymap w3-mode-map)
 
 (define-key w3-mode-map "h" (make-sparse-keymap))
@@ -519,16 +1060,20 @@ returns.")
 (define-key w3-mode-map "hI"       'w3-hotlist-add-document-at-point)
 (define-key w3-mode-map "hR"       'w3-hotlist-refresh)
 
-(define-key w3-mode-map "HF"       'w3-history-forward)
-(define-key w3-mode-map "HB"       'w3-history-backward)
+(define-key w3-mode-map "ai"       'w3-annotation-add)
+(define-key w3-mode-map "ad"       'w3-delete-personal-annotation)
+(define-key w3-mode-map "ae"       'w3-annotation-edit)
+
+(define-key w3-mode-map "HF"       'w3-forward-in-history)
+(define-key w3-mode-map "HB"       'w3-backward-in-history)
 (define-key w3-mode-map "Hv"       'w3-show-history-list)
 
 (define-key w3-mode-map " "	   'w3-scroll-up)
 (define-key w3-mode-map "<"        'beginning-of-buffer)
 (define-key w3-mode-map ">"        'end-of-buffer)
 (define-key w3-mode-map "?"        'w3-help)
-(define-key w3-mode-map "B"        'w3-history-backward)
-(define-key w3-mode-map "F"        'w3-history-forward)
+(define-key w3-mode-map "B"        'w3-backward-in-history)
+(define-key w3-mode-map "F"        'w3-forward-in-history)
 (define-key w3-mode-map "G"        'w3-show-graphics)
 (define-key w3-mode-map "I"        'w3-popup-info)
 (define-key w3-mode-map "K"        'w3-save-this-url)
@@ -543,20 +1088,20 @@ returns.")
 (define-key w3-mode-map "\C-c\C-v" 'w3-version)
 (define-key w3-mode-map "\C-o"     'w3-fetch)
 (define-key w3-mode-map "\M-M"     'w3-mail-document-under-point)
+(define-key w3-mode-map "\M-\C-i"  'w3-insert-this-url)
 (define-key w3-mode-map "\M-m"	   'w3-mail-current-document)
-(define-key w3-mode-map "\M-s"	   'w3-save-as)
+(define-key w3-mode-map "\M-s"	   'w3-search)
 (define-key w3-mode-map "\M-\r"    'w3-follow-inlined-image)
 (define-key w3-mode-map "\r"       'w3-widget-button-press)
-(define-key w3-mode-map "\n"       'w3-widget-button-press)
-(define-key w3-mode-map "b"	   'w3-widget-backward)
+(define-key w3-mode-map "b"	   'widget-backward)
 (define-key w3-mode-map "c"        'w3-mail-document-author)
-(define-key w3-mode-map "f"	   'w3-widget-forward)
+(define-key w3-mode-map "f"	   'widget-forward)
 (define-key w3-mode-map "g"        'w3-reload-document)
 (define-key w3-mode-map "i"        'w3-document-information)
 (define-key w3-mode-map "k"        'w3-save-url)
 (define-key w3-mode-map "l"        'w3-goto-last-buffer)
 (define-key w3-mode-map "m"        'w3-complete-link)
-(define-key w3-mode-map "n"        'w3-widget-forward)
+(define-key w3-mode-map "n"        'widget-forward)
 (define-key w3-mode-map "o"	   'w3-open-local)
 (define-key w3-mode-map "p"        'w3-print-this-url)
 (define-key w3-mode-map "q"	   'w3-quit)
@@ -571,13 +1116,18 @@ returns.")
 (define-key w3-mode-map [(control meta t)] 'url-list-processes)
 
 ;; Widget navigation
-(define-key w3-mode-map [tab]         'w3-widget-forward)
-(define-key w3-mode-map "\t"          'w3-widget-forward)
-(define-key w3-mode-map "\M-\t"       'w3-widget-backward)
-(define-key w3-mode-map [backtab]     'w3-widget-backward)
-(define-key w3-mode-map [(shift tab)] 'w3-widget-backward)
-(define-key w3-mode-map [(meta tab)]  'w3-widget-backward)
+(define-key w3-mode-map "\t"       'widget-forward)
+(define-key w3-mode-map [(shift tab)] 'widget-backward)
   
+(define-key w3-annotation-minor-mode-map "\C-c\C-c"
+  'w3-personal-annotation-finish)
+
+;;; This is so we can use a consistent method of checking for mule support
+;;; Emacs-based mule uses (boundp 'MULE), but XEmacs-based mule uses
+;;; (featurep 'mule) - I choose to use the latter.
+
+(if (boundp 'MULE)
+    (provide 'mule))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Keyword definitions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

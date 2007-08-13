@@ -1,5 +1,5 @@
 ;;; gnus-mh.el --- mh-e interface for Gnus
-;; Copyright (C) 1994,95,96,97 Free Software Foundation, Inc.
+;; Copyright (C) 1994,95,96 Free Software Foundation, Inc.
 
 ;; Author: Masanobu UMEDA <umerin@flab.flab.fujitsu.junet>
 ;;	Lars Magne Ingebrigtsen <larsi@ifi.uio.no>
@@ -33,11 +33,11 @@
 
 ;;; Code:
 
-(require 'gnus)
 (require 'mh-e)
 (require 'mh-comp)
+(require 'gnus)
 (require 'gnus-msg)
-(require 'gnus-sum)
+(eval-when-compile (require 'cl))
 
 (defun gnus-summary-save-article-folder (&optional arg)
   "Append the current article to an mh folder.
@@ -59,7 +59,7 @@ Optional argument FOLDER specifies folder name."
 		     gnus-newsgroup-last-folder)
 		gnus-newsgroup-last-folder)
 	       (folder folder)
-	       (t (mh-prompt-for-folder
+	       (t (mh-prompt-for-folder 
 		   "Save article in"
 		   (funcall gnus-folder-save-name gnus-newsgroup-name
 			    gnus-current-headers gnus-newsgroup-last-folder)
@@ -71,7 +71,7 @@ Optional argument FOLDER specifies folder name."
       (save-restriction
 	(widen)
 	(unwind-protect
-	    (call-process-region
+	    (call-process-region 
 	     (point-min) (point-max) "rcvstore" nil errbuf nil folder)
 	  (set-buffer errbuf)
 	  (if (zerop (buffer-size))

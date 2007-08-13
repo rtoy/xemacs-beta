@@ -17,9 +17,3 @@ not part of the XEmacs distribution.)
 (3) By hand.  Do
     cat info/xemacs* | more "+/^File: xemacs.info,  Node: Bugs,"
 
-
-Part II of the XEmacs FAQ, available in a manner similar to the above,
-or via the world wide web, contains extensive information on how to
-track down and report bugs.
-
-	http://www.xemacs.org/faq/

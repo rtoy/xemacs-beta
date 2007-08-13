@@ -1,5 +1,5 @@
 ;;; dll-debug -- A slow implementation of dll for debugging.
-;;; $Id: dll-debug.el,v 1.1.1.1 1996/12/18 03:32:26 steve Exp $
+;;; $Id: dll-debug.el,v 1.1.1.1 1996/12/18 22:42:58 steve Exp $
 
 ;; Copyright (C) 1991-1995  Free Software Foundation
 

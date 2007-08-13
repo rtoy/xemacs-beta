@@ -29,13 +29,6 @@
 ! The valid color names on your system can be found by looking in the file
 ! `rgb.txt', usually found in /usr/lib/X11/ or /usr/openwin/lib/X11/.
 
-! Set the foreground and background colors of the `default' face.
-! The default face colors are the base for most of the other faces'
-! colors.  The default background is gray80, and the default foreground
-! is black.
-Emacs.default.attributeBackground:	gray80
-Emacs.default.attributeForeground:	black
-
 ! Set the modeline colors.
 Emacs.modeline*attributeForeground:	Black
 Emacs.modeline*attributeBackground:	Gray75
@@ -82,13 +75,13 @@ Emacs*XmScrollBar.Foreground:		Gray30
 Emacs*XmScrollBar.Background:		Gray75
 
 !
-! The Lucid Scrollbar supports two added resources, SliderStyle is either
+! The Lucid Scrollbar supports two added resources, KnobStyle is either
 ! "plain" (default) or "dimple".  Dimple puts a small dimple in the middle
-! of the slider that depresses when the slider is clicked on.  ArrowPosition is
+! of the knob that depresses when the knob is clicked on.  ArrowPosition is
 ! either "opposite" (default) or "same".  Opposite puts the arrows at opposite
 ! of the scrollbar, same puts both arrows at the same end, like the Amiga.
 !
-! Emacs*XlwScrollBar.SliderStyle:    dimple
+! Emacs*XlwScrollBar.KnobStyle:      dimple
 ! Emacs*XlwScrollBar.ArrowPosition:  opposite
 
 
@@ -264,3 +257,25 @@ Emacs*dialog*XmPushButton.translations:#override\n\
     <EnterWindow>:      Enter()\n\
     <LeaveWindow>:      Leave()\n
 
+! XIM input method style 
+! ======================= 
+
+! ximStyles is a (whitespace or comma-separated) list of XIMStyles in
+! order of user's preference.  
+! Choose a subset of the following styles or reorder to taste
+Emacs*ximStyles: XIMPreeditPosition|XIMStatusArea\
+            XIMPreeditPosition|XIMStatusNothing\
+            XIMPreeditPosition|XIMStatusNone\
+            XIMPreeditNothing|XIMStatusArea\
+            XIMPreeditNothing|XIMStatusNothing\
+            XIMPreeditNothing|XIMStatusNone\
+            XIMPreeditNone|XIMStatusArea\
+            XIMPreeditNone|XIMStatusNothing\
+            XIMPreeditNone|XIMStatusNone
+
+! XIM Preedit and Status foreground and background
+Emacs*EmacsFrame.ximForeground: black
+Emacs*EmacsFrame.ximBackground: white
+
+! XIM fontset (defaults to system fontset default)
+! Emacs*EmacsFrame.FontSet: -dt-interface user-medium-r-normal-s*-*-*-*-*-*-*-*-*

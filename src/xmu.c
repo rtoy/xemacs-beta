@@ -167,14 +167,14 @@ int XmuCursorNameToIndex (const char *name)
 
 /* shared data for the image read/parse logic */
 static short hexTable[256];		/* conversion value */
-static int hex_initialized;	/* easier to fill in at run time */
+static Bool initialized = False;	/* easier to fill in at run time */
 
 
 /*
  *	Table index for the hex values. Initialized once, first time.
  *	Used for translation value or delimiter significance lookup.
  */
-static void initHexTable (void)
+static void initHexTable()
 {
     /*
      * We build the table at run time for several reasons:
@@ -201,13 +201,14 @@ static void initHexTable (void)
     hexTable['}'] = -1;	hexTable['\n'] = -1;
     hexTable['\t'] = -1;
 	
-    hex_initialized = 1;
+    initialized = True;
 }
 
 /*
  *	read next hex value in the input stream, return -1 if EOF
  */
-static int NextInt (FILE *fstream)
+static int NextInt (fstream)
+    FILE *fstream;
 {
     int	ch;
     int	value = 0;
@@ -242,12 +243,11 @@ static int NextInt (FILE *fstream)
  * its arguments won't have been touched.  This routine should look as much
  * like the Xlib routine XReadBitmapfile as possible.
  */
-int XmuReadBitmapData (
-    FILE *fstream,			/* handle on file  */
-    unsigned int *width,		/* RETURNED */
-    unsigned int *height,		/* RETURNED */
-    unsigned char **datap,		/* RETURNED */
-    int *x_hot, int *y_hot)		/* RETURNED */
+int XmuReadBitmapData (fstream, width, height, datap, x_hot, y_hot)
+    FILE *fstream;			/* handle on file  */
+    unsigned int *width, *height;	/* RETURNED */
+    unsigned char **datap;		/* RETURNED */
+    int *x_hot, *y_hot;			/* RETURNED */
 {
     unsigned char *data = NULL;		/* working variable */
     char line[MAX_SIZE];		/* input line from file */
@@ -268,7 +268,7 @@ int XmuReadBitmapData (
 #endif
 
     /* first time initialization */
-    if (!hex_initialized) initHexTable();
+    if (initialized == False) initHexTable();
 
     /* error cleanup and return macro	*/
 #define	RETURN(code) { if (data) free (data); return code; }
@@ -369,12 +369,17 @@ int XmuReadBitmapData (
 }
 
 
-int XmuReadBitmapDataFromFile (const char *filename,
-			       /* Remaining args are RETURNED */
-			       unsigned int *width, 
-			       unsigned int *height,
-			       unsigned char **datap,
+#if NeedFunctionPrototypes
+int XmuReadBitmapDataFromFile (const char *filename, unsigned int *width, 
+			       unsigned int *height, unsigned char **datap,
 			       int *x_hot, int *y_hot)
+#else
+int XmuReadBitmapDataFromFile (filename, width, height, datap, x_hot, y_hot)
+    char *filename;
+    unsigned int *width, *height;	/* RETURNED */
+    unsigned char **datap;		/* RETURNED */
+    int *x_hot, *y_hot;			/* RETURNED */
+#endif
 {
     FILE *fstream;
     int status;
@@ -391,7 +396,10 @@ int XmuReadBitmapDataFromFile (const char *filename,
  * XmuPrintDefaultErrorMessage - print a nice error that looks like the usual 
  * message.  Returns 1 if the caller should consider exitting else 0.
  */
-int XmuPrintDefaultErrorMessage (Display *dpy, XErrorEvent *event, FILE *fp)
+int XmuPrintDefaultErrorMessage (dpy, event, fp)
+    Display *dpy;
+    XErrorEvent *event;
+    FILE *fp;
 {
     char buffer[BUFSIZ];
     char mesg[BUFSIZ];
@@ -516,7 +524,9 @@ ERROR! Unsupported release of X11
  * and XGetGeometry; print a message for everything else.  In all case, do
  * not exit.
  */
-int XmuSimpleErrorHandler (Display *dpy, XErrorEvent *errorp)
+int XmuSimpleErrorHandler (dpy, errorp)
+    Display *dpy;
+    XErrorEvent *errorp;
 {
     switch (errorp->request_code) {
       case X_QueryTree:

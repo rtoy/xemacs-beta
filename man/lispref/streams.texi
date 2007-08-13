@@ -483,8 +483,8 @@ in reverse order.
 
 @group
 last-output
-     @result{} (?\n ?\" ?t ?u ?p ?t ?u ?o ?\  ?e ?h ?t
-                ?\  ?s ?i ?\  ?s ?i ?h ?T ?\" ?\n)
+     @result{} (10 34 116 117 112 116 117 111 32 101 104 
+    116 32 115 105 32 115 105 104 84 34 10)
 @end group
 @end example
 
@@ -752,7 +752,7 @@ Uninterned symbols are those which are not present in @code{obarray},
 that is, those which were made with @code{make-symbol} or by calling
 @code{intern} with a second argument.
 
-When @code{print-gensym} is true, such symbols will be preceded by
+When @code{print-gensym} is true, such symbols will be preceeded by
 @samp{#:}, which causes the reader to create a new symbol instead of
 interning and returning an existing one.  Beware: The @samp{#:} syntax
 creates a new symbol each time it is seen, so if you print an object

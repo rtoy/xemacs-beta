@@ -198,7 +198,7 @@ floating point), and returns @code{t} if so, @code{nil} otherwise.
 
 @defun natnump object
 @cindex natural numbers
-The @code{natnump} predicate (whose name comes from the phrase
+The @code{wholenump} predicate (whose name comes from the phrase
 ``natural-number-p'') tests to see whether its argument is a nonnegative
 integer, and returns @code{t} if so, @code{nil} otherwise.  0 is
 considered non-negative.
@@ -223,7 +223,7 @@ compare them, then you test whether two values are the same
 of the objects.
 
   At present, each integer value has a unique Lisp object in XEmacs Lisp.
-Therefore, @code{eq} is equivalent to @code{=} where integers are
+Therefore, @code{eq} is equivalent @code{=} where integers are
 concerned.  It is sometimes convenient to use @code{eq} for comparing an
 unknown value with an integer, because @code{eq} does not report an
 error if the unknown value is not a number---it accepts arguments of any
@@ -395,10 +395,6 @@ like this:
 (setq foo (1+ foo))
      @result{} 5
 @end example
-
-Now that the @code{cl} package is always available from lisp code, a
-more convenient and natural way to increment a variable is
-@w{@code{(incf foo)}}.
 @end defun
 
 @defun 1- number-or-marker

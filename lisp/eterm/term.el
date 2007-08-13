@@ -2968,7 +2968,7 @@ This is a good place to put keybindings.")
 ;;; want them present in specific modes.
 
 (defvar term-completion-autolist nil
-  "*If non-nil, automatically list possibilities on partial completion.
+  "*If non-nil, automatically list possiblities on partial completion.
 This mirrors the optional behavior of tcsh.")
 
 (defvar term-completion-addsuffix t
@@ -3197,7 +3197,7 @@ Typing SPC flushes the help buffer."
 	    (set-window-configuration conf))
 	(if (eq first ?\ )
 	    (set-window-configuration conf)
-	  (setq unread-command-events (append key nil)))))))
+	  (setq unread-command-events (listify-key-sequence key)))))))
 
 ;;; Converting process modes to use term mode
 ;;; ===========================================================================

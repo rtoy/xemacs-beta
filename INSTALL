@@ -2,6 +2,8 @@ XEmacs Installation Guide
 Copyright (c) 1994, 1995, 1996 Board of Trustees, University of Illinois
 Copyright (c) 1994 Free Software Foundation, Inc.
 
+Synched up with: FSF 19.30.
+
    Permission is granted to anyone to make or distribute verbatim copies
    of this document as received, in any medium, provided that the
    copyright notice and permission notice are preserved,
@@ -53,8 +55,7 @@ option, `configure' will try to figure out for itself whether your
 system has X, and arrange to use it if present.
 
 Additional support can be included for the NeXTstep system by
-specifying the flag `--with-ns'.  This was never implemented, and code
-referencing it has been removed from XEmacs 20.3.
+specifying the flag `--with-ns'.  This is not yet fully supported.
 
 The `--x-includes=DIR' and `--x-libraries=DIR' options tell the build
 process where the compiler should look for the include files and
@@ -218,15 +219,15 @@ define `--with-offix' for you.
 The `--with-energize' option specifies that XEmacs should be built
 with support for the Lucid Energize system.  (If you have not
 purchased Energize, specifying this option won't gain you anything.)
-This doesn't work and has been removed from XEmacs 20.3.
+Currently this doesn't work.
 
 The `--external-widget' option specifies that XEmacs should be built
-with support for being used as a widget.  This apparently doesn't work.
+with support for being used as a widget.  This functionality should be
+considered beta.
 
 The `--with-mocklisp' option specifies that XEmacs should be built
 with support for Mocklisp.  Do not use this option unless you have a
-Mocklisp program that you need to run.  Mocklisp support has been removed
-as of XEmacs 20.3.
+Mocklisp program that you need to run.
 
 The `--with-xmu=no' option can be used if your vendor doesn't ship
 the Xmu library.
@@ -259,7 +260,7 @@ systems using the system malloc disables the use of the relocating
 allocator.
 
 The `--with-epoch' option enables functionality taken from Epoch.
-Currently this doesn't work and the option has been removed from XEmacs 20.3.
+Currently this doesn't work.
 
 The `--debug' and `--error-checking' options are intended for use only
 by the developers.  `--debug' adds code to be compiled in for
@@ -665,3 +666,5 @@ PROBLEMS
 
 See the file PROBLEMS in this directory for a list of various
 problems sometimes encountered, and what to do about them.
+
+

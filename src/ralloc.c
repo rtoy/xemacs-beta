@@ -757,11 +757,7 @@ init_MHASH_table (void)
 static int
 MHASH (VM_ADDR addr)
 {
-#if (LONGBITS == 64)
-  unsigned long int addr_shift = (unsigned long int)(addr) >> USELESS_LOWER_ADDRESS_BITS;
-#else
   unsigned int addr_shift = (unsigned int)(addr) >> USELESS_LOWER_ADDRESS_BITS;
-#endif
   int hval = addr_shift % MHASH_PRIME; /* We could have addresses which are -ve 
 					  when converted to signed ints */
   return ((hval >= 0) ? hval : MHASH_PRIME + hval);
@@ -918,14 +914,9 @@ find_mmap_handle (POINTER *alias)
    about the memory map.  Instead, we try to coalesce empty or
    unavailable blocks at any available opportunity.  */
 
-/* Initialization procedure for address picking scheme */
-static void Addr_Block_initialize(void);
-
-/* Get a suitable VM_ADDR via mmap */
-static VM_ADDR New_Addr_Block( SIZE sz );
-
-/* Free a VM_ADDR allocated via New_Addr_Block */
-static void Free_Addr_Block( VM_ADDR addr, SIZE sz );
+static void Addr_Block_initialize(); /* Initialization procedure for address picking scheme */
+static VM_ADDR New_Addr_Block( SIZE sz ); /* Get a suitable VM_ADDR via mmap */
+static void Free_Addr_Block( VM_ADDR addr, SIZE sz ); /* Free a VM_ADDR allocated via New_Addr_Block */
 
 #ifdef MMAP_GENERATE_ADDRESSES
 /* Implementation of the three calls for address picking when XEmacs is incharge */
@@ -1044,10 +1035,8 @@ static void Free_Addr_Block( VM_ADDR addr, SIZE sz )
 /* This is an alternate (simpler) implementation in cases where the
    address is picked by the kernel. */
 
-static void Addr_Block_initialize(void)
-{
-  /* Nothing. */
-}
+static void Addr_Block_initialize()
+{} /* Nothing. */
 
 static VM_ADDR New_Addr_Block( SIZE sz )
 {
@@ -1270,18 +1259,18 @@ void
 syms_of_ralloc (void)
 {
 #ifdef MMAP_METERING
-  defsymbol (&Qmm_times_mapped, "mmap-times-mapped");
-  defsymbol (&Qmm_pages_mapped, "mmap-pages-mapped");
-  defsymbol (&Qmm_times_unmapped, "mmap-times-unmapped");
-  defsymbol (&Qmm_times_remapped, "mmap-times-remapped");
-  defsymbol (&Qmm_didnt_copy, "mmap-didnt-copy");
-  defsymbol (&Qmm_pages_copied, "mmap-pages-copied");
-  defsymbol (&Qmm_average_bumpval, "mmap-average-bumpval");
-  defsymbol (&Qmm_wastage, "mmap-wastage");
-  defsymbol (&Qmm_live_pages, "mmap-live-pages");
-  defsymbol (&Qmm_addr_looked_up, "mmap-had-to-look-up-address");
-  defsymbol (&Qmm_hash_worked, "mmap-hash-table-worked");
-  defsymbol (&Qmm_addrlist_size, "mmap-addrlist-size");
+  defsymbol (&Qmm_times_mapped, "mmap-times-mapped" );
+  defsymbol (&Qmm_pages_mapped, "mmap-pages-mapped" );
+  defsymbol (&Qmm_times_unmapped, "mmap-times-unmapped" );
+  defsymbol (&Qmm_times_remapped, "mmap-times-remapped" );
+  defsymbol (&Qmm_didnt_copy, "mmap-didnt-copy" );
+  defsymbol (&Qmm_pages_copied, "mmap-pages-copied" );
+  defsymbol (&Qmm_average_bumpval, "mmap-average-bumpval" );
+  defsymbol (&Qmm_wastage, "mmap-wastage" );
+  defsymbol (&Qmm_live_pages, "mmap-live-pages" );
+  defsymbol (&Qmm_addr_looked_up, "mmap-had-to-look-up-address" );
+  defsymbol (&Qmm_hash_worked, "mmap-hash-table-worked" );
+  defsymbol (&Qmm_addrlist_size, "mmap-addrlist-size" );
   DEFSUBR (Fmmap_allocator_status);
 #endif /* MMAP_METERING */
 }

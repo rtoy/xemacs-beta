@@ -713,20 +713,7 @@ Returns t for rescan and otherwise a position number."
 				       (if (< 1 (length (cdr menu)))
 					   (cdr menu)
 					 (cdr (cadr menu)))))
-    (if (fboundp 'x-popup-menu)
-	(setq position (x-popup-menu event menu))
-      (setq position (let ((val (get-popup-menu-response
-				 (cons ""
-				       (mapcar
-					(function
-					 (lambda (x)
-					   (vector (car x) (list (car x)) t)))
-					menu)))))
-		       (setq val (and val
-				      (listp (event-object val))
-				      (stringp (car-safe (event-object val)))
-				      (car (event-object val))))
-		       (cdr (assoc val choices)))))
+    (setq position (x-popup-menu event menu))
     (cond ((and (listp position)
 		(numberp (car position))
 		(stringp (nth (1- (length position)) position)))
@@ -771,26 +758,21 @@ not.
 
 The returned value is on the form (INDEX-NAME . INDEX-POSITION)."
   (let (index-alist
-	;; XEmacs
-	(mouse-triggered (or (button-press-event-p last-command-event)
-			     (button-release-event-p last-command-event)
-			     (menu-event-p last-command-event)))
-	;;(mouse-triggered (listp last-nonmenu-event))
+	(mouse-triggered (listp last-nonmenu-event))
 	(result t) )
     ;; If selected by mouse, see to that the window where the mouse is
     ;; really is selected.
-    ;(and mouse-triggered
-	 ;(not (equal last-nonmenu-event '(menu-bar)))
-	 ;(let ((window (posn-window (event-start last-nonmenu-event))))
-	   ;(or (framep window) (null window) (select-window window))))
+    (and mouse-triggered
+	 (not (equal last-nonmenu-event '(menu-bar)))
+	 (let ((window (posn-window (event-start last-nonmenu-event))))
+	   (or (framep window) (null window) (select-window window))))
     ;; Create a list for this buffer only when needed.
     (while (eq result t)
       (setq index-alist (if alist alist (imenu--make-index-alist)))
       (setq result
 	    (if (and mouse-triggered
 		     (not imenu-always-use-completion-buffer-p))
-		;(imenu--mouse-menu index-alist last-nonmenu-event)
-		(imenu--mouse-menu index-alist last-command-event)
+		(imenu--mouse-menu index-alist last-nonmenu-event)
 	      (imenu--completion-buffer index-alist prompt)))
       (and (eq result t)
 	   (imenu--cleanup)
@@ -805,13 +787,12 @@ See the command `imenu' for more information."
   (interactive "sImenu menu item name: ")
   (let ((newmap (make-sparse-keymap))
 	(menu-bar (lookup-key (current-local-map) [menu-bar])))
-    (when menu-bar
-      (define-key newmap [menu-bar]
-	(append (make-sparse-keymap) menu-bar))
-      (define-key newmap [menu-bar index]
-	(cons name (nconc (make-sparse-keymap "Imenu")
-			  (make-sparse-keymap))))
-      (use-local-map (append newmap (current-local-map)))))
+    (define-key newmap [menu-bar]
+      (append (make-sparse-keymap) menu-bar))
+    (define-key newmap [menu-bar index]
+      (cons name (nconc (make-sparse-keymap "Imenu")
+			(make-sparse-keymap))))
+    (use-local-map (append newmap (current-local-map))))
   (add-hook 'menu-bar-update-hook 'imenu-update-menubar))
 
 (defvar imenu-buffer-menubar nil)

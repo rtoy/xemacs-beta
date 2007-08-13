@@ -134,8 +134,8 @@ running.  It is useful to include this string in bug reports.
 @example
 @group
 (emacs-version)
-  @result{} "XEmacs 20.1 [Lucid] (i586-unknown-linux2.0.29)
-                 of Mon Apr  7 1997 on altair.xemacs.org"
+  @result{} "XEmacs 19.14 [Lucid] (i586-unknown-linux1.2.13)
+                 of Wed Mar  6 1996 on nene"
 @end group
 @end example
 
@@ -149,15 +149,15 @@ local site.
 
 @example
 @group
-emacs-build-time "Mon Apr  7 20:28:52 1997"
-     @result{} 
+emacs-build-time
+     @result{} "Wed Mar  6 14:55:57 1996"
 @end group
 @end example
 @end defvar
 
 @defvar emacs-version
 The value of this variable is the version of Emacs being run.  It is a
-string, e.g. @code{"20.1 XEmacs Lucid"}.
+string, e.g. @code{"19.14 XEmacs Lucid"}.
 @end defvar
 
   The following two variables did not exist before FSF GNU Emacs version
@@ -166,12 +166,12 @@ present, but we hope they will be convenient in the future.
 
 @defvar emacs-major-version
 The major version number of Emacs, as an integer.  For XEmacs version
-20.1, the value is 20.
+19.14, the value is 19.
 @end defvar
 
 @defvar emacs-minor-version
 The minor version number of Emacs, as an integer.  For XEmacs version
-20.1, the value is 1.
+19.14, the value is 14.
 @end defvar
 
 @node Pure Storage

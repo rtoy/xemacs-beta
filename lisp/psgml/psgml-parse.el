@@ -1,5 +1,5 @@
 ;;;; psgml-parse.el --- Parser for SGML-editing mode with parsing support
-;; $Id: psgml-parse.el,v 1.4 1997/03/09 02:37:46 steve Exp $
+;; $Id: psgml-parse.el,v 1.1.1.1 1996/12/18 22:43:36 steve Exp $
 
 ;; Copyright (C) 1994, 1995 Lennart Staflin
 
@@ -229,7 +229,7 @@ In case markup closed element this is different from sgml-current-tree.
 Only valid after `sgml-parse-to'.")
 
 (defvar sgml-markup-start nil
-  "Start point of markup being parsed.")
+  "Start point of markup beeing parsed.")
 
 (defvar sgml-conref-flag nil
   "This variable is set by `sgml-parse-attribute-specification-list'
@@ -446,17 +446,6 @@ to point to the next scratch buffer.")
 
 ;;; Using states
 
-(defsubst sgml-final (state)
-  (if (sgml-normal-state-p state)
-      (sgml-state-final-p state)
-    (sgml-final-and state)))
-
-(defun sgml-final-and (state)
-  (and (sgml-final (sgml-and-state-substate state))
-       (loop for s in (sgml-and-state-dfas state)
-	     always (sgml-state-final-p s))
-       (sgml-state-final-p (sgml-and-state-next state))))
-
 ;; get-move: State x Token --> State|nil
 
 (defsubst sgml-get-move (state token)
@@ -512,6 +501,18 @@ If this is not possible, but all DFAS are final, move by TOKEN in NEXT."
         (loop for s in (sgml-and-state-dfas state)
               nconc (sgml-tokens-of-moves (sgml-state-reqs s)))
         (sgml-tokens-of-moves (sgml-state-reqs (sgml-and-state-next state))))))
+
+
+(defsubst sgml-final (state)
+  (if (sgml-normal-state-p state)
+      (sgml-state-final-p state)
+    (sgml-final-and state)))
+
+(defun sgml-final-and (state)
+  (and (sgml-final (sgml-and-state-substate state))
+       (loop for s in (sgml-and-state-dfas state)
+	     always (sgml-state-final-p s))
+       (sgml-state-final-p (sgml-and-state-next state))))
 
 (defun sgml-optional-tokens (state)
   (if (sgml-normal-state-p state)
@@ -1965,12 +1966,8 @@ the entity name."
 		       (or name "?")
 		       pubid 
 		       (sgml-extid-sysid extid))
-    (or (if (and sgml-system-identifiers-are-preferred
-		 (sgml-extid-sysid extid))
-	    (or (sgml-lookup-sysid-as-file extid)
-		(sgml-path-lookup  ;Try the path also, but only using sysid
-		 (sgml-make-extid nil (sgml-extid-sysid extid))
-		 nil nil)))
+    (or (if sgml-system-identifiers-are-preferred
+	    (sgml-lookup-sysid-as-file extid))
 	(sgml-catalog-lookup sgml-current-localcat pubid type name)
 	(sgml-catalog-lookup sgml-catalog-files pubid type name)
 	(if (not sgml-system-identifiers-are-preferred)
@@ -3643,7 +3640,7 @@ VALUE is a string.  Returns nil or an attdecl."
   (setq sgml-dtd-info (sgml-pstate-dtd sgml-buffer-parse-state)
 	sgml-top-tree (sgml-pstate-top-tree sgml-buffer-parse-state))
   (sgml-set-global)
-  (setq sgml-current-tree sgml-top-tree)
+  ;;*** what is sgml-current-tree now?
   (while (stringp (cadr modifier))	; Loop thru the context elements
     (let ((et (sgml-lookup-eltype (car modifier))))
       (sgml-open-element et nil (point-min) (point-min))

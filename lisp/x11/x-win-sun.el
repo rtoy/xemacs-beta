@@ -17,8 +17,9 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Commentary:
 
@@ -47,8 +48,8 @@
 ;;   .emacs files like (global-set-key [(f35)] 'foo) continue to work
 ;;
 ;; - Use keyboard macros to provide indirection for keybindings.
-;;   If we do (global-set-key [(f35)] [(kp-3)]), then the user's keybindings
-;;   work whether he uses `f35' or `kp-3'.
+;;   If we do (global-set-key [(f35)] [(kp_3)]), then the user's keybindings
+;;   work whether he uses `f35' or `kp_3'.
 ;;   This is also compatible with FSF Emacs and other X11 apps.
 ;;   Although this has the disadvantage that these remappings
 ;;   only work with the global key map, we use this as the default.
@@ -86,11 +87,11 @@
  ;; up is ok
  ;; left is ok
  ;; right is ok
- ;; kp-add is ok
+ ;; kp_add is ok
  ;; down is ok
  ;; insert is ok
  ;; delete is ok
- ;; kp-enter is ok
+ ;; kp_enter is ok
  (append
   ;; Sun Function keys
   (cond ((x-keysym-on-keyboard-p "F21")
@@ -116,39 +117,39 @@
        '((f21 . pause)
          (f22 . prsc)
          (f23 . scroll)
-         (f25 . kp-divide)
-         (f26 . kp-multiply)
-         (f31 . kp-5))
+         (f25 . kp_divide)
+         (f26 . kp_multiply)
+         (f31 . kp_5))
        
-       ;; Map f33 and r13 to end or kp-end
+       ;; Map f33 and r13 to end or kp_end
        (cond
         ((not (x-keysym-on-keyboard-p "End"))
          '((f33 . end)    (r13 . end)))
         ((not (x-keysym-on-keyboard-p "KP_End"))
-         '((f33 . kp-end) (r13 . kp-end))))
+         '((f33 . kp_end) (r13 . kp_end))))
   
        (if (x-keysym-on-keyboard-p "F36")
            '((f36 . stop) (f37 . again)) ; MIT Type 5 name
          '((f11 . stop) (f12 . again)))  ; Sun name or MIT Type 4 name
     
-       ;; Type 4 keyboards have a real kp-subtract  and a f24 labelled `='
+       ;; Type 4 keyboards have a real kp_subtract  and a f24 labelled `='
        ;; Type 5 keyboards have no key labelled `=' and a f24 labelled `-'
        (if (x-keysym-on-keyboard-p "F24")
            (if (x-keysym-on-keyboard-p "KP_Subtract")
-               '((f24 . kp-equal))
-             '((f24 . kp-subtract))))
+               '((f24 . kp_equal))
+             '((f24 . kp_subtract))))
   
-       ;; Map f27 to home or kp-home, as appropriate
+       ;; Map f27 to home or kp_home, as appropriate
        (cond ((not (x-keysym-on-keyboard-p "Home"))    '((f27 . home)))
-             ((not (x-keysym-on-keyboard-p "KP_Home")) '((f27 . kp-home))))
+             ((not (x-keysym-on-keyboard-p "KP_Home")) '((f27 . kp_home))))
 
-       ;; Map f29 to prior or kp-prior, as appropriate
+       ;; Map f29 to prior or kp_prior, as appropriate
        (cond ((not (x-keysym-on-keyboard-p "Prior"))     '((f29 . prior)))
-             ((not (x-keysym-on-keyboard-p "KP_Prior"))  '((f29 . kp-prior))))
+             ((not (x-keysym-on-keyboard-p "KP_Prior"))  '((f29 . kp_prior))))
 
-       ;; Map f35 to next or kp-next, as appropriate
+       ;; Map f35 to next or kp_next, as appropriate
        (cond ((not (x-keysym-on-keyboard-p "Next"))    '((f35 . next)))
-             ((not (x-keysym-on-keyboard-p "KP_Next")) '((f35 . kp-next))))
+             ((not (x-keysym-on-keyboard-p "KP_Next")) '((f35 . kp_next))))
        ))
 
   (cond ((x-keysym-on-keyboard-p "apRead") ; SunOS 4.1.1
@@ -158,15 +159,15 @@
 
   ;; !@#$ SunOS 4 with SunOS5 X server
   (if (string-match "sunos4.1" system-configuration)
-      '((unknown_keysym_0xFF9A . kp-prior)
-        (unknown_keysym_0xFF9B . kp-next)
-        (unknown_keysym_0xFF95 . kp-home)
-        (unknown_keysym_0xFF9C . kp-end)
-        (unknown_keysym_0xFF96 . kp-left)
-        (unknown_keysym_0xFF97 . kp-up)
-        (unknown_keysym_0xFF98 . kp-right)
-        (unknown_keysym_0xFF99 . kp-down)
-        (unknown_keysym_0xFF9E . kp-insert)))
+      '((unknown_keysym_0xFF9A . kp_prior)
+        (unknown_keysym_0xFF9B . kp_next)
+        (unknown_keysym_0xFF95 . kp_home)
+        (unknown_keysym_0xFF9C . kp_end)
+        (unknown_keysym_0xFF96 . kp_left)
+        (unknown_keysym_0xFF97 . kp_up)
+        (unknown_keysym_0xFF98 . kp_right)
+        (unknown_keysym_0xFF99 . kp_down)
+        (unknown_keysym_0xFF9E . kp_insert)))
   ))
 
 (fmakunbound 'x11-remap-keysyms-using-function-key-map)
@@ -197,7 +198,7 @@
 (defun sun-x11-keyboard-translate ()
   "Remap Sun's X11 keyboard.
 Keys with names like `f35' are remapped, at a low level,
-to more mnemonic ones,like `kp-3'."
+to more mnemonic ones,like `kp_3'."
   (interactive)
   
   (keyboard-translate
@@ -225,24 +226,24 @@ to more mnemonic ones,like `kp-3'."
    'f22 'prsc
    'f23 'scroll
    ;; num_lock is ok
-   ;;'f24 'kp-equal)			; type4 only!
-   'f25 'kp-divide			;
-   'f26 'kp-multiply			;
-   'f24 'kp-subtract			; type5 only!
-   'f27 'kp-7				;
+   ;;'f24 'kp_equal)			; type4 only!
+   'f25 'kp_divide			;
+   'f26 'kp_multiply			;
+   'f24 'kp_subtract			; type5 only!
+   'f27 'kp_7				;
    ;; up is ok
-   'f29 'kp-9
+   'f29 'kp_9
    ;; left is ok
-   'f31 'kp-5
+   'f31 'kp_5
    ;; right is ok
-   ;; kp-add is ok
-   'f33 'kp-1				; the Sun name
+   ;; kp_add is ok
+   'f33 'kp_1				; the Sun name
    'r13 'end				; the MIT name
    ;; down is ok
-   'f35 'kp-3
+   'f35 'kp_3
    ;; insert is ok
    ;; delete is ok
-   ;; kp-enter is ok
+   ;; kp_enter is ok
    'SunF36 'f11				; Type 5 keyboards
    'SunF37 'f12				; Used to be Stop & Again
    ))

@@ -3,15 +3,15 @@
 ;; FILE:         java-brows.el
 ;; SUMMARY:      Java source code browser.
 ;; USAGE:        GNU Emacs Lisp Library
-;; KEYWORDS:     c, oop, tools
+;; KEYWORDS:     java, oop, tools
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          InfoDock Associates
+;; ORG:          Motorola Inc.
 ;;
 ;; ORIG-DATE:    01-Aug-95
-;; LAST-MOD:     12-Nov-96 at 15:20:24 by Bob Weiner
+;; LAST-MOD:     20-Sep-95 at 14:18:44 by Bob Weiner
 ;;
-;; Copyright (C) 1995, 1996  Free Software Foundation, Inc.
+;; Copyright (C) 1995  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.
@@ -87,18 +87,14 @@ file name.  See also the file \"br-help\"."
 (defun java-mode-setup ()
   "Load best available java major mode and set 'br-lang-mode' to the function that invokes it."
   (fset 'br-lang-mode
-	(cond ((and (or (fboundp 'java-mode)
-			(featurep 'cc-mode)
-			(load "cc-mode" 'missing-ok 'nomessage))
-		    (fboundp 'java-mode))
+	(cond ((or (featurep 'java-mode)
+		   (load "java-mode" 'missing-ok 'nomessage))
 	       'java-mode)
-	      ((load "java-mode" 'missing-ok 'nomessage)
-	       'java-mode)
-	      ((fboundp 'c++-mode)
-	       (provide 'c++-mode)
+	      ((featurep 'cc-mode)
 	       'c++-mode)
-	      (t (error
-		  "(java-mode-setup): Can't load major mode for Java code.")))))
+	      ((load "cc-mode" 'missing-ok 'nomessage)
+	       (provide 'c++-mode))
+	      (t (error "(java-mode-setup): Can't load major mode for Java code.")))))
 
 ;;; ************************************************************************
 ;;; Internal functions

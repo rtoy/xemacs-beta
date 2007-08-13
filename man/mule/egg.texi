@@ -1,0 +1,204 @@
+\input texinfo	@c -*-texinfo-*-
+@setfilename ../info/egg
+@settitle EGG -- Japanese/Chinese inputting methods using Wnn/cWnn
+
+@titlepage
+@sp 6
+@center @titlefont{EGG -- Japanese/Chinese inputting methods using Wnn/cWnn}
+@sp 4
+@center Version 2.0
+@sp 5
+@center Ken'ichi HANDA
+@center handa@@etl.go.jp
+@page
+
+@end titlepage
+
+@node Top, , , (mule)
+@section EGG -- Japanese/Chinese inputting methods using Wnn/cWnn
+
+This documents describes briefly how to use EGG.
+
+Before using EGG, you must, at first, install Wnn/cWnn Ver.4.108 or the
+higher version.  Then install Mule after configuring by argument
+`--wnn'.  See the file `INSTALL' for more detail.
+
+@subsection Getting start with EGG
+
+At first, check if your mule has already loaded necessary
+ITS (Input Translation System) modes.  By 'C-x C-k m'.  You
+can see the list at the echo area.  'C-n' will show you the
+rest.  To input Chinese, you need 'PinYin' mode.  If it
+can't be found in the list,
+@quotation
+@code{M-x load-library<CR>chinese<CR>}
+@end quotation
+is the easiest way.
+
+Next you should tell the system a hostname on which cserver
+is running by:
+
+@example
+M-x set-cserver-host-name<CR>hostname<CR>
+@end example
+
+Putting
+
+@example
+(set-cserver-host-name "hostname")
+@end example
+
+in your .emacs may be easier.
+
+Then type @code{C-\}.  You'll see the change in the left of
+modeline.  The text in brackets shows the current mode.  If
+it is not the mode you want to use, select any mode (for
+instance @code{PinYin}) by @code{C-x C-k m} and @code{C-n}, @code{C-f} (for
+moving around the cursor at the echo area) and @code{<CR>} (for
+selecting).  If you chose @code{PinYin}, you'll see Chinese
+character "QuanPin" at the modeline.
+
+Now you can type in PinYin.  Long sequence is ok.  For
+instance,
+
+@example
+nihaobeijing<SP>
+@end example
+
+will build Chinese text for "Ni Hao Bei Jing".
+
+Reversed region shows the current target word.  @code{C-f}, @code{C-b}
+moves cursor to another word.  @code{<SP>} select next candidate of
+Chinese text.  @code{M-s} (or @code{ESC s}) shows list of candidates at
+the echo area.  @code{C-n}, @code{C-p} chose another candidate.
+@code{M-i}/@code{M-o} change the length of word shorter/longer.
+@code{<CR>} or another alphabet key settles the current text, @code{C-g}
+cancels.
+
+
+@subsection Four phases
+
+While you are using EGG, you'll move around four phases: normal-phase,
+transition-phase, fence-phase, and translation-phase.
+
+@itemize
+@item  normal-phase
+
+Left edge of modeline is something like:
+
+@example
+[--]J.:--**-Mule: ...
+@end example
+
+In this phase, all the keys typed are processed as normal.
+You won't be conscious of the existence of EGG.
+
+@item transition-phase
+
+When you type @code{C-\ (toggle-egg-mode)} at normal-phase, you'll
+be in translation-phase.
+Left edge of modeline shows something like:
+
+@example
+[ITS_MODE_INDICATOR]J.:--**-Mule: ...
+@end example
+
+where ITS_MODE_INDICATOR is a multilingual string indicating
+the current its-mode.  For instance, if the current its-mode
+is PinYin, Chinese text "QuanPin" is shown.  In this phase,
+all your editing commands (say, delete, next-line, ...)  are
+still processed as normal.  But, once you type any graphic
+key ('0'..'~'), you are thrown into fence-phase.
+
+@item fence-phase
+
+The modeline is the same as in transition-phase.  But, the last
+character you typed is surrounded by '|' (fence), or underlined if your
+are using @code{face}.  Any more graphic characters you type are
+translated along rules defined in the current its-mode.  For instance,
+your type @code{n} in transition-phase, the buffer will change as follows:
+
+@example
+YourKey n   i    3     h      a       o        3
+Buffer  |n| |ni| |Ni | |Ni h| |Ni ha| |Ni hao| |Ni Hao |
+                   ^     ^      ^       ^        ^   ^ 
+@end example
+
+where @code{i} and @code{a} characters at @code{^} are shown with tone
+marks.  This is because its-mode for PinYin has rules:
+
+@example
+	ni3 -> Ni , hao3 -> Hao
+		^            ^
+@end example
+
+If you are not sure about tones, you can omit them.
+
+In this phase, you can move cursor only within the fence (or underlined
+region) by @code{C-a}, @code{C-e}, @code{C-f}, and @code{C-b}.
+
+When you type @code{<SPC>}, the string in the fence are sent to
+background `cserver' and a converted string appears in the fence.  At
+the same time, you are thrown into translation-phase
+
+Hitting C-g will let you go back to transition-phase after
+deleting the fence (and its contents).
+
+@item translation-phase
+
+Left edge of the modeline is something like:
+
+@example
+[TRS_MODE_INDICATOR]J.:--**-Mule: ...
+@end example
+
+where TRS_MODE_INDICATOR is a string indicating the server.
+In the case of 'cserver', Chinese character "Han" of "Hanzi"
+is shown.  Now you are seeing Chinese text in the fence (or highlighted
+region).  The text in the fence may have the form:
+
+@example
+|A-B-CD-E FG|
+@end example
+
+where @code{A..G} are Chinese characters.  In this case, the text
+is divided into two BIG-PHRASEs @code{A-B-CD-E} and @code{FG}, and the
+former is divided into 5 SMALL-PHRASEs @code{A}, @code{B}, @code{CD},
+and @code{E}.
+You can change the division point of current phase (which
+your cursor is on) by:
+
+@example
+	C-i: make BIG-PHRASE shorter
+	C-o: make BIG-PHRASE longer
+	M-i: make SMALL-PHRASE shorter
+	M-o: make SMALL-PHRASE longer
+@end example
+
+When you get a desired text, fix it by typing @code{<CR>} or @code{C-l}.
+Just type another graphic key is also ok.  In the former case, you are
+moved to transition-phase, and in the latter case, you are moved to
+fence-phase.
+
+Hitting @code{C-g} will let you go back to fence-phase.
+@end itemize
+
+Here's a summary of the phases:
+
+@example
+	normal-phase
+	     ^
+	     |
+	    C-\
+	     |
+	     V
+	transition-phase -- graphic-key --> fence-phase
+			\		     |      ^
+			 \		   <SPC>    |
+			  \		     |    graphic-key
+			   \		     V      |
+			    `<-- <CR> --- translation-phase
+@end example
+
+@contents
+@bye

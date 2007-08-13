@@ -530,7 +530,7 @@ will be used for.
 
 Canonicalizing means converting to the full form for an inst-list, i.e.
 @code{((@var{tag-set} . @var{instantiator}) ...)}.  This function
-accepts a single inst-pair or any abbreviation thereof or a list of
+accepts a single inst-pair or any abbrevation thereof or a list of
 (possibly abbreviated) inst-pairs. (See @code{canonicalize-inst-pair}.)
 
 If @var{noerror} is non-@code{nil}, signal an error if the inst-list is

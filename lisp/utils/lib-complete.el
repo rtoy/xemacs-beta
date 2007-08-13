@@ -5,7 +5,7 @@
 ;; Last Modified By: Heiko M|nkel <muenkel@tnt.uni-hannover.de>
 ;; Additional XEmacs integration By: Chuck Thompson <cthomp@cs.uiuc.edu>
 ;; Last Modified On: Thu Jul 1 14:23:00 1994
-;; RCS Info        : $Revision: 1.3 $ $Locker:  $
+;; RCS Info        : $Revision: 1.1.1.1 $ $Locker:  $
 ;; ========================================================================
 ;; NOTE: this file must be recompiled if changed.
 ;;
@@ -273,11 +273,7 @@ Optional sixth argument FILTER can be used to provide a function to
 				   FILTER (or MUST-MATCH FULL) nil)))
     (cond 
      ((equal library "") DEFAULT)
-     (FULL (locate-file library read-library-internal-search-path
-			;; decompression doesn't work with Mule -slb
-			(if (featurep 'mule)
-			    ".el:.elc"
-			  ".el:.el.gz:.elc")))
+     (FULL (locate-file library read-library-internal-search-path ".el:.elc"))
      (t library))))
 
 ;; NOTE: as a special case, read-library may be used to read a filename
@@ -290,11 +286,8 @@ Optional sixth argument FILTER can be used to provide a function to
   "Front end to read-library"
   (read-library "Find Library file: " load-path nil t t
 		  (function (lambda (fn) 
-			      (cond
-			       ;; decompression doesn't work with mule -slb
-			       ((string-match (if (featurep 'mule)
-						  "\\.el$"
-						"\\.el\\(\\.gz\\)?$") fn)
+			      (cond 
+			       ((string-match "\\.el$" fn)
 				(substring fn 0 (match-beginning 0))))))
 		  ))
 

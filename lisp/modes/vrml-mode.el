@@ -591,7 +591,7 @@ first word following an opening brace."
   "Return t if point is just after the `#' beginning a real comment.
 Does not check to see if previous char is actually `#'.
 A real comment is either at the beginning of the buffer,
-preceded only by whitespace on the line, or has a preceding
+preceeded only by whitespace on the line, or has a preceeding
 semicolon, opening brace, or opening bracket on the same line."
   (save-excursion
     (backward-char)

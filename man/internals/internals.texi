@@ -7,7 +7,7 @@
 @ifinfo
 
 Copyright @copyright{} 1992 - 1996 Ben Wing.
-Copyright @copyright{} 1996, 1997 Sun Microsystems.
+Copyright @copyright{} 1996 Sun Microsystems.
 Copyright @copyright{} 1994, 1995 Free Software Foundation.
 Copyright @copyright{} 1994, 1995 Board of Trustees, University of Illinois.
 
@@ -59,10 +59,9 @@ instead of in the original English.
 
 @titlepage
 @title XEmacs Internals Manual
-@subtitle Version 1.1, March 1997
+@subtitle Version 1.0, March 1996
 
 @author Ben Wing
-@author Martin Buchholz
 @page
 @vskip 0pt plus 1fill
 
@@ -73,8 +72,8 @@ Copyright @copyright{} 1994 Free Software Foundation. @*
 Copyright @copyright{} 1994, 1995 Board of Trustees, University of Illinois.
 
 @sp 2
-Version 1.1 @*
-March, 1997.@*
+Version 1.0 @*
+March, 1996.@*
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -209,7 +208,7 @@ Symbols and Variables
 Buffers and Textual Representation
 
 * Introduction to Buffers::     A buffer holds a block of text such as a file.
-* The Text in a Buffer::        Representation of the text in a buffer.
+* A Buffer@'s Text::            Representation of the text in a buffer.
 * Buffer Lists::                Keeping track of all buffers.
 * Markers and Extents::         Tagging locations within a buffer.
 * Bufbytes and Emchars::        Representation of individual characters.
@@ -301,7 +300,6 @@ Lisp, a programming language developed at MIT that underlies Emacs.)
 * Through Version 18::          Unification prevails.
 * Lucid Emacs::                 One version 19 Emacs.
 * GNU Emacs 19::                The other version 19 Emacs.
-* GNU Emacs 20::                The other version 20 Emacs.
 * XEmacs::                      The continuation of Lucid Emacs.
 @end menu
 
@@ -488,16 +486,6 @@ version 19.11 (first XEmacs) released September 13, 1994.
 version 19.12 released June 23, 1995.
 @item
 version 19.13 released September 1, 1995.
-@item
-version 19.14 released June 23, 1996.
-@item
-version 20.0 released February 9, 1997.
-@item
-version 19.15 released March 28, 1997.
-@item
-version 20.1 (not released to the net) April 15, 1997.
-@item
-version 20.2 released May 16, 1997.
 @end itemize
 
 @node GNU Emacs 19
@@ -556,18 +544,6 @@ version 19.27 (beta) released September 14, 1994.
 version 19.28 (first ``official'' release) released November 1, 1994.
 @item
 version 19.29 released June 21, 1995.
-@item
-version 19.30 released November 24, 1995.
-@item
-version 19.31 released May 25, 1996.
-@item
-version 19.32 released July 31, 1996.
-@item
-version 19.33 released August 11, 1996.
-@item
-version 19.34 released August 21, 1996.
-@item
-version 19.34b released September 6, 1996.
 @end itemize
 
 @cindex Mlynarik, Richard
@@ -576,23 +552,6 @@ worse.  Lucid soon began incorporating features from GNU Emacs 19 into
 Lucid Emacs; the work was mostly done by Richard Mlynarik, who had been
 working on and using GNU Emacs for a long time (back as far as version
 16 or 17).
-
-@node GNU Emacs 20
-@section GNU Emacs 20
-@cindex GNU Emacs 20
-@cindex FSF Emacs
-
-On February 2, 1997 work began on GNU Emacs to integrate Mule.  The first
-release was made in September of that year.
-
-A timeline for Emacs 20 is
-
-@itemize @bullet
-@item
-version 20.1 released September 17, 1997.
-@item
-version 20.2 released September 20, 1997.
-@end itemize
 
 @node XEmacs
 @section XEmacs
@@ -603,8 +562,6 @@ version 20.2 released September 20, 1997.
 @cindex Illinois, University of
 @cindex SPARCWorks
 @cindex Andreessen, Marc
-@cindex Baur, Steve
-@cindex Buchholz, Martin
 @cindex Kaplan, Simon
 @cindex Wing, Ben
 @cindex Thompson, Chuck
@@ -634,23 +591,11 @@ the newly formed Mosaic Communications Corp., later Netscape
 Communications Corp. (co-founded by the same Marc Andreessen, who had
 quit his Epoch job to work on a graphical browser for the World Wide
 Web).  Chuck then become the primary maintainer of XEmacs, and put out
-versions 19.11 through 19.14 in conjunction with Ben.  For 19.12 and
+versions 19.11, 19.12, and 19.13 in conjunction with Ben.  For 19.12 and
 19.13, Chuck added the new redisplay and many other display improvements
 and Ben added MULE support (support for Asian and other languages) and
 redesigned most of the internal Lisp subsystems to better support the
-MULE work and the various other features being added to XEmacs.  After
-19.14 Chuck retired as primary maintainer and Steve Baur stepped in.
-
-@cindex MULE merged XEmacs appears
-  Soon after 19.13 was released, work began in earnest on the MULE
-internationalization code and the source tree was divided into two
-development paths.  The MULE version was initially called 19.20, but was
-soon renamed to 20.0.  In 1996 Martin Buchholz of Sun Microsystems took
-over the care and feeding of it and worked on it in parallel with the
-19.14 development that was occurring at the same time.  After much work
-by Martin, it was decided to release 20.0 ahead of 19.15 in February
-1997.  The source tree remained divided until 20.1 when the version 19
-source was finally retired.
+MULE work and the various other features being added to XEmacs.
 
 @cindex merging attempts
   Many attempts have been made to merge XEmacs and GNU Emacs, but they
@@ -909,7 +854,7 @@ built.
 operations that make XEmacs useful as an editor as well as just a
 Lisp environment, and also contains many add-on packages that allow
 XEmacs to browse directories, act as a mail and Usenet news reader,
-compile Lisp code, etc.  There is actually more Lisp code than
+compile Lisp code, etc.  There is actually a lot more Lisp code than
 C code associated with XEmacs, but much of the Lisp code is
 peripheral to the actual operation of the editor.  The Lisp code
 all lies in subdirectories underneath the @file{lisp/} directory.
@@ -928,15 +873,15 @@ merely contain useful information of various sorts.
 programs that are used in connection with XEmacs.  Some of them are used
 during the build process; others are used to perform certain functions
 that cannot conveniently be placed in the XEmacs executable (e.g. the
-@file{movemail} program for fetching mail out of @file{/var/spool/mail},
-which must be setgid to @file{mail} on many systems; and the
-@file{gnuclient} program, which allows an external script to communicate
-with a running XEmacs process).
+@file{movemail} program for fetching mail out of /var/spool/mail, which
+must be setgid to @file{mail} on many systems; and the 'gnuclient'
+program, which allows an external script to communicate with a running
+XEmacs process).
 
   The @file{man/} directory contains the sources for the XEmacs
 documentation.  It is mostly in a form called Texinfo, which can be
-converted into either a printed document (by passing it through @TeX{})
-or into on-line documentation called @dfn{info files}.
+converted into either a printed document (by passing it through TeX) or
+into on-line documentation called @dfn{info files}.
 
   The @file{info/} directory contains the results of formatting the
 XEmacs documentation as @dfn{info files}, for on-line use.  These files
@@ -979,12 +924,13 @@ immediately.  The Makefile runs @file{temacs} with certain options that
 cause it to initialize itself, read in a number of basic Lisp files, and
 then dump itself out into a new executable called @file{xemacs}.  This
 new executable has been pre-initialized and contains pre-digested Lisp
-code that is necessary for the editor to function (this includes most
-basic Lisp functions, e.g. @code{not}, that can be defined in terms of
-other Lisp primitives; some initialization code that is called when
-certain objects, such as frames, are created; and all of the standard
-keybindings and code for the actions they result in).  This executable,
-@file{xemacs}, is the executable that you run to use the XEmacs editor.
+code that is necessary for the editor to function (this includes some
+extremely basic Lisp functions, e.g. @code{not}, that can be defined in
+terms of other Lisp primitives; some initialization code that is called
+when certain objects, such as frames, are created; and all of the
+standard keybindings and code for the actions they result in).  This
+executable, @file{xemacs}, is the executable that you run to use the
+XEmacs editor.
 
 @node XEmacs From the Inside, The XEmacs Object System (Abstractly Speaking), XEmacs From the Perspective of Building, Top
 @chapter XEmacs From the Inside
@@ -992,7 +938,7 @@ keybindings and code for the actions they result in).  This executable,
   Internally, XEmacs is quite complex, and can be very confusing.  To
 simplify things, it can be useful to think of XEmacs as containing an
 event loop that ``drives'' everything, and a number of other subsystems,
-such as a Lisp engine and a redisplay mechanism.  Each of these other
+such as a Lisp engine and a redisplay mechanism.  Each of these others
 subsystems exists simultaneously in XEmacs, and each has a certain
 state.  The flow of control continually passes in and out of these
 different subsystems in the course of normal operation of the editor.
@@ -1024,8 +970,8 @@ window, etc.
 The buffer mechanism is responsible for keeping track of what buffers
 exist and what text is in them.  It is periodically given commands
 (usually from the user) to insert or delete text, create a buffer, etc.
-When it receives a text-change command, it notifies the redisplay
-mechanism.
+When it receives a textual-change command, it tells the redisplay
+mechanism about this.
 
 @item
 The redisplay mechanism is responsible for making sure that windows and
@@ -1221,7 +1167,7 @@ these types of objects.)
   XEmacs Lisp also contains numerous specialized objects used to
 implement the editor:
 
-@table @code
+@table @asis
 @item buffer
 Stores text like a string, but is optimized for insertion and deletion
 and has certain other properties that can be set.
@@ -1270,7 +1216,7 @@ An object that describes a connection to an externally-running process.
 
   There are some other, less-commonly-encountered general objects:
 
-@table @code
+@table @asis
 @item hashtable
 An object that maps from an arbitrary Lisp object to another arbitrary
 Lisp object, using hashing for fast lookup.
@@ -1294,7 +1240,7 @@ An object that maps from ranges of integers to arbitrary Lisp objects.
 
   And some strange special-purpose objects:
 
-@table @code
+@table @asis
 @item charset
 @itemx coding-system
 Objects used when MULE, or multi-lingual/Asian-language, support is
@@ -1408,18 +1354,17 @@ converts to a char that represents the lowercase letter b.
 @end example
 
 (where @samp{^[} actually is an @samp{ESC} character) converts to a
-particular Kanji character when using an ISO2022-based coding system for
-input. (To decode this gook: @samp{ESC} begins an escape sequence;
-@samp{ESC $ (} is a class of escape sequences meaning ``switch to a
-94x94 character set''; @samp{ESC $ ( B} means ``switch to Japanese
-Kanji''; @samp{#} and @samp{&} collectively index into a 94-by-94 array
-of characters [subtract 33 from the ASCII value of each character to get
-the corresponding index]; @samp{ESC (} is a class of escape sequences
-meaning ``switch to a 94 character set''; @samp{ESC (B} means ``switch
-to US ASCII''.  It is a coincidence that the letter @samp{B} is used to
-denote both Japanese Kanji and US ASCII.  If the first @samp{B} were
-replaced with an @samp{A}, you'd be requesting a Chinese Hanzi character
-from the GB2312 character set.)
+particular Kanji character. (To decode this gook: @samp{ESC} begins an
+escape sequence; @samp{ESC $ (} is a class of escape sequences meaning
+``switch to a 94x94 character set''; @samp{ESC $ ( B} means ``switch to
+Japanese Kanji''; @samp{#} and @samp{&} collectively index into a
+94-by-94 array of characters [subtract 33 from the ASCII value of each
+character to get the corresponding index]; @samp{ESC (} is a class of
+escape sequences meaning ``switch to a 94 character set''; @samp{ESC (B}
+means ``switch to US ASCII''.  It is a coincidence that the letter
+@samp{B} is used to denote both Japanese Kanji and US ASCII.  If the
+first @samp{B} were replaced with an @samp{A}, you'd be requesting a
+Chinese Hanzi character from the GB2312 character set.)
 
 @example
 "foobar"
@@ -1552,7 +1497,7 @@ opposite semantics?  ``Hysterical reasons'', of course.)
 @cindex record type
   Note that there are only eight types that the tag can represent,
 but many more actual types than this.  This is handled by having
-one of the tag types specify a meta-type called a @dfn{record};
+one of the tag types specify a meta-object called a @dfn{record};
 for all such objects, the first four bytes of the pointed-to
 structure indicate what the actual type is.
 
@@ -1576,11 +1521,10 @@ machines, however, put the data space somewhere else in memory
 the proper mask.  Then, pointers retrieved from Lisp objects are
 automatically OR'ed with this value prior to being used.
 
-  A corollary of the previous paragraph is that @strong{(pointers to)
-stack-allocated structures cannot be put into Lisp objects}.  The stack
-is generally located near the top of memory; if you put such a pointer
-into a Lisp object, it will get its top bits chopped off, and you will
-lose.
+  A corollary of the previous paragraph is that @strong{stack-allocated
+structures cannot be put into Lisp objects}.  The stack is generally
+located near the top of memory; if you put such a pointer into a Lisp
+object, it will get its top bits chopped off, and you will lose.
 
   Various macros are used to construct Lisp objects and extract the
 components.  Macros of the form @code{XINT()}, @code{XCHAR()},
@@ -1605,17 +1549,17 @@ where an incorrect type is being dereferenced -- this typically results
 in a pointer being dereferenced as the wrong type of structure, with
 unpredictable (and sometimes not easily traceable) results.
 
-  There are similar @code{XSET@var{TYPE}()} macros that construct a Lisp object.
-These macros are of the form @code{XSET@var{TYPE} (@var{lvalue}, @var{result})},
+  There are similar @code{XSET()} macros that construct a Lisp object.
+These macros are of the form @code{XSET (@var{lvalue}, @var{result})},
 i.e. they have to be a statement rather than just used in an expression.
 The reason for this is that standard C doesn't let you ``construct'' a
 structure (but GCC does).  Granted, this sometimes isn't too convenient;
 for the case of integers, at least, you can use the function
 @code{make_number()}, which constructs and @emph{returns} an integer
-Lisp object.  Note that the @code{XSET@var{TYPE}()} macros are also
-affected by @code{ERROR_CHECK_TYPECHECK} and make sure that the
-structure is of the right type in the case of record types, where the
-type is contained in the structure.
+Lisp object.  Note that the @code{XSET()} macros are also affected by
+@code{ERROR_CHECK_TYPECHECK} and make sure that the structure is of the right
+type in the case of record types, where the type is contained in
+the structure.
 
 @node Rules When Writing New C Code, A Summary of the Various XEmacs Modules, How Lisp Objects Are Represented in C, Top
 @chapter Rules When Writing New C Code
@@ -1643,9 +1587,9 @@ you have defined and defines any symbols you will be using.  The latter
 declares any global Lisp variables you have added and initializes global
 C variables in the module.  For each such function, declare it in
 @file{symsinit.h} and make sure it's called in the appropriate place in
-@file{emacs.c}.  @strong{Important}: There are stringent requirements on
+@code{main()}.  @strong{Important}: There are stringent requirements on
 exactly what can go into these functions.  See the comment in
-@file{emacs.c}.  The reason for this is to avoid obscure unwanted
+@code{main()}.  The reason for this is to avoid obscure unwanted
 interactions during initialization.  If you don't follow these rules,
 you'll be sorry!  If you want to do anything that isn't allowed, create
 a @code{complex_vars_of_*()} function for it.  Doing this is tricky,
@@ -1653,8 +1597,7 @@ though: You have to make sure your function is called at the right time
 so that all the initialization dependencies work out.
 
   Every module includes @file{<config.h>} (angle brackets so that
-@samp{--srcdir} works correctly; @file{config.h} may or may not be in
-the same directory as the C sources) and @file{lisp.h}.  @file{config.h}
+@samp{--srcdir} works correctly) and @file{lisp.h}.  @file{config.h}
 should always be included before any other header files (including
 system header files) to ensure that certain tricks played by various
 @file{s/} and @file{m/} files work out correctly.
@@ -1750,7 +1693,7 @@ If all args return nil, return nil.
 @code{DEFUN} macro.  Here is a template for them:
 
 @example
-DEFUN (@var{lname}, @var{fname}, @var{min}, @var{max}, @var{interactive}, /* 
+DEFUN (@var{lname}, @var{fname}, @var{min}, @var{max}, @var{interactive} /* 
 @var{docstring} 
 */  
    (@var{arglist}) )
@@ -1758,8 +1701,8 @@ DEFUN (@var{lname}, @var{fname}, @var{min}, @var{max}, @var{interactive}, /*
 
 @table @var
 @item lname
-This string is the name of the Lisp symbol to define as the function
-name; in the example above, it is @code{"or"}.
+This is the name of the Lisp symbol to define as the function name; in
+the example above, it is @code{or}.
 
 @item fname
 This is the C function name for this function.  This is the name that is
@@ -1818,7 +1761,7 @@ the same lines as the comment-start and comment-end characters, and the
 comment-start characters are on the same line as the interactive
 specification.  @file{make-docfile}, which scans the C files for
 documentation strings, is very particular about what it looks for, and
-will not properly extract the doc string if it's not in this exact format.
+will not properly note the doc string if it's not in this exact format.
 
 You are free to put the various arguments to @code{DEFUN} on separate
 lines to avoid overly long lines.  However, make sure to put the
@@ -1837,12 +1780,9 @@ The names of the C arguments will be used as the names of the arguments
 to the Lisp primitive as displayed in its documentation, modulo the same
 concerns described above for @code{F...} names (in particular,
 underscores in the C arguments become dashes in the Lisp arguments).
-
-There is one additional kludge: A trailing `_' on the C argument is
-discarded when forming the Lisp argument.  This allows C language
-reserved words (like @code{default}) or global symbols (like
-@code{dirname}) to be used as argument names without compiler warnings
-or errors.
+There is one additional kludge: A C argument called @code{defalt}
+becomes the Lisp argument @code{default}.  This deliberate misspelling
+is done because @code{default} is a reserved word in the C language.
 
 A Lisp function with @w{@var{max} = @code{UNEVALLED}} is a
 @w{@dfn{special form}}; its arguments are not evaluated.  Instead it
@@ -1893,14 +1833,14 @@ right and use a great deal of discipline when writing this code.
 @xref{GCPROing, ,@code{GCPRO}ing}, for full details on how to do this.
 
   What @code{DEFUN} actually does is declare a global structure of
-type @code{Lisp_Subr} whose name begins with capital @samp{SF} and
+type @code{Lisp_Subr} whose name begins with a capital @samp{S} and
 which contains information about the primitive (e.g. a pointer to the
 function, its minimum and maximum allowed arguments, a string describing
 its Lisp name); @code{DEFUN} then begins a normal C function
 declaration using the @code{F...} name.  The Lisp subr object that is
 the function definition of a primitive (i.e. the object in the function
 slot of the symbol that names the primitive) actually points to this
-@samp{SF} structure; when @code{Feval} encounters a subr, it looks in the
+@samp{S} structure; when @code{Feval} encounters a subr, it looks in the
 structure to find out how to call the C function.
 
   Defining the C function is not enough to make a Lisp primitive
@@ -1910,21 +1850,21 @@ object in its function cell. (If you don't do this, the primitive won't
 be seen by Lisp code.) The code looks like this:
 
 @example
-DEFSUBR (@var{fname});
+defsubr (&@var{subr-structure-name});
 @end example
 
-@noindent 
-Here @var{fname} is the name you used as the second argument to
-@code{DEFUN}.
+@noindent
+Here @var{subr-structure-name} is the name you used as the third
+argument to @code{DEFUN}.
 
-  This call to @code{DEFSUBR} should go in the @code{syms_of_*()}
+  This call to @code{defsubr} should go in the @code{syms_of_*()}
 function at the end of the module.  If no such function exists, create
 it and make sure to also declare it in @file{symsinit.h} and call it
 from the appropriate spot in @code{main()}.  @xref{General Coding
 Rules}.
 
   Note that C code cannot call functions by name unless they are defined
-in C.  The way to call a function written in Lisp from C is to use
+in C.  The way to call a function written in Lisp is to use
 @code{Ffuncall}, which embodies the Lisp function @code{funcall}.  Since
 the Lisp function @code{funcall} accepts an unlimited number of
 arguments, in C it takes two: the number of Lisp-level arguments, and a
@@ -2150,7 +2090,7 @@ all of the files that implement Xt widget classes @emph{must} be placed
 after @file{lastfile.c} because they contain various structures that
 must be statically initialized and into which Xt writes at various
 times.) @file{pre-crt0.c} and @file{lastfile.c} contain exported symbols
-that are used to determine the start and end of XEmacs' initialized
+that are used to determine the start and end of XEmacs's initialized
 data space when dumping.
 
 
@@ -3134,13 +3074,13 @@ can be derived).
    9918  casetab.c
 @end example
 
-@file{chartab.c} and @file{chartab.h} implement the @dfn{char table}
-Lisp object type, which maps from characters or certain sorts of
-character ranges to Lisp objects.  The implementation of this object
-type is optimized for the internal representation of characters.  Char
-tables come in different types, which affect the allowed object types to
-which a character can be mapped and also dictate certain other
-properties of the char table.
+@file{chartab.c} and @file{chartab.h} implement the char table Lisp
+object type, which maps from characters or certain sorts of character
+ranges to Lisp objects.  The implementation of this object is optimized
+for the internal representation of characters.  Char tables come in
+different types, which affect the allowed object types to which a
+character can be mapped and also dictate certain other properties of the
+char table.
 
 @cindex case table
 @file{casetab.c} implements one sort of char table, the @dfn{case
@@ -3156,13 +3096,13 @@ and to do case-insensitive searching.
 @end example
 
 @cindex scanner
-This module implements @dfn{syntax tables}, another sort of char table
-that maps characters into syntax classes that define the syntax of these
-characters (e.g. a parenthesis belongs to a class of @samp{open}
-characters that have corresponding @samp{close} characters and can be
-nested).  This module also implements the Lisp @dfn{scanner}, a set of
-primitives for scanning over text based on syntax tables.  This is used,
-for example, to find the matching parenthesis in a command such as
+This module implements syntax tables, another sort of char table that
+maps characters into syntax classes that define the syntax of these
+characters (e.g. a parenthesis belongs to a class of @samp{open} characters
+that have corresponding @samp{close} characters and can be nested).
+This module also implements the Lisp @dfn{scanner}, a set of primitives
+for scanning over text based on syntax tables.  This is used, for
+example, to find the matching parenthesis in a command such as
 @code{forward-sexp}, and by @file{font-lock.c} to locate quoted strings,
 comments, etc.
 
@@ -3724,9 +3664,9 @@ Kanji).
 
 @file{mule-coding.*} implements the @dfn{coding-system} Lisp object
 type, which encapsulates a method of converting between different
-encodings.  An encoding is a representation of a stream of characters,
-possibly from multiple character sets, using a stream of bytes or words,
-and defines (e.g.) which escape sequences are used to specify particular
+encodings.  An encoding is a representation of a stream of characters
+from multiple character sets using a stream of bytes or words and
+defines (e.g.) which escape sequences are used to specify particular
 character sets, how the indices for a character are converted into bytes
 (sometimes this involves setting the high bit; sometimes complicated
 rearranging of the values takes place, as in the Shift-JIS encoding),
@@ -3738,7 +3678,7 @@ implement converters for custom encodings.
 
 @file{mule-canna.c} and @file{mule-wnnfns.c} implement interfaces to
 external programs used to implement the Canna and WNN input methods,
-respectively.  This is currently in beta.
+respectively.  This is currently broken.
 
 @file{mule-mcpath.c} provides some functions to allow for pathnames
 containing extended characters.  This code is fragmentary, obsolete, and
@@ -3824,8 +3764,7 @@ Lisp object types into four broad categories:
 (a) Those for whom the value directly represents the contents of the
 Lisp object.  Only two types are in this category: integers and
 characters.  No special allocation or garbage collection is necessary
-for such objects.  Lisp objects of these types do not need to be 
-@code{GCPRO}ed.
+for such objects.
 @end itemize
 
   In the remaining three categories, the value is a pointer to a
@@ -3995,7 +3934,7 @@ Therefore, all functions and variables get marked through this.
 @item
 Any shadowed bindings that are sitting on the specpdl stack.
 @item
-Any objects sitting in currently active (Lisp) stack frames,
+Any objects sitting in currently active stack frames,
 catches, and condition cases.
 @item
 A couple of special-case places where active objects are
@@ -4044,7 +3983,7 @@ the first object in the array and then set @code{gcpron.nvars}.
 
 @item
 @strong{Strings are relocated.}  What this means in practice is that the
-pointer obtained using @code{XSTRING_DATA()} is liable to change at any
+pointer obtained using @code{string_data()} is liable to change at any
 time, and you should never keep it around past any function call, or
 pass it as an argument to any function that might cause a garbage
 collection.  This is why a number of functions accept either a
@@ -4085,7 +4024,7 @@ you need to @code{GCPRO}, you should @code{GCPRO}.
 
 @item
 Beware of @code{GCPRO}ing something that is uninitialized.  If you have
-any shade of doubt about this, initialize all your variables to @code{Qnil}.
+any shade of doubt about this, initialize all your variables to Qnil.
 
 @item
 Be careful of traps, like calling @code{Fcons()} in the argument to
@@ -4494,10 +4433,10 @@ before.
   As mentioned above, each vector is @code{malloc()}ed individually, and
 all are threaded through the variable @code{all_vectors}.  Vectors are
 marked strangely during garbage collection, by kludging the size field.
-Note that the @code{struct Lisp_Vector} is declared with its
-@code{contents} field being a @emph{stretchy} array of one element.  It
-is actually @code{malloc()}ed with the right size, however, and access
-to any element through the @code{contents} array works fine.
+Note that the @code{struct Lisp_Vector} is declared with its contents
+being an array of one element.  It is actually @code{malloc()}ed with
+the right size, however, and access to any element through the contents
+array works fine.
 
 @node Bit Vector
 @section Bit Vector
@@ -4980,22 +4919,20 @@ condition'', which is not a good sign.
 
   @code{next-command-event} and @code{read-char} are higher-level
 interfaces to @code{next-event}.  @code{next-command-event} gets the
-next @dfn{command} event (i.e.  keypress, mouse event, menu selection,
-or scrollbar action), calling @code{dispatch-event} on any others.
-@code{read-char} calls @code{next-command-event} and uses
-@code{event_to_character()} to return the character equivalent.  With
-the right kind of input method support, it is possible for (read-char)
-to return a Kanji character.
+next @dfn{command} event (i.e.  keypress, mouse event, or menu
+selection), calling dispatch-event on any others.  @code{read-char}
+calls @code{next-command-event} and uses @code{event_to_character()} to
+return the ASCII equivalent.
 
 @node Converting Events
 @section Converting Events
 
   @code{character_to_event()}, @code{event_to_character()},
 @code{event-to-character}, and @code{character-to-event} convert between
-characters and keypress events corresponding to the characters.  If the
+ASCII characters and keypresses corresponding to the characters.  If the
 event was not a keypress, @code{event_to_character()} returns -1 and
 @code{event-to-character} returns @code{nil}.  These functions convert
-between character representation and the split-up event representation
+between ASCII representation and the split-up event representation
 (keysym plus mod keys).
 
 @node Dispatching Events; The Command Builder
@@ -5041,21 +4978,21 @@ the backtrace structure is changed).
   At this point, the function to be called is determined by looking at
 the car of the cons (if this is a symbol, its function definition is
 retrieved and the process repeated).  The function should then consist
-of either a @code{Lisp_Subr} (built-in function), a
-@code{Lisp_Compiled_Function} object, or a cons whose car is the symbol
-@code{autoload}, @code{macro}, @code{lambda}, or @code{mocklisp}.
+of either a Lisp_Subr (built-in function), a Lisp_Compiled object, or a
+cons whose car is the symbol @code{autoload}, @code{macro},
+@code{lambda}, or @code{mocklisp}.
 
-If the function is a @code{Lisp_Subr}, the lisp object points to a
-@code{struct Lisp_Subr} (created by @code{DEFUN()}), which contains a
-pointer to the C function, a minimum and maximum number of arguments
-(possibly the special constants @code{MANY} or @code{UNEVALLED}), a
-pointer to the symbol referring to that subr, and a couple of other
-things.  If the subr wants its arguments @code{UNEVALLED}, they are
-passed raw as a list.  Otherwise, an array of evaluated arguments is
-created and put into the backtrace structure, and either passed whole
-(@code{MANY}) or each argument is passed as a C argument.
+  If the function is a Lisp_Subr, the lisp object points to a struct
+Lisp_Subr (created by @code{DEFUN()}), which contains a pointer to the C
+function, a minimum and maximum number of arguments (possibly the
+special constants @code{MANY} or @code{UNEVALLED}), a pointer to the
+symbol referring to that subr, and a couple of other things.  If the
+subr wants its arguments @code{UNEVALLED}, they are passed raw as a
+list.  Otherwise, an array of evaluated arguments is created and put
+into the backtrace structure, and either passed whole (@code{MANY}) or
+each argument is passed as a C argument.
 
-  If the function is a @code{Lisp_Compiled_Function} object or a lambda,
+  If the function is a Lisp_Compiled object or a lambda,
 @code{apply_lambda()} is called.  If the function is a macro,
 [..... fill in] is done.  If the function is an autoload,
 @code{do_autoload()} is called to load the definition and then eval
@@ -5075,8 +5012,8 @@ just like eval does.  Then it calls @code{funcall_lambda()}.
 function and binds them to the actual arguments, checking for
 @code{&rest} and @code{&optional} symbols in the formal arguments and
 making sure the number of actual arguments is correct.  Then either
-@code{progn} or @code{byte-code} is called to actually execute the body
-and return a value.
+progn or byte-code is called to actually execute the body and return a
+value.
 
   @code{Ffuncall()} implements Lisp @code{funcall}.  @code{(funcall fun
 x1 x2 x3 ...)} is equivalent to @code{(eval (list fun (quote x1) (quote
@@ -5124,27 +5061,27 @@ specpdl array, and @code{specpdl_size} is increased by 1.
   @code{record_unwind_protect()} implements an @dfn{unwind-protect},
 which, when placed around a section of code, ensures that some specified
 cleanup routine will be executed even if the code exits abnormally
-(e.g. through a @code{throw} or quit).  @code{record_unwind_protect()}
-simply adds a new specbinding to the specpdl array and stores the
-appropriate information in it.  The cleanup routine can either be a C
-function, which is stored in the @code{func} field, or a @code{progn}
-form, which is stored in the @code{old_value} field.
+(e.g. through a throw or quit).  @code{record_unwind_protect()} simply
+adds a new specbinding to the specpdl array and stores the appropriate
+information in it.  The cleanup routine can either be a C function,
+which is stored in the @code{func} field, or a progn form, which is stored in
+the @code{old_value} field.
 
   @code{unbind_to()} removes specbindings from the specpdl array until
-the specified position is reached.  Each specbinding can be one of three
+the specified position is reached.  The specbinding can be one of three
 types:
 
 @enumerate
 @item
-an unwind-protect with a C cleanup function (@code{func} is not 0, and
+an unwind-protect with a C cleanup function (@code{func} is not 0 --
 @code{old_value} holds an argument to be passed to the function);
 @item
-an unwind-protect with a Lisp form (@code{func} is 0, @code{symbol}
-is @code{nil}, and @code{old_value} holds the form to be executed with
+an unwind-protect with a Lisp form (@code{func} is 0 and @code{symbol}
+is @code{nil} -- @code{old_value} holds the form to be executed with
 @code{Fprogn()}); or
 @item
-a local-variable binding (@code{func} is 0, @code{symbol} is not
-@code{nil}, and @code{old_value} holds the old value, which is stored as
+a local-variable binding (@code{func} is 0 and @code{symbol} is not
+@code{nil} -- @code{old_value} holds the old value, which is stored as
 the symbol's value).
 @end enumerate
 
@@ -5305,9 +5242,8 @@ possibility.)
 you can explicitly create a symbol using @code{make-symbol}, giving it
 some name.  The resulting symbol is not in any obarray (i.e. it is
 @dfn{uninterned}), and you can't add it to any obarray.  Therefore its
-primary purpose is as a symbol to use in macros to avoid namespace
-pollution.  It can also be used as a carrier of information, but cons
-cells could probably be used just as well.
+primary purpose is as a carrier of information. (Cons cells could
+probably be used just as well.)
 
   You can also use @code{intern-soft} to look up a symbol but not create
 a new one, and @code{unintern} to remove a symbol from an obarray.  This
@@ -5363,7 +5299,7 @@ well-documented in comments in @file{buffer.c}, @file{symbols.c}, and
 
 @menu
 * Introduction to Buffers::     A buffer holds a block of text such as a file.
-* The Text in a Buffer::        Representation of the text in a buffer.
+* A Buffer@'s Text::            Representation of the text in a buffer.
 * Buffer Lists::                Keeping track of all buffers.
 * Markers and Extents::         Tagging locations within a buffer.
 * Bufbytes and Emchars::        Representation of individual characters.
@@ -5379,7 +5315,7 @@ frequent insertion and deletion, while a string is not.  Furthermore:
 
 @enumerate
 @item
-Buffers are @dfn{permanent} objects, i.e. once you create them, they
+Buffers are @dfn{permanent} objects, i.e. one you create them, they
 remain around, and need to be explicitly deleted before they go away.
 @item
 Each buffer has a unique name, which is a string.  Buffers are
@@ -5413,8 +5349,8 @@ enclosed in a @code{save-excursion} so that the former current buffer
 gets restored when the code is finished).  However, calling
 @code{set-buffer} will NOT cause a permanent change in the current
 buffer.  The reason for this is that the top-level event loop sets
-@code{current_buffer} to the buffer of the selected window, each time 
-it finishes executing a user command.
+current buffer to the buffer of the selected window, each time it
+finishes executing a user command.
 @end enumerate
 
   Make sure you understand the distinction between @dfn{current buffer}
@@ -5423,8 +5359,8 @@ and @dfn{buffer of the selected window}, and the distinction between
 window. (This latter distinction is explained in detail in the section
 on windows.)
 
-@node The Text in a Buffer
-@section The Text in a Buffer
+@node A Buffer@'s Text
+@section A Buffer's Text
 
   The text in a buffer consists of a sequence of zero or more
 characters.  A @dfn{character} is an integer that logically represents
@@ -5437,10 +5373,10 @@ characters is quite large.
 
   For now, we can view a character as some non-negative integer that
 has some shape that defines how it typically appears (e.g. as an
-uppercase A). (The exact way in which a character appears depends on the
-font used to display the character.) The internal type of characters in
-the C code is an @code{Emchar}; this is just an @code{int}, but using a
-symbolic type makes the code clearer.
+uppercase A). (The exact way in which a character appears depends
+on the font of the character.) The internal type of characters in
+the C code is an Emchar; this is just an int, but using a symbolic
+type makes the code clearer.
 
   Between every character in a buffer is a @dfn{buffer position} or
 @dfn{character position}.  We can speak of the character before or after
@@ -5496,7 +5432,7 @@ for the buffer text will be freed, but it will still be sitting on the
 heap, taking up virtual memory, and will not be released back to the
 operating system. (However, if you have compiled XEmacs with rel-alloc,
 the situation is different.  In this case, the space @emph{will} be
-released back to the operating system.  However, this tends to result in a
+released back to the operating system.  However, this tends to effect a
 noticeable speed penalty.)
 
   Astute readers may notice that the text in a buffer is represented as
@@ -5549,7 +5485,7 @@ memory access.
 @dfn{memory indices}, typedef @code{Memind}
 @end enumerate
 
-  All three typedefs are just @code{int}s, but defining them this way makes
+  All three typedefs are just ints, but defining them this way makes
 things a lot clearer.
 
   Most code works with buffer positions.  In particular, all Lisp code
@@ -5560,7 +5496,7 @@ not know that byte indices or memory indices exist.
 @code{Bufbyte}, which is an unsigned char.  Referring to them as
 Bufbytes underscores the fact that we are working with a string of bytes
 in the internal Emacs buffer representation rather than in one of a
-number of possible alternative representations (e.g. EUC-encoded text,
+number of possible alternative representations (e.g. EUC-coded text,
 etc.).
 
 @node Buffer Lists

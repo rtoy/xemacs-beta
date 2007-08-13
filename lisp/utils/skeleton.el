@@ -165,7 +165,6 @@ ignored."
 			 (and skeleton-autowrap
 			      (or (eq last-command 'mouse-drag-region)
 				  (and (boundp 'transient-mark-mode)
-				       (boundp 'mark-active)
 				       transient-mark-mode mark-active))
 			      -1)))
 		     (if (stringp str)
@@ -212,7 +211,6 @@ ignored."
 			   (and skeleton-autowrap
 				(or (eq last-command 'mouse-drag-region)
 				    (and (boundp 'transient-mark-mode)
-					 (boundp 'mark-active)
 					 transient-mark-mode mark-active))
 				-1)))
 		       (if (stringp str)
@@ -393,8 +391,7 @@ automatically, and you are prompted to fill in the variable parts.")))
 
 
 (defun skeleton-internal-1 (element &optional literal)
-  (cond ((or (integerp element)
-	     (char-or-string-p element))
+  (cond ((char-or-string-p element)
 	 (if (and (integerp element)	; -num
 		  (< element 0))
 	     (if skeleton-untabify
@@ -520,7 +517,6 @@ symmetrical ones, and the same character twice for the others."
   (let ((mark (and skeleton-autowrap
 		   (or (eq last-command 'mouse-drag-region)
 		       (and (boundp 'transient-mark-mode)
-			    (boundp 'mark-active)
 			    transient-mark-mode mark-active))))
 	(skeleton-end-hook))
     (if (or arg

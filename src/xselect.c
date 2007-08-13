@@ -371,6 +371,43 @@ hack_motif_clipboard_selection (Atom selection_atom,
       Extbyte *data  = XSTRING_DATA   (selection_value);
       Extcount bytes = XSTRING_LENGTH (selection_value);
 
+#ifdef MULE
+      {
+	enum { ASCII, LATIN_1, WORLD } chartypes = ASCII;
+	CONST Bufbyte *ptr = data, *end = ptr + bytes;
+	/* Optimize for the common ASCII case */
+	while (ptr <= end)
+	  {
+	    if (BYTE_ASCII_P (*ptr))
+	      {
+		ptr++;
+		continue;
+	      }
+
+	    if ((*ptr) == LEADING_BYTE_LATIN_1 ||
+		(*ptr) == LEADING_BYTE_CONTROL_1)
+	      {
+		chartypes = LATIN_1;
+		ptr += 2;
+		continue;
+	      }
+ 
+	    chartypes = WORLD;
+	    break;
+	  }
+
+	switch (chartypes)
+	  {
+	  case LATIN_1:
+	    GET_STRING_BINARY_DATA_ALLOCA (selection_value, data, bytes);
+	    break;
+	  case WORLD:
+	    GET_STRING_CTEXT_DATA_ALLOCA (selection_value, data, bytes);
+	    encoding = (String) "COMPOUND_TEXT";
+	    break;
+	  }
+      }
+#endif /* MULE */
 
       fmh = XmStringCreateLtoR ((String) "Clipboard",
 				XmSTRING_DEFAULT_CHARSET);
@@ -1341,6 +1378,11 @@ x_get_window_property_as_lisp_data (Display *display,
    When converting an object to C, it may be of the form (SYMBOL . <data>)
    where SYMBOL is what we should claim that the type is.  Format and
    representation are as above.
+
+   NOTE: Under Mule, when someone shoves us a string without a type, we
+   set the type to 'COMPOUND_TEXT and automatically convert to Compound
+   Text.  If the string has a type, we assume that the user wants the
+   data sent as-is so we just do "binary" conversion.
  */
 
 
@@ -1468,7 +1510,30 @@ lisp_data_to_selection_data (struct device *d,
       *size_ret = extvallen;
       *data_ret = (unsigned char *) xmalloc (*size_ret);
       memcpy (*data_ret, extval, *size_ret);
+#ifdef MULE
+      if (NILP (type)) type = QCOMPOUND_TEXT;
+#else
       if (NILP (type)) type = QSTRING;
+#endif
+    }
+  else if (CHARP (obj))
+    {
+      Bufbyte buf[MAX_EMCHAR_LEN];
+      Bytecount len;
+      CONST Extbyte *extval;
+      Extcount extvallen;
+
+      *format_ret = 8;
+      len = set_charptr_emchar (buf, XCHAR (obj));
+      GET_CHARPTR_EXT_CTEXT_DATA_ALLOCA (buf, len, extval, extvallen);
+      *size_ret = extvallen;
+      *data_ret = (unsigned char *) xmalloc (*size_ret);
+      memcpy (*data_ret, extval, *size_ret);
+#ifdef MULE
+      if (NILP (type)) type = QCOMPOUND_TEXT;
+#else
+      if (NILP (type)) type = QSTRING;
+#endif
     }
   else if (SYMBOLP (obj))
     {
@@ -1672,7 +1737,9 @@ anything that the functions on selection-converter-alist know about.
 DEFUN ("x-get-selection-internal", Fx_get_selection_internal, 2, 2, 0, /*
 Return text selected from some X window.
 SELECTION is a symbol, typically PRIMARY, SECONDARY, or CLIPBOARD.
-TYPE is the type of data desired, typically STRING.
+TYPE is the type of data desired, typically STRING or COMPOUND_TEXT.
+Under Mule, if the resultant data comes back as 8-bit data in type
+TEXT or COMPOUND_TEXT, it will be decoded as Compound Text.
 */
        (selection_symbol, target_type))
 {
@@ -1860,9 +1927,14 @@ Return the value of the named CUTBUFFER (typically CUT_BUFFER0).
 			   x_atom_to_symbol (d, type),
 			   make_int (format));
 
+  /* We cheat - if the string contains an ESC character, that's
+     technically not allowed in a STRING, so we assume it's
+     COMPOUND_TEXT that we stored there ourselves earlier,
+     in x-store-cutbuffer-internal  */
   ret = (bytes ?
 	 make_ext_string (data, bytes,
-			  FORMAT_BINARY)
+			  memchr (data, 0x1b, bytes) ?
+			  FORMAT_CTEXT : FORMAT_BINARY)
 	 : Qnil);
   xfree (data);
   return ret;
@@ -1882,6 +1954,11 @@ Set the value of the named CUTBUFFER (typically CUT_BUFFER0) to STRING.
   Extcount bytes = XSTRING_LENGTH (string);
   Extcount bytes_remaining;
   int max_bytes = SELECTION_QUANTUM (display);
+#ifdef MULE
+  CONST Bufbyte *ptr, *end;
+  Atom encoding = XA_STRING;
+  enum { ASCII, LATIN_1, WORLD } chartypes = ASCII;
+#endif
 
   if (max_bytes > MAX_SELECTION_QUANTUM)
     max_bytes = MAX_SELECTION_QUANTUM;
@@ -1893,6 +1970,40 @@ Set the value of the named CUTBUFFER (typically CUT_BUFFER0) to STRING.
   if (! cut_buffers_initialized)
     initialize_cut_buffers (display, window);
 
+  /* We use the STRING encoding (Latin-1 only) if we can, else COMPOUND_TEXT.
+     We cheat and use type = `STRING' even when using COMPOUND_TEXT.
+     The ICCCM requires that this be so, and other clients assume it,
+     as we do ourselves in initialize_cut_buffers.  */
+
+#ifdef MULE 
+  /* Optimize for the common ASCII case */
+  for (ptr = data, end = ptr + bytes; ptr <= end; )
+    {
+      if (BYTE_ASCII_P (*ptr))
+	{
+	  ptr++;
+	  continue;
+	}
+      
+      if ((*ptr) == LEADING_BYTE_LATIN_1 ||
+	  (*ptr) == LEADING_BYTE_CONTROL_1)
+	{
+	  chartypes = LATIN_1;
+	  ptr += 2;
+	  continue;
+	}
+      
+      chartypes = WORLD;
+      break;
+    }
+
+  switch (chartypes)
+    {
+    case LATIN_1: GET_STRING_BINARY_DATA_ALLOCA (string, data, bytes); break;
+    case WORLD:   GET_STRING_CTEXT_DATA_ALLOCA  (string, data, bytes); break;
+    }
+#endif /* MULE */
+  
   bytes_remaining = bytes;
 
   while (bytes_remaining)
@@ -1938,6 +2049,7 @@ positive means move values forward, negative means backward.
 }
 
 #endif /* CUT_BUFFER_SUPPORT */
+
 
 
 /************************************************************************/
@@ -2038,8 +2150,17 @@ return the value to send to the X server, which should be one of:
 -- nil (the conversion could not be done)
 -- a cons of a symbol and any of the following values; the symbol
    explicitly specifies the type that will be sent.
--- a string (Will be left as is and sent in the 'STRING format as 8-bit data.)
--- a character (Same as for strings.)
+-- a string (If the type is not specified, then if Mule support exists,
+             the string will be converted to Compound Text and sent in
+             the 'COMPOUND_TEXT format; otherwise (no Mule support),
+             the string will be left as-is and sent in the 'STRING
+             format.  If the type is specified, the string will be
+             left as-is (or converted to binary format under Mule).
+             In all cases, 8-bit data it sent.)
+-- a character (With Mule support, will be converted to Compound Text
+                whether or not a type is specified.  If a type is not
+                specified, a type of 'STRING or 'COMPOUND_TEXT will be
+		sent, as for strings.)
 -- the symbol 'NULL (Indicates that there is no meaningful return value.
                      Empty 32-bit data with a type of 'NULL will be sent.)
 -- a symbol (Will be converted into an atom.  If the type is not specified,

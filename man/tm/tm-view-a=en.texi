@@ -1,0 +1,86 @@
+@c $Id: tm-view-a=en.texi,v 1.1.1.1 1996/12/18 22:43:52 steve Exp $
+
+@node article-buffer, preview-buffer, encoded-word decoding, Mechanism of tm-view
+@comment  node-name,  next,  previous,  up
+@subsection article-buffer
+
+@defvr{Structure} mime::content-info rcnum point-min point-max type parameters encoding children
+
+structure to represent MIME content in article-buffer. It is called by
+@strong{content-info}.
+
+@table @var
+@item rcnum
+@strong{reversed content-number} (list)
+
+@item point-min
+region beginning point in article-buffer
+
+@item point-max
+region end point in article-buffer
+
+@item type
+content-type/sub-type (string or nil)
+
+@item parameters
+parameter of Content-Type field (association list)
+
+@item encoding
+Content-Transfer-Encoding (string or nil)
+
+@item children
+list of content-info included in this content
+@end table
+
+Please use reference function `@code{mime::content-info/SLOT-NAME}' to 
+reference slot of content-info. Their argument is only content-info.
+
+@end defvr
+
+
+@defvar mime::article/content-info
+
+result of MIME parsing of article-buffer (content-info)
+@end defvar
+
+
+@defvar mime::article/preview-buffer
+
+preview-buffer corresponded by this buffer
+@end defvar
+
+
+@defun mime-article/point-content-number point &optional cinfo
+
+In a region managed by content-info @var{cinfo}, it returns
+content-number corresponded by @var{point}.
+
+Default value of @var{cinfo} is @code{mime::article/content-info}.
+@end defun
+
+
+@defun mime-article/rcnum-to-cinfo rcnum &optional cinfo
+
+In a region managed by content-info @var{cinfo}, it returns
+content-info corresponded by reversed-content-number @var{rcnum}.
+
+Default value of @var{cinfo} is @code{mime::article/content-info}.
+@end defun
+
+
+@defun mime-article/cnum-to-cinfo rcnum &optional cinfo
+
+In a region managed by content-info @var{cinfo}, it returns
+content-info corresponded by content-number @var{cnum}.
+
+Default value of @var{cinfo} is @code{mime::article/content-info}.
+@end defun
+
+
+@defun mime/flatten-content-info &optional cinfo
+
+It returns flatten list of content-info from content-info @var{cinfo}
+tree.
+
+Default value of @var{cinfo} is @code{mime::article/content-info}.
+@end defun

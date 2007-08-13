@@ -1,10 +1,10 @@
-;;; tm-ew-e.el --- RFC 2047 based encoded-word encoder for GNU Emacs
+;;; tm-ew-e.el --- RFC 1522 based MIME encoded-word encoder for GNU Emacs
 
-;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
+;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Revision: 1.3 $
-;; Keywords: encoded-word, MIME, multilingual, header, mail, news
+;; Version: $Revision: 1.1.1.1 $
+;; Keywords: mail, news, MIME, RFC 1522, multilingual, encoded-word
 
 ;; This file is part of tm (Tools for MIME).
 
@@ -35,7 +35,7 @@
 ;;;
 
 (defconst tm-ew-e/RCS-ID
-  "$Id: tm-ew-e.el,v 1.3 1997/02/16 01:29:32 steve Exp $")
+  "$Id: tm-ew-e.el,v 1.1.1.1 1996/12/18 22:43:37 steve Exp $")
 (defconst mime-eword/encoder-version (get-version-string tm-ew-e/RCS-ID))
 
 
@@ -90,14 +90,10 @@ when Subject field is encoded by `mime/encode-message-header'.
     (iso-8859-9		. "Q")
     (iso-2022-jp	. "B")
     (iso-2022-kr	. "B")
-    (gb2312		. "B")
-    (cn-gb		. "B")
-    (cn-gb-2312		. "B")
     (euc-kr		. "B")
     (iso-2022-jp-2	. "B")
     (iso-2022-int-1	. "B")
     ))
-
 
 ;;; @ encoded-text encoder
 ;;;
@@ -316,7 +312,8 @@ when Subject field is encoded by `mime/encode-message-header'.
 	     )
 	    (t
 	     (setq string (car rword))
-	     (let* ((p 0) np
+	     (let* ((sl (length string))
+		    (p 0) np
 		    (str "") nstr)
 	       (while (and (< p len)
 			   (progn

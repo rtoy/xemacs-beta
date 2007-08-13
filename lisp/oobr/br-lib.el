@@ -6,12 +6,12 @@
 ;; KEYWORDS:     oop, tools
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          InfoDock Associates
+;; ORG:          Motorola Inc.
 ;;
 ;; ORIG-DATE:    22-Mar-90
-;; LAST-MOD:     20-Feb-97 at 10:55:11 by Bob Weiner
+;; LAST-MOD:     21-Sep-95 at 14:30:36 by Bob Weiner
 ;;
-;; Copyright (C) 1990-1997  Free Software Foundation, Inc.
+;; Copyright (C) 1990-1995  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.
@@ -96,7 +96,7 @@ Optional COUNT conses number of duplicates on to front of list before return."
   (if count (cons count sorted-strings) sorted-strings))
 
 (defun br-member-sorted-strings (elt list)
-  "Return non-nil if ELT is an element of LIST.  Comparison done with `string-equal'.
+  "Return non-nil if ELT is an element of LIST.  Comparison done with 'string-equal'.
 All ELTs must be strings and the list must be sorted in ascending order.
 The value returned is actually the tail of LIST whose car is ELT."
   (while (and list (not (string-equal (car list) elt)))
@@ -116,7 +116,7 @@ The value returned is actually the tail of LIST whose car is ELT."
 
 (defun br-rassoc (elt list)
   "Return non-nil if ELT is the cdr of an element of LIST.
-Comparison done with `equal'.  The value is actually the tail of LIST
+Comparison done with 'equal'.  The value is actually the tail of LIST
 starting at the element whose cdr is ELT."
   (while (and list (not (equal (cdr (car list)) elt)))
     (setq list (cdr list)))
@@ -138,7 +138,7 @@ The shorter of the absolute and relative paths is returned."
 
 (defmacro br-set-cons (set elt)
   "Add to SET element ELT.  Returns nil iff ELT is already in SET.
-Uses `equal' for comparison."
+Uses 'equal' for comparison."
   (` (if (br-member (, elt) (, set))
 	 nil
        (setq (, set) (cons (, elt) (, set))))))
@@ -159,7 +159,7 @@ Uses `equal' for comparison."
 CLASS-PATH is nil, defaults to current buffer file as CLASS-PATH.  If
 optional LIB-TABLE-P is non-nil, add to Library Environment, otherwise add to
 System Environment.  If optional SAVE-FILE is t, the Environment is then
-stored to filename given by `br-env-file'.  If SAVE-FILE is non-nil and
+stored to filename given by 'br-env-file'.  If SAVE-FILE is non-nil and
 not t, its string value is used as the file to which to save the Environment.
 Does not update children lookup table."
   (interactive
@@ -179,15 +179,15 @@ Does not update children lookup table."
   ;;       If function called interactively
   ;;          Query whether should overwrite class-name in tables
   ;;          If yes
-  ;;             Replace class and its features
+  ;;             Replace entry
   ;;          else
   ;;             Don't add class; do nothing
   ;;          end
   ;;       else
-  ;;          Store class without its features in all necessary tables
+  ;;          Store class in all necessary tables
   ;;       end
   ;;    else
-  ;;       Store class and its features under key in all necessary tables
+  ;;       Store class under key in all necessary tables
   ;;    end
   ;;
   (or class-path (setq class-path buffer-file-name)
@@ -195,14 +195,15 @@ Does not update children lookup table."
   (if (or (string-equal class-name "")
 	  (not (or (equal class-path br-null-path)
 		   (file-exists-p class-path))))
-      (error (format "Invalid class specified, `%s', in: %s" class-name class-path)))
+      (error (format "Invalid class specified, '%s', in: %s" class-name class-path)))
   ;; Is class already in Environment?
   (if (hash-key-p class-name (br-get-htable
 			       (if lib-table-p "lib-parents" "sys-parents")))
-      (if (or (not (interactive-p))
-	      (y-or-n-p (format "Overwrite existing `%s' entry? " class-name)))
-	  (br-real-add-class lib-table-p class-name class-path t)
-	(setq save-file nil))
+      (if (interactive-p)
+	  (if (y-or-n-p (format "Overwrite existing '%s' entry? " class-name))
+	      (br-real-add-class lib-table-p class-name class-path 'replace)
+	    (setq save-file nil))
+	(br-real-add-class lib-table-p class-name class-path))
     (br-real-add-class lib-table-p class-name class-path))
   (cond ((eq save-file nil))
 	((eq save-file t) (br-env-save))
@@ -259,7 +260,7 @@ Does not update children lookup table."
   "Return full path, if any, to CLASS-NAME.
 With optional prefix argument INSERT non-nil, insert path at point.
 Only the first matching class is returned, so each CLASS-NAME should be
-unique. Set `br-lib/sys-search-dirs' properly before use."
+unique. Set 'br-lib/sys-search-dirs' properly before use."
   (interactive (list (br-complete-class-name)))
   (setq class-name (if class-name (br-set-case class-name)))
   (let* ((class-path)
@@ -279,7 +280,7 @@ unique. Set `br-lib/sys-search-dirs' properly before use."
 	  (message
 	   (or class-path
 	       (format
-		"(OO-Browser): No `%s' class found in `br-lib/sys-search-dirs'."
+		"(OO-Browser): No '%s' class found in 'br-lib/sys-search-dirs'."
 		class-name)))))
     class-path))
 
@@ -320,7 +321,7 @@ signal an error when called interactively."
 		   (goto-char (point-min))
 		   (if br-narrow-view-to-class
 		       ;; Display file narrowed to definition of
-		       ;; `class-name'.
+		       ;; 'class-name'.
 		       (if (re-search-forward class-def nil t)
 			   ;; Narrow display to this class
 			   (progn (narrow-to-region
@@ -336,7 +337,7 @@ signal an error when called interactively."
 				  (goto-char (point-min)))
 			 (goto-char opoint)
 			 (narrow-to-region pmin pmax)
-			 (setq err (format "(OO-Browser):  No `%s' in %s" class-name
+			 (setq err (format "(OO-Browser):  No '%s' in %s" class-name
 					   class-path))
 			 )
 		     (if (re-search-forward class-def nil t)
@@ -345,17 +346,17 @@ signal an error when called interactively."
 				(recenter 0))
 		       (goto-char opoint)
 		       (narrow-to-region pmin pmax)
-		       (setq err (format "(OO-Browser):  No `%s' in %s" class-name
+		       (setq err (format "(OO-Browser):  No '%s' in %s" class-name
 					class-path))
 		       )))
 		 (setq class-path t))
-	(setq err (format "(OO-Browser):  `%s' - src file not found or not readable, %s"
+	(setq err (format "(OO-Browser):  '%s' - src file not found or not readable, %s"
 			  class-name class-path)
 	      class-path nil)
 	)
       (if (interactive-p)
 	  (setq err
-		(format "(OO-Browser):  No `%s' class defined in Environment."
+		(format "(OO-Browser):  No '%s' class defined in Environment."
 			class-name))
 	)))
     (if err (error err))
@@ -365,16 +366,6 @@ signal an error when called interactively."
   "Invoke language-specific major mode on current buffer if not already set."
   (or (eq major-mode (symbol-function 'br-lang-mode))
       (br-lang-mode)))
-
-(defun br-scan-mode ()
-  "Invoke language-specific major mode for current buffer without running its hooks.
-This is used when scanning source files to build Environments."
-  (let ((mode-hook-sym
-	  (intern-soft (concat (symbol-name (symbol-function 'br-lang-mode))
-			       "-hook"))))
-    (if mode-hook-sym
-	(eval (` (let ((, mode-hook-sym)) (br-lang-mode))))
-      (br-lang-mode))))
 
 (defun br-show-children (class-name)
   "Return children of CLASS-NAME from current Environment."
@@ -496,9 +487,9 @@ Otherwise, display error and return nil."
 	(beep)
 	(message
 	 (if (br-class-in-table-p class)
-	     (format "(OO-Browser):  Class `%s' referenced but not defined in Environment."
+	     (format "(OO-Browser):  Class '%s' referenced but not defined in Environment."
 		     class)
-	   (format "(OO-Browser):  Class `%s' not defined in Environment."
+	   (format "(OO-Browser):  Class '%s' not defined in Environment."
 		   class)))
 	nil)))
 
@@ -510,18 +501,9 @@ Display message and return nil if unsucessful."
 	  (progn
 	    (beep)
 	    (message
-	     (format "(OO-Browser):  Class `%s' referenced but not defined in Environment."
+	     (format "(OO-Browser):  Class '%s' referenced but not defined in Environment."
 		     cl))
 	    t))))
-
-(defun br-delete-features (class)
-  "Delete all feature tags lexically defined in CLASS."
-  (br-feature-map-class-tags
-   (function (lambda ()
-	       (beginning-of-line)
-	       (delete-region (point) (progn (forward-line 1) (point)))))
-   class)
-  nil)
 
 (defun br-get-children (class-name)
   "Return list of children of CLASS-NAME from child lookup table.
@@ -536,15 +518,15 @@ Those from which CLASS-NAME directly inherits."
   (br-set-of-strings (hash-get class-name (br-get-parents-htable))))
 
 (defun br-get-children-htable ()
-  "Loads or builds `br-children-htable' if necessary and returns value."
+  "Loads or builds 'br-children-htable' if necessary and returns value."
   (br-get-htable "children"))
 
 (defun br-get-paths-htable ()
-  "Loads or builds `br-paths-htable' if necessary and returns value."
+  "Loads or builds 'br-paths-htable' if necessary and returns value."
   (br-get-htable "paths"))
 
 (defun br-get-parents-htable ()
-  "Loads or builds `br-parents-htable' if necessary and returns value."
+  "Loads or builds 'br-parents-htable' if necessary and returns value."
   (br-get-htable "parents"))
 
 (defun br-get-children-from-parents-htable (class-name)
@@ -725,7 +707,7 @@ Return list of processes killed."
 	      (message ""))))))
 
 (defun br-real-add-class (lib-table-p class-name class-path &optional replace)
-  "Add or replace class and its features within the current Environment.
+  "Add or replace class in current Environment.
 If LIB-TABLE-P is non-nil, add to Library Environment, otherwise add to
 System Environment.  Add class CLASS-NAME located in CLASS-PATH to
 Environment.  If CLASS-PATH is nil, use current buffer file as CLASS-PATH.
@@ -752,7 +734,7 @@ update children lookup table."
     ;; Signal error if class-name is invalid.
     (if (null class-name)
 	(if replace
-	    (error "(br-real-add-class): `%s' not found in %s classes, so cannot replace it."
+	    (error "(br-real-add-class): '%s' not found in %s classes, so cannot replace it."
 		   class (if lib-table-p "Library" "System"))
 	    (error
 	     "(br-real-add-class): Attempt to add null class to %s classes."
@@ -765,15 +747,12 @@ update children lookup table."
 	       (path-htable (br-get-htable (concat type "paths"))))
 	   (funcall func par-list class-name par-htable)
 	   (br-add-to-paths-htable class-name paths-key path-htable))))
-      (list (if lib-table-p "lib-" "sys-") ""))
-    (and (stringp class-path) (file-readable-p class-path)
-	 (br-get-classes-from-source class-path))))
+      (list (if lib-table-p "lib-" "sys-") ""))))
 
 (defun br-real-delete-class (class-name)
   "Delete class CLASS-NAME from current Environment.
 No error occurs if the class is undefined in the Environment."
   (require 'set)
-  (br-delete-features class-name)
   (let ((paths-key (br-class-path class-name))
 	htable)
     (setq class-name
@@ -830,7 +809,7 @@ No error occurs if the class is undefined in the Environment."
 	      (br-get-parents-htable))))
 
 (defun br-real-build-alists (search-dirs)
-  "Use SEARCH-DIRS to build `br-paths-alist' and `br-parents-alist'."
+  "Use SEARCH-DIRS to build 'br-paths-alist' and 'br-parents-alist'."
   (setq br-paths-alist nil br-parents-alist nil)
   (br-feature-tags-init)
   (br-real-build-al search-dirs)
@@ -842,7 +821,7 @@ No error occurs if the class is undefined in the Environment."
 (defvar br-parents-alist nil)
 
 (defun br-skip-dir-p (dir-name)
-  "Returns non-nil iff DIR-NAME is matched by a member of `br-skip-dir-regexps'."
+  "Returns non-nil iff DIR-NAME is matched by a member of 'br-skip-dir-regexps'."
   (delq nil
 	(mapcar (function
 		  (lambda (dir-regexp)
@@ -857,12 +836,12 @@ No error occurs if the class is undefined in the Environment."
     (fset 'abbreviate-file-name 'identity))
 
 (defun br-real-build-al (search-dirs)
-  "Descend SEARCH-DIRS and build `br-paths-alist' and `br-parents-alist'.
-Does not initialize `br-paths-alist' or `br-parents-alist' to nil."
+  "Descend SEARCH-DIRS and build 'br-paths-alist' and 'br-parents-alist'.
+Does not initialize 'br-paths-alist' or 'br-parents-alist' to nil."
   (let ((inhibit-local-variables nil)
 	(enable-local-variables t)
 	(files)
-	;; These are used in the `br-search-directory' function.
+	;; These are used in the 'br-search-directory' function.
 	classes parents paths-parents-cons)
     (mapcar 
       (function
@@ -932,8 +911,8 @@ Does not initialize `br-paths-alist' or `br-parents-alist' to nil."
 	    files))))
 
 (defun br-real-build-parents-alist (paths-htable)
-  "Build and return `br-parents-alist' of (parent-list . class) elements built from PATHS-HTABLE.
-Initializes `br-parents-alist' to nil."
+  "Build and return 'br-parents-alist' of (parent-list . class) elements built from PATHS-HTABLE.
+Initializes 'br-parents-alist' to nil."
   (let ((inhibit-local-variables nil)
 	(enable-local-variables t)
 	(br-view-file-function 'br-insert-file-contents))
@@ -962,7 +941,7 @@ Initializes `br-parents-alist' to nil."
 
 (defun br-set-lang-env (func sym-list val)
   "Use FUNC to set each element in SYM-LIST.
-If VAL is non-nil, set `br' element to value of current OO-Browser language
+If VAL is non-nil, set 'br' element to value of current OO-Browser language
 element with the same name, otherwise set to symbol."
   (let ((br) (lang))
     (mapcar (function
@@ -988,10 +967,9 @@ element with the same name, otherwise set to symbol."
 		     "select-path"
 
 		     "feature-implementors" "feature-locate-p"
-		     "feature-name-to-regexp" "feature-map-class-tags"
-		     "feature-signature-to-name"
+		     "feature-name-to-regexp" "feature-signature-to-name"
 		     "feature-signature-to-regexp" "feature-tag-class"
-		     "feature-tag-regexp" "feature-tree-command-p"
+		     "feature-tree-command-p"
 		     "list-categories" "list-features" "list-protocols"
 		     "view-friend" "view-protocol")
 		   nil))
@@ -1021,10 +999,10 @@ A system is a group of classes that are likely to change.  Value is
 language-specific.")
 
 (defvar br-lib-prev-search-dirs nil
-  "Used to check if `br-lib-paths-htable' must be regenerated.
+  "Used to check if 'br-lib-paths-htable' must be regenerated.
 Value is language-specific.")
 (defvar br-sys-prev-search-dirs nil
-  "Used to check if `br-sys-paths-htable' must be regenerated.
+  "Used to check if 'br-sys-paths-htable' must be regenerated.
 Value is language-specific.")
 
 (defun br-find-file (filename &optional other-win read-only)
@@ -1033,12 +1011,9 @@ Switch to a buffer visiting file FILENAME, creating one if none
 already exists.  Optional OTHER-WIN means show in other window.
 Optional READ-ONLY means make buffer read-only."
   (interactive "FFind file: ")
-  (if (br-in-browser)
-      (progn (br-to-view-window)
-	     (setq other-win nil)))
   (funcall (if other-win 'switch-to-buffer-other-window 'switch-to-buffer)
 	   (find-file-noselect filename))
-  (if read-only (setq buffer-read-only t)))
+  (and read-only (setq buffer-read-only t)))
 
 (defun br-find-file-read-only (filename &optional other-win)
   "Display file FILENAME read-only.
@@ -1064,37 +1039,33 @@ The function must return the buffer containing the file's contents.")
 
 (defun br-insert-file-contents (filename)
   "Insert FILENAME contents into a temporary buffer and select buffer.
-Does not run any find-file or mode specific hooks.  Marks buffer read-only to
-prevent any accidental editing.
+Does not run any find-file hooks.  Marks buffer read-only to prevent
+any accidental editing.
 
-Set `br-view-file-function' to this function when parsing OO-Browser source
+Set 'br-view-file-function' to this function when parsing OO-Browser source
 files for fast loading of many files."
   (let ((buf (get-buffer-create *br-tmp-buffer*)))
     (switch-to-buffer buf)
-    ;; Don't bother saving anything for this temporary buffer
     (buffer-disable-undo buf)
-    (setq buffer-auto-save-file-name nil
-	  buffer-read-only nil)
+    (setq buffer-read-only nil)
     (erase-buffer)
-    (insert-file-contents filename t)
-    (br-scan-mode)
-    (setq buffer-read-only t)))
+    (insert-file-contents filename t)))
 
 (defvar br-lang-prefix nil
  "Prefix string that starts language-specific symbol names.")
 
 (defvar br-children-htable nil
   "Htable whose elements are of the form: (LIST-OF-CHILD-CLASSES . CLASS-NAME).
-Used to traverse class inheritance graph.  `br-build-children-htable' builds
+Used to traverse class inheritance graph.  'br-build-children-htable' builds
 this list.  Value is language-specific.")
 (defvar br-parents-htable nil
   "Htable whose elements are of the form: (LIST-OF-PARENT-CLASSES . CLASS-NAME).
-Used to traverse class inheritance graph.  `br-build-parents-htable' builds
+Used to traverse class inheritance graph.  'br-build-parents-htable' builds
 this list.  Value is language-specific.")
 (defvar br-paths-htable nil
   "Htable whose elements are of the form: (LIST-OF-CLASS-NAMES . DIRECTORY).
 DIRECTORY gives the location of classes found in LIST-OF-CLASS-NAMES.
-`br-build-paths-htable' builds this list.  Value is language-specific.")
+'br-build-paths-htable' builds this list.  Value is language-specific.")
 
 (defvar br-lib-parents-htable nil
   "Htable whose elements are of the form: (LIST-OF-PARENT-CLASSES . CLASS-NAME).

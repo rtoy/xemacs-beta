@@ -1,6 +1,6 @@
 ;;; electric.el --- window maker and Command loop for `electric' modes.
 
-;; Copyright (C) 1985, 1986, 1995 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1986, 1992, 1995 Free Software Foundation, Inc.
 
 ;; Author: K. Shane Hartman
 ;; Maintainer: FSF
@@ -20,10 +20,9 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-;;; Synched up with: FSF 19.34.
+;;; Synched up with: FSF 19.30.97.
 
 ;;; Commentary:
 
@@ -69,7 +68,6 @@
               (setq prompt-string nil)
             (setq prompt-string "->")))
       (setq cmd (read-key-sequence prompt-string))
-      ;; XEmacs
       (or prefix-arg (setq last-command this-command))
       (setq last-command-event (aref cmd (1- (length cmd)))
 	    current-mouse-event
@@ -84,7 +82,6 @@
       ;; This makes universal-argument-other-key work.
       (setq universal-argument-num-events 0)
       (if (or (prog1 quit-flag (setq quit-flag nil))
-	      ;; XEmacs
 	      (eq (event-to-character last-input-event) (quit-char)))
 	  (progn (setq unread-command-events nil
 		       prefix-arg nil)
@@ -98,7 +95,6 @@
       (setq current-prefix-arg prefix-arg)
       (if cmd
 	  (condition-case conditions
-	      ;; XEmacs
 	      (progn (if (eventp cmd)
 			 (progn
 			   (let ((b (current-buffer)))
@@ -108,43 +104,27 @@
 		       (command-execute cmd))
 		     (setq last-command this-command)
 		     (if (or (prog1 quit-flag (setq quit-flag nil))
-			     ;; XEmacs
 			     (eq (event-to-character last-input-event)
 				 (quit-char)))
 			 (progn (setq unread-command-events nil)
 				(if (not inhibit-quit)
-				    ;; XEmacs
 				    (progn (ding nil 'quit)
 					   (message "Quit")
 					   (throw return-tag nil))
 				  (message "Quit inhibited")
 				  (ding)))))
-	    (buffer-read-only (if loop-function
-				  (setq err conditions)
-				(ding)
-				(message "Buffer is read-only")
-				(sit-for 2)))
-	    (beginning-of-buffer (if loop-function
-				     (setq err conditions)
-				   (ding)
-				   (message "Beginning of Buffer")
-				   (sit-for 2)))
-	    (end-of-buffer (if loop-function
-			       (setq err conditions)
-			     (ding)
-			     (message "End of Buffer")
-			     (sit-for 2)))
-	    (error (if loop-function
-		       (setq err conditions)
-		     (ding)
-		     (message "Error: %s"
-			      (if (eq (car conditions) 'error)
-				  (car (cdr conditions))
-				(prin1-to-string conditions)))
-		     (sit-for 2))))
-	(ding))
+	    (error (command-error conditions) ; XEmacs
+		   (sit-for 2)))
+	(ding nil 'undefined-key))
+            (and (not (eq (current-buffer) electrified-buffer)) ; XEmacs -
+	   (not (eq (selected-window) (minibuffer-window)))
+	   (progn (ding nil 'quit)
+		  (message "Leaving electric command loop %s."
+			   "because buffer has changed")
+		  (sit-for 2)
+		  (throw return-tag nil)))
       (if loop-function (funcall loop-function loop-state err))))
-  ;; XEmacs - huh?  It should be impossible to ever get here...
+  ;; ####> - huh?  It should be impossible to ever get here...
   (ding nil 'alarm)
   (throw return-tag nil))
 
@@ -198,6 +178,6 @@
       (goto-char (point-min))
       win)))
 
-(provide 'electric)
+(provide 'electric)                           ; zaaaaaaap
 
 ;;; electric.el ends here

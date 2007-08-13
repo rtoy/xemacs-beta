@@ -670,7 +670,9 @@ character_to_event (Emchar c, struct Lisp_Event *event, struct console *con,
   if (event->event_type == dead_event)
     error ("character-to-event called with a deallocated event!");
 
+#ifndef MULE
   c &= 255;
+#endif
   if (c > 127 && c <= 255)
     {
       int meta_flag = 1;
@@ -782,6 +784,9 @@ event_to_character (struct Lisp_Event *event,
     {
       if (! allow_meta) return -1;
       if (c & 0200) return -1;		/* don't allow M-oslash (overlap) */
+#ifdef MULE
+      if (c >= 256) return -1;
+#endif
       c |= 0200;
     }
   return c;
@@ -805,7 +810,7 @@ If the ALLOW-NON-ASCII argument is non-nil, then characters which are
 Note that specifying both ALLOW-META and ALLOW-NON-ASCII is ambiguous, as
  both use the high bit; `M-x' and `oslash' will be indistinguishable.
 */
-       (event, allow_extra_modifiers, allow_meta, allow_non_ascii))
+     (event, allow_extra_modifiers, allow_meta, allow_non_ascii))
 {
   Emchar c;
   CHECK_LIVE_EVENT (event);

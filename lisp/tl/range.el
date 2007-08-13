@@ -6,7 +6,7 @@
 ;;         Lars Magne Ingebrigtsen <larsi@ifi.uio.no>
 ;;         MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Version:
-;;	$Id: range.el,v 1.3 1996/12/29 00:15:09 steve Exp $
+;;	$Id: range.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $
 ;; Keywords: range
 
 ;; This file is part of tl (Tiny Library).

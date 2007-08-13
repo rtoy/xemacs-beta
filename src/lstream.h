@@ -252,9 +252,43 @@ void Lstream_set_character_mode (Lstream *str);
 /*             working with an Lstream as a stream of Emchars           */
 /************************************************************************/
 
+#ifdef MULE
+
+MAC_DECLARE_EXTERN (Emchar, MTlstream_emchar)
+MAC_DECLARE_EXTERN (int, MTlstream_emcint)
+/* In mule-charset.c */
+Emchar Lstream_get_emchar_1 (Lstream *lstr, int first_char);
+int Lstream_fput_emchar (Lstream *lstr, Emchar ch);
+void Lstream_funget_emchar (Lstream *lstr, Emchar ch);
+
+# define Lstream_get_emchar(stream)				\
+MAC_BEGIN							\
+  MAC_DECLARE (int, MTlstream_emcint, Lstream_getc (stream))	\
+  BYTE_ASCII_P (MTlstream_emcint) ? (Emchar) MTlstream_emcint :	\
+    Lstream_get_emchar_1 (stream, MTlstream_emcint)		\
+MAC_END
+# define Lstream_put_emchar(stream, ch)			\
+MAC_BEGIN						\
+  MAC_DECLARE (Emchar, MTlstream_emchar, ch)		\
+  CHAR_ASCII_P (MTlstream_emchar) ?			\
+    Lstream_putc (stream, MTlstream_emchar) :		\
+    Lstream_fput_emchar (stream, MTlstream_emchar)	\
+MAC_END
+# define Lstream_unget_emchar(stream, ch)		\
+MAC_BEGIN						\
+  MAC_DECLARE (Emchar, MTlstream_emchar, ch)		\
+  CHAR_ASCII_P (MTlstream_emchar) ?			\
+    Lstream_ungetc (stream, MTlstream_emchar) :		\
+    Lstream_funget_emchar (stream, MTlstream_emchar)	\
+MAC_END
+
+#else /* not MULE */
+
 # define Lstream_get_emchar(stream) Lstream_getc (stream)
 # define Lstream_put_emchar(stream, ch) Lstream_putc (stream, ch)
 # define Lstream_unget_emchar(stream, ch) Lstream_ungetc (stream, ch)
+
+#endif /* not MULE */
 
 
 

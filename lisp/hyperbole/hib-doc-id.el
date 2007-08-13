@@ -6,15 +6,15 @@
 ;; KEYWORDS:     docs, extensions, hypermedia
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          InfoDock Associates
+;; ORG:          Motorola, Inc., PWDG
 ;;
 ;; ORIG-DATE:    30-Sep-92 at 19:39:59
-;; LAST-MOD:     12-Dec-96 at 15:15:28 by Bob Weiner
+;; LAST-MOD:     14-Apr-95 at 15:58:21 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
 ;;
-;; Copyright (C) 1992-1996, InfoDock Associates
+;; Copyright (C) 1992-1995, Free Software Foundation, Inc.
 ;; Developed with support from Motorola Inc.
 ;;
 ;; DESCRIPTION:  
@@ -34,13 +34,13 @@
 ;;   You must explicitly load this package in order to use it, since
 ;;   Hyperbole does not load it by default.
 ;;
-;;   Motorola PPG uses doc ids of the form, [Emacs-001], delimited by
-;;   brackets, starting with a subject name, followed by a - and a
+;;   At this site, we use doc ids of the form, [Emacs-001], delimited by
+;;   brackets, starting with a subject name, followed by a -, followed by a
 ;;   multi-digit numeric identifier.
 ;;
 ;;   Typically an index entry should have links to all available forms of its
 ;;   document, e.g. online, printed, source.  Below is the index entry form
-;;   we use.  The default variable settings herein work with PPG's formats.  If
+;;   we use.  The default variable settings herein work with our formats.  If
 ;;   you prefer different ones, you must change all of the variable values.
 ;;
 ;;  --------------------------------------------------------------------------
@@ -82,13 +82,12 @@
 
 (defact link-to-doc (doc-id)
   "Displays online version of a document given by DOC-ID (no delimiters), in other window.
-If online version of document is not found in `doc-id-indices', an error is
-signalled."
+If online version of document is not found in `doc-id-indices', an error is signalled."
   (interactive "sID for document to link to (omit delimiters): ")
   (let ((rolo-display-buffer (hypb:help-buf-name "Doc ID"))
 	(delim-doc-id (concat doc-id-start doc-id doc-id-end)))
     (cond ((null doc-id-indices)
-	   (error "(doc-id-index-entry): You must set the `doc-id-indices' variable first."))
+	   (error "(doc-id-index-entry): You must set the 'doc-id-indices' variable first."))
 	  ((let ((rolo-entry-regexp doc-id-index-entry-regexp))
 	     (= 0 (rolo-grep (funcall doc-id-match doc-id)
 			     1 doc-id-indices nil 'no-display)))
@@ -108,16 +107,15 @@ signalled."
 		       (if ibut
 			   (progn (hbut:act ibut)
 				  (message "Displaying %s." delim-doc-id))
-			 (error
-			  "(link-to-doc): %s online location is invalid: \"%s\""
-			  delim-doc-id doc-path))))
+			 (error "(link-to-doc): %s invalid online location: %s"
+				delim-doc-id doc-path))))
 		 (error "(link-to-doc): %s is unavailable in online form."
 			delim-doc-id)))))))
 
 (defib doc-id ()
   "Displays an index entry for a site-specific document given its id.
-Ids must be delimited by `doc-id-start' and `doc-id-end' and must
-match the function given by `doc-id-p'."
+Ids must be delimited by 'doc-id-start' and 'doc-id-end' and must
+match the function given by 'doc-id-p'."
   (and (not (bolp))
        (let* ((id-and-pos (hbut:label-p t doc-id-start doc-id-end t))
 	      (id (car id-and-pos)))
@@ -130,10 +128,9 @@ match the function given by `doc-id-p'."
 ;;; Displays a doc from SW Process Tree (Motorola Paging Products Specific)
 ;;; ========================================================================
 
-(if (and (boundp 'ppg-sw-process-directory) ppg-sw-process-directory
-	 (file-exists-p ppg-sw-process-directory))
+(if (file-exists-p "/proj/process/ppg/")
     (defib ppg-sw-process ()
-      "Display a Paging Products software process document whose location is at point."
+      "Display a Paging Products software process document from document id at point."
       (let ((path (hpath:at-p nil t)))
 	(if (and path (string-match "/.+%s.+%s" path))
 	    (progn (require 'sw-process)
@@ -148,10 +145,7 @@ match the function given by `doc-id-p'."
 			   (goto-char (match-beginning 1))
 			   (let ((path-but (ibut:at-p)))
 			     (if path-but
-				 (hbut:act path-but)
-			       (error
-				"(ppg-sw-process): \"%s\" does not exist." path)
-			       ))))))))))
+				 (hbut:act path-but)))))))))))
 
 ;;; ************************************************************************
 ;;; Public variables
@@ -160,7 +154,7 @@ match the function given by `doc-id-p'."
 (defvar doc-id-indices '()
   "List of pathnames in which to search for site-specific document index entries.
 Each file must utilize a wrolo record format, with each record start
-delimited by `doc-id-index-entry-regexp'.")
+delimited by 'doc-id-index-entry-regexp'.")
 
 ;;; ************************************************************************
 ;;; Private functions
@@ -182,7 +176,8 @@ Also displays standard Hyperbole help for implicit button BUT."
 	   (temp-buffer-show-hook
 	     (function
 	       (lambda (buffer)
-		 (setq *hkey-wconfig* (current-window-configuration)))
+		 (setq *hkey-wconfig*
+		       (current-window-configuration)))
 	       (let ((wind (get-buffer-create buffer)))
 		 (setq minibuffer-scroll-window wind))))
 	   (temp-buffer-show-function temp-buffer-show-hook))
@@ -221,7 +216,7 @@ Also displays standard Hyperbole help for implicit button BUT."
 			  (> (length str) 0)
 			  (= ?w (char-syntax (aref str 0)))
 			  (string-match "\\`\\w+-[0-9][0-9][0-9]+\\'" str))))
-  "Function with a boolean result which tests whether or not arg `str' is a doc id.")
+  "Boolean function to test whether arg 'str' is a doc id or not.")
 
 (defvar doc-id-online-regexp "^Online-Loc:[ \t]*\"\\([^\"]+\\)\""
   "Regexp whose 1st grouping matches an implicit button which displays an online document within an index entry.")

@@ -1,6 +1,6 @@
 ;;; ediff-diff.el --- diff-related utilities
 
-;; Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1994, 1995, 1996 Free Software Foundation, Inc.
 
 ;; Author: Michael Kifer <kifer@cs.sunysb.edu>
 
@@ -22,20 +22,6 @@
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Code:
-
-(provide 'ediff-diff)
-
-;; compiler pacifier
-(defvar ediff-default-variant)
-
-(eval-when-compile
-  (let ((load-path (cons (expand-file-name ".") load-path)))
-    (or (featurep 'ediff-init)
-	(load "ediff-init.el" nil nil 'nosuffix))
-    (or (featurep 'ediff-util)
-	(load "ediff-util.el" nil nil 'nosuffix))
-    ))
-;; end pacifier
 
 (require 'ediff-init)
 
@@ -154,45 +140,31 @@ one optional arguments, diff-number to refine.")
 ;; Run the diff program on FILE1 and FILE2 and put the output in DIFF-BUFFER
 ;; Return the size of DIFF-BUFFER
 (defun ediff-make-diff2-buffer (diff-buffer file1 file2)
-  (let ((file1-size (ediff-file-size file1))
-	(file2-size (ediff-file-size file2)))
-    (cond ((not (numberp file1-size))
-	   (message "Can't find file: %s"
-		    (ediff-abbreviate-file-name file1))
-	   (sit-for 2)
-	   ;; 1 is an error exit code
-	   1)
-	  ((not (numberp file2-size))
-	   (message "Can't find file: %s"
-		    (ediff-abbreviate-file-name file2))
-	   (sit-for 2)
-	   ;; 1 is an error exit code
-	   1)
-	  ((< file1-size 0)
-	   (message "Can't diff remote files: %s"
-		    (ediff-abbreviate-file-name file1))
-	   (sit-for 2)
-	   ;; 1 is an error exit code
-	   1)
-	  ((< file2-size 0)
-	   (message "Can't diff remote file: %s"
-		    (ediff-abbreviate-file-name file2))
-	   (sit-for 2)
+  (cond ((< (ediff-file-size file1) 0)
+	 (message "Can't diff remote files: %s"
+		  (ediff-abbreviate-file-name file1))
+	 (sit-for 2)
+	 ;; 1 is an error exit code
+	 1)
+	((< (ediff-file-size file2) 0)
+	 (message "Can't diff remote file: %s"
+		  (ediff-abbreviate-file-name file2))
+	 (sit-for 2)
+	 (message "")
+	 ;; 1 is an error exit code
+	 1)
+	(t (message "Computing differences between %s and %s ..."
+		    (file-name-nondirectory file1)
+		    (file-name-nondirectory file2))
+	   ;; this erases the diff buffer automatically
+	   (ediff-exec-process ediff-diff-program
+			       diff-buffer
+			       'synchronize
+			       ediff-diff-options file1 file2)
+	   ;;(message "Computing differences ... done")
 	   (message "")
-	   ;; 1 is an error exit code
-	   1)
-	  (t (message "Computing differences between %s and %s ..."
-		      (file-name-nondirectory file1)
-		      (file-name-nondirectory file2))
-	     ;; this erases the diff buffer automatically
-	     (ediff-exec-process ediff-diff-program
-				 diff-buffer
-				 'synchronize
-				 ediff-diff-options file1 file2)
-	     ;;(message "Computing differences ... done")
-	     (message "")
-	     (ediff-eval-in-buffer diff-buffer
-	       (buffer-size))))))
+	   (ediff-eval-in-buffer diff-buffer
+	     (buffer-size)))))
   
 
      
@@ -1215,8 +1187,9 @@ argument to `skip-chars-forward'."
 ;;; Local Variables:
 ;;; eval: (put 'ediff-defvar-local 'lisp-indent-hook 'defun)
 ;;; eval: (put 'ediff-eval-in-buffer 'lisp-indent-hook 1)
-;;; eval: (put 'ediff-eval-in-buffer 'edebug-form-spec '(form body))
 ;;; End:
+
+(provide 'ediff-diff)
 
 
 ;; ediff-diff.el ends here

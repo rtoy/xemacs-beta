@@ -17,7 +17,7 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: FSF 19.30.
@@ -160,7 +160,7 @@ In either case, the output is inserted after point (leaving mark after it)."
 	  (progn
 	    (require 'background) ; whizzy comint background code
 	    (background (substring command 0 (match-beginning 0))))
-	(shell-command-on-region (point) (point) command output-buffer)))))
+	(shell-command-on-region (point) (point) command nil)))))
 
 ;; We have a sentinel to prevent insertion of a termination message
 ;; in the buffer itself.
@@ -192,17 +192,19 @@ If OUTPUT-BUFFER is a buffer or buffer name, put the output there.
 If OUTPUT-BUFFER is not a buffer and not nil,
 insert output in the current buffer.
 In either case, the output is inserted after point (leaving mark after it)."
-  (interactive (let ((string
+  (interactive (if (not (region-exists-p))
+		   (error "The region is not active now")
+		 (let ((string
 		      ;; Do this before calling region-beginning
 		      ;; and region-end, in case subprocess output
 		      ;; relocates them while we are in the minibuffer.
-		      (read-shell-command "Shell command on region: ")))
-		 ;; call-interactively recognizes region-beginning and
-		 ;; region-end specially, leaving them in the history.
-		 (list (region-beginning) (region-end)
-		       string
-		       current-prefix-arg
-		       current-prefix-arg)))
+			(read-shell-command "Shell command on region: ")))
+		   ;; call-interactively recognizes region-beginning and
+		   ;; region-end specially, leaving them in the history.
+		   (list (region-beginning) (region-end)
+			 string
+			 current-prefix-arg
+			 current-prefix-arg))))
   (if (or replace
 	  (and output-buffer
 	       (not (or (bufferp output-buffer) (stringp output-buffer)))))

@@ -557,7 +557,7 @@ motion commands do not change whether the region is active or not.
 region.  Moving the cursor with normal motion commands (@kbd{C-n},
 @kbd{C-p}, etc.) will cause the region between point and the
 recently-pushed mark to be highlighted.  It will remain highlighted
-until some non-motion command is executed.
+until some non-motion comand is executed.
 
 @code{exchange-point-and-mark} (@kbd{C-x C-x}) activates the region.
 So if you mark a region and execute a command that operates on it, you

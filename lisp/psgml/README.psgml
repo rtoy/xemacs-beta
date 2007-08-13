@@ -1,4 +1,4 @@
-This is the READ ME file for psgml.el version 1.0       -*- text -*-
+This is the READ ME file for psgml.el version 1a12.       -*- text -*-
 
    PSGML is a major mode for editing SGML documents.  It works with
 GNU Emacs 19.19 and later or with XEmacs 19.13.
@@ -13,8 +13,12 @@ This distribution should contain the following source files:
 	psgml-dtd.el
 	psgml-info.el
         psgml-charent.el
+	psgml-debug.el	-- some functions used in development
 	psgml-api.texi	-- internals documentation
 	psgml-api.el	-- Extra functions for the API
+	fs.el		-- Example use of psgml to format a SGML file
+	style.fs	-- example style file for fs.el
+	catalog.sgml	-- example SGML-file for fs.el and style.el
 	iso88591.map
 	Makefile.in
 
@@ -42,243 +46,544 @@ move the .elc files.
 
 Send bug reports, comments and suggestions to lenst@lysator.liu.se.
 
-New in version 1.0
+New in version 1.0a12
 
-* Main changes
+See ChangeLog...
 
-** Support for general entities
+
+New in version 1.0a11
 
-** Support for short reference
+* Autoconf support
 
-** Support for catalog files
+Tanks to Karl Eichwalder.
 
-** New mechanism for caching parsed DTD
+* Bugs fixed
 
-** Includes commands to list various aspects of the DTD
+** after-change-function lost if text entity referenced
 
-* Entity support
+** Mouse button 3, has wrong binding in XEmacs.
 
-PSGML will recognize entity references (except in attribute values). If
-the entity is a general text entity, PSGML will also parse the content
-of the entity. To support this PSGML has a new entity manager with a
-new mechanism for looking up entities (see belove).
+
+New in version 1.0a10
 
-Short references are also supported, for the short reference delimiters
-from the concrete reference syntax.
-
-There are some new and changed commands to complete the entity support:
-
-** Command: `sgml-expand-entity-reference'
-
-Insert the text of the entity referenced at point.
-
-** Command: `sgml-expand-all-shortrefs'
-
-Expand all short references in the buffer. Short references to text
-entities are expanded to the replacement text of the entity, other
-short references are expanded into general entity references. If
-argument, `to-entity', is non-nil, or if called interactive with
-numeric prefix argument, all short references are replaced by generally
-entity references.
-
-** Command: `sgml-normalize'
-
-Changed to expand short references also. Normalize buffer by filling in
-omitted tags and expanding empty tags. Argument `to-entity' controls
-how short references are expanded as with `sgml-expand-all-shortrefs'.
-
-* Fontification
-
-If `sgml-set-face' is true and the DTD has been activated, PSGML will
-automatically set the face of markup in the buffer.
+* Changed how fontification is done
 
 First the current line is parsed and fontified. If this would mean
 parsing more than 500 chars, wait 1 second first.
 
-The rest of the buffer is fontified after 6 seconds idle time.
+Wait 6 seconds and then fontify rest of buffer.
 
-Fontification can be interrupted by any input event.
+These waits and the parsing can be interrupted by any input event.
 
-The buffer can be fontified initially if `sgml-auto-activate-dtd' is
-true.
+This seems to work well with Emacs 19.29 and XEmacs 19.13 on Linux.
 
-* New entity manager
+* XEmacs menus made with easy-menu
 
-The new entity manager will handle an entity reference thus:
+Now there is only one set of menu for both Emacs and XEmacs.
 
-** If the entity has a system identifier, the entity manager will first
-try and call the functions on `sgml-sysid-resolve-functions' with the
-system identifier as argument, and if any function returns non-nil
-assume that the function has handled the entity.
-
-** If the entity has a system identifier and
-`sgml-system-identifiers-are-preferred' is non-nil, the system
-identifier will be used as a file name relative to the file containing
-the entity declaration.
-
-** Next the entity manager will try the catalog, and
-
-** if not found there use the `sgml-public-map'.
-
-** Finally if the entity has not been found and it has a system
-identifier, this will be used as a file name.
-
-Note: `sgml-system-path' is no longer used for entity lookup.
-
-The catalog files searched is given by the variable
-`sgml-local-catalogs' and `sgml-catalog-files'. The
-`sgml-catalog-files' variable is initialized from the environment
-variable `SGML_CATALOG_FILES' (should be a colon separated list of
-files). The `sgml-local-catalogs' variable is assumed to be set in a
-files local variables.
-
-File names for external entities (e.g system identifiers) are relative
-to the directory containing the file declaring the entity.
-
-The `sgml-public-map' is initialized from the environment variable
-`SGML_PATH'.
-
-`sgml-system-path' defaults to nil.
-
-Supports most of sgmls substitutions for sgml-public-map. Supported:
-%%, %N, %P, %S, %Y, %C, %L, %O, %T, %V. Unsupported: %D, %X, %A, %E,
-%I, %R, %U. Note: that %D is and alias for %C in PSGML (historical
-accident).
-
-* New and changed options
-
-** `sgml-recompile-out-of-date-cdtd'
-
-** New options for insert-element:
-`sgml-insert-missing-element-comment' and
-`sgml-insert-end-tag-on-new-line'.
-
-** `sgml-validate-files' and slight change of `sgml-validate-command'
-
-The variable `sgml-validate-command' can now be a list of strings. The
-strings can contain %-sequences that will be expanded: %b to buffer
-file name, %s to SGML Declaration file, either the value of
-sgml-declaration variable or SGML Declaration file for parent document
-or DOCTYPE file or SGMLDECL from catalog. %d value of `sgml-doctype'.
-
-** `sgml-set-face'
-
-Now automatically sets faces for all visible text, with a delay of 1s.
-
-** `sgml-exposed-tags'
-
-The list of tag names that remain visible, despite `M-x
-sgml-hide-tags'. Each name is a lowercase string, and start-tags and
-end-tags must be listed individually.
-
-** `sgml-auto-activate-dtd'
-
-PSGML was behaving inconsistent when a new file was loaded. If the
-variable `sgml-set-face' was true the DTD would automatically be
-activated (loaded or parsed), but only if psgml-parse already loaded.
-
-Rather than let `sgml-set-face' decide if the DTD is activated, there
-is now a distinct option for this. This option works even the first
-time.
-
-If non-nil, loading a sgml-file will automatically try to activate its
-DTD. Activation means either to parse the document type declaration or
-to load a previously saved parsed DTD. The name of the activated DTD
-will be shown in the mode line.
-
-* Various
-
-** Tracing catalog lookup
+* Tracing catalog lookup
 
 To help debug entity lookup there is a new option
-`sgml-trace-entity-lookup'. If this option is t messages will be logged
-in *SGML LOG* buffer when external entities are looked up. These
-messages shows entity, catalogs searched, and entry type in catalog
-where entity was found.
+`sgml-trace-entity-lookup'. If this option is t messages will be
+logged in *SGML LOG* buffer when external entities are looked up.
+These messages shows entity, catalogs searched, and entry type in
+catalog where entity was found.
 
-** Translating between characters and entity references
 
-Set the variable `sgml-display-char-list-filename' to a file that
-contains mappings between all characters present in the presentation
-character set, and their "standard replacement text" names, e.g. "å" ->
-"[aring ]", e.t.c. The default value for this variable is
-`iso88591.map'.
 
-Use the functions (also in the Modify menu)
-`sgml-charent-to-display-char' and `sgml-display-char-to-charent' to
-translate between entities and characters.
+* Renamed default style sheet for fs.el
 
-** Handling of missing DOCTYPE
+The default style sheet used by fs.el, style sheet formatter example
+is now "style.fs".
 
-If the document prolog does not contain a document type declaration,
-PSGML will try to supply one on the form `<!DOCTYPE DocTypeName
-SYSTEM>' If the variable `sgml-default-doctype-name' is defined this
-will be used for the document type name, otherwise the GI of the first
-start tag will be used. I.e., if the document starts with `<book>', a
-document type declaration `<!DOCTYPE book SYSTEM>' will be assumed.
+
+New in version 1.0a9
 
-** Handling of tags for undefined elements
+* XEmacs may have problem if sgml-set-face is t
 
-*** Start-tags for undefined elements will either be ignored, if
-`sgml-ignore-undefined-elements' is `t', or assumed to be acceptable in
-the current element and defined with `O O ANY'.
+I tried with the latest version on a sun4 Solaris 2 machine and PSGML
+would always parse to the end of the buffer even if I typed something.
+There seem to be a problem with the input-pending-p function. I don't
+know if this is specific for Solaris. Emacs on Solaris has problems
+with signal handling.
 
-*** An end-tag for an element that is not currently open will be
-ignored.
 
-** Cleaned up Markup menu
+* New options for insert-element
+** sgml-insert-missing-element-comment
+** sgml-insert-end-tag-on-new-line
 
-The removed entries can be added with sgml-custom-markup:
+* psgml-api:
+** sgml-map-content: new optional argument. If the argument ENTITY-FUN
+is specified it should be a function with one argument. The function
+will be called for data entity references instead of the entity text
+being passed to the DATA-FUN. The argument is the entity referenced.
+Use `sgml-entity-name', `sgml-entity-type' etc.
 
-(setq sgml-custom-markup
-      '(("<!entity ... >" "<!entity \r>\n")
-        ("<!attlist ... >" "<!attlist \r>\n")
-        ("<!element ... >" "<!element \r>\n")
-        ("<!doctype ...>" "<!doctype \r -- public or system --\n[\n]>\n")
-        ("Local variables comment" "<!--\nLocal variables:\n\rEnd:\n-->\n")
-        ("Comment" "<!-- \r -->\n") ))
+
+Version 1.0a8 has only bug-fixes.
 
-** New commands
 
-Thanks to David Megginson the custom menus are now reachable from the
-keyboard:
+New in version 1.0a7
 
-`C-c C-u C-d' (`sgml-custom-dtd')
+* Better CATALOG parsing
 
-`C-c C-u C-m' (`sgml-custom-markup')
+** Will handle SGMLDECL, etc..
 
-* Changes to API
+** New option: sgml-system-identifiers-are-preferred
+If nil PSGML will look up external entities by searching the catalogs
+in `sgml-local-catalogs' and `sgml-catalog-files'  and only if the entity
+is not found in will a given system identifier be used.  If the variable
+is non-nil and a system identifier is given, the system identifier will
+be used for the entity. If no system identifier is given the catalogs
+will searched.
 
-** New hooks
+* File names for external entities (e.g system identifiers) are
+relative to the directory containing the file declaring of the entity.
 
-*** `sgml-close-element-hook'
+* Changes to how the DTD is found
 
-The hook run by `sgml-close-element'. These functions are invoked with
-`sgml-current-tree' bound to the element just parsed.
+** If the variable sgml-doctype is set, it should be the name of a file
+containing the DOCTYPE declaration to use.
 
-*** `sgml-new-attribute-list-function'
+** The variable sgml-parent-document is used when the current file
+is part of a bigger document, and the variable describes how the
+current files content fits into the element hierarchy. The variable
+should have the form
 
+  (parent-file context-element* top-element (has-seen-element*)?)
+
+*** parent-file (string) is the name of the file containing the
+document entity.
+
+*** context-element (string) is used to set up exceptions and short
+reference map. Good candidates for these elements are the elements
+open when the entity pointing to the current file is used.
+
+*** top-element (string) is the top level element in the current file.
+The file should contain one instance of this element, unless the last
+(lisp) element of sgml-parent-document is a list. If it is a list, the
+top level of the file should follow the content model of top-element.
+
+*** has-seen-element (string) element satisfied in the content model
+of top-element.
+
+
+* sgml-validate
+  The variable sgml-validate-command can now be a list of strings. The
+strings can contain %-sequences that will be expanded:
+  %b to buffer file name,
+  %s to SGML Declaration file, either the value of sgml-declaration
+variable or SGML Declaration file for parent document or DOCTYPE file or
+SGMLDECL from catalog.
+  %d value of sgml-doctype.
+
+
+* Hooks
+
+** sgml-new-attribute-list-function
 This hook is run when a new element is inserted to construct the
 attribute specification list. The default function prompts for the
 required attributes.
 
-*** `sgml-doctype-parsed-hook'
 
-This hook is called after the doctype has been parsed. It can be used
-to load any additional information into the DTD structure.
+* API
+
+** New file psgml-api.el
+
+This file contain API-functions that are not used by other parts of
+psgml. Use (require 'psgml-api) to use the API functions (psgml-api
+includes the rest of the psgml files).
+
+The new functions in psgml-api is two functions to traverse the element
+structure.
+
+*** (sgml-map-content element element-function data-function pi-function)
+
+Call element-function with every child of element.
+Call data-function with all the data in element.
+Don't modify the buffer in these functions.
+	
+*** (sgml-map-element-modify function element)
+
+Call function on every sub element of element, allows the function to
+modify the buffer (e.g. add/modify attributes of the elements).
+
+** Example of API use: fs.el -- a simple style sheet driven formatter.
+
+Try fs.el with the catalog.sgml file.  The style.el is the style sheet
+for catalog.sgml.  The command to format current buffer is
+`M-x style-format'.
+
+
+New in version 1.0 a6
+
+* Entity manager
+
+** Use system id as file name, if there is no %S in sgml-public-map.
+
+** Finds PUBLIC entries before DOCTYPE and ENTITY in catalog files.
+
+* Better error recovery for out of context data and tags
+
+* New command: sgml-general-dtd-info
+
+* Disables auto-fill in the prolog
+
+* Insert element leaves point at the end of the element,
+it used to leave point at the beginning of the element.
+
+* sgml-hide-tags/attributes is better at handling minimized tags
+				   
+* New options
+** sgml-validate-files and slight change of sgml-validate-command.
+** sgml-recompile-out-of-date-cdtd
+
+* Now saving attribute specification list in parse tree
+Faster sgml-element-attval, but more memory used.
+
+* Long menus that are split into sub-menus now show the range of
+choices in the different sub-menus.
+
+The option `sgml-range-indicator-max-length' determines how many
+characters from the first and the last choice to show.
+
+* Private abbrev table
+
+
+New in version 1.0 a5
+
+* New menu structure
+Perhaps there is to many top-level menus now. Any suggestions how to
+organize the menus?
+
+* Some new functions
+
+** Information from the DTD (used to be nefarious.el)
+
+*** sgml-describe-element-type
+
+*** sgml-describe-entity
+
+*** sgml-list-elements
+ Will list all elements and the attributes declared for the element.
+
+*** sgml-list-attributes
+  Will list all attributes declared and the elements that use them.
+
+*** sgml-list-terminals
+  Will list all elements that can contain data.
+
+*** sgml-list-occur-in-elements
+  Will list all element types and where it can occur.
+
+*** sgml-list-content-elements
+  Will list all element types and the element types that can occur
+  in its content.
+
+
+** Translating between characters and entity references
+
+Set the variable `sgml-display-char-list-filename' to a file file that
+contains mappings between all characters present in the presentation
+character set, and their "standard replacement text" names, e.g. "å"
+-> "[aring ]", e.t.c.
+
+The default value for this variable is `iso88591.map'. 
+
+The use the functions (also in the Modify menu)
+
+  sgml-charent-to-display-char
+  sgml-display-char-to-charent
+
+to translate between entities and characters.
+
+
+
+* Two major bugs fixed
+** DTD using undeclared elements was improperly saved
+** Bug in using a precompiled DTD and local element, attlist or usemap
+declaration.
+
+
+
+New in version 1.0 a4
+
+* If the document prolog does not contain a document type declaration,
+PSGML will try to supply one on the form `<!DOCTYPE DocTypeName
+SYSTEM>' If the variable `sgml-default-doctype-name' is defined this
+will be used for the document type name, otherwise the GI of the first
+start tag will be used.  I.e., if the document starts with `<book>', a
+document type declaration `<!DOCTYPE book SYSTEM>' will be assumed.
+
+
+* Compiled DTDs are now associated with external `Document Type
+Declaration Subset' entities.  You will have to create a catalog with
+entries for all the DTDs that should be compiled.  This should make
+it, in most cases, unnecessary to make saved dtds or to set the
+`sgml-default-dtd-file', at the expense of having to maintain the
+catalog file.
+
+** Options
+
+`sgml-ecat-files'  List of compiled dtd catalog files.
+	Default: ("ECAT" "~/sgml/ECAT" "/usr/local/lib/sgml/ECAT")
+
+`sgml-local-ecat-files'  This can be set as a buffer local variable to
+a list of catalogs to be searched before `sgml-ecat-files'.
+
+** Catalog format
+
+The catalog is similar to the catalog used to resolve public
+identifiers.  There are two types of entries:
+
+	PUBLIC pubid pents? cfile
+and
+	FILE file pents? cfile
+
+where pubid is a public identifier (as a minimum literal), pents is a
+optional list of parameter entities and values, file is the file name
+of a DTD file and cfile is the name of the complied DTD. The syntax
+for pents is 
+
+	`[' (name literal)* `]'
+
+Example:
+
+PUBLIC 	"-//lenst//dtd My DTD//en"	cdtd/bar
+FILE	"bar.dtd"			cdtd/bar
+
+To better handle DTDs with options, like TEI and HTML 2.0/+ it is
+possible to have several entries for the same DTD with different
+parameter entity settings.  The parameters are listed between `[' and
+`]' before the file name of the compiled dtd.
+
+FILE 	"~/sgml/htmlplus.dtd"
+	[ HTML.emph "INCLUDE" ] "~/sgml/htmlplus.ced"
+
+PUBLIC "-//Text Encoding Initiative//DTD
+	P3 3.6.1:  Main TEI document type declaration//EN"
+	[ TEI.prose 'INCLUDE'  TEI.analysis 'INCLUDE' ] "tei2an.cdtd"
+
+PUBLIC "-//Text Encoding Initiative//DTD
+	  P3 3.6.1:  Main TEI document type declaration//EN"
+	[ TEI.prose 'INCLUDE'  TEI.verse 'INCLUDE' ] "tei2verse.cdtd"
+
+The entries will be searched in order and the first matching will be
+used.  Put more specific entries before less specific.  Matching is
+done by matching pubid or file and checking that all the listed
+parameters are defined with the listed values.
+
+
+
+** Example: setting up for editing HTML
+
+If you have the files for the html.dtd in ~/sgml. 
+Put in ~/sgml/CATALOG:
+    PUBLIC	"-//IETF//DTD HTML//EN"  			html.dtd
+    PUBLIC 	"-//IETF//DTD HTML//EN//2.0"  			html.dtd
+    PUBLIC	"-//IETF//DTD HTML Level 1//EN//2.0"		html-1.dtd
+    PUBLIC	"-//IETF//ENTITIES Added Latin 1 for HTML//EN"	ISOlat1.sgml
+    DOCTYPE	HTML						html.dtd
+
+Put in ~/sgml/ECAT:
+    FILE html.dtd	[ HTML.Recommended "INCLUDE" ]	cdtd/html-r
+    FILE html.dtd					cdtd/html
+
+Put ~/sgml/CATALOG in sgml-catalog-files and ~/sgml/ECAT in
+sgml-ecat-files.
+
+Now it should be possible to edit html files if you put them in
+sgml-mode.  The file must either start with a proper DOCTYPE or with a
+<html> tag.  To be able to start with empty files and to edit files
+not starting with <html> you can create a html-mode that sets the
+default document type name:
+
+(defun html-mode ()
+  (interactive)
+  (sgml-mode)
+  (make-local-variable 'sgml-declaration)
+  (make-local-variable 'sgml-default-doctype-name)
+  (setq sgml-declaration             "~/sgml/html.decl"
+	sgml-default-doctype-name    "html"
+	sgml-always-quote-attributes t 
+	sgml-indent-step             2
+	sgml-indent-data	     t
+	sgml-minimize-attributes     nil
+	sgml-omittag                 t
+	sgml-shortag                 t  ))
+
+
+* Handling of tags for undefined elements
+
+** Start-tags for undefined elements will either be ignored, if
+`sgml-ignore-undefined-elements' is t, or assumed to be acceptable in
+the current element and defined with `O O ANY'.
+
+** An end-tag for an element that is not currently open will be ignored.
+
+
+* I have (as an experiment) turned off all warnings. Warnings are only
+given if the sgml-next-trouble-spot is used or while parsing the DTD.
+
+
+* Entity manager
+
+** sgml-system-path is no longer used for entity lookup
+
+** PSGML will recognize that a catalog file has been changed
+
+
+News in version 1.0 a3
+
+* Change in user options
+
+** sgml-live-element-indicator no longer buffer local
+
+** sgml-save-options only saves:
+  (sgml-parent-document sgml-omittag sgml-shorttag
+   sgml-minimize-attributes sgml-always-quote-attributes sgml-indent-step
+   sgml-indent-data sgml-default-dtd-file sgml-exposed-tags) 
+ and saves all of them, even if they have no buffer local value
+
+** Options menu split in to two menus
+
+* Cleaned up Markup menu
+The removed entries can be added with sgml-custom-markup:
+
+(setq sgml-custom-markup
+      '(
+	("<!entity ... >" "<!entity \r>\n")
+	("<!attlist ... >" "<!attlist \r>\n")
+	("<!element ... >" "<!element \r>\n")
+	("<!doctype ...>" "<!doctype \r -- public or system --\n[\n]>\n")
+	("Local variables comment" "<!--\nLocal variables:\n\rEnd:\n-->\n")
+	("Comment" "<!-- \r -->\n")
+	))
+
+
+* Some bug fixes
+Including new default for sgml-catalog-files is
+"CATALOG" and "/usr/local/lib/sgml/CATALOG".
+
+* Some tuning
+
+
+News in version 1.0 a2
+
+* Support for short references
+
+** Command: sgml-expand-all-shortrefs
+Expand all short references in the buffer.  Short references to text
+entities are expanded to the replacement text of the entity, other
+short references are expanded into general entity references.  If
+argument, TO-ENTITY, is non-nil, or if called interactive with numeric
+prefix argument, all short references are replaced by generally entity
+references.
+
+** sgml-normalize: expand short references also
+Normalize buffer by filling in omitted tags and expanding empty tags.
+Argument TO-ENTITY controls how short references are expanded as with
+`sgml-expand-all-shortrefs'.  
+
+
+* Variable: sgml-auto-activate-dtd
+
+PSGML was behaving inconsistent when a new file was loaded.  If the
+variable `sgml-set-face' was true the DTD would automatically be
+activated (loaded or parsed), but only if psgml-parse already loaded.
+
+Rather than let `sgml-set-face' decide if the DTD is activated, there
+is now a distinct option for this.  This option works even the first
+time.
+
+If non-nil, loading a sgml-file will automatically try to activate its DTD.
+Activation means either to parse the document type declaration or to
+load a previously saved parsed DTD.  The name of the activated DTD
+will be shown in the mode line.
+
+
+* face setting 
+If `sgml-set-face' is true and the DTD has been activated, PSGML will
+automatically set the face of markup in the buffer.  This is done by
+parsing, with error messages turned off, as much as possible after
+every command.  The parsing is interrupted by input and is almost
+transparent.
+
+* Local catalog files
+Variable `sgml-local-catalogs'
+A list of SGML entity catalogs to be searched first when parsing the buffer.
+This is used in addition to `sgml-catalog-files',  and `sgml-public-map'.
+This variable is automatically local to the buffer.
+
+* New commands
+Thanks to David Megginson the custom menus are now reachable from the
+keyboard:
+** C-c C-u C-d  (sgml-custom-dtd)
+** C-c C-u C-m  (sgml-custom-markup)
+
+* New command: sgml-expand-entity-reference
+Insert the text of the entity referenced at point.
+
+* sgml-validate-command is now a format string
+
+
+News in version 1.0 a1
+
+* A lot of internal changes
+
+* Support for general entities
+
+* New entity manager
+
+The new entity manager will handle an entity thus:
+
+1. If the entity has a system identifier, the entity manager will
+  first try and call the functions on sgml-sysid-resolve-functions
+  with the system identifier as argument, and if any function returns
+  non-nil assume that the function has handled the entity.
+2. Next the entity manager will try the catalogue, and 
+3. if not found there use the sgml-public-map.
+
+The catalogue files searched is given by the variable
+sgml-catalog-files (I suppose it would be confusing to call it
+sgml-catalogue-files.)  This variable is initialised from the
+environment variable SGML_CATALOG_FILES (should be a colon separated
+list of files).
+
+The sgml-public-map is initialised from the environment variable
+SGML_PATH.
+
+sgml-system-path defaults to nil.
+
+Supports most of sgmls substitutions for sgml-public-map.
+Supported: %%, %N, %P, %S, %Y, %C, %L, %O, %T, %V
+Unsupported: %D, %X, %A, %E, %I, %R, %U
+Note: that %D is and alias for %C in PSGML (historical accident).
+
+
+* Hooks
+
+** sgml-close-element-hook
+The hook run by `sgml-close-element'.
+These functions are invoked with `sgml-current-tree' bound to the
+element just parsed.
+
+** sgml-doctype-parsed-hook
+This hook is called after the doctype has been parsed.
+It can be used to load any additional information into the DTD structure.
 
 Example: add description to element types
-
 (defun set-help-info ()
   (let ((help '(("para" "A Paragraph")
 		("q"    "A Quotation")
 		("date" "A Date")))
 	(dtd (sgml-pstate-dtd sgml-buffer-parse-state)))
     (loop for h in help do
-	  (setf (sgml-eltype-appdata (sgml-lookup-eltype (first h) dtd)
+	  (setf (sgml-eltype-appdata (sgml-lookup-eltype (first h) dtd) 
 				     'help-string)
 		(second h)))))
 (add-hook 'sgml-doctype-parsed-hook 'set-help-info)
+
 (defun sgml-help-for-element ()
   (interactive)
   (let* ((el (sgml-find-element-of (point)))
@@ -286,16 +591,15 @@ Example: add description to element types
     (and help
 	 (message "%s" help))))
 
-*** sgml-sysid-resolve-functions
 
-This variable should contain a list of functions. Each function should
-take one argument, the system identifier of an entity. If the function
-can handle that identifier, it should insert the text of the entity
-into the current buffer at point and return t. If the system identifier
-is not handled the function should return nil.
+** sgml-sysid-resolve-functions
+This variable should contain a list of functions.
+Each function should take one argument, the system identifier of an entity.
+If the function can handle that identifier, it should insert the text
+of the entity into the current buffer at point and return t.  If the
+system identifier is not handled the function should return nil.
 
-Example use: Support URLs as system identifiers
-
+Example use:  Support URLs as system identifiers
 (defun sgml-url-sysid (sysid)
   (cond ((string-match "^\\([a-z]+\\):" sysid) ; looks like url
 	 (require 'url)
@@ -305,11 +609,18 @@ Example use: Support URLs as system identifiers
 	 t)))
 (add-hook 'sgml-sysid-resolve-functions 'sgml-url-sysid)
 
-** New file psgml-api.el
 
-This file contain API-functions that are not used by other parts of
-psgml. Use `(require 'psgml-api)' to use the API functions (psgml-api
-includes the rest of the psgml files).
+* sgml-set-face  Now automatically sets faces for all visible text,
+with a delay of 1s.
+
+* sgml-exposed-tags
+The list of tag names that remain visible, despite M-x sgml-hide-tags.
+Each name is a lowercase string, and start-tags and end-tags must be
+listed individually.
+
+`sgml-exposed-tags' is local to each buffer in which it has been set;
+use `setq-default' to set it to a value that is shared among buffers.
+
 
 Local variables:
 mode: text

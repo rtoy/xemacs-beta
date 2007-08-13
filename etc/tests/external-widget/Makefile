@@ -1,4 +1,4 @@
-CFLAGs += -Xc -g -DTOOLTALK
+CFLAGS += -Xc -g -DTOOLTALK
 EMACSHOME = ../../..
 EMACSLIBDIR = $(EMACSHOME)/editor/src
 EMACSINCLUDEDIR = $(EMACSHOME)/editor/src

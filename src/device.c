@@ -1,4 +1,4 @@
-/* Generic device functions.
+ /* Generic device functions.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995, 1996 Ben Wing
@@ -92,6 +92,9 @@ mark_device (Lisp_Object obj, void (*markobj) (Lisp_Object))
 
   ((markobj) (d->color_instance_cache));
   ((markobj) (d->font_instance_cache));
+#ifdef MULE
+  ((markobj) (d->charset_font_cache));
+#endif
   ((markobj) (d->image_instance_cache));
 
   if (d->devmeths)
@@ -185,6 +188,11 @@ allocate_device (Lisp_Object console)
 						 HASHTABLE_EQUAL);
   d->font_instance_cache = make_lisp_hashtable (20, HASHTABLE_KEY_WEAK,
 						HASHTABLE_EQUAL);
+#ifdef MULE
+  /* Note that the following table is bi-level. */
+  d->charset_font_cache = make_lisp_hashtable (20, HASHTABLE_NONWEAK,
+					       HASHTABLE_EQ);
+#endif
   /*
      Note that the image instance cache is actually bi-level.
      See device.h.  We use a low number here because most of the

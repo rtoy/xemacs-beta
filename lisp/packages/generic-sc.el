@@ -539,7 +539,7 @@ MESSAGE is a string describing the changes."
 (defun sc-do-command (buffer message command file sc-file &rest flags)
   "Execute a command, notifying the user and checking for errors."
   (setq file (expand-file-name file))
-  (message (format "Running %s on %s..." message file))
+  (message "Running %s on %s..." message file)
   (let ((status
 	 (save-excursion
 	   (set-buffer (get-buffer-create buffer))
@@ -549,7 +549,7 @@ MESSAGE is a string describing the changes."
 	   (let ((default-directory (file-name-directory (or file "./"))))
 	     (eq (apply 'call-process command nil t nil flags) 0)))))
     (if status
-	(message (format "Running %s...OK" message))
+	(message "Running %s...OK" message)
       (save-excursion
 	(set-buffer buffer)
 	(goto-char (point-min))
@@ -558,7 +558,7 @@ MESSAGE is a string describing the changes."
 	(insert "\n\n")
 	(goto-char (point-min)))
       (display-buffer buffer)
-      (error (format "Running %s...FAILED" message)))))
+      (error "Running %s...FAILED" message))))
 
 (defun sc-enter-comment ()
   "Enter a comment. Return it as a string."

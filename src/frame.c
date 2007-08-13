@@ -103,8 +103,6 @@ Lisp_Object Vdefault_frame_plist;
 
 Lisp_Object Vframe_icon_glyph;
 
-Lisp_Object Qhidden;
-
 Lisp_Object Qvisible, Qiconic, Qinvisible, Qvisible_iconic, Qinvisible_iconic;
 Lisp_Object Qnomini, Qvisible_nomini, Qiconic_nomini, Qinvisible_nomini;
 Lisp_Object Qvisible_iconic_nomini, Qinvisible_iconic_nomini;
@@ -462,10 +460,7 @@ See `set-frame-properties', `default-x-frame-plist', and
      the frame-specific version of the buffer-alist unless the frame
      is accessible from the device. */
 
-#if 0
   DEVICE_FRAME_LIST (d) = nconc2 (DEVICE_FRAME_LIST (d), Fcons (frame, Qnil));
-#endif
-  DEVICE_FRAME_LIST (d) = Fcons (frame, DEVICE_FRAME_LIST (d));
   RESET_CHANGED_SET_FLAGS;
 
   /* Now make sure that the initial cached values are set correctly.
@@ -908,7 +903,7 @@ frame_matches_frametype (Lisp_Object frame, Lisp_Object type)
   if (NILP (type))
     type = Qnomini;
   if (ZEROP (type))
-    type = Qvisible_iconic;
+    type = Qiconic;
 
   if (EQ (type, Qvisible))
     return FRAME_VISIBLE_P (f);
@@ -1282,29 +1277,6 @@ delete_frame_internal (struct frame *f, int force,
 	    }
 	}
     }
-  /* Test for popup frames hanging around. */
-  /* Deletion of a parent frame with popups is deadly. */
-  {
-    Lisp_Object frmcons, devcons, concons;
-
-    FRAME_LOOP_NO_BREAK (frmcons, devcons, concons)
-      {
-	Lisp_Object this = XCAR (frmcons);
-
-
-	if (! EQ (this, frame)
-	    && EQ (frame, DEVMETH_OR_GIVEN(XDEVICE(XCAR(devcons)),
-					   get_frame_parent,
-					   (XFRAME(this)),
-					   Qnil)))
-	  {
-	    /* We've found another frame whose minibuffer is on
-	       this frame. */
-	    signal_simple_error
-	      ("Attempt to delete a frame with live popups", frame);
-	  }
-      }
-  }
 
   /* Before here, we haven't made any dangerous changes (just checked for
      error conditions).  Now run the delete-frame-hook.  Remember that
@@ -1382,7 +1354,6 @@ delete_frame_internal (struct frame *f, int force,
          First try the same device, then the same console. */
 
       next = DEVMETH_OR_GIVEN (d, get_frame_parent, (f), Qnil);
-
       if (NILP (next) || EQ (next, frame) || ! FRAME_LIVE_P (XFRAME (next)))
 	next = next_frame_internal (frame, Qvisible, device,
 				    called_from_delete_device);
@@ -1400,39 +1371,12 @@ delete_frame_internal (struct frame *f, int force,
 				    called_from_delete_device);
       if (NILP (next) || EQ (next, frame))
 	next = next_frame_internal (frame, Qt, Qt, called_from_delete_device);
-
-      /* if we haven't found another frame at this point
-	 then there aren't any. */
       if (NILP (next) || EQ (next, frame))
 	;
+      else if (EQ (frame, Fselected_frame (Qnil)))
+	Fselect_frame (next);
       else
-	{
-	  int did_select = 0;
-	  /* if this is the global selected frame, select another one. */
-	  if (EQ (frame, Fselected_frame (Qnil)))
-	    {
-		Fselect_frame (next);
-		did_select = 1;
-	    }
-	  /*
-	   * If the new frame we just selected is on a different
-	   * device then we still need to change DEVICE_SELECTED_FRAME(d) 
-	   * to a live frame, if there are any left on this device.
-	   */
-	  if (!EQ (device, FRAME_DEVICE(XFRAME(next))))
-	    {
-		Lisp_Object next_f =
-		    next_frame_internal (frame, Qt, device,
-					 called_from_delete_device);
-		if (NILP (next_f) || EQ (next_f, frame))
-		  ;
-		else
-		  set_device_selected_frame (d, next_f);
-	    }
-	  else if (! did_select)
-	    set_device_selected_frame (d, next);
-
-	}
+	set_device_selected_frame (d, next);
     }
 
   /* Don't allow minibuf_window to remain on a deleted frame.  */
@@ -1896,20 +1840,15 @@ Also raises the frame so that nothing obscures it.
 /* FSF returns 'icon for iconized frames.  What a crock! */
 
 DEFUN ("frame-visible-p", Fframe_visible_p, 0, 1, 0, /*
-Return non NIL if FRAME is now \"visible\" (actually in use for display).
+Return t if FRAME is now \"visible\" (actually in use for display).
 A frame that is not visible is not updated, and, if it works through a
 window system, may not show at all.
-N.B. Under X \"visible\" means Mapped. It the window is mapped but not
-actually visible on screen then frame_visible returns 'hidden.
 */
        (frame))
 {
-  int visible;
-  
   struct frame *f = decode_frame (frame);
-  visible = FRAMEMETH_OR_GIVEN (f, frame_visible_p, (f), f->visible);
-  return ( visible ? ( visible > 0 ? Qt : Qhidden )
-			     : Qnil);
+  return (FRAMEMETH_OR_GIVEN (f, frame_visible_p, (f), f->visible)
+			      ? Qt : Qnil);
 }
 
 DEFUN ("frame-totally-visible-p", Fframe_totally_visible_p, 0, 1, 0, /*
@@ -1942,8 +1881,6 @@ frame is iconified, it will not be visible.
 DEFUN ("visible-frame-list", Fvisible_frame_list, 0, 1, 0, /*
 Return a list of all frames now \"visible\" (being updated).
 If DEVICE is specified only frames on that device will be returned.
-Note that under virtual window managers not all these frame are necessarily
-really updated.
 */
        (device))
 {
@@ -1965,7 +1902,7 @@ really updated.
 	    {
 	      Lisp_Object frame = XCAR (frmcons);
 	      f = XFRAME (frame);
-	      if (FRAME_VISIBLE_P(f))
+	      if (f->visible)
 		value = Fcons (frame, value);
 	    }
 	}
@@ -2872,7 +2809,6 @@ syms_of_frame (void)
   defsymbol (&Qframe_title_format, "frame-title-format");
   defsymbol (&Qframe_icon_title_format, "frame-icon-title-format");
 
-  defsymbol (&Qhidden, "hidden");
   defsymbol (&Qvisible, "visible");
   defsymbol (&Qiconic, "iconic");
   defsymbol (&Qinvisible, "invisible");

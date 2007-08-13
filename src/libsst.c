@@ -18,13 +18,17 @@
 #ifdef emacs
 #include <config.h>
 #include "lisp.h"
-#else
-#if __STDC__ || defined(STDC_HEADERS)
+#endif
+
+#ifdef STDC_HEADERS
 #include <stdlib.h>
+#endif
+
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+
 #include <stdio.h>
-#endif
 #include <fcntl.h>
 #include "libsst.h"
 

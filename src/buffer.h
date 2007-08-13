@@ -32,6 +32,9 @@ Boston, MA 02111-1307, USA.  */
 #ifndef _XEMACS_BUFFER_H_
 #define _XEMACS_BUFFER_H_
 
+#ifdef MULE
+#include "mule-charset.h"
+#endif
 
 /************************************************************************/
 /*                                                                      */
@@ -85,6 +88,18 @@ struct buffer_text
     int save_modiff;		/* Previous value of modiff, as of last
 				   time buffer visited or saved a file.  */
 
+#ifdef MULE
+    /* We keep track of a "known" region for very fast access.
+       This information is text-only so it goes here. */
+    Bufpos mule_bufmin, mule_bufmax;
+    Bytind mule_bytmin, mule_bytmax;
+    int mule_shifter, mule_three_p;
+
+    /* And we also cache 16 positions for fairly fast access near those
+       positions. */
+    Bufpos mule_bufpos_cache[16];
+    Bytind mule_bytind_cache[16];
+#endif
 
     /* Change data that goes with the text. */
     struct buffer_text_change_data *changes;
@@ -354,6 +369,10 @@ extern Lisp_Object Qbuffer_or_string_p;
    (D) For working with Emchars:
    -----------------------------
 
+   [Note that there are other functions/macros for working with Emchars
+    in mule-charset.h, for retrieving the charset of an Emchar
+    and such.  These are only valid when MULE is defined.]
+
    valid_char_p(ch):
 	Return whether the given Emchar is valid.
 
@@ -384,7 +403,11 @@ extern Lisp_Object Qbuffer_or_string_p;
 /* (A) For working with charptr's (pointers to internally-formatted text) */
 /* ---------------------------------------------------------------------- */
 
+#ifdef MULE
+# define VALID_CHARPTR_P(ptr) BUFBYTE_FIRST_BYTE_P (* (unsigned char *) ptr)
+#else
 # define VALID_CHARPTR_P(ptr) 1
+#endif
 
 #ifdef ERROR_CHECK_BUFPOS
 # define ASSERT_VALID_CHARPTR(ptr) assert (VALID_CHARPTR_P (ptr))
@@ -438,8 +461,31 @@ extern Lisp_Object Qbuffer_or_string_p;
 #define DEC_CHARPTR(ptr) REAL_DEC_CHARPTR (ptr)
 #endif
 
+#ifdef MULE
+
+#define VALIDATE_CHARPTR_BACKWARD(ptr) do	\
+{						\
+  while (!VALID_CHARPTR_P (ptr)) ptr--;		\
+} while (0)
+
+/* This needs to be trickier to avoid the possibility of running off
+   the end of the string. */
+
+#define VALIDATE_CHARPTR_FORWARD(ptr) do	\
+{						\
+  Bufbyte *__vcfptr__ = (ptr);			\
+  VALIDATE_CHARPTR_BACKWARD (__vcfptr__);	\
+  if (__vcfptr__ != (ptr))			\
+    {						\
+      (ptr) = __vcfptr__;			\
+      INC_CHARPTR (ptr);			\
+    }						\
+} while (0)
+
+#else /* not MULE */
 #define VALIDATE_CHARPTR_BACKWARD(ptr)
 #define VALIDATE_CHARPTR_FORWARD(ptr)
+#endif /* not MULE */
 
 /* -------------------------------------------------------------- */
 /* (B) For working with the length (in bytes and characters) of a */
@@ -469,9 +515,51 @@ charptr_length (CONST Bufbyte *ptr)
 #define simple_set_charptr_emchar(ptr, x)	((ptr)[0] = (Bufbyte) (x), 1)
 #define simple_charptr_copy_char(ptr, ptr2)	((ptr2)[0] = *(ptr), 1)
 
+#ifdef MULE
+
+Emchar non_ascii_charptr_emchar (CONST Bufbyte *ptr);
+Bytecount non_ascii_set_charptr_emchar (Bufbyte *ptr, Emchar c);
+Bytecount non_ascii_charptr_copy_char (CONST Bufbyte *ptr,
+				       Bufbyte *ptr2);
+
+INLINE Emchar charptr_emchar (CONST Bufbyte *ptr);
+INLINE Emchar
+charptr_emchar (CONST Bufbyte *ptr)
+{
+  if (BYTE_ASCII_P (*ptr))
+    return simple_charptr_emchar (ptr);
+  else
+    return non_ascii_charptr_emchar (ptr);
+}
+
+INLINE Bytecount set_charptr_emchar (Bufbyte *ptr, Emchar x);
+INLINE Bytecount
+set_charptr_emchar (Bufbyte *ptr, Emchar x)
+{
+  if (!CHAR_MULTIBYTE_P (x))
+    return simple_set_charptr_emchar (ptr, x);
+  else
+    return non_ascii_set_charptr_emchar (ptr, x);
+}
+
+INLINE Bytecount charptr_copy_char (CONST Bufbyte *ptr, Bufbyte *ptr2);
+INLINE Bytecount
+charptr_copy_char (CONST Bufbyte *ptr, Bufbyte *ptr2)
+{
+  if (BYTE_ASCII_P (*ptr))
+    return simple_charptr_copy_char (ptr, ptr2);
+  else
+    return non_ascii_charptr_copy_char (ptr, ptr2);
+}
+
+#else /* not MULE */
+
 # define charptr_emchar(ptr)		simple_charptr_emchar (ptr)
 # define set_charptr_emchar(ptr, x)	simple_set_charptr_emchar (ptr, x)
 # define charptr_copy_char(ptr, ptr2)	simple_charptr_copy_char (ptr, ptr2)
+
+#endif /* not MULE */
+
 
 #define charptr_emchar_n(ptr, offset) \
   charptr_emchar (charptr_n_addr (ptr, offset))
@@ -481,7 +569,25 @@ charptr_length (CONST Bufbyte *ptr)
 /* (D) For working with Emchars */
 /* ---------------------------- */
 
+#ifdef MULE
+
+int non_ascii_valid_char_p (Emchar ch);
+
+INLINE int valid_char_p (Emchar ch);
+INLINE int
+valid_char_p (Emchar ch)
+{
+  if (ch >= 0 && ch < 0400)
+    return 1;
+  else
+    return non_ascii_valid_char_p (ch);
+}
+
+#else /* not MULE */
+
 #define valid_char_p(ch) ((unsigned int) (ch) < 0400)
+
+#endif /* not MULE */
 
 #define CHAR_INTP(x) (INTP (x) && valid_char_p (XINT (x)))
 
@@ -511,7 +617,11 @@ XCHAR_OR_CHAR_INT (Lisp_Object obj)
        else								\
          x = wrong_type_argument (Qcharacterp, x); } while (0)
 
+#ifdef MULE
+# define MAX_EMCHAR_LEN 4
+#else
 # define MAX_EMCHAR_LEN 1
+#endif
 
 
 /*----------------------------------------------------------------------*/
@@ -762,7 +872,12 @@ memind_to_bytind (struct buffer *buf, Memind x)
 /*                       working with byte indices                      */
 /*----------------------------------------------------------------------*/
 
+#ifdef MULE
+# define VALID_BYTIND_P(buf, x) \
+  BUFBYTE_FIRST_BYTE_P (*BI_BUF_BYTE_ADDRESS (buf, x))
+#else
 # define VALID_BYTIND_P(buf, x) 1
+#endif
 
 #ifdef ERROR_CHECK_BUFPOS
 
@@ -792,9 +907,37 @@ memind_to_bytind (struct buffer *buf, Memind x)
 
 #endif /* not ERROR_CHECK_BUFPOS */
 
-# define VALIDATE_BYTIND_BACKWARD(buf, x)
+/* Note that, although the Mule version will work fine for non-Mule
+   as well (it should reduce down to nothing), we provide a separate
+   version to avoid compilation warnings and possible non-optimal
+   results with stupid compilers. */
 
+#ifdef MULE
+# define VALIDATE_BYTIND_BACKWARD(buf, x) do		\
+{							\
+  Bufbyte *__ibptr = BI_BUF_BYTE_ADDRESS (buf, x);	\
+  while (!BUFBYTE_FIRST_BYTE_P (*__ibptr))		\
+    __ibptr--, (x)--;					\
+} while (0)
+#else
+# define VALIDATE_BYTIND_BACKWARD(buf, x)
+#endif
+
+/* Note that, although the Mule version will work fine for non-Mule
+   as well (it should reduce down to nothing), we provide a separate
+   version to avoid compilation warnings and possible non-optimal
+   results with stupid compilers. */
+
+#ifdef MULE
+# define VALIDATE_BYTIND_FORWARD(buf, x) do		\
+{							\
+  Bufbyte *__ibptr = BI_BUF_BYTE_ADDRESS (buf, x);	\
+  while (!BUFBYTE_FIRST_BYTE_P (*__ibptr))		\
+    __ibptr++, (x)++;					\
+} while (0)
+#else
 # define VALIDATE_BYTIND_FORWARD(buf, x)
+#endif
 
 /* Note that in the simplest case (no MULE, no ERROR_CHECK_BUFPOS),
    this crap reduces down to simply (x)++. */
@@ -846,8 +989,86 @@ next_bytind (struct buffer *buf, Bytind x)
 /*         Converting between buffer positions and byte indices         */
 /*----------------------------------------------------------------------*/
 
+#ifdef MULE
+
+Bytind bufpos_to_bytind_func (struct buffer *buf, Bufpos x);
+Bufpos bytind_to_bufpos_func (struct buffer *buf, Bytind x);
+
+/* The basic algorithm we use is to keep track of a known region of
+   characters in each buffer, all of which are of the same width.  We
+   keep track of the boundaries of the region in both Bufpos and
+   Bytind coordinates and also keep track of the char width, which
+   is 1 - 4 bytes.  If the position we're translating is not in
+   the known region, then we invoke a function to update the known
+   region to surround the position in question.  This assumes
+   locality of reference, which is usually the case.
+
+   Note that the function to update the known region can be simple
+   or complicated depending on how much information we cache.
+   For the moment, we don't cache any information, and just move
+   linearly forward or back from the known region, with a few
+   shortcuts to catch all-ASCII buffers. (Note that this will
+   thrash with bad locality of reference.) A smarter method would
+   be to keep some sort of pseudo-extent layer over the buffer;
+   maybe keep track of the bufpos/bytind correspondence at the
+   beginning of each line, which would allow us to do a binary
+   search over the pseudo-extents to narrow things down to the
+   correct line, at which point you could use a linear movement
+   method.  This would also mesh well with efficiently
+   implementing a line-numbering scheme.
+
+   Note also that we have to multiply or divide by the char width
+   in order to convert the positions.  We do some tricks to avoid
+   ever actually having to do a multiply or divide, because that
+   is typically an expensive operation (esp. divide).  Multiplying
+   or dividing by 1, 2, or 4 can be implemented simply as a
+   shift left or shift right, and we keep track of a shifter value
+   (0, 1, or 2) indicating how much to shift.  Multiplying by 3
+   can be implemented by doubling and then adding the original
+   value.  Dividing by 3, alas, cannot be implemented in any
+   simple shift/subtract method, as far as I know; so we just
+   do a table lookup.  For simplicity, we use a table of size
+   128K, which indexes the "divide-by-3" values for the first
+   64K non-negative numbers. (Note that we can increase the
+   size up to 384K, i.e. indexing the first 192K non-negative
+   numbers, while still using shorts in the array.) This also
+   means that the size of the known region can be at most
+   64K for width-three characters.
+   */
+   
+extern short three_to_one_table[];
+
+INLINE int real_bufpos_to_bytind (struct buffer *buf, Bufpos x);
+INLINE int
+real_bufpos_to_bytind (struct buffer *buf, Bufpos x)
+{
+  if (x >= buf->text->mule_bufmin && x <= buf->text->mule_bufmax)
+    return (buf->text->mule_bytmin +
+	    ((x - buf->text->mule_bufmin) << buf->text->mule_shifter) +
+	    (buf->text->mule_three_p ? (x - buf->text->mule_bufmin) : 0));
+  else
+    return bufpos_to_bytind_func (buf, x);
+}
+
+INLINE int real_bytind_to_bufpos (struct buffer *buf, Bytind x);
+INLINE int
+real_bytind_to_bufpos (struct buffer *buf, Bytind x)
+{
+  if (x >= buf->text->mule_bytmin && x <= buf->text->mule_bytmax)
+    return (buf->text->mule_bufmin +
+	    ((buf->text->mule_three_p
+	      ? three_to_one_table[x - buf->text->mule_bytmin]
+	      : (x - buf->text->mule_bytmin) >> buf->text->mule_shifter)));
+  else
+    return bytind_to_bufpos_func (buf, x);
+}
+
+#else /* not MULE */
+
 # define real_bufpos_to_bytind(buf, x)	((Bytind) x)
 # define real_bytind_to_bufpos(buf, x)	((Bufpos) x)
+
+#endif /* not MULE */
 
 #ifdef ERROR_CHECK_BUFPOS
 
@@ -901,11 +1122,30 @@ Bufpos bytind_to_bufpos (struct buffer *buf, Bytind x);
    format strings back from a library function.
 */
 
+#ifdef MULE
+
+/* WARNING: These use a static buffer.  This can lead to disaster if
+   these functions are not used *very* carefully.  Under normal
+   circumstances, do not call these functions; call the front ends
+   below. */
+
+CONST Extbyte *convert_to_external_format (CONST Bufbyte *ptr,
+					   Bytecount len,
+					   Extcount *len_out,
+					   enum external_data_format fmt);
+CONST Bufbyte *convert_from_external_format (CONST Extbyte *ptr,
+					     Extcount len,
+					     Bytecount *len_out,
+					     enum external_data_format fmt);
+
+#else /* ! MULE */
+
 #define convert_to_external_format(ptr, len, len_out, fmt) \
      (*(len_out) = (int) (len), (CONST Extbyte *) (ptr))
 #define convert_from_external_format(ptr, len, len_out, fmt) \
      (*(len_out) = (Bytecount) (len), (CONST Bufbyte *) (ptr))
 
+#endif /* ! MULE */
 
 /* In all of the following macros we use the following general principles:
 
@@ -958,12 +1198,49 @@ Bufpos bytind_to_bufpos (struct buffer *buf, Bytind x);
    middle of the arguments to the function call and you are unbelievably
    hosed.) */
      
+#ifdef MULE
+
+#define GET_CHARPTR_EXT_DATA_ALLOCA(ptr, len, fmt, stick_value_here, stick_len_here) \
+do									\
+{									\
+  Bytecount __gceda_len_in__ = (len);					\
+  Extcount  __gceda_len_out__;						\
+  CONST Bufbyte *__gceda_ptr_in__ = (ptr);				\
+  CONST Extbyte *__gceda_ptr_out__;					\
+									\
+  __gceda_ptr_out__ =							\
+     convert_to_external_format (__gceda_ptr_in__, __gceda_len_in__,	\
+				&__gceda_len_out__, fmt);		\
+  /* If the new string is identical to the old (will be the case most	\
+     of the time), just return the same string back.  This saves	\
+     on alloca()ing, which can be useful on C alloca() machines and	\
+     on stack-space-challenged environments. */				\
+     									\
+  if (__gceda_len_in__ == __gceda_len_out__ &&				\
+      !memcmp (__gceda_ptr_in__, __gceda_ptr_out__, __gceda_len_out__))	\
+    {									\
+      (stick_value_here) = (CONST Extbyte *) __gceda_ptr_in__;		\
+      (stick_len_here) = (Extcount) __gceda_len_in__;			\
+    }									\
+  else									\
+    {									\
+      (stick_value_here) = (CONST Extbyte *) alloca(1 + __gceda_len_out__);\
+      memcpy ((Extbyte *) stick_value_here, __gceda_ptr_out__,		\
+	      1 + __gceda_len_out__);					\
+      (stick_len_here) = (Extcount) __gceda_len_out__;			\
+    }									\
+} while (0)
+
+#else /* ! MULE */
+
 #define GET_CHARPTR_EXT_DATA_ALLOCA(ptr, len, fmt, stick_value_here, stick_len_here)\
 do								\
 {								\
   (stick_value_here) = (CONST Extbyte *) (ptr);			\
   (stick_len_here) = (Extcount) (len);				\
 } while (0)
+
+#endif /* ! MULE */
 
 #define GET_C_CHARPTR_EXT_DATA_ALLOCA(ptr, fmt, stick_value_here)	\
 do									\
@@ -1010,12 +1287,49 @@ do									\
    middle of the arguments to the function call and you are unbelievably
    hosed.) */
      
+#ifdef MULE
+
 #define GET_CHARPTR_INT_DATA_ALLOCA(ptr, len, fmt, stick_value_here, stick_len_here)\
-do								\
-{								\
-  (stick_value_here) = (CONST Bufbyte *) (ptr);			\
-  (stick_len_here) = (Bytecount) (len);				\
+do									\
+{									\
+  Extcount __gcida_len_in__ = (len);					\
+  Bytecount __gcida_len_out__;						\
+  CONST Extbyte *__gcida_ptr_in__ = (ptr);				\
+  CONST Bufbyte *__gcida_ptr_out__;					\
+									\
+  __gcida_ptr_out__ =							\
+     convert_from_external_format (__gcida_ptr_in__, __gcida_len_in__,	\
+				  &__gcida_len_out__, fmt);		\
+  /* If the new string is identical to the old (will be the case most	\
+     of the time), just return the same string back.  This saves	\
+     on alloca()ing, which can be useful on C alloca() machines and	\
+     on stack-space-challenged environments. */				\
+     									\
+  if (__gcida_len_in__ == __gcida_len_out__ &&				\
+      !memcmp (__gcida_ptr_in__, __gcida_ptr_out__, __gcida_len_out__))	\
+    {									\
+      (stick_value_here) = (CONST Bufbyte *) __gcida_ptr_in__;		\
+      (stick_len_here) = (Bytecount) __gcida_len_in__;			\
+    }									\
+  else									\
+    {									\
+      (stick_value_here) = alloca (1 + __gcida_len_out__);		\
+      memcpy ((Bufbyte *) stick_value_here, __gcida_ptr_out__,		\
+	      1 + __gcida_len_out__); 					\
+      (stick_len_here) = __gcida_len_out__;				\
+    }									\
 } while (0)
+
+#else /* ! MULE */
+
+#define GET_CHARPTR_INT_DATA_ALLOCA(ptr, len, fmt, stick_value_here, stick_len_here)\
+do						\
+{						\
+  (stick_value_here) = (CONST Bufbyte *) (ptr);	\
+  (stick_len_here) = (Bytecount) (len);		\
+} while (0)
+
+#endif /* ! MULE */
 
 #define GET_C_CHARPTR_INT_DATA_ALLOCA(ptr, fmt, stick_value_here)	\
 do									\
@@ -1073,7 +1387,7 @@ do									   \
   __gseda_ptr__ = convert_to_external_format (string_data (__gseda_s__),   \
 					      string_length (__gseda_s__), \
 					      &__gseda_len__, fmt);	   \
-  (stick_value_here) = (CONST Extbyte *) alloca (1 + __gseda_len__);			   \
+  (stick_value_here) = alloca (1 + __gseda_len__);			   \
   memcpy ((Extbyte *) stick_value_here, __gseda_ptr__, 1 + __gseda_len__); \
   (stick_len_here) = __gseda_len__;					   \
 } while (0)
@@ -1122,6 +1436,11 @@ do								\
 /*                                                                      */
 /************************************************************************/
 
+/* used when MULE is not defined, so that Charset-type stuff can still
+   be done */
+
+#ifndef MULE
+
 #define Vcharset_ascii Qnil
 
 #define CHAR_CHARSET(ch) Vcharset_ascii
@@ -1144,6 +1463,8 @@ do						\
   (byte2) = 0;					\
 } while (0)
 #define BYTE_ASCII_P(byte) 1
+
+#endif /* ! MULE */
 
 
 /************************************************************************/
@@ -1459,8 +1780,27 @@ int map_over_sharing_buffers (struct buffer *buf,
 # define SET_TRT_TABLE_CHAR_1(table, ch1, ch2) \
   set_string_char (XSTRING (table), (Charcount) ch1, ch2)
 
+#ifdef MULE
+# define MAKE_MIRROR_TRT_TABLE() make_opaque (256, 0)
+# define MIRROR_TRT_TABLE_AS_STRING(table) ((Bufbyte *) XOPAQUE_DATA (table))
+# define MIRROR_TRT_TABLE_CHAR_1(table, ch) \
+  ((Emchar) (MIRROR_TRT_TABLE_AS_STRING (table)[ch]))
+# define SET_MIRROR_TRT_TABLE_CHAR_1(table, ch1, ch2) \
+  (MIRROR_TRT_TABLE_AS_STRING (table)[ch1] = (Bufbyte) (ch2))
+#endif
+
 # define IN_TRT_TABLE_DOMAIN(c) (((unsigned EMACS_INT) (c)) < 0400)
 
+#ifdef MULE
+#define MIRROR_DOWNCASE_TABLE_AS_STRING(buf) \
+  MIRROR_TRT_TABLE_AS_STRING (buf->mirror_downcase_table)
+#define MIRROR_UPCASE_TABLE_AS_STRING(buf) \
+  MIRROR_TRT_TABLE_AS_STRING (buf->mirror_upcase_table)
+#define MIRROR_CANON_TABLE_AS_STRING(buf) \
+  MIRROR_TRT_TABLE_AS_STRING (buf->mirror_case_canon_table)
+#define MIRROR_EQV_TABLE_AS_STRING(buf) \
+  MIRROR_TRT_TABLE_AS_STRING (buf->mirror_case_eqv_table)
+#else
 #define MIRROR_DOWNCASE_TABLE_AS_STRING(buf) \
   TRT_TABLE_AS_STRING (buf->downcase_table)
 #define MIRROR_UPCASE_TABLE_AS_STRING(buf) \
@@ -1469,6 +1809,7 @@ int map_over_sharing_buffers (struct buffer *buf,
   TRT_TABLE_AS_STRING (buf->case_canon_table)
 #define MIRROR_EQV_TABLE_AS_STRING(buf) \
   TRT_TABLE_AS_STRING (buf->case_eqv_table)
+#endif
 
 INLINE Emchar TRT_TABLE_OF (Lisp_Object trt, Emchar c);
 INLINE Emchar

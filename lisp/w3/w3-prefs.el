@@ -1,14 +1,13 @@
 ;;; w3-prefs.el --- Preferences panels for Emacs-W3
 ;; Author: wmperry
-;; Created: 1997/03/21 15:52:22
-;; Version: 1.23
+;; Created: 1996/06/30 18:10:45
+;; Version: 1.5
 ;; Keywords: hypermedia, preferences
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
-;;; This file is part of GNU Emacs.
+;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
 ;;; GNU Emacs is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -21,20 +20,22 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;;; Boston, MA 02111-1307, USA.
+;;; along with GNU Emacs; see the file COPYING.  If not, write to
+;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Preferences panels for Emacs-W3
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(require 'widget)
+(require 'widget-edit)
 (require 'w3-vars)
 (require 'w3-keyword)
+(require 'w3-widget)
 (require 'w3-toolbar)
-(eval-and-compile
-  (require 'w3-widget))
 
+(defvar w3-preferences-glyph nil)
+(defvar w3-preferences-map nil)
 (defvar w3-preferences-panel-begin-marker nil)
 (defvar w3-preferences-panel-end-marker nil)
 (defvar w3-preferences-panels '(
@@ -43,8 +44,22 @@
 				(cookies       . "HTTP Cookies")
 				(hooks         . "Various Hooks")
 				(compatibility . "Compatibility")
-				(proxy         . "Proxy")
-				(privacy       . "Privacy")))
+				(proxy         . "Proxy")))
+
+(defun w3-preferences-setup-glyph-map ()
+  (let* ((x 0)
+	 (height (and w3-preferences-glyph
+		      (glyph-height w3-preferences-glyph)))
+	 (width (and height (/ (glyph-width w3-preferences-glyph)
+			       (length w3-preferences-panels)))))
+    (mapcar
+     (function
+      (lambda (region)
+	(vector "rect" (list (vector (if width (* x width) 0) 0)
+			     (vector (if width (* (setq x (1+ x)) width) 0)
+				     (or height 0)))
+		(car region) (cdr region))))
+     w3-preferences-panels)))     
 
 (defun w3-preferences-generic-variable-callback (widget &rest ignore)
   (condition-case ()
@@ -89,7 +104,6 @@
    (widget-create 'radio
 		  :value (symbol-value 'w3-preferences-temp-w3-toolbar-type)
 		  :notify 'w3-preferences-generic-variable-callback
-		  :format "%v"
 		  (list 'item :format "%t\t" :tag "Pictures" :value 'pictures)
 		  (list 'item :format "%t\t" :tag "Text"     :value 'text)
 		  (list 'item :format "%t" :tag "Both" :value 'both))
@@ -115,7 +129,6 @@
   (widget-put
    (widget-create
     'radio
-    :format "%v"
     :value (symbol-value 'w3-preferences-temp-use-home-page)
     :notify 'w3-preferences-generic-variable-callback
     (list 'item :format "%t\t" :tag "Blank Page" :value nil)
@@ -124,7 +137,7 @@
   (widget-insert "\n\t\tURL: ")
   (widget-put
    (widget-create
-    'editable-field
+    'field
     :value (or (symbol-value 'w3-preferences-temp-w3-default-homepage) "None")
     :notify 'w3-preferences-generic-variable-callback)
    'variable 'w3-preferences-temp-w3-default-homepage)
@@ -172,6 +185,19 @@
     :value (symbol-value 'w3-preferences-temp-w3-delay-image-loads))
    'variable 'w3-preferences-temp-w3-delay-image-loads)
   (widget-insert " Delay Image Loads\n"
+;;;		 "\nAllowed Image Types\n"
+;;;		 "-------------------\n")
+;;;  (set
+;;;   (make-local-variable 'w3-preferences-image-type-widget)
+;;;   (widget-create
+;;;    'repeat
+;;;    :entry-format "%i %d %v"
+;;;    :value (mapcar
+;;;	    (function
+;;;	     (lambda (x)
+;;;	       (list 'item :format "%t" :tag (car x) :value (cdr x))))
+;;;	    w3-image-mappings)
+;;;    '(item :tag "*/*" :value 'unknown)))
   ))
 
 (defun w3-preferences-save-images-panel ()
@@ -199,7 +225,9 @@
 ;;; The hooks panel
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar w3-preferences-hooks-variables
-  '(w3-load-hook
+  '(w3-file-done-hook
+    w3-file-prepare-hook
+    w3-load-hook
     w3-mode-hook
     w3-preferences-cancel-hook
     w3-preferences-default-hook
@@ -219,7 +247,7 @@
     (while todo
       (setq cur (car todo)
 	    todo (cdr todo)
-	    doc (documentation-property cur 'variable-documentation))
+	    doc (get cur 'variable-documentation))
       (if (string-match "^\\*" doc)
 	  (setq doc (substring doc 1 nil)))
       (setq pt (point))
@@ -243,6 +271,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar w3-preferences-compatibility-variables
   '(
+    (w3-style-ie-compatibility
+     . "Internet Explorer (tm) 3.0 compatible stylesheet parsing")
     (w3-netscape-compatible-comments
      . "Allow Netscape compatible comments")
     (w3-user-colors-take-precedence
@@ -288,25 +318,18 @@
 	(proxy nil)
 	(host-var nil)
 	(port-var nil)
-	(host nil)
-	(port nil)
-	(proxy-entry nil))
+	(urlobj nil))
     (widget-insert "\n")
     (while proxies
       (setq proxy (car proxies)
 	    proxies (cdr proxies)
 	    host-var (intern (format "w3-%s-proxy-host" (downcase proxy)))
 	    port-var (intern (format "w3-%s-proxy-port" (downcase proxy)))
-	    proxy-entry (cdr-safe (assoc (downcase proxy) url-proxy-services)))
-      (if (and proxy-entry (string-match "\\(.*\\):\\([0-9]+\\)" proxy-entry))
-	  (setq host (match-string 1 proxy-entry)
-		port (match-string 2 proxy-entry))
-	(setq host proxy-entry
-	      port nil))
-      (set (make-local-variable host-var) (or host ""))
-      (set (make-local-variable port-var) (or port ""))))
-  (set (make-local-variable 'w3-preferences-temp-no-proxy)
-       (cdr-safe (assoc "no_proxy" url-proxy-services))))
+	    urlobj (url-generic-parse-url
+		    (cdr-safe
+		     (assoc (downcase proxy) url-proxy-services))))
+      (set (make-local-variable host-var) (or (url-host urlobj) ""))
+      (set (make-local-variable port-var) (or (url-port urlobj) "")))))
 
 (defun w3-preferences-create-proxy-panel ()
   (let ((proxies '("FTP" "Gopher" "HTTP" "Security" "WAIS" "SHTTP" "News"))
@@ -322,7 +345,7 @@
 	    port-var (intern (format "w3-%s-proxy-port" (downcase proxy))))
       (widget-insert (format "%10s Proxy: " proxy))
       (widget-put
-       (widget-create 'editable-field
+       (widget-create 'field
 		      :size 20
 		      :value-face 'underline
 		      :notify 'w3-preferences-generic-variable-callback
@@ -330,21 +353,13 @@
        'variable host-var)
       (widget-insert "  Port: ")
       (widget-put
-       (widget-create 'editable-field
+       (widget-create 'field
 		      :size 5
 		      :value-face 'underline
 		      :notify 'w3-preferences-generic-variable-callback
 		      :value (format "%5s" (symbol-value port-var)))
        'variable port-var)
       (widget-insert "\n\n"))
-    (widget-insert "        No proxy: ")
-    (widget-put
-     (widget-create 'editable-field
-		    :size 40
-		    :value-face 'underline
-		    :notify 'w3-preferences-generic-variable-callback
-		    :value (or (symbol-value 'w3-preferences-temp-no-proxy) ""))
-     'variable 'w3-preferences-temp-no-proxy)
     (widget-setup)))
 
 (defun w3-preferences-save-proxy-panel ()
@@ -356,12 +371,6 @@
 	(host nil)
 	(port nil)
 	(new-proxy-services nil))
-    (if (/= 0 (length (symbol-value 'w3-preferences-temp-no-proxy)))
-	(setq new-proxy-services (cons
-				  (cons
-				   "no_proxy"
-				   (symbol-value 'w3-preferences-temp-no-proxy))
-				  new-proxy-services)))
     (while proxies
       (setq proxy (car proxies)
 	    proxies (cdr proxies)
@@ -374,124 +383,10 @@
 	    port (symbol-value port-var))
       (if (and host (/= 0 (length host)))
 	  (setq new-proxy-services (cons (cons (downcase proxy)
-					       (format "%s:%s" host
+					       (format "http://%s:%s/" host
 						       (or port "80")))
 					 new-proxy-services))))
     (setq url-proxy-services new-proxy-services)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Privacy panel
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defsubst w3-preferences-privacy-bits-sort (bits) 
-  (sort bits (function (lambda (a b)
-			 (memq b (memq a '(email os lastloc agent cookie)))))))
-
-(defvar url-valid-privacy-levels
-  '((paranoid . (email os lastloc agent cookie))
-    (high     . (email lastloc))
-    (low      . (lastloc))
-    (none     . nil)))
-
-(defvar w3-preferences-privacy-bit-widgets nil)
-(defvar w3-preferences-privacy-level-widget nil)
-(defvar w3-preferences-temp-url-privacy-level nil)
-;; darnit i just noticed the checklist widget, this should probably be
-;; reimplemented with that instead of checkboxes, but i've almost finished.
-(defun w3-preferences-privacy-bit-callback (widget &rest ignore)
-  (let ((privacy-bits (if (listp w3-preferences-temp-url-privacy-level)
-  			  w3-preferences-temp-url-privacy-level
-  			(copy-list (cdr-safe (assq w3-preferences-temp-url-privacy-level url-valid-privacy-levels)))))
-  	(bit (widget-get widget 'bit))
-  	(val (widget-value widget)))
-    (if val
-  	(setq privacy-bits (delq bit privacy-bits))
-      (setq privacy-bits (w3-preferences-privacy-bits-sort (cons bit (delq bit privacy-bits)))))
-    (setq w3-preferences-temp-url-privacy-level
-  	  (or (car (rassoc privacy-bits url-valid-privacy-levels))
-  	      privacy-bits))
-    (widget-value-set w3-preferences-privacy-level-widget 
-  		      (if (listp w3-preferences-temp-url-privacy-level)
-  			  'custom
-  			w3-preferences-temp-url-privacy-level))
-    ))
-
-
-(defun w3-preferences-privacy-level-callback (widget &rest ignore)
-  (let* ((val (widget-value widget))
-  	 (privacy-bits (cdr-safe (assq val url-valid-privacy-levels))))
-    (if (eq val 'custom) nil
-      (setq w3-preferences-temp-url-privacy-level val)
-      (mapcar (function (lambda (bit)
-  			  (widget-value-set (cdr bit)
-  					    (not (memq (car bit)
-  						       privacy-bits)))))
-  	      w3-preferences-privacy-bit-widgets))
-    ))
-
-(defun w3-preferences-init-privacy-panel ()
-  (w3-preferences-create-temp-variables '(url-privacy-level
-					  url-cookie-confirmation))
-  (setq w3-preferences-privacy-bit-widgets nil)
-  (setq w3-preferences-privacy-level-widget nil))
-
-(defsubst w3-preferences-create-privacy-bit-widget (bit bit-text current-bits)
-  (let ((bit-widget (widget-create 
-		     'checkbox
-		     :value (not (memq bit current-bits))
-		     :notify 'w3-preferences-privacy-bit-callback
-		     )))
-    (widget-put bit-widget 'bit bit)
-    (setq w3-preferences-privacy-bit-widgets (cons (cons bit bit-widget)
-						   w3-preferences-privacy-bit-widgets))
-    (widget-insert " " bit-text "\n")))
-
-
-(defun w3-preferences-create-privacy-panel ()
-  (let ((privacy-bits (if (listp url-privacy-level)
-			  url-privacy-level
-			(cdr-safe (assq url-privacy-level url-valid-privacy-levels)))))
-    (widget-insert "\n")
-    (widget-insert "General Privacy Level: ")
-    ;;; XXX something is weird with case folding in the following widget if you
-    ;;; type an option in lower case it accepts it but doesn't do anything
-    (setq w3-preferences-privacy-level-widget
-	  (widget-create 
-	   'choice
-	   :value (if (listp w3-preferences-temp-url-privacy-level)
-		      'custom
-		    w3-preferences-temp-url-privacy-level)
-	    :notify 'w3-preferences-privacy-level-callback
-	   :format "%v"
-	   :tag "Privacy Level"
-	   (list 'choice-item :format "%[%t%]" :tag "Paranoid" :value 'paranoid)
-	   (list 'choice-item :format "%[%t%]" :tag "High"     :value 'high)
-	   (list 'choice-item :format "%[%t%]" :tag "Low"      :value 'low)
-	   (list 'choice-item :format "%[%t%]" :tag "None"     :value 'none)
-	   (list 'choice-item :format "%[%t%]" :tag "Custom"   :value 'custom)))
-    (widget-put w3-preferences-privacy-level-widget 'variable 'w3-preferences-temp-url-privacy-level)
-    
-    (widget-insert "\n(controls the options below)\n\nSend the following information with each request:\n")
-    (setq w3-preferences-privacy-bit-widgets nil)
-    (w3-preferences-create-privacy-bit-widget 'email   "E-mail address" privacy-bits)
-    (w3-preferences-create-privacy-bit-widget 'lastloc "Last location visited" privacy-bits)
-    (w3-preferences-create-privacy-bit-widget 'os      "Operating system information" privacy-bits)
-    (w3-preferences-create-privacy-bit-widget 'agent   "User agent information" privacy-bits)
-    (w3-preferences-create-privacy-bit-widget 'cookie  "Accept cookies" privacy-bits)
-    (widget-insert "    ")
-    (widget-put
-     (widget-create 
-      'checkbox
-      :value (symbol-value 'w3-preferences-temp-url-cookie-confirmation)
-      :notify 'w3-preferences-generic-variable-callback)
-     'variable 'w3-preferences-temp-url-cookie-confirmation)
-    (widget-insert " Ask before accepting cookies\n"))
-  (widget-setup))
-  
-(defun w3-preferences-save-privacy-panel ()
-  (w3-preferences-restore-variables '(url-privacy-level
-				      url-cookie-confirmation))
-  (url-setup-privacy-info))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -515,8 +410,8 @@
 
 (defun w3-preferences-notify (widget widget-ignore &optional event)
   (let* ((glyph (and event w3-running-xemacs (event-glyph event)))
-	 (x     (and glyph (widget-glyphp glyph) (event-glyph-x-pixel event)))
-	 (y     (and glyph (widget-glyphp glyph) (event-glyph-y-pixel event)))
+	 (x     (and glyph (w3-glyphp glyph) (event-glyph-x-pixel event)))
+	 (y     (and glyph (w3-glyphp glyph) (event-glyph-y-pixel event)))
 	 (map   (widget-get widget 'usemap))
 	 (value (widget-value widget)))
     (if (and map x y)
@@ -585,16 +480,16 @@
 	    todo (cdr todo))
       (and (fboundp func) (funcall func)))))
 
-;;###autoload
 (defun w3-preferences-edit ()
   (interactive)
+  (if (not w3-preferences-map)
+      (setq w3-preferences-map (w3-preferences-setup-glyph-map)))
   (let* ((prefs-buffer (get-buffer-create "W3 Preferences"))
 	 (widget nil)
 	 (inhibit-read-only t)
 	 (window-conf (current-window-configuration)))
     (delete-other-windows)
     (set-buffer prefs-buffer)
-    (set (make-local-variable 'widget-push-button-gui) nil)
     (w3-preferences-init-all-panels)
     (set-window-buffer (selected-window) prefs-buffer)
     (make-local-variable 'widget-field-face)
@@ -605,18 +500,11 @@
     (use-local-map widget-keymap)
     (erase-buffer)
     (run-hooks 'w3-preferences-setup-hook)
-    (setq widget (apply 'widget-create 'menu-choice
-			:tag "Panel"
-			:notify 'w3-preferences-notify
-			:value 'appearance
-			(mapcar
-			 (function
-			  (lambda (x)
-			    (list 'choice-item
-				  :format "%[%t%]"
-				  :tag (cdr x)
-				  :value (car x))))
-			 w3-preferences-panels)))
+    (setq widget (widget-create 'image
+				:notify 'w3-preferences-notify
+				:value 'appearance
+				:tag "Panel"
+				'usemap w3-preferences-map))
     (goto-char (point-max))
     (insert "\n\n")
     (set-marker w3-preferences-panel-begin-marker (point))
@@ -624,15 +512,15 @@
     (w3-preferences-create-panel (caar w3-preferences-panels))
     (goto-char (point-max))
     (widget-insert "\n\n")
-    (widget-create 'push-button
+    (widget-create 'push
 		   :notify 'w3-preferences-ok-callback
 		   :value "Ok")
     (widget-insert "  ")
-    (widget-create 'push-button
+    (widget-create 'push
 		   :notify 'w3-preferences-cancel-callback
 		   :value "Cancel")
     (widget-insert "  ")
-    (widget-create 'push-button
+    (widget-create 'push
 		   :notify 'w3-preferences-reset-callback
 		   :value "Reset")
     (center-region (point-min) w3-preferences-panel-begin-marker)

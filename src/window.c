@@ -77,7 +77,7 @@ extern void energize_window_selected_hook ();
 extern void energize_window_deselected_hook ();
 extern Lisp_Object desired_psheet_buffer ();
 extern void make_psheets_desired ();
-#endif /* ENERGIZE */
+#endif
 
 /* Thickness of shadow border around 3d modelines. */
 Lisp_Object Vmodeline_shadow_thickness;
@@ -102,7 +102,7 @@ Lisp_Object Vminibuf_scroll_window;
 /* Non-nil means this is the buffer whose window C-M-v should scroll.  */
 Lisp_Object Vother_window_scroll_buffer;
 
-/* Non-nil means it's the function to call to display temp buffers.  */
+/* Non-nil means it's function to call to display temp buffers.  */
 Lisp_Object Vtemp_buffer_show_function;
 
 Lisp_Object Vtemp_buffer_show_hook;
@@ -144,9 +144,9 @@ DEFINE_LRECORD_IMPLEMENTATION ("window", window,
                                mark_window, print_window, finalize_window,
 			       0, 0, struct window);
 
-#define MARK_DISP_VARIABLE(field)		\
-  ((markobj) (window->field[CURRENT_DISP]));	\
-  ((markobj) (window->field[DESIRED_DISP]));	\
+#define MARK_DISP_VARIABLE(field)			\
+  ((markobj) (window->field[CURRENT_DISP]));		\
+  ((markobj) (window->field[DESIRED_DISP]));		\
   ((markobj) (window->field[CMOTION_DISP]));
 
 static Lisp_Object
@@ -179,7 +179,7 @@ mark_window (Lisp_Object obj, void (*markobj) (Lisp_Object))
   ((markobj) (window->scrollbar_width));
   ((markobj) (window->scrollbar_height));
   ((markobj) (window->scrollbar_pointer));
-#endif /* HAVE_SCROLLBARS */
+#endif
   ((markobj) (window->left_margin_width));
   ((markobj) (window->right_margin_width));
 #ifdef HAVE_TOOLBARS
@@ -200,14 +200,14 @@ mark_window (Lisp_Object obj, void (*markobj) (Lisp_Object))
   ((markobj) (window->default_toolbar_height));
   ((markobj) (window->default_toolbar_width));
   ((markobj) (window->default_toolbar_visible_p));
-#endif /* HAVE_TOOLBARS */
+#endif
   ((markobj) (window->minimum_line_ascent));
   ((markobj) (window->minimum_line_descent));
   ((markobj) (window->use_left_overflow));
   ((markobj) (window->use_right_overflow));
 #ifdef HAVE_MENUBARS
   ((markobj) (window->menubar_visible_p));
-#endif /* HAVE_MENUBARS */
+#endif
   ((markobj) (window->text_cursor_visible_p));
   /* End cached specifiers. */
   ((markobj) (window->dedicated));
@@ -376,7 +376,7 @@ allocate_window (void)
  * the display structures.
  */
 
-/* Create a new window mirror structure and associated redisplay
+/* Create a new mindow mirror structure and associated redisplay
    structs. */
 static struct window_mirror *
 new_window_mirror (struct frame *f)
@@ -420,7 +420,7 @@ update_mirror_internal (Lisp_Object win, struct window_mirror *mir)
     if (!mir)
       mir = new_window_mirror (XFRAME (XWINDOW (win)->frame));
 
-  mir->next   = update_mirror_internal (XWINDOW (win)->next,   mir->next);
+  mir->next = update_mirror_internal (XWINDOW (win)->next, mir->next);
   mir->hchild = update_mirror_internal (XWINDOW (win)->hchild, mir->hchild);
   mir->vchild = update_mirror_internal (XWINDOW (win)->vchild, mir->vchild);
 
@@ -650,7 +650,7 @@ set_window_display_buffer (struct window *w, struct buffer *b)
 }
 
 
-/* Determining a window's position based solely on its pixel
+/* Determining a windows position based solely on its pixel
    positioning doesn't work.  Instead, we do it the intelligent way,
    by checking its positioning in the window hierarchy. */
 int
@@ -804,7 +804,7 @@ window_needs_vertical_divider (struct window *w)
     return 0;
 #else
   return (!window_is_leftmost (w));
-#endif /* HAVE_SCROLLBARS */
+#endif
 }
 
 int
@@ -820,7 +820,7 @@ window_scrollbar_width (struct window *w)
   return XINT (w->scrollbar_width);
 #else
   return 0;
-#endif /* HAVE_SCROLLBARS */
+#endif
 }
 
 /* Horizontal scrollbars are only active on windows with truncation
@@ -838,7 +838,7 @@ window_scrollbar_height (struct window *w)
   return XINT (w->scrollbar_height);
 #else
   return 0;
-#endif /* HAVE_SCROLLBARS */
+#endif
 }
 
 int
@@ -1174,7 +1174,8 @@ Return non-nil if WINDOW is a minibuffer window.
 */
        (window))
 {
-  return (MINI_WINDOW_P (decode_window (window)) ? Qt : Qnil);
+  struct window *w = decode_window (window);
+  return (MINI_WINDOW_P (w) ? Qt : Qnil);
 }
 
 DEFUN ("window-first-hchild", Fwindow_first_hchild, 1, 1, 0, /*
@@ -1182,7 +1183,8 @@ Return the first horizontal child of WINDOW, or nil.
 */
        (window))
 {
-  return decode_window (window)->hchild;
+  struct window *w = decode_window (window);
+  return w->hchild;
 }
 
 DEFUN ("window-first-vchild", Fwindow_first_vchild, 1, 1, 0, /*
@@ -1190,7 +1192,8 @@ Return the first vertical child of WINDOW, or nil.
 */
        (window))
 {
-  return decode_window (window)->vchild;
+  struct window *w = decode_window (window);
+  return w->vchild;
 }
 
 DEFUN ("window-next-child", Fwindow_next_child, 1, 1, 0, /*
@@ -1198,7 +1201,8 @@ Return the next window on the same level as WINDOW, or nil.
 */
        (window))
 {
-  return decode_window (window)->next;
+  struct window *w = decode_window (window);
+  return w->next;
 }
 
 DEFUN ("window-previous-child", Fwindow_previous_child, 1, 1, 0, /*
@@ -1206,7 +1210,8 @@ Return the previous window on the same level as WINDOW, or nil.
 */
        (window))
 {
-  return decode_window (window)->prev;
+  struct window *w = decode_window (window);
+  return w->prev;
 }
 
 DEFUN ("window-parent", Fwindow_parent, 1, 1, 0, /*
@@ -1214,7 +1219,8 @@ Return the parent of WINDOW, or nil.
 */
        (window))
 {
-  return decode_window (window)->parent;
+  struct window *w = decode_window (window);
+  return w->parent;
 }
 
 DEFUN ("window-lowest-p", Fwindow_lowest_p, 1, 1, 0, /*
@@ -1222,7 +1228,8 @@ Return non-nil if WINDOW is along the bottom of its frame.
 */
        (window))
 {
-  return window_is_lowest (decode_window (window)) ? Qt : Qnil;
+  struct window *w = decode_window (window);
+  return window_is_lowest (w) ? Qt : Qnil;
 }
 
 DEFUN ("window-highest-p", Fwindow_highest_p, 1, 1, 0, /*
@@ -1230,7 +1237,8 @@ Return non-nil if WINDOW is along the top of its frame.
 */
        (window))
 {
-  return window_is_highest (decode_window (window)) ? Qt : Qnil;
+  struct window *w = decode_window (window);
+  return window_is_highest (w) ? Qt : Qnil;
 }
 
 DEFUN ("window-leftmost-p", Fwindow_leftmost_p, 1, 1, 0, /*
@@ -1238,7 +1246,8 @@ Return non-nil if WINDOW is along the left edge of its frame.
 */
        (window))
 {
-  return window_is_leftmost (decode_window (window)) ? Qt : Qnil;
+  struct window *w = decode_window (window);
+  return window_is_leftmost (w) ? Qt : Qnil;
 }
 
 DEFUN ("window-rightmost-p", Fwindow_rightmost_p, 1, 1, 0, /*
@@ -1246,7 +1255,8 @@ Return non-nil if WINDOW is along the right edge of its frame.
 */
        (window))
 {
-  return window_is_rightmost (decode_window (window)) ? Qt : Qnil;
+  struct window *w = decode_window (window);
+  return window_is_rightmost (w) ? Qt : Qnil;
 }
 
 DEFUN ("pos-visible-in-window-p", Fpos_visible_in_window_p, 0, 2, 0, /*
@@ -1256,11 +1266,12 @@ POS defaults to point in WINDOW's buffer; WINDOW, to the selected window.
 */
        (pos, window))
 {
-  struct window *w = decode_window (window);
+  struct window *w;
   Bufpos top;
   Bufpos posint;
   struct buffer *buf;
 
+  w = decode_window (window);
   top = marker_position (w->start[CURRENT_DISP]);
 
   buf = XBUFFER (w->buffer);
@@ -1337,7 +1348,7 @@ between the end of the buffer and the end of the window, this
 function pretends that there are lines of text in the default
 font there.
 */
-       (window))
+     (window))
 {
   return make_int (window_displayed_height (decode_window (window)));
 }
@@ -1357,7 +1368,8 @@ This is the width that is usable columns available for text in WINDOW.
 */
        (window))
 {
-  return (make_int (window_char_width (decode_window (window), 0)));
+  struct window *w = decode_window (window);
+  return (make_int (window_char_width (w, 0)));
 }
 
 DEFUN ("window-pixel-width", Fwindow_pixel_width, 0, 1, 0, /*
@@ -1397,26 +1409,34 @@ NCOL should be zero or positive.
 
 #if 0 /* bogus RMS crock */
 
-xxDEFUN ("window-redisplay-end-trigger", Fwindow_redisplay_end_trigger, 0, 1, 0 /*
+xxDEFUN ("window-redisplay-end-trigger", Fwindow_redisplay_end_trigger,
+       Swindow_redisplay_end_trigger, 0, 1, 0 /*
 Return WINDOW's redisplay end trigger value.
 See `set-window-redisplay-end-trigger' for more information.
-*/
-	 (window))
+*/ )
+  (window)
+     Lisp_Object window;
 {
   return decode_window (window)->redisplay_end_trigger;
 }
 
-xxDEFUN ("set-window-redisplay-end-trigger", Fset_window_redisplay_end_trigger, 2, 2, 0 /*
+xxDEFUN ("set-window-redisplay-end-trigger", Fset_window_redisplay_end_trigger,
+       Sset_window_redisplay_end_trigger, 2, 2, 0 /*
 Set WINDOW's redisplay end trigger value to VALUE.
 VALUE should be a buffer position (typically a marker) or nil.
 If it is a buffer position, then if redisplay in WINDOW reaches a position
 beyond VALUE, the functions in `redisplay-end-trigger-functions' are called
 with two arguments: WINDOW, and the end trigger value.
 Afterwards the end-trigger value is reset to nil.
-*/ 
-	 (window, value))
+*/ )
+  (window, value)
+     register Lisp_Object window, value;
 {
-  return (decode_window (window)->redisplay_end_trigger = value);
+  register struct window *w;
+
+  w = decode_window (window);
+  w->redisplay_end_trigger = value;
+  return value;
 }
 
 #endif /* 0 */
@@ -1903,7 +1923,7 @@ can use `next-window' to iterate through the entire cycle of acceptable
 windows, eventually ending up back at the window you started with.
 `previous-window' traverses the same cycle, in the reverse order.
 */
-       (window, minibuf, all_frames, console))
+     (window, minibuf, all_frames, console))
 {
   Lisp_Object tem;
   Lisp_Object start_window;
@@ -2012,7 +2032,7 @@ windows, eventually ending up back at the window you started with.
 }
 
 DEFUN ("previous-window", Fprevious_window, 0, 4, 0, /*
-Return the window preceding WINDOW in canonical ordering of windows.
+Return the window preceeding WINDOW in canonical ordering of windows.
 If omitted, WINDOW defaults to the selected window.
 
 Optional second arg MINIBUF t means count the minibuffer window even
@@ -2046,7 +2066,7 @@ can use `previous-window' to iterate through the entire cycle of acceptable
 windows, eventually ending up back at the window you started with.
 `next-window' traverses the same cycle, in the reverse order.
 */
-       (window, minibuf, all_frames, console))
+     (window, minibuf, all_frames, console))
 {
   Lisp_Object tem;
   Lisp_Object start_window;
@@ -2157,6 +2177,7 @@ windows, eventually ending up back at the window you started with.
 	    window = tem;
 	}
     }
+  /* "acceptable" is the correct spelling. */
   /* Which windows are acceptable?
      Exit the loop and accept this window if
      this isn't a minibuffer window,
@@ -4020,23 +4041,15 @@ window_scroll (Lisp_Object window, Lisp_Object n, int direction,
 
 }
 
-extern int signal_error_on_buffer_boundary;
-
 DEFUN ("scroll-up", Fscroll_up, 0, 1, "_P", /*
 Scroll text of current window upward ARG lines; or near full screen if no ARG.
 A near full screen is `next-screen-context-lines' less than a full screen.
 Negative ARG means scroll downward.
 When calling from a program, supply a number as argument or nil.
-
-If `signal-error-on-buffer-boundary' is nil, the usual error and
-loss of zmacs region is suppressed when moving past end of buffer.
 */
        (n))
 {
-  Error_behavior errb =
-    signal_error_on_buffer_boundary ? ERROR_ME : ERROR_ME_NOT;
-
-  window_scroll (Fselected_window (Qnil), n, 1, errb);
+  window_scroll (Fselected_window (Qnil), n, 1, ERROR_ME);
   return Qnil;
 }
 
@@ -4045,16 +4058,10 @@ Scroll text of current window downward ARG lines; or near full screen if no ARG.
 A near full screen is `next-screen-context-lines' less than a full screen.
 Negative ARG means scroll upward.
 When calling from a program, supply a number as argument or nil.
-
-If `signal-error-on-buffer-boundary' is nil, the usual error and
-loss of zmacs region is suppressed when moving past end of buffer.
 */
        (n))
 {
-  Error_behavior errb =
-    signal_error_on_buffer_boundary ? ERROR_ME : ERROR_ME_NOT;
-
-  window_scroll (Fselected_window (Qnil), n, -1, errb);
+  window_scroll (Fselected_window (Qnil), n, -1, ERROR_ME);
   return Qnil;
 }
 

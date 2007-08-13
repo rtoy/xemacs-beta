@@ -36,6 +36,9 @@ Boston, MA 02111-1307, USA.  */
 #include "opaque.h"
 #include "paths.h"
 #endif
+#ifdef MULE
+#include "mule-coding.h"
+#endif
 
 #include "sysfile.h"
 
@@ -69,13 +72,6 @@ Lisp_Object Qlocate_file_hash_table;
 Lisp_Object Qfset;
 
 int puke_on_fsf_keys;
-
-/* This symbol is also used in fns.c */
-#define FEATUREP_SYNTAX
-
-#ifdef FEATUREP_SYNTAX
-static Lisp_Object Qfeaturep;
-#endif
 
 /* non-zero if inside `load' */
 int load_in_progress;
@@ -375,6 +371,53 @@ load_file_name_internal_the_purecopy_unwind (Lisp_Object oldval)
 }
 
 static Lisp_Object
+load_byte_code_version_unwind (Lisp_Object oldval)
+{
+  load_byte_code_version = XINT (oldval);
+  return Qnil;
+}
+
+/* The plague is coming.
+
+   Ring around the rosy, pocket full of posy,
+   Ashes ashes, they all fall down.
+   */
+void
+ebolify_bytecode_constants (Lisp_Object vector)
+{
+  int len = vector_length (XVECTOR (vector));
+  int i;
+
+  for (i = 0; i < len; i++)
+    {
+      Lisp_Object el = vector_data (XVECTOR (vector))[i];
+
+      /* We don't check for `eq', `equal', and the others that have
+	 bytecode opcodes.  This might lose if someone passes #'eq or
+	 something to `funcall', but who would really do that?  As
+	 they say in law, we've made a "good-faith effort" to
+	 unfuckify ourselves.  And doing it this way avoids screwing
+	 up args to `make-hashtable' and such.  As it is, we have to
+	 add an extra Ebola check in decode_weak_list_type(). --ben */
+      if (EQ (el, Qassoc))
+	el = Qold_assoc;
+      if (EQ (el, Qdelq))
+	el = Qold_delq;
+#if 0
+      /* I think this is a bad idea because it will probably mess
+	 with keymap code. */
+      if (EQ (el, Qdelete))
+	el = Qold_delete;
+#endif
+      if (EQ (el, Qrassq))
+	el = Qold_rassq;
+      if (EQ (el, Qrassoc))
+	el = Qold_rassoc;
+      vector_data (XVECTOR (vector))[i] = el;
+    }
+}
+
+static Lisp_Object
 pas_de_lache_ici (int fd, Lisp_Object victim)
 {
   Lisp_Object tem;
@@ -436,6 +479,10 @@ load_force_doc_string_unwind (Lisp_Object oldlist)
 		signal_simple_error ("invalid lazy-loaded byte code", ivan);
 	      /* Remember to purecopy; see above. */
 	      XCOMPILED_FUNCTION (john)->bytecodes = Fpurecopy (XCAR (ivan));
+	      /* v18 or v19 bytecode file.  Need to Ebolify. */
+	      if (XCOMPILED_FUNCTION (john)->flags.ebolified
+		  && VECTORP (XCDR (ivan)))
+		ebolify_bytecode_constants (XCDR (ivan));
 	      XCOMPILED_FUNCTION (john)->constants = Fpurecopy (XCDR (ivan));
 	      NUNGCPRO;
 	    }
@@ -480,20 +527,21 @@ restore_file_domain (Lisp_Object val)
 }
 #endif /* I18N3 */
 
-DEFUN ("load-internal", Fload_internal, 1, 4, 0, /*
-Execute a file of Lisp code named FILE.
-First try FILE with `.elc' appended, then try with `.el',
- then try FILE unmodified.
-This function searches the directories in `load-path'.
-If optional second arg NOERROR is non-nil,
- report no error if FILE doesn't exist.
-Print messages at start and end of loading unless
- optional third arg NOMESSAGE is non-nil (ignored in -batch mode).
-If optional fourth arg NOSUFFIX is non-nil, don't try adding
- suffixes `.elc' or `.el' to the specified name FILE.
-Return t if file exists.
+DEFUN ("load-internal", Fload_internal, 1, 6, 0, /*
+Execute a file of Lisp code named FILE; no coding-system frobbing.
+This function is identical to `load' except for the handling of the
+CODESYS and USED-CODESYS arguments under XEmacs/Mule. (When Mule
+support is not present, both functions are identical and ignore the
+CODESYS and USED-CODESYS arguments.)
+
+If support for Mule exists in this Emacs, the file is decoded
+according to CODESYS; if omitted, no conversion happens.  If
+USED-CODESYS is non-nil, it should be a symbol, and the actual coding
+system that was used for the decoding is stored into it.  It will in
+general be different from CODESYS if CODESYS specifies automatic
+encoding detection or end-of-line detection.
 */
-       (file, no_error, nomessage, nosuffix))
+       (file, no_error, nomessage, nosuffix, codesys, used_codesys))
 {
   /* This function can GC */
   int fd = -1;
@@ -528,14 +576,18 @@ Return t if file exists.
   /* If file name is magic, call the handler.  */
   handler = Ffind_file_name_handler (file, Qload);
   if (!NILP (handler))
-    RETURN_UNGCPRO (call5 (handler, Qload, file, no_error,
-			  nomessage, nosuffix));
+    RETURN_UNGCPRO (call7 (handler, Qload, file, no_error, nomessage,
+			   nosuffix, codesys, used_codesys));
 
   /* Do this after the handler to avoid
      the need to gcpro noerror, nomessage and nosuffix.
      (Below here, we care only whether they are nil or not.)  */
   file = Fsubstitute_in_file_name (file);
 
+#ifdef MULE
+  if (!NILP (used_codesys))
+    CHECK_SYMBOL (used_codesys);
+#endif
 
   /* Avoid weird lossage with null string as arg,
      since it would try to load a directory as a Lisp file.
@@ -620,22 +672,22 @@ Return t if file exists.
     fd = open (foundstr, O_RDONLY | O_TEXT);
 #endif /* DOS_NT */
 
-#define PRINT_LOADING_MESSAGE(done) do {				\
-  if (load_ignore_elc_files)						\
-    {									\
-      if (message_p)							\
-	message ("Loading %s..." done, XSTRING_DATA (newer));		\
-    }									\
-  else if (!NILP (newer))						\
-    message ("Loading %s..." done " (file %s is newer)",		\
-	     XSTRING_DATA (file),					\
-	     XSTRING_DATA (newer));					\
-  else if (source_only)							\
+#define PRINT_LOADING_MESSAGE(done) do {			\
+  if (load_ignore_elc_files)					\
+    {								\
+      if (message_p)						\
+	message ("Loading %s..." done, XSTRING_DATA (newer));	\
+    }								\
+  else if (!NILP (newer))					\
+    message ("Loading %s..." done " (file %s is newer)",	\
+	     XSTRING_DATA (file),				\
+	     XSTRING_DATA (newer));				\
+  else if (source_only)						\
     message ("Loading %s..." done " (file %s.elc does not exist)",	\
-	     XSTRING_DATA (file),					\
-	     XSTRING_DATA (Ffile_name_nondirectory (file)));		\
-  else if (message_p)							\
-    message ("Loading %s..." done, XSTRING_DATA (file));		\
+	     XSTRING_DATA (file),				\
+	     XSTRING_DATA (Ffile_name_nondirectory (file)));	\
+  else if (message_p)						\
+    message ("Loading %s..." done, XSTRING_DATA (file));	\
   } while (0)
 
   PRINT_LOADING_MESSAGE ("");
@@ -652,6 +704,12 @@ Return t if file exists.
        files aren't really all that big. */
     Lstream_set_buffering (XLSTREAM (lispstream), LSTREAM_BLOCKN_BUFFERED,
 			   block_size);
+#ifdef MULE
+    lispstream = make_decoding_input_stream
+      (XLSTREAM (lispstream), Fget_coding_system (codesys));
+    Lstream_set_buffering (XLSTREAM (lispstream), LSTREAM_BLOCKN_BUFFERED,
+			   block_size);
+#endif /* MULE */
 
     /* NOTE: Order of these is very important.  Don't rearrange them. */
     record_unwind_protect (load_unwind, lispstream);
@@ -672,7 +730,36 @@ Return t if file exists.
     Vfile_domain = Qnil; /* set it to nil; a call to #'domain will set it. */
 #endif
     load_in_progress++;
+
+    /* Now determine what sort of ELC file we're reading in. */
+    record_unwind_protect (load_byte_code_version_unwind,
+			   make_int (load_byte_code_version));
+    if (reading_elc)
+      {
+	char elc_header[8];
+	int num_read;
+
+	num_read = Lstream_read (XLSTREAM (lispstream), elc_header, 8);
+	if (num_read < 8
+	    || strncmp (elc_header, ";ELC", 4))
+	  {
+	    /* Huh?  Probably not a valid ELC file. */
+	    load_byte_code_version = 100; /* no Ebolification needed */
+	    Lstream_unread (XLSTREAM (lispstream), elc_header, num_read);
+	  }
+	else
+	  load_byte_code_version = elc_header[4];
+      }
+    else
+      load_byte_code_version = 100; /* no Ebolification needed */
+	    
     readevalloop (lispstream, file, Feval, 0);
+#ifdef MULE
+    if (!NILP (used_codesys))
+      Fset (used_codesys,
+	    XCODING_SYSTEM_NAME
+	    (decoding_stream_coding_system (XLSTREAM (lispstream))));
+#endif /* MULE */
     unbind_to (speccount, Qnil);
 
     NUNGCPRO;
@@ -701,14 +788,14 @@ Return t if file exists.
       if (EQ (last_file_loaded, file))
 	message_append (" (%d)", purespace_usage() - pure_usage);
       else
-	message ("Loading %s ...done (%d)", XSTRING_DATA (file),
+	message ("Loading %s...done (%d)", XSTRING_DATA (file),
 		 purespace_usage() - pure_usage);
     }
-#endif
+#endif /* DEBUG_XEMACS */
 
   if (!noninteractive)
     PRINT_LOADING_MESSAGE ("done");
-  
+    
   UNGCPRO;
   return Qt;
 }
@@ -1077,7 +1164,7 @@ track the following environmental changes:
 (i.e. has the same name as) another file further down in the directory list.
 In this case, you must call `locate-file-clear-hashing'.
 */
-       (path))
+(path))
 {
   Lisp_Object pathtail;
 
@@ -1585,6 +1672,10 @@ read_escape (Lisp_Object readcharfun)
 	return i;
       }
 
+#ifdef MULE
+      /* #### need some way of reading an extended character with
+	 an escape sequence. */
+#endif
 
     default:
 	return c;
@@ -1652,7 +1743,7 @@ read_atom (Lisp_Object readcharfun,
       /* If a token had any backslashes in it, it is disqualified from
 	 being an integer or a float.  This means that 123\456 is a
 	 symbol, as is \123 (which is the way (intern "123") prints).
-	 Also, if token was preceded by #:, it's always a symbol.
+	 Also, if token was preceeded by #:, it's always a symbol.
        */
       char *p = read_ptr + len;
       char *p1 = read_ptr;
@@ -1743,7 +1834,7 @@ parse_integer (CONST Bufbyte *buf, Bytecount len, int base)
   if (p == lim)
     goto loser;
 
-  for (; (p < lim) && (*p != '\0'); p++)
+  for (; p < lim; p++)
     {
       int c = *p;
       unsigned EMACS_INT onum;
@@ -2272,26 +2363,6 @@ retry:
 	      return Fsignal (Qinvalid_read_syntax,
 		    list1 (build_string ("Cannot read unreadable object")));
 	    }
-#ifdef FEATUREP_SYNTAX
-         case '+':
-         case '-':
-           {
-             Lisp_Object fexp, obj, tem;
-             struct gcpro gcpro1, gcpro2;
-
-             fexp = read0(readcharfun);
-             obj = read0(readcharfun);
-
-             /* the call to `featurep' may GC. */
-             GCPRO2(fexp, obj);
-             tem = call1(Qfeaturep, fexp);
-             UNGCPRO;
-
-             if (c == '+' && NILP(tem)) goto retry;
-             if (c == '-' && !NILP(tem)) goto retry;
-             return obj;
-           }
-#endif
 
 	  default:
 	    {
@@ -2506,12 +2577,10 @@ sequence_reader (Lisp_Object readcharfun,
 	return (state);
       else
 	unreadchar (readcharfun, ch);
-#ifdef FEATUREP_SYNTAX
       if (ch == ']')
 	syntax_error ("\"]\" in a list");
       else if (ch == ')')
 	syntax_error ("\")\" in a vector");
-#endif
       state = ((conser) (readcharfun, state, len));
     }
 }
@@ -2543,18 +2612,6 @@ read_list_conser (Lisp_Object readcharfun, void *state, Charcount len)
       free_cons (XCONS (tem));
       tem = Qnil;
       ch = XCHAR (elt);
-#ifdef FEATUREP_SYNTAX
-      if (ch == s->terminator) /* deal with #+, #- reader macros */
-       {
-         unreadchar (readcharfun, s->terminator);
-         goto done;
-       }
-      else if (ch == ']')
-       syntax_error ("']' in a list");
-      else if (ch == ')')
-       syntax_error ("')' in a vector");
-      else
-#endif
       if (ch != '.')
 	signal_simple_error ("BUG! Internal reader error", elt);
       else if (!s->allow_dotted_lists)
@@ -2679,10 +2736,10 @@ read_list (Lisp_Object readcharfun,
 		{
 		  if (NILP (Vdoc_file_name))
 		    /* We have not yet called Snarf-documentation, so
-		       assume this file is described in the DOC file
-		       and Snarf-documentation will fill in the right
-		       value later.  For now, replace the whole list
-		       with 0.  */
+		       assume this file is described in the DOC-MM.NN
+		       file and Snarf-documentation will fill in the
+		       right value later.  For now, replace the whole
+		       list with 0.  */
 		    XCAR (holding_cons) = Qzero;
 		  else
 		    /* We have already called Snarf-documentation, so
@@ -2812,9 +2869,14 @@ read_compiled_function (Lisp_Object readcharfun, Emchar terminator)
   GCPRO1 (make_byte_code_args[0]);
   gcpro1.nvars = len;
 
+  /* v18 or v19 bytecode file.  Need to Ebolify. */
+  if (load_byte_code_version < 20 && VECTORP (make_byte_code_args[2]))
+    ebolify_bytecode_constants (make_byte_code_args[2]);
+
   /* make-byte-code looks at purify_flag, which should have the same
    *  value as our "read-pure" argument */
   stuff = Fmake_byte_code (len, make_byte_code_args);
+  XCOMPILED_FUNCTION (stuff)->flags.ebolified = (load_byte_code_version < 20);
   if (saw_a_doc_ref)
     Vload_force_doc_string_list = Fcons (stuff, Vload_force_doc_string_list);
   UNGCPRO;
@@ -3062,11 +3124,6 @@ character escape syntaxes or just read them incorrectly.
   /* So that early-early stuff will work */
   Ffset (Qload, intern ("load-internal"));
 
-#ifdef FEATUREP_SYNTAX
-  Qfeaturep = intern("featurep");
-  staticpro(&Qfeaturep);
-  Fprovide(intern("xemacs"));
-#endif
 #ifdef LISP_BACKQUOTES
   old_backquote_flag = new_backquote_flag = 0;
 #endif

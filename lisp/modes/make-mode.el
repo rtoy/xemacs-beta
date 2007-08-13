@@ -161,12 +161,6 @@ backslash.  This is done silently.
 IMPORTANT: Please note that enabling this option causes makefile-mode
 to MODIFY A FILE WITHOUT YOUR CONFIRMATION when \'it seems necessary\'.")
 
-;;; those suspicious line warnings are really annoying and
-;;; seem to be generated for every makefile I've ever seen.
-;;; add a simple mechanism to disable them.  -gk
-(defvar makefile-warn-suspicious-lines-p t
-  "In non-nil, warn about suspicious lines when saving the makefile")
-
 (defvar makefile-browser-hook '())
 
 ;;
@@ -625,13 +619,7 @@ Anywhere else just self-inserts."
   (makefile-pickup-macros)
   (if (bolp)
       (call-interactively 'makefile-insert-macro)
-    (self-insert-command arg)
-    ;; from here down is new -- if they inserted a macro without using
-    ;; the electric behavior, pick it up anyway   -gk
-    (save-excursion
-      (beginning-of-line)
-      (if (looking-at makefile-macroassign-regex)
-          (makefile-add-this-line-macro)))))
+    (self-insert-command arg)))
 
 (defun makefile-insert-macro (macro-name)
   "Prepare definition of a new macro."
@@ -731,9 +719,7 @@ Anywhere else just self-inserts."
   (if (not makefile-need-macro-pickup)
       nil
     (setq makefile-need-macro-pickup nil)
-    ;; changed the nil in the next line to makefile-runtime-macros-list
-    ;; so you don't have to confirm on every runtime macro entered...  -gk
-    (setq makefile-macro-table makefile-runtime-macros-list) 
+    (setq makefile-macro-table nil)
     (save-excursion
       (goto-char (point-min))
       (while (re-search-forward makefile-macroassign-regex (point-max) t)
@@ -946,11 +932,12 @@ If called with a prefix argument, trailing backslashes are removed."
    target makefile-target-colon))
 
 (defun makefile-browser-format-macro-line (macro selected)
+  (format
    (concat (make-string makefile-browser-leftmost-column ?\ )
 	   (if selected
 	       makefile-browser-selected-mark
 	     makefile-browser-unselected-mark)
-	   (makefile-format-macro-ref macro)))
+	   (makefile-format-macro-ref macro))))
 
 (defun makefile-browser-fill (targets macros)
   (let ((inhibit-read-only t))
@@ -1107,9 +1094,7 @@ Insertion takes place at point."
   (setq makefile-browser-client (current-buffer))
   (makefile-pickup-targets)
   (makefile-pickup-macros)
-  (makefile-browse makefile-target-table
-                   ;; take out the runtime macros which were added for completion sake -gk
-                   (set-difference makefile-macro-table makefile-runtime-macros-list)))
+  (makefile-browse makefile-target-table makefile-macro-table))
 
 
 
@@ -1235,8 +1220,7 @@ and generates the overview, one line per target name."
 
 (defun makefile-warn-suspicious-lines ()
   (let ((dont-save nil))
-    (if (and (eq major-mode 'makefile-mode)
-	     makefile-warn-suspicious-lines-p)  ; -gk
+    (if (eq major-mode 'makefile-mode)
 	(let ((suspicious
 	       (save-excursion
 		 (goto-char (point-min))

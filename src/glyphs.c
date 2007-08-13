@@ -386,7 +386,6 @@ face_must_be_present (Lisp_Object instantiator)
 Lisp_Object
 make_string_from_file (Lisp_Object file)
 {
-  /* This function can call lisp */
   int count = specpdl_depth ();
   Lisp_Object temp_buffer;
   struct gcpro gcpro1;
@@ -398,7 +397,7 @@ make_string_from_file (Lisp_Object file)
   GCPRO1 (temp_buffer);
   set_buffer_internal (XBUFFER (temp_buffer));
   Ferase_buffer (Fcurrent_buffer ());
-  Finsert_file_contents_internal (file, Qnil, Qnil, Qnil, Qnil);
+  Finsert_file_contents_internal (file, Qnil, Qnil, Qnil, Qnil, Qnil, Qnil);
   data = Fbuffer_substring (Qnil, Qnil, Fcurrent_buffer ());
   unbind_to (count, Qnil);
   UNGCPRO;
@@ -479,8 +478,7 @@ normalize_image_instantiator (Lisp_Object instantiator,
 }
 
 static Lisp_Object
-instantiate_image_instantiator (Lisp_Object device, Lisp_Object domain,
-				Lisp_Object instantiator,
+instantiate_image_instantiator (Lisp_Object device, Lisp_Object instantiator,
 				Lisp_Object pointer_fg, Lisp_Object pointer_bg,
 				int dest_mask)
 {
@@ -500,7 +498,7 @@ instantiate_image_instantiator (Lisp_Object device, Lisp_Object domain,
 	("Don't know how to instantiate this image instantiator?",
 	 instantiator);
     IIFORMAT_METH (meths, instantiate, (ii, instantiator, pointer_fg,
-					pointer_bg, dest_mask, domain));
+					pointer_bg, dest_mask));
   }
   UNGCPRO;
 
@@ -983,8 +981,7 @@ make_image_instance_1 (Lisp_Object data, Lisp_Object device,
   if (VECTORP (data)
 	   && EQ (vector_data (XVECTOR (data))[0], Qinherit))
     signal_simple_error ("inheritance not allowed here", data);
-  ii = instantiate_image_instantiator (device, device, data,
-				       Qnil, Qnil, dest_mask);
+  ii = instantiate_image_instantiator (device, data, Qnil, Qnil, dest_mask);
   RETURN_UNGCPRO (ii);
 }
 
@@ -1051,7 +1048,7 @@ message is generated and this function returns nil.
 {
   Error_behavior errb = decode_error_behavior_flag (no_error);
 
-  return call_with_suspended_errors ((lisp_fn_t) make_image_instance_1,
+  return call_with_suspended_errors (make_image_instance_1,
 				     Qnil, Qimage, errb,
 				     3, data, device, dest_types);
 }
@@ -1321,7 +1318,7 @@ instance is a mono pixmap; otherwise, the same image instance is returned.
  ****************************************************************************/
 
 static int
-nothing_possible_dest_types (void)
+nothing_possible_dest_types ()
 {
   return IMAGE_NOTHING_MASK;
 }
@@ -1329,7 +1326,7 @@ nothing_possible_dest_types (void)
 static void
 nothing_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		     Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		     int dest_mask, Lisp_Object domain)
+		     int dest_mask)
 {
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
 
@@ -1363,7 +1360,7 @@ inherit_normalize (Lisp_Object inst, Lisp_Object console_type)
 }
 
 static int
-inherit_possible_dest_types (void)
+inherit_possible_dest_types ()
 {
   return IMAGE_MONO_PIXMAP_MASK;
 }
@@ -1371,7 +1368,7 @@ inherit_possible_dest_types (void)
 static void
 inherit_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		     Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		     int dest_mask, Lisp_Object domain)
+		     int dest_mask)
 {
   /* handled specially in image_instantiate */
   abort ();
@@ -1389,7 +1386,7 @@ string_validate (Lisp_Object instantiator)
 }
 
 static int
-string_possible_dest_types (void)
+string_possible_dest_types ()
 {
   return IMAGE_TEXT_MASK;
 }
@@ -1398,7 +1395,7 @@ string_possible_dest_types (void)
 void
 string_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		    Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		    int dest_mask, Lisp_Object domain)
+		    int dest_mask)
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
@@ -1425,7 +1422,7 @@ formatted_string_validate (Lisp_Object instantiator)
 }
 
 static int
-formatted_string_possible_dest_types (void)
+formatted_string_possible_dest_types ()
 {
   return IMAGE_TEXT_MASK;
 }
@@ -1434,7 +1431,7 @@ static void
 formatted_string_instantiate (Lisp_Object image_instance,
 			      Lisp_Object instantiator,
 			      Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-			      int dest_mask, Lisp_Object domain)
+			      int dest_mask)
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
@@ -1598,7 +1595,6 @@ image_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
 	  record_unwind_protect (image_instantiate_cache_result,
 				 locative);
 	  instance = instantiate_image_instantiator (device,
-						     domain,
 						     instantiator,
 						     pointer_fg, pointer_bg,
 						     dest_mask);
@@ -1734,11 +1730,12 @@ image_going_to_add (Lisp_Object specifier, Lisp_Object locale,
       Lisp_Object newinst;
       Lisp_Object contype = XCAR (rest);
 
-      newinst = call_with_suspended_errors
-	((lisp_fn_t) normalize_image_instantiator,
-	 Qnil, Qimage, ERROR_ME_NOT, 3, instantiator, contype,
-	 make_int (XIMAGE_SPECIFIER_ALLOWED (specifier)));
-
+      newinst = call_with_suspended_errors (normalize_image_instantiator,
+					    Qnil, Qimage, ERROR_ME_NOT,
+					    3, instantiator, contype,
+					    make_int
+					    (XIMAGE_SPECIFIER_ALLOWED
+					     (specifier)));
       if (!NILP (newinst))
 	{
 	  Lisp_Object newtag;
@@ -2383,7 +2380,7 @@ glyph_height_internal (Lisp_Object glyph, Lisp_Object frame_face,
 	struct face_cachel *cachel;
 
 	find_charsets_in_bufbyte_string (charsets,
-					 XSTRING_DATA   (string),
+					 XSTRING_DATA (string),
 					 XSTRING_LENGTH (string));
 
 	if (!NILP (frame_face))

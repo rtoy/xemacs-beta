@@ -16,7 +16,7 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: FSF 19.30. (Some of the stuff below is in FSF's subr.el.)
@@ -341,11 +341,9 @@ Also accepts Space to mean yes, or Delete to mean no."
                   (inhibit-quit t))
               (message "%s%s%s" pre prompt yn)
               (setq event (next-command-event event))
-	      (condition-case nil
-		  (prog1
-		      (or quit-flag (eq 'keyboard-quit (key-binding event)))
-		    (setq quit-flag nil))
-		(wrong-type-argument t)))
+              (prog1
+		  (or quit-flag (eq 'keyboard-quit (key-binding event)))
+		(setq quit-flag nil)))
             (progn
               (message "%s%s%s%s" pre prompt yn (single-key-description event))
               (setq quit-flag nil)

@@ -23,14 +23,30 @@ Boston, MA 02111-1307, USA.  */
 #ifndef _XEMACS_SYNTAX_H_
 #define _XEMACS_SYNTAX_H_
 
+#include "chartab.h"
+
 /* The standard syntax table is stored where it will automatically
    be used in all new buffers.  */
 extern Lisp_Object Vstandard_syntax_table;
 
-/* A syntax table is a Lisp vector of length 0400, whose elements are integers.
+/* A syntax table is a type of char table.
 
 The low 7 bits of the integer is a code, as follows. The 8th bit is
 used as the prefix bit flag (see below).
+
+The values in a syntax table are either integers or conses of
+integers and chars.  The lowest 7 bits of the integer are the syntax
+class.  If this is Sinherit, then the actual syntax value needs to
+be retrieved from the standard syntax table.
+
+Since the logic involved in finding the actual integer isn't very
+complex, you'd think the time required to retrieve it is not a
+factor.  If you thought that, however, you'd be wrong, due to the
+high number of times (many per character) that the syntax value is
+accessed in functions such as scan_lists().  To speed this up,
+we maintain a mirror syntax table that contains the actual
+integers.  We can do this successfully because syntax tables are
+now an abstract type, where we control all access.
 */
 
 enum syntaxcode
@@ -49,8 +65,6 @@ enum syntaxcode
   Scomment,	/* a comment-starting character */
   Sendcomment,	/* a comment-ending character */
   Sinherit,	/* use the standard syntax table for this character */
-  Sextword,	/* extended word; works mostly like a word constituent.
-		   See the comment in syntax.c. */
   Smax	 /* Upper bound on codes that are meaningful */
 };
 
@@ -58,39 +72,17 @@ extern Lisp_Object Qsyntax_table_p;
 Lisp_Object Fsyntax_table_p (Lisp_Object);
 Lisp_Object Fsyntax_table   (Lisp_Object);
 Lisp_Object Fset_syntax_table (Lisp_Object, Lisp_Object);
+enum syntaxcode charset_syntax (struct buffer *buf, Lisp_Object charset,
+				int *multi_p_out);
 
-/* Return the raw syntax code for a particular character and table */
-#define RAW_SYNTAX_CODE_UNSAFE(table, c) \
-  (XINT (vector_data (XVECTOR (table))[(unsigned char) (c)]))
+/* Return the syntax code for a particular character and mirror table. */
 
-/* Return the syntax code for a particular character and table, taking
-   into account inheritance. */
+#define SYNTAX_CODE_UNSAFE(table, c) \
+   XINT (CHAR_TABLE_VALUE_UNSAFE (table, c))
 
-/* Unfortunately, we cannot write SYNTAX_CODE() as a safe macro in
-   general.  I tried just using an inline function but that causes
-   significant slowdown (esp. in regex routines) because this macro
-   is called so many millions of times.  So instead we resort to
-   SYNTAX_CODE_UNSAFE(), which is used most of the time.  Under
-   GCC we can actually write this as a safe macro, and we do because
-   it's likely to lead to speedups. */
-
-#ifdef __GNUC__
-#define SYNTAX_CODE_UNSAFE(table, c)					 \
- ({ Emchar _ch_ = (c);							 \
-    int _rawcode_ = RAW_SYNTAX_CODE_UNSAFE (table, _ch_);		 \
-    if ((enum syntaxcode) (_rawcode_ & 0177) == Sinherit)		 \
-      _rawcode_ = RAW_SYNTAX_CODE_UNSAFE (Vstandard_syntax_table, _ch_); \
-    _rawcode_; })
-#else
-#define SYNTAX_CODE_UNSAFE(table, c)			\
-  (RAW_SYNTAX_CODE_UNSAFE (table, c) == Sinherit	\
-   ? RAW_SYNTAX_CODE_UNSAFE (Vstandard_syntax_table, c)	\
-   : RAW_SYNTAX_CODE_UNSAFE (table, c))
-#endif
-
-INLINE int SYNTAX_CODE (Lisp_Object table, Emchar c);
+INLINE int SYNTAX_CODE (struct Lisp_Char_Table *table, Emchar c);
 INLINE int
-SYNTAX_CODE (Lisp_Object table, Emchar c)
+SYNTAX_CODE (struct Lisp_Char_Table *table, Emchar c)
 {
   return SYNTAX_CODE_UNSAFE (table, c);
 }
@@ -101,13 +93,50 @@ SYNTAX_CODE (Lisp_Object table, Emchar c)
 #define SYNTAX_FROM_CODE(code) ((enum syntaxcode) ((code) & 0177))
 #define SYNTAX(table, c) SYNTAX_FROM_CODE (SYNTAX_CODE (table, c))
 
-INLINE int WORD_SYNTAX_P (Lisp_Object table, Emchar c);
+INLINE int WORD_SYNTAX_P (struct Lisp_Char_Table *table, Emchar c);
 INLINE int
-WORD_SYNTAX_P (Lisp_Object table, Emchar c)
+WORD_SYNTAX_P (struct Lisp_Char_Table *table, Emchar c)
 {
   int syncode = SYNTAX (table, c);
-  return syncode == Sword || syncode == Sextword;
+  return syncode == Sword;
 }
+
+/* OK, here's a graphic diagram of the format of the syntax values:
+
+   Bit number:
+
+ [ 3 3 2 2 2 2 2 2 2 2 2 2 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 ]
+ [ 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0 ]
+
+   <-----> <-----> <-------------> <-------------> ^  <----------->
+    ELisp  unused  |comment bits |     unused      |   syntax code
+     tag           | | | | | | | |                 |
+    stuff          | | | | | | | |                 |
+                   | | | | | | | |                 |
+                   | | | | | | | |                 `--> prefix flag
+                   | | | | | | | |
+                   | | | | | | | `--> comment end style B, second char
+                   | | | | | | `----> comment end style A, second char
+                   | | | | | `------> comment end style B, first char
+                   | | | | `--------> comment end style A, first char
+                   | | | `----------> comment start style B, second char
+                   | | `------------> comment start style A, second char
+                   | `--------------> comment start style B, first char
+                   `----------------> comment start style A, first char
+
+  In a 64-bit integer, there would be 32 more unused bits between
+  the tag and the comment bits.
+
+  Clearly, such a scheme will not work for Mule, because the matching
+  paren could be any character and as such requires 19 bits, which
+  we don't got.
+
+  Remember that under Mule we use char tables instead of vectors.
+  So what we do is use another char table for the matching paren
+  and store a pointer to it in the first char table. (This frees
+  code from having to worry about passing two tables around.)
+*/
+
 
 /* The prefix flag bit for backward-prefix-chars is now put into bit 7. */
 
@@ -116,13 +145,7 @@ WORD_SYNTAX_P (Lisp_Object table, Emchar c)
 #define SYNTAX_PREFIX(table, c) \
   ((SYNTAX_CODE (table, c) >> 7) & 1)
 
-/* The next 8 bits of the number is a character,
- the matching delimiter in the case of Sopen or Sclose. */
-
-#define SYNTAX_MATCH(table, c) \
-  ((SYNTAX_CODE (table, c) >> 8) & 0377)
-
-/* The next 8 bits are used to implement up to two comment styles
+/* Bits 23-16 are used to implement up to two comment styles
    in a single buffer. They have the following meanings:
 
   1. first of a one or two character comment-start sequence of style a.
@@ -227,5 +250,7 @@ Lisp_Object syntax_match (Lisp_Object table, Emchar ch);
 
 extern int no_quit_in_re_search;
 extern struct buffer *regex_emacs_buffer;
+
+void update_syntax_table (struct Lisp_Char_Table *ct);
 
 #endif /* _XEMACS_SYNTAX_H_ */

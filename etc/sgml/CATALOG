@@ -46,10 +46,6 @@ PUBLIC "-//Microsoft//DTD Internet Explorer 2.0 HTML//EN"       iehtml.dtd
 PUBLIC "-//Microsoft//DTD Internet Explorer 2.0 HTML Strict//EN" iehtml-s.dtd
 PUBLIC "-//Microsoft//DTD Internet Explorer 2.0 Tables//EN"     ietables.dtd
 PUBLIC "-//W3C//DTD HTML 3.2//EN"                       html-3.2.dtd
-PUBLIC "-//W3C//DTD HTML 3.2 Final//EN"			html-3.2f.dtd
 PUBLIC "-//W3C//DTD HTML Experimental 19960712//EN"	html-cougar.dtd
-PUBLIC "-//Microsoft//DTD Internet Explorer 3.0 Tables//EN"     ie3tables.dtd
-PUBLIC "-//Microsoft//DTD Internet Explorer 3.0 HTML//EN"       ie30.dtd
-PUBLIC "+//Silmaril//DTD HTML Pro v0r11 19970101//EN"	htmlpro.dtd
-DOCTYPE HTML						html-3.2f.dtd
+DOCTYPE HTML						html.dtd
 DOCTYPE HTML-3						html-3.dtd

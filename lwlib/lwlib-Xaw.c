@@ -14,11 +14,11 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with GNU Emacs; see the file COPYING.  If not, write to
+the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "lwlib-Xaw.h"
 
@@ -284,9 +284,9 @@ make_dialog (CONST char* name, Widget parent, Boolean pop_up_p,
   override = XtParseTranslationTable (overrideTrans);
 
   ac = 0;
-  XtSetArg (av[ac], XtNtitle, shell_title);	ac++;
+  XtSetArg (av[ac], XtNtitle, shell_title); ac++;
   XtSetArg (av[ac], XtNallowShellResize, True); ac++;
-  XtSetArg (av[ac], XtNtransientFor, parent);	ac++;
+  XtSetArg (av[ac], XtNtransientFor, parent); ac++;
   shell = XtCreatePopupShell ("dialog", transientShellWidgetClass,
 			      parent, av, ac);
   XtOverrideTranslations (shell, override);
@@ -299,12 +299,12 @@ make_dialog (CONST char* name, Widget parent, Boolean pop_up_p,
   for (i = 0; i < left_buttons; i++)
     {
       ac = 0;
-      XtSetArg (av [ac], XtNfromHoriz, button);     ac++;
-      XtSetArg (av [ac], XtNleft,   XtChainLeft);   ac++;
-      XtSetArg (av [ac], XtNright,  XtChainLeft);   ac++;
-      XtSetArg (av [ac], XtNtop,    XtChainBottom); ac++;
+      XtSetArg (av [ac], XtNfromHoriz, button); ac++;
+      XtSetArg (av [ac], XtNleft, XtChainLeft); ac++;
+      XtSetArg (av [ac], XtNright, XtChainLeft); ac++;
+      XtSetArg (av [ac], XtNtop, XtChainBottom); ac++;
       XtSetArg (av [ac], XtNbottom, XtChainBottom); ac++;
-      XtSetArg (av [ac], XtNresizable, True);       ac++;
+      XtSetArg (av [ac], XtNresizable, True); ac++;
       sprintf (button_name, "button%d", ++bc);
       button = XtCreateManagedWidget (button_name, commandWidgetClass,
 				      dialog, av, ac);
@@ -319,11 +319,11 @@ make_dialog (CONST char* name, Widget parent, Boolean pop_up_p,
 	 window) but I can't seem to make it do it.  
        */
       ac = 0;
-      XtSetArg (av [ac], XtNfromHoriz, button);	    ac++;
+      XtSetArg (av [ac], XtNfromHoriz, button); ac++;
 /*  XtSetArg (av [ac], XtNfromVert, XtNameToWidget (dialog, "label")); ac++; */
-      XtSetArg (av [ac], XtNleft,   XtChainLeft);   ac++;
-      XtSetArg (av [ac], XtNright,  XtChainRight);  ac++;
-      XtSetArg (av [ac], XtNtop,    XtChainBottom); ac++;
+      XtSetArg (av [ac], XtNleft, XtChainLeft); ac++;
+      XtSetArg (av [ac], XtNright, XtChainRight); ac++;
+      XtSetArg (av [ac], XtNtop, XtChainBottom); ac++;
       XtSetArg (av [ac], XtNbottom, XtChainBottom); ac++;
       XtSetArg (av [ac], XtNlabel, ""); ac++;
       XtSetArg (av [ac], XtNwidth, 30); ac++;	/* #### aaack!! */
@@ -341,12 +341,12 @@ make_dialog (CONST char* name, Widget parent, Boolean pop_up_p,
   for (i = 0; i < right_buttons; i++)
     {
       ac = 0;
-      XtSetArg (av [ac], XtNfromHoriz, button);	    ac++;
-      XtSetArg (av [ac], XtNleft,   XtChainRight);  ac++;
-      XtSetArg (av [ac], XtNright,  XtChainRight);  ac++;
-      XtSetArg (av [ac], XtNtop,    XtChainBottom); ac++;
+      XtSetArg (av [ac], XtNfromHoriz, button); ac++;
+      XtSetArg (av [ac], XtNleft, XtChainRight); ac++;
+      XtSetArg (av [ac], XtNright, XtChainRight); ac++;
+      XtSetArg (av [ac], XtNtop, XtChainBottom); ac++;
       XtSetArg (av [ac], XtNbottom, XtChainBottom); ac++;
-      XtSetArg (av [ac], XtNresizable, True);	    ac++;
+      XtSetArg (av [ac], XtNresizable, True); ac++;
       sprintf (button_name, "button%d", ++bc);
       button = XtCreateManagedWidget (button_name, commandWidgetClass,
 				      dialog, av, ac);
@@ -555,16 +555,9 @@ xaw_scrollbar_jump (Widget widget, XtPointer closure, XtPointer call_data)
 static Widget
 xaw_create_scrollbar (widget_instance *instance, int vertical)
 {
-  Arg av[10];
+  Arg av[20];
   int ac = 0;
-  
-  static XtCallbackRec jumpCallbacks[2] =
-  { {xaw_scrollbar_jump, NULL}, {NULL, NULL} };
-  
-  static XtCallbackRec scrollCallbacks[2] =
-  { {xaw_scrollbar_scroll, NULL}, {NULL, NULL} };
-
-  jumpCallbacks[0].closure = scrollCallbacks[0].closure = (XtPointer) instance;
+  Widget scrollbar;
 
   /* #### This is tacked onto the with and height and completely
      screws our geometry management.  We should probably make the
@@ -572,13 +565,28 @@ xaw_create_scrollbar (widget_instance *instance, int vertical)
      few people use the Athena scrollbar now that it really isn't
      worth the effort, at least not at the moment. */
   XtSetArg (av [ac], XtNborderWidth, 0); ac++;
-  XtSetArg (av [ac], XtNorientation,
-	    vertical ? XtorientVertical : XtorientHorizontal); ac++;
-  XtSetArg (av [ac], "jumpProc",   jumpCallbacks);   ac++;
-  XtSetArg (av [ac], "scrollProc", scrollCallbacks); ac++;
+  if (vertical)
+    {
+      XtSetArg (av [ac], XtNorientation, XtorientVertical); ac++;
+    }
+  else
+    {
+      XtSetArg (av [ac], XtNorientation, XtorientHorizontal); ac++;
+    }
 
-  return XtCreateWidget (instance->info->name, scrollbarWidgetClass,
-			 instance->parent, av, ac);
+  scrollbar =
+    XtCreateWidget (instance->info->name, scrollbarWidgetClass,
+		    instance->parent, av, ac);
+
+  XtRemoveAllCallbacks (scrollbar, "jumpProc");
+  XtRemoveAllCallbacks (scrollbar, "scrollProc");
+
+  XtAddCallback (scrollbar, "jumpProc", xaw_scrollbar_jump,
+		 (XtPointer) instance);
+  XtAddCallback (scrollbar, "scrollProc", xaw_scrollbar_scroll,
+		 (XtPointer) instance);
+
+  return scrollbar;
 }
 
 static Widget

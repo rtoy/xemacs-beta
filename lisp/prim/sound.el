@@ -17,7 +17,7 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: Not in FSF.
@@ -31,11 +31,9 @@
 (defun load-sound-file (filename sound-name &optional volume)
   "Read in an audio-file and add it to the sound-alist.
 
-You can only play sound files if you are running on display 0 of the
-console of a machine with native sound support or running a NetAudio
-server and XEmacs has the necessary sound support compiled in.
-
-The sound file must be in the Sun/NeXT U-LAW format."
+You can only play sound files if you are running on display 0 of the console
+of a Sun SparcStation, SGI machine, or HP9000s700, or running a NetAudio
+server.  The sound file must be in the Sun/NeXT U-LAW format."
   (interactive "fSound file name: \n\
 SSymbol to name this sound: \n\
 nVolume (0 for default): ")

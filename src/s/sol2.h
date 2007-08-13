@@ -1,6 +1,5 @@
 /* Synched up with: FSF 19.31. */
 
-#define __EXTENSIONS__
 #include "usg5-4-2.h"		/* XEmacs change from 5-4 to 5-4-2 */
 
 #define SOLARIS2
@@ -41,17 +40,7 @@
 /* The standard Solaris library nsl has this function in it which is
    supposed to only be in the BSD compat stuff.  Yuck.  Of course,
    there isn't a prototype for it other than in /usr/ucbinclude. */
-int gethostname (char *, size_t);
-
-/* Get non-ANSI functions from ANSI header files in cc -Xc mode.
-   Sun has promised to fix setjmp.h */
-#if __STDC__ == 1
-#ifndef __GNUC__
-#define _POSIX_C_SOURCE 1
-#include <setjmp.h>
-#undef _POSIX_C_SOURCE
-#endif /* __GNUC__ */
-#endif /* __STDC__ */
+int gethostname (char *, int);
 
 /* XEmacs: Solaris include files miss this. */
 struct timeval;
@@ -60,7 +49,7 @@ int utimes (char *file, struct timeval *tvp);
 /* XEmacs addition: to this to avoid having problems when we later
    define INT_MAX etc. */
 #include <limits.h>
-#endif /* C_CODE */
+#endif
 
 /* XEmacs change -- removed flags to force K & R compilation */
 

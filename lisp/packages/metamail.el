@@ -3,7 +3,7 @@
 ;; Copyright (C) 1993, 1996  Masanobu UMEDA
 
 ;; Author: Masanobu UMEDA <umerin@mse.kyutech.ac.jp>
-;; Version: $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs-19/lisp/packages/metamail.el,v 1.1.1.2 1996/12/18 03:45:03 steve Exp $
+;; Version: $Header: /afs/informatik.uni-tuebingen.de/local/web/xemacs/xemacs-cvs/XEmacs/xemacs/lisp/packages/Attic/metamail.el,v 1.1.1.1 1996/12/18 22:42:53 steve Exp $
 ;; Keywords: mail, news, mime, multimedia
 
 ;; This file is part of XEmacs.

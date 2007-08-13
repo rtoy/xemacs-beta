@@ -21,6 +21,9 @@
 ;; file named COPYING.  Among other things, the copyright notice
 ;; and this notice must be preserved on all copies.
 
+;;; Synched up with: Not in FSF.
+;;; #### Appears to duplicate time.el.  Perhaps should be nuked.
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ; Installation
@@ -118,20 +121,20 @@
 ;
 ; HISTORY
 ;
-; 19 dec 93	Jamie Zawinski <jwz@lucid.com>
+; 19 dec 93	Jamie Zawinski <jwz@netscape.com>
 ;	Protected it from edits of the *reportmail* buffer; made the process
 ;	filters not interfere with the match data.
 ;
-; 15 dec 93	Jamie Zawinski <jwz@lucid.com>
+; 15 dec 93	Jamie Zawinski <jwz@netscape.com>
 ;	Kyle renamed timer.el to itimer.el; made this use the new names.
 ;
-; 27 aug 93	Jamie Zawinski <jwz@lucid.com>
+; 27 aug 93	Jamie Zawinski <jwz@netscape.com>
 ;	Use mail-extr to parse addresses if it is loadable.
 ;
 ; 15 oct 92	Benjamin Pierce (bcp@cs.cmu.edu)
 ;	Merged recent changes
 ;
-; 14 oct 92	Jamie Zawinski <jwz@lucid.com>
+; 14 oct 92	Jamie Zawinski <jwz@netscape.com>
 ;	Added support for xbiff++.
 ;
 ; 17 sep 92	Benjamin Pierce (bcp@cs.cmu.edu)
@@ -140,16 +143,16 @@
 ; 15 sep 92	Benjamin Pierce (bcp@cs.cmu.edu)
 ;	Minor bug fixes.
 ;
-; 1 may 92	Jamie Zawinski <jwz@lucid.com>
+; 1 may 92	Jamie Zawinski <jwz@netscape.com>
 ;	Converted to work with Kyle Jones' timer.el package.
 ;
-; 3 may 91	Jamie Zawinski <jwz@lucid.com>
+; 3 may 91	Jamie Zawinski <jwz@netscape.com>
 ;	Made the display-time-sentinel make a fuss when the process dies.
 ;
-; 26 mar 91	Jamie Zawinski <jwz@lucid.com>
+; 26 mar 91	Jamie Zawinski <jwz@netscape.com>
 ;	Merged with BCP's latest posted version
 ;
-;  5 mar 91	Jamie Zawinski <jwz@lucid.com>
+;  5 mar 91	Jamie Zawinski <jwz@netscape.com>
 ;	Added compatibility with Emacs 18.57.
 ;
 ; 25 Jan 91	Benjamin Pierce (bcp@cs.cmu.edu)
@@ -158,7 +161,7 @@
 ;	display-time-process-new-mail to prevent letterbombs 
 ;	(suggested by jwz).
 ;
-; 15 feb 91	Jamie Zawinski <jwz@lucid.com>
+; 15 feb 91	Jamie Zawinski <jwz@netscape.com>
 ;	Made the values of display-time-message-separator and 
 ;	display-time-incoming-mail-file be initialized when this code
 ;	starts, instead of forcing the user to do it.  This means that
@@ -168,7 +171,7 @@
 ;	messages be persistent (not go away at the first key).  I wish
 ;	GC messages didn't destroy it, though...
 ;
-; 20 Dec 90	Jamie Zawinski <jwz@lucid.com>
+; 20 Dec 90	Jamie Zawinski <jwz@netscape.com>
 ;	Added new variables: display-time-no-file-means-no-mail, 
 ;	display-time-wait-hard, and display-time-junk-mail-ring-bell.
 ;	Made display-time-message-separator be compared case-insensitively.
@@ -205,13 +208,8 @@
 ;	Added facility for reporting incoming mail (modeled after gosmacs
 ;	reportmail.ml package written by Benjamin Pierce).
 
-
-(if (string-match "XEmacs" emacs-version)
-    (require 'itimer))
-
-(condition-case ()
-    (require 'mail-extr)
-  (error nil))
+(require 'itimer)		; this is xemacs, so why conditionalize?
+(require 'mail-extr)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;                       User Variables                          ;;;
@@ -359,15 +357,6 @@ long after displaying each debugging message in mode line")
          (list 'display-time-debug-mesg
 	       (append (list 'format mesg) args))))
 
-(defmacro display-time-save-match-data (&rest body)
-  ;; Execute the BODY forms, restoring the global value of the match data.
-  ;; We need this because it's antisocial for process filters to change
-  ;; the regexp match registers.
-  (list 'let '((_match_data_ (match-data)))
-	(list 'unwind-protect
-	      (cons 'progn body)
-	      '(store-match-data _match_data_))))
-
 (defun display-time-init ()
   ;; If the mail-file isn't set, figure it out.
   (or display-time-incoming-mail-file
@@ -436,29 +425,12 @@ mode line of each buffer (if corresponding user variables are set)."
 		(append global-mode-string '(display-time-string))))
       (setq display-time-string "time and load")
       
-      (if (featurep 'itimer)
-	  (let ((old (get-itimer "display-time")))
-	    (if old (delete-itimer old))
-	    (start-itimer "display-time" 'display-time-timer-function
-			  display-time-interval display-time-interval)
-	    (display-time-timer-function))
-	;; if we don't have timers, then use one of the process mechanisms.
-	(setq display-time-loadst-process
-	      (if (string-match "18\\.5[0-5]" (emacs-version))
-		  (start-process "display-time-loadst" nil
-				 "loadst" 
-				 "-n" (int-to-string display-time-interval))
-		(start-process "display-time-wakeup" nil
-			       (concat exec-directory "wakeup")
-			       (int-to-string display-time-interval))))
-	(process-kill-without-query display-time-loadst-process)
-	(set-process-sentinel display-time-loadst-process 
-			      'display-time-sentinel)
-	(set-process-filter display-time-loadst-process
-			    (if (string-match "^18\\.5[0-5]" (emacs-version))
-				'display-time-filter-18-55
-			      'display-time-filter-18-57)))
-      
+      (let ((old (get-itimer "display-time")))
+	(if old (delete-itimer old))
+	(start-itimer "display-time" 'display-time-timer-function
+		      display-time-interval display-time-interval)
+	(display-time-timer-function))
+
       (if display-time-use-xbiff
 	  (progn
 	    (display-time-del-file display-time-mail-arrived-file)
@@ -473,124 +445,58 @@ mode line of each buffer (if corresponding user variables are set)."
 		(error "Display time: xbiff failed.  Check xbiff-arg-list"))))))
   (display-time-total-reset))
 
-
-(defun display-time-sentinel (proc reason)
- (display-time-save-match-data
-  ;; notice if the process has died an untimely death...
-  (display-time-debug "display-time-sentinel")
-  (cond ((memq (process-status proc) '(stop exit closed signal))
-	 (if (and (stringp reason) (string-match "\n?\n*\\'" reason))
-	     (setq reason (substring reason 0 (match-beginning 0))))
-	 (beep)
-	 (setq display-time-string (format "%s" reason))
-	 (display-time-message "")
-	 (message "process %s: %s (%s)" proc reason (process-status proc))))
-  (display-time-force-redisplay)))
-
-(defun display-time-filter-18-55 (proc string)
- (display-time-save-match-data
-  (if display-time-flush-echo-area (display-time-message ""))
-  ;; Desired data can't need more than the last 30 chars,
-  ;; so save time by flushing the rest.
-  ;; This way, if we have many different times all collected at once,
-  ;; we can discard all but the last few very fast.
-  (display-time-debug "display-time-filter-18-55")
-  (if (> (length string) 30) (setq string (substring string -30)))
-  ;; Now discard all but the very last one.
-  (while (and (> (length string) 4)
-	      (string-match "[0-9]+:[0-9][0-9].." string 4))
-    (setq string (substring string (match-beginning 0))))
-  (if (string-match "[^0-9][0-9]+:" string)
-      (setq string (substring string 0 (1+ (match-beginning 0)))))
-  ;; If we're announcing mail and mail has come, process any new messages
-  (if display-time-announce-mail
-      (if (string-match "Mail" string)
-	  (display-time-process-new-mail)
-	  (display-time-total-reset)))
-  ;; Format the mode line time display
-  (let ((time-string (if (string-match "Mail" string)
-			 (if display-time-announce-mail 
-			     display-time-mail-modeline
-			     "Mail "))))
-    (if (and display-time-time (string-match "[0-9]+:[0-9][0-9].." string))
-	(setq time-string 
-	      (concat time-string
-		      (substring string (match-beginning 0) (match-end 0))
-		      " ")))
-    (if display-time-day-and-date
-	(setq time-string
-	      (concat time-string
-		      (substring (current-time-string) 0 11))))
-    (if (and display-time-load (string-match "[0-9]+\\.[0-9][0-9]" string))
-	(setq time-string
-	      (concat time-string
-		      (substring string (match-beginning 0) (match-end 0))
-		      " ")))
-    ;; Install the new time for display.
-    (setq display-time-string time-string)
-    (display-time-force-redisplay))))
-
-(defun display-time-filter-18-57 (proc string) ; args are ignored
- (display-time-save-match-data
-  (display-time-debug "display-time-filter-18-57")
-  (if display-time-flush-echo-area
-      (progn
-	(display-time-debug "flush echo area")
-	(display-time-message "")))
-  (let ((mailp (and (file-exists-p display-time-incoming-mail-file)
-		    (not (eq 0 (nth 7 (file-attributes
-				       display-time-incoming-mail-file)))))))
-    (if display-time-announce-mail
-	(if mailp
-	    (display-time-process-new-mail)
+(defun display-time-timer-function ()
+  ;; was: (defun display-time-filter-18-57 (proc string) ; args are ignored
+  ;; but we're not supporting version 18 here and I'm trimming excess
+  (save-match-data
+    (display-time-debug "display-time-timer-function")
+    (if display-time-flush-echo-area
+	(progn
+	  (display-time-debug "flush echo area")
+	  (display-time-message "")))
+    (let ((mailp (and (file-exists-p display-time-incoming-mail-file)
+		      (not (eq 0 (nth 7 (file-attributes
+					 display-time-incoming-mail-file)))))))
+      (if display-time-announce-mail
+	  (if mailp
+	      (display-time-process-new-mail)
 	    (display-time-total-reset)))
-    ;; Format the mode line time display
-    (let ((time-string (if mailp
-			   (if display-time-announce-mail
-			       display-time-mail-modeline
+      ;; Format the mode line time display
+      (let ((time-string (if mailp
+			     (if display-time-announce-mail
+				 display-time-mail-modeline
 			       "Mail "))))
-      (if display-time-time
-	  (let* ((time (current-time-string))
-		 (hour (read (substring time 11 13)))
-		 (pm (>= hour 12)))
-	    (if (> hour 12) (setq hour (- hour 12)))
-	    (if (= hour 0) (setq hour 12))
+	(if display-time-time
+	    (let* ((time (current-time-string))
+		   (hour (read (substring time 11 13)))
+		   (pm (>= hour 12)))
+	      (if (> hour 12) (setq hour (- hour 12)))
+	      (if (= hour 0) (setq hour 12))
+	      (setq time-string
+		    (concat time-string
+			    (format "%d" hour) (substring time 13 16)
+			    (if pm "pm " "am ")))))
+	(if display-time-day-and-date
 	    (setq time-string
 		  (concat time-string
-			  (format "%d" hour) (substring time 13 16)
-			  (if pm "pm " "am ")))))
-      (if display-time-day-and-date
-	  (setq time-string
-		(concat time-string
-			(substring (current-time-string) 0 11))))
-      (if display-time-load
-	  (setq time-string
-	      (concat time-string
-		      (condition-case ()
-                          (let* ((la (car (load-average)))
-                                 (load (if (zerop la)
-                                           nil
-                                         (format "%03d" la))))
-                            (if load
-                                (concat (substring load 0 -2)
-                                        "." (substring load -2))
-			      ""))
-                        (error "load-error"))
-		      " ")))
-      ;; Install the new time for display.
-      (setq display-time-string time-string)
-
-      (display-time-force-redisplay)))))
-
-(defun display-time-timer-function ()
-  (display-time-filter-18-57 nil nil))
-
-(defun display-time-force-redisplay ()
-  "Force redisplay of all buffers' mode lines to be considered."
-  (save-excursion (set-buffer (other-buffer)))
-  (set-buffer-modified-p (buffer-modified-p))
-  ;; Do redisplay right now, if no input pending.
-  (sit-for 0))
+			  (substring (current-time-string) 0 11))))
+	(if display-time-load
+	    (setq time-string
+		  (concat time-string
+			  (condition-case ()
+			      (let* ((la (car (load-average)))
+				     (load (if (zerop la)
+					       nil
+					     (format "%03d" la))))
+				(if load
+				    (concat (substring load 0 -2)
+					    "." (substring load -2))
+				  ""))
+			    (error "load-error"))
+			  " ")))
+	;; Install the new time for display.
+	(setq display-time-string time-string)
+	(force-mode-line-update t)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;                       Mail processing                         ;;;
@@ -656,9 +562,6 @@ that things may have changed."
   (setq display-time-previous-mail-buffer-max 1)
   (display-time-message "") ; clear the echo-area.
   )
-
-(or (fboundp 'buffer-disable-undo)
-    (fset 'buffer-disable-undo 'buffer-flush-undo))
 
 (defun display-time-process-new-mail ()
   (setq display-time-may-need-to-reset t)
@@ -790,7 +693,8 @@ that things may have changed."
     ;; clear the thing, like, don't bother, that's annoying.
     (if (and in-echo-area-already (string= "" str))
 	nil
-      (if (and (string= str "") (string-match "^19" emacs-version))
+      ;; XEmacs version fix
+      (if (and (string= str "") (not (string-match "^18" emacs-version)))
 	  (message nil)
 	(message "%s" str)))))
 
@@ -857,8 +761,6 @@ that things may have changed."
 			    ""
 			    (concat " (" subject ")")))
 	 (print-from (display-time-truncate from display-time-max-from-length))
-	 (short-from (display-time-truncate 
-		      (display-time-extract-short-addr from) 25))
 	 (print-to (if (display-time-member to display-time-my-addresses)
 		       ""
 		       (display-time-truncate 
@@ -971,7 +873,7 @@ non-nil, always match using regexps."
   "When non-NIL, reportmail displays status messages in real time.")
 
 (defun display-time-debug-mesg (mesg)
- (display-time-save-match-data
+ (save-match-data
   (if display-time-debugging-messages
       (progn 
 	(message "Reportmail: %s" mesg)

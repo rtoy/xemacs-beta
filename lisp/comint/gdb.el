@@ -20,13 +20,9 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
-
-;;; Synched up with: Not in FSF
-
-;;; Commentary:
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;; Description of GDB interface:
 
@@ -61,8 +57,6 @@
 
 ;; gdb-display-frame is invoked automatically when a filename-and-line-number
 ;; appears in the output.
-
-;;; Code:
 
 (require 'comint)
 (require 'shell)
@@ -243,8 +237,6 @@ C-x SPACE sets break point at current line."
   (interactive)
   (comint-mode)
   (use-local-map gdb-mode-map)
-  (when (not (boundp 'c-mode-syntax-table))
-    (require 'cc-mode))
   (set-syntax-table c-mode-syntax-table)
   (make-local-variable 'gdb-last-frame-displayed-p)
   (make-local-variable 'gdb-last-frame)
@@ -267,7 +259,7 @@ C-x SPACE sets break point at current line."
   ;; XEmacs change:
   (make-local-hook 'kill-buffer-hook)
   (add-hook 'kill-buffer-hook 'gdb-delete-arrow-extent nil t)
-  (add-hook 'comint-input-filter-functions 'shell-directory-tracker nil t)
+  (setq comint-input-sentinel 'shell-directory-tracker)
   (run-hooks 'gdb-mode-hook))
 
 (defun gdb-delete-arrow-extent ()
@@ -652,13 +644,11 @@ It is for customization by you.")
     (goto-char (point-max))
     (insert comm)))
 
-(fset 'gdb-control-c-subjob 'comint-interrupt-subjob)
-
-;(defun gdb-control-c-subjob ()
-;  "Send a Control-C to the subprocess."
-;  (interactive)
-;  (process-send-string (get-buffer-process (current-buffer))
-;		       "\C-c"))
+(defun gdb-control-c-subjob ()
+  "Send a Control-C to the subprocess."
+  (interactive)
+  (process-send-string (get-buffer-process (current-buffer))
+		       "\C-c"))
 
 (defun gdb-toolbar-break ()
   (interactive)
@@ -675,5 +665,3 @@ It is for customization by you.")
     (gdb-clear)))
 
 (provide 'gdb)
-
-;;; gdb.el ends here

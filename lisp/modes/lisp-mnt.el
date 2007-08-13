@@ -5,7 +5,7 @@
 ;; Author: Eric S. Raymond <esr@snark.thyrsus.com>
 ;; Maintainer: Eric S. Raymond <esr@snark.thyrsus.com>
 ;; Created: 14 Jul 1992
-;; Version: $Id: lisp-mnt.el,v 1.1.1.2 1996/12/18 03:44:42 steve Exp $
+;; Version: $Id: lisp-mnt.el,v 1.1.1.1 1996/12/18 22:42:47 steve Exp $
 ;; Keywords: docs
 ;; X-Modified-by: Bob Weiner <weiner@mot.com>, 4/14/95, to support InfoDock
 ;; 	headers.

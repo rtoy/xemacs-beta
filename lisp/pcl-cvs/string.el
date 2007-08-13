@@ -1,4 +1,4 @@
-;;;; $Id: string.el,v 1.1.1.1 1996/12/18 03:32:28 steve Exp $
+;;;; $Id: string.el,v 1.1.1.1 1996/12/18 22:42:58 steve Exp $
 ;;;; This file contains some miscellaneous string functions
 
 ;; Copyright (C) 1991-1995 Free Software Foundation

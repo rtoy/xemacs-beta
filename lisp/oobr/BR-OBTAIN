@@ -4,7 +4,7 @@
 # AUTHOR:       Bob Weiner
 #
 # ORIG-DATE:     5-Mar-95
-# LAST-MOD:     21-Feb-97 at 18:56:17 by Bob Weiner
+# LAST-MOD:     22-Aug-95 at 16:23:35 by Bob Weiner
 #
 # Copyright (C) 1995  Free Software Foundation, Inc.
 # See the file BR-COPY for license information.
@@ -17,8 +17,8 @@ of Emacs, information management, and powerful software development tools,
 all in one package.  Get it via anonymous ftp from host ftp.xemacs.org in
 the /pub/infodock directory.
 
-It is a standard part of XEmacs versions 19.12 and above.  The Free
-Software Foundation also encourages its use with GNU Emacs.
+It is a standard part of the forthcoming XEmacs 19.12 release.  The Free
+Software Foundation also intends to add it to GNU Emacs.
 
 The OO-Browser is also available as a standalone package via anonymous ftp
 across the Internet.  Do not send requests to have it mailed to you since it
@@ -35,7 +35,7 @@ directory and place all of the files below it.
 
 Ftp to ftp.xemacs.org  (Internet Host ID = 128.174.252.16):
 
-   prompt> ftp ftp.xemacs.org  (If this doesn't work, try `ftp xemacs.org'.)
+   prompt> ftp ftp.xemacs.org
 
 Login as 'anonymous' with your own <user-id>@<site-name> as a password.
    

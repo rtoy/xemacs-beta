@@ -1,0 +1,1902 @@
+-*- Indented-Text -*-
+
+Frequently Asked Questions and Answers for Mule.
+1994/8/30
+
+----------------------------------------------------------------------
+
+This FAQ list was made to summarise some frequently asked questions
+and their answers in a convenient form.  The structure of this FAQ
+list has drastically changed since the last version.  For the detail
+of the new structure, see the entry of `How to read this FAQ and its
+structure'.
+
+We believe that the contents are fairly correct, but please let us
+know if you find any mistakes.  New information is always welcome.
+
+To get the latest FAQ, see A-12.
+
+Many people gave us advice in making this list.  We would like to
+thank those who have contributed.
+
+--
+Takahiro Maebashi <maebashi@mcs.meitetsu.co.jp>
+(translated by TAKAHASHI Naoto <ntakahas@etl.go.jp>)
+
+----------------------------------------------------------------------
+
+WARNING!!
+This FAQ list contains Japanese, Chinese and Latin-1 characters.  If
+you read this list on a terminal which is not capable of displaying
+those characters, your terminal might be set in a strange state.
+----------------------------------------------------------------------
+
+If you are viewing this text in a Mule Buffer, you can type "M-2 C-x
+$" to get an overview of just the questions.  Then, when you want to
+look at the text of the answers, just type "C-x $".
+
+To search for a question numbered X-XX, type "M-C-s ^X-XX:", followed
+by a C-r if that doesn't work, then type ESC to end the search.
+
+This Mule FAQ is divided into two parts:
+
+Part 1: Questions common to all languages
+Part 2: Questions specific to each language
+
+Each part consists of several sections.  Questions in Part 1 are
+grouped by their fields, and questions in Part 2 are grouped by
+languages.  You may find almost the same questions in different
+sections, but this is for the convenience of readers.
+
+----------------------------------------------------------------------
+
+	FAQ Part 1: Questions common to all languages
+
+GENERAL QUESTIONS
+
+A-1: What is Mule?
+
+  Mule is a multi-lingual enhancement of GNU Emacs.  Mule Ver.1 was
+  based on GNU Emacs Ver.18 and Mule Ver.2 is based on GNU Emacs
+  Ver.19.  Mule Ver.1 will not be supported anymore.
+
+  Mule has the following features:
+   * It can handle not only ASCII characters (7 bit) and ISO Latin-1
+     characters (8 bit), but also 16 bit characters like Japanese,
+     Chinese, and Korean.  Furthermore Mule can have a mixture of
+     languages in a single buffer.
+   * You can set different coding systems for file input/output,
+     keyboard input, and inter-process communication.
+   * When not in the multi-lingual mode, it behaves almost exactly like GNU
+     Emacs.
+
+A-2: How can I get Mule?
+
+  Mule is available via anonymous FTP from:
+
+  	etlport.etl.go.jp [192.31.197.99]: /pub/mule
+  	ftp.mei.co.jp [132.182.49.2]: /public/free/gnu/emacs/Mule
+	ftp.iij.ad.jp [192.244.176.50]: /pub/misc/mule
+  	sh.wide.ad.jp [133.4.11.11]: /JAPAN/mule
+  	ftp.funet.fi [128.214.6.100]: /pub/gnu/emacs/mule
+
+  Please use one of the last three sites unless you are in Japan.  It
+  should be better to use ftp.funet.fi for European sites.
+
+  Both the complete tar file of Mule (mule-2.0.tar.gz) and the diff
+  file to GNU Emacs 19.25 (diff-19.25-2.0.gz) are available.  Please
+  take the diff file if you already have GNU Emacs.  If you find patch
+  files there (patch-2.0-*.gz), get them too and apply the patches.
+  Various fonts and ELISP libraries are also available from the same
+  sites.
+
+  See $MULE/README.Mule for further details.
+
+A-3: What is the latest version of Mule?
+
+  The current version is 2.2 (WAKAMURASAKI), and is based on
+  GNU Emacs 19.28.
+
+A-4: Will Mule be integrated into GNU Emacs in the future?
+
+  We have just started the work of merging Mule to GNU Emacs.
+
+A-5: Are there any plans to introduce the features of Mule to Epoch
+  (or Nepoch)?
+
+  Mule Ver.2 (actually GNU Emacs 19) can make a independent frame for
+  each buffer, and can draw coloured strings.
+
+A-6: Are there any plans to introduce the features of Mule to Demacs?
+
+  Mule Ver.1.x contains Demacs.  Read the install manual
+  "INSTALL.dos".
+
+A-7: What are the advantages of using Mule Ver.2 instead of Mule Ver.1?
+
+  To summarise, it is possible to use the new features added to GNU
+  Emacs 19.  There are so many new features and we cannot list them
+  here, but the multi-frame functions a la Epoch and face functions
+  (see F-5 below) are examples.
+
+A-8: Are there any mailing lists for Mule?
+
+  There are two lists for discussion in English:
+
+  mule@etl.go.jp
+     Main language is English.
+  mule-vn@etl.go.jp
+     To discuss handling of Vietnamese.  Main language is English.
+
+  The following is for various pre-release tests:
+
+  mule-jp@etl.go.jp
+     Main language is Japanese.
+
+  To discuss general topics in Japanese, please use the newsgroup
+  fj.editor.mule.
+
+  If you want to join these lists, contact the address
+  mule-request@etl.go.jp.  Note that mule-jp-request does not exist.
+
+A-9: Where should I send bug-reports of Mule?
+
+  If you write bug-reports and/or propositions for improvement in
+  Japanese, post them to fj.editor.mule.  If you do not have access to
+  this newsgroup, send them to mule@etl.go.jp in English.
+
+A-10: Does Mule have manuals written in Japanese/English/Chinese/
+ Korean/etc.?
+
+  There are five kinds of manuals:
+
+    * on-line manual,
+    * texinfo manual,
+    * FAQ,
+    * tutorial, and
+    * various documents under the "doc" directory.
+
+  The current version of Mule is 2.0, but some manuals have not been
+  rewritten since Ver.1 (sorry).
+
+  * on-line manual
+
+    An on-line manual written in English is included.  Usually you can
+    read it with the man command.  If your sys-admin did not make it
+    readable, you will have to copy $MULE/etc/mule.1 to your man
+    directory.
+
+  * texinfo manual
+
+    A texinfo manual, which explains the functions and terminology of Mule,
+    is also available.  You will find the source in texinfo format
+    under $MULE/man and the formatted text under $MULE/info.
+
+  * FAQ
+
+    This is what you are reading now.  The following versions are
+    available in $MULE/etc:
+    
+                FAQ-Mule          English version
+		FAQ-Mule.jp	  Japanese version
+		FAQ-Mule.kr	  Korean version
+		FAQ-Mule.cn	  Chinese version
+
+  * tutorial
+
+    The tutorial is available in Japanese and Korean.  When you type
+    C-h T (M-x help-with-tutorial-for-mule), Mule asks you in what
+    language you want the tutorial.  (Hitting space bar shows the list
+    of available languages.)
+
+  * documents under the `doc' directory
+
+    There are some sample texts and documentation of functions of Mule in
+    $MULE/doc.  Most of the documents that were there in Ver.1 have
+    been texinfonised.  $MULE/doc/viet contains documents written in
+    Vietnamese.
+
+A-11: What does the name "Mule" stand for?
+
+  Quoted from UNIX dictionary :-)
+
+    [Mule] (UNIX command) [mju:l]
+    Stands for "MUlti-Lingual Enhancement to GNU Emacs".  Corresponding
+    to the animal series of GNU, and also to the convention of giving
+    an antonym to its name, like gawk.  (cf. Demacs, Emacs, gawk,
+    Nemacs)
+
+  Hironobu SUZUKI <hironobu@sra.co.jp> first suggested this name.
+
+A-12: Where can I get the latest Mule FAQ list?
+
+  There are four versions of Mule FAQ, i.e. in English, in Japanese,
+  in Korean and in Chinese.  In the distribution set, they are named:
+  
+                FAQ-Mule          English version
+		FAQ-Mule.jp	  Japanese version
+		FAQ-Mule.kr	  Korean version
+		FAQ-Mule.cn	  Chinese version.
+  
+  The original is the Japanese version.  The others are
+  translations and may or may not be slightly obsolete.
+
+  You can get Mule FAQ from:
+
+  * network news.  Mule FAQ is posted to fj.editor.mule at irregular
+    intervals.
+
+  * anonymous FTP sites.  It is available via anonymous FTP from the
+    following sites.
+
+    etlport.etl.go.jp: /pub/mule/READMEDIR
+    sh.wide.ad.jp: /JAPAN/mule/READMEDIR
+
+  * the distribution set of Mule.  Each distribution set contains the
+  latest FAQ (at that time) as etc/FAQ-Mule{,.jp,.kr}.
+
+A-13: What functions are not implemented in Mule 2.0?
+
+  The following functions are not available in Mule 2.0.  Wait for the
+  next version:
+
+    o Multi-lingual version of lisp/picture.el and lisp/rect.el
+    o Multi-lingual version of XMENU
+    o Displaying on Sun console
+
+
+BUILDING AND INSTALLING
+
+B-1: What options does configure accept?
+
+  You can get the list by `configure --help'.
+
+B-2: How can I build Mule for X Window System under SunOS 4.1.x?
+
+  To make Mule under SunOS 4.1.x, static linking is necessary.  If there
+  are no libraries for static linking, you have to create libX11.a by
+  adding
+  
+    #define  ForceNormalLib YES
+  
+  to the site.def file when you build X.
+
+B-3: How can I use Wnn or Canna in Mule?
+
+  Specify --wnn or --canna to configure.  If the libraries are not in
+  the standard directories, you may need to specify --wnn-include=XXXX,
+  too.
+
+B-4: During the building of Mule, a message "Pure Lisp storage
+ exhausted" was displayed, and the compilation stopped.
+
+  Ken'ichi HANDA <handa@etl.go.jp> writes:
+
+    This happens when the value of PURESIZE in puresize.h is too
+    small.  Some systems seem to require a larger value.  Loading many
+    language specific files (e.g. japanese.el, chinese.el) in
+    site-init.el requires a larger value, too.  First, try again with
+    the value doubled.  If that works, you can adjust PURESIZE to a
+    value a little greater than the value displayed in the message
+    "Pre Bytes Used XXXXX" (which is displayed when temacs has loaded
+    mule-init.el).  After that you have to remake Mule with this
+    adjusted PURESIZE value.
+
+B-5: When I was building Mule the compilation stopped with a message
+ saying "Undefined Symbol: __des_crypt".  What can I do?
+
+  Masato Minda <minmin@astec.co.jp> writes:
+
+    I think this happens when you use static link under SunOS with
+    JLE1.1.1.
+
+    Solutions:
+	Apply the patch(es) for JLE (I forgot the patch ID).
+	Use JLE1.1.1 rev B or later.
+	Throw away JLE :-)
+
+    I think making an empty _des_crypt function and linking it
+    together might work, though I've never tried it.
+
+B-6: Why does Mule, which is compiled with GCC, add a ^M at the end of
+ each line in shell mode?
+
+  Ishikawa Ichiro <ichiro@ccsr.u-tokyo.ac.jp> writes:
+
+    I have had the same problem in Emacs 19.  (At that time Mule did
+    not work at all if compiled with gcc.)  The cause was incomplete
+    installation of gcc.  (I used the JLE version of sed.)
+
+  Sed in JLE has bug and cannot install the header files (fixincludes)
+  well.  Use sed of GNU instead.
+
+B-7: I succeeded in compiling Mule, but I cannot input any language except
+ English.
+
+  If you want to use foreign languages in Mule, you have to load the
+  language specific files by specifying them in the site-init.el file.
+  By default there is no site-init.el file, and this means that you
+  can input only English.
+
+  If you want to use Japanese and Chinese, include the following lines
+  in the lisp/site-init.el file when you build Mule:
+        (load "japanese")
+        (load "chinese")
+
+  When the necessary files have not been loaded, you can load them by
+  hand, for example, as follows:
+    M-x load-library RET japanese RET
+
+  The lastly loaded language will be the default.  To change this,
+  execute 
+    M-x its:select-mode
+  to specify the mode.  Completion of the mode name is available.
+
+  Loading too many language specific files may cause the "Pure Lisp
+  storage exhausted" error during the compile.  In this case, refer
+  B-4.
+
+B-8: I want to save the result of configure to compile on other
+ machines.
+
+  Rename config.status to save the result.  Or, you can compile the
+  source in a different directory.
+
+B-9: I configured on the first machine.  Then I configured on the
+ second machine.  I want to make it on the first machine again.  Do I
+ have to rerun configure?
+
+  No.  All you have to do is executing the previously saved
+  config.status file.
+
+B-10: How can I compile in a directory other than the source directory?
+
+  Specify the --srcdir=(_the_name_of_source_directory_) option to
+  configure.  In this case, if you have ever run configure in the
+  source directory, you must execute `make clean' first in that
+  directory.
+
+B-11: I have to rerun configure for some reason.  Do I have to type
+ all command line options again?
+
+  No.  All you have to do is `./config.status --recheck'.  As
+  `config.status' is a sh script, you can edit this file directly to
+  modify the arguments.  You can also give the argument to configure
+  by using the cut & past function of terminal emulator.
+
+B-12: I tried to run configure, but the options are not recognised at
+ all.
+
+  Are you using the JLE OS on Sun?  It seems that JLE has problems
+  because of bugs and differences of features in the commands and
+  libraries.  They say that the installation of GCC may fail under
+  JLE.
+
+  In the current situation, `tr - _' does not work well.  The
+  workaround is to change `tr - _' in configure to `tr \- _', or, if
+  you are using csh, execute
+      setenv LANG C
+  or
+      unsetenv LANG
+
+B-13: Making Mule under Solaris2 + X11R6 dumps core.
+
+  Mule 2.0 and GNU Emacs 19.25 cannot cope with multi-threading.  This
+  means that you have to either:
+
+    1) include 
+         #define ThreadedX NO
+       in site.def when you build X11R6.  The resulting X11R6 does not
+       cope with multi-thread.
+
+    or
+
+    2) link with libX11.a, not with libX11so.6.  Then it will not be
+    linked with libthread.so.1, either.
+
+
+HANDLING FOREIGN LANGUAGES
+
+C-1: What languages are supported in Mule?
+
+  Except from $MULE/README.Mule:
+
+  0. English
+
+     Just type it. :-)
+
+  1. Japanese
+
+    We strongly recommend you to install Wnn4.108 or later.  (Some
+    machine requires Wnn4.109p1, not Wnn4.108.)  The `TAMAGO (EGG)'
+    system, which is bundled to Mule, communicates with Wnn's jserver
+    to provide a very convenient Japanese input method.  For the usage
+    of `TAMAGO', see $MULE/info/egg.
+
+    Mule runs as a client of the X Window System, or runs under a Japanese
+    terminal (including terminal emulators like kterm and exterm).  In
+    the latter case, you can use the Japanese input system that is
+    provided by the terminal.  Other input systems are:
+        * sj3-egg, CANNA                  bundled with Mule
+        * SKK, boiled-egg                 included in the contrib directory
+
+  2. Chinese
+    We strongly recommend you to install Wnn4.108 or later.  (Some
+    machines require Wnn4.109p1, not Wnn4.108.)  The `TAMAGO (EGG)'
+    system, which is bundled to Mule, communicates with cWnn's cserver
+    to provide a very convenient Chinese (GB) input method.  For
+    the usage of `TAMAGO', see $MULE/info/egg.
+
+    Mule runs as a client of the X Window System, or runs under a Chinese
+    terminal (including terminal emulators like cxterm and exterm).
+    In the latter case, you can use the Chinese input system that is
+    provided by the terminal.
+
+    Furthermore, the QUAIL system (bundled to Mule) provides the
+    following input methods:
+	GB: PINYIN, PINYIN_with_TONE, CCDOSPY, SW
+	Big5: PINYIN, ETZY, ZOZY
+    For the usage of this system, see $MULE/info/quail.
+
+    Readers of alt.chinese.text or alt.chinese.text.big5 will find it
+    very convenient to use GNUS (a newsreader written in emacs lisp)
+    with gnusutil.el (bundled to Mule Ver.2).  The program gnusutil
+    automatically converts Hz/zW encoding and BIG5 from/to the
+    internal code of Mule.
+
+  3. Korean
+
+    For hangul input, quail/hangul.el is provided.  See `info/quail'
+    for the usage.  Mule runs as a client of the X Window System, or runs
+    under a hangul terminal (including terminal emulators like
+    exterm).
+
+  4. European languages
+
+    The QUAIL system provides many input methods for European
+    languages.  Currently supported characters are:
+        Latin1, Latin2,.. Latin5, Greek (ISO8859-7),
+        Hebrew (ISO8859-8), Cyrillic (ISO8859-5).
+    See `$MULE/info/quail' for the usage.  Languages that write from
+    right to left (Hebrew, for example) are supported, too.  See
+    `$MULE/info/R2L'.
+
+  5. Thai
+
+    Thai is supported based on the TIS620 character set.  The QUAIL
+    system (bundled to Mule) provides a Thai input method, too.  See
+    `$MULE/info/quail' for the usage.  The name of the quail package
+    for Thai is `thai'.  A free font (12x29 pixels) is included in the
+    `fonts/ETL.tar.gz' file.  You should widen Mule's line spaces
+    with `-lsp 5+' option if you use this font with a 12x24 ASCII
+    font.
+
+  6. Vietnamese
+
+    Vietnamese support is based on the two-table-VISCII method,
+    which divides the code table of VISCII into upper and lower
+    case.  Mule can read and write VISCII, VIQR and VSCII.  Use the
+    QUAIL system (bundled to Mule) for Vietnamese input.  See
+    `$MULE/info/quail' for the usage of this system.  The name of the
+    quail package for Vietnamese is `viet'.  You can use both VISCII
+    font and VSCII font under the X Window System.  A free VISCII font is
+    included in `fonts/ETL.tar.gz', too.  It was designed to be used
+    with the other ETL fonts.
+
+C-2: Some languages are written from right to left.  Does Mule
+ support such languages?
+
+  Hebrew and Arabic are supported in this version.  quail/hebrew.el can
+  be used to input Hebrew texts.  See also the documents of
+  highlight-reverse-direction, r2l-double-cursor, etc.  We are also
+  planning to support Persian, etc. in the future.
+
+C-3: What kinds of coding systems are related to Mule?  And when are
+ they used?
+
+  Mule supports the following coding systems:
+
+   * the internal code used in Mule's buffers.
+   * MS kanji code or SHIFT-JIS (Japanese only)
+   * a subset of ISO 2022 (including JIS [JUNET], EUC, CTEXT)
+   * Big5 (Chinese only)
+
+  You can specify any combination of these coding systems for file
+  input/output, key input, screen display, and interprocess
+  communication.
+
+C-4: Why does the buffer size displayed in *Buffer List* differ so
+ much from the actual file size?
+
+  Mule allocates a unique "leading character" to each coding system.
+  The internal representation of a character other than an ASCII
+  character begins with a leading character.  Therefore inside of
+  Mule, 8 bit characters like Latin-1 are represented in 2 bytes, and
+  16 bit characters like kanji are represented in 3 bytes.  When you
+  save the contents of a buffer with the internal representation, the
+  size of the buffer and the file will be the same.  If another
+  encoding is used for file output, they will be different.
+
+C-5: I set (setq keyboard-coding-system *euc-japan*), but it does not
+ work.
+
+  Do not use `setq' to bind a value to `keyboard-coding-system'.  Use
+  the function `set-keyboard-coding-system' instead.  This comment
+  also applies to `display-coding-system', `file-coding-system', etc.
+
+C-6: Why doesn't `set-keyboard-coding-system' accept *autoconv*,
+ *big5-hku*, *big5-eten* and *internal*?
+
+  This is a feature.
+
+C-7: I want to use EUC for displaying Japanese, Chinese, Korean, EC,
+ etc. simultaneously.
+
+  This is impossible, because EUC for each language is the same
+  coding system.  Use *junet* or *ctext* to display multi-lingual texts.
+
+C-8: Where can I find documentation for the coding system used in Mule?
+
+  The coding system is ISO 2022 (or JIS X0202 in the case of JIS).
+  You will find a brief explanation in the texinfo manuals and in
+  `$MULE/info/ISO2022'.
+
+C-9: How can I input characters other than ASCII in isearch?
+
+  Load `isearch-ext.el' first, then you will be able to input
+  characters other than ASCII in isearch (incremental search).  You
+  can invoke `TAMAGO' with `C-\' and `quail' with `C-]' to input
+  foreign languages.
+
+C-10: Where can I get various fonts for various languages?
+
+  You can get them via anonymous FTP from the following sites:
+
+    etlport.etl.go.jp: /pub/mule/fonts
+    sh.wide.ad.jp: /JAPAN/mule/fonts
+
+  You will find the following fonts there:
+
+  ./Chinese/ or Chinese.tar.gz
+	gb16fs.bdf	-- 16x16 pixels GB font
+	gb24st.bdf	-- 24x24 pixels GB font
+	taipei16.bdf	-- 16x16 pixels BIG5 (ETen) font
+	taipei24.bdf	-- 24x24 pixels BIG5 (ETen) font
+  
+  ./Japanese/ or Japanese.tar.gz
+	k14.bdf		-- 14x14 pixels JISX0208.1983 font
+	k16.bdf		-- 16x16 pixels JISX0208.1990 font
+	jiskan16.bdf	-- 16x16 pixels JISX0208.1983 font 
+	jiskan24.bdf	-- 24x24 pixels JISX0208.1983 font 
+	min-1-16.bdf	-- 16x16 pixels JISX0212.1990 (HojoKanji) font 
+	min-1-24.bdf	-- 24x24 pixels JISX0212.1990 (HojoKanji) font 
+	8x16rk.bdf	-- 8x16 pixels JISX0201.1976 (Kana) font
+	12x24rk.bdf	-- 12x24 pixels JISX0201.1976 (Kana) font
+  
+  ./Korean/ or Korean.tar.gz
+	hanglm16.bdf	-- 16x16 pixels KSC5601.1987 font
+	hanglm24.bdf	-- 24x24 pixels KSC5601.1987 font
+  
+  ./ETL/ or ETL.tar.gz
+	etl{14,16,24}-latin1.bdf	-- ISO8859-1 (Latin-1) font
+	etl{14,16,24}-latin2.bdf	-- ISO8859-2 (Latin-2) font
+	etl{14,16,24}-latin3.bdf	-- ISO8859-3 (Latin-3) font
+	etl{14,16,24}-latin4.bdf	-- ISO8859-4 (Latin-4) font
+	etl{14,16,24}-cyrillic.bdf	-- ISO8859-5 (Cyrillic) font
+	etl{14,16,24}-greek.bdf		-- ISO8859-7 (Greek) font
+	etl{14,16,24}-hebrew.bdf	-- ISO8859-8 (Hebrew) font
+	etl{14,16,24}-latin5.bdf	-- ISO8859-9 (Latin-5) font
+	etl{14,16,24}-swedish.bdf	-- SEN850200 (Swedish) font
+	etl{14,16,24}-ipa.bdf		-- IPA font
+	etl{14,16,24}-sisheng.bdf	-- SiSheng (Chinese Radical) font
+	etl{16,24}-viscii.bdf		-- VISCII 1.1 (Vietnamese) font
+	etl{14,24}-koi.bdf		-- KOI (Cyrillic) font
+	etl{16,24}-arabic{0,1,2}.bdf	-- Arabic font
+	etl24-thai.bdf			-- TIS620 (Thai) font
+
+  X11R6 also contains most of the JIS, KSC, GB fonts.
+
+  Besides the above Japanese.tar.gz, another JISX0212.1990 font was
+  posted to fj.sources:
+  
+  From: yasuoka@kudpc.kyoto-u.ac.jp (Koichi Yasuoka)
+  Newsgroups: fj.sources
+  Subject: 16x16 JIS Supplementary Kanji Font (1/6)
+  Date: 28 Jul 1994 00:06:12 +0900
+  Organization: Data Processing Center, Kyoto University, Kyoto, Japan.
+  Message-ID: <315t54$et5@kudpc.kudpc.kyoto-u.ac.jp>
+
+  This posting was followed by some patches, so you'd better apply them.
+
+C-11: Some foreign language characters are different from what
+ quail-help displays on the screen.  Is this a known bug?
+
+  Make sure that *quail-keyboard-translate-table* is correctly set.
+
+  If this variable is left unchanged, Mule assumes your keyboard
+  layout is same as vt100 and displays the layout for vt100.
+  Especially if you are using a JIS keyboard, you have to put the
+  following in your .emacs:
+
+	(setq *quail-keyboard-translate-table*
+	      *quail-keyboard-translate-table-jis*)
+
+   See doc/keyboard-translation.text for more information.
+
+C-12: How can I get hardcopy of texts made with Mule?
+
+  A program called m2ps is included in the directory `lis-src' of
+  Mule.  It converts multi-lingual files into PostScript format.
+  Note that m2ps accepts only *internal* encoding of Mule.
+
+  m2ps uses X's BDF files as fonts.  Characters are sent to printer
+  as bitmaps, so you can get hardcopy of multi-language texts even if
+  your printer does not support multi-lingual fonts.  For further
+  information, see the on-line manual (m2ps.1).
+
+C-13: Mule fails to handle filenames which contain two byte characters
+ like Japanese, Chinese, or Korean.
+
+  You must specify `--mcpath' to `configure' when you compile Mule.
+  You also have to specify what coding system will be used in
+  filenames.  Adding the following lines in `site-init.el' may
+  help. (Note that *autoconv* cannot be specified).
+
+    ;;; example: To use Korean EUC for filenames
+    (if (fboundp 'set-pathname-coding-system)
+        (set-pathname-coding-system *euc-korea*))
+
+C-14: Mule wrongly determines the eol-type when it reads a file in.
+
+  The current version of Mule guesses the eol-type when it first
+  encounters a CR/LF/CR+LF.  This means if a CR is placed at the end
+  of a `LF terminated' line, that file is regarded as ....*dos.
+  Similarly, if a CR is placed at the end of a `CR+LF terminated'
+  line, that file is regarded as ....*mac.  You should explicitly
+  specify the eol-type by `\C-u\C-x\C-f (\C-u M-x find-file)' when you 
+  read such ambiguous files.
+
+  There are three possible reasons when the eol-type is wrongly
+  determined:
+
+  1) The file contains more than one coding-system / eol-type.
+  2) Some sequences are unfortunately placed at the boundary of
+     reading blocks.
+  3) The priority of coding-system is wrong.
+
+
+PERSONAL ENVIRONMENT
+
+D-1: I do not want a new line inserted even if I execute `next-line'
+ at the end of a buffer.
+
+  (setq next-line-add-newlines nil) does what you want.
+
+D-2: How can I stop Mule from beeping and displaying
+ `beginning-of-buffer !' when I execute `previous-line' at the
+ beginning of a buffer?
+
+  Include the following lines in your .emacs file.  (Note that this
+  works only in Emacs 19.26 or later.)
+  
+    (defun previous-line (arg)
+      (interactive "p")
+      (condition-case nil
+	  (line-move (- arg))
+	(beginning-of-buffer)))
+
+D-3: I don't want the menu-bar and the scroll-bar.
+
+  You can make them invisible by (menu-bar-mode 0) and
+  (scroll-bar-mode -1), respectively.  To make the scroll bar only of
+  the current frame invisible, execute (toggle-scroll-bar -1).
+
+D-4: I cannot set a hook by (setq xxx-hook yyy).
+
+  Maybe other hooks are overriding it.  To avoid such a trouble, use
+  `add-hook' instead of `setq' when you set a hook.
+
+  (example)
+    (add-hook 'c-mode-hook '(lambda () (setq tab-width 4)))
+
+  By default, `add-hook' appends the new function at the top of the
+  hook.  However, if you specify a `t` as the third argument to
+  `add-hook', it will be added at the end of the hook.
+
+D-5: Is it possible to use the same .emacs file for Mule-1.x and
+ Mule-2.x? 
+
+  Sometimes this causes a trouble because of the difference of the
+  versions of the original emacs.  To make a commonly usable .emacs
+  file, adopt the following structure:
+  
+    (if (eq (string-to-int emacs-version) 18)
+       (_programs_for_Mule-1.x_))
+    (if (eq (string-to-int emacs-version) 19)
+       (_programs_for_Mule-2.x_))
+
+D-6: Why does the BS key execute the same command as the DEL key when
+ I use Mule under the X Window System?  How can I change it as if I am
+ using it on a terminal?
+
+  On terminals, the BS key generates ^H and the DEL key generates ^?.
+  This means that Mule cannot distinguish BS from ^H nor DEL from ^?.
+  Under X, however, these keys are distinguishable.  So, taking account 
+  of the fact that the BS key is often used for what the DEL key does, 
+  the BS key executes what the DEL key does.
+
+  If you prefer the behaviour on terminals, include the following
+  lines in your .emacs file:
+  
+    (if (eq window-system 'x)
+        (progn
+          (define-key function-key-map [backspace] [8])
+          (put 'backspace 'ascii-character 8)))
+  
+  The `term/bobcat' file, which exchanges the two keys on terminals,
+  does not under X.  Include the following code in you .emacs file if
+  you want to exchange the keys:
+  
+    (cond ((eq window-system 'x)
+	   (define-key function-key-map [delete] [8])
+	   (put 'delete 'ascii-character 8))
+	  ((null window-system)
+	   (load "term/bobcat")))
+
+
+MAIL & NEWS
+
+E-1: When I am writing mail or news, typing C-c C-y quotes original
+ text with "   " at the beginning of line.  How can I change this
+ citation mark to "> " ?
+
+  Use Supercite.  Supercite has many functions and you can customise
+  your own citation mark.  See E-2 through E-4 for detail.
+
+E-2: How can I include the name of the sender in a citation mark?
+
+  The following configuration, by ksakai@mtl.t.u-tokyo.ac.jp, should
+  work.  Some lines may be omitted according to your configuration.
+  You can change the last three lines according to your taste.  (See
+  the documents of Supercite for detail.)
+
+    ;;  sc
+    (autoload 'sc-cite-original     "supercite" "Supercite 3.1" t)
+    (autoload 'sc-submit-bug-report "supercite" "Supercite 3.1" t)
+    (autoload 'sc-perform-overloads "sc-oloads" "Supercite 3.1" t)
+    (setq mail-citation-hook 'sc-cite-original)
+    (setq mail-yank-hooks 'sc-cite-original)    ; for all but MH-E
+    (setq mh-yank-hooks 'sc-cite-original)      ; for MH-E (3.7 or later)
+    (setq news-reply-mode-hook 'sc-perform-overloads) ; for RNEWS,GNEWS,GNUS
+    (setq mail-setup-hook 'sc-perform-overloads)      ; for RMAIL,PCMAIL,GNUS
+    (setq gnews-ready-hook 'sc-perform-overloads)     ; for GNEWS
+
+    (setq sc-electric-references-p nil)
+    (setq sc-preferred-header-style 1)
+    (setq sc-citation-leader "")
+
+E-3: How can I change the citation mark to "> " with Supercite?
+
+  Add the following line in addition to what has been done in E-2:
+
+    (setq sc-nested-citation-p t)
+
+  Note that if you add the above line, you cannot include the senders'
+  names anymore.
+
+E-4: How can I customise citation mark with Supercite?
+
+  Use sc-register-2.3.1 written by yoichi@s5g.ksp.fujixerox.co.jp.
+  You can use it by installing sc-register and adding the following
+  configuration:
+
+    (setq sc-load-hook '(lambda () (require 'sc-register)))
+    (setq sc-preferred-attribution 'registeredname)
+
+  You will find it convenient when `selection by completion' is
+  tiresome, e.g., when you include Japanese characters.
+
+  Note that sc-register does not work with Supercite 3.0 or later.  It
+  is said that sc-register will be integrated to Supercite in future.
+
+E-5: I moved from Supercite 2.3 from 3.1, then it automatically does
+ `fill-paragraph' whenever I use `sc-yank-original'.
+
+  This is a bad feature, isn't it?  We do not see the reason why
+  backward compatibility is not kept by default.  Anyway, adding the
+  following line in your .emacs file suppresses `fill-paragraph'.
+
+E-6: RMAIL does not work.
+
+  Takeshi Shigehara <takeki@nalgo.snet.or.jp> writes:
+
+    On NEW EWS4800 EWX-UX/V(Rel 4.2), include the following lines in
+    `site-init.el'.  (It is possible that all SVR4 machines require
+    the same lines.)
+  
+    (setq rmail-spool-directory "/var/mail/")
+    (setq sendmail-program "/usr/ucblib/sendmail")
+    (setq manual-program "/usr/ucb/man")
+  
+    In addition to that, make the directory `/var/mail' readable and
+    writable by all users:
+  
+    chmod 777 /var/mail
+  
+E-7: I am using GNUS.  When I post to, say, fj.test, the default value 
+ of distribution is not set to fj.
+
+  That is a new feature.  The default is the first element of the list 
+  `gnus-local-distributions', which holds the candidates of
+  completion.
+
+
+Display
+
+F-1: Japanese (Chinese, Korean) text are not displayed in Mule under
+ the X Window System.
+
+  You must set the resource like the following.  Do not forget to
+  include the specification of `FontSet-xxx' that is set as
+  `FontSetList'.
+  
+    ! Mule-2.0
+    *FontSetList: 16,24
+    *FontSet-16:\
+        -*-fixed-medium-r-*--16-*-iso8859-1,\
+        -*-fixed-medium-r-*--16-*-iso8859-2,\
+        -*-fixed-medium-r-*--16-*-iso8859-3,\
+        -*-fixed-medium-r-*--16-*-iso8859-4,\
+        -*-fixed-medium-r-*--16-*-iso8859-5,\
+        -*-fixed-medium-r-*--16-*-iso8859-7,\
+        -*-fixed-medium-r-*--16-*-iso8859-8,\
+        -*-fixed-medium-r-*--16-*-iso8859-9,\
+        -*-fixed-medium-r-*--16-*-viscii1.1-1,\
+        -*-fixed-medium-r-*--16-*-mulearabic-0,\
+        -*-fixed-medium-r-*--16-*-mulearabic-1,\
+        -*-fixed-medium-r-*--16-*-mulearabic-2,\
+        -*-fixed-medium-r-*--16-*-muleipa-1,\
+        -*-fixed-medium-r-*--16-*-jisx0201.1976-*,\
+        -*-fixed-medium-r-*--16-*-jisx0208.1983-*,\
+        -*-fixed-medium-r-*--16-*-jisx0212.1990-*,\
+        -*-medium-r-*--16-*-gb2312.1980-*,\
+        -*-mincho-medium-r-*--16-*-ksc5601.1987-*,\
+        -*-fixed-medium-r-*--16-*-tis620.2529-1
+    *FontSet-24:\
+        -*-fixed-medium-r-*--24-*-iso8859-1,\
+        -*-fixed-medium-r-*--24-*-iso8859-2,\
+        -*-fixed-medium-r-*--24-*-iso8859-3,\
+        -*-fixed-medium-r-*--24-*-iso8859-4,\
+        -*-fixed-medium-r-*--24-*-iso8859-5,\
+        -*-fixed-medium-r-*--24-*-iso8859-7,\
+        -*-fixed-medium-r-*--24-*-iso8859-8,\
+        -*-fixed-medium-r-*--24-*-iso8859-9,\
+        -*-fixed-medium-r-*--24-*-viscii1.1-1,\
+        -*-fixed-medium-r-*--24-*-mulearabic-0,\
+        -*-fixed-medium-r-*--24-*-mulearabic-1,\
+        -*-fixed-medium-r-*--24-*-mulearabic-2,\
+        -*-fixed-medium-r-*--24-*-muleipa-1,\
+        -*-fixed-medium-r-*--24-*-jisx0201.1976-*,\
+        -*-fixed-medium-r-*--24-*-jisx0208.1983-*,\
+        -*-fixed-medium-r-*--24-*-jisx0212.1990-*,\
+        -*-medium-r-*--24-*-gb2312.1980-*,\
+        -*-mincho-medium-r-*--24-*-ksc5601.1987-*,\
+        -*-fixed-medium-r-*--24-*-tis620.2529-1
+
+F-2: Why does Mule appear with dirty fonts when I use it under X?
+
+  TAKAHASHI Naoto <ntakahas@etl.go.jp> and Ken'ichi Handa
+  <handa@etl.go.jp> write:
+
+    Mule creates a window whose size is based on the width of the
+    ASCII font.  If the width of the ASCII font and that of the other
+    fonts do not match, then some characters will not be displayed
+    completely.  The width of Japanese, Chinese, and Korean fonts must
+    be exactly twice as wide as that of ASCII fonts; the width of
+    other fonts must be the same as that of ASCII fonts.
+
+    If you see dirty characters on your screen, it may be caused by
+    the auto-scaling function of X.  If an X server receives a request
+    of a font which does not exist but whose specification is LFD
+    compliant, it tries to expand of reduce what is available.  For
+    example, a specification
+          "-*-fixed-medium-r-*--*-*-*-*-*-*-jisx0208.1983-*"
+    is LFD compliant, so it may be resized.  On the other hand, a
+    specification in mule-init.el:
+          "-*-fixed-medium-r-*--*-*-jisx0208.1983-*"
+    is not LFD compliant (the number of columns are less than it
+    should to be), so auto-scaling is inhibited.  (What is described
+    here is what we have learned from experience, not from X documentation.)
+
+F-3: How can I set the default font size to 14 pixels under X?
+
+  The first FontSet in the `Emacs*FontSetList:' field in your X
+  resource will be used as default.  So if you want the default to be
+  14 pixels, put `14' as the first element of `Emacs*FontSetList:', and
+  include the specification of FontSet-14.  See F-1 for examples of
+  FontSet specification.
+
+  Note that `emacs*FontSetList:' or `Mule*FontSetList:' are invalid
+  for resource specification.  SANETO Takanori <sanewo@cep.sony.co.jp>
+  writes:
+
+    You can think of `Emacs' as the class name and `mule' as the
+    instance name.
+
+    `Emacs' is used for all Emacs family programs: mule, nemacs,
+    epoch, nepoch, and of course the original GNU emacs.
+
+    On the other hand, the instance name is used to distinguish each
+    entities.  If you rename mule to hoge, the specification
+    `Emacs*...' still has effect but `mule*...' is of no effect.  When 
+    both specification by instance name and specification by class
+    name are valid, the instance name has priority.
+
+    You can explicitly specify the instance name by `-rn name'
+    option.  Or if the environment variable `WM_RES_NAME' is set, it
+    will be used.  If neither the option nor the environment variable
+    is available, the command name will be used.
+
+F-4: I turned on visible-bell with (set visible-bell t), but the
+ flashing area is limited to a quarter in the centre.
+
+    This is a feature.  It has changed since GNU Emacs 18.58.
+
+F-5: What is a `face'?
+
+  It is a mechanism used by Emacs when running under the X Window
+  System that attaches attributes like colours or fonts to the
+  displayed strings.  Mule 2.x uses this mechanism even for displaying
+  the mode line in reverse video.  `hilit19.el' and `font-lock.el' are
+  examples of programs that use face well.
+
+F-6: What is `terminal face'?  How can I use it?
+
+  In the original emacs, faces are only available under the X Window
+  System.  In Mule, however, you can use face even outside X.  We call
+  this mechanism `terminal face'.  (The biggest reason why we need a
+  new name is to use it for a compile switch and configure switch.)
+
+  To enable the terminal face facility, specify `--terminal-face' when 
+  you `configure'.
+
+F-7: Mule under X has wide line spaces.  How can I shrink them?
+
+  Include the following line in you X resource file:
+  
+    Emacs*lineSpace:		0+0
+  
+  Or invoke Mule with the `-lsp 0+0' command line option.  The
+  function `x-set-linespace', which was provided in Mule Ver.1, is not 
+  yet available in Mule Ver.2.
+
+
+EMACS LISP PACKAGES
+
+G-1: A lisp program `xxx', which worked in Mule 1.x, does not work any 
+ more.  What should I do?
+
+  Mule 1.x is based on GNU Emacs 18.59, but Mule 2.x is based on GNU
+  Emacs 19.  Many features have been modified.  But you do not have to
+  be pessimistic, as many programs have now been ported.  A
+  checklist is given below:
+
+    1. The distribution kit of Mule 2.x contains many lisp programs
+       that were optional in the previous release.  Check the standard 
+       lisp directory first, as these programs have already ported to
+       Mule 2.x.  If you find an alternative there, use it.
+
+    2. In some cases, the author of the program has already finished
+       porting, even though the newer version is not included in the
+       standard distribution.  It is worth searching for the latest
+       version with archie or another tool.
+
+    3. For example, shell-mode, which has many different improved
+       programs, has become much more convenient in Mule 2.x.  So the
+       standard version would be an alternative.
+
+    4. You can port it yourself as a last resort.
+
+G-2: How can I display reserved words and comments in C programs in
+ colour?
+
+  Use `hilit19.el' or `font-lock.el'.
+
+G-3: How can I use `hilit19.el'?
+
+  All you have to do is load the file.  If you want to restrict the
+  modes in which hilit19 is enabled, list the names of the modes in
+  `hilit-mode-enable-list'.  Also, you can specify the modes in which
+  hilit19 is disabled like the following:
+  
+    (setq hilit-mode-enable-list
+          '(not text-mode emacs-lisp-mode sgml-mode c-mode c++-mode)
+  
+  A fault of hilit19 is that you must hit `C-S-l' after having entered 
+  strings to reflect the effect.  Because of this feature, you may
+  want to use font-lock only in some specific modes.
+
+G-4: How can I use `font-lock.el'?
+
+  Include lines like the following in your .emacs file for each mode
+  in which you want to enable font-lock:
+
+    (setq emacs-lisp-mode-hook '(lambda () (font-lock-mode 1)))
+
+  By default, font-lock does not display in colour.  If you want
+  colour strings, specify the face as follows:
+  
+    (add-hook 'font-lock-mode-hook
+	      '(lambda ()
+		 (make-face 'keyword-face)
+		 (set-face-foreground 'keyword-face "tomato")
+		 (setq font-lock-keyword-face 'keyword-face)
+  
+		 (make-face 'comment-face)
+		 (set-face-foreground 'comment-face "violetred4")
+		 (setq font-lock-comment-face 'comment-face)
+  
+		 (make-face 'string-face)
+		 (set-face-foreground 'string-face "darkgreen")
+		 (setq font-lock-string-face 'string-face)
+  
+		 (make-face 'function-face)
+		 (set-face-foreground 'function-face "blueviolet")
+		 (setq font-lock-function-name-face 'function-face)
+  
+		 (make-face 'c-type-face)
+		 (set-face-foreground 'c-type-face "darkolivegreen")
+		 (setq font-lock-type-face 'c-type-face)
+		 ))
+  
+
+  There are improved versions of font-lock: face-lock can handle
+  colours and grey scales; fast-lock works faster.  These programs are
+  available via anonymous FTP, and will be integrated into font-lock
+  in the future version of emacs.
+
+G-5: I want a more convenient c-mode.
+
+  Use cc-mode.  It supports, for example, various indent styles and
+  C++.  It is more convenient in many respects.
+
+G-6: Are there any packages which automatically use RCS?
+
+  `vc.el' is such a one, and can be used in Mule 2.x by default.  If
+  you find-file a file that is controlled by RCS, vc-mode is
+  automatically turned on, and C-x C-q does `ci -u' or `co -l'
+  depending on the situation.  This is already practical enough, but
+  if you want to know the detail, refer to info.
+
+G-7: How can I input codes like `ESC $ B $ "' directly from the
+ keyboard?
+
+  You can do it by using `keyboard.el'.  Give *junet* to
+  `set-keyboard-coding-system' and type what you want.
+
+G-8: Why does "M-!" (shell-command) not work when I load my lovely
+ ange-ftp?
+
+  Many functions, including `write-region' and `insert-file-contents'
+  (which are modified in Mule), will be replaced by loading ange-ftp.
+
+  In Mule, `shell-command' calls the new `write-region' and the new
+  `insert-file-contents' with extra arguments, but another
+  `write-region' introduced by ange-ftp cannot interpret these extra
+  arguments, so the execution fails.
+
+  To fix this problem, Masayuki KUWADA <kuwada@soliton.ee.uec.ac.jp>
+  writes as follows:
+
+    Add `&rest coding-system' at the end of parameters of the
+    definition of `ange-ftp-write-region' and that of
+    `ange-ftp-insert-file-contents' in `ange-ftp.el', and apply the
+    following modifications.  (The modified ange-ftp can be shared
+    with Emacs/Nemacs.)
+
+    [Caution] The following changes are for an ange-ftp whose version is     
+    RCS:          !Header: ange-ftp.el,v 4.20 92/08/14 17:04:34 ange Exp !   
+    Other versions may require different modifications.			     
+									     
+    In `ange-ftp-write-region', `ange-ftp-real-write-region' is		     
+    called twice.  Change these occurrences as follows:
+
+    (ange-ftp-real-write-region start end temp nil visit)
+      -->
+    (apply 'ange-ftp-real-write-region start end temp nil
+	   visit coding-system)
+
+    (ange-ftp-real-write-region start end filename append visit)
+      -->
+    (apply 'ange-ftp-real-write-region start end filename append
+           visit coding-system)
+
+    And in `ange-ftp-insert-file-contents',
+    `ange-ftp-real-insert-file-contents' is called twice.  Change
+    these occurrences as follows:
+
+    (ange-ftp-real-insert-file-contents temp visit)
+      -->
+    (apply 'ange-ftp-real-insert-file-contents
+           temp visit
+           coding-system)
+
+    (ange-ftp-real-insert-file-contents filename visit)
+      -->
+    (apply 'ange-ftp-real-insert-file-contents
+           filename visit coding-system)
+
+
+EMACS LISP PROGRAMMING
+
+H-1: Is Mule upwards-compatible with Nemacs/Emacs?
+
+  Although Mule is based on GNU Emacs, they are slightly different at
+  the level of emacs lisp.  Mule is quite different from Nemacs.
+
+  Enami TSUGUTOMO <enami@sys.ptg.sony.co.jp> points out the
+  incompatibility between Mule and Nemacs/Emacs as follows:
+
+    * Incompatibility caused by the existence of functions specific to
+      each program
+    * Incompatibility caused by the modifications to function
+      definitions (number of arguments, etc.)
+    * Incompatibility of byte compiled files caused by the difference
+      of the internal representation between Mule and Nemacs.  Their
+      byte code is compatible, however. (isn't it? :-)
+    * Incompatibility of compiled emacs lisp files caused by the
+      representations of literals between Mule 1.x and Mule 2.x.
+    * Incompatibility caused by the difference of versions of GNU
+      Emacs they are based on.
+
+H-2: Give me some hints on porting a program for Mule 1.x to Mule 2.x.
+
+  Pay attention to the following points:
+
+    * `auto-fill-hook' has been renamed to `auto-fill-function'.
+    * The structure of keymaps has been changes a little.
+    * You'd better change obsolete variables:
+        unread-command-char  ->  unread-command-event
+
+    etc.
+----------------------------------------------------------------------
+	FAQ Part 2: Questions specific to each language
+
+ABOUT CHINESE
+
+CH-1: I succeeded in compiling Mule, but I cannot input Chinese.
+
+  If you want to use foreign languages in Mule, you have to load the
+  language specific files by specifying them in the site-init.el file.
+  By default there is no site-init.el file, and this means that you
+  can input only English.
+
+  If you want to use Chinese, include the following line in the
+  lisp/site-init.el file when you build Mule:
+
+        (load "chinese")
+
+CH-2: How can I input Chinese?
+
+  TAMAGO is used to input Chinese.  By communicating with cserver
+  of cWnn, TAMAGO provides a convenient input method for Chinese(GB).
+  Type "M-x load-library RET chinese RET" and select PinYin mode to
+  enable Pin-Yin input.
+
+  Mule also provides quail-system.  This system supports all of the
+  conversion tables included in `cxterm/dict/tit'.
+
+CH-3: I want to use EUC for displaying Japanese, Chinese, Korean, EC,
+ etc. simultaneously.
+
+  It is impossible, because EUC for each language is the very same
+  coding system.  Use *junet* or *ctext* to display multi-lingual texts.
+
+
+CH-4: How can I input hanzi in incremental search?
+
+  Load `isearch-ext.el' first, then you will be able to input
+  characters other than ASCII in isearch (incremental search).  You
+  can invoke `TAMAGO' with `C-\' and `quail' with `C-]' to input
+  foreign languages.
+
+CH-5: Mule fails to handle filenames which contain Chinese.
+
+  You must specify `--mcpath' to `configure' when you compile Mule.
+  You also have to specify what coding system will be used in
+  filenames.  Adding the following lines in `site-init.el' may
+  help. (Note that *autoconv* cannot be specified).
+
+    ;;; example: To use Chinese EUC for filenames
+    (if (fboundp 'set-pathname-coding-system)
+        (set-pathname-coding-system *euc-china*))
+
+CH-6: Can I read a newsgroup alt.chinese.text[.big5] in Chinese?
+
+  In alt.chinese.text ~{ and ~} are used instead of 'ESC $ A' (which
+  designates Chinese to G0) and 'ESC ( B' (which designates ASCII to
+  G0) respectively.  This is called Hz encoding.  In Mule you can read
+  this newsgroup in Chinese with the combination of `chinese.el',
+  `gnusutil.el', and GNUS.  Load `chinese.el' and `gnusutil.el' in
+  this order, then invoke GNUS.  `gnusutil.el' is included in the
+  standard distribution kit of Mule Ver.2.
+
+ABOUT JAPANESE
+
+JP-1: What is the advantage of using Mule?  Are there any cases in which
+ Nemacs is better?  If there are, what are they?
+
+  Some advantages of using Mule are:
+
+   * You can use not only English and Japanese, but also Chinese,
+     Korean, and many other languages.  You can use a mixture of these
+     languages, too.
+   * The specified regions in a buffer can have various display
+     attributes.  Unlike Nemacs, you can display these attributes on a
+     normal terminal as long as the terminal supports such functions.
+   * You can utilise a Japanese input system called "TAKANA" which
+     gives better performance than the "TAMAGO" system of Nemacs.
+   * Nemacs is based on GNU Emacs 18.55, while Mule Ver.2 is based on
+     Emacs 19.
+   * Mule has a powerful regular expression compiler.
+
+  On the other hand, Mule is much bigger and more complicated than
+  Nemacs.  So if your computer facility is not powerful and the
+  languages you want to use are limited to English and Japanese, it
+  may be better to use Nemacs.
+
+  Note that Mule is not fully compatible with Nemacs.  Some of the
+  applications developed for Nemacs do not work well with Mule.
+
+JP-2: Will Nemacs disappear?
+
+  "Of course not" would be the ideal answer, but Nemacs will not be
+  supported any more.  This means that the final version of Nemacs is
+  3.3.2.
+
+JP-3: Are there any mailing lists for Mule in which discussion is done
+ in Japanese?
+
+  Use news (fj.editor.emacs) for discussion in Japanese.  (See A-8.)
+
+JP-4: Does Mule has manuals written in Japanese?
+
+  See also A-10.  Mule has the following Japanese manuals and
+  documents:
+
+  * texinfo manual (in $MULE/man)
+
+    mule-jp.texi	texinfo manual for Mule
+    egg-jp.texi		texinfo manual for TAMAGO
+    canna-jp.texi	texinfo manual for canna
+
+
+  * FAQ (in $MULE/etc/FAQ-Mule.jp)
+
+    The document you are reading now is the English translation of this.
+
+  * tutorial
+
+    You can invoke the Japanese tutorial by C-h T (M-x
+    help-with-tutorial-for-mule) in Mule.
+
+  * documents under the `doc' directory
+
+    The directory `$MULE/doc' contains explanations of functions and
+    sample text.  The files whose names end in `.jp' are written in
+    Japanese.
+
+JP-5: I succeeded in compiling Mule, but I cannot input Japanese.
+
+  If you want to use foreign languages in Mule, you have to load the
+  language specific files by specifying them in the site-init.el file.
+  By default there is no site-init.el file, and this means that you
+  can only input English.
+
+  If you want to use Japanese, include the following line in the
+  lisp/site-init.el file when you build Mule:
+
+        (load "japanese")
+
+  (cf. B-7)
+
+JP-6: I cannot display Japanese in Mule under the X Window System.
+
+  You must set the resource like the following.  Do not forget to
+  include the specification of `FontSet-xxx' that is set as
+  `FontSetList'.
+
+    ! Mule-2.0
+    *FontSetList: 16,24
+    *FontSet-16:\
+        -*-fixed-medium-r-*--16-*-iso8859-1,\
+        -*-fixed-medium-r-*--16-*-iso8859-2,\
+        -*-fixed-medium-r-*--16-*-iso8859-3,\
+        -*-fixed-medium-r-*--16-*-iso8859-4,\
+        -*-fixed-medium-r-*--16-*-iso8859-5,\
+        -*-fixed-medium-r-*--16-*-iso8859-7,\
+        -*-fixed-medium-r-*--16-*-iso8859-8,\
+        -*-fixed-medium-r-*--16-*-iso8859-9,\
+        -*-fixed-medium-r-*--16-*-viscii1.1-1,\
+        -*-fixed-medium-r-*--16-*-mulearabic-0,\
+        -*-fixed-medium-r-*--16-*-mulearabic-1,\
+        -*-fixed-medium-r-*--16-*-mulearabic-2,\
+        -*-fixed-medium-r-*--16-*-muleipa-1,\
+        -*-fixed-medium-r-*--16-*-jisx0201.1976-*,\
+        -*-fixed-medium-r-*--16-*-jisx0208.1983-*,\
+        -*-fixed-medium-r-*--16-*-jisx0212.1990-*,\
+        -*-medium-r-*--16-*-gb2312.1980-*,\
+        -*-mincho-medium-r-*--16-*-ksc5601.1987-*,\
+        -*-fixed-medium-r-*--16-*-tis620.2529-1
+    *FontSet-24:\
+        -*-fixed-medium-r-*--24-*-iso8859-1,\
+        -*-fixed-medium-r-*--24-*-iso8859-2,\
+        -*-fixed-medium-r-*--24-*-iso8859-3,\
+        -*-fixed-medium-r-*--24-*-iso8859-4,\
+        -*-fixed-medium-r-*--24-*-iso8859-5,\
+        -*-fixed-medium-r-*--24-*-iso8859-7,\
+        -*-fixed-medium-r-*--24-*-iso8859-8,\
+        -*-fixed-medium-r-*--24-*-iso8859-9,\
+        -*-fixed-medium-r-*--24-*-viscii1.1-1,\
+        -*-fixed-medium-r-*--24-*-mulearabic-0,\
+        -*-fixed-medium-r-*--24-*-mulearabic-1,\
+        -*-fixed-medium-r-*--24-*-mulearabic-2,\
+        -*-fixed-medium-r-*--24-*-muleipa-1,\
+        -*-fixed-medium-r-*--24-*-jisx0201.1976-*,\
+        -*-fixed-medium-r-*--24-*-jisx0208.1983-*,\
+        -*-fixed-medium-r-*--24-*-jisx0212.1990-*,\
+        -*-medium-r-*--24-*-gb2312.1980-*,\
+        -*-mincho-medium-r-*--24-*-ksc5601.1987-*,\
+        -*-fixed-medium-r-*--24-*-tis620.2529-1
+
+JP-7: How can I input Japanese?
+
+  The following Japanese input systems are prepared:
+
+     * TAMAGO (aka EGG) version TAKANA
+     * sj3-egg
+     * Canna
+
+  All of them offer a Japanese input facility using a romaji-kanji
+  conversion method, which utilises a network conversion server.  For
+  details, refer to the manuals of each system.  These systems must be
+  set up when building Mule.
+
+     * T-CODE input using quail
+
+  This requires no conversion server.  After loading
+  `lisp/quail/tcode.el', you can toggle between ASCII and T-CODE mode
+  by C-].  (CAUTION: `quail/tcode.el' will soon be replaced with
+  `tc-mule.el'.)
+
+  Japanese can be input with `SKK', too.  SKK requires no special
+  settings when Mule is built.  It can be used both as a closed system
+  in Mule and as a system which communicates with a dictionary server.
+  For Mule Ver.2, use skk7.18.1 or later version.
+
+JP-8: What is TAMAGO (aka EGG) ?
+
+  TAMAGO is a system which offers a Japanese/Chinese environment
+  utilising the network-wide conversion servers (jserver/cserver) of
+  Wnn.  Sometimes TAMAGO is called EGG, which is the translation of
+  `TAMAGO' in English.
+
+  TAMAGO consists of three parts: 1) a input string conversion system
+  (or romaji-kana conversion system), 2) a kana-kanji (and
+  pinyin-hanzi) conversion system, and 3) a Japanese editing system.
+  The input string conversion system can be used not only for hiragana
+  and katakana but also for pinyin, hangul, and other languages.
+
+JP-9: What is TAKANA?
+
+  Toshiaki SHINGU <shingu@cpr.canon.co.jp> writes:
+
+    It is a version of TAMAGO made for the Wnn V4 library.  The name
+    stands for "TAmagoyo KAshikoku NA-re (EGG, be clever)".  In
+    addition to the conventional TAMAGO, it has the following
+    features:
+
+      * dai-bunsetsu / sho-bunsetsu conversion
+      * reverse conversion (kanji to kana)
+      * word registration according to the POS of V4 server (e.g.
+        proper noun)
+      * enabling / disabling a word without deleting it from the
+        dictionary
+      * setting words frequency
+      * setting comments in the dictionary
+
+    TAKANA is not an alternative to TAMAGO but rather an enhancement.
+    TAMAGO will be integrated into a TAKANA version in the future.
+    Older versions (Wnn V3, and Wnn V4 for V3 library) will not be
+    supported.
+
+JP-10: What is sj3-egg?
+
+  It is another version of TAMAGO which communicates with sj3serv
+  included in the contrib part of X11R5/R6.  It provides very high
+  conversion efficiency.
+
+JP-11: What is Canna?
+
+  It is a kana-kanji conversion system which follows the server-client
+  method.  In Mule, it provides almost the same user interface as
+  TAMAGO but the conversion server of Canna is used instead.
+
+JP-12: What is SKK?
+
+  Masahiko SATO <masahiko@sato.riec.tohoku.ac.jp> writes:
+
+    SKK is a system which provides a fast and highly efficient
+    Japanese input environment.  It allows the user to input the
+    intended sentence easily and "as is".  SKK is fast because it
+    performs the conversion without any grammatical analysis.  The
+    user can let it know his/her intention by specifying the starting
+    point of OKURIGANA, and this makes the conversion efficiency high.
+    When registering words in the dictionary it is not necessary for
+    the user to give information about part of speech, etc., and this
+    makes it easy to augment the dictionary.  You can learn the usage
+    of SKK in a short time with its tutorial program.
+
+JP-13: How can I input Japanese (or Korean/Chinese) characters whose
+ shape I am aware of but whose reading I don't know?
+
+  TAMAGO supports both BUSYU input (M-x busyu-input) and KAKUSUU input
+  (M-x kakusuu-input).  These functions make it possible to input a
+  kanji by selecting its busyu or kakusuu from a menu displayed in the
+  minibuffer.
+
+JP-14: I am not able to cut & paste using mouse in kterm.
+
+  This happens when 1)Mule is running inside of a kterm, and 2)
+  keyboard-coding-system of Mule is incompatible with kanji-mode
+  of that kterm.  Make these two compatible.
+
+JP-15: Can I input kanji by kinput2?
+
+  You can input kanji by kinput2 when Mule is running in a kterm.  Do
+  not forget to set keyboard-coding-system of Mule compatible with
+  kanji-mode of that kterm.
+
+JP-16: I set (setq keyboard-coding-system *euc-japan*), but it does not
+ work well.
+
+  Do not use `setq' to bind a value to `keyboard-coding-system'.  Use
+  the function `set-keyboard-coding-system'.  This comment also
+  applies to `display-coding-system', `file-coding-system', etc.
+
+JP-17: I want to use EUC for displaying Japanese, Chinese, Korean, EC,
+ etc. simultaneously.
+
+  This is impossible, because EUC for each language is the very same
+  coding system.  Use *junet* or *ctext* to display multi-lingual texts.
+
+JP-18: How can I input kanji in incremental search?
+
+  Type C-k to input kanji in incremental search (isearch).  In this
+  mode you can type a string in the minibuffer, so Japanese/Chinese
+  can also be input by C-\.  When the string has been input, hit RET
+  to restart incremental search.
+
+JP-19: How can I input single-width katakana (JIS X0201 katakana)?
+
+  Ken Shibata <shibata@sgi.co.jp> writes:
+
+    To input single-width katakana, Mule provides two emacs lisp
+    files, i.e. `jisx0201.el' and `its/han-kata.el'.  The file
+    `jisx0201.el' defines `fence-hankaku-katakana' (bound to `M-x' in
+    fence-mode), which converts all double-width katakana and hiragana
+    in fence-mode at once.  The file `its/han-kata.el' defines
+    `its:select-hankaku-katakana' (bound to `M-C-x' in fence-mode;
+    `C-x C-k x' otherwise), which converts roma-ji into single-width
+    katakana.
+
+    Furthermore, `jisx0201.el' defines `hankaku-katakana-region' and
+    `zenkaku-katakana-region' (or -paragraph/-sentence/-word).  These
+    functions convert strings all at once.  The file `its/han-kata.el'
+    loads `jisx0201.el', so you can load either of them in your .emacs
+    file.  But note that loading these files takes a fairly long time.
+    If you often input single-width katakana, you should pre-load them
+    in site-init.el.
+
+    To summarise,
+
+    1) In fence-mode,
+       * type M-x to convert kana to single-width.
+       * type M-h to revert single-width katakana to double-width
+         hiragana.
+       * type M-k to revert single-width katakana to double-width
+         katakana.
+
+    2) Outside fence-mode,
+       * type C-x C-k x to make typed roma-ji be converted to
+         single-width katakana.
+       * type C-x C-k h to make typed roma-ji be converted to
+         double-width hiragana.
+
+    3) In fence-mode,
+       * type M-C-x to make typed roma-ji be converted to single-width
+         katakana.
+       * type M-C-h to make typed roma-ji be converted to double-width
+	 hiragana.
+
+    (If you have exchanged BS and DEL by `bobcat.el' or something like
+    that, and are using ESC key to input Meta, then M-C-h means ESC
+    DEL.)
+
+JP-20: How can I input Japanese hiragana "ん" by typing "nn" when I am
+ using Mule + Egg?
+
+  Include the following line in your .emacs file.
+
+	(setq enable-double-n-syntax t)
+
+JP-21: Mule fails to handle filenames which contain Japanese.
+
+  You must specify `--mcpath' to `configure' when you compile Mule.
+  You also have to specify what coding system will be used in
+  filenames.  Adding the following lines in `site-init.el' may
+  help. (Note that *autoconv* cannot be specified).
+
+    ;;; example: To use Japanese EUC for filenames
+    (if (fboundp 'set-pathname-coding-system)
+        (set-pathname-coding-system *euc-japan*))
+
+JP-22: How can I use Wnn and Canna simultaneously?
+
+  Sakai Kiyotaka <ksakai@mtl.t.u-tokyo.ac.jp> writes:
+
+    First, define both `EGG' and `CANNA' in `mconfig.h' when you
+    compile Mule.
+
+    Second, if you have set up to use Canna, your should have
+    something like the following in your .emacs file:
+
+     (if (and (boundp 'CANNA) CANNA)
+        (progn
+         (load-library "canna")
+         (canna)
+         ... ))
+
+    Change the above like this:
+
+     (if (and (boundp 'CANNA) CANNA)
+        (progn
+          (setq canna-server "mercury")
+          (cond ((boundp 'egg-version)
+                 (require 'can-n-egg)
+                 (can-n-egg))
+                (t
+                 (require 'canna)
+	         (canna)))
+          ... ))
+
+    Now you can activate Wnn with `\C-\' and Canna with `\C-o'.
+
+JP-23: Is Mule upwards-compatible with Nemacs/Emacs?
+
+  Mule is quite different from Nemacs at the level of emacs lisp.
+
+  Enami TSUGUTOMO <enami@sys.ptg.sony.co.jp> points out the
+  incompatibility between Mule and Nemacs/Emacs as follows:
+
+    * Incompatibility caused by the existence of functions specific to
+      each program
+    * Incompatibility caused by the modification of function
+      definitions (number of arguments, etc.)
+    * Incompatibility of byte compiled files caused by the difference
+      of the internal representation between Mule and Nemacs.  Their
+      byte code is compatible, however. (isn't it? :-)
+    * Incompatibility caused by the difference of versions of GNU
+      Emacs they are based on.  (only current-column, maybe.)
+
+JP-24: Can Nemacs and Mule share the same .emacs file?
+
+  Mule is not compatible with Nemacs.  Sometimes a `.emacs' file made
+  for Nemacs causes trouble when used for Mule.
+
+  To share the same .emacs file, you have to divide it into two parts;
+  one for Mule and the other for Nemacs:
+
+      (if (boundp 'MULE)
+        (functions for Mule))
+      (if (boundp 'NEMACS)
+        (functions for Nemacs))
+
+  There is a sample shared `.emacs' file in the texinfo manual of
+  Mule.  It may help you.
+
+  Note that some of the byte-compiled files are NOT sharable.  Concerning
+  about this point, Enami Tsugutomo <enami@sys.ptg.sony.co.jp> writes:
+
+    You should prepare two different files for Mule and Nemacs if you
+    want to byte-compile those files.
+
+    As Mule and Nemacs adopt different internal representations of
+    kanji characters, you must re-byte compile if the files include
+    kanji characters.
+
+JP-25: Some functions work fine with Nemacs, but they show the message
+ "Symbol's function definition is void: define-program-kanji-code" and
+ abort.  How can I fix this?
+
+  Atsushi Furuta <furuta@srarc2.sra.co.jp> writes:
+
+    `define-program-kanji-code' is specific to Nemacs, so you have to
+    modify it to make such functions run on Mule.
+    `define-program-coding-system' is the counterpart in Mule.  For
+    example,
+
+	(define-program-kanji-code nil ".*inc.*" 2)
+
+    should be replaced by
+
+	(define-program-coding-system nil ".*inc.*" *junet*)
+
+    Many functions named `kanji-code-xxx' before have been renamed to
+    `coding-system-xxx' in Mule.  The variable `kanji-flag' has been
+    renamed to `mc-flag' in Mule.
+
+  Fortunately, a package has been written to make Nemacs oriented
+  codes work in Mule.  Ken'ichi Handa <handa@etl.go.jp> writes:
+
+    From: handa@etlken.etl.go.jp (Kenichi Handa)
+    Newsgroups: fj.editor.mule,fj.editor.emacs
+    Subject: nemacs -> mule
+    Message-ID: <HANDA.93Oct15215300@etlken.etl.go.jp>
+    Date: 15 Oct 93 21:53:00 GMT
+
+    With the help of members of our mailing list, I have written a
+    simple package which makes the shift from Nemacs to Mule easier.
+
+    First, install the two elisp files below in your load-path.  Then
+    modify your .emacs file as follows.  Your configuration for Mule
+    will be the same as that for Nemacs:
+
+        (load-library "nemacs-pre")
+        ... your original .emacs comes here ...
+        (load-library "nemacs-post")
+
+    The above modification, of course, does not harm the usage of
+    Nemacs.
+
+    This package is not yet complete, so please send your requests
+    like "how can I modify my Nemacs oriented configuration so and so
+    for Mule?"
+
+  Both `nemacs-pre.el' and `nemacs-post.el' are available via
+  anonymous FTP from etlport.etl.go.jp:/pub/mule/contrib/lisp.
+
+JP-26: How can I use Supercite in Japanese environment?
+
+  For those who use only English, the configuration shown in E-2 above
+  suffices.  But if you want to use Japanese, you have to change your
+  `sc-cite-regexp'.
+
+  Yoichi HIROSE <yoichi@esasd.ksp.fujixerox.co.jp> writes:
+
+    Some categories match Japanese strings in Nemacs but do not in
+    Mule.  You do not have to worry if you have not used a category to
+    specify a regexp.
+
+    See the following regexp.  The regexp is very short in Mule, while
+    it was quite long in Nemacs.  For more information, see the part
+    of char-category in info.
+
+    Anyway you have to change sc-cite-regexp as follows if you want to
+    use Japanese.
+
+    An example of how to set sc-cite-regexp:
+    (if (boundp 'MULE)
+        (setq sc-cite-regexp "\\s *\\([a-zA-Z0-9_]\\|\\cj\\)*>+\\s *")
+      (setq sc-cite-regexp "\\s *\\([a-zA-Z0-9_]\\|\\cc\\|\\cC\\|\\ch\\|\\cH\\|\\ck\\|\\cK\\|\\ca\\|\\cg\\|\\cr\\|\\cu\\)*>+\\s *"))
+
+JP-27: Why dired does not work?
+
+  Dired scans the output of ls, but the output should not contain
+  Japanese.
+
+  Akira Kon <kon@quincy.d1.bs2.mt.nec.co.jp> writes:
+
+    My machine is a SVR4 and ls gives an output like the following
+    when LANG is set to Japanese.
+
+    -rw-rw-r--   1 kon      com         1002 10月30日 00時22分 .bashrc
+    -rw-r--r--   1 kon      com        26387 11月18日 10時06分 .emacs
+
+    (The dates are in Japanese, you know.)
+
+    But `dired.el' has a fragment of codes like:
+
+    (defun dired-get-filename (&optional localp no-error-if-not-filep)
+      (...deleted...)
+        (beginning-of-line)
+        (if (re-search-forward
+           "\\(Jan\\|Feb\\|Mar\\|Apr\\|May\\|Jun\\|Jul\\|Aug\\|Sep\\|Oct\\|Nov\\|Dec\\)[ ]+[0-9]+"
+	     eol t)
+            (progn (skip-chars-forward " ")
+
+    and this means, in short, that dired does not accept the output of
+    Japanese `ls -l'.
+
+    I believe that the following modification works for dired, but I
+    am afraid that there are other programs that scan the output of
+    UNIX commands.
+
+--- dired.el.orig	Mon Nov 22 23:32:13 1993
++++ dired.el	Mon Nov 22 23:33:03 1993
+@@ -42,10 +42,13 @@
+       (erase-buffer)
+       (setq dirname (expand-file-name dirname))
+       (if (file-directory-p dirname)
+-	  (call-process "ls" nil buffer nil
+-			dired-listing-switches dirname)
++	  (call-process "env" nil buffer nil
++			"LC_MESSAGES=C" "LC_DATE=C" "LANG=C"
++			"ls" dired-listing-switches dirname)
+ 	(let ((default-directory (file-name-directory dirname)))
+-	  (call-process shell-file-name nil buffer nil
++	  (call-process "env" nil buffer nil
++			"LC_MESSAGES=C" "LC_DATE=C" "LANG=C"
++			shell-file-name
+ 			shell-command-option
+ 			(concat "ls " dired-listing-switches " "
+ 				     (file-name-nondirectory dirname)))))
+
+JP-28: I cannot read the string that follows the single width
+ `KONNICHIWA' in the file `$MULE/doc/demo'.
+
+  Azuma OKAMOTO <lfo@sayori.dais.is.tohoku.ac.jp> writes:
+
+    That part contains `ESC $ ( D', so you need a JISX0212 font to
+    display the characters.
+
+    If you have not installed that font, you cannot read it, of
+    course. :-)
+
+JP-29: Are there any free JIS X0212 (JIS supplemental kanji) fonts?
+
+  Youn can find in:
+
+        etlport.etl.go.jp:/pub/mule/fonts/Japanese.tar.gz
+
+  Besides the above Japanese.tar.gz, another JISX0212.1990 font was
+  posted to fj.sources:
+
+  From: yasuoka@kudpc.kyoto-u.ac.jp (Koichi Yasuoka)
+  Newsgroups: fj.sources
+  Subject: 16x16 JIS Supplementary Kanji Font (1/6)
+  Date: 28 Jul 1994 00:06:12 +0900
+  Organization: Data Processing Center, Kyoto University, Kyoto, Japan.
+  Message-ID: <315t54$et5@kudpc.kudpc.kyoto-u.ac.jp>
+
+  This posting is followed by some patches, so you'd better apply them.
+
+
+HANDLING LATIN CHARACTERS
+
+LT-1: How can I input ISO 8859 characters?
+
+  Mule supports all the character sets from Latin-1 (ISO 8859-1) to
+  Latin-5 (ISO 8859-9).  The quail system is used to input these
+  characters from an ordinary ASCII keyboard.
+
+  Following five files are provided to input ISO 8859 characters:
+
+  * quail/latin.el : languages written in Latin alphabets (for slow typists)
+
+    This file is for naive users.  Most of the accented letters are
+    input by composing two characters.  For example, you will get an ,Ai
+    (e with acute accent) by typing an e followed by a ' (single
+    quote).
+
+    LANGUAGE		PACKAGE NAME
+    --------------------------------
+    Danish		danish
+    Esperanto		esperanto
+    Finnish		finnish
+    French		french
+    German		german
+    Icelandic		icelandic
+    Italian		italian
+    Norwegian		norwegian
+    Spanish		spanish
+    Swedish		swedish
+    Turkish		turkish
+    British		british
+    ISO 8859-1		latin-1
+    ISO 8859-2		latin-2
+    ISO 8859-3		latin-3
+    ISO 8859-4		latin-4
+    ISO 8859-9		latin-5
+
+
+  * quail/ltn.el : languages written in Latin alphabets (for quick typists)
+
+    This file was made for those who find quail/latin.el is too awkward.
+    The principle of this file is "the less strokes, the better".  Most
+    of the special letters proper to each language are allocated to
+    somewhere so that you can type them with a single stroke.  You can
+    type very quickly once you learn the layout by heart.
+
+    LANGUAGE		PACKAGE NAME
+    -----------------------------------------------------------
+    Danish		dnsh
+    Finnish		fnnsh
+    French		frnch, azerty
+    German		grmn
+    Icelandic		iclndc
+    Italian		itln
+    Norwegian		nrwgn
+    Spanish		spnsh
+    Swedish		swdsh
+
+
+  * quail/cyrillic.el : languages written in Cyrillic alphabets
+
+    LANGUAGES		PACKAGE	NAME	NOTE
+    -----------------------------------------------------------------
+    Russian		jcuken		standard layout for Russian
+			jis-russian	same as jcuken, but uses
+					JIS encoding
+    Macedonian		macedonian	JUS.I.K1.004
+    Serbian		serbian		JUS.I.K1.005
+    Byelorussian	byelorussian	derived from JUS.I.K1
+    Ukrainian		ukrainian	derived from JUS.I.K1
+    ISO 8859-5		yawerty		based on Roman transcription
+
+
+  * quail/greek.el : for Greek
+
+    LANGUAGE		PACKAGE NAME	NOTE
+    -----------------------------------------------------------------
+    Greek		greek
+			jis-greek	same as greek, but uses
+					JIS encoding
+
+
+  * quail/hebrew.el : for Hebrew
+
+    LANGUAGE		PACKAGE NAME
+    --------------------------------
+    Hebrew		hebrew
+
+
+  After having loaded the appropriate file(s), you can toggle quail-
+  minor-mode with "C-]".  In the quail mode you can select a package
+  for a particular language either typing "M-s" or evaluating
+  (quail-use-package "package-name").  Typing "M-z" shows a brief
+  help.
+
+  Examples:
+
+  1) If you are new to German and want to type German texts, include
+     the following two lines in your .emacs.
+
+     (load "quail/latin")
+     (quail-use-package "german")
+
+  2) If you want to use the azerty layout for French, include the
+     following two lines in your .emacs.
+
+     (load "quail/ltn")
+     (quail-use-package "azerty")
+
+LT-2: How can I display Latin-1 characters on a character terminal?
+
+  TAKAHASHI Naoto <ntakahas@etl.go.jp> writes:
+
+    You have to set `display-coding-system' to *ctext* to display
+    Latin-1 characters in Mule running on a character terminal.
+    This can be done either 1) by adding a line which looks like:
+
+      (setq display-coding-system *ctext*)
+
+    in your .emacs file, or 2) by answering *ctext* to the prompt
+    "Display-coding-system:" which is shown when you type "M-x
+    set-display-coding-system".
+
+    Even under the X Window System, you have to run one of the
+    above procedures if you invoke Mule with -nw option.
+
+    In either case, your character terminal or terminal emulator should
+    be able to support Latin-1 characters.

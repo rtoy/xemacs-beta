@@ -1,6 +1,6 @@
 ;;; ediff-vers.el --- version control interface to Ediff
 
-;;; Copyright (C) 1995, 1996, 1997 Free Software Foundation, Inc.
+;;; Copyright (C) 1995, 1996 Free Software Foundation, Inc.
 
 ;; Author: Michael Kifer <kifer@cs.sunysb.edu>
 
@@ -30,18 +30,16 @@
 (defvar cvs-shell)
 (defvar cvs-program)
 (defvar cvs-cookie-handle)
-(defvar ediff-temp-file-prefix)
 
-(and noninteractive
-     (eval-when-compile
-       (load "pcl-cvs" 'noerror)
-       (load "rcs" 'noerror)
-       (load "generic-sc" 'noerror)
-       (load "vc" 'noerror)))
+(eval-when-compile
+  (load "pcl-cvs" 'noerror)
+  (load "rcs" 'noerror)
+  (load "generic-sc" 'noerror)
+  (load "vc" 'noerror))
 ;; end pacifier
       
 ;; VC.el support
-(defun ediff-vc-internal (rev1 rev2 &optional startup-hooks)
+(defun vc-ediff-internal (rev1 rev2 &optional startup-hooks)
 ;; Run Ediff on versions of the current buffer.
 ;; If REV2 is "" then compare current buffer with REV1.
 ;; If the current buffer is named `F', the version is named `F.~REV~'.
@@ -105,7 +103,7 @@
       (erase-buffer))
     buf))
 
-(defun ediff-rcs-internal (rev1 rev2 &optional startup-hooks)
+(defun rcs-ediff-internal (rev1 rev2 &optional startup-hooks)
 ;; Run Ediff on versions of the current buffer.
 ;; If REV2 is "" then use current buffer.
   (let ((rev2buf (if (string= rev2 "")
@@ -126,7 +124,7 @@
 	 (eval "main/LATEST"))
 	(t (eval ""))))
 
-(defun ediff-generic-sc-internal (rev1 rev2 &optional startup-hooks)
+(defun generic-sc-ediff-internal (rev1 rev2 &optional startup-hooks)
 ;; Run Ediff on versions of the current buffer.
 ;; If REV2 is "" then compare current buffer with REV1.
 ;; If the current buffer is named `F', the version is named `F.~REV~'.
@@ -146,7 +144,7 @@
 
 ;;; Merge with Version Control
 
-(defun ediff-vc-merge-internal (rev1 rev2 ancestor-rev &optional startup-hooks)
+(defun vc-ediff-merge-internal (rev1 rev2 ancestor-rev &optional startup-hooks)
 ;; If ANCESTOR-REV non-nil, merge with ancestor
   (let (buf1 buf2 ancestor-buf)
     (save-excursion
@@ -179,7 +177,7 @@
       (ediff-merge-buffers buf1 buf2 startup-hooks 'ediff-merge-revisions))
     ))
 
-(defun ediff-rcs-merge-internal (rev1 rev2 ancestor-rev
+(defun rcs-ediff-merge-internal (rev1 rev2 ancestor-rev
 				      &optional startup-hooks)
   ;; If ANCESTOR-REV non-nil, merge with ancestor
   (let (buf1 buf2 ancestor-buf)
@@ -199,7 +197,7 @@
 	 startup-hooks 'ediff-merge-revisions-with-ancestor)
       (ediff-merge-buffers buf1 buf2 startup-hooks 'ediff-merge-revisions))))
 
-(defun ediff-generic-sc-merge-internal (rev1 rev2 ancestor-rev
+(defun generic-sc-ediff-merge-internal (rev1 rev2 ancestor-rev
 					     &optional startup-hooks)
   ;; If ANCESTOR-REV non-nil, merge with ancestor
   (let (buf1 buf2 ancestor-buf)
@@ -226,7 +224,7 @@
 
 ;; PCL-CVS.el support
 
-(defun ediff-pcl-cvs-internal (rev1 rev2 &optional startup-hooks)
+(defun pcl-cvs-ediff-internal (rev1 rev2 &optional startup-hooks)
 ;; Run Ediff on a pair of revisions of the current buffer.
 ;; If REV1 is "", use the latest revision.
 ;; If REV2 is "", use the current buffer as the second file to compare.
@@ -253,7 +251,7 @@
 ;; This function is the standard Ediff's interface to pcl-cvs.
 ;; Works like with other interfaces: runs ediff on versions of the file in the
 ;; current buffer.
-(defun ediff-pcl-cvs-merge-internal (rev1 rev2 ancestor-rev
+(defun pcl-cvs-ediff-merge-internal (rev1 rev2 ancestor-rev
 					  &optional startup-hooks)
 ;; Ediff-merge appropriate revisions of the selected file.
 ;; If REV1 is "" then use the latest revision.
@@ -360,7 +358,6 @@
 ;;; Local Variables:
 ;;; eval: (put 'ediff-defvar-local 'lisp-indent-hook 'defun)
 ;;; eval: (put 'ediff-eval-in-buffer 'lisp-indent-hook 1)
-;;; eval: (put 'ediff-eval-in-buffer 'edebug-form-spec '(form body))
 ;;; End:
 
 (provide 'ediff-vers)

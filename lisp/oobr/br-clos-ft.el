@@ -6,12 +6,12 @@
 ;; KEYWORDS:     lisp, oop, tools
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          InfoDock Associates
+;; ORG:          Motorola Inc.
 ;;
 ;; ORIG-DATE:    03-Oct-90
-;; LAST-MOD:     31-Oct-96 at 17:04:54 by Bob Weiner
+;; LAST-MOD:      6-Aug-95 at 01:52:28 by Bob Weiner
 ;;
-;; Copyright (C) 1990-1996  Free Software Foundation, Inc.
+;; Copyright (C) 1990-1995  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.
@@ -37,8 +37,8 @@
 
 (defconst clos-def-form-match "\([^ \t\n\r]+[ \t\n\r]+")
 
-(defconst clos-tag-fields-regexp
-  (concat "\\`\\(" clos-type-identifier "\\)"
+(defconst clos-feature-tag-regexp
+  (concat "\\(" clos-type-identifier "\\)"
 	  clos-type-tag-separator
 	  clos-def-form-match "['\(]?"
 	  "\\((setf[^\)]+)\\|[^\(;,]+\\)\\( *(.*)\\)?")
@@ -106,24 +106,6 @@ i.e. an alias."
       (goto-char start)
       t)))
 
-(defun clos-feature-map-class-tags (function class)
-  "Apply FUNCTION to all feature tags from CLASS and return a list of the results.
-Feature tags come from the file named by br-feature-tags-file."
-  (let ((obuf (current-buffer))
-	(class-tag (concat "\n" class clos-type-tag-separator))
-	(results))
-    (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
-    (goto-char 1)
-    ;; Feature defs (methods) for a single class could occur in any file,
-    ;; according to Common Lisp rules.
-    (while (search-forward class-tag nil t)
-      (setq results (cons (funcall function) results))
-      ;; Might have deleted current tag and would miss next tag unless point
-      ;; is moved backwards.
-      (backward-char))
-    (set-buffer obuf)
-    results))
-
 (defun clos-feature-name-to-regexp (name)
   "Converts feature NAME into a regular expression matching the feature's name tag."
   (if (string-match (concat "^" br-feature-type-regexp " ") name)
@@ -156,12 +138,6 @@ the name for display in a browser listing."
 	  (if (= ?\( (elt signature (match-end 0)))
 	      (substring signature (match-beginning 3)))))))
 
-(defun clos-feature-tag-regexp (class feature-name)
-  "Return a regexp that matches to the feature tag entry for CLASS' FEATURE-NAME."
-  (concat "^" (regexp-quote class) clos-type-tag-separator
-	  clos-def-form-match "['\(]?"
-	  (regexp-quote feature-name) "\\( *(.*)\\)?"))
-
 (defun clos-feature-tree-command-p (class-or-signature)
   "Display definition of CLASS-OR-SIGNATURE if a signature and return t, else return nil."
   (if (br-in-browser) (br-to-view-window))
@@ -169,12 +145,18 @@ the name for display in a browser listing."
 		      class-or-signature))
 
 (defun clos-list-features (class &optional indent)
-  "Return sorted list of Clos feature tags lexically defined in CLASS.
-Optional INDENT is unused but is required for multi-language OO-Browser conformance."
-  ;; Use nreverse here so that stable sort ends up leaving same named
-  ;; features in the order they were defined in the source file.
-  (clos-sort-features
-   (nreverse (clos-feature-map-class-tags 'br-feature-current class))))
+  "Return sorted list of clos feature names lexically defined in CLASS."
+  (let ((obuf (current-buffer))
+	(class-tag (concat "\n" class clos-type-tag-separator))
+	(features))
+    (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
+    (goto-char 1)
+    ;; Feature defs (methods) for a single class could occur in any file,
+    ;; according to Common Lisp rules.
+    (while (search-forward class-tag nil t)
+      (setq features (cons (br-feature-current) features)))
+    (set-buffer obuf)
+    (clos-sort-features (nreverse features))))
 
 (defun clos-scan-features ()
   "Return reverse ordered list of clos feature definitions in current buffer.
@@ -274,7 +256,7 @@ Leaves point at start of the definition for visual clarity."
   "Extract the feature name without its class name from feature SIGNATURE.
 If optional WITH-CLASS is non-nil, class name and 'clos-type-tag-separator'
 are prepended to the name returned."
-  (if (string-match clos-tag-fields-regexp signature)
+  (if (string-match clos-feature-tag-regexp signature)
       (let ((class (substring signature
 			      (match-beginning 1) (match-end 1)))
 	    (name (substring signature (match-beginning 2)
@@ -291,40 +273,28 @@ are prepended to the name returned."
   (string-lessp (clos-feature-partial-name routine1)
 		(clos-feature-partial-name routine2)))
 	
-(defun clos-feature-map-tags (function regexp)
-  "Apply FUNCTION to all current feature tags that match REGEXP and return a list of the results.
-Feature tags come from the file named by br-feature-tags-file."
-  (let ((identifier-chars (concat "[" clos-identifier-chars "]*"))
-	(results))
-    ;; Ensure match to feature names only; also handle "^" and "$" meta-chars
-    (setq regexp
-	  (concat "^\\(" clos-type-identifier "\\)"
-		  clos-type-tag-separator
-		  clos-def-form-match "['\(]?"
-		  (if (equal (substring regexp 0 1) "^")
-		      (progn (setq regexp (substring regexp 1)) nil)
-		    identifier-chars)
-		  (if (equal (substring regexp -1) "$")
-		      (substring regexp 0 -1)
-		    (concat regexp identifier-chars))
-		  "[ \t\n\r\f]"))
-    (save-excursion
-      (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
-      (goto-char 1)
-      (while (re-search-forward regexp nil t)
-	(setq results (cons (funcall function) results))))
-    results))
-
 (defun clos-feature-matches (regexp)
-  "Return an unsorted list of feature tags whose names match in part or whole to REGEXP.
-^ and $ characters may be used to match to the beginning and end of a feature name,
-respectively."
-  (clos-feature-map-tags
-   ;; Backward-char is necessary in this next function since point might have
-   ;; moved past a newline.
-   (function (lambda () (backward-char) (br-feature-current)))
-   regexp))
-
+  "Return an unsorted list of feature tags whose names match in part or whole to REGEXP."
+  ;; Ensure match to feature names only; also handle "^" and "$" meta-chars
+  (setq regexp
+	(concat "^\\(" clos-type-identifier "\\)"
+		clos-type-tag-separator
+		clos-def-form-match "['\(]?"
+		(if (equal (substring regexp 0 1) "^")
+		    (progn (setq regexp (substring regexp 1)) nil)
+		  (concat "[" clos-identifier-chars "]*"))
+		(if (equal (substring regexp -1) "$")
+		    (substring regexp 0 -1)
+		  (concat regexp "[" clos-identifier-chars "]*"))
+		"[ \t\n\r]"))
+  (save-excursion
+    (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
+    (goto-char 1)
+    (let ((features))
+      (while (re-search-forward regexp nil t)
+	(backward-char) ;; Might have moved past newline.
+	(setq features (cons (br-feature-current) features)))
+      features)))
 
 (defun clos-feature-normalize (routine)
   (let* ((len (length routine))

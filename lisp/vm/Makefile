@@ -1,24 +1,27 @@
 # what Emacs version to build VM for.
 # Allowed values are 18 and 19.
-# Version 18 of Emacs is UNSUPPORTED.
-# In fact all versions of Emacs prior to 19.34 for Emacs and
-# prior to 19.14 for XEmacs are unsupported.  For v20 XEmacs
-# EMACS_VERSION should remain 19.
 #
+# Currently only vm-isearch-forward depends on this being
+# correct.  You can use the same VM .elc files under v18 and v19
+# Emacs if you don't care about vm-isearch-forward.
+#
+# Note that .elc files compiled with the v19 byte compiler won't
+# work under v18 Emacs, but v18 .elcs will work under v19.  So
+# point this at your v18 Emacs binary if you want compatible .elc
+# files.
 EMACS_VERSION = 19
 
 # what emacs is called on your system
-EMACS = emacs
+EMACS = ../../src/xemacs
 
 # where the Info file should go
-INFODIR = /usr/local/lib/emacs/info
+INFODIR = ../../info
 
 # where the vm.elc, tapestry.elc, etc. files should go
-LISPDIR = /usr/local/lib/emacs/site-lisp
+#LISPDIR = /usr/local/lib/emacs/site-lisp
 
 # where the toolbar pixmaps should go.
 # vm-toolbar-pixmap-directory must point to the same place.
-# vm-image-directory must point to the same place.
 PIXMAPDIR = /usr/local/lib/emacs/etc/vm
 
 ############## no user servicable parts beyond this point ###################
@@ -47,36 +50,42 @@ CORE = vm-message.el vm-misc.el vm-byteopts.el
 OBJECTS = \
     vm-delete.elc vm-digest.elc vm-easymenu.elc vm-edit.elc vm-folder.elc \
     vm-license.elc vm-mark.elc vm-menu.elc vm-message.elc \
-    vm-mime.elc vm-minibuf.elc vm-misc.elc vm-mouse.elc \
+    vm-minibuf.elc vm-misc.elc vm-mouse.elc \
     vm-motion.elc vm-page.elc vm-pop.elc vm-reply.elc \
     vm-save.elc \
     vm-search.elc vm-sort.elc vm-summary.elc vm-startup.elc vm-thread.elc \
-    vm-toolbar.elc vm-undo.elc \
-    vm-user.elc vm-vars.elc vm-version.elc vm-virtual.elc vm-window.elc
+    vm-toolbar.elc \
+    vm-undo.elc vm-vars.elc vm-version.elc vm-virtual.elc vm-window.elc
 
 SOURCES = \
     vm-delete.el vm-digest.el vm-easymenu.el vm-edit.el vm-folder.el \
     vm-license.el vm-mark.el vm-menu.el vm-message.el \
-    vm-mime.el vm-minibuf.el vm-misc.el vm-mouse.el \
+    vm-minibuf.el vm-misc.el vm-mouse.el \
     vm-motion.el vm-page.el vm-pop.el vm-reply.el vm-save.el \
     vm-search.el vm-sort.el vm-startup.el vm-summary.el vm-thread.el \
-    vm-toolbar.el vm-undo.el \
-    vm-user.el vm-vars.el vm-version.el vm-virtual.el vm-window.el
+    vm-toolbar.el \
+    vm-undo.el vm-vars.el vm-version.el vm-virtual.el vm-window.el
 
 vm:	vm.elc
 
-vm.elc:	autoload
+vm.elc:	.autoload
 
-noautoload:	$(OBJECTS) tapestry.elc
+.noautoload:	$(OBJECTS) tapestry.elc
 	@echo "building vm.elc (with all modules included)..."
 	@cat $(OBJECTS) tapestry.elc > vm.elc
+	# in case the -f flag doesn't exist (e.g. on HPUX)
+	-chmod +w .noautoload
+	touch -f .noautoload || touch .noautoload
 
-autoload:	vm-autoload.elc $(OBJECTS) tapestry.elc
+.autoload:	vm-autoload.elc $(OBJECTS) tapestry.elc
 	@echo "building vm.elc (with all modules set to autoload)..."
 	@echo "(require 'vm-startup)" > vm.elc
 	@echo "(require 'vm-vars)" >> vm.elc
 	@echo "(require 'vm-version)" >> vm.elc
 	@echo "(require 'vm-autoload)" >> vm.elc
+	# in case the -f flag doesn't exist (e.g. on HPUX)
+	-chmod +w .autoload
+	touch -f .autoload || touch .autoload
 
 all:	vm.info vm
 
@@ -84,17 +93,17 @@ debug:	$(SOURCES) tapestry.el
 	@echo "building vm.elc (uncompiled, no autoloads)..."
 	@cat $(SOURCES) tapestry.el > vm.elc
 
-install:	all
-	cp vm.info $(INFODIR)/vm
-	cp *.elc $(LISPDIR)
-	cp pixmaps/*.xpm $(PIXMAPDIR)
+#install:	all
+#	cp vm.info $(INFODIR)/vm
+#	cp *.elc $(LISPDIR)
+#	cp pixmaps/*.xpm $(PIXMAPDIR)
 
 clean:
 	rm -f vm-autoload.el vm-autoload.elc $(OBJECTS) tapestry.elc
 
 vm.info:	vm.texinfo
 	@echo "making vm.info..."
-	@$(EMACS) $(BATCHFLAGS) -insert vm.texinfo -l texinfmt -f texinfo-format-buffer -f save-buffer
+	@$(EMACS) $(BATCHFLAGS) vm.texinfo -l texinfmt -f texinfo-format-buffer -f save-buffer
 
 vm-autoload.elc:	$(SOURCES)
 	@echo scanning sources to build autoload definitions...
@@ -138,10 +147,6 @@ vm-message.elc:	vm-message.el $(CORE)
 vm-minibuf.elc:	vm-minibuf.el $(CORE)
 	@echo compiling vm-minibuf.el...
 	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-minibuf.el
-
-vm-mime.elc:	vm-mime.el $(CORE)
-	@echo compiling vm-mime.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-mime.el
 
 vm-misc.elc:	vm-misc.el $(CORE)
 	@echo compiling vm-misc.el...
@@ -205,10 +210,6 @@ vm-toolbar.elc:	vm-toolbar.el $(CORE)
 vm-undo.elc:	vm-undo.el $(CORE)
 	@echo compiling vm-undo.el...
 	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-undo.el
-
-vm-user.elc:	vm-user.el $(CORE)
-	@echo compiling vm-user.el...
-	@$(EMACS) $(BATCHFLAGS) $(PRELOADS) -f batch-byte-compile vm-user.el
 
 vm-vars.elc:	vm-vars.el $(CORE)
 	@echo compiling vm-vars.el...

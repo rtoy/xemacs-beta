@@ -1,8 +1,8 @@
 ;;; func-menu.el         --- Jump to a function within a buffer.
 ;;;
 ;;; David Hughes <ukchugd@ukpmr.cs.philips.nl>
-;;; Last modified: David Hughes 13th January 1997
-;;; Version: 2.45
+;;; Last modified: David Hughes 2nd May 1996
+;;; Version: 2.43
 ;;; Keywords: tools, c, lisp
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
@@ -43,8 +43,8 @@
 ;;; addition, the name of the function before point is optionally displayed in
 ;;; the modeline.
 ;;;
-;;; Support for non X Window versions of Emacs:
-;;; ===========================================
+;;; Support for non X Windows versions of Emacs:
+;;; ============================================
 ;;; This package can also be used for non X versions of Emacs. In this case,
 ;;; only modeline display and completing read input from the minibuffer are
 ;;; possible.
@@ -58,15 +58,6 @@
 ;;; Acknowledgements:
 ;;; =================
 ;;;
-;;; Fix to fume-function-name-regexp-c
-;;; Jonathan Edwards <edwards@intranet.com>
-;;;
-;;; Speedup for fume-cc-inside-comment
-;;; Peter Pezaris <pez@dwwc.com>
-;;;
-;;; Made menu placement more flexible
-;;; Bob Weiner <weiner@infodock.com>
-;;;
 ;;; Fortran90 regexp
 ;;; John Turner <turner@xdiv.lanl.gov>
 ;;;
@@ -74,7 +65,6 @@
 ;;; Andy Piper <andyp@parallax.co.uk>
 ;;;
 ;;; Java support
-;;; Bob Weiner <weiner@infodock.com>
 ;;; Heddy Boubaker <boubaker@dgac.fr>
 ;;;
 ;;; Patch for fume-rescan-buffer{-trigger}
@@ -150,7 +140,6 @@
 ;;; Thomas Plass <thomas.plass@mid-heidelberg.de>
 ;;;
 ;;; Extensions to fume-function-name-regexp-lisp
-;;; Vladimir Alexiev <vladimir@cs.ualberta.ca>
 ;;; Kari Heinola <kph@dpe.fi>
 ;;; Milo A. Chan <chan@jpmorgan.com>
 ;;; Jack Repenning <jackr@step7.informix.com>
@@ -173,7 +162,7 @@
 ;;; Philippe Queinnec <queinnec@cenatls.cena.dgac.fr>
 ;;;
 ;;; Assembly support
-;;; Bob Weiner <weiner@infodock.com>
+;;; Bob Weiner <weiner@mot.com>
 ;;;
 ;;; Removal of cl dependencies
 ;;; Russell Ritchie <russell@gssec.bt.co.uk>
@@ -213,14 +202,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;  Environment Initialisation  ;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defconst fume-version "2.45")
+(defconst fume-version "2.43")
 
 (defconst fume-developer "David Hughes <ukchugd@ukpmr.cs.philips.nl>")
 
 (defun fume-about ()
   (interactive)
   (sit-for 0)
-  (message "Func-Menu version %s, © 1996 %s" fume-version fume-developer))
+  (message "Func-Menu version %s, ¨ 1996 %s" fume-version fume-developer))
 
 (defconst fume-running-xemacs (string-match "XEmacs\\|Lucid" emacs-version))
 
@@ -376,19 +365,18 @@ the buffer contains more lines than the present window height."
 (cond ((fboundp 'add-submenu)
        (defconst fume-add-submenu 'add-submenu)
        (defun fume-munge-menu-args (menu-name submenu before)
-         (list fume-menu-path (cons menu-name submenu) before)))
+         (list nil (cons menu-name submenu) before)))
       (t
        (defconst fume-add-submenu 'add-menu)
        (defun fume-munge-menu-args (menu-name submenu before)
-         (list fume-menu-path menu-name submenu before))))
+         (list nil menu-name submenu before))))
 
 (defun fume-add-submenu (menu-name submenu before)
   (apply fume-add-submenu (fume-munge-menu-args menu-name submenu before)))
 
-;; this seems to really be `should I try to change the menubar'
 (defconst fume-not-tty
-  (or (featurep 'menubar)     ;; XEmacs
-      (featurep 'menu-bar)))  ;; GNU Emacs  
+  (or (and (fboundp 'device-type) (not (eq 'tty (device-type))))
+      (and (symbol-value 'window-system) t))) ; obsolete test
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;  Customizable Variables  ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -409,15 +397,9 @@ Note, this is a buffer-local variable.")
 (defvar fume-buffer-name "*Function List*"
   "Name of buffer used to list functions when fume-list-functions called")
 
-(defvar fume-menubar-menu-name "Functions"
+(fume-defvar-local
+ fume-menubar-menu-name "Functions"
  "*Set this to the string you want to appear in the menubar")
-
-;;; Bob Weiner <weiner@infodock.com>
-(defvar fume-menu-path nil
-  "Menubar menu under which the function menu should be installed.
-Nil means install it on the menubar itself.  Otherwise, it should be a list
-of strings, each string names a successively deeper menu under which the
-new menu should be located.")
 
 (defvar fume-menubar-menu-location "Buffers"
   "*Set this nil if you want the menu to appear last on the menubar.
@@ -451,15 +433,7 @@ of the buffer. For example \"Re-Scanning buffer...\"")
   "Used to tune the frequency of automatic checks on the buffer.
 The function fume-rescan-buffer-trigger only works whenever the value of the
 variable fume-rescan-trigger-counter reaches zero, whereupon it gets reset to
-the maximum of a) buffer-size/fume-rescan-trigger-counter-buffer-size 
-            or b) fume-rescan-trigger-counter-min")
-
-(defvar fume-rescan-trigger-counter-min 50
-  "Used to tune the frequency of automatic checks on the buffer.
-The function fume-rescan-buffer-trigger only works whenever the value of the
-variable fume-rescan-trigger-counter reaches zero, whereupon it gets reset to
-the maximum of a) buffer-size/fume-rescan-trigger-counter-buffer-size 
-            or b) fume-rescan-trigger-counter-min")
+buffer-size/fume-rescan-trigger-counter-buffer-size.")
 
 (fume-defvar-local
  fume-sort-function 'fume-sort-by-name
@@ -546,17 +520,21 @@ by func-menu, then do something along the lines of the following:
 
 ;;; Lisp
 ;;;
-;;; Vladimir Alexiev <vladimir@cs.ualberta.ca>
-;;; JTL: 24. Feb. 97 added "/" as part of function names
+;;; Jack Repenning <jackr@step7.informix.com>
+;;; Cedric Beust <Cedric.Beust@sophia.inria.fr>
 (defvar fume-function-name-regexp-lisp
   (concat
-   "^[ \t]*"                            ; Allow whitespace   |(or (fboundp 'foo)
-                                        ;  for the construct |    (defun foo ()
-   "(\\(def[^vc][a-z]*\\)"              ; Allow (def* except (defvar, (defconst
-   "\\s-+"                              ; At least one whitespace
-   "'?[#:?/A-Za-z0-9_+>-]+"             ; Allow (defalias 'foo 'bar)
-   "\\s-*"                              ; Whitespace
-   "\\(nil\\|(\\)"                      ; nil or (arg list
+   "\\(^(defun+\\s-*[#:?A-Za-z0-9_+->]+\\s-*(\\)"
+   "\\|"
+   "\\(^(defsubst+\\s-*[#:?A-Za-z0-9_+->]+\\s-*(\\)"
+   "\\|"
+   "\\(^(defmacro+\\s-*[#:?A-Za-z0-9_+->]+\\s-*(\\)"
+   "\\|"
+   "\\(^(defadvice+\\s-*[#:?A-Za-z0-9_+->]+\\s-*(\\)"
+   "\\|"
+   "\\(^(de+\\s-*[#:?A-Za-z0-9_+->]+\\s-*(\\)"
+   "\\|"
+   "\\(^(dmd+\\s-*[#:?A-Za-z0-9_+->]+\\s-*(\\)"
    )
   "Expression to get lisp function names")
 
@@ -565,11 +543,11 @@ by func-menu, then do something along the lines of the following:
 ;;; Danny Bar-Dov <danny@acet02.amil.co.il>
 (defvar fume-function-name-regexp-c
   (concat
-   "^[a-zA-Z0-9_]+\\s-?"                ; type specs; there can be no
-   "\\([a-zA-Z0-9_*]+\\s-+\\)?"         ; more than 3 tokens, right?
+   "^[a-zA-Z0-9]+\\s-?"                ; type specs; there can be no
+   "\\([a-zA-Z0-9_*]+\\s-+\\)?"        ; more than 3 tokens, right?
    "\\([a-zA-Z0-9_*]+\\s-+\\)?"
-   "\\([*&]+\\s-*\\)?"                  ; pointer
-   "\\([a-zA-Z0-9_*]+\\)[ \t\n]*("      ; name
+   "\\([*&]+\\s-*\\)?"                 ; pointer
+   "\\([a-zA-Z0-9_*]+\\)[ \t\n]*("     ; name
    )
   "Expression to get C function names")
 
@@ -809,7 +787,6 @@ by func-menu, then do something along the lines of the following:
 (defvar fume-function-name-regexp-make
   "^\\(\\(\\$\\s(\\)?\\(\\w\\|\\.\\)+\\(:sh\\)?\\(\\s)\\)?\\)\\s *\\(::?\\|\\+?=\\)"
   "Expression to get makefile target names")
-(add-hook 'makefile-mode-hook 'fume-add-menubar-entry)
 
 ;;; Directory Listings
 ;;;
@@ -842,12 +819,6 @@ by func-menu, then do something along the lines of the following:
   "^\\(task\\|function\\|module\\|primitive\\)[ \t]+\\([A-Za-z0-9_+-]*\\)[ \t]*(?"
   "Expression to get verilog module names")
 
-;;; Idl
-;;;
-;;; Lubos Pochman <lubos@rsinc.com>
-(defvar fume-function-name-regexp-idl
-  (cons "^\\s *\\([pP][rR][oO]\\|[fF][uU][nN][cC][tT][iI][oO][nN]\\)\\s +\\([A-Za-z][A-Za-z0-9_$]*\\)" 2)
-  "Expression to get Idl function Names")
 
 ;;; Assembly
 (defvar fume-function-name-regexp-asm
@@ -948,9 +919,6 @@ by func-menu, then do something along the lines of the following:
     ;; Verilog
     (verilog-mode . fume-function-name-regexp-verilog)
 
-    ;; Idl
-    (idl-mode . fume-function-name-regexp-idl)
-
     ;; Assembly
     (asm-mode . fume-function-name-regexp-asm)
     )
@@ -969,11 +937,7 @@ by func-menu, then do something along the lines of the following:
   ;; Search for the function
   (if (re-search-forward fume-function-name-regexp nil t)
       (let ((char (progn
-                    (if (string-match
-                         "[({[]"
-                         (char-to-string (char-after (1- (point)))))
-                        (backward-char)
-                      (forward-word -1))
+                    (backward-up-list 1)
                     (save-excursion
                       (goto-char (scan-sexps (point) 1))
                       (skip-chars-forward "[ \t\n]")
@@ -1021,7 +985,6 @@ by func-menu, then do something along the lines of the following:
         (cons (buffer-substring beg end) beg))))
 
 ;;; Specialised routine to get the next C function name in the buffer.
-;;; Modified 16/12/96: Jerome Bertorelle <bertorel@telspace.alcatel.fr>
 ;;;
 (defun fume-find-next-c-function-name (buffer)
   "Searches for the next C function in BUFFER."
@@ -1036,7 +999,7 @@ by func-menu, then do something along the lines of the following:
                       (following-char)))))
         ;; Skip this function name if it is a prototype declaration.
         (if (eq char ?\;)
-            (fume-find-next-c-function-name buffer)
+            (fume-find-next-function-name buffer)
           (let (beg
                 name)
             ;; Get the function name and position
@@ -1055,44 +1018,63 @@ by func-menu, then do something along the lines of the following:
                                 (format "%s %s"
                                         name
                                         (buffer-substring beg (point))))))))
-            ;; kludge to avoid 'void' etc in menu
-            (if (string-match "^void$\\|^if$\\|^switch$\\|^while$" name)
-                (fume-find-next-c-function-name buffer)
+            ;; kludge to avoid 'void' in menu
+            (if (string-match "^void\\s-*" name)
+                (fume-find-next-function-name buffer)
               (cons name beg)))))))
 
-;;; Peter Pezaris <pez@dwwc.com>
-;;;
 (defun fume-cc-inside-comment ()
-  (memq (buffer-syntactic-context) '(comment block-comment)))
+  (let ((here (point))
+        (bol-point (save-excursion (beginning-of-line) (point))))
+    (or
+     (save-excursion (and (re-search-backward "\/\/" bol-point t 1) t))
+     (save-excursion
+       (and
+        (re-search-backward "\\(/[*]\\)\\|\\([*]/\\)" (point-min) t 1)
+        (looking-at "/[*]")
+        (goto-char here)
+        (or (beginning-of-line 1) t)
+        (re-search-forward "[ \t]*/?[*][ \t]*" here t 1)
+        t)))))
 
 ;;; <jrm@odi.com>
 ;;; <ajp@eng.cam.ac.uk>
 ;;; <schittko@fokus.gmd.de>
-;;; <ukchugd@ukpmr.cs.philips.nl> - speedup, David Hughes 24th November 1996
 ;;;
 (defun fume-match-find-next-function-name (buffer)
-  ;; General next function name in BUFFER finder using match.
-  ;; The regexp is assumed to be a two item list the car of which is the regexp
-  ;; to use, and the cdr of which is the match position of the function name
+  "General next function name in BUFFER finder using match.
+The regexp is assumed to be a two item list the car of which is the regexp to
+use, and the cdr of which is the match position of the function name."
   (set-buffer buffer)
-  (let ((r (car fume-function-name-regexp))
-        (p (cdr fume-function-name-regexp)))
-    (catch 'found
-      (while (re-search-forward r nil t)
-        (catch 'skip
-          (if (fume-cc-inside-comment) (throw 'skip t))
-          (save-excursion
-            (re-search-backward r nil t)
-            (if (string= "typedef" (fume-what-looking-at)) (throw 'skip t))
-            (re-search-forward r nil t))
-          (backward-up-list 1)
-          (save-excursion
-            (goto-char (scan-sexps (point) 1))
-            (if (eq ?\; (following-char)) (throw 'skip t))) ; skip prototypes
-          (throw
-           'found
-           (cons (buffer-substring (setq p (match-beginning p)) (point)) p))))
-      nil)))
+  (let ((result nil)
+        (continue t)
+        (regexp (car fume-function-name-regexp)))
+    (while continue
+      ;; Search for the function
+      (if (re-search-forward regexp nil t)
+          (if (fume-cc-inside-comment)
+              () ; skip spurious finds in comments
+            (let ((first-token (save-excursion
+                                 (re-search-backward regexp nil t)
+                                 (prog1 (fume-what-looking-at)
+                                   (re-search-forward regexp nil t))))
+                  (last-char (progn
+                               (backward-up-list 1)
+                               (save-excursion
+                                 (goto-char (scan-sexps (point) 1))
+                                 (following-char)))))
+              ;; Skip function name if it's a prototype or typedef declaration
+              (if (or (eq last-char ?\;) (string= first-token "typedef"))
+                  nil
+                (setq result
+                      ;; Get function name and position including scope
+                      (cons (buffer-substring
+                             (match-beginning (cdr fume-function-name-regexp))
+                             (point))
+                            (match-beginning (cdr fume-function-name-regexp)))
+                      continue nil))))
+        (setq continue nil)))
+    result))
 
 ;;; Specialised routine to find the next Perl function
 ;;;
@@ -1101,7 +1083,6 @@ by func-menu, then do something along the lines of the following:
   (fume-find-next-sexp buffer))
 
 ;;; Specialised routine to find the next Java function
-;;; Bob Weiner <weiner@infodock.com>
 ;;; Heddy Boubaker <boubaker@dgac.fr>
 ;;;
 (defun fume-find-next-java-function-name (buffer)
@@ -1114,15 +1095,12 @@ by func-menu, then do something along the lines of the following:
         (forward-sexp)
         (if (and (looking-at "[^;(]*{")
                  (not (fume-cc-inside-comment)))
-            ;; This is a method definition and we're not in a comment
+            ;; This is a method definition and we're not
+            ;; in a comment.
             (let ((str (buffer-substring beg end)))
-              ;; Bob Weiner <weiner@infodock.com> added exact match
-              ;; delimiters so function names that happen to contain
-              ;; any of these terms are not eliminated.  The old version
-              ;; would ignore "notify()" since it contained "if".
-              (or (string-match "\\`\\(if\\|switch\\|catch\\|for\\|while\\)\\'"
-                                str)
-                  ;; These constructs look like method definitions but are not
+              (or (string-match "if\\|switch\\|catch\\|for\\|while" str)
+                  ;; These constructs look like methods definitions
+                  ;; but are not.
                   (cons str beg)))
           (fume-find-next-java-function-name buffer)))))
 
@@ -1392,20 +1370,8 @@ by func-menu, then do something along the lines of the following:
             (end (match-end 2)))
         (cons (buffer-substring beg end) beg))))
 
-;;; Specialised routine to get the next idl function in the buffer
-;;;
-;;; Lubos Pochman <lubos@rsinc.com>
-(defun fume-find-next-idl-function-name (buffer)
-  "Searches for the next idl function in BUFFER."
-  (set-buffer buffer)
-  (if (re-search-forward (car fume-function-name-regexp-idl) nil t)
-      (let ((beg (match-beginning (cdr fume-function-name-regexp-idl)))
-            (end (match-end (cdr fume-function-name-regexp-idl))))
-        (cons (buffer-substring beg end) beg))))
-
-
 ;;; Assembly
-;;; Bob Weiner <weiner@infodock.com>
+;;; Bob Weiner <weiner@mot.com>
 ;;;
 (defun fume-find-next-asm-function-name (buffer)
   "Searches for the next assembler function in BUFFER."
@@ -1451,7 +1417,6 @@ by func-menu, then do something along the lines of the following:
     (sgml-mode       . fume-find-next-sgml-element-name)
     (tcl-mode        . fume-match-find-next-function-name)
     (verilog-mode    . fume-find-next-verilog-function-name)
-    (idl-mode        . fume-find-next-idl-function-name)
     )
 
   "The connection between a mode and the defun that finds function names.
@@ -1461,10 +1426,12 @@ If no connection is in this alist for a given mode, a default method is used")
 ;;;;;;;;;;;;;;;;;;;;;;;;  General utility functions  ;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;; modeline refresh routine
+;;; Routine to refresh the modeline
 ;;;
-(or (fboundp 'redraw-modeline)
-    (defun redraw-modeline () (set-buffer-modified-p (buffer-modified-p))))
+(if (fboundp 'redraw-modeline)          ; faster built-in method
+    (defalias 'fume-refresh-modeline 'redraw-modeline)
+  (defun fume-refresh-modeline ()       ; use old kludge method
+    (set-buffer-modified-p (buffer-modified-p))))
 
 ;;; Smart mouse positioning
 ;;;
@@ -1497,18 +1464,18 @@ Otherwise returns fume-function-name-regexp"
 
 ;;; Routines to add/remove/update function menu from menubar
 ;;;
-(defun fume-add-menubar-entry ()
+(defsubst fume-add-menubar-entry ()
   (interactive)
   (save-window-excursion (function-menu t)))
 
-(defun fume-remove-menubar-entry ()
+(defsubst fume-remove-menubar-entry ()
   (interactive)
   (cond ((and fume-running-xemacs current-menubar)
          (delete-menu-item (list fume-menubar-menu-name))
          ;; force update of the menubar
-         (redraw-modeline))))
+         (fume-refresh-modeline))))
 
-(defun fume-update-menubar-entry ()
+(defsubst fume-update-menubar-entry ()
   "Returns t if menubar was updated. Nil otherwise"
   (and fume-running-xemacs
        fume-not-tty
@@ -1516,7 +1483,7 @@ Otherwise returns fume-function-name-regexp"
        (fume-add-menubar-entry)
        t))
 
-(defun fume-trim-string (string)
+(defsubst fume-trim-string (string)
   "Returns STRING with leading and trailing whitespace removed."
   (if (string-match "^[ \t]*" (setq string (format "%s" string)))
       (setq string (substring string (match-end 0))))
@@ -1526,55 +1493,52 @@ Otherwise returns fume-function-name-regexp"
 
 (defvar fume-syntax-table nil)
 
-(defun fume-what-looking-at (&optional check-primary-selection-p)
-  (or (and check-primary-selection-p
-           primary-selection-extent
-           (condition-case ()
-               (prog1 (buffer-substring (region-beginning) (region-end))
-                 (and zmacs-regions (zmacs-deactivate-region) (sit-for 0)))
-             (error nil)))
-      (let (name
-            (orig-syntax-table (copy-syntax-table (syntax-table))))
-        (if fume-syntax-table
-            ()
-          (setq fume-syntax-table (copy-syntax-table))
-          (modify-syntax-entry ?: "w" fume-syntax-table))
-        (unwind-protect
-            (progn
-              (set-syntax-table fume-syntax-table)
-              (save-excursion
-                (while (looking-at "\\sw\\|\\s_") (forward-char 1))
-                (if (re-search-backward "\\sw\\|\\s_" nil t)
-                    (let ((beg (progn (forward-char 1) (point))))
-                      (forward-sexp -1)
-                      (while (looking-at "\\s'") (forward-char 1))
-                      (setq name (buffer-substring beg (point)))))))
-          (set-syntax-table orig-syntax-table)
-          name))))
+(defsubst fume-what-looking-at ()
+  (let (name
+        (orig-syntax-table (copy-syntax-table (syntax-table))))
+    (if fume-syntax-table
+        ()
+      (setq fume-syntax-table (copy-syntax-table))
+      (modify-syntax-entry ?: "w" fume-syntax-table))
+    (unwind-protect
+        (progn
+          (set-syntax-table fume-syntax-table)
+          (save-excursion
+            (while (looking-at "\\sw\\|\\s_") (forward-char 1))
+            (if (re-search-backward "\\sw\\|\\s_" nil t)
+                (let ((beg (progn (forward-char 1) (point))))
+                  (forward-sexp -1)
+                  (while (looking-at "\\s'") (forward-char 1))
+                  (setq name (buffer-substring beg (point)))))))
+      (set-syntax-table orig-syntax-table)
+      name)))
 
-;;; Find function name that point is in
-;;; (trick is to start from the end)
+;;; Find function name that point is in.
+;;; The trick is to start from the end...
 ;;;
-(defun fume-function-before-point ()
+(defsubst fume-function-before-point ()
   (if (or fume-modeline-funclist (fume-rescan-buffer) fume-modeline-funclist)
-      (let ((p (point)))
+      (let (result
+            (pt (point)))
         (save-excursion
           (catch 'found
             (mapcar (function
-                     (lambda (x)
-                       (goto-char (cdr x))
+                     (lambda (p)
+                       (goto-char (cdr p))
                        (beginning-of-line 1)
-                       (if (>= p (point)) (throw 'found (car x)))))
-                    fume-modeline-funclist) nil)))))
+                       (if (>= pt (point))
+                           (throw 'found (setq result (car p))))))
+                    fume-modeline-funclist))
+          result))))
 
 ;;; Routines to add a buffer local post command hook
 ;;;
-(defun fume-post-command-hook-p (hook)
+(defsubst fume-post-command-hook-p (hook)
   (memq hook (if fume-use-local-post-command-hook
                  local-post-command-hook
                post-command-hook)))
 
-(defun fume-add-post-command-hook (hook &optional append)
+(defsubst fume-add-post-command-hook (hook &optional append)
   (or (fume-post-command-hook-p hook)
       (cond (fume-use-local-post-command-hook
              (add-hook 'local-post-command-hook hook append))
@@ -1586,7 +1550,7 @@ Otherwise returns fume-function-name-regexp"
              (make-local-variable 'post-command-hook)
              (add-hook 'post-command-hook hook append)))))
 
-(defun fume-remove-post-command-hook (hook)
+(defsubst fume-remove-post-command-hook (hook)
   (and (fume-post-command-hook-p hook)
        (cond (fume-use-local-post-command-hook
               (remove-hook 'local-post-command-hook hook))
@@ -1597,7 +1561,7 @@ Otherwise returns fume-function-name-regexp"
 
 ;;; Routine to install the modeline feature
 ;;;
-(defun fume-maybe-install-modeline-feature ()
+(defsubst fume-maybe-install-modeline-feature ()
   (cond ((and fume-display-in-modeline-p (fume-set-defaults))
          (or fume-modeline-funclist
              (fume-post-command-hook-p 'fume-tickle-modeline)
@@ -1630,8 +1594,8 @@ Otherwise returns fume-function-name-regexp"
   (cond ((not fume-display-in-modeline-p)
          (fume-remove-post-command-hook 'fume-tickle-modeline)
          (fume-add-post-command-hook 'fume-maybe-install-modeline-feature)))
-  ;; force update of the modeline
-  (redraw-modeline))
+  ;; force an update of the mode line
+  (fume-refresh-modeline))
 
 (fume-defvar-local fume-modeline-buffer-identification-0 nil
   "Storage for original modeline-buffer-identification")
@@ -1681,18 +1645,18 @@ Otherwise returns fume-function-name-regexp"
 ;;; Sort function to sort items depending on their function-name
 ;;; An item looks like (NAME . POSITION).
 ;;;
-(defun fume-sort-by-name (item1 item2)
+(defsubst fume-sort-by-name (item1 item2)
   (or (string-lessp (car item1) (car item2))
       (string-equal (car item1) (car item2))))
 
 ;;; Sort function to sort items depending on their position
 ;;;
-(defun fume-sort-by-position (item1 item2)
+(defsubst fume-sort-by-position (item1 item2)
   (<= (cdr item1) (cdr item2)))
 
 ;;; Support function to calculate relative position in buffer
 ;;;
-(defun fume-relative-position ()
+(defsubst fume-relative-position ()
   (let ((pos (point))
         (total (buffer-size)))
     (if (> total 50000)
@@ -1704,7 +1668,7 @@ Otherwise returns fume-function-name-regexp"
 ;;; Split LIST into sublists of max length N
 ;;; Example (fume-split '(1 2 3 4 5 6 7 8) 3)-> '((1 2 3) (4 5 6) (7 8))
 ;;;
-(defun fume-split (list n)
+(defsubst fume-split (list n)
   (let ((i 0)
         result
         sublist
@@ -1789,8 +1753,7 @@ Otherwise returns fume-function-name-regexp"
       (if (> fume-rescan-trigger-counter 0)
           (setq fume-rescan-trigger-counter (1- fume-rescan-trigger-counter))
         (setq fume-rescan-trigger-counter
-	      (max fume-rescan-trigger-counter-min
-              (/ (buffer-size) fume-rescan-trigger-counter-buffer-size)))
+              (/ (buffer-size) fume-rescan-trigger-counter-buffer-size))
         (if (or fume-funclist-dirty-p
                 (save-excursion
                   (let (find fnam)
@@ -1819,7 +1782,7 @@ Otherwise returns fume-function-name-regexp"
             (let ((fume-scanning-message nil))
               (fume-rescan-buffer))))))
 
-(defun fume-install-rescan-buffer-trigger ()
+(defsubst fume-install-rescan-buffer-trigger ()
   (cond ((not (fume-post-command-hook-p 'fume-rescan-buffer-trigger))
          (fume-add-post-command-hook 'fume-rescan-buffer-trigger 'append)
          ;; Make narrow-to-region tickle func-menu
@@ -1901,9 +1864,6 @@ If optional arg POPMENU is non-nil, brings up the function-menu."
   ;; Reset dirty flag
   (setq fume-funclist-dirty-p nil))
 
-(defun fume-scan-buffer ()
-  (or fume-funclist (progn (fume-set-defaults) (fume-rescan-buffer))))
-
 ;;; Routine to position cursor
 ;;;
 (defun fume-goto-function (fn pos)
@@ -1961,14 +1921,12 @@ If optional arg POPMENU is non-nil, brings up the function-menu."
 
 ;;; Interface for Key bindings
 ;;;
-(defun function-menu (&optional use-menubar return-only)
+(defun function-menu (&optional use-menubar)
   "Pop up a menu of functions for selection with the mouse.
-Jumps to the selected function.  A mark is set at the old position,
-so you can easily go back with C-u \\[set-mark-command].
 
 With a prefix arg adds the menu to the current menubar.
-Optional second argument, RETURN-ONLY if non-nil simply returns
-the basic menu of functions."
+Jumps to the selected function.  A mark is set at the old position,
+so you can easily go back with C-u \\[set-mark-command]."
   (interactive "P")
 
   (setq use-menubar
@@ -2024,60 +1982,51 @@ the basic menu of functions."
              (or (> count 1)
                  (setq function-menu-items (cdr (car function-menu-items))))
 
-             (if return-only
-                 nil
-               (setq function-menu
-                     (` ((,@ function-menu-items)
+             (setq function-menu
+                   (` ((,@ function-menu-items)
+                       "----"
+                       ["Display full list of functions"
+                        fume-list-functions t]
+                       [(, (concat "Rescan buffer :  " (buffer-name)))
+                        (fume-rescan-buffer (, (null use-menubar))) t]
+                       "----"
+                       ["Toggle modeline display"
+                        fume-toggle-modeline-display t]
+                       ["Toggle buffer auto rescanning"
+                        fume-toggle-auto-rescanning t]
+                       ["About Func-Menu" fume-about t])))
+
+             (cond (use-menubar
+                    (fume-remove-menubar-entry)
+                    (set-buffer-menubar (copy-sequence current-menubar))
+                    (fume-add-submenu
+                     fume-menubar-menu-name
+                     (` ((,@ function-menu)
                          "----"
-                         ["Display full list of functions"
-                          fume-list-functions t]
-                         [(, (concat "Rescan buffer :  " (buffer-name)))
-                          (fume-rescan-buffer (, (null use-menubar))) t]
-                         "----"
-                         ["Toggle modeline display"
-                          fume-toggle-modeline-display t]
-                         ["Toggle buffer auto rescanning"
-                          fume-toggle-auto-rescanning t]
-                         ["About Func-Menu" fume-about t])))
+                         ["Remove Function Menu from menubar"
+                          fume-remove-menubar-entry t]))
+                     fume-menubar-menu-location))
 
-               (cond (use-menubar
-                      (fume-remove-menubar-entry)
-                      (set-buffer-menubar (copy-sequence current-menubar))
-                      (fume-add-submenu
-                       fume-menubar-menu-name
-                       (` ((,@ function-menu)
-                           "----"
-                           ["Remove Function Menu from menubar"
-                            fume-remove-menubar-entry t]))
-                       fume-menubar-menu-location))
+                   ((and fume-not-tty   ; trap tty segmentation faults...
+                         (not (popup-menu-up-p)))
+                    (or (fume-update-menubar-entry)
+                        (setq function-menu
+                              (cons
+                               ["Put Function Menu into menubar"
+                                (function-menu t) t]
+                               (cons "----" function-menu))))
 
-                     ((and fume-not-tty ; trap tty segmentation faults...
-                           (not (popup-menu-up-p)))
-                      (or (fume-update-menubar-entry)
-                          (setq function-menu
-                                (cons
-                                 ["Put Function Menu into menubar"
-                                  (function-menu t) t]
-                                 (cons "----" function-menu))))
+                    (if fume-auto-position-popup
+                        (fume-set-mouse-position))
 
-                      (if fume-auto-position-popup
-                          (fume-set-mouse-position))
-
-                      (popup-menu
-                       (cons fume-menubar-menu-name function-menu)))))
-
-             ;; Return basic function menu for display by another function
-             function-menu-items)))))
+                    (popup-menu (cons "Functions" function-menu)))))))))
 
 (defun fume-mouse-function-goto (event)
   "Goto function clicked on or prompt in minibuffer (with completion)."
   (interactive "@e")
-  (let ((orig-pos (point)))
-    (goto-char (event-point event))
-    (let ((fume-no-prompt-on-valid-default t))
-      (fume-prompt-function-goto))
-    (or (= orig-pos (point))
-        (push-mark orig-pos (null fume-scanning-message)))))
+  (goto-char (event-point event))
+  (let ((fume-no-prompt-on-valid-default t))
+    (fume-prompt-function-goto)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;  Keyboard access to func-menu for tty users  ;;;;;;;;;;;;;;
@@ -2096,28 +2045,34 @@ the basic menu of functions."
   "Goto function prompted for in minibuffer (with completion).
 With prefix arg, jumps to function in a different window."
   (interactive "P")
-  (let* ((default-name (fume-what-looking-at t))
+  (and (interactive-p) current-prefix-arg (setq other-window-p t))
+  (let* ((default-name (fume-what-looking-at))
          (OrigBuffer (current-buffer))
-         (flistMode (eq major-mode 'fume-list-mode))
-         (no-prompt (or flistMode fume-no-prompt-on-valid-default))
-         (TargetBuffer (if flistMode fume-list-srcbuffer OrigBuffer)))
+         (TargetBuffer
+          (if (eq major-mode 'fume-list-mode) fume-list-srcbuffer OrigBuffer))
+         (fume-no-prompt-on-valid-default
+          (or fume-no-prompt-on-valid-default
+              (eq major-mode 'fume-list-mode))))
     (switch-to-buffer TargetBuffer)
-    (fume-scan-buffer) ;; Create funclist and set defaults if required
+    ;; Create funclist and set defaults
+    (cond ((null fume-funclist)
+           (fume-set-defaults)
+           (fume-rescan-buffer)))
     (let* (;; verify default-name is a valid function name
            (default-exists-p (assoc default-name fume-funclist))
            ;; Prompt for function name in minibuffer, unless there is a valid
            ;; function name at point & fume-no-prompt-on-valid-default set to t
            (function-name
-            (if (and default-exists-p no-prompt)
+            (if (and default-exists-p
+                     fume-no-prompt-on-valid-default)
                 ""
-              (let ((this-command last-command)) ; preserve last-command
-                (completing-read
-                 (format "Goto function%s%s: "
-                         (if other-window-p " other window" "")
-                         (if default-exists-p
-                             (concat " (" default-name ")")
-                           ""))
-                 fume-funclist nil t))))
+              (completing-read
+               (format "Goto function%s%s: "
+                       (if other-window-p " other window" "")
+                       (if default-exists-p
+                           (concat " (" default-name ")")
+                         ""))
+               fume-funclist nil t)))
            ;; Use default function name if just RET was pressed
            (function-name (if (and default-exists-p (string= "" function-name))
                               default-name
@@ -2127,10 +2082,7 @@ With prefix arg, jumps to function in a different window."
       (cond ((not (string= "" function-name))
              (if other-window-p
                  (cond ((prog1 (one-window-p)
-                          (if (not (windowp other-window-p))
-                              (switch-to-buffer-other-window TargetBuffer)
-                            (select-window other-window-p)
-                            (switch-to-buffer TargetBuffer)))
+                          (switch-to-buffer-other-window TargetBuffer))
                         (other-window 1)
                         (shrink-window-if-larger-than-buffer)
                         (other-window 1)))
@@ -2145,24 +2097,26 @@ With prefix arg, jumps to function in a different window."
 
 (defun fume-prompt-function-goto-other-window ()
   (interactive)
-  (fume-prompt-function-goto t))
+  (let ((current-prefix-arg 1))
+    (call-interactively 'fume-prompt-function-goto)))
 
-(defun fume-list-functions-show-fn-other-window (&optional window)
+(defun fume-list-functions-show-fn-other-window ()
   (interactive)
   (beginning-of-line)
   (select-window
-   (prog1 (selected-window) (fume-prompt-function-goto (or window t)))))
+   (prog1 (selected-window)
+     (fume-prompt-function-goto-other-window))))
 
-(defun fume-list-functions-show-prev-fn-other-window (&optional window)
+(defun fume-list-functions-show-prev-fn-other-window ()
   (interactive)
   (forward-line -1)
-  (fume-list-functions-show-fn-other-window window))
+  (fume-list-functions-show-fn-other-window))
 
-(defun fume-list-functions-show-next-fn-other-window (&optional window)
+(defun fume-list-functions-show-next-fn-other-window ()
   (interactive)
   (forward-line 1)
   (beginning-of-line)
-  (fume-list-functions-show-fn-other-window window))
+  (fume-list-functions-show-fn-other-window))
 
 (defun fume-list-functions-help ()
   (interactive)
@@ -2231,7 +2185,6 @@ With prefix arg, jumps to function in a different window."
 (defun fume-list-functions (&optional this-window)
   "Creates a temporary buffer listing functions found in the current buffer"
   (interactive "P")
-  (fume-scan-buffer) ;; Create funclist and set defaults if required
   (let ((func-near-point (format "^%s$" (fume-function-before-point))))
     (cond ((or fume-function-name-regexp (fume-maybe-install-modeline-feature))
            (save-excursion
@@ -2276,5 +2229,3 @@ With prefix arg, jumps to function in a different window."
            (error "Func-Menu is not operative in this buffer")))))
 
 (provide 'func-menu)
-
-;;; end of file

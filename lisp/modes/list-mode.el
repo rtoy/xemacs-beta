@@ -113,7 +113,7 @@ This is called from `post-command-hook'."
 
 (defun next-list-mode-item (n)
   "Move to the next item in list-mode.
-With prefix argument N, move N items (negative N means move backward)."
+WIth prefix argument N, move N items (negative N means move backward)."
   (interactive "p")
   (while (and (> n 0) (not (eobp)))
     (let ((prop (get-char-property (point) 'list-mode-item))
@@ -158,15 +158,12 @@ With prefix argument N, move N items (negative N means move backward)."
 
 (defun list-mode-item-mouse-selected (event)
   (interactive "e")
-  ;; Sometimes event-closest-point returns nil.
-  ;; So beep instead of bombing.
+  ;; #### sometimes event-closest-point returns nil.
   (let ((point (event-closest-point event)))
-    (if point
-	(list-mode-item-selected-1 (extent-at point
-					      (event-buffer event)
-					      'list-mode-item nil 'at)
-				   event)
-      (ding))))
+    (list-mode-item-selected-1 (extent-at point
+					  (event-buffer event)
+					  'list-mode-item nil 'at)
+			       event)))
 
 (defun add-list-mode-item (start end &optional buffer activate-callback
 				 user-data)
@@ -193,7 +190,7 @@ If ACTIVATE-CALLBACK is non-nil, it should be a function of three
 
 
 (defvar completion-highlight-first-word-only nil
-  "*Completion will only highlight the first blank delimited word if t.
+  "*Completion will only hightlight the first blank delimited word if t.
 If the variable in not t or nil, the string is taken as a regexp to match for end
 of highlight")
 

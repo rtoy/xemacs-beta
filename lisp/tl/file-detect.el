@@ -1,10 +1,10 @@
 ;;; file-detect.el --- Emacs Lisp file detection utility
 
-;; Copyright (C) 1996,1997 Free Software Foundation, Inc.
+;; Copyright (C) 1996 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Version:
-;;	$Id: file-detect.el,v 1.6 1997/03/16 05:55:39 steve Exp $
+;;	$Id: file-detect.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $
 ;; Keywords: install, module
 
 ;; This file is part of tl (Tiny Library).
@@ -20,8 +20,8 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; along with This program; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Code:
@@ -65,18 +65,6 @@ You can specify following OPTIONS:
 		))
       )))
 
-(defun add-latest-path (pattern &optional all-paths)
-  "Add latest path matched by PATTERN to `load-path'
-if it exists under `default-load-path' directories
-and it does not exist in `load-path'.
-
-If optional argument ALL-PATHS is specified, it is searched from all
-of load-path instead of default-load-path. [file-detect.el]"
-  (let ((path (get-latest-path pattern all-paths)))
-    (if path
-	(add-to-list 'load-path path)
-      )))
-
 (defun get-latest-path (pat &optional all-paths)
   "Return latest directory in default-load-path
 which is matched to regexp PAT.
@@ -102,7 +90,7 @@ it is searched from all of load-path instead of default-load-path.
 	))))
 
 (defun file-installed-p (file &optional paths)
-  "Return absolute-path of FILE if FILE exists in PATHS.
+  "Return t if FILE exists in PATHS.
 If PATHS is omitted, `load-path' is used. [file-detect.el]"
   (if (null paths)
       (setq paths load-path)
@@ -117,40 +105,31 @@ If PATHS is omitted, `load-path' is used. [file-detect.el]"
 	(setq paths (cdr paths))
 	))))
 
-(defvar exec-suffix-list '("")
-  "*List of suffixes for executable.")
-
-(defun exec-installed-p (file &optional paths suffixes)
-  "Return absolute-path of FILE if FILE exists in PATHS.
-If PATHS is omitted, `exec-path' is used.
-If suffixes is omitted, `exec-suffix-list' is used. [file-detect.el]"
-  (or paths
-      (setq paths exec-path)
-      )
-  (or suffixes
-      (setq suffixes exec-suffix-list)
-      )
-  (catch 'tag
-    (while paths
-      (let ((stem (expand-file-name file (car paths)))
-	    (sufs suffixes)
-	    )
-	(while sufs
-	  (let ((file (concat stem (car sufs))))
-	    (if (file-exists-p file)
-		(throw 'tag file)
-	      ))
-	  (setq sufs (cdr sufs))
-	  ))
-      (setq paths (cdr paths))
-      )))
-
 (defun module-installed-p (module &optional paths)
   "Return t if module is provided or exists in PATHS.
 If PATHS is omitted, `load-path' is used. [file-detect.el]"
   (or (featurep module)
-      (exec-installed-p (symbol-name module) load-path '(".elc" ".el"))
-      ))
+      (let ((name (symbol-name module)))
+	(if (null paths)
+	    (setq paths load-path)
+	  )
+	(catch 'tag
+	  (while paths
+	    (let ((file (expand-file-name name (car paths))))
+	      (let ((elc-file (concat file ".elc")))
+		(if (file-exists-p elc-file)
+		    (throw 'tag elc-file)
+		  ))
+	      (let ((el-file (concat file ".el")))
+		(if (file-exists-p el-file)
+		    (throw 'tag el-file)
+		  ))
+	      (if (file-exists-p file)
+		  (throw 'tag file)
+		)
+	      )
+	    (setq paths (cdr paths))
+	    )))))
 
 
 ;;; @ end

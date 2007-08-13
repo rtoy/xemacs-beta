@@ -6,19 +6,19 @@
 ;; KEYWORDS:     docs, help, hypermedia
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          InfoDock Associates
+;; ORG:          Motorola Inc.
 ;;
 ;; ORIG-DATE:     7-Dec-89
-;; LAST-MOD:     20-Feb-97 at 07:01:43 by Bob Weiner
+;; LAST-MOD:     21-Sep-95 at 12:29:58 by Bob Weiner
 ;;
-;; Copyright (C) 1989-1995, 1997  Free Software Foundation, Inc.
+;; Copyright (C) 1989-1995  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.
 ;;
 ;; DESCRIPTION:  
 ;;
-;;   See `info-class-def-regexp' for regular expression that matches class
+;;   See 'info-class-def-regexp' for regular expression that matches class
 ;;   definitions.
 ;;            
 ;; DESCRIP-END.
@@ -155,16 +155,16 @@ Class name identifier is grouped expression 1.")
 
 (defvar info-children-htable nil
   "Htable whose elements are of the form: (LIST-OF-CHILD-CLASSES . CLASS-NAME).
-Used to traverse Info inheritance graph.  `br-build-children-htable' builds
+Used to traverse Info inheritance graph.  'br-build-children-htable' builds
 this list.")
 (defvar info-parents-htable nil
   "Htable whose elements are of the form: (LIST-OF-PARENT-CLASSES . CLASS-NAME).
-Used to traverse Info inheritance graph.  `br-build-parents-htable' builds
+Used to traverse Info inheritance graph.  'br-build-parents-htable' builds
 this list.")
 (defvar info-paths-htable nil
   "Htable whose elements are of the form: (LIST-OF-CLASS-NAMES . FILE-PATH).
 FILE-PATH gives the location of classes found in LIST-OF-CLASS-NAMES.
-`br-build-paths-htable' builds this list.")
+'br-build-paths-htable' builds this list.")
 
 
 (defvar info-lib-parents-htable nil
@@ -185,9 +185,9 @@ Only classes from systems that are likely to change are used to build the
 list.")
 
 (defvar info-lib-prev-search-dirs nil
-  "Used to check if `info-lib-classes-htable' must be regenerated.")
+  "Used to check if 'info-lib-classes-htable' must be regenerated.")
 (defvar info-sys-prev-search-dirs nil
-  "Used to check if `info-sys-classes-htable' must be regenerated.")
+  "Used to check if 'info-sys-classes-htable' must be regenerated.")
 
 (defvar info-env-spec nil
   "Non-nil value means Environment specification has been given but not yet built.

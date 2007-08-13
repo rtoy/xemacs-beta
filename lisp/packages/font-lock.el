@@ -5,7 +5,6 @@
 ;; Copyright (C) 1996 Ben Wing.
 
 ;; Author: Jamie Zawinski <jwz@lucid.com>, for the LISPM Preservation Society.
-;; Minimally merged with FSF 19.34 by Barry Warsaw <bwarsaw@python.org>
 ;; Then (partially) synched with FSF 19.30, leading to:
 ;; Next Author: RMS
 ;; Next Author: Simon Marshall <simon@gnu.ai.mit.edu>
@@ -26,8 +25,8 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: FSF 19.30 except for the code to initialize the faces.
@@ -77,7 +76,7 @@
 ;; the former is subdued, the latter is loud.
 ;;
 ;; You can make font-lock default to the gaudier variety of keyword
-;; highlighting by setting the variable `font-lock-maximum-decoration'
+;; highlighting by setting the variable `font-lock-use-maximal-decoration'
 ;; before loading font-lock, or by calling the functions
 ;; `font-lock-use-default-maximal-decoration' or
 ;; `font-lock-use-default-minimal-decoration'.
@@ -140,8 +139,6 @@
 
 
 ;;; Code:
-
-(require 'fontl-hooks)
 
 ;;;;;;;;;;;;;;;;;;;;;;      user variables       ;;;;;;;;;;;;;;;;;;;;;;
 
@@ -264,30 +261,23 @@ Each element should be of the form:
  (MATCHER . FACENAME)
  (MATCHER . HIGHLIGHT)
  (MATCHER HIGHLIGHT ...)
- (eval . FORM)
 
 where HIGHLIGHT should be either MATCH-HIGHLIGHT or MATCH-ANCHORED.
 
-FORM is an expression, whose value should be a keyword element,
-evaluated when the keyword is (first) used in a buffer.  This feature
-can be used to provide a keyword that can only be generated when Font
-Lock mode is actually turned on.
-
 For highlighting single items, typically only MATCH-HIGHLIGHT is required.
-However, if an item or (typically) items is to be highlighted following the
+However, if an item or (typically) items is to be hightlighted following the
 instance of another item (the anchor) then MATCH-ANCHORED may be required.
 
 MATCH-HIGHLIGHT should be of the form:
 
  (MATCH FACENAME OVERRIDE LAXMATCH)
 
-Where MATCHER can be either the regexp to search for, a variable
-containing the regexp to search for, or the function to call to make
-the search (called with one argument, the limit of the search).  MATCH
-is the subexpression of MATCHER to be highlighted.  FACENAME is either
-a symbol naming a face, or an expression whose value is the face name
-to use.  If you want FACENAME to be a symbol that evaluates to a face,
-use a form like \"(progn sym)\".
+Where MATCHER can be either the regexp to search for, or the function name to
+call to make the search (called with one argument, the limit of the search).
+MATCH is the subexpression of MATCHER to be highlighted.  FACENAME is either
+a symbol naming a face, or an expression whose value is the face name to use.
+If you want FACENAME to be a symbol that evaluates to a face, use a form
+like \"(progn sym)\".
 
 OVERRIDE and LAXMATCH are flags.  If OVERRIDE is t, existing fontification may
 be overwritten.  If `keep', only parts not already fontified are highlighted.
@@ -490,7 +480,7 @@ This is normally set via `font-lock-defaults'.")
 ;;; Each time a modification happens to a line, we re-fontify the entire line.
 ;;; We do this by first removing the extents (text properties) on the line,
 ;;; and then doing the syntactic and keyword passes again on that line.  (More
-;;; generally, each modified region is extended to include the preceding and
+;;; generally, each modified region is extended to include the preceeding and
 ;;; following BOL or EOL.)
 ;;;
 ;;; This means that, as the user types, we repeatedly go back to the beginning
@@ -562,12 +552,7 @@ See the variable `font-lock-keywords' for customization."
 	  (t
 	   (remove-hook 'after-change-functions
 			'font-lock-after-change-function t)
-	   (setq font-lock-defaults-computed nil
-		 font-lock-keywords nil)
-	   ;; We have no business doing this here, since 
-	   ;; pre-idle-hook is global.	Other buffers may
-	   ;; still be in font-lock mode.  -dkindred@cs.cmu.edu
-	   ;; (remove-hook 'pre-idle-hook 'font-lock-pre-idle-hook)
+	   (remove-hook 'pre-idle-hook 'font-lock-pre-idle-hook)
 	   ))
     (set (make-local-variable 'font-lock-mode) on-p)
     (cond (on-p
@@ -770,10 +755,8 @@ This can take a while for large buffers."
     (setq font-lock-old-extent nil)))
 
 (defun font-lock-pre-idle-hook ()
-  (condition-case nil
-      (if font-lock-old-extent
-	  (font-lock-fontify-glumped-region))
-    (error (warn "Error caught in `font-lock-pre-idle-hook'"))))
+  (if font-lock-old-extent
+      (font-lock-fontify-glumped-region)))
 
 (defvar font-lock-always-fontify-immediately nil
   "Set this to non-nil to disable font-lock deferral.")
@@ -1101,6 +1084,8 @@ HIGHLIGHT should be of the form MATCH-HIGHLIGHT, see `font-lock-keywords'."
   (let* ((match (nth 0 highlight))
 	 (start (match-beginning match)) (end (match-end match))
 	 (override (nth 2 highlight)))
+    (and end
+	 (goto-char end)) ;; tlp00 hack to allow for back to back fonts
     (let ((newface (nth 1 highlight)))
       (or (symbolp newface)
 	  (setq newface (eval newface)))
@@ -1168,10 +1153,9 @@ START should be at the beginning of a line."
 	;; Find an occurrence of `matcher' from `start' to `end'.
 	(setq keyword (car keywords) matcher (car keyword))
 	(goto-char start)
-	(while (and (< (point) end)
-		    (if (stringp matcher)
-			(re-search-forward matcher end t)
-		      (funcall matcher end)))
+	(while (if (stringp matcher)
+		   (re-search-forward matcher end t)
+		 (funcall matcher end))
 	  ;; Apply each highlight to this instance of `matcher', which may be
 	  ;; specific highlights or more keywords anchored to `matcher'.
 	(setq highlights (cdr keyword))
@@ -1211,7 +1195,6 @@ START should be at the beginning of a line."
 ;; Font Lock mode.  So turn the mode back on if necessary.
 (defalias 'font-lock-revert-cleanup 'turn-on-font-lock)
 
-
 (defun font-lock-compile-keywords (&optional keywords)
   ;; Compile `font-lock-keywords' into the form (t KEYWORD ...) where KEYWORD
   ;; is the (MATCHER HIGHLIGHT ...) shown in the variable's doc string.
@@ -1219,21 +1202,20 @@ START should be at the beginning of a line."
     (setq font-lock-keywords 
      (if (eq (car-safe keywords) t)
 	 keywords
-       (cons t (mapcar 'font-lock-compile-keyword keywords))))))
-
-(defun font-lock-compile-keyword (keyword)
-  (cond ((nlistp keyword)		; Just MATCHER
-	 (list keyword '(0 font-lock-keyword-face)))
-	((eq (car keyword) 'eval)	; Specified (eval . FORM)
-	 (font-lock-compile-keyword (eval (cdr keyword))))
-	((numberp (cdr keyword))	; Specified (MATCHER . MATCH)
-	 (list (car keyword) (list (cdr keyword) 'font-lock-keyword-face)))
-	((symbolp (cdr keyword))	; Specified (MATCHER . FACENAME)
-	 (list (car keyword) (list 0 (cdr keyword))))
-	((nlistp (nth 1 keyword))	; Specified (MATCHER . HIGHLIGHT)
-	 (list (car keyword) (cdr keyword)))
-	(t				; Hopefully (MATCHER HIGHLIGHT ...)
-	 keyword)))
+       (cons t
+	(mapcar
+	 (function (lambda (item)
+	    (cond ((nlistp item)
+		   (list item '(0 font-lock-keyword-face)))
+		  ((numberp (cdr item))
+		   (list (car item) (list (cdr item) 'font-lock-keyword-face)))
+		  ((symbolp (cdr item))
+		   (list (car item) (list 0 (cdr item))))
+		  ((nlistp (nth 1 item))
+		   (list (car item) (cdr item)))
+		  (t
+		   item))))
+	 keywords))))))
 
 (defun font-lock-choose-keywords (keywords level)
   ;; Return LEVELth element of KEYWORDS.  A LEVEL of nil is equal to a
@@ -1274,12 +1256,20 @@ START should be at the beginning of a line."
       nil
     ;; else map over the syntax table looking for strings or comments.
     (let (got-one)
-      ;; older Emacsen.
-      (let ((i (1- (length (syntax-table)))))
-	(while (>= i 0)
-	  (if (memq (char-syntax i) '(?\" ?\< ?\> ?\$))
-	      (setq got-one t i 0))
-	  (setq i (1- i))))
+      ;; XEmacs 20.0 ...
+      (if (fboundp 'map-syntax-table)
+	  (setq got-one
+		(map-syntax-table
+		 #'(lambda (key value)
+		     (memq (char-syntax-from-code value)
+			   '(?\" ?\< ?\> ?\$)))
+		 (syntax-table)))
+	;; older Emacsen.
+	(let ((i (1- (length (syntax-table)))))
+	  (while (>= i 0)
+	    (if (memq (char-syntax i) '(?\" ?\< ?\> ?\$))
+		(setq got-one t i 0))
+	    (setq i (1- i)))))
       (set (make-local-variable 'font-lock-keywords-only) (not got-one)))))
 
 ;; font-lock-set-defaults is in fontl-hooks.el.
@@ -1523,10 +1513,8 @@ Returns whether it is indistinguishable from the default face."
 
 (put 'java-mode 'font-lock-defaults 
      '((java-font-lock-keywords
-	java-font-lock-keywords-1 java-font-lock-keywords-2
-	java-font-lock-keywords-3)
-       nil nil ((?_ . "w")) beginning-of-defun
-       (font-lock-mark-block-function . mark-defun)))
+	java-font-lock-keywords-1 java-font-lock-keywords-2)
+       nil nil ((?_ . "w")) beginning-of-defun))
 
 (put 'lisp-mode 'font-lock-defaults
      '((lisp-font-lock-keywords
@@ -1818,8 +1806,7 @@ Returns whether it is indistinguishable from the default face."
    
    ;; In FSF this has the simpler definition of "\\sw+" for ctoken.
    ;; I'm not sure if ours is more correct.
-   ;; This is a subset of the next rule, and is slower when present. --dmoore
-   ;; (list (concat "^\\(" ctoken "\\)[ \t]*(") 1 'font-lock-function-name-face)
+   (list (concat "^\\(" ctoken "\\)[ \t]*(") 1 'font-lock-function-name-face)
    ;;
    ;; fontify the names of functions being defined.
    ;; FSF doesn't have this but I think it should be fast for us because
@@ -1828,17 +1815,13 @@ Returns whether it is indistinguishable from the default face."
    ;; the time to do the regexp phase of font-lock for a C file!) Not
    ;; including this discriminates against those who don't follow the
    ;; GNU coding style. --ben
-   ;; x?x?x?y?z should always be: (x(xx?)?)?y?z --dmoore
    (list (concat
-	  "^\\("
-          "\\(" ctoken "[ \t]+\\)"	; type specs; there can be no
-	  "\\("
-          "\\(" ctoken "[ \t]+\\)"	; more than 3 tokens, right?
-          "\\(" ctoken "[ \t]+\\)"
-	  "?\\)?\\)?"
+          "^\\(" ctoken "[ \t]+\\)?"	; type specs; there can be no
+          "\\(" ctoken "[ \t]+\\)?"	; more than 3 tokens, right?
+          "\\(" ctoken "[ \t]+\\)?"
           "\\([*&]+[ \t]*\\)?"		; pointer
           "\\(" ctoken "\\)[ \t]*(")	; name
-         10 'font-lock-function-name-face)
+         8 'font-lock-function-name-face)
    ;;
    ;; This is faster but not by much.  I don't see why not.
    ;(list (concat "^\\(" ctoken "\\)[ \t]*(") 1 'font-lock-function-name-face)
@@ -1937,9 +1920,7 @@ Returns whether it is indistinguishable from the default face."
   (append
    ;;
    ;; The list `c-font-lock-keywords-1' less that for function names.
-   ;; the simple function form regexp has been removed. --dmoore
-   ;;(cdr c-font-lock-keywords-1)
-   c-font-lock-keywords-1
+   (cdr c-font-lock-keywords-1)
    ;;
    ;; Fontify function name definitions, possibly incorporating class name.
    (list
@@ -2195,274 +2176,172 @@ Returns whether it is indistinguishable from the default face."
 ;(defconst c++-font-lock-keywords c++-font-lock-keywords-1
 ;  "Additional expressions to highlight in C++ mode.")
 
-;; Java support from Anders Lindgren and Bob Weiner
-
 (defconst java-font-lock-keywords-1 nil
  "For consideration as a value of `java-font-lock-keywords'.
 This does fairly subdued highlighting.")
 
 (defconst java-font-lock-keywords-2 nil
  "For consideration as a value of `java-font-lock-keywords'.
-This adds highlighting of types and identifier names.")
+This does a lot more highlighting.")
 
-(defconst java-font-lock-keywords-3 nil
- "For consideration as a value of `java-font-lock-keywords'.
-This adds highlighting of Java documentation tags, such as @see.")
+(let ((storage (concat "static\\|abstract\\|const\\|final\\|"
+		       "synchronized\\|threadsafe\\|transient\\|native"))
+      (types (concat
+	      "boolean\\|int\\|char\\|byte\\|short\\|long\\|"
+	      "float\\|double\\|void"))
+      (reserved-words
+       '("private" "protected" "public" "break" "byvalue"
+	 "case" "catch" "class"
+	 "continue" "default" "do" "else if"
+	 "else" "extends" "false" "finally"
+	 "for" "if" "implements" "import"
+	 "instanceof" "interface"
+	 "new" "null" "package" "return"
+	 "super" "switch"
+	 "this" "throw" "throws"
+	 "true" "try" "synchronize" "while"))
 
-(defvar java-font-lock-type-regexp
-  (concat "\\<\\(boolean\\|byte\\|char\\|double\\|float\\|int"
-         "\\|long\\|short\\|void\\)\\>")
-  "Regexp which should match a primitive type.")
-
-(let ((capital-letter "A-Z\300-\326\330-\337")
-      (letter "a-zA-Z_$\300-\326\330-\366\370-\377")
-      (digit  "0-9"))
-(defvar java-font-lock-identifier-regexp
-  (concat "\\<\\([" letter "][" letter digit "]*\\)\\>")
-  "Regexp which should match all Java identifiers.")
-
-(defvar java-font-lock-class-name-regexp
-  (concat "\\<\\([" capital-letter "][" letter digit "]*\\)\\>")
-  "Regexp which should match a class or an interface name.
-The name is assumed to begin with a capital letter.")
-)
-
-
-(let ((java-modifier-regexp
-       (concat "\\<\\(abstract\\|const\\|final\\|native\\|"
-	       "private\\|protected\\|public\\|"
-	       "static\\|synchronized\\|transient\\|volatile\\)\\>")))
-
-  ;; Basic font-lock support:
+;      (java-token "\\w+")
+      (java-token "[a-zA-Z0-9_\.]+")
+      (java-modifying-token "[a-zA-Z0-9_\.]+\\([ \t]*\\[\\]\\)?")
+      )
   (setq java-font-lock-keywords-1
-	(list
-	 ;; Keywords:
-	 (list        
-	  (concat
-	   "\\<\\("
-	   "break\\|byvalue\\|"
-	   "case\\|cast\\|catch\\|class\\|continue\\|"
-	   "do\\|else\\|extends\\|"
-	   "finally\\|for\\|future\\|"
-	   "generic\\|goto\\|"
-	   "if\\|implements\\|import\\|"
-	   "instanceof\\|interface\\|"
-	   "new\\|package\\|return\\|switch\\|"
-	   "throws?\\|try\\|while\\)\\>")
-	  1 'font-lock-keyword-face)
+   (list
+    ;;------------------------------------------------------------------
+    ;; fontify C++-style comments as comments.
+    ;;------------------------------------------------------------------
 
-	 ;; Modifiers:
-	 (list java-modifier-regexp 1 font-lock-type-face)
+    '("//.*" . font-lock-comment-face)
 
-	 ;; Special constants:
-	 '("\\<\\(this\\|super\\)\\>" (1 font-lock-reference-face))
-	 '("\\<\\(false\\|null\\|true\\)\\>" (1 font-lock-keyword-face))
+    ;;------------------------------------------------------------------
+    ;; I think static deserves special attention
+    ;;------------------------------------------------------------------
 
-	 ;; Class names:
-	 (list (concat "\\<class\\>\\s *" java-font-lock-identifier-regexp)
-	       1 'font-lock-function-name-face)
+    '("static" . font-lock-keyword-face)
 
-	 ;; Package declarations:
-	 (list (concat "\\<\\(package\\|import\\)\\>\\s *"
-		       java-font-lock-identifier-regexp)
-	       '(2 font-lock-reference-face)
-	       (list (concat
-		      "\\=\\.\\(" java-font-lock-identifier-regexp "\\)")
-		     nil nil '(1 (let ((c (char-after (match-end 0))))
-				   (if (and (characterp c)
-					    (= c ?.))
-				       'font-lock-reference-face
-				     'font-lock-type-face)))))
+    ;;------------------------------------------------------------------
+    ;; Make the "public" keyword standout (should we do private instead?)
+    ;;------------------------------------------------------------------
 
-	 ;; Constructors:
-	 (list (concat
-		"^\\s *\\(" java-modifier-regexp "\\s +\\)*"
-		java-font-lock-class-name-regexp "\\s *\(")
-	       (list 3
-		     '(condition-case nil
-			  (save-excursion
-			    (goto-char (scan-sexps (- (match-end 0) 1) 1))
-			    (parse-partial-sexp (point) (point-max) nil t)
-			    (and (looking-at "\\($\\|\\<throws\\>\\|{\\)")
-				 'font-lock-function-name-face))
-			(error 'font-lock-function-name-face))))
+    ;; these depend on some personal SMF faces
 
-	 ;; Methods:
-	 (list (concat "\\(" java-font-lock-type-regexp "\\|"
-		       java-font-lock-class-name-regexp "\\)"
-		       "\\s *\\(\\[\\s *\\]\\s *\\)*"
-		       java-font-lock-identifier-regexp "\\s *\(")
-	       5
-	       'font-lock-function-name-face)
+    ;; I wish I knew elisp, etc enough to know if it's
+    ;; faster to use 1 regex for n words, or n
+    ;; unglobbed entries in this list...
 
-	 ;; Labels:
-	 (list ":"
-	       (list
-		(concat "^\\s *" java-font-lock-identifier-regexp "\\s *:")
-		'(beginning-of-line) '(end-of-line)
-		'(1 font-lock-reference-face)))
+    ;; '("private" . font-lock-pale-face)
+    ;; '("protected" . font-lock-pale-face)
 
-	 ;; `break' and continue' destination labels:
-	 (list (concat "\\<\\(break\\|continue\\)\\>\\s *"
-		       java-font-lock-identifier-regexp)
-	       2 'font-lock-reference-face)
+    ;;------------------------------------------------------------------
+    ;; special case so "new Foo();" doesn't map to method declaration
+    ;;------------------------------------------------------------------
 
-	 ;; Case statements:
-	 ;; In Java, any constant expression is allowed.
-	 '("\\<case\\>\\s *\\(.*\\):" 1 font-lock-reference-face)))
+    (list (concat
+	   "^.*[ \t]+\\(new\\|return\\)[ \t]+"
+	   "\\(" java-token "\\)")
+	  2 'default)
 
-  ;; Types and declared variable names:
+    ;;------------------------------------------------------------------
+    ;; special case so "else if();" doesn't map to method declaration
+    ;;------------------------------------------------------------------
+
+    (list "^.*[ \t]+else[ \t]+\\(if\\)"
+	  1 'default)
+
+    ;;------------------------------------------------------------------
+    ;; METHOD IDENTIFICATION
+    ;;
+    ;; fontify the (first word of) names of methods being defined.
+    ;;------------------------------------------------------------------
+
+    (list (concat
+	   "^[ \t]+"			;; indent of line
+
+	   ;;-------------------------------------------------------
+	   ;; Demanding a token 1st doesn't recognize constructors
+	   ;; w/out any access specifiers.  Unfortunately, that also
+	   ;; looks like many other things, including "if (foo) {",
+	   ;; so it's not an easy case to detect -- I'm just going
+	   ;; to live w/out it for now...
+	   ;;-------------------------------------------------------
+
+	   "\\(" java-modifying-token "[ \t]+\\)"
+
+;	   "\\("
+;	   "\\(^[ \t]+\\(" java-token "[ \t]+\\)\\)"
+;	   "\\|"
+;	   "\\(    \\)"
+;	   "\\)"
+; failed attempt to hack in ^ followed by exactly 4 spaces allowance to
+; recognize constructions with no access specified
+
+	   "\\(" java-modifying-token "[ \t]+\\)?"
+	   "\\(" java-modifying-token "[ \t]+\\)?"
+	   "\\(" java-modifying-token "[ \t]+\\)?"
+	   "\\(" java-modifying-token "[ \t]+\\)?"
+	   "\\(" java-modifying-token "[ \t]+\\)?"
+	   "\\(" java-token "\\)[ \t]*(")
+
+	 ;  "\\(" java-token "\\)[ \t]*(.*{")
+
+	  ;; SMF: while demanding { at EOL is stylistic,
+	  ;; it DOESN'T hilite the likes of:
+	  ;; return new Dimension()
+	  ;;	   "\\(" java-token "\\)[ \t]*(")
+	  ;; PROBLEM -- it leaves out abstract and native methods!
+
+	  13 'font-lock-function-name-face)
+
+    ;;------------------------------------------------------------------
+    ;; Fontify class names ...
+    ;; (info-node is another personal SMF face)
+    ;;------------------------------------------------------------------
+    
+    (list (concat
+	   "^[ \t]*\\([a-z]+[ \t]+\\)?\\([a-z]+[ \t]+\\)?class[ \t]+\\("
+	   java-token "\\)")
+	  3 'font-lock-reference-face)
+
+    ;;------------------------------------------------------------------
+    ;; Package names 
+    ;;------------------------------------------------------------------
+
+    (list (concat
+	   "package[ \t]+\\(" java-token "\\)")
+	  1 'font-lock-reference-face)
+
+    ;;
+    ;; Fontify case clauses.  This is fast because its anchored on the left.
+
+    '("case[ \t]+\\(\\(\\sw\\|\\s_\\)+\\):". 1)
+    '("\\<\\(default\\):". 1)
+    ))
+
   (setq java-font-lock-keywords-2
-	(append 
-
-	 java-font-lock-keywords-1
-	 (list
-	  ;; Keywords followed by a type:
-	  (list (concat "\\<\\(extends\\|instanceof\\|new\\)\\>\\s *"
-			java-font-lock-identifier-regexp)
-		'(2 (if (= (char-after (match-end 0)) ?.)
-			'font-lock-reference-face 'font-lock-type-face))
-		(list (concat "\\=\\." java-font-lock-identifier-regexp)
-		      '(goto-char (match-end 0)) nil
-		      '(1 (if (= (char-after (match-end 0)) ?.)
-			      'font-lock-reference-face 'font-lock-type-face))))
-
-	  ;; Keywords followed by a type list:
-	  (list (concat "\\<\\(implements\\|throws\\)\\>\\ s*"
-			java-font-lock-identifier-regexp)
-		'(2 (if (= (char-after (match-end 0)) ?.)
-			font-lock-reference-face font-lock-type-face))
-		(list (concat "\\=\\(\\.\\|\\s *\\(,\\)\\s *\\)"
-			      java-font-lock-identifier-regexp)
-		      '(goto-char (match-end 0)) nil
-		      '(3 (if (= (char-after (match-end 0)) ?.)
-			      font-lock-reference-face font-lock-type-face))))
-
-	  ;; primitive types, can't be confused with anything else.
-	  (list java-font-lock-type-regexp
-		'(1 font-lock-type-face)
-		'(font-lock-match-java-declarations
-		  (goto-char (match-end 0))
-		  (goto-char (match-end 0))
-		  (0 font-lock-variable-name-face)))
-
-	  ;; Declarations, class types and capitalized variables:
-	  ;;
-	  ;; Declarations are easy to recognize.  Capitalized words
-	  ;; followed by a closing parenthesis are treated as casts if they
-	  ;; also are followed by an expression.  Expressions beginning with
-	  ;; a unary numerical operator, e.g. +, can't be cast to an object
-	  ;; type.
-	  ;;
-	  ;; The path of a fully qualified type, e.g. java.lang.Foo, is
-	  ;; fontified in the reference face.
-	  ;;
-	  ;; An access to a static field, e.g. System.out.println, is
-	  ;; not fontified since it can't be distinguished from the
-	  ;; usage of a capitalized variable, e.g. Foo.out.println.
-
-	  (list (concat java-font-lock-class-name-regexp
-			"\\s *\\(\\[\\s *\\]\\s *\\)*"
-			"\\(\\<\\|$\\|)\\s *\\([\(\"]\\|\\<\\)\\)")
-		'(1 (save-match-data
-		      (save-excursion
-			(goto-char
-			 (match-beginning 3))
-			(if (not (looking-at "\\<instanceof\\>"))
-			    'font-lock-type-face))))
-		(list (concat "\\=" java-font-lock-identifier-regexp "\\.")
-		      '(progn
-			 (goto-char (match-beginning 0))
-			 (while (or (= (preceding-char) ?.)
-				    (= (char-syntax (preceding-char)) ?w))
-			   (backward-char)))
-		      '(goto-char (match-end 0))
-		      '(1 font-lock-reference-face)
-		      '(0 nil))		; Workaround for bug in XEmacs.
-		'(font-lock-match-java-declarations
-		  (goto-char (match-end 1))
-		  (goto-char (match-end 0))
-		  (1 font-lock-variable-name-face))))))
-
-  ;; Modifier keywords and Java doc tags
-  (setq java-font-lock-keywords-3
-	(append
-
-	 '(
-	   ;; Feature scoping:
-	   ;; These must come first or the Modifiers from keywords-1 will
-	   ;; catch them.  We don't want to use override fontification here
-	   ;; because then these terms will be fontified within comments.
-	   ("\\<private\\>"   0 font-lock-string-face)
-	   ("\\<protected\\>" 0 font-lock-preprocessor-face)
-	   ("\\<public\\>"    0 font-lock-reference-face))
-
-	 java-font-lock-keywords-2
-
-	 (list
-
-	  ;; Java doc tags
-	  '("@\\(author\\|exception\\|param\\|return\\|see\\|version\\)\\s "
-	    0 font-lock-keyword-face t)
-
-	  ;; Doc tag - Parameter identifiers
-	  (list (concat "@param\\s +" java-font-lock-identifier-regexp)
-		1 'font-lock-variable-name-face t)
-
-	  ;; Doc tag - Exception types
-	  (list (concat "@exception\\ s*"
-			java-font-lock-identifier-regexp)
-		'(1 (if (= (char-after (match-end 0)) ?.)
-			font-lock-reference-face font-lock-type-face) t)
-		(list (concat "\\=\\." java-font-lock-identifier-regexp)
-		      '(goto-char (match-end 0)) nil
-		      '(1 (if (= (char-after (match-end 0)) ?.)
-			      'font-lock-reference-face 'font-lock-type-face) t)))
-
-	  ;; Doc tag - Cross-references, usually to methods 
-	  '("@see\\s +\\(\\S *[^][ \t\n\r\f(){},.;:]\\)"
-	    1 font-lock-function-name-face t)
-
-	  )))
+   (append java-font-lock-keywords-1
+    (list
+     ;;
+     ;; fontify all storage classes and type specifiers
+     (cons (concat "\\<\\(" storage "\\)\\>") 'font-lock-type-face)
+     (cons (concat "\\<\\(" types "\\)\\>") 'font-lock-type-face)
+     
+     ;;
+     ;; fontify all builtin tokens
+	    (cons (concat
+		   "[ \t]\\("
+		   (mapconcat 'identity reserved-words "\\|")
+		   "\\)[ \t\n(){};,]")
+		  1)
+	    (cons (concat
+		   "^\\("
+		   (mapconcat 'identity reserved-words "\\|")
+		   "\\)[ \t\n(){};,]")
+		  1)
+	    )))
   )
 
 (defvar java-font-lock-keywords java-font-lock-keywords-1
   "Additional expressions to highlight in Java mode.")
-
-;; Match and move over any declaration/definition item after
-;; point.  Does not match items which look like a type declaration
-;; (primitive types and class names, i.e. capitalized words.)
-;; Should the variable name be followed by a comma, we reposition
-;; the cursor to fontify more identifiers.
-(defun font-lock-match-java-declarations (limit)
-  "Match and skip over variable definitions."
-  (if (looking-at "\\s *\\(\\[\\s *\\]\\s *\\)*")
-      (goto-char (match-end 0)))
-  (and
-   (looking-at java-font-lock-identifier-regexp)
-   (save-match-data
-     (not (string-match java-font-lock-type-regexp
-			(buffer-substring (match-beginning 1)
-					  (match-end 1)))))
-   (save-match-data
-     (save-excursion
-       (goto-char (match-beginning 1))
-       (not (looking-at
-	     (concat java-font-lock-class-name-regexp
-		     "\\s *\\(\\[\\s *\\]\\s *\\)*\\<")))))
-   (save-match-data
-     (condition-case nil
-	 (save-restriction
-	   (narrow-to-region (point-min) limit)
-	   (goto-char (match-end 0))
-	   ;; Note: Both `scan-sexps' and the second goto-char can
-	   ;; generate an error which is caught by the
-	   ;; `condition-case' expression.
-	   (while (not (looking-at "\\s *\\(\\(,\\)\\|;\\|$\\)"))
-	     (goto-char (or (scan-sexps (point) 1) (point-max))))
-	   (goto-char (match-end 2)))   ; non-nil
-       (error t)))))
-
 
 (defvar tex-font-lock-keywords
 ;  ;; Regexps updated with help from Ulrik Dickow <dickow@nbi.dk>.
@@ -2539,6 +2418,31 @@ The name is assumed to begin with a capital letter.")
    '("`.*`" . font-lock-type-face)
    ))
   "Additional expressions to highlight in sh-mode.")
+
+(defconst python-font-lock-keywords
+  (purecopy
+   (list
+    (cons (concat "\\b\\("
+                  (mapconcat 'identity
+                             '("access"     "del"        "from"
+                               "lambda"     "return"     "and"
+                               "elif"       "global"     "not"
+                               "try:"       "break "     "else:"
+                               "if"         "or"         "while"
+                               "except"     "except:"    "import"
+                               "pass"       "continue"   "finally:"
+                               "in"         "print"      "for"
+                               "is"         "raise")
+                             "\\|")
+                  "\\)[ \n\t(]")
+          1)
+    '("\\bclass[ \t]+\\([a-zA-Z_]+[a-zA-Z0-9_]*\\)"
+      1 font-lock-type-face)
+    '("\\bdef[ \t]+\\([a-zA-Z_]+[a-zA-Z0-9_]*\\)"
+      1 font-lock-function-name-face)
+    ))
+  "Additional expressions to highlight in Python mode.")
+
 
 
 ;; Install ourselves:

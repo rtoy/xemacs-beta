@@ -1,5 +1,5 @@
 ;;; nndir.el --- single directory newsgroup access for Gnus
-;; Copyright (C) 1995,96,97 Free Software Foundation, Inc.
+;; Copyright (C) 1995,96 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@ifi.uio.no>
 ;; Keywords: news
@@ -63,6 +63,8 @@
 	    server))
   (unless (assq 'nndir-directory defs)
     (push `(nndir-directory ,server) defs))
+  ;(when (equal server "")
+  ;  (setq server (cadr (assq 'nndir-directory defs))))
   (push `(nndir-current-group
 	  ,(file-name-nondirectory (directory-file-name nndir-directory)))
 	defs)
@@ -71,12 +73,12 @@
 	defs)
   (nnoo-change-server 'nndir server defs)
   (let (err)
-    (cond
+    (cond 
      ((not (condition-case arg
 	       (file-exists-p nndir-directory)
 	     (ftp-error (setq err (format "%s" arg)))))
       (nndir-close-server)
-      (nnheader-report
+      (nnheader-report 
        'nndir (or err "No such file or directory: %s" nndir-directory)))
      ((not (file-directory-p (file-truename nndir-directory)))
       (nndir-close-server)
@@ -90,7 +92,7 @@
   (nnml-retrieve-headers 0 nndir-current-group 0 0)
   (nnmh-request-article 0 nndir-current-group 0 0)
   (nnmh-request-group nndir-current-group 0 0)
-  (nnml-close-group nndir-current-group 0)
+  (nnmh-close-group nndir-current-group 0)
   (nnmh-request-list (nnoo-current-server 'nndir) nndir-directory)
   (nnmh-request-newsgroups (nnoo-current-server 'nndir) nndir-directory))
 

@@ -1,101 +1,96 @@
-;; -*- Emacs-Lisp -*-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; File:          auto-save.el
-;; Version:       $Revision: 1.4 $
-;; RCS:           
-;; Description:   Safer autosaving with support for efs and /tmp.
-;;                This version of auto-save is designed to work with efs,
-;;                instead of ange-ftp.
-;; Author:        Sebastian Kremer <sk@thp.uni-koeln.de>,
-;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; auto-save.el --- safer auto saving with support for ange-ftp and /tmp
 
-(defconst auto-save-version (substring "$Revision: 1.4 $" 11 -2)
-  "Version number of auto-save.")
+(defconst auto-save-version "cvs ate me")
 
-;;; Copyright (C) 1992 by Sebastian Kremer <sk@thp.uni-koeln.de>
+;;;; Copyright (C) 1992, 1993, 1994 by Sebastian Kremer <sk@thp.uni-koeln.de>
+;;;; Modified by jwz
 
-;;; This program is free software; you can redistribute it and/or modify
-;;; it under the terms of the GNU General Public License as published by
-;;; the Free Software Foundation; either version 1, or (at your option)
-;;; any later version.
+;; This file is part of XEmacs.
 
-;;; This program is distributed in the hope that it will be useful,
-;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;; GNU General Public License for more details.
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
 
-;;; You should have received a copy of the GNU General Public License
-;;; along with this program; if not, write to the Free Software
-;;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
+
+;;; Synched up with: Not in FSF.
+
+;;;; LISPDIR ENTRY for the Elisp Archive ===============================
+;;;;    LCD Archive Entry:
+;;;;    auto-save|Sebastian Kremer|sk@thp.uni-koeln.de
+;;;;    |safer auto saving with support for ange-ftp and /tmp
 
 ;;;; OVERVIEW ==========================================================
 
-;;; Combines autosaving for efs (to a local or remote directory)
-;;; with the ability to do autosaves to a fixed directory on a local
-;;; disk, in case NFS is slow.  The auto-save file used for
-;;;     /usr/foo/bar/baz.txt
-;;; will be
-;;;     AUTOSAVE/#\!usr\!foo\!bar\!baz.txt#
-;;; assuming AUTOSAVE is the non-nil value of the variable
-;;; `auto-save-directory'.
+;;;; Combines autosaving for ange-ftp (to a local or remote directory)
+;;;; with the ability to do autosaves to a fixed directory on a local
+;;;; disk, in case NFS is slow.  The auto-save file used for
+;;;;     /usr/foo/bar/baz.txt
+;;;; will be
+;;;;     AUTOSAVE/#\!usr\!foo\!bar\!baz.txt#
+;;;; assuming AUTOSAVE is the non-nil value of the variable
+;;;; `auto-save-directory'.
 
-;;; Takes care that autosave files for non-file-buffers (e.g. *mail*)
-;;; from two simultaneous Emacses don't collide.
+;;;; Takes care that autosave files for non-file-buffers (e.g. *mail*)
+;;;; from two simultaneous Emacses don't collide.
 
-;;; Autosaves even if the current directory is not writable.
+;;;; Autosaves even if the current directory is not writable.
 
-;;; Can limit autosave names to 14 characters using a hash function,
-;;; see `auto-save-hash-p'.
+;;;; Can limit autosave names to 14 characters using a hash function,
+;;;; see `auto-save-hash-p'.
 
-;;; See `auto-save-directory' and `make-auto-save-file-name' and
-;;; references therein for complete documentation.
+;;;; See `auto-save-directory' and `make-auto-save-file-name' and
+;;;; references therein for complete documentation.
 
-;;; Meta-x recover-all-files will effectively do recover-file on all
-;;; files whose autosave file is newer (one of the benefits of having
-;;; all autosave files in the same place).
+;;;; Meta-x recover-all-files will effectively do recover-file on all
+;;;; files whose autosave file is newer (one of the benefits of having
+;;;; all autosave files in the same place).
 
 ;;;; INSTALLATION ======================================================
 
-;;; Put this file into your load-path and the following in your ~/.emacs:
+;;;; Put this file into your load-path and the following in your ~/.emacs:
 
-;;; If you want to autosave in the fixed directory /tmp/USER-autosave/
-;;; (setq auto-save-directory
-;;;       (concat "/tmp/" (user-login-name) "-autosave/"))
+;;;; If you want to autosave in the fixed directory /tmp/USER-autosave/
+;;;; (setq auto-save-directory
+;;;;       (concat "/tmp/" (user-login-name) "-autosave/"))
 
-;;; If you don't want to save in /tmp (e.g., because it is swap
-;;; mounted) but rather in ~/autosave/
-;;;   (setq auto-save-directory (expand-file-name "~/autosave/"))
+;;;; If you don't want to save in /tmp (e.g., because it is swap
+;;;; mounted) but rather in ~/autosave/
+;;;;   (setq auto-save-directory (expand-file-name "~/autosave/"))
 
-;;; If you want to save each file in its own directory (the default)
-;;;   (setq auto-save-directory nil)
-;;; You still can take advantage of autosaving efs remote files
-;;; in a fixed local directory, `auto-save-directory-fallback' will
-;;; be used.
+;;;; If you want to save each file in its own directory (the default)
+;;;;   (setq auto-save-directory nil)
+;;;; You still can take advantage of autosaving ange-ftp remote files
+;;;; in a fixed local directory, `auto-save-directory-fallback' will
+;;;; be used.
 
-;;; If you want to use 14 character hashed autosave filenames
-;;;   (setq auto-save-hash-p t)
+;;;; If you want to use 14 character hashed autosave filenames
+;;;;   (setq auto-save-hash-p t)
 
-;;; Finally, put this line after the others in your ~/.emacs:
-;;;   (require 'auto-save)
+;;;; Finally, put this line after the others in your ~/.emacs:
+;;;;   (require 'auto-save)
 
 
 ;;;; ACKNOWLEDGEMENT ===================================================
 
-;;; This code is loosely derived from autosave-in-tmp.el by Jamie
-;;; Zawinski <jwz@lucid.com> (the version I had was last modified 22
-;;; dec 90 jwz) and code submitted to ange-ftp-lovers on Sun, 5 Apr
-;;; 92 23:20:47 EDT by drw@BOURBAKI.MIT.EDU (Dale R. Worley).
-;;; auto-save.el tries to cover the functionality of those two
-;;; packages.
+;;;; This code is loosely derived from autosave-in-tmp.el by Jamie
+;;;; Zawinski <jwz@lucid.com> (the version I had was last modified 22
+;;;; dec 90 jwz) and code submitted to ange-ftp-lovers on Sun, 5 Apr
+;;;; 92 23:20:47 EDT by drw@BOURBAKI.MIT.EDU (Dale R. Worley).
+;;;; auto-save.el tries to cover the functionality of those two
+;;;; packages.
 
-;;; Valuable comments and help from Dale Worley, Andy Norman, Jamie
-;;; Zawinski and Sandy Rutherford are gratefully acknowledged.
-
-;;;; PROVISION ========================================================
-
-(provide 'auto-save)
+;;;; Valuable comments and help from Dale Worley, Andy Norman, Jamie
+;;;; Zawinski and Sandy Rutherford are gratefully acknowledged.
 
 ;;;; CUSTOMIZATION =====================================================
 
@@ -124,8 +119,8 @@ is mounted from swap (possible in SunOS, type `df /tmp' to find out)
 and thus vanishes after a reboot, or if your system is particularly
 thorough when cleaning up /tmp, clearing even non-empty subdirectories.
 
-It should never be an efs remote filename because that would
-defeat `efs-auto-save-remotely'.
+It should never be an ange-ftp remote filename because that would
+defeat `ange-ftp-auto-save-remotely'.
 
 Unless you set `auto-save-hash-p', you shouldn't set this to a
 directory in a filesystem that does not support long filenames, since
@@ -139,8 +134,8 @@ will have a longish filename like
 
 as auto save file.
 
-See also variables `auto-save-directory-fallback',
-`efs-auto-save' and `efs-auto-save-remotely'.")
+See also variables `auto-save-directory-fallback', `auto-save-hash-p',
+`ange-ftp-auto-save' and `ange-ftp-auto-save-remotely'.")
 
 (defvar auto-save-hash-p nil
   "If non-nil, hashed autosave names of length 14 are used.
@@ -150,15 +145,26 @@ The directory used is `auto-save-hash-directory' regardless of
 Hashing defeats `recover-all-files', you have to recover files
 individually by doing `recover-file'.")
 
-;;; This defvar is in efs.el now, but doesn't hurt to give it here as
-;;; well so that loading first auto-save.el does not abort.
-(or (boundp 'efs-auto-save) (defvar efs-auto-save 0))
-(or (boundp 'efs-auto-save-remotely) (defvar efs-auto-save-remotely nil))
+;;; This defvar is in ange-ftp.el now, but for older versions it
+;;; doesn't hurt to give it here as well so that loading auto-save.el
+;;; does not abort.
+(defvar ange-ftp-auto-save 0
+  "If 1, allows ange-ftp files to be auto-saved.
+If 0, suppresses auto-saving of ange-ftp files.
+Don't use any other value.")
 
-(defvar auto-save-offer-delete nil
-  "*If non-nil, `recover-all-files' offers to delete autosave files
-that are out of date or were dismissed for recovering.
-Special value 'always deletes those files silently.")
+(defvar ange-ftp-auto-save-remotely nil
+  "*If non-nil, causes the auto-save file for an ange-ftp file to be written in
+the remote directory containing the file, rather than in a local directory.
+
+For remote files, this being true overrides a non-nil
+`auto-save-directory'.  Local files are unaffected.
+
+If you want to use this feature, you probably only want to set this
+true in a few buffers, rather than globally.  You might want to give
+each buffer its own value using `make-variable-buffer-local'.
+
+See also variable `ange-ftp-auto-save'.")
 
 ;;;; end of customization
 
@@ -168,7 +174,7 @@ Special value 'always deletes those files silently.")
 (defvar auto-save-directory-fallback (expand-file-name "~/autosave/")
   ;; not user-variable-p, see above
   "Directory used for local autosaving of remote files if
-both `auto-save-directory' and `efs-auto-save-remotely' are nil.
+both `auto-save-directory' and `ange-ftp-auto-save-remotely' are nil.
 Also used if a working directory to be used for autosaving is not writable.
 This *must* always be the name of directory that exists or can be
 created by you, never nil.")
@@ -192,6 +198,10 @@ created by you, never nil.")
 	(if (fboundp 'make-directory)	; V19 or tree dired
 	    (make-directory dir)
 	  (call-process "mkdir" nil nil nil dir))
+	;; This is 1300, aka "d-wx-----T"
+	;; The sticky bit means that you can only delete your own files,
+	;; even if you have write permission in the directory (which is
+	;; moot, since the directory is only writable by owner.)
 	(set-file-modes dir (* 7 8 8))))))
 
 (mapcar (function auto-save-check-directory)
@@ -214,14 +224,10 @@ Offers to autosave all files in the same `auto-save-directory'.  All
 autosave files can then be recovered at once with function
 `recover-all-files'.
 
-Takes care to make autosave files for files accessed through efs
-be local files if variable `efs-auto-save-remotely' is nil.
+Takes care to make autosave files for files accessed through ange-ftp
+be local files if variable `ange-ftp-auto-save-remotely' is nil.
 
 Takes care of slashes in buffer names to prevent autosave errors.
-
-Takes care that autosave files for buffers not visiting any file (such
-as `*mail*') from two simultaneous Emacses don't collide by prepending
-the Emacs pid.
 
 Uses 14 character autosave names if `auto-save-hash-p' is true.
 
@@ -236,12 +242,9 @@ See also function `auto-save-file-name-p'."
   ;; would fail for each new file).
 
   (condition-case error-data
-      (let* ((file-name (or (and (boundp 'buffer-file-truename)
-				 buffer-file-truename
-				 ;; Make sure that the file name is expanded.
-				 (expand-file-name buffer-file-name))
-			    (and buffer-file-name
-				 (expand-file-name buffer-file-name))))
+      (let* ((file-name (or (and (boundp 'buffer-file-truename) ; From jwz,
+				 buffer-file-truename) ; for Emacs 19?
+			    buffer-file-name))
 	     ;; So autosavename looks like #%...#, roughly as with the
 	     ;; old make-auto-save-file-name function.  The
 	     ;; make-temp-name inserts the pid of this Emacs: this
@@ -267,25 +270,25 @@ See also function `auto-save-file-name-p'."
 			    ;; be unslashified twice.  Don't care.
 			    (auto-save-unslashify-name (buffer-name))))
 	     (remote-p (and (stringp file-name)
-			    (fboundp 'efs-ftp-path)
-			    (efs-ftp-path file-name))))
+			    (fboundp 'ange-ftp-ftp-path)
+			    (ange-ftp-ftp-path file-name))))
 	;; Return the appropriate auto save file name:
 	(expand-file-name;; a buffername needs this, a filename not
 	 (if remote-p
-	     (if efs-auto-save-remotely
+	     (if ange-ftp-auto-save-remotely
 		 (auto-save-name-in-same-directory save-name)
 	       ;; We have to use the `fixed-directory' now since the
 	       ;; `same-directory' would be remote.
 	       ;; It will use the fallback if needed.
 	       (auto-save-name-in-fixed-directory save-name))
 	   ;; Else it is a local file (or a buffer without a file, hence
-	       ;; the name-prefix).
+	   ;; the name-prefix).
 	   ;; Hashed files always go into the special hash dir, never
 	   ;; in the same directory, to make recognizing reliable.
 	   (if (or auto-save-directory auto-save-hash-p)
 	       (auto-save-name-in-fixed-directory save-name name-prefix)
 	     (auto-save-name-in-same-directory save-name name-prefix)))))
-    
+
     ;; If any error occurs in the above code, return what the old
     ;; version of this function would have done.  It is not ok to
     ;; return nil, e.g., when after-find-file tests
@@ -393,16 +396,15 @@ Hashed files are not understood, see `auto-save-hash-p'."
 
 (defun auto-save-cyclic-hash-14 (s)
   ;;   "Hash string S into a string of length 14.
-  ;; A 7-bytes cyclic code for burst correction is calculated on a
-  ;; byte-by-byte basis. The polynomial used is D^7 + D^6 + D^3 +1.
   ;; The resulting string consists of hexadecimal digits [0-9a-f].
   ;; In particular, it contains no slash, so it can be used as autosave name."
-  (let ((crc (make-string 7 0))
+  (let ((crc (make-string 8 0))
 	result)
     (mapcar
      (function
       (lambda (new)
-	(setq new (+ new (aref crc 6)))
+	(setq new (+ new (aref crc 7)))
+	(aset crc 7 (aref crc 6))
 	(aset crc 6 (+ (aref crc 5) new))
 	(aset crc 5 (aref crc 4))
 	(aset crc 4 (aref crc 3))
@@ -418,55 +420,22 @@ Hashed files are not understood, see `auto-save-hash-p'."
 			 (aref crc 3)
 			 (aref crc 4)
 			 (aref crc 5)
-			 (aref crc 6)))
+			 (aref crc 6)
+			 (aref crc 7)))
     result))
-
-;; This leaves two characters that could be used to wrap it in `#' or
-;; make two filenames from it: one for autosaving, and another for a
-;; file containing the name of the autosaved filed, to make hashing
-;; reversible.
-(defun auto-save-cyclic-hash-12 (s)
-  "Outputs the 12-characters ascii hex representation of a 6-bytes
-cyclic code for burst correction calculated on STRING on a
-byte-by-byte basis. The used polynomial is D^6 + D^5 + D^4 + D^3 +1."
-  (let ((crc (make-string 6 0)))
-    (mapcar
-     (function
-      (lambda (new)
-        (setq new (+ new (aref crc 5)))
-        (aset crc 5 (+ (aref crc 4) new))
-        (aset crc 4 (+ (aref crc 3) new))
-        (aset crc 3 (+ (aref crc 2) new))
-        (aset crc 2 (aref crc 1))
-        (aset crc 1 (aref crc 0))
-        (aset crc 0 new)))
-     s)
-    (format "%02x%02x%02x%02x%02x%02x"
-            (aref crc 0)
-            (aref crc 1)
-            (aref crc 2)
-            (aref crc 3)
-            (aref crc 4)
-            (aref crc 5))))
 
 
 
 ;;; Recovering files
 
-(defun recover-all-files (&optional silent)
+;; jwz: changed this to also offer to recover auto-saved buffers which
+;; had no associated file name (such as sendmail buffers.)
+(defun recover-all-files ()
   "Do recover-file for all autosave files which are current.
 Only works if you have a non-nil `auto-save-directory'.
-
-Optional prefix argument SILENT means to be silent about non-current
-autosave files.  This is useful if invoked automatically at Emacs
-startup.
-
-If `auto-save-offer-delete' is t, this function will offer to delete
-old or rejected autosave files.
-
 Hashed files (see `auto-save-hash-p') are not understood, use
 `recover-file' to recover them individually."
-  (interactive "P")
+  (interactive)
   (let ((savefiles (directory-files auto-save-directory t "^#"))
 	afile				; the auto save file
 	file				; its original file
@@ -507,17 +476,10 @@ Hashed files (see `auto-save-hash-p') are not understood, use
 Auto-save off in buffer \"%s\" till you do M-x auto-save-mode."
 			    (buffer-name))
 		   (set-buffer obuf)
-		   (sit-for 1))
-	       ;; If not used for recovering, offer to delete
-	       ;; autosave file
-	       (and auto-save-offer-delete
-		    (or (eq 'always auto-save-offer-delete)
-			(yes-or-no-p
-			 (format "Delete autosave file for `%s'? " file)))
-		    (delete-file afile))))))
+		   (sit-for 1))))))
     (if (zerop total)
-	(or silent (message "Nothing to recover."))
+	(message "Nothing to recover.")
       (message "%d/%d file%s recovered." count total (if (= count 1) "" "s"))))
   (if (get-buffer "*Directory*") (kill-buffer "*Directory*")))
 
-;;; end of auto-save.el
+(provide 'auto-save)

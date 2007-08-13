@@ -69,6 +69,7 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "buffer.h"
+#include "chartab.h"
 #include "commands.h"
 #include "elhash.h"
 #include "extents.h"
@@ -460,7 +461,7 @@ the search will still be done on `buffer-file-name'.
 */
        (filename))
 {
-  /* This function can GC.  GC checked 1997.04.06. */
+  /* This function can GC */
   REGISTER Lisp_Object tail, buf, tem;
   struct gcpro gcpro1;
 
@@ -664,6 +665,11 @@ If BASE is an indirect buffer itself, the base buffer for that buffer
 #if 0 /* #### implement this!  Need various changes in insdel.c */
   Lisp_Object buf;
   REGISTER struct buffer *b;
+
+#ifdef I18N3
+  /* #### Doc string should indicate that the buffer name will get
+     translated. */
+#endif
 
   name = LISP_GETTEXT (name);
   buf = Fget_buffer (name);
@@ -980,8 +986,6 @@ as BUFFER means use current buffer.
 	{
 	  int count = specpdl_depth ();
 	  /* lock_file() and unlock_file() currently use current_buffer */
-	  /* #### - dmoore, what if lock_file or unlock_file kill
-	     the current buffer? */
 	  record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
 	  set_buffer_internal (buf);
 	  if (!already && !NILP (flag))
@@ -998,7 +1002,6 @@ as BUFFER means use current buffer.
      display).  We still need to make sure redisplay realizes that the
      contents have potentially altered and it needs to do some
      work. */
-  buf = decode_buffer(buffer, 0);
   BUF_MODIFF (buf)++;
   BUF_SAVE_MODIFF (buf) = NILP (flag) ? BUF_MODIFF (buf) : 0;
   MARK_MODELINE_CHANGED;
@@ -1166,10 +1169,11 @@ VISIBLE-OK.
   return Fget_buffer_create (QSscratch);
 }
 
-DEFUN ("buffer-disable-undo", Fbuffer_disable_undo, 0, 1, "", /*
+/* XEmacs change: Make this argument required because this is a dangerous
+   function. */
+DEFUN ("buffer-disable-undo", Fbuffer_disable_undo, 1, 1, "", /*
 Make BUFFER stop keeping undo information.
 Any undo records it already has are discarded.
-No argument or nil as argument means do this for the current buffer.
 */
        (buffer))
 {
@@ -1210,7 +1214,7 @@ with `delete-process'.
 */
        (bufname))
 {
-  /* This function can call lisp */
+  /* This function can GC */
   Lisp_Object buf;
   REGISTER struct buffer *b;
   struct gcpro gcpro1, gcpro2;
@@ -1237,10 +1241,6 @@ with `delete-process'.
 
   /* Or the echo area.  */
   if (EQ (buf, Vecho_area_buffer))
-    return Qnil;
-
-  /* Or the special invisible internal prin1 buffer. */
-  if (EQ (buf, Vprin1_to_string_buffer))
     return Qnil;
 
   /* Query if the buffer is still modified.  */
@@ -1306,12 +1306,12 @@ with `delete-process'.
      to kill the buffer.  This must be done after the questions
      since anything can happen within yes-or-no-p.  */
 
-  /* Might have been deleted during the last question above */
-  if (!BUFFER_LIVE_P (b))
-    return Qnil;
-
   /* Don't kill the minibuffer now current.  */
   if (EQ (buf, XWINDOW (minibuf_window)->buffer))
+    return Qnil;
+
+  /* Might have been deleted during the last question above */
+  if (!BUFFER_LIVE_P (b))
     return Qnil;
 
   /* When we kill a base buffer, kill all its indirect buffers.
@@ -1342,23 +1342,8 @@ with `delete-process'.
   /* Now there is no question: we can kill the buffer.  */
 
 #ifdef CLASH_DETECTION
-  /* Unlock this buffer's file, if it is locked.  unlock_buffer
-     can both GC and kill the current buffer, and wreak general
-     havok by running lisp code. */
-  GCPRO1 (buf);
+  /* Unlock this buffer's file, if it is locked.  */
   unlock_buffer (b);
-  UNGCPRO;
-  b = XBUFFER (buf);
-
-  if (!BUFFER_LIVE_P (b))
-    return Qnil;
-
-  if (b == current_buffer)
-    {
-      Fset_buffer (Fother_buffer (buf, Qnil, Qnil));
-      if (b == current_buffer)
-	return Qnil;
-    }
 #endif /* CLASH_DETECTION */
 
   {
@@ -1382,26 +1367,7 @@ with `delete-process'.
 	&& BUF_SAVE_MODIFF (b) < b->auto_save_modified)
       {
 	if (!NILP (Vdelete_auto_save_files))
-	  {
-	    /* deleting the auto save file might kill b! */
-	    /* #### dmoore - fix this crap, we do this same gcpro and
-	       buffer liveness check multiple times.  Let's get a
-	       macro or something for it. */
-	    GCPRO1 (buf);
-	    internal_delete_file (b->auto_save_file_name);
-	    UNGCPRO;
-	    b = XBUFFER (buf);
-	    
-	    if (!BUFFER_LIVE_P (b))
-	      return Qnil;
-
-	    if (b == current_buffer)
-	      {
-		Fset_buffer (Fother_buffer (buf, Qnil, Qnil));
-		if (b == current_buffer)
-		  return Qnil;
-	      }
-	  }
+	  internal_delete_file (b->auto_save_file_name);
       }
 
     uninit_buffer_markers (b);
@@ -1582,9 +1548,7 @@ set_buffer_internal (struct buffer *b)
 	{
 	  /* Just reference the variable
 	     to cause it to become set for this buffer.  */
-	  /* Use find_symbol_value_quickly to avoid an unnecessary O(n)
-	     lookup. */
-	  (void) find_symbol_value_quickly (XCAR (tail), 1);
+	  (void) find_symbol_value (sym);
 	}
     }
 
@@ -1592,7 +1556,9 @@ set_buffer_internal (struct buffer *b)
 
   if (old_buf)
     {
-      LIST_LOOP (tail, old_buf->local_var_alist)
+      for (tail = old_buf->local_var_alist; 
+           !NILP (tail);
+           tail = XCDR (tail))
 	{
 	  Lisp_Object sym = XCAR (XCAR (tail));
 	  Lisp_Object valcontents = XSYMBOL (sym)->value;
@@ -1601,11 +1567,7 @@ set_buffer_internal (struct buffer *b)
 	    {
 	      /* Just reference the variable
 		 to cause it to become set for this buffer.  */
-	      /* Use find_symbol_value_quickly with find_it_p as 0 to avoid an
-		 unnecessary O(n) lookup which is guaranteed to be worst case.
-		 Any symbols which are local are guaranteed to have been
-		 handled in the previous loop, above. */
-	      (void) find_symbol_value_quickly (sym, 0);
+	      (void) find_symbol_value (sym);
 	    }
 	}
     }
@@ -1758,8 +1720,9 @@ DEFUN ("kill-all-local-variables", Fkill_all_local_variables, 0, 0, 0, /*
 Switch to Fundamental mode by killing current buffer's local variables.
 Most local variable bindings are eliminated so that the default values
 become effective once more.  Also, the syntax table is set from
-`standard-syntax-table', local keymap is set to nil,
-the abbrev table is set from `fundamental-mode-abbrev-table',
+`standard-syntax-table', the category table is set from
+`standard-category-table' (if support for Mule exists), local keymap is set
+to nil, the abbrev table is set from `fundamental-mode-abbrev-table',
 and all specifier specifications whose locale is the current buffer
 are removed.  This function also forces redisplay of the modeline.
 
@@ -2199,8 +2162,18 @@ complex_vars_of_buffer (void)
   defs->upcase_table = Vascii_upcase_table;
   defs->case_canon_table = Vascii_canon_table;
   defs->case_eqv_table = Vascii_eqv_table;
+#ifdef MULE
+  defs->mirror_downcase_table = Vmirror_ascii_downcase_table;
+  defs->mirror_upcase_table = Vmirror_ascii_upcase_table;
+  defs->mirror_case_canon_table = Vmirror_ascii_canon_table;
+  defs->mirror_case_eqv_table = Vmirror_ascii_eqv_table;
+#endif  
   defs->syntax_table = Vstandard_syntax_table;
-
+  defs->mirror_syntax_table =
+    XCHAR_TABLE (Vstandard_syntax_table)->mirror_table;
+#ifdef MULE
+  defs->category_table = Vstandard_category_table;
+#endif
   defs->modeline_format = build_string ("%-");  /* reset in loaddefs.el */
   defs->case_fold_search = Qt;
   defs->selective_display_ellipses = Qt;
@@ -2260,6 +2233,9 @@ complex_vars_of_buffer (void)
     buffer_local_flags.case_canon_table = resettable;
     buffer_local_flags.case_eqv_table = resettable;
     buffer_local_flags.syntax_table = resettable;
+#ifdef MULE
+    buffer_local_flags.category_table = resettable;
+#endif
     
     buffer_local_flags.modeline_format = make_int (1);
     buffer_local_flags.abbrev_mode = make_int (2);
@@ -2278,6 +2254,9 @@ complex_vars_of_buffer (void)
     buffer_local_flags.cache_long_line_scans = make_int (0x2000);
 #endif
     buffer_local_flags.buffer_file_type = make_int (0x4000);
+#ifdef MULE
+    buffer_local_flags.file_coding_system = make_int (0x8000);
+#endif
     
     /* #### Warning, 0x4000000 (that's six zeroes) is the largest number
        currently allowable due to the XINT() handling of this value.
@@ -2381,6 +2360,7 @@ A string is printed verbatim in the modeline except for %-constructs:
         or print Bottom or All.
   %n -- print Narrow if appropriate.
   %t -- Under MS-DOS, print T if files is text, B if binary.
+  %C -- under XEmacs/Mule, print the mnemonic for `file-coding-system'.
   %[ -- print one [ for each recursive editing level.  %] similar.
   %% -- print %.                %- -- print infinitely many dashes.
 Decimal digits after the % specify field width to which to pad.
@@ -2411,6 +2391,12 @@ Automatically becomes buffer-local when set in any fashion.
   DEFVAR_BUFFER_LOCAL ("case-fold-search", case_fold_search /*
 *Non-nil if searches should ignore case.
 Automatically becomes buffer-local when set in any fashion.
+
+BUG: Under XEmacs/Mule, translations to or from non-ASCII characters
+ (this includes chars in the range 128 - 255) are ignored by
+ the string/buffer-searching routines.  Thus, `case-fold-search'
+ will not correctly conflate a-umlaut and A-umlaut even if the
+ case tables call for this.
 */ );
 
   DEFVAR_BUFFER_LOCAL ("fill-column", fill_column /*
@@ -2474,6 +2460,58 @@ This variable is meaningful on MS-DOG and Windows NT.
 On those systems, it is automatically local in every buffer.
 On other systems, this variable is normally always nil.
 */ );
+
+#ifdef MULE
+  DEFVAR_BUFFER_DEFAULTS ("default-file-coding-system", file_coding_system /*
+Default value of `file-coding-system' for buffers that do not override it.
+This is the same as (default-value 'file-coding-system).
+This value is used both for buffers without associated files and
+for buffers whose files do not have any apparent coding system.
+See `file-coding-system'.
+*/ );
+
+  DEFVAR_BUFFER_LOCAL ("file-coding-system", file_coding_system /*
+*Current coding system for the current buffer.
+When the buffer is written out into a file, this coding system will
+be used for the encoding.  Automatically buffer-local when set in
+any fashion.  This is normally set automatically when a file is loaded
+in based on the determined coding system of the file (assuming that
+`file-coding-system-for-read' is set to `autodetect', which calls
+for automatic determination of the file's coding system).  Normally the
+modeline indicates the current file coding system using its mnemonic
+abbreviation.
+
+The default value for this variable (which is normally used for
+buffers without associated files) is also used when automatic
+detection of a file's encoding is called for and there was no
+discernable encoding in the file (i.e. it was entirely or almost
+entirely ASCII).  The default value should generally *not* be set to
+nil (equivalent to `no-conversion'), because if extended characters
+are ever inserted into the buffer, they will be lost when the file is
+written out.  A good choice is `iso-2022-8' (the simple ISO 2022 8-bit
+encoding), which will write out ASCII and Latin-1 characters in the
+standard (and highly portable) fashion and use standard escape
+sequences for other charsets.  Another reasonable choice is
+`escape-quoted', which is equivalent to `iso-2022-8' but prefixes
+certain control characters with ESC to make sure they are not
+interpreted as escape sequences when read in.  This latter coding
+system results in more \"correct\" output in the presence of control
+characters in the buffer, in the sense that when read in again using
+the same coding system, the result will virtually always match the
+original contents of the buffer, which is not the case with
+`iso-2022-8'; but the output is less portable when dealing with binary
+data -- there may be stray ESC characters when the file is read by
+another program.
+
+`file-coding-system' does *not* control the coding system used when
+a file is read in.  Use the variables `file-coding-system-for-read'
+and `file-coding-system-alist' for that.  From a Lisp program, if
+you wish to unilaterally specify the coding system used for one
+particular operation, you should bind the variable
+`overriding-file-coding-system' rather than changing the other two
+variables just mentioned, which are intended to be used for
+global environment specification.  */ );
+#endif /* MULE */
 
   DEFVAR_BUFFER_LOCAL ("auto-fill-function", auto_fill_function /*
 Function called (if non-nil) to perform auto-fill.

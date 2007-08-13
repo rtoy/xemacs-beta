@@ -1,0 +1,1106 @@
+Thu Aug  1 13:26:02 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el: made url-insert-file-contents  interactive
+
+* url-sysdp.el:
+added data-directory to sysdep version of x-library-search-path for
+emacs under windows 95/nt
+
+Tue Jul 23 00:19:22 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el: fix for no_proxy checking for local files
+
+Mon Jul 22 03:22:52 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: added stub for make-local-hook - more Emacs 19.2x lossage.
+
+Sun Jul 21 20:10:42 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-vars.el: Created version 1.0.40
+
+* url.el:
+In url-after-change-function, don't change buffers if its been killed.
+
+Fri Jul 19 04:39:08 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-vars.el: Created version 1.0.39
+
+Thu Jul 18 14:06:54 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-vars.el: duh - make url-current-server buffer local.
+
+Fri Jul 12 06:10:02 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el: Only match against the hostname in the URL for the no_proxy checking
+
+* url-hash.el: removed old aliases for w3-*hash functions
+
+Thu Jul 11 05:10:47 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: version of valid-color-name-p and device-class for the OS/2
+presentation manager.
+
+* url.el, url-file.el: handle : in filenames gracefully
+
+* url-vars.el: Created version 1.0.38
+
+Wed Jul 10 23:33:39 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* dist.Makefile: fixed install target - duh
+
+* url-irc.el: fixed bad variable name
+
+* mm.el: require cl to avoid stupid compiler errors
+
+* url.el: new function url-remove-compressed-extensions
+
+* url-vars.el, mm.el: *** empty log message ***
+
+* url-cookie.el, url-vars.el:
+can now control when/how/if an HTTP cookie is accepted
+
+Tue Jul  9 21:01:15 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: added more overlay functions
+
+* url-vars.el: Created version 1.0.37
+
+* url-vars.el, dist.Makefile, mm.el: *** empty log message ***
+
+* url.el: autoload url-nfs
+
+* url-http.el: *** empty log message ***
+
+* mm.el: Fixed mm-save-binary-file
+
+* url-vars.el: fix for mule stuff Emacs vs. XEmacs
+
+* url-wais.el: *** empty log message ***
+
+* url.el: turn off url-download-minor-mode stuff
+
+Mon Jul  1 15:32:13 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: Added stub for buffer-substring-no-properties
+
+* url-sysdp.el: Fix to device-or-frame-type to work under Emacs 19.28
+
+* url-sysdp.el: Added in stubs for plist-put and plist-get, and an Emacs 19.2x
+specific version of facep.  everything almost works in 19.28 now.
+
+Sun Jun 30 18:12:20 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: Changed email address info
+
+Fri Jun 28 16:08:08 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Fix for stupid problem in mm-copy-tree
+
+Wed Jun 26 16:37:12 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-news.el, url.el:
+Patch from Darrell Kindred <dkindred+@cmu.edu> for news problems
+  1. nnheader-init-server-buffer isn't called, so the
+     first call to nntp-open-server fails.  (Patch inserts
+     a call to nnheader-init-server-buffer in url-news-open-host.)
+  2. The `&', '<', and '>' characters don't get turned into
+     entities in news from lines, subject, body, etc.  The result
+     is that "William Perry <wmperry@monolith.spry.com>" shows up
+     as "William Perry @monolith.spry.com>".  (The patch moves
+     w3-insert-entities-in-string to url.el and renames it to
+     url-insert-entities-in-string, then calls it from url-format-news.
+  3. When displayed, news articles get an extra, empty
+     "References" entry.  (Patch inserts a `(delete "" ...)'
+     to remove the trailing empty reference from the list.)
+
+Tue Jun 25 18:44:30 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Potential fix for cl's version of copy-tree fucking things up in mm.el
+
+* url-sysdp.el: Added bogus definition of set-marker-insertion-type
+
+Fri Jun 14 17:45:16 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-cookie.el: fixed bug in cookie support
+
+* url-cookie.el: Require cl for the def. of assoc*
+
+* url-vars.el, url.el:
+Fixes for mule from MORIOKA Tomohiko <morioka@jaist.ac.jp>
+
+Thu Jun 13 00:20:04 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-misc.el, url.el: fixed asynch stuff through a proxy
+
+Wed Jun 12 04:00:39 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-nfs.el: Initial revision
+
+* url.el: Added 'nfs' url type as per the WebNFS specification
+
+Tue Jun 11 17:28:53 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-vars.el: *** empty log message ***
+
+* url-irc.el: Fixed bug when no channel was specified in the URL
+
+* url.el: Added IRC loader
+
+* url-irc.el: Initial revision
+
+Mon Jun 10 18:58:03 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* md5.el: compilation warnings removed
+
+* md5.el:
+New version of md5.el that actually incorporates an md5 implementation
+in lisp!  Whoah.
+
+Sun Jun  9 17:32:55 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-http.el:
+protect against malformed HTTP URLs getting passed in via url-retrieve
+
+* url.el: fixed problem with writing out a history file for the first time
+
+* url-file.el: fixed problem with ftp links
+
+* url-sysdp.el, dist.Makefile: Initial revision
+
+* base64.el, descrip.mms, docomp.el, md5.el, mm.el, ssl.el, url-cookie.el, url-file.el, url-gopher.el, url-hash.el, url-http.el, url-mail.el, url-misc.el, url-news.el, url-parse.el, url-pgp.el, url-vars.el, url-wais.el, url.el, urlauth.el:
+Initial rev
+
+Wed Jun  5 14:31:40 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-cookie.el: added :test to list of keywords url-cookie provides
+
+Mon Jun  3 15:04:57 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-vars.el, url-mail.el:
+Added stub url-mail function that is just a wrapper around `mail' that
+will signal an error if the user says no to cancelling an unsent
+message.
+
+Thu May 30 14:05:07 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: Added symbol-value-in-buffer
+
+* url.el: made url-insert-file-contents never be asynch... duh
+
+* url-sysdp.el: Added insert-file-contents-literally function
+
+Wed May 29 18:10:31 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el:
+New 'minor mode' for displaying whether you are downloading a url in the background
+
+* url-news.el: few fixes
+
+* url-http.el: *** empty log message ***
+
+* url-http.el, url-vars.el, url.el:
+Few fixes for not sending the user-agent at all if url-privacy-level
+dictates so
+
+* url.el: Make 'nntp' url type synonymous w/'news'
+
+Tue May 28 04:36:55 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el: *** empty log message ***
+
+* mm.el, url-file.el, url-vars.el, url.el:
+Standardize MULE checking between Emacs and XEmacs - use featurep 'mule
+
+* url.el: fixed problem with detection of process-(get|put)
+
+* ssl.el: Changed the way to specify the ssl program
+
+Sat May 25 14:42:53 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el: fixed problem in url-open-stream where it would always abort the
+connection - have to hate bad variable initialization.
+
+Fri May 24 18:17:17 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el: Asynch callbacks work for file downloads
+
+* url.el: Changed sit-for to sleep-for to make sure it actually SITS!
+
+* url.el: Retry connection automatically if you get the infamous 'address
+already in use' error.
+
+* url.el, url-wais.el, url-pgp.el, url-file.el, mm.el:
+No longer use mm-insert-file-contents lossage
+
+* url-file.el: Fix for url-host-is-local-p for urls like file:///blahblah/
+
+Thu May 23 14:18:45 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: synching up with XEmacs 19.14's version
+
+* url-sysdp.el: Added lots more device functions
+
+* url.el: Fixed url-extract-from-cache so that it wouldn't say 'loading blah'
+
+Wed May 22 17:07:25 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el: Fixed problems with asynch image loading in emacs-w3
+
+Sun May 19 02:13:46 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-vars.el: *** empty log message ***
+
+Fri May 17 14:55:16 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el, url-vars.el, url-http.el:
+No longer do Session-ID - subsumed by the cookie support
+
+Mon May 13 15:20:18 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-mail.el: *** empty log message ***
+
+* url.el: If the user does not have a history file already, always default to
+using the Emacs-style history instead of prompting for it.
+
+Fri May 10 23:06:34 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el: duh
+
+* url.el: New url-list-processes function
+
+Thu May  2 21:34:50 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el: When stripping off data from a URL for viewing, leave some indication
+that a query was removed if necessary
+
+* url-http.el: Always send off the attributes of URLs to the http server...
+
+Wed May  1 15:52:10 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-vars.el: fixed docstring of url-inhibit-uncompression
+
+* mm.el: *** empty log message ***
+
+* url-http.el:
+No longer conditionalize some stuff on after-change-functions - all
+Emacs19s support this.
+
+Tue Apr 30 16:51:07 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: Added definition of alist-to-plist
+
+* url-cookie.el: Don't downcase the cookie name stuff
+
+* mm.el: changed calling of mm-parse-args... 3rd arg now specifies whether or
+not to never downcase the name portion of the name/value pairs.
+
+Tue Apr 23 16:38:24 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-cookie.el: Added in the security measures outlined in the cookie spec.
+
+Mon Apr 22 16:28:00 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el: renamed url-cookies.el to url-cookie
+now shrinks the error window down if it cannot make a connection, and
+kills the buffer afterwards
+
+* url-http.el, url-cookie.el, dist.Makefile:
+renamed url-cookies.el to url-cookie
+
+* base64.el: Much faster version of base64-decode-region, courtesy of Francesco
+Potorti` <F.Potorti@cnuce.cnr.it>
+
+Fri Apr 12 03:51:20 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el, url-http.el: *** empty log message ***
+
+Thu Apr 11 21:34:18 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-cookie.el: Now cleans up the cookie database when it writes it to disk
+
+* url.el: *** empty log message ***
+
+* url-cookie.el: Fixed bad logic in finding matching paths for cookies.
+
+* url-http.el, url-cookie.el: Now supports netscape-style cookies
+
+Wed Apr 10 14:52:43 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* dist.Makefile, url-cookie.el: Beginnings of netscape-style cookie support
+
+* url-cookie.el: Initial revision
+
+* url-news.el: *** empty log message ***
+
+* url-file.el:
+file:// hrefs now understand using your local hostname instead of
+localhost to mean local file access.  Sheesh.
+
+* url-file.el:
+Fix for local/remote files with ':' in them getting parsed as full URLs.
+
+Tue Apr  9 20:44:07 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el:
+url-truncate-url-for-viewing can now take an optional width parameter.
+If an unknown URL type is found, put quotes around it in the error
+message so that its easier to know what exactly wasn't recognized.
+
+Fri Apr  5 14:52:42 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el, url-http.el: removed excess whitespace from user-agent line
+
+Wed Apr  3 15:55:16 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el, url-vars.el: *** empty log message ***
+
+* url-http.el: Now supports proxy authentication
+
+Tue Apr  2 17:16:23 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: Some extent functions for emacs19
+
+Sun Mar 31 02:38:41 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* base64.el: added data the the LCD stuff
+
+* dist.Makefile: Initial revision
+
+* mm.el: *** empty log message ***
+
+Wed Mar 27 19:51:08 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el: Can now read and write the NCSA global history format version 2.
+
+* base64.el: Fixed _stupid_ problem in base64-decode-region
+
+Mon Mar 25 14:53:56 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: Changed some pointers to ben wing and pearl software.
+
+Wed Mar 20 14:01:04 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el: url-file-attributes will no longer signal an error
+
+Sun Mar  3 01:59:59 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* base64.el: added base64-decode-region
+
+Fri Feb 23 01:58:21 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: *** empty log message ***
+
+Thu Feb 22 14:14:12 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el:
+Fixed problem writing mosaic and netscape style history lists.  D'ohh!
+
+Wed Feb 21 15:35:04 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: Added stub for add-minor-mode
+
+* url-sysdp.el:
+Few fixes for #%!@ damn emacsen that don't sanely deal with make-face et. al
+on a TTY interface.
+
+Sun Feb 18 06:26:03 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-news.el: *** empty log message ***
+
+Sat Feb 17 06:10:51 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el: Some url expansion problems fixed
+
+* url.el: fixed autoload for url-news
+
+* url.el, mm.el: *** empty log message ***
+
+* url.el: Fixed problem with unescaped . in url-remove-relative-links - D'ohh!
+
+Tue Jan 23 13:47:43 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el: Don't choke and die if you can't find ange-ftp
+
+Sun Jan 14 22:41:43 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-news.el: Fixed possible problem in recognizing new versions of GNUS
+
+Fri Jan  5 17:45:31 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-parse.el:
+Fixed some ftp problems that arose when url-generic-parse-url left a
+trailing ':' on the hostname sometimes.
+
+Wed Jan  3 18:40:54 1996  William Perry  <wmperry@cs.indiana.edu>
+
+* url-vars.el: Fixed doc buglet in url-privacy-level
+
+* url.el: *** empty log message ***
+
+* url.el: Now no longer barfs on writing netscape/mosaic history files
+
+Wed Dec 20 15:08:24 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el: No longer cache viewer information to disk... bad bad bad
+
+Tue Dec 12 15:21:13 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el:
+Added stubs for make-face set-face-foreground and set-face-background
+for non-X emacsen
+
+Sun Dec 10 16:27:41 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: Added stubs for face-property and set-face-property
+
+Fri Dec  8 15:55:20 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el: Now correctly trims down urls like http://foo.bar.com/../x/y/z
+
+Wed Dec  6 14:28:43 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el: Fixed problem in url-handle-no-scheme
+
+* url.el: Added in stuff to do automatic link conversion from something like
+'spry' to 'http://www.spry.com/' when typing in links by hand.
+
+Sun Dec  3 19:06:00 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el:
+url-view-url now returns nil instead of "" for documents that don't have
+a URL associated with them.
+
+* url-news.el: Now checks to make sure that you have a correct version of GNUS
+installed and reports error messages instead of choking and dying.
+
+* url-news.el: The news support now requires (ding) GNUS
+
+Sat Dec  2 16:46:15 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-file.el, url-gopher.el, url-news.el:
+Removed bogus use of <div1> in generated HTML
+
+Wed Nov 29 15:06:58 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: Define x-font-regexp-foundry-and-family for Emacs 19
+
+Fri Nov 24 22:54:09 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url.texi:
+Lots of changes and restructuring - will not compile at all right now
+
+Sun Nov 19 22:35:20 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* docomp.el: *** empty log message ***
+
+* mm.el, url-misc.el: Fixed some problems with MULE and code conversion
+
+* urlauth.el:
+Removed bogus call/definition of 'warn' instead of using url-warn.  Bleah.
+
+Fri Nov 17 18:48:16 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el: Fixed writing of the emacs-style global history file
+
+* url-hash.el:
+Fixed hashtable stuff under XEmacs - the key of a hashtable must be
+able to compare with 'eq', not 'equal', so had to change it to use
+symbols instead of the url string.
+
+* url.el: Default to using user-mail-address for url-pgp/pem-entity and
+url-personal-mail-address
+
+* url-parse.el: Fixed problem with parsing url fragments
+
+Wed Nov 15 16:49:31 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-file.el:
+Fixed some bad HTML that made the new parser break when it implied a
+</pre> tag
+
+Tue Nov 14 01:23:13 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-vars.el, url.el: Trying to make OS/2 happy with our CRLF handling
+
+Fri Nov 10 17:41:39 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-gopher.el: Fixed possible screwup in url-grok-gopher-line
+
+Wed Nov  1 15:21:39 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-http.el:
+Always default to basic authentication if no www-authenticate header was returned
+
+* url.el:
+Don't leave backup copies of w3-hotlist-file or url-global-history-file
+
+Sun Oct 29 02:38:49 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el: Don't do cacheing if doing asynchronous retrieval
+
+* url-parse.el: *** empty log message ***
+
+* url-file.el: Fixed a typo
+
+* url-parse.el: Now unescapes the hostname part of a URL if necessary
+
+Sat Oct 28 04:01:56 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-vars.el, url.el:
+Now only saves the history list to disk via the timer if the list has
+changed since the last time.
+
+* url.el: *** empty log message ***
+
+* url-parse.el: Now correctly handles the ;xx=yy attributes on URLs, etc.
+
+* mm.el: Added some new content-transfer-encodings ala the HTTP/1.1 draft
+
+Wed Oct 25 22:50:55 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url.el: Extended url-truncate-url-for-viewing to actually do something.
+Really long URLs should no longer look like shit for V/v or mouse
+tracking viewing.  Could be fairly expensive string/GC wise
+
+* url-parse.el:
+Fixed problem in parsing xxx@yyy hostnames in url-generic-parse-url
+
+Sun Oct 15 22:17:06 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-http.el: *** empty log message ***
+
+* url-parse.el: No longer hangs on really fucking long URLs
+
+* url-hash.el: *** empty log message ***
+
+* url-vars.el: Fixed regexp so it won't blow up in emacs18
+
+* url-http.el: *** empty log message ***
+
+* url-gopher.el: Fixed problem with tn3270 and telnet links from a gopher page.
+
+* url-misc.el:
+Fixed problem with telnet/tn3270/rlogin URLs popping up a bogus `Unkown' buffer
+
+Tue Oct 10 13:28:40 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-mail.el, url-http.el, url-file.el: Fixed header lines
+
+Mon Oct  9 02:54:32 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: *** empty log message ***
+
+Sun Oct  8 23:27:54 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Fixed bug in mm-parse-args where it would (almost) always tack an
+empty/unneeded ("") at the end of the list or argument/value pairs
+
+* url-sysdp.el: *** empty log message ***
+
+Mon Oct  2 13:02:40 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-http.el: Now sends the "Server" header on all requests, ala HTTP/1.1
+
+* url.el: *** empty log message ***
+
+Thu Sep 28 13:18:17 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-file.el, url.el: *** empty log message ***
+
+Sun Sep 24 17:13:14 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: Added def of find-face
+
+* url-vars.el:
+New variable url-extensions-header that is the list of http extensions
+we support
+
+* url-http.el: *** empty log message ***
+
+* url-http.el:
+Improved url-parse-viewer-types to only stick something in the accept
+list once
+
+Sat Sep 23 23:13:29 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* docomp.el, url.texi, descrip.mms, url-file.el, url-gopher.el, url-http.el, url-mail.el, url-misc.el, url-news.el, url-pgp.el, url-wais.el, url.el, urlauth.el:
+*** empty log message ***
+
+* url-parse.el: Initial revision
+
+* url.el, docomp.el: *** empty log message ***
+
+* docomp.el, url-gopher.el, url-hash.el, url-http.el, url-mail.el, url-misc.el, url-news.el, url-pgp.el, url-vars.el, url-wais.el, url.el, urlauth.el, url-file.el:
+Initial revision
+
+* descrip.mms: *** empty log message ***
+
+Wed Sep 20 13:46:55 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: *** empty log message ***
+
+Mon Sep 18 18:13:14 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: *** empty log message ***
+
+Sun Sep 17 16:54:09 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: *** empty log message ***
+
+* url-sysdp.el:
+make-hashtable now finds the next highest prime for the initial size.
+
+* url-sysdp.el: Added def of clrhash
+
+* url-sysdp.el: *** empty log message ***
+
+* url-sysdp.el: Added hashtable functions
+
+Sat Sep 16 01:37:18 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Some MULE stuff
+
+* mm.el: *** empty log message ***
+
+Mon Sep 11 14:32:40 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: *** empty log message ***
+
+Sun Sep 10 23:26:47 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: Added defvar for x-library-search-path
+
+Sun Sep  3 18:56:21 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: put in appropriate test clauses for the bulitin viewers that have a
+'needsx11' tag present.
+
+* url-sysdp.el: fixed typo in device-mm-width
+
+Wed Aug 30 20:25:26 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Applied patch from jbw@cs.bu.edu (Joe Wells) for handling invalid
+mailcap entries gracefully
+
+Sat Aug 26 06:21:20 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: Added split-string
+
+Fri Aug 25 18:56:55 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: Added definition of try-font-name
+
+* url-sysdp.el: *** empty log message ***
+
+Wed Aug 23 19:51:43 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Added a default mpeg audio player
+
+Sat Aug 19 23:26:18 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: *** empty log message ***
+
+* mm.el: Some MULE fixes for mm-insert-file-contents
+
+* mm.el:
+Added image/* -> open %s mapping for external viewer if running under NS
+
+Sat Aug 12 00:54:10 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el:
+Always set coding-system to *noconv* in MULE when inserting file contents
+
+Tue Aug  1 15:54:26 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: *** empty log message ***
+
+Mon Jul 31 04:21:42 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Some NeXT viewers added
+
+Sun Jul 23 17:12:46 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Moved some less standard extensions (.ai -> postscript, etc) to the
+end of the list so that they won'tbe picked up as the default
+extension when viewing files.
+
+Thu Jun 29 14:55:14 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el:
+Various patches from  Katsumi Yamaoka <yamaoka@ga.sony.co.jp> Katsumi Yamaoka <yamaoka@ga.sony.co.jp> for MULE stuff
+]
+
+Tue Jun 27 04:18:13 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: *** empty log message ***
+
+Sun Jun 25 20:03:18 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: *** empty log message ***
+
+* url-sysdp.el: Some more device-* functions
+
+* url-sysdp.el: More NS problems resolved
+
+* url-sysdp.el: Fixed problem in w3-device-class on NeXTstep
+
+* mm.el, url-sysdp.el:
+Continue movement to using w3-sysdp.el defined functions instead of
+url-* funcs
+
+Mon Jun 19 12:46:46 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: *** empty log message ***
+
+* url-sysdp.el: Fixed problem in device-class with arg not being optional
+
+Sun Jun 18 21:41:36 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el:
+Fixed bug in emacs-19 version of device-class on non-color displays
+
+* url-sysdp.el: Rewrote device-class
+Added device-pixel-width and device-pixel-height
+
+* url-sysdp.el: *** empty log message ***
+
+Sat Jun 17 16:35:46 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: Few more bugfixes
+
+* url-sysdp.el: Fixes for nextstep
+
+* url-sysdp.el:
+Fixed definition of device-class so that it won't choke and die under
+NeXTstep.
+
+Fri Jun 16 01:10:44 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: Removed scrollbar functions.
+
+Wed Jun 14 23:30:43 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el:
+Changed sysdep-defalias to make sure that 'def' is fboundp if its a
+symbol, so that bogus defs of make-frame, etc, are not created in
+emacs18
+
+* url-sysdp.el: More functions added
+
+* mm.el: Few things to get a nice clean compile using w3-sysdp
+
+Tue Jun 13 15:38:32 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: *** empty log message ***
+
+Mon Jun 12 15:09:51 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* descrip.mms:
+Added back in the requiring of w3-wemac - just too much different
+stuff between it and even 19.10.
+
+* descrip.mms:
+Added the VMS build file from Richard Levitte <levitte@vms.stacken.kth.se>
+
+* descrip.mms: Initial revision
+
+Mon May 29 18:10:13 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Removed lots of function documentation and left it as comments.  These
+functions are not meant to be seen by everyone, and this saves space
+in the .elc files.
+
+Thu May 25 16:55:24 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Added in a bunch of new file extensions.
+VRML stuff turned on by default.
+
+Mon May  8 16:20:30 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* ssl.el: Initial revision
+
+Sun May  7 15:58:25 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Fixed typo that made mm-play-sound-file always show up as the sound
+player.  Ack.
+
+* base64.el: Made a few performance tweaks (macros)
+
+* mm.el: mm-parse-args can now take an 'allow-math' flag, so that name/value
+pairs can look like '*=', etc.
+
+* base64.el: Removed dependency on url.el
+
+* mm.el: Now uses the base64.el package to do decoding
+
+* base64.el: Initial revision
+
+Sat May  6 17:14:12 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Reorded text/plain viewers again
+
+Tue Apr 25 17:39:48 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: More content-transfer-encodings
+
+* mm.el: New function to decode quoted printable
+
+Wed Apr 19 03:25:01 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: Updated to latest version from XEmacs
+
+* url-sysdp.el: Removed keywords
+
+Sun Apr 16 05:14:10 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Changes to mm-parse-args to make it more rfc822-y.
+
+Fri Apr 14 23:48:49 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Changed keywords
+
+* md5.el: Added keywords
+
+* mm.el: Reverse 'passed' list in mm-mime-info to get it back in the original
+order.  Because the loop through the main list puts them in reversed
+order.
+
+* mm.el: Replaced stupid mistake of using w3-dump-to-disk as a function
+
+Tue Apr 11 23:11:58 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: Added some more stuff from chuck
+
+Mon Apr 10 21:31:13 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: MM will now play sounds internally if in XEmacs and nas-sound or
+native-sound is compiled in.
+
+Tue Mar 28 15:19:18 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Fixed concat'ing of ints
+
+Sun Mar 26 05:24:03 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Added default dumper for application/octet-stream
+
+Sat Mar 25 22:23:46 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Fixes for emacs 18.59
+
+* url-sysdp.el: A few new functions for the latest and greatest beta
+
+Thu Mar 16 16:56:59 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: *** empty log message ***
+
+* mm.el: Fixed viewers once and for all.
+
+* mm.el:
+Fixed unencoding of mime viewers when requesting the entire viewer data.
+
+* md5.el: Initial revision
+
+Mon Mar 13 05:51:41 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Lots and lots of doc fixes to meet FSF/GNU guidelines.
+
+* mm.el: Few doc string fixes
+
+Sat Mar 11 21:41:47 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el:
+Fixed mm-mime-info so that it returns the correctly unescaped mime viewer
+
+Wed Mar  1 16:22:46 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el: Removed function call causing problems
+
+Sat Feb 25 22:23:46 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* url-sysdp.el:
+Removed anonymous lambda without 'function' wrapper for WinEmacs and
+early versoins of lucid emacs.
+
+Sat Feb 18 19:15:37 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Fixed a few compilation warnings.
+
+* url-sysdp.el: Initial revision
+
+Sun Feb  5 17:12:25 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: *** empty log message ***
+
+* mm.el: Rewrote how viewers are chosen if more than one passes its test.  Use
+sort, with funky function.  Basically, fully-specified MIME types with
+lisp viewers take precedence, then lisp-viewers, then fully-specified.
+
+* mm.el: Added a few more default viewers
+
+Sat Jan 28 06:49:34 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Added headers for finder package
+
+Thu Jan 26 04:56:08 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Removed some more dependencies on w3.
+
+Mon Jan 23 16:15:15 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Few changes to how it writes into mm-mime-data
+
+Sat Jan 21 17:50:04 1995  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: replaced all occurances of htmlplus with html
+
+Mon Dec 26 05:15:28 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* url.texi: *** empty log message ***
+
+* mm.el: Updated copyright notices for 1995
+
+Sun Dec 25 18:36:53 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Added default viewer for text/enriched.
+
+* mm.el: Added in checks for windows-nt system-type when figuring out the path
+separator char.
+
+Sat Dec 24 20:11:57 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* url.texi: *** empty log message ***
+
+Mon Dec 12 05:25:46 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Changed lots of the version variables so that they don't rely on
+having the RCS headers in them.
+
+Sun Dec 11 07:18:44 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Added new function mm-type-to-file that will take a MIME-type as its
+argument and return the file spec.
+
+Mon Nov 28 17:11:38 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: More misc. name changes
+
+Wed Nov  2 17:02:24 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* url.texi: *** empty log message ***
+
+* mm.el: Let the variable shell-file-name take precedence over environment
+variables and guessing
+
+* url.texi: Initial revision
+
+Fri Sep 16 17:18:03 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Lots of little fixes
+
+Sun Aug 21 14:20:50 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Fixed problem on ms-dos/ms-windows systems where I was still using :
+as the path separator instead of ;
+
+Sun Aug 14 20:11:45 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: More fixes to work under DOS/Windows
+
+Sat Aug  6 15:51:17 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: *** empty log message ***
+
+* mm.el: New viewer for multipart/* messages.
+
+Mon Aug  1 13:43:43 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Lots more default mime viewers
+
+Sun Jul 24 19:32:43 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: New defaults for x-gzip and a few multipart styles.
+
+* mm.el: Changed mm-possible-viewers to return a sorted list.  Favors exact
+matches (text/html) before wildcard (text/h* or text/*)
+
+* mm.el: Changed all references to wmperry@indiana.edu to use w3-bug-address
+instead.  Changed all copyright notices to use my new email address
+also.
+
+* mm.el: Don't show messages about 'couldn't read xxx'
+
+Sat Jul 23 19:49:05 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Fixed problem with 'test' clause of mm-mime-info
+
+Thu Jul 14 03:16:00 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: *** empty log message ***
+
+Wed Jul 13 05:07:38 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: *** empty log message ***
+
+Mon Jul 11 05:27:46 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: *** empty log message ***
+
+Sun Jul 10 18:52:08 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Changed where ~/.mailcap comes in the default MAILCAPS entry, so that
+it takes precedence over the others in mm-mime-data
+
+Mon Jul  4 17:38:52 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Various patches from Alastair Burt
+
+Sat May 28 12:03:42 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: mm-mime-info now favors the embedded lisp functions/lists when
+retrieving mailcap data.  This way things will go into
+w3-prepare-buffer even if text/html is redefined in the mailcap file.
+
+Fri May 27 13:44:56 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Fixed problem with mm-unescape-mime-test when it tried to take a
+symbol or list as a parameter.
+
+Wed May 25 11:48:20 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Downcase a file extension before looking in the assoc list for it.
+
+* mm.el: Always add new viewers onto the list, but don't replace them.
+
+Wed May 18 18:53:17 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Fixed problem with passing nil to mm-mime-info
+
+Tue May 17 20:55:51 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Properly unescape \; in viewers/composers/etc.
+
+* mm.el: Lots of changes, especially regarding mm-unescape-mime-tester
+
+Sun May 15 18:50:37 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: *** empty log message ***
+
+* mm.el: Added a few more default content-type bindings
+
+* mm.el: Added in extension-to-mime parsing/mapping.  Also put in some decent
+defaults for the common mime types.
+
+* mm.el: *** empty log message ***
+
+* mm.el: Correctly checks for the default info if no viewer is matching
+content-type is found
+
+Sat May 14 20:33:50 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Lots of little tweaks.
+
+Fri May 13 22:06:10 1994  William Perry  <wmperry@cs.indiana.edu>
+
+* mm.el: Initial revision
+

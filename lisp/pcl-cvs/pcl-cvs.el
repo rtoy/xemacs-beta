@@ -1,10 +1,10 @@
 ;;;
 ;;;#ident "@(#)OrigId: pcl-cvs.el,v 1.93 1993/05/31 22:44:00 ceder Exp "
 ;;;
-;;;#ident "@(#)cvs/contrib/pcl-cvs:$Name: r19-16b90 $:$Id: pcl-cvs.el,v 1.4 1997/08/21 06:24:01 steve Exp $"
+;;;#ident "@(#)cvs/contrib/pcl-cvs:$Name: r20-0b30 $:$Id: pcl-cvs.el,v 1.1.1.1 1996/12/18 22:42:58 steve Exp $"
 ;;;
 ;;; pcl-cvs.el -- A Front-end to CVS 1.3 or later.
-;;; Release 1.05-CVS-$Name: r19-16b90 $.
+;;; Release 1.05-CVS-$Name: r20-0b30 $.
 ;;; Copyright (C) 1991, 1992, 1993  Per Cederqvist
 
 ;;; This program is free software; you can redistribute it and/or modify
@@ -19,8 +19,7 @@
 ;;;
 ;;; You should have received a copy of the GNU General Public License
 ;;; along with this program; if not, write to the Free Software
-;;; Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;;; 02111-1307, USA.
+;;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 ;;; See below for installation instructions.
 
@@ -34,35 +33,41 @@
 ;;; or newer.  Use the version of RCS best suited for the version of CVS you're
 ;;; using.
 
-(require 'cookie)			; from ELIB-1.0
+; (require 'cookie)			; from ELIB-1.0
+(load "cookie.el")
 (require 'add-log)			; for all the ChangeLog goodies
+
+(provide 'pcl-cvs)
 
 ;;; -------------------------------------------------------
 ;;;	    START OF THINGS TO CHECK WHEN INSTALLING
 
 ;; also use $GNU here, since may folks might install CVS as a GNU package
 ;;
-(defun cvs-find-program (program)
-  (let ((path (list (getenv "LOCAL")
-		    (getenv "GNU")
-		    "/usr/local/bin"
-		    "/usr/bin"
-		    "/bin")))
-    (while path
-      (if (stringp (car path))
-	  (let ((abs-program (expand-file-name program (car path))))
-	    (if (file-executable-p abs-program)
-		(setq path nil
-		      program abs-program))))
-      (setq path (cdr path)))
-    program))
+(defvar local-path (cond
+		      ((getenv "LOCAL")
+		       (getenv "LOCAL"))
+		      ((getenv "GNU")
+		       (getenv "GNU"))
+		      (t
+		       "/usr/local"))
+  "*Path prefix for most locally installed things.")
 
-(defvar cvs-program (cvs-find-program "cvs")
+;; this isn't likely to be right all the time....
+;;
+(defvar local-gnu-path (cond
+		      ((getenv "GNU")
+		       (getenv "GNU"))
+		      (t
+		       "/usr/local"))	; or "/usr/gnu"?
+  "*Path prefix for locally installed GNU software.")
+
+(defvar cvs-program (concat local-path "/bin/cvs")
   "*Full path to the cvs executable.")
 
 ;; SunOS-4.1.1_U1 has "diff.c 1.12 88/08/04 SMI; from UCB 4.6 86/04/03"
 ;;
-(defvar cvs-diff-program (cvs-find-program "diff")
+(defvar cvs-diff-program (concat local-gnu-path "/bin/diff")
   "*Full path to the best diff program you've got.
 NOTE:  there are some nasty bugs in the context diff variants of some vendor
 versions, such as the one in SunOS-4.1.1_U1")
@@ -126,7 +131,7 @@ a modern version of CVS that stores the current repository in CVS/Root.")
 ;;;	     END OF THINGS TO CHECK WHEN INSTALLING
 ;;; --------------------------------------------------------
 
-(defconst pcl-cvs-version "1.05-CVS-$Name: r19-16b90 $"
+(defconst pcl-cvs-version "1.05-CVS-$Name: r20-0b30 $"
   "A string denoting the current release version of pcl-cvs.")
 
 ;; You are NOT allowed to disable this message by default.  However, you
@@ -139,8 +144,8 @@ a modern version of CVS that stores the current repository in CVS/Root.")
 
 (defconst cvs-startup-message
   (if cvs-inhibit-copyright-message
-      "PCL-CVS release 1.05-CVS-$Name: r19-16b90 $"
-    "PCL-CVS release 1.05 from CVS release $Name: r19-16b90 $.
+      "PCL-CVS release 1.05-CVS-$Name: r20-0b30 $"
+    "PCL-CVS release 1.05 from CVS release $Name: r20-0b30 $.
 Copyright (C) 1992, 1993 Per Cederqvist
 Pcl-cvs comes with absolutely no warranty; for details consult the manual.
 This is free software, and you are welcome to redistribute it under certain
@@ -507,10 +512,7 @@ If optional prefix argument LOCAL is non-nil, 'cvs update -l' is run."
   (interactive (list (read-file-name "CVS Update (directory): "
 				     nil default-directory nil)
 		     current-prefix-arg))
-  ;; If the previous prompt was in a dialog box, the save-some-buffers
-  ;; call in cvs-do-update will lose.
-  (let ((use-dialog-box nil))
-    (cvs-do-update directory local nil))
+  (cvs-do-update directory local nil)
   (switch-to-buffer cvs-buffer-name))
 
 ;;----------
@@ -727,7 +729,7 @@ Full documentation is in the Texinfo file.  Here are the most useful commands:
 \\[cvs-mode-undo-local-changes]   Revert the last checked in version - discard your changes to the file.
 
 Entry to this mode runs cvs-mode-hook.
-This description is updated for release 1.05-CVS-$Name: r19-16b90 $ of pcl-cvs.
+This description is updated for release 1.05-CVS-$Name: r20-0b30 $ of pcl-cvs.
 
 All bindings:
 \\{cvs-mode-map}"
@@ -1016,7 +1018,7 @@ ERR-BUF should be 'STDOUT or 'STDERR."
     (insert "Pcl-cvs Version: "
 	    "@(#)OrigId: pcl-cvs.el,v 1.93 1993/05/31 22:44:00 ceder Exp\n")
     (insert "CVS Version: "
-	    "@(#)lisp/pcl-cvs:$Name: r19-16b90 $:$Id: pcl-cvs.el,v 1.4 1997/08/21 06:24:01 steve Exp $\n\n")
+	    "@(#)cvs/contrib/pcl-cvs:$Name: r20-0b30 $:$Id: pcl-cvs.el,v 1.1.1.1 1996/12/18 22:42:58 steve Exp $\n\n")
     (insert (format "--- Contents of stdout buffer (%d chars) ---\n"
 		    (length stdout)))
     (insert stdout)
@@ -1227,9 +1229,6 @@ This function returns the last cons-cell in the list that is built."
 	 ((looking-at
 	   "^cvs \\(update\\|server\\): \\[..:..:..\\] waiting for .*lock in ")
 	  (forward-line 1))
-	 ((looking-at
-	   "^cvs \\(update\\|server\\): \\[..:..:..\\] obtained lock in ")
-	  (forward-line 1))
 
 	 ;; File removed in repository, but edited by you.
 
@@ -1351,7 +1350,7 @@ This function returns the last cons-cell in the list that is built."
 
 	     ((looking-at
 	       ;; Allow both RCS 5.5 and 5.6.  (5.6 prints "rcs" and " warning").
-	       "^\\(rcs\\)?merge[:]*\\( warning\\)?: \\(overlaps\\|conflicts\\) during merge$")
+	       "^\\(rcs\\)?merge[:]*\\( warning\\)?: \\((overlaps\\|conflicts\\) during merge$")
 
 	      ;; Yes, this is a conflict.
 	      (cvs-skip-line stdout-buffer stderr-buffer
@@ -1412,13 +1411,6 @@ This function returns the last cons-cell in the list that is built."
 		(cvs-set-fileinfo->backup-file fileinfo backup-file)
 		(setcdr head (list fileinfo))
 		(setq head (cdr head)))))))
-
-         ;; Patch failure message with CVS client.
-         ;; Ignore, since a failed patch implies that the file proper
-         ;; subsequently will be fetched from the server.
-	 ((looking-at
-	   "^[0-9]+ out of [0-9]+ hunks failed--saving rejects to ")
-	  (forward-line 1))
 
 	 ;; Error messages from CVS (incomplete)
 
@@ -1544,13 +1536,6 @@ This function doesn't return anything particular."
 	(re-search-forward cvs-update-prog-output-skip-regexp)
 	(forward-line 1))
 
-       ;; Patch informational message with CVS client.
-       ;; Ignore, since this simply tells us that the patch in question
-       ;; already has been applied to the file.
-       ((looking-at
-	 "^.* already contains the differences between .* and ")
-        (forward-line 1))
-
        (t
 	(cvs-parse-error stdout-buffer stderr-buffer 'STDOUT (point)
 			 "cvs-parse-stdout"))))))
@@ -1619,11 +1604,11 @@ For use by the cookie package."
   (define-key cvs-mode-map "\C-p"	'cvs-mode-previous-line)
   ;; ^C- keys are used to set various flags to control CVS features
   (define-key cvs-mode-map "\C-c"	'cvs-mode-map-control-c-prefix)
-  (define-key cvs-mode-map "\C-c\C-c"	'cvs-change-cvsroot)
-  (define-key cvs-mode-map "\C-c\C-d"	'cvs-set-diff-flags)
-  (define-key cvs-mode-map "\C-c\C-l"	'cvs-set-log-flags)
-  (define-key cvs-mode-map "\C-c\C-s"	'cvs-set-status-flags)
-  (define-key cvs-mode-map "\C-c\C-u"	'cvs-set-update-optional-flags)
+  (define-key cvs-mode-map "\C-cc"	'cvs-change-cvsroot)
+  (define-key cvs-mode-map "\C-cd"	'cvs-set-diff-flags)
+  (define-key cvs-mode-map "\C-cl"	'cvs-set-log-flags)
+  (define-key cvs-mode-map "\C-cs"	'cvs-set-status-flags)
+  (define-key cvs-mode-map "\C-cu"	'cvs-set-update-optional-flags)
   ;; M- keys are usually those that operate on modules
   (define-key cvs-mode-map "\M-\C-?"	'cvs-mode-unmark-all-files)
   (define-key cvs-mode-map "\M-C"	'cvs-mode-rcs2log) ; i.e. "Create a ChangeLog"
@@ -3467,6 +3452,4 @@ To select default log text, we:
       (setq cvs-commit-list marked)
       (message "Press C-c C-c when you are done editing."))))
 
-(provide 'pcl-cvs)
-
-;;; pcl-cvs.el ends here
+;;;; end of file pcl-cvs.el

@@ -51,7 +51,6 @@
   "Non-nil when view-mode is active.  Call `view-mode' to toggle.")
 (make-variable-buffer-local 'view-minor-mode)
 
-;;;###autoload
 (defvar view-minor-mode-map
   (let ((map (make-keymap)))
     (set-keymap-name map 'view-minor-mode-map)
@@ -100,7 +99,6 @@
 
 (add-minor-mode 'view-minor-mode " View" view-minor-mode-map)
 
-;;;###autoload
 (defvar view-mode-map
   (let ((map (copy-keymap view-minor-mode-map)))
     (set-keymap-name map 'view-mode-map)

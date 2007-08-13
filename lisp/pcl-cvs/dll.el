@@ -1,4 +1,4 @@
-;;; $Id: dll.el,v 1.1.1.1 1996/12/18 03:32:27 steve Exp $
+;;; $Id: dll.el,v 1.1.1.1 1996/12/18 22:42:58 steve Exp $
 ;;; elib-dll.el -- Some primitives for Doubly linked lists.
 
 ;; Copyright (C) 1991-1995  Free Software Foundation

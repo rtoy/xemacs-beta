@@ -6,11 +6,12 @@
 ;; KEYWORDS:     mouse, outlines, wp
 ;;
 ;; AUTHOR:       Bob Weiner
+;; ORG:          Motorola, Inc., PPG
 ;;
 ;; ORIG-DATE:    28-Mar-94 at 11:22:09
-;; LAST-MOD:      6-Mar-97 at 01:20:03 by Bob Weiner
+;; LAST-MOD:     26-Oct-95 at 18:47:41 by Bob Weiner
 ;;
-;; Copyright (C) 1994, 1995, 1997  Free Software Foundation, Inc.
+;; Copyright (C) 1994-1995 Free Software Foundation, Inc.
 ;;
 ;; This file is part of Hyperbole.
 ;;
@@ -25,7 +26,7 @@
 (defconst id-menubar-kotl
   '(
     ("Koutline"
-     ["All-Cells-Attributes" (kotl-mode:cell-help nil -1)  t]
+     ["All-Cells-Attributes" (kotl-modecell-help nil -1)  t]
      ["Help"                describe-mode                  t]
      ["Manual"              (id-info "(hyperbole.info)Outliner") t]
      "----"
@@ -100,7 +101,7 @@
      ["Kill"                kotl-mode:kill-tree            t]
      ["Mail"                kotl-mode:mail-tree            t]
      ["Promote"             kotl-mode:promote-tree         t]
-     ["Show-Attributes"     (kotl-mode:cell-help nil 2)   t]
+     ["Show-Attributes"     (kotl-modecell-help nil 2)   t]
      "----"
      ["Copy-After-Cell"     kotl-mode:copy-after           t]
      ["Copy-Before-Cell"    kotl-mode:copy-before          t]
@@ -112,9 +113,9 @@
      ["Toggle-Blank-Lines"  kvspec:toggle-blank-lines      t]
      "----"
      ["Set-Cell-Attribute"   kotl-mode:set-cell-attribute  t]
-     ["Show-Cell-Attributes" (kotl-mode:cell-help)        t]
-     ["All-Cells-Attributes" (kotl-mode:cell-help nil -1) t]
-     ["Show-Tree-Attributes" (kotl-mode:cell-help nil 2)  t]
+     ["Show-Cell-Attributes" (kotl-modecell-help)        t]
+     ["All-Cells-Attributes" (kotl-modecell-help nil -1) t]
+     ["Show-Tree-Attributes" (kotl-modecell-help nil 2)  t]
      "----"
      ["Hide (Collapse)"     kotl-mode:hide-tree            t]
      ["Hide-Levels"         kotl-mode:hide-sublevels       t]
@@ -131,7 +132,7 @@
 ;;; This definition is used by InfoDock and XEmacs.
 (defconst id-popup-kotl-menu
   '("Koutline"
-    ["All-Cells-Attributes" (kotl-mode:cell-help nil -1)  t]
+    ["All-Cells-Attributes" (kotl-modecell-help nil -1)  t]
     ["Help"                describe-mode                  t]
     ["Manual"              (id-info "(hyperbole.info)Outliner") t]
     "----"
@@ -198,7 +199,7 @@
      ["Kill"                kotl-mode:kill-tree            t]
      ["Mail"                kotl-mode:mail-tree            t]
      ["Promote"             kotl-mode:promote-tree         t]
-     ["Show-Attributes"     (kotl-mode:cell-help nil 2)   t]
+     ["Show-Attributes"     (kotl-modecell-help nil 2)   t]
      "----"
      ["Copy-After-Cell"     kotl-mode:copy-after           t]
      ["Copy-Before-Cell"    kotl-mode:copy-before          t]
@@ -210,9 +211,9 @@
      ["Toggle-Blank-Lines"  kvspec:toggle-blank-lines      t]
      "----"
      ["Set-Cell-Attribute"   kotl-mode:set-cell-attribute  t]
-     ["Show-Cell-Attributes" (kotl-mode:cell-help)        t]
-     ["All-Cells-Attributes" (kotl-mode:cell-help nil -1) t]
-     ["Show-Tree-Attributes" (kotl-mode:cell-help nil 2)  t]
+     ["Show-Cell-Attributes" (kotl-modecell-help)        t]
+     ["All-Cells-Attributes" (kotl-modecell-help nil -1) t]
+     ["Show-Tree-Attributes" (kotl-modecell-help nil 2)  t]
      "----"
      ["Hide (Collapse)"     kotl-mode:hide-tree            t]
      ["Hide-Levels"         kotl-mode:hide-sublevels       t]

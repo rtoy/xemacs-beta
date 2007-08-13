@@ -277,6 +277,9 @@ typedef enum
 #ifdef emacs
   ,REG_ESYNTAX		/* Invalid syntax designator. */
 #endif
+#ifdef MULE
+  ,REG_ERANGESPAN	/* Ranges may not span charsets. */
+#endif
 } reg_errcode_t;
 
 /* This data structure represents a compiled pattern.  Before calling

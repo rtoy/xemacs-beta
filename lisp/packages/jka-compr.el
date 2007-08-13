@@ -828,7 +828,16 @@ by `jka-compr-installed'."
 (defun jka-compr-installed-p ()
   "Return non-nil if jka-compr is installed.
 The return value is the entry in `file-name-handler-alist' for jka-compr."
-  (rassq 'jka-compr-handler file-name-handler-alist))
+
+  (let ((fnha file-name-handler-alist)
+	(installed nil))
+
+    (while (and fnha (not installed))
+     (and (eq (cdr (car fnha)) 'jka-compr-handler)
+	   (setq installed (car fnha)))
+      (setq fnha (cdr fnha)))
+
+    installed))
 
 
 ;;; Add the file I/O hook if it does not already exist.

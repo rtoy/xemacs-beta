@@ -1,5 +1,5 @@
 ;;; Entry points for VM
-;;; Copyright (C) 1994-1997 Kyle E. Jones
+;;; Copyright (C) 1994, 1995 Kyle E. Jones
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ mode, a major mode for reading mail.
 
 Prefix arg or optional second arg READ-ONLY non-nil indicates
 that the folder should be considered read only.  No attribute
-changes, message additions or deletions will be allowed in the
+changes, messages additions or deletions will be allowed in the
 visited folder.
 
 Visiting the primary inbox causes any contents of the system mailbox to
@@ -61,47 +61,17 @@ See the documentation for vm-mode for more information."
 				       (expand-file-name vm-folder-directory))
 				  default-directory))
 			    (inhibit-local-variables t)
-			    (enable-local-variables nil)
-			    ;; for XEmacs/Mule
-			    (coding-system-for-read 'no-conversion))
-			(message "Reading %s..." file)
+			    (enable-local-variables nil))
+			(vm-unsaved-message "Reading %s..." file)
 			(prog1 (find-file-noselect file)
 			  ;; update folder history
 			  (let ((item (or folder vm-primary-inbox)))
 			    (if (not (equal item (car vm-folder-history)))
 				(setq vm-folder-history
 				      (cons item vm-folder-history))))
-			  (message "Reading %s... done" file))))))))
+			  (vm-unsaved-message "Reading %s... done" file))))))))
       (set-buffer folder-buffer)
-      ;; for XEmacs/MULE
-      ;;
-      ;; If the file coding system is not a no-conversion variant,
-      ;; make it so by encoding all the text, then setting
-      ;; the file coding system and decoding it.
-      ;; This is only possible if a file is visited and then vm-mode
-      ;; is run on it afterwards.
-      (defvar buffer-file-coding-system)
-      (if (and vm-xemacs-mule-p
-	       (not (eq (get-coding-system buffer-file-coding-system)
-			(get-coding-system 'no-conversion-unix)))
-	       (not (eq (get-coding-system buffer-file-coding-system)
-			(get-coding-system 'no-conversion-dos)))
-	       (not (eq (get-coding-system buffer-file-coding-system)
-			(get-coding-system 'no-conversion-mac)))
-	       (not (eq (get-coding-system buffer-file-coding-system)
-			(get-coding-system 'binary))))
-	  (let ((buffer-read-only nil)
-		(omodified (buffer-modified-p)))
-	    (unwind-protect
-		(progn
-		  (encode-coding-region (point-min) (point-max)
-					buffer-file-coding-system)
-		  (set-buffer-file-coding-system 'no-conversion nil)
-		  (decode-coding-region (point-min) (point-max)
-					buffer-file-coding-system))
-	      (set-buffer-modified-p omodified))))
       (vm-check-for-killed-summary)
-      (vm-check-for-killed-presentation)
       ;; If the buffer's not modified then we know that there can be no
       ;; messages in the folder that are not on disk.
       (or (buffer-modified-p) (setq vm-messages-not-on-disk 0))
@@ -115,7 +85,7 @@ See the documentation for vm-mode for more information."
       ;; save file contains information the user might not
       ;; want overwritten, i.e. recover-file might be
       ;; desired.  What we want to avoid is an auto-save.
-      ;; Making the folder read only will keep
+      ;; Making the folder read only will keep it
       ;; subsequent actions from modifying the buffer in a
       ;; way that triggers an auto save.
       ;;
@@ -150,23 +120,26 @@ See the documentation for vm-mode for more information."
       ;; make a new frame if the user wants one.  reuse an
       ;; existing frame that is showing this folder.
       (if (and full-startup
+	       vm-frame-per-folder
+	       (vm-multiple-frames-possible-p)
 	       ;; this so that "emacs -f vm" doesn't create a frame.
 	       this-command)
-	  (apply 'vm-goto-new-folder-frame-maybe
-		 (if folder '(folder) '(primary-folder folder))))
-
-      ;; raise frame if requested and apply startup window
-      ;; configuration.
-      (if full-startup
-	  (let ((buffer-to-display (or vm-summary-buffer
-				       vm-presentation-buffer
-				       (current-buffer))))
-	    (vm-display buffer-to-display buffer-to-display
-			(list this-command)
-			(list (or this-command 'vm) 'startup))
-	    (if vm-raise-frame-at-startup
-		(vm-raise-frame))))
-
+	  (let ((w (or (vm-get-buffer-window (current-buffer))
+		       ;; summary == folder for the purpose
+		       ;; of frame reuse.
+		       (and vm-summary-buffer
+			    (vm-get-buffer-window vm-summary-buffer)))))
+	    (if (null w)
+		(progn
+		  (if folder
+		      (vm-goto-new-frame 'folder)
+		    (vm-goto-new-frame 'primary-folder 'folder))
+		  (vm-set-hooks-for-frame-deletion))
+	      (save-excursion
+		(select-window w)
+		(and vm-warp-mouse-to-new-frame
+		     (vm-warp-mouse-to-frame-maybe (vm-window-frame w)))))))
+      
       ;; say this NOW, before the non-previewers read a message,
       ;; alter the new message count and confuse themselves.
       (if full-startup
@@ -174,10 +147,14 @@ See the documentation for vm-mode for more information."
 	  (setq totals-blurb (vm-emit-totals-blurb)))
 
       (vm-thoughtfully-select-message)
-      (vm-update-summary-and-mode-line)
+      (if vm-message-list
+	  (vm-preview-current-message)
+	(vm-update-summary-and-mode-line))
+      (if full-startup
+	  (vm-display (current-buffer) t nil nil))
       ;; need to do this after any frame creation because the
       ;; toolbar sets frame-specific height and width specifiers.
-      (and (vm-toolbar-support-possible-p) vm-use-toolbar
+      (and full-startup (vm-toolbar-support-possible-p) vm-use-toolbar
 	   (progn
 	     (vm-toolbar-install-toolbar)
 	     (vm-toolbar-update-toolbar)))
@@ -186,33 +163,23 @@ See the documentation for vm-mode for more information."
 	   (vm-menu-install-visited-folders-menu))
 
       (if full-startup
-	  (progn
-	    (if (and (vm-should-generate-summary)
+	  (save-excursion
+	    (vm-display (current-buffer) t nil nil)
+	    (if	(and (vm-should-generate-summary)
 		     ;; don't generate a summary if recover-file is
 		     ;; likely to happen, since recover-file does
 		     ;; nothing useful in a summary buffer.
 		     (not preserve-auto-save-file))
-		(vm-summarize t nil))
-	    ;; raise the summary frame if the user wants frames
-	    ;; raised and if there is a summary frame.
-	    (if (and vm-summary-buffer
-		     vm-mutable-frames
-		     vm-frame-per-summary
-		     vm-raise-frame-at-startup)
-		(vm-raise-frame))
-	    ;; if vm-mutable-windows is nil, the startup
-	    ;; configuration can't be applied, so do
-	    ;; something to get a VM buffer on the screen
-	    (if vm-mutable-windows
-		(vm-display nil nil (list this-command)
-			    (list (or this-command 'vm) 'startup))
-	      (save-excursion
-		(switch-to-buffer (or vm-summary-buffer
-				      vm-presentation-buffer
-				      (current-buffer)))))))
-
-      (if vm-message-list
-	  (vm-preview-current-message))
+		(vm-summarize t))
+	    ;; People were confused that (vm) behaved differently
+	    ;; than M-x vm.  We used to list all the various VM
+	    ;; startup commands here, but now we just accept any
+	    ;; command and treat it as if it were VM.  It's
+	    ;; probably just as well, since any command that
+	    ;; calls VM probably does want the window
+	    ;; configuration to be setup.
+	    (vm-display nil nil (list this-command)
+			(list (or this-command 'vm) 'startup))))
 
       (run-hooks 'vm-visit-folder-hook)
 
@@ -232,9 +199,9 @@ See the documentation for vm-mode for more information."
 	       (not vm-block-new-mail)
 	       (not vm-folder-read-only))
 	  (progn
-	    (message "Checking for new mail for %s..."
+	    (vm-unsaved-message "Checking for new mail for %s..."
 				(or buffer-file-name (buffer-name)))
-	    (if (and (vm-get-spooled-mail t) (vm-assimilate-new-messages t))
+	    (if (and (vm-get-spooled-mail) (vm-assimilate-new-messages t))
 		(progn
 		  (setq totals-blurb (vm-emit-totals-blurb))
 		  (if (vm-thoughtfully-select-message)
@@ -244,7 +211,13 @@ See the documentation for vm-mode for more information."
 
       ;; Display copyright and copying info unless
       ;; user says no.
-      (if (and (interactive-p) (not vm-startup-message-displayed))
+      ;; Check this-command so we don't make the user wait if
+      ;; they call vm non-interactively from some other program.
+      (if (and (not vm-inhibit-startup-message)
+	       (not vm-startup-message-displayed)
+	       (or (memq this-command '(vm vm-visit-folder))
+		   ;; for emacs -f vm
+		   (null last-command)))
 	  (progn
 	    (vm-display-startup-message)
 	    (if (not (input-pending-p))
@@ -280,7 +253,7 @@ See the documentation for vm-mode for more information."
 (defun vm-mode (&optional read-only)
   "Major mode for reading mail.
 
-This is VM 6.34.
+This is VM 5.96 (beta).
 
 Commands:
    h - summarize folder contents
@@ -320,7 +293,7 @@ Commands:
 
    @ - digestify and mail entire folder contents (the folder is not modified)
    * - burst a digest into individual messages, and append and assimilate these
-       messages into the current folder.
+       message into the current folder.
 
    G - sort messages by various keys
 
@@ -343,23 +316,20 @@ Commands:
    x - exit VM with no change to the folder
 
  M N - use marks; the next vm command will affect only marked messages
-       if it makes sense for the command to do so.  These commands
-       apply and remove marks to messages.
+       if it makes sense for the command to do so
 
        M M - mark the current message
        M U - unmark the current message
        M m - mark all messages
        M u - unmark all messages
-       M C - mark messages matched by a virtual folder selector
-       M c - unmark messages matched by a virtual folder selector
+       M C - mark messages matches by a virtual folder selector
+       M c - unmark messages matches by a virtual folder selector
        M T - mark thread tree rooted at the current message
        M t - unmark thread tree rooted at the current message
        M S - mark messages with the same subject as the current message
        M s - unmark messages with the same subject as the current message
        M A - mark messages with the same author as the current message
        M a - unmark messages with the same author as the current message
-       M R - mark messages within the point/mark region in the summary
-       M r - unmark messages within the point/mark region in the summary
 
        M ? - partial help for mark commands
 
@@ -379,7 +349,7 @@ Commands:
  V ? - help for virtual folder commands
 
  C-_ - undo, special undo that retracts the most recent
-             changes in message attributes and labels.  Expunges,
+             changes in message attributes and labels.  Expunges
              message edits, and saves cannot be undone.  C-x u is
              also bound to this command.
 
@@ -406,21 +376,17 @@ Variables:
    vm-arrived-message-hook
    vm-arrived-messages-hook
    vm-auto-center-summary
-   vm-auto-decode-mime-messages
-   vm-auto-displayed-mime-content-types
    vm-auto-folder-alist
    vm-auto-folder-case-fold-search
    vm-auto-get-new-mail
    vm-auto-next-message
    vm-berkeley-mail-compatibility
-   vm-burst-digest-messages-inherit-labels
    vm-check-folder-types
+   vm-convert-folder-types
    vm-circular-folders
    vm-confirm-new-folders
    vm-confirm-quit
-   vm-convert-folder-types
    vm-crash-box
-   vm-crash-box-suffix
    vm-default-folder-type
    vm-delete-after-archiving
    vm-delete-after-bursting
@@ -431,7 +397,6 @@ Variables:
    vm-digest-preamble-format
    vm-digest-send-type
    vm-display-buffer-hook
-   vm-display-using-mime
    vm-edit-message-hook
    vm-folder-directory
    vm-folder-read-only
@@ -441,76 +406,42 @@ Variables:
    vm-forwarding-digest-type
    vm-forwarding-subject-format
    vm-frame-parameter-alist
-   vm-frame-per-completion
    vm-frame-per-composition
-   vm-frame-per-edit
    vm-frame-per-folder
-   vm-frame-per-help
-   vm-frame-per-summary
    vm-highlighted-header-face
    vm-highlighted-header-regexp
    vm-honor-page-delimiters
-   vm-image-directory
    vm-in-reply-to-format
    vm-included-text-attribution-format
    vm-included-text-discard-header-regexp
    vm-included-text-headers
    vm-included-text-prefix
+   vm-inhibit-startup-message
    vm-invisible-header-regexp
    vm-jump-to-new-messages
    vm-jump-to-unread-messages
-   vm-keep-crash-boxes
    vm-keep-sent-messages
-   vm-mail-check-interval
+   vm-keep-crash-boxes
    vm-mail-header-from
    vm-mail-mode-hook
-   vm-make-crash-box-name
-   vm-make-spool-file-name
-   vm-mime-8bit-composition-charset
-   vm-mime-8bit-text-transfer-encoding
-   vm-mime-alternative-select-method
-   vm-mime-attachment-auto-type-alist
-   vm-mime-attachment-save-directory
-   vm-mime-avoid-folding-content-type
-   vm-mime-base64-decoder-program
-   vm-mime-base64-decoder-switches
-   vm-mime-base64-encoder-program
-   vm-mime-base64-encoder-switches
-   vm-mime-button-face
-   vm-mime-charset-font-alist
-   vm-mime-default-face-charsets
-   vm-mime-digest-discard-header-regexp
-   vm-mime-digest-headers
-   vm-mime-display-function
-   vm-mime-external-content-types-alist
-   vm-mime-ignore-mime-version
-   vm-mime-internal-content-types
-   vm-mime-max-message-size
    vm-mode-hook
    vm-mosaic-program
-   vm-mosaic-program-switches
    vm-move-after-deleting
-   vm-move-after-killing
    vm-move-after-undeleting
    vm-move-messages-physically
-   vm-mutable-frames
    vm-mutable-windows
+   vm-mutable-frames
    vm-netscape-program
-   vm-netscape-program-switches
-   vm-pop-bytes-per-session
-   vm-pop-max-message-size
+   vm-options-file
    vm-pop-md5-program
-   vm-pop-messages-per-session
-   vm-popup-menu-on-mouse-3
-   vm-preferences-file
    vm-preview-lines
    vm-preview-read-messages
    vm-primary-inbox
    vm-quit-hook
    vm-recognize-pop-maildrops
    vm-reply-hook
-   vm-reply-ignored-addresses
    vm-reply-ignored-reply-tos
+   vm-reply-ignored-addresses
    vm-reply-subject-prefix
    vm-resend-bounced-discard-header-regexp
    vm-resend-bounced-headers
@@ -528,10 +459,8 @@ Variables:
    vm-select-new-message-hook
    vm-select-unread-message-hook
    vm-send-digest-hook
-   vm-send-using-mime
    vm-skip-deleted-messages
    vm-skip-read-messages
-   vm-spool-file-suffixes
    vm-spool-files
    vm-startup-with-summary
    vm-strip-reply-headers
@@ -541,17 +470,14 @@ Variables:
    vm-summary-mode-hook
    vm-summary-redo-hook
    vm-summary-show-threads
+   vm-summary-subject-no-newlines
    vm-summary-thread-indent-level
-   vm-tale-is-an-idiot
-   vm-temp-file-directory
-   vm-toolbar-pixmap-directory
    vm-trust-From_-with-Content-Length
    vm-undisplay-buffer-hook
    vm-unforwarded-header-regexp
    vm-url-browser
    vm-url-search-limit
    vm-use-menus
-   vm-use-toolbar
    vm-virtual-folder-alist
    vm-virtual-mirror
    vm-visible-headers
@@ -671,8 +597,6 @@ vm-virtual-mode is not a normal major mode.  If you run it, it
 will not do anything.  The entry point to vm-virtual-mode is
 vm-visit-virtual-folder.")
 
-(defvar scroll-in-place)
-
 (defun vm-visit-virtual-folder (folder-name &optional read-only)
   (interactive
    (let ((last-command last-command)
@@ -705,22 +629,17 @@ vm-visit-virtual-folder.")
 		vm-label-obarray (make-vector 29 0)
 		vm-virtual-folder-definition
 		  (assoc folder-name vm-virtual-folder-alist))
-	  ;; scroll in place messes with scroll-up and this loses
-	  (make-local-variable 'scroll-in-place)
-	  (setq scroll-in-place nil)
 	  (vm-build-virtual-message-list nil)
 	  (use-local-map vm-mode-map)
 	  (and (vm-menu-support-possible-p)
 	       (vm-menu-install-menus))
-	  (add-hook 'kill-buffer-hook 'vm-garbage-collect-folder)
-	  (add-hook 'kill-buffer-hook 'vm-garbage-collect-message)
 	  ;; save this for last in case the user interrupts.
 	  ;; an interrupt anywhere before this point will cause
 	  ;; everything to be redone next revisit.
 	  (setq major-mode 'vm-virtual-mode)
 	  (run-hooks 'vm-virtual-mode-hook)
 	  ;; must come after the setting of major-mode
-	  (setq mode-popup-menu (and vm-use-menus vm-popup-menu-on-mouse-3
+	  (setq mode-popup-menu (and vm-use-menus
 				     (vm-menu-support-possible-p)
 				     (vm-menu-mode-menu)))
 	  (setq blurb (vm-emit-totals-blurb))
@@ -732,38 +651,35 @@ vm-visit-virtual-folder.")
 	  (message blurb)))
     ;; make a new frame if the user wants one.  reuse an
     ;; existing frame that is showing this folder.
-    (vm-goto-new-folder-frame-maybe 'folder)
-    (if vm-raise-frame-at-startup
-	(vm-raise-frame))
-    (vm-display nil nil (list this-command) (list this-command 'startup))
+    (if (and vm-frame-per-folder (vm-multiple-frames-possible-p))
+	(let ((w (or (vm-get-buffer-window (current-buffer))
+		     ;; summary == folder for the purpose
+		     ;; of frame reuse.
+		     (and vm-summary-buffer
+			  (vm-get-buffer-window (current-buffer))))))
+	  (if (null w)
+	      (vm-goto-new-frame 'folder)
+	    (save-excursion
+	      (select-window w)
+	      (and vm-warp-mouse-to-new-frame
+		   (vm-warp-mouse-to-frame-maybe (vm-window-frame w)))))
+	  (vm-set-hooks-for-frame-deletion)))
+    (vm-display (current-buffer) t nil nil)
     (and (vm-toolbar-support-possible-p) vm-use-toolbar
 	 (vm-toolbar-install-toolbar))
     (if first-time
-	(progn
-	  (if (vm-should-generate-summary)
-	      (progn (vm-summarize t nil)
-		     (message blurb)))
-	  ;; raise the summary frame if the user wants frames
-	  ;; raised and if there is a summary frame.
-	  (if (and vm-summary-buffer
-		   vm-mutable-frames
-		   vm-frame-per-summary
-		   vm-raise-frame-at-startup)
-	      (vm-raise-frame))
-	  ;; if vm-mutable-windows is nil, the startup
-	  ;; configuration can't be applied, so do
-	  ;; something to get a VM buffer on the screen
-	  (if vm-mutable-windows
-	      (vm-display nil nil (list this-command)
-			  (list (or this-command 'vm) 'startup))
-	    (save-excursion
-	      (switch-to-buffer (or vm-summary-buffer
-				    vm-presentation-buffer
-				    (current-buffer)))))))
-
+	(if (vm-should-generate-summary)
+	    (progn (vm-summarize t)
+		   (message blurb))))
+    (vm-display nil nil '(vm-visit-virtual-folder
+			  vm-visit-virtual-folder-other-frame
+			  vm-visit-virtual-folder-other-window
+			  vm-create-virtual-folder
+			  vm-apply-virtual-folder)
+		(list this-command 'startup))
     ;; check interactive-p so as not to bog the user down if they
     ;; run this function from within another function.
-    (and (interactive-p)
+    (and (interactive-p) (not vm-inhibit-startup-message)
 	 (not vm-startup-message-displayed)
 	 (vm-display-startup-message)
 	 (message blurb))))
@@ -805,36 +721,30 @@ vm-visit-virtual-folder.")
 	(vm-search-other-frames nil))
     (vm-visit-virtual-folder folder-name read-only)))
 
-(defun vm-mail (&optional to)
-  "Send a mail message from within VM, or from without.
-Optional argument TO is a string that should contain a comma separated
-recipient list."
+(defun vm-mail ()
+  "Send a mail message from within VM, or from without."
   (interactive)
   (vm-session-initialization)
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
-  (vm-mail-internal nil to)
+  (vm-mail-internal)
   (run-hooks 'vm-mail-hook)
   (run-hooks 'vm-mail-mode-hook))
 
-(defun vm-mail-other-frame (&optional to)
-  "Like vm-mail, but run in a newly created frame.
-Optional argument TO is a string that should contain a comma separated
-recipient list."
+(defun vm-mail-other-frame ()
+  "Like vm-mail, but run in a newly created frame."
   (interactive)
   (vm-session-initialization)
   (if (vm-multiple-frames-possible-p)
       (vm-goto-new-frame 'composition))
   (let ((vm-frame-per-composition nil)
 	(vm-search-other-frames nil))
-    (vm-mail to))
+    (vm-mail))
   (if (vm-multiple-frames-possible-p)
       (vm-set-hooks-for-frame-deletion)))
 
-(defun vm-mail-other-window (&optional to)
-  "Like vm-mail, but run in a different window.
-Optional argument TO is a string that should contain a comma separated
-recipient list."
+(defun vm-mail-other-window ()
+  "Like vm-mail, but run in a different window."
   (interactive)
   (vm-session-initialization)
   (if (one-window-p t)
@@ -842,7 +752,7 @@ recipient list."
   (other-window 1)
   (let ((vm-frame-per-composition nil)
 	(vm-search-other-frames nil))
-    (vm-mail to)))
+    (vm-mail)))
 
 (defun vm-submit-bug-report ()
   "Submit a bug report, with pertinent information to the VM bug list."
@@ -858,8 +768,6 @@ recipient list."
       'vm-arrived-message-hook
       'vm-arrived-messages-hook
       'vm-auto-center-summary
-      'vm-auto-decode-mime-messages
-      'vm-auto-displayed-mime-content-types
 ;; don't send this by default, might be personal stuff in here.
 ;;      'vm-auto-folder-alist
       'vm-auto-folder-case-fold-search
@@ -872,7 +780,6 @@ recipient list."
       'vm-confirm-quit
       'vm-convert-folder-types
       'vm-crash-box
-      'vm-crash-box-suffix
       'vm-default-folder-type
       'vm-delete-after-archiving
       'vm-delete-after-bursting
@@ -884,7 +791,6 @@ recipient list."
       'vm-digest-preamble-format
       'vm-digest-send-type
       'vm-display-buffer-hook
-      'vm-display-using-mime
       'vm-edit-message-hook
       'vm-edit-message-mode
       'vm-flush-interval
@@ -896,21 +802,17 @@ recipient list."
       'vm-forwarding-digest-type
       'vm-forwarding-subject-format
       'vm-frame-parameter-alist
-      'vm-frame-per-completion
       'vm-frame-per-composition
-      'vm-frame-per-edit
       'vm-frame-per-folder
-      'vm-frame-per-help
-      'vm-frame-per-summary
       'vm-highlight-url-face
       'vm-highlighted-header-regexp
       'vm-honor-page-delimiters
-      'vm-image-directory
       'vm-in-reply-to-format
       'vm-included-text-attribution-format
       'vm-included-text-discard-header-regexp
       'vm-included-text-headers
       'vm-included-text-prefix
+      'vm-inhibit-startup-message
       'vm-init-file
       'vm-invisible-header-regexp
       'vm-jump-to-new-messages
@@ -919,34 +821,10 @@ recipient list."
       'vm-keep-sent-messages
       'vm-mail-header-from
       'vm-mail-hook
-      'vm-make-crash-box-name
-      'vm-make-spool-file-name
-      'vm-mail-check-interval
       'vm-mail-mode-hook
-      'vm-mime-8bit-composition-charset
-      'vm-mime-8bit-text-transfer-encoding
-      'vm-mime-alternative-select-method
-      'vm-mime-attachment-auto-type-alist
-      'vm-mime-attachment-save-directory
-      'vm-mime-avoid-folding-content-type
-      'vm-mime-base64-decoder-program
-      'vm-mime-base64-decoder-switches
-      'vm-mime-base64-encoder-program
-      'vm-mime-base64-encoder-switches
-      'vm-mime-button-face
-      'vm-mime-charset-font-alist
-      'vm-mime-default-face-charsets
-      'vm-mime-digest-discard-header-regexp
-      'vm-mime-digest-headers
-      'vm-mime-display-function
-      'vm-mime-external-content-types-alist
-      'vm-mime-ignore-mime-version
-      'vm-mime-internal-content-types
-      'vm-mime-max-message-size
       'vm-mode-hook
       'vm-mode-hooks
       'vm-mosaic-program
-      'vm-mosaic-program-switches
       'vm-move-after-deleting
       'vm-move-after-undeleting
       'vm-move-messages-physically
@@ -954,21 +832,15 @@ recipient list."
       'vm-mutable-frames
       'vm-mutable-windows
       'vm-netscape-program
-      'vm-netscape-program-switches
-      'vm-pop-bytes-per-session
-      'vm-pop-max-message-size
-      'vm-pop-messages-per-session
+      'vm-options-file
       'vm-pop-md5-program
-      'vm-popup-menu-on-mouse-3
-      'vm-preferences-file
       'vm-preview-lines
       'vm-preview-read-messages
       'vm-primary-inbox
       'vm-quit-hook
       'vm-recognize-pop-maildrops
       'vm-reply-hook
-;; don't feed the spammers or crackers
-;;      'vm-reply-ignored-addresses
+      'vm-reply-ignored-addresses
       'vm-reply-ignored-reply-tos
       'vm-reply-subject-prefix
       'vm-resend-bounced-discard-header-regexp
@@ -987,12 +859,10 @@ recipient list."
       'vm-select-new-message-hook
       'vm-select-unread-message-hook
       'vm-send-digest-hook
-      'vm-send-using-mime
       'vm-skip-deleted-messages
       'vm-skip-read-messages
 ;; don't send vm-spool-files by default, might contain passwords
 ;;      'vm-spool-files
-      'vm-spool-file-suffixes
       'vm-startup-with-summary
       'vm-strip-reply-headers
       'vm-summary-format
@@ -1001,19 +871,17 @@ recipient list."
       'vm-summary-mode-hooks
       'vm-summary-redo-hook
       'vm-summary-show-threads
+      'vm-summary-subject-no-newlines
       'vm-summary-thread-indent-level
       'vm-summary-uninteresting-senders
       'vm-summary-uninteresting-senders-arrow
       'vm-tale-is-an-idiot
-      'vm-toolbar-pixmap-directory
-      'vm-temp-file-directory
       'vm-trust-From_-with-Content-Length
       'vm-undisplay-buffer-hook
       'vm-unforwarded-header-regexp
       'vm-url-browser
       'vm-url-search-limit
       'vm-use-menus
-      'vm-use-toolbar
       'vm-virtual-folder-alist
       'vm-virtual-mirror
       'vm-visible-headers
@@ -1026,7 +894,7 @@ recipient list."
       )
      nil
      nil
-     "Please change the Subject header to a concise bug description.\nRemember to cover the basics, that is, what you expected to\nhappen and what in fact did happen.  Please remove these\ninstructions from your message.")
+     "Please change the Subject header to a concise bug description.\nRemember to cover the basics, that is, what you expected to\nhappen and what in fact did happen.  Please remove these instructions from your message.")
     (save-excursion
       (goto-char (point-min))
       (mail-position-on-field "Subject")
@@ -1041,36 +909,7 @@ recipient list."
   (setq vm-init-file-loaded t)
   (vm-display nil nil '(vm-load-init-file) '(vm-load-init-file)))
 
-(defun vm-check-emacs-version ()
-  (cond ((and vm-xemacs-p
-	      (or (< emacs-major-version 19)
-		  (and (= emacs-major-version 19)
-		       (< emacs-minor-version 14))))
-	 (error "VM %s must be run on XEmacs 19.14 or a later version."
-		vm-version))
-	((and vm-fsfemacs-19-p
-	      (or (< emacs-major-version 19)
-		  (and (= emacs-major-version 19)
-		       (< emacs-minor-version 34))))
-	 (error "VM %s must be run on Emacs 19.34 or a later version."
-		vm-version))))
-
-(defun vm-set-debug-flags ()
-  (or stack-trace-on-error
-      debug-on-error
-      (setq stack-trace-on-error
-	    '(
-	      wrong-type-argument
-	      wrong-number-of-arguments
-	      args-out-of-range
-	      void-function
-	      void-variable
-	     ))))
-
 (defun vm-session-initialization ()
-  (vm-note-emacs-version)
-  (vm-check-emacs-version)
-;;  (vm-set-debug-flags)
   ;; If this is the first time VM has been run in this Emacs session,
   ;; do some necessary preparations.
   (if (or (not (boundp 'vm-session-beginning))
@@ -1083,10 +922,6 @@ recipient list."
 	  (or (vm-load-window-configurations vm-window-configuration-file)
 	      (setq vm-window-configurations vm-default-window-configuration)))
 	(setq vm-buffers-needing-display-update (make-vector 29 0))
-	;; default value of vm-mime-button-face is 'gui-button-face
-	;; this face doesn't exist by default in FSF Emacs 19.34.
-	;; Create it.
-	(and (fboundp 'make-face) (make-face 'gui-button-face))
 	(and (vm-mouse-support-possible-p)
 	     (vm-mouse-install-mouse))
 	(and (vm-menu-support-possible-p)

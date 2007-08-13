@@ -6,19 +6,19 @@
 ;; KEYWORDS:     oop, tools
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          InfoDock Associates
+;; ORG:          Motorola Inc.
 ;;
 ;; ORIG-DATE:    26-Jul-90
-;; LAST-MOD:     20-Feb-97 at 07:00:21 by Bob Weiner
+;; LAST-MOD:     21-Sep-95 at 12:31:20 by Bob Weiner
 ;;
-;; Copyright (C) 1990-1995, 1997  Free Software Foundation, Inc.
+;; Copyright (C) 1990-1995  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.
 ;;
 ;; DESCRIPTION:  
 ;;
-;;   See `smt-class-def-regexp' for regular expression that matches class
+;;   See 'smt-class-def-regexp' for regular expression that matches class
 ;;   definitions.
 ;;            
 ;; DESCRIP-END.
@@ -143,7 +143,7 @@ literal in a regular expression.")
 (defconst smt-class-def-regexp
   (concat smt-class-name-before smt-identifier smt-class-name-after)
   "Regular expression used to match to class definitions in source text.
-Class name identifier is grouped expression 3.  `subclass:' inheritance
+Class name identifier is grouped expression 3.  'subclass:' inheritance
 indicator is grouped expression 2.  Parent identifier is grouped
 expression 1.")
 
@@ -156,16 +156,16 @@ expression 1.")
 
 (defvar smt-children-htable nil
   "Htable whose elements are of the form: (LIST-OF-CHILD-CLASSES . CLASS-NAME).
-Used to traverse Smalltalk inheritance graph.  `br-build-children-htable' builds
+Used to traverse Smalltalk inheritance graph.  'br-build-children-htable' builds
 this list.")
 (defvar smt-parents-htable nil
   "Htable whose elements are of the form: (LIST-OF-PARENT-CLASSES . CLASS-NAME).
-Used to traverse Smalltalk inheritance graph.  `br-build-parents-htable' builds
+Used to traverse Smalltalk inheritance graph.  'br-build-parents-htable' builds
 this list.")
 (defvar smt-paths-htable nil
   "Htable whose elements are of the form: (LIST-OF-CLASS-NAMES . FILE-PATH).
 FILE-PATH gives the location of classes found in LIST-OF-CLASS-NAMES.
-`br-build-paths-htable' builds this list.")
+'br-build-paths-htable' builds this list.")
 
 
 (defvar smt-lib-parents-htable nil
@@ -186,9 +186,9 @@ Only classes from systems that are likely to change are used to build the
 list.")
 
 (defvar smt-lib-prev-search-dirs nil
-  "Used to check if `smt-lib-classes-htable' must be regenerated.")
+  "Used to check if 'smt-lib-classes-htable' must be regenerated.")
 (defvar smt-sys-prev-search-dirs nil
-  "Used to check if `smt-sys-classes-htable' must be regenerated.")
+  "Used to check if 'smt-sys-classes-htable' must be regenerated.")
 
 (defvar smt-env-spec nil
   "Non-nil value means Environment specification has been given but not yet built.

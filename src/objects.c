@@ -676,6 +676,28 @@ font_mark (Lisp_Object obj, void (*markobj) (Lisp_Object))
 
 /* No equal or hash methods; ignore the face the font is based off
    of for `equal' */
+
+#ifdef MULE
+
+int
+font_spec_matches_charset (struct device *d, Lisp_Object charset,
+			   CONST Bufbyte *nonreloc, Lisp_Object reloc,
+			   Bytecount offset, Bytecount length)
+{
+  return DEVMETH_OR_GIVEN (d, font_spec_matches_charset,
+			   (d, charset, nonreloc, reloc, offset, length),
+			   1);
+}
+
+static void
+font_validate_matchspec (Lisp_Object matchspec)
+{
+  Fget_charset (matchspec);
+}
+
+#endif /* MULE */
+
+
 static Lisp_Object
 font_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
 		  Lisp_Object domain, Lisp_Object instantiator,
@@ -687,18 +709,69 @@ font_instantiate (Lisp_Object specifier, Lisp_Object matchspec,
   struct device *d = XDEVICE (device);
   Lisp_Object instance;
 
+#ifdef MULE
+  if (!UNBOUNDP (matchspec))
+    matchspec = Fget_charset (matchspec);
+#endif
+
   if (FONT_INSTANCEP (instantiator))
     {
-      if (NILP (device) /* Vthe_null_color_instance */
+      if (NILP (device)
           || EQ (device, XFONT_INSTANCE (instantiator)->device))
 	{
+#ifdef MULE
+	  if (font_spec_matches_charset (d, matchspec, 0,
+					 Ffont_instance_truename
+					 (instantiator),
+					 0, -1))
+	    return instantiator;
+#else
 	  return instantiator;
+#endif
 	}
       instantiator = Ffont_instance_name (instantiator);
     }
   
   if (STRINGP (instantiator))
     {
+#ifdef MULE
+      if (!UNBOUNDP (matchspec))
+	{
+	  /* The instantiator is a font spec that could match many
+	     different fonts.  We need to find one of those fonts
+	     whose registry matches the registry of the charset in
+	     MATCHSPEC.  This is potentially a very slow operation,
+	     as it involves doing an XListFonts() or equivalent to
+	     iterate over all possible fonts, and a regexp match
+	     on each one.  So we cache the results. */
+	  Lisp_Object matching_font = Qunbound;
+	  Lisp_Object hashtab = Fgethash (matchspec, d->charset_font_cache,
+					  Qunbound);
+	  if (UNBOUNDP (hashtab))
+	    {
+	      /* need to make a sub hash table. */
+	      hashtab = make_lisp_hashtable (20, HASHTABLE_KEY_WEAK,
+					     HASHTABLE_EQUAL);
+	      Fputhash (matchspec, hashtab, d->charset_font_cache);
+	    }
+	  else
+	    matching_font = Fgethash (instantiator, hashtab, Qunbound);
+
+	  if (UNBOUNDP (matching_font))
+	    {
+	      /* make sure we cache the failures, too. */
+	      matching_font =
+                DEVMETH_OR_GIVEN (d, find_charset_font,
+                                  (device, instantiator, matchspec),
+                                  instantiator);
+	      Fputhash (instantiator, matching_font, hashtab);
+	    }
+	  if (NILP (matching_font))
+	    return Qunbound;
+	  instantiator = matching_font;
+	}
+#endif /* MULE */
+
       /* First, look to see if we can retrieve a cached value. */
       instance = Fgethash (instantiator, d->font_instance_cache, Qunbound);
       /* Otherwise, make a new one. */
@@ -990,6 +1063,10 @@ specifier_type_create_objects (void)
   SPECIFIER_HAS_METHOD (color, after_change);
   SPECIFIER_HAS_METHOD (font, after_change);
   SPECIFIER_HAS_METHOD (face_boolean, after_change);
+
+#ifdef MULE
+  SPECIFIER_HAS_METHOD (font, validate_matchspec);
+#endif
 }
 
 void

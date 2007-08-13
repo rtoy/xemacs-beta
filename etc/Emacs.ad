@@ -76,13 +76,13 @@ Emacs.text-cursor*attributeBackground:	Red3
 *XmScrollBar*Background:		Gray75
 
 !
-! The Lucid Scrollbar supports two added resources, SliderStyle is either
+! The Lucid Scrollbar supports two added resources, KnobStyle is either
 ! "plain" (default) or "dimple".  Dimple puts a small dimple in the middle
-! of the slider that depresses when the slider is clicked on.  ArrowPosition is
+! of the knob that depresses when the knob is clicked on.  ArrowPosition is
 ! either "opposite" (default) or "same".  Opposite puts the arrows at opposite
 ! of the scrollbar, same puts both arrows at the same end, like the Amiga.
 !
-! Emacs*XlwScrollBar.SliderStyle:    dimple
+! Emacs*XlwScrollBar.KnobStyle:      dimple
 ! Emacs*XlwScrollBar.ArrowPosition:  opposite
 
 
@@ -99,8 +99,8 @@ Emacs.text-cursor*attributeBackground:	Red3
 ! Emacs.leftToolBarWidth:		0
 ! Emacs.rightToolBarWidth:		0
 
-!*topToolBarShadowColor:			Gray90
-!*bottomToolBarShadowColor:		Gray40
+*topToolBarShadowColor:			Gray90
+*bottomToolBarShadowColor:		Gray40
 *backgroundToolBarColor:		Gray75
 *toolBarShadowThickness:		2
 
@@ -258,3 +258,25 @@ Ctrl<KeyPress>m: ArmAndActivate()\n
     <EnterWindow>:      Enter()\n\
     <LeaveWindow>:      Leave()\n
 
+! XIM input method style 
+! ======================= 
+
+! ximStyles is a (whitespace or comma-separated) list of XIMStyles in
+! order of user's preference.  
+! Choose a subset of the following styles or reorder to taste
+*ximStyles: XIMPreeditPosition|XIMStatusArea\
+            XIMPreeditPosition|XIMStatusNothing\
+            XIMPreeditPosition|XIMStatusNone\
+            XIMPreeditNothing|XIMStatusArea\
+            XIMPreeditNothing|XIMStatusNothing\
+            XIMPreeditNothing|XIMStatusNone\
+            XIMPreeditNone|XIMStatusArea\
+            XIMPreeditNone|XIMStatusNothing\
+            XIMPreeditNone|XIMStatusNone
+
+! XIM Preedit and Status foreground and background
+*EmacsFrame.ximForeground: black
+*EmacsFrame.ximBackground: white
+
+! XIM fontset (defaults to system fontset default)
+! *EmacsFrame.FontSet: -dt-interface user-medium-r-normal-s*-*-*-*-*-*-*-*-*

@@ -57,11 +57,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "sysfile.h"
 
-#ifdef HAVE_PNG
-#include <png.h>
-#else
 #include <setjmp.h>
-#endif
 
 #define LISP_DEVICE_TO_X_SCREEN(dev)					\
   XDefaultScreenOfDisplay (DEVICE_X_DISPLAY (XDEVICE (dev)))
@@ -114,8 +110,7 @@ static void cursor_font_instantiate (Lisp_Object image_instance,
 				     Lisp_Object instantiator,
 				     Lisp_Object pointer_fg,
 				     Lisp_Object pointer_bg,
-				     int dest_mask,
-				     Lisp_Object domain);
+				     int dest_mask);
 
 #include "bitmaps.h"
 
@@ -145,10 +140,8 @@ x_print_image_instance (struct Lisp_Image_Instance *p,
 	}
       write_c_string (")", printcharfun);
       break;
-#if HAVE_SUBWINDOWS
     case IMAGE_SUBWINDOW:
       /* #### implement me */
-#endif
     default:
       break;
     }
@@ -209,11 +202,9 @@ x_image_instance_equal (struct Lisp_Image_Instance *p1,
       if (IMAGE_INSTANCE_X_NPIXELS (p1) != IMAGE_INSTANCE_X_NPIXELS (p2))
 	return 0;
       break;
-#if HAVE_SUBWINDOWS
     case IMAGE_SUBWINDOW:
       /* #### implement me */
       break;
-#endif
     default:
       break;
     }
@@ -230,11 +221,9 @@ x_image_instance_hash (struct Lisp_Image_Instance *p, int depth)
     case IMAGE_COLOR_PIXMAP:
     case IMAGE_POINTER:
       return IMAGE_INSTANCE_X_NPIXELS (p);
-#if HAVE_SUBWINDOWS
     case IMAGE_SUBWINDOW:
       /* #### implement me */
       return 0;
-#endif
     default:
       return 0;
     }
@@ -287,11 +276,11 @@ locate_pixmap_file (Lisp_Object name)
   /* Check non-absolute pathnames with a directory component relative to
      the search path; that's the way Xt does it. */
   /* #### Unix-specific */
-  if (XSTRING_BYTE (name, 0) == '/' ||
-      (XSTRING_BYTE (name, 0) == '.' &&
-       (XSTRING_BYTE (name, 1) == '/' ||
-	(XSTRING_BYTE (name, 1) == '.' &&
-	 (XSTRING_BYTE (name, 2) == '/')))))
+  if (string_byte (XSTRING (name), 0) == '/' ||
+      (string_byte (XSTRING (name), 0) == '.' &&
+       (string_byte (XSTRING (name), 1) == '/' ||
+	(string_byte (XSTRING (name), 1) == '.' &&
+	 (string_byte (XSTRING (name), 2) == '/')))))
     {
       if (!NILP (Ffile_readable_p (name)))
 	return name;
@@ -392,7 +381,6 @@ static Lisp_Object
 simple_image_type_normalize (Lisp_Object inst, Lisp_Object console_type,
 			     Lisp_Object image_type_tag)
 {
-  /* This function can call lisp */
   Lisp_Object file = Qnil;
   struct gcpro gcpro1, gcpro2;
   Lisp_Object alist = Qnil;
@@ -996,11 +984,9 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
 }
 
 static int
-xbm_possible_dest_types (void)
+xbm_possible_dest_types ()
 {
-  return
-    IMAGE_MONO_PIXMAP_MASK  |
-    IMAGE_COLOR_PIXMAP_MASK |
+  return IMAGE_MONO_PIXMAP_MASK | IMAGE_COLOR_PIXMAP_MASK |
     IMAGE_POINTER_MASK;
 }
 
@@ -1039,7 +1025,7 @@ xbm_instantiate_1 (Lisp_Object image_instance, Lisp_Object instantiator,
 static void
 xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		 int dest_mask, Lisp_Object domain)
+		 int dest_mask)
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   CONST char *gcc_go_home;
@@ -1064,11 +1050,6 @@ xbm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 #include "jpeglib.h"
 #include "jerror.h"
 
-/* The in-core jpeg code doesn't work, so I'm avoiding it for now.  -sb  */
-/* Late-breaking update, we're going to give it a try, I think it's */
-/* fixed now -sb */
-/* #define USE_TEMP_FILES_FOR_JPEG_IMAGES 1 */
-
 static void
 jpeg_validate (Lisp_Object instantiator)
 {
@@ -1082,7 +1063,7 @@ jpeg_normalize (Lisp_Object inst, Lisp_Object console_type)
 }
 
 static int
-jpeg_possible_dest_types (void)
+jpeg_possible_dest_types ()
 {
   return IMAGE_COLOR_PIXMAP_MASK;
 }
@@ -1188,16 +1169,8 @@ METHODDEF(boolean)
 METHODDEF boolean
 #endif
 our_fill_input_buffer (j_decompress_ptr cinfo) {
-  /* Insert a fake EOI marker */
-  struct jpeg_source_mgr *src = (struct jpeg_source_mgr *) cinfo->src;
-  static JOCTET buffer[2];
-
-  buffer[0] = (JOCTET) 0xFF;
-  buffer[1] = (JOCTET) JPEG_EOI;
-
-  src->next_input_byte = buffer;
-  src->bytes_in_buffer = 2;
-  return TRUE;
+  ERREXIT(cinfo,JERR_INPUT_EOF);
+  return FALSE;
 }
 
 #if defined(JPEG_LIB_VERSION) && (JPEG_LIB_VERSION >= 61)
@@ -1206,19 +1179,6 @@ METHODDEF(void)
 METHODDEF void
 #endif
 our_skip_input_data (j_decompress_ptr cinfo, long num_bytes) {
-  struct jpeg_source_mgr *src = NULL;
-
-  src = (struct jpeg_source_mgr *) cinfo->src;
-
-  if (!src) {
-    return;
-  } else if (num_bytes > src->bytes_in_buffer) {
-    ERREXIT(cinfo, JERR_INPUT_EOF);
-    /*NOTREACHED*/
-  }
-
-  src->bytes_in_buffer -= num_bytes;
-  src->next_input_byte += num_bytes;
 }
 
 #if defined(JPEG_LIB_VERSION) && (JPEG_LIB_VERSION >= 61)
@@ -1274,7 +1234,7 @@ my_jpeg_error_exit (j_common_ptr cinfo)
 static void
 jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		  Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		  int dest_mask, Lisp_Object domain)
+		  int dest_mask)
 {
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
@@ -1309,7 +1269,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   unwind.dpy = dpy;
   record_unwind_protect (jpeg_instantiate_unwind, make_opaque_ptr (&unwind));
 
-#ifdef USE_TEMP_FILES_FOR_JPEG_IMAGES
+#ifdef USE_TEMP_FILES_FOR_IMAGES
   /* Step 0: Write out to a temp file.
 
      The JPEG routines require you to read from a file unless
@@ -1365,7 +1325,7 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   /* Step 2: specify data source (eg, a file) */
 
-#ifdef USE_TEMP_FILES_FOR_JPEG_IMAGES
+#ifdef USE_FILEIO_FOR_IMAGES
   jpeg_stdio_src (&cinfo, unwind.instream);
 #else
   {
@@ -1584,7 +1544,7 @@ gif_normalize (Lisp_Object inst, Lisp_Object console_type)
 }
 
 static int
-gif_possible_dest_types (void)
+gif_possible_dest_types ()
 {
   return IMAGE_COLOR_PIXMAP_MASK;
 }
@@ -1639,7 +1599,6 @@ gif_instantiate_unwind (Lisp_Object unwind_obj)
   return Qnil;
 }
 
-#if 0
 /* We provide our own version of DGifSlurp() because the standardly
    provided one doesn't handle interlaced GIFs.  This is based on
    code in gif2x11.c. */
@@ -1713,12 +1672,6 @@ our_own_dgif_slurp_from_gif2x11_c (GifFileType *GifFile)
 		    return GIF_ERROR;
 		}
 	    }
-
-	  /* Only get 1 image from animated gifs. */
-	  /* #### if the rest of the file was bad, we still return
-	     GIF_OK, since we don't even bother looking at it.  Should
-	     probably check for ImageCount == 1 above too, hmm. */
-	  goto done;
 	  break;
 
 	case EXTENSION_RECORD_TYPE:
@@ -1742,16 +1695,13 @@ our_own_dgif_slurp_from_gif2x11_c (GifFileType *GifFile)
     }
   while (RecordType != TERMINATE_RECORD_TYPE);
 
- done:
-
   return GIF_OK;
 }
-#endif
 
 static void
 gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		 int dest_mask, Lisp_Object domain)
+		 int dest_mask)
 {
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
@@ -1796,12 +1746,10 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	signal_simple_error ("Unable to decode GIF",
 			     build_string (EmacsPrintGifError ()));
       }
-#if 0
+#if 1
     if (our_own_dgif_slurp_from_gif2x11_c(unwind.giffile) != GIF_OK)
 #else
-    /* DGifSlurp() doesn't handle interlaced files. */
-    /* Actually, it does, sort of.  It just sets the Interlace flag 
-       and stores RasterBits in interlaced order.  We handle that below. */
+      /* DGifSlurp() doesn't handle interlaced files. */
     if (DGifSlurp (unwind.giffile) != GIF_OK)
 #endif
       goto gif_decode_error;
@@ -1840,12 +1788,7 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     int width = unwind.giffile->SWidth;
     int depth;
     int bitmap_pad;
-    int i, j, row, pass, interlace;
-    /* interlaced gifs have rows in this order:
-       0, 8, 16, ..., 4, 12, 20, ..., 2, 6, 10, ..., 1, 3, 5, ...  */
-    static int InterlacedOffset[] = { 0, 4, 2, 1 };
-    static int InterlacedJumps[] = { 8, 8, 4, 2 };
-
+    int i, j;
     
     depth = DefaultDepthOfScreen (scr);
     
@@ -1878,35 +1821,14 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
        optimization routines from XPM (they're in turn mostly
        copied from the Xlib source code). */
     
-    /* Note: We just use the first image in the file and ignore the rest. 
-             We check here that that image covers the full "screen" size.
-	     I don't know whether that's always the case.
-             -dkindred@cs.cmu.edu  */
-    if (unwind.giffile->SavedImages[0].ImageDesc.Height != height
-	|| unwind.giffile->SavedImages[0].ImageDesc.Width != width
-	|| unwind.giffile->SavedImages[0].ImageDesc.Left != 0
-	|| unwind.giffile->SavedImages[0].ImageDesc.Top != 0)
-      signal_simple_error ("First image in GIF file is not full size",
-			   instantiator);
-
-    interlace = unwind.giffile->SavedImages[0].ImageDesc.Interlace;
-    pass = 0;
-    row = interlace ? InterlacedOffset[pass] : 0;
     for (i = 0; i < height; i++)
-      {
-	if (interlace && row >= height)
-	  row = InterlacedOffset[++pass];
-
-	for (j = 0; j < width; j++)
-	  XPutPixel (unwind.ximage, j, row,
-		     unwind.pixels[(unsigned char)
-				  /* incorrect signed declaration
-				     of RasterBits[] */
-				  (unwind.giffile->SavedImages[0].
-				   RasterBits[i * width + j])]);
-
-	row += interlace ? InterlacedJumps[pass] : 1;
-      }
+      for (j = 0; j < width; j++)
+	XPutPixel (unwind.ximage, j, i,
+		   unwind.pixels[(unsigned char)
+				 /* incorrect signed declaration
+				    of RasterBits[] */
+				 (unwind.giffile->SavedImages->
+				  RasterBits[i * width + j])]);
   }
 
   /* 4. Now create the pixmap and set up the image instance */
@@ -1925,6 +1847,8 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
 #ifdef HAVE_PNG
 
+#include <png.h>
+
 /**********************************************************************
  *                             PNG                                    *
  **********************************************************************/
@@ -1941,7 +1865,7 @@ png_normalize (Lisp_Object inst, Lisp_Object console_type)
 }
 
 static int
-png_possible_dest_types (void)
+png_possible_dest_types ()
 {
   return IMAGE_COLOR_PIXMAP_MASK;
 }
@@ -2034,7 +1958,7 @@ _get_png_val (png_byte **pp, int bit_depth)
 static void
 png_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		 int dest_mask, Lisp_Object domain)
+		 int dest_mask)
 {
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
   Lisp_Object device = IMAGE_INSTANCE_DEVICE (ii);
@@ -2320,7 +2244,7 @@ tiff_normalize (Lisp_Object inst, Lisp_Object console_type)
 }
 
 static int
-tiff_possible_dest_types (void)
+tiff_possible_dest_types ()
 {
   return IMAGE_COLOR_PIXMAP_MASK;
 }
@@ -2328,7 +2252,7 @@ tiff_possible_dest_types (void)
 static void
 tiff_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		  Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		  int dest_mask, Lisp_Object domain)
+		  int dest_mask)
 {
   abort ();
 }
@@ -2536,11 +2460,9 @@ xpm_normalize (Lisp_Object inst, Lisp_Object console_type)
 }
 
 static int
-xpm_possible_dest_types (void)
+xpm_possible_dest_types ()
 {
-  return
-    IMAGE_MONO_PIXMAP_MASK  |
-    IMAGE_COLOR_PIXMAP_MASK |
+  return IMAGE_MONO_PIXMAP_MASK | IMAGE_COLOR_PIXMAP_MASK |
     IMAGE_POINTER_MASK;
 }
 
@@ -2558,7 +2480,6 @@ Upgrade to version 3.2g or better or compile with --with-xpm=no.
 
 static XpmColorSymbol *
 extract_xpm_color_names (XpmAttributes *xpmattrs, Lisp_Object device,
-			 Lisp_Object domain,
 			 Lisp_Object color_symbol_alist)
 {
   /* This function can GC */
@@ -2592,7 +2513,7 @@ extract_xpm_color_names (XpmAttributes *xpmattrs, Lisp_Object device,
       else
         {
           assert (COLOR_SPECIFIERP (value));
-          value = Fspecifier_instance (value, domain, Qnil, Qnil);
+          value = Fspecifier_instance (value, device, Qnil, Qnil);
         }
       if (NILP (value))
         continue;
@@ -2641,7 +2562,7 @@ xpm_free (XpmAttributes *xpmattrs)
 static void
 xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		 int dest_mask, Lisp_Object domain)
+		 int dest_mask)
 {
   /* This function can GC */
   struct Lisp_Image_Instance *ii = XIMAGE_INSTANCE (image_instance);
@@ -2702,7 +2623,7 @@ xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       xpmattrs.valuemask |= XpmCloseness;
     }
   
-  color_symbols = extract_xpm_color_names (&xpmattrs, device, domain,
+  color_symbols = extract_xpm_color_names (&xpmattrs, device,
 					   color_symbol_alist);
 
   result = XpmCreatePixmapFromBuffer (dpy,
@@ -2980,7 +2901,6 @@ xface_validate (Lisp_Object instantiator)
 static Lisp_Object
 xface_normalize (Lisp_Object inst, Lisp_Object console_type)
 {
-  /* This funcation can call lisp */
   Lisp_Object file = Qnil, mask_file = Qnil;
   struct gcpro gcpro1, gcpro2, gcpro3;
   Lisp_Object alist = Qnil;
@@ -3028,11 +2948,9 @@ xface_normalize (Lisp_Object inst, Lisp_Object console_type)
 }
 
 static int
-xface_possible_dest_types (void)
+xface_possible_dest_types ()
 {
-  return
-    IMAGE_MONO_PIXMAP_MASK  |
-    IMAGE_COLOR_PIXMAP_MASK |
+  return IMAGE_MONO_PIXMAP_MASK | IMAGE_COLOR_PIXMAP_MASK |
     IMAGE_POINTER_MASK;
 }
 
@@ -3053,7 +2971,7 @@ extern jmp_buf comp_env;
 static void
 xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		   Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		   int dest_mask, Lisp_Object domain)
+		   int dest_mask)
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   int i, stattis;
@@ -3206,19 +3124,16 @@ autodetect_normalize (Lisp_Object instantiator, Lisp_Object console_type)
 }
 
 static int
-autodetect_possible_dest_types (void)
+autodetect_possible_dest_types ()
 {
-  return
-    IMAGE_MONO_PIXMAP_MASK  |
-    IMAGE_COLOR_PIXMAP_MASK |
-    IMAGE_POINTER_MASK      |
-    IMAGE_TEXT_MASK;
+  return IMAGE_MONO_PIXMAP_MASK | IMAGE_COLOR_PIXMAP_MASK |
+    IMAGE_POINTER_MASK | IMAGE_TEXT_MASK;
 }
 
 static void
 autodetect_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 			Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-			int dest_mask, Lisp_Object domain)
+			int dest_mask)
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   struct gcpro gcpro1, gcpro2, gcpro3;
@@ -3246,10 +3161,10 @@ autodetect_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
   if (is_cursor_font)
     cursor_font_instantiate (image_instance, result, pointer_fg,
-			     pointer_bg, dest_mask, domain);
+			     pointer_bg, dest_mask);
   else
     string_instantiate (image_instance, result, pointer_fg,
-			pointer_bg, dest_mask, domain);
+			pointer_bg, dest_mask);
 
   UNGCPRO;
 }
@@ -3307,7 +3222,7 @@ safe_XLoadFont (Display *dpy, char *name)
 }
 
 static int
-font_possible_dest_types (void)
+font_possible_dest_types ()
 {
   return IMAGE_POINTER_MASK;
 }
@@ -3315,7 +3230,7 @@ font_possible_dest_types (void)
 static void
 font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 		  Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-		  int dest_mask, Lisp_Object domain)
+		  int dest_mask)
 {
   /* This function can GC */
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
@@ -3405,7 +3320,7 @@ cursor_font_validate (Lisp_Object instantiator)
 }
 
 static int
-cursor_font_possible_dest_types (void)
+cursor_font_possible_dest_types ()
 {
   return IMAGE_POINTER_MASK;
 }
@@ -3413,7 +3328,7 @@ cursor_font_possible_dest_types (void)
 static void
 cursor_font_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 			 Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-			 int dest_mask, Lisp_Object domain)
+			 int dest_mask)
 {
   /* This function can GC */
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
@@ -3497,7 +3412,6 @@ x_colorize_image_instance (Lisp_Object image_instance,
 }
 
 
-#if HAVE_SUBWINDOWS
 /************************************************************************/
 /*                               subwindows                             */
 /************************************************************************/
@@ -3587,8 +3501,8 @@ subwindow_hash (Lisp_Object obj, int depth)
  which are both being displayed simultaneously you will lose big time.
  This can be dealt with in the new redisplay. */
 
-/* #### These are completely un-re-implemented in 19.16.  Get it done
-   for 20.3. */
+/* #### These are completely un-re-implemented in 19.14.  Get it done
+   for 19.15. */
 
 DEFUN ("make-subwindow", Fmake_subwindow, 0, 3, 0, /*
 Creates a new `subwindow' object of size WIDTH x HEIGHT.
@@ -3612,7 +3526,7 @@ Subwindows are not currently implemented.
   XSetWindowAttributes xswa;
   Mask valueMask = 0;
 
-  error ("subwindows are not functional in 19.16; perhaps some day ...");
+  error ("subwindows are not functional in 19.14; they will be in 19.15");
 
   f = decode_x_frame (frame);
 
@@ -3773,7 +3687,7 @@ Subwindows are not currently implemented.
 
   return subwindow;
 }
-#endif
+
 
 /************************************************************************/
 /*                            initialization                            */
@@ -3782,7 +3696,6 @@ Subwindows are not currently implemented.
 void
 syms_of_glyphs_x (void)
 {
-#if HAVE_SUBWINDOWS
   defsymbol (&Qsubwindowp, "subwindowp");
 
   DEFSUBR (Fmake_subwindow);
@@ -3793,7 +3706,6 @@ syms_of_glyphs_x (void)
   DEFSUBR (Fsubwindow_xid);
   DEFSUBR (Fresize_subwindow);
   DEFSUBR (Fforce_subwindow_map);
-#endif
 
   defkeyword (&Q_mask_file, ":mask-file");
   defkeyword (&Q_mask_data, ":mask-data");
@@ -4013,7 +3925,6 @@ complex_vars_of_glyphs_x (void)
   BUILD_GLYPH_INST (Vtruncation_glyph, truncator);
   BUILD_GLYPH_INST (Vcontinuation_glyph, continuer);
   BUILD_GLYPH_INST (Vxemacs_logo, xemacs);
-  BUILD_GLYPH_INST (Vhscroll_glyph, hscroll);
 
 #undef BUILD_GLYPH_INST
 }

@@ -1,5 +1,5 @@
 ;;;; psgml-other.el --- Part of SGML-editing mode with parsing support
-;; $Id: psgml-other.el,v 1.3 1997/03/09 02:37:46 steve Exp $
+;; $Id: psgml-other.el,v 1.1.1.1 1996/12/18 22:43:36 steve Exp $
 
 ;; Copyright (C) 1994 Lennart Staflin
 
@@ -39,9 +39,9 @@ into several panes.")
 ;;;; Key Commands
 
 ;; Doesn't this work in Lucid? ***
-(define-key sgml-mode-map [(meta control space)] 'sgml-mark-element)
+(define-key sgml-mode-map [?\M-\C-\ ] 'sgml-mark-element)
 
-(define-key sgml-mode-map [(shift button-3)] 'sgml-tags-menu)
+(define-key sgml-mode-map [S-mouse-1] 'sgml-tags-menu)
 
 
 ;;;; Pop Up Menus
@@ -111,10 +111,8 @@ if the item is selected."
     (cond
      (sgml-use-text-properties
       (let ((inhibit-read-only t)
-	    (after-change-function nil) ; obsolete variable
-	    (before-change-function nil) ; obsolete variable
-	    (after-change-functions nil)
-	    (before-change-functions nil))
+	    (after-change-function nil)
+	    (before-change-function nil))
 	(put-text-property start end 'face face)))
      (t
       (let ((current (overlays-at start))
@@ -146,7 +144,7 @@ if the item is selected."
 
 (defun sgml-set-face-after-change (start end &optional pre-len)
   ;; If inserting in front of an markup overlay, move that overlay.
-  ;; this avoids the overlay being deleted and recreated by
+  ;; this avoids the overlay beeing deleted and recreated by
   ;; sgml-set-face-for.
   (when (and sgml-set-face (not sgml-use-text-properties))
     (loop for o in (overlays-at start)

@@ -1,5 +1,5 @@
 ;;; Commands to move around in a VM folder
-;;; Copyright (C) 1989-1997 Kyle E. Jones
+;;; Copyright (C) 1989, 1990, 1993, 1994 Kyle E. Jones
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -19,7 +19,6 @@
 
 (defun vm-record-and-change-message-pointer (old new)
   (intern (buffer-name) vm-buffers-needing-display-update)
-  (vm-garbage-collect-message)
   (setq vm-last-message-pointer old
 	vm-message-pointer new
 	vm-need-summary-pointer-update t))
@@ -276,8 +275,7 @@ ignored."
   (if (interactive-p)
       (vm-follow-summary-cursor))
   (vm-select-folder-buffer)
-  (vm-display nil nil '(vm-next-message-no-skip)
-	      '(vm-next-message-no-skip))
+  (vm-display nil nil '(vm-Next-message) '(vm-Next-message))
   (let ((vm-skip-deleted-messages nil)
 	(vm-skip-read-messages nil))
     (vm-next-message count nil t)))
@@ -290,8 +288,7 @@ ignored."
   (if (interactive-p)
       (vm-follow-summary-cursor))
   (vm-select-folder-buffer)
-  (vm-display nil nil '(vm-previous-message-no-skip)
-	      '(vm-previous-message-no-skip))
+  (vm-display nil nil '(vm-Previous-message) '(vm-Previous-message))
   (let ((vm-skip-deleted-messages nil)
 	(vm-skip-read-messages nil))
     (vm-previous-message count)))

@@ -1,4 +1,4 @@
-;;;; $Id: elib-node.el,v 1.1.1.1 1996/12/18 03:32:27 steve Exp $
+;;;; $Id: elib-node.el,v 1.1.1.1 1996/12/18 22:42:58 steve Exp $
 ;;;; Nodes used in binary trees and doubly linked lists.
 
 ;; Copyright (C) 1991-1995 Free Software Foundation

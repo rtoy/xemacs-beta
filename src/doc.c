@@ -155,7 +155,7 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
             case '_': *to++ = '\037'; break;
             default:
               return_me = list2 (build_string
-	("Invalid data in documentation file -- ^A followed by weird code"),
+      ("Invalid data in documentation file -- ^A followed by weird code"),
                                  make_int (c));
               goto done;
             }
@@ -180,7 +180,7 @@ unparesseuxify_doc_string (int fd, EMACS_INT position,
 /* Extract a doc string from a file.  FILEPOS says where to get it.
    (This could actually be byte code instructions/constants instead
    of a doc string.)
-   If it is an integer, use that position in the standard DOC file.
+   If it is an integer, use that position in the standard DOC-... file.
    If it is (FILE . INTEGER), use FILE as the file name
    and INTEGER as the position in that file.
    But if INTEGER is negative, make it positive.
@@ -255,7 +255,7 @@ get_doc_string (Lisp_Object filepos)
 
 	  fd = open (name_nonreloc, O_RDONLY, 0);
 	}
-#endif /* CANNOT_DUMP */
+#endif /* CANNOT DUMP */
 
       if (fd < 0)
 	error ("Cannot open doc string file \"%s\"",
@@ -421,10 +421,9 @@ translation.
 static void
 weird_doc (Lisp_Object sym, CONST char *weirdness, CONST char *type, int pos)
 {
-/*#if defined(ENERGIZE) || defined(SUNPRO)*/	/* hide kludgery... */
-						/* (for everyone) */
+#if defined(ENERGIZE) || defined(SUNPRO) /* hide kludgery... */
   if (!strcmp (weirdness, GETTEXT ("duplicate"))) return;
-/*#endif*/
+#endif
   message ("Note: Strange doc (%s) for %s %s @ %d",
            weirdness, type, string_data (XSYMBOL (sym)->name), pos);
 }

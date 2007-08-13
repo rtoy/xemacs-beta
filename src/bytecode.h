@@ -51,6 +51,9 @@ struct Lisp_Compiled_Function
         unsigned int interactivep: 1;
 	/* Only used if I18N3, but always defined for simplicity. */
 	unsigned int domainp: 1;
+	/* Non-zero if this bytecode came from a v18 or v19 file.
+	   We need to Ebolify the `assoc', `delq', etc. functions. */
+	unsigned int ebolified: 1;
       } flags;
     Lisp_Object bytecodes;
     Lisp_Object constants;

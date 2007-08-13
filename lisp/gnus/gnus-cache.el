@@ -1,5 +1,5 @@
 ;;; gnus-cache.el --- cache interface for Gnus
-;; Copyright (C) 1995,96,97 Free Software Foundation, Inc.
+;; Copyright (C) 1995,96 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@ifi.uio.no>
 ;; Keywords: news
@@ -26,52 +26,32 @@
 ;;; Code:
 
 (require 'gnus)
-(require 'gnus-int)
-(require 'gnus-range)
-(require 'gnus-start)
-(eval-when-compile
-  (require 'gnus-sum))
+(eval-when-compile (require 'cl))
 
-(defgroup gnus-cache nil
-  "Cache interface."
-  :group 'gnus)
-
-(defcustom gnus-cache-directory
+(defvar gnus-cache-directory
   (nnheader-concat gnus-directory "cache/")
-  "*The directory where cached articles will be stored."
-  :group 'gnus-cache
-  :type 'directory)
+  "*The directory where cached articles will be stored.")
 
-(defcustom gnus-cache-active-file
+(defvar gnus-cache-active-file 
   (concat (file-name-as-directory gnus-cache-directory) "active")
-  "*The cache active file."
-  :group 'gnus-cache
-  :type 'file)
+  "*The cache active file.")
 
-(defcustom gnus-cache-enter-articles '(ticked dormant)
-  "Classes of articles to enter into the cache."
-  :group 'gnus-cache
-  :type '(set (const ticked) (const dormant) (const unread) (const read)))
+(defvar gnus-cache-enter-articles '(ticked dormant)
+  "*Classes of articles to enter into the cache.")
 
-(defcustom gnus-cache-remove-articles '(read)
-  "Classes of articles to remove from the cache."
-  :group 'gnus-cache
-  :type '(set (const ticked) (const dormant) (const unread) (const read)))
+(defvar gnus-cache-remove-articles '(read)
+  "*Classes of articles to remove from the cache.")
 
-(defcustom gnus-uncacheable-groups nil
+(defvar gnus-uncacheable-groups nil
   "*Groups that match this regexp will not be cached.
 
 If you want to avoid caching your nnml groups, you could set this
-variable to \"^nnml\"."
-  :group 'gnus-cache
-  :type '(choice (const :tag "off" nil)
-		 regexp))
+variable to \"^nnml\".")
 
 
 
 ;;; Internal variables.
 
-(defvar gnus-cache-removable-articles nil)
 (defvar gnus-cache-buffer nil)
 (defvar gnus-cache-active-hashtb nil)
 (defvar gnus-cache-active-altered nil)
@@ -91,9 +71,10 @@ variable to \"^nnml\"."
 		 (not (eq gnus-use-cache 'passive))))
     (gnus-cache-read-active)))
 
-;; Complexities of byte-compiling make this kludge necessary.  Eeek.
-(ignore-errors
-  (gnus-add-shutdown 'gnus-cache-close 'gnus))
+(condition-case ()
+    (gnus-add-shutdown 'gnus-cache-close 'gnus)
+  ;; Complexities of byte-compiling makes this kludge necessary.  Eeek.
+  (error nil))
 
 (defun gnus-cache-close ()
   "Shut down the cache."
@@ -104,40 +85,44 @@ variable to \"^nnml\"."
 (defun gnus-cache-save-buffers ()
   ;; save the overview buffer if it exists and has been modified
   ;; delete empty cache subdirectories
-  (when gnus-cache-buffer
+  (if (null gnus-cache-buffer)
+      ()
     (let ((buffer (cdr gnus-cache-buffer))
 	  (overview-file (gnus-cache-file-name
 			  (car gnus-cache-buffer) ".overview")))
       ;; write the overview only if it was modified
-      (when (buffer-modified-p buffer)
-	(save-excursion
-	  (set-buffer buffer)
-	  (if (> (buffer-size) 0)
-	      ;; Non-empty overview, write it to a file.
-	      (gnus-write-buffer overview-file)
-	    ;; Empty overview file, remove it
-	    (when (file-exists-p overview-file)
-	      (delete-file overview-file))
-	    ;; If possible, remove group's cache subdirectory.
-	    (condition-case nil
-		;; FIXME: we can detect the error type and warn the user
-		;; of any inconsistencies (articles w/o nov entries?).
-		;; for now, just be conservative...delete only if safe -- sj
-		(delete-directory (file-name-directory overview-file))
-	      (error nil)))))
-      ;; Kill the buffer -- it's either unmodified or saved.
+      (if (buffer-modified-p buffer)
+	  (save-excursion
+	    (set-buffer buffer)
+	    (if (> (buffer-size) 0)
+		;; non-empty overview, write it out
+		(progn
+		  (gnus-make-directory (file-name-directory overview-file))
+		  (write-region (point-min) (point-max)
+				overview-file nil 'quietly))
+	      ;; empty overview file, remove it
+	      (and (file-exists-p overview-file)
+		   (delete-file overview-file))
+	      ;; if possible, remove group's cache subdirectory
+	      (condition-case nil
+		  ;; FIXME: we can detect the error type and warn the user
+		  ;; of any inconsistencies (articles w/o nov entries?).
+		  ;; for now, just be conservative...delete only if safe -- sj
+		  (delete-directory (file-name-directory overview-file))
+		(error nil)))))
+      ;; kill the buffer, it's either unmodified or saved
       (gnus-kill-buffer buffer)
       (setq gnus-cache-buffer nil))))
 
-(defun gnus-cache-possibly-enter-article
+(defun gnus-cache-possibly-enter-article 
   (group article headers ticked dormant unread &optional force)
   (when (and (or force (not (eq gnus-use-cache 'passive)))
 	     (numberp article)
 	     (> article 0)
-	     (vectorp headers))		; This might be a dummy article.
+	     (vectorp headers))	; This might be a dummy article.
     ;; If this is a virtual group, we find the real group.
     (when (gnus-virtual-group-p group)
-      (let ((result (nnvirtual-find-group-art
+      (let ((result (nnvirtual-find-group-art 
 		     (gnus-group-real-name group) article)))
 	(setq group (car result)
 	      headers (copy-sequence headers))
@@ -145,16 +130,16 @@ variable to \"^nnml\"."
     (let ((number (mail-header-number headers))
 	  file dir)
       (when (and (> number 0)		; Reffed article.
+		 (or (not gnus-uncacheable-groups)
+		     (not (string-match gnus-uncacheable-groups group)))
 		 (or force
-		     (and (or (not gnus-uncacheable-groups)
-			      (not (string-match
-				    gnus-uncacheable-groups group)))
-			  (gnus-cache-member-of-class
-			   gnus-cache-enter-articles ticked dormant unread)))
+		     (gnus-cache-member-of-class
+		      gnus-cache-enter-articles ticked dormant unread))
 		 (not (file-exists-p (setq file (gnus-cache-file-name
 						 group number)))))
 	;; Possibly create the cache directory.
-	(gnus-make-directory (setq dir (file-name-directory file)))
+	(or (file-exists-p (setq dir (file-name-directory file)))
+	    (gnus-make-directory dir))
 	;; Save the article in the cache.
 	(if (file-exists-p file)
 	    t				; The article already is saved.
@@ -163,25 +148,25 @@ variable to \"^nnml\"."
 	    (let ((gnus-use-cache nil))
 	      (gnus-request-article-this-buffer number group))
 	    (when (> (buffer-size) 0)
-	      (gnus-write-buffer file)
+	      (write-region (point-min) (point-max) file nil 'quiet)
 	      (gnus-cache-change-buffer group)
 	      (set-buffer (cdr gnus-cache-buffer))
 	      (goto-char (point-max))
 	      (forward-line -1)
 	      (while (condition-case ()
-			 (when (not (bobp))
-			   (> (read (current-buffer)) number))
+			 (and (not (bobp))
+			      (> (read (current-buffer)) number))
 		       (error
 			;; The line was malformed, so we just remove it!!
 			(gnus-delete-line)
 			t))
 		(forward-line -1))
-	      (if (bobp)
+	      (if (bobp) 
 		  (if (not (eobp))
 		      (progn
 			(beginning-of-line)
-			(when (< (read (current-buffer)) number)
-			  (forward-line 1)))
+			(if (< (read (current-buffer)) number)
+			    (forward-line 1)))
 		    (beginning-of-line))
 		(forward-line 1))
 	      (beginning-of-line)
@@ -230,14 +215,14 @@ variable to \"^nnml\"."
 	  article)
       (gnus-cache-change-buffer gnus-newsgroup-name)
       (while articles
-	(when (memq (setq article (pop articles)) cache-articles)
-	  ;; The article was in the cache, so we see whether we are
-	  ;; supposed to remove it from the cache.
-	  (gnus-cache-possibly-remove-article
-	   article (memq article gnus-newsgroup-marked)
-	   (memq article gnus-newsgroup-dormant)
-	   (or (memq article gnus-newsgroup-unreads)
-	       (memq article gnus-newsgroup-unselected))))))
+	(if (memq (setq article (pop articles)) cache-articles)
+	    ;; The article was in the cache, so we see whether we are
+	    ;; supposed to remove it from the cache.
+	    (gnus-cache-possibly-remove-article
+	     article (memq article gnus-newsgroup-marked)
+	     (memq article gnus-newsgroup-dormant)
+	     (or (memq article gnus-newsgroup-unreads)
+		 (memq article gnus-newsgroup-unselected))))))
     ;; The overview file might have been modified, save it
     ;; safe because we're only called at group exit anyway.
     (gnus-cache-save-buffers)))
@@ -254,10 +239,9 @@ variable to \"^nnml\"."
 
 (defun gnus-cache-possibly-alter-active (group active)
   "Alter the ACTIVE info for GROUP to reflect the articles in the cache."
-  (when (equal group "no.norsk") (error "hie"))
   (when gnus-cache-active-hashtb
     (let ((cache-active (gnus-gethash group gnus-cache-active-hashtb)))
-      (and cache-active
+      (and cache-active 
 	   (< (car cache-active) (car active))
 	   (setcar active (car cache-active)))
       (and cache-active
@@ -266,7 +250,7 @@ variable to \"^nnml\"."
 
 (defun gnus-cache-retrieve-headers (articles group &optional fetch-old)
   "Retrieve the headers for ARTICLES in GROUP."
-  (let ((cached
+  (let ((cached 
 	 (setq gnus-newsgroup-cached (gnus-cache-articles-in-group group))))
     (if (not cached)
 	;; No cached articles here, so we just retrieve them
@@ -278,12 +262,12 @@ variable to \"^nnml\"."
 				articles))
 	    (cache-file (gnus-cache-file-name group ".overview"))
 	    type)
-	;; We first retrieve all the headers that we don't have in
+	;; We first retrieve all the headers that we don't have in 
 	;; the cache.
 	(let ((gnus-use-cache nil))
 	  (when uncached-articles
-	    (setq type (and articles
-			    (gnus-retrieve-headers
+	    (setq type (and articles 
+			    (gnus-retrieve-headers 
 			     uncached-articles group fetch-old)))))
 	(gnus-cache-save-buffers)
 	;; Then we insert the cached headers.
@@ -293,7 +277,7 @@ variable to \"^nnml\"."
 	    ;; There are no cached headers.
 	    type)
 	   ((null type)
-	    ;; There were no uncached headers (or retrieval was
+	    ;; There were no uncached headers (or retrieval was 
 	    ;; unsuccessful), so we use the cached headers exclusively.
 	    (set-buffer nntp-server-buffer)
 	    (erase-buffer)
@@ -318,14 +302,12 @@ Returns the list of articles entered."
   (gnus-set-global-variables)
   (let ((articles (gnus-summary-work-articles n))
 	article out)
-    (while (setq article (pop articles))
-      (if (natnump article)
-	  (when (gnus-cache-possibly-enter-article
-		 gnus-newsgroup-name article
-		 (gnus-summary-article-header article)
-		 nil nil nil t)
-	    (push article out))
-	(gnus-message 2 "Can't cache article %d" article))
+    (while articles
+      (setq article (pop articles))
+      (when (gnus-cache-possibly-enter-article 
+	     gnus-newsgroup-name article (gnus-summary-article-header article)
+	     nil nil nil t)
+	(push article out))
       (gnus-summary-remove-process-mark article)
       (gnus-summary-update-secondary-mark article))
     (gnus-summary-next-subject 1)
@@ -355,16 +337,6 @@ Returns the list of articles removed."
   "Say whether ARTICLE is cached in the current group."
   (memq article gnus-newsgroup-cached))
 
-(defun gnus-summary-insert-cached-articles ()
-  "Insert all the articles cached for this group into the current buffer."
-  (interactive)
-  (let ((cached gnus-newsgroup-cached)
-	(gnus-verbose (max 6 gnus-verbose)))
-    (unless cached
-      (error "No cached articles for this group"))
-    (while cached
-      (gnus-summary-goto-subject (pop cached) t))))
-
 ;;; Internal functions.
 
 (defun gnus-cache-change-buffer (group)
@@ -374,21 +346,21 @@ Returns the list of articles removed."
 	   ;; Another overview cache is current, save it.
 	   (gnus-cache-save-buffers)))
   ;; if gnus-cache buffer is nil, create it
-  (unless gnus-cache-buffer
-    ;; Create cache buffer
-    (save-excursion
-      (setq gnus-cache-buffer
-	    (cons group
-		  (set-buffer (get-buffer-create " *gnus-cache-overview*"))))
-      (buffer-disable-undo (current-buffer))
-      ;; Insert the contents of this group's cache overview.
-      (erase-buffer)
-      (let ((file (gnus-cache-file-name group ".overview")))
-	(when (file-exists-p file)
-	  (nnheader-insert-file-contents file)))
-      ;; We have a fresh (empty/just loaded) buffer,
-      ;; mark it as unmodified to save a redundant write later.
-      (set-buffer-modified-p nil))))
+  (or gnus-cache-buffer
+      ;; Create cache buffer
+      (save-excursion
+	(setq gnus-cache-buffer
+	      (cons group
+		    (set-buffer (get-buffer-create " *gnus-cache-overview*"))))
+	(buffer-disable-undo (current-buffer))
+	;; Insert the contents of this group's cache overview.
+	(erase-buffer)
+	(let ((file (gnus-cache-file-name group ".overview")))
+	  (and (file-exists-p file)
+	       (insert-file-contents file)))
+	;; We have a fresh (empty/just loaded) buffer, 
+	;; mark it as unmodified to save a redundant write later.
+	(set-buffer-modified-p nil))))
 
 ;; Return whether an article is a member of a class.
 (defun gnus-cache-member-of-class (class ticked dormant unread)
@@ -400,25 +372,24 @@ Returns the list of articles removed."
 (defun gnus-cache-file-name (group article)
   (concat (file-name-as-directory gnus-cache-directory)
 	  (file-name-as-directory
-	   (nnheader-translate-file-chars
-	    (if (gnus-use-long-file-name 'not-cache)
-		group
-	      (let ((group (nnheader-replace-chars-in-string group ?/ ?_)))
-		;; Translate the first colon into a slash.
-		(when (string-match ":" group)
-		  (aset group (match-beginning 0) ?/))
-		(nnheader-replace-chars-in-string group ?. ?/)))))
+	   (if (gnus-use-long-file-name 'not-cache)
+	       group 
+	     (let ((group (nnheader-replace-chars-in-string group ?/ ?_)))
+	       ;; Translate the first colon into a slash.
+	       (when (string-match ":" group)
+		 (aset group (match-beginning 0) ?/))
+	       (nnheader-replace-chars-in-string group ?. ?/))))
 	  (if (stringp article) article (int-to-string article))))
 
 (defun gnus-cache-update-article (group article)
   "If ARTICLE is in the cache, remove it and re-enter it."
   (when (gnus-cache-possibly-remove-article article nil nil nil t)
     (let ((gnus-use-cache nil))
-      (gnus-cache-possibly-enter-article
+      (gnus-cache-possibly-enter-article 
        gnus-newsgroup-name article (gnus-summary-article-header article)
        nil nil nil t))))
 
-(defun gnus-cache-possibly-remove-article (article ticked dormant unread
+(defun gnus-cache-possibly-remove-article (article ticked dormant unread 
 						   &optional force)
   "Possibly remove ARTICLE from the cache."
   (let ((group gnus-newsgroup-name)
@@ -426,7 +397,7 @@ Returns the list of articles removed."
 	file)
     ;; If this is a virtual group, we find the real group.
     (when (gnus-virtual-group-p group)
-      (let ((result (nnvirtual-find-group-art
+      (let ((result (nnvirtual-find-group-art 
 		     (gnus-group-real-name group) article)))
 	(setq group (car result)
 	      number (cdr result))))
@@ -439,11 +410,11 @@ Returns the list of articles removed."
 	(delete-file file)
 	(set-buffer (cdr gnus-cache-buffer))
 	(goto-char (point-min))
-	(when (or (looking-at (concat (int-to-string number) "\t"))
-		  (search-forward (concat "\n" (int-to-string number) "\t")
-				  (point-max) t))
-	  (delete-region (progn (beginning-of-line) (point))
-			 (progn (forward-line 1) (point)))))
+	(if (or (looking-at (concat (int-to-string number) "\t"))
+		(search-forward (concat "\n" (int-to-string number) "\t")
+				(point-max) t))
+	    (delete-region (progn (beginning-of-line) (point))
+			   (progn (forward-line 1) (point)))))
       (setq gnus-newsgroup-cached
 	    (delq article gnus-newsgroup-cached))
       (gnus-summary-update-secondary-mark article)
@@ -451,9 +422,10 @@ Returns the list of articles removed."
 
 (defun gnus-cache-articles-in-group (group)
   "Return a sorted list of cached articles in GROUP."
-  (let ((dir (file-name-directory (gnus-cache-file-name group 1))))
+  (let ((dir (file-name-directory (gnus-cache-file-name group 1)))
+	articles)
     (when (file-exists-p dir)
-      (sort (mapcar (lambda (name) (string-to-int name))
+      (sort (mapcar (lambda (name) (string-to-int name)) 
 		    (directory-files dir nil "^[0-9]+$" t))
 	    '<))))
 
@@ -483,9 +455,8 @@ Returns the list of articles removed."
 	    (setq beg (progn (beginning-of-line) (point))
 		  end (progn (end-of-line) (point)))
 	  (setq beg nil)))
-      (when beg
-	(insert-buffer-substring cache-buf beg end)
-	(insert "\n"))
+      (if beg (progn (insert-buffer-substring cache-buf beg end)
+		     (insert "\n")))
       (setq cached (cdr cached)))
     (kill-buffer cache-buf)))
 
@@ -523,10 +494,7 @@ Returns the list of articles removed."
 
 ;;;###autoload
 (defun gnus-jog-cache ()
-  "Go through all groups and put the articles into the cache.
-
-Usage:
-$ emacs -batch -l ~/.emacs -l gnus -f gnus-jog-cache"
+  "Go through all groups and put the articles into the cache."
   (interactive)
   (let ((gnus-mark-article-hook nil)
 	(gnus-expert-user t)
@@ -538,11 +506,10 @@ $ emacs -batch -l ~/.emacs -l gnus -f gnus-jog-cache"
     (gnus)
     ;; Go through all groups...
     (gnus-group-mark-buffer)
-    (gnus-group-universal-argument
-     nil nil
+    (gnus-group-universal-argument 
+     nil nil 
      (lambda ()
-       (interactive)
-       (gnus-summary-read-group (gnus-group-group-name) nil t)
+       (gnus-summary-read-group nil nil t)
        ;; ... and enter the articles into the cache.
        (when (eq major-mode 'gnus-summary-mode)
 	 (gnus-uu-mark-buffer)
@@ -551,7 +518,8 @@ $ emacs -batch -l ~/.emacs -l gnus -f gnus-jog-cache"
 
 (defun gnus-cache-read-active (&optional force)
   "Read the cache active file."
-  (gnus-make-directory gnus-cache-directory)
+  (unless (file-exists-p gnus-cache-directory)
+    (make-directory gnus-cache-directory t))
   (if (not (and (file-exists-p gnus-cache-active-file)
 		(or force (not gnus-cache-active-hashtb))))
       ;; There is no active file, so we generate one.
@@ -561,24 +529,28 @@ $ emacs -batch -l ~/.emacs -l gnus -f gnus-jog-cache"
       (gnus-set-work-buffer)
       (insert-file-contents gnus-cache-active-file)
       (gnus-active-to-gnus-format
-       nil (setq gnus-cache-active-hashtb
-		 (gnus-make-hashtable
+       nil (setq gnus-cache-active-hashtb 
+		 (gnus-make-hashtable 
 		  (count-lines (point-min) (point-max)))))
       (setq gnus-cache-active-altered nil))))
-
+       
 (defun gnus-cache-write-active (&optional force)
   "Write the active hashtb to the active file."
   (when (or force
 	    (and gnus-cache-active-hashtb
 		 gnus-cache-active-altered))
-    (nnheader-temp-write gnus-cache-active-file
+    (save-excursion
+      (gnus-set-work-buffer)
       (mapatoms
        (lambda (sym)
 	 (when (and sym (boundp sym))
 	   (insert (format "%s %d %d y\n"
 			   (symbol-name sym) (cdr (symbol-value sym))
 			   (car (symbol-value sym))))))
-       gnus-cache-active-hashtb))
+       gnus-cache-active-hashtb)
+      (gnus-make-directory (file-name-directory gnus-cache-active-file))
+      (write-region 
+       (point-min) (point-max) gnus-cache-active-file nil 'silent))
     ;; Mark the active hashtb as unaltered.
     (setq gnus-cache-active-altered nil)))
 
@@ -592,9 +564,9 @@ If LOW, update the lower bound instead."
       ;; Update the lower or upper bound.
       (if low
 	  (setcar active number)
-	(setcdr active number)))
-    ;; Mark the active hashtb as altered.
-    (setq gnus-cache-active-altered t)))
+	(setcdr active number))
+      ;; Mark the active hashtb as altered.
+      (setq gnus-cache-active-altered t))))
 
 ;;;###autoload
 (defun gnus-cache-generate-active (&optional directory)
@@ -603,14 +575,14 @@ If LOW, update the lower bound instead."
   (let* ((top (null directory))
 	 (directory (expand-file-name (or directory gnus-cache-directory)))
 	 (files (directory-files directory 'full))
-	 (group
+	 (group 
 	  (if top
 	      ""
-	    (string-match
+	    (string-match 
 	     (concat "^" (file-name-as-directory
 			  (expand-file-name gnus-cache-directory)))
 	     (directory-file-name directory))
-	    (nnheader-replace-chars-in-string
+	    (nnheader-replace-chars-in-string 
 	     (substring (directory-file-name directory) (match-end 0))
 	     ?/ ?.)))
 	 nums alphs)
@@ -647,11 +619,6 @@ If LOW, update the lower bound instead."
   (let ((nnml-generate-active-function 'identity))
     (nnml-generate-nov-databases-1 dir)))
 
-(defun gnus-cache-move-cache (dir)
-  "Move the cache tree to somewhere else."
-  (interactive "DMove the cache tree to: ")
-  (rename-file gnus-cache-directory dir))
-
 (provide 'gnus-cache)
-
+	      
 ;;; gnus-cache.el ends here

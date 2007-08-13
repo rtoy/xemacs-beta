@@ -1,8 +1,8 @@
 ;;;  hm--html-menu ---  A menu for the hm--html-mode.
 ;;;  
-;;;  $Id: hm--html-menu.el,v 1.6 1997/03/26 22:42:38 steve Exp $
+;;;  $Id: hm--html-menu.el,v 1.1.1.1 1996/12/18 22:43:20 steve Exp $
 ;;;
-;;;  Copyright (C) 1993 - 1997  Heiko Muenkel
+;;;  Copyright (C) 1993, 1994, 1995, 1996  Heiko Muenkel
 ;;;  email: muenkel@tnt.uni-hannover.de
 ;;;
 ;;;  This program is free software; you can redistribute it and/or modify
@@ -37,6 +37,14 @@
 ;;;     for further installation points.
 ;;;
 
+;(provide 'hm--html-menu)
+;(require 'hm--html-drag-and-drop)
+;(require 'html-mode)
+;(require 'hm--html-mode)
+;(require 'hm--html)
+;(require 'adapt)
+
+
 ;;
 ;; Menu "HTML"
 ;;
@@ -52,10 +60,6 @@
 	 ("Anchors"
 	  ["Relative link..." hm--html-add-relative-link t]
 	  ["General link..." hm--html-add-normal-link t]
-	  ["Drag & Drop"
-	   idd-start-mouse-drag-and-drop
-	   :active t
-	   :keys "\\[idd-mouse-drag-and-drop]"]
 	  "----"
 	  ["Html link..." hm--html-add-html-link t]
 	  ["Info link..." hm--html-add-info-link t]
@@ -64,7 +68,7 @@
 	  "----"
 	  ["Ftp link..." hm--html-add-ftp-link t]
 	  ["News link..." hm--html-add-news-link t]
-	  ["Mailbox link..." hm--html-add-mail-box-link t]
+	  ["Mailbox link..." hm--html-add-mail-link t]
 	  ["Mailto link..." hm--html-add-mailto-link t]
 	  ["Wais link (direct)..." hm--html-add-direct-wais-link t]
 	  ["Wais link (gateway)..." hm--html-add-wais-link t]
@@ -80,7 +84,6 @@
 	   (hm--html-insert-template hm--html-frame-template-file)
 	   (file-exists-p hm--html-frame-template-file)]
 	  "----"
-	  ["Doctype" hm--html-add-doctype t]
 	  ["Html" hm--html-add-html t]
 	  ["Head" hm--html-add-head t]
 	  ["Body" hm--html-add-body t]
@@ -88,13 +91,9 @@
 	  ["Title and Header..." hm--html-add-title-and-header t]
 	  ["Title..." hm--html-add-title t]
 	  ["Header..." hm--html-add-header t]
+	  ["Node Link..." hm--html-add-normal-node-link t]
 	  ["Address" hm--html-add-address t]
 	  ["Signature" hm--html-add-signature t]
-	  "----"
-	  ["Meta information..." hm--html-add-meta t]
-	  ["Node Link..." hm--html-add-normal-node-link t]
-	  ["Isindex..." hm--html-add-isindex t]
-	  ["Document Base..." hm--html-add-base t]
 	  "----"
 	  ["Created comment" hm--html-insert-created-comment t]
 	  ["Changed comment" hm--html-insert-changed-comment t]
@@ -128,23 +127,18 @@
 	  "----"
 	  ["Paragraph container" hm--html-add-paragraph t]
 	  ["Paragraph start tag" hm--html-add-paragraph-separator t]
-	  ["Document division" hm--html-add-document-division t]
 	  ["New line" hm--html-add-line-break t]
 	  ["Horizontal rule" hm--html-add-horizontal-rule t]
 	  )
 	 ("Formating Paragraphs"
-;	  ["Without links" hm--html-add-plaintext t]
-	  ["Preformated" hm--html-add-preformated t]
+	  ["Without links" hm--html-add-plaintext t]
+	  ["With links" hm--html-add-preformated t]
+	  "----"
           ["Blockquote" hm--html-add-blockquote t]
+	  ["Listing" hm--html-add-listing t]
+	  ["Abstract" hm--html-add-abstract t]
 	  "----"
-	  ["Basefont..." hm--html-add-basefont t]
-	  ["Font..." hm--html-add-font t]
 	  ["Center" hm--html-add-center t]
-	  ["Style" hm--html-add-style t]
-	  "----"
-	  ["HTML Comment" hm--html-add-comment t]
-;	  ["Listing" hm--html-add-listing t]
-;	  ["Abstract" hm--html-add-abstract t]
 	  )
 	 ("Formatting Words"
 	  ["Bold" hm--html-add-bold t]
@@ -157,6 +151,7 @@
 	  "----"
 	  ["Underline" hm--html-add-underline t]
 	  ["Strikethru" hm--html-add-strikethru t]
+	  ;;	  ["Render" hm--html-add-render t]
 	  "----"
 ;          ["Emphasized" hm--html-add-emphasized t]
 ;          ["Strong" hm--html-add-strong t]
@@ -174,7 +169,6 @@
 	   )
 ;; All the following commands are still implemented, but most
 ;; of them are not defined in HTM 3.2
-;; You've to load hm--html-not-standard.el to use them
 ;	  ("Computing"
 ;	   ["Definition" hm--html-add-definition t]
 ;	   ["Keyboard" hm--html-add-keyboard t]
@@ -189,7 +183,7 @@
 ;	  ("Literature"
 ;	   ["Quote" hm--html-add-quote t]
 ;	   ["Acronym" hm--html-add-acronym t]
-;	   ["Abbreviation" hm--html-add-abbreviation t]
+;	   ["Abbrevation" hm--html-add-abbrevation t]
 ;	   ["Citation" hm--html-add-citation t]
 ;	   ["Literature" hm--html-add-literature t]
 ;	   ["Publication" hm--html-add-publication t]
@@ -205,26 +199,16 @@
 ;	  "----"
 ;	  ["Footnote" hm--html-add-footnote t]
 ;	  ["Margin" hm--html-add-margin t]
-;	  "----"
-;	  ["HTML Comment" hm--html-add-comment t]
+	  "----"
+	  ["HTML Comment" hm--html-add-comment t]
 	  )
 	 ("Include"
 	  ["Top aligned image..." hm--html-add-image-top t]
 	  ["Middle aligned image..." hm--html-add-image-middle t]
 	  ["Bottom aligned image..." hm--html-add-image-bottom t]
-	  ["Image as map? ..." hm--html-add-image t]
-	  ["Drag & Drop"
-	   idd-start-mouse-drag-and-drop
-	   :active t
-	   :keys "\\[idd-mouse-drag-and-drop]"]
-	  "----"
-	  ["Image map..." hm--html-add-image-map t]
-	  ["Map..." hm--html-add-map t]
-	  ["Area..." hm--html-add-area t]
 	  "----"
 	  ["Applet..." hm--html-add-applet t]
 	  ["Parameter..." hm--html-add-applet-parameter t]
-	  ["Script" hm--html-add-script t]
 ;	  "----"
 ;	  ["File..."  hm--html-add-server-side-include-file t]
 ;	  ["Command..." hm--html-add-server-side-include-command t]
@@ -264,10 +248,6 @@
        '("HTML No-region Novice Menu"
 	 ("Anchors"
 	  ["Relative link..." hm--html-add-relative-link t]
-	  ["Drag & Drop"
-	   idd-start-mouse-drag-and-drop 
-	   :active t
-	   :keys "\\[idd-mouse-drag-and-drop]"]
 	  "----"
 	  ["Html link..." hm--html-add-html-link t]
 	  ["File link..." hm--html-add-file-link t]
@@ -285,8 +265,8 @@
 	  ["Paragraph Container" hm--html-add-paragraph t]
 	  )
 	 ("Formating Paragraphs"
-;	  ["Without links" hm--html-add-plaintext t]
-	  ["Preformated" hm--html-add-preformated t]
+	  ["Without links" hm--html-add-plaintext t]
+	  ["With links" hm--html-add-preformated t]
 	  )
 	 ("Formatting Words"
 	  ["Bold" hm--html-add-bold t]
@@ -300,10 +280,6 @@
 	 ("Anchors"
 	  ["Relative link..." hm--html-add-relative-link-to-region t]
 	  ["General link..." hm--html-add-normal-link-to-region t]
-	  ["Drag & Drop"
-	   idd-start-mouse-drag-and-drop 
-	   :active t
-	   :keys "\\[idd-mouse-drag-and-drop]"]
 	  "----"
 	  ["Html link..." hm--html-add-html-link-to-region t]
 	  ["Info link..." hm--html-add-info-link-to-region t]
@@ -312,7 +288,7 @@
 	  "----"
 	  ["Ftp link..." hm--html-add-ftp-link-to-region t]
 	  ["News link..." hm--html-add-news-link-to-region t]
-	  ["Mailbox link..." hm--html-add-mail-box-link-to-region t]
+	  ["Mailbox link..." hm--html-add-mail-link-to-region t]
 	  ["Mailto link..." hm--html-add-mailto-link-to-region t]
 	  ["WAIS link (direct)..." hm--html-add-direct-wais-link-to-region t]
 	  ["WAIS link (gateway)..." hm--html-add-wais-link-to-region t]
@@ -353,20 +329,16 @@
 	   )
 	  "----"
 	  ["Paragraph container" hm--html-add-paragraph-to-region t]
-	  ["Document division" hm--html-add-document-division-to-region t]
 	  )
 	 ("Formatting Paragraphs"
-;	  ["Without links" hm--html-add-plaintext-to-region t]
-	  ["Preformated" hm--html-add-preformated-to-region t]
+	  ["Without links" hm--html-add-plaintext-to-region t]
+	  ["With links" hm--html-add-preformated-to-region t]
+	  "----"
           ["Blockquote" hm--html-add-blockquote-to-region t]
+	  ["Listing" hm--html-add-listing-to-region t]
+	  ["Abstract" hm--html-add-abstract-to-region t]
 	  "----"
-	  ["Font..." hm--html-add-font-to-region t]
 	  ["Center" hm--html-add-center-to-region t]
-	  ["Style" hm--html-add-style-to-region t]
-	  "----"
-	  ["HTML Comment" hm--html-add-comment-to-region t]
-;	  ["Listing" hm--html-add-listing-to-region t]
-;	  ["Abstract" hm--html-add-abstract-to-region t]
 	  )
 	 ("Formatting Words"
 	  ["Bold" hm--html-add-bold-to-region t]
@@ -427,14 +399,8 @@
 ;	  "----"
 ;	  ["Footnote" hm--html-add-footnote-to-region t]
 ;	  ["Margin" hm--html-add-margin-to-region t]
-;	  "----"
-;	  ["HTML Comment" hm--html-add-comment-to-region t]
-	  )
-	 ("Include"
-	  ["Map..." hm--html-add-map-to-region t]
 	  "----"
-	  ["Applet..." hm--html-add-applet-to-region t]
-	  ["Script" hm--html-add-script-to-region t]
+	  ["HTML Comment" hm--html-add-comment-to-region t]
 	  )
 	 ("Forms"
 	  ["Form..." hm--html-add-form-to-region t])
@@ -445,10 +411,6 @@
       '("HTML Region Novice Menu"
 	 ("Anchors"
 	  ["Relative link..." hm--html-add-relative-link-to-region t]
-	  ["Drag & Drop"
-	   idd-start-mouse-drag-and-drop 
-	   :active t
-	   :keys "\\[idd-mouse-drag-and-drop]"]
 	  "----"
 	  ["Html link..." hm--html-add-html-link-to-region t]
 	  ["File link..." hm--html-add-file-link-to-region t]
@@ -463,8 +425,8 @@
 	  ["Menu" hm--html-add-menu-to-region t]
 	  )
 	 ("Formatting Paragraphs"
-;	  ["Without links" hm--html-add-plaintext-to-region t]
-	  ["Preformated" hm--html-add-preformated-to-region t]
+	  ["Without links" hm--html-add-plaintext-to-region t]
+	  ["With links" hm--html-add-preformated-to-region t]
 	  )
 	 ("Formatting Words"
 	  ["Bold" hm--html-add-bold-to-region t]
@@ -489,20 +451,10 @@
 	  :active t
 	  :style radio
 	  :selected hm--html-expert]
+;	 ["Marcs menu" hm--html-use-marcs-menu t]
 	 )
 	["Reload config files" hm--html-load-config-files t]
-	["Templates (fixed dirs) ..."
-	 hm--html-insert-template-from-fixed-dirs
-	 t]
 	["Templates ..." hm--html-insert-template t]
-	["Drag & Drop"
-	 idd-start-mouse-drag-and-drop
-	 :active t
-	 :keys "\\[idd-mouse-drag-and-drop]"]
-	["Drag & Drop Help"
-	 idd-start-help-mouse-drag-and-drop
-	 :active t
-	 :keys "\\[idd-help-mouse-drag-and-drop]"]
 	"----"
 	["Remove numeric names" hm--html-remove-numeric-names t]
 	["Quotify hrefs" hm--html-quotify-hrefs t]
@@ -534,9 +486,7 @@
       (if (and current-menubar (not (assoc menu-name current-menubar)))
 	  (progn
 	    (set-buffer-menubar (copy-sequence current-menubar))
-	    (add-submenu nil
-			 (cons menu-name (cdr hm--html-pulldown-menu))
-			 "HTML"))))
+	    (add-menu nil menu-name (cdr hm--html-pulldown-menu))))) 
 
   (defun hm--install-html-menu (menu-name)
     (if (eq major-mode 'hm--html-mode)
@@ -550,6 +500,16 @@
 			"The hm--html-minor-mode pulldown menu."
 			(cons menu-name
 			      (cdr hm--html-pulldown-menu))))
+;    (easy-menu-define hm--html-region-menu-map
+;		      hm--html-region-mode-map
+;		      "The hm--html-mode pulldown menu, if a region is active."
+;		      (cons menu-name
+;			    (cdr hm--html-pulldown-menu)))
+;    (if (and current-menubar (not (assoc "HTML" current-menubar)))
+;	(progn
+;	  (set-buffer-menubar current-menubar)
+;	  ))
+;    (add-menu nil "HTML" (cdr hm--html-pulldown-menu))
     ))
 
 (if (adapt-emacs19p)
@@ -581,22 +541,60 @@
 	(x-popup-menu nil hm--html-menu-region-novice-map))
 
 
+;      (defun hm--html-emacs19-popup-menu (menu event)
+;	(let ((pos (posn-x-y (event-end event)))
+;	      (window (posn-window (event-start event)))
+;	      (answer))
+;	  (while menu
+;	    (setq answer (x-popup-menu (list (list (car pos) (cdr pos))
+;					     window)
+;				       menu))
+;	    (setq cmd (lookup-key menu (apply 'vector answer)))
+;	    (setq menu nil)
+;	    (and cmd
+;		 (if (keymapp cmd)
+;		     (setq menu cmd)
+;		   (call-interactively cmd))))))
+
+;      (defun hm--html-popup-menu (event)
+;	"Pops the HTML- menu up, if no region is active."
+;	(interactive "@e")
+;	(if hm--html-expert
+;	    (hm--html-emacs19-popup-menu hm--html-menu-noregion-expert-map
+;					 event)
+;	  (hm--html-emacs19-popup-menu hm--html-menu-noregion-novice-map
+;				       event)))
+
+;      (defun hm--html-popup-menu-region (event)
+;	"Pops the HTML- menu up, if a region is active."
+;	(interactive "@e")
+;	(if hm--html-expert
+;	    (hm--html-emacs19-popup-menu hm--html-menu-region-expert-map
+;					 event)
+;	  (hm--html-emacs19-popup-menu hm--html-menu-region-novice-map
+;				       event)))
       )
 
   (defun hm--html-popup-menu (event)
     "Pops the HTML- menu up, if no region is active."
     (interactive "@e")
+;  (if hm--html-marc
+;      (popup-menu html-menu)
     (if hm--html-expert
 	(popup-menu hm--html-menu-noregion-expert)
       (popup-menu hm--html-menu-noregion-novice)))
+;)
 
 
   (defun hm--html-popup-menu-region (event)
     "Pops the HTML- menu up, if a region is active."
     (interactive "@e")
+;  (if hm--html-marc
+;      (popup-menu html-menu)
     (if hm--html-expert
 	(popup-menu hm--html-menu-region-expert)
       (popup-menu hm--html-menu-region-novice)))
+;)
   )
 
 
@@ -607,6 +605,9 @@
 	"Changes the HTML popup menu to the novice menu."
 	(interactive)
 	(setq hm--html-expert nil)
+;  (setq hm--html-marc nil)
+;  (define-key html-mode-map '(button3) 'hm--popup-html-menu)
+;  (define-key html-region-mode-map '(button3) 'hm--popup-html-menu)
 	)	
 
 
@@ -614,6 +615,9 @@
 	"Changes the HTML popup menu to the expert menu."
 	(interactive)
 	(setq hm--html-expert t)
+;  (setq hm--html-marc nil)
+;  (define-key html-mode-map '(button3) 'hm--popup-html-menu)
+;  (define-key html-region-mode-map '(button3) 'hm--popup-html-menu)
 	)
       )
 
@@ -659,6 +663,45 @@
     )
   )
 
+;(defun hm--html-use-marcs-menu ()
+;  "Changes the HTML popup menu to Marc Andreessens menu."
+;  (interactive)
+;  (setq hm--html-marc t)
+;  )
+
+
+;(define-key html-mode-map '(button3) 'hm--popup-html-menu)
+;(define-key html-region-mode-map '(button3) 'hm--popup-html-menu)
+
+;(add-hook 'html-mode-hook 'hm--install-html-menu)
+
+
+;(defun sgml-popup-menu (event title entries)
+;  "Display a popup menu."
+;  (setq entries
+;	(loop for ent in entries collect
+;	      (vector (car ent)
+;		      (list 'setq 'value (list 'quote (cdr ent)))
+;		      t)))
+;  (cond ((> (length entries) sgml-max-menu-size)
+;	 (setq entries
+;	       (loop for i from 1 while entries collect
+;		     (let ((submenu
+;			    (subseq entries 0 (min (length entries)
+;						   sgml-max-menu-size))))
+;		       (setq entries (nthcdr sgml-max-menu-size
+;					     entries))
+;		       (cons
+;			(format "%s '%s'-'%s'"
+;				title
+;				(sgml-range-indicator (aref (car submenu) 0))
+;				(sgml-range-indicator
+;				 (aref (car (last submenu)) 0)))
+;			submenu))))))  
+;;  (sgml-xemacs-get-popup-value (cons title entries)))
+;  (sgml-xemacs-get-popup-value (append hm--html-popup-menu
+;				       (list "--" "--" title "==")
+;				       entries)))
 
 (defvar hm--html-use-psgml t
   "Set this to t, if functions from the psgml-mode should be used.")
@@ -690,9 +733,9 @@ menus to the psgml popup menu."
 				    (car menudesc) ;
 				    "==")          ;
 			      (cdr menudesc)))     ;
-	  (while (popup-up-p)
+	  (while (popup-menu-up-p)
 	    (setq event (next-command-event event))
-	    (cond ((misc-user-event-p event)
+	    (cond ((menu-event-p event)
 		   (cond
 		    ((eq (event-object event) 'abort)
 		     (signal 'quit nil))
@@ -747,6 +790,10 @@ menus to the psgml popup menu."
 	  ))
 
       ))
+
+
+;(defvar hm--html-menu-load-hook nil
+;  "*Hook variable to execute functions after loading the file hm--html-menu.")
 
 
 (run-hooks 'hm--html-menu-load-hook)

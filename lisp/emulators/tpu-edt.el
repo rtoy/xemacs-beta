@@ -1,281 +1,36 @@
-;;; tpu-edt.el --- Emacs emulating TPU emulating EDT
-
-;; Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
+;; Copyright (C) 1993 Free Software Foundation, Inc.
 
 ;; Author: Rob Riepel <riepel@networking.stanford.edu>
 ;; Maintainer: Rob Riepel <riepel@networking.stanford.edu>
-;; Version: 4.2
+;; Version: 3.2
 ;; Keywords: emulations
 
-;; This file is part of XEmacs.
+;; Patched for XEmacs support of zmacs regions by:
+;; R. Kevin Oberman <oberman@es.net>
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
+;; This file is part of GNU Emacs.
+
+;; GNU Emacs is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; XEmacs is distributed in the hope that it will be useful, but
-;; WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-;; General Public License for more details.
+;; GNU Emacs is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
-
-;;; Synched up with: FSF 19.34
-
-;; TPU-edt is based on tpu.el by Jeff Kowalski and Bob Covey.
-
-;;; Commentary:
-
-;; %% TPU-edt -- Emacs emulating TPU emulating EDT
-
-;; %% Contents
-
-;;  % Introduction
-;;  % Differences Between TPU-edt and DEC TPU/edt
-;;  % Starting TPU-edt
-;;  % Customizing TPU-edt using the Emacs Initialization File
-;;  % Regular Expressions in TPU-edt
-
-
-;; %% Introduction
-
-;;    TPU-edt emulates the popular DEC VMS editor EDT (actually, it emulates
-;;    DEC TPU's EDT emulation, hence the name TPU-edt).  TPU-edt features the
-;;    following TPU/edt functionality:
-
-;;     .  EDT keypad
-;;     .  On-line help
-;;     .  Repeat counts
-;;     .  Scroll margins
-;;     .  Learn sequences
-;;     .  Free cursor mode
-;;     .  Rectangular cut and paste
-;;     .  Multiple windows and buffers
-;;     .  TPU line-mode REPLACE command
-;;     .  Wild card search and substitution
-;;     .  Configurable through an initialization file
-;;     .  History recall of search strings, file names, and commands
-
-;;    Please note that TPU-edt does NOT emulate TPU.  It emulates TPU's EDT
-;;    emulation.  Very few TPU line-mode commands are supported.
-
-;;    TPU-edt, like it's VMS cousin, works on VT-series terminals with DEC
-;;    style keyboards.  VT terminal emulators, including xterm with the
-;;    appropriate key translations, work just fine too.
-
-;;    TPU-edt works with X-windows.  This is accomplished through a TPU-edt X
-;;    key map.  The TPU-edt module tpu-mapper creates this map and stores it
-;;    in a file.  Tpu-mapper will be run automatically the first time you
-;;    invoke the X-windows version of emacs, or you can run it by hand.  See
-;;    the commentary in tpu-mapper.el for details.
-
-
-;; %% Differences Between TPU-edt and DEC TPU/edt
-
-;;    In some cases, Emacs doesn't support text highlighting, so selected
-;;    regions are not shown in inverse video.  Emacs uses the concept of "the
-;;    mark".  The mark is set at one end of a selected region; the cursor is
-;;    at the other.  The letter "M" appears in the mode line when the mark is
-;;    set.  The native emacs command ^X^X (Control-X twice) exchanges the
-;;    cursor with the mark; this provides a handy way to find the location of
-;;    the mark.
-
-;;    In TPU the cursor can be either bound or free.  Bound means the cursor
-;;    cannot wander outside the text of the file being edited.  Free means
-;;    the arrow keys can move the cursor past the ends of lines.  Free is the
-;;    default mode in TPU; bound is the only mode in EDT.  Bound is the only
-;;    mode in the base version of TPU-edt; optional extensions add an
-;;    approximation of free mode, see the commentary in tpu-extras.el for
-;;    details.
-
-;;    Like TPU, emacs uses multiple buffers.  Some buffers are used to hold
-;;    files you are editing; other "internal" buffers are used for emacs' own
-;;    purposes (like showing you help).  Here are some commands for dealing
-;;    with buffers.
-
-;;       Gold-B   moves to next buffer, including internal buffers
-;;       Gold-N   moves to next buffer containing a file
-;;       Gold-M   brings up a buffer menu (like TPU "show buffers")
-
-;;    Emacs is very fond of throwing up new windows.  Dealing with all these
-;;    windows can be a little confusing at first, so here are a few commands
-;;    to that may help:
-
-;;       Gold-Next_Scr  moves to the next window on the screen
-;;       Gold-Prev_Scr  moves to the previous window on the screen
-;;       Gold-TAB       also moves to the next window on the screen
-
-;;       Control-x 1    deletes all but the current window
-;;       Control-x 0    deletes the current window
-
-;;    Note that the buffers associated with deleted windows still exist!
-
-;;    Like TPU, TPU-edt has a "command" function, invoked with Gold-KP7 or
-;;    Do.  Most of the commands available are emacs commands.  Some TPU
-;;    commands are available, they are: replace, exit, quit, include, and
-;;    Get (unfortunately, "get" is an internal emacs function, so we are
-;;    stuck with "Get" - to make life easier, Get is available as Gold-g).
-
-;;    TPU-edt supports the recall of commands, file names, and search
-;;    strings.  The history of strings recalled differs slightly from
-;;    TPU/edt, but it is still very convenient.
-
-;;    Help is available!  The traditional help keys (Help and PF2) display
-;;    a small help file showing the default keypad layout, control key
-;;    functions, and Gold key functions.  Pressing any key inside of help
-;;    splits the screen and prints a description of the function of the
-;;    pressed key.  Gold-PF2 invokes the native emacs help, with it's
-;;    zillions of options.
-
-;;    Thanks to emacs, TPU-edt has some extensions that may make your life
-;;    easier, or at least more interesting.  For example, Gold-r toggles
-;;    TPU-edt rectangular mode.  In rectangular mode, Remove and Insert work
-;;    on rectangles.  Likewise, Gold-* toggles TPU-edt regular expression
-;;    mode.  In regular expression mode Find, Find Next, and the line-mode
-;;    replace command work with regular expressions.  [A regular expression
-;;    is a pattern that denotes a set of strings; like VMS wildcards.]
-
-;;    Emacs also gives TPU-edt the undo and occur functions.  Undo does
-;;    what it says; it undoes the last change.  Multiple undos in a row
-;;    undo multiple changes.  For your convenience, undo is available on
-;;    Gold-u.  Occur shows all the lines containing a specific string in
-;;    another window.  Moving to that window, and typing ^C^C (Control-C
-;;    twice) on a particular line moves you back to the original window
-;;    at that line.  Occur is on Gold-o.
-
-;;    Finally, as you edit, remember that all the power of emacs is at
-;;    your disposal.  It really is a fantastic tool.  You may even want to
-;;    take some time and read the emacs tutorial; perhaps not to learn the
-;;    native emacs key bindings, but to get a feel for all the things
-;;    emacs can do for you.  The emacs tutorial is available from the
-;;    emacs help function: "Gold-PF2 t"
-
-
-;; %% Starting TPU-edt
-
-;;    All you have to do to start TPU-edt, is turn it on.  This can be
-;;    done from the command line when running emacs.
-
-;;        prompt> emacs -f tpu-edt
-
-;;    If you've already started emacs, turn on TPU-edt using the tpu-edt
-;;    command.  First press `M-x' (that's usually `ESC' followed by `x')
-;;    and type `tpu-edt' followed by a carriage return.
-
-;;    If you like TPU-edt and want to use it all the time, you can start
-;;    TPU-edt using the emacs initialization file, .emacs.  Simply create
-;;    a .emacs file in your home directory containing the line:
-
-;;        (tpu-edt)
-
-;;    That's all you need to do to start TPU-edt.
-
-
-;; %% Customizing TPU-edt using the Emacs Initialization File
-
-;;    The following is a sample emacs initialization file.  It shows how to
-;;    invoke TPU-edt, and how to customize it.
-
-;;    ; .emacs - a sample emacs initialization file
-
-;;    ; Turn on TPU-edt
-;;    (tpu-edt)
-
-;;    ; Set scroll margins 10% (top) and 15% (bottom).
-;;    (tpu-set-scroll-margins "10%" "15%")       
-
-;;    ; Load the vtxxx terminal control functions.
-;;    (load "vt-control" t)
-
-;;    ; TPU-edt treats words like EDT; here's how to add word separators.
-;;    ; Note that backslash (\) and double quote (") are quoted with '\'.
-;;    (tpu-add-word-separators "]\\[-_,.\"=+()'/*#:!&;$")
-
-;;    ; Emacs is happy to save files without a final newline; other Unix
-;;    ; programs hate that!  Here we make sure that files end with newlines.
-;;    (setq require-final-newline t)
-
-;;    ; Emacs uses Control-s and Control-q.  Problems can occur when using
-;;    ; emacs on terminals that use these codes for flow control (Xon/Xoff
-;;    ; flow control).  These lines disable emacs' use of these characters.
-;;    (global-unset-key "\C-s")
-;;    (global-unset-key "\C-q")
-
-;;    ; The emacs universal-argument function is very useful.
-;;    ; This line maps universal-argument to Gold-PF1.
-;;    (define-key GOLD-SS3-map "P" 'universal-argument)          ; Gold-PF1
-
-;;    ; Make KP7 move by paragraphs, instead of pages.
-;;    (define-key SS3-map "w" 'tpu-paragraph)                    ; KP7
-
-;;    ; Repeat the preceding mappings for X-windows.
-;;    (cond
-;;     (window-system
-;;      (global-set-key [kp-7] 'tpu-paragraph)                   ; KP7
-;;      (define-key GOLD-map [kp-f1] 'universal-argument)))      ; GOLD-PF1
-
-;;    ; Display the TPU-edt version.
-;;    (tpu-version)
-
-
-;; %% Regular Expressions in TPU-edt
-
-;;    Gold-* toggles TPU-edt regular expression mode.  In regular expression
-;;    mode, find, find next, replace, and substitute accept emacs regular
-;;    expressions.  A complete list of emacs regular expressions can be found
-;;    using the emacs "info" command (it's somewhat like the VMS help
-;;    command).  Try the following sequence of commands:
-
-;;        DO info             <enter info mode>
-;;        m emacs             <select the "emacs" topic>
-;;        m regexs            <select the "regular expression" topic>
-
-;;    Type "q" to quit out of info mode.
-
-;;    There is a problem in regular expression mode when searching for empty
-;;    strings, like beginning-of-line (^) and end-of-line ($).  When searching
-;;    for these strings, find-next may find the current string, instead of the
-;;    next one.  This can cause global replace and substitute commands to loop
-;;    forever in the same location.  For this reason, commands like
-
-;;        replace "^" "> "       <add "> " to beginning of line>
-;;        replace "$" "00711"    <add "00711" to end of line>
-
-;;    may not work properly.
-
-;;    Commands like those above are very useful for adding text to the
-;;    beginning or end of lines.  They might work on a line-by-line basis, but
-;;    go into an infinite loop if the "all" response is specified.  If the
-;;    goal is to add a string to the beginning or end of a particular set of
-;;    lines TPU-edt provides functions to do this.
-
-;;        Gold-^  Add a string at BOL in region or buffer
-;;        Gold-$  Add a string at EOL in region or buffer
-
-;;    There is also a TPU-edt interface to the native emacs string replacement
-;;    commands.  Gold-/ invokes this command.  It accepts regular expressions
-;;    if TPU-edt is in regular expression mode.  Given a repeat count, it will
-;;    perform the replacement without prompting for confirmation.
-
-;;    This command replaces empty strings correctly, however, it has its
-;;    drawbacks.  As a native emacs command, it has a different interface
-;;    than the emulated TPU commands.  Also, it works only in the forward
-;;    direction, regardless of the current TPU-edt direction.
-
-;; NOTE: There was a very old tpu-edt in XEmacs 19.14 so I deleted it and
-;;  replaced it with the one in Emacs 19.34. -sb
+;; along with GNU Emacs; see the file COPYING.  If not, write to
+;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
 ;;; Code:
 
 
 ;;;
-;;;  Version Information
+;;;  Revision and Version Information
 ;;;
-(defconst tpu-version "4.2" "TPU-edt version number.")
+(defconst tpu-version "3.2" "TPU-edt version number.")
 
 
 ;;;
@@ -303,11 +58,17 @@
 ;;;     o tpu-update-mode-line  o mode line section
 ;;;
 (defconst tpu-emacs19-p (not (string-lessp emacs-version "19"))
-  "Non-nil if we are running Lucid Emacs or version 19.")
+  "Non-NIL if we are running XEmacs or GNU Emacs version 19.")
 
-(defconst tpu-lucid-emacs19-p
-  (and tpu-emacs19-p (string-match "Lucid" emacs-version))
-  "Non-nil if we are running Lucid Emacs version 19.")
+(defconst tpu-gnu-emacs18-p (not tpu-emacs19-p)
+  "Non-NIL if we are running GNU Emacs version 18.")
+
+(defconst tpu-xemacs-emacs19-p
+  (and tpu-emacs19-p (string-match "XEmacs" emacs-version))
+  "Non-NIL if we are running XEmacs version 19.")
+
+(defconst tpu-gnu-emacs19-p (and tpu-emacs19-p (not tpu-xemacs-emacs19-p))
+  "Non-NIL if we are running GNU Emacs version 19.")
 
 
 ;;;
@@ -322,22 +83,22 @@ CSI is DEC's name for the sequence <ESC>[.")
 SS3 is DEC's name for the sequence <ESC>O.")
 
 (defvar GOLD-map (make-keymap)
-  "Maps the function keys on the VT100 keyboard preceded by PF1.
+  "Maps the function keys on the VT100 keyboard preceeded by PF1.
 GOLD is the ASCII 7-bit escape sequence <ESC>OP.")
 
 (defvar GOLD-CSI-map (make-sparse-keymap)
-  "Maps the function keys on the VT100 keyboard preceded by GOLD-CSI.")
+  "Maps the function keys on the VT100 keyboard preceeded by GOLD-CSI.")
 
 (defvar GOLD-SS3-map (make-sparse-keymap)
-  "Maps the function keys on the VT100 keyboard preceded by GOLD-SS3.")
+  "Maps the function keys on the VT100 keyboard preceeded by GOLD-SS3.")
 
 (defvar tpu-global-map nil "TPU-edt global keymap.")
 (defvar tpu-original-global-map (copy-keymap global-map)
   "Original global keymap.")
 
-(and tpu-lucid-emacs19-p
+(and tpu-xemacs-emacs19-p
      (defvar minibuffer-local-ns-map (make-sparse-keymap)
-       "Hack to give Lucid Emacs the same maps as ordinary Emacs."))
+       "Hack to give XEmacs the same maps as GNU emacs."))
 
 
 ;;;
@@ -370,7 +131,7 @@ GOLD is the ASCII 7-bit escape sequence <ESC>OP.")
   "True when TPU-edt is operating in the forward direction.")
 (defvar tpu-reverse nil
   "True when TPU-edt is operating in the backward direction.")
-(defvar tpu-control-keys nil
+(defvar tpu-control-keys t
   "If non-nil, control keys are set to perform TPU functions.")
 (defvar tpu-xkeys-file nil
   "File containing TPU-edt X key map.")
@@ -436,11 +197,8 @@ GOLD is the ASCII 7-bit escape sequence <ESC>OP.")
 			     (purecopy "  ")
 			     'tpu-mark-flag
 			     (purecopy " %[(")
-			     'mode-name 'mode-line-process 'minor-mode-alist
-			     (purecopy "%n")
-			     (purecopy ")%]--")
-			     (purecopy '(line-number-mode "L%l--"))
-			     (purecopy '(column-number-mode "C%c--"))
+			     'mode-name 'minor-mode-alist "%n" 'mode-line-process
+			     (purecopy ")%]----")
 			     (purecopy '(-3 . "%p"))
 			     (purecopy "-%-")))
 	 (or (assq 'tpu-newline-and-indent-p minor-mode-alist)
@@ -463,12 +221,12 @@ GOLD is the ASCII 7-bit escape sequence <ESC>OP.")
   (cond (tpu-emacs19-p (force-mode-line-update))
 	(t (set-buffer-modified-p (buffer-modified-p)) (sit-for 0))))
 
-(cond (tpu-lucid-emacs19-p
-       (add-hook 'zmacs-deactivate-region-hook 'tpu-update-mode-line)
-       (add-hook 'zmacs-activate-region-hook 'tpu-update-mode-line))
-      (tpu-emacs19-p
+(cond (tpu-gnu-emacs19-p
        (add-hook 'activate-mark-hook 'tpu-update-mode-line)
-       (add-hook 'deactivate-mark-hook 'tpu-update-mode-line)))
+       (add-hook 'deactivate-mark-hook 'tpu-update-mode-line))
+      (tpu-xemacs-emacs19-p
+       (add-hook 'zmacs-deactivate-region-hook 'tpu-update-mode-line)
+       (add-hook 'zmacs-activate-region-hook 'tpu-update-mode-line)))
 
 
 ;;;
@@ -523,7 +281,7 @@ Otherwise sets the tpu-match markers to nil and returns nil."
 
 (defun tpu-show-match-markers nil
   "Show the values of the match markers."
-  (interactive)
+  (interactive "_")
   (if (markerp tpu-match-beginning-mark)
       (let ((beg (marker-position tpu-match-beginning-mark)))
 	(message "(%s, %s) in %s -- current %s in %s"
@@ -542,17 +300,17 @@ Otherwise sets the tpu-match markers to nil and returns nil."
 (defun tpu-mark nil
   "TPU-edt version of the mark function.
 Return the appropriate value of the mark for the current
-version of Emacs."
-  (cond (tpu-lucid-emacs19-p (mark (not zmacs-regions)))
-	(tpu-emacs19-p (and mark-active (mark (not transient-mark-mode))))
+version of emacs."
+  (cond (tpu-xemacs-emacs19-p (mark (not zmacs-regions)))
+	(tpu-gnu-emacs19-p (and mark-active (mark (not transient-mark-mode))))
 	(t (mark))))
 
 (defun tpu-set-mark (pos)
-  "TPU-edt verion of the `set-mark' function.
-Sets the mark at POS and activates the region according to the
-current version of Emacs."
+  "TPU-edt verion of the set-mark function.
+Sets the mark at POS and activates the region acording to the
+current version of emacs."
   (set-mark pos)
-  (and tpu-lucid-emacs19-p pos (zmacs-activate-region)))
+  (and tpu-xemacs-emacs19-p pos (zmacs-activate-region)))
 
 (defun tpu-string-prompt (prompt history-symbol)
   "Read a string with PROMPT."
@@ -565,7 +323,7 @@ current version of Emacs."
 (defun tpu-y-or-n-p (prompt &optional not-yes)
   "Prompt for a y or n answer with positive default.
 Optional second argument NOT-YES changes default to negative.
-Like Emacs `y-or-n-p', but also accepts space as y and DEL as n."
+Like emacs y-or-n-p, also accepts space as y and DEL as n."
   (message "%s[%s]" prompt (if not-yes "n" "y"))
   (let ((doit t))
     (while doit
@@ -606,13 +364,13 @@ Top line is 0.  Counts each text line only once, even if it wraps."
 
 (defun tpu-drop-breadcrumb (num)
   "Drops a breadcrumb that can be returned to later with goto-breadcrumb."
-  (interactive "p")
+  (interactive "_p")
   (put tpu-breadcrumb-plist num (list (current-buffer) (point)))
   (message "Mark %d set." num))
 
 (defun tpu-goto-breadcrumb (num)
   "Returns to a breadcrumb set with drop-breadcrumb."
-  (interactive "p")
+  (interactive "_p")
   (cond ((get tpu-breadcrumb-plist num)
 	 (switch-to-buffer (car (get tpu-breadcrumb-plist num)))
 	 (goto-char (tpu-cadr (get tpu-breadcrumb-plist num)))
@@ -627,7 +385,7 @@ Top line is 0.  Counts each text line only once, even if it wraps."
 (defun tpu-change-case (num)
   "Change the case of the character under the cursor or region.
 Accepts a prefix argument of the number of characters to invert."
-  (interactive "p")
+  (interactive "_p")
   (cond ((tpu-mark)
 	 (let ((beg (region-beginning)) (end (region-end)))
 	   (while (> end beg)
@@ -655,7 +413,7 @@ Accepts a prefix argument of the number of characters to invert."
 (defun tpu-fill (num)
   "Fill paragraph or marked region.
 With argument, fill and justify."
-  (interactive "P")
+  (interactive "_P")
   (cond ((tpu-mark)
 	 (fill-region (point) (tpu-mark) num)
 	 (tpu-unselect t))
@@ -664,20 +422,20 @@ With argument, fill and justify."
 
 (defun tpu-version nil
   "Print the TPU-edt version number."
-  (interactive)
+  (interactive "_")
   (message
    "TPU-edt version %s by Rob Riepel (riepel@networking.stanford.edu)"
    tpu-version))
 
 (defun tpu-reset-screen-size (height width)
   "Sets the screen size."
-  (interactive "nnew screen height: \nnnew screen width: ")
-  (set-screen-height height)
-  (set-screen-width width))
+  (interactive "_nnew screen height: \nnnew screen width: ")
+  (set-screen-height (selected-screen) height)
+  (set-screen-width (selected-screen) width))
 
 (defun tpu-toggle-newline-and-indent nil
   "Toggle between 'newline and indent' and 'simple newline'."
-  (interactive)
+  (interactive "_")
   (cond (tpu-newline-and-indent-p
          (setq tpu-newline-and-indent-string "")
          (setq tpu-newline-and-indent-p nil)
@@ -694,7 +452,7 @@ With argument, fill and justify."
 (defun tpu-spell-check nil
   "Checks the spelling of the region, or of the entire buffer if no
  region is selected."
-  (interactive)
+  (interactive "_")
   (cond (tpu-have-ispell
 	 (if (tpu-mark) (ispell-region (tpu-mark) (point)) (ispell-buffer)))
 	(t
@@ -703,7 +461,7 @@ With argument, fill and justify."
 
 (defun tpu-toggle-overwrite-mode nil
   "Switches in and out of overwrite mode"
-  (interactive)
+  (interactive "_")
   (cond (overwrite-mode
 	 (tpu-local-set-key "\177" tpu-saved-delete-func)
 	 (overwrite-mode 0))
@@ -715,14 +473,14 @@ With argument, fill and justify."
 (defun tpu-special-insert (num)
   "Insert a character or control code according to
 its ASCII decimal value."
-  (interactive "P")
+  (interactive "_P")
   (if overwrite-mode (delete-char 1))
   (insert (if num num 0)))
 
 (defun tpu-quoted-insert (num)
   "Read next input character and insert it.
 This is useful for inserting control characters."
-  (interactive "*p")
+  (interactive "_*p")
   (let ((char (read-char)) )
     (if overwrite-mode (delete-char num))
     (insert-char char num)))
@@ -733,20 +491,20 @@ This is useful for inserting control characters."
 ;;;
 (defun tpu-include (file)
   "TPU-like include file"
-  (interactive "fInclude file: ")
+  (interactive "_fInclude file: ")
   (save-excursion
     (insert-file file)
     (message "")))
 
 (defun tpu-get (file)
   "TPU-like get file"
-  (interactive "FFile to get: ")
+  (interactive "_FFile to get: ")
   (find-file file))
 
 (defun tpu-what-line nil
   "Tells what line the point is on,
  and the total number of lines in the buffer."
-  (interactive)
+  (interactive "_")
   (if (eobp)
       (message "You are at the End of Buffer.  The last line is %d."
 	       (count-lines 1 (point-max)))
@@ -756,14 +514,14 @@ This is useful for inserting control characters."
 
 (defun tpu-exit nil
   "Exit the way TPU does, save current buffer and ask about others."
-  (interactive)
+  (interactive "_")
   (if (not (eq (recursion-depth) 0))
       (exit-recursive-edit)
     (progn (save-buffer) (save-buffers-kill-emacs))))
 
 (defun tpu-quit nil
   "Quit the way TPU does, ask to make sure changes should be abandoned."
-  (interactive)
+  (interactive "_")
   (let ((list (buffer-list))
 	(working t))
     (while (and list working)
@@ -884,42 +642,22 @@ This is useful for inserting control characters."
        B     Next Buffer - display the next buffer (all buffers)
        C     Recall - edit and possibly repeat previous commands
        E     Exit - save current buffer and ask about others
-       G     Get - load a file into a new edit buffer
 
+       G     Get - load a file into a new edit buffer
        I     Include - include a file in this buffer
        K     Kill Buffer - abandon edits and delete buffer
+
        M     Buffer Menu - display a list of all buffers
        N     Next File Buffer - display next buffer containing a file
-
        O     Occur - show following lines containing REGEXP
+
        Q     Quit - exit without saving anything
        R     Toggle rectangular mode for remove and insert
        S     Search and substitute - line mode REPLACE command
 
-      ^T     Toggle control key bindings between TPU and emacs
        U     Undo - undo the last edit
        W     Write - save current buffer
        X     Exit - save all modified buffers and exit
-
-\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\f
-
-  More extensive documentation on TPU-edt can be found in the `Commentary'
-  section of tpu-edt.el.  This section can be accessed through the standard
-  Emacs help facility using the `p' option.  Once you exit TPU-edt Help, one
-  of the following key sequences is sure to get you there.
-
-    ^h p        if you're not yet using TPU-edt
-    Gold-PF2 p  if you're using TPU-edt
-
-  Alternatively, fire up Emacs help from the command prompt, with
-
-    M-x help-for-help <CR> p <CR>
-
-  Where `M-x' might be any of `Gold-KP7', 'Do', or 'ESC-x'.
-
-  When you successfully invoke this part of the Emacs help facility, you
-  will see a buffer named `*Finder*' listing a number of topics.  Look for
-  tpu-edt under `emulations'.
 
 \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\f
 
@@ -934,7 +672,7 @@ This is useful for inserting control characters."
 
 (defun tpu-help nil
   "Display TPU-edt help."
-  (interactive)
+  (interactive "_")
   ;; Save current window configuration
   (save-window-excursion
     ;; Create and fill help buffer if necessary
@@ -958,10 +696,12 @@ This is useful for inserting control characters."
 	(if split
 	    (setq key
 		  (read-key-sequence
-		   "Press the key you want help on (RET=exit, ENTER=redisplay, N=next, P=prev): "))
+		   "Press the key you want help on (RET=exit, ENTER=redisplay, N=next, 
+P=prev): "))
 	  (setq key
 		(read-key-sequence
-		 "Press the key you want help on (RET to exit, N next screen, P prev screen): ")))
+		 "Press the key you want help on (RET to exit, N next screen, P prev 
+screen): ")))
 
 	;; Process the read key
 	;;
@@ -990,7 +730,7 @@ This is useful for inserting control characters."
 	        	  (scroll-other-window -8)
 	        	(error nil)))
 	             (t
-	              (backward-page)
+	              (backward-page 2)
 	              (forward-line 1)
 	              (tpu-line-to-top-of-window))))
 	      ((not (equal tpu-help-return fkey))
@@ -1006,12 +746,12 @@ This is useful for inserting control characters."
 ;;;
 (defun tpu-insert-escape nil
   "Inserts an escape character, and so becomes the escape-key alias."
-  (interactive)
+  (interactive "_")
   (insert "\e"))
 
 (defun tpu-insert-formfeed nil
   "Inserts a formfeed character."
-  (interactive)
+  (interactive "_")
   (insert "\C-L"))
 
 
@@ -1022,14 +762,14 @@ This is useful for inserting control characters."
 
 (defun tpu-end-define-macro-key (key)
   "Ends the current macro definition"
-  (interactive "kPress the key you want to use to do what was just learned: ")
+  (interactive "_kPress the key you want to use to do what was just learned: ")
   (end-kbd-macro nil)
   (global-set-key key last-kbd-macro)
   (global-set-key "\C-r" tpu-saved-control-r))
 
 (defun tpu-define-macro-key nil
   "Bind a set of keystrokes to a single key, or key combination."
-  (interactive)
+  (interactive "_")
   (setq tpu-saved-control-r (global-key-binding "\C-r"))
   (global-set-key "\C-r" 'tpu-end-define-macro-key)
   (start-kbd-macro nil))
@@ -1048,12 +788,12 @@ kills modified buffers without asking."
 (defun tpu-save-all-buffers-kill-emacs nil
   "Save all buffers and exit emacs."
   (interactive)
-  (let ((delete-old-versions t))
-    (save-buffers-kill-emacs t)))
+  (setq trim-versions-without-asking t)
+  (save-buffers-kill-emacs t))
 
 (defun tpu-write-current-buffers nil
   "Save all modified buffers without exiting."
-  (interactive)
+  (interactive "_")
   (save-some-buffers t))
 
 (defun tpu-next-buffer nil
@@ -1062,19 +802,14 @@ kills modified buffers without asking."
   (switch-to-buffer (car (reverse (buffer-list)))))
 
 (defun tpu-next-file-buffer nil
-  "Go to next buffer in ring that is visiting a file or directory."
+  "Go to next buffer in ring that is visiting a file."
   (interactive)
-  (let ((list (tpu-make-file-buffer-list (buffer-list))))
-    (setq list (delq (current-buffer) list))
-    (if (not list) (error "No other buffers."))
-    (switch-to-buffer (car (reverse list)))))
-
-(defun tpu-make-file-buffer-list (buffer-list)
-  "Returns names from BUFFER-LIST excluding those beginning with a space or star."
-  (delq nil (mapcar '(lambda (b)
-                       (if (or (= (aref (buffer-name b) 0) ? )
-                               (= (aref (buffer-name b) 0) ?*)) nil b))
-                    buffer-list)))
+  (let ((starting-buffer (buffer-name)))
+    (switch-to-buffer (car (reverse (buffer-list))))
+    (while (and (not (equal (buffer-name) starting-buffer))
+		(not (buffer-file-name)))
+      (switch-to-buffer (car (reverse (buffer-list)))))
+    (if (equal (buffer-name) starting-buffer) (error "No other buffers."))))
 
 (defun tpu-next-window nil
   "Move to the next window."
@@ -1094,7 +829,7 @@ kills modified buffers without asking."
 ;;;
 (defun tpu-toggle-regexp nil
   "Switches in and out of regular expression search and replace mode."
-  (interactive)
+  (interactive "_")
   (setq tpu-regexp-p (not tpu-regexp-p))
   (tpu-set-search)
   (and (interactive-p)
@@ -1111,14 +846,14 @@ kills modified buffers without asking."
 (defun tpu-search nil
   "Search for a string or regular expression.
 The search is performed in the current direction."
-  (interactive)
+  (interactive "_")
   (tpu-set-search)
   (tpu-search-internal ""))
 
 (defun tpu-search-forward nil
   "Search for a string or regular expression.
 The search is begins in the forward direction."
-  (interactive)
+  (interactive "_")
   (setq tpu-searching-forward t)
   (tpu-set-search t)
   (tpu-search-internal ""))
@@ -1126,7 +861,7 @@ The search is begins in the forward direction."
 (defun tpu-search-reverse nil
   "Search for a string or regular expression.
 The search is begins in the reverse direction."
-  (interactive)
+  (interactive "_")
   (setq tpu-searching-forward nil)
   (tpu-set-search t)
   (tpu-search-internal ""))
@@ -1134,7 +869,7 @@ The search is begins in the reverse direction."
 (defun tpu-search-again nil
   "Search for the same string or regular expression as last time.
 The search is performed in the current direction."
-  (interactive)
+  (interactive "_")
   (tpu-search-internal tpu-search-last-string))
 
 ;;  tpu-set-search defines the search functions used by the TPU-edt internal
@@ -1143,11 +878,10 @@ The search is performed in the current direction."
 ;;  to ensure that the next search will be in the current direction.  It is
 ;;  called from:
 
-;;       tpu-advance                   tpu-backup
-;;       tpu-toggle-regexp             tpu-toggle-search-direction (t)
-;;       tpu-search                    tpu-lm-replace
-;;       tpu-search-forward (t)        tpu-search-reverse (t)
-;;       tpu-search-forward-exit (t)   tpu-search-backward-exit (t)
+;;       tpu-advance              tpu-backup
+;;       tpu-toggle-regexp        tpu-toggle-search-direction (t)
+;;       tpu-search               tpu-lm-replace
+;;       tpu-search-forward (t)   tpu-search-reverse (t)
 
 (defun tpu-set-search (&optional arg)
   "Set the search functions and set the search direction to the current
@@ -1176,49 +910,32 @@ direction.  If an argument is specified, don't set the search direction."
   (tpu-unset-match)
   (tpu-adjust-search)
 
-  (let ((case-fold-search
-	 (and case-fold-search (tpu-check-search-case tpu-search-last-string))))
+  (cond ((tpu-emacs-search tpu-search-last-string nil t)
+	 (tpu-set-match) (goto-char (tpu-match-beginning)))
 
-    (cond ((tpu-emacs-search tpu-search-last-string nil t)
-	   (tpu-set-match) (goto-char (tpu-match-beginning)))
+	(t
+	 (tpu-adjust-search t)
+	 (let ((found nil) (pos nil))
+	   (save-excursion
+	     (let ((tpu-searching-forward (not tpu-searching-forward)))
+	       (tpu-adjust-search)
+	       (setq found (tpu-emacs-rev-search tpu-search-last-string nil t))
+	       (setq pos (match-beginning 0))))
 
-	  (t
-	   (tpu-adjust-search t)
-	   (let ((found nil) (pos nil))
-	     (save-excursion
-	       (let ((tpu-searching-forward (not tpu-searching-forward)))
-		 (tpu-adjust-search)
-		 (setq found (tpu-emacs-rev-search tpu-search-last-string nil t))
-		 (setq pos (match-beginning 0))))
+	   (cond (found
+		  (cond ((tpu-y-or-n-p
+			  (format "Found in %s direction.  Go there? "
+				  (if tpu-searching-forward "reverse" "forward")))
+			 (goto-char pos) (tpu-set-match)
+			 (tpu-toggle-search-direction))))
 
-	     (cond
-	      (found
-	       (cond ((tpu-y-or-n-p
-		       (format "Found in %s direction.  Go there? "
-			       (if tpu-searching-forward "reverse" "forward")))
-		      (goto-char pos) (tpu-set-match)
-		      (tpu-toggle-search-direction))))
-
-	      (t
-	       (if (not quiet)
-		   (message
-		    "%sSearch failed: \"%s\""
-		    (if tpu-regexp-p "RE " "") tpu-search-last-string)))))))))
+		 (t
+		  (if (not quiet)
+		      (message
+		       "%sSearch failed: \"%s\""
+		       (if tpu-regexp-p "RE " "") tpu-search-last-string))))))))
 
 (fset 'tpu-search-internal-core (symbol-function 'tpu-search-internal))
-
-(defun tpu-check-search-case (string)
-  "Returns t if string contains upper case."
-  ;; if using regexp, eliminate upper case forms (\B \W \S.)
-  (if tpu-regexp-p
-      (let ((pat (copy-sequence string)) (case-fold-search nil) (pos 0))
-	(while (setq pos (string-match "\\\\\\\\" pat)) (aset pat (+ 1 pos) ?.))
-	(while (setq pos (string-match "\\\\B" pat)) (aset pat (+ 1 pos) ?.))
-	(while (setq pos (string-match "\\\\W" pat)) (aset pat (+ 1 pos) ?.))
-	(while (setq pos (string-match "\\\\S." pat))
-	  (aset pat (+ 1 pos) ?.) (aset pat (+ 2 pos) ?.))
-	(string-equal pat (downcase pat)))
-    (string-equal string (downcase string))))
 
 (defun tpu-adjust-search (&optional arg)
   "For forward searches, move forward a character before searching,
@@ -1230,26 +947,12 @@ and backward a character after a failed search.  Arg means end of search."
 (defun tpu-toggle-search-direction nil
   "Toggle the TPU-edt search direction.
 Used for reversing a search in progress."
-  (interactive)
+  (interactive "_")
   (setq tpu-searching-forward (not tpu-searching-forward))
   (tpu-set-search t)
   (and (interactive-p)
        (message "Searching %sward."
 		(if tpu-searching-forward "for" "back"))))
-
-(defun tpu-search-forward-exit nil
-  "Set search direction forward and exit minibuffer."
-  (interactive)
-  (setq tpu-searching-forward t)
-  (tpu-set-search t)
-  (exit-minibuffer))
-
-(defun tpu-search-backward-exit nil
-  "Set search direction backward and exit minibuffer."
-  (interactive)
-  (setq tpu-searching-forward nil)
-  (tpu-set-search t)
-  (exit-minibuffer))
 
 
 ;;;
@@ -1257,7 +960,7 @@ Used for reversing a search in progress."
 ;;;
 (defun tpu-select (&optional quiet)
   "Sets the mark to define one end of a region."
-  (interactive "P")
+  (interactive "_P")
   (cond ((tpu-mark)
 	 (tpu-unselect quiet))
 	(t
@@ -1271,6 +974,7 @@ Used for reversing a search in progress."
   (setq mark-ring nil)
   (tpu-set-mark nil)
   (tpu-update-mode-line)
+  (zmacs-deactivate-region)
   (if (not quiet) (message "Selection canceled.")))
 
 
@@ -1279,7 +983,7 @@ Used for reversing a search in progress."
 ;;;
 (defun tpu-toggle-rectangle nil
   "Toggle rectangular mode for remove and insert."
-  (interactive)
+  (interactive "_")
   (setq tpu-rectangular-p (not tpu-rectangular-p))
   (setq tpu-rectangle-string (if tpu-rectangular-p " Rect" ""))
   (tpu-update-mode-line)
@@ -1293,7 +997,7 @@ corners of a rectangle."
   (let ((mc (current-column))
 	(pc (progn (exchange-point-and-mark) (current-column))))
 
-    (cond ((> (point) (tpu-mark))                  ; point on lower line
+    (cond ((> (point) (tpu-mark))                      ; point on lower line
 	   (cond ((> pc mc)                        ; point @  lower-right
 		  (exchange-point-and-mark))       ; point -> upper-left
 
@@ -1362,7 +1066,7 @@ argument, delete the selected region too."
 (defun tpu-append-region (arg)
   "Append selected region to the tpu-cut buffer.  In the absence of an
 argument, delete the selected region too."
-  (interactive "P")
+  (interactive "_P")
   (cond ((tpu-mark)
 	 (let ((beg (region-beginning)) (end (region-end)))
 	   (setq tpu-last-deleted-region
@@ -1384,7 +1088,7 @@ argument, delete the selected region too."
   "Delete one or specified number of lines after point.
 This includes the newline character at the end of each line.
 They are saved for the TPU-edt undelete-lines command."
-  (interactive "p")
+  (interactive "_p")
   (let ((beg (point)))
     (forward-line num)
     (if (not (eq (preceding-char) ?\n))
@@ -1397,7 +1101,7 @@ They are saved for the TPU-edt undelete-lines command."
   "Delete text up to end of line.
 With argument, delete up to to Nth line-end past point.
 They are saved for the TPU-edt undelete-lines command."
-  (interactive "p")
+  (interactive "_p")
   (let ((beg (point)))
     (forward-char 1)
     (end-of-line num)
@@ -1409,7 +1113,7 @@ They are saved for the TPU-edt undelete-lines command."
   "Delete text back to beginning of line.
 With argument, delete up to to Nth line-end past point.
 They are saved for the TPU-edt undelete-lines command."
-  (interactive "p")
+  (interactive "_p")
   (let ((beg (point)))
     (tpu-next-beginning-of-line num)
     (setq tpu-last-deleted-lines
@@ -1419,7 +1123,7 @@ They are saved for the TPU-edt undelete-lines command."
 (defun tpu-delete-current-word (num)
   "Delete one or specified number of words after point.
 They are saved for the TPU-edt undelete-words command."
-  (interactive "p")
+  (interactive "_p")
   (let ((beg (point)))
     (tpu-forward-to-word num)
     (setq tpu-last-deleted-words
@@ -1429,7 +1133,7 @@ They are saved for the TPU-edt undelete-words command."
 (defun tpu-delete-previous-word (num)
   "Delete one or specified number of words before point.
 They are saved for the TPU-edt undelete-words command."
-  (interactive "p")
+  (interactive "_p")
   (let ((beg (point)))
     (tpu-backward-to-word num)
     (setq tpu-last-deleted-words
@@ -1439,7 +1143,7 @@ They are saved for the TPU-edt undelete-words command."
 (defun tpu-delete-current-char (num)
   "Delete one or specified number of characters after point.  The last
 character deleted is saved for the TPU-edt undelete-char command."
-  (interactive "p")
+  (interactive "_p")
   (while (and (> num 0) (not (eobp)))
     (setq tpu-last-deleted-char (char-after (point)))
     (cond (overwrite-mode
@@ -1456,7 +1160,7 @@ character deleted is saved for the TPU-edt undelete-char command."
 (defun tpu-paste (num)
   "Insert the last region or rectangle of killed text.
 With argument reinserts the text that many times."
-  (interactive "p")
+  (interactive "_p")
   (while (> num 0)
     (cond (tpu-rectangular-p
 	   (let ((beg (point)))
@@ -1471,7 +1175,7 @@ With argument reinserts the text that many times."
 (defun tpu-undelete-lines (num)
   "Insert lines deleted by last TPU-edt line-deletion command.
 With argument reinserts lines that many times."
-  (interactive "p")
+  (interactive "_p")
   (let ((beg (point)))
     (while (> num 0)
       (insert tpu-last-deleted-lines)
@@ -1481,7 +1185,7 @@ With argument reinserts lines that many times."
 (defun tpu-undelete-words (num)
   "Insert words deleted by last TPU-edt word-deletion command.
 With argument reinserts words that many times."
-  (interactive "p")
+  (interactive "_p")
   (let ((beg (point)))
     (while (> num 0)
       (insert tpu-last-deleted-words)
@@ -1491,7 +1195,7 @@ With argument reinserts words that many times."
 (defun tpu-undelete-char (num)
   "Insert character deleted by last TPU-edt character-deletion command.
 With argument reinserts the character that many times."
-  (interactive "p")
+  (interactive "_p")
   (while (> num 0)
     (if overwrite-mode (prog1 (forward-char -1) (delete-char 1)))
     (insert tpu-last-deleted-char)
@@ -1524,7 +1228,7 @@ With argument reinserts the character that many times."
   "Replace the selected region with the contents of the cut buffer, and
 repeat most recent search.  A numeric argument serves as a repeat count.
 A negative argument means replace all occurrences of the search string."
-  (interactive "p")
+  (interactive "_p")
   (cond ((or (tpu-mark) (tpu-check-match))
 	 (while (and (not (= num 0)) (or (tpu-mark) (tpu-check-match)))
 	   (let ((beg (point)))
@@ -1599,7 +1303,7 @@ A negative argument means replace all occurrences of the search string."
 currently in regular expression mode, the emacs regular expression
 replace functions are used.  If an argument is supplied, replacements
 are performed without asking.  Only works in forward direction."
-  (interactive "P")
+  (interactive "_P")
   (cond (dont-ask
 	 (setq current-prefix-arg nil)
 	 (call-interactively
@@ -1658,17 +1362,17 @@ or each line of the entire buffer if no region is selected."
 (defun tpu-char (num)
   "Move to the next character in the current direction.
 A repeat count means move that many characters."
-  (interactive "p")
+  (interactive "_p")
   (if tpu-advance (tpu-forward-char num) (tpu-backward-char num)))
 
 (defun tpu-forward-char (num)
   "Move right ARG characters (left if ARG is negative)."
-  (interactive "p")
+  (interactive "_p")
   (forward-char num))
 
 (defun tpu-backward-char (num)
   "Move left ARG characters (right if ARG is negative)."
-  (interactive "p")
+  (interactive "_p")
   (backward-char num))
 
 
@@ -1684,13 +1388,13 @@ Additional word separators are added to this string.")
 (defun tpu-word (num)
   "Move to the beginning of the next word in the current direction.
 A repeat count means move that many words."
-  (interactive "p")
+  (interactive "_p")
   (if tpu-advance (tpu-forward-to-word num) (tpu-backward-to-word num)))
 
 (defun tpu-forward-to-word (num)
   "Move forward until encountering the beginning of a word.
 With argument, do this that many times."
-  (interactive "p")
+  (interactive "_p")
   (while (and (> num 0) (not (eobp)))
     (let* ((beg (point))
 	   (end (prog2 (end-of-line) (point) (goto-char beg))))
@@ -1707,7 +1411,7 @@ With argument, do this that many times."
 (defun tpu-backward-to-word (num)
   "Move backward until encountering the beginning of a word.
 With argument, do this that many times."
-  (interactive "p")
+  (interactive "_p")
   (while (and (> num 0) (not (bobp)))
     (let* ((beg (point))
 	   (end (prog2 (beginning-of-line) (point) (goto-char beg))))
@@ -1724,7 +1428,7 @@ With argument, do this that many times."
 
 (defun tpu-add-word-separators (separators)
   "Add new word separators for TPU-edt word commands."
-  (interactive "sSeparators: ")
+  (interactive "_sSeparators: ")
   (let* ((n 0) (length (length separators)))
     (while (< n length)
       (let ((char (aref separators n))
@@ -1744,13 +1448,13 @@ With argument, do this that many times."
 
 (defun tpu-reset-word-separators nil
   "Reset word separators to default value."
-  (interactive)
+  (interactive "_")
   (setq tpu-word-separator-list nil)
   (setq tpu-skip-chars "^ \t"))
 
 (defun tpu-set-word-separators (separators)
   "Set new word separators for TPU-edt word commands."
-  (interactive "sSeparators: ")
+  (interactive "_sSeparators: ")
   (tpu-reset-word-separators)
   (tpu-add-word-separators separators))
 
@@ -1761,46 +1465,46 @@ With argument, do this that many times."
 (defun tpu-next-line (num)
   "Move to next line.
 Prefix argument serves as a repeat count."
-  (interactive "p")
+  (interactive "_p")
   (next-line-internal num)
   (setq this-command 'next-line))
 
 (defun tpu-previous-line (num)
   "Move to previous line.
 Prefix argument serves as a repeat count."
-  (interactive "p")
+  (interactive "_p")
   (next-line-internal (- num))
   (setq this-command 'previous-line))
 
 (defun tpu-next-beginning-of-line (num)
   "Move to beginning of line; if at beginning, move to beginning of next line.
 Accepts a prefix argument for the number of lines to move."
-  (interactive "p")
+  (interactive "_p")
   (backward-char 1)
   (forward-line (- 1 num)))
 
 (defun tpu-end-of-line (num)
   "Move to the next end of line in the current direction.
 A repeat count means move that many lines."
-  (interactive "p")
+  (interactive "_p")
   (if tpu-advance (tpu-next-end-of-line num) (tpu-previous-end-of-line num)))
 
 (defun tpu-next-end-of-line (num)
   "Move to end of line; if at end, move to end of next line.
 Accepts a prefix argument for the number of lines to move."
-  (interactive "p")
+  (interactive "_p")
   (forward-char 1)
   (end-of-line num))
 
 (defun tpu-previous-end-of-line (num)
   "Move EOL upward.
 Accepts a prefix argument for the number of lines to move."
-  (interactive "p")
+  (interactive "_p")
   (end-of-line (- 1 num)))
 
 (defun tpu-current-end-of-line nil
   "Move point to end of current line."
-  (interactive)
+  (interactive "_")
   (let ((beg (point)))
     (end-of-line)
     (if (= beg (point)) (message "You are already at the end of a line."))))
@@ -1808,20 +1512,19 @@ Accepts a prefix argument for the number of lines to move."
 (defun tpu-line (num)
   "Move to the beginning of the next line in the current direction.
 A repeat count means move that many lines."
-  (interactive "p")
+  (interactive "_p")
   (if tpu-advance (tpu-forward-line num) (tpu-backward-line num)))
 
 (defun tpu-forward-line (num)
   "Move to beginning of next line.
 Prefix argument serves as a repeat count."
-  (interactive "p")
+  (interactive "_p")
   (forward-line num))
 
 (defun tpu-backward-line (num)
   "Move to beginning of previous line.
 Prefix argument serves as repeat count."
-  (interactive "p")
-  (or (bolp) (>= 0 num) (setq num (- num 1)))
+  (interactive "_p")
   (forward-line (- num)))
 
 
@@ -1831,14 +1534,14 @@ Prefix argument serves as repeat count."
 (defun tpu-paragraph (num)
   "Move to the next paragraph in the current direction.
 A repeat count means move that many paragraphs."
-  (interactive "p")
+  (interactive "_p")
   (if tpu-advance
       (tpu-next-paragraph num) (tpu-previous-paragraph num)))
 
 (defun tpu-next-paragraph (num)
   "Move to beginning of the next paragraph.
 Accepts a prefix argument for the number of paragraphs."
-  (interactive "p")
+  (interactive "_p")
   (beginning-of-line)
   (while (and (not (eobp)) (> num 0))
     (if (re-search-forward "^[ \t]*$" nil t)
@@ -1852,7 +1555,7 @@ Accepts a prefix argument for the number of paragraphs."
 (defun tpu-previous-paragraph (num)
   "Move to beginning of previous paragraph.
 Accepts a prefix argument for the number of paragraphs."
-  (interactive "p")
+  (interactive "_p")
   (end-of-line)
   (while (and (not (bobp)) (> num 0))
     (if (not (and (re-search-backward "^[ \t]*$" nil t)
@@ -1871,7 +1574,7 @@ Accepts a prefix argument for the number of paragraphs."
 (defun tpu-page (num)
   "Move to the next page in the current direction.
 A repeat count means move that many pages."
-  (interactive "p")
+  (interactive "_p")
   (if tpu-advance (forward-page num) (backward-page num))
   (if (eobp) (recenter -1)))
 
@@ -1882,13 +1585,13 @@ A repeat count means move that many pages."
 (defun tpu-scroll-window (num)
   "Scroll the display to the next section in the current direction.
 A repeat count means scroll that many sections."
-  (interactive "p")
+  (interactive "_p")
   (if tpu-advance (tpu-scroll-window-up num) (tpu-scroll-window-down num)))
 
 (defun tpu-scroll-window-down (num)
   "Scroll the display down to the next section.
 A repeat count means scroll that many sections."
-  (interactive "p")
+  (interactive "_p")
   (let* ((beg (tpu-current-line))
 	 (height (1- (window-height)))
 	 (lines (* num (/ (* height tpu-percent-scroll) 100))))
@@ -1898,7 +1601,7 @@ A repeat count means scroll that many sections."
 (defun tpu-scroll-window-up (num)
   "Scroll the display up to the next section.
 A repeat count means scroll that many sections."
-  (interactive "p")
+  (interactive "_p")
   (let* ((beg (tpu-current-line))
 	 (height (1- (window-height)))
 	 (lines (* num (/ (* height tpu-percent-scroll) 100))))
@@ -1908,51 +1611,51 @@ A repeat count means scroll that many sections."
 (defun tpu-pan-right (num)
   "Pan right tpu-pan-columns (16 by default).
 Accepts a prefix argument for the number of tpu-pan-columns to scroll."
-  (interactive "p")
+  (interactive "_p")
   (scroll-left (* tpu-pan-columns num)))
 
 (defun tpu-pan-left (num)
   "Pan left tpu-pan-columns (16 by default).
 Accepts a prefix argument for the number of tpu-pan-columns to scroll."
-  (interactive "p")
+  (interactive "_p")
   (scroll-right (* tpu-pan-columns num)))
 
 (defun tpu-move-to-beginning nil
   "Move cursor to the beginning of buffer, but don't set the mark."
-  (interactive)
+  (interactive "_")
   (goto-char (point-min)))
 
 (defun tpu-move-to-end nil
   "Move cursor to the end of buffer, but don't set the mark."
-  (interactive)
+  (interactive "_")
   (goto-char (point-max))
   (recenter -1))
 
 (defun tpu-goto-percent (perc)
   "Move point to ARG percentage of the buffer."
-  (interactive "NGoto-percentage: ")
+  (interactive "_NGoto-percentage: ")
   (if (or (> perc 100) (< perc 0))
       (error "Percentage %d out of range 0 < percent < 100" perc)
     (goto-char (/ (* (point-max) perc) 100))))
 
 (defun tpu-beginning-of-window nil
   "Move cursor to top of window."
-  (interactive)
+  (interactive "_")
   (move-to-window-line 0))
 
 (defun tpu-end-of-window nil
   "Move cursor to bottom of window."
-  (interactive)
+  (interactive "_")
   (move-to-window-line -1))
 
 (defun tpu-line-to-bottom-of-window nil
   "Move the current line to the bottom of the window."
-  (interactive)
+  (interactive "_")
   (recenter -1))
 
 (defun tpu-line-to-top-of-window nil
   "Move the current line to the top of the window."
-  (interactive)
+  (interactive "_")
   (recenter 0))
 
 
@@ -1961,7 +1664,7 @@ Accepts a prefix argument for the number of tpu-pan-columns to scroll."
 ;;;
 (defun tpu-advance-direction nil
   "Set TPU Advance mode so keypad commands move forward."
-  (interactive)
+  (interactive "_")
   (setq tpu-direction-string " Advance")
   (setq tpu-advance t)
   (setq tpu-reverse nil)
@@ -1970,7 +1673,7 @@ Accepts a prefix argument for the number of tpu-pan-columns to scroll."
 
 (defun tpu-backup-direction nil
   "Set TPU Backup mode so keypad commands move backward."
-  (interactive)
+  (interactive "_")
   (setq tpu-direction-string " Reverse")
   (setq tpu-advance nil)
   (setq tpu-reverse t)
@@ -2250,43 +1953,38 @@ Accepts a prefix argument for the number of tpu-pan-columns to scroll."
 
 
 ;;;
-;;;  Minibuffer map additions to make KP-enter = RET
+;;;  Minibuffer map additions to make KP_enter = RET
 ;;;
 (define-key minibuffer-local-map "\eOM" 'exit-minibuffer)
 (define-key minibuffer-local-ns-map "\eOM" 'exit-minibuffer)
 (define-key minibuffer-local-completion-map "\eOM" 'exit-minibuffer)
-(define-key minibuffer-local-must-match-map "\eOM" 'minibuffer-complete-and-exit)
+(define-key minibuffer-local-must-match-map "\eOM" 
+'minibuffer-complete-and-exit)
 (and (boundp 'repeat-complex-command-map)
      (define-key repeat-complex-command-map "\eOM" 'exit-minibuffer))
 
 
 ;;;
-;;;  Minibuffer map additions to set search direction
+;;;  Map control keys
 ;;;
-(define-key minibuffer-local-map "\eOt" 'tpu-search-forward-exit)
-(define-key minibuffer-local-map "\eOu" 'tpu-search-backward-exit)
+(define-key global-map "\C-\\" 'quoted-insert)                ; ^\
+(define-key global-map "\C-a" 'tpu-toggle-overwrite-mode)     ; ^A
+(define-key global-map "\C-b" 'repeat-complex-command)        ; ^B
+(define-key global-map "\C-e" 'tpu-current-end-of-line)       ; ^E
+(define-key global-map "\C-h" 'tpu-next-beginning-of-line)    ; ^H (BS)
+(define-key global-map "\C-j" 'tpu-delete-previous-word)      ; ^J (LF)
+(define-key global-map "\C-k" 'tpu-define-macro-key)          ; ^K
+(define-key global-map "\C-l" 'tpu-insert-formfeed)           ; ^L (FF)
+(define-key global-map "\C-r" 'recenter)                      ; ^R
+(define-key global-map "\C-u" 'tpu-delete-to-bol)             ; ^U
+(define-key global-map "\C-v" 'tpu-quoted-insert)             ; ^V
+(define-key global-map "\C-w" 'redraw-display)                ; ^W
+(define-key global-map "\C-z" 'tpu-exit)                      ; ^Z
 
 
 ;;;
-;;;  Functions to set, reset, and toggle the control key bindings
+;;;  Functions to reset and toggle the control key bindings
 ;;;
-(defun tpu-set-control-keys nil
-  "Set control keys to TPU style functions."
-  (define-key global-map "\C-\\" 'quoted-insert)                ; ^\
-  (define-key global-map "\C-a" 'tpu-toggle-overwrite-mode)     ; ^A
-  (define-key global-map "\C-b" 'repeat-complex-command)        ; ^B
-  (define-key global-map "\C-e" 'tpu-current-end-of-line)       ; ^E
-  (define-key global-map "\C-h" 'tpu-next-beginning-of-line)    ; ^H (BS)
-  (define-key global-map "\C-j" 'tpu-delete-previous-word)      ; ^J (LF)
-  (define-key global-map "\C-k" 'tpu-define-macro-key)          ; ^K
-  (define-key global-map "\C-l" 'tpu-insert-formfeed)           ; ^L (FF)
-  (define-key global-map "\C-r" 'recenter)                      ; ^R
-  (define-key global-map "\C-u" 'tpu-delete-to-bol)             ; ^U
-  (define-key global-map "\C-v" 'tpu-quoted-insert)             ; ^V
-  (define-key global-map "\C-w" 'redraw-display)                ; ^W
-  (define-key global-map "\C-z" 'tpu-exit)                      ; ^Z
-  (setq tpu-control-keys t))
-
 (defun tpu-reset-control-keys (tpu-style)
   "Set control keys to TPU or emacs style functions."
   (let* ((tpu   (and tpu-style (not tpu-control-keys)))
@@ -2315,7 +2013,7 @@ Accepts a prefix argument for the number of tpu-pan-columns to scroll."
 
 (defun tpu-toggle-control-keys nil
   "Toggles control key bindings between TPU-edt and Emacs."
-  (interactive)
+  (interactive "_")
   (tpu-reset-control-keys (not tpu-control-keys))
   (and (interactive-p)
        (message "Control keys function with %s bindings."
@@ -2327,26 +2025,28 @@ Accepts a prefix argument for the number of tpu-pan-columns to scroll."
 ;;;
 (defun tpu-next-history-element (n)
   "Insert the next element of the minibuffer history into the minibuffer."
-  (interactive "p")
+  (interactive "_p")
   (next-history-element n)
   (goto-char (point-max)))
 
 (defun tpu-previous-history-element (n)
   "Insert the previous element of the minibuffer history into the minibuffer."
-  (interactive "p")
+  (interactive "_p")
   (previous-history-element n)
   (goto-char (point-max)))
 
 (defun tpu-arrow-history nil
   "Modify minibuffer maps to use arrows for history recall."
-  (interactive)
+  (interactive "_")
   (let ((loc (where-is-internal 'tpu-previous-line)) (cur nil))
     (while (setq cur (car loc))
       (define-key read-expression-map cur 'tpu-previous-history-element)
       (define-key minibuffer-local-map cur 'tpu-previous-history-element)
       (define-key minibuffer-local-ns-map cur 'tpu-previous-history-element)
-      (define-key minibuffer-local-completion-map cur 'tpu-previous-history-element)
-      (define-key minibuffer-local-must-match-map cur 'tpu-previous-history-element)
+      (define-key minibuffer-local-completion-map cur 
+'tpu-previous-history-element)
+      (define-key minibuffer-local-must-match-map cur 
+'tpu-previous-history-element)
       (setq loc (cdr loc)))
 
     (setq loc (where-is-internal 'tpu-next-line))
@@ -2354,8 +2054,10 @@ Accepts a prefix argument for the number of tpu-pan-columns to scroll."
       (define-key read-expression-map cur 'tpu-next-history-element)
       (define-key minibuffer-local-map cur 'tpu-next-history-element)
       (define-key minibuffer-local-ns-map cur 'tpu-next-history-element)
-      (define-key minibuffer-local-completion-map cur 'tpu-next-history-element)
-      (define-key minibuffer-local-must-match-map cur 'tpu-next-history-element)
+      (define-key minibuffer-local-completion-map cur 
+'tpu-next-history-element)
+      (define-key minibuffer-local-must-match-map cur 
+'tpu-next-history-element)
       (setq loc (cdr loc)))))
 
 
@@ -2365,25 +2067,16 @@ Accepts a prefix argument for the number of tpu-pan-columns to scroll."
 (defun tpu-load-xkeys (file)
   "Load the TPU-edt X-windows key definitions FILE.
 If FILE is nil, try to load a default file.  The default file names are
-`~/.tpu-lucid-keys' for Lucid emacs, and `~/.tpu-keys' for Emacs."
-  (interactive "fX key definition file: ")
+~/.tpu-xemacs-keys for XEmacs emacs, and ~/.tpu-gnu-keys for GNU emacs."
+  (interactive "_fX key definition file: ")
   (cond (file
 	 (setq file (expand-file-name file)))
 	(tpu-xkeys-file
 	 (setq file (expand-file-name tpu-xkeys-file)))
-	(tpu-lucid-emacs19-p
-	 (setq file (convert-standard-filename
-		     (expand-file-name "~/.tpu-lucid-keys"))))
-	(tpu-emacs19-p
-	 (setq file (convert-standard-filename
-		     (expand-file-name "~/.tpu-keys")))
-	 (and (not (file-exists-p file))
-	      (file-exists-p
-	       (convert-standard-filename
-		(expand-file-name "~/.tpu-gnu-keys")))
-	      (tpu-copy-keyfile
-	       (convert-standard-filename
-		(expand-file-name "~/.tpu-gnu-keys")) file))))
+	(tpu-gnu-emacs19-p
+	 (setq file (expand-file-name "~/.tpu-gnu-keys")))
+	(tpu-xemacs-emacs19-p
+	 (setq file (expand-file-name "~/.tpu-xemacs-keys"))))
   (cond ((file-readable-p file)
 	 (load-file file))
 	(t
@@ -2416,34 +2109,6 @@ If FILE is nil, try to load a default file.  The default file names are
 		  (insert "Nope, I can't seem to find it.  :-(\n\n")
 		  (sit-for 120)))))))
 
-(defun tpu-copy-keyfile (oldname newname)
-  "Copy the TPU-edt X key definitions file to the new default name."
-  (interactive "fOld name: \nFNew name: ")
-  (if (not (get-buffer "*TPU-Notice*")) (generate-new-buffer "*TPU-Notice*"))
-  (set-buffer "*TPU-Notice*")
-  (erase-buffer)
-  (insert "
-  NOTICE --
-
-  The default name of the TPU-edt key definition file has changed
-  from `~/.tpu-gnu-keys' to `~/.tpu-keys'.  With your permission,
-  your key definitions will be copied to the new file.  If you'll
-  never use older versions of Emacs, you can remove the old file.
-  If the copy fails, you'll be asked if you want to create a new
-  key definitions file.  Do you want to copy your key definition
-  file now?
-  ")
-  (save-window-excursion
-    (switch-to-buffer-other-window "*TPU-Notice*")
-    (shrink-window-if-larger-than-buffer)
-    (goto-char (point-min))
-    (beep)
-    (and (tpu-y-or-n-p "Copy key definitions to the new file now? ")
-	 (condition-case conditions
-             (copy-file oldname newname)
-	   (error (message "Sorry, couldn't copy - %s" (cdr conditions)))))
-    (kill-buffer "*TPU-Notice*")))
-
 
 ;;;
 ;;;  Start and Stop TPU-edt
@@ -2456,14 +2121,16 @@ If FILE is nil, try to load a default file.  The default file names are
    ((not tpu-edt-mode)
     ;; we use picture-mode functions
     (require 'picture)
-    (tpu-set-control-keys)
+    (tpu-reset-control-keys t)
     (cond (tpu-emacs19-p
 	   (and window-system (tpu-load-xkeys nil))
 	   (tpu-arrow-history))
 	  (t
 	   ;; define ispell functions
-	   (autoload 'ispell-word "ispell" "Check spelling of word at or before point" t)
-	   (autoload 'ispell-complete-word "ispell" "Complete word at or before point" t)
+	   (autoload 'ispell-word "ispell" "Check spelling of word at or before 
+point" t)
+	   (autoload 'ispell-complete-word "ispell" "Complete word at or before 
+point" t)
 	   (autoload 'ispell-buffer "ispell" "Check spelling of entire buffer" t)
 	   (autoload 'ispell-region "ispell" "Check spelling of region" t)))
     (tpu-set-mode-line t)
@@ -2484,9 +2151,14 @@ If FILE is nil, try to load a default file.  The default file names are
     (setq-default page-delimiter "^\f")
     (setq-default truncate-lines nil)
     (setq scroll-step 0)
-    (setq global-map (copy-keymap tpu-original-global-map))
     (use-global-map global-map)
     (setq tpu-edt-mode nil))))
+
+
+;;;
+;;;  Turn on TPU-edt and announce it as a feature
+;;;
+(tpu-edt-mode)
 
 (provide 'tpu-edt)
 

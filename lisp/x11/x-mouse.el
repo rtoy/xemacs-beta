@@ -15,8 +15,9 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;(define-key global-map 'button2 'x-set-point-and-insert-selection)
 ;; This is reserved for use by Hyperbole.
@@ -143,11 +144,9 @@ database."
     (set-glyph-image gc-pointer-glyph
 	  (or (x-get-resource "gcPointer" "Cursor" 'string device)
 	      "watch"))
-    (when (featurep 'scrollbar)
-      (set-glyph-image
-       scrollbar-pointer-glyph
-       (or (x-get-resource "scrollbarPointer" "Cursor" 'string device)
-	   "top_left_arrow")))
+    (set-glyph-image scrollbar-pointer-glyph
+	  (or (x-get-resource "scrollbarPointer" "Cursor" 'string device)
+	      "top_left_arrow"))
     (set-glyph-image busy-pointer-glyph
 	  (or (x-get-resource "busyPointer" "Cursor" 'string device)
 	      "watch"))

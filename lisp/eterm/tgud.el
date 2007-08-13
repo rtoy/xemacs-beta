@@ -285,7 +285,7 @@ available with older versions of GDB."
 ;; output of GDB up to the next prompt and build the completion list.
 (defun tgud-gdb-complete-filter (string)
   (setq string (concat tgud-gdb-complete-string string))
-  (while (string-match "\r?\n" string)
+  (while (string-match "\n" string)
     (setq tgud-gdb-complete-list
 	  (cons (substring string tgud-gdb-complete-break (match-beginning 0))
 		tgud-gdb-complete-list))

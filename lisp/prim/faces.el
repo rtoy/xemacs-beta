@@ -31,7 +31,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; along with XEmacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -1069,68 +1069,56 @@ See `face-property-instance' for the semantics of the DOMAIN argument."
   (font-proportional-p (face-font face) domain charset))
 
 
-(defvar init-face-from-resources t
-  "If non-nil, attempt to initialize faces from the resource database.")
-
-(defun make-empty-face (name &optional doc-string temporary)
-  "Like `make-face', but doesn't query the resource database."
-  (let ((init-face-from-resources nil))
-    (make-face name doc-string temporary)))
-
 (defun init-face-from-resources (face &optional locale)
   "Initialize FACE from the resource database.
 If LOCALE is specified, it should be a frame, device, or 'global, and
 the face will be resourced over that locale.  Otherwise, the face will
 be resourced over all possible locales (i.e. all frames, all devices,
 and 'global)."
-  (cond ((null init-face-from-resources)
-	 ;; Do nothing.
-	 )
-	((not locale)
-	 ;; Global, set for all frames.
-	 (progn
-	   (init-face-from-resources face 'global)
-	   (let ((devices (device-list)))
-	     (while devices
-	       (init-face-from-resources face (car devices))
-	       (setq devices (cdr devices))))
-	   (let ((frames (frame-list)))
-	     (while frames
-	       (init-face-from-resources face (car frames))
-	       (setq frames (cdr frames))))))
-	(t
-	 ;; Specific.
-	 (let ((devtype (cond ((devicep locale) (device-type locale))
-			      ((framep locale) (frame-type locale))
-			      (t nil))))
-	   (cond ((or (and (not devtype) (featurep 'x)) (eq 'x devtype))
-		  (x-init-face-from-resources face locale))
-		 ((or (not devtype) (eq 'tty devtype))
-		  ;; Nothing to do for TTYs?
-		  ))))))
+  (if (not locale)
+      (progn
+	(init-face-from-resources face 'global)
+	(let ((devices (device-list)))
+	  (while devices
+	    (init-face-from-resources face (car devices))
+	    (setq devices (cdr devices))))
+	(let ((frames (frame-list)))
+	  (while frames
+	    (init-face-from-resources face (car frames))
+	    (setq frames (cdr frames)))))
+    (let ((devtype (cond ((devicep locale) (device-type locale))
+			 ((framep locale) (frame-type locale))
+			 (t nil))))
+      (cond ((or (and (not devtype) (featurep 'x)) (eq 'x devtype))
+	     (x-init-face-from-resources face locale))
+	    ((or (not devtype) (eq 'tty devtype))
+	     ;; Nothing to do for TTYs?
+	     )))))
 
 (defun init-device-faces (device)
   ;; First, add any device-local face resources.
-  (when init-face-from-resources
-    (loop for face in (face-list) do
-	  (init-face-from-resources face device))
-    ;; Then do any device-specific initialization.
-    (cond ((eq 'x (device-type device))
-	   (x-init-device-faces device))
-	  ;; Nothing to do for TTYs?
-	  )
-    (init-other-random-faces device)))
+  (let ((faces (face-list)))
+    (while faces
+      (init-face-from-resources (car faces) device)
+      (setq faces (cdr faces))))
+  ;; Then do any device-specific initialization.
+  (cond ((eq 'x (device-type device))
+	 (x-init-device-faces device))
+	;; Nothing to do for TTYs?
+	)
+  (init-other-random-faces device))
 
 (defun init-frame-faces (frame)
-  (when init-face-from-resources
-    ;; First, add any frame-local face resources.
-    (loop for face in (face-list) do
-	  (init-face-from-resources face frame))
-    ;; Then do any frame-specific initialization.
-    (cond ((eq 'x (frame-type frame))
-	   (x-init-frame-faces frame))
-	  ;; Is there anything which should be done for TTY's?
-	  )))
+  ;; First, add any frame-local face resources.
+  (let ((faces (face-list)))
+    (while faces
+      (init-face-from-resources (car faces) frame)
+      (setq faces (cdr faces))))
+  ;; Then do any frame-specific initialization.
+  (cond ((eq 'x (frame-type frame))
+	 (x-init-frame-faces frame))
+	;; Is there anything which should be done for TTY's?
+	))
 
 ;; #### This is somewhat X-specific, and is called when the first
 ;; X device is created (even if there were TTY devices created
@@ -1228,7 +1216,7 @@ you want to add code to do stuff like this, use the create-device-hook."
 
   ;; similar for bold-italic.
   (or (face-differs-from-default-p 'bold-italic device)
-      (make-face-bold 'bold-italic device))
+      (make-face-bold-italic 'bold-italic device))
   ;; if we couldn't get a bold-italic version, try just bold.
   (or (face-differs-from-default-p 'bold-italic device)
       (make-face-bold-italic 'bold-italic device))
@@ -1282,10 +1270,11 @@ you want to add code to do stuff like this, use the create-device-hook."
 
   ;; first time through, set the zmacs-region color if it's not already
   ;; specified.
-  (unless (or (face-differs-from-default-p 'zmacs-region device)
-	      (face-background 'zmacs-region 'global))
-    (set-face-background 'zmacs-region "gray65" 'global 'color)
-    (set-face-background 'zmacs-region "gray65" 'global 'grayscale))
+  (if (and (not (face-differs-from-default-p 'zmacs-region device))
+	   (not (face-background 'zmacs-region 'global)))
+      (progn
+	(set-face-background 'zmacs-region "gray" 'global 'color)
+	(set-face-background 'zmacs-region "gray80" 'global 'grayscale)))
   (if (and (not (face-differs-from-default-p 'zmacs-region device))
 	   (not (face-background-pixmap 'zmacs-region 'global)))
       (progn
@@ -1318,10 +1307,11 @@ you want to add code to do stuff like this, use the create-device-hook."
 
   ;; first time through, set the primary-selection color if it's not already
   ;; specified.
-  (unless (or (face-differs-from-default-p 'primary-selection device)
-	      (face-background 'primary-selection 'global))
-    (set-face-background 'primary-selection "gray65" 'global 'color)
-    (set-face-background 'primary-selection "gray65" 'global 'grayscale))
+  (if (and (not (face-differs-from-default-p 'primary-selection device))
+	   (not (face-background 'primary-selection 'global)))
+      (progn
+	(set-face-background 'primary-selection "gray" 'global 'color)
+	(set-face-background 'primary-selection "gray80" 'global 'grayscale)))
   (if (and (not (face-differs-from-default-p 'secondary-selection device))
 	   (not (face-background-pixmap 'primary-selection 'global)))
       (set-face-background-pixmap 'primary-selection "gray3" 'global 'mono))
@@ -1370,7 +1360,7 @@ you want to add code to do stuff like this, use the create-device-hook."
 	    (font (face-font 'modeline-buffer-id 'global)))
 	(and (featurep 'x)
 	     (or fg
-		 (set-face-foreground 'modeline-buffer-id "blue4" 'global
+		 (set-face-foreground 'modeline-buffer-id "blue" 'global
 				      '(color x))))
 	(if font
 	    nil
@@ -1379,8 +1369,7 @@ you want to add code to do stuff like this, use the create-device-hook."
 		(set-face-font 'modeline-buffer-id [bold-italic] nil '(mono x))
 		(set-face-font 'modeline-buffer-id [bold-italic] nil
 			       '(grayscale x))))
-	  (if (featurep 'tty)
-	      (set-face-font 'modeline-buffer-id [bold-italic] nil 'tty)))))
+	  (set-face-font 'modeline-buffer-id [bold-italic] nil 'tty))))
   (set-face-parent 'modeline-buffer-id 'modeline nil nil 'append)
 
   ;; modeline-mousable:
@@ -1389,7 +1378,7 @@ you want to add code to do stuff like this, use the create-device-hook."
 	    (font (face-font 'modeline-mousable 'global)))
 	(and (featurep 'x)
 	     (or fg
-		 (set-face-foreground 'modeline-mousable "firebrick" 'global
+		 (set-face-foreground 'modeline-mousable "red" 'global
 				      '(color x))))
 	(if font
 	    nil
@@ -1407,8 +1396,7 @@ you want to add code to do stuff like this, use the create-device-hook."
 	     (or fg
 		 (set-face-foreground 'modeline-mousable-minor-mode
 				      '(((color x) . "green4")
-					((color x) . "forestgreen"))
-				      'global)))))
+					((color x) . "green")) 'global)))))
   (set-face-parent 'modeline-mousable-minor-mode 'modeline-mousable
 		   nil nil 'append)
   )
@@ -1480,5 +1468,3 @@ you want to add code to do stuff like this, use the create-device-hook."
 ;;
 (if (featurep 'tty)
     (set-face-reverse-p 'isearch t 'global 'tty))
-
-;;; faces.el ends here

@@ -1,0 +1,262 @@
+@c $Id: tm-view-m=en.texi,v 1.1.1.1 1996/12/18 22:43:52 steve Exp $
+
+@node method, Mechanism of tm-view, mime/viewer-mode, tm-view
+@comment  node-name,  next,  previous,  up
+@section method
+@cindex method
+
+In @code{mime/viewer-mode}, you can do play (@key{v}), extract
+(@key{e}), or print (@key{C-c C-p}) for each content. These operations
+are called ``decoding operation(s) (for a content)''. And kind of
+decoding operations are called @strong{decoding-mode}.
+
+When decoding operation is driven, tm-view calls a procedure matched
+for the condition, such as content-type. This procedure is called
+@strong{method}.
+
+There are two kinds of method. One is Emacs Lisp function, called
+@strong{internal method}. Another one is external program, called
+@strong{external method}.
+
+Internal method operates in Emacs, so it can do carefully.
+
+External method is called as asynchronous process, so Emacs does not
+wait while method is running. So it is good for big data, such as
+audio, image or video.
+
+@menu
+* decoding-condition::     Setting of content decoding condition
+* Format of method value::
+* Example of decoding-condition::
+* environment variables::
+@end menu
+
+
+@node decoding-condition, Format of method value, method, method
+@comment  node-name,  next,  previous,  up
+@subsection Setting of content decoding condition
+@cindex content decoding condition
+
+When decoding operation is driven, tm-view calls a method matched for
+the condition searched from the variable
+@code{mime/content-decoding-condition}.
+
+Variable @code{mime/content-decoding-condition} is defined as a list
+with the following syntax:
+
+@lisp
+        (condition1 condition2 ...)
+@end lisp
+
+Each condition are association-list with the following syntax:
+
+@lisp
+        ((field-type_1 . value_1)
+         (field-type_2 . value_2)
+         ...)
+@end lisp
+
+For example, if you want to call the external method named tm-plain to
+decode every text/plain type content, you can define the condition
+like
+
+@lisp
+        ((type . "text/plain")
+         (method "tm-plain" nil 'file 'type 'encoding 'mode 'name))
+@end lisp
+
+As you notice, now you can define the arguments to pass to a external
+method.  Refer to @xref{Format of method value} section for more
+explanation.
+
+This condition definition will match all contents whose types are
+text/plain. Here is an another example:
+
+@lisp
+        ((type . "text/plain")
+         (method "tm-plain" nil 'file 'type 'encoding 'mode 'name)
+         (mode . "play"))
+@end lisp
+
+This will match the content whose type is text/plain and the mode is
+play.
+
+@lisp
+        ((method "metamail" t "-m" "tm" "-x" "-d" "-z" "-e" 'file)
+         (mode . "play"))
+@end lisp
+
+This will match all contents which have a mode of play.
+
+The conditions defined in a mime/content-decoding-condition variable
+are examined from top to bottom.  The first matching condition becomes
+valid and the method specified in that condition definition will be
+executed.
+
+
+@node Format of method value, Example of decoding-condition, decoding-condition, method
+@comment  node-name,  next,  previous,  up
+@subsection Format of method value part
+@cindex Format of method value part
+
+You can specify the method field of the decoding-condition definition
+in two different ways,
+
+@lisp
+        (method . SYMBOL)
+@end lisp
+
+or
+
+@lisp
+        (method  STRING  FLAG  ARGUMENT1  ARGUMENT2  ...)
+@end lisp
+
+can be accepted.
+
+When a symbol is specified in the method field, a function whose name
+is SYMBOL will be called as an internal method.
+
+When a list is specified in the method field, it will be called as an
+external method.
+
+The list below shows the meaning of the parameters when the external
+method is specified in the method field.
+
+@table @samp
+@item STRING
+        name of an external method
+@item FLAG
+        If @code{t}, both the content header and the content body are
+        passed to an external method. if nil, only the content body is
+        passed to an external method.
+@item ARGUMENTs
+        list of arguments passed to an external method
+@end table
+
+An argument passed to an external method can be in one of the
+following formats:
+
+@table @samp
+@item STRING
+        string itself
+@item 'SYMBOL
+        value gotten using SYMBOL as a key (see below)
+@item 'STRING
+        value gotten using STRING as a key (see below)
+@end table
+
+'SYMBOL can be one of the following:
+
+@table @samp
+@item 'file
+        name of a file holding the original content
+@item 'type
+        content-type/sub-type of Content-Type field
+@item 'encoding
+        field body of Content-Transfer-Encoding field
+@item 'mode
+        decoding-mode
+@item 'name
+        name of a file created by decode operation
+@end table
+
+'STRING is used to search a parameter of the Content-Type field whose
+name matches with it, and pass the value of that parameter to the
+external method.
+
+
+@node Example of decoding-condition, environment variables, Format of method value, method
+@comment  node-name,  next,  previous,  up
+@subsection Examples of decoding-condition
+@cindex Examples of decoding-condition
+
+The default definition of a mime/content-decoding-condition variable
+is shown below.
+
+@lisp
+(defvar mime/content-decoding-condition
+  '(((type . "text/plain")
+     (method "tm-plain" nil 'file 'type 'encoding 'mode 'name))
+    ((type . "text/x-latex")
+     (method "tm-latex" nil 'file 'type 'encoding 'mode 'name))
+    ((type . "audio/basic")
+     (method "tm-au"    nil 'file 'type 'encoding 'mode 'name))
+    ((type . "image/gif")
+     (method "tm-image" nil 'file 'type 'encoding 'mode 'name))
+    ((type . "image/jpeg")
+     (method "tm-image" nil 'file 'type 'encoding 'mode 'name))
+    ((type . "image/tiff")
+     (method "tm-image" nil 'file 'type 'encoding 'mode 'name))
+    ((type . "image/x-tiff")
+     (method "tm-image" nil 'file 'type 'encoding 'mode 'name))
+    ((type . "image/x-xbm")
+     (method "tm-image" nil 'file 'type 'encoding 'mode 'name))
+    ((type . "image/x-pic")
+     (method "tm-image" nil 'file 'type 'encoding 'mode 'name))
+    ((type . "video/mpeg")`
+     (method "tm-mpeg"  nil 'file 'type 'encoding 'mode 'name))
+    ((type . "application/octet-stream")
+     (method "tm-file"  nil 'file 'type 'encoding 'mode 'name))
+    ((type . "message/partial")
+     (method . mime/decode-message/partial-region))
+    ((method "metamail" t
+             "-m" "tm" "-x" "-d" "-z" "-e" 'file)(mode . "play"))
+    ))
+@end lisp
+
+For example, if you want to use metamail to decode any contents,
+
+@lisp
+(setq mime/content-decoding-condition
+      '(
+        ((method "metamail" t "-m" "tm" "-x" "-d" "-z" "-e" 'file))
+       ))
+@end lisp
+
+will work.
+
+A mime/content-decoding-condition variable provides you of very flexible
+way to define the conditions of decoding.  It can be simple if you only
+need the a few decoding methods, while it can be very complicated if you
+want to use the separate decoding method for each type/mode combination.
+
+Following function may be useful to set decoding-condition. It is a
+function of tl-atype.el.
+
+
+@deffn{Function} set-atype symbol alist
+
+Add condition @var{alist} to symbol @var{symbol}.
+
+Example:
+
+@lisp
+(set-atype 'mime/content-decoding-condition
+	   '((type . "message/external-body")
+	     ("access-type" . "anon-ftp")
+	     (method . mime/decode-message/external-ftp)
+	     ))
+@end lisp
+@end deffn
+
+
+@node environment variables,  , Example of decoding-condition, method
+@comment  node-name,  next,  previous,  up
+@subsection environment variables
+@cindex environment variables
+
+Standard methods of tm-view reference some environment variables. You
+can specify them to customize.
+
+@table @var
+@item TM_TMP_DIR
+Directory for temporary files or extracted files. Default value is
+`/tmp/'.
+
+@item VIDEO_DITHER
+Dither for mpeg_play. Default value is `gray'.
+
+@item TM_WWW_BROWSER
+WWW browser name. Default value is `netscape'.
+@end table

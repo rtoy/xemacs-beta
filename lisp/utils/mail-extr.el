@@ -3,7 +3,7 @@
 ;; Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
 
 ;; Author: Joe Wells <jbw@cs.bu.edu>
-;; Maintainer: Chuck Thompson <cthomp@xemacs.org>
+;; Maintainer: Jamie Zawinski <jwz@lucid.com>
 ;; Version: 1.8
 ;; Keywords: mail
 
@@ -121,19 +121,19 @@
 
 ;;; Change Log: 
 ;; 
-;; Thu Feb 17 17:57:33 1994  Jamie Zawinski (jwz@netscape.com)
+;; Thu Feb 17 17:57:33 1994  Jamie Zawinski (jwz@lucid.com)
 ;;
 ;;	* merged with jbw's latest version
 ;;
-;; Wed Feb  9 21:56:27 1994  Jamie Zawinski (jwz@netscape.com)
+;; Wed Feb  9 21:56:27 1994  Jamie Zawinski (jwz@lucid.com)
 ;;
 ;;      * high-bit chars in comments weren't treated as word syntax
 ;;
-;; Sat Feb  5 03:13:40 1994  Jamie Zawinski (jwz@netscape.com)
+;; Sat Feb  5 03:13:40 1994  Jamie Zawinski (jwz@lucid.com)
 ;;
 ;;      * call replace-match with fixed-case arg
 ;;
-;; Thu Dec 16 21:56:45 1993  Jamie Zawinski (jwz@netscape.com)
+;; Thu Dec 16 21:56:45 1993  Jamie Zawinski (jwz@lucid.com)
 ;;
 ;;      * some more cleanup, doc, added provide
 ;;
@@ -236,9 +236,6 @@ uniquely identifying the person.")
 (defvar mail-extr-mangle-uucp nil
   "*Whether to throw away information in UUCP addresses
 by translating things like \"foo!bar!baz@host\" into \"baz@bar.UUCP\".")
-
-(defvar mail-extr-mailbox-match-case-fold t
-  "*Non-nil if mailbox and name matching should ignore case.")
 
 ;;----------------------------------------------------------------------
 ;; what orderings are meaningful?????
@@ -1175,8 +1172,7 @@ If ADDRESS contains more than one RFC-822 address, only the first is
 
       (setq %-pos (nreverse %-pos))
       ;; RFC 1034 doesn't approve of this, oh well:
-      ;; Neither do we, sb/lmi
-      ;; (downcase-region (or (car %-pos) @-pos (point-max)) (point-max))
+      (downcase-region (or (car %-pos) @-pos (point-max)) (point-max))
       (cond (%-pos			; implies @-pos valid
 	     (setq temp %-pos)
 	     (catch 'truncated
@@ -1379,7 +1375,7 @@ If ADDRESS contains more than one RFC-822 address, only the first is
 
       ;; If name is "First Last" and userid is "F?L", then assume
       ;; the middle initial is the second letter in the userid.
-      ;; Initial code by Jamie Zawinski <jwz@netscape.com>
+      ;; Initial code by Jamie Zawinski <jwz@lucid.com>
       ;; *** Make it work when there's a suffix as well.
       (goto-char (point-min))
       (cond ((and mail-extr-guess-middle-initial
@@ -1415,10 +1411,7 @@ If ADDRESS contains more than one RFC-822 address, only the first is
 					mbox-beg mbox-end)
 	       (while (and names-match-flag
 			   (< i buffer-length))
-		 (or (eq (let ((c (char-after (+ i (point-min)))))
-			   (if mail-extr-mailbox-match-case-fold
-			       (downcase c)
-			     c))
+		 (or (eq (downcase (char-after (+ i (point-min))))
 			 (downcase
 			  (char-after (+ i buffer-length (point-min)))))
 		     (setq names-match-flag nil))
@@ -1715,7 +1708,7 @@ If ADDRESS contains more than one RFC-822 address, only the first is
       
       ;; If the last thing in the name is 2 or more periods, or one or more
       ;; other sentence terminators (but not a single period) then keep them
-      ;; and the preceding word.  This is for the benefit of whole sentences
+      ;; and the preceeding word.  This is for the benefit of whole sentences
       ;; in the name field: it's better behavior than dropping the last word
       ;; of the sentence...
       (if (and (not suffix-flag)
@@ -1827,7 +1820,6 @@ If ADDRESS contains more than one RFC-822 address, only the first is
        ("gov" t			"Government (U.S.A.)")
        ("gr" "Greece"		"The Hellenic Republic (%s)")
        ("hk" "Hong Kong")
-       ("hr" "Croatia"		"The Republic of %s")
        ("hu" "Hungary"		"The Hungarian People's Republic")	;???
        ("ie" "Ireland")
        ("il" "Israel"		"The State of %s")

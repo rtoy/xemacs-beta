@@ -1,12 +1,12 @@
 ;;; emu.el --- Emulation module for each Emacs variants
 
-;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
+;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: emu.el,v 1.4 1997/03/16 05:55:39 steve Exp $
-;; Keywords: emulation, compatibility, NEmacs, MULE, Emacs/mule, XEmacs
+;; Version: $Id: emu.el,v 1.1.1.1 1996/12/18 22:43:38 steve Exp $
+;; Keywords: emulation, compatibility, NEmacs, MULE, XEmacs
 
-;; This file is part of emu.
+;; This file is part of tl (Tiny Library).
 
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -24,32 +24,6 @@
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Code:
-
-(defmacro defun-maybe (name &rest everything-else)
-  (or (and (fboundp name)
-	   (not (get name 'defun-maybe))
-	   )
-      (` (or (fboundp (quote (, name)))
-	     (progn
-	       (defun (, name) (,@ everything-else))
-	       (put (quote (, name)) 'defun-maybe t)
-	       ))
-	 )))
-
-(defmacro defmacro-maybe (name &rest everything-else)
-  (or (and (fboundp name)
-	   (not (get name 'defmacro-maybe))
-	   )
-      (` (or (fboundp (quote (, name)))
-	     (progn
-	       (defmacro (, name) (,@ everything-else))
-	       (put (quote (, name)) 'defmacro-maybe t)
-	       ))
-	 )))
-
-(put 'defun-maybe 'lisp-indent-function 'defun)
-(put 'defmacro-maybe 'lisp-indent-function 'defun)
-
 
 (or (boundp 'emacs-major-version)
     (defconst emacs-major-version (string-to-int emacs-version)))
@@ -103,6 +77,22 @@
        ))
 
 
+;;; @ binary access
+;;;
+
+(defun insert-binary-file-contents-literally
+  (filename &optional visit beg end replace)
+  "Like `insert-file-contents-literally', q.v., but don't code conversion.
+A buffer may be modified in several ways after reading into the buffer due
+to advanced Emacs features, such as file-name-handlers, format decoding,
+find-file-hooks, etc.
+  This function ensures that none of these modifications will take place.
+\[emu.el]"
+  (as-binary-input-file
+   (insert-file-contents-literally filename visit beg end replace)
+   ))
+
+
 ;;; @ MIME charset
 ;;;
 
@@ -134,31 +124,20 @@ and `default-mime-charset'. [emu.el]"
 	  default-mime-charset)))
 
 
-;;; @ Emacs 19.29 emulation
+;;; @ EMACS 19.29 emulation
 ;;;
 
 (defvar path-separator ":"
   "Character used to separate concatenated paths.")
 
-(defun-maybe buffer-substring-no-properties (start end)
-  "Return the characters of part of the buffer, without the text properties.
-The two arguments START and END are character positions;
-they can be in either order. [Emacs 19.29 emulating function]"
-  (let ((string (buffer-substring start end)))
-    (set-text-properties 0 (length string) nil string)
-    string))
-
-(defun-maybe match-string (num &optional string)
-  "Return string of text matched by last search.
-NUM specifies which parenthesized expression in the last regexp.
- Value is nil if NUMth pair didn't match, or there were less than NUM pairs.
-Zero means the entire text matched by the whole regexp or whole string.
-STRING should be given if the last search was by `string-match' on STRING.
-\[Emacs 19.29 emulating function]"
-  (if (match-beginning num)
-      (if string
-	  (substring string (match-beginning num) (match-end num))
-	(buffer-substring (match-beginning num) (match-end num)))))
+(or (fboundp 'buffer-substring-no-properties)
+    (defun buffer-substring-no-properties (beg end)
+      "Return the text from BEG to END, without text properties, as a string.
+\[emu.el; EMACS 19.29 emulating function]"
+      (let ((string (buffer-substring beg end)))
+        (tl:set-text-properties 0 (length string) nil string)
+	string))
+    )
 
 (or running-emacs-19_29-or-later
     running-xemacs
@@ -176,20 +155,21 @@ See `read-from-minibuffer' for details of HISTORY argument."
 	)
       ))
 
-
-;;; @ Emacs 19.30 emulation
-;;;
-
-;; This function was imported Emacs 19.30.
-(defun-maybe add-to-list (list-var element)
-  "Add to the value of LIST-VAR the element ELEMENT if it isn't there yet.
+(or (fboundp 'add-to-list)
+    ;; This function was imported Emacs 19.30.
+    (defun add-to-list (list-var element)
+      "Add to the value of LIST-VAR the element ELEMENT if it isn't there yet.
 If you want to use `add-to-list' on a variable that is not defined
 until a certain package is loaded, you should put the call to `add-to-list'
 into a hook function that will be run only after loading the package.
-\[Emacs 19.30 emulating function]"
-  (or (member element (symbol-value list-var))
-      (set list-var (cons element (symbol-value list-var)))
-      ))
+\[emu.el; EMACS 19.30 emulating function]"
+      (or (member element (symbol-value list-var))
+	  (set list-var (cons element (symbol-value list-var)))))
+    )
+
+
+;;; @ EMACS 19.30 emulation
+;;;
 
 (cond ((fboundp 'insert-file-contents-literally)
        )
@@ -201,7 +181,7 @@ A buffer may be modified in several ways after reading into the buffer due
 to advanced Emacs features, such as file-name-handlers, format decoding,
 find-file-hooks, etc.
   This function ensures that none of these modifications will take place.
-\[Emacs 19.30 emulating function]"
+\[emu.el; Emacs 19.30 emulating function]"
 	 (let (file-name-handler-alist)
 	   (insert-file-contents filename visit beg end replace)
 	   ))
@@ -211,41 +191,47 @@ find-file-hooks, etc.
        ))
 
 
-;;; @ Emacs 19.31 emulation
+;;; @ EMACS 19.31 emulation
 ;;;
 
-(defun-maybe buffer-live-p (object)
-  "Return non-nil if OBJECT is a buffer which has not been killed.
+(or (fboundp 'buffer-live-p)
+    (defun buffer-live-p (object)
+      "Return non-nil if OBJECT is a buffer which has not been killed.
 Value is nil if OBJECT is not a buffer or if it has been killed.
-\[Emacs 19.31 emulating function]"
-  (and object
-       (get-buffer object)
-       (buffer-name (get-buffer object))
-       ))
+\[emu.el; EMACS 19.31 emulating function]"
+      (and object
+	   (get-buffer object)
+	   (buffer-name (get-buffer object))
+	   ))
+    )
 
-;; This macro was imported Emacs 19.33.
-(defmacro-maybe save-selected-window (&rest body)
-  "Execute BODY, then select the window that was selected before BODY.
-\[Emacs 19.31 emulating function]"
-  (list 'let
-	'((save-selected-window-window (selected-window)))
-	(list 'unwind-protect
-	      (cons 'progn body)
-	      (list 'select-window 'save-selected-window-window))))
+(or (fboundp 'save-selected-window)
+    ;; This function was imported Emacs 19.33.
+    (defmacro save-selected-window (&rest body)
+      "Execute BODY, then select the window that was selected before BODY.
+\[emu.el; EMACS 19.31 emulating function]"
+      (list 'let
+	    '((save-selected-window-window (selected-window)))
+	    (list 'unwind-protect
+		  (cons 'progn body)
+		  (list 'select-window 'save-selected-window-window)))) 
+    )
 
 
 ;;; @ XEmacs emulation
 ;;;
 
-(defun-maybe functionp (obj)
-  "Returns t if OBJ is a function, nil otherwise.
-\[XEmacs emulating function]"
-  (or (subrp obj)
-      (byte-code-function-p obj)
-      (and (symbolp obj)(fboundp obj))
-      (and (consp obj)(eq (car obj) 'lambda))
-      ))
-
+(or (fboundp 'functionp)
+    (defun functionp (obj)
+      "Returns t if OBJ is a function, nil otherwise.
+\[emu.el; XEmacs emulating function]"
+      (or (subrp obj)
+	  (byte-code-function-p obj)
+	  (and (symbolp obj)(fboundp obj))
+	  (and (consp obj)(eq (car obj) 'lambda))
+	  ))
+    )
+	
 
 ;;; @ for XEmacs 20
 ;;;

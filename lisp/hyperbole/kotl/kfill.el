@@ -7,8 +7,7 @@
 ;;
 ;; AUTHOR:       Bob Weiner
 ;; ORIG-DATE:    23-Jan-94
-;; LAST-MOD:      6-Mar-97 at 01:18:10 by Bob Weiner
-
+;; LAST-MOD:      4-Nov-95 at 04:53:42 by Bob Weiner
 ;;; ************************************************************************
 ;;; Public variables
 ;;; ************************************************************************
@@ -104,7 +103,7 @@ contexts.")
       (kfill:fill-paragraph arg skip-prefix-remove))))
 
 ;;;
-;;; Redefine this function so that it sets `fill-prefix-prev' also.
+;;; Redefine this function so that it sets 'fill-prefix-prev' also.
 ;;;
 (defun set-fill-prefix (&optional turn-off)
   "Set the fill-prefix to the current line up to point.

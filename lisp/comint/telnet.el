@@ -1,6 +1,6 @@
 ;;; telnet.el --- run a telnet session from within an Emacs buffer
 
-;;; Copyright (C) 1985, 1988, 1992, 1994 Free Software Foundation, Inc.
+;;; Copyright (C) 1985, 1988, 1992, 1993, 1994 Free Software Foundation, Inc.
 
 ;; Author: William F. Schelter
 ;; Keywords: comm, unix
@@ -19,11 +19,11 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-;; 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: FSF 19.34.
+;;; Synched up with: FSF 19.30.
 
 ;;; Commentary:
 
@@ -53,37 +53,29 @@
 
 (require 'comint)
 
-(defgroup telnet nil
-  "Telnet/rsh stuff"
-  :group 'comint)
-
 (defvar telnet-new-line "\r")
 (defvar telnet-mode-map nil)
+(make-variable-buffer-local 'telnet-new-line)
 (defvar telnet-default-prompt-pattern "^[^#$%>\n]*[#$%>] *")
 (defvar telnet-prompt-pattern telnet-default-prompt-pattern)
-
 (defvar telnet-replace-c-g nil)
-(make-variable-buffer-local
- (defvar telnet-remote-echoes t
-   "True if the telnet process will echo input."))
-(make-variable-buffer-local
- (defvar telnet-interrupt-string "\C-c" "String sent by C-c."))
+(make-variable-buffer-local 'telnet-replace-c-g)
+(defvar telnet-remote-echoes t
+   "True if the telnet process will echo input.")
+(make-variable-buffer-local 'telnet-remote-echoes)
+(defvar telnet-interrupt-string "\C-c"
+  "String sent by C-c.")
+(make-variable-buffer-local 'telnet-interrupt-string)
 
 (defvar telnet-count 0
   "Number of output strings read from the telnet process
 while looking for the initial password.")
-;; (make-variable-buffer-local 'telnet-count)
+(make-variable-buffer-local 'telnet-count)
 
-(defcustom telnet-program "telnet"
-  "*Program to run to open a telnet connection."
-  :group 'telnet)
+(defvar telnet-program "telnet"
+  "Program to run to open a telnet connection.")
 
-(defcustom rsh-eat-password-string nil
-  "Non-nil means rsh will look for a string matching a password prompt."
-  :type 'boolean
-  :group 'telnet)
-
-(defvar telnet-initial-count -75
+(defvar telnet-initial-count -50
   "Initial value of `telnet-count'.  Should be set to the negative of the
 number of terminal writes telnet will make setting up the host connection.")
 
@@ -102,7 +94,6 @@ rejecting one login and prompting again for a username and password.")
   (interactive)
   (process-send-string nil "\C-z"))
 
-;; XEmacs change (Keep telnet- prefix)
 (defun telnet-send-process-next-char ()
   (interactive)
   (process-send-string nil
@@ -114,15 +105,15 @@ rejecting one login and prompting again for a username and password.")
 ; initialization on first load.
 (if telnet-mode-map
     nil
-  ;; FSF
-  ;; (setq telnet-mode-map (nconc (make-sparse-keymap) comint-mode-map))
-  (setq telnet-mode-map (make-sparse-keymap))
-  (set-keymap-parents telnet-mode-map (list comint-mode-map))
-  (define-key telnet-mode-map "\C-m" 'telnet-send-input)
-;  (define-key telnet-mode-map "\C-j" 'telnet-send-input)
-  (define-key telnet-mode-map "\C-c\C-q" 'send-process-next-char)
-  (define-key telnet-mode-map "\C-c\C-c" 'telnet-interrupt-subjob) 
-  (define-key telnet-mode-map "\C-c\C-z" 'telnet-c-z))
+  (progn
+    (setq telnet-mode-map (make-sparse-keymap))
+    (set-keymap-name telnet-mode-map 'telnet-mode-map)
+    (set-keymap-parents telnet-mode-map (list comint-mode-map))
+    (define-key telnet-mode-map "\C-m" 'telnet-send-input)
+    ;;(define-key telnet-mode-map "\C-j" 'telnet-send-input)
+    (define-key telnet-mode-map "\C-c\C-q" 'telnet-send-process-next-char)
+    (define-key telnet-mode-map "\C-c\C-c" 'telnet-interrupt-subjob) 
+    (define-key telnet-mode-map "\C-c\C-z" 'telnet-c-z)))
 
 ;;maybe should have a flag for when have found type
 (defun telnet-check-software-type-initialize (string)
@@ -136,35 +127,35 @@ rejecting one login and prompting again for a username and password.")
 	  ((string-match "its" string)
 	   (setq telnet-prompt-pattern  "^[^*>\n]*[*>] *"))
 	  ((string-match "explorer" string) ;;explorer telnet needs work
-	   (setq telnet-replace-c-g ?\n))))
+	   (setq telnet-replace-c-g ?\n))
+	  (t
+	   (setq telnet-prompt-pattern telnet-default-prompt-pattern))))
   (setq comint-prompt-regexp telnet-prompt-pattern))
 
 (defun telnet-initial-filter (proc string)
-  (let ((case-fold-search t))
-    ;For reading up to and including password; also will get machine type.
-    (cond ((string-match "No such host" string)
-	   (kill-buffer (process-buffer proc))
-	   (error "No such host."))
-	  ((string-match "passw" string)
+  ;For reading up to and including password; also will get machine type.
+  (cond ((string-match "No such host" string)
+	 (kill-buffer (process-buffer proc))
+	 (error "No such host."))
+	((string-match "passw" string)
+	 (telnet-filter proc string)
+	 (let ((password (comint-read-noecho "Password: " t)))
+	   (setq telnet-count 0)
+	   (process-send-string proc (concat password telnet-new-line))))
+	(t (telnet-check-software-type-initialize string)
 	   (telnet-filter proc string)
-	   (let ((password (comint-read-noecho "Password: " t)))
-	     (setq telnet-count 0)
-	     (process-send-string proc (concat password telnet-new-line))))
-	  (t (telnet-check-software-type-initialize string)
-	     (telnet-filter proc string)
-	     (cond ((> telnet-count telnet-maximum-count)
-		    ;; (set-process-filter proc 'telnet-filter) Kludge
-		    ;; for shell-fonts -- this is the only mode that
-		    ;; actually changes what its process filter is at
-		    ;; run time, which confuses shell-font.  So we
-		    ;; special-case that here.
-		    ;; #### Danger, knows an internal shell-font variable name.
-		    (let ((old-filter (process-filter proc)))
-		      (if (eq old-filter 'shell-font-process-filter)
-			  (set (make-local-variable 'shell-font-process-filter)
-			       'telnet-filter)
-			(set-process-filter proc 'telnet-filter))))
-		   (t (setq telnet-count (1+ telnet-count))))))))
+	   (cond ((> telnet-count telnet-maximum-count)
+		  ;; (set-process-filter proc 'telnet-filter)
+		  ;; Kludge for shell-fonts -- this is the only mode that
+		  ;; actually changes what its process filter is at run time,
+		  ;; which confuses shell-font.  So we special-case that here.
+		  ;; #### Danger, knows an internal shell-font variable name.
+		  (let ((old-filter (process-filter proc)))
+		    (if (eq old-filter 'shell-font-process-filter)
+			(set (make-local-variable 'shell-font-process-filter)
+			     'telnet-filter)
+		      (set-process-filter proc 'telnet-filter))))
+		 (t (setq telnet-count (1+ telnet-count)))))))
 
 ;; Identical to comint-simple-send, except that it sends telnet-new-line
 ;; instead of "\n".
@@ -264,6 +255,7 @@ See also `\\[rsh]'."
 					   (if port (concat " " port) "")
 					   "\n"))
       (setq comint-input-sender 'telnet-simple-send)
+      (setq telnet-count telnet-initial-count)
       ;; run last so that hooks can change things.
       (telnet-mode))))
 
@@ -282,7 +274,6 @@ Data is sent to the remote host when RET is typed.
         mode-name "Telnet"
         comint-prompt-regexp telnet-prompt-pattern)
   (use-local-map telnet-mode-map)
-  (set (make-local-variable 'telnet-count) telnet-initial-count)
   (run-hooks 'telnet-mode-hook))
 
 ;;;###autoload (add-hook 'same-window-regexps "\\*rsh-[^-]*\\*\\(\\|<[0-9]*>\\)")
@@ -298,6 +289,7 @@ See also `\\[telnet]'."
   (require 'shell)
   (let ((name (concat "rsh-" host)))
     (pop-to-buffer (make-comint name remote-shell-program nil host))
+    (setq telnet-count telnet-initial-count)
     ;;
     ;; SunOS doesn't print "unix" in its rsh login banner, so let's get a
     ;; reasonable default here.  There do exist non-Unix machines which
@@ -312,12 +304,8 @@ See also `\\[telnet]'."
     ;; antisocial than echoing a password, and more likely than connecting
     ;; to a non-Unix rsh host these days...
     ;;
-    ;; I disagree with the above.  -sb
-    ;;
-    (set-process-filter (get-process name) (if rsh-eat-password-string
-					       'telnet-initial-filter
-					     'telnet-filter))
-    ;; (set-process-filter (get-process name) 'telnet-filter)
+    ;; (set-process-filter (get-process name) 'telnet-initial-filter)
+    (set-process-filter (get-process name) 'telnet-filter)
     ;; run last so that hooks can change things.
     (telnet-mode)))
 

@@ -287,8 +287,7 @@ x_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object name,
   f->descent = xf->descent;
   f->height = xf->ascent + xf->descent;
   {
-    /* following change suggested by Ted Phelps <phelps@dstc.edu.au> */
-    unsigned int def_char = 'n'; /*xf->default_char;*/
+    unsigned int def_char = xf->default_char;
     int byte1, byte2;
 
   once_more:
@@ -316,11 +315,11 @@ x_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object name,
        0 width too (unlikely) then just use the max width. */
     if (f->width == 0)
       {
-	if (def_char == xf->default_char)
+	if (def_char == 'n')
 	  f->width = xf->max_bounds.width;
 	else
 	  {
-	    def_char = xf->default_char;
+	    def_char = 'n';
 	    goto once_more;
 	  }
       }
@@ -760,6 +759,101 @@ x_list_fonts (Lisp_Object pattern, Lisp_Object device)
   return result;
 }
 
+#ifdef MULE
+
+static int
+x_font_spec_matches_charset (struct device *d, Lisp_Object charset,
+			     CONST Bufbyte *nonreloc, Lisp_Object reloc,
+			     Bytecount offset, Bytecount length)
+{
+  if (UNBOUNDP (charset))
+    return 1;
+  /* Hack! Short font names don't have the registry in them,
+     so we just assume the user knows what they're doing in the
+     case of ASCII.  For other charsets, you gotta give the
+     long form; sorry buster.
+     */
+  if (EQ (charset, Vcharset_ascii))
+    {
+      CONST Bufbyte *the_nonreloc = nonreloc;
+      int i;
+      Bytecount the_length = length;
+      
+      if (!the_nonreloc)
+	the_nonreloc = XSTRING_DATA (reloc);
+      fixup_internal_substring (nonreloc, reloc, offset, &the_length);
+      the_nonreloc += offset;
+      if (!memchr (the_nonreloc, '*', the_length))
+	{
+	  for (i = 0;; i++)
+	    {
+	      CONST Bufbyte *new_nonreloc =
+		memchr (the_nonreloc, '-', the_length);
+	      if (!new_nonreloc)
+		break;
+	      new_nonreloc++;
+	      the_length -= new_nonreloc - the_nonreloc;
+	      the_nonreloc = new_nonreloc;
+	    }
+	  
+	  /* If it has less than 5 dashes, it's a short font.
+	     Of course, long fonts always have 14 dashes or so, but short
+	     fonts never have more than 1 or 2 dashes, so this is some
+	     sort of reasonable heuristic. */
+	  if (i < 5)
+	    return 1;
+	}
+    }
+    
+  return (fast_string_match (XCHARSET_REGISTRY (charset),
+			     nonreloc, reloc, offset, length, 1,
+			     ERROR_ME, 0) >= 0);
+}
+
+/* find a font spec that matches font spec FONT and also matches
+   (the registry of) CHARSET. */
+static Lisp_Object
+x_find_charset_font (Lisp_Object device, Lisp_Object font,
+		     Lisp_Object charset)
+{
+  char **names;
+  int count = 0;
+  Lisp_Object result = Qnil;
+  CONST char *patternext;
+  int i;
+
+  GET_C_STRING_BINARY_DATA_ALLOCA (font, patternext);
+  
+  names = XListFonts (DEVICE_X_DISPLAY (XDEVICE (device)),
+		      patternext, MAX_FONT_COUNT, &count);
+  for (i = 0; i < count; i ++)
+    {
+      CONST char *intname;
+
+      GET_C_CHARPTR_INT_BINARY_DATA_ALLOCA (names[i], intname);
+      if (x_font_spec_matches_charset (XDEVICE (device), charset,
+				       (unsigned char *) intname,
+				       Qnil, 0, -1))
+	{
+	  result = build_string (intname);
+	  break;
+	}
+    }
+
+  if (names)
+    XFreeFontNames (names);
+
+  /* Check for a short font name. */
+  if (NILP (result)
+      && x_font_spec_matches_charset (XDEVICE (device), charset, 0,
+				      font, 0, -1))
+    return font;
+
+  return result;
+}
+
+#endif /* MULE */
+
 
 /************************************************************************/
 /*                            initialization                            */
@@ -790,6 +884,10 @@ console_type_create_objects_x (void)
   CONSOLE_HAS_METHOD (x, font_instance_truename);
   CONSOLE_HAS_METHOD (x, font_instance_properties);
   CONSOLE_HAS_METHOD (x, list_fonts);
+#ifdef MULE
+  CONSOLE_HAS_METHOD (x, find_charset_font);
+  CONSOLE_HAS_METHOD (x, font_spec_matches_charset);
+#endif
 }
 
 void

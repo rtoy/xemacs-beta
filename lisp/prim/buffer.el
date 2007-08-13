@@ -17,7 +17,7 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: FSF 19.30 buffer.c.
@@ -66,16 +66,12 @@ If `pop-up-windows' is non-nil, windows can be split to do this.
 If optional second arg NOT-THIS-WINDOW-P is non-nil, insist on finding
 another window even if BUFNAME is already visible in the selected window.
 If optional third arg is non-nil, it is the frame to pop to this
-buffer on.
-If `focus-follows-mouse' is non-nil, keyboard focus is left unchanged."
+buffer on."
   ;; #ifdef I18N3
   ;; #### Doc string should indicate that the buffer name will get
   ;; translated.
   ;; #endif
-  ;; This is twisted.  It is evil to throw the keyboard focus around
-  ;; willy-nilly if the user wants focus-follows-mouse.
-  (let ((oldbuf (current-buffer))
-	buf window frame)
+  (let (buf window frame)
     (if (null bufname)
 	(setq buf (other-buffer (current-buffer)))
       (setq buf (get-buffer bufname))
@@ -88,15 +84,9 @@ If `focus-follows-mouse' is non-nil, keyboard focus is left unchanged."
     (setq window (display-buffer buf not-this-window-p on-frame))
     (setq frame (window-frame window))
     ;; if the display-buffer hook decided to show this buffer in another
-    ;; frame, then select that frame, (unless obeying focus-follows-mouse -sb).
-    (if (and (not focus-follows-mouse)
-	     (not (eq frame (selected-frame))))
+    ;; frame, then select that frame.
+    (if (not (eq frame (selected-frame)))
 	(select-frame frame))
     (record-buffer buf)
-    (if (and focus-follows-mouse
-	     on-frame
-	     (not (eq on-frame (selected-frame))))
-	(set-buffer oldbuf)
-      ;; select-window will modify the internal keyboard focus of XEmacs
-      (select-window window))
+    (select-window window)
     buf))

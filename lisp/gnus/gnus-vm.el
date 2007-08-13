@@ -1,7 +1,7 @@
 ;;; gnus-vm.el --- vm interface for Gnus
-;; Copyright (C) 1994,95,96,97 Free Software Foundation, Inc.
+;; Copyright (C) 1994,95,96 Free Software Foundation, Inc.
 
-;; Author: Per Persson <pp@gnu.ai.mit.edu>
+;; Author: Per Persson <pp@solace.mh.se>
 ;; Keywords: news, mail
 
 ;; This file is part of GNU Emacs.
@@ -23,9 +23,9 @@
 
 ;;; Commentary:
 
-;; Major contributors:
+;; Major contributors: 
 ;;	Christian Limpach <Christian.Limpach@nice.ch>
-;; Some code stolen from:
+;; Some code stolen from: 
 ;;	Rick Sladkey <jrs@world.std.com>
 
 ;;; Code:
@@ -48,12 +48,12 @@ Has to be set before gnus-vm is loaded.")
 
 (or gnus-vm-inhibit-window-system
     (condition-case nil
-	(when window-system
-	  (require 'win-vm))
+	(if window-system
+	    (require 'win-vm))
       (error nil)))
 
-(when (not (featurep 'vm))
-  (load "vm"))
+(if (not (featurep 'vm))
+    (load "vm"))
 
 (defun gnus-vm-make-folder (&optional buffer)
   (let ((article (or buffer (current-buffer)))
@@ -74,7 +74,7 @@ Has to be set before gnus-vm is loaded.")
     (insert "\n")
     (vm-mode)
     tmp-folder))
-
+  
 (defun gnus-summary-save-article-vm (&optional arg)
   "Append the current article to a vm folder.
 If N is a positive number, save the N next articles.
@@ -87,20 +87,24 @@ save those articles instead."
 
 (defun gnus-summary-save-in-vm (&optional folder)
   (interactive)
-  (setq folder
-	(cond ((eq folder 'default) default-name)
-	      (folder folder)
-	      (t (gnus-read-save-file-name
-		  "Save %s in VM folder:" folder
-		  gnus-mail-save-name gnus-newsgroup-name
-		  gnus-current-headers 'gnus-newsgroup-last-mail))))
-  (gnus-eval-in-buffer-window gnus-original-article-buffer
+  (let ((default-name
+	  (funcall gnus-mail-save-name gnus-newsgroup-name
+		   gnus-current-headers gnus-newsgroup-last-mail)))
+    (setq folder
+	  (cond ((eq folder 'default) default-name)
+		(folder folder)
+		(t (gnus-read-save-file-name 
+		    "Save article in VM folder:" default-name))))
+    (gnus-make-directory (file-name-directory folder))
+    (set-buffer gnus-original-article-buffer)
     (save-excursion
       (save-restriction
 	(widen)
 	(let ((vm-folder (gnus-vm-make-folder)))
 	  (vm-save-message folder)
-	  (kill-buffer vm-folder))))))
+	  (kill-buffer vm-folder))))
+    ;; Remember the directory name to save articles.
+    (setq gnus-newsgroup-last-mail folder)))
 
 (provide 'gnus-vm)
 

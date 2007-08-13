@@ -14,11 +14,11 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with GNU Emacs; see the file COPYING.  If not, write to
+the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 /* Created by Douglas Keller <dkeller@vnet.ibm.com> */
+/* Last changed 02/05/95 */
 
 #ifndef _XlwScrollbar_h
 #define _XlwScrollbar_h
@@ -28,76 +28,70 @@ Boston, MA 02111-1307, USA.  */
 /* Motif-compatible resource names */
 #ifndef _XmStrDefs_h_
 
-#define XmNbackground		"background"
-#define XmNbottomShadowColor	"bottomShadowColor"
-#define XmNbottomShadowPixmap	"bottomShadowPixmap"
-#define XmNforeground		"foreground"
-#define XmNincrement		"increment"
-#define XmNinitialDelay		"initialDelay"
-#define XmNmaximum		"maximum"
-#define XmNminimum		"minimum"
-#define XmNpageIncrement	"pageIncrement"
-#define XmNrepeatDelay		"repeatDelay"
-#define XmNshadowThickness	"shadowThickness"
-#define XmNborderWidth		"borderWidth"
-#define XmNshowArrows		"showArrows"
-#define XmNsliderSize		"sliderSize"
-#define XmNtopShadowColor	"topShadowColor"
-#define XmNtopShadowPixmap	"topShadowPixmap"
-#define XmNtroughColor		"troughColor"
-#define XmNvalue		"value"
-#define XmNvalueChangedCallback	"valueChangedCallback"
-#define XmNincrementCallback	"incrementCallback"
-#define XmNdecrementCallback	"decrementCallback"
+#define XmNbackground            "background"
+#define XmNbottomShadowColor     "bottomShadowColor"
+#define XmNbottomShadowPixmap    "bottomShadowPixmap"
+#define XmNforeground            "foreground"
+#define XmNincrement             "increment"
+#define XmNinitialDelay          "initialDelay"
+#define XmNmaximum               "maximum"
+#define XmNminimum               "minimum"
+#define XmNpageIncrement         "pageIncrement"
+#define XmNrepeatDelay           "repeatDelay"
+#define XmNshadowThickness       "shadowThickness"
+#define XmNborderWidth           "borderWidth"
+#define XmNshowArrows            "showArrows"
+#define XmNsliderSize            "sliderSize"
+#define XmNtopShadowColor        "topShadowColor"
+#define XmNtopShadowPixmap       "topShadowPixmap"
+#define XmNtroughColor           "troughColor"
+#define XmNvalue                 "value"
+#define XmNvalueChangedCallback  "valueChangedCallback"
+#define XmNincrementCallback     "incrementCallback"
+#define XmNdecrementCallback     "decrementCallback"
 #define XmNpageIncrementCallback "pageIncrementCallback"
 #define XmNpageDecrementCallback "pageDecrementCallback"
-#define XmNtoTopCallback	"toTopCallback"
-#define XmNtoBottomCallback	"toBottomCallback"
-#define XmNdragCallback		"dragCallback"
-#define XmNorientation		"orientation"
+#define XmNtoTopCallback         "toTopCallback"
+#define XmNtoBottomCallback      "toBottomCallback"
+#define XmNdragCallback          "dragCallback"
+#define XmNorientation           "orientation"
 
-#define XmCBackground		"Background"
-#define XmCBottomShadowColor	"BottomShadowColor"
-#define XmCBottomShadowPixmap	"BottomShadowPixmap"
-#define XmCTopShadowPixmap	"TopShadowPixmap"
-#define XmCForeground		"Foreground"
-#define XmCIncrement		"Increment"
-#define XmCInitialDelay		"InitialDelay"
-#define XmCMaximum		"Maximum"
-#define XmCMinimum		"Minimum"
-#define XmCPageIncrement	"PageIncrement"
-#define XmCRepeatDelay		"RepeatDelay"
-#define XmCShadowThickness	"ShadowThickness"
-#define XmCBorderWidth		"BorderWidth"
-#define XmCShowArrows		"ShowArrows"
-#define XmCSliderSize		"SliderSize"
-#define XmCTopShadowColor	"TopShadowColor"
-#define XmCTroughColor		"TroughColor"
-#define XmCValue		"Value"
-#define XmCValueChangedCallback	"ValueChangedCallback"
-#define XmCIncrementCallback	"IncrementCallback"
-#define XmCDecrementCallback	"DecrementCallback"
+#define XmCBackground            "Background"
+#define XmCBottomShadowColor     "BottomShadowColor"
+#define XmCBottomShadowPixmap    "BottomShadowPixmap"
+#define XmCTopShadowPixmap       "TopShadowPixmap"
+#define XmCForeground            "Foreground"
+#define XmCIncrement             "Increment"
+#define XmCInitialDelay          "InitialDelay"
+#define XmCMaximum               "Maximum"
+#define XmCMinimum               "Minimum"
+#define XmCPageIncrement         "PageIncrement"
+#define XmCRepeatDelay           "RepeatDelay"
+#define XmCShadowThickness       "ShadowThickness"
+#define XmCBorderWidth           "BorderWidth"
+#define XmCShowArrows            "ShowArrows"
+#define XmCSliderSize            "SliderSize"
+#define XmCTopShadowColor        "TopShadowColor"
+#define XmCTroughColor           "TroughColor"
+#define XmCValue                 "Value"
+#define XmCValueChangedCallback  "ValueChangedCallback"
+#define XmCIncrementCallback     "IncrementCallback"
+#define XmCDecrementCallback     "DecrementCallback"
 #define XmCPageIncrementCallback "PageIncrementCallback"
 #define XmCPageDecrementCallback "PageDecrementCallback"
-#define XmCToTopCallback	"ToTopCallback"
-#define XmCToBottomCallback	"ToBottomCallback"
-#define XmCDragCallback		"DragCallback"
-#define XmCOrientation		"Orientation"
+#define XmCToTopCallback         "ToTopCallback"
+#define XmCToBottomCallback      "ToBottomCallback"
+#define XmCDragCallback          "DragCallback"
+#define XmCOrientation           "Orientation"
 
 #endif /* _XmStrDefs_h_ */
 
-/* New resources that Motif does not have.
-   Maybe we should use a different prefix. */
+/* New resouces that Motif does not have, maybe we should use a different prefix. */
+#define XmNknobStyle             "knobStyle"
+#define XmCKnobStyle             "KnobStyle"
 
-/* "knob" is obsolete; use "slider" instead. */
-#define XmNknobStyle		"knobStyle"
-#define XmCKnobStyle		"KnobStyle"
-
-#define XmNsliderStyle		"sliderStyle"
-#define XmCSliderStyle		"SliderStyle"
-
-#define XmNarrowPosition	"arrowPosition"
-#define XmCArrowPosition	"ArrowPosition"
+#define XmNarrowPosition         "arrowPosition"
+#define XmCArrowPosition         "ArrowPosition"
 
 #ifndef _Xm_h
 
@@ -119,7 +113,7 @@ enum {
     XmHORIZONTAL
 };
 
-#endif /* ! _Xm_h */
+#endif /* _Xm_h */
 
 extern WidgetClass xlwScrollBarWidgetClass;
 
@@ -139,5 +133,6 @@ void XlwScrollBarGetValues(Widget widget, int *value, int *sliderSize,
 
 void XlwScrollBarSetValues(Widget widget, int value, int sliderSize,
 			   int increment, int pageIncrement, Boolean notify);
+
 
 #endif

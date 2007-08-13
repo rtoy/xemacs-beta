@@ -218,12 +218,7 @@ during the initial citing via `sc-cite-original'.")
   "*Value returned by `sc-mail-field' if field isn't in mail headers.")
 
 (defvar sc-name-filter-alist
-  '(
-    ;; This first item removes any [bracketed] multi-word items in names.
-    ;; Each word is already split into a separate string when this filter is
-    ;; applied, hence the complexity of the expression.
-    ("\\[.*\\]\\|\\[[^\]]*\\|[^\[]*\\]" . any)
-    ("^\\(Mr\\|Mrs\\|Ms\\|Dr\\)[.]?$" . 0)
+  '(("^\\(Mr\\|Mrs\\|Ms\\|Dr\\)[.]?$" . 0)
     ("^\\(Jr\\|Sr\\)[.]?$" . last)
     ("^ASTS$" . 0)
     ("^[I]+$" . last))
@@ -372,7 +367,9 @@ string.")
 (defconst sc-emacs-features
   (let ((version 'v18)
 	(flavor  'GNU))
-    (if (string= (substring emacs-version 0 2) "19")
+    (if (or
+	 (string= (substring emacs-version 0 2) "19")
+	 (string= (substring emacs-version 0 2) "20"))
 	(setq version 'v19))
     (if (string-match "XEmacs" emacs-version)
 	(setq flavor 'Lucid))

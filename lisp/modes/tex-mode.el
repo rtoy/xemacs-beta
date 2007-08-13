@@ -65,18 +65,12 @@ this string.")
   "*User defined LaTeX block names.
 Combined with `standard-latex-block-names' for minibuffer completion.")
 
-(defvar tex-latex-document-regex "documentstyle\\|documentclass"
-  "matches the first command of a LaTeX document")
-
 (defvar slitex-run-command "slitex"
   "*Command used to run SliTeX subjob.
 If this string contains an asterisk (*), it will be replaced by the
 filename; if not, the name of the file, preceded by blank, will be added to
 this string.")
 
-(defvar tex-slitex-document-regex "documentstyle{slides}"
-  "Matches the first command of a slitex document")
-  
 (defvar tex-bibtex-command "bibtex"
   "*Command used by `tex-bibtex-file' to gather bibliographic data.
 If this string contains an asterisk (*), it will be replaced by the
@@ -221,8 +215,8 @@ is used."
 				    (beginning-of-line)
 				    (search-forward "%" search-end t))))))
       (if (and slash (not comment))
-	  (setq mode (if (looking-at tex-latex-document-regex)
-                         (if (looking-at tex-slitex-document-regex)
+	  (setq mode (if (looking-at "documentstyle")
+                         (if (looking-at "documentstyle{slides}")
                              'slitex-mode
                            'latex-mode)
 		       'plain-tex-mode))))
@@ -814,11 +808,9 @@ is provided, use the alternative command, tex-alt-dvi-print-command."
   (let ((print-file-name-dvi (tex-append tex-print-file ".dvi"))
 	test-name)
     (if (and (not (equal (current-buffer) tex-last-buffer-texed))
-	     (buffer-file-name)
-	     ;; Check that this buffer's printed file is up to date.
 	     (file-newer-than-file-p
 	      (setq test-name (tex-append (buffer-file-name) ".dvi"))
-	      (buffer-file-name)))
+	      print-file-name-dvi))
 	(setq print-file-name-dvi test-name))
     (if (not (file-exists-p print-file-name-dvi))
         (error "No appropriate `.dvi' file could be found")

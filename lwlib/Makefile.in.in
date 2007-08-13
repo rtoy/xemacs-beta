@@ -16,11 +16,10 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  */
+along with GNU Emacs; see the file COPYING.  If not, write to
+the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
-/* Some people use these in paths they define.  We do not want their paths
+/* Some people use these in paths they define.  We don't want their paths
    getting changed on them. */
 #undef sparc
 #undef sun
@@ -55,14 +54,14 @@ AR = ar cq
    in-place location, it will not get recompiled in the not-in-place
    location.
 
-   The GNU Make "vpath" directive continues this tradition, but at
+   The GNU Make `vpath' directive continues this tradition, but at
    least lets you restrict the classes of files that it applies to.
    This allows us to kludge around the problem. */
 #ifdef USE_GNU_MAKE
 vpath %.c @srcdir@
 vpath %.h @srcdir@
 /* now list files that should NOT be searched in the srcdir.
-   This includes any .c or .h built from something else
+   This includes any .c or .h that's built from something else
    (e.g. a .in file). */
 /* none here */
 #else
@@ -196,12 +195,6 @@ ENERGIZEP =
 EZ_SUBDIR =
 #endif
 
-#if defined (HAVE_X_WINDOWS)
-# ifndef NEED_TOOLKIT
-#  define NEED_TOOLKIT
-# endif
-#endif
-
 SRCS = lwlib.c MOTIF_SRCS LUCID_SRCS ATHENA_SRCS lwlib-utils.c \
        lwlib-config.c
 OBJS = lwlib.o MOTIF_OBJS LUCID_OBJS ATHENA_OBJS lwlib-utils.o \
@@ -230,7 +223,7 @@ liblw.a: $(OBJS)
 
 #ifdef ENERGIZE
 ez_dialog:
-	cd energize && $(MAKE) $(MFLAGS)
+	cd energize ; $(MAKE) $(MFLAGS)
 #endif
 
 FRC.mostlyclean:
@@ -238,7 +231,7 @@ mostlyclean: FRC.mostlyclean
 	rm -f liblw.a liblw_pure_*.a *.o
 clean: mostlyclean
 #ifdef ENERGIZE
-	cd energize && $(MAKE) $(MFLAGS) clean
+	cd energize ; $(MAKE) $(MFLAGS) clean
 #endif
 distclean: clean
 	rm -f Makefile Makefile.in .pure

@@ -1,5 +1,5 @@
 ;;; Delete and expunge commands for VM.
-;;; Copyright (C) 1989-1997 Kyle E. Jones
+;;; Copyright (C) 1989, 1990, 1991, 1993, 1994, 1995 Kyle E. Jones
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -107,17 +107,11 @@ only marked messages are undeleted, other messages are ignored."
 					(eq vm-move-after-undeleting t))))
 	  (vm-next-message count t executing-kbd-macro)))))
 
-(defun vm-kill-subject (&optional arg)
+(defun vm-kill-subject ()
   "Delete all messages with the same subject as the current message.
 Message subjects are compared after ignoring parts matched by
-the variables vm-subject-ignored-prefix and vm-subject-ignored-suffix.
-
-The optional prefix argument ARG specifies the direction to move
-if vm-move-after-killing is non-nil.  The default direction is
-forward.  A positive prefix argument means move forward, a
-negative arugment means move backward, a zero argument means
-don't move at all."
-  (interactive "p")
+the variables vm-subject-ignored-prefix and vm-subject-ignored-suffix."
+  (interactive)
   (vm-follow-summary-cursor)
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
@@ -139,16 +133,7 @@ don't move at all."
 	     (message "No messages deleted.")
 	   (message "%d message%s deleted" n (if (= n 1) "" "s")))))
   (vm-display nil nil '(vm-kill-subject) '(vm-kill-subject))
-  (vm-update-summary-and-mode-line)
-  (cond ((or (not (numberp arg)) (> arg 0))
-	 (setq arg 1))
-	((< arg 0)
-	 (setq arg -1))
-	(t (setq arg 0)))
-  (if vm-move-after-killing
-      (let ((vm-circular-folders (and vm-circular-folders
-				      (eq vm-move-after-killing t))))
-	(vm-next-message arg t executing-kbd-macro))))
+  (vm-update-summary-and-mode-line))
 
 (defun vm-expunge-folder (&optional shaddap)
   "Expunge messages with the `deleted' attribute.
@@ -173,7 +158,7 @@ ignored."
   ;; all folder buffers.
   (vm-update-summary-and-mode-line)
   (if (not shaddap)
-      (message "Expunging..."))
+      (vm-unsaved-message "Expunging..."))
   (let ((use-marks (eq last-command 'vm-next-command-uses-marks))
 	(mp vm-message-list)
 	(virtual (eq major-mode 'vm-virtual-mode))
@@ -288,13 +273,11 @@ ignored."
 	  (lambda (buffer)
 	    (set-buffer (symbol-name buffer))
 	    (if (null vm-system-state)
-		(progn
-		  (vm-garbage-collect-message)
-		  (if (null vm-message-pointer)
-		      ;; folder is now empty
-		      (progn (setq vm-folder-type nil)
-			     (vm-update-summary-and-mode-line))
-		    (vm-preview-current-message)))
+		(if (null vm-message-pointer)
+		    ;; folder is now empty
+		    (progn (setq vm-folder-type nil)
+			   (vm-update-summary-and-mode-line))
+		  (vm-preview-current-message))
 	      (vm-update-summary-and-mode-line))
 	    (if (not (eq major-mode 'vm-virtual-mode))
 		(setq vm-message-order-changed

@@ -18,12 +18,17 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with Xmacs; see the file COPYING.  If not, write to the Free
-;; Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with Xmacs; see the file COPYING.  If not, write to the 
+;; Free Software Foundation, 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Commentary:
 
 ;;; Code:
+
+;;; Warning-free compile
+(eval-when-compile
+  (defvar language-environment-list))
 
 (defconst default-menubar
   (purecopy-menubar
@@ -76,19 +81,19 @@
       ["Replace (Regexp)..."	query-replace-regexp	t]
       "----"
       ("Bookmarks"
-       ["Jump to bookmark"  	      bookmark-menu-jump t]
-       ["Set bookmark"  	      bookmark-set t]
+       ["Jump to bookmark"  	bookmark-menu-jump	t]
+       ["Set bookmark"  	bookmark-set		t]
        "---"
-       ["Insert contents"  	      bookmark-menu-insert t]
-       ["Insert location"  	      bookmark-menu-locate t]
+       ["Insert contents"  	bookmark-menu-insert	t]
+       ["Insert location"  	bookmark-menu-locate	t]
        "---"
-       ["Rename bookmark"  	      bookmark-menu-rename t]
-       ["Delete bookmark"  	      bookmark-menu-delete t]
-       ["Edit Bookmark List"          bookmark-bmenu-list t]
+       ["Rename bookmark"  	bookmark-menu-rename	t]
+       ["Delete bookmark"  	bookmark-menu-delete	t]
+       ["Edit Bookmark List"    bookmark-bmenu-list	t]
        "---"
-       ["Save bookmarks"              bookmark-save t]
-       ["Save bookmarks as..."        bookmark-write t]
-       ["Load a bookmark file"        bookmark-load t])
+       ["Save bookmarks"        bookmark-save		t]
+       ["Save bookmarks as..."  bookmark-write		t]
+       ["Load a bookmark file"  bookmark-load		t])
       "----"
       ["Goto Line..."		goto-line		t]
       ["What Line"		what-line		t]
@@ -127,12 +132,10 @@
        ["Towers of Hanoi"	hanoi			t]
        ["Game of Life"		life			t]
        ["Multiplication Puzzle"	mpuz			t]
-       ["Mine Game"		mine			t]
        )
       )
 
      ("Options"
-      ,custom-help-menu
       ["Read Only" (toggle-read-only)
        :style toggle :selected buffer-read-only]
       ("Editing Options"
@@ -158,13 +161,6 @@
        ["Mouse Paste At Text Cursor" (setq mouse-yank-at-point
 					   (not mouse-yank-at-point))
 	:style toggle :selected mouse-yank-at-point]
-       ["Require Newline At End" (setq require-final-newline
-				       (or (eq require-final-newline 'ask)
-					   (not require-final-newline)))
-	:style toggle :selected (eq require-final-newline 't)]
-       ["Add Newline When Moving Past End" (setq next-line-add-newlines
-						 (not next-line-add-newlines))
-	:style toggle :selected next-line-add-newlines]
        )
       ("General Options"
        ["Teach Extended Commands" (setq teach-extended-commands-p
@@ -181,61 +177,23 @@
 	      (read-expression "Switches for `lpr'/`lp': "
 			       (format "%S" lpr-switches)))
 	t]
+       ["Pretty-Print With Color"
+	(setq ps-print-color-p (not ps-print-color-p))
+	:style toggle :selected ps-print-color-p]
        ("Pretty-Print Paper Size"
 	["Letter"
-	 (setq ps-paper-type 'letter)
+	 (setq ps-paper-type 'ps-letter)
 	 :style radio
-	 :selected (eq ps-paper-type 'letter)]
-	["Letter-small"
-	 (setq ps-paper-type 'letter-small)
-	 :style radio
-	 :selected (eq ps-paper-type 'letter-small)]
+	 :selected (eq ps-paper-type 'ps-letter)]
 	["Legal"
-	 (setq ps-paper-type 'legal)
+	 (setq ps-paper-type 'ps-legal)
 	 :style radio
-	 :selected (eq ps-paper-type 'legal)]
-	["Statement"
-	 (setq ps-paper-type 'statement)
-	 :style radio
-	 :selected (eq ps-paper-type 'statement)]
-	["Executive"
-	 (setq ps-paper-type 'executive)
-	 :style radio
-	 :selected (eq ps-paper-type 'executive)]
-	["Tabloid"
-	 (setq ps-paper-type 'tabloid)
-	 :style radio
-	 :selected (eq ps-paper-type 'tabloid)]
-	["Ledger"
-	 (setq ps-paper-type 'ledger)
-	 :style radio
-	 :selected (eq ps-paper-type 'ledger)]
-	["A3"
-	 (setq ps-paper-type 'a3)
-	 :style radio
-	 :selected (eq ps-paper-type 'a3)]
+	 :selected (eq ps-paper-type 'ps-legal)]
 	["A4"
-	 (setq ps-paper-type 'a4)
+	 (setq ps-paper-type 'ps-a4)
 	 :style radio
-	 :selected (eq ps-paper-type 'a4)]
-	["A4small"
-	 (setq ps-paper-type 'a4small)
-	 :style radio
-	 :selected (eq ps-paper-type 'a4small)]
-	["B4"
-	 (setq ps-paper-type 'b4)
-	 :style radio
-	 :selected (eq ps-paper-type 'b4)]
-	["B5"
-	 (setq ps-paper-type 'b5)
-	 :style radio
-	 :selected (eq ps-paper-type 'b5)]
+	 :selected (eq ps-paper-type 'ps-a4)]
 	)
-       ["Enable Color Printing"
-	(progn
-	  (set-face-background 'default "white")
-	  (setq ps-print-color-p t))
-	t]
        )
       ("\"Other Window\" Location"
        ["Always in Same Frame"
@@ -272,14 +230,6 @@
 	(setq temp-buffer-show-function nil)
 	:style radio
 	:selected (null temp-buffer-show-function)]
-       "-----"
-       ["Make current frame gnuserv target"
-	(setq gnuserv-frame
-	      (if (equal gnuserv-frame (selected-frame))
-		  nil
-		(selected-frame)))
-	:style radio
-	:selected (equal gnuserv-frame (selected-frame))]
        )
 
       "-----"
@@ -366,15 +316,11 @@
 			    ;; this shouldn't be necessary so there has to
 			    ;; be a redisplay bug lurking somewhere (or
 			    ;; possibly another event handler bug)
-			    (redraw-modeline)
-			    (remove-hook 'font-lock-mode-hook
-					 'turn-on-lazy-lock))
+			    (redraw-modeline))
 			(if font-lock-mode
 			    (progn
 			      (lazy-lock-mode 1)
-			      (redraw-modeline)
-			      (add-hook 'font-lock-mode-hook
-					'turn-on-lazy-lock)))))
+			      (redraw-modeline)))))
 	:active font-lock-mode
 	:style toggle
 	:selected (and (boundp 'lazy-lock-mode) lazy-lock-mode)]
@@ -392,7 +338,7 @@
 				 (redraw-modeline)))))
 	:active font-lock-mode
 	:style toggle
-	:selected (and (boundp 'fast-lock-mode) fast-lock-mode)]
+	:selected fast-lock-mode]
        )
       ("Paren Highlighting"
        ["None" (paren-set-mode -1)
@@ -439,9 +385,6 @@
        ["Blinking Cursor" (blink-cursor-mode)
 	:style toggle
 	:selected (and (boundp 'blink-cursor-mode) blink-cursor-mode)]
-       ["Frame-Local Font Menu" (setq font-menu-this-frame-only-p
-				    (not font-menu-this-frame-only-p))
-	:style toggle :selected font-menu-this-frame-only-p]
 ;     ["Line Numbers" (line-number-mode nil)
 ;      :style toggle :selected line-number-mode]
       )
@@ -488,6 +431,9 @@
 	:selected buffers-menu-submenus-for-groups-p
 	:active (not (null buffers-menu-grouping-function))]
        "---"
+       ["Frame-Local Font Menu" (setq font-menu-this-frame-only-p
+				    (not font-menu-this-frame-only-p))
+	:style toggle :selected font-menu-this-frame-only-p]
        ["Ignore Scaled Fonts" (setq font-menu-ignore-scaled-fonts
 				    (not font-menu-ignore-scaled-fonts))
 	:style toggle :selected font-menu-ignore-scaled-fonts]
@@ -516,15 +462,6 @@
 	 :style radio :selected (eq (default-toolbar-position) 'right)]
 	)
        )))
-      ("Mouse"
-       ["Avoid-Text"
-	(if (equal (device-type) 'x)
-	    (if mouse-avoidance-mode
-		(mouse-avoidance-mode 'none)
-	      (mouse-avoidance-mode 'banish))
-	  (beep)
-	  (message "This option requires a window system."))
-	:style toggle :selected (and mouse-avoidance-mode window-system)])
       ("Open URLs With"
        ["Emacs-W3" (setq browse-url-browser-function 'browse-url-w3)
 	:style radio
@@ -552,10 +489,14 @@
 	:selected (eq browse-url-browser-function 'browse-url-grail)]
       )
       "-----"
-      ["Browse Faces..." edit-faces t]
+      ["Edit Faces..." edit-faces t]
       ("Font"   :filter font-menu-family-constructor)
       ("Size"	:filter font-menu-size-constructor)
       ("Weight"	:filter font-menu-weight-constructor)
+      ,@(if (featurep 'mule)
+	    '("-----"
+	      ("Language Environment"
+	       :filter language-environment-menu-filter)))
       "-----"
       ["Save Options" save-options-menu-settings t]
       )
@@ -571,77 +512,70 @@
       ["Compile..."		compile			t]
       ["Shell"			shell			t]
       ["Shell Command..."	shell-command		t]
-      ["Shell Command on Region..."
-				shell-command-on-region (region-exists-p)]
+      ["Shell Command on Region..." shell-command-on-region (region-exists-p)]
       ["Debug (GDB)..."		gdb			t]
       ["Debug (DBX)..."		dbx			t]
       "-----"
       ["OO-Browser..."		oobr			t]
       ("Tags"
-       ["Find..."		find-tag		t]
+       ["Find Tag..."		find-tag		t]
        ["Find Other Window..."	find-tag-other-window	t]
+       ["Next Tag..."		(find-tag nil)		t]
+       ["Next Other Window..."	(find-tag-other-window nil) t]
+       ["Next File"		next-file		t]
+       "-----"
        ["Tags Search..."	tags-search		t]
        ["Tags Replace..."	tags-query-replace	t]
+       ["Continue Search/Replace" tags-loop-continue	t]
        "-----"
-       ["Continue Search/Replace"	tags-loop-continue	t]
        ["Pop stack"		pop-tag-mark		t]
-       ["Apropos..."		tags-apropos		t]))
+       ["Apropos..."		tags-apropos		t]
+       "-----"
+       ["Set Tags Table File..." visit-tags-table	t]
+       ))
 
      nil		; the partition: menus after this are flushright
 
      ("Help"
       ["About XEmacs..."	about-xemacs		t]
-      ("Basics"
-       ["Tutorial"		help-with-tutorial	t]
-       ["News"			view-emacs-news		t]
-       ["Packages"		finder-by-keyword	t]
-       ["Splash"		xemacs-splash-buffer	t])
       "-----"
-      ("XEmacs FAQ"
-       ["FAQ (local)"		xemacs-local-faq	t]
-       ["FAQ via WWW"		xemacs-www-faq		t]
-       ["Home Page"		xemacs-www-page		t])
-      ("Samples"
-       ["Sample .emacs"		(find-file
-				 (expand-file-name "sample.emacs"
-						   data-directory))
-	t]
-       ["Sample .Xdefaults"	(find-file
-				 (expand-file-name "sample.Xdefaults"
-						   data-directory))
-	t]
-       ["Sample enriched"	(find-file
-				 (expand-file-name "enriched.doc"
-						   data-directory))
-	t])
+      ["XEmacs WWW Page"	xemacs-www-page		t]
+      ["Newest XEmacs FAQ via WWW" xemacs-www-faq	t]
+      ["XEmacs FAQ (local)"	xemacs-local-faq	t]
+      ["XEmacs Tutorial"	help-with-tutorial	t]
+      ["XEmacs News"		view-emacs-news		t]
+      ["Sample"
+       (find-file (expand-file-name "sample.emacs" data-directory))
+       t ".emacs"]
+      ["Sample"
+       (find-file (expand-file-name "sample.Xdefaults" data-directory))
+       t ".Xdefaults"]
       "-----"
+      ["Info (Detailed Docs)"	info			t]
       ("Lookup in Info"
-       ["Key Binding..."	Info-goto-emacs-key-command-node t]
+       ["Key/Mouse Binding..."	Info-goto-emacs-key-command-node t]
        ["Command..."		Info-goto-emacs-command-node t]
-       ["Function..."		Info-elisp-ref		t]
+       ["Elisp Function..."	Info-elisp-ref		t]
        ["Topic..."		Info-query		t])
-      ("Manuals"
-       ["Info"			info			t]
-       ["Unix Manual..."	manual-entry		t])
-      ("Commands & Keys"
-       ["Mode"			describe-mode		t]
-       ["Apropos..."		hyper-apropos		t]
-       ["Apropos Docs..."	apropos-documentation	t]
-       "-----"
-       ["Key..."		describe-key		t]
-       ["Bindings"		describe-bindings	t]
-       ["Mouse Bindings"	describe-pointer	t]
-       ["Recent Keys"		view-lossage		t]
-       "-----"
-       ["Function..."		describe-function	t]
-       ["Variable..."		describe-variable	t]
-       ["Locate Command..."	where-is		t])
+      ["Package Browser"	finder-by-keyword	t]
+      ["Describe Mode"		describe-mode		t]
+      ["Apropos..."		hyper-apropos		t]
+      ["Apropos Documentation..." apropos-documentation	t]
       "-----"
-      ["Recent Messages" view-lossage	t]
+      ["Recent Keystrokes/Messages" view-lossage	t]
+      ["Describe Key/Mouse..."	describe-key		t]
+      ["List Key Bindings"	describe-bindings	t]
+      ["List Mouse Bindings"	describe-pointer	t]
+      "-----"
+      ["Describe Function..."	describe-function	t]
+      ["Describe Variable..."	describe-variable	t]
+      ["Where Is Command..."	where-is		t]
+      "-----"
+      ["Unix Manual..."		manual-entry		t]
       ("Misc"
-       ["No Warranty"		describe-no-warranty	t]
-       ["XEmacs License"	describe-copying	t]
-       ["The Latest Version"	describe-distribution	t])
+       ["Describe No Warranty"	describe-no-warranty	t]
+       ["Describe XEmacs License" describe-copying	t]
+       ["Getting the Latest Version" describe-distribution	t])
       )
      )))
 
@@ -794,9 +728,7 @@ select that buffer.")
 
 (defvar buffers-menu-submenus-for-groups-p nil
   "*If true, the buffers menu will contain one submenu per group of buffers,
-if a grouping function is specified in `buffers-menu-grouping-function'.
-If this is an integer, do not build submenus if the number of buffers
-is not larger than this value.")
+if a grouping function is specified in `buffers-menu-grouping-function'.")
 
 (defvar buffers-menu-switch-to-buffer-function 'switch-to-buffer
   "*The function to call to select a buffer from the buffers menu.
@@ -916,39 +848,43 @@ This groups buffers by major mode.  It only really makes sense if
 (defsubst build-buffers-menu-internal (buffers)
   (let (name line)
     (mapcar
-     #'(lambda (buffer)
-	 (if (eq buffer t)
-	     "---"
-	   (setq line (funcall buffers-menu-format-buffer-line-function
-			       buffer))
-	   (if complex-buffers-menu-p
-	       (delq nil
-		     (list line
-			   (vector "Switch to Buffer"
-				   (list buffers-menu-switch-to-buffer-function
-					 (setq name (buffer-name buffer)))
-				   t)
-			   (if (eq buffers-menu-switch-to-buffer-function
-				   'switch-to-buffer)
-			       (vector "Switch to Buffer, Other Frame"
-				       (list 'switch-to-buffer-other-frame
-					     (setq name (buffer-name buffer)))
-				       t)
-			     nil)
-			   (if (and (buffer-modified-p buffer)
-				    (buffer-file-name buffer))
-			       (vector "Save Buffer"
-				       (list 'buffer-menu-save-buffer name) t)
-			     ["Save Buffer" nil nil]
-			     )
-			   (vector "Save As..."
-				   (list 'buffer-menu-write-file name) t)
-			   (vector "Delete Buffer" (list 'kill-buffer name)
-				   t)))
-	     (vector line
-		     (list buffers-menu-switch-to-buffer-function
-			   (buffer-name buffer))
-		     t))))
+     (lambda (buffer)
+       (if (eq buffer t)
+	   "---"
+	 (setq line (funcall buffers-menu-format-buffer-line-function
+			     buffer))
+	 (if complex-buffers-menu-p
+	     (delq nil
+		   (list line
+			 (vector "Switch to Buffer"
+				 (list buffers-menu-switch-to-buffer-function
+				       (setq name (buffer-name buffer)))
+				 t)
+			 (if (eq buffers-menu-switch-to-buffer-function
+				 'switch-to-buffer)
+			     (vector "Switch to Buffer, Other Frame"
+				     (list 'switch-to-buffer-other-frame
+					   (setq name (buffer-name buffer)))
+				     t)
+			   nil)
+			 (if (and (buffer-modified-p buffer)
+				  (buffer-file-name buffer))
+			     (vector "Save Buffer"
+				     (list 'buffer-menu-save-buffer name) t)
+			   ["Save Buffer" nil nil]
+			   )
+			 (vector "Save As..."
+				 (list 'buffer-menu-write-file name) t)
+			 (vector "Delete Buffer" (list 'kill-buffer name)
+				 t)))
+	   ;; ### We don't want buffer names to be translated,
+	   ;; ### so we put the buffer name in the suffix.
+	   ;; ### Also, avoid losing with non-ASCII buffer names.
+	   ;; ### We still lose, however, if complex-buffers-menu-p. --mrb
+	   (vector ""
+		   (list buffers-menu-switch-to-buffer-function
+			 (buffer-name buffer))
+		   t line))))
      buffers)))
 
 (defun buffers-menu-filter (menu)
@@ -962,16 +898,12 @@ items by redefining the function `format-buffers-menu-line'."
     (and (integerp buffers-menu-max-size)
 	 (> buffers-menu-max-size 1)
 	 (> (length buffers) buffers-menu-max-size)
-	 ;; shorten list of buffers (not with submenus!)
-	 (not (and buffers-menu-grouping-function
-		   buffers-menu-submenus-for-groups-p))
+	 ;; shorten list of buffers
 	 (setcdr (nthcdr buffers-menu-max-size buffers) nil))
     (if buffers-menu-sort-function
 	(setq buffers (sort buffers buffers-menu-sort-function)))
     (if (and buffers-menu-grouping-function
-	     buffers-menu-submenus-for-groups-p
-	     (or (not (integerp buffers-menu-submenus-for-groups-p))
-		 (> (length buffers) buffers-menu-submenus-for-groups-p)))
+	     buffers-menu-submenus-for-groups-p)
 	(let (groups groupnames current-group)
 	  (mapl
 	   #'(lambda (sublist)
@@ -1010,15 +942,15 @@ items by redefining the function `format-buffers-menu-line'."
     (append menu buffers)
     ))
 
+(defun language-environment-menu-filter (menu)
+  "This is the menu filter for the \"Language Environment\" submenu."
+  (mapcar (lambda (env-sym)
+	    `[ ,(capitalize (symbol-name env-sym))
+	       (set-language-environment ',env-sym) t])
+	  language-environment-list))
 
 
 ;;; The Options menu
-
-(defvar options-save-faces nil
-  "if t, save-options will save all the face information.
-Set to nil to avoid this. This is recommended on XEmacs 19.15
-and above as we have a much more powerful (read: working) way 
-of changing and saving faces via cu-edit-faces.el & custom.el.")
 
 (defconst options-menu-saved-forms
   ;; This is really quite a kludge, but it gets the job done.
@@ -1044,8 +976,6 @@ of changing and saving faces via cu-edit-faces.el & custom.el.")
 	    (pending-delete-on nil)))
      zmacs-regions
      mouse-yank-at-point
-     require-final-newline
-     next-line-add-newlines
 
      ;; General Options menu.
      teach-extended-commands-p
@@ -1062,8 +992,6 @@ of changing and saving faces via cu-edit-faces.el & custom.el.")
      ;; Other Window Location
      get-frame-for-buffer-default-instance-limit
      temp-buffer-show-function
-     (if gnuserv-frame
-	 '(setq gnuserv-frame (selected-frame)))
 
      ;; Syntax Highlighting
      font-lock-auto-fontify
@@ -1135,9 +1063,6 @@ of changing and saving faces via cu-edit-faces.el & custom.el.")
 		 ',(specifier-spec-list toolbar-buttons-captioned-p
 					'global)))))
 
-     ;; mouse
-     mouse-avoidance-mode
-
      ;; Open URLs With
      browse-url-browser-function
 
@@ -1146,43 +1071,36 @@ of changing and saving faces via cu-edit-faces.el & custom.el.")
      ;; Setting this in lisp conflicts with X resources.  Bad move.  --Stig 
      ;; (list 'set-face-font ''default (face-font-name 'default))
      ;; (list 'set-face-font ''modeline (face-font-name 'modeline))
-     (if options-save-faces
-	 (cons 'progn
-	       (mapcar #'(lambda (face)
-			   `(make-face ',face))
-		       (save-options-non-customized-face-list))))
-     
-     (if options-save-faces
-	 (cons 'progn
-	       (apply 'nconc
-		      (mapcar
-		       #'(lambda (face)
-			   (delq nil
-				 (mapcar
-				  #'(lambda (property)
-				      (if (specifier-spec-list
-					   (face-property face property))
-					  `(add-spec-list-to-specifier
-					    (face-property ',face ',property)
-					    ',(save-options-specifier-spec-list
-					       face property))))
-				  (delq 'display-table
-					(copy-sequence
-					 built-in-face-specifiers)))))
-		       (save-options-non-customized-face-list)))))
-     
+
+     (cons 'progn
+	   (mapcar #'(lambda (face)
+		       `(make-face ',face))
+		   (face-list)))
+
+     (cons 'progn
+	   (apply 'nconc
+		  (mapcar
+		   #'(lambda (face)
+		       (delq nil
+			     (mapcar
+			      #'(lambda (property)
+				  (if (specifier-spec-list
+				       (face-property face property))
+				      `(add-spec-list-to-specifier
+					(face-property ',face ',property)
+					',(save-options-specifier-spec-list
+					   face property))))
+			      built-in-face-specifiers)))
+		   (face-list))))
+
+     ;; Mule-specific:
+     (if (featurep 'mule)
+	 `(if (featurep 'mule)
+	      (set-language-environment ',(current-language-environment))))
      ))
   "The variables to save; or forms to evaluate to get forms to write out.
 This is used by `save-options-menu-settings' and should mirror the
 options listed in the Options menu.")
-
-(defun save-options-non-customized-face-list ()
-  "This function will return a list of all faces that have not been
-'customized'."
-  (delq nil (mapcar '(lambda (face)
-		      (unless (get face 'saved-face)
-			face))
-		    (face-list))))
 
 (defun save-options-specifier-spec-list (face property)
   (if (not (or (eq property 'font) (eq property 'color)))
@@ -1380,19 +1298,9 @@ The menu is computed by combining `global-popup-menu' and `mode-popup-menu'."
   (popup-menu
    (cond ((and global-popup-menu mode-popup-menu)
 	  (check-menu-syntax mode-popup-menu)
-	  (let* ((title (car mode-popup-menu))
-		 (items (cdr mode-popup-menu))
-		 filters)
-	    ;; Strip keywords from local menu for attaching them at the top
-	    (while (and items
-			(symbolp (car items)))
-	      (setq items (append filters (list (car items))))
-	      (setq items (cdr items)))
-	    ;; If filters contains a keyword already present in
-	    ;; `global-popup-menu' you will probably lose.
-	    (append (list (car global-popup-menu))
-		    filters
-		    (cdr global-popup-menu)
+	  (let ((title (car mode-popup-menu))
+		(items (cdr mode-popup-menu)))
+	    (append global-popup-menu
 		    '("---" "---")
 		    (if popup-menu-titles (list title))
 		    (if popup-menu-titles '("---" "---"))
@@ -1475,15 +1383,6 @@ The menu is computed by combining `global-popup-menu' and `mode-popup-menu'."
 ;        "shadowDoubleEtchedOutDash"
 ;        ))
 
-(defun xemacs-splash-buffer ()
-  "Redisplay XEmacs splash screen in a buffer."
-  (interactive)
-  (let ((buffer (get-buffer-create "*Splash*")))
-    (set-buffer buffer)
-    (erase-buffer buffer)
-    (startup-splash-frame)
-    (pop-to-buffer buffer)
-    (delete-other-windows)))
 
 (provide 'x-menubar)
 

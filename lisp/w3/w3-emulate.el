@@ -1,14 +1,13 @@
 ;;; w3-emulate.el --- All variable definitions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/03/14 06:12:02
-;; Version: 1.12
+;; Created: 1996/06/30 18:05:22
+;; Version: 1.2
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Copyright (c) 1996 by William M. Perry (wmperry@cs.indiana.edu)
-;;; Copyright (c) 1996, 1997 Free Software Foundation, Inc.
 ;;;
-;;; This file is part of GNU Emacs.
+;;; This file is not part of GNU Emacs, but the same permissions apply.
 ;;;
 ;;; GNU Emacs is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -21,9 +20,8 @@
 ;;; GNU General Public License for more details.
 ;;;
 ;;; You should have received a copy of the GNU General Public License
-;;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;;; Boston, MA 02111-1307, USA.
+;;; along with GNU Emacs; see the file COPYING.  If not, write to
+;;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -80,9 +78,9 @@
 (define-key w3-netscape-emulation-minor-mode-map [right] 'scroll-left)
 (define-key w3-netscape-emulation-minor-mode-map [left] 'scroll-right)
 (define-key w3-netscape-emulation-minor-mode-map [(meta left)]
-  'w3-history-backward)
+  'w3-backward-in-history)
 (define-key w3-netscape-emulation-minor-mode-map [(meta right)]
-  'w3-history-forward)
+  'w3-forward-in-history)
 
 (defun turn-on-netscape-emulation ()
   (interactive)
@@ -108,6 +106,56 @@
 (defsubst w3-skip-word ()
   (skip-chars-forward "^ \t\n\r")
   (skip-chars-forward " \t"))
+
+(defun w3-read-netscape-config (&optional fname)
+  "Read in a netscape-style configuration file."
+  (interactive "fNetscape configuration file: ")
+  (if (not (and (file-exists-p fname)
+		(file-readable-p fname)))
+      (error "Could not read %s" fname))
+  (let ((results nil)
+	(tag nil)
+	(val nil)
+	(var nil)
+	(save-pos nil))
+    (save-excursion
+      (set-buffer (get-buffer-create " *w3-tmp*"))
+      (erase-buffer)
+      (insert-file-contents-literally fname)
+      (goto-char (point-min))
+      (skip-chars-forward "^ \t\r\n")	; Skip tag line
+      (skip-chars-forward " \t\r\n")	; Skip blank line(s)
+      (while (not (eobp))
+	(setq save-pos (point))
+	(skip-chars-forward "^:")
+	(upcase-region save-pos (point))
+	(setq tag (buffer-substring save-pos (point)))
+	(skip-chars-forward ":\t ")
+	(setq save-pos (point))
+	(skip-chars-forward "^\r\n")
+	(setq val (if (= save-pos (point))
+		      nil
+		    (buffer-substring save-pos (point))))
+	(cond
+	 ((null val) nil)
+	 ((string-match "^[0-9]+$" val)
+	  (setq val (string-to-int val)))
+	 ((string= "false" (downcase val))
+	  (setq val nil))
+	 ((string= "true" (downcase val))
+	  (setq val t))
+	 (t nil))
+	(skip-chars-forward " \t\n\r")
+	(setq results (cons (cons tag val) results))))
+    (while results
+      (setq tag (car (car results))
+	    val (cdr (car results))
+	    var (cdr-safe (assoc tag w3-netscape-variable-mappings))
+	    results (cdr results))
+      (cond
+       ((eq var 'w3-delay-image-loads) (set var (not val)))
+       (var (set var val))
+       (t nil)))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -136,72 +184,31 @@
     (setq w3-lynx-emulation-minor-mode t
 	  w3-netscape-emulation-minor-mode nil))))
 
-;; The list of keybindings for lynx minor mode was compiled from:
-;; http://www.crl.com/~subir/lynx/lynx_help/keystroke_commands/keystroke_help.htm
-
-;; Movement
-(define-key w3-lynx-emulation-minor-mode-map [up]   'w3-widget-backward)
-(define-key w3-lynx-emulation-minor-mode-map [down] 'w3-widget-forward)
-(define-key w3-lynx-emulation-minor-mode-map [right] 'w3-follow-link)
-(define-key w3-lynx-emulation-minor-mode-map [left] 'w3-history-backward)
-
-;; Scrolling
 (define-key w3-lynx-emulation-minor-mode-map "+"    'w3-scroll-up)
 (define-key w3-lynx-emulation-minor-mode-map "-"    'scroll-down)
 (define-key w3-lynx-emulation-minor-mode-map "b"    'scroll-down)
-(define-key w3-lynx-emulation-minor-mode-map "\C-a" 'w3-start-of-document)
-(define-key w3-lynx-emulation-minor-mode-map "\C-e" 'w3-end-of-document)
-(define-key w3-lynx-emulation-minor-mode-map "\C-f" 'scroll-down)
-(define-key w3-lynx-emulation-minor-mode-map "\C-n" 'ignore) ; down 2
-(define-key w3-lynx-emulation-minor-mode-map "\C-p" 'ignore) ; up 2
-(define-key w3-lynx-emulation-minor-mode-map ")"    'ignore) ; forward half
-(define-key w3-lynx-emulation-minor-mode-map "("    'ignore) ; back half
-(define-key w3-lynx-emulation-minor-mode-map "#"    'w3-toggle-toolbar)
-
-;; Dired bindings don't have any meaning for us
-
-;; Other
-(define-key w3-lynx-emulation-minor-mode-map "?"   'w3-help)
-(define-key w3-lynx-emulation-minor-mode-map "a"   'w3-hotlist-add-document)
-(define-key w3-lynx-emulation-minor-mode-map "c"   'w3-mail-document-author)
-(define-key w3-lynx-emulation-minor-mode-map "d"   'w3-download-url) 
-(define-key w3-lynx-emulation-minor-mode-map "e"   'ignore) ; edit current
-(define-key w3-lynx-emulation-minor-mode-map "f"   'dired)
-(define-key w3-lynx-emulation-minor-mode-map "g"   'w3-fetch)
-(define-key w3-lynx-emulation-minor-mode-map "h"   'w3-help)
-(define-key w3-lynx-emulation-minor-mode-map "i"   'ignore)
-(define-key w3-lynx-emulation-minor-mode-map "j"   'w3-use-hotlist)
-(define-key w3-lynx-emulation-minor-mode-map "k"   'describe-mode)
-(define-key w3-lynx-emulation-minor-mode-map "l"   'w3-complete-link)
-(define-key w3-lynx-emulation-minor-mode-map "m"   'w3)
-(define-key w3-lynx-emulation-minor-mode-map "n"   'w3-search-again)
-(define-key w3-lynx-emulation-minor-mode-map "o"   'w3-preferences-edit)
-(define-key w3-lynx-emulation-minor-mode-map "p"   'w3-print-this-url)
-(define-key w3-lynx-emulation-minor-mode-map "q"   'w3-quit)
-(define-key w3-lynx-emulation-minor-mode-map "r"   'w3-hotlist-delete)
-(define-key w3-lynx-emulation-minor-mode-map "t"   'ignore) ; tag
-(define-key w3-lynx-emulation-minor-mode-map "u"   'w3-history-backward)
-(define-key w3-lynx-emulation-minor-mode-map "/"   'w3-search-forward)
-(define-key w3-lynx-emulation-minor-mode-map "v"   'w3-show-hotlist)
-(define-key w3-lynx-emulation-minor-mode-map "V"   'w3-show-hotlist)
-(define-key w3-lynx-emulation-minor-mode-map "x"   'w3-follow-link)
-(define-key w3-lynx-emulation-minor-mode-map "z"   'keyboard-quit)
-(define-key w3-lynx-emulation-minor-mode-map "="   'w3-document-information)
-(define-key w3-lynx-emulation-minor-mode-map "\\"  'w3-source-document)
-(define-key w3-lynx-emulation-minor-mode-map "!"   'shell)
-(define-key w3-lynx-emulation-minor-mode-map "'"   'ignore) ; toggle comment
-(define-key w3-lynx-emulation-minor-mode-map "`"   'ignore) ; toggle comment
-(define-key w3-lynx-emulation-minor-mode-map "*"   'ignore) ; toggle image_links
-(define-key w3-lynx-emulation-minor-mode-map "@"   'ignore) ; toggle raw 8-bit
-(define-key w3-lynx-emulation-minor-mode-map "["   'ignore) ; pseudo-inlines
-(define-key w3-lynx-emulation-minor-mode-map "]"   'ignore) ; send head
-(define-key w3-lynx-emulation-minor-mode-map "\""  'ignore) ; toggle quoting
+(define-key w3-lynx-emulation-minor-mode-map "a"    'w3-hotlist-add-document)
+(define-key w3-lynx-emulation-minor-mode-map "c"    'w3-mail-document-author)
+(define-key w3-lynx-emulation-minor-mode-map "e"    'w3-edit-source)
+(define-key w3-lynx-emulation-minor-mode-map "g"    'w3-fetch)
+(define-key w3-lynx-emulation-minor-mode-map "i"    'ignore)
+(define-key w3-lynx-emulation-minor-mode-map "m"    'w3)
+(define-key w3-lynx-emulation-minor-mode-map "o"    'ignore)
+(define-key w3-lynx-emulation-minor-mode-map "p"    'w3-print-this-url)
+(define-key w3-lynx-emulation-minor-mode-map "q"    'w3-quit)
+(define-key w3-lynx-emulation-minor-mode-map "/"    'w3-search-forward)
+(define-key w3-lynx-emulation-minor-mode-map "s"    'w3-search-forward)
+(define-key w3-lynx-emulation-minor-mode-map "n"    'w3-search-again)
+(define-key w3-lynx-emulation-minor-mode-map "v"    'w3-show-hotlist)
+(define-key w3-lynx-emulation-minor-mode-map "="    'w3-document-information)
 (define-key w3-lynx-emulation-minor-mode-map "\C-r" 'w3-reload-document)
 (define-key w3-lynx-emulation-minor-mode-map "\C-w" 'w3-refresh-buffer)
-(define-key w3-lynx-emulation-minor-mode-map "\C-u" 'ignore) ; erase input
-(define-key w3-lynx-emulation-minor-mode-map "\C-g" 'keyboard-quit)
-(define-key w3-lynx-emulation-minor-mode-map "\C-t" 'ignore) ; toggle trace
-(define-key w3-lynx-emulation-minor-mode-map "\C-k" 'ignore) ; cookie jar
+(define-key w3-lynx-emulation-minor-mode-map "\\"   'w3-source-document)
+(define-key w3-lynx-emulation-minor-mode-map "!"    'shell)
+(define-key w3-lynx-emulation-minor-mode-map [up]   'w3-back-link)
+(define-key w3-lynx-emulation-minor-mode-map [down] 'w3-forward-link)
+(define-key w3-lynx-emulation-minor-mode-map [right] 'w3-follow-link)
+(define-key w3-lynx-emulation-minor-mode-map [left] 'w3-backward-in-history)
 
 (provide 'w3-emulate)
 

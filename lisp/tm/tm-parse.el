@@ -3,7 +3,7 @@
 ;; Copyright (C) 1994,1995,1996 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: tm-parse.el,v 1.2 1996/12/22 00:29:41 steve Exp $
+;; Version: $Id: tm-parse.el,v 1.1.1.1 1996/12/18 22:43:37 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia
 
 ;; This file is part of tm (Tools for MIME).
@@ -25,23 +25,13 @@
 
 ;;; Code:
 
-(require 'std11)
+(require 'tl-822)
 (require 'tl-misc)
 (require 'tm-def)
 
 
 ;;; @ field parser
 ;;;
-
-(defconst rfc822/quoted-pair-regexp "\\\\.")
-(defconst rfc822/qtext-regexp
-  (concat "[^" (char-list-to-string std11-non-qtext-char-list) "]"))
-(defconst rfc822/quoted-string-regexp
-  (concat "\""
-	  (regexp-*
-	   (regexp-or rfc822/qtext-regexp rfc822/quoted-pair-regexp)
-	   )
-	  "\""))
 
 (defconst mime/content-parameter-value-regexp
   (concat "\\("

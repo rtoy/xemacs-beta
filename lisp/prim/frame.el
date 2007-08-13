@@ -20,7 +20,7 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs; see the file COPYING.  If not, write to the 
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: FSF 19.30.
@@ -439,7 +439,7 @@ win32	A connection to a machine running Microsoft Windows NT or
 	Windows 95.  Not currently implemented.
 pc	A direct-write MS-DOS frame.  Not currently implemented.
 
-PROPS should be an plist of properties, as in the call to `make-frame'.
+PROPS should be a plist of properties, as in the call to `make-frame'.
 
 If a connection to CONNECTION already exists, it is reused; otherwise,
 a new connection is opened."
@@ -532,7 +532,7 @@ A negative ARG moves in the opposite order."
 This is equivalent to the type of the frame's device.
 Value is `tty' for a tty frame (a character-only terminal),
 `x' for a frame that is an X window,
-`ns' for a frame that is a NeXTstep window (not yet implemented),
+`ns' for a frame that is a NeXTstep window (not yet implemeted),
 `win32' for a frame that is a Windows or Windows NT window (not yet
   implemented),
 `pc' for a frame that is a direct-write MS-DOS frame (not yet implemented),
@@ -721,7 +721,6 @@ all frames that were visible, and iconify all frames that were not."
 	  map-frame-hook 'deiconify-emacs)
     (iconify-frame me)))
 
-
 (defun deiconify-emacs (&optional ignore)
   (or iconification-data (error "not iconified?"))
   (setq frame-icon-title-format (car iconification-data)
@@ -729,9 +728,9 @@ all frames that were visible, and iconify all frames that were not."
 	iconification-data (car (cdr (cdr iconification-data))))
   (while iconification-data
     (let ((visibility (cdr (car iconification-data))))
-      (cond (visibility  ;; JV  (Note non-nil means visible in XEmacs)
+      (cond ((eq visibility 't)
 	     (make-frame-visible (car (car iconification-data))))
-;	    (t ;; (eq visibility 'icon) ;; JV Not in XEmacs!!!
+;	    (t ;; (eq visibility 'icon)
 ;	     (make-frame-visible (car (car iconification-data)))
 ;	     (sleep-for 500 t) ; process X events; I really want to XSync() here
 ;	     (iconify-frame (car (car iconification-data))))
@@ -742,13 +741,9 @@ all frames that were visible, and iconify all frames that were not."
 (defun suspend-or-iconify-emacs ()
   "Calls iconify-emacs if frame is an X frame, otherwise calls suspend-emacs"
   (interactive)
-  (cond
-   ((eq (frame-type (selected-frame)) 'x) (iconify-emacs))
-   ((and (eq (frame-type (selected-frame)) 'tty)
-	 (console-tty-controlling-process (selected-console)))
-    (suspend-console (selected-console)))
-   (t
-    (suspend-emacs))))
+  (if (eq (frame-type (selected-frame)) 'x)
+      (iconify-emacs)
+    (suspend-emacs)))
 
 
 ;;; auto-raise and auto-lower
@@ -796,6 +791,14 @@ if the dragged object is a buffer, inserts it at point."
      (or drag-and-drop-functions
 	 (add-hook 'drag-and-drop-functions 'default-drag-and-drop-functions)))
 
+(defun cde-start-drag (begin end)
+  "Implements the CDE drag operation.
+Calls the internal function cde-start-drag-internal to do the actual work."
+  (interactive "_r")
+  (if (featurep 'cde)
+      (cde-start-drag-internal (buffer-substring-no-properties begin end))
+    (error "CDE functionality not compiled in.")))
+
 
 ;;; Application-specific frame-management
 
@@ -811,8 +814,9 @@ if the dragged object is a buffer, inserts it at point."
     (or (get mode 'frame-name)
 	get-frame-for-buffer-default-frame-name)))
 
-(defun get-frame-for-buffer-make-new-frame (buffer &optional frame-name plist)
-  (let* ((fr (make-frame plist))
+
+(defun get-frame-for-buffer-make-new-frame (buffer &optional frame-name)
+  (let* ((fr (make-frame (and frame-name (list (cons 'name frame-name)))))
 	 (w (frame-root-window fr)))
     ;;
     ;; Make the one buffer being displayed in this newly created
@@ -847,13 +851,11 @@ This is a subroutine of `get-frame-for-buffer' (which see)."
       ;; name.  That always takes priority.
       ;;
       (let ((limit (get name 'instance-limit))
-	    (defaults (get name 'frame-defaults))
 	    (matching-frames '())
 	    frames frame already-visible)
 	;; Sort the list so that iconic frames will be found last.  They
 	;; will be used too, but mapped frames take precedence.  And
 	;; fully visible frames come before occluded frames.
-        ;; Hidden frames come after really visible ones
 	(setq frames
 	      (sort (frame-list)
 		    #'(lambda (s1 s2)
@@ -861,8 +863,6 @@ This is a subroutine of `get-frame-for-buffer' (which see)."
 			       nil)
 			      ((not (frame-visible-p s2))
 			       (frame-visible-p s1))
-			      ((eq (frame-visible-p s2) 'hidden)
-			       (eq (frame-visible-p s1) t ))
 			      ((not (frame-totally-visible-p s2))
 			       (and (frame-visible-p s1)
 				    (frame-totally-visible-p s1)))))))
@@ -885,11 +885,7 @@ This is a subroutine of `get-frame-for-buffer' (which see)."
 	      ((or (null matching-frames)
 		   (eq limit 0) ; means create with reckless abandon
 		   (and limit (< (length matching-frames) limit)))
-	       (get-frame-for-buffer-make-new-frame
-		buffer
-		name
-		(alist-to-plist (acons 'name name
-				       (plist-to-alist defaults)))))
+	       (get-frame-for-buffer-make-new-frame buffer name))
 	      (t
 	       ;; do not switch any of the window/buffer associations in an
 	       ;; existing frame; this function only picks a frame; the
@@ -914,8 +910,6 @@ This is a subroutine of `get-frame-for-buffer' (which see)."
 		    #'(lambda (s1 s2)
 			(cond ((and (frame-visible-p s1)
 				    (not (frame-visible-p s2))))
-			      ((and (eq (frame-visible-p s1) t)
-				    (eq (frame-visible-p s2) 'hidden)))
 			      ((and (frame-visible-p s2)
 				    (not (frame-visible-p s1)))
 			       nil)
@@ -1016,19 +1010,13 @@ is first in the list.  VISIBLE-ONLY will only list non-iconified frames."
 	    (setq save-frame next-frame)
 	  (and 
 	   (or (not visible-only)
-	       (frame-visible-p next-frame))
+	       (eq t (frame-visible-p next-frame)))
 	   (setq frames (append frames (list next-frame))))))
 	(setq list (cdr list)))
 
     (if save-frame
 	(append (list save-frame) frames)
       frames)))
-
-(defvar temp-buffer-shrink-to-fit t
-  "*When non-nil resize temporary output buffers to minimize blank lines.")
-
-(defvar temp-buffer-max-height .5
-  "*Proportion of frame to use for temp windows.")
 
 (defun show-temp-buffer-in-current-frame (buffer)
   "For use as the value of temp-buffer-show-function:
@@ -1043,13 +1031,6 @@ is normally set to `get-frame-for-buffer' (which see)."
       (setq minibuffer-scroll-window window)
       (set-window-start window 1) ; obeys narrowing
       (set-window-point window 1)
-      (when temp-buffer-shrink-to-fit
-        (let* ((temp-window-size (round (* temp-buffer-max-height
-                                           (frame-height (window-frame window)))))
-               (size (window-displayed-height window)))
-          (when (< size temp-window-size)
-            (enlarge-window (- temp-window-size size) nil window)))
-        (shrink-window-if-larger-than-buffer window))
       nil)))
 
 (setq pre-display-buffer-function 'get-frame-for-buffer)
@@ -1202,12 +1183,10 @@ If there is no window at the given POSITION, return nil."
 
 (defun frame-height (&optional frame)
   "Return number of lines available for display on FRAME."
-  (or frame (setq frame (selected-frame)))
   (frame-property frame 'height))
 
 (defun frame-width (&optional frame)
   "Return number of columns available for display on FRAME."
-  (or frame (setq frame (selected-frame)))
   (frame-property frame 'width))
 
 (put 'cursor-color 'frame-property-alias [text-cursor background])

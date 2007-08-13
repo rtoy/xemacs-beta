@@ -61,11 +61,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#ifdef __FreeBSD__
-#  include <machine/soundcard.h>
-#else
-#  include <linux/soundcard.h>
-#endif
+#include <linux/soundcard.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -92,8 +88,8 @@
 #define __inline__
 #endif
 
-static  void (*sighup_handler)(int);
-static  void (*sigint_handler)(int);
+static __sighandler_t sighup_handler;
+static __sighandler_t sigint_handler;
 
 /* Maintain global variable for keeping parser state information; this struct
    is set to zero before the first invocation of the parser. The use of a
@@ -297,7 +293,7 @@ static size_t parsewave(void **data,size_t *sz,void **outbuf)
 	  parsestate.wave.state = wvSkipChunk; }
       else if (rq)
 	/* align data length to a multiple of datasize; keep additional data
-	   in "leftover" buffer --- this is necessary to ensure proper
+	   in "leftover" buffer --- this is neccessary to ensure proper
 	   functioning of the sndcnv... routines */
 	waverequire(data,sz,rq);
       return(count); }
@@ -986,8 +982,8 @@ static void linux_play_data_or_file(int fd,unsigned char *data,
      this could lead to problems, when multiple sound cards are installed */
   mix_fd = audio_fd;
 
-  sighup_handler = signal(SIGHUP, sighandler);
-  sigint_handler = signal(SIGINT, sighandler);
+  sighup_handler = signal(SIGHUP,(__sighandler_t)sighandler);
+  sigint_handler = signal(SIGINT,(__sighandler_t)sighandler);
 
   if (!audio_init(mix_fd,audio_fd,fmt,speed,tracks,&volume,&sndcnv))
     goto END_OF_PLAY;
@@ -997,7 +993,7 @@ static void linux_play_data_or_file(int fd,unsigned char *data,
   memset(&parsestate,0,sizeof(parsestate));
 
   /* Mainloop: read a block of data, parse its contents, perform all
-               the necessary conversions and output it to the sound
+               the neccessary conversions and output it to the sound
                device; repeat until all data has been processed */
   rrtn = length;
   do {
