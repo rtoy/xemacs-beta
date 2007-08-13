@@ -1,3 +1,83 @@
+Mon Apr  7 18:12:26 1997  David Moore  <dmoore@ucsd.edu>
+
+	* xmu.c: Renamed local `initialized' variable to `hex_initialized'
+ 	and don't assign to static, as some compilers crash.
+	(initHexTable): Use it.
+	(XmuReadBitmapData): Use it.
+
+Sun Apr  6 18:03:47 1997  David Moore  <dmoore@ucsd.edu>
+
+	* fileio.c (Fexpand_file_name): Clean up GC protection.
+
+	* dired.c (Fdirectory_files): Clean up GC protection.
+
+	* insdel.c (signal_after_change): Don't run after_change_functions 
+	on special Vprin1_to_string_buffer.
+	(signal_before_change): Ditto for before_change_functions.
+
+Fri Apr  4 14:41:17 1997  David Moore  <dmoore@ucsd.edu>
+
+	* buffer.c (Fkill_buffer): Don't kill special
+	Vprin1_to_string_buffer.
+
+Mon Apr  7 19:13:40 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in (xemacs-version.h): Added to rename main_1 to
+	something reflecting the XEmacs version in use (for lusers
+	reporting crashes who forget to include the version number).
+
+	* toolbar.c (specifier_vars_of_toolbar): Strip HAVE_NEXTSTEP.
+
+	* sound.c: Strip HAVE_NEXTSTEP.
+
+	* redisplay.c (init_redisplay): Strip HAVE_NEXTSTEP.
+
+	* faces.c: Strip HAVE_NEXTSTEP.
+	(update_EmacsFrame): Ditto.
+
+	* events.c (event_equal): Strip HAVE_NEXTSTEP.
+	(event_hash): Ditto.
+	(format_event_object): Ditto.
+
+	* event-stream.c (init_event_stream): Strip HAVE_NEXTSTEP.
+
+	* emacs.c (main_1): Strip HAVE_NEXTSTEP.
+	Attempt hack to change name of main_1 to something reflecting the
+	current version for lusers who don't include version numbers with
+	stack backtraces.
+
+	* device.c: Strip HAVE_NEXTSTEP.
+
+	* console.c (Fconsole_type): Remove reference to unimplemented ns
+	windows type.
+
+Sun Apr  6 08:08:33 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* frame.h: Strip NeXTStep stuff.
+
+	* device.h: Strip NeXTStep stuff.
+
+	* console.h: More NeXTStep trimming.
+
+	* console-x.h: Strip Epoch stuff.
+
+	* symsinit.h (init_sunpro): Strip vms/Epoch stuff.
+
+	* events.h (union magic_data): Strip NeXTStep stuff.
+
+	* console.h: Strip NeXTStep stuff.
+
+	* config.h.in: Strip unimplemented NeXTStep/Epoch stuff out.
+
+	* Makefile.in.in: Remove unused NeXTStep support.  It's all in the 
+	cvs attic if someone wishes to revive it.
+	(epoch.o): Remove last vestiges of non-existent epoch support.
+
+Sat Apr  5 17:16:49 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* fns.c: Correct DOC string to not equate integers and
+	characters.
+
 Thu Apr  3 08:01:50 1997  Steve Carney  <carney@gvc.dec.com>
 
 	* s/decosf4.0-static.h: New file.

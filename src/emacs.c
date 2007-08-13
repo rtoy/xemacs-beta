@@ -43,6 +43,9 @@ Boston, MA 02111-1307, USA.  */
 #include "sysfile.h"
 #include "systime.h"
 
+/* Hack to get version number in stack backtraces */
+#include "xemacs-version.h"
+
 #if defined (HAVE_LOCALE_H) && \
    (defined (I18N2) || defined (I18N3) || defined (I18N4))
 #include <locale.h>
@@ -690,15 +693,6 @@ main_1 (int argc, char **argv, char **envp)
 	display_use = "x";
       
 #endif /* HAVE_X_WINDOWS */
-
-#ifdef HAVE_NEXTSTEP
-      if (argmatch (argv, argc, "-NXHost",     0, 6, 0, &skip_args) ||
-	  argmatch (argv, argc, "-MachLaunch", 0, 9, 0, &skip_args))
-	{
-	  display_arg = 1;
-	  display_use = "ns";
-	}
-#endif /* HAVE_NEXTSTEP */
     }
 #endif /* HAVE_WINDOW_SYSTEM */
 
@@ -874,20 +868,6 @@ main_1 (int argc, char **argv, char **envp)
       syms_of_gui_x ();
 #endif
 #endif /* HAVE_X_WINDOWS */
-
-#ifdef HAVE_NEXTSTEP
-      syms_of_device_ns ();
-      syms_of_frame_ns ();
-      syms_of_glyphs_ns ();
-      syms_of_objects_ns ();
-#ifdef HAVE_MENUBARS
-      syms_of_menubar_ns ();
-#endif
-      syms_of_nsselect ();
-#ifdef HAVE_SCROLLBARS
-      syms_of_scrollbar_ns ();
-#endif
-#endif /* HAVE_NEXTSTEP */
 
 #ifdef MULE
       syms_of_mule ();

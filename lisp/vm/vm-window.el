@@ -133,7 +133,7 @@
 	  (progn
 	    (set-buffer (setq work-buffer (get-buffer-create "*vm-wconfig*")))
 	    ;; for XEmacs/MULE
-	    (and (vm-xemacs-mule-p)
+	    (and vm-xemacs-mule-p
 		 (set-buffer-file-coding-system 'no-conversion))
 	    (erase-buffer)
 	    (print vm-window-configurations (current-buffer))
@@ -449,7 +449,7 @@ Run the hooks in vm-iconify-frame-hook before doing so."
 
 (defun vm-bury-buffer (&optional buffer)
   (or buffer (setq buffer (current-buffer)))
-  (if (vm-xemacs-p)
+  (if vm-xemacs-p
       (if (vm-multiple-frames-possible-p)
 	  (vm-frame-loop 'bury buffer)
 	(bury-buffer buffer))
@@ -644,10 +644,10 @@ Run the hooks in vm-iconify-frame-hook before doing so."
 ;; absent under Emacs 19.34.  So vm-frame-per-summary won't work
 ;; quite right under these Emacs versions.  XEmacs 19.15 should
 ;; have a working version of this function.
-;; 2 April 1997, frame-totallyt-visible-p apparently still broken
-;; under 19.15.  I give it up for now.
+;; 2 April 1997, frame-totally-visible-p apparently still broken
+;; under 19.15.  I give up for now.
 ;;(if (and (fboundp 'frame-totally-visible-p)
-;;	 (vm-xemacs-p)
+;;	 vm-xemacs-p
 ;;	 (or (>= emacs-major-version 20)
 ;;	     (>= emacs-minor-version 15)))
 ;;    (fset 'vm-frame-totally-visible-p 'frame-totally-visible-p)

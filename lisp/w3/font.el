@@ -1,7 +1,7 @@
 ;;; font.el --- New font model
 ;; Author: wmperry
-;; Created: 1997/03/28 20:23:52
-;; Version: 1.43
+;; Created: 1997/04/04 16:02:58
+;; Version: 1.44
 ;; Keywords: faces
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -129,6 +129,7 @@ for use in the 'weight' field of an X font string.")
 		       "optima"))
     ("elfin"        . ("tymes"))
     ("monospace"    . ("courier"
+		       "courier new"
 		       "fixed"
 		       "lucidatypewriter"
 		       "clean"

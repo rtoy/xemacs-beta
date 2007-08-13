@@ -4187,9 +4187,6 @@ vars_of_event_stream (void)
 #if defined (DEBUG_TTY_EVENT_STREAM) || !defined (HAVE_X_WINDOWS)
   vars_of_event_tty ();
 #endif
-#ifdef HAVE_NEXTSTEP
-  vars_of_event_ns ();
-#endif
 
 
   recent_keys_ring_index = 0;
@@ -4517,11 +4514,6 @@ init_event_stream (void)
       if (!strcmp (display_use, "x"))
 	init_event_Xt_late ();
       else
-#endif
-#ifdef HAVE_NEXTSTEP
-	if (!strcmp (display_use, "ns"))
-	  init_event_ns_late ();
-	else
 #endif
 	  {
 	    /* For TTY's, use the Xt event loop if we can; it allows

@@ -29,6 +29,8 @@ site.  The files which may appear at top level are:
 
 	site-init.el	To pre-load additional libraries into XEmacs and dump
 			them in the executable, load them from this file.
+			Read the instructions in this file for a description
+			of how to do this.
 
 	site-load.el	This is like site-init.el, but if you want the 
 			docstrings of your preloaded libraries to be kept in
@@ -66,8 +68,6 @@ These are the main subdirectories:
 			see what type of terminal the user is running on, and
 			loads a file named $TERM.el from this directory, if
 			that file exists.
-
-	vms		VMS-specific code. (Not functional)
 
 	x11		X Window System-specific code.
 
@@ -111,6 +111,9 @@ Some packages are fairly large; those have been given their own	directories:
 	eterm		A merge of the comint shell mode with an
 			ANSI-compatible terminal-emulator.
 
+	gnats		Interface to XEmacs bug reporting system based on
+			Cygnus GNATS.
+
 	gnus		A network news and mail reader.
 
 	hm--html-menus	Menu interface to html-mode.
@@ -137,8 +140,6 @@ Some packages are fairly large; those have been given their own	directories:
 
 	mule		Multi-lingual extensions for XEmacs.
 
-	ns		NeXTStep support.
-
 	oobr		An Object-Oriented class browser.
 
 	pcl-cvs		An interface to the Concurrent Version System.
@@ -146,7 +147,7 @@ Some packages are fairly large; those have been given their own	directories:
 	psgml		General purpose SGML editing support with extra
 			support for editing HTML.
 
-	quail		MULE Input Method.
+	quail		MULE Input Method. [NOT WORKING IN 20.1]
 
 	rmail		A BABYL-format mail reader.
 

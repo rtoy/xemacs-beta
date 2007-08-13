@@ -781,11 +781,11 @@ init_process_fds (struct Lisp_Process *p, int in, int out)
 #ifdef MULE
   p->instream = make_decoding_input_stream
     (XLSTREAM (p->instream),
-     Fget_coding_system (Vprocess_input_coding_system));
+     Fget_coding_system (Vcoding_system_for_read));
   Lstream_set_character_mode (XLSTREAM (p->instream));
   p->outstream = make_encoding_output_stream
     (XLSTREAM (p->outstream),
-     Fget_coding_system (Vprocess_output_coding_system));
+     Fget_coding_system (Vcoding_system_for_write));
   /* CODE_CNTL (&out_state[outchannel]) |= CC_END; !!####
      What's going on here? */
 #endif /* MULE */
@@ -1027,6 +1027,8 @@ create_process (Lisp_Object process,
     }
 
   p->pid = make_int (pid);
+  /* #### dmoore - why is this commented out, otherwise we leave
+     subtty = forkin, but then we close forkin just below. */
   /* p->subtty = -1; */
 
 #ifdef WINDOWSNT
@@ -1098,11 +1100,12 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
 */
        (int nargs, Lisp_Object *args))
 {
+  /* This function can call lisp */
   /* !!#### This function has not been Mule-ized */
-  /* This function can GC */
   Lisp_Object buffer, name, program, proc, current_dir;
   Lisp_Object tem;
   int speccount = specpdl_depth ();
+  struct gcpro gcpro1, gcpro2, gcpro3;
 #ifdef VMS
   char *new_argv;
   int len;
@@ -1111,43 +1114,38 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
 #endif
   int i;
 
+  name = args[0];
   buffer = args[1];
+  program = args[2];
+  current_dir = Qnil;
+
+  /* Protect against various file handlers doing GCs below. */
+  GCPRO3 (buffer, program, current_dir);
+
   if (!NILP (buffer))
     buffer = Fget_buffer_create (buffer);
 
-  CHECK_STRING (args[0]);    /* name */
-  CHECK_STRING (args[2]);    /* program */
+  CHECK_STRING (name);
+  CHECK_STRING (program);
 
   /* Make sure that the child will be able to chdir to the current
      buffer's current directory, or its unhandled equivalent.  We
      can't just have the child check for an error when it does the
      chdir, since it's in a vfork.
 
-     We have to GCPRO around this because Fexpand_file_name and
-     Funhandled_file_name_directory might call a file name handling
-     function.  The argument list is protected by the caller, so all
-     we really have to worry about is buffer.  */
-  {
-    struct gcpro gcpro1, gcpro2; /* Caller gc-protects args[] */
+     Note: these assignments and calls are like this in order to insure
+     "caller protects args" GC semantics. */
+  current_dir = current_buffer->directory;
+  current_dir = Funhandled_file_name_directory (current_dir);
+  current_dir = expand_and_dir_to_file (current_dir, Qnil);
 
-    current_dir = current_buffer->directory;
-
-    GCPRO2 (buffer, current_dir);
-
-    current_dir = 
-      expand_and_dir_to_file (Funhandled_file_name_directory (current_dir),
-			      Qnil);
 #if 0	/* This loser breaks ange-ftp */
-    if (NILP (Ffile_accessible_directory_p (current_dir)))
-      report_file_error ("Setting current directory",
-			 list1 (current_buffer->directory));
+  /* dmoore - if you re-enable this code, you have to gcprotect
+     current_buffer through the above calls. */
+  if (NILP (Ffile_accessible_directory_p (current_dir)))
+    report_file_error ("Setting current directory",
+		       list1 (current_buffer->directory));
 #endif /* 0 */
-
-    UNGCPRO;
-  }
-
-  name = args[0];
-  program = args[2];
 
 #ifdef VMS
   /* Make a one member argv with all args concatenated
@@ -1171,36 +1169,31 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
   /* Need to add code here to check for program existence on VMS */
 
 #else /* not VMS */
-  new_argv = (char **)
-    alloca ((nargs - 1) * sizeof (char *));
-
-  new_argv[0] = (char *) XSTRING_DATA (program);
-
   /* If program file name is not absolute, search our path for it */
   if (!IS_DIRECTORY_SEP (XSTRING_BYTE (program, 0))
       && !(XSTRING_LENGTH (program) > 1
 	   && IS_DEVICE_SEP (XSTRING_BYTE (program, 1))))
     {
-      struct gcpro gcpro1, gcpro2, gcpro3, gcpro4; /* Caller protects args[] */
-      GCPRO4 (buffer, current_dir, name, program);
+      struct gcpro ngcpro1;
 
       tem = Qnil;
+      NGCPRO1 (tem);
       locate_file (Vexec_path, program, EXEC_SUFFIXES, &tem,
 		   X_OK);
-      UNGCPRO;
       if (NILP (tem))
 	report_file_error ("Searching for program", list1 (program));
-      tem = Fexpand_file_name (tem, Qnil);
-      new_argv[0] = (char *) XSTRING_DATA (tem);
+      program = Fexpand_file_name (tem, Qnil);
+      NUNGCPRO;
     }
   else
     {
-      /* #### dmoore - file-directory-p can call lisp, make sure everything
-	 here protects itself. */
       if (!NILP (Ffile_directory_p (program)))
 	error ("Specified program for new process is a directory");
     }
 
+  /* Nothing below here GCs so our string pointers shouldn't move. */
+  new_argv = (char **) alloca ((nargs - 1) * sizeof (char *));
+  new_argv[0] = (char *) XSTRING_DATA (program);
   for (i = 3; i < nargs; i++)
     {
       tem = args[i];
@@ -1230,6 +1223,7 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
 
   create_process (proc, new_argv, (char *) XSTRING_DATA (current_dir));
 
+  UNGCPRO;
   return unbind_to (speccount, proc);
 }
 
@@ -2028,6 +2022,18 @@ Return PROCESS's output coding system.
   return encoding_stream_coding_system (XLSTREAM (XPROCESS (process)->outstream));
 }
 
+DEFUN ("process-coding-system", Fprocess_coding_system, 1, 1, 0, /*
+Return a pair of coding-system for decoding and encoding of PROCESS.
+*/
+       (process))
+{
+  process = get_process (process);
+  return Fcons(decoding_stream_coding_system
+	       (XLSTREAM (XPROCESS (process)->instream)),
+	       encoding_stream_coding_system
+	       (XLSTREAM (XPROCESS (process)->outstream)) );
+}
+
 DEFUN ("set-process-input-coding-system",
        Fset_process_input_coding_system, 2, 2, 0, /*
 Set PROCESS's input coding system to CODESYS.
@@ -2050,6 +2056,21 @@ Set PROCESS's output coding system to CODESYS.
   process = get_process (process);
   set_encoding_stream_coding_system
     ( XLSTREAM ( XPROCESS (process)->outstream), codesys);
+  return Qnil;
+}
+
+DEFUN ("set-process-coding-system",
+       Fset_process_coding_system, 1, 3, 0, /*
+Set coding-systems of PROCESS to DECODING and ENCODING.
+*/
+       (process, decoding, encoding))
+{
+  if(!NILP(decoding)){
+    Fset_process_input_coding_system(process, decoding);
+  }
+  if(!NILP(encoding)){
+    Fset_process_output_coding_system(process, encoding);
+  }
   return Qnil;
 }
 
@@ -3336,6 +3357,8 @@ syms_of_process (void)
   DEFSUBR (Fprocess_output_coding_system);
   DEFSUBR (Fset_process_input_coding_system);
   DEFSUBR (Fset_process_output_coding_system);
+  DEFSUBR (Fprocess_coding_system);
+  DEFSUBR (Fset_process_coding_system);
 #endif /* MULE */
 }
 

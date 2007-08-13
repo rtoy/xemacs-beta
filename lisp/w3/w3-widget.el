@@ -1,7 +1,7 @@
 ;;; w3-widget.el --- An image widget
 ;; Author: wmperry
-;; Created: 1997/03/26 15:31:17
-;; Version: 1.27
+;; Created: 1997/04/07 16:00:02
+;; Version: 1.28
 ;; Keywords: faces, images
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -197,6 +197,7 @@
 				(if (and (not default) (stringp (aref x 2)))
 				    (setq default (aref x 2)))
 				(list 'choice-item
+				      :tab-order -1
 				      :format "%[%t%]"
 				      :tag (or (aref x 3) (aref x 2))
 				      :value (aref x 2)))) client-map)))

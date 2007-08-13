@@ -1,7 +1,7 @@
 ;;; w3.el --- Main functions for emacs-w3 on all platforms/versions
 ;; Author: wmperry
-;; Created: 1997/04/03 02:06:01
-;; Version: 1.105
+;; Created: 1997/04/07 15:59:56
+;; Version: 1.108
 ;; Keywords: faces, help, comm, news, mail, processes, mouse, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -163,7 +163,9 @@ the subprocess exits."
 	 (copy-file fname (read-file-name "Save as: ") t))
     (if (and (file-exists-p fname)
 	     (file-writable-p fname))
-	(delete-file fname))))
+	(delete-file fname)))
+  ;; FSF Emacs doesn't do this after calling a process-sentinel
+  (set-buffer (window-buffer (selected-window))))
 
 (defun w3-notify-when-ready (buff)
   "Notify the user when BUFF is ready.
@@ -1129,7 +1131,6 @@ ftp.w3.org:/pub/www/doc."
   (remove-hook 'after-change-functions 'url-after-change-function)
   (if url-be-asynchronous
       (progn
-	(url-clean-text)
 	(cond
 	 ((not (get-buffer url-working-buffer)) nil)
 	 ((url-mime-response-p) (url-parse-mime-headers)))
@@ -2157,7 +2158,7 @@ With optional ARG, move across that many fields."
 			 (widget-get link-at-point :from)
 			 (widget-get link-at-point :to)
 			 (w3-fix-spaces
-			  (buffer-substring
+			  (buffer-substring-no-properties
 			   (widget-get link-at-point :from)
 			   (widget-get link-at-point :to)))))
     (w3-map-links (function

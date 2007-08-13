@@ -5,7 +5,7 @@
 ;;	Kyle E. Jones <kyle@uunet.uu.net>
 ;; Maintainer: Lawrence R. Dodd <dodd@roebling.poly.edu>
 ;; Created: crypt.el in 1988, crypt++.el on 18 Jan 1993
-;; Version: 2.82
+;; Version: 2.83
 ;; Date: 1994/03/31 12:30:17
 ;; Keywords: extensions
 
@@ -40,7 +40,7 @@
 ;;; LCD Archive Entry:
 ;;; crypt++|Rod Whitby and Lawrence R. Dodd|dodd@roebling.poly.edu|
 ;;; Code for handling all sorts of compressed and encrypted files.|
-;;; 1994/03/31 12:30:17|2.82|~/misc/crypt++.el.Z|
+;;; 1994/03/31 12:30:17|2.83|~/misc/crypt++.el.Z|
 
 ;;; AVAILABLE: 
 ;;; 
@@ -68,7 +68,7 @@
 
 ;;; VERSION:
 ;;;  
-;;; Version: 2.82
+;;; Version: 2.83
 ;;; Ident: crypt++.el,v 2.82 1994/03/31 12:30:17 dodd Exp
 ;;; Date: 1994/03/31 12:30:17
 
@@ -692,33 +692,49 @@
 ;;;   (crypt-encoded-disable-auto-save, crypt-encrypted-disable-auto-save):
 ;;;   New user-defined variables. (crypt-encoded-mode, crypt-encrypted-mode):
 ;;;   Use them.
+;;; 2.83 -
+;;;   hniksic: Added custom.
 
 
 ;;; Code:
 
 ;;;; User definable variables.
 
-(defvar crypt-encryption-type 'crypt
-  "*Method of encryption.  Must be an element of `crypt-encryption-alist.'
-If you change this after crypt++ is loaded then do \\[crypt-rebuild-tables].")
+(defgroup crypt nil
+  "Handling compressed and encrypted files."
+  :group 'data)
 
-(defvar crypt-encryption-file-extension nil
+(defcustom crypt-encryption-type 'crypt
+  "*Method of encryption.  Must be an element of `crypt-encryption-alist.'
+If you change this after crypt++ is loaded then do \\[crypt-rebuild-tables]."
+  :type 'symbol
+  :group 'crypt)
+
+(defcustom crypt-encryption-file-extension nil
   "*Regexp for extension of files encrypted with `crypt-encryption-type.'
 Should be of the form \"\\\\(\\\\.foo\\\\)$\".  nil says use default values in
 `crypt-encryption-alist.'  If you change this after crypt++ is loaded then do
-\\[crypt-rebuild-tables].")
+\\[crypt-rebuild-tables]."
+  :type 'regexp
+  :group 'crypt)
 
-(defvar crypt-never-ever-decrypt nil
-  "*t says never attempt to decrypt a buffer.")
+(defcustom crypt-never-ever-decrypt nil
+  "*t says never attempt to decrypt a buffer."
+  :type 'boolean
+  :group 'crypt)
 
-(defvar crypt-auto-write-buffer-encrypted nil
+(defcustom crypt-auto-write-buffer-encrypted nil
   "*t says files with `crypt-encryption-alist' file extension auto-encrypted.
-nil says query.  See `crypt-auto-write-buffer.'")
+nil says query.  See `crypt-auto-write-buffer.'"
+  :type 'boolean
+  :group 'crypt)
 
-(defvar crypt-confirm-password nil
-  "*t says confirm new passwords and when writing a newly encrypted buffer.")
+(defcustom crypt-confirm-password nil
+  "*t says confirm new passwords and when writing a newly encrypted buffer."
+  :type 'boolean
+  :group 'crypt)
 
-(defvar crypt-encoded-disable-auto-save t
+(defcustom crypt-encoded-disable-auto-save t
   "*If t, turn off auto-save-mode for buffers which are encoded.
 If non-nil but not t, then no message is displayed.
 
@@ -730,9 +746,13 @@ saved.
 
 It is probably best to set this variable to nil and use buffer-local
 variables in files for which you don't actually care about autosaves.
-Unencoded recovery data is better than none at all.")
+Unencoded recovery data is better than none at all."
+  :type '(choice (const :tag "on" t)
+		 (const :tag "off" nil)
+		 (const :tag "no message" other))
+  :group 'crypt)
 
-(defvar crypt-encrypted-disable-auto-save t
+(defcustom crypt-encrypted-disable-auto-save t
   "*If t, turn off auto-save-mode for buffers which are encrypted.
 If non-nil but not t, then no message is displayed.
 
@@ -743,7 +763,11 @@ buffer will be completely lost if the changes are not explicitly saved.
 
 You might consider setting this variable to nil and use buffer-local
 variables in files for which security is more important than data
-recovery.")
+recovery."
+  :type '(choice (const :tag "on" t)
+		 (const :tag "off" nil)
+		 (const :tag "no message" other))
+  :group 'crypt)
 
 ;;; ENCRYPTION
 
@@ -881,16 +905,20 @@ FILE-EXTENSION; typically t.
 
 ;;; ENCODING 
 
-(defvar crypt-auto-decode-buffer t
+(defcustom crypt-auto-decode-buffer t
   "*t says buffers visiting encoded files will be decoded automatically.
-nil means to ask before doing the decoding.")
+nil means to ask before doing the decoding."
+  :type 'boolean
+  :group 'crypt)
 
-(defvar crypt-auto-write-buffer nil
+(defcustom crypt-auto-write-buffer nil
   "*t says save files with `crypt-encoding-alist' file extensions as encoded.
 nil says to ask before doing this encoding.  Similarly, buffers originating
 from encoded files to be written to files not ending in `crypt-encoding-alist'
 file extensions will be written in plain format automatically.  nil says to
-ask before doing this decoding.")
+ask before doing this decoding."
+  :type 'boolean
+  :group 'crypt)
 
 ;; This is an internal variable documented here and not in a DOCSTRING in
 ;; order to save memory.  If this variable's value has been changed from its
@@ -908,7 +936,7 @@ ask before doing this decoding.")
 (put 'crypt-auto-write-answer-local 'permanent-local t) ; for v19 Emacs
 (put 'crypt-auto-write-answer-local 'preserved t)       ; for kill-fix.el
 
-(defvar crypt-query-if-interactive t
+(defcustom crypt-query-if-interactive t
   "*t says ask when saving buffers where `crypt-encoded-mode' was toggled.
 nil says that even if filename extension is plain (i.e., not listed in
 `crypt-encoding-alist') buffer will be written in an encoded format without
@@ -921,9 +949,11 @@ queried every time that they save the buffer.
 NOTE: if `(crypt-encoded-mode)' was not called interactively (the usual
 scenario) then the value of this variable has no effect on how the buffer is
 written to disk.  In such a case `crypt-no-extension-implies-plain' is then
-the relevant variable.")
+the relevant variable."
+  :type 'boolean
+  :group 'crypt)
 
-(defvar crypt-no-extension-implies-plain t
+(defcustom crypt-no-extension-implies-plain t
   "*t says file extensions not in `crypt-encoding-alist' may be written plain.
 if `crypt-auto-write-buffer' is also t then any file ending in a plain
 extension is written in plain format automatically, otherwise query user.
@@ -933,19 +963,25 @@ and will not be queried each time they save these files.
 
 NOTE: (1) this does not effect find-file (C-x C-f) since that works with a
 magic regexp.  (2) there is no way to distinguish between write-file and
-save-buffer so nil will mean that neither will query.")
+save-buffer so nil will mean that neither will query."
+  :type 'boolean
+  :group 'crypt)
 
-(defvar crypt-freeze-vs-fortran t
+(defcustom crypt-freeze-vs-fortran t
   "*t says `.F' file extension denotes a frozen file not a Fortran file.
 If you change this variable after crypt++ has been loaded then do
-\\[crypt-rebuild-tables].")
+\\[crypt-rebuild-tables]."
+  :type 'boolean
+  :group 'crypt)
 
-(defvar crypt-compact-vs-C++ nil
+(defcustom crypt-compact-vs-C++ nil
   "*t says `.C' file extension denotes a compacted file not a C++ file.
 If you change this variable after crypt++ has been loaded then do
-\\[crypt-rebuild-tables].")
+\\[crypt-rebuild-tables]."
+  :type 'boolean
+  :group 'crypt)
 
-(defvar crypt-ignored-filenames nil
+(defcustom crypt-ignored-filenames nil
   "*List of regexp filenames for which encoded to plain conversion is not done.
 A filename with a plain extension, in encoded format, that is matched by one of
 these elements will be saved in encoded format without a query for conversion to
@@ -955,15 +991,21 @@ This variable is provided for users that want to compress their incoming mail
 for RMAIL and VM which look for files `RMAIL' and `INBOX,' respectively, to
 store incoming mail.  For example, the gzip extensions on `RMAIL.gz' and
 `INBOX.gz' can be removed, this variable set to '\(\"INBOX$\" \"RMAIL$\"\) and
-no query about conversion to plain format will be made.")
+no query about conversion to plain format will be made."
+  :type '(repeat regexp)
+  :group 'crypt)
 
-(defvar crypt-default-encoding "gzip"
+(defcustom crypt-default-encoding "gzip"
   "*Default encoding type as string used when `crypt-encoded-mode' is toggled.
-Must match one of the elements of `crypt-encoding-alist'.")
+Must match one of the elements of `crypt-encoding-alist'."
+  :type 'string
+  :group 'crypt)
 
-(defvar crypt-dos-has-ctrl-z nil
+(defcustom crypt-dos-has-ctrl-z nil
   "t if this buffer had a ctrl-z stripped from end, otherwise, nil.
-Buffer local and set by `crypt-dos-to-unix-region'")
+Buffer local and set by `crypt-dos-to-unix-region'"
+  :type 'boolean
+  :group 'crypt)
 (make-variable-buffer-local 'crypt-dos-has-ctrl-z)
 (setq-default crypt-dos-has-ctrl-z nil)
 (put 'crypt-dos-has-ctrl-z 'permanent-local t) ; for v19 Emacs
@@ -1916,7 +1958,7 @@ Sets `crypt-dos-has-ctrl-z'."
               (if crypt-dos-has-ctrl-z (replace-match ""))))))))
 
 (defun crypt-unix-to-dos-region (start end)
-  "Converts region from START to END, from unix to os format.
+  "Converts region from START to END, from unix to dos format.
 Replaces \"\\n\" with \"\\r\\n\" and adds a ^Z at end of file if
 `crypt-dos-has-ctrl-z' is non-nil."
   (save-excursion
@@ -2015,9 +2057,11 @@ encrypted."
 
 (add-hook 'kill-buffer-hook 'crypt-forget-encryption-key)
 
-(defvar crypt-forget-passwd-timeout (* 60 60)
+(defcustom crypt-forget-passwd-timeout (* 60 60)
   "*Do not retain passwords for encrypted buffers more than this many seconds.
-If nil, keep them indefinitely.")
+If nil, keep them indefinitely."
+  :type '(choice integer (const :tag "indefinite" nil))
+  :group 'crypt)
 
 (defun crypt-reset-passwd-timer ()
   (if (fboundp 'get-itimer)	; XEmacs, or anything with itimer.el loaded.
@@ -2392,14 +2436,18 @@ function, it is changed to a list of functions."
 
 ;;; Code for conditionally decoding/decrypting an inserted file
 
-(defvar crypt-bind-insert-file t
+(defcustom crypt-bind-insert-file t
   "*t value means bind `crypt-insert-file' over `insert-file'.
 If you wish to change this variable after crypt++ has been loaded then do
-\\[crypt-bind-insert-file].")
+\\[crypt-bind-insert-file]."
+  :type 'boolean
+  :group 'crypt)
 
-(defvar crypt-auto-decode-insert nil
+(defcustom crypt-auto-decode-insert nil
   "*t says decode/decrypt files that are inserted with `crypt-insert-file'.
-nil says to ask before doing this.")
+nil says to ask before doing this."
+  :type 'boolean
+  :group 'crypt)
 
 ;;; Bind `crypt-insert-file' over wherever `insert-file' is bound?
 (defun crypt-bind-insert-file ()

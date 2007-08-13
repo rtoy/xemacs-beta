@@ -52,5 +52,6 @@ There are several subdirectories:
 
 `msdos' holds configuration files for compiling XEmacs under MSDOG.
     See the file etc/MSDOS for more information.
-`vms' holds instructions and useful files for running XEmacs under VMS.
-    (not supported)
+
+`nt' holds configuration files for compiling XEmacs under Microsoft Windows
+    NT.  The support for NT is very tentative right now.

@@ -33,5 +33,5 @@ misc:Miscellaneous:gnats-admin:
 performance:Performance Issues:gnats-admin:dmoore@ucsd.edu
 redisplay:Redisplay Issues:gnats-admin:cthomp@xemacs.org
 scrollbars:X11 scrollbars:gnats-amdin:mrb@eng.sun.com
-tooblbars:X11 toolbars:gnats-admin:
+toolbars:X11 toolbars:gnats-admin:
 test:*Test Category:gnats-admin:

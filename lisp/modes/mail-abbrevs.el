@@ -143,9 +143,16 @@
 
 (require 'sendmail)
 
+(defgroup mail-abbrevs nil
+  "Mail abbreviation (addressbook)"
+  :group 'mail)
+
 ;;;###autoload
-(defvar mail-abbrev-mailrc-file nil
-  "Name of file with mail aliases.   If nil, ~/.mailrc is used.")
+(defcustom mail-abbrev-mailrc-file nil
+  "Name of file with mail aliases.   If nil, ~/.mailrc is used."
+  :type '(choice (const :tag "Default" nil)
+		 file)
+  :group 'mail-abbrevs)
 
 (defmacro mail-abbrev-mailrc-file ()
   '(or mail-abbrev-mailrc-file
@@ -242,10 +249,12 @@ no aliases, which is represented by this being a table with no entries.)")
       (set-buffer obuf)))
     (message "Parsing %s... done" file))
 
-(defvar mail-alias-separator-string ", "
+(defcustom mail-alias-separator-string ", "
   "*A string inserted between addresses in multi-address mail aliases.
 This has to contain a comma, so \", \" is a reasonable value.  You might 
-also want something like \",\\n    \" to get each address on its own line.")
+also want something like \",\\n    \" to get each address on its own line."
+  :type 'string
+  :group 'mail-abbrevs)
 
 ;; define-mail-alias sets this flag, which causes mail-resolve-all-aliases
 ;; to be called before expanding abbrevs if it's necessary.
@@ -376,14 +385,16 @@ line."
 
 ;;; Syntax tables and abbrev-expansion
 
-(defvar mail-abbrev-mode-regexp
+(defcustom mail-abbrev-mode-regexp
   "^\\(Resent-\\)?\\(To\\|From\\|CC\\|BCC\\|Reply-to\\):"
   "*Regexp to select mail-headers in which mail aliases should be expanded.
 This string it will be handed to `looking-at' with the point at the beginning
 of the current line; if it matches, abbrev mode will be turned on, otherwise
 it will be turned off.  (You don't need to worry about continuation lines.)
 This should be set to match those mail fields in which you want abbreviations
-turned on.")
+turned on."
+  :type 'regexp
+  :group 'mail-abbrevs)
 
 (defvar mail-mode-syntax-table (copy-syntax-table text-mode-syntax-table)
   "The syntax table which is used in send-mail mode message bodies.")

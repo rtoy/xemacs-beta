@@ -66,30 +66,49 @@
 
 ;;; Variable definitions:
 
+(defgroup texinfo-tex nil
+  "TeX and hardcopy printing commands for Texinfo mode"
+  :prefix "texinfo-"
+  :group 'tex
+  :tag "Texinfo TeX"
+  :group 'texinfo)
+
 (require 'shell)
 
-(defvar texinfo-tex-shell-cd-command "cd"
-  "Command to give to shell running TeX to change directory.")
+(defcustom texinfo-tex-shell-cd-command "cd"
+  "Command to give to shell running TeX to change directory."
+  :type 'string
+  :group 'texinfo-tex)
 
-(defvar texinfo-tex-command "tex"
-  "*Command used by  texinfo-tex-region  to run tex on a region.")
+(defcustom texinfo-tex-command "tex"
+  "*Command used by  texinfo-tex-region  to run tex on a region."
+  :type 'string
+  :group 'texinfo-tex)
 
-(defvar texinfo-texindex-command "texindex"
-  "*Command used by  texinfo-texindex  to sort unsorted index files.")
+(defcustom texinfo-texindex-command "texindex"
+  "*Command used by  texinfo-texindex  to sort unsorted index files."
+  :type 'string
+  :group 'texinfo-tex)
 
-(defvar texinfo-tex-dvi-print-command "lpr -d"
-  "*Command string used by \\[tex-print] to print a .dvi file.")
+(defcustom texinfo-tex-dvi-print-command "lpr -d"
+  "*Command string used by \\[tex-print] to print a .dvi file."
+  :type 'string
+  :group 'texinfo-tex)
 
-(defvar texinfo-show-tex-queue-command "lpq"
+(defcustom texinfo-show-tex-queue-command "lpq"
   "*Command string used to show the Texinfo TeX print queue.
 Command is used by \\[texinfo-show-tex-print-queue] and it
-should show the queue that \\[texinfo-tex-print] puts jobs on.")
+should show the queue that \\[texinfo-tex-print] puts jobs on."
+  :type 'string
+  :group 'texinfo-tex)
 
-(defvar texinfo-delete-from-print-queue-command "lprm"
+(defcustom texinfo-delete-from-print-queue-command "lprm"
   "*Command string used to delete a job from the line printer queue.
 Command is used by \\[texinfo-delete-from-tex-print-queue] based on
 number provided by a previous \\[texinfo-show-tex-print-queue]
-command.")
+command."
+  :type 'string
+  :group 'texinfo-tex)
 
 (defvar texinfo-tex-trailer "@bye"
   "String appended after a region sent to TeX by texinfo-tex-region.")

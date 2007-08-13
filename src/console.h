@@ -437,11 +437,6 @@ MAC_END
 #else
 #define CONSOLE_TYPESYM_X_P(typesym) 0
 #endif
-#ifdef HAVE_NEXTSTEP
-#define CONSOLE_TYPESYM_NS_P(typesym) EQ (typesym, Qns)
-#else
-#define CONSOLE_TYPESYM_NS_P(typesym) 0
-#endif
 #ifdef HAVE_TTY
 #define CONSOLE_TYPESYM_TTY_P(typesym) EQ (typesym, Qtty)
 #else
@@ -450,15 +445,11 @@ MAC_END
 #define CONSOLE_TYPESYM_STREAM_P(typesym) EQ (typesym, Qstream)
 
 #define CONSOLE_TYPESYM_WIN_P(typesym) \
-  (CONSOLE_TYPESYM_X_P (typesym) || CONSOLE_TYPESYM_NS_P (typesym))
+  (CONSOLE_TYPESYM_X_P (typesym))
 
 #define CONSOLE_X_P(con) CONSOLE_TYPESYM_X_P (CONSOLE_TYPE (con))
 #define CHECK_X_CONSOLE(z) CHECK_CONSOLE_TYPE (z, x)
 #define CONCHECK_X_CONSOLE(z) CONCHECK_CONSOLE_TYPE (z, x)
-
-#define CONSOLE_NS_P(con) CONSOLE_TYPESYM_NS_P (CONSOLE_TYPE (con))
-#define CHECK_NS_CONSOLE(z) CHECK_CONSOLE_TYPE (z, ns)
-#define CONCHECK_NS_CONSOLE(z) CONCHECK_CONSOLE_TYPE (z, ns)
 
 #define CONSOLE_TTY_P(con) CONSOLE_TYPESYM_TTY_P (CONSOLE_TYPE (con))
 #define CHECK_TTY_CONSOLE(z) CHECK_CONSOLE_TYPE (z, tty)
@@ -504,9 +495,6 @@ extern Lisp_Object Qtty, Qstream, Qdead;
 #ifdef HAVE_X_WINDOWS
 extern Lisp_Object Qx;
 #endif /* HAVE_X_WINDOWS */
-#ifdef HAVE_NEXTSTEP
-extern Lisp_Object Qns;
-#endif /* HAVE_NEXTSTEP */
 
 int valid_console_type_p (Lisp_Object type);
 

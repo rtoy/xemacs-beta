@@ -25,7 +25,7 @@ mode, a major mode for reading mail.
 
 Prefix arg or optional second arg READ-ONLY non-nil indicates
 that the folder should be considered read only.  No attribute
-changes, messages additions or deletions will be allowed in the
+changes, message additions or deletions will be allowed in the
 visited folder.
 
 Visiting the primary inbox causes any contents of the system mailbox to
@@ -81,7 +81,7 @@ See the documentation for vm-mode for more information."
       ;; This is only possible if a file is visited and then vm-mode
       ;; is run on it afterwards.
       (defvar buffer-file-coding-system)
-      (if (and (vm-xemacs-mule-p)
+      (if (and vm-xemacs-mule-p
 	       (not (eq (get-coding-system buffer-file-coding-system)
 			(get-coding-system 'no-conversion-unix)))
 	       (not (eq (get-coding-system buffer-file-coding-system)
@@ -275,7 +275,7 @@ See the documentation for vm-mode for more information."
 (defun vm-mode (&optional read-only)
   "Major mode for reading mail.
 
-This is VM 6.23.
+This is VM 6.24.
 
 Commands:
    h - summarize folder contents
@@ -1026,13 +1026,13 @@ vm-visit-virtual-folder.")
   (vm-display nil nil '(vm-load-init-file) '(vm-load-init-file)))
 
 (defun vm-check-emacs-version ()
-  (cond ((and (vm-xemacs-p)
+  (cond ((and vm-xemacs-p
 	      (or (< emacs-major-version 19)
 		  (and (= emacs-major-version 19)
 		       (< emacs-minor-version 14))))
 	 (error "VM %s must be run on XEmacs 19.14 or a later version."
 		vm-version))
-	((and (vm-fsfemacs-19-p)
+	((and vm-fsfemacs-19-p
 	      (or (< emacs-major-version 19)
 		  (and (= emacs-major-version 19)
 		       (< emacs-minor-version 34))))
@@ -1052,6 +1052,7 @@ vm-visit-virtual-folder.")
 	     ))))
 
 (defun vm-session-initialization ()
+  (vm-note-emacs-version)
   (vm-check-emacs-version)
   (vm-set-debug-flags)
   ;; If this is the first time VM has been run in this Emacs session,

@@ -188,7 +188,7 @@ The new version of the list, minus the deleted strings, is returned."
 	    ;; writing out message separators
 	    (setq buffer-file-type nil)
 	    ;; Tell XEmacs/MULE to pick the correct newline conversion.
-	    (and (vm-xemacs-mule-p)
+	    (and vm-xemacs-mule-p
 		 (set-file-coding-system 'no-conversion nil))
 	    (write-region (point-min) (point-max) where t 'quiet))
 	(and temp-buffer (kill-buffer temp-buffer))))))
@@ -423,20 +423,6 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	((markerp object) (copy-marker object))
 	(t object)))
 
-(defun vm-xemacs-p ()
-  (let ((case-fold-search nil))
-    (string-match "XEmacs" emacs-version)))
-
-(defun vm-xemacs-mule-p ()
-  (and (vm-xemacs-p)
-       (featurep 'mule)
-       (fboundp 'set-file-coding-system)
-       (fboundp 'get-coding-system)))
-
-(defun vm-fsfemacs-19-p ()
-  (and (string-match "^19" emacs-version)
-       (not (string-match "XEmacs\\|Lucid" emacs-version))))
-
 ;; make-frame might be defined and still not work.  This would
 ;; be true since the user could be running on a tty and using
 ;; XEmacs 19.12, or using FSF Emacs 19.28 (or prior FSF Emacs versions).
@@ -461,7 +447,7 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
       (and (fboundp 'device-type) (eq (device-type) 'x))))
 
 (defun vm-toolbar-support-possible-p ()
-  (and (vm-xemacs-p)
+  (and vm-xemacs-p
        (vm-multiple-frames-possible-p)
        (featurep 'toolbar)))
 
@@ -579,12 +565,8 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 	   (get-file-buffer (file-truename file)))))
 
 (defun vm-set-region-face (start end face)
-  (cond ((fboundp 'make-overlay)
-	 (let ((o (make-overlay start end)))
-	   (overlay-put o 'face face)))
-	((fboundp 'make-extent)
-	 (let ((o (make-extent start end)))
-	   (set-extent-property o 'face face)))))
+  (let ((e (vm-make-extent start end)))
+    (vm-set-extent-property e 'face face)))
 
 (defun vm-default-buffer-substring-no-properties (beg end &optional buffer)
   (let ((s (if buffer
@@ -598,7 +580,7 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 (fset 'vm-buffer-substring-no-properties
   (cond ((fboundp 'buffer-substring-no-properties)
 	 (function buffer-substring-no-properties))
-	((vm-xemacs-p)
+	(vm-xemacs-p
 	 (function buffer-substring))
 	(t (function vm-default-buffer-substring-no-properties))))
 
@@ -617,37 +599,45 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
       (set-buffer buffer))
     (set-buffer target-buffer)))
 
-(if (fboundp 'overlay-get)
-    (fset 'vm-extent-property 'overlay-get)
-  (fset 'vm-extent-property 'extent-property))
+(if (not (fboundp 'vm-extent-property))
+    (if (fboundp 'overlay-get)
+	(fset 'vm-extent-property 'overlay-get)
+      (fset 'vm-extent-property 'extent-property)))
 
-(if (fboundp 'overlay-put)
-    (fset 'vm-set-extent-property 'overlay-put)
-  (fset 'vm-set-extent-property 'set-extent-property))
+(if (not (fboundp 'vm-set-extent-property))
+    (if (fboundp 'overlay-put)
+	(fset 'vm-set-extent-property 'overlay-put)
+      (fset 'vm-set-extent-property 'set-extent-property)))
 
-(if (fboundp 'move-overlay)
-    (fset 'vm-set-extent-endpoints 'move-overlay)
-  (fset 'vm-set-extent-endpoints 'set-extent-endpoints))
+(if (not (fboundp 'vm-set-extent-endpoints))
+    (if (fboundp 'move-overlay)
+	(fset 'vm-set-extent-endpoints 'move-overlay)
+      (fset 'vm-set-extent-endpoints 'set-extent-endpoints)))
 
-(if (fboundp 'make-overlay)
-    (fset 'vm-make-extent 'make-overlay)
-  (fset 'vm-make-extent 'make-extent))
+(if (not (fboundp 'vm-make-extent))
+    (if (fboundp 'make-overlay)
+	(fset 'vm-make-extent 'make-overlay)
+      (fset 'vm-make-extent 'make-extent)))
 
-(if (fboundp 'overlay-end)
-    (fset 'vm-extent-end-position 'overlay-end)
-  (fset 'vm-extent-end-position 'extent-end-position))
+(if (not (fboundp 'vm-extent-end-position))
+    (if (fboundp 'overlay-end)
+	(fset 'vm-extent-end-position 'overlay-end)
+      (fset 'vm-extent-end-position 'extent-end-position)))
 
-(if (fboundp 'overlay-start)
-    (fset 'vm-extent-start-position 'overlay-start)
-  (fset 'vm-extent-start-position 'extent-start-position))
+(if (not (fboundp 'vm-extent-start-position))
+    (if (fboundp 'overlay-start)
+	(fset 'vm-extent-start-position 'overlay-start)
+      (fset 'vm-extent-start-position 'extent-start-position)))
 
-(if (fboundp 'delete-overlay)
-    (fset 'vm-detach-extent 'delete-overlay)
-  (fset 'vm-detach-extent 'detach-extent))
+(if (not (fboundp 'vm-detach-extent))
+    (if (fboundp 'delete-overlay)
+	(fset 'vm-detach-extent 'delete-overlay)
+      (fset 'vm-detach-extent 'detach-extent)))
 
-(if (fboundp 'overlay-properties)
-    (fset 'vm-extent-properties 'overlay-properties)
-  (fset 'vm-extent-properties 'extent-properties))
+(if (not (fboundp 'vm-extent-properties))
+    (if (fboundp 'overlay-properties)
+	(fset 'vm-extent-properties 'overlay-properties)
+      (fset 'vm-extent-properties 'extent-properties)))
 
 (defun vm-copy-extent (e)
   (let ((props (vm-extent-properties e))

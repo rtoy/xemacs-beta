@@ -93,6 +93,12 @@
 
 (provide 'makefile)
 
+(defgroup makefile-mode nil
+  "Makefile mode customizations"
+  :group 'tools
+  :prefix "makefile-")
+
+
 ;; Sadly we need this for a macro.
 (eval-when-compile
   (require 'imenu))
@@ -101,73 +107,106 @@
 ;;; Configurable stuff
 ;;; ------------------------------------------------------------
 
-(defvar makefile-browser-buffer-name "*Macros and Targets*"
-  "Name of the macro- and target browser buffer.")
+(defcustom makefile-browser-buffer-name "*Macros and Targets*"
+  "Name of the macro- and target browser buffer."
+  :type 'string
+  :group 'makefile-mode)
 
-(defvar makefile-target-colon ":"
+(defcustom makefile-target-colon ":"
   "String to append to all target names inserted by `makefile-insert-target'.
-\":\" or \"::\" are common values.")
+\":\" or \"::\" are common values."
+  :type 'string
+  :group 'makefile-mode)
 
-(defvar makefile-macro-assign " = "
+(defcustom makefile-macro-assign " = "
   "String to append to all macro names inserted by `makefile-insert-macro'.
 The normal value should be \" = \", since this is what
 standard make expects. However, newer makes such as dmake
 allow a larger variety of different macro assignments, so you
-might prefer to use \" += \" or \" := \" .")
+might prefer to use \" += \" or \" := \" ."
+  :type 'string
+  :group 'makefile-mode)
 
-(defvar makefile-electric-keys nil
+(defcustom makefile-electric-keys nil
   "If non-nil, install electric keybindings.
-Default is nil.")
+Default is nil."
+  :type 'boolean
+  :group 'makefile-mode)
 
-(defvar makefile-use-curly-braces-for-macros-p nil
+(defcustom makefile-use-curly-braces-for-macros-p nil
   "Controls the style of generated macro references.
 t (actually non-nil) means macro references should use curly braces,
 like `${this}'.
-nil means use parentheses, like `$(this)'.")
+nil means use parentheses, like `$(this)'."
+  :type 'boolean
+  :group 'makefile-mode)
 
-(defvar makefile-tab-after-target-colon t
+(defcustom makefile-tab-after-target-colon t
   "If non-nil, insert a TAB after a target colon.
 Otherwise, a space is inserted.
-The default is t.")
+The default is t."
+  :type 'boolean
+  :group 'makefile-mode)
 
-(defvar makefile-browser-leftmost-column 10
-  "Number of blanks to the left of the browser selection mark.")
+(defcustom makefile-browser-leftmost-column 10
+  "Number of blanks to the left of the browser selection mark."
+  :type 'integer
+  :group 'makefile-mode)
 
-(defvar makefile-browser-cursor-column 10
+(defcustom makefile-browser-cursor-column 10
   "Column in which the cursor is positioned when it moves
-up or down in the browser.")
+up or down in the browser."
+  :type 'integer
+  :group 'makefile-mode)
 
-(defvar makefile-backslash-column 48
-  "*Column in which `makefile-backslash-region' inserts backslashes.")
+(defcustom makefile-backslash-column 48
+  "*Column in which `makefile-backslash-region' inserts backslashes."
+  :type 'integer
+  :group 'makefile-mode)
 
-(defvar makefile-browser-selected-mark "+  "
-  "String used to mark selected entries in the browser.")
+(defcustom makefile-browser-selected-mark "+  "
+  "String used to mark selected entries in the browser."
+  :type 'string
+  :group 'makefile-mode)
 
-(defvar makefile-browser-unselected-mark "   "
-  "String used to mark unselected entries in the browser.")
+(defcustom makefile-browser-unselected-mark "   "
+  "String used to mark unselected entries in the browser."
+  :type 'string
+  :group 'makefile-mode)
 
-(defvar makefile-browser-auto-advance-after-selection-p t
-  "If non-nil, cursor will move after item is selected in browser.")
+(defcustom makefile-browser-auto-advance-after-selection-p t
+  "If non-nil, cursor will move after item is selected in browser."
+  :type 'boolean
+  :group 'makefile-mode)
 
-(defvar makefile-pickup-everything-picks-up-filenames-p nil
+(defcustom makefile-pickup-everything-picks-up-filenames-p nil
   "If non-nil, `makefile-pickup-everything' picks up filenames as targets.
 \(i.e. it calls `makefile-find-filenames-as-targets').
-Otherwise filenames are omitted.")
+Otherwise filenames are omitted."
+  :type 'boolean
+  :group 'makefile-mode)
 
-(defvar makefile-cleanup-continuations-p t
+(defcustom makefile-cleanup-continuations-p t
   "If non-nil, automatically clean up continuation lines when saving.
 A line is cleaned up by removing all whitespace following a trailing
 backslash.  This is done silently.
 IMPORTANT: Please note that enabling this option causes makefile-mode
-to MODIFY A FILE WITHOUT YOUR CONFIRMATION when \'it seems necessary\'.")
+to MODIFY A FILE WITHOUT YOUR CONFIRMATION when \'it seems necessary\'."
+  :type 'boolean
+  :group 'makefile-mode)
 
 ;;; those suspicious line warnings are really annoying and
 ;;; seem to be generated for every makefile I've ever seen.
 ;;; add a simple mechanism to disable them.  -gk
-(defvar makefile-warn-suspicious-lines-p t
-  "In non-nil, warn about suspicious lines when saving the makefile")
+(defcustom makefile-warn-suspicious-lines-p t
+  "In non-nil, warn about suspicious lines when saving the makefile"
+  :type 'boolean
+  :group 'makefile-mode)
 
-(defvar makefile-browser-hook '())
+(defcustom makefile-browser-hook '()
+  "The hook to run when entering makefile browser."
+  :type 'hook
+  :group 'makefile-mode)
 
 ;;
 ;; Special targets for DMake, Sun's make ...
@@ -213,8 +252,23 @@ not be enclosed in { } or ( ).")
 ;####
 ;(add-to-list 'facemenu-unlisted-faces 'makefile-space-face)
 ;  Bogus FSFmacs crap.
-(defvar makefile-space-face 'makefile-space-face
-  "Face to use for highlighting leading spaces in Font-Lock mode.")
+(defface makefile-space-face
+  '((((class color))
+     (:background "hotpink"))		; uhm
+    (((class grayscale)
+      (background light))
+     (:background "black"))
+    (((class grayscale)
+      (background black))
+     (:background "white"))
+    (((class mono)
+      (background light))
+     (:background "white"))
+    (((class mono)
+      (background dark))
+     (:background "black")))
+  "Face to use for highlighting leading spaces in Font-Lock mode."
+  :group 'makefile-mode)
 
 ;Older version of same.
 ;(defconst makefile-font-lock-keywords (purecopy
@@ -248,15 +302,15 @@ not be enclosed in { } or ( ).")
 
    ;; Highlight lines that contain just whitespace.
    ;; They can cause trouble, especially if they start with a tab.
-   '("^[ \t]+$" . makefile-space-face)
+   '("^[ \t]+$" . 'makefile-space-face)
 
    ;; Highlight shell comments that Make treats as commands,
    ;; since these can fool people.
-   '("^\t+#" 0 makefile-space-face t)
+   '("^\t+#" 0 'makefile-space-face t)
 
    ;; Highlight spaces that precede tabs.
    ;; They can make a tab fail to be effective.
-   '("^\\( +\\)\t" 1 makefile-space-face)))
+   '("^\\( +\\)\t" 1 'makefile-space-face)))
   "Additional expressions to highlight in makefiles")
 
 (put 'makefile-mode 'font-lock-defaults '(makefile-font-lock-keywords))
@@ -281,10 +335,12 @@ not be enclosed in { } or ( ).")
 ;;; of `makefile-query-by-make-minus-q' .
 ;;; ------------------------------------------------------------
 
-(defvar makefile-brave-make "make"
-  "A make that can handle the `-q' option.")
+(defcustom makefile-brave-make "make"
+  "A make that can handle the `-q' option."
+  :type 'string
+  :group 'makefile-mode)
 
-(defvar makefile-query-one-target-method 'makefile-query-by-make-minus-q
+(defcustom makefile-query-one-target-method 'makefile-query-by-make-minus-q
   "Function to call to determine whether a make target is up to date.
 The function must satisfy this calling convention:
 
@@ -297,10 +353,14 @@ The function must satisfy this calling convention:
 
 * It must return the integer value 0 (zero) if the given target
   should be considered up-to-date in the context of the given
-  makefile, any nonzero integer value otherwise.")
+  makefile, any nonzero integer value otherwise."
+  :type 'function
+  :group 'makefile-mode)
 
-(defvar makefile-up-to-date-buffer-name "*Makefile Up-to-date overview*"
-  "Name of the Up-to-date overview buffer.")
+(defcustom makefile-up-to-date-buffer-name "*Makefile Up-to-date overview*"
+  "Name of the Up-to-date overview buffer."
+  :type 'string
+  :group 'makefile-mode)
 
 ;;; --- end of up-to-date-overview configuration ------------------
 
@@ -522,8 +582,6 @@ makefile-special-targets-list:
   (make-local-variable 'makefile-need-macro-pickup)
 
   ;; Font lock.
-  (if (fboundp 'make-face)
-      (makefile-define-space-face))
   (make-local-variable 'font-lock-defaults)
   (setq font-lock-defaults '(makefile-font-lock-keywords))
 
@@ -1427,25 +1485,5 @@ If it isn't in one, return nil."
 		     alist))))
     (imenu-progress-message stupid 100)
     (nreverse alist)))
-
-(defun makefile-define-space-face ()
-  (make-face 'makefile-space-face)
-  ;; XEmacs change
-  (let* ((light-bg t)) ; ####
-    (set-face-background 'makefile-space-face
-			 (if light-bg "black" "white")
-			 nil
-			 '(mono x)
-			 'append)
-    (set-face-background 'makefile-space-face
-			 (if light-bg "black" "white")
-			 nil
-			 '(grayscale x)
-			 'append)
-    (set-face-background 'makefile-space-face
-			 "hotpink"
-			 nil
-			 '(color x)
-			 'append)))
 
 ;;; make-mode.el ends here

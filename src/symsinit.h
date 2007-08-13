@@ -69,7 +69,6 @@ void syms_of_editfns (void);
 void syms_of_elhash (void);
 void syms_of_emacs (void);
 void syms_of_energize (void);
-void syms_of_epoch (void);
 void syms_of_eval (void);
 void syms_of_event_stream (void);
 void syms_of_event_Xt (void);
@@ -126,8 +125,6 @@ void syms_of_syntax (void);
 void syms_of_toolbar (void);
 void syms_of_tooltalk (void);
 void syms_of_undo (void);
-void syms_of_vmsfns (void);
-void syms_of_vmsproc (void);
 void syms_of_window (void);
 void syms_of_xselect (void);
 
@@ -205,7 +202,6 @@ void vars_of_editfns (void);
 void vars_of_elhash (void);
 void vars_of_emacs (void);
 void vars_of_energize (void);
-void vars_of_epoch (void);
 void vars_of_eval (void);
 void vars_of_event_stream (void);
 void vars_of_event_tty (void);
@@ -327,8 +323,5 @@ void init_macros (void);
 void init_xemacs_process (void);
 void init_redisplay (void);
 void init_sunpro (void);
-void init_vms_input (void);
-void init_vmsfns (void);
-void init_vmsproc (void);
 
 #endif /* _XEMACS_SYMSINIT_H_ */

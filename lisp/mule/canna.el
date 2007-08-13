@@ -1,87 +1,83 @@
 ;;; canna.el --- Interface to the Canna input method.
 
-;; This file is part of XEmacs.
+;; Copyright (C) 1994 Akira Kon, NEC Corporation.
+;; Copyright (C) 1996,1997 MORIOKA Tomohiko
 
-;; XEmacs is free software; you can redistribute it and/or modify it
-;; under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
-;; any later version.
+;; Author: Akira Kon <kon@d1.bs2.mt.nec.co.jp>
+;;         MORIOKA Tomohiko <morioka@jaist.ac.jp>
+;; Version: $Revision: 1.5 $
+;; Keywords: Canna, Japanese, input method, mule, multilingual
 
-;; XEmacs is distributed in the hope that it will be useful, but
+;; This file is not a part of Emacs yet.
+
+;; This program is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 2, or (at
+;; your option) any later version.
+
+;; This program is distributed in the hope that it will be useful, but
 ;; WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the 
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: Mule 2.3.
+;;; Commentary:
 
-;; Egg offered some influences to the implementation of
-;; Canna on Nemacs/Mule, and this file contains a few part
-;; of Egg which is written by S.Tomura, Electrotechnical
-;; Lab.  (tomura@etl.go.jp)
+;; Egg offered some influences to the implementation of Canna on
+;; Nemacs/Mule, and this file contains a few part of Egg which is
+;; written by S.Tomura, Electrotechnical Lab.  (tomura@etl.go.jp)
 
-;; Written by Akira Kon, NEC Corporation.
-;; E-Mail:  kon@d1.bs2.mt.nec.co.jp.
+;; This program is rewritten for Emacs/mule and XEmacs/mule by MORIOKA
+;; Tomohiko.
 
-;; #### This is far from working in XEmacs.
-
-;; added by MORIOKA Tomohiko <morioka@jaist.ac.jp>, 1996/6/18
-(defvar running-xemacs (string-match "XEmacs" emacs-version))
-
-(if running-xemacs (require 'overlay))
-
-;; added by MORIOKA Tomohiko <morioka@jaist.ac.jp>, 1996/6/7
-(or (fboundp 'minibuffer-prompt-width)
-    (defun minibuffer-prompt-width ()
-      (save-excursion
-	(set-buffer (window-buffer (minibuffer-window)))
-	(current-column)
-	))
-    )
-(or (fboundp 'char-before)
-    (defun char-before (pos)
-      (char-after (1- (point)))
-      )
-    )
-
-(if running-xemacs
-    (progn
-      (defun self-insert-string (string)
-	(let ((len (length string))
-	      (i 0)
-	      ;; 挿入の途中で blink が起きるとうっとおしいので、
-	      ;; 一時的に blink を抑止する。
-	      (blink-matching-paren nil))
-	  (while (< i len)
-	    (self-insert-internal (aref canna-kakutei-string i))
-	    (setq i (1+ i))
-	    )))
-      )
-  (defun self-insert-string (string)
-    (let ((len (length string))
-	  (i 0) chr
-	  ;; 挿入の途中で blink が起きるとうっとおしいので、
-	  ;; 一時的に blink を抑止する。
-	  (blink-matching-paren nil))
-      (while (< i len)
-	(setq chr (sref canna-kakutei-string i))
-	(self-insert-internal chr)
-	(setq i (+ i (char-bytes chr)))
-	)))
-  )
-
+;;; Code:
 
 ;; -*-mode: emacs-lisp-*-
 
-(defconst canna-rcs-version "Canna/mule 2.x, based on Canna 2.2/3.2. : canna.el,v x.xx 1994/11/7 00:00:00")
+;; by 守岡 知彦 <morioka@jaist.ac.jp> 1996/11/11
+(or (boundp 'CANNA)
+    (let ((handle (dynamic-link (expand-file-name "canna.so" exec-directory))))
+      (dynamic-call "emacs_canna_init" handle))
+    )
+
+(defvar self-insert-after-hook nil)
+;; (defalias 'self-insert-internal 'self-insert-command)
+;; end
+
+(defconst canna-rcs-version
+  "$Id: canna.el,v 1.5 1997/04/10 05:55:27 steve Exp $")
 
 (defun canna-version ()
+  "Display version of canna.el in mini-buffer."
   (interactive)
-  (message (concat (substring canna-rcs-version 0 72) " ...")) )
+  (message (concat
+	    (substring canna-rcs-version
+		       5
+		       (if (string-match "[0-9] [a-z]" canna-rcs-version)
+			   (1+ (match-beginning 0))
+			 ))
+	    " ...")))
+
+(require 'emu)
+
+(if running-xemacs
+    (defun canna-self-insert-string (string)
+      (let ((len (length string))
+	    (i 0)
+	    ;; 挿入の途中で blink が起きるとうっとおしいので、
+	    ;; 一時的に blink を抑止する。
+	    (blink-matching-paren nil))
+	(while (< i len)
+	  (self-insert-internal (aref canna-kakutei-string i))
+	  (setq i (1+ i))
+	  )))
+  (defalias 'canna-self-insert-string 'insert)
+  )
+
 
 ;;; かんなの変数
 
@@ -157,8 +153,8 @@
 	  (setq minibuffer-preprompt str)
 	;else
 	(setq mode-line-canna-mode-in-minibuffer str))
-    (setq mode-line-canna-mode str))
-  (redraw-modeline))
+    (setq mode-line-canna-mode str) )
+  (set-buffer-modified-p (buffer-modified-p)) )
 
 ;; memq を強調するなら、以下だが、
 ;(defun canna:memq-recursive (a l)
@@ -173,19 +169,42 @@
 	(canna:memq-recursive a (cdr l)) )))
 
 (defun canna:create-mode-line ()
-  (if (not (canna:memq-recursive 'mode-line-canna-mode mode-line-format))
-      (setq-default
-       mode-line-format
-       (append (list (list 'minibuffer-window-selected
-			   (list 'display-minibuffer-mode-in-minibuffer
-				 "-" "m") "-")
-		     (list 'minibuffer-window-selected
-			   (list 'display-minibuffer-mode-in-minibuffer
-				 'mode-line-canna-mode
-				 'mode-line-canna-mode-in-minibuffer)
-			   'mode-line-canna-mode))
-	       mode-line-format)))
-  (mode-line-canna-mode-update mode-line-canna-mode) )
+  "Add string of Canna status into mode-line."
+  (cond (running-xemacs
+	 (or (canna:memq-recursive 'mode-line-canna-mode
+				   default-modeline-format)
+	     (setq-default default-modeline-format
+			   (nconc '("" mode-line-canna-mode)
+				  default-modeline-format))
+	     )
+	 (mapcar (function
+		  (lambda (buffer)
+		    (save-excursion
+		      (set-buffer buffer)
+		      (or (canna:memq-recursive 'mode-line-canna-mode
+						modeline-format)
+			  (setq modeline-format
+				(nconc '("" mode-line-canna-mode)
+				       modeline-format))
+			  )
+		      )))
+		 (buffer-list))
+	 )
+	(t
+	 (or (canna:memq-recursive 'mode-line-canna-mode mode-line-format)
+	     (setq-default
+	      mode-line-format
+	      (append (list (list 'minibuffer-window-selected
+				  (list 'display-minibuffer-mode-in-minibuffer
+					"-" "m") "-")
+			    (list 'minibuffer-window-selected
+				  (list 'display-minibuffer-mode-in-minibuffer
+					'mode-line-canna-mode
+					'mode-line-canna-mode-in-minibuffer)
+				  'mode-line-canna-mode))
+		      mode-line-format))
+	     )))
+  (mode-line-canna-mode-update mode-line-canna-mode))
 
 (defun canna:mode-line-display ()
   (mode-line-canna-mode-update mode-line-canna-mode))
@@ -268,20 +287,38 @@ t の時はデフォルトの色を使用する。
     (define-key canna-mode-map (make-string 1 ch) 'canna-functional-insert-command)
     (setq ch (1+ ch))))
 
-(define-key canna-mode-map [up]      "\C-p")
-(define-key canna-mode-map [(shift up)]    "\C-p")
-(define-key canna-mode-map [(control up)]    "\C-p")
-(define-key canna-mode-map [down]    "\C-n")
-(define-key canna-mode-map [(shift down)]  "\C-n")
-(define-key canna-mode-map [(control down)]  "\C-n")
-(define-key canna-mode-map [right]   "\C-f")
-(define-key canna-mode-map [(shift right)] "\C-f")
-(define-key canna-mode-map [(control right)] "\C-f")
-(define-key canna-mode-map [left]    "\C-b")
-(define-key canna-mode-map [(shift left)]  "\C-b")
-(define-key canna-mode-map [(control left)]  "\C-b")
-(define-key canna-mode-map [kanji]   " ")
-(define-key canna-mode-map [(control space)] [(control @)])
+(cond (running-xemacs
+       (define-key canna-mode-map [up]		    "\C-p")
+       (define-key canna-mode-map [(shift up)]      "\C-p")
+       (define-key canna-mode-map [(control up)]    "\C-p")
+       (define-key canna-mode-map [down]            "\C-n")
+       (define-key canna-mode-map [(shift down)]    "\C-n")
+       (define-key canna-mode-map [(control down)]  "\C-n")
+       (define-key canna-mode-map [right]           "\C-f")
+       (define-key canna-mode-map [(shift right)]   "\C-f")
+       (define-key canna-mode-map [(control right)] "\C-f")
+       (define-key canna-mode-map [left]            "\C-b")
+       (define-key canna-mode-map [(shift left)]    "\C-b")
+       (define-key canna-mode-map [(control left)]  "\C-b")
+       (define-key canna-mode-map [kanji]           " ")
+       (define-key canna-mode-map [(control space)] [(control @)])
+       )
+      (t
+       (define-key canna-mode-map [up]      [?\C-p])
+       (define-key canna-mode-map [S-up]    [?\C-p])
+       (define-key canna-mode-map [C-up]    [?\C-p])
+       (define-key canna-mode-map [down]    [?\C-n])
+       (define-key canna-mode-map [S-down]  [?\C-n])
+       (define-key canna-mode-map [C-down]  [?\C-n])
+       (define-key canna-mode-map [right]   [?\C-f])
+       (define-key canna-mode-map [S-right] [?\C-f])
+       (define-key canna-mode-map [C-right] [?\C-f])
+       (define-key canna-mode-map [left]    [?\C-b])
+       (define-key canna-mode-map [S-left]  [?\C-b])
+       (define-key canna-mode-map [C-left]  [?\C-b])
+       (define-key canna-mode-map [kanji]   [? ])
+       (define-key canna-mode-map [?\C- ]   [?\C-@])
+       ))
 
 ;; ミニバッファに何かを表示している時のローカルマップ
 (defvar canna-minibuffer-mode-map (make-sparse-keymap))
@@ -291,20 +328,38 @@ t の時はデフォルトの色を使用する。
     (define-key canna-minibuffer-mode-map (make-string 1 ch) 'canna-minibuffer-insert-command)
     (setq ch (1+ ch))))
 
-(define-key canna-minibuffer-mode-map [up]      "\C-p")
-(define-key canna-minibuffer-mode-map [(shift up)]    "\C-p")
-(define-key canna-minibuffer-mode-map [(control up)]    "\C-p")
-(define-key canna-minibuffer-mode-map [down]    "\C-n")
-(define-key canna-minibuffer-mode-map [(shift down)]  "\C-n")
-(define-key canna-minibuffer-mode-map [(control down)]  "\C-n")
-(define-key canna-minibuffer-mode-map [right]   "\C-f")
-(define-key canna-minibuffer-mode-map [(shift right)] "\C-f")
-(define-key canna-minibuffer-mode-map [(control right)] "\C-f")
-(define-key canna-minibuffer-mode-map [left]    "\C-b")
-(define-key canna-minibuffer-mode-map [(shift left)]  "\C-b")
-(define-key canna-minibuffer-mode-map [(control left)]  "\C-b")
-(define-key canna-minibuffer-mode-map [kanji]   " ")
-(define-key canna-minibuffer-mode-map [(control space)] [(control @)])
+(cond (running-xemacs
+       (define-key canna-minibuffer-mode-map [up]              "\C-p")
+       (define-key canna-minibuffer-mode-map [(shift up)]      "\C-p")
+       (define-key canna-minibuffer-mode-map [(control up)]    "\C-p")
+       (define-key canna-minibuffer-mode-map [down]            "\C-n")
+       (define-key canna-minibuffer-mode-map [(shift down)]    "\C-n")
+       (define-key canna-minibuffer-mode-map [(control down)]  "\C-n")
+       (define-key canna-minibuffer-mode-map [right]           "\C-f")
+       (define-key canna-minibuffer-mode-map [(shift right)]   "\C-f")
+       (define-key canna-minibuffer-mode-map [(control right)] "\C-f")
+       (define-key canna-minibuffer-mode-map [left]            "\C-b")
+       (define-key canna-minibuffer-mode-map [(shift left)]    "\C-b")
+       (define-key canna-minibuffer-mode-map [(control left)]  "\C-b")
+       (define-key canna-minibuffer-mode-map [kanji]           " ")
+       (define-key canna-minibuffer-mode-map [(control space)] [(control @)])
+       )
+      (t
+       (define-key canna-minibuffer-mode-map [up]      [?\C-p])
+       (define-key canna-minibuffer-mode-map [S-up]    [?\C-p])
+       (define-key canna-minibuffer-mode-map [C-up]    [?\C-p])
+       (define-key canna-minibuffer-mode-map [down]    [?\C-n])
+       (define-key canna-minibuffer-mode-map [S-down]  [?\C-n])
+       (define-key canna-minibuffer-mode-map [C-down]  [?\C-n])
+       (define-key canna-minibuffer-mode-map [right]   [?\C-f])
+       (define-key canna-minibuffer-mode-map [S-right] [?\C-f])
+       (define-key canna-minibuffer-mode-map [C-right] [?\C-f])
+       (define-key canna-minibuffer-mode-map [left]    [?\C-b])
+       (define-key canna-minibuffer-mode-map [S-left]  [?\C-b])
+       (define-key canna-minibuffer-mode-map [C-left]  [?\C-b])
+       (define-key canna-minibuffer-mode-map [kanji]   [? ])
+       (define-key canna-minibuffer-mode-map [?\C- ]   [?\C-@])
+       ))
 
 ;;;
 ;;; グローバル関数の書き替え
@@ -323,7 +378,8 @@ t の時はデフォルトの色を使用する。
 ;      (progn
 ;;	(setq canna:*japanese-mode* nil)
 ;	(setq canna:*fence-mode* nil)
-;	(buffer-enable-undo (current-buffer))
+;	(if (boundp 'disable-undo)
+;	    (setq disable-undo canna:*fence-mode*))
 ;	(canna:mode-line-display) ))
 ;  (canna-sys:keyboard-quit) )
 
@@ -340,7 +396,8 @@ t の時はデフォルトの色を使用する。
 ;      (progn
 ;	(setq canna:*japanese-mode* nil)
 ;	(setq canna:*fence-mode* nil)
-;	(buffer-enable-undo (current-buffer))
+;	(if (boundp 'disable-undo)
+;	    (setq disable-undo canna:*fence-mode*))
 ;	(canna:mode-line-display) ))
 ;  (canna-sys:abort-recursive-edit) )
 
@@ -416,7 +473,7 @@ kana-to-kanji translation."
 		(set-marker canna:*spos-undo-text* (point))
 ;;
 ;; update kbnes
-		(self-insert-string canna-kakutei-string)
+		(canna-self-insert-string canna-kakutei-string)
 		;; 未確定の文字がなく、確定文字列の最後が閉じ括弧の
 		;; 類だったときは blink させる。
 		(if (and canna-empty-info
@@ -444,7 +501,7 @@ kana-to-kanji translation."
 	       (t
 ;;
 ;; update kbnes
-		(self-insert-string canna-kakutei-string)
+		(canna-self-insert-string canna-kakutei-string)
 		;; 未確定の文字がなく、確定文字列の最後が閉じ括弧の
 		;; 類だったときは blink させる。
 		(if (and canna-empty-info
@@ -486,34 +543,34 @@ kana-to-kanji translation."
 	     (canna:yomi-attr-on canna:*region-start* canna:*region-end*))
 	 (setq canna:*last-kouho* canna-henkan-length)
 	 ))
-
-	 ;; 候補領域では強調したい文字列が存在するものと考えら
-	 ;; れる。強調したい文字はEmacsではカーソルポジションにて表示
-	 ;; することとする。強調したい文字がないのであれば、カーソル
-	 ;; は一番後の部分(入力が行われるポイント)に置いておく。
-
-	 ;; カーソルを移動する。
-	 (if (not canna-underline)
-	     (backward-char 
-	      (- canna:*last-kouho*
-		 ;; カーソル位置は、反転表示部分が存在しないのであれば、
-		 ;; 候補文字列の最後の部分とし、反転表示部分が存在するの
-		 ;; であれば、その部分の始めとする。
-		 (cond ((zerop canna-henkan-revlen)
-			canna:*last-kouho*)
-		       (t canna-henkan-revpos) )) )
-	   (if (and (> canna-henkan-revlen 0)
-		    (> canna-henkan-length 0))
-		    ; 候補の長さが0でなく、
-		    ; 反転表示の長さが0でなければ、
-		    ; その部分を変転表示する。
-	       (let ((start (+ canna:*region-start*
-			       (if canna-with-fences 1 0)
-			       canna-henkan-revpos) ))
-		 (if canna-underline
-		     (canna:henkan-attr-on start 
-					   (+ start canna-henkan-revlen)))))
-	   ) )
+  
+  ;; 候補領域では強調したい文字列が存在するものと考えら
+  ;; れる。強調したい文字はEmacsではカーソルポジションにて表示
+  ;; することとする。強調したい文字がないのであれば、カーソル
+  ;; は一番後の部分(入力が行われるポイント)に置いておく。
+  
+  ;; カーソルを移動する。
+  (if (not canna-underline)
+      (backward-char 
+       (- canna:*last-kouho*
+	  ;; カーソル位置は、反転表示部分が存在しないのであれば、
+	  ;; 候補文字列の最後の部分とし、反転表示部分が存在するの
+	  ;; であれば、その部分の始めとする。
+	  (cond ((zerop canna-henkan-revlen)
+		 canna:*last-kouho*)
+		(t canna-henkan-revpos) )) )
+    (if (and (> canna-henkan-revlen 0)
+	     (> canna-henkan-length 0))
+					; 候補の長さが0でなく、
+					; 反転表示の長さが0でなければ、
+					; その部分を変転表示する。
+	(let ((start (+ canna:*region-start*
+			(if canna-with-fences 1 0)
+			canna-henkan-revpos) ))
+	  (if canna-underline
+	      (canna:henkan-attr-on start 
+				    (+ start canna-henkan-revlen)))))
+    ) )
 
 (defun canna:display-candidates (strs)
   (cond ((stringp strs) ; エラーが起こった場合
@@ -580,12 +637,12 @@ kana-to-kanji translation."
 ;	(set-window-buffer (minibuffer-window)
 ;			   (get-buffer-create canna:*menu-buffer*))
 	;; modified by 守岡 知彦 <morioka@jaist.ac.jp>, 1996/6/7
-	;;	とりあえず comment out しておこう (^_^;
-	;; (setq canna:*saved-redirection* (frame-focus (selected-frame)))
-        ;; (redirect-frame-focus (selected-frame) 
-        ;;                       (window-frame (minibuffer-window)))
-	;; end of modification
-	
+	(unless running-xemacs
+	  ;; とりあえず XEmacs では動かさないことにしておこう (^_^;
+	  (setq canna:*saved-redirection* (frame-focus (selected-frame)))
+	  (redirect-frame-focus (selected-frame) 
+				(window-frame (minibuffer-window)))
+	  )
 	;; ミニバッファのキーマップを保存しておく。
 	(setq canna:*minibuffer-local-map-backup* (current-local-map))
 	))
@@ -626,11 +683,12 @@ kana-to-kanji translation."
 	(set-window-buffer (minibuffer-window) canna:*saved-minibuffer*)
 ;	(setq canna:*saved-minibuffer* nil)
 	;; modified by 守岡 知彦 <morioka@jaist.ac.jp>, 1996/6/7
-	;;	とりあえず comment out しておこう (^_^;
-        ;; (redirect-frame-focus (window-frame canna:*previous-window*)
-        ;;                       canna:*saved-redirection*)
-	;; end of modification
-	;; ミニバッファで入力していたのなら以下もする。
+	(unless running-xemacs
+	  ;; とりあえず XEmacs では動かさないようにしておこう (^_^;
+	  (redirect-frame-focus (window-frame canna:*previous-window*)
+				canna:*saved-redirection*)
+	  )
+	; ミニバッファで入力していたのなら以下もする。
 ;	(if (eq canna:*previous-window* (selected-window))
 ;	    (progn
 ;	      (canna:insert-fixed nfixed)
@@ -784,6 +842,8 @@ kana-to-kanji translation, even if you are in the minibuffer."
   (setq canna:*fence-mode* t)
   ;; XEmacs change:
   (buffer-disable-undo (current-buffer))
+  ;; (if (boundp 'disable-undo)
+  ;;     (setq disable-undo canna:*fence-mode*))
   (use-local-map canna-mode-map))
 
 (defun canna:enter-canna-mode-and-functional-insert ()
@@ -804,6 +864,8 @@ kana-to-kanji translation, even if you are in the minibuffer."
 		 (mode-line-canna-mode-update canna:*alpha-mode-string*) )))
 	 ;; XEmacs change:
 	 (buffer-enable-undo (current-buffer))
+         ;; (if (boundp 'disable-undo)
+         ;;     (setq disable-undo canna:*fence-mode*))
 	 ))
   (set-marker canna:*region-start* nil)
   (set-marker canna:*region-end* nil)
@@ -935,7 +997,8 @@ dictionary."
 			 (string-match
 			  "on\\|t"
 			  (or (if running-xemacs
-				  (x-get-resource "ReverseVideo" "reverseVideo" 'string)
+				  (x-get-resource "ReverseVideo"
+						  "reverseVideo" 'string)
 				(x-get-resource "ReverseVideo" "reverseVideo"))
 			      "")))
 		     'reverse)	;反転しているなら 'reverse
@@ -1287,7 +1350,7 @@ self insert otherwise."
 (defun canna:yomi-attr-on (start end)
   (if (overlayp canna:*yomi-overlay*)
       (move-overlay canna:*yomi-overlay* start end)
-    (overlay-put (setq canna:*yomi-overlay* (make-overlay start end nil t))
+    (overlay-put (setq canna:*yomi-overlay* (make-overlay start end nil nil t))
 		 'face 
 		 (if canna:color-p 'attr-yomi 'underline))
     )
@@ -1302,7 +1365,8 @@ self insert otherwise."
 (defun canna:henkan-attr-on (start end)
   (if (overlayp canna:*henkan-overlay*)
       (move-overlay canna:*henkan-overlay* start end)
-    (overlay-put (setq canna:*henkan-overlay* (make-overlay start end nil t))
+    (overlay-put (setq canna:*henkan-overlay*
+		       (make-overlay start end nil nil t))
 		 'face 
 		 (if canna:color-p 'attr-taishou 'region))
 	)
@@ -1317,7 +1381,8 @@ self insert otherwise."
 (defun canna:select-attr-on (start end)
   (if (overlayp canna:*select-overlay*)
       (move-overlay canna:*select-overlay* start end)
-    (overlay-put (setq canna:*select-overlay* (make-overlay start end nil t))
+    (overlay-put (setq canna:*select-overlay*
+		       (make-overlay start end nil nil t))
 		 'face 
 		 'attr-select))
   )
@@ -1328,4 +1393,7 @@ self insert otherwise."
        )
   )
 
+
 (provide 'canna)
+
+;;; canna.el ends here

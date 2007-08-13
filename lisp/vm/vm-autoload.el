@@ -1249,6 +1249,8 @@ in the buffer.  The function is expected to make the message
 
 (autoload (quote vm-mime-display-button-text) "vm-mime" nil nil nil)
 
+(autoload (quote vm-mime-display-internal-text/html) "vm-mime" nil nil nil)
+
 (autoload (quote vm-mime-display-internal-text/plain) "vm-mime" nil nil nil)
 
 (autoload (quote vm-mime-display-internal-text/enriched) "vm-mime" nil nil nil)
@@ -1297,7 +1299,7 @@ in the buffer.  The function is expected to make the message
 
 (autoload (quote vm-mime-run-display-function-at-point) "vm-mime" nil t nil)
 
-(autoload (quote vm-mime-set-extent-glyph-for-layout) "vm-mime" nil nil nil)
+(autoload (quote vm-mime-set-extent-glyph-for-type) "vm-mime" nil nil nil)
 
 (autoload (quote vm-mime-insert-button) "vm-mime" nil nil nil)
 
@@ -1547,12 +1549,6 @@ If HACK-ADDRESSES is t, then the strings are considered to be mail addresses,
 (autoload (quote vm-error-if-folder-empty) "vm-misc" nil nil nil)
 
 (autoload (quote vm-copy) "vm-misc" nil nil nil)
-
-(autoload (quote vm-xemacs-p) "vm-misc" nil nil nil)
-
-(autoload (quote vm-xemacs-mule-p) "vm-misc" nil nil nil)
-
-(autoload (quote vm-fsfemacs-19-p) "vm-misc" nil nil nil)
 
 (autoload (quote vm-multiple-frames-possible-p) "vm-misc" nil nil nil)
 
@@ -2182,7 +2178,7 @@ mode, a major mode for reading mail.
 
 Prefix arg or optional second arg READ-ONLY non-nil indicates
 that the folder should be considered read only.  No attribute
-changes, messages additions or deletions will be allowed in the
+changes, message additions or deletions will be allowed in the
 visited folder.
 
 Visiting the primary inbox causes any contents of the system mailbox to
@@ -2202,7 +2198,7 @@ See the documentation for vm-mode for more information." t nil)
 
 (autoload (quote vm-mode) "vm-startup" "Major mode for reading mail.
 
-This is VM 6.23.
+This is VM 6.24.
 
 Commands:
    h - summarize folder contents
@@ -2804,6 +2800,8 @@ buffer.  The current buffer must be a composition buffer created
 by VM for a reply, resend or forward." nil nil)
 
 (autoload (quote vm-spool-files) "vm-vars" nil nil nil)
+
+(autoload (quote vm-note-emacs-version) "vm-vars" nil nil nil)
 
 (autoload (quote vm-version) "vm-version" "Returns the value of the variable vm-version." nil nil)
 

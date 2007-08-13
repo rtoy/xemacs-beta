@@ -1166,7 +1166,7 @@ extern Lisp_Object Qafter;
 extern Lisp_Object Qall;
 extern Lisp_Object Qassoc;
 extern Lisp_Object Qat;
-extern Lisp_Object Qautodetect;
+extern Lisp_Object Qautomatic_conversion;
 extern Lisp_Object Qbad_variable;
 extern Lisp_Object Qbefore;
 extern Lisp_Object Qbinary;

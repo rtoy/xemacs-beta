@@ -1,3 +1,116 @@
+Wed Apr 09 21:11:14 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.74 released.
+
+Wed Apr  9 11:57:02 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-unlispify-menu-entry): Strip terminating
+	`-p' off booleans.
+
+	* cus-edit.el (custom-save-faces): make sure `default' is saved first.
+
+	* wid-edit.el (widget-vector-match): Pass arguments to
+ 	`widget-apply' in the correct order.
+
+	* custom.el (custom-define-hook): Change to defvar.
+	* cus-edit.el (custom-define-hook): Add customization support.
+
+	* cus-edit.el (custom-menu-update): Don't autoload.
+	(custom-menu-reset): Move here from `custom.el'.  
+	Remove XEmacs support.
+	(custom-help-menu): Move here from `custom.el'.
+	Remove XEmacs support.
+	(custom-menu-create): Work even if custom-menu-nesting is
+	unbound. 
+	(custom-menu-nesting): Don't define for XEmacs.
+
+	* cus-face.el (after-make-frame-hook): Removed
+ 	`custom-initialize-frame', as this is now in `frame.el'.
+
+Tue Apr 08 19:24:17 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.73 released.
+
+Tue Apr  8 19:23:43 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* widget.texi (push-button): Forgot `@end table'.
+
+Tue Apr 08 18:51:09 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.72 released.
+
+Tue Apr  8 09:21:15 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-guess-type-alist): New option.
+	(custom-guess-type): New function.
+	(custom-variable-type): New function.
+	(custom-variable-value-create): Use it.
+
+	* cus-face.el (custom-face-attributes): Moved :family to the
+	beginning of the list.
+	Patch by Herve Poirier <Herve.Poirier@grenoble.rxrc.xerox.com>.
+	(custom-face-attributes): Added :strikethru attribute.
+
+	* custom.texi (Declarations): Refer to `cus-edit.el' for
+	examples. 
+
+	* custom.el (custom-set-variables): If variable is already set,
+	overwrite it here.
+	(custom-declare-variable): Do not set saved variables, if they
+	already are bound.
+	(custom-declare-variable): Clear the `force-value' flag if set.
+
+	* widget.el (:text-format): New keyword.
+	* wid-edit.el (push-button): Define it.
+	(widget-push-button-value-create): Use it.
+	* widget.texi (push-button): Documented it.
+
+Sun Apr 06 22:33:39 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.71 released.
+
+Sun Apr  6 22:25:45 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-face.el (custom-face-font-name): New alias.
+	(custom-face-attributes): Support `get' for remaining properties. 
+	(custom-face-attributes-get): Require `font.el'.
+	(custom-face-font-size): New function.
+	(custom-face-font-family): New function.
+	(custom-face-bold): New function.
+	(custom-face-italic): New function.
+	(custom-face-stipple): New function.
+	Inspired by `rogue.el' by Hunter Kelly <retnuh@corona.pixar.com>.
+
+Wed Apr 02 18:25:55 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.70 released.
+
+Wed Apr  2 10:41:48 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* cus-edit.el (custom-buffer-create): Give progress report.
+	(customize-face): Remove message.
+	(custom-group-value-create): Give progress report.
+	(custom-face-value-create): Ditto.
+
+	* cus-edit.el (custom-face-edit-selected): New function.
+	(custom-face-edit-all): New function.
+	(custom-face-edit-lisp): New function.
+	(custom-face-menu): Use them.
+	(custom-display-unselected): New widget.
+	(custom-display-unselected-match): New function.
+	(custom-face-selected): New widget.
+	(custom-face-selected): New constant.
+	(custom-face-value-create): Use them.
+	* custom.texi (The Face Options): Documented it.
+
+	* cus-edit.el (custom-face-all): New widget.
+	(custom-face-all): New constant.
+	(custom-face-value-create): Use it.
+
+	* cus-edit.el (custom-save-variables): Insert newline at eob. 
+	(custom-save-faces): Ditto.
+	Reported by Jamie Zawinski <jwz@netscape.com>.
+
 Tue Apr 01 20:08:10 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
 
 	* Version 1.69 released.

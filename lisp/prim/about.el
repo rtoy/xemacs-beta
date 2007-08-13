@@ -183,9 +183,8 @@
 		  (let ((coding-system-for-read 'binary))
 		    (insert-file-contents who-xpm))
 		  (if (looking-at "\037\235") ;may already be decompressed...
-		      (let ((coding-system-for-write 'binary)
-			    process-input-coding-system
-			    process-output-coding-system)
+		      (let ((coding-system-for-read 'binary)
+			    (coding-system-for-write 'binary))
 			(call-process-region (point-min) (point-max)
 					     "zcat" t t nil)))
 		  (set who (make-glyph
@@ -303,6 +302,7 @@
 	  ('larsi "About Lars Magne Ingebrigtsen")
 	  ('jens "About Jens Lautenbacher")
 	  ('jareth "About Jareth Hein")
+	  ('morioka "About MORIOKA Tomohiko")
 	  ('others "About Everyone")
 	  ('features "New XEmacs Features")
 	  ('history "XEmacs History")
@@ -805,9 +805,9 @@
 	  (insert " to go back to the previous page.\n")
 	  )
 
-	 ((eq xref 'jens)
+	 ((eq xref 'jareth)
 	  (about-face "P E Jareth Hein" 'bold)
-	  (insert " <jhod@jhod@po.iijnet.or.jp>
+	  (insert " <jhod@po.iijnet.or.jp>
 
 	Jareth Hein is a mountain boy who abandoned his home state of
 	Colorado for the perpetual state of chaos known as Tokyo in a
@@ -816,6 +816,26 @@
 	bilingual (guess which two?) he's been doing quite a bit of
 	MULE hacking. He's also getting his hands dirty in the graphics
 	areas as well.")
+
+	  (insert "\n\n\tClick ")
+	  (about-xref "here" prev-page "Return to previous page")
+	  (insert " to go back to the previous page.\n")
+	  )
+
+	 ((eq xref 'morioka)
+	  (about-face "MORIOKA Tomohiko" 'bold)
+	  (insert " <morioka@jaist.ac.jp>
+
+	I am the author of tm-view (general MIME Viewer for GNU Emacs)
+	and major author and maintainer of tm (Tools for MIME; general
+	MIME package for GNU Emacs).  In addition, I am working to unify
+	MULE API for Emacs and XEmacs.  In XEmacs, I have ported many mule
+	features.
+
+	I am a doctoral student at School of Information Science of JAIST
+	(Japan Advanced Institute of Science and Technology, Hokuriku).
+	I'm interested in Natural Language, Affordance and writing systems.")
+
 
 	  (insert "\n\n\tClick ")
 	  (about-xref "here" prev-page "Return to previous page")
@@ -902,7 +922,7 @@
 	the exams and XEmacs betas are released at a high rate this
 	may take some time...
 
-	") (about-xref "Jareth Hein" 'jens "Find out more about Jareth Hein") (insert " <jhod@jhod@po.iijnet.or.jp>
+	") (about-xref "Jareth Hein" 'jareth "Find out more about Jareth Hein") (insert " <jhod@po.iijnet.or.jp>
 	Jareth Hein is a mountain boy who abandoned his home state of
 	Colorado for the perpetual state of chaos known as Tokyo in a
 	failed attempt to become a cel-animator, and a more successful
@@ -910,6 +930,17 @@
 	bilingual (guess which two?) he's been doing quite a bit of
 	MULE hacking. He's also getting his hands dirty in the graphics
 	areas as well.
+
+	") (about-xref "MORIOKA Tomohiko" 'morioka "Find out more about MORIOKA Tomohiko") (insert " <morioka@jaist.ac.jp>
+
+	I am the author of tm-view (general MIME Viewer for GNU Emacs)
+	and major author and maintainer of tm (Tools for MIME; general
+	MIME package for GNU Emacs).  In addition, I am working to unify
+	MULE API for Emacs and XEmacs.  In XEmacs, I have ported many mule
+	features.
+	I am a doctoral student at School of Information Science of JAIST
+	(Japan Advanced Institute of Science and Technology, Hokuriku).
+	I'm interested in Natural Language, Affordance and writing systems.
 
 	Darrell Kindred <Darrell.Kindred@cmu.edu>
 	Unofficial maintainer of the xemacs-beta list of extant bugs
@@ -976,6 +1007,7 @@
 	doing all of the above.  We couldn't have done it without them.
 
 	  Nagi M. Aboulenein <aboulene@ponder.csci.unt.edu>
+	  Per Abrahamsen <abraham@dina.kvl.dk>
 	  Gary Adams <gra@zeppo.East.Sun.COM>
 	  Gennady Agranov <agranov@csa.CS.Technion.Ac.IL>
 	  Mark Allender <allender@vnet.IBM.COM>
@@ -1131,10 +1163,10 @@
 	  Jason Stewart <jasons@cs.unm.edu>
 	  Rick Tait <rickt@gnu.ai.mit.edu>
 	  James Thompson <thompson@wg2.waii.com>
-	  Morioka Tomohiko <morioka@jaist.ac.jp>
 	  Raymond L. Toy <toy@rtp.ericsson.se>
 	  John Turner <turner@xdiv.lanl.gov>
 	  Juan E. Villacis <jvillaci@cs.indiana.edu>
+	  Jan Vroonhof <vroonhof@math.ethz.ch>
 	  Vladimir Vukicevic <vladimir@intrepid.com>
 	  Peter Ware <ware@cis.ohio-state.edu>
 	  Yoav Weiss <yoav@zeus.datasrv.co.il>

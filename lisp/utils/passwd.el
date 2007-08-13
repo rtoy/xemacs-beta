@@ -37,14 +37,23 @@
 
 ;;; Code:
 
-(defvar passwd-invert-frame-when-keyboard-grabbed t
+(defgroup passwd nil
+  "Prompting for passwords semi-securely"
+  :group 'processes)
+
+
+(defcustom passwd-invert-frame-when-keyboard-grabbed t
   "*If non-nil swap the foreground and background colors of all faces.
 This is done while the keyboard is grabbed in order to give a visual
-clue that a grab is in effect.")
+clue that a grab is in effect."
+  :type 'boolean
+  :group 'passwd)
 
-(defvar passwd-echo ?.
+(defcustom passwd-echo ?.
   "*The character which should be echoed when typing a password,
-or nil, meaning echo nothing.")
+or nil, meaning echo nothing."
+  :type 'sexp
+  :group 'passwd)
 
 (defvar read-passwd-map
   (let ((i 0)

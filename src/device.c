@@ -362,9 +362,6 @@ DEVICE defaults to the selected device if omitted.
 #ifdef HAVE_X_WINDOWS
 extern Lisp_Object Vdefault_x_device;
 #endif
-#ifdef HAVE_NEXTSTEP
-extern Lisp_Object Vdefault_ns_device;
-#endif
 
 #ifdef HAVE_X_WINDOWS
 

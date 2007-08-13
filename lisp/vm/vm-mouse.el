@@ -18,18 +18,18 @@
 (provide 'vm-mouse)
 
 (defun vm-mouse-fsfemacs-mouse-p ()
-  (and (vm-fsfemacs-19-p)
+  (and vm-fsfemacs-19-p
        (fboundp 'set-mouse-position)))
 
 (defun vm-mouse-xemacs-mouse-p ()
-  (and (vm-xemacs-p)
+  (and vm-xemacs-p
        (fboundp 'set-mouse-position)))
 
 (defun vm-mouse-set-mouse-track-highlight (start end)
-  (cond ((fboundp 'make-overlay)
+  (cond (vm-fsfemacs-19-p
 	 (let ((o (make-overlay start end)))
 	   (overlay-put o 'mouse-face 'highlight)))
-	((fboundp 'make-extent)
+	(vm-xemacs-p
 	 (let ((o (make-extent start end)))
 	   (set-extent-property o 'highlight t)))))
 
@@ -218,7 +218,7 @@
 	       ;; newline convention used should be the local
 	       ;; one, whatever that is.
 	       (setq buffer-file-type nil)
-	       (and (vm-xemacs-mule-p)
+	       (and vm-xemacs-mule-p
 		    (set-buffer-file-coding-system 'no-conversion nil))
 	       (write-region (point-min) (point-max)
 			     (concat "/tmp/Mosaic." pid)

@@ -3,7 +3,7 @@
 ;; Copyright (C) 1994,1995,1996,1997 MORIOKA Tomohiko
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: emu-x20.el,v 1.6 1997/03/22 06:02:43 steve Exp $
+;; Version: $Id: emu-x20.el,v 1.7 1997/04/10 05:55:51 steve Exp $
 ;; Keywords: emulation, compatibility, Mule, XEmacs
 
 ;; This file is part of XEmacs.
@@ -40,9 +40,8 @@
 
 (defmacro as-binary-process (&rest body)
   `(let (selective-display	; Disable ^M to nl translation.
-	 (coding-system-for-write 'no-conversion)
-	 process-input-coding-system
-	 process-output-coding-system)
+	 (coding-system-for-read  'no-conversion)
+	 (coding-system-for-write 'no-conversion))
      ,@body))
 
 (defmacro as-binary-input-file (&rest body)
@@ -123,7 +122,7 @@ find-file-hooks, etc.
     ))
 
 (defun mime-charset-to-coding-system (charset)
-  "Return coding-system by MIME charset. [emu-x20.el]"
+  "Return coding-system by MIME charset."
   (if (stringp charset)
       (setq charset (intern (downcase charset)))
     )
@@ -132,35 +131,32 @@ find-file-hooks, etc.
       ))
 
 (defun detect-mime-charset-region (start end)
-  "Return MIME charset for region between START and END.
-\[emu-x20.el]"
+  "Return MIME charset for region between START and END."
   (charsets-to-mime-charset (charsets-in-region start end)))
 
 (defun encode-mime-charset-region (start end charset)
-  "Encode the text between START and END as MIME CHARSET.
-\[emu-x20.el]"
+  "Encode the text between START and END as MIME CHARSET."
   (let ((cs (mime-charset-to-coding-system charset)))
     (if cs
 	(encode-coding-region start end cs)
       )))
 
 (defun decode-mime-charset-region (start end charset)
-  "Decode the text between START and END as MIME CHARSET.
-\[emu-x20.el]"
+  "Decode the text between START and END as MIME CHARSET."
   (let ((cs (mime-charset-to-coding-system charset)))
     (if cs
 	(decode-coding-region start end cs)
       )))
 
 (defun encode-mime-charset-string (string charset)
-  "Encode the STRING as MIME CHARSET. [emu-x20.el]"
+  "Encode the STRING as MIME CHARSET."
   (let ((cs (mime-charset-to-coding-system charset)))
     (if cs
 	(encode-coding-string string cs)
       string)))
 
 (defun decode-mime-charset-string (string charset)
-  "Decode the STRING as MIME CHARSET. [emu-x20.el]"
+  "Decode the STRING as MIME CHARSET."
   (let ((cs (mime-charset-to-coding-system charset)))
     (if cs
 	(decode-coding-string string cs)
@@ -179,8 +175,7 @@ find-file-hooks, etc.
 (defun char-category (character)
   "Return string of category mnemonics for CHAR in TABLE.
 CHAR can be any multilingual character
-TABLE defaults to the current buffer's category table.
-\[emu-x20.el; Mule emulating function]"
+TABLE defaults to the current buffer's category table."
   (mapconcat (lambda (chr)
 	       (char-to-string (int-char chr))
 	       )

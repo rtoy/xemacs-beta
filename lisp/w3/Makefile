@@ -67,6 +67,9 @@ w3:	check-custom docomp.el $(OBJECTS)
 xemacs-w3:	docomp.el $(OBJECTS)
 	@echo Build of w3 complete...
 
+fast: 	 check-custom docomp.el 
+	$(EMACS) $(BATCHFLAGS) $(DEPS) -f batch-byte-compile $(SOURCES)
+
 all:	w3.info w3
 
 install: all

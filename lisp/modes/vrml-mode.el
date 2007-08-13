@@ -44,14 +44,28 @@
 ;; User variables.
 ;;
 
-(defvar vrml-indent-level 3
-  "*Indentation of VRML statements with respect to containing block.")
+(defgroup vrml nil
+  "VRML Language"
+  :group 'languages)
 
-(defvar vrml-auto-newline nil
+(defgroup vrml-mode nil
+  "VRML mode customization"
+  :group 'vrml
+  :prefix "vrml-")
+
+
+(defcustom vrml-indent-level 3
+  "*Indentation of VRML statements with respect to containing block."
+  :type 'integer
+  :group 'vrml-mode)
+
+(defcustom vrml-auto-newline nil
   "*Non-nil means automatically newline before and after braces
-inserted in VRML code.")
+inserted in VRML code."
+  :type 'boolean
+  :group 'vrml-mode)
 
-(defvar vrml-tab-always-indent t
+(defcustom vrml-tab-always-indent t
   "*Control effect of TAB key.
 If t (the default), always indent current line.
 If nil and point is not in the indentation area at the beginning of
@@ -64,11 +78,17 @@ to take place:
   3. Move forward to start of comment, indenting if necessary.
   4. Move forward to end of line, indenting if necessary.
   5. Create an empty comment.
-  6. Move backward to start of comment, indenting if necessary.")
+  6. Move backward to start of comment, indenting if necessary."
+  :type '(choice (const :tag "on" t)
+		 (const :tag "off" nil)
+		 (const :tag "The Works" other))
+  :group 'vrml-mode)
 
-(defvar vrml-use-hairy-comment-detector t
+(defcustom vrml-use-hairy-comment-detector t
   "*If not `nil', then the more complicated, but slower, comment
-detecting function is used.")
+detecting function is used."
+  :type 'boolean
+  :group 'vrml-mode)
 
 (defvar vrml-mode-abbrev-table nil
   "Abbrev table used while in VRML mode.")
@@ -115,8 +135,10 @@ detecting function is used.")
   (modify-syntax-entry ?+ "." vrml-mode-syntax-table)
   (modify-syntax-entry ?\' "\"" vrml-mode-syntax-table))
 
-(defvar vrml-mode-hook nil
-  "Hook run on entry to VRML mode.")
+(defcustom vrml-mode-hook nil
+  "Hook run on entry to VRML mode."
+  :type 'hook
+  :group 'vrml-mode)
 
 (defvar vrml-keyword-list
   '(

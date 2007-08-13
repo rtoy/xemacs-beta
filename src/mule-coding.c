@@ -36,8 +36,8 @@ Lisp_Object Qbuffer_file_coding_system, Qcoding_system_error;
 
 Lisp_Object Vkeyboard_coding_system;
 Lisp_Object Vterminal_coding_system;
-Lisp_Object Vprocess_input_coding_system;
-Lisp_Object Vprocess_output_coding_system;
+Lisp_Object Vcoding_system_for_read;
+Lisp_Object Vcoding_system_for_write;
 Lisp_Object Vpathname_coding_system;
 
 /* Table of symbols identifying each coding category. */
@@ -574,7 +574,7 @@ Register symbol NAME as a coding system.
 
 TYPE describes the conversion method used and should be one of
 
-nil or 'autodetect
+nil or 'automatic-conversion
      Automatic conversion.  XEmacs attempts to detect the coding system
      used in the file.
 'no-conversion
@@ -744,14 +744,15 @@ if TYPE is 'ccl:
   int need_to_setup_eol_systems = 1;
 
   /* Convert type to constant */ 
-  if (NILP (type) || EQ (type, Qautodetect)) { ty = CODESYS_AUTODETECT; }
-  else if (EQ (type, Qshift_jis))            { ty = CODESYS_SHIFT_JIS; }
-  else if (EQ (type, Qiso2022))              { ty = CODESYS_ISO2022; }
-  else if (EQ (type, Qbig5))                 { ty = CODESYS_BIG5; }
-  else if (EQ (type, Qccl))                  { ty = CODESYS_CCL; }
-  else if (EQ (type, Qno_conversion))        { ty = CODESYS_NO_CONVERSION; }
+  if (NILP (type) || EQ (type, Qautomatic_conversion))
+                                      { ty = CODESYS_AUTODETECT; }
+  else if (EQ (type, Qshift_jis))     { ty = CODESYS_SHIFT_JIS; }
+  else if (EQ (type, Qiso2022))       { ty = CODESYS_ISO2022; }
+  else if (EQ (type, Qbig5))          { ty = CODESYS_BIG5; }
+  else if (EQ (type, Qccl))           { ty = CODESYS_CCL; }
+  else if (EQ (type, Qno_conversion)) { ty = CODESYS_NO_CONVERSION; }
 #ifdef DEBUG_XEMACS
-  else if (EQ (type, Qinternal))             { ty = CODESYS_INTERNAL; }
+  else if (EQ (type, Qinternal))      { ty = CODESYS_INTERNAL; }
 #endif
   else
     signal_simple_error ("Invalid coding system type", type);
@@ -946,7 +947,7 @@ Return the type of CODING-SYSTEM.
 {
   switch (XCODING_SYSTEM_TYPE (Fget_coding_system (coding_system)))
     {
-    case CODESYS_AUTODETECT:	return Qautodetect;
+    case CODESYS_AUTODETECT:	return Qautomatic_conversion;
     case CODESYS_SHIFT_JIS:	return Qshift_jis;
     case CODESYS_ISO2022:	return Qiso2022;
     case CODESYS_BIG5:		return Qbig5;
@@ -1471,10 +1472,11 @@ determine_real_coding_system (Lstream *stream, Lisp_Object *codesys_in_out,
 
 DEFUN ("detect-coding-region", Fdetect_coding_region, 2, 3, 0, /*
 Detect coding system of the text in the region between START and END.
-Returned value is a list of possible coding systems ordered by priority.
-If only ASCII characters are found, it returns 'autodetect or one of its
-subsidiary coding systems according to a detected end-of-line type.
-Optional arg BUFFER defaults to the current buffer.
+Returned value is a list of possible coding systems ordered by
+priority.  If only ASCII characters are found, it returns
+'automatic-conversion or one of its subsidiary coding systems
+according to a detected end-of-line type.  Optional arg BUFFER
+defaults to the current buffer.
 */
        (start, end, buffer))
 {
@@ -1506,7 +1508,8 @@ Optional arg BUFFER defaults to the current buffer.
 
   if (decst.mask == ~0)
     {
-      val = subsidiary_coding_system (Fget_coding_system (Qautodetect),
+      val = subsidiary_coding_system (Fget_coding_system
+				      (Qautomatic_conversion),
 				      decst.eol_type);
     }
   else
@@ -4707,20 +4710,26 @@ Not used under a windowing system.
 */ );
   Vterminal_coding_system = Qnil;
 
-  DEFVAR_LISP ("process-input-coding-system", &Vprocess_input_coding_system /*
-Default coding system used by C process routines for inputting data.
-This can be changed for a particular process using
-`set-process-input-coding-system'.
+  DEFVAR_LISP ("coding-system-for-read", &Vcoding_system_for_read /*
+Overriding coding system used when writing a file or process.
+You should *bind* this, not set it.  If this is non-nil, it specifies
+the coding system that will be used when a file or process is read
+in, and overrides `buffer-file-coding-system-for-read',
+`insert-file-contents-pre-hook', etc.  Use those variables instead of
+this one for permanent changes to the environment.
 */ );
-  Vprocess_input_coding_system = Qnil;
+  Vcoding_system_for_read = Qnil;
 
-  DEFVAR_LISP ("process-output-coding-system",
-               &Vprocess_output_coding_system /*
-Default coding system used by C process routines for outputting data.
-This can be changed for a particular process using
-`set-process-output-coding-system'.
+  DEFVAR_LISP ("coding-system-for-write",
+               &Vcoding_system_for_write /*
+Overriding coding system used when writing a file or process.
+You should *bind* this, not set it.  If this is non-nil, it specifies
+the coding system that will be used when a file or process is wrote
+in, and overrides `buffer-file-coding-system',
+`write-region-pre-hook', etc.  Use those variables instead of this one
+for permanent changes to the environment.
 */ );
-  Vprocess_output_coding_system = Qnil;
+  Vcoding_system_for_write = Qnil;
 
   DEFVAR_LISP ("pathname-coding-system", &Vpathname_coding_system /*
 Coding system used to convert pathnames when accessing files.

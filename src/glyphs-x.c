@@ -104,7 +104,7 @@ Lisp_Object Qcursor_font;
 
 DEFINE_IMAGE_INSTANTIATOR_FORMAT (font);
 
-DEFINE_IMAGE_INSTANTIATOR_FORMAT (autodetect);
+DEFINE_IMAGE_INSTANTIATOR_FORMAT (automatic_conversion);
 
 static void cursor_font_instantiate (Lisp_Object image_instance,
 				     Lisp_Object instantiator,
@@ -2588,8 +2588,10 @@ extract_xpm_color_names (XpmAttributes *xpmattrs, Lisp_Object device,
 	    (value, device, encode_error_behavior_flag (ERROR_ME_NOT));
       else
         {
+	  Lisp_Object frame = DEVICE_SELECTED_FRAME(XDEVICE(device));
+	  Lisp_Object window = FRAME_SELECTED_WINDOW(XFRAME(frame));
           assert (COLOR_SPECIFIERP (value));
-          value = Fspecifier_instance (value, Qnil, Qnil, Qnil);
+          value = Fspecifier_instance (value, window, Qnil, Qnil);
         }
       if (NILP (value))
         continue;
@@ -3113,17 +3115,18 @@ xface_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 
 
 /**********************************************************************
- *                           Autodetect                               *
+ *			 Automatic_Conversion                         *
  **********************************************************************/
 
 static void
-autodetect_validate (Lisp_Object instantiator)
+automatic_conversion_validate (Lisp_Object instantiator)
 {
   data_must_be_present (instantiator);
 }
 
 static Lisp_Object
-autodetect_normalize (Lisp_Object instantiator, Lisp_Object console_type)
+automatic_conversion_normalize (Lisp_Object instantiator,
+				Lisp_Object console_type)
 {
   Lisp_Object file = find_keyword_in_vector (instantiator, Q_data);
   Lisp_Object filename = Qnil;
@@ -3196,14 +3199,14 @@ autodetect_normalize (Lisp_Object instantiator, Lisp_Object console_type)
      specification. (We can't do that now because we don't know
      what dest-types it's going to be instantiated into.) */
   {
-    Lisp_Object result = alist_to_tagged_vector (Qautodetect, alist);
+    Lisp_Object result = alist_to_tagged_vector (Qautomatic_conversion, alist);
     free_alist (alist);
     RETURN_UNGCPRO (result);
   }
 }
 
 static int
-autodetect_possible_dest_types (void)
+automatic_conversion_possible_dest_types (void)
 {
   return
     IMAGE_MONO_PIXMAP_MASK  |
@@ -3213,9 +3216,11 @@ autodetect_possible_dest_types (void)
 }
 
 static void
-autodetect_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
-			Lisp_Object pointer_fg, Lisp_Object pointer_bg,
-			int dest_mask)
+automatic_conversion_instantiate (Lisp_Object image_instance,
+				  Lisp_Object instantiator,
+				  Lisp_Object pointer_fg,
+				  Lisp_Object pointer_bg,
+				  int dest_mask)
 {
   Lisp_Object data = find_keyword_in_vector (instantiator, Q_data);
   struct gcpro gcpro1, gcpro2, gcpro3;
@@ -3934,14 +3939,15 @@ image_instantiator_format_create_glyphs_x (void)
   IIFORMAT_VALID_KEYWORD (xface, Q_background, check_valid_string);
 #endif 
 
-  INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (autodetect, "autodetect");
+  INITIALIZE_IMAGE_INSTANTIATOR_FORMAT (automatic_conversion,
+					"automatic-conversion");
 
-  IIFORMAT_HAS_METHOD (autodetect, validate);
-  IIFORMAT_HAS_METHOD (autodetect, normalize);
-  IIFORMAT_HAS_METHOD (autodetect, possible_dest_types);
-  IIFORMAT_HAS_METHOD (autodetect, instantiate);
+  IIFORMAT_HAS_METHOD (automatic_conversion, validate);
+  IIFORMAT_HAS_METHOD (automatic_conversion, normalize);
+  IIFORMAT_HAS_METHOD (automatic_conversion, possible_dest_types);
+  IIFORMAT_HAS_METHOD (automatic_conversion, instantiate);
 
-  IIFORMAT_VALID_KEYWORD (autodetect, Q_data, check_valid_string);
+  IIFORMAT_VALID_KEYWORD (automatic_conversion, Q_data, check_valid_string);
 }
 
 void

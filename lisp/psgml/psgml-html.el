@@ -47,28 +47,49 @@
 
 ;;{{{ user variables
 
+(defgroup html nil
+  "HyperText Markup Language"
+  :group 'sgml)
+
+(defgroup psgml-html nil
+  "HTML mode in conjunction with PSGML"
+  :tag "Psgml Html"
+  :prefix "html-helper-"
+  :group 'html
+  :group 'psgml)
+
 ;; Set this to be whatever signature you want on the bottom of your pages.
-(defvar html-helper-address-string
+(defcustom html-helper-address-string
   (concat "<a href=\"mailto:" (user-mail-address) "\">"
 	  (user-full-name) "</a>")
-  "*The default author string of each file.")
+  "*The default author string of each file."
+  :type 'string
+  :group 'psgml-html)
 
-(defvar html-helper-htmldtd-version "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML//EN\">\n"
-  "*Version of HTML DTD you're using.")
+(defcustom html-helper-htmldtd-version "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML//EN\">\n"
+  "*Version of HTML DTD you're using."
+  :type 'string
+  :group 'psgml-html)
 
-(defvar html-helper-do-write-file-hooks t
-  "*If not nil, then modify `local-write-file-hooks' to do timestamps.")
+(defcustom html-helper-do-write-file-hooks t
+  "*If not nil, then modify `local-write-file-hooks' to do timestamps."
+  :type 'boolean
+  :group 'psgml-html)
 
-(defvar html-helper-build-new-buffer t
-  "*If not nil, then insert `html-helper-new-buffer-strings' for new buffers.")
+(defcustom html-helper-build-new-buffer t
+  "*If not nil, then insert `html-helper-new-buffer-strings' for new buffers."
+  :type 'boolean
+  :group 'psgml-html)
 
-(defvar html-helper-timestamp-hook 'html-helper-default-insert-timestamp
+(defcustom html-helper-timestamp-hook 'html-helper-default-insert-timestamp
   "*Hook called for timestamp insertion.
-Override this for your own timestamp styles.")
+Override this for your own timestamp styles."
+  :type 'boolean
+  :group 'psgml-html)
 
 ;; strings you might want to change
 
-(defvar html-helper-new-buffer-template
+(defcustom html-helper-new-buffer-template
   '(html-helper-htmldtd-version
     "<html>\n"
     "  <head>\n"
@@ -86,33 +107,43 @@ Override this for your own timestamp styles.")
     "\n  </body>\n</html>\n")
   "*Template for new buffers.
 Inserted by `html-helper-insert-new-buffer-strings' if
-`html-helper-build-new-buffer' is set to t")
+`html-helper-build-new-buffer' is set to t"
+  :type 'sexp
+  :group 'psgml-html)
 
-(defvar html-helper-timestamp-start "<!-- hhmts start -->\n"
+(defcustom html-helper-timestamp-start "<!-- hhmts start -->\n"
   "*Start delimiter for timestamps.
 Everything between `html-helper-timestamp-start' and
 `html-helper-timestamp-end' will be deleted and replaced with the output
 of the functions `html-helper-timestamp-hook' if
-`html-helper-do-write-file-hooks' is t")
+`html-helper-do-write-file-hooks' is t"
+  :type 'string
+  :group 'psgml-html)
 
-(defvar html-helper-timestamp-end "<!-- hhmts end -->"
+(defcustom html-helper-timestamp-end "<!-- hhmts end -->"
   "*End delimiter for timestamps.
 Everything between `html-helper-timestamp-start' and
 `html-helper-timestamp-end' will be deleted and replaced with the output
 of the function `html-helper-insert-timestamp' if
-`html-helper-do-write-file-hooks' is t")
+`html-helper-do-write-file-hooks' is t"
+  :type 'string
+  :group 'psgml-html)
 
 ;; control over what types of tags to load. By default, we load all the
 ;; ones we know of.
 
-(defvar html-helper-types-to-install
+(defcustom html-helper-types-to-install
   '(anchor header logical phys list textel entity image head form)
   "*List of tag types to install when html-helper-mode is first loaded.
 If you want to not install some type of tag, override this variable.
-Order is significant: menus go in this order.")
+Order is significant: menus go in this order."
+  :type '(repeat symbol)
+  :group 'psgml-html)
 
-(defvar html-mode-hook nil
-  "*Hook called by `html-mode'.")
+(defcustom html-mode-hook nil
+  "*Hook called by `html-mode'."
+  :type 'hook
+  :group 'psgml-html)
 
 ;;}}} end of user variables
 ;;{{{ type based keymap and menu variable and function setup

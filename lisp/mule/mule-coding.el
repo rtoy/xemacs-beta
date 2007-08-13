@@ -167,7 +167,7 @@ Does not modify STR.  Returns the encoded string on successful conversion."
 ;;;; Definitions of predefined coding systems
 
 (make-coding-system
- 'autodetect 'autodetect
+ 'automatic-conversion 'automatic-conversion
  "Automatic conversion."
  '(mnemonic "Auto"))
 

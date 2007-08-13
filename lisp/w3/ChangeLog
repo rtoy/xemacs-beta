@@ -2,7 +2,52 @@ Wed Mar 19 20:53:23 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 * Makefile (xemacs-w3): Special target for XEmacs Build.
 
+Mon Apr  7 06:23:11 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-parse.el: Some more transitions - don't imply <p> after some form
+  tags.
+
+* url-misc.el (url-finger): Ditto
+
+* url-http.el (url-http): Ditto
+
+* url-gopher.el (url-gopher-retrieve): Put in a process-sentinel of
+  'ignore so that stupid 'process xxx exited with code nnn' messages are
+  not shown.
+
+* url.el (url-sentinel): Ditto
+
+* w3.el (w3-sentinel): remove call to url-clean-text - no longer needed
+
+Mon Apr  7 02:57:19 1997  Greg Stark  <gsstark@mit.edu>
+
+* url.el (url-sentinel): once and for all eliminate the "first character
+  goes to wrong buffer" bug through brute force by setting the current
+  buffer to the buffer of the selected window at the end of a sentinel.
+
+* w3.el (w3-viewer-sentinel): ditto
+
+* w3-widget.el (widget-image-value-create): set tab-order to -1 on the
+  choice-items of client-side imagemaps to avoid having tab stop on them
+  three times, (it still stops on them twice) 
+
+* Makefile: add "make fast" rule to not run a bazillion emacsen
+
+* FAQ: typos
+
+* docomp.el: try setting byte-compile-dynamic to t to reduce memory usage
+
+Fri Apr  4 06:23:31 1997  William M. Perry  <wmperry@aventail.com>
+
+* url-file.el (url-format-directory): Use insert-file-contents instead of
+  -literally, so that ftp index files will work.
+
+* w3-emulate.el: lots of new commands to spoof the user-agent string.  See
+  turn-[on|off]-[lynx|netscape|ie|arena]-masquerade-mode functions.
+
 Thu Apr  3 07:22:27 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs/W3 3.0.79 released
 
 * w3-parse.el: Put in <p> as part of the content-model of <ul/ol> so that
   <p> at the front of a list doesn't cause a bogus list item to be shown.

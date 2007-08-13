@@ -1,3 +1,12 @@
+Wed Apr  9 22:52:06 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.1-b12 is released.
+
+Sun Apr  6 22:31:00 1997  Tatsuya Ichikawa  <ichikawa@hv.epson.co.jp>
+
+	* configure.in: Cosmetic change to summary print of POP/Kerberos/
+	Hesiod options.
+
 Sat Apr  5 09:11:36 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.1-b11 is released.

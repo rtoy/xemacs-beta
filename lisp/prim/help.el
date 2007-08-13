@@ -35,6 +35,10 @@
 ;; or run interpreted, but not when the compiled code is loaded.
 ;(eval-when-compile (require 'help-macro))
 
+(defgroup help-appearance nil
+  "Appearance of help buffers"
+  :group 'help)
+
 (defvar help-map (let ((map (make-sparse-keymap)))
                    (set-keymap-name map 'help-map)
                    (set-keymap-prompt
@@ -339,10 +343,12 @@ If FUNCTION is nil, applies `message' to it, thus printing it."
          (substitute-command-keys
           (gettext "  \\[scroll-other-window] to scroll the help."))))))
 
-(defvar help-selects-help-window t
+(defcustom help-selects-help-window t
   "*If nil, use the \"old Emacs\" behavior for Help buffers.
 This just displays the buffer in another window, rather than selecting
-the window.")
+the window."
+  :type 'boolean
+  :group 'help-appearance)
 
 ;; Use this function for displaying help when C-h something is pressed
 ;; or in similar situations.  Do *not* use it when you are displaying
@@ -745,9 +751,12 @@ instead, to ensure that you get the most up-to-date information."
 	      (set-syntax-table stab)))
 	(error nil))))
 
-(defvar describe-function-show-arglist t  ; default to nil for the non-hackers?
-  "*If true, then describe-function will show its arglist if the function is
-not an autoload.")
+;; default to nil for the non-hackers?
+(defcustom describe-function-show-arglist t
+  "*If non-nil, describe-function will show its arglist,
+unless the function is autoloaded."
+  :type 'boolean
+  :group 'help-appearance)
 
 (defun describe-function-find-file (function)
   (and (boundp 'load-history) ; not standardly bound in XEmacs
@@ -1107,11 +1116,12 @@ not an autoload.")
 	       (terpri)
 	       (terpri)))
 	 ;; don't bother to print anything if variable is obsolete and aliased.
-	 (if (or (not obsolete) (not aliases))
-	     (if doc
-		 ;; note: documentation-property calls substitute-command-keys.
-		 (princ doc)
-	       (princ "not documented as a variable."))))
+	 (when (or (not obsolete) (not aliases))
+	   (if doc
+	       ;; note: documentation-property calls substitute-command-keys.
+	       (princ doc)
+	     (princ "not documented as a variable."))
+	   (terpri)))
        (save-excursion
 	 (set-buffer standard-output)
 	 ;; Return the text we displayed.

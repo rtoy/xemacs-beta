@@ -43,23 +43,7 @@
 
 (define-obsolete-variable-alias 'file-coding-system 'buffer-file-coding-system)
 
-(defvar coding-system-for-write nil
-  "Overriding coding system used when writing a file.
-You should *bind* this, not set it.  If this is non-nil, it specifies
-the coding system that will be used when a file is wrote in, and
-overrides `buffer-file-coding-system',
-`insert-file-contents-pre-hook', etc.  Use those variables instead of
-this one for permanent changes to the environment.")
-
-(defvar coding-system-for-read nil
-  "Overriding coding system used when reading a file.
-You should *bind* this, not set it.  If this is non-nil, it specifies
-the coding system that will be used when a file is read in, and
-overrides `buffer-file-coding-system-for-read',
-`buffer-file-coding-system-alist', etc.  Use those variables instead
-of this one for permanent changes to the environment.")
-
-(defvar buffer-file-coding-system-for-read 'autodetect
+(defvar buffer-file-coding-system-for-read 'automatic-conversion
   "Coding system used when reading a file.
 This provides coarse-grained control; for finer-grained control,
 use `buffer-file-coding-system-alist'.  From a Lisp program, if you wish
@@ -176,7 +160,7 @@ message might be in a different encoding."
 	  (if (re-search-forward "^From" nil 'move)
 	      (beginning-of-line))
 	  (setq end (point))
-	  (decode-coding-region start end 'autodetect))))))
+	  (decode-coding-region start end 'automatic-conversion))))))
 
 (defun find-coding-system-magic-cookie ()
   "Look for the coding-system magic cookie in the current buffer.\n"
@@ -364,9 +348,10 @@ and `insert-file-contents-post-hook'."
 	      (setq return-val coding-system)
 	    (if (null (find-coding-system coding-system))
 		(progn
-		  (message "Invalid coding-system (%s), using 'autodetect"
-			   coding-system)
-		  (setq coding-system 'autodetect)))
+		  (message
+		   "Invalid coding-system (%s), using 'automatic-conversion"
+		   coding-system)
+		  (setq coding-system 'automatic-conversion)))
 	    (setq return-val
 		  (insert-file-contents-internal filename visit beg end
 						 replace coding-system

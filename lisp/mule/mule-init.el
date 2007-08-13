@@ -128,10 +128,6 @@ then `set-language-environment' is called with LANGUAGE-ENVIRONMENT.")
     (add-hook
      'dired-mode-hook
      (lambda ()
-       (make-local-variable 'process-output-coding-system)
-       (make-local-variable 'process-input-coding-system)
-       (setq process-output-coding-system pathname-coding-system)
-       (setq process-input-coding-system  pathname-coding-system)
        (make-local-variable 'process-environment)
        (setenv "LC_MESSAGES" "C")
        (setenv "LC_TIME"     "C"))))

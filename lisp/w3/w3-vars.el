@@ -1,7 +1,7 @@
 ;;; w3-vars.el,v --- All variable definitions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/04/03 21:42:29
-;; Version: 1.120
+;; Created: 1997/04/07 16:06:34
+;; Version: 1.122
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -33,7 +33,7 @@
 (require 'w3-cus)			; Grab everything that is customized
 
 (defconst w3-version-number
-  (let ((x "p3.0.79"))
+  (let ((x "p3.0.80"))
     (if (string-match "State:[ \t\n]+.\\([^ \t\n]+\\)" x)
 	(setq x (substring x (match-beginning 1) (match-end 1)))
       (setq x (substring x 1)))
@@ -41,7 +41,7 @@
      (function (lambda (x) (if (= x ?-) "." (char-to-string x)))) x ""))
   "Version # of w3-mode.")
 
-(defconst w3-version-date (let ((x "1997/04/03 21:42:29"))
+(defconst w3-version-date (let ((x "1997/04/07 16:06:34"))
 			    (if (string-match "Date: \\([^ \t\n]+\\)" x)
 				(substring x (match-beginning 1) (match-end 1))
 			      x))
@@ -400,7 +400,7 @@ last character position that was correctly filled.")
 
 (defconst w3-bug-address "wmperry@cs.indiana.edu"
   "Address of current maintainer, where to send bug reports.")
-(defvar w3-continuation '(url-uncompress url-clean-text)
+(defvar w3-continuation '(url-uncompress)
   "List of functions to call to process a document completely.")
 (defvar w3-current-isindex nil "Is the current document a searchable index?")
 (defvar w3-current-last-buffer nil "Last W3 buffer seen before this one.")
@@ -408,7 +408,7 @@ last character position that was correctly filled.")
 (defvar w3-current-metainfo nil "An assoc list of <meta> tags for this doc.")
 (defvar w3-current-source nil "Source of current document.")
 (defvar w3-current-parse nil "Parsed version of current document.")
-(defconst w3-default-continuation '(url-uncompress url-clean-text) 
+(defconst w3-default-continuation '(url-uncompress) 
   "Default action to start with - cleans text and uncompresses if necessary.")
 (defvar w3-find-this-link nil "Link to go to within a document.")
 (defvar w3-hidden-forms nil "List of hidden form areas and their info.")

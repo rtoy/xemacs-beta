@@ -34,14 +34,18 @@
 
 (global-set-key 'button2 'mouse-yank)
 
-(defvar mouse-track-rectangle-p nil
+(defcustom mouse-track-rectangle-p nil
   "*If true, then dragging out a region with the mouse selects rectangles
-instead of simple start/end regions.")
+instead of simple start/end regions."
+  :type 'boolean
+  :group 'mouse)
 
-(defvar mouse-yank-at-point nil
+(defcustom mouse-yank-at-point nil
   "*If non-nil, the function `mouse-yank' will yank text at the cursor location.
 Otherwise, the cursor will be moved to the location of the pointer click before
-text is inserted.")
+text is inserted."
+  :type 'boolean
+  :group 'mouse)
 
 (defvar mouse-yank-function 'yank	; x11/x-mouse changes this...
   "Function that is called upon by `mouse-yank' to actually insert text.")
@@ -497,11 +501,13 @@ hook: the hook functions are called with no arguments, and
 all hook functions are called regardless of their return
 values.")
 
-(defvar mouse-track-multi-click-time 400
-  "Maximum number of milliseconds allowed between clicks for a multi-click.
-See `mouse-track-click-hook'.")
+(defcustom mouse-track-multi-click-time 400
+  "*Maximum number of milliseconds allowed between clicks for a multi-click.
+See `mouse-track-click-hook'."
+  :type 'integer
+  :group 'mouse)
 
-(defvar mouse-track-scroll-delay 100
+(defcustom mouse-track-scroll-delay 100
   "Maximum of milliseconds between calls to `mouse-track-drag-hook'.
 If the user is dragging the mouse (i.e. the button is held down and
 a drag has been initiated) and does not move the mouse for this many
@@ -510,7 +516,9 @@ WAS-TIMEOUT parameter.  This can be used to implement scrolling
 in a selection when the user drags the mouse out the window it
 was in.
 
-A value of nil disables the timeout feature.")
+A value of nil disables the timeout feature."
+  :type '(choice integer (const :tag "Disabled" nil))
+  :group 'mouse)
 
 (defvar mouse-track-x-threshold '(face-width 'default)
   "Minimum number of pixels in the X direction for a drag to be initiated.

@@ -2,12 +2,7 @@
 
 ;; Author:     Jens Lautenbacher <jens@lemming0.lem.uni-karlsruhe.de>
 ;; Keywords:   games
-;; Version:    1.2
-
-(defconst xmine-version-number "1.2" "XEmacs Mine version number.")
-(defconst xmine-version (format "XEmacs Mine v%s by Jens Lautenbacher © 1997"
-			       xmine-version-number)
-  "Full XEmacs Mine version number.")
+;; Version:    1.4
 
 ;; This file is part of XEmacs.
 
@@ -48,6 +43,11 @@
 ;; Code:
 ;;
 ;;; First of all we'll define the needed varibles.
+
+(defconst xmine-version-number "1.4" "XEmacs Mine version number.")
+(defconst xmine-version (format "XEmacs Mine v%s by Jens Lautenbacher © 1997"
+			       xmine-version-number)
+  "Full XEmacs Mine version number.")
 
 (defgroup xmine nil
   "The well known mine searching game."
@@ -339,6 +339,7 @@ preferred if you don't want to use white."
 	(set-extent-property ext 'action2 'xmine-action2)
 	(if (not no-repaint)
 	    (progn
+	      (xmine-unhide-sound)
 	      (xmine-field-repaint ext)
 	      (if (xmine-game-solved-p) (xmine-end-game)))))))
 
@@ -348,19 +349,22 @@ It is meant as convenience function you can use if you're sure that
 you've marked all mines around the button correctly (or you're sure
 there isn't one)"
   (let ((list (xmine-get-neighbours ext))
+	(xmine-no-unhide-sound t)
 	next)
+    (if list (xmine-unhide-many-sound))
     (while (setq next (pop list))
       (if (not (xmine-flat-button-p next)) (xmine-action1 next)))))
 
 (defun xmine-action3 (ext)
   "This toggles the flagged status of a button.
 You flag a button if you know - or think - that there's a mine under it"
-(if (extent-property ext 'xmine-flagged)
+  (if (extent-property ext 'xmine-flagged)
       (progn
 	(set-annotation-glyph ext (xmine-up-glyph ext))
 	(set-extent-property ext 'action1 'xmine-action1)
 	(set-extent-property ext 'xmine-flagged nil)
 	(setq xmine-number-of-flagged (1- xmine-number-of-flagged))
+	(xmine-flag-sound)
 	(set-annotation-glyph xmine-count-ann
 			      (make-glyph
 			       (format "Mines: %2d"
@@ -375,12 +379,80 @@ You flag a button if you know - or think - that there's a mine under it"
       (set-extent-property ext 'action1 nil)
       (set-extent-property ext 'xmine-flagged t)
       (setq xmine-number-of-flagged (1+ xmine-number-of-flagged))
+      (xmine-flag-sound)
       (if (xmine-game-solved-p) (xmine-end-game)
 	(set-annotation-glyph xmine-count-ann
 			      (make-glyph
 			       (format "Mines: %2d"
 				       (- xmine-number-of-mines
 					  xmine-number-of-flagged))))))))
+
+
+;;; the sounds...
+(defcustom xmine-play-sounds nil
+  "If XMine should play some sounds for various events to happen."
+  :group 'xmine
+  :type 'boolean)
+
+(defun xmine-play-sounds-p ()
+  (and xmine-play-sounds
+       (or (featurep 'native-sound)
+	   (featurep 'nas-sound))
+       (or (device-sound-enabled-p)
+	   (and (featurep 'native-sound)
+		(not native-sound-only-on-console)
+		(eq (device-type) 'x)))))
+
+
+(defcustom xmine-flag-sound (concat data-directory "sounds/click.au")
+  "The sound played when flagging/un-flagging a tile"
+  :group 'xmine
+  :type 'file)
+
+(defcustom xmine-unhide-sound (concat data-directory "sounds/drip.au")
+  "The sound played when unhiding a tile"
+  :group 'xmine
+  :type 'file)
+
+(defcustom xmine-unhide-many-sound (concat data-directory "sounds/boing.au")
+  "The sound played when unhiding all neighbours of a tile"
+  :group 'xmine
+  :type 'file)
+
+(defcustom xmine-explode-sound (concat xmine-glyph-dir "explosion3.au")
+  "The sound played when you unhide a mine"
+  :group 'xmine
+  :type 'file)
+
+(defcustom xmine-solved-sound (concat data-directory "sounds/im_so_happy.au")
+  "The sound played if you managed to win the game."
+  :group 'xmine
+  :type 'file)
+
+(defun xmine-flag-sound ()
+  (if (xmine-play-sounds-p)
+      (play-sound-file xmine-flag-sound)))
+
+(defvar xmine-no-unhide-sound nil)
+
+(defun xmine-unhide-sound ()
+  (if (and (xmine-play-sounds-p)
+	   (not xmine-no-unhide-sound))
+      (play-sound-file xmine-unhide-sound)))
+
+(defun xmine-unhide-many-sound ()
+  (if (xmine-play-sounds-p)
+      (play-sound-file xmine-unhide-many-sound)))
+
+(defun xmine-explode-sound ()
+  (if (xmine-play-sounds-p)
+      (play-sound-file xmine-explode-sound)
+    (beep)))
+
+(defun xmine-solved-sound ()
+  (if (xmine-play-sounds-p)
+      (play-sound-file xmine-solved-sound)
+    (beep)))
 
 
 ;;; what to do after a button is unhidden: We (maybe) have to repaint
@@ -441,12 +513,13 @@ mines plus the number of unhidden buttons equals width*height of the field"
 	 (* xmine-width xmine-height)))
 
 (defun xmine-end-game ()
-  (beep)
   (set-annotation-glyph xmine-count-ann
-			(make-glyph " Solved. ")))
+			(make-glyph " Solved. "))
+  (sit-for 0)
+  (xmine-solved-sound))
 
 (defun xmine-end-game-trapped ()
-  (beep)
+  (xmine-explode-sound)
   (set-annotation-glyph xmine-count-ann
 			(make-glyph "++ RIP ++")))
 
@@ -470,6 +543,7 @@ little game."
 	  (> y xmine-height) (< y 1)) nil
     (aref xmine-field (+ (* (1- y) xmine-width) (1- x)))))
 
+;;;###autoload
 (defun xmine-mode ()
 "A mode for playing the well known mine searching game.
 
@@ -505,6 +579,7 @@ Have Fun."
   (interactive)
   (xmine-field-create))
 
+;;;###autoload
 (fset 'xmine 'xmine-mode)
 
 (defun xmine-field-create ()

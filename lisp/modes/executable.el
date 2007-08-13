@@ -54,7 +54,13 @@
 
 ;;; Code:
 
-(defvar executable-insert 'not-modified
+
+(defgroup executable nil
+  "Base functionality for executable interpreter scripts"
+  :group 'processes)
+
+
+(defcustom executable-insert 'other
   "*What to do when newly found file has no or wrong magic number:
 	nil	do nothing
 	t	insert or update magic number
@@ -62,35 +68,51 @@
 When the insertion is marked as unmodified, you can save it with  \\[write-file] RET.
 This variable is used when `executable-set-magic' is called as a function,
 e.g. when Emacs sets some Un*x interpreter script mode.
-With \\[executable-set-magic], this is always treated as if it were `t'.")
+With \\[executable-set-magic], this is always treated as if it were `t'."
+  :type '(choice (const :tag "off" nil)
+		 (const :tag "on" t)
+		 symbol)
+  :group 'executable)
 
 
-(defvar executable-query 'function
+(defcustom executable-query 'function
   "*If non-`nil', ask user before inserting or changing magic number.
-When this is `function', only ask when called non-interactively.")
+When this is `function', only ask when called non-interactively."
+  :type '(choice (const :tag "Don't Ask" nil)
+		 (const :tag "Ask" t)
+		 (const :tag "Ask when non-interactive" function))
+  :group 'executable)
 
 
-(defvar executable-magicless-file-regexp "/[Mm]akefile$\\|/\\.\\(z?profile\\|bash_profile\\|z?login\\|bash_login\\|z?logout\\|bash_logout\\|.+shrc\\|esrc\\|rcrc\\|[kz]shenv\\)$"
-  "*On files with this kind of name no magic is inserted or changed.")
+(defcustom executable-magicless-file-regexp "/[Mm]akefile$\\|/\\.\\(z?profile\\|bash_profile\\|z?login\\|bash_login\\|z?logout\\|bash_logout\\|.+shrc\\|esrc\\|rcrc\\|[kz]shenv\\)$"
+  "*On files with this kind of name no magic is inserted or changed."
+  :type 'regexp
+  :group 'executable)
 
 
-(defvar executable-prefix "#! "
-  "*Interpreter magic number prefix inserted when there was no magic number.")
+(defcustom executable-prefix "#! "
+  "*Interpreter magic number prefix inserted when there was no magic number."
+  :type 'string
+  :group 'executable)
 
 
 
-(defvar executable-chmod 73
+(defcustom executable-chmod 73
   "*After saving, if the file is not executable, set this mode.
 This mode passed to `set-file-modes' is taken absolutely when negative, or
 relative to the files existing modes.  Do nothing if this is nil.
-Typical values are 73 (+x) or -493 (rwxr-xr-x).")
+Typical values are 73 (+x) or -493 (rwxr-xr-x)."
+  :type 'integer
+  :group 'executable)
 
 
 (defvar executable-command nil)
 
-(defvar executable-self-display "tail"
+(defcustom executable-self-display "tail"
   "*Command you use with argument `+2' to make text files self-display.
-Note that the like of `more' doesn't work too well under Emacs  \\[shell].")
+Note that the like of `more' doesn't work too well under Emacs  \\[shell]."
+  :type 'string
+  :group 'executable)
 
 
 (defvar executable-font-lock-keywords

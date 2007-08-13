@@ -205,14 +205,14 @@ Prefix N scrolls backward N lines."
 
 (defun vm-highlight-headers ()
   (cond
-   ((and (vm-xemacs-p) vm-use-lucid-highlighting)
+   ((and vm-xemacs-p vm-use-lucid-highlighting)
     (require 'highlight-headers)
     ;; disable the url marking stuff, since VM has its own interface.
     (let ((highlight-headers-mark-urls nil)
 	  (highlight-headers-regexp (or vm-highlighted-header-regexp
 					highlight-headers-regexp)))
       (highlight-headers (point-min) (point-max) t)))
-   ((vm-xemacs-p)
+   (vm-xemacs-p
     (let (e)
       (map-extents (function
 		    (lambda (e ignore)
@@ -263,7 +263,7 @@ Prefix N scrolls backward N lines."
 				       (point-max))))
       (setq search-pairs (list (cons (point-min) (point-max)))))
     (cond
-     ((vm-xemacs-p)
+     (vm-xemacs-p
       (let (e)
 	(map-extents (function
 		      (lambda (e ignore)
@@ -299,7 +299,7 @@ Prefix N scrolls backward N lines."
 		  (set-extent-property e 'balloon-help 'vm-url-help)
 		  (set-extent-property e 'highlight t))))
 	  (setq search-pairs (cdr search-pairs)))))
-     ((and (vm-fsfemacs-19-p)
+     ((and vm-fsfemacs-19-p
 	   (fboundp 'overlay-put))
       (let (o-lists o p)
 	(setq o-lists (overlay-lists)
@@ -343,7 +343,7 @@ Prefix N scrolls backward N lines."
 
 (defun vm-energize-headers ()
   (cond
-   ((vm-xemacs-p)
+   (vm-xemacs-p
     (let ((search-tuples '(("^From:" vm-menu-author-menu)
 			   ("^Subject:" vm-menu-subject-menu)))
 	  regexp menu keymap e)
@@ -377,7 +377,7 @@ Prefix N scrolls backward N lines."
 	  (set-extent-property e 'balloon-help 'vm-mouse-3-help)
 	  (set-extent-property e 'highlight t))
 	(setq search-tuples (cdr search-tuples)))))
-   ((and (vm-fsfemacs-19-p)
+   ((and vm-fsfemacs-19-p
 	 (fboundp 'overlay-put))
     (let ((search-tuples '(("^From:" vm-menu-fsfemacs-author-menu)
 			   ("^Subject:" vm-menu-fsfemacs-subject-menu)))
@@ -470,7 +470,7 @@ Use mouse button 3 to choose a Web browser for the URL."
 (defun vm-highlight-headers-maybe ()
   ;; highlight the headers
   (if (or vm-highlighted-header-regexp
-	  (and (vm-xemacs-p) vm-use-lucid-highlighting))
+	  (and vm-xemacs-p vm-use-lucid-highlighting))
       (save-restriction
 	(widen)
 	(narrow-to-region (vm-headers-of (car vm-message-pointer))
@@ -487,7 +487,7 @@ Use mouse button 3 to choose a Web browser for the URL."
 	(vm-energize-headers)))
   ;; display xfaces, if we can
   (if (and vm-display-xfaces
-	   (vm-xemacs-p)
+	   vm-xemacs-p
 	   (vm-multiple-frames-possible-p)
 	   (featurep 'xface))
       (save-restriction

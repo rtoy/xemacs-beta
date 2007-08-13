@@ -546,7 +546,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
     instream =
       make_decoding_input_stream
 	(XLSTREAM (instream),
-	 Fget_coding_system (Vprocess_input_coding_system));
+	 Fget_coding_system (Vcoding_system_for_read));
     Lstream_set_character_mode (XLSTREAM (instream));
 #endif /* MULE */
     GCPRO1 (instream);

@@ -47,11 +47,6 @@ Boston, MA 02111-1307, USA.  */
 #include "EmacsFrame.h"
 #endif /* HAVE_X_WINDOWS */
 
-#ifdef HAVE_NEXTSTEP
-#include "console-ns.h"
-#include "objects-ns.h"
-#endif /* HAVE_NEXTSTEP */
-
 /* Qfont, Qdoc_string, Qface defined in general.c */
 Lisp_Object Qfacep;
 Lisp_Object Qforeground, Qbackground, Qdisplay_table;
@@ -1674,13 +1669,6 @@ update_EmacsFrame (Lisp_Object frame, Lisp_Object name)
 	 }
      }
 #endif /* HAVE_X_WINDOWS */
-
-#ifdef HAVE_NEXTSTEP
-  if (FRAME_NS_P (frm))
-    {
-      /* This code still needs to be written */
-    }
-#endif /* HAVE_NEXSTEP */
 }
 
 static void

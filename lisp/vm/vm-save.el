@@ -496,7 +496,7 @@ Output, if any, is displayed.  The message is not altered."
        (vm-display nil nil '(vm-pipe-message-to-command)
 		   '(vm-pipe-message-to-command)))))
 
-(defun vm-print-message (count)
+(defun vm-print-message (&optional count)
   "Print the current message
 Prefix arg N means print the current message and the next N - 1 messages.
 Prefix arg -N means print the current message and the previous N - 1 messages.
@@ -514,6 +514,7 @@ Output, if any, is displayed.  The message is not altered."
   (vm-select-folder-buffer)
   (vm-check-for-killed-summary)
   (vm-error-if-folder-empty)
+  (or count (setq count 1))
   (let ((buffer (get-buffer-create "*Shell Command Output*"))
 	(command (mapconcat (function identity)
 			    (nconc (list vm-print-command)

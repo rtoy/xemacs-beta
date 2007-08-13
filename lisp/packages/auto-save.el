@@ -2,7 +2,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; File:          auto-save.el
-;; Version:       $Revision: 1.2 $
+;; Version:       $Revision: 1.3 $
 ;; RCS:           
 ;; Description:   Safer autosaving with support for efs and /tmp.
 ;;                This version of auto-save is designed to work with efs,
@@ -11,7 +11,7 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defconst auto-save-version (substring "$Revision: 1.2 $" 11 -2)
+(defconst auto-save-version (substring "$Revision: 1.3 $" 11 -2)
   "Version number of auto-save.")
 
 ;;; Copyright (C) 1992 by Sebastian Kremer <sk@thp.uni-koeln.de>
@@ -99,7 +99,15 @@
 
 ;;;; CUSTOMIZATION =====================================================
 
-(defvar auto-save-directory nil
+(defgroup auto-save nil
+  "Autosaving with support for efs and /tmp"
+  :group 'data)
+
+(put 'auto-save-interval 'custom-type 'integer)
+(put 'auto-save-interval 'factory-value '(300))
+(custom-add-to-group 'auto-save 'auto-save-interval 'custom-variable)
+
+(defcustom auto-save-directory nil
 
   ;;; Don't make this user-variable-p, it should be set in .emacs and
   ;;; left at that.  In particular, it should remain constant across
@@ -140,25 +148,35 @@ will have a longish filename like
 as auto save file.
 
 See also variables `auto-save-directory-fallback',
-`efs-auto-save' and `efs-auto-save-remotely'.")
+`efs-auto-save' and `efs-auto-save-remotely'."
+  :type '(choice (const :tag "same as file" nil)
+		 directory)
+  :group 'auto-save)
 
-(defvar auto-save-hash-p nil
+
+(defcustom auto-save-hash-p nil
   "If non-nil, hashed autosave names of length 14 are used.
 This is to avoid autosave filenames longer than 14 characters.
 The directory used is `auto-save-hash-directory' regardless of
 `auto-save-directory'.
 Hashing defeats `recover-all-files', you have to recover files
-individually by doing `recover-file'.")
+individually by doing `recover-file'."
+  :type 'boolean
+  :group 'auto-save)
 
 ;;; This defvar is in efs.el now, but doesn't hurt to give it here as
 ;;; well so that loading first auto-save.el does not abort.
 (or (boundp 'efs-auto-save) (defvar efs-auto-save 0))
 (or (boundp 'efs-auto-save-remotely) (defvar efs-auto-save-remotely nil))
 
-(defvar auto-save-offer-delete nil
+(defcustom auto-save-offer-delete nil
   "*If non-nil, `recover-all-files' offers to delete autosave files
 that are out of date or were dismissed for recovering.
-Special value 'always deletes those files silently.")
+Special value 'always deletes those files silently."
+  :type '(choice (const :tag "on" t)
+		 (const :tag "off" nil)
+		 (const :tag "delete silently" always))
+  :group 'auto-save)
 
 ;;;; end of customization
 

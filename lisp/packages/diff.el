@@ -2,7 +2,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; File:         diff.el
-;; Version:      $Revision: 1.4 $
+;; Version:      $Revision: 1.5 $
 ;; Author:       This file is based on diff.el by
 ;;               sunpitt!wpmstr!fbresz@Sun.COM 1/27/89.
 ;;               It has been completely rewritten in July 1994 by
@@ -39,16 +39,27 @@
 
 ;;; User Variables
 
+(defgroup diff nil
+  "Handling output from Unix diff utility"
+  :group 'tools)
+
 ;; should be in to loaddefs.el now.
 ;;;###autoload
-(defvar diff-switches "-c"
-  "*A list of switches (strings) to pass to the diff program.")
+(defcustom diff-switches "-c"
+  "*A list of switches (strings) to pass to the diff program."
+  :type '(choice string
+		 (repeat string))
+  :group 'diff)
 
-(defvar diff-do-narrow nil
-  "*If non-nil diff buffers are initialized narrowed to each difference.")
+(defcustom diff-do-narrow nil
+  "*If non-nil diff buffers are initialized narrowed to each difference."
+  :type 'boolean
+  :group 'diff)
 
-(defvar diff-load-hooks nil
-  "Hooks to run after loading diff.el")
+(defcustom diff-load-hooks nil
+  "Hooks to run after loading diff.el"
+  :type 'hook
+  :group 'diff)
 
 ;;; Internal variables
 

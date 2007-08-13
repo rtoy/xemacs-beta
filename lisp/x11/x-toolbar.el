@@ -25,64 +25,95 @@
 ;; order to get different behaviour.
 ;;
 
-(defvar toolbar-open-function 'find-file
-  "*Function to call when the open icon is selected.")
+(defgroup toolbar nil
+  "Configure XEmacs Toolbar functions and properties"
+  :group 'environment)
+
+(defcustom toolbar-open-function 'find-file
+  "*Function to call when the open icon is selected."
+  :type '(radio (function-item find-file)
+                (function :tag "Other"))
+  :group 'toolbar)
 
 (defun toolbar-open ()
   (interactive)
   (call-interactively toolbar-open-function))
 
-(defvar toolbar-dired-function 'dired
-  "*Function to call when the dired icon is selected.")
+(defcustom toolbar-dired-function 'dired
+  "*Function to call when the dired icon is selected."
+  :type '(radio (function-item dired)
+                (function :tag "Other"))
+  :group 'toolbar)
 
 (defun toolbar-dired ()
   (interactive)
   (call-interactively toolbar-dired-function))
 
-(defvar toolbar-save-function 'save-buffer
-  "*Function to call when the save icon is selected.")
+(defcustom toolbar-save-function 'save-buffer
+  "*Function to call when the save icon is selected."
+  :type '(radio (function-item save-buffer)
+                (function :tag "Other"))
+  :group 'toolbar)
 
 (defun toolbar-save ()
   (interactive)
   (call-interactively toolbar-save-function))
 
-(defvar toolbar-print-function 'lpr-buffer
-  "*Function to call when the print icon is selected.")
+(defcustom toolbar-print-function 'lpr-buffer
+  "*Function to call when the print icon is selected."
+  :type '(radio (function-item lpr-buffer)
+                (function :tag "Other"))
+  :group 'toolbar)
 
 (defun toolbar-print ()
   (interactive)
   (call-interactively toolbar-print-function))
 
-(defvar toolbar-cut-function 'x-kill-primary-selection
-  "*Function to call when the cut icon is selected.")
+(defcustom toolbar-cut-function 'x-kill-primary-selection
+  "*Function to call when the cut icon is selected."
+  :type '(radio (function-item x-kill-primary-selection)
+                (function :tag "Other"))
+  :group 'toolbar)
 
 (defun toolbar-cut ()
   (interactive)
   (call-interactively toolbar-cut-function))
 
-(defvar toolbar-copy-function 'x-copy-primary-selection
-  "*Function to call when the copy icon is selected.")
+(defcustom toolbar-copy-function 'x-copy-primary-selection
+  "*Function to call when the copy icon is selected."
+  :type '(radio (function-item x-copy-primary-selection)
+                (function :tag "Other"))
+  :group 'toolbar)
 
 (defun toolbar-copy ()
   (interactive)
   (call-interactively toolbar-copy-function))
 
-(defvar toolbar-paste-function 'x-yank-clipboard-selection
-  "*Function to call when the paste icon is selected.")
+(defcustom toolbar-paste-function 'x-yank-clipboard-selection
+  "*Function to call when the paste icon is selected."
+  :type '(radio (function-item x-yank-primary-selection)
+                (function :tag "Other"))
+  :group 'toolbar)
 
 (defun toolbar-paste ()
   (interactive)
   (call-interactively toolbar-paste-function))
 
-(defvar toolbar-undo-function 'undo
-  "*Function to call when the undo icon is selected.")
+(defcustom toolbar-undo-function 'undo
+  "*Function to call when the undo icon is selected."
+  :type '(radio (function-item undo)
+                (function :tag "Other"))
+  :group 'toolbar)
 
 (defun toolbar-undo ()
   (interactive)
   (call-interactively toolbar-undo-function))
 
-(defvar toolbar-replace-function 'query-replace
-  "*Function to call when the replace icon is selected.")
+(defcustom toolbar-replace-function 'query-replace
+  "*Function to call when the replace icon is selected."
+  :type '(radio (function-item query-replace)
+                (function :tag "Other"))
+  :group 'toolbar)
 
 (defun toolbar-replace ()
   (interactive)
@@ -92,13 +123,17 @@
 ;; toolbar ispell variables and defuns
 ;;
 
-(defvar toolbar-ispell-function
-  (lambda ()
-    (interactive)
-    (if (region-active-p)
-	(ispell-region (region-beginning) (region-end))
-      (ispell-buffer)))
-  "*Function to call when the ispell icon is selected.")
+(defun toolbar-ispell-internal ()
+  (interactive)
+     (if (region-active-p)
+	 (ispell-region (region-beginning) (region-end))
+       (ispell-buffer)))
+
+(defcustom toolbar-ispell-function 'toolbar-ispell-internal
+  "*Function to call when the ispell icon is selected."
+  :type '(radio (function-item toolbar-ispell-internal)
+		(function :tag "Other"))
+  :group 'toolbar)
 
 (defun toolbar-ispell ()
   "Intelligently spell the region or buffer."
@@ -109,28 +144,43 @@
 ;; toolbar mail variables and defuns
 ;;
 
-(defmacro toolbar-external (process &rest args)
-  `(lambda () (interactive) (call-process ,process nil 0 nil ,@args)))
+;; This used to be a macro that expanded its arguments to a form that
+;; called `call-process'.  With the advent of customize, it's better
+;; to have it as a defun, to make customization easier.
+(defun toolbar-external (process &rest args)
+  (interactive)
+  (apply 'call-process process nil 0 nil args))
 
-(defvar toolbar-mail-commands-alist
+(defcustom toolbar-mail-commands-alist
   `((vm		. vm)
     (gnus	. gnus-no-server)
     (rmail	. rmail)
     (mh		. mh-rmail)
-    (pine	. ,(toolbar-external "xterm" "-e" "pine")) ; *gag*
-    (elm	. ,(toolbar-external "xterm" "-e" "elm"))
-    (mutt	. ,(toolbar-external "xterm" "-e" "mutt"))
-    (exmh	. ,(toolbar-external "exmh"))
+    (pine	. (toolbar-external "xterm" "-e" "pine")) ; *gag*
+    (elm	. (toolbar-external "xterm" "-e" "elm"))
+    (mutt	. (toolbar-external "xterm" "-e" "mutt"))
+    (exmh	. (toolbar-external "exmh"))
     ;; How to turn on netscape mail, command-line??
-    (netscape	. ,(toolbar-external "netscape")))
-  "Alist of mail readers and their commands.
-The car of the alist is the mail reader, and the cdr is the form
-used to start it.")
+    (netscape	. (toolbar-external "netscape")))
+  "*Alist of mail readers and their commands.
+The car of each alist element is the mail reader, and the cdr is the form
+used to start it."
+  :type '(repeat (cons (symbol :tag "Mailer") (function :tag "Start with")))
+  :group 'toolbar)
 
-(defvar toolbar-mail-reader 'vm
+(defcustom toolbar-mail-reader 'vm
   "*Mail reader toolbar will invoke.
-The legal values are `vm' and `gnus', but you can add your own values
-by customizing `toolbar-mail-commands-alist'.")
+The legal values are the keys from `toolbar-mail-command-alist', which should
+be used to add new mail readers.
+
+Mail readers known by default are vm, gnus, rmail, mh, pine, elm, mutt,
+exmh and netscape."
+  :type '(symbol :validate (lambda (wid)
+			     (if (assq (widget-value wid) toolbar-mail-commands-alist)
+				 nil
+			       (widget-put wid :error "Unknown mail reader.")
+			       wid)))
+  :group 'toolbar)
 
 
 (defun toolbar-mail ()
@@ -192,27 +242,40 @@ by customizing `toolbar-mail-commands-alist'.")
 ;; toolbar news variables and defuns
 ;;
 
-(defvar toolbar-news-commands-alist
+(defcustom toolbar-news-commands-alist
   `((gnus	. gnus)			; M-x all-hail-gnus
-    (rn		. ,(toolbar-external "xterm" "-e" "rn"))
-    (nn		. ,(toolbar-external "xterm" "-e" "nn"))
-    (trn	. ,(toolbar-external "xterm" "-e" "trn"))
-    (xrn	. ,(toolbar-external "xrn"))
-    (slrn	. ,(toolbar-external "xterm" "-e" "slrn"))
-    (pine	. ,(toolbar-external "xterm" "-e" "pine")) ; *gag*
-    (tin	. ,(toolbar-external "xterm" "-e" "tin")) ; *gag*
-    (netscape	. ,(toolbar-external "netscape" "news:")))
-  "Alist of news readers and their commands.
-Each list element is a pair.  The car of the pair is the mail
-reader, and the cdr is the form used to start it.")
+    (rn		. (toolbar-external "xterm" "-e" "rn"))
+    (nn		. (toolbar-external "xterm" "-e" "nn"))
+    (trn	. (toolbar-external "xterm" "-e" "trn"))
+    (xrn	. (toolbar-external "xrn"))
+    (slrn	. (toolbar-external "xterm" "-e" "slrn"))
+    (pine	. (toolbar-external "xterm" "-e" "pine")) ; *gag*
+    (tin	. (toolbar-external "xterm" "-e" "tin")) ; *gag*
+    (netscape	. (toolbar-external "netscape" "news:")))
+  "*Alist of news readers and their commands.
+The car of each alist element the pair is the news reader, and the cdr
+is the form used to start it."
+  :type '(repeat (cons (symbol :tag "Reader") (sexp :tag "Start with")))
+  :group 'toolbar)
 
-(defvar toolbar-news-reader 'gnus
+(defcustom toolbar-news-reader 'gnus
   "*News reader toolbar will invoke.
-The legal values are gnus, rn, nn, trn, xrn, slrn, pine and netscape.
-You can add your own values by customizing `toolbar-news-commands-alist'.")
+The legal values are the keys from `toolbar-news-command-alist', which should
+be used to add new news readers.
 
-(defvar toolbar-news-use-separate-frame t
-  "*Whether Gnus is invoked in a separate frame.")
+Newsreaders known by default are gnus, rn, nn, trn, xrn, slrn, pine and
+netscape."
+  :type '(symbol :validate (lambda (wid)
+			     (if (assq (widget-value wid) toolbar-news-commands-alist)
+				 nil
+			       (widget-put wid :error "Unknown newsreader.")
+			       wid)))
+  :group 'toolbar)
+
+(defcustom toolbar-news-use-separate-frame t
+  "*Whether Gnus is invoked in a separate frame."
+  :type 'boolean
+  :group 'toolbar)
 
 (defvar toolbar-news-frame nil
   "The frame in which news is displayed.")

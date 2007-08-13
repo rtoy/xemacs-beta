@@ -256,11 +256,6 @@ select_console_1 (Lisp_Object console)
     Vwindow_system = Qx;
   else
 #endif
-#ifdef HAVE_NEXTSTEP
-  if (CONSOLE_NS_P (XCONSOLE (console)))
-    Vwindow_system = Qns;
-  else
-#endif
     Vwindow_system = Qnil;
 }
 
@@ -315,7 +310,6 @@ DEFUN ("console-type", Fconsole_type, 0, 1, 0, /*
 Return the type of the specified console (e.g. `x' or `tty').
 Value is `tty' for a tty console (a character-only terminal),
 `x' for a console that is an X display,
-`ns' for a console that is a NeXTstep connection (not yet implemented),
 `win32' for a console that is a Windows or Windows NT connection (not yet
   implemented),
 `pc' for a console that is a direct-write MS-DOS connection (not yet

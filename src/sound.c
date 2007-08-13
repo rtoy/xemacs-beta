@@ -32,10 +32,6 @@ Boston, MA 02111-1307, USA.  */
 #include "console-x.h"
 #endif
 
-#ifdef HAVE_NEXTSTEP
-#include "console-ns.h"
-#endif
-
 #include "commands.h"
 #include "device.h"
 #include "redisplay.h"

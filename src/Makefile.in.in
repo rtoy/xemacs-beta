@@ -465,12 +465,6 @@ LDFLAGS = LD_SWITCH_SITE LD_SWITCH_X_SITE LD_SWITCH_SYSTEM \
 	  LD_SWITCH_X_SYSTEM LD_SWITCH_MACHINE \
 	  -L. $(LIBX11_LDFLAGS) ENERGIZE_LDFLAGS XILDOFF NO_GNU_LINKER
 
-#ifdef HAVE_NEXTSTEP
-.SUFFIXES: .m
-.m.o:
-	$(CC) -c $(ALL_CFLAGS) $<
-#endif
-
 .c.o:
 	$(CC) -c $(ALL_CFLAGS) $<
 
@@ -541,52 +535,6 @@ XMU_LIB = -lXmu
 #define XMU_OBJS xmu.o
 #endif
 
-#ifdef EPOCH
-#define EPOCH_OBJS epoch.o
-#else
-#define EPOCH_OBJS
-#endif
-
-#ifdef MULE
-
-/* We ignore mule-mcpath.o for the moment. */
-
-# ifdef HAVE_CANNA
-#  define CANNA_OBJS mule-canna.o
-#  define CANNA_OBJ_SRC ${muledirfromsrc}/mule-canna.c
-#  define LIB_CANNA -lcanna -lRKC
-# else
-#  define CANNA_OBJS
-#  define CANNA_OBJ_SRC
-#  define LIB_CANNA
-# endif
-# ifdef HAVE_WNN
-#  define WNN_OBJS mule-wnnfns.o
-#  define WNN_OBJ_SRC ${muledirfromsrc}/mule-wnnfns.c
-#  define LIB_WNN -lwnn
-# else
-#  define WNN_OBJS
-#  define WNN_OBJ_SRC
-#  define LIB_WNN
-# endif
-/* Chuck says that you have to have at least one specified actual
-   object file per line. */
-mule_objs=	mule.o mule-ccl.o CANNA_OBJS \
-		WNN_OBJS mule-charset.o mule-coding.o
-mule_obj_src=	${muledirfromsrc}/mule.c \
-		${muledirfromsrc}/mule-ccl.c CANNA_OBJ_SRC \
-		WNN_OBJ_SRC ${muledirfromsrc}/mule-charset.c \
-		${muledirfromsrc}/mule-coding.c
-
-#else /* not MULE */
-
-mule_objs=
-mule_obj_src=
-#define LIB_CANNA
-#define LIB_WNN
-
-#endif /* not MULE */
-
 /* LWLIBSRCDIR is defined above regardless of X being used or not.
    This avoids having to conditionalize the dependencies on lwlib.h */
 LWLIBBUILDDIR = $(dot)$(dot)/lwlib
@@ -656,36 +604,50 @@ LIBX=  $(LIBX11_LIBS) $(XMU_LIB) -lXt -lXext LIBX11_INTL -lX11 LIBX11_MACHINE LI
 #else
 # define XOBJS
 # define XMU_OBJS
-# define EPOCH_OBJS
+
 #endif /* HAVE_X_WINDOWS */
 
-#ifdef HAVE_NEXTSTEP
-#ifdef HAVE_TOOLBARS
-#define TOOLBAR_NS_OBJS toolbar-ns.o
-#else
-#define TOOLBAR_NS_OBJS
-#endif
-#ifdef HAVE_MENUBARS
-#define MENUBAR_NS_OBJS menubar-ns.o
-#else
-#define MENUBAR_NS_OBJS
-#endif
-#ifdef HAVE_SCROLLBARS
-#define SCROLLBAR_NS_OBJS scrollbar-ns.o
-#else
-#define SCROLLBAR_NS_OBJS
-#endif
-#ifdef HAVE_DIALOGS
-#define DIALOG_NS_OBJS dialog-ns.o
-#else
-#define DIALOG_NS_OBJS
-#endif
-#define NSOBJS console-ns.o device-ns.o DIALOG_NS_OBJS event-ns.o frame-ns.o \
-	       glyphs-ns.o MENUBAR_NS_OBJS nsselect.o objects-ns.o \
-	       redisplay-ns.o SCROLLBAR_NS_OBJS TOOLBAR_NS_OBJS
-#else
-# define NSOBJS
-#endif /* HAVE_NEXTSTEP */
+/* We should be able to deal with Canna and Wnn in tty mode once MULE is */
+/* ported to tty, right? */
+#ifdef MULE
+
+/* We ignore mule-mcpath.o for the moment. */
+
+# ifdef HAVE_CANNA
+#  define CANNA_OBJS mule-canna.o
+#  define CANNA_OBJ_SRC ${muledirfromsrc}/mule-canna.c
+#  define LIB_CANNA -lcanna -lRKC
+# else
+#  define CANNA_OBJS
+#  define CANNA_OBJ_SRC
+#  define LIB_CANNA
+# endif
+# ifdef HAVE_WNN
+#  define WNN_OBJS mule-wnnfns.o
+#  define WNN_OBJ_SRC ${muledirfromsrc}/mule-wnnfns.c
+#  define LIB_WNN -lwnn
+# else
+#  define WNN_OBJS
+#  define WNN_OBJ_SRC
+#  define LIB_WNN
+# endif
+/* Chuck says that you have to have at least one specified actual
+   object file per line. */
+mule_objs=	mule.o mule-ccl.o CANNA_OBJS \
+		WNN_OBJS mule-charset.o mule-coding.o
+mule_obj_src=	${muledirfromsrc}/mule.c \
+		${muledirfromsrc}/mule-ccl.c CANNA_OBJ_SRC \
+		WNN_OBJ_SRC ${muledirfromsrc}/mule-charset.c \
+		${muledirfromsrc}/mule-coding.c
+
+#else /* not MULE */
+
+mule_objs=
+mule_obj_src=
+#define LIB_CANNA
+#define LIB_WNN
+
+#endif /* not MULE */
 
 #ifndef ORDINARY_LINK
 /* Fix linking if compiled with GCC.  */
@@ -905,7 +867,7 @@ objs=	abbrev.o alloc.o blocktype.o buffer.o bytecode.o \
 	cmds.o console.o console-stream.o \
 	data.o DATABASE_OBJS DEBUG_OBJS device.o DIALOG_OBJS dired.o doc.o \
 	doprnt.o dynarr.o \
-	editfns.o elhash.o emacs.o ENERGIZE_OBJS EPOCH_OBJS eval.o events.o \
+	editfns.o elhash.o emacs.o ENERGIZE_OBJS eval.o events.o \
 	event-stream.o EVENT_UNIXOID_OBJS extents.o \
 	faces.o fileio.o filelock.o filemode.o floatfns.o fns.o font-lock.o \
 	frame.o \
@@ -915,7 +877,7 @@ objs=	abbrev.o alloc.o blocktype.o buffer.o bytecode.o \
 	keymap.o $(RTC_PATCH_O) \
 	lread.o lstream.o \
 	macros.o marker.o md5.o MENUBAR_OBJS minibuf.o MOCKLISPOBJS \
-	NAS_OBJS NSOBJS \
+	NAS_OBJS \
 	objects.o opaque.o \
 	print.o process.o profile.o pure.o \
 	rangetab.o REALPATH_OBJS redisplay.o redisplay-output.o regex.o \
@@ -1085,15 +1047,8 @@ otherobjs= $(termcapobjs) BTLOBJS lastfile.o $(mallocobjs) $(rallocobjs) $(alloc
 #define X11_LISP
 #endif
 
-#ifdef HAVE_NEXTSTEP
-/* lisp files preloaded if compiled with support for NeXTstep */
-#define NS_LISP 
-#else
-#define NS_LISP
-#endif
-
 #ifdef HAVE_TTY
-/* lisp files preloaded if compiled with support for NeXTstep */
+/* lisp files preloaded if compiled with support for tty */
 #define TTY_LISP ${lispdir}term/tty-init.elc
 #else
 #define TTY_LISP
@@ -1130,12 +1085,6 @@ otherobjs= $(termcapobjs) BTLOBJS lastfile.o $(mallocobjs) $(rallocobjs) $(alloc
 #else
 #define MULE_LISP
 #define NOMULE_LISP ${lispdir}prim/files-nomule.elc
-#endif
-
-#ifdef EPOCH
-#define EPOCH_LISP ${lispdir}epoch/epoch.elc
-#else
-#define EPOCH_LISP
 #endif
 
 #ifdef ENERGIZE
@@ -1270,7 +1219,7 @@ lisp=   ${lispdir}paths.el \
 	${lispdir}packages/vc-hooks.elc \
         ${lispdir}prim/replace.elc ${lispdir}prim/specifier.elc \
         ${lispdir}modes/auto-show.elc SUNPRO_LISP TTY_LISP \
-        ${lispdir}bytecomp/bytecomp-runtime.elc FLOAT_LISP EPOCH_LISP \
+        ${lispdir}bytecomp/bytecomp-runtime.elc FLOAT_LISP \
         ${lispdir}prim/itimer.elc ${lispdir}prim/itimer-autosave.elc \
 	${lispdir}ediff/ediff-hook.elc \
 	${lispdir}custom/widget.elc \
@@ -1278,7 +1227,7 @@ lisp=   ${lispdir}paths.el \
 	${lispdir}packages/fontl-hooks.elc SCROLLBAR_LISP \
 	${lispdir}prim/buffer.elc MENUBAR_LISP \
 	${lispdir}packages/buff-menu.elc DIALOG_LISP MULE_LISP NOMULE_LISP \
-	${lispdir}modes/abbrev.elc X11_LISP NS_LISP ENERGIZE_LISP TOOLTALK_LISP
+	${lispdir}modes/abbrev.elc X11_LISP ENERGIZE_LISP TOOLTALK_LISP
 
 /* Other Lisp files that are not dumped out but where it is convenient
    (or required?) for them to be byte-compiled early, before xemacs is
@@ -1639,6 +1588,13 @@ Emacs.ad.h: ${srcdir}/${etcdir}Emacs.ad
 	@echo "Consult the file \`INSTALL' for instructions for building Emacs."
 	exit 1
 
+/* Cover your eyes, please */
+xemacs-version.h: ${lispdir}version.el
+	@echo "#define main_1 xemacs_`grep emacs-version ${lispdir}version.el | sed 's/.*\"\(.*\)\.\(.*\)\"/\1_\2/ \
+1q'`_`grep -i xemacs.*lucid.*beta ${lispdir}version.el | sed 's/.*\(beta[0-9]*\).*/\1/ \
+1q'`" > xemacs-version.h
+
+
 /* Some machines have alloca built-in.
    They should define HAVE_ALLOCA, or may just let alloca.s
    be used but generate no code.
@@ -1747,7 +1703,7 @@ clean: mostlyclean
 /**/# This is used in making a distribution.
 /**/# Do not use it on development directories!
 distclean: clean versionclean
-	rm -f config.h paths.h puresize_adjust.h Emacs.ad.h Makefile Makefile.in .pure
+	rm -f config.h paths.h puresize_adjust.h Emacs.ad.h Makefile Makefile.in .pure version.h
 realclean: distclean
 	rm -f TAGS
 versionclean:
@@ -1758,7 +1714,7 @@ extraclean: realclean
 /* The rule for the [sm] files has to be written a little funny to
    avoid looking like a C comment to CPP. */
 SOURCES = *.[chm] *.pswm [sm]/?* COPYING paths.h.in Makefile.in.in \
-	config.h.in README COPYING ChangeLog vms.pp-trans
+	config.h.in README COPYING ChangeLog
 unlock:
 	chmod u+w $(SOURCES)
 
@@ -2504,24 +2460,8 @@ emacs.o: sysdep.h
 emacs.o: sysfile.h
 emacs.o: systime.h
 emacs.o: systty.h
+emacs.o: xemacs-version.h
 energize.o: config.h
-epoch.o: blocktype.h
-epoch.o: config.h
-epoch.o: conslots.h
-epoch.o: console-x.h
-epoch.o: console.h
-epoch.o: device.h
-epoch.o: dynarr.h
-epoch.o: events.h
-epoch.o: frame.h
-epoch.o: frameslots.h
-epoch.o: objects-x.h
-epoch.o: objects.h
-epoch.o: scrollbar.h
-epoch.o: specifier.h
-epoch.o: systime.h
-epoch.o: toolbar.h
-epoch.o: xintrinsic.h
 eval.o: backtrace.h
 eval.o: blocktype.h
 eval.o: buffer.h
@@ -3616,7 +3556,6 @@ vm-limit.o: blocktype.h
 vm-limit.o: config.h
 vm-limit.o: dynarr.h
 vm-limit.o: mem-limits.h
-vmsproc.o: vmsproc.h
 window.o: blocktype.h
 window.o: buffer.h
 window.o: bufslots.h

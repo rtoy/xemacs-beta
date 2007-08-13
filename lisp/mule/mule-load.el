@@ -43,9 +43,9 @@
 ;      (load-gc "egg-wnn")
 ;      (setq egg-default-startup-file "eggrc-wnn")))
 
-;(if (featurep 'canna)
-;    (progn
-;      (load-gc "canna")))
+;; (if (and (boundp 'CANNA) CANNA)
+;;     (load-gc "canna")
+;;   )
 
 ;; Now load files to set up all the different languages/environments
 ;; that Mule knows about.

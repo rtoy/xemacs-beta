@@ -297,7 +297,18 @@ vm-included-text-prefix is prepended to every yanked line."
 		    (t (setq parts (list o))))
 	      (while parts
 		(cond ((vm-mime-text-type-p (car parts))
-		       (if (vm-mime-display-internal-text/plain (car parts) t)
+		       (if (cond ((vm-mime-types-match
+				   "text/html"
+				   (car (vm-mm-layout-type (car parts))))
+				  (vm-mime-display-internal-text/html
+				   (car parts)))
+				 ((vm-mime-types-match
+				   "text/enriched"
+				   (car (vm-mm-layout-type (car parts))))
+				  (vm-mime-display-internal-text/enriched
+				   (car parts)))
+				 ((vm-mime-display-internal-text/plain
+				   (car parts) t)))
 			   nil
 			 ;; charset problems probably
 			 ;; just dump the raw bits
@@ -1002,7 +1013,7 @@ found, the current buffer remains selected."
     (and in-reply-to (insert "In-Reply-To: " in-reply-to "\n"))
     (and references (insert "References: " references "\n"))
     (insert "X-Mailer: VM " vm-version " under "
-	    (if (vm-fsfemacs-19-p) "Emacs " "")
+	    (if vm-fsfemacs-19-p "Emacs " "")
 	    emacs-version "\n")
     ;; REPLYTO support for FSF Emacs v19.29
     (and (eq mail-default-reply-to t)

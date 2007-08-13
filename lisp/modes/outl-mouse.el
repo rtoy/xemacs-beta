@@ -110,10 +110,12 @@ Set this to nil to inhibit progress messages.")
 ;;
 ;; No user definable variables beyond this point.
 ;;
-(defconst outline-up-arrow
-  (make-pixmap	; an up-arrow
-   (if (featurep 'xpm)
-       (concat "/* XPM */
+
+;; I'll bet there's a neat way to do this with specifiers -- a pity the
+;; sucks so badly on it. -sb
+(defconst outline-up-arrow ; XEmacs
+  (make-glyph ; an up-arrow
+   (cond ((featurep 'xpm) (vector 'xpm :data (concat "/* XPM */
 static char * arrow[] = {
 \"10 10 5 1\",
 \" 	c none\",
@@ -130,15 +132,19 @@ static char * arrow[] = {
 \" ..ooooXX \",
 \" ..ooooXX \",
 \"..OOOOOOXX\",
-\"OOOOOOOOOO\"};")
-     (list 10 10 (concat "\000\000\000\000\060\000\060\000\150\000"
-			 "\150\000\324\000\324\000\376\001\376\001"))))
+\"OOOOOOOOOO\"};")))
+	 ((featurep 'x)
+	  (vector 'xbm
+		  :data
+		  (list 10 10
+			(concat "\000\000\000\000\060\000\060\000\150\000"
+				"\150\000\324\000\324\000\376\001\376\001"))))
+	 (t "^")))
   "Bitmap object for outline up glyph.")
 
-(defconst outline-up-arrow-mask
-  (make-pixmap	; an up-arrow
-   (if (featurep 'xpm)
-       (concat "/* XPM */
+(defconst outline-up-arrow-mask ; XEmacs
+  (make-glyph ; an up-arrow
+   (cond ((featurep 'xpm) (vector 'xpm :data (concat "/* XPM */
 static char * arrow[] = {
 \"10 10 5 1\",
 \" 	c none\",
@@ -155,15 +161,19 @@ static char * arrow[] = {
 \" ..ooooXX \",
 \" ..ooooXX \",
 \"..OOOOOOXX\",
-\"OOOOOOOOOO\"};")
-     (list 10 10 (concat "\000\000\000\000\060\000\060\000\130\000"
-			 "\130\000\254\000\274\000\006\001\376\001"))))
+\"OOOOOOOOOO\"};")))
+	 ((featurep 'x)
+	  (vector 'xbm
+		  :data 
+		  (list 10 10
+			(concat "\000\000\000\000\060\000\060\000\130\000"
+				"\130\000\254\000\274\000\006\001\376\001"))))
+	 (t "+")))
   "Bitmap object for outline depressed up glyph.")
 
-(defconst outline-down-arrow
-  (make-pixmap	; a down-arrow
-   (if (featurep 'xpm)
-       (concat "/* XPM */
+(defconst outline-down-arrow ; XEmacs
+  (make-glyph	; a down-arrow
+   (cond ((featurep 'xpm) (vector 'xpm :data (concat "/* XPM */
 static char * down[] = {
 \"10 10 5 1\",
 \" 	c " outline-glyph-lit-colour "\",
@@ -180,15 +190,19 @@ static char * down[] = {
 \"ooo..XXooo\",
 \"ooo..XXooo\",
 \"oooo.Xoooo\",
-\"oooo.Xoooo\"};")
-     (list 10 10 (concat "\000\000\000\000\376\001\202\001\364\000"
-			 "\324\000\150\000\150\000\060\000\060\000"))))
+\"oooo.Xoooo\"};")))
+	 ((featurep 'x)
+	  (vector 'xbm
+		  :data 
+		  (list 10 10
+			(concat "\000\000\000\000\376\001\202\001\364\000"
+				"\324\000\150\000\150\000\060\000\060\000"))))
+	 (t "v")))
   "Bitmap object for outline down glyph.")
 
-(defconst outline-down-arrow-mask
-  (make-pixmap	; a down-arrow
-   (if (featurep 'xpm)
-       (concat "/* XPM */
+(defconst outline-down-arrow-mask ; XEmacs
+  (make-glyph	; a down-arrow
+   (cond ((featurep 'xpm) (vector 'xpm :data (concat "/* XPM */
 static char * down[] = {
 \"10 10 5 1\",
 \" 	c " outline-glyph-shade-colour "\",
@@ -205,15 +219,19 @@ static char * down[] = {
 \"ooo..XXooo\",
 \"ooo..XXooo\",
 \"oooo.Xoooo\",
-\"oooo.Xoooo\"};")
-   (list 10 10 (concat "\000\000\000\000\376\001\376\001\254\000"
-		       "\254\000\130\000\130\000\060\000\060\000"))))
+\"oooo.Xoooo\"};")))
+	 ((featurep 'x)
+	  (vector 'xbm
+		  :data
+		  (list 10 10
+			(concat "\000\000\000\000\376\001\376\001\254\000"
+				"\254\000\130\000\130\000\060\000\060\000"))))
+	 (t "+")))
   "Bitmap object for outline depressed down glyph.")
 
 (defconst outline-right-arrow
-  (make-pixmap	; a right-arrow
-   (if (featurep 'xpm)
-       (concat "/* XPM */
+  (make-glyph	; a right-arrow
+   (cond ((featurep 'xpm) (vector 'xpm :data (concat "/* XPM */
 static char * right[] = {
 \"10 10 5 1\",
 \" 	c " outline-glyph-lit-colour "\",
@@ -230,15 +248,19 @@ static char * right[] = {
 \"  ooOOOOXX\",
 \"  OOOOXXXX\",
 \" OOOXXXXXX\",
-\" OXXXXXXXX\"};")
-   (list 10 10 (concat "\000\000\006\000\032\000\142\000\232\001"
-		       "\352\001\172\000\036\000\006\000\000\000"))))
+\" OXXXXXXXX\"};")))
+	 ((featurep 'x)
+	  (vector 'xbm
+		  :data
+		  (list 10 10
+			(concat "\000\000\006\000\032\000\142\000\232\001"
+				"\352\001\172\000\036\000\006\000\000\000"))))
+	 (t ">")))
   "Bitmap object for outline right glyph.")
 
 (defconst outline-right-arrow-mask
-  (make-pixmap	; a right-arrow
-   (if (featurep 'xpm)
-       (concat "/* XPM */
+  (make-glyph	; a right-arrow
+   (cond ((featurep 'xpm) (vector 'xpm :data (concat "/* XPM */
 static char * right[] = {
 \"10 10 5 1\",
 \" 	c " outline-glyph-shade-colour "\",
@@ -255,9 +277,14 @@ static char * right[] = {
 \"  ooOOOOXX\",
 \"  OOOOXXXX\",
 \" OOOXXXXXX\",
-\" OXXXXXXXX\"};")
-   (list 10 10 (concat "\000\000\006\000\036\000\176\000\346\001"
-		       "\236\001\146\000\036\000\006\000\000\000"))))
+\" OXXXXXXXX\"};")))
+	 ((featurep 'x)
+	  (vector 'xbm
+		  :data
+		  (list 10 10
+			(concat "\000\000\006\000\036\000\176\000\346\001"
+				"\236\001\146\000\036\000\006\000\000\000"))))
+	 (t "+")))
   "Bitmap object for outline depressed right glyph.")
 
 (defvar outline-glyph-menu

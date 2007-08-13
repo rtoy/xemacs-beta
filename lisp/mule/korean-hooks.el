@@ -94,7 +94,7 @@
                 (let ((proc (get-buffer-process (current-buffer))))
                   (set-process-input-coding-system  proc 'euc-korea)
                   (set-process-output-coding-system proc 'euc-korea))))
-    (set-buffer-file-coding-system-for-read 'autodetect)
+    (set-buffer-file-coding-system-for-read 'automatic-conversion)
     (set-default-buffer-file-coding-system  'euc-korea)
     (setq keyboard-coding-system            'euc-korea)
     (setq terminal-coding-system            'euc-korea)

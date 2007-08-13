@@ -376,12 +376,6 @@ struct x_frame
 #endif /* XIM_XLIB */
 #endif /* HAVE_XIM */
 
-/* This needs to go in an include file that's included by inline.c
-   in order for the error-checking functions to get defined. */
-#ifdef EPOCH
-DECLARE_LRECORD (x_resource, struct Lisp_X_Resource);
-#endif
-
 /* Variables associated with the X display frame this emacs is using. */
 extern XtAppContext Xt_app_con;
 
@@ -504,11 +498,6 @@ void describe_Status	 (Status status);
 #endif /* DEBUG_XEMACS */
 #endif /* XIM_XLIB */
 #endif /* HAVE_XIM */
-
-#ifdef EPOCH
-extern Lisp_Object Qx_property_change, Qx_client_message, Qx_map, Qx_unmap;
-extern Lisp_Object Vepoch_event, Vepoch_event_handler;
-#endif
 
 extern int in_resource_setting;
 extern int in_specifier_change_function;

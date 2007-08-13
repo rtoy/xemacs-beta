@@ -817,17 +817,6 @@ If it returns non-nil, this file needs processing by evalling
 
 (require 'backquote)
 
-(defmacro with-caps-disable-folding (string &rest body) "\
-Eval BODY with `case-fold-search' let to nil if STRING contains
-uppercase letters and `search-caps-disable-folding' is t."
-  `(let ((case-fold-search
-          (if (and case-fold-search search-caps-disable-folding)
-              (isearch-no-upper-case-p ,string)
-            case-fold-search)))
-     ,@body))
-(put 'with-caps-disable-folding 'lisp-indent-function 1)
-(put 'with-caps-disable-folding 'edebug-form-spec '(form body))
-
 (defun find-tag-internal (tagname)
   (let ((next (null tagname))
 	(exact (or tags-always-exact (consp tagname)))
@@ -1225,7 +1214,8 @@ See documentation of variable `tag-table-alist'."
                               ;; to the beginning of it so perform-replace
                               ;; will see it.
                               (progn (goto-char (match-beginning 0)) t)))
-        tags-loop-operate (list 'perform-replace from to t t delimited))
+        tags-loop-operate (list 'perform-replace from to t t 
+                                (not (null delimited))))
    (tags-loop-continue (or file-list-form t)))
 
 ;; Miscellaneous

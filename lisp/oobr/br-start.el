@@ -9,7 +9,7 @@
 ;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:     5-Sep-92 at 23:31:03
-;; LAST-MOD:     20-Feb-97 at 06:59:33 by Bob Weiner
+;; LAST-MOD:      9-Apr-97 at 00:16:58 by Bob Weiner
 ;;
 ;; Copyright (C) 1992, 1993, 1994, 1997  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
@@ -73,8 +73,14 @@ The value is actually the tail of LIST whose car is ELT."
 (defun oo-browser (&optional same-env-flag)
   "Prompt for an Environment and language over which to run the OO-Browser.
 Optional prefix argument SAME-ENV-FLAG means browse the current Environment,
-if any, without prompting."
-  (interactive "P")
+if any, without prompting.  Otherwise, if called interactively, give the user
+a choice whether to re-browse the last Environment or to browse a new one."
+  (interactive
+   (list (prog1
+	     (if (and (not current-prefix-arg) br-env-file br-lang-prefix)
+		 (y-or-n-p (format "(OO-Browser): Browse %s again? " br-env-file))
+	       current-prefix-arg)
+	   (message ""))))
   (if (and same-env-flag br-env-file br-lang-prefix)
       (funcall (intern-soft (concat br-lang-prefix "browse")))
     (call-interactively 'br-env-browse)))

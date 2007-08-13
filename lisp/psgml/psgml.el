@@ -1,5 +1,5 @@
 ;;; psgml.el --- SGML-editing mode with parsing support
-;; $Id: psgml.el,v 1.6 1997/03/08 23:26:54 steve Exp $
+;; $Id: psgml.el,v 1.7 1997/04/10 05:55:50 steve Exp $
 
 ;; Copyright (C) 1993, 1994, 1995, 1996 Lennart Staflin
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -77,15 +77,39 @@
 
 ;;; User settable options:
 
-(defvar sgml-insert-missing-element-comment t
+(defgroup sgml nil
+  "Standard Generalized Markup Language"
+  :group 'languages)
+
+(defgroup psgml nil
+  "SGML-editing mode with parsing support"
+  :prefix "sgml-"
+  :group 'sgml)
+
+(defgroup psgml-insert nil
+  "Inserting features of psgml"
+  :prefix "sgml-"
+  :group 'psgml)
+
+(defgroup psgml-dtd nil
+  "DTD, CATALOG and DOCTYPE customizations in psgml"
+  :prefix "sgml-"
+  :group 'psgml)
+
+
+(defcustom sgml-insert-missing-element-comment t
   "*If true, and sgml-auto-insert-required-elements also true,
 `sgml-insert-element' will insert a comment if there is an element required
-but there is more than one to choose from." )
+but there is more than one to choose from."
+  :type 'boolean
+  :group 'psgml-insert)
 
-(defvar sgml-insert-end-tag-on-new-line nil
+(defcustom sgml-insert-end-tag-on-new-line nil
   "*If true, `sgml-insert-element' will put the end-tag on a new line
 after the start-tag. Useful on slow terminals if you find the end-tag after
-the cursor irritating." )
+the cursor irritating."
+  :type 'boolean
+  :group 'psgml-insert)
 
 (defvar sgml-doctype nil
   "*If set, this should be the name of a file that contains the doctype
@@ -94,23 +118,30 @@ Setting this variable automatically makes it local to the current buffer.")
 (put 'sgml-doctype 'sgml-type 'string)
 (make-variable-buffer-local 'sgml-doctype)
 
-(defvar sgml-system-identifiers-are-preferred nil
+(defcustom sgml-system-identifiers-are-preferred nil
   "*If nil, PSGML will look up external entities by searching the catalogs
 in `sgml-local-catalogs' and `sgml-catalog-files' and only if the
 entity is not found in the catalogs will a given system identifer be
 used. If the variable is non-nil and a system identifer is given, the
 system identifier will be used for the entity. If no system identifier
-is given the catalogs will searched.")
+is given the catalogs will searched."
+  :type 'boolean
+  :group 'psgml-dtd)
 
-(defvar sgml-range-indicator-max-length 9
+(defcustom sgml-range-indicator-max-length 9
   "*Maximum number of characters used from the first and last entry
-of a submenu to indicate the range of that menu.")
+of a submenu to indicate the range of that menu."
+  :type 'integer
+  :group 'psgml)
 
-(defvar sgml-default-doctype-name nil
-  "*Document type name to use if no document type declaration is present.")
+(defcustom sgml-default-doctype-name nil
+  "*Document type name to use if no document type declaration is present."
+  :type '(choice string (const nil))
+  :group 'psgml-dtd)
+
 (put 'sgml-default-doctype-name 'sgml-type 'string-or-nil)
 
-(defvar sgml-markup-faces '((start-tag 	. bold)
+(defcustom sgml-markup-faces '((start-tag 	. bold)
 			    (end-tag 	. bold)
 			    (comment 	. italic)
 			    (pi 	. bold)
@@ -131,7 +162,9 @@ pi	- processing instruction
 sgml	- SGML declaration
 start-tag
 entity  - general entity reference
-shortref- short reference")
+shortref- short reference"
+  :type '(repeat (cons symbol face))
+  :group 'psgml)
 
 (defvar sgml-buggy-subst-char-in-region 
   (or (not (boundp 'emacs-minor-version))
@@ -141,22 +174,30 @@ shortref- short reference")
 The bug sets the buffer modified.  If this is set, folding commands
 will be slower.")
 
-(defvar sgml-set-face nil
-  "*If non-nil, psgml will set the face of parsed markup.")
+(defcustom sgml-set-face nil
+  "*If non-nil, psgml will set the face of parsed markup."
+  :type 'boolean
+  :group 'psgml)
 (put 'sgml-set-face 'sgml-desc "Set face of parsed markup")
 
-(defvar sgml-live-element-indicator nil
-  "*If non-nil, indicate current element in mode line.")
+(defcustom sgml-live-element-indicator nil
+  "*If non-nil, indicate current element in mode line."
+  :type 'boolean
+  :group 'psgml)
 
-(defvar sgml-auto-activate-dtd nil
+(defcustom sgml-auto-activate-dtd nil
   "*If non-nil, loading a sgml-file will automatically try to activate its DTD.
 Activation means either to parse the document type declaration or to
 load a previously saved parsed DTD.  The name of the activated DTD
-will be shown in the mode line.")
+will be shown in the mode line."
+  :type 'boolean
+  :group 'psgml-dtd)
 (put 'sgml-auto-activate-dtd 'sgml-desc "Auto Activate DTD")
 
-(defvar sgml-offer-save t
-  "*If non-nil, ask about saving modified buffers before \\[sgml-validate] is run.")
+(defcustom sgml-offer-save t
+  "*If non-nil, ask about saving modified buffers before \\[sgml-validate] is run."
+  :type 'boolean
+  :group 'psgml)
 
 (defvar sgml-parent-document nil
   "* Used when the current file is part of a bigger document.
@@ -186,10 +227,12 @@ Setting this variable automatically makes it local to the current buffer.")
 (make-variable-buffer-local 'sgml-parent-document)
 (put 'sgml-parent-document 'sgml-type 'list)
 
-(defvar sgml-tag-region-if-active t ;; wing change
+(defcustom sgml-tag-region-if-active t ;; wing change
   "*If non-nil, the Tags menu will tag a region if the region is 
 considered active by Emacs.  If nil, region must be active and
-transient-mark-mode/zmacs-regions must be on for the region to be tagged.")
+transient-mark-mode/zmacs-regions must be on for the region to be tagged."
+  :type 'boolean
+  :group 'psgml)
 
 (defvar sgml-normalize-trims t
   "*If non-nil, sgml-normalize will trim off white space from end of element
@@ -229,46 +272,64 @@ Setting this variable automatically makes it local to the current buffer.")
 
 (make-variable-buffer-local 'sgml-always-quote-attributes)
 
-(defvar sgml-auto-insert-required-elements t
+(defcustom sgml-auto-insert-required-elements t
   "*If non-nil, automatically insert required elements in the content
-of an inserted element.")
+of an inserted element."
+  :type 'boolean
+  :group 'psgml-insert)
 
-(defvar sgml-balanced-tag-edit t
-  "*If non-nil, always insert start-end tag pairs.")
+(defcustom sgml-balanced-tag-edit t
+  "*If non-nil, always insert start-end tag pairs."
+  :type 'boolean
+  :group 'psgml-insert)
 
-(defvar sgml-omittag-transparent (not sgml-balanced-tag-edit) ;; wing change
+(defcustom sgml-omittag-transparent (not sgml-balanced-tag-edit) ;; wing change
   "*If non-nil, will show legal tags inside elements with omittable start tags
-and legal tags beyond omittable end tags.")
+and legal tags beyond omittable end tags."
+  :type 'boolean
+  :group 'psgml)
 
-(defvar sgml-leave-point-after-insert nil
+(defcustom sgml-leave-point-after-insert nil
   "*If non-nil, the point will remain after inserted tag(s).
-If nil, the point will be placed before the inserted tag(s).")
+If nil, the point will be placed before the inserted tag(s)."
+  :type 'boolean
+  :group 'psgml-insert)
 
-(defvar sgml-warn-about-undefined-elements t
-  "*If non-nil, print a warning when a tag for an undefined element is found.")
+(defcustom sgml-warn-about-undefined-elements t
+  "*If non-nil, print a warning when a tag for an undefined element is found."
+  :type 'boolean
+  :group 'psgml)
 
-(defvar sgml-warn-about-undefined-entities t
-  "*If non-nil, print a warning when an undefined entity is found.")
+(defcustom sgml-warn-about-undefined-entities t
+  "*If non-nil, print a warning when an undefined entity is found."
+  :type 'boolean
+  :group 'psgml)
 
-(defvar sgml-ignore-undefined-elements nil
+(defcustom sgml-ignore-undefined-elements nil
   "*If non-nil, recover from an undefined element by ignoring the tag.
 If nil, recover from an undefined element by assuming it can occur any
-where and has content model ANY.")
+where and has content model ANY."
+  :type 'boolean
+  :group 'psgml)
 
-(defvar sgml-recompile-out-of-date-cdtd 'ask
+(defcustom sgml-recompile-out-of-date-cdtd 'ask
   "*If non-nil, out of date compiled DTDs will be automatically recompiled.
 If the value is `ask', PSGML will ask before recompiling. A `nil'
 value will cause PSGML to silently load an out of date compiled DTD.
 A DTD that referes to undefined external entities is always out of
 date, thus in such case it can be useful to set this variable to
-`nil'.")
+`nil'."
+  :type 'symbol
+  :group 'psgml-dtd)
 (put 'sgml-recompile-out-of-date-cdtd 'sgml-type '(("No" . nil)
 						   ("Yes" . t)
 						   ("Ask" . ask)))
 
-(defvar sgml-trace-entity-lookup nil
+(defcustom sgml-trace-entity-lookup nil
   "*If non-nil, log messages about catalog files used to look for
-external entities.") 
+external entities."
+  :type 'boolean
+  :group 'psgml-dtd) 
 
 (defvar sgml-indent-step 2
   "*How much to increment indent for every element level.
@@ -283,19 +344,25 @@ Setting this variable automatically makes it local to the current buffer.")
 (make-variable-buffer-local 'sgml-indent-data)
 
 ;;; Wing addition
-(defvar sgml-inhibit-indent-tags nil
+(defcustom sgml-inhibit-indent-tags nil
   "*List of tags within which indentation is inhibited.
-The tags should be given as strings.")
+The tags should be given as strings."
+  :type 'boolean
+  :group 'psgml)
 
-(defvar sgml-data-directory (expand-file-name "sgml" data-directory)
+(defcustom sgml-data-directory (expand-file-name "sgml" data-directory)
   "*Directory for pre-supplied data files (DTD's and such).
-Set this before loading psgml.")
+Set this before loading psgml."
+  :type 'directory
+  :group 'psgml)
 
-(defvar sgml-system-path nil
+(defcustom sgml-system-path nil
   ;; wing addition
   "*List of directories used to look for system identifiers.
 The directory listed in `sgml-data-directory' is always searched in
-addition to the directories listed here.")
+addition to the directories listed here."
+  :type '(repeat directory)
+  :group 'psgml)
 (put 'sgml-system-path 'sgml-type 'list)
 
 (defun sgml-parse-colon-path (cd-path)
@@ -312,12 +379,12 @@ addition to the directories listed here.")
       (setq cd-start (+ cd-colon 1)))
     cd-list))
 
-(defvar sgml-public-map (sgml-parse-colon-path
-			 (or (getenv "SGML_PATH")
-			     ;; Wing change
-			     (concat "%S:" (directory-file-name
-					    sgml-data-directory)
-				     "%o/%c/%d")))
+(defcustom sgml-public-map (sgml-parse-colon-path
+			    (or (getenv "SGML_PATH")
+				;; Wing change
+				(concat "%S:" (directory-file-name
+					       sgml-data-directory)
+					"%o/%c/%d")))
   
   "*Mapping from public identifiers to file names.
 This is a list of possible file names.  To find the file for a public
@@ -331,17 +398,21 @@ sgml-public-transliterations.  If the file exists it will be the file
 used for the public identifier.  An element can also be a dotted pair
 (regexp . filename), the filename is a string treated as above, but
 only if the regular expression, regexp, matches the public
-identifier.")
+identifier."
+  :type '(repeat file)
+  :group 'psgml-dtd)
 (put 'sgml-public-map 'sgml-type 'list)
 
-(defvar sgml-local-catalogs nil
+(defcustom sgml-local-catalogs nil
 "*A list of SGML entity catalogs to be searched first when parsing the buffer.
 This is used in addtion to `sgml-catalog-files',  and `sgml-public-map'.
-This variable is automatically local to the buffer.")
+This variable is automatically local to the buffer."
+  :type '(repeat file)
+  :group 'psgml-dtd)
 (make-variable-buffer-local 'sgml-local-catalogs)
 (put 'sgml-local-catalogs 'sgml-type 'list)
 
-(defvar sgml-catalog-files (sgml-parse-colon-path
+(defcustom sgml-catalog-files (sgml-parse-colon-path
 			    (or (getenv "SGML_CATALOG_FILES")
 				;; Wing addition
 				(concat "CATALOG:"
@@ -350,21 +421,26 @@ This variable is automatically local to the buffer.")
                                         sgml-data-directory))))
   "*List of catalog entry files.
 The files are in the format defined in the SGML Open Draft Technical
-Resolution on Entity Management.")
+Resolution on Entity Management."
+  :type '(repeat file)
+  :group 'psgml-dtd)
 (put 'sgml-catalog-files 'sgml-type 'list)
 
 ;;; Wing addition
-(defvar sgml-ecat-files (list
+(defcustom sgml-ecat-files (list
 			 "ECAT"
 			 "~/sgml/ECAT"
 			 (expand-file-name "ECAT" sgml-data-directory))
-  "*List of catalog files for PSGML.")
+  "*List of catalog files for PSGML."
+  :type '(repeat file)
+  :group 'psgml-dtd)
 (put 'sgml-ecat-files 'sgml-type 'list)
 
-(defvar sgml-local-ecat-files nil
+(defcustom sgml-local-ecat-files nil
   "*List of local catalog files for PSGML.
-Automatically becomes buffer local if set.")
-
+Automatically becomes buffer local if set."
+  :type '(repeat file)
+  :group 'psgml-dtd)
 (make-variable-buffer-local 'sgml-local-ecat-files)
 (put 'sgml-local-ecat-files 'sgml-type 'list)
 
@@ -408,7 +484,7 @@ Example:
    (\"New page\"  \"<?NewPage>\"))
 ")
 
-(defvar sgml-custom-dtd nil
+(defcustom sgml-custom-dtd nil
   "Menu entries to be added to the DTD menu.
 The value should be a list of entries to be added to the DTD menu.
 Every entry should be a list. The first element of the entry is a string
@@ -429,7 +505,16 @@ Example:
     (\"DOCBOOK\" \"<!doctype docbook system 'docbook.dtd'>\"
      \"~/sgml/docbook.ced\"
      sgml-omittag nil sgml-shorttag t)))
-")
+"
+  :type '(repeat (list (string :tag "Menu Entry")
+		       (choice (const :tag "No doctype")
+			       (string :tag "Declaration"))
+		       (repeat :inline t
+			       (list :inline t
+				     (symbol :tag "Variable")
+				     (sexp :tag "Value")))))
+  :group 'psgml-dtd)
+			       
 
 
 ;;; Faces used in edit attribute buffer:
@@ -442,9 +527,9 @@ Example:
 ;;; Its error messages can be parsed by next-error.
 ;;; The -s option suppresses output.
 
-(defvar sgml-validate-command (concat "nsgmls -s -m "
-				      sgml-data-directory
-				      "/CATALOG %s %s")
+(defcustom sgml-validate-command (concat "nsgmls -s -m "
+					 sgml-data-directory
+					 "/CATALOG %s %s")
   "*The shell command to validate an SGML document.
 
 This is a `format' control string that by default should contain two
@@ -464,7 +549,9 @@ string will be replaced according to the list below, if the string contains
 %b means the visited file of the current buffer
 %s means the SGML declaration specified in the sgml-declaration variable
 %d means the file containing the DOCTYPE declaration, if not in the buffer 
-")
+"
+  :type 'string
+  :group 'psgml)
 
 (defvar sgml-validate-files nil
   "If non-nil, a function of no arguments that returns a list of file names.
@@ -479,12 +566,16 @@ format control string instead of the defaults.")
   "Alist of regexps to recognize error messages from `sgml-validate'.
 See `compilation-error-regexp-alist'.")
 
-(defvar sgml-declaration nil
-  "*If non-nil, this is the name of the SGML declaration file.")
+(defcustom sgml-declaration nil
+  "*If non-nil, this is the name of the SGML declaration file."
+  :type 'hook
+  :group 'psgml-dtd)
 (put 'sgml-declaration 'sgml-type 'string)
 
-(defvar sgml-mode-hook nil
-  "A hook or list of hooks to be run when entering sgml-mode")
+(defcustom sgml-mode-hook nil
+  "A hook or list of hooks to be run when entering sgml-mode"
+  :type 'hook
+  :group 'psgml)
 
 (defconst sgml-file-options
   '(

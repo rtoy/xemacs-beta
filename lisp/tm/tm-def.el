@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995,1996,1997 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: tm-def.el,v 1.5 1997/03/16 03:05:46 steve Exp $
+;; Version: $Id: tm-def.el,v 1.6 1997/04/10 05:55:52 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia, definition
 
 ;; This file is part of tm (Tools for MIME).
@@ -100,8 +100,8 @@
 ;;;
 
 (defun tm:set-face-region (b e face)
-  (let ((overlay (tl:make-overlay b e)))
-    (tl:overlay-put overlay 'face face)
+  (let ((overlay (make-overlay b e)))
+    (overlay-put overlay 'face face)
     ))
 
 (defvar tm:button-face 'bold
@@ -117,7 +117,7 @@
 (defun tm:add-button (from to func &optional data)
   "Create a button between FROM and TO with callback FUNC and data DATA."
   (and tm:button-face
-       (tl:overlay-put (tl:make-overlay from to) 'face tm:button-face))
+       (overlay-put (make-overlay from to) 'face tm:button-face))
   (add-text-properties from to
 		       (append (and tm:mouse-face
 				    (list 'mouse-face tm:mouse-face))

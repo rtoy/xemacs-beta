@@ -377,17 +377,27 @@
 ;; User variables.
 ;;
 
-(defvar tcl-indent-level 4
-  "*Indentation of Tcl statements with respect to containing block.")
+(defgroup tcl nil
+  "Tcl programming language"
+  :group 'languages)
 
-(defvar tcl-continued-indent-level 4
-  "*Indentation of continuation line relative to first line of command.")
+(defcustom tcl-indent-level 4
+  "*Indentation of Tcl statements with respect to containing block."
+  :type 'integer
+  :group 'tcl)
 
-(defvar tcl-auto-newline nil
+(defcustom tcl-continued-indent-level 4
+  "*Indentation of continuation line relative to first line of command."
+  :type 'integer
+  :group 'tcl)
+
+(defcustom tcl-auto-newline nil
   "*Non-nil means automatically newline before and after braces
-inserted in Tcl code.")
+inserted in Tcl code."
+  :type 'boolean
+  :group 'tcl)
 
-(defvar tcl-tab-always-indent t
+(defcustom tcl-tab-always-indent t
   "*Control effect of TAB key.
 If t (the default), always indent current line.
 If nil and point is not in the indentation area at the beginning of
@@ -400,48 +410,68 @@ to take place:
   3. Move forward to start of comment, indenting if necessary.
   4. Move forward to end of line, indenting if necessary.
   5. Create an empty comment.
-  6. Move backward to start of comment, indenting if necessary.")
+  6. Move backward to start of comment, indenting if necessary."
+  :type '(choice (const :tag "on" t)
+		 (const :tag "off" nil)
+		 (const :tag "The Works" other))
+  :group 'tcl)
 
-(defvar tcl-use-hairy-comment-detector t
+(defcustom tcl-use-hairy-comment-detector t
   "*If not `nil', then the more complicated, but slower, comment
 detecting function is used.  This variable is only used in GNU Emacs
-19 (the fast function is always used elsewhere).")
+19 (the fast function is always used elsewhere)."
+  :type 'boolean
+  :group 'tcl)
 
-(defvar tcl-electric-hash-style 'smart
+(defcustom tcl-electric-hash-style 'smart
   "*Style of electric hash insertion to use.
 Possible values are 'backslash, meaning that `\\' quoting should be
 done; 'quote, meaning that `\"' quoting should be done; 'smart,
 meaning that the choice between 'backslash and 'quote should be
 made depending on the number of hashes inserted; or nil, meaning that
 no quoting should be done.  Any other value for this variable is
-taken to mean 'smart.  The default is 'smart.")
+taken to mean 'smart.  The default is 'smart."
+  :type '(choice (const backslash) (const quote) (const smart))
+  :group 'tcl)
 
-(defvar tcl-help-directory-list nil
-  "*List of topmost directories containing TclX help files")
+(defcustom tcl-help-directory-list nil
+  "*List of topmost directories containing TclX help files"
+  :type '(repeat directory)
+  :group 'tcl)
 
-(defvar tcl-use-smart-word-finder t
+(defcustom tcl-use-smart-word-finder t
   "*If not nil, use a better way of finding the current word when
-looking up help on a Tcl command.")
+looking up help on a Tcl command."
+  :type 'boolean
+  :group 'tcl)
 
-(defvar tcl-application "wish"
-  "*Name of Tcl application to run in inferior Tcl mode.")
+(defcustom tcl-application "wish"
+  "*Name of Tcl application to run in inferior Tcl mode."
+  :type 'string
+  :group 'tcl)
 
-(defvar tcl-command-switches nil
-  "*Switches to supply to `tcl-application'.")
+(defcustom tcl-command-switches nil
+  "*Switches to supply to `tcl-application'."
+  :type '(repeat string)
+  :group 'tcl)
 
-(defvar tcl-prompt-regexp "^\\(% \\|\\)"
+(defcustom tcl-prompt-regexp "^\\(% \\|\\)"
   "*If not nil, a regexp that will match the prompt in the inferior process.
 If nil, the prompt is the name of the application with \">\" appended.
 
 The default is \"^\\(% \\|\\)\", which will match the default primary
-and secondary prompts for tclsh and wish.")
+and secondary prompts for tclsh and wish."
+  :type 'regexp
+  :group 'tcl)
 
-(defvar inferior-tcl-source-command "source %s\n"
+(defcustom inferior-tcl-source-command "source %s\n"
   "*Format-string for building a Tcl command to load a file.
 This format string should use `%s' to substitute a file name
 and should result in a Tcl expression that will command the
 inferior Tcl to load that file.  The filename will be appropriately
-quoted for Tcl.")
+quoted for Tcl."
+  :type 'string
+  :group 'tcl)
 
 ;;
 ;; Keymaps, abbrevs, syntax tables.
@@ -623,7 +653,7 @@ buffer with \\[set-variable].")
 ;; Hooks and other customization.
 ;;
 
-(defvar tcl-mode-hook nil
+(defcustom tcl-mode-hook nil
   "Hook run on entry to Tcl mode.
 
 Several functions exist which are useful to run from your
@@ -646,11 +676,15 @@ Emacs 19 users can add functions to the hook with `add-hook':
 
 Emacs 18 users must use `setq':
 
-   (setq tcl-mode-hook (cons 'tcl-guess-application tcl-mode-hook))")
+   (setq tcl-mode-hook (cons 'tcl-guess-application tcl-mode-hook))"
+  :type 'hook
+  :group 'tcl)
 
 
-(defvar inferior-tcl-mode-hook nil
-  "Hook for customizing Inferior Tcl mode.")
+(defcustom inferior-tcl-mode-hook nil
+  "Hook for customizing Inferior Tcl mode."
+  :type 'hook
+  :group 'tcl)
 
 (defvar tcl-proc-list
   '("proc" "method" "itcl_class")

@@ -26,6 +26,10 @@
 
 ;;; Synched up with: FSF 19.30.
 
+(defgroup texinfo nil
+  "Texinfo Mode"
+  :group 'docs)
+
 
 ;;; Autoloads:
 
@@ -630,20 +634,28 @@ to jump to the corresponding spot in the Texinfo source file."
 
 ;;; The  tex  and  print  function definitions:
 
-(defvar texinfo-texi2dvi-command "texi2dvi"
-  "*Command used by `texinfo-tex-buffer' to run TeX and texindex on a buffer.")
+(defcustom texinfo-texi2dvi-command "texi2dvi"
+  "*Command used by `texinfo-tex-buffer' to run TeX and texindex on a buffer."
+  :type 'string
+  :group 'texinfo)
 
-(defvar texinfo-tex-command "tex"
-  "*Command used by `texinfo-tex-region' to run TeX on a region.")
+(defcustom texinfo-tex-command "tex"
+  "*Command used by `texinfo-tex-region' to run TeX on a region."
+  :type 'string
+  :group 'texinfo)
 
-(defvar texinfo-texindex-command "texindex"
-  "*Command used by `texinfo-texindex' to sort unsorted index files.")
+(defcustom texinfo-texindex-command "texindex"
+  "*Command used by `texinfo-texindex' to sort unsorted index files."
+  :type 'string
+  :group 'texinfo)
 
-(defvar texinfo-delete-from-print-queue-command "lprm"
+(defcustom texinfo-delete-from-print-queue-command "lprm"
   "*Command string used to delete a job from the line printer queue.
 Command is used by \\[texinfo-delete-from-print-queue] based on
 number provided by a previous \\[tex-show-print-queue]
-command.")
+command."
+  :type 'string
+  :group 'texinfo)
 
 (defvar texinfo-tex-trailer "@bye"
   "String appended after a region sent to TeX by `texinfo-tex-region'.")

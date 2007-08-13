@@ -2345,6 +2345,8 @@ specifier_instance (Lisp_Object specifier, Lisp_Object matchspec,
   else if (DEVICEP (domain))
     device = domain;
   else
+    /* #### dmoore - dammit, this should just signal an error or something
+       shouldn't it? */
     abort ();
 
   if (NILP (buffer) && !NILP (window))

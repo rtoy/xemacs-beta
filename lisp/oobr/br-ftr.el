@@ -9,7 +9,7 @@
 ;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    20-Aug-91 at 18:16:36
-;; LAST-MOD:     20-Feb-97 at 07:02:51 by Bob Weiner
+;; LAST-MOD:     18-Mar-97 at 22:19:28 by Bob Weiner
 ;;
 ;; Copyright (C) 1991-1996, Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
@@ -191,7 +191,11 @@ matching feature tag, if any."
 	(file))
     (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
     (goto-char 1)
-    (if (search-forward feature-sig nil t)
+    ;; Add a newline to feature-sig to avoid matching to signatures that
+    ;; contain the desired signature's classname as a substring, e.g. when
+    ;; looking for a signature from Object, we don't want to match to
+    ;; ClassObject.
+    (if (search-forward (concat "\n" feature-sig) nil t)
 	(setq file (br-feature-file-of-tag)))
     (set-buffer obuf)
     file))
@@ -415,7 +419,7 @@ buffer."
   "Return the file name of the file whose tag point is within.
 Assumes the tag table is the current buffer."
   (save-excursion
-    (search-backward "" nil t)
+    (search-backward "\f" nil t)
     (forward-line 1)
     (let ((start (point)))
       (end-of-line)
@@ -429,7 +433,8 @@ Feature tags come from the file named by br-feature-tags-file."
 	result)
     (unwind-protect
 	(progn
-	  (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
+	  (set-buffer
+	   (funcall br-find-file-noselect-function br-feature-tags-file))
 	  (setq result (br-feature-def-file feature-tag-regexp))
 	  (if result (cons (br-feature-current) result)))
       (set-buffer obuf))))

@@ -999,7 +999,7 @@ See also `\\[telnet]'." t nil)
 
 ;;;***
 
-;;;### (autoloads (custom-make-dependencies custom-menu-update custom-save-all custom-buffer-create customize-apropos customize-customized customize-face customize-variable customize) "cus-edit" "custom/cus-edit.el")
+;;;### (autoloads (custom-make-dependencies custom-menu-create custom-save-all custom-buffer-create customize-apropos customize-customized customize-face customize-variable customize) "cus-edit" "custom/cus-edit.el")
 
 (autoload 'customize "cus-edit" "\
 Customize SYMBOL, which must be a customization group." t nil)
@@ -1028,8 +1028,11 @@ that option." nil nil)
 (autoload 'custom-save-all "cus-edit" "\
 Save all customizations in `custom-file'." nil nil)
 
-(autoload 'custom-menu-update "cus-edit" "\
-Update customize menu." t nil)
+(autoload 'custom-menu-create "cus-edit" "\
+Create menu for customization group SYMBOL.
+If optional NAME is given, use that as the name of the menu. 
+Otherwise make up a name from SYMBOL.
+The menu is in a format applicable to `easy-menu-define'." nil nil)
 
 (autoload 'custom-make-dependencies "cus-edit" "\
 Batch function to extract custom dependencies from .el files.
@@ -2027,67 +2030,6 @@ generations (this defaults to 1)." t nil)
 
 ;;;***
 
-;;;### (autoloads (mine-help mine-version mine) "mine" "games/mine.el")
-
-(autoload 'mine "mine" "\
-Play Mine.  Optional prefix argument is the number of mines.
-
-To play Mine, type `\\[mine]' or `\\[universal-argument] NUM \\[mine]'.  
-
-An optional prefix argument specifies the number of mines to be hidden
-in the field.  If no prefix argument is given, a percentage
-`mine-mines-%' of the field will contain mines.
-
-What is Mine?\\<mine-mode-map>
-
-Mine is a classical game of hide and seek played on a rectangular grid
-containing `mine-xmax' by `mine-ymax' squares (the mine field).
-
-Your opponent (Emacs, in this case) has hidden several mines within
-this field.  The object of the game is to find every hidden mine.
-
-When you're sure a square does NOT contain a mine, you can hit it:
-move the mouse over the square and press `\\[mine-mouse-hit]' or 
-move the cursor with the usual keys and press `\\[mine-hit-curpoint]'.
-
-If the square is a mine, you lose.
-If the square isn't a mine, a number appears which represents
-the number of mines in the surrounding eight squares.  
-
-When you think a square DOES contain a mine, you can mark it:
-move the mouse over the square and press `\\[mine-mouse-mark]' or
-move the cursor with the usual keys and press `\\[mine-mark-curpoint]'.
-
-The number of hidden mines remaining in the mine field is indicated
-inside the buffer.  Every time you mark a square as a mine, this
-number decreases by one, even if you incorrectly mark a square.
-
-If `mine-torus' is non-nil (the default), the Mine game is played over
-a periodic field (like a torus).  Each mine is hidden periodically
-over the mine board `mine-nb-tiles-x' times in the x direction and
-`mine-nb-tiles-y' times in the y direction.
-
-If `mine-colorp' is non-nil (the default, if the system allows it),
-the game is displayed with colors.  The colors can be chosen with the
-variable `mine-colors'.
-
-If the redisplay is not fast enough, increase `mine-level'.  If you
-want to see a smoother (slower) redisplay, decrease `mine-level',
-`mine-count1-max' and `mine-count2-max'.
-
-You can get help on `mine-mode' and its key bindings by pressing `\\[mine-help]'
-while in the *Mine* buffer.
-" t nil)
-
-(autoload 'mine-version "mine" "\
-Return string describing the current version of Mine.
-When called interactively, displays the version." t nil)
-
-(autoload 'mine-help "mine" "\
-*Get help on `mine-mode'." t nil)
-
-;;;***
-
 ;;;### (autoloads (mpuz) "mpuz" "games/mpuz.el")
 
 (autoload 'mpuz "mpuz" "\
@@ -2102,6 +2044,45 @@ Adds that special touch of class to your outgoing mail." t nil)
 
 (autoload 'snarf-spooks "spook" "\
 Return a vector containing the lines from `spook-phrases-file'." nil nil)
+
+;;;***
+
+;;;### (autoloads (xmine-mode) "xmine" "games/xmine.el")
+
+(autoload 'xmine-mode "xmine" "\
+A mode for playing the well known mine searching game.
+
+   `\\<annotation-local-map-default>\\[xmine-activate-function-button1]' or `\\<xmine-keymap>\\[xmine-key-action1]' unhides a tile,
+   `\\<annotation-local-map-default>\\[xmine-activate-function-button2]' or `\\<xmine-keymap>\\[xmine-key-action2]' unhides all neighbours of a tile,
+   `\\<annotation-local-map-default>\\[xmine-activate-function-button3]' or `\\<xmine-keymap>\\[xmine-key-action3]' (un)flagges a tile to hold a mine.
+
+   `\\[xmine-key-new]' starts a new game.
+   `\\[xmine-key-quit]' ends a game.
+
+All keybindings (with alternatives) currently in effect:
+   \\{xmine-keymap}
+
+The rules are quite easy: You start by unhiding (random) tiles. An unhidden
+tile showing a number tells you something about the number of mines in it's
+neighborhood, where the neighborhood are all 8 tiles (or less if it's
+at a border) around the tile.
+
+E.g. a \"1\" shows you that there is only one mine in the neighborhood of
+this tile. Empty tiles have no mines around them, and empty tiles in
+the neighborhood of another empty tile are all automatically unhidden
+if you unhide one of them. You need to find a strategy to use the
+information you have from the numbers to \"flag\" the tiles with mines
+under them and unhide all other tiles. If you correctly made this
+without accidently unhiding a mine, you've won.
+
+If you are sure you have correctly flagged all mines around a unhidden tile,
+you can use Button-2 or \\[xmine-key-action2] on it to unhide all it's
+neighbors. But beware: If you made a mistake by flagging the wrong mines,
+you'll blow up! 
+
+Have Fun." t nil)
+
+(fset 'xmine 'xmine-mode)
 
 ;;;***
 
@@ -3924,7 +3905,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.19 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.20 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4046,8 +4027,7 @@ A major-mode to edit m4 macro files
 
 ;;;### (autoloads (define-mail-alias build-mail-aliases mail-aliases-setup) "mail-abbrevs" "modes/mail-abbrevs.el")
 
-(defvar mail-abbrev-mailrc-file nil "\
-Name of file with mail aliases.   If nil, ~/.mailrc is used.")
+(defcustom mail-abbrev-mailrc-file nil "Name of file with mail aliases.   If nil, ~/.mailrc is used." :type '(choice (const :tag "Default" nil) file) :group 'mail-abbrevs)
 
 (defvar mail-aliases nil "\
 Word-abbrev table of mail address aliases.
@@ -5279,7 +5259,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.19 $
+vhdl-mode $Revision: 1.20 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -5437,7 +5417,8 @@ Return t if load is successful, else nil." t nil)
 (autoload 'oo-browser "br-start" "\
 Prompt for an Environment and language over which to run the OO-Browser.
 Optional prefix argument SAME-ENV-FLAG means browse the current Environment,
-if any, without prompting." t nil)
+if any, without prompting.  Otherwise, if called interactively, give the user
+a choice whether to re-browse the last Environment or to browse a new one." t nil)
 
 ;;;***
 
@@ -5547,21 +5528,13 @@ Environment file name.  See also the file \"br-help\"." t nil)
 
 ;;;### (autoloads (add-log-current-defun change-log-mode add-change-log-entry-other-window add-change-log-entry find-change-log prompt-for-change-log-name) "add-log" "packages/add-log.el")
 
-(defvar change-log-default-name nil "\
-*Name of a change log file for \\[add-change-log-entry].")
+(defcustom change-log-default-name nil "*Name of a change log file for \\[add-change-log-entry]." :type '(choice (const :tag "default" nil) string) :group 'change-log)
 
-(defvar add-log-current-defun-function nil "\
-*If non-nil, function to guess name of current function from surrounding text.
-\\[add-change-log-entry] calls this function (if nil, `add-log-current-defun'
-instead) with no arguments.  It returns a string or nil if it cannot guess.")
+(defcustom add-log-current-defun-function nil "*If non-nil, function to guess name of current function from surrounding text.\n\\[add-change-log-entry] calls this function (if nil, `add-log-current-defun'\ninstead) with no arguments.  It returns a string or nil if it cannot guess." :type 'boolean :group 'change-log)
 
-(defvar add-log-full-name nil "\
-*Full name of user, for inclusion in ChangeLog daily headers.
-This defaults to the value returned by the `user-full-name' function.")
+(defcustom add-log-full-name nil "*Full name of user, for inclusion in ChangeLog daily headers.\nThis defaults to the value returned by the `user-full-name' function." :type '(choice (const :tag "Default" nil) string) :group 'change-log)
 
-(defvar add-log-mailing-address nil "\
-*Electronic mail address of user, for inclusion in ChangeLog daily headers.
-This defaults to the value of `user-mail-address'.")
+(defcustom add-log-mailing-address nil "*Electronic mail address of user, for inclusion in ChangeLog daily headers.\nThis defaults to the value of `user-mail-address'." :type '(choice (const :tag "Default" nil) string) :group 'change-log)
 
 (autoload 'prompt-for-change-log-name "add-log" "\
 Prompt for a change log name." nil nil)
@@ -5994,27 +5967,15 @@ If `compare-ignore-case' is non-nil, changes in case are also ignored." t nil)
 
 ;;;### (autoloads (first-error previous-error next-error compilation-minor-mode grep compile) "compile" "packages/compile.el")
 
-(defvar compilation-mode-hook nil "\
-*List of hook functions run by `compilation-mode' (see `run-hooks').")
+(defcustom compilation-mode-hook nil "*List of hook functions run by `compilation-mode' (see `run-hooks')." :type 'hook :group 'compilation)
 
-(defvar compilation-window-height nil "\
-*Number of lines in a compilation window.  If nil, use Emacs default.")
+(defcustom compilation-window-height nil "*Number of lines in a compilation window.  If nil, use Emacs default." :type '(choice (const nil) integer) :group 'compilation)
 
-(defvar compilation-buffer-name-function nil "\
-Function to compute the name of a compilation buffer.
-The function receives one argument, the name of the major mode of the
-compilation buffer.  It should return a string.
-nil means compute the name with `(concat \"*\" (downcase major-mode) \"*\")'.")
+(defcustom compilation-buffer-name-function nil "Function to compute the name of a compilation buffer.\nThe function receives one argument, the name of the major mode of the\ncompilation buffer.  It should return a string.\nnil means compute the name with `(concat \"*\" (downcase major-mode) \"*\")'." :type 'function :group 'compilation)
 
-(defvar compilation-finish-function nil "\
-*Function to call when a compilation process finishes.
-It is called with two arguments: the compilation buffer, and a string
-describing how the process finished.")
+(defcustom compilation-finish-function nil "*Function to call when a compilation process finishes.\nIt is called with two arguments: the compilation buffer, and a string\ndescribing how the process finished." :type 'function :group 'compilation)
 
-(defvar compilation-search-path '(nil) "\
-*List of directories to search for source files named in error messages.
-Elements should be directory names, not file names of directories.
-nil as an element means to try the default directory.")
+(defcustom compilation-search-path '(nil) "*List of directories to search for source files named in error messages.\nElements should be directory names, not file names of directories.\nnil as an element means to try the default directory." :type '(repeat (choice (const :tag "Default" nil) directory)) :group 'compilation)
 
 (autoload 'compile "compile" "\
 Compile the program including the current buffer.  Default: run `make'.
@@ -6135,8 +6096,7 @@ See also `dabbrev-abbrev-char-regexp' and \\[dabbrev-completion]." t nil)
 
 ;;;### (autoloads (diff-backup diff) "diff" "packages/diff.el")
 
-(defvar diff-switches "-c" "\
-*A list of switches (strings) to pass to the diff program.")
+(defcustom diff-switches "-c" "*A list of switches (strings) to pass to the diff program." :type '(choice string (repeat string)) :group 'diff)
 
 (autoload 'diff "diff" "\
 Find and display the differences between OLD and NEW files.
@@ -7018,14 +6978,11 @@ For example, invoke \"emacs -batch -f batch-info-validate $info/ ~/*.info\"" nil
 
 ;;;### (autoloads (ispell-message ispell-minor-mode ispell-complete-word-interior-frag ispell-complete-word ispell-continue ispell-buffer ispell-region ispell-change-dictionary ispell-kill-ispell ispell-help ispell-word) "ispell" "packages/ispell.el")
 
-(defvar ispell-personal-dictionary nil "\
-*File name of your personal spelling dictionary, or nil.
-If nil, the default personal dictionary, \"~/.ispell_DICTNAME\" is used,
-where DICTNAME is the name of your default dictionary.")
+(defcustom ispell-personal-dictionary nil "*File name of your personal spelling dictionary, or nil.\nIf nil, the default personal dictionary, \"~/.ispell_DICTNAME\" is used,\nwhere DICTNAME is the name of your default dictionary." :type 'file :group 'ispell)
 
 (defvar ispell-dictionary-alist-1 '((nil "[A-Za-z]" "[^A-Za-z]" "[']" nil ("-B") nil) ("english" "[A-Za-z]" "[^A-Za-z]" "[']" nil ("-B") nil) ("british" "[A-Za-z]" "[^A-Za-z]" "[']" nil ("-B" "-d" "british") nil) ("deutsch" "[a-zA-Z\"]" "[^a-zA-Z\"]" "[']" t ("-C") "~tex") ("deutsch8" "[a-zA-ZÄÖÜäößü]" "[^a-zA-ZÄÖÜäößü]" "[']" t ("-C" "-d" "deutsch") "~latin1") ("nederlands" "[A-Za-zÀ-ÅÇÈ-ÏÒ-ÖÙ-Üà-åçè-ïñò-öù-ü]" "[^A-Za-zÀ-ÅÇÈ-ÏÒ-ÖÙ-Üà-åçè-ïñò-öù-ü]" "[']" t ("-C") nil) ("nederlands8" "[A-Za-zÀ-ÅÇÈ-ÏÒ-ÖÙ-Üà-åçè-ïñò-öù-ü]" "[^A-Za-zÀ-ÅÇÈ-ÏÒ-ÖÙ-Üà-åçè-ïñò-öù-ü]" "[']" t ("-C") nil)))
 
-(defvar ispell-dictionary-alist-2 '(("svenska" "[A-Za-z}{|\\133\\135\\\\]" "[^A-Za-z}{|\\133\\135\\\\]" "[']" nil ("-C") nil) ("svenska8" "[A-Za-zåäöÅÄö]" "[^A-Za-zåäöÅÄö]" "[']" nil ("-C" "-d" "svenska") "~list") ("francais7" "[A-Za-z]" "[^A-Za-z]" "[`'^---]" t nil nil) ("francais" "[A-Za-zÀÂÆÇÈÉÊËÎÏÔÙÛÜàâçèéêëîïôùûü]" "[^A-Za-zÀÂÆÇÈÉÊËÎÏÔÙÛÜàâçèéêëîïôùûü]" "[---']" t nil "~list") ("francais-tex" "[A-Za-zÀÂÆÇÈÉÊËÎÏÔÙÛÜàâçèéêëîïôùûü\\]" "[^A-Za-zÀÂÆÇÈÉÊËÎÏÔÙÛÜàâçèéêëîïôùûü\\]" "[---'^`\"]" t nil "~tex") ("dansk" "[A-ZÆØÅa-zæøå]" "[^A-ZÆØÅa-zæøå]" "" nil ("-C") nil)))
+(defvar ispell-dictionary-alist-2 '(("svenska" "[A-Za-z}{|\\133\\135\\\\]" "[^A-Za-z}{|\\133\\135\\\\]" "[']" nil ("-C") nil) ("svenska8" "[A-Za-zåäöÅÄö]" "[^A-Za-zåäöÅÄö]" "[']" nil ("-C" "-d" "svenska") "~list") ("francais7" "[A-Za-z]" "[^A-Za-z]" "[`'^---]" t nil nil) ("francais" "[A-Za-zÀÂÆÇÈÉÊËÎÏÔÙÛÜàâçèéêëîïôùûü]" "[^A-Za-zÀÂÆÇÈÉÊËÎÏÔÙÛÜàâçèéêëîïôùûü]" "[---']" t nil "~list") ("francais-tex" "[A-Za-zÀÂÆÇÈÉÊËÎÏÔÙÛÜàâçèéêëîïôùûü\\]" "[^A-Za-zÀÂÆÇÈÉÊËÎÏÔÙÛÜàâçèéêëîïôùûü\\]" "[---'^`\"]" t nil "~tex") ("italiano" "[A-Za-zÀÈÉÌÍÎÒÙÚàèéìíîòùú]" "[^A-Za-zÀÈÉÌÍÎÒÙÚàèéìíîòùú]" "[']" t ("-d" "italiano") "~list") ("dansk" "[A-ZÆØÅa-zæøå]" "[^A-ZÆØÅa-zæøå]" "" nil ("-C") nil)))
 
 (defvar ispell-dictionary-alist (append ispell-dictionary-alist-1 ispell-dictionary-alist-2) "\
 An alist of dictionaries and their associated parameters.

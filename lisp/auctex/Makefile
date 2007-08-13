@@ -97,6 +97,8 @@ EXTRAFILES = COPYING PROBLEMS MSDOS VMS OS2 WIN-NT Makefile ChangeLog \
 
 all:	lisp
 
+.IGNORE: some
+
 lisp:
 	$(ELC) $(AUCSRC) $(STYLESRC) $(CONTRIB)
 

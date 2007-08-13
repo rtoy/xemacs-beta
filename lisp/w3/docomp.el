@@ -61,7 +61,11 @@
 (load "bytecomp" t t nil)
 ;; Emacs 19 byte compiler complains about too much stuff by default.
 ;; Turn off most of the warnings here.
-(setq byte-compile-warnings '(free-vars))
+(setq byte-compile-warnings '(free-vars)
+      byte-compile-dynamic t
+      byte-compile-dynamic-docstrings t
+      byte-optimize t
+      )
 
 (require 'w3-vars)
 (require 'url)

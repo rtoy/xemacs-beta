@@ -21,7 +21,7 @@
 ;; LCD Archive Entry: 
 ;; filladapt|Kyle Jones|kyle_jones@wonderworks.com| 
 ;; Minor mode to adaptively set fill-prefix and overload filling functions|
-;; 10-June-1996|2.09|~/packages/filladapt.el| 
+;; 10-June-1996|2.10|~/packages/filladapt.el| 
 
 ;; These functions enhance the default behavior of Emacs' Auto Fill
 ;; mode and the commands fill-paragraph, lisp-fill-paragraph,
@@ -72,19 +72,40 @@
 
 (provide 'filladapt)
 
-(defvar filladapt-version "2.09"
+;; BLOB to make custom stuff work even without customize
+(eval-and-compile
+  (condition-case ()
+      (require 'custom)
+    (error nil))
+  (if (and (featurep 'custom) (fboundp 'custom-declare-variable))
+      nil ;; We've got what we needed
+    ;; We have the old custom-library, hack around it!
+    (defmacro defgroup (&rest args)
+      nil)
+    (defmacro defcustom (var value doc &rest args) 
+      (` (defvar (, var) (, value) (, doc))))))
+
+(defgroup filladapt nil
+  "Enhanced filling"
+  :group 'editing)
+
+(defvar filladapt-version "2.10"
   "Version string for filladapt.")
 
-(defvar filladapt-mode nil
+(defcustom filladapt-mode nil
   "*Non-nil means that Filladapt minor mode is enabled.
-Use the filladapt-mode command to toggle the mode on/off.")
+Use the filladapt-mode command to toggle the mode on/off."
+  :type 'boolean
+  :group 'filladapt)
 (make-variable-buffer-local 'filladapt-mode)
 
-(defvar filladapt-mode-line-string " Filladapt"
+(defcustom filladapt-mode-line-string " Filladapt"
   "*String to display in the modeline when Filladapt mode is active.
-Set this to nil if you don't want a modeline indicator for Filladapt.")
+Set this to nil if you don't want a modeline indicator for Filladapt."
+  :type 'string
+  :group 'filladapt)
 
-(defvar filladapt-fill-column-tolerance nil
+(defcustom filladapt-fill-column-tolerance nil
   "*Tolerate filled paragraph lines ending this far from the fill column.
 If any lines other than the last paragraph line end at a column
 less than fill-column - filladapt-fill-column-tolerance, fill-column will
@@ -94,17 +115,24 @@ or filladapt runs out of fuzz values to try.
 
 A nil value means behave normally, that is, don't try refilling
 paragraphs to make filled line lengths fit within any particular
-range.")
+range."
+  :type '(choice (const nil)
+		 integer)
+  :group 'filladapt)
 
-(defvar filladapt-fill-column-forward-fuzz 5
+(defcustom filladapt-fill-column-forward-fuzz 5
   "*Try values from fill-column to fill-column plus this variable
 when trying to make filled paragraph lines fall with the tolerance
-range specified by filladapt-fill-column-tolerance.")
+range specified by filladapt-fill-column-tolerance."
+  :type 'integer
+  :group 'filladapt)
 
-(defvar filladapt-fill-column-backward-fuzz 5
+(defcustom filladapt-fill-column-backward-fuzz 5
   "*Try values from fill-column to fill-column minus this variable
 when trying to make filled paragraph lines fall with the tolerance
-range specified by filladapt-fill-column-tolerance.")
+range specified by filladapt-fill-column-tolerance."
+  :type 'integer
+  :group 'filladapt)
 
 ;; install on minor-mode-alist
 (or (assq 'filladapt-mode minor-mode-alist)
@@ -112,7 +140,7 @@ range specified by filladapt-fill-column-tolerance.")
 				       'filladapt-mode-line-string)
 				 minor-mode-alist)))
 
-(defvar filladapt-token-table
+(defcustom filladapt-token-table
   '(
     ;; this must be first
     ("^" beginning-of-line)
@@ -197,9 +225,11 @@ against the beginning of the line until a match is found.
 Matching is done case-sensitively.  The corresponding SYM is
 added to the list, point is moved to (match-end 0) and the
 process is repeated.  The process ends when there is no REGEXP in
-the table that matches what is at point.")
+the table that matches what is at point."
+  :type '(repeat (list regexp symbol))
+  :group 'filladapt)
 
-(defvar filladapt-not-token-table
+(defcustom filladapt-not-token-table
   '(
     "[Ee].g."
     "[Ii].e."
@@ -212,9 +242,11 @@ the regexps in this list are tried.  If any regexp in this list
 matches what is at point then the token generator gives up and
 doesn't try any of the regexps in filladapt-token-table.
 
-Regexp matching is done case-sensitively.")
+Regexp matching is done case-sensitively."
+  :type '(repeat regexp)
+  :group 'filladapt)
 
-(defvar filladapt-token-match-table
+(defcustom filladapt-token-match-table
   '(
     (citation-> citation->)
     (supercite-citation supercite-citation)
@@ -239,9 +271,11 @@ Table format is
    (SYM [SYM1 [SYM2 ...]])
 
 The first symbol SYM is the token, subsequent symbols are the
-tokens that SYM will match.")
+tokens that SYM will match."
+  :type '(repeat (repeat symbol))
+  :group 'filladapt)
 
-(defvar filladapt-token-match-many-table
+(defcustom filladapt-token-match-many-table
   '(
     space
    )
@@ -249,18 +283,22 @@ tokens that SYM will match.")
 If one of these tokens appears in a token list, it will eat all
 matching tokens in a token list being matched against it until it
 encounters a token that doesn't match or a token that ends on
-a greater column number.")
+a greater column number."
+  :type '(repeat symbol)
+  :group 'filladapt)
 
-(defvar filladapt-token-paragraph-start-table
+(defcustom filladapt-token-paragraph-start-table
   '(
     bullet
    )
   "List of tokens that indicate the start of a paragraph.
 If parsing a line generates a token list containing one of
 these tokens, then the line is considered to be the start of a
-paragraph.")
+paragraph."
+  :type '(repeat symbol)
+  :group 'filladapt)
 
-(defvar filladapt-token-conversion-table
+(defcustom filladapt-token-conversion-table
   '(
     (citation-> . exact)
     (supercite-citation . exact)
@@ -283,7 +321,10 @@ HOWTO specifies how to do the conversion.
   `exact' means copy the token's string directly into the fill prefix.
   `spaces' means convert all characters in the token string that are
       not a TAB or a space into spaces and copy the resulting string into 
-      the fill prefix.")
+      the fill prefix."
+  :type '(repeat (cons symbol (choice (const exact)
+				      (const spaces))))
+  :group 'filladapt)
 
 (defvar filladapt-function-table
   (let ((assoc-list
@@ -300,8 +341,10 @@ HOWTO specifies how to do the conversion.
     assoc-list )
   "Table containing the old function definitions that filladapt usurps.")
 
-(defvar filladapt-fill-paragraph-post-hook nil
-  "Hooks run after filladapt runs fill-paragraph.")
+(defcustom filladapt-fill-paragraph-post-hook nil
+  "Hooks run after filladapt runs fill-paragraph."
+  :type 'hook
+  :group 'filladapt)
 
 (defvar filladapt-inside-filladapt nil
   "Non-nil if the filladapt version of a fill function executing.
@@ -310,7 +353,7 @@ fill-region-as-paragraph to avoid this infinite recursion:
 
   fill-region-as-paragraph -> fill-paragraph -> fill-region-as-paragraph ...")
 
-(defvar filladapt-debug nil
+(defcustom filladapt-debug nil
   "Non-nil means filladapt debugging is enabled.
 Use the filladapt-debug command to turn on debugging.
 
@@ -320,7 +363,9 @@ With debugging enabled, filladapt will
        using filladapt-debug-indentation-face-1 and
        filladapt-debug-indentation-face-2.
     b. display the current paragraph using the face specified by
-       filladapt-debug-paragraph-face.")
+       filladapt-debug-paragraph-face."
+  :type 'boolean
+  :group 'filladapt)
 
 (if filladapt-debug
     (add-hook 'post-command-hook 'filladapt-display-debug-info-maybe))

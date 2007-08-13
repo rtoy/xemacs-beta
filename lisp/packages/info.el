@@ -288,13 +288,25 @@
 ;; Removed any pretense of ever referencing Info-directory since it
 ;; wasn't working anyhow.
 
+;; Modified 4/5/97 by Tomasz J. Cholewo:
+;;
+;; Modified Info-search to use with-caps-disable-folding
+
 ;; Code:
 
-(defvar Info-inhibit-toolbar nil
-  "*Non-nil means don't use the specialized Info toolbar.")
+(defgroup info nil
+  "Info subsystem"
+  :group 'help)
 
-(defvar Info-novice nil
-  "*Non-nil means to ask for confirmation before switching Info files.")
+(defcustom Info-inhibit-toolbar nil
+  "*Non-nil means don't use the specialized Info toolbar."
+  :type 'boolean
+  :group 'info)
+
+(defcustom Info-novice nil
+  "*Non-nil means to ask for confirmation before switching Info files."
+  :type 'boolean
+  :group 'info)
 
 (defvar Info-history nil
   "List of info nodes user has visited.
@@ -304,35 +316,49 @@ Each element of list is a list (\"(FILENAME)NODENAME\" BUFPOS WINSTART).")
   "Non-nil if Info-find-node should modify Info-history.
 This is for use only by certain internal Info routines.")
 
-(defvar Info-enable-edit nil
+(defcustom Info-enable-edit nil
   "*Non-nil means the \\<Info-mode-map>\\[Info-edit] command in Info
 can edit the current node.
 This is convenient if you want to write info files by hand.
 However, we recommend that you not do this.
 It is better to write a Texinfo file and generate the Info file from that,
-because that gives you a printed manual as well.")
+because that gives you a printed manual as well."
+  :type 'boolean
+  :group 'info)
 
-(defvar Info-enable-active-nodes t
+(defcustom Info-enable-active-nodes t
   "*Non-nil allows Info to execute Lisp code associated with nodes.
-The Lisp code is executed when the node is selected.")
+The Lisp code is executed when the node is selected."
+  :type 'boolean
+  :group 'info)
 
-(defvar Info-restoring-point t
-  "*Non-nil means to restore the cursor position when re-entering a node.")
+(defcustom Info-restoring-point t
+  "*Non-nil means to restore the cursor position when re-entering a node."
+  :type 'boolean
+  :group 'info)
 
-(defvar Info-auto-advance 'twice
+(defcustom Info-auto-advance 'twice
   "*Control what SPC and DEL do when they can't scroll any further.
 If nil, they beep and remain in the current node.
 If t, they move to the next node (like Info-global-next/prev).
-If anything else, they must be pressed twice to move to the next node.")
+If anything else, they must be pressed twice to move to the next node."
+  :type '(radio (const :tag "off" nil)
+		(const :tag "advance" t)
+		(const :tag "confirm" twice))
+  :group 'info)
 
-(defvar Info-fontify t
+(defcustom Info-fontify t
   "*Non-nil enables font features in XEmacs.
-This variable is ignored unless running under XEmacs.")
+This variable is ignored unless running under XEmacs."
+  :type 'boolean
+  :group 'info)
 
-(defvar Info-default-directory-list nil
-  "List of default directories to search for Info documentation files.
+(defcustom Info-default-directory-list nil
+  "*List of default directories to search for Info documentation files.
 This value is used as the default for `Info-directory-list'.  It is set
-in startup.el.")
+in startup.el."
+  :type '(repeat directory)
+  :group 'info)
 
 (defvar Info-directory-list
   (let ((path (getenv "INFOPATH")))
@@ -389,10 +415,12 @@ Marker points nowhere if file has no tag table.")
   "List of possible matches for last Info-index command.")
 (defvar Info-index-first-alternative nil)
 
-(defvar Info-annotations-path '("~/.infonotes" "/usr/lib/info.notes")
+(defcustom Info-annotations-path '("~/.infonotes" "/usr/lib/info.notes")
   "*Names of files that contain annotations for different Info nodes.
 By convention, the first one should reside in your personal directory.
-The last should be a world-writable \"public\" annotations file.")
+The last should be a world-writable \"public\" annotations file."
+  :type '(repeat file)
+  :group 'info)
 
 (defvar Info-standalone nil
   "Non-nil if Emacs was started solely as an Info browser.")
@@ -975,62 +1003,63 @@ annotation for any node of any file.  (See `a' and `x' commands.)"
   (if (equal regexp "")
       (setq regexp Info-last-search)
     (setq Info-last-search regexp))
-  (let ((found ())
-	(onode Info-current-node)
-	(ofile Info-current-file)
-	(opoint (point))
-	(osubfile Info-current-subfile))
-    (save-excursion
-      (save-restriction
-	(widen)
-	(if (null Info-current-subfile)
-	    (progn (re-search-forward regexp) (setq found (point)))
-	  (condition-case nil
-	      (progn (re-search-forward regexp) (setq found (point)))
-	    (search-failed nil)))))
-    (if (not found) ;can only happen in subfile case -- else would have erred
-	(unwind-protect
-	    (let ((list ()))
-	      (set-buffer (marker-buffer Info-tag-table-marker))
-	      (goto-char (point-min))
-	      (search-forward "\n\^_\nIndirect:")
-	      (save-restriction
-		(narrow-to-region (point)
-				  (progn (search-forward "\n\^_")
-					 (1- (point))))
-		(goto-char (point-min))
-		(search-forward (concat "\n" osubfile ": "))
-		(beginning-of-line)
-		(while (not (eobp))
-		  (re-search-forward "\\(^.*\\): [0-9]+$")
-		  (goto-char (+ (match-end 1) 2))
-		  (setq list (cons (cons (read (current-buffer))
-					 (buffer-substring (match-beginning 1)
-							   (match-end 1)))
-				   list))
-		  (goto-char (1+ (match-end 0))))
-		(setq list (nreverse list)
-		      list (cdr list)))
-	      (while list
-		(message "Searching subfile %s..." (cdr (car list)))
-		(Info-read-subfile (car (car list)))
-		(setq list (cdr list))
-		(goto-char (point-min))
-		(if (re-search-forward regexp nil t)
-		    (setq found (point) list ())))
-	      (if found
-		  (message "")
-		(signal 'search-failed (list regexp))))
-	  (if (not found)
-	      (progn (Info-read-subfile opoint)
-		     (goto-char opoint)
-		     (Info-select-node)))))
-    (widen)
-    (goto-char found)
-    (Info-select-node)
-    (or (and (equal onode Info-current-node)
-	     (equal ofile Info-current-file))
-	(Info-history-add ofile onode opoint))))
+  (with-caps-disable-folding regexp
+    (let ((found ())
+          (onode Info-current-node)
+          (ofile Info-current-file)
+          (opoint (point))
+          (osubfile Info-current-subfile))
+      (save-excursion
+        (save-restriction
+          (widen)
+          (if (null Info-current-subfile)
+              (progn (re-search-forward regexp) (setq found (point)))
+            (condition-case nil
+                (progn (re-search-forward regexp) (setq found (point)))
+              (search-failed nil)))))
+      (if (not found)                   ;can only happen in subfile case -- else would have erred
+          (unwind-protect
+              (let ((list ()))
+                (set-buffer (marker-buffer Info-tag-table-marker))
+                (goto-char (point-min))
+                (search-forward "\n\^_\nIndirect:")
+                (save-restriction
+                  (narrow-to-region (point)
+                                    (progn (search-forward "\n\^_")
+                                           (1- (point))))
+                  (goto-char (point-min))
+                  (search-forward (concat "\n" osubfile ": "))
+                  (beginning-of-line)
+                  (while (not (eobp))
+                    (re-search-forward "\\(^.*\\): [0-9]+$")
+                    (goto-char (+ (match-end 1) 2))
+                    (setq list (cons (cons (read (current-buffer))
+                                           (buffer-substring (match-beginning 1)
+                                                             (match-end 1)))
+                                     list))
+                    (goto-char (1+ (match-end 0))))
+                  (setq list (nreverse list)
+                        list (cdr list)))
+                (while list
+                  (message "Searching subfile %s..." (cdr (car list)))
+                  (Info-read-subfile (car (car list)))
+                  (setq list (cdr list))
+                  (goto-char (point-min))
+                  (if (re-search-forward regexp nil t)
+                      (setq found (point) list ())))
+                (if found
+                    (message "")
+                  (signal 'search-failed (list regexp))))
+            (if (not found)
+                (progn (Info-read-subfile opoint)
+                       (goto-char opoint)
+                       (Info-select-node)))))
+      (widen)
+      (goto-char found)
+      (Info-select-node)
+      (or (and (equal onode Info-current-node)
+               (equal ofile Info-current-file))
+          (Info-history-add ofile onode opoint)))))
 
 ;; Extract the value of the node-pointer named NAME.
 ;; If there is none, use ERRORNAME in the error message; 

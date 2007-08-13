@@ -64,7 +64,7 @@
 
 (defconst send-pr::version "3.101")
 
-(defvar gnats:root "/usr/lib/gnats/gnats-db"
+(defvar gnats:root "/usr/share/gnats/gnats-db"
   "*The top of the tree containing the GNATS database.")
 
 ;;;;---------------------------------------------------------------------------

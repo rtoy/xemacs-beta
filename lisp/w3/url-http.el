@@ -1,7 +1,7 @@
 ;;; url-http.el --- HTTP Uniform Resource Locator retrieval code
 ;; Author: wmperry
-;; Created: 1997/04/03 20:34:59
-;; Version: 1.17
+;; Created: 1997/04/07 13:24:34
+;; Version: 1.18
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -565,6 +565,7 @@ HTTP/1.0 specification for more details." x redir) 'error)
 		  nil
 		(progn
 		  (url-process-put process 'url (or proxy-info url))
+		  (set-process-sentinel process 'ignore)
 		  (process-kill-without-query process)
 		  (process-send-string process request)
 		  (url-lazy-message "Request sent, waiting for response...")

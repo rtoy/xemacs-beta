@@ -44,17 +44,18 @@
 
 (provide 'vm-menu)
 
+;; makeu sure the emacs/xemacs version variables are set, as they
+;; are needed below at load time.
+(vm-note-emacs-version)
+
 (defun vm-menu-fsfemacs-menus-p ()
-  (and (vm-fsfemacs-19-p)
+  (and vm-fsfemacs-19-p
        (fboundp 'menu-bar-mode)))
 
 (defun vm-menu-xemacs-menus-p ()
-  (and (vm-xemacs-p)
+  (and vm-xemacs-p
        (fboundp 'set-buffer-menubar)))
 
-;; defined again in vm-misc.el but we need it here for some
-;; initializations.  The "noautoload" vm.elc won't work without
-;; this.
 (defun vm-fsfemacs-19-p ()
   (and (string-match "^19" emacs-version)
        (not (string-match "XEmacs\\|Lucid" emacs-version))))
@@ -67,7 +68,7 @@
 (defconst vm-menu-folder-menu
   (list
    "Folder"
-   (if (vm-fsfemacs-19-p)
+   (if vm-fsfemacs-19-p
        ["Manipulate Folders" ignore (ignore)]
      vm-menu-folders-menu)
    "---"

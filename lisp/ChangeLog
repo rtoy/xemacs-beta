@@ -1,3 +1,49 @@
+Wed Apr  9 19:45:46 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* x-menubar.el (default-menubar): Inline definition of customize menu.
+
+Wed Apr  9 10:45:54 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/about.el (about-xemacs-xref): Add Jan Vroonhof to list of
+	contributors.
+	(about-xemacs-xref): Add MORIOKA Tomohiko's bio.
+	(about-xemacs-xref): Add Per Abrahamsen.
+
+Tue Apr  8 12:57:05 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* modes/lisp-mode.el (eval-defun): Evaluate defcustom in defconst
+	style instead of defvar style (patch derived from Emacs 19.35/Lars 
+	Magne Ingebrigtsen).
+
+Mon Apr  7 16:38:43 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/frame.el (temp-buffer-shrink-to-fit): Default to nil since
+	this feature has gotten broken.
+
+Sun Apr  6 06:56:03 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* modes/outl-mouse.el (outline-down-arrow-mask): Set up arrow
+	glyphs to display on when no X11 support is available.
+
+	* modes/outline.el (outline-install-menubar): short circuit if no
+	menubars are available.
+
+	* x11/x-menubar.el (default-menubar): Use xmine not mine.
+
+	* prim/help.el (describe-variable): Some doc strings weren't being 
+	terminated with a newline.
+
+Sat Apr  5 20:20:00 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* prim/about.el (about-xemacs-xref): Correct Jareth Hein's links.
+
+Sat Apr  5 13:18:05 1997  Tomasz J. Cholewo  <t.cholewo@ieee.org>
+
+	* packages/etags.el (tags-query-replace): Fixed DELIMITED argument 
+	bug.  `with-caps-disable-folding' moved to isearch-mode.el.
+
+	* packages/info.el (Info-search): Use `with-caps-disable-folding'.
+
 Sat Apr  5 09:32:43 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* utils/finder-inf.el: Regenerated.

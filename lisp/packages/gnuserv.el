@@ -62,6 +62,13 @@
 
 
 
+(defgroup gnuserv nil
+  "Lisp interface between Emacs and gnuserv"
+  :prefix "server-"
+  :group 'processes
+  :group 'terminals)
+
+
 (defconst gnuserv-rcs-header-id "!Header: gnuserv.el,v 2.1 95/02/16 12:00:16 arup alpha !")
 
 
@@ -78,29 +85,39 @@
 If nil, then a new frame is created for each file edited.
 This variable has no effect in XEmacs versions older than 19.9.")
 
-(defvar server-done-function 'kill-buffer 
+(defcustom server-done-function 'kill-buffer 
   "*A function of one argument, a buffer, which removes the buffer after editing.
 Functions such as 'kill-buffer' and 'bury-buffer' are good values. See also
-`server-done-temp-file-function'")
+`server-done-temp-file-function'"
+  :type 'function
+  :group 'gnuserv)
 
-(defvar server-done-temp-file-function 'kill-buffer
+(defcustom server-done-temp-file-function 'kill-buffer
   "*A function of one argument, a buffer, which removes the buffer after editing a
 temporary file. Functions such as 'kill-buffer' and 'bury-buffer' are
-good values. See also `server-done-function'")
+good values. See also `server-done-function'"
+  :type 'function
+  :group 'gnuserv)
 
-(defvar server-program "gnuserv"
-  "*The program to use as the edit server")
+(defcustom server-program "gnuserv"
+  "*The program to use as the edit server"
+  :type 'string
+  :group 'gnuserv)
 
 
- (defvar server-visit-hook nil
-   "*List of hooks to call when visiting a file for the Emacs server.")
+(defcustom server-visit-hook nil
+  "*List of hooks to call when visiting a file for the Emacs server."
+  :type 'hook
+  :group 'gnuserv)
 
 ;; defined by server.el but obsolete?
 ;; (defvar server-switch-hook nil
 ;;  "*List of hooks to call when switching to a buffer for the Emacs server.")
 
-(defvar server-done-hook nil
-  "*List of hooks to call when done editing a buffer for the Emacs server.")
+(defcustom server-done-hook nil
+  "*List of hooks to call when done editing a buffer for the Emacs server."
+  :type 'hook
+  :group 'gnuserv)
 
 
 (defvar server-process nil 
@@ -121,21 +138,27 @@ Each element is (CLIENTID BUFFER...) where CLIENTID is an integer
 that can be given to the server process to identify a client.
 When a buffer is killed, it is removed from this list.")
 
-(defvar server-kill-quietly nil
+(defcustom server-kill-quietly nil
   "If this variable is set then don't confirm kills of buffers with
-  clients attached")
+clients attached"
+  :type 'boolean
+  :group 'gnuserv)
 
 
 (defvar server-buffer-clients nil
   "List of client ids for clients requesting editing of the current buffer.")
 
-(defvar server-temp-file-regexp "^/tmp/Re\\|/draft$"
+(defcustom server-temp-file-regexp "^/tmp/Re\\|/draft$"
   "*Regexp which should match filenames of temporary files
 which are deleted and reused after each edit
-by the programs that invoke the emacs server.")
+by the programs that invoke the emacs server."
+  :type 'regexp
+  :group 'gnuserv)
 
-(defvar server-make-temp-file-backup nil
-  "Non-nil makes the server backup temporary files also")
+(defcustom server-make-temp-file-backup nil
+  "Non-nil makes the server backup temporary files also"
+  :type 'regexp
+  :group 'gnuserv)
 
 (make-variable-buffer-local 'server-buffer-clients)
 (setq-default server-buffer-clients nil)

@@ -1031,7 +1031,7 @@ is first in the list.  VISIBLE-ONLY will only list non-iconified frames."
 	(append (list save-frame) frames)
       frames)))
 
-(defvar temp-buffer-shrink-to-fit t
+(defvar temp-buffer-shrink-to-fit nil
   "*When non-nil resize temporary output buffers to minimize blank lines.")
 
 (defvar temp-buffer-max-height .5

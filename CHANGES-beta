@@ -1,4 +1,20 @@
 							-*- indented-text -*-
+to 20.1 beta12
+-- Synch to Emacs/MULE patches courtesy of MORIOKA Tomohiko
+-- VM-6.24
+-- miscellaneous documentation fixes/updates
+-- etc/GNUS-NEWS added from Gnus-5.4.42 distribution
+-- xemacs-version.h version in C stack backtrace hack
+-- More unimplemented NeXTstep cruft removed
+-- W3-3.0.80
+-- Lots and lots of Custom-ization by Hrvoje Niksic
+-- temp-buffer-shrink-to-fit (still needs a better name) defaults to nil.
+-- Gnus-5.4.42
+-- Cleanup -- vms C files removed, dummy NeXTStep C files removed.  They're
+   in the CVS attic if anyone wishes to revive this code.
+-- Custom-1.74
+-- miscellaneous bug fixes
+
 to 20.1 beta11
 -- Move lisp/auctex/style/*.el to etc/auctex/style/.
 -- regenerated finder database (every lisp file should have a Keywords: line)

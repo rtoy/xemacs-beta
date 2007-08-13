@@ -1,3 +1,8 @@
+Tue Apr  8 03:08:22 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in: C Comment out Make comments.  No snide comments
+	from me, no sir.
+
 Tue Apr  1 12:26:53 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* Makefile.in.in: Added stuff for updated movemail.c.

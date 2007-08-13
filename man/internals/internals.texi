@@ -491,6 +491,8 @@ version 19.13 released September 1, 1995.
 version 19.14 released June 23, 1996.
 @item
 version 20.0 released February 9, 1997.
+@item
+version 19.15 released March 28, 1997.
 @end itemize
 
 @node GNU Emacs 19
@@ -579,6 +581,8 @@ working on and using GNU Emacs for a long time (back as far as version
 @cindex Illinois, University of
 @cindex SPARCWorks
 @cindex Andreessen, Marc
+@cindex Baur, Steve
+@cindex Buchholz, Martin
 @cindex Kaplan, Simon
 @cindex Wing, Ben
 @cindex Thompson, Chuck
@@ -608,11 +612,23 @@ the newly formed Mosaic Communications Corp., later Netscape
 Communications Corp. (co-founded by the same Marc Andreessen, who had
 quit his Epoch job to work on a graphical browser for the World Wide
 Web).  Chuck then become the primary maintainer of XEmacs, and put out
-versions 19.11, 19.12, and 19.13 in conjunction with Ben.  For 19.12 and
+versions 19.11 through 19.14 in conjunction with Ben.  For 19.12 and
 19.13, Chuck added the new redisplay and many other display improvements
 and Ben added MULE support (support for Asian and other languages) and
 redesigned most of the internal Lisp subsystems to better support the
-MULE work and the various other features being added to XEmacs.
+MULE work and the various other features being added to XEmacs.  After
+19.14 Chuck retired as primary maintainer and Steve Baur stepped in.
+
+@cindex MULE merged XEmacs appears
+  Soon after 19.13 was released, work began in earnest on the MULE
+internationalization code and the source tree was divided into two
+development paths.  The MULE version was initially called 19.20, but was
+soon renamed to 20.0.  In 1996 Martin Buchholz of Sun Microsystems took
+over the care and feeding of it and worked on it in parallel with the
+19.14 development that was occurring at the same time.  After much work
+by Martin, it was decided to release 20.0 ahead of 19.15 in February
+1997.  The source tree remained divided until 20.1 when the version 19
+source was finally retired.
 
 @cindex merging attempts
   Many attempts have been made to merge XEmacs and GNU Emacs, but they

@@ -29,9 +29,15 @@
 
 ;;; Code:
 
-(defvar insert-default-directory t
+(defgroup minibuffer nil
+  "Minibuffer customizations"
+  :group 'environment)
+
+
+(defcustom insert-default-directory t
  "*Non-nil means when reading a filename start with default dir in minibuffer."
- )
+ :type 'boolean
+ :group 'minibuffer)
 
 (defvar minibuffer-completion-table nil
   "Alist or obarray used for completion in the minibuffer.
@@ -58,20 +64,27 @@ t means to return a list of all possible completions of STRING.
 are not valid completions, an extra RET must be typed to confirm the
 response.  This is helpful for catching typos, etc.")
 
-(defvar completion-auto-help t
-  "*Non-nil means automatically provide help for invalid completion input.")
+(defcustom completion-auto-help t
+  "*Non-nil means automatically provide help for invalid completion input."
+  :type 'boolean
+  :group 'minibuffer)
 
-(defvar enable-recursive-minibuffers nil
+(defcustom enable-recursive-minibuffers nil
   "*Non-nil means to allow minibuffer commands while in the minibuffer.
 More precisely, this variable makes a difference when the minibuffer window
 is the selected window.  If you are in some other window, minibuffer commands
-are allowed even if a minibuffer is active.")
+are allowed even if a minibuffer is active."
+  :type 'boolean
+  :group 'minibuffer)
 
-(defvar minibuffer-max-depth 1
+(defcustom minibuffer-max-depth 1
   ;; See comment in #'minibuffer-max-depth-exceeded
   "*Global maximum number of minibuffers allowed;
 compare to enable-recursive-minibuffers, which is only consulted when the
-minibuffer is reinvoked while it is the selected window.")
+minibuffer is reinvoked while it is the selected window."
+  :type '(choice integer
+		 (const :tag "Indefinite" nil))
+  :group 'minibuffer)
 
 ;; Moved to C.  The minibuffer prompt must be setup before this is run
 ;; and that can only be done from the C side.
@@ -158,14 +171,18 @@ minibuffer is reinvoked while it is the selected window.")
     map)
   "Minibuffer keymap used by shell-command and related commands.")
 
-(defvar use-dialog-box t
-  "Variable controlling usage of the dialog box.  If nil, the dialog box
-will never be used, even in response to mouse events.")
+(defcustom use-dialog-box t
+  "*Variable controlling usage of the dialog box.
+If nil, the dialog box will never be used, even in response to mouse events."
+  :type 'boolean
+  :group 'minibuffer)
 
-(defvar minibuffer-electric-file-name-behavior t
-  "If non-nil, slash and tilde in certain places cause immediate deletion.
+(defcustom minibuffer-electric-file-name-behavior t
+  "*If non-nil, slash and tilde in certain places cause immediate deletion.
 These are the same places where this behavior would occur later on anyway,
-in `substitute-in-file-name'.")
+in `substitute-in-file-name'."
+  :type 'boolean
+  :group 'minibuffer)
 
 (defun minibuffer-electric-slash ()
   ;; by Stig@hackvan.com
@@ -260,9 +277,12 @@ Each minibuffer output is added with
        (cons STRING (symbol-value minibuffer-history-variable)))")
 (defvar minibuffer-history-position)
 
-(defvar minibuffer-history-minimum-string-length 3
-  "If this variable is non-nil, a string will not be added to the
-minibuffer history if its length is less than that value.")
+(defcustom minibuffer-history-minimum-string-length 3
+  "*If this variable is non-nil, a string will not be added to the
+minibuffer history if its length is less than that value."
+  :type '(choice (const :tag "Any" nil)
+		 integer)
+  :group 'minibuffer)
 
 (defun read-from-minibuffer (prompt &optional initial-contents
                                     keymap
@@ -920,8 +940,8 @@ Return nil if there is no valid completion, else t."
 ;; ange-ftp stuff, but it doesn't work.
 ;;
 
-(defvar minibuffer-smart-completion-tracking-behavior nil
-  "If non-nil, look for completions under mouse in all buffers.
+(defcustom minibuffer-smart-completion-tracking-behavior nil
+  "*If non-nil, look for completions under mouse in all buffers.
 This allows you to click on something that looks like a completion
 and have it selected, regardless of what buffer it is in.
 
@@ -931,7 +951,9 @@ This is not enabled by default because
    people not expecting it, and looks like a bug
 -- If ange-ftp is enabled, this tracking sometimes causes ange-ftp
    action as a result of mouse motion, which is *bad bad bad*.
-   Hopefully this bug will be fixed at some point.")
+   Hopefully this bug will be fixed at some point."
+  :type 'boolean
+  :group 'minibuffer)
 
 (defun minibuffer-smart-mouse-tracker (event)
   ;; Used as the mode-motion-hook of the minibuffer window, which is the
@@ -1993,10 +2015,12 @@ Prompt with string PROMPT."
 
 
 
-(defvar force-dialog-box-use nil
-  "If non-nil, always use a dialog box for asking questions, if possible.
+(defcustom force-dialog-box-use nil
+  "*If non-nil, always use a dialog box for asking questions, if possible.
 You should *bind* this, not set it.  This is useful if you're doing
-something mousy but which wasn't actually invoked using the mouse.")
+something mousy but which wasn't actually invoked using the mouse."
+  :type 'boolean
+  :group 'minubuffer)
 
 ;; We include this here rather than dialog.el so it is defined
 ;; even when dialog boxes are not present.

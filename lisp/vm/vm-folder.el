@@ -1166,7 +1166,7 @@ vm-folder-type is initialized here."
 	  (vm-total-count 0)
 	  (modulus (+ (% (vm-abs (random)) 11) 25))
 	  (case-fold-search t)
-	  data)
+	  oldpoint data)
       (while mp
 	(vm-increment vm-total-count)
 	(if (vm-attributes-of (car mp))
@@ -1182,17 +1182,28 @@ vm-folder-type is initialized here."
 			       (vm-text-of (car mp)) t)
 	    (goto-char (match-beginning 2))
 	    (condition-case ()
-		(setq data (read (current-buffer)))
-	      (error (setq data
-			   (list
-			    (make-vector vm-attributes-vector-length nil)
-			    (make-vector vm-cache-vector-length nil)
-			    nil))
-		     ;; In lieu of a valid attributes header
-		     ;; assume the message is new.  avoid
-		     ;; vm-set-new-flag because it asks for a
-		     ;; summary update.
-		     (vm-set-new-flag-in-vector (car data) t)))
+		(progn
+		  (setq oldpoint (point)
+			data (read (current-buffer)))
+		  (if (and (or (not (listp data)) (not (= 3 (length data))))
+			   (not (vectorp data)))
+		      (progn
+			(error "Bad x-vm-v5-data at %d in buffer %s"
+			       oldpoint (buffer-name))))
+		  data )
+	      (error 
+	       (message "Bad x-vm-v5-data header at %d in buffer %s, ignoring"
+			oldpoint (buffer-name))
+	       (setq data
+		     (list
+		      (make-vector vm-attributes-vector-length nil)
+		      (make-vector vm-cache-vector-length nil)
+		      nil))
+	       ;; In lieu of a valid attributes header
+	       ;; assume the message is new.  avoid
+	       ;; vm-set-new-flag because it asks for a
+	       ;; summary update.
+	       (vm-set-new-flag-in-vector (car data) t)))
 	    ;; support version 4 format
 	    (cond ((vectorp data)
 		   (setq data (vm-convert-v4-attributes data))
@@ -1406,8 +1417,19 @@ vm-folder-type is initialized here."
 	 (vm-skip-past-folder-header)
 	 (vm-skip-past-leading-message-separator)
 	 (if (re-search-forward vm-labels-header-regexp lim t)
-	     (let (list)
-	       (setq list (read (current-buffer)))
+	     (let ((oldpoint (point))
+		   list)
+	       (condition-case ()
+		   (progn
+		     (setq list (read (current-buffer)))
+		     (if (not (listp list))
+			 (error "Bad global label list at %d in buffer %s"
+				oldpoint (buffer-name)))
+		     list )
+		 (error
+		  (message "Bad global label list at %d in buffer %s, ignoring"
+			   oldpoint (buffer-name))
+		  (setq list nil) ))
 	       (mapcar (function
 			(lambda (s)
 			  (intern s vm-label-obarray)))
@@ -1418,7 +1440,8 @@ vm-folder-type is initialized here."
 ;; Returns non-nil if successful, nil otherwise.
 (defun vm-gobble-bookmark ()
   (let ((case-fold-search t)
-	n lim)
+	(n nil)
+	lim oldpoint)
     (save-excursion
       (vm-save-restriction
        (widen)
@@ -1431,7 +1454,18 @@ vm-folder-type is initialized here."
        (vm-skip-past-folder-header)
        (vm-skip-past-leading-message-separator)
        (if (re-search-forward vm-bookmark-header-regexp lim t)
-	   (setq n (read (current-buffer))))))
+	   (condition-case ()
+	       (progn
+		 (setq oldpoint (point)
+		       n (read (current-buffer)))
+		 (if (not (natnump n))
+		     (error "Bad bookmark at %d in buffer %s"
+			    oldpoint (buffer-name)))
+		 n )
+	     (error
+	      (message "Bad bookmark at %d in buffer %s, ignoring"
+		       oldpoint (buffer-name))
+	      (setq n 1))))))
     (if n
 	(vm-record-and-change-message-pointer
 	 vm-message-pointer
@@ -1490,13 +1524,25 @@ vm-folder-type is initialized here."
 	(vm-skip-past-folder-header)
 	(vm-skip-past-leading-message-separator)
 	(if (re-search-forward vm-message-order-header-regexp lim t)
-	    (progn
+	    (let ((oldpoint (point)))
 	      (message "Reordering messages...")
-	      (setq order (read (current-buffer))
-		    list-length (length vm-message-list)
+	      (condition-case nil
+		  (progn
+		    (setq order (read (current-buffer)))
+		    (if (not (listp order))
+			(error "Bad order header at %d in buffer %s"
+			       oldpoint (buffer-name)))
+		    order )
+		(error
+		 (message "Bad order header at %d in buffer %s, ignoring"
+			  oldpoint (buffer-name))
+		 (setq order nil)))
+	      (setq list-length (length vm-message-list)
 		    v (make-vector (max list-length (length order)) nil))
 	      (while (and order mp)
-		(aset v (1- (car order)) (car mp))
+		(condition-case nil
+		    (aset v (1- (car order)) (car mp))
+		  (args-out-of-range nil))
 		(setq order (cdr order) mp (cdr mp)))
 	      ;; lock out interrupts while the message list is in
 	      ;; an inconsistent state.
@@ -1529,8 +1575,13 @@ vm-folder-type is initialized here."
        (vm-skip-past-folder-header)
        (vm-skip-past-leading-message-separator)
        (if (re-search-forward vm-summary-header-regexp lim t)
-	   (progn
-	     (setq summary (read (current-buffer)))
+	   (let ((oldpoint (point)))
+	     (condition-case ()
+		 (setq summary (read (current-buffer)))
+	       (error
+		(message "Bad summary header at %d in buffer %s, ignoring"
+			 oldpoint (buffer-name))
+		(setq summary "")))
 	     (if (not (equal summary vm-summary-format))
 		 (while mp
 		   (vm-set-summary-of (car mp) nil)

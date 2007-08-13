@@ -271,9 +271,10 @@ messages are of the same type as that folder.
 
 A nil value means don't do the checks.
 
-Depending on the value of vm-convert-folder-types VM will either
-convert the messages to the appropriate type before saving or
-incorporating them, or it will signal an error.")
+If non-nil, VM will either convert the messages to the appropriate
+type before saving or incorporating them, or it will signal an
+error.  The value of vm-convert-folder-types determines which
+action VM will take.")
 
 (defvar vm-convert-folder-types t
   "*Non-nil value means that when VM checks folder types and finds
@@ -683,8 +684,8 @@ for transmission using the MIME message/partial type.")
 When VM prompts you for a target file name when saving a MIME body,
 any relative pathnames will be relative to this directory.")
 
-(defvar vm-mime-avoid-folding-content-type nil
-  "*Non-nil means don't send folded Content-Type headers in MIME messages.
+(defvar vm-mime-avoid-folding-content-type t
+  "*Non-nil means don't send folded Content- headers in MIME messages.
 `Folded' headers are headers broken into multiple lines as specified
 in RFC822 for readability and to avoid excessive line lengths.  At
 least one major UNIX vendor ships a version of sendmail that believes
@@ -3072,3 +3073,14 @@ that has a match.")
 (defvar vm-frame-list nil)
 (if (not (boundp 'shell-command-switch))
     (defvar shell-command-switch "-c"))
+
+(defconst vm-xemacs-p nil)
+(defconst vm-xemacs-mule-p nil)
+(defconst vm-fsfemacs-19-p nil)
+(defun vm-note-emacs-version ()
+  (setq vm-xemacs-p (string-match "XEmacs" emacs-version)
+	vm-xemacs-mule-p (and vm-xemacs-p (featurep 'mule)
+			      ;; paranoia
+			      (fboundp 'set-file-coding-system))
+	vm-fsfemacs-19-p (not vm-xemacs-p)))
+(vm-note-emacs-version)

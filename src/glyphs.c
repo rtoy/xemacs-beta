@@ -144,9 +144,10 @@ valid_image_instantiator_format_p (Lisp_Object format)
 DEFUN ("valid-image-instantiator-format-p",
        Fvalid_image_instantiator_format_p, 1, 1, 0, /*
 Given an IMAGE-INSTANTIATOR-FORMAT, return non-nil if it is valid.
-Valid formats are some subset of 'nothing, 'string, 'formatted-string, 'xpm,
-'xbm, 'xface, 'gif, 'jpeg, 'png, 'tiff, 'cursor-font, 'font, 'autodetect,
-and 'subwindow, depending on how XEmacs was compiled.
+Valid formats are some subset of 'nothing, 'string, 'formatted-string,
+'xpm, 'xbm, 'xface, 'gif, 'jpeg, 'png, 'tiff, 'cursor-font, 'font,
+'automatic-conversion, and 'subwindow, depending on how XEmacs was
+compiled.
 */
        (image_instantiator_format))
 {
@@ -1836,7 +1837,7 @@ pairs.  FORMAT should be one of
    probably be fixed.)
 'subwindow
   (An embedded X window; not currently implemented.)
-'autodetect
+'automatic-conversion
   (XEmacs tries to guess what format the data is in.  If X support
   exists, the data string will be checked to see if it names a filename.
   If so, and this filename contains XBM or XPM data, the appropriate
@@ -1863,7 +1864,7 @@ The valid keywords are:
   value of the `image-instance-file-name' function when applied to
   the resulting image-instance.  This keyword is not valid for
   instantiator formats `nothing', `string', `formatted-string',
-  `cursor-font', `font', `autodetect', and `inherit'.)
+  `cursor-font', `font', `automatic-conversion', and `inherit'.)
 :foreground
 :background
   (For `xbm', `xface', `cursor-font', and `font'.  These keywords

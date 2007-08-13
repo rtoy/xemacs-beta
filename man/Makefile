@@ -33,7 +33,7 @@ MAKEINFO = makeinfo
 .SUFFIXES: .info .texi .dvi
 
 # Subdirectories to make recursively.
-SUBDIR = xemacs lispref new-users-guide internals tm auctex
+SUBDIR = xemacs lispref new-users-guide internals tm auctex gnats
 
 ../info/%.info : %.texi
 	-$(MAKEINFO) -o $@ $<

@@ -33,13 +33,23 @@
 
 ;;; Code:
 
-;;;###autoload
-(defvar compilation-mode-hook nil
-  "*List of hook functions run by `compilation-mode' (see `run-hooks').")
+(defgroup compilation nil
+  "Compilation buffer processing"
+  :group 'programming)
+
 
 ;;;###autoload
-(defvar compilation-window-height nil
-  "*Number of lines in a compilation window.  If nil, use Emacs default.")
+(defcustom compilation-mode-hook nil
+  "*List of hook functions run by `compilation-mode' (see `run-hooks')."
+  :type 'hook
+  :group 'compilation)
+
+;;;###autoload
+(defcustom compilation-window-height nil
+  "*Number of lines in a compilation window.  If nil, use Emacs default."
+  :type '(choice (const nil)
+		 integer)
+  :group 'compilation)
 
 ;; XEmacs change
 (defvar compilation-error-list 'invalid ; only valid buffer-local
@@ -72,17 +82,21 @@ It should read in the source files which have errors and set
 found.  See that variable for more info.")
 
 ;;;###autoload
-(defvar compilation-buffer-name-function nil
+(defcustom compilation-buffer-name-function nil
   "Function to compute the name of a compilation buffer.
 The function receives one argument, the name of the major mode of the
 compilation buffer.  It should return a string.
-nil means compute the name with `(concat \"*\" (downcase major-mode) \"*\")'.")
+nil means compute the name with `(concat \"*\" (downcase major-mode) \"*\")'."
+  :type 'function
+  :group 'compilation)
 
 ;;;###autoload
-(defvar compilation-finish-function nil
+(defcustom compilation-finish-function nil
   "*Function to call when a compilation process finishes.
 It is called with two arguments: the compilation buffer, and a string
-describing how the process finished.")
+describing how the process finished."
+  :type 'function
+  :group 'compilation)
 
 (defvar compilation-last-buffer nil
   "The most recent compilation buffer.
@@ -96,10 +110,12 @@ or when it is used with \\[next-error] or \\[compile-goto-error].")
 				 minor-mode-alist)))
 
 ;; XEmacs change
-(defvar compilation-always-signal-completion nil
-  "Always give an audible signal upon compilation completion.
+(defcustom compilation-always-signal-completion nil
+  "*Always give an audible signal upon compilation completion.
 By default that signal is only given if the bottom of the compilation
-buffer is not visible in its window.")
+buffer is not visible in its window."
+  :type 'boolean
+  :group 'compilation)
 
 (defvar compilation-parsing-end nil
   "Position of end of buffer when last error messages were parsed.")
@@ -109,8 +125,8 @@ buffer is not visible in its window.")
 
 (defvar compilation-num-errors-found)
 
-(defvar compilation-error-regexp-systems-list 'all
-  "This is either the symbol `all', or a list of systems for which
+(defcustom compilation-error-regexp-systems-list 'all
+  "*This is either the symbol `all', or a list of systems for which
 compilation error regexps should be included in
 `compilation-error-regexp-alist'.  
 
@@ -130,7 +146,9 @@ The list of known systems is:
   aix:      the operating system
   ultrix:   the operating system
 
-See also the variable `compilation-error-regexp-alist-alist'.")
+See also the variable `compilation-error-regexp-alist-alist'."
+  :type '(choice (const all) (repeat symbol))
+  :group 'compilation)
 
 (defun compilation-build-compilation-error-regexp-alist ()
   (interactive)
@@ -333,29 +351,38 @@ value of the variable `compilation-error-regexp-alist-alist'")
 
 (compilation-build-compilation-error-regexp-alist)
 
-(defvar compilation-read-command t
-  "If not nil, M-x compile reads the compilation command to use.
-Otherwise, M-x compile just uses the value of `compile-command'.")
+(defcustom compilation-read-command t
+  "*If not nil, M-x compile reads the compilation command to use.
+Otherwise, M-x compile just uses the value of `compile-command'."
+  :type 'boolean
+  :group 'compilation)
 
-(defvar compilation-ask-about-save t
-  "If not nil, M-x compile asks which buffers to save before compiling.
-Otherwise, it saves all modified buffers without asking.")
+(defcustom compilation-ask-about-save t
+  "*If not nil, M-x compile asks which buffers to save before compiling.
+Otherwise, it saves all modified buffers without asking."
+  :type 'boolean
+  :group 'compilation)
 
 (defvar grep-regexp-alist
   '(("^\\([a-zA-Z]?:?[^:( \t\n]+\\)[:( \t]+\\([0-9]+\\)[:) \t]" 1 2))
   "Regexp used to match grep hits.  See `compilation-error-regexp-alist'.")
 
-(defvar grep-command "grep -n "
-  "Last grep command used in \\[grep]; default for next grep.")
+(defcustom grep-command "grep -n "
+  "*Last grep command used in \\[grep]; default for next grep."
+  :type 'string
+  :group 'compilation)
 
 ;;;###autoload
-(defvar compilation-search-path '(nil)
+(defcustom compilation-search-path '(nil)
   "*List of directories to search for source files named in error messages.
 Elements should be directory names, not file names of directories.
-nil as an element means to try the default directory.")
+nil as an element means to try the default directory."
+  :type '(repeat (choice (const :tag "Default" nil)
+			 directory))
+  :group 'compilation)
 
-(defvar compile-command "make -k "
-  "Last shell command used to do a compilation; default for next compilation.
+(defcustom compile-command "make -k "
+  "*Last shell command used to do a compilation; default for next compilation.
 
 Sometimes it is useful for files to supply local values for this variable.
 You might also use mode hooks to specify it in certain modes, like this:
@@ -365,7 +392,9 @@ You might also use mode hooks to specify it in certain modes, like this:
 		      (progn (make-local-variable 'compile-command)
 			     (setq compile-command
 				    (concat \"make -k \"
-					    buffer-file-name))))))")
+					    buffer-file-name))))))"
+  :type 'string
+  :group 'compilation)
 
 (defvar compilation-enter-directory-regexp
   "[^\n]*: Entering directory `\\([^\n]*\\)'$"
@@ -421,10 +450,16 @@ write into the compilation buffer, and to put in its mode line.")
 (put 'compilation-mode 'font-lock-defaults
      '(compilation-font-lock-keywords t))
 
-(defvar compilation-mouse-motion-initiate-parsing t
-  "When set to a non-nil value, mouse motion over the compilation/grep output
-buffer may initiate parsing of the error messages or grep hits")
-
+(defcustom compilation-mouse-motion-initiate-parsing t
+  "*Should mouse motion over the compilation buffer initiate parsing?
+When set to a non-nil value, mouse motion over the compilation/grep
+buffer may initiate parsing of the error messages or grep hits.
+When this is nil, errors and grep matches will no longer be 
+highlighted until they have been parsed, but may still be selected
+with the center mouse button.  This will then initiate parsing
+and jump to the corresponding source line."
+  :type 'boolean
+  :group 'compilation)
 
 ;;;###autoload
 (defun compile (command)

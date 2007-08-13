@@ -53,7 +53,7 @@ If FILES-ONLY is the symbol t, then only the \"files\" in the directory
 */
        (dirname, full, match, nosort, files_only))
 {
-  /* This function can GC */
+  /* This function can GC.  GC checked 1997.04.06. */
   DIR *d;
   Bytecount dirname_length;
   Lisp_Object list, name, dirfilename = Qnil;
@@ -66,10 +66,8 @@ If FILES-ONLY is the symbol t, then only the \"files\" in the directory
   char slashfilename[MAXNAMLEN+2];
   char *filename = slashfilename;
 
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
-
-  /* #### Needs more gcpro's */
-  GCPRO5 (dirname, match, files_only, tail_cons, dirfilename);
+  struct gcpro gcpro1, gcpro2, gcpro3;
+  GCPRO3 (dirname, dirfilename, tail_cons);
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
@@ -85,6 +83,8 @@ If FILES-ONLY is the symbol t, then only the \"files\" in the directory
 		    nosort);
   }
 
+  /* #### why do we do Fexpand_file_name after file handlers here,
+     but earlier everywhere else? */
   dirname = Fexpand_file_name (dirname, Qnil);
   dirfilename = Fdirectory_file_name (dirname);
 
@@ -225,7 +225,7 @@ to the names of directories.
 */
        (file, dirname))
 {
-  /* This function can GC */
+  /* This function can GC.  GC checked 1996.04.06. */
   Lisp_Object handler;
 
   /* If the directory name has special constructs in it,
@@ -254,7 +254,7 @@ to the names of directories.
 */
        (file, dirname))
 {
-  /* This function can GC */
+  /* This function can GC. GC checked 1997.06.04. */
   Lisp_Object handler;
   struct gcpro gcpro1;
 
@@ -619,7 +619,7 @@ If file does not exist, returns nil.
 */
        (filename))
 {
-  /* This function can call lisp */
+  /* This function can GC. GC checked 1997.06.04. */
   Lisp_Object values[12];
   Lisp_Object dirname = Qnil;
   struct stat s;
@@ -627,20 +627,23 @@ If file does not exist, returns nil.
   Lisp_Object handler;
   struct gcpro gcpro1, gcpro2;
 
-  GCPRO1 (filename);
+  GCPRO2 (filename, dirname);
   filename = Fexpand_file_name (filename, Qnil);
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
   handler = Ffind_file_name_handler (filename, Qfile_attributes);
-  UNGCPRO;
   if (!NILP (handler))
-    return call2 (handler, Qfile_attributes, filename);
+    {
+      UNGCPRO;
+      return call2 (handler, Qfile_attributes, filename);
+    }
 
   if (lstat ((char *) XSTRING_DATA (filename), &s) < 0)
-    return Qnil;
-
-  GCPRO2 (filename, dirname);
+    {
+      UNGCPRO;
+      return Qnil;
+    }
 
 #ifdef BSD4_2
   dirname = Ffile_name_directory (filename);

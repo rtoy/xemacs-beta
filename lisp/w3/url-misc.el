@@ -1,7 +1,7 @@
 ;;; url-misc.el --- Misc Uniform Resource Locator retrieval code
 ;; Author: wmperry
-;; Created: 1997/03/24 23:59:37
-;; Version: 1.13
+;; Created: 1997/04/07 13:24:49
+;; Version: 1.14
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -65,6 +65,7 @@
     (if (not (processp proc))
 	nil
       (process-kill-without-query proc)
+      (set-process-sentinel proc 'ignore)
       (if (= (string-to-char user) ?/)
 	  (setq user (substring user 1 nil)))
       (goto-char (point-min))

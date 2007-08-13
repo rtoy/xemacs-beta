@@ -76,6 +76,8 @@
      (load-gc "replace") 		; match-string used in version.el.
      (load-gc "version.el")		; Ignore compiled-by-mistake version.elc
      (load-gc "cl")
+     (load-gc "widget")
+     (load-gc "custom") ; Before the world so everything can be customized
      (load-gc "cmdloop")
      (or (fboundp 'recursive-edit) (load-gc "cmdloop1"))
      (load-gc "keymap")
@@ -108,8 +110,6 @@
      ;; After fixing, eos/loaddefs-eos and loaddefs appear identical?!!
      ;; So just make loaddefs-eos go away...
      ;;(load-gc (if (featurep 'sparcworks) "eos/loaddefs-eos" "loaddefs"))
-     (load-gc "widget")
-     (load-gc "custom") ; Before loaddefs so that defcustom exists
      (load-gc "loaddefs") ; <=== autoloads get put here
      (load-gc "misc")
      (load-gc "profile")

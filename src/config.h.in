@@ -58,11 +58,8 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #endif
 
-/* Do you have the the NeXTstep window system? */
-#undef HAVE_NEXTSTEP
-
 /* Define HAVE_WINDOW_SYSTEM if any windowing system is available. */
-#if defined (HAVE_X_WINDOWS) || defined (HAVE_NEXTSTEP)
+#if defined (HAVE_X_WINDOWS) /* || defined (HAVE_NEXTSTEP) */
 #define HAVE_WINDOW_SYSTEM
 #endif
 
@@ -295,10 +292,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* Define HAVE_NCURSES_TERM_H if ncurses/term.h is present. */
 #undef HAVE_NCURSES_TERM_H
-
-/* Do you want to include extra functionality that was present in Epoch?
-   This code has received only limited testing. */
-#undef EPOCH
 
 #define LOWTAGS
 

@@ -1,7 +1,7 @@
-;; @(#) crisp.el -- Crisp/Brief Emacs emulator
+;; @(#) crisp.el -- CRiSP/Brief Emacs emulator
 
 ;; Author: Gary D. Foster <Gary.Foster@corp.sun.com>
-;; $Revision: 1.1.1.2 $
+;; $Revision: 1.2 $
 ;; Keywords: emulations brief crisp
 
 ;; This file is part of GNU Emacs.
@@ -20,6 +20,8 @@
 ;; along with GNU Emacs; see the file COPYING.  If not, write to the
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
+
+;; CRiSP is a registered trademark of Foxtrot Systems Ltd.
 
 ;;; Commentary:
 
@@ -53,26 +55,26 @@
 ;; local variables
 
 (defvar crisp-mode-map (copy-keymap (current-global-map))
-  "Local keymap for Crisp mode.
+  "Local keymap for CRiSP mode.
 All the bindings are done here instead of globally to try and be
 nice to the world.")
 
-(defvar crisp-mode-modeline-string " *Crisp*"
-  "String to display in the modeline when Crisp mode is enabled.")
+(defvar crisp-mode-modeline-string " *CRiSP*"
+  "String to display in the modeline when CRiSP mode is enabled.")
 
 (defvar crisp-mode-original-keymap (copy-keymap (current-global-map))
-  "The original keymap before Crisp mode remaps anything.
-This keymap is restored when Crisp mode is disabled.")
+  "The original keymap before CRiSP mode remaps anything.
+This keymap is restored when CRiSP mode is disabled.")
 
 (defvar crisp-mode-enabled 'nil
-  "Track status of Crisp mode.
-A value of nil means Crisp mode is not enabled.  A value of t
-indicates Crisp mode is enabled.")
+  "Track status of CRiSP mode.
+A value of nil means CRiSP mode is not enabled.  A value of t
+indicates CRiSP mode is enabled.")
 
 (defvar crisp-override-meta-x 't
   "Controls overriding the normal Emacs M-x key binding.
 The normal binding for M-x is `execute-extended-command', however
-the normal Crisp keybinding for M-x is to exit the editor, while
+the normal CRiSP keybinding for M-x is to exit the editor, while
 the F10 key is used to execute extended commands.  If you don't
 want M-x to dump you out of emacs, set this to nil before loading
 the package.")
@@ -80,11 +82,11 @@ the package.")
 (defvar crisp-load-scroll-lock 't
   "Controls loading of the Scroll Lock minor mode package.
 Default behavior is to load the scroll lock minor mode
-package when Crisp mode is enabled.  Set to nil prior
+package when CRiSP mode is enabled.  Set to nil prior
 to loading this package to prevent it.")
 
 (defvar crisp-load-hook nil
-  "Hooks to run after Crisp mode is enabled.")
+  "Hooks to run after CRiSP mode is enabled.")
 
 (defvar crisp-mode-running-xemacs (string-match "XEmacs\\Lucid" emacs-version))
 
@@ -157,7 +159,7 @@ to loading this package to prevent it.")
 (define-key crisp-mode-map [(end)] 'crisp-end)
 
 (defun crisp-home ()
-  "Home the point according to Crisp conventions.
+  "Home the point according to CRiSP conventions.
 First call to this moves point to beginning of the line.  Second
 consecutive call moves point to beginning of the screen.  Third
 consecutive call moves the point to the beginning of the buffer."
@@ -172,7 +174,7 @@ consecutive call moves the point to the beginning of the buffer."
   (setq last-last-command last-command))
 
 (defun crisp-end ()
-  "End the point according to Crisp conventions.
+  "End the point according to CRiSP conventions.
 First call to this moves point to end of the line.  Second
 consecutive call moves point to the end of the screen.  Third
 consecutive call moves point to the end of the buffer."
@@ -190,7 +192,7 @@ consecutive call moves point to the end of the buffer."
 ;; Now enable the mode
 
 (defun crisp-mode ()
-  "Toggle Crisp minor mode."
+  "Toggle CRiSP minor mode."
   (interactive nil)
   (setq crisp-mode-enabled (not crisp-mode-enabled))
   (cond

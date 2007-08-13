@@ -183,15 +183,15 @@ press the @kbd{q} key.
 @node Downloading, Building and Installing, Getting Started, Getting Started
 @section Downloading
 
-:: WORK :: What you need, and why
-:: WORK :: Where to download Emacs, XEmacs, various platforms
-:: WORK :: Where to download Emacs/W3
+:: WORK :: What you need, and why@*
+:: WORK :: Where to download Emacs, XEmacs, various platforms@*
+:: WORK :: Where to download Emacs/W3@*
 :: WORK :: Where to download related utilities (netpbm, xv, gimp, etc.)
 
 @node Building and Installing, Startup Files, Downloading, Getting Started
 @section Building and Installing
 
-:: WORK :: Document makefile variables
+:: WORK :: Document makefile variables@*
 :: WORK :: Document what gets installed where, why
 
 @node Startup Files, Preferences Panel, Building and Installing, Getting Started
@@ -199,7 +199,7 @@ press the @kbd{q} key.
 @cindex Startup files
 @cindex Default stylesheet
 
-:: WORK :: startup files
+:: WORK :: startup files@*
 This section should document where Emacs/W3 looks for its startup files,
 and what each one does.  'profile' 'stylesheet' 'hotlist' 'history' etc.
 
@@ -208,7 +208,7 @@ and what each one does.  'profile' 'stylesheet' 'hotlist' 'history' etc.
 @cindex Preferences
 @kindex M-x w3-preferences-edit
 
-:: WORK :: pref panel
+:: WORK :: pref panel@*
 This should document the quick preferences panel.  M-x w3-preferences-edit
 
 @node Basic Usage, Compatibility, Getting Started, Top
@@ -640,7 +640,7 @@ the keybindings used in other browsers.
 @findex w3-lynx-emulation-minor-mode
 @vindex w3-mode-hook
 
-:: WORK :: Document lynx emulation
+:: WORK :: Document lynx emulation@*
 @table @kbd
 @item Down arrow
 Highlight next topic
@@ -746,7 +746,7 @@ Toggle trace mode on and off
 Invoke the Cookie Jar Page
 @end table
 
-:: WORK :: Document netscape emulation
+:: WORK :: Document netscape emulation@*
 Uh, turn this into pretty tables about what keys are emulated.
 
 @example
@@ -770,8 +770,8 @@ Uh, turn this into pretty tables about what keys are emulated.
 @node Hotlist Handling, Session History, Emulation, Compatibility
 @section Hotlist Handling
 
-:: WORK :: Document that it supports different types of hotlist formats
-:: WORK :: Make sure everything hotlist related can be accessed via 'h'
+:: WORK :: Document that it supports different types of hotlist formats@*
+:: WORK :: Make sure everything hotlist related can be accessed via 'h'@*
 In order to avoid having to traverse many documents to get to the same
 document over and over, Emacs/W3 supports a ``hotlist'' like Mosaic.  This is
 a file that contains @sc{url}s and aliases.  Hotlists allow quick access to any
@@ -869,7 +869,7 @@ to go backward, use the function @code{w3-backward-in-history}.
 @node Global History,  , Session History, Compatibility
 @section Global History
 
-:: WORK :: Document that the global history can have diff. formats
+:: WORK :: Document that the global history can have diff. formats@*
 Most web browsers also support the idea of a ``history'' of @sc{url}s the
 user has visited, and it displays them in a different style than normal
 @sc{url}s.
@@ -2977,7 +2977,7 @@ people writing valid @sc{html}, set the variable @code{w3-debug-html} to
 If a Emacs/W3 thinks it has encountered invalid @sc{html}, then a debugging
 message is displayed.
 
-:: WORK :: Need to list the different values w3-debug-html can have, and
+:: WORK :: Need to list the different values w3-debug-html can have, and@*
 :: WORK :: what they do ::
 
 @node Hooks, Other Variables, Debugging HTML, Advanced Features
@@ -3295,7 +3295,7 @@ values are:
 Use this method if you must first telnet and log into a gateway host,
 and then run telnet from that host to connect to outside machines.
 
-:: WORK :: document telnet gw variables
+:: WORK :: document telnet gw variables@*
 This section needs more information, specifically documenting the
 following variables.  For now, please do @key{C-h v} on the variable for
 more information.
@@ -3313,7 +3313,7 @@ This method is identical to the @code{telnet} method, but uses
 @file{rlogin} to log into the remote machine without having to send the
 username and password over the wire every time.
 
-:: WORK :: document rlogin gw variables
+:: WORK :: document rlogin gw variables@*
 This section needs more information, specifically documenting the
 following variables.  For now, please do @key{C-h v} on the variable for
 more information.
@@ -3333,7 +3333,7 @@ connections.
 @item @sc{socks}
 Use if the firewall has a @sc{socks} gateway running on it.
 
-:: WORK :: document socks variables
+:: WORK :: document socks variables@*
 This section needs more information, specifically documenting the
 following variables.  For now, please do @key{C-h v} on the variable for
 more information.
@@ -3592,7 +3592,7 @@ document.
 
 @node Down with DoubleClick, General Index, Mailcap Files, Top
 @appendix Down with DoubleClick
-:: WORK :: Document why doubleclick is evil
+:: WORK :: Document why doubleclick is evil@*
 :: WORK :: Document how you can never see another ad from them again
 
 @node General Index, Key Index, Down with DoubleClick, Top

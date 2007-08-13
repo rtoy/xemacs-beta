@@ -468,7 +468,7 @@ The last argument is not copied, just used as the tail of the new list.
 DEFUN ("concat", Fconcat, 0, MANY, 0, /*
 Concatenate all the arguments and make the result a string.
 The result is a string whose elements are the elements of all the arguments.
-Each argument may be a string or a list or vector of characters (integers).
+Each argument may be a string or a list or vector of characters.
 
 Do not use individual integers as arguments!
 The behavior of `concat' in that case will be changed later!

@@ -1,7 +1,7 @@
 ;;; url-gopher.el --- Gopher Uniform Resource Locator retrieval code
 ;; Author: wmperry
-;; Created: 1997/03/18 01:02:58
-;; Version: 1.7
+;; Created: 1997/04/07 13:24:21
+;; Version: 1.8
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -269,6 +269,7 @@ title, type, selector string, server, port, gopher-plus?"
     (if (not (processp proc))
 	nil
       (save-excursion
+	(set-process-sentinel proc 'ignore)
 	(process-send-string proc (concat selector "\r\n"))
 	(while (and (or (not wait-for)
 			(progn
@@ -308,8 +309,6 @@ title, type, selector string, server, port, gopher-plus?"
 	(condition-case ()
 	    (url-kill-process proc)
 	  (error nil))
-	(url-replace-regexp "\n*Connection closed.*\n*" "")
-	(url-replace-regexp "\n*Process .*gopher.*\n*" "")
 	(while (looking-at "\r") (delete-char 1))))))
 
 (defun url-do-gopher-cso-search (descr)

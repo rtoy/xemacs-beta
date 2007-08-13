@@ -59,6 +59,19 @@
 
 ;;; Code:
 
+(defgroup editing-basics nil
+  "Most basic editing variables"
+  :group 'editing)
+
+(defgroup killing nil
+  "Killing and yanking commands"
+  :group 'editing)
+
+(defgroup paren-matching nil
+  "Matching and blinking of parens"
+  :group 'matching)
+
+
 (defun newline (&optional arg)
   "Insert a newline, and move to left margin of the new line if it's blank.
 The newline is marked with the text-property `hard'.
@@ -879,8 +892,10 @@ Repeating \\[universal-argument] without digits or minus sign
   (forward-line (- arg))
   (skip-chars-forward " \t"))
 
-(defvar kill-whole-line nil
-  "*If non-nil, `kill-line' with no arg at beg of line kills the whole line.")
+(defcustom kill-whole-line nil
+  "*If non-nil, `kill-line' with no arg at beg of line kills the whole line."
+  :type 'boolean
+  :group 'killing)
 
 (defun kill-line (&optional arg)
   "Kill the rest of the current line; if no nonblanks there, kill thru newline.
@@ -965,11 +980,13 @@ when given no argument at the beginning of a line."
 ;current string, it is probably good enough to return nil if the string
 ;is equal (according to `string=') to the last text Emacs provided.")
 
-(defvar kill-hooks nil
-  "Functions run when something is added to the XEmacs kill ring.
+(defcustom kill-hooks nil
+  "*Functions run when something is added to the XEmacs kill ring.
 These functions are called with one argument, the string most recently
 cut or copied.  You can use this to, for example, make the most recent 
-kill become the X Clipboard selection.")
+kill become the X Clipboard selection."
+  :type 'hook
+  :group 'killing)
 
 
 ;;;; The kill ring data structure.
@@ -984,8 +1001,10 @@ interact nicely with `interprogram-cut-function' and
 interaction; you may want to use them instead of manipulating the kill
 ring directly.")
 
-(defconst kill-ring-max 30
-  "*Maximum length of kill ring before oldest elements are thrown away.")
+(defcustom kill-ring-max 30
+  "*Maximum length of kill ring before oldest elements are thrown away."
+  :type 'integer
+  :group 'killing)
 
 (defvar kill-ring-yank-pointer nil
   "The tail of the kill ring whose car is the last thing yanked.")
@@ -1392,15 +1411,19 @@ store it in a Lisp variable.  Example:
 (make-variable-buffer-local 'mark-ring)
 (put 'mark-ring 'permanent-local t)
 
-(defconst mark-ring-max 16
-  "*Maximum size of mark ring.  Start discarding off end if gets this big.")
+(defcustom mark-ring-max 16
+  "*Maximum size of mark ring.  Start discarding off end if gets this big."
+  :type 'integer
+  :group 'killing)
 
 (defvar global-mark-ring nil
   "The list of saved global marks, most recent first.")
 
-(defconst global-mark-ring-max 16
+(defcustom global-mark-ring-max 16
   "*Maximum size of global mark ring.  \
-Start discarding off end if gets this big.")
+Start discarding off end if gets this big."
+  :type 'integer
+  :group 'killing)
 
 (defun set-mark-command (arg)
   "Set mark at where point is, or jump to mark.
@@ -1545,8 +1568,10 @@ The mark is activated unless DONT-ACTIVATE-REGION is non-nil."
 
 
 ;;; After 8 years of waiting ... -sb
-(defvar next-line-add-newlines nil  ; XEmacs
-  "*If non-nil, `next-line' inserts newline to avoid `end of buffer' error.")
+(defcustom next-line-add-newlines nil  ; XEmacs
+  "*If non-nil, `next-line' inserts newline to avoid `end of buffer' error."
+  :type 'boolean
+  :group 'editing-basics)
 
 (defun next-line (arg)
   "Move cursor vertically down ARG lines.
@@ -1608,13 +1633,17 @@ to use and more reliable (no dependence on goal column, etc.)."
     (line-move (- arg)))
   nil)
 
-(defconst track-eol nil
+(defcustom track-eol nil
   "*Non-nil means vertical motion starting at end of line keeps to ends of lines.
 This means moving to the end of each line moved onto.
-The beginning of a blank line does not count as the end of a line.")
+The beginning of a blank line does not count as the end of a line."
+  :type 'boolean
+  :group 'editing-basics)
 
-(defvar goal-column nil
-  "*Semipermanent goal column for vertical motion, as set by \\[set-goal-column], or nil.")
+(defcustom goal-column nil
+  "*Semipermanent goal column for vertical motion, as set by \\[set-goal-column], or nil."
+  :type '(choice integer (const nil))
+  :group 'editing-basics)
 (make-variable-buffer-local 'goal-column)
 
 (defvar temporary-goal-column 0
@@ -1627,9 +1656,11 @@ When the `track-eol' feature is doing its job, the value is 9999.")
 (eval-when-compile
   (defvar inhibit-point-motion-hooks))
 
-(defvar line-move-ignore-invisible nil
+(defcustom line-move-ignore-invisible nil
   "*Non-nil means \\[next-line] and \\[previous-line] ignore invisible lines.
-Outline mode sets this.")
+Use with care, as it slows down movement significantly.  Outline mode sets this."
+  :type 'boolean
+  :group 'editing-basics)
 
 ;; This is the guts of next-line and previous-line.
 ;; Arg says how many lines to move.
@@ -2624,8 +2655,10 @@ specialization of overwrite-mode, entered by setting the
 	    'overwrite-mode-binary))
   (redraw-modeline))
 
-(defvar line-number-mode nil
-  "*Non-nil means display line number in modeline.")
+(defcustom line-number-mode nil
+  "*Non-nil means display line number in modeline."
+  :type 'boolean
+  :group 'editing-basics)
 
 (defun line-number-mode (arg)
   "Toggle Line Number mode.
@@ -2638,8 +2671,10 @@ in the mode line."
 	  (> (prefix-numeric-value arg) 0)))
   (redraw-modeline))
 
-(defvar column-number-mode nil
-  "*Non-nil means display column number in mode line.")
+(defcustom column-number-mode nil
+  "*Non-nil means display column number in mode line."
+  :type 'boolean
+  :group 'editing-basics)
 
 (defun column-number-mode (arg)
   "Toggle Column Number mode.
@@ -2653,22 +2688,32 @@ in the mode line."
   (redraw-modeline))
 
 
-(defvar blink-matching-paren t
-  "*Non-nil means show matching open-paren when close-paren is inserted.")
+(defcustom blink-matching-paren t
+  "*Non-nil means show matching open-paren when close-paren is inserted."
+  :type 'boolean
+  :group 'paren-matching)
 
-(defvar blink-matching-paren-on-screen t
+(defcustom blink-matching-paren-on-screen t
   "*Non-nil means show matching open-paren when it is on screen.
 nil means don't show it (but the open-paren can still be shown
-when it is off screen.")
+when it is off screen."
+  :type 'boolean
+  :group 'paren-matching)
 
-(defconst blink-matching-paren-distance 12000
-  "*If non-nil, is maximum distance to search for matching open-paren.")
+(defcustom blink-matching-paren-distance 12000
+  "*If non-nil, is maximum distance to search for matching open-paren."
+  :type '(choice integer (const nil))
+  :group 'paren-matching)
 
-(defconst blink-matching-delay 1
-  "*The number of seconds that `blink-matching-open' will delay at a match.")
+(defcustom blink-matching-delay 1
+  "*The number of seconds that `blink-matching-open' will delay at a match."
+  :type 'number
+  :group 'paren-matching)
 
-(defconst blink-matching-paren-dont-ignore-comments nil
-  "*Non-nil means `blink-matching-paren' should not ignore comments.")
+(defcustom blink-matching-paren-dont-ignore-comments nil
+  "*Non-nil means `blink-matching-paren' should not ignore comments."
+  :type 'boolean
+  :group 'paren-matching)
 
 (defun blink-matching-open ()
   "Move cursor momentarily to the beginning of the sexp before point."
@@ -3058,6 +3103,7 @@ as the second argument.")
 (defvar log-message-ignore-regexps
   '("^Mark set$"
     "^Undo!$"
+    "^Undo\\.\\.\\.$"
     "^Quit$"
     "^\\(Beginning\\|End\\) of buffer$"
     "^Fontifying"

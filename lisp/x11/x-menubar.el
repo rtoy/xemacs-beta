@@ -132,12 +132,19 @@
        ["Towers of Hanoi"	hanoi			t]
        ["Game of Life"		life			t]
        ["Multiplication Puzzle"	mpuz			t]
-       ["Mine Game"		mine			t]
+       ["Mine Game"		xmine			t]
        )
       )
 
      ("Options"
-      ,custom-help-menu
+      ("Customize"
+       ("Emacs" :filter (lambda (&rest junk)
+			   (cdr (custom-menu-create 'emacs))))
+       ["Group..." customize t]
+       ["Variable..." customize-variable t]
+       ["Face..." customize-face t]
+       ["Saved..." customize-customized t]
+       ["Apropos..." customize-apropos t])
       ["Read Only" (toggle-read-only)
        :style toggle :selected buffer-read-only]
       ("Editing Options"

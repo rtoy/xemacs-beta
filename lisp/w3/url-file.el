@@ -1,7 +1,7 @@
 ;;; url-file.el --- File retrieval code
 ;; Author: wmperry
-;; Created: 1997/02/19 23:38:31
-;; Version: 1.15
+;; Created: 1997/04/04 16:19:42
+;; Version: 1.16
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -131,7 +131,7 @@
       (save-excursion
 	(set-buffer url-working-buffer)
 	(erase-buffer)
-	(insert-file-contents-literally
+	(insert-file-contents
 	 (expand-file-name url-directory-index-file dir)))
     (kill-buffer (current-buffer))
     (find-file dir)

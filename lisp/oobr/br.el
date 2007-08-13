@@ -9,7 +9,7 @@
 ;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    12-Dec-89
-;; LAST-MOD:     21-Feb-97 at 16:45:11 by Bob Weiner
+;; LAST-MOD:      9-Apr-97 at 00:31:44 by Bob Weiner
 ;;
 ;; Copyright (C) 1989-1996  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
@@ -991,8 +991,13 @@ buffers associated with the browser."
       ;; Too dangerous to include (br-editor-kill) here.
       ;; The user can invoke it manually if desired.
       )
-    (and *br-prev-wconfig* (set-window-configuration *br-prev-wconfig*))
-    (br-interrupt arg)))
+    ;; The following `let' clause is necessary since br-interrupt buries
+    ;; buffers and so must be called before the window configuration restore,
+    ;; but it also may set *br-prev-wconfig* to nil, so we have to cache its
+    ;; value.
+    (let ((wconfig *br-prev-wconfig*))
+      (br-interrupt arg)
+      (if wconfig (set-window-configuration wconfig)))))
 
 (defun br-refresh ()
   "Restore OO-Browser to its state upon startup."

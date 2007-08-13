@@ -104,7 +104,7 @@
       
 (defun vm-mime-charset-decode-region (charset start end)
   (or (markerp end) (setq end (vm-marker end)))
-  (cond ((vm-xemacs-mule-p)
+  (cond (vm-xemacs-mule-p
 	 (if (eq (device-type) 'x)
 	     (let ((buffer-read-only nil)
 		   (cell (cdr (vm-string-assoc
@@ -822,9 +822,9 @@
 	     (defvar scroll-in-place)
 	     (make-local-variable 'scroll-in-place)
 	     (setq scroll-in-place nil)
-	     (and (vm-xemacs-mule-p)
+	     (and vm-xemacs-mule-p
 		  (set-buffer-file-coding-system 'no-conversion t))
-	     (cond ((vm-fsfemacs-19-p)
+	     (cond (vm-fsfemacs-19-p
 		    ;; need to do this outside the let because
 		    ;; loading disp-table initializes
 		    ;; standard-display-table.
@@ -896,7 +896,7 @@
       (narrow-to-region beg end)
       (catch 'done
 	(goto-char (point-min))
-	(if (vm-xemacs-mule-p)
+	(if vm-xemacs-mule-p
 	    (let ((charsets (delq 'ascii (charsets-in-region beg end))))
 	      (cond ((null charsets)
 		     "us-ascii")
@@ -960,23 +960,23 @@
 (defun vm-mime-can-display-internal (layout)
   (let ((type (car (vm-mm-layout-type layout))))
     (cond ((vm-mime-types-match "image/jpeg" type)
-	   (and (vm-xemacs-p)
+	   (and vm-xemacs-p
 		(featurep 'jpeg)
 		(eq (device-type) 'x)))
 	  ((vm-mime-types-match "image/gif" type)
-	   (and (vm-xemacs-p)
+	   (and vm-xemacs-p
 		(featurep 'gif)
 		(eq (device-type) 'x)))
 	  ((vm-mime-types-match "image/png" type)
-	   (and (vm-xemacs-p)
+	   (and vm-xemacs-p
 		(featurep 'png)
 		(eq (device-type) 'x)))
 	  ((vm-mime-types-match "image/tiff" type)
-	   (and (vm-xemacs-p)
+	   (and vm-xemacs-p
 		(featurep 'tiff)
 		(eq (device-type) 'x)))
 	  ((vm-mime-types-match "audio/basic" type)
-	   (and (vm-xemacs-p)
+	   (and vm-xemacs-p
 		(or (featurep 'native-sound)
 		    (featurep 'nas-sound))
 		(or (device-sound-enabled-p)
@@ -991,13 +991,11 @@
 	   (let ((charset (or (vm-mime-get-parameter layout "charset")
 			      "us-ascii")))
 	     (vm-mime-charset-internally-displayable-p charset)))
-;; commented out until w3-region behavior gets worked out
-;;
-;;	  ((vm-mime-types-match "text/html" type)
-;;	   (condition-case ()
-;;	       (progn (require 'w3)
-;;		      (fboundp 'w3-region))
-;;	     (error nil)))
+	  ((vm-mime-types-match "text/html" type)
+	   (condition-case ()
+	       (progn (require 'w3)
+		      (fboundp 'w3-region))
+	     (error nil)))
 	  (t nil))))
 
 (defun vm-mime-can-convert (type)
@@ -1260,28 +1258,26 @@ in the buffer.  The function is expected to make the message
 (defun vm-mime-display-button-text (layout)
   (vm-mime-display-button-xxxx layout t))
 
-;; commented out until w3-region behavior is worked out
-;;
-;;(defun vm-mime-display-internal-text/html (layout)
-;;  (let ((buffer-read-only nil)
-;;	(work-buffer nil))
-;;    (message "Inlining text/html, be patient...")
-;;    ;; w3-region is not as tame as we would like.
-;;    ;; make sure the yoke is firmly attached.
-;;    (unwind-protect
-;;	(progn
-;;	  (save-excursion
-;;	    (set-buffer (setq work-buffer
-;;			      (generate-new-buffer " *workbuf*")))
-;;	    (vm-mime-insert-mime-body layout)
-;;	    (vm-mime-transfer-decode-region layout (point-min) (point-max))
-;;	    (save-excursion
-;;	      (save-window-excursion
-;;		(w3-region (point-min) (point-max)))))
-;;	  (insert-buffer-substring work-buffer))
-;;      (and work-buffer (kill-buffer work-buffer)))
-;;    (message "Inlining text/html... done")
-;;    t ))
+(defun vm-mime-display-internal-text/html (layout)
+  (let ((buffer-read-only nil)
+	(work-buffer nil))
+    (message "Inlining text/html, be patient...")
+    ;; w3-region is not as tame as we would like.
+    ;; make sure the yoke is firmly attached.
+    (unwind-protect
+	(progn
+	  (save-excursion
+	    (set-buffer (setq work-buffer
+			      (generate-new-buffer " *workbuf*")))
+	    (vm-mime-insert-mime-body layout)
+	    (vm-mime-transfer-decode-region layout (point-min) (point-max))
+	    (save-excursion
+	      (save-window-excursion
+		(w3-region (point-min) (point-max)))))
+	  (insert-buffer-substring work-buffer))
+      (and work-buffer (kill-buffer work-buffer)))
+    (message "Inlining text/html... done")
+    t ))
 
 (defun vm-mime-display-internal-text/plain (layout &optional no-highlighting)
   (let ((start (point)) end old-size
@@ -1344,7 +1340,7 @@ in the buffer.  The function is expected to make the message
 	       (setq buffer-file-type (not (vm-mime-text-type-p layout)))
 	       ;; Tell XEmacs/MULE not to mess with the bits unless
 	       ;; this is a text type.
-	       (if (vm-xemacs-mule-p)
+	       (if vm-xemacs-mule-p
 		   (if (vm-mime-text-type-p layout)
 		       (set-buffer-file-coding-system 'no-conversion nil)
 		     (set-buffer-file-coding-system 'binary t)))
@@ -1684,7 +1680,7 @@ in the buffer.  The function is expected to make the message
       'vm-mime-display-internal-message/partial)
 
 (defun vm-mime-display-internal-image-xxxx (layout feature name)
-  (if (and (vm-xemacs-p)
+  (if (and vm-xemacs-p
 	   (featurep feature)
 	   (eq (device-type) 'x))
       (let ((start (point)) end tempfile g e
@@ -1732,7 +1728,7 @@ in the buffer.  The function is expected to make the message
   (vm-mime-display-internal-image-xxxx layout 'tiff "TIFF"))
 
 (defun vm-mime-display-internal-audio/basic (layout)
-  (if (and (vm-xemacs-p)
+  (if (and vm-xemacs-p
 	   (or (featurep 'native-sound)
 	       (featurep 'nas-sound))
 	   (or (device-sound-enabled-p)
@@ -1782,7 +1778,7 @@ in the buffer.  The function is expected to make the message
   ;; drag window point along, to a place arbitrarily far from
   ;; where it was when the user triggered the button.
   (save-excursion
-    (cond ((vm-fsfemacs-19-p)
+    (cond (vm-fsfemacs-19-p
 	   (let (o-list o (found nil))
 	     (setq o-list (overlays-at (point)))
 	     (while (and o-list (not found))
@@ -1792,7 +1788,7 @@ in the buffer.  The function is expected to make the message
 							 'vm-mime-function))
 			       (car o-list))))
 	       (setq o-list (cdr o-list)))))
-	  ((vm-xemacs-p)
+	  (vm-xemacs-p
 	   (let ((e (extent-at (point) nil 'vm-mime-layout)))
 	     (funcall (or function (extent-property e 'vm-mime-function))
 		      e))))))
@@ -1800,15 +1796,14 @@ in the buffer.  The function is expected to make the message
 ;; for the karking compiler
 (defvar vm-menu-mime-dispose-menu)
 
-(defun vm-mime-set-extent-glyph-for-layout (e layout)
-  (if (and (vm-xemacs-p) (fboundp 'make-glyph)
+(defun vm-mime-set-extent-glyph-for-type (e type)
+  (if (and vm-xemacs-p (fboundp 'make-glyph)
 	   (eq (device-type) 'x) (> (device-bitplanes) 7))
-      (let ((type (car (vm-mm-layout-type layout)))
-	    (dir vm-image-directory)
+      (let ((dir vm-image-directory)
 	    (colorful (> (device-bitplanes) 15))
 	    (tuples
 	     '(("text" "document-simple.xpm" "document-colorful.xpm")
-	       ("image" "mona_stamp-simple.xpm" "mona_stamp-colorful.xpm")
+	       ("image" "mona_stamp-simple.gif" "mona_stamp-colorful.gif")
 	       ("audio" "audio_stamp-simple.xpm" "audio_stamp-colorful.xpm")
 	       ("video" "film-simple.xpm" "film-colorful.xpm")
 	       ("message" "message-simple.xpm" "message-colorful.xpm")
@@ -1822,7 +1817,7 @@ in the buffer.  The function is expected to make the message
 			   (throw 'done (car tuples))
 			 (setq tuples (cdr tuples))))
 		     nil)
-	      file (and file (if colorful (nth 1 file) (nth 2 file)))
+	      file (and file (if colorful (nth 2 file) (nth 1 file)))
 	      sym (and file (intern file vm-image-obarray))
 	      glyph (and sym (boundp sym) (symbol-value sym))
 	      glyph (or glyph (not file)
@@ -1846,16 +1841,18 @@ in the buffer.  The function is expected to make the message
     (if (not (bolp))
 	(insert "\n"))
     (insert caption "\n")
-    ;; we MUST have the five arg make-overlay.  overlays must
-    ;; advance when text is inserted at their start position or
-    ;; inline text and graphics will seep into the button
-    ;; overlay and then be removed when the button is removed.
-    (if (fboundp 'make-overlay)
+    ;; we must use the same interface that the vm-extent functions
+    ;; use.  if they use overlays, then we call make-overlay.
+    (if (eq (symbol-function 'vm-make-extent) 'make-overlay)
+	;; we MUST have the five arg make-overlay.  overlays must
+	;; advance when text is inserted at their start position or
+	;; inline text and graphics will seep into the button
+	;; overlay and then be removed when the button is removed.
 	(setq e (make-overlay start (point) nil t nil))
       (setq e (make-extent start (point)))
       (set-extent-property e 'start-open t)
       (set-extent-property e 'end-open t))
-    (vm-mime-set-extent-glyph-for-layout e layout)
+    (vm-mime-set-extent-glyph-for-type e (car (vm-mm-layout-type layout)))
     ;; for emacs
     (vm-set-extent-property e 'mouse-face 'highlight)
     (vm-set-extent-property e 'local-map keymap)
@@ -1920,7 +1917,7 @@ in the buffer.  The function is expected to make the message
 	    (setq buffer-file-type (not (vm-mime-text-type-p layout)))
 	    ;; Tell XEmacs/MULE not to mess with the bits unless
 	    ;; this is a text type.
-	    (if (vm-xemacs-mule-p)
+	    (if vm-xemacs-mule-p
 		(if (vm-mime-text-type-p layout)
 		    (set-buffer-file-coding-system 'no-conversion nil)
 		  (set-buffer-file-coding-system 'binary t)))
@@ -2084,7 +2081,7 @@ in the buffer.  The function is expected to make the message
       (vm-mime-types-match "message" (car (vm-mm-layout-type layout)))))
 
 (defun vm-mime-charset-internally-displayable-p (name)
-  (cond ((and (vm-xemacs-mule-p) (eq (device-type) 'x))
+  (cond ((and vm-xemacs-mule-p (eq (device-type) 'x))
 	 (vm-string-assoc name vm-mime-mule-charset-to-coding-alist))
 	((vm-multiple-fonts-possible-p)
 	 (or (vm-string-member name vm-mime-default-face-charsets)
@@ -2119,7 +2116,7 @@ in the buffer.  The function is expected to make the message
     (car mp)))
 
 (defun vm-mime-make-multipart-boundary ()
-  (let ((boundary (make-string 40 ?a))
+  (let ((boundary (make-string 10 ?a))
 	(i 0))
     (random t)
     (while (< i (length boundary))
@@ -2250,7 +2247,7 @@ will interactively query you for the file type information."
 					    (file-name-nondirectory object)
 					    "\"")))))
       (setq disposition (list "unspecified")))
-    (cond ((vm-fsfemacs-19-p)
+    (cond (vm-fsfemacs-19-p
 	   (put-text-property start end 'front-sticky nil)
 	   (put-text-property start end 'rear-nonsticky t)
 ;; can't be intangible because menu clicking at a position needs
@@ -2265,8 +2262,9 @@ will interactively query you for the file type information."
 	   (put-text-property start end 'vm-mime-disposition disposition)
 	   (put-text-property start end 'vm-mime-encoded mimed)
 	   (put-text-property start end 'vm-mime-object object))
-	  ((fboundp 'make-extent)
+	  (vm-xemacs-p
 	   (setq e (make-extent start end))
+	   (vm-mime-set-extent-glyph-for-type e type)
 	   (set-extent-property e 'start-open t)
 	   (set-extent-property e 'face vm-mime-button-face)
 	   (set-extent-property e 'duplicable t)
@@ -2284,19 +2282,19 @@ will interactively query you for the file type information."
 	   (set-extent-property e 'vm-mime-encoded mimed)))))
 
 (defun vm-mime-attachment-disposition-at-point ()
-  (cond ((vm-fsfemacs-19-p)
+  (cond (vm-fsfemacs-19-p
 	 (let ((disp (get-text-property (point) 'vm-mime-disposition)))
 	   (intern (car disp))))
-	((vm-xemacs-p)
+	(vm-xemacs-p
 	 (let* ((e (extent-at (point) nil 'vm-mime-disposition))
 		(disp (extent-property e 'vm-mime-disposition)))
 	   (intern (car disp))))))
 
 (defun vm-mime-set-attachment-disposition-at-point (sym)
-  (cond ((vm-fsfemacs-19-p)
+  (cond (vm-fsfemacs-19-p
 	 (let ((disp (get-text-property (point) 'vm-mime-disposition)))
 	   (setcar disp (symbol-name sym))))
-	((vm-xemacs-p)
+	(vm-xemacs-p
 	 (let* ((e (extent-at (point) nil 'vm-mime-disposition))
 		(disp (extent-property e 'vm-mime-disposition)))
 	   (setcar disp (symbol-name sym))))))
@@ -2400,11 +2398,11 @@ will interactively query you for the file type information."
 Attachment tags added to the buffer with vm-mime-attach-file are expanded
 and the approriate content-type and boundary markup information is added."
   (interactive)
-  (cond ((vm-xemacs-mule-p)
+  (cond (vm-xemacs-mule-p
 	 (vm-mime-xemacs-encode-composition))
-	((vm-xemacs-p)
+	(vm-xemacs-p
 	 (vm-mime-xemacs-encode-composition))
-	((vm-fsfemacs-19-p)
+	(vm-fsfemacs-19-p
 	 (vm-mime-fsfemacs-encode-composition))
 	(t
 	 (error "don't know how to MIME encode composition for %s"
@@ -2449,7 +2447,7 @@ and the approriate content-type and boundary markup information is added."
 	    (narrow-to-region (point) (point-max))
 	    (setq charset (vm-determine-proper-charset (point-min)
 						       (point-max)))
-	    (if (vm-xemacs-mule-p)
+	    (if vm-xemacs-mule-p
 		(encode-coding-region (point-min) (point-max)
 				      buffer-file-coding-system))
 	    (setq encoding (vm-determine-proper-content-transfer-encoding
@@ -2562,7 +2560,7 @@ and the approriate content-type and boundary markup information is added."
 			  vm-mime-8bit-text-transfer-encoding)))
 		   (vm-mime-map-atomic-layouts 'vm-mime-transfer-encode-layout
 					       (vm-mm-layout-parts layout)))
-		 ;; now figure out a proper content trasnfer
+		 ;; now figure out a proper content transfer
 		 ;; encoding value for the enclosing entity.
 		 (re-search-forward "^\n" nil t)
 		 (save-restriction
@@ -2633,7 +2631,7 @@ and the approriate content-type and boundary markup information is added."
 	    nil
 	  (setq charset (vm-determine-proper-charset (point)
 						     (point-max)))
-	  (if (vm-xemacs-mule-p)
+	  (if vm-xemacs-mule-p
 	      (encode-coding-region (point-min) (point-max)
 				    buffer-file-coding-system))
 	  (setq encoding (vm-determine-proper-content-transfer-encoding
@@ -2751,7 +2749,7 @@ and the approriate content-type and boundary markup information is added."
 	    (narrow-to-region (point) (point-max))
 	    (setq charset (vm-determine-proper-charset (point-min)
 						       (point-max)))
-	    (if (vm-xemacs-mule-p)
+	    (if vm-xemacs-mule-p
 		(encode-coding-region (point-min) (point-max)
 				      file-coding-system))
 	    (setq encoding (vm-determine-proper-content-transfer-encoding
@@ -2877,7 +2875,7 @@ and the approriate content-type and boundary markup information is added."
 			  vm-mime-8bit-text-transfer-encoding)))
 		   (vm-mime-map-atomic-layouts 'vm-mime-transfer-encode-layout
 					       (vm-mm-layout-parts layout)))
-		 ;; now figure out a proper content trasnfer
+		 ;; now figure out a proper content transfer
 		 ;; encoding value for the enclosing entity.
 		 (re-search-forward "^\n" nil t)
 		 (save-restriction
@@ -2948,7 +2946,7 @@ and the approriate content-type and boundary markup information is added."
 	    nil
 	  (setq charset (vm-determine-proper-charset (point)
 						     (point-max)))
-	  (if (vm-xemacs-mule-p)
+	  (if vm-xemacs-mule-p
 	      (encode-coding-region (point-min) (point-max)
 				    file-coding-system))
 	  (setq encoding (vm-determine-proper-content-transfer-encoding

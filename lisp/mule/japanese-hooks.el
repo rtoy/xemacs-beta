@@ -176,7 +176,7 @@
                 (let ((proc (get-buffer-process (current-buffer))))
                   (set-process-input-coding-system  proc 'euc-japan)
                   (set-process-output-coding-system proc 'euc-japan))))
-    (set-buffer-file-coding-system-for-read 'autodetect)
+    (set-buffer-file-coding-system-for-read 'automatic-conversion)
     (set-default-buffer-file-coding-system  'euc-japan)
     (setq keyboard-coding-system            'euc-japan)
     (setq terminal-coding-system            'euc-japan)

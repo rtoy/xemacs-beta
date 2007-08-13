@@ -1,7 +1,7 @@
 ;;; w3-emulate.el --- All variable definitions for emacs-w3
 ;; Author: wmperry
-;; Created: 1997/03/14 06:12:02
-;; Version: 1.12
+;; Created: 1997/04/04 14:24:19
+;; Version: 1.13
 ;; Keywords: comm, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -203,6 +203,66 @@
 (define-key w3-lynx-emulation-minor-mode-map "\C-t" 'ignore) ; toggle trace
 (define-key w3-lynx-emulation-minor-mode-map "\C-k" 'ignore) ; cookie jar
 
+;; Things to masquerade as other browsers in the user-agent field
+;; of an HTTP request.
+(defun w3-masquerade-stub (arg app version)
+  (if (null arg)
+      (setq arg (if (equal url-package-name "Emacs-W3") 1 0)))
+  (if (= 0 arg)
+      (setq url-package-name "Emacs-W3"
+	    url-package-version w3-version-number)
+    (setq url-package-name app
+	  url-package-version version)))
+
+(defun w3-lynx-masquerade-mode (&optional arg)
+  (interactive "P")
+  (w3-masquerade-stub arg "Lynx" "2.6"))
+
+(defun turn-on-lynx-masquerade-mode ()
+  (interactive)
+  (w3-lynx-masquerade-mode 1))
+
+(defun turn-off-lynx-masquerade-mode ()
+  (interactive)
+  (w3-lynx-masquerade-mode 0))
+
+(defun w3-netscape-masquerade-mode (&optional arg)
+  (interactive "P")
+  (w3-masquerade-stub arg "Mozilla" "4.0"))
+
+(defun turn-on-netscape-masquerade-mode ()
+  (interactive)
+  (w3-netscape-masquerade-mode 1))
+
+(defun turn-off-netscape-masquerade-mode ()
+  (interactive)
+  (w3-netscape-masquerade-mode 0))
+
+(defun w3-ie-masquerade-mode (&optional arg)
+  (interactive "P")
+  (w3-masquerade-stub arg "Internet_Explorer" "3.02"))
+
+(defun turn-on-ie-masquerade-mode ()
+  (interactive)
+  (w3-ie-masquerade-mode 1))
+
+(defun turn-off-ie-masquerade-mode ()
+  (interactive)
+  (w3-ie-masquerade-mode 0))
+
+(defun w3-arena-masquerade-mode (&optional arg)
+  (interactive "P")
+  (w3-masquerade-stub arg "Arena" "0.9"))
+
+(defun turn-on-arena-masquerade-mode ()
+  (interactive)
+  (w3-arena-masquerade-mode 1))
+
+(defun turn-off-arena-masquerade-mode ()
+  (interactive)
+  (w3-arena-masquerade-mode 0))
+
+;;
 (provide 'w3-emulate)
 
 ;;; Local Variables:

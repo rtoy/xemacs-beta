@@ -26,16 +26,24 @@
 ;;;                     General mouse modeline stuff                    ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defvar drag-modeline-event-lag 150
-  "*The amount of time to wait (in msecs) between drag modeline events
-before updating the display. If this value is too small, dragging will
-be choppy because redisplay cannot keep up. If it is too large, dragging
-will be choppy because of the explicit redisplay delay specified.")
+(defgroup modeline nil
+  "Modeline customizations"
+  :group 'environment)
 
-(defvar modeline-click-swaps-buffers nil
+(defcustom drag-modeline-event-lag 150
+  "*The pause (in msecs) between drag modeline events before redisplaying.
+If this value is too small, dragging will be choppy because redisplay cannot
+keep up. If it is too large, dragging will be choppy because of the explicit
+redisplay delay specified."
+  :type 'integer
+  :group 'modeline)
+
+(defcustom modeline-click-swaps-buffers nil
   "*If non-nil, clicking on the modeline changes the current buffer.
 Click on the left half of the modeline cycles forward through the
-buffer list and clicking on the right half cycles backward.")
+buffer list and clicking on the right half cycles backward."
+  :type 'boolean
+  :group 'modeline)
 
 (defun mouse-drag-modeline (event)
   "Resize the window by dragging the modeline.

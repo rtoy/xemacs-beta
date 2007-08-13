@@ -30,17 +30,29 @@
 ;; [ older changelog entries removed, since they're all about code that
 ;;   I've deleted. ]
 
-(defvar Manual-program "man" "\
-*Name of the program to invoke in order to format the source man pages.")
+(defgroup man nil
+  "Browse manual pages"
+  :group 'help)
 
-(defvar Manual-buffer-view-mode t "\
+(defcustom Manual-program "man" "\
+*Name of the program to invoke in order to format the source man pages."
+  :type 'string
+  :group 'man)
+
+(defcustom Manual-buffer-view-mode t "\
 *Whether manual buffers should be placed in view-mode.
 nil means leave the buffer in fundamental-mode in another window.
 t means use `view-buffer' to display the man page in the current window.
-Any other value means use `view-buffer-other-window'.")
+Any other value means use `view-buffer-other-window'."
+  :type '(choice (const :tag "fundamental-mode other window" nil)
+		 (const :tag "view-mode current window" t)
+		 (const :tag "view-mode other window" other))
+  :group 'man)
 
-(defvar Manual-mode-hook nil
-  "Function or functions run on entry to Manual-mode.")
+(defcustom Manual-mode-hook nil
+  "Function or functions run on entry to Manual-mode."
+  :type 'hook
+  :group 'man)
 
 (defvar Manual-page-history nil "\
 A list of names of previously visited man page buffers.")
@@ -48,7 +60,7 @@ A list of names of previously visited man page buffers.")
 
 ;; New variables.
 
-(defvar Manual-use-rosetta-man (not (null (locate-file "rman" exec-path))) "\
+(defcustom Manual-use-rosetta-man (not (null (locate-file "rman" exec-path))) "\
 If non-nil, use RosettaMan (rman) to filter man pages.
 This makes man-page cleanup virtually instantaneous, instead of
 potentially taking a long time.
@@ -112,29 +124,26 @@ distinguish tables from ordinary text, I'd like to hear them.
 
 
 Notes for HTML consumers: This filter does real (heuristic)
-parsing--no <PRE>!  Man page references are turned into hypertext links.")
+parsing--no <PRE>!  Man page references are turned into hypertext links."
+  :type 'boolean
+  :group 'man)
 
-(make-face 'man-italic)
-(or (face-differs-from-default-p 'man-italic)
-    (copy-face 'italic 'man-italic))
-;; XEmacs (from Darrell Kindred): underlining is annoying due to
-;; large blank spaces in this face.
-;; (or (face-differs-from-default-p 'man-italic)
-;;    (set-face-underline-p 'man-italic t))
+(defface man-italic '((t (:italic t)))
+  "Manual italics face"
+  :group 'man)
 
-(make-face 'man-bold)
-(or (face-differs-from-default-p 'man-bold)
-    (copy-face 'bold 'man-bold))
-(or (face-differs-from-default-p 'man-bold)
-    (copy-face 'man-italic 'man-bold))
+(defface man-bold '((t (:bold t)))
+  "Manual bold face"
+  :group 'man)
 
-(make-face 'man-heading)
-(or (face-differs-from-default-p 'man-heading)
-    (copy-face 'man-bold 'man-heading))
+(defface man-heading '((t (:bold t)))
+  "Manual headings face"
+  :group 'man)
 
-(make-face 'man-xref)
-(or (face-differs-from-default-p 'man-xref)
-    (set-face-underline-p 'man-xref t))
+(defface man-xref '((t (:underline t)))
+  "Manual xrefs face"
+  :group 'man)
+
 
 (defvar Manual-mode-map
   (let ((m (make-sparse-keymap)))

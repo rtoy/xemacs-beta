@@ -1,3 +1,13 @@
+Mon Apr  7 21:02:39 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* lispref/lispref.texi: Update version numbers (with patches from
+	Hrvoje Niksic).
+
+	* lispref/building.texi (Building XEmacs): Update version numbers
+	and build identification.
+
+	* lispref/intro.texi (Introduction): Update version number.
+
 Sun Mar 23 15:47:05 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* Makefile (srcs): Add efs.texi.

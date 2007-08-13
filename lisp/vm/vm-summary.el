@@ -284,13 +284,13 @@ mandatory."
 	    (and old-window (select-window old-window)))))))
 
 (defun vm-summary-highlight-region (start end face)
-  (cond ((fboundp 'make-overlay)
+  (cond (vm-fsfemacs-19-p
 	 (if (and vm-summary-overlay (overlay-buffer vm-summary-overlay))
 	     (move-overlay vm-summary-overlay start end)
 	   (setq vm-summary-overlay (make-overlay start end))
 	   (overlay-put vm-summary-overlay 'evaporate nil)
 	   (overlay-put vm-summary-overlay 'face face)))
-	((fboundp 'make-extent)
+	(vm-xemacs-p
 	 (if (and vm-summary-overlay (extent-end-position vm-summary-overlay))
 	     (set-extent-endpoints vm-summary-overlay start end)
 	   (setq vm-summary-overlay (make-extent start end))

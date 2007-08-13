@@ -344,18 +344,11 @@ struct magic_eval_data
 # include <X11/Xlib.h>
 #endif
 
-#if defined (HAVE_NEXTSTEP) && defined(emacs)
-# import <appkit/appkit.h>
-#endif
-
 union magic_data
 {
   char             underlying_tty_event;
 #ifdef HAVE_X_WINDOWS
   XEvent           underlying_x_event;
-#endif
-#ifdef HAVE_NEXTSTEP
-  NXEvent          underlying_ns_event;
 #endif
 };
 

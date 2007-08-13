@@ -8108,14 +8108,6 @@ init_redisplay (void)
       return;
     }
 #endif
-#ifdef HAVE_NEXTSTEP
-  if (!strcmp (display_use, "ns"))
-    {
-      Vwindow_system = Qns;
-      Vinitial_window_system = Qns;
-      return;
-    }        
-#endif
 
   /* If no window system has been specified, try to use the terminal.  */
   if (!isatty (0))

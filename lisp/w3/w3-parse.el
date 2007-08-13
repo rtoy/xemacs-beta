@@ -1414,10 +1414,10 @@ skip-chars-forward."
        ;; FORM - - %body.content -(FORM) +(INPUT|KEYGEN|SELECT|TEXTAREA)
        ((form)
         ;; Same as BODY.  Ugh!
-        (content-model . [((%body.content)
+        (content-model . [((%body.content %text)
                            nil
                            ;; Push <P> before data characters.  Non-SGML.
-                           (((%text) p))
+                           nil
                            nil)])
         (exclusions . (form))
         (inclusions . (input select textarea keygen label)))

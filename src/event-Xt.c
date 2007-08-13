@@ -691,8 +691,8 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
 
         /* ### Use Fget_coding_system (Vcomposed_input_coding_system) */
         instream =
-	  make_decoding_input_stream (XLSTREAM (instream),
-				      Fget_coding_system (Qautodetect));
+	  make_decoding_input_stream
+	  (XLSTREAM (instream), Fget_coding_system (Qautomatic_conversion));
         
         while ((ch = Lstream_get_emchar (XLSTREAM (instream))) != EOF)
           {

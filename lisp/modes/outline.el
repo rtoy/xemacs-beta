@@ -172,16 +172,19 @@ in the file it applies to.")
 ;;; #+XEmacs
 (defun outline-install-menubar (&optional remove)
   ;; install or remove the outline menus
-  (let ((menus (cdr outline-mode-menu)) path)
-    (and (not remove)
-	(set-buffer-menubar (copy-sequence current-menubar)))
-    (while menus
-      (setq path (list (car (car menus))))
-      (if (and remove (find-menu-item current-menubar path))
-	  (delete-menu-item path)
-	(or (car (find-menu-item current-menubar path))
-	    (add-menu nil (car (car menus)) (cdr (car menus)) nil)))
-      (setq menus (cdr menus)))))
+  ;; This is a nop if menubars aren't available
+  (when (and (featurep 'menubar) ; XEmacs
+	     current-menubar)
+    (let ((menus (cdr outline-mode-menu)) path)
+      (and (not remove)
+	   (set-buffer-menubar (copy-sequence current-menubar)))
+      (while menus
+	(setq path (list (car (car menus))))
+	(if (and remove (find-menu-item current-menubar path))
+	    (delete-menu-item path)
+	  (or (car (find-menu-item current-menubar path))
+	      (add-menu nil (car (car menus)) (cdr (car menus)) nil)))
+	(setq menus (cdr menus))))))
 
 ;;;###autoload
 (defvar outline-minor-mode nil

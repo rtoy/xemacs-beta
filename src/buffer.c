@@ -461,7 +461,7 @@ the search will still be done on `buffer-file-name'.
 */
        (filename))
 {
-  /* This function can GC */
+  /* This function can GC.  GC checked 1997.04.06. */
   REGISTER Lisp_Object tail, buf, tem;
   struct gcpro gcpro1;
 
@@ -1243,6 +1243,10 @@ with `delete-process'.
 
   /* Or the echo area.  */
   if (EQ (buf, Vecho_area_buffer))
+    return Qnil;
+
+  /* Or the special invisible internal prin1 buffer. */
+  if (EQ (buf, Vprin1_to_string_buffer))
     return Qnil;
 
   /* Query if the buffer is still modified.  */
@@ -2512,14 +2516,14 @@ See `buffer-file-coding-system'.
 
   DEFVAR_BUFFER_LOCAL ("buffer-file-coding-system", buffer_file_coding_system /*
 *Current coding system for the current buffer.
-When the buffer is written out into a file, this coding system will
-be used for the encoding.  Automatically buffer-local when set in
-any fashion.  This is normally set automatically when a file is loaded
-in based on the determined coding system of the file (assuming that
-`buffer-file-coding-system-for-read' is set to `autodetect', which calls
-for automatic determination of the file's coding system).  Normally the
-modeline indicates the current file coding system using its mnemonic
-abbreviation.
+When the buffer is written out into a file, this coding system will be
+used for the encoding.  Automatically buffer-local when set in any
+fashion.  This is normally set automatically when a file is loaded in
+based on the determined coding system of the file (assuming that
+`buffer-file-coding-system-for-read' is set to `automatic-conversion',
+which calls for automatic determination of the file's coding system).
+Normally the modeline indicates the current file coding system using
+its mnemonic abbreviation.
 
 The default value for this variable (which is normally used for
 buffers without associated files) is also used when automatic

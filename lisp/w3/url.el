@@ -1,13 +1,13 @@
 ;;; url.el --- Uniform Resource Locator retrieval tool
 ;; Author: wmperry
-;; Created: 1997/04/03 15:23:07
-;; Version: 1.70
+;; Created: 1997/04/07 16:01:55
+;; Version: 1.72
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;; LCD Archive Entry:
 ;;; url|William M. Perry|wmperry@cs.indiana.edu|
 ;;; Functions for retrieving/manipulating URLs|
-;;; 1997/04/03 15:23:07|1.70|Location Undetermined
+;;; 1997/04/07 16:01:55|1.72|Location Undetermined
 ;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1274,15 +1274,6 @@ forbidden in URL encoding."
     (setq tmp (concat tmp str))
     tmp))
 
-(defun url-clean-text ()
-  "Clean up a buffer, removing any excess garbage from a gateway mechanism,
-and decoding any MIME content-transfer-encoding used."
-  (set-buffer url-working-buffer)
-  (goto-char (point-min))
-  (url-replace-regexp "Connection closed by.*\n*\\'" "")
-  (goto-char (point-min))
-  (url-replace-regexp "Process .* exited abnormally.*\n*\\'" ""))
-
 (defun url-remove-compressed-extensions (filename)
   (while (assoc (url-file-extension filename) url-uncompressor-alist)
     (setq filename (url-file-extension filename t)))
@@ -1371,7 +1362,6 @@ and decoding any MIME content-transfer-encoding used."
 	(if url-be-asynchronous
 	    (progn
 	      (widen)
-	      (url-clean-text)
 	      (cond
 	       ((and (null proc) (not url-working-buffer)) nil)
 	       ((url-mime-response-p)
@@ -1383,7 +1373,9 @@ and decoding any MIME content-transfer-encoding used."
  						 url-current-object))))))))
       (if (member status '(401 301 302 303 204))
 	  nil
-	(funcall url-default-retrieval-proc (buffer-name url-working-buffer))))))
+	(funcall url-default-retrieval-proc (buffer-name url-working-buffer)))))
+  ;; FSF Emacs doesn't do this after calling a process-sentinel
+  (set-buffer (window-buffer (selected-window))))
 
 (defun url-remove-relative-links (name)
   ;; Strip . and .. from pathnames
@@ -1997,6 +1989,7 @@ immediately before starting the transfer, so that no buffer-local
 variables interfere with the retrieval.  HTTP/1.0 redirection will
 be honored before this function exits."
   (url-do-setup)
+  ;;(url-download-minor-mode t)
   (if (and (fboundp 'set-text-properties)
 	   (subrp (symbol-function 'set-text-properties)))
       (set-text-properties 0 (length url) nil url))

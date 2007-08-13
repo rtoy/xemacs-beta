@@ -303,11 +303,6 @@ event_equal (Lisp_Object o1, Lisp_Object o2, int depth)
 			   (XEvent *) &e2->event.magic.underlying_x_event,
 			   sizeof (e1->event.magic.underlying_x_event)));
 #endif
-#ifdef HAVE_NEXTSTEP
-	if (CONSOLE_NS_P (XCONSOLE (console)))
-	  return (e1->event.magic.underlying_ns_event ==
-		  e2->event.magic.underlying_ns_event);
-#endif
 	return (e1->event.magic.underlying_tty_event ==
 		e2->event.magic.underlying_tty_event);
       }
@@ -368,13 +363,6 @@ event_hash (Lisp_Object obj, int depth)
 	    HASH2 (hash,
 		   memory_hash (&e->event.magic.underlying_x_event,
 				sizeof (e->event.magic.underlying_x_event)));
-#endif
-#ifdef HAVE_NEXTSTEP
-        if (CONSOLE_NS_P (XCONSOLE (console)))
-	  return
-	    HASH2 (hash,
-		   memory_hash (&e->event.magic.underlying_ns_event,
-				sizeof (e->event.magic.underlying_ns_event)));
 #endif
 	return
 	  HASH2 (hash,
@@ -961,10 +949,6 @@ format_event_object (char *buf, struct Lisp_Event *event, int brief)
         if (CONSOLE_X_P (XCONSOLE (console)))
 	  name =
 	    x_event_name (event->event.magic.underlying_x_event.xany.type);
-#endif
-#ifdef HAVE_NEXTSTEP
-        if (CONSOLE_NS_P (XCONSOLE (console)))
-	  name = ns_event_name (event->event.magic.underlying_ns_event);
 #endif
 	if (name) strcpy (buf, name);
 	else strcpy (buf, "???");

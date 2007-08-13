@@ -92,6 +92,11 @@
 ;;; 3/18/92 Fixed yanking in regexps.
 
 
+(defgroup isearch nil
+  "Incremental search"
+  :group 'matching)
+
+
 (defun isearch-char-to-string (c)
   (if (integerp c)
       (make-string 1 c)
@@ -119,26 +124,36 @@ and does not include searches that are aborted.")
 (defconst search-exit-option t
   "Non-nil means random control characters terminate incremental search.")
 
-(defvar search-slow-window-lines 1
+(defcustom search-slow-window-lines 1
   "*Number of lines in slow search display windows.
 These are the short windows used during incremental search on slow terminals.
 Negative means put the slow search window at the top (normally it's at bottom)
-and the value is minus the number of lines.")
+and the value is minus the number of lines."
+  :type 'integer
+  :group 'isearch)
 
-(defconst search-slow-speed 1200
+(defcustom search-slow-speed 1200
   "*Highest terminal speed at which to use \"slow\" style incremental search.
 This is the style where a one-line window is created to show the line
-that the search has reached.")
+that the search has reached."
+  :type 'integer
+  :group 'isearch)
 
-(defvar search-caps-disable-folding t
+(defcustom search-caps-disable-folding t
   "*If non-nil, upper case chars disable case fold searching.
-This does not apply to \"yanked\" strings.")
+This does not apply to \"yanked\" strings."
+  :type 'boolean
+  :group 'isearch)
 
-(defvar search-nonincremental-instead t
-  "*If non-nil, do a nonincremental search instead if exiting immediately.")
+(defcustom search-nonincremental-instead t
+  "*If non-nil, do a nonincremental search instead if exiting immediately."
+  :type 'boolean
+  :group 'isearch)
   
-(defconst search-whitespace-regexp "\\(\\s \\|[\n\r]\\)+"
-  "*If non-nil, regular expression to match a sequence of whitespace chars.")
+(defcustom search-whitespace-regexp "\\(\\s \\|[\n\r]\\)+"
+  "*If non-nil, regular expression to match a sequence of whitespace chars."
+  :type 'regexp
+  :group 'isearch)
 
 ;;;==================================================================
 ;;; Search ring.
@@ -148,10 +163,14 @@ This does not apply to \"yanked\" strings.")
 (defvar regexp-search-ring nil
   "List of regular expression search string sequences.")
 
-(defconst search-ring-max 16
-  "*Maximum length of search ring before oldest elements are thrown away.")
-(defconst regexp-search-ring-max 16
-  "*Maximum length of regexp search ring before oldest elements are thrown away.")
+(defcustom search-ring-max 16
+  "*Maximum length of search ring before oldest elements are thrown away."
+  :type 'integer
+  :group 'isearch)
+(defcustom regexp-search-ring-max 16
+  "*Maximum length of regexp search ring before oldest elements are thrown away."
+  :type 'integer
+  :group 'isearch)
 
 (defvar search-ring-yank-pointer nil
   "The tail of the search ring whose car is the last thing searched for.")
@@ -1012,9 +1031,11 @@ Obsolete."
 ;;===========================================================
 ;; Search Ring
 
-(defvar search-ring-update nil
+(defcustom search-ring-update nil
   "*Non-nil if advancing or retreating in the search ring should cause search.
-Default nil means edit the string from the search ring first.")
+Default nil means edit the string from the search ring first."
+  :type 'boolean
+  :group 'isearch)
   
 (defun isearch-ring-adjust1 (advance)
   ;; Helper for isearch-ring-adjust
@@ -1388,7 +1409,7 @@ If there is no completion possible, say so and continue searching."
 ;;;========================================================
 ;;; Highlighting
 
-(defvar isearch-highlight t
+(defcustom isearch-highlight t
   "*Whether isearch and query-replace should highlight the text which 
 currently matches the search-string.")
 
@@ -1559,3 +1580,16 @@ have special meaning in a regexp."
   ;; this incorrectly returns t for "\\\\A"
   (let ((case-fold-search nil))
     (not (string-match "\\(^\\|[^\\]\\)[A-Z]" string))))
+
+;; Used by etags.el and info.el
+(defmacro with-caps-disable-folding (string &rest body) "\
+Eval BODY with `case-fold-search' let to nil if STRING contains
+uppercase letters and `search-caps-disable-folding' is t."
+  `(let ((case-fold-search
+          (if (and case-fold-search search-caps-disable-folding)
+              (isearch-no-upper-case-p ,string)
+            case-fold-search)))
+     ,@body))
+(put 'with-caps-disable-folding 'lisp-indent-function 1)
+(put 'with-caps-disable-folding 'edebug-form-spec '(form body))
+

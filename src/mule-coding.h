@@ -225,8 +225,8 @@ extern Lisp_Object Qbuffer_file_coding_system, Qcoding_system_error;
 
 extern Lisp_Object Vkeyboard_coding_system;
 extern Lisp_Object Vterminal_coding_system;
-extern Lisp_Object Vprocess_input_coding_system;
-extern Lisp_Object Vprocess_output_coding_system;
+extern Lisp_Object Vcoding_system_for_read;
+extern Lisp_Object Vcoding_system_for_write;
 extern Lisp_Object Vpathname_coding_system;
 
 extern Lisp_Object Qescape_quoted;
