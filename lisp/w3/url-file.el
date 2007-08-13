@@ -1,7 +1,7 @@
 ;;; url-file.el --- File retrieval code
 ;; Author: wmperry
-;; Created: 1997/01/10 00:13:05
-;; Version: 1.8
+;; Created: 1997/01/24 14:32:50
+;; Version: 1.9
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -194,6 +194,7 @@
   ;; Find a file
   (let* ((urlobj (url-generic-parse-url url))
 	 (user (url-user urlobj))
+	 (pass (url-password urlobj))
 	 (site (url-host urlobj))
 	 (file (url-unhex-string (url-filename urlobj)))
 	 (dest (url-target urlobj))
@@ -211,6 +212,14 @@
 	    (setq y (1+ y)))))
 
     (url-clear-tmp-buffer)
+    (and user pass
+	 (cond
+	  ((featurep 'ange-ftp)
+	   (ange-ftp-set-passwd site user pass))
+	  ((or (featurep 'efs) (featurep 'efs-auto))
+	   (efs-set-passwd site user pass))
+	  (t
+	   nil)))
     (cond
      ((file-directory-p filename)
       (if url-use-hypertext-dired

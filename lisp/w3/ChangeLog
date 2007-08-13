@@ -1,3 +1,50 @@
+Sun Jan 26 16:50:09 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-forms.el (w3-form-create-text): Now uses the real text entry widgets
+  provided by 'widget' - still can't do this for password fields yet
+  though.
+
+* Synch'd up to Widget 1.20
+
+Sat Jan 25 13:38:12 1997  William M. Perry  <wmperry@aventail.com>
+
+* url.el (url-expand-file-name): Now strips out spaces as well as
+  newlines/carriage returns. More fixes for that bastardized microsoft
+  home page.
+
+* url-http.el (url-create-mime-request): Make sure that we retrieve the
+  cookies for the real URL we are retrieving when going through a proxy.
+  Now the psychotic crap that is the microsoft home page should be
+  successfully retrieved if going through an HTTP proxy.
+
+* url-cookie.el (url-cookie-handle-set-cookie): Attempt to deal with
+  idiotic microsoft home page that sends out set-cookie headers that look
+  like MC1=ID=abc, and expects two cookies MC1='' and ID='abc'  *sigh*
+
+* w3-forms.el, w3-display.el: Form elements now keep all their attributes
+  with them.  Will be useful when we start allowing scripting.
+  (w3-form-create-custom): Rudimentary patches to allow embedding 'custom'
+  widgets into the buffer.  Interesting.
+
+* w3-forms.el (w3-form-determine-size): New function to calculate how big
+  a form field will be - option lists should look much better now.
+
+Thu Jan 23 08:48:59 1997  William M. Perry  <wmperry@aventail.com>
+
+* Synch'ed up to custom 1.19
+
+* url-parse.el: document extra slots of url-generic-parse-url
+
+Thu Jan 23 08:34:34 1997 Joe Wells <jbw@cs.bu.edu>
+
+* url-file.el (url-file): Patch to tell ange-ftp and/or efs the password
+  in a file/ftp URL so that you won't be prompted for the password, even
+  if one was specified in the URL 
+
+* url-parse.el (url-generic-parse-url): Fixed bug where specifying a
+  username and password in the URL would downcase the username and
+  password as well as the hostname.
+
 Wed Jan 22 08:28:13 1997  William M. Perry  <wmperry@aventail.com>
 
 * Emacs-W3 3.0.50 released

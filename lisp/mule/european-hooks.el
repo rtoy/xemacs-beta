@@ -91,8 +91,8 @@
 (define-language-environment 'european
   "European (for Latin-1 through Latin-5)"
   (lambda ()
-    ;(set-coding-category-system 'iso-8-designate 'iso-8859-1)
-    ;(set-coding-priority-list '(iso-8-designate iso-8-1))
+    (set-coding-category-system 'iso-8-designate 'iso-8859-1)
+    (set-coding-priority-list '(iso-8-designate iso-8-1))
     (set-default-file-coding-system    'binary) ; iso-8859-1
     ;;(setq locale-coding-system         'binary) ; iso-8859-1
     (setq process-input-coding-system  'binary) ; iso-8859-1

@@ -408,7 +408,7 @@
 ;;; 1. Umask problems:
 ;;;    Be warned that files created by using ange-ftp will take account of the
 ;;;    umask of the ftp daemon process rather than the umask of the creating
-;;;    user.  This is particulary important when logging in as the root user.
+;;;    user.  This is particularly important when logging in as the root user.
 ;;;    The way that I tighten up the ftp daemon's umask under HP-UX is to make
 ;;;    sure that the umask is changed to 027 before I spawn /etc/inetd.  I
 ;;;    suspect that there is something similar on other systems.
@@ -643,7 +643,7 @@
 ;;; which the writers of this program believe could never happen. However,
 ;;; being realists they have put calls to 'error in the program at these
 ;;; points. These errors provide a code, which is an integer, greater than 1.
-;;; To aid debugging.  the error codes, and the functions in which they reside
+;;; To aid debugging the error codes, and the functions in which they reside
 ;;; are listed below.
 ;;; 
 ;;; 1: See ange-ftp-ls
@@ -2960,8 +2960,9 @@ ftp transfers."
   (ange-ftp-save-match-data
     (string-match ange-ftp-binary-file-name-regexp file)))
 
+;;; 20.0-b92 change (see jka-compr)
 (defun ange-ftp-write-region (start end filename &optional append visit
-			      lockname)
+			      lockname coding-system)
   "Documented as original."
   (interactive "r\nFWrite region to file: ")
   (setq filename (expand-file-name filename))
@@ -2981,7 +2982,7 @@ ftp transfers."
 		      (mod-p (buffer-modified-p)))
 		  (unwind-protect
 		      (ange-ftp-real-write-region start end temp nil
-						  visit lockname)
+						  visit lockname coding-system)
 		    ;; cleanup forms
 		    (setq buffer-file-name filename)
 		    (if (fboundp 'compute-buffer-file-truename)
@@ -3017,7 +3018,7 @@ ftp transfers."
 		(set-buffer-modified-p nil)))
 	  (ange-ftp-message "Wrote %s" abbr)
 	  (ange-ftp-add-file-entry filename))
-      (ange-ftp-real-write-region start end filename append visit lockname))))
+      (ange-ftp-real-write-region start end filename append visit lockname coding-system))))
 
 (defun ange-ftp-insert-file-contents (filename &optional visit beg end replace)
   "Documented as original."

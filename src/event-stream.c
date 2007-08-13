@@ -260,6 +260,8 @@ static void maybe_kbd_translate (Lisp_Object event);
    Chained through event_next()
    command_event_queue_tail is a pointer to the last-added element.
  */
+static Lisp_Object process_event_queue;
+static Lisp_Object process_event_queue_tail;
 static Lisp_Object command_event_queue;
 static Lisp_Object command_event_queue_tail;
 
@@ -1450,6 +1452,19 @@ It will not work to call this function on an id number returned by
 /*                    enqueuing and dequeuing events                  */
 /**********************************************************************/
 
+/* Add an event to the back of the process_event_queue */
+void
+enqueue_process_event (Lisp_Object event)
+{
+  enqueue_event (event, &process_event_queue, &process_event_queue_tail);
+}
+
+Lisp_Object
+dequeue_process_event (void)
+{
+  return dequeue_event (&process_event_queue, &process_event_queue_tail);
+}
+
 /* Add an event to the back of the command-event queue: it will be the next
    event read after all pending events.   This only works on keyboard,
    mouse-click, misc-user, and eval events.
@@ -1839,7 +1854,8 @@ in_single_console_state (void)
 Charcount num_input_chars;
 
 static void
-next_event_internal (Lisp_Object target_event, int allow_queued)
+next_event_internal (Lisp_Object target_event, int allow_queued,
+                     int allow_deferred)
 {
   struct gcpro gcpro1;
   /* QUIT;   This is incorrect - the caller must do this because some
@@ -1859,6 +1875,21 @@ next_event_internal (Lisp_Object target_event, int allow_queued)
       if (debug_emacs_events)
 	{
 	  write_c_string ("(command event queue) ",
+			  Qexternal_debugging_output);
+	  print_internal (target_event, Qexternal_debugging_output, 1);
+	  write_c_string ("\n", Qexternal_debugging_output);
+	}
+#endif
+    }
+  else if (allow_deferred && !NILP (process_event_queue))
+    {
+      Lisp_Object event = dequeue_process_event ();
+      Fcopy_event (event, target_event);
+      Fdeallocate_event (event);
+#ifdef DEBUG_EMACS
+      if (debug_emacs_events)
+	{
+	  write_c_string ("(process event queue) ",
 			  Qexternal_debugging_output);
 	  print_internal (target_event, Qexternal_debugging_output, 1);
 	  write_c_string ("\n", Qexternal_debugging_output);
@@ -2101,7 +2132,7 @@ The returned event will be one of the following types:
 	{
 	  run_pre_idle_hook ();
 	  redisplay ();
-	  next_event_internal (event, 1);
+	  next_event_internal (event, 1, 1);
 	  Vquit_flag = Qnil; /* Read C-g as an event. */
 	  store_this_key = 1;
 	}
@@ -2302,7 +2333,7 @@ A user event is a key press, button press, button release, or
       /* This will take stuff off the command_event_queue, or read it
 	 from the event_stream, but it will not block.
        */
-      next_event_internal (event, 1);
+      next_event_internal (event, 1, 1);
       Vquit_flag = Qnil; /* Treat C-g as a user event (ignore it).
 			    It is vitally important that we reset
 			    Vquit_flag here.  Otherwise, if we're
@@ -2363,7 +2394,8 @@ DEFUN ("accept-process-output", Faccept_process_output, 0, 3, 0, /*
 Allow any pending output from subprocesses to be read by Emacs.
 It is read into the process' buffers or given to their filter functions.
 Non-nil arg PROCESS means do not return until some output has been received
- from PROCESS.
+ from PROCESS. Nil arg PROCESS means do not return until some output has
+ been received from any process.
 If the second arg is non-nil, it is the maximum number of seconds to wait:
  this function will return after that much time even if no input has arrived
  from PROCESS.  This argument may be a float, meaning wait some fractional
@@ -2380,6 +2412,7 @@ Return non-nil iff we received any output before the timeout expired.
   Lisp_Object result = Qnil;
   int timeout_id;
   int timeout_enabled = 0;
+  int done = 0;
   struct buffer *old_buffer = current_buffer;
 
   /* We preserve the current buffer but nothing else.  If a focus
@@ -2392,7 +2425,7 @@ Return non-nil iff we received any output before the timeout expired.
 
   GCPRO2 (event, process);
 
-  if (!NILP (process) && (!NILP (timeout_secs) || !NILP (timeout_msecs)))
+  if (!NILP (timeout_secs) || !NILP (timeout_msecs))
     {
       unsigned long msecs = 0;
       if (!NILP (timeout_secs))
@@ -2411,7 +2444,10 @@ Return non-nil iff we received any output before the timeout expired.
 
   event = Fmake_event ();
 
-  while (!NILP (process)
+  while (!done &&
+         ((NILP (process) && timeout_enabled) ||
+          (NILP (process) && event_stream_event_pending_p (0)) ||
+          (!NILP (process))))
 	 /* Calling detect_input_pending() is the wrong thing here, because
 	    that considers the Vunread_command_events and command_event_queue.
 	    We don't need to look at the command_event_queue because we are
@@ -2426,13 +2462,13 @@ Return non-nil iff we received any output before the timeout expired.
 	    loop will process it, and I don't think that there is ever a
 	    time when one calls accept-process-output with a nil argument
 	    and really need the processes to be handled. */
-	 || (!EQ (result, Qt) && event_stream_event_pending_p (0)))
     {
       /* If our timeout has arrived, we move along. */
       if (timeout_enabled && !event_stream_wakeup_pending_p (timeout_id, 0))
 	{
 	  timeout_enabled = 0;
-	  process = Qnil;	/* We're  done. */
+          done = 1;             /* We're  done. */
+          continue;             /* Don't call next_event_internal */
 	}
 
       QUIT;	/* next_event_internal() does not QUIT, so check for ^G
@@ -2440,7 +2476,7 @@ Return non-nil iff we received any output before the timeout expired.
 		   less likely that the filter will actually be aborted.
 		 */
 
-      next_event_internal (event, 0);
+      next_event_internal (event, 0, 1);
       /* If C-g was pressed while we were waiting, Vquit_flag got
 	 set and next_event_internal() also returns C-g.  When
 	 we enqueue the C-g below, it will get discarded.  The
@@ -2449,9 +2485,10 @@ Return non-nil iff we received any output before the timeout expired.
 	{
 	case process_event:
 	  {
-	    if (EQ (XEVENT (event)->event.process.process, process))
+	    if (NILP (process) ||
+                EQ (XEVENT (event)->event.process.process, process))
 	      {
-		process = Qnil;
+                done = 1;
 		/* RMS's version always returns nil when proc is nil,
 		   and only returns t if input ever arrived on proc. */
 		result = Qt;
@@ -2518,15 +2555,22 @@ ARG may be a float, meaning pause for some fractional part of a second.
 	 consumer as well.  We don't care about command and eval-events
 	 anyway.
        */
-      next_event_internal (event, 0); /* blocks */
+      next_event_internal (event, 0, 0); /* blocks */
       /* See the comment in accept-process-output about Vquit_flag */
       switch (XEVENT_TYPE (event))
 	{
+        case process_event:
+          {
+            /* Avoid calling filter functions recursively by squirreling
+               away process events */
+            enqueue_process_event (Fcopy_event (event, Qnil));
+            goto DONE_LABEL;
+          }
+
 	case timeout_event:
 	  /* We execute the event even if it's ours, and notice that it's
 	     happened above. */
 	case pointer_motion_event:
-	case process_event:
 	case magic_event:
           {
           EXECUTE_INTERNAL:
@@ -2623,7 +2667,7 @@ Value is t if waited the full time with no input arriving.
 	 consumer as well.  In fact, we know there's nothing on the
 	 command_event_queue that we didn't just put there.
        */
-      next_event_internal (event, 0); /* blocks */
+      next_event_internal (event, 0, 0); /* blocks */
       /* See the comment in accept-process-output about Vquit_flag */
 
       if (command_event_p (event))
@@ -2639,6 +2683,14 @@ Value is t if waited the full time with no input arriving.
 	    enqueue_command_event (Fcopy_event (event, Qnil));
 	    break;
 	  }
+
+        case process_event:
+          {
+            /* Avoid recursive calls to process filters */
+            enqueue_process_event (Fcopy_event (event, Qnil));
+            break;
+          }
+          
 	case timeout_event:
 	  /* We execute the event even if it's ours, and notice that it's
 	     happened above. */
@@ -2693,7 +2745,7 @@ wait_delaying_user_input (int (*predicate) (void *arg), void *predicate_arg)
 	 command_event_queue; there are only user and eval-events there,
 	 and we'd just have to put them back anyway.
        */
-      next_event_internal (event, 0);
+      next_event_internal (event, 0, 1);
       /* See the comment in accept-process-output about Vquit_flag */
       if (command_event_p (event)
           || (XEVENT_TYPE (event) == eval_event)
@@ -4128,6 +4180,10 @@ vars_of_event_stream (void)
   command_event_queue = Qnil;
   staticpro (&command_event_queue);
   command_event_queue_tail = Qnil;
+
+  process_event_queue = Qnil;
+  staticpro (&process_event_queue);
+  process_event_queue_tail = Qnil;
 
   Vlast_selected_frame = Qnil;
   staticpro (&Vlast_selected_frame);

@@ -1,7 +1,7 @@
 ;;; url-cookie.el --- Netscape Cookie support
 ;; Author: wmperry
-;; Created: 1997/01/16 22:34:30
-;; Version: 1.9
+;; Created: 1997/01/26 00:40:23
+;; Version: 1.10
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -335,10 +335,17 @@
       nil)
      ((url-cookie-host-can-set-p url-current-server domain)
       ;; Cookie is accepted by the user, and passes our security checks
-      (while rest
-	(url-cookie-store (car (car rest)) (cdr (car rest))
-			  expires domain path secure)
-	(setq rest (cdr rest))))
+      (let ((cur nil))
+	(while rest
+	  (setq cur (pop rest))
+	  ;; Oh gross, this is for microsoft & netscape.
+	  ;; Fuck them fuck them fuchk them fuck them.
+	  (if (string-match "^\\([^=]+\\)=\\(.*\\)" (cdr cur))
+	      (setq rest (cons (cons (match-string 1 (cdr cur))
+				     (match-string 2 (cdr cur))) rest)
+		    cur (cons (car cur) "")))
+	  (url-cookie-store (car cur) (cdr cur)
+			    expires domain path secure))))
      (t
       (url-warn 'url (format
 		      (concat "%s tried to set a cookie for domain %s\n"

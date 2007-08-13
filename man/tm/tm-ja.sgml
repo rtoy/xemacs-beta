@@ -1,5 +1,5 @@
 <!doctype sinfo system>
-<!-- $Id: tm-ja.sgml,v 1.2 1996/12/28 21:03:30 steve Exp $ -->
+<!-- $Id: tm-ja.sgml,v 1.3 1997/01/30 02:22:58 steve Exp $ -->
 <head>
 <title>tm 7.100 Manual$B!JF|K\8lHG!K(B
 <author>$B<i2,(B $BCNI'(B <mail>morioka@jaist.ac.jp</mail>
@@ -38,6 +38,7 @@ tm $B$O(B GNU Emacs $B$G(B MIME $B$r3Z$7$`$?$a$N(B package $B$G$9!#(Btm 
 <li><a file="gnus-mime-ja">tm-MUA for Gnus</a>
 <li><a file="tm-gnus-ja">tm-MUA for GNUS</a>
 <li><a file="tm-mh-e-ja">tm-MUA for mh-e</a>
+<li><a file="tm-vm-en">tm-MUA for VM</a>
 <li><a file="tm-view-ja">mime/viewer-mode</a>
 <li><a file="tm-edit-ja">mime/editor-mode</a>
 </ul>
@@ -1367,10 +1368,11 @@ Emacs $B$G(B <dref>MIME</dref> $B$rMxMQ$9$k$?$a$N(B user interface $B$rDs(
 <concept>tm $BBg@9$j(B package</concept> $B$K$O(B
 
 <ul>
-<li><a file="mh-e">mh-e</a> $BMQ$N(B <concept>tm-mh-e</concept>
-<li>GNUS $BMQ$N(B <concept>tm-gnus</concept>
+<li><a file="mh-e">mh-e</a> $BMQ$N(B
+ <a file="tm-mh-e-en"><concept>tm-mh-e</concept></a>
+<li>GNUS $BMQ$N(B <a file="tm-gnus-ja"><concept>tm-gnus</concept></a>
 <li>Gnus $BMQ$N(B <a file="gnus-mime-ja"><concept>gnus-mime</concept></a>
-<li>VM $BMQ$N(B <concept>tm-vm</concept>
+<li>VM $BMQ$N(B <a file="tm-vm-en"><concept>tm-vm</concept></a>
 <li>RMAIL $BMQ$N(B <concept>tm-rmail</concept>
 </ul>
 

@@ -141,6 +141,13 @@ DESCRIPTION makes part of the mode line of the summary buffer.
 For each message, FUNCTION is applied to the message number and ARGS...
 and if the result is non-nil, that message is included.
 nil for FUNCTION means all messages."
+  (if (eq major-mode 'mime/viewer-mode)
+      (let ((buf mime::preview/article-buffer)
+	    (pbuf (current-buffer))
+	    )
+	(switch-to-buffer buf)
+	(bury-buffer pbuf)
+	))
   (message "Computing summary lines...")
   (let (sumbuf mesg was-in-summary)
     (save-excursion

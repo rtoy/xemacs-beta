@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: tm-def.el,v 1.2 1996/12/28 21:03:13 steve Exp $
+;; Version: $Id: tm-def.el,v 1.3 1997/01/30 02:22:47 steve Exp $
 ;; Keywords: mail, news, MIME, multimedia, definition
 
 ;; This file is part of tm (Tools for MIME).
@@ -111,6 +111,9 @@
 (defvar tm:mouse-face 'highlight
   "Face used for MIME-preview buffer mouse highlighting. [tm-def.el]")
 
+(defvar tm:warning-face nil
+  "Face used for invalid encoded-word.")
+
 (defun tm:add-button (from to func &optional data)
   "Create a button between FROM and TO with callback FUNC and data DATA."
   (and tm:button-face
@@ -183,7 +186,7 @@
 ;;; @@ Base64
 ;;;
 
-(defconst base64-token-regexp "[A-Za-z0-9+/=]")
+(defconst base64-token-regexp "[A-Za-z0-9+/]")
 (defconst base64-token-padding-regexp "[A-Za-z0-9+/=]")
 
 (defconst mime/B-encoded-text-regexp

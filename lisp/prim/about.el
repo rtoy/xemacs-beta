@@ -1,7 +1,7 @@
 ;;; about.el --- the About The Authors page (shameless self promotion).
 ;;;
 
-;; Copyright (c) 1995, 1996 XEmacs Advocacy Organization.
+;; Copyright (c) 1995, 1996, 1997 XEmacs Advocacy Organization.
 
 ;; This file is part of XEmacs.
 
@@ -37,6 +37,7 @@
 ;;;		      and Chuck Thompson <cthomp@xemacs.org>
 ;;; More hacking for 19.12 by Chuck Thompson and Ben Wing.
 ;;; 19.13 and 19.14 updating done by Chuck Thompson.
+;;; 19.15 and 20.0 updating done by Steve Baur.
 
 (require 'browse-url)
 (defvar about-xref-map (let ((map (make-sparse-keymap)))
@@ -77,7 +78,7 @@
   (view-mode nil 'kill-buffer)		;; assume the new view-less
   (let* ((buffer-read-only nil)
          (emacs-short-version (concat emacs-major-version "." emacs-minor-version))
-         (emacs-about-version (format "version %s; June 1996" emacs-short-version))
+         (emacs-about-version (format "version %s; February 1997" emacs-short-version))
 	 (indent-tabs-mode t)
 	 )
     (erase-buffer)
@@ -126,10 +127,15 @@
     (insert "XEmacs is the result of the time and effort of many people.
 	The developers responsible for the " emacs-short-version " release are:
 
+		 * ") (about-xref "Steve Baur" 'steve "Find out more about Steve Baur") (insert "  <steve@altair.xemacs.org>
+		 * ") (about-xref "Martin Buchholz" 'mrb "Find out more about Martin Buchholz") (insert "  <mrb@eng.sun.com>
 		 * ") (about-xref "Chuck Thompson" 'cthomp "Find out more about Chuck Thompson") (insert "  <cthomp@xemacs.org>
 		 * ") (about-xref "Ben Wing" 'wing "Find out more about Ben Wing") (insert "  <wing@xemacs.org>
 
 		 * ") (about-xref "And many other contributors..." 'others "Read about the legion of XEmacs hackers") (insert "
+
+	Chuck Thompson was Mr. XEmacs from 19.11 through 19.14.  Ben Wing
+	was crucial to each of those releases.
 
 	Jamie Zawinski was Mr. Lucid Emacs from 19.0 through 19.10,
 	the last release actually named Lucid Emacs.  Richard Mlynarik
@@ -149,7 +155,7 @@
     (toggle-read-only 0)
 
     (let ((rest (if who-to-load (list who-to-load)
-		  '(cthomp wing stig jwz mly vladimir baw piper bw wmperry)))
+		  '(steve mrb cthomp wing stig jwz mly vladimir baw piper bw wmperry)))
 	  (got-error nil))
       (while rest
 	(let* ((who (car rest))
@@ -199,7 +205,7 @@
   (goto-char (point-max))
   (insert "\n   ")
 
-  (let ((rest '(cthomp wing stig linebreak jwz mly vladimir linebreak baw piper bw linebreak wmperry))
+  (let ((rest '(steve mrb cthomp wing stig linebreak jwz mly vladimir linebreak baw piper bw linebreak wmperry))
 	(got-error nil))
     (while rest
       (if (eq (car rest) 'linebreak)
@@ -280,6 +286,8 @@
 			       ((eq xref 'bw) "About Bob Weiner")
 			       ((eq xref 'piper) "About Andy Piper")
 			       ((eq xref 'stig) "About Jonathan Stigelman")
+			       ((eq xref 'steve) "About Steve Baur")
+			       ((eq xref 'mrb) "About Martin Buchholz")
 			       ((eq xref 'others) "About Everyone")
 			       ((eq xref 'features) "New XEmacs Features")
 			       ((eq xref 'history) "XEmacs History")
@@ -514,6 +522,38 @@
 	  (about-xref "here" prev-page "Return to previous page")
 	  (insert " to go back to the previous page.\n")
 	  )
+	 ((eq xref 'steve)
+	  (about-face "Steve Baur" 'bold)
+	  (insert " <steve@altair.xemacs.org>
+
+	Steve took over the maintenance of XEmacs in November of 1996
+	(it seemed like a good idea at the time ...).  In real life he is a
+	network administrator and Unix systems programmer for Miranova
+	Systems, Inc.
+
+	Steve's main contributions to XEmacs have been reviving the FAQ,
+	testing and integrating patches, tracking down and fixing bugs, and
+	answering hundreds of questions on Usenet.")
+
+	  (insert "\n\n\tClick ")
+	  (about-xref "here" prev-page "Return to previous page")
+	  (insert " to go back to the previous page.\n")
+	  )
+	 ((eq xref 'mrb)
+	  (about-face "Martin Buchholz" 'bold)
+	  (insert " <mrb@eng.sun.com>
+
+	Martin Buchholz <Martin.Buchholz@sun.com>
+	Technical lead for XEmacs at DevPro (formerly SunPro), a
+	division of Sun Microsystems.  Martin used to do XEmacs as a
+	`hobby' while at IBM, and was crazy enough to try to do it
+	for a living at Sun.  Martin is currently working mostly on
+	Internationalization.")
+
+	  (insert "\n\n\tClick ")
+	  (about-xref "here" prev-page "Return to previous page")
+	  (insert " to go back to the previous page.\n")
+	  )
 	 ((eq xref 'cthomp)
 	  (about-face "Chuck Thompson" 'bold)
 	  (insert " <cthomp@xemacs.org>
@@ -626,13 +666,15 @@
 
 	 ((eq xref 'bw)
 	  (about-face "Bob Weiner" 'bold)
-	  (insert " <weiner@mot.com>
+	  (insert " <weiner@infodock.com>
 
 	Author of the Hyperbole everyday information management
 	hypertext system and the OO-Browser multi-language code
 	browser.  He also designed the InfoDock integrated tool
 	framework for software engineers.  It runs atop XEmacs and is
-	available from \"/anonymous@ftp.xemacs.org:pub/infodock\".
+	available from his firm, InfoDock Associates, which offers custom
+        development and support packages for corporate users of XEmacs,
+        GNU Emacs and InfoDock.  See \"http://www.infodock.com>\".
 	His interests include user interfaces, information management,
 	CASE tools, communications and enterprise integration.")
 
@@ -674,18 +716,14 @@
 
 	 ((eq xref 'wmperry)
 	  (about-face "William Perry" 'bold)
-	  (insert " <wmperry@spry.com>
+	  (insert " <wmperry@aventail.com>
 
- 	Author of Emacs-w3, the builtin web browser that comes with XEmacs,
-        and various additions to the C code (e.g. the database support,
-        the PNG support, some of the GIF/JPEG support, the strikethru
-        face attribute support).
+	Author of Emacs-w3, the builtin web browser that comes with XEmacs,
+	and various additions to the C code (e.g. the database support,
+	the PNG support, some of the GIF/JPEG support, the strikethru
+	face attribute support).
 
-        He is currently working on adding really cool stylesheets to the
-        web, which will stress the new capabilities of XEmacs to the limit.
-
-        He only gets paid for working on an HTTP server for Spry, but will
-        hack emacs for beer.")
+	He is currently working at Aventail, Corp. on SOCKS v5 servers.")
 
 	  (insert "\n\n\tClick ")
 	  (about-xref "here" prev-page "Return to previous page")
@@ -704,13 +742,6 @@
 	Like most free software, XEmacs is a collaborative effort.
 	These are some of the contributors; we have no doubt forgotten
 	someone; we apologize!  You can see some of our faces further below.
-
-	Martin Buchholz <Martin.Buchholz@sun.com>
-	  Technical lead for XEmacs at DevPro (formerly SunPro), a
-	  division of Sun Microsystems.  Martin used to do XEmacs as a
-	  `hobby' while at IBM, and was crazy enough to try to do it
-	  for a living at Sun.  Martin is currently working mostly on
-	  Internationalization.
 
 	") (about-xref "Vladimir Ivanovic" 'vladimir "Find out more about Vladimir Ivanovic") (insert " <vladimir@mri.com>
 	  Former technical lead for XEmacs at Sun Microsystems.  He is
@@ -734,23 +765,22 @@
 	  Created the prototype for the toolbars.  Has been the first to make
 	  use of many of the new XEmacs graphics features.
 
-	") (about-xref "Bob Weiner" 'bw "Find out more about Bob Weiner") (insert " <weiner@mot.com>
+	") (about-xref "Bob Weiner" 'bw "Find out more about Bob Weiner") (insert " <weiner@infodock.com>
 	  Author of the Hyperbole everyday information management
 	  hypertext system and the OO-Browser multi-language code
 	  browser.  He also designed the InfoDock integrated tool
 	  framework for software engineers.  It runs atop XEmacs and is
-	  available from \"/anonymous@ftp.xemacs.org:pub/infodock\".
+	  available from his firm, InfoDock Associates, which offers custom
+          development and support packages for corporate users of XEmacs,
+          GNU Emacs and InfoDock.  See \"http://www.infodock.com>\".
 	  His interests include user interfaces, information management,
-	  CASE tools, communications and enterprise integration.
+ 	  CASE tools, communications and enterprise integration.
 
-	") (about-xref "William Perry" 'wmperry "Find out more about Bill Perry") (insert " <wmperry@spry.com>
-	  Author of W3, a package for browsing the World Wide Web
-	  which is included in the standard XEmacs distribution.
-	  Although W3 runs on all versions of Emacs, Bill has been
-	  quick to take advantage of the unique features of XEmacs
-	  (such as embedded images and windows).  Thus, the XEmacs
-	  version of W3 is significantly more powerful than versions
-	  running in other Emacs variants.
+	") (about-xref "William Perry" 'wmperry "Find out more about Bill Perry") (insert " <wmperry@aventail.com>
+	  Author of Emacs-w3, the builtin web browser that comes with XEmacs,
+	  and various additions to the C code (e.g. the database support,
+	  the PNG support, some of the GIF/JPEG support, the strikethru
+	  face attribute support).
 
 	Kyle Jones <kyle@crystal.wonderworks.com>
 	  Author of VM (View Mail), a mail-reading package that is
@@ -815,9 +845,9 @@
 	  Mark Allender <allender@vnet.IBM.COM>
 	  Butch Anton <butch@zaphod.uchicago.edu>
 	  Fred Appelman <Fred.Appelman@cv.ruu.nl>
+	  Erik \"The Pope\" Arneson <lazarus@mind.net>
 	  Tor Arntsen <tor@spacetec.no>
 	  Mike Battaglia <mbattagl@dsccc.com>
-	  Steven L Baur <steve@miranova.com>
 	  Neal Becker <neal@ctd.comsat.com>
 	  Paul Bibilo <peb@delcam.com>
 	  Jan Borchers <job@tk.uni-linz.ac.at>
@@ -833,16 +863,23 @@
 	  Philippe Charton <charton@lmd.ens.fr>
 	  Peter Cheng <peter.cheng@sun.com>
 	  Jin S. Choi <jin@atype.com>
+	  Tomasz J. Cholewo <tjchol01@mecca.spd.louisville.edu>
 	  Serenella Ciongoli <czs00@ladybug.oes.amdahl.com>
 	  Richard Cognot <cognot@ensg.u-nancy.fr>
 	  Andy Cohen <cohen@andy.bu.edu>
+	  Andrew J Cosgriff <ajc@bing.wattle.id.au>
+	  Nick J. Crabtree <nickc@scopic.com>
 	  Christopher Davis <ckd@kei.com>
+	  Soren Dayton <csdayton@cs.uchicago.edu>
 	  Michael Diers <mdiers@logware.de>
 	  William G. Dubuque <wgd@martigny.ai.mit.edu>
 	  Samuel J. Eaton <samuele@cogs.susx.ac.uk>
 	  Carl Edman <cedman@Princeton.EDU>
 	  Dave Edmondson <davided@sco.com>
+	  Jonathan Edwards <edwards@intranet.com>
 	  Eric Eide <eeide@asylum.cs.utah.edu>
+	  EKR <ekr@terisa.com>
+	  Oscar Figueiredo <Oscar.Figueiredo@di.epfl.ch>
 	  David Fletcher <frodo@tsunami.com>
 	  Paul Flinders <ptf@delcam.co.uk>
 	  Jered J Floyd <jered@mit.edu>
@@ -850,6 +887,7 @@
 	  Benjamin Fried <bf@morgan.com>
 	  Barry Friedman <friedman@bnr.ca>
 	  Lew Gaiter III <lew@StarFire.com>
+	  Itay Gat <itay@cs.huji.ac.il>
 	  Tim Geisler <Tim.Geisler@informatik.uni-muenchen.de>
 	  Dave Gillespie <daveg@synaptics.com>
 	  Christian F. Goetze <cg@bigbook.com>
@@ -863,6 +901,7 @@
 	  Magnus Hammerin <magnush@epact.se>
 	  ChangGil Han <cghan@phys401.phys.pusan.ac.kr>
 	  Derek Harding <dharding@lssec.bt.co.uk>
+	  Michael Harnois <mharnois@sbt.net>
 	  John Haxby <J.Haxby@isode.com>
 	  Jareth \"JHod\" Hein <jhod@po.iijnet.or.jp>
 	  Benedikt Heinen <beh@icemark.thenet.ch>
@@ -875,12 +914,19 @@
 	  Robin Jeffries <robin.jeffries@sun.com>
 	  Philip Johnson <johnson@uhics.ics.Hawaii.Edu>
 	  J. Kean Johnston <jkj@paradigm-sa.com>
+	  Andreas Kaempf <andreas@sccon.com>
 	  Doug Keller <dkeller@vnet.ibm.com>
+	  Hunter Kelly <retnuh@corona>
 	  Gregor Kennedy <gregork@dadd.ti.com>
 	  Michael Kifer <kifer@cs.sunysb.edu>
 	  Yasuhiko Kiuchi <kiuchi@dsp.ksp.fujixerox.co.jp>
+	  Greg Klanderman <greg@alphatech.com>
+	  Valdis Kletnieks <Valdis.Kletnieks@vt.edu>
+	  Jens Krinke <krinke@ips.cs.tu-bs.de>
+	  Mats Larsson <Mats.Larsson@uab.ericsson.se>
 	  Jens Lautenbacher <jens@lemcbed.lem.uni-karlsruhe.de>
 	  Simon Leinen <simon@instrumatic.ch>
+	  Carsten Leonhardt <leo@arioch.tng.oche.de>
 	  James LewisMoss <moss@cs.sc.edu>
 	  Mats Lidell <mats.lidell@contactor.se>
 	  Matt Liggett <mliggett@seven.ucs.indiana.edu>
@@ -888,42 +934,52 @@
 	  Robert Lipe <robertl@arnet.com>
 	  Damon Lipparelli <lipp@aa.net>
 	  Hamish Macdonald <hamish@bnr.ca>
-	  Ian MacKinnon <imac@rd.abs.alcatel.co.uk>
+	  Ian MacKinnon <imackinnon@telia.co.uk>
 	  Patrick MacRoberts <macro@hpcobr30.cup.hp.com>
 	  Tonny Madsen <Tonny.Madsen@netman.dk>
 	  Ketil Z Malde <ketil@ii.uib.no>
 	  Steve March <smarch@quaver.urbana.mcd.mot.com>
+	  Pekka Marjola <pema@iki.fi>
 	  Simon Marshall <Simon.Marshall@mail.esrin.esa.it>
 	  Dave Mason <dmason@plg.uwaterloo.ca>
 	  Jaye Mathisen <mrcpu@cdsnet.net>
 	  Michael Meissner <meissner@osf.org>
 	  David M. Meyer <meyer@ns.uoregon.edu>
 	  Brad Miller <bmiller@cs.umn.edu>
+	  Jeff Miller <jmiller@bay1.bayserve.net>
+	  David Moore <dmoore@UCSD.EDU>
 	  John Morey <jmorey@crl.com>
 	  Rob Mori <rob.mori@sun.com>
 	  Heiko Muenkel <muenkel@tnt.uni-hannover.de>
 	  Arup Mukherjee <arup+@cs.cmu.edu>
 	  Colas Nahaboo <Colas.Nahaboo@sophia.inria.fr>
 	  Lynn D. Newton <lynn@ives.phx.mcd.mot.com>
+	  Casey Nielson <knielson@joule.elee.calpoly.edu>
 	  Georg Nikodym <Georg.Nikodym@canada.sun.com>
+	  Hrvoje Niksic <hniksic@srce.hr>
 	  Andy Norman <ange@hplb.hpl.hp.com>
 	  Joseph J. Nuspl Jr. <nuspl@cc.purdue.edu>
 	  Kim Nyberg <kny@tekla.fi>
 	  David Ofelt <ofelt@getalife.Stanford.EDU>
+	  Tore Olsen <toreo@colargol.idb.hist.no>
 	  Greg Onufer <Greg.Onufer@eng.sun.com>
 	  Achim Oppelt <aoppelt@theorie3.physik.uni-erlangen.de>
 	  Sudeep Kumar Palat <palat@idt.unit.no>
 	  Marc Paquette <Marc.Paquette@Softimage.com>
 	  Jens-U H Petersen <petersen@kurims.kyoto-u.ac.jp>
+	  Joel Peterson <tarzan@aosi.com>
 	  Thomas A. Peterson <tap@src.honeywell.com>
 	  Peter Pezaris <pez@dwwc.com>
 	  Tibor Polgar <tlp00@eng.amdahl.com>
+	  Frederic Poncin <fp@info.ucl.ac.be>
 	  E. Rehmi Post <rehmi@asylum.sf.ca.us>
+	  Colin Rafferty <craffert@spspme.ml.com>
 	  Paul M Reilly <pmr@pajato.com>
 	  Jack Repenning <jackr@sgi.com>
 	  Daniel Rich <drich@cisco.com>
 	  Roland Rieke <rol@darmstadt.gmd.de>
 	  Russell Ritchie <ritchier@msc.ie>
+	  Roland <rol@darmstadt.gmd.de>
 	  Mike Russell <mjruss@rchland.vnet.ibm.com>
 	  Jan Sandquist <etxquist@iqa.ericsson.se>
 	  Marty Sasaki <sasaki@spdcc.com>
@@ -933,7 +989,9 @@
 	  Cotton Seed <cottons@cybercom.net>
 	  Axel Seibert <seiberta@informatik.tu-muenchen.de>
 	  Odd-Magne Sekkingstad <oddms@ii.uib.no>
+	  Vinnie Shelton <shelton@icd.teradyne.com>
 	  John Shen <zfs60@cas.org>
+	  Murata Shuuichirou <mrt@mickey.ai.kyutech.ac.jp>
 	  Jeffrey Sparkes <jsparkes@bnr.ca>
 	  Michael Sperber <sperber@informatik.uni-tuebingen.de>
 	  Manoj Srivastava <srivasta@pilgrim.umass.edu>
@@ -944,6 +1002,7 @@
 	  Morioka Tomohiko <morioka@jaist.ac.jp>
 	  Raymond L. Toy <toy@rtp.ericsson.se>
 	  John Turner <turner@xdiv.lanl.gov>
+	  Juan E. Villacis <jvillaci@cs.indiana.edu>
 	  Vladimir Vukicevic <vladimir@intrepid.com>
 	  Peter Ware <ware@cis.ohio-state.edu>
 	  Yoav Weiss <yoav@zeus.datasrv.co.il>

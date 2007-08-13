@@ -556,12 +556,12 @@ malloc (size)
     return NULL;
 #endif
 
-  if (__malloc_hook != NULL)
-    return (*__malloc_hook) (size);
-
   if (!__malloc_initialized)
     if (!initialize ())
       return NULL;
+
+  if (__malloc_hook != NULL)
+    return (*__malloc_hook) (size);
 
 #ifdef SUNOS_LOCALTIME_BUG
   /* Workaround for localtime() allocating 8 bytes and writing 9 bug... */

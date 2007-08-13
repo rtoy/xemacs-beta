@@ -1,7 +1,7 @@
 ;;; w3-forms.el --- Emacs-w3 forms parsing code for new display engine
 ;; Author: wmperry
-;; Created: 1997/01/21 19:45:55
-;; Version: 1.48
+;; Created: 1997/01/27 00:57:39
+;; Version: 1.51
 ;; Keywords: faces, help, comm, data, languages
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -39,11 +39,13 @@
 (define-widget-keywords :emacspeak-help :w3-form-data)
 
 (defvar w3-form-keymap (copy-keymap global-map))
+(define-key w3-form-keymap "\r"          'w3-form-maybe-submit-by-keypress)
+(define-key w3-form-keymap "\n"          'w3-form-maybe-submit-by-keypress)
 (define-key w3-form-keymap "\t"          'w3-widget-forward)
 (define-key w3-form-keymap [(shift tab)] 'w3-widget-backward)
 
 ;; A form entry area is a vector
-;; [ type name default-value value maxlength options widget]
+;; [ type name default-value value maxlength options widget plist]
 ;; Where:
 ;;          type = symbol defining what type of form entry area it is
 ;;                 (ie: file, radio)
@@ -59,6 +61,7 @@
 (defsubst w3-form-element-options       (obj) (aref obj 6))
 (defsubst w3-form-element-action        (obj) (aref obj 7))
 (defsubst w3-form-element-widget        (obj) (aref obj 8))
+(defsubst w3-form-element-plist         (obj) (aref obj 9))
 
 (defsubst w3-form-element-set-type          (obj val) (aset obj 0 val))
 (defsubst w3-form-element-set-name          (obj val) (aset obj 1 val))
@@ -69,34 +72,43 @@
 (defsubst w3-form-element-set-options       (obj val) (aset obj 6 val))
 (defsubst w3-form-element-set-action        (obj val) (aset obj 7 val))
 (defsubst w3-form-element-set-widget        (obj val) (aset obj 8 val))
+(defsubst w3-form-element-set-plist         (obj val) (aset obj 9 val))
 
-;; The main function - this adds a single widget to the form
-(defun w3-form-add-element (type name value size maxlength default
-				 action options number id checked
-				 face)
-  (let* ((name (or name (case type
-			      ((submit reset) nil)
-			      (otherwise (symbol-name type)))))
-	 (el (vector type
-		     name
-		     default
-		     value
-		     size
-		     maxlength
-		     options
-		     action nil))
-	 (size (case type
-		 (checkbox 3)
-		 (radio 4)
-		 ((reset submit)
-		  (+ 2 (length (or value (symbol-name type)))))
-		 (multiline 21)
-		 (hidden nil)
-		 (file (+ 6 (or size 20)))
-		 ((float int) (or size 20))
-		 (otherwise (or size 22))))
+(defun w3-form-determine-size (el size)
+  (case (w3-form-element-type el)
+    (checkbox 3)
+    (radio 4)
+    ((reset submit) (+ 2 (length (or (w3-form-element-value el)
+				     (symbol-name
+				      (w3-form-element-type el))))))
+    (multiline 21)
+    (hidden nil)
+    (file (or size 26))
+    ((float text int) (or size 20))
+    (option
+     (or size
+	 (length (caar (sort (w3-form-element-options el)
+			     (function
+			      (lambda (x y)
+				(>= (length (car x)) (length (car y))))))))))
+    (otherwise (or size 22))))    
+ 
+;;###autoload
+(defun w3-form-add-element (plist face)
+  (let* ((action (plist-get plist 'action))
+	 (el (vector (plist-get plist 'type)
+		     (plist-get plist 'name)
+		     (plist-get plist 'default)
+		     (plist-get plist 'value)
+		     (plist-get plist 'size)
+		     (plist-get plist 'maxlength)
+		     (plist-get plist 'options)
+		     action
+		     nil
+		     plist))
+	 (size (w3-form-determine-size el (plist-get plist 'size)))
 	 (node (assoc action w3-form-elements)))
-    (if (eq type 'hidden)
+    (if (eq (plist-get plist 'type) 'hidden)
 	(if node
 	    (setcdr node (cons el (cdr node)))
 	  (setq w3-form-elements (cons (cons action (list el))
@@ -188,6 +200,28 @@
 (put 'image	'w3-widget-creation-function 'w3-form-create-image)
 (put 'int       'w3-widget-creation-function 'w3-form-create-integer)
 (put 'float     'w3-widget-creation-function 'w3-form-create-float)
+(put 'custom    'w3-widget-creation-function 'w3-form-create-custom)
+(put 'text      'w3-widget-creation-function 'w3-form-create-text)
+
+;; Custom support.
+(defvar w3-custom-options nil)
+(make-variable-buffer-local 'w3-custom-options)
+
+(defun w3-form-create-custom (el face)
+  (require 'custom-edit)
+  (let* ((name (w3-form-element-name el))
+	 (var-name (w3-form-element-value el))
+	 (type (plist-get (w3-form-element-plist el) 'custom-type))
+	 (widget (widget-create (cond ((string-equal type "variable")
+				       'custom-variable)
+				      ((string-equal type "face")
+				       'custom-face)
+				      ((string-equal type "group")
+				       'custom-group)
+				      (t 'item)) (intern var-name))))
+    (custom-magic-reset widget)
+    (push widget w3-custom-options)
+    widget))
 
 (defun w3-form-create-checkbox (el face)
   (widget-create 'checkbox
@@ -297,20 +331,20 @@
 	   options)))
 
 (defun w3-form-create-option-list (el face)
-  (let ((widget (apply 'widget-create 'menu-choice
+  (let* ((size (w3-form-determine-size el nil))
+	 (widget (apply 'widget-create 'menu-choice
 		       :value (w3-form-element-value el)
 		       :ignore-case t
 		       :tag "Choose"
 		       :format "%v"
-		       :size (w3-form-element-size el)
+		       :size size
 		       :value-face face
 		       (mapcar
 			(function
 			 (lambda (x)
 			   (list 'choice-item :format "%[%t%]"
 				 :emacspeak-help 'w3-form-summarize-field
-				 :tag (mule-truncate-string (car x)
-							    (w3-form-element-size el) ? )
+				 :tag (mule-truncate-string (car x) size ? )
 				 :value (car x))))
 			(w3-form-element-options el)))))
     (widget-value-set widget (w3-form-element-value el))
@@ -341,6 +375,14 @@
 		 :format "%v"
 		 :tag ""
 		 :keymap w3-form-keymap
+		 :w3-form-data el
+		 (w3-form-element-value el)))
+
+(defun w3-form-create-text (el face)
+  (widget-create 'editable-field
+		 :keymap w3-form-keymap
+		 :size (w3-form-element-size el)
+		 :value-face face
 		 :w3-form-data el
 		 (w3-form-element-value el)))
 
@@ -484,6 +526,12 @@ This can be used as the :help-echo property of all w3 form entry widgets."
   )
 
 
+(defun w3-form-maybe-submit-by-keypress ()
+  (interactive)
+  (let ((widget (widget-at (point))))
+    (if widget
+	(w3-form-possibly-submit widget))))
+
 (defun w3-form-possibly-submit (widget &rest ignore)
   (let* ((formobj (widget-get widget :w3-form-data))
 	 (ident (w3-form-element-action formobj))
@@ -587,7 +635,8 @@ This can be used as the :help-echo property of all w3 form entry widgets."
 	  (file
 	   (widget-value-set widget deft))
 	  (otherwise
-	   (widget-value-set widget deft)))))))
+	   (widget-value-set widget deft))))
+      (widget-setup))))
 
 (defun w3-form-encode-helper (formobjs)
   (let (
@@ -600,6 +649,7 @@ This can be used as the :help-echo property of all w3 form entry widgets."
 	    formobjs (cdr formobjs)
 	    temp (case type
 		   (reset nil)
+		   (button nil)
 		   (image
 		    (if (and (eq submit-button-data formobj)
 			     (w3-form-element-name formobj))

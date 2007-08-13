@@ -1,3 +1,7 @@
+Mon Jan 27 13:12:41 1997  Jin S. Choi <jsc@atype.com>
+
+	* psgml.el: Fix location of CATALOG in `sgml-validate-command'.
+
 Thu Jan 16 18:23:51 1997  Steven L Baur  <steve@miranova.com>
 
 	* psgml.el: Use newer interface form of nsgmls.

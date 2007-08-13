@@ -1,13 +1,13 @@
 ;;; url.el --- Uniform Resource Locator retrieval tool
 ;; Author: wmperry
-;; Created: 1997/01/19 01:12:24
-;; Version: 1.46
+;; Created: 1997/01/26 04:24:41
+;; Version: 1.47
 ;; Keywords: comm, data, processes, hypermedia
 
 ;;; LCD Archive Entry:
 ;;; url|William M. Perry|wmperry@cs.indiana.edu|
 ;;; Functions for retrieving/manipulating URLs|
-;;; 1997/01/19 01:12:24|1.46|Location Undetermined
+;;; 1997/01/26 04:24:41|1.47|Location Undetermined
 ;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1339,7 +1339,7 @@ Path components that are `.' are removed, and
 path components followed by `..' are removed, along with the `..' itself."
   (if url
       (setq url (mapconcat (function (lambda (x)
-				       (if (memq x '(?\n ?\r))
+				       (if (memq x '(?  ?\n ?\r))
 					   ""
 					 (char-to-string x))))
 			   (url-strip-leading-spaces

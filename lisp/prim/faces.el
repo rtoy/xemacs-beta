@@ -12,7 +12,7 @@
 ;; pre Lucid-Emacs 19.0.
 ;;
 ;; face implementation #2 (used one face object per frame per face)
-;; authored by Jamie Zawinkski for 19.9.
+;; authored by Jamie Zawinski for 19.9.
 ;;
 ;; face implementation #3 (use one face object per face) originally
 ;; authored for 19.12 by Chuck Thompson <cthomp@cs.uiuc.edu>,
@@ -119,7 +119,7 @@ The specifications in a specifier determine what the value of
 
 See `set-face-property' for the built-in property-names."
 
-  (or (facep face) (setq face (get-face face)))
+  (setq face (get-face face))
   (let ((value (get face property)))
     (if (and locale
 	     (or (memq property built-in-face-specifiers)
@@ -135,15 +135,15 @@ See `set-face-property' for the built-in property-names."
     ;; locale was specified, put a specifier there.  
     ;; If there was already a value there, convert it to a
     ;; specifier with the value as its 'global instantiator.
-    (if (not (specifierp specifier))
-	(let ((new-specifier (make-specifier 'generic)))
-	  (if (or (not (null specifier))
-		  ;; make sure the nil returned from `get' wasn't
-		  ;; actually the value of the property
-		  (null (get face property t)))
-	      (add-spec-to-specifier new-specifier specifier))
-	  (setq specifier new-specifier)
-	  (put face property specifier)))))
+    (unless (specifierp specifier)
+      (let ((new-specifier (make-specifier 'generic)))
+	(if (or (not (null specifier))
+		;; make sure the nil returned from `get' wasn't
+		;; actually the value of the property
+		(null (get face property t)))
+	    (add-spec-to-specifier new-specifier specifier))
+	(setq specifier new-specifier)
+	(put face property specifier)))))
 
 (defun face-property-instance (face property
 				    &optional domain default no-fallback)
@@ -189,7 +189,7 @@ If PROPERTY does not name a built-in property, its value will
 Optional arguments DEFAULT and NO-FALLBACK are the same as in
   `specifier-instance'."
 
-  (or (facep face) (setq face (get-face face)))
+  (setq face (get-face face))
   (let ((value (get face property)))
     (if (specifierp value)
 	(setq value (specifier-instance value domain default no-fallback)))
@@ -208,7 +208,7 @@ Other than MATCHSPEC, this function is identical to `face-property-instance'.
 See also `specifier-matching-instance' for a fuller description of the
 matching process."
 
-  (or (facep face) (setq face (get-face face)))
+  (setq face (get-face face))
   (let ((value (get face property)))
     (if (specifierp value)
 	(setq value (specifier-matching-instance value matchspec domain
@@ -320,7 +320,7 @@ The following symbols have predefined meanings:
                     the other built-in properties, and cannot
                     contain locale-specific values."
 
-  (or (facep face) (setq face (get-face face)))
+  (setq face (get-face face))
   (if (memq property built-in-face-specifiers)
       (set-specifier (get face property) value locale tag-set how-to-add)
 
@@ -351,21 +351,21 @@ arguments."
 This makes FACE inherit all its display properties from 'default.
 WARNING: Be absolutely sure you want to do this!!!  It is a dangerous
 operation and is not undoable."
-  (mapcar #'(lambda (x)
+  (mapcar (lambda (x)
 	    (remove-specifier (face-property face x)))
-	built-in-face-specifiers)
+	  built-in-face-specifiers)
   nil)
 
 (defun set-face-parent (face parent &optional locale tag-set how-to-add)
   "Set the parent of FACE to PARENT, for all properties.
 This makes all properties of FACE inherit from PARENT."
   (setq parent (get-face parent))
-  (mapcar #'(lambda (x)
+  (mapcar (lambda (x)
 	    (set-face-property face x (vector parent) locale tag-set
 			       how-to-add))
-	(delq 'display-table
-	      (delq 'background-pixmap
-		    (copy-sequence built-in-face-specifiers))))
+	  (delq 'display-table
+		(delq 'background-pixmap
+		      (copy-sequence built-in-face-specifiers))))
   (set-face-background-pixmap face (vector 'inherit ':face parent)
 			      locale tag-set how-to-add)
   nil)
@@ -767,8 +767,8 @@ substituted for the specification."
 	;; this is easy.
 	(let* ((inst (face-property-instance face property locale))
 	       (name (and inst (funcall func inst (dfw-device locale)))))
-	  (if name
-	      (add-spec-to-specifier sp name locale)))
+	  (when name
+	    (add-spec-to-specifier sp name locale)))
       ;; otherwise, map over all specifications ...
       ;; but first, some further kludging:
       ;; (1) if we're frobbing the global property, make sure
@@ -790,30 +790,29 @@ substituted for the specification."
 	  (error "Property must have a specification in locale %S" locale))
       (map-specifier
        sp
-       #'(lambda (sp locale inst-list func)
-	   (let* ((device (dfw-device locale))
-		  ;; if a device can be derived from the locale,
-		  ;; call frob-face-property-1 for that device.
-		  ;; Otherwise map frob-face-property-1 over each device.
-		  (result
-		   (if device
-		       (list (frob-face-property-1 sp device inst-list func))
-		     (mapcar #'(lambda (device)
-				 (frob-face-property-1 sp device
-						       inst-list func))
-			     (device-list))))
-		  new-result)
-	     ;; remove duplicates and nils from the obtained list of
-	     ;; instantiators.
-	     (mapcar #'(lambda (arg)
-			 (if (and arg (not (member arg new-result)))
-			     (setq new-result (cons arg new-result))))
-		     result)
-	     ;; add back in.
-	     (add-spec-list-to-specifier sp
-					 (list (cons locale new-result)))
-	     ;; tell map-specifier to keep going.
-	     nil))
+       (lambda (sp locale inst-list func)
+	 (let* ((device (dfw-device locale))
+		;; if a device can be derived from the locale,
+		;; call frob-face-property-1 for that device.
+		;; Otherwise map frob-face-property-1 over each device.
+		(result
+		 (if device
+		     (list (frob-face-property-1 sp device inst-list func))
+		   (mapcar (lambda (device)
+			     (frob-face-property-1 sp device
+						   inst-list func))
+			   (device-list))))
+		new-result)
+	   ;; remove duplicates and nils from the obtained list of
+	   ;; instantiators.
+	   (mapcar (lambda (arg)
+		     (when (and arg (not (member arg new-result)))
+		       (setq new-result (cons arg new-result))))
+		   result)
+	   ;; add back in.
+	   (add-spec-list-to-specifier sp (list (cons locale new-result)))
+	   ;; tell map-specifier to keep going.
+	   nil))
        locale
        func))))
 
@@ -915,13 +914,13 @@ circumstances."
   (interactive (list (read-face-name "Make which face bold: ")))
   (frob-face-font-2
    face locale 'default 'bold
-   #'(lambda ()
-       ;; handle TTY specific entries
-       (if (featurep 'tty)
-	   (set-face-highlight-p face t locale 'tty)))
-   #'(lambda ()
-       ;; handle X specific entries
-       (frob-face-property face 'font 'x-make-font-bold locale))
+   (lambda ()
+     ;; handle TTY specific entries
+     (when (featurep 'tty)
+       (set-face-highlight-p face t locale 'tty)))
+   (lambda ()
+     ;; handle X specific entries
+     (frob-face-property face 'font 'x-make-font-bold locale))
    '(([default] . [bold])
      ([bold] . t)
      ([italic] . [bold-italic])
@@ -936,13 +935,13 @@ for more specifics on exactly how this function works."
   (interactive (list (read-face-name "Make which face italic: ")))
   (frob-face-font-2
    face locale 'default 'italic
-   #'(lambda ()
-       ;; handle TTY specific entries
-       (if (featurep 'tty)
-	   (set-face-underline-p face t locale 'tty)))
-   #'(lambda ()
-       ;; handle X specific entries
-       (frob-face-property face 'font 'x-make-font-italic locale))
+   (lambda ()
+     ;; handle TTY specific entries
+     (when (featurep 'tty)
+       (set-face-underline-p face t locale 'tty)))
+   (lambda ()
+     ;; handle X specific entries
+     (frob-face-property face 'font 'x-make-font-italic locale))
    '(([default] . [italic])
      ([bold] . [bold-italic])
      ([italic] . t)
@@ -957,15 +956,14 @@ for more specifics on exactly how this function works."
   (interactive (list (read-face-name "Make which face bold-italic: ")))
   (frob-face-font-2
    face locale 'default 'bold-italic
-   #'(lambda ()
-       ;; handle TTY specific entries
-       (if (featurep 'tty)
-	   (progn
-	     (set-face-highlight-p face t locale 'tty)
-	     (set-face-underline-p face t locale 'tty))))
-   #'(lambda ()
-       ;; handle X specific entries
-       (frob-face-property face 'font 'x-make-font-bold-italic locale))
+   (lambda ()
+     ;; handle TTY specific entries
+     (when (featurep 'tty)
+       (set-face-highlight-p face t locale 'tty)
+       (set-face-underline-p face t locale 'tty)))
+   (lambda ()
+     ;; handle X specific entries
+     (frob-face-property face 'font 'x-make-font-bold-italic locale))
    '(([default] . [italic])
      ([bold] . [bold-italic])
      ([italic] . [bold-italic])
@@ -980,13 +978,13 @@ for more specifics on exactly how this function works."
   (interactive (list (read-face-name "Make which face non-bold: ")))
   (frob-face-font-2
    face locale 'bold 'default
-   #'(lambda ()
-       ;; handle TTY specific entries
-       (if (featurep 'tty)
-	   (set-face-highlight-p face nil locale 'tty)))
-   #'(lambda ()
-       ;; handle X specific entries
-       (frob-face-property face 'font 'x-make-font-unbold locale))
+   (lambda ()
+     ;; handle TTY specific entries
+     (when (featurep 'tty)
+       (set-face-highlight-p face nil locale 'tty)))
+   (lambda ()
+     ;; handle X specific entries
+     (frob-face-property face 'font 'x-make-font-unbold locale))
    '(([default] . t)
      ([bold] . [default])
      ([italic] . t)
@@ -1001,13 +999,13 @@ for more specifics on exactly how this function works."
   (interactive (list (read-face-name "Make which face non-italic: ")))
   (frob-face-font-2
    face locale 'italic 'default
-   #'(lambda ()
-       ;; handle TTY specific entries
-       (if (featurep 'tty)
-	   (set-face-underline-p face nil locale 'tty)))
-   #'(lambda ()
-       ;; handle X specific entries
-       (frob-face-property face 'font 'x-make-font-unitalic locale))
+   (lambda ()
+     ;; handle TTY specific entries
+     (when (featurep 'tty)
+       (set-face-underline-p face nil locale 'tty)))
+   (lambda ()
+     ;; handle X specific entries
+     (frob-face-property face 'font 'x-make-font-unitalic locale))
    '(([default] . t)
      ([bold] . t)
      ([italic] . [default])
@@ -1097,10 +1095,8 @@ and 'global)."
 
 (defun init-device-faces (device)
   ;; First, add any device-local face resources.
-  (let ((faces (face-list)))
-    (while faces
-      (init-face-from-resources (car faces) device)
-      (setq faces (cdr faces))))
+  (loop for face in (face-list) do
+	(init-face-from-resources face device))
   ;; Then do any device-specific initialization.
   (cond ((eq 'x (device-type device))
 	 (x-init-device-faces device))
@@ -1110,10 +1106,8 @@ and 'global)."
 
 (defun init-frame-faces (frame)
   ;; First, add any frame-local face resources.
-  (let ((faces (face-list)))
-    (while faces
-      (init-face-from-resources (car faces) frame)
-      (setq faces (cdr faces))))
+  (loop for face in (face-list) do
+	(init-face-from-resources face frame))
   ;; Then do any frame-specific initialization.
   (cond ((eq 'x (frame-type frame))
 	 (x-init-frame-faces frame))
@@ -1128,33 +1122,28 @@ and 'global)."
 
 (defun init-global-faces ()
   ;; Look for global face resources.
-  (let ((faces (face-list)))
-    (while faces
-      (init-face-from-resources (car faces) 'global)
-      (setq faces (cdr faces))))
+  (loop for face in (face-list) do
+	(init-face-from-resources face 'global))
   ;; Further X frobbing.
   (x-init-global-faces)
   ;; for bold and the like, make the global specification be bold etc.
   ;; if the user didn't already specify a value.  These will also be
   ;; frobbed further in init-other-random-faces.
-  (or (face-font 'bold 'global)
-      (make-face-bold 'bold 'global))
+  (unless (face-font 'bold 'global)
+    (make-face-bold 'bold 'global))
   ;;
-  (or (face-font 'italic 'global)
-      (make-face-italic 'italic 'global))
+  (unless (face-font 'italic 'global)
+    (make-face-italic 'italic 'global))
   ;;
-  (or (face-font 'bold-italic 'global)
-      (make-face-bold-italic 'bold-italic 'global))
+  (unless (face-font 'bold-italic 'global)
+    (make-face-bold-italic 'bold-italic 'global)
+    (unless (face-font 'bold-italic 'global)
+      (copy-face 'bold 'bold-italic)
+      (make-face-italic 'bold-italic)))
 
-  (if (not (face-font 'bold-italic 'global))
-      (progn
-	(copy-face 'bold 'bold-italic)
-	(make-face-italic 'bold-italic)))
-
-  (if (face-equal 'bold 'bold-italic)
-      (progn
-	(copy-face 'italic 'bold-italic)
-	(make-face-bold 'bold-italic)))
+  (when (face-equal 'bold 'bold-italic)
+    (copy-face 'italic 'bold-italic)
+    (make-face-bold 'bold-italic))
   ;;
   ;; Nothing more to be done for X or TTY's?
 )
@@ -1198,206 +1187,190 @@ you want to add code to do stuff like this, use the create-device-hook."
 
   ;; try to make 'bold look different from the default on this device.
   ;; If that doesn't work at all, then issue a warning.
-  (or (face-differs-from-default-p 'bold device)
-      (make-face-bold 'bold device))
-  (or (face-differs-from-default-p 'bold device)
-      (make-face-unbold 'bold device))
-  (or (face-differs-from-default-p 'bold device)
-      ;; otherwise the luser specified one of the bogus font names
-      (face-complain-about-font 'bold device))
+  (unless (face-differs-from-default-p 'bold device)
+    (make-face-bold 'bold device)
+    (unless (face-differs-from-default-p 'bold device)
+      (make-face-unbold 'bold device)
+      (unless (face-differs-from-default-p 'bold device)
+	;; the luser specified one of the bogus font names
+	(face-complain-about-font 'bold device))))
 
-  ;; similar for italic.
-  (or (face-differs-from-default-p 'italic device)
-      (make-face-italic 'italic device))
-  (or (face-differs-from-default-p 'italic device)
-      (progn
-	(make-face-bold 'italic device) ; bold if possible, then complain
-	(face-complain-about-font 'italic device)))
+  ;; Similar for italic.
+  ;; It's unreasonable to expect to be able to make a font italic all
+  ;; the time.  For many languages, italic is an alien concept.
+  ;; Basically, because italic is not a globally meaningful concept,
+  ;; the use of the italic face should really be oboleted.
+
+  ;; In a Solaris Japanese environment, there just aren't any italic
+  ;; fonts - period.  CDE recognizes this reality, and fonts
+  ;; -dt-interface user-medium-r-normal-*-*-*-*-*-*-*-*-* don't come
+  ;; in italic versions.  So we first try to make the font bold before
+  ;; complaining.
+  (unless (face-differs-from-default-p 'italic device)
+    (make-face-italic 'italic device)
+    (unless (face-differs-from-default-p 'italic device)
+      (make-face-bold 'italic device)
+      (unless (face-differs-from-default-p 'italic device)
+	(face-complain-about-font 'italic device))))
 
   ;; similar for bold-italic.
-  (or (face-differs-from-default-p 'bold-italic device)
-      (make-face-bold-italic 'bold-italic device))
-  ;; if we couldn't get a bold-italic version, try just bold.
-  (or (face-differs-from-default-p 'bold-italic device)
-      (make-face-bold-italic 'bold-italic device))
-  ;; if we couldn't get bold or bold-italic, then that's probably because
-  ;; the default font is bold, so make the `bold-italic' face be unbold.
-  (or (face-differs-from-default-p 'bold-italic device)
-      (progn
+  (unless (face-differs-from-default-p 'bold-italic device)
+    (make-face-bold-italic 'bold-italic device)
+    ;; if we couldn't get a bold-italic version, try just bold.
+    (unless (face-differs-from-default-p 'bold-italic device)
+      (make-face-bold-italic 'bold-italic device)
+      ;; if we couldn't get bold or bold-italic, then that's probably because
+      ;; the default font is bold, so make the `bold-italic' face be unbold.
+      (unless (face-differs-from-default-p 'bold-italic device)
 	(make-face-unbold 'bold-italic device)
-	(make-face-italic 'bold-italic device)))
-  (or (face-differs-from-default-p 'bold-italic device)
-      (progn
-      ;; if that didn't work, try italic (can this ever happen? what the hell.)
 	(make-face-italic 'bold-italic device)
-	;; then bitch and moan.
-	(face-complain-about-font 'bold-italic device)))
+	(unless (face-differs-from-default-p 'bold-italic device)
+	  ;; if that didn't work, try plain italic
+	  ;; (can this ever happen? what the hell.)
+	  (make-face-italic 'bold-italic device)
+	  (unless (face-differs-from-default-p 'bold-italic device)
+	    ;; then bitch and moan.
+	    (face-complain-about-font 'bold-italic device))))))
 
-  ;; first time through, set the text-cursor colors if not already
-  ;; specified.
-  (if (and (not (face-background 'text-cursor 'global))
-	   (face-property-equal 'text-cursor 'default 'background device))
-      (set-face-background 'text-cursor [default foreground] 'global
-			   nil 'append))
-  (if (and (not (face-foreground 'text-cursor 'global))
-	   (face-property-equal 'text-cursor 'default 'foreground device))
-      (set-face-foreground 'text-cursor [default background] 'global
-			   nil 'append))
+  ;; Set the text-cursor colors unless already specified.
+  (when (and (not (face-background 'text-cursor 'global))
+	     (face-property-equal 'text-cursor 'default 'background device))
+    (set-face-background 'text-cursor [default foreground] 'global
+			 nil 'append))
+  (when (and (not (face-foreground 'text-cursor 'global))
+	     (face-property-equal 'text-cursor 'default 'foreground device))
+    (set-face-foreground 'text-cursor [default background] 'global
+			 nil 'append))
 
-  ;; first time through, set the secondary-selection color if it's not already
-  ;; specified.
-  (if (and (not (face-differs-from-default-p 'highlight device))
-	   (not (face-background 'highlight 'global)))
-      (progn
-	;; some older servers don't recognize "darkseagreen2"
-        (set-face-background 'highlight
-			     '((color . "darkseagreen2")
-			       (color . "green"))
-			     'global nil 'append)
-	(set-face-background 'highlight "gray53" 'global 'grayscale 'append)))
-  (if (and (not (face-differs-from-default-p 'highlight device))
-	   (not (face-background-pixmap 'highlight 'global)))
-      (progn
-	(set-face-background-pixmap 'highlight [nothing] 'global 'color
-				    'append)
-	(set-face-background-pixmap 'highlight [nothing] 'global 'grayscale
-				    'append)
-	(set-face-background-pixmap 'highlight "gray1" 'global 'mono 'append)))
+  ;; Set the secondary-selection color unless already specified.
+  (unless (or (face-differs-from-default-p 'highlight device)
+	      (face-background 'highlight 'global))
+    ;; some older servers don't recognize "darkseagreen2"
+    (set-face-background 'highlight
+			 '((color . "darkseagreen2")
+			   (color . "green"))
+			 'global nil 'append)
+    (set-face-background 'highlight "gray53" 'global 'grayscale 'append))
+  (unless (or (face-differs-from-default-p 'highlight device)
+	      (face-background-pixmap 'highlight 'global))
+    (set-face-background-pixmap 'highlight [nothing] 'global 'color 'append)
+    (set-face-background-pixmap 'highlight [nothing] 'global 'grayscale 'append)
+    (set-face-background-pixmap 'highlight "gray1" 'global 'mono 'append))
   ;; if the highlight face isn't distinguished on this device,
   ;; at least try inverting it.
-  (or (face-differs-from-default-p 'highlight device)
-      (invert-face 'highlight device))
+  (unless (face-differs-from-default-p 'highlight device)
+    (invert-face 'highlight device))
 
   ;; first time through, set the zmacs-region color if it's not already
   ;; specified.
-  (if (and (not (face-differs-from-default-p 'zmacs-region device))
-	   (not (face-background 'zmacs-region 'global)))
-      (progn
-	(set-face-background 'zmacs-region "gray" 'global 'color)
-	(set-face-background 'zmacs-region "gray80" 'global 'grayscale)))
-  (if (and (not (face-differs-from-default-p 'zmacs-region device))
-	   (not (face-background-pixmap 'zmacs-region 'global)))
-      (progn
-	(set-face-background-pixmap 'zmacs-region [nothing] 'global 'color)
-	(set-face-background-pixmap 'zmacs-region [nothing] 'global 'grayscale)
-	(set-face-background-pixmap 'zmacs-region "gray3" 'global 'mono)))
+  (unless (or (face-differs-from-default-p 'zmacs-region device)
+	      (face-background 'zmacs-region 'global))
+    (set-face-background 'zmacs-region "gray" 'global 'color)
+    (set-face-background 'zmacs-region "gray80" 'global 'grayscale))
+  (unless (or (face-differs-from-default-p 'zmacs-region device)
+	      (face-background-pixmap 'zmacs-region 'global))
+    (set-face-background-pixmap 'zmacs-region [nothing] 'global 'color)
+    (set-face-background-pixmap 'zmacs-region [nothing] 'global 'grayscale)
+    (set-face-background-pixmap 'zmacs-region "gray3" 'global 'mono))
   ;; if the zmacs-region face isn't distinguished on this device,
   ;; at least try inverting it.
-  (or (face-differs-from-default-p 'zmacs-region device)
-      (invert-face 'zmacs-region device))
+  (unless (face-differs-from-default-p 'zmacs-region device)
+    (invert-face 'zmacs-region device))
 
   ;; first time through, set the list-mode-item-selected color if it's
   ;; not already specified.
-  (if (and (not (face-differs-from-default-p 'list-mode-item-selected device))
-	   (not (face-background 'list-mode-item-selected 'global)))
-      (progn
-	(set-face-background 'list-mode-item-selected "gray68" 'global 'color)
-	(set-face-background 'list-mode-item-selected "gray68" 'global
-			     'grayscale)
-	(if (not (face-foreground 'list-mode-item-selected 'global))
-	    (progn
-	      (set-face-background 'list-mode-item-selected
-				   [default foreground] 'global '(mono x))
-	      (set-face-foreground 'list-mode-item-selected
-				   [default background] 'global '(mono x))))))
+  (unless (or (face-differs-from-default-p 'list-mode-item-selected device)
+	      (face-background 'list-mode-item-selected 'global))
+    (set-face-background 'list-mode-item-selected "gray68" 'global 'color)
+    (set-face-background 'list-mode-item-selected "gray68" 'global 'grayscale)
+    (unless (face-foreground 'list-mode-item-selected 'global)
+      (set-face-background 'list-mode-item-selected
+			   [default foreground] 'global '(mono x))
+      (set-face-foreground 'list-mode-item-selected
+			   [default background] 'global '(mono x))))
   ;; if the list-mode-item-selected face isn't distinguished on this device,
   ;; at least try inverting it.
-  (or (face-differs-from-default-p 'list-mode-item-selected device)
-      (invert-face 'list-mode-item-selected device))
+  (unless (face-differs-from-default-p 'list-mode-item-selected device)
+    (invert-face 'list-mode-item-selected device))
 
-  ;; first time through, set the primary-selection color if it's not already
-  ;; specified.
-  (if (and (not (face-differs-from-default-p 'primary-selection device))
-	   (not (face-background 'primary-selection 'global)))
-      (progn
-	(set-face-background 'primary-selection "gray" 'global 'color)
-	(set-face-background 'primary-selection "gray80" 'global 'grayscale)))
-  (if (and (not (face-differs-from-default-p 'secondary-selection device))
-	   (not (face-background-pixmap 'primary-selection 'global)))
-      (set-face-background-pixmap 'primary-selection "gray3" 'global 'mono))
-  ;; if the primary-selection face isn't distinguished on this device,
+  ;; Set the primary-selection color unless already specified.
+  (unless (or (face-differs-from-default-p 'primary-selection device)
+	      (face-background 'primary-selection 'global))
+    (set-face-background 'primary-selection "gray" 'global 'color)
+    (set-face-background 'primary-selection "gray80" 'global 'grayscale))
+  (unless (or (face-differs-from-default-p 'secondary-selection device)
+	      (face-background-pixmap 'primary-selection 'global))
+    (set-face-background-pixmap 'primary-selection "gray3" 'global 'mono))
+  ;; If the primary-selection face isn't distinguished on this device,
   ;; at least try inverting it.
-  (or (face-differs-from-default-p 'primary-selection device)
-      (invert-face 'primary-selection device))
+  (unless (face-differs-from-default-p 'primary-selection device)
+    (invert-face 'primary-selection device))
 
-  ;; first time through, set the secondary-selection color if it's not already
-  ;; specified.
-  (if (and (not (face-differs-from-default-p 'secondary-selection device))
-	   (not (face-background 'secondary-selection 'global)))
-      (progn
-	(set-face-background 'secondary-selection
-			     '((color . "paleturquoise")
-			       (color . "green"))
-			     'global)
-	(set-face-background 'secondary-selection "gray53" 'global
-			     'grayscale)))
-  (if (and (not (face-differs-from-default-p 'secondary-selection device))
-	   (not (face-background-pixmap 'secondary-selection 'global)))
-      (set-face-background-pixmap 'secondary-selection "gray1" 'global 'mono))
-  ;; if the secondary-selection face isn't distinguished on this device,
+  ;; Set the secondary-selection color unless already specified.
+  (unless (or (face-differs-from-default-p 'secondary-selection device)
+	      (face-background 'secondary-selection 'global))
+    (set-face-background 'secondary-selection
+			 '((color . "paleturquoise")
+			   (color . "green"))
+			 'global)
+    (set-face-background 'secondary-selection "gray53" 'global
+			 'grayscale))
+  (unless (or (face-differs-from-default-p 'secondary-selection device)
+	      (face-background-pixmap 'secondary-selection 'global))
+    (set-face-background-pixmap 'secondary-selection "gray1" 'global 'mono))
+  ;; If the secondary-selection face isn't distinguished on this device,
   ;; at least try inverting it.
-  (or (face-differs-from-default-p 'secondary-selection device)
-      (invert-face 'secondary-selection device))
+  (unless (face-differs-from-default-p 'secondary-selection device)
+    (invert-face 'secondary-selection device))
 
-  ;; set the isearch color if it's not already specified.
-  (if (not (face-differs-from-default-p 'isearch device))
-      (or (face-background 'isearch 'global)
-	  ;; TTY's and some older X servers don't recognize "paleturquoise"
-	  (set-face-background 'isearch
-			       '((color . "paleturquoise")
-				 (color . "green"))
-			       'global)))
+  ;; Set the isearch color if unless already specified.
+  (unless (or (face-differs-from-default-p 'isearch device)
+	      (face-background 'isearch 'global))
+    ;; TTY's and some older X servers don't recognize "paleturquoise"
+    (set-face-background 'isearch
+			 '((color . "paleturquoise")
+			   (color . "green"))
+			 'global))
   ;; if the isearch face isn't distinguished (e.g. we're not on a color
   ;; display), at least try making it bold.
-  (or (face-differs-from-default-p 'isearch device)
-      (set-face-font 'isearch [bold]))
+  (unless (face-differs-from-default-p 'isearch device)
+    (set-face-font 'isearch [bold]))
 
-  ;; set the modeline face colors/fonts if not already specified.
+  ;; Set the modeline face colors/fonts unless already specified.
 
   ;; modeline-buffer-id:
-  (if (not (face-differs-from-default-p 'modeline-buffer-id device))
-      (let ((fg (face-foreground 'modeline-buffer-id 'global))
-	    (font (face-font 'modeline-buffer-id 'global)))
-	(and (featurep 'x)
-	     (or fg
-		 (set-face-foreground 'modeline-buffer-id "blue" 'global
-				      '(color x))))
-	(if font
-	    nil
-	  (if (featurep 'x)
-	      (progn
-		(set-face-font 'modeline-buffer-id [bold-italic] nil '(mono x))
-		(set-face-font 'modeline-buffer-id [bold-italic] nil
-			       '(grayscale x))))
-	  (if (featurep 'tty)
-	      (set-face-font 'modeline-buffer-id [bold-italic] nil 'tty)))))
+  (unless (face-differs-from-default-p 'modeline-buffer-id device)
+    (let ((fg (face-foreground 'modeline-buffer-id 'global))
+	  (font (face-font 'modeline-buffer-id 'global)))
+      (when (and (null fg) (featurep 'x))
+	(set-face-foreground 'modeline-buffer-id "blue" 'global '(color x)))
+      (unless font
+	(when (featurep 'x)
+	  (set-face-font 'modeline-buffer-id [bold-italic] nil '(mono x))
+	  (set-face-font 'modeline-buffer-id [bold-italic] nil '(grayscale x)))
+	(when (featurep 'tty)
+	  (set-face-font 'modeline-buffer-id [bold-italic] nil 'tty)))))
   (set-face-parent 'modeline-buffer-id 'modeline nil nil 'append)
 
   ;; modeline-mousable:
-  (if (not (face-differs-from-default-p 'modeline-mousable device))
-      (let ((fg (face-foreground 'modeline-mousable 'global))
-	    (font (face-font 'modeline-mousable 'global)))
-	(and (featurep 'x)
-	     (or fg
-		 (set-face-foreground 'modeline-mousable "red" 'global
-				      '(color x))))
-	(if font
-	    nil
-	  (if (featurep 'x)
-	      (progn
-		(set-face-font 'modeline-mousable [bold] nil '(mono x))
-		(set-face-font 'modeline-mousable [bold] nil
-			       '(grayscale x)))))))
+  (unless (face-differs-from-default-p 'modeline-mousable device)
+    (let ((fg (face-foreground 'modeline-mousable 'global))
+	  (font (face-font 'modeline-mousable 'global)))
+      (when (and (null fg) (featurep 'x))
+	(set-face-foreground 'modeline-mousable "red" 'global '(color x)))
+      (unless font
+	(when (featurep 'x)
+	  (set-face-font 'modeline-mousable [bold] nil '(mono x))
+	  (set-face-font 'modeline-mousable [bold] nil '(grayscale x))))))
   (set-face-parent 'modeline-mousable 'modeline nil nil 'append)
 
   ;; modeline-mousable-minor-mode:
-  (if (not (face-differs-from-default-p 'modeline-mousable-minor-mode device))
-      (let ((fg (face-foreground 'modeline-mousable-minor-mode 'global)))
-	(and (featurep 'x)
-	     (or fg
-		 (set-face-foreground 'modeline-mousable-minor-mode
-				      '(((color x) . "green4")
-					((color x) . "green")) 'global)))))
+  (unless (face-differs-from-default-p 'modeline-mousable-minor-mode device)
+    (let ((fg (face-foreground 'modeline-mousable-minor-mode 'global)))
+      (when (and (null fg) (featurep 'x))
+	(set-face-foreground 'modeline-mousable-minor-mode
+			     '(((color x) . "green4")
+			       ((color x) . "green")) 'global))))
   (set-face-parent 'modeline-mousable-minor-mode 'modeline-mousable
 		   nil nil 'append)
   )
@@ -1423,51 +1396,27 @@ you want to add code to do stuff like this, use the create-device-hook."
 (make-face 'primary-selection)
 (make-face 'secondary-selection)
 
-(make-face 'red "red text")
-(set-face-foreground 'red "red" nil 'color)
-(make-face 'green "green text")
-(set-face-foreground 'green "green" nil 'color)
-(make-face 'blue "blue text")
-(set-face-foreground 'blue "blue" nil 'color)
-(make-face 'yellow "yellow text")
-(set-face-foreground 'yellow "yellow" nil 'color)
+(loop for color in '("red" "green" "blue" "yellow") do
+      (make-face (intern color) (concat color " text"))
+      (set-face-foreground (intern color) color nil 'color))
 
-;;
 ;; Make some useful faces.  This happens very early, before creating
 ;; the first non-stream device.  We initialize the tty global values here.
 ;; We cannot initialize the X global values here because they depend
 ;; on having already resourced the global face specs, which happens
 ;; when the first X device is created.
-;;
 
-(if (featurep 'tty)
-    (set-face-reverse-p 'modeline t 'global 'tty))
 (set-face-background-pixmap 'modeline [nothing])
-;;
-(if (featurep 'tty)
-    (set-face-highlight-p 'highlight t 'global 'tty))
-;;
-(if (featurep 'tty)
-    (set-face-reverse-p 'text-cursor t 'global 'tty))
-;;
-(if (featurep 'tty)
-    (set-face-highlight-p 'bold t 'global 'tty))
-;;
-(if (featurep 'tty)
-    (set-face-underline-p 'italic t 'global 'tty))
-;;
-(if (featurep 'tty)
-    (progn
-      (set-face-highlight-p 'bold-italic t 'global 'tty)
-      (set-face-underline-p 'bold-italic t 'global 'tty)))
-;;
-(if (featurep 'tty)
-    (set-face-reverse-p 'zmacs-region t 'global 'tty))
-;;
-(if (featurep 'tty)
-    (set-face-reverse-p 'list-mode-item-selected t 'global 'tty))
-;;
-(if (featurep 'tty)
-    (set-face-reverse-p 'isearch t 'global 'tty))
 
-;;; faces.el ends here
+(when (featurep 'tty)
+  (set-face-highlight-p 'bold                    t 'global 'tty)
+  (set-face-underline-p 'italic                  t 'global 'tty)
+  (set-face-highlight-p 'bold-italic             t 'global 'tty)
+  (set-face-underline-p 'bold-italic             t 'global 'tty)
+  (set-face-highlight-p 'highlight               t 'global 'tty)
+  (set-face-reverse-p   'text-cursor             t 'global 'tty)
+  (set-face-reverse-p   'modeline                t 'global 'tty)
+  (set-face-reverse-p   'zmacs-region            t 'global 'tty)
+  (set-face-reverse-p   'list-mode-item-selected t 'global 'tty)
+  (set-face-reverse-p   'isearch                 t 'global 'tty)
+  )

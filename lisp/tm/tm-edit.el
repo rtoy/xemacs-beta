@@ -1,12 +1,12 @@
 ;;; tm-edit.el --- Simple MIME Composer for GNU Emacs
 
-;; Copyright (C) 1993 .. 1996 Free Software Foundation, Inc.
+;; Copyright (C) 1993,1994,1995,1996,1997 Free Software Foundation, Inc.
 
 ;; Author: UMEDA Masanobu <umerin@mse.kyutech.ac.jp>
 ;;         MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Maintainer: MORIOKA Tomohiko <morioka@jaist.ac.jp>
 ;; Created: 1994/08/21 renamed from mime.el
-;; Version: $Revision: 1.5 $
+;; Version: $Revision: 1.6 $
 ;; Keywords: mail, news, MIME, multimedia, multilingual
 
 ;; This file is part of tm (Tools for MIME).
@@ -41,8 +41,8 @@
 ;; resulted in RFC 1468 (ISO-2022-JP charset for MIME).  In order to
 ;; enable multilingual capability in single text message in MIME,
 ;; charset of multilingual text written in Mule is declared as either
-;; `ISO-2022-JP-2' [RFC 1554] or `ISO-2022-INT-1'.  Mule is required
-;; for reading the such messages.
+;; `ISO-2022-JP-2' [RFC 1554].  Mule is required for reading the such
+;; messages.
 
 ;; This MIME composer can work with Mail mode, mh-e letter Mode, and
 ;; News mode.  First of all, you need the following autoload
@@ -96,6 +96,7 @@
 ;; This is also a plain text.  But, it is explicitly specified as is.
 ;;
 ;;--[[text/plain; charset=ISO-2022-JP]]
+;; $(B$3$l$O(B charset $(B$r(B ISO-2022-JP $(B$K;XDj$7$?F|K\8l$N(B plain $(B%F%-%9%H$G$9(B.
 ;;
 ;;--[[text/richtext]]
 ;; <center>This is a richtext.</center>
@@ -119,7 +120,7 @@
 ;;;
 
 (defconst mime-editor/RCS-ID
-  "$Id: tm-edit.el,v 1.5 1997/01/23 05:29:42 steve Exp $")
+  "$Id: tm-edit.el,v 1.6 1997/01/30 02:22:48 steve Exp $")
 
 (defconst mime-editor/version (get-version-string mime-editor/RCS-ID))
 
@@ -740,12 +741,15 @@ TABs at the beginning of the line are not a part of the message:
 	--[[text/plain]]
 	This is also a plain text.  But, it is explicitly specified as
 	is.
-	--[[text/plain; charset=ISO-2022-JP]]
-        ... Japanese text here ...
-	--[[text/richtext]]
-	<center>This is a richtext.</center>
-	--[[image/gif][base64]]^M...image encoded in base64 here...
-	--[[audio/basic][base64]]^M...audio encoded in base64 here...
+	--[[text/plain; charset=ISO-8859-1]]
+	This is also a plain text.  But charset is specified as
+	iso-8859-1.
+
+	¡Hola!  Buenos días.  ¿Cómo está usted?
+	--[[text/enriched]]
+	This is a <bold>enriched text</bold>.
+	--[[image/gif][base64]]...image encoded in base64 here...
+	--[[audio/basic][base64]]...audio encoded in base64 here...
 
 User customizable variables (not documented all of them):
  mime-prefix

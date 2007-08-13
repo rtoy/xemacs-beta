@@ -65,7 +65,7 @@
 ;; APPLICATION NOTES:
 ;;
 ;; crypt++
-;;   jka-compr can coexist with crpyt++ if you take all the decompression
+;;   jka-compr can coexist with crypt++ if you take all the decompression
 ;;   entries out of the crypt-encoding-list.  Clearly problems will arise if
 ;;   you have two programs trying to compress/decompress files.  jka-compr
 ;;   will not "work with" crypt++ in the following sense: you won't be able to
@@ -366,8 +366,10 @@ There should be no more than seven characters after the final `/'")
       (delete-file temp)
     (error nil)))
 
-
-(defun jka-compr-write-region (start end file &optional append visit)
+;;; 20.0-b92 change
+;;; Now receives both `lockname' and `codesys' from Fwrite_region_internal
+;;; what makes it compatible with write-region
+(defun jka-compr-write-region (start end file &optional append visit lockname coding-system)
   (let* ((filename (expand-file-name file))
 	 (visit-file (if (stringp visit) (expand-file-name visit) filename))
 	 (info (jka-compr-get-compression-info visit-file)))
@@ -406,7 +408,7 @@ There should be no more than seven characters after the final `/'")
 	     (message "%s %s..." compress-message base-name))
 	    
 	    (jka-compr-run-real-handler 'write-region
-					(list start end temp-file t 'dont))
+					(list start end temp-file t 'dont lockname coding-system))
 
 	    (jka-compr-call-process compress-program
 				    (concat compress-message
@@ -420,7 +422,7 @@ There should be no more than seven characters after the final `/'")
 	    (jka-compr-run-real-handler 'write-region
 					(list (point-min) (point-max)
 					      filename
-					      (and append can-append) 'dont))
+					      (and append can-append) 'dont lockname coding-system))
 	    (erase-buffer)
 	    (set-buffer cbuf)
 
@@ -447,7 +449,7 @@ There should be no more than seven characters after the final `/'")
 	    nil)
 	      
 	(jka-compr-run-real-handler 'write-region
-				    (list start end filename append visit)))))
+				    (list start end filename append visit lockname coding-system)))))
 
 
 (defun jka-compr-insert-file-contents (file &optional visit beg end replace)

@@ -52,6 +52,8 @@ tm-MUA for GNUS (@ref{(tm-gnus-ja)})
 @item
 tm-MUA for mh-e (@ref{(tm-mh-e-ja)})
 @item
+tm-MUA for VM (@ref{(tm-vm-en)})
+@item
 mime/viewer-mode (@ref{(tm-view-ja)})
 @item
 mime/editor-mode (@ref{(tm-edit-ja)})
@@ -1881,13 +1883,14 @@ extender.@refill
 
 @itemize @bullet
 @item
-mh-e (@ref{(mh-e)}) 用の @strong{tm-mh-e}
+mh-e (@ref{(mh-e)}) 用の
+ @strong{tm-mh-e} (@ref{(tm-mh-e-en)})
 @item
-GNUS 用の @strong{tm-gnus}
+GNUS 用の @strong{tm-gnus} (@ref{(tm-gnus-ja)})
 @item
 Gnus 用の @strong{gnus-mime} (@ref{(gnus-mime-ja)})
 @item
-VM 用の @strong{tm-vm}
+VM 用の @strong{tm-vm} (@ref{(tm-vm-en)})
 @item
 RMAIL 用の @strong{tm-rmail}
 @end itemize

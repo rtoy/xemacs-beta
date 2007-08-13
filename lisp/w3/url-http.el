@@ -1,7 +1,7 @@
 ;;; url-http.el --- HTTP Uniform Resource Locator retrieval code
 ;; Author: wmperry
-;; Created: 1997/01/15 15:55:48
-;; Version: 1.10
+;; Created: 1997/01/26 03:56:59
+;; Version: 1.11
 ;; Keywords: comm, data, processes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -133,8 +133,10 @@
 		       (let ((url-basic-auth-storage
 			      url-proxy-basic-authentication))
 			 (url-get-authentication url nil 'any nil))))
-	 (host (or (and (boundp 'proxy-info)
-			(url-host (url-generic-parse-url proxy-info)))
+	 (proxy-obj (if (boundp 'proxy-info)
+			(url-generic-parse-url proxy-info)))
+	 (real-fname (if proxy-obj (url-filename proxy-obj) fname))
+	 (host (or (and proxy-obj (url-host proxy-obj))
 		   url-current-server))
 	 (auth (if (cdr-safe (assoc "Authorization" url-request-extra-headers))
 		   nil
@@ -195,8 +197,8 @@
 	   url-mime-accept-string
 	   (url-http-user-agent-string)
 	   (or auth "")
-	   (url-cookie-generate-header-lines url-current-server
-					     fname
+	   (url-cookie-generate-header-lines host
+					     real-fname
 					     (string-match "https"
 							   url-current-type))
 	   (or proxy-auth "")

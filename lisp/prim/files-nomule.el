@@ -20,7 +20,7 @@
 ;; Free Software Foundation, 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: FSF 19.34 (files.el).
+;;; Synched up with: FSF 19.34 (files.el).   (Is it?  Please check)
 
 ;;; Commentary:
 
@@ -46,7 +46,7 @@ the whole thing because (1) it preserves some marker positions
 and (2) it puts less data in the undo list."
   (insert-file-contents-internal filename visit beg end replace nil nil))
 
-(defun write-region (start end filename &optional append visit lockname)
+(defun write-region (start end filename &optional append visit lockname coding-system)
   "Write current region into specified file.
 When called from a program, takes three arguments:
 START, END and FILENAME.  START and END are buffer positions.
@@ -63,7 +63,12 @@ If VISIT is neither t nor nil nor a string,
 The optional sixth arg LOCKNAME, if non-nil, specifies the name to
   use for locking and unlocking, overriding FILENAME and VISIT.
 Kludgy feature: if START is a string, then that string is written
-to the file, instead of any buffer contents, and END is ignored."
+to the file, instead of any buffer contents, and END is ignored.
+Optional seventh argument CODING-SYSTEM is meaningful only if support
+  for Mule is present in XEmacs and specifies the coding system
+  used to encode the text when it is written out, and defaults to
+  the value of `file-coding-system' in the current buffer.  When Mule
+  support is not present, the CODING-SYSTEM argument is ignored."
   (interactive "r\nFWrite region to file: ")
   (write-region-internal start end filename append visit lockname nil))
 

@@ -83,6 +83,7 @@ Introduction:
 * Q1.0.11::     Is there a port of XEmacs to the Macintosh?
 * Q1.0.12::     Is there a port of XEmacs to NextStep?
 * Q1.0.13::     Is there a port of XEmacs to OS/2?
+* Q1.0.14::     Where can I get a printed copy of the XEmacs users manual?
 
 Policies:
 * Q1.1.1::      What is the FAQ editorial policy?
@@ -299,10 +300,23 @@ Carl Edman, apparently no longer at <cedman@@princeton.edu>, did the
 port of GNU Emacs to NeXTstep and expressed interest in doing the XEmacs
 port, but never went any farther.
 
-@node Q1.0.13, Q1.1.1, Q1.0.12, Introduction
+@node Q1.0.13, Q1.0.14, Q1.0.12, Introduction
 @section Is there a port of XEmacs to OS/2?
 
 No, and there is no news of anyone working on it.
+
+@node Q1.0.14, Q1.1.1, Q1.0.13, Introduction
+@section Where can I obtain a printed copy of the XEmacs users manual?
+
+InfoDock Associates, a firm specializing in Emacs-related support and
+development, will be maintaining the XEmacs user manual.  The firm plans
+to begin publishing printed copies of the manual in March 1997.
+
+@example
+  Web:     http://www.xemacs.com
+  E-mail:  <info@xemacs.com>
+  Tel:     +1 408 243 3300
+@end example
 
 @node Q1.1.1, Q1.1.2, Q1.0.13, Introduction
 @section What is the FAQ editorial policy?
@@ -3696,19 +3710,17 @@ did so.)
 @node Q4.6.1, Q4.7.1, Q4.5.1, Subsystems
 @section What is Infodock?
 
-NB:  the information in this section is quite dated.
-
 InfoDock is an integrated productivity toolset, mainly aimed at
-technical people.  It is built atop the XEmacs variant of GNU Emacs and
-so has all of the power of Emacs, but with an easier to use and more
-comprehensive menu-based user interface.  The next section describes how
-it differs from XEmacs and GNU Emacs from the Free Software Foundation.
+technical people.  It is developed and supported by InfoDock
+Associates, a firm that offers custom support and development
+for InfoDock, XEmacs and GNU Emacs.  (http://www.infodock.com,
+<info@infodock.com>, +1 408 243 3300).
 
-The quickest way to get a feel for InfoDock is to browse the InfoDock
-Manual, especially the section on tools.  This will help you decide
-whether or not to download InfoDock for local use.  This manual is
-available in gzipped Postscript form, alongside the InfoDock
-distribution.  (See below for FTP retrieval instructions.)
+InfoDock is built atop the XEmacs variant of GNU Emacs and so has all of
+the power of Emacs, but with an easier to use and more comprehensive
+menu-based user interface.  The bottom portion of this text describes
+how it differs from XEmacs and GNU Emacs from the Free Software
+Foundation.
 
 InfoDock is aimed at people who want a free, turn-key productivity
 environment.  Although InfoDock is customizable, it is not intended for
@@ -3718,11 +3730,11 @@ such uses.  InfoDock is for those people who want a complete,
 pre-customized environment in one package, which they need not touch
 more than once or twice a year to update to new revisions.
 
-InfoDock is pre-built for SPARCstations running SunOS V4 or V5
-(Solaris).  It is intended for use on a color display, although most
-features will work on monochrome monitors.  Simply unpack InfoDock
-according to the instructions in the ID-INSTALL file and you are ready
-to run.
+InfoDock is pre-built for SPARC SunOS/Solaris systems, PA-RISC HP-UX,
+and Intel Linux systems.  It is intended for use on a color display,
+although most features will work on monochrome monitors.  Simply unpack
+InfoDock according to the instructions in the ID-INSTALL file and you
+are ready to run.
 
 The InfoDock Manual is concise, yet sufficient as a user guide for users
 who have never used an Emacs-type editor before.  For users who are
@@ -3730,41 +3742,32 @@ already familiar with Emacs, it supplements the information in the GNU
 Emacs Manual.
 
 InfoDock menus are much more extensive and more mature than standard
-Emacs menus.  Each menu offers a @code{Manual} item which displays
+Emacs menus.  Each menu offers a @samp{Manual} item which displays
 documentation associated with the menu's functions.
-
-Three types of menubars are provided:
-
+    
+@noindent
+Four types of menubars are provided:
 @enumerate
 @item
 An extensive menubar providing access to global InfoDock commands.
-
 @item
 Mode-specific menubars tailored to the current major mode.
-
 @item
-A simple menubar for basic editing to help novices get started
-with InfoDock.
+A simple menubar for basic editing to help novices get started with InfoDock.
+@item
+The standard XEmacs menubar.
 @end enumerate
 
-Most modes also include mode-specific popup menus.  Additionally, region
-and rectangle popup menus are included.
+Most modes also include mode-specific popup menus.  Additionally, region and
+rectangle popup menus are included.
 
-@itemize @bullet
-@item
-@dfn{Hyperbole}, the everyday information manager, is a core part of
+@samp{Hyperbole}, the everyday information manager, is a core part of
 InfoDock.  This provides context-sensitive mouse keys, a rolodex-type
 contact manager, programmable hypertext buttons, and an autonumbered
 outliner with embedded hyperlink anchors.
 
-@item
-@dfn{PIEmail}, the prototype Personalized Information Environment Mail
-Tool, is included.
-
-@item
-The @dfn{OO-Browser}, a multi-language object-oriented code browser, is
-a standard part of InfoDock.
-@end itemize
+The @samp{OO-Browser}, a multi-language object-oriented code browser, is a
+standard part of InfoDock.
 
 InfoDock saves a more extensive set of user options than other Emacs
 versions.
@@ -3777,94 +3780,88 @@ for easy MANIFEST file creation.
 Your working set of buffers is automatically saved and restored (if you
 answer yes to a prompt) between InfoDock sessions.
 
-Refined color choices for code highlighting are provided for both dark
-and light background display frames.
+Refined color choices for code highlighting are provided for both dark and
+light background display frames.
 
-The @kbd{C-z} key prefix performs frame-based commands which parallel
-the @kbd{C-x} key prefix for window-based commands.
+The @kbd{C-z} key prefix performs frame-based commands which parallel the
+@kbd{C-x} key prefix for window-based commands.
 
 The Smart Menu system is included for producing command menus on dumb
-terminals. (InfoDock does not yet run on dumb terminals but will in
-1995.)
+terminals.
 
 Lisp libraries are better categorized according to function.
 
-Extensions and improvements to many areas of Emacs are included, such
-as: paragraph filling, mail reading with Rmail, shell handling,
-outlining, code highlighting and browsing, and man page browsing.
-
+Extensions and improvements to many areas of Emacs are included, such as:
+paragraph filling, mail reading with Rmail, shell handling, outlining, code
+highlighting and browsing, and man page browsing.
 
 InfoDock questions, answers and discussion should go to the mail list
-<URL:mailto:infodock@@hub.ucsb.edu>.
+@samp{infodock@@infodock.com}.  Use
+@samp{infodock-request@@infodock.com} to be added or removed from the
+list.  Always include your InfoDock version number when sending help
+requests.
 
-Use <URL:mailto:infodock-request@@hub.ucsb.edu> to be added or removed
-from the list.  Always include your InfoDock version number when sending
-help requests.
-
-InfoDock is available across the Internet via anonymous FTP.  To get it,
-first move to a directory into which you want the InfoDock archive files
-placed.  We will call this <DIST-DIR>.
-
+InfoDock is available across the Internet via anonymous FTP.  To get
+it, first move to a directory into which you want the InfoDock archive
+files placed.  We will call this <DIST-DIR>.
+ 
 @example
-cd <DIST-DIR>
+   cd <DIST-DIR>
 @end example
 
-FTP to ftp.cs.uiuc.edu  (Internet Host ID = 128.174.252.1):
+Ftp to ftp.xemacs.org  (Internet Host ID = 128.174.252.16):
 
 @example
-prompt> ftp ftp.cs.uiuc.edu
+   prompt> ftp ftp.xemacs.org
 @end example
 
-Login as anonymous with your own <user-id>@@<site-name> as a password.
+Login as @samp{anonymous} with your own <user-id>@@<site-name> as a password.
 
-@example
-Name (ftp.cs.uiuc.edu): anonymous
-331 Guest login ok, send your complete e-mail address as password.
-Password: -<your-user-id@@your-domain>
-230 Guest login ok, access restrictions apply.
+@example   
+   Name (ftp.xemacs.org): anonymous
+   331 Guest login ok, send your complete e-mail address as password.
+   Password: -<your-user-id@@your-domain>
+   230 Guest login ok, access restrictions apply.
 @end example
 
 Move to the location of the InfoDock archives:
 
 @example
-ftp> cd pub/xemacs/infodock
+   ftp> cd pub/infodock
 @end example
 
 Set your transfer mode to binary:
 
 @example
-ftp> bin
-200 Type set to I.
+   ftp> bin
+   200 Type set to I.
 @end example
 
 Turn off prompting:
 
 @example
-ftp> prompt
-Interactive mode off.
+   ftp> prompt
+   Interactive mode off.
 @end example
 
 Retrieve the InfoDock archives that you want, either by using a
-@code{get <file>} for each file you want or by using the following to
+@samp{get <file>} for each file you want or by using the following to
 get a complete distribution, including all binaries:
 
 @example
-ftp> mget ID-INSTALL
-ftp> mget id-*
+   ftp> mget ID-INSTALL
+   ftp> mget id-*
 @end example
 
 Close the FTP connection:
 
 @example
-ftp> quit
-221 Goodbye.
+   ftp> quit
+   221 Goodbye.
 @end example
 
 Read the @file{ID-INSTALL} file which you just retrieved for
 step-by-step installation instructions.
-
-@emph{Note}: Hyperbole, the KOutliner, and OO-Browser are included in
-XEmacs 19.14.
 
 @node Q4.7.1, Q4.7.2, Q4.6.1, Subsystems
 @section What is AucTeX?  Where do you get it?

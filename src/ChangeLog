@@ -1,3 +1,23 @@
+Mon Jan 27 21:46:53 1997  Tomasz J. Cholewo  <tjchol01@mecca.spd.louisville.edu>
+
+	* fileio.c (Fwrite_region_internal): pack lockname to write-region
+	handler.
+
+Mon Jan 27 04:50:50 1997  David Moore <dmoore@UCSD.EDU>
+
+	* gmalloc.c (malloc): Guard against incompatible system mallocs
+	with conflicting symbols.
+
+Sun Jan 26 12:27:04 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* redisplay.c (add_emchar_rune): Back out optimization change of
+	caching last_charset.
+
+Sun Jan 26 09:10:45 1997  Hrvoje Niksic <hniksic@srce.hr>
+
+	* s/decosf4-0.h: Digital Unix 4.0 has a realpath, but it's buggy.
+	And I *do* mean buggy.
+
 Thu Jan 23 10:41:19 1997  Steven L. Baur  <steve@altair.xemacs.org>
 
 	* puresize.h: Increase SUNPRO usage to reflect tm & cc-mode.

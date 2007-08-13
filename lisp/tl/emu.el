@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995,1996 Free Software Foundation, Inc.
 
 ;; Author: MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Id: emu.el,v 1.2 1997/01/03 03:10:29 steve Exp $
+;; Version: $Id: emu.el,v 1.3 1997/01/30 02:22:46 steve Exp $
 ;; Keywords: emulation, compatibility, NEmacs, MULE, Emacs/mule, XEmacs
 
 ;; This file is part of emu.
@@ -141,9 +141,8 @@ and `default-mime-charset'. [emu.el]"
 ;;; @ EMACS 19.29 emulation
 ;;;
 
-; XEmacs:  this causes a strange message at DOC file generation time.
-;(defvar path-separator ":"
-;  "Character used to separate concatenated paths.")
+(defvar path-separator ":"
+  "Character used to separate concatenated paths.")
 
 (defun-maybe buffer-substring-no-properties (beg end)
   "Return the text from BEG to END, without text properties, as a string.

@@ -46,7 +46,7 @@ static void x_update_horizontal_scrollbar_callback (Widget widget, LWLIB_ID id,
    scrollbar is incredibly stupid about updating the thumb and causes
    lots of flicker if it is done too often.  */
 static int inhibit_thumb_size_change;
-int stupid_vertical_scrollbar_drag_hack = 1;
+int stupid_vertical_scrollbar_drag_hack;
 
 /* Doesn't work with athena */
 #if defined (LWLIB_SCROLLBARS_MOTIF) || defined (LWLIB_SCROLLBARS_LUCID)
@@ -858,4 +858,5 @@ vars_of_scrollbar_x (void)
 #elif defined (LWLIB_SCROLLBARS_ATHENA)
   Fprovide (intern ("athena-scrollbars"));
 #endif
+  stupid_vertical_scrollbar_drag_hack = 1;
 }

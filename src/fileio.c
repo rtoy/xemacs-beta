@@ -3393,8 +3393,8 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
 
     if (!NILP (handler))
       {
-        Lisp_Object val = call7 (handler, Qwrite_region, start, end, 
-                                 filename, append, visit, codesys);
+        Lisp_Object val = call8 (handler, Qwrite_region, start, end, 
+                                 filename, append, visit, lockname, codesys);
 	if (visiting)
 	  {
 	    BUF_SAVE_MODIFF (current_buffer) = BUF_MODIFF (current_buffer);

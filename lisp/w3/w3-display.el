@@ -1,7 +1,7 @@
 ;;; w3-display.el --- display engine v99999
 ;; Author: wmperry
-;; Created: 1997/01/21 19:45:13
-;; Version: 1.110
+;; Created: 1997/01/26 00:16:07
+;; Version: 1.112
 ;; Keywords: faces, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1414,6 +1414,38 @@ Should be run before restoring w3-table-border-chars to ascii characters."
       (push (list 'tr nil (pop rows)) items))
     items))
 
+(defun w3-display-normalize-form-info (args)
+  (let* ((plist (alist-to-plist args))
+	 (type (intern (downcase
+			(or (plist-get plist 'type) "text"))))
+	 (name (plist-get plist 'name))
+	 (value (or (plist-get plist 'value) ""))
+	 (size (if (plist-get plist 'size)
+		   (string-to-int (plist-get plist 'size))))
+	 (maxlength (if (plist-get plist 'maxlength)
+			(string-to-int
+			 (plist-get plist 'maxlength))))
+	 (default value)
+	 (checked (assq 'checked args)))
+    (if (memq type '(checkbox radio)) (setq default checked))
+    (if (and (eq type 'checkbox) (string= value ""))
+	(setq value "on"))
+    (if (and (not (memq type '(submit reset button)))
+	     (not name))
+	(setq name (symbol-name type)))
+    (while (and name (string-match "[\r\n]+" name))
+      (setq name (concat (substring name 0 (match-beginning 0))
+			 (substring name (match-end 0) nil))))
+    (setq plist (plist-put plist 'type type)
+	  plist (plist-put plist 'name name)
+	  plist (plist-put plist 'value value)
+	  plist (plist-put plist 'size size)
+	  plist (plist-put plist 'default default)
+	  plist (plist-put plist 'internal-form-number w3-current-form-number)
+	  plist (plist-put plist 'action w3-display-form-id)
+	  plist (plist-put plist 'maxlength maxlength))
+    plist))
+
 (defun w3-display-node (node &optional nofaces)
   (let (
 	(content-stack (list (list node)))
@@ -1762,77 +1794,34 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 				  nil	; checked
 				  (car w3-active-faces)))
 	    (input
-	     (let* (
-		    (type (intern (downcase (or (w3-get-attribute 'type)
-						"text"))))
-		    (name (w3-get-attribute 'name))
-		    (value (or (w3-get-attribute 'value) ""))
-		    (size (if (w3-get-attribute 'size)
-			      (string-to-int (w3-get-attribute 'size))))
-		    (maxlength (cdr (assoc 'maxlength args)))
-		    (default value)
-		    (action w3-display-form-id)
-		    (options)
-		    (id (w3-get-attribute 'id))
-		    (checked (assq 'checked args)))
-	       (if (and (string-match "^[ \t\n\r]+$" value)
-			(not (eq type 'hidden)))
-		   (setq value ""))
-	       (if maxlength (setq maxlength (string-to-int maxlength)))
-	       (if (and name (string-match "[\r\n]" name))
-		   (setq name (mapconcat (function
-					  (lambda (x)
-					    (if (memq x '(?\r ?\n))
-						""
-					      (char-to-string x))))
-					 name "")))
-	       (if (memq type '(checkbox radio)) (setq default checked))
-	       (if (and (eq type 'checkbox) (string= value ""))
-		   (setq value "on"))
-	       (w3-form-add-element type name
-				    value size maxlength default action
-				    options w3-current-form-number id checked
-				    (car w3-active-faces))
-	       )
+	     (w3-form-add-element
+	      (w3-display-normalize-form-info args)
+	      (car w3-active-faces))
 	     (w3-handle-empty-tag)
 	     )
 	    (select
-	     (let* (
-		    (name (w3-get-attribute 'name))
-		    (size (string-to-int (or (w3-get-attribute 'size)
-					     "20")))
-		    (maxlength (cdr (assq 'maxlength args)))
-		    (value nil)
+	     (let* ((plist (w3-display-normalize-form-info args))
 		    (tmp nil)
-		    (action w3-display-form-id)
-		    (options)
-		    (id (w3-get-attribute 'id))
 		    (multiple (assq 'multiple args))
-		    (checked (assq 'checked args)))
-	       (if maxlength (setq maxlength (string-to-int maxlength)))
-	       (if (and name (string-match "[\r\n]" name))
-		   (setq name (mapconcat (function
-					  (lambda (x)
-					    (if (memq x '(?\r ?\n))
-						""
-					      (char-to-string x))))
-					 name "")))
-	       (setq options
-		     (mapcar
-		      (function
-		       (lambda (n)
-			 (setq tmp (w3-normalize-spaces
-				    (apply 'concat (nth 2 n)))
-			       tmp (cons tmp
-					 (or
-					  (cdr-safe (assq 'value (nth 1 n)))
-					  tmp)))
-			 (if (assq 'selected (nth 1 n))
-			     (setq value (car tmp)))
-			 tmp))
-		      (nth 2 node)))
+		    (value nil)
+		    (name (plist-get plist 'name))
+		    (options (mapcar
+			      (function
+			       (lambda (n)
+				 (setq tmp (w3-normalize-spaces
+					    (apply 'concat (nth 2 n)))
+				       tmp (cons tmp
+						 (or
+						  (cdr-safe
+						   (assq 'value (nth 1 n)))
+						  tmp)))
+				 (if (assq 'selected (nth 1 n))
+				     (setq value (car tmp)))
+				 tmp))
+			      (nth 2 node))))
 	       (if (not value)
 		   (setq value (caar options)))
+	       (setq plist (plist-put plist 'value value))
 	       (if multiple
 		   (progn
 		     (setq options
@@ -1849,43 +1838,21 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 			    options))
 		     (setq node (list 'p nil options))
 		     (w3-handle-content node))
-		 (w3-form-add-element 'option
-				      name value size maxlength value
-				      action options
-				      w3-current-form-number id nil
-				      (car w3-active-faces))
+		 (setq plist (plist-put plist 'type 'option)
+		       plist (plist-put plist 'options options))
+		 (w3-form-add-element plist (car w3-active-faces))
 		 ;; This should really not be necessary, but some versions
 		 ;; of the widget library leave point _BEFORE_ the menu
 		 ;; widget instead of after.
 		 (goto-char (point-max))
 		 (w3-handle-empty-tag))))
 	    (textarea
-	     (let* (
-		    (name (w3-get-attribute 'name))
-		    (size (string-to-int (or (w3-get-attribute 'size)
-					     "22")))
-		    (maxlength (cdr (assq 'maxlength args)))
+	     (let* ((plist (w3-display-normalize-form-info args))
 		    (value (w3-normalize-spaces
-			    (apply 'concat (nth 2 node))))
-		    (default value)
-		    (tmp nil)
-		    (action w3-display-form-id)
-		    (options)
-		    (id (w3-get-attribute 'id))
-		    (checked (assq 'checked args)))
-	       (if maxlength (setq maxlength (string-to-int maxlength)))
-	       (if (and name (string-match "[\r\n]" name))
-		   (setq name (mapconcat (function
-					  (lambda (x)
-					    (if (memq x '(?\r ?\n))
-						""
-					      (char-to-string x))))
-					 name "")))
-	       (w3-form-add-element 'multiline name
-				    value size maxlength value action
-				    options w3-current-form-number id nil
-				    (car w3-active-faces))
-	       )
+			    (apply 'concat (nth 2 node)))))
+	       (setq plist (plist-put plist 'type 'multiline)
+		     plist (plist-put plist 'value value))
+	       (w3-form-add-element plist (car w3-active-faces)))
 	     (w3-handle-empty-tag)
 	     )
 	    (style

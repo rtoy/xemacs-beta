@@ -575,7 +575,7 @@ if this function doesn't work on your system."
 	(error (buffer-substring (point) (progn (end-of-line) (point))))))
   nil)
 
-(defvar Manual-entry-switches '("-s")
+(defvar Manual-entry-switches nil
   "Switches for `manual-entry' including switch for section (at the end).")
 (defvar Manual-apropos-switches nil
   "Additional switches for `Manpage-apropos' excluding switch `-k'.")

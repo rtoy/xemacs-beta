@@ -189,17 +189,53 @@
 	:style toggle :selected ps-print-color-p]
        ("Pretty-Print Paper Size"
 	["Letter"
-	 (setq ps-paper-type 'ps-letter)
+	 (setq ps-paper-type 'letter)
 	 :style radio
-	 :selected (eq ps-paper-type 'ps-letter)]
+	 :selected (eq ps-paper-type 'letter)]
+	["Letter-small"
+	 (setq ps-paper-type 'letter-small)
+	 :style radio
+	 :selected (eq ps-paper-type 'letter-small)]
 	["Legal"
-	 (setq ps-paper-type 'ps-legal)
+	 (setq ps-paper-type 'legal)
 	 :style radio
-	 :selected (eq ps-paper-type 'ps-legal)]
+	 :selected (eq ps-paper-type 'legal)]
+	["Statement"
+	 (setq ps-paper-type 'statement)
+	 :style radio
+	 :selected (eq ps-paper-type 'statement)]
+	["Executive"
+	 (setq ps-paper-type 'executive)
+	 :style radio
+	 :selected (eq ps-paper-type 'executive)]
+	["Tabloid"
+	 (setq ps-paper-type 'tabloid)
+	 :style radio
+	 :selected (eq ps-paper-type 'tabloid)]
+	["Ledger"
+	 (setq ps-paper-type 'ledger)
+	 :style radio
+	 :selected (eq ps-paper-type 'ledger)]
+	["A3"
+	 (setq ps-paper-type 'a3)
+	 :style radio
+	 :selected (eq ps-paper-type 'a3)]
 	["A4"
-	 (setq ps-paper-type 'ps-a4)
+	 (setq ps-paper-type 'a4)
 	 :style radio
-	 :selected (eq ps-paper-type 'ps-a4)]
+	 :selected (eq ps-paper-type 'a4)]
+	["A4small"
+	 (setq ps-paper-type 'a4small)
+	 :style radio
+	 :selected (eq ps-paper-type 'a4small)]
+	["B4"
+	 (setq ps-paper-type 'b4)
+	 :style radio
+	 :selected (eq ps-paper-type 'b4)]
+	["B5"
+	 (setq ps-paper-type 'b5)
+	 :style radio
+	 :selected (eq ps-paper-type 'b5)]
 	)
        )
       ("\"Other Window\" Location"

@@ -3659,7 +3659,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.5 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.6 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4956,7 +4956,7 @@ gets scrolled to the same line." t nil)
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.5 $
+vhdl-mode $Revision: 1.6 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -8375,12 +8375,15 @@ TABs at the beginning of the line are not a part of the message:
 	--[[text/plain]]
 	This is also a plain text.  But, it is explicitly specified as
 	is.
-	--[[text/plain; charset=ISO-2022-JP]]
-        ... Japanese text here ...
-	--[[text/richtext]]
-	<center>This is a richtext.</center>
-	--[[image/gif][base64]]^M...image encoded in base64 here...
-	--[[audio/basic][base64]]^M...audio encoded in base64 here...
+	--[[text/plain; charset=ISO-8859-1]]
+	This is also a plain text.  But charset is specified as
+	iso-8859-1.
+
+	¡Hola!  Buenos días.  ¿Cómo está usted?
+	--[[text/enriched]]
+	This is a <bold>enriched text</bold>.
+	--[[image/gif][base64]]...image encoded in base64 here...
+	--[[audio/basic][base64]]...audio encoded in base64 here...
 
 User customizable variables (not documented all of them):
  mime-prefix
@@ -9247,6 +9250,12 @@ word, and if `skeleton-pair-filter' returns nil, pairing is performed.
 If a match is found in `skeleton-pair-alist', that is inserted, else
 the defaults are used.  These are (), [], {}, <> and `' for the
 symmetrical ones, and the same character twice for the others." t nil)
+
+;;;***
+
+;;;### (autoloads nil "timezone" "utils/timezone.el")
+
+(define-error 'invalid-date "Invalid date string")
 
 ;;;***
 
