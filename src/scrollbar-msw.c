@@ -27,11 +27,11 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "console-msw.h"
+#include "scrollbar-msw.h"
+
 #include "frame.h"
 #include "window.h"
-#include "scrollbar-msw.h"
 #include "events.h"
-#include "event-msw.h"
 
 /* This has really different semantics in Windows than in Motif.
    There's no corresponding method; we just do not change slider

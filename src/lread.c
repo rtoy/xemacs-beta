@@ -566,10 +566,10 @@ encoding detection or end-of-line detection.
   struct gcpro gcpro1, gcpro2, gcpro3;
   int reading_elc = 0;
   int message_p = NILP (nomessage);
-#ifdef DEBUG_XEMACS
+/*#ifdef DEBUG_XEMACS*/
   static Lisp_Object last_file_loaded;
   int pure_usage = 0;
-#endif
+/*#endif*/
 #ifdef DOS_NT
   int dosmode = O_TEXT;
 #endif /* DOS_NT */
@@ -578,14 +578,14 @@ encoding detection or end-of-line detection.
 
   CHECK_STRING (file);
 
-#ifdef DEBUG_XEMACS
+/*#ifdef DEBUG_XEMACS*/
   if (purify_flag && noninteractive)
     {
       message_p = 1;
       last_file_loaded = file;
       pure_usage = purespace_usage ();
     }
-#endif /* DEBUG_XEMACS */
+/*#endif /* DEBUG_XEMACS */
 
   /* If file name is magic, call the handler.  */
   handler = Ffind_file_name_handler (file, Qload);
@@ -799,7 +799,7 @@ encoding detection or end-of-line detection.
     /* #### Disgusting kludge */
     /* Run any load-hooks for this file.  */
     /* #### An even more disgusting kludge.  There is horrible code */
-    /* this is relying on the fact that dumped lisp files are found */
+    /* that is relying on the fact that dumped lisp files are found */
     /* via `load-path' search. */
     Lisp_Object name = file;
 
@@ -808,7 +808,13 @@ encoding detection or end-of-line detection.
 	name = Ffile_name_nondirectory(file);
       }
 
-    tem = Fassoc (name, Vafter_load_alist);
+    {
+      struct gcpro ngcpro1;
+
+      NGCPRO1 (name);
+      tem = Fassoc (name, Vafter_load_alist);
+      NUNGCPRO;
+    }
     if (!NILP (tem))
       {
 	struct gcpro ngcpro1;
@@ -821,7 +827,7 @@ encoding detection or end-of-line detection.
       }
   }
 
-#ifdef DEBUG_XEMACS
+/*#ifdef DEBUG_XEMACS*/
   if (purify_flag && noninteractive)
     {
       if (EQ (last_file_loaded, file))
@@ -830,7 +836,7 @@ encoding detection or end-of-line detection.
 	message ("Loading %s ...done (%d)", XSTRING_DATA (file),
 		 purespace_usage() - pure_usage);
     }
-#endif /* DEBUG_XEMACS */
+/*#endif /* DEBUG_XEMACS */
 
   if (!noninteractive)
     PRINT_LOADING_MESSAGE ("done");

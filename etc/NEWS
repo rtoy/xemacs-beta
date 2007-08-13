@@ -86,6 +86,12 @@ For example,
 This information is used to control the customize-changed-options
 command.
 
+** The new command `add-log-convert' can be used to convert the
+old-style (pre-20.3) ChangeLog buffers to new style, for
+consistency.  A reminder: if you wish to revert to old-style
+ChangeLogs instead, customize the value of `add-log-time-format'
+variable.
+
 ** XEmacs/Mule (internationalization) changes.
 
 *** Egg/SJ3 input method is now officially supported.  Quail and

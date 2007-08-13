@@ -70,8 +70,7 @@ With a prefix argument, choose the language."
 	    ;; independently, so we must guess the coding according to
 	    ;; the language.
 	    (let ((coding-system-for-read (nth 2 language)))
-	      (insert-file-contents (expand-file-name tutorial
-						      data-directory)))
+	      (insert-file-contents (locate-data-file tutorial)))
 	    (goto-char (point-min))
 	    ;; The 'didactic' blank lines: possibly insert blank lines
 	    ;; around <<nya nya nya>> and replace << >> with [ ].

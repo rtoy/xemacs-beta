@@ -239,7 +239,7 @@ Lisp_Object Qbutton0, Qbutton1, Qbutton2, Qbutton3, Qbutton4, Qbutton5,
   Qbutton6, Qbutton7;
 Lisp_Object Qbutton0up, Qbutton1up, Qbutton2up, Qbutton3up, Qbutton4up,
   Qbutton5up, Qbutton6up, Qbutton7up;
-#ifdef HAVE_OFFIX_DND
+#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
 Lisp_Object Qdrop0, Qdrop1, Qdrop2, Qdrop3, Qdrop4, Qdrop5, Qdrop6, Qdrop7;
 #endif
 Lisp_Object Qmenu_selection;
@@ -1432,7 +1432,7 @@ define_key_parser (Lisp_Object spec, struct key_data *returned_value)
 	    returned_value->modifiers = XEVENT (spec)->event.button.modifiers;
 	    break;
 	  }
-#ifdef HAVE_OFFIX_DND
+#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
 	case dnd_drop_event:
 	  {
 	    switch (XEVENT (spec)->event.dnd_drop.button)
@@ -1553,7 +1553,7 @@ key_desc_list_to_event (Lisp_Object list, Lisp_Object event,
       EQ (raw_key.keysym, Qbutton5) || EQ (raw_key.keysym, Qbutton5up) ||
       EQ (raw_key.keysym, Qbutton6) || EQ (raw_key.keysym, Qbutton6up) ||
       EQ (raw_key.keysym, Qbutton7) || EQ (raw_key.keysym, Qbutton7up)
-#ifdef HAVE_OFFIX_DND
+#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
       || EQ (raw_key.keysym, Qdrop0)   || EQ (raw_key.keysym, Qdrop1)     ||
       EQ (raw_key.keysym, Qdrop2)   || EQ (raw_key.keysym, Qdrop3)     ||
       EQ (raw_key.keysym, Qdrop4)   || EQ (raw_key.keysym, Qdrop5)     ||
@@ -4290,7 +4290,7 @@ syms_of_keymap (void)
   defsymbol (&Qbutton5up, "button5up");
   defsymbol (&Qbutton6up, "button6up");
   defsymbol (&Qbutton7up, "button7up");
-#ifdef HAVE_OFFIX_DND
+#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
   defsymbol (&Qdrop0, "drop0");
   defsymbol (&Qdrop1, "drop1");
   defsymbol (&Qdrop2, "drop2");

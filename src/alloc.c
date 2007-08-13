@@ -2794,13 +2794,13 @@ Does not copy symbols.
 	     * But purified aggregate objects like lists and vectors
 	     * can contain uninterned symbols.  If there are no
 	     * other non-pure references to the symbol, then the
-	     * symbol is not proteted from garabge colelction
+	     * symbol is not protected from garbage collection
 	     * because the collector does not mark the contents of
 	     * purified objects.  So to protect the symbols, an impure
 	     * reference has to be kept for each uninterned symbol
 	     * that is referenced by a pure object.  All such
 	     * symbols are stored in the hashtable pointed to by
-	     * Vpure_uninterened_symbol_table, which is itself
+	     * Vpure_uninterned_symbol_table, which is itself
 	     * staticpro'd.
 	     */
 	    if (EQ (XSYMBOL (obj)->obarray, Vobarray))
@@ -2858,14 +2858,14 @@ report_pure_usage (int report_impurities,
       extern Lisp_Object Vemacs_beta_version;
       /* This used to be NILP(Vemacs_beta_version) ? 512 : 4; */
 #ifndef PURESIZE_SLOP
-#define PURESIZE_SLOP 4
+#define PURESIZE_SLOP 0
 #endif
       int slop = PURESIZE_SLOP;
 
       sprintf (buf, "Purespace usage: %ld of %ld (%d%%",
                pureptr, (long) get_PURESIZE(),
                (int) (pureptr / (get_PURESIZE() / 100.0) + 0.5));
-      if (lost > 2) {
+      if (lost > ((slop ? slop : 1) / 1024)) {
         sprintf (buf + strlen (buf), " -- %dk wasted", lost);
 	if (die_if_pure_storage_exceeded) {
 	  puresize_adjust_h (pureptr + slop);
@@ -4222,20 +4222,28 @@ disksave_object_finalization (void)
   /* Run the disksave finalization methods of all live objects. */
   disksave_object_finalization_1 ();
 
+#if 0 /* I don't see any point in this.  The purespace starts out all 0's */
   /* Zero out the unused portion of purespace */
   if (!pure_lossage)
     memset (  (char *) (PUREBEG + pureptr), 0,
 	    (((char *) (PUREBEG + get_PURESIZE())) -
 	     ((char *) (PUREBEG + pureptr))));
+#endif
 
   /* Zero out the uninitialized (really, unused) part of the containers
      for the live strings. */
   {
     struct string_chars_block *scb;
     for (scb = first_string_chars_block; scb; scb = scb->next)
-      /* from the block's fill ptr to the end */
-      memset ((scb->string_chars + scb->pos), 0,
-              sizeof (scb->string_chars) - scb->pos);
+      {
+	int count = sizeof (scb->string_chars) - scb->pos;
+
+	assert (count >= 0 && count < STRING_CHARS_BLOCK_SIZE);
+	if (count != 0) {
+	  /* from the block's fill ptr to the end */
+	  memset ((scb->string_chars + scb->pos), 0, count);
+	}
+      }
   }
 
   /* There, that ought to be enough... */

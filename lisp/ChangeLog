@@ -1,3 +1,21 @@
+1997-12-30  Colin Rafferty  <colin@xemacs.org>
+
+	* help.el (describe-beta): Made it use `locate-data-file'.
+	(describe-distribution): Ditto.
+	(describe-copying): Ditto.
+	(describe-project): Ditto.
+	(view-emacs-news): Ditto.
+
+	* help-nomule.el (help-with-tutorial): Made it use
+ 	`locate-data-file' to find tutorial.
+
+1998-01-28  Jonathon Harris  <jhar@tardis.ed.ac.uk>
+
+	* about.el: Corrected my email address.
+
+	* mouse.el: Added 'mouse-mswindows-drop' similar to
+	'mouse-offix-drop'.
+
 1998-01-27  SL Baur  <steve@altair.xemacs.org>
 
 	* loadup.el (running-xemacs): Spelling fix.

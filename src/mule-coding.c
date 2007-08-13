@@ -1452,7 +1452,7 @@ coding_system_from_mask (int mask)
    This function does not automatically fetch subsidiary coding systems;
    that should be unnecessary with the explicit eol-type argument. */
 
-static void
+void
 determine_real_coding_system (Lstream *stream, Lisp_Object *codesys_in_out,
 			      enum eol_type *eol_type_in_out)
 {

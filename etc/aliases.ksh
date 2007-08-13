@@ -24,6 +24,8 @@
 
 # Shortcuts for sh-derived Unix shells (ksh, zsh, bash)
 
+# From Steve Baur <steve@altair.xemacs.org>
+# Run temacs as XEmacs
 function runtemacs
 {
 	if [ ! -x temacs ]; then
@@ -32,4 +34,27 @@ function runtemacs
 	fi
 
 	./temacs -batch -l loadup.el run-temacs "$@"
+}
+
+# From Adrian Aichner <aichner@ecf.teradyne.com>
+# Convenience function for running build-report
+function mak
+{
+	make "$@" 2>&1 | tee beta.err
+}
+# export -f mak
+
+# From Karl Hegbloom <karlheg@bittersweet.inetarena.com>
+# igrep from the shell command line
+function listargs
+{
+	for arg in "$@"; do
+		echo " \"$arg\""
+	done
+}
+
+function igrep
+{
+	exp="$1"; shift
+	gnudoit -q "(igrep nil \"$exp\" '($(listargs "$@")))"
 }

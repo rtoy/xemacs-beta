@@ -595,6 +595,8 @@ and 'syntax.  See `valid-char-table-type-p'.
   if (ty == CHAR_TABLE_TYPE_SYNTAX)
     {
       ct->mirror_table = Fmake_char_table (Qgeneric);
+      fill_char_table (XCHAR_TABLE (ct->mirror_table), 
+                       make_int (Spunct)); 
     }
   else
     ct->mirror_table = Qnil;
@@ -645,7 +647,7 @@ copy_char_table_entry (Lisp_Object entry)
 	ctenew->level2[i] = new;
     }
 
-  XSETCHAR_TABLE_ENTRY (obj, cte);
+  XSETCHAR_TABLE_ENTRY (obj, ctenew);
   return obj;
 }
 

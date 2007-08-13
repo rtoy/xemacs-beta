@@ -35,16 +35,22 @@ Boston, MA 02111-1307, USA.  */
 #include "console-msw.h"
 #include "console-stream.h"
 #include "events.h"
-#include "event-msw.h"
 #include "faces.h"
 #include "frame.h"
+#include "sysdep.h"
+
+/* win32 DDE management library globals */
+DWORD mswindows_dde_mlid;
+HSZ mswindows_dde_service;
+HSZ mswindows_dde_topic_system;
+HSZ mswindows_dde_item_open;
 
 Lisp_Object Qinit_pre_mswindows_win, Qinit_post_mswindows_win;
 
 static void
 mswindows_init_device (struct device *d, Lisp_Object props)
 {
-  WNDCLASS wc;
+  WNDCLASSEX wc;
   HWND desktop;
   HDC hdc;
 
@@ -71,6 +77,7 @@ mswindows_init_device (struct device *d, Lisp_Object props)
   DEVICE_CLASS(d) = Qcolor;
 
   /* Register the main window class */
+  wc.cbSize = sizeof (WNDCLASSEX);
   wc.style = CS_OWNDC;	/* One DC per window */
   wc.lpfnWndProc = (WNDPROC) mswindows_wnd_proc;
   wc.cbClsExtra = 0;
@@ -83,7 +90,32 @@ mswindows_init_device (struct device *d, Lisp_Object props)
   wc.hbrBackground = (HBRUSH)(COLOR_APPWORKSPACE + 1);
   wc.lpszMenuName = NULL;
   wc.lpszClassName = XEMACS_CLASS;
-  RegisterClass(&wc);		/* XXX FIXME: Should use RegisterClassEx */
+  wc.hIconSm = LoadImage (GetModuleHandle (NULL), XEMACS_CLASS,
+			  IMAGE_ICON, 16, 16, 0);
+  RegisterClassEx (&wc);
+}
+
+static void
+mswindows_finish_init_device (struct device *d, Lisp_Object props)
+{
+  /* Initialise DDE management library and our related globals */
+  mswindows_dde_mlid = 0;
+  DdeInitialize (&mswindows_dde_mlid, mswindows_dde_callback,
+		 APPCMD_FILTERINITS|CBF_FAIL_SELFCONNECTIONS|CBF_FAIL_ADVISES|
+		 CBF_FAIL_POKES|CBF_FAIL_REQUESTS|CBF_SKIP_ALLNOTIFICATIONS, 0);
+  
+  mswindows_dde_service = DdeCreateStringHandle (mswindows_dde_mlid, XEMACS_CLASS, 0);
+  mswindows_dde_topic_system = DdeCreateStringHandle (mswindows_dde_mlid, SZDDESYS_TOPIC, 0);
+  mswindows_dde_item_open = DdeCreateStringHandle (mswindows_dde_mlid,
+						   TEXT(MSWINDOWS_DDE_ITEM_OPEN), 0);
+  DdeNameService (mswindows_dde_mlid, mswindows_dde_service, 0L, DNS_REGISTER);
+}
+
+static void
+mswindows_delete_device (struct device *d)
+{
+  DdeNameService (mswindows_dde_mlid, 0L, 0L, DNS_REGISTER);
+  DdeUninitialize (mswindows_dde_mlid);
 }
 
 static int
@@ -138,9 +170,9 @@ void
 console_type_create_device_mswindows (void)
 {
   CONSOLE_HAS_METHOD (mswindows, init_device);
-/*  CONSOLE_HAS_METHOD (mswindows, finish_init_device); */
+  CONSOLE_HAS_METHOD (mswindows, finish_init_device);
 /*  CONSOLE_HAS_METHOD (mswindows, mark_device); */
-/*  CONSOLE_HAS_METHOD (mswindows, delete_device); */
+  CONSOLE_HAS_METHOD (mswindows, delete_device);
   CONSOLE_HAS_METHOD (mswindows, device_pixel_width);
   CONSOLE_HAS_METHOD (mswindows, device_pixel_height);
   CONSOLE_HAS_METHOD (mswindows, device_mm_width);

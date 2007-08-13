@@ -1202,7 +1202,7 @@ extern Lisp_Object Qdefault;
 extern Lisp_Object Qdevice;
 extern Lisp_Object Qdimension;
 extern Lisp_Object Qdisplay;
-#ifdef HAVE_OFFIX_DND
+#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
 extern Lisp_Object Qdnd_data;
 #endif
 extern Lisp_Object Qdoc_string;

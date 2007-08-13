@@ -1,3 +1,19 @@
+1998-02-03  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.5-beta23 is released.
+
+1998-02-01  SL Baur  <steve@altair.xemacs.org>
+
+	* etc/aliases.ksh: igrep from the shell command line.
+	From Karl M. Hegbloom <karlheg@bittersweet.inetarena.com>
+
+1998-01-31  SL Baur  <steve@altair.xemacs.org>
+
+	* etc/aliases.ksh: Add `mak' function to create beta.err for
+	build-report.
+	From Adrian Aichner <aichner@ecf.teradyne.com>
+	Suggested by Karl M. Hegbloom <karlheg@bittersweet.inetarena.com>
+
 1998-01-27  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.5-beta22 is released.

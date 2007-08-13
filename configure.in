@@ -2125,7 +2125,7 @@ if test "$window_system" = "none"; then
     with_dialogs=msw
     with_toolbars=no
     with_tty=no
-    XE_ADD_OBJS(console-msw.o device-msw.o event-msw.o frame-msw.o objects-msw.o select-msw.o redisplay-msw.o msw-proc.o)
+    XE_ADD_OBJS(console-msw.o device-msw.o event-msw.o frame-msw.o objects-msw.o select-msw.o redisplay-msw.o)
   fi
 fi
 

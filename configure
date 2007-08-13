@@ -4888,8 +4888,8 @@ EOF
     with_dialogs=msw
     with_toolbars=no
     with_tty=no
-    extra_objs="$extra_objs console-msw.o device-msw.o event-msw.o frame-msw.o objects-msw.o select-msw.o redisplay-msw.o msw-proc.o" &&  if test "$extra_verbose" = "yes"; then
-   echo "    xemacs will be linked with \"console-msw.o device-msw.o event-msw.o frame-msw.o objects-msw.o select-msw.o redisplay-msw.o msw-proc.o\""
+    extra_objs="$extra_objs console-msw.o device-msw.o event-msw.o frame-msw.o objects-msw.o select-msw.o redisplay-msw.o" &&  if test "$extra_verbose" = "yes"; then
+   echo "    xemacs will be linked with \"console-msw.o device-msw.o event-msw.o frame-msw.o objects-msw.o select-msw.o redisplay-msw.o\""
  fi
   fi
 fi

@@ -1,3 +1,8 @@
+1998-01-28  Jonathon Harris  <jhar@tardis.ed.ac.uk>
+
+	* xemacs.mak: Updated accordingly.
+	Creates the MSVC browse info immediately after the link.
+
 1997-12-29  Kirill M. Katsnelson  <kkm@kis.ru>
 
 	* config.h: Suppressed MSVC warning 'relational' : signed/unsigned

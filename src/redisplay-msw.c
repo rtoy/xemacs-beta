@@ -538,7 +538,7 @@ mswindows_redisplay_deadbox_maybe (struct window *w,
       
   if (IntersectRect (&rect_paint, &rect_dead, prc))
     FillRect (FRAME_MSWINDOWS_DC (f), &rect_paint,
-	      (HBRUSH)GetClassLong (FRAME_MSWINDOWS_HANDLE(f), GCL_HBRBACKGROUND));
+	      (HBRUSH) (COLOR_BTNFACE+1));
 }
 
 #endif /* HAVE_SCROLLBARS */

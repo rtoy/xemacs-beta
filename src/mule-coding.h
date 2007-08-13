@@ -451,4 +451,6 @@ extern void set_decoding_stream_coding_system (Lstream *stream,
 					       Lisp_Object codesys);
 extern void set_encoding_stream_coding_system (Lstream *stream,
 					       Lisp_Object codesys);
+extern void determine_real_coding_system (Lstream *stream, Lisp_Object *codesys_in_out,
+					  enum eol_type *eol_type_in_out);
 #endif /* _XEMACS_MULE_CODING_H_ */

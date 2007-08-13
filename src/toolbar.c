@@ -269,6 +269,7 @@ See `default-toolbar-position'.
       /* The following calls will automatically cause the dirty
 	 flags to be set; we delay frame size changes to avoid
 	 lots of frame flickering. */
+      /* #### I think this should be GC protected. -sb */
       hold_frame_size_changes ();
       set_specifier_fallback (Vtoolbar[cur], list1 (Fcons (Qnil, Qnil)));
       set_specifier_fallback (Vtoolbar[new], Vdefault_toolbar);

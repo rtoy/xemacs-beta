@@ -1,4 +1,101 @@
+1998-02-01  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* redisplay.c (redisplay_window): After outputting
+	  the window, invalidate its the line start cache if the
+	  we're displaying the minibuffer window and the echo
+	  area is active.  The cache is only valid for the echo
+	  area buffer, and that buffer isn't associated with the
+	  minibuffer window anymore.
+
+1998-01-31  SL Baur  <steve@altair.xemacs.org>
+
+	* alloc.c (disksave_object_finalization): Additional checking for
+	sanity when zeroing out unused portions of string_chars_block's.
+	(Fpurecopy): Spelling fixes in comment.
+	(PURESIZE_SLOP): Set default slop to 0.
+
+1998-01-31  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* chartab.c (make_char_table): Initialize mirror
+	  tables with Spunct in all the slots.  Syntax table
+	  initialization doesn't touch slots for nonexistent
+	  characters sets.  If character sets corresponding to
+	  those slots are created later Qnil values in the slots
+	  will cause crashes.
+	(copy_char_table_entry): Return copy not original.
+
+1998-01-28  Jonathon Harris  <jhar@tardis.ed.ac.uk>
+
+	* msw-proc.c:
+	* event-msw.h:
+	* event-msw.c:
+	* console-msw.h:
+	Deleted the first two and merged them into the last two files.
+
+	* device-msw.c:
+	* event-msw.c:
+ 	* frame-msw.c:
+	Added file-based drag and drop support. The "System/Open" DDE command
+	is also implemented as if it were a drag and drop operation.
+	
+	* emacsfns.h:
+	* event-stream.c:
+	* events.c:
+	* events.h:
+	* frame.c:
+	* keymap.c:
+	Replaced all "#ifdef HAVE_OFFIX_DND" with
+	"#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)"
+
+	* device.h: Added DEVICE_MSWINDOWS_P and related macros.
+
+	* objects-msw.c:
+	* select-msw.c:
+	Eliminated warnings.
+
+	* redisplay-msw.c: Changed color of "dead" box between scrollbars
+	to windows' "button" color for compatibility with other windows apps.
+
+1998-01-20  Stephen Turnbull  <turnbull@sk.tsukuba.ac.jp>
+
+	* Makefile.in.in: move `rm puresize-adjust.h' from distclean
+	  to mostlyclean
+
+1998-01-29  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in (dlopen.o): Add dependencies.
+
+	* s/sunos4-0.h: Conditionalize use of broken-sun.h for old Gccs.
+	Suggested by Amir J Katz <amir@ndsoft.com>
+
+1998-01-28  SL Baur  <steve@altair.xemacs.org>
+
+	* faces.c (init_device_faces): This function can call lisp.
+
+1998-01-28  P. E. Jareth Hein  <jareth@camelot-soft.com>
+
+	* mule-coding.h:
+	* mule-coding.c: (determine_real_coding_system): removed the
+	static declaration to allow reuse.
+
+	* md5.c (Fmd5): Rewrote to fully support MULE, as well as streamline
+	the code.
+
+	* mule-ccl.c (ccl_driver): Set initial values of variables to shut up
+ 	the compiler and to give better error message if a quit happens before
+	any ccl_code is generated.
+
+1998-01-28  SL Baur  <steve@altair.xemacs.org>
+
+	* glyphs.c (allocate_glyph): This function can GC.
+	Wrap GCPRO around unprotected function calls.
+	(specifier_vars_of_glyphs): Comment change -- Can we GC here?
+
 1998-01-27  SL Baur  <steve@altair.xemacs.org>
+
+	* lread.c (Fload_internal): Add extra GCPRO around call to
+	Fassoc.
+	Enable purespace usage counts always.
 
 	* m/powerpc.h: Isolate changes for mklinux from AIX.
 

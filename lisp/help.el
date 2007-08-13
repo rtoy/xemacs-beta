@@ -552,20 +552,20 @@ describes the minor mode."
   "Display info on how to obtain the latest version of XEmacs."
   (interactive)
   (find-file-read-only
-   (expand-file-name "DISTRIB" data-directory)))
+   (locate-data-file "DISTRIB")))
 
 (defun describe-beta ()
   "Display info on how to deal with Beta versions of XEmacs."
   (interactive)
   (find-file-read-only
-   (expand-file-name "BETA" data-directory))
+   (locate-data-file "BETA"))
   (goto-char (point-min)))
 
 (defun describe-copying ()
   "Display info on how you may redistribute copies of XEmacs."
   (interactive)
   (find-file-read-only
-   (expand-file-name "COPYING" data-directory))
+   (locate-data-file "COPYING"))
   (goto-char (point-min)))
 
 (defun describe-pointer ()
@@ -577,7 +577,7 @@ describes the minor mode."
   "Display info on the GNU project."
   (interactive)
   (find-file-read-only
-   (expand-file-name "GNU" data-directory))
+   (locate-data-file "GNU"))
   (goto-char (point-min)))
 
 (defun describe-no-warranty ()
@@ -660,7 +660,7 @@ of the key sequence that ran this command."
 (defun view-emacs-news ()
   "Display info on recent changes to XEmacs."
   (interactive)
-  (find-file (expand-file-name "NEWS" data-directory)))
+  (find-file (locate-data-file "NEWS")))
 
 (defun xemacs-www-page ()
   "Go to the XEmacs World Wide Web page."

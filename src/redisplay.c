@@ -5250,6 +5250,13 @@ regeneration_done:
 
       update_line_start_cache (w, start, end, pointm, 1);
       redisplay_output_window (w);
+      /*
+       * If we just displayed the echo area, the line start cache is
+       * no longer valid, because the minibuffer window is assocaited
+       * with the window now.
+       */
+      if (echo_active)
+	w->line_cache_last_updated = make_int (-1);
     }
 
   /* #### This should be dependent on face changes and will need to be

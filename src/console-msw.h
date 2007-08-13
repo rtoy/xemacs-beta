@@ -1,4 +1,4 @@
-/* Define mswindowsindows-specific console, device, and frame object for XEmacs.
+/* Define mswindows-specific console, device, and frame object for XEmacs.
    Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
 
@@ -35,6 +35,32 @@ Boston, MA 02111-1307, USA.  */
 #include "console.h"
 
 #include "windows.h"
+#include "ddeml.h"	/* DDE management library */
+#include "shellapi.h"	/* FileManager/Explorer drag and drop */
+
+/*
+ * XXX FIXME: The following X modifier defs in events-mod.h clash with win32
+ * hotkey defs in winuser.h. For the moment lose the win32 versions.
+ * Maybe we should rename all of MOD_* to something that doesn't clash.
+ */
+#ifdef MOD_CONTROL
+#  undef MOD_CONTROL
+#endif  
+#ifdef MOD_ALT
+#  undef MOD_ALT
+#endif  
+#ifdef MOD_SHIFT
+#  undef MOD_SHIFT
+#endif  
+
+
+/* The name of the main window class */
+#define XEMACS_CLASS "XEmacs"
+
+
+/*
+ * Console
+ */
 
 DECLARE_CONSOLE_TYPE (mswindows);
 
@@ -43,6 +69,10 @@ struct mswindows_console
   int infd, outfd;
 };
 
+
+/*
+ * Device
+ */
 
 struct mswindows_device
 {
@@ -62,6 +92,10 @@ struct mswindows_device
 #define DEVICE_MSWINDOWS_HORZSIZE(d) 	(DEVICE_MSWINDOWS_DATA (d)->horzsize)
 #define DEVICE_MSWINDOWS_VERTSIZE(d) 	(DEVICE_MSWINDOWS_DATA (d)->vertsize)
 
+
+/*
+ * Frame
+ */
 
 struct mswindows_frame
 {
@@ -99,10 +133,48 @@ struct mswindows_frame
 #define FRAME_MSWINDOWS_MENU_HASHTABLE(f) (FRAME_MSWINDOWS_DATA (f)->menu_hashtable)
 #define FRAME_MSWINDOWS_MENU_CHECKSUM(f)  (FRAME_MSWINDOWS_DATA (f)->menu_checksum)
 
+/* win32 window LONG indices */
+#define XWL_FRAMEOBJ	0
+#define XWL_COUNT	1	/* Number of LONGs that we use */
+#define MSWINDOWS_WINDOW_EXTRA_BYTES	(XWL_COUNT*4)
+
+
 /*
- * Redisplay functions
+ * Events
  */
+
+/* win32 messages / magic event types */
+#define EVENT_MSWINDOWS_MAGIC_TYPE(e)	\
+	((e)->event.magic.underlying_mswindows_event)
+#define XM_BUMPQUEUE	(WM_USER + 101)
+#define XM_MAPFRAME	(WM_USER + 102)
+#define XM_UNMAPFRAME	(WM_USER + 103)
+
+
+/*
+ * Random globals
+ */
+
+/* win32 "Windows" procedure */
+LRESULT WINAPI mswindows_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam,
+				   LPARAM lParam);
+
 void mswindows_redraw_exposed_area (struct frame *f, int x, int y, 
-			      int width, int height);
+				    int width, int height);
+
+/* win32 DDE management library */
+#define MSWINDOWS_DDE_ITEM_OPEN "Open"
+extern DWORD mswindows_dde_mlid;
+extern HSZ mswindows_dde_service;
+extern HSZ mswindows_dde_topic_system;
+extern HSZ mswindows_dde_item_open;
+HDDEDATA CALLBACK mswindows_dde_callback (UINT uType, UINT uFmt, HCONV hconv,
+					  HSZ hszTopic, HSZ hszItem, HDDEDATA hdata,
+					  DWORD dwData1, DWORD dwData2);
+
+void mswindows_enqueue_dispatch_event (Lisp_Object event);
+void mswindows_enqueue_magic_event (HWND hwnd, UINT message);
+Lisp_Object mswindows_cancel_dispatch_event (struct Lisp_Event* event);
+Lisp_Object mswindows_pump_outstanding_events (void);
 
 #endif /* _XEMACS_CONSOLE_MSW_H_ */

@@ -1050,10 +1050,10 @@ mswindows_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object na
     GetTextMetrics(hdc, &metrics);
     SelectObject(hdc, holdfont);
     ReleaseDC(hwnd, hdc);
-    f->width = metrics.tmAveCharWidth;
-    f->height = metrics.tmHeight;
-    f->ascent = metrics.tmAscent;
-    f->descent = metrics.tmDescent;
+    f->width = (unsigned short) metrics.tmAveCharWidth;
+    f->height = (unsigned short) metrics.tmHeight;
+    f->ascent = (unsigned short) metrics.tmAscent;
+    f->descent = (unsigned short) metrics.tmDescent;
     f->proportional_p = (metrics.tmPitchAndFamily & TMPF_FIXED_PITCH);
   }
 

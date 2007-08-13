@@ -184,10 +184,13 @@
     (message "Dumping under the name xemacs")
     ;; This is handled earlier in the build process.
     ;; (condition-case () (delete-file "xemacs") (file-error nil))
-  (when (fboundp 'really-free)
-    (really-free))
-  (dump-emacs "xemacs" "temacs")
-  (kill-emacs))
+    (test-atoms)
+    (when (fboundp 'really-free)
+      (really-free))
+    (test-atoms)
+    (dump-emacs "xemacs" "temacs")
+    (test-atoms)
+    (kill-emacs))
 
 (when (member "run-temacs" command-line-args)
   (message "\nBootstrapping from temacs...")

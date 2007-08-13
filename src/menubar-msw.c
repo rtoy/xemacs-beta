@@ -83,7 +83,6 @@ Boston, MA 02111-1307, USA.  */
 #include "console-msw.h"
 #include "emacsfns.h"
 #include "elhash.h"
-#include "event-msw.h"
 #include "events.h"
 #include "frame.h"
 #include "gui.h"

@@ -255,7 +255,7 @@ Boston, MA 02111-1307, USA.  */
 			a magic_event; the Lisp programmer need not know
 			anything more.
 
- #ifdef HAVE_OFFIX_DND
+#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
  dnd_drop_event
  dnd_drag_event (* to be implemented *)
     button		What button went down or up.
@@ -302,7 +302,7 @@ typedef enum emacs_event_type
   magic_eval_event,
   eval_event,
   misc_user_event,
-#ifdef HAVE_OFFIX_DND
+#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
   dnd_drop_event,
 #endif
   dead_event
@@ -355,7 +355,7 @@ struct magic_eval_data
   Lisp_Object	    object;
 };
 
-#ifdef HAVE_OFFIX_DND
+#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
 struct dnd_drop_data
 {
   int               button;
@@ -378,11 +378,7 @@ union magic_data
   XEvent	    underlying_x_event;
 #endif
 #ifdef HAVE_MS_WINDOWS
-  struct
-    {
-      int	    message;
-      unsigned long data[4]; /* XXX Big enough for biggest thing? */
-    } underlying_mswindows_event;
+  int		    underlying_mswindows_event;
 #endif
 };
 
@@ -409,7 +405,7 @@ struct Lisp_Event
       struct eval_data		eval;	/* misc_user_event uses this too */
       union magic_data		magic;
       struct magic_eval_data	magic_eval;
-#ifdef HAVE_OFFIX_DND
+#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
       struct dnd_drop_data      dnd_drop;
 #endif
     } event;

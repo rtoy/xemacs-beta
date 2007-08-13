@@ -2057,12 +2057,13 @@ allocate_glyph (enum glyph_type type,
 		void (*after_change) (Lisp_Object glyph, Lisp_Object property,
 				      Lisp_Object locale))
 {
+  /* This function can GC */
   Lisp_Object obj = Qnil;
   struct Lisp_Glyph *g =
     alloc_lcrecord_type (struct Lisp_Glyph, lrecord_glyph);
 
   g->type = type;
-  g->image = Fmake_specifier (Qimage);
+  g->image = Fmake_specifier (Qimage); /* This function can GC */
   switch (g->type)
     {
     case GLYPH_BUFFER:
@@ -2082,18 +2083,31 @@ allocate_glyph (enum glyph_type type,
       abort ();
     }
 
-  set_specifier_fallback (g->image, list1 (Fcons (Qnil, Vthe_nothing_vector)));
-  g->contrib_p = Fmake_specifier (Qboolean);
-  set_specifier_fallback (g->contrib_p, list1 (Fcons (Qnil, Qt)));
-  /* #### should have a specifier for the following */
-  g->baseline = Fmake_specifier (Qgeneric);
-  set_specifier_fallback (g->baseline, list1 (Fcons (Qnil, Qnil)));
-  g->face = Qnil;
-  g->plist = Qnil;
-  g->after_change = after_change;
-  XSETGLYPH (obj, g);
+  /* I think Fmake_specifier can GC.  I think set_specifier_fallback can GC. */
+  /* We're getting enough reports of odd behavior in this area it seems */
+  /* best to GCPRO everything. */
+  {
+    Lisp_Object tem1 = list1 (Fcons (Qnil, Vthe_nothing_vector));
+    Lisp_Object tem2 = list1 (Fcons (Qnil, Qt));
+    Lisp_Object tem3 = list1 (Fcons (Qnil, Qnil));
+    struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
 
-  set_image_attached_to (g->image, obj, Qimage);
+    GCPRO4 (obj, tem1, tem2, tem3);
+
+    set_specifier_fallback (g->image, tem1);
+    g->contrib_p = Fmake_specifier (Qboolean);
+    set_specifier_fallback (g->contrib_p, tem2);
+    /* #### should have a specifier for the following */
+    g->baseline = Fmake_specifier (Qgeneric);
+    set_specifier_fallback (g->baseline, tem3);
+    g->face = Qnil;
+    g->plist = Qnil;
+    g->after_change = after_change;
+    XSETGLYPH (obj, g);
+
+    set_image_attached_to (g->image, obj, Qimage);
+    UNGCPRO;
+  }
 
   return obj;
 }
@@ -2853,6 +2867,8 @@ What to display at the beginning of horizontally scrolled lines.
 void
 specifier_vars_of_glyphs (void)
 {
+  /* #### Can we GC here? The set_specifier_* calls definitely need */
+  /* protection. */
   /* display tables */
 
   DEFVAR_SPECIFIER ("current-display-table", &Vcurrent_display_table /*

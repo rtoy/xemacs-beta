@@ -24,13 +24,17 @@ documentation and/or software.
  */
 
 /* Synched up with: Not in FSF. */
-/* This file has been Mule-ized.  See comment at Fmd5(), though. */
+/* This file has been Mule-ized. */
 
 #include <config.h>
 #include "lisp.h"
 
 #include "buffer.h"
 #include "insdel.h"
+#include "lstream.h"
+#ifdef MULE
+#include "mule-coding.h"
+#endif
 
 typedef unsigned char *POINTER;/* POINTER defines a generic pointer type */
 typedef unsigned short int UINT2;/* UINT2 defines a two byte word */
@@ -355,24 +359,19 @@ LispMDString (char *string)
 /* XEmacs interface code. */
 Lisp_Object Qmd5;
 
-/* #### There could be potential problems here with Mule.  I don't
-   know enough about the uses of MD5 to be able to tell for sure
-   whether this is a problem.  The basic potential problem is that
-   the hash value will be computed based on the internal representation
-   of the buffer; this would likely cause problems if the string
-   contains extended characters, because the extended characters
-   will get sent over the wire in an external form that is different
-   from their internal representation, and thus their MD5 hash would
-   be different. */
-
-DEFUN ("md5", Fmd5, 1, 3, 0, /*
+DEFUN ("md5", Fmd5, 1, 5, 0, /*
 Return the MD5 (a secure message digest algorithm) of an object.
 OBJECT is either a string or a buffer.
 Optional arguments START and END denote buffer positions for computing the
-hash of a portion of OBJECT.
+hash of a portion of OBJECT.  The optional CODING argument specifies the coding
+system the text is to be represented in while computing the digest.  This only
+has meaning with MULE, and defaults to the current format of the data.
+If ERROR-ME-NOT is nil, report an error if the coding system can't be
+determined.  Else assume binary coding if all else fails.
 */
-       (object, start, end))
+       (object, start, end, coding, error_me_not))
 {
+  /* This function can GC */
   MD_CTX context;
   unsigned char digest[16];
   unsigned char thehash[32];
@@ -384,31 +383,126 @@ hash of a portion of OBJECT.
     {
       MDUpdate (&context, (CONST unsigned char *) "", 0);
     }
-  else if (BUFFERP (object))
-    {
-      struct buffer *b = decode_buffer (object, 1);
-      Bufpos begv, endv;
-      Lisp_Object string;
-
-      /* Figure out where we need to get info from */
-      get_buffer_range_char (b, start, end, &begv, &endv, GB_ALLOW_NIL);
-
-      /* Get the string data from the buffer */
-      string = make_string_from_buffer (b, begv, endv - begv);
-
-    /* Compute the digest */
-      MDUpdate (&context, (unsigned char *) XSTRING_DATA (string),
-		XSTRING_LENGTH (string));
-    }
   else
     {
-      Bytecount len, bstart, bend;
-      CHECK_STRING (object);
-      get_string_range_byte (object, start, end, &bstart, &bend,
-			     GB_HISTORICAL_STRING_BEHAVIOR);
-      len = bend - bstart;
-      MDUpdate (&context, ((unsigned char *) XSTRING_DATA (object)
-			   + bstart), len);
+      Lisp_Object instream, outstream;
+      Lstream *istr, *ostr;
+      static Extbyte_dynarr *conversion_out_dynarr;
+      char tempbuf[1024]; /* some random amount */
+      struct gcpro gcpro1, gcpro2;
+#ifdef MULE
+      Lisp_Object conv_out_stream, coding_system;
+      Lstream *costr;
+      struct gcpro gcpro3;
+#endif
+
+      if (!conversion_out_dynarr)
+	conversion_out_dynarr = Dynarr_new (Extbyte);
+      else
+	Dynarr_reset (conversion_out_dynarr);
+
+      /* set up the in stream */
+      if (BUFFERP (object))
+	{
+	  struct buffer *b = decode_buffer (object, 1);
+	  Bufpos begv, endv;
+	  /* Figure out where we need to get info from */
+	  get_buffer_range_char (b, start, end, &begv, &endv, GB_ALLOW_NIL);
+
+	  instream = make_lisp_buffer_input_stream (b, begv, endv, 0);
+	}
+      else
+	{
+	  Bytecount bstart, bend;
+	  CHECK_STRING (object);
+	  get_string_range_byte (object, start, end, &bstart, &bend,
+				 GB_HISTORICAL_STRING_BEHAVIOR);
+	  instream = make_lisp_string_input_stream (object, bstart, bend);
+	}
+      istr = XLSTREAM (instream);
+
+#ifdef MULE
+      /* Find out what format the buffer will be saved in, so we can make
+	 the digest based on what it will look like on disk */
+      if (NILP(coding))
+	{
+	  if (BUFFERP(object)) 
+	    {
+	      /* Use the file coding for this buffer by default */
+	      coding_system = XBUFFER(object)->buffer_file_coding_system;
+	    }
+	  else
+	    {
+	      /* attempt to autodetect the coding of the string.  Note: this VERY hit-and-miss */
+	      enum eol_type eol = EOL_AUTODETECT;
+	      coding_system = Fget_coding_system(Qundecided);
+	      determine_real_coding_system(istr, &coding_system, &eol);
+	    }
+	  if (NILP(coding_system)) 
+	    coding_system = Fget_coding_system(Qbinary);
+	  else
+	    {
+	      coding_system = Ffind_coding_system (coding_system);
+	      if (NILP(coding_system))
+		coding_system = Fget_coding_system(Qbinary);
+	    }
+	}
+      else
+	{
+	  coding_system = Ffind_coding_system (coding);
+	  if (NILP(coding_system))
+	    if (NILP(error_me_not))
+	      signal_simple_error("No such coding system", coding);
+	    else
+	      coding_system = Fget_coding_system(Qbinary); /* default to binary */
+	}
+#endif
+      
+      /* setup the out stream */
+      outstream = make_dynarr_output_stream((unsigned_char_dynarr *)conversion_out_dynarr);
+      ostr = XLSTREAM (outstream);
+#ifdef MULE
+      /* setup the conversion stream */
+      conv_out_stream = make_encoding_output_stream (ostr, coding_system);
+      costr = XLSTREAM (conv_out_stream);
+      GCPRO3 (instream, outstream, conv_out_stream);
+#else
+      GCPRO2 (instream, outstream);
+#endif
+
+      /* Get the data while doing the conversion */
+      while (1) {
+	int size_in_bytes = Lstream_read (istr, tempbuf, sizeof (tempbuf));
+	if (!size_in_bytes)
+	  break;
+	/* It does seem the flushes are necessary... */
+#ifdef MULE
+	Lstream_write (costr, tempbuf, size_in_bytes);
+	Lstream_flush (costr);
+#else
+	Lstream_write (ostr, tempbuf, size_in_bytes);
+#endif
+	Lstream_flush (ostr);
+
+	/* Update the digest */
+	
+	MDUpdate (&context, (unsigned char *)Dynarr_atp(conversion_out_dynarr, 0), 
+		  Dynarr_length(conversion_out_dynarr));
+	/* reset the dynarr */
+	Lstream_rewind(ostr);
+      }
+      Lstream_close (istr);
+#ifdef MULE
+      Lstream_close (costr);
+#endif
+      Lstream_close (ostr);
+
+      UNGCPRO;
+      Lstream_delete (istr);
+      Lstream_delete (ostr);
+#ifdef MULE
+      Lstream_delete (costr);
+#endif
     }
 
   MDFinal (digest, &context);

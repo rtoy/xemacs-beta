@@ -2175,7 +2175,7 @@ The returned event will be one of the following types:
     default:
       goto RETURN;
     case button_release_event:
-#ifdef HAVE_OFFIX_DND
+#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
     case dnd_drop_event:
 #endif
     case misc_user_event:
@@ -3969,7 +3969,7 @@ extract_this_command_keys_nth_mouse_event (int n)
       if (EVENTP (event)
 	  && (XEVENT_TYPE (event) == button_press_event
 	      || XEVENT_TYPE (event) == button_release_event
-#ifdef HAVE_OFFIX_DND
+#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
 	      || XEVENT_TYPE (event) == dnd_drop_event
 #endif
 	      || XEVENT_TYPE (event) == misc_user_event))
@@ -4003,7 +4003,7 @@ extract_vector_nth_mouse_event (Lisp_Object vector, int n)
 	  {
 	  case button_press_event :
 	  case button_release_event :
-#ifdef HAVE_OFFIX_DND
+#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
 	  case dnd_drop_event:
 #endif
 	  case misc_user_event :
@@ -4109,7 +4109,7 @@ lookup_command_event (struct command_builder *command_builder,
 	else if (e->event_type == button_press_event
 		 || e->event_type == button_release_event)
 	  e->event.button.modifiers |= MOD_META;
-#ifdef HAVE_OFFIX_DND
+#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
 	else if (e->event_type == dnd_drop_event)
 	  e->event.dnd_drop.modifiers |= MOD_META;
 #endif
@@ -4212,7 +4212,7 @@ execute_command_event (struct command_builder *command_builder,
       break;
     case button_press_event:
     case button_release_event:
-#ifdef HAVE_OFFIX_DND
+#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
     case dnd_drop_event:
 #endif
     case misc_user_event:
@@ -4442,7 +4442,7 @@ Magic events are handled as necessary.
     {
     case button_press_event:
     case button_release_event:
-#ifdef HAVE_OFFIX_DND
+#if defined(HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
     case dnd_drop_event:
 #endif
     case key_press_event:

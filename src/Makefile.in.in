@@ -614,13 +614,14 @@ hpplay.o: ${srcdir}/hpplay.c
 
 .PHONY: mostlyclean clean distclean realclean versionclean extraclean
 mostlyclean:
-	$(RM) temacs puremacs quantmacs prefix-args depend.* *.o *.i core
+	$(RM) temacs puremacs quantmacs prefix-args depend.* *.o *.i \
+	  core puresize-adjust.h
 clean: mostlyclean versionclean
 	$(RM) libextcli* update-elc.stamp
 ## This is used in making a distribution.
 ## Do not use it on development directories!
 distclean: clean
-	$(RM) config.h paths.h puresize-adjust.h Emacs.ad.h \
+	$(RM) config.h paths.h Emacs.ad.h \
 	  Makefile Makefile.in TAGS xemacs.*
 realclean: distclean
 versionclean:
@@ -1325,6 +1326,8 @@ dired.o: elhash.h
 dired.o: regex.h
 dired.o: sysdir.h
 dired.o: sysfile.h
+dlopen.o: config.h
+dlopen.o: buffer.h
 doc.o: blocktype.h
 doc.o: buffer.h
 doc.o: bufslots.h

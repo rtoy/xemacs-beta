@@ -31,6 +31,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "console-msw.h"
 
+
 DEFINE_CONSOLE_TYPE (mswindows);
 
 
@@ -73,3 +74,74 @@ vars_of_console_mswindows (void)
 {
   Fprovide (Qmswindows);
 }
+
+
+#ifdef DEBUG_XEMACS
+#include "events.h"
+#include "opaque.h"
+/*
+ * Random helper functions for debugging.
+ * Intended for use in the MSVC "Watch" window which doesn't like
+ * the aborts that the error_check_foo() functions can make.
+ */
+struct lrecord_header *DHEADER(Lisp_Object obj)
+{
+  return (LRECORDP (obj)) ? XRECORD_LHEADER (obj) : NULL;
+}
+
+int *DOPAQUE_DATA (Lisp_Object obj)
+{
+  return (OPAQUEP (obj)) ? OPAQUE_DATA (XOPAQUE (obj)) : NULL;
+}
+
+struct Lisp_Event *DEVENT(Lisp_Object obj)
+{
+  return (EVENTP (obj)) ? XEVENT (obj) : NULL;
+}
+
+struct Lisp_Cons *DCONS(Lisp_Object obj)
+{
+  return (CONSP (obj)) ? XCONS (obj) : NULL;
+}
+
+Lisp_Object DCAR(Lisp_Object obj)
+{
+  return (CONSP (obj)) ? XCAR (obj) : 0;
+}
+
+Lisp_Object DCDR(Lisp_Object obj)
+{
+  return (CONSP (obj)) ? XCDR (obj) : 0;
+}
+
+struct Lisp_Cons *DCONSCDR(Lisp_Object obj)
+{
+  return ((CONSP (obj)) && (CONSP (XCDR (obj)))) ? XCONS (XCDR (obj)) : 0;
+}
+
+Lisp_Object DCARCDR(Lisp_Object obj)
+{
+  return ((CONSP (obj)) && (CONSP (XCDR (obj)))) ? XCAR (XCDR (obj)) : 0;
+}
+
+char *DSTRING(Lisp_Object obj)
+{
+  return (STRINGP (obj)) ? XSTRING_DATA (obj) : NULL;
+}
+
+struct Lisp_Vector *DVECTOR(Lisp_Object obj)
+{
+  return (VECTORP (obj)) ? XVECTOR (obj) : NULL;
+}
+
+struct Lisp_Symbol *DSYMBOL(Lisp_Object obj)
+{
+  return (SYMBOLP (obj)) ? XSYMBOL (obj) : NULL;
+}
+
+char *DSYMNAME(Lisp_Object obj)
+{
+  return (SYMBOLP (obj)) ? XSYMBOL (obj)->name->_data : NULL;
+}
+
+#endif

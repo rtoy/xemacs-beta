@@ -84,7 +84,7 @@ Copy STRING to the mswindows clipboard.
     
   GlobalUnlock (h);
   
-  i = SetClipboardData (CF_TEXT, h);
+  i = (SetClipboardData (CF_TEXT, h) != NULL);
   
   CloseClipboard ();
   GlobalFree (h);

@@ -42,16 +42,21 @@
 
 ;; enable drag regions (ograf@fga.de)
 ;; if button2 is dragged from within a region, this becomes a drop
-(if (featurep '(or offix cde))
+(if (featurep '(or offix cde mswindows))
     (global-set-key 'button2 'mouse-drag-or-yank)
   (global-set-key 'button2 'mouse-yank))
 
-;; enable drops from OffiX (ograf@fga.de)
-;; accept any button1,2,3 drop with `mouse-offix-drop'
+;; enable drops from OffiX (ograf@fga.de) or mswindows
+;; accept any button1,2,3 drop with `mouse-offix-drop' or 'mswindows-mouse-drop'
 (cond ((featurep 'offix)
        (global-set-key 'drop1 'mouse-offix-drop)
        (global-set-key 'drop2 'mouse-offix-drop)
-       (global-set-key 'drop3 'mouse-offix-drop)))
+       (global-set-key 'drop3 'mouse-offix-drop))
+      ((featurep 'mswindows)
+       (global-set-key 'drop0 'mouse-mswindows-drop)
+       (global-set-key 'drop1 'mouse-mswindows-drop)
+       (global-set-key 'drop2 'mouse-mswindows-drop)
+       (global-set-key 'drop3 'mouse-mswindows-drop)))
 
 (defgroup mouse nil
   "Window system-independent mouse support."
@@ -238,6 +243,44 @@ primary selection-extent, nil otherwise."
 	     (pop-to-buffer buf nil frame)
 	     (insert data)
 	     (make-frame-visible frame)))
+	  (t ;; this is raw data or unknown stuff
+	   (let ((buf (generate-new-buffer "DndRawData")))
+	     (set-buffer buf)
+	     (pop-to-buffer buf nil frame)
+	     (insert data)
+	     (hexlify-buffer)
+	     (make-frame-visible frame))))
+    (undo-boundary)))
+
+(defun mouse-mswindows-drop (event)
+  "Do something with a drop event. Inserts Text drops and
+ executes appropriate commands for specific drops.
+ Text drops follow the `mouse-yank-at-point' variable."
+  (interactive "e")
+  (let* ((type (car (event-drag-and-drop-data event)))
+	(data (cadr (event-drag-and-drop-data event)))
+	(frame (event-channel event))
+	(window (if frame (event-window event) (frame-selected-window))))
+    (cond ((= type 2)	;; file
+	   (let ((x pop-up-windows))
+	     (setq pop-up-windows nil)
+	     (cond (window
+		    (select-window window)))
+	     (switch-to-buffer (find-file-noselect data))
+	     (make-frame-visible frame)
+	     (setq pop-up-windows x)))
+	  ((= type 3)	;; files
+	   (let ((x pop-up-windows))
+	     (setq pop-up-windows nil)
+	     (while (not (eq data ()))
+	       (pop-to-buffer (find-file-noselect (car data)) nil frame)
+	       (setq data (cdr data)))
+	     (make-frame-visible frame)
+	     (setq pop-up-windows x)))
+	  ((= type 4)	;; text
+	   (and (not mouse-yank-at-point)
+		(mouse-set-point event))
+	   (insert data))
 	  (t ;; this is raw data or unknown stuff
 	   (let ((buf (generate-new-buffer "DndRawData")))
 	     (set-buffer buf)

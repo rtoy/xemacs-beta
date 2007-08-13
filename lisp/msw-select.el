@@ -32,16 +32,6 @@
 
 ;;; Code:
 
-;(defun mswindows-paste-clipboard ()
-;  "Insert the current contents of the Clipboard at point."
-;  (interactive "*")
-;  (setq last-command nil)
-;  (setq this-command 'yank) ; so that yank-pop works.
-; (let ((clip (mswindows-get-clipboard)))
-;    (or clip (error "there is no clipboard selection"))
-;    (push-mark)
-;    (insert clip)))
-
 (defun mswindows-paste-clipboard ()
   "Insert the current contents of the mswindows clipboard at point,
 replacing the active selection if there is one."

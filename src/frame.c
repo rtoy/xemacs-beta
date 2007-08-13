@@ -54,7 +54,7 @@ Lisp_Object Vmouse_leave_frame_hook, Qmouse_leave_frame_hook;
 Lisp_Object Vmap_frame_hook, Qmap_frame_hook;
 Lisp_Object Vunmap_frame_hook, Qunmap_frame_hook;
 int  allow_deletion_of_last_visible_frame;
-#if defined (HAVE_CDE) || defined (HAVE_OFFIX_DND)
+#if defined (HAVE_CDE) || defined (HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
 Lisp_Object Vdrag_and_drop_functions, Qdrag_and_drop_functions;
 #endif
 Lisp_Object Vmouse_motion_handler;
@@ -2892,7 +2892,7 @@ syms_of_frame (void)
   defsymbol (&Qmouse_leave_frame_hook, "mouse-leave-frame-hook");
   defsymbol (&Qmap_frame_hook, "map-frame-hook");
   defsymbol (&Qunmap_frame_hook, "unmap-frame-hook");
-#if defined (HAVE_CDE) || defined (HAVE_OFFIX_DND)
+#if defined (HAVE_CDE) || defined (HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
   defsymbol (&Qdrag_and_drop_functions, "drag-and-drop-functions");
 #endif
 
@@ -3082,7 +3082,7 @@ One argument, the frame.
 */ );
   allow_deletion_of_last_visible_frame = 0;
 
-#if defined (HAVE_CDE) || defined (HAVE_OFFIX_DND)
+#if defined (HAVE_CDE) || defined (HAVE_OFFIX_DND) || defined(HAVE_MS_WINDOWS)
   DEFVAR_LISP ("drag-and-drop-functions", &Vdrag_and_drop_functions /*
 Function or functions to run when an object is dropped on a frame.
 Each function is called with either two or three args.  If called with
@@ -3091,7 +3091,7 @@ args are a frame, a pathname (which will be either a string or nil)
 and the textual representation of the dragged object.
 */ );
   Vdrag_and_drop_functions = Qnil;
-#endif /* HAVE_CDE */
+#endif /* HAVE_CDE || HAVE_OFFIX_DND || HAVE_MS_WINDOWS */
 
   DEFVAR_LISP ("mouse-motion-handler", &Vmouse_motion_handler /*
 Handler for motion events.  One arg, the event.

@@ -32,7 +32,6 @@ Boston, MA 02111-1307, USA.  */
 #include "lisp.h"
 
 #include "console-msw.h"
-#include "event-msw.h"
 
 #include "buffer.h"
 #include "faces.h"
@@ -132,6 +131,7 @@ mswindows_init_frame_3 (struct frame *f)
   /* Don't do this earlier or we get a WM_PAINT before the frame is ready*/
   ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_SHOWNORMAL);
   SetForegroundWindow (FRAME_MSWINDOWS_HANDLE(f));
+  DragAcceptFiles (FRAME_MSWINDOWS_HANDLE(f), TRUE);
 }
 
 static void

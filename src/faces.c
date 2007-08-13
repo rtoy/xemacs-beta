@@ -872,6 +872,8 @@ init_global_faces (struct device *d)
 void
 init_device_faces (struct device *d)
 {
+  /* This function can call lisp */
+
   /* When making the initial terminal device, there is no Lisp code
      loaded, so we can't do this. */
   if (initialized)

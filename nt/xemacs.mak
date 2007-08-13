@@ -294,8 +294,7 @@ DOC_SRC7=\
  $(XEMACS)\src\objects-msw.c \
  $(XEMACS)\src\redisplay-msw.c \
  $(XEMACS)\src\scrollbar-msw.c \
- $(XEMACS)\src\select-msw.c \
- $(XEMACS)\src\msw-proc.c
+ $(XEMACS)\src\select-msw.c
 !endif
 
 !if $(HAVE_MULE)
@@ -396,8 +395,7 @@ TEMACS_MSW_OBJS=\
 	$(OUTDIR)\objects-msw.obj \
 	$(OUTDIR)\redisplay-msw.obj \
 	$(OUTDIR)\scrollbar-msw.obj \
-	$(OUTDIR)\select-msw.obj \
-	$(OUTDIR)\msw-proc.obj
+	$(OUTDIR)\select-msw.obj
 !endif
 
 !if $(HAVE_MULE)
@@ -536,7 +534,6 @@ $(TEMACS): $(TEMACS_INCLUDES) $(TEMACS_OBJS)
 	link.exe @<<
   $(TEMACS_LFLAGS) $(TEMACS_OBJS) $(TEMACS_LIBS)
 <<
-	!$(TEMACS) -batch -l update-elc.el
 
 xemacs.res: xemacs.rc
 	rc xemacs.rc
@@ -566,7 +563,7 @@ $(DOC): $(LIB_SRC)\make-docfile.exe
 	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC8)
 	!$(LIB_SRC)\make-docfile.exe -a $(DOC) -d $(TEMACS_SRC) $(DOC_SRC9)
 
-update-elc: $(LOADPATH)\startup.el
+update-elc:
 	!$(TEMACS) -batch -l update-elc.el
 
 rebuild: $(TEMACS_DIR)\puresize-adjust.h
@@ -584,7 +581,7 @@ dump-xemacs: $(TEMACS)
 #------------------------------------------------------------------------------
 
 # use this rule to build the complete system
-all: $(LASTFILE) $(LWLIB) $(SUPPORT_PROGS) $(TEMACS) $(TEMACS_BROWSE) $(DOC) dump-xemacs
+all: $(LASTFILE) $(LWLIB) $(SUPPORT_PROGS) $(TEMACS) $(TEMACS_BROWSE) update-elc $(DOC) dump-xemacs
 	-del rebuild
 
 temacs:  $(TEMACS)
@@ -626,7 +623,7 @@ distclean:
 	-del /s /q *.bak *.elc *.orig *.rej
 
 depend:
-	mkdepend -f xemacs.mak -p$(OUTDIR)\ -o.obj -w9999 -- $(TEMACS_CPP_FLAGS) --  $(DOC_SRC1) $(DOC_SRC2) $(DOC_SRC3) $(DOC_SRC4) $(DOC_SRC5) $(DOC_SRC6) $(DOC_SRC7) $(DOC_SRC8) $(LASTFILE_SRC)\lastfile.c $(LIB_SRC)\make-docfile.c .\runemacs.c
+	mkdepend -f xemacs.mak -p$(OUTDIR)\ -o.obj -w2048 -- $(TEMACS_CPP_FLAGS) --  $(DOC_SRC1) $(DOC_SRC2) $(DOC_SRC3) $(DOC_SRC4) $(DOC_SRC5) $(DOC_SRC6) $(DOC_SRC7) $(DOC_SRC8) $(LASTFILE_SRC)\lastfile.c $(LIB_SRC)\make-docfile.c .\runemacs.c
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 	mkdepend -f xemacs.mak -p$(OUTDIR)\ -o.obj -w9999 -- $(TEMACS_CPP_FLAGS) --  $(DOC_SRC1) $(DOC_SRC2) $(DOC_SRC3) $(DOC_SRC4) $(DOC_SRC5) $(DOC_SRC6) $(DOC_SRC7) $(DOC_SRC8) $(DOC_SRC9) $(LASTFILE_SRC)\lastfile.c $(LIB_SRC)\make-docfile.c .\runemacs.c

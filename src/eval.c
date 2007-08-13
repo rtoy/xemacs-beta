@@ -4926,6 +4926,7 @@ function calls.
 */
        (stream, detailed))
 {
+  /* This function can GC */
   struct backtrace *backlist = backtrace_list;
   struct catchtag *catches = catchlist;
   int speccount = specpdl_depth_counter;

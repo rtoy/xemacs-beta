@@ -54,7 +54,25 @@
  */
 /* Since lcc is not going to be heavily used anymore if it ever was, I'm
    putting broken-sun.h back in. */
+/* Since Gcc 2.8 appears to have fixed the problem, I'm conditionalizing */
+/* this ugly hack. */
+
+#if defined (__GNUC__)
+#if defined (__GNUC_MINOR__)
+#if ((__GNUC__ == 2) && (__GNUC_MINOR__ > 7)) || ((__GNUC__ > 2))
+/* Don't include for gcc 2.8.0*/
+#else
 #include "../broken-sun.h"
+#endif
+
+#else /* __GNUC_MINOR__ is undefined */
+#include "../broken-sun.h"
+#endif
+
+#else
+/* Not GNU C */
+#endif
+
 extern char *strdup ();
 extern char *ttyname (int);
 extern void tzsetwall (void);
