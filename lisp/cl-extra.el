@@ -76,6 +76,8 @@ TYPE is a Common Lisp type specifier."
 	((eq type 'array) (if (arrayp x) x (vconcat x)))
 	((and (eq type 'character) (stringp x) (= (length x) 1)) (aref x 0))
 	((and (eq type 'character) (symbolp x)) (coerce (symbol-name x) type))
+	((and (eq type 'character) (numberp x) (char-or-char-int-p x)
+	      (int-char x)))
 	((eq type 'float) (float x))
 	((eq type 'bit-vector) (if (bit-vector-p x) x
 				 (apply 'bit-vector (append x nil))))
@@ -108,7 +110,8 @@ strings case-insensitively."
 	 (and (numberp y) (= x y)))
 	((consp x)
 	 ;; XEmacs change
-	 (while (and (consp x) (consp y) (equalp (cl-pop x) (cl-pop y))))
+	 (while (and (consp x) (consp y) (equalp (car x) (car y)))
+	   (cl-pop x) (cl-pop y))
 	 (and (not (consp x)) (equalp x y)))
 	((vectorp x)
 	 (and (vectorp y) (= (length x) (length y))
@@ -180,16 +183,14 @@ the elements themselves."
       (nreverse cl-res))))
 
 
-;; mapc is now in C, renamed from `mapc-internal'.
-
-;(defun mapc (cl-func cl-seq &rest cl-rest)
-;  "Like `mapcar', but does not accumulate values returned by the function."
-;  (if cl-rest
-;      (apply 'map nil cl-func cl-seq cl-rest)
-;    ;; XEmacs change: we call mapc-internal, which really doesn't
-;    ;; accumulate any results.
-;    (mapc-internal cl-func cl-seq))
-;  cl-seq)
+(defun mapc (cl-func cl-seq &rest cl-rest)
+  "Like `mapcar', but does not accumulate values returned by the function."
+  (if cl-rest
+      (apply 'map nil cl-func cl-seq cl-rest)
+    ;; XEmacs change: in the simplest case we call mapc-internal,
+    ;; which really doesn't accumulate any results.
+    (mapc-internal cl-func cl-seq))
+  cl-seq)
 
 (defun mapl (cl-func cl-list &rest cl-rest)
   "Like `maplist', but does not accumulate values returned by the function."
@@ -637,13 +638,7 @@ argument VECP, this copies vectors as well as conses."
 
 ;; XEmacs: our `get' groks DEFAULT.
 (defalias 'get* 'get)
-
-(defun getf (plist tag &optional def)
-  "Search PROPLIST for property PROPNAME; return its value or DEFAULT.
-PROPLIST is a list of the sort returned by `symbol-plist'."
-  (setplist '--cl-getf-symbol-- plist)
-  (or (get '--cl-getf-symbol-- tag)
-      (and def (get* '--cl-getf-symbol-- tag def))))
+(defalias 'getf 'plist-get)
 
 (defun cl-set-getf (plist tag val)
   (let ((p plist))
@@ -655,29 +650,18 @@ PROPLIST is a list of the sort returned by `symbol-plist'."
     (while (and (cdr p) (not (eq (car (cdr p)) tag))) (setq p (cdr (cdr p))))
     (and (cdr p) (progn (setcdr p (cdr (cdr (cdr p)))) t))))
 
-(defun cl-remprop (sym tag)
-  "Remove from SYMBOL's plist the property PROP and its value."
-  (let ((plist (symbol-plist sym)))
-    (if (and plist (eq tag (car plist)))
-	(progn (setplist sym (cdr (cdr plist))) t)
-      (cl-do-remf plist tag))))
-(or (and (fboundp 'remprop) (subrp (symbol-function 'remprop)))
-    (defalias 'remprop 'cl-remprop))
-
-
-
 ;;; Hash tables.
 
 ;; The `regular' Common Lisp hash-table stuff has been moved into C.
 ;; Only backward compatibility stuff remains here.
 (defun make-hashtable (size &optional test)
-  (make-hash-table :size size :test test :type 'non-weak))
+  (make-hash-table :test test :size size))
 (defun make-weak-hashtable (size &optional test)
-  (make-hash-table :size size :test test :type 'weak))
+  (make-hash-table :test test :size size :weakness t))
 (defun make-key-weak-hashtable (size &optional test)
-  (make-hash-table :size size :test test :type 'key-weak))
+  (make-hash-table :test test :size size :weakness 'key))
 (defun make-value-weak-hashtable (size &optional test)
-  (make-hash-table :size size :test test :type 'value-weak))
+  (make-hash-table :test test :size size :weakness 'value))
 
 (define-obsolete-function-alias 'hashtablep 'hash-table-p)
 (define-obsolete-function-alias 'hashtable-fullness 'hash-table-count)
@@ -690,6 +674,7 @@ PROPLIST is a list of the sort returned by `symbol-plist'."
 (make-obsolete 'make-weak-hashtable       'make-hash-table)
 (make-obsolete 'make-key-weak-hashtable   'make-hash-table)
 (make-obsolete 'make-value-weak-hashtable 'make-hash-table)
+(make-obsolete 'hash-table-type           'hash-table-weakness)
 
 (when (fboundp 'x-keysym-hash-table)
   (make-obsolete 'x-keysym-hashtable 'x-keysym-hash-table))

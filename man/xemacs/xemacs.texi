@@ -1,10 +1,14 @@
-
-\input ../texinfo  @c -*-texinfo-*-
+\input texinfo  @c -*-texinfo-*-
 @setfilename ../../info/xemacs.info
 @comment  node-name,  next,  previous,  up
 
 
 @ifinfo
+@dircategory XEmacs Editor
+@direntry
+* XEmacs: (xemacs).		XEmacs Editor.
+@end direntry
+
 This file documents the XEmacs editor.
 
 Copyright (C) 1985, 1986, 1988 Richard M. Stallman.
@@ -86,9 +90,8 @@ translation approved by the author instead of in the original English.
 @page
 @ifinfo
 @node Top, License,, (dir)
+@top The XEmacs Editor
 
-The XEmacs Editor
-*****************
 
 XEmacs is the extensible, customizable, self-documenting real-time
 display editor.  This Info file describes how to edit with Emacs

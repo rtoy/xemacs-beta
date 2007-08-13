@@ -95,15 +95,17 @@ menubar_visible_p_changed_in_frame (Lisp_Object specifier, struct frame *f,
 }
 
 Lisp_Object
-current_frame_menubar (CONST struct frame* f)
+current_frame_menubar (const struct frame* f)
 {
   struct window *w = XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f));
   return symbol_value_in_buffer (Qcurrent_menubar, w->buffer);
 }
 
 Lisp_Object
-menu_parse_submenu_keywords (Lisp_Object desc, struct gui_item* pgui_item)
+menu_parse_submenu_keywords (Lisp_Object desc, Lisp_Object gui_item)
 {
+  Lisp_Gui_Item* pgui_item = XGUI_ITEM (gui_item);
+
   /* Menu descriptor should be a list */
   CHECK_CONS (desc);
 
@@ -130,7 +132,7 @@ menu_parse_submenu_keywords (Lisp_Object desc, struct gui_item* pgui_item)
       desc = XCDR (desc);
       if (!NILP (desc))
 	CHECK_CONS (desc);
-      gui_item_add_keyval_pair (pgui_item, key, val, ERROR_ME);
+      gui_item_add_keyval_pair (gui_item, key, val, ERROR_ME);
     }
 
   /* Return the rest - supposed to be a list of items */
@@ -152,10 +154,10 @@ See also 'find-menu-item'.
 {
   Lisp_Object path_entry, submenu_desc, submenu;
   struct gcpro gcpro1;
-  struct gui_item gui_item;
+  Lisp_Object gui_item = allocate_gui_item ();
+  Lisp_Gui_Item* pgui_item = XGUI_ITEM (gui_item);
 
-  gui_item_init (&gui_item);
-  GCPRO_GUI_ITEM (&gui_item);
+  GCPRO1 (gui_item);
 
   EXTERNAL_LIST_LOOP (path_entry, path)
     {
@@ -164,15 +166,15 @@ See also 'find-menu-item'.
 	RETURN_UNGCPRO (Qnil);
 
       /* Parse this menu */
-      desc = menu_parse_submenu_keywords (desc, &gui_item);
+      desc = menu_parse_submenu_keywords (desc, gui_item);
 
       /* Check that this (sub)menu is active */
-      if (!gui_item_active_p (&gui_item))
+      if (!gui_item_active_p (gui_item))
 	RETURN_UNGCPRO (Qnil);
 
       /* Apply :filter */
-      if (!NILP (gui_item.filter))
-	desc = call1 (gui_item.filter, desc);
+      if (!NILP (pgui_item->filter))
+	desc = call1 (pgui_item->filter, desc);
 
       /* Find the next menu on the path inside this one */
       EXTERNAL_LIST_LOOP (submenu_desc, desc)
@@ -191,7 +193,7 @@ See also 'find-menu-item'.
 
     descend:
       /* Prepare for the next iteration */
-      gui_item_init (&gui_item);
+      gui_item_init (gui_item);
     }
 
   /* We have successfully descended down the end of the path */
@@ -294,7 +296,7 @@ Menu item names should be converted to normal form before being compared.
        (name, buffer))
 {
   struct buffer *buf = decode_buffer (buffer, 0);
-  struct Lisp_String *n;
+  Lisp_String *n;
   Charcount end;
   int i;
   Bufbyte *name_data;
@@ -353,32 +355,21 @@ syms_of_menubar (void)
 void
 vars_of_menubar (void)
 {
-  {
-    /* put in Vblank_menubar a menubar value which has no visible
-     * items.  This is a bit tricky due to various quirks.  We
-     * could use '(["" nil nil]), but this is apparently equivalent
-     * to '(nil), and a new frame created with this menubar will
-     * get a vertically-squished menubar.  If we use " " as the
-     * button title instead of "", we get an etched button border.
-     * So we use
-     *  '(("No active menubar" ["" nil nil]))
-     * which creates a menu whose title is "No active menubar",
-     * and this works fine.
-     */
+  /* put in Vblank_menubar a menubar value which has no visible
+   * items.  This is a bit tricky due to various quirks.  We
+   * could use '(["" nil nil]), but this is apparently equivalent
+   * to '(nil), and a new frame created with this menubar will
+   * get a vertically-squished menubar.  If we use " " as the
+   * button title instead of "", we get an etched button border.
+   * So we use
+   *  '(("No active menubar" ["" nil nil]))
+   * which creates a menu whose title is "No active menubar",
+   * and this works fine.
+   */
 
-    Lisp_Object menu_item[3];
-    static CONST char *blank_msg = "No active menubar";
-
-    menu_item[0] = build_string ("");
-    menu_item[1] = Qnil;
-    menu_item[2] = Qnil;
-    Vblank_menubar = Fcons (Fcons (build_string (blank_msg),
-				   Fcons (Fvector (3, &menu_item[0]),
-					  Qnil)),
-			    Qnil);
-    Vblank_menubar = Fpurecopy (Vblank_menubar);
-    staticpro (&Vblank_menubar);
-  }
+  Vblank_menubar = list1 (list2 (build_string ("No active menubar"),
+				 vector3 (build_string (""), Qnil, Qnil)));
+  staticpro (&Vblank_menubar);
 
   DEFVAR_BOOL ("popup-menu-titles", &popup_menu_titles /*
 If true, popup menus will have title bars at the top.
@@ -502,7 +493,7 @@ The possible keywords are this:
 		     side-effects.
 
  :key-sequence keys  Used in FSF Emacs as an hint to an equivalent keybinding.
-                     Ignored by XEnacs for easymenu.el compatability.
+                     Ignored by XEnacs for easymenu.el compatibility.
 
  :label <form>       (unimplemented!) Like :suffix, but replaces label
                      completely.
@@ -587,11 +578,9 @@ This is a specifier; use `set-specifier' to change it.
 
   set_specifier_fallback (Vmenubar_visible_p, list1 (Fcons (Qnil, Qt)));
   set_specifier_caching (Vmenubar_visible_p,
-			 slot_offset (struct window,
-				      menubar_visible_p),
+			 offsetof (struct window, menubar_visible_p),
 			 menubar_visible_p_changed,
-			 slot_offset (struct frame,
-				      menubar_visible_p),
+			 offsetof (struct frame, menubar_visible_p),
 			 menubar_visible_p_changed_in_frame);
 }
 

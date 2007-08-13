@@ -43,7 +43,6 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef WINDOWSNT
 #define _P_NOWAIT 1	/* from process.h */
-#include <windows.h>
 #include "nt.h"
 #endif
 
@@ -68,7 +67,7 @@ Lisp_Object Vprocess_environment;
 volatile int synch_process_alive;
 
 /* Nonzero => this is a string explaining death of synchronous subprocess.  */
-CONST char *synch_process_death;
+const char *synch_process_death;
 
 /* If synch_process_death is zero,
    this is exit code of synchronous subprocess.  */
@@ -81,6 +80,7 @@ int synch_process_retcode;
 /* Nonzero if this is termination due to exit.  */
 static int call_process_exited;
 
+Lisp_Object Vlisp_EXEC_SUFFIXES;
 
 static Lisp_Object
 call_process_kill (Lisp_Object fdpid)
@@ -101,7 +101,7 @@ call_process_kill (Lisp_Object fdpid)
 static Lisp_Object
 call_process_cleanup (Lisp_Object fdpid)
 {
-  int fd = XINT (Fcar (fdpid));
+  int fd  = XINT (Fcar (fdpid));
   int pid = XINT (Fcdr (fdpid));
 
   if (!call_process_exited &&
@@ -113,7 +113,18 @@ call_process_cleanup (Lisp_Object fdpid)
     /* #### "c-G" -- need non-consing Single-key-description */
     message ("Waiting for process to die...(type C-g again to kill it instantly)");
 
+#ifdef WINDOWSNT
+    {
+      HANDLE pHandle = OpenProcess (PROCESS_ALL_ACCESS, 0, pid);
+      if (pHandle == NULL)
+	warn_when_safe (Qprocess, Qwarning,
+			"cannot open process (PID %d) for cleanup", pid);
+      else
+	wait_for_termination (pHandle);
+    }
+#else
     wait_for_termination (pid);
+#endif
 
     /* "Discard" the unwind protect.  */
     XCAR (fdpid) = Qnil;
@@ -169,6 +180,9 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
   Lisp_Object infile, buffer, current_dir, display, path;
   int fd[2];
   int filefd;
+#ifdef WINDOWSNT
+  HANDLE pHandle;
+#endif
   int pid;
   char buf[16384];
   char *bufptr = buf;
@@ -193,7 +207,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 
   /* Do this before building new_argv because GC in Lisp code
    *  called by various filename-hacking routines might relocate strings */
-  locate_file (Vexec_path, args[0], EXEC_SUFFIXES, &path, X_OK);
+  locate_file (Vexec_path, args[0], Vlisp_EXEC_SUFFIXES, &path, X_OK);
 
   /* Make sure that the child will be able to chdir to the current
      buffer's current directory, or its unhandled equivalent.  We
@@ -286,8 +300,8 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 	CHECK_STRING (args[i]);
 	new_argv[i - 3] = (char *) XSTRING_DATA (args[i]);
       }
-    new_argv[nargs - 3] = 0;
   }
+  new_argv[max(nargs - 3,1)] = 0;
 
   if (NILP (path))
     report_file_error ("Searching for program", Fcons (args[0], Qnil));
@@ -334,7 +348,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
       fd_error = open (NULL_DEVICE, O_WRONLY | OPEN_BINARY);
     else if (STRINGP (error_file))
       {
-	fd_error = open ((CONST char *) XSTRING_DATA (error_file),
+	fd_error = open ((const char *) XSTRING_DATA (error_file),
 #ifdef DOS_NT
 			 O_WRONLY | O_TRUNC | O_CREAT | O_TEXT,
 			 S_IREAD | S_IWRITE
@@ -358,6 +372,23 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 #ifdef WINDOWSNT
     pid = child_setup (filefd, fd1, fd_error, new_argv,
                        (char *) XSTRING_DATA (current_dir));
+    if (!INTP (buffer))
+      {
+	/* OpenProcess() as soon after child_setup as possible.  It's too
+	   late once the process terminated. */
+	pHandle = OpenProcess(PROCESS_ALL_ACCESS, 0, pid);
+#if 0
+	if (pHandle == NULL)
+	  {
+	    /* #### seems to cause crash in unbind_to(...) below. APA */
+	    warn_when_safe (Qprocess, Qwarning,
+			    "cannot open process to wait for");
+	  }
+#endif
+      }
+    /* Close STDERR into the parent process.  We no longer need it. */
+    if (fd_error >= 0)
+      close (fd_error);
 #else  /* not WINDOWSNT */
     pid = fork ();
 
@@ -393,12 +424,14 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
   if (!NILP (fork_error))
     signal_error (Qfile_error, fork_error);
 
+#ifndef WINDOWSNT
   if (pid < 0)
     {
       if (fd[0] >= 0)
 	close (fd[0]);
       report_file_error ("Doing fork", Qnil);
     }
+#endif
 
   if (INTP (buffer))
     {
@@ -449,7 +482,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 	nread = 0;
 	while (nread < bufsize - 1024)
 	  {
-	    int this_read
+	    ssize_t this_read
 	      = Lstream_read (XLSTREAM (instream), bufptr + nread,
 			      bufsize - nread);
 
@@ -468,16 +501,19 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 	if (nread == 0)
 	  break;
 
+#if 0
 #ifdef DOS_NT
        /* Until we pull out of MULE things like
 	  make_decoding_input_stream(), we do the following which is
 	  less elegant. --marcpa */
+	/* We did. -- kkm */
        {
 	 int lf_count = 0;
 	 if (NILP (Vbinary_process_output)) {
 	   nread = crlf_to_lf(nread, bufptr, &lf_count);
          }
        }
+#endif
 #endif
 
 	total_read += nread;
@@ -506,7 +542,11 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 
     QUIT;
     /* Wait for it to terminate, unless it already has.  */
+#ifdef WINDOWSNT
+    wait_for_termination (pHandle);
+#else
     wait_for_termination (pid);
+#endif
 
     /* Don't kill any children that the subprocess may have left behind
        when exiting.  */
@@ -568,7 +608,7 @@ int
 void
 #endif
 child_setup (int in, int out, int err, char **new_argv,
-	     CONST char *current_dir)
+	     const char *current_dir)
 {
   char **env;
   char *pwd;
@@ -644,9 +684,10 @@ child_setup (int in, int out, int err, char **new_argv,
     {
       char **ep = env;
       char *envvar_external;
-      Bufbyte *envvar_internal = XSTRING_DATA (XCAR (tail));
 
-      GET_C_CHARPTR_EXT_FILENAME_DATA_ALLOCA (envvar_internal, envvar_external);
+      TO_EXTERNAL_FORMAT (LISP_STRING, XCAR (tail),
+			  C_STRING_ALLOCA, envvar_external,
+			  Qfile_name);
 
       /* See if envvar_external duplicates any string already in the env.
 	 If so, don't put it in.
@@ -722,7 +763,8 @@ child_setup (int in, int out, int err, char **new_argv,
 
 #ifdef WINDOWSNT
   /* Spawn the child.  (See ntproc.c:Spawnve).  */
-  cpid = spawnve (_P_NOWAIT, new_argv[0], new_argv, env);
+  cpid = spawnve (_P_NOWAIT, new_argv[0], (const char* const*)new_argv,
+		  (const char* const*)env);
   if (cpid == -1)
     /* An error occurred while trying to spawn the process.  */
     report_file_error ("Spawning child process", Qnil);
@@ -741,7 +783,7 @@ child_setup (int in, int out, int err, char **new_argv,
 }
 
 static int
-getenv_internal (CONST Bufbyte *var,
+getenv_internal (const Bufbyte *var,
 		 Bytecount varlen,
 		 Bufbyte **value,
 		 Bytecount *valuelen)
@@ -804,12 +846,12 @@ When invoked interactively, prints the value in the echo area.
 /* A version of getenv that consults process_environment, easily
    callable from C.  */
 char *
-egetenv (CONST char *var)
+egetenv (const char *var)
 {
   Bufbyte *value;
   Bytecount valuelen;
 
-  if (getenv_internal ((CONST Bufbyte *) var, strlen (var), &value, &valuelen))
+  if (getenv_internal ((const Bufbyte *) var, strlen (var), &value, &valuelen))
     return (char *) value;
   else
     return 0;
@@ -827,19 +869,17 @@ init_callproc (void)
     char **envp;
     Vprocess_environment = Qnil;
     for (envp = environ; envp && *envp; envp++)
-      {
-	Vprocess_environment = Fcons (build_ext_string (*envp, FORMAT_OS),
-				      Vprocess_environment);
-      }
+      Vprocess_environment =
+	Fcons (build_ext_string (*envp, Qfile_name), Vprocess_environment);
   }
 
   {
     /* Initialize shell-file-name from environment variables or best guess. */
 #ifdef WINDOWSNT
-    CONST char *shell = egetenv ("COMSPEC");
+    const char *shell = egetenv ("COMSPEC");
     if (!shell) shell = "\\WINNT\\system32\\cmd.exe";
 #else /* not WINDOWSNT */
-    CONST char *shell = egetenv ("SHELL");
+    const char *shell = egetenv ("SHELL");
     if (!shell) shell = "/bin/sh";
 #endif
 
@@ -897,4 +937,7 @@ Each element should be a string of the form ENVVARNAME=VALUE.
 The environment which Emacs inherits is placed in this variable
 when Emacs starts.
 */ );
+
+  Vlisp_EXEC_SUFFIXES = build_string (EXEC_SUFFIXES);
+  staticpro (&Vlisp_EXEC_SUFFIXES);
 }

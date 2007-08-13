@@ -20,14 +20,13 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-#ifndef _XEMACS_EXTENTS_H_
-#define _XEMACS_EXTENTS_H_
+#ifndef INCLUDED_extents_h_
+#define INCLUDED_extents_h_
 
 DECLARE_LRECORD (extent, struct extent);
 #define XEXTENT(x) XRECORD (x, extent, struct extent)
 #define XSETEXTENT(x, p) XSETRECORD (x, p, extent)
 #define EXTENTP(x) RECORDP (x, extent)
-#define GC_EXTENTP(x) GC_RECORDP (x, extent)
 #define CHECK_EXTENT(x) CHECK_RECORD (x, extent)
 #define CONCHECK_EXTENT(x) CONCHECK_RECORD (x, extent)
 
@@ -147,7 +146,6 @@ DECLARE_LRECORD (extent_auxiliary, struct extent_auxiliary);
   XRECORD (x, extent_auxiliary, struct extent_auxiliary)
 #define XSETEXTENT_AUXILIARY(x, p) XSETRECORD (x, p, extent_auxiliary)
 #define EXTENT_AUXILIARYP(x) RECORDP (x, extent_auxiliary)
-#define GC_EXTENT_AUXILIARYP(x) GC_RECORDP (x, extent_auxiliary)
 #define CHECK_EXTENT_AUXILIARY(x) CHECK_RECORD (x, extent_auxiliary)
 #define CONCHECK_EXTENT_AUXILIARY(x) CONCHECK_RECORD (x, extent_auxiliary)
 
@@ -163,7 +161,6 @@ DECLARE_LRECORD (extent_info, struct extent_info);
 #define XEXTENT_INFO(x) XRECORD (x, extent_info, struct extent_info)
 #define XSETEXTENT_INFO(x, p) XSETRECORD (x, p, extent_info)
 #define EXTENT_INFOP(x) RECORDP (x, extent_info)
-#define GC_EXTENT_INFOP(x) GC_RECORDP (x, extent_info)
 #define CHECK_EXTENT_INFO(x) CHECK_RECORD (x, extent_info)
 #define CONCHECK_EXTENT_INFO(x) CONCHECK_RECORD (x, extent_info)
 
@@ -370,7 +367,7 @@ void process_extents_for_insertion (Lisp_Object object,
 				    Bytind opoint, Bytecount length);
 void process_extents_for_deletion (Lisp_Object object, Bytind from,
 				   Bytind to, int destroy_them);
-void report_extent_modification (Lisp_Object, Bufpos, Bufpos, int *, int);
+void report_extent_modification (Lisp_Object, Bufpos, Bufpos, int);
 
 void set_extent_glyph (EXTENT extent, Lisp_Object glyph, int endp,
 		       glyph_layout layout);
@@ -400,4 +397,4 @@ int compute_buffer_extent_usage (struct buffer *b,
 
 #endif /* emacs */
 
-#endif /* _XEMACS_EXTENTS_H_ */
+#endif /* INCLUDED_extents_h_ */

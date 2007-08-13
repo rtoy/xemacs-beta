@@ -40,6 +40,7 @@ Modified Jan 93 by Hamish Macdonald for HPUX
 #include <sys/types.h>
 #include <string.h>
 #include <stdio.h>
+#include <errno.h>
 #include <signal.h>
 #ifdef __hp9000s300
 # include </usr/include/debug.h>
@@ -71,7 +72,7 @@ extern char *strerror (int);
 
 /********************** Function Prototypes/Declarations ***********/
 
-static void unexec_error (CONST char *fmt, int use_errno, ...);
+static void unexec_error (const char *fmt, int use_errno, ...);
 static int unexec_open (char *filename, int flag, int mode);
 static long unexec_seek (int fd, long position);
 static void unexec_read (int fd, long position, char *buf, int bytes);
@@ -87,7 +88,6 @@ int run_time_remap (char *dummy);
 
 /* for reporting error messages from system calls */
 extern int sys_nerr;
-extern int errno;
 extern int _DYNAMIC;
 extern char **environ;             
 
@@ -96,9 +96,9 @@ static unsigned long sbrk_of_0_at_unexec;
 /*******************************************************************/
 
 static void
-unexec_error (CONST char *fmt, int use_errno, ...)
+unexec_error (const char *fmt, int use_errno, ...)
 {
-  CONST char *err_msg = SYS_ERR;
+  const char *err_msg = SYS_ERR;
   va_list args;
 
   fprintf (stderr, "unexec - ");

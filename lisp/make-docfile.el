@@ -3,7 +3,7 @@
 ;; Copyright (C) 1985, 1986, 1992-1995, 1997 Free Software Foundation, Inc.
 
 ;; Author: Unknown
-;; Maintainer: Steven L Baur <steve@altair.xemacs.org>
+;; Maintainer: Steven L Baur <steve@xemacs.org>
 ;; Keywords: internal
 
 ;; This file is part of XEmacs.
@@ -51,9 +51,9 @@
 		 (string-equal arg "-a") ; Append to DOC file
 		 (string-equal arg "-d")) ; Set working directory
 	     (if (string-equal arg "-o")
-		 (setq docfile (car (cdr command-line-args))))
+		 (setq docfile (expand-file-name (car (cdr command-line-args)))))
 	     (setq options (cons arg options))
-	     (setq options (cons (car (cdr command-line-args)) options)))
+	     (setq options (cons (expand-file-name (car (cdr command-line-args))) options)))
 	    ((string-equal arg "-i") ; Set site files to scan
 	     (setq site-file-list (car (cdr command-line-args))))
 	    (t (setq done t)))
@@ -91,7 +91,7 @@
  (nconc load-path (split-path (getenv "EMACSBOOTSTRAPLOADPATH"))))
 
 (let (preloaded-file-list)
-  (load (concat default-directory "../lisp/dumped-lisp.el"))
+  (load (expand-file-name "../lisp/dumped-lisp.el"))
 
   (let ((package-preloaded-file-list
 	 (packages-collect-package-dumped-lisps late-package-load-path)))

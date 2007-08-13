@@ -31,7 +31,7 @@
 ;; This file is dumped with XEmacs.
 
 ;; face implementation #1 (used Lisp vectors and parallel C vectors;
-;; FSFmacs still uses this) authored by Jamie Zawinski <jwz@netscape.com>
+;; FSFmacs still uses this) authored by Jamie Zawinski <jwz@jwz.org>
 ;; pre Lucid-Emacs 19.0.
 
 ;; face implementation #2 (used one face object per frame per face)
@@ -794,7 +794,7 @@ See `face-property-instance' for the semantics of the DOMAIN argument."
 ;; WE DEMAND LEXICAL SCOPING!!!
 ;; WE DEMAND LEXICAL SCOPING!!!
 ;; WE DEMAND LEXICAL SCOPING!!!
-(defun frob-face-property (face property func &optional locale)
+(defun frob-face-property (face property func &optional locale tags)
   "Change the specifier for FACE's PROPERTY according to FUNC, in LOCALE.
 This function is ugly and messy and is primarily used as an internal
 helper function for `make-face-bold' et al., so you probably don't
@@ -814,13 +814,14 @@ first valid instantiator is used), and that result substituted for
 the specification; otherwise, the process just outlined is
 iterated over each existing device and the concatenated results
 substituted for the specification."
-  (let ((sp (face-property face property)))
+  (let ((sp (face-property face property))
+	temp-sp)
     (if (valid-specifier-domain-p locale)
 	;; this is easy.
 	(let* ((inst (face-property-instance face property locale))
 	       (name (and inst (funcall func inst (dfw-device locale)))))
 	  (when name
-	    (add-spec-to-specifier sp name locale)))
+	    (add-spec-to-specifier sp name locale tags)))
       ;; otherwise, map over all specifications ...
       ;; but first, some further kludging:
       ;; (1) if we're frobbing the global property, make sure
@@ -832,33 +833,40 @@ substituted for the specification."
       ;; (2) if we're frobbing a particular locale, nothing would
       ;;     happen if that locale has no instantiators.  So signal
       ;;     an error to indicate this.
+
+      
+      (setq temp-sp (copy-specifier sp))
       (if (and (or (eq locale 'global) (eq locale 'all) (not locale))
 	       (not (face-property face property 'global)))
 	  (copy-specifier (face-property 'default property)
-			  (face-property face property)
-			  'global))
+			  temp-sp 'global))	    
       (if (and (valid-specifier-locale-p locale)
-	       (not (face-property face property locale)))
+	       (not (specifier-specs temp-sp locale)))
 	  (error "Property must have a specification in locale %S" locale))
       (map-specifier
-       sp
-       (lambda (sp locale inst-list func)
+       temp-sp
+       (lambda (sp-arg locale inst-list func)
 	 (let* ((device (dfw-device locale))
 		;; if a device can be derived from the locale,
 		;; call frob-face-property-1 for that device.
 		;; Otherwise map frob-face-property-1 over each device.
 		(result
 		 (if device
-		     (list (frob-face-property-1 sp device inst-list func))
+		     (list (frob-face-property-1 sp-arg device inst-list func))
 		   (mapcar (lambda (device)
-			     (frob-face-property-1 sp device
+			     (frob-face-property-1 sp-arg device
 						   inst-list func))
 			   (device-list))))
 		new-result)
 	   ;; remove duplicates and nils from the obtained list of
-	   ;; instantiators.
+	   ;; instantiators. Also add tags amd remove 'defaults'.
 	   (mapcar (lambda (arg)
-		     (when (and arg (not (member arg new-result)))
+		     (when arg
+		       (if (not (consp arg))
+			   (setq arg (cons tags arg))
+			 (setcar arg (append tags (delete 'default
+							  (car arg))))))
+		     (when (and arg (not (member arg new-result)))		       
 		       (setq new-result (cons arg new-result))))
 		   result)
 	   ;; add back in.
@@ -886,7 +894,7 @@ substituted for the specification."
       (setq inst-list (cdr inst-list)))
     (or result first-valid)))
 
-(defun frob-face-font-2 (face locale unfrobbed-face frobbed-face
+(defun frob-face-font-2 (face locale tags unfrobbed-face frobbed-face
 			      tty-thunk x-thunk standard-face-mapping)
   ;; another kludge to make things more intuitive.  If we're
   ;; inheriting from a standard face in this locale, frob the
@@ -934,9 +942,9 @@ substituted for the specification."
 	    (not (equal (face-property-instance face 'font domain)
 			(face-property-instance unfrobbed-face 'font domain)))
 	    (set-face-property face 'font (vector frobbed-face)
-			       the-locale))))))
+			       the-locale tags))))))
 
-(defun make-face-bold (face &optional locale)
+(defun make-face-bold (face &optional locale tags)
   "Make FACE bold in LOCALE, if possible.
 This will attempt to make the font bold for X locales and will set the
 highlight flag for TTY locales.
@@ -965,24 +973,24 @@ but it makes `make-face-bold' have more intuitive behavior in many
 circumstances."
   (interactive (list (read-face-name "Make which face bold: ")))
   (frob-face-font-2
-   face locale 'default 'bold
+   face locale tags 'default 'bold
    (lambda ()
      ;; handle TTY specific entries
      (when (featurep 'tty)
-       (set-face-highlight-p face t locale 'tty)))
+       (set-face-highlight-p face t locale (cons 'tty tags))))
    (lambda ()
      ;; handle X specific entries
      (when (featurep 'x)
-       (frob-face-property face 'font 'x-make-font-bold locale))
+       (frob-face-property face 'font 'x-make-font-bold locale tags))
      (when (featurep 'mswindows)
-       (frob-face-property face 'font 'mswindows-make-font-bold locale))
+       (frob-face-property face 'font 'mswindows-make-font-bold locale tags))
      )
    '(([default] . [bold])
      ([bold] . t)
      ([italic] . [bold-italic])
      ([bold-italic] . t))))
 
-(defun make-face-italic (face &optional locale)
+(defun make-face-italic (face &optional locale tags)
   "Make FACE italic in LOCALE, if possible.
 This will attempt to make the font italic for X locales and will set
 the underline flag for TTY locales.
@@ -990,24 +998,24 @@ See `make-face-bold' for the semantics of the LOCALE argument and
 for more specifics on exactly how this function works."
   (interactive (list (read-face-name "Make which face italic: ")))
   (frob-face-font-2
-   face locale 'default 'italic
+   face locale tags 'default 'italic
    (lambda ()
      ;; handle TTY specific entries
      (when (featurep 'tty)
-       (set-face-underline-p face t locale 'tty)))
+       (set-face-underline-p face t locale (cons 'tty tags))))
    (lambda ()
      ;; handle X specific entries
      (when (featurep 'x)
-       (frob-face-property face 'font 'x-make-font-italic locale))
+       (frob-face-property face 'font 'x-make-font-italic locale tags))
      (when (featurep 'mswindows)
-       (frob-face-property face 'font 'mswindows-make-font-italic locale))
+       (frob-face-property face 'font 'mswindows-make-font-italic locale tags))
      )
    '(([default] . [italic])
      ([bold] . [bold-italic])
      ([italic] . t)
      ([bold-italic] . t))))
 
-(defun make-face-bold-italic (face &optional locale)
+(defun make-face-bold-italic (face &optional locale tags)
   "Make FACE bold and italic in LOCALE, if possible.
 This will attempt to make the font bold-italic for X locales and will
 set the highlight and underline flags for TTY locales.
@@ -1015,25 +1023,25 @@ See `make-face-bold' for the semantics of the LOCALE argument and
 for more specifics on exactly how this function works."
   (interactive (list (read-face-name "Make which face bold-italic: ")))
   (frob-face-font-2
-   face locale 'default 'bold-italic
+   face locale tags 'default 'bold-italic
    (lambda ()
      ;; handle TTY specific entries
      (when (featurep 'tty)
-       (set-face-highlight-p face t locale 'tty)
-       (set-face-underline-p face t locale 'tty)))
+       (set-face-highlight-p face t locale (cons 'tty tags))
+       (set-face-underline-p face t locale (cons 'tty tags))))
    (lambda ()
      ;; handle X specific entries
      (when (featurep 'x)
-       (frob-face-property face 'font 'x-make-font-bold-italic locale))
+       (frob-face-property face 'font 'x-make-font-bold-italic locale tags))
      (when (featurep 'mswindows)
-       (frob-face-property face 'font 'mswindows-make-font-bold-italic locale))
+       (frob-face-property face 'font 'mswindows-make-font-bold-italic locale tags))
      )
    '(([default] . [italic])
      ([bold] . [bold-italic])
      ([italic] . [bold-italic])
      ([bold-italic] . t))))
 
-(defun make-face-unbold (face &optional locale)
+(defun make-face-unbold (face &optional locale tags)
   "Make FACE non-bold in LOCALE, if possible.
 This will attempt to make the font non-bold for X locales and will
 unset the highlight flag for TTY locales.
@@ -1041,24 +1049,24 @@ See `make-face-bold' for the semantics of the LOCALE argument and
 for more specifics on exactly how this function works."
   (interactive (list (read-face-name "Make which face non-bold: ")))
   (frob-face-font-2
-   face locale 'bold 'default
+   face locale tags 'bold 'default
    (lambda ()
      ;; handle TTY specific entries
      (when (featurep 'tty)
-       (set-face-highlight-p face nil locale 'tty)))
+       (set-face-highlight-p face nil locale (cons 'tty tags))))
    (lambda ()
      ;; handle X specific entries
      (when (featurep 'x)
-       (frob-face-property face 'font 'x-make-font-unbold locale))
+       (frob-face-property face 'font 'x-make-font-unbold locale tags))
      (when (featurep 'mswindows)
-       (frob-face-property face 'font 'mswindows-make-font-unbold locale))
+       (frob-face-property face 'font 'mswindows-make-font-unbold locale tags))
      )
    '(([default] . t)
      ([bold] . [default])
      ([italic] . t)
      ([bold-italic] . [italic]))))
 
-(defun make-face-unitalic (face &optional locale)
+(defun make-face-unitalic (face &optional locale tags)
   "Make FACE non-italic in LOCALE, if possible.
 This will attempt to make the font non-italic for X locales and will
 unset the underline flag for TTY locales.
@@ -1066,17 +1074,17 @@ See `make-face-bold' for the semantics of the LOCALE argument and
 for more specifics on exactly how this function works."
   (interactive (list (read-face-name "Make which face non-italic: ")))
   (frob-face-font-2
-   face locale 'italic 'default
+   face locale tags 'italic 'default
    (lambda ()
      ;; handle TTY specific entries
      (when (featurep 'tty)
-       (set-face-underline-p face nil locale 'tty)))
+       (set-face-underline-p face nil locale (cons 'tty tags))))
    (lambda ()
      ;; handle X specific entries
      (when (featurep 'x)
-       (frob-face-property face 'font 'x-make-font-unitalic locale))
+       (frob-face-property face 'font 'x-make-font-unitalic locale tags))
      (when (featurep 'mswindows)
-       (frob-face-property face 'font 'mswindows-make-font-unitalic locale))
+       (frob-face-property face 'font 'mswindows-make-font-unitalic locale tags))
      )
    '(([default] . t)
      ([bold] . t)
@@ -1197,27 +1205,32 @@ examine the brightness for you."
 ;; Old name, used by custom.  Also, FSFmacs name.
 (defvaralias 'initialize-face-resources 'init-face-from-resources)
 
-(defun face-spec-set (face spec &optional frame)
+;; Make sure all custom setting are added with this tag so we can
+;; identify-them
+(define-specifier-tag 'custom)
+
+(defun face-spec-set (face spec &optional frame tags)
   "Set FACE's face attributes according to the first matching entry in SPEC.
 If optional FRAME is non-nil, set it for that frame only.
 If it is nil, then apply SPEC to each frame individually.
 See `defface' for information about SPEC."
   (if frame
       (progn
-	(reset-face face frame)
-	(face-display-set face spec frame)
+	(reset-face face frame tags)
+	(face-display-set face spec frame tags)
 	(init-face-from-resources face frame))
     (let ((frames (relevant-custom-frames)))
-      (reset-face face)
-      (if (and (eq 'default face) (featurep 'x))
-	  (x-init-global-faces))
-      (face-display-set face spec)
+      (reset-face face nil tags)
+      ;; This should not be needed. We only remove our own specifiers
+      ;; (if (and (eq 'default face) (featurep 'x))
+      ;;	  (x-init-global-faces))
+      (face-display-set face spec nil tags)
       (while frames
-	(face-display-set face spec (car frames))
+	(face-display-set face spec (car frames) tags)
 	(pop frames))
       (init-face-from-resources face))))
 
-(defun face-display-set (face spec &optional frame)
+(defun face-display-set (face spec &optional frame tags)
   "Set FACE to the attributes to the first matching entry in SPEC.
 Iff optional FRAME is non-nil, set it for that frame only.
 See `defface' for information about SPEC."
@@ -1228,7 +1241,7 @@ See `defface' for information about SPEC."
       (when (face-spec-set-match-display display frame)
 	;; Avoid creating frame local duplicates of the global face.
 	(unless (and frame (eq display (get face 'custom-face-display)))
-	  (apply 'face-custom-attributes-set face frame atts))
+	  (apply 'face-custom-attributes-set face frame tags atts))
 	(unless frame
 	  (put face 'custom-face-display display))
 	(setq spec nil)))))
@@ -1347,6 +1360,24 @@ If FRAME is nil or omitted, initialize them for all frames."
 		 (get-custom-frame-properties frame))
     (initialize-custom-faces frame)))
 
+(defun startup-initialize-custom-faces ()
+  "Reset faces created by defface.  Only called at startup.
+Don't use this function in your program."
+  (when default-custom-frame-properties
+    ;; Reset default value to the actual frame, not stream.
+    (setq default-custom-frame-properties
+	  (extract-custom-frame-properties (selected-frame)))
+    ;; like initialize-custom-faces but removes property first.
+    (mapc (lambda (symbol)
+	    (let ((spec (or (get symbol 'saved-face)
+			    (get symbol 'face-defface-spec))))
+	      (when spec
+		;; Reset faces created during auto-autoloads loading.
+		(reset-face symbol)
+		;; And set it according to the spec.
+		(face-display-set symbol spec nil))))
+	  (face-list))))
+
 
 (defun make-empty-face (name &optional doc-string temporary)
   "Like `make-face', but doesn't query the resource database."
@@ -1397,7 +1428,8 @@ and 'global)."
 	   (mswindows-init-device-faces device))
 	  ;; Nothing to do for TTYs?
 	  )
-    (init-other-random-faces device)))
+    (or (eq 'stream (device-type device))
+	(init-other-random-faces device))))
 
 (defun init-frame-faces (frame)
   (when init-face-from-resources
@@ -1507,7 +1539,7 @@ you want to add code to do stuff like this, use the create-device-hook."
   ;; It's unreasonable to expect to be able to make a font italic all
   ;; the time.  For many languages, italic is an alien concept.
   ;; Basically, because italic is not a globally meaningful concept,
-  ;; the use of the italic face should really be oboleted.
+  ;; the use of the italic face should really be obsoleted.
 
   ;; I disagree with above.  In many languages, the concept of capital
   ;; letters is just as alien, and yet we use them.  Italic is here to
@@ -1575,7 +1607,7 @@ If the optional FRAME argument is provided, change only
 in that frame; otherwise change each frame."
   (while (not (find-face face))
     (setq face (signal 'wrong-type-argument (list 'facep face))))
-  (locate-file pixmap x-bitmap-file-path ".xbm:" 4)
+  (locate-file pixmap x-bitmap-file-path '(".xbm" ""))
   (while (cond ((stringp pixmap)
 		(unless (file-readable-p pixmap)
 		  (setq pixmap `[xbm :file ,pixmap]))
@@ -1605,6 +1637,7 @@ in that frame; otherwise change each frame."
     (set-face-underline-p 'underline t 'global '(default)))
 (make-face 'zmacs-region "Used on highlightes region between point and mark.")
 (make-face 'isearch "Used on region matched by isearch.")
+(make-face 'isearch-secondary "Face to use for highlighting all matches.")
 (make-face 'list-mode-item-selected
 	   "Face for the selected list item in list-mode.")
 (make-face 'highlight "Highlight face.")
@@ -1692,6 +1725,13 @@ in that frame; otherwise change each frame."
 		       ((x default color) . "green")
 		       ((mswindows default color) . "paleturquoise")
 		       ((mswindows default color) . "green"))
+		     'global)
+
+;; #### This should really, I mean *really*, be converted to some form
+;; of `defface' one day.
+(set-face-foreground 'isearch-secondary
+		     '(((x default color) . "red3")
+		       ((mswindows default color) . "red3"))
 		     'global)
 
 ;; Define some logical color names to be used when reading the pixmap files.

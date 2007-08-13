@@ -7,16 +7,24 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 1999/03/04 15:48:25 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 2000/01/27 17:11:28 $
 @sp 1
-@author Tony Rossini <arossini@@stat.sc.edu>
-@author Ben Wing <wing@@666.com>
+@author Tony Rossini <rossini@@biostat.washington.edu>
+@author Ben Wing <ben@@xemacs.org>
 @author Chuck Thompson <cthomp@@xemacs.org>
 @author Steve Baur <steve@@xemacs.org>
 @author Andreas Kaempf <andreas@@sccon.com>
 @author Christian Nyb@o{} <chr@@mediascience.no>
+@author Sandra Wambold <wambold@@xemacs.org>
 @page
 @end titlepage
+
+@ifinfo
+@dircategory XEmacs Editor
+@direntry
+* FAQ: (xemacs-faq).            XEmacs FAQ.
+@end direntry
+@end ifinfo
 
 @node Top, Introduction, (dir), (dir)
 @top XEmacs FAQ
@@ -81,6 +89,7 @@ library directory>/info/}. For example in
 * Customization::       Customization and Options.
 * Subsystems::          Major Subsystems.
 * Miscellaneous::       The Miscellaneous Stuff.
+* MS Windows::          XEmacs on Microsoft Windows.
 * Current Events::      What the Future Holds.
 
 @detailmenu
@@ -130,7 +139,6 @@ Getting Started:
 * Q1.4.4::      May I see an example of a useful XEmacs Lisp function?
 * Q1.4.5::      And how do I bind it to a key?
 * Q1.4.6::      What's the difference between a macro and a function?
-* Q1.4.7::      Why options saved with 19.13 don't work with 19.14 or later?
 
 Installation and Trouble Shooting
 
@@ -146,8 +154,6 @@ Installation and Trouble Shooting
 * Q2.0.10::     After I run configure I find a coredump, is something wrong?
 * Q2.0.11::     XEmacs can't resolve host names.
 * Q2.0.12::     Why can't I strip XEmacs?
-* Q2.0.13::     Can't link XEmacs on Solaris with Gcc.
-* Q2.0.14::     Make on HP/UX 9 fails after linking temacs
 
 Trouble Shooting:
 * Q2.1.1::      XEmacs just crashed on me!
@@ -167,12 +173,13 @@ Trouble Shooting:
 * Q2.1.15::     How to debug an XEmacs problem with a debugger.
 * Q2.1.16::     XEmacs crashes in @code{strcat} on HP/UX 10.
 * Q2.1.17::     @samp{Marker does not point anywhere}.
-* Q2.1.18::     19.14 hangs on HP/UX 10.10.
+* Q2.1.18::     [This question intentionally left blank]
 * Q2.1.19::     XEmacs does not follow the local timezone.
 * Q2.1.20::     @samp{Symbol's function definition is void: hkey-help-show.}
-* Q2.1.21::     Every so often the XEmacs frame freezes.
+* Q2.1.21::     [This question intentionally left blank]
 * Q2.1.22::     XEmacs seems to take a really long time to do some things.
 * Q2.1.23::     Movemail on Linux does not work for XEmacs 19.15 and later.
+* Q2.1.24::     XEmacs won't start without network. (NEW)
 
 Customization and Options
 
@@ -189,8 +196,8 @@ Customization and Options
 X Window System & Resources:
 * Q3.1.1::      Where is a list of X resources?
 * Q3.1.2::      How can I detect a color display?
-* Q3.1.3::      @code{(set-screen-width)} worked in 19.6, but not in 19.13?
-* Q3.1.4::      Specifying @code{Emacs*EmacsScreen.geometry} in @file{.emacs} does not work in 19.15?
+* Q3.1.3::      [This question intentionally left blank]
+* Q3.1.4::      [This question intentionally left blank]
 * Q3.1.5::      How can I get the icon to just say @samp{XEmacs}?
 * Q3.1.6::      How can I have the window title area display the full path?
 * Q3.1.7::      @samp{xemacs -name junk} doesn't work?
@@ -298,6 +305,7 @@ Other Mail & News:
 
 Sparcworks, EOS, and WorkShop:
 * Q4.4.1::      What is SPARCworks, EOS, and WorkShop
+* Q4.4.2::      How do I start the Sun Workshop support in XEmacs 21?
 
 Energize:
 * Q4.5.1::      What is/was Energize?
@@ -308,7 +316,7 @@ Infodock:
 Other Unbundled Packages:
 * Q4.7.1::      What is AUC TeX?  Where do you get it?
 * Q4.7.2::      Are there any Emacs Lisp Spreadsheets?
-* Q4.7.3::      Byte compiling AUC TeX on XEmacs 19.14
+* Q4.7.3::      [This question intentionally left blank]
 * Q4.7.4::      Problems installing AUC TeX
 * Q4.7.5::      Is there a reason for an Emacs package not to be included in XEmacs?
 * Q4.7.6::      Is there a MatLab mode?
@@ -325,14 +333,14 @@ The Miscellaneous Stuff
 * Q5.0.8::      Why does edt emulation not work?
 * Q5.0.9::      How can I emulate VI and use it as my default mode?
 * Q5.0.10::     [This question intentionally left blank]
-* Q5.0.11::     Filladapt doesn't work in 19.15?
+* Q5.0.11::     How do I turn on filladapt for all buffers?
 * Q5.0.12::     How do I disable gnuserv from opening a new frame?
 * Q5.0.13::     How do I start gnuserv so that each subsequent XEmacs is a client?
 * Q5.0.14::     Strange things are happening in Shell Mode.
 * Q5.0.15::     Where do I get the latest CC Mode?
 * Q5.0.16::     I find auto-show-mode disconcerting.  How do I turn it off?
 * Q5.0.17::     How can I get two instances of info?
-* Q5.0.18::     I upgraded to XEmacs 19.14 and gnuserv stopped working
+* Q5.0.18::     [This question intentionally left blank]
 * Q5.0.19::     Is there something better than LaTeX mode?
 * Q5.0.20::     Is there a way to start a new XEmacs if there's no gnuserv running, and otherwise use gnuclient?
 
@@ -369,12 +377,38 @@ Miscellaneous:
 * Q5.3.11::     How do I add new Info directories?
 * Q5.3.12::     What do I need to change to make printing work?
 
-What the Future Holds
+XEmacs on MS Windows
 
-* Q6.0.1::      What is new in 20.2?
-* Q6.0.2::      What is new in 20.3?
-* Q6.0.3::      What is new in 20.4?
-* Q6.0.4::      Procedural changes in XEmacs development.
+General Info:
+* Q6.0.1::      What is the status of the XEmacs port to Windows?
+* Q6.0.2::      What flavors of MS Windows are supported?
+* Q6.0.3::      Are binary kits available?
+* Q6.0.4::      Does XEmacs on MS Windows require an X server to run?
+
+Building XEmacs on MS Windows:
+* Q6.1.1::      I decided to run with X.  Where do I get an X server?
+* Q6.1.2::      What compiler do I need to compile XEmacs?
+* Q6.1.3::      How do I compile for the native port?
+* Q6.1.4::      How do I compile for the X port?
+* Q6.1.5::      How do I compile for Cygnus' Cygwin?
+* Q6.1.6::      What do I need for Cygwin?
+
+Customization and User Interface:
+* Q6.2.1::      How will the port cope with differences in the Windows user interface?
+* Q6.2.2::      How do I change fonts in XEmacs on MS Windows?
+* Q6.2.3::      Where do I put my @file{.emacs} file?
+
+Miscellaneous:
+* Q6.3.1::      Will XEmacs rename all the win32-* symbols to w32-*?
+* Q6.3.2::      What are the differences between the various MS Windows emacsen?
+* Q6.3.3::      What is the porting team doing at the moment?
+
+Current Events:
+
+* Q7.0.1::      What is new in 20.2?
+* Q7.0.2::      What is new in 20.3?
+* Q7.0.3::      What is new in 20.4?
+* Q7.0.4::      Procedural changes in XEmacs development.
 @end detailmenu
 @end menu
 
@@ -388,26 +422,24 @@ considering XEmacs for their own use, or has just obtained it and is
 wondering what to do next.  It is also useful as a reference to
 available resources.
 
-The previous maintainer of the FAQ was @email{rossini@@stat.sc.edu,
+The previous maintainer of the FAQ was @email{rossini@@biostat.washington.edu,
 Anthony Rossini}, who started it, after getting tired of hearing JWZ
 complain about repeatedly having to answer questions.
-@email{ben@@666.com, Ben Wing} and @email{cthomp@@xemacs.org, Chuck
+@email{ben@@xemacs.org, Ben Wing} and @email{cthomp@@xemacs.org, Chuck
 Thompson}, the principal authors of XEmacs, then took over and Ben did
 a massive update reorganizing the whole thing.  At which point Anthony
 took back over, but then had to give it up again.  Some of the other
 contributors to this FAQ are listed later in this document.
 
 The previous version was converted to hypertext format, and edited by
-@email{steve@@altair.xemacs.org, Steven L. Baur}.  It was converted back to
-texinfo by @email{hniksic@@srce.hr, Hrvoje Niksic}.
-
-The FAQ was then maintained by @email{andreas@@sccon.com, Andreas
-Kaempf}, who passed it on to @email{faq@@xemacs.org, Christian
-Nyb@o{}}, the current FAQ maintainer.
+@email{steve@@xemacs.org, Steven L. Baur}.  It was converted back to
+texinfo by @email{hniksic@@xemacs.org, Hrvoje Niksic}.  The FAQ was then
+maintained by @email{andreas@@sccon.com, Andreas Kaempf}, who passed it
+on to ChristianNyb@o{}.
 
 If you notice any errors or items which should be added or amended to
-this FAQ please send email to @email{faq@@xemacs.org, Christian
-Nyb@o{}}. Include @samp{XEmacs FAQ} on the Subject: line.
+this FAQ please send email to @email{faq@@xemacs.org, Sandra
+Wambold}.  Include @samp{XEmacs FAQ} on the Subject: line.
 
 @menu
 Introduction:
@@ -452,7 +484,6 @@ Getting Started:
 * Q1.4.4::      May I see an example of a useful XEmacs Lisp function?
 * Q1.4.5::      And how do I bind it to a key?
 * Q1.4.6::      What's the difference between a macro and a function?
-* Q1.4.7::      Why options saved with 19.13 don't work with 19.14 or later?
 @end menu
 
 @node Q1.0.1, Q1.0.2, Introduction, Introduction
@@ -469,6 +500,8 @@ track changes to GNU Emacs while also working to add new features.
 @node Q1.0.2, Q1.0.3, Q1.0.1, Introduction
 @unnumberedsubsec Q1.0.2: What is the current version of XEmacs?
 
+XEmacs 21.1.8 is the current stable version of XEmacs.
+
 XEmacs 20.4 is a minor upgrade from 20.3, containing many bugfixes. It
 was released in February 1998.
 
@@ -478,7 +511,7 @@ which was also the last version without international language support.
 @node Q1.0.3, Q1.0.4, Q1.0.2, Introduction
 @unnumberedsubsec Q1.0.3: Where can I find it?
 
-The canonical source and binaries is found via anonymous FTP at:
+The canonical source and binaries can be found via anonymous FTP at:
 
 @example
 @uref{ftp://ftp.xemacs.org/pub/xemacs/}
@@ -490,7 +523,7 @@ The canonical source and binaries is found via anonymous FTP at:
 For a detailed description of the differences between GNU Emacs and
 XEmacs and a detailed history of XEmacs, check out the
 @example
-@uref{http://www.xemacs.org/NEWS.html, NEWS file}
+@uref{http://www.xemacs.org/About/XEmacsVsGNUemacs.html, NEWS file}
 @end example
 
 However, here is a list of some of the reasons why we think you might
@@ -572,44 +605,37 @@ that often result.  Mail your questions to @email{xemacs-beta@@xemacs.org} and
 @node Q1.0.6, Q1.0.7, Q1.0.5, Introduction
 @unnumberedsubsec Q1.0.6: Where can I get help?
 
-Probably the easiest way, if everything is installed, is to use info, by
-pressing @kbd{C-h i}, or selecting @code{Emacs Info} from the Help Menu.
+Probably the easiest way, if everything is installed, is to use Info, by
+pressing @kbd{C-h i}, or selecting @code{Manuals->Info} from the
+Help Menu.  @kbd{M-x apropos} can be used to look for particular commands.
 
-Also, @kbd{M-x apropos} will look for commands for you.
+For items not found in the manual, try reading this FAQ
+@comment , examining the regular GNU Emacs FAQ (which can be
+@comment found with the Emacs 19 distribution) as well as at
+@comment @uref{http://www.eecs.nwu.edu/emacs/faq/}
+and reading the Usenet group comp.emacs.xemacs.
 
-Try reading this FAQ, examining the regular GNU Emacs FAQ (which can be
-found with the Emacs 19 distribution) as well as at
-@uref{http://www.eecs.nwu.edu/emacs/faq/} and reading the Usenet group
-comp.emacs.xemacs.
-
-If that does not help, try posting your question to comp.emacs.xemacs.
-Please @strong{do not} post XEmacs related questions to gnu.emacs.help.
+If you choose to post to a newsgroup, @strong{please use
+comp.emacs.xemacs}.  Please do not post XEmacs related questions to
+gnu.emacs.help.
 
 If you cannot post or read Usenet news, there is a corresponding mailing
 list which is available.  It can be subscribed to by sending a message
-with a subject of @samp{subscribe} to @email{xemacs-request@@xemacs.org}
-for subscription information and @email{xemacs@@xemacs.org} to send messages
-to the list.
-
-To cancel a subscription, you @strong{must} use the xemacs-request
-address.  Send a message with a subject of @samp{unsubscribe} to be
-removed.
+to @email{xemacs-request@@xemacs.org} with @samp{subscribe} in the
+body of the message.  Send to the list at @email{xemacs@@xemacs.org}.
+list.  To cancel a subscription, you @strong{must} use the
+xemacs-request address.  Send a message with a subject of
+@samp{unsubscribe} to be removed.
 
 @node Q1.0.7, Q1.0.8, Q1.0.6, Introduction
 @unnumberedsubsec Q1.0.7: Where is the mailing list archived?
 
-The mailing list was archived in the directory
-@example
-@uref{ftp://ftp.xemacs.org/pub/mlists/}.
-@end example
-
-However, this archive is out of date.  The current mailing list server
-supports an @code{archive} feature, which may be utilized.
+The archives can be found at @uref{http://www.xemacs.org/Lists/Archive}
 
 @node Q1.0.8, Q1.0.9, Q1.0.7, Introduction
 @unnumberedsubsec Q1.0.8: How do you pronounce XEmacs?
 
-I pronounce it @samp{Eks eemax}.
+The most common pronounciation is @samp{Eks eemax}.
 
 @node Q1.0.9, Q1.0.10, Q1.0.8, Introduction
 @unnumberedsubsec Q1.0.9: What does XEmacs look like?
@@ -622,51 +648,58 @@ Screen snapshots are available in the WWW version of the FAQ.
 @node Q1.0.10, Q1.0.11, Q1.0.9, Introduction
 @unnumberedsubsec Q1.0.10: Is there a port of XEmacs to Microsoft ('95 or NT)?
 
-Thanks to efforts of many people, coordinated by
-@email{davidh@@wr.com.au, David Hobley} and @email{marcpa@@cam.org, Marc
-Paquette}, beta versions of XEmacs now run on 32-bit Windows platforms
-(NT and 95).  The current betas require having an X server to run
-XEmacs; however, a native NT/95 port is in alpha, thanks to
-@email{jhar@@tardis.ed.ac.uk, Jonathan Harris}.
+Yes, @xref{MS Windows}.
 
-Although some features are still unimplemented, XEmacs 21.0 will support
-MS-Windows.
-
-The NT development is now coordinated by a mailing list at
-@email{xemacs-nt@@xemacs.org}.
-
-If you are willing to contribute or want to follow the progress, mail to
-@iftex
-@*
-@end iftex
-@email{xemacs-nt-request@@xemacs.org} to subscribe.
-
-Furthermore, Altrasoft is seeking corporate and government sponsors to
-help fund a fully native port of XEmacs to Windows 95 and NT using
-full-time, senior-level staff working under a professionally managed
-project structure.  See @uref{http://www.altrasoft.com/, the Altrasoft
-web site} for more details
-or contact Altrasoft directly at 1-888-ALTSOFT.
-
-
-The closest existing port is @dfn{Win-Emacs}, which is based on Lucid
-Emacs 19.6.  Available from @uref{http://www.pearlsoft.com/}.
-
-There's a port of GNU Emacs (not XEmacs) at
-@example
-@uref{http://www.cs.washington.edu/homes/voelker/ntemacs.html}.
-@end example
+@comment Thanks to efforts of many people, coordinated by
+@comment @email{davidh@@wr.com.au, David Hobley} and @email{marcpa@@cam.org, Marc
+@comment Paquette}, beta versions of XEmacs now run on 32-bit Windows platforms
+@comment (NT and 95).  The current betas require having an X server to run
+@comment XEmacs; however, a native NT/95 port is in alpha, thanks to
+@comment @email{jhar@@tardis.ed.ac.uk, Jonathan Harris}.
+@comment
+@comment Although some features are still unimplemented, XEmacs 21.0 will support
+@comment MS-Windows.
+@comment
+@comment The NT development is now coordinated by a mailing list at
+@comment @email{xemacs-nt@@xemacs.org}.
+@comment
+@comment If you are willing to contribute or want to follow the progress, mail to
+@comment @iftex
+@comment @*
+@comment @end iftex
+@comment @email{xemacs-nt-request@@xemacs.org} to subscribe.
+@comment
+@comment Furthermore, Altrasoft is seeking corporate and government sponsors to
+@comment help fund a fully native port of XEmacs to Windows 95 and NT using
+@comment full-time, senior-level staff working under a professionally managed
+@comment project structure.  See @uref{http://www.altrasoft.com/, the Altrasoft
+@comment web site} for more details
+@comment or contact Altrasoft directly at 1-888-ALTSOFT.
+@comment
+@comment
+@comment The closest existing port is @dfn{Win-Emacs}, which is based on Lucid
+@comment Emacs 19.6.  Available from @uref{http://www.pearlsoft.com/}.
+@comment
+@comment There's a port of GNU Emacs (not XEmacs) at
+@comment @example
+@comment @uref{http://www.cs.washington.edu/homes/voelker/ntemacs.html}.
+@comment @end example
 
 @node Q1.0.11, Q1.0.12, Q1.0.10, Introduction
 @unnumberedsubsec Q1.0.11: Is there a port of XEmacs to the Macintosh?
 @c changed
 
-There has been a port to the MachTen environment of XEmacs 19.13, but no
-patches have been submitted to the maintainers to get this in the
-mainstream distribution.
+@c There has been a port to the MachTen environment of XEmacs 19.13, but no
+@c patches have been submitted to the maintainers to get this in the
+@c mainstream distribution.
+@c
+@c For the MacOS, there is a port of
+@c @uref{ftp://ftp.cs.cornell.edu/pub/parmet/, Emacs 18.59}.
 
-For the MacOS, there is a port of
-@uref{ftp://ftp.cs.cornell.edu/pub/parmet/, Emacs 18.59}.
+Yes, there is a port of XEmacs 19.14, tested on MacOS 7.6.1 and MacOS
+8.5.1 by @uref{pjarvis@@ispchannel.com,Pitts Jarvis}.  It's available
+at @uref{http://my.ispchannel.com/~pjarvis/xemacs.html,
+http://my.ispchannel.com/~pjarvis/xemacs.html}.
 
 @node Q1.0.12, Q1.0.13, Q1.0.11, Introduction
 @unnumberedsubsec Q1.0.12: Is there a port of XEmacs to NextStep?
@@ -678,44 +711,31 @@ XEmacs port, but never went any farther.
 @node Q1.0.13, Q1.0.14, Q1.0.12, Introduction
 @unnumberedsubsec Q1.0.13: Is there a port of XEmacs to OS/2?
 
-No, and there is no news of anyone working on it.
+No, but Alexander Nikolaev <avn_1251@@mail.ru> is working on it.
 
 @node Q1.0.14, Q1.1.1, Q1.0.13, Introduction
 @unnumberedsubsec Q1.0.14: Where can I obtain a printed copy of the XEmacs users manual?
 
-Altrasoft Associates, a firm specializing in Emacs-related support and
-development, will be maintaining the XEmacs user manual.  The firm plans
-to begin publishing printed copies of the manual soon.
-@c This used to say `March 1997'!
+Pre-printed manuals are not available.  If you are familiar with
+TeX, you can generate your own manual from the XEmacs sources.
 
-@example
-  Web:     @uref{http://www.xemacs.com}
-  E-mail:  @email{info@@xemacs.com}
-  Tel:     +1 408 243 3300
-@end example
+HTML and Postscript versions of XEmacs manuals may be available from the
+XEmacs web site in the future.
+
 
 @node Q1.1.1, Q1.1.2, Q1.0.14, Introduction
 @unnumberedsec 1.1: Policies
 @unnumberedsubsec Q1.1.1: What is the FAQ editorial policy?
 
 The FAQ is actively maintained and modified regularly.  All links should
-be up to date.
-
-Changes are displayed on a monthly basis.  @dfn{Months}, for this
-purpose are defined as the 5th of the month through the 5th of the
-month.  Preexisting questions that have been changed are marked as such.
-Brand new questions are tagged.
-
-All submissions are welcome.  E-mail submissions
-to
-@iftex
-@*
-@end iftex
-@email{faq@@xemacs.org, Christian Nyb@o{}}.
+be up to date.  Unfortunately, some of the information is out of date --
+a situation which the FAQ maintainer is working on.  All submissions are
+welcome, please e-mail submissions to @email{faq@@xemacs.org, XEmacs FAQ
+maintainers}.
 
 Please make sure that @samp{XEmacs FAQ} appears on the Subject: line.
 If you think you have a better way of answering a question, or think a
-question should be included, I'd like to hear about it.  Questions and
+question should be included, we'd like to hear about it.  Questions and
 answers included into the FAQ will be edited for spelling and grammar,
 and will be attributed.  Answers appearing without attribution are
 either from versions of the FAQ dated before May 1996, or are from one
@@ -726,8 +746,8 @@ author.
 @node Q1.1.2, Q1.1.3, Q1.1.1, Introduction
 @unnumberedsubsec Q1.1.2: How do I become a Beta Tester?
 
-Send an email message to @email{xemacs-beta-request@@xemacs.org} with a
-subject line of @samp{subscribe}.
+Send an email message to @email{xemacs-beta-request@@xemacs.org} with
+the line @samp{subscribe} in the body of the message.
 
 Be prepared to get your hands dirty, as beta testers are expected to
 identify problems as best they can.
@@ -735,7 +755,7 @@ identify problems as best they can.
 @node Q1.1.3, Q1.2.1, Q1.1.2, Introduction
 @unnumberedsubsec Q1.1.3: How do I contribute to XEmacs itself?
 
-Ben Wing @email{ben@@666.com} writes:
+Ben Wing @email{ben@@xemacs.org} writes:
 
 @quotation
 BTW if you have a wish list of things that you want added, you have to
@@ -778,14 +798,14 @@ developers responsible for the 19.16/20.x releases are:
 @end ifhtml
 
 
-@item @email{steve@@altair.xemacs.org, Steve Baur}
+@item @email{steve@@xemacs.org, Steve Baur}
 
 @ifhtml
 <br><img src="steve.gif" alt="Portrait of Steve Baur"><br>
 @end ifhtml
 
 
-@item @email{hniksic@@srce.hr, Hrvoje Niksic}
+@item @email{hniksic@@xemacs.org, Hrvoje Niksic}
 
 @ifhtml
 <br><img src="hniksic.jpeg" alt="Portrait of Hrvoje Niksic"><br>
@@ -804,7 +824,7 @@ The developers responsible for the 19.14 release are:
 Chuck was Mr. XEmacs from 19.11 through 19.14, and is responsible
 for XEmacs becoming a widely distributed program over the Internet.
 
-@item @email{ben@@666.com, Ben Wing}
+@item @email{ben@@xemacs.org, Ben Wing}
 @ifhtml
 <br><img src="wing.gif" alt="Portrait of Ben Wing"><br>
 @end ifhtml
@@ -813,7 +833,7 @@ for XEmacs becoming a widely distributed program over the Internet.
 
 
 @itemize @bullet
-@item @email{jwz@@netscape.com, Jamie Zawinski}
+@item @email{jwz@@jwz.org, Jamie Zawinski}
 @ifhtml
 <br><img src="jwz.gif" alt="Portrait of Jamie Zawinski"><br>
 @end ifhtml
@@ -837,7 +857,7 @@ version of the FAQ (listed in alphabetical order):
 @itemize @bullet
 @item @email{steve@@xemacs.org, SL Baur}
 
-@item @email{hniksic@@srce.hr, Hrvoje Niksic}
+@item @email{hniksic@@xemacs.org, Hrvoje Niksic}
 
 @item @email{Aki.Vehtari@@hut.fi, Aki Vehtari}
 
@@ -852,13 +872,19 @@ crash some time ago.
 @itemize @bullet
 @item @email{binge@@aloft.att.com, Curtis.N.Bingham}
 
+@item @email{bruncott@@dormeur.inria.fr, Georges Brun-Cottan}
+
 @item @email{rjc@@cogsci.ed.ac.uk, Richard Caley}
 
 @item @email{cognot@@ensg.u-nancy.fr, Richard Cognot}
 
+@item @email{daku@@nortel.ca, Mark Daku}
+
 @item @email{wgd@@martigny.ai.mit.edu, William G. Dubuque}
 
 @item @email{eeide@@cs.utah.edu, Eric Eide}
+
+@item @email{af@@biomath.jussieu.fr, Alain Fauconnet}
 
 @item @email{cflatter@@nrao.edu, Chris Flatters}
 
@@ -916,7 +942,7 @@ This is yet another holdover from XEmacs Lisp's derivation from
 vintage-1980 Lisps; modern versions of Lisp consider this equivalence
 a bad idea, and have separate character types.  In XEmacs version 20,
 the modern convention is followed, and characters are their own
-primitive types. (This change was necessary in order for @sc{MULE},
+primitive types. (This change was necessary in order for @sc{mule},
 i.e. Asian-language, support to be correctly implemented.)
 
   Even in XEmacs version 20, remnants of the equivalence between
@@ -927,28 +953,28 @@ confoundance disease}.  In particular, many functions such as @code{eq},
 are integers are the same.  Byte code compiled under any version 19
 Emacs will have all such functions mapped to their @code{old-} equivalents
 when the byte code is read into XEmacs 20.  This is to preserve
-compatibility -- Emacs 19 converts all constant characters to the equivalent
+compatibility---Emacs 19 converts all constant characters to the equivalent
 integer during byte-compilation, and thus there is no other way to preserve
 byte-code compatibility even if the code has specifically been written
 with the distinction between characters and integers in mind.
 
   Every character has an equivalent integer, called the @dfn{character
 code}.  For example, the character @kbd{A} is represented as the
-@w{integer 65}, following the standard @sc{ASCII} representation of
-characters.  If XEmacs was not compiled with @sc{MULE} support, the
-range of this integer will always be 0 to 255 -- eight bits, or one
+@w{integer 65}, following the standard @sc{ascii} representation of
+characters.  If XEmacs was not compiled with @sc{mule} support, the
+range of this integer will always be 0 to 255---eight bits, or one
 byte. (Integers outside this range are accepted but silently truncated;
 however, you should most decidedly @emph{not} rely on this, because it
-will not work under XEmacs with @sc{MULE} support.)  When @sc{MULE}
+will not work under XEmacs with @sc{mule} support.)  When @sc{mule}
 support is present, the range of character codes is much
 larger. (Currently, 19 bits are used.)
 
   FSF GNU Emacs uses kludgy character codes above 255 to represent
-keyboard input of @sc{ASCII} characters in combination with certain
+keyboard input of @sc{ascii} characters in combination with certain
 modifiers.  XEmacs does not use this (a more general mechanism is
-used that does not distinguish between @sc{ASCII} keys and other
+used that does not distinguish between @sc{ascii} keys and other
 keys), so you will never find character codes above 255 in a
-non-@sc{MULE} XEmacs.
+non-@sc{mule} XEmacs.
 
   Individual characters are not often used in programs.  It is far more
 common to work with @emph{strings}, which are sequences composed of
@@ -958,14 +984,12 @@ characters.
 @node Q1.3.2, Q1.3.3, Q1.3.1, Introduction
 @unnumberedsubsec Q1.3.2: What is the status of Asian-language support, aka MULE?
 
-The MULE support works OK but still needs a fair amount of work before
-it's really solid.  We could definitely use some help here, esp. people
-who speak Japanese and will use XEmacs/MULE to work with Japanese and
-have some experience with E-Lisp.
+MULE support is now available for UNIX versions of XEmacs.
 
-As the fundings on Mule have stopped, the Mule part of XEmacs is currently
-looking for a full-time maintainer.  If you can provide help here, or
-are willing to fund the work, please mail to @email{xemacs-beta@@xemacs.org}.
+If you would like to help, you may want to join the
+@email{xemacs-mule@@xemacs.org} mailing list.  Especially needed are
+people who speak/write languages other than English, who are willing to
+use XEmacs/MULE regularly, and have some experience with Elisp.
 
 @xref{Q1.1.2}.
 
@@ -983,9 +1007,9 @@ it.  However, menubar localization @emph{does} work, even in 19.14.  To
 enable it, add to your @file{Emacs} file entries like this:
 
 @example
-Emacs*XlwMenu.resourceLabels:			True
-Emacs*XlwMenu.file.labelString:	        	Fichier
-Emacs*XlwMenu.openInOtherWindow.labelString: 	In anderem Fenster offnen
+Emacs*XlwMenu.resourceLabels:                   True
+Emacs*XlwMenu.file.labelString:                 Fichier
+Emacs*XlwMenu.openInOtherWindow.labelString:    In anderem Fenster offnen
 @end example
 
 The name of the resource is derived from the non-localized entry by
@@ -1080,12 +1104,12 @@ Following is a sample to distinguish mule variants:
     (cond ((boundp 'MULE)
            ;; for original Mule
            )
-	  ((string-match "XEmacs" emacs-version)
-	   ;; for XEmacs with Mule
-	   )
-	  (t
-	   ;; for next version of Emacs
-	   ))
+          ((string-match "XEmacs" emacs-version)
+           ;; for XEmacs with Mule
+           )
+          (t
+           ;; for next version of Emacs
+           ))
   ;; for old emacs variants
   )
 @end lisp
@@ -1154,23 +1178,23 @@ show you how to handle different versions and flavors of Emacs.
 @node Q1.4.3, Q1.4.4, Q1.4.2, Introduction
 @unnumberedsubsec Q1.4.3: Any good tutorials around?
 
-There's the XEmacs tutorial available from the Help Menu, or by typing
-@kbd{C-h t}. To check whether it's available in a non-english language,
-type @kbd{C-u C-h t TAB}, type the first letters of your preferred
-language, then type @key{RET}.
+There's the XEmacs tutorial available from the Help Menu under
+@samp{Basics->Tutorials}, or by typing @kbd{C-h t}. To check whether
+it's available in a non-english language, type @kbd{C-u C-h t TAB}, type
+the first letters of your preferred language, then type @key{RET}.
 
-There's an Emacs Lisp tutorial at
-
-@example
-@uref{ftp://prep.ai.mit.edu/pub/gnu/emacs-lisp-intro-1.04.tar.gz}.
-@end example
-
-@email{erik@@petaxp.rug.ac.be, Erik Sundermann} has made a tutorial web
-page at
-@iftex
-@*
-@end iftex
-@uref{http://petaxp.rug.ac.be/~erik/xemacs/}.
+@comment There's an Emacs Lisp tutorial at
+@comment
+@comment @example
+@comment @uref{ftp://prep.ai.mit.edu/pub/gnu/emacs-lisp-intro-1.04.tar.gz}.
+@comment @end example
+@comment
+@comment @email{erik@@petaxp.rug.ac.be, Erik Sundermann} has made a tutorial web
+@comment page at
+@comment @iftex
+@comment @*
+@comment @end iftex
+@comment @uref{http://petaxp.rug.ac.be/~erik/xemacs/}.
 
 @node Q1.4.4, Q1.4.5, Q1.4.3, Introduction
 @unnumberedsubsec Q1.4.4: May I see an example of a useful XEmacs Lisp function?
@@ -1218,7 +1242,7 @@ To bind to a key do:
 
 Or interactively, @kbd{M-x global-set-key} and follow the prompts.
 
-@node Q1.4.6, Q1.4.7, Q1.4.5, Introduction
+@node Q1.4.6, , Q1.4.5, Introduction
 @unnumberedsubsec Q1.4.6: What's the difference between a macro and a function?
 
 Quoting from the Lisp Reference (a.k.a @dfn{Lispref}) Manual:
@@ -1237,36 +1261,6 @@ or parts of them.
 Do not confuse the two terms with @dfn{keyboard macros}, which are
 another matter, entirely.  A keyboard macro is a key bound to several
 other keys.  Refer to manual for details.
-
-@node Q1.4.7, , Q1.4.6, Introduction
-@unnumberedsubsec Q1.4.7: How come options saved with 19.13 don't work with 19.14 or later?
-
-There's a problem with options of the form:
-
-@lisp
-(add-spec-list-to-specifier (face-property 'searchm-field 'font)
-                            '((global (nil))))
-@end lisp
-
-saved by a 19.13 XEmacs that causes a 19.14 XEmacs grief.  You must
-delete these options.  XEmacs 19.14 and later no longer write the
-options directly to @file{.emacs} which should allow us to deal with
-version incompatibilities better in the future.
-
-Options saved under XEmacs 19.13 are protected by code that specifically
-requires a version 19 XEmacs.  This won't be a problem unless you're
-using XEmacs v20.  You should consider changing the code to read:
-
-@lisp
-(cond
- ((and (string-match "XEmacs" emacs-version)
-       (boundp 'emacs-major-version)
-       (or (and (= emacs-major-version 19)
-                (>= emacs-minor-version 12))
-           (>= emacs-major-version 20)))
-  ...
-  ))
-@end lisp
 
 @node Installation, Customization, Introduction, Top
 @unnumbered 2 Installation and Trouble Shooting
@@ -1288,8 +1282,6 @@ Installation:
 * Q2.0.10::     After I run configure I find a coredump, is something wrong?
 * Q2.0.11::     XEmacs can't resolve host names.
 * Q2.0.12::     Why can't I strip XEmacs?
-* Q2.0.13::     Can't link XEmacs on Solaris with Gcc.
-* Q2.0.14::     Make on HP/UX 9 fails after linking temacs
 
 Trouble Shooting:
 * Q2.1.1::      XEmacs just crashed on me!
@@ -1309,12 +1301,13 @@ Trouble Shooting:
 * Q2.1.15::     How to debug an XEmacs problem with a debugger.
 * Q2.1.16::     XEmacs crashes in @code{strcat} on HP/UX 10.
 * Q2.1.17::     @samp{Marker does not point anywhere}.
-* Q2.1.18::     19.14 hangs on HP/UX 10.10.
+* Q2.1.18::     [This question intentionally left blank]
 * Q2.1.19::     XEmacs does not follow the local timezone.
 * Q2.1.20::     @samp{Symbol's function definition is void: hkey-help-show.}
-* Q2.1.21::     Every so often the XEmacs frame freezes.
+* Q2.1.21::     [This question intentionally left blank]
 * Q2.1.22::     XEmacs seems to take a really long time to do some things.
 * Q2.1.23::     Movemail on Linux does not work for XEmacs 19.15 and later.
+* Q2.1.24::     XEmacs won't start without network. (NEW)
 @end menu
 
 @node Q2.0.1, Q2.0.2, Installation, Installation
@@ -1345,7 +1338,7 @@ This will let you run XEmacs without massive copying.
 Although this entry has been written for XEmacs 19.13, most of it still
 stands true.
 
-@email{steve@@altair.xemacs.org, Steve Baur} writes:
+@email{steve@@xemacs.org, Steve Baur} writes:
 
 @quotation
 The 45MB of space required by the installation directories can be
@@ -1361,11 +1354,11 @@ out ways to reduce the disk requirements if desired.
 Now examine the space used by directory:
 
 @format
-0	/usr/local/bin/xemacs
-2048	/usr/local/bin/xemacs-19.13
+0       /usr/local/bin/xemacs
+2048    /usr/local/bin/xemacs-19.13
 
-1546	/usr/local/lib/xemacs-19.13/i486-miranova-sco3.2v4.2
-1158	/usr/local/lib/xemacs-19.13/i486-unknown-linux1.2.13
+1546    /usr/local/lib/xemacs-19.13/i486-miranova-sco3.2v4.2
+1158    /usr/local/lib/xemacs-19.13/i486-unknown-linux1.2.13
 @end format
 
 You need to keep these.  XEmacs isn't stripped by default in
@@ -1373,15 +1366,15 @@ installation, you should consider stripping.  That will save you about
 5MB right there.
 
 @format
-207	/usr/local/lib/xemacs-19.13/etc/w3
-122	/usr/local/lib/xemacs-19.13/etc/sounds
-18	/usr/local/lib/xemacs-19.13/etc/sparcworks
-159	/usr/local/lib/xemacs-19.13/etc/vm
-6	/usr/local/lib/xemacs-19.13/etc/e
-21	/usr/local/lib/xemacs-19.13/etc/eos
-172	/usr/local/lib/xemacs-19.13/etc/toolbar
-61	/usr/local/lib/xemacs-19.13/etc/ns
-43	/usr/local/lib/xemacs-19.13/etc/gnus
+207     /usr/local/lib/xemacs-19.13/etc/w3
+122     /usr/local/lib/xemacs-19.13/etc/sounds
+18      /usr/local/lib/xemacs-19.13/etc/sparcworks
+159     /usr/local/lib/xemacs-19.13/etc/vm
+6       /usr/local/lib/xemacs-19.13/etc/e
+21      /usr/local/lib/xemacs-19.13/etc/eos
+172     /usr/local/lib/xemacs-19.13/etc/toolbar
+61      /usr/local/lib/xemacs-19.13/etc/ns
+43      /usr/local/lib/xemacs-19.13/etc/gnus
 @end format
 
 These are support directories for various packages.  In general they
@@ -1389,50 +1382,50 @@ match a directory under ./xemacs-19.13/lib/xemacs-19.13/lisp/.  If you
 do not require the package, you may delete or gzip the support too.
 
 @format
-1959	/usr/local/lib/xemacs-19.13/etc
-175	/usr/local/lib/xemacs-19.13/lisp/bytecomp
-340	/usr/local/lib/xemacs-19.13/lisp/calendar
-342	/usr/local/lib/xemacs-19.13/lisp/comint
-517	/usr/local/lib/xemacs-19.13/lisp/dired
-42	/usr/local/lib/xemacs-19.13/lisp/electric
-212	/usr/local/lib/xemacs-19.13/lisp/emulators
-238	/usr/local/lib/xemacs-19.13/lisp/energize
-289	/usr/local/lib/xemacs-19.13/lisp/gnus
-457	/usr/local/lib/xemacs-19.13/lisp/ilisp
-1439	/usr/local/lib/xemacs-19.13/lisp/modes
-2276	/usr/local/lib/xemacs-19.13/lisp/packages
-1040	/usr/local/lib/xemacs-19.13/lisp/prim
-176	/usr/local/lib/xemacs-19.13/lisp/pcl-cvs
-154	/usr/local/lib/xemacs-19.13/lisp/rmail
-3	/usr/local/lib/xemacs-19.13/lisp/epoch
-45	/usr/local/lib/xemacs-19.13/lisp/term
-860	/usr/local/lib/xemacs-19.13/lisp/utils
-851	/usr/local/lib/xemacs-19.13/lisp/vm
-13	/usr/local/lib/xemacs-19.13/lisp/vms
-157	/usr/local/lib/xemacs-19.13/lisp/x11
-19	/usr/local/lib/xemacs-19.13/lisp/tooltalk
-14	/usr/local/lib/xemacs-19.13/lisp/sunpro
-291	/usr/local/lib/xemacs-19.13/lisp/games
-198	/usr/local/lib/xemacs-19.13/lisp/edebug
-619	/usr/local/lib/xemacs-19.13/lisp/w3
-229	/usr/local/lib/xemacs-19.13/lisp/eos
-55	/usr/local/lib/xemacs-19.13/lisp/iso
-59	/usr/local/lib/xemacs-19.13/lisp/mailcrypt
-187	/usr/local/lib/xemacs-19.13/lisp/eterm
-356	/usr/local/lib/xemacs-19.13/lisp/ediff
-408	/usr/local/lib/xemacs-19.13/lisp/hyperbole/kotl
-1262	/usr/local/lib/xemacs-19.13/lisp/hyperbole
-247	/usr/local/lib/xemacs-19.13/lisp/hm--html-menus
-161	/usr/local/lib/xemacs-19.13/lisp/mh-e
-299	/usr/local/lib/xemacs-19.13/lisp/viper
-53	/usr/local/lib/xemacs-19.13/lisp/oobr/tree-x
-4	/usr/local/lib/xemacs-19.13/lisp/oobr/tree-nx/English.lproj/DocWindow.nib
-3	/usr/local/lib/xemacs-19.13/lisp/oobr/tree-nx/English.lproj/InfoPanel.nib
-3	/usr/local/lib/xemacs-19.13/lisp/oobr/tree-nx/English.lproj/TreeView.nib
-11	/usr/local/lib/xemacs-19.13/lisp/oobr/tree-nx/English.lproj
-53	/usr/local/lib/xemacs-19.13/lisp/oobr/tree-nx
-466	/usr/local/lib/xemacs-19.13/lisp/oobr
-14142	/usr/local/lib/xemacs-19.13/lisp
+1959    /usr/local/lib/xemacs-19.13/etc
+175     /usr/local/lib/xemacs-19.13/lisp/bytecomp
+340     /usr/local/lib/xemacs-19.13/lisp/calendar
+342     /usr/local/lib/xemacs-19.13/lisp/comint
+517     /usr/local/lib/xemacs-19.13/lisp/dired
+42      /usr/local/lib/xemacs-19.13/lisp/electric
+212     /usr/local/lib/xemacs-19.13/lisp/emulators
+238     /usr/local/lib/xemacs-19.13/lisp/energize
+289     /usr/local/lib/xemacs-19.13/lisp/gnus
+457     /usr/local/lib/xemacs-19.13/lisp/ilisp
+1439    /usr/local/lib/xemacs-19.13/lisp/modes
+2276    /usr/local/lib/xemacs-19.13/lisp/packages
+1040    /usr/local/lib/xemacs-19.13/lisp/prim
+176     /usr/local/lib/xemacs-19.13/lisp/pcl-cvs
+154     /usr/local/lib/xemacs-19.13/lisp/rmail
+3       /usr/local/lib/xemacs-19.13/lisp/epoch
+45      /usr/local/lib/xemacs-19.13/lisp/term
+860     /usr/local/lib/xemacs-19.13/lisp/utils
+851     /usr/local/lib/xemacs-19.13/lisp/vm
+13      /usr/local/lib/xemacs-19.13/lisp/vms
+157     /usr/local/lib/xemacs-19.13/lisp/x11
+19      /usr/local/lib/xemacs-19.13/lisp/tooltalk
+14      /usr/local/lib/xemacs-19.13/lisp/sunpro
+291     /usr/local/lib/xemacs-19.13/lisp/games
+198     /usr/local/lib/xemacs-19.13/lisp/edebug
+619     /usr/local/lib/xemacs-19.13/lisp/w3
+229     /usr/local/lib/xemacs-19.13/lisp/eos
+55      /usr/local/lib/xemacs-19.13/lisp/iso
+59      /usr/local/lib/xemacs-19.13/lisp/mailcrypt
+187     /usr/local/lib/xemacs-19.13/lisp/eterm
+356     /usr/local/lib/xemacs-19.13/lisp/ediff
+408     /usr/local/lib/xemacs-19.13/lisp/hyperbole/kotl
+1262    /usr/local/lib/xemacs-19.13/lisp/hyperbole
+247     /usr/local/lib/xemacs-19.13/lisp/hm--html-menus
+161     /usr/local/lib/xemacs-19.13/lisp/mh-e
+299     /usr/local/lib/xemacs-19.13/lisp/viper
+53      /usr/local/lib/xemacs-19.13/lisp/oobr/tree-x
+4       /usr/local/lib/xemacs-19.13/lisp/oobr/tree-nx/English.lproj/DocWindow.nib
+3       /usr/local/lib/xemacs-19.13/lisp/oobr/tree-nx/English.lproj/InfoPanel.nib
+3       /usr/local/lib/xemacs-19.13/lisp/oobr/tree-nx/English.lproj/TreeView.nib
+11      /usr/local/lib/xemacs-19.13/lisp/oobr/tree-nx/English.lproj
+53      /usr/local/lib/xemacs-19.13/lisp/oobr/tree-nx
+466     /usr/local/lib/xemacs-19.13/lisp/oobr
+14142   /usr/local/lib/xemacs-19.13/lisp
 @end format
 
 These are all Emacs Lisp source code and bytecompiled object code.  You
@@ -1458,14 +1451,14 @@ directories you definitely do @strong{not} want to delete, although
 certain packages can be removed from them if you do not use them.
 
 @example
-1972	/usr/local/lib/xemacs-19.13/info
+1972    /usr/local/lib/xemacs-19.13/info
 @end example
 
 These are online texinfo sources.  You may either gzip them or remove
 them.  In either case, @kbd{C-h i} (info mode) will no longer work.
 
 @example
-20778	/usr/local/lib/xemacs-19.13
+20778   /usr/local/lib/xemacs-19.13
 @end example
 
 The 20MB achieved is less than half of what the full distribution takes up,
@@ -1561,7 +1554,7 @@ Initialization error:
 Terminal type `xterm' undefined (or can't access database?)
 @end example
 
-@email{ben@@666.com, Ben Wing} writes:
+@email{ben@@xemacs.org, Ben Wing} writes:
 
 @quotation
 Your ncurses configuration is messed up.  Your /usr/lib/terminfo is a
@@ -1573,7 +1566,7 @@ bad pointer, perhaps to a CD-ROM that is not inserted.
 
 No.  The name @dfn{XEmacs} is unfortunate in the sense that it is
 @strong{not} an X Window System-only version of Emacs.  Starting with
-19.14 XEmacs has full color support on a color capable character
+19.14 XEmacs has full color support on a color-capable character
 terminal.
 
 @node Q2.0.6, Q2.0.7, Q2.0.5, Installation
@@ -1615,11 +1608,11 @@ Patch the XEmacs binary by replacing all occurrences of
 suffice.  If you don't understand how to do this, don't do it.
 
 @item
-Rebuild XEmacs yourself -- any working ELF version of libc should be
+Rebuild XEmacs yourself---any working ELF version of libc should be
 O.K.
 @end enumerate
 
-@email{hniksic@@srce.hr, Hrvoje Niksic} writes:
+@email{hniksic@@xemacs.org, Hrvoje Niksic} writes:
 
 @quotation
 Why not use a Perl one-liner for No. 2?
@@ -1740,7 +1733,7 @@ check to see if you've put DNS in the shared libc and will then proceed
 to link against the DNS resolver library code.
 @end quotation
 
-@node Q2.0.12, Q2.0.13, Q2.0.11, Installation
+@node Q2.0.12, Q2.1.1, Q2.0.11, Installation
 @unnumberedsubsec Q2.0.12: Why can't I strip XEmacs?
 
 @email{cognot@@fronsac.ensg.u-nancy.fr, Richard Cognot} writes:
@@ -1795,46 +1788,7 @@ cp lib-src/DOC-19.16-XEmacs
 @end enumerate
 @end quotation
 
-@node Q2.0.13, Q2.0.14, Q2.0.12, Installation
-@unnumberedsubsec Q2.0.13: Problems linking with Gcc on Solaris
-
-There are known difficulties linking with Gnu ld on Solaris.  A typical
-error message might look like:
-
-@example
-unexec(): dlopen(../dynodump/dynodump.so): ld.so.1: ./temacs:
-fatal: relocation error:
-symbol not found: main: referenced in ../dynodump/dynodump.so
-@end example
-
-@email{martin@@xemacs.org, Martin Buchholz} writes:
-
-@quotation
-You need to specify @samp{-fno-gnu-linker} as part of your flags to pass
-to ld.  Future releases of XEmacs will try to do this automatically.
-@end quotation
-
-@node Q2.0.14, Q2.1.1, Q2.0.13, Installation
-@unnumberedsubsec Q2.0.14: Make on HP/UX 9 fails after linking temacs
-
-Problem when building xemacs-19.16 on hpux 9:
-
-@email{cognot@@ensg.u-nancy.fr, Richard Cognot} writes:
-
-@quotation
-make on hpux fails after linking temacs with a message:
-
-@example
-"make: don't know how to make .y."
-@end example
-
-Solution: This is a problem with HP make revision 70.X.  Either use GNU
-make, or install PHCO_6552, which will bring make to revision
-72.24.1.17.
-@end quotation
-
-
-@node Q2.1.1, Q2.1.2, Q2.0.14, Installation
+@node Q2.1.1, Q2.1.2, Q2.0.12, Installation
 @unnumberedsec 2.1: Trouble Shooting
 @unnumberedsubsec Q2.1.1: Help!  XEmacs just crashed on me!
 
@@ -2051,10 +2005,10 @@ backgrounds and foregrounds into your @file{.../app-defaults/Emacs}
 like:
 
 @example
-*Foreground:	Black	;everything will be of black on grey95,
-*Background:	Grey95	;unless otherwise specified.
-*cursorColor:	Red3	;red3 cursor with grey95 border.
-*pointerColor:	Red3	;red3 pointer with grey95 border.
+*Foreground:    Black   ;everything will be of black on grey95,
+*Background:    Grey95  ;unless otherwise specified.
+*cursorColor:   Red3    ;red3 cursor with grey95 border.
+*pointerColor:  Red3    ;red3 pointer with grey95 border.
 @end example
 @end quotation
 
@@ -2203,7 +2157,7 @@ forcing a static link of libc (manually).
 @node Q2.1.14, Q2.1.15, Q2.1.13, Installation
 @unnumberedsubsec Q2.1.14: @kbd{C-g} doesn't work for me.  Is it broken?
 
-@email{ben@@666.com, Ben Wing} writes:
+@email{ben@@xemacs.org, Ben Wing} writes:
 
 @quotation
 @kbd{C-g} does work for most people in most circumstances.  If it
@@ -2298,17 +2252,55 @@ it cannot display the internal C structure of a Lisp Object.  Even if
 all you've got is a core dump, all is not lost.
 
 If you're using GDB, there are some macros in the file
-@file{src/gdbinit} in the XEmacs source distribution that should make it
-easier for you to decode Lisp objects.  Copy this file to
-@file{~/.gdbinit}, or @code{source} it from @file{~/.gdbinit}, and use
-the macros defined therein.  In particular, use the @code{pobj} macro to
-print the internal C representation of a lisp object.  This will work
-with a core file or not-yet-run executable.  The aliases @code{ldp} and
-@code{lbt} are provided for conveniently calling @code{debug_print} and
-@code{debug_backtrace}.
+@file{src/.gdbinit} in the XEmacs source distribution that should make
+it easier for you to decode Lisp objects.  This file is automatically
+read by gdb if gdb is run in the directory where xemacs was built, and
+contains these useful macros to inspect the state of xemacs:
+
+@table @code
+@item pobj
+Usage: pobj lisp_object @*
+Print the internal C representation of a lisp object.
+
+@item xtype
+Usage: xtype lisp_object @*
+Print the Lisp type of a lisp object.
+
+@item lbt
+Usage: lbt @*
+Print the current Lisp stack trace.
+Requires a running xemacs process.
+
+@item ldp
+Usage: ldp lisp_object @*
+Print a Lisp Object value using the Lisp printer.
+Requires a running xemacs process.
+
+@item run-temacs
+Usage: run-temacs @*
+Run temacs interactively, like xemacs.
+Use this with debugging tools (like purify) that cannot deal with dumping,
+or when temacs builds successfully, but xemacs does not.
+
+@item dump-temacs
+Usage: dump-temacs @*
+Run the dumping part of the build procedure.
+Use when debugging temacs, not xemacs!
+Use this when temacs builds successfully, but xemacs does not.
+
+@item check-xemacs
+Usage: check-xemacs @*
+Run the test suite.  Equivalent to 'make check'.
+
+@item check-temacs
+Usage: check-temacs @*
+Run the test suite on temacs.  Equivalent to 'make check-temacs'.
+Use this with debugging tools (like purify) that cannot deal with dumping,
+or when temacs builds successfully, but xemacs does not.
+@end table
 
 If you are using Sun's @file{dbx} debugger, there is an equivalent file
-@file{src/dbxrc} to copy to or source from @file{~/.dbxrc}.
+@file{src/.dbxrc}, which defines the same commands for dbx.
 
 @item
 If you're using a debugger to get a C stack backtrace and you're seeing
@@ -2359,22 +2351,21 @@ you'll have something useful.
 
 @item
 If you compile with the newer gcc variants gcc-2.8 or egcs, you will
-also need gdb 4.17.  Earlier releases of gdb can't handle the debug
-information generated by the newer compilers.
+also need gdb 4.17 or above.  Earlier releases of gdb can't handle the
+debug information generated by the newer compilers.
 
 @item
-The above information on using @file{src/gdbinit} works for XEmacs-21.0
-and above.  For older versions of XEmacs, there are different
-@file{gdbinit} files provided in the @file{src} directory.  Use the one
-corresponding to the configure options used when building XEmacs.
+In versions of XEmacs before 21.2.27, @file{src/.gdbinit} was named
+@file{src/gdbinit}.  This had the disadvantage of not being sourced
+automatically by gdb, so you had to set that up yourself.
 
 @end itemize
 
 @node Q2.1.16, Q2.1.17, Q2.1.15, Installation
 @unnumberedsubsec Q2.1.16: XEmacs crashes in @code{strcat} on HP/UX 10
 
->From the problems database (through
-@uref{http://support.mayfield.hp.com/}):
+From the problems database (through
+the former address http://support.mayfield.hp.com/):
 
 @example
 Problem Report: 5003302299
@@ -2412,58 +2403,7 @@ Upgrade your Gnus.
 @end enumerate
 
 @node Q2.1.18, Q2.1.19, Q2.1.17, Installation
-@unnumberedsubsec Q2.1.18: 19.14 hangs on HP/UX 10.10.
-
-@email{cognot@@ensg.u-nancy.fr, Richard Cognot} writes:
-
-@quotation
-For the record, compiling on hpux 10.10 leads to a hang in Gnus when
-compiled with optimization on.
-
-I've just discovered that my hpux 10.01 binary was working less well
-than expected. In fact, on a 10.10 system, @code{(while t)} was not
-interrupted by @kbd{C-g}. I defined @code{BROKEN_SIGIO} and recompiled on
-10.10, and... the hang is now gone.
-
-As far as configure goes, this will be a bit tricky: @code{BROKEN_SIGIO}
-is needed on 10.10, but @strong{not} on 10.01: if I run my 10.01 binary
-on a 10.01 machine, without @code{BROKEN_SIGIO} being defined, @kbd{C-g}
-works as expected.
-@end quotation
-
-@email{cognot@@ensg.u-nancy.fr, Richard Cognot} adds:
-
-@quotation
-Apparently somebody has found the reason why there is this
-@iftex
-@*
-@end iftex
-@samp{poll:
-interrupted...} message for each event.  For some reason, libcurses
-reimplements a @code{select()} system call, in a highly broken fashion.
-The fix is to add a -lc to the link line @emph{before} the
--lxcurses. XEmacs will then use the right version of @code{select()}.
-@end quotation
-
-
-@email{af@@biomath.jussieu.fr, Alain Fauconnet} writes:
-
-@quotation
-The @emph{real} solution is to @emph{not} link -lcurses in!  I just
-changed -lcurses to -ltermcap in the Makefile and it fixed:
-
-@enumerate
-@item
-The @samp{poll: interrupted system call} message.
-
-@item
-A more serious problem I had discovered in the meantime, that is the
-fact that subprocess handling was seriously broken: subprocesses
-e.g. started by AUC TeX for TeX compilation of a buffer would
-@emph{hang}.  Actually they would wait forever for emacs to read the
-socket which connects stdout...
-@end enumerate
-@end quotation
+@unnumberedsubsec Q2.1.18: removed
 
 @node Q2.1.19, Q2.1.20, Q2.1.18, Installation
 @unnumberedsubsec Q2.1.19: XEmacs does not follow the local timezone.
@@ -2491,10 +2431,7 @@ This is a problem with a partially loaded hyperbole.  Try adding:
 where you load hyperbole and the problem should go away.
 
 @node Q2.1.21, Q2.1.22, Q2.1.20, Installation
-@unnumberedsubsec Q2.1.21: Every so often the XEmacs frame freezes
-
-This problem has been fixed in 19.15, and was due to a not easily
-reproducible race condition.
+@unnumberedsubsec Q2.1.21: [This question intentionally left blank]
 
 @node Q2.1.22, Q2.1.23, Q2.1.21, Installation
 @unnumberedsubsec Q2.1.22: XEmacs seems to take a really long time to do some things
@@ -2531,7 +2468,7 @@ debug-on-quit doesn't work if something's turned on inhibit-quit or in
 some other strange cases.
 @end quotation
 
-@node Q2.1.23,  , Q2.1.22, Installation
+@node Q2.1.23, Q2.1.24, Q2.1.22, Installation
 @unnumberedsubsec Q2.1.23:  Movemail on Linux does not work for XEmacs 19.15 and later.
 
 Movemail used to work fine in 19.14 but has stopped working in 19.15
@@ -2549,6 +2486,20 @@ and uncomment the line that reads:
 #define MAIL_USE_FLOCK
 @end example
 @end quotation
+
+@node Q2.1.24,  , Q2.1.23, Installation
+@unnumberedsubsec Q2.1.24:  XEmacs won't start without network. (NEW)
+Q2.1.23:  Movemail on Linux does not work for XEmacs 19.15 and later.
+
+If XEmacs starts when you're on the network, but fails when you're not
+on the network, you may be missing a "localhost" entry in your
+@file{/etc/hosts} file.  The file should contain an entry like:
+
+@example
+127.0.0.1        localhost
+@end example
+
+Add that line, and XEmacs will be happy.
 
 @node Customization, Subsystems, Installation, Top
 @unnumbered 3 Customization and Options
@@ -2571,8 +2522,8 @@ Customization---Emacs Lisp and @file{.emacs}:
 X Window System & Resources:
 * Q3.1.1::      Where is a list of X resources?
 * Q3.1.2::      How can I detect a color display?
-* Q3.1.3::      @code{(set-screen-width)} worked in 19.6, but not in 19.13?
-* Q3.1.4::      Specifying @code{Emacs*EmacsScreen.geometry} in @file{.emacs} does not work in 19.15?
+* Q3.1.3::      [This question intentionally left blank]
+* Q3.1.4::      [This question intentionally left blank]
 * Q3.1.5::      How can I get the icon to just say @samp{XEmacs}?
 * Q3.1.6::      How can I have the window title area display the full path?
 * Q3.1.7::      @samp{xemacs -name junk} doesn't work?
@@ -2760,7 +2711,7 @@ For XEmacs 19.14 and previous:
 @email{mannj@@ll.mit.edu, John Mann} writes:
 
 @quotation
-You have to go to Options->Menubar Appearance and unselect
+You have to go to Options->Frame Appearance and unselect
 @samp{Frame-Local Font Menu}.  If this option is selected, font changes
 are only applied to the @emph{current} frame and do @emph{not} get saved
 when you save options.
@@ -2785,14 +2736,14 @@ Implement the above as well as set the following in your @file{.emacs}
 (setq default-minibuffer-frame
       (make-frame
        '(minibuffer only
-		    width 86
-		    height 1
-		    menubar-visible-p nil
-		    default-toolbar-visible-p nil
-		    name "minibuffer"
-		    top -2
-		    left -2
-		    has-modeline-p nil)))
+                    width 86
+                    height 1
+                    menubar-visible-p nil
+                    default-toolbar-visible-p nil
+                    name "minibuffer"
+                    top -2
+                    left -2
+                    has-modeline-p nil)))
 (frame-notice-user-settings)
 @end lisp
 
@@ -2844,38 +2795,10 @@ in:
 @end lisp
 
 @node Q3.1.3, Q3.1.4, Q3.1.2, Customization
-@unnumberedsubsec Q3.1.3: @code{(set-screen-width)} worked in 19.6, but not in 19.13?
-
-In Lucid Emacs 19.6 I did @code{(set-screen-width @var{characters})} and
-@code{(set-screen-height @var{lines})} in my @file{.emacs} instead of
-specifying @code{Emacs*EmacsScreen.geometry} in my
-@iftex
-@*
-@end iftex
-@file{.Xdefaults} but
-this does not work in XEmacs 19.13.
-
-These two functions now take frame arguments:
-
-@lisp
-(set-frame-width (selected-frame) @var{characters})
-(set-frame-height (selected-frame) @var{lines})
-@end lisp
+@unnumberedsubsec Q3.1.3: [This question intentionally left blank]
 
 @node Q3.1.4, Q3.1.5, Q3.1.3, Customization
-@unnumberedsubsec Q3.1.4: Specifying @code{Emacs*EmacsScreen.geometry} in @file{.emacs} does not work in 19.15?
-
-In XEmacs 19.11 I specified @code{Emacs*EmacsScreen.geometry} in
-my @file{.emacs} but this does not work in XEmacs 19.15.
-
-We have switched from using the term @dfn{screen} to using the term
-@dfn{frame}.
-
-The correct entry for your @file{.Xdefaults} is now:
-
-@example
-Emacs*EmacsFrame.geometry
-@end example
+@unnumberedsubsec Q3.1.4: [This question intentionally left blank]
 
 @node Q3.1.5, Q3.1.6, Q3.1.4, Customization
 @unnumberedsubsec Q3.1.5: How can I get the icon to just say @samp{XEmacs}?
@@ -2906,7 +2829,7 @@ A more sophisticated title might be:
 @lisp
 (setq frame-title-format
       '("%S: " (buffer-file-name "%f"
-				 (dired-directory dired-directory "%b"))))
+                                 (dired-directory dired-directory "%b"))))
 @end lisp
 
 That is, use the file name, or the dired-directory, or the buffer name.
@@ -2969,7 +2892,7 @@ When I start up XEmacs using @samp{-iconic} it doesn't work right.
 Using @samp{-unmapped} on the command line, and setting the
 @code{initiallyUnmapped} X Resource don't seem to help much either...
 
-@email{ben@@666.com, Ben Wing} writes:
+@email{ben@@xemacs.org, Ben Wing} writes:
 
 @quotation
 Ugh, this stuff is such an incredible mess that I've about given up
@@ -2990,24 +2913,24 @@ Like this:
 (set-face-background 'default      "bisque") ; frame background
 (set-face-foreground 'default      "black") ; normal text
 (set-face-background 'zmacs-region "red") ; When selecting w/
-					; mouse
+                                        ; mouse
 (set-face-foreground 'zmacs-region "yellow")
 (set-face-font       'default      "*courier-bold-r*120-100-100*")
 (set-face-background 'highlight    "blue") ; Ie when selecting
-					; buffers
+                                        ; buffers
 (set-face-foreground 'highlight    "yellow")
 (set-face-background 'modeline     "blue") ; Line at bottom
-					; of buffer
+                                        ; of buffer
 (set-face-foreground 'modeline     "white")
 (set-face-font       'modeline     "*bold-r-normal*140-100-100*")
 (set-face-background 'isearch      "yellow") ; When highlighting
-					; while searching
+                                        ; while searching
 (set-face-foreground 'isearch      "red")
 (setq x-pointer-foreground-color   "black") ; Adds to bg color,
-					; so keep black
+                                        ; so keep black
 (setq x-pointer-background-color   "blue") ; This is color
-					; you really
-					; want ptr/crsr
+                                        ; you really
+                                        ; want ptr/crsr
 @end lisp
 
 @node Q3.2.2, Q3.2.3, Q3.2.1, Customization
@@ -3183,7 +3106,7 @@ mode:
 
 @lisp
 (add-hook 'TeX-mode-hook
-	  '(lambda () (setq fume-display-in-modeline-p nil)))
+          '(lambda () (setq fume-display-in-modeline-p nil)))
 @end lisp
 
 @email{dhughes@@origin-at.co.uk, David Hughes} writes:
@@ -3298,8 +3221,8 @@ For the FAQ example you could use:
 @lisp
 (global-set-key [(control ?.)]
   (lambda () (interactive) (scroll-up 1)))
-(global-set-key [(control ?		;)]
-			  (lambda () (interactive) (scroll-up -1)))
+(global-set-key [(control ?;)]
+  (lambda () (interactive) (scroll-up -1)))
 @end lisp
 
 This is fine if you only need a few functions within the lambda body.
@@ -3333,7 +3256,7 @@ Add the following (Thanks to @email{mly@@adoc.xerox.com, Richard Mlynarik} and
   (scroll-down 1))
 
 (global-set-key [(control ?.)] 'scroll-up-one-line) ; C-.
-(global-set-key [(control ?		;)] 'scroll-down-one-line) ; C-;
+(global-set-key [(control ?;)] 'scroll-down-one-line) ; C-;
 @end lisp
 
 The key point is that you can only bind simple functions to keys; you
@@ -3450,7 +3373,7 @@ xmodmap, e.g.
 @c hey, show some respect, willya -- there's xkeycaps, isn't there? --
 @c chr ;)
 @example
-	xmodmap -e 'keycode 0xff20 = Multi_key'
+        xmodmap -e 'keycode 0xff20 = Multi_key'
 @end example
 
 You will need to pick an appropriate keycode. Use xev to find out the
@@ -3461,9 +3384,9 @@ define the right `Windows' key as Multi_key'.]
 
 Once you have Multi_key defined, you can use e.g.
 @example
-	Multi a '	=> á
-	Multi e "	=> ë
-	Multi c ,	=> ç
+        Multi a '       => á
+        Multi e "       => ë
+        Multi c ,       => ç
 @end example
 
 etc.
@@ -3471,9 +3394,9 @@ etc.
 Also, recent versions of XFree86 define various AltGr-<key>
 combinations as dead keys, i.e.
 @example
-	AltGr [		=> dead_diaeresis
-	AltGr ]		=> dead_tilde
-	AltGr ;		=> dead_acute
+        AltGr [         => dead_diaeresis
+        AltGr ]         => dead_tilde
+        AltGr ;         => dead_acute
 @end example
 etc.
 
@@ -3533,7 +3456,7 @@ effect of being able to press and release Shift and have the next
 character typed come out in upper case.  This will affect all the other
 modifier keys like Control and Meta as well.
 
-@email{ben@@666.com, Ben Wing} writes:
+@email{ben@@xemacs.org, Ben Wing} writes:
 
 @quotation
 One thing about the sticky modifiers is that if you move the mouse out
@@ -3593,7 +3516,7 @@ Select from the @code{Options} menu
 You can use a color to make it stand out better:
 
 @example
-Emacs*cursorColor:	Red
+Emacs*cursorColor:      Red
 @end example
 
 @node Q3.6.2, Q3.6.3, Q3.6.1, Customization
@@ -3967,13 +3890,19 @@ is what happens when you select a region (with the mouse or keyboard)
 and you press a key to replace the selected region by the key you typed.
 Usually backspace kills the selected region.
 
-To get this behavior, add the following line to your @file{.emacs}:
+To get this behavior, add the following lines to your @file{.emacs}:
 
 @lisp
-(turn-on-pending-delete)
+(cond
+ ((fboundp 'turn-on-pending-delete)
+  (turn-on-pending-delete))
+ ((fboundp 'pending-delete-on)
+  (pending-delete-on t)))
 @end lisp
 
-Note that this will work with both Backspace and Delete.
+Note that this will work with both Backspace and Delete.  This code is a 
+tad more complicated than it has to be for XEmacs in order to make it
+more portable.
 
 @node Q3.10.3, Q3.10.4, Q3.10.2, Customization
 @unnumberedsubsec Q3.10.3: Can I turn off the highlight during isearch?
@@ -4020,18 +3949,18 @@ off like this:
   (interactive "_P")
   (let ((zmacs-region-stays t))
     (if (interactive-p)
-	(condition-case nil
-	    ad-do-it
-	  (end-of-buffer (goto-char (point-max))))
+        (condition-case nil
+            ad-do-it
+          (end-of-buffer (goto-char (point-max))))
       ad-do-it)))
 
 (defadvice scroll-down (around scroll-down freeze)
   (interactive "_P")
   (let ((zmacs-region-stays t))
     (if (interactive-p)
-	(condition-case nil
-	    ad-do-it
-	  (beginning-of-buffer (goto-char (point-min))))
+        (condition-case nil
+            ad-do-it
+          (beginning-of-buffer (goto-char (point-min))))
       ad-do-it)))
 @end lisp
 
@@ -4079,6 +4008,7 @@ Other Mail & News:
 
 Sparcworks, EOS, and WorkShop:
 * Q4.4.1::      What is SPARCworks, EOS, and WorkShop
+* Q4.4.2::      How do I start the Sun Workshop support in XEmacs 21?
 
 Energize:
 * Q4.5.1::      What is/was Energize?
@@ -4089,7 +4019,7 @@ Infodock:
 Other Unbundled Packages:
 * Q4.7.1::      What is AUC TeX?  Where do you get it?
 * Q4.7.2::      Are there any Emacs Lisp Spreadsheets?
-* Q4.7.3::      Byte compiling AUC TeX on XEmacs 19.14
+* Q4.7.3::      [This question intentionally left blank]
 * Q4.7.4::      Problems installing AUC TeX
 * Q4.7.5::      Is there a reason for an Emacs package not to be included in XEmacs?
 * Q4.7.6::      Is there a MatLab mode?
@@ -4158,7 +4088,7 @@ Set @code{vm-reply-ignored-addresses} to a list, like
 @lisp
 (setq vm-reply-ignored-addresses
       '("wing@@nuspl@@nvwls.cc.purdue.edu,netcom[0-9]*.netcom.com"
-	"wing@@netcom.com" "wing@@666.com"))
+        "wing@@netcom.com" "wing@@xemacs.org"))
 @end lisp
 
 Note that each string is a regular expression.
@@ -4265,7 +4195,7 @@ John.@email{Cooper@@Eng.Sun.COM, John S Cooper} writes:
 
 @quotation
 @lisp
-					; Don't use multiple frames
+                                        ; Don't use multiple frames
 (setq vm-frame-per-composition nil)
 (setq vm-frame-per-folder nil)
 (setq vm-frame-per-edit nil)
@@ -4280,7 +4210,7 @@ For mh-e use the following:
 
 @lisp
 (add-hook 'mh-show-mode-hook '(lambda ()
-				(smiley-region (point-min)
+                                (smiley-region (point-min)
                                                (point-max))))
 @end lisp
 
@@ -4462,12 +4392,11 @@ tm has following functions:
 
 tm is available from following anonymous ftp sites:
 @itemize @bullet
-@item @uref{ftp://ftp.jaist.ac.jp/pub/GNU/elisp/mime/} (Japan).
-@item @uref{ftp://ftp.nis.co.jp/pub/gnu/emacs-lisp/tm/} (Japan).
-@c The host above is unknown.
-
-@item @uref{ftp://ftp.nisiq.net/pub/gnu/emacs-lisp/tm/} (US).
-@item @uref{ftp://ftp.miranova.com/pub/gnus/jaist.ac.jp/} (US).
+@comment @item @uref{ftp://ftp.jaist.ac.jp/pub/GNU/elisp/mime/} (Japan).
+@comment @item @uref{ftp://ftp.nis.co.jp/pub/gnu/emacs-lisp/tm/} (Japan).
+@comment @c The host above is unknown.
+@comment @item @uref{ftp://ftp.nisiq.net/pub/gnu/emacs-lisp/tm/} (US).
+@comment @item @uref{ftp://ftp.miranova.com/pub/gnus/jaist.ac.jp/} (US).
 @item @uref{ftp://ftp.unicamp.br/pub/mail/mime/tm/} (Brasil).
 @item @uref{ftp://ftp.th-darmstadt.de/pub/editors/GNU-Emacs/lisp/mime/} (Germany).
 @item @uref{ftp://ftp.tnt.uni-hannover.de/pub/editors/xemacs/contrib/} (Germany).
@@ -4480,7 +4409,7 @@ trivial to use.
 @node Q4.3.3, Q4.3.4, Q4.3.2, Subsystems
 @unnumberedsubsec Q4.3.3: Why isn't this @code{movemail} program working?
 
-Ben Wing @email{ben@@666.com} writes:
+Ben Wing @email{ben@@xemacs.org} writes:
 
 @quotation
 It wasn't chown'ed/chmod'd correctly.
@@ -4489,14 +4418,14 @@ It wasn't chown'ed/chmod'd correctly.
 @node Q4.3.4, Q4.3.5, Q4.3.3, Subsystems
 @unnumberedsubsec Q4.3.4: Movemail is also distributed by Netscape?  Can that cause problems?
 
-@email{steve@@altair.xemacs.org, Steve Baur} writes:
+@email{steve@@xemacs.org, Steve Baur} writes:
 
 @quotation
 Yes.  Always use the movemail installed with your XEmacs.  Failure to do
 so can result in lost mail.
 @end quotation
 
-Please refer to @email{jwz@@netscape.com, Jamie Zawinski's} notes at
+Please refer to @email{jwz@@jwz.org, Jamie Zawinski's} notes at
 @iftex
 @*
 @end iftex
@@ -4532,7 +4461,7 @@ There is a good mirror at ftp.cdrom.com;
 @end iftex
 @uref{ftp://ftp.cdrom.com/pub/tex/ctan/support/latex2html/}.
 
-@node Q4.4.1, Q4.5.1, Q4.3.5, Subsystems
+@node Q4.4.1, Q4.4.2, Q4.3.5, Subsystems
 @unnumberedsec 4.4: Sparcworks, EOS, and WorkShop
 @unnumberedsubsec Q4.4.1: What is SPARCworks, EOS, and WorkShop?
 
@@ -4573,10 +4502,48 @@ details, check out
 @iftex
 @*
 @end iftex
-@uref{http://www.sun.com/software/Products/Developer-products/programs.html}.
+@uref{http://www.sun.com/software/Products/Developer-products}.
 @end quotation
 
-@node Q4.5.1, Q4.6.1, Q4.4.1, Subsystems
+@node Q4.4.2, Q4.5.1, Q4.4.1, Subsystems
+@unnumberedsubsec Q4.4.2: How do I start the Sun Workshop support in XEmacs 21?
+
+Add the switch ---with-workshop to the configure command when building
+XEmacs and put the following in one of your startup files
+(e.g. site-start.el or .emacs):
+
+@lisp
+(when (featurep 'tooltalk)
+  (load "tooltalk-macros")
+  (load "tooltalk-util")
+  (load "tooltalk-init"))
+(when (featurep 'sparcworks)
+  (load "sunpro-init")
+  (load "ring")
+  (load "comint")
+  (load "annotations")
+  (sunpro-startup))
+@end lisp
+
+If you are not using the latest Workshop (5.0) you have to apply the
+following patch:
+
+@format
+--- /opt/SUNWspro/lib/eserve.el.ORIG    Fri May 14 15:23:26 1999
++++ /opt/SUNWspro/lib/eserve.el Fri May 14 15:24:54 1999
+@@@@ -42,7 +42,7 @@@@
+ (defvar running-xemacs nil "t if we're running XEmacs")
+ (defvar running-emacs  nil "t if we're running GNU Emacs 19")
+
+-(if (string-match "^\\(19\\|20\\)\..*\\(XEmacs\\|Lucid\\)" emacs-version)
++(if (string-match "\\(XEmacs\\|Lucid\\)" emacs-version)
+     (setq running-xemacs t)
+     (setq running-emacs  t))
+@end format
+
+
+
+@node Q4.5.1, Q4.6.1, Q4.4.2, Subsystems
 @unnumberedsec 4.5: Energize
 @unnumberedsubsec Q4.5.1: What is/was Energize?
 
@@ -4789,17 +4756,7 @@ Yes.  Check out @dfn{dismal} (which stands for Dis' Mode Ain't Lotus) at
 @uref{ftp://cs.nyu.edu/pub/local/fox/dismal/}.
 
 @node Q4.7.3, Q4.7.4, Q4.7.2, Subsystems
-@unnumberedsubsec Q4.7.3: Byte compiling AUC TeX on XEmacs 19.14.
-
-@email{bruncott@@dormeur.inria.fr, Georges Brun-Cottan} writes:
-
-@quotation
-When byte compiling auctex-9.4g, you must use the command:
-
-@example
-xemacs -batch -l lpath.el
-@end example
-@end quotation
+@unnumberedsubsec Q4.7.3: [This question intentionally left blank]
 
 @node Q4.7.4, Q4.7.5, Q4.7.3, Subsystems
 @unnumberedsubsec Q4.7.4: Problems installing AUC TeX.
@@ -4855,7 +4812,7 @@ additional package.
 Each package bundled with XEmacs means more work for the maintainers,
 whether they want it or not.  If you are ready to take over the
 maintenance responsibilities for the package you port, be sure to say
-so -- we will more likely include it.
+so---we will more likely include it.
 
 @item
 The package simply hasn't been noted by the XEmacs development.  If
@@ -4871,23 +4828,12 @@ appreciated.
 
 @node Q4.7.6,  , Q4.7.5, Subsystems
 @unnumberedsubsec Q4.7.5: Is there a MatLab mode?
-@c New
-Is there any way I can get syntax highlighting for MatLab .m files?
-Can I "teach" emacs what words are MatLab commands, comments, etc. ?
 
-@email{elsner@@mathematik.tu-chemnitz.de, Ulrich Elsner} writes:
-@quotation
-One way to do this (and much more) is by using the
-@iftex
-@*
-@end iftex
-@uref{ftp://ftp.mathworks.com/pub/contrib/v5/tools/matlab.el, matlab mode}.
+Yes, a matlab mode and other items are available at the
+@uref{ftp://ftp.mathworks.com/pub/contrib/emacs_add_ons,
+MathWorks' emacs_add_ons ftp directory}.
 
-Instructions on how to install this mode are included in this file.
-@end quotation
-
-
-@node Miscellaneous, Current Events, Subsystems, Top
+@node Miscellaneous, MS Windows, Subsystems, Top
 @unnumbered 5 The Miscellaneous Stuff
 
 This is part 5 of the XEmacs Frequently Asked Questions list.  This
@@ -4906,14 +4852,14 @@ Major & Minor Modes:
 * Q5.0.8::      Why does edt emulation not work?
 * Q5.0.9::      How can I emulate VI and use it as my default mode?
 * Q5.0.10::     [This question intentionally left blank]
-* Q5.0.11::     Filladapt doesn't work in 19.15?
+* Q5.0.11::     How do I turn on filladapt for all buffers?
 * Q5.0.12::     How do I disable gnuserv from opening a new frame?
 * Q5.0.13::     How do I start gnuserv so that each subsequent XEmacs is a client?
 * Q5.0.14::     Strange things are happening in Shell Mode.
 * Q5.0.15::     Where do I get the latest CC Mode?
 * Q5.0.16::     I find auto-show-mode disconcerting.  How do I turn it off?
 * Q5.0.17::     How can I get two instances of info?
-* Q5.0.18::     I upgraded to XEmacs 19.14 and gnuserv stopped working
+* Q5.0.18::     [This question intentionally left blank]
 * Q5.0.19::     Is there something better than LaTeX mode?
 * Q5.0.20::     Is there a way to start a new XEmacs if there's no gnuserv running, and otherwise use gnuclient?
 
@@ -4960,8 +4906,8 @@ on.  This can be done by @kbd{M-x font-lock-mode}, or by having XEmacs
 automatically start it by adding lines like:
 
 @lisp
-(add-hook 'emacs-lisp-mode-hook	'turn-on-font-lock)
-(add-hook 'dired-mode-hook	'turn-on-font-lock)
+(add-hook 'emacs-lisp-mode-hook 'turn-on-font-lock)
+(add-hook 'dired-mode-hook      'turn-on-font-lock)
 @end lisp
 
 to your @file{.emacs}.  See the file @file{etc/sample.emacs} for more
@@ -5105,6 +5051,10 @@ This will then start a second shell.  The key is that no buffer named
 rename-uniquely} to rename the @code{*shell*} buffer instead of @kbd{M-x
 rename-buffer}.
 
+Alternately, you can set the variable @code{shell-multiple-shells}.
+If the value of this variable is non-nil, each time shell mode is invoked,
+a new shell is made
+
 @node Q5.0.7, Q5.0.8, Q5.0.6, Miscellaneous
 @unnumberedsubsec Q5.0.7: Telnet from shell filters too much
 
@@ -5158,11 +5108,11 @@ it, otherwise some minor modes may not get viper-ized.
 Obsolete question, left blank to avoid renumbering
 
 @node Q5.0.11, Q5.0.12, Q5.0.10, Miscellaneous
-@unnumberedsubsec Q5.0.11: Filladapt doesn't work in 19.15
+@unnumberedsubsec Q5.0.11: How do I turn on filladapt for all buffers?
 
-Filladapt 2.x is included in 19.15.  In it filladapt is now a minor
-mode and minor modes are traditionally off by default.  The following
-added to your @file{.emacs} will turn it on for all buffers:
+Filladapt is a minor mode and minor modes are traditionally off by
+default.  The following added to your @file{.emacs} will turn it on for
+all buffers:
 
 @lisp
 (setq-default filladapt-mode t)
@@ -5248,7 +5198,7 @@ if ( "$TERM" == emacs || "$TERM" == unknown ) unset filec
 @email{bwarsaw@@cnri.reston.va.us, Barry A. Warsaw} writes:
 
 @quotation
-This can be had from @uref{http://www.python.org/ftp/emacs/}.
+This can be had from @uref{http://www.python.org/emacs/}.
 @end quotation
 
 @node Q5.0.16, Q5.0.17, Q5.0.15, Miscellaneous
@@ -5270,19 +5220,7 @@ enabled by default.  To turn it off, put the following in your
 You can't.  The @code{info} package does not provide for multiple info buffers.
 
 @node Q5.0.18, Q5.0.19, Q5.0.17, Miscellaneous
-@unnumberedsubsec Q5.0.18: I upgraded to XEmacs 19.14 and gnuserv stopped working.
-
-@email{daku@@nortel.ca, Mark Daku} writes:
-
-@quotation
-It turns out I was using an older version of gnuserv.  The installation
-didn't put the binary into the public bin directory.  It put it in
-@iftex
-@*
-@end iftex
-@file{lib/xemacs-19.14/hppa1.1-hp-hpux9.05/gnuserv}.  Shouldn't it have
-been put in @file{bin/hppa1.1-hp-hpux9.0}?
-@end quotation
+@unnumberedsubsec Q5.0.18: [This question intentionally left blank]
 
 @node Q5.0.19, Q5.0.20, Q5.0.18, Miscellaneous
 @unnumberedsubsec Q5.0.19: Is there something better than LaTeX mode?
@@ -5493,7 +5431,7 @@ user-variable temporarily, use @code{let}:
 
 @lisp
 (let ((case-fold-search nil))
-  ...					; code with searches that must be case-sensitive
+  ...                                   ; code with searches that must be case-sensitive
   ...)
 @end lisp
 
@@ -5558,7 +5496,7 @@ unbound.  The correct thing is to do it like this:
 
 @lisp
 (defun my-function (whatever)
-  (let (a)				; default initialization is to nil
+  (let (a)                              ; default initialization is to nil
     ... build a large list ...
     ... and exit, unbinding `a' in the process  ...)
 @end lisp
@@ -5571,11 +5509,11 @@ Note that even global variables should not be @code{setq}ed without
 The reason for the warning is the following:
 
 @lisp
-(defun flurgoze nil)			; ok, global internal variable
+(defun flurgoze nil)                    ; ok, global internal variable
 ...
 
-(setq flurghoze t)			; ops!  a typo, but semantically correct.
-					; however, the byte-compiler warns.
+(setq flurghoze t)                      ; ops!  a typo, but semantically correct.
+                                        ; however, the byte-compiler warns.
 
 While compiling toplevel forms:
 ** assignment to free variable flurghoze
@@ -5697,7 +5635,7 @@ is:
 an easy way to find out where it spends time?
 @c New
 
-z@email{hniksic@@srce.hr, Hrvoje Niksic} writes:
+z@email{hniksic@@xemacs.org, Hrvoje Niksic} writes:
 @quotation
 Under XEmacs 20.4 and later  you can use @kbd{M-x profile-key-sequence}, press a key
 (say @key{RET} in the Gnus Group buffer), and get the results using
@@ -5715,7 +5653,7 @@ Add the following line to your @file{.emacs}:
 (setq sound-alist nil)
 @end lisp
 
-That will make your XEmacs totally silent -- even the default ding sound
+That will make your XEmacs totally silent---even the default ding sound
 (TTY beep on TTY-s) will be gone.
 
 Starting with XEmacs-20.2 you can also change these with Customize.
@@ -5812,7 +5750,7 @@ have a look at your @file{.emacs} file.  You will probably have a line
 like:
 
 @lisp
-(add-hook 'postscript-mode-hook	'turn-on-font-lock)
+(add-hook 'postscript-mode-hook 'turn-on-font-lock)
 @end lisp
 
 Take it out, restart XEmacs, and it won't try to fontify your postscript
@@ -6029,8 +5967,9 @@ method, one should NOT quote the face string using the sed script .
 
 It might also be helpful to use @email{stig@@hackvan.com, Stig's} script
 (included in the compface distribution at XEmacs.org) to do the
-conversion.  For convenience xbm2xface is available for anonymous FTP at
-@uref{ftp://ftp.miranova.com/pub/xemacs/xbm2xface.pl}.
+conversion.
+@comment For convenience xbm2xface is available for anonymous FTP at
+@comment @uref{ftp://ftp.miranova.com/pub/xemacs/xbm2xface.pl}.
 
 Contributors for this item:
 
@@ -6050,8 +5989,8 @@ You use something like:
 
 @lisp
 (setq Info-directory-list (cons
-			   (expand-file-name "~/info")
-			   Info-default-directory-list))
+                           (expand-file-name "~/info")
+                           Info-default-directory-list))
 @end lisp
 
 @email{davidm@@prism.kla.com, David Masterson} writes:
@@ -6131,25 +6070,394 @@ NOTE: It is an undocumented limitation in XEmacs that postscript
 printing (the @code{Pretty Print Buffer} menu item) @strong{requires} a
 window system environment.  It cannot be used outside of X11.
 
-@node Current Events,  , Miscellaneous, Top
-@unnumbered 6 What the Future Holds
+@node MS Windows, Current Events, Miscellaneous, Top
+@unnumbered 6 XEmacs on MS Windows
 
-This is part 6 of the XEmacs Frequently Asked Questions list.  This
+This is part 6 of the XEmacs Frequently Asked Questions list, written by
+Hrvoje Niksic and others.  This section is devoted to the MS Windows
+port of XEmacs.
+
+@menu
+
+General Info
+* Q6.0.1::      What is the status of the XEmacs port to Windows?
+* Q6.0.2::      What flavors of MS Windows are supported?
+* Q6.0.3::      Where are the XEmacs on MS Windows binaries?
+* Q6.0.4::      Does XEmacs on MS Windows require an X server to run?
+
+Building XEmacs on MS Windows
+* Q6.1.1::      I decided to run with X.  Where do I get an X server?
+* Q6.1.2::      What compiler do I need to compile XEmacs?
+* Q6.1.3::      How do I compile for the native port?
+* Q6.1.4::      How do I compile for the X port?
+* Q6.1.5::      How do I compile for Cygnus' Cygwin?
+* Q6.1.6::      What do I need for Cygwin?
+
+Customization and User Interface
+* Q6.2.1::      How will the port cope with differences in the Windows user interface?
+* Q6.2.2::      How do I change fonts in XEmacs on MS Windows?
+* Q6.2.3::      Where do I put my @file{.emacs} file?
+
+Miscellaneous
+* Q6.3.1::      Will XEmacs rename all the win32-* symbols to w32-*?
+* Q6.3.2::      What are the differences between the various MS Windows emacsen?
+* Q6.3.3::      What is the porting team doing at the moment?
+
+@end menu
+
+@node Q6.0.1, Q6.0.2, MS Windows, MS Windows
+@unnumberedsec 6.0: General Info
+@unnumberedsubsec Q6.0.1: What is the status of the XEmacs port to Windows?
+
+Is XEmacs really getting ported to MS Windows?  What is the status of the port?
+
+Yes, a group of volunteers actively works on making XEmacs code base
+cleanly compile and run on MS Windows operating systems.  The mailing
+list at @email{xemacs-nt@@xemacs.org} is dedicated to that effort (please use
+the -request address to subscribe).
+
+At this time, XEmacs on MS Windows is usable, but lacks some of the
+features of XEmacs on UNIX and UNIX-like systems.  Notably,
+internationalization does not work.
+
+@node Q6.0.2, Q6.0.3, Q6.0.1, MS Windows
+@unnumberedsubsec Q6.0.2: What flavors of MS Windows are supported?  The list name implies NT only.
+
+The list name is misleading, as XEmacs will support both Windows 95,
+Windows 98 and Windows NT.  The MS Windows-specific code is based on
+Microsoft Win32 API, and will not work on MS Windows 3.x or on MS-DOS.
+
+
+@node Q6.0.3, Q6.0.4, Q6.0.2, MS Windows
+@unnumberedsubsec Q6.0.3: Are binary kits available?
+
+Binary kits are available at
+@uref{ftp://ftp.xemacs.org/pub/xemacs/binary-kits/win32/} for the
+"plain" MS Windows version.
+
+@node Q6.0.4, Q6.1.1, Q6.0.3, MS Windows
+@unnumberedsubsec Q6.0.4: Does XEmacs on MS Windows require an X server to run?
+
+Short answer: No.
+
+Long answer: XEmacs can be built in several ways in the MS Windows
+environment, some of them requiring an X server and some not.
+
+One is what we call the "X" port---it requires X libraries to build
+and an X server to run.  Internally it uses the Xt event loop and
+makes use of X toolkits.  Its look is quite un-Windowsy, but it works
+reliably and supports all of the graphical features of Unix XEmacs.
+
+The other is what we call the "native" port.  It uses the Win32 API
+and does not require X libraries to build, nor does it require an X to
+run.  In fact, it has no connection with X whatsoever.  At this time,
+the native port obsoletes the X port, providing almost all of its
+features, including support for menus, scrollbars, toolbars, embedded
+images and background pixmaps, frame pointers, etc.  Most of the
+future work will be based on the native port.
+
+There is also a third special case, the Cygwin port.  It takes
+advantage of Cygnus emulation library under Win32, which enables it to
+reuse much of the Unix XEmacs code base, such as processes and network
+support, or internal select() mechanisms.
+
+Cygwin port supports all display types---TTY, X & MS gui, and can be
+built with support for all three.  If you build with ms gui support
+then the Cygwin version uses the majority of the msw code, which is
+mostly related to display.  If you want to build with X support you
+need X libraries.  If you want to build with tty support you need
+ncurses.  MS gui requires no additional libraries.
+
+Some of the advantages of the Cygwin version are that it:
+
+@itemize @bullet
+
+@item integrates well with Cygwin environment for existing Cygwin users;
+@item uses configure so building with different features is very easy;
+@item has process support in X & tty.
+
+@end itemize
+
+The disadvantage is that it requires several Unix utilities and the
+whole Cygwin environment, whereas the native port requires only a
+suitable MS Windows compiler.  Also, it follows the Unix filesystem and
+process model very closely (some will undoubtedly view this as an
+advantage).
+
+@node Q6.1.1, Q6.1.2, Q6.0.4, MS Windows
+@unnumberedsec 6.1: Building XEmacs on MS Windows
+@unnumberedsubsec Q6.1.1: I decided to run with X.  Where do I get an X server?
+
+Pointers to X servers can be found at
+@iftex
+@*
+@end iftex
+@uref{http://dao.gsfc.nasa.gov/software/grads/win32/X11R6.3/};
+
+look for "Where to get an X server".  Also note that, although the above
+page talks about Cygnus gnu-win32 (Cygwin), the information on X servers
+is Cygwin-independent.  You don't have to be running/using Cygwin to use
+these X servers, and you don't have to compile XEmacs under Cygwin to
+use XEmacs with these X servers.  An "X port" XEmacs compiled under
+Visual C++ will work with these X servers (as will XEmacs running on a
+Unix box, redirected to the server running on your PC).
+
+
+@node Q6.1.2, Q6.1.3, Q6.1.1, MS Windows
+@unnumberedsubsec Q6.1.2: What compiler do I need to compile XEmacs?
+
+You need Visual C++ 4.2 or 5.0, with the exception of the Cygwin port,
+which uses Gcc.
+
+
+@node Q6.1.3, Q6.1.4, Q6.1.2, MS Windows
+@unnumberedsubsec Q6.1.3: How do I compile for the native port?
+
+Please read the file @file{nt/README} in the XEmacs distribution, which
+contains the full description.
+
+
+@node Q6.1.4, Q6.1.5, Q6.1.3, MS Windows
+@unnumberedsubsec Q6.1.4: How do I compile for the X port?
+
+Again, it is described in @file{nt/README} in some detail.  Basically, you
+need to get X11 libraries from ftp.x.org, and compile them.  If the
+precompiled versions are available somewhere, I don't know of it.
+
+
+@node Q6.1.5, Q6.1.6, Q6.1.4, MS Windows
+@unnumberedsubsec Q6.1.5: How do I compile for Cygnus' Cygwin?
+
+Similar as on Unix; use the usual `configure' and `make' process.
+Some problems to watch out for:
+
+@itemize @bullet
+@item
+make sure HOME is set. This controls where you @file{.emacs} file comes
+from;
+
+@item
+CYGWIN32 needs to be set to tty for process support
+work. e.g. CYGWIN32=tty;
+
+@item
+picking up some other grep or other unix like tools can kill configure;
+
+@item
+static heap too small, adjust src/sheap-adjust.h to a more positive
+number;
+
+@item
+The Cygwin version doesn't understand @file{//machine/path} type paths so you
+will need to manually mount a directory of this form under a unix style
+directory for a build to work on the directory.
+
+@end itemize
+
+@node Q6.1.6, Q6.2.1, Q6.1.5, MS Windows
+@unnumberedsubsec Q6.1.6: What do I need for Cygwin?
+
+You can find the Cygwin tools and compiler at:
+
+@uref{http://sourceware.cygnus.com/cygwin/}
+
+You will need version b19 or later.
+
+You will also need the X libraries.  There are libraries at
+@iftex
+@*
+@end iftex
+@uref{http://dao.gsfc.nasa.gov/software/grads/win32/X11R6.3/}, but
+these are not b19 compatible.  You can get b19 X11R6.3 binaries, as
+well as pre-built ncurses and graphic libraries, from:
+
+@uref{ftp://ftp.parallax.co.uk/pub/andyp/}.
+
+
+@node Q6.2.1, Q6.2.2, Q6.1.6, MS Windows
+@unnumberedsec 6.2: Customization and User Interface
+@unnumberedsubsec Q6.2.1: How will the port cope with differences in the Windows user interface?
+
+XEmacs (and Emacs in general) UI is pretty
+different from what is expected of a typical MS Windows program.  How will
+the MS Windows port cope with it?
+
+Fortunately, Emacs is also one of the most configurable editor beasts
+in the world.  The MS Windows "look and feel" (mark via shift-arrow,
+self-inserting deletes region, etc.) can be easily configured via
+various packages distributed with XEmacs.  The `pending-delete'
+package is an example of such a utility.
+
+In future versions, some of these packages might be turned on by
+default in the MS Windows environment.
+
+
+@node Q6.2.2, Q6.2.3, Q6.2.1, MS Windows
+@unnumberedsubsec Q6.2.2: How do I change fonts in XEmacs on MS Windows?
+
+In 21.2.*, use the font menu.  In 21.1.*, you can change font
+manually. For example:
+
+@display
+    (set-face-font 'default "Lucida Console:Regular:10")
+    (set-face-font 'modeline "MS Sans Serif:Regular:10")
+@end display
+
+
+@node Q6.2.3, Q6.3.1, Q6.2.2, MS Windows
+@unnumberedsubsec Q6.2.3: Where do I put my @file{.emacs} file?
+
+If the HOME environment variable is set, @file{.emacs} will be looked for
+there.  Else the directory defaults to `c:\'.
+
+@node Q6.3.1, Q6.3.2, Q6.2.3, MS Windows
+@unnumberedsec 6.3: Miscellaneous
+@unnumberedsubsec Q6.3.1: Will XEmacs rename all the win32-* symbols to w32-*?
+
+In his flavor of Emacs 20, Richard Stallman has renamed all the win32-*
+symbols to w32-*.  Will XEmacs do the same?
+
+We consider such a move counter-productive, thus we will not use the
+`w32' prefix.  However, we do recognize that Win32 name is little more
+than a marketing buzzword (will it be Win64 in the next release?), so
+we decided not to use it.  Using `windows-' would be wrong because the
+term is too generic, which is why we settled on a compromise
+`mswindows' term.
+
+Thus all the XEmacs variables and functions directly related to Win32
+are prefixed `mswindows-'.  The user-variables shared with NT Emacs
+will be provided as compatibility aliases.
+
+Architectural note: We believe that there should be a very small
+number of window-systems-specific variables, and will try to provide
+generic interfaces whenever possible.
+
+
+@node Q6.3.2, Q6.3.3, Q6.3.1, MS Windows
+@unnumberedsubsec Q6.3.2: What are the differences between the various MS Windows emacsen?
+
+XEmacs, Win-Emacs, DOS Emacs, NT Emacs, this is all very confusing.
+Could you briefly explain the differences between them?
+
+Here is a recount of various Emacs versions running on MS Windows:
+
+@itemize @bullet
+
+@item
+Win-Emacs
+
+@itemize @minus
+
+@item
+Win-Emacs is a port of Lucid Emacs 19.6 to MS Windows using X
+compatibility libraries.  Win-Emacs has been written by Ben Wing.  The
+MS Windows code has not made it back to Lucid Emacs, which left Win-Emacs
+pretty much dead for our purposes.  Win-Emacs used to be available at
+Pearlsoft, but not anymore, since Pearlsoft went out of business.
+@end itemize
+
+@item
+GNU Emacs for DOS
+
+@itemize @minus
+
+@item
+GNU Emacs features support for MS-DOS and DJGPP (D.J. Delorie's DOS
+port of Gcc).  Such an Emacs is heavily underfeatured, because it does
+not supports long file names, lacks proper subprocesses support, and
+is far too big compared to typical DOS editors.
+@end itemize
+
+@item
+GNU Emacs compiled with Win32
+
+@itemize @minus
+
+@item
+Starting with version 19.30, it has been possible to compile GNU Emacs
+under MS Windows using the DJGPP compiler and X libraries.  The result
+is is very similar to GNU Emacs compiled under MS DOS, only it
+supports longer file names, etc.  This "port" is similar to the "X"
+flavor of XEmacs on MS Windows.
+@end itemize
+
+@item
+NT Emacs
+
+@itemize @minus
+
+@item
+NT Emacs is a version of GNU Emacs modified to compile and run under
+MS MS Windows 95 and NT using the native Win32 API.  As such, it is close
+in spirit to the XEmacs "native" port.
+
+@item
+NT Emacs has been written by Geoff Voelker, and more information can be
+found at
+@iftex
+@*
+@end iftex
+@uref{http://www.cs.washington.edu/homes/voelker/ntemacs.html}.
+
+@end itemize
+
+@item
+XEmacs
+
+@itemize @minus
+
+@item
+Beginning with XEmacs 19.12, XEmacs' architecture has been redesigned
+in such a way to allow clean support of multiple window systems.  At
+this time the TTY support was added, making X and TTY the first two
+"window systems" XEmacs supported.  The 19.12 design is the basis for
+the current native MS Windows code.
+
+@item
+Some time during 1997, David Hobley (soon joined by Marc Paquette)
+imported some of the NT-specific portions of GNU Emacs, making XEmacs
+with X support compile under Windows NT, and creating the "X" port.
+
+@item
+Several months later, Jonathan Harris sent out initial patches to use
+the Win32 API, thus creating the native port.  Since then, various
+people have contributed, including Kirill M. Katsnelson (contributed
+support for menubars, subprocesses and network, as well as loads of
+other code), Andy Piper (ported XEmacs to Cygwin environment,
+contributed Windows unexec, Windows-specific glyphs and toolbars code,
+and more), Jeff Sparkes (contributed scrollbars support) and many
+others.
+
+@end itemize
+
+@end itemize
+
+
+@node Q6.3.3, , Q6.3.2, MS Windows
+@unnumberedsubsec Q6.3.3: What is the porting team doing at the moment?
+
+The porting team is continuing work on the MS Windows-specific code.
+
+
+@node Current Events,  , MS Windows, Top
+@unnumbered 7 What the Future Holds
+
+This is part 7 of the XEmacs Frequently Asked Questions list.  This
 section will change monthly, and contains any interesting items that have
 transpired over the previous month.  If you are reading this from the
 XEmacs distribution, please see the version on the Web or archived at the
 various FAQ FTP sites, as this file is surely out of date.
 
 @menu
-* Q6.0.1::      What is new in 20.2?
-* Q6.0.2::      What is new in 20.3?
-* Q6.0.3::      What is new in 20.4?
-* Q6.0.4::      Procedural changes in XEmacs development.
+* Q7.0.1::      What is new in 20.2?
+* Q7.0.2::      What is new in 20.3?
+* Q7.0.3::      What is new in 20.4?
+* Q7.0.4::      Procedural changes in XEmacs development.
 @end menu
 
-@node Q6.0.1, Q6.0.2, Current Events, Current Events
-@unnumberedsec 6.0: Changes
-@unnumberedsubsec Q6.0.1: What is new in 20.2?
+@node Q7.0.1, Q7.0.2, Current Events, Current Events
+@unnumberedsec 7.0: Changes
+@unnumberedsubsec Q7.0.1: What is new in 20.2?
 
 The biggest changes in 20.2 include integration of EFS (the next
 generation of ange-ftp) and AUC Tex (the Emacs subsystem that includes a
@@ -6161,8 +6469,8 @@ customize}.
 XEmacs 20.2 is the development release (20.0 was beta), and is no longer
 considered unstable.
 
-@node Q6.0.2, Q6.0.3, Q6.0.1, Current Events
-@unnumberedsubsec Q6.0.2: What is new in 20.3?
+@node Q7.0.2, Q7.0.3, Q7.0.1, Current Events
+@unnumberedsubsec Q7.0.2: What is new in 20.3?
 
 XEmacs 20.3 was released in November 1997. It contains many bugfixes,
 and a number of new features, including Autoconf 2 based configuration,
@@ -6174,22 +6482,22 @@ increased MIME support, and many, many synches with GNU Emacs 20.
 The XEmacs/Mule support has been only seriously tested in a Japanese
 locale, and no doubt many problems still remain.  The support for
 ISO-Latin-1 and Japanese is fairly strong.  MULE support comes at a
-price -- about a 30% slowdown from 19.16.  We're making progress on
+price---about a 30% slowdown from 19.16.  We're making progress on
 improving performance and XEmacs 20.3 compiled without Mule (which is
 the default) is definitely faster than XEmacs 19.16.
 
 XEmacs 20.3 is the first non-beta v20 release, and will be the
 basis for all further development.
 
-@node Q6.0.3, Q6.0.4, Q6.0.2, Current Events
-@unnumberedsubsec Q6.0.3: What's new in XEmacs 20.4?
+@node Q7.0.3, Q7.0.4, Q7.0.2, Current Events
+@unnumberedsubsec Q7.0.3: What's new in XEmacs 20.4?
 
 XEmacs 20.4 is a bugfix release with no user-visible changes.
 @c Filled in from NEWS file of 20.5-b33
 
 
-@node Q6.0.4,  , Q6.0.3, Current Events
-@unnumberedsubsec Q6.0.4: Procedural changes in XEmacs development.
+@node Q7.0.4,  , Q7.0.3, Current Events
+@unnumberedsubsec Q7.0.4: Procedural changes in XEmacs development.
 
 @enumerate
 @item
@@ -6218,7 +6526,7 @@ XEmacs 19.16 was the last 19 release, basically consisting of 19.15 plus
 the collected bugfixes.
 
 @item
-As of December 1996, @email{steve@@altair.xemacs.org, Steve Baur} has become
+As of December 1996, @email{steve@@xemacs.org, Steve Baur} has become
 the lead maintainer of XEmacs.
 @end enumerate
 

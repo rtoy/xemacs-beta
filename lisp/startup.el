@@ -30,7 +30,7 @@
 
 ;; This file is dumped with XEmacs.
 
-;; -batch, -t, and -nw are processed by main() in emacs.c and are 
+;; -batch, -t, and -nw are processed by main() in emacs.c and are
 ;; never seen by lisp code.
 
 ;; -version and -help are special-cased as well: they imply -batch,
@@ -104,18 +104,22 @@ the user's init file.")
 (defvar emacs-roots nil
   "List of plausible roots of the XEmacs hierarchy.")
 
-(defvar init-file-user nil
-  "Identity of user whose `.emacs' file is or was read.
-The value is nil if no init file is being used; otherwise, it may be either
-the null string, meaning that the init file was taken from the user that
-originally logged in, or it may be a string containing a user's name.
+(defvar user-init-directory-base ".xemacs"
+  "Base of directory where user-installed init files may go.")
 
-In either of the latter cases, `(concat \"~\" init-file-user \"/\")'
-evaluates to the name of the directory in which the `.emacs' file was
-searched for.
+(defvar user-init-file-base-list (append
+				  '(".emacs.elc" ".emacs.el" ".emacs")
+				  (and (eq system-type 'windows-nt)
+				       '("_emacs.elc" "_emacs.el" "_emacs")))
+  "List of allowed init files.  The first one found takes precedence.")
 
-Setting `init-file-user' does not prevent Emacs from loading
-`site-start.el'.  The only way to do that is to use `--no-site-file'.")
+(defvar user-init-directory
+  (file-name-as-directory
+   (paths-construct-path (list "~" user-init-directory-base)))
+  "Directory where user-installed init files may go.")
+
+(defvar load-user-init-file-p t
+  "Non-nil if XEmacs should load the user's init file.")
 
 ;; #### called `site-run-file' in FSFmacs
 
@@ -200,12 +204,18 @@ remaining command-line args are in the variable `command-line-args-left'.")
     (princ (concat "\n" (emacs-version) "\n\n"))
     (princ
      (if (featurep 'x)
-	 (concat (emacs-name)
-		 " accepts all standard X Toolkit command line options.\n"
-		 "In addition, the")
+	 (concat "When creating a window on an X display, "
+		 (emacs-name)
+		 " accepts all standard X Toolkit
+command line options plus the following:
+  -iconname <title>     Use title as the icon name.
+  -mc <color>           Use color as the mouse color.
+  -cr <color>           Use color as the text-cursor foregound color.
+  -private              Install a private colormap.
+
+In addition, the")
        "The"))
     (princ " following options are accepted:
-
   -t <device>           Use TTY <device> instead of the terminal for input
                         and output.  This implies the -nw option.
   -nw                   Inhibit the use of any window-system-specific
@@ -220,7 +230,11 @@ remaining command-line args are in the variable `command-line-args-left'.")
 			startup.  Also implies `-vanilla'.
   -vanilla		Equivalent to -q -no-site-file -no-early-packages.
   -q                    Same as -no-init-file.
+  -user-init-file <file> Use <file> as init file.
+  -user-init-directory <directory> use <directory> as init directory.
   -user <user>          Load user's init file instead of your own.
+                        Equivalent to -user-init-file ~<user>/.emacs
+                                      -user-init-directory ~<user>/.xemacs/
   -u <user>             Same as -user.\n")
    (let ((l command-switch-alist)
 	  (insert (lambda (&rest x)
@@ -382,14 +396,15 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
 
       (setq emacs-roots (paths-find-emacs-roots invocation-directory
 						invocation-name))
-    
+
       (if debug-paths
 	  (princ (format "emacs-roots:\n%S\n" emacs-roots)
 		 'external-debugging-output))
-    
+
       (if (null emacs-roots)
 	  (startup-find-roots-warning)
 	(startup-setup-paths emacs-roots
+			     user-init-directory
 			     inhibit-early-packages
 			     inhibit-site-lisp
 			     debug-paths))
@@ -399,7 +414,7 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
 	     lisp-directory)
 	(load (expand-file-name (file-name-sans-extension autoload-file-name)
 				lisp-directory) nil t))
-    
+
     (if (not inhibit-autoloads)
 	(progn
 	  (if (not inhibit-early-packages)
@@ -481,16 +496,11 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
   ;;		   (and (not (equal string "")) string)))))
   ;;	(and ctype
   ;;	     (string-match iso-8859-1-locale-regexp ctype)))
-  ;;      (progn 
+  ;;      (progn
   ;;	(standard-display-european t)
   ;;	(require 'iso-syntax)))
 
-  ;; Figure out which user's init file to load,
-  ;; either from the environment or from the options.
-  (setq init-file-user (if (noninteractive) nil (user-login-name)))
-  ;; If user has not done su, use current $HOME to find .emacs.
-  (and init-file-user (string= init-file-user (user-real-login-name))
-       (setq init-file-user ""))
+  (setq load-user-init-file-p (not (noninteractive)))
 
   ;; Allow (at least) these arguments anywhere in the command line
   (let ((new-args nil)
@@ -500,7 +510,7 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
       (cond
        ((or (string= arg "-q")
 	    (string= arg "-no-init-file"))
-	(setq init-file-user nil))
+	(setq load-user-init-file-p nil))
        ((string= arg "-no-site-file")
 	(setq site-start-file nil))
        ((or (string= arg "-no-early-packages")
@@ -511,11 +521,20 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
 	    ;; Some work on this one already done in emacs.c.
 	    (string= arg "-no-autoloads")
 	    (string= arg "--no-autoloads"))
-	(setq init-file-user nil
+	(setq load-user-init-file-p nil
 	      site-start-file nil))
+       ((string= arg "-user-init-file")
+	(setq user-init-file (pop args)))
+       ((string= arg "-user-init-directory")
+	(setq user-init-directory (file-name-as-directory (pop args))))
        ((or (string= arg "-u")
-	    (string= arg "-user"))
-	(setq init-file-user (pop args)))
+ 	    (string= arg "-user"))
+	(let* ((user (pop args))
+	       (home-user (concat "~" user)))
+	  (setq user-init-file (find-user-init-file home-user)
+		user-init-directory (file-name-as-directory
+				     (paths-construct-path
+				      (list home-user user-init-directory-base))))))
        ((string= arg "-debug-init")
 	(setq init-file-debug t))
        ((string= arg "-unmapped")
@@ -527,7 +546,9 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
 	(while args
 	  (push (pop args) new-args)))
        (t (push arg new-args))))
-    
+
+    (setq init-file-user (and load-user-init-file-p ""))
+
     (nreverse new-args)))
 
 (defconst initial-scratch-message "\
@@ -568,6 +589,11 @@ If this is nil, no message will be displayed.")
       ;; and deletes the stdio device.
       (frame-initialize))
 
+    ;; Reinitialize faces if necessary.  This function changes face if
+    ;; it is created during auto-autoloads loading.  Otherwise, it
+    ;; does nothing.
+    (startup-initialize-custom-faces)
+
     ;;
     ;; We have normality, I repeat, we have normality.  Anything you still
     ;; can't cope with is therefore your own problem.  (And we don't need
@@ -576,7 +602,7 @@ If this is nil, no message will be displayed.")
 
     ;;; Load init files.
     (load-init-file)
-    
+
     (with-current-buffer (get-buffer "*scratch*")
       (erase-buffer)
       ;; (insert initial-scratch-message)
@@ -601,7 +627,7 @@ If this is nil, no message will be displayed.")
     ;; If -batch, terminate after processing the command options.
     (when (noninteractive) (kill-emacs t))))
 
-(defun load-terminal-library ()	      
+(defun load-terminal-library ()
   (when term-file-prefix
     (let ((term (getenv "TERM"))
 	  hyphend)
@@ -612,43 +638,26 @@ If this is nil, no message will be displayed.")
 	    (setq term (substring term 0 hyphend))
 	  (setq term nil))))))
 
-(defconst user-init-directory "/.xemacs/"
-  "Directory where user-installed packages may go.")
-(define-obsolete-variable-alias
-  'emacs-user-extension-dir
-  'user-init-directory)
+(defun find-user-init-file (&optional directory)
+  "Determine the user's init file."
+  (unless directory
+    (setq directory "~"))
+  (dolist (file user-init-file-base-list)
+    (let ((expanded (paths-construct-path (list directory file))))
+      (when (file-exists-p expanded)
+	(return expanded)))))
 
-(defun load-user-init-file (init-file-user)
+(defun load-user-init-file ()
   "This function actually reads the init file, .emacs."
-  (when init-file-user
-;; purge references to init.el and options.el
-;; convert these to use paths-construct-path for eventual migration to init.el
-;; needs to be converted when idiom for constructing "~user" paths is created
-;    (setq user-init-file
-;	  (paths-construct-path (list (concat "~" init-file-user)
-;				      user-init-directory
-;				      "init.el")))
-;    (unless (file-exists-p (expand-file-name user-init-file))
-    (setq user-init-file
-	  (paths-construct-path (list (concat "~" init-file-user)
-				      (cond
-				       ((eq system-type 'ms-dos) "_emacs")
-				       (t ".emacs")))))
-;    )
-    (load user-init-file t t t)
-;; This should not be loaded since custom stuff currently goes into .emacs
-;    (let ((default-custom-file
-;	    (paths-construct-path (list (concat "~" init-file-user)
-;				        user-init-directory
-;				        "options.el")))
-;      (when (string= custom-file default-custom-file)
-;	(load default-custom-file t t)))
-    (unless inhibit-default-init
-      (let ((inhibit-startup-message nil))
-	;; Users are supposed to be told their rights.
-	;; (Plus how to get help and how to undo.)
-	;; Don't you dare turn this off for anyone except yourself.
-	(load "default" t t)))))
+  (if (not user-init-file)
+      (setq user-init-file (find-user-init-file)))
+  (load user-init-file t t t)
+  (unless inhibit-default-init
+    (let ((inhibit-startup-message nil))
+      ;; Users are supposed to be told their rights.
+      ;; (Plus how to get help and how to undo.)
+      ;; Don't you dare turn this off for anyone except yourself.
+      (load "default" t t))))
 
 ;;; Load user's init file and default ones.
 (defun load-init-file ()
@@ -669,12 +678,13 @@ If this is nil, no message will be displayed.")
 	(debug-on-error-initial
 	 (if (eq init-file-debug t) 'startup init-file-debug)))
     (let ((debug-on-error debug-on-error-initial))
-      (if init-file-debug
+      (if (and load-user-init-file-p init-file-debug)
 	  ;; Do this without a condition-case if the user wants to debug.
-	  (load-user-init-file init-file-user)
+	  (load-user-init-file)
 	(condition-case error
 	    (progn
-	      (load-user-init-file init-file-user)
+	      (if load-user-init-file-p
+		  (load-user-init-file))
 	      (setq init-file-had-error nil))
           (error
 	   (message "Error in init file: %s" (error-message-string error))
@@ -788,7 +798,7 @@ a new format, when variables have changed, etc."
 	  (setq end-of-options t))
 	 (t
 	  (setq file-p t)))
-	
+
 	(when file-p
 	  (setq file-p nil)
 	  (incf file-count)
@@ -826,7 +836,7 @@ a new format, when variables have changed, etc."
 	       (setq e (read-key-sequence
 			(let ((p (keymap-prompt map t)))
 			  (cond ((symbolp map)
-				 (if p 
+				 (if p
 				     (format "%s %s " map p)
 				   (format "%s " map)))
 				(p)
@@ -905,7 +915,7 @@ a new format, when variables have changed, etc."
 (defun startup-center-spaces (glyph)
   ;; Return the number of spaces to insert in order to center
   ;; the given glyph (may be a string or a pixmap).
-  ;; Assume spaces are as wide as avg-pixwidth.  
+  ;; Assume spaces are as wide as avg-pixwidth.
   ;; Won't be quite right for proportional fonts, but it's the best we can do.
   ;; Maybe the new redisplay will export something a glyph-width function.
   ;;; #### Yes, there is a glyph-width function but it isn't quite what
@@ -916,7 +926,7 @@ a new format, when variables have changed, etc."
   ;; This function is used in about.el too.
   (let* ((avg-pixwidth     (round (/ (frame-pixel-width) (frame-width))))
 	 (fill-area-width  (* avg-pixwidth (- fill-column left-margin)))
-	 (glyph-pixwidth   (cond ((stringp glyph) 
+	 (glyph-pixwidth   (cond ((stringp glyph)
 				  (* avg-pixwidth (length glyph)))
 				 ;; #### the pixmap option should be removed
 				 ;;((pixmapp glyph)
@@ -936,12 +946,12 @@ a new format, when variables have changed, etc."
 	   `( "\
 Sun provides support for the WorkShop/XEmacs integration package only.
 All other XEmacs packages are provided to you \"AS IS\".\n"
-	      ,@(let ((lang (or (getenv "LC_ALL") (getenv "LC_MESSAGES") 
+	      ,@(let ((lang (or (getenv "LC_ALL") (getenv "LC_MESSAGES")
 				(getenv "LANG"))))
 		  (if (and
 		       (not (featurep 'mule)) ;; Already got mule?
 		       ;; No Mule support on tty's yet
-		       (not (eq 'tty (console-type))) 
+		       (not (eq 'tty (console-type)))
 		       lang ;; Non-English locale?
 		       (not (string= lang "C"))
 		       (not (string-match "^en" lang))
@@ -953,7 +963,7 @@ To handle other languages you need to run a Multi-lingual (`Mule') version of
 XEmacs, by either running the command `xemacs-mule', or by using the X resource
 `ESERVE*defaultXEmacsPath: xemacs-mule' when starting XEmacs from Sun WorkShop.
 \n")))))
-     ((key describe-no-warranty) 
+     ((key describe-no-warranty)
       ": "(face (red bold) "XEmacs comes with ABSOLUTELY NO WARRANTY\n"))
      ((key describe-copying)
       ": conditions to give out copies of XEmacs\n")
@@ -961,16 +971,16 @@ XEmacs, by either running the command `xemacs-mule', or by using the X resource
       ": how to get the latest version\n")
      "\n--\n"
      (face italic "\
-Copyright (C) 1985-1998 Free Software Foundation, Inc.
+Copyright (C) 1985-1999 Free Software Foundation, Inc.
 Copyright (C) 1990-1994 Lucid, Inc.
 Copyright (C) 1993-1997 Sun Microsystems, Inc. All Rights Reserved.
 Copyright (C) 1994-1996 Board of Trustees, University of Illinois
 Copyright (C) 1995-1996 Ben Wing\n"))
-    
+
     ((face (blue bold underline) "\nInformation, on-line help:\n\n")
      "XEmacs comes with plenty of documentation...\n\n"
      ,@(if (string-match "beta" emacs-version)
-	   `((key describe-beta) 
+	   `((key describe-beta)
 	     ": " (face (red bold)
 			"This is an Experimental version of XEmacs.\n"))
 	 `( "\n"))
@@ -984,7 +994,7 @@ Copyright (C) 1995-1996 Ben Wing\n"))
       (face bold "Help") " menu)\n")
      ((key info) ": read the on-line documentation\n\n")
      ((key describe-project) ": read about the GNU project\n")
-     ((key about-xemacs) ": see who's developping XEmacs\n"))
+     ((key about-xemacs) ": see who's developing XEmacs\n"))
 
     ((face (blue bold underline) "\nUseful stuff:\n\n")
      "Things that you should know rather quickly...\n\n"
@@ -999,7 +1009,7 @@ Copyright (C) 1995-1996 Ben Wing\n"))
 ;  "If non-nil, function called to provide the startup logo.
 ;This function should return an initialized glyph if it is used.")
 
-;; This will hopefully go away when gettext is functionnal.
+;; This will hopefully go away when gettext is functional.
 (defconst splash-frame-static-body
   `(,(emacs-version) "\n\n"
     (face italic "`C-' means the control key,`M-' means the meta key\n\n")))
@@ -1020,7 +1030,7 @@ Copyright (C) 1995-1996 Ben Wing\n"))
 	      (1+ indice )))
       )))
 
-;; ### This function now returns the (possibly nil) timeout circulating the
+;; #### This function now returns the (possibly nil) timeout circulating the
 ;; splash-frame elements
 (defun display-splash-frame ()
   (let ((logo xemacs-logo)
@@ -1069,7 +1079,8 @@ Copyright (C) 1995-1996 Ben Wing\n"))
 	;; don't let /tmp_mnt/... get into the load-path or exec-path.
 	(abbreviate-file-name invocation-directory)))
 
-(defun startup-setup-paths (roots &optional
+(defun startup-setup-paths (roots user-init-directory
+				  &optional
 				  inhibit-early-packages inhibit-site-lisp
 				  debug-paths)
   "Setup all the various paths.
@@ -1084,7 +1095,9 @@ It's idempotent, so call this as often as you like!"
 				       early))
 	     (setq late-packages late)
 	     (setq last-packages last))
-	 (packages-find-packages roots))
+	 (packages-find-packages
+	  roots
+	  (packages-compute-package-locations user-init-directory)))
 
   (setq early-package-load-path (packages-find-package-load-path early-packages))
   (setq late-package-load-path (packages-find-package-load-path late-packages))
@@ -1128,7 +1141,7 @@ It's idempotent, so call this as often as you like!"
 	(paths-construct-info-path roots
 				   early-packages late-packages last-packages))
 
-  
+
   (if debug-paths
       (princ (format "Info-directory-list:\n%S\n" Info-directory-list)
 	     'external-debugging-output))
@@ -1137,7 +1150,7 @@ It's idempotent, so call this as often as you like!"
       (progn
 	(setq lock-directory (paths-find-lock-directory roots))
 	(setq superlock-file (paths-find-superlock-file lock-directory))
-	
+
 	(if debug-paths
 	    (progn
 	      (princ (format "lock-directory:\n%S\n" lock-directory)
@@ -1158,7 +1171,7 @@ It's idempotent, so call this as often as you like!"
   (if debug-paths
       (princ (format "exec-path:\n%S\n" exec-path)
 	     'external-debugging-output))
-  
+
   (setq doc-directory (paths-find-doc-directory roots))
 
   (if debug-paths

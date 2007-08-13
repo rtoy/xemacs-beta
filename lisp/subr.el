@@ -223,6 +223,12 @@ other hooks, such as major mode hooks, can do the job."
 The value of this variable may be buffer-local.
 The buffer about to be killed is current when this hook is run.")
 
+;; called by Frecord_buffer()
+(defvar record-buffer-hook nil
+  "Function or functions to be called when a buffer is recorded.
+The value of this variable may be buffer-local.
+The buffer being recorded is passed as an argument to the hook.")
+
 ;; in C in FSFmacs
 (defvar kill-emacs-hook nil
   "Function or functions to be called when `kill-emacs' is called,
@@ -238,6 +244,22 @@ just before emacs is actually killed.")
 ;; ...and analogously for RPLACD.
 (define-function 'rplaca 'setcar)
 (define-function 'rplacd 'setcdr)
+
+(defun copy-symbol (symbol &optional copy-properties)
+  "Return a new uninterned symbol with the same name as SYMBOL.
+If COPY-PROPERTIES is non-nil, the new symbol will have a copy of
+SYMBOL's value, function, and property lists."
+  (let ((new (make-symbol (symbol-name symbol))))
+    (when copy-properties
+      ;; This will not copy SYMBOL's chain of forwarding objects, but
+      ;; I think that's OK.  Callers should not expect such magic to
+      ;; keep working in the copy in the first place.
+      (and (boundp symbol)
+	   (set new (symbol-value symbol)))
+      (and (fboundp symbol)
+	   (fset new (symbol-function symbol)))
+      (setplist new (copy-list (symbol-plist symbol))))
+    new))
 
 ;;;; String functions.
 
@@ -294,10 +316,14 @@ Otherwise treat \\ in NEWTEXT string as special:
 If PATTERN is omitted, it defaults to \"[ \\f\\t\\n\\r\\v]+\"."
   (or pattern
       (setq pattern "[ \f\t\n\r\v]+"))
-  ;; The FSF version of this function takes care not to cons in case
-  ;; of infloop.  Maybe we should synch?
-  (let (parts (start 0))
-    (while (string-match pattern string start)
+  (let (parts (start 0) (len (length string)))
+    (if (string-match pattern string)
+	(setq parts (cons (substring string 0 (match-beginning 0)) parts)
+	      start (match-end 0)))
+    (while (and (< start len)
+		(string-match pattern string (if (> start (match-beginning 0))
+						 start
+					       (1+ start))))
       (setq parts (cons (substring string start (match-beginning 0)) parts)
 	    start (match-end 0)))
     (nreverse (cons (substring string start) parts))))
@@ -330,7 +356,7 @@ it as a string."
        (erase-buffer))))
 
 (defmacro with-current-buffer (buffer &rest body)
-  "Execute the forms in BODY with BUFFER as the current buffer.
+  "Temporarily make BUFFER the current buffer and execute the forms in BODY.
 The value returned is the value of the last form in BODY.
 See also `with-temp-buffer'."
   `(save-current-buffer
@@ -565,9 +591,6 @@ This function accepts any number of arguments, but ignores them."
   (interactive)
   nil)
 
-(define-function 'mapc-internal 'mapc)
-(make-obsolete 'mapc-internal 'mapc)
-
 (define-function 'eval-in-buffer 'with-current-buffer)
 (make-obsolete 'eval-in-buffer 'with-current-buffer)
 
@@ -613,6 +636,32 @@ If FUNCTION is not interactive, nil will be returned."
 		spec)))
 	(t
 	 (error "Non-funcallable object: %s" function))))
+
+;; This function used to be an alias to `buffer-substring', except
+;; that FSF Emacs 20.4 added a BUFFER argument in an incompatible way.
+;; The new FSF's semantics makes more sense, but we try to support
+;; both for backward compatibility.
+(defun buffer-string (&optional buffer old-end old-buffer)
+  "Return the contents of the current buffer as a string.
+If narrowing is in effect, this function returns only the visible part
+of the buffer.
+
+If BUFFER is specified, the contents of that buffer are returned.
+
+The arguments OLD-END and OLD-BUFFER are supported for backward
+compatibility with pre-21.2 XEmacsen times when arguments to this
+function were (buffer-string &optional START END BUFFER)."
+  (cond
+   ((or (stringp buffer) (bufferp buffer))
+    ;; Most definitely the new way.
+    (buffer-substring nil nil buffer))
+   ((or (stringp old-buffer) (bufferp old-buffer)
+	(natnump buffer) (natnump old-end))
+    ;; Definitely the old way.
+    (buffer-substring buffer old-end old-buffer))
+   (t
+    ;; Probably the old way.
+    (buffer-substring buffer old-end old-buffer))))
 
 ;; This was not present before.  I think Jamie had some objections
 ;; to this, so I'm leaving this undefined for now. --ben
@@ -667,6 +716,5 @@ FILE should be the name of a library, with no directory name."
 (define-function 'remove-directory 'delete-directory)
 (define-function 'set-match-data 'store-match-data)
 (define-function 'send-string-to-terminal 'external-debugging-output)
-(define-function 'buffer-string 'buffer-substring)
 
 ;;; subr.el ends here

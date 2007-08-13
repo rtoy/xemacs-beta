@@ -33,9 +33,6 @@
 ;;; Code:
 
 
-(defvar binary-process-output)
-(defvar buffer-file-type)
-
 (defgroup processes nil
   "Process, subshell, compilation, and job control support."
   :group 'external
@@ -115,14 +112,10 @@ If you quit, the process is first killed with SIGINT, then with SIGKILL if
 you quit again before the process exits."
   (let ((temp
 	 (make-temp-name
-	  (concat (file-name-as-directory (temp-directory))
-		  (if (memq system-type '(ms-dos windows-nt)) "em" "emacs")))))
+	  (concat (file-name-as-directory (temp-directory)) "emacs"))))
     (unwind-protect
 	(progn
-	  (if (memq system-type '(ms-dos windows-nt))
-	      (let ((buffer-file-type binary-process-output))
-		(write-region start end temp nil 'silent))
-	    (write-region start end temp nil 'silent))
+	  (write-region start end temp nil 'silent)
 	  (if deletep (delete-region start end))
 	  (apply #'call-process program temp buffer displayp args))
       (ignore-file-errors (delete-file temp)))))
@@ -299,7 +292,7 @@ Third arg is program file name.  It is searched for as in the shell.
 Remaining arguments are strings to give program as arguments."
   (apply 'start-process-internal name buffer program program-args))
 
-(defun open-network-stream (name buffer host service)
+(defun open-network-stream (name buffer host service &optional protocol)
   "Open a TCP connection for a service to a host.
 Returns a subprocess-object to represent the connection.
 Input and output work as for subprocesses; `delete-process' closes it.
@@ -312,33 +305,38 @@ BUFFER is the buffer (or buffer-name) to associate with the process.
  with any buffer
 Third arg is name of the host to connect to, or its IP address.
 Fourth arg SERVICE is name of the service desired, or an integer
- specifying a port number to connect to."
-  (open-network-stream-internal name buffer host service))
+ specifying a port number to connect to.
+Fifth argument PROTOCOL is a network protocol.  Currently 'tcp
+ (Transmission Control Protocol) and 'udp (User Datagram Protocol) are
+ supported.  When omitted, 'tcp is assumed.
+
+Ouput via `process-send-string' and input via buffer or filter (see
+`set-process-filter') are stream-oriented.  That means UDP datagrams are
+not guaranteed to be sent and received in discrete packets. (But small
+datagrams around 500 bytes that are not truncated by `process-send-string'
+are usually fine.)  Note further that UDP protocol does not guard against
+lost packets."
+  (open-network-stream-internal name buffer host service protocol))
 
 (defun shell-quote-argument (argument)
   "Quote an argument for passing as argument to an inferior shell."
-  (if (eq system-type 'ms-dos)
-      ;; MS-DOS shells don't have quoting, so don't do any.
-      argument
-    (if (eq system-type 'windows-nt)
-	(concat "\"" argument "\"")
-      ;; Quote everything except POSIX filename characters.
-      ;; This should be safe enough even for really weird shells.
-      (let ((result "") (start 0) end)
-	(while (string-match "[^-0-9a-zA-Z_./]" argument start)
-	  (setq end (match-beginning 0)
-		result (concat result (substring argument start end)
-			       "\\" (substring argument end (1+ end)))
-		start (1+ end)))
-	(concat result (substring argument start))))))
+  (if (eq system-type 'windows-nt)
+      (nt-quote-process-args (list shell-file-name argument))
+    ;; Quote everything except POSIX filename characters.
+    ;; This should be safe enough even for really weird shells.
+    (let ((result "") (start 0) end)
+      (while (string-match "[^-0-9a-zA-Z_./]" argument start)
+	(setq end (match-beginning 0)
+	      result (concat result (substring argument start end)
+			     "\\" (substring argument end (1+ end)))
+	      start (1+ end)))
+      (concat result (substring argument start)))))
 
-(defun exec-to-string (command)
-  "Execute COMMAND as an external process and return the output of that
-process as a string"
-  ;; by "William G. Dubuque" <wgd@zurich.ai.mit.edu>
+(defun shell-command-to-string (command)
+  "Execute shell command COMMAND and return its output as a string."
   (with-output-to-string
     (call-process shell-file-name nil t nil shell-command-switch command)))
 
-(defalias 'shell-command-to-string 'exec-to-string)
+(defalias 'exec-to-string 'shell-command-to-string)
 
 ;;; process.el ends here

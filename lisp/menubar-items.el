@@ -93,17 +93,17 @@
 		    (or buffer-undo-list pending-undo-list))
        :suffix (if (or (eq last-command 'undo)
 		       (eq last-command 'advertised-undo))
-		       "More" "")]
+		   "More" "")]
       ["Redo" redo
        :included (fboundp 'redo)
        :active (not (or (eq buffer-undo-list t)
-			 (eq last-buffer-undo-list nil)
-			 (not (or (eq last-buffer-undo-list buffer-undo-list)
-				  (and (null (car-safe buffer-undo-list))
-				       (eq last-buffer-undo-list
-					   (cdr-safe buffer-undo-list)))))
-			 (or (eq buffer-undo-list pending-undo-list)
-			     (eq (cdr buffer-undo-list) pending-undo-list))))
+			(eq last-buffer-undo-list nil)
+			(not (or (eq last-buffer-undo-list buffer-undo-list)
+				 (and (null (car-safe buffer-undo-list))
+				      (eq last-buffer-undo-list
+					  (cdr-safe buffer-undo-list)))))
+			(or (eq buffer-undo-list pending-undo-list)
+			    (eq (cdr buffer-undo-list) pending-undo-list))))
        :suffix (if (eq last-command 'redo) "More" "")]
       ["Cut" kill-primary-selection
        :active (selection-owner-p)]
@@ -143,7 +143,7 @@
 	    ("Set language environment")
 	    "--"
 	    ["Toggle input method" toggle-input-method]
-	    ["Select input method" select-input-method]
+	    ["Select input method" set-input-method]
 	    ["Describe input method" describe-input-method]
 	    "--"
 	    ["Describe current coding systems"
@@ -238,9 +238,9 @@
        ["Update Package Index" package-get-update-base]
        ["List & Install" pui-list-packages]
        ["Update Installed Packages" package-get-update-all]
-       ;; hack-o-matic, we can't force a laod of package-base here
+       ;; hack-o-matic, we can't force a load of package-base here
        ;; since it triggers dialog box interactions which we can't
-       ;; deal while using a menu
+       ;; deal with while using a menu
        ("Using Custom" 
 	:filter (lambda (&rest junk)
 		  (if package-get-base
@@ -375,7 +375,7 @@
        ["Color Printing"
 	(cond (ps-print-color-p
 	       (customize-set-variable 'ps-print-color-p nil)
-	       ;; I'm wondering whether all this muck is usefull.
+	       ;; I'm wondering whether all this muck is useful.
 	       (and (boundp 'original-face-background)
 		    original-face-background
 		    (set-face-background 'default original-face-background)))
@@ -634,24 +634,24 @@
 	  (force-cursor-redisplay))
 	:style radio
 	:selected (eq bar-cursor t)]
-	["Bar cursor (2 pixels)"
-	 (progn
-	   (customize-set-variable 'bar-cursor 2)
-	   (force-cursor-redisplay))
-	 :style radio
-	 :selected (and bar-cursor (not (eq bar-cursor t)))]
-	"------"
-	["Line Numbers"
-	 (progn
-	   (customize-set-variable 'line-number-mode (not line-number-mode))
-	   (redraw-modeline))
-	 :style toggle :selected line-number-mode]
-	["Column Numbers"
-	 (progn
-	   (customize-set-variable 'column-number-mode
-				   (not column-number-mode))
-	   (redraw-modeline))
-	 :style toggle :selected column-number-mode]
+       ["Bar cursor (2 pixels)"
+	(progn
+	  (customize-set-variable 'bar-cursor 2)
+	  (force-cursor-redisplay))
+	:style radio
+	:selected (and bar-cursor (not (eq bar-cursor t)))]
+       "------"
+       ["Line Numbers"
+	(progn
+	  (customize-set-variable 'line-number-mode (not line-number-mode))
+	  (redraw-modeline))
+	:style toggle :selected line-number-mode]
+       ["Column Numbers"
+	(progn
+	  (customize-set-variable 'column-number-mode
+				  (not column-number-mode))
+	  (redraw-modeline))
+	:style toggle :selected column-number-mode]
        )
       ("Menubar Appearance"
        ["Buffers Menu Length..."
@@ -735,6 +735,32 @@
 		 (customize-set-variable 'default-toolbar-position 'right)
 		 :style radio
 		 :selected (eq default-toolbar-position 'right)]
+		)
+	       )))
+      ,@(if (featurep 'gutter)
+	    '(("Gutter Appearance"
+	       ["Visible"
+		(customize-set-variable 'gutter-visible-p
+					(not gutter-visible-p))
+		:style toggle
+		:selected gutter-visible-p]
+	       ("Default Location"
+		["Top"
+		 (customize-set-variable 'default-gutter-position 'top)
+		 :style radio
+		 :selected (eq default-gutter-position 'top)]
+		["Bottom"
+		 (customize-set-variable 'default-gutter-position 'bottom)
+		 :style radio
+		 :selected (eq default-gutter-position 'bottom)]
+		["Left"
+		 (customize-set-variable 'default-gutter-position 'left)
+		 :style radio
+		 :selected (eq default-gutter-position 'left)]
+		["Right"
+		 (customize-set-variable 'default-gutter-position 'right)
+		 :style radio
+		 :selected (eq default-gutter-position 'right)]
 		)
 	       )))
       ("Mouse"
@@ -955,7 +981,8 @@
        ["No Warranty" describe-no-warranty]
        ["XEmacs License" describe-copying]
        ["The Latest Version" describe-distribution])
-      ["Send Bug Report..." report-emacs-bug]))))
+      ["Send Bug Report..." report-emacs-bug
+       :active (fboundp 'report-emacs-bug)]))))
 
 
 (defun maybe-add-init-button ()
@@ -963,12 +990,12 @@
 Adds `Load .emacs' button to menubar when starting up with -q."
   ;; by Stig@hackvan.com
   (cond
-   (init-file-user nil)
+   (load-user-init-file-p nil)
    ((file-exists-p (expand-file-name ".emacs" "~"))
     (add-menu-button nil
 		     ["Load .emacs"
 		      (progn (delete-menu-item '("Load .emacs"))
-			     (load-user-init-file (user-login-name)))
+			     (load-user-init-file))
 		      ]
 		     "Help"))
    (t nil)))
@@ -1081,7 +1108,7 @@ returns a whole bunch of info about a buffer."
   'sort-buffers-menu-by-mode-then-alphabetically
   "*If non-nil, a function to sort the list of buffers in the buffers menu.
 It will be passed two arguments (two buffers to compare) and should return
-T if the first is \"less\" than the second.  One possible value is
+t if the first is \"less\" than the second.  One possible value is
 `sort-buffers-menu-alphabetically'; another is
 `sort-buffers-menu-by-mode-then-alphabetically'."
   :type '(choice (const :tag "None" nil)
@@ -1115,11 +1142,16 @@ Sorts the buffers in alphabetical order by name, but puts buffers beginning
 with a star at the end of the list."
   (let* ((nam1 (buffer-name buf1))
 	 (nam2 (buffer-name buf2))
+	 (inv1p (not (null (string-match "\\` " nam1))))
+	 (inv2p (not (null (string-match "\\` " nam2))))
 	 (star1p (not (null (string-match "\\`*" nam1))))
 	 (star2p (not (null (string-match "\\`*" nam2)))))
-    (if (not (eq star1p star2p))
-	(not star1p)
-      (string-lessp nam1 nam2))))
+    (cond ((not (eq inv1p inv2p))
+	   (not inv1p))
+	  ((not (eq star1p star2p))
+	   (not star1p))
+	  (t
+	   (string-lessp nam1 nam2)))))
 
 (defun sort-buffers-menu-by-mode-then-alphabetically (buf1 buf2)
   "For use as a value of `buffers-menu-sort-function'.
@@ -1127,15 +1159,23 @@ Sorts first by major mode and then alphabetically by name, but puts buffers
 beginning with a star at the end of the list."
   (let* ((nam1 (buffer-name buf1))
 	 (nam2 (buffer-name buf2))
+	 (inv1p (not (null (string-match "\\` " nam1))))
+	 (inv2p (not (null (string-match "\\` " nam2))))
 	 (star1p (not (null (string-match "\\`*" nam1))))
 	 (star2p (not (null (string-match "\\`*" nam2))))
 	 (mode1 (symbol-value-in-buffer 'major-mode buf1))
 	 (mode2 (symbol-value-in-buffer 'major-mode buf2)))
-    (cond ((not (eq star1p star2p)) (not star1p))
+    (cond ((not (eq inv1p inv2p))
+	   (not inv1p))
+	  ((not (eq star1p star2p))
+	   (not star1p))
 	  ((and star1p star2p (string-lessp nam1 nam2)))
-	  ((string-lessp mode1 mode2) t)
-	  ((string-lessp mode2 mode1) nil)
-	  (t (string-lessp nam1 nam2)))))
+	  ((string-lessp mode1 mode2)
+	   t)
+	  ((string-lessp mode2 mode1)
+	   nil)
+	  (t
+	   (string-lessp nam1 nam2)))))
 
 ;; this version is too slow on some machines.
 (defun slow-format-buffers-menu-line (buffer)
@@ -1212,10 +1252,10 @@ This groups buffers by major mode.  It only really makes sense if
 				   (list 'buffer-menu-write-file name) t)
 			   (vector "Delete Buffer" (list 'kill-buffer name)
 				   t)))
-	     ;; ### We don't want buffer names to be translated,
-	     ;; ### so we put the buffer name in the suffix.
-	     ;; ### Also, avoid losing with non-ASCII buffer names.
-	     ;; ### We still lose, however, if complex-buffers-menu-p. --mrb
+	     ;; #### We don't want buffer names to be translated,
+	     ;; #### so we put the buffer name in the suffix.
+	     ;; #### Also, avoid losing with non-ASCII buffer names.
+	     ;; #### We still lose, however, if complex-buffers-menu-p. --mrb
 	     (vector ""
 		     (list buffers-menu-switch-to-buffer-function
 			   (buffer-name buffer))
@@ -1376,7 +1416,7 @@ See the function `popup-menu' for a description of menu syntax.")
 (make-variable-buffer-local 'mode-popup-menu)
 
 ;; In an effort to avoid massive menu clutter, this mostly worthless menu is
-;; superceded by any local popup menu...
+;; superseded by any local popup menu...
 (setq-default mode-popup-menu default-popup-menu)
 
 (defvar activate-popup-menu-hook nil
@@ -1517,4 +1557,4 @@ The menu is computed by combining `global-popup-menu' and `mode-popup-menu'."
 (provide 'x-menubar)
 (provide 'menubar-items)
 
-;;; x-menubar.el ends here.
+;;; menubar-items.el ends here.

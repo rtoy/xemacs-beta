@@ -24,8 +24,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.30. */
 
-#ifndef _XEMACS_WINDOW_H_
-#define _XEMACS_WINDOW_H_
+#ifndef INCLUDED_window_h_
+#define INCLUDED_window_h_
 
 #include "redisplay.h"
 #ifdef HAVE_SCROLLBARS
@@ -129,7 +129,15 @@ struct window
   /* Number of columns display within the window is scrolled to the left. */
   int hscroll;
   /* Idem for the window's modeline */
-  int modeline_hscroll;
+  Charcount modeline_hscroll;
+  /* Amount to clip off the top line for pixel-based scrolling. Point
+     will remain constant but this will be incremented to
+     incrementally shift lines up. */
+  int top_yoffset;
+  /* Amount to clip off the left of the lines for pixel-based
+     scrolling. Hscroll will remain constant but this will be
+     incremented to incrementally shift lines left.*/
+  int left_xoffset;
   /* Number saying how recently window was selected */
   Lisp_Object use_time;
   /* text.modified of displayed buffer as of last time display completed */
@@ -254,7 +262,6 @@ DECLARE_LRECORD (window, struct window);
 #define XWINDOW(x) XRECORD (x, window, struct window)
 #define XSETWINDOW(x, p) XSETRECORD (x, p, window)
 #define WINDOWP(x) RECORDP (x, window)
-#define GC_WINDOWP(x) GC_RECORDP (x, window)
 #define CHECK_WINDOW(x) CHECK_RECORD (x, window)
 #define CONCHECK_WINDOW(x) CONCHECK_RECORD (x, window)
 
@@ -303,7 +310,7 @@ EXFUN (Frecenter, 2);
 EXFUN (Freplace_buffer_in_windows, 1);
 EXFUN (Fselect_window, 2);
 EXFUN (Fselected_window, 1);
-EXFUN (Fset_window_buffer, 2);
+EXFUN (Fset_window_buffer, 3);
 EXFUN (Fset_window_hscroll, 2);
 EXFUN (Fset_window_point, 2);
 EXFUN (Fset_window_start, 3);
@@ -329,6 +336,8 @@ int window_char_height (struct window *, int include_gutters_p);
 int window_displayed_height (struct window *);
 int window_is_leftmost (struct window *w);
 int window_is_rightmost (struct window *w);
+int window_is_lowest (struct window *w);
+int window_is_highest (struct window *w);
 int window_truncation_on (struct window *w);
 int window_needs_vertical_divider (struct window *);
 int window_scrollbar_width (struct window *w);
@@ -340,7 +349,6 @@ int window_top_gutter_height (struct window *w);
 int window_bottom_gutter_height (struct window *w);
 int window_left_gutter_width (struct window *w, int modeline);
 int window_right_gutter_width (struct window *w, int modeline);
-int window_bottom_toolbar_height (struct window *w);
 
 void delete_all_subwindows (struct window *w);
 void set_window_pixheight (Lisp_Object window, int pixheight,
@@ -352,6 +360,8 @@ void window_scroll (Lisp_Object window, Lisp_Object n, int direction,
 int buffer_window_count (struct buffer *b, struct frame *f);
 int buffer_window_mru (struct window *w);
 void check_frame_size (struct frame *frame, int *rows, int *cols);
+int frame_pixsize_valid_p (struct frame *frame, int width, int height);
+int frame_size_valid_p (struct frame *frame, int rows, int cols);
 struct window *decode_window (Lisp_Object window);
 struct window *find_window_by_pixel_pos (int pix_x, int pix_y, Lisp_Object win);
 
@@ -381,6 +391,7 @@ int window_divider_width (struct window *w);
 /* XEmacs window size and positioning macros. */
 #define WINDOW_TOP(w) ((w)->pixel_top)
 #define WINDOW_TEXT_TOP(w) (WINDOW_TOP (w) + window_top_gutter_height (w))
+#define WINDOW_TEXT_TOP_CLIP(w) ((w)->top_yoffset)
 #define WINDOW_BOTTOM(w) ((w)->pixel_top + (w)->pixel_height)
 #define WINDOW_TEXT_BOTTOM(w) (WINDOW_BOTTOM (w) - window_bottom_gutter_height (w))
 #define WINDOW_LEFT(w) ((w)->pixel_left)
@@ -416,4 +427,4 @@ int window_divider_width (struct window *w);
 
 #endif /* emacs */
 
-#endif /* _XEMACS_WINDOW_H_ */
+#endif /* INCLUDED_window_h_ */

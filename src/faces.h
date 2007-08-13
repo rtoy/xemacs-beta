@@ -21,14 +21,14 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-#ifndef _XEMACS_FACES_H_
-#define _XEMACS_FACES_H_
+#ifndef INCLUDED_faces_h_
+#define INCLUDED_faces_h_
 
 #include "buffer.h" /* for NUM_LEADING_BYTES */
 
-/* a struct Lisp_Face is the C object corresponding to a face.  There
-   is one of these per face.  It basically contains all of the specifiers
-   for the built-in face properties, plus the plist of user-specified
+/* a Lisp_Face is the C object corresponding to a face.  There is one
+   of these per face.  It basically contains all of the specifiers for
+   the built-in face properties, plus the plist of user-specified
    properties. */
 
 struct Lisp_Face
@@ -222,11 +222,10 @@ struct face_cachel
   unsigned char font_updated[NUM_LEADING_BYTES];
 };
 
-DECLARE_LRECORD (face, struct Lisp_Face);
-#define XFACE(x) XRECORD (x, face, struct Lisp_Face)
+DECLARE_LRECORD (face, Lisp_Face);
+#define XFACE(x) XRECORD (x, face, Lisp_Face)
 #define XSETFACE(x, p) XSETRECORD (x, p, face)
 #define FACEP(x) RECORDP (x, face)
-#define GC_FACEP(x) GC_RECORDP (x, face)
 #define CHECK_FACE(x) CHECK_RECORD (x, face)
 
 Lisp_Object ensure_face_cachel_contains_charset (struct face_cachel *cachel,
@@ -241,8 +240,7 @@ void update_face_cachel_data (struct face_cachel *cachel,
 void face_cachel_charset_font_metric_info (struct face_cachel *cachel,
 					   unsigned char *charsets,
 					   struct font_metric_info *fm);
-void mark_face_cachels (face_cachel_dynarr *elements,
-			void (*markobj) (Lisp_Object));
+void mark_face_cachels (face_cachel_dynarr *elements);
 void mark_face_cachels_as_clean (struct window *w);
 void mark_face_cachels_as_not_updated (struct window *w);
 void reset_face_cachel (struct face_cachel *inst);
@@ -260,7 +258,7 @@ EXFUN (Fget_face, 1);
 
 extern Lisp_Object Qstrikethru, Vbuilt_in_face_specifiers, Vdefault_face;
 extern Lisp_Object Vleft_margin_face, Vpointer_face, Vright_margin_face;
-extern Lisp_Object Vtext_cursor_face, Vvertical_divider_face; 
+extern Lisp_Object Vtext_cursor_face, Vvertical_divider_face;
 extern Lisp_Object Vtoolbar_face, Vgui_element_face, Vwidget_face;
 
 void mark_all_faces_as_clean (void);
@@ -360,6 +358,8 @@ Lisp_Object face_property_matching_instance (Lisp_Object face,
   FACE_PROPERTY_INSTANCE (face, Qbackground_pixmap, domain, 0, Qzero)
 #define FACE_UNDERLINE_P(face, domain)					\
   (!NILP (FACE_PROPERTY_INSTANCE (face, Qunderline, domain, 0, Qzero)))
+#define FACE_STRIKETHRU_P(face, domain)					\
+  (!NILP (FACE_PROPERTY_INSTANCE (face, Qstrikethru, domain, 0, Qzero)))
 #define FACE_HIGHLIGHT_P(face, domain)					\
   (!NILP (FACE_PROPERTY_INSTANCE (face, Qhighlight, domain, 0, Qzero)))
 #define FACE_DIM_P(face, domain)					\
@@ -369,4 +369,4 @@ Lisp_Object face_property_matching_instance (Lisp_Object face,
 #define FACE_REVERSE_P(face, domain)					\
   (!NILP (FACE_PROPERTY_INSTANCE (face, Qreverse, domain, 0, Qzero)))
 
-#endif /* _XEMACS_FACES_H_ */
+#endif /* INCLUDED_faces_h_ */

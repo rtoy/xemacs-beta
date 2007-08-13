@@ -260,7 +260,7 @@ typedef struct gap_array
   Gap_Array_Marker *markers;
 } Gap_Array;
 
-Gap_Array_Marker *gap_array_marker_freelist;
+static Gap_Array_Marker *gap_array_marker_freelist;
 
 /* Convert a "memory position" (i.e. taking the gap into account) into
    the address of the element at (i.e. after) that position.  "Memory
@@ -301,7 +301,7 @@ typedef struct extent_list
   Extent_List_Marker *markers;
 } Extent_List;
 
-Extent_List_Marker *extent_list_marker_freelist;
+static Extent_List_Marker *extent_list_marker_freelist;
 
 #define EXTENT_LESS_VALS(e,st,nd) ((extent_start (e) < (st)) || \
 				   ((extent_start (e) == (st)) && \
@@ -443,9 +443,6 @@ Lisp_Object Qoutside_margin;
 Lisp_Object Qinside_margin;
 Lisp_Object Qwhitespace;
 /* Qtext defined in general.c */
-
-/* partially used in redisplay */
-Lisp_Object Qglyph_invisible;
 
 Lisp_Object Qcopy_function;
 Lisp_Object Qpaste_function;
@@ -890,8 +887,8 @@ static Extent_List *
 allocate_extent_list (void)
 {
   Extent_List *el = xnew (Extent_List);
-  el->start = make_gap_array (sizeof(EXTENT));
-  el->end = make_gap_array (sizeof(EXTENT));
+  el->start = make_gap_array (sizeof (EXTENT));
+  el->end = make_gap_array (sizeof (EXTENT));
   el->markers = 0;
   return el;
 }
@@ -910,31 +907,31 @@ free_extent_list (Extent_List *el)
 /************************************************************************/
 
 static Lisp_Object
-mark_extent_auxiliary (Lisp_Object obj, void (*markobj) (Lisp_Object))
+mark_extent_auxiliary (Lisp_Object obj)
 {
   struct extent_auxiliary *data = XEXTENT_AUXILIARY (obj);
-  markobj (data->begin_glyph);
-  markobj (data->end_glyph);
-  markobj (data->invisible);
-  markobj (data->children);
-  markobj (data->read_only);
-  markobj (data->mouse_face);
-  markobj (data->initial_redisplay_function);
-  markobj (data->before_change_functions);
-  markobj (data->after_change_functions);
+  mark_object (data->begin_glyph);
+  mark_object (data->end_glyph);
+  mark_object (data->invisible);
+  mark_object (data->children);
+  mark_object (data->read_only);
+  mark_object (data->mouse_face);
+  mark_object (data->initial_redisplay_function);
+  mark_object (data->before_change_functions);
+  mark_object (data->after_change_functions);
   return data->parent;
 }
 
 DEFINE_LRECORD_IMPLEMENTATION ("extent-auxiliary", extent_auxiliary,
                                mark_extent_auxiliary, internal_object_printer,
-			       0, 0, 0, struct extent_auxiliary);
+			       0, 0, 0, 0, struct extent_auxiliary);
 
 void
 allocate_extent_auxiliary (EXTENT ext)
 {
   Lisp_Object extent_aux;
   struct extent_auxiliary *data =
-    alloc_lcrecord_type (struct extent_auxiliary, lrecord_extent_auxiliary);
+    alloc_lcrecord_type (struct extent_auxiliary, &lrecord_extent_auxiliary);
 
   copy_lcrecord (data, &extent_auxiliary_defaults);
   XSETEXTENT_AUXILIARY (extent_aux, data);
@@ -973,7 +970,7 @@ static void free_soe (struct stack_of_extents *soe);
 static void soe_invalidate (Lisp_Object obj);
 
 static Lisp_Object
-mark_extent_info (Lisp_Object obj, void (*markobj) (Lisp_Object))
+mark_extent_info (Lisp_Object obj)
 {
   struct extent_info *data = (struct extent_info *) XEXTENT_INFO (obj);
   int i;
@@ -996,7 +993,7 @@ mark_extent_info (Lisp_Object obj, void (*markobj) (Lisp_Object))
 	  Lisp_Object exobj;
 
 	  XSETEXTENT (exobj, extent);
-	  markobj (exobj);
+	  mark_object (exobj);
 	}
     }
 
@@ -1025,7 +1022,7 @@ finalize_extent_info (void *header, int for_disksave)
 
 DEFINE_LRECORD_IMPLEMENTATION ("extent-info", extent_info,
                                mark_extent_info, internal_object_printer,
-			       finalize_extent_info, 0, 0,
+			       finalize_extent_info, 0, 0, 0,
 			       struct extent_info);
 
 static Lisp_Object
@@ -1033,7 +1030,7 @@ allocate_extent_info (void)
 {
   Lisp_Object extent_info;
   struct extent_info *data =
-    alloc_lcrecord_type (struct extent_info, lrecord_extent_info);
+    alloc_lcrecord_type (struct extent_info, &lrecord_extent_info);
 
   XSETEXTENT_INFO (extent_info, data);
   data->extents = allocate_extent_list ();
@@ -2602,12 +2599,11 @@ extent_fragment_delete (struct extent_fragment *ef)
   xfree (ef);
 }
 
-/* Note:  CONST is losing, but `const' is part of the interface of qsort() */
 static int
 extent_priority_sort_function (const void *humpty, const void *dumpty)
 {
-  CONST EXTENT foo = * (CONST EXTENT *) humpty;
-  CONST EXTENT bar = * (CONST EXTENT *) dumpty;
+  const EXTENT foo = * (const EXTENT *) humpty;
+  const EXTENT bar = * (const EXTENT *) dumpty;
   if (extent_priority (foo) < extent_priority (bar))
     return -1;
   return extent_priority (foo) > extent_priority (bar);
@@ -2913,37 +2909,13 @@ extent_fragment_update (struct window *w, struct extent_fragment *ef,
    extent objects.  They are similar to the functions for other
    lrecord objects.  allocate_extent() is in alloc.c, not here. */
 
-static Lisp_Object mark_extent (Lisp_Object, void (*) (Lisp_Object));
-static int extent_equal (Lisp_Object, Lisp_Object, int depth);
-static unsigned long extent_hash (Lisp_Object obj, int depth);
-static void print_extent (Lisp_Object obj, Lisp_Object printcharfun,
-			  int escapeflag);
-static Lisp_Object extent_getprop (Lisp_Object obj, Lisp_Object prop);
-static int extent_putprop (Lisp_Object obj, Lisp_Object prop,
-			   Lisp_Object value);
-static int extent_remprop (Lisp_Object obj, Lisp_Object prop);
-static Lisp_Object extent_plist (Lisp_Object obj);
-
-DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("extent", extent,
-						mark_extent,
-						print_extent,
-						/* NOTE: If you declare a
-						   finalization method here,
-						   it will NOT be called.
-						   Shaft city. */
-						0,
-						extent_equal, extent_hash,
-						extent_getprop, extent_putprop,
-						extent_remprop, extent_plist,
-						struct extent);
-
 static Lisp_Object
-mark_extent (Lisp_Object obj, void (*markobj) (Lisp_Object))
+mark_extent (Lisp_Object obj)
 {
   struct extent *extent = XEXTENT (obj);
 
-  markobj (extent_object (extent));
-  markobj (extent_no_chase_normal_field (extent, face));
+  mark_object (extent_object (extent));
+  mark_object (extent_no_chase_normal_field (extent, face));
   return extent->plist;
 }
 
@@ -2962,11 +2934,9 @@ print_extent_1 (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   if (extent_detached_p (ext))
     strcpy (bp, "detached");
   else
-    {
-      Bufpos from = XINT (Fextent_start_position (obj));
-      Bufpos to = XINT (Fextent_end_position (obj));
-      sprintf (bp, "%d, %d", from, to);
-    }
+    sprintf (bp, "%ld, %ld",
+	     (long) XINT (Fextent_start_position (obj)),
+	     (long) XINT (Fextent_end_position (obj)));
   bp += strlen (bp);
   *bp++ = (extent_end_open_p (anc) ? ')': ']');
   if (!NILP (extent_end_glyph (anc))) *bp++ = '*';
@@ -3004,9 +2974,9 @@ print_extent (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   if (escapeflag)
     {
-      CONST char *title = "";
-      CONST char *name = "";
-      CONST char *posttitle = "";
+      const char *title = "";
+      const char *name = "";
+      const char *posttitle = "";
       Lisp_Object obj2 = Qnil;
 
       /* Destroyed extents have 't' in the object field, causing
@@ -3128,6 +3098,13 @@ extent_hash (Lisp_Object obj, int depth)
 		internal_hash (extent_object (e), depth + 1));
 }
 
+static const struct lrecord_description extent_description[] = {
+  { XD_LISP_OBJECT, offsetof (struct extent, object) },
+  { XD_LISP_OBJECT, offsetof (struct extent, flags.face) },
+  { XD_LISP_OBJECT, offsetof (struct extent, plist) },
+  { XD_END }
+};
+
 static Lisp_Object
 extent_getprop (Lisp_Object obj, Lisp_Object prop)
 {
@@ -3177,7 +3154,7 @@ extent_remprop (Lisp_Object obj, Lisp_Object prop)
       return -1;
     }
 
-  return external_remprop (&ext->plist, prop, 0, ERROR_ME);
+  return external_remprop (extent_plist_addr (ext), prop, 0, ERROR_ME);
 }
 
 static Lisp_Object
@@ -3185,6 +3162,20 @@ extent_plist (Lisp_Object obj)
 {
   return Fextent_properties (obj);
 }
+
+DEFINE_BASIC_LRECORD_IMPLEMENTATION_WITH_PROPS ("extent", extent,
+						mark_extent,
+						print_extent,
+						/* NOTE: If you declare a
+						   finalization method here,
+						   it will NOT be called.
+						   Shaft city. */
+						0,
+						extent_equal, extent_hash,
+						extent_description,
+						extent_getprop, extent_putprop,
+						extent_remprop, extent_plist,
+						struct extent);
 
 
 /************************************************************************/
@@ -3667,7 +3658,7 @@ copy_extent (EXTENT original, Bytind from, Bytind to, Lisp_Object object)
 	 one. */
       struct extent_auxiliary *data =
 	alloc_lcrecord_type (struct extent_auxiliary,
-			     lrecord_extent_auxiliary);
+			     &lrecord_extent_auxiliary);
 
       copy_lcrecord (data, XEXTENT_AUXILIARY (XCAR (original->plist)));
       XSETEXTENT_AUXILIARY (XCAR (e->plist), data);
@@ -4616,14 +4607,9 @@ struct report_extent_modification_closure {
   int speccount;
 };
 
-/* This juggling with the pointer to another file's global variable is
-   kind of yucky.  Perhaps I should just export the variable.  */
-static int *inside_change_hook_pointer;
-
 static Lisp_Object
 report_extent_modification_restore (Lisp_Object buffer)
 {
-  *inside_change_hook_pointer = 0;
   if (current_buffer != XBUFFER (buffer))
     Fset_buffer (buffer);
   return Qnil;
@@ -4648,7 +4634,13 @@ report_extent_modification_mapper (EXTENT extent, void *arg)
   /* Now that we are sure to call elisp, set up an unwind-protect so
      inside_change_hook gets restored in case we throw.  Also record
      the current buffer, in case we change it.  Do the recording only
-     once.  */
+     once.
+
+     One confusing thing here is that our caller never actually calls
+     unbind_to (closure.speccount, Qnil).  This is because
+     map_extents_bytind() unbinds before, and with a smaller
+     speccount.  The additional unbind_to() in
+     report_extent_modification() would cause XEmacs to abort.  */
   if (closure->speccount == -1)
     {
       closure->speccount = specpdl_depth ();
@@ -4664,7 +4656,10 @@ report_extent_modification_mapper (EXTENT extent, void *arg)
   /* #### It's a shame that we can't use any of the existing run_hook*
      functions here.  This is so because all of them work with
      symbols, to be able to retrieve default values of local hooks.
-     <sigh> */
+     <sigh>
+
+     #### Idea: we could set up a dummy symbol, and call the hook
+     functions on *that*.  */
 
   if (!CONSP (hook) || EQ (XCAR (hook), Qlambda))
     call3 (hook, exobj, startobj, endobj);
@@ -4672,6 +4667,8 @@ report_extent_modification_mapper (EXTENT extent, void *arg)
     {
       Lisp_Object tail;
       EXTERNAL_LIST_LOOP (tail, hook)
+	/* #### Shouldn't this perform the same Fset_buffer() check as
+           above?  */
 	call3 (XCAR (tail), exobj, startobj, endobj);
     }
   return 0;
@@ -4679,7 +4676,7 @@ report_extent_modification_mapper (EXTENT extent, void *arg)
 
 void
 report_extent_modification (Lisp_Object buffer, Bufpos start, Bufpos end,
-			    int *inside, int afterp)
+			    int afterp)
 {
   struct report_extent_modification_closure closure;
 
@@ -4689,20 +4686,8 @@ report_extent_modification (Lisp_Object buffer, Bufpos start, Bufpos end,
   closure.afterp = afterp;
   closure.speccount = -1;
 
-  inside_change_hook_pointer = inside;
-  *inside = 1;
-
   map_extents (start, end, report_extent_modification_mapper, (void *)&closure,
 	       buffer, NULL, ME_MIGHT_CALL_ELISP);
-
-  if (closure.speccount == -1)
-    *inside = 0;
-  else
-    {
-      /* We mustn't unbind when closure.speccount != -1 because
-	 map_extents_bytind has already done that.  */
-      assert (*inside == 0);
-    }
 }
 
 
@@ -5009,10 +4994,10 @@ set_extent_glyph_1 (Lisp_Object extent_obj, Lisp_Object glyph, int endp,
   EXTENT extent = decode_extent (extent_obj, DE_MUST_HAVE_BUFFER);
   glyph_layout layout = symbol_to_glyph_layout (layout_obj);
 
-  /* Make sure we've actually been given a glyph or it's nil (meaning
-     we're deleting a glyph from an extent). */
+  /* Make sure we've actually been given a valid glyph or it's nil
+     (meaning we're deleting a glyph from an extent). */
   if (!NILP (glyph))
-    CHECK_GLYPH (glyph);
+    CHECK_BUFFER_GLYPH (glyph);
 
   set_extent_glyph (extent, glyph, endp, layout);
   return glyph;
@@ -6715,8 +6700,6 @@ syms_of_extents (void)
   defsymbol (&Qwhitespace, "whitespace");
   /* Qtext defined in general.c */
 
-  defsymbol (&Qglyph_invisible, "glyph-invisible");
-
   defsymbol (&Qpaste_function, "paste-function");
   defsymbol (&Qcopy_function,  "copy-function");
 
@@ -6793,8 +6776,26 @@ syms_of_extents (void)
 }
 
 void
+reinit_vars_of_extents (void)
+{
+  extent_auxiliary_defaults.begin_glyph = Qnil;
+  extent_auxiliary_defaults.end_glyph = Qnil;
+  extent_auxiliary_defaults.parent = Qnil;
+  extent_auxiliary_defaults.children = Qnil;
+  extent_auxiliary_defaults.priority = 0;
+  extent_auxiliary_defaults.invisible = Qnil;
+  extent_auxiliary_defaults.read_only = Qnil;
+  extent_auxiliary_defaults.mouse_face = Qnil;
+  extent_auxiliary_defaults.initial_redisplay_function = Qnil;
+  extent_auxiliary_defaults.before_change_functions = Qnil;
+  extent_auxiliary_defaults.after_change_functions = Qnil;
+}
+
+void
 vars_of_extents (void)
 {
+  reinit_vars_of_extents ();
+
   DEFVAR_INT ("mouse-highlight-priority", &mouse_highlight_priority /*
 The priority to use for the mouse-highlighting pseudo-extent
 that is used to highlight extents with the `mouse-face' attribute set.
@@ -6821,18 +6822,6 @@ functions `get-text-property' or `get-char-property' are called.
 
   Vextent_face_reusable_list = Fcons (Qnil, Qnil);
   staticpro (&Vextent_face_reusable_list);
-
-  extent_auxiliary_defaults.begin_glyph = Qnil;
-  extent_auxiliary_defaults.end_glyph = Qnil;
-  extent_auxiliary_defaults.parent = Qnil;
-  extent_auxiliary_defaults.children = Qnil;
-  extent_auxiliary_defaults.priority = 0;
-  extent_auxiliary_defaults.invisible = Qnil;
-  extent_auxiliary_defaults.read_only = Qnil;
-  extent_auxiliary_defaults.mouse_face = Qnil;
-  extent_auxiliary_defaults.initial_redisplay_function = Qnil;
-  extent_auxiliary_defaults.before_change_functions = Qnil;
-  extent_auxiliary_defaults.after_change_functions = Qnil;
 }
 
 void

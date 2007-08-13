@@ -13,7 +13,7 @@
 
 
 #include <stdio.h>
-#include <Errno.h>
+#include <errno.h>
 
 #include <zlib.h>
 
@@ -43,7 +43,6 @@ int makepath(char *path)
 {
   char tmp[MAXNAMELEN];
   char *cp;
-  extern int errno;
 
   for (cp=path; cp; cp = (char*)strchr(cp+1,'/')){
     if (!*cp)
@@ -204,6 +203,7 @@ main(int argc, char **argv)
 	in_block = 0;
     }
   }
+  exit (0);
 }	
 
 

@@ -3,7 +3,7 @@
 ;;; Copyright (C) 1985-1987, 1991-1994 Free Software Foundation, Inc.
 ;;; Copyright (C) 1996 Ben Wing.
 
-;; Author: Jamie Zawinski <jwz@netscape.com>
+;; Author: Jamie Zawinski <jwz@jwz.org>
 ;;	Hallvard Furuseth <hbf@ulrik.uio.no>
 ;; Keywords: internal
 
@@ -432,7 +432,6 @@ on the specbind stack.  The cdr of each cell is an integer bitmask.")
 
 (defvar byte-compile-free-references)
 (defvar byte-compile-free-assignments)
-(defvar debug-issue-ebola-notices)
 
 (defvar byte-compiler-error-flag)
 
@@ -1298,11 +1297,7 @@ otherwise pop it")
 	(byte-compile-warnings (if (eq byte-compile-warnings t)
 				   byte-compile-default-warnings
 				 byte-compile-warnings))
-	(byte-compile-file-domain nil)
-
-	;; We reserve the right to compare ANY objects for equality.
-	(debug-issue-ebola-notices -42)
-	)
+	(byte-compile-file-domain nil))
      (prog1
 	 (progn ,@body)
        (if (memq 'unused-vars byte-compile-warnings)
@@ -1527,11 +1522,7 @@ With prefix arg (noninteractively: 2nd arg), load the file after compiling."
 	(unless byte-compile-overwrite-file
 	  (ignore-file-errors (delete-file target-file)))
 	(if (file-writable-p target-file)
-	    (progn
-	      (when (memq system-type '(ms-dos windows-nt))
-		(defvar buffer-file-type)
-		(setq buffer-file-type t))
-	      (write-region 1 (point-max) target-file))
+	    (write-region 1 (point-max) target-file)
 	  ;; This is just to give a better error message than write-region
 	  (signal 'file-error
 		  (list "Opening output file"
@@ -1752,18 +1743,19 @@ With argument, insert value in current buffer after the form."
   ;; file if under Mule.  If there are any extended characters in the
   ;; input file, use `escape-quoted' to make sure that both binary and
   ;; extended characters are output properly and distinguished properly.
-  ;; Otherwise, use `no-conversion' for maximum portability with non-Mule
+  ;; Otherwise, use `raw-text' for maximum portability with non-Mule
   ;; Emacsen.
-  (when (featurep 'mule)
+  (when (featurep '(or mule file-coding))
     (defvar buffer-file-coding-system)
-    (if (save-excursion
-	  (set-buffer byte-compile-inbuffer)
-	  (goto-char (point-min))
-	  ;; mrb- There must be a better way than skip-chars-forward
-	  (skip-chars-forward (concat (char-to-string 0) "-"
-				      (char-to-string 255)))
-	  (eq (point) (point-max)))
-	(setq buffer-file-coding-system 'no-conversion)
+    (if (or (featurep '(not mule)) ;; Don't scan buffer if we are not muleized
+	    (save-excursion
+	      (set-buffer byte-compile-inbuffer)
+	      (goto-char (point-min))
+	      ;; mrb- There must be a better way than skip-chars-forward
+	      (skip-chars-forward (concat (char-to-string 0) "-"
+					  (char-to-string 255)))
+	      (eq (point) (point-max))))
+	(setq buffer-file-coding-system 'raw-text-unix)
       (insert "(require 'mule)\n;;;###coding system: escape-quoted\n")
       (setq buffer-file-coding-system 'escape-quoted)
       ;; #### Lazy loading not yet implemented for MULE files
@@ -1972,7 +1964,7 @@ list that represents a doc string reference.
 	       (while (if (setq form (cdr form))
 			  (byte-compile-constp (car form))))
 	       (null form)))
-	;; eval the macro autoload into the compilation enviroment
+	;; eval the macro autoload into the compilation environment
 	(eval form))
 
     (if name

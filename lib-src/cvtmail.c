@@ -35,27 +35,20 @@ Boston, MA 02111-1307, USA.  */
  */
 
 
-#include <../src/config.h>
+#include <config.h>
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
-#if __STDC__ || defined(STDC_HEADERS)
-# include <stdlib.h>
-#else
-char *malloc ();
-char *getenv ();
-#endif
-static void *xmalloc (unsigned int);
-static void *xrealloc (char *ptr, unsigned int);
+static void *xmalloc (size_t);
+static void *xrealloc (void *, size_t);
 static void skip_to_lf (FILE *stream);
-static void fatal (CONST char *s1, CONST char *s2);
-static void error (CONST char *s1, CONST char *s2);
+static void fatal (const char *s1, const char *s2);
+static void error (const char *s1, const char *s2);
 
 int
-main (argc, argv)
-     int argc;
-     char *argv[];
+main (int argc, char *argv[])
 {
   char *hd;
   char *md;
@@ -70,7 +63,7 @@ main (argc, argv)
   char name[14];
   int c;
 
-  hd = (char *) getenv ("HOME");
+  hd = getenv ("HOME");
 
   md = (char *) xmalloc (strlen (hd) + 10);
   strcpy (md, hd);
@@ -118,8 +111,7 @@ main (argc, argv)
 }
 
 static void
-skip_to_lf (stream)
-     FILE *stream;
+skip_to_lf (FILE *stream)
 {
   register int c;
   while ((c = getc(stream)) != '\n')
@@ -127,21 +119,18 @@ skip_to_lf (stream)
 }
 
 static void *
-xmalloc (size)
-     unsigned size;
+xmalloc (size_t size)
 {
-  char *result = (char *) malloc (size);
+  void *result = malloc (size);
   if (!result)
     fatal ("virtual memory exhausted", 0);
   return result;
 }
 
 static void *
-xrealloc (ptr, size)
-     char *ptr;
-     unsigned size;
+xrealloc (void *ptr, size_t size)
 {
-  char *result = (char *) realloc (ptr, size);
+  void *result = realloc (ptr, size);
   if (!result)
     fatal ("virtual memory exhausted", 0);
   return result;
@@ -150,14 +139,14 @@ xrealloc (ptr, size)
 /* Print error message and exit.  */
 
 static void
-fatal (CONST char *s1, CONST char *s2)
+fatal (const char *s1, const char *s2)
 {
   error (s1, s2);
   exit (1);
 }
 
 static void
-error (CONST char *s1, CONST char *s2)
+error (const char *s1, const char *s2)
 {
   fprintf (stderr, "cvtmail: ");
   fprintf (stderr, s1, s2);

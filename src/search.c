@@ -54,10 +54,10 @@ struct regexp_cache {
 };
 
 /* The instances of that struct.  */
-struct regexp_cache searchbufs[REGEXP_CACHE_SIZE];
+static struct regexp_cache searchbufs[REGEXP_CACHE_SIZE];
 
 /* The head of the linked list; points to the most recently used buffer.  */
-struct regexp_cache *searchbuf_head;
+static struct regexp_cache *searchbuf_head;
 
 
 /* Every call to re_match, etc., must pass &search_regs as the regs
@@ -131,7 +131,7 @@ compile_pattern_1 (struct regexp_cache *cp, Lisp_Object pattern,
 		   char *translate, struct re_registers *regp, int posix,
 		   Error_behavior errb)
 {
-  CONST char *val;
+  const char *val;
   reg_syntax_t old;
 
   cp->regexp = Qnil;
@@ -139,7 +139,7 @@ compile_pattern_1 (struct regexp_cache *cp, Lisp_Object pattern,
   cp->posix = posix;
   old = re_set_syntax (RE_SYNTAX_EMACS
 		       | (posix ? 0 : RE_NO_POSIX_BACKTRACKING));
-  val = (CONST char *)
+  val = (const char *)
     re_compile_pattern ((char *) XSTRING_DATA (pattern),
 			XSTRING_LENGTH (pattern), &cp->buf);
   re_set_syntax (old);
@@ -442,7 +442,7 @@ tables) and defaults to the current buffer.
    This does not clobber the match data. */
 
 Bytecount
-fast_string_match (Lisp_Object regexp,  CONST Bufbyte *nonreloc,
+fast_string_match (Lisp_Object regexp,  const Bufbyte *nonreloc,
 		   Lisp_Object reloc, Bytecount offset,
 		   Bytecount length, int case_fold_search,
 		   Error_behavior errb, int no_quit)
@@ -700,6 +700,50 @@ find_next_newline (struct buffer *buf, Bufpos from, int count)
   return scan_buffer (buf, '\n', from, 0, count, 0, 1);
 }
 
+Bytind
+bi_find_next_emchar_in_string (Lisp_String* str, Emchar target, Bytind st,
+			       EMACS_INT count)
+{
+  /* This function has been Mule-ized. */
+  Bytind lim = string_length (str) -1;
+  Bufbyte* s = string_data (str);
+
+  assert (count >= 0);
+
+#ifdef MULE
+  /* Due to the Mule representation of characters in a buffer,
+     we can simply search for characters in the range 0 - 127
+     directly.  For other characters, we do it the "hard" way.
+     Note that this way works for all characters but the other
+     way is faster. */
+  if (target >= 0200)
+    {
+      while (st < lim && count > 0)
+	{
+	  if (string_char (str, st) == target)
+	    count--;
+	  INC_CHARBYTIND (s, st);
+	}
+    }
+  else
+#endif
+    {
+      while (st < lim && count > 0)
+	{
+	  Bufbyte *bufptr = (Bufbyte *) memchr (charptr_n_addr (s, st),
+						(int) target, lim - st);
+	  if (bufptr)
+	    {
+	      count--;
+	      st =  (Bytind)(bufptr - s) + 1;
+	    }
+	  else
+	    st = lim;
+	}
+    }
+  return st;
+}
+
 /* Like find_next_newline, but returns position before the newline,
    not after, and only search up to TO.  This isn't just
    find_next_newline (...)-1, because you might hit TO.  */
@@ -727,8 +771,7 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
   unsigned char fastmap[0400];
   int negate = 0;
   REGISTER int i;
-  struct Lisp_Char_Table *syntax_table =
-    XCHAR_TABLE (buf->mirror_syntax_table);
+  Lisp_Char_Table *syntax_table = XCHAR_TABLE (buf->mirror_syntax_table);
   Bufpos limit;
 
   if (NILP (lim))
@@ -1540,8 +1583,7 @@ wordify (Lisp_Object buffer, Lisp_Object string)
   Charcount i, len;
   EMACS_INT punct_count = 0, word_count = 0;
   struct buffer *buf = decode_buffer (buffer, 0);
-  struct Lisp_Char_Table *syntax_table =
-    XCHAR_TABLE (buf->mirror_syntax_table);
+  Lisp_Char_Table *syntax_table = XCHAR_TABLE (buf->mirror_syntax_table);
 
   CHECK_STRING (string);
   len = XSTRING_CHAR_LENGTH (string);
@@ -1801,7 +1843,7 @@ and you do not need to specify it.)
   Emchar c, prevc;
   Charcount inslen;
   struct buffer *buf;
-  struct Lisp_Char_Table *syntax_table;
+  Lisp_Char_Table *syntax_table;
   int mc_count;
   Lisp_Object buffer;
   int_dynarr *ul_action_dynarr = 0;
@@ -2530,9 +2572,12 @@ syms_of_search (void)
 }
 
 void
-vars_of_search (void)
+reinit_vars_of_search (void)
 {
-  REGISTER int i;
+  int i;
+
+  last_thing_searched = Qnil;
+  staticpro_nodump (&last_thing_searched);
 
   for (i = 0; i < REGEXP_CACHE_SIZE; ++i)
     {
@@ -2540,13 +2585,16 @@ vars_of_search (void)
       searchbufs[i].buf.buffer = (unsigned char *) xmalloc (100);
       searchbufs[i].buf.fastmap = searchbufs[i].fastmap;
       searchbufs[i].regexp = Qnil;
-      staticpro (&searchbufs[i].regexp);
+      staticpro_nodump (&searchbufs[i].regexp);
       searchbufs[i].next = (i == REGEXP_CACHE_SIZE-1 ? 0 : &searchbufs[i+1]);
     }
   searchbuf_head = &searchbufs[0];
+}
 
-  last_thing_searched = Qnil;
-  staticpro (&last_thing_searched);
+void
+vars_of_search (void)
+{
+  reinit_vars_of_search ();
 
   DEFVAR_LISP ("forward-word-regexp", &Vforward_word_regexp /*
 *Regular expression to be used in `forward-word'.

@@ -49,7 +49,8 @@ Boston, MA 02111-1307, USA.  */
 #include "device.h"
 #include "insdel.h"
 
-#ifdef __CYGWIN32__
+#if (defined(__CYGWIN32__) || defined(__MINGW32__)) && \
+	CYGWIN_VERSION_DLL_MAJOR < 21
 #define stricmp strcasecmp
 #define FONTENUMPROC FONTENUMEXPROC
 #define ntmTm ntmentm
@@ -57,12 +58,12 @@ Boston, MA 02111-1307, USA.  */
 
 typedef struct colormap_t 
 {
-  CONST char *name;
-  CONST COLORREF colorref;
+  const char *name;
+  const COLORREF colorref;
 } colormap_t;
 
 /* Colors from X11R6 "XConsortium: rgb.txt,v 10.41 94/02/20 18:39:36 rws Exp" */
-static CONST colormap_t mswindows_X_color_map[] = 
+static const colormap_t mswindows_X_color_map[] = 
 {
   {"snow"			, PALETTERGB (255, 250, 250) },
   {"GhostWhite"			, PALETTERGB (248, 248, 255) },
@@ -726,12 +727,12 @@ static CONST colormap_t mswindows_X_color_map[] =
 
 typedef struct fontmap_t 
 {
-  CONST char *name;
-  CONST int value;
+  const char *name;
+  const int value;
 } fontmap_t;
 
 /* Default weight first, preferred names listed before synonyms */
-static CONST fontmap_t fontweight_map[] = 
+static const fontmap_t fontweight_map[] = 
 {
   {"Regular"		, FW_REGULAR},	/* The standard font weight */
   {"Thin"		, FW_THIN},
@@ -751,7 +752,7 @@ static CONST fontmap_t fontweight_map[] =
 
 /* Default charset first, no synonyms allowed because these names are 
  * matched against the names reported by win32 by match_font() */
-static CONST fontmap_t charset_map[] = 
+static const fontmap_t charset_map[] = 
 {
   {"Western"		, ANSI_CHARSET},
   {"Symbol"		, SYMBOL_CHARSET},
@@ -793,7 +794,7 @@ hexval (char c)
 }
 
 COLORREF
-mswindows_string_to_color(CONST char *name)
+mswindows_string_to_color(const char *name)
 {
   int i;
 
@@ -937,15 +938,15 @@ match_font (char *pattern1, char *pattern2, char *fontname)
 struct font_enum_t
 {
   HDC hdc;
-  struct device *d;
+  Lisp_Object list;
 };
 
 static int CALLBACK
 font_enum_callback_2 (ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, 
 		      int FontType, struct font_enum_t *font_enum)
 {
-  struct mswindows_font_enum *fontlist, **fonthead;
   char fontname[MSW_FONTSIZE];
+  Lisp_Object fontname_lispstr;
   int i;
 
   /*
@@ -966,7 +967,7 @@ font_enum_callback_2 (ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme,
     /* Formula for pointsize->height from LOGFONT docs in Platform SDK */
     sprintf (fontname, "%s::%d::", lpelfe->elfLogFont.lfFaceName,
 	     MulDiv (lpntme->ntmTm.tmHeight - lpntme->ntmTm.tmInternalLeading,
-	             72, DEVICE_MSWINDOWS_LOGPIXELSY (font_enum->d)));
+	             72, GetDeviceCaps (font_enum->hdc, LOGPIXELSY)));
 
   /*
    * The enumerated font character set strings are not to be trusted because
@@ -984,25 +985,11 @@ font_enum_callback_2 (ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme,
   if (i==countof (charset_map))
     strcpy (fontname, charset_map[0].name);
 
-  /* Check that the new font is not a duplicate */
-  fonthead = &DEVICE_MSWINDOWS_FONTLIST (font_enum->d);
-  fontlist = *fonthead;
-  while (fontlist)
-    if (!strcmp (fontname, fontlist->fontname))
-      return 1;		/* found a duplicate */
-    else
-      fontlist = fontlist->next;
+  /* Add the font name to the list if not already there */
+  fontname_lispstr = build_string (fontname);
+  if (NILP (memq_no_quit (fontname_lispstr, font_enum->list)))
+    font_enum->list = Fcons (fontname_lispstr, font_enum->list);
 
-  /* Insert entry at head */
-  fontlist = *fonthead;
-  *fonthead = xmalloc (sizeof (struct mswindows_font_enum));
-  if (*fonthead == NULL)
-    {
-      *fonthead = fontlist;
-      return 0;
-    }
-  strcpy ((*fonthead)->fontname, fontname);
-  (*fonthead)->next = fontlist;
   return 1;
 }
 
@@ -1018,13 +1005,13 @@ font_enum_callback_1 (ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme,
 }
 
 /*
- * Enumerate the available fonts. Called by mswindows_init_device().
- * Fills in the device's device-type-specfic fontlist.
+ * Enumerate the available on the HDC fonts and return a list of string
+ * font names.
  */
-void
-mswindows_enumerate_fonts (struct device *d)
+Lisp_Object
+mswindows_enumerate_fonts (HDC hdc)
 {
-  HDC hdc = CreateCompatibleDC (NULL);
+  /* This cannot CG */
   LOGFONT logfont;
   struct font_enum_t font_enum;
 
@@ -1033,26 +1020,76 @@ mswindows_enumerate_fonts (struct device *d)
   logfont.lfFaceName[0] = '\0';
   logfont.lfPitchAndFamily = DEFAULT_PITCH;
   font_enum.hdc = hdc;
-  font_enum.d = d;
-  DEVICE_MSWINDOWS_FONTLIST (d) = NULL;
+  font_enum.list = Qnil;
   EnumFontFamiliesEx (hdc, &logfont, (FONTENUMPROC) font_enum_callback_1,
 		      (LPARAM) (&font_enum), 0);
-  DeleteDC (hdc);
+  return font_enum.list;
 }
 
+static HFONT
+mswindows_create_font_variant (Lisp_Font_Instance* f,
+			       int under, int strike)
+{
+  /* Cannot GC */
+
+  LOGFONT lf;
+  HFONT hfont;
+
+  assert (FONT_INSTANCE_MSWINDOWS_HFONT_VARIANT (f, under, strike) == NULL);
+
+  if (GetObject (FONT_INSTANCE_MSWINDOWS_HFONT_VARIANT (f, 0, 0),
+		 sizeof (lf), (void*) &lf) == 0)
+    {
+      hfont = MSWINDOWS_BAD_HFONT;
+    }
+  else
+    {
+      lf.lfUnderline = under;
+      lf.lfStrikeOut = strike;
+
+      hfont = CreateFontIndirect (&lf);
+      if (hfont == NULL)
+	hfont = MSWINDOWS_BAD_HFONT;
+    }
+
+  FONT_INSTANCE_MSWINDOWS_HFONT_VARIANT (f, under, strike) = hfont;
+  return hfont;
+}
+
+HFONT
+mswindows_get_hfont (Lisp_Font_Instance* f,
+		     int under, int strike)
+{
+  /* Cannot GC */
+  HFONT hfont = FONT_INSTANCE_MSWINDOWS_HFONT_VARIANT (f, under, strike);
+
+  if (hfont == NULL)
+    hfont = mswindows_create_font_variant (f, under, strike);
+
+  /* If strikeout/underline variant of the font could not be
+     created, then use the base version of the font */
+  if (hfont == MSWINDOWS_BAD_HFONT)
+    hfont = FONT_INSTANCE_MSWINDOWS_HFONT_VARIANT (f, 0, 0);
+
+  assert (hfont != NULL && hfont != MSWINDOWS_BAD_HFONT);
+
+  return hfont;
+}
 
 /************************************************************************/
 /*                               methods                                */
 /************************************************************************/
 
 static int
-mswindows_initialize_color_instance (struct Lisp_Color_Instance *c, Lisp_Object name,
+mswindows_initialize_color_instance (Lisp_Color_Instance *c, Lisp_Object name,
 			       Lisp_Object device, Error_behavior errb)
 {
-  CONST char *extname;
+  const char *extname;
   COLORREF color;
 
-  GET_C_STRING_CTEXT_DATA_ALLOCA (name, extname);
+  TO_EXTERNAL_FORMAT (LISP_STRING, name,
+		      C_STRING_ALLOCA, extname,
+		      Qctext);
   color = mswindows_string_to_color(extname);
   if (color != -1)
     {
@@ -1066,16 +1103,15 @@ mswindows_initialize_color_instance (struct Lisp_Color_Instance *c, Lisp_Object 
 
 #if 0
 static void
-mswindows_mark_color_instance (struct Lisp_Color_Instance *c,
-			 void (*markobj) (Lisp_Object))
+mswindows_mark_color_instance (Lisp_Color_Instance *c)
 {
 }
 #endif
 
 static void
-mswindows_print_color_instance (struct Lisp_Color_Instance *c,
-			  Lisp_Object printcharfun,
-			  int escapeflag)
+mswindows_print_color_instance (Lisp_Color_Instance *c,
+				Lisp_Object printcharfun,
+				int escapeflag)
 {
   char buf[32];
   COLORREF color = COLOR_INSTANCE_MSWINDOWS_COLOR (c);
@@ -1085,7 +1121,7 @@ mswindows_print_color_instance (struct Lisp_Color_Instance *c,
 }
 
 static void
-mswindows_finalize_color_instance (struct Lisp_Color_Instance *c)
+mswindows_finalize_color_instance (Lisp_Color_Instance *c)
 {
   if (c->data)
     {
@@ -1095,21 +1131,21 @@ mswindows_finalize_color_instance (struct Lisp_Color_Instance *c)
 }
 
 static int
-mswindows_color_instance_equal (struct Lisp_Color_Instance *c1,
-			  struct Lisp_Color_Instance *c2,
-			  int depth)
+mswindows_color_instance_equal (Lisp_Color_Instance *c1,
+				Lisp_Color_Instance *c2,
+				int depth)
 {
   return (COLOR_INSTANCE_MSWINDOWS_COLOR(c1) == COLOR_INSTANCE_MSWINDOWS_COLOR(c2));
 }
 
 static unsigned long
-mswindows_color_instance_hash (struct Lisp_Color_Instance *c, int depth)
+mswindows_color_instance_hash (Lisp_Color_Instance *c, int depth)
 {
-  return (unsigned long)(COLOR_INSTANCE_MSWINDOWS_COLOR(c));
+  return (unsigned long) COLOR_INSTANCE_MSWINDOWS_COLOR(c);
 }
 
 static Lisp_Object
-mswindows_color_instance_rgb_components (struct Lisp_Color_Instance *c)
+mswindows_color_instance_rgb_components (Lisp_Color_Instance *c)
 {
   COLORREF color = COLOR_INSTANCE_MSWINDOWS_COLOR (c);
   return list3 (make_int (GetRValue (color) * 257),
@@ -1120,38 +1156,36 @@ mswindows_color_instance_rgb_components (struct Lisp_Color_Instance *c)
 static int
 mswindows_valid_color_name_p (struct device *d, Lisp_Object color)
 {
-  CONST char *extname;
+  const char *extname;
 
-  GET_C_STRING_CTEXT_DATA_ALLOCA (color, extname);
+  TO_EXTERNAL_FORMAT (LISP_STRING, color,
+		      C_STRING_ALLOCA, extname,
+		      Qctext);
   return (mswindows_string_to_color(extname)!=-1);
 }
 
 
 
 static void
-mswindows_finalize_font_instance (struct Lisp_Font_Instance *f)
-{
-  if (f->data)
-    {
-      DeleteObject(f->data);
-      f->data=0;
-    }
-}
+mswindows_finalize_font_instance (Lisp_Font_Instance *f);
 
-
+/*
+ * This is a work horse for both mswindows_initialize_font_instanc and
+ * msprinter_initialize_font_instance.
+ */
 static int
-mswindows_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object name,
-				    Lisp_Object device, Error_behavior errb)
+initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
+			  Lisp_Object device_font_list, HDC hdc,
+			  Error_behavior errb)
 {
-  CONST char *extname;
+  const char *extname;
   LOGFONT logfont;
   int fields, i;
   int pt;
   char fontname[LF_FACESIZE], weight[LF_FACESIZE], *style, points[8];
   char effects[LF_FACESIZE], charset[LF_FACESIZE];
   char *c;
-  HDC hdc;
-  HFONT holdfont;
+  HFONT hfont, hfont2;
   TEXTMETRIC metrics;
 
   extname = XSTRING_DATA (name);
@@ -1255,7 +1289,7 @@ mswindows_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object na
     }
 
   /* Formula for pointsize->height from LOGFONT docs in MSVC5 Platform SDK */
-  logfont.lfHeight = -MulDiv(pt, DEVICE_MSWINDOWS_LOGPIXELSY (XDEVICE (device)), 72);
+  logfont.lfHeight = -MulDiv(pt, GetDeviceCaps (hdc, LOGPIXELSY), 72);
   logfont.lfWidth = 0;
 
   /* Effects */
@@ -1353,96 +1387,192 @@ mswindows_initialize_font_instance (struct Lisp_Font_Instance *f, Lisp_Object na
   /* Default to monospaced if the specified fontname doesn't exist. */
   logfont.lfPitchAndFamily = FF_MODERN;
 
-  /* Windows will silently substitute a default font if the fontname 
-   * specifies a non-existent font. So we check the font against the device's
-   * list of font patterns to make sure that at least one of them matches. */
-  {
-    struct mswindows_font_enum *fontlist;
-    char truename[MSW_FONTSIZE];
-    int done = 0;
-    
-    sprintf (truename, "%s:%s:%d:%s:%s", fontname, weight, pt, effects, charset);
-    fontlist = DEVICE_MSWINDOWS_FONTLIST (XDEVICE (device));
-    while (fontlist && !done)
-      {
-        done = match_font (fontlist->fontname, truename, NULL);
-        fontlist = fontlist->next;
-      }
-    if (!done)
-      {
-	maybe_signal_simple_error ("No matching font", name, Qfont, errb);
-	return 0;
-      }
-  }
+  /* Windows will silently substitute a default font if the fontname specifies
+     a non-existent font. This is bad for screen fonts because it doesn't
+     allow higher-level code to see the error and to act appropriately.
+     For instance complex_vars_of_faces() sets up a fallback list of fonts
+     for the default face. */
 
-  if ((f->data = CreateFontIndirect(&logfont)) == NULL)
+  if (!NILP (device_font_list))
+    {
+      Lisp_Object fonttail;
+      char truename[MSW_FONTSIZE];
+
+      sprintf (truename, "%s:%s:%d:%s:%s", fontname, weight, pt, effects, charset);
+      LIST_LOOP (fonttail, device_font_list)
+	{
+	  if (match_font (XSTRING_DATA (XCAR (fonttail)), truename, NULL))
+	    break;
+	}
+      if (NILP (fonttail))
+	{
+	  maybe_signal_simple_error ("No matching font", name, Qfont, errb);
+	  return 0;
+	}
+    }
+
+  if ((hfont = CreateFontIndirect(&logfont)) == NULL)
   {
     maybe_signal_simple_error ("Couldn't create font", name, Qfont, errb);
     return 0;
   }
 
-  hdc = CreateCompatibleDC (NULL);
-  if (hdc)
+  f->data = xnew_and_zero (struct mswindows_font_instance_data);
+  FONT_INSTANCE_MSWINDOWS_HFONT_VARIANT (f,0,0) = hfont;
+  
+  /* Some underlined fonts have the descent of one pixel more than their
+     non-underlined counterparts. Font variants though are assumed to have
+     identical metrics. So get the font metrics from the underlined variant
+     of the font */
+  hfont2 = mswindows_create_font_variant (f, 1, 0);
+  if (hfont2 != MSWINDOWS_BAD_HFONT)
+    hfont = hfont2;
+
+  hfont2 = SelectObject(hdc, hfont);
+  if (!hfont2)
     {
-      holdfont = SelectObject(hdc, f->data);
-      if (holdfont)
-	{
-	  GetTextMetrics (hdc, &metrics);
-	  SelectObject(hdc, holdfont);
-	  DeleteDC (hdc);
-	  f->width = (unsigned short) metrics.tmAveCharWidth;
-	  f->height = (unsigned short) metrics.tmHeight;
-	  f->ascent = (unsigned short) metrics.tmAscent;
-	  f->descent = (unsigned short) metrics.tmDescent;
-	  f->proportional_p = (metrics.tmPitchAndFamily & TMPF_FIXED_PITCH);
-	  return 1;
-	}
-      DeleteDC (hdc);
+      mswindows_finalize_font_instance (f);
+      maybe_signal_simple_error ("Couldn't map font", name, Qfont, errb);
+      return 0;
     }
-  mswindows_finalize_font_instance (f);
-  maybe_signal_simple_error ("Couldn't map font", name, Qfont, errb);
-  return 0;
+  GetTextMetrics (hdc, &metrics);
+  SelectObject(hdc, hfont2);
+
+  f->width = (unsigned short) metrics.tmAveCharWidth;
+  f->height = (unsigned short) metrics.tmHeight;
+  f->ascent = (unsigned short) metrics.tmAscent;
+  f->descent = (unsigned short) metrics.tmDescent;
+  f->proportional_p = (metrics.tmPitchAndFamily & TMPF_FIXED_PITCH);
+
+  return 1;
+}
+
+static int
+mswindows_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
+				    Lisp_Object device, Error_behavior errb)
+{
+  HDC hdc = CreateCompatibleDC (NULL);
+  Lisp_Object font_list = DEVICE_MSWINDOWS_FONTLIST (XDEVICE (device));
+  int res = initialize_font_instance (f, name, font_list, hdc, errb);
+  DeleteDC (hdc);
+  return res;
+}
+
+static int
+msprinter_initialize_font_instance (Lisp_Font_Instance *f, Lisp_Object name,
+				    Lisp_Object device, Error_behavior errb)
+{
+  HDC hdc = DEVICE_MSPRINTER_HDC (XDEVICE (device));
+  Lisp_Object font_list = DEVICE_MSPRINTER_FONTLIST (XDEVICE (device));
+  return initialize_font_instance (f, name, font_list, hdc, errb);
+}
+
+static void
+mswindows_finalize_font_instance (Lisp_Font_Instance *f)
+{
+  int i;
+
+  if (f->data)
+    {
+      for (i = 0; i < MSWINDOWS_NUM_FONT_VARIANTS; i++)
+	{
+	  if (FONT_INSTANCE_MSWINDOWS_HFONT_I (f, i) != NULL
+	      && FONT_INSTANCE_MSWINDOWS_HFONT_I (f, i) != MSWINDOWS_BAD_HFONT)
+	    DeleteObject (FONT_INSTANCE_MSWINDOWS_HFONT_I (f, i));
+	}
+
+      xfree (f->data);
+      f->data = 0;
+   }
 }
 
 #if 0
 static void
-mswindows_mark_font_instance (struct Lisp_Font_Instance *f,
-			void (*markobj) (Lisp_Object))
+mswindows_mark_font_instance (Lisp_Font_Instance *f)
 {
 }
 #endif
 
 static void
-mswindows_print_font_instance (struct Lisp_Font_Instance *f,
-			 Lisp_Object printcharfun,
-			 int escapeflag)
+mswindows_print_font_instance (Lisp_Font_Instance *f,
+			       Lisp_Object printcharfun,
+			       int escapeflag)
 {
+  char buf[10];
+  sprintf (buf, " 0x%lx", 
+	   (unsigned long)FONT_INSTANCE_MSWINDOWS_HFONT_VARIANT (f,0,0));
+  write_c_string (buf, printcharfun);
 }
 
 static Lisp_Object
 mswindows_list_fonts (Lisp_Object pattern, Lisp_Object device)
 {
-  Lisp_Object result = Qnil;
-  struct mswindows_font_enum *fontlist;
-  char fontname[MSW_FONTSIZE], *extpattern;
+  Lisp_Object fonttail, result = Qnil;
+  char *extpattern;
 
-  GET_C_STRING_CTEXT_DATA_ALLOCA (pattern, extpattern);
-  fontlist = DEVICE_MSWINDOWS_FONTLIST (XDEVICE (device));
-  while (fontlist)
+  TO_EXTERNAL_FORMAT (LISP_STRING, pattern,
+		      C_STRING_ALLOCA, extpattern,
+		      Qctext);
+
+  LIST_LOOP (fonttail, DEVICE_MSWINDOWS_FONTLIST (XDEVICE (device)))
     {
-      if (match_font (fontlist->fontname, extpattern, fontname))
-	 result = Fcons (build_string (fontname), result);
-      fontlist = fontlist->next;
+      if (match_font (XSTRING_DATA (XCAR (fonttail)), extpattern, NULL))
+	result = Fcons (XCAR (fonttail), result);
     }
 
   return Fnreverse (result);
+}
+
+/* Fill in missing parts of a font spec. This is primarily intended as a
+ * helper function for the functions below.
+ * mswindows fonts look like:
+ *	fontname[:[weight][ style][:pointsize[:effects]]][:charset]
+ * A minimal mswindows font spec looks like:
+ *	Courier New
+ * A maximal mswindows font spec looks like:
+ *	Courier New:Bold Italic:10:underline strikeout:Western
+ * Missing parts of the font spec should be filled in with these values:
+ *	Courier New:Regular:10::Western */
+static Lisp_Object
+mswindows_font_instance_truename (Lisp_Font_Instance *f, Error_behavior errb)
+{
+  int nsep=0;
+  char *name = (char *) XSTRING_DATA (f->name);
+  char* ptr = name;
+  char* extname = alloca (strlen (name) + 19);
+  strcpy (extname, name);
+
+  while ((ptr = strchr (ptr, ':')) != 0)
+    {
+      ptr++;
+      nsep++;
+    }
+
+  switch (nsep)
+    {
+    case 0:
+      strcat (extname, ":Regular:10::Western");
+      break;
+    case 1:
+      strcat (extname, ":10::Western");
+      break;
+    case 2:
+      strcat (extname, "::Western");
+      break;
+    case 3:
+      strcat (extname, ":Western");
+      break;
+    default:;
+    }
+  
+  return build_ext_string (extname, Qnative);
 }
 
 #ifdef MULE
 
 static int
 mswindows_font_spec_matches_charset (struct device *d, Lisp_Object charset,
-			     CONST Bufbyte *nonreloc, Lisp_Object reloc,
+			     const Bufbyte *nonreloc, Lisp_Object reloc,
 			     Bytecount offset, Bytecount length)
 {
   /* #### Implement me */
@@ -1512,11 +1642,34 @@ console_type_create_objects_mswindows (void)
 /*  CONSOLE_HAS_METHOD (mswindows, mark_font_instance); */
   CONSOLE_HAS_METHOD (mswindows, print_font_instance);
   CONSOLE_HAS_METHOD (mswindows, finalize_font_instance);
-/*  CONSOLE_HAS_METHOD (mswindows, font_instance_truename); */
+  CONSOLE_HAS_METHOD (mswindows, font_instance_truename); 
   CONSOLE_HAS_METHOD (mswindows, list_fonts);
 #ifdef MULE
   CONSOLE_HAS_METHOD (mswindows, font_spec_matches_charset);
   CONSOLE_HAS_METHOD (mswindows, find_charset_font);
+#endif
+
+  /* Printer methods - delegate most to windows methods,
+     since graphical objects behave the same way. */
+
+  CONSOLE_INHERITS_METHOD (msprinter, mswindows, initialize_color_instance);
+/*  CONSOLE_INHERITS_METHOD (msprinter, mswindows, mark_color_instance); */
+  CONSOLE_INHERITS_METHOD (msprinter, mswindows, print_color_instance);
+  CONSOLE_INHERITS_METHOD (msprinter, mswindows, finalize_color_instance);
+  CONSOLE_INHERITS_METHOD (msprinter, mswindows, color_instance_equal);
+  CONSOLE_INHERITS_METHOD (msprinter, mswindows, color_instance_hash);
+  CONSOLE_INHERITS_METHOD (msprinter, mswindows, color_instance_rgb_components);
+  CONSOLE_INHERITS_METHOD (msprinter, mswindows, valid_color_name_p);
+
+  CONSOLE_HAS_METHOD (msprinter, initialize_font_instance);
+/*  CONSOLE_INHERITS_METHOD (msprinter, mswindows, mark_font_instance); */
+  CONSOLE_INHERITS_METHOD (msprinter, mswindows, print_font_instance);
+  CONSOLE_INHERITS_METHOD (msprinter, mswindows, finalize_font_instance);
+  CONSOLE_INHERITS_METHOD (msprinter, mswindows, font_instance_truename); 
+  CONSOLE_INHERITS_METHOD (msprinter, mswindows, list_fonts);
+#ifdef MULE
+  CONSOLE_INHERITS_METHOD (msprinter, mswindows, font_spec_matches_charset);
+  CONSOLE_INHERITS_METHOD (msprinter, mswindows, find_charset_font);
 #endif
 }
 

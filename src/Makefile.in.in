@@ -97,7 +97,6 @@ vpath %.h @srcdir@
 vpath config.h
 vpath paths.h
 vpath Emacs.ad.h
-vpath puresize-adjust.h
 vpath sheap-adjust.h
 #else
 VPATH=@srcdir@
@@ -118,7 +117,7 @@ $(lwlib_libs) :
 	cd ../lwlib && $(RECURSIVE_MAKE)
 
 x_objs=balloon_help.o balloon-x.o console-x.o device-x.o event-Xt.o frame-x.o\
- glyphs-x.o objects-x.o redisplay-x.o xgccache.o xselect.o 
+ glyphs-x.o objects-x.o redisplay-x.o select-x.o xgccache.o
 
 #ifdef AIX4
 LIBI18N = -li18n
@@ -176,13 +175,13 @@ objs=\
  eval.o events.o $(extra_objs)\
  event-stream.o extents.o faces.o\
  fileio.o $(LOCK_OBJ) filemode.o floatfns.o fns.o font-lock.o\
- frame.o general.o getloadavg.o glyphs.o glyphs-eimage.o glyphs-widget.o\
- gui.o $(gui_objs) hash.o imgproc.o indent.o insdel.o intl.o\
+ frame.o general.o glyphs.o glyphs-eimage.o glyphs-widget.o\
+ gui.o gutter.o $(gui_objs) hash.o imgproc.o indent.o insdel.o intl.o\
  keymap.o $(RTC_patch_objs) line-number.o lread.o lstream.o\
  macros.o marker.o md5.o minibuf.o objects.o opaque.o\
  print.o process.o profile.o\
  rangetab.o redisplay.o redisplay-output.o regex.o\
- search.o $(sheap_obj) signal.o sound.o\
+ search.o select.o $(sheap_obj) signal.o sound.o\
  specifier.o strftime.o symbols.o syntax.o sysdep.o\
  undo.o $(x_objs) widget.o window.o
 
@@ -237,37 +236,37 @@ external_widget_objs = ExternalShell.o extw-Xt-nonshared.o extw-Xlib-nonshared.o
 #   define EXTW_LINK(objs, output) $(CC) -shared objs -Xlinker -z -Xlinker text -o output
 extw_link_beg = $(CC) -shared
 extw_link_mid = -Xlinker -z -Xlinker text -o
-extw_link_end = 
+extw_link_end =
 ## I cannot figure out how to do shared a.out libraries, so just punt.
 #  elif !defined (LINUX) || defined (__ELF__)
 #   define EXTW_LINK(objs, output) $(CC) -shared objs -o output
 extw_link_beg = $(CC) -shared
 extw_link_mid = -o
-extw_link_end = 
+extw_link_end =
 #  endif
 # elif defined (USG5)
 #  if defined (IRIX)
 #   define EXTW_LINK(objs, output) $(LD) -shared -g -check_registry ${TOOLROOT}/usr/lib/so_locations objs -o output
-extw_link_beg = $(LD) -shared -g -check_registry ${TOOLROOT}/usr/lib/so_locations 
-extw_link_mid =  -o 
-extw_link_end = 
+extw_link_beg = $(LD) -shared -g -check_registry ${TOOLROOT}/usr/lib/so_locations
+extw_link_mid =  -o
+extw_link_end =
 #  else /* not IRIX */
 #   define EXTW_LINK(objs, output) $(CC) -G objs -z text -o output
 extw_link_beg = $(CC) -G
 extw_link_mid = -z text -o
-extw_link_end = 
+extw_link_end =
 #  endif /* not IRIX */
 # else /* not USG5 */
 #  if defined (DEC_ALPHA) && defined (OSF1)
 #   define EXTW_LINK(objs, output) $(LD) $(ldflags) $(ld_switch_shared) -d objs -o output $(LIBES)
-extw_link_beg = $(LD) $(ldflags) $(ld_switch_shared) -d 
-extw_link_mid = -o 
+extw_link_beg = $(LD) $(ldflags) $(ld_switch_shared) -d
+extw_link_mid = -o
 extw_link_end = $(LIBES)
 #  else /* !(DEC_ALPHA && OSF1) */
 #   define EXTW_LINK(objs, output) $(LD) -dc objs -assert pure-text -o output
 extw_link_beg = $(LD) -dc
 extw_link_mid = -assert pure-text -o
-extw_link_end = 
+extw_link_end =
 #  endif /* !(DEC_ALPHA && OSF1) */
 # endif /* not USG5 */
 
@@ -310,12 +309,18 @@ mo_dir = ${etcdir}
 mo_file = ${mo_dir}emacs.mo
 #endif
 
+#ifdef WINDOWSNT
+LOADPATH   =  EMACSBOOTSTRAPLOADPATH="${lispdir};${blddir}"
+MODULEPATH =  EMACSBOOTSTRAPMODULEPATH="${moduledir};${blddir}"
+#else
 LOADPATH   =  EMACSBOOTSTRAPLOADPATH="${lispdir}:${blddir}"
 MODULEPATH =  EMACSBOOTSTRAPMODULEPATH="${moduledir}:${blddir}"
+#endif
 DUMPENV = $(LOADPATH) $(MODULEPATH)
 temacs_loadup = $(DUMPENV) ./temacs -batch -l ${srcdir}/../lisp/loadup.el
 dump_temacs   = ${temacs_loadup} dump
 run_temacs    = ${temacs_loadup} run-temacs
+debug_temacs = $(DUMPENV) gdb temacs
 
 release: temacs ${libsrc}DOC $(mo_file) ${other_files}
 #ifdef CANNOT_DUMP
@@ -325,39 +330,40 @@ release: temacs ${libsrc}DOC $(mo_file) ${other_files}
 	-if [ -w ${srcdir}/../lisp ]; then \
 	  w=`pwd`; cd ${srcdir} && $${w}/temacs -nl -batch -l ${srcdir}/../lisp/inc-vers; \
 	else true; fi
-	@touch SATISFIED
 	-$(DUMPENV) ./temacs -nl -batch -l ${srcdir}/../lisp/loadup.el dump
-	@if test ! -f SATISFIED; then $(RECURSIVE_MAKE) $@; fi
-	@$(RM) SATISFIED
 #else /* ! defined (HAVE_SHM) */
 	-if [ -w ${srcdir}/../lisp ]; then \
 	  w=`pwd`; cd ${srcdir} && $${w}/temacs -batch -l ${srcdir}/../lisp/inc-vers; \
 	else true; fi
-	@touch SATISFIED
 	-$(DUMPENV) ./temacs -batch -l ${srcdir}/../lisp/loadup.el dump
-	@if test ! -f SATISFIED; then $(RECURSIVE_MAKE) $@; fi
-	@$(RM) SATISFIED
 #endif /* ! defined (HAVE_SHM) */
 	touch release
 #endif /* ! defined (CANNOT_DUMP) */
 
 ${PROGNAME}: temacs ${libsrc}DOC $(mo_file) ${other_files} update-elc.stamp
-	@$(RM) $@ && touch SATISFIED
+#ifdef HEAP_IN_DATA
+	@$(RM) $@ $@.exe && touch SATISFIED
 	-${dump_temacs}
-	@if test -f $@; then if test -f SATISFIED; then \
+	@if test -f $@;        then if test -f SATISFIED; then \
 		echo "Testing for Lisp shadows ..."; \
 		./${PROGNAME} -batch -vanilla -f list-load-path-shadows; fi; \
 		$(RM) SATISFIED; exit 0; fi; \
 	if test -f SATISFIED; then $(RM) SATISFIED; exit 1; fi; \
 	$(RECURSIVE_MAKE) $@;
+#else
+	@$(RM) $@ xemacs.dmp
+	${dump_temacs}
+#ifdef PDUMP
+	@mv temacs $@
+#endif
+	@echo "Testing for Lisp shadows ..."
+	@./${PROGNAME} -batch -vanilla -f list-load-path-shadows
+#endif
 
-fastdump: temacs 
+fastdump: temacs
 	@$(RM) ${PROGNAME} && touch SATISFIED
 	-${dump_temacs}
-	@if test -f ${PROGNAME}; then if test -f SATISFIED; then \
-		./${PROGNAME} -batch -vanilla -f list-load-path-shadows; fi; \
-		$(RM) SATISFIED; exit 0; fi; \
-	if test -f SATISFIED; then $(RM) SATISFIED; exit 1; fi;
+	@./${PROGNAME} -batch -vanilla -f list-load-path-shadows
 
 FRC.update-elc.stamp :
 
@@ -448,6 +454,9 @@ temacs_link_args=\
 
 temacs: $(temacs_deps)
 	$(LD) $(temacs_link_args)
+#ifdef PDUMP
+	@$(RM) xemacs.dmp
+#endif
 
 .PHONY : run-temacs
 
@@ -456,13 +465,7 @@ run-temacs: temacs
 
 ## We have automated tests!!
 testdir = ${srcdir}/../tests/automated
-tests   = \
-	${testdir}/hash-table-tests.el    \
-	${testdir}/lisp-tests.el          \
-	${testdir}/database-tests.el      \
-	${testdir}/byte-compiler-tests.el \
-	${testdir}/md5-tests.el
-batch_test_emacs = -batch -l ${testdir}/test-harness.el -f batch-test-emacs ${tests}
+batch_test_emacs = -batch -l ${testdir}/test-harness.el -f batch-test-emacs ${testdir}
 
 .PHONY: check check-temacs
 check:
@@ -496,13 +499,21 @@ run-rtcmacs: rtcmacs
 	runargs -batch -l ${srcdir}/../lisp/loadup.el run-temacs -q; \
 	run' rtcmacs
 
+debug-temacs: temacs
+	-${debug_temacs}
+
 ## Purify, Quantify, PureCoverage are software quality products from
 ## Rational, formerly Pure Atria, formerly Pure Software.
 ##
 ## Purify
 PURIFY_PROG  = purify
-PURIFY_FLAGS = -chain-length=32 -ignore-signals=SIGPOLL -threads=yes \
- -cache-dir=./purecache -always-use-cache-dir=yes -pointer-mask=0x0fffffff
+PURIFY_FLAGS =\
+#ifdef PDUMP
+ -search-mmaps=yes\
+#endif
+ -chain-length=32 -ignore-signals=SIGPOLL -threads=yes\
+ -cache-dir=./purecache -always-use-cache-dir=yes
+
 PURIFY_LIBS  = -lpthread
 puremacs: $(temacs_deps)
 	$(PURIFY_PROG) $(PURIFY_FLAGS) $(LD) $(temacs_link_args) $(PURIFY_LIBS)
@@ -631,10 +642,9 @@ libextcli_Xlib.so.1: ${external_client_xlib_objs_shared}
 #endif /* EXTERNAL_WIDGET */
 
 config.h: ${srcdir}/config.h.in
-puresize-adjust.h: ${srcdir}/puresize.h
 Emacs.ad.h: ${srcdir}/${etcdir}Emacs.ad
 
-config.h puresize-adjust.h sheap-adjust.h paths.h Emacs.ad.h :
+config.h sheap-adjust.h paths.h Emacs.ad.h :
 	@echo "The file $@ needs to be re-generated."
 	@echo "Please run a make in the top level directory."
 	@echo "Consult the file \`INSTALL' for instructions for building XEmacs."
@@ -689,7 +699,7 @@ hpplay.o: ${srcdir}/hpplay.c
 .PHONY: mostlyclean clean distclean realclean versionclean extraclean
 mostlyclean:
 	$(RM) temacs puremacs quantmacs prefix-args *.o *.i  \
-	  core temacs.exe puresize-adjust.h sheap-adjust.h
+	  core temacs.exe sheap-adjust.h
 clean: mostlyclean versionclean
 	$(RM) libextcli* update-elc.stamp
 ## This is used in making a distribution.
@@ -744,5 +754,8 @@ install: ${PROGNAME}
 FRC.depend:
 depend: FRC.depend
 	cd ${srcdir} && $(RM) depend.tmp && \
-	perl make-src-depend > depend.tmp && \
-	$(RM) depend && mv depend.tmp depend
+	perl ./make-src-depend > depend.tmp && \
+	if cmp -s depend depend.tmp; \
+	then $(RM) depend.tmp; \
+	else $(RM) depend && mv depend.tmp depend; \
+	fi

@@ -52,7 +52,7 @@
 ;; Kyle Jones <kyle_jones@wonderworks.com>
 ;;   added "Exact match, then inexact" code
 ;;   added support for include directive.
-;; Hrvoje Niksic <hniksic@srce.hr>
+;; Hrvoje Niksic <hniksic@xemacs.org>
 ;;   various changes.
 
 
@@ -598,11 +598,8 @@ Make it buffer-local in a mode hook.  The function is called with no
 	       (format "%s(default %s) " prompt default)
 	     prompt)
 	   tag-completion-table 'tag-completion-predicate nil nil
-	   'find-tag-history))
-    (if (string-equal tag-name "")
-	;; #### - This is a really LAME way of doing it!  --Stig
-	default			;indicate exact symbol match
-      tag-name)))
+	   'find-tag-history default))
+    tag-name))
 
 (defvar last-tag-data nil
   "Information for continuing a tag search.
@@ -641,7 +638,7 @@ If it returns non-nil, this file needs processing by evalling
 	  (t
 	   (setq tag-table-currently-matching-exact t)))
     ;; \_ in the tagname is used to indicate a symbol boundary.
-    (setq exact-tagname (concat "\\_" tagname "\\_"))
+    (setq exact-tagname (format "\C-?\\_%s\\_\C-a\\|\\_%s\\_" tagname tagname))
     (while (string-match "\\\\_" exact-tagname)
       (aset exact-tagname (1- (match-end 0)) ?b))
     (save-excursion
@@ -674,7 +671,9 @@ If it returns non-nil, this file needs processing by evalling
 		;; tag searches?
 		(while (re-search-forward tag-target nil t)
 		  (and (save-match-data
-			 (looking-at "[^\n\C-?]*\C-?"))
+			 (save-excursion
+			   (goto-char (match-beginning 0))
+			   (looking-at "[^\n\C-?]*\C-?")))
 		       ;; If we're looking for inexact matches, skip
 		       ;; exact matches since we've visited them
 		       ;; already.
@@ -693,6 +692,7 @@ If it returns non-nil, this file needs processing by evalling
 	       (if next "more " "")
 	       (if exact "matching" "containing")
 	       tagname))
+      (beginning-of-line)
       (search-forward "\C-?")
       (setq file (expand-file-name (file-of-tag)
 				   ;; In XEmacs, this needs to be

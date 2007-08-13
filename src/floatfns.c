@@ -55,9 +55,13 @@ Boston, MA 02111-1307, USA.  */
 #define THIS_FILENAME floatfns
 #include "sysfloat.h"
 
-#ifndef HAVE_RINT
+/* The code uses emacs_rint, so that it works to undefine HAVE_RINT
+   if `rint' exists but does not work right.  */
+#ifdef HAVE_RINT
+#define emacs_rint rint
+#else
 static double
-rint (double x)
+emacs_rint (double x)
 {
   double r = floor (x + 0.5);
   double diff = fabs (r - x);
@@ -75,7 +79,7 @@ static int in_float;
 /* If an argument is out of range for a mathematical function,
    here is the actual argument value to use in the error message.  */
 static Lisp_Object float_error_arg, float_error_arg2;
-static CONST char *float_error_fn_name;
+static const char *float_error_fn_name;
 
 /* Evaluate the floating point expression D, recording NUM
    as the original argument for error messages.
@@ -108,21 +112,21 @@ static CONST char *float_error_fn_name;
 
 
 #define arith_error(op,arg) \
-  Fsignal (Qarith_error, list2 (build_string ((op)), (arg)))
+  Fsignal (Qarith_error, list2 (build_string (op), arg))
 #define range_error(op,arg) \
-  Fsignal (Qrange_error, list2 (build_string ((op)), (arg)))
+  Fsignal (Qrange_error, list2 (build_string (op), arg))
 #define range_error2(op,a1,a2) \
-  Fsignal (Qrange_error, list3 (build_string ((op)), (a1), (a2)))
+  Fsignal (Qrange_error, list3 (build_string (op), a1, a2))
 #define domain_error(op,arg) \
-  Fsignal (Qdomain_error, list2 (build_string ((op)), (arg)))
+  Fsignal (Qdomain_error, list2 (build_string (op), arg))
 #define domain_error2(op,a1,a2) \
-  Fsignal (Qdomain_error, list3 (build_string ((op)), (a1), (a2)))
+  Fsignal (Qdomain_error, list3 (build_string (op), a1, a2))
 
 
 /* Convert float to Lisp Integer if it fits, else signal a range
    error using the given arguments.  */
 static Lisp_Object
-float_to_int (double x, CONST char *name, Lisp_Object num, Lisp_Object num2)
+float_to_int (double x, const char *name, Lisp_Object num, Lisp_Object num2)
 {
   if (x >= ((EMACS_INT) 1 << (VALBITS-1))
       || x <= - ((EMACS_INT) 1 << (VALBITS-1)) - (EMACS_INT) 1)
@@ -160,7 +164,7 @@ in_float_error (void)
 
 
 static Lisp_Object
-mark_float (Lisp_Object obj, void (*markobj) (Lisp_Object))
+mark_float (Lisp_Object obj)
 {
   return Qnil;
 }
@@ -179,9 +183,14 @@ float_hash (Lisp_Object obj, int depth)
   return (unsigned long) fmod (extract_float (obj), 4e9);
 }
 
+static const struct lrecord_description float_description[] = {
+  { XD_END }
+};
+
 DEFINE_BASIC_LRECORD_IMPLEMENTATION ("float", float,
 				     mark_float, print_float, 0, float_equal,
-				     float_hash, struct Lisp_Float);
+				     float_hash, float_description,
+				     Lisp_Float);
 
 /* Extract a Lisp number as a `double', or signal an error.  */
 
@@ -194,7 +203,7 @@ extract_float (Lisp_Object num)
   if (INTP (num))
     return (double) XINT (num);
 
-  return extract_float (wrong_type_argument (num, Qnumberp));
+  return extract_float (wrong_type_argument (Qnumberp, num));
 }
 #endif /* LISP_FLOAT_TYPE */
 
@@ -666,12 +675,12 @@ Return the absolute value of ARG.
   if (INTP (arg))
     return (XINT (arg) >= 0) ? arg : make_int (- XINT (arg));
 
-  return Fabs (wrong_type_argument (arg, Qnumberp));
+  return Fabs (wrong_type_argument (Qnumberp, arg));
 }
 
 #ifdef LISP_FLOAT_TYPE
 DEFUN ("float", Ffloat, 1, 1, 0, /*
-Return the floating point number equal to ARG.
+Return the floating point number numerically equal to ARG.
 */
        (arg))
 {
@@ -681,7 +690,7 @@ Return the floating point number equal to ARG.
   if (FLOATP (arg))		/* give 'em the same float back */
     return arg;
 
-  return Ffloat (wrong_type_argument (arg, Qnumberp));
+  return Ffloat (wrong_type_argument (Qnumberp, arg));
 }
 #endif /* LISP_FLOAT_TYPE */
 
@@ -696,19 +705,19 @@ This is the same as the exponent of a float.
   double f = extract_float (arg);
 
   if (f == 0.0)
-    return make_int (- (int)((((EMACS_UINT) 1) << (VALBITS - 1)))); /* most-negative-fixnum */
+    return make_int (- (EMACS_INT)(((EMACS_UINT) 1) << (VALBITS - 1))); /* most-negative-fixnum */
 #ifdef HAVE_LOGB
   {
     Lisp_Object val;
-    IN_FLOAT (val = make_int ((int) logb (f)), "logb", arg);
-    return (val);
+    IN_FLOAT (val = make_int ((EMACS_INT) logb (f)), "logb", arg);
+    return val;
   }
 #else
 #ifdef HAVE_FREXP
   {
     int exqp;
     IN_FLOAT (frexp (f, &exqp), "logb", arg);
-    return (make_int (exqp - 1));
+    return make_int (exqp - 1);
   }
 #else
   {
@@ -732,7 +741,7 @@ This is the same as the exponent of a float.
         f /= d;
         val += i;
       }
-    return (make_int (val));
+    return make_int (val);
   }
 #endif /* ! HAVE_FREXP */
 #endif /* ! HAVE_LOGB */
@@ -757,7 +766,7 @@ Return the smallest integer no less than ARG.  (Round toward +inf.)
   if (INTP (arg))
     return arg;
 
-  return Fceiling (wrong_type_argument (arg, Qnumberp));
+  return Fceiling (wrong_type_argument (Qnumberp, arg));
 }
 
 
@@ -826,7 +835,7 @@ Return the nearest integer to ARG.
     {
       double d;
       /* Screw the prevailing rounding mode.  */
-      IN_FLOAT ((d = rint (XFLOAT_DATA (arg))), "round", arg);
+      IN_FLOAT ((d = emacs_rint (XFLOAT_DATA (arg))), "round", arg);
       return (float_to_int (d, "round", arg, Qunbound));
     }
 #endif /* LISP_FLOAT_TYPE */
@@ -834,7 +843,7 @@ Return the nearest integer to ARG.
   if (INTP (arg))
     return arg;
 
-  return Fround (wrong_type_argument (arg, Qnumberp));
+  return Fround (wrong_type_argument (Qnumberp, arg));
 }
 
 DEFUN ("truncate", Ftruncate, 1, 1, 0, /*
@@ -851,7 +860,7 @@ Rounds the value toward zero.
   if (INTP (arg))
     return arg;
 
-  return Ftruncate (wrong_type_argument (arg, Qnumberp));
+  return Ftruncate (wrong_type_argument (Qnumberp, arg));
 }
 
 /* Float-rounding functions. */
@@ -886,7 +895,7 @@ Return the nearest integer to ARG, as a float.
        (arg))
 {
   double d = extract_float (arg);
-  IN_FLOAT (d = rint (d), "fround", arg);
+  IN_FLOAT (d = emacs_rint (d), "fround", arg);
   return make_float (d);
 }
 

@@ -9,7 +9,8 @@
 
 /* Synched up with: FSF 19.28. */
 
-#include <../src/config.h>
+#define DONT_ENCAPSULATE
+#include <config.h>
 
 #include <stdio.h>
 #include <ctype.h>
@@ -90,8 +91,7 @@ static long header_len;
 
 /* Sets len and header_len */
 void
-setup_yow(fp)
-     FILE *fp;
+setup_yow (FILE *fp)
 {
   int c;
 
@@ -119,8 +119,7 @@ setup_yow(fp)
 
 /* go to a random place in the file and print the quotation there */
 void
-yow (fp)
-     FILE *fp;
+yow (FILE *fp)
 {
   long offset;
   int c, i = 0;

@@ -6,8 +6,6 @@
 
 ;; This file is part of XEmacs.
 
-;; This file is very similar to mule-files.el
-
 ;; XEmacs is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
@@ -23,16 +21,21 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
+;;; Synched up with: Not synched.
+
 ;;; Commentary:
 
-;;; Derived from mule.el in the original Mule but heavily modified
-;;; by Ben Wing.
+;; Derived from mule.el in the original Mule but heavily modified
+;; by Ben Wing.
 
 ;; 1997/3/11 modified by MORIOKA Tomohiko to sync with Emacs 20 API.
 
+;; This file was derived from the former mule-files.el which has been removed
+;; as of XEmacs 21.2.15.
+
 ;;; Code:
 
-(setq-default buffer-file-coding-system 'no-conversion)
+(setq-default buffer-file-coding-system 'raw-text)
 (put 'buffer-file-coding-system 'permanent-local t)
 
 (define-obsolete-variable-alias
@@ -271,7 +274,7 @@ Return t if file exists."
       (if (or (<= (length filename) 0)
 	      (null (setq path
 			  (locate-file filename load-path
-				       (and (not nosuffix) ".elc:.el:")))))
+				       (and (not nosuffix) '(".elc" ".el" ""))))))
 	  (and (null noerror)
 	       (signal 'file-error (list "Cannot open load file" filename)))
 	;; now use the internal load to actually load the file.
@@ -284,7 +287,7 @@ Return t if file exists."
 	       (save-excursion
 		 (set-buffer (get-buffer-create " *load*"))
 		 (erase-buffer)
-		 (let ((coding-system-for-read 'no-conversion))
+		 (let ((coding-system-for-read 'raw-text))
 		   (insert-file-contents path nil 1 3001))
 		 (find-coding-system-magic-cookie))
 	       (if elc
@@ -371,9 +374,6 @@ with the file contents.  This is better than simply deleting and inserting
 the whole thing because (1) it preserves some marker positions
 and (2) it puts less data in the undo list.
 
-NOTE: When Mule support is enabled, the REPLACE argument is
-currently ignored.
-
 The coding system used for decoding the file is determined as follows:
 
 1. `coding-system-for-read', if non-nil.
@@ -381,7 +381,7 @@ The coding system used for decoding the file is determined as follows:
 3. The matching value for this filename from
    `file-coding-system-alist', if any.
 4. `buffer-file-coding-system-for-read', if non-nil.
-5. The coding system 'no-conversion.
+5. The coding system 'raw-text.
 
 If a local value for `buffer-file-coding-system' in the current buffer
 does not exist, it is set to the coding system which was actually used
@@ -410,7 +410,7 @@ and `insert-file-contents-post-hook'."
 		 ;; #4.
 		 buffer-file-coding-system-for-read
 		 ;; #5.
-		 'no-conversion))
+		 'raw-text))
 	  (if (consp coding-system)
 	      (setq return-val coding-system)
 	    (if (null (find-coding-system coding-system))
@@ -555,4 +555,9 @@ See also `write-region-pre-hook' and `write-region-post-hook'."
 			start end filename append visit lockname
 			coding-system)))
 
-;;; mule-files.el ends here
+;;; The following was all that remained in mule-files.el, so I moved it
+;;; here for neatness.  -sb
+(when (featurep 'mule)
+  (setq-default buffer-file-coding-system 'iso-2022-8))
+
+;;; code-files.el ends here

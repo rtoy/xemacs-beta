@@ -59,6 +59,9 @@ GetDlgItem(FRAME_MSWINDOWS_HANDLE(f), TOOLBAR_ID_BIAS + p)
 #define MSWINDOWS_BLANK_SIZE 5
 #define MSWINDOWS_MINIMUM_TOOLBAR_SIZE 8
 
+static void
+mswindows_move_toolbar (struct frame *f, enum toolbar_pos pos);
+
 #define SET_TOOLBAR_WAS_VISIBLE_FLAG(frame, pos, flag)			\
   do {									\
     switch (pos)							\
@@ -205,10 +208,11 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
     {
 
       struct toolbar_button *tb = XTOOLBAR_BUTTON (button);
-      checksum = HASH4 (checksum, 
+      checksum = HASH5 (checksum, 
 			internal_hash (get_toolbar_button_glyph(w, tb), 0),
 			internal_hash (tb->callback, 0),
-			width);
+			width,
+			LISP_HASH (w->toolbar_buttons_captioned_p));
       button = tb->next;
       nbuttons++;
     }
@@ -258,7 +262,7 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 	      
 	      if (IMAGE_INSTANCEP (instance))
 		{
-		  struct Lisp_Image_Instance* p = XIMAGE_INSTANCE (instance);
+		  Lisp_Image_Instance* p = XIMAGE_INSTANCE (instance);
 		  
 		  if (IMAGE_INSTANCE_PIXMAP_TYPE_P (p))
 		    {
@@ -459,6 +463,9 @@ mswindows_output_toolbar (struct frame *f, enum toolbar_pos pos)
 
       /* now display the window */
       ShowWindow (toolbarwnd, SW_SHOW);
+      /* no idea why this is necessary but initial display will not
+         happen otherwise. */
+      mswindows_move_toolbar (f, pos);
 
       if (button_tbl) xfree (button_tbl);
 
@@ -524,6 +531,13 @@ mswindows_redraw_exposed_toolbars (struct frame *f, int x, int y, int width,
 }
 
 static void
+mswindows_redraw_frame_toolbars (struct frame *f)
+{
+  mswindows_redraw_exposed_toolbars (f, 0, 0, FRAME_PIXWIDTH (f),
+				     FRAME_PIXHEIGHT (f));
+}
+
+static void
 mswindows_initialize_frame_toolbars (struct frame *f)
 {
 
@@ -572,7 +586,7 @@ mswindows_free_frame_toolbars (struct frame *f)
 }
 
 /* map toolbar hwnd to pos*/
-int mswindows_find_toolbar_pos(struct frame* f, HWND ctrl)
+static int mswindows_find_toolbar_pos(struct frame* f, HWND ctrl)
 {
   int id = GetDlgCtrlID(ctrl);
   return id ? id - TOOLBAR_ID_BIAS : -1;
@@ -635,5 +649,6 @@ console_type_create_toolbar_mswindows (void)
   CONSOLE_HAS_METHOD (mswindows, initialize_frame_toolbars);
   CONSOLE_HAS_METHOD (mswindows, free_frame_toolbars);
   CONSOLE_HAS_METHOD (mswindows, redraw_exposed_toolbars);
+  CONSOLE_HAS_METHOD (mswindows, redraw_frame_toolbars);
 }
 

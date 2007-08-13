@@ -32,16 +32,18 @@ Boston, MA 02111-1307, USA.  */
 #include "faces.h"
 #include "frame.h"
 #include "lstream.h"
+#include "glyphs.h"
 #include "sysdep.h"
 #include "sysfile.h"
 #ifdef FILE_CODING
 #include "file-coding.h"
 #endif
-#ifdef HAVE_GPM
-#include "gpmevent.h"
-#endif
 
 DEFINE_CONSOLE_TYPE (tty);
+DECLARE_IMAGE_INSTANTIATOR_FORMAT (nothing);
+DECLARE_IMAGE_INSTANTIATOR_FORMAT (string);
+DECLARE_IMAGE_INSTANTIATOR_FORMAT (formatted_string);
+DECLARE_IMAGE_INSTANTIATOR_FORMAT (inherit);
 
 Lisp_Object Qterminal_type;
 Lisp_Object Qcontrolling_process;
@@ -125,10 +127,6 @@ tty_init_console (struct console *con, Lisp_Object props)
   tty_con->terminal_type = terminal_type;
   tty_con->controlling_process = controlling_process;
 
-#ifdef HAVE_GPM
-  connect_to_gpm (con);
-#endif
-
   if (NILP (CONSOLE_NAME (con)))
     CONSOLE_NAME (con) = Ffile_name_nondirectory (tty);
   {
@@ -161,12 +159,12 @@ tty_init_console (struct console *con, Lisp_Object props)
 }
 
 static void
-tty_mark_console (struct console *con, void (*markobj) (Lisp_Object))
+tty_mark_console (struct console *con)
 {
   struct tty_console *tty_con = CONSOLE_TTY_DATA (con);
-  markobj (tty_con->terminal_type);
-  markobj (tty_con->instream);
-  markobj (tty_con->outstream);
+  mark_object (tty_con->terminal_type);
+  mark_object (tty_con->instream);
+  mark_object (tty_con->outstream);
 }
 
 static int
@@ -280,10 +278,12 @@ CODESYS defaults to the value of `terminal-coding-system'.
   set_encoding_stream_coding_system
     (XLSTREAM (CONSOLE_TTY_DATA (decode_tty_console (console))->outstream),
      Fget_coding_system (NILP (codesys) ? Vterminal_coding_system : codesys));
+  /* Redraw tty */
+  face_property_was_changed (Vdefault_face, Qfont, Qtty);
   return Qnil;
 }
 
-/* ### Move this function to lisp */
+/* #### Move this function to lisp */
 DEFUN ("set-console-tty-coding-system", Fset_console_tty_coding_system,
        0, 2, 0, /*
 Set the input and output coding systems of tty console CONSOLE to CODESYS.
@@ -364,6 +364,21 @@ console_type_create_tty (void)
   CONSOLE_HAS_METHOD (tty, canonicalize_device_connection);
   CONSOLE_HAS_METHOD (tty, semi_canonicalize_console_connection);
   CONSOLE_HAS_METHOD (tty, semi_canonicalize_device_connection);
+}
+
+void
+reinit_console_type_create_tty (void)
+{
+  REINITIALIZE_CONSOLE_TYPE (tty);
+}
+
+void
+image_instantiator_format_create_glyphs_tty (void)
+{
+  IIFORMAT_VALID_CONSOLE (tty, nothing);
+  IIFORMAT_VALID_CONSOLE (tty, string);
+  IIFORMAT_VALID_CONSOLE (tty, formatted_string);
+  IIFORMAT_VALID_CONSOLE (tty, inherit);
 }
 
 void

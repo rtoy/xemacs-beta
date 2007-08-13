@@ -1,4 +1,259 @@
-							-*- indented-text -*-
+to 21.2.29 "Hestia"
+-- Fix compile errors on pre-X11R6 systems, introduced in 21.2.28.
+-- Fix autodetection of Berkeley DB on Linux Glibc 2 systems.  
+   (but more work needed)
+-- Allow non-symbols (anything compared with `eq') in object plists.
+-- Cleanup of property frobbing code.
+-- Various AIX 4 fixes, including port of PDUMP.
+-- Unconditionally define _POSIX_C_SOURCE, _XOPEN_SOURCE, _XOPEN_SOURCE_EXTENDED.
+-- MS-Windows redisplay and font fixes from Jonathan Harris.
+-- various fixes from Craig Lanning, Daiki Ueno.
+-- Asynchronous widget updates from Andy Piper.
+-- More widget fixes from Andy Piper.
+-- Don't use rel_alloc on glibc systems, including Linux
+-- Upgrade etags.c to version 13.44, Francesco Potorti
+-- etags does a better job of finding the exact match first, Kyle Jones
+-- Portable dumper now described in Internals manual, Olivier and Martin
+-- Object Plist documentation in lispref updated, Martin Buchholz
+-- Just use standard `const' everywhere, instead of CONST
+-- More pdump changes, Olivier Galibert
+
+to 21.2.28 "Hermes"
+-- Add configure support for NetWinders, Sean MacLennan
+-- Make the "Load .emacs" menu item work again, Kirill Katsnelson
+-- Make --without-x work again.
+-- Detect Xaw3d and friends using #include <Xaw3d/FOO.h>
+-- Experimental Drag-N-Drop now defaults to "no" until there is again
+   active development.
+-- SGI dumping fixes should make XEmacs work again on Irix 6.
+-- More warning flags on by default when building with gcc.
+-- process coding changes, Kirill Katsnelson
+-- help now knows how to print macro arglists, Yoshiki Hayashi
+-- Windows printing support, Kirill Katsnelson
+-- Obscure crash fixes, Martin Buchholz
+-- Memory leak fixes, Martin Buchholz
+-- We now always use our own realpath(), never the system-provided one.
+-- More gutter/tab widget changes, Andy Piper
+-- Crash fix when using dead processes, Gunnar Evermann (fix PR#1061)
+-- Pdump stability fixes, Olivier Galibert
+-- New coding system alias implementation, Ben Wing and Martin Buchholz
+-- New internal data conversion infrastructure, Ben Wing and Martin Buchholz
+-- IPv6 support, URA Hiroshi
+-- Runtime Athena mismatch warnings added, Daniel Pittman
+-- Removal of old MSDOS support, Kirill Katsnelson
+-- Correctly define Latin-3 and Latin-4 character syntax as "w".
+-- Auto-define all X-defined keysyms as self-inserting, not just Latin-1.
+-- Workaround egcs-20000131 c++ compiler bug
+-- Byte-optimize (length "foo") to 3.
+-- (define-key ctl-x-4-map "p" global-map) no longer causes stack overflow crash.
+-- Partially implement dontusethis-set-symbol-value-handler.
+-- Fix bug: (getf nil t t) ==> Lisp nesting exceeds `max-lisp-eval-depth'
+-- lib-src partially C++ized, Zack Weinberg.
+
+to 21.2.27 "Hera"
+-- Dynamic layout for widgets from Andy Piper
+-- Vertical tab widgets for MS-Windows from Andy Piper
+-- pdump fixes for MS-Windows from Big K
+-- config.sub, config.guess major upgrade, Marcus Thiessel
+-- gdbinit renamed to .gdbinit
+-- dbxrc renamed to .dbxrc
+-- Mail locking overhaul, Michael Sperber
+-- Info-visit-file can now be used non-interactively, Martin Buchholz
+-- FAQ updates, Sandra Wambold
+-- Document lisp-level error handling, Hrvoje Niksic
+-- Windows changes, Kirill Katsnelson
+-- Portable dumper ported to Windows, Kirill Katsnelson
+-- idlwave-mode added, Carsten Dominik
+-- Info changes, Yoshiki Hayashi and Didier Verna.
+-- Again support BSD/OS 2.0
+-- minibuf.* changes, Yoshiki Hayashi
+-- hyper-apropos changes, Yoshiki Hayashi
+-- buffers tab has its own face, Andy Piper
+-- modeline scrolling changes, Didier Verna
+
+to 21.2.26 "Millenium"
+-- Fix unpredictable results, perhaps even crashes, if using the
+   `return from debugger feature' and errors in `eval' or `funcall'.
+-- fix for Tab widgets causing X errors in XMapWindow().
+
+to 21.2.25 "Hephaestus"
+-- the LATEST.IS.* file has been renamed to LATEST-IS-*.
+-- the CVS tag to checkout the latest tarball is `r21-2-latest-beta'.
+-- 3 crashes in mapcar1 have been fixed.
+-- lwlib arg passing cleanup
+-- yet more widget and tab fixes
+-- yet another Tab sync
+-- specifier copying fix for widgets
+-- preparation for proper layouts
+-- native widgets used for some custom widgets
+-- (+ 1) is no longer incorrectly compiled
+-- char-before no longer has performance penalty
+-- xpm again works on Windows
+-- native Windows fixes from Adrian Aichner
+-- Mule fixes from Yoshiki Hayashi
+-- properly detect Athena widgets headers and libs, preventing crashes
+   from misdetection and from libraries and headers that don't match,
+   from Daniel Pittman
+
+to 21.2.24 "Hecate"
+-- Tabs fixes from Andy Piper
+-- Widget leak fixes from Andy Piper
+-- (coding-system-list) deals properly with coding system aliases, Shenghuo ZHU
+-- configure support for ESD sound rewritte, Martin Buchholz
+-- directory separator fix from Mike Alexander
+-- Windows process support cleanup, Adrian Aichner
+-- NT now encapsulates fstat to get correct file mod time, Adrian Aichner
+
+to 21.2.23 "Hebe"
+-- MS-Windows selection fixes from Mike Alexander
+-- MS-WIndows process handling fixes from Mike Alexander
+-- Subwindow GC fix from Andy Piper
+-- Various minor fixes from Andy Piper
+-- Rewrite module configure support, Martin Buchholz
+-- Various Windows fixes, Martin Buchholz, Adrian Aichner, Andy Piper
+-- HP native compiler compilation fixes, Martin Buchholz
+-- Workarounds for Cygnus compiler bugs, Martin Buchholz
+-- Workarounds for Cygwin broken header files, Martin Buchholz
+-- itimers work again, Kyle Jones
+-- random code cleanup, Martin Buchholz
+-- various redisplay fixes, Andy Piper, Jan Vroonhof
+-- various fixes from Hrvoje Niksic, Yoshiki Hayashi
+
+to 21.2.22 "Mercedes"
+-- ESD Sound support from Robert Bihlmeyer
+-- 10% faster redisplay from Jan Vroonhof
+-- Fixes from Jeff Miller, Alexandre Oliva and Yoshiki Hayashi
+-- "If you've got problems, read PROBLEMS!" from Robert Pluim
+-- Lstream code now uses size_t, ssize_t consistently, Martin Buchholz
+-- Fix `make install' if prefix != exec_prefix, Martin Buchholz
+-- Fix compile warnings and C++ compilation, Martin Buchholz
+-- Fix detection of coding: cookie in -*- first line.
+-- More xim-xlib work by Kazuyuki Ienaga
+-- Fix crash in abbrev.c (abbrev_location), Eric Darve
+
+to 21.2.20 "Yoko"
+-- UTF-8 & file-coding magic cookie fix from MORIOKA Tomohiko
+-- bug fixes from Adrian Aichner, Sean MacLennan, and Jeff Miller
+-- glyph widget support under X/Athena from Andy Piper
+-- tab widget support under X (all variants) from Andy Piper
+-- many gutter, redisplay & widget fixes from Andy Piper
+-- mswindows mousewheel support from Mike Woolley
+-- combo box support under X/Motif from Andy Piper
+-- buffer tab grouping from Andy Piper
+-- layout widget support from Andy Piper
+-- partial display line scrolling support from Andy Piper
+-- cleanup patches from Gleb Arshinov
+-- hash table FSF API sync from Martin Buchholz
+-- widget cleanup from Martin Buchholz
+-- process-environment fix for nt from Julian Back
+-- widget to frame fix from Jan Vroonhof
+-- animated glyph support from Andy Piper
+-- glyph redisplay improvements from Andy Piper
+-- color cells allocation fix from Lee Kindness
+-- recover file fix for windows nt
+-- mingw install fix from Craig Lanning
+-- recognize keypad keys under MS-Windows from Jonathan Harris
+-- Switch gui dialogs to native widgets from Andy Piper
+-- fixes from Yoshiki Hayashi and Norbert Koch
+
+to 21.2.19 "Shinjuku"
+-- various fixes from Gunnar Evermann
+-- XIM fixes from Kazuyuki IENAGA
+-- keymap fix from Katsumi Yamaoka
+-- Microsoft build fixes from Adrian Aichner
+-- documentation update from Adrian Aichner
+-- rect.el rewrite from Didier Verna
+-- custom comment fields from Didier Verna
+-- various fixes from Karl Hegbloom
+-- filling fix from Yoshiki Hayashi
+-- miscellaneous changes from Jeff Miller and Didier Verna
+-- configure hacking from Steve Baur
+-- various fixes from Bob Weiner
+-- Mule synching from MORIOKA Tomohiko
+-- various fixes from Steve Baur
+-- LDAP configure changes from Gregory Neil Shapiro
+-- gutter implementation from Andy Piper
+-- tab widgets in gutter from Andy Piper
+-- Custom themes, API part. See etc/custom/theme-examples from Jan Vroonhof
+
+to 21.2.18 "Toshima"
+-- miscellaneous fixes from Steve Baur
+-- miscellaneous fixes from Didier Verna
+-- various bug fixes from Karl Hegbloom
+-- miscellaneous fixes from Bob Weiner
+-- fix for XIM server crashing and taking down XEmacs from Kazuyuki IENAGA
+-- valid-image-instantiator-format-p tightened up by Andy Piper.
+-- glyph widget support under X/Motif from Andy Piper
+-- Make docdir configurable, update package searching rules from Michael
+   Sperber
+-- Fix for Japanese word/character movements from MORIOKA Tomohiko
+-- lrecord struct header size fix from Olivier Galibert
+
+to 21.2.17 "Chiyoda"
+-- miscellaneous bug fixes from Steve Baur
+-- font menu fix from Robert Pluim
+-- ldap API update from Oscar Figueiredo
+-- Fix thai-xtis charset width from MORIOKA Tomohiko
+-- CCL engine fix from MORIOKA Tomohiko
+-- mswindows build fixes from Norbert Koch
+-- miscellaneous fixes from Andy Piper
+-- automated tests for mswindows from Adrian Aichner
+-- tree-view and tab-control widget glyph support from Andy Piper
+
+to 21.2.16 "Sumida"
+-- miscellaneous fixes from Hrvoje Niksic and Olivier Galibert
+-- make selection more mswindows conformant.
+-- Make customize use specifiers from Jan Vroonhof
+-- Cyrillic CCL crash fix from MORIOKA Tomohiko
+-- DEC OSF Build fix and miscellaneous Lisp fix from Steve Baur
+-- raw-text coding system synch from MORIOKA Tomohiko
+
+to 21.2.15 "Sakuragawa"
+-- new self tests from Oscar Figueiredo and Hrvoje Niksic
+-- Miscellaneous bug fixes from Yoshiki Hayashi, Jerry James, Hirokazu FUKUI,
+   Hrvoje Niksic, MORIOKA Tomohiko
+-- LDAP internationalization from Oscar Figueiredo
+-- DEC OSF build fixes from Steve Baur
+-- Documentation fixes from Mike McEwan, Vin Shelton and Gunnar Evermann
+-- Build fixes from Jan Vroonhof
+-- Miscellaneous fixes from Hrvoje Niksic
+-- Documentation updates from Hrvoje Niksic and Albert Chin-A-Young
+-- mule-charset.el synch with Mule from Steve Baur
+-- miscellaneous build and cosmetic fixes from Steve Baur
+-- font-menu for mswindows from Andy Piper
+-- select rationalisation for window systems from Andy Piper
+-- reinstate sheap adjustment + mingw32 fixes from Andy Piper
+
+to 21.2.14 "Dionysos"
+-- mingw32 port from Andy Piper
+-- fix for Solaris build lossage from Hrvoje Niksic
+-- THAI/Cyrillic-KOI8, Vietnamese, Ethiopic support from MORIOKA Tomohiko
+-- miscellaneous bug fixes from Gunnar Evermann
+-- Internal purespace cleanup from Olivier Galibert
+-- documentation updates from Hrvoje Niksic
+-- dump time tuning from Hrvoje Niksic
+-- miscellaneous bug fixes from Giacomo Boffi
+-- font hacking from Jan Vroonhof
+-- Czech language support from David Sauer
+-- `delete-key-deletes-forward' now defaults to t
+-- `locate-file' update from Hrvoje Niksic
+-- MS Windows build fixes from Adrian Aichner
+-- LDAP updates from Oscar Figueiredo
+-- miscellaneous bug fixes from Colin Rafferty and Kai Haberzettl
+-- disable display of images in buffers by file format
+-- miscellaneous Mule fixes from Olivier Galibert
+-- documentation updates from Albert Chin-A-Young
+-- documentation updates from Gunnar Evermann and Stephen Turnbull
+-- MS Windows build fix from Norbert Koch
+-- miscellaneous MS Windows fixes from Andy Piper
+-- redisplay bug fixes from Jan Vroonhof
+-- miscellaneous bug fixes from Robert Pluim, MORIOKA Tomohiko
+-- many, many bug fixes and enhancements from Hrvoje Niksic and Olivier
+   Galibert
+-- miscellaneous bug fixes from Martin Buchholz
+-- Miscellaneous MS Windows fixes from Philip Aston
+-- lots of new tests from Hrvoje Niksic
+
 to 21.2.13 "Demeter"
 -- Build fixes from Martin Buchholz
 -- experimental splash screen rewrite from Didier Verna

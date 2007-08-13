@@ -51,14 +51,13 @@ Lisp_Object Vstandard_output, Qstandard_output;
 /* The subroutine object for external-debugging-output is kept here
    for the convenience of the debugger.  */
 Lisp_Object Qexternal_debugging_output;
-Lisp_Object Qalternate_debugging_output;
 
 /* Avoid actual stack overflow in print.  */
 static int print_depth;
 
 /* Detect most circularities to print finite output.  */
 #define PRINT_CIRCLE 200
-Lisp_Object being_printed[PRINT_CIRCLE];
+static Lisp_Object being_printed[PRINT_CIRCLE];
 
 /* Maximum length of list or vector to print in full; noninteger means
    effectively infinity */
@@ -92,9 +91,6 @@ int print_readably;
 Lisp_Object Vprint_gensym;
 Lisp_Object Vprint_gensym_alist;
 
-Lisp_Object Qprint_escape_newlines;
-Lisp_Object Qprint_readably;
-
 Lisp_Object Qdisplay_error;
 Lisp_Object Qprint_message_label;
 
@@ -111,14 +107,16 @@ int stdout_needs_newline;
 
 void
 write_string_to_stdio_stream (FILE *stream, struct console *con,
-			      CONST Bufbyte *str,
+			      const Bufbyte *str,
 			      Bytecount offset, Bytecount len,
-			      enum external_data_format fmt)
+			      Lisp_Object coding_system)
 {
-  int extlen;
-  CONST Extbyte *extptr;
+  Extcount extlen;
+  const Extbyte *extptr;
 
-  GET_CHARPTR_EXT_DATA_ALLOCA (str + offset, len, fmt, extptr, extlen);
+  TO_EXTERNAL_FORMAT (DATA, (str + offset, len),
+		      ALLOCA, (extptr, extlen),
+		      coding_system);
   if (stream)
     {
       fwrite (extptr, 1, extlen, stream);
@@ -154,7 +152,7 @@ write_string_to_stdio_stream (FILE *stream, struct console *con,
    buffer_insert_string_1() in insdel.c. */
 
 static void
-output_string (Lisp_Object function, CONST Bufbyte *nonreloc,
+output_string (Lisp_Object function, const Bufbyte *nonreloc,
 	       Lisp_Object reloc, Bytecount offset, Bytecount len)
 {
   /* This function can GC */
@@ -164,7 +162,7 @@ output_string (Lisp_Object function, CONST Bufbyte *nonreloc,
      other functions that take both a nonreloc and a reloc, or things
      may get confused and an assertion failure in
      fixup_internal_substring() may get triggered. */
-  CONST Bufbyte *newnonreloc = nonreloc;
+  const Bufbyte *newnonreloc = nonreloc;
   struct gcpro gcpro1, gcpro2;
 
   /* Emacs won't print while GCing, but an external debugger might */
@@ -240,7 +238,7 @@ output_string (Lisp_Object function, CONST Bufbyte *nonreloc,
   else if (EQ (function, Qt) || EQ (function, Qnil))
     {
       write_string_to_stdio_stream (stdout, 0, newnonreloc, offset, len,
-				    FORMAT_TERMINAL);
+				    Qterminal);
     }
   else
     {
@@ -349,7 +347,7 @@ print_finish (Lisp_Object stream, Lisp_Object frame_kludge)
 
 /* Used for printing a single-byte character (*not* any Emchar).  */
 #define write_char_internal(string_of_length_1, stream)			\
-  output_string (stream, (CONST Bufbyte *) (string_of_length_1),	\
+  output_string (stream, (const Bufbyte *) (string_of_length_1),	\
 		 Qnil, 0, 1)
 
 /* NOTE: Do not call this with the data of a Lisp_String, as
@@ -362,7 +360,7 @@ print_finish (Lisp_Object stream, Lisp_Object frame_kludge)
    canonicalize_printcharfun() (i.e. Qnil means stdout, not
    Vstandard_output, etc.)  */
 void
-write_string_1 (CONST Bufbyte *str, Bytecount size, Lisp_Object stream)
+write_string_1 (const Bufbyte *str, Bytecount size, Lisp_Object stream)
 {
   /* This function can GC */
 #ifdef ERROR_CHECK_BUFPOS
@@ -372,10 +370,10 @@ write_string_1 (CONST Bufbyte *str, Bytecount size, Lisp_Object stream)
 }
 
 void
-write_c_string (CONST char *str, Lisp_Object stream)
+write_c_string (const char *str, Lisp_Object stream)
 {
   /* This function can GC */
-  write_string_1 ((CONST Bufbyte *) str, strlen (str), stream);
+  write_string_1 ((const Bufbyte *) str, strlen (str), stream);
 }
 
 
@@ -631,8 +629,13 @@ print_error_message (Lisp_Object error_object, Lisp_Object stream)
   {
     int first = 1;
     int speccount = specpdl_depth ();
+    Lisp_Object frame = Qnil;
+    struct gcpro gcpro1;
+    GCPRO1 (stream);
 
     specbind (Qprint_message_label, Qerror);
+    stream = print_prepare (stream, &frame);
+
     tail = Fcdr (error_object);
     if (EQ (type, Qerror))
       {
@@ -654,6 +657,8 @@ print_error_message (Lisp_Object error_object, Lisp_Object stream)
 	tail = Fcdr (tail);
 	first = 0;
       }
+    print_finish (stream, frame);
+    UNGCPRO;
     unbind_to (speccount, Qnil);
     return;
     /* not reached */
@@ -711,11 +716,10 @@ Display ERROR-OBJECT on STREAM in a user-friendly way.
 #ifdef LISP_FLOAT_TYPE
 
 Lisp_Object Vfloat_output_format;
-Lisp_Object Qfloat_output_format;
 
 /*
  * This buffer should be at least as large as the max string size of the
- * largest float, printed in the biggest notation.  This is undoubtably
+ * largest float, printed in the biggest notation.  This is undoubtedly
  * 20d float_output_format, with the negative of the C-constant "HUGE"
  * from <math.h>.
  *
@@ -806,41 +810,56 @@ float_to_string (char *buf, double data)
    faster.
 
    BUFFER should accept 24 bytes.  This should suffice for the longest
-   numbers on 64-bit machines.  */
+   numbers on 64-bit machines, including the `-' sign and the trailing
+   \0.  */
 void
 long_to_string (char *buffer, long number)
 {
-  char *p;
-  int i, len;
+#if (SIZEOF_LONG != 4) && (SIZEOF_LONG != 8)
+  /* Huh? */
+  sprintf (buffer, "%ld", number);
+#else /* (SIZEOF_LONG == 4) || (SIZEOF_LONG == 8) */
+  char *p = buffer;
+  int force = 0;
 
   if (number < 0)
     {
-      *buffer++ = '-';
+      *p++ = '-';
       number = -number;
     }
-  p = buffer;
 
-  /* Print the digits to the string.  */
-  do
-    {
-      *p++ = number % 10 + '0';
-      number /= 10;
-    }
-  while (number);
-
-  /* And reverse them.  */
-  len = p - buffer - 1;
-  for (i = len / 2; i >= 0; i--)
-    {
-      char c = buffer[i];
-      buffer[i] = buffer[len - i];
-      buffer[len - i] = c;
-    }
-  buffer[len + 1] = '\0';
+#define FROB(figure) do {						\
+    if (force || number >= figure)					\
+      *p++ = number / figure + '0', number %= figure, force = 1;	\
+    } while (0)
+#if SIZEOF_LONG == 8
+  FROB (1000000000000000000L);
+  FROB (100000000000000000L);
+  FROB (10000000000000000L);
+  FROB (1000000000000000L);
+  FROB (100000000000000L);
+  FROB (10000000000000L);
+  FROB (1000000000000L);
+  FROB (100000000000L);
+  FROB (10000000000L);
+#endif /* SIZEOF_LONG == 8 */
+  FROB (1000000000);
+  FROB (100000000);
+  FROB (10000000);
+  FROB (1000000);
+  FROB (100000);
+  FROB (10000);
+  FROB (1000);
+  FROB (100);
+  FROB (10);
+#undef FROB
+  *p++ = number + '0';
+  *p = '\0';
+#endif /* (SIZEOF_LONG == 4) || (SIZEOF_LONG == 8) */
 }
 
 static void
-print_vector_internal (CONST char *start, CONST char *end,
+print_vector_internal (const char *start, const char *end,
                        Lisp_Object obj,
                        Lisp_Object printcharfun, int escapeflag)
 {
@@ -947,7 +966,7 @@ print_vector (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 void
 print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
-  struct Lisp_String *s = XSTRING (obj);
+  Lisp_String *s = XSTRING (obj);
   /* We distinguish between Bytecounts and Charcounts, to make
      Vprint_string_length work correctly under Mule.  */
   Charcount size = string_char_length (s);
@@ -1093,14 +1112,12 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
   switch (XTYPE (obj))
     {
-#ifdef USE_MINIMAL_TAGBITS
     case Lisp_Type_Int_Even:
     case Lisp_Type_Int_Odd:
-#else
-    case Lisp_Type_Int:
-#endif
       {
-	char buf[24];
+	/* ASCII Decimal representation uses 2.4 times as many bits as
+	   machine binary.  */
+	char buf[3 * sizeof (EMACS_INT) + 5];
 	long_to_string (buf, XINT (obj));
 	write_c_string (buf, printcharfun);
 	break;
@@ -1113,101 +1130,69 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	Emchar ch = XCHAR (obj);
 	char *p = buf;
 	*p++ = '?';
-	if (ch == '\n')
-	  *p++ = '\\', *p++ = 'n';
-	else if (ch == '\r')
-	  *p++ = '\\', *p++ = 'r';
-	else if (ch == '\t')
-	  *p++ = '\\', *p++ = 't';
-	else if (ch < 32)
+	if (ch < 32)
 	  {
-	    *p++ = '\\', *p++ = '^';
-	    *p++ = ch + 64;
-	    if ((ch + 64) == '\\')
-	      *p++ = '\\';
+	    *p++ = '\\';
+	    switch (ch)
+	      {
+	      case '\t': *p++ = 't'; break;
+	      case '\n': *p++ = 'n'; break;
+	      case '\r': *p++ = 'r'; break;
+	      default:
+		*p++ = '^';
+		*p++ = ch + 64;
+		if ((ch + 64) == '\\')
+		  *p++ = '\\';
+		break;
+	      }
+	  }
+	else if (ch < 127)
+	  {
+	    /* syntactically special characters should be escaped. */
+	    switch (ch)
+	      {
+	      case ' ':
+	      case '"':
+	      case '#':
+	      case '\'':
+	      case '(':
+	      case ')':
+	      case ',':
+	      case '.':
+	      case ';':
+	      case '?':
+	      case '[':
+	      case '\\':
+	      case ']':
+	      case '`':
+		*p++ = '\\';
+	      }
+	    *p++ = ch;
 	  }
 	else if (ch == 127)
-	  *p++ = '\\', *p++ = '^', *p++ = '?';
-	else if (ch >= 128 && ch < 160)
+	  {
+	    *p++ = '\\', *p++ = '^', *p++ = '?';
+	  }
+	else if (ch < 160)
 	  {
 	    *p++ = '\\', *p++ = '^';
-	    p += set_charptr_emchar ((Bufbyte *)p, ch + 64);
+	    p += set_charptr_emchar ((Bufbyte *) p, ch + 64);
 	  }
-	else if (ch < 127
-		 && !isdigit (ch)
-		 && !isalpha (ch)
-		 && ch != '^') /* must not backslash this or it will
-				  be interpreted as the start of a
-				  control char */
-	  *p++ = '\\', *p++ = ch;
 	else
-	  p += set_charptr_emchar ((Bufbyte *)p, ch);
-	output_string (printcharfun, (Bufbyte *)buf, Qnil, 0, p - buf);
-	break;
-      }
-
-#ifndef LRECORD_STRING
-    case Lisp_Type_String:
-      {
-	print_string (obj, printcharfun, escapeflag);
-	break;
-      }
-#endif /* ! LRECORD_STRING */
-
-#ifndef LRECORD_CONS
-    case Lisp_Type_Cons:
-      {
-	struct gcpro gcpro1, gcpro2;
-
-	/* If deeper than spec'd depth, print placeholder.  */
-	if (INTP (Vprint_level)
-	    && print_depth > XINT (Vprint_level))
 	  {
-	    GCPRO2 (obj, printcharfun);
-	    write_c_string ("...", printcharfun);
-	    UNGCPRO;
-	    break;
+	    p += set_charptr_emchar ((Bufbyte *) p, ch);
 	  }
 
-	print_cons (obj, printcharfun, escapeflag);
+	output_string (printcharfun, (Bufbyte *) buf, Qnil, 0, p - buf);
+
 	break;
       }
-#endif /* ! LRECORD_CONS */
-
-#ifndef LRECORD_VECTOR
-    case Lisp_Type_Vector:
-      {
-	/* If deeper than spec'd depth, print placeholder.  */
-	if (INTP (Vprint_level)
-	    && print_depth > XINT (Vprint_level))
-	  {
-	    struct gcpro gcpro1, gcpro2;
-	    GCPRO2 (obj, printcharfun);
-	    write_c_string ("...", printcharfun);
-	    UNGCPRO;
-	    break;
-	  }
-
-	/* God intended that this be #(...), you know. */
-	print_vector_internal ("[", "]", obj, printcharfun, escapeflag);
-	break;
-      }
-#endif /* !LRECORD_VECTOR */
-
-#ifndef LRECORD_SYMBOL
-    case Lisp_Type_Symbol:
-      {
-        print_symbol (obj, printcharfun, escapeflag);
-        break;
-      }
-#endif /* !LRECORD_SYMBOL */
 
     case Lisp_Type_Record:
       {
 	struct lrecord_header *lheader = XRECORD_LHEADER (obj);
 	struct gcpro gcpro1, gcpro2;
 
-#if defined(LRECORD_CONS) || defined(LRECORD_VECTOR)
 	if (CONSP (obj) || VECTORP(obj))
 	  {
 	    /* If deeper than spec'd depth, print placeholder.  */
@@ -1220,7 +1205,6 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 		break;
 	      }
 	  }
-#endif
 
 	GCPRO2 (obj, printcharfun);
 	if (LHEADER_IMPLEMENTATION (lheader)->printer)
@@ -1275,7 +1259,7 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   /* This function can GC */
   /* #### Bug!! (intern "") isn't printed in some distinguished way */
   /* ####  (the reader also loses on it) */
-  struct Lisp_String *name = symbol_name (XSYMBOL (obj));
+  Lisp_String *name = symbol_name (XSYMBOL (obj));
   Bytecount size = string_length (name);
   struct gcpro gcpro1, gcpro2;
 
@@ -1292,7 +1276,12 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   /* If we print an uninterned symbol as part of a complex object and
      the flag print-gensym is non-nil, prefix it with #n= to read the
      object back with the #n# reader syntax later if needed.  */
-  if (!NILP (Vprint_gensym) && NILP (XSYMBOL (obj)->obarray))
+  if (!NILP (Vprint_gensym)
+      /* #### Test whether this produces a noticable slow-down for
+         printing when print-gensym is non-nil.  */
+      && !EQ (obj, oblookup (Vobarray,
+			     string_data (symbol_name (XSYMBOL (obj))),
+			     string_length (symbol_name (XSYMBOL (obj))))))
     {
       if (print_depth > 1)
 	{
@@ -1404,8 +1393,8 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
    getting rid of this function altogether?  Does anything actually
    *use* it?  --hniksic */
 
-int alternate_do_pointer;
-char alternate_do_string[5000];
+static int alternate_do_pointer;
+static char alternate_do_string[5000];
 
 DEFUN ("alternate-debugging-output", Falternate_debugging_output, 1, 1, 0, /*
 Append CHARACTER to the array `alternate_do_string'.
@@ -1418,11 +1407,13 @@ to 0.
   Bufbyte str[MAX_EMCHAR_LEN];
   Bytecount len;
   int extlen;
-  CONST Extbyte *extptr;
+  const Extbyte *extptr;
 
   CHECK_CHAR_COERCE_INT (character);
   len = set_charptr_emchar (str, XCHAR (character));
-  GET_CHARPTR_EXT_DATA_ALLOCA (str, len, FORMAT_TERMINAL, extptr, extlen);
+  TO_EXTERNAL_FORMAT (DATA, (str, len),
+		      ALLOCA, (extptr, extlen),
+		      Qterminal);
   memcpy (alternate_do_string + alternate_do_pointer, extptr, extlen);
   alternate_do_pointer += extlen;
   alternate_do_string[alternate_do_pointer] = 0;
@@ -1470,7 +1461,7 @@ the output also will be logged to this file.
     write_string_to_stdio_stream (file, con,
 				  XSTRING_DATA (char_or_string),
 				  0, XSTRING_LENGTH (char_or_string),
-				  FORMAT_TERMINAL);
+				  Qterminal);
   else
     {
       Bufbyte str[MAX_EMCHAR_LEN];
@@ -1478,7 +1469,7 @@ the output also will be logged to this file.
 
       CHECK_CHAR_COERCE_INT (char_or_string);
       len = set_charptr_emchar (str, XCHAR (char_or_string));
-      write_string_to_stdio_stream (file, con, str, 0, len, FORMAT_TERMINAL);
+      write_string_to_stdio_stream (file, con, str, 0, len, Qterminal);
     }
 
   return char_or_string;
@@ -1507,39 +1498,41 @@ FILE = nil means just close any termscript file currently open.
 
 #if 1
 /* Debugging kludge -- unbuffered */
-static int debug_print_length = 50;
-static int debug_print_level = 15;
-Lisp_Object debug_temp;
+static int debug_print_length   = 50;
+static int debug_print_level    = 15;
+static int debug_print_readably = -1;
 
 static void
 debug_print_no_newline (Lisp_Object debug_print_obj)
 {
   /* This function can GC */
-  int old_print_readably = print_readably;
-  int old_print_depth = print_depth;
-  Lisp_Object old_print_length = Vprint_length;
-  Lisp_Object old_print_level = Vprint_level;
-  Lisp_Object old_inhibit_quit = Vinhibit_quit;
+  int save_print_readably = print_readably;
+  int save_print_depth    = print_depth;
+  Lisp_Object save_Vprint_length = Vprint_length;
+  Lisp_Object save_Vprint_level  = Vprint_level;
+  Lisp_Object save_Vinhibit_quit = Vinhibit_quit;
   struct gcpro gcpro1, gcpro2, gcpro3;
-  GCPRO3 (old_print_level, old_print_length, old_inhibit_quit);
+  GCPRO3 (save_Vprint_level, save_Vprint_length, save_Vinhibit_quit);
 
   if (gc_in_progress)
     stderr_out ("** gc-in-progress!  Bad idea to print anything! **\n");
 
   print_depth = 0;
-  print_readably = 0;
+  print_readably = debug_print_readably != -1 ? debug_print_readably : 0;
   print_unbuffered++;
   /* Could use unwind-protect, but why bother? */
   if (debug_print_length > 0)
     Vprint_length = make_int (debug_print_length);
   if (debug_print_level > 0)
     Vprint_level = make_int (debug_print_level);
+
   print_internal (debug_print_obj, Qexternal_debugging_output, 1);
-  Vinhibit_quit = old_inhibit_quit;
-  Vprint_level = old_print_level;
-  Vprint_length = old_print_length;
-  print_depth = old_print_depth;
-  print_readably = old_print_readably;
+
+  Vinhibit_quit  = save_Vinhibit_quit;
+  Vprint_level   = save_Vprint_level;
+  Vprint_length  = save_Vprint_length;
+  print_depth    = save_print_depth;
+  print_readably = save_print_readably;
   print_unbuffered--;
   UNGCPRO;
 }
@@ -1646,14 +1639,7 @@ debug_short_backtrace (int length)
 void
 syms_of_print (void)
 {
-  defsymbol (&Qprint_escape_newlines, "print-escape-newlines");
-  defsymbol (&Qprint_readably, "print-readably");
-
   defsymbol (&Qstandard_output, "standard-output");
-
-#ifdef LISP_FLOAT_TYPE
-  defsymbol (&Qfloat_output_format, "float-output-format");
-#endif
 
   defsymbol (&Qprint_length, "print-length");
 
@@ -1671,7 +1657,6 @@ syms_of_print (void)
   DEFSUBR (Fterpri);
   DEFSUBR (Fwrite_char);
   DEFSUBR (Falternate_debugging_output);
-  defsymbol (&Qalternate_debugging_output, "alternate-debugging-output");
   DEFSUBR (Fexternal_debugging_output);
   DEFSUBR (Fopen_termscript);
   defsymbol (&Qexternal_debugging_output, "external-debugging-output");
@@ -1679,9 +1664,15 @@ syms_of_print (void)
 }
 
 void
-vars_of_print (void)
+reinit_vars_of_print (void)
 {
   alternate_do_pointer = 0;
+}
+
+void
+vars_of_print (void)
+{
+  reinit_vars_of_print ();
 
   DEFVAR_LISP ("standard-output", &Vstandard_output /*
 Output stream `print' uses by default for outputting a character.

@@ -44,7 +44,7 @@ maybe_run_dbox_text_callback (LWLIB_ID id)
   widget_value *wv;
   int got_some;
   wv = xmalloc_widget_value ();
-  wv->name = (char *) "value";
+  wv->name = xstrdup ("value");
   got_some = lw_get_some_values (id, wv);
   if (got_some)
     {
@@ -56,10 +56,12 @@ maybe_run_dbox_text_callback (LWLIB_ID id)
 	  void *tmp = LISP_TO_VOID (list2 (text_field_callback,
                                            build_string (text_field_value)));
 	  popup_selection_callback (0, id, (XtPointer) tmp);
-	  xfree (text_field_value);
 	}
     }
-  free_widget_value (wv);
+  /* This code tried to optimize, newing/freeing. This is generally
+     unsafe so we will alwats strdup and always use
+     free_widget_value_tree. */
+  free_widget_value_tree (wv);
 }
 
 static void
@@ -100,7 +102,7 @@ dbox_selection_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
     lw_set_keyboard_focus (FRAME_X_SHELL_WIDGET (f), FRAME_X_TEXT_WIDGET (f));
 }
 
-static CONST char * CONST button_names [] = {
+static const char * const button_names [] = {
   "button1", "button2", "button3", "button4", "button5",
   "button6", "button7", "button8", "button9", "button10" };
 
@@ -120,7 +122,7 @@ dbox_descriptor_to_widget_value (Lisp_Object desc)
   widget_value *prev = 0, *kids = 0;
   int n = 0;
   int count = specpdl_depth ();
-  Lisp_Object wv_closure;
+  Lisp_Object wv_closure, gui_item;
 
   CHECK_CONS (desc);
   CHECK_STRING (XCAR (desc));
@@ -144,7 +146,7 @@ dbox_descriptor_to_widget_value (Lisp_Object desc)
 
   wv_closure = make_opaque_ptr (kids);
   record_unwind_protect (widget_value_unwind, wv_closure);
-  prev->name = (char *) "message";
+  prev->name = xstrdup ("message");
   prev->value = xstrdup (name);
   prev->enabled = 1;
 
@@ -163,9 +165,10 @@ dbox_descriptor_to_widget_value (Lisp_Object desc)
       CHECK_VECTOR (button);
       wv = xmalloc_widget_value ();
 
-      if (!button_item_to_widget_value (button, wv, allow_text_p, 1))
+      gui_item = gui_parse_item_keywords (button);
+      if (!button_item_to_widget_value (gui_item, wv, allow_text_p, 1))
 	{
-	  free_widget_value (wv);
+	  free_widget_value_tree (wv);
 	  continue;
 	}
 
@@ -177,8 +180,9 @@ dbox_descriptor_to_widget_value (Lisp_Object desc)
       else			/* it's a button */
 	{
 	  allow_text_p = 0;	 /* only allow text field at the front */
-	  wv->value = xstrdup (wv->name);	/* what a mess... */
-	  wv->name = (char *) button_names [n];
+	  if (wv->value)	xfree (wv->value);
+	  wv->value = wv->name;	/* what a mess... */
+	  wv->name = xstrdup (button_names [n]);
 
 	  if (partition_seen)
 	    rbuttons++;
@@ -201,7 +205,7 @@ dbox_descriptor_to_widget_value (Lisp_Object desc)
     widget_value *dbox;
     sprintf (tmp_dbox_name, "%c%dBR%d", type, lbuttons + rbuttons, rbuttons);
     dbox = xmalloc_widget_value ();
-    dbox->name = tmp_dbox_name;
+    dbox->name = xstrdup (tmp_dbox_name);
     dbox->contents = kids;
 
     /* No more need to free the half-filled-in structures. */

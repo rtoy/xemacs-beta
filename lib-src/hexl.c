@@ -1,10 +1,11 @@
 /* Synched up with: FSF 19.28. */
 
-#include <../src/config.h>
+#include <config.h>
 
 #include <stdio.h>
 #include <ctype.h>
-#ifdef MSDOS
+#ifdef WINDOWSNT
+#include <io.h>
 #include <fcntl.h>
 #endif
 
@@ -29,9 +30,7 @@ char *progname;
 void usage (void);
 
 int
-main(argc, argv)
-     int argc;
-     char *argv[];
+main (int argc, char *argv[])
 {
   register long address;
   char string[18];
@@ -143,9 +142,8 @@ main(argc, argv)
 	{
 	  char buf[18];
 
-#ifdef MSDOS
-	  (stdout)->_flag &= ~_IOTEXT; /* print binary */
-	  _setmode (fileno (stdout), O_BINARY);
+#ifdef WINDOWSNT
+	  _setmode (_fileno (stdout), O_BINARY);
 #endif
 	  for (;;)
 	    {
@@ -187,9 +185,8 @@ main(argc, argv)
 	}
       else
 	{
-#ifdef MSDOS
-	  (fp)->_flag &= ~_IOTEXT; /* read binary */
-	  _setmode (fileno (fp), O_BINARY);
+#ifdef WINDOWSNT
+	  _setmode (_fileno (fp), O_BINARY);
 #endif
 	  address = 0;
 	  string[0] = ' ';

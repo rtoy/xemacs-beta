@@ -20,8 +20,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.30. */
 
-#ifndef _XEMACS_FRAME_H_
-#define _XEMACS_FRAME_H_
+#ifndef INCLUDED_frame_h_
+#define INCLUDED_frame_h_
 
 #ifdef HAVE_SCROLLBARS
 #include "scrollbar.h"
@@ -33,6 +33,7 @@ Boston, MA 02111-1307, USA.  */
 
 #include "device.h"
 #include "glyphs.h"
+#include "redisplay.h"
 
 #define FRAME_TYPE_NAME(f) ((f)->framemeths->name)
 #define FRAME_TYPE(f) ((f)->framemeths->symbol)
@@ -77,6 +78,9 @@ struct frame
   int order_count;
 #endif
 
+  /* Current page number for a printer frame. */
+  int page_number;
+
   /* Width of the internal border.  This is a line of background color
      just inside the window's border.  It is normally only non-zero on
      X frames, but we put it here to avoid introducing window system
@@ -93,6 +97,9 @@ struct frame
   /* subwindow cache elements for this frame */
   subwindow_cachel_dynarr *subwindow_cachels;
 
+  struct expose_ignore* subwindow_exposures;
+  struct expose_ignore* subwindow_exposures_tail;
+
 #ifdef HAVE_SCROLLBARS
   /* frame-local scrollbar information.  See scrollbar.c. */
   int scrollbar_y_offset;
@@ -108,6 +115,10 @@ struct frame
      in redisplay_frame. */
   unsigned int current_toolbar_size[4];
 #endif
+
+  /* Dynamic array of display lines for gutters */
+  display_line_dynarr *current_display_lines;
+  display_line_dynarr *desired_display_lines;
 
   /* A structure of auxiliary data specific to the device type.
      struct x_frame is used for X window frames; defined in console-x.h */
@@ -160,6 +171,11 @@ Value : Emacs meaning                           :f-v-p : X meaning
   unsigned int bottom_toolbar_was_visible :1;
   unsigned int left_toolbar_was_visible :1;
   unsigned int right_toolbar_was_visible :1;
+  /* gutter visibility */
+  unsigned int top_gutter_was_visible :1;
+  unsigned int bottom_gutter_was_visible :1;
+  unsigned int left_gutter_was_visible :1;
+  unsigned int right_gutter_was_visible :1;
 
   /* redisplay flags */
   unsigned int buffers_changed :1;
@@ -168,6 +184,7 @@ Value : Emacs meaning                           :f-v-p : X meaning
   unsigned int faces_changed :1;
   unsigned int frame_changed :1;
   unsigned int subwindows_changed :1;
+  unsigned int subwindows_state_changed :1;
   unsigned int glyphs_changed :1;
   unsigned int icon_changed :1;
   unsigned int menubar_changed :1;
@@ -175,6 +192,7 @@ Value : Emacs meaning                           :f-v-p : X meaning
   unsigned int point_changed :1;
   unsigned int size_changed :1;
   unsigned int toolbar_changed :1;
+  unsigned int gutter_changed :1;
   unsigned int windows_changed :1;
   unsigned int windows_structure_changed :1;
   unsigned int window_face_cache_reset :1;	/* used by expose handler */
@@ -198,6 +216,7 @@ EXFUN (Fraise_frame, 1);
 EXFUN (Fselect_frame, 1);
 EXFUN (Fset_frame_pointer, 2);
 EXFUN (Fset_frame_position, 3);
+EXFUN (Fset_frame_properties, 2);
 EXFUN (Fset_frame_size, 4);
 
 extern Lisp_Object Qbackground_toolbar_color, Qbell_volume, Qborder_color;
@@ -222,7 +241,6 @@ DECLARE_LRECORD (frame, struct frame);
 #define XFRAME(x) XRECORD (x, frame, struct frame)
 #define XSETFRAME(x, p) XSETRECORD (x, p, frame)
 #define FRAMEP(x) RECORDP (x, frame)
-#define GC_FRAMEP(x) GC_RECORDP (x, frame)
 #define CHECK_FRAME(x) CHECK_RECORD (x, frame)
 #define CONCHECK_FRAME(x) CONCHECK_RECORD (x, frame)
 
@@ -249,7 +267,7 @@ error_check_frame_type (struct frame * f, Lisp_Object sym)
   return f;
 }
 # define FRAME_TYPE_DATA(f, type)			\
- ((struct type##_frame *) (error_check_frame_type (f, Q##type))->frame_data)
+ ((struct type##_frame *) error_check_frame_type (f, Q##type)->frame_data)
 #else
 # define FRAME_TYPE_DATA(f, type)			\
   ((struct type##_frame *) (f)->frame_data)
@@ -268,6 +286,40 @@ error_check_frame_type (struct frame * f, Lisp_Object sym)
     if (!FRAME_TYPE_P (XFRAME (x), type))		\
       x = wrong_type_argument				\
 	(type##_console_methods->predicate_symbol, x);	\
+  } while (0)
+
+#define FRAME_DISPLAY_P(frm)				\
+  (DEVICE_DISPLAY_P (XDEVICE (FRAME_DEVICE (frm))))
+
+#define CHECK_DISPLAY_FRAME(frm)			\
+  do {							\
+    CHECK_FRAME (frm);					\
+    CHECK_LIVE_FRAME (frm);				\
+    CHECK_DISPLAY_DEVICE (FRAME_DEVICE (XFRAME (frm)));	\
+  } while (0)
+
+#define CONCHECK_DISPLAY_FRAME(frm)			\
+  do {							\
+    CONCHECK_FRAME (frm);				\
+    CONCHECK_LIVE_FRAME (frm);				\
+    CONCHECK_DISPLAY_DEVICE (FRAME_DEVICE (XFRAME (frm))); \
+  } while (0)
+
+#define FRAME_PRINTER_P(frm)				\
+  (DEVICE_PRINTER_P (XDEVICE (FRAME_DEVICE (frm))))
+
+#define CHECK_PRINTER_FRAME(frm)			\
+  do {							\
+    CHECK_FRAME (frm);					\
+    CHECK_LIVE_FRAME (frm);				\
+    CHECK_PRINTER_DEVICE (FRAME_DEVICE (XFRAME (frm)));	\
+  } while (0)
+
+#define CONCHECK_PRINTER_FRAME(frm)			\
+  do {							\
+    CONCHECK_FRAME (frm);				\
+    CONCHECK_LIVE_FRAME (frm);				\
+    CONCHECK_PRINTER_DEVICE (FRAME_DEVICE (XFRAME (frm))); \
   } while (0)
 
 /* #### These should be in the frame-*.h files but there are
@@ -318,7 +370,7 @@ extern int frame_changed;
 
 #define MARK_FRAME_SUBWINDOWS_CHANGED(f) do {		\
   struct frame *mfgc_f = (f);				\
-  mfgc_f->subwindows_changed = 1;				\
+  mfgc_f->subwindows_changed = 1;			\
   mfgc_f->modiff++;					\
   if (!NILP (mfgc_f->device))				\
     {							\
@@ -326,7 +378,20 @@ extern int frame_changed;
       MARK_DEVICE_SUBWINDOWS_CHANGED (mfgc_d);		\
     }							\
   else							\
-    subwindows_changed = 1;					\
+    subwindows_changed = 1;				\
+} while (0)
+
+#define MARK_FRAME_SUBWINDOWS_STATE_CHANGED(f) do {	\
+  struct frame *mfgc_f = (f);				\
+  mfgc_f->subwindows_state_changed = 1;			\
+  mfgc_f->modiff++;					\
+  if (!NILP (mfgc_f->device))				\
+    {							\
+      struct device *mfgc_d = XDEVICE (mfgc_f->device);	\
+      MARK_DEVICE_SUBWINDOWS_STATE_CHANGED (mfgc_d);	\
+    }							\
+  else							\
+    subwindows_state_changed = 1;			\
 } while (0)
 
 #define MARK_FRAME_TOOLBARS_CHANGED(f) do {		\
@@ -340,6 +405,19 @@ extern int frame_changed;
     }							\
   else							\
     toolbar_changed = 1;				\
+} while (0)
+
+#define MARK_FRAME_GUTTERS_CHANGED(f) do {		\
+  struct frame *mftc_f = (f);				\
+  mftc_f->gutter_changed = 1;				\
+  mftc_f->modiff++;					\
+  if (!NILP (mftc_f->device))				\
+    {							\
+      struct device *mftc_d = XDEVICE (mftc_f->device);	\
+      MARK_DEVICE_GUTTERS_CHANGED (mftc_d);		\
+    }							\
+  else							\
+    gutter_changed = 1;					\
 } while (0)
 
 #define MARK_FRAME_SIZE_CHANGED(f) do {			\
@@ -421,13 +499,15 @@ extern int frame_changed;
 
 #define FRAME_MINIBUF_ONLY_P(f) \
   EQ (FRAME_ROOT_WINDOW (f), FRAME_MINIBUF_WINDOW (f))
-#define FRAME_HAS_MINIBUF_P(f) ((f)->has_minibuffer)
-#define FRAME_HEIGHT(f) ((f)->height)
-#define FRAME_WIDTH(f) ((f)->width)
-#define FRAME_CHARHEIGHT(f) ((f)->char_height)
-#define FRAME_CHARWIDTH(f) ((f)->char_width)
-#define FRAME_PIXHEIGHT(f) ((f)->pixheight)
-#define FRAME_PIXWIDTH(f) ((f)->pixwidth)
+#define FRAME_HAS_MINIBUF_P(f)  ((f)->has_minibuffer)
+#define FRAME_HEIGHT(f)         ((f)->height)
+#define FRAME_WIDTH(f)          ((f)->width)
+#define FRAME_CHARHEIGHT(f)     ((f)->char_height)
+#define FRAME_CHARWIDTH(f)      ((f)->char_width)
+#define FRAME_PIXHEIGHT(f)      ((f)->pixheight)
+#define FRAME_PIXWIDTH(f)       ((f)->pixwidth)
+#define FRAME_PAGENUMBER(f)     ((f)->page_number + 0)
+#define FRAME_SET_PAGENUMBER(f,x) (f)->page_number = (x);
 #ifdef HAVE_SCROLLBARS
 #define FRAME_SCROLLBAR_WIDTH(f)		\
   (NILP ((f)->vertical_scrollbar_visible_p) ?	\
@@ -442,8 +522,8 @@ extern int frame_changed;
 
 #define FW_FRAME(obj)					\
    (WINDOWP (obj) ? WINDOW_FRAME (XWINDOW (obj))	\
- : (FRAMEP  (obj) ? obj						\
- : Qnil))
+    : (FRAMEP  (obj) ? obj				\
+       : Qnil))
 
 #define FRAME_NEW_HEIGHT(f) ((f)->new_height)
 #define FRAME_NEW_WIDTH(f) ((f)->new_width)
@@ -539,7 +619,7 @@ extern int frame_changed;
   FRAME_THEORETICAL_TOOLBAR_SIZE (f, RIGHT_TOOLBAR)
 
 #define FRAME_THEORETICAL_TOOLBAR_BORDER_WIDTH(f, pos)		\
-  (FRAME_RAW_THEORETICAL_TOOLBAR_VISIBLE (f, pos)	\
+  (FRAME_RAW_THEORETICAL_TOOLBAR_VISIBLE (f, pos)		\
    ? FRAME_RAW_THEORETICAL_TOOLBAR_BORDER_WIDTH (f, pos)	\
    : 0)
 
@@ -598,18 +678,18 @@ extern int frame_changed;
    if you encounter some odd toolbar behavior, you might want
    to look into this. --ben */
 
-#define FRAME_REAL_TOOLBAR_VISIBLE(f, pos)	\
-  ((!NILP (FRAME_REAL_TOOLBAR (f, pos))	        \
-  && FRAME_RAW_REAL_TOOLBAR_SIZE (f, pos) > 0)	\
-   ? FRAME_RAW_REAL_TOOLBAR_VISIBLE (f, pos)	\
+#define FRAME_REAL_TOOLBAR_VISIBLE(f, pos)		\
+  ((!NILP (FRAME_REAL_TOOLBAR (f, pos))			\
+  && FRAME_RAW_REAL_TOOLBAR_SIZE (f, pos) > 0)		\
+   ? FRAME_RAW_REAL_TOOLBAR_VISIBLE (f, pos)		\
    : 0)
-#define FRAME_REAL_TOOLBAR_SIZE(f, pos)		\
-  ((!NILP (FRAME_REAL_TOOLBAR (f, pos))	        \
-  && FRAME_RAW_REAL_TOOLBAR_VISIBLE (f, pos))	\
-   ? FRAME_RAW_REAL_TOOLBAR_SIZE (f, pos)	\
+#define FRAME_REAL_TOOLBAR_SIZE(f, pos)			\
+  ((!NILP (FRAME_REAL_TOOLBAR (f, pos))	        	\
+  && FRAME_RAW_REAL_TOOLBAR_VISIBLE (f, pos))		\
+   ? FRAME_RAW_REAL_TOOLBAR_SIZE (f, pos)		\
    : 0)
 #define FRAME_REAL_TOOLBAR_BORDER_WIDTH(f, pos)		\
-  ((!NILP (FRAME_REAL_TOOLBAR (f, pos))		\
+  ((!NILP (FRAME_REAL_TOOLBAR (f, pos))			\
   && FRAME_RAW_REAL_TOOLBAR_VISIBLE (f, pos))		\
    ? FRAME_RAW_REAL_TOOLBAR_BORDER_WIDTH (f, pos)	\
    : 0)
@@ -641,32 +721,32 @@ extern int frame_changed;
 #define FRAME_REAL_RIGHT_TOOLBAR_VISIBLE(f) \
   FRAME_REAL_TOOLBAR_VISIBLE (f, RIGHT_TOOLBAR)
 
-#define FRAME_TOP_BORDER_START(f)					\
-  (FRAME_REAL_TOP_TOOLBAR_HEIGHT (f) +					\
+#define FRAME_TOP_BORDER_START(f)				\
+  (FRAME_REAL_TOP_TOOLBAR_HEIGHT (f) +				\
    2 * FRAME_REAL_TOP_TOOLBAR_BORDER_WIDTH (f))
-#define FRAME_TOP_BORDER_END(f)						\
+#define FRAME_TOP_BORDER_END(f)					\
   (FRAME_TOP_BORDER_START (f) + FRAME_BORDER_HEIGHT (f))
 
-#define FRAME_BOTTOM_BORDER_START(f)					\
-  (FRAME_PIXHEIGHT (f) - FRAME_BORDER_HEIGHT (f) -			\
-   FRAME_REAL_BOTTOM_TOOLBAR_HEIGHT (f) -				\
+#define FRAME_BOTTOM_BORDER_START(f)				\
+  (FRAME_PIXHEIGHT (f) - FRAME_BORDER_HEIGHT (f) -		\
+   FRAME_REAL_BOTTOM_TOOLBAR_HEIGHT (f) -			\
    2 * FRAME_REAL_BOTTOM_TOOLBAR_BORDER_WIDTH (f))
-#define FRAME_BOTTOM_BORDER_END(f)					\
-  (FRAME_PIXHEIGHT (f) - FRAME_REAL_BOTTOM_TOOLBAR_HEIGHT (f) -		\
+#define FRAME_BOTTOM_BORDER_END(f)				\
+  (FRAME_PIXHEIGHT (f) - FRAME_REAL_BOTTOM_TOOLBAR_HEIGHT (f) -	\
    2 * FRAME_REAL_BOTTOM_TOOLBAR_BORDER_WIDTH (f))
 
-#define FRAME_LEFT_BORDER_START(f)					\
-  (FRAME_REAL_LEFT_TOOLBAR_WIDTH (f) +					\
+#define FRAME_LEFT_BORDER_START(f)				\
+  (FRAME_REAL_LEFT_TOOLBAR_WIDTH (f) +				\
    2 * FRAME_REAL_LEFT_TOOLBAR_BORDER_WIDTH (f))
-#define FRAME_LEFT_BORDER_END(f)					\
+#define FRAME_LEFT_BORDER_END(f)				\
   (FRAME_LEFT_BORDER_START (f) + FRAME_BORDER_WIDTH (f))
 
-#define FRAME_RIGHT_BORDER_START(f)					\
-  (FRAME_PIXWIDTH (f) - FRAME_BORDER_WIDTH (f) -			\
-   FRAME_REAL_RIGHT_TOOLBAR_WIDTH(f) -                                                           \
+#define FRAME_RIGHT_BORDER_START(f)				\
+  (FRAME_PIXWIDTH (f) - FRAME_BORDER_WIDTH (f) -		\
+   FRAME_REAL_RIGHT_TOOLBAR_WIDTH(f) -                          \
    2 * FRAME_REAL_RIGHT_TOOLBAR_BORDER_WIDTH (f))
-#define FRAME_RIGHT_BORDER_END(f)					\
-  (FRAME_PIXWIDTH (f) - FRAME_REAL_RIGHT_TOOLBAR_WIDTH (f) -		\
+#define FRAME_RIGHT_BORDER_END(f)				\
+  (FRAME_PIXWIDTH (f) - FRAME_REAL_RIGHT_TOOLBAR_WIDTH (f) -	\
    2 * FRAME_REAL_RIGHT_TOOLBAR_BORDER_WIDTH(f))
 
 /* Equivalent in FSF Emacs:
@@ -690,9 +770,6 @@ Lisp_Object next_frame (Lisp_Object f, Lisp_Object frametype,
 			Lisp_Object console);
 Lisp_Object prev_frame (Lisp_Object f, Lisp_Object frametype,
 			Lisp_Object console);
-void store_in_alist (Lisp_Object *alistptr,
-		     CONST char *propname,
-		     Lisp_Object val);
 void pixel_to_char_size (struct frame *f, int pixel_width, int pixel_height,
 			 int *char_width, int *char_height);
 void char_to_pixel_size (struct frame *f, int char_width, int char_height,
@@ -737,4 +814,6 @@ int is_surrogate_for_selected_frame (struct frame *f);
 void update_frame_icon (struct frame *f);
 void invalidate_vertical_divider_cache_in_frame (struct frame *f);
 
-#endif /* _XEMACS_FRAME_H_ */
+void init_frame (void);
+
+#endif /* INCLUDED_frame_h_ */

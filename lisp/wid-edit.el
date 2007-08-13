@@ -1,9 +1,9 @@
 ;;; wid-edit.el --- Functions for creating and using widgets.
 ;;
-;; Copyright (C) 1996, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1996, 1997, 2000 Free Software Foundation, Inc.
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
-;; Maintainer: Hrvoje Niksic <hniksic@srce.hr>
+;; Maintainer: Hrvoje Niksic <hniksic@xemacs.org>
 ;; Keywords: extensions
 ;; Version: 1.9960-x
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
@@ -49,7 +49,7 @@
   :group 'hypermedia)
 
 (defgroup widget-documentation nil
-  "Options controling the display of documentation strings."
+  "Options controlling the display of documentation strings."
   :group 'widgets)
 
 (defgroup widget-faces nil
@@ -601,7 +601,7 @@ ARGS are passed as extra arguments to the function."
   ;; In WIDGET, match the start of VALS.
   (cond ((widget-get widget :inline)
 	 (widget-apply widget :match-inline vals))
-	((and vals
+	((and (listp vals)
 	      (widget-apply widget :match (car vals)))
 	 (cons (list (car vals)) (cdr vals)))
 	(t nil)))
@@ -674,7 +674,7 @@ automatically."
   :group 'widgets
   :type 'boolean)
 
-(defcustom widget-image-conversion
+(defcustom widget-image-file-name-suffixes
   '((xpm ".xpm") (gif ".gif") (png ".png") (jpeg ".jpg" ".jpeg")
     (xbm ".xbm"))
   "Conversion alist from image formats to file name suffixes."
@@ -723,27 +723,27 @@ It can also be a valid image instantiator, in which case it will be
 	     (let* ((dirlist (cons (or widget-glyph-directory
 				       (locate-data-directory "custom"))
 				   data-directory-list))
-		    (formats widget-image-conversion)
-		    file)
-	       (while (and formats (not file))
-		 ;; This dance is necessary, because XEmacs signals an
-		 ;; error when it encounters an unrecognized image
-		 ;; format.
-		 (when (valid-image-instantiator-format-p (caar formats))
-		   (setq file (locate-file image dirlist
-					   (mapconcat #'identity (cdar formats)
-						      ":"))))
-		 (unless file
-		   (pop formats)))
+		    (all-suffixes
+		     (apply #'append
+			    (mapcar
+			     (lambda (el)
+			       (and (valid-image-instantiator-format-p (car el))
+				    (cdr el)))
+			     widget-image-file-name-suffixes)))
+		    (file (locate-file image dirlist all-suffixes)))
 	       (when file
-		 ;; We create a glyph with the file as the default image
-		 ;; instantiator, and the TAG fallback
-		 (let ((glyph (make-glyph `([,(caar formats) :file ,file]
-					    [string :data ,tag]))))
-		   ;; Cache the glyph
-		   (laxputf widget-glyph-cache image glyph)
-		   ;; ...and return it
-		   glyph)))))
+		 (let* ((extension (concat "." (file-name-extension file)))
+			(format (car (rassoc* extension
+					      widget-image-file-name-suffixes
+					      :test #'member))))
+		   ;; We create a glyph with the file as the default image
+		   ;; instantiator, and the TAG fallback
+		   (let ((glyph (make-glyph `([,format :file ,file]
+					      [string :data ,tag]))))
+		     ;; Cache the glyph
+		     (laxputf widget-glyph-cache image glyph)
+		     ;; ...and return it
+		     glyph))))))
 	((valid-instantiator-p image 'image)
 	 ;; A valid image instantiator (e.g. [gif :file "somefile"] etc.)
 	 (make-glyph `(,image [string :data ,tag])))
@@ -1898,9 +1898,6 @@ If END is omitted, it defaults to the length of LIST."
   :group 'widgets
   :type 'boolean)
 
-;; Cache already created GUI objects.
-(defvar widget-push-button-cache nil)
-
 (defcustom widget-push-button-prefix "["
   "String used as prefix for buttons."
   :type 'string
@@ -1925,7 +1922,7 @@ If END is omitted, it defaults to the length of LIST."
 	 (tag-glyph (widget-get widget :tag-glyph))
 	 (text (concat widget-push-button-prefix
 		       tag widget-push-button-suffix))
-	 (gui-glyphs (lax-plist-get widget-push-button-cache tag)))
+	 gui)
     (cond (tag-glyph
 	   (widget-glyph-insert widget text tag-glyph))
 	  ;; We must check for console-on-window-system-p here,
@@ -1933,18 +1930,10 @@ If END is omitted, it defaults to the length of LIST."
 	  ;; components for colors, and they are not known on TTYs).
 	  ((and widget-push-button-gui
 		(console-on-window-system-p))
-	   (unless gui-glyphs
-	     (let* ((gui-button-shadow-thickness 1)
-		    (gui (make-gui-button tag 'widget-gui-action widget)))
-	       (setq
-		gui-glyphs
-		(list
-		 (make-glyph `(,(nth 0 (aref gui 1)) [string :data ,text]))
-		 (make-glyph `(,(nth 1 (aref gui 1)) [string :data ,text]))
-		 (make-glyph `(,(nth 2 (aref gui 1)) [string :data ,text]))))
-	       (laxputf widget-push-button-cache tag gui-glyphs)))
-	   (widget-glyph-insert-glyph
-	    widget (nth 0 gui-glyphs) (nth 1 gui-glyphs) (nth 2 gui-glyphs)))
+	   (let* ((gui-button-shadow-thickness 1))
+	     (setq gui (make-glyph 
+			(make-gui-button tag 'widget-gui-action widget))))
+	   (widget-glyph-insert-glyph widget gui))
 	  (t
 	   (insert text)))))
 
@@ -2532,7 +2521,7 @@ when he invoked the menu."
     found))
 
 (defun widget-checklist-match-up (args vals)
-  ;; Rerturn the first type from ARGS that matches VALS.
+  ;; Return the first type from ARGS that matches VALS.
   (let (current found)
     (while (and args (null found))
       (setq current (car args)
@@ -2554,7 +2543,7 @@ when he invoked the menu."
     result))
 
 (defun widget-checklist-validate (widget)
-  ;; Ticked chilren must be valid.
+  ;; Ticked children must be valid.
   (let ((children (widget-get widget :children))
 	child button found)
     (while (and children (not found))

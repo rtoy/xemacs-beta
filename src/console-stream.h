@@ -23,8 +23,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Written by Ben Wing. */
 
-#ifndef _XEMACS_CONSOLE_STREAM_H_
-#define _XEMACS_CONSOLE_STREAM_H_
+#ifndef INCLUDED_console_stream_h_
+#define INCLUDED_console_stream_h_
 
 #include "console.h"
 
@@ -40,6 +40,8 @@ struct stream_console
 
 #define CONSOLE_STREAM_DATA(con) CONSOLE_TYPE_DATA (con, stream)
 
+extern Lisp_Object Vterminal_console, Vterminal_frame, Vterminal_device;
+
 Lisp_Object stream_semi_canonicalize_console_connection(Lisp_Object,
 							Error_behavior);
 Lisp_Object stream_canonicalize_console_connection(Lisp_Object,
@@ -48,4 +50,4 @@ Lisp_Object stream_semi_canonicalize_device_connection(Lisp_Object,
 						       Error_behavior);
 Lisp_Object stream_canonicalize_device_connection(Lisp_Object,
 						  Error_behavior);
-#endif /* _XEMACS_CONSOLE_STREAM_H_ */
+#endif /* INCLUDED_console_stream_h_ */

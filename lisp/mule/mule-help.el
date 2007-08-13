@@ -2,8 +2,8 @@
 
 ;; Copyright (C) 1997 by Free Software Foundation, Inc.
 
-;; Author: SL Baur <steve@altair.xemacs.org>
-;; Keywords: help, internal
+;; Author: SL Baur <steve@xemacs.org>
+;; Keywords: help, internal, mule
 
 ;; This file is part of XEmacs.
 
@@ -57,7 +57,9 @@ With arg, you are asked to select which language."
       (setq buffer-file-name file)
       (setq default-directory (expand-file-name "~/"))
       (setq buffer-auto-save-file-name nil)
-      (insert-file-contents (locate-data-file filename))
+      (let ((coding-system-for-read
+	     (get-language-info lang 'tutorial-coding-system)))
+	(insert-file-contents (locate-data-file filename)))
       (goto-char (point-min))
       ;; The 'didactic' blank lines: Possibly insert blank lines
       ;; around <<nya nya nya>>, and change << >> to [ ].

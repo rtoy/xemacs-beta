@@ -101,15 +101,27 @@ Use the following functions/macros:
 Use the following global variable:
 
    Dynarr_min_size
-      Minimum allowable size for a dynamic array when it is resized.  The
-      default is 32 and does not normally need to be changed.
+      Minimum allowable size for a dynamic array when it is resized.
 
 */
 
 #include <config.h>
 #include "lisp.h"
 
-int Dynarr_min_size = 1;
+static int Dynarr_min_size = 8;
+
+static void
+Dynarr_realloc (Dynarr *dy, int new_size)
+{
+  if (DUMPEDP (dy->base))
+    {
+      void *new_base = malloc (new_size);
+      memcpy (new_base, dy->base, dy->max > new_size ? new_size : dy->max);
+      dy->base = new_base;
+    }
+  else
+    dy->base = xrealloc (dy->base, new_size);
+}
 
 void *
 Dynarr_newf (int elsize)
@@ -138,14 +150,14 @@ Dynarr_resize (void *d, int size)
   /* Don't do anything if the array is already big enough. */
   if (newsize > dy->max)
     {
-      dy->base = xrealloc (dy->base, newsize*dy->elsize);
+      Dynarr_realloc (dy, newsize*dy->elsize);
       dy->max = newsize;
     }
 }
 
 /* Add a number of contiguous elements to the array starting at START. */
 void
-Dynarr_insert_many (void *d, CONST void *el, int len, int start)
+Dynarr_insert_many (void *d, const void *el, int len, int start)
 {
   Dynarr *dy = (Dynarr *) d;
 
@@ -186,9 +198,10 @@ Dynarr_free (void *d)
 {
   Dynarr *dy = (Dynarr *) d;
 
-  if (dy->base)
+  if (dy->base && !DUMPEDP (dy->base))
     xfree (dy->base);
-  xfree (dy);
+  if(!DUMPEDP (dy))
+    xfree (dy);
 }
 
 #ifdef MEMORY_USAGE_STATS

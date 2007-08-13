@@ -39,6 +39,8 @@ Boston, MA 02111-1307, USA.  */
 #include "frame.h"
 #include "sysdep.h"
 
+#include <winspool.h>
+
 /* win32 DDE management library globals */
 #ifdef HAVE_DRAGNDROP
 DWORD mswindows_dde_mlid;
@@ -64,15 +66,15 @@ Lisp_Object Qinit_pre_mswindows_win, Qinit_post_mswindows_win;
 /************************************************************************/
 
 static Lisp_Object
-build_syscolor_string (int index)
+build_syscolor_string (int idx)
 {
   DWORD clr;
   char buf[16];
 
-  if (index < 0)
+  if (idx < 0)
     return Qnil;
 
-  clr = GetSysColor (index);
+  clr = GetSysColor (idx);
   sprintf (buf, "#%02X%02X%02X",
 	   GetRValue (clr),
 	   GetGValue (clr),
@@ -98,10 +100,17 @@ build_sysmetrics_cons (int index1, int index2)
 		index2 < 0 ? Qnil : make_int (GetSystemMetrics (index2)));
 }
 
+static Lisp_Object
+build_devicecaps_cons (HDC hdc, int index1, int index2)
+{
+  return Fcons (index1 < 0 ? Qnil : make_int (GetDeviceCaps (hdc, index1)),
+		index2 < 0 ? Qnil : make_int (GetDeviceCaps (hdc, index2)));
+}
+
 
 
 /************************************************************************/
-/*                               methods                                */
+/*                          display methods                             */
 /************************************************************************/
 
 static void
@@ -129,9 +138,9 @@ mswindows_init_device (struct device *d, Lisp_Object props)
   DEVICE_MSWINDOWS_HORZSIZE(d) = GetDeviceCaps(hdc, HORZSIZE);
   DEVICE_MSWINDOWS_VERTSIZE(d) = GetDeviceCaps(hdc, VERTSIZE);
   DEVICE_MSWINDOWS_BITSPIXEL(d) = GetDeviceCaps(hdc, BITSPIXEL);
-  DeleteDC (hdc);
+  DEVICE_MSWINDOWS_FONTLIST (d) = mswindows_enumerate_fonts (hdc);
 
-  mswindows_enumerate_fonts (d);
+  DeleteDC (hdc);
 
   /* Register the main window class */
   wc.cbSize = sizeof (WNDCLASSEX);
@@ -139,7 +148,9 @@ mswindows_init_device (struct device *d, Lisp_Object props)
   wc.lpfnWndProc = (WNDPROC) mswindows_wnd_proc;
   wc.cbClsExtra = 0;
   wc.cbWndExtra = MSWINDOWS_WINDOW_EXTRA_BYTES;
-  wc.hInstance = NULL;	/* ? */
+  /* This must match whatever is passed to CreateWIndowEx, NULL is ok
+     for this. */
+  wc.hInstance = NULL;	
   wc.hIcon = LoadIcon (GetModuleHandle(NULL), XEMACS_CLASS);
   wc.hCursor = LoadCursor (NULL, IDC_ARROW);
   /* Background brush is only used during sizing, when XEmacs cannot
@@ -151,7 +162,18 @@ mswindows_init_device (struct device *d, Lisp_Object props)
   wc.hIconSm = LoadImage (GetModuleHandle (NULL), XEMACS_CLASS,
 			  IMAGE_ICON, 16, 16, 0);
   RegisterClassEx (&wc);
-#ifdef HAVE_TOOLBARS
+
+#ifdef HAVE_WIDGETS
+  xzero (wc);
+  /* Register the main window class */
+  wc.cbSize = sizeof (WNDCLASSEX);
+  wc.lpfnWndProc = (WNDPROC) mswindows_control_wnd_proc;
+  wc.lpszClassName = XEMACS_CONTROL_CLASS;
+  wc.hInstance = NULL;
+  RegisterClassEx (&wc);
+#endif
+
+#if defined (HAVE_TOOLBARS) || defined (HAVE_WIDGETS)
   InitCommonControls ();
 #endif
 }
@@ -178,22 +200,18 @@ mswindows_finish_init_device (struct device *d, Lisp_Object props)
 static void
 mswindows_delete_device (struct device *d)
 {
-  struct mswindows_font_enum *fontlist, *next;
-
-  fontlist = DEVICE_MSWINDOWS_FONTLIST (d);
-  while (fontlist)
-    {
-      next = fontlist->next;
-      free (fontlist);
-      fontlist = next;
-    }
-
 #ifdef HAVE_DRAGNDROP
   DdeNameService (mswindows_dde_mlid, 0L, 0L, DNS_REGISTER);
   DdeUninitialize (mswindows_dde_mlid);
 #endif
 
   free (d->device_data);
+}
+
+static void
+mswindows_mark_device (struct device *d)
+{
+  mark_object (DEVICE_MSWINDOWS_FONTLIST (d));
 }
 
 static Lisp_Object
@@ -205,6 +223,10 @@ mswindows_device_system_metrics (struct device *d,
     case DM_size_device:
       return Fcons (make_int (DEVICE_MSWINDOWS_HORZRES(d)),
 		    make_int (DEVICE_MSWINDOWS_VERTRES(d)));
+      break;
+    case DM_device_dpi:
+      return Fcons (make_int (DEVICE_MSWINDOWS_LOGPIXELSX(d)),
+		    make_int (DEVICE_MSWINDOWS_LOGPIXELSY(d)));
       break;
     case DM_size_device_mm:
       return Fcons (make_int (DEVICE_MSWINDOWS_HORZSIZE(d)),
@@ -292,6 +314,184 @@ mswindows_device_implementation_flags (void)
 
 
 /************************************************************************/
+/*                          printer methods                             */
+/************************************************************************/
+
+static void
+signal_open_printer_error (struct device *d)
+{
+  signal_simple_error ("Failed to open printer", DEVICE_CONNECTION (d));
+}
+
+static void
+msprinter_init_device (struct device *d, Lisp_Object props)
+{
+  char* printer_name;
+
+  DEVICE_INFD (d) = DEVICE_OUTFD (d) = -1;
+
+  CHECK_STRING (DEVICE_CONNECTION (d));
+
+  TO_EXTERNAL_FORMAT (LISP_STRING, DEVICE_CONNECTION (d),
+		      C_STRING_ALLOCA, printer_name,
+		      Qctext);
+
+  d->device_data = xnew_and_zero (struct msprinter_device);
+
+  DEVICE_MSPRINTER_NAME(d) = xstrdup (printer_name);
+
+  if (!OpenPrinter (printer_name, &DEVICE_MSPRINTER_HPRINTER (d), NULL))
+    {
+      DEVICE_MSPRINTER_HPRINTER (d) = NULL;
+      signal_open_printer_error (d);
+    }
+
+  DEVICE_MSPRINTER_HDC (d) = CreateDC ("WINSPOOL", printer_name,
+				       NULL, NULL);
+  if (DEVICE_MSPRINTER_HDC (d) == NULL)
+    signal_open_printer_error (d);
+
+  /* Determinie DEVMODE size and store the default DEVMODE */
+  DEVICE_MSPRINTER_DEVMODE_SIZE(d) = 
+    DocumentProperties (NULL, DEVICE_MSPRINTER_HPRINTER(d),
+			printer_name, NULL, NULL, 0);
+  if (DEVICE_MSPRINTER_DEVMODE_SIZE(d) <= 0)
+    signal_open_printer_error (d);
+
+  DEVICE_MSPRINTER_DEVMODE(d) = xmalloc (DEVICE_MSPRINTER_DEVMODE_SIZE(d));
+  DocumentProperties (NULL, DEVICE_MSPRINTER_HPRINTER(d),
+		      printer_name, DEVICE_MSPRINTER_DEVMODE(d),
+		      NULL, DM_OUT_BUFFER);
+
+  /* We do not use printer fon list as we do with the display
+     device. Rather, we allow GDI to pick the closest match to the
+     display font. */
+  DEVICE_MSPRINTER_FONTLIST (d) = Qnil;
+
+  DEVICE_CLASS (d) = (GetDeviceCaps (DEVICE_MSPRINTER_HDC (d), BITSPIXEL)
+		      * GetDeviceCaps (DEVICE_MSPRINTER_HDC (d), PLANES)
+		      > 1) ? Qcolor : Qmono;
+}
+
+static Lisp_Object
+msprinter_device_system_metrics (struct device *d,
+				 enum device_metrics m)
+{
+  switch (m)
+    {
+      /* Device sizes - pixel and mm */
+#define FROB(met, index1, index2)			\
+    case DM_##met:					\
+      return build_devicecaps_cons			\
+         (DEVICE_MSPRINTER_HDC(d), index1, index2);
+
+      FROB (size_device, PHYSICALWIDTH, PHYSICALHEIGHT);
+      FROB (size_device_mm, HORZSIZE, VERTSIZE);
+      FROB (size_workspace, HORZRES, VERTRES);
+      FROB (offset_workspace, PHYSICALOFFSETX, PHYSICALOFFSETY);
+      FROB (device_dpi, LOGPIXELSX, LOGPIXELSY);
+#undef FROB
+
+    case DM_num_bit_planes:
+      /* this is what X means by bitplanes therefore we ought to be
+         consistent. num planes is always 1 under mswindows and
+         therefore useless */
+      return make_int (GetDeviceCaps (DEVICE_MSPRINTER_HDC(d), BITSPIXEL));
+
+    case DM_num_color_cells:	/* Prnters are non-palette devices */
+    case DM_slow_device:	/* Animation would be a really bad idea */
+    case DM_security:		/* Not provided by windows */
+      return Qzero;
+    }
+
+  /* Do not know such property */
+  return Qunbound;
+}
+
+static void
+msprinter_delete_device (struct device *d)
+{
+  if (d->device_data)
+    {
+      if (DEVICE_MSPRINTER_HPRINTER (d))
+	ClosePrinter (DEVICE_MSPRINTER_HPRINTER (d));
+      if (DEVICE_MSPRINTER_HDC (d))
+	DeleteDC (DEVICE_MSPRINTER_HDC (d));
+      if (DEVICE_MSPRINTER_NAME (d))
+	free (DEVICE_MSPRINTER_NAME (d));
+      if (DEVICE_MSPRINTER_DEVMODE (d))
+	free (DEVICE_MSPRINTER_DEVMODE (d));
+      if (DEVICE_MSPRINTER_DEVMODE_MIRROR (d))
+	free (DEVICE_MSPRINTER_DEVMODE_MIRROR (d));
+
+      free (d->device_data);
+    }
+}
+
+static void
+msprinter_mark_device (struct device *d)
+{
+  mark_object (DEVICE_MSPRINTER_FONTLIST (d));
+}
+
+static unsigned int
+msprinter_device_implementation_flags (void)
+{
+  return (  XDEVIMPF_PIXEL_GEOMETRY
+	  | XDEVIMPF_IS_A_PRINTER
+	  | XDEVIMPF_NO_AUTO_REDISPLAY
+	  | XDEVIMPF_FRAMELESS_OK );
+}
+
+
+/************************************************************************/
+/*                      printer external functions                      */
+/************************************************************************/
+
+/* 
+ * Return a copy of default DEVMODE. The copy returned is in
+ * a static buffer which will be overwritten by next call.
+ */
+DEVMODE*
+msprinter_get_devmode_copy (struct device *d)
+{
+  assert (DEVICE_MSPRINTER_P (d));
+
+  if (DEVICE_MSPRINTER_DEVMODE_MIRROR(d) == NULL)
+    DEVICE_MSPRINTER_DEVMODE_MIRROR(d) = 
+      xmalloc (DEVICE_MSPRINTER_DEVMODE_SIZE(d));
+
+  memcpy (DEVICE_MSPRINTER_DEVMODE_MIRROR(d),
+	  DEVICE_MSPRINTER_DEVMODE(d),
+	  DEVICE_MSPRINTER_DEVMODE_SIZE(d));
+
+  return DEVICE_MSPRINTER_DEVMODE_MIRROR(d);
+}
+
+/*
+ * Apply settings from the DEVMODE. The settings are considered
+ * incremental to the default DEVMODE, so that changes in the
+ * passed structure supercede parameters of the printer.
+ *
+ * The passed structure is overwritten by the fuction call;
+ * complete printer settings are returned.
+ */
+void
+msprinter_apply_devmode (struct device *d, DEVMODE *devmode)
+{
+  assert (DEVICE_MSPRINTER_P (d));
+
+  DocumentProperties (NULL,
+		      DEVICE_MSPRINTER_HPRINTER(d),
+		      DEVICE_MSPRINTER_NAME(d),
+		      devmode, devmode,
+		      DM_IN_BUFFER | DM_OUT_BUFFER);
+
+  ResetDC (DEVICE_MSPRINTER_HDC (d), devmode);
+}
+
+
+/************************************************************************/
 /*                            initialization                            */
 /************************************************************************/
 
@@ -300,19 +500,6 @@ syms_of_device_mswindows (void)
 {
   defsymbol (&Qinit_pre_mswindows_win, "init-pre-mswindows-win");
   defsymbol (&Qinit_post_mswindows_win, "init-post-mswindows-win");
-
-  DEFVAR_LISP ("mswindows-downcase-file-names", &Vmswindows_downcase_file_names /*
-Non-nil means convert all-upper case file names to lower case.
-This applies when performing completions and file name expansion.*/ );
-  Vmswindows_downcase_file_names = Qnil;
-
-  DEFVAR_LISP ("mswindows-get-true-file-attributes", &Vmswindows_get_true_file_attributes /*
-    "Non-nil means determine accurate link count in file-attributes.
-This option slows down file-attributes noticeably, so is disabled by
-default.  Note that it is only useful for files on NTFS volumes,
-where hard links are supported.
-*/ );
-  Vmswindows_get_true_file_attributes = Qnil;
 }
 
 void
@@ -320,13 +507,33 @@ console_type_create_device_mswindows (void)
 {
   CONSOLE_HAS_METHOD (mswindows, init_device);
   CONSOLE_HAS_METHOD (mswindows, finish_init_device);
-/*  CONSOLE_HAS_METHOD (mswindows, mark_device); */
+  CONSOLE_HAS_METHOD (mswindows, mark_device);
   CONSOLE_HAS_METHOD (mswindows, delete_device);
   CONSOLE_HAS_METHOD (mswindows, device_system_metrics);
   CONSOLE_HAS_METHOD (mswindows, device_implementation_flags);
+
+  CONSOLE_HAS_METHOD (msprinter, init_device);
+  CONSOLE_HAS_METHOD (msprinter, mark_device);
+  CONSOLE_HAS_METHOD (msprinter, delete_device);
+  CONSOLE_HAS_METHOD (msprinter, device_system_metrics);
+  CONSOLE_HAS_METHOD (msprinter, device_implementation_flags);
 }
+
 
 void
 vars_of_device_mswindows (void)
 {
+  DEFVAR_LISP ("mswindows-downcase-file-names", &Vmswindows_downcase_file_names /*
+Non-nil means convert all-upper case file names to lower case.
+This applies when performing completions and file name expansion.
+*/ );
+  Vmswindows_downcase_file_names = Qnil;
+
+  DEFVAR_LISP ("mswindows-get-true-file-attributes", &Vmswindows_get_true_file_attributes /*
+Non-nil means determine accurate link count in file-attributes.
+This option slows down file-attributes noticeably, so is disabled by
+default.  Note that it is only useful for files on NTFS volumes,
+where hard links are supported.
+*/ );
+  Vmswindows_get_true_file_attributes = Qnil;
 }

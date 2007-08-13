@@ -20,16 +20,14 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.30.  Split out of sysdep.c/emacs.c. */
 
-#ifndef _XEMACS_SYSDEP_H_
-#define _XEMACS_SYSDEP_H_
+#ifndef INCLUDED_sysdep_h_
+#define INCLUDED_sysdep_h_
 
 #include <setjmp.h>
 
+#ifndef WINDOWSNT
 extern char **environ;
-
-struct emacs_tty;
-int emacs_get_tty (int fd, struct emacs_tty *settings);
-int emacs_set_tty (int fd, struct emacs_tty *settings, int waitp);
+#endif
 
 int eight_bit_tty (struct device *d);
 
@@ -48,7 +46,12 @@ Bufbyte get_eof_char (int fd);
 
 /* Wait for subprocess with process id `pid' to terminate and
    make sure it will get eliminated (not remain forever as a zombie) */
+#ifdef WINDOWSNT
+#include <windows.h>
+void wait_for_termination (HANDLE pid);
+#else
 void wait_for_termination (int pid);
+#endif
 
 /* flush any pending output
  * (may flush input as well; it does not matter the way we use it)
@@ -78,10 +81,10 @@ void reset_poll_for_quit (void);
 extern JMP_BUF break_system_call_jump;
 extern volatile int can_break_system_calls;
 
-int sys_write_1 (int fildes, CONST void *buf, size_t nbyte,
-		 int allow_quit);
-int sys_read_1 (int fildes, void *buf, size_t nbyte,
-		int allow_quit);
+ssize_t sys_write_1 (int fildes, const void *buf, size_t nbyte,
+		     int allow_quit);
+ssize_t sys_read_1 (int fildes, void *buf, size_t nbyte,
+		    int allow_quit);
 
 /* Call these functions if you want to change some terminal parameter --
    reset the console, change the parameter, and init it again. */
@@ -142,11 +145,11 @@ char *end_of_data (void);
 void init_system_name (void);
 
 #ifndef HAVE_GETCWD
-char *getcwd (char *pathname, int size);
+char *getcwd (char *pathname, size_t size);
 #endif
 
 #ifndef HAVE_RENAME
-int rename (CONST char *from, CONST char *to);
+int rename (const char *from, const char *to);
 #endif
 
 #ifndef HAVE_DUP2
@@ -158,7 +161,7 @@ int dup2 (int oldd, int newd);
 # ifdef strerror
 # undef strerror
 # endif
-CONST char *strerror (int);
+const char *strerror (int);
 #endif
 
 #ifdef WINDOWSNT
@@ -166,7 +169,7 @@ void mswindows_set_errno (unsigned long win32_error);
 void mswindows_set_last_errno (void);
 #endif
 
-int interruptible_open (CONST char *path, int oflag, int mode);
+int interruptible_open (const char *path, int oflag, int mode);
 
 #ifndef HAVE_H_ERRNO
 extern int h_errno;
@@ -175,7 +178,7 @@ extern int h_errno;
 #ifdef HAVE_REALPATH
 #define xrealpath realpath
 #else
-char *xrealpath(CONST char *path, char resolved_path []);
+char *xrealpath(const char *path, char resolved_path []);
 #endif
 
-#endif /* _XEMACS_SYSDEP_H_ */
+#endif /* INCLUDED_sysdep_h_ */

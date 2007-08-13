@@ -94,14 +94,11 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
      prohibits GC. */
   /* !!#### This function has not been Mule-ized */
   int menubar_root_p = (menu_type == MENUBAR_TYPE && depth == 0);
-  widget_value *wv;
-  Lisp_Object wv_closure;
   int count = specpdl_depth ();
   int partition_seen = 0;
+  widget_value *wv = xmalloc_widget_value ();
+  Lisp_Object wv_closure = make_opaque_ptr (wv);
 
-  wv = xmalloc_widget_value ();
-
-  wv_closure = make_opaque_ptr (wv);
   record_unwind_protect (widget_value_unwind, wv_closure);
 
   if (STRINGP (desc))
@@ -120,7 +117,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	}
       else
 	{
-	  wv->name = string_chars;
+	  wv->name = xstrdup (string_chars);
 	  wv->enabled = 1;
 	  /* dverna Dec. 98: command_builder_operate_menu_accelerator will
 	     manipulate the accel as a Lisp_Object if the widget has a name.
@@ -131,7 +128,8 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
     }
   else if (VECTORP (desc))
     {
-      if (!button_item_to_widget_value (desc, wv, 1,
+      Lisp_Object gui_item = gui_parse_item_keywords (desc);
+      if (!button_item_to_widget_value (gui_item, wv, 1,
 					(menu_type == MENUBAR_TYPE
 					 && depth <= 1)))
 	{
@@ -156,8 +154,9 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	  wv->type = CASCADE_TYPE;
 	  wv->enabled = 1;
 	  wv->name = (char *) XSTRING_DATA (LISP_GETTEXT (XCAR (desc)));
+	  wv->name = xstrdup (wv->name);
 
-	  accel = menu_name_to_accelerator (wv->name);
+	  accel = gui_name_accelerator (LISP_GETTEXT (XCAR (desc)));
 	  wv->accel = LISP_TO_VOID (accel);
 
 	  desc = Fcdr (desc);
@@ -225,6 +224,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 		  incr_wv->type = INCREMENTAL_TYPE;
 		  incr_wv->enabled = 1;
 		  incr_wv->name = wv->name;
+		  incr_wv->name = xstrdup (wv->name);
 		  /* This is automatically GC protected through
 		     the call to lw_map_widget_values(); no need
 		     to worry. */
@@ -241,7 +241,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	      widget_value *title_wv = xmalloc_widget_value ();
 	      widget_value *sep_wv = xmalloc_widget_value ();
 	      title_wv->type = TEXT_TYPE;
-	      title_wv->name = wv->name;
+	      title_wv->name = xstrdup (wv->name);
 	      title_wv->enabled = 1;
 	      title_wv->next = sep_wv;
 	      sep_wv->type = SEPARATOR_TYPE;
@@ -257,7 +257,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	      widget_value *dummy;
 	      /* Add a fake entry so the menus show up */
 	      wv->contents = dummy = xmalloc_widget_value ();
-	      dummy->name = "(inactive)";
+	      dummy->name = xstrdup ("(inactive)");
 	      dummy->accel = LISP_TO_VOID (Qnil);
 	      dummy->enabled = 0;
 	      dummy->selected = 0;
@@ -272,7 +272,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	}
       else if (menubar_root_p)
 	{
-	  wv->name = (char *) "menubar";
+	  wv->name = xstrdup ("menubar");
 	  wv->type = CASCADE_TYPE; /* Well, nothing else seems to fit and
 				      this is ignored anyway...  */
 	}
@@ -360,7 +360,7 @@ int in_menu_callback;
 static Lisp_Object
 restore_in_menu_callback (Lisp_Object val)
 {
-    in_menu_callback = XINT(val);
+    in_menu_callback = XINT (val);
     return Qnil;
 }
 #endif /* LWLIB_MENUBARS_LUCID || LWLIB_MENUBARS_MOTIF */
@@ -465,10 +465,12 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
 	  wv = xmalloc_widget_value ();
 	  wv->type = CASCADE_TYPE;
 	  wv->next = NULL;
+	  wv->accel = LISP_TO_VOID (Qnil);
 	  wv->contents = xmalloc_widget_value ();
 	  wv->contents->type = TEXT_TYPE;
-	  wv->contents->name = (char *) "No menu";
+	  wv->contents->name = xstrdup ("No menu");
 	  wv->contents->next = NULL;
+	  wv->contents->accel = LISP_TO_VOID (Qnil);
 	}
       assert (wv && wv->type == CASCADE_TYPE && wv->contents);
       replace_widget_value_tree (hack_wv, wv->contents);
@@ -509,24 +511,21 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
 static widget_value *
 compute_menubar_data (struct frame *f, Lisp_Object menubar, int deep_p)
 {
-  widget_value *data;
-
   if (NILP (menubar))
-    data = 0;
+    return 0;
   else
     {
-      Lisp_Object old_buffer;
+      widget_value *data;
       int count = specpdl_depth ();
 
-      old_buffer = Fcurrent_buffer ();
-      record_unwind_protect (Fset_buffer, old_buffer);
-      Fset_buffer ( XWINDOW (FRAME_SELECTED_WINDOW (f))->buffer);
+      record_unwind_protect (Fset_buffer, Fcurrent_buffer ());
+      Fset_buffer (XWINDOW (FRAME_SELECTED_WINDOW (f))->buffer);
       data = menu_item_descriptor_to_widget_value (menubar, MENUBAR_TYPE,
 						   deep_p, 0);
-      Fset_buffer (old_buffer);
       unbind_to (count, Qnil);
+
+      return data;
     }
-  return data;
 }
 
 static int
@@ -536,7 +535,7 @@ set_frame_menubar (struct frame *f, int deep_p, int first_time_p)
   Lisp_Object menubar;
   int menubar_visible;
   long id;
-  /* As for the toolbar, the minibuffer does not have its own menubar. */
+  /* As with the toolbar, the minibuffer does not have its own menubar. */
   struct window *w = XWINDOW (FRAME_LAST_NONMINIBUF_WINDOW (f));
 
   if (! FRAME_X_P (f))
@@ -572,7 +571,7 @@ set_frame_menubar (struct frame *f, int deep_p, int first_time_p)
   if (NILP (FRAME_MENUBAR_DATA (f)))
     {
       struct popup_data *mdata =
-	alloc_lcrecord_type (struct popup_data, lrecord_popup_data);
+	alloc_lcrecord_type (struct popup_data, &lrecord_popup_data);
 
       mdata->id = new_lwlib_id ();
       mdata->last_menubar_buffer = Qnil;
@@ -657,9 +656,7 @@ popup_menu_down_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
 
 
 static void
-make_dummy_xbutton_event (XEvent *dummy,
-			  Widget daddy,
-			  struct Lisp_Event *eev)
+make_dummy_xbutton_event (XEvent *dummy, Widget daddy, Lisp_Event *eev)
      /* NULL for eev means query pointer */
 {
   XButtonPressedEvent *btn = (XButtonPressedEvent *) dummy;
@@ -672,7 +669,6 @@ make_dummy_xbutton_event (XEvent *dummy,
   if (eev)
     {
       Position shellx, shelly, framex, framey;
-      Widget shell = XtParent (daddy);
       Arg al [2];
       btn->time = eev->timestamp;
       btn->button = eev->event.button.button;
@@ -680,9 +676,16 @@ make_dummy_xbutton_event (XEvent *dummy,
       btn->subwindow = (Window) NULL;
       btn->x = eev->event.button.x;
       btn->y = eev->event.button.y;
-      XtSetArg (al [0], XtNx, &shellx);
-      XtSetArg (al [1], XtNy, &shelly);
-      XtGetValues (shell, al, 2);
+      shellx = shelly = 0;
+#ifndef HAVE_WMCOMMAND
+      {
+	Widget shell = XtParent (daddy);
+
+	XtSetArg (al [0], XtNx, &shellx);
+	XtSetArg (al [1], XtNy, &shelly);
+	XtGetValues (shell, al, 2);
+      }
+#endif
       XtSetArg (al [0], XtNx, &framex);
       XtSetArg (al [1], XtNy, &framey);
       XtGetValues (daddy, al, 2);
@@ -772,7 +775,7 @@ x_popup_menu (Lisp_Object menu_desc, Lisp_Object event)
   widget_value *data;
   Widget parent;
   Widget menu;
-  struct Lisp_Event *eev = NULL;
+  Lisp_Event *eev = NULL;
   XEvent xev;
   Lisp_Object frame;
 
@@ -852,9 +855,15 @@ console_type_create_menubar_x (void)
 }
 
 void
-vars_of_menubar_x (void)
+reinit_vars_of_menubar_x (void)
 {
   last_popup_menu_selection_callback_id = (LWLIB_ID) -1;
+}
+
+void
+vars_of_menubar_x (void)
+{
+  reinit_vars_of_menubar_x ();
 
 #if defined (LWLIB_MENUBARS_LUCID)
   Fprovide (intern ("lucid-menubars"));

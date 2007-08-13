@@ -423,10 +423,9 @@ string_width_u (XlwMenuWidget mw,
   int i, j;
 
 #ifdef NEED_MOTIF
+  chars = "";
   if (!XmStringGetLtoR (string, XmFONTLIST_DEFAULT_TAG, &chars))
-    {
-      chars = "";
-    }
+    chars = "";
 #else
   chars = string;
 #endif
@@ -458,7 +457,7 @@ string_width_u (XlwMenuWidget mw,
 }
 
 static void
-massage_resource_name (CONST char *in, char *out)
+massage_resource_name (const char *in, char *out)
 {
   /* Turn a random string into something suitable for using as a resource.
      For example:
@@ -521,7 +520,7 @@ nameResource[] =
  *    not inserted if value is a zero length string.
  */
 static char*
-parameterize_string (CONST char *string, CONST char *value)
+parameterize_string (const char *string, const char *value)
 {
   char *percent;
   char *result;
@@ -872,7 +871,9 @@ string_draw_u (XlwMenuWidget mw,
   char *chars;
 
 #ifdef NEED_MOTIF
-  XmStringGetLtoR (string, XmFONTLIST_DEFAULT_TAG, &chars);
+  chars = "";
+  if (!XmStringGetLtoR (string, XmFONTLIST_DEFAULT_TAG, &chars))
+    chars = "";
 #else
   chars = string;
 #endif
@@ -1528,7 +1529,7 @@ label_button_size (XlwMenuWidget mw,
 	     2 * mw->menu.vertical_margin +
 	     2 * mw->menu.shadow_thickness);
   /* no left column decoration */
-  *toggle_width = mw->menu.horizontal_margin + mw->menu.shadow_thickness;;
+  *toggle_width = mw->menu.horizontal_margin + mw->menu.shadow_thickness;
 
   *label_width  = string_width_u (mw, resource_widget_value (mw, val));
   *bindings_width =  mw->menu.horizontal_margin + mw->menu.shadow_thickness;
@@ -1872,7 +1873,7 @@ radio_button_draw (XlwMenuWidget mw,
 
 static struct _shadow_names
 {
-  CONST char *      name;
+  const char *      name;
   shadow_type type;
 } shadow_names[] =
 {
@@ -2824,8 +2825,8 @@ make_shadow_gcs (XlwMenuWidget mw)
   xgcv.foreground = mw->menu.bottom_shadow_color;
 /*  xgcv.stipple = mw->menu.bottom_shadow_pixmap; gtb */
 #ifdef NEED_MOTIF
-  if (mw->menu.top_shadow_pixmap &&
-      mw->menu.top_shadow_pixmap != XmUNSPECIFIED_PIXMAP)
+  if (mw->menu.bottom_shadow_pixmap &&
+      mw->menu.bottom_shadow_pixmap != XmUNSPECIFIED_PIXMAP)
      xgcv.stipple = mw->menu.bottom_shadow_pixmap;
   else
      xgcv.stipple = 0;

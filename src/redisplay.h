@@ -22,8 +22,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-#ifndef _XEMACS_REDISPLAY_H_
-#define _XEMACS_REDISPLAY_H_
+#ifndef INCLUDED_redisplay_h_
+#define INCLUDED_redisplay_h_
 
 /* Redisplay DASSERT types */
 #define DB_DISP_POS		1
@@ -91,6 +91,13 @@ typedef struct
    but control characters have two -- a ^ and a letter -- and other
    non-printing characters (those displayed in octal) have four. */
 
+/* WARNING! In compare_runes (one of the most heavily used functions)
+   two runes are compared. So please be careful with changes to this
+   structure. See comments in compare_runes.
+
+   #### This should really be made smaller.
+*/
+
 typedef struct rune rune;
 struct rune
 {
@@ -105,10 +112,6 @@ struct rune
 				   each of the face properties in this
 				   particular window. */
 
-  short xpos;			/* horizontal starting position in pixels */
-  short width;			/* pixel width of rune */
-
-
   Bufpos bufpos;		/* buffer position this rune is displaying;
 				   for the modeline, the value here is a
 				   Charcount, but who's looking? */
@@ -116,11 +119,26 @@ struct rune
  				/* #### Chuck, what does it mean for a rune
 				   to cover a range of pos?  I don't get
 				   this. */
-  unsigned int cursor_type :3;	/* is this rune covered by the cursor? */
-  unsigned int type :3;		/* type of rune object */
+                                /* #### This isn't used as an rvalue anywhere!
+                                   remove! */
+
+
+  short xpos;			/* horizontal starting position in pixels */
+  short width;			/* pixel width of rune */
+
+
+  unsigned char cursor_type;	/* is this rune covered by the cursor? */
+  unsigned char type;		/* type of rune object */
+                                /* We used to do bitfields here, but if I
+                                   (JV) count correctly that doesn't matter
+                                   for the size of the structure. All the bit
+                                   fiddling _does_ slow down redisplay by
+                                   about 10%. So don't do that */
 
   union				/* Information specific to the type of rune */
   {
+    /* #### GLyps are are. Is it really necessary to waste 8 bytes on every
+       rune for that?! */
     /* DGLYPH */
     struct
     {
@@ -145,8 +163,8 @@ struct rune
     /* HLINE */
     struct
     {
-      int thickness;		/* how thick to make hline */
-      int yoffset;		/* how far down from top of line to put top */
+      short thickness;	/* how thick to make hline */
+      short yoffset;	/* how far down from top of line to put top */
     } hline;
   } object;			/* actual rune object */
 };
@@ -233,6 +251,32 @@ typedef struct
   Dynarr_declare (glyph_block);
 } glyph_block_dynarr;
 
+/*************************************************************************/
+/*                              display lines                             */
+/*************************************************************************/
+
+/*  Modeline commentary: IMO the modeline is handled very badly, we
+  special case virtually *everything* in the redisplay routines for
+  the modeline. The fact that dl->bufpos can be either a buffer
+  position or a char count highlights this. There is no abstraction at
+  all that I can find and it means that the code is made very ugly as
+  a result. Either we should treat the modeline *entirely* separately,
+  or we should abstract to something that applies equally well to the
+  modeline and to buffer text, the things are not enormously different
+  after all and handling them identically at some level would
+  eliminate some bugs that still exist (mainly to do with modeline
+  handling). This problem doesn't help trying to implement gutters
+  which are somewhere in between buffer text and modeline text.
+
+  Redisplay commentary: Everything in redisplay is tied very tightly
+  to the things that are being displayed, and the context,
+  e.g. buffers and windows. According to Chuck this is so that we can
+  get speed, which seems fine to me, however this usage is extended
+  too far down the redispay routines IMO. At some level there should
+  be functions that know how to display strings with extents and
+  faces, regardless of buffer etc. After all the window system does
+  not care. <andy@xemacs.org> */
+
 typedef struct display_line display_line;
 struct display_line
 {
@@ -246,6 +290,8 @@ struct display_line
 					   The descent includes the baseline
 					   pixel-row itself, I think. */
   unsigned short clip;			/* amount of bottom of line to clip
+					   in pixels.*/
+  unsigned short top_clip;		/* amount of top of line to clip
 					   in pixels.*/
   Bufpos bufpos;			/* first buffer position on line */
   Bufpos end_bufpos;			/* last buffer position on line */
@@ -268,17 +314,51 @@ struct display_line
   /* Dynamic arrays of left and right glyph blocks */
   glyph_block_dynarr *left_glyphs;
   glyph_block_dynarr *right_glyphs;
+
+  face_index	left_margin_findex;
+  face_index	right_margin_findex;
+  face_index	default_findex;
 };
 
 #define DISPLAY_LINE_HEIGHT(dl) \
-(dl->ascent + dl->descent - dl->clip)
+(dl->ascent + dl->descent - (dl->clip + dl->top_clip))
 #define DISPLAY_LINE_YPOS(dl) \
-(dl->ypos - dl->ascent)
+(dl->ypos - (dl->ascent - dl->top_clip))
+#define DISPLAY_LINE_YEND(dl) \
+((dl->ypos + dl->descent) - dl->clip)
 
 typedef struct
 {
   Dynarr_declare (display_line);
 } display_line_dynarr;
+
+/* The following two structures are used to represent an area to
+displayed and where to display it. Using these two structures all
+combinations of clipping and position can be accommodated.  */
+
+/* This represents an area to be displayed into. */
+typedef struct display_box display_box;
+struct display_box
+{
+  int xpos;		/* absolute horizontal position of area */
+  int ypos;		/* absolute vertical position of area */
+  int width, height;
+};
+
+/* This represents the area from a glyph to be displayed. */
+typedef struct display_glyph_area display_glyph_area;
+struct display_glyph_area
+{
+  int xoffset;		/* horizontal offset of the glyph, +ve means
+			   display the glyph with x offset by xoffset,
+			   -ve means display starting xoffset into the
+			   glyph. */
+  int yoffset;		/* vertical offset of the glyph, +ve means
+			   display the glyph with y offset by yoffset,
+			   -ve means display starting xoffset into the
+			   glyph. */
+  int width, height;	/* width and height of glyph to display. */
+};
 
 /* It could be argued that the following two structs belong in
    extents.h, but they're only used by redisplay and it simplifies
@@ -314,6 +394,12 @@ struct extent_fragment
   unsigned int previously_invisible:1;
   unsigned int invisible_ellipses_already_displayed:1;
 };
+
+#define EDGE_TOP 1
+#define EDGE_LEFT 2
+#define EDGE_BOTTOM 4
+#define EDGE_RIGHT 8
+#define EDGE_ALL (EDGE_TOP | EDGE_LEFT | EDGE_BOTTOM | EDGE_RIGHT)
 
 
 /*************************************************************************/
@@ -360,6 +446,11 @@ extern int glyphs_changed_set;
 extern int subwindows_changed;
 extern int subwindows_changed_set;
 
+/* True if any displayed subwindow is in need of updating
+   somewhere. */
+extern int subwindows_state_changed;
+extern int subwindows_state_changed_set;
+
 /* True if an icon is in need of updating somewhere. */
 extern int icon_changed;
 extern int icon_changed_set;
@@ -386,6 +477,10 @@ extern int asynch_device_change_pending;
 /* non-nil if any toolbar has changed */
 extern int toolbar_changed;
 extern int toolbar_changed_set;
+
+/* non-nil if any gutter has changed */
+extern int gutter_changed;
+extern int gutter_changed_set;
 
 /* non-nil if any window has changed since the last time redisplay completed */
 extern int windows_changed;
@@ -426,24 +521,105 @@ extern int windows_structure_changed;
 #define MARK_MODELINE_CHANGED MARK_TYPE_CHANGED (modeline)
 #define MARK_POINT_CHANGED MARK_TYPE_CHANGED (point)
 #define MARK_TOOLBAR_CHANGED MARK_TYPE_CHANGED (toolbar)
+#define MARK_GUTTER_CHANGED MARK_TYPE_CHANGED (gutter)
 #define MARK_GLYPHS_CHANGED MARK_TYPE_CHANGED (glyphs)
 #define MARK_SUBWINDOWS_CHANGED MARK_TYPE_CHANGED (subwindows)
+#define MARK_SUBWINDOWS_STATE_CHANGED MARK_TYPE_CHANGED (subwindows_state)
+
+
+#define CLASS_RESET_CHANGED_FLAGS(p) do {	\
+  (p)->buffers_changed = 0;			\
+  (p)->clip_changed = 0;			\
+  (p)->extents_changed = 0;			\
+  (p)->faces_changed = 0;			\
+  (p)->frame_changed = 0;			\
+  (p)->icon_changed = 0;			\
+  (p)->menubar_changed = 0;			\
+  (p)->modeline_changed = 0;			\
+  (p)->point_changed = 0;			\
+  (p)->toolbar_changed = 0;			\
+  (p)->gutter_changed = 0;			\
+  (p)->glyphs_changed = 0;			\
+  (p)->subwindows_changed = 0;			\
+  (p)->subwindows_state_changed = 0;		\
+  (p)->windows_changed = 0;			\
+  (p)->windows_structure_changed = 0;		\
+} while (0)
+
+#define GLOBAL_RESET_CHANGED_FLAGS do {		\
+  buffers_changed = 0;				\
+  clip_changed = 0;				\
+  extents_changed = 0;				\
+  faces_changed = 0;				\
+  frame_changed = 0;				\
+  icon_changed = 0;				\
+  menubar_changed = 0;				\
+  modeline_changed = 0;				\
+  point_changed = 0;				\
+  toolbar_changed = 0;				\
+  gutter_changed = 0;				\
+  glyphs_changed = 0;				\
+  subwindows_changed = 0;			\
+  subwindows_state_changed = 0;		\
+  windows_changed = 0;				\
+  windows_structure_changed = 0;		\
+} while (0)
+
+#define CLASS_REDISPLAY_FLAGS_CHANGEDP(p)	\
+  ( (p)->buffers_changed ||			\
+    (p)->clip_changed ||			\
+    (p)->extents_changed ||			\
+    (p)->faces_changed ||			\
+    (p)->frame_changed ||			\
+    (p)->icon_changed ||			\
+    (p)->menubar_changed ||			\
+    (p)->modeline_changed ||			\
+    (p)->point_changed ||			\
+    (p)->toolbar_changed ||			\
+    (p)->gutter_changed ||			\
+    (p)->glyphs_changed ||			\
+    (p)->size_changed ||				\
+    (p)->subwindows_changed ||			\
+    (p)->subwindows_state_changed ||		\
+    (p)->windows_changed ||			\
+    (p)->windows_structure_changed )
+
+#define GLOBAL_REDISPLAY_FLAGS_CHANGEDP		\
+  ( buffers_changed ||				\
+    clip_changed ||				\
+    extents_changed ||				\
+    faces_changed ||				\
+    frame_changed ||				\
+    icon_changed ||				\
+    menubar_changed ||				\
+    modeline_changed ||				\
+    point_changed ||				\
+    toolbar_changed ||				\
+    gutter_changed ||				\
+    glyphs_changed ||				\
+    size_changed ||				\
+    subwindows_changed ||			\
+    subwindows_state_changed ||			\
+    windows_changed ||				\
+    windows_structure_changed )
+
 
 /* Anytime a console, device or frame is added or deleted we need to reset
    these flags. */
-#define RESET_CHANGED_SET_FLAGS		\
-  do {					\
-    buffers_changed_set = 0;		\
-    clip_changed_set = 0;		\
-    extents_changed_set = 0;		\
-    icon_changed_set = 0;		\
-    menubar_changed_set = 0;		\
-    modeline_changed_set = 0;		\
-    point_changed_set = 0;		\
-    toolbar_changed_set = 0;		\
-    glyphs_changed_set = 0;		\
-    subwindows_changed_set = 0;		\
-  } while (0)
+#define RESET_CHANGED_SET_FLAGS do {	\
+  buffers_changed_set = 0;		\
+  clip_changed_set = 0;			\
+  extents_changed_set = 0;		\
+  icon_changed_set = 0;			\
+  menubar_changed_set = 0;		\
+  modeline_changed_set = 0;		\
+  point_changed_set = 0;		\
+  toolbar_changed_set = 0;		\
+  gutter_changed_set = 0;		\
+  glyphs_changed_set = 0;		\
+  subwindows_changed_set = 0;		\
+  subwindows_state_changed_set = 0;	\
+} while (0)
 
 
 /*************************************************************************/
@@ -485,7 +661,7 @@ extern Lisp_Object Vglobal_mode_string;
 extern int display_arg;
 
 /* Type of display specified.  Defined in emacs.c. */
-extern CONST char *display_use;
+extern const char *display_use;
 
 /* Nonzero means reading single-character input with prompt
    so put cursor on minibuffer after the prompt.  */
@@ -519,9 +695,19 @@ int line_at_center (struct window *w, int type, Bufpos start, Bufpos point);
 int window_half_pixpos (struct window *w);
 void redisplay_echo_area (void);
 void free_display_structs (struct window_mirror *mir);
-Bufbyte *generate_formatted_string (struct window *w, Lisp_Object format_str,
-                                    Lisp_Object result_str, face_index findex,
-                                    int type);
+void free_display_lines (display_line_dynarr *dla);
+void generate_displayable_area (struct window *w, Lisp_Object disp_string,
+				int xpos, int ypos, int width, int height,
+				display_line_dynarr* dl,
+				Bufpos start_pos, face_index default_face);
+/* `generate_title_string' in frame.c needs this */
+void generate_formatted_string_db (Lisp_Object format_str,
+				   Lisp_Object result_str,
+				   struct window *w,
+				   struct display_line *dl,
+				   struct display_block *db,
+				   face_index findex,
+				   int min_pixpos, int max_pixpos, int type);
 int real_current_modeline_height (struct window *w);
 int pixel_to_glyph_translation (struct frame *f, int x_coord,
 				int y_coord, int *col, int *row,
@@ -531,7 +717,7 @@ int pixel_to_glyph_translation (struct frame *f, int x_coord,
 				Lisp_Object *obj1, Lisp_Object *obj2);
 void glyph_to_pixel_translation (struct window *w, int char_x,
 				 int char_y, int *pix_x, int *pix_y);
-void mark_redisplay (void (*) (Lisp_Object));
+void mark_redisplay (void);
 int point_in_line_start_cache (struct window *w, Bufpos point,
 			       int min_past);
 int point_would_be_visible (struct window *w, Bufpos startp,
@@ -559,12 +745,29 @@ int compute_line_start_cache_dynarr_usage (line_start_cache_dynarr *dyn,
 int get_next_display_block (layout_bounds bounds,
 			    display_block_dynarr *dba, int start_pos,
 			    int *next_start);
-void redisplay_output_subwindow (struct window *w, struct display_line *dl,
-				 Lisp_Object image_instance, int xpos,
-				 int xoffset, int start_pixpos, int width,
-				 face_index findex, int cursor_start, 
-				 int cursor_width, int cursor_height);
+void redisplay_output_layout (struct window *w,
+			      Lisp_Object image_instance,
+			      struct display_box* db, struct display_glyph_area* dga,
+			      face_index findex, int cursor_start, int cursor_width,
+			      int cursor_height);
+void redisplay_output_subwindow (struct window *w,
+				 Lisp_Object image_instance,
+				 struct display_box* db, struct display_glyph_area* dga,
+				 face_index findex, int cursor_start, int cursor_width,
+				 int cursor_height);
 void redisplay_unmap_subwindows_maybe (struct frame* f, int x, int y, int width, int height);
+void redisplay_output_pixmap (struct window *w,
+			      Lisp_Object image_instance,
+			      struct display_box* db, struct display_glyph_area* dga,
+			      face_index findex, int cursor_start, int cursor_width,
+			      int cursor_height, int offset_bitmap);
+int redisplay_calculate_display_boxes (struct display_line *dl, int xpos,
+				       int xoffset, int start_pixpos, int width,
+				       struct display_box* dest,
+				       struct display_glyph_area* src);
+int redisplay_normalize_glyph_area (struct display_box* dest,
+				    struct display_glyph_area* glyphsrc);
+void redisplay_clear_to_window_end (struct window *w, int ypos1, int ypos2);
 void redisplay_clear_region (Lisp_Object window, face_index findex, int x,
 			     int y, int width, int height);
 void redisplay_clear_bottom_of_window (struct window *w,
@@ -573,6 +776,7 @@ void redisplay_clear_bottom_of_window (struct window *w,
 void redisplay_update_line (struct window *w, int first_line,
 			    int last_line, int update_values);
 void redisplay_output_window (struct window *w);
+void bevel_modeline (struct window *w, struct display_line *dl);
 int redisplay_move_cursor (struct window *w, Bufpos new_point,
 			   int no_output_end);
 void redisplay_redraw_cursor (struct frame *f, int run_begin_end_meths);
@@ -580,4 +784,4 @@ void output_display_line (struct window *w, display_line_dynarr *cdla,
 			  display_line_dynarr *ddla, int line,
 			  int force_start, int force_end);
 
-#endif /* _XEMACS_REDISPLAY_H_ */
+#endif /* INCLUDED_redisplay_h_ */

@@ -27,8 +27,8 @@ Boston, MA 02111-1307, USA.  */
    getrlimit() should be preferred to ulimit().
    On Linux, ulimit() is deprecated and always returns -1. */
 
-#ifndef _XEMACS_MEM_LIMITS_H_
-#define _XEMACS_MEM_LIMITS_H_
+#ifndef INCLUDED_mem_limits_h_
+#define INCLUDED_mem_limits_h_
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -101,12 +101,7 @@ typedef unsigned long SIZE;
 #endif
 
 extern POINTER start_of_data (void);
-#ifdef DATA_SEG_BITS
-#define EXCEEDS_LISP_PTR(ptr) \
-  (((EMACS_UINT) (ptr) & ~DATA_SEG_BITS) >> VALBITS)
-#else
-#define EXCEEDS_LISP_PTR(ptr) ((EMACS_UINT) (ptr) >> VALBITS)
-#endif
+#define EXCEEDS_LISP_PTR(ptr) 0
 
 #ifdef BSD
 #ifndef DATA_SEG_BITS
@@ -225,4 +220,4 @@ get_lim_data (void)
 #endif /* not NO_LIM_DATA */
 #endif /* not HEAP_IN_DATA */
 
-#endif /* _XEMACS_MEM_LIMITS_H_ */
+#endif /* INCLUDED_mem_limits_h_ */

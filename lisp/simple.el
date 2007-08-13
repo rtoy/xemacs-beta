@@ -62,7 +62,7 @@
 ;; Mule-2.3, and could probably use some feature additions (like additional wrap
 ;; styles, etc)
 
-;; 97/06/11 Steve Baur (steve@altair.xemacs.org) Convert use of
+;; 97/06/11 Steve Baur (steve@xemacs.org) Convert use of
 ;;  (preceding|following)-char to char-(after|before).
 
 ;;; Code:
@@ -433,7 +433,7 @@ and KILLP is t if a prefix arg was specified."
   (and overwrite-mode (not (eolp))
        (save-excursion (insert-char ?\  arg))))
 
-(defcustom delete-key-deletes-forward nil
+(defcustom delete-key-deletes-forward t
   "*If non-nil, the DEL key will erase one character forwards.
 If nil, the DEL key will erase one character backwards."
   :type 'boolean
@@ -670,7 +670,7 @@ BUFFER defaults to the current buffer."
       cnt)))
 
 ;;; Modified by Bob Weiner, 8/24/95, to print narrowed line number also.
-;;; Expanded by Bob Weiner, Altrasoft, on 02/12/1997
+;;; Expanded by Bob Weiner, BeOpen, on 02/12/1997
 (defun what-line ()
   "Print the following variants of the line number of point:
      Region line     - displayed line within the active region
@@ -2592,7 +2592,8 @@ indicating whether soft newlines should be inserted.")
 		       bounce
 		       ;; 97/3/14 jhod: Kinsoku
 		       (re-break-point (if (featurep 'mule)
-					    (concat "[ \t\n]\\|" word-across-newline)
+					    (concat "[ \t\n]\\|" word-across-newline
+						    ".\\|." word-across-newline)
 					"[ \t\n]"))
 		       ;; end patch
 		       (first t))
@@ -2655,20 +2656,23 @@ indicating whether soft newlines should be inserted.")
 		  (if (save-excursion
 			(skip-chars-backward " \t")
 			(= (point) fill-point))
+		      ;; 1999-09-17 hniksic: turn off Kinsoku until
+		      ;; it's debugged.
+		      (indent-new-comment-line)
 		      ;; 97/3/14 jhod: Kinsoku processing
-		      ;(indent-new-comment-line)
-		      (let ((spacep (memq (char-before (point)) '(?\  ?\t))))
-			(funcall comment-line-break-function)
-			;; if user type space explicitly, leave SPC
-			;; even if there is no WAN.
-			(if spacep
-			    (save-excursion
-			      (goto-char fill-point)
-			      ;; put SPC except that there is SPC
-			      ;; already or there is sentence end.
-			      (or (memq (char-after (point)) '(?\  ?\t))
-				  (fill-end-of-sentence-p)
-				  (insert ?\ )))))
+;		      ;(indent-new-comment-line)
+;		      (let ((spacep (memq (char-before (point)) '(?\  ?\t))))
+;			(funcall comment-line-break-function)
+;			;; if user type space explicitly, leave SPC
+;			;; even if there is no WAN.
+;			(if spacep
+;			    (save-excursion
+;			      (goto-char fill-point)
+;			      ;; put SPC except that there is SPC
+;			      ;; already or there is sentence end.
+;			      (or (memq (char-after (point)) '(?\  ?\t))
+;				  (fill-end-of-sentence-p)
+;				  (insert ?\ )))))
 		    (save-excursion
 		      (goto-char fill-point)
 		      (funcall comment-line-break-function)))
@@ -2889,6 +2893,7 @@ unless optional argument SOFT is non-nil."
       (if (and comcol (not fill-prefix))  ; XEmacs - (ENE) from fa-extras.
 	  (let ((comment-column comcol)
 		(comment-start comstart)
+		(block-comment-start comstart)
 		(comment-end comment-end))
 	    (and comment-end (not (equal comment-end ""))
   ;	       (if (not comment-multi-line)
@@ -3625,7 +3630,7 @@ as the second argument.")
 ;;                                            --hniksic
 (defcustom log-message-ignore-regexps
   '(;; Note: adding entries to this list slows down messaging
-    ;; significantly.  Wherever possible, use message lables.
+    ;; significantly.  Wherever possible, use message labels.
 
     ;; Often-seen messages
     "\\`\\'"				; empty message

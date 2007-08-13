@@ -1647,12 +1647,12 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 (defsetf extent-priority set-extent-priority)
 (defsetf extent-property (x y &optional ignored-arg) (arg)
   (list 'set-extent-property x y arg))
-(defsetf extent-end-position (ext) (store)
-  (list 'progn (list 'set-extent-endpoints (list 'extent-start-position ext)
-		     store) store))
 (defsetf extent-start-position (ext) (store)
-  (list 'progn (list 'set-extent-endpoints store
-		     (list 'extent-end-position ext)) store))
+  `(progn (set-extent-endpoints ,ext ,store (extent-end-position ,ext))
+	  ,store))
+(defsetf extent-end-position (ext) (store)
+  `(progn (set-extent-endpoints ,ext (extent-start-position ,ext) ,store)
+	  ,store))
 (defsetf face-background (f &optional s) (x) (list 'set-face-background f x s))
 (defsetf face-background-pixmap (f &optional s) (x)
   (list 'set-face-background-pixmap f x s))
@@ -2744,10 +2744,11 @@ surrounded by (block NAME ...)."
       (setq form (list 'cons (car args) form)))
     form))
 
-(define-compiler-macro get* (sym prop &optional def)
-  (if def
-      (list 'getf (list 'symbol-plist sym) prop def)
-    (list 'get sym prop)))
+(define-compiler-macro get* (sym prop &optional default)
+  (list 'get sym prop default))
+
+(define-compiler-macro getf (sym prop &optional default)
+  (list 'plist-get sym prop default))
 
 (define-compiler-macro typep (&whole form val type)
   (if (cl-const-expr-p type)
@@ -2795,7 +2796,7 @@ surrounded by (block NAME ...)."
 ;		    abs expt signum last butlast ldiff
 ;		    pairlis gcd lcm
 ;		    isqrt floor* ceiling* truncate* round* mod* rem* subseq
-;		    list-length get* getf))
+;		    list-length getf))
 ;  (put fun 'side-effect-free t))
 
 ;;; Things that are side-effect-and-error-free.  Moved to byte-optimize.el

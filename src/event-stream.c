@@ -81,7 +81,6 @@ Boston, MA 02111-1307, USA.  */
 #include "keymap.h"
 #include "lstream.h"
 #include "macros.h"		/* for defining_keyboard_macro */
-#include "opaque.h"
 #include "process.h"
 #include "window.h"
 
@@ -101,8 +100,6 @@ Boston, MA 02111-1307, USA.  */
 static int auto_save_interval;
 
 Lisp_Object Qundefined_keystroke_sequence;
-
-Lisp_Object Qcommand_execute;
 
 Lisp_Object Qcommand_event_p;
 
@@ -262,6 +259,8 @@ Lisp_Object Qmenu_right;
 Lisp_Object Qmenu_select;
 Lisp_Object Qmenu_escape;
 
+Lisp_Object Qself_insert_defer_undo;
+
 /* this is in keymap.c */
 extern Lisp_Object Fmake_keymap (Lisp_Object name);
 
@@ -385,19 +384,18 @@ static Lisp_Object recursive_sit_for;
   XRECORD (x, command_builder, struct command_builder)
 #define XSETCOMMAND_BUILDER(x, p) XSETRECORD (x, p, command_builder)
 #define COMMAND_BUILDERP(x) RECORDP (x, command_builder)
-#define GC_COMMAND_BUILDERP(x) GC_RECORDP (x, command_builder)
 #define CHECK_COMMAND_BUILDER(x) CHECK_RECORD (x, command_builder)
 
 static Lisp_Object
-mark_command_builder (Lisp_Object obj, void (*markobj) (Lisp_Object))
+mark_command_builder (Lisp_Object obj)
 {
   struct command_builder *builder = XCOMMAND_BUILDER (obj);
-  markobj (builder->prefix_events);
-  markobj (builder->current_events);
-  markobj (builder->most_current_event);
-  markobj (builder->last_non_munged_event);
-  markobj (builder->munge_me[0].first_mungeable_event);
-  markobj (builder->munge_me[1].first_mungeable_event);
+  mark_object (builder->prefix_events);
+  mark_object (builder->current_events);
+  mark_object (builder->most_current_event);
+  mark_object (builder->last_non_munged_event);
+  mark_object (builder->munge_me[0].first_mungeable_event);
+  mark_object (builder->munge_me[1].first_mungeable_event);
   return builder->console;
 }
 
@@ -413,7 +411,7 @@ finalize_command_builder (void *header, int for_disksave)
 
 DEFINE_LRECORD_IMPLEMENTATION ("command-builder", command_builder,
                                mark_command_builder, internal_object_printer,
-			       finalize_command_builder, 0, 0,
+			       finalize_command_builder, 0, 0, 0,
 			       struct command_builder);
 
 static void
@@ -432,7 +430,7 @@ allocate_command_builder (Lisp_Object console)
 {
   Lisp_Object builder_obj;
   struct command_builder *builder =
-    alloc_lcrecord_type (struct command_builder, lrecord_command_builder);
+    alloc_lcrecord_type (struct command_builder, &lrecord_command_builder);
 
   builder->console = console;
   reset_command_builder_event_chain (builder);
@@ -510,7 +508,7 @@ event_stream_event_pending_p (int user)
 }
 
 static int
-maybe_read_quit_event (struct Lisp_Event *event)
+maybe_read_quit_event (Lisp_Event *event)
 {
   /* A C-g that came from `sigint_happened' will always come from the
      controlling terminal.  If that doesn't exist, however, then the
@@ -537,7 +535,7 @@ maybe_read_quit_event (struct Lisp_Event *event)
 }
 
 void
-event_stream_next_event (struct Lisp_Event *event)
+event_stream_next_event (Lisp_Event *event)
 {
   Lisp_Object event_obj;
 
@@ -581,7 +579,7 @@ event_stream_next_event (struct Lisp_Event *event)
 }
 
 void
-event_stream_handle_magic_event (struct Lisp_Event *event)
+event_stream_handle_magic_event (Lisp_Event *event)
 {
   check_event_stream_ok (EVENT_STREAM_READ);
   event_stream->handle_magic_event_cb (event);
@@ -624,7 +622,7 @@ event_stream_unselect_console (struct console *con)
 }
 
 void
-event_stream_select_process (struct Lisp_Process *proc)
+event_stream_select_process (Lisp_Process *proc)
 {
   check_event_stream_ok (EVENT_STREAM_PROCESS);
   if (!get_process_selected_p (proc))
@@ -635,7 +633,7 @@ event_stream_select_process (struct Lisp_Process *proc)
 }
 
 void
-event_stream_unselect_process (struct Lisp_Process *proc)
+event_stream_unselect_process (Lisp_Process *proc)
 {
   check_event_stream_ok (EVENT_STREAM_PROCESS);
   if (get_process_selected_p (proc))
@@ -799,7 +797,7 @@ maybe_kbd_translate (Lisp_Object event)
 	}
       else if (CHARP (traduit))
 	{
-	  struct Lisp_Event ev2;
+	  Lisp_Event ev2;
 
 	  /* This used to call Fcharacter_to_event() directly into EVENT,
 	     but that can eradicate timestamps and other such stuff.
@@ -985,7 +983,7 @@ Actually, the value is nil only if we can be sure that no input is available.
    used to indicate an absence of a timer. */
 static int low_level_timeout_id_tick;
 
-struct low_level_timeout_blocktype
+static struct low_level_timeout_blocktype
 {
   Blocktype_declare (struct low_level_timeout);
 } *the_low_level_timeout_blocktype;
@@ -1101,37 +1099,39 @@ pop_low_level_timeout (struct low_level_timeout **timeout_list,
 
 static int timeout_id_tick;
 
-/* Since timeout structures contain Lisp_Objects, they need to be GC'd
-   properly.  The opaque data type provides a convenient way of doing
-   this without having to create a new Lisp object, since we can
-   provide our own mark function. */
-
-struct timeout
-{
-  int id; /* Id we use to identify the timeout over its lifetime */
-  int interval_id; /* Id for this particular interval; this may
-		      be different each time the timeout is
-		      signalled.*/
-  Lisp_Object function, object; /* Function and object associated
-				   with timeout. */
-  EMACS_TIME next_signal_time;  /* Absolute time when the timeout
-				   is next going to be signalled. */
-  unsigned int resignal_msecs;  /* How far after the next timeout
-				   should the one after that
-				   occur? */
-};
-
 static Lisp_Object pending_timeout_list, pending_async_timeout_list;
 
 static Lisp_Object Vtimeout_free_list;
 
 static Lisp_Object
-mark_timeout (Lisp_Object obj, void (*markobj) (Lisp_Object))
+mark_timeout (Lisp_Object obj)
 {
-  struct timeout *tm = (struct timeout *) XOPAQUE_DATA (obj);
-  markobj (tm->function);
+  Lisp_Timeout *tm = XTIMEOUT (obj);
+  mark_object (tm->function);
   return tm->object;
 }
+
+/* Should never, ever be called. (except by an external debugger) */
+static void
+print_timeout (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+{
+  const Lisp_Timeout *t = XTIMEOUT (obj);
+  char buf[64];
+
+  sprintf (buf, "#<INTERNAL OBJECT (XEmacs bug?) (timeout) 0x%lx>",
+	   (unsigned long) t);
+  write_c_string (buf, printcharfun);
+}
+
+static const struct lrecord_description timeout_description[] = {
+  { XD_LISP_OBJECT, offsetof (Lisp_Timeout, function) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Timeout, object) },
+  { XD_END }
+};
+
+DEFINE_LRECORD_IMPLEMENTATION ("timeout", timeout,
+			       mark_timeout, print_timeout,
+			       0, 0, 0, timeout_description, Lisp_Timeout);
 
 /* Generate a timeout and return its ID. */
 
@@ -1141,8 +1141,8 @@ event_stream_generate_wakeup (unsigned int milliseconds,
 			      Lisp_Object function, Lisp_Object object,
 			      int async_p)
 {
-  Lisp_Object op = allocate_managed_opaque (Vtimeout_free_list, 0);
-  struct timeout *timeout = (struct timeout *) XOPAQUE_DATA (op);
+  Lisp_Object op = allocate_managed_lcrecord (Vtimeout_free_list);
+  Lisp_Timeout *timeout = XTIMEOUT (op);
   EMACS_TIME current_time;
   EMACS_TIME interval;
 
@@ -1191,7 +1191,7 @@ event_stream_resignal_wakeup (int interval_id, int async_p,
 			      Lisp_Object *function, Lisp_Object *object)
 {
   Lisp_Object op = Qnil, rest;
-  struct timeout *timeout;
+  Lisp_Timeout *timeout;
   Lisp_Object *timeout_list;
   struct gcpro gcpro1;
   int id;
@@ -1204,16 +1204,16 @@ event_stream_resignal_wakeup (int interval_id, int async_p,
   /* Find the timeout on the list of pending ones. */
   LIST_LOOP (rest, *timeout_list)
     {
-      timeout = (struct timeout *) XOPAQUE_DATA (XCAR (rest));
+      timeout = XTIMEOUT (XCAR (rest));
       if (timeout->interval_id == interval_id)
 	break;
     }
 
   assert (!NILP (rest));
   op = XCAR (rest);
-  timeout = (struct timeout *) XOPAQUE_DATA (op);
+  timeout = XTIMEOUT (op);
   /* We make sure to snarf the data out of the timeout object before
-     we free it with free_managed_opaque(). */
+     we free it with free_managed_lcrecord(). */
   id = timeout->id;
   *function = timeout->function;
   *object = timeout->object;
@@ -1255,7 +1255,7 @@ event_stream_resignal_wakeup (int interval_id, int async_p,
       *timeout_list = noseeum_cons (op, *timeout_list);
     }
   else
-    free_managed_opaque (Vtimeout_free_list, op);
+    free_managed_lcrecord (Vtimeout_free_list, op);
 
   UNGCPRO;
   return id;
@@ -1264,7 +1264,7 @@ event_stream_resignal_wakeup (int interval_id, int async_p,
 void
 event_stream_disable_wakeup (int id, int async_p)
 {
-  struct timeout *timeout = 0;
+  Lisp_Timeout *timeout = 0;
   Lisp_Object rest;
   Lisp_Object *timeout_list;
 
@@ -1276,7 +1276,7 @@ event_stream_disable_wakeup (int id, int async_p)
   /* Find the timeout on the list of pending ones, if it's still there. */
   LIST_LOOP (rest, *timeout_list)
     {
-      timeout = (struct timeout *) XOPAQUE_DATA (XCAR (rest));
+      timeout = XTIMEOUT (XCAR (rest));
       if (timeout->id == id)
 	break;
     }
@@ -1292,14 +1292,14 @@ event_stream_disable_wakeup (int id, int async_p)
 	event_stream_remove_async_timeout (timeout->interval_id);
       else
 	event_stream_remove_timeout (timeout->interval_id);
-      free_managed_opaque (Vtimeout_free_list, op);
+      free_managed_lcrecord (Vtimeout_free_list, op);
     }
 }
 
 static int
 event_stream_wakeup_pending_p (int id, int async_p)
 {
-  struct timeout *timeout;
+  Lisp_Timeout *timeout;
   Lisp_Object rest;
   Lisp_Object timeout_list;
   int found = 0;
@@ -1313,7 +1313,7 @@ event_stream_wakeup_pending_p (int id, int async_p)
   /* Find the element on the list of pending ones, if it's still there. */
   LIST_LOOP (rest, timeout_list)
     {
-      timeout = (struct timeout *) XOPAQUE_DATA (XCAR (rest));
+      timeout = XTIMEOUT (XCAR (rest));
       if (timeout->id == id)
 	{
 	  found = 1;
@@ -2016,7 +2016,7 @@ next_event_internal (Lisp_Object target_event, int allow_queued)
     }
   else
     {
-      struct Lisp_Event *e = XEVENT (target_event);
+      Lisp_Event *e = XEVENT (target_event);
 
       /* The command_event_queue was empty.  Wait for an event. */
       event_stream_next_event (e);
@@ -3038,7 +3038,7 @@ execute_internal_event (Lisp_Object event)
 
     case timeout_event:
       {
-	struct Lisp_Event *e = XEVENT (event);
+	Lisp_Event *e = XEVENT (event);
 	if (!NILP (e->event.timeout.function))
 	  call1 (e->event.timeout.function,
 		 e->event.timeout.object);
@@ -3100,20 +3100,15 @@ command_builder_find_leaf_1 (struct command_builder *builder)
 static void
 menu_move_up (void)
 {
-  widget_value *current, *prev;
-  widget_value *entries;
+  widget_value *current = lw_get_entries (False);
+  widget_value *entries = lw_get_entries (True);
+  widget_value *prev    = NULL;
 
-  current = lw_get_entries (False);
-  entries = lw_get_entries (True);
-  prev = NULL;
-  if (current != entries)
+  while (entries != current)
     {
-      while (entries != current)
-	{
-	  if (entries->name /*&& entries->enabled*/) prev = entries;
-	  entries = entries->next;
-	  assert (entries);
-	}
+      if (entries->name /*&& entries->enabled*/) prev = entries;
+      entries = entries->next;
+      assert (entries);
     }
 
   if (!prev)
@@ -3142,11 +3137,8 @@ menu_move_up (void)
 static void
 menu_move_down (void)
 {
-  widget_value *current;
-  widget_value *new;
-
-  current = lw_get_entries (False);
-  new = current;
+  widget_value *current = lw_get_entries (False);
+  widget_value *new = current;
 
   while (new->next)
     {
@@ -3179,11 +3171,9 @@ menu_move_left (void)
   int l = level;
   widget_value *current;
 
-  while (level >= 3)
-    {
-      --level;
-      lw_pop_menu ();
-    }
+  while (level-- >= 3)
+    lw_pop_menu ();
+
   menu_move_up ();
   current = lw_get_entries (False);
   if (l > 2 && current->contents)
@@ -3197,11 +3187,9 @@ menu_move_right (void)
   int l = level;
   widget_value *current;
 
-  while (level >= 3)
-    {
-      --level;
-      lw_pop_menu ();
-    }
+  while (level-- >= 3)
+    lw_pop_menu ();
+
   menu_move_down ();
   current = lw_get_entries (False);
   if (l > 2 && current->contents)
@@ -3424,7 +3412,7 @@ menu_accelerator_junk_on_error (Lisp_Object errordata, Lisp_Object ignored)
       args[1] = errordata;
       warn_when_safe_lispobj
 	(Qerror, Qwarning,
-	 emacs_doprnt_string_lisp ((CONST Bufbyte *) "%s: %s",
+	 emacs_doprnt_string_lisp ((const Bufbyte *) "%s: %s",
 				   Qnil, -1, 2, args));
     }
 
@@ -3782,7 +3770,7 @@ command_builder_find_leaf (struct command_builder *builder,
           || (CHAR_OR_CHAR_INTP (key->keysym)
               && ((c = XCHAR_OR_CHAR_INT (key->keysym)), c >= 'A' && c <= 'Z')))
         {
-          struct Lisp_Event terminal_copy = *XEVENT (terminal);
+          Lisp_Event terminal_copy = *XEVENT (terminal);
 
           if (key->modifiers & MOD_SHIFT)
             key->modifiers &= (~ MOD_SHIFT);
@@ -4175,7 +4163,7 @@ lookup_command_event (struct command_builder *command_builder,
     if (EVENTP (recent)
 	&& event_matches_key_specifier_p (XEVENT (recent), Vmeta_prefix_char))
       {
-	struct Lisp_Event *e;
+	Lisp_Event *e;
 	/* When we see a sequence like "ESC x", pretend we really saw "M-x".
 	   DoubleThink the recent-keys and this-command-keys as well. */
 
@@ -4242,7 +4230,7 @@ lookup_command_event (struct command_builder *command_builder,
 	  }
 	else if (!NILP (Vquit_flag)) {
 	  Lisp_Object quit_event = Fmake_event(Qnil, Qnil);
-	  struct Lisp_Event *e = XEVENT (quit_event);
+	  Lisp_Event *e = XEVENT (quit_event);
 	  /* if quit happened during menu acceleration, pretend we read it */
 	  struct console *con = XCONSOLE (Fselected_console ());
 	  int ch = CONSOLE_QUIT_CHAR (con);
@@ -4413,7 +4401,7 @@ post_command_hook (void)
 #if 0
   /* If the last command deleted the frame, `win' might be nil.
      It seems safest to do nothing in this case. */
-  /* ### This doesn't really fix the problem,
+  /* #### This doesn't really fix the problem,
      if delete-frame is called by some hook */
   if (NILP (win))
     return;
@@ -4492,7 +4480,7 @@ Magic events are handled as necessary.
 {
   /* This function can GC */
   struct command_builder *command_builder;
-  struct Lisp_Event *ev;
+  Lisp_Event *ev;
   Lisp_Object console;
   Lisp_Object channel;
 
@@ -4606,15 +4594,35 @@ Magic events are handled as necessary.
 	  }
 	else /* key sequence is bound to a command */
 	  {
+	    int magic_undo = 0;
+	    int magic_undo_count = 20;
+
 	    Vthis_command = leaf;
+
 	    /* Don't push an undo boundary if the command set the prefix arg,
 	       or if we are executing a keyboard macro, or if in the
 	       minibuffer.  If the command we are about to execute is
 	       self-insert, it's tricky: up to 20 consecutive self-inserts may
 	       be done without an undo boundary.  This counter is reset as
 	       soon as a command other than self-insert-command is executed.
-	       */
-	    if (! EQ (leaf, Qself_insert_command))
+
+	       Programmers can also use the `self-insert-undo-magic'
+	       property to install that behaviour on functions other
+	       than `self-insert-command', or to change the magic
+	       number 20 to something else.  */
+
+	    if (SYMBOLP (leaf))
+	      {
+		Lisp_Object prop = Fget (leaf, Qself_insert_defer_undo, Qnil);
+		if (NATNUMP (prop))
+		  magic_undo = 1, magic_undo_count = XINT (prop);
+		else if (!NILP (prop))
+		  magic_undo = 1;
+		else if (EQ (leaf, Qself_insert_command))
+		  magic_undo = 1;
+	      }
+
+	    if (!magic_undo)
 	      command_builder->self_insert_countdown = 0;
 	    if (NILP (XCONSOLE (console)->prefix_arg)
 		&& NILP (Vexecuting_macro)
@@ -4628,10 +4636,10 @@ Magic events are handled as necessary.
 		&& command_builder->self_insert_countdown == 0)
 	      Fundo_boundary ();
 
-	    if (EQ (leaf, Qself_insert_command))
+	    if (magic_undo)
 	      {
 		if (--command_builder->self_insert_countdown < 0)
-		  command_builder->self_insert_countdown = 20;
+		  command_builder->self_insert_countdown = magic_undo_count;
 	      }
 	    execute_command_event
               (command_builder,
@@ -4817,7 +4825,7 @@ That is not right.
 
 Calling this function directs the translated event to replace
 the original event, so that only one version of the event actually
-appears in the echo area and in the value of `this-command-keys.'.
+appears in the echo area and in the value of `this-command-keys'.
 */
        ())
 {
@@ -4841,9 +4849,7 @@ dribble_out_event (Lisp_Object event)
 	{
 	  Emchar ch = XCHAR (keysym);
 	  Bufbyte str[MAX_EMCHAR_LEN];
-	  Bytecount len;
-
-	  len = set_charptr_emchar (str, ch);
+	  Bytecount len = set_charptr_emchar (str, ch);
 	  Lstream_write (XLSTREAM (Vdribble_file), str, len);
 	}
       else if (string_char_length (XSYMBOL (keysym)->name) == 1)
@@ -4909,7 +4915,6 @@ syms_of_event_stream (void)
 
   deferror (&Qundefined_keystroke_sequence, "undefined-keystroke-sequence",
             "Undefined keystroke sequence", Qerror);
-  defsymbol (&Qcommand_execute, "command-execute");
 
   DEFSUBR (Frecent_keys);
   DEFSUBR (Frecent_keys_ring_size);
@@ -4962,26 +4967,41 @@ syms_of_event_stream (void)
   defsymbol (&Qmenu_select, "menu-select");
   defsymbol (&Qmenu_escape, "menu-escape");
 
+  defsymbol (&Qself_insert_defer_undo, "self-insert-defer-undo");
   defsymbol (&Qcancel_mode_internal, "cancel-mode-internal");
+}
+
+void
+reinit_vars_of_event_stream (void)
+{
+  recent_keys_ring_index = 0;
+  recent_keys_ring_size = 100;
+  num_input_chars = 0;
+  Vtimeout_free_list = make_lcrecord_list (sizeof (Lisp_Timeout),
+					   &lrecord_timeout);
+  staticpro_nodump (&Vtimeout_free_list);
+  the_low_level_timeout_blocktype =
+    Blocktype_new (struct low_level_timeout_blocktype);
+  something_happened = 0;
+  recursive_sit_for = Qnil;
 }
 
 void
 vars_of_event_stream (void)
 {
-  recent_keys_ring_index = 0;
-  recent_keys_ring_size = 100;
+  reinit_vars_of_event_stream ();
   Vrecent_keys_ring = Qnil;
   staticpro (&Vrecent_keys_ring);
 
   Vthis_command_keys = Qnil;
   staticpro (&Vthis_command_keys);
   Vthis_command_keys_tail = Qnil;
-
-  num_input_chars = 0;
+  pdump_wire (&Vthis_command_keys_tail);
 
   command_event_queue = Qnil;
   staticpro (&command_event_queue);
   command_event_queue_tail = Qnil;
+  pdump_wire (&command_event_queue_tail);
 
   Vlast_selected_frame = Qnil;
   staticpro (&Vlast_selected_frame);
@@ -4992,19 +5012,8 @@ vars_of_event_stream (void)
   pending_async_timeout_list = Qnil;
   staticpro (&pending_async_timeout_list);
 
-  Vtimeout_free_list = make_opaque_list (sizeof (struct timeout),
-					 mark_timeout);
-  staticpro (&Vtimeout_free_list);
-
-  the_low_level_timeout_blocktype =
-    Blocktype_new (struct low_level_timeout_blocktype);
-
-  something_happened = 0;
-
   last_point_position_buffer = Qnil;
   staticpro (&last_point_position_buffer);
-
-  recursive_sit_for = Qnil;
 
   DEFVAR_LISP ("echo-keystrokes", &Vecho_keystrokes /*
 *Nonzero means echo unfinished commands after this many seconds of pause.

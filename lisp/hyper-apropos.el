@@ -58,9 +58,9 @@
 ;; Massive changes by Christoph Wedler <wedler@fmi.uni-passau.de>
 ;; Some changes for XEmacs 20.3 by hniksic
 
-;; ### The maintainer is supposed to be stig, but I haven't seen him
+;; #### The maintainer is supposed to be stig, but I haven't seen him
 ;; around for ages.  The real maintainer for the moment is Hrvoje
-;; Niksic <hniksic@srce.hr>.
+;; Niksic <hniksic@xemacs.org>.
 
 ;;; Code:
 
@@ -243,16 +243,22 @@ See also `hyper-apropos-mode'."
       (setq hyper-apropos-prev-wconfig (current-window-configuration)))
   (if (string= "" regexp)
       (if (get-buffer hyper-apropos-apropos-buf)
-	  (if toggle-apropos
-	      (hyper-apropos-toggle-programming-flag)
-	    (message "Using last search results"))
+	  (progn
+	    (setq regexp hyper-apropos-last-regexp)
+	    (if toggle-apropos
+		(hyper-apropos-toggle-programming-flag)
+	      (message "Using last search results")))
 	(error "Be more specific..."))
     (set-buffer (get-buffer-create hyper-apropos-apropos-buf))
     (setq buffer-read-only nil)
     (erase-buffer)
     (if toggle-apropos
-	(set (make-local-variable 'hyper-apropos-programming-apropos)
-	     (not (default-value 'hyper-apropos-programming-apropos))))
+	(if (local-variable-p 'hyper-apropos-programming-apropos
+			      (current-buffer))
+	    (setq hyper-apropos-programming-apropos
+		  (not hyper-apropos-programming-apropos))
+	  (set (make-local-variable 'hyper-apropos-programming-apropos)
+	       (not (default-value 'hyper-apropos-programming-apropos)))))
     (let ((flist (apropos-internal regexp
 				   (if hyper-apropos-programming-apropos
 				       #'fboundp
@@ -432,7 +438,9 @@ General Commands:
 	(if (and (or (symbolp defn) (symbolp (setq defn (car-safe defn))))
 		 defn
 		 show)
-	    (hyper-apropos-get-doc defn t))))))
+	    (hyper-apropos-get-doc defn t))
+	(or (memq major-mode '(hyper-apropos-mode hyper-apropos-help-mode))
+	  (setq hyper-apropos-prev-wconfig (current-window-configuration)))))))
 
 ;;;###autoload
 (defun hyper-describe-face (symbol &optional this-ref-buffer)
@@ -454,10 +462,9 @@ See also `hyper-apropos' and `hyper-describe-function'."
 			    ": "))
 		  (mapcar #'(lambda (x) (list (symbol-name x)))
 			  (face-list))
-		  nil t nil 'hyper-apropos-face-history)))
-     (list (if (string= val "")
-	       (progn (push (symbol-name v) hyper-apropos-face-history) v)
-	     (intern-soft val))
+		  nil t nil 'hyper-apropos-face-history
+		  (and v (symbol-name v)))))
+     (list (intern-soft val)
 	   current-prefix-arg)))
   (if (null symbol)
       (message "Sorry, nothing to describe.")
@@ -524,10 +531,10 @@ See also `hyper-apropos' and `hyper-describe-function'."
 			 (if v
 			     (format " (default %s): " v)
 			   ": "))
-		 obarray predicate t nil 'variable-history)))
-    (if (string= val "")
-	(progn (push (symbol-name v) variable-history) v)
-      (intern-soft val))))
+		 obarray predicate t nil 'variable-history
+		 (and v (symbol-name v)))))
+    (intern-soft val)))
+
 ;;;###autoload
 (define-obsolete-function-alias
   'hypropos-read-variable-symbol 'hyper-apropos-read-variable-symbol)
@@ -543,10 +550,9 @@ See also `hyper-apropos' and `hyper-describe-function'."
 				     (format "%s (default %s): " prompt fn)
 				   (format "%s: " prompt))
 				 obarray 'fboundp t nil
-				 'function-history)))
-    (if (equal val "")
-	(progn (push (symbol-name fn) function-history) fn)
-      (intern-soft val))))
+				 'function-history
+				 (and fn (symbol-name fn)))))
+    (intern-soft val)))
 
 (defun hyper-apropos-last-help (arg)
   "Go back to the last symbol documented in the *Hyper Help* buffer."
@@ -1079,6 +1085,12 @@ Deletes lines which match PATTERN."
 	       nil
 	     (forward-char 3)
 	     (read (point-marker))))
+	  ((and
+	    (eq major-mode 'hyper-apropos-help-mode)
+	    (> (point) (point-min)))
+	   (save-excursion
+	     (goto-char (point-min))
+	     (hyper-apropos-this-symbol)))
 	  (t
 	   (let* ((st (progn
 			(skip-syntax-backward "w_")
@@ -1121,11 +1133,6 @@ Deletes lines which match PATTERN."
   (interactive
    (let ((var (hyper-apropos-this-symbol)))
      (or (and var (boundp var))
-	 (and (setq var (and (eq major-mode 'hyper-apropos-help-mode)
-			     (save-excursion
-			       (goto-char (point-min))
-			       (hyper-apropos-this-symbol))))
-	      (boundp var))
 	 (setq var nil))
      (list var (hyper-apropos-read-variable-value var))))
   (and var
@@ -1175,7 +1182,10 @@ Deletes lines which match PATTERN."
 (defun hyper-apropos-customize-variable ()
   (interactive)
   (let ((var (hyper-apropos-this-symbol)))
-    (customize-variable var)))
+    (and
+     (or (and var (boundp var))
+	 (setq var nil))
+     (customize-variable var))))
 
 ;; ---------------------------------------------------------------------- ;;
 
@@ -1197,11 +1207,6 @@ window.  (See also `find-function'.)"
   (interactive
    (let ((fn (hyper-apropos-this-symbol)))
      (or (fboundp fn)
-	 (and (setq fn (and (eq major-mode 'hyper-apropos-help-mode)
-			    (save-excursion
-			      (goto-char (point-min))
-			      (hyper-apropos-this-symbol))))
-	      (fboundp fn))
 	 (setq fn nil))
      (list fn)))
   (if fn
@@ -1257,11 +1262,7 @@ window.  (See also `find-function'.)"
 (defun hyper-apropos-popup-menu (event)
   (interactive "e")
   (mouse-set-point event)
-  (let* ((sym (or (hyper-apropos-this-symbol)
-		  (and (eq major-mode 'hyper-apropos-help-mode)
-		       (save-excursion
-			 (goto-char (point-min))
-			 (hyper-apropos-this-symbol)))))
+  (let* ((sym (hyper-apropos-this-symbol))
 	 (notjunk (not (null sym)))
 	 (command-p (if (commandp sym) t))
 	 (variable-p (and sym (boundp sym)))

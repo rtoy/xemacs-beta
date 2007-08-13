@@ -36,6 +36,7 @@ Boston, MA 02111-1307, USA.  */
 #include "console.h"
 #include "process.h"
 #include "redisplay.h"
+#include "frame.h"
 #include "sysdep.h"
 
 #include "syssignal.h" /* Always include before systty.h */
@@ -60,12 +61,6 @@ Boston, MA 02111-1307, USA.  */
 #include TT_C_H_PATH
 #endif
 
-#ifdef APOLLO
-#ifndef APOLLO_SR10
-#include <default_acl.h>
-#endif
-#endif
-
 #if defined (WINDOWSNT)
 #include <windows.h>
 #endif
@@ -73,7 +68,11 @@ Boston, MA 02111-1307, USA.  */
 /* For PATH_EXEC */
 #include <paths.h>
 
-#if !defined SYSTEM_MALLOC && !defined DOUG_LEA_MALLOC
+#ifdef HEAP_IN_DATA
+void report_sheap_usage (int die_if_pure_storage_exceeded);
+#endif
+
+#if !defined (SYSTEM_MALLOC) && !defined (DOUG_LEA_MALLOC)
 extern void *(*__malloc_hook)(size_t);
 extern void *(*__realloc_hook)(void *, size_t);
 extern void (*__free_hook)(void *);
@@ -111,6 +110,7 @@ Lisp_Object Vsystem_configuration_options;
 /* Version numbers and strings */
 Lisp_Object Vemacs_major_version;
 Lisp_Object Vemacs_minor_version;
+Lisp_Object Vemacs_patch_level;
 Lisp_Object Vemacs_beta_version;
 Lisp_Object Vxemacs_codename;
 #ifdef INFODOCK
@@ -146,10 +146,11 @@ Lisp_Object Vdata_directory, Vconfigure_data_directory;
 Lisp_Object Vdoc_directory, Vconfigure_doc_directory;
 Lisp_Object Vconfigure_lock_directory;
 Lisp_Object Vdata_directory_list;
-Lisp_Object Vinfo_directory, Vconfigure_info_directory;
+Lisp_Object Vconfigure_info_directory;
 Lisp_Object Vsite_directory, Vconfigure_site_directory;
 Lisp_Object Vconfigure_info_path;
 Lisp_Object Vinternal_error_checking;
+Lisp_Object Vmail_lock_methods, Vconfigure_mail_lock_method;
 Lisp_Object Vpath_separator;
 
 /* The default base directory XEmacs is installed under. */
@@ -170,7 +171,7 @@ int display_arg;
 /* Type of display specified.  We cannot use a Lisp symbol here because
    Lisp symbols may not initialized at the time that we set this
    variable. */
-CONST char *display_use;
+const char *display_use;
 
 /* If non-zero, then the early error handler will only print the error
    message and exit. */
@@ -216,13 +217,15 @@ int inhibit_autoloads;
 int debug_paths;
 
 /* Save argv and argc.  */
-char **initial_argv;
-int initial_argc;
+static char **initial_argv;
+static int initial_argc;
 
 static void sort_args (int argc, char **argv);
 
 Lisp_Object Qkill_emacs_hook;
 Lisp_Object Qsave_buffers_kill_emacs;
+
+extern Lisp_Object Vlisp_EXEC_SUFFIXES;
 
 
 /* Signal code for the fatal signal that was received */
@@ -253,7 +256,7 @@ fatal_error_signal (int sig)
 # if 0	/* This is evil, rarely useful, and causes grief in some cases. */
       /* Check for Sun-style stack printing via /proc */
       {
-        CONST char *pstack = "/usr/proc/bin/pstack";
+        const char *pstack = "/usr/proc/bin/pstack";
         if (access (pstack, X_OK) == 0)
           {
             char buf[100];
@@ -272,7 +275,7 @@ fatal_error_signal (int sig)
 
 
 DOESNT_RETURN
-fatal (CONST char *fmt, ...)
+fatal (const char *fmt, ...)
 {
   va_list args;
   va_start (args, fmt);
@@ -297,7 +300,7 @@ fatal (CONST char *fmt, ...)
    GETTEXT on the format string. */
 
 int
-stderr_out (CONST char *fmt, ...)
+stderr_out (const char *fmt, ...)
 {
   int retval;
   va_list args;
@@ -314,7 +317,7 @@ stderr_out (CONST char *fmt, ...)
    GETTEXT on the format string. */
 
 int
-stdout_out (CONST char *fmt, ...)
+stdout_out (const char *fmt, ...)
 {
   int retval;
   va_list args;
@@ -362,7 +365,7 @@ make_arg_list_1 (int argc, char **argv, int skip_args)
 	      /* Do not trust to what crt0 has stuffed into argv[0] */
 	      char full_exe_path [MAX_PATH];
 	      GetModuleFileName (NULL, full_exe_path, MAX_PATH);
-	      result = Fcons (build_ext_string (full_exe_path, FORMAT_FILENAME),
+	      result = Fcons (build_ext_string (full_exe_path, Qfile_name),
 			      result);
 #if defined(HAVE_SHLIB)
 	      (void)dll_init(full_exe_path);
@@ -370,7 +373,8 @@ make_arg_list_1 (int argc, char **argv, int skip_args)
 	    }
 	  else
 #endif
-	    result = Fcons (build_ext_string (argv [i], FORMAT_FILENAME), result);
+	    result = Fcons (build_ext_string (argv [i], Qfile_name),
+			    result);
 	}
     }
   return result;
@@ -394,10 +398,12 @@ make_argc_argv (Lisp_Object argv_list, int *argc, char ***argv)
 
   for (i = 0, next = argv_list; i < n; i++, next = XCDR (next))
     {
-      CONST char *temp;
+      const char *temp;
       CHECK_STRING (XCAR (next));
 
-      GET_C_STRING_EXT_DATA_ALLOCA (XCAR (next), FORMAT_OS, temp);
+      TO_EXTERNAL_FORMAT (LISP_STRING, XCAR (next),
+			  C_STRING_ALLOCA, temp,
+			  Qnative);
       (*argv) [i] = xstrdup (temp);
     }
   (*argv) [n] = 0;
@@ -540,7 +546,8 @@ main_1 (int argc, char **argv, char **envp, int restart)
   extern int malloc_cookie;
 #endif
 
-#if !defined(SYSTEM_MALLOC) && !defined(HAVE_LIBMCHECK)
+#if (!defined (SYSTEM_MALLOC) && !defined (HAVE_LIBMCHECK)	\
+     && !defined (DOUG_LEA_MALLOC))
   /* Make sure that any libraries we link against haven't installed a
      hook for a gmalloc of a potentially incompatible version. */
   /* If we're using libmcheck, the hooks have already been initialized, */
@@ -548,7 +555,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
   __malloc_hook = NULL;
   __realloc_hook = NULL;
   __free_hook = NULL;
-#endif /* not SYSTEM_MALLOC */
+#endif /* not SYSTEM_MALLOC or HAVE_LIBMCHECK or DOUG_LEA_MALLOC */
 
   noninteractive = 0;
 
@@ -609,15 +616,6 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #endif
 
   clearerr (stdin);
-
-#ifdef APOLLO
-#ifndef APOLLO_SR10
-  /* If USE_DOMAIN_ACLS environment variable exists,
-     use ACLs rather than UNIX modes. */
-  if (egetenv ("USE_DOMAIN_ACLS"))
-    default_acl (USE_DEFACL);
-#endif
-#endif /* APOLLO */
 
 #if defined (HAVE_MMAP) && defined (REL_ALLOC)
   /* ralloc can only be used if using the GNU memory allocator. */
@@ -848,6 +846,22 @@ main_1 (int argc, char **argv, char **envp, int restart)
      We try to do things in an order that minimizes the non-obvious
      dependencies between functions. */
 
+  /* purify_flag 1 is correct even if CANNOT_DUMP.
+   * loadup.el will set to nil at end. */
+
+  purify_flag = 0;
+#ifdef PDUMP
+  if (restart)
+    initialized = 1;
+  else {
+    initialized = pdump_load ();
+    purify_flag = !initialized;
+  }
+#else
+  if (!initialized)
+    purify_flag = 1;
+#endif
+
   if (!initialized)
     {
       /* Initialize things so that new Lisp objects
@@ -884,9 +898,6 @@ main_1 (int argc, char **argv, char **envp, int restart)
 
       syms_of_abbrev ();
       syms_of_alloc ();
-#ifdef HAVE_X_WINDOWS
-      syms_of_balloon_x ();
-#endif
       syms_of_buffer ();
       syms_of_bytecode ();
       syms_of_callint ();
@@ -900,6 +911,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       syms_of_data ();
 #ifdef DEBUG_XEMACS
       syms_of_debug ();
+      syms_of_tests ();
 #endif /* DEBUG_XEMACS */
       syms_of_device ();
 #ifdef HAVE_DIALOGS
@@ -936,6 +948,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_DIALOGS) || defined (HAVE_TOOLBARS)
       syms_of_gui ();
 #endif
+      syms_of_gutter ();
       syms_of_indent ();
       syms_of_intl ();
       syms_of_keymap ();
@@ -968,6 +981,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       syms_of_rangetab ();
       syms_of_redisplay ();
       syms_of_search ();
+      syms_of_select ();
       syms_of_signal ();
       syms_of_sound ();
       syms_of_specifier ();
@@ -990,6 +1004,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #endif
 
 #ifdef HAVE_X_WINDOWS
+      syms_of_balloon_x ();
       syms_of_device_x ();
 #ifdef HAVE_DIALOGS
       syms_of_dialog_x ();
@@ -1000,10 +1015,15 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #ifdef HAVE_MENUBARS
       syms_of_menubar_x ();
 #endif
-      syms_of_xselect ();
+      syms_of_select_x ();
 #if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_DIALOGS) || defined (HAVE_TOOLBARS)
       syms_of_gui_x ();
 #endif
+#ifdef HAVE_XIM
+#ifdef XIM_XLIB
+      syms_of_input_method_xlib ();
+#endif
+#endif /* HAVE_XIM */
 #endif /* HAVE_X_WINDOWS */
 
 #ifdef HAVE_MS_WINDOWS
@@ -1013,6 +1033,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       syms_of_objects_mswindows ();
       syms_of_select_mswindows ();
       syms_of_glyphs_mswindows ();
+      syms_of_gui_mswindows ();
 #ifdef HAVE_MENUBARS
       syms_of_menubar_mswindows ();
 #endif
@@ -1022,6 +1043,9 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #ifdef HAVE_MSW_C_DIRED
       syms_of_dired_mswindows ();
 #endif
+#ifdef WINDOWSNT
+      syms_of_ntproc ();
+#endif
 #endif	/* HAVE_MS_WINDOWS */
 
 #ifdef MULE
@@ -1030,7 +1054,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       syms_of_mule_charset ();
 #endif
 #ifdef FILE_CODING
-      syms_of_mule_coding ();
+      syms_of_file_coding ();
 #endif
 #ifdef MULE
 #ifdef HAVE_WNN
@@ -1071,6 +1095,10 @@ main_1 (int argc, char **argv, char **envp, int restart)
       syms_of_eldap ();
 #endif
 
+#ifdef HAVE_GPM
+	  syms_of_gpmevent ();
+#endif
+
       /* Now create the subtypes for the types that have them.
 	 We do this before the vars_*() because more symbols
 	 may get initialized here. */
@@ -1102,6 +1130,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       console_type_create_device_x ();
       console_type_create_frame_x ();
       console_type_create_glyphs_x ();
+      console_type_create_select_x ();
 #ifdef HAVE_MENUBARS
       console_type_create_menubar_x ();
 #endif
@@ -1125,6 +1154,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       console_type_create_objects_mswindows ();
       console_type_create_redisplay_mswindows ();
       console_type_create_glyphs_mswindows ();
+      console_type_create_select_mswindows ();
 # ifdef HAVE_SCROLLBARS
       console_type_create_scrollbar_mswindows ();
 # endif
@@ -1152,6 +1182,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       specifier_type_create ();
 
       specifier_type_create_image ();
+      specifier_type_create_gutter ();
       specifier_type_create_objects ();
 #ifdef HAVE_TOOLBARS
       specifier_type_create_toolbar ();
@@ -1187,6 +1218,9 @@ main_1 (int argc, char **argv, char **envp, int restart)
       image_instantiator_format_create ();
       image_instantiator_format_create_glyphs_eimage ();
       image_instantiator_format_create_glyphs_widget ();
+#ifdef HAVE_TTY
+      image_instantiator_format_create_glyphs_tty ();
+#endif
 #ifdef HAVE_X_WINDOWS
       image_instantiator_format_create_glyphs_x ();
 #endif /* HAVE_X_WINDOWS */
@@ -1204,7 +1238,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
 
       lstream_type_create ();
 #ifdef FILE_CODING
-      lstream_type_create_mule_coding ();
+      lstream_type_create_file_coding ();
 #endif
 #if defined (HAVE_MS_WINDOWS) && !defined(HAVE_MSG_SELECT)
       lstream_type_create_mswindows_selectable ();
@@ -1235,7 +1269,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
 	 staticpro()
 	 Fprovide(symbol)
 	 intern()
-	 pure_put()
+	 Fput()
 	 xmalloc()
 	 defsymbol(), if it's absolutely necessary and you're sure that
 	   the symbol isn't referenced anywhere else in the initialization
@@ -1248,7 +1282,6 @@ main_1 (int argc, char **argv, char **envp, int restart)
 	 Any of the object-creating functions on alloc.c: e.g.
 
 	 make_pure_*()
-	 Fpurecopy()
 	 make_string()
 	 build_string()
 	 make_vector()
@@ -1258,7 +1291,6 @@ main_1 (int argc, char **argv, char **envp, int restart)
 	 Fcons()
 	 listN()
 	 make_opaque_ptr()
-	 make_opaque_long()
 
 	 perhaps a few others.
        */
@@ -1266,21 +1298,23 @@ main_1 (int argc, char **argv, char **envp, int restart)
       /* Now allow Fprovide() statements to be made. */
       init_provide_once ();
 
+      /* Do that before any specifier creation (esp. vars_of_glyphs()) */
+      vars_of_specifier ();
+
       vars_of_abbrev ();
       vars_of_alloc ();
-#ifdef HAVE_X_WINDOWS
-      vars_of_balloon_x ();
-#endif
       vars_of_buffer ();
       vars_of_bytecode ();
       vars_of_callint ();
       vars_of_callproc ();
+      vars_of_chartab ();
       vars_of_cmdloop ();
       vars_of_cmds ();
       vars_of_console ();
       vars_of_data ();
 #ifdef DEBUG_XEMACS
       vars_of_debug ();
+      vars_of_tests ();
 #endif
       vars_of_console_stream ();
       vars_of_device ();
@@ -1321,6 +1355,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_DIALOGS) || defined (HAVE_TOOLBARS)
       vars_of_gui ();
 #endif
+      vars_of_gutter ();
       vars_of_indent ();
       vars_of_insdel ();
       vars_of_intl ();
@@ -1346,6 +1381,10 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #ifdef HAVE_SHLIB
       vars_of_module ();
 #endif
+#ifdef WINDOWSNT
+      vars_of_nt ();
+      vars_of_ntproc ();
+#endif
       vars_of_objects ();
       vars_of_print ();
 
@@ -1368,8 +1407,8 @@ main_1 (int argc, char **argv, char **envp, int restart)
       vars_of_scrollbar ();
 #endif
       vars_of_search ();
+      vars_of_select ();
       vars_of_sound ();
-      vars_of_specifier ();
       vars_of_symbols ();
       vars_of_syntax ();
 #ifdef HAVE_TOOLBARS
@@ -1385,6 +1424,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #endif
 
 #ifdef HAVE_X_WINDOWS
+      vars_of_balloon_x ();
       vars_of_device_x ();
 #ifdef HAVE_DIALOGS
       vars_of_dialog_x ();
@@ -1395,14 +1435,14 @@ main_1 (int argc, char **argv, char **envp, int restart)
       vars_of_menubar_x ();
 #endif
       vars_of_objects_x ();
-      vars_of_xselect ();
+      vars_of_select_x ();
 #ifdef HAVE_SCROLLBARS
       vars_of_scrollbar_x ();
 #endif
 #if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_DIALOGS) || defined (HAVE_TOOLBARS)
       vars_of_gui_x ();
 #endif
-#endif
+#endif /* HAVE_X_WINDOWS */
 
 #ifdef HAVE_MS_WINDOWS
       vars_of_device_mswindows ();
@@ -1427,10 +1467,11 @@ main_1 (int argc, char **argv, char **envp, int restart)
 
 #ifdef MULE
       vars_of_mule ();
+      vars_of_mule_ccl ();
       vars_of_mule_charset ();
 #endif
 #ifdef FILE_CODING
-      vars_of_mule_coding ();
+      vars_of_file_coding ();
 #endif
 #ifdef MULE
 #ifdef HAVE_WNN
@@ -1453,6 +1494,10 @@ main_1 (int argc, char **argv, char **envp, int restart)
       vars_of_eldap ();
 #endif
 
+#ifdef HAVE_GPM
+	  vars_of_gpmevent ();
+#endif
+
       /* Now initialize any specifier variables.  We do this later
 	 because it has some dependence on the vars initialized
 	 above.
@@ -1468,6 +1513,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
 	 */
 
       specifier_vars_of_glyphs ();
+      specifier_vars_of_gutter ();
 #ifdef HAVE_MENUBARS
       specifier_vars_of_menubar ();
 #endif
@@ -1501,8 +1547,8 @@ main_1 (int argc, char **argv, char **envp, int restart)
 	 earlier.  The second may also depend on the first. */
       complex_vars_of_mule_charset ();
 #endif
-#if defined(FILE_CODING)
-      complex_vars_of_mule_coding ();
+#ifdef FILE_CODING
+      complex_vars_of_file_coding ();
 #endif
 
       /* This calls allocate_glyph(), which creates specifiers
@@ -1583,7 +1629,117 @@ main_1 (int argc, char **argv, char **envp, int restart)
 	  garbage_collect_1 ();
       }
 #endif
+#ifdef PDUMP
+    } else if (!restart) {
+      reinit_alloc_once_early ();
+      reinit_symbols_once_early ();
+      reinit_opaque_once_early ();
+
+      reinit_console_type_create_stream ();
+#ifdef HAVE_TTY
+      reinit_console_type_create_tty ();
+#endif
+#ifdef HAVE_X_WINDOWS
+      reinit_console_type_create_x ();
+      reinit_console_type_create_device_x ();
+#endif
+#ifdef HAVE_MS_WINDOWS
+      reinit_console_type_create_mswindows ();
+#endif
+
+      reinit_specifier_type_create ();
+      reinit_specifier_type_create_image ();
+      reinit_specifier_type_create_gutter ();
+      reinit_specifier_type_create_objects ();
+#ifdef HAVE_TOOLBARS
+      reinit_specifier_type_create_toolbar ();
+#endif
+
+      structure_type_create ();
+
+      structure_type_create_chartab ();
+      structure_type_create_faces ();
+      structure_type_create_rangetab ();
+      structure_type_create_hash_table ();
+
+      lstream_type_create ();
+#ifdef FILE_CODING
+      lstream_type_create_file_coding ();
+#endif
+#if defined (HAVE_MS_WINDOWS) && !defined(HAVE_MSG_SELECT)
+      lstream_type_create_mswindows_selectable ();
+#endif
+#ifdef HAVE_UNIX_PROCESSES
+      process_type_create_unix ();
+#endif
+#ifdef HAVE_WIN32_PROCESSES
+      process_type_create_nt ();
+#endif
+
+      reinit_vars_of_buffer ();
+      reinit_vars_of_console ();
+#ifdef DEBUG_XEMACS
+      reinit_vars_of_debug ();
+#endif
+      reinit_vars_of_device ();
+      reinit_vars_of_eval ();
+#ifdef HAVE_X_WINDOWS
+      reinit_vars_of_event_Xt ();
+#endif
+#if defined(HAVE_TTY) && (defined (DEBUG_TTY_EVENT_STREAM) || !defined (HAVE_X_WINDOWS))
+      reinit_vars_of_event_tty ();
+#endif
+#ifdef HAVE_MS_WINDOWS
+      reinit_vars_of_event_mswindows ();
+#endif
+      reinit_vars_of_event_stream ();
+      reinit_vars_of_events ();
+      reinit_vars_of_extents ();
+      reinit_vars_of_font_lock ();
+      reinit_vars_of_glyphs ();
+      reinit_vars_of_glyphs_widget ();
+      reinit_vars_of_insdel ();
+      reinit_vars_of_lread ();
+      reinit_vars_of_lstream ();
+      reinit_vars_of_minibuf ();
+#ifdef HAVE_SHLIB
+      reinit_vars_of_module ();
+#endif
+      reinit_vars_of_objects ();
+      reinit_vars_of_print ();
+      reinit_vars_of_redisplay ();
+      reinit_vars_of_search ();
+      reinit_vars_of_undo ();
+      reinit_vars_of_window ();
+
+#ifdef HAVE_MS_WINDOWS
+      reinit_vars_of_frame_mswindows ();
+#endif
+
+#ifdef HAVE_X_WINDOWS
+      reinit_vars_of_device_x ();
+#ifdef HAVE_SCROLLBARS
+      reinit_vars_of_scrollbar_x ();
+#endif
+#ifdef HAVE_MENUBARS
+      reinit_vars_of_menubar_x ();
+#endif
+      reinit_vars_of_select_x ();
+#if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_DIALOGS) || defined (HAVE_TOOLBARS)
+      reinit_vars_of_gui_x ();
+#endif
+#endif /* HAVE_X_WINDOWS */
+
+#if defined(MULE) && defined(HAVE_WNN)
+      reinit_vars_of_mule_wnn ();
+#endif
+
+      reinit_complex_vars_of_buffer ();
+      reinit_complex_vars_of_console ();
+      reinit_complex_vars_of_minibuf ();
+#endif /* PDUMP */
     }
+
 
   /* CONGRATULATIONS!!!  We have successfully initialized the Lisp
      engine. */
@@ -1639,6 +1795,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
 
   init_redisplay ();      /* Determine terminal type.
 			     init_sys_modes uses results */
+  init_frame ();
   init_event_stream (); /* Set up so we can get user input. */
   init_macros (); /* set up so we can run macros. */
   init_editfns (); /* Determine the name of the user we're running as */
@@ -1676,7 +1833,8 @@ main_1 (int argc, char **argv, char **envp, int restart)
     else
       {
 	Vinvocation_path = decode_env_path ("PATH", NULL);
-	locate_file (Vinvocation_path, Vinvocation_name, EXEC_SUFFIXES,
+	locate_file (Vinvocation_path, Vinvocation_name,
+		     Vlisp_EXEC_SUFFIXES,
 		     &Vinvocation_directory, X_OK);
       }
 
@@ -1745,8 +1903,8 @@ main_1 (int argc, char **argv, char **envp, int restart)
 
 struct standard_args
 {
-  CONST char * CONST name;
-  CONST char * CONST longname;
+  const char * const name;
+  const char * const longname;
   int priority;
   int nargs;
 };
@@ -1985,11 +2143,11 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
      (int nargs, Lisp_Object *args))
 {
   int ac;
-  CONST Extbyte *wampum;
+  const Extbyte *wampum;
   int namesize;
   int total_len;
   Lisp_Object orig_invoc_name = Fcar (Vcommand_line_args);
-  CONST Extbyte **wampum_all = alloca_array (CONST Extbyte *, nargs);
+  const Extbyte **wampum_all = alloca_array (const Extbyte *, nargs);
   int *wampum_all_len  = alloca_array (int, nargs);
 
   assert (!gc_in_progress);
@@ -2000,21 +2158,22 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
   /* Need to convert the orig_invoc_name and all of the arguments
      to external format. */
 
-  GET_STRING_EXT_DATA_ALLOCA (orig_invoc_name, FORMAT_OS, wampum,
-			      namesize);
+  TO_EXTERNAL_FORMAT (LISP_STRING, orig_invoc_name,
+		      ALLOCA, (wampum, namesize),
+		      Qnative);
   namesize++;
 
   for (ac = 0, total_len = namesize; ac < nargs; ac++)
     {
       CHECK_STRING (args[ac]);
-      GET_STRING_EXT_DATA_ALLOCA (args[ac], FORMAT_OS,
-				  wampum_all[ac],
-				  wampum_all_len[ac]);
+      TO_EXTERNAL_FORMAT (LISP_STRING, args[ac],
+			  ALLOCA, (wampum_all[ac], wampum_all_len[ac]),
+			  Qnative);
       wampum_all_len[ac]++;
       total_len += wampum_all_len[ac];
     }
   DO_REALLOC (run_temacs_args, run_temacs_args_size, total_len, char);
-  DO_REALLOC (run_temacs_argv, run_temacs_argv_size, nargs+1, char *);
+  DO_REALLOC (run_temacs_argv, run_temacs_argv_size, nargs+2, char *);
 
   memcpy (run_temacs_args, wampum, namesize);
   run_temacs_argv [0] = run_temacs_args;
@@ -2031,13 +2190,9 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
   unbind_to (0, Qnil); /* this closes loadup.el */
   purify_flag = 0;
   run_temacs_argc = nargs + 1;
-#if 0
-#ifdef REPORT_PURE_USAGE
-  report_pure_usage (1, 0);
-#else
-  report_pure_usage (0, 0);
+#ifdef HEAP_IN_DATA
+  report_sheap_usage (0);
 #endif
-#endif /* 0 */
   LONGJMP (run_temacs_catch, 1);
   return Qnil; /* not reached; warning suppression */
 }
@@ -2177,9 +2332,13 @@ voodoo_free_hook (void *mem)
 {
   /* Disable all calls to free() when XEmacs is exiting and it doesn't */
   /* matter. */
-  __free_hook = voodoo_free_hook;
-}
+  __free_hook =
+#ifdef __GNUC__ /* prototype of __free_hook varies with glibc version */
+    (__typeof__ (__free_hook))
 #endif
+    voodoo_free_hook;
+}
+#endif /* GNU_MALLOC */
 
 DEFUN ("kill-emacs", Fkill_emacs, 0, 1, "P", /*
 Exit the XEmacs job and kill it.  Ask for confirmation, without argument.
@@ -2233,13 +2392,17 @@ all of which are called before XEmacs is actually killed.
 
   UNGCPRO;
 
-  shut_down_emacs (0, ((STRINGP (arg)) ? arg : Qnil));
+  shut_down_emacs (0, STRINGP (arg) ? arg : Qnil);
 
 #if defined(GNU_MALLOC)
-  __free_hook = voodoo_free_hook;
+  __free_hook =
+#ifdef __GNUC__ /* prototype of __free_hook varies with glibc version */
+    (__typeof__ (__free_hook))
+#endif
+    voodoo_free_hook;
 #endif
 
-  exit ((INTP (arg)) ? XINT (arg) : 0);
+  exit (INTP (arg) ? XINT (arg) : 0);
   /* NOTREACHED */
   return Qnil; /* I'm sick of the compiler warning */
 }
@@ -2295,12 +2458,16 @@ shut_down_emacs (int sig, Lisp_Object stuff)
 	("Your files have been auto-saved.\n"
 	 "Use `M-x recover-session' to recover them.\n"
 	 "\n"
+         "If you have access to the PROBLEMS file that came with your\n"
+         "version of XEmacs, please check to see if your crash is described\n"
+         "there, as there may be a workaround available.\n"
 #ifdef INFODOCK
-	 "Please report this bug by selecting `Report-Bug' in the InfoDock\n"
-	 "menu.\n"
+	 "Otherwise, please report this bug by selecting `Report-Bug'\n"
+         "in the InfoDock menu.\n"
 #else
-	 "Please report this bug by running the send-pr script included\n"
-	 "with XEmacs, or selecting `Send Bug Report' from the help menu.\n"
+	 "Otherwise, please report this bug by running the send-pr\n"
+         "script included with XEmacs, or selecting `Send Bug Report'\n"
+         "from the help menu.\n"
 	 "As a last resort send ordinary email to `crashes@xemacs.org'.\n"
 #endif
 	 "*MAKE SURE* to include the information in the command\n"
@@ -2315,17 +2482,17 @@ shut_down_emacs (int sig, Lisp_Object stuff)
 	 "\n"
 	 "  gdb ");
       {
-	CONST char *name;
+	const char *name;
 	char *dir = 0;
 
 	/* Now try to determine the actual path to the executable,
 	   to try to make the backtrace-determination process as foolproof
 	   as possible. */
-	if (GC_STRINGP (Vinvocation_name))
+	if (STRINGP (Vinvocation_name))
 	  name = (char *) XSTRING_DATA (Vinvocation_name);
 	else
 	  name = "xemacs";
-	if (GC_STRINGP (Vinvocation_directory))
+	if (STRINGP (Vinvocation_directory))
 	  dir = (char *) XSTRING_DATA (Vinvocation_directory);
 	if (!dir || dir[0] != '/')
 	  stderr_out ("`which %s`", name);
@@ -2362,10 +2529,10 @@ shut_down_emacs (int sig, Lisp_Object stuff)
 
 
 #ifndef CANNOT_DUMP
-/* Nothing like this can be implemented on an Apollo.
-   What a loss!  */
 
+#if !defined(PDUMP) || !defined(SYSTEM_MALLOC)
 extern char my_edata[];
+#endif
 
 #ifdef HAVE_SHM
 
@@ -2446,11 +2613,11 @@ and announce itself normally when it is run.
   opurify = purify_flag;
   purify_flag = 0;
 
-#ifdef DEBUG_XEMACS
-  report_pure_usage (1, 1);
-#else
-  report_pure_usage (0, 1);
+#ifdef HEAP_IN_DATA
+  report_sheap_usage (1);
 #endif
+
+  clear_message ();
 
   fflush (stderr);
   fflush (stdout);
@@ -2482,13 +2649,23 @@ and announce itself normally when it is run.
     char *intoname_ext;
     char *symname_ext;
 
-    GET_C_STRING_FILENAME_DATA_ALLOCA (intoname, intoname_ext);
+    TO_EXTERNAL_FORMAT (LISP_STRING, intoname,
+			C_STRING_ALLOCA, intoname_ext,
+			Qfile_name);
+
     if (STRINGP (symname))
-      GET_C_STRING_FILENAME_DATA_ALLOCA (symname, symname_ext);
+      TO_EXTERNAL_FORMAT (LISP_STRING, symname,
+			  C_STRING_ALLOCA, symname_ext,
+			  Qfile_name);
     else
       symname_ext = 0;
 
     garbage_collect_1 ();
+
+#ifdef PDUMP
+    pdump ();
+#else
+
 #ifdef DOUG_LEA_MALLOC
     malloc_state_ptr = malloc_get_state ();
 #endif
@@ -2502,6 +2679,7 @@ and announce itself normally when it is run.
 #ifdef DOUG_LEA_MALLOC
     free (malloc_state_ptr);
 #endif
+#endif /* not PDUMP */
   }
 #endif /* not MSDOS and EMX */
 
@@ -2521,15 +2699,15 @@ and announce itself normally when it is run.
 /* Split STRING into a list of substrings.  The substrings are the
    parts of original STRING separated by SEPCHAR.  */
 static Lisp_Object
-split_string_by_emchar_1 (CONST Bufbyte *string, Bytecount size,
+split_string_by_emchar_1 (const Bufbyte *string, Bytecount size,
 			  Emchar sepchar)
 {
   Lisp_Object result = Qnil;
-  CONST Bufbyte *end = string + size;
+  const Bufbyte *end = string + size;
 
   while (1)
     {
-      CONST Bufbyte *p = string;
+      const Bufbyte *p = string;
       while (p < end)
 	{
 	  if (charptr_emchar (p) == sepchar)
@@ -2549,33 +2727,32 @@ split_string_by_emchar_1 (CONST Bufbyte *string, Bytecount size,
 }
 
 /* The same as the above, except PATH is an external C string (it is
-   converted as FORMAT_FILENAME), and sepchar is hardcoded to SEPCHAR
+   converted using Qfile_name), and sepchar is hardcoded to SEPCHAR
    (':' or whatever).  */
 Lisp_Object
-decode_path (CONST char *path)
+decode_path (const char *path)
 {
-  int len;
+  Bytecount newlen;
   Bufbyte *newpath;
   if (!path)
     return Qnil;
 
-  GET_C_CHARPTR_INT_FILENAME_DATA_ALLOCA (path, newpath);
+  TO_INTERNAL_FORMAT (C_STRING, path, ALLOCA, (newpath, newlen), Qfile_name);
 
-  len = strlen ((const char *) newpath);
   /* #### Does this make sense?  It certainly does for
      decode_env_path(), but it looks dubious here.  Does any code
      depend on decode_path("") returning nil instead of an empty
      string?  */
-  if (!len)
+  if (!newlen)
     return Qnil;
 
-  return split_string_by_emchar_1 (newpath, (Bytecount)len, SEPCHAR);
+  return split_string_by_emchar_1 (newpath, newlen, SEPCHAR);
 }
 
 Lisp_Object
-decode_env_path (CONST char *evarname, CONST char *default_)
+decode_env_path (const char *evarname, const char *default_)
 {
-  CONST char *path = 0;
+  const char *path = 0;
   if (evarname)
     path = egetenv (evarname);
   if (!path)
@@ -2638,7 +2815,7 @@ Non-nil return value means XEmacs is running without interactive terminal.
 /* This highly dubious kludge ... shut up Jamie, I'm tired of your slagging. */
 
 DOESNT_RETURN
-assert_failed (CONST char *file, int line, CONST char *expr)
+assert_failed (const char *file, int line, const char *expr)
 {
   stderr_out ("Fatal error: assertion failed, file %s, line %d, %s\n",
 	      file, line, expr);
@@ -2761,7 +2938,7 @@ Symbol indicating type of operating system you are using.
   DEFVAR_LISP ("system-configuration", &Vsystem_configuration /*
 String naming the configuration XEmacs was built for.
 */ );
-  Vsystem_configuration = Fpurecopy (build_string (EMACS_CONFIGURATION));
+  Vsystem_configuration = build_string (EMACS_CONFIGURATION);
 
 #ifndef EMACS_CONFIG_OPTIONS
 # define EMACS_CONFIG_OPTIONS "UNKNOWN"
@@ -2769,8 +2946,7 @@ String naming the configuration XEmacs was built for.
   DEFVAR_LISP ("system-configuration-options", &Vsystem_configuration_options /*
 String containing the configuration options XEmacs was built with.
 */ );
-  Vsystem_configuration_options = Fpurecopy (build_string
-					     (EMACS_CONFIG_OPTIONS));
+  Vsystem_configuration_options = build_string (EMACS_CONFIG_OPTIONS);
 
   DEFVAR_LISP ("emacs-major-version", &Vemacs_major_version /*
 Major version number of this version of Emacs, as an integer.
@@ -2788,7 +2964,20 @@ Warning: this variable did not exist in Emacs versions earlier than:
 */ );
   Vemacs_minor_version = make_int (EMACS_MINOR_VERSION);
 
-  DEFVAR_LISP ("emacs-beta-version", &Vemacs_beta_version /*
+  DEFVAR_LISP ("emacs-patch-level", &Vemacs_patch_level /*
+The patch level of this version of Emacs, as an integer.
+The value is non-nil if this version of XEmacs is part of a series of
+stable XEmacsen, but has bug fixes applied.
+Warning: this variable does not exist in FSF Emacs or in XEmacs versions
+earlier than 21.1.1
+*/ );
+#ifdef EMACS_PATCH_LEVEL
+  Vemacs_patch_level = make_int (EMACS_PATCH_LEVEL);
+#else
+  Vemacs_patch_level = Qnil;
+#endif
+
+    DEFVAR_LISP ("emacs-beta-version", &Vemacs_beta_version /*
 Beta number of this version of Emacs, as an integer.
 The value is nil if this is an officially released version of XEmacs.
 Warning: this variable does not exist in FSF Emacs or in XEmacs versions
@@ -2823,7 +3012,7 @@ Codename of this version of Emacs (a string).
 #ifndef XEMACS_CODENAME
 #define XEMACS_CODENAME "Noname"
 #endif
-  Vxemacs_codename = Fpurecopy (build_string (XEMACS_CODENAME));
+  Vxemacs_codename = build_string (XEMACS_CODENAME);
 
   DEFVAR_BOOL ("noninteractive", &noninteractive1 /*
 Non-nil means XEmacs is running without interactive terminal.
@@ -2897,7 +3086,46 @@ bufpos		- check buffer positions.
   Vinternal_error_checking = Fcons (intern ("bufpos"),
 				    Vinternal_error_checking);
 #endif
-  Vinternal_error_checking = Fpurecopy (Vinternal_error_checking);
+
+  DEFVAR_CONST_LISP ("mail-lock-methods", &Vmail_lock_methods /*
+Mail spool locking methods supported by this instance of XEmacs.
+This is a list of symbols.  Each of the symbols is one of the
+following: dot, lockf, flock, locking, mmdf.
+*/ );
+  {
+    Vmail_lock_methods = Qnil;
+    Vmail_lock_methods = Fcons (intern ("dot"), Vmail_lock_methods);
+#ifdef HAVE_LOCKF
+    Vmail_lock_methods = Fcons (intern ("lockf"), Vmail_lock_methods);
+#endif
+#ifdef HAVE_FLOCK
+    Vmail_lock_methods = Fcons (intern ("flock"), Vmail_lock_methods);
+#endif
+#ifdef HAVE_MMDF
+    Vmail_lock_methods = Fcons (intern ("mmdf"), Vmail_lock_methods);
+#endif
+#ifdef HAVE_LOCKING
+    Vmail_lock_methods = Fcons (intern ("locking"), Vmail_lock_methods);
+#endif
+  }
+  
+  DEFVAR_CONST_LISP ("configure-mail-lock-method", &Vconfigure_mail_lock_method /*
+Mail spool locking method suggested by configure.  This is one
+of the symbols in MAIL-LOCK-METHODS.
+*/ );
+  {
+#if defined(MAIL_LOCK_FLOCK) && defined(HAVE_FLOCK)
+    Vconfigure_mail_lock_method = intern("flock");
+#elif defined(MAIL_LOCK_LOCKF) && defined(HAVE_LOCKF)
+    Vconfigure_mail_lock_method = intern("lockf");
+#elif defined(MAIL_LOCK_MMDF) && defined(HAVE_MMDF)
+    Vconfigure_mail_lock_method = intern("mmdf");
+#elif defined(MAIL_LOCK_LOCKING) && defined(HAVE_LOCKING)
+    Vconfigure_mail_lock_method = intern("locking");
+#else
+    Vconfigure_mail_lock_method = intern("dot");
+#endif
+  }
 
   DEFVAR_LISP ("path-separator", &Vpath_separator /*
 The directory separator in search paths, as a string.
@@ -3124,7 +3352,7 @@ The configured initial path for info documentation.
 #endif
 }
 
-#ifdef __sgi
+#if defined(__sgi) && !defined(PDUMP)
 /* This is so tremendously ugly I'd puke. But then, it works.
  * The target is to override the static constructor from the
  * libiflPNG.so library which is maskerading as libz, and

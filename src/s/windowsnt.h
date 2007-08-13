@@ -105,9 +105,9 @@ typedef int pid_t;
    The alternative is that a lock file named
    /usr/spool/mail/$USER.lock.  */
 
-/* #define MAIL_USE_FLOCK */
 #define MAIL_USE_POP
-#define MAIL_USE_SYSTEM_LOCK
+#define HAVE_LOCKING
+#define MAIL_USE_LOCKING
 
 /* If the character used to separate elements of the executable path
    is not ':', #define this to be the appropriate character constant.  */
@@ -125,7 +125,7 @@ typedef int pid_t;
 /* XEmacs file I/O for DOS text files requires FILE_CODING */
 #define FILE_CODING
 
-#define DIRECTORY_SEP '\\'
+#define DIRECTORY_SEP ((char)XCHAR(Vdirectory_sep_char))
 
 /* Define this to be the separator between devices and paths */
 #define DEVICE_SEP ':'
@@ -182,49 +182,15 @@ typedef int pid_t;
 
 #define MODE_LINE_BINARY_TEXT(_b_) (NILP ((_b_)->buffer_file_type) ? "T" : "B")
 
-/* get some redefinitions in place */
-
-#if 0
-/* IO calls that are emulated or shadowed */
-#define access  sys_access
-#define chdir   sys_chdir
-#define chmod   sys_chmod
-#define close   sys_close
-#define creat   sys_creat
-#define ctime sys_ctime
-#define dup     sys_dup
-#define dup2    sys_dup2
-#define fopen   sys_fopen
-#define link    sys_link
-#define mktemp  sys_mktemp
-#define open    sys_open
-#define read    sys_read
-#define rename  sys_rename
-#define unlink  sys_unlink
-#define write   sys_write
-#define mkdir   sys_mkdir
-#define rmdir   sys_rmdir
-
-#endif
-
-#if 0
-/* this is hacky, but is necessary to avoid warnings about macro
-   redefinitions using the SDK compilers */
-#ifndef __STDC__
-#define __STDC__ 1
-#define MUST_UNDEF__STDC__
-#endif
-#include <direct.h>
-#include <io.h>
-#include <stdio.h>
-#ifdef MUST_UNDEF__STDC__
-#undef __STDC__
-#undef MUST_UNDEF__STDC__
-#endif
-#endif
 
 #include <stdio.h>
 
+/* subprocess calls that are emulated */
+#ifndef DONT_ENCAPSULATE
+#define spawnve sys_spawnve
+int spawnve (int mode, const char *cmdname, 
+	     const char * const *argv, const char *const *envp);
+#endif
 
 /* IO calls that are emulated or shadowed */
 #define pipe    sys_pipe
@@ -234,11 +200,6 @@ int sys_pipe (int * phandles);
 #define sleep   sys_sleep
 void sleep (int seconds);
 #endif
-
-/* subprocess calls that are emulated */
-#define spawnve sys_spawnve
-int spawnve (int mode, CONST char *cmdname, 
-	     CONST char * CONST *argv, CONST char *CONST *envp);
 
 #define wait    sys_wait
 int wait (int *status);
@@ -250,41 +211,15 @@ int kill (int pid, int sig);
 #define popen     _popen
 #define pclose    _pclose
 
-#if 0
-#define chdir     _chdir
-#define execlp    _execlp
-#define execvp    _execvp
-#define fcloseall _fcloseall
-#define fdopen    _fdopen
-#define fgetchar  _fgetchar
-#define fileno    _fileno
-#define flushall  _flushall
-#define fputchar  _fputchar
-#define getw      _getw
-#define getpid    _getpid
-#define isatty    _isatty
-#define logb      _logb
-#define _longjmp  longjmp
-#define lseek     _lseek
-#define putw      _putw
-#define umask     _umask
-/* #define utime     _utime */
-/* #define index     strchr */
-/* #define rindex    strrchr */
-#define read	  _read
-#define write	  _write
-#define getcwd    _getcwd
-
-#ifdef HAVE_NTGUI
-#define abort	win32_abort
-#endif
-
-#endif /* 0 */
+typedef int uid_t;
+typedef int gid_t;
+typedef int pid_t;
+typedef int ssize_t;
 
 /* Encapsulation of system calls */
 #ifndef DONT_ENCAPSULATE
 #define getpid sys_getpid
-int getpid (void);
+pid_t getpid (void);
 #endif
 
 /* Random global functions called everywhere. Implemented in nt.c */
@@ -299,12 +234,12 @@ char *getwd (char *dir);
 void *sbrk (unsigned long increment);
 
 struct passwd;
-struct passwd *getpwuid (int uid);
+struct passwd *getpwuid (uid_t uid);
 struct passwd *getpwnam (const char *name);
-int getuid ();
-int geteuid ();
-int getgid (void);
-int getegid ();
+uid_t getuid (void);
+uid_t geteuid (void);
+gid_t getgid (void);
+gid_t getegid (void);
 
 /* Setitimer is emulated */
 #define HAVE_SETITIMER
@@ -315,7 +250,6 @@ int getegid ();
 #define sighold(s) msw_sighold(s)
 #define sigrelse(s) msw_sigrelse(s)
 #define sigpause(s) msw_sigpause(s)
-#define signal sigset
 
 /* Defines that we need that aren't in the standard signal.h  */
 #define SIGHUP  1               /* Hang up */
@@ -327,13 +261,6 @@ int getegid ();
 /* For integration with MSDOS support.  */
 #define getdisk()               (_getdrive () - 1)
 #define getdefdir(_drv, _buf)   _getdcwd (_drv, _buf, MAXPATHLEN)
-
-#if 0 /* they do. -kkm */
-/* Define this so that winsock.h definitions don't get included when windows.h
-   is...  I don't know if they do the right thing for emacs.  For this to
-   have proper effect, config.h must always be included before windows.h.  */
-#define _WINSOCKAPI_    1
-#endif /* 0 */
 
 /* Defines size_t and alloca ().  */
 #include <malloc.h>
@@ -369,4 +296,11 @@ int getegid ();
 #ifdef DUMP_SEPARATE_SECTION
 #pragma data_seg("xdata")
 #pragma bss_seg("xdata")
+#endif
+
+#ifdef HAVE_SCROLLBARS
+/* Ensure the NT 4 mouse definitions in winuser.h are available */
+ #ifndef _WIN32_WINNT
+  #define _WIN32_WINNT 0x0400
+ #endif
 #endif

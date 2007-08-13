@@ -32,7 +32,7 @@ Boston, MA 02111-1307, USA.
 #include <signal.h>
 
 /* must include CRT headers *before* config.h */
-/* ### I don't believe it - martin */
+/* #### I don't believe it - martin */
 #include <config.h>
 #undef signal
 #undef wait
@@ -42,14 +42,18 @@ Boston, MA 02111-1307, USA.
 
 #include <windows.h>
 #include <sys/socket.h>
-
+#ifdef HAVE_A_OUT_H
+#include <a.out.h>
+#endif
 #include "lisp.h"
 #include "sysproc.h"
 #include "nt.h"
 #include "ntheap.h" /* From 19.34.6 */
 #include "systime.h"
 #include "syssignal.h"
+#include "sysfile.h"
 #include "syswait.h"
+#include "buffer.h"
 #include "process.h"
 /*#include "w32term.h"*/ /* From 19.34.6: sync in ? --marcpa */
 
@@ -86,6 +90,8 @@ Lisp_Object Vwin32_generate_fake_inodes;
 
 Lisp_Object Qhigh, Qlow;
 
+extern Lisp_Object Vlisp_EXEC_SUFFIXES;
+
 #ifndef DEBUG_XEMACS
 __inline
 #endif
@@ -113,6 +119,13 @@ child_process child_procs[ MAX_CHILDREN ];
 child_process *dead_child = NULL;
 
 DWORD WINAPI reader_thread (void *arg);
+
+/* Determine if running on Windows 9x and not NT */
+static int
+windows9x_p (void)
+{
+  return GetVersion () & 0x80000000;
+}
 
 /* Find an unused process slot.  */
 child_process *
@@ -223,6 +236,63 @@ find_child_pid (DWORD pid)
   return NULL;
 }
 
+/* Function to do blocking read of one byte, needed to implement
+   select.  It is only allowed on sockets and pipes. */
+static int
+_sys_read_ahead (int fd)
+{
+  child_process * cp;
+  int rc = 0;
+
+  if (fd < 0 || fd >= MAXDESC)
+    return STATUS_READ_ERROR;
+
+  cp = fd_info[fd].cp;
+
+  if (cp == NULL || cp->fd != fd || cp->status != STATUS_READ_READY)
+    return STATUS_READ_ERROR;
+
+  if ((fd_info[fd].flags & (FILE_PIPE | FILE_SOCKET)) == 0
+      || (fd_info[fd].flags & FILE_READ) == 0)
+    {
+      /* fd is not a pipe or socket */
+      abort ();
+    }
+  
+  cp->status = STATUS_READ_IN_PROGRESS;
+  
+  if (fd_info[fd].flags & FILE_PIPE)
+    {
+      rc = _read (fd, &cp->chr, sizeof (char));
+
+      /* Give subprocess time to buffer some more output for us before
+	 reporting that input is available; we need this because Win95
+	 connects DOS programs to pipes by making the pipe appear to be
+	 the normal console stdout - as a result most DOS programs will
+	 write to stdout without buffering, ie.  one character at a
+	 time.  Even some Win32 programs do this - "dir" in a command
+	 shell on NT is very slow if we don't do this. */
+      if (rc > 0)
+	{
+	  int wait = XINT (Vwin32_pipe_read_delay);
+
+	  if (wait > 0)
+	    Sleep (wait);
+	  else if (wait < 0)
+	    while (++wait <= 0)
+	      /* Yield remainder of our time slice, effectively giving a
+		 temporary priority boost to the child process. */
+	      Sleep (0);
+	}
+    }
+
+  if (rc == sizeof (char))
+    cp->status = STATUS_READ_SUCCEEDED;
+  else
+    cp->status = STATUS_READ_FAILED;
+
+  return cp->status;
+}
 
 /* Thread proc for child process and socket reader threads. Each thread
    is normally blocked until woken by select() to check for input by
@@ -330,7 +400,7 @@ reader_thread (void *arg)
 static const char * process_dir;
 
 static BOOL 
-create_child (char *exe, char *cmdline, char *env,
+create_child (const char *exe, char *cmdline, char *env,
 	      int * pPid, child_process *cp)
 {
   STARTUPINFO start;
@@ -382,16 +452,8 @@ create_child (char *exe, char *cmdline, char *env,
   cp->procinfo.hThread=NULL;
   cp->procinfo.hProcess=NULL;
 
-  /* Hack for Windows 95, which assigns large (ie negative) pids */
-  if (cp->pid < 0)
-    cp->pid = -cp->pid;
-
   /* pid must fit in a Lisp_Int */
-#ifdef USE_UNION_TYPE
-  cp->pid = (cp->pid & ((1U << VALBITS) - 1));
-#else
-  cp->pid = (cp->pid & VALMASK);
-#endif
+
 
   *pPid = cp->pid;
   
@@ -402,8 +464,30 @@ create_child (char *exe, char *cmdline, char *env,
   return FALSE;
 }
 
+#ifndef __MINGW32__
+/* Return pointer to section header for section containing the given
+   relative virtual address. */
+static IMAGE_SECTION_HEADER *
+rva_to_section (DWORD rva, IMAGE_NT_HEADERS * nt_header)
+{
+  PIMAGE_SECTION_HEADER section;
+  int i;
+
+  section = IMAGE_FIRST_SECTION (nt_header);
+
+  for (i = 0; i < nt_header->FileHeader.NumberOfSections; i++)
+    {
+      if (rva >= section->VirtualAddress
+	  && rva < section->VirtualAddress + section->SizeOfRawData)
+	return section;
+      section++;
+    }
+  return NULL;
+}
+#endif
+
 void
-win32_executable_type (char * filename, int * is_dos_app, int * is_cygnus_app)
+win32_executable_type (const char * filename, int * is_dos_app, int * is_cygnus_app)
 {
   file_data executable;
   char * p;
@@ -430,9 +514,9 @@ win32_executable_type (char * filename, int * is_dos_app, int * is_cygnus_app)
       /* Actually, I think it uses the program association for that
 	 extension, which is defined in the registry.  */
       p = egetenv ("COMSPEC");
-	  if (p)
+      if (p)
 	win32_executable_type (p, is_dos_app, is_cygnus_app);
-	}
+    }
       else
 	{
       /* Look for DOS .exe signature - if found, we must also check that
@@ -440,57 +524,77 @@ win32_executable_type (char * filename, int * is_dos_app, int * is_cygnus_app)
 	 start with a DOS program stub.  Note that 16-bit Windows
 	 executables use the OS/2 1.x format. */
 
-      IMAGE_DOS_HEADER * dos_header;
-      IMAGE_NT_HEADERS * nt_header;
+#ifdef __MINGW32__
+	  /* mingw32 doesn't have enough headers to detect cygwin
+             apps, just do what we can. */
+	  FILHDR * exe_header;
 
-      dos_header = (PIMAGE_DOS_HEADER) executable.file_base;
-      if (dos_header->e_magic != IMAGE_DOS_SIGNATURE)
-	goto unwind;
+	  exe_header = (FILHDR*) executable.file_base;
+	  if (exe_header->e_magic != DOSMAGIC)
+	    goto unwind;
 
-      nt_header = (PIMAGE_NT_HEADERS) ((char *) dos_header + dos_header->e_lfanew);
-
-      if ((char *) nt_header > (char *) dos_header + executable.size) 
-	{
-	  /* Some dos headers (pkunzip) have bogus e_lfanew fields.  */
-	  *is_dos_app = TRUE;
-	} 
-      else if (nt_header->Signature != IMAGE_NT_SIGNATURE &&
-		 LOWORD (nt_header->Signature) != IMAGE_OS2_SIGNATURE)
-	{
-	  *is_dos_app = TRUE;
-	}
-      else if (nt_header->Signature == IMAGE_NT_SIGNATURE)
-	{
-	  /* Look for cygwin.dll in DLL import list. */
-	  IMAGE_DATA_DIRECTORY import_dir =
-	    nt_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
-	  IMAGE_IMPORT_DESCRIPTOR * imports;
-	  IMAGE_SECTION_HEADER * section;
-
-	  section = rva_to_section (import_dir.VirtualAddress, nt_header);
-	  imports = RVA_TO_PTR (import_dir.VirtualAddress, section, executable);
-
-	  for ( ; imports->Name; imports++)
+	  if ((char *) exe_header->e_lfanew > (char *) executable.size)
 	    {
-	      char * dllname = RVA_TO_PTR (imports->Name, section, executable);
-
-	      if (strcmp (dllname, "cygwin.dll") == 0)
+	      /* Some dos headers (pkunzip) have bogus e_lfanew fields.  */
+	      *is_dos_app = TRUE;
+	    } 
+	  else if (exe_header->nt_signature != NT_SIGNATURE)
 	    {
-		  *is_cygnus_app = TRUE;
-		  break;
+	      *is_dos_app = TRUE;
+	    }
+#else
+	  IMAGE_DOS_HEADER * dos_header;
+	  IMAGE_NT_HEADERS * nt_header;
+
+	  dos_header = (PIMAGE_DOS_HEADER) executable.file_base;
+	  if (dos_header->e_magic != IMAGE_DOS_SIGNATURE)
+	    goto unwind;
+	  
+	  nt_header = (PIMAGE_NT_HEADERS) ((char *) dos_header + dos_header->e_lfanew);
+	  
+	  if ((char *) nt_header > (char *) dos_header + executable.size) 
+	    {
+	      /* Some dos headers (pkunzip) have bogus e_lfanew fields.  */
+	      *is_dos_app = TRUE;
+	    } 
+	  else if (nt_header->Signature != IMAGE_NT_SIGNATURE &&
+		   LOWORD (nt_header->Signature) != IMAGE_OS2_SIGNATURE)
+	    {
+	      *is_dos_app = TRUE;
+	    }
+	  else if (nt_header->Signature == IMAGE_NT_SIGNATURE)
+	    {
+	      /* Look for cygwin.dll in DLL import list. */
+	      IMAGE_DATA_DIRECTORY import_dir =
+		nt_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
+	      IMAGE_IMPORT_DESCRIPTOR * imports;
+	      IMAGE_SECTION_HEADER * section;
+
+	      section = rva_to_section (import_dir.VirtualAddress, nt_header);
+	      imports = RVA_TO_PTR (import_dir.VirtualAddress, section, executable);
+	      
+	      for ( ; imports->Name; imports++)
+		{
+		  char * dllname = RVA_TO_PTR (imports->Name, section, executable);
+
+		  if (strcmp (dllname, "cygwin.dll") == 0)
+		    {
+		      *is_cygnus_app = TRUE;
+		      break;
+		    }
 		}
 	    }
+#endif
 	}
-    }
 
-unwind:
-  close_file_data (&executable);
+ unwind:
+      close_file_data (&executable);
 }
 
 int
-compare_env (const char **strp1, const char **strp2)
+compare_env (const void *strp1, const void *strp2)
 {
-  const char *str1 = *strp1, *str2 = *strp2;
+  const char *str1 = *(const char**)strp1, *str2 = *(const char**)strp2;
 
   while (*str1 && *str2 && *str1 != '=' && *str2 != '=')
     {
@@ -534,8 +638,8 @@ merge_and_sort_env (char **envp1, char **envp2, char **new_envp)
 /* When a new child process is created we need to register it in our list,
    so intercept spawn requests.  */
 int 
-sys_spawnve (int mode, CONST char *cmdname,
-	     CONST char * CONST *argv, CONST char *CONST *envp)
+sys_spawnve (int mode, const char *cmdname,
+	     const char * const *argv, const char *const *envp)
 {
   Lisp_Object program, full;
   char *cmdline, *env, *parg, **targ;
@@ -544,7 +648,7 @@ sys_spawnve (int mode, CONST char *cmdname,
   child_process *cp;
   int is_dos_app, is_cygnus_app;
   int do_quoting = 0;
-  char escape_char;
+  char escape_char = 0;
   /* We pass our process ID to our children by setting up an environment
      variable in their environment.  */
   char ppid_env_var_buffer[64];
@@ -564,24 +668,28 @@ sys_spawnve (int mode, CONST char *cmdname,
   if (NILP (Ffile_executable_p (program)))
     {
       full = Qnil;
-      locate_file (Vexec_path, program, EXEC_SUFFIXES, &full, 1);
+      locate_file (Vexec_path, program, Vlisp_EXEC_SUFFIXES, &full, 1);
       if (NILP (full))
 	{
 	  UNGCPRO;
 	  errno = EINVAL;
 	  return -1;
 	}
-      cmdname = XSTRING_DATA (full);
-      /* #### KLUDGE */
-      *(char**)(argv[0]) = cmdname;
+      TO_EXTERNAL_FORMAT (LISP_STRING, full,
+			  C_STRING_ALLOCA, cmdname,
+			  Qfile_name);
+    }
+  else
+    {
+      (char*)cmdname = alloca (strlen (argv[0]) + 1);
+      strcpy ((char*)cmdname, argv[0]);
     }
   UNGCPRO;
 
   /* make sure argv[0] and cmdname are both in DOS format */
-  strcpy (cmdname = alloca (strlen (cmdname) + 1), argv[0]);
-  unixtodos_filename (cmdname);
+  unixtodos_filename ((char*)cmdname);
   /* #### KLUDGE */
-  *(char**)(argv[0]) = cmdname;
+  ((const char**)argv)[0] = cmdname;
 
   /* Determine whether program is a 16-bit DOS executable, or a Win32
      executable that is implicitly linked to the Cygnus dll (implying it
@@ -597,13 +705,13 @@ sys_spawnve (int mode, CONST char *cmdname,
     {
       cmdname = alloca (MAXPATHLEN);
       if (egetenv ("CMDPROXY"))
-	strcpy (cmdname, egetenv ("CMDPROXY"));
+	strcpy ((char*)cmdname, egetenv ("CMDPROXY"));
       else
     {
-	  strcpy (cmdname, XSTRING_DATA (Vinvocation_directory));
-	  strcat (cmdname, "cmdproxy.exe");
+	  strcpy ((char*)cmdname, XSTRING_DATA (Vinvocation_directory));
+	  strcat ((char*)cmdname, "cmdproxy.exe");
 	}
-      unixtodos_filename (cmdname);
+      unixtodos_filename ((char*)cmdname);
     }
   
   /* we have to do some conjuring here to put argv and envp into the
@@ -649,7 +757,7 @@ sys_spawnve (int mode, CONST char *cmdname,
   
   /* do argv...  */
   arglen = 0;
-  targ = argv;
+  targ = (char**)argv;
   while (*targ)
     {
       char * p = *targ;
@@ -695,7 +803,7 @@ sys_spawnve (int mode, CONST char *cmdname,
       arglen += strlen (*targ++) + 1;
     }
   cmdline = alloca (arglen);
-  targ = argv;
+  targ = (char**)argv;
   parg = cmdline;
   while (*targ)
     {
@@ -776,7 +884,7 @@ sys_spawnve (int mode, CONST char *cmdname,
   
   /* and envp...  */
   arglen = 1;
-  targ = envp;
+  targ = (char**)envp;
   numenv = 1; /* for end null */
   while (*targ)
     {
@@ -791,7 +899,7 @@ sys_spawnve (int mode, CONST char *cmdname,
 
   /* merge env passed in and extra env into one, and sort it.  */
   targ = (char **) alloca (numenv * sizeof (char *));
-  merge_and_sort_env (envp, extra_env, targ);
+  merge_and_sort_env ((char**)envp, extra_env, targ);
 
   /* concatenate env entries.  */
   env = alloca (arglen);
@@ -838,7 +946,7 @@ find_child_console (HWND hwnd, child_process * cp)
 
       GetClassName (hwnd, window_class, sizeof (window_class));
       if (strcmp (window_class,
-		  (os_subtype == OS_WIN95)
+		  windows9x_p()
 		  ? "tty"
 		  : "ConsoleWindowClass") == 0)
 	{
@@ -882,7 +990,7 @@ sys_kill (int pid, int sig)
       pid = cp->procinfo.dwProcessId;
 
       /* Try to locate console window for process. */
-      EnumWindows (find_child_console, (LPARAM) cp);
+      EnumWindows ((WNDENUMPROC)find_child_console, (LPARAM) cp);
     }
   
   if (sig == SIGINT)
@@ -931,7 +1039,7 @@ sys_kill (int pid, int sig)
       if (NILP (Vwin32_start_process_share_console) && cp && cp->hwnd)
 	{
 #if 1
-	  if (os_subtype == OS_WIN95)
+	  if (windows9x_p())
 	    {
 /*
    Another possibility is to try terminating the VDM out-right by
@@ -992,7 +1100,7 @@ sys_kill (int pid, int sig)
 
 #if 0
 /* Sync with FSF Emacs 19.34.6 note: ifdef'ed out in XEmacs */
-extern int report_file_error (CONST char *, Lisp_Object);
+extern int report_file_error (const char *, Lisp_Object);
 #endif
 /* The following two routines are used to manipulate stdin, stdout, and
    stderr of our child processes.
@@ -1320,7 +1428,7 @@ If successful, the new locale id is returned, otherwise nil.
 
 /* Sync with FSF Emacs 19.34.6 note: dwWinThreadId declared in
    w32term.h and defined in w32fns.c, both of which are not in current
-   XEmacs.  ### Check what we lose by ifdef'ing out these. --marcpa */
+   XEmacs.  #### Check what we lose by ifdef'ing out these. --marcpa */
 #if 0
   /* Need to set input thread locale if present.  */
   if (dwWinThreadId)
@@ -1335,9 +1443,6 @@ If successful, the new locale id is returned, otherwise nil.
 void
 syms_of_ntproc ()
 {
-  Qhigh = intern ("high");
-  Qlow = intern ("low");
-
   DEFSUBR (Fwin32_short_file_name);
   DEFSUBR (Fwin32_long_file_name);
   DEFSUBR (Fwin32_set_process_priority);
@@ -1346,6 +1451,14 @@ syms_of_ntproc ()
   DEFSUBR (Fwin32_get_default_locale_id);
   DEFSUBR (Fwin32_get_valid_locale_ids);
   DEFSUBR (Fwin32_set_current_locale);
+}
+
+
+void
+vars_of_ntproc (void)
+{
+  defsymbol (&Qhigh, "high");
+  defsymbol (&Qlow, "low");
 
   DEFVAR_LISP ("win32-quote-process-args", &Vwin32_quote_process_args /*
     Non-nil enables quoting of process arguments to ensure correct parsing.
@@ -1376,7 +1489,7 @@ or indirectly by Emacs), and preventing Emacs from cleanly terminating the
 subprocess group, but may allow Emacs to interrupt a subprocess that doesn't
 otherwise respond to interrupts from Emacs.
 */ );
-  Vwin32_start_process_share_console = Qnil;
+  Vwin32_start_process_share_console = Qt;
 
   DEFVAR_LISP ("win32-pipe-read-delay", &Vwin32_pipe_read_delay /*
     Forced delay before reading subprocess output.
@@ -1401,4 +1514,5 @@ the truename of a file can be slow.
   Vwin32_generate_fake_inodes = Qnil;
 #endif
 }
+
 /* end of ntproc.c */

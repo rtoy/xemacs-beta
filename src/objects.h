@@ -21,8 +21,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-#ifndef _XEMACS_OBJECTS_H_
-#define _XEMACS_OBJECTS_H_
+#ifndef INCLUDED_objects_h_
+#define INCLUDED_objects_h_
 
 #include "specifier.h"
 
@@ -38,7 +38,7 @@ struct color_specifier
   Lisp_Object face_property;	/* property of that face */
 };
 
-#define COLOR_SPECIFIER_DATA(g) (SPECIFIER_TYPE_DATA (g, color))
+#define COLOR_SPECIFIER_DATA(g) SPECIFIER_TYPE_DATA (g, color)
 #define COLOR_SPECIFIER_FACE(g) (COLOR_SPECIFIER_DATA (g)->face)
 #define COLOR_SPECIFIER_FACE_PROPERTY(g) \
   (COLOR_SPECIFIER_DATA (g)->face_property)
@@ -63,7 +63,7 @@ struct font_specifier
   Lisp_Object face_property;	/* property of that face */
 };
 
-#define FONT_SPECIFIER_DATA(g) (SPECIFIER_TYPE_DATA (g, font))
+#define FONT_SPECIFIER_DATA(g) SPECIFIER_TYPE_DATA (g, font)
 #define FONT_SPECIFIER_FACE(g) (FONT_SPECIFIER_DATA (g)->face)
 #define FONT_SPECIFIER_FACE_PROPERTY(g) \
   (FONT_SPECIFIER_DATA (g)->face_property)
@@ -88,7 +88,7 @@ struct face_boolean_specifier
   Lisp_Object face_property;	/* property of that face */
 };
 
-#define FACE_BOOLEAN_SPECIFIER_DATA(g) (SPECIFIER_TYPE_DATA (g, face_boolean))
+#define FACE_BOOLEAN_SPECIFIER_DATA(g) SPECIFIER_TYPE_DATA (g, face_boolean)
 #define FACE_BOOLEAN_SPECIFIER_FACE(g) (FACE_BOOLEAN_SPECIFIER_DATA (g)->face)
 #define FACE_BOOLEAN_SPECIFIER_FACE_PROPERTY(g) \
   (FACE_BOOLEAN_SPECIFIER_DATA (g)->face_property)
@@ -111,15 +111,6 @@ void set_face_boolean_attached_to (Lisp_Object obj, Lisp_Object face,
  *                           Color Instance Object                          *
  ****************************************************************************/
 
-DECLARE_LRECORD (color_instance, struct Lisp_Color_Instance);
-#define XCOLOR_INSTANCE(x) \
-  XRECORD (x, color_instance, struct Lisp_Color_Instance)
-#define XSETCOLOR_INSTANCE(x, p) XSETRECORD (x, p, color_instance)
-#define COLOR_INSTANCEP(x) RECORDP (x, color_instance)
-#define GC_COLOR_INSTANCEP(x) GC_RECORDP (x, color_instance)
-#define CHECK_COLOR_INSTANCE(x) CHECK_RECORD (x, color_instance)
-#define CONCHECK_COLOR_INSTANCE(x) CONCHECK_RECORD (x, color_instance)
-
 EXFUN (Fmake_color_instance, 3);
 
 extern Lisp_Object Vthe_null_color_instance;
@@ -134,6 +125,13 @@ struct Lisp_Color_Instance
   void *data;
 };
 
+DECLARE_LRECORD (color_instance, Lisp_Color_Instance);
+#define XCOLOR_INSTANCE(x) XRECORD (x, color_instance, Lisp_Color_Instance)
+#define XSETCOLOR_INSTANCE(x, p) XSETRECORD (x, p, color_instance)
+#define COLOR_INSTANCEP(x) RECORDP (x, color_instance)
+#define CHECK_COLOR_INSTANCE(x) CHECK_RECORD (x, color_instance)
+#define CONCHECK_COLOR_INSTANCE(x) CONCHECK_RECORD (x, color_instance)
+
 #define COLOR_INSTANCE_NAME(c)   ((c)->name)
 #define COLOR_INSTANCE_DEVICE(c) ((c)->device)
 
@@ -141,17 +139,16 @@ struct Lisp_Color_Instance
  *                            Font Instance Object                          *
  ****************************************************************************/
 
-DECLARE_LRECORD (font_instance, struct Lisp_Font_Instance);
-#define XFONT_INSTANCE(x) XRECORD (x, font_instance, struct Lisp_Font_Instance)
+DECLARE_LRECORD (font_instance, Lisp_Font_Instance);
+#define XFONT_INSTANCE(x) XRECORD (x, font_instance, Lisp_Font_Instance)
 #define XSETFONT_INSTANCE(x, p) XSETRECORD (x, p, font_instance)
 #define FONT_INSTANCEP(x) RECORDP (x, font_instance)
-#define GC_FONT_INSTANCEP(x) GC_RECORDP (x, font_instance)
 #define CHECK_FONT_INSTANCE(x) CHECK_RECORD (x, font_instance)
 #define CONCHECK_FONT_INSTANCE(x) CONCHECK_RECORD (x, font_instance)
 
 #ifdef MULE
 int font_spec_matches_charset (struct device *d, Lisp_Object charset,
-			       CONST Bufbyte *nonreloc,
+			       const Bufbyte *nonreloc,
 			       Lisp_Object reloc, Bytecount offset,
 			       Bytecount length);
 #endif
@@ -186,4 +183,4 @@ struct Lisp_Font_Instance
 #define FONT_INSTANCE_WIDTH(f)	 ((f)->width)
 #define FONT_INSTANCE_HEIGHT(f)	 ((f)->height)
 
-#endif /* _XEMACS_OBJECTS_H_ */
+#endif /* INCLUDED_objects_h_ */

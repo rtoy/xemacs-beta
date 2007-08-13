@@ -18,8 +18,8 @@ along with XEmacs; see the file COPYING.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#ifndef _XEMACS_ELDAP_H_
-#define _XEMACS_ELDAP_H_
+#ifndef INCLUDED_eldap_h_
+#define INCLUDED_eldap_h_
 
 #include <lber.h>
 #include <ldap.h>
@@ -37,22 +37,20 @@ struct Lisp_LDAP
   LDAP *ld;
   /* Name of the host we connected to */
   Lisp_Object host;
-  /* Status of the LDAP connection.  */
-  int livep;
 };
+typedef struct Lisp_LDAP Lisp_LDAP;
 
 
-DECLARE_LRECORD (ldap, struct Lisp_LDAP);
-#define XLDAP(x) XRECORD (x, ldap, struct Lisp_LDAP)
+DECLARE_LRECORD (ldap, Lisp_LDAP);
+#define XLDAP(x) XRECORD (x, ldap, Lisp_LDAP)
 #define XSETLDAP(x, p) XSETRECORD (x, p, ldap)
 #define LDAPP(x) RECORDP (x, ldap)
-#define GC_LDAPP(x) GC_RECORDP (x, ldap)
 #define CHECK_LDAP(x) CHECK_RECORD (x, ldap)
 #define CONCHECK_LDAP(x) CONCHECK_RECORD (x, ldap)
 
 #define CHECK_LIVE_LDAP(ldap) do {					\
   CHECK_LDAP (ldap);							\
-  if (!XLDAP (ldap)->livep)						\
+  if (!XLDAP (ldap)->ld)						\
     signal_simple_error ("Attempting to access closed LDAP connection",	\
                          ldap);						\
 } while (0)
@@ -69,6 +67,7 @@ Lisp_Object Fldap_search_internal (Lisp_Object ldap,
                                    Lisp_Object base,
                                    Lisp_Object scope,
                                    Lisp_Object attrs,
-                                   Lisp_Object attrsonly);
+                                   Lisp_Object attrsonly,
+                                   Lisp_Object withdn);
 
-#endif /* _XEMACS_ELDAP_H_ */
+#endif /* INCLUDED_eldap_h_ */

@@ -28,7 +28,7 @@ Boston, MA 02111-1307, USA.  */
 
    FSF: long ago.
 
-hacked on by jwz@netscape.com 1991-06
+hacked on by jwz@jwz.org 1991-06
   o  added a compile-time switch to turn on simple sanity checking;
   o  put back the obsolete byte-codes for error-detection;
   o  added a new instruction, unbind_all, which I will use for
@@ -56,7 +56,6 @@ by Hallvard:
 #include "opaque.h"
 #include "syntax.h"
 
-#include <stddef.h>
 #include <limits.h>
 
 EXFUN (Ffetch_bytecode, 1);
@@ -217,20 +216,14 @@ typedef unsigned char Opbyte;
 static void invalid_byte_code_error (char *error_message, ...);
 
 Lisp_Object * execute_rare_opcode (Lisp_Object *stack_ptr,
-				   CONST Opbyte *program_ptr,
+				   const Opbyte *program_ptr,
 				   Opcode opcode);
 
-static Lisp_Object execute_optimized_program (CONST Opbyte *program,
+static Lisp_Object execute_optimized_program (const Opbyte *program,
 					      int stack_depth,
 					      Lisp_Object *constants_data);
 
 extern Lisp_Object Qand_rest, Qand_optional;
-
-/* Define ERROR_CHECK_BYTE_CODE to enable some minor sanity checking.
-   Useful for debugging the byte compiler.  */
-#ifdef DEBUG_XEMACS
-#define ERROR_CHECK_BYTE_CODE
-#endif
 
 /* Define BYTE_CODE_METER to enable generation of a byte-op usage histogram.
    This isn't defined in FSF Emacs and isn't defined in XEmacs v19. */
@@ -242,21 +235,17 @@ extern Lisp_Object Qand_rest, Qand_optional;
 Lisp_Object Vbyte_code_meter, Qbyte_code_meter;
 int byte_metering_on;
 
-#define METER_2(code1, code2) \
-  XINT (XVECTOR_DATA (XVECTOR_DATA (Vbyte_code_meter)[(code1)])[(code2)])
-
-#define METER_1(code) METER_2 (0, (code))
-
-#define METER_CODE(last_code, this_code) do {				\
-  if (byte_metering_on)							\
-    {									\
-      if (METER_1 (this_code) != ((1<<VALBITS)-1))			\
-        METER_1 (this_code)++;						\
-      if (last_code							\
-	  && METER_2 (last_code, this_code) != ((1<<VALBITS)-1))	\
-        METER_2 (last_code, this_code)++;				\
-    }									\
-} while (0)
+static void
+meter_code (Opcode prev_opcode, Opcode this_opcode)
+{
+  if (byte_metering_on)
+    {
+      Lisp_Object *p = XVECTOR_DATA (XVECTOR_DATA (Vbyte_code_meter)[this_opcode]);
+      p[0] = INT_PLUS1 (p[0]);
+      if (prev_opcode)
+	p[prev_opcode] = INT_PLUS1 (p[prev_opcode]);
+    }
+}
 
 #endif /* BYTE_CODE_METER */
 
@@ -266,12 +255,12 @@ bytecode_negate (Lisp_Object obj)
 {
  retry:
 
+  if (INTP    (obj)) return make_int (- XINT (obj));
 #ifdef LISP_FLOAT_TYPE
   if (FLOATP  (obj)) return make_float (- XFLOAT_DATA (obj));
 #endif
   if (CHARP   (obj)) return make_int (- ((int) XCHAR (obj)));
   if (MARKERP (obj)) return make_int (- ((int) marker_position (obj)));
-  if (INTP    (obj)) return make_int (- XINT (obj));
 
   obj = wrong_type_argument (Qnumber_char_or_marker_p, obj);
   goto retry;
@@ -305,7 +294,7 @@ bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2)
 
 #ifdef LISP_FLOAT_TYPE
   {
-    int ival1, ival2;
+    EMACS_INT ival1, ival2;
 
     if      (INTP    (obj1)) ival1 = XINT  (obj1);
     else if (CHARP   (obj1)) ival1 = XCHAR (obj1);
@@ -349,7 +338,7 @@ bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2)
   }
 #else /* !LISP_FLOAT_TYPE */
   {
-    int ival1, ival2;
+    EMACS_INT ival1, ival2;
 
     if      (INTP    (obj1)) ival1 = XINT  (obj1);
     else if (CHARP   (obj1)) ival1 = XCHAR (obj1);
@@ -378,7 +367,7 @@ static Lisp_Object
 bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 {
 #ifdef LISP_FLOAT_TYPE
-  int ival1, ival2;
+  EMACS_INT ival1, ival2;
   int float_p;
 
  retry:
@@ -440,7 +429,7 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
       return make_float (dval1);
     }
 #else /* !LISP_FLOAT_TYPE */
-  int ival1, ival2;
+  EMACS_INT ival1, ival2;
 
  retry:
 
@@ -538,6 +527,10 @@ funcall_compiled_function (Lisp_Object fun, int nargs, Lisp_Object args[])
   }
 
  wrong_number_of_arguments:
+  /* The actual printed compiled_function object is incomprehensible.
+     Check the backtrace to see if we can get a more meaningful symbol. */
+  if (EQ (fun, indirect_function (*backtrace_list->function, 0)))
+    fun = *backtrace_list->function;
   return Fsignal (Qwrong_number_of_arguments, list2 (fun, make_int (nargs)));
 }
 
@@ -603,12 +596,12 @@ funcall_compiled_function (Lisp_Object fun, int nargs, Lisp_Object args[])
 
 
 static Lisp_Object
-execute_optimized_program (CONST Opbyte *program,
+execute_optimized_program (const Opbyte *program,
 			   int stack_depth,
 			   Lisp_Object *constants_data)
 {
   /* This function can GC */
-  REGISTER CONST Opbyte *program_ptr = (Opbyte *) program;
+  REGISTER const Opbyte *program_ptr = (Opbyte *) program;
   REGISTER Lisp_Object *stack_ptr
     = alloca_array (Lisp_Object, stack_depth + 1);
   int speccount = specpdl_depth ();
@@ -650,7 +643,7 @@ execute_optimized_program (CONST Opbyte *program,
 #ifdef BYTE_CODE_METER
       prev_opcode = this_opcode;
       this_opcode = opcode;
-      METER_CODE (prev_opcode, this_opcode);
+      meter_code (prev_opcode, this_opcode);
 #endif
 
       switch (opcode)
@@ -693,7 +686,7 @@ execute_optimized_program (CONST Opbyte *program,
 	do_varset:
 	{
 	  Lisp_Object symbol = constants_data[n];
-	  struct Lisp_Symbol *symbol_ptr = XSYMBOL (symbol);
+	  Lisp_Symbol *symbol_ptr = XSYMBOL (symbol);
 	  Lisp_Object old_value = symbol_ptr->value;
 	  Lisp_Object new_value = POP;
 	  if (!SYMBOL_VALUE_MAGIC_P (old_value) || UNBOUNDP (old_value))
@@ -714,7 +707,7 @@ execute_optimized_program (CONST Opbyte *program,
 	do_varbind:
 	{
 	  Lisp_Object symbol = constants_data[n];
-	  struct Lisp_Symbol *symbol_ptr = XSYMBOL (symbol);
+	  Lisp_Symbol *symbol_ptr = XSYMBOL (symbol);
 	  Lisp_Object old_value = symbol_ptr->value;
 	  Lisp_Object new_value = POP;
 	  if (!SYMBOL_VALUE_MAGIC_P (old_value) || UNBOUNDP (old_value))
@@ -766,6 +759,7 @@ execute_optimized_program (CONST Opbyte *program,
 		     (opcode <  Bunbind+6 ? opcode-Bunbind :
 		      opcode == Bunbind+6 ? READ_UINT_1 : READ_UINT_2));
 	  break;
+
 
 	case Bgoto:
 	  JUMP;
@@ -1004,11 +998,11 @@ execute_optimized_program (CONST Opbyte *program,
 	  }
 
 	case Bsub1:
-	  TOP = INTP (TOP) ? make_int (XINT (TOP) - 1) : Fsub1 (TOP);
+	  TOP = INTP (TOP) ? INT_MINUS1 (TOP) : Fsub1 (TOP);
 	  break;
 
 	case Badd1:
-	  TOP = INTP (TOP) ? make_int (XINT (TOP) + 1) : Fadd1 (TOP);
+	  TOP = INTP (TOP) ? INT_PLUS1 (TOP) : Fadd1 (TOP);
 	  break;
 
 
@@ -1062,7 +1056,7 @@ execute_optimized_program (CONST Opbyte *program,
 	    Lisp_Object arg2 = POP;
 	    Lisp_Object arg1 = TOP;
 	    TOP = INTP (arg1) && INTP (arg2) ?
-	      make_int (XINT (arg1) + XINT (arg2)) :
+	      INT_PLUS (arg1, arg2) :
 	      bytecode_arithop (arg1, arg2, opcode);
 	    break;
 	  }
@@ -1072,7 +1066,7 @@ execute_optimized_program (CONST Opbyte *program,
 	    Lisp_Object arg2 = POP;
 	    Lisp_Object arg1 = TOP;
 	    TOP = INTP (arg1) && INTP (arg2) ?
-	      make_int (XINT (arg1) - XINT (arg2)) :
+	      INT_MINUS (arg1, arg2) :
 	      bytecode_arithop (arg1, arg2, opcode);
 	    break;
 	  }
@@ -1114,7 +1108,6 @@ execute_optimized_program (CONST Opbyte *program,
 	    TOP = Fmemq (TOP, arg);
 	    break;
 	  }
-
 
 	case Bset:
 	  {
@@ -1228,7 +1221,7 @@ execute_optimized_program (CONST Opbyte *program,
    Don't make this function static, since then the compiler might inline it. */
 Lisp_Object *
 execute_rare_opcode (Lisp_Object *stack_ptr,
-		     CONST Opbyte *program_ptr,
+		     const Opbyte *program_ptr,
 		     Opcode opcode)
 {
   switch (opcode)
@@ -1498,7 +1491,7 @@ invalid_byte_code_error (char *error_message, ...)
 
   sprintf (buf, "%s", error_message);
   va_start (args, error_message);
-  obj = emacs_doprnt_string_va ((CONST Bufbyte *) GETTEXT (buf), Qnil, -1,
+  obj = emacs_doprnt_string_va ((const Bufbyte *) GETTEXT (buf), Qnil, -1,
 				args);
   va_end (args);
 
@@ -1614,14 +1607,14 @@ optimize_byte_code (/* in */
 		    Lisp_Object instructions,
 		    Lisp_Object constants,
 		    /* out */
-		    Opbyte * CONST program,
-		    int * CONST program_length,
-		    int * CONST varbind_count)
+		    Opbyte * const program,
+		    int * const program_length,
+		    int * const varbind_count)
 {
   size_t instructions_length = XSTRING_LENGTH (instructions);
   size_t comfy_size = 2 * instructions_length;
 
-  int * CONST icounts = alloca_array (int, comfy_size);
+  int * const icounts = alloca_array (int, comfy_size);
   int * icounts_ptr = icounts;
 
   /* We maintain a table of jumps in the source code. */
@@ -1630,13 +1623,13 @@ optimize_byte_code (/* in */
     int from;
     int to;
   };
-  struct jump * CONST jumps = alloca_array (struct jump, comfy_size);
+  struct jump * const jumps = alloca_array (struct jump, comfy_size);
   struct jump *jumps_ptr = jumps;
 
   Opbyte *program_ptr = program;
 
-  CONST Bufbyte *ptr = XSTRING_DATA (instructions);
-  CONST Bufbyte * CONST end = ptr + instructions_length;
+  const Bufbyte *ptr = XSTRING_DATA (instructions);
+  const Bufbyte * const end = ptr + instructions_length;
 
   *varbind_count = 0;
 
@@ -1901,8 +1894,7 @@ optimize_compiled_function (Lisp_Object compiled_function)
 			  program, &program_length, &varbind_count);
       f->specpdl_depth = XINT (Flength (f->arglist)) + varbind_count;
       f->instructions =
-	Fpurecopy (make_opaque (program_length * sizeof (Opbyte),
-				(CONST void *) program));
+	make_opaque (program, program_length * sizeof (Opbyte));
     }
 
   assert (OPAQUEP (f->instructions));
@@ -1988,15 +1980,15 @@ print_compiled_function (Lisp_Object obj, Lisp_Object printcharfun,
 
 
 static Lisp_Object
-mark_compiled_function (Lisp_Object obj, void (*markobj) (Lisp_Object))
+mark_compiled_function (Lisp_Object obj)
 {
   Lisp_Compiled_Function *f = XCOMPILED_FUNCTION (obj);
 
-  markobj (f->instructions);
-  markobj (f->arglist);
-  markobj (f->doc_and_interactive);
+  mark_object (f->instructions);
+  mark_object (f->arglist);
+  mark_object (f->doc_and_interactive);
 #ifdef COMPILED_FUNCTION_ANNOTATION_HACK
-  markobj (f->annotated);
+  mark_object (f->annotated);
 #endif
   /* tail-recurse on constants */
   return f->constants;
@@ -2030,11 +2022,23 @@ compiled_function_hash (Lisp_Object obj, int depth)
 		internal_hash (f->constants,    depth + 1));
 }
 
+static const struct lrecord_description compiled_function_description[] = {
+  { XD_LISP_OBJECT, offsetof (Lisp_Compiled_Function, instructions) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Compiled_Function, constants) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Compiled_Function, arglist) },
+  { XD_LISP_OBJECT, offsetof (Lisp_Compiled_Function, doc_and_interactive) },
+#ifdef COMPILED_FUNCTION_ANNOTATION_HACK
+  { XD_LISP_OBJECT, offsetof (Lisp_Compiled_Function, annotated) },
+#endif
+  { XD_END }
+};
+
 DEFINE_BASIC_LRECORD_IMPLEMENTATION ("compiled-function", compiled_function,
 				     mark_compiled_function,
 				     print_compiled_function, 0,
 				     compiled_function_equal,
 				     compiled_function_hash,
+				     compiled_function_description,
 				     Lisp_Compiled_Function);
 
 DEFUN ("compiled-function-p", Fcompiled_function_p, 1, 1, 0, /*
@@ -2065,13 +2069,13 @@ compiled_function_instructions (Lisp_Compiled_Function *f)
     /* Invert action performed by optimize_byte_code() */
     Lisp_Opaque *opaque = XOPAQUE (f->instructions);
 
-    Bufbyte * CONST buffer =
+    Bufbyte * const buffer =
       alloca_array (Bufbyte, OPAQUE_SIZE (opaque) * MAX_EMCHAR_LEN);
     Bufbyte *bp = buffer;
 
-    CONST Opbyte * CONST program = (CONST Opbyte *) OPAQUE_DATA (opaque);
-    CONST Opbyte *program_ptr = program;
-    CONST Opbyte * CONST program_end = program_ptr + OPAQUE_SIZE (opaque);
+    const Opbyte * const program = (const Opbyte *) OPAQUE_DATA (opaque);
+    const Opbyte *program_ptr = program;
+    const Opbyte * const program_end = program_ptr + OPAQUE_SIZE (opaque);
 
     while (program_ptr < program_end)
       {
@@ -2348,10 +2352,8 @@ If the byte code for compiled function FUNCTION is lazy-loaded, fetch it now.
       /* v18 or v19 bytecode file.  Need to Ebolify. */
       if (f->flags.ebolified && VECTORP (XCDR (tem)))
 	ebolify_bytecode_constants (XCDR (tem));
-      /* VERY IMPORTANT to purecopy here!!!!!
-	 See load_force_doc_string_unwind. */
-      f->instructions = Fpurecopy (XCAR (tem));
-      f->constants    = Fpurecopy (XCDR (tem));
+      f->instructions = XCAR (tem);
+      f->constants    = XCDR (tem);
       return function;
     }
   abort ();

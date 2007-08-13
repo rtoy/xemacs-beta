@@ -20,8 +20,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: FSF 19.30. */
 
-#ifndef _XEMACS_SYSTIME_H_
-#define _XEMACS_SYSTIME_H_
+#ifndef INCLUDED_systime_h_
+#define INCLUDED_systime_h_
 
 #ifdef TIME_WITH_SYS_TIME
 #include <sys/time.h>
@@ -51,7 +51,7 @@ Boston, MA 02111-1307, USA.  */
 # include <utime.h>
 #endif
 
-#ifdef HAVE_TZNAME
+#if defined(HAVE_TZNAME) && !defined(WINDOWSNT) && !defined(__CYGWIN32__)
 #ifndef tzname		/* For SGI.  */
 extern char *tzname[];	/* RS6000 and others want it this way.  */
 #endif
@@ -147,37 +147,23 @@ do {						\
 #define EMACS_SET_USECS(time, microseconds) ((time).tv_usec = (microseconds))
 
 #if !defined (HAVE_GETTIMEOFDAY)
-struct timezone;
-int gettimeofday (struct timeval *, struct timezone *);
+int gettimeofday (struct timeval *, void *);
 #endif
 
 /* On SVR4, the compiler may complain if given this extra BSD arg.  */
 #ifdef GETTIMEOFDAY_ONE_ARGUMENT
-# ifdef SOLARIS2
-/* Solaris (at least) omits this prototype.  IRIX5 has it and chokes if we
-   declare it here. */
-int gettimeofday (struct timeval *);
-# endif
+#define EMACS_GETTIMEOFDAY(time) gettimeofday(time)
+#else
+#define EMACS_GETTIMEOFDAY(time) gettimeofday(time,0)
+#endif
+
 /* According to the Xt sources, some NTP daemons on some systems may
    return non-normalized values. */
 #define EMACS_GET_TIME(time)					\
 do {								\
-  gettimeofday (&(time));					\
+  EMACS_GETTIMEOFDAY (&(time));					\
   EMACS_NORMALIZE_TIME (time);					\
 } while (0)
-#else /* not GETTIMEOFDAY_ONE_ARGUMENT */
-# ifdef SOLARIS2
-/* Solaris doesn't provide any prototype of this unless a bunch of
-   crap we don't define are defined. */
-int gettimeofday (struct timeval *, void *dummy);
-# endif
-#define EMACS_GET_TIME(time)					\
-do {								\
-  struct timezone dummy;					\
-  gettimeofday (&(time), &dummy);				\
-  EMACS_NORMALIZE_TIME (time);					\
-} while (0)
-#endif /* not GETTIMEOFDAY_ONE_ARGUMENT */
 
 #define EMACS_NORMALIZE_TIME(time)				\
 do {								\
@@ -231,7 +217,7 @@ int set_file_times (char *filename, EMACS_TIME atime, EMACS_TIME mtime);
 void get_process_times (double *user_time, double *system_time,
 			double *real_time);
 
-#if defined(WINDOWSNT) || defined(BROKEN_CYGWIN)
+#if defined(WINDOWSNT) || defined(BROKEN_CYGWIN) || defined(__MINGW32__)
 
 /* setitimer emulation for Win32 (see nt.c) */
 
@@ -249,4 +235,4 @@ int setitimer (int kind, const struct itimerval* itnew,
 
 #endif /* WINDOWSNT */
 
-#endif /* _XEMACS_SYSTIME_H_ */
+#endif /* INCLUDED_systime_h_ */

@@ -23,8 +23,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with:  Not in FSF. */
 
-#ifndef _XEMACS_GLYPHS_X_H_
-#define _XEMACS_GLYPHS_X_H_
+#ifndef INCLUDED_glyphs_x_h_
+#define INCLUDED_glyphs_x_h_
 
 #include "glyphs.h"
 
@@ -39,8 +39,7 @@ Boston, MA 02111-1307, USA.  */
 
 struct x_image_instance_data
 {
-  Pixmap pixmap;
-  Pixmap mask;
+  Pixmap* pixmaps;
   Cursor cursor;
 
   /* If depth>0, then that means that other colors were allocated when
@@ -56,8 +55,13 @@ struct x_image_instance_data
 
 #define X_IMAGE_INSTANCE_DATA(i) ((struct x_image_instance_data *) (i)->data)
 
-#define IMAGE_INSTANCE_X_PIXMAP(i) (X_IMAGE_INSTANCE_DATA (i)->pixmap)
-#define IMAGE_INSTANCE_X_MASK(i) (X_IMAGE_INSTANCE_DATA (i)->mask)
+#define IMAGE_INSTANCE_X_PIXMAP(i) (X_IMAGE_INSTANCE_DATA (i)->pixmaps[0])
+#define IMAGE_INSTANCE_X_PIXMAP_SLICE(i,slice) \
+     (X_IMAGE_INSTANCE_DATA (i)->pixmaps[slice])
+#define IMAGE_INSTANCE_X_PIXMAP_SLICES(i) \
+     (X_IMAGE_INSTANCE_DATA (i)->pixmaps)
+#define IMAGE_INSTANCE_X_MASK(i) \
+	(Pixmap)(IMAGE_INSTANCE_PIXMAP_MASK (i))
 #define IMAGE_INSTANCE_X_CURSOR(i) (X_IMAGE_INSTANCE_DATA (i)->cursor)
 #define IMAGE_INSTANCE_X_COLORMAP(i) (X_IMAGE_INSTANCE_DATA (i)->colormap)
 #define IMAGE_INSTANCE_X_PIXELS(i) (X_IMAGE_INSTANCE_DATA (i)->pixels)
@@ -65,6 +69,10 @@ struct x_image_instance_data
 
 #define XIMAGE_INSTANCE_X_PIXMAP(i) \
   IMAGE_INSTANCE_X_PIXMAP (XIMAGE_INSTANCE (i))
+#define XIMAGE_INSTANCE_X_PIXMAP_SLICES(i) \
+  IMAGE_INSTANCE_X_PIXMAP_SLICES (XIMAGE_INSTANCE (i))
+#define XIMAGE_INSTANCE_X_PIXMAP_SLICE(i) \
+  IMAGE_INSTANCE_X_PIXMAP_SLICE (XIMAGE_INSTANCE (i))
 #define XIMAGE_INSTANCE_X_MASK(i) \
   IMAGE_INSTANCE_X_MASK (XIMAGE_INSTANCE (i))
 #define XIMAGE_INSTANCE_X_CURSOR(i) \
@@ -80,22 +88,58 @@ struct x_image_instance_data
 
 struct x_subwindow_data
 {
-  Screen *xscreen;
-  Window parent_window;
+  union
+  {
+    struct
+    {
+      Display *display;
+      Window parent_window;
+      Window clip_window;
+    } sub;
+    struct 
+    {
+      Widget clip_window;
+      Position x_offset;
+      Position y_offset;
+      LWLIB_ID	id;
+    } wid;
+  } data;
 };
 
 #define X_SUBWINDOW_INSTANCE_DATA(i) ((struct x_subwindow_data *) (i)->data)
 
-#define IMAGE_INSTANCE_X_SUBWINDOW_SCREEN(i) \
-  (X_SUBWINDOW_INSTANCE_DATA (i)->xscreen)
+#define IMAGE_INSTANCE_X_SUBWINDOW_DISPLAY(i) \
+  (X_SUBWINDOW_INSTANCE_DATA (i)->data.sub.display)
 #define IMAGE_INSTANCE_X_SUBWINDOW_PARENT(i) \
-  (X_SUBWINDOW_INSTANCE_DATA (i)->parent_window)
+  (X_SUBWINDOW_INSTANCE_DATA (i)->data.sub.parent_window)
+#define IMAGE_INSTANCE_X_CLIPWINDOW(i) \
+  (X_SUBWINDOW_INSTANCE_DATA (i)->data.sub.clip_window)
+#define IMAGE_INSTANCE_X_WIDGET_XOFFSET(i) \
+  (X_SUBWINDOW_INSTANCE_DATA (i)->data.wid.x_offset)
+#define IMAGE_INSTANCE_X_WIDGET_YOFFSET(i) \
+  (X_SUBWINDOW_INSTANCE_DATA (i)->data.wid.y_offset)
+#define IMAGE_INSTANCE_X_WIDGET_LWID(i) \
+  (X_SUBWINDOW_INSTANCE_DATA (i)->data.wid.id)
+#define IMAGE_INSTANCE_X_CLIPWIDGET(i) \
+  (X_SUBWINDOW_INSTANCE_DATA (i)->data.wid.clip_window)
 #define XIMAGE_INSTANCE_X_SUBWINDOW_PARENT(i) \
   IMAGE_INSTANCE_X_SUBWINDOW_PARENT (XIMAGE_INSTANCE (i))
-#define XIMAGE_INSTANCE_X_SUBWINDOW_SCREEN(i) \
-  IMAGE_INSTANCE_X_SUBWINDOW_SCREEN (XIMAGE_INSTANCE (i))
+#define XIMAGE_INSTANCE_X_SUBWINDOW_DISPLAY(i) \
+  IMAGE_INSTANCE_X_SUBWINDOW_DISPLAY (XIMAGE_INSTANCE (i))
+#define XIMAGE_INSTANCE_X_WIDGET_XOFFSET(i) \
+  IMAGE_INSTANCE_X_WIDGET_XOFFSET (XIMAGE_INSTANCE (i))
+#define XIMAGE_INSTANCE_X_WIDGET_YOFFSET(i) \
+  IMAGE_INSTANCE_X_WIDGET_YOFFSET (XIMAGE_INSTANCE (i))
+#define XIMAGE_INSTANCE_X_WIDGET_LWID(i) \
+  IMAGE_INSTANCE_X_WIDGET_LWID (XIMAGE_INSTANCE (i))
+#define XIMAGE_INSTANCE_X_CLIPWIDGET(i) \
+  IMAGE_INSTANCE_X_CLIPWIDGET (XIMAGE_INSTANCE (i))
+#define XIMAGE_INSTANCE_X_CLIPWINDOW(i) \
+  IMAGE_INSTANCE_X_CLIPWINDOW (XIMAGE_INSTANCE (i))
 #define IMAGE_INSTANCE_X_SUBWINDOW_ID(i) \
-  ((Window) IMAGE_INSTANCE_SUBWINDOW_ID (i))
+  (* (Window *) & IMAGE_INSTANCE_SUBWINDOW_ID (i))
+#define IMAGE_INSTANCE_X_WIDGET_ID(i) \
+  (* (Widget *) & IMAGE_INSTANCE_SUBWINDOW_ID (i))
 
 #endif /* HAVE_X_WINDOWS */
-#endif /* _XEMACS_GLYPHS_X_H_ */
+#endif /* INCLUDED_glyphs_x_h_ */

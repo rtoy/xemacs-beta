@@ -102,7 +102,7 @@ x_device_to_console_connection (Lisp_Object connection, Error_behavior errb)
 static Lisp_Object
 get_display_arg_connection (void)
 {
-  CONST char *disp_name;
+  const char *disp_name;
 
   /* If the user didn't explicitly specify a display to use when
      they called make-x-device, then we first check to see if a
@@ -140,12 +140,12 @@ get_display_arg_connection (void)
       /* assert: display_arg is only set if we found the display
 	 arg earlier so we can't fail to find it now. */
       assert (disp_name != NULL);
-      conn = build_ext_string (disp_name, FORMAT_CTEXT);
+      conn = build_ext_string (disp_name, Qctext);
       free_argc_argv (argv);
       return conn;
     }
   else
-    return build_ext_string (XDisplayName (0), FORMAT_CTEXT);
+    return build_ext_string (XDisplayName (0), Qctext);
 }
 
 /* "semi-canonicalize" means convert to a nicer form for printing, but
@@ -181,7 +181,7 @@ x_semi_canonicalize_console_connection (Lisp_Object connection,
   /* Check for a couple of standard special cases */
   if (string_byte (XSTRING (connection), 0) == ':')
     connection = concat2 (build_string ("localhost"), connection);
-  else if (!strncmp ((CONST char *) XSTRING_DATA (connection),
+  else if (!strncmp ((const char *) XSTRING_DATA (connection),
 		     "unix:", 5))
     connection = concat2 (build_string ("localhost:"),
 			  Fsubstring (connection, make_int (5), Qnil));
@@ -260,7 +260,7 @@ x_canonicalize_device_connection (Lisp_Object connection, Error_behavior errb)
   split_up_display_spec (connection, &hostname_length, &display_length,
 			 &screen_length);
 
-  screen_str = build_string ((CONST char *) XSTRING_DATA (connection)
+  screen_str = build_string ((const char *) XSTRING_DATA (connection)
 			     + hostname_length + display_length);
   connection = x_canonicalize_console_connection (connection, errb);
 
@@ -280,3 +280,9 @@ console_type_create_x (void)
   CONSOLE_HAS_METHOD (x, initially_selected_for_input);
 }
 
+
+void
+reinit_console_type_create_x (void)
+{
+  REINITIALIZE_CONSOLE_TYPE (x);
+}

@@ -29,6 +29,8 @@ Boston, MA 02111-1307, USA.  */
 
 #include <config.h>
 #include "lisp.h"
+#include "frame.h"
+#include "select.h"
 
 #include "console-msw.h"
 
@@ -40,6 +42,7 @@ Copy STRING to the mswindows clipboard.
   int rawsize, size, i;
   unsigned char *src, *dst, *next;
   HGLOBAL h = NULL;
+  struct frame *f = NULL;
 
   CHECK_STRING (string);
 
@@ -51,7 +54,8 @@ Copy STRING to the mswindows clipboard.
     if (src[i] == '\n')
       size++;
 
-  if (!OpenClipboard (NULL))
+  f = selected_frame ();
+  if (!OpenClipboard (FRAME_MSWINDOWS_HANDLE (f)))
     return Qnil;
 
   if (!EmptyClipboard () ||
@@ -87,9 +91,25 @@ Copy STRING to the mswindows clipboard.
   i = (SetClipboardData (CF_TEXT, h) != NULL);
   
   CloseClipboard ();
-  GlobalFree (h);
   
   return i ? Qt : Qnil;
+}
+
+/* Do protocol to assert ourself as a selection owner. Under mswindows
+this is easy, we just set the clipboard.  */
+static Lisp_Object
+mswindows_own_selection (Lisp_Object selection_name, Lisp_Object selection_value)
+{
+  Lisp_Object converted_value = get_local_selection (selection_name, QSTRING);
+  if (!NILP (converted_value) &&
+      CONSP (converted_value) &&
+      EQ (XCAR (converted_value), QSTRING) &&
+      /* pure mswindows behaviour only says we can own the selection 
+	 if it is the clipboard */
+      EQ (selection_name, QCLIPBOARD))
+    Fmswindows_set_clipboard (XCDR (converted_value));
+
+  return Qnil;
 }
 
 DEFUN ("mswindows-get-clipboard", Fmswindows_get_clipboard, 0, 0, 0, /*
@@ -144,6 +164,15 @@ Return the contents of the mswindows clipboard.
   return ret;
 }
 
+static Lisp_Object
+mswindows_get_foreign_selection (Lisp_Object selection_symbol, Lisp_Object target_type)
+{
+  if (EQ (selection_symbol, QCLIPBOARD))
+    return Fmswindows_get_clipboard ();
+  else
+    return Qnil;
+}
+
 DEFUN ("mswindows-selection-exists-p", Fmswindows_selection_exists_p, 0, 0, 0, /*
 Whether there is an MS-Windows selection.
 */
@@ -157,13 +186,37 @@ Remove the current MS-Windows selection from the clipboard.
 */
        ())
 {
-  return EmptyClipboard () ? Qt : Qnil;
+  BOOL success = OpenClipboard (NULL);
+  if (success)
+    {
+      success = EmptyClipboard ();
+      /* Close it regardless of whether empty worked. */
+      if (!CloseClipboard ())
+	success = FALSE;
+    }
+
+  return success ? Qt : Qnil;
+}
+
+static void
+mswindows_disown_selection (Lisp_Object selection, Lisp_Object timeval)
+{
+  if (EQ (selection, QCLIPBOARD))
+    Fmswindows_delete_selection ();
 }
 
 
 /************************************************************************/
 /*                            initialization                            */
 /************************************************************************/
+
+void
+console_type_create_select_mswindows (void)
+{
+  CONSOLE_HAS_METHOD (mswindows, own_selection);
+  CONSOLE_HAS_METHOD (mswindows, disown_selection);
+  CONSOLE_HAS_METHOD (mswindows, get_foreign_selection);
+}
 
 void
 syms_of_select_mswindows (void)

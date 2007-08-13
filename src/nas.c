@@ -108,7 +108,6 @@
 
 #else /* !emacs */
 #    define warn(str) fprintf (stderr, "%s\n", (str))
-#    define CONST const
 #endif /* emacs */
 
 #ifdef XTOOLKIT
@@ -146,10 +145,18 @@ init_play (
 #else
 	   char *server
 #endif
+	   );
+char *
+init_play (
+#ifdef XTOOLKIT
+	   Display *display
+#else
+	   char *server
+#endif
 	   )
 {
   char *err_message;
-  SIGTYPE (*old_sigpipe) ();
+  SIGTYPE (*old_sigpipe) (int);
 
 #ifdef XTOOLKIT
   char * server = DisplayString (display);
@@ -223,7 +230,7 @@ init_play (
   return NULL;
 }
 
-void
+static void
 close_down_play (void)
 
 {
@@ -238,7 +245,7 @@ close_down_play (void)
  \********************************************************************/
 
 static void
-doneCB (AuServer       *aud,
+doneCB (AuServer       *auserver,
 	AuEventHandlerRec *handler,
 	AuEvent        *ev,
 	AuPointer       data)
@@ -274,23 +281,23 @@ do_caching_play (Sound s,
 
   if (list == NULL)
     {
-      unsigned char *my_buf;
+      AuPointer my_buf;
 
       if (buf==NULL)
 	{
-	  if ((my_buf=malloc (SoundNumBytes (s)))==NULL)
+	  if ((my_buf= (AuPointer) malloc (SoundNumBytes (s)))==NULL)
 	    {
 	      return;
 	    }
 
-	  if (SoundReadFile (my_buf, SoundNumBytes (s), s) != SoundNumBytes (s))
+	  if (SoundReadFile ((char *) my_buf, SoundNumBytes (s), s) != SoundNumBytes (s))
 	    {
 	      free (my_buf);
 	      return;
 	    }
 	}
       else
-	my_buf=buf;
+	my_buf = (AuPointer) buf;
 
       id = AuSoundCreateBucketFromData (aud, 
 					s,
@@ -322,6 +329,7 @@ do_caching_play (Sound s,
 #endif /* CACHE_SOUNDS */
 
 
+void wait_for_sounds (void);
 void 
 wait_for_sounds (void)
 
@@ -335,11 +343,12 @@ wait_for_sounds (void)
     }
 }
 
+int play_sound_file (char *sound_file, int volume);
 int
 play_sound_file (char *sound_file,
 		 int volume)
 {
-  SIGTYPE (*old_sigpipe) ();
+  SIGTYPE (*old_sigpipe) (int);
 
 #ifdef ROBUST_PLAY
   old_sigpipe=signal (SIGPIPE, sigpipe_handle);
@@ -427,6 +436,7 @@ play_sound_file (char *sound_file,
   return 1;
 }
 
+int play_sound_data (unsigned char *data, int length, int volume);
 int
 play_sound_data (unsigned char *data,
 		 int length, 
@@ -434,7 +444,7 @@ play_sound_data (unsigned char *data,
 {
   Sound s;
   int offset;
-  SIGTYPE (*old_sigpipe) ();
+  SIGTYPE (*old_sigpipe) (int);
 
 #if !defined (XTEVENTS)
   AuEvent         ev;
@@ -613,11 +623,11 @@ CatchErrorAndJump (AuServer *old_aud,
 /* Create a name from the sound. */
 
 static char *
-NameFromData (CONST unsigned char *buf,
+NameFromData (const char *buf,
 	      int len)
 
 {
-  unsigned char name[9];
+  char name[9];
   int i;
   char *s;
 
@@ -642,11 +652,11 @@ NameFromData (CONST unsigned char *buf,
 
   if (i==8)
     {
-      strcpy (s=malloc (10), name);
+      strcpy (s = (char *) malloc (10), name);
     }
   else 
     {
-      strcpy (s=malloc (15), "short sound");
+      strcpy (s = (char *) malloc (15), "short sound");
     }
 
   return s;
@@ -657,7 +667,7 @@ NameFromData (CONST unsigned char *buf,
  */
 
 static SndInfo *
-SndOpenDataForReading (CONST char *data,
+SndOpenDataForReading (const char *data,
 		       int length)
 
 {
@@ -729,15 +739,15 @@ SndOpenDataForReading (CONST char *data,
 /* These functions here are for faking file I/O from buffer. */
 
 /* The "file" position */
-static int file_posn;
+static size_t file_posn;
 /* The length of the "file" */
-static int file_len;
+static size_t file_len;
 /* The actual "file" data. */
-CONST static char* file_data;
+static const void* file_data;
 
 /* Like fopen, but for a buffer in memory */
 static void
-dopen(CONST char* data, int length)
+dopen (const void* data, size_t length)
 {
    file_data = data;
    file_len = length;
@@ -746,15 +756,13 @@ dopen(CONST char* data, int length)
 
 /* Like fread, but for a buffer in memory */
 static int
-dread(char* buf, int size, int nitems)
+dread (void* buf, size_t size, size_t nitems)
 {
-  int nread;
-
-  nread = size * nitems;
+  size_t nread = size * nitems;
   
   if (file_posn + nread <= file_len)
     {
-      memcpy(buf, file_data + file_posn, size * nitems);
+      memcpy(buf, (char *) file_data + file_posn, size * nitems);
       file_posn += nread;
       return nitems;
     }
@@ -766,19 +774,17 @@ dread(char* buf, int size, int nitems)
 
 /* Like fgetc, but for a buffer in memory */
 static int
-dgetc()
+dgetc (void)
 {
-  int ch;
-  
   if (file_posn < file_len)
-    return file_data[file_posn++];
+    return ((char *)file_data)[file_posn++];
   else
     return -1;
 }
 
 /* Like fseek, but for a buffer in memory */
 static int
-dseek(long offset, int from)
+dseek (long offset, int from)
 {
   if (from == 0)
     file_posn = offset;
@@ -791,8 +797,8 @@ dseek(long offset, int from)
 }
 
 /* Like ftell, but for a buffer in memory */
-static int
-dtell()
+static long
+dtell (void)
 {
   return file_posn;
 }
@@ -800,7 +806,7 @@ dtell()
 /* Data buffer analogs for FileReadS and FileReadL in NAS. */
 
 static unsigned short
-DataReadS(int swapit)
+DataReadS (int swapit)
 {
     unsigned short us;
 
@@ -811,7 +817,7 @@ DataReadS(int swapit)
 }
 
 static AuUint32
-DataReadL(int swapit)
+DataReadL (int swapit)
 {
     AuUint32 ul;
 
@@ -822,7 +828,7 @@ DataReadL(int swapit)
 }
 
 static int
-readChunk(RiffChunk *c)
+readChunk (RiffChunk *c)
 {
     int             status;
     char            n;
@@ -838,8 +844,8 @@ readChunk(RiffChunk *c)
    read the wave data from a buffer in memory. */
 
 static WaveInfo *
-WaveOpenDataForReading(CONST char *data,
-		       int length)
+WaveOpenDataForReading (const char *data,
+			int length)
 {
     RiffChunk       ck;
     RIFF_FOURCC     fourcc;
@@ -981,20 +987,20 @@ SoundOpenDataForReading (unsigned char *data,
   if (!(s = (Sound) malloc (sizeof (SoundRec))))
     return NULL;
 
-  if ((s->formatInfo = SndOpenDataForReading (data, length)) != NULL)
+  if ((s->formatInfo = SndOpenDataForReading ((char *) data, length)) != NULL)
     {
-      if (!(SoundFileInfo[SoundFileFormatSnd].toSound) (s))
+      if (!((int(*)(Sound))(SoundFileInfo[SoundFileFormatSnd].toSound)) (s))
 	{
-	  SndCloseFile (s->formatInfo);
+	  SndCloseFile ((SndInfo *) (s->formatInfo));
 	  free (s);
 	  return NULL;
 	}
     }
-  else if ((s->formatInfo = WaveOpenDataForReading (data, length)) != NULL)
+  else if ((s->formatInfo = WaveOpenDataForReading ((char *) data, length)) != NULL)
     {
-      if (!(SoundFileInfo[SoundFileFormatWave].toSound) (s))
+      if (!((int(*)(Sound))(SoundFileInfo[SoundFileFormatWave].toSound)) (s))
 	{
-	  WaveCloseFile (s->formatInfo);
+	  WaveCloseFile ((WaveInfo *) (s->formatInfo));
 	  free (s);
 	  return NULL;
 	}
@@ -1002,4 +1008,3 @@ SoundOpenDataForReading (unsigned char *data,
 
   return s;
 }
-

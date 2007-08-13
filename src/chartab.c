@@ -2,6 +2,8 @@
    Copyright (C) 1992, 1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Sun Microsystems, Inc.
    Copyright (C) 1995, 1996 Ben Wing.
+   Copyright (C) 1995, 1997, 1999 Electrotechnical Laboratory, JAPAN.
+   Licensed to the Free Software Foundation.
 
 This file is part of XEmacs.
 
@@ -50,6 +52,9 @@ Lisp_Object Qcategory_designator_p;
 Lisp_Object Qcategory_table_value_p;
 
 Lisp_Object Vstandard_category_table;
+
+/* Variables to determine word boundary.  */
+Lisp_Object Vword_combining_categories, Vword_separating_categories;
 #endif /* MULE */
 
 
@@ -90,14 +95,14 @@ Lisp_Object Vstandard_category_table;
 #ifdef MULE
 
 static Lisp_Object
-mark_char_table_entry (Lisp_Object obj, void (*markobj) (Lisp_Object))
+mark_char_table_entry (Lisp_Object obj)
 {
-  struct Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (obj);
+  Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (obj);
   int i;
 
   for (i = 0; i < 96; i++)
     {
-      markobj (cte->level2[i]);
+      mark_object (cte->level2[i]);
     }
   return Qnil;
 }
@@ -105,8 +110,8 @@ mark_char_table_entry (Lisp_Object obj, void (*markobj) (Lisp_Object))
 static int
 char_table_entry_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 {
-  struct Lisp_Char_Table_Entry *cte1 = XCHAR_TABLE_ENTRY (obj1);
-  struct Lisp_Char_Table_Entry *cte2 = XCHAR_TABLE_ENTRY (obj2);
+  Lisp_Char_Table_Entry *cte1 = XCHAR_TABLE_ENTRY (obj1);
+  Lisp_Char_Table_Entry *cte2 = XCHAR_TABLE_ENTRY (obj2);
   int i;
 
   for (i = 0; i < 96; i++)
@@ -119,29 +124,35 @@ char_table_entry_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 static unsigned long
 char_table_entry_hash (Lisp_Object obj, int depth)
 {
-  struct Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (obj);
+  Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (obj);
 
   return internal_array_hash (cte->level2, 96, depth);
 }
+
+static const struct lrecord_description char_table_entry_description[] = {
+  { XD_LISP_OBJECT_ARRAY, offsetof (Lisp_Char_Table_Entry, level2), 96 },
+  { XD_END }
+};
 
 DEFINE_LRECORD_IMPLEMENTATION ("char-table-entry", char_table_entry,
                                mark_char_table_entry, internal_object_printer,
 			       0, char_table_entry_equal,
 			       char_table_entry_hash,
-			       struct Lisp_Char_Table_Entry);
+			       char_table_entry_description,
+			       Lisp_Char_Table_Entry);
 #endif /* MULE */
 
 static Lisp_Object
-mark_char_table (Lisp_Object obj, void (*markobj) (Lisp_Object))
+mark_char_table (Lisp_Object obj)
 {
-  struct Lisp_Char_Table *ct = XCHAR_TABLE (obj);
+  Lisp_Char_Table *ct = XCHAR_TABLE (obj);
   int i;
 
   for (i = 0; i < NUM_ASCII_CHARS; i++)
-    markobj (ct->ascii[i]);
+    mark_object (ct->ascii[i]);
 #ifdef MULE
   for (i = 0; i < NUM_LEADING_BYTES; i++)
-    markobj (ct->level1[i]);
+    mark_object (ct->level1[i]);
 #endif
   return ct->mirror_table;
 }
@@ -151,18 +162,18 @@ mark_char_table (Lisp_Object obj, void (*markobj) (Lisp_Object))
    and prune_weak_hash_tables(). */
 
 void
-prune_syntax_tables (int (*obj_marked_p) (Lisp_Object))
+prune_syntax_tables (void)
 {
   Lisp_Object rest, prev = Qnil;
 
   for (rest = Vall_syntax_tables;
-       !GC_NILP (rest);
+       !NILP (rest);
        rest = XCHAR_TABLE (rest)->next_table)
     {
-      if (! obj_marked_p (rest))
+      if (! marked_p (rest))
 	{
 	  /* This table is garbage.  Remove it from the list. */
-	  if (GC_NILP (prev))
+	  if (NILP (prev))
 	    Vall_syntax_tables = XCHAR_TABLE (rest)->next_table;
 	  else
 	    XCHAR_TABLE (prev)->next_table =
@@ -230,7 +241,7 @@ print_chartab_range (Emchar first, Emchar last, Lisp_Object val,
 static void
 print_chartab_charset_row (Lisp_Object charset,
 			   int row,
-			   struct Lisp_Char_Table_Entry *cte,
+			   Lisp_Char_Table_Entry *cte,
 			   Lisp_Object printcharfun)
 {
   int i;
@@ -278,7 +289,7 @@ print_chartab_charset_row (Lisp_Object charset,
 
 static void
 print_chartab_two_byte_charset (Lisp_Object charset,
-				struct Lisp_Char_Table_Entry *cte,
+				Lisp_Char_Table_Entry *cte,
 				Lisp_Object printcharfun)
 {
   int i;
@@ -308,7 +319,7 @@ print_chartab_two_byte_charset (Lisp_Object charset,
 static void
 print_char_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
-  struct Lisp_Char_Table *ct = XCHAR_TABLE (obj);
+  Lisp_Char_Table *ct = XCHAR_TABLE (obj);
   char buf[200];
 
   sprintf (buf, "#s(char-table type %s data (",
@@ -366,7 +377,7 @@ print_char_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	  }
 	else
 	  {
-	    struct Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (ann);
+	    Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (ann);
 	    if (XCHARSET_DIMENSION (charset) == 1)
 	      print_chartab_charset_row (charset, -1, cte, printcharfun);
 	    else
@@ -382,8 +393,8 @@ print_char_table (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 static int
 char_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 {
-  struct Lisp_Char_Table *ct1 = XCHAR_TABLE (obj1);
-  struct Lisp_Char_Table *ct2 = XCHAR_TABLE (obj2);
+  Lisp_Char_Table *ct1 = XCHAR_TABLE (obj1);
+  Lisp_Char_Table *ct2 = XCHAR_TABLE (obj2);
   int i;
 
   if (CHAR_TABLE_TYPE (ct1) != CHAR_TABLE_TYPE (ct2))
@@ -405,7 +416,7 @@ char_table_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 static unsigned long
 char_table_hash (Lisp_Object obj, int depth)
 {
-  struct Lisp_Char_Table *ct = XCHAR_TABLE (obj);
+  Lisp_Char_Table *ct = XCHAR_TABLE (obj);
   unsigned long hashval = internal_array_hash (ct->ascii, NUM_ASCII_CHARS,
 					       depth);
 #ifdef MULE
@@ -415,10 +426,21 @@ char_table_hash (Lisp_Object obj, int depth)
   return hashval;
 }
 
+static const struct lrecord_description char_table_description[] = {
+  { XD_LISP_OBJECT_ARRAY, offsetof (Lisp_Char_Table, ascii), NUM_ASCII_CHARS },
+#ifdef MULE
+  { XD_LISP_OBJECT_ARRAY, offsetof (Lisp_Char_Table, level1), NUM_LEADING_BYTES },
+#endif
+  { XD_LISP_OBJECT, offsetof (Lisp_Char_Table, mirror_table) },
+  { XD_LO_LINK,     offsetof (Lisp_Char_Table, next_table) },
+  { XD_END }
+};
+
 DEFINE_LRECORD_IMPLEMENTATION ("char-table", char_table,
                                mark_char_table, print_char_table, 0,
 			       char_table_equal, char_table_hash,
-			       struct Lisp_Char_Table);
+			       char_table_description,
+			       Lisp_Char_Table);
 
 DEFUN ("char-table-p", Fchar_table_p, 1, 1, 0, /*
 Return non-nil if OBJECT is a char table.
@@ -521,7 +543,7 @@ See `valid-char-table-type-p'.
 }
 
 void
-fill_char_table (struct Lisp_Char_Table *ct, Lisp_Object value)
+fill_char_table (Lisp_Char_Table *ct, Lisp_Object value)
 {
   int i;
 
@@ -541,7 +563,7 @@ Reset a char table to its default state.
 */
        (table))
 {
-  struct Lisp_Char_Table *ct;
+  Lisp_Char_Table *ct;
 
   CHECK_CHAR_TABLE (table);
   ct = XCHAR_TABLE (table);
@@ -577,11 +599,11 @@ and 'syntax.  See `valid-char-table-type-p'.
 */
        (type))
 {
-  struct Lisp_Char_Table *ct;
+  Lisp_Char_Table *ct;
   Lisp_Object obj;
   enum char_table_type ty = symbol_to_char_table_type (type);
 
-  ct = alloc_lcrecord_type (struct Lisp_Char_Table, lrecord_char_table);
+  ct = alloc_lcrecord_type (Lisp_Char_Table, &lrecord_char_table);
   ct->type = ty;
   if (ty == CHAR_TABLE_TYPE_SYNTAX)
     {
@@ -609,9 +631,8 @@ make_char_table_entry (Lisp_Object initval)
 {
   Lisp_Object obj;
   int i;
-  struct Lisp_Char_Table_Entry *cte =
-    alloc_lcrecord_type (struct Lisp_Char_Table_Entry,
-			 lrecord_char_table_entry);
+  Lisp_Char_Table_Entry *cte =
+    alloc_lcrecord_type (Lisp_Char_Table_Entry, &lrecord_char_table_entry);
 
   for (i = 0; i < 96; i++)
     cte->level2[i] = initval;
@@ -623,12 +644,11 @@ make_char_table_entry (Lisp_Object initval)
 static Lisp_Object
 copy_char_table_entry (Lisp_Object entry)
 {
-  struct Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (entry);
+  Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (entry);
   Lisp_Object obj;
   int i;
-  struct Lisp_Char_Table_Entry *ctenew =
-    alloc_lcrecord_type (struct Lisp_Char_Table_Entry,
-			 lrecord_char_table_entry);
+  Lisp_Char_Table_Entry *ctenew =
+    alloc_lcrecord_type (Lisp_Char_Table_Entry, &lrecord_char_table_entry);
 
   for (i = 0; i < 96; i++)
     {
@@ -652,13 +672,13 @@ as OLD-TABLE.  The values will not themselves be copied.
 */
        (old_table))
 {
-  struct Lisp_Char_Table *ct, *ctnew;
+  Lisp_Char_Table *ct, *ctnew;
   Lisp_Object obj;
   int i;
 
   CHECK_CHAR_TABLE (old_table);
   ct = XCHAR_TABLE (old_table);
-  ctnew = alloc_lcrecord_type (struct Lisp_Char_Table, lrecord_char_table);
+  ctnew = alloc_lcrecord_type (Lisp_Char_Table, &lrecord_char_table);
   ctnew->type = ct->type;
 
   for (i = 0; i < NUM_ASCII_CHARS; i++)
@@ -687,7 +707,13 @@ as OLD-TABLE.  The values will not themselves be copied.
     ctnew->mirror_table = Fcopy_char_table (ct->mirror_table);
   else
     ctnew->mirror_table = ct->mirror_table;
+  ctnew->next_table = Qnil;
   XSETCHAR_TABLE (obj, ctnew);
+  if (ctnew->type == CHAR_TABLE_TYPE_SYNTAX)
+    {
+      ctnew->next_table = Vall_syntax_tables;
+      Vall_syntax_tables = obj;
+    }
   return obj;
 }
 
@@ -707,7 +733,7 @@ decode_char_table_range (Lisp_Object range, struct chartab_range *outrange)
 #else /* MULE */
   else if (VECTORP (range))
     {
-      struct Lisp_Vector *vec = XVECTOR (range);
+      Lisp_Vector *vec = XVECTOR (range);
       Lisp_Object *elts = vector_data (vec);
       if (vector_length (vec) != 2)
 	signal_simple_error ("Length of charset row vector must be 2",
@@ -747,7 +773,7 @@ decode_char_table_range (Lisp_Object range, struct chartab_range *outrange)
 
 /* called from CHAR_TABLE_VALUE(). */
 Lisp_Object
-get_non_ascii_char_table_value (struct Lisp_Char_Table *ct, int leading_byte,
+get_non_ascii_char_table_value (Lisp_Char_Table *ct, int leading_byte,
 			       Emchar c)
 {
   Lisp_Object val;
@@ -758,7 +784,7 @@ get_non_ascii_char_table_value (struct Lisp_Char_Table *ct, int leading_byte,
   val = ct->level1[leading_byte - MIN_LEADING_BYTE];
   if (CHAR_TABLE_ENTRYP (val))
     {
-      struct Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (val);
+      Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (val);
       val = cte->level2[byte1 - 32];
       if (CHAR_TABLE_ENTRYP (val))
 	{
@@ -775,7 +801,7 @@ get_non_ascii_char_table_value (struct Lisp_Char_Table *ct, int leading_byte,
 #endif /* MULE */
 
 Lisp_Object
-get_char_table (Emchar ch, struct Lisp_Char_Table *ct)
+get_char_table (Emchar ch, Lisp_Char_Table *ct)
 {
 #ifdef MULE
   {
@@ -795,7 +821,7 @@ get_char_table (Emchar ch, struct Lisp_Char_Table *ct)
 	val = ct->level1[lb];
 	if (CHAR_TABLE_ENTRYP (val))
 	  {
-	    struct Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (val);
+	    Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (val);
 	    val = cte->level2[byte1 - 32];
 	    if (CHAR_TABLE_ENTRYP (val))
 	      {
@@ -820,7 +846,7 @@ Find value for char CH in TABLE.
 */
        (ch, table))
 {
-  struct Lisp_Char_Table *ct;
+  Lisp_Char_Table *ct;
 
   CHECK_CHAR_TABLE (table);
   ct = XCHAR_TABLE (table);
@@ -835,7 +861,7 @@ If there is more than one value, return MULTI (defaults to nil).
 */
        (range, table, multi))
 {
-  struct Lisp_Char_Table *ct;
+  Lisp_Char_Table *ct;
   struct chartab_range rainj;
 
   if (CHAR_OR_CHAR_INTP (range))
@@ -1020,7 +1046,7 @@ Signal an error if VALUE is not a valid value for CHAR-TABLE-TYPE.
 /* Assign VAL to all characters in RANGE in char table CT. */
 
 void
-put_char_table (struct Lisp_Char_Table *ct, struct chartab_range *range,
+put_char_table (Lisp_Char_Table *ct, struct chartab_range *range,
 		Lisp_Object val)
 {
   switch (range->type)
@@ -1053,7 +1079,7 @@ put_char_table (struct Lisp_Char_Table *ct, struct chartab_range *range,
 
     case CHARTAB_RANGE_ROW:
       {
-	struct Lisp_Char_Table_Entry *cte;
+	Lisp_Char_Table_Entry *cte;
 	int lb = XCHARSET_LEADING_BYTE (range->charset) - MIN_LEADING_BYTE;
 	/* make sure that there is a separate entry for the row. */
 	if (!CHAR_TABLE_ENTRYP (ct->level1[lb]))
@@ -1077,7 +1103,7 @@ put_char_table (struct Lisp_Char_Table *ct, struct chartab_range *range,
 	  ct->ascii[byte1 + 128] = val;
 	else
 	  {
-	    struct Lisp_Char_Table_Entry *cte;
+	    Lisp_Char_Table_Entry *cte;
 	    int lb = XCHARSET_LEADING_BYTE (charset) - MIN_LEADING_BYTE;
 	    /* make sure that there is a separate entry for the row. */
 	    if (!CHAR_TABLE_ENTRYP (ct->level1[lb]))
@@ -1128,7 +1154,7 @@ See `valid-char-table-type-p'.
 */
        (range, val, table))
 {
-  struct Lisp_Char_Table *ct;
+  Lisp_Char_Table *ct;
   struct chartab_range rainj;
 
   CHECK_CHAR_TABLE (table);
@@ -1143,7 +1169,7 @@ See `valid-char-table-type-p'.
 /* Map FN over the ASCII chars in CT. */
 
 static int
-map_over_charset_ascii (struct Lisp_Char_Table *ct,
+map_over_charset_ascii (Lisp_Char_Table *ct,
 			int (*fn) (struct chartab_range *range,
 				   Lisp_Object val, void *arg),
 			void *arg)
@@ -1173,7 +1199,7 @@ map_over_charset_ascii (struct Lisp_Char_Table *ct,
 /* Map FN over the Control-1 chars in CT. */
 
 static int
-map_over_charset_control_1 (struct Lisp_Char_Table *ct,
+map_over_charset_control_1 (Lisp_Char_Table *ct,
 			    int (*fn) (struct chartab_range *range,
 				       Lisp_Object val, void *arg),
 			    void *arg)
@@ -1199,7 +1225,7 @@ map_over_charset_control_1 (struct Lisp_Char_Table *ct,
    CTE specifies the char table entry for CHARSET. */
 
 static int
-map_over_charset_row (struct Lisp_Char_Table_Entry *cte,
+map_over_charset_row (Lisp_Char_Table_Entry *cte,
 		      Lisp_Object charset, int row,
 		      int (*fn) (struct chartab_range *range,
 				 Lisp_Object val, void *arg),
@@ -1239,7 +1265,7 @@ map_over_charset_row (struct Lisp_Char_Table_Entry *cte,
 
 
 static int
-map_over_other_charset (struct Lisp_Char_Table *ct, int lb,
+map_over_other_charset (Lisp_Char_Table *ct, int lb,
 			int (*fn) (struct chartab_range *range,
 				   Lisp_Object val, void *arg),
 			void *arg)
@@ -1262,7 +1288,7 @@ map_over_other_charset (struct Lisp_Char_Table *ct, int lb,
     }
 
   {
-    struct Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (val);
+    Lisp_Char_Table_Entry *cte = XCHAR_TABLE_ENTRY (val);
     int charset94_p = (XCHARSET_CHARS (charset) == 94);
     int start = charset94_p ?  33 :  32;
     int stop  = charset94_p ? 127 : 128;
@@ -1296,7 +1322,7 @@ map_over_other_charset (struct Lisp_Char_Table *ct, int lb,
    becomes the return value of map_char_table(). */
 
 int
-map_char_table (struct Lisp_Char_Table *ct,
+map_char_table (Lisp_Char_Table *ct,
 		struct chartab_range *range,
 		int (*fn) (struct chartab_range *range,
 			   Lisp_Object val, void *arg),
@@ -1423,7 +1449,7 @@ the entire table.
 */
        (function, table, range))
 {
-  struct Lisp_Char_Table *ct;
+  Lisp_Char_Table *ct;
   struct slow_map_char_table_arg slarg;
   struct gcpro gcpro1, gcpro2;
   struct chartab_range rainj;
@@ -1591,7 +1617,7 @@ check_category_char (Emchar ch, Lisp_Object table,
 		     unsigned int designator, unsigned int not)
 {
   REGISTER Lisp_Object temp;
-  struct Lisp_Char_Table *ctbl;
+  Lisp_Char_Table *ctbl;
 #ifdef ERROR_CHECK_TYPECHECK
   if (NILP (Fcategory_table_p (table)))
     signal_simple_error ("Expected category table", table);
@@ -1709,6 +1735,69 @@ Valid values are nil or a bit vector of size 95.
   return CATEGORY_TABLE_VALUEP (obj) ? Qt : Qnil;
 }
 
+
+#define CATEGORYP(x) \
+  (CHARP (x) && XCHAR (x) >= 0x20 && XCHAR (x) <= 0x7E)
+
+#define CATEGORY_SET(c)						\
+  (get_char_table(c, XCHAR_TABLE(current_buffer->category_table)))
+
+/* Return 1 if CATEGORY_SET contains CATEGORY, else return 0.
+   The faster version of `!NILP (Faref (category_set, category))'.  */
+#define CATEGORY_MEMBER(category, category_set)		 	\
+  (bit_vector_bit(XBIT_VECTOR (category_set), category - 32))
+
+/* Return 1 if there is a word boundary between two word-constituent
+   characters C1 and C2 if they appear in this order, else return 0.
+   Use the macro WORD_BOUNDARY_P instead of calling this function
+   directly.  */
+
+int word_boundary_p (Emchar c1, Emchar c2);
+int
+word_boundary_p (Emchar c1, Emchar c2)
+{
+  Lisp_Object category_set1, category_set2;
+  Lisp_Object tail;
+  int default_result;
+
+#if 0
+  if (COMPOSITE_CHAR_P (c1))
+    c1 = cmpchar_component (c1, 0, 1);
+  if (COMPOSITE_CHAR_P (c2))
+    c2 = cmpchar_component (c2, 0, 1);
+#endif
+
+  if (EQ (CHAR_CHARSET (c1), CHAR_CHARSET (c2)))
+    {
+      tail = Vword_separating_categories;
+      default_result = 0;
+    }
+  else
+    {
+      tail = Vword_combining_categories;
+      default_result = 1;
+    }
+
+  category_set1 = CATEGORY_SET (c1);
+  if (NILP (category_set1))
+    return default_result;
+  category_set2 = CATEGORY_SET (c2);
+  if (NILP (category_set2))
+    return default_result;
+
+  for (; CONSP (tail); tail = XCONS (tail)->cdr)
+    {
+      Lisp_Object elt = XCONS(tail)->car;
+
+      if (CONSP (elt)
+	  && CATEGORYP (XCONS (elt)->car)
+	  && CATEGORYP (XCONS (elt)->cdr)
+	  && CATEGORY_MEMBER (XCHAR (XCONS (elt)->car), category_set1)
+	  && CATEGORY_MEMBER (XCHAR (XCONS (elt)->cdr), category_set2))
+	return !default_result;
+    }
+  return default_result;
+}
 #endif /* MULE */
 
 
@@ -1750,8 +1839,14 @@ syms_of_chartab (void)
   DEFSUBR (Fcategory_table_value_p);
 #endif /* MULE */
 
+}
+
+void
+vars_of_chartab (void)
+{
   /* DO NOT staticpro this.  It works just like Vweak_hash_tables. */
   Vall_syntax_tables = Qnil;
+  pdump_wire_list (&Vall_syntax_tables);
 }
 
 void
@@ -1775,5 +1870,50 @@ complex_vars_of_chartab (void)
   Vstandard_category_table = Qnil;
   Vstandard_category_table = Fcopy_category_table (Qnil);
   staticpro (&Vstandard_category_table);
+
+  DEFVAR_LISP ("word-combining-categories", &Vword_combining_categories /*
+List of pair (cons) of categories to determine word boundary.
+
+Emacs treats a sequence of word constituent characters as a single
+word (i.e. finds no word boundary between them) iff they belongs to
+the same charset.  But, exceptions are allowed in the following cases.
+
+(1) The case that characters are in different charsets is controlled
+by the variable `word-combining-categories'.
+
+Emacs finds no word boundary between characters of different charsets
+if they have categories matching some element of this list.
+
+More precisely, if an element of this list is a cons of category CAT1
+and CAT2, and a multibyte character C1 which has CAT1 is followed by
+C2 which has CAT2, there's no word boundary between C1 and C2.
+
+For instance, to tell that ASCII characters and Latin-1 characters can
+form a single word, the element `(?l . ?l)' should be in this list
+because both characters have the category `l' (Latin characters).
+
+(2) The case that character are in the same charset is controlled by
+the variable `word-separating-categories'.
+
+Emacs find a word boundary between characters of the same charset
+if they have categories matching some element of this list.
+
+More precisely, if an element of this list is a cons of category CAT1
+and CAT2, and a multibyte character C1 which has CAT1 is followed by
+C2 which has CAT2, there's a word boundary between C1 and C2.
+
+For instance, to tell that there's a word boundary between Japanese
+Hiragana and Japanese Kanji (both are in the same charset), the
+element `(?H . ?C) should be in this list.
+*/ );
+
+  Vword_combining_categories = Qnil;
+
+  DEFVAR_LISP ("word-separating-categories", &Vword_separating_categories /*
+List of pair (cons) of categories to determine word boundary.
+See the documentation of the variable `word-combining-categories'.
+*/ );
+
+  Vword_separating_categories = Qnil;
 #endif /* MULE */
 }

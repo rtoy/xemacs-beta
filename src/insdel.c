@@ -304,10 +304,10 @@ do						\
    the equivalent length in characters. */
 
 Charcount
-bytecount_to_charcount (CONST Bufbyte *ptr, Bytecount len)
+bytecount_to_charcount (const Bufbyte *ptr, Bytecount len)
 {
   Charcount count = 0;
-  CONST Bufbyte *end = ptr + len;
+  const Bufbyte *end = ptr + len;
 
 #if (LONGBITS == 32 || LONGBITS == 64)
 
@@ -331,11 +331,11 @@ bytecount_to_charcount (CONST Bufbyte *ptr, Bytecount len)
       /* Determine the section in the middle of the string that's
 	 amenable to this treatment.  Everything has to be aligned
 	 on CPU word boundaries. */
-      CONST Bufbyte *aligned_ptr =
-	(CONST Bufbyte *) (((unsigned long) (ptr + LONG_BYTES - 1)) &
+      const Bufbyte *aligned_ptr =
+	(const Bufbyte *) (((unsigned long) (ptr + LONG_BYTES - 1)) &
 			   ALIGN_MASK);
-      CONST Bufbyte *aligned_end =
-	(CONST Bufbyte *) (((unsigned long) end) & ALIGN_MASK);
+      const Bufbyte *aligned_end =
+	(const Bufbyte *) (((unsigned long) end) & ALIGN_MASK);
 
       /* Handle unaligned stuff at the beginning. */
       while (ptr < aligned_ptr)
@@ -378,9 +378,9 @@ bytecount_to_charcount (CONST Bufbyte *ptr, Bytecount len)
    the equivalent length in bytes. */
 
 Bytecount
-charcount_to_bytecount (CONST Bufbyte *ptr, Charcount len)
+charcount_to_bytecount (const Bufbyte *ptr, Charcount len)
 {
-  CONST Bufbyte *newptr = ptr;
+  const Bufbyte *newptr = ptr;
 
   while (len > 0)
     {
@@ -1605,7 +1605,7 @@ static void
 adjust_markers (struct buffer *buf, Memind from, Memind to,
 		Bytecount amount)
 {
-  struct Lisp_Marker *m;
+  Lisp_Marker *m;
 
   for (m = BUF_MARKERS (buf); m; m = marker_next (m))
     m->memind = do_marker_adjustment (m->memind, from, to, amount);
@@ -1617,7 +1617,7 @@ adjust_markers (struct buffer *buf, Memind from, Memind to,
 static void
 adjust_markers_for_insert (struct buffer *buf, Memind ind, Bytecount amount)
 {
-  struct Lisp_Marker *m;
+  Lisp_Marker *m;
 
   for (m = BUF_MARKERS (buf); m; m = marker_next (m))
     {
@@ -1630,18 +1630,6 @@ adjust_markers_for_insert (struct buffer *buf, Memind ind, Bytecount amount)
 /************************************************************************/
 /*                  Routines for dealing with the gap                   */
 /************************************************************************/
-
-/* XEmacs requires an ANSI C compiler, and it damn well better have a
-   working memmove() */
-#define GAP_USE_BCOPY
-#ifdef BCOPY_UPWARD_SAFE
-# undef BCOPY_UPWARD_SAFE
-#endif
-#ifdef BCOPY_DOWNWARD_SAFE
-# undef BCOPY_DOWNWARD_SAFE
-#endif
-#define BCOPY_UPWARD_SAFE 1
-#define BCOPY_DOWNWARD_SAFE 1
 
 /* maximum amount of memory moved in a single chunk.  Increasing this
    value improves gap-motion efficiency but decreases QUIT responsiveness
@@ -1683,23 +1671,15 @@ gap_left (struct buffer *buf, Bytind pos)
       /* Move at most GAP_MOVE_CHUNK chars before checking again for a quit. */
       if (i > GAP_MOVE_CHUNK)
 	i = GAP_MOVE_CHUNK;
-#ifdef GAP_USE_BCOPY
-      if (i >= 128
-	  /* bcopy is safe if the two areas of memory do not overlap
-	     or on systems where bcopy is always safe for moving upward.  */
-	  && (BCOPY_UPWARD_SAFE
-	      || to - from >= 128))
+
+      if (i >= 128)
 	{
-	  /* If overlap is not safe, avoid it by not moving too many
-	     characters at once.  */
-	  if (!BCOPY_UPWARD_SAFE && i > to - from)
-	    i = to - from;
 	  new_s1 -= i;
-	  from -= i, to -= i;
+	  from   -= i;
+	  to     -= i;
 	  memmove (to, from, i);
 	}
       else
-#endif
 	{
 	  new_s1 -= i;
 	  while (--i >= 0)
@@ -1762,23 +1742,15 @@ gap_right (struct buffer *buf, Bytind pos)
       /* Move at most GAP_MOVE_CHUNK chars before checking again for a quit. */
       if (i > GAP_MOVE_CHUNK)
 	i = GAP_MOVE_CHUNK;
-#ifdef GAP_USE_BCOPY
-      if (i >= 128
-	  /* bcopy is safe if the two areas of memory do not overlap
-	     or on systems where bcopy is always safe for moving downward. */
-	  && (BCOPY_DOWNWARD_SAFE
-	      || from - to >= 128))
+
+      if (i >= 128)
 	{
-	  /* If overlap is not safe, avoid it by not moving too many
-	     characters at once.  */
-	  if (!BCOPY_DOWNWARD_SAFE && i > from - to)
-	    i = from - to;
 	  new_s1 += i;
 	  memmove (to, from, i);
-	  from += i, to += i;
+	  from += i;
+	  to   += i;
 	}
       else
-#endif
 	{
 	  new_s1 += i;
 	  while (--i >= 0)
@@ -2057,7 +2029,12 @@ multiple_change_finish_up (Lisp_Object buffer)
    of the specified region, that will also be handled correctly.
 
    begin_multiple_change() returns a number (actually a specpdl depth)
-   that you must pass to end_multiple_change() when you are done. */
+   that you must pass to end_multiple_change() when you are done.
+
+   FSF Emacs 20 implements a similar feature, accessible from Lisp
+   through a `combine-after-change-calls' special form, which is
+   essentially equivalent to this function.  We should consider
+   whether we want to introduce a similar Lisp form.  */
 
 int
 begin_multiple_change (struct buffer *buf, Bufpos start, Bufpos end)
@@ -2105,7 +2082,8 @@ change_function_restore (Lisp_Object buffer)
   /* We should first reset the variable and then change the buffer,
      because Fset_buffer() can throw.  */
   inside_change_hook = 0;
-  Fset_buffer (buffer);
+  if (XBUFFER (buffer) != current_buffer)
+    Fset_buffer (buffer);
   return Qnil;
 }
 
@@ -2155,6 +2133,7 @@ signal_before_change (struct buffer *buf, Bufpos start, Bufpos end)
   if (!inside_change_hook)
     {
       Lisp_Object buffer;
+      int speccount;
 
       /* Are we in a multiple-change session? */
       if (buf->text->changes->in_multiple_change &&
@@ -2192,6 +2171,9 @@ signal_before_change (struct buffer *buf, Bufpos start, Bufpos end)
 	}
 
       /* Now in any case run the before-change-functions if any.  */
+      speccount = specpdl_depth ();
+      record_unwind_protect (change_function_restore, Fcurrent_buffer ());
+      inside_change_hook = 1;
 
       MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
 	{
@@ -2200,25 +2182,28 @@ signal_before_change (struct buffer *buf, Bufpos start, Bufpos end)
 	      /* Obsolete, for compatibility */
 	      || !NILP (symbol_value_in_buffer (Qbefore_change_function, buffer)))
 	    {
-	      int speccount = specpdl_depth ();
-	      record_unwind_protect (change_function_restore, Fcurrent_buffer ());
 	      set_buffer_internal (buf);
-	      inside_change_hook = 1;
 	      va_run_hook_with_args (Qbefore_change_functions, 2,
 				     make_int (start), make_int (end));
 	      /* Obsolete, for compatibility */
 	      va_run_hook_with_args (Qbefore_change_function, 2,
 				     make_int (start), make_int (end));
-	      unbind_to (speccount, Qnil);
 	    }
 	}
+
+      /* Make sure endpoints remain valid.  before-change-functions
+	 might have modified the buffer. */
+      if (start < BUF_BEGV (buf)) start = BUF_BEGV (buf);
+      if (start > BUF_ZV (buf))   start = BUF_ZV (buf);
+      if (end < BUF_BEGV (buf)) end = BUF_BEGV (buf);
+      if (end > BUF_ZV (buf))   end = BUF_ZV (buf);
 
       MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
 	{
 	  XSETBUFFER (buffer, mbuf);
-	  report_extent_modification (buffer, start, end,
-				      &inside_change_hook, 0);
+	  report_extent_modification (buffer, start, end, 0);
 	}
+      unbind_to (speccount, Qnil);
 
       /* Only now do we indicate that the before-change-functions have
 	 been called, in case some function throws out. */
@@ -2255,6 +2240,7 @@ signal_after_change (struct buffer *buf, Bufpos start, Bufpos orig_end,
   if (!inside_change_hook)
     {
       Lisp_Object buffer;
+      int speccount;
 
       if (buf->text->changes->in_multiple_change &&
 	  buf->text->changes->mc_begin != 0)
@@ -2267,6 +2253,9 @@ signal_after_change (struct buffer *buf, Bufpos start, Bufpos orig_end,
 	  return; /* after-change-functions signalled when all changes done */
 	}
 
+      speccount = specpdl_depth ();
+      record_unwind_protect (change_function_restore, Fcurrent_buffer ());
+      inside_change_hook = 1;
       MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
 	{
 	  XSETBUFFER (buffer, mbuf);
@@ -2275,10 +2264,7 @@ signal_after_change (struct buffer *buf, Bufpos start, Bufpos orig_end,
 	      /* Obsolete, for compatibility */
 	      || !NILP (symbol_value_in_buffer (Qafter_change_function, buffer)))
 	    {
-	      int speccount = specpdl_depth ();
-	      record_unwind_protect (change_function_restore, Fcurrent_buffer ());
 	      set_buffer_internal (buf);
-	      inside_change_hook = 1;
 	      /* The actual after-change functions take slightly
 		 different arguments than what we were passed. */
 	      va_run_hook_with_args (Qafter_change_functions, 3,
@@ -2288,16 +2274,24 @@ signal_after_change (struct buffer *buf, Bufpos start, Bufpos orig_end,
 	      va_run_hook_with_args (Qafter_change_function, 3,
 				     make_int (start), make_int (new_end),
 				     make_int (orig_end - start));
-	      unbind_to (speccount, Qnil);
 	    }
 	}
+
+      /* Make sure endpoints remain valid.  after-change-functions
+	 might have modified the buffer. */
+      if (start < BUF_BEGV (buf)) start = BUF_BEGV (buf);
+      if (start > BUF_ZV (buf))   start = BUF_ZV (buf);
+      if (new_end < BUF_BEGV (buf)) new_end = BUF_BEGV (buf);
+      if (new_end > BUF_ZV (buf))   new_end = BUF_ZV (buf);
+      if (orig_end < BUF_BEGV (buf)) orig_end = BUF_BEGV (buf);
+      if (orig_end > BUF_ZV (buf))   orig_end = BUF_ZV (buf);
 
       MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
 	{
 	  XSETBUFFER (buffer, mbuf);
-	  report_extent_modification (buffer, start, new_end,
-				      &inside_change_hook, 1);
+	  report_extent_modification (buffer, start, new_end, 1);
 	}
+      unbind_to (speccount, Qnil); /* sets inside_change_hook back to 0 */
     }
 }
 
@@ -2377,7 +2371,7 @@ prepare_to_modify_buffer (struct buffer *buf, Bufpos start, Bufpos end,
 /************************************************************************/
 
 void
-fixup_internal_substring (CONST Bufbyte *nonreloc, Lisp_Object reloc,
+fixup_internal_substring (const Bufbyte *nonreloc, Lisp_Object reloc,
 			  Bytecount offset, Bytecount *len)
 {
   assert ((nonreloc && NILP (reloc)) || (!nonreloc && STRINGP (reloc)));
@@ -2385,7 +2379,7 @@ fixup_internal_substring (CONST Bufbyte *nonreloc, Lisp_Object reloc,
   if (*len < 0)
     {
       if (nonreloc)
-	*len = strlen ((CONST char *) nonreloc) - offset;
+	*len = strlen ((const char *) nonreloc) - offset;
       else
 	*len = XSTRING_LENGTH (reloc) - offset;
     }
@@ -2419,7 +2413,7 @@ fixup_internal_substring (CONST Bufbyte *nonreloc, Lisp_Object reloc,
 
 Charcount
 buffer_insert_string_1 (struct buffer *buf, Bufpos pos,
-			CONST Bufbyte *nonreloc, Lisp_Object reloc,
+			const Bufbyte *nonreloc, Lisp_Object reloc,
 			Bytecount offset, Bytecount length,
 			int flags)
 {
@@ -2584,7 +2578,7 @@ buffer_insert_string_1 (struct buffer *buf, Bufpos pos,
 
 Charcount
 buffer_insert_raw_string_1 (struct buffer *buf, Bufpos pos,
-			    CONST Bufbyte *nonreloc, Bytecount length,
+			    const Bufbyte *nonreloc, Bytecount length,
 			    int flags)
 {
   /* This function can GC */
@@ -2608,12 +2602,12 @@ buffer_insert_lisp_string_1 (struct buffer *buf, Bufpos pos, Lisp_Object str,
 /* Insert the null-terminated string S (in external format). */
 
 Charcount
-buffer_insert_c_string_1 (struct buffer *buf, Bufpos pos, CONST char *s,
+buffer_insert_c_string_1 (struct buffer *buf, Bufpos pos, const char *s,
 			  int flags)
 {
   /* This function can GC */
-  CONST char *translated = GETTEXT (s);
-  return buffer_insert_string_1 (buf, pos, (CONST Bufbyte *) translated, Qnil,
+  const char *translated = GETTEXT (s);
+  return buffer_insert_string_1 (buf, pos, (const Bufbyte *) translated, Qnil,
 				 0, strlen (translated), flags);
 }
 
@@ -3079,14 +3073,14 @@ barf_if_buffer_read_only (struct buffer *buf, Bufpos from, Bufpos to)
 }
 
 void
-find_charsets_in_bufbyte_string (unsigned char *charsets, CONST Bufbyte *str,
+find_charsets_in_bufbyte_string (unsigned char *charsets, const Bufbyte *str,
 				 Bytecount len)
 {
 #ifndef MULE
   /* Telescope this. */
   charsets[0] = 1;
 #else
-  CONST Bufbyte *strend = str + len;
+  const Bufbyte *strend = str + len;
   memset (charsets, 0, NUM_LEADING_BYTES);
 
   while (str < strend)
@@ -3098,7 +3092,7 @@ find_charsets_in_bufbyte_string (unsigned char *charsets, CONST Bufbyte *str,
 }
 
 void
-find_charsets_in_emchar_string (unsigned char *charsets, CONST Emchar *str,
+find_charsets_in_emchar_string (unsigned char *charsets, const Emchar *str,
 				Charcount len)
 {
 #ifndef MULE
@@ -3116,10 +3110,10 @@ find_charsets_in_emchar_string (unsigned char *charsets, CONST Emchar *str,
 }
 
 int
-bufbyte_string_displayed_columns (CONST Bufbyte *str, Bytecount len)
+bufbyte_string_displayed_columns (const Bufbyte *str, Bytecount len)
 {
   int cols = 0;
-  CONST Bufbyte *end = str + len;
+  const Bufbyte *end = str + len;
 
   while (str < end)
     {
@@ -3136,7 +3130,7 @@ bufbyte_string_displayed_columns (CONST Bufbyte *str, Bytecount len)
 }
 
 int
-emchar_string_displayed_columns (CONST Emchar *str, Charcount len)
+emchar_string_displayed_columns (const Emchar *str, Charcount len)
 {
 #ifdef MULE
   int cols = 0;
@@ -3154,10 +3148,10 @@ emchar_string_displayed_columns (CONST Emchar *str, Charcount len)
 /* NOTE: Does not reset the Dynarr. */
 
 void
-convert_bufbyte_string_into_emchar_dynarr (CONST Bufbyte *str, Bytecount len,
+convert_bufbyte_string_into_emchar_dynarr (const Bufbyte *str, Bytecount len,
 					   Emchar_dynarr *dyn)
 {
-  CONST Bufbyte *strend = str + len;
+  const Bufbyte *strend = str + len;
 
   while (str < strend)
     {
@@ -3168,10 +3162,10 @@ convert_bufbyte_string_into_emchar_dynarr (CONST Bufbyte *str, Bytecount len,
 }
 
 Charcount
-convert_bufbyte_string_into_emchar_string (CONST Bufbyte *str, Bytecount len,
+convert_bufbyte_string_into_emchar_string (const Bufbyte *str, Bytecount len,
 					   Emchar *arr)
 {
-  CONST Bufbyte *strend = str + len;
+  const Bufbyte *strend = str + len;
   Charcount newlen = 0;
   while (str < strend)
     {
@@ -3234,7 +3228,7 @@ convert_emchar_string_into_malloced_string (Emchar *arr, int nels,
 /************************************************************************/
 
 void
-vars_of_insdel (void)
+reinit_vars_of_insdel (void)
 {
   int i;
 
@@ -3243,6 +3237,12 @@ vars_of_insdel (void)
 
   for (i = 0; i <= MAX_BYTIND_GAP_SIZE_3; i++)
     three_to_one_table[i] = i / 3;
+}
+
+void
+vars_of_insdel (void)
+{
+  reinit_vars_of_insdel ();
 }
 
 void

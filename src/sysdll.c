@@ -23,6 +23,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include <config.h>
 #endif
 
+#include <stdlib.h>
 #include "sysdll.h"
 
 /* This whole file is conditional upon HAVE_SHLIB */
@@ -48,13 +49,13 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #endif
 
 int
-dll_init (CONST char *arg)
+dll_init (const char *arg)
 {
   return 0;
 }
 
 dll_handle
-dll_open (CONST char *fname)
+dll_open (const char *fname)
 {
   return (dll_handle)dlopen (fname, RTLD_LAZY | RTLD_GLOBAL);
 }
@@ -66,7 +67,7 @@ dll_close (dll_handle h)
 }
 
 dll_func
-dll_function (dll_handle h, CONST char *n)
+dll_function (dll_handle h, const char *n)
 {
 #ifdef DLSYM_NEEDS_UNDERSCORE
   char *buf = alloca_array (char, strlen (n) + 2);
@@ -78,7 +79,7 @@ dll_function (dll_handle h, CONST char *n)
 }
 
 dll_var
-dll_variable (dll_handle h, CONST char *n)
+dll_variable (dll_handle h, const char *n)
 {
 #ifdef DLSYM_NEEDS_UNDERSCORE
   char *buf = alloca_array (char, strlen (n) + 2);
@@ -89,11 +90,11 @@ dll_variable (dll_handle h, CONST char *n)
   return (dll_var)dlsym ((void *)h, n);
 }
 
-CONST char *
+const char *
 dll_error (dll_handle h)
 {
 #if defined(HAVE_DLERROR) || defined(dlerror)
-  return (CONST char *)dlerror ();
+  return (const char *)dlerror ();
 #elif defined(HAVE__DLERROR)
   return (const char *)_dlerror();
 #else
@@ -105,13 +106,13 @@ dll_error (dll_handle h)
 /* This is the HP/UX version */
 #include <dl.h>
 int
-dll_init (CONST char *arg)
+dll_init (const char *arg)
 {
   return 0;
 }
 
 dll_handle
-dll_open (CONST char *fname)
+dll_open (const char *fname)
 {
   shl_t h = shl_load (fname, BIND_DEFERRED,0L);
   shl_t *hp = NULL;
@@ -136,7 +137,7 @@ dll_close (dll_handle h)
 }
 
 dll_func
-dll_function (dll_handle h, CONST char *n)
+dll_function (dll_handle h, const char *n)
 {
   long handle = 0L;
 
@@ -147,7 +148,7 @@ dll_function (dll_handle h, CONST char *n)
 }
 
 dll_var
-dll_variable (dll_handle h, CONST char *n)
+dll_variable (dll_handle h, const char *n)
 {
   long handle = 0L;
 
@@ -157,7 +158,7 @@ dll_variable (dll_handle h, CONST char *n)
   return (dll_var)handle;
 }
 
-CONST char *
+const char *
 dll_error (dll_handle h)
 {
   /* #### WTF?!  Shouldn't this at least attempt to get strerror or
@@ -168,7 +169,7 @@ dll_error (dll_handle h)
 #elif defined(HAVE_INIT_DLD)
 #include <dld.h>
 int
-dll_init (CONST char *arg)
+dll_init (const char *arg)
 {
   char *real_exe = dld_find_executable (arg);
   int rc;
@@ -183,7 +184,7 @@ dll_init (CONST char *arg)
 }
 
 dll_handle
-dll_open (CONST char *fname)
+dll_open (const char *fname)
 {
   rc = dld_link (fname);
   if (rc)
@@ -205,25 +206,25 @@ dll_close (dll_handle h)
 }
 
 DLL_FUNC
-dll_function (dll_handle h, CONST char *n)
+dll_function (dll_handle h, const char *n)
 {
   return dld_get_func(n);
 }
 
 DLL_FUNC
-dll_variable (dll_handle h, CONST char *n)
+dll_variable (dll_handle h, const char *n)
 {
   return dld_get_symbol(n);
 }
 #elif defined(_WINDOWS) || defined(WIN32)
 int
-dll_init (CONST char *arg)
+dll_init (const char *arg)
 {
   return 0;
 }
 
 dll_handle
-dll_open (CONST char *fname)
+dll_open (const char *fname)
 {
   return (dll_handle)LoadLibrary (fname);
 }
@@ -235,18 +236,18 @@ dll_close (dll_handle h)
 }
 
 dll_func
-dll_function (dll_handle h, CONST char *n)
+dll_function (dll_handle h, const char *n)
 {
   return (dll_func)GetProcAddress (h,n);
 }
 
 dll_func
-dll_variable (dll_handle h, CONST char *n)
+dll_variable (dll_handle h, const char *n)
 {
   return (dll_func)GetProcAddress (h,n);
 }
 
-CONST char *
+const char *
 dll_error (dll_handle h)
 {
   return "Windows DLL Error";
@@ -254,13 +255,13 @@ dll_error (dll_handle h)
 #else
 /* Catchall if we don't know about this systems method of dynamic loading */
 int
-dll_init (CONST char *arg)
+dll_init (const char *arg)
 {
   return -1;
 }
 
 dll_handle
-dll_open (CONST char *fname)
+dll_open (const char *fname)
 {
   return NULL;
 }
@@ -272,18 +273,18 @@ dll_close (dll_handle h)
 }
 
 dll_func
-dll_function (dll_handle h, CONST char *n)
+dll_function (dll_handle h, const char *n)
 {
   return NULL;
 }
 
 dll_func
-dll_variable (dll_handle h, CONST char *n)
+dll_variable (dll_handle h, const char *n)
 {
   return NULL;
 }
 
-CONST char *
+const char *
 dll_error (dll_handle h)
 {
   return "Shared libraries not implemented on this system";

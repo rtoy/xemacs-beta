@@ -48,6 +48,8 @@ static char rcsid [] = "!Header: gnuclient.c,v 2.2 95/12/12 01:39:21 wing nene !
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#define DONT_ENCAPSULATE
+#include <sysfile.h>
 
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -89,7 +91,9 @@ tell_emacs_to_resume (int sig)
 
   /* Why is SYSV so retarded? */
   /* We want emacs to realize that we are resuming */
+#ifdef SIGCONT
   signal(SIGCONT, tell_emacs_to_resume);
+#endif
 
   connect_type = make_connection (NULL, (u_short) 0, &s);
 
@@ -129,8 +133,10 @@ initialize_signals ()
   signal (SIGWINCH, pass_signal_to_emacs);
 #endif
 
+#ifdef SIGCONT
   /* We want emacs to realize that we are resuming */
   signal (SIGCONT, tell_emacs_to_resume);
+#endif
 }
 
 
@@ -225,13 +231,13 @@ filename_expand (char *fullpath, char *filename)
 /* Encase the string in quotes, escape all the backslashes and quotes
    in string.  */
 static char *
-clean_string (CONST char *s)
+clean_string (const char *s)
 {
   int i = 0;
   char *p, *res;
 
   {
-    CONST char *const_p;
+    const char *const_p;
     for (const_p = s; *const_p; const_p++, i++)
       {
 	if (*const_p == '\\' || *const_p == '\"')
@@ -285,14 +291,14 @@ clean_string (CONST char *s)
   over = 1;								   \
 } while (0)
 
-/* A strdup immitation. */
+/* A strdup imitation. */
 static char *
-my_strdup (CONST char *s)
+my_strdup (const char *s)
 {
-  char *new = malloc (strlen (s) + 1);
-  if (new)
-    strcpy (new, s);
-  return new;
+  char *new_s = (char *) malloc (strlen (s) + 1);
+  if (new_s)
+    strcpy (new_s, s);
+  return new_s;
 }
 
 int
@@ -654,7 +660,7 @@ main (int argc, char *argv[])
 	    }
 	  filename_expand (fullpath, argv[i]);
 #ifdef INTERNET_DOMAIN_SOCKETS
-	  path = malloc (strlen (remotepath) + strlen (fullpath) + 1);
+	  path = (char *) malloc (strlen (remotepath) + strlen (fullpath) + 1);
 	  sprintf (path, "%s%s", remotepath, fullpath);
 #else
 	  path = my_strdup (fullpath);

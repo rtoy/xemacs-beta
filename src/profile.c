@@ -57,7 +57,7 @@ Boston, MA 02111-1307, USA.  */
    even be useful to provide a way to turn on only one profiling
    mechanism, but I haven't done so yet.  --hniksic */
 
-struct hash_table *big_profile_table;
+static struct hash_table *big_profile_table;
 Lisp_Object Vcall_count_profile_table;
 
 int default_profiling_interval;
@@ -68,10 +68,10 @@ int profiling_active;
    and is not set the whole time we're in redisplay. */
 int profiling_redisplay_flag;
 
-Lisp_Object QSin_redisplay;
-Lisp_Object QSin_garbage_collection;
-Lisp_Object QSprocessing_events_at_top_level;
-Lisp_Object QSunknown;
+static Lisp_Object QSin_redisplay;
+static Lisp_Object QSin_garbage_collection;
+static Lisp_Object QSprocessing_events_at_top_level;
+static Lisp_Object QSunknown;
 
 /* We use inside_profiling to prevent the handler from writing to
    the table while another routine is operating on it.  We also set
@@ -119,9 +119,10 @@ sigprof_handler (int signo)
 	{
 	  fun = *backtrace_list->function;
 
-	  if (!GC_SYMBOLP	     (fun) &&
-	      !GC_COMPILED_FUNCTIONP (fun) &&
-	      !GC_SUBRP		     (fun))
+	  if (!SYMBOLP (fun)
+	      && !COMPILED_FUNCTIONP (fun)
+	      && !SUBRP (fun)
+	      && !CONSP (fun))
 	     fun = QSunknown;
 	}
       else
@@ -134,14 +135,14 @@ sigprof_handler (int signo)
 	   lose because of this.  Even worse, if the memory allocation
 	   fails, the `error' generated whacks everything hard. */
 	long count;
-	CONST void *vval;
+	const void *vval;
 
 	if (gethash (LISP_TO_VOID (fun), big_profile_table, &vval))
 	  count = (long) vval;
 	else
 	  count = 0;
 	count++;
-	vval = (CONST void *) count;
+	vval = (const void *) count;
 	puthash (LISP_TO_VOID (fun), (void *) vval, big_profile_table);
       }
 
@@ -225,7 +226,7 @@ struct get_profiling_info_closure
 };
 
 static int
-get_profiling_info_maphash (CONST void *void_key,
+get_profiling_info_maphash (const void *void_key,
 			    void *void_val,
 			    void *void_closure)
 {
@@ -262,34 +263,26 @@ Return the profiling info as an alist.
   return closure.accum;
 }
 
-struct mark_profiling_info_closure
-{
-  void (*markfun) (Lisp_Object);
-};
-
 static int
-mark_profiling_info_maphash (CONST void *void_key,
+mark_profiling_info_maphash (const void *void_key,
 			     void *void_val,
 			     void *void_closure)
 {
   Lisp_Object key;
 
   CVOID_TO_LISP (key, void_key);
-  (((struct mark_profiling_info_closure *) void_closure)->markfun) (key);
+  mark_object (key);
   return 0;
 }
 
 void
-mark_profiling_info (void (*markfun) (Lisp_Object))
+mark_profiling_info (void)
 {
-  /* This function does not GC (if markfun doesn't) */
-  struct mark_profiling_info_closure closure;
-
-  closure.markfun = markfun;
+  /* This function does not GC */
   if (big_profile_table)
     {
       inside_profiling = 1;
-      maphash (mark_profiling_info_maphash, big_profile_table, &closure);
+      maphash (mark_profiling_info_maphash, big_profile_table, 0);
       inside_profiling = 0;
     }
 }

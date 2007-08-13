@@ -22,24 +22,19 @@ Boston, MA 02111-1307, USA.  */
 
 /* Synched up with: Not in FSF. */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include <sys/types.h>
-#if defined(HAVE_UNISTD_H) || defined(STDC_HEADERS)
-#include <unistd.h>
-#endif
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 #ifdef _POSIX_VERSION
 #include <limits.h>			/* for PATH_MAX */
 #else
 #include <sys/param.h>			/* for MAXPATHLEN */
-#endif
-#include <errno.h>
-#ifndef STDC_HEADERS
-extern int errno;
 #endif
 
 #ifdef WINDOWSNT
@@ -48,33 +43,32 @@ extern int errno;
 
 #include <sys/stat.h>			/* for S_IFLNK */
 
+#if !defined (HAVE_GETCWD) && defined (HAVE_GETWD)
+#undef getcwd
+#define getcwd(buffer, len) getwd (buffer)
+#endif
+
 #ifndef PATH_MAX
-#ifdef _POSIX_VERSION
-#define PATH_MAX _POSIX_PATH_MAX
-#else
-#ifdef MAXPATHLEN
-#define PATH_MAX MAXPATHLEN
-#else
-#define PATH_MAX 1024
-#endif
-#endif
+# if defined (_POSIX_PATH_MAX)
+#  define PATH_MAX _POSIX_PATH_MAX
+# elif defined (MAXPATHLEN)
+#  define PATH_MAX MAXPATHLEN
+# else
+#  define PATH_MAX 1024
+# endif
 #endif
 
 #define MAX_READLINKS 32
 
-#ifdef __STDC__
-char *xrealpath(const char *path, char resolved_path [])
-#else
-char *xrealpath(path, resolved_path)
-const char *path;
-char resolved_path [];
-#endif
+char * xrealpath (const char *path, char resolved_path []);
+char *
+xrealpath (const char *path, char resolved_path [])
 {
   char copy_path[PATH_MAX];
   char *new_path = resolved_path;
   char *max_path;
-  int readlinks = 0;
 #ifdef S_IFLNK
+  int readlinks = 0;
   char link_path[PATH_MAX];
   int n;
 #endif
@@ -109,7 +103,7 @@ char resolved_path [];
   */
   else if (*path == '/')
     {
-      getcwd(new_path, PATH_MAX - 1);
+      getcwd (new_path, PATH_MAX - 1);
       new_path += 3;
       path++;
     }
@@ -119,21 +113,17 @@ char resolved_path [];
   */
   else
     {
-      getcwd(new_path, PATH_MAX - 1);
+      getcwd (new_path, PATH_MAX - 1);
       new_path += strlen(new_path);
       if (new_path[-1] != '/')
 	*new_path++ = '/';
     }
 
 #else
-  /* If it's a relative pathname use getwd for starters. */
+  /* If it's a relative pathname use getcwd for starters. */
   if (*path != '/')
     {
-#ifdef HAVE_GETCWD
-      getcwd(new_path, PATH_MAX - 1);
-#else
-      getwd(new_path);
-#endif
+      getcwd (new_path, PATH_MAX - 1);
       new_path += strlen(new_path);
       if (new_path[-1] != '/')
 	*new_path++ = '/';

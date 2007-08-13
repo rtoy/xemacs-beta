@@ -65,9 +65,13 @@ WinMain (HINSTANCE hSelf, HINSTANCE hPrev, LPSTR cmdline, int nShow)
    char execpath[MAX_PATH];
    char* argv[MAX_ARGS+1]; /* leave extra slot for compact_invocation argv[0] */
    int argc;
-   int i,j;
+   int i;
    char exec[MAX_PATH + FILENAME_MAX + 100];
    char cmdline2[MAX_ARGS * MAX_PATH];
+
+#ifdef Debug
+   int j;
+#endif
 
    compact_invocation = get_exec_name_and_path(execname,execpath);
 
@@ -121,7 +125,6 @@ int start_child(char* cmdline, int wait_for_child)
 {
    STARTUPINFO start;
    SECURITY_ATTRIBUTES sec_attrs;
-   SECURITY_DESCRIPTOR sec_desc;
    PROCESS_INFORMATION child;
    int retval;
 
@@ -158,7 +161,9 @@ void xemacs_special(char* exec)
    char* p;
    char* p2;
    char exec2[MAX_PATH + FILENAME_MAX + 100];
+#if defined(__CYGWIN__)
    char tmp[MAX_PATH + FILENAME_MAX + 100];
+#endif
    strcpy(exec2,exec);
    /* this depends on short-circuit evaluation */
    if ( ((p = strrchr(exec2,'\\')) && stricmp(p,"\\xemacs") == 0) ||
@@ -240,7 +245,6 @@ void process_execname(char *exec, const char* execname,const char* execpath )
    char buf[MAX_PATH + FILENAME_MAX + 100];
    int i,j;
 
-   int len = 0;
    /* 
     * STARTS WITH / or \ 
     * execpath NOT used
@@ -625,7 +629,6 @@ char *pfopen(char *retval, const char *name, const char *dirs)
     char *ptr;
     char *tdirs;
     char returnval[MAX_PATH + FILENAME_MAX + 100];
-    char *recursive_name;
     int foundit = FALSE;
     
     returnval[0] = '\0';

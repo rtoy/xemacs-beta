@@ -75,9 +75,6 @@ Lisp_Object Vdatabase_coding_system;
 
 Lisp_Object Qdatabasep;
 
-struct Lisp_Database;
-typedef struct Lisp_Database Lisp_Database;
-
 typedef struct
 {
   Lisp_Object (*get_subtype) (Lisp_Database *);
@@ -113,7 +110,6 @@ struct Lisp_Database
 #define XDATABASE(x) XRECORD (x, database, Lisp_Database)
 #define XSETDATABASE(x, p) XSETRECORD (x, p, database)
 #define DATABASEP(x) RECORDP (x, database)
-#define GC_DATABASEP(x) GC_RECORDP (x, database)
 #define CHECK_DATABASE(x) CHECK_RECORD (x, database)
 #define CONCHECK_DATABASE(x) CONCHECK_RECORD (x, database)
 #define DATABASE_LIVE_P(x) (x->live_p)
@@ -128,7 +124,7 @@ struct Lisp_Database
 static Lisp_Database *
 allocate_database (void)
 {
-  Lisp_Database *db = alloc_lcrecord_type (Lisp_Database, lrecord_database);
+  Lisp_Database *db = alloc_lcrecord_type (Lisp_Database, &lrecord_database);
 
   db->fname = Qnil;
   db->live_p = 0;
@@ -148,12 +144,10 @@ allocate_database (void)
 }
 
 static Lisp_Object
-mark_database (Lisp_Object obj, void (*markobj) (Lisp_Object))
+mark_database (Lisp_Object obj)
 {
   Lisp_Database *db = XDATABASE (obj);
-
-  markobj (db->fname);
-  return Qnil;
+  return db->fname;
 }
 
 static void
@@ -195,7 +189,7 @@ finalize_database (void *header, int for_disksave)
 
 DEFINE_LRECORD_IMPLEMENTATION ("database", database,
                                mark_database, print_database,
-			       finalize_database, 0, 0,
+			       finalize_database, 0, 0, 0,
 			       Lisp_Database);
 
 DEFUN ("close-database", Fclose_database, 1, 1, 0, /*
@@ -492,7 +486,7 @@ berkdb_map (Lisp_Database *db, Lisp_Object func)
        status == 0;
        status = dbp->seq (dbp, &keydatum, &valdatum, R_NEXT))
     {
-      /* ### Needs mule-izing */
+      /* #### Needs mule-izing */
       key = make_string ((Bufbyte *) keydatum.data, keydatum.size);
       val = make_string ((Bufbyte *) valdatum.data, valdatum.size);
       call2 (func, key, val);
@@ -505,12 +499,12 @@ berkdb_map (Lisp_Database *db, Lisp_Object func)
     status = dbp->cursor (dbp, NULL, &dbcp, 0);
 #else
     status = dbp->cursor (dbp, NULL, &dbcp);
-#endif   
+#endif
     for (status = dbcp->c_get (dbcp, &keydatum, &valdatum, DB_FIRST);
 	 status == 0;
 	 status = dbcp->c_get (dbcp, &keydatum, &valdatum, DB_NEXT))
       {
-	/* ### Needs mule-izing */
+	/* #### Needs mule-izing */
 	key = make_string ((Bufbyte *) keydatum.data, keydatum.size);
 	val = make_string ((Bufbyte *) valdatum.data, valdatum.size);
 	call2 (func, key, val);
@@ -584,7 +578,9 @@ and defaults to 0755.
   file = Fexpand_file_name (file, Qnil);
   UNGCPRO;
 
-  GET_C_CHARPTR_EXT_FILENAME_DATA_ALLOCA (XSTRING_DATA (file), filename);
+  TO_EXTERNAL_FORMAT (LISP_STRING, file,
+		      C_STRING_ALLOCA, filename,
+		      Qfile_name);
 
   if (NILP (access_))
     {

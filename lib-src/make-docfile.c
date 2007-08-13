@@ -40,7 +40,7 @@ Boston, MA 02111-1307, USA.  */
  */
 
 #define NO_SHORTNAMES   /* Tell config not to load remap.h */
-#include <../src/config.h>
+#include <config.h>
 
 #include <stdio.h>
 #include <errno.h>
@@ -51,8 +51,6 @@ Boston, MA 02111-1307, USA.  */
 #include <ctype.h>
 #endif
 
-#include <sys/param.h>
-
 #if defined(MSDOS) || defined(__CYGWIN32__)
 #include <fcntl.h>
 #endif /* MSDOS */
@@ -62,6 +60,8 @@ Boston, MA 02111-1307, USA.  */
 #include <io.h>
 #include <stdlib.h>
 #endif /* WINDOWSNT */
+
+#include <sys/param.h>
 
 #if defined(DOS_NT) || defined(__CYGWIN32__)
 #define READ_TEXT "rt"
@@ -91,14 +91,14 @@ enum
   c_file
 } Current_file_type;
 
-static int scan_file (CONST char *filename);
+static int scan_file (const char *filename);
 static int read_c_string (FILE *, int, int);
-static void write_c_args (FILE *out, CONST char *func, char *buf, int minargs,
+static void write_c_args (FILE *out, const char *func, char *buf, int minargs,
 			  int maxargs);
-static int scan_c_file (CONST char *filename, CONST char *mode);
+static int scan_c_file (const char *filename, const char *mode);
 static void skip_white (FILE *);
 static void read_lisp_symbol (FILE *, char *);
-static int scan_lisp_file (CONST char *filename, CONST char *mode);
+static int scan_lisp_file (const char *filename, const char *mode);
 
 #define C_IDENTIFIER_CHAR_P(c) \
  (('A' <= c && c <= 'Z') || \
@@ -115,7 +115,7 @@ int ellcc = 0;
 /* Print error message.  `s1' is printf control string, `s2' is arg for it. */
 
 static void
-error (CONST char *s1, CONST char *s2)
+error (const char *s1, const char *s2)
 {
   fprintf (stderr, "%s: ", progname);
   fprintf (stderr, s1, s2);
@@ -125,7 +125,7 @@ error (CONST char *s1, CONST char *s2)
 /* Print error message and exit.  */
 
 static void
-fatal (CONST char *s1, CONST char *s2)
+fatal (const char *s1, const char *s2)
 {
   error (s1, s2);
   exit (1);
@@ -274,7 +274,7 @@ main (int argc, char **argv)
 /* Return 1 if file is not found, 0 if it is found.  */
 
 static int
-scan_file (CONST char *filename)
+scan_file (const char *filename)
 {
   int len = strlen (filename);
   if (ellcc == 0 && len > 4 && !strcmp (filename + len - 4, ".elc"))
@@ -396,7 +396,7 @@ read_c_string (FILE *infile, int printflag, int c_docstring)
    MINARGS and MAXARGS are the minimum and maximum number of arguments.  */
 
 static void
-write_c_args (FILE *out, CONST char *func, char *buff, int minargs,
+write_c_args (FILE *out, const char *func, char *buff, int minargs,
 	      int maxargs)
 {
   register char *p;
@@ -429,10 +429,10 @@ write_c_args (FILE *out, CONST char *func, char *buff, int minargs,
       static char lo[] = "Lisp_Object";
       if ((C_IDENTIFIER_CHAR_P (c) != in_ident) && !in_ident &&
 	  (strncmp (p, lo, sizeof (lo) - 1) == 0) &&
-	  isspace(*(p + sizeof (lo) - 1)))
+	  isspace((unsigned char) (* (p + sizeof (lo) - 1))))
 	{
 	  p += (sizeof (lo) - 1);
-	  while (isspace (*p))
+	  while (isspace ((unsigned char) (*p)))
 	    p++;
 	  c = *p;
 	}
@@ -496,7 +496,7 @@ write_c_args (FILE *out, CONST char *func, char *buff, int minargs,
    Accepts any word starting DEF... so it finds DEFSIMPLE and DEFPRED.  */
 
 static int
-scan_c_file (CONST char *filename, CONST char *mode)
+scan_c_file (const char *filename, const char *mode)
 {
   FILE *infile;
   register int c;
@@ -787,7 +787,7 @@ read_lisp_symbol (FILE *infile, char *buffer)
 }
 
 static int
-scan_lisp_file (CONST char *filename, CONST char *mode)
+scan_lisp_file (const char *filename, const char *mode)
 {
   FILE *infile;
   register int c;
@@ -915,7 +915,7 @@ scan_lisp_file (CONST char *filename, CONST char *mode)
 	      /* Skip until the first newline; remember the two previous chars. */
 	      while (c != '\n' && c >= 0)
 		{
-		  /* ### Kludge -- Ignore any ESC x x ISO2022 sequences */
+		  /* #### Kludge -- Ignore any ESC x x ISO2022 sequences */
 		  if (c == 27)
 		    {
 		      getc (infile);

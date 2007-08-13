@@ -21,7 +21,7 @@ Boston, MA 02111-1307, USA.  */
 /* Synched up with: FSF 19.28. */
 
 #define NO_SHORTNAMES
-#include <../src/config.h>
+#include <config.h>
 
 #if defined (BSD) && !defined (BSD4_1) && !defined (USE_FAKEMAIL)
 /* This program is not used in BSD, so just avoid loader complaints.  */
@@ -116,7 +116,7 @@ typedef struct stream_record *stream_list;
 
 struct linebuffer
 {
-  long size;
+  size_t size;
   char *buffer;
 };
 
@@ -144,7 +144,7 @@ struct linebuffer lb;
 #define MAIL_PROGRAM_NAME "/bin/mail"
 #endif
 
-static CONST char *my_name;
+static const char *my_name;
 static char *the_date;
 static char *the_user;
 static line_list file_preface;
@@ -162,7 +162,7 @@ extern struct passwd *getpwuid ();
 extern unsigned short geteuid ();
 static struct passwd *my_entry;
 #define cuserid(s)				\
-(my_entry = getpwuid (((int) geteuid ())),	\
+(my_entry = getpwuid ((int) geteuid ()),	\
  my_entry->pw_name)
 #endif
 
@@ -171,7 +171,7 @@ static struct passwd *my_entry;
 /* Print error message.  `s1' is printf control string, `s2' is arg for it. */
 
 static void
-error (CONST char *s1, CONST char *s2)
+error (const char *s1, const char *s2)
 {
   printf ("%s: ", my_name);
   printf (s1, s2);
@@ -182,7 +182,7 @@ error (CONST char *s1, CONST char *s2)
 /* Print error message and exit.  */
 
 static void
-fatal (CONST char *s1, CONST char *s2)
+fatal (const char *s1, const char *s2)
 {
   error (s1, s2);
   exit (1);
@@ -190,20 +190,20 @@ fatal (CONST char *s1, CONST char *s2)
 
 /* Like malloc but get fatal error if memory is exhausted.  */
 
-static char *
+static void *
 xmalloc (size_t size)
 {
-  char *result = malloc (((unsigned) size));
-  if (result == ((char *) NULL))
+  void *result = malloc (size);
+  if (result == NULL)
     fatal ("virtual memory exhausted", (char *) 0);
   return result;
 }
 
-static char *
-xrealloc (char *ptr, size_t size)
+static void *
+xrealloc (void *ptr, size_t size)
 {
-  char *result = realloc (ptr, ((unsigned) size));
-  if (result == ((char *) NULL))
+  void *result = realloc (ptr, size);
+  if (result == NULL)
     fatal ("virtual memory exhausted", (char *) 0);
   return result;
 }
@@ -214,7 +214,7 @@ static void
 init_linebuffer (struct linebuffer *linebuffer)
 {
   linebuffer->size = INITIAL_LINE_SIZE;
-  linebuffer->buffer = ((char *) xmalloc (INITIAL_LINE_SIZE));
+  linebuffer->buffer = (char *) xmalloc (INITIAL_LINE_SIZE);
 }
 
 /* Read a line of text from `stream' into `linebuffer'.
@@ -234,8 +234,7 @@ readline (struct linebuffer *linebuffer, FILE *stream)
       if (p == end)
 	{
 	  linebuffer->size *= 2;
-	  buffer = ((char *) xrealloc ((char *) buffer,
-				       (size_t) (linebuffer->size)));
+	  buffer = (char *) xrealloc (buffer, linebuffer->size);
 	  p = buffer + (p - linebuffer->buffer);
 	  end = buffer + linebuffer->size;
 	  linebuffer->buffer = buffer;
@@ -279,7 +278,7 @@ static boolean
 has_keyword (char *field)
 {
   char *ignored;
-  return (get_keyword (field, &ignored) != ((char *) NULL));
+  return (get_keyword (field, &ignored) != (char *) NULL);
 }
 
 static char *
@@ -323,7 +322,11 @@ make_file_preface (void)
   /* the_date has an unwanted newline at the end */
   date_length = strlen (the_date) - 1;
   the_date[date_length] = '\0';
+#ifdef WINDOWSNT
+  temp = "(null)";
+#else
   temp = cuserid ((char *) NULL);
+#endif
   user_length = strlen (temp);
   the_user = alloc_string ((size_t) (user_length + 1));
   strcpy (the_user, temp);
@@ -396,7 +399,7 @@ open_a_file (char *name)
   if (the_stream != ((FILE *) NULL))
     {
       add_a_stream (the_stream, my_fclose);
-      if (the_user == ((char *) NULL))
+      if (the_user == (char *) NULL)
 	file_preface = make_file_preface ();
       write_line_list (file_preface, the_stream);
       return true;
@@ -416,20 +419,20 @@ put_string (char *s)
 }
 
 static void
-put_line (CONST char *string)
+put_line (const char *string)
 {
   register stream_list rem;
   for (rem = the_streams;
        rem != ((stream_list) NULL);
        rem = rem->rest_streams)
     {
-      CONST char *s = string;
+      const char *s = string;
       int column = 0;
 
       /* Divide STRING into lines.  */
       while (*s != 0)
 	{
-	  CONST char *breakpos;
+	  const char *breakpos;
 
 	  /* Find the last char that fits.  */
 	  for (breakpos = s; *breakpos && column < 78; ++breakpos)
@@ -634,10 +637,6 @@ main (int argc, char *argv[])
   register int size;
   FILE *the_pipe;
 
-#if !(__STDC__ || defined(STDC_HEADERS))
-  extern char *getenv ();
-#endif
-
   mail_program_name = getenv ("FAKEMAILER");
   if (!(mail_program_name && *mail_program_name))
     mail_program_name = (char *) MAIL_PROGRAM_NAME;
@@ -645,8 +644,8 @@ main (int argc, char *argv[])
 
   my_name = MY_NAME;
   the_streams = ((stream_list) NULL);
-  the_date = ((char *) NULL);
-  the_user = ((char *) NULL);
+  the_date = (char *) NULL;
+  the_user = (char *) NULL;
 
   the_header = read_header ();
   command_line = alloc_string ((size_t) (name_length +
@@ -656,7 +655,7 @@ main (int argc, char *argv[])
 
   the_pipe = popen (command_line, "w");
   if (the_pipe == ((FILE *) NULL))
-    fatal ("cannot open pipe to real mailer", (char *) 0);
+    fatal ("cannot open pipe to real mailer", (char *) NULL);
 
   add_a_stream (the_pipe, pclose);
 

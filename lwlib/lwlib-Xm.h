@@ -1,5 +1,5 @@
-#ifndef LWLIB_XM_H
-#define LWLIB_XM_H
+#ifndef INCLUDED_lwlib_Xm_h_
+#define INCLUDED_lwlib_Xm_h_
 
 #include "lwlib-internal.h"
 
@@ -7,6 +7,9 @@ extern widget_creation_entry xm_creation_table [];
 
 Widget 
 xm_create_dialog (widget_instance* instance);
+
+Widget
+xm_create_label (Widget parent, widget_value* val);
 
 Boolean
 lw_motif_widget_p (Widget widget);
@@ -33,4 +36,4 @@ xm_pop_instance (widget_instance* instance, Boolean up);
 
 extern Widget first_child (Widget);	/* garbage */
 
-#endif /* LWLIB_XM_H */
+#endif /* INCLUDED_lwlib_Xm_h_ */

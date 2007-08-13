@@ -35,11 +35,10 @@ Boston, MA 02111-1307, USA.  */
 #include "device.h"
 #include "frame.h"
 #include "gui.h"
+#include "redisplay.h"
 #include "opaque.h"
 
-#ifdef HAVE_POPUPS
 Lisp_Object Qmenu_no_selection_hook;
-#endif
 
 /* we need a unique id for each popup menu, dialog box, and scrollbar */
 static unsigned int lwlib_id_tick;
@@ -59,36 +58,26 @@ xmalloc_widget_value (void)
 }
 
 
-#ifdef HAVE_POPUPS
-
-struct mark_widget_value_closure
-{
-  void (*markobj) (Lisp_Object);
-};
-
 static int
 mark_widget_value_mapper (widget_value *val, void *closure)
 {
   Lisp_Object markee;
-
-  struct mark_widget_value_closure *cl =
-    (struct mark_widget_value_closure *) closure;
   if (val->call_data)
     {
       VOID_TO_LISP (markee, val->call_data);
-      (cl->markobj) (markee);
+      mark_object (markee);
     }
 
   if (val->accel)
     {
       VOID_TO_LISP (markee, val->accel);
-      (cl->markobj) (markee);
+      mark_object (markee);
     }
   return 0;
 }
 
 static Lisp_Object
-mark_popup_data (Lisp_Object obj, void (*markobj) (Lisp_Object))
+mark_popup_data (Lisp_Object obj)
 {
   struct popup_data *data = (struct popup_data *) XPOPUP_DATA (obj);
 
@@ -96,19 +85,14 @@ mark_popup_data (Lisp_Object obj, void (*markobj) (Lisp_Object))
      call-data */
 
   if (data->id)
-    {
-      struct mark_widget_value_closure closure;
-
-      closure.markobj = markobj;
-      lw_map_widget_values (data->id, mark_widget_value_mapper, &closure);
-    }
+    lw_map_widget_values (data->id, mark_widget_value_mapper, 0);
 
   return data->last_menubar_buffer;
 }
 
 DEFINE_LRECORD_IMPLEMENTATION ("popup-data", popup_data,
                                mark_popup_data, internal_object_printer,
-			       0, 0, 0, struct popup_data);
+			       0, 0, 0, 0, struct popup_data);
 
 /* This is like FRAME_MENUBAR_DATA (f), but contains an alist of
    (id . popup-data) for GCPRO'ing the callbacks of the popup menus
@@ -123,7 +107,7 @@ gcpro_popup_callbacks (LWLIB_ID id)
   Lisp_Object lpdata;
 
   assert (NILP (assq_no_quit (lid, Vpopup_callbacks)));
-  pdata = alloc_lcrecord_type (struct popup_data, lrecord_popup_data);
+  pdata = alloc_lcrecord_type (struct popup_data, &lrecord_popup_data);
   pdata->id = id;
   pdata->last_menubar_buffer = Qnil;
   pdata->menubar_contents_up_to_date = 0;
@@ -159,7 +143,7 @@ widget_value_unwind (Lisp_Object closure)
   widget_value *wv = (widget_value *) get_opaque_ptr (closure);
   free_opaque_ptr (closure);
   if (wv)
-    free_widget_value (wv);
+    free_widget_value_tree (wv);
   return Qnil;
 }
 
@@ -202,6 +186,7 @@ free_popup_widget_value_tree (widget_value *wv)
   if (! wv) return;
   if (wv->key) xfree (wv->key);
   if (wv->value) xfree (wv->value);
+  if (wv->name) xfree (wv->name);
 
   wv->name = wv->value = wv->key = (char *) 0xDEADBEEF;
 
@@ -259,7 +244,10 @@ popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
       arg = Qmenu_no_selection_hook;
     }
   else
-    get_gui_callback (data, &fn, &arg);
+    {
+      MARK_SUBWINDOWS_STATE_CHANGED;
+      get_gui_callback (data, &fn, &arg);
+    }
 
   /* This is the timestamp used for asserting focus so we need to get an
      up-to-date value event if no events has been dispatched to emacs
@@ -287,9 +275,9 @@ popup_selection_callback (Widget widget, LWLIB_ID ignored_id,
 #endif
 
 char *
-menu_separator_style (CONST char *s)
+menu_separator_style (const char *s)
 {
-  CONST char *p;
+  const char *p;
   char first;
 
   if (!s || s[0] == '\0')
@@ -315,151 +303,73 @@ menu_separator_style (CONST char *s)
   return NULL;
 }
 
-/* set menu accelerator key to first underlined character in menu name */
-
-Lisp_Object
-menu_name_to_accelerator (char *name)
-{
-  while (*name) {
-    if (*name=='%') {
-      ++name;
-      if (!(*name))
-	return Qnil;
-      if (*name=='_' && *(name+1))
-	{
-	  int accelerator = (int) (unsigned char) (*(name+1));
-	  return make_char (tolower (accelerator));
-	}
-    }
-    ++name;
-  }
-  return Qnil;
-}
 
 /* This does the dirty work.  gc_currently_forbidden is 1 when this is called.
  */
-
 int
-button_item_to_widget_value (Lisp_Object desc, widget_value *wv,
+button_item_to_widget_value (Lisp_Object gui_item, widget_value *wv,
 			     int allow_text_field_p, int no_keys_p)
 {
   /* !!#### This function has not been Mule-ized */
   /* This function cannot GC because gc_currently_forbidden is set when
      it's called */
-  Lisp_Object name       = Qnil;
-  Lisp_Object callback   = Qnil;
-  Lisp_Object suffix     = Qnil;
-  Lisp_Object active_p   = Qt;
-  Lisp_Object include_p  = Qt;
-  Lisp_Object selected_p = Qnil;
-  Lisp_Object keys       = Qnil;
-  Lisp_Object style      = Qnil;
-  Lisp_Object config_tag = Qnil;
-  Lisp_Object accel = Qnil;
-  int length = XVECTOR_LENGTH (desc);
-  Lisp_Object *contents = XVECTOR_DATA (desc);
-  int plist_p;
-  int selected_spec = 0, included_spec = 0;
+  Lisp_Gui_Item* pgui = 0;
 
-  if (length < 2)
-    signal_simple_error ("Button descriptors must be at least 2 long", desc);
-
-  /* length 2:		[ "name" callback ]
-     length 3:		[ "name" callback active-p ]
-     length 4:		[ "name" callback active-p suffix ]
-     		   or	[ "name" callback keyword  value  ]
-     length 5+:		[ "name" callback [ keyword value ]+ ]
-   */
-  plist_p = (length >= 5 || (length > 2 && KEYWORDP (contents [2])));
-
-  if (!plist_p && length > 2)
-    /* the old way */
+  /* degenerate case */
+  if (STRINGP (gui_item))
     {
-      name = contents [0];
-      callback = contents [1];
-      active_p = contents [2];
-      if (length == 4)
-	suffix = contents [3];
+      wv->type = TEXT_TYPE;
+      wv->name = (char *) XSTRING_DATA (gui_item);
+      wv->name = xstrdup (wv->name);
+      return 1;
     }
-  else
-    {
-      /* the new way */
-      int i;
-      if (length & 1)
-	signal_simple_error (
-		"Button descriptor has an odd number of keywords and values",
-			     desc);
+  else if (!GUI_ITEMP (gui_item))
+    signal_simple_error("need a string or a gui_item here", gui_item);
 
-      name = contents [0];
-      callback = contents [1];
-      for (i = 2; i < length;)
-	{
-	  Lisp_Object key = contents [i++];
-	  Lisp_Object val = contents [i++];
-	  if (!KEYWORDP (key))
-	    signal_simple_error_2 ("Not a keyword", key, desc);
+  pgui = XGUI_ITEM (gui_item);
 
-	  if      (EQ (key, Q_active))   active_p   = val;
-	  else if (EQ (key, Q_suffix))   suffix     = val;
-	  else if (EQ (key, Q_keys))     keys       = val;
-	  else if (EQ (key, Q_style))    style      = val;
-	  else if (EQ (key, Q_selected)) selected_p = val, selected_spec = 1;
-	  else if (EQ (key, Q_included)) include_p  = val, included_spec = 1;
-	  else if (EQ (key, Q_config))	 config_tag = val;
-	  else if (EQ (key, Q_accelerator))
-	    {
-	      if ( SYMBOLP (val)
-		   || CHARP (val))
-		accel = val;
-	      else
-		signal_simple_error ("Bad keyboard accelerator", val);
-	    }
-	  else if (EQ (key, Q_filter))
-	    signal_simple_error(":filter keyword not permitted on leaf nodes", desc);
-	  else
-	    signal_simple_error_2 ("Unknown menu item keyword", key, desc);
-	}
-    }
+  if (!NILP (pgui->filter))
+    signal_simple_error(":filter keyword not permitted on leaf nodes", gui_item);
 
 #ifdef HAVE_MENUBARS
-  if ((!NILP (config_tag) && NILP (Fmemq (config_tag, Vmenubar_configuration)))
-      || (included_spec && NILP (Feval (include_p))))
+  if (!gui_item_included_p (gui_item, Vmenubar_configuration))
     {
       /* the include specification says to ignore this item. */
       return 0;
     }
 #endif /* HAVE_MENUBARS */
 
-  CHECK_STRING (name);
-  wv->name = (char *) XSTRING_DATA (name);
+  CHECK_STRING (pgui->name);
+  wv->name = (char *) XSTRING_DATA (pgui->name);
+  wv->name = xstrdup (wv->name);
+  wv->accel = LISP_TO_VOID (gui_item_accelerator (gui_item));
 
-  if (NILP (accel))
-    accel = menu_name_to_accelerator (wv->name);
-  wv->accel = LISP_TO_VOID (accel);
-
-  if (!NILP (suffix))
+  if (!NILP (pgui->suffix))
     {
-      CONST char *const_bogosity;
+      const char *const_bogosity;
       Lisp_Object suffix2;
 
       /* Shortcut to avoid evaluating suffix each time */
-      if (STRINGP (suffix))
-	suffix2 = suffix;
+      if (STRINGP (pgui->suffix))
+	suffix2 = pgui->suffix;
       else
 	{
-	  suffix2 = Feval (suffix);
+	  suffix2 = Feval (pgui->suffix);
 	  CHECK_STRING (suffix2);
 	}
 
-      GET_C_STRING_FILENAME_DATA_ALLOCA (suffix2, const_bogosity);
+      TO_EXTERNAL_FORMAT (LISP_STRING, suffix2,
+			  C_STRING_ALLOCA, const_bogosity,
+			  Qfile_name);
       wv->value = (char *) const_bogosity;
       wv->value = xstrdup (wv->value);
     }
 
-  wv_set_evalable_slot (wv->enabled, active_p);
-  wv_set_evalable_slot (wv->selected, selected_p);
+  wv_set_evalable_slot (wv->enabled, pgui->active);
+  wv_set_evalable_slot (wv->selected, pgui->selected);
 
-  wv->call_data = LISP_TO_VOID (callback);
+  if (!NILP (pgui->callback))
+    wv->call_data = LISP_TO_VOID (pgui->callback);
 
   if (no_keys_p
 #ifdef HAVE_MENUBARS
@@ -467,28 +377,28 @@ button_item_to_widget_value (Lisp_Object desc, widget_value *wv,
 #endif
       )
     wv->key = 0;
-  else if (!NILP (keys))	/* Use this string to generate key bindings */
+  else if (!NILP (pgui->keys))	/* Use this string to generate key bindings */
     {
-      CHECK_STRING (keys);
-      keys = Fsubstitute_command_keys (keys);
-      if (XSTRING_LENGTH (keys) > 0)
-	wv->key = xstrdup ((char *) XSTRING_DATA (keys));
+      CHECK_STRING (pgui->keys);
+      pgui->keys = Fsubstitute_command_keys (pgui->keys);
+      if (XSTRING_LENGTH (pgui->keys) > 0)
+	wv->key = xstrdup ((char *) XSTRING_DATA (pgui->keys));
       else
 	wv->key = 0;
     }
-  else if (SYMBOLP (callback))	/* Show the binding of this command. */
+  else if (SYMBOLP (pgui->callback))	/* Show the binding of this command. */
     {
       char buf [1024];
       /* #### Warning, dependency here on current_buffer and point */
-      where_is_to_char (callback, buf);
+      where_is_to_char (pgui->callback, buf);
       if (buf [0])
 	wv->key = xstrdup (buf);
       else
 	wv->key = 0;
     }
 
-  CHECK_SYMBOL (style);
-  if (NILP (style))
+  CHECK_SYMBOL (pgui->style);
+  if (NILP (pgui->style))
     {
       /* If the callback is nil, treat this item like unselectable text.
 	 This way, dashes will show up as a separator. */
@@ -515,13 +425,13 @@ button_item_to_widget_value (Lisp_Object desc, widget_value *wv,
 	    wv->type = BUTTON_TYPE;
 	}
     }
-  else if (EQ (style, Qbutton))
+  else if (EQ (pgui->style, Qbutton))
     wv->type = BUTTON_TYPE;
-  else if (EQ (style, Qtoggle))
+  else if (EQ (pgui->style, Qtoggle))
     wv->type = TOGGLE_TYPE;
-  else if (EQ (style, Qradio))
+  else if (EQ (pgui->style, Qradio))
     wv->type = RADIO_TYPE;
-  else if (EQ (style, Qtext))
+  else if (EQ (pgui->style, Qtext))
     {
       wv->type = TEXT_TYPE;
 #if 0
@@ -530,19 +440,123 @@ button_item_to_widget_value (Lisp_Object desc, widget_value *wv,
 #endif
     }
   else
-    signal_simple_error_2 ("Unknown style", style, desc);
+    signal_simple_error_2 ("Unknown style", pgui->style, gui_item);
 
   if (!allow_text_field_p && (wv->type == TEXT_TYPE))
-    signal_simple_error ("Text field not allowed in this context", desc);
+    signal_simple_error ("Text field not allowed in this context", gui_item);
 
-  if (selected_spec && EQ (style, Qtext))
+  if (!NILP (pgui->selected) && EQ (pgui->style, Qtext))
     signal_simple_error (
-         ":selected only makes sense with :style toggle, radio or button",
-			 desc);
+			 ":selected only makes sense with :style toggle, radio or button",
+			 gui_item);
   return 1;
 }
 
-#endif /* HAVE_POPUPS */
+/* parse tree's of gui items into widget_value hierarchies */
+static void gui_item_children_to_widget_values (Lisp_Object items, widget_value* parent);
+
+static widget_value *
+gui_items_to_widget_values_1 (Lisp_Object items, widget_value* parent,
+			      widget_value* prev)
+{
+  widget_value* wv = 0;
+
+  assert ((parent || prev) && !(parent && prev));
+  /* now walk the tree creating widget_values as appropriate */
+  if (!CONSP (items))
+    {
+      wv = xmalloc_widget_value();
+      if (parent)
+	parent->contents = wv;
+      else
+	prev->next = wv;
+      if (!button_item_to_widget_value (items, wv, 0, 1))
+	{
+	  free_widget_value_tree (wv);
+	  if (parent)
+	    parent->contents = 0;
+	  else
+	    prev->next = 0;
+	}
+      else
+	{
+	  wv->value = xstrdup (wv->name);	/* what a mess... */
+	}
+    }
+  else
+    {
+      /* first one is the parent */
+      if (CONSP (XCAR (items)))
+	signal_simple_error ("parent item must not be a list", XCAR (items));
+
+      if (parent)
+	wv = gui_items_to_widget_values_1 (XCAR (items), parent, 0);
+      else
+	wv = gui_items_to_widget_values_1 (XCAR (items), 0, prev);
+      /* the rest are the children */
+      gui_item_children_to_widget_values (XCDR (items), wv);
+    }
+  return wv;
+}
+
+static void
+gui_item_children_to_widget_values (Lisp_Object items, widget_value* parent)
+{
+  widget_value* wv = 0, *prev = 0;
+  Lisp_Object rest;
+  CHECK_CONS (items);
+
+  /* first one is master */
+  prev = gui_items_to_widget_values_1 (XCAR (items), parent, 0);
+  /* the rest are the children */
+  LIST_LOOP (rest, XCDR (items))
+    {
+      Lisp_Object tab = XCAR (rest);
+      wv = gui_items_to_widget_values_1 (tab, 0, prev);
+      prev = wv;
+    }
+}
+
+widget_value *
+gui_items_to_widget_values (Lisp_Object items)
+{
+  /* !!#### This function has not been Mule-ized */
+  /* This function can GC */
+  widget_value *control = 0, *tmp = 0;
+  int count = specpdl_depth ();
+  Lisp_Object wv_closure;
+
+  if (NILP (items))
+    signal_simple_error ("must have some items", items);
+
+  /* Inhibit GC during this conversion.  The reasons for this are
+     the same as in menu_item_descriptor_to_widget_value(); see
+     the large comment above that function. */
+  record_unwind_protect (restore_gc_inhibit,
+			 make_int (gc_currently_forbidden));
+  gc_currently_forbidden = 1;
+
+  /* Also make sure that we free the partially-created widget_value
+     tree on Lisp error. */
+  control = xmalloc_widget_value();
+  wv_closure = make_opaque_ptr (control);
+  record_unwind_protect (widget_value_unwind, wv_closure);
+
+  gui_items_to_widget_values_1 (items, control, 0);
+
+  /* mess about getting the data we really want */
+  tmp = control;
+  control = control->contents;
+  tmp->next = 0;
+  tmp->contents = 0;
+  free_widget_value_tree (tmp);
+
+  /* No more need to free the half-filled-in structures. */
+  set_opaque_ptr (wv_closure, 0);
+  unbind_to (count, Qnil);
+
+  return control;
+}
 
 /* This is a kludge to make sure emacs can only link against a version of
    lwlib that was compiled in the right way.  Emacs references symbols which
@@ -593,6 +607,11 @@ sanity_check_lwlib (void)
 #elif defined (HAVE_DIALOGS)
   MACROLET (lwlib_dialogs_athena);
 #endif
+#ifdef LWLIB_WIDGETS_MOTIF
+  MACROLET (lwlib_widgets_motif);
+#elif defined (HAVE_WIDGETS)
+  MACROLET (lwlib_widgets_athena);
+#endif
 
 #undef MACROLET
 }
@@ -600,18 +619,25 @@ sanity_check_lwlib (void)
 void
 syms_of_gui_x (void)
 {
-#ifdef HAVE_POPUPS
   defsymbol (&Qmenu_no_selection_hook, "menu-no-selection-hook");
+}
+
+void
+reinit_vars_of_gui_x (void)
+{
+  lwlib_id_tick = (1<<16);	/* start big, to not conflict with Energize */
+#ifdef HAVE_POPUPS
+  popup_up_p = 0;
 #endif
+
+  /* this makes only safe calls as in emacs.c */
+  sanity_check_lwlib ();
 }
 
 void
 vars_of_gui_x (void)
 {
-  lwlib_id_tick = (1<<16);	/* start big, to not conflict with Energize */
-
-#ifdef HAVE_POPUPS
-  popup_up_p = 0;
+  reinit_vars_of_gui_x ();
 
   Vpopup_callbacks = Qnil;
   staticpro (&Vpopup_callbacks);
@@ -625,8 +651,4 @@ without a selection having been made.
 */ );
 #endif
   Fset (Qmenu_no_selection_hook, Qnil);
-#endif /* HAVE_POPUPS */
-
-  /* this makes only safe calls as in emacs.c */
-  sanity_check_lwlib ();
 }

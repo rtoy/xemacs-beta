@@ -111,10 +111,16 @@ int nCmdShow = 0;
    version, we need to bootstrap our heap and .bss section into our
    address space before we can actually hand off control to the startup
    code supplied by NT (primarily because that code relies upon malloc ()).  */
+
+/* **********************
+   Hackers please remember, this _start() thingy is *not* called neither
+   when dumping portably, nor when running from temacs! Do not put
+   significant XEmacs initialization here!
+   ********************** */
+
 void
 _start (void)
 {
-  char * p;
   extern void mainCRTStartup (void);
 
   /* Cache system info, e.g., the NT page size.  */
@@ -134,18 +140,29 @@ _start (void)
 	  exit (1);
 	}
 
-      /* To allow profiling, make sure executable_path names the .exe
-	 file, not the file created by the profiler */
-      p = strrchr (executable_path, '\\');
-      strcpy (p+1, PATH_PROGNAME ".exe");
+      /* #### This is super-bogus. When I rename xemacs.exe,
+	 the renamed file still loads its heap from xemacs.exe --kkm */
+#if 0
+      {
+	/* To allow profiling, make sure executable_path names the .exe
+	   file, not the file created by the profiler */
+	char *p = strrchr (executable_path, '\\');
+	strcpy (p+1, PATH_PROGNAME ".exe");
+      }
+#endif
 
       recreate_heap (executable_path);
       heap_state = HEAP_LOADED;
     }
 
+  /* #### This is bogus, too. _fmode is set to different values
+     when we run `xemacs' and `temacs run-emacs'. The sooner we
+     hit and fix all the weirdities this causes us, the better --kkm */
+#if 0
   /* The default behavior is to treat files as binary and patch up
      text files appropriately, in accordance with the MSDOS code.  */
   _fmode = O_BINARY;
+#endif
 
 #if 0
   /* This prevents ctrl-c's in shells running while we're suspended from
@@ -261,39 +278,7 @@ unexec (char *new_name, char *old_name, void *start_data, void *start_bss,
 
 
 int
-open_input_file (file_data *p_file, char *filename)
-{
-  HANDLE file;
-  HANDLE file_mapping;
-  void  *file_base;
-  unsigned long size, upper_size;
-
-  file = CreateFile (filename, GENERIC_READ, FILE_SHARE_READ, NULL,
-		     OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-  if (file == INVALID_HANDLE_VALUE) 
-    return FALSE;
-
-  size = GetFileSize (file, &upper_size);
-  file_mapping = CreateFileMapping (file, NULL, PAGE_READONLY, 
-				    0, size, NULL);
-  if (!file_mapping) 
-    return FALSE;
-
-  file_base = MapViewOfFile (file_mapping, FILE_MAP_READ, 0, 0, size);
-  if (file_base == 0) 
-    return FALSE;
-
-  p_file->name = filename;
-  p_file->size = size;
-  p_file->file = file;
-  p_file->file_mapping = file_mapping;
-  p_file->file_base = file_base;
-
-  return TRUE;
-}
-
-int
-open_output_file (file_data *p_file, char *filename, unsigned long size)
+open_output_file (file_data *p_file, const char *filename, unsigned long size)
 {
   HANDLE file;
   HANDLE file_mapping;
@@ -321,16 +306,6 @@ open_output_file (file_data *p_file, char *filename, unsigned long size)
 
   return TRUE;
 }
-
-/* Close the system structures associated with the given file.  */
-void
-close_file_data (file_data *p_file)
-{
-    UnmapViewOfFile (p_file->file_base);
-    CloseHandle (p_file->file_mapping);
-    CloseHandle (p_file->file);
-}
-
 
 /* Routines to manipulate NT executable file sections.  */
 
@@ -374,27 +349,6 @@ get_bss_info_from_map_file (file_data *p_infile, PUCHAR *p_bss_start,
   *p_bss_size = (DWORD) len;
 }
 #endif
-
-/* Return pointer to section header for section containing the given
-   relative virtual address. */
-IMAGE_SECTION_HEADER *
-rva_to_section (DWORD rva, IMAGE_NT_HEADERS * nt_header)
-{
-  PIMAGE_SECTION_HEADER section;
-  int i;
-
-  section = IMAGE_FIRST_SECTION (nt_header);
-
-  for (i = 0; i < nt_header->FileHeader.NumberOfSections; i++)
-    {
-      if (rva >= section->VirtualAddress
-	  && rva < section->VirtualAddress + section->SizeOfRawData)
-	return section;
-      section++;
-    }
-  return NULL;
-}
-
 
 /* Flip through the executable and cache the info necessary for dumping.  */
 static void

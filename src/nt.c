@@ -34,6 +34,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include "systime.h"
 #include "syssignal.h"
 #include "sysproc.h"
+#include "sysfile.h"
 
 #include <ctype.h>
 #include <direct.h>
@@ -42,13 +43,25 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include <io.h>
 #include <pwd.h>
 #include <signal.h>
-#include <stddef.h> /* for offsetof */
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 #include <windows.h>
+#ifndef __MINGW32__
 #include <mmsystem.h>
+#else
+typedef void (CALLBACK TIMECALLBACK)(UINT uTimerID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw2);
+
+typedef TIMECALLBACK FAR *LPTIMECALLBACK;
+DWORD WINAPI timeGetTime(void);
+MMRESULT WINAPI timeSetEvent(UINT uDelay, UINT uResolution,
+    LPTIMECALLBACK fptc, DWORD dwUser, UINT fuEvent);
+MMRESULT WINAPI timeKillEvent(UINT uTimerID);
+MMRESULT WINAPI timeGetDevCaps(TIMECAPS* ptc, UINT cbtc);
+MMRESULT WINAPI timeBeginPeriod(UINT uPeriod);
+MMRESULT WINAPI timeEndPeriod(UINT uPeriod);
+#endif
 
 #include "nt.h"
 #include <sys/dir.h>
@@ -61,7 +74,7 @@ extern Lisp_Object Vwin32_generate_fake_inodes;
 #endif
 extern Lisp_Object Vmswindows_get_true_file_attributes;
 
-extern char *get_home_directory(void);
+int nt_fake_unix_uid;
 
 static char startup_dir[ MAXPATHLEN ];
 
@@ -118,39 +131,40 @@ static struct passwd the_passwd =
   the_passwd_shell,
 };
 
-int 
+uid_t
 getuid () 
-{ 
-  return the_passwd.pw_uid;
+{
+  return nt_fake_unix_uid;
 }
 
-int 
+uid_t 
 geteuid () 
 { 
-  /* I could imagine arguing for checking to see whether the user is
-     in the Administrators group and returning a UID of 0 for that
-     case, but I don't know how wise that would be in the long run.  */
-  return getuid (); 
+  return nt_fake_unix_uid;
 }
 
-int 
+gid_t
 getgid () 
 { 
   return the_passwd.pw_gid;
 }
 
-int 
+gid_t
 getegid () 
 { 
   return getgid ();
 }
 
 struct passwd *
-getpwuid (int uid)
+getpwuid (uid_t uid)
 {
-  if (uid == the_passwd.pw_uid)
-    return &the_passwd;
-  return NULL;
+  if (uid == nt_fake_unix_uid)
+    {
+      the_passwd.pw_gid = the_passwd.pw_uid = uid;
+      return &the_passwd;
+    }
+  else
+    return NULL;
 }
 
 struct passwd *
@@ -171,6 +185,12 @@ getpwnam (const char *name)
 void
 init_user_info ()
 {
+  /* This code is pretty much of ad hoc nature. There is no unix-like
+     UIDs under Windows NT. There is no concept of root user, because
+     all security is ACL-based. Instead, let's use a simple variable,
+     nt-fake-unix-uid, which would allow the user to have a uid of
+     choice. --kkm, 02/03/2000 */
+#if 0
   /* Find the user's real name by opening the process token and
      looking up the name associated with the user-sid in that token.
 
@@ -246,6 +266,18 @@ init_user_info ()
       the_passwd.pw_gid = 123;
     }
 
+  if (token)
+    CloseHandle (token);
+#else
+  /* Obtain only logon id here, uid part is moved to getuid */
+  char name[256];
+  DWORD length = sizeof (name);
+  if (GetUserName (name, &length))
+    strcpy (the_passwd.pw_name, name);
+  else
+    strcpy (the_passwd.pw_name, "unknown");
+#endif
+
   /* Ensure HOME and SHELL are defined. */
 #if 0
   /*
@@ -260,9 +292,6 @@ init_user_info ()
   /* Set dir and shell from environment variables. */
   strcpy (the_passwd.pw_dir, get_home_directory());
   strcpy (the_passwd.pw_shell, getenv ("SHELL"));
-
-  if (token)
-    CloseHandle (token);
 }
 
 /* Normalize filename by converting all path separators to
@@ -533,7 +562,6 @@ nt_get_resource (key, lpdwtype)
   LPBYTE lpvalue;
   HKEY hrootkey = NULL;
   DWORD cbData;
-  BOOL ok = FALSE;
   
   /* Check both the current user and the local machine to see if 
      we have any resources.  */
@@ -596,7 +624,9 @@ init_environment ()
       "EMACSLOCKDIR",
       "INFOPATH"
     };
-
+#ifdef HEAP_IN_DATA
+    cache_system_info ();
+#endif
     for (i = 0; i < countof (env_vars); i++) 
       {
 	if (!getenv (env_vars[i]) &&
@@ -942,7 +972,7 @@ map_win32_filename (const char * name, const char ** pPath)
   static char shortname[MAX_PATH];
   char * str = shortname;
   char c;
-  char * path;
+  const char * path;
   const char * save_name = name;
 
   if (is_fat_volume (name, &path)) /* truncate to 8.3 */
@@ -1052,7 +1082,7 @@ opendir (const char *filename)
   /* Opening is done by FindFirstFile.  However, a read is inherent to
      this operation, so we defer the open until read time.  */
 
-  if (!(dirp = (DIR *) xmalloc (sizeof (DIR))))
+  if (!(dirp = xnew_and_zero(DIR)))
     return NULL;
   if (dir_find_handle != INVALID_HANDLE_VALUE)
     return NULL;
@@ -1077,7 +1107,7 @@ closedir (DIR *dirp)
       FindClose (dir_find_handle);
       dir_find_handle = INVALID_HANDLE_VALUE;
     }
-  xfree ((char *) dirp);
+  xfree (dirp);
 }
 
 struct direct *
@@ -1190,8 +1220,11 @@ sys_rename (const char * oldname, const char * newname)
 #endif /* 0 */
 
 static FILETIME utc_base_ft;
-static long double utc_base;
 static int init = 0;
+
+#if 0
+
+static long double utc_base;
 
 time_t
 convert_time (FILETIME ft)
@@ -1224,6 +1257,77 @@ convert_time (FILETIME ft)
   ret -= utc_base;
   return (time_t) (ret * 1e-7);
 }
+#else
+
+static LARGE_INTEGER utc_base_li;
+
+time_t
+convert_time (FILETIME uft)
+{
+  time_t ret;
+#ifndef MAXLONGLONG
+  SYSTEMTIME st;
+  struct tm t;
+  FILETIME ft;
+  TIME_ZONE_INFORMATION tzi;
+  DWORD tzid;
+#else
+  LARGE_INTEGER lft;
+#endif
+
+  if (!init)
+    {
+      /* Determine the delta between 1-Jan-1601 and 1-Jan-1970. */
+      SYSTEMTIME st;
+
+      st.wYear = 1970;
+      st.wMonth = 1;
+      st.wDay = 1;
+      st.wHour = 0;
+      st.wMinute = 0;
+      st.wSecond = 0;
+      st.wMilliseconds = 0;
+
+      SystemTimeToFileTime (&st, &utc_base_ft);
+
+      utc_base_li.LowPart = utc_base_ft.dwLowDateTime;
+      utc_base_li.HighPart = utc_base_ft.dwHighDateTime;
+
+      init = 1;
+    }
+
+#ifdef MAXLONGLONG
+
+  /* On a compiler that supports long integers, do it the easy way */
+  lft.LowPart = uft.dwLowDateTime;
+  lft.HighPart = uft.dwHighDateTime;
+  ret = (time_t) ((lft.QuadPart - utc_base_li.QuadPart) / 10000000);
+
+#else
+
+  /* Do it the hard way using mktime. */
+  FileTimeToLocalFileTime(&uft, &ft);
+  FileTimeToSystemTime (&ft, &st);
+  tzid = GetTimeZoneInformation (&tzi);
+  t.tm_year = st.wYear - 1900;
+  t.tm_mon = st.wMonth - 1;
+  t.tm_mday = st.wDay;
+  t.tm_hour = st.wHour;
+  t.tm_min = st.wMinute;
+  t.tm_sec = st.wSecond;
+  t.tm_isdst = (tzid == TIME_ZONE_ID_DAYLIGHT);
+  /* st.wMilliseconds not applicable */
+  ret = mktime(&t);
+  if (ret == -1)
+    {
+      ret = 0;
+    }
+
+#endif
+
+  return ret;
+}
+#endif
 
 #if 0
 /* in case we ever have need of this */
@@ -1300,6 +1404,46 @@ generate_inode_val (const char * name)
 }
 
 #endif
+
+/* stat has been fixed since MSVC 5.0.
+   Oh, and do not encapsulater stat for non-MS compilers, too */
+/* #### popineau@ese-metz.fr says they still might be broken.
+   Oh well... Let's add that `1 ||' condition.... --kkm */
+#if 1 || defined(_MSC_VER) && _MSC_VER < 1100
+
+/* Since stat is encapsulated on Windows NT, we need to encapsulate
+   the equally broken fstat as well. */
+int _cdecl
+fstat (int handle, struct stat *buffer)
+{
+  int ret;
+  BY_HANDLE_FILE_INFORMATION lpFileInfo;
+  /* Initialize values */
+  buffer->st_mode = 0;
+  buffer->st_size = 0;
+  buffer->st_dev = 0;
+  buffer->st_rdev = 0;
+  buffer->st_atime = 0;
+  buffer->st_ctime = 0;
+  buffer->st_mtime = 0;
+  buffer->st_nlink = 0;
+  ret = GetFileInformationByHandle((HANDLE) _get_osfhandle(handle), &lpFileInfo);
+  if (!ret)
+    {
+      return -1;
+    }
+  else
+    {
+      buffer->st_mtime = convert_time (lpFileInfo.ftLastWriteTime);
+      buffer->st_atime = convert_time (lpFileInfo.ftLastAccessTime);
+      if (buffer->st_atime == 0) buffer->st_atime = buffer->st_mtime;
+      buffer->st_ctime = convert_time (lpFileInfo.ftCreationTime);
+      if (buffer->st_ctime == 0) buffer->st_ctime = buffer->st_mtime;
+      buffer->st_size = lpFileInfo.nFileSizeLow;
+      buffer->st_nlink = (short) lpFileInfo.nNumberOfLinks;
+      return 0;
+    }
+}
 
 /* MSVC stat function can't cope with UNC names and has other bugs, so
    replace it with our own.  This also allows us to calculate consistent
@@ -1453,13 +1597,11 @@ stat (const char * path, struct stat * buf)
   buf->st_ino = (unsigned short) (fake_inode ^ (fake_inode >> 16));
 
   /* consider files to belong to current user */
-  buf->st_uid = the_passwd.pw_uid;
-  buf->st_gid = the_passwd.pw_gid;
+  buf->st_uid = buf->st_gid = nt_fake_unix_uid;
 
   /* volume_info is set indirectly by map_win32_filename */
   buf->st_dev = volume_info.serialnum;
   buf->st_rdev = volume_info.serialnum;
-
 
   buf->st_size = wfd.nFileSizeLow;
 
@@ -1493,6 +1635,7 @@ stat (const char * path, struct stat * buf)
 
   return 0;
 }
+#endif /* defined(_MSC_VER) && _MSC_VER < 1100 */
 
 /* From callproc.c  */
 extern Lisp_Object Vbinary_process_input;
@@ -1525,67 +1668,6 @@ sys_pipe (int * phandles)
     }
 
   return rc;
-}
-
-/* From ntproc.c */
-extern Lisp_Object Vwin32_pipe_read_delay;
-
-/* Function to do blocking read of one byte, needed to implement
-   select.  It is only allowed on sockets and pipes. */
-int
-_sys_read_ahead (int fd)
-{
-  child_process * cp;
-  int rc;
-
-  if (fd < 0 || fd >= MAXDESC)
-    return STATUS_READ_ERROR;
-
-  cp = fd_info[fd].cp;
-
-  if (cp == NULL || cp->fd != fd || cp->status != STATUS_READ_READY)
-    return STATUS_READ_ERROR;
-
-  if ((fd_info[fd].flags & (FILE_PIPE | FILE_SOCKET)) == 0
-      || (fd_info[fd].flags & FILE_READ) == 0)
-    {
-      /* fd is not a pipe or socket */
-      abort ();
-    }
-  
-  cp->status = STATUS_READ_IN_PROGRESS;
-  
-  if (fd_info[fd].flags & FILE_PIPE)
-    {
-      rc = _read (fd, &cp->chr, sizeof (char));
-
-      /* Give subprocess time to buffer some more output for us before
-	 reporting that input is available; we need this because Win95
-	 connects DOS programs to pipes by making the pipe appear to be
-	 the normal console stdout - as a result most DOS programs will
-	 write to stdout without buffering, ie.  one character at a
-	 time.  Even some Win32 programs do this - "dir" in a command
-	 shell on NT is very slow if we don't do this. */
-      if (rc > 0)
-	{
-	  int wait = XINT (Vwin32_pipe_read_delay);
-
-	  if (wait > 0)
-	    Sleep (wait);
-	  else if (wait < 0)
-	    while (++wait <= 0)
-	      /* Yield remainder of our time slice, effectively giving a
-		 temporary priority boost to the child process. */
-	      Sleep (0);
-	}
-    }
-
-  if (rc == sizeof (char))
-    cp->status = STATUS_READ_SUCCEEDED;
-  else
-    cp->status = STATUS_READ_FAILED;
-
-  return cp->status;
 }
 
 void
@@ -1810,6 +1892,7 @@ int msw_raise (int nsig)
     exit (3);
 
   /* Other signals are ignored by default */
+  return 0;
 }
 
 /*--------------------------------------------------------------------*/
@@ -1926,6 +2009,59 @@ int setitimer (int kind, const struct itimerval* itnew,
     return setitimer_helper (itnew, itold, &it_prof, &tid_prof, SIGPROF);
   else
     return errno = EINVAL;
+}
+
+int
+open_input_file (file_data *p_file, const char *filename)
+{
+  HANDLE file;
+  HANDLE file_mapping;
+  void  *file_base;
+  DWORD size, upper_size;
+
+  file = CreateFile (filename, GENERIC_READ, FILE_SHARE_READ, NULL,
+		     OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+  if (file == INVALID_HANDLE_VALUE) 
+    return FALSE;
+
+  size = GetFileSize (file, &upper_size);
+  file_mapping = CreateFileMapping (file, NULL, PAGE_READONLY, 
+				    0, size, NULL);
+  if (!file_mapping) 
+    return FALSE;
+
+  file_base = MapViewOfFile (file_mapping, FILE_MAP_READ, 0, 0, size);
+  if (file_base == 0) 
+    return FALSE;
+
+  p_file->name = (char*)filename;
+  p_file->size = size;
+  p_file->file = file;
+  p_file->file_mapping = file_mapping;
+  p_file->file_base = file_base;
+
+  return TRUE;
+}
+
+/* Close the system structures associated with the given file.  */
+void
+close_file_data (file_data *p_file)
+{
+    UnmapViewOfFile (p_file->file_base);
+    CloseHandle (p_file->file_mapping);
+    CloseHandle (p_file->file);
+}
+
+void
+vars_of_nt (void)
+{
+  DEFVAR_INT ("nt-fake-unix-uid", &nt_fake_unix_uid /*
+*Set uid returned by `user-uid' and `user-real-uid'.
+Under NT and 9x, there is no uids, and even no almighty user called root.
+By setting this variable, you can have any uid of choice. Default is 0.
+Changes to this variable take effect immediately.
+*/ );
+  nt_fake_unix_uid = 0;
 }
 
 /* end of nt.c */

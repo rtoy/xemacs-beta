@@ -1,6 +1,8 @@
 ;;; mule-category.el --- category functions for XEmacs/Mule.
 
 ;; Copyright (C) 1992,93,94,95 Free Software Foundation, Inc.
+;; Copyright (C) 1995, 1997, 1999 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1995 Amdahl Corporation.
 ;; Copyright (C) 1995 Sun Microsystems.
 
@@ -27,7 +29,7 @@
 ;; type of char table.  Some function names / arguments should be
 ;; parallel with syntax tables.
 
-;; Written by Ben Wing <wing@666.com>.  The initialization code
+;; Written by Ben Wing <ben@xemacs.org>.  The initialization code
 ;; at the end of this file comes from Mule.
 ;; Some bugfixes by Jareth Hein <jhod@po.iijnet.or.jp>
 
@@ -67,8 +69,8 @@ Categories are given by their designators."
   "Return an undefined category designator, or nil if there are none."
   (let ((a 32) found)
     (while (and (< a 127) (not found))
-      (if (gethash a defined-category-hashtable)
-	  (setq found a))
+      (unless (gethash a defined-category-hashtable)
+	(setq found (make-char 'ascii a)))
       (setq a (1+ a)))
     found))
 
@@ -115,11 +117,11 @@ The categories are given by their designators."
       (let ((a 32) list)
 	(while (< a 127)
 	  (if (= 1 (aref vec (- a 32)))
-	      (setq list (cons a list)))
+	      (setq list (cons (make-char 'ascii a) list)))
 	  (setq a (1+ a)))
 	(nreverse list)))))
 
-;; implimented in c, file chartab.c (97/3/14 jhod@po.iijnet.or.jp)
+;; implemented in c, file chartab.c (97/3/14 jhod@po.iijnet.or.jp)
 ;(defun char-in-category-p (char category &optional table)
 ;  "Return non-nil if CHAR is in CATEGORY.
 ;TABLE defaults to the current buffer's category table.
@@ -135,8 +137,9 @@ The categories are given by their designators."
   "Describe the category specifications in the category table.
 The descriptions are inserted in a buffer, which is then displayed."
   (interactive)
-  (with-output-to-temp-buffer "*Help*"
-    (describe-category-table (category-table) standard-output)))
+  (with-displaying-help-buffer
+   (lambda ()
+     (describe-category-table (category-table) standard-output))))
 
 (defun describe-category-table (table stream)
   (let (first-char
@@ -243,9 +246,11 @@ Each element is a list of a charset, a designator, and maybe a doc string.")
 
 (let (i l)
   (define-category ?a "ASCII character set.")
+  (define-category ?l "Latin-1 through Latin-5 character set")
   (setq i 32)
   (while (< i 127)
     (modify-category-entry i ?a)
+    (modify-category-entry i ?l)
     (setq i (1+ i)))
   (setq l predefined-category-list)
   (while l
@@ -254,6 +259,23 @@ Each element is a list of a charset, a designator, and maybe a doc string.")
 	(define-category (nth 1 (car l)) (nth 2 (car l))))
     (modify-category-entry (car (car l)) (nth 1 (car l)))
     (setq l (cdr l))))
+
+;;; Setting word boundary.
+
+(setq word-combining-categories
+      '((?l . ?l)))
+
+(setq word-separating-categories	;  (2-byte character sets)
+      '((?A . ?K)			; Alpha numeric - Katakana
+	(?A . ?C)			; Alpha numeric - Chinese
+	(?H . ?A)			; Hiragana - Alpha numeric
+	(?H . ?K)			; Hiragana - Katakana
+	(?H . ?C)			; Hiragana - Chinese
+	(?K . ?A)			; Katakana - Alpha numeric
+	(?K . ?C)			; Katakana - Chinese
+	(?C . ?A)			; Chinese - Alpha numeric
+	(?C . ?K)			; Chinese - Katakana
+	))
 
 ;;; At the present, I know Japanese and Chinese text can
 ;;; break line at any point under a restriction of 'kinsoku'.

@@ -56,7 +56,6 @@ Boston, MA 02111-1307, USA.  */
 
 #ifdef WINDOWSNT
 #define NOMINMAX 1
-#include <windows.h>
 #include <direct.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -71,7 +70,7 @@ Boston, MA 02111-1307, USA.  */
 /* Need to lower-case the drive letter, or else expanded
    filenames will sometimes compare inequal, because
    `expand-file-name' doesn't always down-case the drive letter.  */
-#define DRIVE_LETTER(x) (tolower (x))
+#define DRIVE_LETTER(x) tolower (x)
 #endif /* WINDOWSNT */
 
 int lisp_to_time (Lisp_Object, time_t *);
@@ -109,8 +108,6 @@ Lisp_Object Vauto_save_list_file_name;
 
 int disable_auto_save_when_buffer_shrinks;
 
-Lisp_Object Qfile_name_handler_alist;
-
 Lisp_Object Vdirectory_sep_char;
 
 /* These variables describe handlers that have "already" had a chance
@@ -138,7 +135,7 @@ EXFUN (Frunning_temacs_p, 0);
 /* signal a file error when errno contains a meaningful value. */
 
 DOESNT_RETURN
-report_file_error (CONST char *string, Lisp_Object data)
+report_file_error (const char *string, Lisp_Object data)
 {
   /* #### dmoore - This uses current_buffer, better make sure no one
      has GC'd the current buffer.  File handlers are giving me a headache
@@ -151,7 +148,7 @@ report_file_error (CONST char *string, Lisp_Object data)
 }
 
 void
-maybe_report_file_error (CONST char *string, Lisp_Object data,
+maybe_report_file_error (const char *string, Lisp_Object data,
 			 Lisp_Object class, Error_behavior errb)
 {
   /* Optimization: */
@@ -167,14 +164,14 @@ maybe_report_file_error (CONST char *string, Lisp_Object data,
 /* signal a file error when errno does not contain a meaningful value. */
 
 DOESNT_RETURN
-signal_file_error (CONST char *string, Lisp_Object data)
+signal_file_error (const char *string, Lisp_Object data)
 {
   signal_error (Qfile_error,
                 list2 (build_translated_string (string), data));
 }
 
 void
-maybe_signal_file_error (CONST char *string, Lisp_Object data,
+maybe_signal_file_error (const char *string, Lisp_Object data,
 			 Lisp_Object class, Error_behavior errb)
 {
   /* Optimization: */
@@ -186,7 +183,7 @@ maybe_signal_file_error (CONST char *string, Lisp_Object data,
 }
 
 DOESNT_RETURN
-signal_double_file_error (CONST char *string1, CONST char *string2,
+signal_double_file_error (const char *string1, const char *string2,
 			  Lisp_Object data)
 {
   signal_error (Qfile_error,
@@ -196,7 +193,7 @@ signal_double_file_error (CONST char *string1, CONST char *string2,
 }
 
 void
-maybe_signal_double_file_error (CONST char *string1, CONST char *string2,
+maybe_signal_double_file_error (const char *string1, const char *string2,
 				Lisp_Object data, Lisp_Object class,
 				Error_behavior errb)
 {
@@ -211,7 +208,7 @@ maybe_signal_double_file_error (CONST char *string1, CONST char *string2,
 }
 
 DOESNT_RETURN
-signal_double_file_error_2 (CONST char *string1, CONST char *string2,
+signal_double_file_error_2 (const char *string1, const char *string2,
 			    Lisp_Object data1, Lisp_Object data2)
 {
   signal_error (Qfile_error,
@@ -221,7 +218,7 @@ signal_double_file_error_2 (CONST char *string1, CONST char *string2,
 }
 
 void
-maybe_signal_double_file_error_2 (CONST char *string1, CONST char *string2,
+maybe_signal_double_file_error_2 (const char *string1, const char *string2,
 				  Lisp_Object data1, Lisp_Object data2,
 				  Lisp_Object class, Error_behavior errb)
 {
@@ -242,7 +239,7 @@ maybe_signal_double_file_error_2 (CONST char *string1, CONST char *string2,
 Lisp_Object
 lisp_strerror (int errnum)
 {
-  return build_ext_string (strerror (errnum), FORMAT_NATIVE);
+  return build_ext_string (strerror (errnum), Qnative);
 }
 
 static Lisp_Object
@@ -282,19 +279,17 @@ restore_point_unwind (Lisp_Object point_marker)
    signal handler) because that's way too losing.
 
    (#### Actually, longjmp()ing out of the signal handler may not be
-   as losing as I thought.  See sys_do_signal() in sysdep.c.)
+   as losing as I thought.  See sys_do_signal() in sysdep.c.) */
 
-   Solaris include files declare the return value as ssize_t.
-   Is that standard? */
-int
+ssize_t
 read_allowing_quit (int fildes, void *buf, size_t size)
 {
   QUIT;
   return sys_read_1 (fildes, buf, size, 1);
 }
 
-int
-write_allowing_quit (int fildes, CONST void *buf, size_t size)
+ssize_t
+write_allowing_quit (int fildes, const void *buf, size_t size)
 {
   QUIT;
   return sys_write_1 (fildes, buf, size, 1);
@@ -586,20 +581,12 @@ except for (file-name-as-directory \"\") => \"./\".
  */
 
 static int
-directory_file_name (CONST char *src, char *dst)
+directory_file_name (const char *src, char *dst)
 {
-  long slen;
-
-  slen = strlen (src);
+  long slen = strlen (src);
   /* Process as Unix format: just remove any final slash.
      But leave "/" unchanged; do not change it to "".  */
   strcpy (dst, src);
-#ifdef APOLLO
-  /* Handle // as root for apollo's.  */
-  if ((slen > 2 && dst[slen - 1] == '/')
-      || (slen > 1 && dst[0] != '/' && dst[slen - 1] == '/'))
-    dst[slen - 1] = 0;
-#else
   if (slen > 1
       && IS_DIRECTORY_SEP (dst[slen - 1])
 #ifdef WINDOWSNT
@@ -607,7 +594,6 @@ directory_file_name (CONST char *src, char *dst)
 #endif /* WINDOWSNT */
       )
     dst[slen - 1] = 0;
-#endif /* APOLLO */
   return 1;
 }
 
@@ -737,7 +723,7 @@ be an absolute file name.
 
       QUIT;
 
-      if (stat ((CONST char *) data, &ignored) < 0)
+      if (stat ((const char *) data, &ignored) < 0)
 	{
 	  /* We want to return only if errno is ENOENT.  */
 	  if (errno == ENOENT)
@@ -981,12 +967,14 @@ See also the function `substitute-in-file-name'.
       if (IS_DIRECTORY_SEP (nm[1])
 	  || nm[1] == 0)	/* ~ by itself */
 	{
-	  char * newdir_external = get_home_directory ();
+	  Extbyte *newdir_external = get_home_directory ();
 
 	  if (newdir_external == NULL)
 	    newdir = (Bufbyte *) "";
 	  else
-	    GET_C_CHARPTR_INT_FILENAME_DATA_ALLOCA (newdir_external, newdir);
+	    TO_INTERNAL_FORMAT (C_STRING, newdir_external,
+				C_STRING_ALLOCA, (* ((char **) &newdir)),
+				Qfile_name);
 
 	  nm++;
 #ifdef WINDOWSNT
@@ -1022,9 +1010,9 @@ See also the function `substitute-in-file-name'.
 	  if ((user = user_login_name (NULL)) != NULL)
 	    {
 	      /* Does the user login name match the ~name? */
-	      if (strcmp(user,((char *) o + 1)) == 0)
+	      if (strcmp (user, (char *) o + 1) == 0)
 	        {
-		  newdir = (Bufbyte *)  get_home_directory();
+		  newdir = (Bufbyte *) get_home_directory();
 	          nm = p;
 		}
 	    }
@@ -1303,19 +1291,21 @@ No component of the resulting pathname will be a symbolic link, as
 
   {
     char resolved_path[MAXPATHLEN];
-    char path[MAXPATHLEN];
-    char *p = path;
-    int elen = XSTRING_LENGTH (expanded_name);
+    Extbyte *path;
+    Extbyte *p;
+    Extcount elen;
 
-    if (elen >= countof (path))
+    TO_EXTERNAL_FORMAT (LISP_STRING, expanded_name,
+			ALLOCA, (path, elen),
+			Qfile_name);
+    p = path;
+    if (elen > MAXPATHLEN)
       goto toolong;
-
-    memcpy (path, XSTRING_DATA (expanded_name), elen + 1);
-    /* memset (resolved_path, 0, sizeof (resolved_path)); */
-
+    
     /* Try doing it all at once. */
-    /* !!#### Does realpath() Mule-encapsulate? */
-    if (!xrealpath (path, resolved_path))
+    /* !! Does realpath() Mule-encapsulate?
+       Answer: Nope! So we do it above */
+    if (!xrealpath ((char *) path, resolved_path))
       {
 	/* Didn't resolve it -- have to do it one component at a time. */
 	/* "realpath" is a typically useless, stupid un*x piece of crap.
@@ -1325,12 +1315,12 @@ No component of the resulting pathname will be a symbolic link, as
 	   partial result returned.  What a piece of junk. */
 	for (;;)
 	  {
-	    p = (char *) memchr (p + 1, '/', elen - (p + 1 - path));
+	    p = (Extbyte *) memchr (p + 1, '/', elen - (p + 1 - path));
 	    if (p)
 	      *p = 0;
 
 	    /* memset (resolved_path, 0, sizeof (resolved_path)); */
-	    if (xrealpath (path, resolved_path))
+	    if (xrealpath ((char *) path, resolved_path))
 	      {
 		if (p)
 		  *p = '/';
@@ -1378,7 +1368,7 @@ No component of the resulting pathname will be a symbolic link, as
 	  resolved_path[rlen + 1] = 0;
 	  rlen = rlen + 1;
 	}
-      return make_ext_string ((Bufbyte *) resolved_path, rlen, FORMAT_BINARY);
+      return make_ext_string ((Bufbyte *) resolved_path, rlen, Qbinary);
     }
 
   toolong:
@@ -1429,13 +1419,12 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
   for (p = nm; p != endp; p++)
     {
       if ((p[0] == '~'
-#if defined (APOLLO) || defined (WINDOWSNT) || defined (__CYGWIN32__)
-	   /* // at start of file name is meaningful in Apollo and
-	      WindowsNT systems */
+#if defined (WINDOWSNT) || defined (__CYGWIN32__)
+	   /* // at start of file name is meaningful in WindowsNT systems */
 	   || (IS_DIRECTORY_SEP (p[0]) && p - 1 != nm)
-#else /* not (APOLLO || WINDOWSNT || __CYGWIN32__) */
+#else /* not (WINDOWSNT || __CYGWIN32__) */
 	   || IS_DIRECTORY_SEP (p[0])
-#endif /* not (APOLLO || WINDOWSNT || __CYGWIN32__) */
+#endif /* not (WINDOWSNT || __CYGWIN32__) */
 	   )
 	  && p != nm
 	  && (IS_DIRECTORY_SEP (p[-1])))
@@ -1561,11 +1550,11 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
 
   for (p = xnm; p != x; p++)
     if ((p[0] == '~'
-#if defined (APOLLO) || defined (WINDOWSNT)
+#if defined (WINDOWSNT)
 	 || (IS_DIRECTORY_SEP (p[0]) && p - 1 != xnm)
-#else /* not (APOLLO || WINDOWSNT) */
+#else /* not WINDOWSNT */
 	 || IS_DIRECTORY_SEP (p[0])
-#endif /* APOLLO || WINDOWSNT */
+#endif /* not WINDOWSNT */
 	 )
 	/* don't do p[-1] if that would go off the beginning --jwz */
 	&& p != nm && p > xnm && IS_DIRECTORY_SEP (p[-1]))
@@ -1622,7 +1611,7 @@ expand_and_dir_to_file (Lisp_Object filename, Lisp_Object defdir)
    If the file does not exist, STATPTR->st_mode is set to 0.  */
 
 static void
-barf_or_query_if_file_exists (Lisp_Object absname, CONST char *querystring,
+barf_or_query_if_file_exists (Lisp_Object absname, const char *querystring,
 			      int interactive, struct stat *statptr)
 {
   /* This function can GC.  GC checked 1997.04.06. */
@@ -1640,7 +1629,7 @@ barf_or_query_if_file_exists (Lisp_Object absname, CONST char *querystring,
 	  struct gcpro gcpro1;
 
 	  prompt = emacs_doprnt_string_c
-	    ((CONST Bufbyte *) GETTEXT ("File %s already exists; %s anyway? "),
+	    ((const Bufbyte *) GETTEXT ("File %s already exists; %s anyway? "),
 	     Qnil, -1, XSTRING_DATA (absname),
 	     GETTEXT (querystring));
 
@@ -1732,7 +1721,7 @@ A prefix arg makes KEEP-TIME non-nil.
       || INTP (ok_if_already_exists))
     barf_or_query_if_file_exists (newname, "copy to it",
 				  INTP (ok_if_already_exists), &out_st);
-  else if (stat ((CONST char *) XSTRING_DATA (newname), &out_st) < 0)
+  else if (stat ((const char *) XSTRING_DATA (newname), &out_st) < 0)
     out_st.st_mode = 0;
 
   ifd = interruptible_open ((char *) XSTRING_DATA (filename), O_RDONLY | OPEN_BINARY, 0);
@@ -1805,7 +1794,7 @@ A prefix arg makes KEEP-TIME non-nil.
 			    mtime))
 	  report_file_error ("I/O error", list1 (newname));
       }
-      chmod ((CONST char *) XSTRING_DATA (newname),
+      chmod ((const char *) XSTRING_DATA (newname),
 	     st.st_mode & 07777);
     }
 
@@ -1998,7 +1987,7 @@ This is what happens in interactive use with M-x.
 	  Fcopy_file (filename, newname,
 		      /* We have already prompted if it was an integer,
 			 so don't have copy-file prompt again.  */
-		      ((NILP (ok_if_already_exists)) ? Qnil : Qt),
+		      (NILP (ok_if_already_exists) ? Qnil : Qt),
                       Qt);
 	  Fdelete_file (filename);
 	}
@@ -2136,26 +2125,21 @@ Open a network connection to PATH using LOGIN as the login string.
        (path, login))
 {
   int netresult;
+  const char *path_ext;
+  const char *login_ext;
 
   CHECK_STRING (path);
   CHECK_STRING (login);
 
   /* netunam, being a strange-o system call only used once, is not
      encapsulated. */
-  {
-    char *path_ext;
-    char *login_ext;
 
-    GET_C_STRING_FILENAME_DATA_ALLOCA (path, path_ext);
-    GET_C_STRING_EXT_DATA_ALLOCA (login, FORMAT_OS, login_ext);
+  TO_EXTERNAL_FORMAT (LISP_STRING, path,  C_STRING_ALLOCA, path_ext,  Qfile_name);
+  TO_EXTERNAL_FORMAT (LISP_STRING, login, C_STRING_ALLOCA, login_ext, Qnative);
 
-    netresult = netunam (path_ext, login_ext);
-  }
+  netresult = netunam (path_ext, login_ext);
 
-  if (netresult == -1)
-    return Qnil;
-  else
-    return Qt;
+  return netresult == -1 ? Qnil : Qt;
 }
 #endif /* HPUX_NET */
 
@@ -2202,7 +2186,7 @@ check_executable (char *filename)
 /* Return nonzero if file FILENAME exists and can be written.  */
 
 static int
-check_writable (CONST char *filename)
+check_writable (const char *filename)
 {
 #ifdef HAVE_EACCESS
   return (eaccess (filename, 2) >= 0);
@@ -2741,15 +2725,7 @@ positions), even in Mule. (Fixing this is very difficult.)
 
   fd = -1;
 
-  if (
-#ifndef APOLLO
-      (stat ((char *) XSTRING_DATA (filename), &st) < 0)
-#else /* APOLLO */
-      /* Don't even bother with interruptible_open.  APOLLO sucks. */
-      ((fd = open ((char *) XSTRING_DATA (filename), O_RDONLY | OPEN_BINARY, 0)) < 0
-       || fstat (fd, &st) < 0)
-#endif /* APOLLO */
-      )
+  if (stat ((char *) XSTRING_DATA (filename), &st) < 0)
     {
       if (fd >= 0) close (fd);
     badopen:
@@ -2984,7 +2960,7 @@ positions), even in Mule. (Fixing this is very difficult.)
        occurs inside of the filedesc stream. */
     while (1)
       {
-	Bytecount this_len;
+	ssize_t this_len;
 	Charcount cc_inserted;
 
 	QUIT;
@@ -3033,9 +3009,6 @@ positions), even in Mule. (Fixing this is very difficult.)
     {
       if (!EQ (buf->undo_list, Qt))
 	buf->undo_list = Qnil;
-#ifdef APOLLO
-      stat ((char *) XSTRING_DATA (filename), &st);
-#endif
       if (NILP (handler))
 	{
 	  buf->modtime = st.st_mtime;
@@ -3341,21 +3314,11 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
       }
 #endif /* HAVE_FSYNC */
 
-    /* Spurious "file has changed on disk" warnings have been
-       observed on Suns as well.
-       It seems that `close' can change the modtime, under nfs.
-
-       (This has supposedly been fixed in Sunos 4,
-       but who knows about all the other machines with NFS?)  */
-    /* On VMS and APOLLO, must do the stat after the close
-       since closing changes the modtime.  */
-    /* As it does on Windows too - kkm */
-    /* The spurious warnings appear on Linux too.  Rather than handling
-       this on a per-system basis, unconditionally do the stat after the close - cgw */
-
-#if 0 /* !defined (WINDOWSNT) */  /* !defined (VMS) && !defined (APOLLO) */
-    fstat (desc, &st);
-#endif
+    /* Spurious "file has changed on disk" warnings used to be seen on
+       systems where close() can change the modtime.  This is known to
+       happen on various NFS file systems, on Windows, and on Linux.
+       Rather than handling this on a per-system basis, we
+       unconditionally do the stat() after the close(). */
 
     /* NFS can report a write failure now.  */
     if (close (desc) < 0)
@@ -3371,9 +3334,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
     unbind_to (speccount, Qnil);
   }
 
-  /* # if defined (WINDOWSNT) */ /* defined (VMS) || defined (APOLLO) */
   stat ((char *) XSTRING_DATA (fn), &st);
-  /* #endif */
 
 #ifdef CLASH_DETECTION
   if (!auto_saving)
@@ -3909,7 +3870,7 @@ Non-nil second argument means save only current buffer.
 
   run_hook (Qauto_save_hook);
 
-  if (GC_STRINGP (Vauto_save_list_file_name))
+  if (STRINGP (Vauto_save_list_file_name))
     listfile = condition_case_1 (Qt,
 				 auto_save_expand_name,
 				 Vauto_save_list_file_name,
@@ -3928,13 +3889,13 @@ Non-nil second argument means save only current buffer.
   for (do_handled_files = 0; do_handled_files < 2; do_handled_files++)
     {
       for (tail = Vbuffer_alist;
-	   GC_CONSP (tail);
+	   CONSP (tail);
 	   tail = XCDR (tail))
 	{
 	  buf = XCDR (XCAR (tail));
 	  b = XBUFFER (buf);
 
-	  if (!GC_NILP (current_only)
+	  if (!NILP (current_only)
 	      && b != current_buffer)
 	    continue;
 
@@ -3946,7 +3907,7 @@ Non-nil second argument means save only current buffer.
 	  /* Check for auto save enabled
 	     and file changed since last auto save
 	     and file changed since last real save.  */
-	  if (GC_STRINGP (b->auto_save_file_name)
+	  if (STRINGP (b->auto_save_file_name)
 	      && BUF_SAVE_MODIFF (b) < BUF_MODIFF (b)
 	      && b->auto_save_modified < BUF_MODIFF (b)
 	      /* -1 means we've turned off autosaving for a while--see below.  */
@@ -3991,19 +3952,19 @@ Non-nil second argument means save only current buffer.
 		  continue;
 		}
 	      set_buffer_internal (b);
-	      if (!auto_saved && GC_NILP (no_message))
+	      if (!auto_saved && NILP (no_message))
 		{
-		  static CONST unsigned char *msg
-		    = (CONST unsigned char *) "Auto-saving...";
+		  static const unsigned char *msg
+		    = (const unsigned char *) "Auto-saving...";
 		  echo_area_message (selected_frame (), msg, Qnil,
-				     0, strlen ((CONST char *) msg),
+				     0, strlen ((const char *) msg),
 				     Qauto_saving);
 		}
 
 	      /* Open the auto-save list file, if necessary.
 		 We only do this now so that the file only exists
 		 if we actually auto-saved any files. */
-	      if (!auto_saved && GC_STRINGP (listfile) && listdesc < 0)
+	      if (!auto_saved && STRINGP (listfile) && listdesc < 0)
 		{
 		  listdesc = open ((char *) XSTRING_DATA (listfile),
 				   O_WRONLY | O_TRUNC | O_CREAT | OPEN_BINARY,
@@ -4022,21 +3983,22 @@ Non-nil second argument means save only current buffer.
 		 auto save name.  */
 	      if (listdesc >= 0)
 		{
-		  CONST Extbyte *auto_save_file_name_ext;
+		  const Extbyte *auto_save_file_name_ext;
 		  Extcount auto_save_file_name_ext_len;
 
-		  GET_STRING_FILENAME_DATA_ALLOCA
-		    (b->auto_save_file_name,
-		     auto_save_file_name_ext,
-		     auto_save_file_name_ext_len);
+		  TO_EXTERNAL_FORMAT (LISP_STRING, b->auto_save_file_name,
+				      ALLOCA, (auto_save_file_name_ext,
+					       auto_save_file_name_ext_len),
+				      Qfile_name);
 		  if (!NILP (b->filename))
 		    {
-		      CONST Extbyte *filename_ext;
+		      const Extbyte *filename_ext;
 		      Extcount filename_ext_len;
 
-		      GET_STRING_FILENAME_DATA_ALLOCA (b->filename,
-						       filename_ext,
-						       filename_ext_len);
+		      TO_EXTERNAL_FORMAT (LISP_STRING, b->filename,
+					  ALLOCA, (filename_ext,
+						   filename_ext_len),
+					  Qfile_name);
 		      write (listdesc, filename_ext, filename_ext_len);
 		    }
 		  write (listdesc, "\n", 1);
@@ -4092,17 +4054,17 @@ Non-nil second argument means save only current buffer.
      one because nothing needed to be auto-saved.  Do this afterwards
      rather than before in case we get a crash attempting to autosave
      (in that case we'd still want the old one around). */
-  if (listdesc < 0 && !auto_saved && GC_STRINGP (listfile))
+  if (listdesc < 0 && !auto_saved && STRINGP (listfile))
     unlink ((char *) XSTRING_DATA (listfile));
 
   /* Show "...done" only if the echo area would otherwise be empty. */
   if (auto_saved && NILP (no_message)
       && NILP (clear_echo_area (selected_frame (), Qauto_saving, 0)))
     {
-      static CONST unsigned char *msg
-        = (CONST unsigned char *)"Auto-saving...done";
+      static const unsigned char *msg
+        = (const unsigned char *)"Auto-saving...done";
       echo_area_message (selected_frame (), msg, Qnil, 0,
-			 strlen ((CONST char *) msg), Qauto_saving);
+			 strlen ((const char *) msg), Qauto_saving);
     }
 
   Vquit_flag = oquit;
@@ -4180,7 +4142,6 @@ syms_of_fileio (void)
   defsymbol (&Qset_visited_file_modtime, "set-visited-file-modtime");
   defsymbol (&Qcar_less_than_car, "car-less-than-car"); /* Vomitous! */
 
-  defsymbol (&Qfile_name_handler_alist, "file-name-handler-alist");
   defsymbol (&Qauto_save_hook, "auto-save-hook");
   defsymbol (&Qauto_save_error, "auto-save-error");
   defsymbol (&Qauto_saving, "auto-saving");
@@ -4338,5 +4299,9 @@ This variable affects the built-in functions only on Windows,
 on other platforms, it is initialized so that Lisp code can find out
 what the normal separator is.
 */ );
-  Vdirectory_sep_char = make_char ('/');
+#ifdef WINDOWSNT
+  Vdirectory_sep_char = make_char ('\\');
+#else
+   Vdirectory_sep_char = make_char ('/');
+#endif
 }

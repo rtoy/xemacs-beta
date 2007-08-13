@@ -22,19 +22,19 @@ Boston, MA 02111-1307, USA.  */
 
 /* #### Not properly abstracted for device-independence. */
 
-#ifndef _XEMACS_MENUBAR_H_
-#define _XEMACS_MENUBAR_H_
+#ifndef INCLUDED_menubar_h_
+#define INCLUDED_menubar_h_
 
 #ifdef HAVE_MENUBARS
 #include "gui.h"
 void update_frame_menubars (struct frame *f);
 void free_frame_menubars (struct frame *f);
 Lisp_Object menu_parse_submenu_keywords (Lisp_Object desc,
-					 struct gui_item* pgui_item);
-Lisp_Object current_frame_menubar (CONST struct frame* f);
+					 Lisp_Object gui_item);
+Lisp_Object current_frame_menubar (const struct frame* f);
 
 EXFUN (Fmenu_find_real_submenu, 2);
 
 #endif /* HAVE_MENUBARS */
 
-#endif /* _XEMACS_MENUBAR_H_ */
+#endif /* INCLUDED_menubar_h_ */

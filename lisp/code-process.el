@@ -30,10 +30,6 @@
 
 ;;; Code:
 
-(eval-when-compile
-  (defvar buffer-file-type)
-  (defvar binary-process-output))
-
 (defvar process-coding-system-alist nil
   "Alist to decide a coding system to use for a process I/O operation.
 The format is ((PATTERN . VAL) ...),
@@ -112,8 +108,7 @@ If you quit, the process is first killed with SIGINT, then with SIGKILL if
 you quit again before the process exits."
   (let ((temp
 	 (make-temp-name
-	  (concat (file-name-as-directory (temp-directory))
-		  (if (memq system-type '(ms-dos windows-nt)) "em" "emacs")))))
+	  (concat (file-name-as-directory (temp-directory)) "emacs"))))
     (unwind-protect
 	(let (cs-r cs-w)
 	  (let (ret)
@@ -137,10 +132,7 @@ you quit again before the process exits."
 		 (or coding-system-for-read cs-r))
 		(coding-system-for-write
 		 (or coding-system-for-write cs-w)))
-	    (if (memq system-type '(ms-dos windows-nt))
-		(let ((buffer-file-type binary-process-output))
-		  (write-region start end temp nil 'silent))
-	      (write-region start end temp nil 'silent))
+	    (write-region start end temp nil 'silent)
 	    (if deletep (delete-region start end))
 	    (apply #'call-process program temp buffer displayp args)))
       (ignore-file-errors (delete-file temp)))))
@@ -198,9 +190,9 @@ or a cons of coding systems which are used as above.
 
 See also the function `find-operation-coding-system'.")
 
-(defun open-network-stream (name buffer host service)
+(defun open-network-stream (name buffer host service &optional protocol)
   "Open a TCP connection for a service to a host.
-Returns a subprocess-object to represent the connection.
+Return a subprocess-object to represent the connection.
 Input and output work as for subprocesses; `delete-process' closes it.
 Args are NAME BUFFER HOST SERVICE.
 NAME is name for process.  It is modified if necessary to make it unique.
@@ -211,7 +203,17 @@ BUFFER is the buffer (or buffer-name) to associate with the process.
  with any buffer
 Third arg is name of the host to connect to, or its IP address.
 Fourth arg SERVICE is name of the service desired, or an integer
- specifying a port number to connect to."
+ specifying a port number to connect to.
+Fifth argument PROTOCOL is a network protocol.  Currently 'tcp
+ (Transmission Control Protocol) and 'udp (User Datagram Protocol) are
+ supported.  When omitted, 'tcp is assumed.
+
+Ouput via `process-send-string' and input via buffer or filter (see
+`set-process-filter') are stream-oriented.  That means UDP datagrams are
+not guaranteed to be sent and received in discrete packets. (But small
+datagrams around 500 bytes that are not truncated by `process-send-string'
+are usually fine.)  Note further that UDP protocol does not guard against 
+lost packets."
   (let (cs-r cs-w)
     (let (ret)
       (catch 'found
@@ -245,6 +247,6 @@ Fourth arg SERVICE is name of the service desired, or an integer
 	   (or coding-system-for-read cs-r))
 	  (coding-system-for-write
 	   (or coding-system-for-write cs-w)))
-      (open-network-stream-internal name buffer host service))))
+      (open-network-stream-internal name buffer host service protocol))))
 
-;;; mule-process.el ends here
+;;; code-process.el ends here

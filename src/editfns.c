@@ -45,6 +45,7 @@ Boston, MA 02111-1307, USA.  */
 #include "systime.h"
 #include "sysdep.h"
 #include "syspwd.h"
+#include "sysfile.h"			/* for getcwd */
 
 /* Some static data, and a function to initialize it for each run */
 
@@ -64,8 +65,6 @@ Lisp_Object Vuser_login_name;	/* user name from LOGNAME or USER.  */
    keep it. */
 Lisp_Object Vuser_full_name;
 EXFUN (Fuser_full_name, 1);
-
-char *get_system_name (void);
 
 Lisp_Object Qformat;
 
@@ -97,7 +96,7 @@ init_editfns (void)
   if ((p = getenv ("NAME")))
     /* I don't think it's the right thing to do the ampersand
        modification on NAME.  Not that it matters anymore...  -hniksic */
-    Vuser_full_name = build_ext_string (p, FORMAT_OS);
+    Vuser_full_name = build_ext_string (p, Qnative);
   else
     Vuser_full_name = Fuser_full_name (Qnil);
 }
@@ -132,7 +131,7 @@ An empty string will return the constant `nil'.
 */
        (str))
 {
-  struct Lisp_String *p;
+  Lisp_String *p;
   CHECK_STRING (str);
 
   p = XSTRING (str);
@@ -441,7 +440,8 @@ If BUFFER is nil, the current buffer is assumed.
 
 DEFUN ("point-min", Fpoint_min, 0, 1, 0, /*
 Return the minimum permissible value of point in BUFFER.
-This is 1, unless narrowing (a buffer restriction) is in effect.
+This is 1, unless narrowing (a buffer restriction)
+is in effect, in which case it may be greater.
 If BUFFER is nil, the current buffer is assumed.
 */
        (buffer))
@@ -452,7 +452,8 @@ If BUFFER is nil, the current buffer is assumed.
 
 DEFUN ("point-min-marker", Fpoint_min_marker, 0, 1, 0, /*
 Return a marker to the minimum permissible value of point in BUFFER.
-This is the beginning, unless narrowing (a buffer restriction) is in effect.
+This is the beginning, unless narrowing (a buffer restriction)
+is in effect, in which case it may be greater.
 If BUFFER is nil, the current buffer is assumed.
 */
        (buffer))
@@ -464,7 +465,7 @@ If BUFFER is nil, the current buffer is assumed.
 DEFUN ("point-max", Fpoint_max, 0, 1, 0, /*
 Return the maximum permissible value of point in BUFFER.
 This is (1+ (buffer-size)), unless narrowing (a buffer restriction)
-is in effect, in which case it is less.
+is in effect, in which case it may be less.
 If BUFFER is nil, the current buffer is assumed.
 */
        (buffer))
@@ -474,9 +475,9 @@ If BUFFER is nil, the current buffer is assumed.
 }
 
 DEFUN ("point-max-marker", Fpoint_max_marker, 0, 1, 0, /*
-Return a marker to the maximum permissible value of point BUFFER.
+Return a marker to the maximum permissible value of point in BUFFER.
 This is (1+ (buffer-size)), unless narrowing (a buffer restriction)
-is in effect, in which case it is less.
+is in effect, in which case it may be less.
 If BUFFER is nil, the current buffer is assumed.
 */
        (buffer))
@@ -565,11 +566,11 @@ If BUFFER is nil, the current buffer is assumed.
 }
 
 DEFUN ("char-after", Fchar_after, 0, 2, 0, /*
-Return character in BUFFER at position POS.
-POS is an integer or a buffer pointer.
+Return the character at position POS in BUFFER.
+POS is an integer or a marker.
 If POS is out of range, the value is nil.
-If BUFFER is nil, the current buffer is assumed.
 if POS is nil, the value of point is assumed.
+If BUFFER is nil, the current buffer is assumed.
 */
        (pos, buffer))
 {
@@ -583,17 +584,17 @@ if POS is nil, the value of point is assumed.
 }
 
 DEFUN ("char-before", Fchar_before, 0, 2, 0, /*
-Return character in BUFFER before position POS.
-POS is an integer or a buffer pointer.
+Return the character preceding position POS in BUFFER.
+POS is an integer or a marker.
 If POS is out of range, the value is nil.
-If BUFFER is nil, the current buffer is assumed.
 if POS is nil, the value of point is assumed.
+If BUFFER is nil, the current buffer is assumed.
 */
        (pos, buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  Bufpos n = ((NILP (pos) ? BUF_PT (b) :
-	       get_buffer_pos_char (b, pos, GB_NO_ERROR_IF_BAD)));
+  Bufpos n = (NILP (pos) ? BUF_PT (b) :
+	      get_buffer_pos_char (b, pos, GB_NO_ERROR_IF_BAD));
 
   n--;
 
@@ -624,7 +625,7 @@ On Unix it is obtained from TMPDIR, with /tmp as the default
    tmpdir = "/tmp";
 #endif
 
-  return build_ext_string (tmpdir, FORMAT_FILENAME);
+  return build_ext_string (tmpdir, Qfile_name);
 }
 
 DEFUN ("user-login-name", Fuser_login_name, 0, 1, 0, /*
@@ -638,17 +639,17 @@ ignored and this function returns the login name for that UID, or nil.
        (uid))
 {
   char *returned_name;
-  int local_uid;
+  uid_t local_uid;
 
   if (!NILP (uid))
     {
       CHECK_INT (uid);
-      local_uid = XINT(uid);
-      returned_name = user_login_name(&local_uid);
+      local_uid = XINT (uid);
+      returned_name = user_login_name (&local_uid);
     }
   else
     {
-      returned_name = user_login_name(NULL);
+      returned_name = user_login_name (NULL);
     }
   /* #### - I believe this should return nil instead of "unknown" when pw==0
      pw=0 is indicated by a null return from user_login_name
@@ -664,14 +665,12 @@ ignored and this function returns the login name for that UID, or nil.
    corresponds to a nil argument to Fuser_login_name.
 */
 char*
-user_login_name (int *uid)
+user_login_name (uid_t *uid)
 {
-  struct passwd *pw = NULL;
-
   /* uid == NULL to return name of this user */
   if (uid != NULL)
     {
-      pw = getpwuid (*uid);
+      struct passwd *pw = getpwuid (*uid);
       return pw ? pw->pw_name : NULL;
     }
   else
@@ -692,7 +691,7 @@ user_login_name (int *uid)
 	return (user_name);
       else
 	{
-	  pw = getpwuid (geteuid ());
+	  struct passwd *pw = getpwuid (geteuid ());
 #ifdef __CYGWIN32__
 	  /* Since the Cygwin environment may not have an /etc/passwd,
 	     return "unknown" instead of the null if the username
@@ -765,11 +764,13 @@ value of `user-full-name' is returned.
   user_name = (STRINGP (user) ? user : Fuser_login_name (user));
   if (!NILP (user_name))	/* nil when nonexistent UID passed as arg */
     {
-      CONST char *user_name_ext;
+      const char *user_name_ext;
 
       /* Fuck me.  getpwnam() can call select() and (under IRIX at least)
 	 things get wedged if a SIGIO arrives during this time. */
-      GET_C_STRING_OS_DATA_ALLOCA (user_name, user_name_ext);
+      TO_EXTERNAL_FORMAT (LISP_STRING, user_name,
+			  C_STRING_ALLOCA, user_name_ext,
+			  Qnative);
       slow_down_interrupts ();
       pw = (struct passwd *) getpwnam (user_name_ext);
       speed_up_interrupts ();
@@ -787,7 +788,7 @@ value of `user-full-name' is returned.
   tem = ((!NILP (user) && !pw)
 	 ? Qnil
 	 : make_ext_string ((Extbyte *) p, (q ? q - p : strlen (p)),
-			    FORMAT_OS));
+			    Qnative));
 
 #ifdef AMPERSAND_FULL_NAME
   if (!NILP (tem))
@@ -812,7 +813,7 @@ value of `user-full-name' is returned.
   return tem;
 }
 
-static char *cached_home_directory;
+static Extbyte *cached_home_directory;
 
 void
 uncache_home_directory (void)
@@ -822,24 +823,27 @@ uncache_home_directory (void)
 }
 
 /* Returns the home directory, in external format */
-char *
+Extbyte *
 get_home_directory (void)
 {
   int output_home_warning = 0;
 
   if (cached_home_directory == NULL)
     {
-      if ((cached_home_directory = getenv("HOME")) == NULL)
+      if ((cached_home_directory = (Extbyte *) getenv("HOME")) == NULL)
 	{
 #if defined(WINDOWSNT) && !defined(__CYGWIN32__)
-	  char	*homedrive, *homepath;
+	  char *homedrive, *homepath;
 
 	  if ((homedrive = getenv("HOMEDRIVE")) != NULL &&
 	      (homepath = getenv("HOMEPATH")) != NULL)
 	    {
 	      cached_home_directory =
-		(char *) xmalloc(strlen(homedrive) + strlen(homepath) + 1);
-	      sprintf(cached_home_directory, "%s%s", homedrive, homepath);
+		(Extbyte *) xmalloc (strlen (homedrive) +
+				     strlen (homepath) + 1);
+	      sprintf((char *) cached_home_directory, "%s%s",
+		      homedrive,
+		      homepath);
 	    }
 	  else
 	    {
@@ -862,7 +866,7 @@ get_home_directory (void)
 	      /*
 	       * This is NT Emacs behavior
 	       */
-	      cached_home_directory = "C:\\";
+	      cached_home_directory = (Extbyte *) "C:\\";
 	      output_home_warning = 1;
 # endif
 	    }
@@ -873,7 +877,7 @@ get_home_directory (void)
 	   * We probably should try to extract pw_dir from /etc/passwd,
 	   * before falling back to this.
 	   */
-	  cached_home_directory = "/";
+	  cached_home_directory = (Extbyte *) "/";
 	  output_home_warning = 1;
 #endif	/* !WINDOWSNT */
 	}
@@ -896,11 +900,11 @@ Return the user's home directory, as a string.
 */
        ())
 {
-  char *path = get_home_directory ();
+  Extbyte *path = get_home_directory ();
 
   return path == NULL ? Qnil :
     Fexpand_file_name (Fsubstitute_in_file_name
-		       (build_ext_string (path, FORMAT_FILENAME)),
+		       (build_ext_string ((char *) path, Qfile_name)),
 		       Qnil);
 }
 
@@ -910,14 +914,6 @@ Return the name of the machine you are running on, as a string.
        ())
 {
     return Fcopy_sequence (Vsystem_name);
-}
-
-/* For the benefit of callers who don't want to include lisp.h.
-   Caller must free! */
-char *
-get_system_name (void)
-{
-  return xstrdup ((char *) XSTRING_DATA (Vsystem_name));
 }
 
 DEFUN ("emacs-pid", Femacs_pid, 0, 0, 0, /*
@@ -1008,9 +1004,9 @@ time_to_lisp (time_t the_time)
   return Fcons (make_int (item >> 16), make_int (item & 0xffff));
 }
 
-size_t emacs_strftime (char *string, size_t max, CONST char *format,
-		       CONST struct tm *tm);
-static long difftm (CONST struct tm *a, CONST struct tm *b);
+size_t emacs_strftime (char *string, size_t max, const char *format,
+		       const struct tm *tm);
+static long difftm (const struct tm *a, const struct tm *b);
 
 
 DEFUN ("format-time-string", Fformat_time_string, 1, 2, 0, /*
@@ -1040,6 +1036,8 @@ FORMAT-STRING may contain %-sequences to substitute parts of the time.
 %p is replaced by AM or PM, as appropriate.
 %r is a synonym for "%I:%M:%S %p".
 %R is a synonym for "%H:%M".
+%s is replaced by the time in seconds since 00:00:00, Jan 1, 1970 (a
+      nonstandard extension)
 %S is replaced by the second (00-60).
 %t is a synonym for "\\t".
 %T is a synonym for "%H:%M:%S".
@@ -1075,10 +1073,10 @@ characters appearing in the day and month names may be incorrect.
       char *buf = (char *) alloca (size);
       *buf = 1;
       if (emacs_strftime (buf, size,
-			  (CONST char *) XSTRING_DATA (format_string),
+			  (const char *) XSTRING_DATA (format_string),
 			  localtime (&value))
 	  || !*buf)
-	return build_ext_string (buf, FORMAT_BINARY);
+	return build_ext_string (buf, Qbinary);
       /* If buffer was too small, make it bigger.  */
       size *= 2;
     }
@@ -1232,14 +1230,14 @@ and from `file-attributes'.
   strncpy (buf, tem, 24);
   buf[24] = 0;
 
-  return build_ext_string (buf, FORMAT_BINARY);
+  return build_ext_string (buf, Qbinary);
 }
 
 #define TM_YEAR_ORIGIN 1900
 
 /* Yield A - B, measured in seconds.  */
 static long
-difftm (CONST struct tm *a, CONST struct tm *b)
+difftm (const struct tm *a, const struct tm *b)
 {
   int ay = a->tm_year + (TM_YEAR_ORIGIN - 1);
   int by = b->tm_year + (TM_YEAR_ORIGIN - 1);
@@ -1826,7 +1824,7 @@ Returns the number of substitutions performed.
   mc_count = begin_multiple_change (buf, pos, stop);
   if (STRINGP (table))
     {
-      struct Lisp_String *stable = XSTRING (table);
+      Lisp_String *stable = XSTRING (table);
       Charcount size = string_char_length (stable);
 #ifdef MULE
       /* Under Mule, string_char(n) is O(n), so for large tables or
@@ -1906,7 +1904,7 @@ Returns the number of substitutions performed.
 	   && (XCHAR_TABLE_TYPE (table) == CHAR_TABLE_TYPE_GENERIC
 	       || XCHAR_TABLE_TYPE (table) == CHAR_TABLE_TYPE_CHAR))
     {
-      struct Lisp_Char_Table *ctable = XCHAR_TABLE (table);
+      Lisp_Char_Table *ctable = XCHAR_TABLE (table);
 
       for (; pos < stop && (oc = BUF_FETCH_CHAR (buf, pos), 1); pos++)
 	{
@@ -2240,17 +2238,16 @@ If BUFFER is nil, the current buffer is assumed.
     ? Qt : Qnil;
 }
 
-DEFUN ("char=", Fchar_Equal, 2, 3, 0, /*
+DEFUN ("char=", Fchar_Equal, 2, 2, 0, /*
 Return t if two characters match, case is significant.
 Both arguments must be characters (i.e. NOT integers).
-The optional buffer argument is for symmetry and is ignored.
 */
-       (c1, c2, buffer))
+       (c1, c2))
 {
   CHECK_CHAR_COERCE_INT (c1);
   CHECK_CHAR_COERCE_INT (c2);
 
-  return XCHAR(c1) == XCHAR(c2) ? Qt : Qnil;
+  return EQ (c1, c2) ? Qt : Qnil;
 }
 
 #if 0 /* Undebugged FSFmacs code */

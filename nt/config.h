@@ -67,12 +67,6 @@ Boston, MA 02111-1307, USA.  */
    numbers. */
 #undef LISP_FLOAT_TYPE
 
-/* Define GNU_MALLOC if you want to use the *new* GNU memory allocator. */
-#define GNU_MALLOC
-
-/* Define USE_SYSTEM_MALLOC if you forcing the use of it. */
-#undef USE_SYSTEM_MALLOC
-
 /* Define HAVE_TTY if you want TTY support compiled in. */
 #undef HAVE_TTY
 
@@ -336,6 +330,20 @@ Boston, MA 02111-1307, USA.  */
 
 #endif /* DEBUG_XEMACS */
 
+/* Define convenient conditionally defined assertion macros. */
+#ifdef ERROR_CHECK_TYPECHECK
+#define type_checking_assert(assertion) assert (assertion)
+#else
+#define type_checking_assert(assertion)
+#endif
+
+#ifdef ERROR_CHECK_BUFPOS
+#define bufpos_checking_assert(assertion) assert (assertion)
+#else
+#define bufpos_checking_assert(assertion)
+#endif
+
+
 /* Define MEMORY_USAGE_STATS if you want extra code compiled in to
    determine where XEmacs's memory is going. */
 #undef MEMORY_USAGE_STATS
@@ -411,8 +419,6 @@ Boston, MA 02111-1307, USA.  */
    file.  This saves a lot of time when you're repeatedly
    compiling-running-crashing. */
 #undef NO_DOC_FILE
-
-#define CONST const
 
 /* If not defined, use unions instead of ints.  A few systems (DEC Alpha)
    seem to require this, probably because something with the int
@@ -611,16 +617,8 @@ on various systems. */
 /* Should movemail use hesiod for getting POP server host? */
 #undef HESIOD
 /* Determine type of mail locking. */
-/* Play preprocessor games so that configure options override s&m files */
-#undef REAL_MAIL_USE_LOCKF
-#undef REAL_MAIL_USE_FLOCK
-#undef MAIL_USE_LOCKF
-#undef MAIL_USE_FLOCK
-#ifdef REAL_MAIL_USE_FLOCK
-#define MAIL_USE_FLOCK
-#endif
-#ifdef REAL_MAIL_USE_LOCKF
-#define MAIL_USE_LOCKF
-#endif
+#undef MAIL_LOCK_LOCKF
+#undef REAL_LOCK_FLOCK
+#undef MAIL_LOCK_DOT
 
 #endif /* _SRC_CONFIG_H_ */

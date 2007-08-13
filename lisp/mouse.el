@@ -84,11 +84,54 @@ If set to `symbol', double-click will always attempt to highlight a
   "Function that is called upon by `mouse-yank' to actually insert text.")
 
 (defun mouse-consolidated-yank ()
+  "Insert the current selection or, if there is none under X insert
+the X cutbuffer.  A mark is pushed, so that the inserted text lies
+between point and mark."
   (interactive)
-  (case (device-type)
-    (x (x-yank-function))
-    (tty (yank))
-    (otherwise (yank))))
+  (if (and (not (console-on-window-system-p))
+	   (and (featurep 'gpm)
+		(not gpm-minor-mode)))
+      (yank)
+    (push-mark)
+    (if (region-active-p)
+	(if (consp zmacs-region-extent)
+	    ;; pirated code from insert-rectangle in rect.el
+	    ;; perhaps that code should be modified to handle a list of extents
+	    ;; as the rectangle to be inserted?
+	    (let ((lines zmacs-region-extent)
+		  (insertcolumn (current-column))
+		  (first t))
+	      (push-mark)
+	      (while lines
+		(or first
+		    (progn
+		      (forward-line 1)
+		      (or (bolp) (insert ?\n))
+		      (move-to-column insertcolumn t)))
+		(setq first nil)
+		(insert (extent-string (car lines)))
+		(setq lines (cdr lines))))
+	  (insert (extent-string zmacs-region-extent)))
+      (insert-selection t))))
+
+(defun insert-selection (&optional check-cutbuffer-p move-point-event)
+  "Insert the current selection into buffer at point."
+  (interactive "P")
+  ;; we fallback to the clipboard if the current selection is not existent
+  (let ((text (if check-cutbuffer-p
+		  (or (get-selection-no-error) 
+		      (get-cutbuffer)
+		      (get-selection-no-error 'CLIPBOARD)
+		      (error "No selection, clipboard or cut buffer available"))
+		(or (get-selection-no-error)
+		    (get-selection 'CLIPBOARD)))))
+    (cond (move-point-event
+	   (mouse-set-point move-point-event)
+	   (push-mark (point)))
+	  ((interactive-p)
+	   (push-mark (point))))
+    (insert text)
+    ))
 
 
 (defun mouse-select ()
@@ -185,9 +228,10 @@ This functions has to be improved.  Currently it is just a (working) test."
   (if (click-inside-extent-p event zmacs-region-extent)
       ;; okay, this is a drag
       (cond ((featurep 'offix)
-	     (offix-start-drag-region event
-				      (extent-start-position zmacs-region-extent)
-				      (extent-end-position zmacs-region-extent)))
+	     (offix-start-drag-region 
+	      event
+	      (extent-start-position zmacs-region-extent)
+	      (extent-end-position zmacs-region-extent)))
 	    ((featurep 'cde)
 	     ;; should also work with CDE
 	     (cde-start-drag-region event
@@ -1339,7 +1383,7 @@ and `mode-motion-hook'."
 	 ;; vars is a list of glyph variables to check for a pointer
 	 ;; value.
 	 (vars (cond
-		;; Checking if button is non-nil is not sufficent
+		;; Checking if button is non-nil is not sufficient
 		;; since the pointer could be over a blank portion
 		;; of the toolbar.
 		((event-over-toolbar-p event)
@@ -1481,10 +1525,10 @@ other mouse buttons."
 		 (setq last-timestamp (event-timestamp event))
 		 ;; Enlarge the window, calculating change in characters
 		 ;; of default font. Do not let the window to become
-		 ;; less than alolwed minimum (not because that's critical
+		 ;; less than allowed minimum (not because that's critical
 		 ;; for the code performance, just the visual effect is
 		 ;; better: when cursor goes to the left of the next left
-		 ;; divider, the vindow being resized shrinks to minimal
+		 ;; divider, the window being resized shrinks to minimal
 		 ;; size.
 		 (enlarge-window (max (- window-min-width (window-width window))
 				      (/ (- (event-x-pixel event) old-right)
@@ -1494,7 +1538,7 @@ other mouse buttons."
 		 ;; if the change caused more than two windows to resize
 		 ;; (shifting the whole stack right is ugly), or if the
 		 ;; left window side has slipped (right side cannot be
-		 ;; moved any funrther to the right, so enlarge-window
+		 ;; moved any further to the right, so enlarge-window
 		 ;; plays bad games with the left edge.
 		 (if (or (/= (count-windows) (length old-edges-all-windows))
 			 (/= old-left (car (window-pixel-edges window)))

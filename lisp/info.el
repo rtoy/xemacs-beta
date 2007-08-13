@@ -437,9 +437,15 @@ nil or `never', the default, auto-generated info directory
   "List of directories to search for Info documentation files.
 
 The first directory in this list, the \"dir\" file there will become
-the (dir)Top node of the Info documentation tree.  If you wish to
-modify the info search path, use `M-x customize-variable,
-Info-directory-list' to do so.")
+the (dir)Top node of the Info documentation tree.
+
+Note: DO NOT use the `customize' interface to change the value of this
+variable.  Its value is created dynamically on each startup, depending
+on XEmacs packages installed on the system.  If you want to change the
+search path, make the needed modifications on the variable's value
+from .emacs.  For instance:
+
+    (setq Info-directory-list (cons \"~/info\" Info-directory-list))")
 
 (defcustom Info-localdir-heading-regexp
     "^Locally installed XEmacs Packages:?"
@@ -459,6 +465,7 @@ heading."
 ;; Is this right for NT?  .zip, with -c for to stdout, right?
 (defvar Info-suffix-list '( ("" . nil) 
 			    (".info" . nil)
+			    (".info.bz2" . "bzip2 -dc %s")
 			    (".info.gz" . "gzip -dc %s")
 			    (".info-z" . "gzip -dc %s")
 			    (".info.Z" . "uncompress -c %s")
@@ -501,9 +508,12 @@ Marker points nowhere if file has no tag table.")
   "List of possible matches for last Info-index command.")
 (defvar Info-index-first-alternative nil)
 
-(defcustom Info-annotations-path '("~/.xemacs/info.notes"
-                                   "~/.infonotes"
-				   "/usr/lib/info.notes")
+(defcustom Info-annotations-path
+  (list
+   (paths-construct-path (list user-init-directory "info.notes"))
+   (paths-construct-path '("~" ".infonotes"))
+   (paths-construct-path '("usr" "lib" "info.notes")
+			 (char-to-string directory-sep-char)))
   "*Names of files that contain annotations for different Info nodes.
 By convention, the first one should reside in your personal directory.
 The last should be a world-writable \"public\" annotations file."
@@ -1485,12 +1495,10 @@ annotation for any node of any file.  (See `a' and `x' commands.)"
     (or (equal tag "") (Info-find-node nil (format "<<%s>>" tag)))))
 
 ;;;###autoload
-(defun Info-visit-file ()
+(defun Info-visit-file (file)
   "Directly visit an info file."
-  (interactive)
-  (let* ((insert-default-directory nil)
-	 (file (read-file-name "Goto Info file: " "" "")))
-    (or (equal file "") (Info-find-node (expand-file-name file) "Top"))))
+  (interactive "fVisit Info file: ")
+  (Info-find-node (expand-file-name file) "Top"))
 
 (defun Info-restore-point (&optional always)
   "Restore point to same location it had last time we were in this node."
@@ -1509,13 +1517,33 @@ annotation for any node of any file.  (See `a' and `x' commands.)"
        (set-window-start (get-buffer-window (current-buffer))
 			 (+ (nth 2 entry) (point-min)))))
 
+(defvar Info-read-node-completion-table)
+
+;; This function is used as the "completion table" while reading a node name.
+;; It does completion using the alist in Info-read-node-completion-table
+;; unless STRING starts with an open-paren.
+(defun Info-read-node-name-1 (string predicate code)
+  (let ((no-completion (and (> (length string) 0) (eq (aref string 0) ?\())))
+    (cond ((eq code nil)
+	   (if no-completion
+	       string
+	     (try-completion string Info-read-node-completion-table predicate)))
+	  ((eq code t)
+	   (if no-completion
+	       nil
+	     (all-completions string Info-read-node-completion-table predicate)))
+	  ((eq code 'lambda)
+	   (if no-completion
+	       t
+	     (assoc string Info-read-node-completion-table))))))
+
 (defun Info-read-node-name (prompt &optional default)
   (Info-setup-initial)
   (let* ((completion-ignore-case t)
-	 (nodename (completing-read prompt
-				    (Info-build-node-completions)
-				    nil nil nil
-				    'Info-minibuffer-history)))
+	 (Info-read-node-completion-table (Info-build-node-completions))
+	 (nodename (completing-read prompt 'Info-read-node-name-1
+				    nil t nil 'Info-minibuffer-history
+				    default)))
     (if (equal nodename "")
 	(or default
 	    (Info-read-node-name prompt))
@@ -1572,10 +1600,14 @@ annotation for any node of any file.  (See `a' and `x' commands.)"
 ;;;###autoload
 (defun Info-search (regexp)
   "Search for REGEXP, starting from point, and select node it's found in."
-  (interactive "sSearch (regexp): ")
-  (if (equal regexp "")
-      (setq regexp Info-last-search)
-    (setq Info-last-search regexp))
+  (interactive (list
+		(read-from-minibuffer
+		 (if Info-last-search
+		     (format "Search (regexp, default %s): "
+			     Info-last-search)
+		   "Search (regexp): ")
+		 nil nil nil nil nil Info-last-search)))
+  (setq Info-last-search regexp)
   (with-search-caps-disable-folding regexp t
     (let ((found ())
           (onode Info-current-node)
@@ -1652,7 +1684,7 @@ annotation for any node of any file.  (See `a' and `x' commands.)"
 
 ;; Return the node name in the buffer following point.
 ;; ALLOWEDCHARS, if non-nil, goes within [...] to make a regexp
-;; saying which chas may appear in the node name.
+;; saying which chars may appear in the node name.
 (defun Info-following-node-name (&optional allowedchars)
   (skip-chars-forward " \t")
   (buffer-substring
@@ -1662,7 +1694,7 @@ annotation for any node of any file.  (See `a' and `x' commands.)"
        (skip-chars-forward (concat (or allowedchars "^,\t\n") "("))
        (if (looking-at "(")
 	   (skip-chars-forward "^)")))
-     (skip-chars-backward " ")
+     (skip-chars-backward " .")
      (point))))
 
 (defun Info-next (&optional n)
@@ -1757,7 +1789,8 @@ NAME may be an abbreviation of the reference name."
 						  default ") ")
 					"Follow reference named: ")
 				      completions nil t nil
-				      'Info-minibuffer-history)))
+				      'Info-minibuffer-history
+				      default)))
 	   (if (and (string= item "") default)
 	       (list default)
 	     (list item)))
@@ -1841,7 +1874,19 @@ NAME may be an abbreviation of the reference name."
 	  (if (looking-at ":")
 	      (buffer-substring beg (1- (point)))
 	    (skip-chars-forward " \t\n")
-	    (Info-following-node-name (if multi-line "^.,\t" "^.,\t\n"))))
+	    ;; Kludge.
+	    ;; Allow dots in node name not followed by whitespace.
+	    (re-search-forward
+	     (concat "\\(([^)]+)[^."
+		     (if multi-line "" "\n")
+		     "]*\\|\\([^.,\t"
+		     (if multi-line "" "\n")
+		     ;; We consider dots followed by newline as
+		     ;; end of nodename even if multil-line.
+		     ;; Also stops at .).  It is generated by @pxref.
+		     ;; Skips sequential dots.
+		     "]\\|\\.+[^ \t\n)]\\)+\\)"))
+	    (match-string 1)))
     (while (setq i (string-match "\n" str i))
       (aset str i ?\ ))
     str))
@@ -1884,7 +1929,8 @@ Completion is allowed, and the menu item point is on is the default."
 						   default)
 					   "Menu item: ")
 				       completions nil t nil
-				       'Info-minibuffer-history)))
+				       'Info-minibuffer-history
+				       default)))
 	 ;; we rely on the fact that completing-read accepts an input
 	 ;; of "" even when the require-match argument is true and ""
 	 ;; is not a valid possibility
@@ -2060,11 +2106,9 @@ A positive or negative prefix argument moves by multiple screenfuls."
 	  (progn
 	    (Info-global-prev)
 	    (message "Node: %s" Info-current-node)
-	    (sit-for 0)
-	    ;;(scroll-up 1)   ; work around bug in pos-visible-in-window-p
-	    ;;(scroll-down 1)
-	    (while (not (pos-visible-in-window-p (point-max)))
-	      (scroll-up)))
+	    (goto-char (point-max))
+	    (recenter -1)
+	    (move-to-window-line 0))
 	(scroll-down)))))
 
 (defun Info-scroll-prev (arg)
@@ -2074,9 +2118,9 @@ A positive or negative prefix argument moves by multiple screenfuls."
 	       (not (eq Info-auto-advance t))
 	       (not (eq last-command this-command)))
 	  (message "Hit %s again to go to previous node"
-		   (if (= last-command-char 0)
+		   (if (mouse-event-p last-command-event)
 		       "mouse button"
-		     (key-description (char-to-string last-command-char))))
+		     (key-description (event-key last-command-event))))
 	(Info-page-prev)
 	(setq this-command 'Info))
     (scroll-down arg)))
@@ -2093,7 +2137,7 @@ Give a blank topic name to go to the Index node itself."
   (interactive "sIndex topic: ")
   (let ((pattern (format "\n\\* \\([^\n:]*%s[^\n:]*\\):[ \t]*%s"
 			 (regexp-quote topic)
-			 "\\([^.\n]*\\)\\.[ t]*\\([0-9]*\\)"))
+			 "\\(.*\\)\\.[ t]*\\([0-9]*\\)$"))
 	node)
     (message "Searching index for `%s'..." topic)
     (Info-goto-node "Top")

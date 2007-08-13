@@ -23,8 +23,8 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 /* Adapted for XEmacs by David Hobley <david@spook-le0.cia.com.au> */
 /* Synced with FSF Emacs 19.34.6 by Marc Paquette <marcpa@cam.org> */
 
-#ifndef NTHEAP_H_
-#define NTHEAP_H_
+#ifndef INCLUDED_ntheap_h_
+#define INCLUDED_ntheap_h_
 
 #include <windows.h>
 
@@ -54,13 +54,6 @@ extern int    	      nt_minor_version;
 #define UNINIT_PTR ((void *) 0xF0A0F0A0)
 #define UNINIT_LONG (0xF0A0F0A0L)
 
-enum {
-  OS_WIN95 = 1,
-  OS_NT
-};
-
-extern int os_subtype;
-
 /* Emulation of Unix sbrk().  */
 extern void *sbrk (unsigned long size);
 
@@ -87,7 +80,7 @@ extern unsigned char *round_to_next (unsigned char *address,
 /* Useful routines for manipulating memory-mapped files. */
 
 typedef struct file_data {
-    char          *name;
+    const char    *name;
     unsigned long  size;
     HANDLE         file;
     HANDLE         file_mapping;
@@ -103,12 +96,8 @@ typedef struct file_data {
 #define RVA_TO_PTR(var,section,filedata) \
 	  ((void *)(RVA_TO_OFFSET(var,section) + (filedata).file_base))
 
-int open_input_file (file_data *p_file, char *name);
-int open_output_file (file_data *p_file, char *name, unsigned long size);
+int open_input_file (file_data *p_file, const char *name);
+int open_output_file (file_data *p_file, const char *name, unsigned long size);
 void close_file_data (file_data *p_file);
 
-/* Return pointer to section header for section containing the given
-   relative virtual address. */
-IMAGE_SECTION_HEADER * rva_to_section (DWORD rva, IMAGE_NT_HEADERS * nt_header);
-
-#endif /* NTHEAP_H_ */
+#endif /* INCLUDED_ntheap_h_ */

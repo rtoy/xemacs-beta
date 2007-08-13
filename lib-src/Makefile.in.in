@@ -53,6 +53,9 @@ exec_prefix=@exec_prefix@
 bindir=@bindir@
 libdir=@libdir@
 srcdir=@srcdir@
+datadir=@datadir@
+instvardir=@instvardir@
+top_srcdir=@top_srcdir@
 archlibdir=@archlibdir@
 configuration=@configuration@
 moduledir=@moduledir@
@@ -72,8 +75,12 @@ INSTALL_DATA = @INSTALL_DATA@
 
 ## Things that a user might actually run,
 ## which should be installed in bindir.
+#ifdef WINDOWSNT
+INSTALLABLES_BASE = etags ctags b2m ootags
+#else
 INSTALLABLES_BASE = etags ctags b2m gnuclient ootags
-INSTALLABLE_SCRIPTS = rcs-checkin pstogif gnudoit gnuattach
+#endif
+INSTALLABLE_SCRIPTS = rcs-checkin gnudoit gnuattach
 #ifdef HAVE_SHLIB
 #ifdef HAVE_MS_WINDOWS
 INSTALLABLES = $(INSTALLABLES_BASE) runxemacs rungnuclient ellcc
@@ -84,16 +91,22 @@ INSTALLABLES = $(INSTALLABLES_BASE) ellcc
 #ifdef HAVE_MS_WINDOWS
 INSTALLABLES = $(INSTALLABLES_BASE) runxemacs rungnuclient
 #else
-INSTALLABLES = $(INSTALLABLES_BASE) 
+INSTALLABLES = $(INSTALLABLES_BASE)
 #endif
 #endif
 
 
 ## Things that Emacs runs internally, or during the build process,
 ## which should not be installed in bindir.
+#ifdef WINDOWSNT
+UTILITIES= make-path wakeup profile make-docfile digest-doc \
+	sorted-doc movemail cvtmail yow hexl \
+	mmencode
+#else
 UTILITIES= make-path wakeup profile make-docfile digest-doc \
 	sorted-doc movemail cvtmail fakemail yow hexl \
 	gnuserv mmencode
+#endif
 ## These need to be conditional on I18N3 make-msgfile make-po
 
 ## Like UTILITIES, but they are not system-dependent, and should not be
@@ -149,7 +162,13 @@ ld_libs_general=@ld_libs_general@
 
 ## We need to #define emacs to get the right versions of some files.
 
-cppflags = -Demacs -I../src $(CPPFLAGS)
+## To understand the order of -I flags, consider what happens if you run
+## ./configure in the source tree, and then run
+## $(srcdir).2.26/configure in some other build tree.
+## Where will the generated files like config.h be included from?
+## This is also why you _must_ use <...> instead of "..." 
+## when #include'ing generated files.
+cppflags = -Demacs -I. -I../src -I$(srcdir) -I$(top_srcdir)/src $(CPPFLAGS)
 cflags   = $(CFLAGS) $(cppflags) $(c_switch_general)
 ldflags  = $(LDFLAGS) $(ld_switch_general) $(ld_libs_general)
 
@@ -159,6 +178,8 @@ ldflags  = $(LDFLAGS) $(ld_switch_general) $(ld_libs_general)
 ## Using an explicit command made it work.
 .c.o:
 	${CC} -c $(cflags) $<
+
+.PHONY : all maybe-blessmail install uninstall
 
 all: ${UTILITIES} ${INSTALLABLES} srcdir-symlink.stamp
 
@@ -218,7 +239,6 @@ ${archlibdir}: all
 
 ## We do not need to install "wakeup" explicitly, because it will be
 ## copied when this whole directory is copied.
-.PHONY : all maybe-blessmail install uninstall
 install: ${archlibdir}
 	@echo; echo "Installing utilities for users to run."
 	for file in ${INSTALLABLES} ; do \
@@ -265,32 +285,29 @@ getopt.o: ${srcdir}/getopt.c ${srcdir}/getopt.h
 	${CC} -c $(cflags) ${srcdir}/getopt.c
 getopt1.o: ${srcdir}/getopt1.c ${srcdir}/getopt.h
 	${CC} -c $(cflags) ${srcdir}/getopt1.c
-alloca.o: ${srcdir}/../src/alloca.c
+alloca.o: ${top_srcdir}/src/alloca.c
 	${CC} -c $(cflags) ${srcdir}/../src/alloca.c
 
-regex.o: ${srcdir}/../src/regex.c ${srcdir}/../src/regex.h
+regex.o: ${srcdir}/../src/regex.c ${top_srcdir}/src/regex.h
 	$(CC) -c `echo $(cflags) | sed 's/-Demacs/ /'` \
-		-DINHIBIT_STRING_HEADER ${srcdir}/../src/regex.c
+		-DINHIBIT_STRING_HEADER ${top_srcdir}/src/regex.c
 
-etags_args = -I. $(cflags) -I${srcdir} -I${srcdir}/../src \
-	-DVERSION='"${version}"' ${srcdir}/etags.c \
+etags_args = $(cflags) -DVERSION='"${version}"' ${srcdir}/etags.c \
 	$(GETOPTOBJS) regex.o $(ldflags)
-etags_deps   = ${srcdir}/etags.c $(GETOPTDEPS) regex.o ../src/config.h
+etags_deps = ${srcdir}/etags.c $(GETOPTDEPS) regex.o ../src/config.h
 
 etags: ${etags_deps}
 	$(CC) ${etags_args} -o $@
 
-ellcc_args = -I. $(cflags) -I${srcdir} -I${srcdir}/../src \
-    ${srcdir}/ellcc.c $(ldflags)
+ellcc_args = $(cflags) ${srcdir}/ellcc.c $(ldflags)
 ellcc_deps = ${srcdir}/ellcc.c ellcc.h ../src/config.h
 
 ellcc: ${ellcc_deps}
 	$(CC) ${ellcc_args} -o $@
 
-run_args = -I. $(cflags) -I${srcdir} -I${srcdir}/../src \
-	-DVERSION='"${version}"' ${srcdir}/run.c \
+run_args = $(cflags) -DVERSION='"${version}"' ${srcdir}/run.c \
 	$(ldflags) -Wl,--subsystem,windows -e _mainCRTStartup
-run_deps   = ${srcdir}/run.c ${srcdir}/run.h ${srcdir}/run.rc \
+run_deps = ${srcdir}/run.c ${srcdir}/run.h ${srcdir}/run.rc \
 	${srcdir}/../nt/xemacs.ico ${srcdir}/../nt/file.ico \
 	${srcdir}/../nt/lisp.ico
 
@@ -305,10 +322,9 @@ runxemacs: run
 rungnuclient: run
 	cp run.exe $@.exe
 
-ootags_args = -I. $(cflags) -I${srcdir} -I${srcdir}/../src \
-	-DVERSION='"${version}"' ${srcdir}/ootags.c \
+ootags_args = $(cflags) -DVERSION='"${version}"' ${srcdir}/ootags.c \
 	$(GETOPTOBJS) regex.o $(ldflags)
-ootags_deps   = ${srcdir}/ootags.c $(GETOPTDEPS) regex.o ../src/config.h
+ootags_deps = ${srcdir}/ootags.c $(GETOPTDEPS) regex.o ../src/config.h
 
 ootags: ${ootags_deps}
 	$(CC) ${ootags_args} -o $@

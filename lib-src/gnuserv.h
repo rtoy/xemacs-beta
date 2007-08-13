@@ -43,7 +43,7 @@ static char header_rcsid [] = "!Header: gnuserv.h,v 2.4 95/02/16 11:58:11 arup a
 #define NO_SHORTNAMES
 /* gnuserv should not be compiled using SOCKS */
 #define DO_NOT_SOCKSIFY
-#include <../src/config.h>
+#include <config.h>
 #undef read
 #undef write
 #undef open
@@ -216,7 +216,7 @@ int make_connection (char *hostarg, int portarg, int *s);
 void disconnect_from_ipc_server();
 #endif
 #if defined(INTERNET_DOMAIN_SOCKETS) || defined(UNIX_DOMAIN_SOCKETS)
-void send_string (int s, CONST char *msg);
+void send_string (int s, const char *msg);
 void disconnect_from_server (int s, int echo);
 int read_line (int s, char *dest);
 #endif

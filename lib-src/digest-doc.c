@@ -6,12 +6,12 @@
    but in texinfo format and sorted by function/variable name.  */
 
 #ifdef emacs
-#include <../src/config.h>
+#include <config.h>
 #endif
 #include <stdio.h>
 
 int
-main ()
+main (int argc, char *argv[])
 {
   register int ch;
   register int notfirst = 0;

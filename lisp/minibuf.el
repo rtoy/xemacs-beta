@@ -77,10 +77,12 @@ t means to return a list of all possible completions of STRING.
 (defvar minibuffer-completion-confirm nil
   "Non-nil => demand confirmation of completion before exiting minibuffer.")
 
-(defvar minibuffer-confirm-incomplete nil
+(defcustom minibuffer-confirm-incomplete nil
   "If true, then in contexts where completing-read allows answers which
 are not valid completions, an extra RET must be typed to confirm the
-response.  This is helpful for catching typos, etc.")
+response.  This is helpful for catching typos, etc."
+  :type 'boolean
+  :group 'minibuffer)
 
 (defcustom completion-auto-help t
   "*Non-nil means automatically provide help for invalid completion input."
@@ -344,7 +346,8 @@ minibuffer history if its length is less than that value."
                                     keymap
                                     readp
                                     history
-				    abbrev-table)
+				    abbrev-table
+				    default)
   "Read a string from the minibuffer, prompting with string PROMPT.
 If optional second arg INITIAL-CONTENTS is non-nil, it is a string
   to be inserted into the minibuffer before reading input.
@@ -366,6 +369,8 @@ Fifth arg HISTORY, if non-nil, specifies a history list
   Positions are counted starting from 1 at the beginning of the list.
 Sixth arg ABBREV-TABLE, if non-nil, becomes the value of `local-abbrev-table'
   in the minibuffer.
+Seventh arg DEFAULT, if non-nil, will be returned when user enters
+  an empty string.
 
 See also the variable completion-highlight-first-word-only for control over
   completion display."
@@ -412,7 +417,8 @@ See also the variable completion-highlight-first-word-only for control over
 	 ;; `M-x doctor' makes history a local variable, and thus
 	 ;; our binding above is buffer-local and doesn't apply
 	 ;; once we switch buffers!!!!  We demand better scope!
-	 (_history_ history))
+	 (_history_ history)
+	 (minibuffer-default default))
     (unwind-protect
          (progn
            (set-buffer (reset-buffer buffer))
@@ -490,8 +496,13 @@ See also the variable completion-highlight-first-word-only for control over
                (let* ((val (progn (set-buffer buffer)
                                   (if minibuffer-exit-hook
                                       (run-hooks 'minibuffer-exit-hook))
-                                  (buffer-string)))
-                    (histval val)
+                                  (if (and (eq (char-after (point-min)) nil)
+					   default)
+				      default
+				    (buffer-string))))
+		      (histval (if (and default (string= val ""))
+				   default
+				 val))
                       (err nil))
                  (if readp
                      (condition-case e
@@ -748,7 +759,7 @@ See also the variable completion-highlight-first-word-only for control over
 
 (defun completing-read (prompt table
                         &optional predicate require-match
-                                  initial-contents history)
+                                  initial-contents history default)
   "Read a string in the minibuffer, with completion.
 Args: PROMPT, TABLE, PREDICATE, REQUIRE-MATCH, INITIAL-CONTENTS, HISTORY.
 PROMPT is a string to prompt with; normally it ends in a colon and a space.
@@ -770,19 +781,27 @@ HISTORY, if non-nil, specifies a history list
   which INITIAL-CONTENTS corresponds to).
   If HISTORY is `t', no history will be recorded.
   Positions are counted starting from 1 at the beginning of the list.
+DEFAULT, if non-nil, is the default value.
 Completion ignores case if the ambient value of
   `completion-ignore-case' is non-nil."
   (let ((minibuffer-completion-table table)
         (minibuffer-completion-predicate predicate)
         (minibuffer-completion-confirm (if (eq require-match 't) nil t))
-        (last-exact-completion nil))
-    (read-from-minibuffer prompt
-                          initial-contents
-                          (if (not require-match)
-                              minibuffer-local-completion-map
-                              minibuffer-local-must-match-map)
-                          nil
-                          history)))
+        (last-exact-completion nil)
+	ret)
+    (setq ret (read-from-minibuffer prompt
+				    initial-contents
+				    (if (not require-match)
+					minibuffer-local-completion-map
+				      minibuffer-local-must-match-map)
+				    nil
+				    history
+				    nil
+				    default))
+    (if (and (string= ret "")
+	     default)
+	default
+      ret)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1231,7 +1250,9 @@ With prefix argument N, search for Nth previous match.
 If N is negative, find the next or Nth next match."
   (interactive
    (let ((enable-recursive-minibuffers t)
-	 (minibuffer-history-sexp-flag nil))
+	 (minibuffer-history-sexp-flag nil)
+	 (minibuffer-max-depth (and minibuffer-max-depth
+				    (1+ minibuffer-max-depth))))
      (if (eq 't (symbol-value minibuffer-history-variable))
 	 (error "History is not being recorded in this context"))
      (list (read-from-minibuffer "Previous element matching (regexp): "
@@ -1279,7 +1300,9 @@ With prefix argument N, search for Nth next match.
 If N is negative, find the previous or Nth previous match."
   (interactive
    (let ((enable-recursive-minibuffers t)
-	 (minibuffer-history-sexp-flag nil))
+	 (minibuffer-history-sexp-flag nil)
+	 (minibuffer-max-depth (and minibuffer-max-depth
+				    (1+ minibuffer-max-depth))))
      (if (eq t (symbol-value minibuffer-history-variable))
 	 (error "History is not being recorded in this context"))
      (list (read-from-minibuffer "Next element matching (regexp): "
@@ -1303,7 +1326,10 @@ If N is negative, find the previous or Nth previous match."
     (let ((narg (- minibuffer-history-position n))
 	  (minimum (if minibuffer-default -1 0)))
       (cond ((< narg minimum)
-	     (error "No following item in %s" minibuffer-history-variable))
+	     (error (if minibuffer-default
+			"No following item in %s"
+		      "No following item in %s; no default available")
+		    minibuffer-history-variable))
 	    ((> narg (length (symbol-value minibuffer-history-variable)))
 	     (error "No preceding item in %s" minibuffer-history-variable)))
       (erase-buffer)
@@ -1354,11 +1380,14 @@ If N is negative, find the previous or Nth previous match."
 ;;;;                reading various things from a minibuffer            ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun read-expression (prompt &optional initial-contents history)
-  "Return a Lisp object read using the minibuffer.
-Prompt with PROMPT.  If non-nil, optional second arg INITIAL-CONTENTS
-is a string to insert in the minibuffer before reading.
-Third arg HISTORY, if non-nil, specifies a history list."
+(defun read-expression (prompt &optional initial-contents history default-value)
+  "Return a Lisp object read using the minibuffer, prompting with PROMPT.
+If non-nil, optional second arg INITIAL-CONTENTS is a string to insert
+ in the minibuffer before reading.
+Third arg HISTORY, if non-nil, specifies a history list.
+Fourth arg DEFAULT-VALUE is the default value.  If non-nil, it is used
+ for history command, and as the value to return if the user enters the
+ empty string."
   (let ((minibuffer-history-sexp-flag t)
 	;; Semi-kludge to get around M-x C-x o M-ESC trying to do completion.
 	(minibuffer-completion-table nil))
@@ -1367,50 +1396,57 @@ Third arg HISTORY, if non-nil, specifies a history list."
 			  read-expression-map
 			  t
 			  (or history 'read-expression-history)
-			  lisp-mode-abbrev-table)))
+			  lisp-mode-abbrev-table
+			  default-value)))
 
-(defun read-string (prompt &optional initial-contents history)
+(defun read-string (prompt &optional initial-contents history default-value)
   "Return a string from the minibuffer, prompting with string PROMPT.
 If non-nil, optional second arg INITIAL-CONTENTS is a string to insert
-in the minibuffer before reading.
-Third arg HISTORY, if non-nil, specifies a history list."
+ in the minibuffer before reading.
+Third arg HISTORY, if non-nil, specifies a history list.
+Fourth arg DEFAULT-VALUE is the default value.  If non-nil, it is used
+ for history command, and as the value to return if the user enters the
+ empty string."
   (let ((minibuffer-completion-table nil))
     (read-from-minibuffer prompt
 			  initial-contents
 			  minibuffer-local-map
-			  nil history)))
+			  nil history nil default-value)))
 
-(defun eval-minibuffer (prompt &optional initial-contents history)
+(defun eval-minibuffer (prompt &optional initial-contents history default-value)
   "Return value of Lisp expression read using the minibuffer.
 Prompt with PROMPT.  If non-nil, optional second arg INITIAL-CONTENTS
 is a string to insert in the minibuffer before reading.
-Third arg HISTORY, if non-nil, specifies a history list."
-  (eval (read-expression prompt initial-contents history)))
+Third arg HISTORY, if non-nil, specifies a history list.
+Fourth arg DEFAULT-VALUE is the default value.  If non-nil, it is used
+ for history command, and as the value to return if the user enters the
+ empty string."
+  (eval (read-expression prompt initial-contents history default-value)))
 
 ;; The name `command-history' is already taken
 (defvar read-command-history '())
 
-(defun read-command (prompt)
+(defun read-command (prompt &optional default-value)
   "Read the name of a command and return as a symbol.
-Prompts with PROMPT."
+Prompts with PROMPT.  By default, return DEFAULT-VALUE."
   (intern (completing-read prompt obarray 'commandp t nil
 			   ;; 'command-history is not right here: that's a
 			   ;; list of evalable forms, not a history list.
 			   'read-command-history
-			   )))
+			   default-value)))
 
-(defun read-function (prompt)
+(defun read-function (prompt &optional default-value)
   "Read the name of a function and return as a symbol.
-Prompts with PROMPT."
+Prompts with PROMPT.  By default, return DEFAULT-VALUE."
   (intern (completing-read prompt obarray 'fboundp t nil
-			   'function-history)))
+			   'function-history default-value)))
 
-(defun read-variable (prompt)
+(defun read-variable (prompt &optional default-value)
   "Read the name of a user variable and return it as a symbol.
-Prompts with PROMPT.
+Prompts with PROMPT.  By default, return DEFAULT-VALUE.
 A user variable is one whose documentation starts with a `*' character."
   (intern (completing-read prompt obarray 'user-variable-p t nil
-			   'variable-history)))
+			   'variable-history default-value)))
 
 (defun read-buffer (prompt &optional default require-match)
   "Read the name of a buffer and return as a string.
@@ -1428,7 +1464,10 @@ only existing buffer names are allowed."
         result)
     (while (progn
              (setq result (completing-read prompt alist nil require-match
-					   nil 'buffer-history))
+					   nil 'buffer-history 
+					   (if (bufferp default)
+					       (buffer-name default)
+					     default)))
              (cond ((not (equal result ""))
                     nil)
                    ((not require-match)
@@ -1445,8 +1484,12 @@ only existing buffer names are allowed."
         (buffer-name result)
       result)))
 
-(defun read-number (prompt &optional integers-only)
-  "Read a number from the minibuffer."
+(defun read-number (prompt &optional integers-only default-value)
+  "Read a number from the minibuffer, prompting with PROMPT.
+If optional second argument INTEGERS-ONLY is non-nil, accept
+ only integer input.
+If DEFAULT-VALUE is non-nil, return that if user enters an empty
+ line."
   (let ((pred (if integers-only 'integerp 'numberp))
 	num)
     (while (not (funcall pred num))
@@ -1454,19 +1497,20 @@ only existing buffer names are allowed."
 		    (let ((minibuffer-completion-table nil))
 		      (read-from-minibuffer
 		       prompt (if num (prin1-to-string num)) nil t
-		       t)) ;no history
+		       nil nil default-value))
 		  (input-error nil)
 		  (invalid-read-syntax nil)
 		  (end-of-file nil)))
       (or (funcall pred num) (beep)))
     num))
 
-(defun read-shell-command (prompt &optional initial-input history)
+(defun read-shell-command (prompt &optional initial-input history default-value)
   "Just like read-string, but uses read-shell-command-map:
 \\{read-shell-command-map}"
   (let ((minibuffer-completion-table nil))
     (read-from-minibuffer prompt initial-input read-shell-command-map
-			  nil (or history 'shell-command-history))))
+			  nil (or history 'shell-command-history)
+			  nil default-value)))
 
 
 ;;; This read-file-name stuff probably belongs in files.el
@@ -1531,8 +1575,9 @@ only existing buffer names are allowed."
 				      read-file-name-map
 				    read-file-name-must-match-map)
 				  nil
-				  history))
-	      ))
+				  history
+				  nil
+				  default))))
 ;;;     ;; Kludge!  Put "/foo/bar" on history rather than "/default//foo/bar"
 ;;;     (let ((hist (cond ((not history) 'minibuffer-history)
 ;;;                       ((consp history) (car history))
@@ -1625,22 +1670,27 @@ only existing buffer names are allowed."
 This will prompt with a dialog box if appropriate, according to
  `should-use-dialog-box-p'.
 Value is not expanded---you must call `expand-file-name' yourself.
-Value is subject to interpreted by substitute-in-file-name however.
+Value is subject to interpretation by `substitute-in-file-name' however.
 Default name to DEFAULT if user enters a null string.
  (If DEFAULT is omitted, the visited file name is used,
   except that if INITIAL-CONTENTS is specified, that combined with DIR is
   used.)
 Fourth arg MUST-MATCH non-nil means require existing file's name.
  Non-nil and non-t means also require confirmation after completion.
-Fifth arg INITIAL-CONTENTS specifies text to start with.
+Fifth arg INITIAL-CONTENTS specifies text to start with.  If this is not
+ specified, and `insert-default-directory' is non-nil, DIR or the current
+ directory will be used.
 Sixth arg HISTORY specifies the history list to use.  Default is
  `file-name-history'.
 DIR defaults to current buffer's directory default."
   (read-file-name-1
    (or history 'file-name-history)
    prompt dir (or default
-		  (if initial-contents (expand-file-name initial-contents dir)
-		    buffer-file-name))
+		  (and initial-contents
+		       (abbreviate-file-name (expand-file-name
+					      initial-contents dir) t))
+		  (and buffer-file-truename
+		       (abbreviate-file-name buffer-file-name t)))
    must-match initial-contents
    ;; A separate function (not an anonymous lambda-expression)
    ;; and passed as a symbol because of disgusting kludges in various
@@ -2107,10 +2157,18 @@ On mswindows devices, this uses `mswindows-color-list'."
 
 ;;(if (featurep 'mule)
 
-(defun read-coding-system (prompt)
+(defun read-coding-system (prompt &optional default-coding-system)
   "Read a coding-system (or nil) from the minibuffer.
-Prompting with string PROMPT."
-  (intern (completing-read prompt obarray 'find-coding-system t)))
+Prompting with string PROMPT.
+If the user enters null input, return second argument DEFAULT-CODING-SYSTEM.
+DEFAULT-CODING-SYSTEM can be a string, symbol, or coding-system object."
+  (intern (completing-read prompt obarray 'find-coding-system t nil nil 
+			   (cond ((symbolp default-coding-system)
+				  (symbol-name default-coding-system))
+				 ((coding-system-p default-coding-system)
+				  (symbol-name (coding-system-name default-coding-system)))
+				 (t
+				  default-coding-system)))))
 
 (defun read-non-nil-coding-system (prompt)
   "Read a non-nil coding-system from the minibuffer.

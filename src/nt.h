@@ -1,6 +1,3 @@
-#ifndef _NT_H_
-#define _NT_H_
-
 /* Support routines for the NT version of XEmacs.
    Copyright (C) 1994 Free Software Foundation, Inc.
 
@@ -26,6 +23,9 @@ Boston, MA 02111-1307, USA.  */
 
 /* #define FULL_DEBUG */
 
+#ifndef INCLUDED_nt_h_
+#define INCLUDED_nt_h_
+
 #ifdef DEBUG_XEMACS
 #define DebPrint(stuff) _DebPrint stuff
 #else
@@ -34,6 +34,9 @@ Boston, MA 02111-1307, USA.  */
 
 #define R_OK 4
 #define W_OK 2
+#ifdef X_OK
+#undef X_OK
+#endif
 #define X_OK 1
 #define F_OK 0
 
@@ -147,4 +150,4 @@ time_t convert_time (FILETIME ft);
 extern void init_ntproc ();
 extern void term_ntproc ();
 
-#endif /* _NT_H_ */
+#endif /* INCLUDED_nt_h_ */

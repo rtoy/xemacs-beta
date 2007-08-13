@@ -61,6 +61,7 @@ char *alloca();
 /* The version info from version.sh. Used in #pragma ident in emacs.c */
 #undef EMACS_MAJOR_VERSION
 #undef EMACS_MINOR_VERSION
+#undef EMACS_PATCH_LEVEL
 #undef EMACS_BETA_VERSION
 #undef EMACS_VERSION
 #undef XEMACS_CODENAME
@@ -69,11 +70,23 @@ char *alloca();
 #undef INFODOCK_MINOR_VERSION
 #undef INFODOCK_BUILD_VERSION
 
+/* Make all functions from all IEEE Stds 1003.[123] available. */
+#undef _POSIX_C_SOURCE
+
+/* Make all functions from Unix98 available. */
+#undef _XOPEN_SOURCE
+
+/* Make extensions from Unix98 available. */
+#undef _XOPEN_SOURCE_EXTENDED
+
 /* Make all functions available on AIX.  See AC_AIX. */
 #undef _ALL_SOURCE
 
 /* Make all functions available on GNU libc systems.  See features.h. */
 #undef _GNU_SOURCE
+
+/* Make all functions available on Solaris 2 systems. */
+#undef __EXTENSIONS__
 
 /* Used to identify the XEmacs version in stack traces. */
 #undef STACK_TRACE_EYE_CATCHER
@@ -162,6 +175,8 @@ char *alloca();
 #undef THIS_IS_X11R4
 #undef THIS_IS_X11R5
 #undef THIS_IS_X11R6
+
+#undef HAVE_XCONVERTCASE
 
 /* Where do we find bitmaps? */
 #undef BITMAPDIR
@@ -266,11 +281,14 @@ char *alloca();
 #undef HAVE_FPATHCONF
 #undef HAVE_FREXP
 #undef HAVE_FTIME
+#undef HAVE_GETADDRINFO
 #undef HAVE_GETHOSTNAME
+#undef HAVE_GETNAMEINFO
 #undef HAVE_GETPAGESIZE
 #undef HAVE_GETTIMEOFDAY
 #undef HAVE_GETWD
 #undef HAVE_GETCWD
+#undef HAVE_GETPT
 #undef HAVE_LOGB
 #undef HAVE_LRAND48
 #undef HAVE_MATHERR
@@ -293,6 +311,7 @@ char *alloca();
 #undef HAVE_SIGPROCMASK
 #undef HAVE_SIGSETJMP
 #undef HAVE_SNPRINTF
+#undef HAVE_STPCPY
 #undef HAVE_STRCASECMP
 #undef HAVE_STRERROR
 #undef HAVE_TZSET
@@ -305,6 +324,11 @@ char *alloca();
 #undef HAVE_SOCKADDR_SUN_LEN
 #undef HAVE_MULTICAST
 #undef HAVE_SYSVIPC
+#undef HAVE_LOCKF
+#undef HAVE_FLOCK
+#undef HAVE_FSYNC
+#undef HAVE_FTRUNCATE
+#undef HAVE_UMASK
 
 #undef SYSV_SYSTEM_DIR
 #undef NONSYSTEM_DIR_LIBRARY
@@ -356,10 +380,14 @@ char *alloca();
 
 /* Do we have LDAP support? */
 #undef HAVE_LDAP
-/* Do we have the LDAP library of the University of Michigan ? */
-#undef HAVE_UMICH_LDAP
-/* Do we have Netscape LDAP SDK library */
-#undef HAVE_NS_LDAP
+/* Does the library define ldap_set_option () ? */
+#undef HAVE_LDAP_SET_OPTION
+/* Does the library define ldap_get_lderrno () ? */
+#undef HAVE_LDAP_GET_LDERRNO
+/* Does the library define ldap_result2error () ? */
+#undef HAVE_LDAP_RESULT2ERROR
+/* Does the library define ldap_parse_result () ? */
+#undef HAVE_LDAP_PARSE_RESULT
 
 /* Do you have the Xauth library present?  This will add some extra
    functionality to gnuserv. */
@@ -388,17 +416,35 @@ char *alloca();
 /* Check the entire extent structure of a buffer each time an extent
    change is done, and do other extent-related checks. */
 #undef ERROR_CHECK_EXTENTS
+
 /* Make sure that all X... macros are dereferencing the correct type,
    and that all XSET... macros (as much as possible) are setting the
    correct type of structure.  Highly recommended for all
    development work. */
 #undef ERROR_CHECK_TYPECHECK
+#ifdef ERROR_CHECK_TYPECHECK
+#define type_checking_assert(assertion) assert (assertion)
+#else
+#define type_checking_assert(assertion)
+#endif
+
 /* Make sure valid buffer positions are passed to BUF_* macros. */
 #undef ERROR_CHECK_BUFPOS
+#ifdef ERROR_CHECK_BUFPOS
+#define bufpos_checking_assert(assertion) assert (assertion)
+#else
+#define bufpos_checking_assert(assertion)
+#endif
+
 /* Attempt to catch bugs related to garbage collection (e.g. not GCPRO'ing). */
 #undef ERROR_CHECK_GC
+
 /* Attempt to catch freeing of a non-malloc()ed block, heap corruption, etc. */
 #undef ERROR_CHECK_MALLOC
+
+/* Minor sanity checking of the bytecode interpreter.  Useful for
+   debugging the byte compiler.  */
+#undef ERROR_CHECK_BYTE_CODE
 
 /* Define DEBUG_XEMACS if you want extra debugging code compiled in.
    This is mainly intended for use by developers. */
@@ -429,11 +475,6 @@ char *alloca();
 #undef USE_GCC
 #undef USE_LCC
 
-/* Allow the user to override the default value of PURESIZE at configure
-   time.  This must come before we include the sys files in order for
-   it to be able to override any changes in them. */
-#undef RAW_PURESIZE
-
 /* Define this if you want level 2 internationalization compliance
    (localized collation and formatting).  Generally this should be
    defined, unless your system doesn't have the strcoll() and
@@ -458,8 +499,8 @@ char *alloca();
 /* Compile in generic Drag'n'Drop API */
 #undef HAVE_DRAGNDROP
 
-/* Compile in support for proper session-management. */
-#undef HAVE_SESSION
+/* Compile in support for proper handling of WM_COMMAND. */
+#undef HAVE_WMCOMMAND
 
 /* Define this if you want Mule support (multi-byte character support).
    There may be some performance penalty, although it should be small
@@ -492,21 +533,20 @@ char *alloca();
 /* Defined by AC_C_CONST in configure.in */
 #undef const
 
-#define CONST const
+/* Allow the source to use standard types. Include these before the
+ s&m files so that they can use them. */
+#undef ssize_t
+#undef size_t
+#undef pid_t
+#undef mode_t
+#undef off_t
+#undef uid_t
+#undef gid_t
 
 /* If defined, use unions instead of ints.  A few systems (DEC Alpha)
    seem to require this, probably because something with the int
    definitions isn't right with 64-bit systems.  */
 #undef USE_UNION_TYPE
-
-/* If defined, use a minimal number of tagbits.  This allows usage of more
-   advanced versions of malloc (like the Doug Lea new GNU malloc) and larger
-   integers. */
-/* --use-minimal-tagbits  */
-#undef USE_MINIMAL_TAGBITS
-
-/* --use-indexed-lrecord-implementation  */
-#undef USE_INDEXED_LRECORD_IMPLEMENTATION
 
 /* The configuration script defines opsysfile to be the name of the
    s/...h file that describes the system type you are using.
@@ -554,14 +594,6 @@ extern "C" {
 #define SIGRETURN return
 #endif
 
-/* Allow the source to use standard types */
-#undef size_t
-#undef pid_t
-#undef mode_t
-#undef off_t
-#undef uid_t
-#undef gid_t
-
 /* Define DYNODUMP if it is necessary to properly dump on this system.
    Currently this is only Solaris 2.x, for x < 6. */
 #undef DYNODUMP
@@ -583,6 +615,9 @@ extern "C" {
 #undef HAVE_NAS_SOUND
 #undef NAS_NO_ERROR_JUMP
 
+/* Compile in support for ESD (Enlightened Sound Daemon)? */
+#undef HAVE_ESD_SOUND
+
 /* Compile in support for SunPro usage-tracking code? */
 #undef USAGE_TRACKING
 
@@ -603,12 +638,17 @@ extern "C" {
 #undef LWLIB_DIALOGS_MOTIF
 #undef LWLIB_DIALOGS_ATHENA
 #undef LWLIB_DIALOGS_ATHENA3D
+#undef LWLIB_TABS_LUCID
+#undef LWLIB_WIDGETS_MOTIF
+#undef LWLIB_WIDGETS_ATHENA
+#undef HAVE_ATHENA_3D
 
 /* Other things that can be disabled by configure. */
 #undef HAVE_MENUBARS
 #undef HAVE_SCROLLBARS
 #undef HAVE_DIALOGS
 #undef HAVE_TOOLBARS
+#undef HAVE_WIDGETS
 
 
 #if defined (HAVE_MENUBARS) || defined (HAVE_DIALOGS)
@@ -635,7 +675,7 @@ extern "C" {
 /* If you turn this flag on, it forces encapsulation in all
 circumstances; this can be used to make sure things compile OK
 on various systems. */
-#define DEBUG_ENCAPSULATION
+#undef DEBUG_ENCAPSULATION
 
 /* basic system calls */
 
@@ -792,18 +832,17 @@ on various systems. */
 /* Should movemail use hesiod for getting POP server host? */
 #undef HESIOD
 /* Determine type of mail locking. */
-/* Play preprocessor games so that configure options override s&m files */
-#undef REAL_MAIL_USE_LOCKF
-#undef REAL_MAIL_USE_FLOCK
-#undef MAIL_USE_LOCKF
-#undef MAIL_USE_FLOCK
-#ifdef REAL_MAIL_USE_FLOCK
-#define MAIL_USE_FLOCK
-#endif
-#ifdef REAL_MAIL_USE_LOCKF
-#define MAIL_USE_LOCKF
-#endif
+#undef MAIL_LOCK_LOCKF
+#undef MAIL_LOCK_FLOCK
+#undef MAIL_LOCK_DOT
+#undef MAIL_LOCK_LOCKING
+#undef MAIL_LOCK_MMDF
 
+#undef PREFIX_USER_DEFINED
+#undef EXEC_PREFIX_USER_DEFINED
+#undef MODULEDIR_USER_DEFINED
+#undef SITEMODULEDIR_USER_DEFINED
+#undef DOCDIR_USER_DEFINED
 #undef LISPDIR_USER_DEFINED
 #undef PACKAGE_PATH_USER_DEFINED
 #undef SITELISPDIR_USER_DEFINED
@@ -812,5 +851,7 @@ on various systems. */
 #undef LOCKDIR_USER_DEFINED
 #undef INFODIR_USER_DEFINED
 #undef INFOPATH_USER_DEFINED
+
+#undef PDUMP
 
 #endif /* _SRC_CONFIG_H_ */

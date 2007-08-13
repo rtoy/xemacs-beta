@@ -38,7 +38,7 @@ Boston, MA 02111-1307, USA.  */
  * YMMV. I build with NT4 SP3.
  *
  * Andy Piper <andy@xemacs.org> 8/1/98 
- * http://www.parallax.co.uk/~andyp */
+ * http://www.xemacs.freeserve.co.uk/ */
 
 /* cheesy way to determine cygwin version */
 #ifndef NOT_C_CODE
@@ -47,8 +47,12 @@ Boston, MA 02111-1307, USA.  */
 #include <cygwin/version.h>
 #else
 #ifdef SIGIO
+#define CYGWIN_VERSION_DLL_MAJOR 19
+#define CYGWIN_VERSION_DLL_MINOR 0
 #define CYGWIN_B19
 #else
+#define CYGWIN_VERSION_DLL_MAJOR 18
+#define CYGWIN_VERSION_DLL_MINOR 0
 #define BROKEN_CYGWIN
 #endif
 #endif
@@ -57,7 +61,7 @@ extern void cygwin32_win32_to_posix_path_list(const char*, char*);
 extern int cygwin32_win32_to_posix_path_list_buf_size(const char*);
 extern void cygwin32_posix_to_win32_path_list(const char*, char*);
 extern int cygwin32_posix_to_win32_path_list_buf_size(const char*);
-#ifndef CYGWIN_VERSION_DLL_MAJOR
+#if CYGWIN_VERSION_DLL_MAJOR < 20
 struct timeval;
 struct timezone;
 struct itimerval;
@@ -105,6 +109,38 @@ extern long random();
 #endif
 #endif
 
+#ifndef SPI_GETWHEELSCROLLLINES
+#define SPI_GETWHEELSCROLLLINES 104
+#endif
+#ifndef WHEEL_PAGESCROLL
+#define WHEEL_PAGESCROLL (UINT_MAX)
+#endif
+#ifndef WHEEL_DELTA
+#define WHEEL_DELTA 120
+#endif
+#ifndef WM_MOUSEWHEEL
+#define WM_MOUSEWHEEL 0x20A
+#endif
+#ifndef TCS_BOTTOM
+#define TCS_BOTTOM 0x0002
+#endif
+#ifndef TCS_VERTICAL
+#define TCS_VERTICAL 0x0080
+#endif
+#ifndef PHYSICALWIDTH
+#define PHYSICALWIDTH 110
+#endif
+#ifndef PHYSICALHEIGHT
+#define PHYSICALHEIGHT 111
+#endif
+#ifndef PHYSICALOFFSETX
+#define PHYSICALOFFSETX 112
+#endif
+#ifndef PHYSICALOFFSETY
+#define PHYSICALOFFSETY 113
+#endif
+
+
 #define PBS_SMOOTH              0x01
 
 #ifdef HAVE_MS_WINDOWS
@@ -128,7 +164,7 @@ extern long random();
 
 #ifdef CYGWIN_VERSION_DLL_MAJOR
 #if 0
-/* ### FIXME: although defining BROKEN_SIGIO is correct for proper ^G
+/* #### FIXME: although defining BROKEN_SIGIO is correct for proper ^G
    behavior, bugs in cygwin mean that xemacs locks up frequently if
    this is defined.  */
 #define BROKEN_SIGIO

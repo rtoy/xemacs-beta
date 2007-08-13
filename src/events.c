@@ -81,51 +81,51 @@ static void
 deinitialize_event (Lisp_Object ev)
 {
   int i;
-  struct Lisp_Event *event = XEVENT (ev);
+  Lisp_Event *event = XEVENT (ev);
 
-  for (i = 0; i < (int) (sizeof (struct Lisp_Event) / sizeof (int)); i++)
+  for (i = 0; i < (int) (sizeof (Lisp_Event) / sizeof (int)); i++)
     ((int *) event) [i] = 0xdeadbeef;
   event->event_type = dead_event;
   event->channel = Qnil;
-  set_lheader_implementation (&(event->lheader), lrecord_event);
+  set_lheader_implementation (&(event->lheader), &lrecord_event);
   XSET_EVENT_NEXT (ev, Qnil);
 }
 
 /* Set everything to zero or nil so that it's predictable. */
 void
-zero_event (struct Lisp_Event *e)
+zero_event (Lisp_Event *e)
 {
   xzero (*e);
-  set_lheader_implementation (&(e->lheader), lrecord_event);
+  set_lheader_implementation (&(e->lheader), &lrecord_event);
   e->event_type = empty_event;
   e->next = Qnil;
   e->channel = Qnil;
 }
 
 static Lisp_Object
-mark_event (Lisp_Object obj, void (*markobj) (Lisp_Object))
+mark_event (Lisp_Object obj)
 {
-  struct Lisp_Event *event = XEVENT (obj);
+  Lisp_Event *event = XEVENT (obj);
 
   switch (event->event_type)
     {
     case key_press_event:
-      markobj (event->event.key.keysym);
+      mark_object (event->event.key.keysym);
       break;
     case process_event:
-      markobj (event->event.process.process);
+      mark_object (event->event.process.process);
       break;
     case timeout_event:
-      markobj (event->event.timeout.function);
-      markobj (event->event.timeout.object);
+      mark_object (event->event.timeout.function);
+      mark_object (event->event.timeout.object);
       break;
     case eval_event:
     case misc_user_event:
-      markobj (event->event.eval.function);
-      markobj (event->event.eval.object);
+      mark_object (event->event.eval.function);
+      mark_object (event->event.eval.object);
       break;
     case magic_eval_event:
-      markobj (event->event.magic_eval.object);
+      mark_object (event->event.magic_eval.object);
       break;
     case button_press_event:
     case button_release_event:
@@ -137,12 +137,12 @@ mark_event (Lisp_Object obj, void (*markobj) (Lisp_Object))
     default:
       abort ();
     }
-  markobj (event->channel);
+  mark_object (event->channel);
   return event->next;
 }
 
 static void
-print_event_1 (CONST char *str, Lisp_Object obj, Lisp_Object printcharfun)
+print_event_1 (const char *str, Lisp_Object obj, Lisp_Object printcharfun)
 {
   char buf[255];
   write_c_string (str, printcharfun);
@@ -221,8 +221,8 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 static int
 event_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 {
-  struct Lisp_Event *e1 = XEVENT (obj1);
-  struct Lisp_Event *e2 = XEVENT (obj2);
+  Lisp_Event *e1 = XEVENT (obj1);
+  Lisp_Event *e2 = XEVENT (obj2);
 
   if (e1->event_type != e2->event_type) return 0;
   if (!EQ (e1->channel, e2->channel)) return 0;
@@ -293,8 +293,9 @@ event_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 	if (CONSOLE_MSWINDOWS_P (con))
 	  return (!memcmp(&e1->event.magic.underlying_mswindows_event,
 			  &e2->event.magic.underlying_mswindows_event,
-			  sizeof(union magic_data)));
+			  sizeof (union magic_data)));
 #endif
+	abort ();
 	return 1; /* not reached */
       }
 
@@ -307,7 +308,7 @@ event_equal (Lisp_Object obj1, Lisp_Object obj2, int depth)
 static unsigned long
 event_hash (Lisp_Object obj, int depth)
 {
-  struct Lisp_Event *e = XEVENT (obj);
+  Lisp_Event *e = XEVENT (obj);
   unsigned long hash;
 
   hash = HASH2 (e->event_type, LISP_HASH (e->channel));
@@ -360,6 +361,8 @@ event_hash (Lisp_Object obj, int depth)
 	if (CONSOLE_MSWINDOWS_P (con))
 	  return HASH2 (hash, e->event.magic.underlying_mswindows_event);
 #endif
+	abort ();
+	return 0;
       }
 
     case empty_event:
@@ -375,7 +378,7 @@ event_hash (Lisp_Object obj, int depth)
 
 DEFINE_BASIC_LRECORD_IMPLEMENTATION ("event", event,
 				     mark_event, print_event, 0, event_equal,
-				     event_hash, struct Lisp_Event);
+				     event_hash, 0, Lisp_Event);
 
 
 DEFUN ("make-event", Fmake_event, 0, 2, 0, /*
@@ -428,7 +431,7 @@ WARNING: the event object returned may be a reused one; see the function
 {
   Lisp_Object tail, keyword, value;
   Lisp_Object event = Qnil;
-  struct Lisp_Event *e;
+  Lisp_Event *e;
   EMACS_INT coord_x = 0, coord_y = 0;
   struct gcpro gcpro1;
 
@@ -763,7 +766,7 @@ DEFUN ("copy-event", Fcopy_event, 1, 2, 0, /*
 Make a copy of the given event object.
 If a second argument is given, the first event is copied into the second
 and the second is returned.  If the second argument is not supplied (or
-is nil) then a new event will be made as with `allocate-event.'  See also
+is nil) then a new event will be made as with `make-event'.  See also
 the function `deallocate-event'.
 */
        (event1, event2))
@@ -771,19 +774,26 @@ the function `deallocate-event'.
   CHECK_LIVE_EVENT (event1);
   if (NILP (event2))
     event2 = Fmake_event (Qnil, Qnil);
-  else CHECK_LIVE_EVENT (event2);
-  if (EQ (event1, event2))
-    return signal_simple_continuable_error_2
-      ("copy-event called with `eq' events", event1, event2);
+  else
+    {
+      CHECK_LIVE_EVENT (event2);
+      if (EQ (event1, event2))
+	return signal_simple_continuable_error_2
+	  ("copy-event called with `eq' events", event1, event2);
+    }
 
   assert (XEVENT_TYPE (event1) <= last_event_type);
   assert (XEVENT_TYPE (event2) <= last_event_type);
 
   {
-    Lisp_Object save_next = XEVENT_NEXT (event2);
+    Lisp_Event *ev2 = XEVENT (event2);
+    Lisp_Event *ev1 = XEVENT (event1);
 
-    *XEVENT (event2) = *XEVENT (event1);
-    XSET_EVENT_NEXT (event2, save_next);
+    ev2->event_type = ev1->event_type;
+    ev2->channel    = ev1->channel;
+    ev2->timestamp  = ev1->timestamp;
+    ev2->event      = ev1->event;
+
     return event2;
   }
 }
@@ -963,7 +973,7 @@ command_event_p (Lisp_Object event)
 
 
 void
-character_to_event (Emchar c, struct Lisp_Event *event, struct console *con,
+character_to_event (Emchar c, Lisp_Event *event, struct console *con,
 		    int use_console_meta_flag, int do_backspace_mapping)
 {
   Lisp_Object k = Qnil;
@@ -1032,17 +1042,18 @@ character_to_event (Emchar c, struct Lisp_Event *event, struct console *con,
   event->event.key.modifiers = m;
 }
 
-
 /* This variable controls what character name -> character code mapping
    we are using.  Window-system-specific code sets this to some symbol,
    and we use that symbol as the plist key to convert keysyms into 8-bit
    codes.  In this way one can have several character sets predefined and
    switch them by changing this.
+
+   #### This is utterly bogus and should be removed.
  */
 Lisp_Object Vcharacter_set_property;
 
 Emchar
-event_to_character (struct Lisp_Event *event,
+event_to_character (Lisp_Event *event,
 		    int allow_extra_modifiers,
 		    int allow_meta,
 		    int allow_non_ascii)
@@ -1052,7 +1063,7 @@ event_to_character (struct Lisp_Event *event,
 
   if (event->event_type != key_press_event)
     {
-      if (event->event_type == dead_event) abort ();
+      assert (event->event_type != dead_event);
       return -1;
     }
   if (!allow_extra_modifiers &&
@@ -1219,7 +1230,7 @@ key_sequence_to_event_chain (Lisp_Object seq)
 }
 
 void
-format_event_object (char *buf, struct Lisp_Event *event, int brief)
+format_event_object (char *buf, Lisp_Event *event, int brief)
 {
   int mouse_p = 0;
   int mod = 0;
@@ -1255,7 +1266,7 @@ format_event_object (char *buf, struct Lisp_Event *event, int brief)
       }
     case magic_event:
       {
-        CONST char *name = NULL;
+        const char *name = NULL;
 
 #ifdef HAVE_X_WINDOWS
 	{
@@ -1303,7 +1314,7 @@ format_event_object (char *buf, struct Lisp_Event *event, int brief)
     }
   else if (SYMBOLP (key))
     {
-      CONST char *str = 0;
+      const char *str = 0;
       if (brief)
 	{
 	  if      (EQ (key, QKlinefeed))  str = "LFD";
@@ -1322,7 +1333,7 @@ format_event_object (char *buf, struct Lisp_Event *event, int brief)
 	}
       else
 	{
-	  struct Lisp_String *name = XSYMBOL (key)->name;
+	  Lisp_String *name = XSYMBOL (key)->name;
 	  memcpy (buf, string_data (name), string_length (name) + 1);
 	  str += string_length (name);
 	}
@@ -1358,7 +1369,7 @@ The `next-event' field is changed by calling `set-next-event'.
 */
 	 (event))
 {
-  struct Lisp_Event *e;
+  Lisp_Event *e;
   CHECK_LIVE_EVENT (event);
 
   return XEVENT_NEXT (event);
@@ -2098,7 +2109,7 @@ This is in the form of a property list (alternating keyword/value pairs).
        (event))
 {
   Lisp_Object props = Qnil;
-  struct Lisp_Event *e;
+  Lisp_Event *e;
   struct gcpro gcpro1;
 
   CHECK_LIVE_EVENT (event);
@@ -2229,11 +2240,28 @@ syms_of_events (void)
   defsymbol (&Qbutton_release, "button-release");
   defsymbol (&Qmisc_user, "misc-user");
   defsymbol (&Qascii_character, "ascii-character");
+
+  defsymbol (&QKbackspace, "backspace");
+  defsymbol (&QKtab, "tab");
+  defsymbol (&QKlinefeed, "linefeed");
+  defsymbol (&QKreturn, "return");
+  defsymbol (&QKescape, "escape");
+  defsymbol (&QKspace, "space");
+  defsymbol (&QKdelete, "delete");
+}
+
+
+void
+reinit_vars_of_events (void)
+{
+  Vevent_resource = Qnil;
 }
 
 void
 vars_of_events (void)
 {
+  reinit_vars_of_events ();
+
   DEFVAR_LISP ("character-set-property", &Vcharacter_set_property /*
 A symbol used to look up the 8-bit character of a keysym.
 To convert a keysym symbol to an 8-bit code, as when that key is
@@ -2243,22 +2271,4 @@ system-specific code will set up appropriate properties and set this
 variable.
 */ );
   Vcharacter_set_property = Qnil;
-
-  Vevent_resource = Qnil;
-
-  QKbackspace = KEYSYM ("backspace");
-  QKtab       = KEYSYM ("tab");
-  QKlinefeed  = KEYSYM ("linefeed");
-  QKreturn    = KEYSYM ("return");
-  QKescape    = KEYSYM ("escape");
-  QKspace     = KEYSYM ("space");
-  QKdelete    = KEYSYM ("delete");
-
-  staticpro (&QKbackspace);
-  staticpro (&QKtab);
-  staticpro (&QKlinefeed);
-  staticpro (&QKreturn);
-  staticpro (&QKescape);
-  staticpro (&QKspace);
-  staticpro (&QKdelete);
 }

@@ -1,7 +1,7 @@
 ;; Copyright (C) 1998 Free Software Foundation, Inc.
 
-;; Author: Hrvoje Niksic <hniksic@srce.hr>
-;; Maintainer: Hrvoje Niksic <hniksic@srce.hr>
+;; Author: Hrvoje Niksic <hniksic@xemacs.org>
+;; Maintainer: Hrvoje Niksic <hniksic@xemacs.org>
 ;; Created: 1998
 ;; Keywords: tests
 
@@ -22,7 +22,7 @@
 ;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ;; 02111-1307, USA.
 
-;;; Synched up with: not in FSF Emacs.
+;;; Synched up with: Not in FSF.
 
 ;;; Commentary:
 

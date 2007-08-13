@@ -29,8 +29,7 @@ my ($myName, $srcdir, %exists, %uses, %generated_header);
 Usage: $myName
 
 Generates Makefile dependencies for the XEmacs src directory.
-The dependencies are written to stdout.
-";
+The dependencies are written to stdout.\n";
 
 die $usage if @ARGV;
 
@@ -42,7 +41,7 @@ opendir SRCDIR, "." or die "$srcdir: $!";
 for (grep (/\.[ch]$/, readdir (SRCDIR))) { $exists{$_} = 1; }
 closedir SRCDIR;
 
-for (qw (config.h puresize-adjust.h sheap-adjust.h paths.h Emacs.ad.h)) {
+for (qw (config.h sheap-adjust.h paths.h Emacs.ad.h)) {
   $generated_header{$_} = 1;
 }
 

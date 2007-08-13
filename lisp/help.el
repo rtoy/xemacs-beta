@@ -305,8 +305,8 @@ otherwise it is killed."
   "Return the command invoked by KEY.
 Like `key-binding', but handles menu events and toolbar presses correctly.
 KEY is any value returned by `next-command-event'.
-MENU-FLAG is a symbol that should be set to T if KEY is a menu event,
- or NIL otherwise"
+MENU-FLAG is a symbol that should be set to t if KEY is a menu event,
+ or nil otherwise"
   (let (defn)
     (and menu-flag (set menu-flag nil))
     ;; If the key typed was really a menu selection, grab the form out
@@ -461,7 +461,9 @@ You should never set this directory, only let-bind it.")
   (if (and (integerp help-max-help-buffers)
            (> help-max-help-buffers 0)
            (stringp name))
-      (format "*%s: %s*" help-buffer-prefix-string name)
+      (if help-buffer-prefix-string
+	  (format "*%s: %s*" help-buffer-prefix-string name)
+	(format "*%s*" name))
     (format "*%s*" help-buffer-prefix-string)))
 
 ;; Use this function for displaying help when C-h something is pressed
@@ -655,9 +657,20 @@ then only the mouse bindings are displayed."
             (gettext "key             binding\n---             -------\n")))
         (buffer (current-buffer))
         (minor minor-mode-map-alist)
+	(extent-maps (mapcar-extents
+		      'extent-keymap
+		      nil (current-buffer) (point) (point) nil 'keymap))
         (local (current-local-map))
         (shadow '()))
     (set-buffer standard-output)
+    (while extent-maps
+      (insert "Bindings for Text Region:\n"
+	      heading)
+      (describe-bindings-internal
+       (car extent-maps) nil shadow prefix mouse-only-p)
+       (insert "\n")
+       (setq shadow (cons (car extent-maps) shadow)
+	     extent-maps (cdr extent-maps)))
     (while minor
       (let ((sym (car (car minor)))
             (map (cdr (car minor))))
@@ -935,8 +948,9 @@ When run interactively, it defaults to any function found by
                         (format (gettext "Describe function (default %s): ")
 				fn)
                         (gettext "Describe function: "))
-                    obarray 'fboundp t nil 'function-history))))
-      (list (if (equal val "") fn (intern val)))))
+                    obarray 'fboundp t nil 'function-history
+		    (symbol-name fn)))))
+      (list (intern val))))
   (with-displaying-help-buffer
    (lambda ()
      (describe-function-1 function)
@@ -1004,24 +1018,27 @@ For example:
 
 This function is used by `describe-function-1' to list function
 arguments in the standard Lisp style."
-  (let* ((fndef (indirect-function function))
+  (let* ((fnc (indirect-function function))
+	 (fndef (if (eq (car-safe fnc) 'macro)
+		    (cdr fnc)
+		  fnc))
 	 (arglist
-	 (cond ((compiled-function-p fndef)
-		(compiled-function-arglist fndef))
-	       ((eq (car-safe fndef) 'lambda)
-		(nth 1 fndef))
-	       ((subrp fndef)
-		(let* ((doc (documentation function))
-		       (args (and (string-match
-				   "[\n\t ]*\narguments: ?(\\(.*\\))\n?\\'"
-				   doc)
-				  (match-string 1 doc))))
-		  ;; If there are no arguments documented for the
-		  ;; subr, rather don't print anything.
-		  (cond ((null args) t)
-			((equal args "") nil)
-			(args))))
-	       (t t))))
+	  (cond ((compiled-function-p fndef)
+		 (compiled-function-arglist fndef))
+		((eq (car-safe fndef) 'lambda)
+		 (nth 1 fndef))
+		((subrp fndef)
+		 (let* ((doc (documentation function))
+			(args (and (string-match
+				    "[\n\t ]*\narguments: ?(\\(.*\\))\n?\\'"
+				    doc)
+				   (match-string 1 doc))))
+		   ;; If there are no arguments documented for the
+		   ;; subr, rather don't print anything.
+		   (cond ((null args) t)
+			 ((equal args "") nil)
+			 (args))))
+		(t t))))
     (cond ((listp arglist)
 	   (prin1-to-string
 	    (cons function (mapcar (lambda (arg)
@@ -1224,8 +1241,9 @@ part of the documentation of internal subroutines."
                    (if v
                        (format "Describe variable (default %s): " v)
                        (gettext "Describe variable: "))
-                   obarray 'boundp t nil 'variable-history))))
-     (list (if (equal val "") v (intern val)))))
+                   obarray 'boundp t nil 'variable-history
+		   (symbol-name v)))))
+     (list (intern val))))
   (with-displaying-help-buffer
    (lambda ()
      (let ((origvar variable)
@@ -1408,7 +1426,7 @@ after the listing is made.)"
 		(if cmd (princ " ")))))
 	  (terpri))))))
 
-;; Stop gap for 21.0 untill we do help-char etc properly.
+;; Stop gap for 21.0 until we do help-char etc properly.
 (defun help-keymap-with-help-key (keymap form)
   "Return a copy of KEYMAP with an help-key binding according to help-char
  invoking FORM like help-form.  An existing binding is not overridden.

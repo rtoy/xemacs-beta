@@ -38,9 +38,10 @@ Boston, MA 02111-1307, USA.  */
 #include "window.h"
 #include "elhash.h"
 #include "commands.h"
+#include "gutter.h"
 
 Lisp_Object Qwindowp, Qwindow_live_p, Qwindow_configurationp;
-Lisp_Object Qscroll_up, Qscroll_down, Qdisplay_buffer;
+Lisp_Object Qdisplay_buffer;
 
 #ifdef MEMORY_USAGE_STATS
 Lisp_Object Qface_cache, Qglyph_cache, Qline_start_cache, Qother_redisplay;
@@ -84,6 +85,9 @@ Lisp_Object Vvertical_divider_line_width;
 /* Spacing between outer egde of divider border and window edge */
 Lisp_Object Vvertical_divider_spacing;
 
+/* How much to scroll by per-line. */
+Lisp_Object Vwindow_pixel_scroll_increment;
+
 /* Scroll if point lands on the bottom line and that line is partially
    clipped. */
 int scroll_on_clipped_lines;
@@ -117,7 +121,7 @@ Lisp_Object Qtemp_buffer_show_hook;
 int next_screen_context_lines;
 
 /* List of freed window configurations with 1 - 10 windows. */
-Lisp_Object Vwindow_configuration_free_list[10];
+static Lisp_Object Vwindow_configuration_free_list[10];
 
 #define SET_LAST_MODIFIED(w, cache_too)		\
 do {						\
@@ -137,38 +141,38 @@ do {						\
 
 
 #define MARK_DISP_VARIABLE(field)		\
-  markobj (window->field[CURRENT_DISP]);	\
-  markobj (window->field[DESIRED_DISP]);	\
-  markobj (window->field[CMOTION_DISP]);
+  mark_object (window->field[CURRENT_DISP]);	\
+  mark_object (window->field[DESIRED_DISP]);	\
+  mark_object (window->field[CMOTION_DISP]);
 
 static Lisp_Object
-mark_window (Lisp_Object obj, void (*markobj) (Lisp_Object))
+mark_window (Lisp_Object obj)
 {
   struct window *window = XWINDOW (obj);
-  markobj (window->frame);
-  markobj (window->mini_p);
-  markobj (window->next);
-  markobj (window->prev);
-  markobj (window->hchild);
-  markobj (window->vchild);
-  markobj (window->parent);
-  markobj (window->buffer);
+  mark_object (window->frame);
+  mark_object (window->mini_p);
+  mark_object (window->next);
+  mark_object (window->prev);
+  mark_object (window->hchild);
+  mark_object (window->vchild);
+  mark_object (window->parent);
+  mark_object (window->buffer);
   MARK_DISP_VARIABLE (start);
   MARK_DISP_VARIABLE (pointm);
-  markobj (window->sb_point);	/* #### move to scrollbar.c? */
-  markobj (window->use_time);
+  mark_object (window->sb_point);	/* #### move to scrollbar.c? */
+  mark_object (window->use_time);
   MARK_DISP_VARIABLE (last_modified);
   MARK_DISP_VARIABLE (last_point);
   MARK_DISP_VARIABLE (last_start);
   MARK_DISP_VARIABLE (last_facechange);
-  markobj (window->line_cache_last_updated);
-  markobj (window->redisplay_end_trigger);
-  markobj (window->subwindow_instance_cache);
+  mark_object (window->line_cache_last_updated);
+  mark_object (window->redisplay_end_trigger);
+  mark_object (window->subwindow_instance_cache);
 
-  mark_face_cachels (window->face_cachels, markobj);
-  mark_glyph_cachels (window->glyph_cachels, markobj);
+  mark_face_cachels (window->face_cachels);
+  mark_glyph_cachels (window->glyph_cachels);
 
-#define WINDOW_SLOT(slot, compare) ((void) (markobj (window->slot)))
+#define WINDOW_SLOT(slot, compare) mark_object (window->slot)
 #include "winslots.h"
 
   return Qnil;
@@ -231,7 +235,7 @@ finalize_window (void *header, int for_disksave)
 
 DEFINE_LRECORD_IMPLEMENTATION ("window", window,
                                mark_window, print_window, finalize_window,
-			       0, 0, struct window);
+			       0, 0, 0, struct window);
 
 
 #define INIT_DISP_VARIABLE(field, initialization)	\
@@ -252,7 +256,7 @@ Lisp_Object
 allocate_window (void)
 {
   Lisp_Object val;
-  struct window *p = alloc_lcrecord_type (struct window, lrecord_window);
+  struct window *p = alloc_lcrecord_type (struct window, &lrecord_window);
 
   zero_lcrecord (p);
   XSETWINDOW (val, p);
@@ -641,7 +645,7 @@ window_full_width_p (struct window *w)
   return window_is_leftmost (w) && window_is_rightmost (w);
 }
 
-static int
+int
 window_is_highest (struct window *w)
 {
   Lisp_Object parent, current_ancestor, window;
@@ -669,7 +673,7 @@ window_is_highest (struct window *w)
     return 0;
 }
 
-static int
+int
 window_is_lowest (struct window *w)
 {
   Lisp_Object parent, current_ancestor, window;
@@ -705,6 +709,11 @@ window_full_height_p (struct window *w)
 int
 window_truncation_on (struct window *w)
 {
+    /* Minibuffer windows are never truncated.
+       #### is this the right way ? */
+  if (MINI_WINDOW_P (w))
+    return 0;
+
   /* Horizontally scrolled windows are truncated. */
   if (w->hscroll)
     return 1;
@@ -722,6 +731,17 @@ window_truncation_on (struct window *w)
 
   return 0;
 }
+
+DEFUN ("window-truncated-p", Fwindow_truncated_p, 0, 1, 0, /*
+Returns non-nil if text in the window is truncated.
+*/
+       (window))
+{
+  struct window *w = decode_window (window);
+
+  return window_truncation_on (w) ? Qt : Qnil;
+}
+
 
 static int
 have_undivided_common_edge (struct window *w_right, void *closure)
@@ -972,32 +992,6 @@ window_right_margin_width (struct window *w)
   return margin_width_internal (w, 0);
 }
 
-static int
-window_top_toolbar_height (struct window *w)
-{
-  /* #### implement this shit. */
-  return 0;
-}
-
-/* #### Currently used in scrollbar.c.  Does it actually need to be? */
-int
-window_bottom_toolbar_height (struct window *w)
-{
-  return 0;
-}
-
-static int
-window_left_toolbar_width (struct window *w)
-{
-  return 0;
-}
-
-static int
-window_right_toolbar_width (struct window *w)
-{
-  return 0;
-}
-
 /*****************************************************************************
  Window Gutters
 
@@ -1019,46 +1013,44 @@ window_right_toolbar_width (struct window *w)
 int
 window_top_gutter_height (struct window *w)
 {
-  int toolbar_height = window_top_toolbar_height (w);
+  int gutter = WINDOW_REAL_TOP_GUTTER_BOUNDS (w);
 
   if (!NILP (w->hchild) || !NILP (w->vchild))
     return 0;
 
 #ifdef HAVE_SCROLLBARS
   if (!NILP (w->scrollbar_on_top_p))
-    return window_scrollbar_height (w) + toolbar_height;
+    return window_scrollbar_height (w) + gutter;
   else
 #endif
-    return toolbar_height;
+    return gutter;
 }
 
 int
 window_bottom_gutter_height (struct window *w)
 {
-  int other_height;
+  int gutter = WINDOW_REAL_BOTTOM_GUTTER_BOUNDS (w);
 
   if (!NILP (w->hchild) || !NILP (w->vchild))
     return 0;
-  else
-    other_height =
-      window_modeline_height (w) + window_bottom_toolbar_height (w);
+
+  gutter += window_modeline_height (w);
 
 #ifdef HAVE_SCROLLBARS
   if (NILP (w->scrollbar_on_top_p))
-    return window_scrollbar_height (w) + other_height;
+    return window_scrollbar_height (w) + gutter;
   else
 #endif
-    return other_height;
+    return gutter;
 }
 
 int
 window_left_gutter_width (struct window *w, int modeline)
 {
-  int gutter = window_left_toolbar_width (w);
+  int gutter = WINDOW_REAL_LEFT_GUTTER_BOUNDS (w);
 
   if (!NILP (w->hchild) || !NILP (w->vchild))
     return 0;
-
 
 #ifdef HAVE_SCROLLBARS
   if (!modeline && !NILP (w->scrollbar_on_left_p))
@@ -1071,7 +1063,7 @@ window_left_gutter_width (struct window *w, int modeline)
 int
 window_right_gutter_width (struct window *w, int modeline)
 {
-  int gutter = window_right_toolbar_width (w);
+  int gutter = WINDOW_REAL_RIGHT_GUTTER_BOUNDS (w);
 
   if (!NILP (w->hchild) || !NILP (w->vchild))
     return 0;
@@ -1123,6 +1115,26 @@ be used.  Otherwise, the selected frame is used.
   }
 }
 
+DEFUN ("last-nonminibuf-window", Flast_nonminibuf_window, 0, 1, 0, /*
+Return the last selected window that is not a minibuffer window.
+If the optional argument CON-DEV-OR-FRAME is specified and is a frame,
+return the last non-minibuffer window used by that frame.  If
+CON-DEV-OR-FRAME is a device, then the selected frame on that device
+will be used.  If CON-DEV-OR-FRAME is a console, the selected frame on
+that console's selected device will be used.  Otherwise, the selected
+frame is used.
+*/
+       (con_dev_or_frame))
+{
+  if (NILP (con_dev_or_frame) && NILP (Fselected_device (Qnil)))
+    return Qnil; /* happens at startup */
+
+  {
+    struct frame *f = decode_frame_or_selected (con_dev_or_frame);
+    return FRAME_LAST_NONMINIBUF_WINDOW (f);
+  }
+}
+
 DEFUN ("minibuffer-window", Fminibuffer_window, 0, 1, 0, /*
 Return the window used now for minibuffers.
 If the optional argument CON-DEV-OR-FRAME is specified and is a frame, return
@@ -1136,7 +1148,7 @@ be used.  Otherwise, the selected frame is used.
   return FRAME_MINIBUF_WINDOW (decode_frame_or_selected (con_dev_or_frame));
 }
 
-DEFUN ("window-minibuffer-p", Fwindow_minibuffer_p, 1, 1, 0, /*
+DEFUN ("window-minibuffer-p", Fwindow_minibuffer_p, 0, 1, 0, /*
 Return non-nil if WINDOW is a minibuffer window.
 */
        (window))
@@ -1345,7 +1357,7 @@ is non-nil, do not include space occupied by clipped lines.
   if (NILP (window))
     window = Fselected_window (Qnil);
 
-  CHECK_WINDOW (window);
+  CHECK_LIVE_WINDOW (window);
   w = XWINDOW (window);
 
   start  = marker_position (w->start[CURRENT_DISP]);
@@ -1425,22 +1437,23 @@ Return the number of columns by which WINDOW is scrolled from left margin.
   return make_int (decode_window (window)->hscroll);
 }
 
-#ifdef MODELINE_IS_SCROLLABLE
 DEFUN ("modeline-hscroll", Fmodeline_hscroll, 0, 1, 0, /*
-Return the number of columns by which WINDOW's modeline is scrolled from
-left margin. If the window has no modeline, return nil.
+Return the horizontal scrolling ammount of WINDOW's modeline.
+If the window has no modeline, return nil.
 */
        (window))
 {
   struct window *w = decode_window (window);
 
-  return (WINDOW_HAS_MODELINE_P (w)) ? make_int (w->modeline_hscroll) : Qnil;
+  return (WINDOW_HAS_MODELINE_P (w)) ? make_int ((int) w->modeline_hscroll) :
+    Qnil;
 }
 
 DEFUN ("set-modeline-hscroll", Fset_modeline_hscroll, 2, 2, 0, /*
-Set number of columns WINDOW's modeline is scrolled from left margin to NCOL.
-NCOL should be zero or positive. If NCOL is negative, it will be forced to 0.
-If the window has no modeline, do nothing and return nil.
+Set the horizontal scrolling ammount of WINDOW's modeline to NCOL.
+If NCOL is negative, it will silently be forced to 0.
+If the window has no modeline, return nil. Otherwise, return the actual
+value that was set.
 */
        (window, ncol))
 {
@@ -1448,18 +1461,20 @@ If the window has no modeline, do nothing and return nil.
 
   if (WINDOW_HAS_MODELINE_P (w))
     {
-      int ncols;
+      Charcount ncols;
+
       CHECK_INT (ncol);
-      ncols = XINT (ncol);
-      if (ncols < 0) ncols = 0;
-      if (w->modeline_hscroll != ncols)
-	MARK_MODELINE_CHANGED;
-      w->modeline_hscroll = ncols;
-      return ncol;
+      ncols = (XINT (ncol) <= 0) ? 0 : (Charcount) XINT (ncol);
+      if (ncols != w->modeline_hscroll)
+	{
+	  MARK_MODELINE_CHANGED;
+	  w->modeline_hscroll = ncols;
+	}
+      return make_int ((int) ncols);
     }
+
   return Qnil;
 }
-#endif /* MODELINE_IS_SCROLLABLE */
 
 DEFUN ("set-window-hscroll", Fset_window_hscroll, 2, 2, 0, /*
 Set number of columns WINDOW is scrolled from left margin to NCOL.
@@ -1606,6 +1621,28 @@ slower with this flag set.
       Bufpos startp = marker_position (w->start[CURRENT_DISP]);
       return make_int (end_of_last_line (w, startp));
     }
+}
+
+DEFUN ("window-last-line-visible-height", Fwindow_last_line_visible_height, 0, 1, 0, /*
+Return pixel height of visible part of last window line if it is clipped.
+If the last line is not clipped, return nil.
+*/
+       (window))
+{
+  struct window *w = decode_window (window);
+  display_line_dynarr *dla = window_display_lines (w, CURRENT_DISP);
+  int num_lines = Dynarr_length (dla);
+  struct display_line *dl;
+
+  /* No lines - no clipped lines */
+  if (num_lines == 0 || (num_lines == 1 && Dynarr_atp (dla, 0)->modeline))
+    return Qnil;
+
+  dl = Dynarr_atp (dla, num_lines - 1);
+  if (dl->clip == 0)
+    return Qnil;
+
+  return make_int (dl->ascent + dl->descent - dl->clip);
 }
 
 DEFUN ("set-window-point", Fset_window_point, 2, 2, 0, /*
@@ -1853,6 +1890,12 @@ will automatically call `save-buffers-kill-emacs'.)
   par = XWINDOW (parent);
 
   MARK_FRAME_WINDOWS_STRUCTURE_CHANGED (f);
+  /* It's quite likely that deleting a window will result in
+     subwindows needing to be deleted also (since they are cached
+     per-window). So we mark them as changed, so that the cachels will
+     get reset by redisplay and thus deleted subwindows can get
+     GC'd. */
+  MARK_FRAME_SUBWINDOWS_CHANGED (f);
 
   /* Are we trying to delete any frame's selected window?
      Note that we could be dealing with a non-leaf window
@@ -2584,7 +2627,7 @@ window_loop (enum window_loop type,
 			    new_buffer = Fother_buffer (obj, Qnil, Qnil);
 			    if (NILP (new_buffer))
 			      new_buffer = Fget_buffer_create (QSscratch);
-			    Fset_window_buffer (w, new_buffer);
+			    Fset_window_buffer (w, new_buffer, Qnil);
 			    if (EQ (w, Fselected_window (Qnil)))
 			      Fset_buffer (p->buffer);
 			  }
@@ -2656,7 +2699,7 @@ window_loop (enum window_loop type,
 			  /* Otherwise show a different buffer in the
                              window.  */
 			  p->dedicated = Qnil;
-			  Fset_window_buffer (w, another_buffer);
+			  Fset_window_buffer (w, another_buffer, Qnil);
 			  if (EQ (w, Fselected_window (Qnil)))
 			    Fset_buffer (p->buffer);
 			}
@@ -2957,17 +3000,41 @@ check_min_window_sizes (void)
     window_min_height = MIN_SAFE_WINDOW_HEIGHT;
 }
 
+static int
+frame_min_height (struct frame *frame)
+{
+  /* For height, we have to see whether the frame has a minibuffer, and
+     whether it wants a modeline.  */
+  return (FRAME_MINIBUF_ONLY_P (frame) ? MIN_SAFE_WINDOW_HEIGHT - 1
+	  : (! FRAME_HAS_MINIBUF_P (frame)) ? MIN_SAFE_WINDOW_HEIGHT
+	  : 2 * MIN_SAFE_WINDOW_HEIGHT - 1);
+}
+
+/* Return non-zero if both frame sizes are less than or equal to
+   minimal allowed values. ROWS and COLS are in characters */
+int
+frame_size_valid_p (struct frame *frame, int rows, int cols)
+{
+  return (rows >= frame_min_height (frame)
+	  && cols >= MIN_SAFE_WINDOW_WIDTH);
+}
+
+/* Return non-zero if both frame sizes are less than or equal to
+   minimal allowed values. WIDTH and HEIGHT are in pixels */
+int
+frame_pixsize_valid_p (struct frame *frame, int width, int height)
+{
+  int rows, cols;
+  pixel_to_real_char_size (frame, width, height, &cols, &rows);
+  return frame_size_valid_p (frame, rows, cols);
+}
+
 /* If *ROWS or *COLS are too small a size for FRAME, set them to the
    minimum allowable size.  */
 void
 check_frame_size (struct frame *frame, int *rows, int *cols)
 {
-  /* For height, we have to see whether the frame has a minibuffer, and
-     whether it wants a modeline.  */
-  int min_height =
-    (FRAME_MINIBUF_ONLY_P (frame) ? MIN_SAFE_WINDOW_HEIGHT - 1
-     : (! FRAME_HAS_MINIBUF_P (frame)) ? MIN_SAFE_WINDOW_HEIGHT
-     : 2 * MIN_SAFE_WINDOW_HEIGHT - 1);
+  int min_height = frame_min_height (frame);
 
   if (*rows < min_height)
     *rows = min_height;
@@ -3117,11 +3184,14 @@ set_window_pixwidth (Lisp_Object window, int new_pixwidth, int nodelete)
 
 static int window_select_count;
 
-DEFUN ("set-window-buffer", Fset_window_buffer, 2, 2, 0, /*
+DEFUN ("set-window-buffer", Fset_window_buffer, 2, 3, 0, /*
 Make WINDOW display BUFFER as its contents.
 BUFFER can be a buffer or buffer name.
+
+With non-nil optional argument `norecord', do not modify the
+global or per-frame buffer ordering.
 */
-       (window, buffer))
+       (window, buffer, norecord))
 {
   Lisp_Object tem;
   struct window *w = decode_window (window);
@@ -3180,6 +3250,9 @@ BUFFER can be a buffer or buffer name.
   recompute_all_cached_specifiers_in_window (w);
   if (EQ (window, Fselected_window (Qnil)))
     {
+      if (NILP (norecord))
+	Frecord_buffer (buffer);
+
       Fset_buffer (buffer);
     }
   return Qnil;
@@ -3319,7 +3392,7 @@ make_dummy_parent (Lisp_Object window)
 {
   Lisp_Object new;
   struct window *o = XWINDOW (window);
-  struct window *p = alloc_lcrecord_type (struct window, lrecord_window);
+  struct window *p = alloc_lcrecord_type (struct window, &lrecord_window);
 
   XSETWINDOW (new, p);
   copy_lcrecord (p, o);
@@ -3366,7 +3439,7 @@ and put SIZE columns in the first of the pair.
   if (NILP (window))
     window = Fselected_window (Qnil);
   else
-    CHECK_WINDOW (window);
+    CHECK_LIVE_WINDOW (window);
 
   o = XWINDOW (window);
   f = XFRAME (WINDOW_FRAME (o));
@@ -3482,7 +3555,7 @@ and put SIZE columns in the first of the pair.
   /* do this last (after the window is completely initialized and
      the mirror-dirty flag is set) so that specifier recomputation
      caused as a result of this will work properly and not abort. */
-  Fset_window_buffer (new, o->buffer);
+  Fset_window_buffer (new, o->buffer, Qt);
   return new;
 }
 
@@ -3926,6 +3999,8 @@ change_window_height (struct window *win, int delta, int widthflag,
   SET_LAST_MODIFIED (w, 0);
   SET_LAST_FACECHANGE (w);
   MARK_FRAME_WINDOWS_STRUCTURE_CHANGED (f);
+  /* overkill maybe, but better to be correct */
+  MARK_FRAME_GUTTERS_CHANGED (f);
 }
 #undef MINSIZE
 #undef CURBEG
@@ -3935,7 +4010,8 @@ change_window_height (struct window *win, int delta, int widthflag,
 
 
 
-/* Scroll contents of window WINDOW up N lines.  */
+/* Scroll contents of window WINDOW up N lines. If N < (top line height /
+   average line height) then we just adjust the top clip.  */
 void
 window_scroll (Lisp_Object window, Lisp_Object n, int direction,
 	       Error_behavior errb)
@@ -3945,6 +4021,9 @@ window_scroll (Lisp_Object window, Lisp_Object n, int direction,
   int selected = EQ (window, Fselected_window (Qnil));
   int value = 0;
   Lisp_Object point, tem;
+  display_line_dynarr *dla;
+  int fheight, fwidth, modeline = 0;
+  struct display_line* dl;
 
   if (selected)
     point = make_int (BUF_PT (b));
@@ -3974,6 +4053,7 @@ window_scroll (Lisp_Object window, Lisp_Object n, int direction,
                         window, Qnil);
       Fset_marker (w->start[CURRENT_DISP], point, w->buffer);
       w->start_at_line_beg = beginning_of_line_p (b, XINT (point));
+      WINDOW_TEXT_TOP_CLIP (w) = 0;
       MARK_WINDOWS_CHANGED (w);
     }
 
@@ -4017,82 +4097,164 @@ window_scroll (Lisp_Object window, Lisp_Object n, int direction,
     {
       return;
     }
-  else if (value > 0)
+
+  /* Determine parameters to test for partial line scrolling with. */
+  dla = window_display_lines (w, CURRENT_DISP);
+
+  if (INTP (Vwindow_pixel_scroll_increment))
+    fheight = XINT (Vwindow_pixel_scroll_increment);
+  else if (!NILP (Vwindow_pixel_scroll_increment))
+    default_face_height_and_width (window, &fheight, &fwidth);
+
+  if (Dynarr_length (dla) >= 1)
+    modeline = Dynarr_atp (dla, 0)->modeline;
+
+  dl = Dynarr_atp (dla, modeline);
+
+  if (value > 0)
     {
-      int vtarget;
-      Bufpos startp, old_start;
-
-      old_start = marker_position (w->start[CURRENT_DISP]);
-      startp = vmotion (w, old_start, value, &vtarget);
-
-      if (vtarget < value &&
-	  (w->window_end_pos[CURRENT_DISP] == -1
-	   || (BUF_Z (b) - w->window_end_pos[CURRENT_DISP] > BUF_ZV (b))))
+      /* Go for partial display line scrolling. This just means bumping
+	 the clip by a reasonable amount and redisplaying, everything else
+	 remains unchanged. */
+      if (!NILP (Vwindow_pixel_scroll_increment)
+	  &&
+	  Dynarr_length (dla) >= (1 + modeline)
+	  &&
+	  (dl->ascent - dl->top_clip) - fheight * value > 0)
 	{
-	  maybe_signal_error (Qend_of_buffer, Qnil, Qwindow, errb);
-	  return;
+	  WINDOW_TEXT_TOP_CLIP (w) += value * fheight;
+	  MARK_WINDOWS_CHANGED (w);
 	}
       else
 	{
-	  set_marker_restricted (w->start[CURRENT_DISP], make_int (startp),
-				 w->buffer);
-	  w->force_start = 1;
-	  w->start_at_line_beg = beginning_of_line_p (b, startp);
-	  MARK_WINDOWS_CHANGED (w);
+	  int vtarget;
+	  Bufpos startp, old_start;
 
-	  if (!point_would_be_visible (w, startp, XINT (point)))
+	  if (WINDOW_TEXT_TOP_CLIP (w))
 	    {
-	      if (selected)
-		BUF_SET_PT (b, startp);
-	      else
-		set_marker_restricted (w->pointm[CURRENT_DISP],
-				       make_int (startp),
-				       w->buffer);
+	      WINDOW_TEXT_TOP_CLIP (w) = 0;
+	      MARK_WINDOWS_CHANGED (w);
+	    }
+
+	  old_start = marker_position (w->start[CURRENT_DISP]);
+	  startp = vmotion (w, old_start, value, &vtarget);
+
+	  if (vtarget < value &&
+	      (w->window_end_pos[CURRENT_DISP] == -1
+	       || (BUF_Z (b) - w->window_end_pos[CURRENT_DISP] > BUF_ZV (b))))
+	    {
+	      maybe_signal_error (Qend_of_buffer, Qnil, Qwindow, errb);
+	      return;
+	    }
+	  else
+	    {
+	      set_marker_restricted (w->start[CURRENT_DISP], make_int (startp),
+				     w->buffer);
+	      w->force_start = 1;
+	      w->start_at_line_beg = beginning_of_line_p (b, startp);
+	      MARK_WINDOWS_CHANGED (w);
+
+	      if (!point_would_be_visible (w, startp, XINT (point)))
+		{
+		  if (selected)
+		    BUF_SET_PT (b, startp);
+		  else
+		    set_marker_restricted (w->pointm[CURRENT_DISP],
+					   make_int (startp),
+					   w->buffer);
+		}
 	    }
 	}
     }
   else if (value < 0)
     {
-      int vtarget;
-      Bufpos startp, old_start;
-
-      old_start = marker_position (w->start[CURRENT_DISP]);
-      startp = vmotion (w, old_start, value, &vtarget);
-
-      if (vtarget > value
-	  && marker_position (w->start[CURRENT_DISP]) == BUF_BEGV (b))
+      /* Go for partial display line scrolling. This just means bumping
+	 the clip by a reasonable amount and redisplaying, everything else
+	 remains unchanged. */
+      if (!NILP (Vwindow_pixel_scroll_increment)
+	  &&
+	  Dynarr_length (dla) >= (1 + modeline)
+	  &&
+	  (dl->ascent - dl->top_clip) - fheight * value <
+	  (dl->ascent + dl->descent - dl->clip)
+	  &&
+	  WINDOW_TEXT_TOP_CLIP (w) + value * fheight > 0)
 	{
-	  maybe_signal_error (Qbeginning_of_buffer, Qnil, Qwindow, errb);
-	  return;
+	  WINDOW_TEXT_TOP_CLIP (w) += value * fheight;
+	  MARK_WINDOWS_CHANGED (w);
 	}
       else
 	{
-	  set_marker_restricted (w->start[CURRENT_DISP], make_int (startp),
-				 w->buffer);
-	  w->force_start = 1;
-	  w->start_at_line_beg = beginning_of_line_p (b, startp);
-	  MARK_WINDOWS_CHANGED (w);
+	  int vtarget;
+	  Bufpos startp, old_start;
 
-	  if (!point_would_be_visible (w, startp, XINT (point)))
+	  if (WINDOW_TEXT_TOP_CLIP (w))
 	    {
-	      Bufpos new_point;
+	      WINDOW_TEXT_TOP_CLIP (w) = 0;
+	      MARK_WINDOWS_CHANGED (w);
+	    }
 
-	      if (MINI_WINDOW_P (w))
-		new_point = startp;
-	      else
-		new_point = start_of_last_line (w, startp);
+	  old_start = marker_position (w->start[CURRENT_DISP]);
+	  startp = vmotion (w, old_start, value, &vtarget);
 
-	      if (selected)
-		BUF_SET_PT (b, new_point);
-	      else
-		set_marker_restricted (w->pointm[CURRENT_DISP],
-				       make_int (new_point),
-				       w->buffer);
+	  if (vtarget > value
+	      && marker_position (w->start[CURRENT_DISP]) == BUF_BEGV (b))
+	    {
+	      maybe_signal_error (Qbeginning_of_buffer, Qnil, Qwindow, errb);
+	      return;
+	    }
+	  else
+	    {
+	      set_marker_restricted (w->start[CURRENT_DISP], make_int (startp),
+				     w->buffer);
+	      w->force_start = 1;
+	      w->start_at_line_beg = beginning_of_line_p (b, startp);
+	      MARK_WINDOWS_CHANGED (w);
+
+	      /* #### Scroll back by less than a line. This code was
+		 originally for scrolling over large pixmaps and it
+		 loses when a line being *exposed* at the top of the
+		 window is bigger than the current one. However, for
+		 pixel based scrolling in general we can guess that
+		 the line we are going to display is probably the same
+		 size as the one we are on. In that instance we can
+		 have a reasonable stab at a suitable top clip. Fixing
+		 this properly is hard (and probably slow) as we would
+		 have to call redisplay to figure out the exposed line
+		 size. */
+	      if (!NILP (Vwindow_pixel_scroll_increment)
+		  && Dynarr_length (dla) >= (1 + modeline)
+		  && dl->ascent + fheight * value > 0)
+		{
+		  WINDOW_TEXT_TOP_CLIP (w) = (dl->ascent + fheight * value);
+		}
+
+	      if (!point_would_be_visible (w, startp, XINT (point)))
+		{
+		  Bufpos new_point;
+
+		  if (MINI_WINDOW_P (w))
+		    new_point = startp;
+		  else
+		    new_point = start_of_last_line (w, startp);
+
+		  if (selected)
+		    BUF_SET_PT (b, new_point);
+		  else
+		    set_marker_restricted (w->pointm[CURRENT_DISP],
+					   make_int (new_point),
+					   w->buffer);
+		}
 	    }
 	}
     }
   else	/* value == 0 && direction == -1 */
     {
+      if (WINDOW_TEXT_TOP_CLIP (w))
+	{
+	  WINDOW_TEXT_TOP_CLIP (w) = 0;
+	  MARK_WINDOWS_CHANGED (w);
+	}
       if (marker_position (w->start[CURRENT_DISP]) == BUF_BEGV (b))
 	{
 	  maybe_signal_error (Qbeginning_of_buffer, Qnil, Qwindow, errb);
@@ -4130,7 +4292,6 @@ window_scroll (Lisp_Object window, Lisp_Object n, int direction,
 	    }
 	}
     }
-
 }
 
 DEFUN ("scroll-up", Fscroll_up, 0, 1, "_P", /*
@@ -4304,7 +4465,7 @@ If WINDOW is nil, the selected window is used.
   if (NILP (window))
     window = Fselected_window (Qnil);
   else
-    CHECK_WINDOW (window);
+    CHECK_LIVE_WINDOW (window);
   w = XWINDOW (window);
   b = XBUFFER (w->buffer);
 
@@ -4606,7 +4767,7 @@ struct saved_window
   int pixel_width;
   int pixel_height;
   int hscroll;
-  int modeline_hscroll;
+  Charcount modeline_hscroll;
   int parent_index;           /* index into saved_windows */
   int prev_index;             /* index into saved_windows */
   char start_at_line_beg; /* boolean */
@@ -4621,8 +4782,8 @@ struct saved_window
 struct window_config
 {
   struct lcrecord_header header;
-  int frame_width;
-  int frame_height;
+  /*  int frame_width; No longer needed, JV
+      int frame_height; */
 #if 0 /* FSFmacs */
   Lisp_Object selected_frame;
 #endif
@@ -4630,6 +4791,7 @@ struct window_config
   Lisp_Object current_buffer;
   Lisp_Object minibuffer_scroll_window;
   Lisp_Object root_window;
+  int minibuf_height; /* 0 = no minibuffer, <0, size in lines, >0 in pixels */
   /* Record the values of window-min-width and window-min-height
      so that window sizes remain consistent with them.  */
   int min_width, min_height;
@@ -4642,36 +4804,35 @@ struct window_config
 #define XWINDOW_CONFIGURATION(x) XRECORD (x, window_configuration, struct window_config)
 #define XSETWINDOW_CONFIGURATION(x, p) XSETRECORD (x, p, window_configuration)
 #define WINDOW_CONFIGURATIONP(x) RECORDP (x, window_configuration)
-#define GC_WINDOW_CONFIGURATIONP(x) GC_RECORDP (x, window_configuration)
 #define CHECK_WINDOW_CONFIGURATION(x) CHECK_RECORD (x, window_configuration)
 
 static Lisp_Object
-mark_window_config (Lisp_Object obj, void (*markobj) (Lisp_Object))
+mark_window_config (Lisp_Object obj)
 {
   struct window_config *config = XWINDOW_CONFIGURATION (obj);
   int i;
-  markobj (config->current_window);
-  markobj (config->current_buffer);
-  markobj (config->minibuffer_scroll_window);
-  markobj (config->root_window);
+  mark_object (config->current_window);
+  mark_object (config->current_buffer);
+  mark_object (config->minibuffer_scroll_window);
+  mark_object (config->root_window);
 
   for (i = 0; i < config->saved_windows_count; i++)
     {
       struct saved_window *s = SAVED_WINDOW_N (config, i);
-      markobj (s->window);
-      markobj (s->buffer);
-      markobj (s->start);
-      markobj (s->pointm);
-      markobj (s->sb_point);
-      markobj (s->mark);
+      mark_object (s->window);
+      mark_object (s->buffer);
+      mark_object (s->start);
+      mark_object (s->pointm);
+      mark_object (s->sb_point);
+      mark_object (s->mark);
 #if 0
       /* #### This looked like this. I do not see why specifier cached
 	 values should not be marked, as such specifiers as toolbars
 	 might have GC-able instances. Freed configs are not marked,
 	 aren't they?  -- kkm */
-      markobj (s->dedicated);
+      mark_object (s->dedicated);
 #else
-#define WINDOW_SLOT(slot, compare) ((void) (markobj (s->slot)))
+#define WINDOW_SLOT(slot, compare) mark_object (s->slot)
 #include "winslots.h"
 #endif
     }
@@ -4687,9 +4848,9 @@ sizeof_window_config_for_n_windows (int n)
 }
 
 static size_t
-sizeof_window_config (CONST void *h)
+sizeof_window_config (const void *h)
 {
-  CONST struct window_config *c = (CONST struct window_config *) h;
+  const struct window_config *c = (const struct window_config *) h;
   return sizeof_window_config_for_n_windows (c->saved_windows_count);
 }
 
@@ -4710,7 +4871,7 @@ DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION ("window-configuration",
 					window_configuration,
 					mark_window_config,
 					print_window_config,
-					0, 0, 0, sizeof_window_config,
+					0, 0, 0, 0, sizeof_window_config,
 					struct window_config);
 
 
@@ -4761,9 +4922,10 @@ window_config_equal (Lisp_Object conf1, Lisp_Object conf2)
 	EQ (fig1->current_window,	    fig2->current_window) &&
 	EQ (fig1->current_buffer,	    fig2->current_buffer) &&
 	EQ (fig1->root_window,		    fig2->root_window) &&
-	EQ (fig1->minibuffer_scroll_window, fig2->minibuffer_scroll_window) &&
+	EQ (fig1->minibuffer_scroll_window, fig2->minibuffer_scroll_window)))
+	/* &&
 	fig1->frame_width  == fig2->frame_width &&
-	fig1->frame_height == fig2->frame_height))
+	fig1->frame_height == fig2->frame_height)) */
     return 0;
 
   for (i = 0; i < fig1->saved_windows_count; i++)
@@ -4859,8 +5021,15 @@ by `current-window-configuration' (which see).
   struct frame *f;
   struct gcpro gcpro1;
   Lisp_Object old_window_config;
-  int previous_frame_height;
-  int previous_frame_width;
+  /*  int previous_frame_height;
+      int previous_frame_width;*/
+  int previous_pixel_top;
+  int previous_pixel_height;
+  int previous_pixel_left;
+  int previous_pixel_width;
+  int previous_minibuf_height, previous_minibuf_top,previous_minibuf_width;
+  int real_font_height;
+  int converted_minibuf_height,target_minibuf_height;
   int specpdl_count = specpdl_depth ();
 
   GCPRO1 (configuration);
@@ -4925,6 +5094,20 @@ by `current-window-configuration' (which see).
 
       mark_windows_in_use (f, 1);
 
+#if 0
+      /* JV: This is bogus,
+	 First of all, the units are inconsistent. The frame sizes are measured
+	 in characters but the window sizes are stored in pixels. So if a
+	 font size change happened between saving and restoring, the
+	 frame "sizes" maybe equal but the windows still should be
+	 resized. This is tickled alot by the new "character size
+	 stays constant" policy in 21.0. It leads to very wierd
+	 glitches (and possibly craches when asserts are tickled).
+
+	 Just changing the units doens't help because changing the
+	 toolbar configuration can also change the pixel positions.
+	 Luckily there is a much simpler way of doing this, see below.
+       */
       previous_frame_width = FRAME_WIDTH (f);
       previous_frame_height = FRAME_HEIGHT (f);
       /* If the frame has been resized since this window configuration was
@@ -4934,6 +5117,37 @@ by `current-window-configuration' (which see).
       if (config->frame_height != FRAME_HEIGHT (f)
 	  || config->frame_width != FRAME_WIDTH (f))
 	change_frame_size (f, config->frame_height, config->frame_width, 0);
+#endif
+
+      previous_pixel_top = XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_top;
+      previous_pixel_height = XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_height;
+      previous_pixel_left = XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_left;
+      previous_pixel_width = XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_width;
+
+      /* remember some properties of the minibuffer */
+
+      default_face_height_and_width (frame, &real_font_height, 0);
+      assert(real_font_height > 0);
+
+      if (FRAME_HAS_MINIBUF_P (f) && ! FRAME_MINIBUF_ONLY_P (f))
+	{
+	  previous_minibuf_height
+	    = XWINDOW(FRAME_MINIBUF_WINDOW(f))->pixel_height;
+	  previous_minibuf_top
+	    = XWINDOW(FRAME_MINIBUF_WINDOW(f))->pixel_top;
+	  previous_minibuf_width
+	    = XWINDOW(FRAME_MINIBUF_WINDOW(f))->pixel_width;
+	}
+      else
+	{
+	  previous_minibuf_height = 0;
+	  previous_minibuf_top = 0;
+	  previous_minibuf_width = 0;
+	}
+      converted_minibuf_height =
+	(previous_minibuf_height % real_font_height) == 0 ?
+	- (previous_minibuf_height / real_font_height ) :    /* lines */
+	    previous_minibuf_height;   /* pixels */
 
       /* Temporarily avoid any problems with windows that are smaller
 	 than they are supposed to be.  */
@@ -5022,7 +5236,7 @@ by `current-window-configuration' (which see).
 	  SET_LAST_FACECHANGE (w);
 	  w->config_mark = 0;
 
-#define WINDOW_SLOT(slot, compare) w->slot = p->slot;
+#define WINDOW_SLOT(slot, compare) w->slot = p->slot
 #include "winslots.h"
 
 	  /* Reinstall the saved buffer and pointers into it.  */
@@ -5100,10 +5314,60 @@ by `current-window-configuration' (which see).
 	 currently selected, or just set the selected window of the
 	 window config's frame. */
 
+#if 0
       /* Set the frame height to the value it had before this function.  */
       if (previous_frame_height != FRAME_HEIGHT (f)
 	  || previous_frame_width != FRAME_WIDTH (f))
 	change_frame_size (f, previous_frame_height, previous_frame_width, 0);
+#endif
+      /* We just reset the size and position of the minibuffer, to its old
+	 value, which needn't be valid. So we do some magic to see which value
+	 to actually take. Then we set it.
+
+	 The magic:
+	 We take the old value if is in the same units but differs from the
+	 current value.
+
+         #### Now we get more cases correct then ever before, but
+	 are we treating all? For instance what if the frames minibuf window
+	 is no longer the same one?
+      */
+      target_minibuf_height = previous_minibuf_height;
+      if (converted_minibuf_height &&
+	  (converted_minibuf_height * config->minibuf_height) > 0 &&
+	  (converted_minibuf_height !=  config->minibuf_height))
+	{
+	  target_minibuf_height = config->minibuf_height < 0 ?
+	    - (config->minibuf_height * real_font_height) :
+	    config->minibuf_height;
+	  target_minibuf_height =
+	    max(target_minibuf_height,real_font_height);
+	}
+      if (previous_minibuf_height)
+	{
+	  XWINDOW (FRAME_MINIBUF_WINDOW (f))->pixel_top
+	    = previous_minibuf_top -
+	          (target_minibuf_height - previous_minibuf_height);
+	  set_window_pixheight (FRAME_MINIBUF_WINDOW (f),
+				target_minibuf_height, 0);
+	  set_window_pixwidth  (FRAME_MINIBUF_WINDOW (f),
+			    previous_minibuf_width, 0);
+	}
+
+      /* This is a better way to deal with frame resizing, etc.
+	 What we _actually_ want is for the old (just restored)
+	 root window to fit
+	 into the place of the new one. So we just do that. Simple! */
+      XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_top = previous_pixel_top;
+      /* Note that this function also updates the subwindow
+	 "pixel_top"s */
+      set_window_pixheight (FRAME_ROOT_WINDOW (f),
+	  previous_pixel_height -
+		  (target_minibuf_height - previous_minibuf_height), 0);
+      XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_left = previous_pixel_left;
+      /* Note that this function also updates the subwindow
+	 "pixel_left"s */
+      set_window_pixwidth (FRAME_ROOT_WINDOW (f), previous_pixel_width, 0);
 
       /* If restoring in the current frame make the window current,
 	 otherwise just update the frame selected_window slot to be
@@ -5246,7 +5510,7 @@ save_window_save (Lisp_Object window, struct window_config *config, int i)
       p->hscroll = w->hscroll;
       p->modeline_hscroll = w->modeline_hscroll;
 
-#define WINDOW_SLOT(slot, compare) p->slot = w->slot;
+#define WINDOW_SLOT(slot, compare) p->slot = w->slot
 #include "winslots.h"
 
       if (!NILP (w->buffer))
@@ -5319,6 +5583,8 @@ its value is -not- saved.
   struct frame *f = decode_frame (frame);
   struct window_config *config;
   int n_windows = count_windows (XWINDOW (FRAME_ROOT_WINDOW (f)));
+  int minibuf_height;
+  int real_font_height;
 
   if (n_windows <= countof (Vwindow_configuration_free_list))
     config = XWINDOW_CONFIGURATION (allocate_managed_lcrecord
@@ -5328,11 +5594,11 @@ its value is -not- saved.
     /* More than ten windows; just allocate directly */
     config = (struct window_config *)
       alloc_lcrecord (sizeof_window_config_for_n_windows (n_windows),
-		      lrecord_window_configuration);
+		      &lrecord_window_configuration);
   XSETWINDOW_CONFIGURATION (result, config);
-
+  /*
   config->frame_width = FRAME_WIDTH (f);
-  config->frame_height = FRAME_HEIGHT (f);
+  config->frame_height = FRAME_HEIGHT (f); */
   config->current_window = FRAME_SELECTED_WINDOW (f);
   XSETBUFFER (config->current_buffer, current_buffer);
   config->minibuffer_scroll_window = Vminibuffer_scroll_window;
@@ -5341,6 +5607,22 @@ its value is -not- saved.
   config->min_width = window_min_width;
   config->saved_windows_count = n_windows;
   save_window_save (FRAME_ROOT_WINDOW (f), config, 0);
+
+  /* save the minibuffer height using the heuristics from
+     change_frame_size_1 */
+
+  XSETFRAME (frame, f); /* frame could have been nil ! */
+  default_face_height_and_width (frame, &real_font_height, 0);
+  assert(real_font_height > 0);
+
+  if (FRAME_HAS_MINIBUF_P (f) && ! FRAME_MINIBUF_ONLY_P (f))
+    minibuf_height = XWINDOW(FRAME_MINIBUF_WINDOW(f))->pixel_height;
+  else
+    minibuf_height = 0;
+  config->minibuf_height = (minibuf_height % real_font_height) == 0 ?
+    - (minibuf_height / real_font_height ) :    /* lines */
+    minibuf_height;   /* pixels */
+
   return result;
 }
 
@@ -5368,6 +5650,78 @@ Does not restore the value of point in current buffer.
 			 Fcurrent_window_configuration (Qnil));
   val = Fprogn (args);
   return unbind_to (speccount, val);
+}
+
+DEFUN ("current-pixel-column", Fcurrent_pixel_column, 0, 2, 0, /*
+Return the horizontal pixel position of POS in window.
+Beginning of line is column 0. This is calculated using the redisplay
+display tables.  If WINDOW is nil, the current window is assumed.
+If POS is nil, point is assumed. Note that POS must be visible for
+a non-nil result to be returned.
+*/
+       (window, pos))
+{
+  struct window* w = decode_window (window);
+  display_line_dynarr *dla = window_display_lines (w, CURRENT_DISP);
+
+  struct display_line *dl = 0;
+  struct display_block *db = 0;
+  struct rune* rb = 0;
+  int y = w->last_point_y[CURRENT_DISP];
+  int x = w->last_point_x[CURRENT_DISP];
+
+  if (MINI_WINDOW_P (w))
+    return Qnil;
+
+  if (y<0 || x<0 || y >= Dynarr_length (dla) || !NILP (pos))
+    {
+      int first_line, i;
+      Bufpos point;
+
+      if (NILP (pos))
+	pos = Fwindow_point (window);
+
+      CHECK_INT (pos);
+      point = XINT (pos);
+
+      if (Dynarr_length (dla) && Dynarr_atp (dla, 0)->modeline)
+	first_line = 1;
+      else
+	first_line = 0;
+
+      for (i = first_line; i < Dynarr_length (dla); i++)
+	{
+	  dl = Dynarr_atp (dla, i);
+	  /* find the vertical location first */
+	  if (point >= dl->bufpos && point <= dl->end_bufpos)
+	    {
+	      db = get_display_block_from_line (dl, TEXT);
+	      for (i = 0; i < Dynarr_length (db->runes); i++)
+		{
+		  rb = Dynarr_atp (db->runes, i);
+		  if (point <= rb->bufpos)
+		    goto found_bufpos;
+		}
+	      return Qnil;
+	    }
+	}
+      return Qnil;
+    found_bufpos:
+      ;
+    }
+  else
+    {
+      /* optimised case */
+      dl = Dynarr_atp (dla, y);
+      db = get_display_block_from_line (dl, TEXT);
+
+      if (x >= Dynarr_length (db->runes))
+	return Qnil;
+
+      rb = Dynarr_atp (db->runes, x);
+    }
+
+  return make_int (rb->xpos - WINDOW_LEFT (w));
 }
 
 
@@ -5422,8 +5776,6 @@ syms_of_window (void)
   defsymbol (&Qwindowp, "windowp");
   defsymbol (&Qwindow_live_p, "window-live-p");
   defsymbol (&Qwindow_configurationp, "window-configuration-p");
-  defsymbol (&Qscroll_up, "scroll-up");
-  defsymbol (&Qscroll_down, "scroll-down");
   defsymbol (&Qtemp_buffer_show_hook, "temp-buffer-show-hook");
   defsymbol (&Qdisplay_buffer, "display-buffer");
 
@@ -5439,6 +5791,7 @@ syms_of_window (void)
 #endif
 
   DEFSUBR (Fselected_window);
+  DEFSUBR (Flast_nonminibuf_window);
   DEFSUBR (Fminibuffer_window);
   DEFSUBR (Fwindow_minibuffer_p);
   DEFSUBR (Fwindowp);
@@ -5449,6 +5802,7 @@ syms_of_window (void)
   DEFSUBR (Fwindow_previous_child);
   DEFSUBR (Fwindow_parent);
   DEFSUBR (Fwindow_lowest_p);
+  DEFSUBR (Fwindow_truncated_p);
   DEFSUBR (Fwindow_highest_p);
   DEFSUBR (Fwindow_leftmost_p);
   DEFSUBR (Fwindow_rightmost_p);
@@ -5464,20 +5818,19 @@ syms_of_window (void)
   DEFSUBR (Fwindow_displayed_text_pixel_height);
   DEFSUBR (Fwindow_text_area_pixel_width);
   DEFSUBR (Fwindow_hscroll);
-#ifdef MODELINE_IS_SCROLLABLE
+  DEFSUBR (Fset_window_hscroll);
   DEFSUBR (Fmodeline_hscroll);
   DEFSUBR (Fset_modeline_hscroll);
-#endif /* MODELINE_IS_SCROLLABLE */
 #if 0 /* bogus FSF crock */
   DEFSUBR (Fwindow_redisplay_end_trigger);
   DEFSUBR (Fset_window_redisplay_end_trigger);
 #endif
-  DEFSUBR (Fset_window_hscroll);
   DEFSUBR (Fwindow_pixel_edges);
   DEFSUBR (Fwindow_text_area_pixel_edges);
   DEFSUBR (Fwindow_point);
   DEFSUBR (Fwindow_start);
   DEFSUBR (Fwindow_end);
+  DEFSUBR (Fwindow_last_line_visible_height);
   DEFSUBR (Fset_window_point);
   DEFSUBR (Fset_window_start);
   DEFSUBR (Fwindow_dedicated_p);
@@ -5517,14 +5870,30 @@ syms_of_window (void)
   DEFSUBR (Fset_window_configuration);
   DEFSUBR (Fcurrent_window_configuration);
   DEFSUBR (Fsave_window_excursion);
+  DEFSUBR (Fcurrent_pixel_column);
+}
+
+void
+reinit_vars_of_window (void)
+{
+  int i;
+  /* Make sure all windows get marked */
+  minibuf_window = Qnil;
+  staticpro_nodump (&minibuf_window);
+
+  for (i = 0; i < countof (Vwindow_configuration_free_list); i++)
+    {
+      Vwindow_configuration_free_list[i] =
+	make_lcrecord_list (sizeof_window_config_for_n_windows (i + 1),
+			    &lrecord_window_configuration);
+      staticpro_nodump (&Vwindow_configuration_free_list[i]);
+    }
 }
 
 void
 vars_of_window (void)
 {
-  /* Make sure all windows get marked */
-  minibuf_window = Qnil;
-  staticpro (&minibuf_window);
+  reinit_vars_of_window ();
 
   DEFVAR_BOOL ("scroll-on-clipped-lines", &scroll_on_clipped_lines /*
 *Non-nil means to scroll if point lands on a line which is clipped.
@@ -5555,6 +5924,13 @@ If non-nil, this is a buffer and \\[scroll-other-window] should scroll its windo
 */ );
   Vother_window_scroll_buffer = Qnil;
 
+  DEFVAR_LISP ("window-pixel-scroll-increment", &Vwindow_pixel_scroll_increment /*
+*Number of pixels to scroll by per requested line.
+If nil then normal line scrolling occurs regardless of line height.
+If t then scrolling is done in increments equal to the height of the default face.
+*/ );
+  Vwindow_pixel_scroll_increment = Qt;
+
   DEFVAR_INT ("next-screen-context-lines", &next_screen_context_lines /*
 *Number of lines of continuity when scrolling by screenfuls.
 */ );
@@ -5569,18 +5945,6 @@ If non-nil, this is a buffer and \\[scroll-other-window] should scroll its windo
 *Delete any window less than this wide.
 */ );
   window_min_width = 10;
-
-  {
-    int i;
-
-    for (i = 0; i < countof (Vwindow_configuration_free_list); i++)
-      {
-	Vwindow_configuration_free_list[i] =
-	  make_lcrecord_list (sizeof_window_config_for_n_windows (i + 1),
-			      lrecord_window_configuration);
-	staticpro (&Vwindow_configuration_free_list[i]);
-      }
-  }
 }
 
 void
@@ -5601,8 +5965,7 @@ This is a specifier; use `set-specifier' to change it.
   Fadd_spec_to_specifier (Vmodeline_shadow_thickness, make_int (2),
 			  Qnil, Qnil, Qnil);
   set_specifier_caching (Vmodeline_shadow_thickness,
-			 slot_offset (struct window,
-				      modeline_shadow_thickness),
+			 offsetof (struct window, modeline_shadow_thickness),
 			 modeline_shadow_thickness_changed,
 			 0, 0);
 
@@ -5614,8 +5977,7 @@ This is a specifier; use `set-specifier' to change it.
   set_specifier_fallback (Vhas_modeline_p,
 			  list1 (Fcons (Qnil, Qt)));
   set_specifier_caching (Vhas_modeline_p,
-			 slot_offset (struct window,
-				      has_modeline_p),
+			 offsetof (struct window, has_modeline_p),
 			 /* #### It's strange that we need a special
 			    flag to indicate that the shadow-thickness
 			    has changed, but not one to indicate that
@@ -5637,8 +5999,8 @@ This is a specifier; use `set-specifier' to change it.
   set_specifier_fallback (Vvertical_divider_always_visible_p,
 			  list1 (Fcons (Qnil, Qt)));
   set_specifier_caching (Vvertical_divider_always_visible_p,
-			 slot_offset (struct window,
-				      vertical_divider_always_visible_p),
+			 offsetof (struct window,
+				   vertical_divider_always_visible_p),
 			 vertical_divider_changed_in_window,
  			 0, 0);
 
@@ -5652,8 +6014,8 @@ This is a specifier; use `set-specifier' to change it.
   Fadd_spec_to_specifier (Vvertical_divider_shadow_thickness, make_int (2),
 			  Qnil, Qnil, Qnil);
   set_specifier_caching (Vvertical_divider_shadow_thickness,
-			 slot_offset (struct window,
-				      vertical_divider_shadow_thickness),
+			 offsetof (struct window,
+				   vertical_divider_shadow_thickness),
 			 vertical_divider_changed_in_window,
  			 0, 0);
   DEFVAR_SPECIFIER ("vertical-divider-line-width", &Vvertical_divider_line_width /*
@@ -5683,8 +6045,8 @@ This is a specifier; use `set-specifier' to change it.
     set_specifier_fallback (Vvertical_divider_line_width, fb);
   }
   set_specifier_caching (Vvertical_divider_line_width,
-                         slot_offset (struct window,
-				      vertical_divider_line_width),
+                         offsetof (struct window,
+				   vertical_divider_line_width),
 			 vertical_divider_changed_in_window,
                          0, 0);
 
@@ -5713,8 +6075,7 @@ This is a specifier; use `set-specifier' to change it.
     set_specifier_fallback (Vvertical_divider_spacing, fb);
   }
   set_specifier_caching (Vvertical_divider_spacing,
-			 slot_offset (struct window,
-				      vertical_divider_spacing),
+			 offsetof (struct window, vertical_divider_spacing),
 			 vertical_divider_changed_in_window,
 			 0, 0);
 }

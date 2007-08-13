@@ -2,7 +2,6 @@
       (assemble-list
         "backquote" 		; needed for defsubst etc.
 	"bytecomp-runtime"	; define defsubst
-	"Installation.el"
 	"find-paths"
 	"packages"		; Bootstrap run-time lisp environment
 	"setup-paths"
@@ -33,7 +32,7 @@
 	"events"
 	"text-props"
 	"process" ;; This is bad. network-streams may not be defined.
-	(when-feature multicast "multicast") ; #+network-streams implicitely true
+	(when-feature multicast "multicast") ; #+network-streams implicitly true
 	"frame"			; move up here cause some stuff needs it here
 	"map-ynp"
 	"simple"
@@ -80,7 +79,7 @@
 	"text-mode"
 	"fill"
 	"auto-save"		; Added for 20.4
-
+	"movemail"              ; Added for 21.2
 	(when-feature windows-nt "winnt")
 	(when-feature lisp-float-type "float-sup")
 	"itimer"		; for vars auto-save-timeout and
@@ -95,7 +94,6 @@
 	(when-feature mule "mule-coding")
 ;; Handle I/O of files with extended characters.
 	(when-feature file-coding "code-files")
-	(when-feature mule "mule-files")
 ;; Handle process with encoding/decoding non-ascii coding-system.
 	(when-feature file-coding "code-process")
 	(when-feature mule "mule-help")
@@ -128,16 +126,17 @@
 	(when-feature mule "chinese")
 	(when-feature mule "mule/cyrillic") ; overloaded in leim/quail
 	(when-feature mule "english")
-;;	(when-feature mule "ethiopic")
+	(when-feature mule "ethiopic")
 	(when-feature mule "european")
 	(when-feature mule "mule/greek") ; overloaded in leim/quail
 	(when-feature mule "hebrew")
 	(when-feature mule "japanese")
 	(when-feature mule "korean")
 	(when-feature mule "misc-lang")
-;;	(when-feature mule "thai")
+	(when-feature mule "thai-xtis-chars")
+	(when-feature mule "mule/thai-xtis") ; overloaded in leim/quail
 	(when-feature mule "viet-chars")
-;;	(when-feature mule "vietnamese")
+	(when-feature mule "vietnamese")
 
 	;; Specialized language support
 	(when-feature (and mule CANNA) "canna-leim")
@@ -166,6 +165,7 @@
 	(when-feature (and (not infodock)
 			   (or x mswindows) menubar) "menubar-items")
 	(when-feature (and infodock (or x mswindows) menubar) "id-menus")
+	(when-feature (and gutter menubar window-system) "gutter-items")
 	(when-feature x "x-faces")
 	(when-feature x "x-iso8859-1")
 	(when-feature x "x-mouse")

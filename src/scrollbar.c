@@ -34,6 +34,7 @@ Boston, MA 02111-1307, USA.  */
 #include "device.h"
 #include "frame.h"
 #include "glyphs.h"
+#include "gutter.h"
 #include "window.h"
 
 Lisp_Object Qinit_scrollbar_from_resources;
@@ -452,23 +453,41 @@ update_scrollbar_instance (struct window *w, int vertical,
   {
     int x_offset, y_offset;
 
-    /* Scrollbars are always the farthest from the text area. */
+    /* Scrollbars are always the farthest from the text area, barring
+       gutters. */
     if (vertical)
       {
-	x_offset = (!NILP (w->scrollbar_on_left_p)
-		    ? WINDOW_LEFT (w)
-		    : (WINDOW_RIGHT (w) - scrollbar_width
-		       - (window_needs_vertical_divider (w)
-			  ? window_divider_width (w) : 0)));
+	if (!NILP (w->scrollbar_on_left_p))
+	  {
+	    x_offset = WINDOW_LEFT (w);
+	    if (window_is_leftmost (w))
+	      x_offset += FRAME_LEFT_GUTTER_BOUNDS (f);
+	  }
+	else 
+	  {
+	    x_offset = WINDOW_RIGHT (w) - scrollbar_width;
+	    if (window_is_rightmost (w))
+	      x_offset -= FRAME_RIGHT_GUTTER_BOUNDS (f);
+	    if (window_needs_vertical_divider (w))
+	      x_offset -= window_divider_width (w);
+	  }
 	y_offset = WINDOW_TEXT_TOP (w) + f->scrollbar_y_offset;
       }
     else
       {
 	x_offset = WINDOW_TEXT_LEFT (w);
-	y_offset = f->scrollbar_y_offset +
-	  (!NILP (w->scrollbar_on_top_p)
-	   ? WINDOW_TOP (w)
-	   : WINDOW_TEXT_BOTTOM (w) + window_bottom_toolbar_height (w));
+	y_offset = f->scrollbar_y_offset;
+
+	if (!NILP (w->scrollbar_on_top_p))
+	  {
+	    y_offset += WINDOW_TOP (w);
+	    if (window_is_highest (w))
+	      y_offset += FRAME_TOP_GUTTER_BOUNDS (f);
+	  }
+	else
+	  {
+	    y_offset += WINDOW_TEXT_BOTTOM (w);
+	  }
       }
 
     new_x = x_offset;
@@ -850,7 +869,7 @@ This ensures that VALUE is in the proper range for the horizontal scrollbar.
 
   w = XWINDOW (window);
   wcw = window_char_width (w, 0) - 1;
-  /* ### We should be able to scroll further right as long as there is
+  /* #### We should be able to scroll further right as long as there is
      a visible truncation glyph.  This calculation for max is bogus.  */
   max_len = w->max_line_len + 2;
 
@@ -937,11 +956,9 @@ This is a specifier; use `set-specifier' to change it.
     (Vscrollbar_width,
      list1 (Fcons (Qnil, make_int (DEFAULT_SCROLLBAR_WIDTH))));
   set_specifier_caching (Vscrollbar_width,
-			 slot_offset (struct window,
-				      scrollbar_width),
+			 offsetof (struct window, scrollbar_width),
 			 vertical_scrollbar_changed_in_window,
-			 slot_offset (struct frame,
-				      scrollbar_width),
+			 offsetof (struct frame, scrollbar_width),
 			 frame_size_slipped);
 
   DEFVAR_SPECIFIER ("scrollbar-height", &Vscrollbar_height /*
@@ -953,11 +970,9 @@ This is a specifier; use `set-specifier' to change it.
     (Vscrollbar_height,
      list1 (Fcons (Qnil, make_int (DEFAULT_SCROLLBAR_HEIGHT))));
   set_specifier_caching (Vscrollbar_height,
-			 slot_offset (struct window,
-				      scrollbar_height),
+			 offsetof (struct window, scrollbar_height),
 			 some_window_value_changed,
-			 slot_offset (struct frame,
-				      scrollbar_height),
+			 offsetof (struct frame, scrollbar_height),
 			 frame_size_slipped);
 
   DEFVAR_SPECIFIER ("horizontal-scrollbar-visible-p", &Vhorizontal_scrollbar_visible_p /*
@@ -968,11 +983,11 @@ This is a specifier; use `set-specifier' to change it.
   set_specifier_fallback (Vhorizontal_scrollbar_visible_p,
 			  list1 (Fcons (Qnil, Qt)));
   set_specifier_caching (Vhorizontal_scrollbar_visible_p,
-			 slot_offset (struct window,
-				      horizontal_scrollbar_visible_p),
+			 offsetof (struct window,
+				   horizontal_scrollbar_visible_p),
 			 some_window_value_changed,
-			 slot_offset (struct frame,
-				      horizontal_scrollbar_visible_p),
+			 offsetof (struct frame,
+				   horizontal_scrollbar_visible_p),
 			 frame_size_slipped);
 
   DEFVAR_SPECIFIER ("vertical-scrollbar-visible-p", &Vvertical_scrollbar_visible_p /*
@@ -983,11 +998,11 @@ This is a specifier; use `set-specifier' to change it.
   set_specifier_fallback (Vvertical_scrollbar_visible_p,
 			  list1 (Fcons (Qnil, Qt)));
   set_specifier_caching (Vvertical_scrollbar_visible_p,
-			 slot_offset (struct window,
-				      vertical_scrollbar_visible_p),
+			 offsetof (struct window,
+				   vertical_scrollbar_visible_p),
 			 vertical_scrollbar_changed_in_window,
-			 slot_offset (struct frame,
-				      vertical_scrollbar_visible_p),
+			 offsetof (struct frame,
+				   vertical_scrollbar_visible_p),
 			 frame_size_slipped);
 
   DEFVAR_SPECIFIER ("scrollbar-on-left-p", &Vscrollbar_on_left_p /*
@@ -1011,11 +1026,9 @@ This is a specifier; use `set-specifier' to change it.
   }
 
   set_specifier_caching (Vscrollbar_on_left_p,
-			 slot_offset (struct window,
-				      scrollbar_on_left_p),
+			 offsetof (struct window, scrollbar_on_left_p),
 			 vertical_scrollbar_changed_in_window,
-			 slot_offset (struct frame,
-				      scrollbar_on_left_p),
+			 offsetof (struct frame, scrollbar_on_left_p),
 			 frame_size_slipped);
 
   DEFVAR_SPECIFIER ("scrollbar-on-top-p", &Vscrollbar_on_top_p /*
@@ -1026,11 +1039,9 @@ This is a specifier; use `set-specifier' to change it.
   set_specifier_fallback (Vscrollbar_on_top_p,
 			  list1 (Fcons (Qnil, Qnil)));
   set_specifier_caching (Vscrollbar_on_top_p,
-			 slot_offset (struct window,
-				      scrollbar_on_top_p),
+			 offsetof (struct window, scrollbar_on_top_p),
 			 some_window_value_changed,
-			 slot_offset (struct frame,
-				      scrollbar_on_top_p),
+			 offsetof (struct frame, scrollbar_on_top_p),
 			 frame_size_slipped);
 }
 
@@ -1040,8 +1051,7 @@ complex_vars_of_scrollbar (void)
   Vscrollbar_pointer_glyph = Fmake_glyph_internal (Qpointer);
 
   set_specifier_caching (XGLYPH (Vscrollbar_pointer_glyph)->image,
-			 slot_offset (struct window,
-				      scrollbar_pointer),
+			 offsetof (struct window, scrollbar_pointer),
 			 scrollbar_pointer_changed_in_window,
 			 0, 0);
 }

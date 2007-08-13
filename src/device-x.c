@@ -50,6 +50,10 @@ Boston, MA 02111-1307, USA.  */
 #include "sysfile.h"
 #include "systime.h"
 
+#if defined(HAVE_SHLIB) && defined(LWLIB_USES_ATHENA) && !defined(HAVE_ATHENA_3D)
+#include "sysdll.h"
+#endif /* HAVE_SHLIB and LWLIB_USES_ATHENA and not HAVE_ATHENA_3D */
+
 #ifdef HAVE_OFFIX_DND
 #include "offix.h"
 #endif
@@ -387,8 +391,8 @@ x_try_best_visual_class (Screen *screen, int scrnum, int visual_class)
 		vi_out [i].depth == 1 ||
 		vi_out [i].depth == 8)
 #endif
-             
-	    /* SGI has 30-bit deep visuals.  Ignore them. 
+
+	    /* SGI has 30-bit deep visuals.  Ignore them.
                 (We only have 24-bit data anyway.)
               */
 	    && (vi_out [i].depth <= 24)
@@ -456,15 +460,87 @@ x_init_device (struct device *d, Lisp_Object props)
   Widget app_shell;
   int argc;
   char **argv;
-  CONST char *app_class;
-  CONST char *app_name;
-  CONST char *disp_name;
+  const char *app_class;
+  const char *app_name;
+  const char *disp_name;
   Visual *visual = NULL;
   int depth = 8;		/* shut up the compiler */
   Colormap cmap;
   int screen;
   /* */
   int best_visual_found = 0;
+
+#if defined(HAVE_SHLIB) && defined(LWLIB_USES_ATHENA) && !defined(HAVE_ATHENA_3D)
+  /*
+   * In order to avoid the lossage with flat Athena widgets dynamically
+   * linking to one of the ThreeD variants, using the dynamic symbol helpers
+   * to look for symbols that shouldn't be there and refusing to run if they
+   * are seems a less toxic idea than having XEmacs crash when we try and
+   * use a subclass of a widget that has changed size.
+   *
+   * It's ugly, I know, and not going to work everywhere. It seems better to
+   * do our damnedest to try and tell the user what to expect rather than
+   * simply blow up though.
+   *
+   * All the ThreeD variants I have access to define the following function
+   * symbols in the shared library. The flat Xaw library does not define them:
+   *
+   * Xaw3dComputeBottomShadowRGB
+   * Xaw3dComputeTopShadowRGB
+   *
+   * So far only Linux has shown this problem. This seems to be portable to
+   * all the distributions (certainly all the ones I checked - Debian and
+   * Redhat)
+   *
+   * This will only work, sadly, with dlopen() -- the other dynamic linkers
+   * are simply not capable of doing what is needed. :/
+   */
+
+  {
+    /* Get a dll handle to the main process. */
+    dll_handle xaw_dll_handle = dll_open (NULL);
+
+    /* Did that fail?  If so, continue without error.
+     * We could die here but, well, that's unfriendly and all -- plus I feel
+     * better about some crashing somewhere rather than preventing a perfectly
+     * good configuration working just because dll_open failed.
+     */
+    if (xaw_dll_handle != NULL)
+      {
+	/* Look for the Xaw3d function */
+	dll_func xaw_function_handle =
+	  dll_function (xaw_dll_handle, "Xaw3dComputeTopShadowRGB");
+
+	/* If we found it, warn the user in big, nasty, unfriendly letters */
+	if (xaw_function_handle != NULL)
+	  {
+	    warn_when_safe (Qdevice, Qerror, "\n"
+"It seems that XEmacs is built dynamically linked to the flat Athena widget\n"
+"library but it finds a 3D Athena variant with the same name at runtime.\n"
+"\n"
+"This WILL cause your XEmacs process to dump core at some point.\n"
+"You should not continue to use this binary without resolving this issue.\n"
+"\n"
+"This can be solved with the xaw-wrappers package under Debian\n"
+"(register XEmacs as incompatible with all 3d widget sets, see\n"
+"update-xaw-wrappers(8) and .../doc/xaw-wrappers/README.packagers).  It\n"
+"can be verified by checking the runtime path in /etc/ld.so.conf and by\n"
+"using `ldd /path/to/xemacs' under other Linux distributions.  One\n"
+"solution is to use LD_PRELOAD or LD_LIBRARY_PATH to force ld.so to\n"
+"load the flat Athena widget library instead of the aliased 3D widget\n"
+"library (see ld.so(8) for use of these environment variables).\n\n"
+			    );
+
+	  }
+
+	/* Otherwise release the handle to the library
+	 * No error catch here; I can't think of a way to recover anyhow.
+	 */
+	dll_close (xaw_dll_handle);
+      }
+  }
+#endif /* HAVE_SHLIB and LWLIB_USES_ATHENA and not HAVE_ATHENA_3D */
+
 
   XSETDEVICE (device, d);
   display = DEVICE_CONNECTION (d);
@@ -473,7 +549,9 @@ x_init_device (struct device *d, Lisp_Object props)
 
   make_argc_argv (Vx_initial_argv_list, &argc, &argv);
 
-  GET_C_STRING_CTEXT_DATA_ALLOCA (display, disp_name);
+  TO_EXTERNAL_FORMAT (LISP_STRING, display,
+		      C_STRING_ALLOCA, disp_name,
+		      Qctext);
 
   /*
    * Break apart the old XtOpenDisplay call into XOpenDisplay and
@@ -495,7 +573,9 @@ x_init_device (struct device *d, Lisp_Object props)
 
   if (STRINGP (Vx_emacs_application_class) &&
       XSTRING_LENGTH (Vx_emacs_application_class) > 0)
-    GET_C_STRING_CTEXT_DATA_ALLOCA (Vx_emacs_application_class, app_class);
+    TO_EXTERNAL_FORMAT (LISP_STRING, Vx_emacs_application_class,
+			C_STRING_ALLOCA, app_class,
+			Qctext);
   else
     {
       app_class = (NILP (Vx_emacs_application_class)  &&
@@ -529,15 +609,17 @@ x_init_device (struct device *d, Lisp_Object props)
        data-directory/app-defaults/$LANG/Emacs.
        This is in addition to the standard app-defaults files, and
        does not override resources defined elsewhere */
-    CONST char *data_dir;
+    const char *data_dir;
     char *path;
     XrmDatabase db = XtDatabase (dpy); /* #### XtScreenDatabase(dpy) ? */
-    CONST char *locale = XrmLocaleOfDatabase (db);
+    const char *locale = XrmLocaleOfDatabase (db);
 
     if (STRINGP (Vx_app_defaults_directory) &&
 	XSTRING_LENGTH (Vx_app_defaults_directory) > 0)
       {
-	GET_C_STRING_FILENAME_DATA_ALLOCA(Vx_app_defaults_directory, data_dir);
+	TO_EXTERNAL_FORMAT (LISP_STRING, Vx_app_defaults_directory,
+			    C_STRING_ALLOCA, data_dir,
+			    Qfile_name);
 	path = (char *)alloca (strlen (data_dir) + strlen (locale) + 7);
 	sprintf (path, "%s%s/Emacs", data_dir, locale);
 	if (!access (path, R_OK))
@@ -545,7 +627,9 @@ x_init_device (struct device *d, Lisp_Object props)
       }
     else if (STRINGP (Vdata_directory) && XSTRING_LENGTH (Vdata_directory) > 0)
       {
-	GET_C_STRING_FILENAME_DATA_ALLOCA (Vdata_directory, data_dir);
+	TO_EXTERNAL_FORMAT (LISP_STRING, Vdata_directory,
+			    C_STRING_ALLOCA, data_dir,
+			    Qfile_name);
 	path = (char *)alloca (strlen (data_dir) + 13 + strlen (locale) + 7);
 	sprintf (path, "%sapp-defaults/%s/Emacs", data_dir, locale);
 	if (!access (path, R_OK))
@@ -566,8 +650,10 @@ x_init_device (struct device *d, Lisp_Object props)
   XtGetApplicationNameAndClass (dpy, (char **) &app_name, (char **) &app_class);
   /* search for a matching visual if requested by the user, or setup the display default */
   {
-    char *buf1 = (char *)alloca (strlen (app_name)  + 17);
-    char *buf2 = (char *)alloca (strlen (app_class) + 17);
+    int resource_name_length = max (sizeof (".emacsVisual"),
+				    sizeof (".privateColormap"));
+    char *buf1 = alloca_array (char, strlen (app_name)  + resource_name_length);
+    char *buf2 = alloca_array (char, strlen (app_class) + resource_name_length);
     char *type;
     XrmValue value;
 
@@ -575,13 +661,14 @@ x_init_device (struct device *d, Lisp_Object props)
     sprintf (buf2, "%s.EmacsVisual", app_class);
     if (XrmGetResource (XtDatabase (dpy), buf1, buf2, &type, &value) == True)
       {
-	int cnt = 0, vis_class = PseudoColor;
+	int cnt = 0;
+	int vis_class = PseudoColor;
 	XVisualInfo vinfo;
-	char *res, *str = (char*)value.addr;
+	char *str = (char*) value.addr;
 
-#define CHECK_VIS_CLASS(class)					\
- else if (strncmp (str, #class, sizeof (#class) - 1) == 0)	\
-	cnt = sizeof (#class) - 1, vis_class = class
+#define CHECK_VIS_CLASS(visual_class)					\
+ else if (memcmp (str, #visual_class, sizeof (#visual_class) - 1) == 0)	\
+	cnt = sizeof (#visual_class) - 1, vis_class = visual_class
 
 	if (1)
 	  ;
@@ -594,8 +681,7 @@ x_init_device (struct device *d, Lisp_Object props)
 
 	if (cnt)
 	  {
-	    res = str + cnt;
-	    depth = atoi (res);
+	    depth = atoi (str + cnt);
 	    if (depth == 0)
 	      {
 		stderr_out ("Invalid Depth specification in %s... ignoring...\n", str);
@@ -653,7 +739,7 @@ x_init_device (struct device *d, Lisp_Object props)
 	else
 	  {
 	    /* We have to create a matching colormap anyway...
-	       ### think about using standard colormaps (need the Xmu libs?) */
+	       #### think about using standard colormaps (need the Xmu libs?) */
 	    cmap = XCreateColormap(dpy, RootWindow(dpy, screen), visual, AllocNone);
 	    XInstallColormap(dpy, cmap);
 	  }
@@ -696,7 +782,7 @@ x_init_device (struct device *d, Lisp_Object props)
     XtRealizeWidget (app_shell);
   }
 
-#ifdef HAVE_SESSION
+#ifdef HAVE_WMCOMMAND
   {
     int new_argc;
     char **new_argv;
@@ -704,7 +790,7 @@ x_init_device (struct device *d, Lisp_Object props)
     XSetCommand (XtDisplay (app_shell), XtWindow (app_shell), new_argv, new_argc);
     free_argc_argv (new_argv);
   }
-#endif /* HAVE_SESSION */
+#endif /* HAVE_WMCOMMAND */
 
 
 #ifdef HAVE_OFFIX_DND
@@ -728,7 +814,7 @@ x_init_device (struct device *d, Lisp_Object props)
   DEVICE_X_GC_CACHE (d) = make_gc_cache (dpy, XtWindow(app_shell));
   DEVICE_X_GRAY_PIXMAP (d) = None;
   Xatoms_of_device_x (d);
-  Xatoms_of_xselect (d);
+  Xatoms_of_select_x (d);
   Xatoms_of_objects_x (d);
   x_init_device_class (d);
 
@@ -743,10 +829,10 @@ x_finish_init_device (struct device *d, Lisp_Object props)
 }
 
 static void
-x_mark_device (struct device *d, void (*markobj) (Lisp_Object))
+x_mark_device (struct device *d)
 {
-  markobj (DEVICE_X_WM_COMMAND_FRAME (d));
-  markobj (DEVICE_X_DATA (d)->x_keysym_map_hash_table);
+  mark_object (DEVICE_X_WM_COMMAND_FRAME (d));
+  mark_object (DEVICE_X_DATA (d)->x_keysym_map_hash_table);
 }
 
 
@@ -827,10 +913,10 @@ x_delete_device (struct device *d)
 /*				handle X errors				*/
 /************************************************************************/
 
-CONST char *
+const char *
 x_event_name (int event_type)
 {
-  static CONST char *events[] =
+  static const char *events[] =
   {
     "0: ERROR!",
     "1: REPLY",
@@ -1335,7 +1421,7 @@ The returned value of this function is nil if the queried resource is not
 found.  If the third arg is `string', a string is returned, and if it is
 `integer', an integer is returned.  If the third arg is `boolean', then the
 returned value is the list (t) for true, (nil) for false, and is nil to
-mean ``unspecified.''
+mean ``unspecified''.
 */
        (name, class, type, locale, device, no_error))
 {
@@ -1598,17 +1684,19 @@ Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
 */
        (keysym))
 {
-  CONST char *keysym_ext;
+  const char *keysym_ext;
 
   CHECK_STRING (keysym);
-  GET_C_STRING_CTEXT_DATA_ALLOCA (keysym, keysym_ext);
+  TO_EXTERNAL_FORMAT (LISP_STRING, keysym,
+		      C_STRING_ALLOCA, keysym_ext,
+		      Qctext);
 
   return XStringToKeysym (keysym_ext) ? Qt : Qnil;
 }
 
 DEFUN ("x-keysym-hash-table", Fx_keysym_hash_table, 0, 1, 0, /*
-Return a hash table which contains a hash key for all keysyms which
-name keys on the keyboard.  See `x-keysym-on-keyboard-p'.
+Return a hash table containing a key for all keysyms on DEVICE.
+DEVICE must be an X11 display device.  See `x-keysym-on-keyboard-p'.
 */
        (device))
 {
@@ -1750,7 +1838,7 @@ Grab the keyboard on the given device (defaulting to the selected one).
 So long as the keyboard is grabbed, all keyboard events will be delivered
 to emacs -- it is not possible for other X clients to eavesdrop on them.
 Ungrab the keyboard with `x-ungrab-keyboard' (use an unwind-protect).
-Returns t if the grab was successful; nil otherwise.
+Returns t if the grab is successful, nil otherwise.
 */
        (device))
 {
@@ -1802,15 +1890,16 @@ See also `x-set-font-path'.
 {
   Display *dpy = get_x_display (device);
   int ndirs_return;
-  CONST char **directories = (CONST char **) XGetFontPath (dpy, &ndirs_return);
+  const char **directories = (const char **) XGetFontPath (dpy, &ndirs_return);
   Lisp_Object font_path = Qnil;
 
   if (!directories)
     signal_simple_error ("Can't get X font path", device);
 
   while (ndirs_return--)
-      font_path = Fcons (build_ext_string (directories[ndirs_return], 
-                                           FORMAT_FILENAME), font_path);
+      font_path = Fcons (build_ext_string (directories[ndirs_return],
+                                           Qfile_name),
+			 font_path);
 
   return font_path;
 }
@@ -1833,7 +1922,7 @@ See also `x-get-font-path'.
 {
   Display *dpy = get_x_display (device);
   Lisp_Object path_entry;
-  CONST char **directories;
+  const char **directories;
   int i=0,ndirs=0;
 
   EXTERNAL_LIST_LOOP (path_entry, font_path)
@@ -1842,11 +1931,13 @@ See also `x-get-font-path'.
       ndirs++;
     }
 
-  directories = alloca_array (CONST char *, ndirs);
+  directories = alloca_array (const char *, ndirs);
 
   EXTERNAL_LIST_LOOP (path_entry, font_path)
     {
-      GET_C_STRING_FILENAME_DATA_ALLOCA (XCAR (path_entry), directories[i++]);
+      TO_EXTERNAL_FORMAT (LISP_STRING, XCAR (path_entry),
+			  C_STRING_ALLOCA, directories[i++],
+			  Qfile_name);
     }
 
   expect_x_error (dpy);
@@ -1893,29 +1984,43 @@ syms_of_device_x (void)
 }
 
 void
+reinit_console_type_create_device_x (void)
+{
+  /* Initialize variables to speed up X resource interactions */
+  const char *valid_resource_chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+  while (*valid_resource_chars)
+    valid_resource_char_p[(unsigned int) (*valid_resource_chars++)] = 1;
+
+  name_char_dynarr  = Dynarr_new (char);
+  class_char_dynarr = Dynarr_new (char);
+}
+
+void
 console_type_create_device_x (void)
 {
+  reinit_console_type_create_device_x ();
   CONSOLE_HAS_METHOD (x, init_device);
   CONSOLE_HAS_METHOD (x, finish_init_device);
   CONSOLE_HAS_METHOD (x, mark_device);
   CONSOLE_HAS_METHOD (x, delete_device);
   CONSOLE_HAS_METHOD (x, device_system_metrics);
+}
 
-  {
-    /* Initialize variables to speed up X resource interactions */
-    CONST char *valid_resource_chars =
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-    while (*valid_resource_chars)
-      valid_resource_char_p[(unsigned int) (*valid_resource_chars++)] = 1;
+void
+reinit_vars_of_device_x (void)
+{
+  error_expected = 0;
+  error_occurred = 0;
 
-    name_char_dynarr  = Dynarr_new (char);
-    class_char_dynarr = Dynarr_new (char);
-  }
+  in_resource_setting = 0;
 }
 
 void
 vars_of_device_x (void)
 {
+  reinit_vars_of_device_x ();
+
   DEFVAR_LISP ("x-emacs-application-class", &Vx_emacs_application_class /*
 The X application class of the XEmacs process.
 This controls, among other things, the name of the `app-defaults' file
@@ -1958,9 +2063,4 @@ where the localized init files are.
 
   staticpro (&Vdefault_x_device);
   Vdefault_x_device = Qnil;
-
-  error_expected = 0;
-  error_occurred = 0;
-
-  in_resource_setting = 0;
 }

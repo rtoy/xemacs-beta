@@ -7,33 +7,22 @@
 
 /* Synched up with: FSF 19.28. */
 
-#include <../src/config.h>
+#include <config.h>
 
 #include <stdio.h>
 #include <ctype.h>
-#if __STDC__ || defined(STDC_HEADERS)
-# include <stdlib.h> /* for qsort() and malloc() */
-# include <string.h>
-static void *xmalloc (int);
-# ifndef CONST
-#  define CONST const
-# endif
-#else
-extern char *malloc ();
-static void *xmalloc ();
-# ifndef CONST
-#  define CONST
-# endif
-#endif
+#include <stdlib.h> /* for qsort() and malloc() */
+#include <string.h>
+static void *xmalloc (size_t);
 
 #define NUL	'\0'
 #define MARKER '\037'
 
 #define DEBUG 0
 
-typedef struct line LINE;
+typedef struct LINE LINE;
 
-struct line
+struct LINE
 {
   LINE *next;			/* ptr to next or NULL */
   char *line;			/* text of the line */
@@ -72,9 +61,9 @@ fatal (char *s1, char *s2)
 /* Like malloc but get fatal error if memory is exhausted.  */
 
 static void *
-xmalloc (int size)
+xmalloc (size_t size)
 {
-  char *result = malloc ((unsigned)size);
+  void *result = malloc (size);
   if (result == NULL)
     fatal ("%s", "virtual memory exhausted");
   return result;
@@ -83,9 +72,9 @@ xmalloc (int size)
 static char *
 strsav (char *str)
 {
-  char *buf = xmalloc (strlen (str) + 1);
-  (void) strcpy (buf, str);
-  return (buf);
+  char *buf = (char *) xmalloc (strlen (str) + 1);
+  strcpy (buf, str);
+  return buf;
 }
 
 /* Comparison function for qsort to call.  */
@@ -104,7 +93,7 @@ enum state
   WAITING, BEG_NAME, NAME_GET, BEG_DESC, DESC_GET
 };
 
-CONST char *states[] =
+const char *states[] =
 {
   "WAITING", "BEG_NAME", "NAME_GET", "BEG_DESC", "DESC_GET"
 };
@@ -209,12 +198,7 @@ main (int argc, char *argv[])
     /* sort the array by name; within each name, by type */
 
     qsort ((char*)array, cnt, sizeof (DOCSTR*),
-	   /* was cast to (int (*)(CONST void *, CONST void *))
-	      but that loses on HP because CONST_IS_LOSING. */
-	   /* This one loses too: (int (*)()) */
-	   /* Ok, so let's try const instead of CONST.  Fuck me!!! */
-	   (int (*)(const void *, const void *))
-	   cmpdoc);
+	   (int (*)(const void *, const void *)) cmpdoc);
 
     /* write the output header */
 
@@ -224,7 +208,8 @@ main (int argc, char *argv[])
     printf ("@unnumbered Command Summary for GNU Emacs\n");
     printf ("@table @asis\n");
     printf ("\n");
-    printf ("@let@ITEM@item\n");
+    printf ("@iftex\n");
+    printf ("@global@let@ITEM=@item\n");
     printf ("@def@item{@filbreak@vskip5pt@ITEM}\n");
     printf ("@font@tensy cmsy10 scaled @magstephalf\n");
     printf ("@font@teni cmmi10 scaled @magstephalf\n");
@@ -237,6 +222,7 @@ main (int argc, char *argv[])
     printf ("@chardef@@64\n");
     printf ("@catcode43=12\n");
     printf ("@tableindent-0.2in\n");
+    printf ("@end iftex\n");
 
     /* print each function from the array */
 
@@ -260,6 +246,7 @@ main (int argc, char *argv[])
 	    putchar ('\n');
 	  }
 	printf("@end display\n");
+	if ( i%200 == 0 && i != 0 ) printf("@end table\n\n@table @asis\n");
       }
 
     printf ("@end table\n");

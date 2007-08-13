@@ -32,8 +32,11 @@ Boston, MA 02111-1307, USA.  */
 #include "procimpl.h"
 #include "sysdep.h"
 
-#include <windows.h>
+#ifndef __MINGW32__
 #include <shellapi.h>
+#else
+#include <errno.h>
+#endif
 #include <signal.h>
 #ifdef HAVE_SOCKETS
 #include <winsock.h>
@@ -49,6 +52,7 @@ Lisp_Object Qnt_quote_process_args;
 struct nt_process_data
 {
   HANDLE h_process;
+  int need_enable_child_signals;
 };
 
 #define NT_DATA(p) ((struct nt_process_data*)((p)->process_data))
@@ -60,7 +64,7 @@ struct nt_process_data
 /* This one breaks process abstraction. Prototype is in console-msw.h,
    used by select_process method in event-msw.c */
 HANDLE
-get_nt_process_handle (struct Lisp_Process *p)
+get_nt_process_handle (Lisp_Process *p)
 {
   return (NT_DATA (p)->h_process);
 }
@@ -164,7 +168,7 @@ run_in_other_process (HANDLE h_process,
 		      LPVOID data, size_t data_size)
 {
   process_memory pm;
-  CONST size_t code_size = FRAGMENT_CODE_SIZE;
+  const size_t code_size = FRAGMENT_CODE_SIZE;
   /* Need at most 3 extra bytes of memory, for data alignment */
   size_t total_size = code_size + data_size + 3;
   LPVOID remote_data;
@@ -306,7 +310,8 @@ send_signal (HANDLE h_process, int signo)
 	sigkill_data d;
 	d.adr_ExitProcess = GetProcAddress (h_kernel, "ExitProcess");
 	assert (d.adr_ExitProcess);
-	retval = run_in_other_process (h_process, sigkill_proc,
+	retval = run_in_other_process (h_process, 
+				       (LPTHREAD_START_ROUTINE)sigkill_proc,
 				       &d, sizeof (d));
 	break;
       }
@@ -317,7 +322,8 @@ send_signal (HANDLE h_process, int signo)
 	  GetProcAddress (h_kernel, "GenerateConsoleCtrlEvent");
 	assert (d.adr_GenerateConsoleCtrlEvent);
 	d.event = CTRL_C_EVENT;
-	retval = run_in_other_process (h_process, sigint_proc,
+	retval = run_in_other_process (h_process, 
+				       (LPTHREAD_START_ROUTINE)sigint_proc,
 				       &d, sizeof (d));
 	break;
       }
@@ -341,7 +347,7 @@ enable_child_signals (HANDLE h_process)
   d.adr_SetConsoleCtrlHandler =
     GetProcAddress (h_kernel, "SetConsoleCtrlHandler");
   assert (d.adr_SetConsoleCtrlHandler);
-  run_in_other_process (h_process, sig_enable_proc,
+  run_in_other_process (h_process, (LPTHREAD_START_ROUTINE)sig_enable_proc,
 			&d, sizeof (d));
 }
   
@@ -368,13 +374,13 @@ validate_signal_number (int signo)
  */
 
 static void
-nt_alloc_process_data (struct Lisp_Process *p)
+nt_alloc_process_data (Lisp_Process *p)
 {
   p->process_data = xnew_and_zero (struct nt_process_data);
 }
 
 static void
-nt_finalize_process_data (struct Lisp_Process *p, int for_disksave)
+nt_finalize_process_data (Lisp_Process *p, int for_disksave)
 {
   assert (!for_disksave);
   if (NT_DATA(p)->h_process)
@@ -403,8 +409,6 @@ nt_init_process (void)
  * must signal an error instead.
  */
 
-/* #### This function completely ignores Vprocess_environment */
-
 static void
 signal_cannot_launch (Lisp_Object image_file, DWORD err)
 {
@@ -413,13 +417,14 @@ signal_cannot_launch (Lisp_Object image_file, DWORD err)
 }
 
 static int
-nt_create_process (struct Lisp_Process *p,
+nt_create_process (Lisp_Process *p,
 		   Lisp_Object *argv, int nargv,
 		   Lisp_Object program, Lisp_Object cur_dir)
 {
-  HANDLE hmyshove, hmyslurp, hprocin, hprocout;
+  HANDLE hmyshove, hmyslurp, hprocin, hprocout, hprocerr;
   LPTSTR command_line;
   BOOL do_io, windowed;
+  char *proc_env;
 
   /* Find out whether the application is windowed or not */
   {
@@ -467,6 +472,10 @@ nt_create_process (struct Lisp_Process *p,
       CreatePipe (&hprocin, &hmyshove, &sa, 0);
       CreatePipe (&hmyslurp, &hprocout, &sa, 0);
 
+      /* Duplicate the stdout handle for use as stderr */
+      DuplicateHandle(GetCurrentProcess(), hprocout, GetCurrentProcess(), &hprocerr,
+	0, TRUE, DUPLICATE_SAME_ACCESS);
+
       /* Stupid Win32 allows to create a pipe with *both* ends either
 	 inheritable or not. We need process ends inheritable, and local
 	 ends not inheritable. */
@@ -507,6 +516,80 @@ nt_create_process (struct Lisp_Process *p,
     UNGCPRO; /* args_or_ret */
   }
 
+  /* Set `proc_env' to a nul-separated array of the strings in
+     Vprocess_environment terminated by 2 nuls.  */
+ 
+  {
+    extern int compare_env (const char **strp1, const char **strp2);
+    char **env;
+    REGISTER Lisp_Object tem;
+    REGISTER char **new_env;
+    REGISTER int new_length = 0, i, new_space;
+    char *penv;
+    
+    for (tem = Vprocess_environment;
+ 	 (CONSP (tem)
+ 	  && STRINGP (XCAR (tem)));
+ 	 tem = XCDR (tem))
+      new_length++;
+    
+    /* new_length + 1 to include terminating 0.  */
+    env = new_env = alloca_array (char *, new_length + 1);
+ 
+    /* Copy the Vprocess_environment strings into new_env.  */
+    for (tem = Vprocess_environment;
+ 	 (CONSP (tem)
+ 	  && STRINGP (XCAR (tem)));
+ 	 tem = XCDR (tem))
+      {
+	char **ep = env;
+	char *string = (char *) XSTRING_DATA (XCAR (tem));
+	/* See if this string duplicates any string already in the env.
+	   If so, don't put it in.
+	   When an env var has multiple definitions,
+	   we keep the definition that comes first in process-environment.  */
+	for (; ep != new_env; ep++)
+	  {
+	    char *p = *ep, *q = string;
+	    while (1)
+	      {
+		if (*q == 0)
+		  /* The string is malformed; might as well drop it.  */
+		  goto duplicate;
+		if (*q != *p)
+		  break;
+		if (*q == '=')
+		  goto duplicate;
+		p++, q++;
+	      }
+	  }
+	*new_env++ = string;
+      duplicate: ;
+      }
+    *new_env = 0;
+    
+    /* Sort the environment variables */
+    new_length = new_env - env;
+    qsort (env, new_length, sizeof (char *), compare_env);
+    
+    /* Work out how much space to allocate */
+    new_space = 0;
+    for (i = 0; i < new_length; i++)
+      {
+ 	new_space += strlen(env[i]) + 1;
+      }
+    new_space++;
+    
+    /* Allocate space and copy variables into it */
+    penv = proc_env = alloca(new_space);
+    for (i = 0; i < new_length; i++)
+      {
+ 	strcpy(penv, env[i]);
+ 	penv += strlen(env[i]) + 1;
+      }
+    *penv = 0;
+  }
+  
   /* Create process */
   {
     STARTUPINFO si;
@@ -520,14 +603,14 @@ nt_create_process (struct Lisp_Process *p,
       {
 	si.hStdInput = hprocin;
 	si.hStdOutput = hprocout;
-	si.hStdError = hprocout;
+	si.hStdError = hprocerr;
 	si.dwFlags |= STARTF_USESTDHANDLES;
       }
 
     err = (CreateProcess (NULL, command_line, NULL, NULL, TRUE,
 			  CREATE_NEW_CONSOLE | CREATE_NEW_PROCESS_GROUP
 			  | CREATE_SUSPENDED,
-			  NULL, (char *) XSTRING_DATA (cur_dir), &si, &pi)
+			  proc_env, (char *) XSTRING_DATA (cur_dir), &si, &pi)
 	   ? 0 : GetLastError ());
 
     if (do_io)
@@ -535,6 +618,7 @@ nt_create_process (struct Lisp_Process *p,
 	/* These just have been inherited; we do not need a copy */
 	CloseHandle (hprocin);
 	CloseHandle (hprocout);
+	CloseHandle (hprocerr);
       }
     
     /* Handle process creation failure */
@@ -561,15 +645,19 @@ nt_create_process (struct Lisp_Process *p,
 	CloseHandle (pi.hProcess);
       }
 
-    if (!windowed)
-      enable_child_signals (pi.hProcess);
-
     ResumeThread (pi.hThread);
     CloseHandle (pi.hThread);
 
-    /* Hack to support Windows 95 negative pids */
-    return ((int)pi.dwProcessId < 0
-	    ? -(int)pi.dwProcessId : (int)pi.dwProcessId);
+    /* Remember to enable child signals later if this is not a windowed
+       app.  Can't do it right now because that screws up the MKS Toolkit
+       shell. */
+    if (!windowed)
+      {
+	NT_DATA(p)->need_enable_child_signals = 10;
+	kick_status_notify ();
+      }
+
+    return ((int)pi.dwProcessId);
   }
 }
 
@@ -582,9 +670,21 @@ nt_create_process (struct Lisp_Process *p,
  */
 
 static void
-nt_update_status_if_terminated (struct Lisp_Process* p)
+nt_update_status_if_terminated (Lisp_Process* p)
 {
   DWORD exit_code;
+
+  if (NT_DATA(p)->need_enable_child_signals > 1)
+    {
+      NT_DATA(p)->need_enable_child_signals -= 1;
+      kick_status_notify ();
+    }
+  else if (NT_DATA(p)->need_enable_child_signals == 1)
+    {
+      enable_child_signals(NT_DATA(p)->h_process);
+      NT_DATA(p)->need_enable_child_signals = 0;
+    }
+
   if (GetExitCodeProcess (NT_DATA(p)->h_process, &exit_code)
       && exit_code != STILL_ACTIVE)
     {
@@ -616,7 +716,8 @@ nt_update_status_if_terminated (struct Lisp_Process* p)
 static void
 nt_send_process (Lisp_Object proc, struct lstream* lstream)
 {
-  struct Lisp_Process *p = XPROCESS (proc);
+  volatile Lisp_Object vol_proc = proc;
+  Lisp_Process *volatile p = XPROCESS (proc);
 
   /* use a reasonable-sized buffer (somewhere around the size of the
      stream buffer) so as to avoid inundating the stream with blocked
@@ -626,7 +727,7 @@ nt_send_process (Lisp_Object proc, struct lstream* lstream)
 
   while (1)
     {
-      int writeret;
+      ssize_t writeret;
 
       chunklen = Lstream_read (lstream, chunkbuf, 128);
       if (chunklen <= 0)
@@ -646,7 +747,7 @@ nt_send_process (Lisp_Object proc, struct lstream* lstream)
 	  p->core_dumped = 0;
 	  p->tick++;
 	  process_tick++;
-	  deactivate_process (proc);
+	  deactivate_process (*((Lisp_Object *) (&vol_proc)));
 	  error ("Broken pipe error sending to process %s; closed it",
 		 XSTRING_DATA (p->name));
 	}
@@ -684,7 +785,15 @@ static void
 nt_kill_child_process (Lisp_Object proc, int signo,
 		       int current_group, int nomsg)
 {
-  struct Lisp_Process *p = XPROCESS (proc);
+  Lisp_Process *p = XPROCESS (proc);
+
+  /* Enable child signals if necessary.  This may lose the first
+     but it's better than nothing. */
+  if (NT_DATA(p)->need_enable_child_signals > 0)
+    {
+      enable_child_signals(NT_DATA(p)->h_process);
+      NT_DATA(p)->need_enable_child_signals = 0;
+    }
 
   /* Signal error if SIGNO cannot be sent */
   validate_signal_number (signo);
@@ -779,6 +888,12 @@ get_internet_address (Lisp_Object host, struct sockaddr_in *address,
 	  /* Ok, got an answer */
 	  if (WSAGETASYNCERROR(msg.lParam) == NO_ERROR)
 	    success = 1;
+	  else
+	    {
+	      warn_when_safe(Qstream, Qwarning,
+			     "cannot get IP address for host \"%s\"",
+			     XSTRING_DATA (host));
+	    }
 	  goto done;
 	}
       else if (msg.message == WM_TIMER && msg.wParam == SOCK_TIMER_ID)
@@ -828,7 +943,7 @@ nt_canonicalize_host_name (Lisp_Object host)
 
 static void
 nt_open_network_stream (Lisp_Object name, Lisp_Object host, Lisp_Object service,
-			Lisp_Object family, void** vinfd, void** voutfd)
+			Lisp_Object protocol, void** vinfd, void** voutfd)
 {
   struct sockaddr_in address;
   SOCKET s;
@@ -837,9 +952,9 @@ nt_open_network_stream (Lisp_Object name, Lisp_Object host, Lisp_Object service,
 
   CHECK_STRING (host);
 
-  if (!EQ (family, Qtcpip))
-    error ("Unsupported protocol family \"%s\"",
-	   string_data (symbol_name (XSYMBOL (family))));
+  if (!EQ (protocol, Qtcp))
+    error ("Unsupported protocol \"%s\"",
+	   string_data (symbol_name (XSYMBOL (protocol))));
 
   if (INTP (service))
     port = htons ((unsigned short) XINT (service));
@@ -862,14 +977,13 @@ nt_open_network_stream (Lisp_Object name, Lisp_Object host, Lisp_Object service,
 
   /* We don't want to be blocked on connect */
   {
-    unsigned int nonblock = 1;
+    unsigned long nonblock = 1;
     ioctlsocket (s, FIONBIO, &nonblock);
   }
   
   retval = connect (s, (struct sockaddr *) &address, sizeof (address));
   if (retval != NO_ERROR && WSAGetLastError() != WSAEWOULDBLOCK)
     goto connect_failed;
-
   /* Wait while connection is established */
   while (1)
     {
@@ -912,6 +1026,18 @@ nt_open_network_stream (Lisp_Object name, Lisp_Object host, Lisp_Object service,
 
  connect_failed:  
   closesocket (s);
+  if (INTP (service)) {
+    warn_when_safe(Qstream, Qwarning,
+		   "failure to open network stream to host \"%s\" for service \"%d\"",
+		   XSTRING_DATA (host),
+		   (unsigned short) XINT (service));
+  }
+  else {
+    warn_when_safe(Qstream, Qwarning,
+		   "failure to open network stream to host \"%s\" for service \"%s\"",
+		   XSTRING_DATA (host),
+		   XSTRING_DATA (service));
+  }
   report_file_error ("connection failed", list2 (host, name));
 }
 

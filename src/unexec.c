@@ -136,7 +136,7 @@ before writing it (above and beyond the number of bytes of actual
 program text).  HDR's standard fields are already correct, except that
 this adjustment to the `a_text' field has not yet been made;
 thus, the amount of offset can depend on the data in the file.
-  
+
 * A_TEXT_SEEK(HDR)
 
 If defined, this macro specifies the number of bytes to seek into the
@@ -186,19 +186,12 @@ pointer looks like an int) but not on all machines.
 #  undef _POSIX_SOURCE
 # endif
 
-# if defined(__lucid) && !defined(__STDC_EXTENDED__)
-#  define __STDC_EXTENDED__ 1
-# endif
-
 # include <stddef.h>
 # include <stdlib.h>
 # include <unistd.h>
 # include <string.h>
 # include <stddef.h>
-
-# ifdef __lucid
-#  include <sysent.h>
-# endif
+# include <errno.h>
 
 #endif
 
@@ -373,14 +366,12 @@ static int pagemask;
 #include "lisp.h"
 
 static void
-report_error (file, fd)
-     CONST char *file;
-     int fd;
+report_error (const char *file, int fd)
 {
   if (fd)
     close (fd);
   report_file_error ("Cannot unexec",
-		     Fcons (build_ext_string (file, FORMAT_FILENAME), Qnil));
+		     Fcons (build_ext_string (file, Qfile_name), Qnil));
 }
 #endif /* emacs */
 
@@ -391,7 +382,7 @@ report_error (file, fd)
 static void
 report_error_1 (fd, msg, a1, a2)
      int fd;
-     CONST char *msg;
+     const char *msg;
      int a1, a2;
 {
   close (fd);
@@ -443,7 +434,7 @@ unexec (new_name, a_name, data_start, bss_start, entry_address)
     {
       close (new);
       /* unlink (new_name);	    	/ * Failed, unlink new a.out */
-      return -1;	
+      return -1;
     }
 
   close (new);
@@ -998,7 +989,7 @@ copy_text_and_data (int new, int a_out)
     char c;
     int mcount_address, mcount_offset, count;
     extern char *_execname;
-   
+
 
     /* The use of _execname is incompatible with RISCiX 1.1 */
     sprintf (command, "nm %s | fgrep mcount", _execname);
@@ -1018,7 +1009,7 @@ copy_text_and_data (int new, int a_out)
     {
       sprintf (errbuf, "Failed to execute the command '%s'\n", command);
       PERROR (errbuf);
-    }  
+    }
 
     sscanf(address_text, "%x", &mcount_address);
     ptr = (char *) unexec_text_start;
@@ -1076,7 +1067,6 @@ write_segment (new, ptr, end)
 #if 0
   char buf[80];
 #endif
-  extern int errno;
   /* This is the normal amount to write at once.
      It is the size of block that NFS uses.  */
   int writesize = 1 << 13;
