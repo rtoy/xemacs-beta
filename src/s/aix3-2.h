@@ -16,7 +16,9 @@
    additional optimization.  --nils@exp-math.uni-essen.de */
 /* XEmacs change: maxmem=-1 means unlimited.  Suggested by
    dkeller@VNET.IBM.COM */
+#if 0 /* mrb */
 #define C_SWITCH_SYSTEM "-ma -qmaxmem=-1"
+#endif /* mrb */
 #else
 /* Otherwise, XEmacs is just too big ... */
 #define C_SWITCH_SYSTEM "-mminimal-toc"

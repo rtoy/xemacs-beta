@@ -4,9 +4,11 @@
 
 #include "aix4.h"
 
+#if 0 /* mrb */
 /* olson@mcs.anl.gov says -li18n is needed by -lXm.  */
 #undef LIB_MOTIF
 #define LIB_MOTIF "-lXm -li18n"
+#endif /* mrb */
 
 #ifdef __GNUC__
 #undef _NO_PROTO

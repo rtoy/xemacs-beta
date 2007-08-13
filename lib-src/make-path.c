@@ -26,14 +26,14 @@ Boston, MA 02111-1307, USA.  */
    command on some of the purer BSD systems (like Mt. Xinu) don't have
    that option. */
 
+#ifdef emacs
+#include <../src/config.h>
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
 #include <errno.h>
-
-#ifdef emacs
-#include <../src/config.h>
-#endif
 
 extern int errno;
 

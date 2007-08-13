@@ -184,6 +184,18 @@ extern int gc_in_progress;
   XRECORD_LHEADER (obj)->implementation->finalizer ==			\
   this_marks_a_marked_record)
 
+
+/* moved here from alloc.c so that lisp.h macros can use them. */
+#define MARKED_RECORD_HEADER_P(lheader) \
+  (((lheader)->implementation->finalizer) == this_marks_a_marked_record)
+#define UNMARKABLE_RECORD_HEADER_P(lheader) \
+  (((lheader)->implementation->marker) == this_one_is_unmarkable)
+#define MARK_RECORD_HEADER(lheader) \
+  do { (((lheader)->implementation)++); } while (0)
+#define UNMARK_RECORD_HEADER(lheader) \
+  do { (((lheader)->implementation)--); } while (0)
+
+
 /* Declaring the following structures as const puts them in the
    text (read-only) segment, which makes debugging inconvenient
    because this segment is not mapped when processing a core-

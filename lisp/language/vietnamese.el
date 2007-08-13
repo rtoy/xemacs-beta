@@ -2,25 +2,26 @@
 
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
+;; Copyright (C) 1997 MORIOKA Tomohiko
 
 ;; Keywords: multilingual, Vietnamese
 
-;; This file is part of GNU Emacs.
+;; This file is part of XEmacs.
 
-;; GNU Emacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
 ;;; Commentary:
 
@@ -106,135 +107,268 @@ Both tables are indexed by the position code of Vietnamese characters.")
 
 )
 
-(define-ccl-program ccl-decode-viscii
-  `(3
-    ((read r0)
+(define-ccl-program ccl-read-viscii
+  `(((read r0)
      (loop
-      (write-read-repeat r0 ,viet-viscii-decode-table))
+       (write-read-repeat r0 ,viet-viscii-decode-table))
      ))
-  "CCL program to decode VISCII 1.1")
+  "CCL program to read VISCII 1.1")
+
+;; (define-ccl-program ccl-decode-viscii
+;;   `(3
+;;     ((read r0)
+;;      (loop
+;;       (write-read-repeat r0 ,viet-viscii-decode-table))
+;;      ))
+;;   "CCL program to decode VISCII 1.1")
 
 ;; Multibyte form of a Vietnamese character is as follows (3-byte):
 ;;   LEADING-CODE-PRIVATE-11 LEADING-CODE-EXTENDED-11 POSITION-CODE
 ;; where LEADING-CODE-EXTENDED-11 for Vietnamese is
 ;; `vietnamese-viscii-lower' or `vietnamese-viscii-upper'.
 
-(define-ccl-program ccl-encode-viscii
-  `(1
-     ((read r0)
-      (loop
+(define-ccl-program ccl-write-viscii
+  `(((read r0)
+     (loop
        (if (r0 < 128)
-	   ;; ASCII
 	   (write-read-repeat r0)
-	 ;; not ASCII
-	 (if (r0 != ,leading-code-private-11)
-	     ;; not Vietnamese
+	 (if (r0 != 154)
 	     (write-read-repeat r0)
-	   ((read-if (r0 == ,(charset-id 'vietnamese-viscii-lower))
-	     (;; Vietnamese lower
-	      (read r0)
-	      (r0 -= 128)
-	      (write-read-repeat r0 ,(car viet-viscii-encode-table)))
-	     (if (r0 == ,(charset-id 'vietnamese-viscii-upper))
-		 (;; Vietnamese upper
-		  (read r0)
-		  (r0 -= 128)
-		  (write-read-repeat r0 ,(cdr viet-viscii-encode-table)))
-	       ;; not Vietnamese
-	       (write-read-repeat r0)))))))))
-  "CCL program to encode VISCII 1.1")
+	   ((read-if (r0 == 163)
+	     ((read r0)
+	      (r0 -= 160)
+	      (write-read-repeat r0 ,(car viet-viscii-encode-table))
+	      (if (r0 == 164)
+		  ((read r0)
+		   (r0 -= 160)
+		   (write-read-repeat r0 ,(cdr viet-viscii-encode-table)))
+		(write-read-repeat r0))))))))))
+  "CCL program to write VISCII 1.1")
 
-(define-ccl-program ccl-encode-viscii-font
-  `(0
-    ;; In:  R0:vietnamese-viscii-lower/vietnamese-viscii-upper
-    ;;      R1:position code
-    ;; Out: R1:font code point
-    (if (r0 == ,(charset-id 'vietnamese-viscii-lower))
-	(r1 = r1 ,(car viet-viscii-encode-table))
-      (r1 = r1 ,(cdr viet-viscii-encode-table)))
-    )
-  "CCL program to encode Vietnamese chars to VISCII 1.1 font")
+;; (define-ccl-program ccl-encode-viscii
+;;   `(1
+;;      ((read r0)
+;;       (loop
+;;        (if (r0 < 128)
+;;            ;; ASCII
+;;            (write-read-repeat r0)
+;;          ;; not ASCII
+;;          (if (r0 != ,leading-code-private-11)
+;;              ;; not Vietnamese
+;;              (write-read-repeat r0)
+;;            ((read-if (r0 == ,(charset-id 'vietnamese-viscii-lower))
+;;              (;; Vietnamese lower
+;;               (read r0)
+;;               (r0 -= 128)
+;;               (write-read-repeat r0 ,(car viet-viscii-encode-table)))
+;;              (if (r0 == ,(charset-id 'vietnamese-viscii-upper))
+;;                  (;; Vietnamese upper
+;;                   (read r0)
+;;                   (r0 -= 128)
+;;                   (write-read-repeat r0 ,(cdr viet-viscii-encode-table)))
+;;                ;; not Vietnamese
+;;                (write-read-repeat r0)))))))))
+;;   "CCL program to encode VISCII 1.1")
 
-(define-ccl-program ccl-decode-vscii
-  `(3
-    ((read r0)
+(define-ccl-program ccl-vietnamese-lower-to-viscii
+  `(((r1 = r1
+	 ,(car viet-viscii-encode-table))))
+  "CCL program to convert chars of 'vietnamese-lower to VISCII 1.1 font")
+
+(define-ccl-program ccl-vietnamese-upper-to-viscii
+  `(((r1 = r1
+	 ,(cdr viet-viscii-encode-table))))
+  "CCL program to convert chars of 'vietnamese-upper to VISCII 1.1 font")
+
+;; (define-ccl-program ccl-encode-viscii-font
+;;   `(0
+;;     ;; In:  R0:vietnamese-viscii-lower/vietnamese-viscii-upper
+;;     ;;      R1:position code
+;;     ;; Out: R1:font code point
+;;     (if (r0 == ,(charset-id 'vietnamese-viscii-lower))
+;;         (r1 = r1 ,(car viet-viscii-encode-table))
+;;       (r1 = r1 ,(cdr viet-viscii-encode-table)))
+;;     )
+;;   "CCL program to encode Vietnamese chars to VISCII 1.1 font")
+
+(define-ccl-program ccl-read-vscii
+  `(((read r0)
+      (loop
+	(write-read-repeat r0 ,viet-vscii-decode-table))
+      ))
+  "CCL program to read VSCII-1.")
+
+;; (define-ccl-program ccl-decode-vscii
+;;   `(3
+;;     ((read r0)
+;;      (loop
+;;       (write-read-repeat r0 ,viet-vscii-decode-table))
+;;      ))
+;;   "CCL program to decode VSCII-1.")
+
+(define-ccl-program ccl-write-vscii
+  `(((read r0)
      (loop
-      (write-read-repeat r0 ,viet-vscii-decode-table))
-     ))
-  "CCL program to decode VSCII-1.")
+       (if (r0 < 128)
+	   (write-read-repeat r0)
+	 (if (r0 != 154)
+	     (write-read-repeat r0)
+	   (read-if (r0 == 163)
+		    ((read r0)
+		     (r0 -= 160)
+		     (write-read-repeat r0 ,(car viet-vscii-encode-table)))
+		    (if (r0 == 164)
+			((read r0)
+			 (r0 -= 160)
+			 (write-read-repeat
+			  r0 ,(cdr viet-viscii-encode-table)))
+		      (write-read-repeat r0))))))))
+  "CCL program to write VSCII-1.")
 
-(define-ccl-program ccl-encode-vscii
-  `(1
-    ((read r0)
-     (loop
-      (if (r0 < 128)
-	  ;; ASCII
-	  (write-read-repeat r0)
-	;; not ASCII 
-	(if (r0 != ,leading-code-private-11)
-	    ;; not Vietnamese
-	    (write-read-repeat r0)
-	  (read-if (r0 == ,(charset-id 'vietnamese-viscii-lower))
-		   (;; Vietnamese lower
-		    (read r0)
-		    (r0 -= 128)
-		    (write-read-repeat r0 ,(car viet-vscii-encode-table)))
-		   (if (r0 == ,(charset-id 'vietnamese-viscii-upper))
-		       (;; Vietnamese upper
-			(read r0)
-			(r0 -= 128)
-			(write-read-repeat r0 ,(cdr viet-viscii-encode-table)))
-		     ;; not Vietnamese
-		     (write-read-repeat r0))))))))
-  "CCL program to encode VSCII-1.")
+;; (define-ccl-program ccl-encode-vscii
+;;   `(1
+;;     ((read r0)
+;;      (loop
+;;       (if (r0 < 128)
+;;           ;; ASCII
+;;           (write-read-repeat r0)
+;;         ;; not ASCII 
+;;         (if (r0 != ,leading-code-private-11)
+;;             ;; not Vietnamese
+;;             (write-read-repeat r0)
+;;           (read-if (r0 == ,(charset-id 'vietnamese-viscii-lower))
+;;                    (;; Vietnamese lower
+;;                     (read r0)
+;;                     (r0 -= 128)
+;;                     (write-read-repeat r0 ,(car viet-vscii-encode-table)))
+;;                    (if (r0 == ,(charset-id 'vietnamese-viscii-upper))
+;;                        (;; Vietnamese upper
+;;                         (read r0)
+;;                         (r0 -= 128)
+;;                         (write-read-repeat r0 ,(cdr viet-viscii-encode-table)))
+;;                      ;; not Vietnamese
+;;                      (write-read-repeat r0))))))))
+;;   "CCL program to encode VSCII-1.")
 
-(define-ccl-program ccl-encode-vscii-font
-  `(0
-    ;; In:  R0:vietnamese-viscii-lower/vietnamese-viscii-upper
-    ;;      R1:position code
-    ;; Out: R1:font code point
-    (if (r0 == ,(charset-id 'vietnamese-viscii-lower))
-	(r1 = r1 ,(car viet-vscii-encode-table))
-      (r1 = r1 ,(cdr viet-vscii-encode-table)))
-    )
-  "CCL program to encode Vietnamese chars to VSCII-1 font.")
+(define-ccl-program ccl-vietnamese-lower-to-vscii
+  '(((r1 = r1
+       [  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+	  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+	  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+	  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+	  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+	  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+	  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+	  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+	  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+	  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+	  0 190 187 198 202 199 200 203 207 209 213 210 211 212 214 232
+	229 230 231   0   0 233 234 235 222   0   0   0   0   0 237   0
+	  0   0   0   0   0   0 188 189   0   0   0   0   0   0   0 250
+	  0 248   0   0   0 185 251 245 246   0   0 252 254   0 236   0
+	181 184 169 183 182 168 247 201 204 208 170 206 215 221 220 216
+	174 249 223 227 171 226 225 228 244 239 243 242 241 253 238   0
+	])))
+  "CCL program to convert chars of 'vietnamese-lower to VSCII-1 font.")
+
+(define-ccl-program ccl-vietnamese-upper-to-vscii
+  '(((r1 = r1
+       [  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+	  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+	  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+	  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+	  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+	  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+	  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+	  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+	  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+	  0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0
+	  0 192 175 133   0 196 194 134 137 139 218 197 205 217 140 255
+	219 224 240   0   0 151 152 153 145   0   0   0   0 165 155   0
+	  0   0   0   0   0   0 186 191   0   0   0   0   0   0   0  19
+	  0  17   0   0   0 132  20   4   5   0   0  21  23   0 154 166
+	128 131 162 130 129 161   6 195 135 138 163 136 141 144 143 142
+	167   0 146 149 164 148 147 150   2 157   1 159 158  22 156   0
+	])))
+  "CCL program to convert chars of 'vietnamese-upper to VSCII-1 font.")
+
+;; (define-ccl-program ccl-encode-vscii-font
+;;   `(0
+;;     ;; In:  R0:vietnamese-viscii-lower/vietnamese-viscii-upper
+;;     ;;      R1:position code
+;;     ;; Out: R1:font code point
+;;     (if (r0 == ,(charset-id 'vietnamese-viscii-lower))
+;;         (r1 = r1 ,(car viet-vscii-encode-table))
+;;       (r1 = r1 ,(cdr viet-vscii-encode-table)))
+;;     )
+;;   "CCL program to encode Vietnamese chars to VSCII-1 font.")
 
 
 (make-coding-system
- 'vietnamese-viscii 4 ?V
- "8-bit encoding for Vietnamese VISCII 1.1 (MIME:VISCII)"
- (cons ccl-decode-viscii ccl-encode-viscii))
+ 'viscii 'ccl
+ "Coding-system used for VISCII 1.1."
+ `(mnemonic "VISCII"
+   decode ,ccl-read-viscii
+   encode ,ccl-write-viscii))
 
-(define-coding-system-alias 'viscii 'vietnamese-viscii)
+;; (make-coding-system
+;;  'vietnamese-viscii 4 ?V
+;;  "8-bit encoding for Vietnamese VISCII 1.1 (MIME:VISCII)"
+;;  (cons ccl-decode-viscii ccl-encode-viscii))
+
+;; (define-coding-system-alias 'viscii 'vietnamese-viscii)
 
 (make-coding-system
- 'vietnamese-vscii 4 ?v
- "8-bit encoding for Vietnamese VSCII-1"
- (cons ccl-decode-vscii ccl-encode-vscii))
+ 'vscii 'ccl
+ "Coding-system used for VSCII 1.1."
+ `(mnemonic "VSCII"
+   decode ,ccl-read-vscii
+   encode ,ccl-write-vscii))
 
-(define-coding-system-alias 'vscii 'vietnamese-vscii)
+;; (make-coding-system
+;;  'vietnamese-vscii 4 ?v
+;;  "8-bit encoding for Vietnamese VSCII-1"
+;;  (cons ccl-decode-vscii ccl-encode-vscii))
+
+;; (define-coding-system-alias 'vscii 'vietnamese-vscii)
 
 (make-coding-system
- 'vietnamese-viqr 0 ?q
- "Vietnamese latin transcription (VIQR)"
- nil)
-(put 'vietnamese-viqr 'post-read-conversion 'viqr-post-read-conversion)
-(put 'vietnamese-viqr 'pre-write-conversion 'viqr-pre-write-conversion)
+ 'viqr 'no-conversion
+ "Coding-system used for VIQR."
+ '(mnemonic "VIQR"
+   eol-type lf
+   post-read-conversion viqr-post-read-conversion
+   pre-write-conversion viqr-pre-write-conversion))
 
-(define-coding-system-alias 'viqr 'vietnamese-viqr)
+;; (make-coding-system
+;;  'vietnamese-viqr 0 ?q
+;;  "Vietnamese latin transcription (VIQR)"
+;;  nil)
+;; (put 'vietnamese-viqr 'post-read-conversion 'viqr-post-read-conversion)
+;; (put 'vietnamese-viqr 'pre-write-conversion 'viqr-pre-write-conversion)
 
-(setq font-ccl-encoder-alist
-      (cons (cons "viscii" ccl-encode-viscii-font) font-ccl-encoder-alist))
+;; (define-coding-system-alias 'viqr 'vietnamese-viqr)
 
-(setq font-ccl-encoder-alist
-      (cons (cons "vscii" ccl-encode-vscii-font) font-ccl-encoder-alist))
+;; For VISCII users
+(set-charset-ccl-program 'vietnamese-viscii-lower
+			 ccl-vietnamese-lower-to-viscii)
+(set-charset-ccl-program 'vietnamese-viscii-upper
+			 ccl-vietnamese-upper-to-viscii)
+;; For VSCII users
+;; (set-charset-ccl-program 'vietnamese-lower ccl-vietnamese-lower-to-vscii)
+;; (set-charset-ccl-program 'vietnamese-upper ccl-vietnamese-upper-to-vscii)
+
+;; (setq font-ccl-encoder-alist
+;;       (cons (cons "viscii" ccl-encode-viscii-font) font-ccl-encoder-alist))
+
+;; (setq font-ccl-encoder-alist
+;;       (cons (cons "vscii" ccl-encode-vscii-font) font-ccl-encoder-alist))
 
 (set-language-info-alist
  "Vietnamese" '((setup-function . setup-vietnamese-environment)
 		(charset . (vietnamese-viscii-lower
 			    vietnamese-viscii-upper))
-		(coding-system . (vietnamese-viscii vietnamese-vscii
-				  vietnamese-viqr))
+		(coding-system . (viscii vscii viqr))
 		(sample-text . "Vietnamese (Ti,1*(Bng Vi,1.(Bt)	Ch,1`(Bo b,1U(Bn")
 		(documentation . "\
 For Vietnamese, Emacs uses special charasets internally.

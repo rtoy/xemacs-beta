@@ -417,10 +417,10 @@ One annotation each for foreground color, background color, italic, etc."
 	  (t
 	   (let* ((fg (and (not (eq (face-foreground face)
 				    (face-foreground 'default)))
-			   (color-instance-name (face-foreground face))))
+			   (color-name (face-foreground face))))
 		  (bg (and (not (eq (face-background face)
 				    (face-background 'default)))
-			   (color-instance-name (face-background face))))
+			   (color-name (face-background face))))
 		  (ans '()))
 	     (if fg (setq ans (cons (list "x-color" fg) ans)))
 	     (if bg (setq ans (cons (list "x-bg-color" bg) ans)))

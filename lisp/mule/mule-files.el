@@ -26,17 +26,9 @@
 ;;; Derived from mule.el in the original Mule but heavily modified
 ;;; by Ben Wing.
 
-;; 1997/3/11 modified by MORIOKA Tomohiko to sync with Emacs/mule API.
+;; 1997/3/11 modified by MORIOKA Tomohiko to sync with Emacs 20 API.
 
 ;;; Code:
-
-;;;; #### also think more about `binary' vs. `no-conversion'
-
-;; Use `no-conversion' instead of `binary', because Emacs/mule does
-;; not have `binary' coding-system.
-
-;; also think more about `internal'.
-
 
 (setq-default buffer-file-coding-system 'iso-2022-8)
 (put 'buffer-file-coding-system 'permanent-local t)
@@ -49,7 +41,7 @@
   'overriding-file-coding-system
   'coding-system-for-read)
 
-(defvar buffer-file-coding-system-for-read 'automatic-conversion
+(defvar buffer-file-coding-system-for-read 'undecided
   "Coding system used when reading a file.
 This provides coarse-grained control; for finer-grained control, use
 `file-coding-system-alist'.  From a Lisp program, if you wish to
@@ -66,6 +58,7 @@ global environment specification.")
   '(("\\.elc$" . (binary . binary))
     ("loaddefs.el$" . (binary . binary))
     ("\\.tar$" . (binary . binary))
+    ("TUTORIAL\\.hr$" . iso-8859-2)
     ;; ("\\.\\(el\\|emacs\\|info\\(-[0-9]+\\)?\\|texi\\)$" . iso-2022-8)
     ;; ("\\(ChangeLog\\|CHANGES-beta\\)$" . iso-2022-8)
     ("\\.\\(gz\\|Z\\)$" . binary)
@@ -194,7 +187,7 @@ message might be in a different encoding."
 	  (if (re-search-forward "^From" nil 'move)
 	      (beginning-of-line))
 	  (setq end (point))
-	  (decode-coding-region start end 'automatic-conversion))))))
+	  (decode-coding-region start end 'undecided))))))
 
 (defun find-coding-system-magic-cookie ()
   "Look for the coding-system magic cookie in the current buffer.\n"
@@ -209,15 +202,38 @@ message might be in a different encoding."
 "charsets."
   (save-excursion
     (goto-char (point-min))
-    (let ((case-fold-search nil))
-      (if (search-forward ";;;###coding system: " (+ (point-min) 3000) t)
-	  (let ((start (point))
-		(end (progn
-		       (skip-chars-forward "^ \t\n\r")
-		       (point))))
-	    (if (> end start)
-		(let ((codesys (intern (buffer-substring start end))))
-		  (if (find-coding-system codesys) codesys))))))))
+    (or (and (looking-at "^-\\*-[^\n]*coding: \\([^ \t\n;]+\\);[^\n]*-\\*-")
+	     (let ((codesys (intern (buffer-substring
+				     (match-beginning 1)(match-end 1)))))
+	       (if (find-coding-system codesys) codesys)))
+        ;; (save-excursion
+        ;;   (let (start end)
+        ;;     (and (re-search-forward "^;+[ \t]*Local Variables:" nil t)
+        ;;          (setq start (match-end 0))
+        ;;          (re-search-forward "\n;+[ \t]*End:")
+        ;;          (setq end (match-beginning 0))
+        ;;          (save-restriction
+        ;;            (narrow-to-region start end)
+        ;;            (goto-char start)
+        ;;            (re-search-forward "^;;; coding: \\([^\n]+\\)$" nil t)
+        ;;            )
+        ;;          (let ((codesys
+        ;;                 (intern (buffer-substring
+        ;;                          (match-beginning 1)(match-end 1)))))
+        ;;            (if (find-coding-system codesys) codesys))
+        ;;          )))
+	(let ((case-fold-search nil))
+	  (if (search-forward
+	       ";;;###coding system: " (+ (point-min) 3000) t)
+	      (let ((start (point))
+		    (end (progn
+			   (skip-chars-forward "^ \t\n\r")
+			   (point))))
+		(if (> end start)
+		    (let ((codesys (intern (buffer-substring start end))))
+		      (if (find-coding-system codesys) codesys)))
+		)))
+	)))
 
 (defun load (file &optional noerror nomessage nosuffix)
   "Execute a file of Lisp code named FILE.
@@ -251,20 +267,24 @@ Return t if file exists."
 	  ;; use string= instead of string-match to keep match-data.
 	  (if (string= ".elc" (downcase (substring path -4)))
 	      ;; if reading a byte-compiled file and we didn't find
-	      ;; a coding-system magic cookie, then use `no-conversion'.
+	      ;; a coding-system magic cookie, then use `binary'.
 	      ;; We need to guarantee that we never do autodetection
 	      ;; on byte-compiled files because confusion here would
 	      ;; be a very bad thing.  Pre-existing byte-compiled
-	      ;; files are always in the `no-conversion' system.
+	      ;; files are always in the `binary' coding system.
 	      ;; Also, byte-compiled files always use `lf' to terminate
 	      ;; a line; don't risk confusion here either.
-	      (if (not __codesys__)
-		  (setq __codesys__ 'no-conversion))
+	      (or __codesys__
+		  (setq __codesys__ 'binary))
 	    ;; otherwise use `buffer-file-coding-system-for-read', as normal
 	    ;; #### need to do some looking up in
 	    ;; ####	file-coding-system-alist!
-	    (if (not __codesys__)
-		(setq __codesys__ buffer-file-coding-system-for-read)))
+	    (or __codesys__
+		(setq __codesys__
+		      (or (find-file-coding-system-for-read-from-filename
+			   file)
+			  buffer-file-coding-system-for-read)))
+	    )
 	  ;; now use the internal load to actually load the file.
 	  (load-internal file noerror nomessage nosuffix __codesys__))))))
 
@@ -378,9 +398,9 @@ and `insert-file-contents-post-hook'."
 	    (if (null (find-coding-system coding-system))
 		(progn
 		  (message
-		   "Invalid coding-system (%s), using 'automatic-conversion"
+		   "Invalid coding-system (%s), using 'undecided"
 		   coding-system)
-		  (setq coding-system 'automatic-conversion)))
+		  (setq coding-system 'undecided)))
 	    (setq return-val
 		  (insert-file-contents-internal filename visit beg end
 						 replace coding-system

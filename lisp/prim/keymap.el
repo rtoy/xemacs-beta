@@ -347,8 +347,41 @@ Optional arg NO-MICE means that button events are not allowed."
                    (signal 'wrong-type-argument (list 'eventp event))))
             (setq i (1+ i)))
           new))))
+
 
-;FSFmacs ####
+(defun next-key-event ()
+  "Return the next available keyboard event."
+  (let (event)
+    (while (not (key-press-event-p (setq event (next-event))))
+      (dispatch-event event))
+    event))
+
+(defun key-sequence-list-description (keys)
+  "Convert a key sequence KEYS to the full [(modifiers... key)...] form.
+Argument KEYS can be in any form accepted by `define-key' function."
+  (let ((vec
+	  (cond ((vectorp keys)
+		 keys)
+		((stringp keys)
+		 (vconcat keys))
+		(t
+		 (vector keys))))
+	 (event-to-list
+	  #'(lambda (ev)
+	    (append (event-modifiers ev) (list (event-key ev))))))
+    (mapvector
+     #'(lambda (key)
+       (cond ((key-press-event-p key)
+	      (funcall event-to-list key))
+	     ((characterp key)
+	      (funcall event-to-list (character-to-event key)))
+	     ((listp key)
+	      key)
+	     (t
+	      (list key))))
+     vec)))
+
+
 ;;; Support keyboard commands to turn on various modifiers.
 
 ;;; These functions -- which are not commands -- each add one modifier
@@ -367,21 +400,41 @@ Optional arg NO-MICE means that button events are not allowed."
 (defun event-apply-meta-modifier (ignore-prompt)
   (event-apply-modifier 'meta))
 
+;;; #### `key-translate-map' is ignored for now.
 (defun event-apply-modifier (symbol)
   "Return the next key event, with a modifier flag applied.
-SYMBOL is the name of this modifier, as a symbol."
-  (let (event)
-    (while (not (key-press-event-p (setq event (next-command-event))))
-      (dispatch-event event))
-    (vconcat (list symbol)
-	     (delq symbol (event-modifiers event))
-	     (list (event-key event)))))
+SYMBOL is the name of this modifier, as a symbol.
+`function-key-map' is scanned for prefix bindings."
+  (let (events binding)
+    ;; read keystrokes scanning `function-key-map'
+    (while (keymapp
+	    (setq binding
+		  (lookup-key
+		   function-key-map
+		   (vconcat
+		    (setq events
+			  (append events (list (next-key-event)))))))))
+    (if binding				; found a binding
+	(progn
+	  ;; allow for several modifiers
+	  (if (and (symbolp binding) (fboundp binding))
+	      (setq binding (funcall binding nil)))
+	  (setq events (append binding nil))
+	  ;; put remaining keystrokes back into input queue
+	  (setq unread-command-events
+		(mapcar 'character-to-event (cdr events))))
+      (setq unread-command-events (cdr events)))
+    ;; add a modifier SYMBOL to the first keystroke or event
+    (vector
+     (append (list symbol)
+	     (delq symbol
+		   (aref (key-sequence-list-description (car events)) 0))))))
 
 ;; This looks dirty.  The following code should maybe go to another
 ;; file, and `create-console-hook' should maybe default to nil.
 (add-hook
  'create-console-hook
- (lambda (console)
+ #'(lambda (console)
    (letf (((selected-console) console))
      (define-key function-key-map [?\C-x ?@ ?h] 'event-apply-hyper-modifier)
      (define-key function-key-map [?\C-x ?@ ?s] 'event-apply-super-modifier)

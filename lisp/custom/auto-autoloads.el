@@ -138,7 +138,7 @@ The menu is in a format applicable to `easy-menu-define'." nil nil)
 
 (autoload 'customize-menu-create "cus-edit" "\
 Return a customize menu for customization group SYMBOL.
-If optional NAME is given, use that as the name of the menu. 
+If optional NAME is given, use that as the name of the menu.
 Otherwise the menu will be named `Customize'.
 The format is suitable for use with `easy-menu-define'." nil nil)
 
@@ -186,7 +186,7 @@ Prompt for a value matching WIDGET, using PROMPT.
 The current value is assumed to be VALUE, unless UNBOUND is non-nil." nil nil)
 
 (autoload 'widget-create "wid-edit" "\
-Create widget of TYPE.  
+Create widget of TYPE.
 The optional ARGS are additional keyword arguments." nil nil)
 
 (autoload 'widget-delete "wid-edit" "\

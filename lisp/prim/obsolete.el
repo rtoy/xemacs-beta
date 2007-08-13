@@ -615,11 +615,6 @@ If FRAME is omitted or nil, use the selected frame."
   (color-instance-rgb-components (make-color-instance color)))
 (make-compatible 'x-color-values 'color-instance-rgb-components)
 
-;; The name of char-int is unintuitive and silly, but in CLtL2.
-(define-compatible-function-alias 'char-int 'char-to-int)
-;; likewise with int-char.
-(define-compatible-function-alias 'int-char 'int-to-char)
-
 ;; Two loser functions which shouldn't be used.
 (make-obsolete 'following-char 'char-after)
 (make-obsolete 'preceding-char 'char-before)
@@ -693,5 +688,7 @@ the resulting string may be narrower than END-COLUMN."
 
 ;; Keywords already do The Right Thing in XEmacs
 (make-compatible 'define-widget-keywords "Just use them")
+
+(make-obsolete 'function-called-at-point 'function-at-point)
 
 ;;; obsolete.el ends here

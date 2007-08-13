@@ -36,6 +36,8 @@ typedef struct _XlwMenu_part
 
   Pixel		foreground;
   Pixel		button_foreground;
+  Pixel		highlight_foreground;
+  Pixel		title_foreground;
   Dimension	margin;
   Dimension	horizontal_margin;
   Dimension	vertical_margin;
@@ -79,6 +81,8 @@ typedef struct _XlwMenu_part
   GC			shadow_top_gc;
   GC			shadow_bottom_gc;
   GC			select_gc;
+  GC			highlight_gc;
+  GC			title_gc;
   Cursor		cursor;
   Boolean		popped_up;
   Pixmap		gray_pixmap;

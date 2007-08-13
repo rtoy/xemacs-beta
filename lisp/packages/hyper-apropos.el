@@ -533,7 +533,7 @@ See also `hyper-apropos' and `hyper-describe-function'."
   (let ((fn (hyper-apropos-this-symbol))
 	val)
     (or (fboundp fn)
-	(setq fn (function-called-at-point)))
+	(setq fn (function-at-point)))
     (setq val (let ((enable-recursive-minibuffers t))
 		(completing-read (if fn
 				     (format "%s (default %s): " prompt fn)

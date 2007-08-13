@@ -83,7 +83,7 @@
 
 (provide 'floating-toolbar)
 
-(require 'toolbar)
+;; (require 'toolbar)
 (require 'x)
 
 (defvar floating-toolbar-version "1.02"
@@ -145,6 +145,8 @@ press event.  Optional second arg EXTENT-LOCAL-ONLY specifies
 that only extent local toolbars should be used; this means the
 `floating-toolbar' variable will not be consulted."
   (interactive "_e")
+  (unless (featurep 'toolbar)
+    (error "Floating toolbar requires built in toolbar support."))
   (if (not (mouse-event-p event))
       nil
     (let* ((buffer (event-buffer event))
@@ -375,7 +377,8 @@ extent local toolbar."
       frame )))
 
 ;; first popup should be faster if we go ahead and make the frame now.
-(or floating-toolbar-frame
+(or (not (featurep 'toolbar))
+    floating-toolbar-frame
     (not (eq (device-type) 'x))
     (setq floating-toolbar-frame (floating-toolbar-make-toolbar-frame 0 0)))
 

@@ -38,6 +38,9 @@ Boston, MA 02111-1307, USA.  */
 #ifdef MULE
 #include "mule-coding.h"
 #endif
+#ifdef HAVE_GPM
+#include "gpmevent.h"
+#endif
 
 DEFINE_CONSOLE_TYPE (tty);
 

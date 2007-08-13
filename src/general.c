@@ -38,7 +38,7 @@ Lisp_Object Qand;
 Lisp_Object Qassoc;
 Lisp_Object Qat;
 Lisp_Object Qautodetect;
-Lisp_Object Qautomatic_conversion;
+Lisp_Object Qundecided;
 Lisp_Object Qbad_variable;
 Lisp_Object Qbefore;
 Lisp_Object Qbinary;
@@ -173,7 +173,7 @@ syms_of_general (void)
   defsymbol (&Qassoc, "assoc");
   defsymbol (&Qat, "at");
   defsymbol (&Qautodetect, "autodetect");
-  defsymbol (&Qautomatic_conversion, "automatic-conversion");
+  defsymbol (&Qundecided, "undecided");
   defsymbol (&Qbad_variable, "bad-variable");
   defsymbol (&Qbefore, "before");
   defsymbol (&Qbinary, "binary");

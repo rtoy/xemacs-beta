@@ -1061,7 +1061,7 @@ This is a file whose name is in the variable tags-file-name."
 (defun emacs-lisp-default-tag ()
   "Function to return a default tag for Emacs-Lisp mode."
   (let ((tag (or (variable-at-point)
-		 (function-called-at-point))))
+		 (function-at-point))))
     (if tag (symbol-name tag))))
 
 

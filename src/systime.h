@@ -50,8 +50,8 @@ extern char *tzname[];	/* RS6000 and others want it this way.  */
 #endif
 #endif
 
-/* SVr4 doesn't actually declare this in its #include files.  */
-#ifdef USG5_4
+/* SVr4 and some friends don't actually declare this in its #include files.  */
+#ifndef HAVE_TIMEZONE_DECL
 extern long timezone;
 #endif
 

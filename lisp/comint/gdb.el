@@ -331,7 +331,7 @@ the GDB commands `cd DIR' and `directory'."
     (gdb-mode)
     (gdb-set-buffer)))
 
-;;;####autoload
+;;;###autoload
 (defun gdb-with-core (file corefile)
   "Debug a program using a corefile."
   (interactive "fProgram to debug: \nfCore file to use: ")

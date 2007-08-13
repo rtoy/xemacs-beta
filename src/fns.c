@@ -2886,6 +2886,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth)
   /* Note that (equal 20 20.0) should be nil */
   else if (XTYPE (o1) != XTYPE (o2))
     return 0;
+#ifndef LRECORD_CONS
   else if (CONSP (o1))
     {
       if (!internal_equal (XCAR (o1), XCAR (o2), depth + 1))
@@ -2894,7 +2895,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth)
       o2 = XCDR (o2);
       goto do_cdr;
     }
-
+#endif
 #ifndef LRECORD_VECTOR
   else if (VECTORP (o1))
     {
@@ -2912,7 +2913,8 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth)
 	}
       return 1;
     }
-#endif /* !LRECORD_VECTOR */
+#endif
+#ifndef LRECORD_STRING
   else if (STRINGP (o1))
     {
       Bytecount len = XSTRING_LENGTH (o1);
@@ -2922,6 +2924,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth)
 	return 0;
       return 1;
     }
+#endif
   else if (LRECORDP (o1))
     {
       CONST struct lrecord_implementation
@@ -2956,6 +2959,7 @@ internal_old_equal (Lisp_Object o1, Lisp_Object o2, int depth)
   /* Note that (equal 20 20.0) should be nil */
   else if (XTYPE (o1) != XTYPE (o2))
     return 0;
+#ifndef LRECORD_CONS
   else if (CONSP (o1))
     {
       if (!internal_old_equal (XCAR (o1), XCAR (o2), depth + 1))
@@ -2964,7 +2968,7 @@ internal_old_equal (Lisp_Object o1, Lisp_Object o2, int depth)
       o2 = XCDR (o2);
       goto do_cdr;
     }
-
+#endif
 #ifndef LRECORD_VECTOR
   else if (VECTORP (o1))
     {
@@ -2981,7 +2985,8 @@ internal_old_equal (Lisp_Object o1, Lisp_Object o2, int depth)
 	}
       return 1;
     }
-#endif /* !LRECORD_VECTOR */
+#endif
+#ifndef LRECORD_STRING
   else if (STRINGP (o1))
     {
       Bytecount len = XSTRING_LENGTH (o1);
@@ -2991,6 +2996,7 @@ internal_old_equal (Lisp_Object o1, Lisp_Object o2, int depth)
 	return 0;
       return 1;
     }
+#endif
   else if (LRECORDP (o1))
     {
       CONST struct lrecord_implementation
@@ -3340,27 +3346,29 @@ which case you can't use this.
 
 Lisp_Object Vfeatures;
 
-#ifndef FEATUREP_SYNTAX
 DEFUN ("featurep", Ffeaturep, 1, 1, 0, /*
-Return t if FEATURE is present in this Emacs.
+Return non-nil if feature FEXP is present in this Emacs.
 Use this to conditionalize execution of lisp code based on the
-presence or absence of emacs or environment extensions.
-Use `provide' to declare that a feature is available.
-This function looks at the value of the variable `features'.
-*/
-       (feature))
-{
-  CHECK_SYMBOL (feature);
-  return NILP (Fmemq (feature, Vfeatures)) ? Qnil : Qt;
-}
-#else
-extern Lisp_Object Vemacs_major_version, Vemacs_minor_version;
-
-DEFUN ("featurep", Ffeaturep, 1, 1, 0, /*
-Return non-nil if feature expression FEXP is true.
+ presence or absence of emacs or environment extensions.
+FEXP can be a symbol, a number, or a list.
+If a symbol, it will be looked up in the `features' variable, and
+ non-nil will be returned if it is found.
+If FEXP is a number, the function will return non-nil if this Emacs
+ has an equal or greater version number than FEXP.
+If FEXP is a list whose car is the symbol `and', it will return
+ non-nil if all the features in its cdr are non-nil.
+If FEXP is a list whose car is the symbol `or', it will return non-nil
+ if any of the features in its cdr are non-nil.
+If FEXP is a list whose car is the symbol `not', it will return
+ non-nil if the feature is not present.
 */
        (fexp))
 {
+#ifndef FEATUREP_SYNTAX
+  CHECK_SYMBOL (fexp);
+  return NILP (Fmemq (fexp, Vfeatures)) ? Qnil : Qt;
+#else  /* FEATUREP_SYNTAX */
+  extern Lisp_Object Vemacs_major_version, Vemacs_minor_version;
   static double featurep_emacs_version;
 
   /* Brute force translation from Erik Naggum's lisp function. */
@@ -3387,32 +3395,32 @@ Return non-nil if feature expression FEXP is true.
       tem = XCAR(fexp);
       if (EQ(tem, Qnot))
 	{
-	  Lisp_Object negate = XCDR(fexp);
+	  Lisp_Object negate;
 
-	  if (!NILP(XCDR(fexp)))
-	    {
-	      return Fsignal(Qinvalid_read_syntax, list1(XCDR(fexp)));
-	    }
+	  tem = XCDR (fexp);
+	  negate = Fcar (tem);
+	  if (!NILP (tem))
+	    return NILP (Ffeaturep (negate)) ? Qt : Qnil;
 	  else
-	    {
-	      return NILP(Ffeaturep(negate)) ? Qt : Qnil;
-	    }
+	    return Fsignal (Qinvalid_read_syntax, list1 (tem));
 	}
       else if (EQ(tem, Qand))
 	{
 	  tem = XCDR(fexp);
-	  while (!NILP(tem) && !NILP(Ffeaturep(XCAR(tem))))
+	  /* Use Fcar/Fcdr for error-checking. */
+	  while (!NILP (tem) && !NILP (Ffeaturep (Fcar (tem))))
 	    {
-	      tem = XCDR(tem);
+	      tem = Fcdr (tem);
 	    }
 	  return NILP(tem) ? Qt : Qnil;
 	}
       else if (EQ(tem, Qor))
 	{
-	  tem = XCDR(fexp);
-	  while (!NILP(tem) && NILP(Ffeaturep(XCAR(tem))))
+	  tem = XCDR (fexp);
+	  /* Use Fcar/Fcdr for error-checking. */
+	  while (!NILP (tem) && NILP (Ffeaturep (Fcar (tem))))
 	    {
-	      tem = XCDR(tem);
+	      tem = Fcdr (tem);
 	    }
 	  return NILP(tem) ? Qnil : Qt;
 	}

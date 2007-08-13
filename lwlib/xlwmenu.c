@@ -100,6 +100,10 @@ xlwMenuResources[] =
      offset(menu.foreground), XtRString, "XtDefaultForeground"},
   {XtNbuttonForeground, XtCButtonForeground, XtRPixel, sizeof(Pixel),
      offset(menu.button_foreground), XtRString, "XtDefaultForeground"},
+  {XtNhighlightForeground, XtCHighlightForeground, XtRPixel, sizeof(Pixel),
+     offset(menu.highlight_foreground), XtRString, "XtDefaultForeground"},
+  {XtNtitleForeground, XtCTitleForeground, XtRPixel, sizeof(Pixel),
+     offset(menu.title_foreground), XtRString, "XtDefaultForeground"},
   {XtNmargin, XtCMargin, XtRDimension,  sizeof(Dimension),
      offset(menu.margin), XtRImmediate, (XtPointer)2},
   {XmNmarginWidth, XmCMarginWidth, XmRHorizontalDimension, sizeof(Dimension),
@@ -110,9 +114,15 @@ xlwMenuResources[] =
      offset(menu.column_spacing), XtRImmediate, (XtPointer)4},
   {XmNindicatorSize, XmCIndicatorSize, XtRDimension,  sizeof(Dimension),
      offset(menu.indicator_size), XtRImmediate, (XtPointer)0},
+#if 0
   {XmNshadowThickness, XmCShadowThickness, XmRHorizontalDimension,
      sizeof (Dimension), offset (menu.shadow_thickness),
      XtRImmediate, (XtPointer) 2},
+#else
+  {XmNshadowThickness, XmCShadowThickness, XtRDimension,
+     sizeof (Dimension), offset (menu.shadow_thickness),
+     XtRImmediate, (XtPointer) 2},
+#endif
   {XmNselectColor, XmCSelectColor, XtRPixel, sizeof (Pixel),
      offset (menu.select_color), XtRImmediate, (XtPointer)-1},
   {XmNtopShadowColor, XmCTopShadowColor, XtRPixel, sizeof (Pixel),
@@ -1549,9 +1559,17 @@ label_button_draw (XlwMenuWidget mw,
 		   unsigned binding_tab)
 {
   int y_offset = mw->menu.shadow_thickness + mw->menu.vertical_margin;
+  GC gc;
 
   if (!label_offset)
     label_offset = mw->menu.shadow_thickness + mw->menu.horizontal_margin;
+
+  if (highlighted && (in_menubar || val->contents))
+    gc = mw->menu.highlight_gc;
+  else if (in_menubar || val->contents)
+    gc = mw->menu.foreground_gc;
+  else
+    gc = mw->menu.title_gc;
 
   /*
    *    Draw the label string.
@@ -1559,7 +1577,7 @@ label_button_draw (XlwMenuWidget mw,
   string_draw_u (mw,
 	       window,
 	       x + label_offset, y + y_offset,
-	       mw->menu.foreground_gc,
+	       gc,
 	       resource_widget_value (mw, val));
 }
 
@@ -1615,7 +1633,14 @@ push_button_draw (XlwMenuWidget mw,
   if (!label_offset)
     label_offset = mw->menu.shadow_thickness + mw->menu.horizontal_margin;
 
-  if (menu_pb)
+  if (highlighted)
+    {
+      if (val->enabled)
+	gc = mw->menu.highlight_gc;
+      else
+	gc = mw->menu.inactive_button_gc;
+    }
+  else if (menu_pb)
     {
       if (val->enabled)
 	gc = mw->menu.button_gc;
@@ -1778,6 +1803,13 @@ toggle_decoration_height(XlwMenuWidget mw)
 
   if (rv > (mw->menu.font_ascent+mw->menu.font_descent))
     rv = mw->menu.font_ascent+mw->menu.font_descent;
+
+  /*
+   * radio button can't be smaller than its border or a filling
+   * error will occur. 
+   */
+  if (rv < 2 * mw->menu.shadow_thickness)
+    rv = 2 * mw->menu.shadow_thickness;
 
   return rv;
 }
@@ -2650,6 +2682,14 @@ make_drawing_gcs (XlwMenuWidget mw)
 				  (flags | GCFillStyle | GCStipple),
 				  &xgcv);
 
+  xgcv.foreground = mw->menu.highlight_foreground;
+  xgcv.background = mw->core.background_pixel;
+  mw->menu.highlight_gc = XtGetGC ((Widget)mw, flags, &xgcv);
+
+  xgcv.foreground = mw->menu.title_foreground;
+  xgcv.background = mw->core.background_pixel;
+  mw->menu.title_gc = XtGetGC ((Widget)mw, flags, &xgcv);
+
   xgcv.foreground = mw->menu.button_foreground;
   xgcv.background = mw->core.background_pixel;
   mw->menu.button_gc = XtGetGC ((Widget)mw, flags, &xgcv);
@@ -2666,6 +2706,8 @@ release_drawing_gcs (XlwMenuWidget mw)
 {
   XtReleaseGC ((Widget) mw, mw->menu.foreground_gc);
   XtReleaseGC ((Widget) mw, mw->menu.button_gc);
+  XtReleaseGC ((Widget) mw, mw->menu.highlight_gc);
+  XtReleaseGC ((Widget) mw, mw->menu.title_gc);
   XtReleaseGC ((Widget) mw, mw->menu.inactive_gc);
   XtReleaseGC ((Widget) mw, mw->menu.inactive_button_gc);
   XtReleaseGC ((Widget) mw, mw->menu.background_gc);
@@ -2673,6 +2715,8 @@ release_drawing_gcs (XlwMenuWidget mw)
   /* let's get some segvs if we try to use these... */
   mw->menu.foreground_gc      = (GC) -1;
   mw->menu.button_gc          = (GC) -1;
+  mw->menu.highlight_gc       = (GC) -1;
+  mw->menu.title_gc           = (GC) -1;
   mw->menu.inactive_gc        = (GC) -1;
   mw->menu.inactive_button_gc = (GC) -1;
   mw->menu.background_gc      = (GC) -1;

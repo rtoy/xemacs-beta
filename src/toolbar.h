@@ -111,7 +111,7 @@ DECLARE_SPECIFIER_TYPE (toolbar);
 #define DEFAULT_TOOLBAR_HEIGHT	37
 #define DEFAULT_TOOLBAR_WIDTH	40
 #define DEFAULT_TOOLBAR_BLANK_SIZE	8
-#define MINIMUM_SHADOW_THICKNESS	2
+#define MINIMUM_SHADOW_THICKNESS	1
 
 extern Lisp_Object Vtoolbar_size[4];
 void update_frame_toolbars (struct frame *f);

@@ -73,67 +73,6 @@
 ;     (charset-list))
 ;    ))
 
-(defun describe-designation (cs register)
-  (let ((charset
-	 (coding-system-property
-	  cs (intern (format "charset-g%d" register))))
-	(force
-	 (coding-system-property
-	  cs (intern (format "force-g%d-on-output" register)))))
-    (princ
-     (format
-      "  G%d: %s%s\n"
-      register
-      (cond ((null charset) "never used")
-	    ((eq t charset) "none")
-	    (t (charset-name charset)))
-      (if force " (explicit designation required)" "")))))
-	
-;;;###autoload
-(defun describe-coding-system (cs)
-  "Display documentation of the coding-system CS."
-  (interactive "zCoding-system: ")
-  (setq cs (get-coding-system cs))
-  (with-output-to-temp-buffer "*Help*"
-    (princ (format "Coding-system %s [%s]:\n"
-		   (coding-system-name cs)
-		   (coding-system-mnemonic cs)))
-    (princ (format "  %s\n" (coding-system-doc-string cs)))
-    (let ((type (coding-system-type cs)))
-      (princ "Type: ") (princ type) (terpri)
-      (case type
-	('iso2022
-	 (princ "\nInitial designations:\n")
-	 (dolist (register '(0 1 2 3))
-	   (describe-designation cs register))
-	 (princ "\nOther properties: \n")
-	 (dolist (prop '(short no-ascii-eol no-ascii-cntl seven lock-shift no-iso6429))
-	   (princ (format "  %s: " (symbol-name prop)))
-	   (princ (coding-system-property cs prop))
-	   (terpri)))
-	 ;;(princ "  short: ") (princ (coding-system-short))
-	 ;;(princ (if (aref flags 4) "ShortForm" "LongForm"))
-	 ;;(if (aref flags 5) (princ ", ASCII@EOL"))
-	 ;;(if (aref flags 6) (princ ", ASCII@CNTL"))
-	 ;;(princ (if (coding-system-seven cs) ", 7bit" ", 8bit"))
-	 ;;(if (aref flags 8) (princ ", UseLockingShift"))
-	 ;;(if (aref flags 9) (princ ", UseRoman"))
-	 ;;(if (aref flags 10) (princ ", UseOldJIS"))
-	 ;;(if (aref flags 11) (princ ", No ISO6429"))
-	 ;;(terpri))
-	
-	('big5
-	 ;;(princ (if flags "Big-ETen\n" "Big-HKU\n")))
-	 ))
-      (princ (format "\nEOL-Type: %s\n"
-		     (case (coding-system-eol-type cs)
-		       ('nil   "null (= LF)")
-		       ('lf   "LF")
-		       ('crlf "CRLF")
-		       ('cr   "CR")
-		       (t     "invalid"))))
-      )))
-
 ;;;###autoload
 (defun list-coding-system-briefly ()
   "Display coding-systems currently used with a brief format in mini-buffer."

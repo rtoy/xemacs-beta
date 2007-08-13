@@ -228,7 +228,8 @@ This variable is buffer-local."
 See also `comint-read-input-ring' and `comint-write-input-ring'.
 
 This variable is buffer-local, and is a good thing to set in mode hooks."
-  :type 'boolean
+  :type '(choice (const :tag "None" nil)
+	         (file))
   :group 'comint)
 
 (defcustom comint-scroll-to-bottom-on-input nil
@@ -262,14 +263,21 @@ See variable `comint-scroll-show-maximum-output' and function
 		 (const others))
   :group 'comint)
 
-;; XEmacs - Default this to nil: this is just horrible
-(defcustom comint-scroll-show-maximum-output nil
+(defcustom comint-scroll-show-maximum-output t
   "*Controls how interpreter output causes window to scroll.
 If non-nil, then show the maximum output when the window is scrolled.
 
+You may set this to an integer number of lines to keep shown, or a
+floating point percentage of the window size to keep filled.
+A negative number expresses a distance from the bottom, as when using
+a prefix argument with `recenter' (bound to `\\[recenter]').
+
 See variable `comint-scroll-to-bottom-on-output' and function
 `comint-postoutput-scroll-to-bottom'.  This variable is buffer-local."
-  :type 'boolean
+  :type '(choice (const :tag "Off" nil)
+		 (const :tag "On" t)
+		 (integer :tag "Number of lines" 20)
+		 (number :tag "Decimal Percent of window" .85))
   :group 'comint)
 
 (defcustom comint-buffer-maximum-size 1024
@@ -1584,14 +1592,15 @@ This function should be in the list `comint-output-filter-functions'."
 		       (set-window-point window (point-max))
 		       (recenter
 			;; XEmacs - lemacs addition
-;;                         (cond ((integerp comint-scroll-show-maximum-output)
-;;                                comint-scroll-show-maximum-output)
-;;                               ((floatp comint-scroll-show-maximum-output)
-;;                                (floor (* (window-height window)
-;;                                          comint-scroll-show-maximum-output)
-;;                                       1))
-;;                               (t
-;;                                -1))
+                         (cond ((integerp comint-scroll-show-maximum-output)
+                                comint-scroll-show-maximum-output)
+                               ((floatp comint-scroll-show-maximum-output)
+                                (floor (* (window-height window)
+                                          comint-scroll-show-maximum-output)
+                                       1))
+                               (t
+                                -1))
+			 window
 			 )))
 		 ))))
 	 nil t))))

@@ -396,6 +396,12 @@ The original current buffer is restored afterwards."
 (define-function 'string< 'string-lessp)
 (define-function 'int-to-string 'number-to-string)
 (define-function 'string-to-int 'string-to-number)
+
+;; These two names are a bit awkward, as they conflict with the normal
+;; foo-to-bar naming scheme, but CLtL2 has them, so they stay.
+(define-function 'char-int 'char-to-int)
+(define-function 'int-char 'int-to-char)
+
 
 ;; alist/plist functions
 (defun plist-to-alist (plist)
@@ -572,7 +578,7 @@ This function accepts any number of arguments, but ignores them."
                                                abbrev-table-name-list)))))))
 
 (defun functionp (obj)
-  "Returns t if OBJ is a function, nil otherwise."
+  "Non-nil if OBJECT is a type of object that can be called as a function."
   (cond
    ((symbolp obj) (fboundp obj))
    ((subrp obj))

@@ -35,19 +35,35 @@
 
 (require 'custom)
 
-(defun custom-put (symbol property list)
-  (let ((loads (get symbol property)))
+
+(defun custom-add-loads (symbol list)
+  "Update the custom-loads list of a symbol.
+This works by adding the elements from LIST to the SYMBOL's
+`custom-loads' property, avoiding duplicates.  Also, SYMBOL is
+added to `custom-group-hash-table'."
+  (let ((loads (get symbol 'custom-loads)))
     (dolist (el list)
       (unless (member el loads)
 	(setq loads (nconc loads (list el)))))
-    (put symbol property loads)
+    (put symbol 'custom-loads loads)
     (puthash symbol t custom-group-hash-table)))
+
+;; custom-add-loads was named custom-put (and accepted different
+;; arguments) during the 20.3 beta cycle.  Support it for
+;; compatibility.
+(defun custom-put (symbol ignored list)
+  (custom-add-loads symbol list))
+(make-obsolete 'custom-put 'custom-add-loads)
+
 
 (message "Loading customization dependencies...")
 
-(mapc (lambda (dir)
-	(load (expand-file-name "custom-load" dir) t t))
-      load-path)
+;; Garbage-collection seems to be very intensive here, and it slows
+;; things down.  Nuke it.
+(let ((gc-cons-threshold 10000000))
+  (mapc (lambda (dir)
+	  (load (expand-file-name "custom-load" dir) t t))
+	load-path))
 
 (message "Loading customization dependencies...done")
 

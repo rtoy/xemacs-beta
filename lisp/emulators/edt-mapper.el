@@ -88,8 +88,8 @@
 ;;;
 ;;;  Decide whether we're running GNU or Lucid emacs.
 ;;;
-(defconst edt-lucid-emacs19-p (string-match "Lucid" emacs-version)
-  "Non-NIL if we are running Lucid Emacs version 19.")
+(defconst edt-lucid-emacs19-p (string-match "XEmacs" emacs-version)
+  "Non-NIL if we are running XEmacs.")
 
 
 ;;;

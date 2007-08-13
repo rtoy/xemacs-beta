@@ -344,6 +344,10 @@ init_console_stream (void)
       Vterminal_frame = Fmake_frame (Qnil, Vterminal_device);
       minibuf_window = XFRAME (Vterminal_frame)->minibuffer_window;
     }
-  else if (noninteractive)
-    event_stream_select_console (XCONSOLE (Vterminal_console));
+  else {
+    /* Re-initialize the FILE fields of the console. */
+    stream_init_console (XCONSOLE (Vterminal_console), Qnil);
+    if (noninteractive)
+      event_stream_select_console (XCONSOLE (Vterminal_console));
+  }
 }

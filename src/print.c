@@ -854,6 +854,137 @@ print_vector_internal (CONST char *start, CONST char *end,
   write_c_string (end, printcharfun);
 }
 
+void
+print_cons (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+{
+  /* This function can GC */
+  struct gcpro gcpro1, gcpro2;
+
+  /* If print_readably is on, print (quote -foo-) as '-foo-
+     (Yeah, this should really be what print-pretty does, but we
+     don't have the rest of a pretty printer, and this actually
+     has non-negligible impact on size/speed of .elc files.)
+  */
+  if (print_readably &&
+      EQ (XCAR (obj), Qquote) &&
+      CONSP (XCDR (obj)) &&
+      NILP (XCDR (XCDR (obj))))
+    {
+      obj = XCAR (XCDR (obj));
+      GCPRO2 (obj, printcharfun);
+      write_char_internal ("'", printcharfun);
+      UNGCPRO;
+      print_internal (obj, printcharfun, escapeflag);
+      return;
+    }
+
+  GCPRO2 (obj, printcharfun);
+  write_char_internal ("(", printcharfun);
+  {
+    int i = 0;
+    int max = 0;
+
+    if (INTP (Vprint_length))
+      max = XINT (Vprint_length);
+    while (CONSP (obj))
+      {
+	if (i++)
+	  write_char_internal (" ", printcharfun);
+	if (max && i > max)
+	  {
+	    write_c_string ("...", printcharfun);
+	    break;
+	  }
+	print_internal (Fcar (obj), printcharfun,
+			escapeflag);
+	obj = Fcdr (obj);
+      }
+  }
+  if (!NILP (obj) && !CONSP (obj))
+    {
+      write_c_string (" . ", printcharfun);
+      print_internal (obj, printcharfun, escapeflag);
+    }
+  UNGCPRO;
+  write_char_internal (")", printcharfun);
+  return;
+}
+
+void
+print_vector (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+{
+  print_vector_internal ("[", "]", obj, printcharfun, escapeflag);
+}
+
+void
+print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
+{
+  Bytecount size = XSTRING_LENGTH (obj);
+  struct gcpro gcpro1, gcpro2;
+  int max = size;
+  GCPRO2 (obj, printcharfun);
+
+  if (INTP (Vprint_string_length) &&
+      XINT (Vprint_string_length) < max)
+    max = XINT (Vprint_string_length);
+  if (max < 0)
+    max = 0;
+
+  /* !!#### This handles MAX incorrectly for Mule. */
+  if (!escapeflag)
+    {
+      /* This deals with GC-relocation */
+      output_string (printcharfun, 0, obj, 0, max);
+      if (max < size)
+	write_c_string (" ...", printcharfun);
+    }
+  else
+    {
+      Bytecount i;
+      struct Lisp_String *s = XSTRING (obj);
+      Bytecount last = 0;
+
+      write_char_internal ("\"", printcharfun);
+      for (i = 0; i < max; i++)
+	{
+	  Bufbyte ch = string_byte (s, i);
+	  if (ch == '\"' || ch == '\\'
+	      || (ch == '\n' && print_escape_newlines))
+	    {
+	      if (i > last)
+		{
+		  output_string (printcharfun, 0, obj, last,
+				 i - last);
+		}
+	      if (ch == '\n')
+		{
+		  write_c_string ("\\n", printcharfun);
+		}
+	      else
+		{
+		  write_char_internal ("\\", printcharfun);
+		  /* This is correct for Mule because the
+		     character is either \ or " */
+		  write_char_internal ((char *) (string_data (s) + i),
+				       printcharfun);
+		}
+	      last = i + 1;
+	    }
+	}
+      if (max > last)
+	{
+	  output_string (printcharfun, 0, obj, last,
+			 max - last);
+	}
+      if (max < size)
+	write_c_string (" ...", printcharfun);
+      write_char_internal ("\"", printcharfun);
+    }
+  UNGCPRO;
+  return;
+}
+
+
 static void
 default_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 			int escapeflag)
@@ -928,7 +1059,12 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
   switch (XTYPE (obj))
     {
+#ifdef USE_MINIMAL_TAGBITS
+    case Lisp_Type_Int_Even:
+    case Lisp_Type_Int_Odd:
+#else
     case Lisp_Type_Int:
+#endif
       {
 	sprintf (buf, "%ld", (long) XINT (obj));
 	write_c_string (buf, printcharfun);
@@ -977,73 +1113,15 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	break;
       }
 
+#ifndef LRECORD_STRING
     case Lisp_Type_String:
       {
-	Bytecount size = XSTRING_LENGTH (obj);
-	struct gcpro gcpro1, gcpro2;
-	int max = size;
-	GCPRO2 (obj, printcharfun);
-
-	if (INTP (Vprint_string_length) &&
-	    XINT (Vprint_string_length) < max)
-	  max = XINT (Vprint_string_length);
-	if (max < 0)
-	  max = 0;
-
-	/* !!#### This handles MAX incorrectly for Mule. */
-	if (!escapeflag)
-	  {
-	    /* This deals with GC-relocation */
-	    output_string (printcharfun, 0, obj, 0, max);
-	    if (max < size)
-	      write_c_string (" ...", printcharfun);
-	  }
-	else
-	  {
-	    Bytecount i;
-	    struct Lisp_String *s = XSTRING (obj);
-	    Bytecount last = 0;
-
-	    write_char_internal ("\"", printcharfun);
-	    for (i = 0; i < max; i++)
-	      {
-		Bufbyte ch = string_byte (s, i);
-		if (ch == '\"' || ch == '\\'
-		    || (ch == '\n' && print_escape_newlines))
-		  {
-		    if (i > last)
-		      {
-			output_string (printcharfun, 0, obj, last,
-				       i - last);
-		      }
-		    if (ch == '\n')
-		      {
-			write_c_string ("\\n", printcharfun);
-		      }
-		    else
-		      {
-			write_char_internal ("\\", printcharfun);
-			/* This is correct for Mule because the
-			   character is either \ or " */
-			write_char_internal ((char *) (string_data (s) + i),
-					     printcharfun);
-		      }
-		    last = i + 1;
-		  }
-	      }
-	    if (max > last)
-	      {
-		output_string (printcharfun, 0, obj, last,
-			       max - last);
-	      }
-	    if (max < size)
-	      write_c_string (" ...", printcharfun);
-	    write_char_internal ("\"", printcharfun);
-	  }
-	UNGCPRO;
+	print_string(obj, printcharfun, escapeflag);
 	break;
       }
+#endif /* ! LRECORD_STRING */
 
+#ifndef LRECORD_CONS
     case Lisp_Type_Cons:
       {
 	struct gcpro gcpro1, gcpro2;
@@ -1052,68 +1130,29 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	if (INTP (Vprint_level)
 	    && print_depth > XINT (Vprint_level))
 	  {
-	    write_c_string ("...", printcharfun);
-	    break;
-	  }
-
-	/* If print_readably is on, print (quote -foo-) as '-foo-
-	   (Yeah, this should really be what print-pretty does, but we
-	   don't have the rest of a pretty printer, and this actually
-	   has non-negligible impact on size/speed of .elc files.)
-	 */
-	if (print_readably &&
-	    EQ (XCAR (obj), Qquote) &&
-	    CONSP (XCDR (obj)) &&
-	    NILP (XCDR (XCDR (obj))))
-	  {
-	    obj = XCAR (XCDR (obj));
 	    GCPRO2 (obj, printcharfun);
-	    write_char_internal ("'", printcharfun);
+	    write_c_string ("...", printcharfun);
 	    UNGCPRO;
-	    print_internal (obj, printcharfun, escapeflag);
 	    break;
 	  }
 
-	GCPRO2 (obj, printcharfun);
-	write_char_internal ("(", printcharfun);
-	{
-	  int i = 0;
-	  int max = 0;
-
-	  if (INTP (Vprint_length))
-	    max = XINT (Vprint_length);
-	  while (CONSP (obj))
-	    {
-	      if (i++)
-		write_char_internal (" ", printcharfun);
-	      if (max && i > max)
-		{
-		  write_c_string ("...", printcharfun);
-		  break;
-		}
-	      print_internal (Fcar (obj), printcharfun,
-			      escapeflag);
-	      obj = Fcdr (obj);
-	    }
-	}
-	if (!NILP (obj) && !CONSP (obj))
-	  {
-	    write_c_string (" . ", printcharfun);
-	    print_internal (obj, printcharfun, escapeflag);
-	  }
-	UNGCPRO;
-	write_char_internal (")", printcharfun);
+	print_cons (obj, printcharfun, escapeflag);
 	break;
       }
+#endif /* ! LRECORD_CONS */
 
 #ifndef LRECORD_VECTOR
     case Lisp_Type_Vector:
       {
+	struct gcpro gcpro1, gcpro2;
+
 	/* If deeper than spec'd depth, print placeholder.  */
 	if (INTP (Vprint_level)
 	    && print_depth > XINT (Vprint_level))
 	  {
+	    GCPRO2 (obj, printcharfun);
 	    write_c_string ("...", printcharfun);
+	    UNGCPRO;
 	    break;
 	  }
 
@@ -1135,6 +1174,21 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       {
 	struct lrecord_header *lheader = XRECORD_LHEADER (obj);
 	struct gcpro gcpro1, gcpro2;
+
+#if defined(LRECORD_CONS) || defined(LRECORD_VECTOR)
+	if (CONSP (obj) || VECTORP(obj))
+	  {
+	    /* If deeper than spec'd depth, print placeholder.  */
+	    if (INTP (Vprint_level)
+		&& print_depth > XINT (Vprint_level))
+	      {
+		GCPRO2 (obj, printcharfun);
+		write_c_string ("...", printcharfun);
+		UNGCPRO;
+		break;
+	      }
+	  }
+#endif
 
 	GCPRO2 (obj, printcharfun);
 	if (lheader->implementation->printer)
@@ -1346,7 +1400,6 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   }
   UNGCPRO;
 }
-
 
 int alternate_do_pointer;
 char alternate_do_string[5000];

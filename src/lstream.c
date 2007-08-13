@@ -714,13 +714,37 @@ Lstream_close (Lstream *lstr)
 
   if (lstr->flags & LSTREAM_FL_IS_OPEN)
     {
-      /* don't return here on error, or file descriptor leak will result. */
       rc = Lstream_pseudo_close (lstr);
+      /*
+       * We used to return immediately if the closer method reported
+       * failure, leaving the stream open.  But this is no good, for
+       * the following reasons.
+       *
+       * 1. The finalizer method used in GC makes no provision for
+       *    failure, so we must not return without freeing buffer
+       *    memory.
+       *
+       * 2. The closer method may have already freed some memory
+       *    used for I/O in this stream.  E.g. encoding_closer frees
+       *    ENCODING_STREAM_DATA(stream)->runoff.  If a writer method
+       *    tries to use this buffer later, it will write into memory
+       *    that may have been allocated elsewhere.  Sometime later
+       *    you will see a sign that says "Welcome to Crash City."
+       *
+       * 3. The closer can report failure if a flush fails in the
+       *    other stream in a MULE encoding/decoding stream pair.
+       *    The other stream in the pair is closed, but returning
+       *    early leaves the current stream open.  If we try to
+       *    flush the current stream later, we will crash when the
+       *    flusher notices that the other end stream is closed.
+       *
+       * So, we no longer abort the close if the closer method
+       * reports some kind of failure.  We still report the failure
+       * to the caller.
+       */
       if (lstr->imp->closer)
-	{
-	  if ((lstr->imp->closer) (lstr) < 0)
-	    return -1;
-	}
+	if ((lstr->imp->closer) (lstr) < 0)
+	  rc = -1;
     }
 
   lstr->flags &= ~LSTREAM_FL_IS_OPEN;

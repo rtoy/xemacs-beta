@@ -99,6 +99,7 @@ ht_copy_to_c (struct hashtable *ht, c_hashtable c_table)
   c_table->harray = (hentry *) XVECTOR_DATA (ht->harray);
   c_table->zero_set = (!GC_UNBOUNDP (ht->zero_entry));
   c_table->zero_entry = LISP_TO_VOID (ht->zero_entry);
+#ifndef LRECORD_VECTOR
   if (len < 0)
     {
       /* #### if alloc.c mark_object() changes, this must change too. */
@@ -109,6 +110,7 @@ ht_copy_to_c (struct hashtable *ht, c_hashtable c_table)
       assert (gc_in_progress);
       len = -1 - len;
     }
+#endif
   c_table->size          = len/LISP_OBJECTS_PER_HENTRY;
   c_table->fullness      = ht->fullness;
   c_table->hash_function = ht->hash_function;
@@ -154,7 +156,7 @@ elisp_hvector_malloc (unsigned int bytes, Lisp_Object table)
   struct hashtable *ht = XHASHTABLE (table);
 
   assert (bytes > XVECTOR_LENGTH (ht->harray) * sizeof (Lisp_Object));
-  new_vector = make_vector ((bytes / sizeof (Lisp_Object)), Qzero);
+  new_vector = make_vector ((bytes / sizeof (Lisp_Object)), Qnull_pointer);
   return (void *) XVECTOR_DATA (new_vector);
 }
 
@@ -252,7 +254,7 @@ make_lisp_hashtable (int size,
 
   table->harray = make_vector ((compute_harray_size (size)
 				* LISP_OBJECTS_PER_HENTRY),
-                               Qzero);
+                               Qnull_pointer);
   switch (test)
     {
     case HASHTABLE_EQ:
@@ -341,7 +343,7 @@ as the given table.  The keys and values will not themselves be copied.
   new_ht->zero_entry = Qunbound;
   new_ht->hash_function = old_ht->hash_function;
   new_ht->test_function = old_ht->test_function;
-  new_ht->harray = Fmake_vector (Flength (old_ht->harray), Qzero);
+  new_ht->harray = Fmake_vector (Flength (old_ht->harray), Qnull_pointer);
   ht_copy_to_c (new_ht, &new_htbl);
   copy_hash (&new_htbl, &old_htbl);
   ht_copy_from_c (&new_htbl, new_ht);
@@ -716,11 +718,19 @@ finish_marking_weak_hashtables (int (*obj_marked_p) (Lisp_Object),
 	   */
 	struct Lisp_Vector *ptr = XVECTOR (XHASHTABLE (rest)->harray);
 	int len = vector_length (ptr);
+#ifdef LRECORD_VECTOR
+	if (! MARKED_RECORD_P(XHASHTABLE(rest)->harray))
+	  {
+	    MARK_RECORD_HEADER(&(ptr->header.lheader));
+	    did_mark = 1;
+	  }
+#else
 	if (len >= 0)
 	  {
 	    ptr->size = -1 - len;
 	    did_mark = 1;
 	  }
+#endif
 	/* else it's already marked (remember, this function is iterated
 	   until marking stops) */
       }
@@ -830,7 +840,6 @@ internal_hash (Lisp_Object obj, int depth)
     }
   else if (STRINGP (obj))
     return hash_string (XSTRING_DATA (obj), XSTRING_LENGTH (obj));
-#ifndef LRECORD_VECTOR
   else if (VECTORP (obj))
     {
       struct Lisp_Vector *v = XVECTOR (obj);
@@ -838,7 +847,6 @@ internal_hash (Lisp_Object obj, int depth)
 		    internal_array_hash (v->contents, vector_length (v),
 					 depth + 1));
     }
-#endif /* !LRECORD_VECTOR */
   else if (LRECORDP (obj))
     {
       CONST struct lrecord_implementation

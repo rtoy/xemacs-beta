@@ -1,28 +1,122 @@
 ;;; china-util.el --- utilities for Chinese
 
-;; Copyright (C) 1995 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
+;; Copyright (C) 1997 MORIOKA Tomohiko
 
 ;; Keywords: mule, multilingual, Chinese
 
-;; This file is part of GNU Emacs.
+;; This file is part of XEmacs.
 
-;; GNU Emacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
 ;;; Code:
+
+;;;###autoload
+(defun setup-chinese-gb-environment ()
+  "Setup multilingual environment (MULE) for Chinese GB2312 users."
+  (interactive)
+  (setup-english-environment)
+
+  (set-default-coding-systems 'cn-gb-2312)
+  ;; (setq coding-category-iso-8-2 'chinese-iso-8bit)
+  (set-coding-category-system 'iso-8-2 'cn-gb-2312)
+  ;; (setq coding-category-iso-7-else 'chinese-iso-7bit)
+  ;; (setq coding-category-big5 'chinese-big5)
+
+  ;; (set-coding-priority
+  ;;  '(coding-category-iso-7
+  ;;    coding-category-iso-7-else
+  ;;    coding-category-iso-8-2
+  ;;    coding-category-big5
+  ;;    coding-category-iso-8-1
+  ;;    coding-category-emacs-mule
+  ;;    coding-category-iso-8-else))
+  (set-coding-priority-list
+   '(iso-7
+     iso-8-2
+     big5
+     iso-8-1
+     no-conversion
+     iso-8-designate
+     iso-lock-shift
+     shift-jis))
+  
+  ;; (when (eq 'x (device-type (selected-device)))
+  ;;   (x-use-halfwidth-roman-font 'chinese-gb2312 "gb1988"))))
+  (when (featurep 'egg)
+    (setq-default its:*current-map* (its:get-mode-map "PinYin")))
+  (setq default-input-method  "chinese-py-punct")
+  )
+
+;;;###autoload
+(defun setup-chinese-big5-environment ()
+  "Setup multilingual environment (MULE) for Chinese Big5 users."
+  (interactive)
+  (setup-english-environment)
+
+  (set-default-coding-systems 'big5)
+  ;; (setq coding-category-iso-8-2 'chinese-big5)
+  (set-coding-category-system 'iso-8-2 'cn-gb-2312)
+  ;; (setq coding-category-iso-7-else 'chinese-iso-7bit)
+  ;; (setq coding-category-big5 'chinese-big5)
+
+  ;; (set-coding-priority
+  ;;  '(coding-category-iso-7
+  ;;    coding-category-iso-7-else
+  ;;    coding-category-big5
+  ;;    coding-category-iso-8-2
+  ;;    coding-category-emacs-mule
+  ;;    coding-category-iso-8-else))
+  (set-coding-priority-list
+   '(iso-7
+     big5
+     iso-8-2
+     no-conversion
+     iso-8-1
+     iso-8-designate
+     iso-lock-shift
+     shift-jis))
+  
+  (setq default-input-method "chinese-py-punct-b5")
+  )
+
+;; ;;;###autoload
+;; (defun setup-chinese-cns-environment ()
+;;   "Setup multilingual environment (MULE) for Chinese CNS11643 family users."
+;;   (interactive)
+;;   (setup-english-environment)
+;; 
+;;   (setq coding-category-iso-7-else 'chinese-iso-7bit)
+;;   (setq coding-category-big5 'chinese-big5)
+;;   (setq coding-category-iso-8-2 'chinese-big5)
+;;   (set-default-coding-systems 'chinese-iso-7bit)
+;; 
+;;   (set-coding-priority
+;;    '(coding-category-iso-7
+;;      coding-category-iso-7-else
+;;      coding-category-iso-8-2
+;;      coding-category-big5
+;;      coding-category-iso-7-else))
+;; 
+;;   (setq-default buffer-file-coding-system 'chinese-iso-7bit)
+;;   (setq default-terminal-coding-system 'chinese-iso-7bit)
+;;   (setq default-keyboard-coding-system 'chinese-iso-7bit)
+;; 
+;;   (setq default-input-method "chinese-quick-cns"))
 
 ;; Hz/ZW encoding stuffs
 
@@ -61,7 +155,7 @@ Return the length of resulting text."
     (save-restriction
       (narrow-to-region beg end)
 
-      ;; We, at first, convert HZ/ZW to `iso-2022-7',
+      ;; We, at first, convert HZ/ZW to `iso-2022-7bit',
       ;; then decode it.
 
       ;; "~\n" -> "\n"
@@ -76,13 +170,13 @@ Return the length of resulting text."
       (let ((chinese-found nil))
 	(while (re-search-forward hz/zw-start-gb nil t)
 	  (if (= (char-after (match-beginning 0)) ?z)
-	      ;; ZW -> iso-20227-7
+	      ;; ZW -> iso-2022-7bit
 	      (progn
 		(delete-char -2)
 		(insert iso2022-gb-designation)
 		(end-of-line)
 		(insert iso2022-ascii-designation))
-	    ;; HZ -> iso-20227-7
+	    ;; HZ -> iso-2022-7bit
 	    (delete-char -2)
 	    (insert iso2022-gb-designation)
 	    (let ((pos (save-excursion (end-of-line) (point))))
@@ -97,7 +191,7 @@ Return the length of resulting text."
 		  ;; If any, we had better decode them also.
 		  (goto-char (point-min))
 		  (re-search-forward "[\240-\377]" nil t))) 
-	    (decode-coding-region (point-min) (point-max) 'cn-gb-2312)))
+	    (decode-coding-region (point-min) (point-max) 'euc-china)))
 
       ;; "~~" -> "~"
       (goto-char (point-min))
@@ -129,7 +223,7 @@ Return the length of resulting text."
 	  (let ((enable-multibyte-characters nil)
 		pos)
 	    (goto-char (setq pos (match-beginning 0)))
-	    (encode-coding-region pos (point-max) 'iso-2022-7)
+	    (encode-coding-region pos (point-max) 'iso-2022-7bit)
 	    (goto-char pos)
 	    (while (search-forward iso2022-gb-designation nil t)
 	      (delete-char -3)
@@ -147,9 +241,6 @@ Return the length of resulting text."
   (encode-hz-region (point-min) (point-max)))
 
 ;;
-(provide 'language/china-util)
+(provide 'china-util)
 
-;;; Local Variables:
-;;; generated-autoload-file: "../loaddefs.el"
-;;; End:
 ;;; china-util.el ends here

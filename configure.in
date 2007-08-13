@@ -1,4 +1,4 @@
-dnl Define our own header notice with own copyrights
+dnl Define our own header notice with own copyright
 define([AC_INIT_NOTICE],
 [#### Configuration script for XEmacs.  Largely divergent from FSF.
 #### Guess values for system-dependent variables and create Makefiles.
@@ -358,7 +358,6 @@ dnl world have core dumps turned off by default or \"cannot find where the
 dnl core file went\".  At least we should get some useful output ...
 use_assertions="yes"
 dnl the following is set to yes or no later.
-with_gif=""
 dnl the following is set to yes or no later.
 with_toolbars=""
 with_tty=""
@@ -425,7 +424,7 @@ Window-system options:
 --with-toolbars=no	Don't compile with any toolbar support.
 --with-session=no	Compile without realized leader window which will
 			keep the WM_COMMAND property. Required for proper
-			session-management. (ON by default for testing)
+			session-management.
 --with-menubars=TYPE	Use TYPE menubars (lucid, motif, or no).  The Lucid
 			widgets emulate Motif (mostly) but are faster.
 			*WARNING*  The Motif menubar is currently broken.
@@ -447,13 +446,11 @@ Window-system options:
 --with-xface (*)	Compile with support for X-Face mail header
 	  		conversion.  Requires the compface library.
 			Get it from the XEmacs FTP site.
---with-jpeg (*)		Compile with support for JPEG image conversion.
-			Requires libjpeg from the Independent JPEG Group.
+--with-imagick (*)	Compile with support for ImageMagick image conversion.
+			Requires ImageMagick from wizards.dupont.com and
+			libraries for whatever image types you wish to have
+			supported.
 			Get it from the XEmacs FTP site.
---with-png (*)		Compile with support for PNG image conversion.
-			Requires libpng.  Get it from the XEmacs FTP site.
---with-tiff (*)		Compile with support for TIFF image conversion
-			(not yet implemented).
 
 
 TTY options:
@@ -680,12 +677,9 @@ while test $# != 0; do
 	with_cde	| \
 	with_offix	| \
 	with_gpm	| \
-	with_gif	| \
 	with_xpm	| \
 	with_xface	| \
-	with_jpeg	| \
-	with_png	| \
-	with_tiff	| \
+	with_imagick	| \
 	with_session	| \
 	with_xmu	| \
 	with_quantify	| \
@@ -1046,7 +1040,7 @@ dnl is still relative.  We do not symlink lock because someone may
 dnl have stuck the source on a read-only partition.  Instead we
 dnl create it as an actual directory later on if it does not already
 dnl exist.
-for dir in lisp etc man info site-lisp; do
+for dir in lisp etc man info; do
   if test ! -d "$dir" ; then
     echo Making symbolic link to "$srcdir/$dir"
     ${LN_S} "$srcdir/$dir" "$dir"
@@ -1467,7 +1461,7 @@ case "$canonical" in
   dnl Iris 4D
   mips-sgi-irix3.*    ) opsys=irix3-3 ;;
   mips-sgi-irix4.*    ) opsys=irix4-0 ;;
-  mips-sgi-irix6*     ) opsys=irix6-0 NON_GNU_CC="cc -Olimit 2000" ;;
+  mips-sgi-irix6*     ) opsys=irix6-0 ;;
   mips-sgi-irix5.1*   ) opsys=irix5-1 ;;
   mips-sgi-irix5.2*   ) opsys=irix5-2 ;;
   mips-sgi-irix5.*    ) opsys=irix5-3 ;;
@@ -1646,6 +1640,9 @@ else dnl "$dynamic" = "no"
     decosf* ) ld_call_shared="-non_shared" ;;
   esac
 fi
+
+dnl Use xlc by default on AIX
+case "$opsys" in aix*) NON_GNU_CC=xlc ;; esac
 
 stack_trace_eye_catcher=`echo xemacs_${version}_${canonical} | sed 'y/.-/__/'`
 AC_DEFINE_UNQUOTED(STACK_TRACE_EYE_CATCHER, $stack_trace_eye_catcher)
@@ -1884,8 +1881,10 @@ if test -z "$CFLAGS"; then
       sol2    ) CFLAGS="-v -xO4" ;;
       sunos4* ) CFLAGS="-xO2";;
     esac
+  elif test "$CC" = "xlc"; then
+    CFLAGS="-O3 -qstrict -qnoansialias -qlibansi -qinfo -qro -qmaxmem=20000"
   else
-    CFLAGS="-O" # The only POSIX-approved flag
+    CFLAGS="-O" ;dnl The only POSIX-approved flag
   fi
 fi
 
@@ -1895,7 +1894,7 @@ if test "$GCC" = "yes"; then
   [[$1_tmp]="$[$1]"; [$1]=""
   for arg in $[$1_tmp]; do
     case "$arg" in
-      -L* | -l* | -R* | -u* | -Wl* | -f* ) [$1]="$[$1] $arg" ;;
+      -L* | -l* | -R* | -u* | -Wl* | -f* | -B*) [$1]="$[$1] $arg" ;;
       -Xlinker* ) ;;
       * ) [$1]="$[$1] -Xlinker $arg" ;;
     esac
@@ -1930,10 +1929,25 @@ else
 fi
 
 dnl Feed s&m crud to src/Makefile
+
+if test "$unexec" = "unexaix.o"; then
+dnl AIX needs various hacks to make static linking work.
+dnl This can go away if we ever figure out how to get dynamic linking on AIX.
+  start_flags="-Wl,-bnso,-bnodelcsect"
+  test "$GCC" = "yes" && start_flags="-B/bin/ ${aixflags}"
+  for f in "/lib/syscalls.exp" "$srcdir/src/m/ibmrs6000.inp"; do
+    if test -r "$f"; then start_flags="${start_flags},-bI:${f}"; fi
+  done
+  for f in "/usr/lpp/X11/bin/smt.exp" "/usr/bin/X11/smt.exp"; do
+    if test -r "$f"; then start_flags="${start_flags},-bI:${f}"; break; fi
+  done
+elif test -n "$ld_text_start_addr"; then
+  start_flags="-T $ld_text_start_addr -e __start"
+fi
+AC_SUBST(start_flags)
+
 AC_SUBST(ld_switch_shared)
 AC_SUBST(start_files)
-test -n "$ld_text_start_addr" && start_flags="-T $ld_text_start_addr -e __start"
-AC_SUBST(start_flags)
 if test "$ordinary_link" = "no" -a "$GCC" = "yes"; then
  test -z "$linker" &&  linker='$(CC) -nostdlib'
  test -z "$lib_gcc" && lib_gcc='`$(CC) -print-libgcc-file-name`'
@@ -2190,7 +2204,7 @@ dnl check for long file names
 AC_SYS_LONG_FILE_NAMES
 
 dnl -lm is required by LISP_FLOAT_TYPE, among other things
-AC_CHECK_LIB(m, sqrt)
+AC_CHECK_LIB(m, sin)
 
 dnl Floating operation support is now unconditional
 AC_DEFINE(LISP_FLOAT_TYPE)
@@ -2421,7 +2435,7 @@ if test "$window_system" = "none" ; then
   fi
   for feature in tooltalk cde offix session \
                  menubars scrollbars toolbars dialogs xim xmu \
-                 tiff png jpeg gif xface xpm
+                 imagick xface xpm
   do
     if eval "test -n \"\$with_${feature}\" -a \"\$with_${feature}\" != no" ; then
        AC_MSG_WARN([--with-$feature ignored:  Not valid without X support])
@@ -2463,10 +2477,10 @@ if test "$with_xauth" = "yes"; then
 fi
 AC_SUBST(libs_xauth)
 
-dnl Autodetect OffiX
+dnl Always compile OffiX except --without-offix is given or no
+dnl x11 support is compiled in
 OFFIX_O=""
-test -z "$with_offix" && { AC_CHECK_HEADER(OffiX/DragAndDrop.h, , with_offix=no) }
-test -z "$with_offix" && { AC_CHECK_LIB(Dnd, DndInitialize, [:] , with_offix=no) }
+test "$window_system" != "x11" && with_offix=no
 test -z "$with_offix" && with_offix=yes
 if test "$with_offix" = "yes"; then
   AC_DEFINE(HAVE_OFFIX_DND)
@@ -2537,13 +2551,6 @@ dnl ----------------------
 if test "$with_x11" = "yes"; then
 
   AC_CHECKING(for X11 graphics libraries)
-  dnl Built-in GIF support defaults to yes
-  test -z "$with_gif" && with_gif=yes;
-  if test "$with_gif" = "yes"; then
-    AC_DEFINE(HAVE_GIF)
-    XE_ADD_OBJS(dgif_lib.o gif_err.o gifalloc.o)
-  fi
-
   dnl Autodetect Xpm
   AC_MSG_CHECKING(for Xpm - no older than 3.4f)
   xe_check_libs=-lXpm
@@ -2583,41 +2590,13 @@ if test "$with_x11" = "yes"; then
     XE_PREPEND(-lcompface, libs_x)
   fi
 
-  dnl autodetect JPEG
-  test -z "$with_jpeg" && { AC_CHECK_HEADER(jpeglib.h,                    ,with_jpeg=no) }
-  test -z "$with_jpeg" && { AC_CHECK_LIB(jpeg, jpeg_destroy_decompress,[:],with_jpeg=no) }
-  test -z "$with_jpeg" && with_jpeg=yes
-  if test "$with_jpeg" = "yes"; then
-    AC_DEFINE(HAVE_JPEG)
-    XE_PREPEND(-ljpeg, libs_x)
-  fi
-
-  dnl autodetect PNG
-  test -z "$with_png" && { AC_CHECK_HEADER(png.h, , with_png=no) }
-  test -z "$with_png" && { AC_CHECK_FUNC(pow,     , with_png=no) }
-  if test "$with_png" != "no"; then
-    for extra_libs in "" "-lz" "-lgz"; do
-      AC_CHECK_LIB(png, png_read_image,
-	png_libs="-lpng $extra_libs" with_png=yes; break,[:],$extra_libs)
-    done
-  fi
-  test -z "$with_png" && with_png=no
-  if test "$with_png" = "yes"; then
-    AC_DEFINE(HAVE_PNG)
-    XE_PREPEND($png_libs, libs_x)
-  fi
-
-  dnl autodetect TIFF
-  if test "$with_tiff" != no; then
-    for extra_libs in "" "-lz" "-lgz"; do
-      AC_CHECK_LIB(tiff, TIFFReadScanline, 
-        tiff_libs="-ltiff $extra_libs" with_tiff=yes; break, [:], $extra_libs)
-    done
-  fi
-  test -z "$with_tiff" && with_tiff=no
-  if test "$with_tiff" = "yes"; then
-    AC_DEFINE(HAVE_TIFF)
-    XE_PREPEND($tiff_libs, libs_x)
+  dnl autodetect ImageMagick
+  test -z "$with_imagick" && { AC_CHECK_HEADER(magick.h,                    ,with_imagick=no) }
+  test -z "$with_imagick" && { AC_CHECK_LIB(Magick, MogrifyImage,[:],with_imagick=no) }
+  test -z "$with_imagick" && with_imagick=yes
+  if test "$with_imagick" = "yes"; then
+    AC_DEFINE(HAVE_IMAGEMAGICK)
+    XE_PREPEND(-lMagick, libs_x)
   fi
 
   dnl Autodetect -lXaw
@@ -2714,6 +2693,13 @@ dnl ----------------------
 
 test -z "$with_mule" && with_mule=no
 
+if test "$with_mule" = "yes" && test ! -d "$srcdir/lisp/mule"; then
+	echo "Attempt to Build with Mule without Mule/Lisp"
+	echo "Please install the XEmacs/Mule tarball or"
+	echo "rerun configure with --with-mule=no"
+	exit 1
+fi
+
 if test "$with_mule" = "yes" ; then
   AC_CHECKING(for Mule-related features)
   AC_DEFINE(MULE)
@@ -2799,6 +2785,8 @@ fi dnl with_mule
 dnl At this point, we know whether we need the motif lib or not.
 if test "$need_motif" = "yes" ; then
   XE_PREPEND(-lXm, libs_x)
+  dnl AIX needs the following library for use with Motif
+  AC_CHECK_LIB(i18n, layout_object_getvalue, [XE_PREPEND(-li18n, libs_x)])
   XE_COMPUTE_RUNPATH()
 fi
 
@@ -2901,6 +2889,27 @@ AC_TRY_LINK([
   [AC_MSG_RESULT(yes)
    AC_DEFINE(GETTIMEOFDAY_ONE_ARGUMENT)])
 fi
+
+AC_MSG_CHECKING(whether the timezone variable is already declared)
+AC_TRY_LINK([
+#ifdef TIME_WITH_SYS_TIME
+#include <sys/time.h>
+#include <time.h>
+#else
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#else
+#include <time.h>
+#endif
+#endif
+  ],
+  [
+  timezone = 0;
+],
+  [AC_MSG_RESULT(yes)
+   AC_DEFINE(HAVE_TIMEZONE_DECL)],
+  [AC_MSG_RESULT(no)])
+
 
 
 AC_C_INLINE
@@ -3012,11 +3021,6 @@ AC_CHECK_HEADER(dirent.h, [AC_DEFINE(SYSV_SYSTEM_DIR)],
 
 dnl Check for nlist.h
 AC_CHECK_HEADER(nlist.h, AC_DEFINE(NLIST_STRUCT), )
-
-dnl AIX export list
-for f in "/usr/lpp/X11/bin/smt.exp" "/usr/bin/X11/smt.exp" ; do
-  if test -r $f; then AC_DEFINE_UNQUOTED(AIX_SMT_EXP, "-bI:$f") break; fi
-done
 
 dnl Check for sound of various sorts.
 
@@ -3251,11 +3255,6 @@ typedef uint64_t u_int64_t;
 #endif
 #endif
 #include <$path>
-#ifdef DB_VERSION_MAJOR
-#if DB_VERSION_MAJOR > 1
-choke me;
-#endif
-#endif
 ],[], db_h_path="$path"; break)
     done
     test -z "$db_h_path" && with_database_berkdb=no
@@ -3382,6 +3381,7 @@ AC_SUBST(mandir)
 AC_SUBST(infodir)
 AC_SUBST(infodir_user_defined)
 AC_SUBST(infopath)
+AC_SUBST(infopath_user_defined)
 AC_SUBST(lispdir)
 AC_SUBST(lispdir_user_defined)
 AC_SUBST(sitelispdir)
@@ -3431,8 +3431,9 @@ dnl change blanks to colons in package path, and make available to config.h
 package_path=`echo $package_path | sed 'y/ /:/'`
 AC_DEFINE_UNQUOTED(PACKAGE_PATH, "$package_path")
 
+XE_SPACE(ac_configure_args, $ac_configure_args)
 AC_DEFINE_UNQUOTED(EMACS_CONFIGURATION, "$canonical")
-AC_DEFINE_UNQUOTED(EMACS_CONFIG_OPTIONS, "${ac_configure_args}")
+AC_DEFINE_UNQUOTED(EMACS_CONFIG_OPTIONS, "$ac_configure_args")
 AC_DEFINE_UNQUOTED(config_machfile,  "$machfile")
 AC_DEFINE_UNQUOTED(config_opsysfile, "$opsysfile")
 
@@ -3522,7 +3523,6 @@ if test "$with_xmu" != yes -a "$with_x11" = yes; then
   echo "  No Xmu; substituting equivalent routines."
 fi
 
-test "$with_gif"   = yes && echo "  Compiling in support for GIF image conversion."
 if test "$with_xpm" = yes; then
   echo "  Compiling in support for XPM images."
 elif test "$with_x11" = yes; then
@@ -3533,9 +3533,7 @@ elif test "$with_x11" = yes; then
   echo "  --------------------------------------------------------------------"
 fi
 test "$with_xface" = yes && echo "  Compiling in support for X-Face message headers."
-test "$with_jpeg"  = yes && echo "  Compiling in support for JPEG image conversion."
-test "$with_png"   = yes && echo "  Compiling in support for PNG image conversion."
-test "$with_tiff"  = yes && echo "  Compiling in support for TIFF image conversion (not implemented)."
+test "$with_imagick"  = yes && echo "  Compiling in support for ImageMagick image conversion."
 
 case "$with_sound" in
   nas    ) echo "  Compiling in network sound (NAS) support." ;;
@@ -3594,7 +3592,7 @@ test "$with_pop"	= yes && echo "  Using POP for mail access"
 test "$with_kerberos"	= yes && echo "  Using Kerberos for POP authentication"
 test "$with_hesiod"	= yes && echo "  Using Hesiod to get POP server host"
 echo "  The \`Info-default-directory-list' will be initialized from:"
-echo "  INFOPATH=\"`echo $infopath`\""
+echo "  INFOPATH=\"$infopath\""
 test "$use_union_type"     = yes && echo "  Using the union type for Lisp_Objects."
 test "$debug"              = yes && echo "  Compiling in extra code for debugging."
 test "$memory_usage_stats" = yes && echo "  Compiling in code for checking XEmacs memory usage."

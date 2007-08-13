@@ -62,7 +62,7 @@ fi
 
 # Compute patterns to ignore when searching for files
 # These directories don't have autoloads or are partially broken.
-ignore_dirs="egg eos ilisp its language locale mel mu sunpro term tooltalk"
+ignore_dirs="egg eos ilisp its locale mel mu sunpro term tooltalk"
 
 # Prepare for autoloading directories with directory-specific instructions
 make_special_commands=''
@@ -76,7 +76,7 @@ make_special () {
 # Only use Mule XEmacs to build Mule-specific autoloads & custom-loads.
 echon "Checking for Mule support..."
 lisp_prog='(princ (featurep (quote mule)))'
-mule_p="`$EMACS -batch -no-site-file -eval \"$lisp_prog\"`"
+mule_p="`$EMACS -batch -vanilla -eval \"$lisp_prog\"`"
 if test "$mule_p" = nil ; then
 	echo No
 	ignore_dirs="$ignore_dirs mule leim"
@@ -91,7 +91,8 @@ fi
 # 	make_special auctex autoloads MULE_EL=tex-jp.elc
 # fi
 #make_special cc-mode autoloads
-make_special efs autoloads
+# EFS is now packaged
+#make_special efs autoloads
 #make_special eos autoloads # EOS doesn't have custom or autoloads
 make_special hyperbole autoloads
 # make_special ilisp autoloads
@@ -115,7 +116,7 @@ done
 
 # set -x
 for dir in $dirs; do
-	$EMACS -batch -q -l autoload -f batch-update-directory $dir
+	$EMACS -batch -vanilla -l autoload -f batch-update-directory $dir
 done
 
 eval "$make_special_commands"

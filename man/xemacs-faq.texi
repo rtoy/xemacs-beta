@@ -44,6 +44,292 @@ Utrecht, Oxford, Smart Pages, and other FAQ archives.
 * Subsystems::          Major Subsystems.
 * Miscellaneous::       The Miscellaneous Stuff.
 * Current Events::      What the Future Holds.
+
+@detailmenu
+
+ --- The Detailed Node Listing ---
+
+Introduction, Policy, Credits
+
+* Q1.0.1::      What is XEmacs?
+* Q1.0.2::      What is the current version of XEmacs?
+* Q1.0.3::      Where can I find it?
+* Q1.0.4::      Why Another Version of Emacs?
+* Q1.0.5::      Why Haven't XEmacs and GNU Emacs Merged?
+* Q1.0.6::      Where can I get help?  
+* Q1.0.7::      Where is the mailing list archived?
+* Q1.0.8::      How do you pronounce XEmacs?
+* Q1.0.9::      What does XEmacs look like? 
+* Q1.0.10::     Is there a port of XEmacs to Microsoft ('95 or NT)?
+* Q1.0.11::     Is there a port of XEmacs to the Macintosh?
+* Q1.0.12::     Is there a port of XEmacs to NextStep?
+* Q1.0.13::     Is there a port of XEmacs to OS/2?
+* Q1.0.14::     Where can I get a printed copy of the XEmacs users manual?
+
+Policies:
+* Q1.1.1::      What is the FAQ editorial policy?
+* Q1.1.2::      How do I become a Beta Tester?
+* Q1.1.3::      How do I contribute to XEmacs itself?
+
+Credits:
+* Q1.2.1::      Who wrote XEmacs?
+* Q1.2.2::      Who contributed to this version of the FAQ? 
+* Q1.2.3::      Who contributed to the FAQ in the past? 
+
+Internationalization:
+* Q1.3.1::      What is the status of XEmacs v20? 
+* Q1.3.2::      What is the status of Asian-language support, aka @var{mule}?
+* Q1.3.3::      How do I type non-ASCII characters?
+* Q1.3.4::      Can XEmacs messages come out in a different language?
+* Q1.3.5::      Please explain the various input methods in MULE/XEmacs 20.0
+* Q1.3.6::      How do I portably code for MULE/XEmacs 20.0?
+* Q1.3.7::      How about Cyrillic Modes? 
+
+Getting Started:
+* Q1.4.1::      What is a @file{.emacs} and is there a sample one?
+* Q1.4.2::      Can I use the same @file{.emacs} with the other Emacs?
+* Q1.4.3::      Any good XEmacs tutorials around?
+* Q1.4.4::      May I see an example of a useful XEmacs Lisp function?
+* Q1.4.5::      And how do I bind it to a key?
+* Q1.4.6::      What's the difference between a macro and a function?
+* Q1.4.7::      Why options saved with 19.13 don't work with 19.14 or later?
+
+Installation and Trouble Shooting
+
+* Q2.0.1::      Running XEmacs without installing. 
+* Q2.0.2::      XEmacs is too big. 
+* Q2.0.3::      Compiling XEmacs with Netaudio.
+* Q2.0.4::      Problems with Linux and ncurses.
+* Q2.0.5::      Do I need X11 to run XEmacs?
+* Q2.0.6::      I'm having strange crashes.  What do I do?
+* Q2.0.7::      Libraries in non-standard locations.
+* Q2.0.8::      can't resolve symbol _h_errno
+* Q2.0.9::      Where do I find external libraries? 
+* Q2.0.10::     After I run configure I find a coredump, is something wrong?
+* Q2.0.11::     XEmacs can't resolve host names.
+* Q2.0.12::     Why can't I strip XEmacs? 
+* Q2.0.13::     Can't link XEmacs on Solaris with Gcc.
+* Q2.0.14::     Make on HP/UX 9 fails after linking temacs 
+
+Trouble Shooting:
+* Q2.1.1::      XEmacs just crashed on me!
+* Q2.1.2::      Cryptic Minibuffer messages.
+* Q2.1.3::      Translation Table Syntax messages at Startup.
+* Q2.1.4::      Startup warnings about deducing proper fonts?
+* Q2.1.5::      XEmacs cannot connect to my X Terminal.
+* Q2.1.6::      XEmacs just locked up my Linux X server.
+* Q2.1.7::      HP Alt key as Meta.
+* Q2.1.8::      got (wrong-type-argument color-instance-p nil)!
+* Q2.1.9::      XEmacs causes my OpenWindows 3.0 server to crash.
+* Q2.1.10::     Warnings from incorrect key modifiers.
+* Q2.1.11::     [This question intentionally left blank]
+* Q2.1.12::     Regular Expression Problems on DEC OSF1.
+* Q2.1.13::     HP/UX 10.10 and @code{create_process} failure
+* Q2.1.14::     @kbd{C-g} doesn't work for me.  Is it broken?
+* Q2.1.15::     How to debug an XEmacs problem with a debugger.
+* Q2.1.16::     XEmacs crashes in @code{strcat} on HP/UX 10.
+* Q2.1.17::     @samp{Marker does not point anywhere}.
+* Q2.1.18::     19.14 hangs on HP/UX 10.10.
+* Q2.1.19::     XEmacs does not follow the local timezone.
+* Q2.1.20::     @samp{Symbol's function definition is void: hkey-help-show.}
+* Q2.1.21::     Every so often the XEmacs frame freezes.
+* Q2.1.22::     XEmacs seems to take a really long time to do some things.
+* Q2.1.23::     Movemail on Linux does not work for XEmacs 19.15 and later.
+
+Customization and Options
+
+* Q3.0.1::      What version of Emacs am I running? 
+* Q3.0.2::      How do I evaluate Elisp expressions?
+* Q3.0.3::      @code{(setq tab-width 6)} behaves oddly.
+* Q3.0.4::      How can I add directories to the @code{load-path}?
+* Q3.0.5::      How to check if a lisp function is defined?
+* Q3.0.6::      Can I force the output of @code{(face-list)} to a buffer?
+* Q3.0.7::      Font selections don't get saved after @code{Save Options}. 
+* Q3.0.8::      How do I make a single minibuffer frame?
+
+X Window System & Resources:
+* Q3.1.1::      Where is a list of X resources?
+* Q3.1.2::      How can I detect a color display?
+* Q3.1.3::      @code{(set-screen-width)} worked in 19.6, but not in 19.13?
+* Q3.1.4::      Specifiying @code{Emacs*EmacsScreen.geometry} in @file{.emacs} does not work in 19.15?
+* Q3.1.5::      How can I get the icon to just say @samp{XEmacs}?
+* Q3.1.6::      How can I have the window title area display the full path?
+* Q3.1.7::      @samp{xemacs -name junk} doesn't work?
+* Q3.1.8::      @samp{-iconic} it doesn't work.
+
+Textual Fonts & Colors:
+* Q3.2.1::      How can I set color options from @file{.emacs}?
+* Q3.2.2::      How do I set the text, menu and modeline fonts?
+* Q3.2.3::      How can I set the colors when highlighting a region?
+* Q3.2.4::      How can I limit color map usage? 
+* Q3.2.5::      My tty supports color, but XEmacs doesn't use them.
+
+The Modeline:
+* Q3.3.1::      How can I make the modeline go away?
+* Q3.3.2::      How do you have XEmacs display the line number in the modeline?
+* Q3.3.3::      How do I get XEmacs to put the time of day on the modeline?
+* Q3.3.4::      How do I turn off current chapter from AUC TeX modeline?
+* Q3.3.5::      How can one change the modeline color based on the mode used?
+
+3.4 Multiple Device Support:
+* Q3.4.1::      How do I open a frame on another screen of my multi-headed display?  
+* Q3.4.2::      Can I really connect to a running XEmacs after calling up over a modem?  How?
+
+3.5 The Keyboard:
+* Q3.5.1::      How can I bind complex functions (or macros) to keys?
+* Q3.5.2::      How can I stop down-arrow from adding empty lines to the bottom of my buffers?
+* Q3.5.3::      How do I bind C-. and C-; to scroll one line up and down?
+* Q3.5.4::      Globally binding @kbd{Delete}?
+* Q3.5.5::      Scrolling one line at a time.
+* Q3.5.6::      How to map @kbd{Help} key alone on Sun type4 keyboard? 
+* Q3.5.7::      How can you type in special characters in XEmacs?
+* Q3.5.8::      Why does @code{(global-set-key [delete-forward] 'delete-char)} complain?
+* Q3.5.9::      How do I make the Delete key delete forward?
+* Q3.5.10::     Can I turn on @dfn{sticky} modifier keys?
+
+The Cursor:
+* Q3.6.1::      Is there a way to make the bar cursor thicker?
+* Q3.6.2::      Is there a way to get back the old block cursor where the cursor covers the character in front of the point?
+* Q3.6.3::      Can I make the cursor blink?
+
+The Mouse and Highlighting:
+* Q3.7.1::      How can I turn off Mouse pasting?
+* Q3.7.2::      How do I set control/meta/etc modifiers on mouse buttons?
+* Q3.7.3::      Clicking the left button does not do anything in buffer list.
+* Q3.7.4::      How can I get a list of buffers when I hit mouse button 3?
+* Q3.7.5::      Why does cut-and-paste not work between XEmacs and a cmdtool?
+* Q3.7.6::      How I can set XEmacs up so that it pastes where the text cursor is?
+* Q3.7.7::      How do I select a rectangular region?
+* Q3.7.8::      Why does @kbd{M-w} take so long?
+
+The Menubar and Toolbar:
+* Q3.8.1::      How do I get rid of the menu (or menubar)?
+* Q3.8.2::      Can I customize the basic menubar?
+* Q3.8.3::      How do I control how many buffers are listed in the menu @code{Buffers} list?
+* Q3.8.4::      Resources like @code{Emacs*menubar*font} are not working?
+* Q3.8.5::      How can I bind a key to a function to toggle the toolbar?
+
+Scrollbars:
+* Q3.9.1::      How can I disable the scrollbar?
+* Q3.9.2::      How can one use resources to change scrollbar colors?
+* Q3.9.3::      Moving the scrollbar can move the point; can I disable this?
+* Q3.9.4::      How can I get automatic horizontal scrolling?
+
+Text Selections:
+* Q3.10.1::     How can I turn off or change highlighted selections? 
+* Q3.10.2::     How do I get that typing on an active region removes it?
+* Q3.10.3::     Can I turn off the highlight during isearch?
+* Q3.10.4::     How do I turn off highlighting after @kbd{C-x C-p} (mark-page)?
+* Q3.10.5::     The region disappears when I hit the end of buffer while scrolling.
+
+Major Subsystems
+
+* Q4.0.1::      How do I set up VM to retrieve remote mail using POP?
+* Q4.0.2::      How do I get VM to filter mail for me?
+* Q4.0.3::      How can I get VM to automatically check for new mail?
+* Q4.0.4::      [This question intentionally left blank]
+* Q4.0.5::      How do I get my outgoing mail archived?
+* Q4.0.6::      I have various addresses at which I receive mail.  How can I tell VM to ignore them when doing a "reply-all"?
+* Q4.0.7::      Is there a mailing list or FAQ for VM?
+* Q4.0.8::      Remote Mailreading with VM.
+* Q4.0.9::      rmail or VM gets an error incorporating new mail.
+* Q4.0.10::     How do I make VM stay in a single frame?
+* Q4.0.11::     How do I make VM or mh-e display graphical smilies?
+* Q4.0.12::     Customization of VM not covered in the manual or here.
+
+Web browsing with W3:
+* Q4.1.1::      What is W3?
+* Q4.1.2::      How do I run W3 from behind a firewall?
+* Q4.1.3::      Is it true that W3 supports style sheets and tables?
+
+Reading Netnews and Mail with Gnus:
+* Q4.2.1::      GNUS, (ding) Gnus, Gnus 5, September Gnus, Red Gnus,argh! 
+* Q4.2.2::      [This question intentionally left blank]
+* Q4.2.3::      How do I make Gnus stay within a single frame?
+* Q4.2.4::      How do I customize the From: line?
+
+Other Mail & News:
+* Q4.3.1::      How can I read and/or compose MIME messages?
+* Q4.3.2::      What is TM and where do I get it?
+* Q4.3.3::      Why isn't this @code{movemail} program working?
+* Q4.3.4::      Movemail is also distributed by Netscape?  Can that cause problems?
+* Q4.3.5::      Where do I find pstogif (required by tm)?
+
+Sparcworks, EOS, and WorkShop:
+* Q4.4.1::      What is SPARCworks, EOS, and WorkShop 
+
+Energize:
+* Q4.5.1::      What is/was Energize?
+
+Infodock:
+* Q4.6.1::      What is Infodock?
+
+Other Unbundled Packages:
+* Q4.7.1::      What is AUC TeX?  Where do you get it?
+* Q4.7.2::      Are there any Emacs Lisp Spreadsheets?
+* Q4.7.3::      Byte compiling AUC TeX on XEmacs 19.14
+* Q4.7.4::      Problems installing AUC TeX
+* Q4.7.5::      Is there a reason for an Emacs package not to be included in XEmacs?
+
+The Miscellaneous Stuff
+
+* Q5.0.1::      How can I do source code highlighting using font-lock?
+* Q5.0.2::      I do not like cc-mode.  How do I use the old c-mode?
+* Q5.0.3::      How do I get @samp{More} Syntax Highlighting on by default?
+* Q5.0.4::      How can I enable auto-indent?
+* Q5.0.5::      How can I get XEmacs to come up in text/auto-fill mode by default?
+* Q5.0.6::      How do I start up a second shell buffer?
+* Q5.0.7::      Telnet from shell filters too much.
+* Q5.0.8::      Why does edt emulation not work?
+* Q5.0.9::      How can I emulate VI and use it as my default mode?
+* Q5.0.10::     [This question intentionally left blank] 
+* Q5.0.11::     Filladapt doesn't work in 19.15? 
+* Q5.0.12::     How do I disable gnuserv from opening a new frame?
+* Q5.0.13::     How do I start gnuserv so that each subsequent XEmacs is a client?
+* Q5.0.14::     Strange things are happening in Shell Mode.
+* Q5.0.15::     Where do I get the latest CC Mode?
+* Q5.0.16::     I find auto-show-mode disconcerting.  How do I turn it off?
+* Q5.0.17::     How can I get two instances of info?
+* Q5.0.18::     I upgraded to XEmacs 19.14 and gnuserv stopped working
+* Q5.0.19::     Is there something better than LaTeX mode?
+
+Emacs Lisp Programming Techniques:
+* Q5.1.1::      The difference in key sequences between XEmacs and GNU Emacs?
+* Q5.1.2::      Can I generate "fake" keyboard events?
+* Q5.1.3::      Could you explain @code{read-kbd-macro} in more detail?
+* Q5.1.4::      What is the performance hit of @code{let}?
+* Q5.1.5::      What is the recommended use of @code{setq}?
+* Q5.1.6::      What is the typical misuse of @code{setq} ?
+* Q5.1.7::      I like the the @code{do} form of cl, does it slow things down?
+* Q5.1.8::      I like recursion, does it slow things down?
+* Q5.1.9::      How do I put a glyph as annotation in a buffer?
+
+Sound:
+* Q5.2.1::      How do I turn off the sound?
+* Q5.2.2::      How do I get funky sounds instead of a boring beep?
+* Q5.2.3::      What's NAS, how do I get it?
+* Q5.2.4::      Sunsite sounds don't play.
+
+Miscellaneous:
+* Q5.3.1::      How do you make XEmacs indent CL if-clauses correctly?
+* Q5.3.2::      Fontifying hangs when editing a postscript file.
+* Q5.3.3::      How can I print WYSIWYG a font-locked buffer?
+* Q5.3.4::      Getting @kbd{M-x lpr} to work with postscript printer.
+* Q5.3.5::      How do I specify the paths that XEmacs uses for finding files?
+* Q5.3.6::      [This question intentionally left blank]
+* Q5.3.7::      Can I have the end of the buffer delimited in some way?
+* Q5.3.8::      How do I insert today's date into a buffer?
+* Q5.3.9::      Are only certain syntactic character classes available for abbrevs?
+* Q5.3.10::     How can I get those oh-so-neat X-Face lines?
+* Q5.3.11::     How do I add new Info directories?
+* Q5.3.12::     What do I need to change to make printing work?
+
+What the Future Holds
+
+* Q6.0.1::      What is new in 20.2?
+* Q6.0.2::      What is new in 20.3?
+* Q6.0.3::      Procedural changes in XEmacs development.
+@end detailmenu
 @end menu
 
 @node Introduction, Installation, Top, Top
@@ -239,6 +525,11 @@ technical, programming, design and organizational matters between RMS
 and the XEmacs development team which provide little hope for a merge to
 take place in the short-term future.
 
+If you have a comment to add regarding the merge, it is a good idea to
+avoid posting to the newsgroups, because of the very heated flamewars
+that often result.  Mail your questions to <xemacs-beta@@xemacs.org> and 
+<bug-gnu-emacs@@prep.ai.mit.edu>.
+
 @node Q1.0.6, Q1.0.7, Q1.0.5, Introduction
 @section Where can I get help?
 
@@ -268,10 +559,13 @@ removed.
 @node Q1.0.7, Q1.0.8, Q1.0.6, Introduction
 @section Where is the mailing list archived?
 
-The mailing list is archived in the directory
+The mailing list was archived in the directory
 @example
 <URL:ftp://ftp.xemacs.org:/pub/mlists/>.
 @end example
+
+However, this archive is out of date.  The current mailing list server
+supports an @code{archive} feature, which may be utilized.
 
 @node Q1.0.8, Q1.0.9, Q1.0.7, Introduction
 @section How do you pronounce XEmacs?
@@ -339,7 +633,8 @@ No, and there is no news of anyone working on it.
 
 InfoDock Associates, a firm specializing in Emacs-related support and
 development, will be maintaining the XEmacs user manual.  The firm plans
-to begin publishing printed copies of the manual in March 1997.
+to begin publishing printed copies of the manual soon.
+@c This used to say `March 1997'!
 
 @example
   Web:     http://www.xemacs.com
@@ -418,7 +713,7 @@ always hope :)
 @section Who wrote XEmacs?
 
 XEmacs is the result of the time and effort of many people.  The
-developers responsible for the 19.15/20.0 release are:
+developers responsible for the 19.15/20.x releases are:
 
 @itemize @bullet
 @item Martin Buchholz <mrb@@eng.sun.com>
@@ -519,9 +814,13 @@ new primitive types including @code{char}, @code{char-table}, and
 The MULE support works OK but still needs a fair amount of work before
 it's really solid.  We could definitely use some help here, esp. people
 who speak Japanese and will use XEmacs/MULE to work with Japanese and
-have some experience with E-Lisp.  Martin Buchholz
-<Martin.Buchholz@@sun.com> is working full-time on this currently.  If
-you can help out here, @xref{Q1.1.2}.
+have some experience with E-Lisp.
+
+As the fundings on Mule have stopped, Mule part of XEmacs is currently
+looking for a full-time maintainer.  If you can provide help here, or
+are willing to fund the work, please mail to <xemacs-beta@@xemacs.org>.
+
+@xref{Q1.1.2}.
 
 @node Q1.3.3, Q1.3.4, Q1.3.2, Introduction
 @section How do I type non-ASCII characters?
@@ -754,12 +1053,6 @@ To bind to a key do:
 
 Or interactively, @kbd{M-x global-set-key} and follow the prompts.
 
-You can also view Jari Aalto's <jaalto@@tre.ntc.nokia.com> file:
-
-@example
-<URL:ftp://cs.uta.fi/pub/ssjaaa/ema-keys.html>
-@end example
-
 @node Q1.4.6, Q1.4.7, Q1.4.5, Introduction
 @section What's the difference between a macro and a function?
 
@@ -883,6 +1176,9 @@ This will let you run XEmacs without massive copying.
 
 @node Q2.0.2, Q2.0.3, Q2.0.1, Installation
 @section XEmacs is too big
+
+Although this entry has been written for XEmacs 19.13, most of it still
+stands true.
 
 Steve Baur <steve@@altair.xemacs.org> writes:
 
@@ -1189,6 +1485,8 @@ The solution is to upgrade to at least libc-5.4.23.  Sigh.  Drat.
 All external libraries used by XEmacs can be found at the XEmacs FTP
 site <URL:ftp://ftp.xemacs.org/pub/aux/>.
 
+@c This list is a pain in the you-know-what to keep in synch with the
+@c world.
 The canonical locations (at the time of this writing) are as follows:
 
 @table @asis
@@ -5266,18 +5564,10 @@ considered unstable.
 @node Q6.0.2, Q6.0.3, Q6.0.1, Current Events
 @section What is new in 20.3?
 
-XEmacs release 20.3 is planned for autumn 1997.  It will likely contain
-a much smaller amount of code for basic functionality, with all the
-popular Lisp packages being available in the form of easy-to-install
-add-ons.
-
-Other input methods (such as skk) will be made available for Mule, as
-well as more user-level documentation.
-
-Many new features are planned, such as multiple TTY frames, support for
-Autoconf 2, synches with Emacs 20.1, and more; much of this is already
-running in various beta versions.  Ask at
-@code{<xemacs-beta-request@@xemacs.org>} for more details.
+XEmacs release 20.3 is planned for november 1997.  It will contain many
+bugfixes, and a number of new features, including Autoconf 2 based
+configuration, multiple TTY frames, further customizations, synches with
+GNU Emacs 20, advanced Perl-like regexp features, and more.
 
 @node Q6.0.3,  , Q6.0.2, Current Events
 @section Procedural changes in XEmacs development.
@@ -5296,9 +5586,8 @@ Due to the long development cycle in between releases, it has been
 decided that intermediate versions will be made available in source only
 form for the truly interested.
 
-No further XEmacs 19 feature releases are planned.  XEmacs 19.16 will
-consist of 19.15 plus the collected bugfixes, and will probably be the
-final version of XEmacs 19.
+XEmacs 19.16 will be the last 19 release, basically consisting of 19.15
+plus the collected bugfixes.
 
 @item
 As of December 1996, Steve Baur <steve@@altair.xemacs.org> has become

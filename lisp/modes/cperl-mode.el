@@ -37,7 +37,7 @@
 ;;; Karl M. Hegbloom <karlheg@inetarena.com>
 
 ;; Original Vendor Version Number:  (mostly based on...)
-;; $Id: cperl-mode.el,v 1.14 1997/10/12 01:39:40 steve Exp $
+;; $Id: cperl-mode.el,v 1.15 1997/10/31 14:52:54 steve Exp $
 
 ;; Increment the final digit once per XEmacs-only revision, the other
 ;; for merges.  (sound ok?)
@@ -632,7 +632,9 @@ set to the value of `font-lock-auto-fontify'."
   :group 'cperl-faces)
 
 (defface cperl-here-face 
-    '(( ((class color)) (:foreground "green") ))
+  '((((type x) (class color) (background light))
+     (:foreground "green4" :background "grey85"))
+    (t (:foreground "green")))
   "*The result of evaluation of this expression is used for here-docs highlighting."
   :group 'cperl-faces)
 

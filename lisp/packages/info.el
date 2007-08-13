@@ -311,6 +311,11 @@
   :group 'help
   :group 'docs)
 
+(defgroup info-faces nil
+  "The faces used by info browser."
+  :group 'info
+  :group 'faces)
+
 
 (defcustom Info-inhibit-toolbar nil
   "*Non-nil means don't use the specialized Info toolbar."
@@ -407,6 +412,14 @@ the (dir)Top node of the Info documentation tree.")
 heading."
   :type 'regexp
   :group 'info)
+
+(defface info-node '((t (:bold t :italic t)))
+  "Face used for node links in info."
+  :group 'info-faces)
+
+(defface info-xref '((t (:bold t)))
+  "Face used for cross-references in info."
+  :group 'info-faces)
 
 ;; Is this right for NT?  .zip, with -c for to stdout, right?
 (defvar Info-suffix-list '( ("" . nil) 
@@ -916,6 +929,9 @@ actually get any text from."
       (while buffers
 	(kill-buffer (car buffers))
 	(setq buffers (cdr buffers)))
+      (while lbuffers
+	(kill-buffer (car lbuffers))
+	(setq lbuffers (cdr lbuffers)))
       (message "Composing main Info directory...done"))
     (setq Info-dir-contents (buffer-string)))
   (setq default-directory Info-dir-contents-directory)
@@ -2429,18 +2445,7 @@ e	Edit the contents of the current node."
   (make-local-variable 'Info-current-annotation-completions)
   (make-local-variable 'Info-index-alternatives)
   (make-local-variable 'Info-history)
-  (if t ;; XEmacs: remove v19 test
-      (progn
-	(or (and (fboundp 'find-face) (find-face 'info-node))
-	    (make-face 'info-node "used for node links in info"))
-	(or (and (fboundp 'find-face) (find-face 'info-xref))
-	    (make-face 'info-xref "used for cross-references in info"))
-	(or (face-differs-from-default-p 'info-node)
-	    (if (face-differs-from-default-p 'bold-italic)
-		(copy-face 'bold-italic 'info-node)
-	      (copy-face 'bold 'info-node)))
-	(or (face-differs-from-default-p 'info-xref)
-	    (copy-face 'bold 'info-xref))))
+  ;; Faces are now defined by `defface'...
   (make-local-variable 'mouse-track-click-hook)
   (add-hook 'mouse-track-click-hook 'Info-maybe-follow-clicked-node)
   (add-hook 'mouse-track-click-hook 'Info-mouse-track-double-click-hook)

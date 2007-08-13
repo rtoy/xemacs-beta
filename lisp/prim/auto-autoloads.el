@@ -126,7 +126,7 @@ This function works by modifying `process-environment'." t nil)
 Find the definition of the function near point in the current window.
 
 Finds the Emacs Lisp library containing the definition of the function
-near point (selected by `find-function-function') in a buffer and
+near point (selected by `function-at-point') in a buffer and
 places point before the definition.  Point is saved in the buffer if
 it is one of the current buffers.
 
@@ -137,7 +137,7 @@ The library where FUNCTION is defined is searched for in
 Find the definition of the function near point in the other window.
 
 Finds the Emacs Lisp library containing the definition of the function
-near point (selected by `find-function-function') in a buffer and
+near point (selected by `function-at-point') in a buffer and
 places point before the definition.  Point is saved in the buffer if
 it is one of the current buffers.
 
@@ -148,7 +148,7 @@ The library where FUNCTION is defined is searched for in
 Find the definition of the function near point in the another frame.
 
 Finds the Emacs Lisp library containing the definition of the function
-near point (selected by `find-function-function') in a buffer and
+near point (selected by `function-at-point') in a buffer and
 places point before the definition.  Point is saved in the buffer if
 it is one of the current buffers.
 
@@ -300,9 +300,9 @@ Install a pre-bytecompiled XEmacs package into package hierarchy." t nil)
 
 ;;;***
 
-;;;### (autoloads (profile-key-sequence profile profiling-results) "profile" "prim/profile.el")
+;;;### (autoloads (profile-key-sequence profile profile-results) "profile" "prim/profile.el")
 
-(autoload 'profiling-results "profile" "\
+(autoload 'profile-results "profile" "\
 Print profiling info INFO to STREAM in a pretty format.
 If INFO is omitted, the current profiling info is retrieved using
  `get-profiling-info'.

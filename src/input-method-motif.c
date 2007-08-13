@@ -23,8 +23,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Written by Martin Buchholz. */
 
-#include <X11/Xlocale.h>        /* More portable than <locale.h> ? */
 #include <config.h>
+#include <X11/Xlocale.h>        /* More portable than <locale.h> ? */
 #include "lisp.h"
 #include "console-x.h"
 #include "device.h"

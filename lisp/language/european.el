@@ -67,14 +67,16 @@
 (defun setup-8-bit-environment (language charset coding-system input-method)
   (setup-english-environment)
   (set-default-coding-systems coding-system)
-  (setq coding-category-iso-8-1 coding-system
-	coding-category-iso-8-2 coding-system)
+  ;; (setq coding-category-iso-8-1 coding-system
+  ;;       coding-category-iso-8-2 coding-system)
+  (set-coding-category-system 'iso-8-1 coding-system)
+  (set-coding-category-system 'iso-8-2 coding-system)
 
-  (if charset
-      (let ((nonascii-offset (- (make-char charset) 128)))
-	;; Set up for insertion of characters in this character set
-	;; when codes 0200 - 0377 are typed in.
-	(setq nonascii-insert-offset nonascii-offset)))
+  ;; (if charset
+  ;;     (let ((nonascii-offset (- (make-char charset) 128)))
+  ;;       ;; Set up for insertion of characters in this character set
+  ;;       ;; when codes 0200 - 0377 are typed in.
+  ;;       (setq nonascii-insert-offset nonascii-offset)))
 
   (if input-method
       (setq default-input-method input-method))
@@ -82,22 +84,9 @@
   ;; If this is a Latin-N character set, set up syntax for it in
   ;; single-byte mode.  We can't use require because the file
   ;; must be eval'd each time in case we change from one Latin-N to another.
-  (if (string-match "^Latin-\\([1-9]\\)$" language)
-      (load (downcase language) nil t)))
-
-;; (define-language-environment 'european
-;;   "European (for Latin-1 through Latin-5)"
-;;   (lambda ()
-;;     (set-coding-category-system 'iso-8-designate 'iso-8859-1)
-;;     (set-coding-priority-list '(iso-8-designate iso-8-1))
-;;     ;;(setq locale-coding-system            'no-conversion) ; iso-8859-1
-;;     (set-default-buffer-file-coding-system  'no-conversion) ; iso-8859-1
-;;     ;;(set-buffer-file-coding-system-for-read 'no-conversion) ; iso-8859-1
-;;     ;;(setq display-coding-system 'iso-8859-1)
-;;     ;;(setq keyboard-coding-system 'iso-8859-1)
-;;     ;; (setq-default quail-current-package
-;;     ;;               (assoc "latin-1" quail-package-alist))
-;;     ))
+  ;; (if (string-match "^Latin-\\([1-9]\\)$" language)
+  ;;     (load (downcase language) nil t))
+  )
 
 ;; Latin-1 (ISO-8859-1)
 
@@ -122,6 +111,51 @@
 				. setup-european-environment-map))
 	     (charset . (ascii latin-iso8859-1))
 	     (coding-system . (iso-8859-1))
+	     (sample-text
+	      . "Hello, Hej, Tere, Hei, Bonjour, Gr,A|_(B Gott, Ciao, ,A!(BHola!")
+	     (documentation . ("\
+These languages are supported with the Latin-1 (ISO-8859-1) character set:
+ Danish, Dutch, English, Faeroese, Finnish, French, German, Icelandic,
+ Irish, Italian, Norwegian, Portuguese, Spanish, and Swedish.
+" . describe-european-environment-map))
+	     ))
+
+(set-language-info-alist
+ "German" '((setup-function . (setup-latin1-environment
+				. setup-european-environment-map))
+	     (charset . (ascii latin-iso8859-1))
+	     (coding-system . (iso-8859-1))
+	     (tutorial . "TUTORIAL.de")
+	     (sample-text
+	      . "Hello, Hej, Tere, Hei, Bonjour, Gr,A|_(B Gott, Ciao, ,A!(BHola!")
+	     (documentation . ("\
+These languages are supported with the Latin-1 (ISO-8859-1) character set:
+ Danish, Dutch, English, Faeroese, Finnish, French, German, Icelandic,
+ Irish, Italian, Norwegian, Portuguese, Spanish, and Swedish.
+" . describe-european-environment-map))
+	     ))
+
+(set-language-info-alist
+ "French" '((setup-function . (setup-latin1-environment
+				. setup-european-environment-map))
+	     (charset . (ascii latin-iso8859-1))
+	     (coding-system . (iso-8859-1))
+	     (tutorial . "TUTORIAL.fr")
+	     (sample-text
+	      . "Hello, Hej, Tere, Hei, Bonjour, Gr,A|_(B Gott, Ciao, ,A!(BHola!")
+	     (documentation . ("\
+These languages are supported with the Latin-1 (ISO-8859-1) character set:
+ Danish, Dutch, English, Faeroese, Finnish, French, German, Icelandic,
+ Irish, Italian, Norwegian, Portuguese, Spanish, and Swedish.
+" . describe-european-environment-map))
+	     ))
+
+(set-language-info-alist
+ "Norwegian" '((setup-function . (setup-latin1-environment
+				. setup-european-environment-map))
+	     (charset . (ascii latin-iso8859-1))
+	     (coding-system . (iso-8859-1))
+	     (tutorial . "TUTORIAL.no")
 	     (sample-text
 	      . "Hello, Hej, Tere, Hei, Bonjour, Gr,A|_(B Gott, Ciao, ,A!(BHola!")
 	     (documentation . ("\
@@ -165,9 +199,22 @@ These languages are supported with the Latin-1 (ISO-8859-1) character set:
 	     (documentation . ("\
 These languages are supported with the Latin-2 (ISO-8859-2) character set:
  Albanian, Czech, English, German, Hungarian, Polish, Romanian,
- Serbo-Croatian or Croatian, Slovak, Slovene, and Swedish.
+ Serbian or Croatian, Slovak, Slovene, and Swedish.
 " . describe-european-environment-map))
 	     ))
+
+(set-language-info-alist
+ "Croatian" '((setup-function . (setup-latin2-environment
+				. setup-european-environment-map))
+	      (charset . (ascii latin-iso8859-2))
+	      (tutorial . "TUTORIAL.hr")
+	      (coding-system . (iso-8859-2))
+	      (documentation . ("\
+These languages are supported with the Latin-2 (ISO-8859-2) character set:
+ Albanian, Czech, English, German, Hungarian, Polish, Romanian,
+ Serbian or Croatian, Slovak, Slovene, and Swedish.
+" . describe-european-environment-map))
+	      ))
 
 ;; Latin-3 (ISO-8859-3)
 

@@ -184,8 +184,8 @@ primary selection-extent, nil otherwise."
  Text drops follow the `mouse-yank-at-point' variable."
   ;; by Oliver Graf <ograf@fga.de>
   (interactive "e")
-  (let ((type (car (event-dnd-data event)))
-	(data (cadr (event-dnd-data event)))
+  (let ((type (car (event-drag-and-drop-data event)))
+	(data (cadr (event-drag-and-drop-data event)))
 	(frame (event-channel event)))
     (cond ((= type 2)
 	   (let ((x pop-up-windows))

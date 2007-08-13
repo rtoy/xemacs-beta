@@ -64,6 +64,8 @@ Boston, MA 02111-1307, USA.  */
 #undef EMACS_VERSION
 #undef XEMACS_CODENAME
 
+/* Make all functions available on AIX.  See AC_AIX. */
+#undef _ALL_SOURCE
 
 /* Used to identify the XEmacs version in stack traces. */
 #undef STACK_TRACE_EYE_CATCHER
@@ -100,6 +102,7 @@ Boston, MA 02111-1307, USA.  */
 /* The following will be defined if xmkmf thinks they are necessary */
 #undef SVR4
 #undef SYSV
+#undef AIXV3
 #undef _POSIX_SOURCE
 #undef _BSD_SOURCE
 #undef _GNU_SOURCE
@@ -204,6 +207,9 @@ Boston, MA 02111-1307, USA.  */
 /* Can `gettimeofday' accept two arguments? */
 #undef GETTIMEOFDAY_ONE_ARGUMENT
 
+/* Is the timezone variable already declared in system headers? */
+#undef HAVE_TIMEZONE_DECL
+
 #undef HAVE_MMAP
 #undef HAVE_STRCOLL
 #undef HAVE_GETPGRP
@@ -279,8 +285,6 @@ Boston, MA 02111-1307, USA.  */
 
 #undef NLIST_STRUCT
 
-#undef AIX_SMT_EXP
-
 /* Compile in support for SOCKS? */
 #undef HAVE_SOCKS
 
@@ -294,17 +298,8 @@ Boston, MA 02111-1307, USA.  */
    This enables graphical display of X-face headers in mail/news messages */
 #undef HAVE_XFACE
 
-/* Compile in support for GIF (Graphics Interchange Format) images? */
-#undef HAVE_GIF
-
-/* Compile in support for displaying JPEG images via the `jpeg' library? */
-#undef HAVE_JPEG
-
-/* Compile in support for displaying PNG images via the `png' library? */
-#undef HAVE_PNG
-
-/* Compile in support for displaying TIFF images via the `tiff' library? */
-#undef HAVE_TIFF
+/* Compile in support for ImageMagick (all image formats) */
+#undef HAVE_IMAGEMAGICK
 
 /* Do you have the Xmu library?
    This should always be the case except on losing HP-UX systems. */
@@ -406,7 +401,7 @@ Boston, MA 02111-1307, USA.  */
    Requires libDtSvc, which typically must be present at runtime.  */
 #undef HAVE_CDE
 
-/* Compile in support for OffiX Drag and Drop?  Requires libdnd. */
+/* Compile in support for OffiX Drag and Drop? */
 #undef HAVE_OFFIX_DND
 
 /* Compile in support for proper session-management. */

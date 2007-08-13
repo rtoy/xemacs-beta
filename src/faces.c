@@ -580,19 +580,20 @@ face_property_matching_instance (Lisp_Object face, Lisp_Object property,
 				  XFACE (face)->charsets_warned_about)))
 	    {
 #ifdef MULE
-	      warn_when_safe
-		(Qfont, Qwarning,
-		 "Unable to instantiate font for face %s, charset %s",
-		 string_data (symbol_name
-			      (XSYMBOL (XFACE (face)->name))),
-		 string_data (symbol_name
-			      (XSYMBOL (XCHARSET_NAME (charset)))));
-#else
-	      warn_when_safe (Qfont, Qwarning,
-			      "Unable to instantiate font for face %s",
-			      string_data (symbol_name
-					   (XSYMBOL (XFACE (face)->name))));
+	      if (! UNBOUNDP (charset))
+		warn_when_safe
+		  (Qfont, Qwarning,
+		   "Unable to instantiate font for face %s, charset %s",
+		   string_data (symbol_name
+				(XSYMBOL (XFACE (face)->name))),
+		   string_data (symbol_name
+				(XSYMBOL (XCHARSET_NAME (charset)))));
+	      else
 #endif
+		warn_when_safe (Qfont, Qwarning,
+				"Unable to instantiate font for face %s",
+				string_data (symbol_name
+					     (XSYMBOL (XFACE (face)->name))));
 	      XFACE (face)->charsets_warned_about =
 		Fcons (charset, XFACE (face)->charsets_warned_about);
 	    }

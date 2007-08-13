@@ -42,6 +42,7 @@
     ["Diff against Repository"		cvs-mode-diff-cvs		t]
     ["Diff against Backup Version"	cvs-mode-diff-backup		t]
     "----"
+    ["Update sources from Repository"	cvs-mode-update-no-prompt	t]
     ["Commit Changes to Repository"	cvs-mode-commit			t]
     ["Revert File from Repository"	cvs-mode-undo-local-changes	t]
     ["Add File to Repository"		cvs-mode-add			t]

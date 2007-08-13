@@ -202,7 +202,7 @@ potentially taking a long time."
     (let ((bufname (concat "Man"
 			   (when apropos-mode " apropos")
 			   ": " topic
-			   (when section (concat "(" section ")") "")))
+			   (when section (concat "(" section ")"))))
 	  (temp-buffer-show-function 
 	   (cond ((eq 't Manual-buffer-view-mode)
 		  'view-buffer)

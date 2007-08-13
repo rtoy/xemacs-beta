@@ -1,4 +1,70 @@
 							-*- indented-text -*-
+to 20.4 beta2 "Alpine"
+-- hm--html-mode has been packaged
+-- viper has been packaged
+-- ediff has been packaged
+-- EFS has been packaged
+-- Mailcrypt has been packaged
+-- VM has been packaged
+-- Mule updates, elimination of dead languages courtesy of MORIOKA Tomohiko
+-- Phase one of graphics conversion to ImageMagic courtesy of William Perry
+-- Miscellaneous menu hacking courtesy of Kyle Jones
+-- Reorganization of Lisp type & type bits courtesy of Kyle Jones
+-- reftex.el 3.7 courtesy of Carsten Dominik
+-- Norwegian tutorial update courtesy of Stig Bjorlykkee
+-- ediff & viper updates courtesy of Michael Kifer
+-- Canna & Wnn integrated with LEIM courtesy of Stephen Turnbull
+-- Berkeley DB 2.x support courtesy of Andreas Jaegar
+-- tm has been packaged
+-- calendar has been packaged
+-- Build tweak: finder-inf is not aggressively rebuilt
+-- New versions of TUTORIAL:
+--   Croatian - Hrvoje Niksic
+--   French - Didier Verna
+--   German - Adrian Aichner
+--   Norwegian - Stig Bjorlykke
+--   Japanese, Korean, Thai - Imported from Emacs 20.1
+-- Disable puresize statistics unless --debug is in effect
+-- about.el hacking
+-- New command line options -no-packages, -vanilla
+-- psgml has been packaged
+-- Move lisp types into lrecords for portability courtesy of Kyle Jones
+-- yow.el has been packaged
+-- xmine.el has been packaged
+-- tetris.el has been packaged
+-- hanoi.el has been packaged
+-- hide-copyleft.el has been packaged
+-- flow-ctrl.el has been packaged
+-- find-gc.el has been packaged
+-- detached-minibuf.el has been packaged
+-- crontab.el has been packaged
+-- browse-cltl2.el has been packaged
+-- studly.el has been packaged
+-- spook.el has been packaged
+-- mpuz.el has been packaged
+-- life.el has been packaged
+-- gomoku.el has been packaged
+-- flame.el has been packaged
+-- dunnet.el has been packaged
+-- doctor.el has been packaged
+-- dissociate.el has been packaged
+-- decipher.el has been packaged
+-- cookie1.el has been packaged
+-- conx.el has been packaged
+-- blackbox.el has been packaged
+-- NeXTify.el has been packaged
+-- Support for conses and vectors to be lrecords
+-- autoloads found in User packages loaded at start up
+-- reftex.el update courtesy of Carsten Dominik
+-- crisp.el-1.21 courtesy of Gary Foster
+-- lazy-shot.el update from Jan Vroonhof
+-- XEmacs/BETA logo courtesy of Mark Borges & Didier Verna
+-- Oliver Graf OffiX patches
+-- Mule patches from MORIOKA Tomohiko
+-- xemacs-build-report-1.33 courtesy of Adrian Aichner
+-- Hrvoje Niksic updates
+-- Miscellaneous bug fixes
+
 to 20.4 beta1 "Century"
 -- Version fork, package work will be carried on in this branch
 -- Miscellaneous bug fixes

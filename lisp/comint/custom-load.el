@@ -1,20 +1,19 @@
 ;;; custom-load.el --- automatically extracted custom dependencies
 
-;; Created by SL Baur on Sat Oct  4 18:11:23 1997
 
 ;;; Code:
 
-(custom-put 'ssh 'custom-loads '("ssh"))
-(custom-put 'telnet 'custom-loads '("telnet"))
-(custom-put 'shell 'custom-loads '("shell"))
-(custom-put 'comint-completion 'custom-loads '("comint"))
-(custom-put 'comint 'custom-loads '("comint-xemacs" "comint" "telnet"))
-(custom-put 'rlogin 'custom-loads '("rlogin"))
-(custom-put 'shell-faces 'custom-loads '("shell"))
-(custom-put 'shell-directories 'custom-loads '("shell"))
-(custom-put 'comint-source 'custom-loads '("comint"))
-(custom-put 'processes 'custom-loads '("background" "comint" "rlogin" "shell" "ssh"))
-(custom-put 'background 'custom-loads '("background"))
-(custom-put 'unix 'custom-loads '("rlogin" "shell" "ssh"))
+(custom-add-loads 'ssh '("ssh"))
+(custom-add-loads 'telnet '("telnet"))
+(custom-add-loads 'shell '("shell"))
+(custom-add-loads 'comint-completion '("comint"))
+(custom-add-loads 'comint '("comint-xemacs" "comint" "telnet"))
+(custom-add-loads 'rlogin '("rlogin"))
+(custom-add-loads 'shell-faces '("shell"))
+(custom-add-loads 'shell-directories '("shell"))
+(custom-add-loads 'comint-source '("comint"))
+(custom-add-loads 'processes '("background" "comint" "rlogin" "shell" "ssh"))
+(custom-add-loads 'background '("background"))
+(custom-add-loads 'unix '("rlogin" "shell" "ssh"))
 
 ;;; custom-load.el ends here

@@ -8,7 +8,7 @@
 ;; Created: 97/07/25
 ;; URL: <http://www.kurims.kyoto-u.ac.jp/~petersen/emacs-lisp/>
 
-;; $Id: find-func.el,v 1.1 1997/10/10 01:39:52 steve Exp $
+;; $Id: find-func.el,v 1.2 1997/10/31 14:53:07 steve Exp $
 
 ;; This file is part of XEmacs.
 
@@ -96,10 +96,10 @@ not selected.
 
 The library where FUNCTION is defined is searched for in
 `find-function-source-path', if non `nil', otherwise in `load-path'."
-  (and (subrp (symbol-function function))
-       (error "%s is a primitive function" function))
   (if (not function)
       (error "You didn't specify a function"))
+  (and (subrp (symbol-function function))
+       (error "%s is a primitive function" function))
   (let ((def (symbol-function function))
 	library aliases)
     (while (symbolp def)
@@ -118,7 +118,10 @@ The library where FUNCTION is defined is searched for in
 		 (nth 1 def))
 		((describe-function-find-file function))
 		((compiled-function-p def)
-		 (substring (compiled-function-annotation def) 0 -4))))
+		 (substring (compiled-function-annotation def) 0 -4))
+		((eq 'macro (car-safe def))
+		 (and (compiled-function-p (cdr def))
+		      (substring (compiled-function-annotation (cdr def)) 0 -4)))))
     (if (null library)
 	(error (format "Don't know where `%s' is defined" function)))
     (if (string-match "\\.el\\(c\\)\\'" library)
@@ -153,9 +156,8 @@ The library where FUNCTION is defined is searched for in
 (defun find-function-read-function ()
   "Read and return a function, defaulting to the one near point.
 
-The function named by `find-function-function' is used to select the
-default function."
-  (let ((fn (funcall find-function-function))
+`function-at-point' is used to select the default function."
+  (let ((fn (function-at-point))
 	(enable-recursive-minibuffers t)
 	val)
     (setq val (completing-read
@@ -184,7 +186,7 @@ Point is saved in the buffer if it is one of the current buffers."
   "Find the definition of the function near point in the current window.
 
 Finds the Emacs Lisp library containing the definition of the function
-near point (selected by `find-function-function') in a buffer and
+near point (selected by `function-at-point') in a buffer and
 places point before the definition.  Point is saved in the buffer if
 it is one of the current buffers.
 
@@ -198,7 +200,7 @@ The library where FUNCTION is defined is searched for in
   "Find the definition of the function near point in the other window.
 
 Finds the Emacs Lisp library containing the definition of the function
-near point (selected by `find-function-function') in a buffer and
+near point (selected by `function-at-point') in a buffer and
 places point before the definition.  Point is saved in the buffer if
 it is one of the current buffers.
 
@@ -212,7 +214,7 @@ The library where FUNCTION is defined is searched for in
   "Find the definition of the function near point in the another frame.
 
 Finds the Emacs Lisp library containing the definition of the function
-near point (selected by `find-function-function') in a buffer and
+near point (selected by `function-at-point') in a buffer and
 places point before the definition.  Point is saved in the buffer if
 it is one of the current buffers.
 

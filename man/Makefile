@@ -37,16 +37,15 @@ TEXI2DVI = texi2dvi
 RECURSIVE_MAKE = $(MAKE) $(MFLAGS) MAKEINFO='$(MAKEINFO)' TEXI2DVI='$(TEXI2DVI)'
 
 # Subdirectories to make recursively.
-SUBDIR = xemacs lispref new-users-guide internals tm gnats
+SUBDIR = xemacs lispref new-users-guide internals gnats
 
 ../info/%.info : %.texi
 	-$(MAKEINFO) -o $@ $<
 
-srcs = cc-mode cl custom ediff efs external-widget forms \
-	hm--html-mode \
-	hyperbole ilisp info ispell mailcrypt oo-browser \
-	pcl-cvs ph psgml psgml-api standards supercite term \
-	termcap texinfo vhdl-mode viper vm widget xemacs-faq
+srcs = cc-mode cl custom external-widget forms \
+	hyperbole ilisp info ispell oo-browser \
+	pcl-cvs ph standards supercite term \
+	termcap texinfo vhdl-mode widget xemacs-faq
 
 info = $(srcs:%=../info/%.info)
 dvi  = $(srcs:%=%.dvi)

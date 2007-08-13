@@ -58,30 +58,47 @@ The default status is as follows.
 	coding-category-binarry		no-conversion
 "
   (interactive)
-  (setq-default enable-multibyte-characters t)
+  ;; (setq-default enable-multibyte-characters t)
 
-  (setq coding-category-iso-7		'iso-2022-7bit
-	coding-category-iso-8-1		'iso-8859-1
-	coding-category-iso-8-2		'iso-8859-1
-	coding-category-iso-7-else	'iso-2022-7bit-lock
-	coding-category-iso-8-else	'iso-2022-8bit-ss2
-	coding-category-emacs-mule	'no-conversion
-	coding-category-sjis		'japanese-shift-jis
-	coding-category-big5		'chinese-big5
-	coding-category-binary		'binary)
-
-  (set-coding-priority
-   '(coding-category-iso-7
-     coding-category-iso-8-2
-     coding-category-iso-8-1
-     coding-category-iso-7-else
-     coding-category-iso-8-else
-     coding-category-emacs-mule 
-     coding-category-raw-text
-     coding-category-sjis
-     coding-category-big5
-     coding-category-binary))
-
+  ;; (setq coding-category-iso-7           'iso-2022-7bit
+  ;;       coding-category-iso-8-1         'iso-8859-1
+  ;;       coding-category-iso-8-2         'iso-8859-1
+  ;;       coding-category-iso-7-else      'iso-2022-7bit-lock
+  ;;       coding-category-iso-8-else      'iso-2022-8bit-ss2
+  ;;       coding-category-emacs-mule      'no-conversion
+  ;;       coding-category-sjis            'japanese-shift-jis
+  ;;       coding-category-big5            'chinese-big5
+  ;;       coding-category-binary          'binary)
+  (set-coding-category-system 'iso-7		'iso-2022-7bit)
+  (set-coding-category-system 'iso-8-1		'iso-8859-1)
+  (set-coding-category-system 'iso-8-2		'iso-8859-1)
+  (set-coding-category-system 'iso-lock-shift	'iso-2022-lock)
+  (set-coding-category-system 'iso-8-designate	'ctext)
+  (set-coding-category-system 'no-conversion	'no-conversion)
+  (set-coding-category-system 'shift-jis	'shift_jis)
+  (set-coding-category-system 'big5		'big5)
+  
+  ;; (set-coding-priority
+  ;;  '(coding-category-iso-7
+  ;;    coding-category-iso-8-2
+  ;;    coding-category-iso-8-1
+  ;;    coding-category-iso-7-else
+  ;;    coding-category-iso-8-else
+  ;;    coding-category-emacs-mule 
+  ;;    coding-category-raw-text
+  ;;    coding-category-sjis
+  ;;    coding-category-big5
+  ;;    coding-category-binary))
+  (set-coding-priority-list
+   '(iso-7
+     iso-8-2
+     iso-8-1
+     iso-8-designate
+     iso-lock-shift
+     no-conversion
+     shift-jis
+     big5))
+  
   (set-default-coding-systems nil)
   ;; Don't alter the terminal and keyboard coding systems here.
   ;; The terminal still supports the same coding system
@@ -89,7 +106,8 @@ The default status is as follows.
 ;;;  (set-terminal-coding-system-internal nil)
 ;;;  (set-keyboard-coding-system-internal nil)
 
-  (setq nonascii-insert-offset 0))
+  ;;(setq nonascii-insert-offset 0)
+  )
 
 (set-language-info-alist
  "English" '((setup-function . setup-english-environment)

@@ -228,6 +228,42 @@ non-nil." t nil)
 
 ;;;***
 
+;;;### (autoloads (c-comment-edit) "c-comment" "modes/c-comment.el")
+
+(autoload 'c-comment-edit "c-comment" "\
+Edit multi-line C comments.
+This command allows the easy editing of a multi-line C comment like this:
+   /*
+    * ...
+    * ...
+    */
+The comment may be indented or flush with the left margin.
+
+If point is within a comment, that comment is used.  Otherwise the
+comment to be edited is found by searching forward from point.
+
+With one \\[universal-argument] searching starts after moving back one
+  paragraph.
+With two \\[universal-argument]'s searching starts at the beginning of the
+  current or proceeding C function.
+With three \\[universal-argument]'s searching starts at the beginning of the
+  current page.
+With four \\[universal-argument]'s searching starts at the beginning of the
+  current buffer (clipping restrictions apply).
+
+Once located, the comment is copied into a temporary buffer, the comment
+leaders and delimiters are stripped away and the resulting buffer is
+selected for editing.  The major mode of this buffer is controlled by
+the variable `c-comment-edit-mode'.\\<c-comment-edit-map>
+
+Use \\[c-comment-edit-end] when you have finished editing the comment.  The
+comment will be inserted into the original buffer with the appropriate
+delimiters and indention, replacing the old version of the comment.  If
+you don't want your edited version of the comment to replace the
+original, use \\[c-comment-edit-abort]." t nil)
+
+;;;***
+
 ;;;### (autoloads (common-lisp-indent-function) "cl-indent" "modes/cl-indent.el")
 
 (autoload 'common-lisp-indent-function "cl-indent" nil nil nil)
@@ -707,7 +743,7 @@ Decode XPM image between START and END." nil nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.12 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.13 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -1286,7 +1322,7 @@ filter." t nil)
 
 ;;;***
 
-;;;### (autoloads (reftex-add-to-label-alist reftex-mode turn-on-reftex) "reftex" "modes/reftex.el")
+;;;### (autoloads (reftex-mode turn-on-reftex) "reftex" "modes/reftex.el")
 
 (autoload 'turn-on-reftex "reftex" "\
 Turn on RefTeX minor mode." nil nil)
@@ -1299,7 +1335,7 @@ When referencing, you get a menu with all labels of a given type and
 context of the label definition.  The selected label is inserted as a
 \\ref macro.
 
-Citations can be made with `\\[reftex-citation]' which will use a regular expression 
+Citations can be made with `\\[reftex-citation]' which will use a regular expression
 to pull out a *formatted* list of articles from your BibTeX
 database.  The selected citation is inserted as a \\cite macro.
 
@@ -1309,23 +1345,14 @@ capabilities is available with `\\[reftex-toc]'.
 Most command have help available on the fly.  This help is accessed by
 pressing `?' to any prompt mentioning this feature.
 
-Extensive documentation about reftex is in the file header of `reftex.el'.
+Extensive documentation about RefTeX is in the file header of `reftex.el'.
+You can view this information with `\\[reftex-show-commentary]'.
 
 \\{reftex-mode-map}
-Under X, these functions will also be available in a menu on the menu bar.
+Under X, these and other functions will also be available as `Ref' menu
+on the menu bar.
 
 ------------------------------------------------------------------------------" t nil)
-
-(autoload 'reftex-add-to-label-alist "reftex" "\
-Add label environment descriptions to `reftex-label-alist-external-add-ons'.
-The format of ENTRY-LIST is exactly like `reftex-label-alist'.  See there 
-for details.
-This function makes it possible to support RefTeX from AUCTeX style files.
-The entries in ENTRY-LIST will be processed after the user settings in
-`reftex-label-alist', and before the defaults (specified in
-`reftex-default-label-alist-entries').  Any changes made to
-`reftex-label-alist-external-add-ons' will raise a flag to the effect that a
-mode reset is done on the next occasion." nil nil)
 
 ;;;***
 
@@ -2019,7 +2046,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.12 $
+vhdl-mode $Revision: 1.13 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the

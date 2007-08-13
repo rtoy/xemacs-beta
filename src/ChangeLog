@@ -1,11 +1,388 @@
+1997-10-30  SL Baur  <steve@altair.xemacs.org>
+
+	* config.h.in: Remove HAVE_GIF, HAVE_JPEG, HAVE_PNG, HAVE_TIFF and 
+	replace with HAVE_IMAGEMAGICK.
+
+1997-10-30  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* process.c (Fprocess_send_string): Protect against
+	  SIGPIPE when flushing outstream.
+
+1997-10-30  SL Baur  <steve@altair.xemacs.org>
+
+	* input-method-xfs.c: Xlocale.h must be included after config.h.
+	* input-method-motif.c: ditto.
+	* input-method-xlib.c: ditto.
+
+1997-10-28  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* Under LRECORD_VECTOR, moved vectors from being an basic 
+	  lrecord tpye to an lcrecord.
+	  Added support for 31 bits Lisp integers.
+	  Added support for maskless pointers to Lisp objects.
+
+	* alloc.c
+
+	(allocate_lisp_storage): Use XSETOBJ instead of
+	   XSETCONS to avoid tripping the ERROR_CHECK_TYPECHECK
+	   code with uninitialized data.  XSETCONS used to work
+	   until it became an lrecord type.
+
+	   Removed sweep_vectors_1, all_vectors and other vector
+	   specific GC related objects in the LRECORD_VECTOR
+	   case, as they are unneeded now that lrecord-based
+	   vectors are lcrecords.
+
+	   Added `equal' methods for lrecord-based conses, vectors
+	   and strings.  I was mistaken before; they are needed.
+
+	(pure_cons): moved XSETCONS call to after the
+	   set_lheader_implementation call, to avoid tripping the
+	   type checking code on an uninitialized implementation
+	   pointer.
+
+	(make_pure_vector): moved XSETVECTOR call to after the
+	   set_lheader_implementation call, to avoid tripping the
+	   type checking code on an uninitialized implementation
+	   pointer.
+
+	(Fpurecopy): return if given a null pointer.  THis can 
+	   happen when initializing Qnil.
+
+	(mark_object): return if passed a null pointer.  I
+	   think this can happen when marking through some kind of
+	   objects that contain Lisp_Objects and null pointers.
+
+	(marked_p): Ditto
+
+	* buffer.c
+
+	(mark_buffer): Don't mark conses in the indirect children
+	   list is said list is in fact a null pointer.  The
+	   indirect children list gets reset to a null pointer
+	   when a bfufer is killed.
+
+	(complex_vars_of_buffer): initialize indirect_children 
+	   slow of Vbuffer_local_symbols and Vbuffer_defaults to
+	   nil.
+
+	* chartab.c
+
+	(Fcheck_category_at): Don't use XREALINT to extract a
+	   char from a Lisp_Object, use XCHAR instead.
+
+	(Fchar_in_category): Ditto.
+
+	* data.c
+
+	(eq_with_ebola_notice): Use XCHAR_OR_INT instead of
+	   XREALINT to extract data from a Lisp_Object that could
+	   contain a charater or an integer.
+
+	(make_int): use XSETINT in the USE_MINIMAL_TAGBITS
+	   case.
+
+	(make_char): use XSETINT in the USE_MINIMAL_TAGBITS
+	   case.
+
+	(Flsh): XUINT is gone; use XINT instead.
+
+	* elhash.c
+
+	(elisp_hvector_malloc): Use Qnull_pointer instead of
+	   Qzero, as Qzero is no longer guaranteed to contain an
+	   all-zero bit pattern.
+
+	(make_lisp_hashtable): Ditto.
+
+	(Fcopy_hashtable): Ditto.
+
+	* emacsfns.h
+
+	   Conditionalize the declaration of make_char() on
+	   whether a make_char macro exists or not.
+
+	* fns.c
+
+	(internal_equal): Conditionalize existence of cons,
+	   string and vector comparison code on whether they are
+	   lrecord-based.
+
+	(internal_old_equal): Ditto.
+
+	* lisp-disunion.h
+
+	   USE_MINIMAL_TAGBITS support.
+
+	   31 bit Lisp integer support.
+
+	   Conditionalized existence of markbit related macros on
+	   the existence of a markbit in a Lisp_Object.  There are
+	   no markbits in the USE_MINIMAL_TAGBITS implementation
+	   of a Lisp_Object.
+
+	   Replaced XUINT with XPNTRVAL.
+
+	   Added declaration for Qnull_pointer.
+
+	* lisp-union.h
+
+	   USE_MINIMAL_TAGBITS support.
+
+	   31 bit Lisp integer support.
+
+	   Conditionalized existence of markbit related macros on
+	   the existence of a markbit in a Lisp_Object.  There are
+	   no markbits in the USE_MINIMAL_TAGBITS implementation
+	   of a Lisp_Object.
+
+	   Replaced XUINT with XPNTRVAL.
+
+	   Added a make_char macro, similar to the make_int
+	   macro, for use with the GCC-specific XMAKE_LISP hack.
+
+	* lisp.h
+
+	   USE_MINIMAL_TAGBITS support.
+
+	   31 bit Lisp integer support.
+
+	   Added GCMARKBITS macro to specify how many markbits a
+	   Lisp_Object contains.
+
+	   Support for lcrecord-based vectors.
+
+	   Added XCHAR_OR_INT for accessing data in an object
+	   that might contain either a character or an integer.
+
+	   Made HACKEQ_UNSAFE use XCHAR_OR_INT instead of
+	   XREALINT during its Ebola check.
+
+	* print.c
+
+	   Made the printing code undestand the split Lisp integer type.
+
+	* symbols.c
+
+	   Added declaration for Qnull_pointer.
+
+1997-10-27  Martin Buchholz  <mrb@eng.sun.com>
+
+	* src/m/ibmrs6000.h:
+	* src/s/aix3-2.h: C_SWITCH_SYSTEM ==> configure.in
+	* src/s/aix4-1.h: -li18n ==> configure.in
+	* src/s/aix4.h: Always include strings.h
+	* src/config.h.in: Add AIXV3 define, suggested by xmkmf. Remove
+	AIX_SMT_EXP.
+	* src/unexaix.c: Fix nested comments compiler warning
+
+1997-10-27  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* src/profile.c (sigprof_handler): Don't call XUNMARK on
+	  fun, it isn't needed.
+
+	* src/faces.c (face_property_matching_instance): Check
+	  for charset == Qunbound, which it can be if the
+	  character set is unspecified.
+
+1997-10-27  SL Baur  <steve@altair.xemacs.org>
+
+	* mule-wnnfns.c (vars_of_mule_wnn): Provide 'wnn feature.
+
+	* mule-canna.c (vars_of_mule_canna): Provide 'CANNA feature.
+
+1997-10-27  Kazuyuki IENAGA <ienaga@jsys.co.jp>
+
+	* device-x.c (x_init_device): To avoid crazy menubars due to
+	lack of suitable font loading.  Disabled locale based app-defaults
+	loading when menubars=motif or menubars=lucid + xfs feature is not
+	used.  Currently, the menubar resource has no effect for tty use.
+
+1997-10-25  Andreas Jaeger  <aj@arthur.rhein-neckar.de>
+
+	* README: Remove references to VMS.
+
+	* vlimit.h: 
+	* s/vms5-5.h: 
+	* s/vms4-4.h: 
+	* s/vms4-2.h: 
+	* s/vms4-0.h: 
+	* s/vms.h: Remove files since VMS isn't supported any more.
+
+1997-10-25  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* toolbar.h: Reduce MINIMUM_SHADOW_THICKNESS to 1.
+
+1997-10-24  Andreas Jaeger  <aj@arthur.rhein-neckar.de>
+
+	* database.c: Added support for Berkeley DB 2.x.
+
+1997-10-23  SL Baur  <steve@altair.xemacs.org>
+
+	* alloc.c: Disable purespace statistics unless --debug is in
+	effect.
+
+	* console-stream.c (init_console_stream): At the price of a tiny 
+	memory leak, reinitialize FILE fields of the console.
+	From Tonny Madsen <tma@nettest.dk>
+
+	* emacs.c: New variable `inhibit_package_init'.
+	(vars_of_emacs): Use it.
+	(main_1): Initialize from command line.
+
+	* Makefile.in.in (xemacs): Specify -vanilla when searching for
+	shadows.
+
+	* emacs.c: Remove VMS ifdefs.
+	(standard_args): Added -no-packages, --no-packages.
+	Added -vanilla, --vanilla.
+	(Frun_emacs_from_temacs): Guard pure usage report with DEBUG_XEMACS
+	(Fdump_emacs): Ditto.
+
+1997-10-22  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* fns.c (Ffeaturep): Use `Fcar' with `or'.
+
+1997-10-22  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* alloc.c: drop the Lisp_Type_Record case clause
+	  that I added to the switch statement in a previous
+	  patch.  The string, vector and cons cases belong in
+	  the `default' clause with the other lrecord types.
+
+1997-10-22  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* Added support for strings as lrecords.
+
+	* lisp.h: #ifdef'd out Lisp_Type_String enum value
+	   if LRECORD_STRING is defined.
+
+	* alloc.c: Added allocation and garbage collection
+	   code for lrecord-based strings.
+
+	* print.c: move Lisp_String printing code to a
+	   separate function so that it could be used as a
+	   `print' method for lrecord-based strings.
+
+1997-10-20  Jan Vroonhof  <vroonhof@math.ethz.ch> 
+ 
+	* extents.c: Renamed shot property to initial-redisplay-function
+	(extent_fragment_update): Changed the bookkeeping whether an event
+	has been spawned. The initial-redisplay-function property is no
+	longer set to nil.
+ 
+	* extents.h: ditto
+ 
+1997-10-20  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* Added support for conses and vectors to be lrecords.
+
+	* alloc.c: Modified allocation and GC code for
+	   LRECORD_CONS and LRECORD_VECTOR support.  Moved some
+	   macros to lrecord.h.
+
+	* bytecode.c: Warning comment about LRECORD_CONS.
+
+	* elhash.c: Let internal_hash handle vector hashing
+	   if LRECORD_VECTOR is defined, just as it does when
+	   LRECORD_VECTOR is not defined.  The code could have
+	   been copied into an `hash' method function but I don't
+	   see any point to it.  Added lrecord style marking code
+	   to finish_marking_weak_hashtables.  Bracketed code
+	   that groks the non-lrecord method of marking vectors
+	   with #ifdefs.
+
+	* fns.c: Let internal_equal and internal_old_equal
+	   handle vector comparisons when LRECORD_VECTOR is
+	   defined, just as it does when LRECORD_VECTOR is not
+	   defined.  The code could have been copied into an
+	   `equal' method function but I don't see any point to
+	   it.
+
+	* lisp.h: Added typecheck macros for LRECORD_CONS
+	   support.  LRECORD_VECTOR macros were already present.
+
+	* print.c: New functions print_cons and print_vector
+	   for LRECORD_CONS and LRECORD_VECTOR support.
+	   Some GC protection also added.
+
+	* lrecord.h: Received some macros from alloc.c, so
+	   that they could be used in lisp.h.
+
+1997-10-20  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* fns.c (Ffeaturep): Handle `not' correctly.
+
+	* lread.c (vars_of_lread): Use defsymbol for featurep.
+
+1997-10-15  Olivier Galibert  <olivier.galibert@mines.u-nancy.fr>
+
+	* s/irix5-0.h: Removed -G 0 from LD_SWITCH_SYSTEM. .sbss sections
+ 	are supported since unexelfsgi.c upgrade.
+
+1997-10-16  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* lstream.c (Lstream_close): Don't return early if the
+	  closer method reports failure.  Doing so caused GC and
+	  memory corruption crashes.
+
+1997-10-14  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* extents.c (Fset_extent_property): Allow `keymap' property to be
+	set to nil.
+
+1997-10-15  SL Baur  <steve@altair.xemacs.org>
+
+	* mule-coding.c (acceptable_control_char_p): Add C-_ for info.
+	(detect_coding_iso2022): Ditto.
+	From SENDA Shigeya  <senda@ic.rdc.ricoh.co.jp>
+
+1997-10-09  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mule-coding.c (make-coding-system, detect-coding-region): Modify
+	DOC-string because of renaming `automatic-conversion' ->
+	`undecided' to sync with Emacs 20.2.
+
+	(make-coding-system, coding-system-type, detect-coding-region):
+	Rename `Qautomatic_conversion' -> `Qundecided'.
+	
+	* general.c (syms_of_general): Rename `automatic-conversion' ->
+	`undecided' to sync with Emacs 20.2.
+
+	* emacsfns.h, event-Xt.c (x_to_emacs_keysym): Rename
+	`Qautomatic_conversion' -> `Qundecided'.
+
+	* buffer.c (buffer-file-coding-system): Modify DOC-string because
+	of renaming `automatic-conversion' -> `undecided' to sync with
+	Emacs 20.2.
+
+1997-10-15  Olivier Galibert  <olivier.galibert@mines.u-nancy.fr>
+
+	* lisp.h (MANY): Bump SUBR_MAX_ARGS to 12 and add corresponding
+ 	DEFUN_n macros.
+
+1997-10-13  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
+
+	* console-tty.c: Include gpmevent.h
+	* gpmevent.c (connect_to_gpm): change to void
+	* gpmevent.h: Ditto.
+
+1997-10-13  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* lisp-disunion.h (XSETOBJ): cast Lisp type enum to
+	  an EMACS_UINT quantity to avoid a compiler warning about
+	  integer overflow when the most significat bit of the
+	  type tag is shifted into the sign bit position of an
+	  EMACS_INT.
+
 1997-10-12  SL Baur  <steve@altair.xemacs.org>
 
-	* src/s/freebsd.h: Add X11 guard for building without X11.
+	* s/freebsd.h: Add X11 guard for building without X11.
 	From Hrvoje Niksic <hniksic@srce.hr>
 
 1997-10-12  Kyle Jones  <kyle_jones@wonderworks.com>
 
-	* src/doprnt.c (emacs_doprnt_1): if forwarded field width
+	* doprnt.c (emacs_doprnt_1): if forwarded field width
 	  is negative, set minus_flag and make the field width
 	  positive.  Makes (format "%*s" -10 "abc") work like
 	  (format "%-*s" 10 "abc").
@@ -14,7 +391,7 @@
 
 	* unexsol2.c (unexec): CONST isn't defined here.
 	From Adrian Aichner <aichner@ecf.teradyne.com>
-	
+
 1997-10-11  SL Baur  <steve@altair.xemacs.org>
 
 	* realpath.c (realpath): CONST IS LOSING but removing it conflicts 

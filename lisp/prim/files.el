@@ -144,7 +144,7 @@ The value is a list of regular expressions.
 If the file name matches one of these regular expressions,
 then `revert-buffer' reverts the file without querying
 if the file has changed on disk and you have not edited the buffer."
-  :type 'boolean
+  :type '(repeat (regexp ""))
   :group 'find-file)
 
 (defvar buffer-file-number nil
@@ -644,8 +644,6 @@ bottom of the buffer stack."
 	 (frame (make-frame (if name
 				  (list (cons 'name (symbol-name name)))))))
     (pop-to-buffer buffer t frame)
-    (unless focus-follows-mouse
-      (select-frame frame))
     (make-frame-visible frame)
     buffer))
 

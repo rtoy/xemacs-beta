@@ -83,7 +83,7 @@ int handle_gpm_read(struct Lisp_Event *event, struct console *con, int fd)
   return (1);
 }
 
-int connect_to_gpm(struct console *con)
+void connect_to_gpm(struct console *con)
 {
   /* Only do this if we are running after dumping and really interactive */
   if (!noninteractive && initialized) {

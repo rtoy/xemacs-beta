@@ -1,28 +1,68 @@
 ;;; japan-util.el ---  utilities for Japanese
 
-;; Copyright (C) 1995 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
+;; Copyright (C) 1997 MORIOKA Tomohiko
 
 ;; Keywords: mule, multilingual, Japanese
 
-;; This file is part of GNU Emacs.
+;; This file is part of XEmacs.
 
-;; GNU Emacs is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; along with XEmacs; see the file COPYING.  If not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;; 02111-1307, USA.
 
 ;;; Code:
+
+;;;###autoload
+(defun setup-japanese-environment ()
+  "Setup multilingual environment (MULE) for Japanese."
+  (interactive)
+  (setup-english-environment)
+
+  ;; (setq coding-category-iso-8-2 'japanese-iso-8bit)
+  (set-coding-category-system 'iso-8-2 'euc-jp)
+  ;; (setq coding-category-iso-8-else 'japanese-iso-8bit)
+  
+  ;; (set-coding-priority
+  ;;  '(coding-category-iso-7
+  ;;    coding-category-iso-8-2
+  ;;    coding-category-sjis
+  ;;    coding-category-iso-8-1
+  ;;    coding-category-iso-7-else
+  ;;    coding-category-iso-8-else
+  ;;    coding-category-emacs-mule))
+  (set-coding-priority-list
+   '(iso-7
+     iso-8-2
+     shift-jis
+     iso-8-1
+     iso-lock-shift
+     iso-8-designate
+     no-conversion
+     big5))
+  
+  (set-default-coding-systems
+   (if (eq system-type 'ms-dos)
+       'japanese-shift-jis
+     'iso-2022-jp))
+  
+  ;; (when (eq 'x (device-type (selected-device)))
+  ;;   (x-use-halfwidth-roman-font 'japanese-jisx0208 "jisx0201"))
+  
+  ;; (setq default-input-method "japanese")
+  )
 
 (defconst japanese-kana-table
   '((?あ ?ア ?ｱ) (?い ?イ ?ｲ) (?う ?ウ ?ｳ) (?え ?エ ?ｴ) (?お ?オ ?ｵ)
@@ -261,13 +301,9 @@ Optional argument ASCII-ONLY non-nil means to convert only to ASCII char."
 (defun read-hiragana-string (prompt &optional initial-input)
   "Read a Hiragana string from the minibuffer, prompting with string PROMPT.
 If non-nil, second arg INITIAL-INPUT is a string to insert before reading."
-  (read-multilingual-string prompt initial-input
-			    "Japanese" "quail-ja-hiragana"))
+  (read-multilingual-string prompt initial-input "japanese-hiragana"))
 
 ;;
-(provide 'language/japan-util)
+(provide 'japan-util)
 
-;;; Local Variables:
-;;; generated-autoload-file: "../loaddefs.el"
-;;; End:
 ;;; japan-util.el ends here

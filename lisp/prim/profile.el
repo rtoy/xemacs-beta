@@ -26,7 +26,7 @@
 
 ;;; Commentary:
 
-;; In addition to Lisp-based `elp', XEmacs contains a set of
+;; In addition to Lisp-based `elp', XEmacs provides a set of
 ;; primitives able to profile evaluation of Lisp functions, created by
 ;; the illustrious Ben Wing.  The functions in this file can be used
 ;; to gain easy access to the internal profiling functions.
@@ -36,16 +36,16 @@
 ;; The output of this process is an alist with keys being the
 ;; functions, and values being the number of ticks per function.  From
 ;; this, `profiling-results' easily extracts the total number of
-;; ticks, and the percentage CPU time of each function.
-
-;; Unless stated otherwise, profiling info is being accumulated (the
-;; current info is returned by `get-profiling-info').  Use
+;; Unless stated otherwise, profiling info is being accumulated
+;; incrementally through several profile runs (the current info is
+;; always available by `get-profiling-info').  Use
 ;; `clear-profiling-info' to break the accumulation chain.
 
 ;; Caveats (ELP users should read this):
 ;; 1) The time reported is function time, rather than
 ;;    function+descendants time;
-;; 2) The Time/ms is CPU time (user+kernel), not the real time;
+;; 2) Each tick is equivalent to 1ms (which can be changed), but this
+;;    is CPU time (user+kernel), not the real time;
 ;; 3) Only the actuall funcalls are profiled.  If a subr Ffoo calls
 ;;    Fbar using Fbar (), only Ffoo will appear in the profile.
 
@@ -59,12 +59,6 @@
 
 
 ;;; Code:
-
-(defun profile-align (form width)
-  ;; Bletch!  this is what (format "%-*s" width form) should do.
-  (let ((printed-form (format "%s" form)))
-    (concat printed-form
-	    (make-string (max 0 (- width (length printed-form))) ?\ ))))
 
 ;;;###autoload
 (defun profile-results (&optional info stream)
@@ -88,26 +82,25 @@ If STREAM is omitted, either a *Profiling Results* buffer or standard
 	;; Calculate the longest function
 	(maxfunlen (apply #'max
 			  (length "Function Name")
-			  (mapcar (lambda (el)
-				    ;; Functions longer than 40
-				    ;; characters don't qualify
-				    (let ((l (length (format "%s" (car el)))))
-				      (if (< l 40)
-					  l 0)))
-				  info))))
-    (princ (format "%s    Ticks    %%/Total\n"
-		   (profile-align "Function Name" maxfunlen)))
+			  (mapcar
+			   (lambda (el)
+			     ;; Functions longer than 50 characters (usually
+			     ;; anonymous functions) don't qualify
+			     (let ((l (length (format "%s" (car el)))))
+			       (if (< l 50)
+				   l 0)))
+			   info))))
+    (princ (format "%-*s    Ticks    %%/Total\n" maxfunlen "Function Name"))
     (princ (make-string maxfunlen ?=))
     (princ "    =====    =======\n")
     (let ((sum (float (apply #'+ (mapcar #'cdr info)))))
       (dolist (entry (nreverse (sort info #'cdr-less-than-cdr)))
-	(princ (format "%s    %-5d    %-6.3f\n"
-		       (profile-align (car entry) maxfunlen)
-		       (cdr entry) (* 100 (/ (cdr entry) sum)))))
+	(princ (format "%-*s    %-5d    %-6.3f\n"
+		       maxfunlen (car entry) (cdr entry)
+		       (* 100 (/ (cdr entry) sum)))))
       (princ (make-string maxfunlen ?-))
       (princ "--------------------\n")
-      (princ (format "%s    %-5d    %-6.2f\n"
-		     (profile-align "Total" maxfunlen) sum 100.0))
+      (princ (format "%-*s    %-5d    %-6.2f\n" maxfunlen "Total" sum 100.0))
       (princ (format "\n\nOne tick = %g ms\n"
 		     (/ default-profiling-interval 1000.0)))))
   (when (and (not stream)

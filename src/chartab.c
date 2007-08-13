@@ -1621,7 +1621,7 @@ else return nil. Optional third arg specifies which buffer
 
   CHECK_INT (pos);
   CHECK_CATEGORY_DESIGNATOR (designator);
-  des = XREALINT (designator);
+  des = XCHAR (designator);
   ctbl = check_category_table (category_table, Vstandard_category_table);
   ch = BUF_FETCH_CHAR (buf, XINT (pos));
   return check_category_char (ch, ctbl, des, 0) ? Qt : Qnil;
@@ -1639,7 +1639,7 @@ which defaults to the system default table.
   unsigned int des;
 
   CHECK_CATEGORY_DESIGNATOR (designator);
-  des = XREALINT (designator);
+  des = XCHAR (designator);
   CHECK_CHAR (chr);
   ch = XCHAR (chr);
   ctbl = check_category_table (category_table, Vstandard_category_table);

@@ -12,6 +12,10 @@
 /* Resource names used by the XlwMenu widget */
 #define XtNbuttonForeground "buttonForeground"
 #define XtCButtonForeground "ButtonForeground"
+#define XtNhighlightForeground "highlightForeground"
+#define XtCHighlightForeground "HighlightForeground"
+#define XtNtitleForeground "titleForeground"
+#define XtCTitleForeground "TitleForeground"
 #define XtNmargin "margin"
 #define XtNhorizontalSpacing "horizontalSpacing"
 #define XtNverticalSpacing "verticalSpacing"

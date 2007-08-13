@@ -1,3 +1,137 @@
+1997-10-31  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.4-beta2
+
+1997-10-30  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in (xetest): Eliminate tests for PNG, JPEG,
+	TIFF(broken) and replace with test for ImageMagick.
+
+1997-10-30  Kyle Jones  <kyle_jones@wonderworks.com>
+	
+	* etc/Emacs.ad: Added *XlwMenu*highlightForeground entry.
+	  Added *XlwMenu*titleForeground entry.
+
+	* lwlib/xlwmenu.h: Added string macro declarations for
+	  titleForeground and highlightForeground properties.
+
+	* lwlib/xlwmenuP.h: Added struct fields for title and
+	  highlight colors.
+
+	* lwlib/xlwmenu.c: Added initialization and usage code
+	  for the new titleForeground and highlightForeground
+	  properties.
+
+1997-10-29  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* etc/HELLO: Add Czech.
+
+	* etc/HELLO: Delete Amharic, Thai and Tigrigna.
+
+1997-10-28  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta94 is released.
+
+1997-10-28  Andreas Jaeger  <aj@arthur.rhein-neckar.de>
+
+	* configure.in: Correct last patch for berkdb.
+
+1997-10-28  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta93 is released.
+
+1997-10-27  Martin Buchholz  <mrb@eng.sun.com>
+
+	* lib-src/make-path.c:
+	* lib-src/digest-doc.c:
+	* lib-src/gnuslib.c: Always include config.h before system headers
+	* configure.in: Improve AIX configure support
+	  - NON_GNU_CC defaults to `xlc'
+	  - CFLAGS defaults to "-O3 -qstrict  -qlibansi -qinfo -qro 
+	    -qmaxmem=20000"
+	  - check for sin instead of sqrt in -lm to avoid xlc internal error
+	  - Detect -li18n for use with Motif
+	  - Move weird AIX static linking flags from s&m files to configure.in
+	  - use #pragma instead of -ma flag to avoid compiler warnings
+
+1997-10-25  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* lwlib/xlwmenu.c: Use XtRDimension in place of
+	  XmRHorizontalDimension in shadowThickness resource
+	  declaration.
+
+	* lwlib/xlwmenu.c (label_button_draw): Use the button_gc
+	  color as the foreground for selected entries.
+
+	* lwlib/xlwmenu.c (push_button_draw): Use the button_gc
+	  color as the foreground for selected entries.
+
+	* lwlib/xlwmenu.c (toggle_decoration_height): Force
+	  height to be minimum of 2x the shadow thickness.
+
+1997-10-24  Andreas Jaeger  <aj@arthur.rhein-neckar.de>
+
+	* configure.in: Don't choke on Berkeley DB 2.x.
+
+1997-10-24  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta92 is released.
+
+1997-10-21  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in (lisp/utils/finder-inf.el): Don't force rebuild if
+	it already exists (use `make finder' to force rebuild).
+
+1997-10-18  SL Baur  <steve@altair.xemacs.org>
+
+        * XEmacs 20.3-beta91 is released. 
+
+1997-10-16  Hrvoje Niksic <hniksic@srce.hr>
+
+	* etc/NEWS:  document changed package load semantics.
+
+1997-10-15  Olivier Galibert  <olivier.galibert@mines.u-nancy.fr>
+
+	* configure.in: Removed -Olimit=2000 from cc for IRIX.
+
+1997-10-12  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* configure.in (null_string): Added AC_SUBST(infodir_user_defined)
+ 	and removed backquoted echo statement from the infopath report line.
+
+1997-10-15  Olivier Galibert  <olivier.galibert@mines.u-nancy.fr>
+
+	* configure.in: Added detection of the declaration of the timezone
+ 	variable in system files. Defines HAVE_TIMEZONE_DECL if yes.
+
+
+1997-10-15  Olivier Galibert  <olivier.galibert@mines.u-nancy.fr>
+
+	* config.h.in: Add HAVE_TIMEZONE_DECL for detection of declaration
+ 	of the timezone variable in system headers.
+
+	* systime.h: Use HAVE_TIMEZONE_DECL.
+
+1997-10-14  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in (all_widgets): Don't allow configuration of
+	--with-mule if Mule lisp hasn't been installed.
+
+1997-10-13  SL Baur  <steve@altair.xemacs.org>
+
+	* configure.in: Remove `site-lisp' from list of directories to
+	make symbolic links for.
+
+	* XEmacs 20.3-beta90 is released.
+
+1997-10-12  Glynn Clements  <glynn@sensei.co.uk>
+
+	* info/dir: Cosmetic changes to info/dir
+
+1997-10-13  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* etc/NEWS: Updates
+
 1997-10-12  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.4-beta1 is released.
@@ -22,7 +156,7 @@
  	and lockdir
 	* '' added a line to the report for infopath and lockdir
 
-	* NEWS: Draft entry for the info changes.
+	* etc/NEWS: Draft entry for the info changes.
 
 1997-10-10  Karl M. Hegbloom  <karlheg@inetarena.com>
 

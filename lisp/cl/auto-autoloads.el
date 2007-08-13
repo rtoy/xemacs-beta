@@ -1,5 +1,7 @@
 ;;; DO NOT MODIFY THIS FILE
 (if (featurep 'cl-autoloads) (error "Already loaded"))
+
+(provide 'cl-autoloads)
 
 ;;;### (autoloads (compiler-macroexpand define-compiler-macro ignore-errors assert check-type typep deftype cl-struct-setf-expander defstruct define-modify-macro callf2 callf letf* letf rotatef shiftf remf cl-do-pop psetf setf get-setf-method defsetf define-setf-method declare the locally multiple-value-setq multiple-value-bind lexical-let* lexical-let symbol-macrolet macrolet labels flet progv psetq do-all-symbols do-symbols dotimes dolist do* do loop return-from return block etypecase typecase ecase case load-time-value eval-when destructuring-bind function* defmacro* defun* gentemp gensym cl-compile-time-init) "cl-macs" "cl/cl-macs.el")
 
@@ -327,5 +329,3 @@ and then returning foo." nil 'macro)
 (autoload 'compiler-macroexpand "cl-macs" nil nil nil)
 
 ;;;***
-
-(provide 'cl-autoloads)

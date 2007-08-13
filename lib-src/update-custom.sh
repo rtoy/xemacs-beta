@@ -72,7 +72,7 @@ hm--html-menus gnats pcl-cvs vm"
 # Only use Mule XEmacs to build Mule-specific autoloads & custom-loads.
 echon "Checking for Mule support..."
 lisp_prog='(princ (featurep (quote mule)))'
-mule_p="`$EMACS -batch -no-site-file -eval \"$lisp_prog\"`"
+mule_p="`$EMACS -batch -vanilla -eval \"$lisp_prog\"`"
 if test "$mule_p" = nil ; then
 	echo No
 	ignore_dirs="$ignore_dirs mule leim"
@@ -97,4 +97,4 @@ for dir in lisp/*; do
 done
 echo done
 
-$EMACS -batch -q -l cus-dep -f Custom-make-dependencies $dirs
+$EMACS -batch -vanilla -l cus-dep -f Custom-make-dependencies $dirs

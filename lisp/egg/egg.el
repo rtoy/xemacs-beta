@@ -2378,7 +2378,12 @@ Arguments are STRING, ALIST and optional PRED. ALIST must be no obarray."
 ;;; Currently entries C-\ and C-^ at global-map are undefined.
 ;;;
 
-(define-key global-map "\C-\\" 'toggle-egg-mode)
+;; Make this no-op if LEIM interface is used.
+(cond ((featurep 'egg-leim) t)
+      (t (define-key global-map "\C-\\" 'toggle-egg-mode)) )
+;; #### Should hide bindings like this, too?  However, `convert-region'
+;;      probably isn't going to be a LEIM feature, it's really pretty
+;;      Japanese and Korean specific.
 (define-key global-map "\C-x " 'henkan-region)
 
 ;; 92.3.16 by K.Handa

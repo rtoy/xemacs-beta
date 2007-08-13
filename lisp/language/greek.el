@@ -71,8 +71,8 @@
 (defun setup-greek-environment ()
   "Setup multilingual environment (MULE) for Greek."
   (interactive)
-  (setup-8-bit-environment "Greek" 'greek-iso8859-7 'greek-iso-8bit
-			   "greek"))
+  (setup-8-bit-environment "Greek" 'greek-iso8859-7 'iso-8859-7 "greek")
+  )
 
 (set-language-info-alist
  "Greek" '((setup-function . setup-greek-environment)

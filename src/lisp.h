@@ -630,38 +630,44 @@ enum munge_me_out_the_door
 /*                   Definition of Lisp_Object data type                */
 /************************************************************************/
 
-/* There's not any particular reason not to use lrecords for these; some
-   objects get slightly larger, but we get 3 bit tags instead of 4.
- */
-/* #define LRECORD_SYMBOL */
-
+#ifdef USE_MINIMAL_TAGBITS
+# define LRECORD_CONS
+# define LRECORD_VECTOR
+# define LRECORD_SYMBOL
+# define LRECORD_STRING
+#endif
 
 /* Define the fundamental Lisp data structures */
 
 /* This is the set of Lisp data types */
 
+#ifndef USE_MINIMAL_TAGBITS
+
 enum Lisp_Type
 {
   /* Integer.  XINT(obj) is the integer value. */
-  Lisp_Type_Int,		/* 0  DTP-FIXNUM */
+  Lisp_Type_Int,
 
   /* XRECORD_LHEADER (object) points to a struct lrecord_header
      lheader->implementation determines the type (and GC behaviour)
      of the object. */
-  Lisp_Type_Record,		/* 1  DTP-OTHER-POINTER */
+  Lisp_Type_Record,
 
+#ifndef LRECORD_CONS
   /* Cons.  XCONS (object) points to a struct Lisp_Cons. */
-  Lisp_Type_Cons,		/* 2  DTP-LIST */
+  Lisp_Type_Cons,
+#endif
 
-  /* LRECORD_STRING is NYI */
+#ifndef LRECORD_STRING
   /* String.  XSTRING (object) points to a struct Lisp_String.
      The length of the string, and its contents, are stored therein. */
-  Lisp_Type_String,		/* 3  DTP-STRING */
+  Lisp_Type_String,
+#endif
 
 #ifndef LRECORD_VECTOR
   /* Vector of Lisp objects.  XVECTOR(object) points to a struct Lisp_Vector.
      The length of the vector, and its contents, are stored therein. */
-  Lisp_Type_Vector,		/* 4  DTP-SIMPLE-ARRAY */
+  Lisp_Type_Vector,
 #endif /* !LRECORD_VECTOR */
 
 #ifndef LRECORD_SYMBOL
@@ -669,11 +675,25 @@ enum Lisp_Type
   Lisp_Type_Symbol,
 #endif /* !LRECORD_SYMBOL */
 
-  Lisp_Type_Char		/* 5 DTP-CHAR */
+  Lisp_Type_Char
 };
 
-/* unsafe! */
-#define POINTER_TYPE_P(type) ((type) != Lisp_Type_Int && (type) != Lisp_Type_Char)
+# define POINTER_TYPE_P(type) \
+  ((type) != Lisp_Type_Int && (type) != Lisp_Type_Char)
+
+#else
+
+enum Lisp_Type
+{
+  Lisp_Type_Record,
+  Lisp_Type_Int_Even,
+  Lisp_Type_Char,
+  Lisp_Type_Int_Odd
+};
+
+#define POINTER_TYPE_P(type) ((type) == Lisp_Type_Record)
+
+#endif
 
 /* This should be the underlying type into which a Lisp_Object must fit.
    In a strict ANSI world, this must be `int', since ANSI says you can't
@@ -697,11 +717,22 @@ enum Lisp_Type
 
 /* These values are overridden by the m- file on some machines.  */
 #ifndef GCTYPEBITS
-# define GCTYPEBITS 3L
+# ifdef USE_MINIMAL_TAGBITS
+#  define GCTYPEBITS 2L
+# else
+#  define GCTYPEBITS 3L
+# endif
+#endif
+
+/* Valid values for GCMARKBITS are 0 and 1. */
+#ifdef USE_MINIMAL_TAGBITS
+# define GCMARKBITS 0L
+#else
+# define GCMARKBITS 1L
 #endif
 
 #ifndef VALBITS
-# define VALBITS ((LONGBITS)-((GCTYPEBITS)+1L))
+# define VALBITS ((LONGBITS)-(GCTYPEBITS)-(GCMARKBITS))
 #endif
 
 #ifdef NO_UNION_TYPE
@@ -722,7 +753,7 @@ typedef struct
 #define HACKEQ_UNSAFE(obj1, obj2)				\
   (EQ (obj1, obj2) || (!POINTER_TYPE_P (XGCTYPE (obj1))		\
 		       && !POINTER_TYPE_P (XGCTYPE (obj2))	\
-		       && XREALINT (obj1) == XREALINT (obj2)))
+		       && XCHAR_OR_INT (obj1) == XCHAR_OR_INT (obj2)))
 
 #ifdef DEBUG_XEMACS
 extern int debug_issue_ebola_notices;
@@ -758,6 +789,9 @@ int eq_with_ebola_notice (Lisp_Object, Lisp_Object);
 
 struct Lisp_Cons
 {
+#ifdef LRECORD_CONS
+  struct lrecord_header lheader;
+#endif
   Lisp_Object car, cdr;
 };
 
@@ -773,6 +807,21 @@ struct Lisp_Buffer_Cons
 };
 #endif
 
+#ifdef LRECORD_CONS
+
+DECLARE_LRECORD (cons, struct Lisp_Cons);
+#define XCONS(x) XRECORD (x, cons, struct Lisp_Cons)
+#define XSETCONS(x, p) XSETRECORD (x, p, cons)
+#define CONSP(x) RECORDP (x, cons)
+#define GC_CONSP(x) GC_RECORDP (x, cons)
+#define CHECK_CONS(x) CHECK_RECORD (x, cons)
+#define CONCHECK_CONS(x) CONCHECK_RECORD (x, cons)
+
+#define CONS_MARKED_P(c) MARKED_RECORD_HEADER_P(&((c)->lheader))
+#define MARK_CONS(c) MARK_RECORD_HEADER (&((c)->lheader))
+
+#else /* ! LRECORD_CONS */
+
 DECLARE_NONRECORD (cons, Lisp_Type_Cons, struct Lisp_Cons);
 #define XCONS(a) XNONRECORD (a, cons, Lisp_Type_Cons, struct Lisp_Cons)
 #define XSETCONS(c, p) XSETOBJ (c, Lisp_Type_Cons, p)
@@ -785,6 +834,8 @@ DECLARE_NONRECORD (cons, Lisp_Type_Cons, struct Lisp_Cons);
    out of alloc.c */
 #define CONS_MARKED_P(c) XMARKBIT (c->car)
 #define MARK_CONS(c) XMARK (c->car)
+
+#endif /* ! LRECORD_CONS */
 
 #define NILP(x)  EQ (x, Qnil)
 #define GC_NILP(x)  GC_EQ (x, Qnil)
@@ -923,7 +974,7 @@ void set_string_char (struct Lisp_String *s, Charcount i, Emchar c);
 struct Lisp_Vector
 {
 #ifdef LRECORD_VECTOR
-  struct lrecord_header lheader;
+  struct lcrecord_header header;
 #endif
   long size;
   /* next is now chained through v->contents[size], terminated by Qzero.
@@ -958,8 +1009,9 @@ DECLARE_NONRECORD (vector, Lisp_Type_Vector, struct Lisp_Vector);
 #define XVECTOR_LENGTH(s) vector_length (XVECTOR (s))
 #define vector_data(v) ((v)->contents)
 #define XVECTOR_DATA(s) vector_data (XVECTOR (s))
-#define vector_next(v) ((v)->contents[(v)->size])
-
+#ifndef LRECORD_VECTOR
+# define vector_next(v) ((v)->contents[(v)->size])
+#endif
 
 /*********** bit vector ***********/
 
@@ -1141,12 +1193,12 @@ INLINE Emchar
 XCHAR (Lisp_Object obj)
 {
   assert (CHARP (obj));
-  return XREALINT (obj);
+  return XCHARVAL (obj);
 }
 
 #else
 
-#define XCHAR(x) XREALINT (x)
+#define XCHAR(x) XCHARVAL (x)
 
 #endif
 
@@ -1230,8 +1282,15 @@ DECLARE_LRECORD (float, struct Lisp_Float);
 
 #endif /* not LISP_FLOAT_TYPE */
 
-#define INTP(x) (XTYPE (x) == Lisp_Type_Int)
-#define GC_INTP(x) (XGCTYPE (x) == Lisp_Type_Int)
+#ifdef USE_MINIMAL_TAGBITS
+# define INTP(x) \
+  (XTYPE (x) == Lisp_Type_Int_Even || XTYPE(x) == Lisp_Type_Int_Odd)
+# define GC_INTP(x) \
+  (XGCTYPE (x) == Lisp_Type_Int_Even || XGCTYPE(x) == Lisp_Type_Int_Odd)
+#else
+# define INTP(x) (XTYPE (x) == Lisp_Type_Int)
+# define GC_INTP(x) (XGCTYPE (x) == Lisp_Type_Int)
+#endif
 
 #define ZEROP(x) EQ (x, Qzero)
 #define GC_ZEROP(x) GC_EQ (x, Qzero)
@@ -1252,8 +1311,39 @@ XINT (Lisp_Object obj)
 
 #endif
 
-#define CHECK_INT(x) CHECK_NONRECORD (x, Lisp_Type_Int, Qintegerp)
-#define CONCHECK_INT(x) CONCHECK_NONRECORD (x, Lisp_Type_Int, Qintegerp)
+#ifdef ERROR_CHECK_TYPECHECK
+
+INLINE EMACS_INT XCHAR_OR_INT (Lisp_Object obj);
+INLINE EMACS_INT
+XCHAR_OR_INT (Lisp_Object obj)
+{
+  assert (INTP (obj) || CHARP (obj));
+  return CHARP (obj) ? XCHAR (obj) : XINT (obj);
+}
+
+#else
+
+#define XCHAR_OR_INT(obj) (CHARP ((obj)) ? XCHAR ((obj)) : XINT ((obj)))
+
+#endif
+
+#ifdef USE_MINIMAL_TAGBITS
+/*
+ * can't use CHECK_NONRECORD and CONCHECK_NONRECORD here because in
+ * the USE_MINIMAL_TAGBITS implementation Lisp integers have two types.
+ */
+# define CHECK_INT(x)				do {	\
+ if (! INTP (x))					\
+   dead_wrong_type_argument (Qintegerp, x);		\
+ } while (0)
+# define CONCHECK_INT(x)			do {	\
+ if (! INTP (x))					\
+   x = wrong_type_argument (Qintegerp, x);		\
+ } while (0)
+#else
+# define CHECK_INT(x) CHECK_NONRECORD (x, Lisp_Type_Int, Qintegerp)
+# define CONCHECK_INT(x) CONCHECK_NONRECORD (x, Lisp_Type_Int, Qintegerp)
+#endif
 
 #define NATNUMP(x) (INTP (x) && XINT (x) >= 0)
 #define GC_NATNUMP(x) (GC_INTP (x) && XINT (x) >= 0)
@@ -1435,7 +1525,7 @@ void free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord);
     comment and creates the DOC file form it.
 */
 
-#define SUBR_MAX_ARGS 8
+#define SUBR_MAX_ARGS 12
 #define MANY -2
 #define UNEVALLED -1
 
@@ -1455,14 +1545,18 @@ void free_managed_lcrecord (Lisp_Object lcrecord_list, Lisp_Object lcrecord);
 #define DEFUN_MANY(named_int, named_Lisp_Object) named_int, named_Lisp_Object
 #define DEFUN_UNEVALLED(args) Lisp_Object args
 #define DEFUN_0() void
-#define DEFUN_1(a)					 Lisp_Object a
-#define DEFUN_2(a,b)		 DEFUN_1(a),		 Lisp_Object b
-#define DEFUN_3(a,b,c)		 DEFUN_2(a,b),		 Lisp_Object c
-#define DEFUN_4(a,b,c,d)	 DEFUN_3(a,b,c),	 Lisp_Object d
-#define DEFUN_5(a,b,c,d,e)	 DEFUN_4(a,b,c,d),	 Lisp_Object e
-#define DEFUN_6(a,b,c,d,e,f)	 DEFUN_5(a,b,c,d,e),	 Lisp_Object f
-#define DEFUN_7(a,b,c,d,e,f,g)	 DEFUN_6(a,b,c,d,e,f),	 Lisp_Object g
-#define DEFUN_8(a,b,c,d,e,f,g,h) DEFUN_7(a,b,c,d,e,f,g), Lisp_Object h
+#define DEFUN_1(a)									Lisp_Object a
+#define DEFUN_2(a,b)				DEFUN_1(a),				Lisp_Object b
+#define DEFUN_3(a,b,c)				DEFUN_2(a,b),				Lisp_Object c
+#define DEFUN_4(a,b,c,d)			DEFUN_3(a,b,c),				Lisp_Object d
+#define DEFUN_5(a,b,c,d,e)			DEFUN_4(a,b,c,d),			Lisp_Object e
+#define DEFUN_6(a,b,c,d,e,f)			DEFUN_5(a,b,c,d,e),			Lisp_Object f
+#define DEFUN_7(a,b,c,d,e,f,g)			DEFUN_6(a,b,c,d,e,f),			Lisp_Object g
+#define DEFUN_8(a,b,c,d,e,f,g,h)		DEFUN_7(a,b,c,d,e,f,g),			Lisp_Object h
+#define DEFUN_9(a,b,c,d,e,f,g,h,i)		DEFUN_8(a,b,c,d,e,f,g,h),		Lisp_Object i
+#define DEFUN_10(a,b,c,d,e,f,g,h,i,j)		DEFUN_9(a,b,c,d,e,f,g,h,i),		Lisp_Object j
+#define DEFUN_11(a,b,c,d,e,f,g,h,i,j,k)		DEFUN_10(a,b,c,d,e,f,g,h,i,j),		Lisp_Object k
+#define DEFUN_12(a,b,c,d,e,f,g,h,i,j,k,l)	DEFUN_11(a,b,c,d,e,f,g,h,i,j,k),	Lisp_Object l
 
 /* WARNING: If you add defines here for higher values of maxargs,
    make sure to also fix the clauses in primitive_funcall(),

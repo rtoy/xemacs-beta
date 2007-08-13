@@ -29,19 +29,18 @@
 
 (defvar mule-keymap (make-sparse-keymap "MULE")
   "Keymap for MULE (Multilingual environment) specific commands.")
-(fset 'mule-prefix mule-keymap)
 
 ;; Keep "C-x C-m ..." for mule specific commands.
-(define-key ctl-x-map "\C-m" 'mule-prefix)
+(define-key ctl-x-map "\C-m" mule-keymap)
 
 (define-key mule-keymap "f" 'set-buffer-file-coding-system)
 (define-key mule-keymap "F" 'set-default-buffer-file-coding-system) ; XEmacs
 (define-key mule-keymap "t" 'set-terminal-coding-system)
 (define-key mule-keymap "k" 'set-keyboard-coding-system)
-(define-key mule-keymap "p" 'set-current-process-coding-system)
-(define-key mule-keymap "P" 'set-default-process-coding-system) ; XEmacs
+(define-key mule-keymap "p" 'set-buffer-process-coding-system)
 (define-key mule-keymap "\C-\\" 'select-input-method)
-(define-key mule-keymap "c" 'list-coding-system-briefly) ; XEmacs
+(define-key mule-keymap "c" 'universal-coding-system-argument)
+;;(define-key mule-keymap "c" 'list-coding-system-briefly) ; XEmacs
 (define-key mule-keymap "C" 'list-coding-system)	 ; XEmacs
 (define-key mule-keymap "r" 'toggle-display-direction)	 ; XEmacs
 (define-key mule-keymap "l" 'set-language-environment)
@@ -50,7 +49,7 @@
 (define-key help-map "L" 'describe-language-environment)
 (define-key help-map "\C-\\" 'describe-input-method)
 (define-key help-map "I" 'describe-input-method)
-(define-key help-map "C" 'describe-current-coding-system)
+(define-key help-map "C" 'describe-coding-system)
 (define-key help-map "h" 'view-hello-file)
 
 ;; Menu for XEmacs were moved to x11/x-menubar.el.
@@ -71,12 +70,71 @@
   (let ((coding-system-for-read 'iso-2022-7))
     (find-file-read-only (expand-file-name "HELLO" data-directory))))
 
+(defun universal-coding-system-argument ()
+  "Execute an I/O command using the specified coding system."
+  (interactive)
+  (let* ((coding-system
+	  (read-coding-system "Coding system for following command: "))
+	 (keyseq (read-key-sequence
+		  (format "Command to execute with %s:" coding-system)))
+	 (cmd (key-binding keyseq)))
+    (let ((coding-system-for-read coding-system)
+	  (coding-system-for-write coding-system))
+      (message "")
+      (call-interactively cmd))))
+
+(defun set-default-coding-systems (coding-system)
+  "Set default value of various coding systems to CODING-SYSTEM.
+The follwing coding systems are set:
+  o coding system of a newly created buffer
+  o default coding system for terminal output
+  o default coding system for keyboard input
+  o default coding system for subprocess I/O"
+  (check-coding-system coding-system)
+  ;;(setq-default buffer-file-coding-system coding-system)
+  (set-default-buffer-file-coding-system coding-system)
+  ;;(setq default-terminal-coding-system coding-system)
+  (setq terminal-coding-system coding-system)
+  ;;(setq default-keyboard-coding-system coding-system)
+  (setq keyboard-coding-system coding-system)
+  ;;(setq default-process-coding-system (cons coding-system coding-system))
+  (add-hook 'comint-exec-hook
+	    (lambda ()
+	      (let ((proc (get-buffer-process (current-buffer))))
+		(set-process-input-coding-system  proc coding-system)
+		(set-process-output-coding-system proc coding-system)
+		)))
+  (setq file-name-coding-system coding-system)
+  )
+
+(defun prefer-coding-system (coding-system)
+  "Add CODING-SYSTEM at the front of the priority list for automatic detection.
+This also sets the following coding systems to CODING-SYSTEM:
+  o coding system of a newly created buffer
+  o default coding system for terminal output
+  o default coding system for keyboard input
+  o default coding system for subprocess I/O"
+  (interactive "zPrefer coding system: ")
+  (if (not (and coding-system (coding-system-p coding-system)))
+      (error "Invalid coding system `%s'" coding-system))
+  (let ((coding-category (coding-system-category coding-system))
+	(parent (coding-system-parent coding-system)))
+    (if (not coding-category)
+	;; CODING-SYSTEM is no-conversion or undecided.
+	(error "Can't prefer the coding system `%s'" coding-system))
+    (set coding-category (or parent coding-system))
+    (if (not (eq coding-category (car coding-category-list)))
+	;; We must change the order.
+	(setq coding-category-list
+	      (cons coding-category
+		    (delq coding-category coding-category-list))))
+    (if (and parent (interactive-p))
+	(message "Highest priority is set to %s (parent of %s)"
+		 parent coding-system))
+    (set-default-coding-systems (or parent coding-system))))
+
 
 ;;; Language support staffs.
-
-(defvar primary-language "English"
-  "Name of a user's primary language.
-Emacs provide various language supports based on this variable.")
 
 (defvar language-info-alist nil
   "Alist of language names vs the corresponding information of various kind.
@@ -141,23 +199,43 @@ if you want to use your own KEY values, make them start with `user-'."
 	  (setcdr lang-slot (cons key-slot (cdr lang-slot)))))
     ;; Setup menu.
     (cond ((eq key 'documentation)
-           ;; (define-key-after mule-describe-language-support-map
+           ;; (define-key-after
+           ;;   (if (consp info)
+           ;;       (prog1 (symbol-value (cdr info))
+           ;;         (setq info (car info)))
+           ;;     describe-language-environment-map)
            ;;   (vector (intern language-name))
-           ;;   (cons language-name info)
+           ;;   (cons language-name 'describe-specified-language-support)
            ;;   t)
+	   (if (consp info)
+	       (setq info (car info)))
 	   (eval-after-load "x-menubar"
-	     `(add-menu-button '("Mule" "Describe Language Support")
-			       (vector ,language-name ',info t)))
+	     `(add-menu-button
+	       '("Mule" "Describe Language Support")
+	       (vector ,language-name
+		       '(describe-language-environment ,language-name)
+		       t)))
 	   )
 	  ((eq key 'setup-function)
-	   ;; (define-key-after mule-set-language-environment-map
+           ;; (define-key-after
+           ;;   (if (consp info)
+           ;;       (prog1 (symbol-value (cdr info))
+           ;;         (setq info (car info)))
+           ;;     setup-language-environment-map)
            ;;   (vector (intern language-name))
-           ;;   (cons language-name info)
+           ;;   (cons language-name 'setup-specified-language-environment)
            ;;   t)
+	   (if (consp info)
+	       (setq info (car info)))
 	   (eval-after-load "x-menubar"
-	     `(add-menu-button '("Mule" "Set Language Environment")
-			       (vector ,language-name ',info t)))
+	     `(add-menu-button
+	       '("Mule" "Set Language Environment")
+	       (vector ,language-name
+		       '(set-language-environment ,language-name)
+		       t)))
            ))
+
+    (setcdr key-slot info)
     ))
 
 (defun set-language-info-alist (language-name alist)
@@ -178,7 +256,7 @@ This returns a language name as a string."
 	 (name (completing-read prompt
 				language-info-alist
 				(function (lambda (elm) (assq key elm)))
-				t nil nil default)))
+				t nil default)))
     (if (and (> (length name) 0)
 	     (get-language-info name key))
 	name)))
@@ -311,11 +389,8 @@ The return value is a string."
 		       ))
     (if (> (length input-method) 0)
 	input-method
-      ;; If we have a default, use it, otherwise check inhibit-null
-      (if default
-	  default
-	(if inhibit-null
-	    (error "No valid input method is specified"))))))
+      (if inhibit-null
+	  (error "No valid input method is specified")))))
 
 (defun activate-input-method (input-method)
   "Turn INPUT-METHOD on.
@@ -373,8 +448,6 @@ or the default input method (see `default-input-method').
 
 When there's no input method to turn on, turn on what read from minibuffer."
   (interactive "P")
-  (if (eq arg 1)
-      (setq arg nil))
   (let* ((default (or (car input-method-history) default-input-method)))
     (if (and current-input-method (not arg))
 	(inactivate-input-method)
@@ -428,7 +501,9 @@ or a string."
   (if (and input-method (symbolp input-method))
       (setq input-method (symbol-name input-method)))
   (let ((current-input-method input-method))
-    (read-string prompt initial-input nil nil t)))
+    ;; FSFmacs
+    ;; (read-string prompt initial-input nil nil t)))
+    (read-string prompt initial-input nil)))
 
 ;; Variables to control behavior of input methods.  All input methods
 ;; should react to these variables.
@@ -479,80 +554,109 @@ back on.
 But, if this flag is non-nil, the input method is never back on.")
 
 
-;;; Language specific setup functions.
-;; (defun set-language-environment (language-name)
-;;   "Setup a user's environment for LANGUAGE-NAME.
-;; 
-;; To setup, a fucntion returned by:
-;;   (get-language-info LANGUAGE-NAME 'setup-function)
-;; is called."
-;;   (interactive (list (read-language-name 'setup-function "Language: ")))
-;;   (let (func)
-;;     (if (or (null language-name)
-;;             (null (setq func
-;;                         (get-language-info language-name 'setup-function))))
-;;         (error "No way to setup environment for the specified language"))
-;;     (funcall func)))
+(defun setup-specified-language-environment ()
+  "Set up multi-lingual environment convenient for the specified language."
+  (interactive)
+  (let (language-name)
+    (if (and (symbolp last-command-event)
+	     (or (not (eq last-command-event 'Default))
+		 (setq last-command-event 'English))
+	     (setq language-name (symbol-name last-command-event)))
+	(set-language-environment language-name)
+      (error "Bogus calling sequence"))))
+
+(defvar current-language-environment "English"
+  "The last language environment specified with `set-language-environment'.")
+
+(defun set-language-environment (language-name)
+  "Set up multi-lingual environment for using LANGUAGE-NAME.
+This sets the coding system priority and the default input method
+and sometimes other things."
+  (interactive (list (read-language-name 'setup-function
+					 "Set language environment: ")))
+  (if language-name
+      (if (symbolp language-name)
+	  (setq language-name (symbol-name language-name)))
+    (setq language-name "English"))
+  (if (null (get-language-info language-name 'setup-function))
+      (error "Language environment not defined: %S" language-name))
+  (funcall (get-language-info language-name 'setup-function))
+  (setq current-language-environment language-name)
+  (force-mode-line-update t))
 
 ;; Print all arguments with `princ', then print "\n".
 (defsubst princ-list (&rest args)
   (while args (princ (car args)) (setq args (cdr args)))
   (princ "\n"))
 
-(defun describe-language-support (language-name)
-  "Describe how Emacs supports LANGUAGE-NAME.
-
-For that, a function returned by:
-  (get-language-info LANGUAGE-NAME 'describe-function)
-is called."
-  (interactive (list (read-language-name 'documentation "Language: ")))
-  (let (func)
-    (if (or (null language-name)
-	    (null (setq func
-			(get-language-info language-name 'describe-function))))
-	(error "No documentation for the specified language"))
-    (funcall func)))
-
-;; Print LANGUAGE-NAME specific information such as input methods,
+;; Print a language specific information such as input methods,
 ;; charsets, and coding systems.  This function is intended to be
-;; called from various describe-LANGUAGE-support functions defined in
-;; lisp/language/LANGUAGE.el.
-(defun describe-language-support-internal (language-name)
-  (with-output-to-temp-buffer "*Help*"
-    (let ((doc (get-language-info language-name 'documentation)))
+;; called from the menu:
+;;   [menu-bar mule describe-language-environment LANGUAGE]
+;; and should not run it by `M-x describe-current-input-method-function'.
+(defun describe-specified-language-support ()
+  "Describe how Emacs supports the specified language environment."
+  (interactive)
+  (let (language-name)
+    (if (not (and (symbolp last-command-event)
+		  (setq language-name (symbol-name last-command-event))))
+	(error "Bogus calling sequence"))
+    (describe-language-environment language-name)))
+
+(defun describe-language-environment (language-name)
+  "Describe how Emacs supports language environment LANGUAGE-NAME."
+  (interactive
+   (list (read-language-name
+	  'documentation
+	  "Describe language environment (default, current choise): ")))
+  (if (null language-name)
+      (setq language-name current-language-environment))
+  (if (or (null language-name)
+	  (null (get-language-info language-name 'documentation)))
+      (error "No documentation for the specified language"))
+  (if (symbolp language-name)
+      (setq language-name (symbol-name language-name)))
+  (let ((doc (get-language-info language-name 'documentation)))
+    (with-output-to-temp-buffer "*Help*"
       (if (stringp doc)
-	  (princ-list doc)))
-    (princ "-----------------------------------------------------------\n")
-    (princ-list "List of items specific to "
-		language-name
-		" support")
-    (princ "-----------------------------------------------------------\n")
-    (let ((str (get-language-info language-name 'sample-text)))
-      (if (stringp str)
-	  (progn
-	    (princ "<sample text>\n")
-	    (princ-list "  " str))))
-    (princ "<input methods>\n")
-    (let ((l (get-language-info language-name 'input-method)))
-      (while l
-	(princ-list "  " (car (car l)))
-	(setq l (cdr l))))
-    (princ "<character sets>\n")
-    (let ((l (get-language-info language-name 'charset)))
-      (if (null l)
-	  (princ-list "  nothing specific to " language-name)
-	(while l
-	  (princ-list "  " (car l) ": "
-		      (charset-description (car l)))
-	  (setq l (cdr l)))))
-    (princ "<coding systems>\n")
-    (let ((l (get-language-info language-name 'coding-system)))
-      (if (null l)
-	  (princ-list "  nothing specific to " language-name)
-	(while l
-	  (princ-list "  " (car l) ":\n\t"
-		      (coding-system-docstring (car l)))
-	  (setq l (cdr l)))))))
+  	  (progn
+	    (princ-list doc)
+	    (terpri)))
+      (let ((str (get-language-info language-name 'sample-text)))
+	(if (stringp str)
+	    (progn
+	      (princ "Sample text:\n")
+	      (princ-list "  " str)
+	      (terpri))))
+      (princ "Input methods:\n")
+      (let ((l input-method-alist))
+  	(while l
+	  (if (string= language-name (nth 1 (car l)))
+	      (princ-list "  " (car (car l))
+			  (format " (`%s' in mode line)" (nth 3 (car l)))))
+	  (setq l (cdr l))))
+      (terpri)
+      (princ "Character sets:\n")
+      (let ((l (get-language-info language-name 'charset)))
+	(if (null l)
+	    (princ-list "  nothing specific to " language-name)
+	  (while l
+	    (princ-list "  " (car l) ": "
+			(charset-description (car l)))
+	    (setq l (cdr l)))))
+      (terpri)
+      (princ "Coding systems:\n")
+      (let ((l (get-language-info language-name 'coding-system)))
+	(if (null l)
+	    (princ-list "  nothing specific to " language-name)
+	  (while l
+	    (princ ; (format "  %s (`%c' in mode line):\n\t%s\n"
+	     ;; In XEmacs, `coding-system-mnemonic' returns string.
+	     (format "  %s (`%s' in mode line):\n\t%s\n"
+		     (car l)
+		     (coding-system-mnemonic (car l))
+		     (coding-system-doc-string (car l))))
+	    (setq l (cdr l))))))))
 
 ;;; Charset property
 
@@ -568,29 +672,30 @@ is called."
 ;;   (set-charset-plist charset
 ;;                      (plist-put (charset-plist charset) propname value)))
 
-;;; Character code property
-;; (put 'char-code-property-table 'char-table-extra-slots 0)
-
-;; (defvar char-code-property-table
-;;   (make-char-table 'char-code-property-table)
-;;   "Char-table containing a property list of each character code.
+(defvar char-code-property-table
+  (make-char-table 'generic)
+  "Char-table containing a property list of each character code.
 ;; 
-;; See also the documentation of `get-char-code-property' and
-;; `put-char-code-property'")
-
-;; (defun get-char-code-property (char propname)
-;;   "Return the value of CHAR's PROPNAME property in `char-code-property-table'."
+See also the documentation of `get-char-code-property' and
+`put-char-code-property'")
 ;;   (let ((plist (aref char-code-property-table char)))
-;;     (if (listp plist)
-;;         (car (cdr (memq propname plist))))))
+(defun get-char-code-property (char propname)
+  "Return the value of CHAR's PROPNAME property in `char-code-property-table'."
+  (let ((plist (get-char-table char char-code-property-table)))
+    (if (listp plist)
+	(car (cdr (memq propname plist))))))
 
-;; (defun put-char-code-property (char propname value)
-;;   "Store CHAR's PROPNAME property with VALUE in `char-code-property-table'.
-;; It can be retrieved with `(get-char-code-property CHAR PROPNAME)'."
-;;   (let ((plist (aref char-code-property-table char)))
-;;     (if plist
-;;         (let ((slot (memq propname plist)))
-;;           (if slot
+(defun put-char-code-property (char propname value)
+  "Store CHAR's PROPNAME property with VALUE in `char-code-property-table'.
+It can be retrieved with `(get-char-code-property CHAR PROPNAME)'."
+  (let ((plist (get-char-table char char-code-property-table)))
+    (if plist
+	(let ((slot (memq propname plist)))
+	  (if slot
+	      (setcar (cdr slot) value)
+	    (nconc plist (list propname value))))
+      (put-char-table char (list propname value) char-code-property-table)
+      )))
 ;;               (setcar (cdr slot) value)
 ;;             (nconc plist (list propname value))))
 ;;       (aset char-code-property-table char (list propname value)))))

@@ -22,6 +22,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Written by Bill Perry */
 /* Substantially rewritten by Martin Buchholz */
+/* db 2.x support added by Andreas Jaeger */
 
 #include <config.h>
 #include "lisp.h"
@@ -37,6 +38,8 @@ Boston, MA 02111-1307, USA.  */
 /* Work around Berkeley DB's use of int types which are defined
    slightly differently in the not quite yet standard <inttypes.h>.
    See db.h for details of why we're resorting to this... */
+/* glibc 2.1 doesn't have this problem with DB 2.x */
+#if !(defined __GLIBC__ && __GLIBC_MINOR__ >= 1)
 #ifdef HAVE_INTTYPES_H
 #define __BIT_TYPES_DEFINED__
 #include <inttypes.h>
@@ -47,7 +50,11 @@ typedef uint32_t u_int32_t;
 typedef uint64_t u_int64_t;
 #endif /* WE_DONT_NEED_QUADS */
 #endif /* HAVE_INTTYPES_H */
+#endif /* !(defined __GLIBC__ && __GLIBC_MINOR__ >= 1) */
 #include DB_H_PATH              /* Berkeley db's header file */
+#ifndef DB_VERSION_MAJOR
+# define DB_VERSION_MAJOR 1
+#endif /* DB_VERSION_MAJOR */
 Lisp_Object Qberkeley_db;
 Lisp_Object Qhash;
 Lisp_Object Qbtree;
@@ -61,7 +68,7 @@ Lisp_Object Qdbm;
 
 Lisp_Object Qdatabasep;
 
-typedef enum { DB_DBM, DB_BERKELEY, DB_UNKNOWN } XEMACS_DB_TYPE;
+typedef enum { DB_DBM, DB_BERKELEY, DB_IS_UNKNOWN } XEMACS_DB_TYPE;
 
 struct database;
 typedef struct database database;
@@ -138,7 +145,7 @@ new_database (void)
   dbase->access_ = 0;
   dbase->mode = 0;
   dbase->dberrno = 0;
-  dbase->type = DB_UNKNOWN;
+  dbase->type = DB_IS_UNKNOWN;
 #ifdef MULE
   dbase->coding_system = Fget_coding_system (Qbinary);
 #endif
@@ -400,15 +407,30 @@ berkdb_get (struct database *db, Lisp_Object key)
   DBT keydatum, valdatum;
   int status = 0;
 
+#if DB_VERSION_MAJOR == 2
+  /* Always initialize keydatum, valdatum. */
+  memset(&keydatum, 0, sizeof(keydatum));
+  memset(&valdatum, 0, sizeof(valdatum));
+#endif /* DV_VERSION_MAJOR = 2 */
+
   keydatum.data = XSTRING_DATA (key);
   keydatum.size = XSTRING_LENGTH (key);
 
+#if DB_VERSION_MAJOR == 1
   status = db->db_handle->get (db->db_handle, &keydatum, &valdatum, 0);
+#else
+  status = db->db_handle->get (db->db_handle, NULL, &keydatum, &valdatum, 0);
+#endif /* DB_VERSION_MAJOR */
 
   if (!status)
     return make_string ((Bufbyte *) valdatum.data, valdatum.size);
 
+#if DB_VERSION_MAJOR == 1
   db->dberrno = (status == 1) ? -1 : errno;
+#else
+  db->dberrno = (status < 0) ? -1 : errno;
+#endif /* DB_VERSION_MAJOR */
+
   return Qnil;
 }
 
@@ -421,13 +443,26 @@ berkdb_put (struct database *db,
   DBT keydatum, valdatum;
   int status = 0;
 
+#if DB_VERSION_MAJOR == 2
+  /* Always initalize keydatum, valdatum. */
+  memset(&keydatum, 0, sizeof(keydatum));
+  memset(&valdatum, 0, sizeof(valdatum));
+#endif /* DV_VERSION_MAJOR = 2 */
+
   keydatum.data = XSTRING_DATA   (key);
   keydatum.size = XSTRING_LENGTH (key);
   valdatum.data = XSTRING_DATA   (val);
   valdatum.size = XSTRING_LENGTH (val);
+#if DB_VERSION_MAJOR == 1
   status = db->db_handle->put (db->db_handle, &keydatum, &valdatum,
-			       NILP (replace) ? R_NOOVERWRITE : 0);
+ 			       NILP (replace) ? R_NOOVERWRITE : 0);
   db->dberrno = (status == 1) ? -1 : errno;
+#else
+  status = db->db_handle->put (db->db_handle, NULL, &keydatum, &valdatum,
+			       NILP (replace) ? DB_NOOVERWRITE : 0);
+  db->dberrno = (status < 0) ? -1 : errno;
+#endif/* DV_VERSION_MAJOR = 2 */
+
   return status;
 }
 
@@ -437,14 +472,29 @@ berkdb_remove (struct database *db, Lisp_Object key)
   DBT keydatum;
   int status;
 
+#if DB_VERSION_MAJOR == 2
+  /* Always initialize keydatum. */
+  memset(&keydatum, 0, sizeof(keydatum));
+#endif /* DV_VERSION_MAJOR = 2 */
+
   keydatum.data = XSTRING_DATA   (key);
   keydatum.size = XSTRING_LENGTH (key);
 
+#if DB_VERSION_MAJOR == 1
   status = db->db_handle->del (db->db_handle, &keydatum, 0);
+#else
+  status = db->db_handle->del (db->db_handle, NULL, &keydatum, 0);
+#endif /* DB_VERSION_MAJOR */
+
   if (!status)
     return 0;
 
+#if DB_VERSION_MAJOR == 1
   db->dberrno = (status == 1) ? -1 : errno;
+#else
+  db->dberrno = (status < 0) ? -1 : errno;
+#endif /* DB_VERSION_MAJOR */
+
   return 1;
 }
 
@@ -456,6 +506,7 @@ berkdb_map (struct database *db, Lisp_Object func)
   DB *dbp = db->db_handle;
   int status;
 
+#if DB_VERSION_MAJOR == 1
   for (status = dbp->seq (dbp, &keydatum, &valdatum, R_FIRST);
        status == 0;
        status = dbp->seq (dbp, &keydatum, &valdatum, R_NEXT))
@@ -465,6 +516,24 @@ berkdb_map (struct database *db, Lisp_Object func)
       val = make_string ((Bufbyte *) valdatum.data, valdatum.size);
       call2 (func, key, val);
     }
+#else
+  DBC *dbcp;
+  /* Initialize the key/data pair so the flags aren't set. */
+  memset(&keydatum, 0, sizeof(keydatum));
+  memset(&valdatum, 0, sizeof(valdatum));
+
+  status = dbp->cursor (dbp, NULL, &dbcp);
+  for (status = dbcp->c_get (dbcp, &keydatum, &valdatum, DB_FIRST);
+       status == 0;
+       status = dbcp->c_get (dbcp, &keydatum, &valdatum, DB_NEXT))
+    {
+      /* ### Needs mule-izing */
+      key = make_string ((Bufbyte *) keydatum.data, keydatum.size);
+      val = make_string ((Bufbyte *) valdatum.data, valdatum.size);
+      call2 (func, key, val);
+    }
+  dbcp->c_close (dbcp);
+#endif /* DB_VERSION_MAJOR */
 }
 
 static void
@@ -472,8 +541,13 @@ berkdb_close (struct database *db)
 {
   if (db->db_handle)
     {
+#if DB_VERSION_MAJOR == 1
       db->db_handle->sync  (db->db_handle, 0);
       db->db_handle->close (db->db_handle);
+#else
+      db->db_handle->sync  (db->db_handle, 0);
+      db->db_handle->close (db->db_handle, 0);
+#endif /* DB_VERSION_MAJOR */
       db->db_handle = NULL;
     }
 }
@@ -577,7 +651,8 @@ combination of 'r' 'w' and '+', for read, write, and creation flags.
     {
       DBTYPE real_subtype;
       DB *db;
-
+      int status;
+      
       if (EQ (subtype, Qhash) || NILP (subtype))
 	real_subtype = DB_HASH;
       else if (EQ (subtype, Qbtree))
@@ -587,10 +662,35 @@ combination of 'r' 'w' and '+', for read, write, and creation flags.
       else
 	signal_simple_error ("Unsupported subtype", subtype);
 
+#if DB_VERSION_MAJOR == 1
       db = dbopen (filename, accessmask, modemask, real_subtype, NULL);
       if (!db)
 	return Qnil;
+#else
+      /* Berkeley DB Version 2 has only the accessmask DB_CREATE and DB_RDONLY,
+	 other flags shouldn't be set */
+      if (NILP (access_))
+	{
+	  accessmask = DB_CREATE;
+	}
+      else
+	{
+	  char *acc;
+	  CHECK_STRING (access_);
+	  acc = (char *) XSTRING_DATA (access_);
+	  accessmask = 0;
+	  
+	  if (strchr (acc, '+'))
+	    accessmask |= DB_CREATE;
 
+	  if (strchr (acc, 'r') && !strchr (acc, 'w'))
+	    accessmask |= DB_RDONLY;
+	}
+      status = db_open (filename, real_subtype, accessmask, modemask, NULL , NULL, &db);
+      if (status)
+	return Qnil;
+#endif /* DB_VERSION_MAJOR */
+   
       dbase = new_database ();
       dbase->db_handle = db;
       dbase->type = DB_BERKELEY;

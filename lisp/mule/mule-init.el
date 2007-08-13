@@ -42,8 +42,8 @@
 (require 'cl)
 
 
-(setq language-environment-list
-      (sort (language-environment-list) 'string-lessp))
+;; (setq language-environment-list
+;;       (sort (language-environment-list) 'string-lessp))
 
 ;; MULE keymap codes were moved to mule-cmds.el.
 
@@ -84,34 +84,36 @@
   (help-with-tutorial (concat "mule/TUTORIAL" (or language ""))))
 
 (defvar auto-language-alist
-  '(("^ja" . japanese)
-    ("^zh" . chinese)
-    ("^ko" . korean))
+  '(("^ja" . "Japanese")
+    ("^zh" . "Chinese")
+    ("^ko" . "Korean"))
   "Alist of LANG patterns vs. corresponding language environment.
 Each element looks like (REGEXP . LANGUAGE-ENVIRONMENT).
 It the value of the environment variable LANG matches the regexp REGEXP,
 then `set-language-environment' is called with LANGUAGE-ENVIRONMENT.")
-  
+
 (defun init-mule ()
   "Initialize MULE environment at startup.  Don't call this."
   (let ((lang (or (getenv "LC_ALL") (getenv "LC_MESSAGES") (getenv "LANG"))))
     (unless (or (null lang) (string-equal "C" lang))
       (let ((case-fold-search t))
-        (loop for elt in auto-language-alist
-              if (string-match (car elt) lang)
-              return (set-language-environment (cdr elt))))
-
+	(loop for elt in auto-language-alist
+	      if (string-match (car elt) lang)
+	      return (progn
+		       (setq lang (substring lang 0 (match-end 0)))
+		       (set-language-environment (cdr elt))
+		       )))
       ;; Load a (localizable) locale-specific init file, if it exists.
       (load (format "locale/%s/locale-start" lang) t t)))
-
-  (when (current-language-environment)
+  
+  (when current-language-environment
     ;; Translate remaining args on command line using file-name-coding-system
     (loop for arg in-ref command-line-args-left do
 	  (setf arg (decode-coding-string arg file-name-coding-system)))
-
+    
     ;; rman seems to be incompatible with encoded text
     (setq Manual-use-rosetta-man nil)
-    
+
     ;; Make sure ls -l output is readable by dired and encoded using
     ;; file-name-coding-system
     (add-hook
@@ -120,7 +122,7 @@ then `set-language-environment' is called with LANGUAGE-ENVIRONMENT.")
        (make-local-variable 'process-environment)
        (setenv "LC_MESSAGES" "C")
        (setenv "LC_TIME"     "C"))))
-
+  
   ;; Register avairable input methods by loading LEIM list file.
   (load "leim-list.el" 'noerror 'nomessage 'nosuffix)
   )

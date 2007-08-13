@@ -139,6 +139,26 @@ On consoles that display only one frame at a time (e.g. TTY consoles),
 creating a new frame with `C-x 5 2' also raises and selects that
 frame.  The behavior of window system frames is unchanged.
 
+** Package starting changes.
+
+State of Emacs should never be changed with loading a package.  The
+following XEmacs packages that used to break this have been changed.
+
+*** Loading `paren' no longer enables paren-blinking.  Use
+`paren-set-mode' explicitly, or customize `paren-mode'.
+
+*** Loading `uniquify' no longer enables uniquify.  Set
+`uniquify-buffer-name-style' to a legal value.
+
+*** Loading `time' no longer enables display time.  Invoke
+`display-time' explicitly.
+
+*** Loading `jka-compr' no longer enables on-the-fly compression.  Use
+`toggle-auto-compression' instead.
+
+*** Loading `id-select' no longer enables its behaviour.  Use
+`id-select-install' instead.
+
 ** Zmacs region is not deactivated when an error is signaled.
 
 The behavior of the zmacs region can now be controlled in the event of
@@ -146,74 +166,15 @@ a signaled error.  The new variable `errors-deactivate-region' may be
 set to nil to revert to the old behaviour.  As before, typing C-g
 deactivates the region.
 
-** Info "dir" functionality merged from Emacs-19.34
+** Multiple Info `dir' functionality has been merged with GNU Emacs
+19.34.
 
-  ------------------  DRAFT ------------------
-
-At the time it is dumped, XEmacs will initialize the value of
-`Info-default-directory-list' from the value of the environment
-variable INFOPATH, which it inherits from the Makefile.  The Makefile
-gets the value from `configure'.
-
- #### BETA Note: if the package startup stuff moves or changes, this
-                 next paragraph may need fixing.
-
-At runtime, the XEmacs startup code will loop through that list and
-collect all of the directories in it that satisfy `file-directory-p',
-and then appends any site package info directories found... ?? How do
-you want this worded? XXXXX !!!! (bright red bold DRAFT)
-
-When you start the info reader, `Info-directory-list' is initialized
-from either the environment variable "INFOPATH", if it exists, or
-`Info-default-directory-list'.  The first directory in this list must
-contain a "dir" file like the one supplied with XEmacs.  Note that if
-an INFOPATH variable is used, that only the directories in that path
-will be searched; no package info paths will be appended, as `Info-
-default-directory-list' will be ignored in that case.
-
-All of the directories on `Info-directory-list' will be searched for
-"dir" files, which may be full fledged Info files containing subnodes
-as well as menus.  They are merged to become one Info directory, with
-menus in like-named subnodes being coalesced from the several "dir"
-files.
-
- BETA Note: I have not tested this very thouroughly.  Does anyone out
- there actually have a dir file with real `info' subnodes in it?  I
- will create one and try it as I learn how. - karlheg
-
-"localdir" files are looked for also, secondary to "dir"'s. A localdir
-file should look like a section of the Info directory menu:
-
- |
- |* Gnus::                The all seeing all knowing News and Mail
- |                         interface for XEmacs.
- |* Calc::                HP-48 alike Calculator that can do algebra
- |
-
-The info reader will insert its contents into the main Info directory
-either at the end of the (dir)Top node, beginning at and replacing a
-line that looks like:
-
- |
- |* Locals:
- |
-
- BETA-Note:  Coming soon...
-
- ... or, below a line that contains the exact text:
-
- |
- |Locally installed XEmacs Packages
- |
-
- ... by default.  (This text is configurable--- see:
- `M-x customize-variable Info-localdir-heading-regexp'
-
-The `Info-localdir-heading-regexp' may be underlined with *'s, ='s, or
--'s, like any Info topic header.  When `Info-fontify' is non-nil, the
-underlineing characters will be elided and the topic heading itself
-will be given a face, according to `Info-title-face-alist'.
-
+XEmacs will now correctly merge all the `dir' files in
+`Info-directory-list' (initialized from either `INFOPATH'
+env. variable or `Info-default-directory-list'.)  These files may be
+full-fledged info files containing subnodes or menus.  Previously
+supported `localdir' files are looked for also, secondary to `dir's.
+See the manual for details.
 
 ** Abbreviations can now contain non-word characters.
 
@@ -230,8 +191,14 @@ the current defun.
 current buffer and deletes the selected window.  It asks for
 confirmation first.
 
+** `ESC ESC ESC' (keyboard-escape-quit) will now correctly abort
+recursive edits (as documented.)
+
 ** arc-mode has a new function called `archive-quit' bound to q, which
 quits archive mode in the same fashion dired-quit works.
+
+** A `tetris' clone is now available within XEmacs, written by Glynn
+Clements.  Try it out with `M-x tetris'.
  
 ** The feature to teach the key bindings of extended commands now
 prints the message after the command finishes.  After some time, the
@@ -247,6 +214,15 @@ does not exceed `scroll-conservatively' lines.
 background pixmap, which means that background pixmaps no longer clash
 with zmacs-regions, or clickable buttons.
 
+** Regexps can now contain additional Perl-like constructs.
+
+** Modifiers can be added to a keystroke by preceding it with a `C-x @
+<x>' sequence where <x> is one of letters `S', `c', `m', `a', `h', `s'
+corresponding to shift, control, meta, alt, hyper, and super modifiers,
+respectively.  It is possible to add several modifiers by repeating this
+sequence.  This feature is especially useful on text terminals where it
+allows one to enter keystrokes like, e.g., `M-home'.
+
 ** Customize changes.
 
 *** Customize has undergone a massive speedup, and should now operate
@@ -254,7 +230,7 @@ acceptably fast.  Slowness of the interface used to be the biggest
 gripe.
 
 *** Many more packages have been modified to use the facility, so
-almost all of XEmacs options can be examined through the Customize
+almost all of XEmacs options can now be examined through the Customize
 groups.
 
 *** There is a new `browser' mode of traversing customizations, in
@@ -278,23 +254,6 @@ function:
   In .emacs:       Use       (turn-on-pending-delete)
                    not       (load "pending-del")
 
-** Package starting changes.
-
-*** Loading `paren' no longer enables paren-blinking.  Use
-`paren-set-mode' explicitly, or customize `paren-mode'.
-
-*** Loading `uniquify' no longer enables uniquify.  Set
-`uniquify-buffer-name-style' to a legal value.
-
-*** Loading `time' no longer enables display time.  Invoke
-`display-time' explicitly.
-
-*** Loading `jka-compr' no longer enables on-the-fly compression.  Use
-`toggle-auto-compression' instead.
-
-*** Loading `id-select' no longer enables its behaviour.  Use
-`id-select-install' instead.
-
 ** XEmacs can now save the minibuffer histories from various
 minibuffers.  To use this feature, add the line:
 
@@ -312,6 +271,10 @@ To revert to the old behaviour, use:
    (setq add-log-time-format 'current-time-string)
 
 Or `M-x customize RET add-log RET'.
+
+** In ChangeLog mode, you can now press `C-c C-c' to save the file
+and restore old window configuration, or `C-c C-k' to abandon the
+changes.
 
 ** The key `C-x m' no longer runs the `mail' command directly.
 Instead, it runs the command `compose-mail', which invokes the mail
@@ -346,10 +309,10 @@ only if you have not edited the buffer text yourself.
 flexibility and features.
 
 *** Many new options and variables are now customizable.  Try
-`M-x customize-group RET gnuserv RET'.
+`M-x customize RET gnuserv RET'.
 
-*** The `gnuattach' and `gnudoit' programs have been abandoned in
-favor of `gnuclient', which now accepts the standard `-nw',
+*** The functionality of `gnuattach' and `gnudoit' programs is
+provided by `gnuclient', which now accepts the standard `-nw',
 `-display', `-eval' and `-f' options.
 
 ** Etags changes.
@@ -408,6 +371,71 @@ formatting used in GNAT.  It places two blanks after a comment start,
 places one blank between a word end and an opening '(', and puts one
 space between a comma and the beginning of a word.
 
+** New demand based locking implementation
+
+A faster, but experimental replacement for lazy-lock (called lazy-shot) is
+provided.  Like lazy-lock it provides demand based and idle time
+font-lock-ing.  However the lazy-lock versions that came with previous
+versions slowed down XEmacs (possibly quite a lot).  Lazy-shot solves
+this problem by relying on new support from the C code part of XEmacs.
+The support however is experimental and will cause some flashing as
+parts of the buffer are colored.  This likely to change in the future
+as the C support is completed. 
+
+The current lazy-shot implementation is mostly interface compatible
+with lazy-lock v2.06 (the version shipped with XEmacs is v1.x).
+
+*** To enable:
+ 1. Despite the flashing, lazy-shot was deemed such an improvement by
+    the majority of beta testers that it is now the standard method
+    provided by the options menu. Alternatively add
+
+	(add-hook 'font-lock-mode-hook 'turn-on-lazy-shot)
+
+    to '.emacs'.	
+ 2. If you were using lazy-lock before, just replace all occurrences of 
+    "lazy-lock" by "lazy-shot" in your '.emacs' file.
+
+*** To disable:
+
+If prefer to use lazy-lock in stead of lazy-shot, put
+
+	(remove-hook 'font-lock-mode-hook 'turn-on-lazy-shot)
+	(add-hook 'font-lock-mode-hook 'turn-on-lazy-lock)
+
+at the END of `.emacs'.
+
+** RefTeX mode
+
+RefTeX mode is a new minor mode with special support for \label{}, \ref{}
+and \cite{} macros in LaTeX documents.  RefTeX distinguishes labels of
+different environments (equation, figure, ...) and has full support for
+multifile documents.  To use it, select a buffer with a LaTeX document and
+turn the mode on with M-x reftex-mode.  Here are the main user commands:
+
+C-c (    reftex-label        
+   Creates a label semi-automatically.  RefTeX is context sensitive and
+   knows which kind of label is needed.
+
+C-c )    reftex-reference
+   Offers in a menu all labels in the document, along with context of the
+   label definition.  The selected label is referenced as \ref{LABEL}.
+
+C-c [    reftex-citation
+   Prompts for a regular expression and displays a list of matching BibTeX
+   database entries.  The selected entry is cited with a \cite{KEY} macro.
+
+C-c &    reftex-view-crossref
+   Views the cross reference of a \ref{} or \cite{} command near point.
+
+C-c =    reftex-toc
+   Shows a table of contents of the (multifile) document.  From there you
+   can quickly jump to every section.
+ 
+Under X, RefTeX installs a "Ref" menu in the menu bar, with additional
+commands.  Full documentation and customization examples are in the file
+reftex.el.  You can use the finder to view this information:
+C-h p --> tex --> reftex.el
 
 
 * Lisp and internal changes in XEmacs 20.3
@@ -419,6 +447,10 @@ conventions used by other free software.
 ** `tty-erase-char' is a new variable that reports which character
 was set up as the terminal's erase character at the time Emacs was
 started.
+
+** It is now possible to attach the menubar accelerator keys to menu
+entries.  Look at the Lispref under Menus->Menu Accelerators for
+details.
 
 ** `insert-file-contents' can now read from a special file,
 as long as the arguments VISIT and REPLACE are nil.
@@ -435,6 +467,12 @@ to whitespace ("[ \f\t\n\r\v]+").
 ** `set-extent-properties' is a new function that can be used to
 change properties of an extent at once, and is analogous to
 `set-frame-properties'.
+
+** If a format field width is specified as `*', the field width is
+now assumed to have been specified as an argument (as in C.)
+
+  (format "%*s" 10 "abc")
+    => "       abc"
 
 ** The new macro `with-current-buffer' lets you evaluate an expression
 conveniently with a different current buffer.  It looks like this:
@@ -471,10 +509,55 @@ they no longer do anything special with // or /~.  The same goes for
 This makes it possible for a Lisp program to open a file whose name
 begins with ~.
 
+** The regexp matcher has been extended to recognize the following
+constructs, borrowed from Perl:
+
+*** Additional quantifiers.
+
+In addition to `*', `+' and `?', XEmacs now recognizes the following
+quantifiers:
+
+  \{n\}    Match exactly n times
+  \{n,\}   Match at least n times
+  \{n,m\}  Match at least n but not more than m times
+
+*** Non-greedy quantifiers.
+
+Any of the standard quantifiers (`*', `+' and others) can now be
+followed by an optional `?', which will make them become "non-greedy", 
+i.e. they will match as little text as possible.  Note that the
+meanings don't change, just the "gravity."
+
+*** Shy groups.
+
+The \(?: ... \) groups things like \( ... \), but doesn't record the
+context for backreferences or future use.  This is useful when you
+need a lot of groups for the sake of priorities, but actually want to
+record only one or two.
+
 ** The new function `regexp-opt' returns an efficient regexp to match
 a string.  The arguments are STRINGS and (optionally) PAREN.  This
 function can be used where regexp matching or searching is intensively
 used and speed is important, e.g., in Font Lock mode.
+
+** The featurep syntax has been extended to resemble the Common Lisp
+one, as suggested by Erik Naggum.
+
+*** The `xemacs' feature is defined in XEmacs by default.
+
+*** The expression `#+fexp form' is equivalent to
+(when (featurep fexp) form), only it is evaluated at read-time.  Also,
+`#-fexp form' is equivalent to (unless (featurep fexp) form).
+
+*** In addition to symbols, a FEXP can also be a number, or a logical
+operator.  Here are some examples:
+  ;; evaluates to non-nil on XEmacs:
+  (featurep 'xemacs)
+  ;; evaluates to non-nil on XEmacs 20.3 or later:
+  (featurep '(and xemacs 20.03))
+  ;; evaluates to non-nil either on Emacs, or on XEmacs built without
+  ;; X support:
+  (featurep '(or emacs (and xemacs (not x))))
 
 
 

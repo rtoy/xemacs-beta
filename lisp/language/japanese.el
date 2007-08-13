@@ -227,42 +227,4 @@
 	      (sample-text . "Japanese (日本語)		こんにちは, ｺﾝﾆﾁﾊ")
 	      (documentation . t)))
 
-;; for XEmacs (will be obsoleted)
-
-(define-language-environment 'japanese
-  "Japanese (includes JIS and EUC)"
-  (lambda ()
-    (set-coding-category-system 'iso-7   'iso-2022-jp)
-    (set-coding-category-system 'iso-8-2 'euc-jp)
-    (set-coding-priority-list '(iso-7 iso-8-2 shift-jis no-conversion))
-    ;;'(iso-8-2 iso-8-designate iso-8-1 shift-jis big5)
-    
-    ;; Added by mrb, who doesn't speak japanese - so be sceptical...
-    ;; (when (string-match "solaris\\|sunos" system-configuration)
-    ;;(set-native-coding-system          'euc-japan) ; someday
-    (set-pathname-coding-system 'euc-jp)
-    (add-hook 'comint-exec-hook
-              (lambda ()
-                (let ((proc (get-buffer-process (current-buffer))))
-                  (set-process-input-coding-system  proc 'euc-jp)
-                  (set-process-output-coding-system proc 'euc-jp))))
-    ;;(set-buffer-file-coding-system-for-read 'automatic-conversion)
-    (set-default-buffer-file-coding-system  'euc-jp)
-    (setq keyboard-coding-system            'euc-jp)
-    (setq terminal-coding-system            'euc-jp)
-    (when (eq 'x (device-type (selected-device)))
-      (x-use-halfwidth-roman-font 'japanese-jisx0208 "jisx0201"))
-    
-    (when (eq system-type 'ms-dos)
-      ;; Shift-JIS is the standard coding system under Japanese MS-DOS
-      ;; This isn't really code - just a hint to future implementors
-      (setq keyboard-coding-system           'shift_jis-dos)
-      (setq terminal-coding-system           'shift_jis-dos)
-      (set-default-buffer-file-coding-system 'shift_jis-dos)
-      ;;(set-default-process-coding-system 'shift_jis-dos 'shift_jis-dos)
-      )
-    ))
-
-(set-coding-category-system 'shift-jis 'shift_jis)
-
 ;;; japanese.el ends here

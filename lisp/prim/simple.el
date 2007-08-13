@@ -2903,6 +2903,7 @@ when it is off screen."
 
 (defun assoc-ignore-case (key alist)
   "Like `assoc', but assumes KEY is a string and ignores case when comparing."
+  (setq key (downcase key))
   (let (element)
     (while (and alist (not element))
       (if (equal key (downcase (car (car alist))))
@@ -3141,19 +3142,22 @@ Otherwise, this function always returns false."
 (defun capitalize-region-or-word (arg)
   "Capitalize the selected region or the following word (or ARG words)."
   (interactive "p")
-  (if (region-active-p) (capitalize-region (region-beginning) (region-end))
+  (if (region-active-p)
+      (capitalize-region (region-beginning) (region-end))
     (capitalize-word arg)))
 
 (defun upcase-region-or-word (arg)
   "Upcase the selected region or the following word (or ARG words)."
   (interactive "p")
-  (if (region-active-p) (upcase-region (region-beginning) (region-end))
+  (if (region-active-p)
+      (upcase-region (region-beginning) (region-end))
     (upcase-word arg)))
 
 (defun downcase-region-or-word (arg)
   "Downcase the selected region or the following word (or ARG words)."
   (interactive "p")
-  (if (region-active-p) (downcase-region (region-beginning) (region-end))
+  (if (region-active-p)
+      (downcase-region (region-beginning) (region-end))
     (downcase-word arg)))
 
 ;;;
@@ -3202,7 +3206,7 @@ See the variable `zmacs-regions'.")
 				(extent-object zmacs-region-extent)))
 		 buffer (marker-buffer (car region))))
 	  (t
-	   (signal 'error (list "invalid region" region))))
+	   (signal 'error (list "Invalid region" region))))
 
     (if valid
 	nil
@@ -3210,7 +3214,7 @@ See the variable `zmacs-regions'.")
       ;; otherwise incapacitated.
       (condition-case ()
 	  (if (listp zmacs-region-extent)
-	      (mapcar 'delete-extent zmacs-region-extent)
+	      (mapc 'delete-extent zmacs-region-extent)
 	    (delete-extent zmacs-region-extent))
 	(error nil)))
 
@@ -3289,7 +3293,7 @@ otherwise."
     (if zmacs-region-extent
 	(let ((inhibit-quit t))
 	  (if (listp zmacs-region-extent)
-	      (mapcar 'delete-extent zmacs-region-extent)
+	      (mapc 'delete-extent zmacs-region-extent)
 	    (delete-extent zmacs-region-extent))
 	  (setq zmacs-region-extent nil)))
     (run-hooks 'zmacs-deactivate-region-hook)
@@ -3300,16 +3304,18 @@ otherwise."
 You shouldn't need to call this; the command loop calls it
 when appropriate.  Calling this function will call the hook
 `zmacs-update-region-hook', if the region is active."
-  (if zmacs-region-active-p
-      (progn
-	(if (marker-buffer (mark-marker t))
-	    (zmacs-make-extent-for-region (cons (point-marker t)
-						(mark-marker t))))
-	(run-hooks 'zmacs-update-region-hook))))
+  (when zmacs-region-active-p
+    (when (marker-buffer (mark-marker t))
+      (zmacs-make-extent-for-region (cons (point-marker t)
+					  (mark-marker t))))
+    (run-hooks 'zmacs-update-region-hook)))
 
 ;;;;;;
 ;;;;;; echo area stuff
 ;;;;;;
+
+;;; #### Should this be moved to a separate file, for clarity?
+;;; -hniksic
 
 ;;; The `message-stack' is an alist of labels with messages; the first
 ;;; message in this list is always in the echo area.  A call to
@@ -3742,11 +3748,11 @@ times."
 	    (setq display-p nil))
 	(save-excursion
 	  (let ((buffer (get-buffer-create "*Warnings*")))
-	    (if display-p
-		;; The C code looks at display-warning-tick to determine
-		;; when it should call `display-warning-buffer'.  Change it
-		;; to get the C code's attention.
-		(setq display-warning-tick (1+ display-warning-tick)))
+	    (when display-p
+	      ;; The C code looks at display-warning-tick to determine
+	      ;; when it should call `display-warning-buffer'.  Change it
+	      ;; to get the C code's attention.
+	      (incf display-warning-tick))
 	    (set-buffer buffer)
 	    (goto-char (point-max))
 	    (setq warning-count (1+ warning-count))
@@ -3776,11 +3782,10 @@ redisplay.  The class of the warning is `warning'.  See also
   "Make the buffer that contains the warnings be visible.
 The C code calls this periodically, right before redisplay."
   (let ((buffer (get-buffer-create "*Warnings*")))
-    (if (or (not warning-marker) (not (eq (marker-buffer warning-marker)
-					  buffer)))
-	(progn
-	  (setq warning-marker (make-marker))
-	  (set-marker warning-marker 1 buffer)))
+    (when (or (not warning-marker)
+	      (not (eq (marker-buffer warning-marker) buffer)))
+      (setq warning-marker (make-marker))
+      (set-marker warning-marker 1 buffer))
     (set-window-start (display-buffer buffer) warning-marker)
     (set-marker warning-marker (point-max buffer) buffer)))
 

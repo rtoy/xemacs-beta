@@ -1058,6 +1058,7 @@ If the third argument is incorrect, Emacs may crash.
 #if 0
 	  /* probably this code is OK, but nth_entry is commented
 	     out above --ben */
+	  /* #### will not work if cons type is an lrecord. */
 	  if (XTYPE (TOP) == Lisp_Type_Cons)
 	    {
 	      /* Exchange args and then do nth.  */

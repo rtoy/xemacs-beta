@@ -79,7 +79,9 @@ struct extent
 				      /* Not used any more */
       unsigned int detachable	: 1;  /* 13  extent detaches if text deleted */
       unsigned int internal	: 1;  /* 14  used by map-extents etc.        */
-      unsigned int unused15  	: 1;  /* 15  unused                          */
+      unsigned int in_red_event  : 1;  /* 15  An event has been spawned for
+					  initial redisplay. Not exported to
+					  the lisp level */
       unsigned int unused16	: 1;  /* 16  unused			     */
       /* --- Adding more flags will cause the extent struct grow by another
 	 word.  It's not clear that this would make a difference, however,
@@ -132,7 +134,7 @@ struct extent_auxiliary
   Lisp_Object invisible;
   Lisp_Object read_only;
   Lisp_Object mouse_face;
-  Lisp_Object one_shot_function;
+  Lisp_Object initial_redisplay_function;
 #ifdef ENERGIZE
   Energize_Extent_Data *energize_data;
 #endif
@@ -255,7 +257,7 @@ MAC_END
 #define extent_invisible(e)	extent_aux_field (e, invisible)
 #define extent_read_only(e)	extent_aux_field (e, read_only)
 #define extent_mouse_face(e)	extent_aux_field (e, mouse_face)
-#define extent_one_shot_function(e)	extent_aux_field (e, one_shot_function)
+#define extent_initial_redisplay_function(e)	extent_aux_field (e, initial_redisplay_function)
 #ifdef ENERGIZE
 #define extent_energize_data(e)	extent_aux_field (e, energize_data)
 #endif
@@ -272,9 +274,9 @@ MAC_END
   set_extent_aux_field (e, read_only, value)
 #define set_extent_mouse_face(e, value)					\
   set_extent_aux_field (e, mouse_face, value)
-/* Use Fset_extent_one_shot_function unless you know what you are ding */
-#define set_extent_one_shot_function(e, value)			         \
-  set_extent_aux_field (e, one_shot_function, value)
+/* Use Fset_extent_initial_redisplay_function unless you know what you are ding */
+#define set_extent_initial_redisplay_function(e, value)			         \
+  set_extent_aux_field (e, initial_redisplay_function, value)
 #ifdef ENERGIZE
 #define set_extent_energize_data(e, value)				\
   set_extent_aux_field (e, energize_data, value)
@@ -290,6 +292,7 @@ MAC_END
 #define extent_duplicable_p(e)	extent_normal_field (e, duplicable)
 #define extent_detachable_p(e)	extent_normal_field (e, detachable)
 #define extent_internal_p(e)	extent_normal_field (e, internal)
+#define extent_in_red_event_p(e)	extent_normal_field (e, in_red_event)
 
 #define extent_no_chase_plist_addr(e)		\
 MAC_BEGIN					\

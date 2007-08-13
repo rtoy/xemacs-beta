@@ -77,13 +77,6 @@ char *_getpty ();
 /* Tell process_send_signal to use VSUSP instead of VSWTCH.  */
 #define PREFER_VSUSP
 
-/* Because unexelfsgi.c cannot handle a ".sbss" section yet, we must
-   tell the linker to avoid making one.  SGI's cc does this by
-   default, but GCC (at least 2.5.8 and 2.6.0) doesn't. */
-#ifdef __GNUC__
-#define LD_SWITCH_SYSTEM "-G 0"
-#endif
-
 /* define MAIL_USE_FLOCK if the mailer uses flock
    to interlock access to /usr/spool/mail/$USER.
    The alternative is that a lock file named

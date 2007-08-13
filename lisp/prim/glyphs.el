@@ -602,12 +602,12 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
   ;; initialize default image types
   (if (featurep 'x)
     (set-console-type-image-conversion-list 'x
-     `(,@(if (featurep 'xpm) '(("\\.xpm$\\'" [xpm :file nil] 2)))
+     `(,@(if (featurep 'xpm) '(("\\.xpm\\'" [xpm :file nil] 2)))
 	 ("\\.xbm\\'" [xbm :file nil] 2)
        ,@(if (featurep 'xpm) '(("\\`/\\* XPM \\*/" [xpm :data nil] 2)))
        ,@(if (featurep 'xface) '(("\\`X-Face:" [xface :data nil] 2)))
-       ,@(if (featurep 'gif) '(("\\.gif\\'" [gif :file nil] 2)))
-       ,@(if (featurep 'gif) '(("\\`GIF8[79]" [gif :data nil] 2)))
+       ,@(if (featurep 'gif) '(("\\.gif\\'" [gif :file nil] 2)
+			       ("\\`GIF8[79]" [gif :data nil] 2)))
        ,@(if (featurep 'jpeg) '(("\\.jpe?g\\'" [jpeg :file nil] 2)))
        ;; all of the JFIF-format JPEG's that I've seen begin with
        ;; the following.  I have no idea if this is standard.
@@ -657,7 +657,10 @@ If unspecified in a particular domain, `nontext-pointer-glyph' is used.")
   ;; has a built-in bitmap
   (if (featurep 'xpm)
       (set-glyph-image xemacs-logo
-		       (concat "../etc/" "xemacs.xpm")
+		       (concat "../etc/" 
+			       (if emacs-beta-version
+				   "xemacs-beta.xpm"
+				 "xemacs.xpm"))
 		       'global 'x))
   (cond ((featurep 'xpm)
 	 (set-glyph-image frame-icon-glyph

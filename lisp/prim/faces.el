@@ -1127,8 +1127,9 @@ examine the brightness for you."
 		   (if (< (apply '+ (color-instance-rgb-components
 				     color-instance)) 65536)
 		       'dark 'light)
-		 ;; We'll get an error on a TTY; TTY-s are generally
-		 ;; dark.  ### That's a good one.
+		 ;; Here, we get an error on a TTY.  As we don't have
+		 ;; a good way of detecting whether a TTY is light or
+		 ;; dark, we'll guess it's dark.
 		 (error 'dark))))
     (set-frame-property frame 'background-mode mode)
     mode))
@@ -1225,16 +1226,13 @@ If FRAME is nil, the current FRAME is used."
 	      entries (cdr entries)
 	      req (car entry)
 	      options (cdr entry)
-	      match (cond ((eq req 'type)
-			   (memq type options))
-			  ((eq req 'class)
-			   (memq class options))
-			  ((eq req 'background)
-			   (memq background options))
-			  (t
-			   (warn "Unknown req `%S' with options `%S'"
-				 req options)
-			   nil))))
+	      match (case req
+		      (type       (memq type options))
+		      (class      (memq class options))
+		      (background (memq background options))
+		      (t (warn "Unknown req `%S' with options `%S'"
+			       req options)
+			 nil))))
       match)))
 
 (defun relevant-custom-frames ()
@@ -1267,7 +1265,6 @@ If FRAME is nil or omitted, initialize them for all frames."
   (unless (equal (get-custom-frame-properties) 
 		 (get-custom-frame-properties frame))
     (initialize-custom-faces frame)))
-
 
 
 (defun make-empty-face (name &optional doc-string temporary)
@@ -1365,8 +1362,9 @@ and 'global)."
   )
 
 
-;; These warnings are there for a reason.
-;; Just specify your fonts correctly.  Deal with it.
+;; These warnings are there for a reason.  Just specify your fonts
+;; correctly.  Deal with it.  Additionally, one can use
+;; `log-warning-minimum-level' instead of this.
 ;(defvar inhibit-font-complaints nil
 ;  "Whether to suppress complaints about incomplete sets of fonts.")
 
@@ -1395,6 +1393,15 @@ Emacs.%s.attributeForeground: hotpink\n"
              face
              ))))
 
+
+;; #### This is quite a mess.  We should use the custom mechanism for
+;; most of this stuff.  Currently we don't do it, because Custom
+;; doesn't use specifiers (yet.)  FSF does it the Right Way.
+
+;; For instance, the definition of `bold' should be something like
+;; (defface bold ((t (:bold t))) "Bold text.") -- and `:bold t' should
+;; make sure that everything works properly.
+
 (defun init-other-random-faces (device)
   "Initializes the colors and fonts of the bold, italic, bold-italic,
 zmacs-region, list-mode-item-selected, highlight, primary-selection,
@@ -1416,6 +1423,10 @@ you want to add code to do stuff like this, use the create-device-hook."
   ;; the time.  For many languages, italic is an alien concept.
   ;; Basically, because italic is not a globally meaningful concept,
   ;; the use of the italic face should really be oboleted.
+  
+  ;; I disagree with above.  In many languages, the concept of capital
+  ;; letters is just as alien, and yet we use them.  Italic is here to
+  ;; stay.  -hniksic
 
   ;; In a Solaris Japanese environment, there just aren't any italic
   ;; fonts - period.  CDE recognizes this reality, and fonts
@@ -1576,10 +1587,10 @@ in that frame; otherwise change each frame."
     (setq face (signal 'wrong-type-argument (list 'facep face))))
   (while (cond ((stringp pixmap)
 		(unless (file-readable-p pixmap)
-		  (setq pixmap (vector 'xbm ':file pixmap)))
+		  (setq pixmap `[xbm :file ,pixmap]))
 		nil)
 	       ((and (consp pixmap) (= (length pixmap) 3))
-		(setq pixmap (vector 'xbm ':data pixmap))
+		(setq pixmap `[xbm :data ,pixmap])
 		nil)
 	       (t t))
     (setq pixmap (signal 'wrong-type-argument
@@ -1595,33 +1606,24 @@ in that frame; otherwise change each frame."
 ;; The default, modeline, left-margin, right-margin, text-cursor,
 ;; and pointer faces are created in C.
 
-(make-face 'bold "bold text")
-(make-face 'italic "italic text")
-(make-face 'bold-italic "bold-italic text")
-(make-face 'underline "underlined text")
+(make-face 'bold "Bold text.")
+(make-face 'italic "Italic text.")
+(make-face 'bold-italic "Bold-italic text.")
+(make-face 'underline "Underlined text.")
 (or (face-differs-from-default-p 'underline)
     (set-face-underline-p 'underline t 'global))
-(make-face 'zmacs-region "used on defined region between point and mark")
-(make-face 'isearch "used on region matched by isearch")
+(make-face 'zmacs-region "Used on highlightes region between point and mark.")
+(make-face 'isearch "Used on region matched by isearch.")
 (make-face 'list-mode-item-selected
 	   "Face for the selected list item in list-mode.")
-(make-face 'highlight "highlight face")
-(make-face 'primary-selection)
-(make-face 'secondary-selection)
+(make-face 'highlight "Highlight face.")
+(make-face 'primary-selection "Primary selection face.")
+(make-face 'secondary-selection "Secondary selection face.")
 
-;; The loop macro isn't defined until loaddefs.el is read
-;;(loop for color in '("red" "green" "blue" "yellow") do
-;;      (make-face (intern color) (concat color " text"))
-;;      (set-face-foreground (intern color) color nil 'color))
-(make-face 'red "red text")
-(set-face-foreground 'red "red" nil 'color)
-(make-face 'green "green text")
-(set-face-foreground 'green "green" nil 'color)
-(make-face 'blue "blue text")
-(set-face-foreground 'blue "blue" nil 'color)
-(make-face 'yellow "yellow text")
-(set-face-foreground 'yellow "yellow" nil 'color)
-
+;; Several useful color faces.
+(dolist (color '(red green blue yellow))
+  (make-face color (concat (symbol-name color) " text."))
+  (set-face-foreground color (symbol-name color) nil 'color))
 
 ;; Make some useful faces.  This happens very early, before creating
 ;; the first non-stream device.  We initialize the tty global values here.

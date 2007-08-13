@@ -252,7 +252,8 @@ mark_buffer (Lisp_Object obj, void (*markobj) (Lisp_Object))
   /* Don't mark normally through the children slot.
      (Actually, in this case, it doesn't matter.)
    */
-  mark_conses_in_list (buf->indirect_children);
+  if (! EQ (buf->indirect_children, Qnull_pointer))
+    mark_conses_in_list (buf->indirect_children);
 
   if (buf->base_buffer)
     {
@@ -2219,6 +2220,9 @@ complex_vars_of_buffer (void)
   defs->auto_save_failure_time = -1;
   defs->invisibility_spec = Qt;
 
+  defs->indirect_children = Qnil;
+  syms->indirect_children = Qnil;
+
   {
     /*  0 means var is always local.  Default used only at creation.
      * -1 means var is always local.  Default used only at reset and
@@ -2508,8 +2512,8 @@ When the buffer is written out into a file, this coding system will be
 used for the encoding.  Automatically buffer-local when set in any
 fashion.  This is normally set automatically when a file is loaded in
 based on the determined coding system of the file (assuming that
-`buffer-file-coding-system-for-read' is set to `automatic-conversion',
-which calls for automatic determination of the file's coding system).
+`buffer-file-coding-system-for-read' is set to `undecided', which
+calls for automatic determination of the file's coding system).
 Normally the modeline indicates the current file coding system using
 its mnemonic abbreviation.
 
@@ -2542,8 +2546,7 @@ you wish to unilaterally specify the coding system used for one
 particular operation, you should bind the variable
 `coding-system-for-read' rather than changing the other two
 variables just mentioned, which are intended to be used for
-global environment specification.
-*/ );
+global environment specification.  */ );
 #endif /* MULE */
 
   DEFVAR_BUFFER_LOCAL ("auto-fill-function", auto_fill_function /*

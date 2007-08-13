@@ -1,7 +1,7 @@
 ;;; gnuserv.el --- Lisp interface code between Emacs and gnuserv
 ;; Copyright (C) 1989-1997 Free Software Foundation, Inc.
 
-;; Version: 3.9
+;; Version: 3.10
 ;; Author: Andy Norman (ange@hplb.hpl.hp.com), originally based on server.el
 ;;         Hrvoje Niksic <hniksic@srce.hr>
 ;; Maintainer: Jan Vroonhof <vroonhof@math.ethz.ch>,
@@ -58,10 +58,11 @@
 ;; gnudoit and gnuserv, distributed with XEmacs.
 
 ;; gnuserv.el was originally written by Andy Norman as an improvement
-;; over William Sommerfeld's server.el.  Since then, a number of people
-;; have worked on it, including Bob Weiner, Darell Kindred, Arup
-;; Mukherjee, Ben Wing and Jan Vroonhof.  It was completely rewritten
-;; (labeled as version 3) by Hrvoje Niksic in May 1997.
+;; over William Sommerfeld's server.el.  Since then, a number of
+;; people have worked on it, including Bob Weiner, Darell Kindred,
+;; Arup Mukherjee, Ben Wing and Jan Vroonhof.  It was completely
+;; rewritten (labeled as version 3) by Hrvoje Niksic in May 1997.  The
+;; new code will not run on GNU Emacs.
 
 ;; Jan Vroonhof <vroonhof@math.ethz.ch> July/1996
 ;; ported the server-temp-file-regexp feature from server.el
@@ -131,7 +132,16 @@ only argument, and its return value will be interpreted as above."
 		(function-item :tag "Create special Gnuserv frame and use it"
 			       gnuserv-special-frame-function)
 		(function :tag "Other"))
-   :group 'gnuserv)
+  :group 'gnuserv
+  :group 'frames)
+
+(defcustom gnuserv-frame-plist nil
+  "*Plist of frame properties for creating a gnuserv frame."
+  :type '(repeat (group :inline t
+			(symbol :tag "Property")
+			(sexp :tag "Value")))
+  :group 'gnuserv
+  :group 'frames)
 
 (defcustom gnuserv-done-function 'kill-buffer 
   "*Function used to remove a buffer after editing.
@@ -281,7 +291,7 @@ visual screen.  Totally visible frames are preferred.  If none found, return nil
 (defun gnuserv-special-frame-function (type)
   "Creates a special frame for Gnuserv and returns it on later invocations."
   (unless (frame-live-p gnuserv-special-frame)
-    (setq gnuserv-special-frame (make-frame)))
+    (setq gnuserv-special-frame (make-frame gnuserv-frame-plist)))
   gnuserv-special-frame)
 
 
@@ -406,7 +416,9 @@ If a flag is `view', view the files read-only."
 	   (dest-frame (if (functionp gnuserv-frame)
 			   (funcall gnuserv-frame (car type))
 			 gnuserv-frame))
-	   ;; The gnuserv-frame dependencies are ugly.
+	   ;; The gnuserv-frame dependencies are ugly, but it's
+	   ;; extremely hard to make that stuff cleaner without
+	   ;; breaking everything in sight.
 	   (device (cond ((frame-live-p dest-frame)
 			  (frame-device dest-frame))
 			 ((null dest-frame)
@@ -419,7 +431,8 @@ If a flag is `view', view the files read-only."
 	   (frame (cond ((frame-live-p dest-frame)
 			 dest-frame)
 			((null dest-frame)
-			 (setq new-frame (make-frame nil device))
+			 (setq new-frame (make-frame gnuserv-frame-plist
+						     device))
 			 new-frame)
 			(t (selected-frame))))
 	   (client (make-gnuclient :id gnuserv-current-client

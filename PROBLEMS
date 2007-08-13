@@ -82,9 +82,6 @@ This will rebuild all the needed .elc files.
 This error message has been observed with lesstif-0.75a.  It does not
 appear to cause any harm.
 
-### Does this happen in any of the more recent versions of
-Lesstif/XEmacs?
-
 ** Linking with -rpath on IRIX.
 
 Darrell Kindred <dkindred@cmu.edu> writes:
@@ -106,7 +103,10 @@ There are a couple of problems [with use of -rpath with Irix ld], though:
      or --site-runtime-libraries, you must use --use-gcc=no,
      or configure will fail.
 
-### Is this valid in 20.3?
+** On Irix 6.3, the SGI ld quits with segmentation fault when linking temacs
+
+This occurs if you use the SGI linker version 7.1.  Installing the
+patch SG0001872 fixes this problem.
 
 ** On Irix 5.x and 6.x, the dumped XEmacs (xemacs) core dumps when executed 
 on another machine, or after newer SGI IRIX patches have been installed.
@@ -170,8 +170,6 @@ Richard Cognot <cognot@ensg.u-nancy.fr> writes:
   remember the patch numbers. I think potential XEmacs builders
   on HP should be warned about this.
 
-### Fixed in 20.3?
-
 ** I don't have `xmkmf' and `imake' on my HP.
 
 You can get these standard X tools by anonymous FTP to hpcvaaz.cv.hp.com.
@@ -190,8 +188,6 @@ in src/Makefile.  Edit src/Makefile, after configure is run,
 find that string, and take out the spaces.
 
 Compiler fixes in Irix 6.0.1 should eliminate this problem.
-
-### Fixed in 20.3?
 
 ** Native cc on SCO OpenServer 5 is now OK.  Icc may still throw you
 a curve.  Here is what Robert Lipe <robertl@arnet.com> says:
@@ -257,7 +253,8 @@ The comments at the top of emacskeys.sco describe its function, and
 the emacstrs.sco is a suitable candidate for /usr/lib/keyboard/strings
 to take advantage of the keyboard map in emacskeys.sco.
 
-### Is this valid in 20.3?
+Note: Much of the above entry is probably not valid for XEmacs 20.3
+and later.
 
 ** Under some versions of OSF XEmacs runs fine if built without
 optimization but will crash randomly if built with optimization.
@@ -829,7 +826,8 @@ Richard Cognot <cognot@ensg.u-nancy.fr> writes:
   delayed until mid-june ;-). I think this problem will be an FAQ soon
   after the release otherwise.
 
-### Is this valid for 20.3?
+Note: The above entry is probably not valid for XEmacs 20.3 and
+later.
 
 ** When Emacs tries to ring the bell, you get an error like
 
@@ -909,15 +907,11 @@ Beware of not specifying
 
 if it builds with the motif dialogs [boom!] you're a dead man.
 
-### Does this apply to 20.3?
-
 ** Beware of the default image & graphics library on Irix
 
 Richard Cognot <cognot@ensg.u-nancy.fr> writes:
 You *have* to compile your own jpeg lib. The one delivered with SGI
 systems is a C++ lib, which apparently XEmacs cannot cope with.
-
-### Does this apply to 20.3?
 
 ** Slow startup on Linux.
 

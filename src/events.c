@@ -1920,13 +1920,13 @@ EVENT should be a timeout, misc-user, or eval event.
     }
 }
 
-#ifdef HAVE_OFFIX_DND
-DEFUN ("event-dnd-data", Fevent_dnd_data, 1, 1, 0, /*
+DEFUN ("event-drag-and-drop-data", Fevent_drag_and_drop_data, 1, 1, 0, /*
 Return the Dnd data list of EVENT.
-EVENT should be a dnd_drop (later also dnd_drag) event.
+EVENT should be a dnd_drop event.
 */
        (event))
 {
+#ifdef HAVE_OFFIX_DND
  again:
   CHECK_LIVE_EVENT (event);
   switch (XEVENT (event)->event_type)
@@ -1937,8 +1937,10 @@ EVENT should be a dnd_drop (later also dnd_drag) event.
       event = wrong_type_argument (Qdnd_drop_event_p, event);
       goto again;
     }
-}
+#else /* !HAVE_OFFIX_DND */
+  return Qnil;
 #endif /* HAVE_OFFIX_DND */
+}
 
 DEFUN ("event-properties", Fevent_properties, 1, 1, 0, /*
 Return a list of all of the properties of EVENT.
@@ -2000,7 +2002,7 @@ This is in the form of a property list (alternating keyword/value pairs).
       props = Fcons (Qx, Fcons (Fevent_x_pixel (event), props));
       props = Fcons (Qmodifiers, Fcons (Fevent_modifiers (event), props));
       props = Fcons (Qbutton, Fcons (Fevent_button (event), props));
-      props = Fcons (Qdnd_data, Fcons (Fevent_dnd_data (event), props));
+      props = Fcons (Qdnd_data, Fcons (Fevent_drag_and_drop_data (event), props));
       break;
 #endif
 
@@ -2070,9 +2072,7 @@ syms_of_events (void)
   DEFSUBR (Fevent_process);
   DEFSUBR (Fevent_function);
   DEFSUBR (Fevent_object);
-#ifdef HAVE_OFFIX_DND
-  DEFSUBR (Fevent_dnd_data);
-#endif
+  DEFSUBR (Fevent_drag_and_drop_data);
 
   defsymbol (&Qeventp, "eventp");
   defsymbol (&Qevent_live_p, "event-live-p");

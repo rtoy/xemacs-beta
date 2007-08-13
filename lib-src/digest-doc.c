@@ -5,10 +5,10 @@
    See also sorted-doc.c, which produces similar output
    but in texinfo format and sorted by function/variable name.  */
 
-#include <stdio.h>
 #ifdef emacs
 #include <../src/config.h>
 #endif
+#include <stdio.h>
 
 int
 main ()

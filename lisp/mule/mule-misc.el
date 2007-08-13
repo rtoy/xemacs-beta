@@ -1,5 +1,7 @@
 ;; mule-misc.el --- Miscellaneous Mule functions.
 
+;; Copyright (C) 1995 Electrotechnical Laboratory, JAPAN.
+;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1992,93,94,95 Free Software Foundation, Inc.
 ;; Copyright (C) 1995 Amdahl Corporation.
 ;; Copyright (C) 1995 Sun Microsystems.
@@ -190,52 +192,89 @@ It might be available for compatibility with Mule 2.3,
 because its `find-charset-string' ignores ASCII charset."
   (delq 'ascii (charsets-in-region start end)))
 
+(defun split-char (char)
+  "Return list of charset and one or two position-codes of CHAR."
+  (let ((charset (char-charset char)))
+    (if (eq charset 'ascii)
+	(list charset char)
+      (let ((i 0)
+	    (len (charset-dimension charset))
+	    (code (if (integerp char)
+		      char
+		    (char-int char)))
+	    dest)
+	(while (< i len)
+	  (setq dest (cons (logand code 127) dest)
+		code (lsh code -7)
+		i (1+ i)))
+	(cons charset dest)
+	))))
+
+
+;;; Commands
+
+(defun set-buffer-process-coding-system (decoding encoding)
+  "Set coding systems for the process associated with the current buffer.
+DECODING is the coding system to be used to decode input from the process,
+ENCODING is the coding system to be used to encode output to the process.
+
+For a list of possible values of CODING-SYSTEM, use \\[list-coding-systems]."
+  (interactive
+   "zCoding-system for process input: \nzCoding-system for process output: ")
+  (let ((proc (get-buffer-process (current-buffer))))
+    (if (null proc)
+	(error "no process")
+      (check-coding-system decoding)
+      (check-coding-system encoding)
+      (set-process-coding-system proc decoding encoding)))
+  (force-mode-line-update))
+
 
 ;;; Language environments
 
-(defvar current-language-environment nil)
+;; (defvar current-language-environment nil)
 
-(defvar language-environment-list nil)
+;; (defvar language-environment-list nil)
 
-(defun current-language-environment ()
-  "Return the current language environment as a symbol.
-Returns nil if `set-language-environment' has not been called."
-  current-language-environment)
+;; (defun current-language-environment ()
+;;   "Return the current language environment as a symbol.
+;; Returns nil if `set-language-environment' has not been called."
+;;   current-language-environment)
 
-(defun language-environment-list ()
-  "Return a list of all currently defined language environments."
-  language-environment-list)
+;; (defun language-environment-list ()
+;;   "Return a list of all currently defined language environments."
+;;   language-environment-list)
 
-(defun language-environment-p (sym)
-  "True if SYM names a defined language environment."
-  (memq sym (language-environment-list)))
+;; (defun language-environment-p (sym)
+;;   "True if SYM names a defined language environment."
+;;   (memq sym (language-environment-list)))
 
-(defun set-language-environment (env)
-  "Set the current language environment to ENV."
-  (interactive
-   (list (intern (completing-read "Language environment: "
-				  obarray 'language-environment-p
-				  'require-match))))
-  (when (not (string= (charset-registry 'ascii) "iso8859-1"))
-    (set-charset-registry 'ascii "iso8859-1"))
-  (let ((func (get env 'set-lang-environ)))
-    (if (not (null func))
-	(funcall func)))
-  (setq current-language-environment env)
-  (if (featurep 'egg)
-      (egg-lang-switch-callback))
-;;  (if (featurep 'quail)
-;;      (quail-lang-switch-callback))
-)
+;; (defun set-language-environment (env)
+;;   "Set the current language environment to ENV."
+;;   (interactive
+;;    (list (intern (completing-read "Language environment: "
+;;                                   obarray 'language-environment-p
+;;                                   'require-match))))
+;;   (when (not (string= (charset-registry 'ascii) "iso8859-1"))
+;;     (set-charset-registry 'ascii "iso8859-1"))
+;;   (let ((func (get env 'set-lang-environ)))
+;;     (if (not (null func))
+;;         (funcall func)))
+;;   (setq current-language-environment env)
+;;   (if (featurep 'egg)
+;;       (egg-lang-switch-callback))
+;; ;;  (if (featurep 'quail)
+;; ;;      (quail-lang-switch-callback))
+;; )
 
-(defun define-language-environment (env-sym doc-string enable-function)
-  "Define a new language environment, named by ENV-SYM.
-DOC-STRING should be a string describing the environment.
-ENABLE-FUNCTION should be a function of no arguments that will be called
-when the language environment is made current."
-  (put env-sym 'lang-environ-doc-string doc-string)
-  (put env-sym 'set-lang-environ enable-function)
-  (setq language-environment-list (cons env-sym language-environment-list)))
+;; (defun define-language-environment (env-sym doc-string enable-function)
+;;   "Define a new language environment, named by ENV-SYM.
+;; DOC-STRING should be a string describing the environment.
+;; ENABLE-FUNCTION should be a function of no arguments that will be called
+;; when the language environment is made current."
+;;   (put env-sym 'lang-environ-doc-string doc-string)
+;;   (put env-sym 'set-lang-environ enable-function)
+;;   (setq language-environment-list (cons env-sym language-environment-list)))
 
 (defun define-egg-environment (env-sym doc-string enable-function)
   "Define a new language environment for egg, named by ENV-SYM.
@@ -245,11 +284,12 @@ when the language environment is made current."
   (put env-sym 'egg-environ-doc-string doc-string)
   (put env-sym 'set-egg-environ enable-function))
 
-(defun define-quail-environment (env-sym doc-string enable-function)
-  "Define a new language environment for quail, named by ENV-SYM.
-DOC-STRING should be a string describing the environment.
-ENABLE-FUNCTION should be a function of no arguments that will be called
-when the language environment is made current."
-  (put env-sym 'quail-environ-doc-string doc-string)
-  (put env-sym 'set-quail-environ enable-function))
+;; (defun define-quail-environment (env-sym doc-string enable-function)
+;;   "Define a new language environment for quail, named by ENV-SYM.
+;; DOC-STRING should be a string describing the environment.
+;; ENABLE-FUNCTION should be a function of no arguments that will be called
+;; when the language environment is made current."
+;;   (put env-sym 'quail-environ-doc-string doc-string)
+;;   (put env-sym 'set-quail-environ enable-function))
 
+;;; mule-misc.el ends here

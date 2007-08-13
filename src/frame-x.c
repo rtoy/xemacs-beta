@@ -1263,13 +1263,13 @@ Start a OffiX drag from a buffer.
       x_event.xbutton.y_root = lisp_event->event.button.y;
 
       modifier = lisp_event->event.button.modifiers;
-      if (modifier && MOD_SHIFT)   state |= ShiftMask;
-      if (modifier && MOD_CONTROL) state |= ControlMask;
-      if (modifier && MOD_META)    state |= xd->MetaMask;
-      if (modifier && MOD_SUPER)   state |= xd->SuperMask;
-      if (modifier && MOD_HYPER)   state |= xd->HyperMask;
-      if (modifier && MOD_ALT)     state |= xd->AltMask;
-      state |= (Button1Mask << (lisp_event->event.button.button-1));
+      if (modifier & MOD_SHIFT)   state |= ShiftMask;
+      if (modifier & MOD_CONTROL) state |= ControlMask;
+      if (modifier & MOD_META)    state |= xd->MetaMask;
+      if (modifier & MOD_SUPER)   state |= xd->SuperMask;
+      if (modifier & MOD_HYPER)   state |= xd->HyperMask;
+      if (modifier & MOD_ALT)     state |= xd->AltMask;
+      state |= Button1Mask << (lisp_event->event.button.button-1);
 
       x_event.xbutton.state = state;
       x_event.xbutton.button = lisp_event->event.button.button;

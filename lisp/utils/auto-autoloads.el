@@ -333,7 +333,9 @@ Submit via mail, a bug report on elp." t nil)
 
 ;;;***
 
-;;;### (autoloads (list-colors-display facemenu-read-color list-text-properties-at facemenu-remove-special facemenu-remove-props facemenu-set-read-only facemenu-set-intangible facemenu-set-invisible facemenu-make-much-smaller facemenu-make-much-larger facemenu-make-smaller facemenu-make-larger facemenu-set-size-default facemenu-set-face-from-menu facemenu-set-background facemenu-set-foreground facemenu-set-face) "facemenu" "utils/facemenu.el")
+;;;### (autoloads (list-colors-display list-text-properties-at facemenu-remove-special facemenu-remove-props facemenu-set-read-only facemenu-set-intangible facemenu-set-invisible facemenu-make-much-smaller facemenu-make-much-larger facemenu-make-smaller facemenu-make-larger facemenu-set-size-default facemenu-set-face-from-menu facemenu-set-background facemenu-set-foreground facemenu-set-face) "facemenu" "utils/facemenu.el")
+
+(autoload 'facemenu-keymap "facemenu" nil t 'keymap)
 
 (define-key ctl-x-map "F" 'facemenu-keymap)
 
@@ -344,6 +346,8 @@ Facemenu top-level menu keymap.")
 Keymap for face-changing commands.
 `Facemenu-update' fills in the keymap according to the bindings
 requested in `facemenu-keybindings'.")
+
+(defalias 'facemenu-keymap facemenu-keymap)
 
 (autoload 'facemenu-set-face "facemenu" "\
 Add FACE to the region or next character typed.
@@ -424,8 +428,7 @@ These special properties include `invisible', `intangible' and `read-only'." t n
 (autoload 'list-text-properties-at "facemenu" "\
 Pop up a buffer listing text-properties at LOCATION." t nil)
 
-(autoload 'facemenu-read-color "facemenu" "\
-Read a color using the minibuffer." nil nil)
+(defalias 'facemenu-read-color 'read-color)
 
 (autoload 'list-colors-display "facemenu" "\
 Display names of defined colors, and show what they look like.
@@ -459,28 +462,6 @@ run popup-mode-menu." t nil)
 (autoload 'floating-toolbar-from-extent-or-popup-mode-menu "floating-toolbar" "\
 Like floating-toolbar-or-popup-mode-menu, but search only for an
 extent local toolbar." t nil)
-
-;;;***
-
-;;;### (autoloads (enable-flow-control-on enable-flow-control) "flow-ctrl" "utils/flow-ctrl.el")
-
-(autoload 'enable-flow-control "flow-ctrl" "\
-Toggle flow control handling.
-When handling is enabled, user can type C-s as C-\\, and C-q as C-^.
-With arg, enable flow control mode if arg is positive, otherwise disable." t nil)
-
-(autoload 'enable-flow-control-on "flow-ctrl" "\
-Enable flow control if using one of a specified set of terminal types.
-Use `(enable-flow-control-on \"vt100\" \"h19\")' to enable flow control
-on VT-100 and H19 terminals.  When flow control is enabled,
-you must type C-\\ to get the effect of a C-s, and type C-^
-to get the effect of a C-q.
-
-This function has no effect unless the current device is a tty.
-
-The tty terminal type is determined from the TERM environment variable.
-Trailing hyphens and everything following is stripped, so a TERM
-value of \"vt100-nam\" is treated the same as \"vt100\"." nil nil)
 
 ;;;***
 
@@ -531,17 +512,6 @@ Visit a file in Forms mode." t nil)
 
 (autoload 'forms-find-file-other-window "forms" "\
 Visit a file in Forms mode in other window." t nil)
-
-;;;***
-
-;;;### (autoloads (unhide-copyleft-region hide-copyleft-region) "hide-copyleft" "utils/hide-copyleft.el")
-
-(autoload 'hide-copyleft-region "hide-copyleft" "\
-Make the legal drivel at the front of this file invisible.  Unhide it again
-with C-u \\[hide-copyleft-region]." t nil)
-
-(autoload 'unhide-copyleft-region "hide-copyleft" "\
-If the legal nonsense at the top of this file is elided, make it visible again." nil nil)
 
 ;;;***
 

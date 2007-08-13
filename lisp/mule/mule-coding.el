@@ -84,12 +84,20 @@ or a function symbol which, when called, returns such a cons cell."
 		   (cons (cons regexp coding-system)
 			 network-coding-system-alist)))))))
 
+(defsubst keyboard-coding-system ()
+  "Return coding-system of what is sent from terminal keyboard."
+  keyboard-coding-system)
+
 (defun set-keyboard-coding-system (coding-system)
   "Set the coding system used for TTY keyboard input. Currently broken."
   (interactive "zkeyboard-coding-system: ")
   (get-coding-system coding-system) ; correctness check
   (setq keyboard-coding-system coding-system)
   (redraw-modeline t))
+
+(defsubst terminal-coding-system ()
+  "Return coding-system of your terminal."
+  terminal-coding-system)
 
 (defun set-terminal-coding-system (coding-system)
   "Set the coding system used for TTY display output. Currently broken."
@@ -156,19 +164,6 @@ Does not modify STR.  Returns the encoded string on successful conversion."
   "Return the 'pre-write-conversion property of CODING-SYSTEM."
   (coding-system-property coding-system 'pre-write-conversion))
 
-(defun coding-system-charset (coding-system register)
-  "Return the 'charset property of CODING-SYSTEM for the specified REGISTER."
-  (unless (integerp register)
-    (signal 'wrong-type-argument (list 'integerp register)))
-  (coding-system-property
-   coding-system
-   (case register
-     (0 'charset-g0)
-     (1 'charset-g1)
-     (2 'charset-g2)
-     (3 'charset-g3)
-     (t (signal 'args-out-of-range (list register 0 3))))))
-
 (defun coding-system-force-on-output (coding-system register)
   "Return the 'force-on-output property of CODING-SYSTEM for the specified REGISTER."
   (unless (integerp register)
@@ -226,9 +221,12 @@ Does not modify STR.  Returns the encoded string on successful conversion."
 ;;;; Definitions of predefined coding systems
 
 (make-coding-system
- 'automatic-conversion 'automatic-conversion
+ 'undecided 'undecided
  "Automatic conversion."
  '(mnemonic "Auto"))
+
+;; compatibility for old XEmacsen (don't use it)
+(copy-coding-system 'undecided 'automatic-conversion)
 
 (make-coding-system
  'ctext 'iso2022

@@ -1599,7 +1599,7 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 (defsetf elt (seq n) (store)
   (list 'if (list 'listp seq) (list 'setcar (list 'nthcdr n seq) store)
 	(list 'aset seq n store)))
-(defsetf get put)
+(defsetf get (x y &optional d) (store) (list 'put x y store))
 (defsetf get* (x y &optional d) (store) (list 'put x y store))
 (defsetf gethash (x h &optional d) (store) (list 'cl-puthash x store h))
 (defsetf nth (n x) (store) (list 'setcar (list 'nthcdr n x) store))
@@ -1643,8 +1643,8 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 (defsetf extent-data set-extent-data) ; obsolete
 (defsetf extent-face set-extent-face)
 (defsetf extent-priority set-extent-priority)
-;; XEmacs change
-(defsetf extent-property set-extent-property)
+(defsetf extent-property (x y &optional d) (arg)
+  (list 'set-extent-property x y arg))
 (defsetf extent-end-position (ext) (store)
   (list 'progn (list 'set-extent-endpoints (list 'extent-start-position ext)
 		     store) store))

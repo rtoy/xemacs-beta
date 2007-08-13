@@ -52,10 +52,6 @@ Boston, MA 02111-1307, USA.  */
 #include TT_C_H_PATH
 #endif
 
-#ifdef VMS
-#include <ssdef.h>
-#endif
-
 #ifdef APOLLO
 #ifndef APOLLO_SR10
 #include <default_acl.h>
@@ -158,6 +154,9 @@ int noninteractive;
 
 int noninteractive1;
 
+/* Nonzero means don't perform package searches at startup */
+int inhibit_package_init;
+
 /* Save argv and argc.  */
 char **initial_argv;
 int initial_argc;
@@ -210,12 +209,8 @@ fatal_error_signal (int sig)
       }
 # endif
     }
-#ifdef VMS
-  LIB$STOP (SS$_ABORT);
-#else
   /* Signal the same code; this time it will really be fatal. */
   kill (getpid (), fatal_error_code);
-#endif /* not VMS */
   SIGRETURN;
 }
 
@@ -519,24 +514,6 @@ main_1 (int argc, char **argv, char **envp)
     }
 #endif /* HAVE_SHM */
 
-#ifdef VMS
-  /* If -map specified, map the data file in */
-  if (argc > 2 && ! strcmp (argv[1], "-map"))
-    {
-      skip_args = 2;
-      mapin_data (argv[2]);
-    }
-
-#ifdef LINK_CRTL_SHARE
-#ifdef SHAREABLE_LIB_BUG
-  /* Bletcherous shared libraries! */
-  if (!stdin)  stdin  = fdopen (0, "r");
-  if (!stdout) stdout = fdopen (1, "w");
-  if (!stderr) stderr = fdopen (2, "w");
-  if (!environ) environ = envp;
-#endif /* SHAREABLE_LIB_BUG */
-#endif /* LINK_CRTL_SHARE */
-#endif /* VMS */
 #if (defined (MSDOS) && defined (EMX)) || defined (WIN32) || defined (_SCO_DS)
   environ = envp;
 #endif
@@ -634,6 +611,17 @@ main_1 (int argc, char **argv, char **envp)
   /* Handle the -batch switch, which means don't do interactive display.  */
   if (argmatch (argv, argc, "-batch", "--batch", 5, NULL, &skip_args))
     noninteractive = 1;
+
+  /* Partially handle -no-packages and -vanilla.  Packages are searched */
+  /* prior to the rest of the command line being parsed in startup.el */
+  if (argmatch (argv, argc, "-no-packages", "--no-packages",
+		6, NULL, &skip_args) ||
+      argmatch (argv, argc, "-vanilla", "--vanilla",
+		7, NULL, &skip_args))
+    {
+      inhibit_package_init = 1;
+      skip_args--;
+    }
 
   /* Partially handle the -version and -help switches: they imply -batch,
      but are not removed from the list. */
@@ -1397,16 +1385,8 @@ main_1 (int argc, char **argv, char **envp)
   init_ntproc();
 #endif
 
-#ifdef VMS
-  init_vms_input ();	/* init_redisplay calls get_tty_device_size,
-			   that needs this */
-#endif /* VMS */
   init_redisplay ();      /* Determine terminal type.
 			     init_sys_modes uses results */
-#ifdef VMS
-  init_vmsproc ();
-  init_vmsfns ();
-#endif /* VMS */
   init_event_stream (); /* Set up so we can get user input. */
   init_macros (); /* set up so we can run macros. */
   init_editfns (); /* Determine the name of the user we're running as */
@@ -1498,9 +1478,6 @@ static struct standard_args standard_args[] =
 {
   /* Handled by main_1 above: */
   { "-nl", "--no-shared-memory", 100, 0 },
-#ifdef VMS
-  { "-map", "--map-data", 100, 0 },
-#endif
   { "-t", "--terminal", 95, 1 },
   { "-nw", "--no-windows", 90, 0 },
   { "-batch", "--batch", 85, 0 },
@@ -1519,7 +1496,9 @@ static struct standard_args standard_args[] =
   { "-q", "--no-init-file", 50, 0 },
   { "-unmapped", 0, 50, 0 },
   { "-no-init-file", 0, 50, 0 },
+  { "-vanilla", "--vanilla", 50, 0 },
   { "-no-site-file", "--no-site-file", 40, 0 },
+  { "-no-packages", "--no-packages", 35, 0 },
   { "-u", "--user", 30, 1 },
   { "-user", 0, 30, 1 },
   { "-debug-init", "--debug-init", 20, 0 },
@@ -1772,7 +1751,11 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
   unbind_to (0, Qnil); /* this closes loadup.el */
   purify_flag = 0;
   run_temacs_argc = nargs + 1;
+#ifdef DEBUG_XEMACS
   report_pure_usage (1, 0);
+#else
+  report_pure_usage (0, 0);
+#endif
   LONGJMP (run_temacs_catch, 1);
   return Qnil; /* not reached; warning suppression */
 }
@@ -1877,13 +1860,7 @@ all of which are called before XEmacs is actually killed.
 
   shut_down_emacs (0, ((STRINGP (arg)) ? arg : Qnil));
 
-  exit ((INTP (arg)) ? XINT (arg)
-#ifdef VMS
-	: 1
-#else
-	: 0
-#endif
-	);
+  exit ((INTP (arg)) ? XINT (arg) : 0);
   /* NOTREACHED */
   return Qnil; /* I'm sick of the compiler warning */
 }
@@ -1992,9 +1969,6 @@ shut_down_emacs (int sig, Lisp_Object stuff)
 #endif
 #endif /* TOOLTALK */
 
-#ifdef VMS
-  kill_vms_processes ();
-#endif
 }
 
 
@@ -2083,7 +2057,11 @@ and announce itself normally when it is run.
   opurify = purify_flag;
   purify_flag = 0;
 
+#ifdef DEBUG_XEMACS
   report_pure_usage (1, 1);
+#else
+  report_pure_usage (0, 1);
+#endif
 
   fflush (stderr);
   fflush (stdout);
@@ -2091,9 +2069,6 @@ and announce itself normally when it is run.
   disksave_object_finalization ();
   release_breathing_space ();
 
-#ifdef VMS
-  mapout_data (XSTRING_DATA (intoname));
-#else
   /* Tell malloc where start of impure now is */
   /* Also arrange for warnings when nearly out of space.  */
 #ifndef SYSTEM_MALLOC
@@ -2134,7 +2109,6 @@ and announce itself normally when it is run.
 	    0, 0);
   }
 #endif /* not MSDOS and EMX */
-#endif /* not VMS */
 
   purify_flag = opurify;
 
@@ -2377,6 +2351,10 @@ List of directories configured for package searching.
 
   DEFVAR_BOOL ("noninteractive", &noninteractive1 /*
 Non-nil means XEmacs is running without interactive terminal.
+*/ );
+
+  DEFVAR_BOOL ("inhibit-package-init", &inhibit_package_init /*
+Set to non-nil when the package-path should not be searched at startup.
 */ );
 
   DEFVAR_INT ("emacs-priority", &emacs_priority /*

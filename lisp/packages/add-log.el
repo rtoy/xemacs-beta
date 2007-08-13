@@ -113,7 +113,9 @@ and `current-time-string' are valid values."
   "Keymap for Change Log major mode.")
 (if change-log-mode-map
     nil
-  (setq change-log-mode-map (make-sparse-keymap)))
+  (setq change-log-mode-map (make-sparse-keymap))
+  (define-key change-log-mode-map "\C-c\C-c" 'change-log-exit)
+  (define-key change-log-mode-map "\C-c\C-k" 'change-log-cancel))
 
 (defvar change-log-time-zone-rule nil
   "Time zone used for calculating change log time stamps.
@@ -270,6 +272,8 @@ never append to an existing entry.  Today's date is calculated according to
 			 (substring buffer-file-name (match-end 0))
 		       (file-name-nondirectory buffer-file-name))))
 
+    (push-window-configuration)
+
     (if (and other-window (not (equal file-name buffer-file-name)))
 	(find-file-other-window file-name)
       (find-file file-name))
@@ -387,7 +391,29 @@ Runs `change-log-mode-hook'."
   (set (make-local-variable 'adaptive-fill-regexp) "\\s *")
   ;;(set (make-local-variable 'font-lock-defaults)
        ;;'(change-log-font-lock-keywords t))
+  (when (boundp 'filladapt-mode)
+    ;; Filladapt works badly with ChangeLogs.  Still, we disable it
+    ;; before change-log-mode-hook, so the users can override this
+    ;; choice.
+    (setq filladapt-mode nil))
   (run-hooks 'change-log-mode-hook))
+
+(defun change-log-exit ()
+  "Save the change-log buffer, and restores the old window configuration.
+Buries the buffer."
+  (interactive)
+  (save-buffer)
+  (let ((buf (current-buffer)))
+    (pop-window-configuration)
+    (bury-buffer buf)))
+
+(defun change-log-cancel ()
+  "Cancel the changes to change-log buffer.
+This kills the buffer without saving, and restores the old window
+ configuration."
+  (interactive)
+  (kill-buffer (current-buffer))
+  (pop-window-configuration))
 
 ;; It might be nice to have a general feature to replace this.  The idea I
 ;; have is a variable giving a regexp matching text which should not be

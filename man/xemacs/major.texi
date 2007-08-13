@@ -1,5 +1,5 @@
 
-@node Major Modes, Indentation, Windows, Top
+@node Major Modes, Indentation, Mule, Top
 @chapter Major Modes
 @cindex major modes
 @kindex TAB

@@ -329,7 +329,9 @@ Lisp_Object Fsubr_max_args (Lisp_Object subr);
 #ifndef make_int
 Lisp_Object make_int (EMACS_INT);
 #endif
+#ifndef make_char
 Lisp_Object make_char (Emchar num);
+#endif
 DECLARE_DOESNT_RETURN (pure_write_error (void));
 DECLARE_DOESNT_RETURN (args_out_of_range (Lisp_Object, Lisp_Object));
 DECLARE_DOESNT_RETURN (args_out_of_range_3 (Lisp_Object, Lisp_Object,
@@ -1172,7 +1174,7 @@ extern Lisp_Object Qand;
 extern Lisp_Object Qassoc;
 extern Lisp_Object Qat;
 extern Lisp_Object Qautodetect;
-extern Lisp_Object Qautomatic_conversion;
+extern Lisp_Object Qundecided;
 extern Lisp_Object Qbad_variable;
 extern Lisp_Object Qbefore;
 extern Lisp_Object Qbinary;

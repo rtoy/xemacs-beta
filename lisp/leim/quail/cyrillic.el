@@ -741,7 +741,7 @@ u f h=kh=x c ch sh shch=sj=/s=/sht ~ y ' e' yu=ju ya=ja=q
 
 Also included are Ukrainian ,Lt(B (YE) = \"/e\" and ,Lw(B (YI) = \"yi\", 
 Belorussian ,L~(B (SHORT U) = \"u'\",
-Serbo-Croatian ,Lr(B (DJE) = \"/d\", ,L{(B (CHJE)= \"/ch\", 
+Serbian ,Lr(B (DJE) = \"/d\", ,L{(B (CHJE)= \"/ch\", 
 Macedonian ,Ls(B (GJE) = \"/g\", ,Lu(B (DZE) = \"/s\", ,L|(B (KJE) = \"/k\",
 cyrillic ,Lv(B (I DECIMAL) = \"/i\", ,Lx(B (JE) = \"/j\", 
 ,Ly(B (LJE) = \"/l\", ,Lz(B (NJE) = \"/n\" and ,L(B (DZE) =\"/z\"."

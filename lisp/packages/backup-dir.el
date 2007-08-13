@@ -96,7 +96,6 @@
 ;;; It does not work under ms-dos.
 
 
-
 (byte-compiler-options
  (optimize t)
  (warnings (- free-vars))              ; Don't warn about free variables
@@ -106,23 +105,42 @@
 ;;; New variables affecting backup file behavior
 ;;; This is the only user-customizable variable for this package.
 ;;;
-(defvar bkup-backup-directory-info nil
-  "Alist of (FILE-REGEXP BACKUP-DIR OPTIONS ...))
+(defcustom bkup-backup-directory-info nil
+  "*Alist of (FILE-REGEXP BACKUP-DIR OPTIONS ...))
 If the filename to be backed up matches FILE-REGEXP, or FILE-REGEXP is t,
-then BACKUP-DIR is used as the path for its backups.  Directories may
-begin with \"/\" to specify an absolute pathname.  If BACKUP-DIR does
-not exist and OPTIONS contains the symbol `ok-create', then it is created if possible.
-Otherwise the usual behavior (backup in the same directory as the file)
-results.  If OPTIONS contains the symbol `full-path', then the full path of the file
-being backed up is prepended to the backup file name, with each \"/\"
-replaced by a \"!\".  This is intended for cases where an absolute backup path
-is used.  If OPTIONS contains the symbol `search-upward' and the backup
-directory BACKUP-DIR is a relative path, then a directory with that name is
-searched for starting at the current directory and proceeding upward (..,
-../.., etc) until one is found of that name or the root is reached, and if
-one is found it is used as the backup directory.  Finally, if no FILE-REGEXP
-matches the file name being backed up, then the usual behavior results.")
+then BACKUP-DIR is used as the path for its backups.
 
+Directories may begin with \"/\" to specify an absolute pathname.
+
+If BACKUP-DIR does not exist and OPTIONS contains the symbol `ok-create',
+then it is created if possible.  Otherwise the usual behavior (backup in the
+same directory as the file) results.
+
+If OPTIONS contains the symbol `full-path', then the full path of the file
+being backed up is prepended to the backup file name, with each \"/\"
+replaced by a \"!\".  This is intended for cases where an absolute backup
+path is used.
+
+If OPTIONS contains the symbol `search-upward' and the backup directory
+BACKUP-DIR is a relative path, then a directory with that name is searched
+for starting at the current directory and proceeding upward (.., ../.., etc)
+until one is found of that name, or the root is reached, and if one is found
+it is used as the backup directory.
+
+Finally, if no FILE-REGEXP matches the file name being backed up, then the
+usual behavior results.
+
+Once you save this variable with `M-x customize-variable',
+`backup-dir' will  be loaded for you each time you start XEmacs."
+  :type '(repeat 
+	  (list (regexp :tag "File regexp")
+		(string :tag "Backup Dir")
+		(set :inline t
+		     (const ok-create)
+		     (const full-path)
+		     (const search-upward))))
+  :require 'backup-dir
+  :group 'backup)
  
 ;;; New functions
 ;;;

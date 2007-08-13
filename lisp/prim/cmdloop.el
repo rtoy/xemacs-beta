@@ -88,10 +88,14 @@ or go back to just one window (by deleting all but the selected window)."
 	 nil)
 	((region-active-p)
 	 (zmacs-deactivate-region))
+	((> (recursion-depth) 0)
+	 (exit-recursive-edit))
 	(buffer-quit-function
 	 (funcall buffer-quit-function))
 	((not (one-window-p t))
-	 (delete-other-windows))))
+	 (delete-other-windows))
+	((string-match "^ \\*" (buffer-name (current-buffer)))
+	 (bury-buffer))))
 
 ;;#### This should really be a ring of last errors.
 (defvar last-error nil

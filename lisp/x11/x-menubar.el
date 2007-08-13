@@ -155,16 +155,16 @@
        ["Sunrise/Sunset"	sunrise-sunset		t]
        )
       ("Games"
-       ["Mine Game"		xmine			t]
-       ["Tetris"		tetris			t]
-       ["Quote from Zippy"	yow			t]
-       ["Psychoanalyst"		doctor			t]
-       ["Psychoanalyze Zippy!"	psychoanalyze-pinhead	t]
-       ["Random Flames"		flame			t]
-       ["Dunnet (Adventure)"	dunnet			t]
-       ["Towers of Hanoi"	hanoi			t]
-       ["Game of Life"		life			t]
-       ["Multiplication Puzzle"	mpuz			t]
+       ["Mine Game"		xmine			(fboundp 'xmine)]
+       ["Tetris"		tetris			(fboundp 'tetris)]
+       ["Quote from Zippy"	yow			(fboundp 'yow)]
+       ["Psychoanalyst"		doctor			(fboundp 'doctor)]
+       ["Psychoanalyze Zippy!"	psychoanalyze-pinhead	(fboundp 'psychoanalyze-pinhead)]
+       ["Random Flames"		flame			(fboundp 'flame)]
+       ["Dunnet (Adventure)"	dunnet			(fboundp 'dunnet)]
+       ["Towers of Hanoi"	hanoi			(fboundp 'hanoi)]
+       ["Game of Life"		life			(fboundp 'life)]
+       ["Multiplication Puzzle"	mpuz			(fboundp 'mpuz)]
        )
       )
 
@@ -402,25 +402,25 @@
 			   (and (integerp font-lock-maximum-decoration)
 				(>= font-lock-maximum-decoration 3))))]
        "-----"
-       ["Lazy" (progn (require 'lazy-lock)
-		      (if (and (boundp 'lazy-lock-mode) lazy-lock-mode)
+       ["Lazy" (progn (require 'lazy-shot)
+		      (if (and (boundp 'lazy-shot-mode) lazy-shot-mode)
 			  (progn
-			    (lazy-lock-mode 0)
+			    (lazy-shot-mode 0)
 			    ;; this shouldn't be necessary so there has to
 			    ;; be a redisplay bug lurking somewhere (or
 			    ;; possibly another event handler bug)
 			    (redraw-modeline)
 			    (remove-hook 'font-lock-mode-hook
-					 'turn-on-lazy-lock))
+					 'turn-on-lazy-shot))
 			(if font-lock-mode
 			    (progn
-			      (lazy-lock-mode 1)
+			      (lazy-shot-mode 1)
 			      (redraw-modeline)
 			      (add-hook 'font-lock-mode-hook
-					'turn-on-lazy-lock)))))
+					'turn-on-lazy-shot)))))
 	:active font-lock-mode
 	:style toggle
-	:selected (and (boundp 'lazy-lock-mode) lazy-lock-mode)]
+	:selected (and (boundp 'lazy-shot-mode) lazy-shot-mode)]
        ["Caching" (progn (require 'fast-lock)
 			 (if fast-lock-mode
 			     (progn
@@ -1156,7 +1156,8 @@ of changing and saving faces via cu-edit-faces.el & custom.el.")
 	 '(overwrite-mode 1))
      `(setq-default case-fold-search ,(default-value 'case-fold-search))
      case-replace
-     (if pending-delete-mode
+     (if (and (boundp 'pending-delete-mode)
+	      pending-delete-mode)
 	 '(pending-delete-mode 1))
      zmacs-regions
      mouse-yank-at-point
@@ -1199,9 +1200,9 @@ of changing and saving faces via cu-edit-faces.el & custom.el.")
 	 '(add-hook 'font-lock-mode-hook 'turn-on-fast-lock)
        '(remove-hook 'font-lock-mode-hook 'turn-on-fast-lock))
      (if (and (boundp 'font-lock-mode-hook)
-	      (memq 'turn-on-lazy-lock font-lock-mode-hook))
-	 '(add-hook 'font-lock-mode-hook 'turn-on-lazy-lock)
-       '(remove-hook 'font-lock-mode-hook 'turn-on-lazy-lock))
+	      (memq 'turn-on-lazy-shot font-lock-mode-hook))
+	 '(add-hook 'font-lock-mode-hook 'turn-on-lazy-shot)
+       '(remove-hook 'font-lock-mode-hook 'turn-on-lazy-shot))
 
      ;; Paren Highlighting
      (if paren-mode
@@ -1559,7 +1560,8 @@ The menu is computed by combining `global-popup-menu' and `mode-popup-menu'."
 (global-set-key 'button3 'popup-mode-menu)
 ;; shift button3 and shift button2 are reserved for Hyperbole
 (global-set-key '(meta control button3) 'popup-buffer-menu)
-(global-set-key '(meta shift button3) 'popup-menubar-menu)
+;; The following command is way too dangerous with Custom.
+;; (global-set-key '(meta shift button3) 'popup-menubar-menu)
 
 ;; Here's a test of the cool new menu features (from Stig).
 

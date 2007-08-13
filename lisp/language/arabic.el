@@ -59,9 +59,9 @@
 ;;; ARABIC
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-language-environment 'arabic
-  "Arabic"
-  (lambda ()
-    (require 'arabic)))
+;; (define-language-environment 'arabic
+;;   "Arabic"
+;;   (lambda ()
+;;     (require 'arabic)))
 
 ;;; arabic.el ends here

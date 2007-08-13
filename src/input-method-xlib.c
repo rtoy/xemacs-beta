@@ -27,8 +27,8 @@ Boston, MA 02111-1307, USA.  */
    and X11 R6 release guide chapters on internationalized input,
    for further details */
 
-#include <X11/Xlocale.h>        /* More portable than <locale.h> ? */
 #include <config.h>
+#include <X11/Xlocale.h>        /* More portable than <locale.h> ? */
 #include "lisp.h"
 #include "frame.h"
 #include "device.h"

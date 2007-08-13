@@ -481,6 +481,11 @@ allowed, and some values may be converted to others before being
 stored.)
 @end defun
 
+@defun set-extent-properties extent plist
+Change some properties of @var{extent}.  @var{plist} is a property
+list.  This is useful to change many extent properties at once.
+@end defun
+
 The following table lists the properties with predefined meanings, along
 with their allowable values.
 
@@ -594,6 +599,15 @@ Defaults to @code{text}.  @xref{Annotations}.
 (@code{text}, @code{whitespace}, @code{inside-margin}, or
 @code{outside-margin}) The layout policy for this extent's end glyph.
 Defaults to @code{text}.  @xref{Annotations}.
+
+@item initial-redisplay-function
+(any funcallable object) The function to be called the first time (a
+part of) the extent is redisplayed.  It will be called with the extent
+as its argument.
+
+This is used by @code{lazy-shot} to implement lazy font-locking.  The
+functionality is still experimental, and may change without further
+notice.
 @end table
 
 The following convenience functions are provided for accessing
@@ -668,7 +682,8 @@ This function sets the @code{mouse-face} property of @var{extent} to
 
 @defun set-extent-keymap extent keymap
 This function sets the @code{keymap} property of @var{extent} to
-@var{keymap}.
+@var{keymap}.  @var{keymap} must be either a keymap object, or
+@code{nil}.
 @end defun
 
 @defun set-extent-begin-glyph-layout extent layout
@@ -691,6 +706,11 @@ respectively. (@var{layout} defaults to @code{text} if not specified.)
 This function sets the @code{end-glyph} and @code{glyph-layout}
 properties of @var{extent} to @var{end-glyph} and @var{layout},
 respectively. (@var{layout} defaults to @code{text} if not specified.)
+@end defun
+
+@defun set-extent-initial-redisplay-function extent function
+This function sets the @code{initial-redisplay-function} property of the 
+extent to @var{function}.
 @end defun
 
 @node Detached Extents

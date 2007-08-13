@@ -205,8 +205,15 @@ in `substitute-in-file-name'."
   (interactive)
   (and minibuffer-electric-file-name-behavior
        (eq ?/ (char-before (point)))
+       (not (save-excursion
+	      (goto-char (point-min))
+	      (and (looking-at "^/.+:~?")
+		   (re-search-forward "^/.+:~?[^/]*" nil t)
+		   (progn
+		     (delete-region (point) (point-max))
+		     t))))
        (not (eq (point) (1+ (point-min)))) ; permit `//hostname/path/to/file'
-       (not (eq ?: (char-after (- (point) 2))))	; permit `http://url/goes/here'
+       (not (eq ?: (char-after (- (point) 2)))) ; permit `http://url/goes/here'
        (delete-region (point-min) (point)))
   (insert ?/))
 

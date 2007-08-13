@@ -62,7 +62,10 @@ Boston, MA 02111-1307, USA.  */
 /* #define VERIFY_STRING_CHARS_INTEGRITY */
 
 /* Define this to see where all that space is going... */
+/* But the length of the printout is obnoxious, so limit it to testers */
+#ifdef DEBUG_XEMACS
 #define PURESTAT
+#endif
 
 /* Define this to use malloc/free with no freelist for all datatypes,
    the hope being that some debugging tools may help detect
@@ -486,24 +489,14 @@ allocate_lisp_storage (int size)
   char *lim = ((char *) p) + size;
   Lisp_Object val = Qnil;
 
-  XSETCONS (val, lim);
-  if ((char *) XCONS (val) != lim)
+  XSETOBJ (val, Lisp_Type_Record, lim);
+  if ((char *) XPNTR (val) != lim)
     {
       xfree (p);
       memory_full ();
     }
   return p;
 }
-
-
-#define MARKED_RECORD_HEADER_P(lheader) \
-  (((lheader)->implementation->finalizer) == this_marks_a_marked_record)
-#define UNMARKABLE_RECORD_HEADER_P(lheader) \
-  (((lheader)->implementation->marker) == this_one_is_unmarkable)
-#define MARK_RECORD_HEADER(lheader) \
-  do { (((lheader)->implementation)++); } while (0)
-#define UNMARK_RECORD_HEADER(lheader) \
-  do { (((lheader)->implementation)--); } while (0)
 
 
 /* lrecords are chained together through their "next.v" field.
@@ -991,6 +984,44 @@ DECLARE_FIXED_TYPE_ALLOC (cons, struct Lisp_Cons);
 /* #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_cons 20000 */
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_cons 2000
 
+#ifdef LRECORD_CONS
+static Lisp_Object mark_cons (Lisp_Object, void (*) (Lisp_Object));
+static int cons_equal(Lisp_Object, Lisp_Object, int);
+extern void print_cons (Lisp_Object, Lisp_Object, int);
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("cons", cons,
+				     mark_cons, print_cons, 0,
+				     cons_equal, 
+				     /*
+				      * No `hash' method needed.
+				      * internal_hash knows how to
+				      * handle conses.
+				      */
+				     0,
+				     struct Lisp_Cons);
+static Lisp_Object
+mark_cons (Lisp_Object obj, void (*markobj) (Lisp_Object))
+{
+  if (NILP (XCDR (obj)))
+    return XCAR (obj);
+  else
+    (markobj) (XCAR (obj));
+  return XCDR (obj);
+}
+
+static int
+cons_equal (Lisp_Object ob1, Lisp_Object ob2, int depth)
+{
+  while (internal_equal (XCAR (ob1), XCAR (ob2), depth + 1))
+    {
+      ob1 = XCDR(ob1);
+      ob2 = XCDR(ob2);
+      if (! CONSP (ob1) || ! CONSP (ob2))
+	return internal_equal (ob1, ob2, depth + 1);
+    }
+  return 0;
+}
+#endif /* LRECORD_CONS */
+
 DEFUN ("cons", Fcons, 2, 2, 0, /*
 Create a new cons, give it CAR and CDR as components, and return it.
 */
@@ -1001,9 +1032,12 @@ Create a new cons, give it CAR and CDR as components, and return it.
   struct Lisp_Cons *c;
 
   ALLOCATE_FIXED_TYPE (cons, struct Lisp_Cons, c);
+#ifdef LRECORD_CONS
+  set_lheader_implementation (&(c->lheader), lrecord_cons);
+#endif
   XSETCONS (val, c);
-  XCAR (val) = car;
-  XCDR (val) = cdr;
+  c->car = car;
+  c->cdr = cdr;
   return val;
 }
 
@@ -1017,6 +1051,9 @@ noseeum_cons (Lisp_Object car, Lisp_Object cdr)
   struct Lisp_Cons *c;
 
   NOSEEUM_ALLOCATE_FIXED_TYPE (cons, struct Lisp_Cons, c);
+#ifdef LRECORD_CONS
+  set_lheader_implementation (&(c->lheader), lrecord_cons);
+#endif
   XSETCONS (val, c);
   XCAR (val) = car;
   XCDR (val) = cdr;
@@ -1136,6 +1173,77 @@ make_float (double float_value)
 /*                         Vector allocation                          */
 /**********************************************************************/
 
+#ifdef LRECORD_VECTOR
+static Lisp_Object mark_vector (Lisp_Object, void (*) (Lisp_Object));
+static unsigned int size_vector (CONST void *);
+static int vector_equal(Lisp_Object, Lisp_Object, int);
+extern void print_vector (Lisp_Object, Lisp_Object, int);
+DEFINE_LRECORD_SEQUENCE_IMPLEMENTATION("vector", vector,
+				       mark_vector, print_vector, 0,
+				       vector_equal,
+				       /*
+				        * No `hash' method needed for
+				        * vectors.  internal_hash
+				        * knows how to handle vectors.
+				        */
+				       0,
+				       size_vector, struct Lisp_Vector);
+static Lisp_Object
+mark_vector (Lisp_Object obj, void (*markobj) (Lisp_Object))
+{
+  struct Lisp_Vector *ptr = XVECTOR (obj);
+  int len = vector_length (ptr);
+  int i;
+
+  for (i = 0; i < len - 1; i++)
+    (markobj) (ptr->contents[i]);
+  return (len > 0) ? ptr->contents[len - 1] : Qnil;
+}
+
+static unsigned int
+size_vector (CONST void *lheader)
+{
+  struct Lisp_Vector *p = lheader;
+  /*
+   * -1 because struct Lisp_Vector includes 1 slot
+   */
+  return sizeof (struct Lisp_Vector) +
+    ((p->size - 1) * sizeof (Lisp_Object)) ;
+}
+
+static int
+vector_equal (Lisp_Object o1, Lisp_Object o2, int depth)
+{
+  int indice;
+  int len = XVECTOR_LENGTH (o1);
+  if (len != XVECTOR_LENGTH (o2))
+    return 0;
+  for (indice = 0; indice < len; indice++)
+    {
+      if (!internal_equal (XVECTOR_DATA (o1) [indice],
+			   XVECTOR_DATA (o2) [indice],
+			   depth + 1))
+	return 0;
+    }
+  return 1;
+}
+
+/* #### should allocate `small' vectors from a frob-block */
+static struct Lisp_Vector *
+make_vector_internal (EMACS_INT sizei)
+{
+  EMACS_INT sizem = (sizeof (struct Lisp_Vector)
+               /* -1 because struct Lisp_Vector includes 1 slot */
+               + (sizei - 1) * sizeof (Lisp_Object)
+               );
+  struct Lisp_Vector *p = alloc_lcrecord (sizem, lrecord_vector);
+
+  p->size = sizei;
+  return p;
+}
+
+#else /* ! LRECORD_VECTOR */
+
 static Lisp_Object all_vectors;
 
 /* #### should allocate `small' vectors from a frob-block */
@@ -1148,9 +1256,6 @@ make_vector_internal (EMACS_INT sizei)
                + (sizei - 1 + 1) * sizeof (Lisp_Object)
                );
   struct Lisp_Vector *p = (struct Lisp_Vector *) allocate_lisp_storage (sizem);
-#ifdef LRECORD_VECTOR
-  set_lheader_implementation (&(p->lheader), lrecord_vector);
-#endif
 
   INCREMENT_CONS_COUNTER (sizem, "vector");
 
@@ -1159,6 +1264,8 @@ make_vector_internal (EMACS_INT sizei)
   XSETVECTOR (all_vectors, p);
   return p;
 }
+
+#endif
 
 Lisp_Object
 make_vector (EMACS_INT length, Lisp_Object init)
@@ -1794,6 +1901,46 @@ DECLARE_FIXED_TYPE_ALLOC (string, struct Lisp_String);
 /* #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_string 10000 */
 #define MINIMUM_ALLOWED_FIXED_TYPE_CELLS_string 1000
 
+#ifdef LRECORD_STRING
+static Lisp_Object mark_string (Lisp_Object, void (*) (Lisp_Object));
+static int string_equal (Lisp_Object, Lisp_Object, int);
+extern void print_string (Lisp_Object, Lisp_Object, int);
+DEFINE_BASIC_LRECORD_IMPLEMENTATION ("string", string,
+				     mark_string, print_string,
+				     /*
+				      * No `finalize', or `hash' methods.
+				      * internal_hash already knows how
+				      * to hash strings and finalization
+				      * is done with the
+				      * ADDITIONAL_FREE_string macro,
+				      * which is the standard way to do
+				      * finalization when using
+				      * SWEEP_FIXED_TYPE_BLOCK().
+				      */
+				     0, string_equal, 0,
+				     struct Lisp_String);
+static Lisp_Object
+mark_string (Lisp_Object obj, void (*markobj) (Lisp_Object))
+{
+  struct Lisp_String *ptr = XSTRING (obj);
+
+  if (GC_CONSP (ptr->plist) && GC_EXTENT_INFOP (XCAR (ptr->plist)))
+    flush_cached_extent_info (XCAR (ptr->plist));
+  return ptr->plist;
+}
+
+static int
+string_equal (Lisp_Object o1, Lisp_Object o2, int depth)
+{
+  Bytecount len = XSTRING_LENGTH (o1);
+  if (len != XSTRING_LENGTH (o2))
+    return 0;
+  if (memcmp (XSTRING_DATA (o1), XSTRING_DATA (o2), len))
+    return 0;
+  return 1;
+}
+#endif /* LRECORD_STRING */
+
 /* String blocks contain this many useful bytes. */
 #define STRING_CHARS_BLOCK_SIZE \
   (8192 - MALLOC_OVERHEAD - ((2 * sizeof (struct string_chars_block *)) \
@@ -1905,6 +2052,9 @@ make_uninit_string (Bytecount length)
 
   /* Allocate the string header */
   ALLOCATE_FIXED_TYPE (string, struct Lisp_String, s);
+#ifdef LRECORD_STRING
+  set_lheader_implementation (&(s->lheader), lrecord_string);
+#endif
 
   s_chars = allocate_string_chars_struct (s, fullsize);
 
@@ -2357,6 +2507,9 @@ make_pure_string (CONST Bufbyte *data, Bytecount length,
     return make_string (data, length);
 
   s = (struct Lisp_String *) (PUREBEG + pureptr);
+#ifdef LRECORD_STRING
+  set_lheader_implementation (&(s->lheader), lrecord_string);
+#endif
   set_string_length (s, length);
   if (no_need_to_copy_data)
     {
@@ -2404,16 +2557,21 @@ Lisp_Object
 pure_cons (Lisp_Object car, Lisp_Object cdr)
 {
   Lisp_Object new;
+  struct Lisp_Cons *c;
 
   if (!check_purespace (sizeof (struct Lisp_Cons)))
     return Fcons (Fpurecopy (car), Fpurecopy (cdr));
 
-  XSETCONS (new, PUREBEG + pureptr);
+  c = (struct Lisp_Cons *) (PUREBEG + pureptr);
+#ifdef LRECORD_CONS
+  set_lheader_implementation (&(c->lheader), lrecord_cons);
+#endif
   pureptr += sizeof (struct Lisp_Cons);
   bump_purestat (&purestat_cons, sizeof (struct Lisp_Cons));
 
-  XCAR (new) = Fpurecopy (car);
-  XCDR (new) = Fpurecopy (cdr);
+  c->car = Fpurecopy (car);
+  c->cdr = Fpurecopy (cdr);
+  XSETCONS (new, c);
   return new;
 }
 
@@ -2482,6 +2640,7 @@ Lisp_Object
 make_pure_vector (EMACS_INT len, Lisp_Object init)
 {
   Lisp_Object new;
+  struct Lisp_Vector *v;
   EMACS_INT size = (sizeof (struct Lisp_Vector)
               + (len - 1) * sizeof (Lisp_Object));
 
@@ -2490,15 +2649,19 @@ make_pure_vector (EMACS_INT len, Lisp_Object init)
   if (!check_purespace (size))
     return make_vector (len, init);
 
-  XSETVECTOR (new, PUREBEG + pureptr);
+  v = (struct Lisp_Vector *) (PUREBEG + pureptr);
+#ifdef LRECORD_VECTOR
+  set_lheader_implementation (&(v->header.lheader), lrecord_vector);
+#endif
   pureptr += size;
   bump_purestat (&purestat_vector_all, size);
 
-  XVECTOR_LENGTH (new) = len;
+  v->size = len;
 
   for (size = 0; size < len; size++)
-    XVECTOR_DATA (new)[size] = init;
+    v->contents[size] = init;
 
+  XSETVECTOR (new, v); 
   return new;
 }
 
@@ -2532,19 +2695,25 @@ Does not copy symbols.
     return obj;
 
   if (!POINTER_TYPE_P (XTYPE (obj))
-      || PURIFIED (XPNTR (obj)))
+      || PURIFIED (XPNTR (obj))
+      /* happens when bootstrapping Qnil */
+      || EQ (obj, Qnull_pointer))
     return obj;
 
   switch (XTYPE (obj))
     {
+#ifndef LRECORD_CONS
     case Lisp_Type_Cons:
       return pure_cons (XCAR (obj), XCDR (obj));
+#endif
 
+#ifndef LRECORD_STRING
     case Lisp_Type_String:
       return make_pure_string (XSTRING_DATA (obj),
 			       XSTRING_LENGTH (obj),
 			       XSTRING (obj)->plist,
                                0);
+#endif /* ! LRECORD_STRING */
 
 #ifndef LRECORD_VECTOR
     case Lisp_Type_Vector:
@@ -2573,6 +2742,29 @@ Does not copy symbols.
 	    n->maxdepth = o->maxdepth;
             return new;
           }
+#ifdef LRECORD_CONS
+      else if (CONSP (obj))
+	return pure_cons (XCAR (obj), XCDR (obj));
+#endif /* LRECORD_CONS */
+#ifdef LRECORD_VECTOR
+      else if (VECTORP (obj))
+	{
+	  struct Lisp_Vector *o = XVECTOR (obj);
+	  Lisp_Object new = make_pure_vector (vector_length (o), Qnil);
+	  for (i = 0; i < vector_length (o); i++)
+	    XVECTOR_DATA (new)[i] = Fpurecopy (o->contents[i]);
+	  return new;
+	}
+#endif /* LRECORD_VECTOR */
+#ifdef LRECORD_STRING
+      else if (STRINGP (obj))
+	{
+	  return make_pure_string (XSTRING_DATA (obj),
+				   XSTRING_LENGTH (obj),
+				   XSTRING (obj)->plist,
+				   0);
+	}
+#endif /* LRECORD_STRING */
 #ifdef LISP_FLOAT_TYPE
         else if (FLOATP (obj))
           return make_pure_float (float_data (XFLOAT (obj)));
@@ -2776,12 +2968,15 @@ mark_object (Lisp_Object obj)
 {
  tail_recurse:
 
+  if (EQ (obj, Qnull_pointer))
+    return;
   if (!POINTER_TYPE_P (XGCTYPE (obj)))
     return;
   if (PURIFIED (XPNTR (obj)))
     return;
   switch (XGCTYPE (obj))
     {
+#ifndef LRECORD_CONS
     case Lisp_Type_Cons:
       {
 	struct Lisp_Cons *ptr = XCONS (obj);
@@ -2800,6 +2995,7 @@ mark_object (Lisp_Object obj)
 	  }
 	goto tail_recurse;
       }
+#endif
 
     case Lisp_Type_Record:
     /* case Lisp_Symbol_Value_Magic: */
@@ -2825,6 +3021,7 @@ mark_object (Lisp_Object obj)
       }
       break;
 
+#ifndef LRECORD_STRING
     case Lisp_Type_String:
       {
 	struct Lisp_String *ptr = XSTRING (obj);
@@ -2840,6 +3037,7 @@ mark_object (Lisp_Object obj)
 	  }
       }
       break;
+#endif /* ! LRECORD_STRING */
 
 #ifndef LRECORD_VECTOR
     case Lisp_Type_Vector:
@@ -2873,15 +3071,13 @@ mark_object (Lisp_Object obj)
 	    mark_object (sym->value);
 	    mark_object (sym->function);
 	    {
-	      /*  Open-code mark_string */
-	      /*  symbol->name is a struct Lisp_String *, not a Lisp_Object */
-	      struct Lisp_String *pname = sym->name;
-	      if (!PURIFIED (pname)
-		  && !XMARKBIT (pname->plist))
-		{
-		  XMARK (pname->plist);
-		  mark_object (pname->plist);
-		}
+	      /*
+	       * symbol->name is a struct Lisp_String *, not a
+	       * Lisp_Object.  Fix it up and pass to mark_object.
+	       */
+	      Lisp_Object symname;
+	      XSETSTRING(symname, sym->name);
+	      mark_object(symname);
 	    }
 	    if (!symbol_next (sym))
 	      {
@@ -2936,6 +3132,27 @@ idiot_c (Lisp_Object obj)
 }
 #endif /* unused */
 
+static int
+pure_string_sizeof(Lisp_Object obj)
+{
+  struct Lisp_String *ptr = XSTRING (obj);
+  int size = string_length (ptr);
+
+  if (string_data (ptr) !=
+      (unsigned char *) ptr + sizeof (struct Lisp_String))
+    {
+      /* string-data not allocated contiguously.
+	 Probably (better be!!) a pointer constant "C" data. */
+      size = sizeof (struct Lisp_String);
+    }
+  else
+    {
+      size = sizeof (struct Lisp_String) + size + 1;
+      size = ALIGN_SIZE (size, sizeof (Lisp_Object));
+    }
+  return size;
+}
+
 /* recurse arg isn't actually used */
 static int
 pure_sizeof (Lisp_Object obj /*, int recurse */)
@@ -2953,26 +3170,14 @@ pure_sizeof (Lisp_Object obj /*, int recurse */)
 
   switch (XTYPE (obj))
     {
+
+#ifndef LRECORD_STRING
     case Lisp_Type_String:
       {
-	struct Lisp_String *ptr = XSTRING (obj);
-        int size = string_length (ptr);
-
-        if (string_data (ptr) !=
-	    (unsigned char *) ptr + sizeof (struct Lisp_String))
-	  {
-	    /* string-data not allocated contiguously.
-	       Probably (better be!!) a pointer constant "C" data. */
-	    size = sizeof (struct Lisp_String);
-	  }
-        else
-	  {
-	    size = sizeof (struct Lisp_String) + size + 1;
-	    size = ALIGN_SIZE (size, sizeof (Lisp_Object));
-	  }
-        total += size;
+	total += pure_string_sizeof (obj);
       }
       break;
+#endif /* ! LRECORD_STRING */
 
 #ifndef LRECORD_VECTOR
     case Lisp_Type_Vector:
@@ -2998,7 +3203,7 @@ pure_sizeof (Lisp_Object obj /*, int recurse */)
 #endif /* unused */
       }
       break;
-#endif /* !LRECORD_SYMBOL */
+#endif /* !LRECORD_VECTOR */
 
     case Lisp_Type_Record:
       {
@@ -3006,6 +3211,11 @@ pure_sizeof (Lisp_Object obj /*, int recurse */)
 	CONST struct lrecord_implementation *implementation
 	  = lheader->implementation;
 
+#ifdef LRECORD_STRING
+	if (STRINGP (obj))
+	  total += pure_string_sizeof (obj);
+	else
+#endif
         if (implementation->size_in_bytes_method)
           total += ((implementation->size_in_bytes_method) (lheader));
 	else
@@ -3030,6 +3240,7 @@ pure_sizeof (Lisp_Object obj /*, int recurse */)
       }
       break;
 
+#ifndef LRECORD_CONS
     case Lisp_Type_Cons:
       {
         struct Lisp_Cons *ptr = XCONS (obj);
@@ -3051,6 +3262,7 @@ pure_sizeof (Lisp_Object obj /*, int recurse */)
 #endif /* unused */
       }
       break;
+#endif
 
       /* Others can't be purified */
     default:
@@ -3065,8 +3277,10 @@ pure_sizeof (Lisp_Object obj /*, int recurse */)
 
 /* Find all structures not marked, and free them. */
 
+#ifndef LRECORD_VECTOR
 static int gc_count_num_vector_used, gc_count_vector_total_size;
 static int gc_count_vector_storage;
+#endif
 static int gc_count_num_bit_vector_used, gc_count_bit_vector_total_size;
 static int gc_count_bit_vector_storage;
 static int gc_count_num_short_string_in_use;
@@ -3213,6 +3427,8 @@ sweep_lcrecords_1 (struct lcrecord_header **prev, int *used)
   /* *total = total_size; */
 }
 
+#ifndef LRECORD_VECTOR
+
 static void
 sweep_vectors_1 (Lisp_Object *prev,
                  int *used, int *total, int *storage)
@@ -3250,6 +3466,8 @@ sweep_vectors_1 (Lisp_Object *prev,
   *total = total_size;
   *storage = total_storage;
 }
+
+#endif /* ! LRECORD_VECTOR */
 
 static void
 sweep_bit_vectors_1 (Lisp_Object *prev,
@@ -3422,8 +3640,13 @@ do {									      \
 static void
 sweep_conses (void)
 {
-#define MARKED_cons_P(ptr) XMARKBIT ((ptr)->car)
-#define UNMARK_cons(ptr) do { XUNMARK ((ptr)->car); } while (0)
+#ifndef LRECORD_CONS
+# define MARKED_cons_P(ptr) XMARKBIT ((ptr)->car)
+# define UNMARK_cons(ptr) do { XUNMARK ((ptr)->car); } while (0)
+#else /* LRECORD_CONS */
+# define MARKED_cons_P(ptr) MARKED_RECORD_HEADER_P (&((ptr)->lheader))
+# define UNMARK_cons(ptr) UNMARK_RECORD_HEADER (&((ptr)->lheader))
+#endif /* LRECORD_CONS */
 #define ADDITIONAL_FREE_cons(ptr)
 
   SWEEP_FIXED_TYPE_BLOCK (cons, struct Lisp_Cons);
@@ -3677,7 +3900,11 @@ compact_string_chars (void)
             abort ();
 
           /* Just skip it if it isn't marked.  */
+#ifdef LRECORD_STRING
+	  if (! MARKED_RECORD_HEADER_P (&(string->lheader)))
+#else
           if (!XMARKBIT (string->plist))
+#endif
             {
               from_pos += fullsize;
               continue;
@@ -3758,8 +3985,30 @@ sweep_strings (void)
   int num_small_used = 0, num_small_bytes = 0, num_bytes = 0;
   int debug = debug_string_purity;
 
-#define MARKED_string_P(ptr) XMARKBIT ((ptr)->plist)
-#define UNMARK_string(ptr)				\
+#ifdef LRECORD_STRING
+
+# define MARKED_string_P(ptr) MARKED_RECORD_HEADER_P (&((ptr)->lheader))
+# define UNMARK_string(ptr)				\
+  do { struct Lisp_String *p = (ptr);			\
+       int size = string_length (p);			\
+       UNMARK_RECORD_HEADER (&(p->lheader));		\
+       num_bytes += size;				\
+       if (!BIG_STRING_SIZE_P (size))			\
+	 { num_small_bytes += size;			\
+	   num_small_used++;				\
+	 }						\
+       if (debug) debug_string_purity_print (p);	\
+     } while (0)
+# define ADDITIONAL_FREE_string(p)				\
+  do { int size = string_length (p);				\
+       if (BIG_STRING_SIZE_P (size))				\
+	 xfree_1 (CHARS_TO_STRING_CHAR (string_data (p)));	\
+     } while (0)
+
+#else
+
+# define MARKED_string_P(ptr) XMARKBIT ((ptr)->plist)
+# define UNMARK_string(ptr)				\
   do { struct Lisp_String *p = (ptr);			\
        int size = string_length (p);			\
        XUNMARK (p->plist);				\
@@ -3770,11 +4019,13 @@ sweep_strings (void)
 	 }						\
        if (debug) debug_string_purity_print (p);	\
      } while (0)
-#define ADDITIONAL_FREE_string(p)				\
+# define ADDITIONAL_FREE_string(p)				\
   do { int size = string_length (p);				\
        if (BIG_STRING_SIZE_P (size))				\
 	 xfree_1 (CHARS_TO_STRING_CHAR (string_data (p)));	\
      } while (0)
+
+#endif /* ! LRECORD_STRING */
 
   SWEEP_FIXED_TYPE_BLOCK (string, struct Lisp_String);
 
@@ -3788,16 +4039,21 @@ sweep_strings (void)
 static int
 marked_p (Lisp_Object obj)
 {
+  if (EQ (obj, Qnull_pointer)) return 1;
   if (!POINTER_TYPE_P (XGCTYPE (obj))) return 1;
   if (PURIFIED (XPNTR (obj))) return 1;
   switch (XGCTYPE (obj))
     {
+#ifndef LRECORD_CONS
     case Lisp_Type_Cons:
       return XMARKBIT (XCAR (obj));
+#endif
     case Lisp_Type_Record:
       return MARKED_RECORD_HEADER_P (XRECORD_LHEADER (obj));
+#ifndef LRECORD_STRING
     case Lisp_Type_String:
       return XMARKBIT (XSTRING (obj)->plist);
+#endif /* ! LRECORD_STRING */
 #ifndef LRECORD_VECTOR
     case Lisp_Type_Vector:
       return XVECTOR_LENGTH (obj) < 0;
@@ -3845,10 +4101,12 @@ gc_sweep (void)
   /* Put all unmarked conses on free list */
   sweep_conses ();
 
+#ifndef LRECORD_VECTOR
   /* Free all unmarked vectors */
   sweep_vectors_1 (&all_vectors,
                    &gc_count_num_vector_used, &gc_count_vector_total_size,
                    &gc_count_vector_storage);
+#endif
 
   /* Free all unmarked bit vectors */
   sweep_bit_vectors_1 (&all_bit_vectors,
@@ -4232,6 +4490,9 @@ Garbage collection happens automatically if you cons more than
   Lisp_Object pl = Qnil;
   Lisp_Object ret[6];
   int i;
+#ifdef LRECORD_VECTOR
+  int gc_count_vector_total_size;
+#endif
 
   if (purify_flag && pure_lossage)
     {
@@ -4249,6 +4510,12 @@ Garbage collection happens automatically if you cons more than
           char buf [255];
           CONST char *name = lrecord_implementations_table[i]->name;
 	  int len = strlen (name);
+#ifdef LRECORD_VECTOR
+	  /* save this for the FSFmacs-compatible part of the summary */
+	  if (i == *lrecord_vector[0].lrecord_type_index)
+	    gc_count_vector_total_size =
+	      lcrecord_stats[i].bytes_in_use + lcrecord_stats[i].bytes_freed;
+#endif
           sprintf (buf, "%s-storage", name);
           pl = gc_plist_hack (buf, lcrecord_stats[i].bytes_in_use, pl);
 	  /* Okay, simple pluralization check for `symbol-value-varalias' */
@@ -4307,10 +4574,12 @@ Garbage collection happens automatically if you cons more than
   pl = gc_plist_hack ("compiled-functions-used",
 		      gc_count_num_compiled_function_in_use, pl);
 
+#ifndef LRECORD_VECTOR
   pl = gc_plist_hack ("vector-storage", gc_count_vector_storage, pl);
   pl = gc_plist_hack ("vectors-total-length",
                       gc_count_vector_total_size, pl);
   pl = gc_plist_hack ("vectors-used", gc_count_num_vector_used, pl);
+#endif
 
   pl = gc_plist_hack ("bit-vector-storage", gc_count_bit_vector_storage, pl);
   pl = gc_plist_hack ("bit-vectors-total-length",
@@ -4545,7 +4814,9 @@ init_alloc_once_early (void)
   pureptr = 0;
   pure_lossage = 0;
   breathing_space = 0;
+#ifndef LRECORD_VECTOR
   XSETINT (all_vectors, 0); /* Qzero may not be set yet. */
+#endif
   XSETINT (all_bit_vectors, 0); /* Qzero may not be set yet. */
   XSETINT (Vgc_message, 0);
   all_lcrecords = 0;

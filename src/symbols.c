@@ -3103,6 +3103,9 @@ variable chain of symbols.
 #ifndef Qzero
 Lisp_Object Qzero;
 #endif
+#ifndef Qnull_pointer
+Lisp_Object Qnull_pointer;
+#endif
 
 /* some losing systems can't have static vars at function scope... */
 static struct symbol_value_magic guts_of_unbound_marker =
@@ -3120,6 +3123,10 @@ init_symbols_once_early (void)
 
 #ifndef Qzero
   Qzero = make_int (0);	/* Only used if Lisp_Object is a union type */
+#endif
+
+#ifndef Qnull_pointer
+  Qnull_pointer.ui = 0;
 #endif
 
   Vobarray = make_vector (OBARRAY_SIZE, Qzero);

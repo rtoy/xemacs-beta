@@ -69,17 +69,20 @@
     (kazz     "IENAGA Kazuyuki"   "ienaga@jsys.co.jp")
     (kyle     "Kyle Jones"        "kyle_jones@wonderworks.com")
     (larsi    "Lars Magne Ingebrigtsen" "larsi@gnus.org")
+    (marcpa   "Marc Paquette"	  "marcpa@CAM.ORG")
     (mly      "Richard Mlynarik"  "mly@adoc.xerox.com")
     (morioka  "MORIOKA Tomohiko"  "morioka@jaist.ac.jp")
     (mrb      "Martin Buchholz"   "mrb@sun.eng.com")
+    (ograf    "Oliver Graf"       "ograf@fga.de")
     (pez      "Peter Pezaris"	  "pez@dwwc.com")
     (piper    "Andy Piper"        "andy@parallax.co.uk")
     (rickc    "Rick Campbell"     "rickc@lehman.com")
     (rossini  "Anthony Rossini"	  "rossini@stat.sc.edu")
-    (shelton  "Vin Shelton"	  "acs@acm.org")
+    (vin      "Vin Shelton"	  "acs@acm.org")
     (sperber  "Michael Sperber"   "sperber@informatik.uni-tuebingen.de")
     (slb      "SL Baur"           "steve@xemacs.org")
     (stig     "Jonathan Stigelman" "stig@hackvan.com")
+    (stigb    "Stig Bjorlykke"	  "stigb@tihlde.hist.no")
     (thiessel "Marcus Thiessel"   "thiessel@rhrk.uni-kl.de")
     (vladimir "Vladimir Ivanovic" "vladimir@mri.com")
     (wing     "Ben Wing"          "wing@xemacs.org")
@@ -100,8 +103,11 @@
     (kazz      . "http://www.imasy.or.jp/~kazz/")
     (kyle      . "http://www.wonderworks.com/kyle/")
     (larsi     . "http://www.ifi.uio.no/~larsi/")
+    (marcpa    . "http://www.positron911.com/products/power.htm")
+    (ograf     . "http://www.fga.de/~ograf/")
     (pez       . "http://www.dwwc.com/")
-    (shelton   . "http://www.upa.org/")
+    (vin       . "http://www.upa.org/")
+    (stigb     . "http://www.tihlde.hist.no/~stigb/")
     (wget      . "ftp://gnjilux.cc.fer.hr/pub/unix/util/wget/")
     (xemacs    . "http://www.xemacs.org/"))
   "Some of the more important URLs.")
@@ -157,7 +163,7 @@
 		     "Remove")
     (widget-create 'link :help-echo "Kill buffer"
 		   :action (lambda (&rest ignore)
-			     (bury-buffer))
+			     (kill-buffer (current-buffer)))
 		   "Kill"))
   (widget-insert " this buffer.\n")
   (use-local-map (make-sparse-keymap))
@@ -512,7 +518,7 @@ contributed to the XEmacs development from late 1994 to early
 				     '(color grayscale))
 			       "" "m")
 			   ".xpm")
-		   data-directory))
+		   (locate-data-directory "photos")))
 	    (data nil))
 	(unless (file-exists-p file)
 	  ;; Maybe the file is compressed?
@@ -668,6 +674,14 @@ wants a MIG welder and air tools.
 Stig likes to perch, hang from the ceiling, and climb on the walls.
 Stig has a cool van.  Stig would like to be able to telecommute from,
 say, the north rim of the Grand Canyon or the midst of Baja.\n"))
+    (stigb
+     (widget-insert "\
+Currently studying computer science in Trondheim, Norway.  Full time
+Linux user and proud of it.  XEmacs hacker light.  Maintainer of the
+RPM package.  
+
+See:\t")
+     (about-url-link 'stigb "Visit Stig's home page"))
     (baw
      (widget-insert
 	"\
@@ -738,6 +752,19 @@ project connected with CASCADE and CERN and stuff.
 See ")
      (about-url-link 'larsi "Visit the Larsissistic pages")
      (widget-insert ".\n"))
+    (marcpa
+     (widget-insert "\
+I work for Positron Industries Inc., Public Safety Division.
+I'm part of the team producing POWER 911, a 911 emergency response
+system written in Modula3:\n")
+     (about-url-link 'marcpa "Visit POWER 911")
+     (widget-insert "\
+Previously, I worked at Softimage Inc., now a Microsoft company
+(eeekkk!), as a UNIX system administrator.  This is where I've been
+converted to NT.
+
+In a previous life, I was a programmer/sysadmin at CRIM (Centre de
+Recherche Informatique de Montreal) for the speech recognition group.\n"))
     (jens
      (widget-insert "\
 Jens did the artwork for graphics added to XEmacs 20.2 and 19.15.
@@ -799,7 +826,7 @@ Mike isn't busy putting together patches for free software he has just
 installed or changing his hairstyle, he does research in modern
 programming languages and their implementation, and hopes that one day
 XEmacs will speak Scheme.\n"))
-    (shelton
+    (vin
      (widget-insert "\
 Vin maintains the XEmacs patch pages in order to bring a more
 stable XEmacs.  (Actually, he does it 'cause it's fun and he's been
@@ -813,7 +840,7 @@ with in Austin, Texas - the Ether Bunnies.  I'm getting too old
 to play competitive Ultimate any more, so now I've gotten roped
 into serving on the board of directors of the Ultimate Players
 Association.  See ")
-     (about-url-link 'shelton "Visit the UPA homepage")
+     (about-url-link 'vin "Visit the UPA homepage")
      (widget-insert ".\n"))
     (ajc
      (widget-insert "\
@@ -890,6 +917,25 @@ XLispStat; configurable for nearly any other statistical
 language/package one might want.  In spare time, acts as a
 Ph.D. (bio)statistician for money and amusement.  Current position:
 Assistant Professor of Statistics at the University of South Carolina.\n"))
+    (ograf
+     (widget-insert "\
+I'm a student of computer sciences at the University of Koblenz. My
+major is computational linguistics (human language generation and
+analysis).
+
+I make my living as a managing director of a small but fine company 
+which I started two years ago with one of my friends. We provide 
+business network solutions based on linux servers and various other
+networking products.
+
+Most of my spare time I spent on the development of the XEmacs DnD
+events, a enhanced version of Tk called TkStep (better looks, DnD,
+and more), and various other minor hacks: ISDN-tools, cd players,
+python, etc...
+
+To see some of these have a look at ")
+     (about-url-link 'ograf "one of my homepages")
+     (widget-insert ".\n"))
 
 ))
 
@@ -1060,11 +1106,13 @@ and the operator, in order to detect the intentions of the latter.
 Otherwise, I'm, say, 35.82% professional Jazz guitar player,
 which means that's not the way I earn my crust, but things may very
 well reverse in the future ...\n")
+    (about-show-linked-info 'marcpa "\
+I work for Positron Industries Inc., Public Safety Division.\n")
     (about-show-linked-info 'pez "\
 Author of SQL Mode, edit-toolbar, mailtool-mode, and various other
 small packages with varying degrees of usefulness.\n")
     (about-show-linked-info 'rickc "\
-The hacker formerly known as Rick Busdiecker, author of ILISP.\n")
+The hacker formerly known as Rick Busdiecker, maintainer of ILISP.\n")
     (about-show-linked-info 'rossini "\
 Author of the first XEmacs FAQ, as well as minor priest in the
 movement to get every statistician in the world to use XEmacs for
@@ -1074,7 +1122,14 @@ statistical programming and data analysis for SAS, S, S-PLUS, R,
 XLispStat; configurable for nearly any other statistical
 language/package one might want.  In spare time, acts as a
 Ph.D. (bio)statistician for money and amusement.  Current position:
-Assistant Professor of Statistics at the University of South Carolina.")
+Assistant Professor of Statistics at the University of South Carolina.\n")
+    (about-show-linked-info 'stigb "\
+Currently studying computer science in Trondheim, Norway.  Full time
+Linux user and proud of it.  XEmacs hacker light.  Maintainer of the
+RPM package.\n")
+    (about-show-linked-info 'ograf "\
+Is currently working on the integration of OffiX and CDE drag-and-drop
+into the event system of XEmacs.\n")
     (flet ((print-short (name addr &optional shortinfo)
 	     (concat (about-with-face name 'italic)
 		     (about-tabs name)
@@ -1273,7 +1328,6 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Achim Oppelt" "aoppelt@theorie3.physik.uni-erlangen.de")
        (print-short "Rebecca Ore" "rebecca.ore@op.net")
        (print-short "Sudeep Kumar Palat" "palat@idt.unit.no")
-       (print-short "Marc Paquette" "Marc.Paquette@Softimage.com")
        (print-short "Jens-U H Petersen" "petersen@kurims.kyoto-u.ac.jp")
        (print-short "Joel Peterson" "tarzan@aosi.com")
        (print-short "Thomas A. Peterson" "tap@src.honeywell.com")
@@ -1299,9 +1353,9 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Cotton Seed" "cottons@cybercom.net")
        (print-short "Axel Seibert" "seiberta@informatik.tu-muenchen.de")
        (print-short "Odd-Magne Sekkingstad" "oddms@ii.uib.no")
-       (print-short "Vinnie Shelton" "shelton@icd.teradyne.com")
        (print-short "John Shen" "zfs60@cas.org")
        (print-short "Murata Shuuichirou" "mrt@mickey.ai.kyutech.ac.jp")
+       (print-short "Matt Simmons" "simmonmt@acm.org")
        (print-short "Dinesh Somasekhar" "somasekh@ecn.purdue.edu")
        (print-short "Jeffrey Sparkes" "jsparkes@bnr.ca")
        (print-short "Manoj Srivastava" "srivasta@pilgrim.umass.edu")
@@ -1314,6 +1368,7 @@ above.  We couldn't have done it without them.\n\n"
        (print-short "Raymond L. Toy" "toy@rtp.ericsson.se")
        (print-short "Remek Trzaska" "remek@npac.syr.edu")
        (print-short "TSUTOMU Nakamura" "tsutomu@rs.kyoto.omronsoft.co.jp")
+       (print-short "Stephen Turnbull" "turnbull@sk.tsukuba.ac.jp")
        (print-short "John Turner" "turner@xdiv.lanl.gov")
        (print-short "UENO Fumihiro" "7m2vej@ritp.ye.IHI.CO.JP")
        (print-short "Juan E. Villacis" "jvillaci@cs.indiana.edu")

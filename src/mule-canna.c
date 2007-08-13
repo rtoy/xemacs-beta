@@ -1510,6 +1510,8 @@ For canna
   DEFVAR_INT ("canna-key-control-down", &Vcanna_key_Cntrl_Down /*
 
 */ );
+
+  Fprovide(intern("CANNA"));
 }
 
 #ifdef CANNA_MULE

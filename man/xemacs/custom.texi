@@ -212,10 +212,10 @@ under it.  It looks like this, in part:
    Customization of the One True Editor.
    See also [Manual].
 
-Editing group: [Go to Group] 
+ [Open] Editing group
 Basic text editing facilities.
 
-External group: [Go to Group] 
+ [Open] External group
 Interfacing to external utilities.
 
 @var{more second-level groups}
@@ -240,11 +240,10 @@ are also @dfn{active fields}; this means a field that does something
 when you @dfn{invoke} it.  To invoke an active field, either click on it
 with @kbd{Mouse-1}, or move point to it and type @key{RET}.
 
-  For example, the phrase @samp{[Go to Group]} that appears in a
-second-level group is an active field.  Invoking the @samp{[Go to
-Group]} field for a group creates a new customization buffer, which
-shows that group and its contents.  This field is a kind of hypertext
-link to another group.
+  For example, the phrase @samp{[Open]} that appears in a second-level
+group is an active field.  Invoking the @samp{[Open]} field for a group
+opens up a new customization buffer, which shows that group and its
+contents.  This field is a kind of hypertext link to another group.
 
   The @code{Emacs} group does not include any user options itself, but
 other groups do.  By examining various groups, you will eventually find
@@ -392,11 +391,11 @@ invoke @samp{[State]} and select the @samp{Save for Future Sessions}
 operation.
 
   You can also restore the option to its standard value by invoking
-@samp{[State]} and selecting the @samp{Reset to Standard Settings}
-operation.  There are actually three reset operations:
+@samp{[State]} and selecting the @samp{Reset} operation.  There are
+actually three reset operations:
 
 @table @samp
-@item Reset
+@item Reset to Current
 If you have made some modifications and not yet set the option,
 this restores the text in the customization buffer to match
 the actual value.
@@ -421,7 +420,7 @@ options in the group and its subgroups.
 containing several active fields:
 
 @smallexample
- [Set] [Save] [Reset] [Reset to Saved] [Reset to Standard]  [Done]
+ [Set] [Save] [Reset]  [Done]
 @end smallexample
 
 @noindent
@@ -445,13 +444,17 @@ example of how a face looks:
 Custom Changed Face: (sample)
    [State]: this face is unchanged from its standard setting.
 Face used when the customize item has been changed.
-Attributes: [ ] Bold: [toggle] off
-            [X] Italic: [toggle] on
-            [ ] Underline: [toggle] off
-            [ ] Inverse-Video: [toggle] on
-            [ ] Foreground: black (sample)
-            [ ] Background: white (sample)
-            [ ] Stipple:  
+Parent groups: [Custom Magic Faces]
+Attributes: [ ] Bold: [Toggle]  off (nil)
+            [ ] Italic: [Toggle]  off (nil)
+            [ ] Underline: [Toggle]  off (nil)
+            [ ] Foreground: white       (sample)
+            [ ] Background: blue        (sample)
+            [ ] Inverse: [Toggle]  off (nil)
+            [ ] Stipple: 
+            [ ] Font Family: 
+            [ ] Size: 
+            [ ] Strikethru: off
 @end smallexample
 
   Each face attribute has its own line.  The @samp{[@var{x}]} field
@@ -460,11 +463,12 @@ before the attribute name indicates whether the attribute is
 attribute by invoking that field.  When the attribute is enabled, you
 can change the attribute value in the usual ways.
 
-  On a black-and-white display, the colors you can use for the
-background are @samp{black}, @samp{white}, @samp{gray}, @samp{gray1},
-and @samp{gray3}.  Emacs supports these shades of gray by using
-background stipple patterns instead of a color.
-
+@c Is this true for XEmacs?
+@c  On a black-and-white display, the colors you can use for the
+@c background are @samp{black}, @samp{white}, @samp{gray}, @samp{gray1},
+@c and @samp{gray3}.  Emacs supports these shades of gray by using
+@c background stipple patterns instead of a color.
+@c 
   Setting, saving and resetting a face work like the same operations for
 options (@pxref{Changing an Option}).
 
@@ -474,13 +478,14 @@ use a bold font on a monochrome display.  To specify multiple
 appearances for a face, select @samp{Show Display Types} in the menu you
 get from invoking @samp{[State]}.
 
-@findex modify-face
-  Another more basic way to set the attributes of a specific face is
-with @kbd{M-x modify-face}.  This command reads the name of a face, then
-reads the attributes one by one.  For the color and stipple attributes,
-the attribute's current value is the default---type just @key{RET} if
-you don't want to change that attribute.  Type @samp{none} if you want
-to clear out the attribute.
+@c It would be cool to implement this
+@c @findex modify-face
+@c   Another more basic way to set the attributes of a specific face is
+@c with @kbd{M-x modify-face}.  This command reads the name of a face, then
+@c reads the attributes one by one.  For the color and stipple attributes,
+@c the attribute's current value is the default---type just @key{RET} if
+@c you don't want to change that attribute.  Type @samp{none} if you want
+@c to clear out the attribute.
 
 @node Specific Customization
 @subsubsection Customizing Specific Items

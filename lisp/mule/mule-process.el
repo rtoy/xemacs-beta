@@ -72,7 +72,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 		      (setq alist (cdr alist))
 		      )))
 		(if (functionp ret)
-		    (setq ret (funcall ret 'call-process filename))
+		    (setq ret (funcall ret 'call-process program))
 		  )
 		(cond ((consp ret) (car ret))
 		      ((find-coding-system ret) ret)
@@ -116,7 +116,7 @@ you quit again before the process exits."
                     (t
                      (make-temp-name "/tmp/emacs")))))
     (unwind-protect
-	(let (cs-r cd-w)
+	(let (cs-r cs-w)
 	  (let (ret)
 	    (catch 'found
 	      (let ((alist process-coding-system-alist)
@@ -127,7 +127,7 @@ you quit again before the process exits."
 		  (setq alist (cdr alist))
 		  )))
 	    (if (functionp ret)
-		(setq ret (funcall ret 'call-process-region filename)))
+		(setq ret (funcall ret 'call-process-region program)))
 	    (cond ((consp ret)
 		   (setq cs-r (car ret)
 			 cs-w (cdr ret)))
@@ -162,7 +162,7 @@ Third arg is program file name.  It is searched for as in the shell.
 Remaining arguments are strings to give program as arguments.
 INCODE and OUTCODE specify the coding-system objects used in input/output
  from/to the process."
-  (let (cs-r cd-w)
+  (let (cs-r cs-w)
     (let (ret)
       (catch 'found
 	(let ((alist process-coding-system-alist)
@@ -173,7 +173,7 @@ INCODE and OUTCODE specify the coding-system objects used in input/output
 	    (setq alist (cdr alist))
 	    )))
       (if (functionp ret)
-	  (setq ret (funcall ret 'start-process filename)))
+	  (setq ret (funcall ret 'start-process program)))
       (cond ((consp ret)
 	     (setq cs-r (car ret)
 		   cs-w (cdr ret)))
@@ -216,18 +216,29 @@ BUFFER is the buffer (or buffer-name) to associate with the process.
 Third arg is name of the host to connect to, or its IP address.
 Fourth arg SERVICE is name of the service desired, or an integer
  specifying a port number to connect to."
-  (let (cs-r cd-w)
+  (let (cs-r cs-w)
     (let (ret)
       (catch 'found
 	(let ((alist network-coding-system-alist)
-	      (case-fold-search (eq system-type 'vax-vms)))
+	      (case-fold-search (eq system-type 'vax-vms))
+	      pattern)
 	  (while alist
-	    (if (string-match (car (car alist)) program)
-		(throw 'found (setq ret (cdr (car alist)))))
+	    (setq pattern (car (car alist)))
+	    (and
+	     (cond ((numberp pattern)
+		    (and (numberp service)
+			 (eq pattern service)))
+		   ((stringp pattern)
+		    (or (and (stringp service)
+			     (string-match pattern service))
+			(and (numberp service)
+			     (string-match pattern
+					   (number-to-string service))))))
+	     (throw 'found (setq ret (cdr (car alist)))))
 	    (setq alist (cdr alist))
 	    )))
       (if (functionp ret)
-	  (setq ret (funcall ret 'open-network-stream filename)))
+	  (setq ret (funcall ret 'open-network-stream service)))
       (cond ((consp ret)
 	     (setq cs-r (car ret)
 		   cs-w (cdr ret)))

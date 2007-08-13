@@ -262,6 +262,7 @@ x_init_device (struct device *d, Lisp_Object props)
     Vdefault_x_device = device;
 
 #ifdef MULE
+#if defined(LWLIB_MENUBARS_MOTIF) || defined(USE_XFONTSET)
   {
     /* Read in locale-specific resources from
        data-directory/app-defaults/$LANG/emacs-application-class.
@@ -280,6 +281,7 @@ x_init_device (struct device *d, Lisp_Object props)
 	  XrmCombineFileDatabase (path, &db, False);
       }
   }
+#endif /* LWLIB_MENUBARS_MOTIF or USE_XFONTSET */
 #endif /* MULE */
 
   if (NILP (DEVICE_NAME (d)))

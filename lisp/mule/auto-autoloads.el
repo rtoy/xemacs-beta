@@ -37,13 +37,10 @@ Byte-compiler expand this macro while compiling." nil 'macro)
 
 ;;;***
 
-;;;### (autoloads (dump-coding-systems dump-charsets mule-diag list-fontset describe-fontset list-font describe-font list-coding-system list-coding-system-briefly describe-coding-system list-charsets) "mule-debug" "mule/mule-debug.el")
+;;;### (autoloads (dump-coding-systems dump-charsets mule-diag list-fontset describe-fontset list-font describe-font list-coding-system list-coding-system-briefly list-charsets) "mule-debug" "mule/mule-debug.el")
 
 (autoload 'list-charsets "mule-debug" "\
 Display a list of existing character sets." t nil)
-
-(autoload 'describe-coding-system "mule-debug" "\
-Display documentation of the coding-system CS." t nil)
 
 (autoload 'list-coding-system-briefly "mule-debug" "\
 Display coding-systems currently used with a brief format in mini-buffer." t nil)
@@ -71,6 +68,105 @@ Show diagnosis of the current running Mule." t nil)
 (autoload 'dump-charsets "mule-debug" nil nil nil)
 
 (autoload 'dump-coding-systems "mule-debug" nil nil nil)
+
+;;;***
+
+;;;### (autoloads (dump-codings dump-charsets mule-diag list-input-methods list-fontsets describe-fontset describe-font list-coding-systems describe-current-coding-system describe-current-coding-system-briefly describe-coding-system list-character-sets) "mule-diag" "mule/mule-diag.el")
+
+(autoload 'list-character-sets "mule-diag" "\
+Display a list of all character sets.
+
+The ID column contains a charset identification number for internal use.
+The B column contains a number of bytes occupied in a buffer.
+The W column contains a number of columns occupied in a screen.
+
+With prefix arg, the output format gets more cryptic
+but contains full information about each character sets." t nil)
+
+(autoload 'describe-coding-system "mule-diag" "\
+Display information of CODING-SYSTEM." t nil)
+
+(autoload 'describe-current-coding-system-briefly "mule-diag" "\
+Display coding systems currently used in a brief format in echo area.
+
+The format is \"F[..],K[..],T[..],P>[..],P<[..], default F[..],P<[..],P<[..]\",
+where mnemonics of the following coding systems come in this order
+at the place of `..':
+  buffer-file-coding-system (of the current buffer)
+  eol-type of buffer-file-coding-system (of the current buffer)
+  (keyboard-coding-system)
+  eol-type of (keyboard-coding-system)
+  (terminal-coding-system)
+  eol-type of (terminal-coding-system)
+  process-coding-system for read (of the current buffer, if any)
+  eol-type of process-coding-system for read (of the current buffer, if any)
+  process-coding-system for write (of the current buffer, if any)
+  eol-type of process-coding-system for write (of the current buffer, if any)
+  default-buffer-file-coding-system
+  eol-type of default-buffer-file-coding-system
+  default-process-coding-system for read
+  eol-type of default-process-coding-system for read
+  default-process-coding-system for write
+  eol-type of default-process-coding-system" t nil)
+
+(autoload 'describe-current-coding-system "mule-diag" "\
+Display coding systems currently used in a detailed format." t nil)
+
+(autoload 'list-coding-systems "mule-diag" "\
+Display a list of all coding systems.
+It prints mnemonic letter, name, and description of each coding systems.
+
+With prefix arg, the output format gets more cryptic,
+but contains full information about each coding systems." t nil)
+
+(autoload 'describe-font "mule-diag" "\
+Display information about fonts which partially match FONTNAME." t nil)
+
+(autoload 'describe-fontset "mule-diag" "\
+Display information of FONTSET.
+
+It prints name, size, and style of FONTSET, and lists up fonts
+contained in FONTSET.
+
+The column WDxHT contains width and height (pixels) of each fontset
+\(i.e. those of ASCII font in the fontset).  The letter `-' in this
+column means that the corresponding fontset is not yet used in any
+frame.
+
+The O column of each font contains one of the following letters.
+ o -- font already opened
+ - -- font not yet opened
+ x -- font can't be opened
+ ? -- no font specified
+
+The Charset column of each font contains a name of character set
+displayed by the font." t nil)
+
+(autoload 'list-fontsets "mule-diag" "\
+Display a list of all fontsets.
+
+It prints name, size, and style of each fontset.
+With prefix arg, it also lists up fonts contained in each fontset.
+See the function `describe-fontset' for the format of the list." t nil)
+
+(autoload 'list-input-methods "mule-diag" "\
+Print information of all input methods." t nil)
+
+(autoload 'mule-diag "mule-diag" "\
+Display diagnosis of the multilingual environment (MULE).
+
+It prints various information related to the current multilingual
+environment, including lists of input methods, coding systems,
+character sets, and fontsets (if Emacs running under some window
+system)." t nil)
+
+(autoload 'dump-charsets "mule-diag" "\
+Dump information of all charsets into the file \"CHARSETS\".
+The file is saved in the directory `data-directory'." nil nil)
+
+(autoload 'dump-codings "mule-diag" "\
+Dump information of all coding systems into the file \"CODINGS\".
+The file is saved in the directory `data-directory'." nil nil)
 
 ;;;***
 
@@ -210,22 +306,6 @@ order of elements in the sequence is the same as arguments for
 `compose-chars' to create CHAR.
 If TYPE is omitted or is `string', composition rules are omitted
 even if WITH-COMPOSITION-RULE is t." nil nil)
-
-;;;***
-
-;;;### (autoloads (vn-decompose-viqr-buffer vn-decompose-viqr vn-compose-viqr-buffer vn-compose-viqr) "mule-vietnamese" "mule/mule-vietnamese.el")
-
-(autoload 'vn-compose-viqr "mule-vietnamese" "\
-Convert 'VIQR' mnemonics of the current region to
-pre-composed Vietnamese characaters." t nil)
-
-(autoload 'vn-compose-viqr-buffer "mule-vietnamese" nil t nil)
-
-(autoload 'vn-decompose-viqr "mule-vietnamese" "\
-Convert pre-composed Vietnamese characaters of the current region to
-'VIQR' mnemonics." t nil)
-
-(autoload 'vn-decompose-viqr-buffer "mule-vietnamese" nil t nil)
 
 ;;;***
 

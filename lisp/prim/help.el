@@ -243,37 +243,38 @@ Bury the help buffer to the end of the buffer list."
 
 ;;(define-key global-map 'backspace 'deprecated-help-command)
 
+;; This function has been moved to help-nomule.el and mule-help.el.
 ;; TUTORIAL arg is XEmacs addition
-(defun help-with-tutorial (&optional tutorial)
-  "Select the XEmacs learn-by-doing tutorial.
-Optional arg TUTORIAL specifies the tutorial file; default is \"TUTORIAL\"."
-  (interactive)
-  (if (null tutorial)
-      (setq tutorial "TUTORIAL"))
-  (let ((file (expand-file-name (concat "~/" tutorial))))
-    (delete-other-windows)
-    (if (get-file-buffer file)
-	(switch-to-buffer (get-file-buffer file))
-      (switch-to-buffer (create-file-buffer file))
-      (setq buffer-file-name file)
-      (setq default-directory (expand-file-name "~/"))
-      (setq buffer-auto-save-file-name nil)
-      (insert-file-contents (expand-file-name tutorial data-directory))
-      (goto-char (point-min))
-      (search-forward "\n<<")
-      (delete-region (point-at-bol) (point-at-eol))
-      (let ((n (- (window-height (selected-window))
-		  (count-lines (point-min) (point))
-		  6)))
-	(if (< n 12)
-	    (newline n)
-	  ;; Some people get confused by the large gap.
-	  (newline (/ n 2))
-	  (insert "[Middle of page left blank for didactic purposes.  "
-		  "Text continues below]")
-	  (newline (- n (/ n 2)))))
-      (goto-char (point-min))
-      (set-buffer-modified-p nil))))
+;(defun help-with-tutorial (&optional tutorial)
+;  "Select the XEmacs learn-by-doing tutorial.
+;Optional arg TUTORIAL specifies the tutorial file; default is \"TUTORIAL\"."
+;  (interactive)
+;  (if (null tutorial)
+;      (setq tutorial "TUTORIAL"))
+;  (let ((file (expand-file-name (concat "~/" tutorial))))
+;    (delete-other-windows)
+;    (if (get-file-buffer file)
+;	(switch-to-buffer (get-file-buffer file))
+;      (switch-to-buffer (create-file-buffer file))
+;      (setq buffer-file-name file)
+;      (setq default-directory (expand-file-name "~/"))
+;      (setq buffer-auto-save-file-name nil)
+;      (insert-file-contents (expand-file-name tutorial data-directory))
+;      (goto-char (point-min))
+;      (search-forward "\n<<")
+;      (delete-region (point-at-bol) (point-at-eol))
+;      (let ((n (- (window-height (selected-window))
+;		  (count-lines (point-min) (point))
+;		  6)))
+;	(if (< n 12)
+;	    (newline n)
+;	  ;; Some people get confused by the large gap.
+;	  (newline (/ n 2))
+;	  (insert "[Middle of page left blank for didactic purposes.  "
+;		  "Text continues below]")
+;	  (newline (- n (/ n 2)))))
+;      (goto-char (point-min))
+;      (set-buffer-modified-p nil))))
 
 ;; used by describe-key, describe-key-briefly, insert-key-binding, etc.
 
@@ -798,31 +799,38 @@ If that doesn't give a function, return nil."
 (defun function-at-point ()
   "Return the function whose name is around point.
 If that gives no function, return the function which is called by the
-list containing point.  If that doesn't give a function, return nil."
-  (or (condition-case ()
-	  (let ((stab (syntax-table)))
-	    (unwind-protect
-		(save-excursion
-		  (set-syntax-table emacs-lisp-mode-syntax-table)
-		  (or (not (zerop (skip-syntax-backward "_w")))
-		      (eq (char-syntax (char-after (point))) ?w)
-		      (eq (char-syntax (char-after (point))) ?_)
-		      (forward-sexp -1))
-		  (skip-chars-forward "`'")
-		  (let ((obj (read (current-buffer))))
-		    (and (symbolp obj) (fboundp obj) obj)))
-	      (set-syntax-table stab)))
-	(error nil))
-      (condition-case ()
-	  (save-excursion
-	    (save-restriction
-	      (narrow-to-region (max (point-min) (- (point) 1000)) (point-max))
-	      (backward-up-list 1)
-	      (forward-char 1)
-	      (let (obj)
-		(setq obj (read (current-buffer)))
-		(and (symbolp obj) (fboundp obj) obj))))
-	(error nil))))
+list containing point.  If that doesn't give a function, return nil.
+
+If `function-at-point-function' is non nil, the function it names is
+called instead."
+  (if (and (fboundp function-at-point-function)
+	   (not (eq function-at-point-function 'function-at-point)))
+      (funcall function-at-point-function)
+    (or (condition-case ()
+	    (let ((stab (syntax-table)))
+	      (unwind-protect
+		  (save-excursion
+		    (set-syntax-table emacs-lisp-mode-syntax-table)
+		    (or (not (zerop (skip-syntax-backward "_w")))
+			(eq (char-syntax (char-after (point))) ?w)
+			(eq (char-syntax (char-after (point))) ?_)
+			(forward-sexp -1))
+		    (skip-chars-forward "`'")
+		    (let ((obj (read (current-buffer))))
+		      (and (symbolp obj) (fboundp obj) obj)))
+		(set-syntax-table stab)))
+	  (error nil))
+	(condition-case ()
+	    (save-excursion
+	      (save-restriction
+		(narrow-to-region (max (point-min) (- (point) 1000))
+				  (point-max))
+		(backward-up-list 1)
+		(forward-char 1)
+		(let (obj)
+		  (setq obj (read (current-buffer)))
+		  (and (symbolp obj) (fboundp obj) obj))))
+	  (error nil)))))
 
 ;; Default to nil for the non-hackers?  Not until we find a way to
 ;; distinguish hackers from non-hackers automatically!
@@ -832,11 +840,11 @@ unless the function is autoloaded."
   :type 'boolean
   :group 'help-appearance)
 
-(defcustom find-function-function 'function-at-point
-  "*The function used by `describe-function', `where-is' and
-`find-function' to select the function near point.
+(defcustom function-at-point-function nil
+  "*Set this to name an alternative function to be used by
+`function-at-point' instead of itself.
 
-For example `function-at-point' or `function-called-at-point'."
+For example `function-called-at-point'."
   :type 'function
   :group 'help)
 
@@ -852,10 +860,10 @@ For example `function-at-point' or `function-called-at-point'."
 
 (defun describe-function (function)
   "Display the full documentation of FUNCTION (a symbol).
-When run interactively, it defaults to any function found by the
-value of `find-function-function'."
+When run interactively, it defaults to any function found by
+`function-at-point'."
   (interactive
-    (let* ((fn (funcall find-function-function))
+    (let* ((fn (function-at-point))
            (val (let ((enable-recursive-minibuffers t))
                   (completing-read
                     (if fn
@@ -1047,7 +1055,7 @@ value of `find-function-function'."
 
 ;;; ## this doesn't seem to be used for anything
 ;; (defun describe-function-arglist (function)
-;;   (interactive (list (or (function-called-at-point)
+;;   (interactive (list (or (function-at-point)
 ;; 			 (error "no function call at point"))))
 ;;   (let ((b nil))
 ;;     (unwind-protect
@@ -1223,10 +1231,10 @@ are separated with SEPARATOR (\", \" by default)."
 (defun where-is (definition)
   "Print message listing key sequences that invoke specified command.
 Argument is a command definition, usually a symbol with a function definition.
-When run interactively, it defaults to any function found by the
-value of `find-function-function'."
+When run interactively, it defaults to any function found by
+`function-at-point'."
   (interactive
-   (let ((fn (funcall find-function-function))
+   (let ((fn (function-at-point))
 	 (enable-recursive-minibuffers t)	     
 	 val)
      (setq val (read-command

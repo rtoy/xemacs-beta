@@ -39,7 +39,7 @@
 
 (defvar command-line-processed nil "t once command line has been processed")
 
-(defconst startup-message-timeout 1200)	; More or less disable the timeout
+(defconst startup-message-timeout 12000) ; More or less disable the timeout
 
 (defconst inhibit-startup-message nil
   "*Non-nil inhibits the initial startup message.
@@ -211,6 +211,8 @@ remaining command-line args are in the variable `command-line-args-left'.")
   -unmapped             Do not map the initial frame.
   -no-site-file         Do not load the site-specific init file (site-start.el).
   -no-init-file         Do not load the user-specific init file (~/.emacs).
+  -no-packages		Do not process the package path.
+  -vanilla		Equivalent to -q -no-site-file -no-packages.
   -q                    Same as -no-init-file.
   -user <user>          Load user's init file instead of your own.
   -u <user>             Same as -user.\n")
@@ -461,6 +463,12 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
 	(setq init-file-user nil))
        ((string= arg "-no-site-file")
 	(setq site-start-file nil))
+       ((string= arg "-no-packages")
+	(setq inhibit-package-init t))
+       ((string= arg "-vanilla")
+	(setq init-file-user nil
+	      site-start-file nil
+	      inhibit-package-init t))
        ((or (string= arg "-u")
 	    (string= arg "-user"))
 	(setq init-file-user (pop args)))
@@ -654,47 +662,48 @@ a new format, when variables have changed, etc."
   (load filename))
 
 (defun command-line-1 ()
-  (if (null command-line-args-left)
-      (unless (or inhibit-startup-message
-		  noninteractive
-		  ;; Don't clobber a non-scratch buffer if init file
-		  ;; has selected it.
-		  (not (string= (buffer-name) "*scratch*"))
-		  (input-pending-p))
+  (cond
+   ((null command-line-args-left)
+    (unless noninteractive
+      ;; If there are no switches to process, run the term-setup-hook
+      ;; before displaying the copyright notice; there may be some need
+      ;; to do it before doing any output.  If we're not going to
+      ;; display a copyright notice (because other options are present)
+      ;; then this is run after those options are processed.
+      (run-hooks 'term-setup-hook)
+      ;; Don't let the hook be run twice.
+      (setq term-setup-hook nil)
 
-	;; If there are no switches to process, run the term-setup-hook
-	;; before displaying the copyright notice; there may be some need
-	;; to do it before doing any output.  If we're not going to
-	;; display a copyright notice (because other options are present)
-	;; then this is run after those options are processed.
-	(run-hooks 'term-setup-hook)
-	;; Don't let the hook be run twice.
-	(setq term-setup-hook nil)
+      ;; Don't clobber a non-scratch buffer if init file
+      ;; has selected it.
+      (when (string= (buffer-name) "*scratch*")
+	(unless (or inhibit-startup-message
+		    (input-pending-p))
+	  (let ((timeout nil))
+	    (unwind-protect
+		;; Guts of with-timeout
+		(catch 'timeout
+		  (setq timeout (add-timeout startup-message-timeout
+					     (lambda (ignore)
+					       (condition-case nil
+						   (throw 'timeout t)
+						 (error nil)))
+					     nil))
+		  (startup-splash-frame)
+		  (or nil;; (pos-visible-in-window-p (point-min))
+		      (goto-char (point-min)))
+		  (sit-for 0)
+		  (setq unread-command-event (next-command-event)))
+	      (when timeout (disable-timeout timeout)))))
+	(with-current-buffer (get-buffer "*scratch*")
+	  ;; In case the XEmacs server has already selected
+	  ;; another buffer, erase the one our message is in.
+	  (erase-buffer)
+	  (when (stringp initial-scratch-message)
+	    (insert initial-scratch-message))
+	  (set-buffer-modified-p nil)))))
 
-	(let ((timeout nil))
-	  (unwind-protect
-	      ;; Guts of with-timeout
-	      (catch 'timeout
-		(setq timeout (add-timeout startup-message-timeout
-					   (lambda (ignore)
-					     (condition-case nil
-						 (throw 'timeout t)
-					       (error nil)))
-					   nil))
-		(startup-splash-frame)
-		(or nil;; (pos-visible-in-window-p (point-min))
-		    (goto-char (point-min)))
-		(sit-for 0)
-		(setq unread-command-event (next-command-event)))
-	    (when timeout (disable-timeout timeout))
-	    (with-current-buffer (get-buffer "*scratch*")
-	      (erase-buffer)
-	      (when (stringp initial-scratch-message)
-		(insert initial-scratch-message))
-	      ;; In case the XEmacs server has already selected
-	      ;; another buffer, erase the one our message is in.
-	      (set-buffer-modified-p nil)))))
-    
+   (t
     ;; Command-line-options exist
     (let ((dir command-line-default-directory)
 	  (file-count 0)
@@ -740,7 +749,7 @@ a new format, when variables have changed, etc."
 		 (> file-count 2)
 		 (not (get-buffer-window first-file-buffer)))
 	(other-window 1)
-	(buffer-menu nil)))))
+	(buffer-menu nil))))))
 
 (defvar startup-presentation-hack-keymap
   (let ((map (make-sparse-keymap)))

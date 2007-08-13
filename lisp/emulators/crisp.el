@@ -2,7 +2,7 @@
 
 ;; Author: Gary D. Foster <Gary.Foster@corp.sun.com>
 ;; Created: 01 Mar 1996
-;; Version: 1.20
+;; Version: 1.21
 ;; Keywords: emulations brief crisp
 ;; X-Modified-by:
 ;;	crisp.el,v
@@ -111,14 +111,8 @@ does not load the scroll-lock package.")
 (defvar crisp-load-hook nil
   "Hooks to run after loading the CRiSP emulator package.")
 
-(defconst crisp-version "crisp.el release 1.1/1.20"
+(defconst crisp-version "crisp.el release 1.1/1.21"
   "The release number and RCS version for the CRiSP emulator.")
-
-(if (string-match "XEmacs\\Lucid" emacs-version)
-    (add-minor-mode 'crisp-mode-enabled crisp-mode-modeline-string)
-  (or (assq 'crisp-mode-enabled minor-mode-alist)
-      (setq minor-mode-alist
-	    (cons '(crisp-mode-enabled crisp-mode-modeline-string) minor-mode-alist))))
 
 ;; and now the keymap defines
 
@@ -255,6 +249,13 @@ normal CRiSP binding) and when it is nil M-x will run
     (run-hooks 'crisp-load-hook))
    ((eq crisp-mode-enabled 'nil)
     (use-global-map crisp-mode-original-keymap))))
+
+(if (string-match "\\(XEmacs\\|Lucid\\)" emacs-version)
+    (add-minor-mode 'crisp-mode-enabled 'crisp-mode-modeline-string
+		    nil nil 'crisp-mode)
+  (or (assq 'crisp-mode-enabled minor-mode-alist)
+      (setq minor-mode-alist
+	    (cons '(crisp-mode-enabled crisp-mode-modeline-string) minor-mode-alist))))
 
 (provide 'crisp)
 

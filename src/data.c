@@ -87,7 +87,7 @@ eq_with_ebola_notice (Lisp_Object obj1, Lisp_Object obj2)
 {
   if (((CHARP (obj1) && INTP (obj2)) || (CHARP (obj2) && INTP (obj1)))
       && (debug_issue_ebola_notices >= 2
-	  || XREALINT (obj1) == XREALINT (obj2)))
+	  || XCHAR_OR_INT (obj1) == XCHAR_OR_INT (obj2)))
     {
       stderr_out("Comparison between integer and character is constant nil (");
       Fprinc (obj1, Qexternal_debugging_output);
@@ -166,8 +166,12 @@ Lisp_Object
 make_int (EMACS_INT num)
 {
   Lisp_Object val;
+#ifdef USE_MINIMAL_TAGBITS
+  XSETINT(val, num);
+#else
   /* Don't use XSETINT here -- it's defined in terms of make_int ().  */
   XSETOBJ (val, Lisp_Type_Int, num);
+#endif
   return val;
 }
 #endif /* ! defined (make_int) */
@@ -191,13 +195,19 @@ sign_extend_lisp_int (EMACS_INT num)
 
 /* characters do not need to sign extend so there's no need for special
    futzing like with ints. */
+#ifndef make_char
 Lisp_Object
 make_char (Emchar num)
 {
   Lisp_Object val;
+#ifdef USE_MINIMAL_TAGBITS
+  XSETCHAR (val, num);
+#else
   XSETOBJ (val, Lisp_Type_Char, num);
+#endif
   return val;
 }
+#endif /* ! make_char */
 
 /* Data type predicates */
 
@@ -1641,7 +1651,8 @@ In this case, zeros are shifted in on the left.
 
   {
     int C_count = XINT (count);
-    EMACS_UINT C_value = (EMACS_UINT) XUINT (value);
+    /* EMACS_UINT C_value = (EMACS_UINT) XUINT (value);*/
+    EMACS_UINT C_value = (EMACS_UINT) XINT (value);
     XSETINT (val, C_count > 0 ? C_value << C_count : C_value >> -C_count);
   }
   return val;

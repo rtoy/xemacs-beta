@@ -5,7 +5,7 @@
 
 ;; Author: Akira Kon <kon@d1.bs2.mt.nec.co.jp>
 ;;         MORIOKA Tomohiko <morioka@jaist.ac.jp>
-;; Version: $Revision: 1.7 $
+;; Version: $Revision: 1.8 $
 ;; Keywords: Canna, Japanese, input method, mule, multilingual
 
 ;; This file is not a part of Emacs yet.
@@ -50,7 +50,7 @@
 ;; end
 
 (defconst canna-rcs-version
-  "$Id: canna.el,v 1.7 1997/06/21 20:02:46 steve Exp $")
+  "$Id: canna.el,v 1.8 1997/10/31 14:52:58 steve Exp $")
 
 (defun canna-version ()
   "Display version of canna.el in mini-buffer."
@@ -1057,7 +1057,14 @@ dictionary."
 	       (define-key global-map (make-string 1 ch) 'canna-self-insert-command)
 	       (setq ch (1+ ch)) ))
 
-	   (cond ((let ((keys (car init-val)) (ok nil))
+	   (cond
+	    ;; #### I'm just guessing that this should come before the
+	    ;;      init-val setting
+	    ;; if registered with LEIM, no-op
+	    ((featurep 'canna-leim) t)
+	    ;; check to see if an X resource or the like is available in
+	    ;; init-val
+	    ((let ((keys (car init-val)) (ok nil))
 		    (while keys
 		      (cond ((< (car keys) 128)
 			     (global-set-key
@@ -1066,9 +1073,13 @@ dictionary."
 			     (setq ok t) ))
 		      (setq keys (cdr keys))
 		      ) ok))
-		 (t ; デフォルトの設定
-		  (global-set-key "\C-o" 'canna-toggle-japanese-mode) ))
+	    ;; デフォルトの設定
+	    ;; Since XEmacs provides canna-leim.el, we should leave this
+	    ;; as is.
+	    (t (global-set-key "\C-o" 'canna-toggle-japanese-mode)) )
 
+	   ;; #### should these global bindings be conditional on LEIM?
+           ;;      LEIM doesn't use kanji key yet AFAIK, so leave them.
 	   (if (not (keymapp (global-key-binding "\e[")))
 	       (global-unset-key "\e[") )
 	   (global-set-key "\e[210z" 'canna-toggle-japanese-mode) ; XFER

@@ -3158,8 +3158,7 @@ character escape syntaxes or just read them incorrectly.
   Ffset (Qload, intern ("load-internal"));
 
 #ifdef FEATUREP_SYNTAX
-  Qfeaturep = intern("featurep");
-  staticpro(&Qfeaturep);
+  defsymbol (&Qfeaturep, "featurep");
   Fprovide(intern("xemacs"));
 #ifdef INFODOCK
   Fprovide(intern("infodock"));

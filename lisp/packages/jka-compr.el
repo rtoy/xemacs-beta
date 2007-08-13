@@ -139,7 +139,11 @@ for `jka-compr-compression-info-list')."
     ["\\.gz\\(~\\|\\.~[0-9]+~\\)?\\'"
      "zipping"        "gzip"         ("-c" "-q")
      "unzipping"      "gzip"         ("-c" "-q" "-d")
-     t t])
+     t t]
+    ["\\.bz2\\(~\\|\\.~[0-9]+~\\)?\\'"
+     "bzipping"       "bzip2"        ("-f")
+     "unbzipping"     "bzip2"        ("-d")
+     nil t])
 
   "List of vectors that describe available compression techniques.
 Each element, which describes a compression technique, is a vector of
@@ -164,8 +168,8 @@ APPEND-FLAG EXTENSION], where:
 
    uncompress-args       is a list of args to pass to the uncompress program
 
-   append-flag           is non-nil if this compression technique can be
-                         appended
+   append-flag           is non-nil if files compressed with this technique can
+                         be appended to without decompressing them first.
 
    auto-mode flag        non-nil means strip the regexp from file names
                          before attempting to set the mode.

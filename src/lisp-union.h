@@ -28,11 +28,11 @@ union Lisp_Object
   {
 #if (!!defined (WORDS_BIGENDIAN) != !!defined (LOWTAGS))
     /* Big-endian lowtags, little-endian hightags */
-    unsigned EMACS_INT type_mark: GCTYPEBITS + 1;
+    unsigned EMACS_INT type_mark: GCTYPEBITS + GCMARKBITS;
     signed EMACS_INT val: VALBITS;
 #else /* If WORDS_BIGENDIAN, or little-endian hightags */
     signed EMACS_INT val: VALBITS;
-    unsigned EMACS_INT mark_type: GCTYPEBITS + 1;
+    unsigned EMACS_INT mark_type: GCTYPEBITS + GCMARKBITS;
 #endif /* BIG/LITTLE_ENDIAN vs HIGH/LOWTAGS */
   } s;
   struct
@@ -47,11 +47,26 @@ union Lisp_Object
 #endif /* __GNUC__ */
     /* The markbit is not really part of the value of a Lisp_Object,
        and is always zero except during garbage collection.  */
-    unsigned EMACS_INT markbit: 1;
+#if GCMARKBITS > 0
+    unsigned EMACS_INT markbit: GCMARKBITS;
+#endif
 #if (!!defined (WORDS_BIGENDIAN)  != !!defined (LOWTAGS))
     unsigned EMACS_INT val: VALBITS;
 #endif
   } gu;
+#ifdef USE_MINIMAL_TAGBITS
+  struct
+  {
+#if (!!defined (WORDS_BIGENDIAN) != !!defined (LOWTAGS))
+    unsigned bit: GCTYPEBITS - 1;
+#endif
+    signed EMACS_INT val: VALBITS + 1;
+#if (!!defined (WORDS_BIGENDIAN) == !!defined (LOWTAGS))
+    unsigned bit: GCTYPEBITS - 1;
+#endif
+  } si;
+#endif /* USE_MINIMAL_TAGBITS */
+  EMACS_UINT ui;
   EMACS_INT i;
   /* GCC bites yet again.  I fart in the general direction of
      the GCC authors.
@@ -64,6 +79,7 @@ union Lisp_Object
 }
 Lisp_Object;
 
+#ifndef USE_MINIMAL_TAGBITS
 #ifndef XMAKE_LISP
 #if (__GNUC__ > 1)
 /* Use GCC's struct initializers feature */
@@ -73,15 +89,17 @@ Lisp_Object;
                                 val: ((unsigned EMACS_INT) value) } })
 #endif /* __GNUC__ */
 #endif /* !XMAKE_LISP */
-
+#endif /* ! USE_MINIMAL_TAGBITS */
 
 #ifdef XMAKE_LISP
 #define Qzero (XMAKE_LISP (Lisp_Type_Int, 0))
 #define make_int(a) (XMAKE_LISP (Lisp_Type_Int, (a)))
+#define make_char(a) (XMAKE_LISP (Lisp_Type_Char, (a)))
 #else
 extern Lisp_Object Qzero;
 #endif
 
+extern Lisp_Object Qnull_pointer;
 
 #define EQ(x,y) ((x).v == (y).v)
 #define GC_EQ(x,y) ((x).gu.val == (y).gu.val && (x).gu.type == (y).gu.type)
@@ -96,15 +114,26 @@ extern Lisp_Object Qzero;
 /* Make sure we sign-extend; compilers have been known to fail to do so.  */
 #define XREALINT(a) (((a).i << ((LONGBITS) - (VALBITS))) >> ((LONGBITS) - (VALBITS)))
 #else
-#define XREALINT(a) ((a).s.val)
+#ifdef USE_MINIMAL_TAGBITS
+# define XREALINT(a) ((a).si.val)
+#else
+# define XREALINT(a) ((a).s.val)
+#endif
 #endif /* EXPLICIT_SIGN_EXTEND */
 
-#define XUINT(a) ((a).gu.val)
+#ifdef USE_MINIMAL_TAGBITS
+# define XPNTRVAL(a) ((a).ui)
+# define XCHARVAL(a) ((a).gu.val)
+#else
+# define XPNTRVAL(a) ((a).gu.val)
+# define XCHARVAL(a) XPNTRVAL(a)
+#endif
+
 #ifdef HAVE_SHM
 /* In this representation, data is found in two widely separated segments.  */
 extern int pure_size;
 # define XPNTR(a) \
-  ((void *)(((a).gu.val) | ((a).gu.val > pure_size ? DATA_SEG_BITS : PURE_SEG_BITS)))
+  ((void *)(XPNTRVAL(a)) | (XPNTRVAL(a) > pure_size ? DATA_SEG_BITS : PURE_SEG_BITS)))
 #else /* not HAVE_SHM */
 # ifdef DATA_SEG_BITS
 /* This case is used for the rt-pc and hp-pa.
@@ -113,46 +142,66 @@ extern int pure_size;
    But I don't think that zero should ever be found
    in a Lisp object whose data type says it points to something.
  */
-#  define XPNTR(a) ((void *)(((a).gu.val) | DATA_SEG_BITS))
+#  define XPNTR(a) ((void *)((XPNTRVAL(a)) | DATA_SEG_BITS))
 # else /* not DATA_SEG_BITS */
-#  define XPNTR(a) ((void *) ((a).gu.val))
+#  define XPNTR(a) ((void *) (XPNTRVAL(a)))
 # endif /* not DATA_SEG_BITS */
 #endif /* not HAVE_SHM */
-#define XSETINT(a, b) ((void) ((a) = make_int (b)))
 
-#define XSETCHAR(a, b) ((void) ((a) = make_char (b)))
+#ifdef USE_MINIMAL_TAGBITS
+# define XSETINT(a, b) \
+    do { Lisp_Object *_xzx = &(a) ; \
+         (*_xzx).si.val = (b) ; \
+         (*_xzx).si.bit = 1; \
+       } while (0)
+# define XSETCHAR(a, b) \
+    do { Lisp_Object *_xzx = &(a) ; \
+         (*_xzx).gu.val = (b) ; \
+         (*_xzx).gu.type = Lisp_Type_Char; \
+       } while (0)
+#else
+# define XSETINT(a, b) ((void) ((a) = make_int (b)))
+# define XSETCHAR(a, b) ((void) ((a) = make_char (b)))
+#endif
 
 /* XSETOBJ was formerly named XSET.  The name change was made to catch
    C code that attempts to use this macro.  You should always use the
    individual settor macros (XSETCONS, XSETBUFFER, etc.) instead. */
 
-#ifdef XMAKE_LISP
-#define XSETOBJ(a, type, b) ((void) ((a) = XMAKE_LISP (type, b)))
+#ifdef USE_MINIMAL_TAGBITS
+# define XSETOBJ(var, vartype, value) \
+   ((void) ((var).ui = (EMACS_UINT)(value)))
 #else
+# ifdef XMAKE_LISP
+#  define XSETOBJ(a, type, b) ((void) ((a) = XMAKE_LISP (type, b)))
+# else
 /* This is haired up to avoid evaluating var twice...
    This is necessary only in the "union" version.
    The "int" version has never done double evaluation.
  */
 /* XEmacs change: put the assignment to val first; otherwise you
    can trip up the error_check_*() stuff */
-#define XSETOBJ(var, vartype, value)			\
+#  define XSETOBJ(var, vartype, value)			\
    do {							\
 	 Lisp_Object *tmp_xset_var = &(var);		\
 	 (*tmp_xset_var).s.val = ((EMACS_INT) (value));	\
 	 (*tmp_xset_var).gu.markbit = 0;		\
 	 (*tmp_xset_var).gu.type = (vartype);		\
       } while (0)
-#endif /* undefined XMAKE_LISP */
+# endif /* ! XMAKE_LISP */
+#endif /* ! USE_MINIMAL_TAGBITS */
 
-/* During garbage collection, XGCTYPE must be used for extracting types
-   so that the mark bit is ignored.  XMARKBIT access the markbit.
-   Markbits are used only in particular slots of particular structure types.
-   Other markbits are always zero.
-   Outside of garbage collection, all mark bits are always zero.  */
-
-#define XMARKBIT(a) ((a).gu.markbit)
-#define XMARK(a) ((void) (XMARKBIT (a) = 1))
-#define XUNMARK(a) ((void) (XMARKBIT (a) = 0))
+#if GCMARKBITS > 0
+/*
+ * XMARKBIT access the markbit.  Markbits are used only in particular
+ * slots of particular structure types.  Other markbits are always
+ * zero.  Outside of garbage collection, all mark bits are always
+ * zero.
+ */
+# define XMARKBIT(a) ((a).gu.markbit)
+# define XMARK(a) ((void) (XMARKBIT (a) = 1))
+# define XUNMARK(a) ((void) (XMARKBIT (a) = 0))
+#endif
 
 /* Use this for turning a (void *) into a Lisp_Object, as when the
   Lisp_Object is passed into a toolkit callback function */

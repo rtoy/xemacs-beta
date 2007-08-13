@@ -51,6 +51,8 @@ Emacs.text-cursor*attributeBackground:	Red3
 ! This is for buttons in the menubar.  
 ! Yellow would be better, but that would map to white on monochrome.
 *menubar*buttonForeground:		Blue
+*XlwMenu*highlightForeground:		Red
+*XlwMenu*titleForeground:		Maroon
 *XlwMenu*selectColor:			ForestGreen
 *XmToggleButton*selectColor:		ForestGreen
 

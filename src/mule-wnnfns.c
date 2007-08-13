@@ -1896,6 +1896,8 @@ Leading character for Sisheng.
       wnnfns_env_norm[i] = (struct wnn_env *) 0;
       wnnfns_env_rev[i] = (struct wnn_env *) 0;
     }
+
+  Fprovide(intern("wnn"));
 }
 
 void

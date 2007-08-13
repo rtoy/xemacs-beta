@@ -572,7 +572,7 @@ Register symbol NAME as a coding system.
 
 TYPE describes the conversion method used and should be one of
 
-nil or 'automatic-conversion
+nil or 'undecided
      Automatic conversion.  XEmacs attempts to detect the coding system
      used in the file.
 'no-conversion
@@ -742,7 +742,7 @@ if TYPE is 'ccl:
   int need_to_setup_eol_systems = 1;
 
   /* Convert type to constant */
-  if (NILP (type) || EQ (type, Qautomatic_conversion))
+  if (NILP (type) || EQ (type, Qundecided))
                                       { ty = CODESYS_AUTODETECT; }
   else if (EQ (type, Qshift_jis))     { ty = CODESYS_SHIFT_JIS; }
   else if (EQ (type, Qiso2022))       { ty = CODESYS_ISO2022; }
@@ -944,7 +944,7 @@ Return the type of CODING-SYSTEM.
 {
   switch (XCODING_SYSTEM_TYPE (Fget_coding_system (coding_system)))
     {
-    case CODESYS_AUTODETECT:	return Qautomatic_conversion;
+    case CODESYS_AUTODETECT:	return Qundecided;
     case CODESYS_SHIFT_JIS:	return Qshift_jis;
     case CODESYS_ISO2022:	return Qiso2022;
     case CODESYS_BIG5:		return Qbig5;
@@ -958,6 +958,31 @@ Return the type of CODING-SYSTEM.
     }
 
   return Qnil; /* not reached */
+}
+
+Lisp_Object coding_system_charset (coding_system, gnum)
+{
+  Lisp_Object cs
+    = XCODING_SYSTEM_ISO2022_INITIAL_CHARSET (coding_system, gnum);
+  
+  if (CHARSETP(cs)){
+    return XCHARSET_NAME(cs);
+  }
+  else {
+    return Qnil;
+  }
+}
+
+DEFUN ("coding-system-charset", Fcoding_system_charset, 2, 2, 0, /*
+Return initial charset of CODING-SYSTEM designated to GNUM.
+GNUM allows 0 .. 3.
+*/
+       (coding_system, gnum))
+{
+  coding_system = Fget_coding_system (coding_system);
+  CHECK_INT (gnum);
+
+  return coding_system_charset(coding_system, XINT (gnum));
 }
 
 DEFUN ("coding-system-property", Fcoding_system_property, 2, 2, 0, /*
@@ -1025,14 +1050,14 @@ Return the PROP property of CODING-SYSTEM.
     return XCODING_SYSTEM_PRE_WRITE_CONVERSION (coding_system);
   else if (type == CODESYS_ISO2022)
     {
-#define INITIAL_CHARSET(charset_num) \
-  (XCHARSET_NAME (XCODING_SYSTEM_ISO2022_INITIAL_CHARSET \
-		  (coding_system, charset_num)))
-
-      if      (EQ (prop, Qcharset_g0)) return INITIAL_CHARSET (0);
-      else if (EQ (prop, Qcharset_g1)) return INITIAL_CHARSET (1);
-      else if (EQ (prop, Qcharset_g2)) return INITIAL_CHARSET (2);
-      else if (EQ (prop, Qcharset_g3)) return INITIAL_CHARSET (3);
+      if (EQ (prop, Qcharset_g0))
+	return coding_system_charset (coding_system, 0);
+      else if (EQ (prop, Qcharset_g1))
+	return coding_system_charset (coding_system, 1);
+      else if (EQ (prop, Qcharset_g2))
+	return coding_system_charset (coding_system, 2);
+      else if (EQ (prop, Qcharset_g3))
+	return coding_system_charset (coding_system, 3);
 
 #define FORCE_CHARSET(charset_num) \
   (XCODING_SYSTEM_ISO2022_FORCE_CHARSET_ON_OUTPUT \
@@ -1259,6 +1284,7 @@ acceptable_control_char_p (int c)
     case 11: /* vertical tab */
     case 12: /* form feed */
     case 26: /* MS-DOS C-z junk */
+    case 31: /* '^_' -- for info */
       return 1;
     default:
       return 0;
@@ -1469,11 +1495,10 @@ determine_real_coding_system (Lstream *stream, Lisp_Object *codesys_in_out,
 
 DEFUN ("detect-coding-region", Fdetect_coding_region, 2, 3, 0, /*
 Detect coding system of the text in the region between START and END.
-Returned value is a list of possible coding systems ordered by
-priority.  If only ASCII characters are found, it returns
-'automatic-conversion or one of its subsidiary coding systems
-according to a detected end-of-line type.  Optional arg BUFFER
-defaults to the current buffer.
+Returned a list of possible coding systems ordered by priority.
+If only ASCII characters are found, it returns 'undecided or one of
+its subsidiary coding systems according to a detected end-of-line
+type.  Optional arg BUFFER defaults to the current buffer.
 */
        (start, end, buffer))
 {
@@ -1506,7 +1531,7 @@ defaults to the current buffer.
     }
 
   if (decst.mask == ~0)
-    val = subsidiary_coding_system (Fget_coding_system (Qautomatic_conversion),
+    val = subsidiary_coding_system (Fget_coding_system (Qundecided),
 				    decst.eol_type);
   else
     {
@@ -3614,6 +3639,7 @@ detect_coding_iso2022 (struct detection_state *st, CONST unsigned char *src,
 	    case 11: /* vertical tab */
 	    case 12: /* form feed */
 	    case 26: /* MS-DOS C-z junk */
+	    case 31: /* '^_' -- for info */
 	      goto label_continue_loop;
 
 	    default:
@@ -4606,6 +4632,7 @@ syms_of_mule_coding (void)
 
   DEFSUBR (Fcoding_system_type);
   DEFSUBR (Fcoding_system_doc_string);
+  DEFSUBR (Fcoding_system_charset);
   DEFSUBR (Fcoding_system_property);
 
   DEFSUBR (Fcoding_category_list);

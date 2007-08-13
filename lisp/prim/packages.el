@@ -100,13 +100,18 @@ is used instead of `load-path'."
 	 (locate-file
 	  library
 	  (or path load-path)
-	  (if nosuffix
-	      ""
-	    (if (or (rassq 'jka-compr-handler file-name-handler-alist)
-		    (and (boundp 'find-file-hooks)
-			 (member 'crypt-find-file-hook find-file-hooks)))
-		".elc:.el:"
-	      ".elc:.elc.gz:elc.Z:.el:.el.gz:.el.Z::.gz:.Z"))
+	  (cond ((or (rassq 'jka-compr-handler file-name-handler-alist)
+		     (and (boundp 'find-file-hooks)
+			  (member 'crypt-find-file-hook find-file-hooks)))
+		 ;; Compression involved.
+		 (if nosuffix
+		     ":.gz:.Z"
+		   ".elc:.elc.gz:elc.Z:.el:.el.gz:.el.Z::.gz:.Z"))
+		(t
+		 ;; No compression.
+		 (if nosuffix
+		     ""
+		   ".elc:.el:")))
 	  4)))
     (and interactive-call
 	 (if result
@@ -151,13 +156,15 @@ they can be perused for their useful information."
     autolist))
 
 ;; The following function is called from temacs
-(defun packages-find-packages-1 (package path-only)
+(defun packages-find-packages-1 (package path-only user-package)
   "Search the supplied directory for associated directories.
 The top level is assumed to look like:
 info/           Contain texinfo files for lisp installed in this hierarchy
 etc/            Contain data files for lisp installled in this hiearchy
 lisp/           Contain directories which either have straight lisp code
-                or are self-contained packages of their own."
+                or are self-contained packages of their own.
+
+This is an internal function.  Do not call it after startup."
   ;; Info files
   (if (and (null path-only) (file-directory-p (concat package "/info")))
       (let ((dir (concat package "/info/")))
@@ -170,16 +177,34 @@ lisp/           Contain directories which either have straight lisp code
   ;; Lisp files
   (if (file-directory-p (concat package "/lisp"))
       (progn
-	;; (print (concat "DIR: " package "/lisp/"))
+;	(print (concat "DIR: "
+;		       (if user-package "[USER]" "")
+;		       package
+;		       "/lisp/"))
 	(setq load-path (cons (concat package "/lisp/") load-path))
+	(if user-package
+	    (condition-case nil
+		(load (concat package "/lisp/"
+			      (file-name-sans-extension autoload-file-name)))
+	      (t nil)))
 	(let ((dirs (directory-files (concat package "/lisp/")
 				     t "^[^-.]" nil 'dirs-only))
 	      dir)
 	  (while dirs
 	    (setq dir (car dirs))
-	    ;; (print (concat "DIR: " dir "/"))
+;	    (print (concat "DIR: " dir "/"))
 	    (setq load-path (cons (concat dir "/") load-path))
-	    (packages-find-packages-1 dir path-only)
+	    (if user-package
+		(condition-case nil
+		    (progn
+;		      (print
+;		       (concat dir "/"
+;			       (file-name-sans-extension autoload-file-name)))
+		      (load
+		       (concat dir "/"
+			       (file-name-sans-extension autoload-file-name))))
+		  (t nil)))
+	    (packages-find-packages-1 dir path-only user-package)
 	    (setq dirs (cdr dirs)))))))
 
 ;; The following function is called from temacs
@@ -197,11 +222,13 @@ This is used at dump time to suppress the builder's local environment."
     (while path
       (setq dir (car path))
       ;; (prin1 (concat "Find: " (expand-file-name dir) "\n"))
-      (if (null (and suppress-user
+      (if (null (and (or suppress-user inhibit-package-init)
 		     (string-match "^~" dir)))
 	  (progn
 	    ;; (print dir)
-	    (packages-find-packages-1 (expand-file-name dir) path-only)))
+	    (packages-find-packages-1 (expand-file-name dir)
+				      path-only
+				      (string-match "^~" dir))))
       (setq path (cdr path)))))
 
 ;; Data-directory is really a list now.  Provide something to search it for

@@ -1923,7 +1923,9 @@ send_process (volatile Lisp_Object proc,
 	     XSTRING_DATA (p->name));
 #endif
     }
+  old_sigpipe = (SIGTYPE (*) (int)) signal (SIGPIPE, send_process_trap);
   Lstream_flush (XLSTREAM (p->outstream));
+  signal (SIGPIPE, old_sigpipe);
   UNGCPRO;
   Lstream_delete (XLSTREAM (lstream));
 }

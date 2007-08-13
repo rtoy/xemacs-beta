@@ -1,3 +1,17 @@
+1997-10-30  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile (srcs): Mailcrypt, hm--html-menus, vm, psgml and tm have
+	been packaged.
+
+1997-10-22  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* xemacs-faq.texi: Added the detailed menu listing.
+
+	* lispref/extents.texi (Extent Properties): Documented
+	`set-extent-properties'.
+
+	* xemacs/custom.texi (Face Customization): Updated for XEmacs.
+
 1997-10-07  SL Baur  <steve@altair.xemacs.org>
 
 	* xemacs-faq.texi (Q1.3.7): Update Russion URLs.

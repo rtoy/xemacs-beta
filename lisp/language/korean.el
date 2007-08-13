@@ -105,15 +105,37 @@
   "Setup multilingual environment (MULE) for Korean."
   (interactive)
   (setup-english-environment)
-  (setq coding-category-iso-8-2 'euc-kr)
+  ;; (setq coding-category-iso-8-2 'euc-kr)
+  (set-coding-category-system 'iso-8-2 'euc-kr)
 
-  (set-coding-priority
-   '(coding-category-iso-7
-     coding-category-iso-8-2
-     coding-category-iso-8-1))
+  ;; (set-coding-priority
+  ;;  '(coding-category-iso-7
+  ;;    coding-category-iso-8-2
+  ;;    coding-category-iso-8-1))
+  (set-coding-priority-list
+   '(iso-8-2
+     iso-7
+     iso-8-1
+     iso-8-designate
+     iso-lock-shift
+     no-conversion
+     shift-jis
+     big5))
 
   (set-default-coding-systems 'euc-kr)
 
+  ;; (when (eq 'x (device-type (selected-device)))
+  ;;   (x-use-halfwidth-roman-font 'korean-ksc5601 "ksc5636"))
+
+  ;; EGG specific setup 97.02.05 jhod
+  (when (featurep 'egg)
+    (when (not (featurep 'egg-kor))
+      (provide 'egg-kor)
+      (load "its/its-hangul")
+      (setq its:*standard-modes*
+	    (cons (its:get-mode-map "hangul") its:*standard-modes*)))
+    (setq-default its:*current-map* (its:get-mode-map "hangul")))
+  
   (setq default-input-method "korean-hangul"))
 
 (set-language-info-alist
@@ -123,38 +145,5 @@
 	    (coding-system . (iso-2022-kr euc-kr))
 	    (sample-text . "Hangul (한글)	안녕하세요, 안녕하십니까")
 	    (documentation . t)))
-
-;;; for XEmacs (will be obsoleted)
-
-(define-language-environment 'korean
-  "Korean"
-  (lambda ()
-    (set-coding-category-system 'iso-8-2 'euc-kr)
-    (set-coding-priority-list '(iso-8-2 iso-7 iso-8-designate))
-    (set-pathname-coding-system 'euc-kr)
-    (add-hook 'comint-exec-hook
-	      (lambda ()
-		(let ((proc (get-buffer-process (current-buffer))))
-		  (set-process-input-coding-system  proc 'euc-kr)
-		  (set-process-output-coding-system proc 'euc-kr))))
-    (set-buffer-file-coding-system-for-read 'automatic-conversion)
-    (set-default-buffer-file-coding-system  'euc-kr)
-    (setq keyboard-coding-system            'euc-kr)
-    (setq terminal-coding-system            'euc-kr)
-    (when (eq 'x (device-type (selected-device)))
-      (x-use-halfwidth-roman-font 'korean-ksc5601 "ksc5636"))
-    
-    ;; EGG specific setup 97.02.05 jhod
-    (when (featurep 'egg)
-      (when (not (featurep 'egg-kor))
-	(provide 'egg-kor)
-	(load "its/its-hangul")
-	(setq its:*standard-modes*
-	      (cons (its:get-mode-map "hangul") its:*standard-modes*)))
-      (setq-default its:*current-map* (its:get-mode-map "hangul")))
-    
-;;     ;; (setq-default quail-current-package
-;;     ;;               (assoc "hangul" quail-package-alist))
-    ))
 
 ;;; korean.el ends here

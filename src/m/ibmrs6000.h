@@ -137,7 +137,7 @@ Boston, MA 02111-1307, USA.  */
 
 #define ORDINARY_LINK
 
-
+#if 0 /* mrb */
 #ifndef USG5_4
 /* XEmacs change -- automatically add the correct path for smt.exp if
    it exists. */
@@ -162,3 +162,4 @@ Boston, MA 02111-1307, USA.  */
 #endif /* __GNUC__ == 2 && __GNUC_MINOR__ == 7 */
 
 #endif /* USG5_4 */
+#endif /* mrb */

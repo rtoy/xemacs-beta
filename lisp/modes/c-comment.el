@@ -1,19 +1,46 @@
 ;;; c-comment.el --- edit C comments
 
-;; Keywords: c
+;; Copyright (C) 1987, 1988, 1989 Kyle E. Jones
+;; Copyright (C) 1997 Free Software Foundation, Inc.
 
-;;; Copyright (C) 1987, 1988, 1989 Kyle E. Jones
-;;;
-;;; Verbatim copies of this file may be freely redistributed.
-;;;
-;;; Modified versions of this file may be redistributed provided that this
-;;; notice remains unchanged, the file contains prominent notice of
-;;; author and time of modifications, and redistribution of the file
-;;; is not further restricted in any way.
-;;;
-;;; This file is distributed `as is', without warranties of any kind.
+;; Author: Kyle Jones <kyle_jones@wonderworks.com>
+;; Maintainer: XEmacs Development Team
+;; Keywords: languages
+
+;; This file is part of XEmacs.
+
+;; XEmacs is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+
+;; XEmacs is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with XEmacs; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Synched up with: Not in FSF.
+
+;;; Commentary:
+
+;;
+;; Verbatim copies of this file may be freely redistributed.
+;;
+;; Modified versions of this file may be redistributed provided that this
+;; notice remains unchanged, the file contains prominent notice of
+;; author and time of modifications, and redistribution of the file
+;; is not further restricted in any way.
+;;
+;; This file is distributed `as is', without warranties of any kind.
+
+;; sb [23-Oct-1997] Put into standard format, fixed an autoload cookie.
+
+;;; Code:
 
 (provide 'c-comment-edit)
 
@@ -56,8 +83,15 @@ the duration of this call."
 (defmacro marker (pos &optional buffer)
   (list 'set-marker '(make-marker) pos buffer))
 
+(defvar c-comment-edit-map nil "Key map for c-comment-edit buffers")
+(if c-comment-edit-map
+    nil
+  (setq c-comment-edit-map (make-sparse-keymap))
+  (define-key c-comment-edit-map [(meta control c)] 'c-comment-edit-end)
+  (define-key c-comment-edit-map [(control c) (control c)] 'c-comment-edit-end)
+  (define-key c-comment-edit-map [(control c) (control ?\])] 'c-comment-edit-abort))
 
-;;;### autoload
+;;;###autoload
 (defun c-comment-edit (search-prefix)
   "Edit multi-line C comments.
 This command allows the easy editing of a multi-line C comment like this:
@@ -82,7 +116,7 @@ With four \\[universal-argument]'s searching starts at the beginning of the
 Once located, the comment is copied into a temporary buffer, the comment
 leaders and delimiters are stripped away and the resulting buffer is
 selected for editing.  The major mode of this buffer is controlled by
-the variable `c-comment-edit-mode'.
+the variable `c-comment-edit-mode'.\\<c-comment-edit-map>
 
 Use \\[c-comment-edit-end] when you have finished editing the comment.  The
 comment will be inserted into the original buffer with the appropriate
@@ -157,7 +191,8 @@ original, use \\[c-comment-edit-abort]."
 	(delete-char 1))
     ;; restore cursor if possible
     (goto-char (or marker (point-min)))
-    (set-buffer-modified-p nil))
+    (set-buffer-modified-p nil)
+    (use-local-map c-comment-edit-map c-comment-buffer))
   ;; run user hook, if present.
   (if c-comment-edit-hook
       (funcall c-comment-edit-hook))
@@ -293,9 +328,5 @@ Indentation will be the same as the original."
 	(if (eq (car (car list)) buffer)
 	    (throw 'return-value (car list))
 	  (setq list (cdr list)))))))
-
-;; keys;
-(define-key mode-specific-map "\e" 'c-comment-edit-end)
-(define-key mode-specific-map "\C-]" 'c-comment-edit-abort)
 
-
+;;; c-comment.el ends here

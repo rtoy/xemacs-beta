@@ -1,3 +1,852 @@
+1997-10-30  SL Baur  <steve@altair.xemacs.org>
+
+	* vm/vm-vars.el (vm-image-directory): Use locate-data-directory if 
+	it exists.
+
+	* language/european.el: Remove erroneous references to
+	`Serbo-Croatian'.
+	* language/cyril-util.el: Ditto.
+	* leim/quail/cyrillic.el: Ditto.
+
+	* comint.el:  reverse previous patch
+
+1997-10-29  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mule/mule-init.el (init-mule): Load locale-start even if lang is
+	not exactly matched.
+
+	* mule/mule-init.el (auto-language-alist): Modify for new language
+	environment feature.
+	(init-mule): Modify for new language environment feature.
+
+1997-10-29  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* language/korean.el (setup-korean-environment): Modify for
+	XEmacs.
+
+	* language/greek.el: Modify setting about language environment.
+
+	* language/european.el: Fix setting for Croatian language
+	environment.
+
+	* language/vietnamese.el: Fix setting about language environment.
+
+	* language/viet-util.el (setup-vietnamese-environment): Modify for
+	XEmacs.
+
+	* language/cyril-util.el (setup-cyrillic-iso-environment): Modify
+	for XEmacs.
+	(setup-cyrillic-koi8-environment): Modify for XEmacs.
+	(setup-cyrillic-alternativnyj-environment): Modify for XEmacs.
+
+1997-10-28  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* language/hebrew.el (setup-hebrew-environment): Modify for
+	XEmacs.
+
+	* mule/mule-cmds.el (set-default-coding-systems): New function.
+	(set-language-info): Fix about menu.
+	(read-input-method-name, toggle-input-method): Sync with Emacs
+	20.2.
+
+	* language/cyril-util.el: Modify header.
+
+	* language/cyril-util.el
+	(setup-cyrillic-alternativnyj-environment): Modify for XEmacs.
+
+	* language/cyril-util.el: New file; imported from Emacs 20.2.
+
+	* language/japan-util.el (setup-japanese-environment): Use
+	`set-default-coding-systems'.
+
+	* language/european.el (setup-8-bit-environment): Modify for
+	XEmacs.
+
+	* language/english.el (setup-english-environment): Use
+	`set-default-coding-systems'.
+
+	* language/chinese.el: Modify for XEmacs.
+
+	* language/china-util.el (setup-chinese-gb-environment,
+	setup-chinese-big5-environment): Use `set-default-coding-systems'.
+
+	* mule/mule-files.el (file-coding-system-alist): Fix typo.
+
+1997-10-28  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* prim/dumped-lisp.el: Abolish Thai support temporary.
+
+	* language/thai.el, language/thai-util.el: Delete Thai specific
+	files because composite character features don't work in XEmacs.
+
+	* language/japan-util.el: Modify header.
+
+	* language/chinese.el: Abolish `Chinese-CNS' environment
+	temporary.
+
+	* language/china-util.el: Abolish `setup-chinese-cns-environment'
+	temporary.
+
+	* language/china-util.el (setup-chinese-big5-environment): Modify
+	for XEmacs.
+
+	* language/china-util.el (setup-chinese-gb-environment): Modify
+	for XEmacs.
+
+	* language/chinese.el: Delete set-coding-category-system for big5.
+
+	* language/japan-util.el (setup-japanese-environment): Modify for
+	XEmacs.
+
+	* language/japanese.el: Delete set-coding-category-system for
+	shift-jis.
+
+	* language/english.el (setup-english-environment): Modify for
+	XEmacs.
+
+1997-10-28  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* language/auto-autoloads.el: New file.
+
+	* mule/mule-files.el (file-coding-system-alist): Add setting for
+	TUTORIAL.hr to iso-8859-2.
+
+	* leim/quail/tibetan.el, leim/quail/ethiopic.el,
+	leim/quail/japanese.el, leim/quail/lao.el, leim/quail/lrt.el,
+	leim/quail/devanagari.el: Delete broken features temporary.
+
+	* language/tibetan.el, language/indian.el, language/lao-util.el,
+	language/lao.el, language/tibet-util.el, language/ethio-util.el,
+	language/ethiopic.el, language/devanagari.el: Delete broken
+	features temporary.
+
+	* mule/mule-cmds.el (universal-coding-system-argument): New
+	function; imported from Emacs 20.2.
+
+1997-10-27  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* language/korean.el, language/thai.el, language/vietnamese.el,
+	language/chinese.el, language/japanese.el, language/arabic.el,
+	language/ethiopic.el: Abolish setting for old language
+	environment.
+
+	* language/hebrew.el: Modify for XEmacs.
+
+	* Use language/hebrew.el instead of mule/hebrew-hooks.el; abolish
+	mule/hebrew-hooks.el.
+
+	* mule/mule-misc.el: Abolish old language environment features.
+
+	* mule/mule-init.el: Delete old language environment specific
+	features temporary.
+
+	* prim/dumped-lisp.el: Use language/hebrew.el instead of
+	hebrew-hooks.el.
+
+	* mule/mule-cmds.el (describe-language-environment): Modify for
+	XEmacs because `coding-system-mnemonic' returns string instead of
+	character in XEmacs.
+
+	* mule/mule-cmds.el: Sync with Emacs 20.2 about language
+	environment.
+
+	* mule/mule-cmds.el: Don't use `mule-prefix'.
+
+1997-10-26  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* language/ethiopic.el (ccl-encode-ethio-font): Modify to sync
+	with Emacs 20.2.
+
+1997-10-26  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mule-diag.el (list-coding-systems): Modify for XEmacs.
+
+1997-10-26  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mule/mule-files.el (find-coding-system-magic-cookie): Regard top
+	line magic.
+	(load): Use `find-file-coding-system-for-read-from-filename'.
+
+	* language/arabic-util.el: Use iso-2022-7bit.
+
+1997-10-26  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mule-diag.el (describe-designation): Moved from mule-debug.el.
+	(describe-coding-system): Use `describe-designation'.
+
+	* mule-debug.el: Move function `describe-designation' to
+	mule-diag.el; Abolish function `describe-coding-system' because of
+	using it in mule-diag.el.
+
+	* mule-coding.el (keyboard-coding-system): New inline function.
+	(terminal-coding-system): New inline function.
+
+	* mule-cmds.el: Bind `describe-coding-system' to C-h C instead of
+	`describe-current-coding-system' to sync with Emacs 20.2.
+
+	* mule-diag.el: Abolish `print-designation' because it does not
+	work in XEmacs.
+
+	(describe-coding-system): Modify for XEmacs.
+	(print-coding-system-briefly): Modify for XEmacs.
+	(describe-current-coding-system): Modify for XEmacs.
+
+	* mule-coding.el: Abolish function `coding-system-charset'
+	(defined as builtin function).
+
+	* mule-diag.el: New file; imported from Emacs 20.2.
+
+	* mule-misc.el (set-buffer-process-coding-system): New function;
+	imported from mule.el of Emacs 20.2.
+
+	* mule-cmds.el: Bind `set-buffer-process-coding-system' to C-x C-m
+	p and abolish C-x C-m P.
+
+	* mule-files.el (load): Use `binary' instead of `no-conversion'.
+
+1997-10-28  Kyle Jones  <kyle_jones@wonderworks.com>
+
+	* modes/enriched.el (enriched-face-ans): Use
+	  color-name instead of color-instance-name.
+	  color-instance-name will not handle the specifiers that 
+	  are passed as arguments.
+
+1997-10-28  Tomasz Cholewo  <tjchol01@mecca.spd.louisville.edu>
+
+	* prim/find-func.el (find-function-noselect): Fix nil argument
+ 	handling and add support for dumped macros.
+
+1997-10-28  SL Baur  <steve@altair.xemacs.org>
+
+	* pcl-cvs/pcl-cvs-xemacs.el: Add `cvs-mode-update-no-prompt' to menu.
+	From Stig Bjorlykke <stigb@tihlde.hist.no>
+
+1997-10-28  Didier Verna  <verna@inf.enst.fr>
+
+	* packages/man.el (manual-entry): corrected the `when'
+	form to include 'section' in the buffer name.
+
+1997-10-28  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/packages (packages-find-pacakges): Fix test on 
+	inhibit-package-init
+
+1997-10-27  Tomasz Cholewo  <tjchol01@mecca.spd.louisville.edu>
+
+	* prim/keymap.el (event-apply-modifier): Fix the return type and
+	scan the function-key-map.
+	(next-key-event): New function.
+	(key-sequence-list-description): Ditto.
+
+1997-10-27  SL Baur  <steve@altair.xemacs.org>
+
+	* x11/x-menubar.el: Turn off `popup-menubar-menu' keybinding.
+
+	* prim/dumped-lisp.el (preloaded-file-list): Dump canna-leim and
+	egg-leim with XEmacs.
+
+	* mule/canna-leim.el: Clean up file for dumping with XEmacs.
+	* egg/egg-leim.el: Ditto.
+
+1997-10-27  Stephen J. Turnbull <turnbull@sk.tsukuba.ac.jp>
+
+	* mule/canna-leim.el: Register Canna with LEIM when loaded
+
+	* mule/canna.el (canna): Bind `canna-toggle-japanese-mode' to
+	"\C-o" only if LEIM is not present
+
+	* egg/egg-leim.el: Registers EGG/Wnn with LEIM when loaded
+
+	* egg/egg.el: Bind `toggle-egg-mode' to "\C-\" only if LEIM is
+	not present when loaded 
+
+1997-10-27  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/about.el: Update entries
+
+1997-10-26  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/startup.el (startup-message-timeout): Startup message
+	timeout is too short.
+
+	* mule/canna.el (canna): Move canna-toggle-japanese-mode
+	keybinding to C-\.
+
+	* emulators/edt-mapper.el (edt-lucid-emacs19-p): Test for XEmacs
+	instead of Lucid in `emacs-version'.
+
+1997-10-25  SL Baur  <steve@altair.xemacs.org>
+
+	* mule/mule-cmds.el: describe-language-support,
+	describe-language-support-internal removed.
+
+Fri Aug  8 12:58:00 1997  David Byers  <davby@sen2.ida.liu.se>
+
+	* fill.el (fill-region-as-paragraph): When justifying, check for
+ 	end-of-buffer at the end of whitespace point is sitting in, and
+ 	delete the trailing whitespace if we are on the last line.
+
+1997-10-24  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/about.el (about-finish-buffer): Kill the buffer, when
+	button documents so.
+
+1997-10-24  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* pcl-cvs.el (cvs-parse-stderr): Ignore ssh-askpass message.
+
+1997-10-20  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/packages.el (locate-library): Make NOSUFFIX not affect
+ 	compression.
+
+1997-10-24  SL Baur  <steve@altair.xemacs.org>
+
+	* modes/c-comment.el:  Create c-comment-edit-map.
+	(c-comment-edit): Fix docstring, use new keymap.
+	Suggested by Chris Felaco <felaco@iatcmail.ed.ray.com>
+
+	* prim/help-nomule.el (tutorial-supported-languages): Add
+	Norwegian.
+
+	* prim/simple.el (assoc-ignore-case): Synch with Emacs 20.1.
+
+	* mule/mule-cmds.el (set-language-info): Forgot to set any data
+	values in language-alist.
+	(read-multilingual-string): Fix call to `read-string'.
+
+1997-10-22  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* packages/backup-dir.el (bkup-backup-directory-info): customized,
+ 	with :require so it loads automagicly if you've set it.  Docstring
+ 	updated to reflect that, and reformatted for easier reading.
+
+	* packages/jka-compr.el (jka-compr-compression-info-list):
+ 	Docstring clarification: what does the append flag do?
+
+	* prim/minibuf.el (minibuffer-electric-slash): leave efs prefix
+ 	and ~\(blah\)? when / is pressed.
+
+1997-10-24  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* efs/dired.el (dired-create-files): Get mark-char thing working
+	again: replace `integerp' by `characterp'.
+	(dired-add-entry): Ditto.
+	(dired-add-entry-do-indentation): Ditto.
+
+1997-10-24  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* x11/x-faces.el (*try-oblique-before-italic-fonts*): Customized.
+
+1997-10-23  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/startup.el (command-line-do-help): Add Documentation for
+	-vanilla and -no-packages.
+	(command-line-early): Implement them.
+
+	* prim/packages.el (inhibit-package-init): New variable.
+	(packages-find-packages): Use it.
+
+
+	* packages/jka-compr.el (jka-compr-compression-info-list):
+	Add bzip2 extensions.
+	From Tomasz Cholewo <tjchol01@mecca.spd.louisville.edu>
+
+1997-10-22  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* comint/comint.el (comint-scroll-show-maximum-output): fixups to
+ 	docstring, and to :type to allow numbers.
+	(comint-postoutput-scroll-to-bottom): Added window arg to
+ 	`recenter' call to fix the horrid flash and global recentering,
+ 	and uncommented the code allowing numeric values for
+ 	`comint-scroll-show-maximum-output'.
+
+1997-10-23  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* packages/info.el (Info-mode): Don't initialize faces.
+
+	* packages/info.el: Use `defface' to initialize faces.
+
+1997-10-23  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* modes/cperl-mode.el (cperl-here-face): fix the horrible invisible
+ 	green default face.
+
+1997-10-23  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/wid-edit.el (widget-choose): Acknowledge aborted choice
+	with a `Canceled' message, even if C-g wasn't pressed explicitly.
+
+1997-10-23  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* custom/cus-edit.el (hook): Use `widget-group-match' instead of
+	`widget-editable-list-match'. 
+
+1997-10-23  SL Baur  <steve@altair.xemacs.org>
+
+	* modes/c-comment.el (c-comment-edit): Fixed autoload cookie.
+	Reformatted Lisp comments.
+
+1997-10-22  SL Baur  <steve@altair.xemacs.org>
+
+	* psgml/psgml-charent.el (sgml-display-char-list-filename): Use
+	locate-data-directory instead of data-directory.
+	* psgml.el (sgml-data-directory): Ditto.
+
+1997-10-20  Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* extents.c: Renamed shot property to initial-redisplay-function
+	(extent_fragment_update): Changed the bookkeeping whether an event 
+	has been spawned. The initial-redisplay-function property is no
+	longer set to nil.
+
+1997-10-21  SL Baur  <steve@altair.xemacs.org>
+
+	* custom/cus-dep.el (Custom-make-dependencies): Ditch the time
+	stamp.
+
+1997-10-22  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* comint/gdb.el (gdb-with-core): Fixed autoload cookie.
+
+1997-10-22  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/startup.el (command-line-1): Run term-setup-hook regardless 
+	of `input-pending-p'.
+
+	* custom/cus-edit.el (custom-split-regexp-maybe): Use `split-string'.
+
+	* custom/cus-start.el (custom-start-quote): Synch with
+ 	`custom-quote'.
+
+	* prim/subr.el (functionp): Synched docstring with Emacs 20.2.
+
+	* custom/cus-edit.el (custom-quote): Use `keywordp'; use
+	`car-safe'; don't conditionalize on having `characterp'.
+
+1997-10-21  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/wid-edit.el (radio-button): Use "radio0" as inactive
+ 	glyph.
+	(widget-visibility-value-create): Use new semantics of
+	`widget-glyph-insert'.
+
+	* custom/cus-edit.el (custom-buffer-create-internal): Setup
+	tag-down-glyphs with list.
+	(custom-group-value-create): Ditto.
+
+	* custom/wid-edit.el (widget-glyph-click): Check whether the
+	extent was detached/killed.
+	(widget-push-button-value-create): Removed crufty XPM contrast
+	hack.
+	(widget-default-create): Make the markers point nowhere after
+	using them.
+	(widget-default-create): Use `point-min-marker'/`point-max-marker'.
+	(widget-glyph-find): Disallow list.
+	(widget-glyph-insert): Allow IMAGE to be a list.
+
+1997-10-20  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/featurep.el (featurep): Handle `not' correctly.
+
+1997-10-21  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/about.el (about-maintainer-glyph): Pictures have been moved 
+	to photos subdirectory.
+
+1997-10-21  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* x11/x-menubar.el (options-menu-saved-forms): Check whether
+	`pending-delete' is bound before accessing it.
+
+1997-10-21  SL Baur  <steve@altair.xemacs.org>
+
+	* x11/x-menubar.el (default-menubar): Conditionalize games menu.
+
+1997-10-21  Colin Rafferty  <craffert@ml.com>
+
+	* x11/x-menubar.el (default-menubar): Made it use lazy-shot
+	instead of lazy-lock in "Syntax Highlighting->Lazy".  
+	(options-menu-saved-forms): Made it save lazy-shot instead of
+	lazy-lock in the options.
+
+1997-10-21  SL Baur  <steve@altair.xemacs.org>
+
+	* mule/mule-help.el (help-with-tutorial): New file.
+
+	* prim/dumped-lisp.el (preloaded-file-list): New entries for
+	help-nomule and mule-help.
+
+	* prim/help.el: Remove `help-with-tutorial'.
+
+	* prim/help-nomule.el: New file.
+
+1997-10-19  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/subr.el: Moved int-char and char-int definitions from
+	obsolete.el.
+
+1997-10-18  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/wid-edit.el (widget-push-button-value-create): Require
+ 	`xpm-button'.
+	(widget-push-button-value-create): Use :tag-down-glyph and
+ 	:tag-inactive-glyph.
+	(widget-default-create): Use :tag-inactive-glyph.
+	(widget-button-click): Correctly merge faces.
+
+	* custom/cus-edit.el (custom-variable-action): Don't redraw
+	magic.
+
+	* custom/wid-edit.el (widget-glyph-insert): Return glyph.
+	(widget-default-create): Insert :button-prefix and :button-suffix
+	only if a glyph is not used.
+	(widget-glyph-click): Respect :mouse-down-action.
+	(widget-specify-insert): Document for edebug.
+	(widget-default-create): Use markers to keep track of stuff.
+
+	* custom/cus-edit.el (custom-group-value-create): Ditto.
+
+	* custom/wid-edit.el (widget-default-create): Use :tag-down-glyph.
+
+	* custom/cus-edit.el (custom-group-value-create): Use image.
+
+	* prim/glyphs.el (init-glyphs): Minor fixups.
+
+1997-10-17  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/wid-edit.el (widget-field-value-get): Use `cond'.
+	(default): Use :button-keymap.
+	(widget-specify-button): Ditto.
+	(widget-glyph-insert-glyph): Ditto.
+	(widget-activation-glyph-mapper): Renamed from
+ 	`widget-activation-glyphs-mapper'.
+
+	* custom/cus-edit.el (Custom-mode-menu): Go to `Easy
+	Customization' node.
+	(boolean): Don't use nested backquotes.
+
+	* custom/wid-edit.el (widget-field-action): Check whether the new
+ 	value is valid before using it.
+
+1997-10-16  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/wid-edit.el (character): Use [\0-\377] instead of . in
+ 	:valid-regexp.
+	(widget-color-notify): Use `valid-color-name-p'.
+	(widget-activation-widget-mapper): New function.
+	(widget-specify-inactive): Use it.
+	(widget-specify-active): Ditto.
+	(widget-setup): Ditto.
+	(radio-button): Added :inactive-glyph spec.
+	(widget-toggle-value-create): Use it.
+	(widget-color-sample-face-get): Check for color before setting it.
+	(widget-color-sample-face-get): Store the face object, not its
+ 	name.
+
+1997-10-18  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* help.el (function-at-point): Use `function-at-point-function'.
+	(function-at-point-function): New variable, formerly
+	`find-function-function'. 
+	(describe-function): Use `function-at-point'.
+	(where-is): Ditto.
+
+	* find-func.el (find-function-read-function): Use
+	`function-at-point'. 
+
+	* packages/info.el (Info-elisp-ref): Use `function-at-point'.
+
+	* packages/hyper-apropos.el (hyper-apropos-read-function-symbol):
+	Use `function-at-point'.
+
+	* packages/etags.el (emacs-lisp-default-tag): Use
+	`function-at-point'.
+
+	* prim/obsolete.el (function-called-at-point): Make it
+	  obsolete.
+
+1997-10-09  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* prim/files.el (switch-to-buffer-other-frame): Remove call to
+	`select-frame'.
+
+1997-10-17  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/packages.el (packages-find-packages-1): New argument:
+	`user-package' non-nil when searching user packages.
+	- Load any autoloads found in user packages.
+	
+1997-10-17  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* packages/info.el (Info-insert-dir): Also kill the localdir temp
+ 	buffers.
+
+1997-10-17  SL Baur  <steve@altair.xemacs.org>
+
+	* utils/facemenu.el: autoload the `facemenu-keymap' properly.
+
+	* mule/mule-cmds.el (read-language-name): Fix typo.
+	From Didier Verna <verna@inf.enst.fr>
+
+1997-10-15  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* utils/build-report.el: Leaving point at begin of composed mail now.
+	Using mime-edit-content-beginning to determine file-begin of
+	Installation file.
+	Introduced the according alias for SEMI/TM compatibility.
+
+	* utils/build-report.el:
+	Corrected backward search for begin of last configuration in
+	Installation file.
+
+	* utils/build-report.el:
+	Incorporated `xemacs-build-report-installation-insert-all' feature
+	suggested by Didier Verna.
+	Composing mail parts (with-temp-buffer ...) to simplify implementing
+	future features.
+	Eliminated use of mail-mode -specific function `mail-text'.
+
+1997-10-14  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* utils/build-report.el:
+	Incorporated fix for SEMI/TM compatibility suggested by Jens-Ulrik
+	Holger Petersen <petersen@kurims.kyoto-u.ac.jp>.  If SEMI symbols are
+	not fboundp, alias them to corresponding TM symbols.
+
+1997-10-13  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* utils/build-report.el:
+	Changed to (mime-edit-insert-tag "text" "plain" ...) from
+	"application" "octet-stream" due to complaint from
+	Kazuyoshi Furutaka in
+	Message-Id: <19971013102132V.furutaka@Flux.tokai.jaeri.go.jp>
+
+1997-10-13  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* utils/facemenu.el: Autoload `facemenu-keymap' function definition.
+	(facemenu-color-defined-p): Nuked.
+	(facemenu-find-face): Ditto.
+	(facemenu-region-active-p): Ditto.
+	(facemenu-sized-face): Declare `prefix'.
+	(facemenu-read-color): Aliased to `read-color'.
+	(facemenu-face-attributes): Use `mapvector'.
+
+	* utils/facemenu.el: Customized and synched with FSF 20.2.
+
+1997-10-17  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* cl/cl-macs.el (extent-properties): Remove old setf method.
+
+1997-10-16  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* prim/files.el (revert-without-query): changed from boolean to
+ 	list of regexp as documented in NEWS and its docstring.
+
+1997-10-16  SL Baur  <steve@altair.xemacs.org>
+
+	* utils/floating-toolbar.el: (TopLevel): Don't unconditionally
+	require the feature `toolbar' it causes breakage only at
+	bytecompile time.  Don't do any initialization if toolbar support
+	is not available.
+	(floating-toolbar): Whine if no run-time toolbar support is
+	available.
+
+        * custom/wid-edit.el (widget-change-glyphs-mapper): cosmetic changes.
+        From Hrvoje Niksic <hniksic@srce.hr>
+
+	* prim/glyphs.el (init-glyphs): Use different logo for beta XEmacsen.
+	From Didier Verna <verna@inf.enst.fr>
+
+1997-10-15  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* cl/cl-macs.el (extent-property): Updated SETF methods for `get'
+	and `extent-property'.
+
+	* custom/wid-edit.el (widget-field-value-create): Revert to using
+ 	two markers.
+	(widget-setup): Ditto.
+	(widget-color-sample-face-get): Get only a unique face per widget.
+	(widget-color-notify): Change the color of the face instead of
+	creating a new one.
+
+	* packages/add-log.el (add-change-log-entry): Push window
+ 	configuration.
+	(change-log-exit): New function.
+	(change-log-cancel): Ditto.
+	(change-log-mode-map): Bind them.
+
+	* custom/wid-edit.el (widget-specify-inactive): Make glyphs look
+ 	inactive.
+	(widget-change-glyphs-mapper): New function.
+	(widget-glyph-click): Disallow operations on inactive glyphs.
+
+1997-10-14  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/wid-edit.el: (widget-glyph-insert-glyph): Use
+ 	`widget-mouse-help' if necessary.
+	(widget-documentation-string-value-create): Don't coerce help-echo 
+	WIDGET to widget.
+	(widget-button-keymap): New keymap.
+	(widget-specify-button): Use it.
+	(widget-glyph-insert-glyph): Ditto.
+	(widget-glyph-click): Dispatch events during the loop.
+	(widget-glyph-click): Use `unwind-protect' to ensure that the
+	glyph stays in up position.
+	(widget-keymap): Don't bind buttons and RET.
+	(widget-button-keymap): Bind mouse buttons and RET.
+	(widget-field-activate): Use `widget-field-find'.
+
+	* custom/wid-edit.el (widget-button-click): Visually "release" the
+ 	button *before* doing the buttonup action.
+	(widget-button-click): Reworked.
+	(widget-echo-help): Accept extent.
+
+	* custom/cus-edit.el (custom-face-value-create): Use `make-face'.
+
+	* custom/wid-edit.el (widget-restore-tabable): New function.
+	(widget-deactivate-widget-extent): New function.
+	(widget-reactivate-widget-extent): New function.
+	(widget-specify-inactive): Use `widget-deactivate-widget-extent'.
+	(widget-setup): Ditto.
+	(widget-specify-active): Use `widget-reactivate-widget-extent'.
+	(widget-move): Don't stop within inactive range.
+
+1997-10-14  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* language/japan-util.el: Copied from Emacs 20.2.
+
+	* mule/mule-cmds.el (char-code-property-table): New variable.
+	(get-char-code-property): New function.
+	(put-char-code-property): New function.
+
+1997-10-10  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* language/vietnamese.el: Use language/viet-util.el instead of
+	mule/mule-vietnamese.el; abolish mule/mule-vietnamese.el.
+
+1997-10-09  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mule/mule-coding.el: Rename `automatic-conversion' ->
+	`undecided' to sync with Emacs 20.2; define coding-system
+	`automatic-conversion' as an alias for `undecided'.
+
+	mule/mule-files.el (buffer-file-coding-system-for-read,
+	convert-mbox-coding-system, insert-file-contents),
+	language/japanese.el, language/chinese.el, language/korean.el:
+	Rename `automatic-conversion' -> `undecided' to sync with Emacs
+	20.2.
+
+1997-10-08  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* language/viet-chars.el: New file; moved from
+	mule/vietnamese-hooks-1.el.
+
+	* language/vietnamese.el: Merge mule/vietnamese-hooks-2.el;
+	abolish mule/vietnamese-hooks-2.el.
+
+	* prim/dumped-lisp.el: Use language/viet-chars and
+	language/vietnamese instead of mule/vietnamese-hooks-{1|2}.
+
+1997-10-07  MORIOKA Tomohiko  <morioka@jaist.ac.jp>
+
+	* mule/mule-misc.el (split-char): New function.
+
+1997-10-14  SL Baur  <steve@altair.xemacs.org>
+
+	* default.el: New file.
+	* site-start.el: New file.  XEmacs starts faster if dummy versions 
+	of these files are found early in the `load-path'.
+	Suggested by Kyle Jones <kyle_jones@wonderworks.com>
+
+1997-10-14  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/wid-edit.el (widget-field-find): Use `map-extents'.
+	(widget-transpose-chars): Check for empty fields, and point at
+	beginning of field.
+	(widget-documentation-string-value-create): `insert-char' handles
+	0 gracefully, so no need to protect.
+	(widget-specify-inactive): Detach the button extents.
+	(widget-specify-active): Reattach the button extents.
+	(widget-make-field-untabable): New function.
+	(widget-specify-inactive): Make the fields non-tabable; use
+	`widget-make-field-untabable'.
+	(widget-type): Revert to defsubst.
+
+1997-10-13  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* utils/xemacs-build-report.el:
+	Switched from (mail ...) to (compose-mail ...) upon suggestion by
+	Hrvoje Niksic.
+	Extended xemacs-build-report-keep-regexp.
+	Changed xemacs-build-report-make-output-file value to beta.err
+	Shortend and bracketed xemacs-build-report-subject.
+	Improved (I hope) tm-edit to SEMI aliasing logic.
+
+1997-10-09  Adrian Aichner  <aichner@ecf.teradyne.com>
+
+	* utils/xemacs-build-report.el:
+	Restored RCS keywords and updated comment for `xemacs-build-report-version'.
+
+	* utils/xemacs-build-report.el:
+	Separated the Spaghetti code into separate functions to do the following:
+	xemacs-build-report-insert-header
+	xemacs-build-report-insert-make-output
+	xemacs-build-report-insert-installation-file
+
+1997-10-13  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* custom/cus-load.el: Disable gc while loading `custom-load'
+ 	files.
+	(custom-put): Added docstring; ignore PROPERTY.
+
+	* custom/wid-edit.el (widget-previous-button-or-field): If the
+ 	point is within a button or field, return the beginning position
+ 	of the field.
+
+	* prim/frame.el (frame-list): Use `nconc' instead of `append'.
+	(set-frame-configuration): Use `mapc'.
+	(delete-other-frames): Ditto.
+
+	* prim/faces.el: Use the CL macro at top-level.
+
+	* prim/faces.el (face-spec-set-match-display): Use `case'.
+	(set-face-stipple): Use backquotes.
+
+	* custom/wid-edit.el (widget-glyph-find): Use `laxputf'.
+	(widget-push-button-value-create): Ditto.
+
+	* custom/cus-face.el (custom-face-attributes): Support
+	inverse-video for TTY-s.
+
+	* prim/cmdloop.el (keyboard-escape-quit): Abort recursive edit, as 
+	documented.
+
+1997-10-12  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/simple.el (zmacs-deactivate-region): Use `mapc' instead of
+ 	`mapcar'.
+	(zmacs-make-extent-for-region): Ditto.
+
+	* custom/cus-dep.el: Updated comments.
+
+	* custom/cus-edit.el (custom-variable-prompt): Prompt with
+	`variable'.
+
+1997-10-12  Karl Hegbloom  <karlheg@inetarena.com>
+
+	* custom/cus-edit.el (custom-guess-name-alist): Allow `-hooks'
+	instead of `hook'.
+
+1997-10-12  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* prim/profile.el (profile-results): Use %-*s format.
+	(profile-align): Nuked.
+
+	* packages/gnuserv.el (gnuserv-frame-plist): New variable.
+	(gnuserv-special-frame-function): Use it.
+	(gnuserv-edit-files): Ditto.
+
 1997-10-12  SL Baur  <steve@altair.xemacs.org>
 
 	* prim/package-admin.el (package-admin-add-binary-package):
@@ -44,6 +893,24 @@
 	* prim/profile.el (profile-results): Rename.
 	(pretty-print-profiling-info): Ditto.
 	From Kyle Jones <kyle_jones@wonderworks.com>
+
+1997-10-10  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* custom/wid-edit.el (variable-link): New widget.
+	(widget-variable-link-action): New function.
+	(function-link): New widget.
+	(widget-function-link-action): New function.
+
+1997-10-10  Karl M. Hegbloom  <karlheg@inetarena.com>
+
+	* prim/modeline.el (modeline-minor-mode-menu): menus are toggles
+	not strings now.
+
+1997-10-10  SL Baur  <steve@altair.xemacs.org>
+
+	* psgml/psgml-html.el (html-quote-region): Grow bounds when performing
+	substitutions.
+	From Adrian Aichner <aichner@ecf.teradyne.com>
 
 1997-10-10  SL Baur  <steve@altair.xemacs.org>
 

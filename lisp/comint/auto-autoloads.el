@@ -47,7 +47,7 @@ Typing SPC flushes the help buffer." nil nil)
 
 ;;;***
 
-;;;### (autoloads (gdb) "gdb" "comint/gdb.el")
+;;;### (autoloads (gdb-with-core gdb) "gdb" "comint/gdb.el")
 
 (defvar gdb-command-name "gdb" "\
 Pathname for executing gdb.")
@@ -57,6 +57,9 @@ Run gdb on program FILE in buffer *gdb-FILE*.
 The directory containing FILE becomes the initial working directory
 and source-file directory for GDB.  If you wish to change this, use
 the GDB commands `cd DIR' and `directory'." t nil)
+
+(autoload 'gdb-with-core "gdb" "\
+Debug a program using a corefile." t nil)
 
 ;;;***
 

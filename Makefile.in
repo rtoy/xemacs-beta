@@ -272,7 +272,7 @@ finder: src
 		${blddir}/src/xemacs -batch -q -no-site-file \
 		-l finder -f finder-compile-keywords )
 
-lisp/utils/finder-inf.el: FRC.lisp.utils.finder-inf.el
+lisp/utils/finder-inf.el:
 	@(cd lisp/utils; \
 		${blddir}/src/xemacs -batch -q -no-site-file \
 		-l finder -f finder-compile-keywords )

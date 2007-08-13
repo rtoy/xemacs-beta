@@ -92,8 +92,6 @@ sigprof_handler (int signo)
 	{
 	  fun = *backtrace_list->function;
 
-	  /* #### dmoore - why do we need to unmark it, we aren't in GC. */
-	  XUNMARK (fun);
 	  if (!GC_SYMBOLP (fun) && !GC_COMPILED_FUNCTIONP (fun))
 	    fun = QSunknown;
 	}

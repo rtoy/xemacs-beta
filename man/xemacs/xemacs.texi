@@ -155,6 +155,7 @@ Larger Units of Text
 * Files::       All about handling files.
 * Buffers::     Multiple buffers; editing several files at once.
 * Windows::     Viewing two pieces of text at once.
+* Mule::	Using world scripts.
 
 Advanced Features
 * Major Modes:: Text mode vs. Lisp mode vs. C mode ...
@@ -1060,6 +1061,7 @@ can use it afterward.
 @include files.texi
 @include buffers.texi
 @include windows.texi
+@include mule.texi
 @include major.texi
 @include indent.texi
 @include text.texi

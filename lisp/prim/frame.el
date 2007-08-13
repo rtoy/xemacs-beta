@@ -545,7 +545,8 @@ A negative ARG moves in the opposite order."
 ; this is in C in FSFmacs
 (defun frame-list ()
   "Return a list of all frames on all devices/consoles."
-  (apply 'append (mapcar 'device-frame-list (device-list))))
+  ;; Lists are copies, so nconc is safe here.
+  (apply 'nconc (mapcar 'device-frame-list (device-list))))
 
 (defun frame-type (&optional frame)
   "Return the type of the specified frame (e.g. `x' or `tty').
@@ -613,26 +614,25 @@ is given and non-nil, the unwanted frames are iconified instead."
 	      (list 'frame-configuration-p configuration)))
   (let ((config-plist (cdr configuration))
 	frames-to-delete)
-    (mapcar (function
-	     (lambda (frame)
-	       (let ((properties (assq frame config-plist)))
-		 (if properties
-		     (progn
-		       (set-frame-properties
-			frame
-			;; Since we can't set a frame's minibuffer status,
-			;; we might as well omit the parameter altogether.
-			(lax-plist-remprop (nth 1 properties) 'minibuffer))
-		       (set-window-configuration (nth 2 properties)))
-		   (setq frames-to-delete (cons frame frames-to-delete))))))
-	    (frame-list))
+    (mapc (lambda (frame)
+	    (let ((properties (assq frame config-plist)))
+	      (if properties
+		  (progn
+		    (set-frame-properties
+		     frame
+		     ;; Since we can't set a frame's minibuffer status,
+		     ;; we might as well omit the parameter altogether.
+		     (lax-plist-remprop (nth 1 properties) 'minibuffer))
+		    (set-window-configuration (nth 2 properties)))
+		(setq frames-to-delete (cons frame frames-to-delete)))))
+	  (frame-list))
     (if nodelete
 	;; Note: making frames invisible here was tried
 	;; but led to some strange behavior--each time the frame
 	;; was made visible again, the window manager asked afresh
 	;; for where to put it.
-	(mapcar 'iconify-frame frames-to-delete)
-      (mapcar 'delete-frame frames-to-delete))))
+	(mapc 'iconify-frame frames-to-delete)
+      (mapc 'delete-frame frames-to-delete))))
 
 ; this function is in subr.el in FSFmacs.
 ; that's because they don't always include frame.el, while we do.
@@ -1139,7 +1139,7 @@ is normally set to `get-frame-for-buffer' (which see)."
 (defun delete-other-frames (&optional frame)
   "Delete all but FRAME (or the selected frame)."
   (interactive)
-  (mapcar 'delete-frame (delq (or frame (selected-frame)) (frame-list))))
+  (mapc 'delete-frame (delq (or frame (selected-frame)) (frame-list))))
 
 ;; By adding primitives to directly access the window hierarchy,
 ;; we can move many functions into Lisp.  We do it this way

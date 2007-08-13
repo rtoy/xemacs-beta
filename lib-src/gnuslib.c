@@ -33,8 +33,8 @@
 static char rcsid [] = "!Header: gnuslib.c,v 2.4 95/02/16 11:57:37 arup alpha !";
 #endif
 
-#include <errno.h>
 #include "gnuserv.h"
+#include <errno.h>
 
 #ifdef SYSV_IPC
 static int connect_to_ipc_server (void);

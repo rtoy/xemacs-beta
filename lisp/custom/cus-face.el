@@ -74,10 +74,11 @@ Control whether the text should be underlined.")
 			:value ""
 			:help-echo "Set background color.")
 		 set-face-background face-background-name)
-;;    (:inverse-video (boolean :tag "Inverse"
-;;			     :help-echo "\
-;;Control whether the text should be inverted.")
-;;		    custom-inverse-face custom-face-inverse)
+    ;; #### Should make it work on X
+    (:inverse-video (boolean :tag "Inverse"
+			     :help-echo "\
+Control whether the text should be inverted.  Works only on TTY-s")
+		    set-face-reverse-p face-reverse-p)
     (:stipple (editable-field :format "Stipple: %v"
 			      :help-echo "Name of background bitmap file.")
 	      set-face-background-pixmap custom-face-stipple)
@@ -213,25 +214,6 @@ If FRAME is nil, use the default face."
 	 ;; Gag
 	 (fontobj (font-create-object font)))
     (font-family fontobj)))
-
-;;(defun custom-reverse-face (face value &optional frame)
-;;  "Swap the foreground and background colors of face FACE.
-;;If the colors are not specified in the face, use the default colors."
-;;  (interactive (list (read-face-name "Reverse face: ")))
-;;  (when value
-;;    (if (eq (frame-type) 'tty)
-;;	(set-face-reverse-p face value frame)
-;;      (let ((fg (face-foreground-instance face frame))
-;;	    (bg (face-background-instance face frame)))
-;;	(set-face-foreground face bg frame)
-;;	(set-face-background face fg frame)))))
-
-;;(defun custom-face-reverse (face &optional frame)
-;;  "Returns non-nil if the face is reverse."
-;;  (if (eq (frame-type) 'tty)
-;;      (face-reverse-p face frame)
-;;    ;;; ### Implement me
-;;    ))
 
 ;;; Initializing.
 

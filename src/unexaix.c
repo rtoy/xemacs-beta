@@ -308,7 +308,7 @@ unexec (new_name, a_name, data_start, bss_start, entry_address)
       )
     {
       close (new);
-      /* unlink (new_name);	    	/* Failed, unlink new a.out */
+      /* unlink (new_name); */	    	/* Failed, unlink new a.out */
       return -1;	
     }
 

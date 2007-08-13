@@ -300,7 +300,7 @@ xemacs: temacs ${libsrc}DOC $(mo_file) ${other_files} update-elc.stamp
 	@$(RM) $@ && touch SATISFIED
 	-$(DUMPENV) ./temacs -batch -l loadup.el dump
 	@if test -f $@;        then if test -f SATISFIED; then \
-		./xemacs -q -batch -f list-load-path-shadows; fi; \
+		./xemacs -batch -vanilla -f list-load-path-shadows; fi; \
 		$(RM) SATISFIED; exit 0; fi; \
 	 if test -f SATISFIED; then $(RM) SATISFIED; exit 1; fi; \
 	 $(RECURSIVE_MAKE) $@;

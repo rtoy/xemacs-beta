@@ -197,17 +197,18 @@
 						 '(pointer))
 			  (error nil))	    ; returns nil if an error occurred.
 			(set-glyph-image gc-pointer-glyph file))))
-	 
-	      ;; Add `dired' to the File menu
-	      (add-menu-button '("File") ["Edit Directory" dired t])
 
-	      ;; Here's a way to add scrollbar-like buttons to the menubar
-	      (add-menu-button nil ["Top" beginning-of-buffer t])
-	      (add-menu-button nil ["<<<" scroll-down         t])
-	      (add-menu-button nil [" . " recenter            t])
-	      (add-menu-button nil [">>>" scroll-up           t])
-	      (add-menu-button nil ["Bot" end-of-buffer       t])
-	      
+	      (when (featurep 'menubar)
+		;; Add `dired' to the File menu
+		(add-menu-button '("File") ["Edit Directory" dired t])
+
+		;; Here's a way to add scrollbar-like buttons to the menubar
+		(add-menu-button nil ["Top" beginning-of-buffer t])
+		(add-menu-button nil ["<<<" scroll-down         t])
+		(add-menu-button nil [" . " recenter            t])
+		(add-menu-button nil [">>>" scroll-up           t])
+		(add-menu-button nil ["Bot" end-of-buffer       t]))
+
 	      ;; Change the behavior of mouse button 2 (which is normally
 	      ;; bound to `mouse-yank'), so that it inserts the selected text
 	      ;; at point (where the text cursor is), instead of at the

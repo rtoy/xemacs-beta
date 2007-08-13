@@ -1,3 +1,18 @@
+1997-10-30  SL Baur  <steve@altair.xemacs.org>
+
+	* update-autoloads.sh (mule_p): EFS has been packaged.
+	* update-elc.sh (make_special_commands): Ditto.
+
+	* update-elc.sh: VM has been packaged.
+
+	* update-autoloads.sh: Add directory language
+
+1997-10-23  SL Baur  <steve@altair.xemacs.org>
+
+	* update-elc.sh (BYTECOMP): Specify -vanilla
+	* update-autoloads.sh (dirs): Ditto.
+	* update-custom.sh (dirs): Ditto.
+
 1997-10-10  Martin Buchholz  <mrb@eng.sun.com>
 
 	* config.values.in:  Run config.values.sh

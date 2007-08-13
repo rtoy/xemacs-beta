@@ -50,6 +50,7 @@
 				;  `emacs-user-extension-dir'
 	"misc"
 	;; (load-gc "profile")
+	#-mule "help-nomule"
 	"help"
 	;; (load-gc "hyper-apropos")  Soon...
 	#-mule "files-nomule"
@@ -111,6 +112,7 @@
 	#+mule "mule-files"
 ;; Handle process with encoding/decoding non-ascii coding-system.
 	#+mule "mule-process"
+	#+mule "mule-help"
 ;; Load the remaining basic files.
 	#+mule "mule-category"
 	#+mule "mule-ccl"
@@ -139,16 +141,20 @@
 	#+mule "language/chinese"
 	#+mule "language/cyrillic"
 	#+mule "language/english"
-	#+mule "language/ethiopic"
+;;	#+mule "language/ethiopic"
 	#+mule "language/european"
 	#+mule "language/greek"
-	#+mule "hebrew-hooks"
+	#+mule "language/hebrew"
 	#+mule "language/japanese"
 	#+mule "language/korean"
 	#+mule "language/misc-lang"
-	#+mule "language/thai"
-	#+mule "vietnamese-hooks-1"
-	#+mule "vietnamese-hooks-2"
+;;	#+mule "language/thai"
+	#+mule "language/viet-chars"
+	#+mule "language/vietnamese"
+
+	;; Specialized language support
+	#+(and mule CANNA) "canna-leim"
+	#+(and mule wnn) "egg-leim"
 
 ;; Set up the XEmacs environment for Mule.
 ;; Assumes the existence of various stuff above.
@@ -178,7 +184,7 @@
 	#+tooltalk "tooltalk/tooltalk-util"
 	#+tooltalk "tooltalk/tooltalk-init"
 	;; "vc-hooks"		; Packaged.  Available in two versions.
-	"ediff-hook"
+	;; "ediff-hook"		; Packaged.
 	"fontl-hooks"
 	"auto-show"
 ;; #+energize "energize/energize-load.el"

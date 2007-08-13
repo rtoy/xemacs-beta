@@ -61,11 +61,11 @@ else
 fi
 
 REAL=`cd \`dirname $EMACS\` ; pwd | sed 's|^/tmp_mnt||'`/`basename $EMACS`
-BYTECOMP="$REAL -batch -q -no-site-file "
+BYTECOMP="$REAL -batch -vanilla "
 echo "Recompiling in `pwd|sed 's|^/tmp_mnt||'`"
 echo "          with $REAL..."
 
-$EMACS -batch -q -l `pwd`/lisp/prim/cleantree -f batch-remove-old-elc lisp
+$EMACS -batch -vanilla -l `pwd`/lisp/prim/cleantree -f batch-remove-old-elc lisp
 
 prune_vc="( -name SCCS -o -name RCS -o -name CVS ) -prune -o"
 
@@ -91,7 +91,7 @@ ignore_pattern=''
 # Only use Mule XEmacs to compile Mule-specific elisp dirs
 echon "Checking for Mule support..."
 lisp_prog='(princ (featurep (quote mule)))'
-mule_p="`$EMACS -batch -no-site-file -eval \"$lisp_prog\"`"
+mule_p="`$EMACS -batch -vanilla -eval \"$lisp_prog\"`"
 if test "$mule_p" = nil ; then
 	echo No
 	ignore_dirs="$ignore_dirs its egg mule language leim"
@@ -108,13 +108,6 @@ fi
 # we're running, which might not be the case, but often is.)
 echo "Checking the byte compiler..."
 $BYTECOMP -f batch-byte-recompile-directory lisp/bytecomp
-
-# Byte-compile VM first, because other packages depend on it,
-# but it depends on nothing (Kyle is like that).
-ignore_dirs="$ignore_dirs vm"
-echo "Compiling in lisp/vm";
-(cd lisp/vm && ${MAKE:-make} EMACS=$REAL autoload)
-echo "lisp/vm done."
 
 # Prepare for byte-compiling directories with directory-specific instructions
 make_special_commands=''
@@ -134,7 +127,8 @@ echo \"lisp/$dir done.\";"
 # 	make_special auctex some MULE_ELC=tex-jp.elc
 # fi
 #make_special cc-mode all
-make_special efs x20
+# EFS is now packaged
+# make_special efs x20
 make_special eos -k		# not strictly necessary...
 ## make_special gnus  some	# Now this is a package.
 make_special hyperbole elc
