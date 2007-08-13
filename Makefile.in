@@ -32,14 +32,14 @@
 #      with them.
 #
 #      Delete `.dvi' files here if they are not part of the distribution.
-# 
+#
 # make distclean
 #      Delete all files from the current directory that are created by
 #      configuring or building the program.  If you have unpacked the
 #      source and built the program without creating any other files,
 #      `make distclean' should leave only the files that were in the
 #      distribution.
-# 
+#
 # make realclean
 #      Delete everything from the current directory that can be
 #      reconstructed with this Makefile.  This typically includes
@@ -286,10 +286,9 @@ src/Emacs.ad.h: ${srcdir}/etc/Emacs.ad
 	  /bin/sh ${srcdir}/lib-src/ad2c ${srcdir}/etc/Emacs.ad ) > \
 	  src/Emacs.ad.h
 
-src:	lib-src lwlib dynodump FRC.src
+src:	@SRC_SUBDIR_DEPS@ FRC.src
 lib-src: FRC.lib-src
 lwlib:	FRC.lwlib
-dynodump: FRC.dynodump
 
 .RECURSIVE: ${SUBDIR}
 
@@ -307,9 +306,6 @@ lib-src/Makefile: ${srcdir}/lib-src/Makefile.in.in config.status
 	./config.status
 
 lwlib/Makefile: ${srcdir}/lwlib/Makefile.in.in config.status
-	./config.status
-
-dynodump/Makefile: ${srcdir}/dynodump/Makefile.in.in config.status
 	./config.status
 
 src/config.h: ${srcdir}/src/config.h.in
@@ -458,7 +454,6 @@ mkdir: FRC.mkdir
 ### Some makes seem to remember that they've built something called FRC,
 ### so you can only use a given FRC once per makefile.
 FRC FRC.src.paths.h FRC.src FRC.lib-src FRC.lwlib FRC.mkdir FRC.dump-elcs:
-FRC.dynodump:
 FRC.mostlyclean FRC.clean FRC.distclean FRC.realclean:
 
 # ==================== Cleaning up and miscellanea ====================
@@ -471,11 +466,8 @@ FRC.mostlyclean FRC.clean FRC.distclean FRC.realclean:
 ###      target for GCC does not delete `libgcc.a', because recompiling it
 ###      is rarely necessary and takes a lot of time.
 mostlyclean: FRC.mostlyclean
-	(cd src      && $(MAKE) $(MFLAGS) mostlyclean)
-	(cd lib-src  && $(MAKE) $(MFLAGS) mostlyclean)
-	(cd lwlib    && $(MAKE) $(MFLAGS) mostlyclean)
-	(cd dynodump && $(MAKE) $(MFLAGS) mostlyclean)
-	-(cd man     && $(MAKE) $(MFLAGS) mostlyclean)
+	for d in $(MAKE_SUBDIR); do (cd $$d && $(MAKE) $(MFLAGS) $@); done
+	-(cd man && $(MAKE) $(MFLAGS) $@)
 
 ### `clean'
 ###      Delete all files from the current directory that are normally
@@ -483,14 +475,12 @@ mostlyclean: FRC.mostlyclean
 ###      record the configuration.  Also preserve files that could be made
 ###      by building, but normally aren't because the distribution comes
 ###      with them.
-### 
+###
 ###      Delete `.dvi' files here if they are not part of the distribution.
 clean: FRC.clean
-	(cd src      && $(MAKE) $(MFLAGS) clean)
-	(cd lib-src  && $(MAKE) $(MFLAGS) clean)
-	(cd lwlib    && $(MAKE) $(MFLAGS) clean)
-	(cd dynodump && $(MAKE) $(MFLAGS) clean)
-	-(cd man     && $(MAKE) $(MFLAGS) clean)
+	for d in $(MAKE_SUBDIR); do (cd $$d && $(MAKE) $(MFLAGS) $@); done
+	-(cd man && $(MAKE) $(MFLAGS) $@)
+	rm -f core
 
 ### `distclean'
 ###      Delete all files from the current directory that are created by
@@ -499,18 +489,16 @@ clean: FRC.clean
 ###      `make distclean' should leave only the files that were in the
 ###      distribution.
 top_distclean=\
-	rm -f config.status config-tmp-* build-install Installation ; \
-	rm -f Makefile ${SUBDIR_MAKEFILES}; \
-	(cd lock && rm -f *)
+	rm -f config.status config.log config-tmp-* build-install Installation ; \
+	for d in src lib-src lwlib dynodump ; do \
+	  rm -f $$d/Makefile $$d/Makefile.in ; \
+	done ; \
+	rm -f core .sbinit Makefile lock/*
 
 distclean: FRC.distclean
-	-([ ! -d lock ] && mkdir lock)
-	-([ ! -d site-lisp ] && mkdir site-lisp)
-	(cd src      && $(MAKE) $(MFLAGS) distclean)
-	(cd lib-src  && $(MAKE) $(MFLAGS) distclean)
-	(cd lwlib    && $(MAKE) $(MFLAGS) distclean)
-	(cd dynodump && $(MAKE) $(MFLAGS) distclean)
-	-(cd man     && $(MAKE) $(MFLAGS) distclean)
+	-for d in lock site-lisp; do test -d $$d || mkdir $$d; done
+	for d in $(MAKE_SUBDIR); do (cd $$d && $(MAKE) $(MFLAGS) $@); done
+	-(cd man && $(MAKE) $(MFLAGS) $@)
 	-${top_distclean}
 
 ### `realclean'
@@ -518,18 +506,15 @@ distclean: FRC.distclean
 ###      reconstructed with this Makefile.  This typically includes
 ###      everything deleted by distclean, plus more: C source files
 ###      produced by Bison, tags tables, info files, and so on.
-### 
+###
 ###      One exception, however: `make realclean' should not delete
 ###      `configure' even if `configure' can be remade using a rule in the
 ###      Makefile.  More generally, `make realclean' should not delete
 ###      anything that needs to exist in order to run `configure' and then
 ###      begin to build the program.
 realclean: FRC.realclean
-	(cd src      && $(MAKE) $(MFLAGS) realclean)
-	(cd lib-src  && $(MAKE) $(MFLAGS) realclean)
-	(cd lwlib    && $(MAKE) $(MFLAGS) realclean)
-	(cd dynodump && $(MAKE) $(MFLAGS) realclean)
-	-(cd man     && $(MAKE) $(MFLAGS) realclean)
+	for d in $(MAKE_SUBDIR); do (cd $$d && $(MAKE) $(MFLAGS) $@); done
+	-(cd man && $(MAKE) $(MFLAGS) $@)
 	-${top_distclean}
 
 ### This doesn't actually appear in the coding standards, but Karl
@@ -537,11 +522,8 @@ realclean: FRC.realclean
 ### the coding standards seem to come from.  It's like distclean, but
 ### it deletes backup and autosave files too.
 extraclean:
-	(cd src      && $(MAKE) $(MFLAGS) extraclean)
-	(cd lib-src  && $(MAKE) $(MFLAGS) extraclean)
-	(cd lwlib    && $(MAKE) $(MFLAGS) extraclean)
-	(cd dynodump && $(MAKE) $(MFLAGS) extraclean)
-	-(cd man     && $(MAKE) $(MFLAGS) extraclean)
+	for d in $(MAKE_SUBDIR); do (cd $$d && $(MAKE) $(MFLAGS) $@); done
+	-(cd man && $(MAKE) $(MFLAGS) $@)
 	-rm -f *~ \#*
 	-${top_distclean}
 

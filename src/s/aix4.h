@@ -6,6 +6,3 @@
 
 /* AIX 4 does not have HFT any more.  */
 #undef AIXHFT
-
-/* realpath is broken */
-#undef HAVE_REALPATH

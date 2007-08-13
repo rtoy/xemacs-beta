@@ -42,7 +42,7 @@
   "syntax table used in autoconf mode")
 (setq autoconf-mode-syntax-table (make-syntax-table))
 (modify-syntax-entry ?\" "\""  autoconf-mode-syntax-table)
-(modify-syntax-entry ?\' "\""  autoconf-mode-syntax-table)
+;;(modify-syntax-entry ?\' "\""  autoconf-mode-syntax-table)
 (modify-syntax-entry ?#  "<\n" autoconf-mode-syntax-table)
 (modify-syntax-entry ?\n ">#"  autoconf-mode-syntax-table)
 (modify-syntax-entry ?\( "."   autoconf-mode-syntax-table)

@@ -86,13 +86,6 @@ Boston, MA 02111-1307, USA.  */
 
 /* #define LINUX_LDAV_FILE "/proc/loadavg" */
 
-/* XEmacs change: The realpath() in linux's libc (4.6.27) sometimes
- * fails with ELOOP erroneously.  For example, create a file
- * thirty-five or so directories deep and call realpath on it.  You
- * get ELOOP even if no symlinks at all are involved.
- * -dkindred@cs.cmu.edu */
-#undef HAVE_REALPATH
-
 /* This is needed for dispnew.c:update_frame */
 
 #ifdef emacs
@@ -146,9 +139,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Best not to include -lg, unless it is last on the command line */
 #define LIBS_DEBUG
-#ifndef HAVE_NCURSES /* XEmacs change */
 #define LIBS_TERMCAP -ltermcap -lcurses /* save some space with shared libs*/
-#endif
 #ifndef __ELF__
 #define LIB_STANDARD -lc /* avoid -lPW */
 #else
@@ -181,9 +172,6 @@ Boston, MA 02111-1307, USA.  */
    At least XawScrollbarSetThumb needs this. */ 
 #define C_SWITCH_SYSTEM -DFUNCPROTO=11 -DNARROWPROTO -D_BSD_SOURCE
 #endif
-
-/* Paul Abrahams <abrahams@equinox.shaysnet.com> says this is needed.  */
-#define LIB_MOTIF -lXm -lXpm
 
 /* XEmacs change: configure doesn't find this because math.h aliases
    rint to __rint so that it's not found. */

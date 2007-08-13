@@ -143,12 +143,7 @@ static Lisp_Object fork_error;
 static void
 report_fork_error (char *string, Lisp_Object data)
 {
-  Lisp_Object errstring = build_string (strerror (errno));
-
-  /* System error messages are capitalized.  Downcase the initial. */
-  set_string_char (XSTRING (errstring), 0,
-		   DOWNCASE (current_buffer,
-			     string_char (XSTRING (errstring), 0)));
+  Lisp_Object errstring = lisp_strerror (errno);
 
   fork_error = Fcons (build_string (string), Fcons (errstring, data));
 
@@ -453,7 +448,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 	close (fd[0]);
 	if (fd1 >= 0)
 	  close (fd1);
-	report_file_error ("Cannot open", error_file);
+	report_file_error ("Cannot open", Fcons(error_file, Qnil));
       }
 
     fork_error = Qnil;

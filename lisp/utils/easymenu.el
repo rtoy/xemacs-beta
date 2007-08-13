@@ -1,11 +1,11 @@
 ;;; easymenu.el - Easy menu support for Emacs 19 and XEmacs.
 ;; 
-;; $Id: easymenu.el,v 1.3 1997/04/16 04:08:03 steve Exp $
+;; $Id: easymenu.el,v 1.4 1997/05/23 01:36:43 steve Exp $
 ;;
 ;; LCD Archive Entry:
 ;; easymenu|Per Abrahamsen|abraham@iesd.auc.dk|
 ;; Easy menu support for XEmacs|
-;; $Date: 1997/04/16 04:08:03 $|$Revision: 1.3 $|~/misc/easymenu.el.gz|
+;; $Date: 1997/05/23 01:36:43 $|$Revision: 1.4 $|~/misc/easymenu.el.gz|
 
 ;; Copyright (C) 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
 
@@ -168,7 +168,7 @@ is a list of menu items, as above."
   "Add MENU to the current menu bar."
   (if (featurep 'menubar)
       (progn
-	(setq easy-menu-all-popups (cons menu easy-menu-all-popups))
+	(pushnew menu easy-menu-all-popups)
 	(setq mode-popup-menu (cons (easy-menu-title)
 				    (reverse easy-menu-all-popups)))
 

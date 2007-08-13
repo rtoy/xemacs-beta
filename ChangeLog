@@ -1,3 +1,41 @@
+1997-05-22  Steven L Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta2 is released.
+
+Thu May 22 04:19:09 1997  Martin Buchholz  <mrb@eng.sun.com>
+
+	* configure.in: Try to fix all reported bugs with 20.3-b1.
+	Change HAVE_WNN6 to WNN6.  WNN6 correctly autodetected.
+	extra-verbose now default on beta builds.
+	extra-verbose now much more verbose.
+	Don't set libs_termcap to " ".
+	Detect -lXm AFTER detecting -lXpm.
+	Use runtime paths before running tests, since AC_TRY_RUN may
+	depend on it.
+	with-xim=motif only default on Solaris.
+	realpath moved from s&m to configure.in.
+	xemacs-version.h removed.  main_1 now contains $canonical as well, 
+	for even more useful backtraces.
+	termcap handling rewritten.
+	Create .sbinit for Sun's source browser.
+	Warn user if no XPM support present.
+	Warn user if compiling in error checking.
+
+	* Makefile.in: use MAKE_SUBDIR consistently.  Remove references to 
+	dynodump.  Remove core when cleaning.  Remove config.log.
+	make distclean now functional.
+
+Tue Jun  4 10:15:54 1996  Per Bothner  <bothner@deneb.cygnus.com>
+
+	* etc/e/eterm.ti:  Add kcub1, kcuf1, kcuu1, kcud1 capabilities.
+
+Sun May 18 13:03:20 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* lwlib/Makefile.in.in (distclean): Clean up config.h.
+
+	* Makefile.in (distclean): Remve config.log.
+	remove broken dynodump stuffs.
+
 Sat May 17 20:30:54 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.3-b1 is released.

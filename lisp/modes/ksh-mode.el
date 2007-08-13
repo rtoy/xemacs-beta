@@ -24,7 +24,7 @@
 ;; LCD Archive Entry:
 ;; ksh-mode|Gary F. Ellison|Gary.F.Ellison@ATT.COM
 ;; |Mode for editing sh/ksh/bash scripts
-;; |$Date: 1997/03/08 23:26:25 $|$Revision: 1.2 $|~/modes/ksh-mode.el.Z|
+;; |$Date: 1997/05/23 01:36:24 $|$Revision: 1.3 $|~/modes/ksh-mode.el.Z|
 
 ;; Author: Gary F. Ellison <Gary.F.Ellison@ATT.COM>
 ;;                   AT&T  Laboratories
@@ -33,10 +33,10 @@
 ;;
 ;; Maintainer: Gary F. Ellison <Gary.F.Ellison@ATT.COM>
 ;; Created: Fri Jun 19
-;; $Revision: 1.2 $
+;; $Revision: 1.3 $
 ;; Keywords: shell, korn, bourne, sh, ksh, bash
 ;;
-;; Delta On   $Date: 1997/03/08 23:26:25 $
+;; Delta On   $Date: 1997/05/23 01:36:24 $
 ;; Last Modified By: Gary Ellison
 ;; Last Modified On: Mon Sep 11 12:26:47 1995
 ;; Update Count    : 35
@@ -231,7 +231,7 @@
 ;;    Conception of this mode.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defconst ksh-mode-version "$Revision: 1.2 $"
+(defconst ksh-mode-version "$Revision: 1.3 $"
   "*Version numbers of this version of ksh-mode")
 
 ;;
@@ -431,7 +431,7 @@ while, for, until, and select")
   (modify-syntax-entry ?\n ">" ksh-mode-syntax-table)
   (modify-syntax-entry ?\f ">" ksh-mode-syntax-table)
   (modify-syntax-entry ?# "<" ksh-mode-syntax-table)
-  (modify-syntax-entry ?_ "w" ksh-mode-syntax-table)
+  (modify-syntax-entry ?_ "_" ksh-mode-syntax-table)
   (modify-syntax-entry ?< "." ksh-mode-syntax-table)
   (modify-syntax-entry ?> "." ksh-mode-syntax-table)
   (modify-syntax-entry ?& "." ksh-mode-syntax-table)
@@ -468,7 +468,7 @@ while, for, until, and select")
 
 ;;;###autoload
 (defun ksh-mode ()
-  "ksh-mode $Revision: 1.2 $ - Major mode for editing (Bourne, Korn or Bourne again)
+  "ksh-mode $Revision: 1.3 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}

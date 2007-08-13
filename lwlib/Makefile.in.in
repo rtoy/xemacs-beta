@@ -255,7 +255,7 @@ clean: mostlyclean
 	cd energize && $(MAKE) $(MFLAGS) clean
 #endif
 distclean: clean
-	rm -f Makefile Makefile.in .pure
+	rm -f Makefile Makefile.in config.h .pure
 realclean: distclean
 extraclean: distclean
 	-rm -f *~ \#* m/?*~ s/?*~

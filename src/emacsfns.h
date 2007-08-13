@@ -917,6 +917,7 @@ void maybe_signal_double_file_error_2 (CONST char *string1,
 				       CONST char *string2, Lisp_Object data1,
 				       Lisp_Object data2, Lisp_Object class,
 				       Error_behavior errb);
+Lisp_Object lisp_strerror (int errnum);
 Lisp_Object expand_and_dir_to_file (Lisp_Object fn, Lisp_Object def);
 Lisp_Object Finsert_file_contents_internal (Lisp_Object filename,
 					    Lisp_Object visit,

@@ -23,6 +23,8 @@
    supposed to only be in the BSD compat stuff.  Yuck.  Of course,
    there isn't a prototype for it other than in /usr/ucbinclude. */
 int gethostname (char *, size_t);
+/* Another missing prototype, added in Solaris 2.5 */
+extern void *__builtin_alloca(size_t);
 
 /* Get non-ANSI functions from ANSI header files in cc -Xc mode.
    Sun has promised to fix setjmp.h */
@@ -43,30 +45,10 @@ int utimes (char *file, struct timeval *tvp);
 #include <limits.h>
 #endif /* C_CODE */
 
-/* XEmacs change -- removed flags to force K & R compilation */
-
-/*
- * XEmacs change -- some Motif packages need -lgen to get regex and regcmp
- */
+/* XEmacs change -- some Motif packages need -lgen to get regex and regcmp */
 
 #undef LIBS_SYSTEM
 #define LIBS_SYSTEM -lsocket -lnsl -lelf -lgen -ldl
-
-/* XEmacs change -- Mark Borges says this is needed. */
-#define LIBS_TERMCAP -ltermlib 
-
-/* #### XEmacs change: until we've gotten the Energize builds converted
-   over to use configure instead of ymakefile, we still need this.
- */
-#if defined (NOT_C_CODE) && defined (ENERGIZE)
-
-# define LIBS_DEBUG
-# undef LIBS_SYSTEM
-# define LIBS_SYSTEM -lsocket -lnsl -lelf -lgen -ldl
-# define START_FILES
-# define LD_CMD $(CC)
-
-#endif
 
 /* SYSTEM_MALLOC must be defined if dbx/RTC is going to be used.  dbx/RTC does
    not work with a static definition of malloc(). */
@@ -81,8 +63,8 @@ int utimes (char *file, struct timeval *tvp);
  */
 
 /* XEmacs change from Georg.Nikodym@Canada.Sun.COM. */
-#ifdef UNEXEC 
-#undef UNEXEC 
+#ifdef UNEXEC
+#undef UNEXEC
 #endif
 #define UNEXEC unexsol2.o
 

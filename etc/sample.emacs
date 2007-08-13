@@ -16,12 +16,10 @@
 ;;			Basic Customization			    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Enable the commands `narrow-to-region' ("C-x n n") and 
-;; `eval-expression' ("M-:", or "ESC :").  Both are useful
-;; commands, but they can be confusing for a new user, so they're
-;; disabled by default.
+;; Enable the command `narrow-to-region' ("C-x n n"), a useful
+;; command, but possibly confusing to a new user, so it's disabled by
+;; default.
 (put 'narrow-to-region 'disabled nil)
-(put 'eval-expression  'disabled nil)
 
 ;;; Define a variable to indicate whether we're running XEmacs/Lucid Emacs.
 ;;; (You do not have to defvar a global variable before using it --
@@ -54,10 +52,10 @@
 ;; key sequence.
 (global-set-key [f4] 'set-mark-command)
 (global-set-key [f5] "\M-w")
-(global-set-key [f6]"\C-y")
+(global-set-key [f6] "\C-y")
 
 ;; Shift-F4 is "pop mark off of stack"
-(global-set-key '(shift f4) (lambda () (interactive) (set-mark-command t)))
+(global-set-key [(shift f4)] (lambda () (interactive) (set-mark-command t)))
 
 ;; Make F7 be `save-buffer'
 (global-set-key [f7] 'save-buffer)
@@ -350,6 +348,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;		Customization of Specific Packages		    ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; Load gnuserv, which will allow you to connect to XEmacs sessions
+;;; using `gnuclient'.
+
+;; If you never run more than one XEmacs at a time, you might want to
+;; always start gnuserv.  Otherwise it is preferable to specify
+;; `-f gnuserv-start' on the command line to one of the XEmacsen.
+; (gnuserv-start)
 
 
 ;;; ********************

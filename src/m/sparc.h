@@ -42,18 +42,6 @@ NOTE-END  */
 # endif
 #endif
 
-#ifdef __GNUC__
-# define C_OPTIMIZE_SWITCH -O
-#else
-/* XEmacs change */
-# ifdef USE_LCC
-#  define C_OPTIMIZE_SWITCH -O4 -Oi
-# else
-     /* This level of optimization is reported to work.  */
-#  define C_OPTIMIZE_SWITCH -O2
-# endif
-#endif
-
 /* XINT must explicitly sign-extend */
 
 #define EXPLICIT_SIGN_EXTEND
@@ -66,30 +54,9 @@ NOTE-END  */
 
 #define LOAD_AVE_CVT(x) (int) (((double) (x)) * 100.0 / FSCALE)
 
-/* Must use the system's termcap, if we use any termcap.
-   It does special things.  */
-
-#ifndef LIBS_TERMCAP
-#ifndef TERMINFO
-#define LIBS_TERMCAP -ltermcap
-#endif
-#endif
-
 /* Mask for address bits within a memory segment */
 
 #define SEGMENT_MASK (SEGSIZ - 1)
-
-/* Arrange to link with sun windows, if requested.  */
-/* For details on emacstool and sunfns, see etc/SUN-SUPPORT */
-/* These programs require Sun UNIX 4.2 Release 3.2 or greater */
-
-#ifdef HAVE_SUN_WINDOWS
-#define OTHER_FILES  ${etcdir}emacstool
-#define LIBS_MACHINE -lsuntool -lsunwindow -lpixrect
-#define OBJECTS_MACHINE sunfns.o
-#define SYMS_MACHINE syms_of_sunfns ()
-#define SYSTEM_PURESIZE_EXTRA 10000
-#endif
 
 #ifndef __NetBSD__
 #ifndef __linux__

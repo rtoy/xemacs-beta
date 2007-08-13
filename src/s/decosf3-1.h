@@ -18,6 +18,8 @@
 /* XEmacs: from Stephen Carney <carney@gvc.dec.com> */
 
 /* #### why the hell is configure so broken on this system? */
-#define HAVE_SELECT
+#ifndef HAVE_SELECT
+#define HAVE_SELECT 1
+#endif
 
 #define BROKEN_SIGIO

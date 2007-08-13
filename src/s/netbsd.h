@@ -29,11 +29,7 @@
 /* -lutil is not needed for NetBSD >0.9.  */
 /* #define LIBS_SYSTEM -lutil */
 /* XEmacs change */
-#ifdef HAVE_NCURSES
-#define LIBS_TERMCAP -lncurses -ltermcap
-#else
 #define LIBS_TERMCAP -ltermcap
-#endif
 
 #define NEED_ERRNO
 

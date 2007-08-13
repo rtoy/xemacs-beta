@@ -973,6 +973,12 @@ do stuff to the tty to make it sane again.
 	  }
       }
     init_one_console(c);
+#ifdef SIGWINCH
+    /* The same as in Fsuspend_emacs: it is possible that a size
+       change occurred while we were suspended.  Assume one did just
+       to be safe.  It won't hurt anything if one didn't. */
+    asynch_device_change_pending++;
+#endif
   }
 
   UNGCPRO;

@@ -1,3 +1,10 @@
+Tue May 20 23:22:00 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* update-autoloads.sh (dirs): Remove obsolete directory lisp/vms
+	from exclusion list (it doesn't exist any more).  Remove
+	lisp/eterm from exclusion list of directories searched for
+	autoloads.
+
 Thu May  1 15:26:20 1997  Steven L Baur  <steve@altair.xemacs.org>
 
 	* update-elc.sh (mule_p): Test for mule bombs with change in format

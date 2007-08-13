@@ -156,7 +156,7 @@
   (modify-syntax-entry ?> "."    pascal-mode-syntax-table)
   (modify-syntax-entry ?& "."    pascal-mode-syntax-table)
   (modify-syntax-entry ?| "."    pascal-mode-syntax-table)
-  (modify-syntax-entry ?_ "w"    pascal-mode-syntax-table)
+  (modify-syntax-entry ?_ "_"    pascal-mode-syntax-table)
   (modify-syntax-entry ?\' "\""  pascal-mode-syntax-table))
 
 (defconst pascal-font-lock-keywords (purecopy

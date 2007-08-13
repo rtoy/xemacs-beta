@@ -649,8 +649,10 @@
 ;;      (byte-optimize-two-args-right form)
 ;;      form))
 
+;; jwz: (byte-optimize-approx-equal 0.0 0.0) was returning nil
+;; in xemacs 19.15 because it used < instead of <=.
 (defun byte-optimize-approx-equal (x y)
-  (< (* (abs (- x y)) 100) (abs (+ x y))))
+  (<= (* (abs (- x y)) 100) (abs (+ x y))))
 
 ;; Collect all the constants from FORM, after the STARTth arg,
 ;; and apply FUN to them to make one argument at the end.
@@ -697,6 +699,22 @@
 	 (condition-case ()
 	     (eval form)
 	   (error form)))
+
+	;; `add1' and `sub1' are a marginally fewer instructions
+	;; than `plus' and `minus', so use them when possible.
+	((and (null (nthcdr 3 form))
+	      (eq (nth 2 form) 1))
+	 (list '1+ (nth 1 form)))	; (+ x 1)  -->  (1+ x)
+	((and (null (nthcdr 3 form))
+	      (eq (nth 1 form) 1))
+	 (list '1+ (nth 2 form)))	; (+ 1 x)  -->  (1+ x)
+	((and (null (nthcdr 3 form))
+	      (eq (nth 2 form) -1))
+	 (list '1- (nth 1 form)))	; (+ x -1)  -->  (1- x)
+	((and (null (nthcdr 3 form))
+	      (eq (nth 1 form) -1))
+	 (list '1- (nth 2 form)))	; (+ -1 x)  -->  (1- x)
+
 ;;; It is not safe to delete the function entirely
 ;;; (actually, it would be safe if we know the sole arg
 ;;; is not a marker).
@@ -717,6 +735,7 @@
 		(numberp last))
 	   (setq form (nconc (list '- (- (nth 1 form) last) (nth 2 form))
 			     (delq last (copy-sequence (nthcdr 3 form))))))))
+  (setq form
 ;;; It is not safe to delete the function entirely
 ;;; (actually, it would be safe if we know the sole arg
 ;;; is not a marker).
@@ -728,6 +747,18 @@
 	 (cons (car form) (cdr (cdr form)))
        form))
 ;;;    )
+    )
+
+  ;; `add1' and `sub1' are a marginally fewer instructions than `plus'
+  ;; and `minus', so use them when possible.
+  (cond ((and (null (nthcdr 3 form))
+	      (eq (nth 2 form) 1))
+	 (list '1- (nth 1 form)))	; (- x 1)  -->  (1- x)
+	((and (null (nthcdr 3 form))
+	      (eq (nth 2 form) -1))
+	 (list '1+ (nth 1 form)))	; (- x -1)  -->  (1+ x)
+	(t
+	 form))
   )
 
 (defun byte-optimize-multiply (form)

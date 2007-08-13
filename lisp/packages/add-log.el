@@ -1,6 +1,6 @@
 ;;; add-log.el --- change log maintenance commands for Emacs
 
-;; Copyright (C) 1985, 1986, 1988, 1993, 1994 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 86, 88, 93, 94, 1997 Free Software Foundation, Inc.
 
 ;; Keywords: maint
 
@@ -21,7 +21,7 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-;;; Synched up with: FSF 19.34.
+;;; Synched up with: Emacs 20.0.
 
 ;;; Commentary:
 
@@ -60,6 +60,7 @@ This defaults to the value returned by the `user-full-name' function."
 		 string)
   :group 'change-log)
 
+;; XEmacs;
 ;; So that the dump-time value doesn't go into loaddefs.el with the autoload.
 (or add-log-full-name (setq add-log-full-name (user-full-name)))
 
@@ -71,14 +72,36 @@ This defaults to the value of `user-mail-address'."
 		 string)
   :group 'change-log)
 
+;; XEmacs:
 ;; So that the dump-time value doesn't go into loaddefs.el with the autoload.
 (or add-log-mailing-address
     (setq add-log-mailing-address (user-mail-address)))
 
 (defvar change-log-font-lock-keywords
-  '(("^[SMTWF].+" . font-lock-function-name-face)	; Date line.
-    ("^\t\\* \\([^ :\n]+\\)" 1 font-lock-comment-face)	; File name.
-    ("(\\([^)\n]+\\)):" 1 font-lock-keyword-face))	; Function name.
+  '(;;
+    ;; Date lines, new and old styles.
+    ("^\\sw.........[0-9: ]*"
+     (0 font-lock-string-face)
+     ("\\([^<]+\\)<\\([A-Za-z0-9_.-]+@[A-Za-z0-9_.-]+\\)>" nil nil
+      (1 font-lock-reference-face)
+      (2 font-lock-variable-name-face)))
+    ;;
+    ;; File names.
+    ("^\t\\* \\([^ ,:([\n]+\\)"
+     (1 font-lock-function-name-face)
+     ("\\=, \\([^ ,:([\n]+\\)" nil nil (1 font-lock-function-name-face)))
+    ;;
+    ;; Function or variable names.
+    ("(\\([^ ,:\n]+\\)"
+     (1 font-lock-keyword-face)
+     ("\\=, \\([^ ,:\n]+\\)" nil nil (1 font-lock-keyword-face)))
+    ;;
+    ;; Conditionals.
+    ("\\[!?\\([^]\n]+\\)\\]\\(:\\| (\\)" (1 font-lock-variable-name-face))
+    ;;
+    ;; Acknowledgments.
+    ("^\t\\(From\\|Reported by\\)" 1 font-lock-comment-face)
+    )
   "Additional expressions to highlight in Change Log mode.")
 (put 'change-log-mode 'font-lock-defaults
      '(change-log-font-lock-keywords t))
@@ -87,16 +110,31 @@ This defaults to the value of `user-mail-address'."
   "Keymap for Change Log major mode.")
 (if change-log-mode-map
     nil
-  (setq change-log-mode-map (make-sparse-keymap))
-  (define-key change-log-mode-map "\M-q" 'change-log-fill-paragraph))
+  (setq change-log-mode-map (make-sparse-keymap)))
+
+(defvar change-log-time-zone-rule nil
+  "Time zone used for calculating change log time stamps.
+It takes the same format as the TZ argument of `set-time-zone-rule'.
+If nil, use local time.")
+
+(defun iso8601-time-zone (time)
+  (let* ((utc-offset (or (car (current-time-zone time)) 0))
+	 (sign (if (< utc-offset 0) ?- ?+))
+	 (sec (abs utc-offset))
+	 (ss (% sec 60))
+	 (min (/ sec 60))
+	 (mm (% min 60))
+	 (hh (/ min 60)))
+    (format (cond ((not (zerop ss)) "%c%02d:%02d:%02d")
+		  ((not (zerop mm)) "%c%02d:%02d")
+		  (t "%c%02d"))
+	    sign hh mm ss)))
 
 (defun change-log-name ()
   (or change-log-default-name
       (if (eq system-type 'vax-vms) 
-	  "$CHANGE_LOG$.TXT" 
-	(if (or (eq system-type 'ms-dos) (eq system-type 'windows-nt))
-	    "changelo"
-	  "ChangeLog"))))
+	  "$CHANGE_LOG$.TXT"
+	"ChangeLog")))
 
 ;;;###autoload
 (defun prompt-for-change-log-name ()
@@ -180,7 +218,8 @@ Optional arg (interactive prefix) non-nil means prompt for user name and site.
 Second arg is file name of change log.  If nil, uses `change-log-default-name'.
 Third arg OTHER-WINDOW non-nil means visit in other window.
 Fourth arg NEW-ENTRY non-nil means always create a new entry at the front;
-never append to an existing entry."
+never append to an existing entry.  Today's date is calculated according to
+`change-log-time-zone-rule' if non-nil, otherwise in local time."
   (interactive (list current-prefix-arg
 		     (prompt-for-change-log-name)))
   (or add-log-full-name
@@ -220,14 +259,23 @@ never append to an existing entry."
 	(change-log-mode))
     (undo-boundary)
     (goto-char (point-min))
-    (if (looking-at (concat (regexp-quote (substring (current-time-string)
-						     0 10))
-			    ".* " (regexp-quote add-log-full-name)
-			    "  <" (regexp-quote add-log-mailing-address)))
-	(forward-line 1)
-      (insert (current-time-string)
-	      "  " add-log-full-name
-	      "  <" add-log-mailing-address ">\n\n"))
+    (let ((new-entry (concat (if change-log-time-zone-rule
+				 (let ((tz (getenv "TZ"))
+				       (now (current-time)))
+				   (unwind-protect
+				       (progn
+					 (set-time-zone-rule
+					  change-log-time-zone-rule)
+					 (concat
+					  (format-time-string "%Y-%m-%d " now)
+					  (iso8601-time-zone now)))
+				     (set-time-zone-rule tz)))
+			       (format-time-string "%Y-%m-%d"))
+			     "  " add-log-full-name
+			     "  <" add-log-mailing-address ">")))
+      (if (looking-at (regexp-quote new-entry))
+	  (forward-line 1)
+	(insert new-entry "\n\n")))
 
     ;; Search only within the first paragraph.
     (if (looking-at "\n*[^\n* \t]")
@@ -300,14 +348,6 @@ If nil, uses `change-log-default-name'."
   (add-change-log-entry whoami file-name t))
 ;;;###autoload (define-key ctl-x-4-map "a" 'add-change-log-entry-other-window)
 
-(defvar change-log-mode-map nil
-  "Keymap for Change Log major mode.")
-(if change-log-mode-map
-    nil
-  (setq change-log-mode-map (make-sparse-keymap))
-  (set-keymap-name change-log-mode-map 'change-log-mode-map)
-  (define-key change-log-mode-map "\M-q" 'change-log-fill-paragraph))
-
 ;;;###autoload
 (defun change-log-mode ()
   "Major mode for editing change logs; like Indented Text Mode.
@@ -325,17 +365,21 @@ Runs `change-log-mode-hook'."
 	indent-tabs-mode t
 	tab-width 8)
   (use-local-map change-log-mode-map)
+  (set (make-local-variable 'fill-paragraph-function)
+       'change-log-fill-paragraph)
   ;; Let each entry behave as one paragraph:
   ;; We really do want "^" in paragraph-start below: it is only the lines that
   ;; begin at column 0 (despite the left-margin of 8) that we are looking for.
-  (set (make-local-variable 'paragraph-start) "\\s *$\\|\f\\|^\\sw")
-  (set (make-local-variable 'paragraph-separate) "\\s *$\\|\f\\|^\\sw")
+  (set (make-local-variable 'paragraph-start) "\\s *$\\|\f\\|^\\<")
+  (set (make-local-variable 'paragraph-separate) "\\s *$\\|\f\\|^\\<")
   ;; Let all entries for one day behave as one page.
   ;; Match null string on the date-line so that the date-line
   ;; is grouped with what follows.
   (set (make-local-variable 'page-delimiter) "^\\<\\|^\f")
   (set (make-local-variable 'version-control) 'never)
   (set (make-local-variable 'adaptive-fill-regexp) "\\s *")
+  ;;(set (make-local-variable 'font-lock-defaults)
+       ;;'(change-log-font-lock-keywords t))
   (run-hooks 'change-log-mode-hook))
 
 ;; It might be nice to have a general feature to replace this.  The idea I
@@ -346,16 +390,32 @@ Runs `change-log-mode-hook'."
   "Fill the paragraph, but preserve open parentheses at beginning of lines.
 Prefix arg means justify as well."
   (interactive "P")
-  (let ((end (save-excursion (forward-paragraph) (point)))
-	(beg (save-excursion (backward-paragraph)(point)))
+  (let ((end (progn (forward-paragraph) (point)))
+	(beg (progn (backward-paragraph) (point)))
 	(paragraph-start (concat paragraph-start "\\|\\s *\\s(")))
-    (fill-region beg end justify)))
+    (fill-region beg end justify)
+    t))
 
 (defcustom add-log-current-defun-header-regexp
   "^\\([A-Z][A-Z_ ]*[A-Z_]\\|[-_a-zA-Z]+\\)[ \t]*[:=]"
   "*Heuristic regexp used by `add-log-current-defun' for unknown major modes."
   :type 'regexp
   :group 'change-log)
+
+;;;###autoload
+(defvar add-log-lisp-like-modes
+    '(emacs-lisp-mode lisp-mode scheme-mode lisp-interaction-mode)
+  "*Modes that look like Lisp to `add-log-current-defun'.")
+
+;;;###autoload
+(defvar add-log-c-like-modes
+    '(c-mode c++-mode c++-c-mode objc-mode)
+  "*Modes that look like C to `add-log-current-defun'.")
+
+;;;###autoload
+(defvar add-log-tex-like-modes
+    '(TeX-mode plain-TeX-mode LaTeX-mode plain-tex-mode latex-mode)
+  "*Modes that look like TeX to `add-log-current-defun'.")
 
 ;;;###autoload
 (defun add-log-current-defun ()
@@ -373,8 +433,7 @@ Has a preference of looking backwards."
   (condition-case nil
       (save-excursion
 	(let ((location (point)))
-	  (cond ((memq major-mode '(emacs-lisp-mode lisp-mode scheme-mode
-						    lisp-interaction-mode))
+	  (cond ((memq major-mode add-log-lisp-like-modes)
 		 ;; If we are now precisely at the beginning of a defun,
 		 ;; make sure beginning-of-defun finds that one
 		 ;; rather than the previous one.
@@ -393,14 +452,15 @@ Has a preference of looking backwards."
 		       (skip-chars-forward " '")
 		       (buffer-substring (point)
 					 (progn (forward-sexp 1) (point))))))
-		((and (memq major-mode '(c-mode c++-mode c++-c-mode objc-mode))
-		      (save-excursion (beginning-of-line)
-				      ;; Use eq instead of = here to avoid
-				      ;; error when at bob and char-after
-				      ;; returns nil.
-				      (while (eq (char-after (- (point) 2)) ?\\)
-					(forward-line -1))
-				      (looking-at "[ \t]*#[ \t]*define[ \t]")))
+		((and (memq major-mode add-log-c-like-modes)
+		      (save-excursion
+			(beginning-of-line)
+			;; Use eq instead of = here to avoid
+			;; error when at bob and char-after
+			;; returns nil.
+			(while (eq (char-after (- (point) 2)) ?\\)
+			  (forward-line -1))
+			(looking-at "[ \t]*#[ \t]*define[ \t]")))
 		 ;; Handle a C macro definition.
 		 (beginning-of-line)
 		 (while (eq (char-after (- (point) 2)) ?\\) ;not =; note above
@@ -409,7 +469,7 @@ Has a preference of looking backwards."
 		 (skip-chars-forward " \t")
 		 (buffer-substring (point)
 				   (progn (forward-sexp 1) (point))))
-		((memq major-mode '(c-mode c++-mode c++-c-mode objc-mode))
+		((memq major-mode add-log-c-like-modes)
 		 (beginning-of-line)
 		 ;; See if we are in the beginning part of a function,
 		 ;; before the open brace.  If so, advance forward.
@@ -504,10 +564,7 @@ Has a preference of looking backwards."
 					(looking-at "struct \\|union \\|class ")
 					(setq middle (point)))
 				   (buffer-substring middle end)))))))))
-		((memq major-mode
-		       '(TeX-mode plain-TeX-mode LaTeX-mode;; tex-mode.el
-				  plain-tex-mode latex-mode;; cmutex.el
-				  ))
+		((memq major-mode add-log-tex-like-modes)
 		 (if (re-search-backward
 		      "\\\\\\(sub\\)*\\(section\\|paragraph\\|chapter\\)" nil t)
 		     (progn

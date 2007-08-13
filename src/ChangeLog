@@ -1,3 +1,39 @@
+1997-05-21  Steven L Baur  <steve@altair.xemacs.org>
+
+	* editfns.c (format-time-string): Update DOCstring.  Make time
+ 	parameter optional.
+
+Wed May 21 11:58:17 1997  Kyle Jones  <kyle@crystal.wonderworks.com>
+
+	* src/insdel.c (signal_first_change):
+          record the current buffer for the unwind instead of the 
+          buffer that's about to become the current buffer.
+
+Tue May 20 23:23:39 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* frame.c: Correct spelling typo in docstring.
+
+Mon May 19 03:40:46 1997  Kyle Jones  <kyle@crystal.WonderWorks.COM>
+
+	* src/redisplay.c: (window_line_number)
+	  don't prefer buffer point value over window point
+	  value unless window, frame, device and console are
+	  all selected.
+
+	* src/redisplay.c: (redisplay_window)
+	  don't prefer buffer point value over window point
+	  value unless window, frame, device and console are
+	  all selected.
+
+	* src/redisplay.c: (create_text_block)
+	  don't prefer buffer point value over window point
+	  value unless window, frame, device and console are
+	  all selected.
+
+Sun May 18 13:03:50 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in (distclean): remove xemacs-version.h.
+
 Sun May 11 13:38:46 1997  Kyle Jones  <kyle@crystal.WonderWorks.COM>
 
 	* src/frame.c (change_frame_size_1):

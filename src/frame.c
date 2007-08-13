@@ -371,7 +371,7 @@ DEFUN ("make-frame", Fmake_frame, 0, 2, "", /*
 Create a new frame, displaying the current buffer.
 
 Optional argument PROPS is a property list (a list of alternating
-keyword-value specifcations) of properties for the new frame.
+keyword-value specifications) of properties for the new frame.
 \(An alist is accepted for backward compatibility but should not
 be passed in.)
 

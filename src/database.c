@@ -344,7 +344,7 @@ new_dbm_file (CONST char *file, Lisp_Object subtype, int ackcess, int mode)
 static Lisp_Object
 dbm_lasterr (struct database_struct *dbp)
 {
-  return Fstrerror (make_int (dbp->dberrno));
+  return lisp_strerror (dbp->dberrno);
 }
 
 static void
@@ -426,7 +426,7 @@ berkdb_open (CONST char *file, Lisp_Object subtype, int ackcess, int mode)
 static Lisp_Object
 berkdb_lasterr (struct database_struct *dbp)
 {
-  return Fstrerror (make_int (dbp->dberrno));
+  return lisp_strerror (dbp->dberrno);
 }
 
 static Lisp_Object
@@ -539,7 +539,7 @@ Return the last error associated with database OBJ.
   struct database_struct *db;
 
   if (NILP (obj))
-    return Fstrerror (make_int (errno));
+    return lisp_strerror (errno);
   
   CHECK_DATABASE (obj);
   db = XDATABASE (obj);

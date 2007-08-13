@@ -10,16 +10,6 @@
 #define NO_SHARED_LIBS
 #endif
 
-#if 0 /* This much, alone, seemed sufficient as of 19.23.
-	 But it seems better to be independent of netbsd.h.  */
-#include "netbsd.h"
-
-#undef LIB_GCC
-#define LIB_GCC -lgcc
-#undef NEED_ERRNO
-#endif /* 0 */
-
-
 /* Get most of the stuff from bsd4.3 */
 #include "bsd4-3.h"
 
@@ -42,12 +32,8 @@
 #else
 #define LIBS_SYSTEM -lutil
 #endif
-/* XEmacs change: */
-#ifdef HAVE_NCURSES
-#define LIBS_TERMCAP -lncurses -ltermcap
-#else
+
 #define LIBS_TERMCAP -ltermcap
-#endif
 #define LIB_GCC -lgcc
 
 /* freebsd has POSIX-style pgrp behavior. */

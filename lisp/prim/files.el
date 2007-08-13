@@ -824,39 +824,42 @@ you may or may not want the visited file name to record the specific
 directory where the file was found.  If you *do not* want that, add the logical
 name to this list as a string.")
 
-;(defun find-buffer-visiting (filename)
-;  "Return the buffer visiting file FILENAME (a string).
-;This is like `get-file-buffer', except that it checks for any buffer
-;visiting the same file, possibly under a different name.
-;If there is no such live buffer, return nil."
-;  (let ((buf (get-file-buffer filename))
-;	(truename (abbreviate-file-name (file-truename filename))))
-;    (or buf
-;	(let ((list (buffer-list)) found)
-;	  (while (and (not found) list)
-;	    (save-excursion
-;	      (set-buffer (car list))
-;	      (if (and buffer-file-name
-;		       (string= buffer-file-truename truename))
-;		  (setq found (car list))))
-;	    (setq list (cdr list)))
-;	  found)
-;	(let ((number (nthcdr 10 (file-attributes truename)))
-;	      (list (buffer-list)) found)
-;	  (and number
-;	       (while (and (not found) list)
-;		 (save-excursion
-;		   (set-buffer (car list))
-;		   (if (and buffer-file-number
-;                           (equal buffer-file-number number)
-;			    ;; Verify this buffer's file number
-;			    ;; still belongs to its file.
-;			    (file-exists-p buffer-file-name)
-;			    (equal (nthcdr 10 (file-attributes buffer-file-name))
-;				   number))
-;		       (setq found (car list))))
-;		 (setq list (cdr list))))
-;	  found))))
+;; This function is needed by FSF vc.el.  I hope somebody can make it
+;; work for XEmacs.  -sb.
+(defun find-buffer-visiting (filename)
+  "Return the buffer visiting file FILENAME (a string).
+This is like `get-file-buffer', except that it checks for any buffer
+visiting the same file, possibly under a different name.
+If there is no such live buffer, return nil."
+  (let ((buf (get-file-buffer filename))
+	(truename (abbreviate-file-name (file-truename filename))))
+    (or buf
+	(let ((list (buffer-list)) found)
+	  (while (and (not found) list)
+	    (save-excursion
+	      (set-buffer (car list))
+	      (if (and buffer-file-name
+		       (string= buffer-file-truename truename))
+		  (setq found (car list))))
+	    (setq list (cdr list)))
+	  found)
+	(let ((number (nthcdr 10 (file-attributes truename)))
+	      (list (buffer-list)) found)
+	  (and buffer-file-numbers-unique
+	       number
+	       (while (and (not found) list)
+		 (save-excursion
+		   (set-buffer (car list))
+		   (if (and buffer-file-number
+                           (equal buffer-file-number number)
+			    ;; Verify this buffer's file number
+			    ;; still belongs to its file.
+			    (file-exists-p buffer-file-name)
+			    (equal (nthcdr 10 (file-attributes buffer-file-name))
+				   number))
+		       (setq found (car list))))
+		 (setq list (cdr list))))
+	  found))))
 
 (defun insert-file-contents-literally (filename &optional visit beg end replace)
   "Like `insert-file-contents', q.v., but only reads in the file.
@@ -1010,7 +1013,8 @@ problems will be suppressed."
 (defvar after-find-file-from-revert-buffer nil)
 
 (defun after-find-file (&optional error warn noauto
-				  after-find-file-from-revert-buffer)
+				  after-find-file-from-revert-buffer
+				  nomodes)
   "Called after finding a file and by the default revert function.
 Sets buffer mode, parses local variables.
 Optional args ERROR, WARN, and NOAUTO: ERROR non-nil means there was an
@@ -1019,6 +1023,7 @@ exists an auto-save file more recent than the visited file.
 NOAUTO means don't mess with auto-save mode.
 Fourth arg AFTER-FIND-FILE-FROM-REVERT-BUFFER non-nil
  means this call was from `revert-buffer'.
+Fifth arg NOMODES non-nil means don't alter the file's modes.
 Finishes by calling the functions in `find-file-hooks'."
   (setq buffer-read-only (not (file-writable-p buffer-file-name)))
   (if noninteractive
@@ -1032,9 +1037,9 @@ Finishes by calling the functions in `find-file-hooks'."
 		   (if (and warn
 			    (file-newer-than-file-p (make-auto-save-file-name)
 						    buffer-file-name))
-	       (gettext "Auto save file is newer; consider M-x recover-file")
+		       (format "%s has auto save data; consider M-x recover-file"
 		     (setq not-serious t)
-		     (if error (gettext "(New file)") nil)))
+		     (if error (gettext "(New file)") nil))))
 		  ((not error)
 		   (setq not-serious t)
 		   (gettext "Note: file is write protected"))
@@ -1048,23 +1053,18 @@ Finishes by calling the functions in `find-file-hooks'."
 		   ;; than when we save the buffer, because we want
 		   ;; autosaving to work.
 		   (setq buffer-read-only nil)
-		   (or (file-exists-p (file-name-directory buffer-file-name))
-		       (if (yes-or-no-p
-			    (format
-		       "The directory containing %s does not exist.  Create? "
-			     (abbreviate-file-name buffer-file-name)))
-			   (make-directory (file-name-directory
-                                             buffer-file-name)
-                                           t)))
-		   nil))))
+		   (if (file-exists-p (file-name-directory (directory-file-name (file-name-directory buffer-file-name))))
+		       "Use M-x make-dir RET RET to create the directory"
+		     "Use C-u M-x make-dir RET RET to create directory and its parents")))))
       (if msg
 	  (progn
 	    (message msg)
 	    (or not-serious (sit-for 1 t)))))
     (if (and auto-save-default (not noauto))
 	(auto-save-mode t)))
-  (normal-mode t)
-  (run-hooks 'find-file-hooks))
+  (unless nomodes
+    (normal-mode t)
+    (run-hooks 'find-file-hooks)))
 
 (defun normal-mode (&optional find-file)
   "Choose the major mode for this buffer automatically.
@@ -1956,7 +1956,7 @@ We don't want excessive versions piling up, so there are variables
 `dired-kept-versions' controls dired's clean-directory (.) command.
 If `delete-old-versions' is nil, system will query user
  before trimming versions.  Otherwise it does it silently."
-  (interactive "p")
+  (interactive "_p")
   (let ((modp (buffer-modified-p))
 	(large (> (buffer-size) 50000))
 	(make-backup-files (or (and make-backup-files (not (eq args 0)))
@@ -2418,11 +2418,17 @@ hook functions.
 If `revert-buffer-function' is used to override the normal revert
 mechanism, this hook is not used.")
 
-(defun revert-buffer (&optional ignore-auto noconfirm)
+(defun revert-buffer (&optional ignore-auto noconfirm preserve-modes)
   "Replace the buffer text with the text of the visited file on disk.
 This undoes all changes since the file was visited or saved.
 With a prefix argument, offer to revert from latest auto-save file, if
 that is more recent than the visited file.
+
+This command also works for special buffers that contain text which
+doesn't come from a file, but reflects some other data base instead:
+for example, Dired buffers and buffer-list buffers.  In these cases,
+it reconstructs the buffer contents from the appropriate data base.
+
 When called from Lisp, the first argument is IGNORE-AUTO; only offer
 to revert from the auto-save file when this is nil.  Note that the
 sense of this argument is the reverse of the prefix argument, for the
@@ -2431,6 +2437,9 @@ to nil.
 
 Optional second argument NOCONFIRM means don't ask for confirmation at
 all.
+
+Optional third argument PRESERVE-MODES non-nil means don't alter
+the files modes.  Normally we reinitialize them using `normal-mode'.
 
 If the value of `revert-buffer-function' is non-nil, it is called to
 do the work.
@@ -2498,8 +2507,9 @@ beginning and `after-revert-hook' at the end."
 	       ;; Recompute the truename in case changes in symlinks
 	       ;; have changed the truename.
 	       ;XEmacs: already done by insert-file-contents
-	       ;(compute-buffer-file-truename)
-	       (after-find-file nil nil t t)
+	       ;;(setq buffer-file-truename
+		     ;;(abbreviate-file-name (file-truename buffer-file-name)))
+	       (after-find-file nil nil t t preserve-modes)
 	       ;; Run after-revert-hook as it was before we reverted.
 	       (setq-default revert-buffer-internal-hook global-hook)
 	       (if local-hook-p

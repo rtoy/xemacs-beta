@@ -536,7 +536,13 @@
 	      (mouse-avoidance-mode 'banish))
 	  (beep)
 	  (message "This option requires a window system."))
-	:style toggle :selected (and mouse-avoidance-mode window-system)])
+	:style toggle :selected (and mouse-avoidance-mode window-system)]
+       ["strokes-mode"
+	(if (equal (device-type) 'x)
+	    (strokes-mode)
+	  (beep)
+	  (message "This option requires a window system."))
+	:style toggle :selected (and strokes-enabled-p window-system)])
       ("Open URLs With"
        ["Emacs-W3" (setq browse-url-browser-function 'browse-url-w3)
 	:style radio

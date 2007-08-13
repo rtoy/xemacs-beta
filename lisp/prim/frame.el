@@ -837,9 +837,8 @@ Calls the internal function cde-start-drag-internal to do the actual work."
     (or (get mode 'frame-name)
 	get-frame-for-buffer-default-frame-name)))
 
-
-(defun get-frame-for-buffer-make-new-frame (buffer &optional frame-name)
-  (let* ((fr (make-frame (and frame-name (list (cons 'name frame-name)))))
+(defun get-frame-for-buffer-make-new-frame (buffer &optional frame-name plist)
+  (let* ((fr (make-frame plist))
 	 (w (frame-root-window fr)))
     ;;
     ;; Make the one buffer being displayed in this newly created
@@ -874,6 +873,7 @@ This is a subroutine of `get-frame-for-buffer' (which see)."
       ;; name.  That always takes priority.
       ;;
       (let ((limit (get name 'instance-limit))
+	    (defaults (get name 'frame-defaults))
 	    (matching-frames '())
 	    frames frame already-visible)
 	;; Sort the list so that iconic frames will be found last.  They
@@ -911,7 +911,11 @@ This is a subroutine of `get-frame-for-buffer' (which see)."
 	      ((or (null matching-frames)
 		   (eq limit 0) ; means create with reckless abandon
 		   (and limit (< (length matching-frames) limit)))
-	       (get-frame-for-buffer-make-new-frame buffer name))
+	       (get-frame-for-buffer-make-new-frame
+		buffer
+		name
+		(alist-to-plist (acons 'name name
+				       (plist-to-alist defaults)))))
 	      (t
 	       ;; do not switch any of the window/buffer associations in an
 	       ;; existing frame; this function only picks a frame; the

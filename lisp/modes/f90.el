@@ -143,6 +143,10 @@
 
 ;;; Code:
 
+(eval-when-compile
+  (defvar deactivate-mark)
+  (defvar mark-active))
+
 (defconst bug-f90-mode "T.Einarsson@clab.ericsson.se"
   "Address of mailing list for F90 mode bugs.")
 
@@ -488,19 +492,24 @@ whether to blink the matching beginning."
 (if f90-mode-syntax-table
     ()
   (setq f90-mode-syntax-table (make-syntax-table))
-  (modify-syntax-entry ?\! "<" f90-mode-syntax-table)  ; beg. comment
-  (modify-syntax-entry ?\n ">" f90-mode-syntax-table)  ; end comment
-  (modify-syntax-entry ?_ "w" f90-mode-syntax-table)   ; underscore in names
+  (modify-syntax-entry ?\! "<"  f90-mode-syntax-table) ; beg. comment
+  (modify-syntax-entry ?\n ">"  f90-mode-syntax-table) ; end comment
   (modify-syntax-entry ?\' "\"" f90-mode-syntax-table) ; string quote
   (modify-syntax-entry ?\" "\"" f90-mode-syntax-table) ; string quote
-  (modify-syntax-entry ?\` "w" f90-mode-syntax-table)  ; for abbrevs
-  (modify-syntax-entry ?\r " " f90-mode-syntax-table)  ; return is whitespace
-  (modify-syntax-entry ?+ "." f90-mode-syntax-table)  
-  (modify-syntax-entry ?- "." f90-mode-syntax-table)
-  (modify-syntax-entry ?= "." f90-mode-syntax-table)
-  (modify-syntax-entry ?* "." f90-mode-syntax-table)
-  (modify-syntax-entry ?/ "." f90-mode-syntax-table)
-  (modify-syntax-entry ?\\ "/" f90-mode-syntax-table)) ; escape chars
+  (modify-syntax-entry ?\` "w"  f90-mode-syntax-table) ; for abbrevs
+  (modify-syntax-entry ?\r " "  f90-mode-syntax-table) ; return is whitespace
+  (modify-syntax-entry ?+  "."  f90-mode-syntax-table)  
+  (modify-syntax-entry ?-  "."  f90-mode-syntax-table)
+  (modify-syntax-entry ?=  "."  f90-mode-syntax-table)
+  (modify-syntax-entry ?*  "."  f90-mode-syntax-table)
+  (modify-syntax-entry ?/  "."  f90-mode-syntax-table)
+  (modify-syntax-entry ?\\ "/"  f90-mode-syntax-table)
+  (modify-syntax-entry ?.  "."  f90-mode-syntax-table)
+  (modify-syntax-entry ?%  "."  f90-mode-syntax-table) ; not in f77
+  (modify-syntax-entry ?$  "_"  f90-mode-syntax-table)
+  (modify-syntax-entry ?@  "_"  f90-mode-syntax-table)
+  (modify-syntax-entry ?_  "_"  f90-mode-syntax-table)
+  ) ; escape chars
 
 ;; keys
 (defvar f90-mode-map ()

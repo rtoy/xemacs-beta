@@ -43,9 +43,6 @@ Boston, MA 02111-1307, USA.  */
 #include "sysfile.h"
 #include "systime.h"
 
-/* Hack to get version number in stack backtraces */
-#include "xemacs-version.h"
-
 #if defined (HAVE_LOCALE_H) && \
    (defined (I18N2) || defined (I18N3) || defined (I18N4))
 #include <locale.h>

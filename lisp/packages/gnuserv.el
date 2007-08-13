@@ -1,7 +1,7 @@
 ;;; gnuserv.el --- Lisp interface code between Emacs and gnuserv
 ;; Copyright (C) 1989-1997 Free Software Foundation, Inc.
 
-;; Version: 3.1
+;; Version: 3.2
 ;; Author: Andy Norman (ange@hplb.hpl.hp.com), originally based on server.el
 ;;         Hrvoje Niksic <hniksic@srce.hr>
 ;; Keywords: environment, processes, terminals
@@ -77,7 +77,7 @@
 ;;; Code:
 
 (defconst gnuserv-rcs-version
-  "$Id: gnuserv.el,v 1.8 1997/05/18 03:40:06 steve Exp $")
+  "$Id: gnuserv.el,v 1.9 1997/05/23 01:36:30 steve Exp $")
 
 (defgroup gnuserv nil
   "The gnuserv suite of programs to talk to Emacs from outside."
@@ -151,6 +151,16 @@ It takes one argument, a file name to view."
   "*Hook run when done editing a buffer for the Emacs server.
 The hook functions are called after the file has been visited, with the
 current buffer set to the visiting buffer."
+  :type 'hook
+  :group 'gnuserv)
+
+(defcustom gnuserv-init-hook nil
+  "*Hook run after the server is started."
+  :type 'hook
+  :group 'gnuserv)
+
+(defcustom gnuserv-shutdown-hook nil
+  "*Hook run before the server exits."
   :type 'hook
   :group 'gnuserv)
 
@@ -230,7 +240,8 @@ Each element is a gnuclient structure that identifies a client.")
 ;; identification, so we'll make a "minor mode".
 (defvar gnuserv-minor-mode nil)
 (make-variable-buffer-local 'gnuserv-mode)
-(pushnew '(gnuserv-minor-mode " Server") minor-mode-alist)
+(pushnew '(gnuserv-minor-mode " Server") minor-mode-alist
+	  :test 'equal)
 
 
 ;; Sample gnuserv-frame functions
@@ -263,14 +274,45 @@ visual screen.  Totally visible frames are preferred.  If none found, return nil
 
 ;;; Communication functions
 
+;; We used to restart the server here, but it's too risky -- if
+;; something goes awry, it's too easy to wind up in a loop.
 (defun gnuserv-sentinel (proc msg)
   (case (process-status proc)
-    (exit (message "Gnuserv subprocess exited; restarting")
-	  ;; This will also kill all the existing clients.
-	  (gnuserv-start-1))
-    (closed (message "Gnuserv subprocess closed"))
-    (signal (message "Gnuserv subprocess killed"))))
+    (exit
+     (message
+      (substitute-command-keys
+       "Gnuserv subprocess exited; restart with `\\[gnuserv-start]'"))
+     (gnuserv-prepare-shutdown))
+    (signal
+     (message
+      (substitute-command-keys
+       "Gnuserv subprocess killed; restart with `\\[gnuserv-start]'"))
+     (gnuserv-prepare-shutdown))
+    (closed
+     (message
+      (substitute-command-keys
+       "Gnuserv subprocess closed; restart with `\\[gnuserv-start]'"))
+     (gnuserv-prepare-shutdown))))
 
+;; This function reads client requests from our current server.  Every
+;; client is identified by a unique ID within the server
+;; (incidentally, the same ID is the file descriptor the server uses
+;; to communicate to client).
+;;
+;; The request string can arrive in several chunks.  As the request
+;; ends with \C-d, we check for that character at the end of string.
+;; If not found, keep reading, and concatenating to former strings.
+;; So, if at first read we receive "5 (gn", that text will be stored
+;; to gnuserv-string.  If we then receive "us)\C-d", the two will be
+;; concatenated, `current-client' will be set to 5, and `(gnus)' form
+;; will be evaluated.
+;;
+;; Server will send the following:
+;;
+;; "ID <text>\C-d"  (no quotes)
+;;
+;;  ID    - file descriptor of the given client;
+;; <text> - the actual contents of the request.
 (defun gnuserv-process-filter (proc string)
   "Process gnuserv client requests to execute Emacs commands."
   (setq gnuserv-string (concat gnuserv-string string))
@@ -298,6 +340,16 @@ visual screen.  Totally visible frames are preferred.  If none found, return nil
 	   (error "%s: invalid response from gnuserv" gnuserv-string)
 	   (setq gnuserv-string "")))))
 
+;; This function is somewhat of a misnomer.  Actually, we write to the
+;; server (using `process-send-string' to gnuserv-process), which
+;; interprets what we say and forwards it to the client.  The
+;; incantation server understands is (from gnuserv.c):
+;;
+;; "FD/LEN:<text>\n"  (no quotes)
+;;    FD     - file descriptor of the given client (which we obtained from
+;;             the server earlier);
+;;    LEN    - length of the stuff we are about to send;
+;;    <text> - the actual contents of the request.
 (defun gnuserv-write-to-client (client-id form)
   "Write the given form to the given client via the gnuserv process."
   (when (eq (process-status gnuserv-process) 'run)
@@ -306,7 +358,6 @@ visual screen.  Totally visible frames are preferred.  If none found, return nil
 			   (length result) result)))
       (process-send-string gnuserv-process s))))
 
-
 ;; The following two functions are helper functions, used by
 ;; gnuclient.
 
@@ -325,82 +376,90 @@ This order is important as not to keep the client waiting."
 
 ;; "Execute" a client connection, called by gnuclient.  This is the
 ;; backbone of gnuserv.el.
-(defun gnuserv-edit-files (type list &optional flags)
+(defun gnuserv-edit-files (type list &rest flags)
   "For each (line-number . file) pair in LIST, edit the file at line-number.
 The visited buffers are memorized, so that when \\[gnuserv-edit] is invoked
 in such a buffer, or when it is killed, or the client's device deleted, the
 client will be invoked that the edit is finished.
 
 TYPE should either be a (tty TTY TERM PID) list, or (x DISPLAY) list.
-If FLAGS is `quick', just edit the files in Emacs.
-If FLAGS is `view', view the files read-only."
-  (or (not flags)
-      (memq flags '(quick view))
-      (error "Invalid flag %s" flags))
-  (let* ((old-device-num (length (device-list)))
-	 (new-frame nil)
-	 (dest-frame (if (functionp gnuserv-frame)
-			 (funcall gnuserv-frame (car type))
-		       gnuserv-frame))
-	 ;; The gnuserv-frame dependencies are ugly.
-	 (device (cond ((frame-live-p dest-frame)
-			(frame-device dest-frame))
-		       ((null dest-frame)
-			(case (car type)
-			  (tty (apply 'make-tty-device (cdr type)))
-			  (x   (make-x-device (cadr type)))
-			  (t   (error "Invalid device type"))))
-		       (t
-			(selected-device))))
-	 (frame (cond ((frame-live-p dest-frame)
-		       dest-frame)
-		      ((null dest-frame)
-		       (setq new-frame (make-frame nil device))
-		       new-frame)
-		      (t (selected-frame))))
-	 (client (make-gnuclient :id gnuserv-current-client
-				 :device device
-				 :frame new-frame)))
-    (setq gnuserv-current-client nil)
-    ;; If the device was created by this client, push it to the list.
-    (and (/= old-device-num (length (device-list)))
-	 (push device gnuserv-devices))
-    ;; Visit all the listed files.
-    (while list
-      (let ((line (caar list)) (path (cdar list)))
-	(select-frame frame)
-	;; Visit the file.
-	(funcall (if (eq flags 'view)
-		     gnuserv-view-file-function
-		   gnuserv-find-file-function)
-		 path)
-	(goto-line line)
-	(run-hooks 'gnuserv-visit-hook)
-	;; Don't memorize the quick and view buffers.
-	(when (null flags)
-	  (pushnew (current-buffer) (gnuclient-buffers client))
-	  (setq gnuserv-minor-mode t))
-	(pop list)))
-    (cond ((and flags (device-on-window-system-p device))
-	   ;; Exit if on X device, and quick or view.	   
-	   ;; NOTE: if the client is to finish now, it must absolutely
-	   ;; /not/ be included to the list of clients.  This way the
-	   ;; client-ids should be unique.
-	   (gnuserv-write-to-client (gnuclient-id client) nil))
-	  (t
-	   ;; Else, the client gets a vote.
-	   (push client gnuserv-clients)
-	   ;; Explain buffer exit options.  If dest-frame is nil, the
-	   ;; user can exit via `delete-frame'.  OTOH, if FLAGS are
-	   ;; nil and there are some buffers, the user can exit via
-	   ;; `gnuserv-edit'.
-	   (if (and (null flags)
-		    (gnuclient-buffers client))
-	       (message (substitute-command-keys
-			 "Type `\\[gnuserv-edit]' to finish editing"))
-	     (or dest-frame
-		 (message (substitute-command-keys
-			   "Type `\\[delete-frame]' to finish editing"))))))))
+If a flag is `quick', just edit the files in Emacs.
+If a flag is `view', view the files read-only."
+  (let (quick view)
+    (mapc (lambda (flag)
+	    (case flag
+	      (quick (setq quick t))
+	      (view  (setq view t))
+	      (t     (error "Invalid flag %s" flag))))
+	  flags)
+    (let* ((old-device-num (length (device-list)))
+	   (new-frame nil)
+	   (dest-frame (if (functionp gnuserv-frame)
+			   (funcall gnuserv-frame (car type))
+			 gnuserv-frame))
+	   ;; The gnuserv-frame dependencies are ugly.
+	   (device (cond ((frame-live-p dest-frame)
+			  (frame-device dest-frame))
+			 ((null dest-frame)
+			  (case (car type)
+			    (tty (apply 'make-tty-device (cdr type)))
+			    (x   (make-x-device (cadr type)))
+			    (t   (error "Invalid device type"))))
+			 (t
+			  (selected-device))))
+	   (frame (cond ((frame-live-p dest-frame)
+			 dest-frame)
+			((null dest-frame)
+			 (setq new-frame (make-frame nil device))
+			 new-frame)
+			(t (selected-frame))))
+	   (client (make-gnuclient :id gnuserv-current-client
+				   :device device
+				   :frame new-frame)))
+      (setq gnuserv-current-client nil)
+      ;; If the device was created by this client, push it to the list.
+      (and (/= old-device-num (length (device-list)))
+	   (push device gnuserv-devices))
+      (and (frame-iconified-p frame)
+	   (deiconify-frame frame))
+      ;; Visit all the listed files.
+      (while list
+	(let ((line (caar list)) (path (cdar list)))
+	  (select-frame frame)
+	  ;; Visit the file.
+	  (funcall (if view
+		       gnuserv-view-file-function
+		     gnuserv-find-file-function)
+		   path)
+	  (goto-line line)
+	  (run-hooks 'gnuserv-visit-hook)
+	  ;; Don't memorize the quick and view buffers.
+	  (unless (or quick view)
+	    (pushnew (current-buffer) (gnuclient-buffers client))
+	    (setq gnuserv-minor-mode t))
+	  (pop list)))
+      (cond
+       ((and (or quick view)
+	     (device-on-window-system-p device))
+	;; Exit if on X device, and quick or view.  NOTE: if the
+	;; client is to finish now, it must absolutely /not/ be
+	;; included to the list of clients.  This way the client-ids
+	;; should be unique.
+	(gnuserv-write-to-client (gnuclient-id client) nil))
+       (t
+	;; Else, the client gets a vote.
+	(push client gnuserv-clients)
+	;; Explain buffer exit options.  If dest-frame is nil, the
+	;; user can exit via `delete-frame'.  OTOH, if FLAGS are nil
+	;; and there are some buffers, the user can exit via
+	;; `gnuserv-edit'.
+	(if (and (not (or quick view))
+		 (gnuclient-buffers client))
+	    (message (substitute-command-keys
+		      "Type `\\[gnuserv-edit]' to finish editing"))
+	  (or dest-frame
+	      (message (substitute-command-keys
+			"Type `\\[delete-frame]' to finish editing")))))))))
 
 
 ;;; Functions that hook into Emacs in various way to enable operation
@@ -408,7 +467,9 @@ If FLAGS is `view', view the files read-only."
 ;; Defined later.
 (add-hook 'kill-emacs-hook 'gnuserv-kill-all-clients t)
 
-;; A helper function; used by others.
+;; A helper function; used by others.  Try avoiding it whenever
+;; possible, because it is slow, and conses a list.  Use
+;; `gnuserv-buffer-p' when appropriate, for instance.
 (defun gnuserv-buffer-clients (buffer)
   "Returns a list of clients to which BUFFER belongs."
   (let ((client gnuserv-clients)
@@ -418,6 +479,13 @@ If FLAGS is `view', view the files read-only."
 	  (push (car client) res))
       (pop client))
     res))
+
+;; Like `gnuserv-buffer-clients', but returns a boolean; doesn't
+;; collect a list.
+(defun gnuserv-buffer-p (buffer)
+  (member* buffer gnuserv-clients
+	   :test 'memq
+	   :key 'gnuclient-buffers))
 
 ;; This function makes sure that a killed buffer is deleted off the
 ;; list for the particular client.
@@ -443,7 +511,7 @@ editing has ended."
 ;; living client.
 (defun gnuserv-kill-buffer-query-function ()
   (or gnuserv-kill-quietly
-      (not (gnuserv-buffer-clients (current-buffer)))
+      (not (gnuserv-buffer-p (current-buffer)))
       (yes-or-no-p
        (format "Buffer %s belongs to gnuserv client(s); kill anyway? "
 	       (current-buffer)))))
@@ -538,7 +606,7 @@ the function will not remove the frames associated with the client."
 ;;; Higher-level functions
 
 ;; Choose a `next' server buffer, according to several criteria, and
-;; return it.  If none appropriate are found, return nil.
+;; return it.  If none are found, return nil.
 (defun gnuserv-next-buffer ()
   (let* ((frame (selected-frame))
 	 (device (selected-device))
@@ -555,18 +623,20 @@ the function will not remove the frames associated with the client."
        (setq client
 	     (car (member* device gnuserv-clients :key 'gnuclient-device))))
       (car (gnuclient-buffers client)))
-     ;; Else, try to find just any client, and return its first buffer.
-     (gnuserv-clients
-      (car (gnuclient-buffers (car gnuserv-clients))))
-      ;; Oh, give up.
+     ;; Else, try to find any client with at least one buffer, and
+     ;; return its first buffer.
+     ((setq client
+	    (car (member-if-not 'null gnuserv-clients
+				:key 'gnuserv-buffers)))
+      (car (gnuclient-buffers client)))
+     ;; Oh, give up.
      (t nil))))
 
 (defun gnuserv-buffer-done (buffer)
   "Mark BUFFER as \"done\" for its client(s).
-Calls `gnuserv-done-function' and returns another gnuserv buffer as a
-suggestion for the new current buffer."
+Does the save/backup queries first, and calls `gnuserv-done-function'."
   ;; Check whether this is the real thing.
-  (unless (gnuserv-buffer-clients buffer)
+  (unless (gnuserv-buffer-p buffer)
     (error "%s does not belong to a gnuserv client" buffer))
   ;; Backup/ask query.
   (if (gnuserv-temp-file-p buffer)
@@ -578,8 +648,7 @@ suggestion for the new current buffer."
     (if (and (buffer-modified-p)
 	     (y-or-n-p (concat "Save file " buffer-file-name "? ")))
 	(save-buffer buffer)))
-  (gnuserv-buffer-done-1 buffer)
-  (gnuserv-next-buffer))
+  (gnuserv-buffer-done-1 buffer))
 
 ;; Called by `gnuserv-start-1' to clean everything.  Hooked into
 ;; `kill-emacs-hook', too.
@@ -587,27 +656,51 @@ suggestion for the new current buffer."
   "Kill all the gnuserv clients.  Ruthlessly."
   (mapc 'gnuserv-kill-client gnuserv-clients))
 
-;; Actually start the process.  Kills all the clients before-hand.
-(defun gnuserv-start-1 (&optional leave-dead)
+;; This serves to run the hook and reset
+;; `allow-deletion-of-last-visible-frame'.
+(defun gnuserv-prepare-shutdown ()
+  (setq allow-deletion-of-last-visible-frame nil)
+  (run-hooks 'gnuserv-shutdown-hook))
+
+;; This is a user-callable function, too.
+(defun gnuserv-shutdown ()
+  "Shutdown the gnuserv server, if one is currently running.
+All the clients will be disposed of via the normal methods."
+  (interactive)
   (gnuserv-kill-all-clients)
   (when gnuserv-process
     (set-process-sentinel gnuserv-process nil)
+    (gnuserv-prepare-shutdown)
     (condition-case ()
 	(delete-process gnuserv-process)
-      (error nil)))
+      (error nil))
+    (setq gnuserv-process nil)
+    (message "Killed server")))
+
+;; Actually start the process.  Kills all the clients before-hand.
+(defun gnuserv-start-1 (&optional leave-dead)
+  ;; Shutdown the existing server, if any.
+  (gnuserv-shutdown)
   ;; If we already had a server, clear out associated status.
   (unless leave-dead
-    (setq gnuserv-string "")
-    (setq gnuserv-current-client nil)
+    (setq gnuserv-string ""
+	  gnuserv-current-client nil)
     (let ((process-connection-type t))
-      (setq gnuserv-process 
+      (setq gnuserv-process
 	    (start-process "gnuserv" nil gnuserv-program)))
     (set-process-sentinel gnuserv-process 'gnuserv-sentinel)
     (set-process-filter gnuserv-process 'gnuserv-process-filter)
-    (process-kill-without-query gnuserv-process)))
+    (process-kill-without-query gnuserv-process)
+    (setq allow-deletion-of-last-visible-frame t)
+    (run-hooks 'gnuserv-init-hook)))
 
 
 ;;; User-callable functions:
+
+;;;###autoload
+(defun gnuserv-running-p ()
+  "Return non-nil if a gnuserv process is running from this XEmacs session."
+  (not (not gnuserv-process)))
 
 ;;;###autoload
 (defun gnuserv-start (&optional leave-dead)
@@ -618,35 +711,44 @@ this Emacs job.  See the gnuserv(1) manual page for more details.
 
 Prefix arg means just kill any existing server communications subprocess."
   (interactive "P")
-  ;; kill it dead!
   (and gnuserv-process
        (not leave-dead)
        (message "Restarting gnuserv"))
   (gnuserv-start-1 leave-dead))
 
-;;;###autoload
-(defun gnuserv-edit (&optional arg)
+(defun gnuserv-edit (&optional count)
   "Mark the current gnuserv editing buffer as \"done\", and switch to next one.
 
-The `gnuserv-done-function' is used to dispose of the buffer after marking it
-as done; it is `kill-buffer' by default.
+Run with a numeric prefix argument, repeat the operation that number
+of times.  If given a universal prefix argument, close all the buffers
+of this buffer's clients.
+
+The `gnuserv-done-function' (bound to `kill-buffer' by default) is
+called to dispose of the buffer after marking it as done.
 
 Files that match `gnuserv-temp-file-regexp' are considered temporary and
 are saved unconditionally and backed up if `gnuserv-make-temp-file-backup'
-is non-nil.  They are disposed of using `gnuserv-done-temp-file-function'.
+is non-nil.  They are disposed of using `gnuserv-done-temp-file-function'
+(also bound to `kill-buffer' by default).
 
-When all of a client's buffers are marked as \"done\", the client is notified.
-
-If invoked with a prefix argument, or if there is no gnuserv process
-running, only starts server process.  Invoked with \\[gnuserv-edit]."
+When all of a client's buffers are marked as \"done\", the client is notified."
   (interactive "P")
-  (if (or arg (not gnuserv-process)
-	  (memq (process-status gnuserv-process) '(signal exit)))
-      (gnuserv-start)
-    (switch-to-buffer (or (gnuserv-buffer-done (current-buffer))
-			  (current-buffer)))))
+  (when (null count)
+    (setq count 1))
+  (cond ((numberp count)
+	 (let (next)
+	   (while (natnump (decf count))
+	     (gnuserv-buffer-done (current-buffer))
+	     (setq next (gnuserv-next-buffer))
+	     (when next
+	       (switch-to-buffer next)))))
+	(count
+	   (let* ((buf (current-buffer))
+		  (clients (gnuserv-buffer-clients buf)))
+	     (unless clients
+	       (error "%s does not belong to a gnuserv client" buf))
+	     (mapc 'gnuserv-kill-client (gnuserv-buffer-clients buf))))))
 
-;;;###autoload
 (global-set-key "\C-x#" 'gnuserv-edit)
 
 (provide 'gnuserv)

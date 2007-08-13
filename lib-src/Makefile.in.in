@@ -105,7 +105,7 @@ INSTALL_DATA = @INSTALL_DATA@
 
 /* Things that a user might actually run,
    which should be installed in bindir. */
-INSTALLABLES = etags ctags b2m gnuclient gnuattach gnudoit
+INSTALLABLES = etags ctags b2m gnuclient
 INSTALLABLE_SCRIPTS = rcs-checkin pstogif install-sid send-pr
 
 /* Things that Emacs runs internally, or during the build process,
@@ -270,9 +270,9 @@ C_SWITCH_X=$(c_switch_window_system)
 
 /* We need to #define emacs to get the right versions of some files. */
 
-lib_src_cppflags =  -Demacs -I../src -I${srcdir} -I${srcdir}/../src $(CPPFLAGS)
+lib_src_cppflags = -Demacs -I../src -I${srcdir} -I${srcdir}/../src $(CPPFLAGS)
 cflags  = $(CFLAGS) $(lib_src_cppflags) $(c_switch_general)
-ldflags = $(ld_switch_general) $(LDFLAGS) $(ld_libs_general)
+ldflags = $(LDFLAGS) $(ld_switch_general) $(ld_libs_general)
 
 /* CPP_CFLAGS =  $(c_switch_general) -Demacs -DHAVE_CONFIG_H \ */
 /*    -I. -I../src -I${srcdir} -I${srcdir}/../src ${CPPFLAGS} ${CFLAGS} */
@@ -479,8 +479,8 @@ make-po: ${srcdir}/make-po.c
 /* Why oh why does HP not include half of the standard X distribution? */
 
 #ifdef HAVE_XAUTH
-cflags_gnuserv = $(CFLAGS) $(c_switch_all) $(lib_src_cppflags)
-ldflags_gnuserv = $(ld_switch_all) $(LDFLAGS) $(ld_libs_all)
+cflags_gnuserv = $(CFLAGS) $(lib_src_cppflags) $(c_switch_all)
+ldflags_gnuserv = $(LDFLAGS) $(ld_switch_all) $(ld_libs_all)
 #else
 cflags_gnuserv = ${cflags}
 ldflags_gnuserv = ${ldflags}
@@ -489,10 +489,6 @@ gnuslib.o: ${srcdir}/gnuslib.c ${srcdir}/gnuserv.h ../src/config.h
 	$(CC) -c ${cflags_gnuserv} ${srcdir}/gnuslib.c
 gnuclient: ${srcdir}/gnuclient.c gnuslib.o ${srcdir}/gnuserv.h 
 	$(CC) ${cflags_gnuserv} -o gnuclient ${srcdir}/gnuclient.c gnuslib.o $(ldflags_gnuserv)
-gnuattach: ${srcdir}/gnuclient.c gnuslib.o ${srcdir}/gnuserv.h gnuclient
-	$(CC) ${cflags_gnuserv} -o gnuattach -DGNUATTACH ${srcdir}/gnuclient.c gnuslib.o $(ldflags_gnuserv)
-gnudoit: ${srcdir}/gnudoit.c gnuslib.o ${srcdir}/gnuserv.h 
-	$(CC) ${cflags_gnuserv} -o gnudoit ${srcdir}/gnudoit.c gnuslib.o $(ldflags_gnuserv)
 gnuserv: ${srcdir}/gnuserv.c gnuslib.o ${srcdir}/gnuserv.h
 	$(CC) ${cflags_gnuserv} -o gnuserv ${srcdir}/gnuserv.c gnuslib.o $(ldflags_gnuserv)
 

@@ -274,8 +274,13 @@ flag.  For Linux, `/dev/audio' is required for SunAudio files and
 `/dev/dsp' is required for raw data and WAVE format files.
 
 The `--rel-alloc' option can be used to either enable or disable use
-of the relocating allocator.  Generally, it's best to go with the
-default configuration for your system.
+of the relocating allocator.  Turning on --rel-alloc will allow XEmacs
+to return unused memory to the operating system, thereby reducing its
+memory footprint.  However, it may make XEmacs runs more slowly,
+especially if your system's `mmap' implemntation is missing or
+inefficient.  Generally, it's best to go with the default
+configuration for your system.  You can tweak this based on how you
+use XEmacs, and the memory and cpu resources available on your system.
 
 The `--use-system-malloc' option can be use to either enable or
 disable use of the system malloc.  Generally, it's best to go with the
@@ -302,11 +307,11 @@ following options require Mule support:
 The `--with-xim' option enables use of the X11 XIM mechanism to allow
 an input method to input text into XEmacs.  The input method is shared
 among all the X applications sharing an X display and using the same
-language.  The XIM support comes in 2 flavors: motif, and xlib.  If
-Motif support (the XmIm* set of functions) is available, it is
-preferred when available.  The xlib XIM support does not work quite as
-well, so by default if the XmIm* routines are autodetected, then the
-default is `--with-xim=motif', else `--with-xim=no'.
+language.  The XIM support comes in two flavors: `motif' and `xlib'.
+The Motif support (the XmIm* functions) is preferred when available.
+The xlib XIM support does not work quite as well.  The XIM support has
+been known to cause crashes due to bugs in X11, so it defaults to `no'
+except on Solaris, where it is known to be stable.
 
 The `--with-canna' option enables the use of the Canna Japanese input
 method.

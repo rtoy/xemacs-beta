@@ -1910,7 +1910,10 @@ create_text_block (struct window *w, struct display_line *dl,
     }
   else if (MINI_WINDOW_P (w) && !active_minibuffer)
     data.cursor_type = NO_CURSOR;
-  else if (w == XWINDOW (FRAME_SELECTED_WINDOW (device_selected_frame (d))))
+  else if (w == XWINDOW (FRAME_SELECTED_WINDOW (f)) &&
+	   EQ(DEVICE_CONSOLE(d), Vselected_console) &&
+	   d == XDEVICE(CONSOLE_SELECTED_DEVICE(XCONSOLE(DEVICE_CONSOLE(d))))&&
+	   f == XFRAME(DEVICE_SELECTED_FRAME(d)))
     {
       data.bi_cursor_bufpos = BI_BUF_PT (b);
       data.cursor_type = CURSOR_ON;
@@ -4931,7 +4934,8 @@ redisplay_window (Lisp_Object window, int skip_selected)
   int echo_active = 0;
   int startp = 1;
   int pointm;
-  int selected;
+  int selected_in_its_frame;
+  int selected_globally;
   int skip_output = 0;
   int truncation_changed;
   int inactive_minibuffer =
@@ -4958,9 +4962,13 @@ redisplay_window (Lisp_Object window, int skip_selected)
     }
 
   /* Is this window the selected window on its frame? */
-  selected =
-    (w == XWINDOW (FRAME_SELECTED_WINDOW (device_selected_frame (d))));
-  if (skip_selected && selected)
+  selected_in_its_frame = (w == XWINDOW (FRAME_SELECTED_WINDOW (f)));
+  selected_globally =
+      selected_in_its_frame &&
+      EQ(DEVICE_CONSOLE(d), Vselected_console) &&
+      XDEVICE(CONSOLE_SELECTED_DEVICE(XCONSOLE(DEVICE_CONSOLE(d)))) == d &&
+      XFRAME(DEVICE_SELECTED_FRAME(d)) == f;
+  if (skip_selected && selected_in_its_frame)
     return;
 
   /* It is possible that the window is not fully initialized yet. */
@@ -4979,7 +4987,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
     pointm = 1;
   else
     {
-      if (selected)
+      if (selected_globally)
 	{
 	  pointm = BUF_PT (b);
 	}
@@ -5051,7 +5059,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
 	{
 	  pointm = point_at_center (w, DESIRED_DISP, 0, 0);
 
-	  if (selected)
+	  if (selected_globally)
 	    BUF_SET_PT (b, pointm);
 
 	  Fset_marker (w->pointm[DESIRED_DISP], make_int (pointm),
@@ -5079,7 +5087,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
       /* Check if the cursor has actually moved. */
       if (EQ (Fmarker_buffer (w->last_point[CURRENT_DISP]), w->buffer)
 	  && pointm == marker_position (w->last_point[CURRENT_DISP])
-	  && selected
+	  && selected_globally
 	  && !w->windows_changed
 	  && !f->clip_changed
 	  && !f->extents_changed
@@ -5119,7 +5127,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
 		      goto regeneration_done;
 		    }
 		}
-	      else if (!selected && !f->point_changed)
+	      else if (!selected_in_its_frame && !f->point_changed)
 		{
 		  if (f->modeline_changed)
 		    regenerate_modeline (w);
@@ -5679,7 +5687,10 @@ window_line_number (struct window *w, int type)
   struct device *d = XDEVICE (XFRAME (w->frame)->device);
   struct buffer *b = XBUFFER (w->buffer);
   Bufpos end =
-    ((w == XWINDOW (FRAME_SELECTED_WINDOW (device_selected_frame (d))))
+    (((w == XWINDOW (FRAME_SELECTED_WINDOW (device_selected_frame (d)))) &&
+      EQ(DEVICE_CONSOLE(d), Vselected_console) &&
+      XDEVICE(CONSOLE_SELECTED_DEVICE(XCONSOLE(DEVICE_CONSOLE(d)))) == d &&
+      EQ(DEVICE_SELECTED_FRAME(d), w->frame))
      ? BUF_PT (b)
      : marker_position (w->pointm[type]));
   int lots = 999999999;

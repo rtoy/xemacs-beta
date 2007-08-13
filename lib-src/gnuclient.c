@@ -124,6 +124,9 @@ initialize_signals ()
   signal (SIGHUP, pass_signal_to_emacs);
   signal (SIGQUIT, pass_signal_to_emacs);
   signal (SIGINT, pass_signal_to_emacs);
+#ifdef SIGWINCH
+  signal (SIGWINCH, pass_signal_to_emacs);
+#endif
 
   /* We want emacs to realize that we are resuming */
   signal (SIGCONT, tell_emacs_to_resume);
@@ -190,234 +193,395 @@ filename_expand (char *fullpath, char *filename)
 
 } /* filename_expand */
 
+/* Encase the string in quotes, escape all the backslashes and quotes
+   in string.  */
+char *
+clean_string (CONST char *s)
+{
+  int i = 0;
+  char *p, *res;
+
+  for (p = s; *p; p++, i++)
+    {
+      if (*p == '\\' || *p == '\"')
+	++i;
+      else if (*p == '\004')
+	i += 3;
+    }
+  p = res = (char *)malloc (i + 2 + 1);
+  *p++ = '\"';
+  for (; *s; p++, s++)
+    {
+      switch (*s)
+	{
+	case '\\':
+	  *p++ = '\\';
+	  *p = '\\';
+	  break;
+	case '\"':
+	  *p++ = '\\';
+	  *p = '\"';
+	  break;
+	case '\004':
+	  *p++ = '\\';
+	  *p++ = 'C';
+	  *p++ = '-';
+	  *p = 'd';
+	  break;
+	default:
+	  *p = *s;
+	}
+    }
+  *p++ = '\"';
+  *p = '\0';
+  return res;
+}
+
+#define GET_ARGUMENT(var, desc) do {					   \
+ if (*(p + 1)) (var) = p + 1;						   \
+   else									   \
+     {									   \
+       if (!argv[++i])							   \
+         {								   \
+           fprintf (stderr, "%s: `%s' must be followed by an argument\n",  \
+		    progname, desc);					   \
+	   exit (1);							   \
+         }								   \
+      (var) = argv[i];							   \
+    }									   \
+  over = 1;								   \
+} while (0)
+
+
 int
 main (int argc, char *argv[])
 {
-  int starting_line = 1;			/* line to start editing at */
-  char command[MAXPATHLEN+50];			/* emacs command buffer */
-  char fullpath[MAXPATHLEN+1];			/* full pathname to file */
-  int qflg = 0;					/* quick edit, don't wait for 
-						 * user to finish */
-  int view = 0;					/* view only. */
-  int errflg = 0;				/* option error */
-  int c;					/* char from getopt */
-  int s;					/* socket / msqid to server */
-  int connect_type;           			/* CONN_UNIX, CONN_INTERNET, or
-						 * CONN_IPC */
+  int starting_line = 1;	/* line to start editing at */
+  char command[MAXPATHLEN+50];	/* emacs command buffer */
+  char fullpath[MAXPATHLEN+1];	/* full pathname to file */
+  char *eval_form = NULL;	/* form to evaluate with `-eval' */
+  char *eval_function = NULL;	/* function to evaluate with `-f' */
+  char *load_library = NULL;	/* library to load */
+  int quick = 0;	       	/* quick edit, don't wait for user to
+				   finish */
+  int batch = 0;		/* batch mode */
+  int view = 0;			/* view only. */
+  int nofiles = 0;
+  int errflg = 0;		/* option error */
+  int c;			/* char from getopt */
+  int s;			/* socket / msqid to server */
+  int connect_type;		/* CONN_UNIX, CONN_INTERNET, or
+				 * CONN_IPC */
   int suppress_windows_system = 0;
   char *display;
 #ifdef INTERNET_DOMAIN_SOCKETS
-  char *hostarg = NULL;				/* remote hostname */
-  char thishost[HOSTNAMSZ];			/* this hostname */
-  char remotepath[MAXPATHLEN+1];		/* remote pathname */
-  int rflg = 0;					/* pathname given on cmdline */
-  u_short portarg = 0;				/* port to server */
-  char *ptr;					/* return from getenv */
+  char *hostarg = NULL;		/* remote hostname */
+  char *remotearg;
+  char thishost[HOSTNAMSZ];	/* this hostname */
+  char remotepath[MAXPATHLEN+1]; /* remote pathname */
+  char *path;
+  int rflg = 0;			/* pathname given on cmdline */
+  char *portarg;
+  u_short port = 0;		/* port to server */
 #endif /* INTERNET_DOMAIN_SOCKETS */
 #ifdef SYSV_IPC
-  struct msgbuf *msgp;				/* message */
+  struct msgbuf *msgp;		/* message */
 #endif /* SYSV_IPC */
   char *tty;
-  char buffer[GSERV_BUFSZ+1];		/* buffer to read pid */
+  char buffer[GSERV_BUFSZ + 1];	/* buffer to read pid */
+  char result[GSERV_BUFSZ + 1];
+  int i;
 
 #ifdef INTERNET_DOMAIN_SOCKETS
   memset (remotepath, 0, sizeof (remotepath));
 #endif /* INTERNET_DOMAIN_SOCKETS */
 
-  progname = argv[0];
+  progname = strrchr (argv[0], '/');
+  if (progname)
+    ++progname;
+  else
+    progname = argv[0];
 
   display = getenv ("DISPLAY");
   if (!display)
     suppress_windows_system = 1;
 
-  while ((c = getopt (argc, argv,
-
+  for (i = 1; argv[i] && !errflg; i++)
+    {
+      if (*argv[i] != '-')
+	break;
+      if (!strcmp (argv[i], "-batch"))
+	batch = 1;
+      else if (!strcmp (argv[i], "-eval"))
+	{
+	  if (!argv[++i])
+	    {
+	      fprintf (stderr, "%s: `-eval' must be followed by an argument\n",
+		       progname);
+	      exit (1);
+	    }
+	  eval_form = argv[i];
+	}
+      else if (!strcmp (argv[i], "-display"))
+	{
+	  suppress_windows_system = 0;
+	  if (!argv[++i])
+	    {
+	      fprintf (stderr, "%s: `-display' must be followed by an argument\n",
+		       progname);
+	      exit (1);
+	    }
+	  display = argv[i];
+	}
+      else if (!strcmp (argv[i], "-nw"))
+	suppress_windows_system = 1;
+      else
+	{
+	  /* Iterate over one-letter options. */
+	  char *p;
+	  int over = 0;
+	  for (p = argv[i] + 1; *p && !over; p++)
+	    {
+	      switch (*p)
+		{
+		case 'q':
+		  quick = 1;
+		  break;
+		case 'v':
+		  view = 1;
+		  break;
+		case 'f':
+		  GET_ARGUMENT (eval_function, "-f");
+		  break;
+		case 'l':
+		  GET_ARGUMENT (load_library, "-l");
+		  break;
 #ifdef INTERNET_DOMAIN_SOCKETS
-		      "n:h:p:r:qv"
-#else /* !INTERNET_DOMAIN_SOCKETS */
-		      "n:qv"
-#endif /* !INTERNET_DOMAIN_SOCKETS */
-
-		      )) != EOF)
-    switch (c)
-      {
-      case 'n':
-	if (*optarg == 'w')
-	  suppress_windows_system++;
-	else
-	  errflg++;
-	break;
-      case 'q':					/* quick mode specified */
-	qflg++;
-	break;
-      case 'v':
-	view++;
-	break;
-
-#ifdef INTERNET_DOMAIN_SOCKETS
-      case 'h':				/* server host name specified */
-	hostarg = optarg;
-	break;
-      case 'r':				/* remote path from server specifed */
-	strcpy (remotepath,optarg);
-	rflg++;
-	break;
-      case 'p':				/* port number specified */
-	portarg = atoi (optarg);
-	break;
+		case 'h':
+		  GET_ARGUMENT (hostarg, "-h");
+		  break;
+		case 'p':
+		  GET_ARGUMENT (portarg, "-p");
+		  port = atoi (portarg);
+		  break;
+		case 'r':
+		  GET_ARGUMENT (remotearg, "-r");
+		  strcpy (remotepath, remotearg);
+		  rflg = 1;
+		  break;
 #endif /* INTERNET_DOMAIN_SOCKETS */
-
-      case '?':
-	errflg++;
-      } /* switch */
+		default:
+		  errflg = 1;
+		}
+	    } /* for */
+	} /* else */
+    } /* for */
 
   if (errflg)
     {
       fprintf (stderr,
 #ifdef INTERNET_DOMAIN_SOCKETS
-	       "usage: %s [-q] [-h hostname] [-p port] [-r pathname] "
-	       "[[+line] path] ...\n",
+	       "usage: %s [-nw] [-q] [-v] [-l library] [-f function] [-eval expr]\n"
+	       "       [-h host] [-p port] [-r file-name] [[+line] file] ...\n",
 #else /* !INTERNET_DOMAIN_SOCKETS */
-	       "usage: %s [-nw] [-q] [[+line] path] ...\n",
+	       "usage: %s [-nw] [-q] [-v] [-l library] [-f function] [-eval expr] "
+	       "[[+line] path] ...\n",
 #endif /* !INTERNET_DOMAIN_SOCKETS */
 	       progname);
       exit (1);
-    } /* if */
-
-  if (suppress_windows_system)
-    {
-      tty = ttyname (0);
-      if (!tty)
-	{
-	  fprintf (stderr, "%s: Not connected to a tty", progname);
-	  exit (1);
-	}
     }
-  /* This next stuff added in an attempt to make handling of the tty
-     do the right thing when dealing with signals.  The idea is to
-     pass all the appropriate signals to the emacs process. */
-
-  connect_type = make_connection (NULL, (u_short) 0, &s);
-
-  send_string (s, "(gnuserv-eval '(emacs-pid))");
-  send_string (s, EOT_STR);
-
-  if (read_line (s, buffer) == 0)
+  if (batch && argv[i])
     {
-      fprintf (stderr, "%s: Could not establish emacs procces id\n",
+      fprintf (stderr, "%s: Cannot specify `-batch' with file names\n",
 	       progname);
       exit (1);
     }
-  /* Don't do disconnect_from_server becasue we have already read
-     data, and disconnect doesn't do anything else. */
-#ifdef SYSV_IPC
-  if (connect_type == (int) CONN_IPC)
-    disconnect_from_ipc_server (s, msgp, FALSE);
+  *result = '\0';
+  if (eval_function || eval_form || load_library)
+    {
+#if defined(INTERNET_DOMAIN_SOCKETS)
+      connect_type = make_connection (hostarg, port, &s);
+#else
+      connect_type = make_connection (NULL, (u_short) 0, &s);
+#endif
+      sprintf (command, "(gnuserv-eval%s '(progn ", quick ? "-quickly" : "");
+      send_string (s, command);
+      if (load_library)
+	{
+	  sprintf (command, " (load-library %s)", clean_string (load_library));
+	  send_string (s, command);
+	}
+      if (eval_form)
+	{
+	  sprintf (command, " %s", eval_form);
+	  send_string (s, command);
+	}
+      if (eval_function)
+	{
+	  sprintf (command, " (%s)", eval_function);
+	  send_string (s, command);
+	}
+      send_string (s, "))");
+      send_string (s, EOT_STR);
+      if (read_line (s, result) == 0)
+	{
+	  fprintf (stderr, "%s: Could not read\n", progname);
+	  exit (1);
+	}
+    } /* eval_function || eval_form || load_library */
+  else if (batch)
+    {
+      fprintf (stderr, "%s: `-batch' requires an evaluation\n",
+	       progname);
+      exit (1);
+    }
+
+  if (!batch)
+    {
+      if (suppress_windows_system)
+	{
+	  tty = ttyname (0);
+	  if (!tty)
+	    {
+	      fprintf (stderr, "%s: Not connected to a tty", progname);
+	      exit (1);
+	    }
+	}
+
+#if defined(INTERNET_DOMAIN_SOCKETS)
+      connect_type = make_connection (hostarg, port, &s);
+#else
+      connect_type = make_connection (NULL, (u_short) 0, &s);
+#endif
+
+      send_string (s, "(gnuserv-eval '(emacs-pid))");
+      send_string (s, EOT_STR);
+
+      if (read_line (s, buffer) == 0)
+	{
+	  fprintf (stderr, "%s: Could not establish emacs procces id\n",
+		   progname);
+	  exit (1);
+	}
+      /* Don't do disconnect_from_server becasue we have already read
+	 data, and disconnect doesn't do anything else. */
+#ifndef INTERNET_DOMAIN_SOCKETS
+      if (connect_type == (int) CONN_IPC)
+	disconnect_from_ipc_server (s, msgp, FALSE);
 #endif /* !SYSV_IPC */
 
-  emacs_pid = (pid_t)atol(buffer);
-  initialize_signals();
+      emacs_pid = (pid_t)atol(buffer);
+      initialize_signals();
 
-#if defined(INTERNET_DOMAIN_SOCKETS) && !defined(GNUATTACH)
-  connect_type = make_connection (hostarg, portarg, &s);
+#if defined(INTERNET_DOMAIN_SOCKETS)
+      connect_type = make_connection (hostarg, port, &s);
 #else
-  connect_type = make_connection (NULL, (u_short) 0, &s);
+      connect_type = make_connection (NULL, (u_short) 0, &s);
 #endif
 
 #ifdef INTERNET_DOMAIN_SOCKETS
-  if (connect_type == (int) CONN_INTERNET)
-    {
-      gethostname (thishost, HOSTNAMSZ);
-      if (!rflg)
-	{				/* attempt to generate a path 
+      if (connect_type == (int) CONN_INTERNET)
+	{
+	  char *ptr;
+	  gethostname (thishost, HOSTNAMSZ);
+	  if (!rflg)
+	    {				/* attempt to generate a path 
 					 * to this machine */
-	  if ((ptr = getenv ("GNU_NODE")) != NULL)
-	    /* user specified a path */
-	    strcpy (remotepath, ptr);
-	}
+	      if ((ptr = getenv ("GNU_NODE")) != NULL)
+		/* user specified a path */
+		strcpy (remotepath, ptr);
+	    }
 #if 0  /* This is really bogus... re-enable it if you must have it! */
 #if defined (hp9000s300) || defined (hp9000s800)
-      else if (strcmp (thishost,hostarg))
-	{	/* try /net/thishost */
-	  strcpy (remotepath, "/net/");		/* (this fails using internet 
-						   addresses) */
-	  strcat (remotepath, thishost);
+	  else if (strcmp (thishost,hostarg))
+	    {	/* try /net/thishost */
+	      strcpy (remotepath, "/net/");		/* (this fails using internet 
+							   addresses) */
+	      strcat (remotepath, thishost);
+	    }
+#endif
+#endif
 	}
-#endif
-#endif
-    }
-  else
-    {					/* same machines, no need for path */
-      remotepath[0] = '\0';		/* default is the empty path */
-    }
+      else
+	{			/* same machines, no need for path */
+	  remotepath[0] = '\0';	/* default is the empty path */
+	}
 #endif /* INTERNET_DOMAIN_SOCKETS */
 
 #ifdef SYSV_IPC
-  if ((msgp = (struct msgbuf *) 
-       malloc (sizeof *msgp + GSERV_BUFSZ)) == NULL)
-    {
-      fprintf (stderr, "%s: not enough memory for message buffer\n", progname);
-      exit (1);
-    } /* if */
+      if ((msgp = (struct msgbuf *) 
+	   malloc (sizeof *msgp + GSERV_BUFSZ)) == NULL)
+	{
+	  fprintf (stderr, "%s: not enough memory for message buffer\n", progname);
+	  exit (1);
+	} /* if */
 
-  msgp->mtext[0] = '\0';			/* ready for later strcats */
+      msgp->mtext[0] = '\0';			/* ready for later strcats */
 #endif /* SYSV_IPC */
 
-  if (suppress_windows_system)
-    {
-      ptr = getenv ("TERM");
-      if (!ptr)
+      if (suppress_windows_system)
 	{
-	  fprintf (stderr, "%s: unknown terminal type\n", progname);
-	  exit (1);
+	  char *term = getenv ("TERM");
+	  if (!term)
+	    {
+	      fprintf (stderr, "%s: unknown terminal type\n", progname);
+	      exit (1);
+	    }
+	  sprintf (command, "(gnuserv-edit-files '(tty %s %s %d) '(",
+		   clean_string (tty), clean_string (term), getpid ());
 	}
-      sprintf (command,
-	       "(gnuserv-edit-files '(tty \"%s\" \"%s\" %d) '(",
-	       tty, ptr, getpid ());
-    }
-  else /* !suppress_windows_system */
-    {
-      sprintf (command, "(gnuserv-edit-files '(x \"%s\") '(",
-	       display);
-    } /* !suppress_windows_system */
-  send_string (s, command);
-
-  if (!suppress_windows_system && (optind == argc))
-    qflg = 1;
-
-  for (; optind < argc; optind++)
-    {
-      if (optind < argc - 1 && *argv[optind] == '+')
-	starting_line = atoi (argv[optind++]);
-      else
-	starting_line = 1;
-      /* If the last argument is +something, treat it as a file. */
-      if (optind == argc)
+      else /* !suppress_windows_system */
 	{
-	  starting_line = 1;
-	  --optind;
-	}
-      filename_expand (fullpath, argv[optind]);
-      sprintf (command, "(%d . \"%s%s\")", starting_line,
-#ifdef INTERNET_DOMAIN_SOCKETS
-	       remotepath,
-#else /* !INTERNET_DOMAIN_SOCKETS */
-	       "",
-#endif
-	       fullpath);
+	  sprintf (command, "(gnuserv-edit-files '(x %s) '(",
+		   clean_string (display));
+	} /* !suppress_windows_system */
       send_string (s, command);
-    } /* for */
 
-  sprintf (command, ") %s)", qflg ? "'quick" : (view ? "'view" : ""));
-  send_string (s, command);
+      if (!argv[i])
+	nofiles = 1;
+
+      for (; argv[i]; i++)
+	{
+	  if (i < argc - 1 && *argv[i] == '+')
+	    starting_line = atoi (argv[i++]);
+	  else
+	    starting_line = 1;
+	  /* If the last argument is +something, treat it as a file. */
+	  if (i == argc)
+	    {
+	      starting_line = 1;
+	      --i;
+	    }
+	  filename_expand (fullpath, argv[i]);
+#ifdef INTERNET_DOMAIN_SOCKETS
+	  path = malloc (strlen (remotepath) + strlen (fullpath) + 1);
+	  sprintf (path, "%s%s", remotepath, fullpath);
+#else
+	  path = malloc (strlen (fullpath));
+	  strcpy (path, fullpath);
+#endif
+	  sprintf (command, "(%d . %s)", starting_line, clean_string (path));
+	  send_string (s, command);
+	  free (path);
+	} /* for */
+
+      sprintf (command, ")%s%s",
+	       (quick || (nofiles && !suppress_windows_system)) ? " 'quick" : "",
+	       view ? " 'view" : "");
+      send_string (s, command);
+      send_string (s, ")");
 
 #ifdef SYSV_IPC
-  if (connect_type == (int) CONN_IPC)
-    disconnect_from_ipc_server (s, msgp, FALSE);
+      if (connect_type == (int) CONN_IPC)
+	disconnect_from_ipc_server (s, msgp, FALSE);
 #else /* !SYSV_IPC */
-  if (connect_type != (int) CONN_IPC)
-    disconnect_from_server (s, FALSE);
+      if (connect_type != (int) CONN_IPC)
+	disconnect_from_server (s, FALSE);
 #endif /* !SYSV_IPC */
+    } /* not batch */
+
+  if (batch && !quick)
+      printf ("%s\n", result);
 
   return 0;
 

@@ -1005,8 +1005,8 @@ back to the user from the mailer."
 	  t)
       (or soft
 	  (progn (goto-char end)
-		 (insert "\n" field ": ")
-		 (skip-chars-backward "\n")))
+		 (insert field ": \n")
+		 (forward-char -1)))
       nil)))
 
 (defun mail-text ()

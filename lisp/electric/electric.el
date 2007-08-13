@@ -75,9 +75,9 @@
 	    current-mouse-event
 	      (and (or (button-press-event-p last-command-event)
 		       (button-release-event-p last-command-event)
-		       (menu-event-p last-command-event))
+		       (misc-user-event-p last-command-event))
 		   last-command-event)
-	    this-command (if (menu-event-p last-command-event)
+	    this-command (if (misc-user-event-p last-command-event)
 			     last-command-event
                              (key-binding cmd t))
 	    cmd this-command)

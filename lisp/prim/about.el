@@ -105,23 +105,25 @@
     (about-xref "collaboration" 'history "An XEmacs History Lesson")
     (insert "\n\tof Lucid, Inc. with Sun Microsystems, Inc. and the University
 	of Illinois with additional support having been provided by
-	Amdahl Corporation and INS Engineering Corporation.\n\n\t")
+	Amdahl Corporation, INS Engineering Corporation, and a huge amount of
+	volunteer effort.\n\n\t")
 
-	(insert "In almost all circumstances, Emacs-Lisp code written for
+	(insert "In most circumstances, Emacs-Lisp code written for
 	GNU Emacs versions 18 and 19 will run under XEmacs without
 	requiring any modifications, or at most will require small
-	changes to accommodate an improved functional interface.\n\n\t")
+	changes to accommodate a different and usually improved
+	functional interface.\n\n\t")
 
     (insert "XEmacs provides a great number of ")
     (about-xref "new features" 'features "See a list of the new features.")
-    (insert ".  More details
-	on XEmacs's functionality, including bundled packages can be
-	obtained through the ")
+    (insert " not found in GNU Emacs.
+	More details on XEmacs's functionality, including bundled packages,
+ 	can be obtained through the ")
 
     (about-xref "`info`" 'info "Look at the info pages")
     (insert " on-line information system.
 
-	The WWW page for XEmacs can be browsed, using any WWW browser, at\n\t\t")
+	The Web page for XEmacs can be browsed, using any Web browser, at\n\t\t")
     (about-xref "http://www.xemacs.org/" 'w3-xemacs "Go to the XEmacs World Wide Web page")
     (insert "\n\n\tNote that w3 (XEmacs's own browser), might need customization
 	(due to firewalls) in order to work correctly.\n\n\t")
@@ -130,21 +132,36 @@
 	The developers responsible for the " emacs-short-version " release are:
 
 		 * ") (about-xref "Steve Baur" 'steve "Find out more about Steve Baur") (insert "  <steve@altair.xemacs.org>
-		 * ") (about-xref "Martin Buchholz" 'mrb "Find out more about Martin Buchholz") (insert "  <mrb@eng.sun.com>
+		 * ") (about-xref "Martin Buchholz" 'mrb "Find out more about Martin Buchholz") (insert "  <mrb@xemacs.org>
+		 * ") (about-xref "Hrvoje Niksic" 'hrvoje "Find out more about Hrvoje Niksic") (insert "  <hrvoje@srce.hr>
 		 * ") (about-xref "Chuck Thompson" 'cthomp "Find out more about Chuck Thompson") (insert "  <cthomp@xemacs.org>
 		 * ") (about-xref "Ben Wing" 'wing "Find out more about Ben Wing") (insert "  <wing@xemacs.org>
 
 		 * ") (about-xref "And many other contributors..." 'others "Read about the legion of XEmacs hackers") (insert "
 
-	Chuck Thompson was Mr. XEmacs from 19.11 through 19.14.  Ben Wing
-	was crucial to each of those releases.
+	Chuck Thompson and Ben Wing were co-maintainers of XEmacs from 19.11 through 19.14.
+	Chuck Thompson was responsible for putting out the releases,
+	rewriting the redisplay engine and acting as keeper of the source code base.
+	Ben Wing did most of the rest of the coding, including adding the Mule support
+	and rewriting much of the internal C code.
 
 	Jamie Zawinski was Mr. Lucid Emacs from 19.0 through 19.10,
-	the last release actually named Lucid Emacs.  Richard Mlynarik
-	was crucial to most of those releases.
+	the last release actually named Lucid Emacs.
+
+	19.8 contained a great number of significant changes.
+	These included a new lisp object system, rewritten minibuffer
+	and command loop code, and a great deal of code merging with the
+	newly released GNU Emacs 19 (all done by Richard Mlynarik);
+	and also the replacement of the previous redisplay mechanism with
+	the more powerful Epoch redisplay mechanism (done by Chuck Thompson).
+
+	19.9 contained two significant feature additions from Chuck Thompson:
+	scrollbars and configure support, and one from Ben Wing, the external widget support.
+
+	19.10 contained a number of contributions from Chuck Thompson and Ben Wing.
 
 		 * ") (about-xref "Jamie Zawinski" 'jwz "Find out more about Jamie Zawinski") (insert "  <jwz@netscape.com>
-		 * ")  (about-xref "Richard Mlynarik" 'mly "Find out more about Richard Mlynarik")  (insert "  <mly@adoc.xerox.com>")
+		 * ") (about-xref "Richard Mlynarik" 'mly "Find out more about Richard Mlynarik")  (insert "  <mly@adoc.xerox.com>")
    (insert "\n\n\tClick ")
    (about-xref "here" 'kill-buffer "Exit the About page")
    (insert " to remove (kill) this buffer.")
@@ -298,6 +315,7 @@
 	  ('stig "About Jonathan Stigelman")
 	  ('steve "About Steve Baur")
 	  ('mrb "About Martin Buchholz")
+	  ('hrvoje "About Hrvoje Niksic")
 	  ('kyle "About Kyle Jones")
 	  ('larsi "About Lars Magne Ingebrigtsen")
 	  ('jens "About Jens Lautenbacher")
@@ -574,6 +592,22 @@
 
 	Martin is currently working mostly on Internationalization.
 	He spends most of his waking hours inside a Japanized XEmacs.")
+
+	  (insert "\n\n\tClick ")
+	  (about-xref "here" prev-page "Return to previous page")
+	  (insert " to go back to the previous page.\n")
+	  )
+	 ((eq xref 'hrvoje)
+	  (about-face "Hrvoje Niksic" 'bold)
+	  (insert " <hniksic@srce.hr>
+
+	Hrvoje is currently a student at the Faculty of Electrical
+	Engineering and Computing in Zagreb, Croatia.  He works part-
+	time at SRCE, where he helps run the network machines.
+	In his free time he is helping develop free software (especially
+	XEmacs, as well as GNU software) and is writing his own -- he has
+	written a small network mirroring utility Wget, see
+	\"ftp://gnjilux.cc.fer.hr/pub/unix/util/wget/\".")
 
 	  (insert "\n\n\tClick ")
 	  (about-xref "here" prev-page "Return to previous page")
@@ -1097,15 +1131,6 @@
 	Hans Muller <hmuller@eng.sun.com>
 	Author of the code used to connect XEmacs with ToolTalk, and
 	of an early client of the external Emacs widget.
-
-	Hrvoje Niksic <hniksic@srce.hr>
-	Hrvoje is currently a student at the Faculty of Electrical
-	Engineering and Computing in Zagreb, Croatia.  He works part-
-	time at SRCE, where he helps run the network machines.
-	In his free time he is helping develop free software (especially
-	XEmacs, as well as GNU software) and is writing his own -- he has
-	written a small network mirroring utility Wget, see
-	\"ftp://gnjilux.cc.fer.hr/pub/unix/util/wget/\".
 
 	In addition to those just mentioned, the following people have
 	spent a great deal of effort providing feedback, testing beta

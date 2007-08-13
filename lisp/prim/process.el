@@ -192,19 +192,17 @@ If OUTPUT-BUFFER is a buffer or buffer name, put the output there.
 If OUTPUT-BUFFER is not a buffer and not nil,
 insert output in the current buffer.
 In either case, the output is inserted after point (leaving mark after it)."
-  (interactive (if (not (region-exists-p))
-		   (error "The region is not active now")
-		 (let ((string
+  (interactive (let ((string
 		      ;; Do this before calling region-beginning
 		      ;; and region-end, in case subprocess output
 		      ;; relocates them while we are in the minibuffer.
-			(read-shell-command "Shell command on region: ")))
-		   ;; call-interactively recognizes region-beginning and
-		   ;; region-end specially, leaving them in the history.
-		   (list (region-beginning) (region-end)
-			 string
-			 current-prefix-arg
-			 current-prefix-arg))))
+		      (read-shell-command "Shell command on region: ")))
+		 ;; call-interactively recognizes region-beginning and
+		 ;; region-end specially, leaving them in the history.
+		 (list (region-beginning) (region-end)
+		       string
+		       current-prefix-arg
+		       current-prefix-arg)))
   (if (or replace
 	  (and output-buffer
 	       (not (or (bufferp output-buffer) (stringp output-buffer)))))

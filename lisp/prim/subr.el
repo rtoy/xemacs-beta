@@ -509,9 +509,11 @@ yourself.]"
 ;;;; Miscellanea.
 
 (defun buffer-substring-no-properties (beg end)
-  "Return the text from BEG to END, without text properties, as a string."
+  "Return the text from BEG to END, without extents, as a string."
   (let ((string (buffer-substring beg end)))
-    (set-text-properties 0 (length string) nil string)
+    (map-extents (lambda (ext &rest junk)
+		   (delete-extent ext))
+		 string)
     string))
 
 (defun ignore (&rest ignore)

@@ -1,6 +1,6 @@
 ;;; func-menu.el         --- Jump to a function within a buffer.
 ;;;
-;;; David Hughes <ukchugd@ukpmr.cs.philips.nl>
+;;; David Hughes <d.hughes@videonetworks.com>
 ;;; Last modified: David Hughes 13th January 1997
 ;;; Version: 2.45
 ;;; Keywords: tools, c, lisp
@@ -65,7 +65,7 @@
 ;;; Peter Pezaris <pez@dwwc.com>
 ;;;
 ;;; Made menu placement more flexible
-;;; Bob Weiner <weiner@infodock.com>
+;;; Bob Weiner <weiner@altrasoft.com>
 ;;;
 ;;; Fortran90 regexp
 ;;; John Turner <turner@xdiv.lanl.gov>
@@ -74,7 +74,7 @@
 ;;; Andy Piper <andyp@parallax.co.uk>
 ;;;
 ;;; Java support
-;;; Bob Weiner <weiner@infodock.com>
+;;; Bob Weiner <weiner@altrasoft.com>
 ;;; Heddy Boubaker <boubaker@dgac.fr>
 ;;;
 ;;; Patch for fume-rescan-buffer{-trigger}
@@ -173,7 +173,7 @@
 ;;; Philippe Queinnec <queinnec@cenatls.cena.dgac.fr>
 ;;;
 ;;; Assembly support
-;;; Bob Weiner <weiner@infodock.com>
+;;; Bob Weiner <weiner@altrasoft.com>
 ;;;
 ;;; Removal of cl dependencies
 ;;; Russell Ritchie <russell@gssec.bt.co.uk>
@@ -220,7 +220,7 @@
   :tag "Func Menu"
   :group 'tools)
 
-(defconst fume-developer "David Hughes <ukchugd@ukpmr.cs.philips.nl>")
+(defconst fume-developer "David Hughes <d.hughes@videonetworks.com>")
 
 (defun fume-about ()
   (interactive)
@@ -421,7 +421,7 @@ Note, this is a buffer-local variable.")
   :type 'string
   :group 'fume)
 
-;;; Bob Weiner <weiner@infodock.com>
+;;; Bob Weiner <weiner@altrasoft.com>
 (defvar fume-menu-path nil
   "Menubar menu under which the function menu should be installed.
 Nil means install it on the menubar itself.  Otherwise, it should be a list
@@ -587,9 +587,10 @@ by func-menu, then do something along the lines of the following:
 ;;; C
 ;;;
 ;;; Danny Bar-Dov <danny@acet02.amil.co.il>
+;;; Bob Weiner    <weiner@altrasoft.com> added #define macro support.
 (defvar fume-function-name-regexp-c
   (concat
-   "^[a-zA-Z0-9_]+\\s-?"                ; type specs; there can be no
+   "^\\([a-zA-Z0-9]+\\|#define\\)\\s-?" ; type specs; there can be no
    "\\([a-zA-Z0-9_*]+\\s-+\\)?"         ; more than 3 tokens, right?
    "\\([a-zA-Z0-9_*]+\\s-+\\)?"
    "\\([*&]+\\s-*\\)?"                  ; pointer
@@ -605,16 +606,18 @@ by func-menu, then do something along the lines of the following:
 ;;; Mike Battaglia  <mbattagl@spd.dsccc.com>
 ;;; Oliver Schittko <schittko@fokus.gmd.de>
 ;;; Tom Murray      <tmurray@hpindck.cup.hp.com>
+;;; Bob Weiner      <weiner@altrasoft.com> added #define macro support.
 (defvar fume-function-name-regexp-c++
   (cons
    (concat
-    "^\\(template\\s +<[^>]+>\\s +\\)?"          ; template formals
+    "^\\(#define\\s-+\\|"
+    "\\(template\\s-+<[^>]+>\\s-+\\)?"           ; template formals
     "\\([a-zA-Z0-9_*&<,>:]+\\s-+\\)?"            ; type specs; there can be no
     "\\([a-zA-Z0-9_*&<,>\"]+\\s-+\\)?"           ; more than 3 tokens, right?
-    "\\([a-zA-Z0-9_*&<,>]+\\s-+\\)?"
+    "\\([a-zA-Z0-9_*&<,>]+\\s-+\\)?\\)"
     "\\(\\([a-zA-Z0-9_&~:<,>*]\\|\\(\\s +::\\s +\\)\\)+\\)"
     "\\(o?perator\\s *.[^(]*\\)?\\(\\s-\\|\n\\)*(" ; name
-    ) 5)
+    ) 6)
   "Expression to get C++ function names")
 
 ;;; FORTRAN
@@ -1092,7 +1095,7 @@ by func-menu, then do something along the lines of the following:
 ;;; <jrm@odi.com>
 ;;; <ajp@eng.cam.ac.uk>
 ;;; <schittko@fokus.gmd.de>
-;;; <ukchugd@ukpmr.cs.philips.nl> - speedup, David Hughes 24th November 1996
+;;; <d.hughes@videonetworks.com> - speedup, David Hughes 24th November 1996
 ;;;
 (defun fume-match-find-next-function-name (buffer)
   ;; General next function name in BUFFER finder using match.
@@ -1125,7 +1128,7 @@ by func-menu, then do something along the lines of the following:
   (fume-find-next-sexp buffer))
 
 ;;; Specialised routine to find the next Java function
-;;; Bob Weiner <weiner@infodock.com>
+;;; Bob Weiner <weiner@altrasoft.com>
 ;;; Heddy Boubaker <boubaker@dgac.fr>
 ;;;
 (defun fume-find-next-java-function-name (buffer)
@@ -1140,7 +1143,7 @@ by func-menu, then do something along the lines of the following:
                  (not (fume-cc-inside-comment)))
             ;; This is a method definition and we're not in a comment
             (let ((str (buffer-substring beg end)))
-              ;; Bob Weiner <weiner@infodock.com> added exact match
+              ;; Bob Weiner <weiner@altrasoft.com> added exact match
               ;; delimiters so function names that happen to contain
               ;; any of these terms are not eliminated.  The old version
               ;; would ignore "notify()" since it contained "if".
@@ -1429,7 +1432,7 @@ by func-menu, then do something along the lines of the following:
 
 
 ;;; Assembly
-;;; Bob Weiner <weiner@infodock.com>
+;;; Bob Weiner <weiner@altrasoft.com>
 ;;;
 (defun fume-find-next-asm-function-name (buffer)
   "Searches for the next assembler function in BUFFER."
@@ -2114,7 +2117,7 @@ the basic menu of functions."
 (defvar fume-list-trampled-buffer nil)
 
 ;;; Espen Skoglund <espensk@stud.cs.uit.no>
-;;; David Hughes <ukchugd@ukpmr.cs.philips.nl>
+;;; David Hughes <d.hughes@videonetworks.com>
 ;;;
 (defun fume-prompt-function-goto (&optional other-window-p)
   "Goto function prompted for in minibuffer (with completion).

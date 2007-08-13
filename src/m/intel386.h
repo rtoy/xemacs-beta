@@ -167,24 +167,6 @@ NOTE-END */
 #endif /* USG */
 #endif /* not XENIX */
 
-#ifdef BSD
-#define HAVE_ALLOCA
-#endif /* BSD */
-
-/* If compiling with GCC, let GCC implement alloca.  */
-#if defined(__GNUC__) && !defined(alloca)
-#define alloca(n) __builtin_alloca(n)
-#define HAVE_ALLOCA
-#endif
-
-/* Solaris defines alloca to __builtin_alloca & doesn't provide a prototype. */
-#ifdef __SUNPRO_C
-#  ifndef NOT_C_CODE
-#    include <alloca.h>
-     void *__builtin_alloca (unsigned int);
-#  endif /* __SUNPRO_C */
-#endif /* NOT_C_CODE */
-
 #ifdef USG5_4
 #define DATA_SEG_BITS 0x08000000
 #endif

@@ -29,11 +29,9 @@ for dir in lisp/* ; do
    -a $dir != lisp/CVS \
    -a $dir != lisp/SCCS \
    -a $dir != lisp/egg \
-   -a $dir != lisp/eterm \
    -a $dir != lisp/its \
    -a $dir != lisp/mule \
-   -a $dir != lisp/quail \
-   -a $dir != lisp/vms ; then
+   -a $dir != lisp/quail; then
     dirs="$dirs $dir"
   fi
 done

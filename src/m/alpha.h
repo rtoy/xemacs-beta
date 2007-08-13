@@ -160,12 +160,6 @@ NOTE-END
 
 #ifdef OSF1
 #define ORDINARY_LINK
-/* Some systems seem to have this, others don't.  */
-#ifdef HAVE_LIBDNET
-#define LIBS_MACHINE -ldnet
-#else
-#define LIBS_MACHINE -ldnet_stub
-#endif /* HAVE_LIBDNET */
 #endif /* OSF1 */
 
 #if 0 /* Rainer Schoepf <schoepf@uni-mainz.de> says this loses with X11R6

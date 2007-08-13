@@ -158,6 +158,9 @@ extern int errno;
 
 #if defined (__osf__) && (defined (__alpha) || defined (__alpha__))
 #define OSF_ALPHA
+#include <netdb.h>
+#include <netinet/in.h>		/* Needed for Digital UNIX V3 */
+#include <net/proto_net.h>
 #include <sys/table.h>
 #endif
 

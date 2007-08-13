@@ -32,7 +32,7 @@
 ;;; Corrections made by Ilya Zakharevich ilya@math.mps.ohio-state.edu
 ;;; XEmacs changes by Peter Arius arius@informatik.uni-erlangen.de
 
-;; $Id: cperl-mode.el,v 1.5 1997/04/27 19:30:26 steve Exp $
+;; $Id: cperl-mode.el,v 1.6 1997/05/23 01:36:22 steve Exp $
 
 ;;; To use this mode put the following into your .emacs file:
 
@@ -842,7 +842,7 @@ The expansion is entirely correct because it uses the C preprocessor."
   (modify-syntax-entry ?# "<" cperl-mode-syntax-table)
   (modify-syntax-entry ?' "\"" cperl-mode-syntax-table)
   (modify-syntax-entry ?` "\"" cperl-mode-syntax-table)
-  (modify-syntax-entry ?_ "w" cperl-mode-syntax-table)
+  (modify-syntax-entry ?_ "_" cperl-mode-syntax-table)
   (modify-syntax-entry ?: "_" cperl-mode-syntax-table)
   (modify-syntax-entry ?| "." cperl-mode-syntax-table))
 

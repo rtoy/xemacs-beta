@@ -1,5 +1,6 @@
-;; term.el --- general command interpreter in a window stuff
-;; Copyright (C) 1988, 1990, 1992, 1994, 1995 Free Software Foundation, Inc.
+;;; term.el --- general command interpreter in a window stuff
+
+;; Copyright (C) 1988-1995, 1997 Free Software Foundation, Inc.
 
 ;; Author: Per Bothner <bothner@cygnus.com>
 ;; Based on comint mode written by: Olin Shivers <shivers@cs.cmu.edu>
@@ -18,74 +19,80 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Commentary:
 
-;;; The changelog is at the end of this file.
+;; The changelog is at the end of this file.
 
-;;; Please send me bug reports, bug fixes, and extensions, so that I can
-;;; merge them into the master source.
-;;;     - Per Bothner (bothner@cygnus.com)
+;; Please send me bug reports, bug fixes, and extensions, so that I can
+;; merge them into the master source.
+;;     - Per Bothner (bothner@cygnus.com)
 
-;;; This file defines a general command-interpreter-in-a-buffer package
-;;; (term mode). The idea is that you can build specific process-in-a-buffer
-;;; modes on top of term mode -- e.g., lisp, shell, scheme, T, soar, ....
-;;; This way, all these specific packages share a common base functionality, 
-;;; and a common set of bindings, which makes them easier to use (and
-;;; saves code, implementation time, etc., etc.).
+;; This file defines a general command-interpreter-in-a-buffer package
+;; (term mode). The idea is that you can build specific process-in-a-buffer
+;; modes on top of term mode -- e.g., lisp, shell, scheme, T, soar, ....
+;; This way, all these specific packages share a common base functionality, 
+;; and a common set of bindings, which makes them easier to use (and
+;; saves code, implementation time, etc., etc.).
 
-;;; For hints on converting existing process modes (e.g., tex-mode,
-;;; background, dbx, gdb, kermit, prolog, telnet) to use term-mode
-;;; instead of shell-mode, see the notes at the end of this file.
+;; For hints on converting existing process modes (e.g., tex-mode,
+;; background, dbx, gdb, kermit, prolog, telnet) to use term-mode
+;; instead of shell-mode, see the notes at the end of this file.
 
 
-;;; Brief Command Documentation:
-;;;============================================================================
-;;; Term Mode Commands: (common to all derived modes, like cmushell & cmulisp
-;;; mode)
-;;;
-;;; m-p	    term-previous-input    	  Cycle backwards in input history
-;;; m-n	    term-next-input  	    	  Cycle forwards
-;;; m-r     term-previous-matching-input  Previous input matching a regexp
-;;; m-s     comint-next-matching-input      Next input that matches
-;;; return  term-send-input
-;;; c-c c-a term-bol                      Beginning of line; skip prompt.
-;;; c-d	    term-delchar-or-maybe-eof     Delete char unless at end of buff.
-;;; c-c c-u term-kill-input	    	    ^u
-;;; c-c c-w backward-kill-word    	    ^w
-;;; c-c c-c term-interrupt-subjob 	    ^c
-;;; c-c c-z term-stop-subjob	    	    ^z
-;;; c-c c-\ term-quit-subjob	    	    ^\
-;;; c-c c-o term-kill-output		    Delete last batch of process output
-;;; c-c c-r term-show-output		    Show last batch of process output
-;;; c-c c-h term-dynamic-list-input-ring  List input history
-;;;
-;;; Not bound by default in term-mode
-;;; term-send-invisible			Read a line w/o echo, and send to proc
-;;; (These are bound in shell-mode)
-;;; term-dynamic-complete		Complete filename at point.
-;;; term-dynamic-list-completions	List completions in help buffer.
-;;; term-replace-by-expanded-filename	Expand and complete filename at point;
-;;;					replace with expanded/completed name.
-;;; term-kill-subjob			No mercy.
-;;; term-show-maximum-output            Show as much output as possible.
-;;; term-continue-subjob		Send CONT signal to buffer's process
-;;;					group. Useful if you accidentally
-;;;					suspend your process (with C-c C-z).
+;; Brief Command Documentation:
+;;============================================================================
+;; Term Mode Commands: (common to all derived modes, like cmushell & cmulisp
+;; mode)
+;;
+;; m-p	    term-previous-input    	  Cycle backwards in input history
+;; m-n	    term-next-input  	    	  Cycle forwards
+;; m-r     term-previous-matching-input  Previous input matching a regexp
+;; m-s     comint-next-matching-input      Next input that matches
+;; return  term-send-input
+;; c-c c-a term-bol                      Beginning of line; skip prompt.
+;; c-d	    term-delchar-or-maybe-eof     Delete char unless at end of buff.
+;; c-c c-u term-kill-input	    	    ^u
+;; c-c c-w backward-kill-word    	    ^w
+;; c-c c-c term-interrupt-subjob 	    ^c
+;; c-c c-z term-stop-subjob	    	    ^z
+;; c-c c-\ term-quit-subjob	    	    ^\
+;; c-c c-o term-kill-output		    Delete last batch of process output
+;; c-c c-r term-show-output		    Show last batch of process output
+;; c-c c-h term-dynamic-list-input-ring  List input history
+;;
+;; Not bound by default in term-mode
+;; term-send-invisible			Read a line w/o echo, and send to proc
+;; (These are bound in shell-mode)
+;; term-dynamic-complete		Complete filename at point.
+;; term-dynamic-list-completions	List completions in help buffer.
+;; term-replace-by-expanded-filename	Expand and complete filename at point;
+;;					replace with expanded/completed name.
+;; term-kill-subjob			No mercy.
+;; term-show-maximum-output            Show as much output as possible.
+;; term-continue-subjob		Send CONT signal to buffer's process
+;;					group. Useful if you accidentally
+;;					suspend your process (with C-c C-z).
 
-;;; term-mode-hook is the term mode hook. Basically for your keybindings.
-;;; term-load-hook is run after loading in this package.
+;; term-mode-hook is the term mode hook. Basically for your keybindings.
+;; term-load-hook is run after loading in this package.
 
-;;; Code:
+;; Code:
 
-;;; This is passed to the inferior in the EMACS environment variable,
-;;; so it is important to increase it if there are protocol-relevant changes.
+;; This is passed to the inferior in the EMACS environment variable,
+;; so it is important to increase it if there are protocol-relevant changes.
 (defconst term-protocol-version "0.95")
 
 (require 'ring)
 (require 'ehelp)
+
+(if (fboundp 'defgroup) nil
+  (defmacro defgroup (&rest forms) nil)
+  (defmacro defcustom (name init doc &rest forms)
+    (list 'defvar name init doc)))
 
 (defgroup term nil
   "General command interpreter in a window"
@@ -229,9 +236,12 @@ If `others', scroll only those that are not the selected window.
 
 The default is nil.
 
-See variable `term-scroll-show-maximum-output'.
-This variable is buffer-local."
-  :type 'boolean
+See variable `term-scroll-show-maximum-output'. This variable is buffer-local."
+  :type '(choice (const :tag "off" nil)
+                 (const t)
+                 (const all)
+                 (const this)
+                 (const others))
   :group 'term)
 
 (defcustom term-scroll-show-maximum-output nil
@@ -299,7 +309,7 @@ This is run before the process is cranked up."
   "Called each time a process is exec'd by term-exec.
 This is called after the process is cranked up.  It is useful for things that
 must be done each time a process is executed in a term-mode buffer (e.g.,
-(process-kill-without-query)). In contrast, the term-mode-hook is only
+\(process-kill-without-query)).  In contrast, the term-mode-hook is only
 executed once when the buffer is created."
   :type 'hook
   :group 'term)
@@ -316,7 +326,7 @@ Do not change it directly;  use term-set-escape-char instead.")
 
 (defvar term-ptyp t
   "True if communications via pty; false if by pipe.  Buffer local.
-This is to work around a bug in emacs process signalling.")
+This is to work around a bug in emacs process signaling.")
 
 (defvar term-last-input-match ""
   "Last string searched for by term input history search, for defaulting.
@@ -667,7 +677,7 @@ Entry to this mode runs the hooks on term-mode-hook"
       (goto-char (process-mark proc))
       (if (term-pager-enabled)
 	  (setq term-pager-count (term-current-row)))
-      (send-string proc chars))))
+      (process-send-string proc chars))))
 
 (defun term-send-raw ()
   "Send the last character typed through the terminal-emulator
@@ -677,9 +687,9 @@ without any interpretation."
   (term-if-xemacs
    (if (key-press-event-p last-input-event)
        (let ((mods (event-modifiers last-input-event))
-	     (key (event-key last-input-event))
-	     meta)
-	 (if (memq 'meta mods)
+ 	     (key (event-key last-input-event))
+ 	     meta)
+ 	 (if (memq 'meta mods)
 	     (progn
 	       (setq meta t)
 	       (setq mods (delq 'meta mods))))
@@ -689,35 +699,20 @@ without any interpretation."
 					  nil ;; no meta mucking
 					  t ;; allow non-ASCII
 					  )))
-	   (if ascii
-	       (if meta
-		   (term-send-raw-string (format "\e%c" ascii))
-		 (term-send-raw-string (make-string 1 ascii)))
-	     (command-execute (key-binding last-input-event)))))))
-	 
+	   (cond (ascii
+		  (if meta
+		      (term-send-raw-string (format "\e%c" ascii))
+		    (term-send-raw-string (make-string 1 ascii))))
+		 (t (command-execute (key-binding last-input-event))))))
+     (let ((cmd (lookup-key (current-global-map) (this-command-keys))))
+       (and cmd (call-interactively cmd)))))
+
   (term-ifnot-xemacs
    ;; Convert `return' to C-m, etc.
    (if (and (symbolp last-input-char)
 	    (get last-input-char 'ascii-character))
        (setq last-input-char (get last-input-char 'ascii-character)))
    (term-send-raw-string (make-string 1 last-input-char))))
-
-(defun term-send-raw-meta ()
-  (interactive)
-  (if (symbolp last-input-char)
-      ;; Convert `return' to C-m, etc.
-      (let ((tmp (get last-input-char 'event-symbol-elements)))
-	(if tmp
-	    (setq last-input-char (car tmp)))
-	(if (symbolp last-input-char)
-	    (progn
-	      (setq tmp (get last-input-char 'ascii-character))
-	      (if tmp (setq last-input-char tmp))))))
-  (term-send-raw-string (if (and (numberp last-input-char)
-				 (> last-input-char 127)
-				 (< last-input-char 256))
-			    (make-string 1 last-input-char)
-			  (format "\e%c" last-input-char))))
 
 (defun term-mouse-paste (click arg)
   "Insert the last stretch of killed text at the position clicked on."
@@ -736,10 +731,18 @@ without any interpretation."
 					(t (1- arg)))))))
 
 ;; Which would be better:  "\e[A" or "\eOA"? readline accepts either.
+;; Both xterm and dtterm (CDE) send "\e[A", which argues for that choice.
+;; The xterm termcap claims ku=\EOA; the dtterm terminfo entry says ku=\E[A.
 (defun term-send-up    () (interactive) (term-send-raw-string "\e[A"))
 (defun term-send-down  () (interactive) (term-send-raw-string "\e[B"))
 (defun term-send-right () (interactive) (term-send-raw-string "\e[C"))
 (defun term-send-left  () (interactive) (term-send-raw-string "\e[D"))
+(defun term-send-home  () (interactive) (term-send-raw-string "\e[H"))
+(defun term-send-end   () (interactive) (term-send-raw-string "\eOw"))
+(defun term-send-prior () (interactive) (term-send-raw-string "\e[5~"))
+(defun term-send-next  () (interactive) (term-send-raw-string "\e[6~"))
+(defun term-send-del   () (interactive) (term-send-raw-string "\C-?"))
+(defun term-send-backspace  () (interactive) (term-send-raw-string "\C-H"))
 
 (defun term-set-escape-char (c)
   "Change term-escape-char and keymaps that depend on it."
@@ -747,7 +750,7 @@ without any interpretation."
       (define-key term-raw-map term-escape-char 'term-send-raw))
   (setq c (make-string 1 c))
   (define-key term-raw-map c term-raw-escape-map)
-  ;; Define standard binings in term-raw-escape-map
+  ;; Define standard bindings in term-raw-escape-map
   (define-key term-raw-escape-map "\C-x"
     (lookup-key (current-global-map) "\C-x"))
   (define-key term-raw-escape-map "\C-v"
@@ -766,32 +769,38 @@ Each character you type is sent directly to the inferior without
 intervention from emacs, except for the escape character (usually C-c)."
   (interactive)
   (if (not term-raw-map)
-      (let ((map (make-keymap)))
+      ;; Initialize term-raw-map.
+      (let* ((map (make-keymap))
+	     (save-meta-prefix-char meta-prefix-char)
+	     (i 0))
+	;; Temporarily disable meta-prefix-char while building keymaps.
+	(setq meta-prefix-char -1)
 	(term-if-xemacs
-	 (set (make-local-variable 'meta-prefix-char) -1)
 	 (set-keymap-default-binding map 'term-send-raw))
 	(term-ifnot-xemacs
-	 (let ((esc-map (make-keymap))
-	       (i 0))
-	   (while (< i 128)
-	     (define-key map (make-string 1 i) 'term-send-raw)
-	     (define-key esc-map (make-string 1 i) 'term-send-raw-meta)
-	     (setq i (1+ i)))
-	   (define-key map "\e" esc-map)))
+	 (while (< i 128)
+	   (define-key map (make-string 1 i) 'term-send-raw)
+	   (setq i (1+ i))))
 	(setq term-raw-map map)
 	(setq term-raw-escape-map
 	      (copy-keymap (lookup-key (current-global-map) "\C-x")))
-	(term-if-emacs19
-	 (term-if-xemacs
-	  (define-key term-raw-map [button2] 'term-mouse-paste))
-	 (term-ifnot-xemacs
-	  (define-key term-raw-map [mouse-2] 'term-mouse-paste)
-	  (define-key term-raw-map [menu-bar terminal] term-terminal-menu)
-	  (define-key term-raw-map [menu-bar signals] term-signals-menu))
-	 (define-key term-raw-map [up] 'term-send-up)
-	 (define-key term-raw-map [down] 'term-send-down)
-	 (define-key term-raw-map [right] 'term-send-right)
-	 (define-key term-raw-map [left] 'term-send-left))
+	(define-key term-raw-map [up] 'term-send-up)
+	(define-key term-raw-map [down] 'term-send-down)
+	(define-key term-raw-map [right] 'term-send-right)
+	(define-key term-raw-map [left] 'term-send-left)
+	(define-key term-raw-map [home] 'term-send-home)
+	(define-key term-raw-map [end] 'term-send-end)
+	(define-key term-raw-map [prior] 'term-send-prior)
+	(define-key term-raw-map [next] 'term-send-next)
+	(term-if-xemacs
+	 (define-key term-raw-map [button2] 'term-mouse-paste))
+	(term-ifnot-xemacs
+	 (define-key term-raw-map [mouse-2] 'term-mouse-paste)
+	 (define-key term-raw-map [menu-bar terminal] term-terminal-menu)
+	 (define-key term-raw-map [menu-bar signals] term-signals-menu)
+	 (define-key term-raw-map [delete] 'term-send-del)
+	 (define-key term-raw-map [backspace] 'term-send-backspace))
+	(setq meta-prefix-char save-meta-prefix-char)
 	(term-set-escape-char ?\C-c)))
   ;; FIXME: Emit message? Cfr ilisp-raw-message
   (if (term-in-line-mode)
@@ -827,7 +836,7 @@ you type \\[term-send-input] which sends the current line to the inferior."
 	(if (term-in-char-mode)
 	    (if (term-pager-enabled) '(": char page %s") '(": char %s"))
 	  (if (term-pager-enabled) '(": line page %s") '(": line %s"))))
-  (set-buffer-modified-p (buffer-modified-p))) ;; Force mode line update.
+  (force-mode-line-update))
 
 (defun term-check-proc (buffer)
   "True if there is a process associated w/buffer BUFFER, and
@@ -910,11 +919,12 @@ buffer. The hook term-exec-hook is run after each exec."
 :nd=\\E[C:up=\\E[A:ce=\\E[K:ho=\\E[H:pt\
 :al=\\E[L:dl=\\E[M:DL=\\E[%%dM:AL=\\E[%%dL:cs=\\E[%%i%%d;%%dr:sf=\\n\
 :te=\\E[2J\\E[?47l\\E8:ti=\\E7\\E[?47h\
-:dc=\\E[P:DC=\\E[%%dP:IC=\\E[%%d@:im=\\E[4h:ei=\\E[4l:mi:\
+:dc=\\E[P:DC=\\E[%%dP:IC=\\E[%%d@:im=\\E[4h:ei=\\E[4l:mi\
+:kd=\\E[B:kl=\\E[D:kr=\\E[C:ku=\\E[A\
 :so=\\E[7m:se=\\E[m:us=\\E[4m:ue=\\E[m:md=\\E[1m:mr=\\E[7m:me=\\E[m\
 :UP=\\E[%%dA:DO=\\E[%%dB:LE=\\E[%%dD:RI=\\E[%%dC"
 ;;; : -undefine ic
-  "termcap capabilties supported")
+  "termcap capabilities supported")
 
 ;;; This auxiliary function cranks up the process for term-exec in
 ;;; the appropriate environment.
@@ -1428,7 +1438,7 @@ Argument 0 is the command name."
   (let ((argpart "[^ \n\t\"'`]+\\|\\(\"[^\"]*\"\\|'[^']*'\\|`[^`]*`\\)")
 	(args ()) (pos 0)
 	(count 0)
-	beg str value quotes)
+	beg str quotes)
     ;; Build a list of all the args until we have as many as we want.
     (while (and (or (null mth) (<= count mth))
 		(string-match argpart string pos))
@@ -1639,7 +1649,7 @@ applications."
     (while (not done)
       (if stars
           (message "%s%s" prompt (make-string (length ans) ?*))
-        (message prompt))
+        (message "%s" prompt))
       (setq c (read-char))
       (cond ((= c ?\C-g)
              ;; This function may get called from a process filter, where
@@ -2037,7 +2047,7 @@ See `term-prompt-regexp'."
 	 (let ((H)
 	       (todo (+ count (/ (current-column) term-width))))
 	   (end-of-line)
-	   ;; The loop interates over buffer lines;
+	   ;; The loop iterates over buffer lines;
 	   ;; H is the number of screen lines in the current line, i.e.
 	   ;; the ceiling of dividing the buffer line width by term-width.
 	   (while (and (<= (setq H (max (/ (+ (current-column) term-width -1)
@@ -2062,7 +2072,7 @@ See `term-prompt-regexp'."
 		       (progn (beginning-of-line)
 			      (not (bobp))))
 	     (setq todo (- todo H))
-	     (backward-char)) ;; Move to end of previos line
+	     (backward-char)) ;; Move to end of previous line.
 	   (if (and (>= todo H) (> todo 0))
 	       (+ count todo (- 1 H)) ;; Hit beginning of buffer.
 	     (move-to-column (* (- H todo 1) term-width))
@@ -2241,7 +2251,7 @@ See `term-prompt-regexp'."
 				   (setq i temp))
 				  (t ;; Not followed by LF or can't optimize:
 				   (term-vertical-motion 0)
-				   (setq term-current-column 0))))
+				   (setq term-current-column term-start-line-column))))
 			   ((eq char ?\n)
 			    (if (not (and term-kill-echo-list
 					  (term-check-kill-echo-list)))
@@ -2383,15 +2393,15 @@ See `term-prompt-regexp'."
 
 (defun term-handle-deferred-scroll ()
   (let ((count (- (term-current-row) term-height)))
-    (if (> count 0)
+    (if (>= count 0)
 	(save-excursion
 	  (goto-char term-home-marker)
-	  (term-vertical-motion count)
+	  (term-vertical-motion (1+ count))
 	  (set-marker term-home-marker (point))
 	  (setq term-current-row (1- term-height))))))
 
 ;;; Handle a character assuming (eq terminal-state 2) -
-;;; i.e. we have previousely seen Escape followed by ?[.
+;;; i.e. we have previously seen Escape followed by ?[.
 
 (defun term-handle-ansi-escape (proc char)
   (cond
@@ -2476,7 +2486,7 @@ See `term-prompt-regexp'."
 (defun term-scroll-region (top bottom)
   "Set scrolling region.
 TOP is the top-most line (inclusive) of the new scrolling region,
-while BOTTOM is the line folling the new scrolling region (e.g. exclusive).
+while BOTTOM is the line following the new scrolling region (e.g. exclusive).
 The top-most line is line 0."
   (setq term-scroll-start
 	(if (or (< top 0) (>= top term-height))
@@ -2532,6 +2542,7 @@ The top-most line is line 0."
 			   (substring string (1+ first-colon) second-colon))))
 	   (setq term-pending-frame (cons filename fileline))))
 	((= (aref string 0) ?/)
+	 ;; FIXME: If cd fails, should ignore, and not raise error.
 	 (cd (substring string 1)))
 	;; Allowing the inferior to call functions in emacs is
 	;; probably too big a security hole.
@@ -2622,7 +2633,7 @@ The top-most line is line 0."
 	  (setq tmp (make-sparse-keymap "More pages?"))
 	  (define-key tmp [help] '("Help" . term-pager-help))
 	  (define-key tmp [disable]
-	    '("Diable paging" . term-fake-pager-disable))
+	    '("Disable paging" . term-fake-pager-disable))
 	  (define-key tmp [discard]
 	    '("Discard remaining output" . term-pager-discard))
 	  (define-key tmp [eob] '("Goto to end" . term-pager-eob))
@@ -2646,7 +2657,7 @@ The top-most line is line 0."
 	      mode-line-buffer-identification
 	      " [Type ? for help] "
 	      "%-"))
-  (set-buffer-modified-p (buffer-modified-p))) ;;No-op, but updates mode line.
+  (force-mode-line-update))
 
 (defun term-pager-line (lines)
   (interactive "p")
@@ -2759,7 +2770,7 @@ all pending output has been dealt with."))
     (use-local-map term-pager-old-local-map)
     (setq term-pager-old-local-map nil)
     (setq mode-line-format term-old-mode-line-format)
-    (set-buffer-modified-p (buffer-modified-p)) ;; Updates mode line.
+    (force-mode-line-update)
     (setq term-pager-count new-count)
     (set-process-filter process term-pager-old-filter)
     (funcall term-pager-old-filter process "")
@@ -2997,7 +3008,9 @@ This mirrors the optional behavior of tcsh.")
 
 (defvar term-completion-addsuffix t
   "*If non-nil, add a `/' to completed directories, ` ' to file names.
-This mirrors the optional behavior of tcsh.")
+If a cons pair, it should be of the form (DIRSUFFIX . FILESUFFIX) where
+DIRSUFFIX and FILESUFFIX are strings added on unambiguous or exact
+completion.  This mirrors the optional behavior of tcsh.")
 
 (defvar term-completion-recexact nil
   "*If non-nil, use shortest completion if characters cannot be added.
@@ -3085,6 +3098,12 @@ See `term-dynamic-complete-filename'.  Returns t if successful."
   (let* ((completion-ignore-case nil)
 	 (completion-ignored-extensions term-completion-fignore)
 	 (success t)
+	 (dirsuffix (cond ((not term-completion-addsuffix) "")
+			  ((not (consp term-completion-addsuffix)) "/")
+			  (t (car term-completion-addsuffix))))
+	 (filesuffix (cond ((not term-completion-addsuffix) "")
+			   ((not (consp term-completion-addsuffix)) " ")
+			   (t (cdr term-completion-addsuffix))))	 
 	 (filename (or (term-match-partial-filename) ""))
 	 (pathdir (file-name-directory filename))
 	 (pathnondir (file-name-nondirectory filename))
@@ -3105,14 +3124,13 @@ See `term-dynamic-complete-filename'.  Returns t if successful."
                                 (length pathnondir)))
              (cond ((symbolp (file-name-completion completion directory))
                     ;; We inserted a unique completion.
-                    (if term-completion-addsuffix
-                        (insert (if (file-directory-p file) "/" " ")))
+		    (insert (if (file-directory-p file) dirsuffix filesuffix))
                     (or mini-flag (message "Completed")))
                    ((and term-completion-recexact term-completion-addsuffix
                          (string-equal pathnondir completion)
                          (file-exists-p file))
                     ;; It's not unique, but user wants shortest match.
-                    (insert (if (file-directory-p file) "/" " "))
+		    (insert (if (file-directory-p file) dirsuffix filesuffix))
                     (or mini-flag (message "Completed shortest")))
                    ((or term-completion-autolist
                         (string-equal pathnondir completion))
@@ -3221,7 +3239,10 @@ Typing SPC flushes the help buffer."
 	    (set-window-configuration conf))
 	(if (eq first ?\ )
 	    (set-window-configuration conf)
-	  (setq unread-command-events (append key nil)))))))
+	  (term-ifnot-xemacs
+	   (setq unread-command-events (listify-key-sequence key)))
+	  (term-if-xemacs
+	   (setq unread-command-events (append key nil))))))))
 
 ;;; Converting process modes to use term mode
 ;;; ===========================================================================

@@ -1,6 +1,24 @@
 							-*- indented-text -*-
+to 20.3 beta2.
+-- mega configure patches courtesy of Martin Buchholz
+-- edmacro.el-3.14
+-- eldoc.el-1.13 courtesy of Noah Friedman
+-- strokes.el-2.2 courtesy of David Bakhash
+-- eterm updates courtesy of Per Bothner
+-- add-log.el gets new mode type variables for lisp-like, c-like, and tex-like
+   modes courtesy of Erik Naggum
+-- add-log.el synched with Emacs 20.0
+-- gnudoit removed, Gnuserv updated courtesy of Hrvoje Niksic
+-- miscellaneous bug fixes
+-- Fix for multiple frame `cursor lockstep' bug courtesy of Kyle Jones
+-- Continued configure/build cleanup
+-- obsolete dynodump directories removed
+-- Gnus-5.4.53 courtesy of Lars Magne Ingebrigtsen
+-- vc-hooks.el, vc.el synched up with Emacs 19.34.94.
+-- Bytecompiler optimization hacking courtesy of Jamie Zawinski
+
 to 20.3 beta1.
--- Custom-1.97 courtesy of Per Abraham
+-- Custom-1.97 courtesy of Per Abrahamsen
 -- Obsolete files emacstool.c, emacsclient.c, emacsserver.c removed
 -- etags.c-11.90 courtesy of Francesco Potorti`
 -- Dragable modeline courtesy of Kyle Jones
@@ -9,4 +27,3 @@ to 20.3 beta1.
 -- New variable `Info-button1-follows-hyperlink' to allow disabling the
    feature.
 -- Restore Gosling Emacs transpose-chars implementation as an option
--- Bytecompiler optimization hacking courtesy of Jamie Zawinski

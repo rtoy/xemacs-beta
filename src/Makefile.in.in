@@ -103,17 +103,6 @@ VPATH=@srcdir@
 MAKE = MAKE_COMMAND
 #endif
 
-/* Some machines do not have the standard C libraries in the usual place. */
-#ifndef ORDINARY_LINK
-#ifndef LIB_STANDARD
-#define LIB_STANDARD -lc
-#endif
-#else
-#ifndef LIB_STANDARD
-#define LIB_STANDARD
-#endif
-#endif
-
 /* Unless inhibited or changed, use -lg to link for debugging.  */
 #ifndef LIBS_DEBUG
 #define LIBS_DEBUG -lg
@@ -216,12 +205,11 @@ X11_libs= $(LIBX11_LIBS) $(libx11_intl) $(LIBI18N)
 /* -Demacs is needed to make some files produce the correct version
    for use in Emacs. */
 
-src_cppflags=-Demacs -I${srcdir} $(LWLIB_CPPFLAGS) $(CPPFLAGS)
-cppflags = -I. $(c_switch_all) $(src_cppflags)
+cppflags = $(CPPFLAGS) -Demacs -I. -I${srcdir} $(LWLIB_CPPFLAGS) $(c_switch_all)
 
 cflags= $(CFLAGS) $(cppflags)
 
-ldflags = $(ld_switch_all) -L. $(no_gnu_linker) $(LWLIB_LDFLAGS)
+ldflags = -L. $(LWLIB_LDFLAGS) $(ld_switch_all)
 
 .c.o:
 	$(CC) -c $(cflags) $<
@@ -306,14 +294,6 @@ LD=ld
 #endif /* ! defined (COFF_ENCAPSULATE) */
 #endif /* not ORDINARY_LINK */
 
-/* Allow config.h to specify a replacement file for unexec.c.  */
-#ifndef UNEXEC
-#define UNEXEC unexec.o
-#endif
-#ifndef UNEXEC_SRC
-#define UNEXEC_SRC unexec.c
-#endif
-
 #ifdef ENERGIZE
 # ifdef EMACS_BTL
 BTL_dir=$(srcdir)/../btl
@@ -324,15 +304,6 @@ freecheck_objs = free-hook.o
 # endif /* FREE */
 energize_objs = energize.o $(freecheck_objs)
 #endif /* ENERGIZE */
-
-#ifdef MOCKLISP_SUPPORT
-mocklisp_objs = mocklisp.o
-#endif
-
-#ifdef HAVE_TTY
-tty_objs = console-tty.o device-tty.o event-tty.o frame-tty.o \
-		 objects-tty.o redisplay-tty.o cm.o
-#endif
 
 #ifdef HAVE_UNIXOID_EVENT_LOOP
 event_unixoid_objs = event-unixoid.o
@@ -346,57 +317,21 @@ event_unixoid_objs = event-unixoid.o
 
 objs =	abbrev.o alloc.o blocktype.o buffer.o bytecode.o \
 	callint.o callproc.o casefiddle.o casetab.o chartab.o \
-	cmdloop.o cmds.o console.o console-stream.o data.o \
-	device.o dired.o \
-	doc.o doprnt.o dynarr.o editfns.o elhash.o emacs.o \
+	cmdloop.o cmds.o console.o console-stream.o \
+	data.o device.o dired.o doc.o doprnt.o dynarr.o \
+	editfns.o elhash.o emacs.o \
 	$(energize_objs) eval.o events.o $(extra_objs) \
 	event-stream.o $(event_unixoid_objs) extents.o faces.o \
 	fileio.o filelock.o filemode.o floatfns.o fns.o font-lock.o \
 	frame.o general.o getloadavg.o glyphs.o \
 	$(gui_objs) hash.o indent.o inline.o insdel.o intl.o \
-	keymap.o $(RTC_patch_objs) lread.o lstream.o macros.o \
-	marker.o md5.o minibuf.o $(mocklisp_objs) \
-	objects.o opaque.o \
-	print.o process.o profile.o pure.o rangetab.o \
-	redisplay.o redisplay-output.o regex.o \
+	keymap.o $(RTC_patch_objs) lread.o lstream.o \
+	macros.o marker.o md5.o minibuf.o objects.o opaque.o \
+	print.o process.o profile.o pure.o \
+	rangetab.o redisplay.o redisplay-output.o regex.o \
 	search.o signal.o sound.o \
-	specifier.o strftime.o symbols.o syntax.o \
-	sysdep.o $(tty_objs) undo.o \
-	UNEXEC $(x_objs) window.o
-
-/* The following is being done in configure.in now - mrb */
-#undef LIBS_TERMCAP
-#define LIBS_TERMCAP
-#if 0
-#ifdef HAVE_TTY
-#  ifdef HAVE_NCURSES
-/* If your machine needs -ltermcap, define LIBS_TERMCAP to include
-   -lncurses -ltermcap in your s or m file (conditionalized on
-   HAVE_NCURSES). */
-#    ifndef LIBS_TERMCAP
-#      define LIBS_TERMCAP -lncurses
-#    endif /* LIBS_TERMCAP */
-termcapobjs = terminfo.o
-#  elif defined (TERMINFO)
-/* Used to be -ltermcap here.  If your machine needs that,
-   define LIBS_TERMCAP in the m/<machine>.h file.  */
-#    ifndef LIBS_TERMCAP
-#      define LIBS_TERMCAP -lcurses
-#    endif /* LIBS_TERMCAP */
-termcapobjs = terminfo.o
-#  else /* ! defined (TERMINFO) */
-#    ifndef LIBS_TERMCAP
-#      define LIBS_TERMCAP
-termcapobjs = termcap.o tparam.o
-#    else /* LIBS_TERMCAP */
-termcapobjs = tparam.o
-#    endif /* LIBS_TERMCAP */
-#  endif /* ! defined (TERMINFO) */
-#else /* !HAVE_TTY */
-#  undef LIBS_TERMCAP
-#  define LIBS_TERMCAP
-#endif /* !HAVE_TTY */
-#endif /* 0 */
+	specifier.o strftime.o symbols.o syntax.o sysdep.o \
+	undo.o $(x_objs) window.o
 
 #ifdef REL_ALLOC
 rallocdocsrc = ralloc.c
@@ -476,7 +411,7 @@ X11_objs = EmacsFrame.o EmacsShell.o TopLevelEmacsShell.o TransientEmacsShell.o 
 
 /* define otherobjs as list of object files that make-docfile
    should not be told about.  */
-otherobjs = $(termcapobjs) $(BTL_objs) lastfile.o $(mallocobjs) $(rallocobjs) $(X11_objs)
+otherobjs = $(BTL_objs) lastfile.o $(mallocobjs) $(rallocobjs) $(X11_objs)
 
 #ifdef LISP_FLOAT_TYPE
 #define FLOAT_LISP ${lispdir}prim/float-sup.elc
@@ -701,9 +636,7 @@ otherlisp= ${lispdir}bytecomp/bytecomp.elc \
 	   ${lispdir}bytecomp/byte-optimize.elc \
 	   ${lispdir}utils/advice.elc
 
-LIBES = $(LWLIB_LIBS) $(energize_libs) $(quantify_libs) \
-	LIBS_DEBUG $(GNULIB_VAR) LIB_STANDARD \
-	$(GNULIB_VAR) $(ld_libs_all)
+LIBES = $(LWLIB_LIBS) $(quantify_libs) $(ld_libs_all) LIBS_DEBUG $(GNULIB_VAR)
 
 /* Enable recompilation of certain other files depending on system type.  */
 
@@ -1040,11 +973,6 @@ Emacs.ad.h: ${srcdir}/${etcdir}Emacs.ad
 	@echo "Consult the file \`INSTALL' for instructions for building Emacs."
 	exit 1
 
-/* Cover your eyes, please */
-xemacs-version.h: ../lisp/version.el
-	@echo "#define main_1 xemacs_`grep emacs-version ../lisp/version.el | sed -e 's/.*\"\(.*\)\.\(.*\)\"/\1_\2/' -e 1q`_`grep -i xemacs.*lucid.*beta ../lisp/version.el | sed -e 's/.*\(beta[0-9]*\).*/\1/' -e 1q`" > xemacs-version.h
-
-
 /* Some machines have alloca built-in.
    They should define HAVE_ALLOCA, or may just let alloca.s
    be used but generate no code.
@@ -1113,7 +1041,8 @@ clean: mostlyclean
 /**/# This is used in making a distribution.
 /**/# Do not use it on development directories!
 distclean: clean versionclean
-	rm -f config.h paths.h puresize_adjust.h Emacs.ad.h Makefile Makefile.in .pure version.h
+	rm -f config.h paths.h puresize_adjust.h Emacs.ad.h \
+	rm -f Makefile Makefile.in .pure xemacs-version.h
 realclean: distclean
 	rm -f TAGS
 versionclean:
@@ -1858,7 +1787,6 @@ emacs.o: sysdep.h
 emacs.o: sysfile.h
 emacs.o: systime.h
 emacs.o: systty.h
-emacs.o: xemacs-version.h
 energize.o: config.h
 eval.o: backtrace.h
 eval.o: blocktype.h

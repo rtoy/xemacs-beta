@@ -307,7 +307,7 @@
   :group 'environment)
 
 (defgroup auto-save nil
-  "Preventing accidential loss of data."
+  "Preventing accidental loss of data."
   :group 'data)
 
 (defgroup processes-basics nil
@@ -317,6 +317,10 @@
 (defgroup windows nil
   "Windows within a frame."
   :group 'processes)
+
+(defgroup mule nil
+  "MULE Emacs internationalization."
+  :group 'emacs)
 
 ;;; Utilities.
 

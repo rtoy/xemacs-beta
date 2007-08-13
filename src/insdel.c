@@ -2118,7 +2118,7 @@ signal_first_change (struct buffer *buf)
 {
   /* This function can GC */
   Lisp_Object buffer;
-  XSETBUFFER (buffer, buf);
+  XSETBUFFER (buffer, current_buffer);
 
   if (!in_first_change)
     {

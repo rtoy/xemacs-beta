@@ -228,18 +228,20 @@ This variable used in TAB format mode.")
   (setq fortran-mode-syntax-table (make-syntax-table))
   (modify-syntax-entry ?\; "w" fortran-mode-syntax-table)
   (modify-syntax-entry ?\r " " fortran-mode-syntax-table)
-  (modify-syntax-entry ?+ "." fortran-mode-syntax-table)
-  (modify-syntax-entry ?- "." fortran-mode-syntax-table)
-  (modify-syntax-entry ?= "." fortran-mode-syntax-table)
+  (modify-syntax-entry ?+  "." fortran-mode-syntax-table)
+  (modify-syntax-entry ?-  "." fortran-mode-syntax-table)
+  (modify-syntax-entry ?=  "." fortran-mode-syntax-table)
   ;; XEmacs change
   ;;(modify-syntax-entry ?* "." fortran-mode-syntax-table)
-  (modify-syntax-entry ?/ "." fortran-mode-syntax-table)
+  (modify-syntax-entry ?/  "."  fortran-mode-syntax-table)
   (modify-syntax-entry ?\' "\"" fortran-mode-syntax-table)
   (modify-syntax-entry ?\" "\"" fortran-mode-syntax-table)
-  (modify-syntax-entry ?\\ "/" fortran-mode-syntax-table)
-  (modify-syntax-entry ?. "w" fortran-mode-syntax-table)
-  (modify-syntax-entry ?_ "w" fortran-mode-syntax-table)
-  (modify-syntax-entry ?\! "<" fortran-mode-syntax-table)
+  (modify-syntax-entry ?\\ "/"  fortran-mode-syntax-table)
+  (modify-syntax-entry ?.  "_"  fortran-mode-syntax-table)
+  (modify-syntax-entry ?_  "_"  fortran-mode-syntax-table)
+  (modify-syntax-entry ?$  "_"  fortran-mode-syntax-table)
+  (modify-syntax-entry ?@  "_"  fortran-mode-syntax-table)
+  (modify-syntax-entry ?\! "<"  fortran-mode-syntax-table)
   ;; XEmacs change
   ;;(modify-syntax-entry ?\n ">" fortran-mode-syntax-table)
 
@@ -319,7 +321,7 @@ This variable used in TAB format mode.")
     ;;
     ;; Program, subroutine and function declarations, plus calls.
     (list (concat "\\<\\(block[ \t]*data\\|call\\|entry\\|function\\|"
-		  "program\\|subroutine\\)\\>[ \t]*\\(\\sw+\\)?")
+		  "program\\|subroutine\\)\\>[ \t]*\\(\\(\\sw\\|\\s_\\)+\\)?")
 	  '(1 font-lock-keyword-face)
 	  '(2 font-lock-function-name-face nil t))))
 
@@ -1687,8 +1689,7 @@ automatically breaks the line at a previous space."
 		  (fortran-break-line))))))
     ))
 (defun fortran-break-line ()
-  (let ((opoint (point))
-	(bol (save-excursion (beginning-of-line) (point)))
+  (let ((bol (save-excursion (beginning-of-line) (point)))
 	(eol (save-excursion (end-of-line) (point)))
 	(comment-string nil))
     

@@ -357,9 +357,9 @@ See `set-frame-properties' for built-in property names."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; minibuffer
 
-(define-obsolete-function-alias 'read-minibuffer
+(define-compatible-function-alias 'read-minibuffer
   'read-expression) ; misleading name
-(define-obsolete-function-alias 'read-input 'read-string)
+(define-compatible-function-alias 'read-input 'read-string)
 (make-obsolete 'read-no-blanks-input 'read-string) ; mocklisp crud
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; misc

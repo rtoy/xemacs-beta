@@ -13,24 +13,7 @@
 #undef srand48
 #undef HAVE_RANDOM
 #define HPUX10
-#define FORCE_ALLOCA_H
 /* AlainF 20-Jul-1996 -- fixes for 10.10, untested for 10.0x */
 /* Fix kernel file name for 10.10 */
 #undef KERNEL_FILE
 #define KERNEL_FILE "/stand/vmunix"
-/* The curses library seems to have a badly broken version of select(2)
-   that makes "poll: interrupted system call" messages to appear and
-   Emacs suprocesses to hang (e.g. TeX compilation w/ AUCTeX) */
-#undef LIBS_TERMCAP
-#define LIBS_TERMCAP -ltermcap
-/* 10.10 has Xmu in /usr/contrib/X11R5/lib */
-#ifndef HAVE_LIBXMU
-#undef C_SWITCH_X_SYSTEM 
-#define C_SWITCH_X_SYSTEM -I/usr/include/X11R5 -I/usr/include/Motif1.2 -I/usr/contrib/include/X11R5
-#undef LD_SWITCH_X_DEFAULT
-#define LD_SWITCH_X_DEFAULT -L/usr/lib/X11R5 -L/usr/lib/Motif1.2 -L/usr/contrib/lib/X11R5
-#undef LIBXMU
-#define LIBXMU -lXmu
-#define HAVE_LIBXMU 1
-#undef NO_EDITRES
-#endif

@@ -1,3 +1,8 @@
+Tue May 20 19:17:01 1997  Steven L Baur  <steve@altair.xemacs.org>
+
+	* cus-edit.el (mule): New group for MULE merged emacsen.
+	(auto-save): Spelling fix.
+
 Tue May 13 16:05:34 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
 
 	* Version 1.97 released.

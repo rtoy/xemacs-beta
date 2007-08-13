@@ -28,7 +28,7 @@
 ;; It also sets the font-lock syntax stuff for colorization
 
 ;; By Drew Csillag (drew@staff.prodigy.com)
-;; $Id: m4-mode.el,v 1.3 1997/05/18 03:39:57 steve Exp $
+;; $Id: m4-mode.el,v 1.4 1997/05/23 01:36:24 steve Exp $
 
 ;; History:
 
@@ -121,9 +121,9 @@ font-lock-comment-face)
 (modify-syntax-entry ?\n ">#" m4-mode-syntax-table)
 (modify-syntax-entry ?{  "_" m4-mode-syntax-table)
 (modify-syntax-entry ?}  "_" m4-mode-syntax-table)
-(modify-syntax-entry ?*  "w" m4-mode-syntax-table)
-(modify-syntax-entry ?_  "w" m4-mode-syntax-table)
-(modify-syntax-entry ?\"  "w" m4-mode-syntax-table)
+(modify-syntax-entry ?*  "." m4-mode-syntax-table)
+(modify-syntax-entry ?_  "_" m4-mode-syntax-table)
+(modify-syntax-entry ?\" "w" m4-mode-syntax-table)
 
 (defvar m4-mode-map
   (let ((map (make-sparse-keymap)))

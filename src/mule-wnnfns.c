@@ -268,11 +268,12 @@ Boston, MA 02111-1307, USA.  */
 
 #include "buffer.h"
 #include "window.h"
+#include "sysdep.h"
 
-#include "commonhd.h"
+#include "wnn/commonhd.h"
 #include "mule-charset.h"
-#include "jllib.h"
-#include "cplib.h"
+#include "wnn/jllib.h"
+#include "wnn/cplib.h"
 
 /* UCHAR が二重定義されるので */
 #define _UCHAR_T
@@ -284,6 +285,7 @@ Boston, MA 02111-1307, USA.  */
 #define WNNSERVER_T 2
 #define WNNSERVER_K 3
 
+int check_wnn_server_type (void); 
 void w2m (w_char *wp, unsigned char *mp, unsigned char lb);
 void m2w (unsigned char *mp, w_char *wp);
 void w2y (w_char *w);

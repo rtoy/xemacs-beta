@@ -228,7 +228,6 @@ Boston, MA 02111-1307, USA.  */
 
 #undef NLIST_STRUCT
 
-#undef UNEXEC_SRC
 #undef AIX_SMT_EXP
 
 /* Compile in support for SOCKS? */
@@ -447,6 +446,8 @@ typedef unsigned long EMACS_UINT;
 
 /* The version string from version.el. Used in #pragma ident in emacs.c */
 #undef EMACS_VERSION
+/* Used to identify the XEmacs version in stack traces. */
+#undef main_1
 
 /* Load in the conversion definitions if this system
    needs them and the source file being compiled has not

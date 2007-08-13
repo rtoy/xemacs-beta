@@ -1565,6 +1565,89 @@ The key bindings are:
 
 ;;;***
 
+;;;### (autoloads (term make-term) "term" "eterm/term.el")
+
+(autoload 'make-term "term" "\
+Make a term process NAME in a buffer, running PROGRAM.
+The name of the buffer is made by surrounding NAME with `*'s.
+If there is already a running process in that buffer, it is not restarted.
+Optional third arg STARTFILE is the name of a file to send the contents of to 
+the process.  Any more args are arguments to PROGRAM." nil nil)
+
+(autoload 'term "term" "\
+Start a terminal-emulator in a new buffer." t nil)
+
+;;;***
+
+;;;### (autoloads (tperldb txdb tdbx tsdb tgdb) "tgud" "eterm/tgud.el")
+
+(autoload 'tgdb "tgud" "\
+Run gdb on program FILE in buffer *tgud-FILE*.
+The directory containing FILE becomes the initial working directory
+and source-file directory for your debugger." t nil)
+
+(autoload 'tsdb "tgud" "\
+Run sdb on program FILE in buffer *tgud-FILE*.
+The directory containing FILE becomes the initial working directory
+and source-file directory for your debugger." t nil)
+
+(autoload 'tdbx "tgud" "\
+Run dbx on program FILE in buffer *tgud-FILE*.
+The directory containing FILE becomes the initial working directory
+and source-file directory for your debugger." t nil)
+
+(autoload 'txdb "tgud" "\
+Run xdb on program FILE in buffer *tgud-FILE*.
+The directory containing FILE becomes the initial working directory
+and source-file directory for your debugger.
+
+You can set the variable 'tgud-xdb-directories' to a list of program source
+directories if your program contains sources from more than one directory." t nil)
+
+(autoload 'tperldb "tgud" "\
+Run perldb on program FILE in buffer *tgud-FILE*.
+The directory containing FILE becomes the initial working directory
+and source-file directory for your debugger." t nil)
+
+;;;***
+
+;;;### (autoloads (tshell) "tshell" "eterm/tshell.el")
+
+(defvar tshell-prompt-pattern "^[^#$%>\n]*[#$%>] *" "\
+Regexp to match prompts in the inferior shell.
+Defaults to \"^[^#$%>\\n]*[#$%>] *\", which works pretty well.
+This variable is used to initialise `term-prompt-regexp' in the 
+shell buffer.
+
+The pattern should probably not match more than one line.  If it does,
+tshell-mode may become confused trying to distinguish prompt from input
+on lines which don't start with a prompt.
+
+This is a fine thing to set in your `.emacs' file.")
+
+(autoload 'tshell "tshell" "\
+Run an inferior shell, with I/O through buffer *shell*.
+If buffer exists but shell process is not running, make new shell.
+If buffer exists and shell process is running, just switch to buffer `*shell*'.
+Program used comes from variable `explicit-shell-file-name',
+ or (if that is nil) from the ESHELL environment variable,
+ or else from SHELL if there is no ESHELL.
+If a file `~/.emacs_SHELLNAME' exists, it is given as initial input
+ (Note that this may lose due to a timing error if the shell
+  discards input when it starts up.)
+The buffer is put in Tshell mode, giving commands for sending input
+and controlling the subjobs of the shell.  See `tshell-mode'.
+See also the variable `tshell-prompt-pattern'.
+
+The shell file name (sans directories) is used to make a symbol name
+such as `explicit-csh-args'.  If that symbol is a variable,
+its value is used as a list of arguments when invoking the shell.
+Otherwise, one argument `-i' is passed to the shell.
+
+\(Type \\[describe-mode] in the shell buffer for a list of commands.)" t nil)
+
+;;;***
+
 ;;;### (autoloads (blackbox) "blackbox" "games/blackbox.el")
 
 (autoload 'blackbox "blackbox" "\
@@ -3689,7 +3772,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.28 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.29 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4622,6 +4705,19 @@ with your script for an edit-interpret-debug cycle." t nil)
 
 ;;;***
 
+;;;### (autoloads (strokes-mode) "strokes" "modes/strokes.el")
+
+(defvar strokes-enabled-p nil "\
+Variable determining whether `strokes' is globally enabled")
+
+(autoload 'strokes-mode "strokes" "\
+Toggle strokes being enabled.
+With ARG, turn strokes on if and only if ARG is positive or true.
+Note that `strokes-mode' is a global mode.  Think of it as a minor
+mode in all buffers when activated." t nil)
+
+;;;***
+
 ;;;### (autoloads (tcl-help-on-word inferior-tcl tcl-mode) "tcl" "modes/tcl.el")
 
 (autoload 'tcl-mode "tcl" "\
@@ -5040,7 +5136,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.28 $
+vhdl-mode $Revision: 1.29 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -5341,7 +5437,8 @@ Optional arg (interactive prefix) non-nil means prompt for user name and site.
 Second arg is file name of change log.  If nil, uses `change-log-default-name'.
 Third arg OTHER-WINDOW non-nil means visit in other window.
 Fourth arg NEW-ENTRY non-nil means always create a new entry at the front;
-never append to an existing entry." t nil)
+never append to an existing entry.  Today's date is calculated according to
+`change-log-time-zone-rule' if non-nil, otherwise in local time." t nil)
 
 (autoload 'add-change-log-entry-other-window "add-log" "\
 Find change log file in other window and add an entry for today.
@@ -5356,6 +5453,15 @@ Prevents numeric backups and sets `left-margin' to 8 and `fill-column' to 74.
 New log entries are usually made with \\[add-change-log-entry] or \\[add-change-log-entry-other-window].
 Each entry behaves as a paragraph, and the entries for one day as a page.
 Runs `change-log-mode-hook'." t nil)
+
+(defvar add-log-lisp-like-modes '(emacs-lisp-mode lisp-mode scheme-mode lisp-interaction-mode) "\
+*Modes that look like Lisp to `add-log-current-defun'.")
+
+(defvar add-log-c-like-modes '(c-mode c++-mode c++-c-mode objc-mode) "\
+*Modes that look like C to `add-log-current-defun'.")
+
+(defvar add-log-tex-like-modes '(TeX-mode plain-TeX-mode LaTeX-mode plain-tex-mode latex-mode) "\
+*Modes that look like TeX to `add-log-current-defun'.")
 
 (autoload 'add-log-current-defun "add-log" "\
 Return name of function definition point is in, or nil.
@@ -6386,9 +6492,12 @@ When using CVS you have additional commands
 
 ;;;***
 
-;;;### (autoloads (gnuserv-edit gnuserv-start) "gnuserv" "packages/gnuserv.el")
+;;;### (autoloads (gnuserv-start gnuserv-running-p) "gnuserv" "packages/gnuserv.el")
 
 (defcustom gnuserv-frame nil "*The frame to be used to display all edited files.\nIf nil, then a new frame is created for each file edited.\nIf t, then the currently selected frame will be used.\nIf a function, then this will be called with a symbol `x' or `tty' as the\nonly argument, and its return value will be interpreted as above." :tag "Gnuserv Frame" :type '(radio (const :tag "Create new frame each time" nil) (const :tag "Use selected frame" t) (function-item :tag "Use main Emacs frame" gnuserv-main-frame-function) (function-item :tag "Use visible frame, otherwise create new" gnuserv-visible-frame-function) (function-item :tag "Create special Gnuserv frame and use it" gnuserv-special-frame-function) (function :tag "Other")) :group 'gnuserv)
+
+(autoload 'gnuserv-running-p "gnuserv" "\
+Return non-nil if a gnuserv process is running from this XEmacs session." nil nil)
 
 (autoload 'gnuserv-start "gnuserv" "\
 Allow this Emacs process to be a server for client processes.
@@ -6397,23 +6506,6 @@ client \"editors\" (gnuclient and gnudoit) can send editing commands to
 this Emacs job.  See the gnuserv(1) manual page for more details.
 
 Prefix arg means just kill any existing server communications subprocess." t nil)
-
-(autoload 'gnuserv-edit "gnuserv" "\
-Mark the current gnuserv editing buffer as \"done\", and switch to next one.
-
-The `gnuserv-done-function' is used to dispose of the buffer after marking it
-as done; it is `kill-buffer' by default.
-
-Files that match `gnuserv-temp-file-regexp' are considered temporary and
-are saved unconditionally and backed up if `gnuserv-make-temp-file-backup'
-is non-nil.  They are disposed of using `gnuserv-done-temp-file-function'.
-
-When all of a client's buffers are marked as \"done\", the client is notified.
-
-If invoked with a prefix argument, or if there is no gnuserv process
-running, only starts server process.  Invoked with \\[gnuserv-edit]." t nil)
-
-(global-set-key "#" 'gnuserv-edit)
 
 ;;;***
 
@@ -7450,21 +7542,29 @@ Put this on write-file-hooks." nil nil)
 
 ;;;***
 
-;;;### (autoloads (vc-update-change-log vc-rename-this-file vc-rename-file vc-cancel-version vc-revert-buffer vc-print-log vc-retrieve-snapshot vc-create-snapshot vc-directory vc-insert-headers vc-version-other-window vc-version-diff vc-diff vc-register vc-next-action vc-file-status) "vc" "packages/vc.el")
-
-(defvar vc-checkin-hook nil "\
-*List of functions called after a checkin is done.  See `run-hooks'.")
+;;;### (autoloads (vc-update-change-log vc-rename-file vc-cancel-version vc-revert-buffer vc-print-log vc-retrieve-snapshot vc-create-snapshot vc-directory vc-insert-headers vc-version-other-window vc-diff vc-checkout vc-register vc-next-action vc-find-binary) "vc" "packages/vc.el")
 
 (defvar vc-before-checkin-hook nil "\
-*List of functions called before a checkin is done.  See `run-hooks'.")
+*Normal hook (list of functions) run before a file gets checked in.  
+See `run-hooks'.")
 
-(autoload 'vc-file-status "vc" "\
-Display the current status of the file being visited.
-Currently, this is only defined for CVS.  The information provided in the
-modeline is generally sufficient for RCS and SCCS." t nil)
+(defvar vc-checkin-hook nil "\
+*Normal hook (List of functions) run after a checkin is done.
+See `run-hooks'.")
+
+(autoload 'vc-find-binary "vc" "\
+Look for a command anywhere on the subprocess-command search path." nil nil)
 
 (autoload 'vc-next-action "vc" "\
 Do the next logical checkin or checkout operation on the current file.
+   If you call this from within a VC dired buffer with no files marked,
+it will operate on the file in the current line.
+   If you call this from within a VC dired buffer, and one or more
+files are marked, it will accept a log message and then operate on
+each one.  The log message will be used as a comment for any register
+or checkin operations, but ignored when doing checkouts.  Attempted
+lock steals will raise an error.
+   A prefix argument lets you specify the version number to use.
 
 For RCS and SCCS files:
    If the file is not already registered, this registers it for version
@@ -7486,30 +7586,18 @@ For CVS files:
    If the file is not already registered, this registers it for version
 control.  This does a \"cvs add\", but no \"cvs commit\".
    If the file is added but not committed, it is committed.
-   If the file has not been changed, neither in your working area or
-in the repository, a message is printed and nothing is done.
    If your working file is changed, but the repository file is
 unchanged, this pops up a buffer for entry of a log message; when the
 message has been entered, it checks in the resulting changes along
 with the logmessage as change commentary.  A writable file is retained.
    If the repository file is changed, you are asked if you want to
-merge in the changes into your working copy.
-
-The following is true regardless of which version control system you
-are using:
-
-   If you call this from within a VC dired buffer with no files marked,
-it will operate on the file in the current line.
-   If you call this from within a VC dired buffer, and one or more
-files are marked, it will accept a log message and then operate on
-each one.  The log message will be used as a comment for any register
-or checkin operations, but ignored when doing checkouts.  Attempted
-lock steals will raise an error.
-
-   For checkin, a prefix argument lets you specify the version number to use." t nil)
+merge in the changes into your working copy." t nil)
 
 (autoload 'vc-register "vc" "\
 Register the current file into your version-control system." t nil)
+
+(autoload 'vc-checkout "vc" "\
+Retrieve a copy of the latest version of the given file." nil nil)
 
 (autoload 'vc-diff "vc" "\
 Display diffs between file versions.
@@ -7517,11 +7605,6 @@ Normally this compares the current file and buffer with the most recent
 checked in version of that file.  This uses no arguments.
 With a prefix argument, it reads the file name to use
 and two version designators specifying which versions to compare." t nil)
-
-(autoload 'vc-version-diff "vc" "\
-For FILE, report diffs between two stored versions REL1 and REL2 of it.
-If FILE is a directory, generate diffs between versions for all registered
-files in or below it." t nil)
 
 (autoload 'vc-version-other-window "vc" "\
 Visit version REV of the current buffer in another window.
@@ -7534,13 +7617,9 @@ Headers desired are inserted at the start of the buffer, and are pulled from
 the variable `vc-header-alist'." t nil)
 
 (autoload 'vc-directory "vc" "\
-Show version-control status of all files in the directory DIR.
-If the second argument VERBOSE is non-nil, show all files;
-otherwise show only files that current locked in the version control system.
-Interactively, supply a prefix arg to make VERBOSE non-nil.
-
-If the optional third argument NESTED is non-nil,
-scan the entire tree of subdirectories of the current directory." t nil)
+Show version-control status of the current directory and subdirectories.
+Normally it creates a Dired buffer that lists only the locked files
+in all these directories.  With a prefix argument, it lists all files." t nil)
 
 (autoload 'vc-create-snapshot "vc" "\
 Make a snapshot called NAME.
@@ -7571,15 +7650,21 @@ A prefix argument means do not revert the buffer afterwards." t nil)
 (autoload 'vc-rename-file "vc" "\
 Rename file OLD to NEW, and rename its master file likewise." t nil)
 
-(autoload 'vc-rename-this-file "vc" nil t nil)
-
 (autoload 'vc-update-change-log "vc" "\
-Find change log file and add entries from recent RCS logs.
+Find change log file and add entries from recent RCS/CVS logs.
+Normally, find log entries for all registered files in the default
+directory using `rcs2log', which finds CVS logs preferentially.
 The mark is left at the end of the text prepended to the change log.
+
 With prefix arg of C-u, only find log entries for the current buffer's file.
-With any numeric prefix arg, find log entries for all files currently visited.
-Otherwise, find log entries for all registered files in the default directory.
-From a program, any arguments are passed to the `rcs2log' script." t nil)
+
+With any numeric prefix arg, find log entries for all currently visited
+files that are under version control.  This puts all the entries in the
+log for the default directory, which may not be appropriate.
+
+From a program, any arguments are assumed to be filenames and are
+passed to the `rcs2log' script after massaging to be relative to the
+default directory." t nil)
 
 ;;;***
 
@@ -8770,10 +8855,6 @@ is a list of menu items, as above." nil 'macro)
 ;;;### (autoloads (insert-kbd-macro format-kbd-macro kbd read-kbd-macro edit-named-kbd-macro edit-last-kbd-macro edit-kbd-macro) "edmacro" "utils/edmacro.el")
 
 (define-key ctl-x-map "\C-k" 'edit-kbd-macro)
-
-(defvar edmacro-eight-bits nil "\
-*Non-nil if edit-kbd-macro should leave 8-bit characters intact.
-Default nil means to write characters above \\177 in octal notation.")
 
 (autoload 'edit-kbd-macro "edmacro" "\
 Edit a keyboard macro.
