@@ -359,7 +359,7 @@ Unless you are an XEmacs maintainr, it is probably unwise to change this.")
 (defun update-file-autoloads (file)
   "Update the autoloads for FILE in `generated-autoload-file'
 \(which FILE might bind in its local variables).
-This function refuses to update autoloads files."
+This functions refuses to update autoloads files."
   (interactive "fUpdate autoloads for file: ")
   (setq file (expand-file-name file))
   (when (and (file-newer-than-file-p file generated-autoload-file)
@@ -375,8 +375,6 @@ This function refuses to update autoloads files."
 	(let ((find-file-hooks nil))
 	  (set-buffer (or (get-file-buffer generated-autoload-file)
 			  (find-file-noselect generated-autoload-file))))
-	;; Make sure we can scribble in it.
-	(setq buffer-read-only nil)
 	;; First delete all sections for this file.
 	(goto-char (point-min))
 	(while (search-forward generate-autoload-section-header nil t)

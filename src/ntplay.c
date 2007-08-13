@@ -25,7 +25,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #include "sysfile.h"
 #include "lisp.h"
 
-#if defined (__CYGWIN32__) && CYGWIN_VERSION_DLL_MAJOR < 21
+#ifdef __CYGWIN32__
 extern BOOL WINAPI PlaySound(LPCSTR,HMODULE,DWORD);
 #else
 #include <mmsystem.h>

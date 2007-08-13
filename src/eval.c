@@ -1071,7 +1071,7 @@ If SYMBOL is buffer-local, its default value is what is set;
  buffer-local values are not affected.
 INITVALUE and DOCSTRING are optional.
 If DOCSTRING starts with *, this variable is identified as a user option.
- This means that M-x set-variable recognizes it.
+ This means that M-x set-variable and M-x edit-options recognize it.
 If INITVALUE is missing, SYMBOL's value is not set.
 
 In lisp-interaction-mode defvar is treated as defconst.
@@ -1122,7 +1122,7 @@ If SYMBOL is buffer-local, its default value is what is set;
  buffer-local values are not affected.
 DOCSTRING is optional.
 If DOCSTRING starts with *, this variable is identified as a user option.
- This means that M-x set-variable recognizes it.
+ This means that M-x set-variable and M-x edit-options recognize it.
 
 Note: do not use `defconst' for user options in libraries that are not
  normally loaded, since it is useful for users to be able to specify
@@ -1193,10 +1193,10 @@ If FORM is not a macro call, it is returned unchanged.
 Otherwise, the macro is expanded and the expansion is considered
 in place of FORM.  When a non-macro-call results, it is returned.
 
-The second optional arg ENVIRONMENT specifies an environment of macro
+The second optional arg ENVIRONMENT species an environment of macro
 definitions to shadow the loaded ones for use in file byte-compilation.
 */
-       (form, environment))
+       (form, env))
 {
   /* This function can GC */
   /* With cleanups from Hallvard Furuseth.  */
@@ -1217,7 +1217,7 @@ definitions to shadow the loaded ones for use in file byte-compilation.
 	{
 	  QUIT;
 	  sym = def;
-	  tem = Fassq (sym, environment);
+	  tem = Fassq (sym, env);
 	  if (NILP (tem))
 	    {
 	      def = XSYMBOL (sym)->function;
@@ -1226,11 +1226,11 @@ definitions to shadow the loaded ones for use in file byte-compilation.
 	    }
 	  break;
 	}
-      /* Right now TEM is the result from SYM in ENVIRONMENT,
+      /* Right now TEM is the result from SYM in ENV,
 	 and if TEM is nil then DEF is SYM's function definition.  */
       if (NILP (tem))
 	{
-	  /* SYM is not mentioned in ENVIRONMENT.
+	  /* SYM is not mentioned in ENV.
 	     Look at its function definition.  */
 	  if (UNBOUNDP (def)
 	      || !CONSP (def))
@@ -3275,12 +3275,7 @@ form, or any macro.
 	}
       if (EQ (funcar, Qautoload))
 	{
-	  struct gcpro gcpro1;
-
-	  GCPRO1 (function);
 	  do_autoload (function, orig_function);
-	  UNGCPRO;
-	  function = orig_function;
 	  goto retry;
 	}
       if (EQ (funcar, Qlambda))
@@ -3343,12 +3338,7 @@ be passed to `funcall', any special form, or any macro.
 	}
       if (EQ (funcar, Qautoload))
 	{
-	  struct gcpro gcpro1;
-
-	  GCPRO1 (function);
 	  do_autoload (function, orig_function);
-	  UNGCPRO;
-	  function = orig_function;
 	  goto retry;
 	}
       if (EQ (funcar, Qlambda))
@@ -3645,7 +3635,7 @@ called to run the hook.  If the value is a function, it is called with
 the given arguments and its return value is returned.  If it is a list
 of functions, those functions are called, in order,
 with the given arguments ARGS.
-It is best not to depend on the value returned by `run-hook-with-args',
+It is best not to depend on the value return by `run-hook-with-args',
 as that may change.
 
 To make a hook variable buffer-local, use `make-local-hook',
@@ -3701,6 +3691,7 @@ run_hook_with_args_in_buffer (struct buffer *buf, int nargs, Lisp_Object *args,
 			      enum run_hooks_condition cond)
 {
   Lisp_Object sym, val, ret;
+  struct gcpro gcpro1, gcpro2;
 
   if (!initialized || preparing_for_armageddon)
     /* We need to bail out of here pronto. */
@@ -3723,9 +3714,7 @@ run_hook_with_args_in_buffer (struct buffer *buf, int nargs, Lisp_Object *args,
     }
   else
     {
-     struct gcpro gcpro1, gcpro2, gcpro3;
-     Lisp_Object globals = Qnil;
-     GCPRO3 (sym, val, globals);
+      GCPRO2 (sym, val);
 
       for (;
 	   CONSP (val) && ((cond == RUN_HOOKS_TO_COMPLETION)
@@ -3737,7 +3726,7 @@ run_hook_with_args_in_buffer (struct buffer *buf, int nargs, Lisp_Object *args,
 	    {
 	      /* t indicates this hook has a local binding;
 		 it means to run the global binding too.  */
-	      globals = Fdefault_value (sym);
+	      Lisp_Object globals = Fdefault_value (sym);
 
 	      if ((! CONSP (globals) || EQ (XCAR (globals), Qlambda)) &&
 		  ! NILP (globals))
@@ -4832,7 +4821,7 @@ backtrace_specials (int speccount, int speclimit, Lisp_Object stream)
 
 DEFUN ("backtrace", Fbacktrace, 0, 2, "", /*
 Print a trace of Lisp function calls currently active.
-Optional arg STREAM specifies the output stream to send the backtrace to,
+Option arg STREAM specifies the output stream to send the backtrace to,
 and defaults to the value of `standard-output'.  Optional second arg
 DETAILED means show places where currently active variable bindings,
 catches, condition-cases, and unwind-protects were made as well as
@@ -4875,8 +4864,8 @@ function calls.
       if (!NILP (detailed) && catches && catches->backlist == backlist)
 	{
           int catchpdl = catches->pdlcount;
-          if (speccount > catchpdl
-	      && specpdl[catchpdl].func == condition_case_unwind)
+          if (specpdl[catchpdl].func == condition_case_unwind
+              && speccount > catchpdl)
             /* This is a condition-case catchpoint */
             catchpdl = catchpdl + 1;
 
@@ -5259,7 +5248,7 @@ If due to `eval' entry, one arg, t.
   specpdl = xnew_array (struct specbinding, specpdl_size);
   /* XEmacs change: increase these values. */
   max_specpdl_size = 3000;
-  max_lisp_eval_depth = 1000;
+  max_lisp_eval_depth = 500;
   throw_level = 0;
 
   reinit_eval ();

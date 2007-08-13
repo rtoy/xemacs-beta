@@ -772,6 +772,7 @@ Choose the buffer's name using `generate-new-buffer-name'."
 
 (defvar abbreviated-home-dir nil
   "The user's homedir abbreviated according to `directory-abbrev-alist'.")
+
 (defun abbreviate-file-name (filename &optional hack-homedir)
   "Return a version of FILENAME shortened using `directory-abbrev-alist'.
 See documentation of variable `directory-abbrev-alist' for more information.
@@ -789,43 +790,38 @@ If optional argument HACK-HOMEDIR is non-nil, then this also substitutes
 	;; If any elt of directory-abbrev-alist matches this name,
 	;; abbreviate accordingly.
 	(while tail
-	  (when (string-match (car (car tail)) filename)
-	    (setq filename
-		  (concat (cdr (car tail)) (substring filename (match-end 0)))))
+	  (if (string-match (car (car tail)) filename)
+	      (setq filename
+		    (concat (cdr (car tail)) (substring filename (match-end 0)))))
 	  (setq tail (cdr tail))))
-      (when hack-homedir
-	;; Compute and save the abbreviated homedir name.
-	;; We defer computing this until the first time it's needed,
-	;; to give time for directory-abbrev-alist to be set properly.
-	;; We include the separator at the end, to avoid spurious
-	;; matches such as `/usr/foobar' when the home dir is
-	;; `/usr/foo'.
-	(or abbreviated-home-dir
-	    (setq abbreviated-home-dir
-		  (let ((abbreviated-home-dir "$foo"))
-		    (concat "\\`"
-			    (regexp-quote
-			     (abbreviate-file-name (expand-file-name "~")))
-			    "\\("
-			    (regexp-quote (string directory-sep-char))
-			    "\\|\\'\\)"))))
-	;; If FILENAME starts with the abbreviated homedir,
-	;; make it start with `~' instead.
-	(if (and (string-match abbreviated-home-dir filename)
-		 ;; If the home dir is just /, don't change it.
-		 (not (and (= (match-end 0) 1)
-			   (= (aref filename 0) directory-sep-char)))
-		 (not (and (eq system-type 'windows-nt)
-			   (save-match-data
-			     (string-match (concat "\\`[a-zA-Z]:"
-						   (regexp-quote
-						    (string directory-sep-char))
-						   "\\'")
-					   filename)))))
-	    (setq filename
-		  (concat "~"
-			  (match-string 1 filename)
-			  (substring filename (match-end 0))))))
+      (if hack-homedir
+	  (progn
+	    ;; Compute and save the abbreviated homedir name.
+	    ;; We defer computing this until the first time it's needed, to
+	    ;; give time for directory-abbrev-alist to be set properly.
+	    ;; We include a slash at the end, to avoid spurious matches
+	    ;; such as `/usr/foobar' when the home dir is `/usr/foo'.
+	    (or abbreviated-home-dir
+		(setq abbreviated-home-dir
+		      (let ((abbreviated-home-dir "$foo"))
+			(concat "\\`" (regexp-quote (abbreviate-file-name
+						     (expand-file-name "~")))
+				"\\(/\\|\\'\\)"))))
+	    ;; If FILENAME starts with the abbreviated homedir,
+	    ;; make it start with `~' instead.
+	    (if (and (string-match abbreviated-home-dir filename)
+		     ;; If the home dir is just /, don't change it.
+		     (not (and (= (match-end 0) 1) ;#### unix-specific
+			       (= (aref filename 0) ?/)))
+		     (not (and (or (eq system-type 'ms-dos)
+				   (eq system-type 'windows-nt))
+			       (save-match-data
+				 (string-match "^[a-zA-Z]:/$" filename)))))
+		(setq filename
+		      (concat "~"
+			      (substring filename
+					 (match-beginning 1) (match-end 1))
+			      (substring filename (match-end 0)))))))
       filename)))
 
 (defcustom find-file-not-true-dirname-list nil
@@ -878,31 +874,23 @@ If there is no such live buffer, return nil."
 (defun insert-file-contents-literally (filename &optional visit beg end replace)
   "Like `insert-file-contents', q.v., but only reads in the file.
 A buffer may be modified in several ways after reading into the buffer due
-to advanced Emacs features, such as format decoding, character code
-conversion,find-file-hooks, automatic uncompression, etc.
-
+to advanced Emacs features, such as file-name-handlers, format decoding,
+find-file-hooks, etc.
   This function ensures that none of these modifications will take place."
-  (let ((wrap-func (find-file-name-handler filename
-					   'insert-file-contents-literally)))
-    (if wrap-func 
-	(funcall wrap-func 'insert-file-contents-literally filename
-		 visit beg end replace)
-      (let ((file-name-handler-alist nil)
-	    (format-alist nil)
-	    (after-insert-file-functions nil)
-	    (coding-system-for-read 'binary)
-	    (coding-system-for-write 'binary)
-	    (find-buffer-file-type-function
-	     (if (fboundp 'find-buffer-file-type)
-		 (symbol-function 'find-buffer-file-type)
-	       nil)))
-	(unwind-protect
-	    (progn
-	      (fset 'find-buffer-file-type (lambda (filename) t))
-	      (insert-file-contents filename visit beg end replace))
-	  (if find-buffer-file-type-function
-	      (fset 'find-buffer-file-type find-buffer-file-type-function)
-	    (fmakunbound 'find-buffer-file-type)))))))
+  (let ((file-name-handler-alist nil)
+	(format-alist nil)
+	(after-insert-file-functions nil)
+	(find-buffer-file-type-function
+	 (if (fboundp 'find-buffer-file-type)
+	     (symbol-function 'find-buffer-file-type)
+	   nil)))
+    (unwind-protect
+	(progn
+	  (fset 'find-buffer-file-type (lambda (filename) t))
+	  (insert-file-contents filename visit beg end replace))
+      (if find-buffer-file-type-function
+	  (fset 'find-buffer-file-type find-buffer-file-type-function)
+	(fmakunbound 'find-buffer-file-type)))))
 
 (defun find-file-noselect (filename &optional nowarn rawfile)
   "Read file FILENAME into a buffer and return the buffer.
@@ -988,69 +976,65 @@ If RAWFILE is non-nil, the file is read literally."
 ;;;		(message "Symbolic link to file in buffer %s"
 ;;;			 (buffer-name linked-buf))))
 	  (setq buf (create-file-buffer filename))
-	  ;; Catch various signals, such as QUIT, and kill the buffer
-	  ;; in that case.
-	  (condition-case data
-	      (progn
-		(set-buffer-major-mode buf)
-		(set-buffer buf)
-		(erase-buffer)
-		(condition-case ()
-		    (if rawfile
-			(insert-file-contents-literally filename t)
-		      (insert-file-contents filename t))
-		  (file-error
-		   (when (and (file-exists-p filename)
-			      (not (file-readable-p filename)))
-		     (signal 'file-error (list "File is not readable" filename)))
-		   (if rawfile
-		       ;; Unconditionally set error
-		       (setq error t)
-		     (or
-		      ;; Run find-file-not-found-hooks until one returns non-nil.
-		      (run-hook-with-args-until-success 'find-file-not-found-hooks)
-		      ;; If they fail too, set error.
-		      (setq error t)))))
-		;; Find the file's truename, and maybe use that as visited name.
-		;; automatically computed in XEmacs, unless jka-compr was used!
-		(unless buffer-file-truename
-		  (setq buffer-file-truename truename))
-		(setq buffer-file-number number)
-		;; On VMS, we may want to remember which directory in
-		;; a search list the file was found in.
-		(and (eq system-type 'vax-vms)
-		     (let (logical)
-		       (if (string-match ":" (file-name-directory filename))
-			   (setq logical (substring (file-name-directory filename)
-						    0 (match-beginning 0))))
-		       (not (member logical find-file-not-true-dirname-list)))
-		     (setq buffer-file-name buffer-file-truename))
-		(and find-file-use-truenames
-		     ;; This should be in C.  Put pathname
-		     ;; abbreviations that have been explicitly
-		     ;; requested back into the pathname.  Most
-		     ;; importantly, strip out automounter /tmp_mnt
-		     ;; directories so that auto-save will work
-		     (setq buffer-file-name (abbreviate-file-name buffer-file-name)))
-		;; Set buffer's default directory to that of the file.
-		(setq default-directory (file-name-directory buffer-file-name))
-		;; Turn off backup files for certain file names.  Since
-		;; this is a permanent local, the major mode won't eliminate it.
-		(and (not (funcall backup-enable-predicate buffer-file-name))
-		     (progn
-		       (make-local-variable 'backup-inhibited)
-		       (setq backup-inhibited t)))
-		(if rawfile
-		    ;; #### FSF 20.3 sets buffer-file-coding-system to
-		    ;; `no-conversion' here.  Should we copy?  It also
-		    ;; makes `find-file-literally' a local variable
-		    ;; and sets it to t.
-		    nil
-		  (after-find-file error (not nowarn))
-		  (setq buf (current-buffer))))
-	    (t
-	     (kill-buffer buf)
-	     (signal (car data) (cdr data))))))
+	  (set-buffer-major-mode buf)
+	  (set-buffer buf)
+	  (erase-buffer)
+	  (if rawfile
+	      (condition-case ()
+		  (insert-file-contents-literally filename t)
+		(file-error
+		 (when (and (file-exists-p filename)
+			    (not (file-readable-p filename)))
+		   (kill-buffer buf)
+		   (signal 'file-error (list "File is not readable" filename)))
+		 ;; Unconditionally set error
+		 (setq error t)))
+	    (condition-case ()
+		(insert-file-contents filename t)
+	      (file-error
+	       (when (and (file-exists-p filename)
+			  (not (file-readable-p filename)))
+		 (kill-buffer buf)
+		 (signal 'file-error (list "File is not readable" filename)))
+	       ;; Run find-file-not-found-hooks until one returns non-nil.
+	       (or (run-hook-with-args-until-success 'find-file-not-found-hooks)
+		   ;; If they fail too, set error.
+		   (setq error t)))))
+	  ;; Find the file's truename, and maybe use that as visited name.
+	  ;; automatically computed in XEmacs, unless jka-compr was used!
+	  (unless buffer-file-truename
+	    (setq buffer-file-truename truename))
+	  (setq buffer-file-number number)
+	  ;; On VMS, we may want to remember which directory in a search list
+	  ;; the file was found in.
+	  (and (eq system-type 'vax-vms)
+	       (let (logical)
+		 (if (string-match ":" (file-name-directory filename))
+		     (setq logical (substring (file-name-directory filename)
+					      0 (match-beginning 0))))
+		 (not (member logical find-file-not-true-dirname-list)))
+	       (setq buffer-file-name buffer-file-truename))
+	  (and find-file-use-truenames
+	       ;; This should be in C.  Put pathname abbreviations that have
+	       ;; been explicitly requested back into the pathname.  Most
+	       ;; importantly, strip out automounter /tmp_mnt directories so
+	       ;; that auto-save will work
+	       (setq buffer-file-name (abbreviate-file-name buffer-file-name)))
+	  ;; Set buffer's default directory to that of the file.
+	  (setq default-directory (file-name-directory buffer-file-name))
+	  ;; Turn off backup files for certain file names.  Since
+	  ;; this is a permanent local, the major mode won't eliminate it.
+	  (and (not (funcall backup-enable-predicate buffer-file-name))
+	       (progn
+		 (make-local-variable 'backup-inhibited)
+		 (setq backup-inhibited t)))
+	  (if rawfile
+	      ;; #### FSF 20.3 sets buffer-file-coding-system to
+	      ;; `no-conversion' here.  Should we copy?  It also makes
+	      ;; `find-file-literally' a local variable and sets it to t.
+	      nil
+	    (after-find-file error (not nowarn))
+	    (setq buf (current-buffer)))))
       buf)))
 
 ;; FSF has `insert-file-literally' and `find-file-literally' here.
@@ -1159,53 +1143,51 @@ run `normal-mode' explicitly."
 
 (defvar auto-mode-alist
   '(("\\.te?xt\\'" . text-mode)
-    ("\\.[chi]\\'" . c-mode)
+    ("\\.[ch]\\'" . c-mode)
     ("\\.el\\'" . emacs-lisp-mode)
-    ("\\.\\(?:[CH]\\|cc\\|hh\\)\\'" . c++-mode)
+    ("\\.\\([CH]\\|cc\\|hh\\)\\'" . c++-mode)
     ("\\.[ch]\\(pp\\|xx\\|\\+\\+\\)\\'" . c++-mode)
     ("\\.java\\'" . java-mode)
     ("\\.idl\\'" . idl-mode)
-    ("\\.f\\(?:or\\)?\\'" . fortran-mode)
-    ("\\.F\\(?:OR\\)?\\'" . fortran-mode)
+    ("\\.f\\(or\\)?\\'" . fortran-mode)
+    ("\\.F\\(OR\\)?\\'" . fortran-mode)
     ("\\.[fF]90\\'" . f90-mode)
 ;;; Less common extensions come here
 ;;; so more common ones above are found faster.
-    ("\\.\\([pP][Llm]\\|al\\)\\'" . perl-mode)
+    ("\\.p[lm]\\'" . perl-mode)
     ("\\.py\\'" . python-mode)
-    ("\\.texi\\(?:nfo\\)?\\'" . texinfo-mode)
+    ("\\.texi\\(nfo\\)?\\'" . texinfo-mode)
     ("\\.ad[abs]\\'" . ada-mode)
-    ("\\.c?l\\(?:i?sp\\)?\\'" . lisp-mode)
-    ("\\.p\\(?:as\\)?\\'" . pascal-mode)
+    ("\\.c?l\\(i?sp\\)?\\'" . lisp-mode)
+    ("\\.p\\(as\\)?\\'" . pascal-mode)
     ("\\.ltx\\'" . latex-mode)
     ("\\.[sS]\\'" . asm-mode)
-    ("[Cc]hange.?[Ll]og?\\(?:.[0-9]+\\)?\\'" . change-log-mode)
+    ("[Cc]hange.?[Ll]og?\\(.[0-9]+\\)?\\'" . change-log-mode)
     ("\\$CHANGE_LOG\\$\\.TXT" . change-log-mode)
     ("\\.scm?\\(?:\\.[0-9]*\\)?\\'" . scheme-mode)
     ("\\.e\\'" . eiffel-mode)
     ("\\.mss\\'" . scribe-mode)
-    ("\\.m\\(?:[mes]\\|an\\)\\'" . nroff-mode)
+    ("\\.m\\([mes]\\|an\\)\\'" . nroff-mode)
     ("\\.icn\\'" . icon-mode)
-    ("\\.\\(?:[ckz]?sh\\|shar\\)\\'" . sh-mode)
-    ("\\.[Pp][Rr][Oo]\\'" . idlwave-mode)
+    ("\\.\\([ckz]?sh\\|shar\\)\\'" . sh-mode)
     ;; #### Unix-specific!
-    ("/\\.\\(?:bash_\\|z\\)?\\(profile\\|login\\|logout\\)\\'" . sh-mode)
-    ("/\\.\\(?:[ckz]sh\\|bash\\|tcsh\\|es\\|xinit\\|startx\\)rc\\'" . sh-mode)
-    ("/\\.\\(?:[kz]shenv\\|xsession\\)\\'" . sh-mode)
-    ("\\.m?spec$" .sh-mode)
+    ("/\\.\\(bash_\\|z\\)?\\(profile\\|login\||logout\\)\\'" . sh-mode)
+    ("/\\.\\([ckz]sh\\|bash\\|tcsh\\|es\\|xinit\\|startx\\)rc\\'" . sh-mode)
+    ("/\\.\\([kz]shenv\\|xsession\\)\\'" . sh-mode)
     ;; The following come after the ChangeLog pattern for the sake of
     ;; ChangeLog.1, etc. and after the .scm.[0-9] pattern too.
     ("\\.[12345678]\\'" . nroff-mode)
     ("\\.[tT]e[xX]\\'" . tex-mode)
-    ("\\.\\(?:sty\\|cls\\|bbl\\)\\'" . latex-mode)
+    ("\\.\\(sty\\|cls\\|bbl\\)\\'" . latex-mode)
     ("\\.bib\\'" . bibtex-mode)
     ("\\.article\\'" . text-mode)
     ("\\.letter\\'" . text-mode)
-    ("\\.\\(?:tcl\\|exp\\)\\'" . tcl-mode)
+    ("\\.\\(tcl\\|exp\\)\\'" . tcl-mode)
     ("\\.wrl\\'" . vrml-mode)
     ("\\.awk\\'" . awk-mode)
     ("\\.prolog\\'" . prolog-mode)
     ("\\.tar\\'" . tar-mode)
-    ("\\.\\(?:arc\\|zip\\|lzh\\|zoo\\)\\'" . archive-mode)
+    ("\\.\\(arc\\|zip\\|lzh\\|zoo\\)\\'" . archive-mode)
     ;; Mailer puts message to be edited in /tmp/Re.... or Message
     ;; #### Unix-specific!
     ("\\`/tmp/Re" . text-mode)
@@ -1217,10 +1199,9 @@ run `normal-mode' explicitly."
     ("\\.lex\\'" . c-mode)
     ("\\.m\\'" . objc-mode)
     ("\\.oak\\'" . scheme-mode)
-    ("\\.[sj]?html?\\'" . html-mode)
-    ("\\.jsp\\'" . html-mode)
-    ("\\.xml\\'" . xml-mode)
-    ("\\.\\(?:sgml?\\|dtd\\)\\'" . sgml-mode)
+    ("\\.s?html?\\'" . html-mode)
+    ("\\.htm?l?3\\'" . html3-mode)
+    ("\\.\\(sgml?\\|dtd\\)\\'" . sgml-mode)
     ("\\.c?ps\\'" . postscript-mode)
     ;; .emacs following a directory delimiter in either Unix or
     ;; Windows syntax.
@@ -1228,16 +1209,16 @@ run `normal-mode' explicitly."
     ("\\.m4\\'" . autoconf-mode)
     ("configure\\.in\\'" . autoconf-mode)
     ("\\.ml\\'" . lisp-mode)
-    ("\\.ma?ke?\\'" . makefile-mode)
+    ("\\.ma?k\\'" . makefile-mode)
     ("[Mm]akefile\\(\\.\\|\\'\\)" . makefile-mode)
     ("\\.X\\(defaults\\|environment\\|resources\\|modmap\\)\\'" . xrdb-mode)
     ;; #### The following three are Unix-specific (but do we care?)
     ("/app-defaults/" . xrdb-mode)
-    ("\\.[^/]*wm2?\\(?:rc\\)?\\'" . winmgr-mode)
+    ("\\.[^/]*wm\\'" . winmgr-mode)
+    ("\\.[^/]*wm2?rc" . winmgr-mode)
     ("\\.[Jj][Pp][Ee]?[Gg]\\'" . image-mode)
     ("\\.[Pp][Nn][Gg]\\'" . image-mode)
     ("\\.[Gg][Ii][Ff]\\'" . image-mode)
-    ("\\.[Tt][Ii][Ff][Ff]?\\'" . image-mode)
     )
 "Alist of filename patterns vs. corresponding major mode functions.
 Each element looks like (REGEXP . FUNCTION) or (REGEXP FUNCTION NON-NIL).
@@ -1257,9 +1238,7 @@ REGEXP and search the list again for another match.")
     ("python" . python-mode)
     ("awk\\b" . awk-mode)
     ("rexx"   . rexx-mode)
-    ("scm\\|guile" . scheme-mode)
-    ("emacs" . emacs-lisp-mode)
-    ("make" . makefile-mode)
+    ("scm"    . scheme-mode)
     ("^:"     . sh-mode))
   "Alist mapping interpreter names to major modes.
 This alist is used to guess the major mode of a file based on the
@@ -1359,12 +1338,17 @@ and we don't even do that unless it would come from the file name."
 			  (setq alist (cdr alist)))))))
               (if mode
 		  (if (not (fboundp mode))
-                      (let ((name (package-get-package-provider mode)))
-                        (if name
-                            (message "Mode %s is not installed.  Download package %s" mode name)
-                          (message "Mode %s either doesn't exist or is not a known package" mode))
-                        (sit-for 2)
-                        (error "%s" mode))
+		      (progn
+			(if (or (not (boundp 'package-get-base))
+				(not package-get-base))
+			    (load "package-get-base"))
+			(require 'package-get)
+			(let ((name (package-get-package-provider mode)))
+			  (if name
+			      (message "Mode %s is not installed.  Download package %s" mode name)
+			    (message "Mode %s either doesn't exist or is not a known package" mode))
+			  (sit-for 2)
+			  (error "%s" mode)))
 		    (unless (and just-from-file-name
 				 (or
 				  ;; Don't reinvoke major mode.
@@ -1832,7 +1816,7 @@ with a prefix argument, you will be prompted for the coding system."
 					  (buffer-local-variables)))
 			       nil nil (buffer-name)))
 	 t
-	 (if (and current-prefix-arg (featurep 'file-coding))
+	 (if (and current-prefix-arg (featurep 'mule))
 	     (read-coding-system "Coding system: "))))
   (and (eq (current-buffer) mouse-grabbed-buffer)
        (error "Can't write minibuffer window"))
@@ -3294,17 +3278,7 @@ absolute one."
 	filename
       (error "Apparently circular symlink path"))))
 
-(defcustom allow-remote-paths t
-   "*Set this to nil if you don't want remote paths to access
-remote files."
-   :type 'boolean
-   :group 'files
-   )
-
 ;; Suggested by Michael Kifer <kifer@CS.SunySB.EDU>
-;; #### This is broken. It is assumes it knows
-;;      about all possible remote file systsems.
-;;      This should be a file-name-handler-method.
 (defun file-remote-p (file-name)
   "Test whether FILE-NAME is looked for on a remote system."
   (cond ((not allow-remote-paths) nil)

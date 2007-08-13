@@ -179,7 +179,7 @@ The following KEYWORD's are defined:
 	the current value for that symbol.  The default is
 	`default-value'. 
 :require VALUE should be a feature symbol.  Each feature will be
-	required after initialization, of the user have saved this
+	required after initialization, of the the user have saved this
 	option.
 
 Read the section about customization in the Emacs Lisp manual for more

@@ -71,25 +71,15 @@ Boston, MA 02111-1307, USA.  */
 /* cheesy way to determine cygwin version */
 #ifndef NOT_C_CODE
 #include <signal.h>
-#ifdef HAVE_CYGWIN_VERSION_H
-#include <cygwin/version.h>
-#else
 #ifdef SIGIO
-#define CYGWIN_VERSION_DLL_MAJOR 19
-#define CYGWIN_VERSION_DLL_MINOR 0
 #define CYGWIN_B19
 #else
-#define CYGWIN_VERSION_DLL_MAJOR 18
-#define CYGWIN_VERSION_DLL_MINOR 0
 #define BROKEN_CYGWIN
 #endif
-#endif
-
 extern void cygwin32_win32_to_posix_path_list(const char*, char*);
 extern int cygwin32_win32_to_posix_path_list_buf_size(const char*);
 extern void cygwin32_posix_to_win32_path_list(const char*, char*);
 extern int cygwin32_posix_to_win32_path_list_buf_size(const char*);
-#if CYGWIN_VERSION_DLL_MAJOR < 20
 struct timeval;
 struct timezone;
 struct itimerval;
@@ -112,42 +102,6 @@ extern int utimes(char *file, struct timeval *tvp);
 
 extern int srandom( unsigned seed);
 extern long random();
-
-#define SND_ASYNC		1
-#define SND_NODEFAULT		2
-#define SND_MEMORY		4
-#define SND_FILENAME		0x2000L
-#define VK_APPS			0x5D
-#define SIF_TRACKPOS	0x0010
-#define ICC_BAR_CLASSES 4
-#define FW_BLACK	FW_HEAVY
-#define FW_ULTRABOLD	FW_EXTRABOLD
-#define FW_DEMIBOLD	FW_SEMIBOLD
-#define FW_ULTRALIGHT	FW_EXTRALIGHT
-#define APPCMD_FILTERINITS	0x20L
-#define CBF_FAIL_SELFCONNECTIONS 0x1000
-#define CBF_SKIP_ALLNOTIFICATIONS	0x3C0000
-#define CBF_FAIL_ADVISES	0x4000
-#define CBF_FAIL_POKES		0x10000
-#define CBF_FAIL_REQUESTS	0x20000
-#define SZDDESYS_TOPIC		"System"
-#define JOHAB_CHARSET 		130
-#define MAC_CHARSET 		77
-
-#endif
-#endif
-
-#ifndef SPI_GETWHEELSCROLLLINES
-#define SPI_GETWHEELSCROLLLINES 104
-#endif
-#ifndef WHEEL_PAGESCROLL
-#define WHEEL_PAGESCROLL (UINT_MAX)
-#endif
-#ifndef WHEEL_DELTA
-#define WHEEL_DELTA 120
-#endif
-#ifndef WM_MOUSEWHEEL
-#define WM_MOUSEWHEEL 0x20A
 #endif
 
 #ifdef HAVE_MS_WINDOWS
@@ -162,23 +116,34 @@ extern long random();
 #define C_SWITCH_SYSTEM -Wno-sign-compare -fno-caller-saves
 #define LIBS_SYSTEM -lwinmm
 
+#define ICC_BAR_CLASSES 4
+#define SIF_TRACKPOS	0x0010
+#define FW_BLACK	FW_HEAVY
+#define FW_ULTRABOLD	FW_EXTRABOLD
+#define FW_DEMIBOLD	FW_SEMIBOLD
+#define FW_ULTRALIGHT	FW_EXTRALIGHT
+#define VK_APPS			0x5D
+#define APPCMD_FILTERINITS	0x20L
+#define CBF_FAIL_SELFCONNECTIONS 0x1000
+#define CBF_SKIP_ALLNOTIFICATIONS	0x3C0000
+#define CBF_FAIL_ADVISES	0x4000
+#define CBF_FAIL_POKES		0x10000
+#define CBF_FAIL_REQUESTS	0x20000
+#define SZDDESYS_TOPIC		"System"
+#define SND_ASYNC		1
+#define SND_NODEFAULT		2
+#define SND_MEMORY		4
+#define SND_FILENAME		0x2000L
+#define JOHAB_CHARSET 		130
+#define MAC_CHARSET 		77
 
 #define TEXT_START -1
 #define TEXT_END -1
 #define DATA_END -1
 #define HEAP_IN_DATA
 #define UNEXEC "unexcw.o"
-
-#ifdef CYGWIN_VERSION_DLL_MAJOR
-#if 0
-/* ### FIXME: although defining BROKEN_SIGIO is correct for proper ^G
-   behavior, bugs in cygwin mean that xemacs locks up frequently if
-   this is defined.  */
-#define BROKEN_SIGIO
-#endif
-#else
+/* #define BROKEN_SIGIO */
 #define PROCESS_IO_BLOCKING
-#endif
 #define strnicmp strncasecmp
 #ifndef HAVE_SOCKETS
 #define HAVE_SOCKETS

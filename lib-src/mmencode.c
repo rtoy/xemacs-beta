@@ -18,7 +18,6 @@ WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES.
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-#include <errno.h>
 
 static void
 output64chunk(int c1, int c2, int c3, int pads, FILE *outfile);
@@ -53,7 +52,9 @@ char c;
 static int InNewline=0;
 
 static int
-nextcharin (FILE *infile, int PortableNewlines)
+nextcharin(infile, PortableNewlines)
+FILE *infile;
+int PortableNewlines;
 {
     int c;
 

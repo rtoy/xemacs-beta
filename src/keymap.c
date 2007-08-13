@@ -1549,7 +1549,7 @@ int
 event_matches_key_specifier_p (struct Lisp_Event *event,
 			       Lisp_Object key_specifier)
 {
-  Lisp_Object event2 = Qnil;
+  Lisp_Object event2;
   int retval;
   struct gcpro gcpro1;
 
@@ -2226,7 +2226,7 @@ it takes to reach a non-prefix command.
    map of the buffer in which the mouse was clicked in event0 is a click.
 
    It would be kind of nice if this were in Lisp so that this semi-hairy
-   semi-heuristic command-lookup behavior could be readily understood and
+   semi-heuristic command-lookup behaviour could be readily understood and
    customised.  However, this needs to be pretty fast, or performance of
    keyboard macros goes to shit; putting this in lisp slows macros down
    2-3x.  And they're already slower than v18 by 5-6x.
@@ -4325,12 +4325,10 @@ Keymap of key translations that can override keymaps.
 This keymap works like `function-key-map', but comes after that,
 and applies even for keys that have ordinary bindings.
 */ );
-  Vkey_translation_map = Qnil;
 
   DEFVAR_LISP ("vertical-divider-map", &Vvertical_divider_map /*
 Keymap which handles mouse clicks over vertical dividers.
 */ );
-  Vvertical_divider_map = Qnil;
 
   DEFVAR_INT ("keymap-tick", &keymap_tick /*
 Incremented for each change to any keymap.

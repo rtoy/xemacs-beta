@@ -343,7 +343,7 @@ The return value has the form (NAME . ADDRESS)."
 
 (defun lm-version (&optional file)
   "Return the version listed in file FILE, or current buffer if FILE is nil.
-This can be found in an RCS or SCCS header to crack it out of."
+This can befound in an RCS or SCCS header to crack it out of."
   (save-excursion 
     (if file
 	(find-file file))
@@ -407,7 +407,7 @@ with tag `Commentary' and ends with tag `Change Log' or `History'."
 	(let ((commentary	(lm-commentary-mark))
 	      (change-log	(lm-history-mark))
 	      (code		(lm-code-mark))
-	      end)
+	      )
 	  (cond
 	   ((and commentary change-log)
 	    (buffer-substring commentary change-log))
@@ -415,9 +415,9 @@ with tag `Commentary' and ends with tag `Change Log' or `History'."
 	    (buffer-substring commentary code))
 	   (t
 	    ;; XEmacs change (Infodock headers? -sb)
-	    (setq commentary (lm-section-mark "DESCRIPTION" t))
-	    (setq end (lm-section-mark "DESCRIP-END"))
-	    (and commentary end (buffer-substring commentary end)))))
+	    (setq commentary (lm-section-mark "DESCRIPTION" t)
+		  code (lm-section-mark "DESCRIP-END"))
+	    (and commentary end (buffer-substring commentary code)))))
       (if file
 	  (kill-buffer (current-buffer)))
       )))
@@ -560,9 +560,7 @@ Prompts for bug subject.  Leaves you in a mail buffer."
     (mail nil
 	  (if addr
 	      (concat (car addr) " <" (cdr addr) ">")
-	    (or (and (boundp 'report-emacs-bug-beta-address)
-		     report-emacs-bug-beta-address)
-		"<xemacs-beta@xemacs.org>"))
+	    bug-gnu-emacs)
 	  topic)
     (goto-char (point-max))
     (insert "\nIn "

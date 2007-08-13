@@ -54,8 +54,6 @@
 #ifdef emacs
 #include <config.h>
 #include "lisp.h"
-#include "sysdep.h"		/* for (start|stop)_interrupts */
-#include "syssignal.h"
 #endif
 
 #if __STDC__ || defined (STDC_HEADERS)
@@ -69,23 +67,14 @@
 #endif
 
 #include <stdio.h>
+#include "syssignal.h"
 
-/* NAS 1.2p5 and previous define these in conflict with GNU libc (at least) */
-#ifndef NAS_USES_OWN_NAMESPACE
 #undef LITTLE_ENDIAN
 #undef BIG_ENDIAN
-#endif
-
 #include <audio/audiolib.h>
 #include <audio/soundlib.h>
 #include <audio/snd.h>
 #include <audio/fileutil.h>
-
-/* If needed (NAS <= 1.2p5) define the NAS_ versions of *_ENDIAN */
-#ifndef NAS_USES_OWN_NAMESPACE
-#define NAS_LITTLE_ENDIAN LITTLE_ENDIAN
-#define NAS_BIG_ENDIAN BIG_ENDIAN
-#endif
 
 #ifdef emacs
 
@@ -677,7 +666,7 @@ SndOpenDataForReading (CONST char *data,
 
   memcpy (&si->h, data, sizeof (SndHeader));
 
-  if (NAS_LITTLE_ENDIAN)
+  if (LITTLE_ENDIAN)
     {
       char            n;
     

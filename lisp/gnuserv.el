@@ -1,7 +1,7 @@
 ;;; gnuserv.el --- Lisp interface code between Emacs and gnuserv
 ;; Copyright (C) 1989-1997 Free Software Foundation, Inc.
 
-;; Version: 3.12
+;; Version: 3.11
 ;; Author: Andy Norman (ange@hplb.hpl.hp.com), originally based on server.el
 ;;         Hrvoje Niksic <hniksic@srce.hr>
 ;; Maintainer: Jan Vroonhof <vroonhof@math.ethz.ch>,
@@ -68,7 +68,7 @@
 ;; ported the server-temp-file-regexp feature from server.el
 ;; ported server hooks from server.el
 ;; ported kill-*-query functions from server.el (and made it optional)
-;; synced other behavior with server.el
+;; synced other behaviour with server.el
 ;;
 ;; Jan Vroonhof
 ;;     Customized.
@@ -337,8 +337,8 @@ visual screen.  Totally visible frames are preferred.  If none found, return nil
   "Process gnuserv client requests to execute Emacs commands."
   (setq gnuserv-string (concat gnuserv-string string))
   ;; C-d means end of request.
-  (when (string-match "\C-d\n?\\'" gnuserv-string)
-    (cond ((string-match "\\`[0-9]+" gnuserv-string) ; client request id
+  (when (string-match "\C-d\\'" gnuserv-string)
+    (cond ((string-match "^[0-9]+" gnuserv-string) ; client request id
 	   (let ((header (read-from-string gnuserv-string)))
 	     ;; Set the client we are talking to.
 	     (setq gnuserv-current-client (car header))
@@ -348,20 +348,17 @@ visual screen.  Totally visible frames are preferred.  If none found, return nil
 	       ;; In case of an error, write the description to the
 	       ;; client, and then signal it.
 	       (error (setq gnuserv-string "")
-		      (when gnuserv-current-client
-			(gnuserv-write-to-client gnuserv-current-client oops))
+		      (gnuserv-write-to-client gnuserv-current-client oops)
 		      (setq gnuserv-current-client nil)
 		      (signal (car oops) (cdr oops)))
 	       (quit (setq gnuserv-string "")
-		     (when gnuserv-current-client
-		       (gnuserv-write-to-client gnuserv-current-client oops))
+		     (gnuserv-write-to-client gnuserv-current-client oops)
 		     (setq gnuserv-current-client nil)
 		     (signal 'quit nil)))
 	     (setq gnuserv-string "")))
 	  (t
-	   (let ((response (car (split-string gnuserv-string "\C-d"))))
-	     (setq gnuserv-string "")
-	     (error "%s: invalid response from gnuserv" response))))))
+	   (error "%s: invalid response from gnuserv" gnuserv-string)
+	   (setq gnuserv-string "")))))
 
 ;; This function is somewhat of a misnomer.  Actually, we write to the
 ;; server (using `process-send-string' to gnuserv-process), which

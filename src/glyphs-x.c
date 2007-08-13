@@ -39,10 +39,8 @@ Boston, MA 02111-1307, USA.  */
    Many changes for color work and optimizations by Jareth Hein for 21.0
    Switch of GIF/JPEG/PNG to new EImage intermediate code by Jareth Hein for 21.0
    TIFF code by Jareth Hein for 21.0
-   GIF/JPEG/PNG/TIFF code moved to new glyph-eimage.c for 21.0
 
    TODO:
-   Support the GrayScale, StaticColor and StaticGray visual classes.
    Convert images.el to C and stick it in here?
  */
 
@@ -134,13 +132,6 @@ convert_EImage_to_XImage (Lisp_Object device, int width, int height,
   vis = DEVICE_X_VISUAL (XDEVICE(device));
   depth = DEVICE_X_DEPTH(XDEVICE(device));
 
-  if (vis->class == GrayScale || vis->class == StaticColor ||
-      vis->class == StaticGray)
-    {
-      /* #### Implement me!!! */
-      return NULL;
-    }
-
   if (vis->class == PseudoColor)
     {
       /* Quantize the image and get a histogram while we're at it.
@@ -152,13 +143,12 @@ convert_EImage_to_XImage (Lisp_Object device, int width, int height,
   bitmap_pad = ((depth > 16) ? 32 :
 		(depth >  8) ? 16 :
 		8);
+  byte_cnt = bitmap_pad >> 3;
   
   outimg = XCreateImage (dpy, vis,
 			 depth, ZPixmap, 0, 0, width, height,
 			 bitmap_pad, 0);
   if (!outimg) return NULL;
-
-  byte_cnt = outimg->bits_per_pixel >> 3;
 
   data = (unsigned char *) xmalloc (outimg->bytes_per_line * height);
   if (!data)

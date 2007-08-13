@@ -521,8 +521,6 @@ mswindows_create_resized_bitmap (struct Lisp_Image_Instance* ii,
 		   IMAGE_INSTANCE_PIXMAP_HEIGHT (ii), 
 		   SRCCOPY))
     {
-      DeleteObject (newbmp);
-      DeleteDC (hdcDst);
       return 0;
     }
 
@@ -555,8 +553,6 @@ mswindows_create_resized_mask (struct Lisp_Image_Instance* ii,
 		      IMAGE_INSTANCE_PIXMAP_HEIGHT (ii), 
 		      SRCCOPY))
 	{
-	  DeleteObject (newmask);
-	  DeleteDC (hdcDst);
 	  return NULL;
 	}
       
@@ -1011,9 +1007,7 @@ typedef struct
 #define OIC_BANG            32515
 #define OIC_NOTE            32516
 #define OIC_WINLOGO         32517
-#if defined (__CYGWIN32__) && CYGWIN_VERSION_DLL_MAJOR < 21
 #define LR_SHARED           0x8000
-#endif
 #endif
 
 static CONST resource_t bitmap_table[] = 
@@ -1043,7 +1037,7 @@ static CONST resource_t bitmap_table[] =
   { "size", OBM_SIZE },
   { "btsize", OBM_BTSIZE },
   { "check", OBM_CHECK },
-  { "checkboxes", OBM_CHECKBOXES },
+  { "cehckboxes", OBM_CHECKBOXES },
   { "btncorners" , OBM_BTNCORNERS },
   {0}
 };
@@ -1542,7 +1536,7 @@ xbm_create_bitmap_from_data (HDC hdc, char *data,
 			     int mask, COLORREF fg, COLORREF bg)
 {
   int old_width = (width + 7)/8;
-  int new_width = BPLINE (2*((width + 15)/16));
+  int new_width = 2*((width + 15)/16);
   unsigned char *offset;
   void *bmp_buf = 0;
   unsigned char *new_data, *new_offset;
@@ -1734,10 +1728,10 @@ init_image_instance_from_xbm_inline (struct Lisp_Image_Instance *ii,
 	if (NILP (background))
 	  background = pointer_bg;
 
-	IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii) = 
-	  find_keyword_in_vector (instantiator, Q_hotspot_x);
-	IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii) = 
-	  find_keyword_in_vector (instantiator, Q_hotspot_y);
+	XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_X (ii), 
+		 find_keyword_in_vector (instantiator, Q_hotspot_x));
+	XSETINT (IMAGE_INSTANCE_PIXMAP_HOTSPOT_Y (ii), 
+		 find_keyword_in_vector (instantiator, Q_hotspot_y));
 	IMAGE_INSTANCE_PIXMAP_FG (ii) = foreground;
 	IMAGE_INSTANCE_PIXMAP_BG (ii) = background;
 	if (COLOR_INSTANCEP (foreground))

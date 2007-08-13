@@ -76,8 +76,10 @@ char *tmpdir = NULL;
 
 char *progname = NULL;
 
-int
-make_connection (char *hostarg, int portarg, int *s)
+int make_connection(hostarg, portarg, s)
+     char *hostarg;
+     int portarg;
+     int *s;
 {
 #ifdef INTERNET_DOMAIN_SOCKETS
   char *ptr;
@@ -194,8 +196,9 @@ void disconnect_from_ipc_server(s,msgp,echo)
 /*
   send_string -- send string to socket.
 */
-void
-send_string (int s, CONST char *msg)
+void send_string(s,msg)
+     int s;
+     CONST char *msg;
 {
 #if 0
   if (send(s,msg,strlen(msg),0) < 0) {
@@ -283,8 +286,8 @@ static int connect_to_unix_server (void)
   internet_addr -- return the internet addr of the hostname or
                    internet address passed. Return -1 on error.
 */
-int
-internet_addr (char *host)
+int internet_addr(host)
+     char *host;
 {
   struct hostent *hp;		/* pointer to host info for remote host */
   IN_ADDR numeric_addr;		/* host address */
@@ -392,8 +395,9 @@ static int connect_to_internet_server (char *serverhost, u_short port)
   disconnect_from_server -- inform the server that sending has finished, and wait for
                             its reply.
 */
-void
-disconnect_from_server (int s, int echo)
+void disconnect_from_server(s,echo)
+     int s;
+     int echo;
 {
 #if 0
   char buffer[REPLYSIZ+1];

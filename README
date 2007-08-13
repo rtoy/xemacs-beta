@@ -1,4 +1,4 @@
-This directory tree holds version 21.1 of XEmacs, the extensible,
+This directory tree holds version 21.2 of XEmacs, the extensible,
 customizable, self-documenting real-time display editor.  This version
 of XEmacs also runs on various Microsoft Windows platforms including
 MS Windows '95 and MS Windows NT and Cygwin.
@@ -15,9 +15,6 @@ occur in building, installing and running XEmacs.
 
 See the file `nt/README' for instructions on building XEmacs for
 Microsoft Windows.
-
-The file 'README.packages' will guide you in the installation of
-(essential) add on packages.
 
 Reports of bugs in XEmacs should be posted to the newsgroup
 comp.emacs.xemacs or sent to the mailing list xemacs@xemacs.org.  See
@@ -58,6 +55,9 @@ There are several subdirectories:
 
 `info' holds the Info documentation tree for XEmacs.
 `man' holds the source code for the XEmacs info documentation tree.
+
+`msdos' holds configuration files for compiling XEmacs under MSDOG.
+    See the file etc/MSDOS for more information.
 
 `nt' holds configuration files for compiling XEmacs under Microsoft Windows
     NT.  The support for NT is very tentative right now.

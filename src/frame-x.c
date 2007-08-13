@@ -103,34 +103,19 @@ x_window_to_frame (struct device *d, Window wdesc)
 struct frame *
 x_any_window_to_frame (struct device *d, Window wdesc)
 {
-  Widget w;
-  assert (DEVICE_X_P (d));
-
-  w = XtWindowToWidget (DEVICE_X_DISPLAY (d), wdesc);
-
-  if (!w)
-    return 0;
-
-  /* We used to map over all frames here and then map over all widgets
-     belonging to that frame. However it turns out that this was very fragile
-     as it requires our display stuctures to be in sync _and_ that the 
-     loop is told about every new widget somebody adds. Therefore we
-     now let Xt find it for us (which does a bottom-up search which
-     could even be faster) */
-  return  x_any_widget_or_parent_to_frame (d, w);
-}
-
-static struct frame *
-x_find_frame_for_window (struct device *d, Window wdesc)
-{
   Lisp_Object tail, frame;
   struct frame *f;
+
+  assert (DEVICE_X_P (d));
+
   /* This function was previously written to accept only a window argument
      (and to loop over all devices looking for a matching window), but
      that is incorrect because window ID's are not unique across displays. */
 
   for (tail = DEVICE_FRAME_LIST (d); CONSP (tail); tail = XCDR (tail))
     {
+      int i;
+
       frame = XCAR (tail);
       f = XFRAME (frame);
       /* This frame matches if the window is any of its widgets. */
@@ -153,18 +138,18 @@ x_find_frame_for_window (struct device *d, Window wdesc)
 	 would incorrectly get sucked away by Emacs if this function matched
 	 on psheet widgets. */
 
-      /* Note: that this called only from
-         x_any_widget_or_parent_to_frame it is unnecessary to iterate
-         over the top level widgets. */
+      for (i = 0; i < FRAME_X_NUM_TOP_WIDGETS (f); i++)
+	{
+	  Widget wid = FRAME_X_TOP_WIDGETS (f)[i];
+	  if (wid && XtIsManaged (wid) && wdesc == XtWindow (wid))
+	    return f;
+	}
 
-      /* Note:  we use to special case scrollbars but this turns out to be a bad idea
-         because
-         1. We sometimes get events for _unmapped_ scrollbars and our
-         callers don't want us to fail.
-         2. Starting with the 21.2 widget stuff there are now loads of
-         widgets to check and it is easy to forget adding them in a loop here.
-         See x_any_window_to_frame
-         3. We pick up all widgets now anyway. */
+#ifdef HAVE_SCROLLBARS
+      /* Match if the window is one of this frame's scrollbars. */
+      if (x_window_is_scrollbar (f, wdesc))
+	return f;
+#endif
     }
 
   return 0;
@@ -175,7 +160,7 @@ x_any_widget_or_parent_to_frame (struct device *d, Widget widget)
 {
   while (widget)
     {
-      struct frame *f = x_find_frame_for_window (d, XtWindow (widget));
+      struct frame *f = x_any_window_to_frame (d, XtWindow (widget));
       if (f)
 	return f;
       widget = XtParent (widget);
@@ -2646,7 +2631,6 @@ static void
 x_delete_frame (struct frame *f)
 {
   Widget w = FRAME_X_SHELL_WIDGET (f);
-  Display *dpy = XtDisplay (w);
 
 #ifndef HAVE_SESSION
   if (FRAME_X_TOP_LEVEL_FRAME_P (f))
@@ -2654,17 +2638,19 @@ x_delete_frame (struct frame *f)
 #endif /* HAVE_SESSION */
 
 #ifdef EXTERNAL_WIDGET
-  expect_x_error (dpy);
-  /* for obscure reasons having (I think) to do with the internal
-     window-to-widget hierarchy maintained by Xt, we have to call
-     XtUnrealizeWidget() here.  Xt can really suck. */
-  if (f->being_deleted)
-    XtUnrealizeWidget (w);
-  XtDestroyWidget (w);
-  x_error_occurred_p (dpy);
+  {
+    Display *dpy = XtDisplay (w);
+    expect_x_error (dpy);
+    /* for obscure reasons having (I think) to do with the internal
+       window-to-widget hierarchy maintained by Xt, we have to call
+       XtUnrealizeWidget() here.  Xt can really suck. */
+    if (f->being_deleted)
+      XtUnrealizeWidget (w);
+    XtDestroyWidget (w);
+    x_error_occurred_p (dpy);
+  }
 #else
   XtDestroyWidget (w);
-  XFlush (dpy);   /* make sure the windows are really gone! */
 #endif /* EXTERNAL_WIDGET */
 
   if (FRAME_X_GEOM_FREE_ME_PLEASE (f))

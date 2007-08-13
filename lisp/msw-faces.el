@@ -26,14 +26,15 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-;; This file does the magic to parse mswindows font names, and make sure that
-;; the default and modeline attributes of new frames are specified enough.
+;; This file does the magic to parse mswindows font names, and make sure that the
+;; default and modeline attributes of new frames are specified enough.
 
-;;; Force creation of the default face font so that if it fails we get an
-;;; error now instead of a crash at frame creation.
+;;; ensure that the default face has some reasonable fallbacks if nothing
+;;; else is specified.
 (defun mswindows-init-device-faces (device)
-  (unless (face-font-instance 'default device)
-    (error "Can't find a suitable default font")))
+  (set-face-font 'default 
+		 '((mswindows default) . "Courier New:Regular:10") 'global)
+  )
 
 
 (defun mswindows-init-frame-faces (frame)
@@ -47,12 +48,12 @@
 ;;; A minimal mswindows font spec looks like:
 ;;;	Courier New
 ;;; A maximal mswindows font spec looks like:
-;;;	Courier New:Bold Italic:10:underline strikeout:Western
+;;;	Courier New:Bold Italic:10:underline strikeout:western
 ;;; Missing parts of the font spec should be filled in with these values:
-;;;	Courier New:Regular:10::Western
+;;;	Courier New:Normal:10::western
 (defun mswindows-font-canonicalize-name (font)
-  "Given a mswindows font or font name, this returns its name in
-canonical form."
+  "Given a mswindows font or font specification, this returns its
+specification in canonical form."
   (if (or (font-instance-p font)
 	  (stringp font))
       (let ((name (if (font-instance-p font) 
@@ -62,14 +63,14 @@ canonical form."
 		"^[a-zA-Z ]+:[a-zA-Z ]*:[0-9]+:[a-zA-Z ]*:[a-zA-Z 0-9]*$"
 		name) name)
 	      ((string-match "^[a-zA-Z ]+:[a-zA-Z ]*:[0-9]+:[a-zA-Z ]*$"
-			     name) (concat name ":Western"))
+			     name) (concat name ":western"))
 	      ((string-match "^[a-zA-Z ]+:[a-zA-Z ]*:[0-9]+$" name)
-	       (concat name "::Western"))
+	       (concat name "::western"))
 	      ((string-match "^[a-zA-Z ]+:[a-zA-Z ]*$" name)
-	       (concat name ":10::Western"))
+	       (concat name ":10::western"))
 	      ((string-match "^[a-zA-Z ]+$" name)
-	       (concat name ":Regular:10::Western"))
-	      (t "Courier New:Regular:10::Western")))))
+	       (concat name ":Normal:10::western"))
+	      (t "Courier New:Normal:10::western")))))
 
 (defun mswindows-make-font-bold (font &optional device)
   "Given a mswindows font specification, this attempts to make a bold font.
@@ -87,7 +88,7 @@ If it fails, it returns nil."
 ; makes it the same width (maybe at the expense of making it one pixel shorter)
 	  (if (font-instance-p newfont)
 	      (if (> (font-instance-width newfont) oldwidth)
-		  (mswindows-find-smaller-font newfont device)
+		  (mswindows-find-smaller-font newfont)
 		newfont))))))
 
 (defun mswindows-make-font-unbold (font &optional device)
@@ -98,7 +99,7 @@ If it fails, it returns nil."
 	(string-match "^[a-zA-Z ]+:\\([a-zA-Z ]*\\):" name)
 	(make-font-instance (concat
 			     (substring name 0 (match-beginning 1))
-			     "Regular" (substring name (match-end 1)))
+			     "Normal" (substring name (match-end 1)))
 			    device t))))
 
 (defun mswindows-make-font-italic (font &optional device)
@@ -120,7 +121,7 @@ font. If it fails, it returns nil."
 	(string-match "^[a-zA-Z ]+:\\([a-zA-Z ]*\\):" name)
 	(make-font-instance (concat
 			     (substring name 0 (match-beginning 1))
-			     "Regular" (substring name (match-end 1)))
+			     "Normal" (substring name (match-end 1)))
 			    device t))))
 
 (defun mswindows-make-font-bold-italic (font &optional device)
@@ -139,15 +140,12 @@ font. If it fails, it returns nil."
 ; makes it the same width (maybe at the expense of making it one pixel shorter)
 	  (if (font-instance-p newfont)
 	      (if (> (font-instance-width newfont) oldwidth)
-		  (mswindows-find-smaller-font newfont device)
+		  (mswindows-find-smaller-font newfont)
 		newfont))))))
 
 (defun mswindows-find-smaller-font (font &optional device)
   "Loads a new version of the given font (or font name) 1 point smaller.
 Returns the font if it succeeds, nil otherwise."
-  (if (stringp font) (setq font (make-font-instance font device)))
-  (if (font-instance-p font) (setq font (font-instance-truename font)))
-  (if (stringp font) (setq font (make-font-instance font device)))
   (if (font-instance-p font)
       (let (old-size (name (mswindows-font-canonicalize-name font)))
 	(string-match "^[a-zA-Z ]+:[a-zA-Z ]*:\\([0-9]+\\):" name)
@@ -163,9 +161,6 @@ Returns the font if it succeeds, nil otherwise."
 (defun mswindows-find-larger-font (font &optional device)
   "Loads a new version of the given font (or font name) 1 point larger.
 Returns the font if it succeeds, nil otherwise."
-  (if (stringp font) (setq font (make-font-instance font device)))
-  (if (font-instance-p font) (setq font (font-instance-truename font)))
-  (if (stringp font) (setq font (make-font-instance font device)))
   (if (font-instance-p font)
       (let (old-size (name (mswindows-font-canonicalize-name font)))
 	(string-match "^[a-zA-Z ]+:[a-zA-Z ]*:\\([0-9]+\\):" name)

@@ -175,6 +175,10 @@ Boston, MA 02111-1307, USA.  */
 
 #define HAVE_LONG_FILE_NAMES
 
+#ifdef HAVE_LONG_FILE_NAMES
+#define CLASH_DETECTION
+#endif
+
 #undef HAVE_LIBKSTAT
 #undef HAVE_LIBINTL
 #undef HAVE_LIBDNET

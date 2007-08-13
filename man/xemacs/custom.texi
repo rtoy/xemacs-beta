@@ -1093,9 +1093,9 @@ definitions for the same key.  Or you can change the current buffer's
 local map, which affects all buffers using the same major mode.
 
 @menu
-* Interactive Rebinding::      Changing Key Bindings Interactively   
-* Programmatic Rebinding::     Changing Key Bindings Programmatically
-* Key Bindings Using Strings:: Using Strings for Changing Key Bindings 
+* Interactive Rebinding::     Changing Key Bindings Interactively   
+* Programmatic Rebinding::    Changing Key Bindings Programmatically
+* Key Bindings Using Strings::Using Strings for Changing Key Bindings 
 @end menu
 
 @node Interactive Rebinding
@@ -2206,7 +2206,7 @@ Emacs frames accept the following resources:
 
 @table @asis
 @item @code{geometry} (class @code{Geometry}): string
-Initial geometry for the frame.  @xref{Geometry Resources}, for a
+Initial geometry for the frame.  @xref{Geometry Resources} for a
 complete discussion of how this works.
 
 @item @code{iconic} (class @code{Iconic}): boolean
@@ -2486,26 +2486,12 @@ proper, it does not use the fac" mechanism for specifying fonts and
 colors: It uses whatever resources are appropriate to the type of widget
 which is used to implement it.
 
-If Emacs was compiled to use only the Lucid Motif-lookalike menu widgets,
-then one way to specify the font of the menubar would be
+If Emacs was compiled to use only the Motif-lookalike menu widgets, then one
+way to specify the font of the menubar would be
 
 @example
 Emacs*menubar*font: *-courier-medium-r-*-*-*-120-*-*-*-*-*-*
 @end example
-
-If both the Lucid Motif-lookalike menu widgets and X Font Sets are 
-configured to allow multilingual menubars, then one uses
-
-@example
-*menubar*FontSet:       -*-helvetica-bold-r-*-*-*-120-*-*-*-*-iso8859-*, \
-                        -*-*-*-*-*-*-*-120-*-jisx0208.1983-0
-@end example
-
-That would specify fonts for a Japanese menubar.  Specifying only one
-XLFD is acceptable; specifying more than one for a given registry
-(language) is also allowed.  When X Font Sets are configured, some .font
-resources (eg, menubars) are ignored in favor of the corresponding
-.fontSet resources.
 
 If the Motif library is being used, then one would have to use 
 

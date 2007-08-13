@@ -50,7 +50,6 @@ Boston, MA 02111-1307, USA.
 #include "systime.h"
 #include "syssignal.h"
 #include "syswait.h"
-#include "buffer.h"
 #include "process.h"
 /*#include "w32term.h"*/ /* From 19.34.6: sync in ? --marcpa */
 
@@ -59,7 +58,7 @@ Boston, MA 02111-1307, USA.
 
 /* Control whether spawnve quotes arguments as necessary to ensure
    correct parsing by child process.  Because not all uses of spawnve
-   are careful about constructing argv arrays, we make this behavior
+   are careful about constructing argv arrays, we make this behaviour
    conditional (off by default). */
 Lisp_Object Vwin32_quote_process_args;
 
@@ -133,8 +132,6 @@ new_child (void)
   xzero (*cp);
   cp->fd = -1;
   cp->pid = -1;
-  if (cp->procinfo.hProcess)
-    CloseHandle(cp->procinfo.hProcess);
   cp->procinfo.hProcess = NULL;
   cp->status = STATUS_READ_ERROR;
 
@@ -237,19 +234,10 @@ reader_thread (void *arg)
   /* Our identity */
   cp = (child_process *)arg;
   
-  /* <matts@tibco.com> - I think the test below is wrong - we don't
-     want to wait for someone to signal char_consumed, as we haven't
-     read anything for them to consume yet! */
-
-  /*
+  /* We have to wait for the go-ahead before we can start */
   if (cp == NULL ||
       WaitForSingleObject (cp->char_consumed, INFINITE) != WAIT_OBJECT_0)
-  */
-
-  if (cp == NULL)
-  {
-      return 1;
-  }
+    return 1;
 
   for (;;)
     {
@@ -267,28 +255,7 @@ reader_thread (void *arg)
 	}
 
       if (rc == STATUS_READ_ERROR)
-      {
-        /* We are finished, so clean up handles and set to NULL so
-           that CHILD_ACTIVE will see what is going on */
-        if (cp->char_avail) {
-          CloseHandle (cp->char_avail);
-          cp->char_avail = NULL;
-        }
-        if (cp->thrd) {
-          CloseHandle (cp->thrd);
-          cp->thrd = NULL;
-        }
-        if (cp->char_consumed) {
-          CloseHandle(cp->char_consumed);
-          cp->char_consumed = NULL;
-        }
-        if (cp->procinfo.hProcess)
-        {
-          CloseHandle (cp->procinfo.hProcess);
-          cp->procinfo.hProcess=NULL;
-        }
-        return 1;
-      }
+	return 1;
         
       /* If the read died, the child has died so let the thread die */
       if (rc == STATUS_READ_FAILED)
@@ -302,26 +269,6 @@ reader_thread (void *arg)
 	  break;
         }
     }
-  /* We are finished, so clean up handles and set to NULL so that
-     CHILD_ACTIVE will see what is going on */
-  if (cp->char_avail) {
-    CloseHandle (cp->char_avail);
-    cp->char_avail = NULL;
-  }
-  if (cp->thrd) {
-    CloseHandle (cp->thrd);
-    cp->thrd = NULL;
-  }
-  if (cp->char_consumed) {
-    CloseHandle(cp->char_consumed);
-    cp->char_consumed = NULL;
-  }
-  if (cp->procinfo.hProcess)
-  {
-    CloseHandle (cp->procinfo.hProcess);
-    cp->procinfo.hProcess=NULL;
-  }
-  
   return 0;
 }
 
@@ -378,13 +325,16 @@ create_child (char *exe, char *cmdline, char *env,
 
   cp->pid = (int) cp->procinfo.dwProcessId;
 
-  CloseHandle (cp->procinfo.hThread);
-  CloseHandle (cp->procinfo.hProcess);
-  cp->procinfo.hThread=NULL;
-  cp->procinfo.hProcess=NULL;
+  /* Hack for Windows 95, which assigns large (ie negative) pids */
+  if (cp->pid < 0)
+    cp->pid = -cp->pid;
 
   /* pid must fit in a Lisp_Int */
-
+#ifdef USE_UNION_TYPE
+  cp->pid = (cp->pid & ((1U << VALBITS) - 1));
+#else
+  cp->pid = (cp->pid & VALMASK);
+#endif
 
   *pPid = cp->pid;
   
@@ -564,19 +514,17 @@ sys_spawnve (int mode, CONST char *cmdname,
 	  errno = EINVAL;
 	  return -1;
 	}
-      GET_C_STRING_FILENAME_DATA_ALLOCA (full, cmdname);
-    }
-  else
-    {
-      (char*)cmdname = alloca (strlen (argv[0]) + 1);
-      strcpy ((char*)cmdname, argv[0]);
+      cmdname = XSTRING_DATA (full);
+      /* #### KLUDGE */
+      *(char**)(argv[0]) = cmdname;
     }
   UNGCPRO;
 
   /* make sure argv[0] and cmdname are both in DOS format */
+  strcpy (cmdname = alloca (strlen (cmdname) + 1), argv[0]);
   unixtodos_filename (cmdname);
   /* #### KLUDGE */
-  ((CONST char**)argv)[0] = cmdname;
+  *(char**)(argv[0]) = cmdname;
 
   /* Determine whether program is a 16-bit DOS executable, or a Win32
      executable that is implicitly linked to the Cygnus dll (implying it
@@ -719,7 +667,7 @@ sys_spawnve (int mode, CONST char *cmdname,
 #if 0
 	  /* This version does not escape quotes if they occur at the
 	     beginning or end of the arg - this could lead to incorrect
-	     behavior when the arg itself represents a command line
+	     behaviour when the arg itself represents a command line
 	     containing quoted args.  I believe this was originally done
 	     as a hack to make some things work, before
 	     `win32-quote-process-args' was added.  */
@@ -1330,6 +1278,9 @@ If successful, the new locale id is returned, otherwise nil.
 void
 syms_of_ntproc ()
 {
+  Qhigh = intern ("high");
+  Qlow = intern ("low");
+
   DEFSUBR (Fwin32_short_file_name);
   DEFSUBR (Fwin32_long_file_name);
   DEFSUBR (Fwin32_set_process_priority);
@@ -1338,14 +1289,6 @@ syms_of_ntproc ()
   DEFSUBR (Fwin32_get_default_locale_id);
   DEFSUBR (Fwin32_get_valid_locale_ids);
   DEFSUBR (Fwin32_set_current_locale);
-}
-
-
-void
-vars_of_ntproc (void)
-{
-  Qhigh = intern ("high");
-  Qlow = intern ("low");
 
   DEFVAR_LISP ("win32-quote-process-args", &Vwin32_quote_process_args /*
     Non-nil enables quoting of process arguments to ensure correct parsing.
@@ -1376,7 +1319,7 @@ or indirectly by Emacs), and preventing Emacs from cleanly terminating the
 subprocess group, but may allow Emacs to interrupt a subprocess that doesn't
 otherwise respond to interrupts from Emacs.
 */ );
-  Vwin32_start_process_share_console = Qt;
+  Vwin32_start_process_share_console = Qnil;
 
   DEFVAR_LISP ("win32-pipe-read-delay", &Vwin32_pipe_read_delay /*
     Forced delay before reading subprocess output.
@@ -1401,5 +1344,4 @@ the truename of a file can be slow.
   Vwin32_generate_fake_inodes = Qnil;
 #endif
 }
-
 /* end of ntproc.c */

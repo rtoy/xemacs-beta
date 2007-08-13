@@ -82,7 +82,7 @@ omitted.
 This function returns the maximum accessible value of point in
 @var{buffer}.  This is @code{(1+ (buffer-size buffer))}, unless
 narrowing is in effect, in which case it is the position of the end of
-the region that you narrowed to. (@pxref{Narrowing}).  @var{buffer}
+the region that you narrowed to. (@xref{Narrowing}).  @var{buffer}
 defaults to the current buffer if omitted.
 @end defun
 
@@ -602,7 +602,7 @@ expressions (also called @dfn{sexps} in connection with moving across
 them in XEmacs).  The syntax table controls how these functions interpret
 various characters; see @ref{Syntax Tables}.  @xref{Parsing
 Expressions}, for lower-level primitives for scanning sexps or parts of
-sexps.  For user-level commands, see @ref{Lists and Sexps,,, xemacs, XEmacs
+sexps.  For user-level commands, see @ref{Lists and Sexps,,, emacs, XEmacs
 Reference Manual}.
 
 @deffn Command forward-list &optional arg
@@ -901,7 +901,7 @@ before you try it.
 
 If @var{body} changes the current buffer, @code{save-restriction} still
 restores the restrictions on the original buffer (the buffer whose
-restrictions it saved from), but it does not restore the identity of the
+restructions it saved from), but it does not restore the identity of the
 current buffer.
 
 @code{save-restriction} does @emph{not} restore point and the mark; use

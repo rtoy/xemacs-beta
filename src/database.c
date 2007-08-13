@@ -502,11 +502,7 @@ berkdb_map (struct Lisp_Database *db, Lisp_Object func)
   xzero (keydatum);
   xzero (valdatum);
 
-#if DB_VERSION_MAJOR > 2 || DB_VERSION_MINOR >=6
-  status = dbp->cursor (dbp, NULL, &dbcp, 0);
-#else
   status = dbp->cursor (dbp, NULL, &dbcp);
-#endif
   for (status = dbcp->c_get (dbcp, &keydatum, &valdatum, DB_FIRST);
        status == 0;
        status = dbcp->c_get (dbcp, &keydatum, &valdatum, DB_NEXT))

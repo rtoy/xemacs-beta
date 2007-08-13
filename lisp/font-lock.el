@@ -849,13 +849,11 @@ See the variable `font-lock-keywords' for customization."
 ;;;###autoload
 (defun turn-on-font-lock ()
   "Unconditionally turn on Font Lock mode."
-  (interactive)
   (font-lock-mode 1))
 
 ;;;###autoload
 (defun turn-off-font-lock ()
   "Unconditionally turn off Font Lock mode."
-  (interactive)
   (font-lock-mode 0))
 
 ;;; FSF has here:
@@ -1075,9 +1073,8 @@ This can take a while for large buffers."
   ;; region as fontified; otherwise, the same error might get signaled
   ;; after every command.
   (unwind-protect
-      ;; buffer/extent may be deleted.
-      (if (and (extent-live-p font-lock-old-extent)
-	       (buffer-live-p (extent-object font-lock-old-extent)))
+      ;; buffer may be deleted.
+      (if (buffer-live-p (extent-object font-lock-old-extent))
 	  (save-excursion
 	    (set-buffer (extent-object font-lock-old-extent))
 	    (font-lock-after-change-function-1
@@ -1287,16 +1284,6 @@ This can take a while for large buffers."
 ;    ;; Clean up.
 ;    (and prev (remove-text-properties prev end '(face nil)))))
 
-(defun font-lock-lisp-like (mode)
-  ;; Note: (or (get mode 'font-lock-lisp-like) (string-match ...)) is
-  ;; not enough because the property needs to be able to specify a nil
-  ;; value.
-  (if (plist-member (symbol-plist mode) 'font-lock-lisp-like)
-      (get mode 'font-lock-lisp-like)
-    ;; If the property is not specified, guess.  Similar logic exists
-    ;; in add-log, but I think this encompasses more modes.
-    (string-match "lisp\\|scheme" (symbol-name mode))))
-
 (defun font-lock-fontify-syntactically-region (start end &optional loudly)
   "Put proper face on each string and comment between START and END.
 START should be at the beginning of a line."
@@ -1309,24 +1296,21 @@ START should be at the beginning of a line."
     (font-lock-unfontify-region start end loudly)
     (goto-char start)
     (if (> end (point-max)) (setq end (point-max)))
-    (let ((lisp-like (font-lock-lisp-like major-mode)))
-      (syntactically-sectionize
-       #'(lambda (s e context depth)
-	   (let (face)
-	     (cond ((eq context 'string)
-		    (setq face
-			  ;; #### It would be nice if we handled
-			  ;; Python and other non-Lisp languages with
-			  ;; docstrings correctly.
-			  (if (and lisp-like (= depth 1))
-			      ;; really we should only use this if
-			      ;;  in position 3 depth 1, but that's
-			      ;;  too expensive to compute.
-			      'font-lock-doc-string-face
-			    'font-lock-string-face)))
-		   ((or (eq context 'comment)
-			(eq context 'block-comment))
-		    (setq face 'font-lock-comment-face)
+    (syntactically-sectionize
+      #'(lambda (s e context depth)
+	  (let (face)
+	    (cond ((eq context 'string)
+		   ;;#### Should only do this is Lisp-like modes!
+		   (setq face
+			 (if (= depth 1)
+			     ;; really we should only use this if
+			     ;;  in position 3 depth 1, but that's
+			     ;;  too expensive to compute.
+			     'font-lock-doc-string-face
+			   'font-lock-string-face)))
+		  ((or (eq context 'comment)
+		       (eq context 'block-comment))
+		   (setq face 'font-lock-comment-face)
 ;		 ;; Don't fontify whitespace at the beginning of lines;
 ;		 ;;  otherwise comment blocks may not line up with code.
 ;		 ;; (This is sometimes a good idea, sometimes not; in any
@@ -1339,9 +1323,9 @@ START should be at the beginning of a line."
 ;		       (skip-chars-forward " \t\n")
 ;		       (setq s (point)))
 		   ))
-	     (font-lock-set-face s e face)))
-       start end)
-      )))
+	    (font-lock-set-face s e face)))
+      start end)
+    ))
 
 ;;; Additional text property functions.
 
@@ -1552,12 +1536,7 @@ START should be at the beginning of a line."
 
 ;; If the buffer has just been reverted, normally that turns off
 ;; Font Lock mode.  So turn the mode back on if necessary.
-;; sb 1999-03-03 -- The above comment no longer appears to be operative as
-;; the first call to normal-mode *will* restore the font-lock state and
-;; this call forces a second font-locking to occur when reverting a buffer,
-;; which is wasteful at best.
-;(defalias 'font-lock-revert-cleanup 'turn-on-font-lock)
-(defun font-lock-revert-cleanup ())
+(defalias 'font-lock-revert-cleanup 'turn-on-font-lock)
 
 
 ;; Various functions.
@@ -2338,9 +2317,8 @@ The name is assumed to begin with a capital letter.")
 	 '("\\<\\(false\\|null\\|true\\)\\>" (1 font-lock-keyword-face))
 
 	 ;; Class names:
-	 (list (concat "\\<\\(class\\|interface\\)\\>\\s *" 
-								 java-font-lock-identifier-regexp)
-	       2 'font-lock-function-name-face)
+	 (list (concat "\\<class\\>\\s *" java-font-lock-identifier-regexp)
+	       1 'font-lock-function-name-face)
         
 	 ;; Package declarations:
 	 (list (concat "\\<\\(package\\|import\\)\\>\\s *"
@@ -2478,8 +2456,8 @@ The name is assumed to begin with a capital letter.")
 
 	 (list
 
-	  ;; Javadoc tags
-	  '("@\\(author\\|exception\\|throws\\|deprecated\\|param\\|return\\|see\\|since\\|version\\)\\s "
+	  ;; Java doc tags
+	  '("@\\(author\\|exception\\|param\\|return\\|see\\|version\\)\\s "
 	    0 font-lock-keyword-face t)
 
 	  ;; Doc tag - Parameter identifiers
@@ -2487,9 +2465,9 @@ The name is assumed to begin with a capital letter.")
 		1 'font-lock-variable-name-face t)
 
 	  ;; Doc tag - Exception types
-	  (list (concat "@\\(exception\\|throws\\)\\s +"
+	  (list (concat "@exception\\ s*"
 			java-font-lock-identifier-regexp)
-		'(2 (if (equal (char-after (match-end 0)) ?.)
+		'(1 (if (equal (char-after (match-end 0)) ?.)
 			font-lock-reference-face font-lock-type-face) t)
 		(list (concat "\\=\\." java-font-lock-identifier-regexp)
 		      '(goto-char (match-end 0)) nil
@@ -2498,19 +2476,6 @@ The name is assumed to begin with a capital letter.")
 
 	  ;; Doc tag - Cross-references, usually to methods 
 	  '("@see\\s +\\(\\S *[^][ \t\n\r\f(){},.;:]\\)"
-	    1 font-lock-function-name-face t)
-
-	  ;; Doc tag - docRoot (1.3)
-	  '("\\({ *@docRoot *}\\)"
-	    0 font-lock-keyword-face t)
-	  ;; Doc tag - beaninfo, unofficial but widely used, even by Sun
-	  '("\\(@beaninfo\\)"
-	    0 font-lock-keyword-face t)
-	  ;; Doc tag - Links
-	  '("{ *@link\\s +\\([^}]+\\)}"
-	    0 font-lock-keyword-face t)
-	  ;; Doc tag - Links
-	  '("{ *@link\\s +\\(\\(\\S +\\)\\|\\(\\S +\\s +\\S +\\)\\) *}"
 	    1 font-lock-function-name-face t)
 
 	  )))

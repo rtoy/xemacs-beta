@@ -297,14 +297,10 @@ Otherwise treat \\ in NEWTEXT string as special:
 If PATTERN is omitted, it defaults to \"[ \\f\\t\\n\\r\\v]+\"."
   (or pattern
       (setq pattern "[ \f\t\n\r\v]+"))
-  (let (parts (start 0) (len (length string)))
-    (if (string-match pattern string)
-       (setq parts (cons (substring string 0 (match-beginning 0)) parts)
-             start (match-end 0)))
-    (while (and (< start len)
-               (string-match pattern string (if (> start (match-beginning 0))
-                                                start
-                                              (1+ start))))
+  ;; The FSF version of this function takes care not to cons in case
+  ;; of infloop.  Maybe we should synch?
+  (let (parts (start 0))
+    (while (string-match pattern string start)
       (setq parts (cons (substring string start (match-beginning 0)) parts)
 	    start (match-end 0)))
     (nreverse (cons (substring string start) parts))))
@@ -326,8 +322,7 @@ If PATTERN is omitted, it defaults to \"[ \\f\\t\\n\\r\\v]+\"."
   "Collect output to `standard-output' while evaluating FORMS and return
 it as a string."
   ;; by "William G. Dubuque" <wgd@zurich.ai.mit.edu> w/ mods from Stig
-  `(with-current-buffer (get-buffer-create
-			 (generate-new-buffer-name " *string-output*"))
+  `(with-current-buffer (get-buffer-create " *string-output*")
      (setq buffer-read-only nil)
      (buffer-disable-undo (current-buffer))
      (erase-buffer)
@@ -338,7 +333,7 @@ it as a string."
        (erase-buffer))))
 
 (defmacro with-current-buffer (buffer &rest body)
-  "Temporarily make BUFFER the current buffer and execute the forms in BODY.
+  "Execute the forms in BODY with BUFFER as the current buffer.
 The value returned is the value of the last form in BODY.
 See also `with-temp-buffer'."
   `(save-current-buffer
@@ -376,14 +371,21 @@ See also `with-temp-file' and `with-output-to-string'."
 	 (and (buffer-name ,temp-buffer)
 	      (kill-buffer ,temp-buffer))))))
 
+;; Moved from mule-coding.el.
 (defmacro with-string-as-buffer-contents (str &rest body)
   "With the contents of the current buffer being STR, run BODY.
 Returns the new contents of the buffer, as modified by BODY.
 The original current buffer is restored afterwards."
-  `(with-temp-buffer
-     (insert ,str)
-     ,@body
-     (buffer-string)))
+  `(let ((tempbuf (get-buffer-create " *string-as-buffer-contents*")))
+     (with-current-buffer tempbuf
+       (unwind-protect
+	   (progn
+	     (buffer-disable-undo (current-buffer))
+	     (erase-buffer)
+	     (insert ,str)
+	     ,@body
+	     (buffer-string))
+	 (erase-buffer tempbuf)))))
 
 (defun insert-face (string face)
   "Insert STRING and highlight with FACE.  Return the extent created."

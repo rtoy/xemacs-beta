@@ -4,11 +4,6 @@
 
 
 @ifinfo
-@dircategory XEmacs Editor
-@direntry
-* Intro: (new-users-guide).	Introduction to the XEmacs Editor.
-@end direntry
-
 This manual serves as an introduction to the XEmacs editor.
 
 Copyright (C) 1985, 1986, 1988 Richard M. Stallman.
@@ -60,8 +55,9 @@ are preserved on all copies.
 @page
 @ifinfo
 @node Top, Intro, (dir), (dir)
-@top The Emacs Editor
 
+The Emacs Editor
+****************
 
 Emacs is the extensible, customizable, self-documenting real-time
 display editor.  This Info file will help you get started on using 

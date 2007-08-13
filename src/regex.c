@@ -4857,16 +4857,8 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
                   highest_active_reg = NO_HIGHEST_ACTIVE_REG;
                 }
               else
-		{
-		  highest_active_reg = r;
-
-		  /* 98/9/21 jhod:  We've also gotta set lowest_active_reg, don't we? */
-		  r = 1;
-		  while (r < highest_active_reg && !IS_ACTIVE(reg_info[r]))
-		    r++;
-		  lowest_active_reg = r;
-		}
-	    }
+                highest_active_reg = r;
+            }
 
           /* If just failed to match something this time around with a
              group that's operated on by a repetition operator, try to
@@ -5499,25 +5491,22 @@ re_match_2_internal (struct re_pattern_buffer *bufp, CONST char *string1,
 #ifdef emacs
   	case before_dot:
           DEBUG_PRINT1 ("EXECUTING before_dot.\n");
- 	  if (!regex_emacs_buffer_p
-	      || (BUF_PTR_BYTE_POS (regex_emacs_buffer, (unsigned char *) d)
-		  >= BUF_PT (regex_emacs_buffer)))
+ 	  if (BUF_PTR_BYTE_POS (regex_emacs_buffer, (unsigned char *) d) >=
+	      BUF_PT (regex_emacs_buffer))
   	    goto fail;
   	  break;
 
   	case at_dot:
           DEBUG_PRINT1 ("EXECUTING at_dot.\n");
- 	  if (!regex_emacs_buffer_p
-	      || (BUF_PTR_BYTE_POS (regex_emacs_buffer, (unsigned char *) d)
-		  != BUF_PT (regex_emacs_buffer)))
+ 	  if (BUF_PTR_BYTE_POS (regex_emacs_buffer, (unsigned char *) d)
+	      != BUF_PT (regex_emacs_buffer))
   	    goto fail;
   	  break;
 
   	case after_dot:
           DEBUG_PRINT1 ("EXECUTING after_dot.\n");
-          if (!regex_emacs_buffer_p
-	      || (BUF_PTR_BYTE_POS (regex_emacs_buffer, (unsigned char *) d)
-		  <= BUF_PT (regex_emacs_buffer)))
+          if (BUF_PTR_BYTE_POS (regex_emacs_buffer, (unsigned char *) d)
+	      <= BUF_PT (regex_emacs_buffer))
   	    goto fail;
   	  break;
 #if 0 /* not emacs19 */

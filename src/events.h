@@ -273,7 +273,7 @@ Boston, MA 02111-1307, USA.  */
   implementation does not care about that implementation.
 
   The Create stream pair function is passed two void* values, which identify
-  process-dependent 'handles'. The process implementation uses these handles
+  process-dependant 'handles'. The process implementation uses these handles
   to communicate with child processes. The function must be prepared to receive
   handle types of any process implementation. Since there only one process
   implementation exists in a particular XEmacs configuration, preprocessing
@@ -293,7 +293,7 @@ Boston, MA 02111-1307, USA.  */
   corresponding lstream should not be created.
 
   The return value of the function is a unique stream identifier. It is used
-  by processes implementation, in its  platform-independent part. There is
+  by processes implementation, in its  platform-independant part. There is
   the get_process_from_usid function, which returns process object given its
   USID. The event stream is responsible for converting its internal handle
   type into USID.

@@ -22,7 +22,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with XEmacs; see the file COPYING.  If not, write to the
+;; along with XEmacs; see the file COPYING.  If not, write to the 
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -396,10 +396,10 @@ nil or `never' never auto-generate a directory listing,
 `always' auto-generate a directory listing ignoring existing
   `dir' and `localdir' files
 `if-missing', the default, auto-generates a directory listing
-  if no `dir' or `localdir' file is present.  Otherwise the
+  if no `dir' or `localdir' file is present.  Otherwise the 
   contents of any of these files is used instead.
 `if-outdated' auto-generates a directory listing if the `dir'
-  and `localdir' are either inexistent or outdated (touched
+  and `localdir' are either inexistent or outdated (touched 
   less recently than an info file in the same directory)."
   :type '(choice (const :tag "never" never)
 		 (const :tag "always" always)
@@ -410,41 +410,37 @@ nil or `never' never auto-generate a directory listing,
 (defcustom Info-save-auto-generated-dir nil
   "*Whether an auto-generated info directory listing should be saved.
 Possible values are:
-nil or `never', the default, auto-generated info directory
+nil or `never', the default, auto-generated info directory 
   information will never be saved.
 `always', auto-generated info directory information will be saved to
   a `dir' file in the same directory overwriting it if it exists
 `conservative', auto-generated info directory information will be saved
-  to a `dir' file in the same directory but the user is asked before
+  to a `dir' file in the same directory but the user is asked before 
   overwriting any existing file."
   :type '(choice (const :tag "never" never)
 		 (const :tag "always" always)
 		 (const :tag "conservative" conservative))
   :group 'info)
 
-(defconst Info-emacs-info-file-name "xemacs.info"
-  "The filename of the XEmacs info for `Info-goto-emacs-command-node'
-(`\\<help-mode-map>\\[Info-goto-emacs-command-node]')")
+(defvar Info-emacs-info-file-name "xemacs.info"
+  "The filename of the XEmacs info for
+`Info-goto-emacs-command-node' (`\\<help-mode-map>\\[Info-goto-emacs-command-node]')")
 
 ;;;###autoload
 (defvar Info-directory-list nil
   "List of directories to search for Info documentation files.
 
 The first directory in this list, the \"dir\" file there will become
-the (dir)Top node of the Info documentation tree.
+the (dir)Top node of the Info documentation tree.  If you wish to
+modify the info search path, use `M-x customize-variable,
+Info-directory-list' to do so.")
 
-Note: DO NOT use the `customize' interface to change the value of this
-variable.  Its value is created dynamically on each startup, depending
-on XEmacs packages installed on the system.  If you want to change the
-search path, make the needed modifications on the variable's value
-from .emacs.  For instance:
-
-    (setq Info-directory-list (cons \"~/info\" Info-directory-list))")
-
-;; This could as well be hard-coded since ${srcdir}/info/dir is in CVS --dv
-(defconst Info-localdir-heading-regexp "^Local Packages:$"
+(defcustom Info-localdir-heading-regexp
+    "^Locally installed XEmacs Packages:?"
   "The menu part of localdir files will be inserted below this topic
-heading.")
+heading."
+  :type 'regexp
+  :group 'info)
 
 (defface info-node '((t (:bold t :italic t)))
   "Face used for node links in info."
@@ -454,41 +450,23 @@ heading.")
   "Face used for cross-references in info."
   :group 'info-faces)
 
-;; This list is based on Karl Berry-s advice about extensions `info' itself
-;; might encounter. --dv
-(defcustom Info-suffix-list '(("" . nil)
-			      (".info" . nil)
-			      (".gz" . "gzip -dc %s")
-			      (".info.gz" . "gzip -dc %s")
-			      (".z" . "gzip -dc %s")
-			      (".info.z" . "gzip -dc %s")
-			      (".bz2" . "bzip2 -dc %s")
-			      (".info.bz2" . "bzip2 -dc %s")
-			      (".Z" . "uncompress -c %s")
-			      (".info.Z" . "uncompress -c %s")
-			      (".zip" . "unzip -c %s")
-			      (".info.zip" . "unzip -c %s")
-			      (".y" . "cat %s | unyabba")
-			      ("info.y" . "cat %s | unyabba")
-			      ;; These ones are for MS-DOS filenames.
-			      (".inf" . nil)
-			      (".igz" . "gzip -dc %s")
-			      (".inz" . "gzip -c %s"))
-  "*List of file name suffixes and associated decoding commands.
+;; Is this right for NT?  .zip, with -c for to stdout, right?
+(defvar Info-suffix-list '( ("" . nil) 
+			    (".info" . nil)
+			    (".info.gz" . "gzip -dc %s")
+			    (".info-z" . "gzip -dc %s")
+			    (".info.Z" . "uncompress -c %s")
+			    (".gz" . "gzip -dc %s")
+			    (".Z" . "uncompress -c %s")
+			    (".zip" . "unzip -c %s") )
+  "List of file name suffixes and associated decoding commands.
 Each entry should be (SUFFIX . STRING); if STRING contains %s, that is
 changed to name of the file to decode, otherwise the file is given to
-the command as standard input.  If STRING is nil, no decoding is done."
-  :type '(repeat (cons (string :tag "suffix")
-		       (choice :tag "command"
-			       (const  :tag "none" :value nil)
-			       (string :tag ""))))
-  :group 'info)
+the command as standard input.  If STRING is nil, no decoding is done.")
 
-(defcustom Info-footnote-tag "Note"
+(defvar Info-footnote-tag "Note"
   "*Symbol that identifies a footnote or cross-reference.
-All \"*Note\" references will be changed to use this word instead."
-  :type 'string
-  :group 'info)
+All \"*Note\" references will be changed to use this word instead.")
 
 (defvar Info-current-file nil
   "Info file that Info is now looking at, or nil.
@@ -514,7 +492,6 @@ Marker points nowhere if file has no tag table.")
 
 (defvar Info-index-alternatives nil
   "List of possible matches for last Info-index command.")
-
 (defvar Info-index-first-alternative nil)
 
 (defcustom Info-annotations-path '("~/.xemacs/info.notes"
@@ -543,16 +520,14 @@ Info hierarchy.  The first time you invoke Info you start off
 looking at that node, which is (dir)Top.
 
 File: dir	Node: Top	This is the top of the INFO tree
-  This (the Directory node) gives a menu of major topics.
+  This (the Directory node) gives a menu of major topics. 
 
 * Menu: The list of major topics begins on the next line.
 
 ")
 
-(defcustom Info-no-description-string "[No description available]"
-  "*Description string for info files that have none"
-  :type 'string
-  :group 'info)
+(defvar Info-no-description-string "[No description available]"
+  "Description string for info files that have none")
 
 ;;;###autoload
 (defun info (&optional file)
@@ -615,16 +590,13 @@ further (recursive) error recovery.  TRYFILE is ??"
     (Info-find-file-node nil nodename no-going-back tryfile line))
    ;; Convert filename to lower case if not found as specified.
    ;; Expand it, look harder...
-   ((let ((fname (substitute-in-file-name filename))
-	  temp found)
+   ((let (temp temp-downcase found 
+	       (fname (substitute-in-file-name filename)))
       (let ((dirs (cond
-		   ;; If specified name starts with `./', then just try
-		   ;; current directory. No point in searching for an absolute
-		   ;; file name
-		   ((string-match "^\\./" fname)
-		    (list default-directory))
+		   ((string-match "^\\./" fname) ; If specified name starts with `./'
+		    (list default-directory)) ; then just try current directory.
 		   ((file-name-absolute-p fname)
-		    '(nil))
+		    '(nil))		; No point in searching for an absolute file name
 		   (Info-additional-search-directory-list
 		    (append Info-directory-list
 			    Info-additional-search-directory-list))
@@ -632,9 +604,14 @@ further (recursive) error recovery.  TRYFILE is ??"
 	;; Search the directory list for file FNAME.
 	(while (and dirs (not found))
 	  (setq temp (expand-file-name fname (car dirs)))
-	  (setq found (Info-suffixed-file temp))
+	  (setq temp-downcase
+		(expand-file-name (downcase fname) (car dirs)))
+	  (if (equal temp-downcase temp) (setq temp-downcase nil))
+	  ;; Try several variants of specified name.
+	  ;; Try downcasing, appending a suffix, or both.
+	  (setq found (Info-suffixed-file temp temp-downcase))
 	  (setq dirs (cdr dirs)))
-	(if found
+	(if found 
 	    (progn (setq filename (expand-file-name found))
 		   t))))
     (Info-find-file-node filename nodename no-going-back tryfile line))
@@ -815,7 +792,7 @@ further (recursive) error recovery.  TRYFILE is ??"
 
 (defun Info-insert-dir ()
   "Construct the Info directory node by merging the files named
-\"dir\" or \"localdir\" from the directories in `Info-directory-list'.
+\"dir\" or \"localdir\" from the directories in `Info-directory-list'
 The \"dir\" files will take precedence in cases where both exist.  It
 sets the *info* buffer's `default-directory' to the first directory we
 actually get any text from."
@@ -841,26 +818,25 @@ actually get any text from."
 	(let ((truename (file-truename (expand-file-name (car dirs)))))
 	  (or (member truename dirs-done)
 	      (member (directory-file-name truename) dirs-done)
-	      ;; Karl Berry recently added the ability all possibilities for
-	      ;; extension as for normal info files. This code however is
-	      ;; still unsatisfactory: if one day, we find a compressed dir
-	      ;; file (which looks possible), we should be able to handle it
-	      ;; (which means decompress and read it, update it, save and
-	      ;; recompress it). --dv
-	      (let ((trials '("dir" "DIR"
-			      "dir.info" "DIR.INFO"
-			      "dir.inf" "DIR.INF"
-			      "localdir" "LOCALDIR"
-			      "localdir.info" "LOCALDIR.INFO"
-			      "localdir.inf" "LOCALDIR.INF"))
-		    buf file attrs)
-		(catch 'found
-		  (while (setq file (pop trials))
-		    (setq file (expand-file-name file truename))
-		    (and (setq attrs (file-attributes file))
-			 (throw 'found t))))
-		(unless file
-		  (setq file (expand-file-name "dir" truename)))
+	      ;; Try several variants of specified name.
+	      ;; Try upcasing, appending `.info', or both.
+	      (let* (buf
+		     file
+		     (attrs
+		      (or
+		       (progn (setq file (expand-file-name "dir" truename))
+			      (file-attributes file))
+		       (progn (setq file (expand-file-name "DIR" truename))
+			      (file-attributes file))
+		       (progn (setq file (expand-file-name "dir.info" truename))
+			      (file-attributes file))
+		       (progn (setq file (expand-file-name "DIR.INFO" truename))
+			      (file-attributes file))
+		       (progn (setq file (expand-file-name "localdir" truename))
+			      (file-attributes file))
+		       (progn (setq file (expand-file-name "dir" truename))
+			      nil)
+		       )))
 		(setq dirs-done
 		      (cons truename
 			    (cons (directory-file-name truename)
@@ -877,7 +853,7 @@ actually get any text from."
 				       (if (string-match "localdir" file)
 					   "localdir"
 					 "info dir"))))
-		      (if (not buf)
+		      (if (not buf) 
 			  (insert-file-contents file))
 		      (if (string-match "localdir" (buffer-name))
 			  (setq lbuffers (cons (current-buffer) lbuffers))
@@ -888,13 +864,13 @@ actually get any text from."
 				      Info-dir-file-attributes)))))))
 	  (or (cdr dirs) (setq Info-dir-contents-directory (car dirs)))
 	  (setq dirs (cdr dirs))))
-
+      
       ;; ensure that the localdir files are inserted last, and reverse
       ;; the list of them so that when they get pushed in, they appear
       ;; in the same order they got specified in the path, from top to
       ;; bottom.
       (nconc buffers (reverse lbuffers))
-
+      
       (or buffers
 	  (error "Can't find the Info directory node"))
       ;; Distinguish the dir file that comes with Emacs from all the
@@ -963,7 +939,7 @@ actually get any text from."
 		  (setq end (point))
 		  (setq nodes (cons (list nodename other beg end) nodes))))))
 	  (setq others (cdr others))))
-
+      
       ;; Add to the main menu a menu item for each other node.
       (re-search-forward "^\\* Menu:" nil t)
       (forward-line 1)
@@ -1016,59 +992,14 @@ actually get any text from."
   (setq default-directory Info-dir-contents-directory)
   (setq buffer-file-name (caar Info-dir-file-attributes)))
 
-(defmacro Info-directory-files (dir-file &optional all full nosort files-only)
-  "Return a list of Info files living in the same directory as DIR-FILE.
-This list actually contains the files living in this directory, except for
-the dir file itself and the secondary info files (foo-1 foo-2 etc).
-
-If the optional argument ALL is non nil, the secondary info files are also
-included in the list.
-
-Please refer to the function `directory-files' for the meaning of the other
-optional arguments."
-  `(let* ((dir (file-name-directory ,dir-file))
-	  (all-files (remove ,dir-file (directory-files dir ',full nil ',nosort
-							',files-only))))
-     (setq all-files
-	   (if ,full
-	       (remove (concat dir ".")
-		       (remove (concat dir "..") all-files))
-	     (remove "."
-		     (remove ".." all-files))))
-     (if ,all
-	 all-files
-       (let ((suff-match
-	      (concat "-[0-9]+\\("
-		      ;; Extract all known compression suffixes from
-		      ;; Info-suffix-list. These suffixes can typically  be
-		      ;; found in entries of the form `.info.something'.
-		      (let ((suff-list Info-suffix-list)
-			    suff regexp)
-			(while (setq suff (pop suff-list))
-			  (and (string-match "^\\.info" (car suff))
-			       (setq regexp (concat regexp
-						    (regexp-quote
-						     (substring
-						      (car suff) 5))
-						    (and suff-list "\\|")))))
-			regexp)
-		      "\\)?$"))
-	     info-files file)
-	 (while (setq file (pop all-files))
-	   (or (string-match suff-match file)
-	       (push file info-files)))
-	 (reverse info-files)
-	 ))
-     ))
-
 (defun Info-maybe-update-dir (file)
   "Rebuild dir or localdir according to `Info-auto-generate-directory'."
   (unless (or (not (file-exists-p (file-name-directory file)))
-	      (null (Info-directory-files file 'all)))
+	      (null (directory-files (file-name-directory file) nil "\\.info")))
     (if (not (find-buffer-visiting file))
 	(if (not (file-exists-p file))
 	    (if (or (eq Info-auto-generate-directory 'always)
-		    (eq Info-auto-generate-directory 'if-missing))
+		    (eq Info-auto-generate-directory 'if-missing))	      
 		(Info-build-dir-anew (file-name-directory file)))
 	  (if (or (eq Info-auto-generate-directory 'always)
 		  (and (eq Info-auto-generate-directory 'if-outdated)
@@ -1083,20 +1014,25 @@ optional arguments."
 dir or localdir are outdated when an info file in the same
 directory has been modified more recently."
   (let ((dir-mod-time (nth 5 (file-attributes file)))
-	f-mod-time newer)
+	f-mod-time
+	newer)
     (setq Info-dir-newer-info-files nil)
-    (mapcar
+    (mapcar 
      '(lambda (f)
 	(prog2
 	    (setq f-mod-time (nth 5 (file-attributes f)))
 	    (setq newer (or (> (car f-mod-time) (car dir-mod-time))
 			    (and (= (car f-mod-time) (car dir-mod-time))
-				 (> (car (cdr f-mod-time))
-				    (car (cdr dir-mod-time))))))
-	  (if (and (file-readable-p f) newer)
-	      (setq Info-dir-newer-info-files
+				 (> (car (cdr f-mod-time)) (car (cdr dir-mod-time))))))
+	  (if (and (file-readable-p f)
+		   newer)
+	      (setq Info-dir-newer-info-files 
 		    (cons f Info-dir-newer-info-files)))))
-     (Info-directory-files file nil 'fullname 'nosort t))
+     (directory-files (file-name-directory file)
+		      'fullname
+		      ".*\\.info\\(.gz\\|.Z\\|-z\\|.zip\\)?$"
+		      'nosort
+		      t))
     Info-dir-newer-info-files))
 
 (defun Info-extract-dir-entry-from (file)
@@ -1124,18 +1060,17 @@ and `END-INFO-DIR-ENTRY'"
       (save-restriction
 	(narrow-to-region beg end)
 	(goto-char beg)
-	(while (re-search-forward
-		"^\\* \\([^:]+\\):\\([ \t]*(\\([^)]*\\))\\w*\\.\\|:\\)" nil t)
+	(while (re-search-forward "^\\* \\([^:]+\\):\\([ \t]*(\\([^)]*\\))\\w*\\.\\|:\\)" nil t)
 	  (setq entry (list (match-string 2)
 			    (match-string 1)
 			    (downcase (or (match-string 3)
 					  (match-string 1)))))
-	  (setq entry
-		(cons (nreverse
-		       (cdr
-			(nreverse
-			 (split-string
-			  (buffer-substring
+	  (setq entry 
+		(cons (nreverse 
+		       (cdr 
+			(nreverse 
+			 (split-string 
+			  (buffer-substring 
 			   (re-search-forward "[ \t]*" nil t)
 			   (or (and (re-search-forward "^[^ \t]" nil t)
 				    (goto-char (match-beginning 0)))
@@ -1156,7 +1091,7 @@ and `END-INFO-DIR-ENTRY'"
 	       (if (> len description-col)
 		   (setq description-col len)))
 	    entries)
-    (setq description-col (+ 5 description-col))
+    (setq description-col (+ 5 description-col)) 
     (mapcar '(lambda (e)
 	       (setq e (cdr e))		; Drop filename
 	       (insert "* " (car e) ":" (car (cdr e)))
@@ -1171,32 +1106,37 @@ and `END-INFO-DIR-ENTRY'"
 
 (defun Info-build-dir-anew (directory)
   "Build info directory information for DIRECTORY.
-The generated directory listing may be saved to a `dir' according
+The generated directory listing may be saved to a `dir' according 
 to the value of `Info-save-auto-generated-dir'"
   (save-excursion
     (let* ((dirfile (expand-file-name "dir" directory))
 	   (to-temp (or (null Info-save-auto-generated-dir)
 			(eq Info-save-auto-generated-dir 'never)
 			(and (not (file-writable-p dirfile))
-			     (message "File not writable %s. Using temporary."
-				      dirfile))))
-	   (info-files (Info-directory-files dirfile nil 'fullname nil t)))
+			     (message "File not writable %s. Using temporary." dirfile))))
+	   (info-files 
+	    (directory-files directory
+			     'fullname
+			     ".*\\.info\\(.gz\\|.Z\\|-z\\|.zip\\)?$"
+			     nil
+			     t)))
       (if to-temp
 	  (message "Creating temporary dir in %s..." directory)
 	(message "Creating %s..." dirfile))
       (set-buffer (find-file-noselect dirfile t))
       (setq buffer-read-only nil)
       (erase-buffer)
-      (insert Info-dir-prologue "Info files in " directory ":\n\n")
-      (Info-dump-dir-entries
-       (mapcar
+      (insert Info-dir-prologue
+	      "Info files in " directory ":\n\n")
+      (Info-dump-dir-entries 
+       (mapcar 
 	'(lambda (f)
 	   (or (Info-extract-dir-entry-from f)
 	       (list 'dummy
-		     (progn (string-match "\\([^.]*\\)\\(\\..*\\)?$"
-					  (file-name-nondirectory f))
-			    (capitalize
-			     (match-string 1 (file-name-nondirectory f))))
+		     (progn 
+		       (string-match "\\(.*\\)\\.info\\(.gz\\|.Z\\|-z\\|.zip\\)?$" 
+				     (file-name-nondirectory f))
+		       (capitalize (match-string 1 (file-name-nondirectory f))))
 		     ":"
 		     (list Info-no-description-string))))
 	info-files))
@@ -1210,10 +1150,10 @@ to the value of `Info-save-auto-generated-dir'"
 
 (defun Info-rebuild-dir (file)
   "Build info directory information in the directory of dir FILE.
-Description of info files are merged from the info files in the
+Description of info files are merged from the info files in the 
 directory and the contents of FILE with the description in info files
-taking precedence over descriptions in FILE.
-The generated directory listing may be saved to a `dir' according to
+taking precedence over descriptions in FILE.  
+The generated directory listing may be saved to a `dir' according to 
 the value of `Info-save-auto-generated-dir' "
   (save-excursion
     (save-restriction
@@ -1222,7 +1162,7 @@ the value of `Info-save-auto-generated-dir' "
 	    file-dir-entry
 	    mark next-section
 	    not-first-section
-	    (to-temp
+	    (to-temp 
 	     (or (null Info-save-auto-generated-dir)
 		 (eq Info-save-auto-generated-dir 'never)
 		 (and (eq Info-save-auto-generated-dir 'always)
@@ -1230,10 +1170,9 @@ the value of `Info-save-auto-generated-dir' "
 		      (message "File not writable %s. Using temporary." file))
 		 (and (eq Info-save-auto-generated-dir 'conservative)
 		      (or (and (not (file-writable-p file))
-			       (message
-				"File not writable %s. Using temporary." file))
-			  (not (y-or-n-p
-				(message "%s is outdated. Overwrite ? "
+			       (message "File not writable %s. Using temporary." file))
+			  (not (y-or-n-p 
+				(message "%s is outdated. Overwrite ? " 
 					 file))))))))
 	(set-buffer (find-file-noselect file t))
 	(setq buffer-read-only nil)
@@ -1249,43 +1188,40 @@ the value of `Info-save-auto-generated-dir' "
 				       (match-beginning 0))))
 	    (throw 'done nil))
 	  (setq dir-full-contents (Info-parse-dir-entries mark (point-max)))
-	  (setq next-section (or (and (re-search-forward
-				       "^[^* \t].*:[ \t]*$" nil t)
+	  (setq next-section (or (and (re-search-forward "^[^* \t].*:[ \t]*$" nil t)
 				      (match-beginning 0))
 				 (point-max)))
 	  (while next-section
 	    (narrow-to-region mark next-section)
-	    (setq dir-section-contents (nreverse (Info-parse-dir-entries
-						  (point-min) (point-max))))
-	    (mapcar
-	     '(lambda (file)
-		(setq dir-entry (assoc (downcase
-					(file-name-sans-extension
-					 (file-name-nondirectory file)))
-				       dir-section-contents)
-		      file-dir-entry (Info-extract-dir-entry-from file))
-		(if dir-entry
-		    (if file-dir-entry
-			;; A dir entry in the info file takes precedence over
-			;; an existing entry in the dir file
-			(setcdr dir-entry (cdr file-dir-entry)))
-		  (unless (or not-first-section
-			      (assoc (downcase
-				      (file-name-sans-extension
-				       (file-name-nondirectory file)))
-				     dir-full-contents))
-		    (if file-dir-entry
-			(setq dir-section-contents
-			      (cons file-dir-entry dir-section-contents))
-		      (setq dir-section-contents
-			    (cons (list 'dummy
-					(capitalize (file-name-sans-extension
-						     (file-name-nondirectory
-						      file)))
-					":"
-					(list Info-no-description-string))
-				  dir-section-contents))))))
-	     Info-dir-newer-info-files)
+	    (setq dir-section-contents (nreverse (Info-parse-dir-entries (point-min)
+									 (point-max))))
+	    (mapcar '(lambda (file)
+		       (setq dir-entry (assoc (downcase
+					       (file-name-sans-extension
+						(file-name-nondirectory file)))
+					      dir-section-contents)
+			     file-dir-entry (Info-extract-dir-entry-from file))
+		       (if dir-entry
+			   (if file-dir-entry
+			       ;; A dir entry in the info file takes precedence over an
+			       ;; existing entry in the dir file
+			       (setcdr dir-entry (cdr file-dir-entry)))
+			 (unless (or not-first-section
+				     (assoc (downcase
+					 (file-name-sans-extension
+					  (file-name-nondirectory file)))
+					dir-full-contents))
+			   (if file-dir-entry
+			       (setq dir-section-contents (cons file-dir-entry
+								dir-section-contents))
+			     (setq dir-section-contents 
+				   (cons (list 'dummy
+					       (capitalize (file-name-sans-extension
+							    (file-name-nondirectory file)))
+					       ":"
+					       (list Info-no-description-string)) 
+					 dir-section-contents))))))
+		    Info-dir-newer-info-files)
 	    (delete-region (point-min) (point-max))
 	    (Info-dump-dir-entries (nreverse dir-section-contents))
 	    (widen)
@@ -1294,8 +1230,7 @@ the value of `Info-save-auto-generated-dir' "
 	      (or (setq mark (and (re-search-forward "^\\* " nil t)
 				  (match-beginning 0)))
 		  (throw 'done nil))
-	      (setq next-section (or (and (re-search-forward
-					   "^[^* \t].*:[ \t]*$" nil t)
+	      (setq next-section (or (and (re-search-forward "^[^* \t].*:[ \t]*$" nil t)
 					  (match-beginning 0))
 				     (point-max))))
 	    (setq not-first-section t)))
@@ -1306,14 +1241,13 @@ the value of `Info-save-auto-generated-dir' "
 	  (save-buffer)
 	  (message "Rebuilding %s...done" file))))))
 
-;;;###autoload
+;;;###autoload      
 (defun Info-batch-rebuild-dir ()
-  "(Re)build `dir' files in the directories remaining on the command line.
-Use this from the command line, with `-batch', it won't work in an
-interactive XEmacs.
-
-Each file is processed even if an error occurred previously. For example,
-invoke \"xemacs -batch -f Info-batch-rebuild-dir /usr/local/info\""
+  "(Re)build info `dir' files in the directories remaining on the command line.
+Use this from the command line, with `-batch';
+it won't work in an interactive Emacs.
+Each file is processed even if an error occurred previously.
+For example, invoke \"xemacs -batch -f Info-batch-rebuild-dir /usr/local/info\""
   ;; command-line-args-left is what is left of the command line (from
   ;; startup.el)
   (defvar command-line-args-left)	; Avoid 'free variable' warning
@@ -1326,9 +1260,8 @@ invoke \"xemacs -batch -f Info-batch-rebuild-dir /usr/local/info\""
 	  (message "Warning: Skipped %s. Not a directory."
 		   (car command-line-args-left))
 	(setq dir (expand-file-name "dir" (car command-line-args-left)))
-	(setq localdir (expand-file-name "localdir"
-					 (car command-line-args-left)))
-	(cond
+	(setq localdir (expand-file-name "localdir" (car command-line-args-left)))
+	(cond 
 	 ((file-exists-p dir)
 	  (Info-rebuild-dir dir))
 	 ((file-exists-p localdir)
@@ -1391,8 +1324,7 @@ invoke \"xemacs -batch -f Info-batch-rebuild-dir /usr/local/info\""
 	  (Info-insert-file-contents (Info-suffixed-file
 				      (expand-file-name lastfilename
 							(file-name-directory
-							 Info-current-file))
-				      'exact)
+							 Info-current-file)))
 				     t)
 	  (set-buffer-modified-p nil)
 	  (setq Info-current-subfile lastfilename)))
@@ -1400,90 +1332,36 @@ invoke \"xemacs -batch -f Info-batch-rebuild-dir /usr/local/info\""
     (search-forward "\n\^_")
     (+ (- nodepos lastfilepos) (point))))
 
-(defun Info-all-case-regexp (str)
-  (let ((regexp "")
-	(len (length str))
-	(i 0)
-	c)
-    (while (< i len)
-      (setq c (aref str i))
-      (cond ((or (and (>= c ?A) (<= c ?Z))
-		 (and (>= c ?a) (<= c ?z)))
-	     (setq regexp (concat regexp
-				  "["
-				  (char-to-string (downcase c))
-				  "\\|"
-				  (char-to-string (upcase c))
-				  "]")))
+(defun Info-suffixed-file (name &optional name2)
+  "Look for NAME with each of the `Info-suffix-list' extensions in
+turn. Optional NAME2 is the name of a fallback info file to check
+for; usually a downcased version of NAME."
+  (let ((suff Info-suffix-list)
+	(found nil)
+	file file2)
+    (while (and suff (not found))
+      (setq file (concat name (caar suff))
+	    file2 (and name2 (concat name2 (caar suff))))
+      (cond
+       ((file-regular-p file)
+	(setq found file))
+       ((and file2 (file-regular-p file2))
+	(setq found file2))
        (t
-	     (setq regexp (concat regexp (char-to-string c)))))
-      (setq i (1+ i)))
-    regexp))
-
-(defun Info-suffixed-file (name &optional exact)
-  "Look for an info file named NAME. This function tries to be smart in
-finding the file corresponding to NAME: if it doesn't exist, several
-variants are looked for, notably by appending suffixes from
-`Info-suffix-list' and by trying to change the characters case in NAME.
-
-The optional argument EXACT prevents this function from trying different case
-versions of NAME. Only the suffixes are tried."
-  (catch 'found
-    ;; First, try NAME alone:
-    (and (file-regular-p name) (throw 'found name))
-    ;; Then, try different variants
-    (let ((suff-match (concat "\\("
-			      (let ((suff-list Info-suffix-list)
-				    suff regexp)
-				(while (setq suff (pop suff-list))
-				  (setq regexp
-					(concat regexp
-						(regexp-quote (car suff))
-						(and suff-list "\\|"))))
-				regexp)
-			      "\\)?$"))
-	  (dir (file-name-directory name))
-	  file files)
-      (setq name (file-name-nondirectory name))
-      (setq files
-	    (condition-case data ;; protect against invalid directory
-		;; First, try NAME[.<suffix>]
-		(append
-		 (directory-files dir 'fullname
-				  (concat "^" (regexp-quote name) suff-match)
-				  nil t)
-		 (if exact
-		     nil
-		   ;; Then, try to match the name independantly of the
-		   ;; characters case.
-		   (directory-files dir 'fullname
-				    (Info-all-case-regexp
-				     (concat "^"
-					     (regexp-quote name)
-					     suff-match))
-				    nil t)))
-	      (t
-	       (display-warning 'info
-		 (format "directory `%s' error: %s" dir data))
-	       nil)))
-      (while (setq file (pop files))
-	(and (file-regular-p file)
-	     (throw 'found file)))
-      )))
+	(setq suff (cdr suff)))))
+    (or found
+	(and name (when (file-regular-p name)
+		    name))
+	(and name2 (when (file-regular-p name2)
+		     name2)))))
 
 (defun Info-insert-file-contents (file &optional visit)
   (setq file (expand-file-name file default-directory))
-  (let ((suff Info-suffix-list)
-	len)
-    (while (and suff
-		(setq len (length (car (car suff))))
-		(or (<= (length file) len)
-		    (not (or
-			  (equal (substring file (- len))
-				 (car (car suff)))
-			  (equal (substring file (- len))
-				 (upcase (car (car suff)))))
-			 )))
+  (let ((suff Info-suffix-list))
+    (while (and suff (or (<= (length file) (length (car (car suff))))
+			 (not (equal (substring file
+						(- (length (car (car suff)))))
+				     (car (car suff))))))
       (setq suff (cdr suff)))
     (if (stringp (cdr (car suff)))
 	(let ((command (if (string-match "%s" (cdr (car suff)))
@@ -1553,10 +1431,9 @@ versions of NAME. Only the suffixes are tried."
 		    (concat
 		     "("
 		     (if Info-current-file
-			 (let ((name (file-name-nondirectory
-				      Info-current-file)))
-			   (if (string-match "^\\([^.]*\\)\\..*$" name)
-			       (match-string 1 name)
+			 (let ((name (file-name-nondirectory Info-current-file)))
+			   (if (string-match "\\.info$" name)
+			       (substring name 0 -5)
 			     name))
 		       "")
 		     ")"
@@ -1660,7 +1537,6 @@ annotation for any node of any file.  (See `a' and `x' commands.)"
       (let ((compl (Info-build-annotation-completions)))
 	(save-excursion
 	  (save-restriction
-	    (widen)
 	    (if (marker-buffer Info-tag-table-marker)
 		(progn
 		  (set-buffer (marker-buffer Info-tag-table-marker))
@@ -1670,6 +1546,7 @@ annotation for any node of any file.  (See `a' and `x' commands.)"
 			  (cons (list (buffer-substring (match-beginning 1)
 							(match-end 1)))
 				compl))))
+	      (widen)
 	      (goto-char (point-min))
 	      (while (search-forward "\n\^_" nil t)
 		(forward-line 1)
@@ -1677,7 +1554,7 @@ annotation for any node of any file.  (See `a' and `x' commands.)"
 		  (forward-line 1)
 		  (if (re-search-backward "Node: *\\([^,\n]*\\) *[,\n\t]"
 					  beg t)
-		      (setq compl
+		      (setq compl 
 			    (cons (list (buffer-substring (match-beginning 1)
 							  (match-end 1)))
 				  compl))))))))
@@ -1708,8 +1585,7 @@ annotation for any node of any file.  (See `a' and `x' commands.)"
             (condition-case nil
                 (progn (re-search-forward regexp) (setq found (point)))
               (search-failed nil)))))
-      (if (not found)
-	  ;; can only happen in subfile case -- else would have erred
+      (if (not found)                   ;can only happen in subfile case -- else would have erred
           (unwind-protect
               (let ((list ()))
                 (set-buffer (marker-buffer Info-tag-table-marker))
@@ -1726,9 +1602,8 @@ annotation for any node of any file.  (See `a' and `x' commands.)"
                     (re-search-forward "\\(^.*\\): [0-9]+$")
                     (goto-char (+ (match-end 1) 2))
                     (setq list (cons (cons (read (current-buffer))
-                                           (buffer-substring
-					    (match-beginning 1)
-					    (match-end 1)))
+                                           (buffer-substring (match-beginning 1)
+                                                             (match-end 1)))
                                      list))
                     (goto-char (1+ (match-end 0))))
                   (setq list (nreverse list)
@@ -1755,7 +1630,7 @@ annotation for any node of any file.  (See `a' and `x' commands.)"
           (Info-history-add ofile onode opoint)))))
 
 ;; Extract the value of the node-pointer named NAME.
-;; If there is none, use ERRORNAME in the error message;
+;; If there is none, use ERRORNAME in the error message; 
 ;; if ERRORNAME is nil, just return nil.
 (defun Info-extract-pointer (name &optional errorname)
   (save-excursion
@@ -2017,7 +1892,7 @@ Completion is allowed, and the menu item point is on is the default."
   ;; there is a problem here in that if several menu items have the same
   ;; name you can only go to the node of the first with this command.
   (Info-goto-node (Info-extract-menu-item menu-item) nil t))
-
+  
 (defun Info-extract-menu-item (menu-item &optional noerror)
   (save-excursion
     (goto-char (point-min))
@@ -2180,9 +2055,11 @@ A positive or negative prefix argument moves by multiple screenfuls."
 	  (progn
 	    (Info-global-prev)
 	    (message "Node: %s" Info-current-node)
-	    (goto-char (point-max))
-	    (recenter -1)
-	    (move-to-window-line 0))
+	    (sit-for 0)
+	    ;;(scroll-up 1)   ; work around bug in pos-visible-in-window-p
+	    ;;(scroll-down 1)
+	    (while (not (pos-visible-in-window-p (point-max)))
+	      (scroll-up)))
 	(scroll-down)))))
 
 (defun Info-scroll-prev (arg)
@@ -2192,9 +2069,9 @@ A positive or negative prefix argument moves by multiple screenfuls."
 	       (not (eq Info-auto-advance t))
 	       (not (eq last-command this-command)))
 	  (message "Hit %s again to go to previous node"
-		   (if (mouse-event-p last-command-event)
+		   (if (= last-command-char 0)
 		       "mouse button"
-		     (key-description (event-key last-command-event))))
+		     (key-description (char-to-string last-command-char))))
 	(Info-page-prev)
 	(setq this-command 'Info))
     (scroll-down arg)))
@@ -2366,7 +2243,7 @@ This command is designed to be used whether you are already in Info or not."
   "Look up an Emacs Lisp function in the Elisp manual in the Info system.
 This command is designed to be used whether you are already in Info or not."
   (interactive (let ((fn (function-at-point))
-		     (enable-recursive-minibuffers t)
+		     (enable-recursive-minibuffers t)	     
 		     val)
 		 (setq val (completing-read
 			    (format "Look up Emacs Lisp function%s: "
@@ -2439,7 +2316,6 @@ This command is designed to be used whether you are already in Info or not."
 
 (defvar Info-annotate-map nil
   "Local keymap used within `a' command of Info.")
-
 (if Info-annotate-map
     nil
   ;; (setq Info-annotate-map (nconc (make-sparse-keymap) text-mode-map))
@@ -2738,24 +2614,42 @@ At end of the node's text, moves to the next node."
   (if (/= click-count 2)
       ;; Return nil so any other hooks are performed.
       nil
-      (let* ((fw (face-width 'default))
-	     (fh (face-height 'default))
-	     (x (/ (event-x-pixel event) fw))
-	     (y (/ (event-y-pixel event) fw))
-	     (w (/ (window-pixel-width (event-window event)) fw))
-	     (h (/ (window-pixel-height (event-window event)) fh))
-	     (bx 3)
-	     (by 2))
+      (let* ((x (event-x-pixel event))
+	     (y (event-y-pixel event))
+	     (w (window-pixel-width (event-window event)))
+	     (h (window-pixel-height (event-window event)))
+	     (w/3 (/ w 3))
+	     (w/2 (/ w 2))
+	     (h/4 (/ h 4)))
 	(cond
-	  ((<= y by) (Info-up) t)
-	  ((>= y (- h by)) (Info-nth-menu-item 1) t)
-	  ((<= x bx) (Info-prev) t)
-	  ((>= x (- w bx)) (Info-next) t)
-	  (t nil)))))
+	  ;; In the top 1/4 and inside the middle 1/3
+	  ((and (<= y h/4)
+		(and (>= x w/3) (<= x (+ w/3 w/3))))
+	   (Info-up)
+	   t)
+	  ;; In the bottom 1/4 and inside the middle 1/3
+	  ((and (>= y (+ h/4 h/4 h/4))
+		(and (>= x w/3) (<= x (+ w/3 w/3))))
+	   (Info-nth-menu-item 1)
+	   t)
+	  ;; In the lower 3/4 and the right 1/2
+	  ;; OR in the upper 1/4 and the right 1/3
+	  ((or (and (>= y h/4) (>= x w/2))
+	       (and (< y h/4) (>= x (+ w/3 w/3))))
+	   (Info-next)
+	   t)
+	  ;; In the lower 3/4 and the left 1/2
+	  ;; OR in the upper 1/4 and the left 1/3
+	  ((or (and (>= y h/4) (< x w/2))
+	       (and (< y h/4) (<= x w/3)))
+	   (Info-prev)
+	   t)
+	  ;; This shouldn't happen.
+	  (t
+	   (error "event out of bounds: %s %s" x y))))))
 
 (defvar Info-mode-map nil
   "Keymap containing Info commands.")
-
 (if Info-mode-map
     nil
   (setq Info-mode-map (make-sparse-keymap))
@@ -2848,15 +2742,9 @@ b	Go to beginning of node.        Meta->    Go to end of node.
 TAB	Go to next cross-reference.     Meta-TAB  Go to previous ref.
 
 Mouse commands:
-Left Button	Set point (usual text-mode functionality)
+Left Button	Set point.
 Middle Button	Click on a highlighted node reference to go to it.
 Right Button	Pop up a menu of applicable Info commands.
-
-Left Button Double Click in window edges:
- Top edge:    Go up to the parent node, like `u'.
- Left edge:   Go to the previous node, like `p'.
- Right edge:  Go to the next node, like `n'.
- Bottom edge: Follow first menu item, like `1'.
 
 Advanced commands:
 g	Move to node, file, or annotation tag specified by name.
@@ -2914,7 +2802,6 @@ e	Edit the contents of the current node."
 
 (defvar Info-edit-map nil
   "Local keymap used within `e' command of Info.")
-
 (if Info-edit-map
     nil
   ;; XEmacs: remove FSF stuff
@@ -3054,22 +2941,19 @@ The locations are of the format used in Info-history, i.e.
 	    (while
 		(looking-at "[ \t]*[^:, \t\n]+:[ \t]+\\([^:,\t\n]+\\),?\n?")
 	      (goto-char (match-end 0))
-	      (Info-highlight-region (match-beginning 1) (match-end 1)
-				     'info-xref))))
+	      (Info-highlight-region (match-beginning 1) (match-end 1) 'info-xref))))
       ;; Now get the xrefs in the body
       (goto-char (point-min))
       (while (re-search-forward xref-regexp nil t)
 	(if (= (char-after (1- (match-beginning 0))) ?\") ; hack
 	    nil
-	  (Info-highlight-region (match-beginning 1) (match-end 1)
-				 'info-xref)))
+	  (Info-highlight-region (match-beginning 1) (match-end 1) 'info-xref)))
       ;; then highlight the nodes in the menu.
       (goto-char (point-min))
       (if (and (search-forward "\n* menu:" nil t))
 	  (while (re-search-forward
 		  "^\\* \\([^:\t\n]*\\):?:[ \t\n]" nil t)
-	    (Info-highlight-region (match-beginning 1) (match-end 1)
-				   'info-node)))
+	    (Info-highlight-region (match-beginning 1) (match-end 1) 'info-node)))
       (set-buffer-modified-p nil))))
 
 (defun Info-construct-menu (&optional event)
@@ -3078,7 +2962,7 @@ Adds an entry for the node at EVENT, or under point if EVENT is omitted.
 Used to construct the menubar submenu and popup menu."
   (or event (setq event (point)))
   (let ((case-fold-search t)
-	(xref-regexp (concat "\\*"
+	(xref-regexp (concat "\\*" 
 			     (regexp-quote Info-footnote-tag)
 			     "[ \n\t]*\\([^:]*\\):"))
 	up-p prev-p next-p menu xrefs subnodes in)

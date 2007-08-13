@@ -68,12 +68,12 @@
  *		Note. under this mechanism, any data item that undergoes
  *		relocation and is then further modified during the execution of
  *		the image before dynodump(3x) is called will lose the
- *		modification that occurred during the applications execution.
+ *		modification that occured during the applications execution.
  *
  * N.B. The above commentary is not quite correct in the flags have been hardwired
  *      to RTLD_SAVREL.
  */
-#pragma ident	"@(#) $Id: dynodump.c,v 1.7 2000/11/17 03:21:17 vins Exp $ - SMI"
+#pragma ident	"@(#) $Id: dynodump.c,v 1.6 1998/03/31 20:10:55 steve Exp $ - SMI"
 
 #define __EXTENSIONS__ 1
 

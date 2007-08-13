@@ -202,31 +202,18 @@ If it fails, it returns nil."
   "Given an X font specification, this attempts to make a `bold-italic' font.
 If it fails, it returns nil."
   ;; This is haired up to avoid loading the "intermediate" fonts.
-  (if *try-oblique-before-italic-fonts*
-      (or (try-font-name
-	   (x-frob-font-slant (x-frob-font-weight font "bold") "o") device)
-	  (try-font-name
-	   (x-frob-font-slant (x-frob-font-weight font "bold") "i") device)
-	  (try-font-name
-	   (x-frob-font-slant (x-frob-font-weight font "black") "o") device)
-	  (try-font-name
-	   (x-frob-font-slant (x-frob-font-weight font "black") "i") device)
-	  (try-font-name
-	   (x-frob-font-slant (x-frob-font-weight font "demibold") "o") device)
-	  (try-font-name
-	   (x-frob-font-slant (x-frob-font-weight font "demibold") "i") device))
-    (or (try-font-name
-	 (x-frob-font-slant (x-frob-font-weight font "bold") "i") device)
-	(try-font-name
-	 (x-frob-font-slant (x-frob-font-weight font "bold") "o") device)
-	(try-font-name
-	 (x-frob-font-slant (x-frob-font-weight font "black") "i") device)
-	(try-font-name
-	 (x-frob-font-slant (x-frob-font-weight font "black") "o") device)
-	(try-font-name
-	 (x-frob-font-slant (x-frob-font-weight font "demibold") "i") device)
-	(try-font-name
-	 (x-frob-font-slant (x-frob-font-weight font "demibold") "o") device))))
+  (or (try-font-name
+       (x-frob-font-slant (x-frob-font-weight font "bold") "i") device)
+      (try-font-name
+       (x-frob-font-slant (x-frob-font-weight font "bold") "o") device)
+      (try-font-name
+       (x-frob-font-slant (x-frob-font-weight font "black") "i") device)
+      (try-font-name
+       (x-frob-font-slant (x-frob-font-weight font "black") "o") device)
+      (try-font-name
+       (x-frob-font-slant (x-frob-font-weight font "demibold") "i") device)
+      (try-font-name
+       (x-frob-font-slant (x-frob-font-weight font "demibold") "o") device)))
 
 (defun x-font-size (font)
   "Return the nominal size of the given font.
@@ -519,7 +506,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 	;; globally.  This means we should override global
 	;; defaults for all X device classes.
 	(remove-specifier (face-font face) locale x-tag-set nil))
-      (set-face-font face fn locale 'x append))
+      (set-face-font face fn locale nil append))
     ;; Kludge-o-rooni.  Set the foreground and background resources for
     ;; X devices only -- otherwise things tend to get all messed up
     ;; if you start up an X frame and then later create a TTY frame.
@@ -615,12 +602,12 @@ Otherwise, it returns the next larger version of this font that is defined."
 (defun x-init-global-faces ()
   (or (face-font 'default 'global)
       (set-face-font 'default
-		     "-*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-*"
-		     'global '(x default)))
+		     "-*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-*")
+      'global)
   (or (face-foreground 'default 'global)
-      (set-face-foreground 'default "black" 'global '(x default)))
+      (set-face-foreground 'default "black" 'global 'x))
   (or (face-background 'default 'global)
-      (set-face-background 'default "gray80" 'global '(x default))))
+      (set-face-background 'default "gray80" 'global 'x)))
 
 ;;; x-init-device-faces is responsible for initializing default
 ;;; values for faces on a newly created device.

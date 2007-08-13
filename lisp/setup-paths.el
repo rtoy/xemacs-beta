@@ -107,7 +107,7 @@
 
 (defun paths-find-doc-directory (roots)
   "Find the documentation directory."
-  (paths-find-architecture-directory roots "lib-src" nil configure-doc-directory))
+  (paths-find-architecture-directory roots "lib-src"))
 
 (defun paths-find-lock-directory (roots)
   "Find the lock directory."
@@ -126,7 +126,7 @@
 
 (defun paths-find-exec-directory (roots)
   "Find the binary directory."
-  (paths-find-architecture-directory roots "lib-src" nil configure-exec-directory))
+  (paths-find-architecture-directory roots "lib-src" configure-exec-directory))
 
 (defun paths-construct-exec-path (roots exec-directory
 				  early-packages late-packages last-packages)
@@ -137,12 +137,12 @@
 	 (paths-decode-directory-path path-envval 'drop-empties)))
    (packages-find-package-exec-path early-packages)
    (packages-find-package-exec-path late-packages)
+   (packages-find-package-exec-path last-packages)
    (let ((emacspath-envval (getenv "EMACSPATH")))
      (and emacspath-envval
 	  (split-path emacspath-envval)))
    (and exec-directory
-	(list exec-directory))
-   (packages-find-package-exec-path last-packages)))
+	(list exec-directory))))
 
 (defun paths-find-data-directory (roots)
   "Find the data directory."
@@ -154,7 +154,7 @@
   (append
    (packages-find-package-data-path early-packages)
    (packages-find-package-data-path late-packages)
-   (list data-directory)
-   (packages-find-package-data-path last-packages)))
+   (packages-find-package-data-path last-packages)
+   (list data-directory)))
 
 ;;; setup-paths.el ends here

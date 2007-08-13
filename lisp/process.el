@@ -245,7 +245,6 @@ In either case, the output is inserted after point (leaving mark after it)."
     (let ((buffer (get-buffer-create
 		   (or output-buffer "*Shell Command Output*")))
 	  (success nil)
-	  (exit-status nil)
 	  (directory default-directory))
       (unwind-protect
 	  (if (eq buffer (current-buffer))
@@ -255,10 +254,9 @@ In either case, the output is inserted after point (leaving mark after it)."
 	      (progn (setq buffer-read-only nil)
 		     (delete-region (max start end) (point-max))
 		     (delete-region (point-min) (max start end))
-		     (setq exit-status
-			   (call-process-region (point-min) (point-max)
-						shell-file-name t t nil
-						shell-command-switch command))
+		     (call-process-region (point-min) (point-max)
+					  shell-file-name t t nil
+					  shell-command-switch command)
 		     (setq success t))
 	    ;; Clear the output buffer, 
 	    ;; then run the command with output there.
@@ -268,10 +266,9 @@ In either case, the output is inserted after point (leaving mark after it)."
 	      ;; XEmacs change
 	      (setq default-directory directory)
 	      (erase-buffer))
-	    (setq exit-status
-		  (call-process-region start end shell-file-name
-				       nil buffer nil
-				       shell-command-switch command))
+	    (call-process-region start end shell-file-name
+				 nil buffer nil
+				 shell-command-switch command)
 	    (setq success t))
 	;; Report the amount of output.
 	(let ((lines (save-excursion
@@ -283,9 +280,7 @@ In either case, the output is inserted after point (leaving mark after it)."
 		 (if success
 		     (display-message
 		      'command
-		      (if (eql exit-status 0)
-			  "(Shell command succeeded with no output)"
-			"(Shell command failed with no output)")))
+		      "(Shell command completed with no output)"))
 		 (kill-buffer buffer))
 		((and success (= lines 1))
 		 (message "%s"
@@ -350,7 +345,7 @@ Fourth arg SERVICE is name of the service desired, or an integer
 process as a string"
   ;; by "William G. Dubuque" <wgd@zurich.ai.mit.edu>
   (with-output-to-string
-    (call-process shell-file-name nil t nil shell-command-switch command)))
+    (call-process shell-file-name nil t nil "-c" command)))
 
 (defalias 'shell-command-to-string 'exec-to-string)
 

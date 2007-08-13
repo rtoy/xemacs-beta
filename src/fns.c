@@ -1688,7 +1688,7 @@ the value of `foo'.
       REGISTER Lisp_Object elt, tem;
       CONCHECK_CONS (tail);
       elt = XCAR (tail);
-      if (CONSP (elt) && (tem = XCDR (elt), EQ_WITH_EBOLA_NOTICE (value, tem)))
+      if (CONSP (elt) && (tem = XCAR (elt), EQ_WITH_EBOLA_NOTICE (value, tem)))
 	{
 	  if (NILP (prev))
 	    list = XCDR (tail);
@@ -1715,7 +1715,7 @@ remrassq_no_quit (Lisp_Object value, Lisp_Object list)
     {
       REGISTER Lisp_Object elt, tem;
       elt = XCAR (tail);
-      if (CONSP (elt) && (tem = XCDR (elt), EQ_WITH_EBOLA_NOTICE (value, tem)))
+      if (CONSP (elt) && (tem = XCAR (elt), EQ_WITH_EBOLA_NOTICE (value, tem)))
 	{
 	  if (NILP (prev))
 	    list = XCDR (tail);
@@ -1927,7 +1927,7 @@ int
 plists_differ (Lisp_Object a, Lisp_Object b, int nil_means_not_present,
 	       int laxp, int depth)
 {
-  int eqp = (depth == -1);	/* -1 as depth means use eq, not equal. */
+  int eqp = (depth == -1);	/* -1 as depth means us eq, not equal. */
   int la, lb, m, i, fill;
   Lisp_Object *keys, *vals;
   char *flags;

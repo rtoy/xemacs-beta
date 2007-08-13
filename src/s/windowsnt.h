@@ -125,7 +125,7 @@ typedef int pid_t;
 /* XEmacs file I/O for DOS text files requires FILE_CODING */
 #define FILE_CODING
 
-#define DIRECTORY_SEP XCHAR(Vdirectory_sep_char)
+#define DIRECTORY_SEP '\\'
 
 /* Define this to be the separator between devices and paths */
 #define DEVICE_SEP ':'
@@ -369,11 +369,4 @@ int getegid ();
 #ifdef DUMP_SEPARATE_SECTION
 #pragma data_seg("xdata")
 #pragma bss_seg("xdata")
-#endif
-
-#ifdef HAVE_SCROLLBARS
-/* Ensure the NT 4 mouse definitions in winuser.h are available */
- #ifndef _WIN32_WINNT
-  #define _WIN32_WINNT 0x0400
- #endif
 #endif

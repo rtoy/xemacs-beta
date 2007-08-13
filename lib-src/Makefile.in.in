@@ -70,7 +70,7 @@ INSTALL_DATA = @INSTALL_DATA@
 ## Things that a user might actually run,
 ## which should be installed in bindir.
 INSTALLABLES_BASE = etags ctags b2m gnuclient ootags
-INSTALLABLE_SCRIPTS = rcs-checkin gnudoit gnuattach
+INSTALLABLE_SCRIPTS = rcs-checkin pstogif install-sid send-pr gnudoit gnuattach
 #ifdef HAVE_MS_WINDOWS
 INSTALLABLES = $(INSTALLABLES_BASE) runemacs
 #else
@@ -87,9 +87,10 @@ UTILITIES= make-path wakeup profile make-docfile digest-doc \
 
 ## Like UTILITIES, but they are not system-dependent, and should not be
 ## deleted by the distclean target.
-GEN_SCRIPTS = rcs2log vcdiff gzip-el.sh
+GEN_SCRIPTS = rcs2log vcdiff gzip-el.sh install-sid send-pr
+TM_SCRIPTS = tm-au tm-file tm-html tm-image tm-mpeg tm-plain tm-ps tmdecode
 PKG_SCRIPTS = add-big-package.sh
-SCRIPTS = $(GEN_SCRIPTS) $(PKG_SCRIPTS)
+SCRIPTS = $(GEN_SCRIPTS) $(TM_SCRIPTS) $(PKG_SCRIPTS)
 
 EXECUTABLES= ${UTILITIES} ${INSTALLABLES} ${SCRIPTS} ${INSTALLABLE_SCRIPTS}
 
@@ -149,8 +150,6 @@ ldflags  = $(LDFLAGS) $(ld_switch_general) $(ld_libs_general)
 .c.o:
 	${CC} -c $(cflags) $<
 
-.PHONY : all maybe-blessmail install uninstall
-
 all: ${UTILITIES} ${INSTALLABLES} srcdir-symlink.stamp
 
 ## Make symlinks for shell scripts if using --srcdir
@@ -209,6 +208,7 @@ ${archlibdir}: all
 
 ## We do not need to install "wakeup" explicitly, because it will be
 ## copied when this whole directory is copied.
+.PHONY : all maybe-blessmail install uninstall
 install: ${archlibdir}
 	@echo; echo "Installing utilities for users to run."
 	for file in ${INSTALLABLES} ; do \
@@ -311,10 +311,8 @@ sorted-doc: ${srcdir}/sorted-doc.c
 b2m: ${srcdir}/b2m.c ../src/config.h
 	$(CC) $(cflags) ${srcdir}/b2m.c $(ldflags) -o $@
 
-movemail: ${srcdir}/movemail.c ${srcdir}/pop.c ${srcdir}/pop.h $(GETOPTDEPS) regex.o \
-	../src/config.h
-	$(CC) $(cflags) ${MOVE_FLAGS} ${srcdir}/movemail.c ${srcdir}/pop.c \
-	$(GETOPTOBJS) regex.o $(ldflags) ${MOVE_LIBS} -o $@
+movemail: ${srcdir}/movemail.c ${srcdir}/pop.c ${srcdir}/pop.h ../src/config.h
+	$(CC) $(cflags) ${MOVE_FLAGS} ${srcdir}/movemail.c ${srcdir}/pop.c $(ldflags) ${MOVE_LIBS} -o $@
 
 cvtmail: ${srcdir}/cvtmail.c
 	$(CC) $(cflags) ${srcdir}/cvtmail.c $(ldflags) -o $@

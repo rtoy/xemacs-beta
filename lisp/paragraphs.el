@@ -126,9 +126,7 @@ hard newline are considered to match.")
 ;; XEmacs -- use purecopy
 (defconst paragraph-separate (purecopy "[ \t\f]*$") "\
 *Regexp for beginning of a line that separates paragraphs.
-If you change this, you may have to change `paragraph-start' also.
-
-A line matching this is not part of any paragraph.
+If you change this, you may have to change paragraph-start also.
 
 This is matched against the text at the left margin, which is not necessarily
 the beginning of the line, so it should not use \"^\" as an anchor.  This
@@ -353,7 +351,7 @@ negative arg -N means kill forward to Nth end of paragraph."
 With negative argument, move backward repeatedly to `sentence-beginning'.
 
 The variable `sentence-end' is a regular expression that matches ends of
-sentences.  A paragraph boundary also terminates a sentence."
+sentences.  Also, every paragraph boundary terminates sentences as well."
   (interactive "_p") ; XEmacs
   (or arg (setq arg 1))
   (while (< arg 0)

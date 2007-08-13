@@ -131,21 +131,15 @@ Batch usage: xemacs -batch -l cus-dep.el -f Custom-make-dependencies DIRS"
 			     (file-name-nondirectory file))))
 		  ;; Search for defcustom/defface/defgroup
 		  ;; expressions, and evaluate them.
-		  (while (re-search-forward
-			  "^(defcustom\\|^(defface\\|^(defgroup"
-			  nil t)
-		    (beginning-of-line)
-		    (let ((expr (read (current-buffer))))
-		      ;; We need to ignore errors here, so that
-		      ;; defcustoms with :set don't bug out.  Of
-		      ;; course, their values will not be assigned in
-		      ;; case of errors, but their `custom-group'
-		      ;; properties will by that time be in place, and
-		      ;; that's all we care about.
-		      (ignore-errors
-			(eval expr))
-		      ;; Hash the file of the affected symbol.
-		      (setf (gethash (nth 1 expr) hash) name))))))
+		  (ignore-errors
+		    (while (re-search-forward
+			    "^(defcustom\\|^(defface\\|^(defgroup"
+			    nil t)
+		      (beginning-of-line)
+		      (let ((expr (read (current-buffer))))
+			(eval expr)
+			;; Hash the file of the affected symbol.
+			(setf (gethash (nth 1 expr) hash) name)))))))
 	    (cond
 	     ((zerop (hash-table-count hash))
 	      (princ "(No customization dependencies")
@@ -173,7 +167,7 @@ Batch usage: xemacs -batch -l cus-dep.el -f Custom-make-dependencies DIRS"
 			   (if found
 			       (insert " ")
 			     (insert "(custom-add-loads '"
-				     (prin1-to-string sym) " '("))
+				     (symbol-name sym) " '("))
 			   (prin1 where (current-buffer))
 			   (push where found)))
 		       (when found

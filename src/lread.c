@@ -91,6 +91,9 @@ int load_warn_when_source_only;
 /* Whether Fload_internal() should ignore .elc files when no suffix is given */
 int load_ignore_elc_files;
 
+/* Directory in which the sources were found.  */
+Lisp_Object Vsource_directory;
+
 /* Search path for files to be loaded. */
 Lisp_Object Vload_path;
 
@@ -793,11 +796,10 @@ encoding detection or end-of-line detection.
   if (purify_flag && noninteractive)
     {
       if (EQ (last_file_loaded, file))
-	message_append (" (%ld)", 
-			(unsigned long) (purespace_usage() - pure_usage));
+	message_append (" (%d)", purespace_usage() - pure_usage);
       else
-	message ("Loading %s ...done (%ld)", XSTRING_DATA (file),
-		 (unsigned long) (purespace_usage() - pure_usage));
+	message ("Loading %s ...done (%d)", XSTRING_DATA (file),
+		 purespace_usage() - pure_usage);
     }
 /*#endif / * DEBUG_XEMACS */
 
@@ -1545,8 +1547,9 @@ backquote_unwind (Lisp_Object ptr)
 static Lisp_Object
 read0 (Lisp_Object readcharfun)
 {
-  Lisp_Object val = read1 (readcharfun);
+  Lisp_Object val;
 
+  val = read1 (readcharfun);
   if (CONSP (val) && UNBOUNDP (XCAR (val)))
     {
       Emchar c = XCHAR (XCDR (val));
@@ -1686,14 +1689,10 @@ read_escape (Lisp_Object readcharfun)
       }
 
     case 'x':
-      /* A hex escape, as in ANSI C, except that we only allow latin-1
-	 characters to be read this way.  What is "\x4e03" supposed to
-	 mean, anyways, if the internal representation is hidden?
-         This is also consistent with the treatment of octal escapes. */
+      /* A hex escape, as in ANSI C.  */
       {
 	REGISTER Emchar i = 0;
-	REGISTER int count = 0;
-	while (++count <= 2)
+	while (1)
 	  {
 	    c = readchar (readcharfun);
 	    /* Remember, can't use isdigit(), isalpha() etc. on Emchars */
@@ -1941,7 +1940,6 @@ read_bit_vector (Lisp_Object readcharfun)
 {
   unsigned_char_dynarr *dyn = Dynarr_new (unsigned_char);
   Emchar c;
-  Lisp_Object val;
 
   while (1)
     {
@@ -1954,12 +1952,8 @@ read_bit_vector (Lisp_Object readcharfun)
   if (c >= 0)
     unreadchar (readcharfun, c);
 
-  val = make_bit_vector_from_byte_vector (Dynarr_atp (dyn, 0),
-					  Dynarr_length (dyn));
-
-  Dynarr_free (dyn);
-
-  return val;
+  return make_bit_vector_from_byte_vector (Dynarr_atp (dyn, 0),
+					   Dynarr_length (dyn));
 }
 
 
@@ -3158,6 +3152,12 @@ Non-nil means `load' should force-load all dynamic doc strings.
 This is useful when the file being loaded is a temporary copy.
 */ );
   load_force_doc_strings = 0;
+
+  DEFVAR_LISP ("source-directory", &Vsource_directory /*
+Directory in which XEmacs sources were found when XEmacs was built.
+You cannot count on them to still be there!
+*/ );
+  Vsource_directory = Qnil;
 
   /* See read_escape().  */
 #if 0

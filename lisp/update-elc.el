@@ -71,7 +71,7 @@
 (load "setup-paths.el")
 (load "dump-paths.el")
 
-(let ((autol (packages-list-autoloads (concat default-directory "../lisp"))))
+(let ((autol (packages-list-autoloads)))
   ;; (print (prin1-to-string autol))
   (while autol
     (let ((src (car autol)))

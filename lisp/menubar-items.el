@@ -156,9 +156,9 @@
 	      ;; not implemented yet
 	      ["Set coding system of keyboard"
 	       set-keyboard-coding-system :active nil]
+	      ;; not implemented yet
 	      ["Set coding system of process"
-	       set-buffer-process-coding-system
-	       :active (get-buffer-process (current-buffer))]
+	       set-current-process-coding-system :active nil]
 	      "--"
 	      ["Show character table" view-charset-by-menu]
 	      ;; not implemented yet
@@ -176,6 +176,8 @@
        :active (fboundp 'gnus)]
       ["Browse the Web" w3
        :active (fboundp 'w3)]
+      ["Gopher" gopher
+       :active (fboundp 'gopher)]
       "----"
       ["Spell-Check Buffer" ispell-buffer
        :active (fboundp 'ispell-buffer)]
@@ -229,28 +231,8 @@
        ["Saved..." customize-saved]
        ["Set..." customize-customized]
        ["Apropos..." customize-apropos]
-       ["Browse..." customize-browse])
-      
-      ("Manage Packages"
-       ("Add Download Site"
-        :filter (lambda (&rest junk)
-                  (package-get-download-menu)))
-       ["Update Package Index" package-get-update-base]
-       ["List & Install" pui-list-packages]
-       ["Update Installed Packages" package-get-update-all]
-       ;; hack-o-matic, we can't force a laod of package-base here
-       ;; since it triggers dialog box interactions which we can't
-       ;; deal while using a menu
-       ("Using Custom" 
-	:filter (lambda (&rest junk)
-		  (if package-get-base
-		      (cdr (custom-menu-create 'packages))
-		    '(["Please load Package Index" #'ignore nil]))))
-       
-       ["Help" (Info-goto-node "(xemacs)Packages")])
-
-      "---"
-      
+       ["Browse..." customize-browse]
+       ["Update Packages" package-get-custom])
       ("Editing Options"
        ["Overstrike"
 	(progn
@@ -480,7 +462,7 @@
 	    (font-lock-recompute-variables)))
 	:style radio
 	:active (fboundp 'font-lock-mode)
-	:selected (and (boundp 'font-lock-maximum-decoration)
+	:selected (and (boundp 'font-lock-maximium-decoration)
 		       (or (and (not (integerp font-lock-maximum-decoration))
 				(not (eq t font-lock-maximum-decoration)))
 			   (and (integerp font-lock-maximum-decoration)
@@ -495,7 +477,7 @@
 	    (font-lock-recompute-variables)))
 	:style radio
 	:active (fboundp 'font-lock-mode)
-	:selected (and (boundp 'font-lock-maximum-decoration)
+	:selected (and (boundp 'font-lock-maximium-decoration)
 		       (integerp font-lock-maximum-decoration)
 		       (= 1 font-lock-maximum-decoration))]
        ["Even More" 
@@ -816,20 +798,12 @@
 		       (eq browse-url-browser-function 'browse-url-grail))
 	:active (and (boundp 'browse-url-browser-function)
 		     (fboundp 'browse-url-grail))]
-       ["Kfm" 
-	(customize-set-variable 'browse-url-browser-function
-				'browse-url-kfm)
-	:style radio
-	:selected (and (boundp 'browse-url-browser-function)
-		       (eq browse-url-browser-function 'browse-url-kfm))
-	:active (and (boundp 'browse-url-browser-function)
-		     (fboundp 'browse-url-kfm))]
        )
       "-----"
-      ["Edit Faces..." (customize-face nil)]
+      ["Browse Faces..." (customize-face nil)]
       ("Font"   :filter font-menu-family-constructor)
       ("Size"	:filter font-menu-size-constructor)
-;      ("Weight"	:filter font-menu-weight-constructor)
+      ("Weight"	:filter font-menu-weight-constructor)
       "-----"
       ["Save Options" customize-save-customized]
       )
@@ -955,27 +929,22 @@
        ["No Warranty" describe-no-warranty]
        ["XEmacs License" describe-copying]
        ["The Latest Version" describe-distribution])
-      ["Send Bug Report..." report-emacs-bug
-       :active (fboundp 'report-emacs-bug)]))))
+      ["Send Bug Report..." report-emacs-bug]))))
 
 
 (defun maybe-add-init-button ()
   "Don't call this.
 Adds `Load .emacs' button to menubar when starting up with -q."
+  ;; by Stig@hackvan.com
   (cond
    (init-file-user nil)
    ((file-exists-p (expand-file-name ".emacs" "~"))
-    (add-menu-button
-     nil
-     ["Load .emacs"
-      (progn
-	(mapc #'(lambda (buf)
-		 (with-current-buffer buf
-		   (delete-menu-item '("Load .emacs"))))
-	      (buffer-list))
-	(load-user-init-file (user-login-name)))
-      ]
-     "Help"))
+    (add-menu-button nil
+		     ["Load .emacs"
+		      (progn (delete-menu-item '("Load .emacs"))
+			     (load-user-init-file (user-login-name)))
+		      ]
+		     "Help"))
    (t nil)))
 
 (add-hook 'before-init-hook 'maybe-add-init-button)

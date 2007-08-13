@@ -49,7 +49,7 @@
   :group 'hypermedia)
 
 (defgroup widget-documentation nil
-  "Options controlling the display of documentation strings."
+  "Options controling the display of documentation strings."
   :group 'widgets)
 
 (defgroup widget-faces nil
@@ -302,7 +302,6 @@ new value."
     (and (functionp help-echo)
 	 (setq help-echo (funcall help-echo widget)))
     (when (stringp help-echo)
-      (setq help-echo-owns-message t)
       (display-message 'help-echo help-echo))))
 
 (defsubst widget-handle-help-echo (extent help-echo)
@@ -439,7 +438,7 @@ new value."
 
 ;; For inactiveness to work on complex structures, it is not
 ;; sufficient to keep track of whether a button/field/glyph is
-;; inactive or not -- we must know how many times it was deactivated
+;; inactive or not -- we must know how many time it was deactivated
 ;; (inactiveness level).  Successive deactivations of the same button
 ;; increment its inactive-count, and activations decrement it.  When
 ;; inactive-count reaches 0, the button/field/glyph is reactivated.
@@ -512,16 +511,14 @@ Suitable for use with `map-extents'."
 
 (defun widget-specify-active (widget)
   "Make WIDGET active for user modifications."
-  (let ((inactive (widget-get widget :inactive))
-        (from (widget-get widget :from))
-        (to (widget-get widget :to)))
+  (let ((inactive (widget-get widget :inactive)))
     (when (and inactive (not (extent-detached-p inactive)))
       ;; Reactivate the buttons and fields covered by the extent.
       (map-extents 'widget-activation-widget-mapper
-                   nil from to :activate nil 'button-or-field)
+		   inactive nil nil :activate nil 'button-or-field)
       ;; Reactivate the glyphs.
       (map-extents 'widget-activation-glyph-mapper
-                   nil from to :activate nil 'end-glyph)
+		   inactive nil nil :activate nil 'end-glyph)
       (delete-extent inactive)
       (widget-put widget :inactive nil))))
 
@@ -677,7 +674,7 @@ automatically."
   :type 'boolean)
 
 (defcustom widget-image-conversion
-  '((png ".png") (xpm ".xpm") (gif ".gif") (jpeg ".jpg" ".jpeg")
+  '((xpm ".xpm") (gif ".gif") (png ".png") (jpeg ".jpg" ".jpeg")
     (xbm ".xbm"))
   "Conversion alist from image formats to file name suffixes."
   :group 'widgets
@@ -1066,49 +1063,48 @@ Recommended as a parent keymap for modes using widgets.")
 
 (defun widget-button-click (event)
   "Invoke button below mouse pointer."
-  (interactive "e")
-  (with-current-buffer (event-buffer event)
-    (cond ((event-glyph event)
-	   (widget-glyph-click event))
-	  ((widget-event-point event)
-	   (let* ((pos (widget-event-point event))
-		  (button (get-char-property pos 'button)))
-	     (if button
-		 (let* ((extent (widget-get button :button-extent))
-			(face (extent-property extent 'face))
-			(mouse-face (extent-property extent 'mouse-face))
-			(help-echo (extent-property extent 'help-echo)))
-		   (unwind-protect
-		       (progn
-			 ;; Merge relevant faces, and make the result mouse-face.
-			 (let ((merge `(widget-button-pressed-face ,mouse-face)))
-			   (nconc merge (if (listp face)
-					    face (list face)))
-			   (setq merge (delete-if-not 'find-face merge))
-			   (set-extent-property extent 'mouse-face merge))
-			 (unless (widget-apply button :mouse-down-action event)
-			   ;; Wait for button release.
-			   (while (not (button-release-event-p
-					(setq event (next-event))))
-			     (dispatch-event event)))
-			 ;; Disallow mouse-face and help-echo.
-			 (set-extent-property extent 'mouse-face nil)
-			 (set-extent-property extent 'help-echo nil)
-			 (setq pos (widget-event-point event))
-			 (unless (eq (current-buffer) (extent-object extent))
-			   ;; Barf if dispatch-event tripped us by
-			   ;; changing buffer.
-			   (error "Buffer changed during mouse motion"))
-			 ;; Do the associated action.
-			 (when (and pos (extent-in-region-p extent pos pos))
-			   (widget-apply-action button event)))
-		     ;; Unwinding: fully release the button.
-		     (set-extent-property extent 'mouse-face mouse-face)
-		     (set-extent-property extent 'help-echo help-echo)))
-	       ;; This should not happen!
-	       (error "`widget-button-click' called outside button"))))
-	  (t
-	   (message "You clicked somewhere weird")))))
+  (interactive "@e")
+  (cond ((event-glyph event)
+	 (widget-glyph-click event))
+	((widget-event-point event)
+	 (let* ((pos (widget-event-point event))
+		(button (get-char-property pos 'button)))
+	   (if button
+	       (let* ((extent (widget-get button :button-extent))
+		      (face (extent-property extent 'face))
+		      (mouse-face (extent-property extent 'mouse-face))
+		      (help-echo (extent-property extent 'help-echo)))
+		 (unwind-protect
+		     (progn
+		       ;; Merge relevant faces, and make the result mouse-face.
+		       (let ((merge `(widget-button-pressed-face ,mouse-face)))
+			 (nconc merge (if (listp face)
+					  face (list face)))
+			 (setq merge (delete-if-not 'find-face merge))
+			 (set-extent-property extent 'mouse-face merge))
+		       (unless (widget-apply button :mouse-down-action event)
+			 ;; Wait for button release.
+			 (while (not (button-release-event-p
+				      (setq event (next-event))))
+			   (dispatch-event event)))
+		       ;; Disallow mouse-face and help-echo.
+		       (set-extent-property extent 'mouse-face nil)
+		       (set-extent-property extent 'help-echo nil)
+		       (setq pos (widget-event-point event))
+		       (unless (eq (current-buffer) (extent-object extent))
+			 ;; Barf if dispatch-event tripped us by
+			 ;; changing buffer.
+			 (error "Buffer changed during mouse motion"))
+		       ;; Do the associated action.
+		       (when (and pos (extent-in-region-p extent pos pos))
+			 (widget-apply-action button event)))
+		   ;; Unwinding: fully release the button.
+		   (set-extent-property extent 'mouse-face mouse-face)
+		   (set-extent-property extent 'help-echo help-echo)))
+	     ;; This should not happen!
+	     (error "`widget-button-click' called outside button"))))
+	(t
+	 (message "You clicked somewhere weird"))))
 
 (defun widget-button1-click (event)
   "Invoke glyph below mouse pointer."

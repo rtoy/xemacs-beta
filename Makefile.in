@@ -55,7 +55,6 @@ SHELL = /bin/sh
 LANG = C
 RM = rm -f
 pwd = /bin/pwd
-TAR = tar
 
 ## ==================== Things `configure' Might Edit ====================
 
@@ -175,9 +174,6 @@ etcdir=@etcdir@
 ## the XEmacs locking code keeps track of which files are
 ## currently being edited.
 lockdir=@lockdir@
-
-# Where to put the DOC file.
-docdir=@docdir@
 
 ## Where to put executables to be run by XEmacs rather than
 ## the user.  This path usually includes the XEmacs version
@@ -387,14 +383,15 @@ install-arch-dep: mkdir
 	   if test -f ../Installation; then \
 		${INSTALL_DATA} ../Installation ${archlibdir}/Installation; \
 	   fi; \
-	   ${INSTALL_DATA} lib-src/config.values ${docdir}/config.values; \
-	   ${INSTALL_DATA} lib-src/DOC ${docdir}/DOC; \
+	   for f in DOC config.values; do \
+		${INSTALL_DATA} lib-src/$${f} ${archlibdir}/$${f}; \
+	   done ; \
 	   for subdir in `find ${archlibdir} -type d ! -name RCS ! -name SCCS ! -name CVS -print` ; \
 	     do (cd $${subdir} && $(RM) -r RCS CVS SCCS \#* *~) ; done ; \
 	else true; fi
 	${INSTALL_PROGRAM} src/${PROGNAME} ${bindir}/${PROGNAME}-${version}
 	-chmod 0755 ${bindir}/${PROGNAME}-${version}
-	cd ${bindir} && $(RM) ./${PROGNAME} && ${LN_S} ${PROGNAME}-${version}@exe_suffix@ ./${PROGNAME}
+	cd ${bindir} && $(RM) ./${PROGNAME} && ${LN_S} ${PROGNAME}-${version} ./${PROGNAME}
 	if test "${prefix}" != "${exec_prefix}"; then \
 	  for dir in \
 		lib/${PROGNAME} \
@@ -425,8 +422,8 @@ install-arch-indep: mkdir info
 	     -a "`(cd $${dir} && $(pwd))`" != \
 		"`(cd $${dest} && $(pwd))`" \
 	   && (echo "Copying $${dir}..." ; \
-              (cd $${dir} && $(TAR) -cf - . ) | \
-               (cd $${dest} && umask 022 && $(TAR) -xf - );\
+	       (cd $${dir} && tar -cf - . ) | \
+		(cd $${dest} && umask 022 && tar -xf - );\
 	       chmod 0755 $${dest}; \
 	       for subdir in `find $${dest} -type d ! -name RCS ! -name SCCS ! -name CVS -print` ; do \
 		 (cd $${subdir} && $(RM) -r RCS CVS SCCS \#* *~) ; \
@@ -464,7 +461,7 @@ MAKEPATH=./lib-src/make-path
 ## (e.g. /usr/local/lib/${PROGNAME}-20.5/sparc-sun-solaris2.6), we use
 ## make-path instead of mkdir.  Not all mkdirs have the `-p' flag.
 mkdir: FRC.mkdir
-	${MAKEPATH} ${COPYDESTS} ${lockdir} $(docdir) ${infodir} ${archlibdir} \
+	${MAKEPATH} ${COPYDESTS} ${lockdir} ${infodir} ${archlibdir} \
 	  ${mandir} ${bindir} ${datadir} ${libdir} ${pkgdir}
 	-chmod 0777 ${lockdir}
 
@@ -601,7 +598,6 @@ relock:
 	cd ./lwlib && chmod u+w *.[ch] Makefile.in.in
 
 PRUNE_VC = -name SCCS -prune -o -name RCS -prune -o -name CVS -prune -o
-tagslisp = lisp
 TAGS tags: FRC.tags
 	@echo "If you don't have a copy of etags around, then do 'make lib-src' first."
 	$(RM) ${srcdir}/TAGS
@@ -610,12 +606,12 @@ TAGS tags: FRC.tags
 	PATH=`$(pwd)`/lib-src:$$PATH ; export PATH; cd ${srcdir} && \
 	find src lwlib lib-src ${PRUNE_VC} -name '*.[ch]' -print | \
 	  xargs etags -a -r '/[ 	]*DEF\(VAR\|INE\)_[A-Z_]+[ 	]*([ 	]*"\([^"]+\)"/\2/'; \
-	find ${tagslisp} ${PRUNE_VC} -name '*.el' -print | \
+	find lisp ${PRUNE_VC} -name '*.el' -print | \
 	  xargs etags -a -l none -r "/^(def\\(var\\|un\\|alias\\|const\\|macro\\)[ 	]+'?\\([^ 	]+\\)/\\2/"
 
 ## We have automated tests!
 testdir = ${srcdir}/tests
-tests   = ${testdir}/basic-lisp.el ${testdir}/database.el ${testdir}/mule-tests.el
+tests   = ${testdir}/basic-lisp.el ${testdir}/database.el
 
 check:
 	src/${PROGNAME} -batch -l ${testdir}/test-emacs.el -f batch-test-emacs ${tests}

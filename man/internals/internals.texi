@@ -5,10 +5,6 @@
 @c %**end of header
 
 @ifinfo
-@dircategory XEmacs Editor
-@direntry
-* Internals: (internals).	XEmacs Internals Manual.
-@end direntry
 
 Copyright @copyright{} 1992 - 1996 Ben Wing.
 Copyright @copyright{} 1996, 1997 Sun Microsystems.
@@ -173,7 +169,6 @@ Allocation of Objects in XEmacs Lisp
 * Introduction to Allocation::
 * Garbage Collection::
 * GCPROing::
-* Garbage Collection - Step by Step::
 * Integers and Characters::
 * Allocation from Frob Blocks::
 * lrecords::
@@ -603,8 +598,6 @@ A timeline for Emacs 20 is
 version 20.1 released September 17, 1997.
 @item
 version 20.2 released September 20, 1997.
-@item
-version 20.3 released August 19, 1998.
 @end itemize
 
 @node XEmacs
@@ -1426,7 +1419,7 @@ converts to an integer whose value is 17297.
 1.983e-4
 @end example
 
-converts to a float whose value is 1.983e-4, or .0001983.
+converts to a float whose value is 1983.23e-4, or .0001983.
 
 @example
 ?b
@@ -1661,7 +1654,6 @@ often in code far away from where the actual breakage is.
 * General Coding Rules::
 * Writing Lisp Primitives::
 * Adding Global Lisp Variables::
-* Coding for Mule::
 * Techniques for XEmacs Developers::
 @end menu
 
@@ -1689,15 +1681,6 @@ the same directory as the C sources) and @file{lisp.h}.  @file{config.h}
 should always be included before any other header files (including
 system header files) to ensure that certain tricks played by various
 @file{s/} and @file{m/} files work out correctly.
-
-When including header files, always use angle brackets, not double
-quotes, except when the file to be included is in the same directory as
-the including file.  If either file is a generated file, then that is
-not likely to be the case.  In order to understand why we have this
-rule, imagine what happens when you do a build in the source directory
-using @samp{./configure} and another build in another directory using
-@samp{../work/configure}.  There will be two different @file{config.h}
-files.  Which one will be used if you @samp{#include "config.h"}?
 
   @strong{All global and static variables that are to be modifiable must
 be declared uninitialized.}  This means that you may not use the ``declare
@@ -1771,7 +1754,7 @@ If all args return nil, return nil.
     @{
       val = Feval (XCAR (args));
       if (!NILP (val))
-        break;
+	break;
       args = XCDR (args);
     @}
 
@@ -2040,352 +2023,6 @@ garbage-collection mechanism won't know that the object in this variable
 is in use, and will happily collect it and reuse its storage for another
 Lisp object, and you will be the one who's unhappy when you can't figure
 out how your variable got overwritten.
-
-@node Coding for Mule
-@section Coding for Mule
-@cindex Coding for Mule
-
-Although Mule support is not compiled by default in XEmacs, many people
-are using it, and we consider it crucial that new code works correctly
-with multibyte characters.  This is not hard; it is only a matter of
-following several simple user-interface guidelines.  Even if you never
-compile with Mule, with a little practice you will find it quite easy
-to code Mule-correctly.
-
-Note that these guidelines are not necessarily tied to the current Mule
-implementation; they are also a good idea to follow on the grounds of
-code generalization for future I18N work.
-
-@menu
-* Character-Related Data Types::
-* Working With Character and Byte Positions::
-* Conversion of External Data::
-* General Guidelines for Writing Mule-Aware Code::
-* An Example of Mule-Aware Code::
-@end menu
-
-@node Character-Related Data Types
-@subsection Character-Related Data Types
-
-First, we will list the basic character-related datatypes used by
-XEmacs.  Note that the separate @code{typedef}s are not required for the 
-code to work (all of them boil down to @code{unsigned char} or
-@code{int}), but they improve clarity of code a great deal, because one
-glance at the declaration can tell the intended use of the variable.
-
-@table @code
-@item Emchar
-@cindex Emchar
-An @code{Emchar} holds a single Emacs character.
-
-Obviously, the equality between characters and bytes is lost in the Mule
-world.  Characters can be represented by one or more bytes in the
-buffer, and @code{Emchar} is the C type large enough to hold any
-character.
-
-Without Mule support, an @code{Emchar} is equivalent to an
-@code{unsigned char}.
-
-@item Bufbyte
-@cindex Bufbyte
-The data representing the text in a buffer or string is logically a set
-of @code{Bufbyte}s.
-
-XEmacs does not work with character formats all the time; when reading
-characters from the outside, it decodes them to an internal format, and
-likewise encodes them when writing.  @code{Bufbyte} (in fact
-@code{unsigned char}) is the basic unit of XEmacs internal buffers and
-strings format.
-
-One character can correspond to one or more @code{Bufbyte}s.  In the
-current implementation, an ASCII character is represented by the same
-@code{Bufbyte}, and extended characters are represented by a sequence of
-@code{Bufbyte}s.
-
-Without Mule support, a @code{Bufbyte} is equivalent to an
-@code{Emchar}.
-
-@item Bufpos
-@itemx Charcount
-A @code{Bufpos} represents a character position in a buffer or string.
-A @code{Charcount} represents a number (count) of characters.
-Logically, subtracting two @code{Bufpos} values yields a
-@code{Charcount} value.  Although all of these are @code{typedef}ed to
-@code{int}, we use them in preference to @code{int} to make it clear
-what sort of position is being used.
-
-@code{Bufpos} and @code{Charcount} values are the only ones that are
-ever visible to Lisp.
-
-@item Bytind
-@itemx Bytecount
-A @code{Bytind} represents a byte position in a buffer or string.  A
-@code{Bytecount} represents the distance between two positions in bytes.
-The relationship between @code{Bytind} and @code{Bytecount} is the same
-as the relationship between @code{Bufpos} and @code{Charcount}.
-
-@item Extbyte
-@itemx Extcount
-When dealing with the outside world, XEmacs works with @code{Extbyte}s,
-which are equivalent to @code{unsigned char}.  Obviously, an
-@code{Extcount} is the distance between two @code{Extbyte}s.  Extbytes
-and Extcounts are not all that frequent in XEmacs code.
-@end table
-
-@node Working With Character and Byte Positions
-@subsection Working With Character and Byte Positions
-
-Now that we have defined the basic character-related types, we can look
-at the macros and functions designed for work with them and for
-conversion between them.  Most of these macros are defined in
-@file{buffer.h}, and we don't discuss all of them here, but only the
-most important ones.  Examining the existing code is the best way to
-learn about them.
-
-@table @code
-@item MAX_EMCHAR_LEN
-This preprocessor constant is the maximum number of buffer bytes per
-Emacs character, i.e. the byte length of an @code{Emchar}.  It is useful
-when allocating temporary strings to keep a known number of characters.
-For instance:
-
-@example
-@group
-@{
-  Charcount cclen;
-  ...
-  @{
-    /* Allocate place for @var{cclen} characters. */
-    Bufbyte *tmp_buf = (Bufbyte *)alloca (cclen * MAX_EMCHAR_LEN);
-...
-@end group
-@end example
-
-If you followed the previous section, you can guess that, logically,
-multiplying a @code{Charcount} value with @code{MAX_EMCHAR_LEN} produces 
-a @code{Bytecount} value.
-
-In the current Mule implementation, @code{MAX_EMCHAR_LEN} equals 4.
-Without Mule, it is 1.
-
-@item charptr_emchar
-@item set_charptr_emchar
-@code{charptr_emchar} macro takes a @code{Bufbyte} pointer and returns
-the underlying @code{Emchar}.  If it were a function, its prototype
-would be:
-
-@example
-Emchar charptr_emchar (Bufbyte *p);
-@end example
-
-@code{set_charptr_emchar} stores an @code{Emchar} to the specified byte
-position.  It returns the number of bytes stored:
-
-@example
-Bytecount set_charptr_emchar (Bufbyte *p, Emchar c);
-@end example
-
-It is important to note that @code{set_charptr_emchar} is safe only for
-appending a character at the end of a buffer, not for overwriting a
-character in the middle.  This is because the width of characters
-varies, and @code{set_charptr_emchar} cannot resize the string if it
-writes, say, a two-byte character where a single-byte character used to
-reside.
-
-A typical use of @code{set_charptr_emchar} can be demonstrated by this
-example, which copies characters from buffer @var{buf} to a temporary
-string of Bufbytes.
-
-@example
-@group
-@{
-  Bufpos pos;
-  for (pos = beg; pos < end; pos++)
-    @{
-      Emchar c = BUF_FETCH_CHAR (buf, pos);
-      p += set_charptr_emchar (buf, c);
-    @}
-@}
-@end group
-@end example
-
-Note how @code{set_charptr_emchar} is used to store the @code{Emchar}
-and increment the counter, at the same time.
-
-@item INC_CHARPTR
-@itemx DEC_CHARPTR
-These two macros increment and decrement a @code{Bufbyte} pointer,
-respectively.  The pointer needs to be correctly positioned at the
-beginning of a valid character position.
-
-Without Mule support, @code{INC_CHARPTR (p)} and @code{DEC_CHARPTR (p)}
-simply expand to @code{p++} and @code{p--}, respectively.
-
-@item bytecount_to_charcount
-Given a pointer to a text string and a length in bytes, return the
-equivalent length in characters.
-
-@example
-Charcount bytecount_to_charcount (Bufbyte *p, Bytecount bc);
-@end example
-
-@item charcount_to_bytecount
-Given a pointer to a text string and a length in characters, return the
-equivalent length in bytes.
-
-@example
-Bytecount charcount_to_bytecount (Bufbyte *p, Charcount cc);
-@end example
-
-@item charptr_n_addr
-Return a pointer to the beginning of the character offset @var{cc} (in
-characters) from @var{p}.
-
-@example
-Bufbyte *charptr_n_addr (Bufbyte *p, Charcount cc);
-@end example
-@end table
-
-@node Conversion of External Data
-@subsection Conversion of External Data
-
-When an external function, such as a C library function, returns a
-@code{char} pointer, you should never treat it as @code{Bufbyte}.  This
-is because these returned strings may contain 8bit characters which can
-be misinterpreted by XEmacs, and cause a crash.  Instead, you should use
-a conversion macro.  Many different conversion macros are defined in
-@file{buffer.h}, so I will try to order them logically, by direction and
-by format.
-
-Thus the basic conversion macros are @code{GET_CHARPTR_INT_DATA_ALLOCA}
-and @code{GET_CHARPTR_EXT_DATA_ALLOCA}.  The former is used to convert
-external data to internal format, and the latter is used to convert the
-other way around.  The arguments each of these receives are @var{ptr}
-(pointer to the text in external format), @var{len} (length of texts in
-bytes), @var{fmt} (format of the external text), @var{ptr_out} (lvalue
-to which new text should be copied), and @var{len_out} (lvalue which
-will be assigned the length of the internal text in bytes).  The
-resulting text is stored to a stack-allocated buffer.  If the text
-doesn't need changing, these macros will do nothing, except for setting
-@var{len_out}.
-
-Currently meaningful formats are @code{FORMAT_BINARY},
-@code{FORMAT_FILENAME}, @code{FORMAT_OS}, and @code{FORMAT_CTEXT}.
-
-The two macros above take many arguments which makes them unwieldy.  For
-this reason, several convenience macros are defined with obvious
-functionality, but accepting less arguments:
-
-@table @code
-@item GET_C_CHARPTR_EXT_DATA_ALLOCA
-@itemx GET_C_CHARPTR_INT_DATA_ALLOCA
-These two macros work on ``C char pointers'', which are zero-terminated, 
-and thus do not need @var{len} or @var{len_out} parameters.
-
-@item GET_STRING_EXT_DATA_ALLOCA
-@itemx GET_C_STRING_EXT_DATA_ALLOCA
-These two macros work on Lisp strings, thus also not needing a @var{len}
-parameter.  However, @code{GET_STRING_EXT_DATA_ALLOCA} still provides a
-@var{len_out} parameter.  Note that for Lisp strings only one conversion
-direction makes sense.
-
-@item GET_C_CHARPTR_EXT_BINARY_DATA_ALLOCA
-@itemx GET_C_CHARPTR_EXT_FILENAME_DATA_ALLOCA
-@itemx GET_C_CHARPTR_EXT_CTEXT_DATA_ALLOCA
-@itemx ...
-These macros are a combination of the above, but with the @var{fmt}
-argument encoded into the name of the macro.
-@end table
-
-@node General Guidelines for Writing Mule-Aware Code
-@subsection General Guidelines for Writing Mule-Aware Code
-
-This section contains some general guidance on how to write Mule-aware
-code, as well as some pitfalls you should avoid.
-
-@table @emph
-@item Never use @code{char} and @code{char *}.
-In XEmacs, the use of @code{char} and @code{char *} is almost always a
-mistake.  If you want to manipulate an Emacs character from ``C'', use
-@code{Emchar}.  If you want to examine a specific octet in the internal
-format, use @code{Bufbyte}.  If you want a Lisp-visible character, use a
-@code{Lisp_Object} and @code{make_char}.  If you want a pointer to move
-through the internal text, use @code{Bufbyte *}.  Also note that you
-almost certainly do not need @code{Emchar *}.
-
-@item Be careful not to confuse @code{Charcount}, @code{Bytecount}, and @code{Bufpos}.
-The whole point of using different types is to avoid confusion about the 
-use of certain variables.  Lest this effect be nullified, you need to be 
-careful about using the right types.
-
-@item Always convert external data
-It is extremely important to always convert external data, because
-XEmacs can crash if unexpected 8bit sequences are copied to its internal 
-buffers literally.
-
-This means that when a system function, such as @code{readdir}, returns
-a string, you need to convert it using one of the conversion macros
-described in the previous chapter, before passing it further to Lisp.
-In the case of @code{readdir}, you would use the
-@code{GET_C_CHARPTR_INT_FILENAME_DATA_ALLOCA} macro.
-
-Also note that many internal functions, such as @code{make_string},
-accept Bufbytes, which removes the need for them to convert the data
-they receive.  This increases efficiency because that way external data
-needs to be decoded only once, when it is read.  After that, it is
-passed around in internal format.
-@end table
-
-@node An Example of Mule-Aware Code
-@subsection An Example of Mule-Aware Code
-
-As an example of Mule-aware code, we shall will analyze the
-@code{string} function, which conses up a Lisp string from the character
-arguments it receives.  Here is the definition, pasted from
-@code{alloc.c}:
-
-@example
-@group
-DEFUN ("string", Fstring, 0, MANY, 0, /*
-Concatenate all the argument characters and make the result a string.
-*/
-       (int nargs, Lisp_Object *args))
-@{
-  Bufbyte *storage = alloca_array (Bufbyte, nargs * MAX_EMCHAR_LEN);
-  Bufbyte *p = storage;
-
-  for (; nargs; nargs--, args++)
-    @{
-      Lisp_Object lisp_char = *args;
-      CHECK_CHAR_COERCE_INT (lisp_char);
-      p += set_charptr_emchar (p, XCHAR (lisp_char));
-    @}
-  return make_string (storage, p - storage);
-@}
-@end group
-@end example
-
-Now we can analyze the source line by line.
-
-Obviously, string will be as long as there are arguments to the
-function.  This is why we allocate @code{MAX_EMCHAR_LEN} * @var{nargs}
-bytes on the stack, i.e. the worst-case number of bytes for @var{nargs}
-@code{Emchar}s to fit in the string.
-
-Then, the loop checks that each element is a character, converting
-integers in the process.  Like many other functions in XEmacs, this
-function silently accepts integers where characters are expected, for
-historical and compatibility reasons.  Unless you know what you are
-doing, @code{CHECK_CHAR} will also suffice.  @code{XCHAR (lisp_char)}
-extracts the @code{Emchar} from the @code{Lisp_Object}, and
-@code{set_charptr_emchar} stores it to storage, increasing @code{p} in
-the process.
-
-Other instructing examples of correct coding under Mule can be found all
-over XEmacs code.  For starters, I recommend
-@code{Fnormalize_menu_item_name} in @file{menubar.c}.  After you have
-understood this section of the manual and studied the examples, you can
-proceed writing new Mule-aware code.
 
 @node Techniques for XEmacs Developers
 @section Techniques for XEmacs Developers
@@ -4184,7 +3821,6 @@ Asian-language support, and is not currently used.
 * Introduction to Allocation::
 * Garbage Collection::
 * GCPROing::
-* Garbage Collection - Step by Step::
 * Integers and Characters::
 * Allocation from Frob Blocks::
 * lrecords::
@@ -4528,502 +4164,6 @@ anything that looks like a reference to an object as a reference.  This
 will result in a few objects not getting collected when they should, but
 it obviates the need for @code{GCPRO}ing, and allows garbage collection
 to happen at any point at all, such as during object allocation.
-
-@node Garbage Collection - Step by Step
-@section Garbage Collection - Step by Step
-@cindex garbage collection step by step
-
-@menu
-* Invocation::
-* garbage_collect_1::
-* mark_object::
-* gc_sweep::
-* sweep_lcrecords_1::
-* compact_string_chars::
-* sweep_strings::
-* sweep_bit_vectors_1::
-@end menu
-
-@node Invocation
-@subsection Invocation
-@cindex garbage collection, invocation
-
-The first thing that anyone should know about garbage collection is:
-when and how the garbage collector is invoked. One might think that this 
-could happen every time new memory is allocated, e.g. new objects are
-created, but this is @emph{not} the case. Instead, we have the following
-situation:
-
-The entry point of any process of garbage collection is an invocation
-of the function @code{garbage_collect_1} in file @code{alloc.c}. The
-invocation can occur @emph{explicitly} by calling the function
-@code{Fgarbage_collect} (in addition this function provides information
-about the freed memory), or can occur @emph{implicitly} in four different 
-situations:
-@enumerate
-@item
-In function @code{main_1} in file @code{emacs.c}. This function is called
-at each startup of xemacs. The garbage collection is invoked after all
-initial creations are completed, but only if a special internal error
-checking-constant @code{ERROR_CHECK_GC} is defined.
-@item
-In function @code{disksave_object_finalization} in file
-@code{alloc.c}. The only purpose of this function is to clear the
-objects from memory which need not be stored with xemacs when we dump out 
-an executable. This is only done by @code{Fdump_emacs} or by
-@code{Fdump_emacs_data} respectively (both in @code{emacs.c}). The
-actual clearing is accomplished by making these objects unreachable and
-starting a garbage collection. The function is only used while building
-xemacs.
-@item
-In function @code{Feval / eval} in file @code{eval.c}. Each time the
-well known and often used function eval is called to evaluate a form,
-one of the first things that could happen, is a potential call of
-@code{garbage_collect_1}. There exist three global variables,
-@code{consing_since_gc} (counts the created cons-cells since the last
-garbage collection), @code{gc_cons_threshold} (a specified threshold
-after which a garbage collection occurs) and @code{always_gc}. If
-@code{always_gc} is set or if the threshold is exceeded, the garbage
-collection will start.
-@item
-In function @code{Ffuncall / funcall} in file @code{eval.c}. This
-function evaluates calls of elisp functions and works according to
-@code{Feval}.
-@end enumerate
-
-The upshot is that garbage collection can basically occur everywhere
-@code{Feval}, respectively @code{Ffuncall}, is used - either directly or
-through another function. Since calls to these two functions are
-hidden in various other functions, many calls to
-@code{garabge_collect_1} are not obviously foreseeable, and therefore
-unexpected. Instances where they are used that are worth remembering are
-various elisp commands, as for example @code{or},
-@code{and}, @code{if}, @code{cond}, @code{while}, @code{setq}, etc.,
-miscellaneous @code{gui_item_...} functions, everything related to
-@code{eval} (@code{Feval_buffer}, @code{call0}, ...) and inside
-@code{Fsignal}. The latter is used to handle signals, as for example the
-ones raised by every @code{QUIT}-macro triggered after pressing Ctrl-g.
-
-@node garbage_collect_1
-@subsection @code{garbage_collect_1}
-@cindex @code{garbage_collect_1}
-
-We can now describe exactly what happens after the invocation takes
-place.
-@enumerate
-@item
-There are several cases in which the garbage collector is left immediately: 
-when we are already garbage collecting (@code{gc_in_progress}), when
-the garbage collection is somehow forbidden
-(@code{gc_currently_forbidden}), when we are currently displaying something
-(@code{in_display}) or when we are preparing for the armageddon of the
-whole system (@code{preparing_for_armageddon}).
-@item
-Next the correct frame in which to put
-all the output occurring during garbage collecting is determined. In
-order to be able to restore the old display's state after displaying the
-message, some data about the current cursor position has to be
-saved. The variables @code{pre_gc_curser} and @code{cursor_changed} take
-care of that.
-@item
-The state of @code{gc_currently_forbidden} must be restored after
-the garbage collection, no matter what happens during the process. We
-accomplish this by @code{record_unwind_protect}ing the suitable function
-@code{restore_gc_inhibit} together with the current value of
-@code{gc_currently_forbidden}. 
-@item
-If we are concurrently running an interactive xemacs session, the next step
-is simply to show the garbage collector's cursor/message.
-@item
-The following steps are the intrinsic steps of the garbage collector,
-therefore @code{gc_in_progress} is set.
-@item
-For debugging purposes, it is possible to copy the current C stack
-frame. However, this seems to be a currently unused feature.
-@item
-Before actually starting to go over all live objects, references to
-objects that are no longer used are pruned. We only have to do this for events
-(@code{clear_event_resource}) and for specifiers
-(@code{cleanup_specifiers}). 
-@item
-Now the mark phase begins and marks all accessible elements. In order to
-start from
-all slots that serve as roots of accessibility, the function
-@code{mark_object} is called for each root individually to go out from
-there to mark all reachable objects. All roots that are traversed are
-shown in their processed order:
-@itemize @bullet
-@item
-all constant symbols and static variables that are registered via
-@code{staticpro}@ in the array @code{staticvec}.
-@xref{Adding Global Lisp Variables}. 
-@item
-all Lisp objects that are created in C functions and that must be
-protected from freeing them. They are registered in the global
-list @code{gcprolist}.
-@xref{GCPROing}.
-@item 
-all local variables (i.e. their name fields @code{symbol} and old
-values @code{old_values}) that are bound during the evaluation by the Lisp
-engine. They are stored in @code{specbinding} structs pushed on a stack
-called @code{specpdl}.
-@xref{Dynamic Binding; The specbinding Stack; Unwind-Protects}.
-@item
-all catch blocks that the Lisp engine encounters during the evaluation
-cause the creation of structs @code{catchtag} inserted in the list
-@code{catchlist}. Their tag (@code{tag}) and value (@code{val} fields
-are freshly created objects and therefore have to be marked.
-@xref{Catch and Throw}.
-@item
-every function application pushes new structs @code{backtrace} 
-on the call stack of the Lisp engine (@code{backtrace_list}). The unique 
-parts that have to be marked are the fields for each function
-(@code{function}) and all their arguments (@code{args}).
-@xref{Evaluation}.
-@item
-all objects that are used by the redisplay engine that must not be freed 
-are marked by a special function called @code{mark_redisplay} (in
-@code{redisplay.c}).
-@item
-all objects created for profiling purposes are allocated by C functions
-instead of using the lisp allocation mechanisms. In order to receive the
-right ones during the sweep phase, they also have to be marked
-manually. That is done by the function @code{mark_profiling_info}
-@end itemize
-@item
-Hash tables in Xemacs belong to a kind of special objects that
-make use of a concept often called 'weak pointers'.
-To make a long story short, these kind of pointers are not followed
-during the estimation of the live objects during garbage collection.
-Any object referenced only by weak pointers is collected
-anyway, and the reference to it is cleared. In hash tables there are
-different usage patterns of them, manifesting in different types of hash
-tables, namely 'non-weak', 'weak', 'key-weak' and 'value-weak'
-(internally also 'key-car-weak' and 'value-car-weak') hash tables, each 
-clearing entries depending on different conditions. More information can 
-be found in the documentation to the function @code{make-hash-table}.
-
-Because there are complicated dependency rules about when and what to
-mark while processing weak hash tables, the standard @code{marker}
-method is only active if it is marking non-weak hash tables. As soon as
-a weak component is in the table, the hash table entries are ignored
-while marking. Instead their marking is done each separately by the
-function @code{finish_marking_weak_hash_tables}. This function iterates
-over each hash table entry @code{hentries} for each weak hash table in
-@code{Vall_weak_hash_tables}. Depending on the type of a table, the
-appropriate action is performed. 
-If a table is acting as @code{HASH_TABLE_KEY_WEAK}, and a key already marked,
-everything reachable from the @code{value} component is marked. If it is 
-acting as a @code{HASH_TABLE_VALUE_WEAK} and the value component is
-already marked, the marking starts beginning only from the 
-@code{key} component.
-If it is a @code{HASH_TABLE_KEY_CAR_WEAK} and the car 
-of the key entry is already marked, we mark both the @code{key} and
-@code{value} components.
-Finally, if the table is of the type @code{HASH_TABLE_VALUE_CAR_WEAK}
-and the car of the value components is already marked, again both the
-@code{key} and the @code{value} components get marked.
-
-Again, there are lists with comparable properties called weak
-lists. There exist different peculiarities of their types called
-@code{simple}, @code{assoc}, @code{key-assoc} and
-@code{value-assoc}. You can find further details about them in the
-description to the function @code{make-weak-list}. The scheme of their
-marking is similar: all weak lists are listed in @code{Qall_weak_lists}, 
-therefore we iterate over them. The marking is advanced until we hit an
-already marked pair. Then we know that during a former run all 
-the rest has been marked completely. Again, depending on the special
-type of the weak list, our jobs differ. If it is a @code{WEAK_LIST_SIMPLE}
-and the elem is marked, we mark the @code{cons} part. If it is a
-@code{WEAK_LIST_ASSOC} and not a pair or a pair with both marked car and
-cdr, we mark the @code{cons} and the @code{elem}. If it is a
-@code{WEAK_LIST_KEY_ASSOC} and not a pair or a pair with a marked car of
-the elem, we mark the @code{cons} and the @code{elem}. Finally, if it is
-a @code{WEAK_LIST_VALUE_ASSOC} and not a pair or a pair with a marked
-cdr of the elem, we mark both the @code{cons} and the @code{elem}.
-
-Since, by marking objects in reach from weak hash tables and weak lists,
-other objects could get marked, this perhaps implies further marking of
-other weak objects, both finishing functions are redone as long as 
-yet unmarked objects get freshly marked.
-
-@item
-After completing the special marking for the weak hash tables and for the weak
-lists, all entries that point to objects that are going to be swept in
-the further process are useless, and therefore have to be removed from
-the table or the list.
-
-The function @code{prune_weak_hash_tables} does the job for weak hash
-tables. Totally unmarked hash tables are removed from the list
-@code{Vall_weak_hash_tables}. The other ones are treated more carefully
-by scanning over all entries and removing one as soon as one of 
-the components @code{key} and @code{value} is unmarked.
-
-The same idea applies to the weak lists. It is accomplished by
-@code{prune_weak_lists}: An unmarked list is pruned from
-@code{Vall_weak_lists} immediately. A marked list is treated more
-carefully by going over it and removing just the unmarked pairs.
-
-@item
-The function @code{prune_specifiers} checks all listed specifiers held
-in @code{Vall_speficiers} and removes the ones from the lists that are 
-unmarked.
-
-@item
-All syntax tables are stored in a list called
-@code{Vall_syntax_tables}. The function @code{prune_syntax_tables} walks 
-through it and unlinks the tables that are unmarked.
-
-@item
-Next, we will attack the complete sweeping - the function
-@code{gc_sweep} which holds the predominance.
-@item
-First, all the variables with respect to garbage collection are
-reset. @code{consing_since_gc} - the counter of the created cells since 
-the last garbage collection - is set back to 0, and
-@code{gc_in_progress} is not @code{true} anymore.
-@item
-In case the session is interactive, the displayed cursor and message are 
-removed again.
-@item
-The state of @code{gc_inhibit} is restored to the former value by
-unwinding the stack.
-@item
-A small memory reserve is always held back that can be reached by
-@code{breathing_space}. If nothing more is left, we create a new reserve
-and exit. 
-@end enumerate
-
-@node mark_object
-@subsection @code{mark_object}
-@cindex @code{mark_object}
-
-The first thing that is checked while marking an object is whether the
-object is a real Lisp object @code{Lisp_Type_Record} or just an integer
-or a character. Integers and characters are the only two types that are
-stored directly - without another level of indirection, and therefore they
-don´t have to be marked and collected. 
-@xref{How Lisp Objects Are Represented in C}.
-
-The second case is the one we have to handle. It is the one when we are
-dealing with a pointer to a Lisp object. But, there exist also three
-possibilities, that prevent us from doing anything while marking: The
-object is read only which prevents it from being garbage collected,
-i.e. marked (@code{C_READONLY_RECORD_HEADER}). The object in question is
-already marked, and need not be marked for the second time (checked by
-@code{MARKED_RECORD_HEADER_P}). If it is a special, unmarkable object
-(@code{UNMARKABLE_RECORD_HEADER_P}, apparently, these are objects that
-sit in some CONST space, and can therefore not be marked, see
-@code{this_one_is_unmarkable} in @code{alloc.c}).
-
-Now, the actual marking is feasible. We do so by once using the macro
-@code{MARK_RECORD_HEADER} to mark the object itself (actually the
-special flag in the lrecord header), and calling its special marker
-"method" @code{marker} if available. The marker method marks every
-other object that is in reach from our current object. Note, that these 
-marker methods should not call @code{mark_object} recursively, but
-instead should return the next object from where further marking has to
-be performed.
-
-In case another object was returned, as mentioned before, we reiterate
-the whole @code{mark_object} process beginning with this next object.
-
-@node gc_sweep
-@subsection @code{gc_sweep}
-@cindex @code{gc_sweep}
-
-The job of this function is to free all unmarked records from memory. As 
-we know, there are different types of objects implemented and managed, and
-consequently different ways to free them from memory.
-@xref{Introduction to Allocation}.
-
-We start with all objects stored through @code{lcrecords}. All
-bulkier objects are allocated and handled using that scheme of
-@code{lcrecords}. Each object is @code{malloc}ed separately
-instead of placing it in one of the contiguous frob blocks. All types
-that are currently stored 
-using @code{lcrecords}´s  @code{alloc_lcrecord} and
-@code{make_lcrecord_list} are the types: vectors, buffers,
-char-table, char-table-entry, console, weak-list, database, device,
-ldap, hash-table, command-builder, extent-auxiliary, extent-info, face,
-coding-system, frame, image-instance, glyph, popup-data, gui-item,
-keymap, charset, color_instance, font_instance, opaque, opaque-list,
-process, range-table, specifier, symbol-value-buffer-local,
-symbol-value-lisp-magic, symbol-value-varalias, toolbar-button,
-tooltalk-message, tooltalk-pattern, window, and window-configuration. We
-take care of them in the fist place
-in order to be able to handle and to finalize items stored in them more
-easily. The function @code{sweep_lcrecords_1} as described below is
-doing the whole job for us.
-For a description about the internals: @xref{lrecords}.
-
-Our next candidates are the other objects that behave quite differently
-than everything else: the strings. They consists of two parts, a
-fixed-size portion (@code{struct Lisp_string}) holding the string's
-length, its property list and a pointer to the second part, and the
-actual string data, which is stored in string-chars blocks comparable to
-frob blocks. In this block, the data is not only freed, but also a
-compression of holes is made, i.e. all strings are relocated together.
-@xref{String}. This compacting phase is performed by the function
-@code{compact_string_chars}, the actual sweeping by the function
-@code{sweep_strings} is described below.
-
-After that, the other types are swept step by step using functions
-@code{sweep_conses}, @code{sweep_bit_vectors_1},
-@code{sweep_compiled_functions}, @code{sweep_floats},
-@code{sweep_symbols}, @code{sweep_extents}, @code{sweep_markers} and
-@code{sweep_extents}.  They are the fixed-size types cons, floats,
-compiled-functions, symbol, marker, extent, and event stored in
-so-called "frob blocks", and therefore we can basically do the same on
-every type objects, using the same macros, especially defined only to
-handle everything with respect to fixed-size blocks. The only fixed-size 
-type that is not handled here are the fixed-size portion of strings,
-because we took special care of them earlier.
-
-The only big exceptions are bit vectors stored differently and
-therefore treated differently by the function @code{sweep_bit_vectors_1} 
-described later.
-
-At first, we need some brief information about how
-these fixed-size types are managed in general, in order to understand
-how the sweeping is done. They have all a fixed size, and are therefore
-stored in big blocks of memory - allocated at once - that can hold a
-certain amount of objects of one type. The macro
-@code{DECLARE_FIXED_TYPE_ALLOC} creates the suitable structures for
-every type. More precisely, we have the block struct 
-(holding a pointer to the previous block @code{prev} and the
-objects in @code{block[]}), a pointer to current block
-(@code{current_..._block)}) and its last index
-(@code{current_..._block_index}), and a pointer to the free list that
-will be created. Also a macro @code{FIXED_TYPE_FROM_BLOCK} plus some
-related macros exists that are used to obtain a new object, either from
-the free list @code{ALLOCATE_FIXED_TYPE_1} if there is an unused object
-of that type stored or by allocating a completely new block using
-@code{ALLOCATE_FIXED_TYPE_FROM_BLOCK}.
-
-The rest works as follows: all of them define a
-macro @code{UNMARK_...} that is used to unmark the object. They define a
-macro @code{ADDITIONAL_FREE_...} that defines additional work that has
-to be done when converting an object from in use to not in use (so far,
-only markers use it in order to unchain them). Then, they all call
-the macro @code{SWEEP_FIXED_TYPE_BLOCK} instantiated with their type name 
-and their struct name.
-
-This call in particular does the following: we go over all blocks
-starting with the current moving towards the oldest.
-For each block, we look at every object in it. If the object already
-freed (checked with @code{FREE_STRUCT_P} using the first pointer of the
-object), or if it is 
-set to read only (@code{C_READONLY_RECORD_HEADER_P}, nothing must be
-done. If it is unmarked (checked with @code{MARKED_RECORD_HEADER_P}), it
-is put in the free list and set free (using the macro
-@code{FREE_FIXED_TYPE}, otherwise it stays in the block, but is unmarked 
-(by @code{UNMARK_...}). While going through one block, we note if the
-whole block is empty. If so, the whole block is freed (using
-@code{xfree}) and the free list state is set to the state it had before
-handling this block.
-
-@node sweep_lcrecords_1
-@subsection @code{sweep_lcrecords_1}
-@cindex @code{sweep_lcrecords_1}
-
-After nullifying the complete lcrecord statistics, we go over all
-lcrecords two separate times. They are all chained together in a list with 
-a head called @code{all_lcrecords}. 
-
-The first loop calls for each object its @code{finalizer} method, but only 
-in the case that it is not read only
-(@code{C_READONLY_RECORD_HEADER_P)}, it is not already marked
-(@code{MARKED_RECORD_HEADER_P}), it is not already in a free list (list of
-freed objects, field @code{free}) and finally it owns a finalizer
-method.
- 
-The second loop actually frees the appropriate objects again by iterating 
-through the whole list. In case an object is read only or marked, it 
-has to persist, otherwise it is manually freed by calling
-@code{xfree}. During this loop, the lcrecord statistics are kept up to
-date by calling @code{tick_lcrecord_stats} with the right arguments, 
-
-@node compact_string_chars
-@subsection @code{compact_string_chars}
-@cindex @code{compact_string_chars}
-
-The purpose of this function is to compact all the data parts of the
-strings that are held in so-called @code{string_chars_block}, i.e. the
-strings that do not exceed a certain maximal length.
-
-The procedure with which this is done is as follows. We are keeping two
-positions in the @code{string_chars_block}s using two pointer/integer
-pairs, namely @code{from_sb}/@code{from_pos} and
-@code{to_sb}/@code{to_pos}. They stand for the actual positions, from
-where to where, to copy the actually handled string. 
-
-While going over all chained @code{string_char_block}s and their held
-strings, staring at @code{first_string_chars_block}, both pointers
-are advanced and eventually a string is copied from @code{from_sb} to
-@code{to_sb}, depending on the status of the pointed at strings.
-
-More precisely, we can distinguish between the following actions.
-@itemize @bullet
-@item
-The string at @code{from_sb}'s position could be marked as free, which
-is indicated by an invalid pointer to the pointer that should point back 
-to the fixed size string object, and which is checked by
-@code{FREE_STRUCT_P}. In this case, the @code{from_sb}/@code{from_pos}
-is advanced to the next string, and nothing has to be copied.
-@item
-Also, if a string object itself is unmarked, nothing has to be
-copied. We likewise advance the @code{from_sb}/@code{from_pos}
-pair as described above.
-@item
-In all other cases, we have a marked string at hand. The string data 
-must be moved from the from-position to the to-position. In case
-there is not enough space in the actual @code{to_sb}-block, we advance
-this pointer to the beginning of the next block before copying. In case the
-from and to positions are different, we perform the
-actual copying using the library function @code{memmove}.
-@end itemize
-
-After compacting, the pointer to the current
-@code{string_chars_block}, sitting in @code{current_string_chars_block},
-is reset on the last block to which we moved a string,
-i.e. @code{to_block}, and all remaining blocks (we know that they just
-carry garbage) are explicitly @code{xfree}d.
-
-@node sweep_strings
-@subsection @code{sweep_strings}
-@cindex @code{sweep_strings}
-
-The sweeping for the fixed sized string objects is essentially exactly
-the same as it is for all other fixed size types. As before, the freeing
-into the suitable free list is done by using the macro
-@code{SWEEP_FIXED_SIZE_BLOCK} after defining the right macros
-@code{UNMARK_string} and @code{ADDITIONAL_FREE_string}. These two
-definitions are a little bit special compared to the ones used
-for the other fixed size types.
-
-@code{UNMARK_string} is defined the same way except some additional code 
-used for updating the bookkeeping information.
-
-For strings, @code{ADDITIONAL_FREE_string} has to do something in
-addition: in case, the string was not allocated in a
-@code{string_chars_block} because it exceeded the maximal length, and
-therefore it was @code{malloc}ed separately, we know also @code{xfree}
-it explicitly.
-
-@node sweep_bit_vectors_1
-@subsection @code{sweep_bit_vectors_1}
-@cindex @code{sweep_bit_vectors_1}
-
-Bit vectors are also one of the rare types that are @code{malloc}ed
-individually. Consequently, while sweeping, all further needless
-bit vectors must be freed by hand. This is done, as one might imagine,
-the expected way: since they are all registered in a list called
-@code{all_bit_vectors}, all elements of that list are traversed,
-all unmarked bit vectors are unlinked by calling @code{xfree} and all of 
-them become unmarked.
-In addition, the bookkeeping information used for garbage 
-collector's output purposes is updated.
 
 @node Integers and Characters
 @section Integers and Characters
@@ -6560,19 +5700,19 @@ Many are accessible indirectly in Lisp programs via Lisp primitives.
 @table @code
 @item name
 The buffer name is a string that names the buffer.  It is guaranteed to
-be unique.  @xref{Buffer Names,,, lispref, XEmacs Lisp Reference
+be unique.  @xref{Buffer Names,,, lispref, XEmacs Lisp Programmer's
 Manual}.
 
 @item save_modified
 This field contains the time when the buffer was last saved, as an
-integer.  @xref{Buffer Modification,,, lispref, XEmacs Lisp Reference
+integer.  @xref{Buffer Modification,,, lispref, XEmacs Lisp Programmer's
 Manual}.
 
 @item modtime
 This field contains the modification time of the visited file.  It is
 set when the file is written or read.  Every time the buffer is written
 to the file, this field is compared to the modification time of the
-file.  @xref{Buffer Modification,,, lispref, XEmacs Lisp Reference
+file.  @xref{Buffer Modification,,, lispref, XEmacs Lisp Programmer's
 Manual}.
 
 @item auto_save_modified
@@ -6584,39 +5724,39 @@ the last time the buffer was displayed in a window.
 
 @item undo_list
 This field points to the buffer's undo list.  @xref{Undo,,, lispref,
-XEmacs Lisp Reference Manual}.
+XEmacs Lisp Programmer's Manual}.
 
 @item syntax_table_v
 This field contains the syntax table for the buffer.  @xref{Syntax
-Tables,,, lispref, XEmacs Lisp Reference Manual}.
+Tables,,, lispref, XEmacs Lisp Programmer's Manual}.
 
 @item downcase_table
 This field contains the conversion table for converting text to lower
-case.  @xref{Case Tables,,, lispref, XEmacs Lisp Reference Manual}.
+case.  @xref{Case Tables,,, lispref, XEmacs Lisp Programmer's Manual}.
 
 @item upcase_table
 This field contains the conversion table for converting text to upper
-case.  @xref{Case Tables,,, lispref, XEmacs Lisp Reference Manual}.
+case.  @xref{Case Tables,,, lispref, XEmacs Lisp Programmer's Manual}.
 
 @item case_canon_table
 This field contains the conversion table for canonicalizing text for
 case-folding search.  @xref{Case Tables,,, lispref, XEmacs Lisp
-Reference Manual}.
+Programmer's Manual}.
 
 @item case_eqv_table
 This field contains the equivalence table for case-folding search.
-@xref{Case Tables,,, lispref, XEmacs Lisp Reference Manual}.
+@xref{Case Tables,,, lispref, XEmacs Lisp Programmer's Manual}.
 
 @item display_table
 This field contains the buffer's display table, or @code{nil} if it
 doesn't have one.  @xref{Display Tables,,, lispref, XEmacs Lisp
-Reference Manual}.
+Programmer's Manual}.
 
 @item markers
 This field contains the chain of all markers that currently point into
 the buffer.  Deletion of text in the buffer, and motion of the buffer's
 gap, must check each of these markers and perhaps update it.
-@xref{Markers,,, lispref, XEmacs Lisp Reference Manual}.
+@xref{Markers,,, lispref, XEmacs Lisp Programmer's Manual}.
 
 @item backed_up
 This field is a flag that tells whether a backup file has been made for
@@ -6625,7 +5765,7 @@ the visited file of this buffer.
 @item mark
 This field contains the mark for the buffer.  The mark is a marker,
 hence it is also included on the list @code{markers}.  @xref{The Mark,,,
-lispref, XEmacs Lisp Reference Manual}.
+lispref, XEmacs Lisp Programmer's Manual}.
 
 @item mark_active
 This field is non-@code{nil} if the buffer's mark is active.
@@ -6635,12 +5775,12 @@ This field contains the association list describing the variables local
 in this buffer, and their values, with the exception of local variables
 that have special slots in the buffer object.  (Those slots are omitted
 from this table.)  @xref{Buffer-Local Variables,,, lispref, XEmacs Lisp
-Reference Manual}.
+Programmer's Manual}.
 
 @item modeline_format
 This field contains a Lisp object which controls how to display the mode
 line for this buffer.  @xref{Modeline Format,,, lispref, XEmacs Lisp
-Reference Manual}.
+Programmer's Manual}.
 
 @item base_buffer
 This field holds the buffer's base buffer (if it is an indirect buffer),
@@ -7019,7 +6159,7 @@ this is the code executed to handle any stuff that needs to be done
 other encoded/decoded data has been written out.  This is not used for
 charset CCL programs.
 
-REGISTER: 0..7  -- referred by RRR or rrr
+REGISTER: 0..7  -- refered by RRR or rrr
 
 OPERATOR BIT FIELD (27-bit): XXXXXXXXXXXXXXX RRR TTTTT
         TTTTT (5-bit): operator type
@@ -7405,7 +6545,7 @@ Furthermore, there is logically a @dfn{selected console},
 @dfn{selected display}, @dfn{selected frame}, and @dfn{selected window}.
 Each of these objects is distinguished in various ways, such as being the
 default object for various functions that act on objects of that type.
-Note that every containing object remembers the ``selected'' object
+Note that every containing object rememembers the ``selected'' object
 among the objects that it contains: e.g. not only is there a selected
 window, but every frame remembers the last window in it that was
 selected, and changing the selected frame causes the remembered window

@@ -1,9 +1,9 @@
 \input texinfo.tex    @c -*-texinfo-*-
-@c $Id: texinfo.texi,v 1.13 2001/01/07 03:21:58 vins Exp $
+@c $Id: texinfo.texi,v 1.8 1998/06/30 06:35:31 steve Exp $
 @c %**start of header
 
 @c All text is ignored before the setfilename.
-@setfilename ../info/texinfo.info
+@setfilename ../info/texinfo
 @settitle Texinfo @value{edition}
 
 @c Edition number is now the same as the Texinfo distribution version number.
@@ -648,8 +648,8 @@ Finding Badly Referenced Nodes
 
 How to Obtain @TeX{}
 
-@c * New Texinfo Mode Commands::   The updating commands are especially useful.
-@c * New Commands::                Many newly described @@-commands.
+* New Texinfo Mode Commands::   The updating commands are especially useful.
+* New Commands::                Many newly described @@-commands.
 @end detailmenu
 @end menu
 
@@ -743,8 +743,8 @@ menu-driven, on-line Info file with nodes, menus, cross references,
 and indices.  You can, if you wish, make the chapters and sections of
 the printed document correspond to the nodes of the on-line
 information; and you use the same cross references and indices for
-both the Info file and the printed work.  @cite{The XEmacs User's
-Manual} is a good example of a Texinfo file, as is this manual.@refill
+both the Info file and the printed work.  @cite{The GNU
+Emacs Manual} is a good example of a Texinfo file, as is this manual.@refill
 
 To make a printed document, you process a Texinfo source file with the
 @TeX{} typesetting program.  This creates a DVI file that you can
@@ -4768,9 +4768,9 @@ utility to insert these pointers automatically.)
 @cindex Previous node of Top node
 Do not define the `Previous' node of the Top node to be @samp{(dir)}, as
 it causes confusing behavior for users: if you are in the Top node and
-hit @key{DEL} to go backwards, you wind up in the middle of some other
-entry in the @file{dir} file, which has nothing to do with what you were
-reading.
+hits @key{DEL} to go backwards, you wind up in the middle of the
+some other entry in the @file{dir} file, which has nothing to do with
+what you were reading.
 
 @xref{Install an Info File}, for more information about installing
 an Info file in the @file{info} directory.
@@ -5158,16 +5158,16 @@ The format looks like this:@refill
 @end example
 
 For example, to refer directly to the @samp{Outlining} and
-@samp{Rebinding} nodes in the @cite{XEmacs User's Manual}, you would
-write a menu like this:@refill
+@samp{Rebinding} nodes in the @cite{Emacs Manual}, you would write a
+menu like this:@refill
 
 @example
 @group
 @@menu
-* Outlining: (xemacs)Outline Mode. The major mode for
-                                   editing outlines.
-* Rebinding: (xemacs)Rebinding.    How to redefine the
-                                   meaning of a key.
+* Outlining: (emacs)Outline Mode. The major mode for
+                                  editing outlines.
+* Rebinding: (emacs)Rebinding.    How to redefine the
+                                  meaning of a key.
 @@end menu
 @end group
 @end example
@@ -7448,6 +7448,13 @@ Here is an example written in the small font used by the
 @tex
 % Remove extra vskip; this is a kludge to counter the effect of display
 \vskip-3\baselineskip
+{\ninett
+\dots{} to make sure that you have the freedom to
+distribute copies of free software (and charge for
+this service if you wish), that you receive source
+code or can get it if you want it, that you can
+change the software or use pieces of it in new free
+programs; and that you know you can do these things.}
 @end tex
 @end display
 @end ifclear
@@ -8226,7 +8233,7 @@ Line breaks are not special within the table body, and you may break
 input lines in your source file as necessary.
 
 Here is a complete example of a multi-column table (the text is from
-@cite{The XEmacs Users' Manual}, @pxref{Split Window,, Splitting Windows,
+@cite{The GNU Emacs Manual}, @pxref{Split Window,, Splitting Windows,
 xemacs, XEmacs User's Manual}):
 
 @example
@@ -14199,7 +14206,7 @@ Start a new page in a printed manual if fewer than @var{n} mils
 (thousandths of an inch) remain on the current page.  @xref{need, ,
 @code{@@need}}.@refill
 
-@item @@node @var{name}, @var{next}, @var{previous}, @var{up}
+@item @@node @var{name, next, previous, up}
 Define the beginning of a new node in Info, and serve as a locator for
 references for @TeX{}.  @xref{node, , @code{@@node}}.@refill
 

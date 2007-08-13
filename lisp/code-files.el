@@ -71,13 +71,7 @@ global environment specification.")
     ;; ("\\.\\(el\\|emacs\\|info\\(-[0-9]+\\)?\\|texi\\)$" . iso-2022-8)
     ;; ("\\(ChangeLog\\|CHANGES-beta\\)$" . iso-2022-8)
     ("\\.\\(gz\\|Z\\)$" . binary)
-
-    ;; This idea is totally broken, and the code didn't work anyway.
-    ;; Mailboxes should be decoded by mail clients, who actually know
-    ;; how to deal with them.  Otherwise, their contents should be
-    ;; treated as `binary'.
-    ;("/spool/mail/.*$" . convert-mbox-coding-system)
-    )
+    ("/spool/mail/.*$" . convert-mbox-coding-system))
   "Alist to decide a coding system to use for a file I/O operation.
 The format is ((PATTERN . VAL) ...),
 where PATTERN is a regular expression matching a file name,
@@ -200,12 +194,22 @@ object (the entry specified a coding system)."
 	    ((find-coding-system codesys))
 	    ))))
 
-;; This is completely broken, not only in implementation (does not
-;; understand MIME), but in concept -- such high-level decoding should
-;; be done by mail readers, not by IO code!
-
-;(defun convert-mbox-coding-system (filename visit start end)
-;...
+(defun convert-mbox-coding-system (filename visit start end)
+  "Decoding function for Unix mailboxes.
+Does separate detection and decoding on each message, since each
+message might be in a different encoding."
+  (let ((buffer-read-only nil))
+    (save-restriction
+      (narrow-to-region start end)
+      (goto-char (point-min))
+      (while (not (eobp))
+	(let ((start (point))
+	      end)
+	  (forward-char 1)
+	  (if (re-search-forward "^From" nil 'move)
+	      (beginning-of-line))
+	  (setq end (point))
+	  (decode-coding-region start end 'undecided))))))
 
 (defun find-coding-system-magic-cookie ()
   "Look for the coding-system magic cookie in the current buffer.\n"
@@ -373,6 +377,9 @@ with the file contents.  This is better than simply deleting and inserting
 the whole thing because (1) it preserves some marker positions
 and (2) it puts less data in the undo list.
 
+NOTE: When Mule support is enabled, the REPLACE argument is
+currently ignored.
+
 The coding system used for decoding the file is determined as follows:
 
 1. `coding-system-for-read', if non-nil.
@@ -401,8 +408,9 @@ and `insert-file-contents-post-hook'."
 		 ;; #1.
 		 coding-system-for-read
 		 ;; #2.
-		 (run-special-hook-with-args 'insert-file-contents-pre-hook
-					     filename visit)
+		 (run-hook-with-args-until-success
+		  'insert-file-contents-pre-hook
+		  filename visit)
 		 ;; #3.
 		 (find-file-coding-system-for-read-from-filename filename)
 		 ;; #4.
@@ -445,8 +453,8 @@ and `insert-file-contents-post-hook'."
 		  (set-buffer-modified-p nil)))))
       (setcar (cdr return-val) (- (marker-position endmark) (point))))
     ;; now finally set the buffer's `buffer-file-coding-system'.
-    (if (run-special-hook-with-args 'insert-file-contents-post-hook
-				    filename visit return-val)
+    (if (run-hook-with-args-until-success 'insert-file-contents-post-hook
+					  filename visit return-val)
 	nil
       (if (local-variable-p 'buffer-file-coding-system (current-buffer))
 	  ;; if buffer-file-coding-system is already local, just
@@ -514,7 +522,7 @@ See also `write-region-pre-hook' and `write-region-post-hook'."
   (interactive "r\nFWrite region to file: \ni\ni\ni\nZCoding-system: ")
   (setq coding-system
 	(or coding-system-for-write
-	    (run-special-hook-with-args
+	    (run-hook-with-args-until-success
 	     'write-region-pre-hook start end filename append visit lockname)
 	    coding-system
 	    buffer-file-coding-system

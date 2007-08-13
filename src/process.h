@@ -46,13 +46,7 @@ DECLARE_LRECORD (process, struct Lisp_Process);
 #define PROCESSP(x) RECORDP (x, process)
 #define GC_PROCESSP(x) GC_RECORDP (x, process)
 #define CHECK_PROCESS(x) CHECK_RECORD (x, process)
-#define PROCESS_LIVE_P(x) (!NILP ((x)->pipe_instream))
-
-#define CHECK_LIVE_PROCESS(x) do {			\
-  CHECK_PROCESS (x);					\
-  if (! PROCESS_LIVE_P (XPROCESS (x)))			\
-    dead_wrong_type_argument (Qprocess_live_p, (x));	\
-} while (0)
+#define PROCESS_LIVE_P(x) (!NILP (XPROCESS(x)->pipe_instream))
 
 #ifdef emacs
 

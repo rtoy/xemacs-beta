@@ -377,8 +377,8 @@ default is t.")
 
 If a match spreads across multiple lines, all those lines are shown.
 
-If variable `list-matching-lines-whole-buffer' is non-nil, the entire
-buffer is searched, otherwise search begins at point.
+If variable `list-matching-lines-whole-buffer' is non-nil, the entire buffer is
+searched, otherwise search begins at point.
 
 Each line is displayed with NLINES lines before and after, or -NLINES
 before if NLINES is negative.
@@ -657,7 +657,6 @@ which will run faster and probably do exactly what you want."
 	;; Loop finding occurrences that perhaps should be replaced.
 	(while (and keep-going
 		    (not (eobp))
-		    (or (null limit) (< (point) limit))
 		    (let ((case-fold-search qr-case-fold-search))
 		      (funcall search-function search-string limit t))
 		    ;; If the search string matches immediately after
@@ -667,8 +666,7 @@ which will run faster and probably do exactly what you want."
 			    (and regexp-flag
 				 (eq lastrepl (match-beginning 0))
 				 (not match-again)))
-			(if (or (eobp)
-				(and limit (>= (point) limit)))
+			(if (eobp)
 			    nil
 			  ;; Don't replace the null string 
 			  ;; right after end of previous replacement.

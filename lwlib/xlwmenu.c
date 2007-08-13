@@ -88,8 +88,6 @@ xlwMenuResources[] =
   {XtNfont,  XtCFont, XtRFontStruct, sizeof(XFontStruct *),
      offset(menu.font), XtRString, "XtDefaultFont"},
 # ifdef USE_XFONTSET
-  /* #### Consider using the same method as for Motif; see the comment in
-     XlwMenuInitialize(). */
   {XtNfontSet,  XtCFontSet, XtRFontSet, sizeof(XFontSet),
      offset(menu.font_set), XtRString, "XtDefaultFontSet"},
 # endif
@@ -425,9 +423,10 @@ string_width_u (XlwMenuWidget mw,
   int i, j;
 
 #ifdef NEED_MOTIF
-  chars = "";
   if (!XmStringGetLtoR (string, XmFONTLIST_DEFAULT_TAG, &chars))
-    chars = "";
+    {
+      chars = "";
+    }
 #else
   chars = string;
 #endif
@@ -445,7 +444,6 @@ string_width_u (XlwMenuWidget mw,
   newstring = XmStringLtoRCreate (newchars, XmFONTLIST_DEFAULT_TAG);
   XmStringExtent (mw->menu.font_list, newstring, &width, &height);
   XmStringFree (newstring);
-  XtFree (chars);
   return width;
 #else
 # ifdef USE_XFONTSET
@@ -484,8 +482,7 @@ massage_resource_name (CONST char *in, char *out)
       char ch = massaged_resource_char[(unsigned char) *in++];
       if (ch)
 	{
-	  int int_ch = (int) (unsigned char) ch;
-	  *out++ = firstp ? tolower (int_ch) : toupper (int_ch);
+	  *out++ = firstp ? tolower (ch) : toupper (ch);
 	  firstp = False;
 	  while ((ch = massaged_resource_char[(unsigned char) *in++]) != '\0')
 	    *out++ = ch;
@@ -873,9 +870,7 @@ int i,s=0;
 char *chars;
 
 #ifdef NEED_MOTIF
-  chars = "";
-  if (!XmStringGetLtoR (string, XmFONTLIST_DEFAULT_TAG, &chars))
-    chars = "";
+  XmStringGetLtoR (string, XmFONTLIST_DEFAULT_TAG, &chars);
 #else
   chars = string;
 #endif
@@ -896,9 +891,6 @@ char *chars;
       }
   }
   x += string_draw_range (mw, window, x, y, gc, chars, s, i);
-#ifdef NEED_MOTIF
-  XtFree (chars);
-#endif
 }
 
 static void
@@ -2811,23 +2803,13 @@ make_shadow_gcs (XlwMenuWidget mw)
   xgcv.fill_style = FillOpaqueStippled;
   xgcv.foreground = mw->menu.top_shadow_color;
   xgcv.background = mw->core.background_pixel;
-/*  xgcv.stipple = mw->menu.top_shadow_pixmap; gtb */
-  if (mw->menu.top_shadow_pixmap &&
-      mw->menu.top_shadow_pixmap != XmUNSPECIFIED_PIXMAP)
-     xgcv.stipple = mw->menu.top_shadow_pixmap;
-  else
-     xgcv.stipple = 0;
+  xgcv.stipple = mw->menu.top_shadow_pixmap;
   pm = (xgcv.stipple ? GCStipple|GCFillStyle : 0);
   mw->menu.shadow_top_gc =
     XtGetGC((Widget)mw, GCForeground|GCBackground|pm, &xgcv);
 
   xgcv.foreground = mw->menu.bottom_shadow_color;
-/*  xgcv.stipple = mw->menu.bottom_shadow_pixmap; gtb */
-  if (mw->menu.bottom_shadow_pixmap &&
-      mw->menu.bottom_shadow_pixmap != XmUNSPECIFIED_PIXMAP)
-     xgcv.stipple = mw->menu.bottom_shadow_pixmap;
-  else
-     xgcv.stipple = 0;
+  xgcv.stipple = mw->menu.bottom_shadow_pixmap;
   pm = (xgcv.stipple ? GCStipple|GCFillStyle : 0);
   mw->menu.shadow_bottom_gc =
     XtGetGC ((Widget)mw, GCForeground|GCBackground|pm, &xgcv);
@@ -3011,12 +2993,10 @@ XlwMenuInitialize (Widget request, Widget new, ArgList args,
 				 gray_width, gray_height, 1, 0, 1);
 
 #ifdef NEED_MOTIF
-  /* #### Even if it's a kludge!!!, we should consider doing the same for
-     X Font Sets. */
   /* The menu.font_list slot came from the *fontList resource (Motif standard.)
      The menu.font_list_2 slot came from the *font resource, for backward
      compatibility with older versions of this code, and consistency with the
-     rest of emacs.  If both font and fontList are specified, we use fontList.
+     rest of emacs.  If both font and fontList are specified, we use font.
      If only one is specified, we use that.  If neither are specified, we
      use the "fallback" value.  What a kludge!!!
 

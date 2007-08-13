@@ -386,7 +386,7 @@ get_doprnt_args (printf_spec_dynarr *specs, va_list vargs)
       if (strchr (int_converters, ch))
 	{
 	  if (spec->h_flag)
-	    arg.i = va_arg (vargs, int /* short */);
+	    arg.i = va_arg (vargs, short);
 	  else if (spec->l_flag)
 	    arg.l = va_arg (vargs, long);
 	  else
@@ -395,7 +395,7 @@ get_doprnt_args (printf_spec_dynarr *specs, va_list vargs)
       else if (strchr (unsigned_int_converters, ch))
 	{
 	  if (spec->h_flag)
-	    arg.ui = va_arg (vargs, unsigned int /* unsigned short */);
+	    arg.ui = va_arg (vargs, unsigned short);
 	  else if (spec->l_flag)
 	    arg.ul = va_arg (vargs, unsigned long);
 	  else
@@ -633,7 +633,6 @@ emacs_doprnt_1 (Lisp_Object stream, CONST Bufbyte *format_nonreloc,
 	    {
 	      char text_to_print[500];
 	      char constructed_spec[100];
-	      int tem;
 
 	      /* Partially reconstruct the spec and use sprintf() to
 		 format the string. */
@@ -652,7 +651,6 @@ emacs_doprnt_1 (Lisp_Object stream, CONST Bufbyte *format_nonreloc,
 		strcat (constructed_spec, " ");
 	      if (spec->number_flag)
 		strcat (constructed_spec, "#");
-	      tem = strlen (constructed_spec);
 	      if (spec->precision >= 0)
 		{
 		  strcat (constructed_spec, ".");
@@ -676,12 +674,6 @@ emacs_doprnt_1 (Lisp_Object stream, CONST Bufbyte *format_nonreloc,
 		}
 	      else
 		{
-		  /* In the special case of zero padding a signed integer */
-		  /* with a field width specified, we overwrite the default */
-		  /* format. */
-		  if (spec->zero_flag && spec->minwidth)
-		    sprintf (constructed_spec + tem,
-			     "0%d%c", spec->minwidth, ch);
 		  if (spec->l_flag)
 		    sprintf (text_to_print, constructed_spec, arg.l);
 		  else

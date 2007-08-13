@@ -69,9 +69,8 @@ Lisp_Object Qnas;
 DEFUN ("play-sound-file", Fplay_sound_file, 1, 3, "fSound file name: ", /*
 Play the named sound file on DEVICE's speaker at the specified volume
 \(0-100, default specified by the `bell-volume' variable).
-On Unix machines the sound file must be in the Sun/NeXT U-LAW format
-except under Linux where WAV files are also supported.  On Microsoft 
-Windows the sound file must be in WAV format.
+The sound file must be in the Sun/NeXT U-LAW format except under Linux
+where WAV files are also supported.
   DEVICE defaults to the selected device.
 */
      (file, volume, device))
@@ -594,7 +593,7 @@ of sounds.  Otherwise, sounds are always played synchronously.
   DEFVAR_LISP ("native-sound-only-on-console", &Vnative_sound_only_on_console /*
 Non-nil value means play sounds only if XEmacs is running
 on the system console.
-Nil means always play sounds, even if running on a non-console tty
+Nil means always always play sounds, even if running on a non-console tty
 or a secondary X display.
 
 This variable only applies to native sound support.

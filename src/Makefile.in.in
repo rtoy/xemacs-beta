@@ -110,7 +110,7 @@ lwlib_deps = $(lwlib_libs)
 $(lwlib_libs) :
 	cd ../lwlib && $(RECURSIVE_MAKE)
 
-x_objs=console-x.o device-x.o event-Xt.o frame-x.o\
+x_objs=balloon_help.o balloon-x.o console-x.o device-x.o event-Xt.o frame-x.o\
  glyphs-x.o objects-x.o redisplay-x.o xgccache.o xselect.o 
 
 #ifdef AIX4
@@ -477,7 +477,7 @@ run-rtcmacs: rtcmacs
 ## Purify
 PURIFY_PROG=purify
 PURIFY_FLAGS=-chain-length=32 -ignore-signals=SIGPOLL -threads=yes \
- -cache-dir=${srcdir}/purecache -always-use-cache-dir=yes -pointer-mask=0x0fffffff
+ -cache-dir=./purecache -always-use-cache-dir=yes -pointer-mask=0x0fffffff
 puremacs: $(temacs_deps)
 	$(PURIFY_PROG) $(PURIFY_FLAGS) $(LD) $(temacs_link_args) -lpthread
 

@@ -19,6 +19,10 @@ the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 
+#ifdef LINUX
+ # define SYSTEM_MALLOC
+#endif
+
 #ifdef OSF1
 # define ORDINARY_LINK
 #endif
@@ -28,5 +32,5 @@ Boston, MA 02111-1307, USA.  */
 # define TEXT_START    0x120000000
 # define DATA_START    0x140000000
   /* The program to be used for unexec. */
-# define UNEXEC "unexalpha.o"
+# define UNEXEC unexalpha.o
 #endif

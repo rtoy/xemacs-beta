@@ -166,8 +166,6 @@ what you give them.   Help stamp out software-hoarding!  */
 
 #endif /* not emacs */
 
-#include <stddef.h>
-
 /* Define getpagesize () if the system does not.  */
 #include "getpagesize.h"
 

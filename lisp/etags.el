@@ -405,7 +405,7 @@ File name returned is relative to tag table file's directory."
 (defun buffer-tag-table-files ()
   "Returns a list of all files referenced by all TAGS tables that 
 this buffer uses."
-  (apply #'append
+  (apply #'nconc
 	 (mapcar #'tag-table-files (buffer-tag-table-list))))
 
 
@@ -1064,7 +1064,7 @@ See documentation of variable `tag-table-alist'."
 
 ;; Sample uses of find-tag-hook and find-tag-default-hook
 
-;; This is wrong.  We should either make this behavior default and
+;; This is wrong.  We should either make this behaviour default and
 ;; back it up, or not use it at all.  For now, I've commented it out.
 ;; --hniksic
 
@@ -1189,7 +1189,6 @@ and `\\[pop-tag-mark]'."
 
 ;;;###autoload (define-key esc-map "*" 'pop-tag-mark)
 
-;;;###autoload
 (defun pop-tag-mark (arg)
   "Go to last tag position.
 `find-tag' maintains a mark-stack seperate from the \\[set-mark-command] mark-stack.
@@ -1204,5 +1203,3 @@ This function pops (and moves to) the tag at the top of this stack."
 
 (provide 'etags)
 (provide 'tags)
-
-;;; etags.el ends here

@@ -3,14 +3,13 @@
 ;;; Copyright (C) 1985-1987, 1991-1994 Free Software Foundation, Inc.
 ;;; Copyright (C) 1996 Ben Wing.
 
-;; Authors: Jamie Zawinski <jwz@jwz.org>
-;;    Hallvard Furuseth <hbf@ulrik.uio.no>
-;;    Ben Wing <ben@xemacs.org>
-;;    Martin Buchholz <martin@xemacs.org>
-;;    Richard Stallman <rms@gnu.org>
-;; Keywords: internal lisp
-  
-(defconst byte-compile-version (purecopy  "2.27 XEmacs; 2000-09-12."))
+;; Author: Jamie Zawinski <jwz@netscape.com>
+;;	Hallvard Furuseth <hbf@ulrik.uio.no>
+;; Keywords: internal
+
+;; Subsequently modified by RMS and others.
+
+(defconst byte-compile-version (purecopy  "2.25 XEmacs; 22-Mar-96."))
 
 ;; This file is part of XEmacs.
 
@@ -34,15 +33,8 @@
 ;;; Commentary:
 
 ;; The Emacs Lisp byte compiler.  This crunches lisp source into a
-;; sort of p-code (`bytecode') which takes up less space and can be
-;; interpreted faster.  First, the source code forms are converted to
-;; an intermediate form, `lapcode' [`LAP' == `Lisp Assembly Program']
-;; which is much easier to manipulate than bytecode.  Then the lapcode
-;; is converted to bytecode, which can be considered to be actual
-;; machine language.  Optimizations can occur at either the source
-;; level or the lapcode level.
-
-;; The user entry points are byte-compile-file,
+;; sort of p-code which takes up less space and can be interpreted
+;; faster.  The user entry points are byte-compile-file,
 ;; byte-recompile-directory and byte-compile-buffer.
 
 ;;; Code:
@@ -2014,14 +2006,12 @@ list that represents a doc string reference.
     ;; No doc string, so we can compile this as a normal form.
     (byte-compile-keep-pending form 'byte-compile-normal-call)))
 
-(put 'defvar   'byte-hunk-handler 'byte-compile-file-form-defvar-or-defconst)
-(put 'defconst 'byte-hunk-handler 'byte-compile-file-form-defvar-or-defconst)
-(defun byte-compile-file-form-defvar-or-defconst (form)
-  ;; (defvar|defconst VAR [VALUE [DOCSTRING]])
+(put 'defvar   'byte-hunk-handler 'byte-compile-file-form-defvar)
+(put 'defconst 'byte-hunk-handler 'byte-compile-file-form-defvar)
+(defun byte-compile-file-form-defvar (form)
   (if (> (length form) 4)
-      (byte-compile-warn
-       "%s %s called with %d arguments, but accepts only %s"
-       (car form) (nth 1 form) (length (cdr form)) 3))
+      (byte-compile-warn "%s used with too many args (%s)"
+			 (car form) (nth 1 form)))
   (if (and (> (length form) 3) (not (stringp (nth 3 form))))
       (byte-compile-warn "Third arg to %s %s is not a string: %s"
 			 (car form) (nth 1 form) (nth 3 form)))
@@ -2846,9 +2836,10 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 (put 'byte-concatN 'byte-opcode-invert 'concat)
 (put 'byte-insertN 'byte-opcode-invert 'insert)
 
-(byte-defop-compiler (dot byte-point)		0+1)
-(byte-defop-compiler (dot-max byte-point-max)	0+1)
-(byte-defop-compiler (dot-min byte-point-min)	0+1)
+;; How old is this stuff? -slb
+;(byte-defop-compiler (dot byte-point)		0+1)
+;(byte-defop-compiler (dot-max byte-point-max)	0+1)
+;(byte-defop-compiler (dot-min byte-point-min)	0+1)
 (byte-defop-compiler point		0+1)
 (byte-defop-compiler-rmsfun eq		2)
 (byte-defop-compiler point-max		0+1)
@@ -3138,9 +3129,9 @@ If FORM is a lambda or a macro, byte-compile it as a function."
     ;; buffer-substring used to take exactly two args, but now takes 0-3.
     ;; convert 0-2 to two args and use special bytecode operand.
     ;; convert 3 args to a normal call.
-    (cond ((= len 1) (byte-compile-two-args (append form '(nil nil))))
-	  ((= len 2) (byte-compile-two-args (append form '(nil))))
-	  ((= len 3) (byte-compile-two-args form))
+    (cond ((= len 1) (setq form (append form '(nil nil)))
+	   (= len 2) (setq form (append form '(nil)))))
+    (cond ((= len 3) (byte-compile-two-args form))
 	  ((= len 4) (byte-compile-normal-call form))
 	  (t (byte-compile-subr-wrong-args form "0-3")))))
 
@@ -3714,8 +3705,7 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 (byte-defop-compiler-1 defun)
 (byte-defop-compiler-1 defmacro)
 (byte-defop-compiler-1 defvar)
-(byte-defop-compiler-1 defvar   byte-compile-defvar-or-defconst)
-(byte-defop-compiler-1 defconst byte-compile-defvar-or-defconst)
+(byte-defop-compiler-1 defconst byte-compile-defvar)
 (byte-defop-compiler-1 autoload)
 ;; According to Mly this can go now that lambda is a macro
 ;(byte-defop-compiler-1 lambda byte-compile-lambda-form)
@@ -3743,38 +3733,32 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 		   (list 'quote (cons 'macro (eval code))))))
 	 (list 'quote (nth 1 form)))))
 
-(defun byte-compile-defvar-or-defconst (form)
-  ;; This is not used for file-level defvar/defconsts with doc strings:
-  ;; byte-compile-file-form-defvar-or-defconst will be used in that case.
-  ;; (defvar|defconst VAR [VALUE [DOCSTRING]])
-  (let ((fun (nth 0 form))
-	(var (nth 1 form))
+(defun byte-compile-defvar (form)
+  ;; This is not used for file-level defvar/consts with doc strings:
+  ;; byte-compile-file-form-defvar will be used in that case.
+  (let ((var (nth 1 form))
 	(value (nth 2 form))
 	(string (nth 3 form)))
-    (when (> (length form) 4)
-      (byte-compile-warn
-       "%s %s called with %d arguments, but accepts only %s"
-       fun var (length (cdr form)) 3))
-    (when (memq 'free-vars byte-compile-warnings)
-      (push (cons var byte-compile-global-bit) byte-compile-bound-variables))
+    (if (> (length form) 4)
+	(byte-compile-warn "%s used with too many args" (car form)))
+    (if (memq 'free-vars byte-compile-warnings)
+	(setq byte-compile-bound-variables
+	      (cons (cons var byte-compile-global-bit)
+		    byte-compile-bound-variables)))
     (byte-compile-body-do-effect
-     (list
+     (list (if (cdr (cdr form))
+	       (if (eq (car form) 'defconst)
+		   (list 'setq var value)
+		 (list 'or (list 'boundp (list 'quote var))
+		       (list 'setq var value))))
 	   ;; Put the defined variable in this library's load-history entry
-      ;; just as a real defvar would, but only in top-level forms.
-      (when (null byte-compile-current-form)
-	`(push ',var current-load-list))
-      (when (> (length form) 3)
-	(when (and string (not (stringp string)))
-	  (byte-compile-warn "Third arg to %s %s is not a string: %s"
-			     fun var string))
-	`(put ',var 'variable-documentation ,string))
-      (if (cdr (cdr form))		; `value' provided
-	  (if (eq fun 'defconst)
-	      ;; `defconst' sets `var' unconditionally.
-	      `(setq ,var ,value)
-	    ;; `defvar' sets `var' only when unbound.
-	    `(if (not (boundp ',var)) (setq ,var ,value))))
-      `',var))))
+	   ;; just as a real defvar would.
+	   (list 'setq 'current-load-list
+		 (list 'cons (list 'quote var)
+		       'current-load-list))
+	   (if string
+	       (list 'put (list 'quote var) ''variable-documentation string))
+	   (list 'quote var)))))
 
 (defun byte-compile-autoload (form)
   (and (byte-compile-constp (nth 1 form))

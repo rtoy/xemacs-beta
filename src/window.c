@@ -80,7 +80,7 @@ Lisp_Object Vvertical_divider_shadow_thickness;
 /* Divider surface width (not counting 3-d borders) */
 Lisp_Object Vvertical_divider_line_width;
 
-/* Spacing between outer edge of divider border and window edge */
+/* Spacing between outer egde of divider border and window edge */
 Lisp_Object Vvertical_divider_spacing;
 
 /* Scroll if point lands on the bottom line and that line is partially
@@ -701,11 +701,6 @@ window_full_height_p (struct window *w)
 int
 window_truncation_on (struct window *w)
 {
-    /* Minibuffer windows are never truncated.
-       ### is this the right way ? */
-  if (EQ (w->mini_p, Qt))
-    return 0;
-
   /* Horizontally scrolled windows are truncated. */
   if (w->hscroll)
     return 1;
@@ -723,17 +718,6 @@ window_truncation_on (struct window *w)
 
   return 0;
 }
-
-DEFUN ("window-truncated-p", Fwindow_truncated_p, 0, 1, 0, /*
-Returns Non-Nil iff the window is truncated.
-*/
-       (window))
-{
-  struct window *w = decode_window (window);
-
-  return window_truncation_on (w) ? Qt : Qnil;
-}
-
 
 static int
 have_undivided_common_edge (struct window *w_right, void *closure)
@@ -1357,7 +1341,7 @@ is non-nil, do not include space occupied by clipped lines.
   if (NILP (window))
     window = Fselected_window (Qnil);
 
-  CHECK_LIVE_WINDOW (window);
+  CHECK_WINDOW (window);
   w = XWINDOW (window);
 
   start  = marker_position (w->start[CURRENT_DISP]);
@@ -1562,7 +1546,7 @@ top left corner of the window.
 
 DEFUN ("window-point", Fwindow_point, 0, 1, 0, /*
 Return current value of point in WINDOW.
-For a non-selected window, this is the value point would have
+For a nonselected window, this is the value point would have
 if that window were selected.
 
 Note that, when WINDOW is the selected window and its buffer
@@ -1649,10 +1633,7 @@ from overriding motion of point in order to display at this exact start.
   CHECK_INT_COERCE_MARKER (pos);
   set_marker_restricted (w->start[CURRENT_DISP], pos, w->buffer);
   /* this is not right, but much easier than doing what is right. */
-  /* w->start_at_line_beg = 0; */
-  /* WTF is the above supposed to mean?  GE */
-  w->start_at_line_beg = beginning_of_line_p (XBUFFER (w->buffer),
-					      marker_position (w->start[CURRENT_DISP]));
+  w->start_at_line_beg = 0;
   if (NILP (noforce))
     w->force_start = 1;
   w->redo_modeline = 1;
@@ -1980,7 +1961,7 @@ will automatically call `save-buffers-kill-emacs'.)
 
 
 DEFUN ("next-window", Fnext_window, 0, 4, 0, /*
-Return the next window after WINDOW in the canonical ordering of windows.
+Return next window after WINDOW in canonical ordering of windows.
 If omitted, WINDOW defaults to the selected window.
 
 Optional second arg MINIBUF t means count the minibuffer window even
@@ -2001,7 +1982,7 @@ ALL-FRAMES = 0 means include windows on all visible and iconified frames.
 If ALL-FRAMES is a frame, restrict search to windows on that frame.
 Anything else means restrict to WINDOW's frame.
 
-Optional fourth arg CONSOLE controls which consoles or devices the
+Optional fourth argument CONSOLE controls which consoles or devices the
 returned window may be on.  If CONSOLE is a console, return windows only
 on that console.  If CONSOLE is a device, return windows only on that
 device.  If CONSOLE is a console type, return windows only on consoles
@@ -2032,9 +2013,8 @@ windows, eventually ending up back at the window you started with.
     minibuf = (minibuf_level ? minibuf_window : Qlambda);
   else if (! EQ (minibuf, Qt))
     minibuf = Qlambda;
-  /* Now `minibuf' is one of:
-     t      => count all minibuffer windows
-     lambda => count none of them
+  /* Now minibuf can be t => count all minibuffer windows,
+     lambda => count none of them,
      or a specific minibuffer window (the active one) to count.  */
 
   /* all_frames == nil doesn't specify which frames to include.  */
@@ -2055,12 +2035,11 @@ windows, eventually ending up back at the window you started with.
     return frame_first_window (XFRAME (all_frames));
   else if (! EQ (all_frames, Qt))
     all_frames = Qnil;
-  /* Now `all_frames' is one of:
-     t        => search all frames
-     nil      => search just the current frame
-     visible  => search just visible frames
-     0        => search visible and iconified frames
-     a window => search the frame that window belongs to.  */
+  /* Now all_frames is t meaning search all frames,
+     nil meaning search just current frame,
+     visible meaning search just visible frames,
+     0 meaning search visible and iconified frames,
+     or a window, meaning search the frame that window belongs to.  */
 
   /* Do this loop at least once, to get the next window, and perhaps
      again, if we hit the minibuffer and that is not acceptable.  */
@@ -2079,9 +2058,10 @@ windows, eventually ending up back at the window you started with.
 
 	    if (! NILP (all_frames))
 	      {
-		Lisp_Object tem1 = tem;
-		tem = next_frame (tem, all_frames, console);
+		Lisp_Object tem1;
 
+		tem1 = tem;
+		tem = next_frame (tem, all_frames, console);
 		/* In the case where the minibuffer is active,
 		   and we include its frame as well as the selected one,
 		   next_frame may get stuck in that frame.
@@ -2108,6 +2088,7 @@ windows, eventually ending up back at the window you started with.
 	  else break;
 	}
     }
+  /* "acceptable" is the correct spelling. */
   /* Which windows are acceptable?
      Exit the loop and accept this window if
      this isn't a minibuffer window,
@@ -2123,7 +2104,7 @@ windows, eventually ending up back at the window you started with.
 }
 
 DEFUN ("previous-window", Fprevious_window, 0, 4, 0, /*
-Return the window preceding WINDOW in the canonical ordering of windows.
+Return the window preceding WINDOW in canonical ordering of windows.
 If omitted, WINDOW defaults to the selected window.
 
 Optional second arg MINIBUF t means count the minibuffer window even
@@ -2135,16 +2116,16 @@ Several frames may share a single minibuffer; if the minibuffer
 counts, all windows on all frames that share that minibuffer count
 too.  Therefore, `previous-window' can be used to iterate through
 the set of windows even when the minibuffer is on another frame.  If
-the minibuffer does not count, only windows from WINDOW's frame count.
+the minibuffer does not count, only windows from WINDOW's frame count
 
-Optional third arg ALL-FRAMES t means include windows on all frames.
+If optional third arg ALL-FRAMES t means include windows on all frames.
 ALL-FRAMES nil or omitted means cycle within the frames as specified
 above.  ALL-FRAMES = `visible' means include windows on all visible frames.
 ALL-FRAMES = 0 means include windows on all visible and iconified frames.
 If ALL-FRAMES is a frame, restrict search to windows on that frame.
 Anything else means restrict to WINDOW's frame.
 
-Optional fourth arg CONSOLE controls which consoles or devices the
+Optional fourth argument CONSOLE controls which consoles or devices the
 returned window may be on.  If CONSOLE is a console, return windows only
 on that console.  If CONSOLE is a device, return windows only on that
 device.  If CONSOLE is a console type, return windows only on consoles
@@ -2175,9 +2156,8 @@ windows, eventually ending up back at the window you started with.
     minibuf = (minibuf_level ? minibuf_window : Qlambda);
   else if (! EQ (minibuf, Qt))
     minibuf = Qlambda;
-  /* Now `minibuf' is one of:
-     t      => count all minibuffer windows
-     lambda => count none of them
+  /* Now minibuf can be t => count all minibuffer windows,
+     lambda => count none of them,
      or a specific minibuffer window (the active one) to count.  */
 
   /* all_frames == nil doesn't specify which frames to include.
@@ -2199,12 +2179,11 @@ windows, eventually ending up back at the window you started with.
     return frame_first_window (XFRAME (all_frames));
   else if (! EQ (all_frames, Qt))
     all_frames = Qnil;
-  /* Now `all_frames' is one of:
-     t        => search all frames
-     nil      => search just the current frame
-     visible  => search just visible frames
-     0        => search visible and iconified frames
-     a window => search the frame that window belongs to.  */
+  /* Now all_frames is t meaning search all frames,
+     nil meaning search just current frame,
+     visible meaning search just visible frames,
+     0 meaning search visible and iconified frames,
+     or a window, meaning search the frame that window belongs to.  */
 
   /* Do this loop at least once, to get the next window, and perhaps
      again, if we hit the minibuffer and that is not acceptable.  */
@@ -2222,7 +2201,7 @@ windows, eventually ending up back at the window you started with.
 	    tem = WINDOW_FRAME (XWINDOW (window));
 
 	    if (! NILP (all_frames))
-	      /* It's actually important that we use previous_frame here,
+	      /* It's actually important that we use prev_frame here,
 		 rather than next_frame.  All the windows acceptable
 		 according to the given parameters should form a ring;
 		 Fnext_window and Fprevious_window should go back and
@@ -2232,8 +2211,10 @@ windows, eventually ending up back at the window you started with.
 		 window_loop assumes that these `ring' requirement are
 		 met.  */
 	      {
-		Lisp_Object tem1 = tem;
-		tem = previous_frame (tem, all_frames, console);
+		Lisp_Object tem1;
+
+		tem1 = tem;
+		tem = prev_frame (tem, all_frames, console);
 		/* In the case where the minibuffer is active,
 		   and we include its frame as well as the selected one,
 		   next_frame may get stuck in that frame.
@@ -2419,19 +2400,20 @@ window_loop (enum window_loop type,
   int lose_lose = 0;
   Lisp_Object devcons, concons;
 
+  /* FRAME_ARG is Qlambda to stick to one frame,
+     Qvisible to consider all visible frames,
+     or Qt otherwise.  */
+
   /* If we're only looping through windows on a particular frame,
      FRAME points to that frame.  If we're looping through windows
      on all frames, FRAME is 0.  */
+
   if (FRAMEP (frames))
     frame = XFRAME (frames);
   else if (NILP (frames))
     frame = selected_frame ();
   else
     frame = 0;
-
-  /* FRAME_ARG is Qlambda to stick to one frame,
-     Qvisible to consider all visible frames,
-     or Qt otherwise.  */
   if (frame)
     frame_arg = Qlambda;
   else if (ZEROP (frames))
@@ -2452,10 +2434,7 @@ window_loop (enum window_loop type,
       if (NILP (the_frame))
 	continue;
 
-      if (!device_matches_console_spec (device,
-					NILP (console) ?
-					FRAME_CONSOLE (XFRAME (the_frame)) :
-					console))
+      if (!device_matches_console_spec (the_frame, device, console))
 	continue;
 
       /* Pick a window to start with.  */
@@ -2481,7 +2460,7 @@ window_loop (enum window_loop type,
 
 	  /* Pick the next window now, since some operations will delete
 	     the current window.  */
-	  next_window = Fnext_window (w, mini ? Qt : Qnil, frame_arg, device);
+	  next_window = Fnext_window (w, mini ? Qt : Qnil, frame_arg, Qt);
 
 	  /* #### Still needed ?? */
 	  /* Given the outstanding quality of the rest of this code,
@@ -3184,9 +3163,7 @@ BUFFER can be a buffer or buffer name.
 			 make_int (XBUFFER (buffer)->last_window_start),
 			 buffer);
   Fset_marker (w->sb_point, w->start[CURRENT_DISP], buffer);
-  /* set start_at_line_beg correctly. GE */
-  w->start_at_line_beg = beginning_of_line_p (XBUFFER (buffer),
-					      marker_position (w->start[CURRENT_DISP]));  
+  w->start_at_line_beg = 0;
   w->force_start = 0;           /* Lucid fix */
   SET_LAST_MODIFIED (w, 1);
   SET_LAST_FACECHANGE (w);
@@ -3204,7 +3181,7 @@ Select WINDOW.  Most editing will apply to WINDOW's buffer.
 The main editor command loop selects the buffer of the selected window
 before each command.
 
-With non-nil optional argument NORECORD, do not modify the
+With non-nil optional argument `norecord', do not modify the
 global or per-frame buffer ordering.
 */
        (window, norecord))
@@ -3366,7 +3343,7 @@ make_dummy_parent (Lisp_Object window)
 DEFUN ("split-window", Fsplit_window, 0, 3, "", /*
 Split WINDOW, putting SIZE lines in the first of the pair.
 WINDOW defaults to selected one and SIZE to half its size.
-If optional third arg HORFLAG is non-nil, split side by side
+If optional third arg HOR-FLAG is non-nil, split side by side
 and put SIZE columns in the first of the pair.
 */
        (window, chsize, horflag))
@@ -3380,7 +3357,7 @@ and put SIZE columns in the first of the pair.
   if (NILP (window))
     window = Fselected_window (Qnil);
   else
-    CHECK_LIVE_WINDOW (window);
+    CHECK_WINDOW (window);
 
   o = XWINDOW (window);
   f = XFRAME (WINDOW_FRAME (o));
@@ -4322,7 +4299,7 @@ If WINDOW is nil, the selected window is used.
   if (NILP (window))
     window = Fselected_window (Qnil);
   else
-    CHECK_LIVE_WINDOW (window);
+    CHECK_WINDOW (window);
   w = XWINDOW (window);
   b = XBUFFER (w->buffer);
 
@@ -4449,7 +4426,7 @@ map_windows_1 (Lisp_Object window,
    non-zero, the mapping is halted.  Otherwise, map_windows() maps
    over all windows in F.
 
-   If MAPFUN creates or deletes windows, the behavior is undefined.  */
+   If MAPFUN creates or deletes windows, the behaviour is undefined.  */
 
 int
 map_windows (struct frame *f, int (*mapfun) (struct window *w, void *closure),
@@ -4639,8 +4616,8 @@ struct saved_window
 struct window_config
 {
   struct lcrecord_header header;
-  /*  int frame_width; No longer needed, JV
-      int frame_height; */
+  int frame_width;
+  int frame_height;
 #if 0 /* FSFmacs */
   Lisp_Object selected_frame;
 #endif
@@ -4648,7 +4625,6 @@ struct window_config
   Lisp_Object current_buffer;
   Lisp_Object minibuffer_scroll_window;
   Lisp_Object root_window;
-  int minibuf_height; /* 0 = no minibuffer, <0, size in lines, >0 in pixels */
   /* Record the values of window-min-width and window-min-height
      so that window sizes remain consistent with them.  */
   int min_width, min_height;
@@ -4780,10 +4756,9 @@ window_config_equal (Lisp_Object conf1, Lisp_Object conf2)
 	EQ (fig1->current_window,	    fig2->current_window) &&
 	EQ (fig1->current_buffer,	    fig2->current_buffer) &&
 	EQ (fig1->root_window,		    fig2->root_window) &&
-	EQ (fig1->minibuffer_scroll_window, fig2->minibuffer_scroll_window)))
-	/* &&
+	EQ (fig1->minibuffer_scroll_window, fig2->minibuffer_scroll_window) &&
 	fig1->frame_width  == fig2->frame_width &&
-	fig1->frame_height == fig2->frame_height)) */
+	fig1->frame_height == fig2->frame_height))
     return 0;
 
   for (i = 0; i < fig1->saved_windows_count; i++)
@@ -4879,15 +4854,8 @@ by `current-window-configuration' (which see).
   struct frame *f;
   struct gcpro gcpro1;
   Lisp_Object old_window_config;
-  /*  int previous_frame_height;
-      int previous_frame_width;*/
-  int previous_pixel_top;
-  int previous_pixel_height;
-  int previous_pixel_left;
-  int previous_pixel_width;
-  int previous_minibuf_height, previous_minibuf_top,previous_minibuf_width;
-  int real_font_height;
-  int converted_minibuf_height,target_minibuf_height; 
+  int previous_frame_height;
+  int previous_frame_width;
   int specpdl_count = specpdl_depth ();
 
   GCPRO1 (configuration);
@@ -4952,20 +4920,6 @@ by `current-window-configuration' (which see).
 
       mark_windows_in_use (f, 1);
 
-#if 0
-      /* JV: This is bogus,
-	 First of all, the units are inconsistent. The frame sizes are measured
-	 in characters but the window sizes are stored in pixels. So if a 
-	 font size change happened between saving and restoring, the
-	 frame "sizes" maybe equal but the windows still should be
-	 resized. This is tickled alot by the new "character size
-	 stays constant" policy in 21.0. It leads to very weird
-	 glitches (and possibly craches when asserts are tickled).
-
-	 Just changing the units doesn't help because changing the
-	 toolbar configuration can also change the pixel positions.
-	 Luckily there is a much simpler way of doing this, see below.
-       */
       previous_frame_width = FRAME_WIDTH (f);
       previous_frame_height = FRAME_HEIGHT (f);
       /* If the frame has been resized since this window configuration was
@@ -4975,37 +4929,7 @@ by `current-window-configuration' (which see).
       if (config->frame_height != FRAME_HEIGHT (f)
 	  || config->frame_width != FRAME_WIDTH (f))
 	change_frame_size (f, config->frame_height, config->frame_width, 0);
-#endif
-      
-      previous_pixel_top = XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_top;
-      previous_pixel_height = XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_height;
-      previous_pixel_left = XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_left;
-      previous_pixel_width = XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_width;
 
-      /* remember some properties of the minibuffer */
-
-      default_face_height_and_width (frame, &real_font_height, 0);
-      assert(real_font_height > 0);
-  
-      if (FRAME_HAS_MINIBUF_P (f) && ! FRAME_MINIBUF_ONLY_P (f))
-	{
-	  previous_minibuf_height
-	    = XWINDOW(FRAME_MINIBUF_WINDOW(f))->pixel_height;
-	  previous_minibuf_top
-	    = XWINDOW(FRAME_MINIBUF_WINDOW(f))->pixel_top;
-	  previous_minibuf_width
-	    = XWINDOW(FRAME_MINIBUF_WINDOW(f))->pixel_width;
-	}
-      else
-	{
-	  previous_minibuf_height = 0;
-	  previous_minibuf_width = 0;
-	}
-      converted_minibuf_height =
-	(previous_minibuf_height % real_font_height) == 0 ?
-	- (previous_minibuf_height / real_font_height ) :    /* lines */
-	    previous_minibuf_height;   /* pixels */
-           
       /* Temporarily avoid any problems with windows that are smaller
 	 than they are supposed to be.  */
       window_min_height = 1;
@@ -5171,61 +5095,11 @@ by `current-window-configuration' (which see).
 	 currently selected, or just set the selected window of the
 	 window config's frame. */
 
-#if 0
       /* Set the frame height to the value it had before this function.  */
       if (previous_frame_height != FRAME_HEIGHT (f)
 	  || previous_frame_width != FRAME_WIDTH (f))
 	change_frame_size (f, previous_frame_height, previous_frame_width, 0);
-#endif
-      /* We just reset the size and position of the minibuffer, to its old
-	 value, which needn't be valid. So we do some magic to see which value
-	 to actually take. Then we set it.
 
-	 The magic:
-	 We take the old value if is in the same units but differs from the
-	 current value.
-
-         #### Now we get more cases correct then ever before, but
-	 are we treating all? For instance what if the frames minibuf window
-	 is no longer the same one? 
-      */
-      target_minibuf_height = previous_minibuf_height;
-      if (converted_minibuf_height &&
-	  (converted_minibuf_height * config->minibuf_height) > 0 &&
-	  (converted_minibuf_height !=  config->minibuf_height))
-	{
-	  target_minibuf_height = config->minibuf_height < 0 ?
-	    - (config->minibuf_height * real_font_height) :
-	    config->minibuf_height;
-	  target_minibuf_height =
-	    max(target_minibuf_height,real_font_height);
-	}
-      if (previous_minibuf_height)
-	{
-	  XWINDOW (FRAME_MINIBUF_WINDOW (f))->pixel_top
-	    = previous_minibuf_top -
-	          (target_minibuf_height - previous_minibuf_height);
-	  set_window_pixheight (FRAME_MINIBUF_WINDOW (f),
-				target_minibuf_height, 0);
-	  set_window_pixwidth  (FRAME_MINIBUF_WINDOW (f),
-			    previous_minibuf_width, 0);
-	}
-	
-      /* This is a better way to deal with frame resizing, etc.
-	 What we _actually_ want is for the old (just restored)
-	 root window to fit
-	 into the place of the new one. So we just do that. Simple! */
-      XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_top = previous_pixel_top;
-      /* Note that this function also updates the subwindow
-	 "pixel_top"s */
-      set_window_pixheight (FRAME_ROOT_WINDOW (f),
-	  previous_pixel_height -
-		  (target_minibuf_height - previous_minibuf_height), 0);
-      XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_left = previous_pixel_left;
-      /* Note that this function also updates the subwindow
-	 "pixel_left"s */
-      set_window_pixwidth (FRAME_ROOT_WINDOW (f), previous_pixel_width, 0);
-      
       /* If restoring in the current frame make the window current,
 	 otherwise just update the frame selected_window slot to be
 	 the restored current_window. */
@@ -5440,8 +5314,6 @@ its value is -not- saved.
   struct frame *f = decode_frame (frame);
   struct window_config *config;
   int n_windows = count_windows (XWINDOW (FRAME_ROOT_WINDOW (f)));
-  int minibuf_height;
-  int real_font_height;
 
   if (n_windows <= countof (Vwindow_configuration_free_list))
     config = XWINDOW_CONFIGURATION (allocate_managed_lcrecord
@@ -5453,9 +5325,9 @@ its value is -not- saved.
       alloc_lcrecord (sizeof_window_config_for_n_windows (n_windows),
 		      lrecord_window_configuration);
   XSETWINDOW_CONFIGURATION (result, config);
-  /*
+
   config->frame_width = FRAME_WIDTH (f);
-  config->frame_height = FRAME_HEIGHT (f); */
+  config->frame_height = FRAME_HEIGHT (f);
   config->current_window = FRAME_SELECTED_WINDOW (f);
   XSETBUFFER (config->current_buffer, current_buffer);
   config->minibuffer_scroll_window = Vminibuffer_scroll_window;
@@ -5464,22 +5336,6 @@ its value is -not- saved.
   config->min_width = window_min_width;
   config->saved_windows_count = n_windows;
   save_window_save (FRAME_ROOT_WINDOW (f), config, 0);
-
-  /* save the minibuffer height using the heuristics from
-     change_frame_size_1 */
-  
-  XSETFRAME (frame, f); /* frame could have been nil ! */
-  default_face_height_and_width (frame, &real_font_height, 0);
-  assert(real_font_height > 0);
-  
-  if (FRAME_HAS_MINIBUF_P (f) && ! FRAME_MINIBUF_ONLY_P (f))
-    minibuf_height = XWINDOW(FRAME_MINIBUF_WINDOW(f))->pixel_height;
-  else
-    minibuf_height = 0;
-  config->minibuf_height = (minibuf_height % real_font_height) == 0 ?
-    - (minibuf_height / real_font_height ) :    /* lines */
-    minibuf_height;   /* pixels */
-
   return result;
 }
 
@@ -5588,7 +5444,6 @@ syms_of_window (void)
   DEFSUBR (Fwindow_previous_child);
   DEFSUBR (Fwindow_parent);
   DEFSUBR (Fwindow_lowest_p);
-  DEFSUBR (Fwindow_truncated_p);
   DEFSUBR (Fwindow_highest_p);
   DEFSUBR (Fwindow_leftmost_p);
   DEFSUBR (Fwindow_rightmost_p);
@@ -5811,7 +5666,7 @@ This is a specifier; use `set-specifier' to change it.
   {
     Lisp_Object fb = Qnil;
 #ifdef HAVE_TTY
-    fb = Fcons (Fcons (list1 (Qtty), make_int (1)), fb);
+    fb = Fcons (Fcons (list1 (Qtty), Qzero), fb);
 #endif
 #ifdef HAVE_X_WINDOWS
     fb = Fcons (Fcons (list1 (Qx), make_int (3)), fb);

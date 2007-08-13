@@ -485,10 +485,6 @@ arrow_same_end (XlwScrollBarWidget w)
 }
 
 /*-------------------------- GC and Pixel allocation --------------------*/
-#ifndef XmUNSPECIFIED_PIXMAP
-#define XmUNSPECIFIED_PIXMAP 2
-#endif
-
 static GC
 get_gc (XlwScrollBarWidget w, Pixel fg, Pixel bg, Pixmap pm)
 {
@@ -510,15 +506,8 @@ get_gc (XlwScrollBarWidget w, Pixel fg, Pixel bg, Pixmap pm)
   values.background = bg;
   values.fill_style = FillOpaqueStippled;
   values.stipple    = pm;
-/*  mask = GCForeground | GCBackground |
-    (pm == None ? 0 : GCStipple | GCFillStyle); gtb */
-  if (pm != None && pm != 0 && pm != XmUNSPECIFIED_PIXMAP)
-     values.stipple = pm;
-  else
-     values.stipple = None;
   mask = GCForeground | GCBackground |
-   (values.stipple == None ? 0 : GCStipple | GCFillStyle);
-
+    (pm == None ? 0 : GCStipple | GCFillStyle);
   return XtGetGC((Widget) w, mask, &values);
 }
 

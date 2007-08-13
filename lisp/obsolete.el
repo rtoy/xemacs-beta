@@ -74,8 +74,6 @@ setting NEWVAR and marks OLDVAR as provided for compatibility only."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; device stuff
 
 (make-compatible-variable 'window-system "use (console-type)")
-(make-obsolete-variable 'meta-flag
-			"use the `set-input-mode' function instead.")
 
 (defun x-display-color-p (&optional device)
   "Return t if DEVICE is a color device."
@@ -98,159 +96,18 @@ setting NEWVAR and marks OLDVAR as provided for compatibility only."
 (define-compatible-function-alias 'x-display-planes       'device-bitplanes)
 (define-compatible-function-alias 'x-display-color-cells  'device-color-cells)
 
-(define-obsolete-function-alias 'baud-rate 'device-baud-rate)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; events
 
 (define-obsolete-function-alias 'menu-event-p 'misc-user-event-p)
 (make-obsolete-variable 'unread-command-char 'unread-command-events)
-(make-obsolete 'sleep-for-millisecs "use sleep-for with a float")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; extents
 
-(defun extent-data (extent)
-  "Obsolete.  Return the `data' property of EXTENT."
-  (extent-property extent 'data))
 (make-obsolete 'set-window-dot 'set-window-point)
-
-(defun set-extent-data (extent data)
-  "Obsolete.  Set the `data' property of EXTENT."
-  (set-extent-property extent 'data data))
-(make-obsolete 'set-extent-data 'set-extent-property)
 
 (define-obsolete-function-alias 'extent-buffer 'extent-object)
 
-(defun set-extent-attribute (extent attr &optional clearp)
-  ;; obsoleteness info will be displayed, so no need for docstring.
-  (cond ((eq attr 'write-protected)
-         (set-extent-property extent 'read-only t))
-        ((eq attr 'unhighlight)
-         (set-extent-property extent 'mouse-face nil))
-        ((eq attr 'writable)
-         (set-extent-property extent 'read-only nil))
-        ((eq attr 'visible)
-         (set-extent-property extent 'invisible nil))
-        (t
-         (set-extent-property extent attr t))))
-(make-obsolete 'set-extent-attribute 'set-extent-property)
-
-(defun extent-glyph (extent)
-  ;; obsoleteness info will be displayed, so no need for docstring.
-  (or (extent-begin-glyph extent)
-      (extent-end-glyph extent)))
-(make-obsolete 'extent-glyph
-	       "use `extent-begin-glyph' or `extent-end-glyph' instead.")
-
-(defun extent-layout (extent)
-  ;; obsoleteness info will be displayed, so no need for docstring.
-  (extent-begin-glyph-layout extent))
-(make-obsolete 'extent-layout
-       "use `extent-begin-glyph-layout' or `extent-end-glyph-layout' instead.")
-
-(defun set-extent-layout (extent layout)
-  ;; obsoleteness info will be displayed, so no need for docstring.
-  (set-extent-begin-glyph-layout extent layout))
-(make-obsolete 'set-extent-layout
-       "use `set-extent-begin-glyph-layout' or `set-extent-end-glyph-layout' instead.")
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; frames
-
-(define-obsolete-variable-alias 'select-screen-hook 'select-frame-hook)
-(define-obsolete-variable-alias 'deselect-screen-hook 'deselect-frame-hook)
-(define-obsolete-variable-alias 'auto-raise-screen 'auto-raise-frame)
-(define-obsolete-variable-alias 'auto-lower-screen 'auto-lower-frame)
-(define-obsolete-variable-alias 'get-screen-for-buffer-default-screen-name
-  'get-frame-for-buffer-default-frame-name)
-
-(define-obsolete-function-alias 'buffer-dedicated-screen
-  'buffer-dedicated-frame)
-(define-obsolete-function-alias 'deiconify-screen 'deiconify-frame)
-(define-obsolete-function-alias 'delete-screen 'delete-frame)
-(define-obsolete-function-alias 'event-screen 'event-frame)
-(define-obsolete-function-alias 'find-file-other-screen 'find-file-other-frame)
-(define-obsolete-function-alias 'find-file-read-only-other-screen
-  'find-file-read-only-other-frame)
-(define-obsolete-function-alias 'live-screen-p 'frame-live-p)
-(define-obsolete-function-alias 'screen-height 'frame-height)
-(define-obsolete-function-alias 'screen-iconified-p 'frame-iconified-p)
-(define-obsolete-function-alias 'screen-list 'frame-list)
-(define-obsolete-function-alias 'screen-live-p 'frame-live-p)
-(define-obsolete-function-alias 'screen-name 'frame-name)
-(define-obsolete-function-alias 'screen-parameters 'frame-parameters)
-(define-obsolete-function-alias 'screen-pixel-height 'frame-pixel-height)
-(define-obsolete-function-alias 'screen-pixel-width 'frame-pixel-width)
-(define-obsolete-function-alias 'screen-root-window 'frame-root-window)
-(define-obsolete-function-alias 'screen-selected-window 'frame-selected-window)
-(define-obsolete-function-alias 'screen-totally-visible-p
-  'frame-totally-visible-p)
-(define-obsolete-function-alias 'screen-visible-p 'frame-visible-p)
-(define-obsolete-function-alias 'screen-width 'frame-width)
-(define-obsolete-function-alias 'screenp 'framep)
-(define-obsolete-function-alias 'get-screen-for-buffer 'get-frame-for-buffer)
-(define-obsolete-function-alias 'get-screen-for-buffer-noselect
-  'get-frame-for-buffer-noselect)
-(define-obsolete-function-alias 'get-other-screen 'get-other-frame)
-(define-obsolete-function-alias 'iconify-screen 'iconify-frame)
-(define-obsolete-function-alias 'lower-screen 'lower-frame)
-(define-obsolete-function-alias 'mail-other-screen 'mail-other-frame)
-(define-obsolete-function-alias 'make-screen 'make-frame)
-(define-obsolete-function-alias 'make-screen-invisible 'make-frame-invisible)
-(define-obsolete-function-alias 'make-screen-visible 'make-frame-visible)
-(define-obsolete-function-alias 'modify-screen-parameters
-  'modify-frame-parameters)
-(define-obsolete-function-alias 'new-screen 'new-frame)
-(define-obsolete-function-alias 'next-screen 'next-frame)
-(define-obsolete-function-alias 'next-multiscreen-window
-  'next-multiframe-window)
-(define-obsolete-function-alias 'other-screen 'other-frame)
-(define-obsolete-function-alias 'previous-screen 'previous-frame)
-(define-obsolete-function-alias 'previous-multiscreen-window
-  'previous-multiframe-window)
-(define-obsolete-function-alias 'raise-screen 'raise-frame)
-(define-obsolete-function-alias 'redraw-screen 'redraw-frame)
-(define-obsolete-function-alias 'select-screen 'select-frame)
-(define-obsolete-function-alias 'selected-screen 'selected-frame)
-(define-obsolete-function-alias 'set-buffer-dedicated-screen
-  'set-buffer-dedicated-frame)
-(define-obsolete-function-alias 'set-screen-height 'set-frame-height)
-(define-obsolete-function-alias 'set-screen-position 'set-frame-position)
-(define-obsolete-function-alias 'set-screen-size 'set-frame-size)
-(define-obsolete-function-alias 'set-screen-width 'set-frame-width)
-(define-obsolete-function-alias 'show-temp-buffer-in-current-screen
-  'show-temp-buffer-in-current-frame)
-(define-obsolete-function-alias 'switch-to-buffer-other-screen
-  'switch-to-buffer-other-frame)
-(define-obsolete-function-alias 'visible-screen-list 'visible-frame-list)
-(define-obsolete-function-alias 'window-screen 'window-frame)
-(define-obsolete-function-alias 'x-set-screen-pointer
-  'set-frame-pointer)
-(define-obsolete-function-alias 'x-set-frame-pointer
-  'set-frame-pointer)
-
-(define-obsolete-variable-alias 'screen-title-format 'frame-title-format)
-(define-obsolete-variable-alias 'screen-icon-title-format
-  'frame-icon-title-format)
-(define-obsolete-variable-alias 'terminal-screen 'terminal-frame)
-(define-obsolete-variable-alias 'delete-screen-hook 'delete-frame-hook)
-(define-obsolete-variable-alias 'create-screen-hook 'create-frame-hook)
-(define-obsolete-variable-alias 'mouse-enter-screen-hook
-  'mouse-enter-frame-hook)
-(define-obsolete-variable-alias 'mouse-leave-screen-hook
-  'mouse-leave-frame-hook)
-(define-obsolete-variable-alias 'map-screen-hook 'map-frame-hook)
-(define-obsolete-variable-alias 'unmap-screen-hook 'unmap-frame-hook)
-(define-obsolete-variable-alias 'default-screen-alist 'default-frame-alist)
-(define-obsolete-variable-alias 'default-screen-name 'default-frame-name)
-(define-obsolete-variable-alias 'x-screen-defaults 'default-x-frame-alist)
-
-(defun x-create-screen (parms window-id)
-  ;; obsoleteness info will be displayed, so no need for docstring.
-  (if (not (eq 'x (device-type (selected-device))))
-      (error "Cannot create X frames on non-X device"))
-  (make-frame (append parms (list (list 'window-id window-id)))
-              (selected-device)))
-(make-obsolete 'x-create-screen 'make-frame)
-
 (defun frame-first-window (frame)
   "Return the topmost, leftmost window of FRAME.
 If omitted, FRAME defaults to the currently selected frame."
@@ -306,13 +163,6 @@ See `set-frame-properties' for built-in property names."
 (define-obsolete-function-alias 'list-faces-display 'edit-faces)
 (define-obsolete-function-alias 'list-faces 'face-list)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;; files
-
-(make-obsolete-variable 'trim-versions-without-asking 'delete-old-versions)
-;;; Old XEmacs name; kept around for compatibility.
-(define-obsolete-variable-alias 'after-write-file-hooks 'after-save-hook)
-(define-obsolete-function-alias 'truename 'file-truename)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; paths
 
 (defvar Info-default-directory-list nil
@@ -323,10 +173,8 @@ set Info-directory-list.")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; hooks
 
-(make-obsolete-variable 'auto-fill-hook 'auto-fill-function)
-(make-obsolete-variable 'blink-paren-hook 'blink-paren-function)
-(make-obsolete-variable 'lisp-indent-hook 'lisp-indent-function)
-(make-obsolete-variable 'comment-indent-hook 'comment-indent-function)
+(make-compatible-variable 'lisp-indent-hook 'lisp-indent-function)
+(make-compatible-variable 'comment-indent-hook 'comment-indent-function)
 (make-obsolete-variable 'temp-buffer-show-hook
 			'temp-buffer-show-function)
 (make-obsolete-variable 'inhibit-local-variables
@@ -373,14 +221,11 @@ set Info-directory-list.")
 ;; Can't make this obsolete.  easymenu depends on it.
 (make-compatible 'add-menu 'add-submenu)
 
-(define-obsolete-function-alias 'popup-menu-up-p 'popup-up-p)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; minibuffer
 
 (define-compatible-function-alias 'read-minibuffer
   'read-expression) ; misleading name
 (define-compatible-function-alias 'read-input 'read-string)
-(make-obsolete 'read-no-blanks-input 'read-string) ; mocklisp crud
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; misc
 
@@ -391,24 +236,15 @@ set Info-directory-list.")
 (define-obsolete-function-alias 'user-original-login-name 'user-login-name)
 
 ; old names
-(define-obsolete-function-alias 'wholenump 'natnump)
 (define-obsolete-function-alias 'show-buffer 'set-window-buffer)
 (define-obsolete-function-alias 'buffer-flush-undo 'buffer-disable-undo)
-(define-obsolete-function-alias 'eval-current-buffer 'eval-buffer)
-(define-obsolete-function-alias 'byte-code-function-p
+(make-compatible 'eval-current-buffer 'eval-buffer)
+(define-compatible-function-alias 'byte-code-function-p
   'compiled-function-p) ;FSFmacs
 
-;;(make-obsolete 'mod '%)	; mod and % are different now
-
-(make-obsolete 'ring-mod 'mod)
-
-(make-obsolete 'current-time-seconds 'current-time)
 ;; too bad there's not a way to check for aref, assq, and nconc
 ;; being called on the values of functions known to return keymaps,
 ;; or known to return vectors of events instead of strings...
-
-(define-obsolete-function-alias 'run-special-hook-with-args
-  'run-hook-with-args-until-success)
 
 (make-obsolete-variable 'executing-macro 'executing-kbd-macro)
 
@@ -443,20 +279,6 @@ set Info-directory-list.")
   (cdr (mouse-position (frame-device frame))))
 (make-obsolete 'read-mouse-position 'mouse-position)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;; `point'
-
-(define-obsolete-function-alias 'dot 'point)
-(define-obsolete-function-alias 'dot-marker 'point-marker)
-(define-obsolete-function-alias 'dot-min 'point-min)
-(define-obsolete-function-alias 'dot-max 'point-max)
-(define-obsolete-function-alias 'window-dot 'window-point)
-(define-obsolete-function-alias 'set-window-dot 'set-window-point)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;; processes
-
-(define-obsolete-function-alias 'send-string 'process-send-string)
-(define-obsolete-function-alias 'send-region 'process-send-region)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; redisplay
 
 (defun redraw-display (&optional device)
@@ -464,159 +286,10 @@ set Info-directory-list.")
       (mapcar 'redisplay-device (device-list))
     (redisplay-device device)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;; stuff replaced by specifiers
-
-(defun screen-scrollbar-width (&optional screen)
-  ;; specifier-specs is the inverse of set-specifier, but
-  ;; the way this function was defined, specifier-instance
-  ;; is closer.
-  (specifier-instance scrollbar-width (or screen (selected-frame))))
-(make-obsolete 'screen-scrollbar-width
-	       "use (specifier-instance scrollbar-width ...).")
-
-(defun set-screen-scrollbar-width (screen value)
-  (set-specifier scrollbar-width (cons screen value)))
-(make-obsolete 'set-screen-scrollbar-width
-	       "use (set-specifier scrollbar-width ...).")
-
-(defun set-screen-left-margin-width (value &optional screen)
-  (set-specifier left-margin-width
-		 (cons (or screen (selected-frame)) value)))
-(make-obsolete 'set-screen-left-margin-width
-	       "use (set-specifier left-margin-width ...).")
-
-(defun set-screen-right-margin-width (value &optional screen)
-  (set-specifier right-margin-width
-		 (cons (or screen (selected-frame)) value)))
-(make-obsolete 'set-screen-right-margin-width
-	       "use (set-specifier right-margin-width ...).")
-
-(defun set-buffer-left-margin-width (value &optional buffer)
-  (set-specifier left-margin-width (cons (or buffer (current-buffer)) value)))
-(make-obsolete 'set-buffer-left-margin-width
-	       "use (set-specifier left-margin-width ...).")
-
-(defun set-buffer-right-margin-width (value &optional buffer)
-  (set-specifier right-margin-width (cons (or buffer (current-buffer)) value)))
-(make-obsolete 'set-buffer-right-margin-width
-	       "use (set-specifier right-margin-width ...).")
-
-(defun screen-left-margin-width (&optional screen)
-  (specifier-specs left-margin-width (or screen (selected-frame))))
-(make-obsolete 'screen-left-margin-width
-	       "use (specifier-specs left-margin-width ...).")
-
-(defun screen-right-margin-width (&optional screen)
-  (specifier-specs right-margin-width (or screen (selected-frame))))
-(make-obsolete 'screen-right-margin-width
-	       "use (specifier-specs right-margin-width ...).")
-
-(defun buffer-left-margin-width (&optional buffer)
-  (specifier-specs left-margin-width (or buffer (current-buffer))))
-(make-obsolete 'buffer-left-margin-width
-	       "use (specifier-specs left-margin-width ...).")
-
-(defun buffer-right-margin-width (&optional buffer)
-  (specifier-specs right-margin-width (or buffer (current-buffer))))
-(make-obsolete 'buffer-right-margin-width
-	       "use (specifier-specs right-margin-width ...).")
-
-(defun x-set-frame-icon-pixmap (frame image-instance &optional mask-ignored)
-  "Set the icon of the given frame to the given image instance,
-which should be an image instance object (as returned by
-`make-image-instance'), a glyph object (as returned by `make-glyph'),
-or nil.  If a glyph object is given, the glyph will be instantiated on
-the frame to produce an image instance object.
-
-If the given image instance has a mask, that will be used as the icon mask;
-however, not all window managers support this.
-
-The window manager is also not required to support color pixmaps,
-only bitmaps (one plane deep).
-
-Optional third argument is ignored.  If you're concerned about this
-incomplete backwards incompatibility, you should convert your code
-to use `frame-icon-glyph' -- you can specify a mask for an XBM file
-using the standard image instantiator format."
-  (if (glyphp image-instance)
-      (setq image-instance (glyph-image-instance image-instance frame)))
-  (set-glyph-image frame-icon-glyph image-instance frame))
-(make-obsolete 'x-set-frame-icon-pixmap
-	       "use (set-glyph-image frame-icon-glyph ...).")
-(defalias 'x-set-screen-icon-pixmap 'x-set-frame-icon-pixmap)
-(make-obsolete 'x-set-screen-icon-pixmap
-	       "use (set-glyph-image frame-icon-glyph ...).")
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; window-system objects
 
-(define-obsolete-function-alias 'pixel-name 'color-name)
-
-;; compatibility function -- a front-end to make-glyph
-(defun make-pixmap (name &optional locale)
-  "Create a glyph with NAME as an image specifier and locale LOCALE.
-The file should be in `XBM' or `XPM' format.
-If the XBMLANGPATH environment variable is set, it will be searched for
- matching files.  Next, the directories listed in the `x-bitmap-file-path'
- variable will be searched (this variable is initialized from the
- \"*bitmapFilePath\" resource).  Finally, the XEmacs etc/ directory
- (the value of `data-directory') will be searched.
-The file argument may also be a list of the form (width height data) where
- width and height are the size in pixels, and data is a string, containing
- the raw bits of the bitmap.  (Bitmaps specified this way can only be one bit
- deep.)
-If compiled with support for XPM, the file argument may also be a string
- which is the contents of an XPM file (that is, a string beginning with the
- characters \"/* XPM */\"; see the XPM documentation).
-The optional second argument is the specifier locale for this pixmap glyph.
-The returned object is a glyph object.  To get the actual pixmap object for
-a given frame, use the function `glyph-instance'."
-  (if (consp name)
-      (setq name (vector 'xbm :data name)))
-  (make-glyph name))
-(make-obsolete 'make-pixmap 'make-glyph)
-
-(defun make-cursor (name &optional fg bg device)
-  "Creates a pointer image instance with NAME as an image specifier.
-The optional second and third arguments are the foreground and background
- colors.  They may be color name strings or `pixel' objects.
-The optional fourth argument is the device on which to allocate the cursor
- (defaults to the selected device).
-This allocates a new pointer in the X server, and signals an error if the
- pointer is unknown or cannot be allocated.
-
-A pointer name can take many different forms.  It can be:
- - any of the standard cursor names from appendix B of the Xlib manual
-   (also known as the file <X11/cursorfont.h>) minus the XC_ prefix;
- - the name of a font, and glyph index into it of the form
-   \"FONT fontname index [[mask-font] mask-index]\";
- - the name of a bitmap or pixmap file;
- - or an image instance object, as returned by `make-image-instance'.
-
-If it is an image instance or pixmap file, and that pixmap comes with a
- mask, then that mask will be used.  If it is an image instance, it must
- have only one plane, since X pointers may only have two colors.  If it is a
- pixmap file, then the file will be read in monochrome.
-
-If it is a bitmap file, and if a bitmap file whose name is the name of the
- pointer with \"msk\" or \"Mask\" appended exists, then that second bitmap
- will be used as the mask.  For example, a pair of files might be named
- \"pointer.xbm\" and \"pointer.xbmmsk\".
-
-The returned object is a normal, first-class lisp object.  The way you
-`deallocate' the pointer is the way you deallocate any other lisp object:
-you drop all pointers to it and allow it to be garbage collected.  When
-these objects are GCed, the underlying X data is deallocated as well."
-  ;; #### ignores fg and bg
-  (make-image-instance name device '(pointer)))
-(make-obsolete 'make-cursor 'make-image-instance)
-
-(define-obsolete-function-alias 'pixmap-width 'glyph-width)
-(define-obsolete-function-alias 'pixmap-contributes-to-line-height-p
-  'glyph-contrib-p-instance)
-(define-obsolete-function-alias 'set-pixmap-contributes-to-line-height
-  'set-glyph-contrib-p)
-
 ;; the functionality of column.el has been moved into C
+;; Function obsoleted for XEmacs 20.0/February 1997.
 (defalias 'display-column-mode 'column-number-mode)
 
 (defun x-color-values  (color &optional frame)
@@ -673,7 +346,7 @@ Multibyte characters are concerned."
 
 ;; ### This function is not compatible with FSF in some cases.  Hard
 ;; to fix, because it is hard to trace the logic of the FSF function.
-;; In case we need the exact behavior, we can always copy the FSF
+;; In case we need the exact behaviour, we can always copy the FSF
 ;; version, which is very long and does lots of unnecessary stuff.
 (defun truncate-string-to-width (str end-column &optional start-column padding)
   "Truncate string STR to end at column END-COLUMN.

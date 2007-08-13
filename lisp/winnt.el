@@ -39,6 +39,12 @@
 ;; #### Oh if we had an alist of shells and their command switches.
 (setq shell-command-switch "/c")
 
+;; For appending suffixes to directories and files in shell completions.
+(defun nt-shell-mode-hook ()
+  (setq comint-completion-addsuffix '("\\" . " ")
+	comint-process-echoes t))
+(add-hook 'shell-mode-hook 'nt-shell-mode-hook)
+
 ;; Use ";" instead of ":" as a path separator (from files.el).
 (setq path-separator ";")
 
@@ -70,7 +76,7 @@ before calling this function.  You can redefine this for customization.
 See also `auto-save-file-name-p'."
   (let ((name (original-make-auto-save-file-name))
 	(start 0))
-    ;; destructively replace occurrences of * or ? with $
+    ;; destructively replace occurences of * or ? with $
     (while (string-match "[?*]" name start)
       (aset name (match-beginning 0) ?$)
       (setq start (1+ (match-end 0))))
@@ -106,8 +112,8 @@ See also `auto-save-file-name-p'."
   '(("^.?.?sh\\." . nt-quote-args-double-quote))
   "An alist for determining proper argument quoting given executable file name.
 Car of each cons must be a string, a regexp against which a file name sans 
-directory is matched.  Cdr is a function symbol.  The list is matched in
-forward order, and matching entry cdr's function is called with a list of
+directory is matched.  Cdr is a function symbol.  The list is mathced in
+forward order, and mathcing entry cdr's funcrion is called with a list of
 strings, process arguments.  It must return a string which is passed to
 the newly created process.
 

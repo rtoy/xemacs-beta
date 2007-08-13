@@ -41,7 +41,7 @@
 ;;; Code:
 
 (defgroup minibuffer nil
-  "Controling the behavior of the minibuffer."
+  "Controling the behaviour of the minibuffer."
   :group 'environment)
 
 
@@ -52,7 +52,7 @@
 
 (defcustom minibuffer-history-uniquify t
   "*Non-nil means when adding an item to a minibuffer history, remove
-previous occurrences of the same item from the history list first,
+previous occurances of the same item from the history list first,
 rather than just consing the new element onto the front of the list."
   :type 'boolean
   :group 'minibuffer)
@@ -242,7 +242,6 @@ in `substitute-in-file-name'."
        (not (save-excursion (search-backward "//" nil t)))
        (delete-region (point-min) (point)))
   (insert ?~))
-
 
 (defvar read-file-name-map
   (let ((map (make-sparse-keymap 'read-file-name-map)))
@@ -448,14 +447,12 @@ See also the variable completion-highlight-first-word-only for control over
 		 (insert initial-contents)
 		 (setq current-minibuffer-contents initial-contents
 		       current-minibuffer-point (point))))
-           (use-local-map (help-keymap-with-help-key
-			   (or keymap minibuffer-local-map)
-			   minibuffer-help-form))
+           (use-local-map (or keymap minibuffer-local-map))
            (let ((mouse-grabbed-buffer
 		  (and minibuffer-smart-completion-tracking-behavior
 		       (current-buffer)))
                  (current-prefix-arg current-prefix-arg)
-;;                 (help-form minibuffer-help-form)
+                 (help-form minibuffer-help-form)
                  (minibuffer-history-variable (cond ((not _history_)
                                                      'minibuffer-history)
                                                     ((consp _history_)
@@ -1387,17 +1384,6 @@ is a string to insert in the minibuffer before reading.
 Third arg HISTORY, if non-nil, specifies a history list."
   (eval (read-expression prompt initial-contents history)))
 
-;;;#### Screw this crock!!
-;(defun read-no-blanks-input (prompt &optional initial-contents)
-; "Read a string from the terminal, not allowing blanks.
-;Prompt with PROMPT.  If non-nil, optional second arg INITIAL-CONTENTS
-;is a string to insert in the minibuffer before reading."
-;  (let ((minibuffer-completion-table nil))
-; (read-from-minibuffer prompt
-;                       initial-contents
-;                       minibuffer-local-ns-map
-;                       nil)))
-
 ;; The name `command-history' is already taken
 (defvar read-command-history '())
 
@@ -1466,7 +1452,6 @@ only existing buffer names are allowed."
 		      (read-from-minibuffer
 		       prompt (if num (prin1-to-string num)) nil t
 		       t)) ;no history
-		  (input-error nil)
 		  (invalid-read-syntax nil)
 		  (end-of-file nil)))
       (or (funcall pred num) (beep)))
@@ -1640,7 +1625,7 @@ only existing buffer names are allowed."
 This will prompt with a dialog box if appropriate, according to
  `should-use-dialog-box-p'.
 Value is not expanded---you must call `expand-file-name' yourself.
-Value is subject to interpretation by `substitute-in-file-name' however.
+Value is subject to interpreted by substitute-in-file-name however.
 Default name to DEFAULT if user enters a null string.
  (If DEFAULT is omitted, the visited file name is used,
   except that if INITIAL-CONTENTS is specified, that combined with DIR is

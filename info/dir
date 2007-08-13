@@ -34,15 +34,15 @@ File: dir	Node: Top	This is the top of the INFO tree
 
 * Menu:
 
-XEmacs 21
+XEmacs 21.2
 ===========
 * Info: (info).	     Documentation browsing system.
 * XEmacs::	     The extensible user-friendly self-documenting text editor.
-		     This manual is for XEmacs 21.
+		     This manual is for XEmacs 21.2
 * Lispref::	     XEmacs Lisp technical reference.
-		     This manual is for XEmacs 21.
-* New-Users-Guide::  XEmacs New User's Guide for XEmacs 21.
-* XEmacs-FAQ::	     XEmacs Frequently Asked Questions for XEmacs 21.
+		     This manual is for XEmacs 21.2.
+* New-Users-Guide::  XEmacs New User's Guide for XEmacs 21.2.
+* XEmacs-FAQ::	     XEmacs Frequently Asked Questions for 21.2.
 * Internals::	     Guide to the internals of XEmacs.
 
 

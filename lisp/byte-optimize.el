@@ -1344,7 +1344,7 @@
 (defconst byte-after-unbind-ops
    '(byte-constant byte-dup
      byte-symbolp byte-consp byte-stringp byte-listp byte-numberp byte-integerp
-     byte-eq byte-not
+     byte-eq byte-equal byte-not
      byte-cons byte-list1 byte-list2	; byte-list3 byte-list4
      byte-interactive-p)
    ;; How about other side-effect-free-ops?  Is it safe to move an

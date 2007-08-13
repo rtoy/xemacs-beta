@@ -573,15 +573,8 @@ vmotion_1 (struct window *w, Bufpos orig, int vtarget,
   /* #### This assertion must be true before the if statements are hit
      but may possibly be wrong after the call to
      point_in_line_start_cache if orig is outside of the visible
-     region of the buffer.  Handle this.
-
-     This occurs sometimes if scroll-step is non-zero and the window
-     is very small.  In this case it's not possible to lay out any lines
-     in the window and point_in_line_start_cache returns -1 because
-     the line cache is empty.  In this case we will just return the
-     original point and hope for the best. */
-  if (elt < 0)
-    return orig;
+     region of the buffer.  Handle this. */
+  assert (elt >= 0);
 
   /* Moving downward. */
   if (vtarget > 0)
@@ -672,7 +665,7 @@ Lisp_Object vertical_motion_1 (Lisp_Object lines, Lisp_Object window,
   if (NILP (window))
     window = Fselected_window (Qnil);
 
-  CHECK_LIVE_WINDOW (window);
+  CHECK_WINDOW (window);
   CHECK_INT (lines);
 
   selected = (EQ (window, Fselected_window (Qnil)));
@@ -746,7 +739,7 @@ vmotion_pixels (Lisp_Object window, Bufpos start, int pixels, int how,
   if (NILP (window))
     window = Fselected_window (Qnil);
 
-  CHECK_LIVE_WINDOW (window);
+  CHECK_WINDOW (window);
   w = XWINDOW (window);
 
   eobuf = BUF_ZV (XBUFFER (w->buffer));
@@ -849,7 +842,7 @@ that the motion should be as close as possible to PIXELS.
   if (NILP (window))
     window = Fselected_window (Qnil);
 
-  CHECK_LIVE_WINDOW (window);
+  CHECK_WINDOW (window);
   CHECK_INT (pixels);
 
   selected = (EQ (window, Fselected_window (Qnil)));

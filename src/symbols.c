@@ -98,6 +98,8 @@ mark_symbol (Lisp_Object obj, void (*markobj) (Lisp_Object))
 
   ((markobj) (sym->value));
   ((markobj) (sym->function));
+  /* No need to mark through ->obarray, because it only holds nil or t.  */
+  /*((markobj) (sym->obarray));*/
   XSETSTRING (pname, sym->name);
   ((markobj) (pname));
   if (!symbol_next (sym))
@@ -190,9 +192,17 @@ it defaults to the value of `obarray'.
   if (purify_flag && ! purified (str))
     str = make_pure_pname (XSTRING_DATA (str), len, 0);
   sym = Fmake_symbol (str);
-  /* FSFmacs places OBARRAY here, but it we know better.  See lisp.h
-     for a little explanation.  */
-  XSYMBOL_OBARRAY_FLAGS (sym) = 1 | (2 * EQ (Vobarray, obarray));
+  /* FSFmacs places OBARRAY here, but it is pointless because we do
+     not mark through this slot, so it is not usable later (because
+     the obarray might have been collected).  Marking through the
+     ->obarray slot is an even worse idea, because it would keep
+     obarrays from being collected because of symbols pointed to them.
+
+     NOTE: We place Qt here only if OBARRAY is actually Vobarray.  It
+     is safer to do it this way, to avoid hosing with symbols within
+     pure objects.  */
+  if (EQ (obarray, Vobarray))
+    XSYMBOL (sym)->obarray = Qt;
 
   if (SYMBOLP (*ptr))
     symbol_next (XSYMBOL (sym)) = XSYMBOL (*ptr);
@@ -277,13 +287,7 @@ OBARRAY defaults to the value of the variable `obarray'
 	    }
 	}
     }
-  if (XSYMBOL_OBARRAY_FLAGS (tem) & 4)
-    {
-      /* Symbol was stored somewhere in a pure structure, so it needs
-         at least one existing reference.  Make one.  */
-      Fputhash (tem, Qnil, Vpure_uninterned_symbol_table);
-    }
-  XSYMBOL_OBARRAY_FLAGS (tem) &= ~3;
+  XSYMBOL (tem)->obarray = Qnil;
   return Qt;
 }
 
@@ -411,15 +415,11 @@ OBARRAY defaults to the value of `obarray'.
 */
        (function, obarray))
 {
-  struct gcpro gcpro1;
-
   if (NILP (obarray))
     obarray = Vobarray;
   obarray = check_obarray (obarray);
 
-  GCPRO1 (obarray);
   map_obarray (obarray, mapatoms_1, &function);
-  UNGCPRO;
   return Qnil;
 }
 
@@ -461,17 +461,14 @@ Return list of symbols found.
        (regexp, predicate))
 {
   struct appropos_mapper_closure closure;
-  struct gcpro gcpro1;
 
   CHECK_STRING (regexp);
 
   closure.regexp = regexp;
   closure.predicate = predicate;
   closure.accumulation = Qnil;
-  GCPRO1 (closure.accumulation);
   map_obarray (Vobarray, apropos_mapper, &closure);
   closure.accumulation = Fsort (closure.accumulation, Qstring_lessp);
-  UNGCPRO;
   return closure.accumulation;
 }
 
@@ -564,7 +561,7 @@ reject_constant_symbols (Lisp_Object sym, Lisp_Object newval, int function_p,
 
   if (symbol_is_constant (sym, val)
       || (SYMBOL_IS_KEYWORD (sym) && !EQ (newval, sym)
-	  && (XSYMBOL_OBARRAY_FLAGS (sym) & 2)))
+	  && !NILP (XSYMBOL (sym)->obarray)))
     signal_error (Qsetting_constant,
 		  UNBOUNDP (newval) ? list1 (sym) : list2 (sym, newval));
 }
@@ -3165,7 +3162,6 @@ init_symbols_once_early (void)
   XSYMBOL (Qnil)->name->plist = Qnil;
   XSYMBOL (Qnil)->value = Qnil; /* Nihil ex nihil */
   XSYMBOL (Qnil)->plist = Qnil;
-  XSYMBOL_OBARRAY_FLAGS (Qnil) = 1 | 2;
 
   Vobarray = make_vector (OBARRAY_SIZE, Qzero);
   initial_obarray = Vobarray;
@@ -3174,6 +3170,7 @@ init_symbols_once_early (void)
   {
     int hash = hash_string (string_data (XSYMBOL (Qnil)->name), 3);
     XVECTOR_DATA (Vobarray)[hash % OBARRAY_SIZE] = Qnil;
+    XSYMBOL (Qnil)->obarray = Qt;
   }
 
   {

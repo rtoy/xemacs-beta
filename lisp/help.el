@@ -256,7 +256,7 @@ otherwise it is killed."
 
 ;; This is a grody hack of the same genotype as `advertised-undo'; if the
 ;; bindings of Backspace and C-h are the same, we want the menubar to claim
-;; that `info' is invoked with `C-h i', not `BS i'.
+;; that `info' in invoked with `C-h i', not `BS i'.
 
 (defun deprecated-help-command ()
   (interactive)
@@ -306,7 +306,7 @@ otherwise it is killed."
 Like `key-binding', but handles menu events and toolbar presses correctly.
 KEY is any value returned by `next-command-event'.
 MENU-FLAG is a symbol that should be set to T if KEY is a menu event,
- or nil otherwise"
+ or NIL otherwise"
   (let (defn)
     (and menu-flag (set menu-flag nil))
     ;; If the key typed was really a menu selection, grab the form out
@@ -1415,26 +1415,5 @@ after the listing is made.)"
 		(setq cmd (cdr cmd))
 		(if cmd (princ " ")))))
 	  (terpri))))))
-
-;; Stop gap for 21.0 untill we do help-char etc properly.
-(defun help-keymap-with-help-key (keymap form)
-  "Return a copy of KEYMAP with an help-key binding according to help-char
- invoking FORM like help-form.  An existing binding is not overridden.
- If FORM is nil then no binding is made."
-  (let ((map (copy-keymap keymap))
-	(key (if (characterp help-char)
-		 (vector (character-to-event help-char))
-	       help-char)))
-    (when (and form key (not (lookup-key map key)))
-      (define-key map key
-	`(lambda () (interactive) (help-print-help-form ,form))))
-    map))
-
-(defun help-print-help-form (form)
-  (let ((string (eval form)))
-    (if (stringp string)
-	(with-displaying-help-buffer
-	 (insert string)))))
-
 
 ;;; help.el ends here

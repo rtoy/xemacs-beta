@@ -53,10 +53,10 @@ define decode_object
     if $obj & 1
     # It's an int
       set $val = $obj >> 1
-      set $type = Lisp_Type_Int
+      set $type = dbg_Lisp_Type_Int
     else
       set $type = $obj & dbg_typemask
-      if $type == Lisp_Type_Char
+      if $type == dbg_Lisp_Type_Char
         set $val = ($obj & dbg_valmask) >> dbg_gctypebits
       else
         # It's a record pointer
@@ -69,16 +69,12 @@ define decode_object
     set $type = ($obj & dbg_typemask) >> (dbg_valbits + 1)
   end
 
-  if $type == Lisp_Type_Record
+  if $type == dbg_Lisp_Type_Record
     set $lheader = (struct lrecord_header *) $val
     if dbg_USE_INDEXED_LRECORD_IMPLEMENTATION
       set $imp = lrecord_implementations_table[$lheader->type]
     else
       set $imp = $lheader->implementation
-      if $imp->finalizer == this_marks_a_marked_record
-	set $imp = $imp -1
-	printf "marked lrecord:\n"
-      end
     end
   else
     set $imp = -1
@@ -98,22 +94,22 @@ end
 
 define xtype
   decode_object $arg0
-  if $type == Lisp_Type_Int
+  if $type == dbg_Lisp_Type_Int
     echo int\n
   else
-  if $type == Lisp_Type_Char
+  if $type == dbg_Lisp_Type_Char
     echo char\n
   else
-  if $type == Lisp_Type_Symbol
+  if $type == dbg_Lisp_Type_Symbol
     echo symbol\n
   else
-  if $type == Lisp_Type_String
+  if $type == dbg_Lisp_Type_String
     echo string\n
   else
-  if $type == Lisp_Type_Vector
+  if $type == dbg_Lisp_Type_Vector
     echo vector\n
   else
-  if $type == Lisp_Type_Cons
+  if $type == dbg_Lisp_Type_Cons
     echo cons\n
   else
     printf "record type: %s\n", $imp->name
@@ -126,23 +122,9 @@ define xtype
   end
 end
 
-define lisp-shadows
-  run -batch -vanilla -f list-load-path-shadows
-end
-
-document lisp-shadows
-Usage: lisp-shadows
-Run xemacs to check for lisp shadows
-end
-
-define environment-to-run-temacs
-  unset env EMACSLOADPATH
-  set env EMACSBOOTSTRAPLOADPATH=../lisp/:..
-  set env EMACSBOOTSTRAPMODULEPATH=../modules/:..
-end
-
 define run-temacs
-  environment-to-run-temacs
+  unset env EMACSLOADPATH
+  set env EMACSBOOTSTRAPLOADPATH ../lisp/:..
   run -batch -l ../lisp/loadup.el run-temacs -q
 end
 
@@ -154,7 +136,8 @@ or when temacs builds successfully, but xemacs does not.
 end
 
 define update-elc
-  environment-to-run-temacs
+  unset env EMACSLOADPATH
+  set env EMACSBOOTSTRAPLOADPATH ../lisp/:..
   run -batch -l ../lisp/update-elc.el
 end
 
@@ -166,7 +149,8 @@ Use this when temacs builds successfully, but xemacs does not.
 end
 
 define dump-temacs
-  environment-to-run-temacs
+  unset env EMACSLOADPATH
+  set env EMACSBOOTSTRAPLOADPATH ../lisp/:..
   run -batch -l ../lisp/loadup.el dump
 end
 
@@ -201,22 +185,6 @@ Print the current Lisp stack trace.
 Requires a running xemacs process.
 end
 
-
-define leval
-ldp Feval(Fcar(Fread_from_string(build_string($arg0),Qnil,Qnil)))
-end
-
-document leval
-Usage: leval "SEXP"
-Eval a lisp expression.
-Requires a running xemacs process.
-
-Example:
-(gdb) leval "(+ 1 2)"
-Lisp ==> 3
-end
-
-
 define wtype
 print $arg0->core.widget_class->core_class.class_name
 end
@@ -235,27 +203,27 @@ end
 
 define pobj
   decode_object $arg0
-  if $type == Lisp_Type_Int
+  if $type == dbg_Lisp_Type_Int
     printf "Integer: %d\n", $val
   else
-  if $type == Lisp_Type_Char
-    if $val > 32 && $val < 128
+  if $type == dbg_Lisp_Type_Char
+    if $val < 128
       printf "Char: %c\n", $val
     else
       printf "Char: %d\n", $val
     end
   else
-  if $type == Lisp_Type_String || $imp == lrecord_string
+  if $type == dbg_Lisp_Type_String || $imp == lrecord_string
     pstruct Lisp_String
   else
-  if $type == Lisp_Type_Cons   || $imp == lrecord_cons
+  if $type == dbg_Lisp_Type_Cons   || $imp == lrecord_cons
     pstruct Lisp_Cons
   else
-  if $type == Lisp_Type_Symbol || $imp == lrecord_symbol
+  if $type == dbg_Lisp_Type_Symbol || $imp == lrecord_symbol
     pstruct Lisp_Symbol
     printf "Symbol name: %s\n", $xstruct->name->_data
   else
-  if $type == Lisp_Type_Vector || $imp == lrecord_vector
+  if $type == dbg_Lisp_Type_Vector || $imp == lrecord_vector
     pstruct Lisp_Vector
     printf "Vector of length %d\n", $xstruct->size
     #print *($xstruct->_data) @ $xstruct->size
@@ -291,7 +259,7 @@ define pobj
     pstruct console
   else
   if $imp == lrecord_database
-    pstruct Lisp_Database
+    pstruct database
   else
   if $imp == lrecord_device
     pstruct device
@@ -330,7 +298,7 @@ define pobj
     pstruct Lisp_Image_Instance
   else
   if $imp == lrecord_keymap
-    pstruct Lisp_Keymap
+    pstruct keymap
   else
   if $imp == lrecord_lcrecord_list
     pstruct lcrecord_list
@@ -410,7 +378,6 @@ define pobj
   end
   end
   end
-  # Repeat after me... gdb sux, gdb sux, gdb sux...
   end
   end
   end
@@ -429,7 +396,6 @@ define pobj
   end
   end
   end
-  # Are we having fun yet??
   end
   end
   end
@@ -453,44 +419,3 @@ document pobj
 Usage: pobj lisp_object
 Print the internal C structure of a underlying Lisp Object.
 end
-
-# -------------------------------------------------------------
-# functions to test the debugging support itself.
-# If you change this file, make sure the following still work...
-# -------------------------------------------------------------
-define test_xtype
-  printf "Vemacs_major_version: "
-  xtype Vemacs_major_version
-  printf "Vhelp_char: "
-  xtype Vhelp_char
-  printf "Qnil: "
-  xtype Qnil
-  printf "Qunbound: "
-  xtype Qunbound
-  printf "Vobarray: "
-  xtype Vobarray
-  printf "Vall_weak_lists: "
-  xtype Vall_weak_lists
-  printf "Vxemacs_codename: "
-  xtype Vxemacs_codename
-end
-
-define test_pobj
-  printf "Vemacs_major_version: "
-  pobj Vemacs_major_version
-  printf "Vhelp_char: "
-  pobj Vhelp_char
-  printf "Qnil: "
-  pobj Qnil
-  printf "Qunbound: "
-  pobj Qunbound
-  printf "Vobarray: "
-  pobj Vobarray
-  printf "Vall_weak_lists: "
-  pobj Vall_weak_lists
-  printf "Vall_weak_hashtables: "
-  pobj Vall_weak_hashtables
-  printf "Vxemacs_codename: "
-  pobj Vxemacs_codename
-end
-

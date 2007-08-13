@@ -565,7 +565,7 @@ to be input files only; any output files would be specified using
 options (preferably @samp{-o}).  Even if you allow an output file name
 as an ordinary argument for compatibility, try to provide a suitable
 option as well.  This will lead to more consistency among GNU
-utilities, so that there are fewer idiosyncrasies for users to
+utilities, so that there are fewer idiosyncracies for users to
 remember.
 
 Programs should support an option @samp{--version} which prints the

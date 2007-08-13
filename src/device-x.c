@@ -351,7 +351,7 @@ x_init_device (struct device *d, Lisp_Object props)
    * Break apart the old XtOpenDisplay call into XOpenDisplay and
    * XtDisplayInitialize so we can figure out whether there
    * are any XEmacs resources in the resource database before
-   * we initialize Xt.  This is so we can automagically support
+   * we intitialize Xt.  This is so we can automagically support
    * both `Emacs' and `XEmacs' application classes.
    */
   slow_down_interrupts ();
@@ -1604,7 +1604,7 @@ Grab the keyboard on the given device (defaulting to the selected one).
 So long as the keyboard is grabbed, all keyboard events will be delivered
 to emacs -- it is not possible for other X clients to eavesdrop on them.
 Ungrab the keyboard with `x-ungrab-keyboard' (use an unwind-protect).
-Returns t if the grab is successful, nil otherwise.
+Returns t if the grab was successful; nil otherwise.
 */
        (device))
 {

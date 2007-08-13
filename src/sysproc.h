@@ -71,14 +71,6 @@ Boston, MA 02111-1307, USA.  */
 #include <sys/select.h>
 #endif
 
-#ifdef HAVE_STROPTS_H
-#include <stropts.h>		/* isastream(), I_PUSH */
-#endif
-
-#ifdef HAVE_STRTIO_H
-#include <strtio.h>		/* TIOCSIGNAL */
-#endif
-
 #ifdef FD_SET
 
 /* We could get this from param.h, but better not to depend on finding that.

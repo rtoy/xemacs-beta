@@ -3173,7 +3173,7 @@ extent_remprop (Lisp_Object obj, Lisp_Object prop)
       return -1;
     }
 
-  return external_remprop (extent_plist_addr (ext), prop, 0, ERROR_ME);
+  return external_remprop (&ext->plist, prop, 0, ERROR_ME);
 }
 
 static Lisp_Object
@@ -4906,10 +4906,10 @@ set_extent_glyph_1 (Lisp_Object extent_obj, Lisp_Object glyph, int endp,
   EXTENT extent = decode_extent (extent_obj, DE_MUST_HAVE_BUFFER);
   glyph_layout layout = symbol_to_glyph_layout (layout_obj);
 
-  /* Make sure we've actually been given a valid glyph or it's nil
-     (meaning we're deleting a glyph from an extent). */
+  /* Make sure we've actually been given a glyph or it's nil (meaning
+     we're deleting a glyph from an extent). */
   if (!NILP (glyph))
-    CHECK_BUFFER_GLYPH (glyph);
+    CHECK_GLYPH (glyph);
 
   set_extent_glyph (extent, glyph, endp, layout);
   return glyph;
@@ -5714,6 +5714,8 @@ splice_in_string_extents_mapper (EXTENT extent, void *arg)
     new_start = base_start;
   if (new_end > base_end)
     new_end = base_end;
+  if (new_end <= new_start)
+    return 0;
 
   if (!extent_duplicable_p (extent))
     return 0;

@@ -107,7 +107,6 @@ Lisp_Object Vsystem_configuration_options;
 /* Version numbers and strings */
 Lisp_Object Vemacs_major_version;
 Lisp_Object Vemacs_minor_version;
-Lisp_Object Vemacs_patch_level;
 Lisp_Object Vemacs_beta_version;
 Lisp_Object Vxemacs_codename;
 #ifdef INFODOCK
@@ -218,7 +217,6 @@ extern int always_gc;           /* hack */
 Lisp_Object Qkill_emacs_hook;
 Lisp_Object Qsave_buffers_kill_emacs;
 
-extern Lisp_Object Vauto_save_list_file_name;
 
 /* Signal code for the fatal signal that was received */
 static int fatal_error_code;
@@ -532,8 +530,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
   extern int malloc_cookie;
 #endif
 
-#if (!defined (SYSTEM_MALLOC) && !defined (HAVE_LIBMCHECK)	\
-     && !defined (DOUG_LEA_MALLOC))
+#if !defined(SYSTEM_MALLOC) && !defined(HAVE_LIBMCHECK)
   /* Make sure that any libraries we link against haven't installed a
      hook for a gmalloc of a potentially incompatible version. */
   /* If we're using libmcheck, the hooks have already been initialized, */
@@ -541,7 +538,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
   __malloc_hook = NULL;
   __realloc_hook = NULL;
   __free_hook = NULL;
-#endif /* not SYSTEM_MALLOC or HAVE_LIBMCHECK or DOUG_LEA_MALLOC */
+#endif /* not SYSTEM_MALLOC */
 
   noninteractive = 0;
 
@@ -615,9 +612,6 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #if defined (HAVE_MMAP) && defined (REL_ALLOC)
   /* ralloc can only be used if using the GNU memory allocator. */
   init_ralloc ();
-#elif defined (REL_ALLOC) && !defined(DOUG_LEA_MALLOC)
-  if (initialized)
-    init_ralloc();
 #endif
 
 #ifdef HAVE_SOCKS
@@ -868,9 +862,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       syms_of_abbrev ();
       syms_of_alloc ();
 #ifdef HAVE_X_WINDOWS
-#ifdef HAVE_BALLOON_HELP
       syms_of_balloon_x ();
-#endif
 #endif
       syms_of_buffer ();
       syms_of_bytecode ();
@@ -985,11 +977,6 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_DIALOGS) || defined (HAVE_TOOLBARS)
       syms_of_gui_x ();
 #endif
-#ifdef HAVE_XIM
-#ifdef XIM_XLIB
-      syms_of_input_method_xlib ();
-#endif
-#endif /* HAVE_XIM */
 #endif /* HAVE_X_WINDOWS */
 
 #ifdef HAVE_MS_WINDOWS
@@ -1009,9 +996,6 @@ main_1 (int argc, char **argv, char **envp, int restart)
 #ifdef HAVE_MSW_C_DIRED
       syms_of_dired_mswindows ();
 #endif
-#ifdef WINDOWSNT
-      syms_of_ntproc ();
-#endif
 #endif	/* HAVE_MS_WINDOWS */
 
 #ifdef MULE
@@ -1020,7 +1004,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       syms_of_mule_charset ();
 #endif
 #ifdef FILE_CODING
-      syms_of_file_coding ();
+      syms_of_mule_coding ();
 #endif
 #ifdef MULE
 #ifdef HAVE_WNN
@@ -1197,7 +1181,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
 
       lstream_type_create ();
 #ifdef FILE_CODING
-      lstream_type_create_file_coding ();
+      lstream_type_create_mule_coding ();
 #endif
 #if defined (HAVE_MS_WINDOWS) && !defined(HAVE_MSG_SELECT)
       lstream_type_create_mswindows_selectable ();
@@ -1262,15 +1246,12 @@ main_1 (int argc, char **argv, char **envp, int restart)
       vars_of_abbrev ();
       vars_of_alloc ();
 #ifdef HAVE_X_WINDOWS
-#ifdef HAVE_BALLOON_HELP
       vars_of_balloon_x ();
-#endif
 #endif
       vars_of_buffer ();
       vars_of_bytecode ();
       vars_of_callint ();
       vars_of_callproc ();
-      vars_of_chartab ();
       vars_of_cmdloop ();
       vars_of_cmds ();
       vars_of_console ();
@@ -1330,9 +1311,6 @@ main_1 (int argc, char **argv, char **envp, int restart)
       vars_of_menubar ();
 #endif
       vars_of_minibuf ();
-#ifdef WINDOWSNT
-      vars_of_ntproc ();
-#endif
       vars_of_objects ();
       vars_of_print ();
 
@@ -1417,11 +1395,10 @@ main_1 (int argc, char **argv, char **envp, int restart)
 
 #ifdef MULE
       vars_of_mule ();
-      vars_of_mule_ccl ();
       vars_of_mule_charset ();
 #endif
 #ifdef FILE_CODING
-      vars_of_file_coding ();
+      vars_of_mule_coding ();
 #endif
 #ifdef MULE
 #ifdef HAVE_WNN
@@ -1493,7 +1470,7 @@ main_1 (int argc, char **argv, char **envp, int restart)
       complex_vars_of_mule_charset ();
 #endif
 #if defined(FILE_CODING)
-      complex_vars_of_file_coding ();
+      complex_vars_of_mule_coding ();
 #endif
 
       /* This calls allocate_glyph(), which creates specifiers
@@ -1998,7 +1975,7 @@ Do not call this.  It will reinitialize your XEmacs.  You'll be sorry.
       total_len += wampum_all_len[ac];
     }
   DO_REALLOC (run_temacs_args, run_temacs_args_size, total_len, char);
-  DO_REALLOC (run_temacs_argv, run_temacs_argv_size, nargs+2, char *);
+  DO_REALLOC (run_temacs_argv, run_temacs_argv_size, nargs+1, char *);
 
   memcpy (run_temacs_args, wampum, namesize);
   run_temacs_argv [0] = run_temacs_args;
@@ -2098,7 +2075,7 @@ main (int argc, char **argv, char **envp)
 
 	 06/20/96 robertl@dgii.com */
       {
-	extern char **_environ;
+	extern char *_environ;
 	if ((unsigned) environ == 0)
 	  environ=_environ;
       }
@@ -2212,12 +2189,6 @@ all of which are called before XEmacs is actually killed.
 
   shut_down_emacs (0, ((STRINGP (arg)) ? arg : Qnil));
 
-  /* If we have an auto-save list file,
-     kill it because we are exiting Emacs deliberately (not crashing).
-     Do it after shut_down_emacs, which does an auto-save.  */
-  if (STRINGP (Vauto_save_list_file_name))
-      unlink ((char *) XSTRING_DATA (Vauto_save_list_file_name));
-
 #if defined(GNU_MALLOC)
   __free_hook = voodoo_free_hook;
 #endif
@@ -2278,16 +2249,12 @@ shut_down_emacs (int sig, Lisp_Object stuff)
 	("Your files have been auto-saved.\n"
 	 "Use `M-x recover-session' to recover them.\n"
 	 "\n"
-         "If you have access to the PROBLEMS file that came with your\n"
-         "version of XEmacs, please check to see if your crash is described\n"
-         "there, as there may be a workaround available.\n"
 #ifdef INFODOCK
-	 "Otherwise, please report this bug by selecting `Report-Bug'\n"
-         "in the InfoDock menu.\n"
+	 "Please report this bug by selecting `Report-Bug' in the InfoDock\n"
+	 "menu.\n"
 #else
-	 "Otherwise, please report this bug by running the send-pr\n"
-         "script included with XEmacs, or selecting `Send Bug Report'\n"
-         "from the help menu.\n"
+	 "Please report this bug by running the send-pr script included\n"
+	 "with XEmacs, or selecting `Send Bug Report' from the help menu.\n"
 	 "As a last resort send ordinary email to `crashes@xemacs.org'.\n"
 #endif
 	 "*MAKE SURE* to include the information in the command\n"
@@ -2550,7 +2517,7 @@ decode_path (CONST char *path)
 
   GET_C_CHARPTR_INT_FILENAME_DATA_ALLOCA (path, newpath);
 
-  len = strlen ((const char *) newpath);
+  len = strlen (newpath);
   /* #### Does this make sense?  It certainly does for
      decode_env_path(), but it looks dubious here.  Does any code
      depend on decode_path("") returning nil instead of an empty
@@ -2777,20 +2744,7 @@ Warning: this variable did not exist in Emacs versions earlier than:
 */ );
   Vemacs_minor_version = make_int (EMACS_MINOR_VERSION);
 
-  DEFVAR_LISP ("emacs-patch-level", &Vemacs_patch_level /*
-The patch level of this version of Emacs, as an integer.
-The value is non-nil if this version of XEmacs is part of a series of
-stable XEmacsen, but has bug fixes applied.
-Warning: this variable does not exist in FSF Emacs or in XEmacs versions
-earlier than 21.1.1
-*/ );
-#ifdef EMACS_PATCH_LEVEL
-  Vemacs_patch_level = make_int (EMACS_PATCH_LEVEL);
-#else
-  Vemacs_patch_level = Qnil;
-#endif
-
-    DEFVAR_LISP ("emacs-beta-version", &Vemacs_beta_version /*
+  DEFVAR_LISP ("emacs-beta-version", &Vemacs_beta_version /*
 Beta number of this version of Emacs, as an integer.
 The value is nil if this is an officially released version of XEmacs.
 Warning: this variable does not exist in FSF Emacs or in XEmacs versions
@@ -3094,7 +3048,6 @@ The configured initial path for info documentation.
  * cores on us when re-started from the dumped executable.
  * This will have to go for 21.1  -- OG.
  */
-void __sti__iflPNGFile_c___(void);
 void __sti__iflPNGFile_c___()
 {
 }

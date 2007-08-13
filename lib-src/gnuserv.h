@@ -30,7 +30,9 @@
  * ../etc/gnuserv.README relative to the directory containing this file)
  */
 
-#define GNUSERV_VERSION "3.12"
+#if 0
+static char header_rcsid [] = "!Header: gnuserv.h,v 2.4 95/02/16 11:58:11 arup alpha !";
+#endif
 
 #define USE_TMPDIR
 

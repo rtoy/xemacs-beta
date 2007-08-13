@@ -33,10 +33,7 @@ Boston, MA 02111-1307, USA.  */
 #ifndef NOT_C_CODE
 #ifdef __GNUC__
 #define alloca __builtin_alloca
-#elif defined __DECC
-#include <alloca.h>
-#pragma intrinsic(alloca)
-#elif defined HAVE_ALLOCA_H
+#elif HAVE_ALLOCA_H
 #include <alloca.h>
 #elif defined(_AIX)
 #pragma alloca
@@ -64,7 +61,6 @@ char *alloca();
 /* The version info from version.sh. Used in #pragma ident in emacs.c */
 #undef EMACS_MAJOR_VERSION
 #undef EMACS_MINOR_VERSION
-#undef EMACS_PATCH_LEVEL
 #undef EMACS_BETA_VERSION
 #undef EMACS_VERSION
 #undef XEMACS_CODENAME
@@ -164,8 +160,6 @@ char *alloca();
 #undef THIS_IS_X11R5
 #undef THIS_IS_X11R6
 
-#undef HAVE_BALLOON_HELP
-
 /* Where do we find bitmaps? */
 #undef BITMAPDIR
 
@@ -200,7 +194,6 @@ char *alloca();
 #undef HAVE_ULIMIT_H
 #undef HAVE_X11_XLOCALE_H
 #undef HAVE_LINUX_VERSION_H
-#undef HAVE_CYGWIN_VERSION_H
 #undef HAVE_INTTYPES_H
 #undef HAVE_SYS_UN_H
 #undef HAVE_A_OUT_H
@@ -302,17 +295,6 @@ char *alloca();
 #undef HAVE_UTIMES
 #undef HAVE_WAITPID
 #undef HAVE_VSNPRINTF
-/* UNIX98 PTY support functions
-   getpt is a glibc addition which emulates the master device on
-   systems without kernel support. */
-#undef HAVE_GRANTPT
-#undef HAVE_UNLOCKPT
-#undef HAVE_GETPT
-#undef HAVE_PTSNAME
-#undef HAVE_KILLPG
-#undef HAVE_STROPTS_H	/* SysV streams */
-#undef HAVE_STRTIO_H	/* SysV streams TIOCSIGNAL */
-
 #undef HAVE_SOCKETS
 #undef HAVE_SOCKADDR_SUN_LEN
 #undef HAVE_MULTICAST
@@ -368,14 +350,10 @@ char *alloca();
 
 /* Do we have LDAP support? */
 #undef HAVE_LDAP
-/* Does the library define ldap_set_option () ? */
-#undef HAVE_LDAP_SET_OPTION
-/* Does the library define ldap_get_lderrno () ? */
-#undef HAVE_LDAP_GET_LDERRNO
-/* Does the library define ldap_result2error () ? */
-#undef HAVE_LDAP_RESULT2ERROR
-/* Does the library define ldap_parse_result () ? */
-#undef HAVE_LDAP_PARSE_RESULT
+/* Do we have the LDAP library of the University of Michigan ? */
+#undef HAVE_UMICH_LDAP
+/* Do we have Netscape LDAP SDK library */
+#undef HAVE_NS_LDAP
 
 /* Do you have the Xauth library present?  This will add some extra
    functionality to gnuserv. */
@@ -587,12 +565,9 @@ extern "C" {
 
 /* Compile in support for NAS (Network Audio System)?
    NAS_NO_ERROR_JUMP means that the NAS libraries don't include some
-   error handling changes.
-   NAS_USES_OWN_NAMESPACE means NAS headers define NAS_LITTLE_ENDIAN
-   instead of LITTLE_ENDIAN etc. */
+   error handling changes. */
 #undef HAVE_NAS_SOUND
 #undef NAS_NO_ERROR_JUMP
-#undef NAS_USES_OWN_NAMESPACE
 
 /* Compile in support for SunPro usage-tracking code? */
 #undef USAGE_TRACKING
@@ -771,7 +746,6 @@ on various systems. */
 #define new   c_new
 #define this  c_this
 #define catch c_catch
-#define not   c_not
 #endif /* C++ */
 
 /* Strictly speaking, only int or unsigned int are valid types in a
@@ -816,7 +790,6 @@ on various systems. */
 #define MAIL_USE_LOCKF
 #endif
 
-#undef DOCDIR_USER_DEFINED
 #undef LISPDIR_USER_DEFINED
 #undef PACKAGE_PATH_USER_DEFINED
 #undef SITELISPDIR_USER_DEFINED

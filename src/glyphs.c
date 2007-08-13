@@ -38,8 +38,6 @@ Boston, MA 02111-1307, USA.  */
 #include "objects.h"
 #include "redisplay.h"
 #include "window.h"
-#include "chartab.h"
-#include "rangetab.h"
 
 #ifdef HAVE_XPM
 #include <X11/xpm.h>
@@ -468,12 +466,8 @@ normalize_image_instantiator (Lisp_Object instantiator,
 			      Lisp_Object contype,
 			      Lisp_Object dest_mask)
 {
-  struct gcpro gcpro1;
-  
-  GCPRO1(instantiator);
-
   if (IMAGE_INSTANCEP (instantiator))
-    RETURN_UNGCPRO (instantiator);
+    return instantiator;
 
   if (STRINGP (instantiator))
     instantiator = process_image_string_instantiator (instantiator, contype,
@@ -490,9 +484,9 @@ normalize_image_instantiator (Lisp_Object instantiator,
     struct image_instantiator_methods * meths =
       decode_image_instantiator_format (XVECTOR_DATA (instantiator)[0],
 					ERROR_ME);
-    RETURN_UNGCPRO (IIFORMAT_METH_OR_GIVEN (meths, normalize,
+    return IIFORMAT_METH_OR_GIVEN (meths, normalize,
 				   (instantiator, contype),
-				   instantiator));
+				   instantiator);
   }
 }
 
@@ -2372,17 +2366,15 @@ pairs.  FORMAT should be one of
   instanced as `mono-pixmap', `color-pixmap', or `pointer'.)
 'gif
   (A GIF87 or GIF89 image; only if GIF support was compiled into this
-   XEmacs.  NOTE: only the first frame of animated gifs will be displayed.
-   Can be instanced as `color-pixmap'.)
+   XEmacs.  Can be instanced as `color-pixmap'.)
 'jpeg
   (A JPEG image; only if JPEG support was compiled into this XEmacs.
    Can be instanced as `color-pixmap'.)
 'png
-  (A PNG image; only if PNG support was compiled into this XEmacs.
+  (A PNG/GIF24 image; only if PNG support was compiled into this XEmacs.
    Can be instanced as `color-pixmap'.)
 'tiff
-  (A TIFF image; only if TIFF support was compiled into this XEmacs.
-   Can be instanced as `color-pixmap'.)
+  (A TIFF image; not currently implemented.)
 'cursor-font
   (One of the standard cursor-font names, such as "watch" or
    "right_ptr" under X.  Under X, this is, more specifically, any
@@ -3211,82 +3203,29 @@ compute_glyph_cachel_usage (glyph_cachel_dynarr *glyph_cachels,
  *                              display tables                               *
  *****************************************************************************/
 
-/* Get the display tables for use currently on window W with face
-   FACE.  #### This will have to be redone.  */
+/* Get the display table for use currently on window W with face FACE.
+   Precedence:
 
-void
-get_display_tables (struct window *w, face_index findex,
-		    Lisp_Object *face_table, Lisp_Object *window_table)
+   -- FACE's display table
+   -- W's display table (comes from specifier `current-display-table')
+
+   Ignore the specified tables if they are not valid;
+   if no valid table is specified, return 0.  */
+
+struct Lisp_Vector *
+get_display_table (struct window *w, face_index findex)
 {
   Lisp_Object tem;
+
   tem = WINDOW_FACE_CACHEL_DISPLAY_TABLE (w, findex);
-  if (UNBOUNDP (tem))
-    tem = Qnil;
-  if (!LISTP (tem))
-    tem = noseeum_cons (tem, Qnil);
-  *face_table = tem;
+  if (VECTORP (tem) && XVECTOR_LENGTH (tem) == DISP_TABLE_SIZE)
+    return XVECTOR (tem);
+
   tem = w->display_table;
-  if (UNBOUNDP (tem))
-    tem = Qnil;
-  if (!LISTP (tem))
-    tem = noseeum_cons (tem, Qnil);
-  *window_table = tem;
-}
+  if (VECTORP (tem) && XVECTOR_LENGTH (tem) == DISP_TABLE_SIZE)
+    return XVECTOR (tem);
 
-Lisp_Object
-display_table_entry (Emchar ch, Lisp_Object face_table,
-		     Lisp_Object window_table)
-{
-  Lisp_Object tail;
-
-  /* Loop over FACE_TABLE, and then over WINDOW_TABLE. */
-  for (tail = face_table; 1; tail = XCDR (tail))
-    {
-      Lisp_Object table;
-      if (NILP (tail))
-	{
-	  if (!NILP (window_table))
-	    {
-	      tail = window_table;
-	      window_table = Qnil;
-	    }
-	  else
-	    return Qnil;
-	}
-      table = XCAR (tail);
-
-      if (VECTORP (table))
-	{
-	  if (ch < XVECTOR_LENGTH (table) && !NILP (XVECTOR_DATA (table)[ch]))
-	    return XVECTOR_DATA (table)[ch];
-	  else
-	    continue;
-	}
-      else if (CHAR_TABLEP (table)
-	       && XCHAR_TABLE_TYPE (table) == CHAR_TABLE_TYPE_CHAR)
-	{
-	  return get_char_table (ch, XCHAR_TABLE (table));
-	}
-      else if (CHAR_TABLEP (table)
-	       && XCHAR_TABLE_TYPE (table) == CHAR_TABLE_TYPE_GENERIC)
-	{
-	  Lisp_Object gotit = get_char_table (ch, XCHAR_TABLE (table));
-	  if (!NILP (gotit))
-	    return gotit;
-	  else
-	    continue;
-	}
-      else if (RANGE_TABLEP (table))
-	{
-	  Lisp_Object gotit = Fget_range_table (make_char (ch), table, Qnil);
-	  if (!NILP (gotit))
-	    return gotit;
-	  else
-	    continue;
-	}
-      else
-	abort ();
-    }
+  return 0;
 }
 
 

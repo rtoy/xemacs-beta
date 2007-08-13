@@ -37,10 +37,12 @@ Boston, MA 02111-1307, USA.
  * ../etc/gnuserv.README relative to the directory containing this file)
  */
 
+#if 0
+/* Hand-munged RCS header */
+static char rcsid [] = "!Header: gnuclient.c,v 2.2 95/12/12 01:39:21 wing nene !";
+#endif
+
 #include "gnuserv.h"
-
-char gnuserv_version[] = "gnuclient version " GNUSERV_VERSION;
-
 #include "getopt.h"
 
 #include <stdio.h>
@@ -177,37 +179,8 @@ filename_expand (char *fullpath, char *filename)
 
   fullpath[0] = '\0';
 
-  if (filename[0] && filename[0] == '/')
-     {
-       /* Absolute (unix-style) pathname.  Do nothing */
-       strcat (fullpath, filename);
-     }
-#ifdef  __CYGWIN32__
-  else if (filename[0] && filename[0] == '\\' &&
-           filename[1] && filename[1] == '\\')
-    {
-      /* This path includes the server name (something like
-         "\\server\path"), so we assume it's absolute.  Do nothing to
-         it. */
-      strcat (fullpath, filename);
-    }
-  else if (filename[0] &&
-           filename[1] && filename[1] == ':' &&
-           filename[2] && filename[2] == '\\')
-    {
-      /* Absolute pathname with drive letter.  Convert "<drive>:"
-         to "//<drive>/". */
-      strcat (fullpath, "//");
-      strncat (fullpath, filename, 1);
-      strcat (fullpath, &filename[2]);
-    }
-#endif
-  else
-    {
-      /* Assume relative Unix style path.  Get the current directory
-       and prepend it.  FIXME: need to fix the case of DOS paths like
-       "\foo", where we need to get the current drive. */
-      
+  if (filename[0] && filename[0] != '/')
+    {	/* relative filename */
       strcat (fullpath, get_current_working_directory ());
       len = strlen (fullpath);
 
@@ -215,9 +188,10 @@ filename_expand (char *fullpath, char *filename)
 	;					/* yep */
       else
 	strcat (fullpath, "/");		/* nope, append trailing slash */
-      /* Don't forget to add the filename! */
-      strcat (fullpath,filename);
-    }
+    } /* if */
+
+  strcat (fullpath,filename);
+
 } /* filename_expand */
 
 /* Encase the string in quotes, escape all the backslashes and quotes

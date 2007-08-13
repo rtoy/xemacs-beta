@@ -43,24 +43,14 @@ echo " (using $EMACS)"
 
 export EMACS
 
-EMACS_DIR=`cd \`dirname $EMACS\` && pwd`;
-CANON_PWD=`pwd`
-# Account for various system automounter configurations
-if test -d "/net"; then
-  if test -d "/tmp_mnt/net"; then tdir="/tmp_mnt/net"; else tdir="/tmp_mnt"; fi
-  EMACS_DIR=`echo "$EMACS_DIR" | \
-   sed -e "s|^${tdir}/|/net/|" -e "s|^/a/|/net/|" -e "s|^/amd/|/net/|"`
-  CANON_PWD=`echo "$CANON_PWD" | \
-   sed -e "s|^${tdir}/|/net/|" -e "s|^/a/|/net/|" -e "s|^/amd/|/net/|"`
-fi
-REAL="$EMACS_DIR/`basename $EMACS`"
+REAL=`cd \`dirname $EMACS\` ; pwd | sed 's|^/tmp_mnt||'`/`basename $EMACS`
 
-echo "Rebuilding autoloads in $CANON_PWD"
+echo "Rebuilding autoloads in `pwd|sed 's|^/tmp_mnt||'`"
 echo "          with $REAL..."
 
 if [ "`uname -r | sed 's/\(.\).*/\1/'`" -gt 4 ]; then
   echon()
-  {
+  {    
     /bin/echo $* '\c'
   }
 else

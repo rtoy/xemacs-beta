@@ -164,7 +164,7 @@ same as the minibuffer, despite the fact that the minibuffer appears
 (when active) in the same place on the screen as the echo area.  The
 @cite{XEmacs Reference Manual} specifies the rules for resolving conflicts
 between the echo area and the minibuffer for use of that screen space
-(@pxref{Minibuffer,, The Minibuffer, xemacs, The XEmacs Reference Manual}).
+(@pxref{Minibuffer,, The Minibuffer, emacs, The XEmacs Reference Manual}).
 Error messages appear in the echo area; see @ref{Errors}.
 
 You can write output in the echo area by using the Lisp printing
@@ -359,7 +359,7 @@ in a separate buffer, and include an explanatory message that may span
 across several lines.  Here is an example of how a warning is displayed:
 
 @example
-(1) (initialization/error) An error has occurred while loading ~/.emacs:
+(1) (initialization/error) An error has occured while loading ~/.emacs:
 
 Symbol's value as variable is void: bogus-variable
 
@@ -499,11 +499,11 @@ applies to it.  The list can have two kinds of elements:
 
 @table @code
 @item @var{atom}
-A character is invisible if its @code{invisible} property value
+A character is invisible if its @code{invisible} propery value
 is @var{atom} or if it is a list with @var{atom} as a member.
 
 @item (@var{atom} . t)
-A character is invisible if its @code{invisible} property value
+A character is invisible if its @code{invisible} propery value
 is @var{atom} or if it is a list with @var{atom} as a member.
 Moreover, if this character is at the end of a line and is followed
 by a visible newline, it displays an ellipsis.

@@ -167,7 +167,7 @@ Show only symbols that are names of commands
 (@code{command-apropos}).@refill
 
 @item M-x apropos @var{regexp}
-Show all symbols whose names contain matches for @var{regexp}.
+Show all symbols whose names comtain matches for @var{regexp}.
 @end table
 
   It is possible to ask a question like, ``What are the commands for

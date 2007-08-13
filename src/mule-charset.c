@@ -58,8 +58,6 @@ Lisp_Object Vcharset_chinese_big5_2;
 Lisp_Object Vcharset_chinese_cns11643_1;
 Lisp_Object Vcharset_chinese_cns11643_2;
 Lisp_Object Vcharset_korean_ksc5601;
-
-#ifdef ENABLE_COMPOSITE_CHARS
 Lisp_Object Vcharset_composite;
 
 /* Hashtables for composite chars.  One maps string representing
@@ -68,16 +66,14 @@ Lisp_Object Vcharset_composite;
 Lisp_Object Vcomposite_char_char2string_hashtable;
 Lisp_Object Vcomposite_char_string2char_hashtable;
 
-static int composite_char_row_next;
-static int composite_char_col_next;
-
-#endif /* ENABLE_COMPOSITE_CHARS */
-
 /* Table of charsets indexed by leading byte. */
 Lisp_Object charset_by_leading_byte[128];
 
 /* Table of charsets indexed by type/final-byte/direction. */
 Lisp_Object charset_by_attributes[4][128][2];
+
+static int composite_char_row_next;
+static int composite_char_col_next;
 
 /* Table of number of bytes in the string representation of a character
    indexed by the first byte of that representation.
@@ -251,19 +247,15 @@ non_ascii_valid_char_p (Emchar ch)
   if (f1 == 0)
     {
       Lisp_Object charset;
-      /* 0x8B checking is here to avoid the gap between
-	 LEADING_BYTE_LATIN_JISX0201 and
-	 LEADING_BYTE_CYRILLIC_ISO8859_5. See mule-charset.h */
+
       if (f2 < MIN_CHAR_FIELD2_OFFICIAL ||
-	  f2 == (0x8B - FIELD2_TO_OFFICIAL_LEADING_BYTE) ||
 	  (f2 > MAX_CHAR_FIELD2_OFFICIAL && f2 < MIN_CHAR_FIELD2_PRIVATE) ||
 	   f2 > MAX_CHAR_FIELD2_PRIVATE)
 	return 0;
       if (f3 < 0x20)
 	return 0;
 
-      if (f3 != 0x20 && f3 != 0x7F && !(f2 >= MIN_CHAR_FIELD2_PRIVATE &&
-					f2 <= MAX_CHAR_FIELD2_PRIVATE))
+      if (f3 != 0x20 && f3 != 0x7F)
 	return 1;
 
       /*
@@ -272,8 +264,6 @@ non_ascii_valid_char_p (Emchar ch)
 	 FIELD2_TO_PRIVATE_LEADING_BYTE are the same.
 	 */
       charset = CHARSET_BY_LEADING_BYTE (f2 + FIELD2_TO_OFFICIAL_LEADING_BYTE);
-      if (EQ (charset, Qnil))
-	return 0;
       return (XCHARSET_CHARS (charset) == 96);
     }
   else
@@ -287,8 +277,6 @@ non_ascii_valid_char_p (Emchar ch)
       if (f2 < 0x20 || f3 < 0x20)
 	return 0;
 
-
-#ifdef ENABLE_COMPOSITE_CHARS
       if (f1 + FIELD1_TO_OFFICIAL_LEADING_BYTE == LEADING_BYTE_COMPOSITE)
 	{
 	  if (UNBOUNDP (Fgethash (make_int (ch),
@@ -297,10 +285,8 @@ non_ascii_valid_char_p (Emchar ch)
 	    return 0;
 	  return 1;
 	}
-#endif /* ENABLE_COMPOSITE_CHARS */
 
-      if (f2 != 0x20 && f2 != 0x7F && f3 != 0x20 && f3 != 0x7F
-	  && !(f1 >= MIN_CHAR_FIELD1_PRIVATE && f1 <= MAX_CHAR_FIELD1_PRIVATE))
+      if (f2 != 0x20 && f2 != 0x7F && f3 != 0x20 && f3 != 0x7F)
 	return 1;
 
       if (f1 <= MAX_CHAR_FIELD1_OFFICIAL)
@@ -310,8 +296,6 @@ non_ascii_valid_char_p (Emchar ch)
 	charset =
 	  CHARSET_BY_LEADING_BYTE (f1 + FIELD1_TO_PRIVATE_LEADING_BYTE);
 
-      if (EQ (charset, Qnil))
-	return 0;
       return (XCHARSET_CHARS (charset) == 96);
     }
 }
@@ -477,7 +461,7 @@ make_charset (int id, Lisp_Object name, Bufbyte leading_byte, unsigned char rep_
 				CHARSET_TYPE (cs) == CHARSET_TYPE_96) ? 1 : 2;
   CHARSET_CHARS         (cs) = (CHARSET_TYPE (cs) == CHARSET_TYPE_94 ||
 				CHARSET_TYPE (cs) == CHARSET_TYPE_94X94) ? 94 : 96;
-
+    
   if (final)
     {
       /* some charsets do not have final characters.  This includes
@@ -947,8 +931,10 @@ Recognized properties are those listed in `make-charset', as well as
   if (EQ (prop, Qreverse_direction_charset))
     {
       Lisp_Object obj = CHARSET_REVERSE_DIRECTION_CHARSET (cs);
-      /* #### Is this translation OK?  If so, error checking sufficient? */
-      return CHARSETP (obj) ? XCHARSET_NAME (obj) : obj;
+      if (NILP (obj))
+	return Qnil;
+      else
+	return XCHARSET_NAME (obj);
     }
   signal_simple_error ("Unrecognized charset property name", prop);
   return Qnil; /* not reached */
@@ -1027,11 +1013,7 @@ Make a multi-byte character from CHARSET and octets ARG1 and ARG2.
   else	/* CHARSET_CHARS (cs) == 96) */	     lowlim = 32, highlim = 127;
 
   CHECK_INT (arg1);
-  /* It is useful (and safe, according to Olivier Galibert) to strip
-     the 8th bit off ARG1 and ARG2 becaue it allows programmers to
-     write (make-char 'latin-iso8859-2 CODE) where code is the actual
-     Latin 2 code of the character.  */
-  a1 = XINT (arg1) & 0x7f;
+  a1 = XINT (arg1);
   if (a1 < lowlim || a1 > highlim)
     args_out_of_range_3 (arg1, make_int (lowlim), make_int (highlim));
 
@@ -1044,7 +1026,7 @@ Make a multi-byte character from CHARSET and octets ARG1 and ARG2.
     }
 
   CHECK_INT (arg2);
-  a2 = XINT (arg2) & 0x7f;
+  a2 = XINT (arg2);
   if (a2 < lowlim || a2 > highlim)
     args_out_of_range_3 (arg2, make_int (lowlim), make_int (highlim));
 
@@ -1086,7 +1068,6 @@ N defaults to 0 if omitted.
 }
 
 
-#ifdef ENABLE_COMPOSITE_CHARS
 /************************************************************************/
 /*                     composite character functions                    */
 /************************************************************************/
@@ -1132,7 +1113,7 @@ composite_char_string (Emchar ch)
   return str;
 }
 
-xxDEFUN ("make-composite-char", Fmake_composite_char, 1, 1, 0, /*
+DEFUN ("make-composite-char", Fmake_composite_char, 1, 1, 0, /*
 Convert a string into a single composite character.
 The character is the result of overstriking all the characters in
 the string.
@@ -1144,7 +1125,7 @@ the string.
 					   XSTRING_LENGTH (string)));
 }
 
-xxDEFUN ("composite-char-string", Fcomposite_char_string, 1, 1, 0, /*
+DEFUN ("composite-char-string", Fcomposite_char_string, 1, 1, 0, /*
 Return a string of the characters comprising a composite character.
 */
        (ch))
@@ -1157,7 +1138,6 @@ Return a string of the characters comprising a composite character.
     signal_simple_error ("Must be composite char", ch);
   return composite_char_string (emch);
 }
-#endif /* ENABLE_COMPOSITE_CHARS */
 
 
 /************************************************************************/
@@ -1187,10 +1167,8 @@ syms_of_mule_charset (void)
   DEFSUBR (Fchar_charset);
   DEFSUBR (Fchar_octet);
 
-#ifdef ENABLE_COMPOSITE_CHARS
   DEFSUBR (Fmake_composite_char);
   DEFSUBR (Fcomposite_char_string);
-#endif
 
   defsymbol (&Qcharsetp, "charsetp");
   defsymbol (&Qregistry, "registry");
@@ -1271,7 +1249,7 @@ complex_vars_of_mule_charset (void)
 		  build_string ("iso8859-1"));
   Vcharset_control_1 =
     make_charset (-1, Qcontrol_1, LEADING_BYTE_CONTROL_1, 2,
-		  CHARSET_TYPE_94, 1, 1, 0,
+		  CHARSET_TYPE_94, 1, 0, 0,
 		  CHARSET_LEFT_TO_RIGHT,
 		  build_string ("Control characters"),
 		  build_string (""));
@@ -1358,7 +1336,7 @@ complex_vars_of_mule_charset (void)
 		  CHARSET_LEFT_TO_RIGHT,
 		  build_string
 		  ("JIS X0208-1978 (Japanese Kanji; Old Version)"),
-		  build_string ("\\(jisx0208\\|jisc6226\\).1978"));
+		  build_string ("\\(jisx0208\\|jisc6226\\).19"));
   Vcharset_japanese_jisx0208 =
     make_charset (146, Qjapanese_jisx0208,
 		  LEADING_BYTE_JAPANESE_JISX0208, 3,
@@ -1419,8 +1397,6 @@ complex_vars_of_mule_charset (void)
 		  CHARSET_LEFT_TO_RIGHT,
 		  build_string ("KS C5601 (Hangul and Korean Hanja)"),
 		  build_string ("ksc5601"));
-
-#ifdef ENABLE_COMPOSITE_CHARS
   /* #### For simplicity, we put composite chars into a 96x96 charset.
      This is going to lead to problems because you can run out of
      room, esp. as we don't yet recycle numbers. */
@@ -1440,6 +1416,5 @@ complex_vars_of_mule_charset (void)
     make_lisp_hashtable (500, HASHTABLE_NONWEAK, HASHTABLE_EQ);
   staticpro (&Vcomposite_char_string2char_hashtable);
   staticpro (&Vcomposite_char_char2string_hashtable);
-#endif /* ENABLE_COMPOSITE_CHARS */
 
 }

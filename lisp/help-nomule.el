@@ -100,8 +100,6 @@ With a prefix argument, choose the language."
 		    ;; Now, signal the error
 		    (signal (car error-data) (cdr error-data)))))))
 
-;; General Mule-compatibility stuffs
-(define-function 'string-width 'length)
 
 (provide 'help-nomule)
 

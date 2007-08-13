@@ -135,9 +135,6 @@ you quit again before the process exits."
 	    (cond ((consp ret)
 		   (setq cs-r (car ret)
 			 cs-w (cdr ret)))
-		  ((null ret)
-		   (setq cs-r buffer-file-coding-system
-			 cs-w buffer-file-coding-system))
 		  ((find-coding-system ret)
 		   (setq cs-r ret
 			 cs-w ret))))

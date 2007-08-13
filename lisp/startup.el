@@ -199,18 +199,12 @@ remaining command-line args are in the variable `command-line-args-left'.")
     (princ (concat "\n" (emacs-version) "\n\n"))
     (princ
      (if (featurep 'x)
-	 (concat "When creating a window on an X display, "
-		 (emacs-name)
-		 " accepts all standard X Toolkit
-command line options plus the following:
-  -iconname <title>     Use title as the icon name.
-  -mc <color>           Use color as the mouse color.
-  -cr <color>           Use color as the text-cursor foregound color.
-  -private              Install a private colormap.
-
-In addition, the")
+	 (concat (emacs-name)
+		 " accepts all standard X Toolkit command line options.\n"
+		 "In addition, the")
        "The"))
     (princ " following options are accepted:
+
   -t <device>           Use TTY <device> instead of the terminal for input
                         and output.  This implies the -nw option.
   -nw                   Inhibit the use of any window-system-specific
@@ -408,10 +402,10 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
     
     (if (not inhibit-autoloads)
 	(progn
-	  (if (not inhibit-early-packages)
-	      (packages-load-package-auto-autoloads early-package-load-path))
+	  (packages-load-package-auto-autoloads last-package-load-path)
 	  (packages-load-package-auto-autoloads late-package-load-path)
-	  (packages-load-package-auto-autoloads last-package-load-path)))
+	  (if (not inhibit-early-packages)
+	      (packages-load-package-auto-autoloads early-package-load-path))))
 
     (unwind-protect
 	(command-line)
@@ -419,13 +413,12 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n")
       (setq default-directory (abbreviate-file-name default-directory))
       ;; Specify the file for recording all the auto save files of
       ;; this session.  This is used by recover-session.
-      (if auto-save-list-file-prefix
-	  (setq auto-save-list-file-name
-		(expand-file-name
-		 (format "%s%d-%s"
-			 auto-save-list-file-prefix
-			 (emacs-pid)
-			 (system-name)))))
+      (setq auto-save-list-file-name
+	    (expand-file-name
+	     (format "%s%d-%s"
+		     auto-save-list-file-prefix
+		     (emacs-pid)
+		     (system-name))))
       (run-hooks 'emacs-startup-hook)
       (and term-setup-hook
 	   (run-hooks 'term-setup-hook))
@@ -687,7 +680,7 @@ If this is nil, no message will be displayed.")
 	   (message "Error in init file: %s" (error-message-string error))
 	   (display-warning 'initialization
 	     (format "\
-An error has occurred while loading %s:
+An error has occured while loading %s:
 
 %s
 
@@ -942,7 +935,7 @@ a new format, when variables have changed, etc."
 				 " to see what this means.\n")))
 	`( "\n"))
     (face bold-italic "\
-Copyright (C) 1985-1998 Free Software Foundation, Inc.
+Copyright (C) 1985-1997 Free Software Foundation, Inc.
 Copyright (C) 1990-1994 Lucid, Inc.
 Copyright (C) 1993-1997 Sun Microsystems, Inc. All Rights Reserved.
 Copyright (C) 1994-1996 Board of Trustees, University of Illinois

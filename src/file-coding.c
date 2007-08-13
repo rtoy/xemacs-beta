@@ -103,10 +103,8 @@ struct iso2022_decoder
   /* Index for next byte to store in ISO escape sequence. */
   int esc_bytes_index;
 
-#ifdef ENABLE_COMPOSITE_CHARS
   /* Stuff seen so far when composing a string. */
   unsigned_char_dynarr *composite_chars;
-#endif
 
   /* If we saw an invalid designation sequence for a particular
      register, we flag it here and switch to ASCII.  The next time we
@@ -619,7 +617,7 @@ nil or 'undecided
      JIS (the Japanese encoding commonly used for e-mail), EUC (the
      standard Unix encoding for Japanese and other languages), and
      Compound Text (the encoding used in X11).  You can specify more
-     specific information about the conversion with the PROPS argument.
+     specific information about the conversion with the FLAGS argument.
 'big5
      Big5 (the encoding commonly used for Taiwanese).
 'ccl
@@ -1855,13 +1853,6 @@ reset_decoding_stream (struct decoding_stream *str)
       setup_ccl_program (&str->ccl, CODING_SYSTEM_CCL_DECODE (str->codesys));
     }
 #endif /* MULE */
-  if (CODING_SYSTEM_TYPE (str->codesys) == CODESYS_AUTODETECT
-      || CODING_SYSTEM_EOL_TYPE (str->codesys) == EOL_AUTODETECT)
-    {
-      xzero (str->decst);
-      str->decst.eol_type = EOL_AUTODETECT;
-      str->decst.mask = ~0;
-    }
   str->flags = str->ch = 0;
 }
 
@@ -1899,10 +1890,8 @@ decoding_closer (Lstream *stream)
     }
   Dynarr_free (str->runoff);
 #ifdef MULE
-#ifdef ENABLE_COMPOSITE_CHARS
   if (str->iso2022.composite_chars)
     Dynarr_free (str->iso2022.composite_chars);
-#endif
 #endif
   return Lstream_close (str->other_end);
 }
@@ -3206,10 +3195,8 @@ reset_iso2022 (Lisp_Object coding_system, struct iso2022_decoder *iso)
   iso->invalid_switch_dir = 0;
   iso->output_direction_sequence = 0;
   iso->output_literally = 0;
-#ifdef ENABLE_COMPOSITE_CHARS
   if (iso->composite_chars)
     Dynarr_reset (iso->composite_chars);
-#endif
 }
 
 static int
@@ -3339,7 +3326,6 @@ parse_iso2022_esc (Lisp_Object codesys, struct iso2022_decoder *iso,
 
 	  /**** composite ****/
 
-#ifdef ENABLE_COMPOSITE_CHARS
 	case '0':
 	  iso->esc = ISO_ESC_START_COMPOSITE;
 	  *flags = (*flags & CODING_STATE_ISO2022_LOCK) |
@@ -3351,7 +3337,6 @@ parse_iso2022_esc (Lisp_Object codesys, struct iso2022_decoder *iso,
 	  *flags = (*flags & CODING_STATE_ISO2022_LOCK) &
 	    ~CODING_STATE_COMPOSITE;
 	  return 1;
-#endif /* ENABLE_COMPOSITE_CHARS */
 
 	  /**** directionality ****/
 
@@ -3800,18 +3785,14 @@ decode_coding_iso2022 (Lstream *decoding, CONST unsigned char *src,
   enum eol_type eol_type;
   struct decoding_stream *str = DECODING_STREAM_DATA (decoding);
   Lisp_Object coding_system;
-#ifdef ENABLE_COMPOSITE_CHARS
   unsigned_char_dynarr *real_dst = dst;
-#endif
 
   CODING_STREAM_DECOMPOSE (str, flags, ch);
   eol_type = str->eol_type;
   XSETCODING_SYSTEM (coding_system, str->codesys);
 
-#ifdef ENABLE_COMPOSITE_CHARS
   if (flags & CODING_STATE_COMPOSITE)
     dst = str->iso2022.composite_chars;
-#endif /* ENABLE_COMPOSITE_CHARS */
 
   while (n--)
     {
@@ -3825,7 +3806,6 @@ decode_coding_iso2022 (Lstream *decoding, CONST unsigned char *src,
 	    {
 	      switch (str->iso2022.esc)
 		{
-#ifdef ENABLE_COMPOSITE_CHARS
 		case ISO_ESC_START_COMPOSITE:
 		  if (str->iso2022.composite_chars)
 		    Dynarr_reset (str->iso2022.composite_chars);
@@ -3844,7 +3824,6 @@ decode_coding_iso2022 (Lstream *decoding, CONST unsigned char *src,
 		    Dynarr_add_many (dst, comstr, len);
 		    break;
 		  }
-#endif /* ENABLE_COMPOSITE_CHARS */
 
 		case ISO_ESC_LITERAL:
 		  DECODE_ADD_BINARY_CHAR (c, dst);
@@ -3932,8 +3911,7 @@ decode_coding_iso2022 (Lstream *decoding, CONST unsigned char *src,
 	  charset = str->iso2022.charset[reg];
 
 	  /* Error checking: */
-	  if (! CHARSETP (charset)
-	      || str->iso2022.invalid_designated[reg]
+	  if (NILP (charset) || str->iso2022.invalid_designated[reg]
 	      || (((c & 0x7F) == ' ' || (c & 0x7F) == ISO_CODE_DEL)
 		  && XCHARSET_CHARS (charset) == 94))
 	    /* Mrmph.  We are trying to invoke a register that has no
@@ -4131,13 +4109,11 @@ encode_coding_iso2022 (Lstream *encoding, CONST unsigned char *src,
   Lisp_Object charset;
   int half;
 
-#ifdef ENABLE_COMPOSITE_CHARS
   /* flags for handling composite chars.  We do a little switcharoo
      on the source while we're outputting the composite char. */
   unsigned int saved_n = 0;
   CONST unsigned char *saved_src = NULL;
   int in_composite = 0;
-#endif /* ENABLE_COMPOSITE_CHARS */
 
   CODING_STREAM_DECOMPOSE (str, flags, ch);
   eol_type = CODING_SYSTEM_EOL_TYPE (str->codesys);
@@ -4145,9 +4121,7 @@ encode_coding_iso2022 (Lstream *encoding, CONST unsigned char *src,
   charset = str->iso2022.current_charset;
   half = str->iso2022.current_half;
 
-#ifdef ENABLE_COMPOSITE_CHARS
  back_to_square_n:
-#endif
   while (n--)
     {
       c = *src++;
@@ -4206,10 +4180,7 @@ encode_coding_iso2022 (Lstream *encoding, CONST unsigned char *src,
 	  if (LEADING_BYTE_PREFIX_P(c))
 	    ch = c;
 	  else if (!EQ (charset, Vcharset_control_1)
-#ifdef ENABLE_COMPOSITE_CHARS
-		   && !EQ (charset, Vcharset_composite)
-#endif
-		   )
+		   && !EQ (charset, Vcharset_composite))
 	    {
 	      int reg;
 
@@ -4329,7 +4300,6 @@ encode_coding_iso2022 (Lstream *encoding, CONST unsigned char *src,
 		    }
 		  else if (ch)
 		    {
-#ifdef ENABLE_COMPOSITE_CHARS
 		      if (EQ (charset, Vcharset_composite))
 			{
 			  if (in_composite)
@@ -4353,7 +4323,6 @@ encode_coding_iso2022 (Lstream *encoding, CONST unsigned char *src,
 			    }
 			}
 		      else
-#endif /* ENABLE_COMPOSITE_CHARS */
 			{
 			  Dynarr_add (dst, ch & charmask);
 			  Dynarr_add (dst, c & charmask);
@@ -4386,7 +4355,6 @@ encode_coding_iso2022 (Lstream *encoding, CONST unsigned char *src,
 	}
     }
 
-#ifdef ENABLE_COMPOSITE_CHARS
   if (in_composite)
     {
       n = saved_n;
@@ -4396,7 +4364,6 @@ encode_coding_iso2022 (Lstream *encoding, CONST unsigned char *src,
       Dynarr_add (dst, '1'); /* end composing */
       goto back_to_square_n; /* Wheeeeeeeee ..... */
     }
-#endif /* ENABLE_COMPOSITE_CHARS */
 
   if (char_boundary && flags & CODING_STATE_END)
     {
@@ -4522,25 +4489,27 @@ static Bufbyte_dynarr *conversion_in_dynarr;
    (EQ ((Vfile_name_coding_system), Qbinary))) ?	\
   Qnil : Fget_coding_system (Vfile_name_coding_system))
 
+/* #### not correct for all values of `fmt'! */
+#ifdef MULE
+#define FMT_CODING_SYSTEM(fmt)					\
+ (((fmt) == FORMAT_FILENAME) ? FILE_NAME_CODING_SYSTEM     :	\
+  ((fmt) == FORMAT_CTEXT   ) ? Fget_coding_system (Qctext) :	\
+  ((fmt) == FORMAT_TERMINAL) ? FILE_NAME_CODING_SYSTEM     :	\
+  Qnil)
+#else
+#define FMT_CODING_SYSTEM(fmt)					\
+ (((fmt) == FORMAT_FILENAME) ? FILE_NAME_CODING_SYSTEM     :	\
+  ((fmt) == FORMAT_TERMINAL) ? FILE_NAME_CODING_SYSTEM     :	\
+  Qnil)
+#endif
+
 Extbyte *
 convert_to_external_format (CONST Bufbyte *ptr,
 			    Bytecount len,
 			    Extcount *len_out,
 			    enum external_data_format fmt)
 {
-  Lisp_Object coding_system;
-
-  /* #### not correct for all values of `fmt'! */
-  if (fmt == FORMAT_FILENAME || fmt == FORMAT_TERMINAL)
-    coding_system = FILE_NAME_CODING_SYSTEM;
-#ifdef MULE
-  else if (fmt == FORMAT_CTEXT)
-    coding_system = Fget_coding_system (Qctext);
-#endif
-  else
-    coding_system = Qnil;
-
-  /* Lisp_Object coding_system = FMT_CODING_SYSTEM (fmt); */
+  Lisp_Object coding_system = FMT_CODING_SYSTEM (fmt);
 
   if (!conversion_out_dynarr)
     conversion_out_dynarr = Dynarr_new (Extbyte);
@@ -4608,19 +4577,7 @@ convert_from_external_format (CONST Extbyte *ptr,
 			      Bytecount *len_out,
 			      enum external_data_format fmt)
 {
-  Lisp_Object coding_system;
-
-  /* #### not correct for all values of `fmt'! */
-  if (fmt == FORMAT_FILENAME || fmt == FORMAT_TERMINAL)
-    coding_system = FILE_NAME_CODING_SYSTEM;
-#ifdef MULE
-  else if (fmt == FORMAT_CTEXT)
-    coding_system = Fget_coding_system (Qctext);
-#endif
-  else
-    coding_system = Qnil;
-
-  /* Lisp_Object coding_system = FMT_CODING_SYSTEM (fmt); */
+  Lisp_Object coding_system = FMT_CODING_SYSTEM (fmt);
 
   if (!conversion_in_dynarr)
     conversion_in_dynarr = Dynarr_new (Bufbyte);
@@ -4677,7 +4634,7 @@ convert_from_external_format (CONST Extbyte *ptr,
 /************************************************************************/
 
 void
-syms_of_file_coding (void)
+syms_of_mule_coding (void)
 {
   defsymbol (&Qbuffer_file_coding_system, "buffer-file-coding-system");
   deferror (&Qcoding_system_error, "coding-system-error",
@@ -4778,7 +4735,7 @@ syms_of_file_coding (void)
 }
 
 void
-lstream_type_create_file_coding (void)
+lstream_type_create_mule_coding (void)
 {
   LSTREAM_HAS_METHOD (decoding, reader);
   LSTREAM_HAS_METHOD (decoding, writer);
@@ -4798,7 +4755,7 @@ lstream_type_create_file_coding (void)
 }
 
 void
-vars_of_file_coding (void)
+vars_of_mule_coding (void)
 {
   int i;
 
@@ -4860,7 +4817,7 @@ Setting this to nil does not do anything.
 }
 
 void
-complex_vars_of_file_coding (void)
+complex_vars_of_mule_coding (void)
 {
   staticpro (&Vcoding_system_hashtable);
   Vcoding_system_hashtable = make_lisp_hashtable (50, HASHTABLE_NONWEAK,

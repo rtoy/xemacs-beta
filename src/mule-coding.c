@@ -3855,8 +3855,7 @@ decode_coding_iso2022 (Lstream *decoding, CONST unsigned char *src,
 	  charset = str->iso2022.charset[reg];
 
 	  /* Error checking: */
-	  if (! CHARSETP (charset)
-	      || str->iso2022.invalid_designated[reg]
+	  if (NILP (charset) || str->iso2022.invalid_designated[reg]
 	      || (((c & 0x7F) == ' ' || (c & 0x7F) == ISO_CODE_DEL)
 		  && XCHARSET_CHARS (charset) == 94))
 	    /* Mrmph.  We are trying to invoke a register that has no

@@ -208,7 +208,6 @@
   (x-define-dead-key dead-cedilla		compose-cedilla-map)
   (x-define-dead-key dead-diaeresis		compose-diaeresis-map)
   (x-define-dead-key dead-circum		compose-circumflex-map)
-  (x-define-dead-key dead-circumflex		compose-circumflex-map)
   (x-define-dead-key dead-tilde			compose-tilde-map)
   )
 

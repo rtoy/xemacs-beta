@@ -1,16 +1,7 @@
 #ifndef LWLIB_H
 #define LWLIB_H
 
-#undef CONST
-
 #include <X11/Intrinsic.h>
-
-/* To eliminate use of `const' in the lwlib sources, define CONST_IS_LOSING. */
-#ifdef CONST_IS_LOSING
-# define CONST
-#else
-# define CONST const
-#endif
 
 #if defined (LWLIB_MENUBARS_LUCID) || defined (LWLIB_MENUBARS_MOTIF) || defined (LWLIB_MENUBARS_ATHENA)
 #define NEED_MENUBARS
@@ -113,7 +104,7 @@ typedef struct _widget_value
 
   /* name of widget */
   char*		name;
-  /* value (meaning BOGUSLY depends on widget type) */
+  /* value (meaning BOGUSLY depend on widget type) */
   char*		value;
   /* keyboard equivalent. no implications for XtTranslations */
   char*		key;
@@ -132,11 +123,11 @@ typedef struct _widget_value
   Boolean	edited;
   /* true if has changed (maintained by lw library) */
   change_type	change;
-  /* Contents of sub-widgets, also selected slot for checkbox */
+  /* Contents of the sub-widgets, also selected slot for checkbox */
   struct _widget_value*	contents;
   /* data passed to callback */
   XtPointer	call_data;
-  /* next in the list of siblings */
+  /* next one in the list */
   struct _widget_value*	next;
   /* slot for the toolkit dependent part.  Always initialize to NULL. */
   void* toolkit_data;

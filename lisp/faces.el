@@ -1209,8 +1209,6 @@ See `defface' for information about SPEC."
 	(init-face-from-resources face frame))
     (let ((frames (relevant-custom-frames)))
       (reset-face face)
-      (if (and (eq 'default face) (featurep 'x))
-	  (x-init-global-faces))
       (face-display-set face spec)
       (while frames
 	(face-display-set face spec (car frames))
@@ -1235,7 +1233,7 @@ See `defface' for information about SPEC."
 
 (defvar default-custom-frame-properties nil
   "The frame properties used for the global faces.
-Frames not matching these properties should have frame local faces.
+Frames not matching these propertiess should have frame local faces.
 The value should be nil, if uninitialized, or a plist otherwise.
 See `defface' for a list of valid keys and values for the plist.")
 
@@ -1251,43 +1249,12 @@ If FRAME is nil, return the default frame properties."
 	     ;; and cache it...
 	     (set-frame-property frame 'custom-properties cache))
 	   cache))
-	(default-custom-frame-properties)
+	;; We avoid this cache, because various frame and device
+	;; properties can change.
+	;;(default-custom-frame-properties)
 	(t
 	 (setq default-custom-frame-properties
 	       (extract-custom-frame-properties (selected-frame))))))
-
-(defun face-spec-update-all-matching (spec display plist)
-  "Update all entries in the face spec that could match display to
-have the entries from the new plist and return the new spec"
-  (mapcar
-   (lambda (e)
-     (let ((entries (car e))
-	   (options (cadr e))
-	   (match t)
-	   dplist
-	   (new-options plist)
-	   )
-       (unless (eq display t)
-	 (mapc (lambda (arg)
-		 (setq dplist (plist-put dplist (car arg) (cadr arg))))
-	       display))
-       (unless (eq entries t)
-	 (mapc (lambda (arg)
-		 (setq match (and match (eq (cadr arg)
-					    (plist-get
-					      dplist (car arg)
-					      (cadr arg))))))
-	       entries))
-       (if (not match)
-	   e
-	 (while new-options
-	   (setq options
-		 (plist-put options (car new-options) (cadr new-options)))
-	   (setq new-options (cddr new-options)))
-	 (list entries options))))
-   (copy-sequence spec)))
-       
-		    
 
 (defun face-spec-set-match-display (display &optional frame)
   "Return non-nil if DISPLAY matches FRAME.

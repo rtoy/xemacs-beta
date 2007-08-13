@@ -1,4 +1,4 @@
-.TH XEMACS 1 "2000-09-20"
+.TH XEMACS 1 "1998 January 13"
 .UC 4
 .SH NAME
 xemacs \- Emacs: The Next Generation
@@ -126,7 +126,7 @@ and
 .B \-eval
 options to specify files to execute and functions to call.
 .TP
-.B \-nw
+.B \-nw\
 Inhibit the use of any window-system-specific display code: use the
 current TTY.
 .TP
@@ -151,7 +151,7 @@ Load no extra files at startup.  Equivalent to the combination of
 ,
 .B \-no-site-file
 , and
-.B \-no-early-packages
+.B \-no-packages
 \.
 .TP
 .BI \-u " user, " \-user " user"
@@ -210,22 +210,6 @@ so that you can continue using your original window.
 .PP
 .I XEmacs
 can be started with the following standard X options:
-.TP
-.BI \-visual " <visualname><bitdepth>"
-Select the visual that XEmacs will attempt to use.
-.I <visualname>
-should be one of the strings "StaticColor", "TrueColor", "GrayScale",
-"PseudoColor" or "DirectColor", and
-.I <bitdepth>
-should be the number of bits per pixel (example, "-visual TrueColor24"
-for a 24bit TrueColor visual) See
-.IR X (1)
-for more information.
-.TP
-.B -privateColormap
-Require XEmacs to create and use a private colormap for display.  This will keep
-XEmacs from taking colors from the default colormap and keeping them from other
-clients.
 .TP
 .BI \-geometry " ##x##+##+##"
 Specify the geometry of the initial window.  The ##'s represent a number;
@@ -318,7 +302,7 @@ this option.
 .BI \-xrm " argument"
 This allows you to set an arbitrary resource on the command line.
 .I argument
-should be a resource specification, as might be found in your
+should be a resource specification, as might as in your
 .I \.Xresources
 or
 .I \.Xdefaults
@@ -439,7 +423,7 @@ If set to
 .IR on ,
 the window will be displayed in reverse video.  Consider
 explicitly setting the foreground and background colors instead
-of using this resource.
+of using this resources.
 .TP
 .B borderWidth (\fPclass\fB BorderWidth)
 Sets the window's border width in pixels.
@@ -455,16 +439,6 @@ Sets the color of the window's text cursor.
 .TP
 .B pointerColor (\fPclass\fB Foreground)
 Sets the color of the window's mouse cursor.
-.TP
-.B emacsVisual (\fPclass\fB EmacsVisual)
-Sets the default visual
-.I XEmacs
-will try to use (as described above).
-.TP
-.B privateColormap (\fPclass\fB PrivateColormap)
-If set, 
-.I XEmacs
-will default to using a private colormap.
 .TP
 .B geometry (\fPclass\fB Geometry)
 Sets the geometry of the
@@ -511,7 +485,7 @@ means no horizontal scrollbars.
 Sets the position of vertical and horizontal scrollbars.   Should be one
 of the strings "top-left", "bottom-left", "top-right", or "bottom-right".
 The default is "bottom-right" for the Motif and Lucid scrollbars and
-"bottom-left" for the Athena scrollbars.
+"buttom-left" for the Athena scrollbars.
 .TP
 .B topToolBarHeight (\fPclass\fB TopToolBarHeight)
 Sets the height of the top toolbar, in pixels.  0 means no top toolbar.
@@ -741,7 +715,7 @@ X(1), xlsfonts(1), xterm(1), xrdb(1), emacs(1), vi(1)
 was written by
 Steve Baur <steve@xemacs.org>,
 Martin Buchholz <martin@xemacs.org>,
-Richard Mlynarik <Mly@POBox.COM>,
+Richard Mlynarik <mly@adoc.xerox.com>,
 Hrvoje Niksic <hniksic@srce.hr>,
 Chuck Thompson <cthomp@xemacs.org>,
 Ben Wing <wing@666.com>,

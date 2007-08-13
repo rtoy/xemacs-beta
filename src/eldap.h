@@ -37,6 +37,8 @@ struct Lisp_LDAP
   LDAP *ld;
   /* Name of the host we connected to */
   Lisp_Object host;
+  /* Status of the LDAP connection.  */
+  int livep;
 };
 
 
@@ -50,7 +52,7 @@ DECLARE_LRECORD (ldap, struct Lisp_LDAP);
 
 #define CHECK_LIVE_LDAP(ldap) do {					\
   CHECK_LDAP (ldap);							\
-  if (!XLDAP (ldap)->ld)						\
+  if (!XLDAP (ldap)->livep)						\
     signal_simple_error ("Attempting to access closed LDAP connection",	\
                          ldap);						\
 } while (0)

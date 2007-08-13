@@ -302,7 +302,6 @@ looking_at_1 (Lisp_Object string, struct buffer *buf, int posix)
   s2 = BI_BUF_ZV (buf) - p2;
 
   regex_emacs_buffer = buf;
-  regex_emacs_buffer_p = 1;
   i = re_match_2 (bufp, (char *) BI_BUF_BYTE_ADDRESS (buf, p1),
 		  s1, (char *) BI_BUF_BYTE_ADDRESS (buf, p2), s2,
 		  BI_BUF_PT (buf) - BI_BUF_BEGV (buf), &search_regs,
@@ -393,7 +392,6 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
   {
     Bytecount bis = charcount_to_bytecount (XSTRING_DATA (string), s);
     regex_emacs_buffer = buf;
-    regex_emacs_buffer_p = 0;
     val = re_search (bufp, (char *) XSTRING_DATA (string),
 		     XSTRING_LENGTH (string), bis,
 		     XSTRING_LENGTH (string) - bis,
@@ -487,7 +485,6 @@ fast_string_match (Lisp_Object regexp,  CONST Bufbyte *nonreloc,
 
   /* #### evil current-buffer dependency */
   regex_emacs_buffer = current_buffer;
-  regex_emacs_buffer_p = 0;
   val = re_search (bufp, (char *) newnonreloc + offset, length, 0,
 		   length, 0);
 
@@ -1124,7 +1121,6 @@ search_buffer (struct buffer *buf, Lisp_Object string, Bufpos bufpos,
 	  Bytecount val;
 	  QUIT;
           regex_emacs_buffer = buf;
-	  regex_emacs_buffer_p = 1;
 	  val = re_search_2 (bufp,
 			     (char *) BI_BUF_BYTE_ADDRESS (buf, p1), s1,
 			     (char *) BI_BUF_BYTE_ADDRESS (buf, p2), s2,
@@ -1163,7 +1159,6 @@ search_buffer (struct buffer *buf, Lisp_Object string, Bufpos bufpos,
 	  Bytecount val;
 	  QUIT;
           regex_emacs_buffer = buf;
-	  regex_emacs_buffer_p = 1;
           val = re_search_2 (bufp,
 			     (char *) BI_BUF_BYTE_ADDRESS (buf, p1), s1,
 			     (char *) BI_BUF_BYTE_ADDRESS (buf, p2), s2,
@@ -2040,10 +2035,6 @@ and you do not need to specify it.)
 	  else
 	    newtext = accum;
 	}
-
-      /* newtext can be nil. */
-      if (NILP (newtext))
-	newtext = build_string ("");
 
       if (case_action == all_caps)
 	newtext = Fupcase (newtext, buffer);

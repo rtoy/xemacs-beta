@@ -68,13 +68,13 @@ text is inserted."
   :group 'mouse)
 
 (defcustom mouse-highlight-text 'context
-  "*Choose the default double-click highlighting behavior.
+  "*Choose the default double-click highlighting behaviour.
 If set to `context', double-click will highlight words when the mouse
  is at a word character, or a symbol if the mouse is at a symbol
  character.
 If set to `word', double-click will always attempt to highlight a word.
 If set to `symbol', double-click will always attempt to highlight a
- symbol (the default behavior in previous XEmacs versions)."
+ symbol (the default behaviour in previous XEmacs versions)."
   :type '(choice (const context)
 		 (const word)
 		 (const symbol))
@@ -676,7 +676,7 @@ at the initial click position."
       (let* ((edges (window-pixel-edges window))
 	     (row (event-y-pixel event))
 	     (text-start (nth 1 edges))
-	     (text-end (nth 3 edges)))
+	     (text-end (+ (nth 3 edges))))
 	(if (or (< row text-start)
 		(> row text-end))
 	    nil ;; Scroll
@@ -1414,7 +1414,7 @@ and `mode-motion-hook'."
 ;;
 (defun drag-window-divider (event)
   "Handle resizing windows by dragging window dividers.
-This is an internal function, normally bound to button1 event in
+This is an intenal function, normally bound to button1 event in
 window-divider-map. You would not call it, but you may bind it to
 other mouse buttons."
   (interactive "e")

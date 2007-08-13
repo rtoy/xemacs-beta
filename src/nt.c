@@ -1169,7 +1169,7 @@ sys_rename (const char * oldname, const char * newname)
 	return -1;
     }
 
-  /* Emulate Unix behavior - newname is deleted if it already exists
+  /* Emulate Unix behaviour - newname is deleted if it already exists
      (at least if it is a file; don't do this for directories).
      However, don't do this if we are just changing the case of the file
      name - we will end up deleting the file we are trying to rename!  */
@@ -1288,7 +1288,7 @@ generate_inode_val (const char * name)
   unsigned hash;
 
   /* Get the truly canonical filename, if it exists.  (Note: this
-     doesn't resolve aliasing due to subst commands, or recognize hard
+     doesn't resolve aliasing due to subst commands, or recognise hard
      links.  */
   if (!win32_get_long_filename ((char *)name, fullname, MAX_PATH))
     abort ();
@@ -1300,40 +1300,6 @@ generate_inode_val (const char * name)
 }
 
 #endif
-
-/* Since stat is encapsulated on Windows NT, we need to encapsulate
-   the equally broken fstat as well. */
-int
-fstat (int handle, struct stat *buffer)
-{
-  int ret;
-  BY_HANDLE_FILE_INFORMATION lpFileInfo;
-  /* Initialize values */
-  buffer->st_mode = 0;
-  buffer->st_size = 0;
-  buffer->st_dev = 0;
-  buffer->st_rdev = 0;
-  buffer->st_atime = 0;
-  buffer->st_ctime = 0;
-  buffer->st_mtime = 0;
-  buffer->st_nlink = 0;
-  ret = GetFileInformationByHandle((HANDLE) handle, &lpFileInfo);
-  if (!ret)
-    {
-      return -1;
-    }
-  else
-    {
-      buffer->st_mtime = convert_time (lpFileInfo.ftLastWriteTime);
-      buffer->st_atime = convert_time (lpFileInfo.ftLastAccessTime);
-      if (buffer->st_atime == 0) buffer->st_atime = buffer->st_mtime;
-      buffer->st_ctime = convert_time (lpFileInfo.ftCreationTime);
-      if (buffer->st_ctime == 0) buffer->st_ctime = buffer->st_mtime;
-      buffer->st_size = lpFileInfo.nFileSizeLow;
-      buffer->st_nlink = (short) lpFileInfo.nNumberOfLinks;
-      return 0;
-    }
-}
 
 /* MSVC stat function can't cope with UNC names and has other bugs, so
    replace it with our own.  This also allows us to calculate consistent
@@ -1424,8 +1390,8 @@ stat (const char * path, struct stat * buf)
     }
   else if (!NILP (Vmswindows_get_true_file_attributes))
     {
-      /* This is more accurate in terms of getting the correct number
-	 of links, but is quite slow (it is noticeable when Emacs is
+      /* This is more accurate in terms of gettting the correct number
+	 of links, but is quite slow (it is noticable when Emacs is
 	 making a list of file name completions). */
       BY_HANDLE_FILE_INFORMATION info;
 
@@ -1897,7 +1863,7 @@ static UINT period (const struct itimerval* it, UINT denom)
   if (tv->tv_sec == 0 && tv->tv_usec == 0)
     return 0;
   
-  /* Convert to ms and divide by denom */
+  /* Conver to ms and divide by denom */
   res = (tv->tv_sec * 1000 + (tv->tv_usec + 500) / 1000) / denom;
   
   /* Converge to minimum timer resolution */

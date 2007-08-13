@@ -125,7 +125,6 @@ struct buffer buffer_local_flags;
 
 /* This is the initial (startup) directory, as used for the *scratch* buffer.
    We're making this a global to make others aware of the startup directory.
-   `initial_directory' is stored in external format.
  */
 char initial_directory[MAXPATHLEN+1];
 
@@ -433,7 +432,7 @@ the search will still be done on `buffer-file-name'.
 */
        (filename))
 {
-  /* This function can GC.  GC checked and fixed 7-11-2000 ben. */
+  /* This function can GC.  GC checked 1997.04.06. */
   REGISTER Lisp_Object tail, buf, tem;
   struct gcpro gcpro1;
 
@@ -468,11 +467,8 @@ the search will still be done on `buffer-file-name'.
 	  dn = Ffile_name_directory (filename);
 	  fn = Ffile_truename (dn, Qnil);
 	  if (! NILP (fn)) dn = fn;
-	  /* Formerly the two calls below were combined, but that is
-	     not GC-safe because the first call returns unprotected
-	     data and the second call can GC. --ben */
-	  fn = Ffile_name_nondirectory (filename);
-	  fn = Fexpand_file_name (fn, dn);
+	  fn = Fexpand_file_name (Ffile_name_nondirectory (filename),
+				  dn);
 	}
       filename = fn;
       NUNGCPRO;
@@ -529,7 +525,6 @@ delete_from_buffer_alist (Lisp_Object buf)
 Lisp_Object
 get_truename_buffer (REGISTER Lisp_Object filename)
 {
-  /* This function can GC.  GC correct 7-11-00 ben */
   /* FSFmacs has its own code here and doesn't call get-file-buffer.
      That's because their equivalent of find-file-compare-truenames
      (find-file-existing-other-name) isn't looked at in get-file-buffer.
@@ -1657,8 +1652,6 @@ thus, the least likely buffer for \\[switch-to-buffer] to select by default.
 If BUFFER is nil or omitted, bury the current buffer.
 Also, if BUFFER is nil or omitted, remove the current buffer from the
 selected window if it is displayed there.
-Because of this, you may need to specify (current-buffer) as
-BUFFER when calling from minibuffer.
 If BEFORE is non-nil, it specifies a buffer before which BUFFER
 will be placed, instead of being placed at the end.
 */
@@ -2754,53 +2747,37 @@ handled:
   }
 }
 
-/* Is PWD another name for `.' ? */
-static int
-directory_is_current_directory (char *pwd)
-{
-  Bufbyte *pwd_internal;
-  struct stat dotstat, pwdstat;
-
-  GET_C_CHARPTR_INT_FILENAME_DATA_ALLOCA (pwd, pwd_internal);
-
-  return (IS_DIRECTORY_SEP (*pwd_internal)
-	  && stat ((char *) pwd_internal, &pwdstat) == 0
-	  && stat (".", &dotstat) == 0
-	  && dotstat.st_ino == pwdstat.st_ino
-	  && dotstat.st_dev == pwdstat.st_dev
-	  && (int) strlen ((char *) pwd_internal) < MAXPATHLEN);
-}
-
 void
 init_initial_directory (void)
 {
   /* This function can GC */
 
   char *pwd;
+  struct stat dotstat, pwdstat;
+  int rc;
 
   initial_directory[0] = 0;
 
   /* If PWD is accurate, use it instead of calling getcwd.  This is faster
      when PWD is right, and may avoid a fatal error.  */
-  if ((pwd = getenv ("PWD")) != NULL
-      && directory_is_current_directory (pwd))
+  if ((pwd = getenv ("PWD")) != 0 && IS_DIRECTORY_SEP (*pwd)
+      && stat (pwd, &pwdstat) == 0
+      && stat (".", &dotstat) == 0
+      && dotstat.st_ino == pwdstat.st_ino
+      && dotstat.st_dev == pwdstat.st_dev
+      && (int) strlen (pwd) < MAXPATHLEN)
     strcpy (initial_directory, pwd);
   else if (getcwd (initial_directory, MAXPATHLEN) == NULL)
     fatal ("`getcwd' failed: %s\n", strerror (errno));
 
-  /* Make sure pwd is DIRECTORY_SEP-terminated.
-     Maybe this should really use some standard subroutine
+  /* Maybe this should really use some standard subroutine
      whose definition is filename syntax dependent.  */
-  {
-    int len = strlen (initial_directory);
-
-    if (! IS_DIRECTORY_SEP (initial_directory[len - 1]))
-      {
-	initial_directory[len] = DIRECTORY_SEP;
-	initial_directory[len + 1] = '\0';
-      }
-  }
-
+  rc = strlen (initial_directory);
+  if (!(IS_DIRECTORY_SEP (initial_directory[rc - 1])))
+    {
+      initial_directory[rc] = DIRECTORY_SEP;
+      initial_directory[rc + 1] = '\0';
+    }
   /* XEmacs change: store buffer's default directory
      using prefered (i.e. as defined at compile-time)
      directory separator. --marcpa */
@@ -2821,8 +2798,7 @@ init_buffer (void)
 
   Fset_buffer (Fget_buffer_create (QSscratch));
 
-  current_buffer->directory =
-    build_ext_string (initial_directory, FORMAT_FILENAME);
+  current_buffer->directory = build_string (initial_directory);
 
 #if 0 /* FSFmacs */
   /* #### is this correct? */

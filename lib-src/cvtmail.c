@@ -53,7 +53,9 @@ static void fatal (CONST char *s1, CONST char *s2);
 static void error (CONST char *s1, CONST char *s2);
 
 int
-main (int argc, char *argv[])
+main (argc, argv)
+     int argc;
+     char *argv[];
 {
   char *hd;
   char *md;
@@ -116,7 +118,8 @@ main (int argc, char *argv[])
 }
 
 static void
-skip_to_lf (FILE *stream)
+skip_to_lf (stream)
+     FILE *stream;
 {
   register int c;
   while ((c = getc(stream)) != '\n')
@@ -124,7 +127,8 @@ skip_to_lf (FILE *stream)
 }
 
 static void *
-xmalloc (unsigned int size)
+xmalloc (size)
+     unsigned size;
 {
   char *result = (char *) malloc (size);
   if (!result)
@@ -133,7 +137,9 @@ xmalloc (unsigned int size)
 }
 
 static void *
-xrealloc (char *ptr, unsigned int size)
+xrealloc (ptr, size)
+     char *ptr;
+     unsigned size;
 {
   char *result = (char *) realloc (ptr, size);
   if (!result)

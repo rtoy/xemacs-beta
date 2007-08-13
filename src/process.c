@@ -59,7 +59,7 @@ Boston, MA 02111-1307, USA.  */
 #include "systty.h"
 #include "syswait.h"
 
-Lisp_Object Qprocessp, Qprocess_live_p;
+Lisp_Object Qprocessp;
 
 /* Process methods */
 struct process_methods the_process_methods;
@@ -254,14 +254,6 @@ Return t if OBJECT is a process.
        (obj))
 {
   return PROCESSP (obj) ? Qt : Qnil;
-}
-
-DEFUN ("process-live-p", Fprocess_live_p, 1, 1, 0, /*
-Return t if OBJECT is a process that is alive.
-*/
-       (obj))
-{
-  return PROCESSP (obj) && PROCESS_LIVE_P (XPROCESS (obj)) ? Qt : Qnil;
 }
 
 DEFUN ("process-list", Fprocess_list, 0, 0, 0, /*
@@ -517,7 +509,7 @@ create_process (Lisp_Object process, Lisp_Object *argv, int nargv,
   pid = PROCMETH (create_process, (p, argv, nargv, program, cur_dir));
 
   p->pid = make_int (pid);
-  if (PROCESS_LIVE_P (p))
+  if (!NILP(p->pipe_instream))
     event_stream_select_process (p);
 }
 
@@ -823,7 +815,7 @@ read_process_output (Lisp_Object proc)
      Really, the loop in execute_internal_event() should check itself
      for a process-filter change, like in status_notify(); but the
      struct Lisp_Process is not exported outside of this file. */
-  if (!PROCESS_LIVE_P (p))
+  if (NILP(p->pipe_instream))
     return -1; /* already closed */
 
   if (!NILP (p->filter) && (p->filter_does_read))
@@ -1032,7 +1024,7 @@ void
 set_process_filter (Lisp_Object proc, Lisp_Object filter, int filter_does_read)
 {
   CHECK_PROCESS (proc);
-  if (PROCESS_LIVE_P (XPROCESS (proc))) {
+  if (PROCESS_LIVE_P (proc)) {
     if (EQ (filter, Qt))
       event_stream_unselect_process (XPROCESS (proc));
     else
@@ -1121,7 +1113,6 @@ Return PROCESS's input coding system.
        (process))
 {
   process = get_process (process);
-  CHECK_LIVE_PROCESS (process);
   return decoding_stream_coding_system (XLSTREAM (XPROCESS (process)->coding_instream) );
 }
 
@@ -1131,7 +1122,6 @@ Return PROCESS's output coding system.
        (process))
 {
   process = get_process (process);
-  CHECK_LIVE_PROCESS (process);
   return encoding_stream_coding_system (XLSTREAM (XPROCESS (process)->coding_outstream));
 }
 
@@ -1141,7 +1131,6 @@ Return a pair of coding-system for decoding and encoding of PROCESS.
        (process))
 {
   process = get_process (process);
-  CHECK_LIVE_PROCESS (process);
   return Fcons (decoding_stream_coding_system
 		(XLSTREAM (XPROCESS (process)->coding_instream)),
 		encoding_stream_coding_system
@@ -1156,8 +1145,6 @@ Set PROCESS's input coding system to CODESYS.
 {
   codesys = Fget_coding_system (codesys);
   process = get_process (process);
-  CHECK_LIVE_PROCESS (process);
-
   set_decoding_stream_coding_system
     (XLSTREAM (XPROCESS (process)->coding_instream), codesys);
   return Qnil;
@@ -1171,8 +1158,6 @@ Set PROCESS's output coding system to CODESYS.
 {
   codesys = Fget_coding_system (codesys);
   process = get_process (process);
-  CHECK_LIVE_PROCESS (process);
-
   set_encoding_stream_coding_system
     (XLSTREAM (XPROCESS (process)->coding_outstream), codesys);
   return Qnil;
@@ -1534,7 +1519,9 @@ process_send_signal (Lisp_Object process, int signo,
   if (network_connection_p (proc))
     error ("Network connection %s is not a subprocess",
 	   XSTRING_DATA (XPROCESS(proc)->name));
-  CHECK_LIVE_PROCESS (proc);
+  if (!PROCESS_LIVE_P (proc))
+    error ("Process %s is not active",
+	   XSTRING_DATA (XPROCESS(proc)->name));
 
   MAYBE_PROCMETH (kill_child_process, (proc, signo, current_group, nomsg));
 }
@@ -1888,7 +1875,7 @@ PROCESS may be a process or the name of one, or a buffer name.
       p->tick++;
       process_tick++;
     }
-  else if (PROCESS_LIVE_P (p))
+  else if (!NILP(p->pipe_instream))
     {
       Fkill_process (proc, Qnil);
       /* Do this now, since remove_process will make sigchld_handler do nothing.  */
@@ -1920,7 +1907,7 @@ kill_buffer_processes (Lisp_Object buffer)
 	{
 	  if (network_connection_p (proc))
 	    Fdelete_process (proc);
-	  else if (PROCESS_LIVE_P (XPROCESS (proc)))
+	  else if (!NILP (XPROCESS (proc)->pipe_instream))
 	    process_send_signal (proc, SIGHUP, 0, 1);
 	}
     }
@@ -1979,7 +1966,6 @@ void
 syms_of_process (void)
 {
   defsymbol (&Qprocessp, "processp");
-  defsymbol (&Qprocess_live_p, "process-live-p");
   defsymbol (&Qrun, "run");
   defsymbol (&Qstop, "stop");
   defsymbol (&Qopen, "open");
@@ -1992,7 +1978,6 @@ syms_of_process (void)
 #endif
 
   DEFSUBR (Fprocessp);
-  DEFSUBR (Fprocess_live_p);
   DEFSUBR (Fget_process);
   DEFSUBR (Fget_buffer_process);
   DEFSUBR (Fdelete_process);

@@ -1011,7 +1011,6 @@ See also `current-input-mode'.
       TTY_FLAGS (con).flow_control = !NILP (flow);
       TTY_FLAGS (con).meta_key = meta_key;
       init_one_console (con);
-      MARK_FRAME_CHANGED (XFRAME (CONSOLE_SELECTED_FRAME (con)));
     }
 #endif
 

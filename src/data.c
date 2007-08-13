@@ -1192,7 +1192,7 @@ Floating point numbers always use base 10.
     p++;
 
 #ifdef LISP_FLOAT_TYPE
-  if (isfloat_string (p) && b == 10)
+  if (isfloat_string (p))
     return make_float (atof (p));
 #endif /* LISP_FLOAT_TYPE */
 
@@ -1969,7 +1969,7 @@ DEFUN ("make-weak-list", Fmake_weak_list, 0, 1, 0, /*
 Return a new weak list object of type TYPE.
 A weak list object is an object that contains a list.  This list behaves
 like any other list except that its elements do not count towards
-garbage collection -- if the only pointer to an object is inside a weak
+garbage collection -- if the only pointer to an object in inside a weak
 list (other than pointers in similar objects such as weak hash tables),
 the object is garbage collected and automatically removed from the list.
 This is used internally, for example, to manage the list holding the

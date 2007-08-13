@@ -226,10 +226,9 @@ first line, insist it must match FIRST-LINE-REGEXP."
       ;; XEmacs change
       (if (not dont-skip-first)
 	  (forward-line 1))
-      (cond ((>= (point) to)
-	     (goto-char firstline))
-	    ((/= (point) from)
-	     (setq at-second t)))
+      (if (>= (point) to)
+	  (goto-char firstline)
+	(setq at-second t))
       (move-to-left-margin)
       ;; XEmacs change
       (let ((start (point))
@@ -237,7 +236,7 @@ first line, insist it must match FIRST-LINE-REGEXP."
 	    ;(eol (save-excursion (end-of-line) (point)))
 	    )
 	(setq result
-	      (if (or dont-skip-first (not (looking-at paragraph-start)))
+	      (if (not (looking-at paragraph-start))
 		  (cond ((and adaptive-fill-regexp (looking-at adaptive-fill-regexp))
 			 (buffer-substring-no-properties start (match-end 0)))
 			(adaptive-fill-function (funcall adaptive-fill-function)))))

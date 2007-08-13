@@ -587,7 +587,7 @@ is treated as a regexp.  See \\[isearch-forward] for more info."
 		      (cons isearch-string regexp-search-ring)
 		      regexp-search-ring-yank-pointer regexp-search-ring)
 		(if (> (length regexp-search-ring) regexp-search-ring-max)
-		    (setcdr (nthcdr (1- regexp-search-ring-max) regexp-search-ring)
+		    (setcdr (nthcdr (1- search-ring-max) regexp-search-ring)
 			    nil))))
 	(if (not (setq search-ring-yank-pointer
 		       ;; really need equal test instead of eq.
@@ -936,20 +936,6 @@ backwards."
   (interactive)
   (isearch-yank (x-get-clipboard)))
 
-(defun isearch-fix-case ()
-  (if (and isearch-case-fold-search search-caps-disable-folding)
-      (setq isearch-case-fold-search (isearch-no-upper-case-p isearch-string)))
-  (setq isearch-mode (if case-fold-search
-                         (if isearch-case-fold-search
-                             " Isearch"  ;As God Intended Mode
-			   " ISeARch") ;Warn about evil case via StuDLYcAps.
-		       "Isearch"
-;		         (if isearch-case-fold-search
-;                            " isearch"    ;Presumably case-sensitive losers
-;                                          ;will notice this 1-char difference.
-;                            " Isearch")   ;Weenie mode.
-			 )))
-
 (defun isearch-search-and-update ()
   ;; Do the search and update the display.
   (if (and (not isearch-success)
@@ -965,15 +951,12 @@ backwards."
     ;; long as the match does not extend past search origin.
     (if (and (not isearch-forward) (not isearch-adjusted)
 	     (condition-case ()
-		 (progn
-		   (isearch-fix-case)
-		   (let ((case-fold-search isearch-case-fold-search))
-		     (looking-at (if isearch-regexp isearch-string
-				   (regexp-quote isearch-string)))))
+		 (looking-at (if isearch-regexp isearch-string
+			       (regexp-quote isearch-string)))
 	       (error nil))
-	     (or isearch-yank-flag
-		 (<= (match-end 0) 
-		     (min isearch-opoint isearch-barrier))))
+	       (or isearch-yank-flag
+		   (<= (match-end 0) 
+		       (min isearch-opoint isearch-barrier))))
 	(setq isearch-success t 
 	      isearch-invalid-regexp nil
 	      isearch-other-end (match-end 0))
@@ -1477,9 +1460,12 @@ currently matches the search-string.")
   (if (null isearch-highlight)
       nil
     ;; make sure isearch-extent is in the current buffer
-    (or (extentp isearch-extent)
-	(isearch-make-extent begin end))
-    (set-extent-endpoints isearch-extent begin end (current-buffer))))
+    (cond ((not (extentp isearch-extent))
+	   (isearch-make-extent begin end))
+	  ((not (eq (extent-object isearch-extent) (current-buffer)))
+	   (delete-extent isearch-extent)
+	   (isearch-make-extent begin end)))
+    (set-extent-endpoints isearch-extent begin end)))
 
 (defun isearch-dehighlight (totally)
   (if (and isearch-highlight isearch-extent)
@@ -1499,7 +1485,19 @@ currently matches the search-string.")
 (defun isearch-search ()
   ;; Do the search with the current search string.
   (isearch-message nil t)
-  (isearch-fix-case)
+  (if (and isearch-case-fold-search search-caps-disable-folding)
+      (setq isearch-case-fold-search (isearch-no-upper-case-p isearch-string)))
+
+  (setq isearch-mode (if case-fold-search
+                         (if isearch-case-fold-search
+                             " Isearch"  ;As God Intended Mode
+                             " ISeARch") ;Warn about evil case via StuDLYcAps.
+		         "Isearch"
+;		         (if isearch-case-fold-search
+;                            " isearch"    ;Presumably case-sensitive losers
+;                                          ;will notice this 1-char difference.
+;                            " Isearch")   ;Weenie mode.
+			 ))
   (condition-case lossage
       (let ((inhibit-quit nil)
 	    (case-fold-search isearch-case-fold-search))

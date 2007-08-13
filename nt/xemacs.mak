@@ -24,14 +24,7 @@
 # Synched up with: Not in FSF.
 #
 
-# APA: Since there seems to be no way to determine the directory where
-# xemacs.mak is located (from within nmake) we just insist on the user
-# to invoke nmake in the directory where xemacs.mak is.
-!if !exist("$(MAKEDIR)\xemacs.mak")
-!error Please run nmake from the directory of this makefile (xemacs\nt).
-!endif
-
-XEMACS=$(MAKEDIR)\..
+XEMACS=..
 LISP=$(XEMACS)\lisp
 NT=$(XEMACS)\nt
 
@@ -52,10 +45,10 @@ PROGRAM_DEFINES=-DINFODOCK 					\
 	-DINFODOCK_MINOR_VERSION=$(infodock_minor_version)	\
 	-DINFODOCK_BUILD_VERSION=$(infodock_build_version)
 !else
-!if "$(emacs_is_beta)" != ""
+!if "$(emacs_beta_version)" != ""
 XEMACS_VERSION_STRING=$(emacs_major_version).$(emacs_minor_version)-b$(emacs_beta_version)
 !else
-XEMACS_VERSION_STRING=$(emacs_major_version).$(emacs_minor_version).$(emacs_beta_version)
+XEMACS_VERSION_STRING=$(emacs_major_version).$(emacs_minor_version)
 !endif
 PROGRAM_DEFINES=						\
 	-DPATH_VERSION=\"$(XEMACS_VERSION_STRING)\"		\
@@ -72,13 +65,11 @@ INSTALL_DIR=c:\Program Files\Infodock\Infodock-$(INFODOCK_VERSION_STRING)
 INSTALL_DIR=c:\Program Files\XEmacs\XEmacs-$(XEMACS_VERSION_STRING)
 ! endif
 !endif
-!if !defined(PACKAGE_PATH)
-! if !defined(PACKAGE_PREFIX)
-PACKAGE_PREFIX=c:\Program Files\XEmacs
-! endif
-PACKAGE_PATH=~\.xemacs;;$(PACKAGE_PREFIX)\site-packages;$(PACKAGE_PREFIX)\mule-packages;$(PACKAGE_PREFIX)\xemacs-packages
+!if !defined(PACKAGEPATH)
+PATH_PACKAGEPATH="c:\\Program Files\\XEmacs\\packages"
+!else
+PATH_PACKAGEPATH="$(PACKAGEPATH)"
 !endif
-PATH_PACKAGEPATH="$(PACKAGE_PATH:\=\\)"
 !if !defined(HAVE_MSW)
 HAVE_MSW=1
 !endif
@@ -90,18 +81,6 @@ HAVE_MULE=0
 !endif
 !if !defined(HAVE_XPM)
 HAVE_XPM=0
-!endif
-!if !defined(HAVE_PNG)
-HAVE_PNG=0
-!endif
-!if !defined(HAVE_TIFF)
-HAVE_TIFF=0
-!endif
-!if !defined(HAVE_JPEG)
-HAVE_JPEG=0
-!endif
-!if !defined(HAVE_GIF)
-HAVE_GIF=1
 !endif
 !if !defined(HAVE_TOOLBARS)
 HAVE_TOOLBARS=$(HAVE_XPM)
@@ -173,38 +152,6 @@ CONFIG_ERROR=1
 !message Specified XPM directory does not contain "$(XPM_DIR)\lib\Xpm.lib"
 CONFIG_ERROR=1
 !endif
-!if $(HAVE_MSW) && $(HAVE_PNG) && !defined(PNG_DIR)
-!message Please specify root directory for your PNG installation: PNG_DIR=path
-CONFIG_ERROR=1
-!endif
-!if $(HAVE_MSW) && $(HAVE_PNG) && defined(PNG_DIR) && !exist("$(PNG_DIR)\libpng.lib")
-!message Specified PNG directory does not contain "$(PNG_DIR)\libpng.lib"
-CONFIG_ERROR=1
-!endif
-!if $(HAVE_MSW) && $(HAVE_PNG) && !defined(ZLIB_DIR)
-!message Please specify root directory for your ZLIB installation: ZLIB_DIR=path
-CONFIG_ERROR=1
-!endif
-!if $(HAVE_MSW) && $(HAVE_PNG) && defined(ZLIB_DIR) && !exist("$(ZLIB_DIR)\zlib.lib")
-!message Specified ZLIB directory does not contain "$(ZLIB_DIR)\zlib.lib"
-CONFIG_ERROR=1
-!endif
-!if $(HAVE_MSW) && $(HAVE_TIFF) && !defined(TIFF_DIR)
-!message Please specify root directory for your TIFF installation: TIFF_DIR=path
-CONFIG_ERROR=1
-!endif
-!if $(HAVE_MSW) && $(HAVE_TIFF) && !exist("$(TIFF_DIR)\libtiff\libtiff.lib")
-!message Specified TIFF directory does not contain "$(TIFF_DIR)\libtiff\libtiff.lib"
-CONFIG_ERROR=1
-!endif
-!if $(HAVE_MSW) && $(HAVE_JPEG) && !defined(JPEG_DIR)
-!message Please specify root directory for your JPEG installation: JPEG_DIR=path
-CONFIG_ERROR=1
-!endif
-!if $(HAVE_MSW) && $(HAVE_JPEG) && !exist("$(JPEG_DIR)\libjpeg.lib")
-!message Specified JPEG directory does not contain "$(JPEG_DIR)\libjpeg.lib"
-CONFIG_ERROR=1
-!endif
 !if $(HAVE_MSW) && $(HAVE_TOOLBARS) && !$(HAVE_XPM)
 !error Toolbars require XPM support
 CONFIG_ERROR=1
@@ -228,10 +175,10 @@ USE_INDEXED_LRECORD_IMPLEMENTATION=$(GUNG_HO)
 !if [set CONF_REPORT_ALREADY_PRINTED=1]
 !endif
 !message ------------------------------------------------
-!message XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename) configured for "$(EMACS_CONFIGURATION)".
+!message Configured for "$(EMACS_CONFIGURATION)".
 !message 
 !message Installation directory is "$(INSTALL_DIR)".
-!message Package path is "$(PACKAGE_PATH)".
+!message Package path is $(PATH_PACKAGEPATH).
 !message 
 !if $(INFODOCK)
 !message Building InfoDock.
@@ -247,18 +194,6 @@ USE_INDEXED_LRECORD_IMPLEMENTATION=$(GUNG_HO)
 !endif
 !if $(HAVE_XPM)
 !message Compiling in support for XPM images.
-!endif
-!if $(HAVE_GIF)
-!message Compiling in support for GIF images.
-!endif
-!if $(HAVE_PNG)
-!message Compiling in support for PNG images.
-!endif
-!if $(HAVE_TIFF)
-!message Compiling in support for TIFF images.
-!endif
-!if $(HAVE_JPEG)
-!message Compiling in support for JPEG images.
 !endif
 !if $(HAVE_TOOLBARS)
 !message Compiling in support for toolbars.
@@ -331,26 +266,6 @@ MSW_DEFINES=$(MSW_DEFINES) -DHAVE_XPM -DFOR_MSW
 MSW_INCLUDES=$(MSW_INCLUDES) -I"$(XPM_DIR)" -I"$(XPM_DIR)\lib"
 MSW_LIBS=$(MSW_LIBS) "$(XPM_DIR)\lib\Xpm.lib"
 !endif
-!if $(HAVE_GIF)
-MSW_DEFINES=$(MSW_DEFINES) -DHAVE_GIF
-MSW_GIF_SRC=$(XEMACS)\src\dgif_lib.c $(XEMACS)\src\gif_io.c
-MSW_GIF_OBJ=$(OUTDIR)\dgif_lib.obj $(OUTDIR)\gif_io.obj
-!endif
-!if $(HAVE_PNG)
-MSW_DEFINES=$(MSW_DEFINES) -DHAVE_PNG
-MSW_INCLUDES=$(MSW_INCLUDES) -I"$(PNG_DIR)" -I"$(ZLIB_DIR)"
-MSW_LIBS=$(MSW_LIBS) "$(PNG_DIR)\libpng.lib" "$(ZLIB_DIR)\zlib.lib"
-!endif
-!if $(HAVE_TIFF)
-MSW_DEFINES=$(MSW_DEFINES) -DHAVE_TIFF
-MSW_INCLUDES=$(MSW_INCLUDES) -I"$(TIFF_DIR)\libtiff"
-MSW_LIBS=$(MSW_LIBS) "$(TIFF_DIR)\libtiff\libtiff.lib"
-!endif
-!if $(HAVE_JPEG)
-MSW_DEFINES=$(MSW_DEFINES) -DHAVE_JPEG
-MSW_INCLUDES=$(MSW_INCLUDES) -I"$(JPEG_DIR)"
-MSW_LIBS=$(MSW_LIBS) "$(JPEG_DIR)\libjpeg.lib"
-!endif
 !if $(HAVE_TOOLBARS)
 MSW_DEFINES=$(MSW_DEFINES) -DHAVE_TOOLBARS
 MSW_TOOLBAR_SRC=$(XEMACS)\src\toolbar.c $(XEMACS)\src\toolbar-msw.c
@@ -407,47 +322,6 @@ DEFINES=$(X_DEFINES) $(MSW_DEFINES) $(MULE_DEFINES) \
 
 OUTDIR=obj
 
-#
-# Creating simplified versions of Installation and Installation.el
-#
-# Some values cannot be written on the same line with
-# their key, since they cannot be put inside an echo command.
-# Macro substitution (:"=\", :\=\\) can be performed on values in order
-# to create a legal string in LISP for Installation.el.
-#
-!if [echo OS: $(OS)>Installation] ||\
-[echo XEmacs $(XEMACS_VERSION_STRING) $(xemacs_codename:"=\") configured for ^`$(EMACS_CONFIGURATION)^'.>>Installation] ||\
-[echo Where should the build process find the source code?>>Installation] ||\
-[echo $(MAKEDIR:\=\\)>>Installation]
-!endif
-# Compiler Information
-!if defined(CCV) &&\
-[echo What compiler should XEmacs be built with?>>Installation] &&\
-[echo $(CCV)>>Installation]
-!endif
-# Window System Information
-!if [echo What window system should XEmacs use?>>Installation]
-!endif
-!if (defined (HAVE_X) && $(HAVE_X) == 1)
-!if [echo X11>>Installation]
-!endif
-!endif
-!if (defined (HAVE_MSW) && $(HAVE_MSW) == 1)
-!if [echo MS Windows>>Installation]
-!endif
-!endif
-!if (!defined (HAVE_MSW) && !defined (HAVE_X))
-!if [echo Please specify at least one HAVE_MSW^=1 and^/or HAVE_X^=1>>Installation]
-!endif
-!endif
-# Creation of Installation.el
-!if [type Installation] ||\
-[echo (setq Installation-string ^">Installation.el] ||\
-[type Installation >>Installation.el] ||\
-[echo ^")>>Installation.el]
-!endif
-
-
 #------------------------------------------------------------------------------
 
 default: $(OUTDIR)\nul all 
@@ -480,29 +354,6 @@ $(XEMACS)\src\puresize-adjust.h:	puresize-adjust.h
 LIB_SRC = $(XEMACS)\lib-src
 LIB_SRC_DEFINES = -DHAVE_CONFIG_H -DWIN32 -DWINDOWSNT
 
-#
-# Creating config.values to be used by config.el
-#
-CONFIG_VALUES = $(LIB_SRC)\config.values
-!if [echo Creating $(CONFIG_VALUES) && echo ;;; Do not edit this file!>$(CONFIG_VALUES)]
-!endif
-# MAKEDIR has to be made into a string.
-!if [echo blddir>>$(CONFIG_VALUES) && echo ^"$(MAKEDIR:\=\\)\\..^">>$(CONFIG_VALUES)]
-!endif
-!if [echo CC>>$(CONFIG_VALUES) && echo ^"$(CC:\=\\)^">>$(CONFIG_VALUES)]
-!endif
-!if [echo CFLAGS>>$(CONFIG_VALUES) && echo ^"$(CFLAGS:\=\\)^">>$(CONFIG_VALUES)]
-!endif
-!if [echo CPP>>$(CONFIG_VALUES) && echo ^"$(CPP:\=\\)^">>$(CONFIG_VALUES)]
-!endif
-!if [echo CPPFLAGS>>$(CONFIG_VALUES) && echo ^"$(CPPFLAGS:\=\\)^">>$(CONFIG_VALUES)]
-!endif
-!if [echo LISPDIR>>$(CONFIG_VALUES) && echo ^"$(MAKEDIR:\=\\)\\$(LISP:\=\\)^">>$(CONFIG_VALUES)]
-!endif
-# PATH_PACKAGEPATH is already a quoted string.
-!if [echo PACKAGE_PATH>>$(CONFIG_VALUES) && echo $(PATH_PACKAGEPATH)>>$(CONFIG_VALUES)]
-!endif
-
 # Inferred rule
 {$(LIB_SRC)}.c{$(LIB_SRC)}.exe :
 	@cd $(LIB_SRC)
@@ -512,7 +363,7 @@ CONFIG_VALUES = $(LIB_SRC)\config.values
 # Individual dependencies
 ETAGS_DEPS = $(LIB_SRC)/getopt.c $(LIB_SRC)/getopt1.c $(LIB_SRC)/../src/regex.c
 $(LIB_SRC)/etags.exe : $(LIB_SRC)/etags.c $(ETAGS_DEPS)
-$(LIB_SRC)/movemail.exe: $(LIB_SRC)/movemail.c $(LIB_SRC)/pop.c $(ETAGS_DEPS)
+#### ootags???
 
 LIB_SRC_TOOLS = \
 	$(LIB_SRC)/make-docfile.exe	\
@@ -631,6 +482,7 @@ DOC_SRC2=\
  $(XEMACS)\src\faces.c \
  $(XEMACS)\src\file-coding.c \
  $(XEMACS)\src\fileio.c \
+ $(XEMACS)\src\filelock.c \
  $(XEMACS)\src\filemode.c \
  $(XEMACS)\src\floatfns.c \
  $(XEMACS)\src\fns.c 
@@ -732,8 +584,7 @@ DOC_SRC7=\
  $(XEMACS)\src\select-msw.c \
  $(MSW_C_DIRED_SRC) \
  $(MSW_TOOLBAR_SRC) \
- $(MSW_DIALOG_SRC) \
- $(MSW_GIF_SRC)
+ $(MSW_DIALOG_SRC)
 !endif
 
 !if $(HAVE_MULE)
@@ -755,10 +606,8 @@ DOC_SRC9=\
 # TEMACS Executable
 
 # This may not exist
-!if "$(emacs_is_beta)" != ""
+!if "$(emacs_beta_version)" != ""
 EMACS_BETA_VERSION=-DEMACS_BETA_VERSION=$(emacs_beta_version)
-!else
-EMACS_BETA_VERSION=-DEMACS_PATCH_LEVEL=$(emacs_beta_version)
 !ENDIF
 
 TEMACS_DIR=$(XEMACS)\src
@@ -821,9 +670,9 @@ TEMACS_MSW_OBJS=\
 	$(OUTDIR)\select-msw.obj \
 	$(MSW_C_DIRED_OBJ) \
 	$(MSW_TOOLBAR_OBJ) \
-	$(MSW_DIALOG_OBJ) \
-	$(MSW_GIF_OBJ)
+	$(MSW_DIALOG_OBJ)
 !endif
+
 
 !if $(HAVE_MULE)
 TEMACS_MULE_OBJS=\
@@ -877,6 +726,7 @@ TEMACS_OBJS= \
 	$(OUTDIR)\faces.obj \
 	$(OUTDIR)\file-coding.obj \
 	$(OUTDIR)\fileio.obj \
+	$(OUTDIR)\filelock.obj \
 	$(OUTDIR)\filemode.obj \
 	$(OUTDIR)\floatfns.obj \
 	$(OUTDIR)\fns.obj \
@@ -938,7 +788,7 @@ TEMACS_OBJS= \
 # Rules
 
 .SUFFIXES:
-.SUFFIXES:	.c .texi
+.SUFFIXES:	.c
 
 # nmake rule
 {$(TEMACS_SRC)}.c{$(OUTDIR)}.obj:
@@ -965,175 +815,6 @@ $(TEMACS): $(TEMACS_INCLUDES) $(TEMACS_OBJS)
 
 $(NT)\xemacs.res: xemacs.rc
 	rc xemacs.rc
-
-# Section handling info starts here
-SRCDIR=..\src
-PROGNAME=$(SRCDIR)\xemacs.exe
-MAKEINFO=$(PROGNAME) -no-site-file -no-init-file -batch -l texinfmt -f batch-texinfo-format
-
-MANDIR = $(XEMACS)\man
-INFODIR = $(XEMACS)\info
-INFO_FILES= \
-	$(INFODIR)\cl.info \
-	$(INFODIR)\custom.info \
-	$(INFODIR)\external-widget.info \
-	$(INFODIR)\info.info \
-	$(INFODIR)\standards.info \
-	$(INFODIR)\term.info \
-	$(INFODIR)\termcap.info \
-	$(INFODIR)\texinfo.info \
-	$(INFODIR)\widget.info \
-	$(INFODIR)\xemacs-faq.info \
-	$(INFODIR)\xemacs.info \
-	$(INFODIR)\lispref.info \
-	$(INFODIR)\new-users-guide.info \
-	$(INFODIR)\internals.info
-
-{$(MANDIR)}.texi{$(INFODIR)}.info:
-	$(MAKEINFO) $**
-
-$(INFODIR)\xemacs.info:	$(MANDIR)\xemacs\xemacs.texi
-	$(MAKEINFO) $**
-
-$(MANDIR)\xemacs\xemacs.texi: \
-	$(MANDIR)\xemacs\abbrevs.texi \
-	$(MANDIR)\xemacs\basic.texi \
-	$(MANDIR)\xemacs\buffers.texi \
-	$(MANDIR)\xemacs\building.texi \
-	$(MANDIR)\xemacs\calendar.texi \
-	$(MANDIR)\xemacs\cmdargs.texi \
-	$(MANDIR)\xemacs\custom.texi \
-	$(MANDIR)\xemacs\display.texi \
-	$(MANDIR)\xemacs\entering.texi \
-	$(MANDIR)\xemacs\files.texi \
-	$(MANDIR)\xemacs\fixit.texi \
-	$(MANDIR)\xemacs\glossary.texi \
-	$(MANDIR)\xemacs\gnu.texi \
-	$(MANDIR)\xemacs\help.texi \
-	$(MANDIR)\xemacs\indent.texi \
-	$(MANDIR)\xemacs\keystrokes.texi \
-	$(MANDIR)\xemacs\killing.texi \
-	$(MANDIR)\xemacs\\xemacs.texi \
-	$(MANDIR)\xemacs\m-x.texi \
-	$(MANDIR)\xemacs\major.texi \
-	$(MANDIR)\xemacs\mark.texi \
-	$(MANDIR)\xemacs\menus.texi \
-	$(MANDIR)\xemacs\mini.texi \
-	$(MANDIR)\xemacs\misc.texi \
-	$(MANDIR)\xemacs\mouse.texi \
-	$(MANDIR)\xemacs\new.texi \
-	$(MANDIR)\xemacs\picture.texi \
-	$(MANDIR)\xemacs\programs.texi \
-	$(MANDIR)\xemacs\reading.texi \
-	$(MANDIR)\xemacs\regs.texi \
-	$(MANDIR)\xemacs\frame.texi \
-	$(MANDIR)\xemacs\search.texi \
-	$(MANDIR)\xemacs\sending.texi \
-	$(MANDIR)\xemacs\text.texi \
-	$(MANDIR)\xemacs\trouble.texi \
-	$(MANDIR)\xemacs\undo.texi \
-	$(MANDIR)\xemacs\windows.texi \
-
-
-$(INFODIR)\lispref.info:	$(MANDIR)\lispref\lispref.texi
-	$(MAKEINFO) $**
-
-$(MANDIR)\lispref\lispref.texi:	$(MANDIR)\lispref\abbrevs.texi \
-	$(MANDIR)\lispref\annotations.texi \
-	$(MANDIR)\lispref\back.texi \
-	$(MANDIR)\lispref\backups.texi \
-	$(MANDIR)\lispref\buffers.texi \
-	$(MANDIR)\lispref\building.texi \
-	$(MANDIR)\lispref\commands.texi \
-	$(MANDIR)\lispref\compile.texi \
-	$(MANDIR)\lispref\consoles-devices.texi \
-	$(MANDIR)\lispref\control.texi \
-	$(MANDIR)\lispref\databases.texi \
-	$(MANDIR)\lispref\debugging.texi \
-	$(MANDIR)\lispref\dialog.texi \
-	$(MANDIR)\lispref\display.texi \
-	$(MANDIR)\lispref\edebug-inc.texi \
-	$(MANDIR)\lispref\edebug.texi \
-	$(MANDIR)\lispref\errors.texi \
-	$(MANDIR)\lispref\eval.texi \
-	$(MANDIR)\lispref\extents.texi \
-	$(MANDIR)\lispref\faces.texi \
-	$(MANDIR)\lispref\files.texi \
-	$(MANDIR)\lispref\frames.texi \
-	$(MANDIR)\lispref\functions.texi \
-	$(MANDIR)\lispref\glyphs.texi \
-	$(MANDIR)\lispref\hash-tables.texi \
-	$(MANDIR)\lispref\help.texi \
-	$(MANDIR)\lispref\hooks.texi \
-	$(MANDIR)\lispref\index.texi \
-	$(MANDIR)\lispref\internationalization.texi \
-	$(MANDIR)\lispref\intro.texi \
-	$(MANDIR)\lispref\keymaps.texi \
-	$(MANDIR)\lispref\ldap.texi \
-	$(MANDIR)\lispref\lists.texi \
-	$(MANDIR)\lispref\loading.texi \
-	$(MANDIR)\lispref\locals.texi \
-	$(MANDIR)\lispref\macros.texi \
-	$(MANDIR)\lispref\maps.texi \
-	$(MANDIR)\lispref\markers.texi \
-	$(MANDIR)\lispref\menus.texi \
-	$(MANDIR)\lispref\minibuf.texi \
-	$(MANDIR)\lispref\modes.texi \
-	$(MANDIR)\lispref\mouse.texi \
-	$(MANDIR)\lispref\mule.texi \
-	$(MANDIR)\lispref\numbers.texi \
-	$(MANDIR)\lispref\objects.texi \
-	$(MANDIR)\lispref\os.texi \
-	$(MANDIR)\lispref\positions.texi \
-	$(MANDIR)\lispref\processes.texi \
-	$(MANDIR)\lispref\range-tables.texi \
-	$(MANDIR)\lispref\scrollbars.texi \
-	$(MANDIR)\lispref\searching.texi \
-	$(MANDIR)\lispref\sequences.texi \
-	$(MANDIR)\lispref\specifiers.texi \
-	$(MANDIR)\lispref\streams.texi \
-	$(MANDIR)\lispref\strings.texi \
-	$(MANDIR)\lispref\symbols.texi \
-	$(MANDIR)\lispref\syntax.texi \
-	$(MANDIR)\lispref\text.texi \
-	$(MANDIR)\lispref\tips.texi \
-	$(MANDIR)\lispref\toolbar.texi \
-	$(MANDIR)\lispref\tooltalk.texi \
-	$(MANDIR)\lispref\variables.texi \
-	$(MANDIR)\lispref\windows.texi \
-	$(MANDIR)\lispref\x-windows.texi
-
-$(MANDIR)\lispref\index.texi:	$(MANDIR)\lispref\index.perm
-	copy $(MANDIR)\lispref\index.perm $(MANDIR)\lispref\index.texi
-
-$(INFODIR)\new-users-guide.info:	$(MANDIR)\new-users-guide\new-users-guide.texi
-	$(MAKEINFO) $**
-
-$(MANDIR)\new-users-guide\new-users-guide.texi: \
-	$(MANDIR)\new-users-guide\custom1.texi \
-	$(MANDIR)\new-users-guide\files.texi \
-	$(MANDIR)\new-users-guide\region.texi \
-	$(MANDIR)\new-users-guide\custom2.texi \
-	$(MANDIR)\new-users-guide\help.texi \
-	$(MANDIR)\new-users-guide\search.texi \
-	$(MANDIR)\new-users-guide\edit.texi \
-	$(MANDIR)\new-users-guide\modes.texi \
-	$(MANDIR)\new-users-guide\xmenu.texi \
-	$(MANDIR)\new-users-guide\enter.texi
-
-
-$(INFODIR)\internals.info:	$(MANDIR)\internals\internals.texi
-	copy $(MANDIR)\internals\index.perm $(MANDIR)\internals\index.texi
-	$(MAKEINFO) $**
-
-$(MANDIR)\internals\internals.texi: \
-	$(MANDIR)\internals\index.unperm \
-	$(MANDIR)\internals\index.perm \
-
-
-info:	$(INFO_FILES)
-
-# Section handling info ends here
 
 # MSDEV Source Broswer file. "*.sbr" is too inclusive but this is harmless
 $(TEMACS_BROWSE): $(TEMACS_OBJS)
@@ -1181,35 +862,25 @@ dump-xemacs: $(TEMACS)
 
 # use this rule to build the complete system
 all:	$(OUTDIR)\nul $(LASTFILE) $(LWLIB) $(LIB_SRC_TOOLS) $(RUNEMACS) \
-	$(TEMACS) $(TEMACS_BROWSE) update-elc $(DOC) dump-xemacs \
-	$(LISP)/auto-autoloads.el $(LISP)/custom-load.el \
-	info
+	$(TEMACS) $(TEMACS_BROWSE) update-elc $(DOC) dump-xemacs
 
 temacs: $(TEMACS)
 
 # use this rule to install the system
-install:	all
-	@echo Installing in $(INSTALL_DIR) ...
-	@echo PlaceHolder > PlaceHolder
-	@xcopy /q PROBLEMS "$(INSTALL_DIR)\"
-	@xcopy /q PlaceHolder "$(INSTALL_DIR)\lock\"
-	@del "$(INSTALL_DIR)\lock\PlaceHolder"
+install:	all "$(INSTALL_DIR)\nul" "$(INSTALL_DIR)\lock\nul"
 	@xcopy /q $(LIB_SRC)\*.exe "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)\"
-	@copy $(LIB_SRC)\DOC "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)"
-	@copy $(CONFIG_VALUES) "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)"
-	@copy $(XEMACS)\src\xemacs.exe "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)"
-	@copy $(RUNEMACS) "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)"
+	@copy $(LIB_SRC)\DOC "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)\"
+	@copy $(XEMACS)\src\xemacs.exe "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)\"
+	@copy $(RUNEMACS) "$(INSTALL_DIR)\$(EMACS_CONFIGURATION)\"
 	@xcopy /e /q $(XEMACS)\etc  "$(INSTALL_DIR)\etc\"
 	@xcopy /e /q $(XEMACS)\info "$(INSTALL_DIR)\info\"
 	@xcopy /e /q $(XEMACS)\lisp "$(INSTALL_DIR)\lisp\"
-	@echo Making skeleton package tree in $(PACKAGE_PREFIX) ...
-	@xcopy /q PlaceHolder "$(PACKAGE_PREFIX)\site-packages\"
-	@del "$(PACKAGE_PREFIX)\site-packages\PlaceHolder"
-	@xcopy /q PlaceHolder "$(PACKAGE_PREFIX)\mule-packages\"
-	@del "$(PACKAGE_PREFIX)\mule-packages\PlaceHolder"
-	@xcopy /q PlaceHolder "$(PACKAGE_PREFIX)\xemacs-packages\"
-	@del "$(PACKAGE_PREFIX)\xemacs-packages\PlaceHolder"
-	@del PlaceHolder
+
+"$(INSTALL_DIR)\nul":
+	-@mkdir "$(INSTALL_DIR)"
+
+"$(INSTALL_DIR)\lock\nul":	"$(INSTALL_DIR)\nul"
+	-@mkdir "$(INSTALL_DIR)\lock"
 
 distclean:
 	del *.bak
@@ -1239,30 +910,11 @@ distclean:
 	del *.orig
 	del *.rej
 	del *.exe
-	del $(CONFIG_VALUES)
 	cd $(LISP)
 	-del /s /q *.bak *.elc *.orig *.rej
-	cd $(INFODIR)
-	del *.info* $(MANDIR)\internals\index.texi $(MANDIR)\lispref\index.texi
 
 depend:
 	mkdepend -f xemacs.mak -p$(OUTDIR)\ -o.obj -w9999 -- $(TEMACS_CPP_FLAGS) --  $(DOC_SRC1) $(DOC_SRC2) $(DOC_SRC3) $(DOC_SRC4) $(DOC_SRC5) $(DOC_SRC6) $(DOC_SRC7) $(DOC_SRC8) $(DOC_SRC9) $(LASTFILE_SRC)\lastfile.c $(LIB_SRC)\make-docfile.c .\runemacs.c
-
-# Update auto-autoloads.el and custom-load.el similar to what
-# XEmacs.rules does for xemacs-packages.
-VANILLA=-vanilla
-FORCE:
-$(LISP)\auto-autoloads.el:	FORCE
-	-@del $(LISP)\auto-autoloads.el
-	$(PROGNAME) $(VANILLA) -batch \
-		-l autoload -f batch-update-directory $(LISP)
-	$(PROGNAME) $(VANILLA) -batch \
-		-f batch-byte-compile $@
-	@del $(LISP)\auto-autoloads.el~
-
-$(LISP)\custom-load.el:	FORCE
-	$(PROGNAME) $(VANILLA) -batch -l cus-dep \
-		-f Custom-make-dependencies $(LISP)
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 

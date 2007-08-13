@@ -124,11 +124,6 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	{
 	  wv->name = string_chars;
 	  wv->enabled = 1;
-	  /* dverna Dec. 98: command_builder_operate_menu_accelerator will
-	     manipulate the accel as a Lisp_Object if the widget has a name.
-	     Since simple labels have a name, but no accel, we *must* set it
-	     to nil */
-	  wv->accel = LISP_TO_VOID (Qnil);
 	}
     }
   else if (VECTORP (desc))
@@ -151,10 +146,8 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	{
 	  Lisp_Object key, val;
 	  Lisp_Object include_p = Qnil, hook_fn = Qnil, config_tag = Qnil;
-	  Lisp_Object active_p = Qt;
 	  Lisp_Object accel;
 	  int included_spec = 0;
-	  int active_spec = 0;
 	  wv->type = CASCADE_TYPE;
 	  wv->enabled = 1;
 	  wv->name = (char *) XSTRING_DATA (LISP_GETTEXT (XCAR (desc)));
@@ -179,8 +172,6 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 		config_tag = val;
 	      else if (EQ (key, Q_filter))
 		hook_fn = val;
-	      else if (EQ (key, Q_active))
-		active_p = val, active_spec = 1;
 	      else if (EQ (key, Q_accelerator))
 		{
 		  if ( SYMBOLP (val)
@@ -188,10 +179,6 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 		    wv->accel = LISP_TO_VOID (val);
 		  else
 		    signal_simple_error ("bad keyboard accelerator", val);
-		}
-	      else if (EQ (key, Q_label))
-		{
-		  /* implement in 21.2 */
 		}
 	      else
 		signal_simple_error ("unknown menu cascade keyword", cascade);
@@ -204,11 +191,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	      wv = NULL;
 	      goto menu_item_done;
 	    }
-
-	  if (active_spec)
-	    active_p = Feval (active_p);
-	  
-	  if (!NILP (hook_fn) && !NILP (active_p))
+	  if (!NILP (hook_fn))
 	    {
 #if defined LWLIB_MENUBARS_LUCID || defined LWLIB_MENUBARS_MOTIF
 	      if (filter_p || depth == 0)
@@ -253,24 +236,6 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	      wv->contents = title_wv;
 	      prev = sep_wv;
 	    }
-	  wv->enabled = ! NILP (active_p);
-	  if (deep_p && !wv->enabled  && !NILP (desc))
-	    {
-	      widget_value *dummy;
-	      /* Add a fake entry so the menus show up */
-	      wv->contents = dummy = xmalloc_widget_value ();
-	      dummy->name = "(inactive)";
-	      dummy->accel = LISP_TO_VOID (Qnil);
-	      dummy->enabled = 0;
-	      dummy->selected = 0;
-	      dummy->value = NULL;
-	      dummy->type = BUTTON_TYPE;
-	      dummy->call_data = NULL;
-	      dummy->next = NULL;
-	      
-	      goto menu_item_done;
-	}
-
 	}
       else if (menubar_root_p)
 	{
@@ -283,7 +248,8 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	  signal_simple_error ("menu name (first element) must be a string",
                                desc);
 	}
-      
+
+      wv->enabled = 1;
       if (deep_p || menubar_root_p)
 	{
 	  widget_value *next;
@@ -367,33 +333,6 @@ restore_in_menu_callback (Lisp_Object val)
 }
 #endif /* LWLIB_MENUBARS_LUCID || LWLIB_MENUBARS_MOTIF */
 
-#if 0
-/* #### Sort of a hack needed to process Vactivate_menubar_hook
-   correctly wrt buffer-local values.  A correct solution would
-   involve adding a callback mechanism to run_hook().  This function
-   is currently unused.  */
-static int
-my_run_hook (Lisp_Object hooksym, int allow_global_p)
-{
-  /* This function can GC */
-  Lisp_Object tail;
-  Lisp_Object value = Fsymbol_value (hooksym);
-  int changes = 0;
-
-  if (!NILP (value) && (!CONSP (value) || EQ (XCAR (value), Qlambda)))
-    return !EQ (call0 (value), Qt);
-
-  EXTERNAL_LIST_LOOP (tail, value)
-    {
-      if (allow_global_p && EQ (XCAR (tail), Qt))
-	changes |= my_run_hook (Fdefault_value (hooksym), 0);
-      if (!EQ (call0 (XCAR (tail)), Qt))
-	changes = 1;
-    }
-  return changes;
-}
-#endif
-
 
 /* The order in which callbacks are run is funny to say the least.
    It's sometimes tricky to avoid running a callback twice, and to
@@ -419,9 +358,12 @@ static void
 pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
 {
   /* This function can GC */
+  struct gcpro gcpro1;
   struct device *d = get_device_from_display (XtDisplay (widget));
   struct frame *f = x_any_window_to_frame (d, XtWindow (widget));
+  Lisp_Object rest = Qnil;
   Lisp_Object frame;
+  int any_changes = 0;
   int count;
 
   /* set in lwlib to the time stamp associated with the most recent menu
@@ -467,28 +409,33 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
 	  wv = xmalloc_widget_value ();
 	  wv->type = CASCADE_TYPE;
 	  wv->next = NULL;
-	  wv->accel = LISP_TO_VOID (Qnil);
 	  wv->contents = xmalloc_widget_value ();
 	  wv->contents->type = TEXT_TYPE;
 	  wv->contents->name = (char *) "No menu";
 	  wv->contents->next = NULL;
-	  wv->contents->accel = LISP_TO_VOID (Qnil);
 	}
       assert (wv && wv->type == CASCADE_TYPE && wv->contents);
       replace_widget_value_tree (hack_wv, wv->contents);
       free_popup_widget_value_tree (wv);
     }
-  else if (!POPUP_DATAP (FRAME_MENUBAR_DATA (f)))
-    return;
   else
     {
-#if 0 /* Unused, see comment below. */
-      int any_changes;
-
+      if (!POPUP_DATAP (FRAME_MENUBAR_DATA (f)))
+	return;
       /* #### - this menubar update mechanism is expensively anti-social and
 	 the activate-menubar-hook is now mostly obsolete. */
-      any_changes = my_run_hook (Qactivate_menubar_hook, 1);
+      /* make the activate-menubar-hook be a list of functions, not a single
+	 function, just to simplify things. */
+      if (!NILP (Vactivate_menubar_hook) &&
+	  (!CONSP (Vactivate_menubar_hook) ||
+	   EQ (XCAR (Vactivate_menubar_hook), Qlambda)))
+	Vactivate_menubar_hook = Fcons (Vactivate_menubar_hook, Qnil);
 
+      GCPRO1 (rest);
+      for (rest = Vactivate_menubar_hook; !NILP (rest); rest = Fcdr (rest))
+	if (!EQ (call0 (XCAR (rest)), Qt))
+	  any_changes = 1;
+#if 0
       /* #### - It is necessary to *ALWAYS* call set_frame_menubar() now that
 	 incremental menus are implemented.  If a subtree of a menu has been
 	 updated incrementally (a destructive operation), then that subtree
@@ -499,14 +446,12 @@ pre_activate_callback (Widget widget, LWLIB_ID id, XtPointer client_data)
 	 that an INCREMENTAL_TYPE widget_value can be recreated...  Hmmmmm. */
       if (any_changes ||
 	  !XFRAME_MENUBAR_DATA (f)->menubar_contents_up_to_date)
-	set_frame_menubar (f, 1, 0);
-#else
-      run_hook (Qactivate_menubar_hook);
-      set_frame_menubar (f, 1, 0);
 #endif
+	set_frame_menubar (f, 1, 0);
       DEVICE_X_MOUSE_TIMESTAMP (XDEVICE (FRAME_DEVICE (f))) =
 	DEVICE_X_GLOBAL_MOUSE_TIMESTAMP (XDEVICE (FRAME_DEVICE (f))) =
 	x_focus_timestamp_really_sucks_fix_me_better;
+      UNGCPRO;
     }
 }
 
@@ -676,6 +621,7 @@ make_dummy_xbutton_event (XEvent *dummy,
   if (eev)
     {
       Position shellx, shelly, framex, framey;
+      Widget shell = XtParent (daddy);
       Arg al [2];
       btn->time = eev->timestamp;
       btn->button = eev->event.button.button;
@@ -683,16 +629,9 @@ make_dummy_xbutton_event (XEvent *dummy,
       btn->subwindow = (Window) NULL;
       btn->x = eev->event.button.x;
       btn->y = eev->event.button.y;
-      shellx = shelly = 0;
-#ifndef HAVE_SESSION
-      {
-	Widget shell = XtParent (daddy);
-
-	XtSetArg (al [0], XtNx, &shellx);
-	XtSetArg (al [1], XtNy, &shelly);
-	XtGetValues (shell, al, 2);
-      }
-#endif      
+      XtSetArg (al [0], XtNx, &shellx);
+      XtSetArg (al [1], XtNy, &shelly);
+      XtGetValues (shell, al, 2);
       XtSetArg (al [0], XtNx, &framex);
       XtSetArg (al [1], XtNy, &framey);
       XtGetValues (daddy, al, 2);

@@ -1568,16 +1568,7 @@ get_extent_fragment_face_cache_index (struct window *w,
       findex = get_builtin_face_cache_index (w, Vdefault_face);
       merge_face_cachel_data (w, findex, &cachel);
 
-      findex = get_merged_face_cache_index (w, &cachel);
-      if (cachel.merged_faces &&
-	  /* merged_faces did not get stored and available via return value */
-	  Dynarr_at (w->face_cachels, findex).merged_faces !=
-	  cachel.merged_faces)
-	{
-	  Dynarr_free (cachel.merged_faces);
-	  cachel.merged_faces = 0;
-	}
-      return findex;
+      return get_merged_face_cache_index (w, &cachel);
     }
 }
 
@@ -1928,12 +1919,8 @@ complex_vars_of_faces (void)
 		       inst_list);
 #endif /* HAVE_TTY */
 #ifdef HAVE_MS_WINDOWS
-    inst_list = Fcons (Fcons (list1 (Qmswindows),
-		       build_string ("Fixedsys:Regular:9::Western")), inst_list);
-    inst_list = Fcons (Fcons (list1 (Qmswindows),
-		       build_string ("Courier:Regular:10::Western")), inst_list);
-    inst_list = Fcons (Fcons (list1 (Qmswindows),
-		       build_string ("Courier New:Regular:10::Western")), inst_list);
+    inst_list = Fcons (Fcons (list1 (Qmswindows), build_string ("Courier New")),
+		       inst_list);
 #endif /* HAVE_MS_WINDOWS */
     set_specifier_fallback (Fget (Vdefault_face, Qfont, Qnil), inst_list);
   }

@@ -92,11 +92,9 @@ struct headers {
 #define DEFAULT_ENTRY_ADDRESS __start
 #endif
 
-int
-unexec (char *new_name, char *a_name,
-	unsigned long data_start,
-	unsigned long bss_start,
-	unsigned long entry_address)
+unexec (new_name, a_name, data_start, bss_start, entry_address)
+     char *new_name, *a_name;
+     unsigned long data_start, bss_start, entry_address;
 {
   int new, old;
   char * oldptr;
@@ -104,6 +102,7 @@ unexec (char *new_name, char *a_name,
   struct stat stat;
   long pagesize, brk;
   long newsyms, symrel;
+  int nread;
   int i;
   long vaddr, scnptr;
 #define BUFSIZE 8192
@@ -210,7 +209,7 @@ unexec (char *new_name, char *a_name,
   nhdr.aout.bsize = 0;
   if (entry_address == 0)
     {
-      extern int DEFAULT_ENTRY_ADDRESS (void);
+      extern DEFAULT_ENTRY_ADDRESS ();
       nhdr.aout.entry = (unsigned long)DEFAULT_ENTRY_ADDRESS;
     }
   else
@@ -366,15 +365,15 @@ unexec (char *new_name, char *a_name,
 
 */
 
-int
-update_dynamic_symbols (
-     char *old,			/* Pointer to old executable */
-     char *new_name,            /* Name of new executable */
-     int new,			/* File descriptor for new executable */
-     long newsyms,		/* Offset of Symbol table in new executable */
-     int nsyms,			/* Number of symbol table entries */
-     long symoff,		/* Offset of External Symbols in old file */
-     long stroff)		/* Offset of string table in old file */
+
+update_dynamic_symbols (old, new_name, new, newsyms, nsyms, symoff, stroff)
+     char *old;			/* Pointer to old executable */
+     char *new_name;            /* Name of new executable */
+     int new;			/* File descriptor for new executable */
+     long newsyms;		/* Offset of Symbol table in new executable */
+     int nsyms;			/* Number of symbol table entries */
+     long symoff;		/* Offset of External Symbols in old file */
+     long stroff;		/* Offset of string table in old file */
 {
   long i;
   int found = 0;

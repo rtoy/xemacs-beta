@@ -81,7 +81,7 @@
 	 (function (lambda (n p f)
 		     (list 'put (list 'quote n) (list 'quote p)
 			   (list 'function (cons 'lambda f)))))))
-   'xemacs))
+   (car (or features (setq features (list 'cl-kludge))))))
 
 
 ;;; Initialization.
@@ -898,24 +898,20 @@ Valid clauses are:
 
 	       ((memq word '(frame frames screen screens))
 		(let ((temp (gensym)))
-		  (cl-push (list var (if (eq cl-emacs-type 'lucid)
-					 '(selected-screen) '(selected-frame)))
+		  (cl-push (list var '(selected-frame))
 			   loop-for-bindings)
 		  (cl-push (list temp nil) loop-for-bindings)
 		  (cl-push (list 'prog1 (list 'not (list 'eq var temp))
 				 (list 'or temp (list 'setq temp var)))
 			   loop-body)
-		  (cl-push (list var (list (if (eq cl-emacs-type 'lucid)
-					       'next-screen 'next-frame) var))
+		  (cl-push (list var (list 'next-frame var))
 			   loop-for-steps)))
 
 	       ((memq word '(window windows))
 		(let ((scr (and (memq (car args) '(in of)) (cl-pop2 args)))
 		      (temp (gensym)))
 		  (cl-push (list var (if scr
-					 (list (if (eq cl-emacs-type 'lucid)
-						   'screen-selected-window
-						 'frame-selected-window) scr)
+					 (list 'frame-selected-window scr)
 				       '(selected-window)))
 			   loop-for-bindings)
 		  (cl-push (list temp nil) loop-for-bindings)
@@ -1451,10 +1447,10 @@ values.  For compatibility, (values A B C) is a synonym for (list A B C)."
   (cond ((eq (car-safe spec) 'special)
 	 (if (boundp 'byte-compile-bound-variables)
 	     (setq byte-compile-bound-variables
-		   (append
-		    (mapcar #'(lambda (v) (cons v byte-compile-global-bit))
-			    (cdr spec))
-		    byte-compile-bound-variables))))
+		   ;; todo: this should compute correct binding bits vs. 0
+		   (append (mapcar #'(lambda (v) (cons v 0)) 
+				   (cdr spec))
+			   byte-compile-bound-variables))))
 
 	((eq (car-safe spec) 'inline)
 	 (while (setq spec (cdr spec))
@@ -1655,17 +1651,16 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 (defsetf default-file-modes set-default-file-modes t)
 (defsetf default-value set-default)
 (defsetf documentation-property put)
-(defsetf extent-data set-extent-data) ; obsolete
 (defsetf extent-face set-extent-face)
 (defsetf extent-priority set-extent-priority)
 (defsetf extent-property (x y &optional d) (arg)
   (list 'set-extent-property x y arg))
-(defsetf extent-start-position (ext) (store)
-  `(progn (set-extent-endpoints ,ext ,store (extent-end-position ,ext))
-	  ,store))
 (defsetf extent-end-position (ext) (store)
-  `(progn (set-extent-endpoints ,ext (extent-start-position ,ext) ,store)
-	  ,store))
+  (list 'progn (list 'set-extent-endpoints (list 'extent-start-position ext)
+		     store) store))
+(defsetf extent-start-position (ext) (store)
+  (list 'progn (list 'set-extent-endpoints store
+		     (list 'extent-end-position ext)) store))
 (defsetf face-background (f &optional s) (x) (list 'set-face-background f x s))
 (defsetf face-background-pixmap (f &optional s) (x)
   (list 'set-face-background-pixmap f x s))
@@ -1736,8 +1731,6 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 ;; Avoid adding various face and glyph functions.
 (defsetf frame-selected-window (&optional f) (v)
   `(set-frame-selected-window ,f ,v))
-(defsetf glyph-image (glyph &optional domain) (i)
-  (list 'set-glyph-image glyph i domain))
 (defsetf itimer-function set-itimer-function)
 (defsetf itimer-function-arguments set-itimer-function-arguments)
 (defsetf itimer-is-idle set-itimer-is-idle)
@@ -1788,10 +1781,7 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 (defsetf process-sentinel set-process-sentinel)
 (defsetf read-mouse-position (scr) (store)
   (list 'set-mouse-position scr (list 'car store) (list 'cdr store)))
-(defsetf screen-height set-screen-height t)
-(defsetf screen-width set-screen-width t)
 (defsetf selected-window select-window)
-(defsetf selected-screen select-screen)
 (defsetf selected-frame select-frame)
 (defsetf standard-case-table set-standard-case-table)
 (defsetf syntax-table set-syntax-table)

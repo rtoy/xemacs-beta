@@ -126,16 +126,16 @@
 
 	(when-feature mule "arabic")
 	(when-feature mule "chinese")
-	(when-feature mule "mule/cyrillic") ; overloaded in leim/quail
+	(when-feature mule "mule-base/cyrillic") ; overloaded in leim/quail
 	(when-feature mule "english")
-	(when-feature mule "ethiopic")
+;;	(when-feature mule "ethiopic")
 	(when-feature mule "european")
-	(when-feature mule "mule/greek") ; overloaded in leim/quail
+	(when-feature mule "mule-base/greek") ; overloaded in leim/quail
 	(when-feature mule "hebrew")
 	(when-feature mule "japanese")
 	(when-feature mule "korean")
 	(when-feature mule "misc-lang")
-	(when-feature mule "thai-xtis-chars")
+;;	(when-feature mule "thai")
 	(when-feature mule "viet-chars")
 ;;	(when-feature mule "vietnamese")
 
@@ -165,6 +165,7 @@
 ;; preload the X code, for faster startup.
 	(when-feature (and (not infodock)
 			   (or x mswindows) menubar) "menubar-items")
+	(when-feature (and infodock (or x mswindows) menubar) "id-menus")
 	(when-feature x "x-faces")
 	(when-feature x "x-iso8859-1")
 	(when-feature x "x-mouse")

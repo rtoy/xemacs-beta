@@ -38,7 +38,7 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #include <windows.h>
 #include <ddeml.h>	/* DDE management library */
-#if !defined(__CYGWIN32__) || CYGWIN_VERSION_DLL_MAJOR > 20
+#ifndef __CYGWIN32__
 #include <shellapi.h>	/* FileManager/Explorer drag and drop */
 #include <commctrl.h>
 #endif
@@ -250,7 +250,5 @@ HANDLE get_nt_process_handle (struct Lisp_Process *p);
 
 extern Lisp_Object Vmswindows_frame_being_created;
 extern Lisp_Object mswindows_frame_being_created;
-
-void mswindows_enumerate_fonts (struct device *d);
 
 #endif /* _XEMACS_CONSOLE_MSW_H_ */

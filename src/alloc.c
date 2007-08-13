@@ -56,8 +56,6 @@ Boston, MA 02111-1307, USA.  */
 #include "sysfile.h"
 #include "window.h"
 
-#include <stddef.h>
-
 #ifdef DOUG_LEA_MALLOC
 #include <malloc.h>
 #endif
@@ -636,93 +634,78 @@ gc_record_type_p (Lisp_Object frob, CONST struct lrecord_implementation *type)
 }
 
 
-/************************************************************************/
-/*			  Debugger support				*/
-/************************************************************************/
-/* Give gdb/dbx enough information to decode Lisp Objects.  We make
-   sure certain symbols are always defined, so gdb doesn't complain
-   about expressions in src/gdbinit.  See src/gdbinit or src/dbxrc to
-   see how this is used.  */
+/**********************************************************************/
+/*			  Debugger support			      */
+/**********************************************************************/
+/* Give gdb/dbx enough information to decode Lisp Objects.
+   We make sure certain symbols are defined, so gdb doesn't complain
+   about expressions in src/gdbinit.  Values are randomly chosen.
+   See src/gdbinit or src/dbxrc to see how this is used.  */
 
-#ifdef USE_MINIMAL_TAGBITS
-EMACS_UINT dbg_valmask = ((1UL << VALBITS) - 1) << GCBITS;
-EMACS_UINT dbg_typemask = (1UL << GCTYPEBITS) - 1;
-unsigned char dbg_USE_MINIMAL_TAGBITS = 1;
-unsigned char Lisp_Type_Int = 100;
-#else
-EMACS_UINT dbg_valmask = (1UL << VALBITS) - 1;
-EMACS_UINT dbg_typemask = ((1UL << GCTYPEBITS) - 1) << (VALBITS + GCMARKBITS);
-unsigned char dbg_USE_MINIMAL_TAGBITS = 0;
-#endif
-
-#ifdef USE_UNION_TYPE
-unsigned char dbg_USE_UNION_TYPE = 1;
-#else
-unsigned char dbg_USE_UNION_TYPE = 0;
-#endif
-
-#ifdef USE_INDEXED_LRECORD_IMPLEMENTATION
-unsigned char dbg_USE_INDEXED_LRECORD_IMPLEMENTATION = 1;
-#else
-unsigned char dbg_USE_INDEXED_LRECORD_IMPLEMENTATION = 0;
-#endif
-
-#ifdef LRECORD_CONS
-unsigned char Lisp_Type_Cons = 101;
-#else
-unsigned char lrecord_cons;
-#endif
-
-#ifdef LRECORD_STRING
-unsigned char Lisp_Type_String = 102;
-#else
-unsigned char lrecord_string;
-#endif
-
-#ifdef LRECORD_VECTOR
-unsigned char Lisp_Type_Vector = 103;
-#else
-unsigned char lrecord_vector;
-#endif
-
-#ifdef LRECORD_SYMBOL
-unsigned char Lisp_Type_Symbol = 104;
-#else
-unsigned char lrecord_symbol;
-#endif
-
-#ifndef MULE
-unsigned char lrecord_char_table_entry;
-unsigned char lrecord_charset;
-#ifndef FILE_CODING
-unsigned char lrecord_coding_system;
-#endif
-#endif
-
-#ifndef HAVE_TOOLBARS
-unsigned char lrecord_toolbar_button;
-#endif
-
-#ifndef TOOLTALK
-unsigned char lrecord_tooltalk_message;
-unsigned char lrecord_tooltalk_pattern;
-#endif
-
-#ifndef HAVE_DATABASE
-unsigned char lrecord_database;
-#endif
-
-unsigned char dbg_valbits = VALBITS;
-unsigned char dbg_gctypebits = GCTYPEBITS;
-
-/* Macros turned into functions for ease of debugging.
-   Debuggers don't know about macros! */
-int dbg_eq (Lisp_Object obj1, Lisp_Object obj2);
-int
-dbg_eq (Lisp_Object obj1, Lisp_Object obj2)
+enum dbg_constants
 {
-  return EQ (obj1, obj2);
-}
+#ifdef USE_MINIMAL_TAGBITS
+  dbg_valmask = (EMACS_INT) (((1UL << VALBITS) - 1) << GCBITS),
+  dbg_typemask = (EMACS_INT) ((1UL << GCTYPEBITS) - 1),
+  dbg_USE_MINIMAL_TAGBITS = 1,
+  dbg_Lisp_Type_Int = 100,
+#else /* ! USE_MIMIMAL_TAGBITS */
+  dbg_valmask = (EMACS_INT) ((1UL << VALBITS) - 1),
+  dbg_typemask = (EMACS_INT) (((1UL << GCTYPEBITS) - 1) << (VALBITS + GCMARKBITS)),
+  dbg_USE_MINIMAL_TAGBITS = 0,
+  dbg_Lisp_Type_Int = Lisp_Type_Int,
+#endif /* ! USE_MIMIMAL_TAGBITS */
+#ifdef USE_INDEXED_LRECORD_IMPLEMENTATION
+  dbg_USE_INDEXED_LRECORD_IMPLEMENTATION = 1,
+#else
+  dbg_USE_INDEXED_LRECORD_IMPLEMENTATION = 0,
+#endif
+  dbg_Lisp_Type_Char = Lisp_Type_Char,
+  dbg_Lisp_Type_Record = Lisp_Type_Record,
+#ifdef LRECORD_CONS
+  dbg_Lisp_Type_Cons = 101,
+#else
+  dbg_Lisp_Type_Cons = Lisp_Type_Cons,
+  lrecord_cons = 201,
+#endif
+#ifdef LRECORD_STRING
+  dbg_Lisp_Type_String = 102,
+#else
+  dbg_Lisp_Type_String = Lisp_Type_String,
+  lrecord_string = 202,
+#endif
+#ifdef LRECORD_VECTOR
+  dbg_Lisp_Type_Vector = 103,
+#else
+  dbg_Lisp_Type_Vector = Lisp_Type_Vector,
+  lrecord_vector = 203,
+#endif
+#ifdef LRECORD_SYMBOL
+  dbg_Lisp_Type_Symbol = 104,
+#else
+  dbg_Lisp_Type_Symbol = Lisp_Type_Symbol,
+  lrecord_symbol = 204,
+#endif
+#ifndef MULE
+  lrecord_char_table_entry = 205,
+  lrecord_charset          = 206,
+  lrecord_coding_system    = 207,
+#endif
+#ifndef HAVE_TOOLBARS
+  lrecord_toolbar_button   = 208,
+#endif
+#ifndef HAVE_TOOLTALK
+  lrecord_tooltalk_message = 210,
+  lrecord_tooltalk_pattern = 211,
+#endif
+#ifndef HAVE_DATABASE
+  lrecord_database = 212,
+#endif
+  dbg_valbits = VALBITS,
+  dbg_gctypebits = GCTYPEBITS
+  /* If we don't have an actual object of this enum, pgcc (and perhaps
+     other compilers) might optimize away the entire type declaration :-( */
+} dbg_dummy;
 
 
 /**********************************************************************/
@@ -1022,28 +1005,22 @@ do								\
    byte-aligned pointers, this pointer is at the very top of the address
    space and so it's almost inconceivable that it could ever be valid. */
 
-#if SIZEOF_LONG == 4
-# define INVALID_POINTER_VALUE 0xFFFFFFFFUL
-#elif SIZEOF_LONG == 8
-# define INVALID_POINTER_VALUE 0xFFFFFFFFFFFFFFFFUL
+#if INTBITS == 32
+# define INVALID_POINTER_VALUE 0xFFFFFFFF
+#elif INTBITS == 48
+# define INVALID_POINTER_VALUE 0xFFFFFFFFFFFF
+#elif INTBITS == 64
+# define INVALID_POINTER_VALUE 0xFFFFFFFFFFFFFFFF
 #else
 You have some weird system and need to supply a reasonable value here.
 #endif
 
-/* The construct (* (void **) (ptr)) would cause aliasing problems
-   with modern optimizing compilers like `gcc -O3 -fstrict-aliasing'.
-   But `char *' can legally alias any pointer.  Hence this union trick...
-
-   It turned out that the union trick was not good enough for xlC -O3;
-   and it is questionable whether it really complies with the C standard.
-   so we use memset instead, which should be safe from optimizations. */
-typedef union { char c; void *p; } *aliasing_voidpp;
-#define ALIASING_VOIDPP_DEREFERENCE(ptr) \
-  (((aliasing_voidpp) (ptr))->p)
 #define FREE_STRUCT_P(ptr) \
-  (ALIASING_VOIDPP_DEREFERENCE (ptr) == (void *) INVALID_POINTER_VALUE)
-#define MARK_STRUCT_AS_FREE(ptr) memset (ptr, 0xff, sizeof (void *))
-#define MARK_STRUCT_AS_NOT_FREE(ptr) memset (ptr, 0x00, sizeof (void *))
+  (* (void **) ptr == (void *) INVALID_POINTER_VALUE)
+#define MARK_STRUCT_AS_FREE(ptr) \
+  (* (void **) ptr = (void *) INVALID_POINTER_VALUE)
+#define MARK_STRUCT_AS_NOT_FREE(ptr) \
+  (* (void **) ptr = 0)
 
 #ifdef ERROR_CHECK_GC
 
@@ -1901,8 +1878,8 @@ Its value and function definition are void, and its property list is nil.
   p->plist = Qnil;
   p->value = Qunbound;
   p->function = Qunbound;
-  p->obarray_flags = 0;
-  symbol_next (p)  = 0;
+  p->obarray = Qnil;
+  symbol_next (p) = 0;
   XSETSYMBOL (val, p);
   return val;
 }
@@ -2090,6 +2067,11 @@ struct string_chars_block *current_string_chars_block;
 #define BIG_STRING_FULLSIZE_P(fullsize) ((fullsize) >= STRING_CHARS_BLOCK_SIZE)
 #define BIG_STRING_SIZE_P(size) (BIG_STRING_FULLSIZE_P (STRING_FULLSIZE(size)))
 
+#define CHARS_TO_STRING_CHAR(x) \
+  ((struct string_chars *) \
+   (((char *) (x)) - (slot_offset (struct string_chars, chars[0]))))
+
+
 struct string_chars
 {
   struct Lisp_String *string;
@@ -2118,9 +2100,14 @@ allocate_string_chars_struct (struct Lisp_String *string_it_goes_with,
 {
   struct string_chars *s_chars;
 
-  if (fullsize <=
-      (countof (current_string_chars_block->string_chars)
-       - current_string_chars_block->pos))
+  /* Allocate the string's actual data */
+  if (BIG_STRING_FULLSIZE_P (fullsize))
+    {
+      s_chars = (struct string_chars *) xmalloc (fullsize);
+    }
+  else if (fullsize <=
+           (countof (current_string_chars_block->string_chars)
+            - current_string_chars_block->pos))
     {
       /* This string can fit in the current string chars block */
       s_chars = (struct string_chars *)
@@ -2153,10 +2140,12 @@ Lisp_Object
 make_uninit_string (Bytecount length)
 {
   struct Lisp_String *s;
+  struct string_chars *s_chars;
   EMACS_INT fullsize = STRING_FULLSIZE (length);
   Lisp_Object val;
 
-  assert (length >= 0 && fullsize > 0);
+  if ((length < 0) || (fullsize <= 0))
+    abort ();
 
   /* Allocate the string header */
   ALLOCATE_FIXED_TYPE (string, struct Lisp_String, s);
@@ -2164,10 +2153,9 @@ make_uninit_string (Bytecount length)
   set_lheader_implementation (&(s->lheader), lrecord_string);
 #endif
 
-  set_string_data (s, BIG_STRING_FULLSIZE_P (fullsize)
-		   ? xnew_array (Bufbyte, length + 1)
-		   : allocate_string_chars_struct (s, fullsize)->chars);
+  s_chars = allocate_string_chars_struct (s, fullsize);
 
+  set_string_data (s, &(s_chars->chars[0]));
   set_string_length (s, length);
   s->plist = Qnil;
 
@@ -2190,7 +2178,6 @@ static void verify_string_chars_integrity (void);
 void
 resize_string (struct Lisp_String *s, Bytecount pos, Bytecount delta)
 {
-  Bytecount oldfullsize, newfullsize;
 #ifdef VERIFY_STRING_CHARS_INTEGRITY
   verify_string_chars_integrity ();
 #endif
@@ -2209,62 +2196,47 @@ resize_string (struct Lisp_String *s, Bytecount pos, Bytecount delta)
     }
 #endif /* ERROR_CHECK_BUFPOS */
 
+  if (pos >= 0 && delta < 0)
+  /* If DELTA < 0, the functions below will delete the characters
+     before POS.  We want to delete characters *after* POS, however,
+     so convert this to the appropriate form. */
+    pos += -delta;
+
   if (delta == 0)
     /* simplest case: no size change. */
     return;
-
-  if (pos >= 0 && delta < 0)
-    /* If DELTA < 0, the functions below will delete the characters
-       before POS.  We want to delete characters *after* POS, however,
-       so convert this to the appropriate form. */
-    pos += -delta;
-
-  oldfullsize = STRING_FULLSIZE (string_length (s));
-  newfullsize = STRING_FULLSIZE (string_length (s) + delta);
-
-  if (BIG_STRING_FULLSIZE_P (oldfullsize))
+  else
     {
-      if (BIG_STRING_FULLSIZE_P (newfullsize))
-	{
-	  /* Both strings are big.  We can just realloc().
-	     But careful!  If the string is shrinking, we have to
-	     memmove() _before_ realloc(), and if growing, we have to
-	     memmove() _after_ realloc() - otherwise the access is
-	     illegal, and we might crash. */
-	  Bytecount len = string_length (s) + 1 - pos;
+      Bytecount oldfullsize = STRING_FULLSIZE (string_length (s));
+      Bytecount newfullsize = STRING_FULLSIZE (string_length (s) + delta);
 
-	  if (delta < 0 && pos >= 0)
-	    memmove (string_data (s) + pos + delta, string_data (s) + pos, len);
-	  set_string_data (s, (Bufbyte *) xrealloc (string_data (s),
-						    string_length (s) + delta + 1));
-	  if (delta > 0 && pos >= 0)
-	    memmove (string_data (s) + pos + delta, string_data (s) + pos, len);
-	}
-      else /* String has been demoted from BIG_STRING. */
-	{
-	  Bufbyte *new_data =
-	    allocate_string_chars_struct (s, newfullsize)->chars;
-	  Bufbyte *old_data = string_data (s);
-
-	  if (pos >= 0)
-	    {
-	      memcpy (new_data, old_data, pos);
-	      memcpy (new_data + pos + delta, old_data + pos,
-		      string_length (s) + 1 - pos);
-	    }
-	  set_string_data (s, new_data);
-	  xfree (old_data);
-	}
-    }
-  else /* old string is small */
-    {
       if (oldfullsize == newfullsize)
 	{
-	  /* special case; size change but the necessary
-	     allocation size won't change (up or down; code
-	     somewhere depends on there not being any unused
-	     allocation space, modulo any alignment
-	     constraints). */
+	  /* next simplest case; size change but the necessary
+	     allocation size won't change (up or down; code somewhere
+	     depends on there not being any unused allocation space,
+	     modulo any alignment constraints). */
+	  if (pos >= 0)
+	    {
+	      Bufbyte *addroff = pos + string_data (s);
+
+	      memmove (addroff + delta, addroff,
+		       /* +1 due to zero-termination. */
+		       string_length (s) + 1 - pos);
+	    }
+	}
+      else if (BIG_STRING_FULLSIZE_P (oldfullsize) &&
+	       BIG_STRING_FULLSIZE_P (newfullsize))
+	{
+	  /* next simplest case; the string is big enough to be malloc()ed
+	     itself, so we just realloc.
+
+	     It's important not to let the string get below the threshold
+	     for making big strings and still remain malloc()ed; if that
+	     were the case, repeated calls to this function on the same
+	     string could result in memory leakage. */
+	  set_string_data (s, (Bufbyte *) xrealloc (string_data (s),
+						    newfullsize));
 	  if (pos >= 0)
 	    {
 	      Bufbyte *addroff = pos + string_data (s);
@@ -2276,52 +2248,58 @@ resize_string (struct Lisp_String *s, Bytecount pos, Bytecount delta)
 	}
       else
 	{
-	  Bufbyte *old_data = string_data (s);
-	  Bufbyte *new_data =
-	    BIG_STRING_FULLSIZE_P (newfullsize)
-	    ? xnew_array (Bufbyte, string_length (s) + delta + 1)
-	    : allocate_string_chars_struct (s, newfullsize)->chars;
-
+	  /* worst case.  We make a new string_chars struct and copy
+	     the string's data into it, inserting/deleting the delta
+	     in the process.  The old string data will either get
+	     freed by us (if it was malloc()ed) or will be reclaimed
+	     in the normal course of garbage collection. */
+	  struct string_chars *s_chars =
+	    allocate_string_chars_struct (s, newfullsize);
+	  Bufbyte *new_addr = &(s_chars->chars[0]);
+	  Bufbyte *old_addr = string_data (s);
 	  if (pos >= 0)
 	    {
-	      memcpy (new_data, old_data, pos);
-	      memcpy (new_data + pos + delta, old_data + pos,
+	      memcpy (new_addr, old_addr, pos);
+	      memcpy (new_addr + pos + delta, old_addr + pos,
 		      string_length (s) + 1 - pos);
 	    }
-	  set_string_data (s, new_data);
-
-	  {
-	    /* We need to mark this chunk of the string_chars_block
-	       as unused so that compact_string_chars() doesn't
-	       freak. */
-	    struct string_chars *old_s_chars = (struct string_chars *)
-	      ((char *) old_data - offsetof (struct string_chars, chars));
-	    /* Sanity check to make sure we aren't hosed by strange
-	       alignment/padding. */
-	    assert (old_s_chars->string == s);
-	    MARK_STRUCT_AS_FREE (old_s_chars);
-	    ((struct unused_string_chars *) old_s_chars)->fullsize =
-	      oldfullsize;
-	  }
+	  set_string_data (s, new_addr);
+	  if (BIG_STRING_FULLSIZE_P (oldfullsize))
+	    xfree (old_addr);
+	  else
+	    {
+	      /* We need to mark this chunk of the string_chars_block
+		 as unused so that compact_string_chars() doesn't
+		 freak. */
+	      struct string_chars *old_s_chars =
+		(struct string_chars *) ((char *) old_addr -
+					 sizeof (struct Lisp_String *));
+	      /* Sanity check to make sure we aren't hosed by strange
+	         alignment/padding. */
+	      assert (old_s_chars->string == s);
+	      MARK_STRUCT_AS_FREE (old_s_chars);
+	      ((struct unused_string_chars *) old_s_chars)->fullsize =
+		oldfullsize;
+	    }
 	}
-    }
 
-  set_string_length (s, string_length (s) + delta);
-  /* If pos < 0, the string won't be zero-terminated.
-     Terminate now just to make sure. */
-  string_data (s)[string_length (s)] = '\0';
+      set_string_length (s, string_length (s) + delta);
+      /* If pos < 0, the string won't be zero-terminated.
+	 Terminate now just to make sure. */
+      string_data (s)[string_length (s)] = '\0';
 
-  if (pos >= 0)
-    {
-      Lisp_Object string;
+      if (pos >= 0)
+	{
+	  Lisp_Object string;
 
-      XSETSTRING (string, s);
-      /* We also have to adjust all of the extent indices after the
-	 place we did the change.  We say "pos - 1" because
-	 adjust_extents() is exclusive of the starting position
-	 passed to it. */
-      adjust_extents (string, pos - 1, string_length (s),
-		      delta);
+	  XSETSTRING (string, s);
+	  /* We also have to adjust all of the extent indices after the
+	     place we did the change.  We say "pos - 1" because
+	     adjust_extents() is exclusive of the starting position
+	     passed to it. */
+	  adjust_extents (string, pos - 1, string_length (s),
+			  delta);
+	}
     }
 
 #ifdef VERIFY_STRING_CHARS_INTEGRITY
@@ -2914,11 +2892,10 @@ Does not copy symbols.
 #endif /* LISP_FLOAT_TYPE */
 	else if (SYMBOLP (obj))
 	  {
-	    int mask = XSYMBOL_OBARRAY_FLAGS (obj);
 	    /*
 	     * Symbols can't be made pure (and thus read-only),
 	     * because assigning to their function, value or plist
-	     * slots would produce a SEGV in the dumped XEmacs.  So
+	     * slots would produced a SEGV in the dumped XEmacs.  So
 	     * we previously would just return the symbol unchanged.
 	     *
 	     * But purified aggregate objects like lists and vectors
@@ -2933,16 +2910,9 @@ Does not copy symbols.
 	     * Vpure_uninterned_symbol_table, which is itself
 	     * staticpro'd.
 	     */
-	    if (!(mask & 1))
-	      /* Symbol is not interned anywhere.  Keep a reference to the
-		 end of time.  */
-	      Fputhash (obj, Qnil, Vpure_uninterned_symbol_table);
-
-	    /* Mark symbol as being referenced by a pure structure.
-	       Funintern() will recognize this mark and place the symbol to
-	       Vpure_uninterned_symbol_table at the time of uninterning.  */
-	    XSYMBOL (obj)->obarray_flags = mask | 4;
-
+	    if (!NILP (XSYMBOL (obj)->obarray))
+	      return obj;
+	    Fputhash (obj, Qnil, Vpure_uninterned_symbol_table);
 	    return obj;
 	  }
 	else
@@ -4184,7 +4154,7 @@ sweep_strings (void)
 # define ADDITIONAL_FREE_string(p)				\
   do { int size = string_length (p);				\
        if (BIG_STRING_SIZE_P (size))				\
-	 xfree (p->_data);					\
+	 xfree_1 (CHARS_TO_STRING_CHAR (string_data (p)));	\
      } while (0)
 
 #else
@@ -4204,7 +4174,7 @@ sweep_strings (void)
 # define ADDITIONAL_FREE_string(p)				\
   do { int size = string_length (p);				\
        if (BIG_STRING_SIZE_P (size))				\
-	 xfree (p->_data);					\
+	 xfree_1 (CHARS_TO_STRING_CHAR (string_data (p)));	\
      } while (0)
 
 #endif /* ! LRECORD_STRING */
@@ -4342,10 +4312,6 @@ disksave_object_finalization (void)
   Vexec_path = Qnil;
   Vload_path = Qnil;
   /* Vdump_load_path = Qnil; */
-  /* Release hash tables for locate_file */
-  Fset (intern ("early-package-load-path"), Qnil);
-  Fset (intern ("late-package-load-path"),  Qnil);
-  Fset (intern ("last-package-load-path"),  Qnil);
   uncache_home_directory();
 
 #if defined(LOADHIST) && !(defined(LOADHIST_DUMPED) || \

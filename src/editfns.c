@@ -369,7 +369,7 @@ save_excursion_restore (Lisp_Object info)
 	 and cleaner never to alter the window/buffer connections.  */
       /* I'm certain some code somewhere depends on this behavior. --jwz */
       /* Even if it did, it certainly doesn't matter anymore, because
-         this has been the behavior for countless XEmacs releases
+         this has been the behaviour for countless XEmacs releases
          now.  --hniksic */
       if (visible
 	  && (current_buffer != XBUFFER (XWINDOW (selected_window)->buffer)))
@@ -602,12 +602,6 @@ if POS is nil, the value of point is assumed.
   return make_char (BUF_FETCH_CHAR (b, n));
 }
 
-#if !defined(WINDOWSNT) && !defined(MSDOS)
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <limits.h>
-#endif
 
 DEFUN ("temp-directory", Ftemp_directory, 0, 0, 0, /*
 Return the pathname to the directory to use for temporary files.
@@ -627,47 +621,7 @@ On Unix it is obtained from TMPDIR, with /tmp as the default
 #else /* WINDOWSNT || MSDOS */
  tmpdir = getenv ("TMPDIR");
  if (!tmpdir)
-    {
-      struct stat st;
-      char * logname = user_login_name(NULL);
-      int myuid      = getuid();
-      static char path[1+_POSIX_PATH_MAX];
-
-      strcpy(path, "/tmp/"); strncat(path, logname, _POSIX_PATH_MAX);
-      if (lstat(path, &st) < 0 && errno == ENOENT)
-	{
-	  mkdir(path, 0700);	/* ignore retval -- checked next anyway. */
-	}
-      if (lstat(path, &st) == 0 && st.st_uid == myuid && S_ISDIR(st.st_mode))
-	{
-	  tmpdir = path;
-	}
-      else
-	{
-	  strcpy(path, getenv("HOME")); strncat(path, "/tmp/", _POSIX_PATH_MAX);
-	  if (stat(path, &st) < 0 && errno == ENOENT)
-	    {
-	      int fd;
-	      char warnpath[1+_POSIX_PATH_MAX];
-	      mkdir(path, 0700);	/* ignore retvals */
-	      strcpy(warnpath, path);
-	      strncat(warnpath, ".created_by_xemacs", _POSIX_PATH_MAX);
-	      if ((fd = open(warnpath, O_WRONLY|O_CREAT, 0644)) > 0)
-		{
-		  write(fd, "XEmacs created this directory because /tmp/<yourname> was unavailable -- \nPlease check !\n", 89);
-		  close(fd);
-		}
-	    }
-	  if (stat(path, &st) == 0 && S_ISDIR(st.st_mode))
-	    {
-	      tmpdir = path;
-	    }
-	  else
-	    {
    tmpdir = "/tmp";
-	    }
-	}
-    }
 #endif
 
   return build_ext_string (tmpdir, FORMAT_FILENAME);
@@ -1091,8 +1045,6 @@ FORMAT-STRING may contain %-sequences to substitute parts of the time.
 %p is replaced by AM or PM, as appropriate.
 %r is a synonym for "%I:%M:%S %p".
 %R is a synonym for "%H:%M".
-%s is replaced by the time in seconds since 00:00:00, Jan 1, 1970 (a
-      nonstandard extension)
 %S is replaced by the second (00-60).
 %t is a synonym for "\\t".
 %T is a synonym for "%H:%M:%S".
@@ -2444,8 +2396,6 @@ zmacs-activate-region. Setting this to true lets a command be non-intrusive.
 See the variable `zmacs-regions'.
 
 The same effect can be achieved using the `_' interactive specification.
-
-`zmacs-region-stays' is reset to nil before each command is executed.
 */ );
   zmacs_region_stays = 0;
 

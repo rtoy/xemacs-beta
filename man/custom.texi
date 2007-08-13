@@ -1,21 +1,13 @@
 \input texinfo.tex
 
 @c %**start of header
-@setfilename ../info/custom.info
+@setfilename ../info/custom
 @settitle The Customization Library
 @iftex
 @afourpaper
 @headings double
 @end iftex
 @c %**end of header
-
-@ifinfo
-@dircategory XEmacs Editor
-@direntry
-* Customizations: (custom).	Customization Library.
-package.
-@end direntry
-@end ifinfo
 
 @node Top, Declaring Groups, (dir), (dir)
 @comment  node-name,  next,  previous,  up

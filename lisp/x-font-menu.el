@@ -130,45 +130,18 @@
 ;;; (defvar font-menu-ignore-proportional-fonts nil
 ;;;   "*If non-nil, then the font menu will only show fixed-width fonts.")
 
-(defgroup font-menu ()
-  "Settings for the font menu"
-  :group 'x)
-
 ;;;###autoload
 (defcustom font-menu-ignore-scaled-fonts t
   "*If non-nil, then the font menu will try to show only bitmap fonts."
   :type 'boolean
-  :group 'font-menu)
+  :group 'x)
 
 ;;;###autoload
 (defcustom font-menu-this-frame-only-p nil
   "*If non-nil, then changing the default font from the font menu will only
 affect one frame instead of all frames."
   :type 'boolean
-  :group 'font-menu)
-
-(defcustom font-menu-max-items 25
-  "*Maximum number of items in the font menu
-If number of entries in a menu is larger than this value, split menu
-into submenus of nearly equal length.  If nil, never split menu into
-submenus."
-  :group 'font-menu
-  :type '(choice (const :tag "no submenus" nil)
-		 (integer)))
-
-(defcustom font-menu-submenu-name-format "%-12.12s ... %.12s"
-  "*Format specification of the submenu name.
-Used by `font-menu-split-long-menu' if the number of entries in a menu is
-larger than `font-menu-menu-max-items'.
-This string should contain one %s for the name of the first entry and
-one %s for the name of the last entry in the submenu.
-If the value is a function, it should return the submenu name.  The
-function is be called with two arguments, the names of the first and
-the last entry in the menu."
-  :group 'font-menu
-  :type '(choice (string :tag "Format string")
-		 (function)))
-
+  :group 'x)
 
 ;; only call XListFonts (and parse) once per device.
 ;; ( (device . [parsed-list-fonts family-menu size-menu weight-menu]) ...)
@@ -385,40 +358,6 @@ or if you change your font path, you can call this to re-initialize the menus."
       
     (vector entry family size weight slant)))
 
-(defun font-menu-split-long-menu (menu)
-  "Split MENU according to `font-menu-max-items'."
-  (let ((len (length menu)))
-    (if (or (null font-menu-max-items)
-	    (null (featurep 'lisp-float-type))
-	    (<= len font-menu-max-items))
-	menu
-      ;; Submenu is max 2 entries longer than menu, never shorter, number of
-      ;; entries in submenus differ by at most one (with longer submenus first)
-      (let* ((outer (floor (sqrt len)))
-	     (inner (/ len outer))
-	     (rest (% len outer))
-	     (result nil))
-	(setq menu (reverse menu))
-	(while menu
-	  (let ((in inner)
-		(sub nil)
-		(to (car menu)))
-	    (while (> in 0)
-	      (setq in   (1- in)
-		    sub  (cons (car menu) sub)
-		    menu (cdr menu)))
-	    (setq result
-		  (cons (cons (if (stringp font-menu-submenu-name-format)
-				  (format font-menu-submenu-name-format
-					  (aref (car sub) 0) (aref to 0))
-				(funcall font-menu-submenu-name-format
-					 (aref (car sub) 0) (aref to 0)))
-			      sub)
-			result)
-		  rest  (1+ rest))
-	    (if (= rest outer) (setq inner (1+ inner)))))
-	result))))
-
 ;;;###autoload
 (defun font-menu-family-constructor (ignored)
   (catch 'menu
@@ -437,23 +376,21 @@ or if you change your font path, you can call this to re-initialize the menus."
       ;; the same size and weight as the current font (scalable fonts
       ;; exist in every size).  Only the current font is marked as
       ;; selected.
-      (font-menu-split-long-menu
-       (mapcar
-	(lambda (item)
-	  (setq f (aref item 0)
-		entry (vassoc f (aref dcache 0)))
-	  ;; The user can no longer easily control the weight using the menu
-	  ;; Note it is silly anyway as it could very well be that the font
-	  ;; has no common size+weight combinations with the default font.
-	  (if (and (not (member size (aref entry 2)))
-		   font-menu-ignore-scaled-fonts (member 0 (aref entry 2)))
-	      (disable-menu-item item)
-	    (enable-menu-item item))  
-	  (if (string-equal family f)
-	      (select-toggle-menu-item item)
-	    (deselect-toggle-menu-item item))
-	  item)
-	(aref dcache 1))))))
+      (mapcar
+       (lambda (item)
+	 (setq f (aref item 0)
+	       entry (vassoc f (aref dcache 0)))
+	 (if (and (member weight (aref entry 1))
+		  (or (member size (aref entry 2))
+		      (and (not font-menu-ignore-scaled-fonts)
+			   (member 0 (aref entry 2)))))
+	     (enable-menu-item item)
+	   (disable-menu-item item))
+	 (if (string-equal family f)
+	     (select-toggle-menu-item item)
+	   (deselect-toggle-menu-item item))
+	 item)
+       (aref dcache 1)))))
 
 ;;;###autoload
 (defun font-menu-size-constructor (ignored)
@@ -529,12 +466,9 @@ or if you change your font path, you can call this to re-initialize the menus."
 	 (from-size   (aref font-data 2))
 	 (from-weight (aref font-data 3))
 	 (from-slant  (aref font-data 4))
-	 new-default-face-font
-	 new-props)
+	 new-default-face-font)
     (unless from-family
       (signal 'error '("couldn't parse font name for default face")))
-    (when weight
-      (signal 'error '("Setting weight currently not supported")))
     (setq new-default-face-font
 	  (font-menu-load-font (or family from-family)
 			       (or weight from-weight)
@@ -554,19 +488,10 @@ or if you change your font path, you can call this to re-initialize the menus."
     ;; Set the default face's font after hacking the other faces, so that
     ;; the frame size doesn't change until we are all done.
 
-    ;; If we need to be frame local we do the changes ourselves.
-    (if font-menu-this-frame-only-p
     ;;; WMP - we need to honor font-menu-this-frame-only-p here!
-	(set-face-font 'default new-default-face-font
-		       (and font-menu-this-frame-only-p (selected-frame)))
-      ;; OK Let Customize do it.
-      (when (and family (not (equal family from-family)))
-	(setq new-props (append (list :family family) new-props)))
-      (when (and size (not (equal size from-size)))
-	(setq new-props (append
-	   (list :size (concat (int-to-string (/ size 10)) "pt")) new-props)))
-      (custom-set-face-update-spec 'default '((type x)) new-props)
-      (message "Font %s" (face-font-name 'default)))))
+    (set-face-font 'default new-default-face-font
+		   (and font-menu-this-frame-only-p (selected-frame)))
+    (message "Font %s" (face-font-name 'default))))
 
 
 (defun font-menu-change-face (face

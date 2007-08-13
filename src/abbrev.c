@@ -222,10 +222,9 @@ abbrev_oblookup (struct buffer *buf, Lisp_Object obarray)
 	 because of consistency with abbrev_match. */
       if (wordend < point)
 	return 0;
+      if (wordend <= wordstart)
+	return 0;
     }
-
-  if (wordend <= wordstart)
-    return 0;
 
   p = word = (Bufbyte *) alloca (MAX_EMCHAR_LEN * (wordend - wordstart));
   for (idx = wordstart; idx < wordend; idx++)

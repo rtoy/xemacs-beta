@@ -454,16 +454,13 @@ Given a Unix syntax file name, returns a string ending in slash.
       Bufbyte *res = alloca (MAXPATHLEN + 1);
       if (getdefdir (toupper (*beg) - 'A' + 1, res))
 	{
-	  char *c=((char *) res) + strlen ((char *) res);
-	  if (!IS_DIRECTORY_SEP (*c))
-	    {
-	      *c++ = DIRECTORY_SEP;
-	      *c = '\0';
-	    }
+	  if (!IS_DIRECTORY_SEP (res[strlen ((char *) res) - 1]))
+	    strcat ((char *) res, "/");
 	  beg = res;
 	  p = beg + strlen ((char *) beg);
 	}
     }
+  CORRECT_DIR_SEPS (beg);
 #endif /* WINDOWSNT */
   return make_string (beg, p - beg);
 }
@@ -547,6 +544,9 @@ file_name_as_directory (char *out, char *in)
 	  out[size + 1] = '\0';
 	}
     }
+#ifdef WINDOWSNT
+  CORRECT_DIR_SEPS (out);
+#endif
   return out;
 }
 
@@ -608,6 +608,9 @@ directory_file_name (CONST char *src, char *dst)
       )
     dst[slen - 1] = 0;
 #endif /* APOLLO */
+#ifdef WINDOWSNT
+  CORRECT_DIR_SEPS (dst);
+#endif /* WINDOWSNT */
   return 1;
 }
 
@@ -772,7 +775,7 @@ See also the function `substitute-in-file-name'.
 */
        (name, default_directory))
 {
-  /* This function can GC.  GC-checked 7-11-00 ben */
+  /* This function can GC */
   Bufbyte *nm;
 
   Bufbyte *newdir, *p, *o;
@@ -789,10 +792,6 @@ See also the function `substitute-in-file-name'.
 #ifdef __CYGWIN32__
   char *user;
 #endif
-  struct gcpro gcpro1, gcpro2;
-
-  /* both of these get set below */
-  GCPRO2 (name, default_directory);
 
   CHECK_STRING (name);
 
@@ -800,11 +799,8 @@ See also the function `substitute-in-file-name'.
      call the corresponding file handler.  */
   handler = Ffind_file_name_handler (name, Qexpand_file_name);
   if (!NILP (handler))
-    {
-      UNGCPRO;
-      return call3_check_string (handler, Qexpand_file_name, name,
-				 default_directory);
-    }
+    return call3_check_string (handler, Qexpand_file_name, name,
+			       default_directory);
 
   /* Use the buffer's default-directory if DEFAULT_DIRECTORY is omitted.  */
   if (NILP (default_directory))
@@ -816,10 +812,7 @@ See also the function `substitute-in-file-name'.
     {
       handler = Ffind_file_name_handler (default_directory, Qexpand_file_name);
       if (!NILP (handler))
-	{
-	  UNGCPRO;
-	  return call3 (handler, Qexpand_file_name, name, default_directory);
-	}
+	return call3 (handler, Qexpand_file_name, name, default_directory);
     }
 
   o = XSTRING_DATA (default_directory);
@@ -851,8 +844,13 @@ See also the function `substitute-in-file-name'.
       && ! (IS_DIRECTORY_SEP (o[0]))
 #endif /* not WINDOWSNT */
       )
+    {
+      struct gcpro gcpro1;
 
-    default_directory = Fexpand_file_name (default_directory, Qnil);
+      GCPRO1 (name);
+      default_directory = Fexpand_file_name (default_directory, Qnil);
+      UNGCPRO;
+    }
 
 #ifdef FILE_SYSTEM_CASE
   name = FILE_SYSTEM_CASE (name);
@@ -955,11 +953,11 @@ See also the function `substitute-in-file-name'.
 	      XSTRING_DATA (name)[0] = DRIVE_LETTER (drive);
 	      XSTRING_DATA (name)[1] = ':';
 	    }
-	  RETURN_UNGCPRO (name);
+	  return name;
 #else /* not WINDOWSNT */
 	  if (nm == XSTRING_DATA (name))
-	    RETURN_UNGCPRO (name);
-	  RETURN_UNGCPRO (build_string ((char *) nm));
+	    return name;
+	  return build_string ((char *) nm);
 #endif /* not WINDOWSNT */
 	}
     }
@@ -1266,7 +1264,7 @@ See also the function `substitute-in-file-name'.
   CORRECT_DIR_SEPS (target);
 #endif /* WINDOWSNT */
 
-  RETURN_UNGCPRO (make_string (target, o - target));
+  return make_string (target, o - target);
 }
 
 #if 0 /* FSFmacs */
@@ -1304,18 +1302,18 @@ No component of the resulting pathname will be a symbolic link, as
 
   {
     char resolved_path[MAXPATHLEN];
-    char *path;
-    char *p;
+    char path[MAXPATHLEN];
+    char *p = path;
     int elen = XSTRING_LENGTH (expanded_name);
 
-    GET_STRING_FILENAME_DATA_ALLOCA(expanded_name,path,elen);
-    p = path;
-    if (elen > MAXPATHLEN)
+    if (elen >= countof (path))
       goto toolong;
-    
+
+    memcpy (path, XSTRING_DATA (expanded_name), elen + 1);
+    /* memset (resolved_path, 0, sizeof (resolved_path)); */
+
     /* Try doing it all at once. */
-    /* !! Does realpath() Mule-encapsulate?
-       Answer: Nope! So we do it above */
+    /* !!#### Does realpath() Mule-encapsulate? */
     if (!xrealpath (path, resolved_path))
       {
 	/* Didn't resolve it -- have to do it one component at a time. */
@@ -1379,7 +1377,7 @@ No component of the resulting pathname will be a symbolic link, as
 	  resolved_path[rlen + 1] = 0;
 	  rlen = rlen + 1;
 	}
-      return make_ext_string ((Bufbyte *) resolved_path, rlen, FORMAT_FILENAME);
+      return make_ext_string ((Bufbyte *) resolved_path, rlen, FORMAT_BINARY);
     }
 
   toolong:
@@ -2054,7 +2052,7 @@ This is what happens in interactive use with M-x.
    on NT here. --marcpa */
 /* But FSF #defines link as sys_link which is supplied in nt.c. We can't do
    that because sysfile.h defines sys_link depending on ENCAPSULATE_LINK.
-   Reverted to previous behavior pending a working fix. (jhar) */
+   Reverted to previous behaviour pending a working fix. (jhar) */
 #if defined(WINDOWSNT)
   /* Windows does not support this operation.  */
   report_file_error ("Adding new name", Flist (2, &filename));
@@ -2073,6 +2071,7 @@ This is what happens in interactive use with M-x.
   return Qnil;
 }
 
+#ifdef S_IFLNK
 DEFUN ("make-symbolic-link", Fmake_symbolic_link, 2, 3,
        "FMake symbolic link to file: \nFMake symbolic link to file %s: \np", /*
 Make a symbolic link to FILENAME, named LINKNAME.  Both args strings.
@@ -2084,7 +2083,6 @@ This happens for interactive use with M-x.
        (filename, linkname, ok_if_already_exists))
 {
   /* This function can GC.  GC checked 1997.06.04. */
-  /* XEmacs change: run handlers even if local machine doesn't have symlinks */
   Lisp_Object handler;
   struct gcpro gcpro1, gcpro2;
 
@@ -2112,7 +2110,6 @@ This happens for interactive use with M-x.
     RETURN_UNGCPRO (call4 (handler, Qmake_symbolic_link, filename,
 			   linkname, ok_if_already_exists));
 
-#ifdef S_IFLNK
   if (NILP (ok_if_already_exists)
       || INTP (ok_if_already_exists))
     barf_or_query_if_file_exists (linkname, "make it a link",
@@ -2125,11 +2122,10 @@ This happens for interactive use with M-x.
       report_file_error ("Making symbolic link",
 			 list2 (filename, linkname));
     }
-#endif /* S_IFLNK */
-
   UNGCPRO;
   return Qnil;
 }
+#endif /* S_IFLNK */
 
 #ifdef HPUX_NET
 
@@ -2225,7 +2221,7 @@ See also `file-readable-p' and `file-attributes'.
 */
        (filename))
 {
-  /* This function can call lisp; GC checked 7-11-00 ben */
+  /* This function can call lisp */
   Lisp_Object abspath;
   Lisp_Object handler;
   struct stat statbuf;
@@ -2252,7 +2248,7 @@ For a directory, this means you can access files in that directory.
        (filename))
 
 {
-  /* This function can GC.  GC checked 07-11-2000 ben. */
+  /* This function can GC.  GC checked 1997.04.10. */
   Lisp_Object abspath;
   Lisp_Object handler;
   struct gcpro gcpro1;
@@ -2292,7 +2288,7 @@ See also `file-exists-p' and `file-attributes'.
   if (!NILP (handler))
     RETURN_UNGCPRO (call2 (handler, Qfile_readable_p, abspath));
 
-#if defined(WINDOWSNT) || defined(__CYGWIN32__)
+#ifdef WINDOWSNT
   /* Under MS-DOS and Windows, open does not work for directories.  */
   UNGCPRO;
   if (access (XSTRING_DATA (abspath), 0) == 0)
@@ -2356,13 +2352,11 @@ Otherwise returns nil.
        (filename))
 {
   /* This function can GC.  GC checked 1997.04.10. */
-  /* XEmacs change: run handlers even if local machine doesn't have symlinks */
 #ifdef S_IFLNK
   char *buf;
   int bufsize;
   int valsize;
   Lisp_Object val;
-#endif
   Lisp_Object handler;
   struct gcpro gcpro1;
 
@@ -2377,7 +2371,6 @@ Otherwise returns nil.
   if (!NILP (handler))
     return call2 (handler, Qfile_symlink_p, filename);
 
-#ifdef S_IFLNK
   bufsize = 100;
   while (1)
     {
@@ -2779,9 +2772,9 @@ positions), even in Mule. (Fixing this is very difficult.)
 	{
 	  end_multiple_change (buf, mc_count);
 
-	  RETURN_UNGCPRO (Fsignal (Qfile_error,
-				   list2 (build_translated_string("not a regular file"),
-					  filename)));
+	  return Fsignal (Qfile_error,
+			  list2 (build_translated_string("not a regular file"),
+				 filename));
 	}
     }
 #endif /* S_IFREG */
@@ -3150,7 +3143,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
   int failure;
   int save_errno = 0;
   struct stat st;
-  Lisp_Object fn = Qnil;
+  Lisp_Object fn;
   int speccount = specpdl_depth ();
   int visiting_other = STRINGP (visit);
   int visiting = (EQ (visit, Qt) || visiting_other);
@@ -3159,23 +3152,12 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
   Lisp_Object annotations = Qnil;
   struct buffer *given_buffer;
   Bufpos start1, end1;
-  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
-  struct gcpro ngcpro1, ngcpro2;
-  Lisp_Object curbuf;
 
-  XSETBUFFER (curbuf, current_buffer);
-
-  /* start, end, visit, and append are never modified in this fun
-     so we don't protect them. */
-  GCPRO5 (visit_file, filename, codesys, lockname, annotations);
-  NGCPRO2 (curbuf, fn);
-
-  /* [[ dmoore - if Fexpand_file_name or handlers kill the buffer,
+  /* #### dmoore - if Fexpand_file_name or handlers kill the buffer,
      we should signal an error rather than blissfully continuing
      along.  ARGH, this function is going to lose lose lose.  We need
      to protect the current_buffer from being destroyed, but the
-     multiple return points make this a pain in the butt. ]] we do
-     protect curbuf now. --ben */
+     multiple return points make this a pain in the butt. */
 
 #ifdef FILE_CODING
   codesys = Fget_coding_system (codesys);
@@ -3189,6 +3171,9 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
 
   {
     Lisp_Object handler;
+    struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
+
+    GCPRO5 (start, filename, visit, visit_file, lockname);
 
     if (visiting_other)
       visit_file = Fexpand_file_name (visit, Qnil);
@@ -3196,11 +3181,11 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
       visit_file = filename;
     filename = Fexpand_file_name (filename, Qnil);
 
+    UNGCPRO;
+
     if (NILP (lockname))
       lockname = visit_file;
 
-    /* We used to UNGCPRO here.  BAD!  visit_file is used below after
-       more Lisp calling. */
     /* If the file name has special constructs in it,
        call the corresponding file handler.  */
     handler = Ffind_file_name_handler (filename, Qwrite_region);
@@ -3219,15 +3204,21 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
 	    current_buffer->filename = visit_file;
 	    MARK_MODELINE_CHANGED;
 	  }
-	NUNGCPRO;
-	UNGCPRO;
 	return val;
       }
   }
 
 #ifdef CLASH_DETECTION
   if (!auto_saving)
-    lock_file (lockname);
+    {
+      Lisp_Object curbuf;
+      struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
+
+      XSETBUFFER (curbuf, current_buffer);
+      GCPRO5 (start, filename, visit_file, lockname, curbuf);
+      lock_file (lockname);
+      UNGCPRO;
+    }
 #endif /* CLASH_DETECTION */
 
   /* Special kludge to simplify auto-saving.  */
@@ -3273,9 +3264,9 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
   {
     Lisp_Object desc_locative = Fcons (make_int (desc), Qnil);
     Lisp_Object instream = Qnil, outstream = Qnil;
-    struct gcpro nngcpro1, nngcpro2;
+    struct gcpro gcpro1, gcpro2;
     /* need to gcpro; QUIT could happen out of call to write() */
-    NNGCPRO2 (instream, outstream);
+    GCPRO2 (instream, outstream);
 
     record_unwind_protect (close_file_unwind, desc_locative);
 
@@ -3333,6 +3324,7 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
 	save_errno = errno;
       }
     Lstream_close (XLSTREAM (instream));
+    UNGCPRO;
 
 #ifdef HAVE_FSYNC
     /* Note fsync appears to change the modtime on BSD4.2 (both vax and sun).
@@ -3348,21 +3340,18 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
       }
 #endif /* HAVE_FSYNC */
 
-    /*
-     * On VMS and APOLLO, must do the stat after the close
-     * since closing changes the modtime.
-     *
-     * Spurious "file has changed on disk" warnings have been
-     * observed on Suns as well.  It seems that `close' can change
-     * the modtime, under nfs.  (This has supposedly been fixed in
-     * Sunos 4, but who knows about all the other machines with
-     * NFS?)
-     *
-     * This is reported to happen under Windows also.
-     *
-     * So we don't do the stat here.  It is done after the
-     * descriptor is closed.
-     */
+    /* Spurious "file has changed on disk" warnings have been
+       observed on Suns as well.
+       It seems that `close' can change the modtime, under nfs.
+
+       (This has supposedly been fixed in Sunos 4,
+       but who knows about all the other machines with NFS?)  */
+    /* On VMS and APOLLO, must do the stat after the close
+       since closing changes the modtime.  */
+    /* As it does on Windows too - kkm */
+#if !defined (WINDOWSNT) /* !defined (VMS) && !defined (APOLLO) */
+    fstat (desc, &st);
+#endif
 
     /* NFS can report a write failure now.  */
     if (close (desc) < 0)
@@ -3376,15 +3365,11 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
        as necessary). */
     XCAR (desc_locative) = Qnil;
     unbind_to (speccount, Qnil);
-
-    NNUNGCPRO;
   }
 
-  /*
-   * stat the file after the file is closed to avoid having the
-   * modtime change on us when the file is closed.
-   */
+#if defined (WINDOWSNT) /* defined (VMS) || defined (APOLLO) */
   stat ((char *) XSTRING_DATA (fn), &st);
+#endif
 
 #ifdef CLASH_DETECTION
   if (!auto_saving)
@@ -3411,8 +3396,6 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
     }
   else if (quietly)
     {
-      NUNGCPRO;
-      UNGCPRO;
       return Qnil;
     }
 
@@ -3422,21 +3405,19 @@ to the value of CODESYS.  If this is nil, no code conversion occurs.
         message ("Wrote %s", XSTRING_DATA (visit_file));
       else
 	{
-	  Lisp_Object fsp = Qnil;
-	  struct gcpro nngcpro1;
+	  struct gcpro gcpro1;
+	  Lisp_Object fsp;
+	  GCPRO1 (fn);
 
-	  NNGCPRO1 (fsp);
 	  fsp = Ffile_symlink_p (fn);
 	  if (NILP (fsp))
 	    message ("Wrote %s", XSTRING_DATA (fn));
 	  else
 	    message ("Wrote %s (symlink to %s)",
 		     XSTRING_DATA (fn), XSTRING_DATA (fsp));
-	  NNUNGCPRO;
+	  UNGCPRO;
 	}
     }
-  NUNGCPRO;
-  UNGCPRO;
   return Qnil;
 }
 
@@ -3682,7 +3663,7 @@ This means that the file has not been changed since it was visited or saved.
 */
        (buf))
 {
-  /* This function can call lisp; GC checked 7-11-00 ben */
+  /* This function can call lisp */
   struct buffer *b;
   struct stat st;
   Lisp_Object handler;
@@ -3757,7 +3738,7 @@ An argument specifies the modification time value to use
     }
   else
     {
-      Lisp_Object filename = Qnil;
+      Lisp_Object filename;
       struct stat st;
       Lisp_Object handler;
       struct gcpro gcpro1, gcpro2, gcpro3;
@@ -4219,7 +4200,9 @@ syms_of_fileio (void)
   DEFSUBR (Fdelete_file);
   DEFSUBR (Frename_file);
   DEFSUBR (Fadd_name_to_file);
+#ifdef S_IFLNK
   DEFSUBR (Fmake_symbolic_link);
+#endif /* S_IFLNK */
 #ifdef HPUX_NET
   DEFSUBR (Fsysnetunam);
 #endif /* HPUX_NET */
@@ -4345,9 +4328,5 @@ This variable affects the built-in functions only on Windows,
 on other platforms, it is initialized so that Lisp code can find out
 what the normal separator is.
 */ );
-#ifdef WINDOWSNT
-  Vdirectory_sep_char = make_char ('\\');
-#else
   Vdirectory_sep_char = make_char ('/');
-#endif
 }

@@ -769,14 +769,10 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
      /* simple_p means don't try too hard (ASCII only) */
 {
   KeySym keysym = 0;
-  
+
 #ifdef HAVE_XIM
   int len;
-  /* Some implementations of XmbLookupString don't return
-     XBufferOverflow correctly, so increase the size of the xim input
-     buffer from 64 to the more reasonable size 513, as Emacs has done.
-     From Kenichi Handa. */
-  char buffer[513];
+  char buffer[64];
   char *bufptr = buffer;
   int   bufsiz = sizeof (buffer);
   Status status;
@@ -798,8 +794,7 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
          than passing in 0) to avoid crashes on German IRIX */
       char dummy[256];
       XLookupString (event, dummy, 200, &keysym, 0);
-      return (IsModifierKey (keysym) || keysym == XK_Mode_switch )
-	? Qnil : x_keysym_to_emacs_keysym (keysym, simple_p);
+      return x_keysym_to_emacs_keysym (keysym, simple_p);
     }
 #endif /* ! XIM_MOTIF */
 
@@ -848,8 +843,7 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p)
     {
     case XLookupKeySym:
     case XLookupBoth:
-      return (IsModifierKey (keysym) || keysym == XK_Mode_switch )
-	? Qnil : x_keysym_to_emacs_keysym (keysym, simple_p);
+      return x_keysym_to_emacs_keysym (keysym, simple_p);
 
     case XLookupChars:
       {
@@ -989,16 +983,20 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 	  {
 	    Lisp_Object keysym;
 	    XKeyEvent *ev = &x_event->xkey;
+	    KeyCode keycode = ev->keycode;
+
+	    if (x_key_is_modifier_p (keycode, d)) /* it's a modifier key */
+	      return 0;
+
 	    /* This used to compute the frame from the given X window and
 	       store it here, but we really don't care about the frame. */
 	    emacs_event->channel = DEVICE_CONSOLE (d);
 	    keysym = x_to_emacs_keysym (&x_event->xkey, 0);
 
-	    /* If the emacs keysym is nil, then that means that the X
-	       keysym was either a Modifier or NoSymbol, which
-	       probably means that we're in the midst of reading a
-	       Multi_key sequence, or a "dead" key prefix, or XIM
-	       input. Ignore it. */
+	    /* If the emacs keysym is nil, then that means that the
+	       X keysym was NoSymbol, which probably means that
+	       we're in the midst of reading a Multi_key sequence,
+	       or a "dead" key prefix, or XIM input.  Ignore it. */
 	    if (NILP (keysym))
 	      return 0;
 
@@ -1123,11 +1121,10 @@ x_event_to_emacs_event (XEvent *x_event, struct Lisp_Event *emacs_event)
 	    Lisp_Object l_dndlist = Qnil, l_item = Qnil;
 	    struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
 
-	    if (! frame)
-	      return 0;	/* not for us */
-
 	    GCPRO4 (l_type, l_data, l_dndlist, l_item);
 
+	    if (! frame)
+	      return 0;	/* not for us */
 	    XSETFRAME (emacs_event->channel, frame);
 
 	    emacs_event->event_type = misc_user_event;
@@ -2040,7 +2037,7 @@ emacs_Xt_unselect_console (struct console *con)
   /* On a stream device (ie: noninteractive), bad things can happen. */
   if (EQ (CONSOLE_TYPE (con), Qtty)) {
     mousefd = CONSOLE_TTY_MOUSE_FD (con);
-    if (mousefd >= 0 && filedesc_to_what_closure[mousefd]  ) {
+    if (mousefd >= 0) {
       unselect_filedesc (mousefd);
     }
   }
@@ -2807,9 +2804,9 @@ Boolean EmacsXtCvtStringToPixel (
   if ((d = get_device_from_display_1(dpy))) {
     visual = DEVICE_X_VISUAL(d);
     if (colormap != DEVICE_X_COLORMAP(d)) {
-      XtAppWarningMsg(the_app_con, "weirdColormap", "cvtStringToPixel",
+      XtAppWarningMsg(the_app_con, "wierdColormap", "cvtStringToPixel",
 		      "XtToolkitWarning",
-		      "The colormap passed to cvtStringToPixel doesn't match the one registered to the device.\n",
+		      "The colormap passed to cvtStringToPixel doesn't match the one registerd to the device.\n",
 		      NULL, 0);
       status = XAllocNamedColor(dpy, colormap, (char*)str, &screenColor, &exactColor);
     } else {

@@ -26,7 +26,6 @@ Boston, MA 02111-1307, USA.  */
    Ultimately based on FSF.
    Substantially rewritten for XEmacs by Ben Wing.
    Rewritten for mswindows by Jonathan Harris, November 1997 for 21.0.
-   Graphics features added and frame resizing fiddled with by Andy Piper.
  */
 
 #include <config.h>
@@ -304,7 +303,7 @@ mswindows_make_frame_visible (struct frame *f)
   if (f->iconified)
     ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_RESTORE);
   else
-    ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_SHOW);
+    ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_SHOWNORMAL);
   f->visible = 1;
   f->iconified = 0;
 }
@@ -393,10 +392,6 @@ mswindows_set_frame_pointer (struct frame *f)
     {
       SetClassLong (FRAME_MSWINDOWS_HANDLE (f), GCL_HCURSOR,
 		    (LONG) XIMAGE_INSTANCE_MSWINDOWS_ICON (f->pointer));
-      /* we only have to do this because GC doesn't cause a mouse
-         event and doesn't give time to event processing even if it
-         did. */
-      SetCursor (XIMAGE_INSTANCE_MSWINDOWS_ICON (f->pointer));
     }
 }
 
@@ -456,6 +451,7 @@ static void
 mswindows_raise_frame (struct frame *f)
 {
   BringWindowToTop (FRAME_MSWINDOWS_HANDLE(f));
+  /* XXX Should we do SetWindowForeground too ? */
 }
 
 static void
@@ -598,7 +594,7 @@ void mswindows_size_frame_internal (struct frame* f, XEMACS_RECT_WH* dest)
   int pixel_width, pixel_height;
   int size_p = (dest->width >=0 || dest->height >=0);
   int move_p = (dest->top >=0 || dest->left >=0);
-  struct device* d = XDEVICE (FRAME_DEVICE (f));
+
   char_to_real_pixel_size (f, dest->width, dest->height, &pixel_width, &pixel_height);
   
   if (dest->width < 0)
@@ -611,7 +607,7 @@ void mswindows_size_frame_internal (struct frame* f, XEMACS_RECT_WH* dest)
     dest->left = rect.left;
   if (dest->top < 0)
     dest->top = rect.top;
-  
+
   rect.left = rect.top = 0;
   rect.right = pixel_width;
   rect.bottom = pixel_height;
@@ -621,41 +617,12 @@ void mswindows_size_frame_internal (struct frame* f, XEMACS_RECT_WH* dest)
 		      GetMenu (FRAME_MSWINDOWS_HANDLE(f)) != NULL,
 		      GetWindowLong (FRAME_MSWINDOWS_HANDLE(f), GWL_EXSTYLE));
 
-  /* resize and move the window so that it fits on the screen. This is
-  not restrictive since this will happen later anyway in WM_SIZE.  We
-  have to do this after adjusting the rect to account for menubar
-  etc. */
-  pixel_width = rect.right - rect.left;
-  pixel_height = rect.bottom - rect.top;
-  if (pixel_width > DEVICE_MSWINDOWS_HORZRES(d))
-    {
-      pixel_width = DEVICE_MSWINDOWS_HORZRES(d);
-      size_p=1;
-    }
-  if (pixel_height > DEVICE_MSWINDOWS_VERTRES(d))
-    {
-      pixel_height = DEVICE_MSWINDOWS_VERTRES(d);
-      size_p=1;
-    }
-
-  /* adjust position so window is on screen */
-  if (dest->left + pixel_width > DEVICE_MSWINDOWS_HORZRES(d))
-    {
-      dest->left = DEVICE_MSWINDOWS_HORZRES(d) - pixel_width;
-      move_p=1;
-    }
-  if (dest->top + pixel_height > DEVICE_MSWINDOWS_VERTRES(d))
-    {
-      dest->top = DEVICE_MSWINDOWS_VERTRES(d) - pixel_height;
-      move_p=1;
-    }
-
   if (IsIconic (FRAME_MSWINDOWS_HANDLE(f)) 
       || IsZoomed (FRAME_MSWINDOWS_HANDLE(f)))
     ShowWindow (FRAME_MSWINDOWS_HANDLE(f), SW_RESTORE);
 
   SetWindowPos (FRAME_MSWINDOWS_HANDLE(f), NULL, 
-		dest->left, dest->top, pixel_width, pixel_height,
+		dest->left, dest->top, rect.right - rect.left, rect.bottom - rect.top,
 		SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSENDCHANGING
 		| (size_p ? 0 : SWP_NOSIZE)
 		| (move_p ? 0 : SWP_NOMOVE));

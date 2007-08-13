@@ -28,7 +28,6 @@ Boston, MA 02111-1307, USA.  */
    Ultimately based on FSF.
    Rewritten by Ben Wing.
    Rewritten for mswindows by Jonathan Harris, November 1997 for 21.0.
-   Subprocess and modal loop support by Kirill M. Katsnelson.
  */
 
 #include <config.h>
@@ -88,8 +87,7 @@ mswindows_handle_toolbar_wm_command (struct frame* f, HWND ctrl, WORD id);
 
 static Lisp_Object mswindows_find_frame (HWND hwnd);
 static Lisp_Object mswindows_find_console (HWND hwnd);
-static Lisp_Object mswindows_key_to_emacs_keysym (int mswindows_key, int mods,
-						  int extendedp);
+static Lisp_Object mswindows_key_to_emacs_keysym(int mswindows_key, int mods);
 static int mswindows_modifier_state (BYTE* keymap, int has_AltGr);
 static void mswindows_set_chord_timer (HWND hwnd);
 static int mswindows_button2_near_enough (POINTS p1, POINTS p2);
@@ -100,7 +98,6 @@ static struct event_stream *mswindows_event_stream;
 #ifdef HAVE_MSG_SELECT
 extern SELECT_TYPE input_wait_mask, non_fake_input_wait_mask;
 extern SELECT_TYPE process_only_mask, tty_only_mask;
-SELECT_TYPE zero_mask;
 extern int signal_event_pipe_initialized;
 int windows_fd;
 #endif
@@ -452,7 +449,7 @@ init_slurp_stream (void)
 #define NTPIPE_SHOVE_STREAM_DATA(stream) \
   LSTREAM_TYPE_DATA (stream, ntpipe_shove)
 
-#define MAX_SHOVE_BUFFER_SIZE 512
+#define MAX_SHOVE_BUFFER_SIZE 128
      
 struct ntpipe_shove_stream
 {
@@ -485,18 +482,15 @@ shove_thread (LPVOID vparam)
       InterlockedIncrement (&s->idle_p);
       WaitForSingleObject (s->hev_thread, INFINITE);
 
-      /* Write passed buffer if any */
-      if (s->size > 0)
+      if (s->die_p)
+	break;
+
+      /* Write passed buffer */
+      if (!WriteFile (s->hpipe, s->buffer, s->size, &bytes_written, NULL)
+	  || bytes_written != s->size)
 	{
-	  if (!WriteFile (s->hpipe, s->buffer, s->size, &bytes_written, NULL)
-	      || bytes_written != s->size)
-	    {
-	      s->error_p = TRUE;
-	      InterlockedIncrement (&s->die_p);
-	    }
-	  /* Set size to zero so we won't write it again if the closer sets
-	     die_p and kicks us */
-	  s->size = 0;
+	  s->error_p = TRUE;
+	  InterlockedIncrement (&s->die_p);
 	}
 
       if (s->die_p)
@@ -525,15 +519,6 @@ make_ntpipe_output_stream (HANDLE hpipe, LPARAM param)
 			     CREATE_SUSPENDED, &thread_id_unused);
   if (s->hthread == NULL)
     {
-      Lstream_delete (lstr);
-      return Qnil;
-    }
-
-  /* Set the priority of the thread higher so we don't end up waiting
-     on it to send things. */
-  if (!SetThreadPriority (s->hthread, THREAD_PRIORITY_HIGHEST))
-    {
-      CloseHandle (s->hthread);
       Lstream_delete (lstr);
       return Qnil;
     }
@@ -595,18 +580,14 @@ ntpipe_shove_closer (Lstream *stream)
   /* Force thread stop */
   InterlockedIncrement (&s->die_p);
 
-  /* Thread will end upon unblocking.  If it's already unblocked this will
-     do nothing, but the thread won't look at die_p until it's written any
-     pending output. */
+  /* Close pipe handle, possibly breaking it */
+  CloseHandle (s->hpipe);
+
+  /* Thread will end upon unblocking */
   SetEvent (s->hev_thread);
 
   /* Wait while thread terminates */
   WaitForSingleObject (s->hthread, INFINITE);
-
-  /* Close pipe handle, possibly breaking it */
-  CloseHandle (s->hpipe);
-
-  /* Close the thread handle */
   CloseHandle (s->hthread);
 
   /* Destroy the event */
@@ -746,11 +727,8 @@ winsock_writer (Lstream *stream, CONST unsigned char *data, size_t size)
   
   {
     ResetEvent (str->ov.hEvent);
-
-    /* Docs indicate that 4th parameter to WriteFile can be NULL since this is
-     * an overlapped operation. This fails on Win95 with winsock 1.x so we
-     * supply a spare address which is ignored by Win95 anyway. Sheesh. */
-    if (WriteFile ((HANDLE)str->s, data, size, (LPDWORD)&str->buffer, &str->ov)
+    
+    if (WriteFile ((HANDLE)str->s, data, size, NULL, &str->ov)
 	|| GetLastError() == ERROR_IO_PENDING)
       str->pending_p = 1;
     else
@@ -1316,29 +1294,6 @@ mswindows_need_event (int badly_p)
 	  EMACS_TIME_TO_SELECT_TIME (sometime, select_time_to_block);
 	  pointer_to_this = &select_time_to_block;
 	}
-
-      /* select() is slow and buggy so if we don't have any processes
-         just wait as normal */
-      if (memcmp (&process_only_mask, &zero_mask, sizeof(SELECT_TYPE))==0)
-	{
-	  /* Now try getting a message or process event */
-	  active = MsgWaitForMultipleObjects (0, mswindows_waitable_handles,
-					      FALSE, badly_p ? INFINITE : 0,
-					      QS_ALLINPUT);
-	  
-	  if (active == WAIT_TIMEOUT)
-	    {
-	      /* No luck trying - just return what we've already got */
-	      return;
-	    }
-	  else if (active == WAIT_OBJECT_0)
-	    {
-	      /* Got your message, thanks */
-	      mswindows_drain_windows_queue ();
-	      continue;
-	    }
-	}
-
       active = select (MAXDESC, &temp_mask, 0, 0, pointer_to_this);
       
       if (active == 0)
@@ -1617,71 +1572,31 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     mswindows_enqueue_misc_user_event (fobj, Qeval, list3 (Qdelete_frame, fobj, Qt));
     break;
 
-  case WM_KEYUP:
-  case WM_SYSKEYUP:
-    /* See Win95 comment under WM_KEYDOWN */
-    {
-      BYTE keymap[256];
-
-      if (wParam == VK_CONTROL)
-        {
-	  GetKeyboardState (keymap);
-	  keymap [(lParam & 0x1000000) ? VK_RCONTROL : VK_LCONTROL] &= ~0x80;
-	  SetKeyboardState (keymap);
-	}
-      else if (wParam == VK_MENU)
-	{
-	  GetKeyboardState (keymap);
-	  keymap [(lParam & 0x1000000) ? VK_RMENU : VK_LMENU] &= ~0x80;
-	  SetKeyboardState (keymap);
-	}
-    };
-    goto defproc;
-
   case WM_KEYDOWN:
   case WM_SYSKEYDOWN:
-    /* In some locales the right-hand Alt key is labelled AltGr. This key
-     * should produce alternative charcaters when combined with another key.
-     * eg on a German keyboard pressing AltGr+q should produce '@'.
-     * AltGr generates exactly the same keystrokes as LCtrl+RAlt. But if
-     * TranslateMessage() is called with *any* combination of Ctrl+Alt down,
-     * it translates as if AltGr were down.
-     * We get round this by removing all modifiers from the keymap before
-     * calling TranslateMessage() unless AltGr is *really* down. */
     {
       BYTE keymap[256];
       int has_AltGr = mswindows_current_layout_has_AltGr ();
       int mods;
-      int extendedp = lParam & 0x1000000;
       Lisp_Object keysym;
 
       GetKeyboardState (keymap);
       mods = mswindows_modifier_state (keymap, has_AltGr);
 
-      /* Handle non-printables */
-      if (!NILP (keysym = mswindows_key_to_emacs_keysym (wParam, mods,
-							 extendedp)))
+      /* Handle those keys that TranslateMessage won't generate a WM_CHAR for */
+      if (!NILP (keysym = mswindows_key_to_emacs_keysym(wParam, mods)))
 	mswindows_enqueue_keypress_event (hwnd, keysym, mods);
-      else	/* Normal keys & modifiers */
+      else
 	{
 	  int quit_ch = CONSOLE_QUIT_CHAR (XCONSOLE (mswindows_find_console (hwnd)));
 	  BYTE keymap_orig[256];
 	  MSG msg = { hwnd, message, wParam, lParam, GetMessageTime(), (GetMessagePos()) };
-
-	  /* GetKeyboardState() does not work as documented on Win95. We have
-	   * to loosely track Left and Right modifiers on behalf of the OS,
-	   * without screwing up Windows NT which tracks them properly. */
-	  if (wParam == VK_CONTROL)
-	    keymap [extendedp ? VK_RCONTROL : VK_LCONTROL] |= 0x80;
-	  else if (wParam == VK_MENU)
-	    keymap [extendedp ? VK_RMENU : VK_LMENU] |= 0x80;
-
 	  memcpy (keymap_orig, keymap, 256);
 
 	  /* Remove shift modifier from an ascii character */
 	  mods &= ~MOD_SHIFT;
 
-	  /* Clear control and alt modifiers unless AltGr is pressed */
+	  /* Clear control and alt modifiers out of the keymap */
 	  keymap [VK_RCONTROL] = 0;
 	  keymap [VK_LMENU] = 0;
 	  if (!has_AltGr || !(keymap [VK_LCONTROL] & 0x80) || !(keymap [VK_RMENU] & 0x80))
@@ -1693,7 +1608,7 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	    }
 	  SetKeyboardState (keymap);
 
-	  /* Maybe generate some WM_[SYS]CHARs in the queue */
+	  /* Have some WM_[SYS]CHARS in the queue */
 	  TranslateMessage (&msg);
 
 	  while (PeekMessage (&msg, hwnd, WM_CHAR, WM_CHAR, PM_REMOVE)
@@ -2108,23 +2023,6 @@ mswindows_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
       UNGCPRO;
       break;     
     }
-
-  case WM_MOUSEWHEEL:
-  {
-	  int keys = LOWORD (wParam);				/* Modifier key flags */
-	  int delta = (short) HIWORD (wParam);		/* Wheel rotation amount */
-      struct gcpro gcpro1, gcpro2;
-
-      if (mswindows_handle_mousewheel_event (mswindows_find_frame (hwnd), keys,  delta))
-	  {
-		  GCPRO2 (emacs_event, fobj);
-		  mswindows_pump_outstanding_events ();	/* Can GC */
-		  UNGCPRO;
-	  }
-	  else
-		  goto defproc;
-      break;     
-  }
 #endif
 
 #ifdef HAVE_MENUBARS
@@ -2330,102 +2228,68 @@ int mswindows_modifier_state (BYTE* keymap, int has_AltGr)
  * Translate a mswindows virtual key to a keysym.
  * Only returns non-Qnil for keys that don't generate WM_CHAR messages
  * or whose ASCII codes (like space) xemacs doesn't like.
+ * Virtual key values are defined in winresrc.h
+ * XXX I'm not sure that KEYSYM("name") is the best thing to use here.
  */
-Lisp_Object mswindows_key_to_emacs_keysym (int mswindows_key, int mods,
-					   int extendedp)
+Lisp_Object mswindows_key_to_emacs_keysym(int mswindows_key, int mods)
 {
-  if (extendedp)	/* Keys not present on a 82 key keyboard */
-    {
-      switch (mswindows_key)
-        {
-	case VK_CANCEL:		return KEYSYM ("pause");
-	case VK_RETURN:		return KEYSYM ("kp-enter");
-	case VK_PRIOR:		return KEYSYM ("prior");
-	case VK_NEXT:		return KEYSYM ("next");
-	case VK_END:		return KEYSYM ("end");
-	case VK_HOME:		return KEYSYM ("home");
-	case VK_LEFT:		return KEYSYM ("left");
-	case VK_UP:		return KEYSYM ("up");
-	case VK_RIGHT:		return KEYSYM ("right");
-	case VK_DOWN:		return KEYSYM ("down");
-	case VK_INSERT:		return KEYSYM ("insert");
-	case VK_DELETE:		return QKdelete;
-#if 0	/* FSF Emacs allows these to return configurable syms/mods */
-	case VK_LWIN		return KEYSYM ("");
-	case VK_RWIN		return KEYSYM ("");
+  switch (mswindows_key)
+  {
+  /* First the predefined ones */
+  case VK_BACK:		return QKbackspace;
+  case VK_TAB:		return QKtab;
+  case '\n':		return QKlinefeed;  /* No VK_LINEFEED in winresrc.h */
+  case VK_RETURN:	return QKreturn;
+  case VK_ESCAPE:	return QKescape;
+  case VK_SPACE:	return QKspace;
+  case VK_DELETE:	return QKdelete;
+
+  /* The rest */
+  case VK_CLEAR:	return KEYSYM ("clear");  /* Should do ^L ? */
+  case VK_PRIOR:	return KEYSYM ("prior");
+  case VK_NEXT:		return KEYSYM ("next");
+  case VK_END:		return KEYSYM ("end");
+  case VK_HOME:		return KEYSYM ("home");
+  case VK_LEFT:		return KEYSYM ("left");
+  case VK_UP:		return KEYSYM ("up");
+  case VK_RIGHT:	return KEYSYM ("right");
+  case VK_DOWN:		return KEYSYM ("down");
+  case VK_SELECT:	return KEYSYM ("select");
+  case VK_PRINT:	return KEYSYM ("print");
+  case VK_EXECUTE:	return KEYSYM ("execute");
+  case VK_SNAPSHOT:	return KEYSYM ("print");
+  case VK_INSERT:	return KEYSYM ("insert");
+  case VK_HELP:		return KEYSYM ("help");
+#if 0	/* XXX What are these supposed to do? */
+  case VK_LWIN		return KEYSYM ("");
+  case VK_RWIN		return KEYSYM ("");
 #endif
-	case VK_APPS:		return KEYSYM ("menu");
-	}
-    }
-  else
-    {
-      switch (mswindows_key)
-	{
-	case VK_BACK:		return QKbackspace;
-	case VK_TAB:		return QKtab;
-	case '\n':		return QKlinefeed;
-	case VK_CLEAR:		return KEYSYM ("clear");
-	case VK_RETURN:		return QKreturn;
-	case VK_PAUSE:		return KEYSYM ("pause");
-	case VK_ESCAPE:		return QKescape;
-	case VK_SPACE:		return QKspace;
-	case VK_PRIOR:		return KEYSYM ("kp-prior");
-	case VK_NEXT:		return KEYSYM ("kp-next");
-	case VK_END:		return KEYSYM ("kp-end");
-	case VK_HOME:		return KEYSYM ("kp-home");
-	case VK_LEFT:		return KEYSYM ("kp-left");
-	case VK_UP:		return KEYSYM ("kp-up");
-	case VK_RIGHT:		return KEYSYM ("kp-right");
-	case VK_DOWN:		return KEYSYM ("kp-down");
-	case VK_SELECT:		return KEYSYM ("select");
-	case VK_PRINT:		return KEYSYM ("print");
-	case VK_EXECUTE:	return KEYSYM ("execute");
-	case VK_SNAPSHOT:	return KEYSYM ("print");
-	case VK_INSERT:		return KEYSYM ("kp-insert");
-	case VK_DELETE:		return KEYSYM ("kp-delete");
-	case VK_HELP:		return KEYSYM ("help");
-	case VK_NUMPAD0:	return KEYSYM ("kp-0");
-	case VK_NUMPAD1:	return KEYSYM ("kp-1");
-	case VK_NUMPAD2:	return KEYSYM ("kp-2");
-	case VK_NUMPAD3:	return KEYSYM ("kp-3");
-	case VK_NUMPAD4:	return KEYSYM ("kp-4");
-	case VK_NUMPAD5:	return KEYSYM ("kp-5");
-	case VK_NUMPAD6:	return KEYSYM ("kp-6");
-	case VK_NUMPAD7:	return KEYSYM ("kp-7");
-	case VK_NUMPAD8:	return KEYSYM ("kp-8");
-	case VK_NUMPAD9:	return KEYSYM ("kp-9");
-	case VK_MULTIPLY:	return KEYSYM ("kp-multiply");
-	case VK_ADD:		return KEYSYM ("kp-add");
-	case VK_SEPARATOR:	return KEYSYM ("kp-separator");
-	case VK_SUBTRACT:	return KEYSYM ("kp-subtract");
-	case VK_DECIMAL:	return KEYSYM ("kp-decimal");
-	case VK_DIVIDE:		return KEYSYM ("kp-divide");
-	case VK_F1:		return KEYSYM ("f1");
-	case VK_F2:		return KEYSYM ("f2");
-	case VK_F3:		return KEYSYM ("f3");
-	case VK_F4:		return KEYSYM ("f4");
-	case VK_F5:		return KEYSYM ("f5");
-	case VK_F6:		return KEYSYM ("f6");
-	case VK_F7:		return KEYSYM ("f7");
-	case VK_F8:		return KEYSYM ("f8");
-	case VK_F9:		return KEYSYM ("f9");
-	case VK_F10:		return KEYSYM ("f10");
-	case VK_F11:		return KEYSYM ("f11");
-	case VK_F12:		return KEYSYM ("f12");
-	case VK_F13:		return KEYSYM ("f13");
-	case VK_F14:		return KEYSYM ("f14");
-	case VK_F15:		return KEYSYM ("f15");
-	case VK_F16:		return KEYSYM ("f16");
-	case VK_F17:		return KEYSYM ("f17");
-	case VK_F18:		return KEYSYM ("f18");
-	case VK_F19:		return KEYSYM ("f19");
-	case VK_F20:		return KEYSYM ("f20");
-	case VK_F21:		return KEYSYM ("f21");
-	case VK_F22:		return KEYSYM ("f22");
-	case VK_F23:		return KEYSYM ("f23");
-	case VK_F24:		return KEYSYM ("f24");
-	}
-    }
+  case VK_APPS:		return KEYSYM ("menu");
+  case VK_F1:		return KEYSYM ("f1");
+  case VK_F2:		return KEYSYM ("f2");
+  case VK_F3:		return KEYSYM ("f3");
+  case VK_F4:		return KEYSYM ("f4");
+  case VK_F5:		return KEYSYM ("f5");
+  case VK_F6:		return KEYSYM ("f6");
+  case VK_F7:		return KEYSYM ("f7");
+  case VK_F8:		return KEYSYM ("f8");
+  case VK_F9:		return KEYSYM ("f9");
+  case VK_F10:		return KEYSYM ("f10");
+  case VK_F11:		return KEYSYM ("f11");
+  case VK_F12:		return KEYSYM ("f12");
+  case VK_F13:		return KEYSYM ("f13");
+  case VK_F14:		return KEYSYM ("f14");
+  case VK_F15:		return KEYSYM ("f15");
+  case VK_F16:		return KEYSYM ("f16");
+  case VK_F17:		return KEYSYM ("f17");
+  case VK_F18:		return KEYSYM ("f18");
+  case VK_F19:		return KEYSYM ("f19");
+  case VK_F20:		return KEYSYM ("f20");
+  case VK_F21:		return KEYSYM ("f21");
+  case VK_F22:		return KEYSYM ("f22");
+  case VK_F23:		return KEYSYM ("f23");
+  case VK_F24:		return KEYSYM ("f24");
+  }
   return Qnil;
 }
 
@@ -2650,20 +2514,14 @@ emacs_mswindows_unselect_console (struct console *con)
 static void
 emacs_mswindows_quit_p (void)
 {
-  MSG msg;
-
   /* Quit cannot happen in modal loop: all program
      input is dedicated to Windows. */
   if (mswindows_in_modal_loop)
     return;
 
-  /* Drain windows queue. This sets up number of quit characters in the queue
-   * (and also processes wm focus change, move, resize, etc messages).
-   * We don't want to process WM_PAINT messages because this function can be
-   * called from almost anywhere and the windows' states may be changing. */
-  while (PeekMessage (&msg, NULL, 0, WM_PAINT-1, PM_REMOVE) ||
-	 PeekMessage (&msg, NULL, WM_PAINT+1, WM_USER-1, PM_REMOVE))
-      DispatchMessage (&msg);
+  /* Drain windows queue. This sets up number of quit
+     characters in in the queue */
+  mswindows_drain_windows_queue ();
 
   if (mswindows_quit_chars_count > 0)
     {
@@ -2920,7 +2778,9 @@ init_event_mswindows_late (void)
   windows_fd = open("/dev/windows", O_RDONLY | O_NONBLOCK, 0);
   assert (windows_fd>=0);
   FD_SET (windows_fd, &input_wait_mask);
-  FD_ZERO(&zero_mask);
+  /* for some reason I get blocks on the signal event pipe, which is
+     bad... 
+     signal_event_pipe_initialized = 0; */
 #endif
 
   event_stream = mswindows_event_stream;

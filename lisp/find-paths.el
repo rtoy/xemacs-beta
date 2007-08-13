@@ -62,7 +62,7 @@ from the search."
       (let ((directory (file-name-as-directory
 			(expand-file-name
 			 (car directories)))))
-	(if (paths-file-readable-directory-p directory)
+	(if (file-directory-p directory)
 	    (let ((raw-entries
 		   (if (equal 0 max-depth)
 		       '()
@@ -88,11 +88,6 @@ from the search."
       (setq directories (cdr directories)))
     path))
 
-(defun paths-file-readable-directory-p (filename)
-  "Check if filename is a readable directory."
-  (and (file-directory-p filename)
-       (file-readable-p filename)))
-
 (defun paths-find-recursive-load-path (directories &optional max-depth)
   "Construct a recursive load path underneath DIRECTORIES."
   (paths-find-recursive-path directories
@@ -102,13 +97,13 @@ from the search."
   "Check if DIRECTORY is a plausible installation root for XEmacs."
   (or
    ;; installed
-   (paths-file-readable-directory-p (paths-construct-path (list directory
-								"lib"
-								emacs-program-name)))
+   (file-directory-p (paths-construct-path (list directory
+						 "lib"
+						 emacs-program-name)))
    ;; in-place or windows-nt
    (and 
-    (paths-file-readable-directory-p (paths-construct-path (list directory "lisp")))
-    (paths-file-readable-directory-p (paths-construct-path (list directory "etc"))))))
+    (file-directory-p (paths-construct-path (list directory "lisp")))
+    (file-directory-p (paths-construct-path (list directory "etc"))))))
 
 (defun paths-chase-symlink (file-name)
   "Chase a symlink until the bitter end."
@@ -173,19 +168,19 @@ the directory."
   (let ((preferred-value (or (and envvar (getenv envvar))
 			     default)))
     (if (and preferred-value
-	     (paths-file-readable-directory-p preferred-value))
+	     (file-directory-p preferred-value))
 	(file-name-as-directory preferred-value)
       (catch 'gotcha
 	(while roots
 	  (let* ((root (car roots))
 		 ;; installed
 		 (path (paths-construct-emacs-directory root suffix base)))
-	    (if (paths-file-readable-directory-p path)
+	    (if (file-directory-p path)
 		(throw 'gotcha path)
 	      ;; in-place
 	      (if (null keep-suffix)
 		  (let ((path (paths-construct-emacs-directory root "" base)))
-		    (if (paths-file-readable-directory-p path)
+		    (if (file-directory-p path)
 			(throw 'gotcha path))))))
 	  (setq roots (cdr roots)))
 	nil))))
@@ -219,13 +214,13 @@ If ENFORCE-VERSION is non-nil, the directory must contain the XEmacs version."
    ;; from more to less specific
    (paths-find-version-directory roots
 				 (concat base system-configuration)
-				 envvar default)
+				 envvar)
    (paths-find-version-directory roots
 				 base
 				 envvar)
    (paths-find-version-directory roots
 				 system-configuration
-				 envvar)))
+				 envvar default)))
 
 (defun construct-emacs-version-name ()
   "Construct the raw XEmacs version number."
@@ -235,7 +230,7 @@ If ENFORCE-VERSION is non-nil, the directory must contain the XEmacs version."
   "Return the directories among DIRECTORIES."
   (let ((reverse-directories '()))
     (while directories
-      (if (paths-file-readable-directory-p (car directories))
+      (if (file-directory-p (car directories))
 	  (setq reverse-directories 
 		(cons (car directories)
 		      reverse-directories)))
@@ -263,7 +258,7 @@ If ENFORCE-VERSION is non-nil, the directory must contain the XEmacs version."
 
 (defun paths-decode-directory-path (string &optional drop-empties)
   "Split STRING at path separators into a directory list.
-Non-\"\" components are converted into directory form.
+Non-\"\" comonents are converted into directory form.
 If DROP-EMPTIES is non-NIL, \"\" components are dropped from the output.
 Otherwise, they are left alone."
   (let* ((components (split-path string))

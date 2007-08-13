@@ -45,20 +45,13 @@ echo " (using $EMACS)"
 
 export EMACS
 
-EMACS_DIR=`cd \`dirname $EMACS\` && pwd`;
-# Account for various system automounter configurations
-if test -d "/net"; then
-  if test -d "/tmp_mnt/net"; then tdir="/tmp_mnt/net"; else tdir="/tmp_mnt"; fi
-  EMACS_DIR=`echo "$EMACS_DIR" | \
-   sed -e "s|^${tdir}/|/net/|" -e "s|^/a/|/net/|" -e "s|^/amd/|/net/|"`
-fi
-REAL="$EMACS_DIR/`basename $EMACS`"
+REAL=`cd \`dirname $EMACS\` ; pwd | sed 's|^/tmp_mnt||'`/`basename $EMACS`
 
 echo "Rebuilding custom-loads with $REAL..."
 
 if [ "`uname -r | sed 's/\(.\).*/\1/'`" -gt 4 ]; then
   echon()
-  {
+  {    
     /bin/echo $* '\c'
   }
 else
@@ -69,7 +62,12 @@ else
 fi
 
 # Compute patterns to ignore when searching for files
-ignore_dirs=""
+# These directories don't have customizations, or are partially broken.
+# If some of the packages listed here are customized, don't forget to
+#  remove the directory!
+ignore_dirs="cl egg eos its language locale sunpro term \
+tooltalk iso electric \
+hm--html-menus gnats pcl-cvs vm"
 
 # Only use Mule XEmacs to build Mule-specific autoloads & custom-loads.
 echon "Checking for Mule support..."
@@ -77,7 +75,7 @@ lisp_prog='(princ (featurep (quote mule)))'
 mule_p="`$EMACS -batch -q -no-site-file -eval \"$lisp_prog\"`"
 if test "$mule_p" = nil ; then
 	echo No
-	ignore_dirs="$ignore_dirs mule"
+	ignore_dirs="$ignore_dirs mule leim skk"
 else
 	echo Yes
 fi

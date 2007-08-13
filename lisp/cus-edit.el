@@ -2288,8 +2288,7 @@ Match frames with dark backgrounds")
 	     (unless (widget-get widget :custom-form)
 		 (widget-put widget :custom-form custom-face-default-form))
 	     (let* ((symbol (widget-value widget))
-		    (spec (or (get symbol 'customized-face)
-			      (get symbol 'saved-face)
+		    (spec (or (get symbol 'saved-face)
 			      (get symbol 'face-defface-spec)
 			      ;; Attempt to construct it.
 			      (list (list t (face-custom-attributes-get
@@ -3017,7 +3016,7 @@ Leave point at the location of the call, or after the last expression."
 					   (not (get symbol 'force-value)))))))
 		    (when value
 		      (princ "\n '(")
-		      (prin1 symbol)
+		      (princ symbol)
 		      (princ " ")
 		      (prin1 (car value))
 		      (cond (requests
@@ -3058,7 +3057,7 @@ Leave point at the location of the call, or after the last expression."
 			       ;; Don't print default face here.
 			       value)
 		      (princ "\n '(")
-		      (prin1 symbol)
+		      (princ symbol)
 		      (princ " ")
 		      (prin1 value)
 		      (if (or (get symbol 'face-defface-spec)

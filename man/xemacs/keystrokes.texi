@@ -143,7 +143,7 @@ Pressing the @key{BREAK} key.
 Release the middle mouse button, while pressing @key{CTRL} and
 @key{META}. 
 @end table
-@cindex shift modifier
+@cindex shift modifer
   Note: As you define keystrokes, you can use the @kbd{shift} key only
 as a modifier with characters that do not have a second keysym on the
 same key, such as @kbd{backspace} and @kbd{tab}.  It is an error to
@@ -163,7 +163,7 @@ sequence must make up a @dfn{prefix key sequence}.
 schematic representation of a complete key sequence is as follows:
 
 @example
-  [(modifier .. modifier keysym) ... (modifier .. modifier keysym)]
+  [(modifier .. modifer keysym) ... (modifier .. modifier keysym)]
 @end example
 
   Here are some examples of complete key sequences:
@@ -440,7 +440,7 @@ and some previously-unassigned modifier bit.
 @section Representation of Characters
 
 This section briefly discusses how characters are represented in Emacs
-buffers.  @xref{Key Sequences}, for information on representing key
+buffers.  @xref{Key Sequences} for information on representing key
 sequences to create key bindings. 
 
   ASCII graphic characters in Emacs buffers are displayed with their
@@ -481,8 +481,8 @@ names}.  More information on this subject will appear in the @i{XEmacs
 Lisp Reference Manual}.
 
   The bindings between keys and functions are recorded in various tables
-called @dfn{keymaps}.  @xref{Key Bindings}, for more information on key
-sequences you can bind commands to.  @xref{Keymaps}, for information on
+called @dfn{keymaps}.  @xref{Key Bindings} for more information on key
+sequences you can bind commands to.  @xref{Keymaps} for information on
 creating keymaps.
 
   When we say  ``@kbd{C-n} moves down vertically one line'' we are

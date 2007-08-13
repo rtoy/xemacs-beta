@@ -377,7 +377,7 @@ Returns list of symbols and documentation found."
 
 (defun apropos-documentation-check-doc-file ()
   (let (type symbol (sepa 2) sepb beg end)
-    (insert ?\^_)
+    (princ ?\^_)
     (backward-char)
     (insert-file-contents (concat doc-directory internal-doc-file-name))
     (forward-char)

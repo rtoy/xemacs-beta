@@ -735,7 +735,7 @@ unix_create_process (struct Lisp_Process *p,
 
   /* Nothing below here GCs so our string pointers shouldn't move. */
   new_argv = alloca_array (char *, nargv + 2);
-  GET_C_STRING_FILENAME_DATA_ALLOCA (program, new_argv[0]);
+  new_argv[0] = (char *) XSTRING_DATA (program);
   for (i = 0; i < nargv; i++)
     {
       Lisp_Object tem = argv[i];
@@ -743,7 +743,7 @@ unix_create_process (struct Lisp_Process *p,
       new_argv[i + 1] = (char *) XSTRING_DATA (tem);
     }
   new_argv[i + 1] = 0;
-  GET_C_STRING_FILENAME_DATA_ALLOCA (cur_dir, current_dir);
+  current_dir = (char *) XSTRING_DATA (cur_dir);
 
 #ifdef HAVE_PTYS
   if (!NILP (Vprocess_connection_type))
@@ -817,15 +817,17 @@ unix_create_process (struct Lisp_Process *p,
 	int xforkin = forkin;
 	int xforkout = forkout;
 
+	if (!pty_flag)
+	  EMACS_SEPARATE_PROCESS_GROUP ();
+#ifdef HAVE_PTYS
+	else
+	  {
 	    /* Disconnect the current controlling terminal, pursuant to
 	       making the pty be the controlling terminal of the process.
 	       Also put us in our own process group. */
 
 	    disconnect_controlling_terminal ();
 
-#ifdef HAVE_PTYS
-	if (pty_flag)
-	  {
 	    /* Open the pty connection and make the pty's terminal
 	       our controlling terminal.
 
@@ -918,14 +920,12 @@ unix_create_process (struct Lisp_Process *p,
 	      EMACS_SET_TTY_PROCESS_GROUP (xforkin, &piddly);
 	    }
 
+# ifdef AIX
 	    /* On AIX, we've disabled SIGHUP above once we start a
 	       child on a pty.  Now reenable it in the child, so it
-	       will die when we want it to.
-	       JV: This needs to be done ALWAYS as we might have inherited
-	       a SIG_IGN handling from our parent (nohup) and we are in new
-	       process group.	       
-	    */
+	       will die when we want it to.  */
 	    signal (SIGHUP, SIG_DFL);
+# endif /* AIX */
 	  }
 #endif /* HAVE_PTYS */
 
@@ -952,9 +952,7 @@ unix_create_process (struct Lisp_Process *p,
 
   if (pid < 0)
     {
-      int save_errno = errno;
       close_descriptor_pair (forkin, forkout);
-      errno = save_errno;
       report_file_error ("Doing fork", Qnil);
     }
 
@@ -1153,14 +1151,6 @@ unix_send_process (Lisp_Object proc, struct lstream* lstream)
   volatile Lisp_Object vol_proc = proc;
   struct Lisp_Process *volatile p = XPROCESS (proc);
 
-  /* #### JV: layering violation?
-
-     This function knows too much about the relation between the encodingstream
-     (DATA_OUTSTREAM) and te actual output stream p->output_stream.
-
-     If encoding streams properly forwarded all calls, we could simply
-     use DATA_OUTSTREAM everywhere. */
-  
   if (!SETJMP (send_process_frame))
     {
       /* use a reasonable-sized buffer (somewhere around the size of the
@@ -1196,9 +1186,6 @@ unix_send_process (Lisp_Object proc, struct lstream* lstream)
 		 that may allow the program
 		 to finish doing output and read more.  */
 	      Faccept_process_output (Qnil, make_int (1), Qnil);
-	      /* It could have *really* finished, deleting the process */
-	      if (NILP(p->pipe_outstream))
-		return;
 	      old_sigpipe =
 		(SIGTYPE (*) (int)) signal (SIGPIPE, send_process_trap);
 	      Lstream_flush (XLSTREAM (p->pipe_outstream));
@@ -1209,10 +1196,6 @@ unix_send_process (Lisp_Object proc, struct lstream* lstream)
   else
     { /* We got here from a longjmp() from the SIGPIPE handler */
       signal (SIGPIPE, old_sigpipe);
-      /* Close the file lstream so we don't attempt to write to it further */
-      /* #### There is controversy over whether this might cause fd leakage */
-      /*      my tests say no. -slb */
-      XLSTREAM (p->pipe_outstream)->flags &= ~LSTREAM_FL_IS_OPEN;
       p->status_symbol = Qexit;
       p->exit_code = 256; /* #### SIGPIPE ??? */
       p->core_dumped = 0;
@@ -1287,17 +1270,7 @@ unix_deactivate_process (struct Lisp_Process *p)
   return usid;
 }
 
-/* If the subtty field of the process data is not filled in, do so now. */
-static void
-try_to_initialize_subtty (struct unix_process_data *upd)
-{
-  if (upd->pty_flag
-      && (upd->subtty == -1 || ! isatty (upd->subtty))
-      && STRINGP (upd->tty_name))
-    upd->subtty = open ((char *) XSTRING_DATA (upd->tty_name), O_RDWR, 0);
-}
-
-/* Send signal number SIGNO to PROCESS.
+/* send a signal number SIGNO to PROCESS.
    CURRENT_GROUP means send to the process group that currently owns
    the terminal being used to communicate with PROCESS.
    This is used for various commands in shell mode.
@@ -1306,18 +1279,70 @@ try_to_initialize_subtty (struct unix_process_data *upd)
 
    If we can, we try to signal PROCESS by sending control characters
    down the pty.  This allows us to signal inferiors who have changed
-   their uid, for which killpg would return an EPERM error,
-   or processes running on other machines via remote login.
+   their uid, for which killpg would return an EPERM error.
 
-   The method signals an error if the given SIGNO is not valid. */
+   The method signals an error if the given SIGNO is not valid
+*/
 
 static void
 unix_kill_child_process (Lisp_Object proc, int signo,
 			 int current_group, int nomsg)
 {
-  pid_t pgid = -1;
+  int gid;
+  int no_pgrp = 0;
+  int kill_retval;
   struct Lisp_Process *p = XPROCESS (proc);
-  struct unix_process_data *d = UNIX_DATA (p);
+
+  if (!UNIX_DATA(p)->pty_flag)
+    current_group = 0;
+
+  /* If we are using pgrps, get a pgrp number and make it negative.  */
+  if (current_group)
+    {
+#ifdef SIGNALS_VIA_CHARACTERS
+      /* If possible, send signals to the entire pgrp
+	 by sending an input character to it.  */
+      {
+        char sigchar = process_signal_char(UNIX_DATA(p)->subtty, signo);
+        if (sigchar) {
+          send_process (proc, Qnil, (Bufbyte *) &sigchar, 0, 1);
+          return;
+        }
+      }
+#endif /* ! defined (SIGNALS_VIA_CHARACTERS) */
+
+#ifdef TIOCGPGRP
+      /* Get the pgrp using the tty itself, if we have that.
+	 Otherwise, use the pty to get the pgrp.
+	 On pfa systems, saka@pfu.fujitsu.co.JP writes:
+	 "TIOCGPGRP symbol defined in sys/ioctl.h at E50.
+	 But, TIOCGPGRP does not work on E50 ;-P works fine on E60"
+	 His patch indicates that if TIOCGPGRP returns an error, then
+	 we should just assume that p->pid is also the process group id.  */
+      {
+	int err;
+
+        err = ioctl ( (UNIX_DATA(p)->subtty != -1
+		       ? UNIX_DATA(p)->subtty
+		       : UNIX_DATA(p)->infd), TIOCGPGRP, &gid);
+
+#ifdef pfa
+	if (err == -1)
+	  gid = - XINT (p->pid);
+#endif /* ! defined (pfa) */
+      }
+      if (gid == -1)
+	no_pgrp = 1;
+      else
+	gid = - gid;
+#else /* ! defined (TIOCGPGRP ) */
+      /* Can't select pgrps on this system, so we know that
+	 the child itself heads the pgrp.  */
+      gid = - XINT (p->pid);
+#endif /* ! defined (TIOCGPGRP ) */
+    }
+  else
+    gid = - XINT (p->pid);
 
   switch (signo)
     {
@@ -1334,100 +1359,38 @@ unix_kill_child_process (Lisp_Object proc, int signo,
     case SIGINT:
     case SIGQUIT:
     case SIGKILL:
-      flush_pending_output (d->infd);
+      flush_pending_output (UNIX_DATA(p)->infd);
       break;
     }
 
-  if (! d->pty_flag)
-    current_group = 0;
-
-  /* If current_group is true, we want to send a signal to the
-     foreground process group of the terminal our child process is
-     running on.  You would think that would be easy.
-
-     The BSD people invented the TIOCPGRP ioctl to get the foreground
-     process group of a tty.  That, combined with killpg, gives us
-     what we want.
-
-     However, the POSIX standards people, in their infinite wisdom,
-     have seen fit to only allow this for processes which have the
-     terminal as controlling terminal, which doesn't apply to us.
-
-     Sooo..., we have to do something non-standard.  The ioctls
-     TIOCSIGNAL, TIOCSIG, and TIOCSIGSEND send the signal directly on
-     many systems.  POSIX tcgetpgrp(), since it is *documented* as not
-     doing what we want, is actually less likely to work than the BSD
-     ioctl TIOCGPGRP it is supposed to obsolete.  Sometimes we have to
-     use TIOCGPGRP on the master end, sometimes the slave end
-     (probably an AIX bug).  So we better get a fd for the slave if we
-     haven't got it yet.
-
-     Anal operating systems like SGI Irix and Compaq Tru64 adhere
-     strictly to the letter of the law, so our hack doesn't work.
-     The following fragment from an Irix header file is suggestive:
-
-     #ifdef __notdef__
-     // this is not currently supported
-     #define TIOCSIGNAL      (tIOC|31)       // pty: send signal to slave
-     #endif
-
-     On those systems where none of our tricks work, we just fall back
-     to the non-current_group behavior and kill the process group of
-     the child.
-  */
-  if (current_group)
+  /* If we don't have process groups, send the signal to the immediate
+     subprocess.  That isn't really right, but it's better than any
+     obvious alternative.  */
+  if (no_pgrp)
     {
-      try_to_initialize_subtty (d);
-
-#ifdef SIGNALS_VIA_CHARACTERS
-      /* If possible, send signals to the entire pgrp
-	 by sending an input character to it.  */
-    {
-        char sigchar = process_signal_char (d->subtty, signo);
-        if (sigchar)
-	{
-	    send_process (proc, Qnil, (Bufbyte *) &sigchar, 0, 1);
-	    return;
-	}
+      kill_retval = kill (XINT (p->pid), signo) ? errno : 0;
     }
-#endif /* SIGNALS_VIA_CHARACTERS */
-
-#ifdef TIOCGPGRP
-      if (pgid == -1)
-	ioctl (d->infd, TIOCGPGRP, &pgid); /* BSD */
-      if (pgid == -1 && d->subtty != -1)
-	ioctl (d->subtty, TIOCGPGRP, &pgid); /* Only this works on AIX! */
-#endif /* TIOCGPGRP */
-
-      if (pgid == -1)
+  else
+    {
+      /* gid may be a pid, or minus a pgrp's number */
+#if defined (TIOCSIGNAL) || defined (TIOCSIGSEND)
+      if (current_group)
 	{
-	  /* Many systems provide an ioctl to send a signal directly */
-#ifdef TIOCSIGNAL /* Solaris, HP-UX */
-	  if (ioctl (d->infd, TIOCSIGNAL, signo) != -1)
-	    return;
-#endif /* TIOCSIGNAL */
-
-#ifdef TIOCSIG /* BSD */
-	  if (ioctl (d->infd, TIOCSIG, signo) != -1)
-	    return;
-#endif /* TIOCSIG */
+#ifdef TIOCSIGNAL
+	  kill_retval = ioctl (UNIX_DATA(p)->infd, TIOCSIGNAL, signo);
+#else /* ! defined (TIOCSIGNAL) */
+	  kill_retval = ioctl (UNIX_DATA(p)->infd, TIOCSIGSEND, signo);
+#endif /* ! defined (TIOCSIGNAL) */
 	}
-    } /* current_group */
+      else
+	kill_retval = kill (- XINT (p->pid), signo) ? errno : 0;
+#else /* ! (defined (TIOCSIGNAL) || defined (TIOCSIGSEND)) */
+      kill_retval = EMACS_KILLPG (-gid, signo) ? errno : 0;
+#endif /* ! (defined (TIOCSIGNAL) || defined (TIOCSIGSEND)) */
+    }
 
-  if (pgid == -1)
-    /* Either current_group is 0, or we failed to get the foreground
-       process group using the trickery above.  So we fall back to
-       sending the signal to the process group of our child process.
-       Since this is often a shell that ignores signals like SIGINT,
-       the shell's subprocess is killed, which is the desired effect.
-       The process group of p->pid is always p->pid, since it was
-       created as a process group leader. */
-    pgid = XINT (p->pid);
-
-  /* Finally send the signal. */
-  if (EMACS_KILLPG (pgid, signo) == -1)
-    error ("kill (%ld, %ld) failed: %s",
-	   (long) pgid, (long) signo, strerror (errno));
+  if (kill_retval < 0 && errno == EINVAL)
+    error ("Signal number %d is invalid for this system", signo);
 }
 
 /*

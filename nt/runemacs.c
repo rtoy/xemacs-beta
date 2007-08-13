@@ -41,7 +41,6 @@ WinMain (HINSTANCE hSelf, HINSTANCE hPrev, LPSTR cmdline, int nShow)
   int wait_for_child = FALSE;
   DWORD ret_code = 0;
   char *new_cmdline;
-  char *basename;
   char *p;
   char modname[MAX_PATH];
 
@@ -49,10 +48,6 @@ WinMain (HINSTANCE hSelf, HINSTANCE hPrev, LPSTR cmdline, int nShow)
     goto error;
   if ((p = strrchr (modname, '\\')) == NULL)
     goto error;
-
-  basename = alloca(strlen(p) + 1);
-  strcpy (basename, p + 1);
-  
   *p = 0;
 
   new_cmdline = alloca (MAX_PATH + strlen (cmdline) + 1);
@@ -95,51 +90,36 @@ WinMain (HINSTANCE hSelf, HINSTANCE hPrev, LPSTR cmdline, int nShow)
     char sym_link_name[MAX_PATH+1], real_name[MAX_PATH+1];
     
     strcpy(sym_link_name, new_cmdline);
-    if (strcmp(basename, "rungnuclient.exe") == 0)
-      strcat(new_cmdline, "\\gnuclient.exe ");
-    else if (strcmp(basename, "runemacs.exe") == 0)
+    strcat(sym_link_name, "\\xemacs");
+    if (lstat(sym_link_name, &stbuf) == 0)
       {
-        strcat(sym_link_name, "\\xemacs");
-          
-        if (lstat(sym_link_name, &stbuf) == 0)
+        if ((stbuf.st_mode & S_IFLNK) == S_IFLNK)
           {
-            if ((stbuf.st_mode & S_IFLNK) == S_IFLNK)
+	    if (readlink(sym_link_name, real_name, sizeof(real_name)) == -1)
               {
-                if (readlink(sym_link_name, real_name, sizeof(real_name)) == -1)
-                  {
-                    MessageBox (NULL, "Error reading symbolic link for xemacs",
-                                "Error", MB_ICONSTOP);
-                    return 1;
-                  }
-                else
-                  {
-                    strcat(new_cmdline, "\\");
-		    /* #### Horrible kludge to get round 1.1.6 bug in readlink. */
-                    p = strrchr (real_name, '.');
-                    if (p[1] == 'e' || p[1] == 'E'
-			&& p[2] == 'x' || p[2] == 'X'
-			&& p[3] == 'e' || p[3] == 'E')
-		      p[4] = 0;
-                    strcat(new_cmdline, real_name);
-                    strcat(new_cmdline, " ");
-                  }
+                MessageBox (NULL, "Error reading symbolic link for xemacs",
+                            "Error", MB_ICONSTOP);
+                return 1;
               }
             else
-              strcat(new_cmdline, "\\xemacs ");
+              {
+		strcat(new_cmdline, "\\");
+                strcat(new_cmdline, real_name);
+		strcat(new_cmdline, " ");
+	      }
           }
         else
-          {
-            MessageBox (NULL, "can't locate XEmacs executable",
-                        "Error", MB_ICONSTOP);
-            return 1;
-          }
+          strcat(new_cmdline, "\\xemacs ");
+      }
+    else
+      {
+        MessageBox (NULL, "can't locate XEmacs executable",
+                    "Error", MB_ICONSTOP);
+	return 1;
       }
   }
 #else					
-  if (strcmp(basename, "rungnuclient.exe") == 0)
-    strcat (new_cmdline, "\\gnuclient.exe ");
-  else 
-    strcat (new_cmdline, "\\xemacs.exe ");
+  strcat (new_cmdline, "\\xemacs.exe ");
 #endif
 #endif
 
@@ -186,6 +166,6 @@ WinMain (HINSTANCE hSelf, HINSTANCE hPrev, LPSTR cmdline, int nShow)
   return (int) ret_code;
 
 error:
-  MessageBox (NULL, "Could not start XEmacs or gnuclient.", "Error", MB_ICONSTOP);
+  MessageBox (NULL, "Could not start XEmacs.", "Error", MB_ICONSTOP);
   return 1;
 }

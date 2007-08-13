@@ -104,9 +104,6 @@ call_process_cleanup (Lisp_Object fdpid)
 {
   int fd = XINT (Fcar (fdpid));
   int pid = XINT (Fcdr (fdpid));
-#ifdef WINDOWSNT
-  HANDLE pHandle;
-#endif
 
   if (!call_process_exited &&
       EMACS_KILLPG (pid, SIGINT) == 0)
@@ -117,17 +114,7 @@ call_process_cleanup (Lisp_Object fdpid)
     /* #### "c-G" -- need non-consing Single-key-description */
     message ("Waiting for process to die...(type C-g again to kill it instantly)");
 
-#ifdef WINDOWSNT
-    pHandle = OpenProcess(PROCESS_ALL_ACCESS, 0, pid);
-    if (pHandle == NULL)
-      {
-	warn_when_safe (Qprocess, Qerror,
-			"OpenProcess returns NULL process handle.");
-      }
-    wait_for_termination (pHandle);
-#else
     wait_for_termination (pid);
-#endif
 
     /* "Discard" the unwind protect.  */
     XCAR (fdpid) = Qnil;
@@ -183,9 +170,6 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
   Lisp_Object infile, buffer, current_dir, display, path;
   int fd[2];
   int filefd;
-#ifdef WINDOWSNT
-  HANDLE pHandle;
-#endif
   int pid;
   char buf[16384];
   char *bufptr = buf;
@@ -224,8 +208,8 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
        buffer's current directory.  We can't just have the child check
        for an error when it does the chdir, since it's in a vfork.  */
 
-    current_dir = current_buffer->directory;
     NGCPRO2 (current_dir, path);   /* Caller gcprotects args[] */
+    current_dir = current_buffer->directory;
     current_dir = Funhandled_file_name_directory (current_dir);
     current_dir = expand_and_dir_to_file (current_dir, Qnil);
 #if 0
@@ -303,8 +287,8 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 	CHECK_STRING (args[i]);
 	new_argv[i - 3] = (char *) XSTRING_DATA (args[i]);
       }
+    new_argv[nargs - 3] = 0;
   }
-  new_argv[max(nargs - 3,1)] = 0;
 
   if (NILP (path))
     report_file_error ("Searching for program", Fcons (args[0], Qnil));
@@ -372,12 +356,10 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 
     if (fd_error < 0)
       {
-	int save_errno = errno;
 	close (filefd);
 	close (fd[0]);
 	if (fd1 >= 0)
 	  close (fd1);
-	errno = save_errno;
 	report_file_error ("Cannot open", Fcons(error_file, Qnil));
       }
 
@@ -385,19 +367,6 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 #ifdef WINDOWSNT
     pid = child_setup (filefd, fd1, fd_error, new_argv,
                        (char *) XSTRING_DATA (current_dir));
-    if (!INTP (buffer))
-      {
-	/* OpenProcess() as soon after child_setup as possible.  It's too
-	   late once the process terminated. */
-	pHandle = OpenProcess(PROCESS_ALL_ACCESS, 0, pid);
-	if (pHandle == NULL)
-	  {
-	    stderr_out ("Fcall_process_internal: pHandle == NULL, GetLastError () = %d, (int)pHandle = %d\n", GetLastError (), (int)pHandle);
-	  }
-      }
-    /* Close STDERR into the parent process.  We no longer need it. */
-    if (fd_error >= 0)
-      close (fd_error);
 #else  /* not WINDOWSNT */
     pid = fork ();
 
@@ -437,16 +406,12 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
   if (!NILP (fork_error))
     signal_error (Qfile_error, fork_error);
 
-#ifndef WINDOWSNT
   if (pid < 0)
     {
-      int save_errno = errno;
       if (fd[0] >= 0)
 	close (fd[0]);
-      errno = save_errno;
       report_file_error ("Doing fork", Qnil);
     }
-#endif
 
   if (INTP (buffer))
     {
@@ -554,11 +519,7 @@ If you quit, the process is killed with SIGINT, or SIGKILL if you
 
     QUIT;
     /* Wait for it to terminate, unless it already has.  */
-#ifdef WINDOWSNT
-    wait_for_termination (pHandle);
-#else
     wait_for_termination (pid);
-#endif
 
     /* Don't kill any children that the subprocess may have left behind
        when exiting.  */
@@ -615,28 +576,11 @@ child_setup (int in, int out, int err, char **new_argv,
     nice (- emacs_priority);
 #endif
 
-  /* Under Windows, we are not in a child process at all, so we should
-     not close handles inherited from the parent -- we are the parent
-     and doing so will screw up all manner of things!  Similarly, most
-     of the rest of the cleanup done in this function is not done
-     under Windows.
-
-     #### This entire child_setup() function is an utter and complete
-     piece of shit.  I would rewrite it, at the very least splitting
-     out the Windows and non-Windows stuff into two completely
-     different functions; but instead I'm trying to make it go away
-     entirely, using the Lisp definition in process.el.  What's left
-     is to fix up the routines in event-msw.c (and in event-Xt.c and
-     event-tty.c) to allow for stream devices to be handled correctly.
-     There isn't much to do, in fact, and I'll fix it shortly.  That
-     way, the Lisp definition can be used non-interactively too. */
 #if !defined (NO_SUBPROCESSES) && !defined (WINDOWSNT)
   /* Close Emacs's descriptors that this process should not have.  */
   close_process_descs ();
 #endif /* not NO_SUBPROCESSES */
-#ifndef WINDOWSNT
   close_load_descs ();
-#endif
 
   /* Note that use of alloca is always safe here.  It's obvious for systems
      that do not have true vfork or that have true (stack) alloca.
@@ -800,7 +744,7 @@ child_setup (int in, int out, int err, char **new_argv,
   environ = env;
   execvp (new_argv[0], new_argv);
 
-  stdout_out ("Can't exec program %s\n", new_argv[0]);
+  stdout_out ("Cant't exec program %s\n", new_argv[0]);
   _exit (1);
 #endif /* not WINDOWSNT */
 }
