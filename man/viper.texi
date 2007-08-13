@@ -2968,7 +2968,8 @@ sawdey@@lcse.umn.edu (Aaron Sawdey),
 jobrien@@hchp.org (John O'Brien),
 mrb@@Eng.Sun.COM (Martin Buchholz),
 kwzh@@gnu.ai.mit.edu (Karl Heuer),
-sudish@@MindSpring.COM (Sudish Joseph)
+sudish@@MindSpring.COM (Sudish Joseph),
+paulk@@summit.esg.apertus.com (Paul Keusemann)
 @end example
 
 

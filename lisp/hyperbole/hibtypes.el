@@ -6,10 +6,17 @@
 ;; KEYWORDS:     extensions, hypermedia
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Brown U.
+;; ORG:          InfoDock Associates
+;;
+;; This file is part of Hyperbole.
+;; Available for use and distribution under the same terms as GNU Emacs.
+;;
+;; Copyright (C) 1991-1997  Free Software Foundation, Inc.
+;; Developed with support from Motorola Inc.
 ;;
 ;; ORIG-DATE:    19-Sep-91 at 20:45:31
-;; LAST-MOD:      3-Nov-95 at 22:49:12 by Bob Weiner
+;; LAST-MOD:     20-Feb-97 at 11:17:04 by Bob Weiner
+
 ;;; ************************************************************************
 ;;; Other required Elisp libraries
 ;;; ************************************************************************
@@ -21,6 +28,39 @@
 ;;; ************************************************************************
   
 (run-hooks 'hibtypes:begin-load-hook)
+
+;;; ========================================================================
+;;; Use func-menu.el to jump to a function referred to in the same file in 
+;;; which it is defined.  Function references across files are handled
+;;; separately be clauses within the `hkey-alist' variable.
+;;; ========================================================================
+
+(defib function-in-buffer ()
+  "Return function name defined within this buffer that point is within or after, else nil.
+This triggers only when the func-menu.el package has been loaded and the
+current major mode is one handled by func-menu."
+  (if (and (boundp 'fume-function-name-regexp-alist)
+	   (assq major-mode fume-function-name-regexp-alist)
+	   (not (eq major-mode 'dired-mode))
+	   ;; Not sure if this is defined in early versions of Emacs.
+	   (fboundp 'skip-syntax-backward))
+      (save-excursion
+	(skip-syntax-backward "w_")
+	(if (looking-at "\\(\\sw\\|\\s_\\)+")
+	    (let ((function-name (buffer-substring (point) (match-end 0)))
+		  (start (point))
+		  (end (match-end 0))
+		  function-pos)
+	      (if fume-funclist
+		  nil
+		(fume-set-defaults)
+		(let ((fume-scanning-message nil))
+		  (fume-rescan-buffer)))
+	      (setq function-pos (cdr-safe (assoc function-name fume-funclist)))
+	      (if function-pos
+		  (progn (ibut:label-set function-name start end)
+			 (hact 'function-in-buffer function-name
+			       function-pos))))))))
 
 ;;; ========================================================================
 ;;; Follows URLs by invoking a browser.
@@ -41,6 +81,8 @@ constituent character, and must not be in buffers whose names begin with a
        buffer-file-name
        (let ((chr (aref (buffer-name) 0)))
 	 (not (or (= chr ? ) (= chr ?*))))
+       ;; Force [PPG-sw-process-id], if defined, to take precedence.
+       (not (htype:names 'ibtypes 'ppg-sw-process))
        (let* ((ref-and-pos (hbut:label-p t "[" "]" t))
 	      (ref (car ref-and-pos)))
 	 (and ref (= ?w (char-syntax (aref ref 0)))
@@ -196,11 +238,11 @@ Useful when sending mail to a Hyperbole mail list.
 See also the documentation for `actypes::hyp-config'."
   (if (memq major-mode (list hmail:composer hnews:composer))
       (let ((addr (find-tag-default)))
-	(cond ((set:member addr (list "hyperbole" "hyperbole@hub.ucsb.edu"))
+	(cond ((set:member addr (list "hyperbole" "hyperbole@infodock.com"))
 	       (hact 'hyp-config))
 	      ((set:member addr
 			   (list "hyperbole-request"
-				 "hyperbole-request@hub.ucsb.edu"))
+				 "hyperbole-request@infodock.com"))
 	       (hact 'hyp-request))
 	      ))))
 
@@ -252,15 +294,28 @@ See also the documentation for `actypes::hyp-config'."
 (defib pathname ()
   "Makes a delimited, valid pathname display the path entry.
 Also works for delimited and non-delimited ange-ftp and efs pathnames.
+Emacs Lisp library files (filenames that end in .el and .elc) are looked up
+using the load-path directory list.
+
 See `hpath:at-p' function documentation for possible delimiters.
 See `hpath:suffixes' variable documentation for suffixes that are added to or
 removed from pathname when searching for a valid match.
-See `hpath:find' function documentation and `hpath:display-alist' and
-`hpath:find-alist' variable documentation for special file display options."
+See `hpath:find' function documentation for special file display options."
      (let ((path (hpath:at-p)))
-       (if path
-	   (progn (ibut:label-set path)
-		  (hact 'link-to-file path)))))
+       (cond (path
+	      (ibut:label-set path)
+	      (hact 'link-to-file path))
+	     ((and (fboundp 'locate-file)
+		   (setq path (or (hargs:delimited "\"" "\"") 
+				  ;; Filenames in Info docs
+				  (hargs:delimited "\`" "\'")
+				  ;; Filenames in TexInfo docs
+				  (hargs:delimited "@file{" "}")))
+		   (string-match ".\\.el?c\\'" path))
+	      (ibut:label-set path)
+	      (setq path (locate-file path load-path))
+	      (if path (hact 'link-to-file path))))))
+
 
 ;;; ========================================================================
 ;;; Jumps to source line associated with debugger stack frame or breakpoint

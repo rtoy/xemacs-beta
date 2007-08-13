@@ -8,15 +8,15 @@
 ;; KEYWORDS:     hypermedia
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Motorola, Inc., PWDG
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:     6-Oct-92 at 11:52:51
-;; LAST-MOD:      3-Nov-95 at 23:14:52 by Bob Weiner
+;; LAST-MOD:     19-Feb-97 at 10:57:44 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
 ;;
-;; Copyright (C) 1992-1995, Free Software Foundation, Inc.
+;; Copyright (C) 1992-1996, Free Software Foundation, Inc.
 ;; Developed with support from Motorola Inc.
 ;;
 ;; DESCRIPTION:  
@@ -314,15 +314,16 @@ nothing if either variable is nil."
 ;;; Hyperbole system.
 
 ;; Action type definitions.
-(autoload 'defact           "hsite"
+(autoload 'defact            "hsite"
   "Creates an action TYPE (an unquoted symbol) with PARAMS, described by DOC."
   nil 'macro)
 ;; Implicit button type definitions.
-(autoload 'defib            "hsite"
+(autoload 'defib             "hsite"
   "Creates implicit button TYPE (unquoted sym) with PARAMS, described by DOC."
   nil 'macro)
 
 (autoload 'ebut:map          "hsite"      "Map over Hyperbole buffer buttons." nil)
+(autoload 'hbut:key-src      "hsite"      "Called by {e} command in rolo match buffer.")
 (autoload 'hui:ebut-rename   "hsite"      "Rename a Hyperbole button."     t)
 (autoload 'hyperbole         "hsite"      "Hyperbole info manager menus."  t)
 
@@ -354,12 +355,15 @@ Returns non-nil iff associated help documentation is found."               t)
 	  "Make PATH absolute from optional DEFAULT-DIRS." nil)
 (autoload 'hpath:find        "hsite"
 	  "Edit file FILENAME, possibly using a special command." t)
+(autoload 'hpath:find-other-frame "hsite"
+	  "Edit file FILENAME in other frame, possibly using a special command." t)
 (autoload 'hpath:find-other-window "hsite"
 	  "Edit file FILENAME in other window, possibly using a special command." t)
 
 ;;; Hyperbole entry points that trigger loading part of the system.
 
 (autoload 'hypb:functionp    "hypb"       "Return t iff OBJ is a function." nil)
+(autoload 'hypb:display-file-with-logo "hypb" "Display FILE with IDA logo." nil)
 
 ;;; Hyperbole msg reader autoloads.
 (autoload 'Rmail-init "hrmail" "Initializes Hyperbole Rmail support." t)
@@ -426,11 +430,10 @@ Its displayable part begins at optional MSG-START and ends at or before MSG-END.
 (autoload 'smart-lisp-mode-p "hmouse-tag"
 	  "Jumps to Lisp identifier definitions.")
 (autoload 'smart-c++ "hmouse-tag" "Jumps to C++ identifier definitions.")
-;; Does nothing unless OO-Browser C++ support has been loaded.
-(autoload 'smart-c++-oobr "hmouse-tag" "Jumps to C++ identifier definitions.")
+(autoload 'smart-fortran-at-tag-p "hmouse-tag" "Jumps to Fortran identifier definitions.")
+(autoload 'smart-java "hmouse-tag" "Jumps to Java identifier definitions.")
+(autoload 'smart-java-at-tag-p "hmouse-tag" "Jumps to Java identifier definitions.")
 (autoload 'smart-objc "hmouse-tag" "Jumps to Objective-C identifier definitions.")
-;; Does nothing unless OO-Browser Objective-C support has been loaded.
-(autoload 'smart-objc-oobr "hmouse-tag" "Jumps to Objective-C identifier definitions.")
 (autoload 'smart-tags-file "hmouse-tag" "Determines nearest etags file.")
 (autoload 'smart-tags-file-path "hmouse-tag" "Expands a filename from TAGS file.")
 
@@ -500,5 +503,9 @@ Its displayable part begins at optional MSG-START and ends at or before MSG-END.
 		   (fset (intern (concat "frame" func-name))
 			 (intern-soft (concat "screen" func-name))))))
    '("-width" "-height")))
+
+;;; ************************************************************************
+;;; Register Hyperbole Package
+;;; ************************************************************************
 
 (provide 'hyperbole)

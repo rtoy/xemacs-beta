@@ -6,12 +6,12 @@
 ;; KEYWORDS:     c, oop, tools
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Motorola Inc.
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    01-Aug-95
-;; LAST-MOD:      4-Oct-95 at 13:31:43 by Bob Weiner
+;; LAST-MOD:     20-Feb-97 at 07:33:18 by Bob Weiner
 ;;
-;; Copyright (C) 1995  Free Software Foundation, Inc.
+;; Copyright (C) 1995, 1996, 1997  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.
@@ -68,11 +68,6 @@ non-nil suppresses this action."
     (if no-kill
 	(set-buffer no-kill)
       (funcall br-view-file-function filename))
-    ;; Don't bother saving anything for this temporary buffer
-    (buffer-disable-undo (current-buffer))
-    (setq buffer-auto-save-file-name nil)
-    ;; Make life simpler
-    (br-lang-mode)
     ;; Static initializers confuse the parser and don't define anything
     ;; that we need, so remove them.
     (java-strip-static-code)
@@ -162,8 +157,8 @@ non-nil suppresses this action."
 	(hash-add words java-package-name java-package-htable))))
 
 (defun java-normalize-class-name (name)
-  "Convert class NAME to make it globally unique using current package."
-  ;; Currently incomplete.  THe defined class has a package name, but
+  "Normalize class NAME to include the package name that defines it."
+  ;; Currently incomplete.  The defined class has a package name, but
   ;; the parents do not.  How do we match the parents to the correct
   ;; class if there are multiple matches?
   (or (car (java-split-identifier name))
@@ -289,7 +284,7 @@ Presumes no \"/*\" strings are nested within multi-line comments."
 ;;; ************************************************************************
 
 (defconst java-class-modifier-keyword
-  "\\(public\\|protected\\|final\\|abstract\\|[ \t\n\^M]+\\)*")
+  "\\(public\\|final\\|abstract\\|[ \t\n\^M]+\\)*")
 
 (defconst java-class-name-before
   (concat "^[ \t]*" java-class-modifier-keyword java-class-keyword)

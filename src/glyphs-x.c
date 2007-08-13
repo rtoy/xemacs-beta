@@ -2520,7 +2520,7 @@ extract_xpm_color_names (XpmAttributes *xpmattrs, Lisp_Object device,
       else
         {
           assert (COLOR_SPECIFIERP (value));
-          value = Fspecifier_instance (value, device, Qnil, Qnil);
+          value = Fspecifier_instance (value, Qnil, Qnil, Qnil);
         }
       if (NILP (value))
         continue;

@@ -3,15 +3,15 @@
 ;; FILE:         br-java-ft.el
 ;; SUMMARY:      Java OO-Browser class and member functions.
 ;; USAGE:        GNU Emacs Lisp Library
-;; KEYWORDS:     java, oop, tools
+;; KEYWORDS:     c, oop, tools
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Motorola Inc.
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    01-Aug-95
-;; LAST-MOD:      4-Oct-95 at 13:41:34 by Bob Weiner
+;; LAST-MOD:     13-Nov-96 at 00:08:46 by Bob Weiner
 ;;
-;; Copyright (C) 1995  Free Software Foundation, Inc.
+;; Copyright (C) 1995, 1996  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.
@@ -29,25 +29,13 @@
 ;;; Public variables
 ;;; ************************************************************************
 
-(defvar java-cpp-include-dirs '("/usr/include/")
-  "*Ordered list of include directories by default searched by C preprocessor.
-Each directory must end with a directory separator.  See also
-'java-include-dirs'.")
-
-(defvar java-include-dirs nil
-  "*Ordered list of directories to search for java include files.
-Each directory must end with a directory separator.  Directories normally
-searched by the java pre-processor should be set instead in
-'java-cpp-include-dirs'.")
-
 (defconst java-return-type-identifier
-  (concat "\\([\[a-zA-Z]"
-	  "\\|[\[a-zA-Z][]" java-return-type-chars "]*"
-	  "[]" java-return-type-chars "]+\\)"
+  (concat "\\([\[a-zA-Z][][" java-return-type-chars "]*"
+	  "[][" java-return-type-chars "]+\\|[\[a-zA-Z]\\)"
 	  "[ \t\n\^M]*"))
 
 (defconst java-type-identifier
-  (concat "\\([\[a-zA-Z][]" java-identifier-chars "]*[ \t\n\^M]+\\)"))
+  (concat "\\([\[a-zA-Z][][" java-identifier-chars "]*[ \t\n\^M]+\\)"))
 
 (defconst java-type-tag-separator "@"
   "String that separates a tag's type from its normalized definition form.
@@ -58,7 +46,7 @@ literal in a regular expression.")
   ;; The \\\\? below is necessary because we sometimes use this expression to
   ;; test against a string that has been regexp-quoted and some of the
   ;; characters in br-feature-type-regexp will then be preceded by \\.
-  (format "\\`\\([^%s \n]+\\)%s\\\\?\\(%s \\)\\([^%s\n]+\\)%s"
+  (format "\\`\\([^%s \n]+\\)%s\\\\?\\(%s \\)\\([^%s\n]+\\)%s?"
 	  java-type-tag-separator java-type-tag-separator
 	  br-feature-type-regexp java-type-tag-separator
 	  java-type-tag-separator)
@@ -112,43 +100,64 @@ Optional REGEXP-FLAG means FEATURE-TAG is a regular expression."
   ;; Match to function definitions, not declarations, except for abstract
   ;; methods which are declared, not defined, and so end with a ';'.
   ;;
-  ;; First move to the proper class implementation if feature-tag does not
-  ;; include a <class>:: part and this is not a [default-class], so that if
-  ;; two classes in the same file have the same feature signature, we still
-  ;; end up at the right one.
-  (if (string-match java-tag-fields-regexp feature-tag)
-      (let ((class (substring feature-tag (match-beginning 1) (match-end 1))))
-	(setq feature-tag (substring feature-tag (match-end 0)))
-	(if regexp-flag
-	    (if (not (string-match "\\`\\\\\\[\\|::" feature-tag))
-		(re-search-forward (java-class-definition-regexp class t)
-				   nil t))
-	  (if (not (string-match "\\`\\[\\|::" feature-tag))
-	      (re-search-forward (java-class-definition-regexp class)
-				 nil t)))))
-  ;; Now look for feature expression.
-  (let ((found) (start))
-    (or regexp-flag (setq feature-tag
-			  (java-feature-signature-to-regexp feature-tag)))
-    (while (and (re-search-forward feature-tag nil t)
-		(setq start (match-beginning 0))
-		(not (setq found (not 
-				  (if (c-within-comment-p)
-				      (progn (search-forward "*/" nil t)
-					     t)))))))
-    (if found
-	(progn (goto-char start)
-	       (skip-chars-forward " \t\n")
-	       (java-to-comments-begin)
-	       (recenter 0)
-	       (goto-char start)
-	       t))))
+  ;; First move to the proper class implementation if this is not a
+  ;; [default-class], so that if two classes in the same file have the same
+  ;; feature signature, we still end up at the right one.
+  (let ((found t) (start))
+    (if (string-match java-tag-fields-regexp feature-tag)
+	(let ((class (substring feature-tag (match-beginning 1) (match-end 1))))
+	  (setq feature-tag (substring feature-tag (match-end 0))
+		found (re-search-forward
+		       (java-class-definition-regexp class regexp-flag) nil t))))
+
+    ;; If class was searched for and not found, return nil.
+    (if (not found)
+	nil
+      ;; Otherwise, look for feature expression.
+      (or regexp-flag (setq feature-tag
+			    (java-feature-signature-to-regexp feature-tag)))
+      (while (and (re-search-forward feature-tag nil t)
+		  (setq start (match-beginning 0))
+		  (not (setq found (not 
+				    (if (c-within-comment-p)
+					(progn (search-forward "*/" nil t)
+					       t)))))))
+      (if found
+	  (progn (goto-char start)
+		 (skip-chars-forward " \t\n\^M")
+		 (java-to-comments-begin)
+		 (recenter 0)
+		 (goto-char start)
+		 t)))))
+
+(defun java-feature-map-class-tags (function class)
+  "Apply FUNCTION to all feature tags from CLASS and return a list of the results.
+Feature tags come from the file named by br-feature-tags-file."
+  (let ((obuf (current-buffer))
+	(class-tag (concat "\n" class java-type-tag-separator))
+	(results)
+	start end)
+    (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
+    (goto-char 1)
+    (if (not (search-forward class-tag nil t))
+	nil
+      (setq start (match-beginning 0)
+	    end (if (search-forward "\^L\n" nil t)
+		    (match-beginning 0)
+		  (point-max)))
+      (goto-char start)
+      ;; Feature defs can occur only within a single file.
+      (while (search-forward class-tag end t)
+	(setq results (cons (funcall function) results))
+	;; Might have deleted current tag and would miss next tag unless point
+	;; is moved backwards.
+	(backward-char)))
+    (set-buffer obuf)
+    results))
 
 (defun java-feature-name-to-regexp (name)
   "Converts routine NAME into a regular expression matching the routine's name tag."
-  (setq name (java-feature-signature-to-regexp name))
-  (aset name (1- (length name)) ?\()  ;; Match only to functions
-  name)
+  (java-feature-signature-to-regexp name))
 
 (defun java-feature-signature-to-name (signature &optional with-class for-display)
   "Extracts the feature name from SIGNATURE.
@@ -164,7 +173,7 @@ prepended to the name for display in a browser listing."
       (if with-class
 	  (setq name (concat
 		      (substring signature (match-beginning 1) (match-end 1))
-		      "." name)))
+		      java-type-tag-separator name)))
       ;; Remove any trailing whitespace.
       (br-delete-space name))
      ;;
@@ -193,37 +202,31 @@ prepended to the name for display in a browser listing."
 	      i (1+ i)))
       (setq pat (concat prefix-info pat)))))
 
+(defun java-feature-tag-regexp (class feature-name)
+  "Return a regexp that matches to the feature tag entry for CLASS' FEATURE-NAME."
+  (concat "^" (regexp-quote class) java-type-tag-separator
+	  br-feature-type-regexp " "
+	  (regexp-quote feature-name) java-type-tag-separator))
+
 (defun java-feature-tree-command-p (class-or-signature)
   "Display definition of CLASS-OR-SIGNATURE if a signature and return t, else return nil."
-  (if (java-routine-p class-or-signature)
+  ;; A class name won't contain a space.
+  (if (string-match " " class-or-signature)
       (progn
 	(if (br-in-browser) (br-to-view-window))
 	(br-feature-found-p (br-feature-file class-or-signature)
 			    class-or-signature))))
 
 (defun java-list-features (class &optional indent)
-  "Return sorted list of java feature tags lexically defined in CLASS."
-  (let ((obuf (current-buffer))
-	(features)
-	(class-tag (concat "\n" class java-type-tag-separator))
-	feature)
-    (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
-    (goto-char 1)
-    (if (or (null indent) (<= indent 2))
-	;; Include all features.
-	(while (search-forward class-tag nil t)
-	  (setq features (cons (br-feature-current) features)))
-      (while (search-forward class-tag nil t)
-	(setq feature (br-feature-current))
-	(setq features (cons feature features))))
-    (set-buffer obuf)
-    (java-sort-features (nreverse features))))
+  "Return sorted list of Java feature tags lexically defined in CLASS.
+Optional INDENT is unused but is required for multi-language OO-Browser conformance."
+  ;; Use nreverse here so that stable sort ends up leaving same named
+  ;; features in the order they were defined in the source file.
+  (java-sort-features
+   (nreverse (java-feature-map-class-tags 'br-feature-current class))))
 
-(defun java-routine-p (str)
-  (string-match "([^\)]*)" str))
-
-(defun java-sort-features (routine-list)
-  (sort routine-list 'java-feature-lessp))
+(defun java-sort-features (feature-list)
+  (sort feature-list 'java-feature-lessp))
 
 (defun java-to-definition (&optional other-win)
   "If point is within a declaration, try to move to its definition.
@@ -231,7 +234,6 @@ With OTHER-WIN non-nil, show it in another window."
   (interactive)
   (let ((opoint (point)))
     (cond
-     ((java-include-file other-win))
      ((br-check-for-class (java-class-decl-p) other-win))
      ((java-feature other-win))
      ((and (goto-char opoint)
@@ -265,14 +267,12 @@ visual clarity."
 (defun java-feature (&optional other-win)
   "Move point to definition of member given by declaration at point.
 Return nil if point is not within a member declaration."
-  ;; If '{' follows the feature declaration, then feature is defined right
-  ;; here, within the class definition.
   (interactive)
   (let ((feature-def) (ftr) (class) (ftr-pat))
     (cond ((java-feature-def-p)
 	   (recenter 0)
 	   t)
-	  ;; Now look for feature definition in code (non-header) files.
+	  ;; Now look for feature definition in ancestor classes.
 	  ((progn (setq feature-def (java-feature-def-pat)
 			ftr (car (cdr (cdr feature-def)))
 			class (car (cdr feature-def))
@@ -289,9 +289,14 @@ Return nil if point is not within a member declaration."
 		 "/ ")
 		((string-match java-abstract-method-regexp signature)
 		 "> ")
+		;; constructors and destructors
 		((or (string-equal feature-name class)
 		     (string-equal feature-name "finalize"))
 		 "+ ")
+		;; attributes
+		((string-match "[=;,]\\'" signature)
+		 "= ")
+		;; regular methods
 		(t "- "))
 	  feature-name))
 
@@ -301,28 +306,30 @@ Return nil if point is not within a member declaration."
     (looking-at java-feature-decl)))
 
 (defun java-feature-def-p ()
-  "Return nil unless point is within a member definition.
-Commented member definitions also return nil.
+  "Return nil unless point is within a member declaration.
+Commented member declarations also return nil.
 Leaves point at start of statement for visual clarity."
   (java-skip-to-statement)
-  (save-excursion
-    (and (not (c-within-comment-p))
-	 (save-excursion (beginning-of-line)
-			 (not (looking-at "[ \t]*//")))
-	 (not (looking-at java-class-decl))
-	 (looking-at (concat java-at-feature-regexp "[{;,]"))
-	 (or (= ?\{
-		(save-excursion (goto-char (match-end 0))
-				(preceding-char)))
-	     ;; If ends with a '[;,]' then it must be a native or abstract
-	     ;; method to be a definition.
-	     (if (match-end java-feature-parens-grpn)
-		 (save-restriction
-		   (narrow-to-region (match-beginning 0) (match-end 0))
-		   (if (looking-at
-			"\\(^\\|[ \t\n\^M]\\)\\(abstract\\|native\\)[ \t\n\^M][^;{}]+;")
-		       (progn (message "(OO-Browser):  Abstract function, definition deferred to descendants.")
-			      t))))))))
+  (and (not (c-within-comment-p))
+       (save-excursion (beginning-of-line)
+		       (not (looking-at "[ \t]*//")))
+       (not (looking-at java-class-decl))
+       (looking-at (concat java-at-feature-regexp "[=;,{]"))
+       (or (= ?\{ (char-after (1- (match-end 0))))
+	   (if (not (match-end java-feature-parens-grpn))
+	       ;; This is an attribute.
+	       t
+	     ;; If this is a native or abstract method, alert user that
+	     ;; its definition is elsewhere.
+	     (save-restriction
+	       (narrow-to-region (match-beginning 0) (match-end 0))
+	       (cond ((looking-at "\\s *\\<abstract\\>[^;{}]+;")
+		      (message "(OO-Browser):  Abstract method, definition deferred to descendants.")
+		      t)
+		     ((looking-at "\\s *\\<native\\>[^;{}]+;")
+		      (message "(OO-Browser):  Native method, defined in an external language.")
+		      t)))))))
+
 
 (defun java-feature-def-pat ()
   "Return (list <feature-def-pat> <feature-class> <feature-name>) associated with declaration at point."
@@ -346,8 +353,7 @@ Leaves point at start of statement for visual clarity."
 				     java-feature-type-grpn)))))
 	      (func-args (if (match-end java-feature-parens-grpn)
 			     (cons (match-beginning java-feature-parens-grpn)
-				   (match-end java-feature-parens-grpn))))
-	      (base-cl-args (match-end java-feature-parens-grpn)))
+				   (match-end java-feature-parens-grpn)))))
 
 	 (and member-type (string-match "[ \t]+$" member-type)
 	      (setq member-type (substring member-type 0
@@ -390,13 +396,7 @@ Leaves point at start of statement for visual clarity."
 		     (concat "\\(" (java-func-args-regexp func-args)
 			     "\\|" (java-func-args-string func-args)
 			     "\\)"))
-		 ;; If is a constructor member function, then can have some
-		 ;; arguments for base class constructors after a ':'
-		 ;; but preceding the '{'.
-		 "[ \t\n]*"
-		 (and base-cl-args
-		      (equal member-name class)
-		      "\\(:[^;{}]*\\)?"))))
+		 "[ \t\n]*")))
 	   (list
 	    (` (lambda (class)
 		 (concat "^" (br-regexp-quote class)
@@ -410,80 +410,9 @@ Leaves point at start of statement for visual clarity."
 			 (, post-member-regexp))))
 	    class member-name)))))
 
-(defun java-feature-lessp (routine1 routine2)
-  (string-lessp (java-feature-signature-to-name routine1)
-		(java-feature-signature-to-name routine2)))
-
-(defun java-feature-matches (regexp)
-  "Return an unsorted list of feature tags whose names match in part or whole to REGEXP."
-  ;; Ensure match to feature names only; also handle "^" and "$" meta-chars
-  (setq regexp
-	(concat (format "^[^%s \n]+%s%s "
-			java-type-tag-separator java-type-tag-separator
-			br-feature-type-regexp)
-		(if (equal (substring regexp 0 1) "^")
-		    (progn (setq regexp (substring regexp 1)) nil)
-		  java-identifier-chars)
-		(if (equal (substring regexp -1) "$")
-		    (substring regexp 0 -1)
-		  (concat regexp java-identifier-chars))
-		java-type-tag-separator))
-  (save-excursion
-    (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
-    (goto-char 1)
-    (let ((features))
-      (while (re-search-forward regexp nil t)
-	(setq features (cons (br-feature-current) features)))
-      features)))
-
-(defun java-feature-normalize (routine class name)
-  (setq class (br-delete-space class)
-	name (java-feature-add-prefix name class routine)
-	routine (concat class java-type-tag-separator 
-			name java-type-tag-separator 
-			(br-delete-space routine)))
-  (let* ((len (length routine))
-	 (normal-feature (make-string len ?\ ))
-	 (n 0) (i 0)
-	 (space-list '(?\  ?\t ?\n ?\^M))
-	 (space-regexp "[ \t\n\^M]+")
-	 chr)
-    (while (< i len)
-      (setq chr (aref routine i)) 
-      (cond
-       ;; Convert sequences of space characters to a single space.
-       ((memq chr space-list)
-	(aset normal-feature n ?\ )
-	(if (string-match space-regexp routine i)
-	    (setq i (match-end 0)
-		  n (1+ n))
-	  (setq i (1+ i)
-		n (1+ n))))
-       ;;
-       ;; Remove // style comments
-       ((and (= chr ?/)
-	     (< (1+ i) len)
-	     (= (aref routine (1+ i)) ?/))
-	(setq i (+ i 2))
-	(while (and (< i len) (/= (aref routine i) ?\n))
-	  (setq i (1+ i))))
-       (t ;; Normal character
-	(aset normal-feature n chr)
-	(setq i (1+ i)
-	      n (1+ n)))))
-    (substring normal-feature 0 n)))
-
-(defun java-feature-tag-class (signature)
-  "Extract the class name from SIGNATURE."
-  (cond ((string-match java-type-tag-separator signature)
-	 (substring signature 0 (match-beginning 0)))
-	((string-match "\\([^ \t]+\\)\." signature)
-	 (substring signature (match-beginning 1) (match-end 1)))
-	(t "")))
-
-(defun java-feature-tags-lookup (class-list ftr-pat &optional other-win)
-  "Display routine definition derived from CLASS-LIST, matching FTR-PAT.
-Use routine tags table to locate a match.  Caller must use 'set-buffer'
+(defun java-feature-display (class-list ftr-pat &optional other-win)
+  "Display feature declaration derived from CLASS-LIST, matching FTR-PAT.
+Use feature tags table to locate a match.  Caller must use 'set-buffer'
 to restore prior buffer when a match is not found."
   (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
   (let  ((classes class-list)
@@ -498,15 +427,95 @@ to restore prior buffer when a match is not found."
 	      ftr-regexp (funcall ftr-pat class)
 	      ftr-path (br-feature-def-file ftr-regexp)
 	      found-ftr (if ftr-path
-			    (br-edit-feature (br-feature-current)
-					     ftr-path other-win))
+			    (br-edit-feature-from-tag (br-feature-current)
+						      ftr-path other-win))
 	      classes (if found-ftr nil (cdr classes))))
       (if found-ftr
 	  (or class t)
-	(java-feature-tags-lookup
+	(java-feature-display
 	 (apply 'append (mapcar (function (lambda (cl) (br-get-parents cl)))
 				class-list))
 	 ftr-pat)))))
+
+(defun java-feature-lessp (routine1 routine2)
+  (string-lessp (java-feature-signature-to-name routine1)
+		(java-feature-signature-to-name routine2)))
+
+(defun java-feature-map-tags (function regexp)
+  "Apply FUNCTION to all current feature tags that match REGEXP and return a list of the results.
+Feature tags come from the file named by br-feature-tags-file."
+  ;; Ensure match to feature names only; also handle "^" and "$" meta-chars
+  (let ((identifier-chars (concat "[" java-identifier-chars "]*"))
+	(results))
+    (setq regexp
+	  (concat (format "^[^%s \n]+%s%s "
+			  java-type-tag-separator java-type-tag-separator
+			  br-feature-type-regexp)
+		  (if (equal (substring regexp 0 1) "^")
+		      (progn (setq regexp (substring regexp 1)) nil)
+		    identifier-chars)
+		  (if (equal (substring regexp -1) "$")
+		      (substring regexp 0 -1)
+		    (concat regexp identifier-chars))
+		  java-type-tag-separator))
+    (save-excursion
+      (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
+      (goto-char 1)
+      (while (re-search-forward regexp nil t)
+	(setq results (cons (funcall function) results))))
+    results))
+
+(defun java-feature-matches (regexp)
+  "Return an unsorted list of feature tags whose names match in part or whole to REGEXP.
+^ and $ characters may be used to match to the beginning and end of a feature name,
+respectively."
+  (java-feature-map-tags 'br-feature-current regexp))
+
+(defun java-feature-normalize (feature class name)
+  (setq class (br-delete-space class)
+	name (java-feature-add-prefix name class feature)
+	feature (concat class java-type-tag-separator 
+			name java-type-tag-separator 
+			(br-delete-space feature)))
+  (let* ((len (length feature))
+	 (normal-feature (make-string len ?\ ))
+	 (n 0) (i 0)
+	 (space-list '(?\  ?\t ?\n ?\^M))
+	 (space-regexp "[ \t\n\^M]+")
+	 chr)
+    (while (< i len)
+      (setq chr (aref feature i)) 
+      (cond
+       ;; Convert sequences of space characters to a single space.
+       ((memq chr space-list)
+	(aset normal-feature n ?\ )
+	(if (string-match space-regexp feature i)
+	    (setq i (match-end 0)
+		  n (1+ n))
+	  (setq i (1+ i)
+		n (1+ n))))
+       ;;
+       ;; Remove // style comments
+       ((and (= chr ?/)
+	     (< (1+ i) len)
+	     (= (aref feature (1+ i)) ?/))
+	(setq i (+ i 2))
+	(while (and (< i len) (/= (aref feature i) ?\n))
+	  (setq i (1+ i))))
+       ;;
+       (t ;; Normal character
+	(aset normal-feature n chr)
+	(setq i (1+ i)
+	      n (1+ n)))))
+    (substring normal-feature 0 n)))
+
+(defun java-feature-tag-class (signature)
+  "Extract the class name from SIGNATURE."
+  (cond ((string-match java-type-tag-separator signature)
+	 (substring signature 0 (match-beginning 0)))
+	((string-match "\\([^ \t]+\\)\." signature)
+	 (substring signature (match-beginning 1) (match-end 1)))
+	(t "")))
 
 (defun java-files-with-source (class)
   "Use CLASS to compute set of files that match to a java source file regexp.
@@ -529,7 +538,7 @@ Return as a list."
 	(if (and br-feature-tags-file
 		 (file-exists-p br-feature-tags-file)
 		 (file-readable-p br-feature-tags-file))
-	    (java-feature-tags-lookup class-list ftr-pat other-win)
+	    (java-feature-display class-list ftr-pat other-win)
 	  ;; Only works if features are in same directory as class def.
 	  (java-scan-ancestors-feature class-list ftr-pat other-win))
       (set-buffer obuf))))
@@ -544,7 +553,7 @@ Return as a list."
       (skip-chars-backward ignore)
       (skip-chars-backward pat)
       (setq start (point))
-      (skip-chars-forward (concat pat ":"))
+      (skip-chars-forward pat)
       (buffer-substring start (point)))))
 
 (defun java-func-args-regexp (func-args)
@@ -702,83 +711,30 @@ Return as a list."
 		 (and (> (point) opoint)
 		      class))))))
 
-(defun java-get-feature-tags (routine-file &optional routine-list)
-  "Scan java ROUTINE-FILE and hold routine tags in 'br-feature-tags-file'.
-Assume ROUTINE-FILE has already been read into a buffer and that
-'br-feature-tags-init' has been called.  Optional ROUTINE-LIST can be
+(defun java-get-feature-tags (feature-file &optional feature-list)
+  "Scan java FEATURE-FILE and hold feature tags in 'br-feature-tags-file'.
+Assume FEATURE-FILE has already been read into a buffer and that
+'br-feature-tags-init' has been called.  Optional FEATURE-LIST can be
 provided so that a non-standard scan function can be used before calling
 this function."
   (interactive)
   (let ((obuf (current-buffer)))
     (set-buffer (funcall br-find-file-noselect-function br-feature-tags-file))
     (goto-char 1)
-    ;; Delete any prior routine tags associated with routine-file
-    (if (search-forward routine-file nil 'end)
+    ;; Delete any prior feature tags associated with feature-file
+    (if (search-forward feature-file nil 'end)
 	(progn (forward-line -1)
 	       (let ((start (point)))
 		 (search-forward "\^L" nil 'end 2)
 		 (backward-char 1)
 		 (delete-region start (point))
 		 )))
-    (if routine-list
-	(progn (insert "\^L\n" routine-file "\n")
+    (if feature-list
+	(progn (insert "\^L\n" feature-file "\n")
 	       (mapcar (function (lambda (tag) (insert tag "\n")))
-		       routine-list)
+		       feature-list)
 	       ))
     (set-buffer obuf)))
-
-(defun java-include-file (&optional other-win)
-  "If point is on an include file line, try to display file.
-Return non-nil iff an include file line, even if file is not found.
-Look for include file in 'java-cpp-include-dirs' and in directory list
-'java-include-dirs'."
-  (let ((opoint (point)))
-    (beginning-of-line)
-    (if (looking-at java-include-regexp)
-	(let ((incl-type (string-to-char
-			  (buffer-substring (match-beginning 1)
-					    (1+ (match-beginning 1)))))
-	      (file (buffer-substring (match-beginning 2) (match-end 2)))
-	      (path)
-	      (dir-list java-include-dirs)
-	      (found))
-	  (goto-char opoint)
-	  (setq dir-list (if (= incl-type ?<)
-			     (append dir-list java-cpp-include-dirs)
-			   (cons (file-name-directory buffer-file-name)
-				 dir-list)))
-	  (while dir-list
-	    (setq path (concat (car dir-list) file)
-		  dir-list (if (setq found (file-exists-p path))
-			       nil
-			     (cdr dir-list))))
-	  ;;
-	  ;; If not found in normal include dirs, check all Env paths also.
-	  ;;
-	  (if (not found)
-	      (let ((paths (delq nil (hash-map 'cdr br-paths-htable))))
-		(while paths
-		  (setq path (car paths))
-		  (if (string-equal (file-name-nondirectory path) file)
-		      (setq found t paths nil)
-		    (setq paths (cdr paths))))))
-	  ;;
-	  ;; If found, display file
-	  ;;
-	  (if found
-	      (if (file-readable-p path)
-		  (progn
-		    (funcall br-edit-file-function path other-win)
-		    (if (not (fboundp 'br-lang-mode))
-			(java-mode-setup))
-		    (br-major-mode))
-		(beep)
-		(message "(OO-Browser):  Include file '%s' unreadable." path))
-	    (beep)
-	    (message "(OO-Browser):  Include file '%s' not found." file))
-	  path)
-      (goto-char opoint)
-      nil)))
 
 (defun java-locate-feature (ftr class ftr-pat &optional other-win)
   ;; 'class' may = nil, implying non-member function
@@ -795,7 +751,7 @@ Look for include file in 'java-cpp-include-dirs' and in directory list
 	       t))))
 
 (defun java-scan-ancestors-feature (class-list ftr-pat &optional other-win)
-  "Display routine definition derived from CLASS-LIST, matching FTR-PAT.
+  "Display feature definition derived from CLASS-LIST, matching FTR-PAT.
 Scan files with same base name as class file."
   (let  ((classes class-list)
 	 (found-ftr)
@@ -823,43 +779,47 @@ Scan files with same base name as class file."
 	 ftr-pat)))))
 
 (defun java-scan-features (class start end)
-  "Return reverse ordered list of java routine definitions within CLASS def.
-START and END give buffer region to search."
+  "Return reverse ordered list of java feature declarations within CLASS def.
+START and END give buffer region to search.
+
+Multiple declarations with only one type, e.g. float a, b;
+are missed, because that would require too much effort right now.
+Use the clearer style with a type keyword for each feature defined."
   (setq class (br-delete-space class))
   (save-excursion
     (save-restriction
       (narrow-to-region start end)
       (goto-char start)
-      (let ((routines) rout name)
+      (let ((features) ftr name)
 	;;
 	;; Get member definitions and abstract method declarations.
-	;;
-	(while (re-search-forward java-routine-def nil t)
+	(while (re-search-forward java-feature-decl nil t)
 	  (setq start (match-beginning 0)
 		name  (buffer-substring
 		       (match-beginning java-feature-name-grpn)
 		       (match-end java-feature-name-grpn))
-		rout  (buffer-substring (match-beginning 0) (match-end 0)))
+		ftr  (buffer-substring (match-beginning 0) (match-end 0)))
 	  ;; This is necessary to remove a possible double expression match
 	  ;; where there is a blank line within the match.
-	  (if (string-match "[\n\^M]\\([ \t]*[\n\^M]\\)+" rout)
-	      (progn (setq rout (substring rout (match-end 0)))
+	  (if (string-match "[\n\^M]\\([ \t]*[\n\^M]\\)+" ftr)
+	      (progn (setq ftr (substring ftr (match-end 0)))
 		     (goto-char (+ start (match-end 0))))
 	    (if (c-within-comment-p)
 		(search-forward "*/" nil t)
-	      ;; Move point to precede feature opening brace or abstract
-	      ;; method declaration semicolon.
+	      ;; Move point to precede the feature match termination character.
 	      (backward-char)
-	      (if (= (following-char) ?\{)
-		  (condition-case ()
-		      ;; Move to end of feature but ignore any error if braces
-		      ;; are unbalanced.  Let the compiler tell the user about
-		      ;; this.
-		      (forward-sexp)
-		    (error nil)))
-	      (setq rout (java-feature-normalize rout class name)
-		    routines (cons rout routines)))))
-	routines))))
+	      (cond ((= (following-char) ?\{)
+		     (condition-case ()
+			 ;; Move to end of feature but ignore any error if braces
+			 ;; are unbalanced.  Let the compiler tell the user about
+			 ;; this.
+			 (forward-sexp)
+		       (error nil)))
+		    ((= (following-char) ?=)
+		     (skip-chars-forward "^;")))
+	      (setq ftr (java-feature-normalize ftr class name)
+		    features (cons ftr features)))))
+	features))))
 
 (defun java-skip-to-statement ()
   (if (re-search-backward "\\(^\\|[;{}]\\)[ \t]*" nil t)
@@ -871,22 +831,16 @@ START and END give buffer region to search."
 ;;; Private variables
 ;;; ************************************************************************
 
-(defconst java-code-file-regexp "\\.java$"
-  "Regular expression matching a unique part of java source (non-header) file name and no others.")
-
-(defconst java-include-regexp
-  "[ \t/*]*import[ \t]+\\([^;]+\\)"
-  "Regexp to match to java include file lines.  File name is grouping 2.  Type
-of include, user-specified via double quote, or system-related starting with
-'<' is given by grouping 1.")
+(defconst java-code-file-regexp "\\.java?$"
+  "Regular expression matching a unique part of a Java source file name and no others.")
 
 (defconst java-type-def-modifier
   "\\(const\\|final\\|static\\|abstract\\|public\\|protected\\|private\\)")
 
 (defconst java-type-modifier-keyword
   (concat "\\(\\(public\\|protected\\|private\\|const\\|abstract\\|"
-	  "synchronized\\|final\\|static\\|threadsafe\\|transient\\|"
-	  "native\\)[ \t\n\^M]+\\)"))
+	  "synchronized\\|final\\|static\\|transient\\|"
+	  "native\\|volatile\\)[ \t\n\^M]+\\)"))
 
 (defconst java-type-identifier-group
   (concat "\\(\\(" java-return-type-identifier "\\)[ \t\n\^M]+\\)"))
@@ -904,11 +858,11 @@ of include, user-specified via double quote, or system-related starting with
 	  java-type-identifier-group "\\)?"
 	  "\\(" java-type-identifier "[ \t\n\^M]*\\)?"
 	  "\\(" java-function-identifier "\\|" java-identifier "\\)"
-	  ;; It's hard to tell arguments from parenthesized initializing
+	  ;; It is hard to tell arguments from parenthesized initializing
 	  ;; expressions.
-	  "[ \t\n\^M]*(\\([^);{}]*\\))\\([][]*\\)"
-	  ;; Optional exceptions that a feature can throw.
-	  "\\([ \t\n\^M]+throws[ \t\n\^M]+\\("
+	  "[ \t\n\^M]*\\(([^\);{}]*)\\)?\\([][ \t]*\\)"
+	  ;; Optional exceptions that a method can throw.
+	  "\\([ \t\n\^M]*\\<throws\\>[ \t\n\^M]*\\("
 	  java-identifier  "[, \t\n\^M]*\\)+\\)?"
 	  )
   "Regexp matching a java member declaration or definition.
@@ -923,23 +877,24 @@ thrown by a function are group 'java-feature-exceptions-grpn'.")
 (defconst java-feature-name-grpn 9)
 (defconst java-feature-parens-grpn 11)
 (defconst java-feature-exceptions-grpn 14)
+(defconst java-feature-terminator-grpn 15)
 
 (defconst java-at-feature-regexp
   (concat java-feature-decl-or-def "[ \t\n]*")
   "See documentation of 'java-feature-decl-or-def' for grouping expressions.")
 
 (defconst java-feature-decl
-  (concat java-at-feature-regexp "[;{]")
-  "See documentation of 'java-feature-decl-or-def' for grouping expressions.")
-
-(defconst java-routine-def-terminator-regexp
-  ;; Also matches to abstract method declarations.
-  ;; Only native and abstract functions end with a semi-colon.
-  "\\({\\|;\\)")
+  (concat java-at-feature-regexp "\\([=;{]\\)")
+  "See documentation of 'java-feature-decl-or-def' for grouping expressions.
+'java-feature-terminator-grpn' holds the equal-sign, semi-color or opening brace
+that triggers the end of the match.")
 
 (defconst java-routine-def
-  (concat java-at-feature-regexp java-routine-def-terminator-regexp)
-  "See documentation of 'java-feature-decl-or-def' for grouping expressions.")
+  (concat java-at-feature-regexp "\\([;{]\\)")
+  "See documentation of 'java-feature-decl-or-def' for grouping expressions.
+'java-feature-terminator-grpn' holds the opening brace that terminates the
+feature declaration or the semi-colon that terminates native and abstract
+method declarations.")
 
 (defconst java-class-decl
   (concat java-class-modifier-keyword 
@@ -949,11 +904,10 @@ Class name is grouping 'java-class-name-grpn'.")
 
 (defconst java-class-name-grpn 4)
 
-;; Old def was: "\\(^\\|[ \t\n\^M]\\)abstract[ \t\n\^M][^;{}]+;"
-(defconst java-abstract-method-regexp ";\\'"
+(defconst java-abstract-method-regexp "\\<abstract\\>[^;{}]+;"
   "Regexp matching a Java abstract method signature.")
 
-(defconst java-native-method-regexp "\\(^\\|[ \t\n\^M]\\)native[ \t\n\^M][^;{}]+;"
+(defconst java-native-method-regexp   "\\<native\\>[^;{}]+;"
   "Regexp matching a Java native method signature, one implemented in another language.")
 
 (provide 'br-java-ft)

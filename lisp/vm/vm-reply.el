@@ -291,7 +291,7 @@ vm-included-text-prefix is prepended to every yanked line."
 					    (vm-headers-of message)
 					    (vm-text-of message))
 	      (cond ((vm-mime-types-match "multipart" type)
-		     (setq parts (vm-mm-layout-parts o)))
+		     (setq parts (copy-sequence (vm-mm-layout-parts o))))
 		    (t (setq parts (list o))))
 	      (while parts
 		(cond ((vm-mime-text-type-p (car parts))
@@ -301,8 +301,15 @@ vm-included-text-prefix is prepended to every yanked line."
 			 ;; just dump the raw bits
 			 (vm-mime-insert-mime-body (car parts))
 			 (vm-mime-transfer-decode-region (car parts)
-							 start (point)))))
-		(setq parts (cdr parts)))
+							 start (point)))
+		       (setq parts (cdr parts)))
+		      ((vm-mime-composite-type-p
+			(car (vm-mm-layout-type (car parts))))
+		       (setq parts (nconc (copy-sequence
+					   (vm-mm-layout-parts
+					    (car parts)))
+					  (cdr parts))))
+		      (t (setq parts (cdr parts)))))
 	      (setq end (point-marker)))
 	  (set-buffer (vm-buffer-of message))
 	  (save-restriction
@@ -650,7 +657,7 @@ Subject: header manually."
 	    (mail-text)
 	    (vm-mime-attach-object b "multipart/digest"
 				   (list (concat "boundary=\""
-						 boundary "\"")) t)
+						 boundary "\"")) nil t)
 	    (add-hook 'kill-buffer-hook
 		      (list 'lambda ()
 			    (list 'if (list 'eq mail-buffer '(current-buffer))
@@ -862,7 +869,7 @@ only marked messages will be put into the digest."
 	    (mail-text)
 	    (vm-mime-attach-object b "multipart/digest"
 				   (list (concat "boundary=\""
-						 boundary "\"")) t)
+						 boundary "\"")) nil t)
 	    (add-hook 'kill-buffer-hook
 		      (list 'lambda ()
 			    (list 'if (list 'eq mail-buffer '(current-buffer))
@@ -955,7 +962,8 @@ found, the current buffer remains selected."
     ;; do it only once.
     (if (not vm-mail-mode-map-parented)
 	(cond ((fboundp 'set-keymap-parents)
-	       (set-keymap-parents vm-mail-mode-map (list mail-mode-map)))
+	       (set-keymap-parents vm-mail-mode-map (list mail-mode-map))
+	       (setq vm-mail-mode-map-parented t))
 	      ((consp mail-mode-map)
 	       (nconc vm-mail-mode-map mail-mode-map)
 	       (setq vm-mail-mode-map-parented t))))

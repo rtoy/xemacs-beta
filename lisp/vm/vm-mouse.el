@@ -213,6 +213,11 @@
 	       (erase-buffer)
 	       (insert (if new-window "newwin" "goto") ?\n)
 	       (insert url ?\n)
+	       ;; newline convention used should be the local
+	       ;; one, whatever that is.
+	       (setq buffer-file-type nil)
+	       (and (fboundp 'set-file-coding-system)
+		    (set-file-coding-system 'no-conversion nil))
 	       (write-region (point-min) (point-max)
 			     (concat "/tmp/Mosaic." pid)
 			     nil 0)
@@ -328,13 +333,14 @@ HISTORY argument is ignored."
 		       (let ((vm-mutable-frames t))
 			 (vm-delete-windows-or-frames-on (current-buffer))))
 		     (setq vm-mouse-read-file-name-return-value
-			   (vm-keyboard-read-file-name
-			    vm-mouse-read-file-name-prompt
-			    vm-mouse-read-file-name-dir
-			    vm-mouse-read-file-name-default
-			    vm-mouse-read-file-name-must-match
-			    vm-mouse-read-file-name-initial
-			    vm-mouse-read-file-name-history))
+			   (save-excursion
+			     (vm-keyboard-read-file-name
+			      vm-mouse-read-file-name-prompt
+			      vm-mouse-read-file-name-dir
+			      vm-mouse-read-file-name-default
+			      vm-mouse-read-file-name-must-match
+			      vm-mouse-read-file-name-initial
+			      vm-mouse-read-file-name-history)))
 		     (vm-mouse-read-file-name-quit-handler t))
 		 (quit (vm-mouse-read-file-name-quit-handler))))
 	      ((file-directory-p string)

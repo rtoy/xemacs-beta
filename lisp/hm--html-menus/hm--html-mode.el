@@ -2,7 +2,7 @@
 ;;;
 ;;; Keywords: hypermedia languages help docs wp
 ;;;
-;;; $Id: hm--html-mode.el,v 1.2 1997/02/16 01:29:10 steve Exp $
+;;; $Id: hm--html-mode.el,v 1.3 1997/02/22 22:07:11 steve Exp $
 ;;;
 ;;; Copyright (C) 1996, 1997 Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -63,11 +63,12 @@
 (require 'adapt)
 (require 'hm--date)
 (require 'hm--html)
+(eval-when-compile
+  (require 'hm--html-configuration))
 (hm--html-load-config-files)
 (require 'hm--html-indentation)
 (require 'hm--html-menu)
 (require 'hm--html-drag-and-drop)
-;(hm--html-load-config-files) ; Load the system and user configuration files
 (require 'hm--html-keys)
 
 
@@ -76,7 +77,7 @@
 
 (defconst hm--html-menus-package-name "hm--html-menus")
 
-(defconst hm--html-menus-package-version "5.1")
+(defconst hm--html-menus-package-version "5.2")
   
 
 ;;; Generate the help buffer faces
@@ -136,9 +137,6 @@ if that value is non-nil."
   (hm--install-html-menu hm--html-mode-pulldown-menu-name)
   (make-variable-buffer-local 'write-file-hooks)
   (add-hook 'write-file-hooks 'hm--html-maybe-new-date-and-changed-comment)
-;  (make-local-variable 'font-lock-keywords)
-;  (setq font-lock-keywords-case-fold-search t)
-;  (setq font-lock-keywords hm--html-font-lock-keywords)
   (put major-mode 'font-lock-defaults '((hm--html-font-lock-keywords
 					 hm--html-font-lock-keywords-1
 					 hm--html-font-lock-keywords-2)
@@ -203,30 +201,6 @@ of `hm--html-region-mode'."
       )
 
     )
-
-;(or (assq 'hm--html-region-mode minor-mode-alist)
-;    (setq minor-mode-alist
-;	  (purecopy
-;	   (append minor-mode-alist
-;		   '((hm--html-region-mode " Region"))))))
-
-
-
-;(defun hm--html-region-mode (on)
-;  "Turns the minor mode hm--html-region-mode on or off.
-;The function turns the hm--html-region-mode on, if ON is t and off otherwise."
-;  (if (eq major-mode 'hm--html-mode)
-;      ;;(string= mode-name "HTML")
-;      (if on
-;	  ;; html-region-mode on
-;	  (progn
-;	    (setq hm--html-region-mode t)
-;	    (use-local-map hm--html-region-mode-map))
-;	;; html-region-mode off
-;	(setq hm--html-region-mode nil)
-;	(use-local-map hm--html-mode-map))))
-
-
 
 
 ;;; hm--html-minor-mode

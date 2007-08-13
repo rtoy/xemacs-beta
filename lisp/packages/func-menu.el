@@ -450,7 +450,15 @@ of the buffer. For example \"Re-Scanning buffer...\"")
   "Used to tune the frequency of automatic checks on the buffer.
 The function fume-rescan-buffer-trigger only works whenever the value of the
 variable fume-rescan-trigger-counter reaches zero, whereupon it gets reset to
-buffer-size/fume-rescan-trigger-counter-buffer-size.")
+the maximum of a) buffer-size/fume-rescan-trigger-counter-buffer-size 
+            or b) fume-rescan-trigger-counter-min")
+
+(defvar fume-rescan-trigger-counter-min 50
+  "Used to tune the frequency of automatic checks on the buffer.
+The function fume-rescan-buffer-trigger only works whenever the value of the
+variable fume-rescan-trigger-counter reaches zero, whereupon it gets reset to
+the maximum of a) buffer-size/fume-rescan-trigger-counter-buffer-size 
+            or b) fume-rescan-trigger-counter-min")
 
 (fume-defvar-local
  fume-sort-function 'fume-sort-by-name
@@ -1779,7 +1787,8 @@ Otherwise returns fume-function-name-regexp"
       (if (> fume-rescan-trigger-counter 0)
           (setq fume-rescan-trigger-counter (1- fume-rescan-trigger-counter))
         (setq fume-rescan-trigger-counter
-              (/ (buffer-size) fume-rescan-trigger-counter-buffer-size))
+	      (max fume-rescan-trigger-counter-min
+              (/ (buffer-size) fume-rescan-trigger-counter-buffer-size)))
         (if (or fume-funclist-dirty-p
                 (save-excursion
                   (let (find fnam)

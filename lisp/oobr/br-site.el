@@ -6,12 +6,12 @@
 ;; KEYWORDS:     local, oop, tools
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Motorola Inc.
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    18-May-90
-;; LAST-MOD:     28-Jul-95 at 15:11:17 by Bob Weiner
+;; LAST-MOD:     20-Feb-97 at 06:59:49 by Bob Weiner
 ;;
-;; Copyright (C) 1990-1995  Free Software Foundation, Inc.
+;; Copyright (C) 1990-1995, 1997  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.
@@ -30,12 +30,12 @@
    )
   "*Alist of (FILENAME-REGEXP . EDIT-FUNCTION) elements for calling special
 functions to display particular file types within Emacs.  See also
-'hpath:find-alist' for external display program settings.")
+`hpath:find-alist' for external display program settings.")
 
 (defvar hpath:find-alist nil
   "*Alist of (FILENAME-REGEXP . EDIT-PROGRAM) elements for using window system
 dependent external programs to edit/display particular file types.  See also
-'hpath:display-alist' for internal, window-system independent display
+`hpath:display-alist' for internal, window-system independent display
 settings.")
 
 (defvar smart-scroll-proportional nil

@@ -116,13 +116,19 @@ Prefix argument N means scroll forward N lines."
   (let ((direction (prefix-numeric-value arg))
 	(w (selected-window)))
     (condition-case error-data
-	(progn
-	  (if (and (> direction 0)
-		   (pos-visible-in-window-p
-		    (vm-text-end-of (car vm-message-pointer))))
-	      (signal 'end-of-buffer nil)
-	    (scroll-up arg))
-	  nil )
+	(progn (scroll-up arg) nil)
+;; this looks like it should work, but doesn't because the
+;; redisplay code is schizophrenic when it comes to updates.  A
+;; window position may no longer be visible but
+;; pos-visible-in-window-p will still say it is because it was
+;; visible before some window size change happened.
+;;	(progn
+;;	  (if (and (> direction 0)
+;;		   (pos-visible-in-window-p
+;;		    (vm-text-end-of (car vm-message-pointer))))
+;;	      (signal 'end-of-buffer nil)
+;;	    (scroll-up arg))
+;;	  nil )
       (error
        (if (or (and (< direction 0)
 		    (> (point-min) (vm-text-of (car vm-message-pointer))))
@@ -551,7 +557,9 @@ Use mouse button 3 to choose a Web browser for the URL."
 (defun vm-show-current-message ()
   (and vm-display-using-mime
        vm-auto-decode-mime-messages
-       (not vm-mime-decoded)
+       (if vm-mail-buffer
+	   (not (vm-buffer-variable-value vm-mail-buffer 'vm-mime-decoded))
+	 (not vm-mime-decoded))
        (not (vm-mime-plain-message-p (car vm-message-pointer)))
        (vm-decode-mime-message))
   (vm-save-buffer-excursion

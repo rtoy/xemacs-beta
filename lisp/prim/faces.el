@@ -1360,7 +1360,7 @@ you want to add code to do stuff like this, use the create-device-hook."
 	    (font (face-font 'modeline-buffer-id 'global)))
 	(and (featurep 'x)
 	     (or fg
-		 (set-face-foreground 'modeline-buffer-id "blue" 'global
+		 (set-face-foreground 'modeline-buffer-id "blue4" 'global
 				      '(color x))))
 	(if font
 	    nil
@@ -1379,7 +1379,7 @@ you want to add code to do stuff like this, use the create-device-hook."
 	    (font (face-font 'modeline-mousable 'global)))
 	(and (featurep 'x)
 	     (or fg
-		 (set-face-foreground 'modeline-mousable "red" 'global
+		 (set-face-foreground 'modeline-mousable "firebrick" 'global
 				      '(color x))))
 	(if font
 	    nil
@@ -1397,7 +1397,8 @@ you want to add code to do stuff like this, use the create-device-hook."
 	     (or fg
 		 (set-face-foreground 'modeline-mousable-minor-mode
 				      '(((color x) . "green4")
-					((color x) . "green")) 'global)))))
+					((color x) . "forestgreen"))
+				      'global)))))
   (set-face-parent 'modeline-mousable-minor-mode 'modeline-mousable
 		   nil nil 'append)
   )

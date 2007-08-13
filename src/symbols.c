@@ -328,6 +328,7 @@ oblookup (Lisp_Object obarray, CONST Bufbyte *ptr, Bytecount size)
   return (make_int (hash));
 }
 
+#if 0 /* Emacs 19.34 */
 int
 hash_string (CONST Bufbyte *ptr, Bytecount len)
 {
@@ -341,6 +342,26 @@ hash_string (CONST Bufbyte *ptr, Bytecount len)
       c = *p++;
       if (c >= 0140) c -= 40;
       hash = ((hash<<3) + (hash>>28) + c);
+    }
+  return hash & 07777777777;
+}
+#endif
+
+/* derived from hashpjw, Dragon Book P436. */
+int
+hash_string (CONST Bufbyte *ptr, Bytecount len)
+{
+  CONST Bufbyte *p = ptr;
+  int hash = 0, g;
+  Bytecount count = len;
+
+  while (count-- > 0)
+    {
+      hash = (hash << 4) + *p++;
+      if (g = (hash & 0xf0000000)) {
+	hash = hash ^ (g >> 24);
+	hash = hash ^ g;
+      }
     }
   return hash & 07777777777;
 }

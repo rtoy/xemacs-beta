@@ -1556,8 +1556,9 @@ call this function from other code."
   ;; recover.
   (setq scroll-boundary-error-command this-command
 	scroll-boundary-error-point initial-point)
-  (signal (if (< lines 0) 'beginning-of-buffer 'end-of-buffer)
-	  nil))
+  (when signal-error-on-buffer-boundary
+    (signal (if (< lines 0) 'beginning-of-buffer 'end-of-buffer)
+	    nil)))
 
 
 ;;; Some convenience redefinitions for modes that don't like scroll-in-place

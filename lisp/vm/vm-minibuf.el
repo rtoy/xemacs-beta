@@ -262,8 +262,8 @@ default the local keymap of the current buffer is used."
     (if (not multi-word)
 	(define-key minibuffer-local-map "\r"
 	  'vm-minibuffer-complete-word-and-exit))
-    ;; evade the XEmacs dialox box, yeccch.
-    (let ((should-use-dialog-box nil))
+    ;; evade the XEmacs dialog box, yeccch.
+    (let ((use-dialog-box nil))
       (read-string prompt))))
 
 (defvar last-nonmenu-event)
@@ -361,8 +361,8 @@ Line editing keys are:
 					  must-match initial history)
   "Like read-file-name, except HISTORY's value is unaltered."
   (let ((oldvalue (symbol-value history))
-	;; evade the XEmacs dialox box, yeccch.
-	(should-use-dialog-box nil))
+	;; evade the XEmacs dialog box, yeccch.
+	(use-dialog-box nil))
     (unwind-protect
 	(condition-case nil
 	    (read-file-name prompt dir default must-match initial history)

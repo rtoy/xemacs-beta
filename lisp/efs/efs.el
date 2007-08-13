@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.1 $
+;; Version:      $Revision: 1.56 $
 ;; RCS:          
 ;; Description:  Transparent FTP support for the original GNU Emacs
 ;;               from FSF and Lucid Emacs
@@ -97,7 +97,8 @@
 ;;;
 ;;;        (require 'efs)
 ;;;
-;;; in your .emacs file.
+;;; in your .emacs file.  Note this takes awhile, and some users have
+;;; found this to  be unbearably slow.  Therefore ...
 ;;;
 ;;; If you would like efs to be autoloaded when you attempt to access
 ;;; a remote file, put
@@ -905,7 +906,7 @@
 ;;;    efs|Andy Norman and Sandy Rutherford
 ;;;    |ange@hplb.hpl.hp.com and sandy@ibm550.sissa.it
 ;;;    |transparent FTP Support for GNU Emacs
-;;;    |$Date: 1997/02/11 05:05:14 $|$efs release: 1.15 beta $|
+;;;    |$Date: 94/08/25 $|$efs release: 1.15 beta $|
 
 ;;; Host and listing type notation:
 ;;;
@@ -1052,7 +1053,7 @@
 (defconst efs-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.1 $" 11 -2)))
+	  (substring "$Revision: 1.56 $" 11 -2)))
 
 (defconst efs-time-zero 1970) ; we count time from midnight, Jan 1, 1970 GMT.
 
@@ -7438,8 +7439,6 @@ of the directory in efs's internal cache."
 			 (efs-internal-file-name-extension filename)))
 		  (type (efs-xfer-type host-type filename nil nil))
 		  (abbr (efs-relativize-filename filename))
-		  (temp (concat (car (efs-make-tmp-name nil host))
-				(or (substring abbr (string-match "\\." abbr)) "")))
 		  (i-f-c-size 0))
 	      
 	      (unwind-protect

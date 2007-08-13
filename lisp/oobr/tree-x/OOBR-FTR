@@ -1,0 +1,25 @@
+
+/home/infodock/lisp/oobr/tree-x/draw.c
+[function]@- BeginFrame@void BeginFrame() {
+[function]@- EndFrame@void EndFrame() {
+
+/home/infodock/lisp/oobr/tree-x/intf.c
+[function]@- Pause@void Pause() {
+[function]@- UserEventLoop@void UserEventLoop() {
+
+/home/infodock/lisp/oobr/tree-x/tree.c
+[function]@- MakeNode@Tree* MakeNode() {
+
+/home/infodock/lisp/oobr/tree-x/usleep.c
+[function]@- usleep@int usleep( unsigned long int microSeconds ) {
+
+/home/infodock/lisp/oobr/tree-x/intf.c
+#defi@- GLOBALS@#define GLOBALS
+#defi@- gray_width@#define gray_width
+#defi@- gray_height@#define gray_height
+#defi@- check_width@#define check_width
+#defi@- check_height@#define check_height
+#defi@- slider_pixmap_width@#define slider_pixmap_width
+#defi@- slider_pixmap_height@#define slider_pixmap_height
+#defi@- shell_tra@#define shell_translations
+

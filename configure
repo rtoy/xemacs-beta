@@ -4658,9 +4658,9 @@ else
 fi
 
     fi
-    # On SunOS4 we must kludge harder to try to detect Xmu
+    # On SunOS4 (and 5!) we must kludge harder to try to detect Xmu
     # Upgrade to autoconf 2 and use ac_check_lib - mrb
-    if test "${with_xmu}" != "yes" && test -n "$OPENWINHOME" ; then
+    if test "${with_xmu}" != "yes" ; then
       # begin expansion of ac_have_library
       ac_save_LIBS="${LIBS}"
       LIBS="${LIBS} -lXmu -lXt -lXext -lX11 -lm"

@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.40
+;; Version: 1.44
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -35,16 +35,6 @@
 
 ;;; Compatibility.
 
-(unless (fboundp 'x-color-values)
-  ;; Emacs function missing in XEmacs 19.14.
-  (defun x-color-values  (color)
-    "Return a description of the color named COLOR on frame FRAME.
-The value is a list of integer RGB values--(RED GREEN BLUE).
-These values appear to range from 0 to 65280 or 65535, depending
-on the system; white is (65280 65280 65280) or (65535 65535 65535).
-If FRAME is omitted or nil, use the selected frame."
-    (color-instance-rgb-components (make-color-instance color))))
-
 (unless (fboundp 'frame-property)
   ;; XEmacs function missing in Emacs 19.34.
   (defun frame-property (frame property &optional default)
@@ -53,7 +43,7 @@ If FRAME is omitted or nil, use the selected frame."
 	default)))
 
 (defun custom-background-mode ()
-  "Kludge to detext background mode."
+  "Kludge to detect background mode."
   (let* ((bg-resource 
 	  (condition-case ()
 	      (x-get-resource ".backgroundMode" "BackgroundMode" 'string)
@@ -80,22 +70,16 @@ If FRAME is omitted or nil, use the selected frame."
 
 ;; XEmacs and Emacs have different definitions of `facep'.  
 ;; The Emacs definition is the useful one, so emulate that. 
-(cond ((not (fboundp 'facep))
-       (defun custom-facep (face) 
-	 "No faces"
-	 nil))
-      ((string-match "XEmacs" emacs-version)
-       (defun custom-facep (face) 
-	 "Face symbol or object."
-	 (or (facep face)
-	     (find-face face))))
-      (t
-       (defalias 'custom-facep 'facep)))
+(if (fboundp 'facep)
+    (defalias 'custom-facep 'facep)
+  (defun custom-facep (face) 
+    "No faces"
+    nil))
 
 ;;; The `defcustom' Macro.
 
 (defun custom-declare-variable (symbol value doc &rest args)
-  "Like `defcustom', but SYMBOL and VALUE are evaluated as notmal arguments."
+  "Like `defcustom', but SYMBOL and VALUE are evaluated as normal arguments."
   (unless (and (default-boundp symbol)
 	       (not (get symbol 'saved-value)))
     (set-default symbol (if (get symbol 'saved-value)
@@ -154,6 +138,15 @@ information."
 
 ;;; The `defface' Macro.
 
+
+;(defun get-face-documentation (face)
+;  "Get the documentation string for FACE."
+;  (get face 'face-documentation))
+
+;(defun set-face-documentation (face string)
+;  "Set the documentation string for FACE to STRING."
+;  (put face 'face-documentation string))
+
 (defun custom-declare-face (face spec doc &rest args)
   "Like `defface', but FACE is evaluated as a normal argument."
   (put face 'factory-face spec)
@@ -163,8 +156,8 @@ information."
       ;; If the user has already created the face, respect that.
       (let ((value (or (get face 'saved-face) spec)))
 	(custom-face-display-set face value))))
-  (when doc
-    (put face 'face-documentation doc))
+  (when (and doc (null (get-face-documentation face)))
+    (set-face-documentation face doc))
   (custom-handle-all-keywords face args 'custom-face)
   (run-hooks 'custom-define-hook)
   face)
@@ -337,7 +330,7 @@ LOAD should be either a library file name, or a feature name."
 Iff optional FRAME is non-nil, set it for that frame only.
 See `defface' for information about SPEC."
   (when (fboundp 'copy-face)
-    (copy-face 'custom-face-empty face)
+    (copy-face 'custom-face-empty face frame)
     (while spec 
       (let* ((entry (car spec))
 	     (display (nth 0 entry))
@@ -408,34 +401,6 @@ The SET function should take three arguments, the face to modify, the
 value of the attribute, and optionally the frame where the face should
 be changed.")
 
-(when (string-match "XEmacs" emacs-version)
-  ;; Support for special XEmacs font attributes.
-  (require 'font)
-
-  (unless (fboundp 'face-font-name)
-    (defun face-font-name (face &rest args)
-      (apply 'face-font face args)))
-
-  (defun set-face-font-size (face size &rest args)
-    "Set the font of FACE to SIZE"
-    (let* ((font (apply 'face-font-name face args))
-	   (fontobj (font-create-object font)))
-      (set-font-size fontobj size)
-      (apply 'set-face-font face fontobj args)))
-
-  (defun set-face-font-family (face family &rest args)
-    "Set the font of FACE to FAMILY"
-    (let* ((font (apply 'face-font-name face args))
-	   (fontobj (font-create-object font)))
-      (set-font-family fontobj family)
-      (apply 'set-face-font face fontobj args)))
-
-  (nconc custom-face-attributes
-	 '((:family (editable-field :format "Family: %v") 
-		    set-face-font-family)
-	   (:size (editable-field :format "Size: %v")
-		  set-face-font-size))))
-
 (defun custom-face-attribites-set (face frame &rest atts)
   "For FACE on FRAME set the attributes [KEYWORD VALUE]....
 Each keyword should be listed in `custom-face-attributes'.
@@ -447,7 +412,7 @@ If FRAME is nil, set the default face."
 	   (fun (nth 2 (assq name custom-face-attributes))))
       (setq atts (cdr (cdr atts)))
       (condition-case nil
-	  (funcall fun face value)
+	  (funcall fun face value frame)
 	(error nil)))))
 
 (defun custom-set-face-bold (face value &optional frame)
@@ -557,27 +522,24 @@ See `defface' for the format of SPEC."
 			     ["Apropos..." customize-apropos t])
   "Customize menu")
 
-(defun custom-menu-reset ()
-  "Reset customize menu."
-  (remove-hook 'custom-define-hook 'custom-menu-reset)
-  (cond ((fboundp 'add-submenu)
-	 ;; XEmacs with menus.
-	 (add-submenu '("Help") custom-help-menu))
-	((string-match "XEmacs" emacs-version)
-	 ;; XEmacs without menus.
-	 )
-	(t
-	 ;; Emacs.
-	 (define-key global-map [menu-bar help-menu customize-menu]
-	   (cons (car custom-help-menu)
-		 (easy-menu-create-keymaps (car custom-help-menu)
-					   (cdr custom-help-menu)))))))
-
-(unless (fboundp 'load-gc)
-  (custom-menu-reset))
+;(defun custom-menu-reset ()
+;  "Reset customize menu."
+;  (remove-hook 'custom-define-hook 'custom-menu-reset)
+;  (define-key global-map [menu-bar help-menu customize-menu]
+;    (cons (car custom-help-menu)
+;	  (easy-menu-create-keymaps (car custom-help-menu)
+;				    (cdr custom-help-menu)))))
 
 ;;; The End.
 
 (provide 'custom)
+
+(when (and (not (fboundp 'load-gc))
+	   (string-match "XEmacs" emacs-version))
+  ;; Overwrite definitions for XEmacs.
+  (load-library "custom-xmas"))
+
+(unless (fboundp 'load-gc)
+  (custom-menu-reset))
 
 ;; custom.el ends here

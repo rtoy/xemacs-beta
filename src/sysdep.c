@@ -453,6 +453,7 @@ child_setup_tty (int out)
 #ifdef OLCUC
   s.main.c_oflag &= ~OLCUC;	/* Disable upcasing on output.  */
 #endif
+  s.main.c_oflag &= ~TAB3;	/* Disable tab expansion */
 #if defined (CSIZE) && defined (CS8)
   s.main.c_cflag = (s.main.c_cflag & ~CSIZE) | CS8; /* Don't strip 8th bit */
 #endif

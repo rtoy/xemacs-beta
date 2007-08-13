@@ -155,7 +155,8 @@ are used."
     (save-excursion
       (unwind-protect
 	  (progn
-	    (set-buffer (or visited (find-file-noselect file)))
+	    (let ((find-file-hooks nil))
+	      (set-buffer (or visited (find-file-noselect file))))
 	    (save-excursion
 	      (save-restriction
 		(widen)
@@ -343,8 +344,9 @@ autoloads go somewhere else.")
 	(trim-name (autoload-trim-file-name file))
 	section-begin form)
     (save-excursion
-      (set-buffer (or (get-file-buffer generated-autoload-file)
-		      (find-file-noselect generated-autoload-file)))
+      (let ((find-file-hooks nil))
+	(set-buffer (or (get-file-buffer generated-autoload-file)
+			(find-file-noselect generated-autoload-file))))
       ;; First delete all sections for this file.
       (goto-char (point-min))
       (while (search-forward generate-autoload-section-header nil t)
@@ -434,7 +436,8 @@ Obsolete autoload entries for files that no longer exist are deleted."
 		     (directory-file-name dir))))
 	(enable-local-eval nil))
     (save-excursion
-      (set-buffer (find-file-noselect generated-autoload-file))
+      (let ((find-file-hooks nil))
+	(set-buffer (find-file-noselect generated-autoload-file)))
       (goto-char (point-min))
       (while (search-forward generate-autoload-section-header nil t)
 	(let* ((begin (match-beginning 0))

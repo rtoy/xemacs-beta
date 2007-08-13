@@ -1,6 +1,6 @@
 ;;;  hm--html-menu ---  A menu for the hm--html-mode.
 ;;;  
-;;;  $Id: hm--html-menu.el,v 1.2 1997/02/16 01:29:08 steve Exp $
+;;;  $Id: hm--html-menu.el,v 1.3 1997/02/22 22:07:11 steve Exp $
 ;;;
 ;;;  Copyright (C) 1993 - 1997  Heiko Muenkel
 ;;;  email: muenkel@tnt.uni-hannover.de
@@ -36,14 +36,6 @@
 ;;;     Look at the files hm--html-mode.el and hm--html-configuration
 ;;;     for further installation points.
 ;;;
-
-;(provide 'hm--html-menu)
-;(require 'hm--html-drag-and-drop)
-;(require 'html-mode)
-;(require 'hm--html-mode)
-;(require 'hm--html)
-;(require 'adapt)
-
 
 ;;
 ;; Menu "HTML"
@@ -88,6 +80,7 @@
 	   (hm--html-insert-template hm--html-frame-template-file)
 	   (file-exists-p hm--html-frame-template-file)]
 	  "----"
+	  ["Doctype" hm--html-add-doctype t]
 	  ["Html" hm--html-add-html t]
 	  ["Head" hm--html-add-head t]
 	  ["Body" hm--html-add-body t]
@@ -95,9 +88,13 @@
 	  ["Title and Header..." hm--html-add-title-and-header t]
 	  ["Title..." hm--html-add-title t]
 	  ["Header..." hm--html-add-header t]
-	  ["Node Link..." hm--html-add-normal-node-link t]
 	  ["Address" hm--html-add-address t]
 	  ["Signature" hm--html-add-signature t]
+	  "----"
+	  ["Meta information..." hm--html-add-meta t]
+	  ["Node Link..." hm--html-add-normal-node-link t]
+	  ["Isindex..." hm--html-add-isindex t]
+	  ["Document Base..." hm--html-add-base t]
 	  "----"
 	  ["Created comment" hm--html-insert-created-comment t]
 	  ["Changed comment" hm--html-insert-changed-comment t]
@@ -131,6 +128,7 @@
 	  "----"
 	  ["Paragraph container" hm--html-add-paragraph t]
 	  ["Paragraph start tag" hm--html-add-paragraph-separator t]
+	  ["Document division" hm--html-add-document-division t]
 	  ["New line" hm--html-add-line-break t]
 	  ["Horizontal rule" hm--html-add-horizontal-rule t]
 	  )
@@ -138,6 +136,8 @@
 	  ["Without links" hm--html-add-plaintext t]
 	  ["With links" hm--html-add-preformated t]
 	  "----"
+	  ["Basefont..." hm--html-add-basefont t]
+	  ["Font..." hm--html-add-font t]
           ["Blockquote" hm--html-add-blockquote t]
 	  ["Listing" hm--html-add-listing t]
 	  ["Abstract" hm--html-add-abstract t]
@@ -210,10 +210,15 @@
 	  ["Top aligned image..." hm--html-add-image-top t]
 	  ["Middle aligned image..." hm--html-add-image-middle t]
 	  ["Bottom aligned image..." hm--html-add-image-bottom t]
+	  ["Image as map? ..." hm--html-add-image t]
 	  ["Drag & Drop"
 	   idd-start-mouse-drag-and-drop
 	   :active t
 	   :keys "\\[idd-mouse-drag-and-drop]"]
+	  "----"
+	  ["Image map..." hm--html-add-image-map t]
+	  ["Map..." hm--html-add-map t]
+	  ["Area..." hm--html-add-area t]
 	  "----"
 	  ["Applet..." hm--html-add-applet t]
 	  ["Parameter..." hm--html-add-applet-parameter t]
@@ -345,11 +350,13 @@
 	   )
 	  "----"
 	  ["Paragraph container" hm--html-add-paragraph-to-region t]
+	  ["Document division" hm--html-add-document-division-to-region t]
 	  )
 	 ("Formatting Paragraphs"
 	  ["Without links" hm--html-add-plaintext-to-region t]
 	  ["With links" hm--html-add-preformated-to-region t]
 	  "----"
+	  ["Font..." hm--html-add-font-to-region t]
           ["Blockquote" hm--html-add-blockquote-to-region t]
 	  ["Listing" hm--html-add-listing-to-region t]
 	  ["Abstract" hm--html-add-abstract-to-region t]
@@ -417,6 +424,11 @@
 ;	  ["Margin" hm--html-add-margin-to-region t]
 	  "----"
 	  ["HTML Comment" hm--html-add-comment-to-region t]
+	  )
+	 ("Include"
+	  ["Map..." hm--html-add-map-to-region t]
+	  "----"
+	  ["Applet..." hm--html-add-applet-to-region t]
 	  )
 	 ("Forms"
 	  ["Form..." hm--html-add-form-to-region t])

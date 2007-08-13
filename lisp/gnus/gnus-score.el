@@ -43,7 +43,7 @@ score files in the \"/ftp.some-where:/pub/score\" directory.
  (setq gnus-global-score-files
        '(\"/ftp.ifi.uio.no:/pub/larsi/ding/score/soc.motss.SCORE\"
          \"/ftp.some-where:/pub/score\"))"
-  :group 'gnus-score
+  :group 'gnus-score-files
   :type '(repeat file))
 
 (defcustom gnus-score-file-single-match-alist nil
@@ -58,7 +58,7 @@ use multiple matches, see gnus-score-file-multiple-match-alist).
 
 These score files are loaded in addition to any files returned by
 gnus-score-find-score-files-function (which see)."
-  :group 'gnus-score
+  :group 'gnus-score-files
   :type '(repeat (cons regexp (repeat file))))
 
 (defcustom gnus-score-file-multiple-match-alist nil
@@ -74,17 +74,18 @@ gnus-score-file-single-match-alist).
 
 These score files are loaded in addition to any files returned by
 gnus-score-find-score-files-function (which see)."
-  :group 'gnus-score
+  :group 'gnus-score-files
   :type '(repeat (cons regexp (repeat file))))
 
 (defcustom gnus-score-file-suffix "SCORE"
   "Suffix of the score files."
-  :group 'gnus-score
+  :group 'gnus-score-files
   :type 'string)
 
 (defcustom gnus-adaptive-file-suffix "ADAPT"
   "Suffix of the adaptive score files."
-  :group 'gnus-score
+  :group 'gnus-score-files
+  :group 'gnus-score-adapt
   :type 'string)
 
 (defcustom gnus-score-find-score-files-function 'gnus-score-find-bnews
@@ -104,7 +105,7 @@ See the documentation to these functions for more information.
 This variable can also be a list of functions to be called.  Each
 function should either return a list of score files, or a list of
 score alists."
-  :group 'gnus-score
+  :group 'gnus-score-files
   :type '(radio (function-item gnus-score-find-single)
 		(function-item gnus-score-find-hierarchical)
 		(function-item gnus-score-find-bnews)
@@ -112,13 +113,13 @@ score alists."
 
 (defcustom gnus-score-interactive-default-score 1000
   "*Scoring commands will raise/lower the score with this number as the default."
-  :group 'gnus-score
+  :group 'gnus-score-default
   :type 'integer)
 
 (defcustom gnus-score-expiry-days 7
   "*Number of days before unused score file entries are expired.
 If this variable is nil, no score file entries will be expired."
-  :group 'gnus-score
+  :group 'gnus-score-expire
   :type '(choice (const :tag "never" nil)
 		 number))
 
@@ -126,34 +127,34 @@ If this variable is nil, no score file entries will be expired."
   "*In non-nil, update matching score entry dates.
 If this variable is nil, then score entries that provide matches
 will be expired along with non-matching score entries."
-  :group 'gnus-score
+  :group 'gnus-score-expire
   :type 'boolean)
 
 (defcustom gnus-orphan-score nil
   "*All orphans get this score added.  Set in the score file."
-  :group 'gnus-score
+  :group 'gnus-score-default
   :type 'integer)
 
 (defcustom gnus-decay-scores nil
   "*If non-nil, decay non-permanent scores."
-  :group 'gnus-score
+  :group 'gnus-score-decay
   :type 'boolean)
 
 (defcustom gnus-decay-score-function 'gnus-decay-score
   "*Function called to decay a score.
 It is called with one parameter -- the score to be decayed."
-  :group 'gnus-score
+  :group 'gnus-score-decay
   :type '(radio (function-item gnus-decay-score)
 		(function :tag "Other")))
 
 (defcustom gnus-score-decay-constant 3
   "*Decay all \"small\" scores with this amount."
-  :group 'gnus-score
+  :group 'gnus-score-decay
   :type 'integer)
 
 (defcustom gnus-score-decay-scale .05
   "*Decay all \"big\" scores with this factor."
-  :group 'gnus-score
+  :group 'gnus-score-decay
   :type 'number)
 
 (defcustom gnus-home-score-file nil
@@ -186,7 +187,7 @@ It can be:
 
    The list will be traversed from the beginning towards the end looking
    for matches."
-  :group 'gnus-score
+  :group 'gnus-score-files
   :type '(choice string
 		 (repeat (choice string
 				 (cons regexp (repeat file))
@@ -196,7 +197,8 @@ It can be:
 (defcustom gnus-home-adapt-file nil
   "Variable to control where new adaptive score entries are to go.
 This variable allows the same syntax as `gnus-home-score-file'."
-  :group 'gnus-score
+  :group 'gnus-score-adapt
+  :group 'gnus-score-files
   :type '(choice string
 		 (repeat (choice string
 				 (cons regexp (repeat file))
@@ -211,7 +213,7 @@ This variable allows the same syntax as `gnus-home-score-file'."
     (gnus-killed-mark (from -1) (subject -20))
     (gnus-del-mark (from -2) (subject -15)))
 "Alist of marks and scores."
-:group 'gnus-score
+:group 'gnus-score-adapt
 :type '(repeat (cons (symbol :tag "Mark")
 		     (repeat (list (choice :tag "Header"
 					   (const from)
@@ -221,7 +223,7 @@ This variable allows the same syntax as `gnus-home-score-file'."
 
 (defcustom gnus-ignored-adaptive-words nil
   "List of words to be ignored when doing adaptive word scoring."
-  :group 'gnus-score
+  :group 'gnus-score-adapt
   :type '(repeat string))
 
 (defcustom gnus-default-ignored-adaptive-words
@@ -240,7 +242,7 @@ This variable allows the same syntax as `gnus-home-score-file'."
     "both" "true" "off" "say" "another" "state" "might" "under" "start"
     "try" "re")
   "Default list of words to be ignored when doing adaptive word scoring."
-  :group 'gnus-score
+  :group 'gnus-score-adapt
   :type '(repeat string))
 
 (defcustom gnus-default-adaptive-word-score-alist  
@@ -249,13 +251,13 @@ This variable allows the same syntax as `gnus-home-score-file'."
     (,gnus-killed-mark . -20)
     (,gnus-del-mark . -15))
 "Alist of marks and scores."
-:group 'gnus-score
+:group 'gnus-score-adapt
 :type '(repeat (cons (character :tag "Mark")
 		     (integer :tag "Score"))))
 
 (defcustom gnus-score-mimic-keymap nil
   "*Have the score entry functions pretend that they are a keymap."
-  :group 'gnus-score
+  :group 'gnus-score-default
   :type 'boolean)
 
 (defcustom gnus-score-exact-adapt-limit 10
@@ -266,12 +268,13 @@ for false positives is great, so if the length of the match is less
 than this variable, exact matching will be used.
 
 If this variable is nil, exact matching will always be used."
-  :group 'gnus-score
+  :group 'gnus-score-adapt
   :type '(choice (const nil) integer))
 
 (defcustom gnus-score-uncacheable-files "ADAPT$"
   "All score files that match this regexp will not be cached."
-  :group 'gnus-score
+  :group 'gnus-score-adapt
+  :group 'gnus-score-files
   :type 'regexp)
 
 (defcustom gnus-score-default-header nil
@@ -291,7 +294,7 @@ Should be one of the following symbols.
  f: followup
 
 If nil, the user will be asked for a header."
-  :group 'gnus-score
+  :group 'gnus-score-default
   :type '(choice (const :tag "from" a)
 		 (const :tag "subject" s)
 		 (const :tag "body" b)
@@ -320,7 +323,7 @@ Should be one of the following symbols.
  =: equal to number
 
 If nil, the user will be asked for a match type."
-  :group 'gnus-score
+  :group 'gnus-score-default
   :type '(choice (const :tag "substring" s)
 		 (const :tag "exact string" e)
 		 (const :tag "fuzzy string" f)
@@ -334,7 +337,7 @@ If nil, the user will be asked for a match type."
 
 (defcustom gnus-score-default-fold nil
   "Use case folding for new score file entries iff not nil."
-  :group 'gnus-score
+  :group 'gnus-score-default
   :type 'boolean)
 
 (defcustom gnus-score-default-duration nil
@@ -347,14 +350,14 @@ Should be one of the following symbols.
  i: immediate
 
 If nil, the user will be asked for a duration."
-  :group 'gnus-score
+  :group 'gnus-score-default
   :type '(choice (const :tag "temporary" t)
 		 (const :tag "permanent" p)
 		 (const :tag "immediate" i)))
 
 (defcustom gnus-score-after-write-file-function nil
   "Function called with the name of the score file just written to disk."
-  :group 'gnus-score
+  :group 'gnus-score-files
   :type 'function)
 
 
@@ -2050,7 +2053,7 @@ SCORE is the score to add."
 
 (defun gnus-score-adaptive ()
   "Create adaptive score rules for this newsgroup."
-  (when gnus-use-adaptive-scoring
+  (when gnus-newsgroup-adaptive
     ;; We change the score file to the adaptive score file.
     (save-excursion
       (set-buffer gnus-summary-buffer)
@@ -2059,8 +2062,8 @@ SCORE is the score to add."
 	   (gnus-score-file-name 
 	    gnus-newsgroup-name gnus-adaptive-file-suffix))))
     ;; Perform ordinary line scoring.
-    (when (or (not (listp gnus-use-adaptive-scoring))
-	      (memq 'line gnus-use-adaptive-scoring))
+    (when (or (not (listp gnus-newsgroup-adaptive))
+	      (memq 'line gnus-newsgroup-adaptive))
       (save-excursion
 	(let* ((malist (gnus-copy-sequence gnus-adaptive-score-alist))
 	       (alist malist)
@@ -2119,8 +2122,8 @@ SCORE is the score to add."
 	    (setq data (cdr data))))))
 
     ;; Perform adaptive word scoring.
-    (when (and (listp gnus-use-adaptive-scoring)
-	       (memq 'word gnus-use-adaptive-scoring))
+    (when (and (listp gnus-newsgroup-adaptive)
+	       (memq 'word gnus-newsgroup-adaptive))
       (nnheader-temp-write nil
 	(let* ((hashtb (gnus-make-hashtable 1000))
 	       (date (gnus-day-number (current-time-string)))
@@ -2702,14 +2705,16 @@ If ADAPT, return the home adaptive file instead."
   (if (string-match "^[^.]+\\." group)
       (concat (match-string 0 group) gnus-score-file-suffix)
     ;; Group name without any dots.
-    (concat group "." gnus-score-file-suffix)))
+    (concat group (if (gnus-use-long-file-name 'not-score) "." "/")
+	    gnus-score-file-suffix)))
       
 (defun gnus-hierarchial-home-adapt-file (group)
   "Return the adapt file of the top-level hierarchy of GROUP."
   (if (string-match "^[^.]+\\." group)
       (concat (match-string 0 group) gnus-adaptive-file-suffix)
     ;; Group name without any dots.
-    (concat group "." gnus-adaptive-file-suffix)))
+    (concat group (if (gnus-use-long-file-name 'not-score) "." "/")
+	    gnus-adaptive-file-suffix)))
 
 ;;;
 ;;; Score decays

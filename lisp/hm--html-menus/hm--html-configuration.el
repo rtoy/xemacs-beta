@@ -1,6 +1,6 @@
 ;;; hm--html-configuration.el - Configurationfile for the html-mode
 ;;;
-;;; $Id: hm--html-configuration.el,v 1.2 1997/02/16 01:29:08 steve Exp $
+;;; $Id: hm--html-configuration.el,v 1.3 1997/02/22 22:07:09 steve Exp $
 ;;;
 ;;; Copyright (C) 1993 - 1997  Heiko Muenkel
 ;;; email: muenkel@tnt.uni-hannover.de
@@ -72,6 +72,11 @@ For example: \"http://www.tnt.uni-hannover.de:80/data/info/www/tnt/info/tnt/whoi
 
 (defvar hm--html-username nil
   "*Your Name for the signature. For example: \"Heiko Münkel\".")
+
+
+;;; HTML Doctype
+(defvar hm--html-html-doctype-version "-//W3C//DTD HTML 3.2 Final//EN"
+  "The HTML version. This is used in the doctype element.")
 
 
 ;;; Your favorite server (eg: the name of the host of your own http server)
@@ -471,6 +476,10 @@ See, usually, /usr/include/sys/signal.h.
 	Linux		: (setq html-sigusr1-signal-value 10))")
 
 
+;;; Meta information
+(defvar hm--html-meta-name-alist '(("Expires") ("Keys") ("Author"))
+  "*Alist with possible names for the name or http-equiv attribute of meta.")
+
 ;;; indentation
 
 (defvar hm--html-disable-indentation nil
@@ -489,6 +498,124 @@ done this.")
 
 (defvar hm--html-tag-name-alist
   '(("!--" (:hm--html-one-element-tag t))
+    ("!doctype" (:hm--html-one-element-tag t))
+    ("isindex" (:hm--html-one-element-tag t)
+     (:hm--html-optional-attributes (prompt)))
+    ("base" (:hm--html-one-element-tag t)
+     (:hm--html-required-attributes (href)))
+    ("meta" (:hm--html-one-element-tag t)
+     (:hm--html-required-attributes (content))
+     (:hm--html-optional-attributes (http-equiv name)))
+    ("link" (:hm--html-one-element-tag t)
+     (:hm--html-optional-attributes (href rel rev title)))
+    ("hr" (:hm--html-one-element-tag t)
+     (:hm--html-optional-attributes (align noshade size width)))
+    ("input" (:hm--html-one-element-tag t)
+     (:hm--html-optional-attributes
+      (type name value checked size maxlength src align)))
+    ("img" (:hm--html-one-element-tag t)
+     (:hm--html-required-attributes (src))
+     (:hm--html-optional-attributes
+      (alt align height width border hspace vspace usemap ismap)))
+    ("param" (:hm--html-one-element-tag t)
+     (:hm--html-required-attributes (name))
+     (:hm--html-optional-attributes (value)))
+    ("br" (:hm--html-one-element-tag t)
+     (:hm--html-optional-attributes (clear)))
+    ("basefont" (:hm--html-one-element-tag t)
+     (:hm--html-optional-attributes size))
+    ("area" (:hm--html-one-element-tag t)
+     (:hm--html-required-attributes (alt))
+     (:hm--html-optional-attributes (shape coords href nohref)))
+    ("option" (:hm--html-one-element-tag t)
+     (:hm--html-optional-attributes (selected value)))
+
+    ("html" (:hm--html-two-element-tag t))
+    ("head" (:hm--html-two-element-tag t))
+    ("body" (:hm--html-two-element-tag t)
+     (:hm--html-optional-attributes (bgcolor text link vlink alink background))
+     )
+    ("h1" (:hm--html-two-element-tag t)
+     (:hm--html-optional-attributes (align)))
+    ("h2" (:hm--html-two-element-tag t)
+     (:hm--html-optional-attributes (align)))
+    ("h3" (:hm--html-two-element-tag t)
+     (:hm--html-optional-attributes (align)))
+    ("h4" (:hm--html-two-element-tag t)
+     (:hm--html-optional-attributes (align)))
+    ("h5" (:hm--html-two-element-tag t)
+     (:hm--html-optional-attributes (align)))
+    ("h6" (:hm--html-two-element-tag t)
+     (:hm--html-optional-attributes (align)))
+    ("address" (:hm--html-two-element-tag t))
+    ("p" (:hm--html-one-or-two-element-tag t)
+     (:hm--html-optional-attributes (align)))
+    ("ul" (:hm--html-two-element-tag t)
+     (:hm--html-optional-attributes (type compact)))
+    ("ol" (:hm--html-two-element-tag t)
+     (:hm--html-optional-attributes (type start compact)))
+    ("dl" (:hm--html-two-element-tag t)
+     (:hm--html-optional-attributes (compact)))
+    ("li" (:hm--html-one-or-two-element-tag t)
+     (:hm--html-optional-attributes (type (value "ol"))))
+    ("dt" (:hm--html-one-or-two-element-tag t))
+    ("dd" (:hm--html-one-or-two-element-tag t))
+    ("dir" (:hm--html-two-element-tag t)
+     (:hm--html-optional-attributes (compact)))
+    ("menu" (:hm--html-two-element-tag t)
+     (:hm--html-optional-attributes (compact)))
+    ("pre" (:hm--html-two-element-tag t)
+     (:hm--html-optional-attributes (width)))
+    ("div" (:hm--html-two-element-tag t)
+     (:hm--html-optional-attributes (align)))
+    ("center" (:hm--html-two-element-tag t))
+    ("blockquote" (:hm--html-two-element-tag t))
+    ("form" (:hm--html-two-element-tag t)
+     (:hm--html-optional-attributes (action method enctype)))
+    ("select" (:hm--html-two-element-tag t)
+     (:hm--html-required-attributes (name))
+     (:hm--html-optional-attributes (size multiple)))
+    ("textarea" (:hm--html-two-element-tag t)
+     (:hm--html-required-attributes (name rows cols)))
+    ("table" (:hm--html-two-element-tag t)
+     (:hm--html-optional-attributes
+      (align width border cellspacing cellpading)))
+    ("caption" (:hm--html-two-element-tag t)
+     (:hm--html-optional-attributes (align)))
+    ("tr" (:hm--html-one-or-two-element-tag t)
+     (:hm--html-optional-attributes (align valign)))
+    ("th" (:hm--html-one-or-two-element-tag t)
+     (:hm--html-optional-attributes
+      (nowrap rowspan colspan align valign width height)))
+    ("td" (:hm--html-one-or-two-element-tag t)
+     (:hm--html-optional-attributes
+      (nowrap rowspan colspan align valign width height)))
+    ("tt" (:hm--html-two-element-tag t))
+    ("i" (:hm--html-two-element-tag t))
+    ("b" (:hm--html-two-element-tag t))
+    ("u" (:hm--html-two-element-tag t))
+    ("strike" (:hm--html-two-element-tag t))
+    ("big" (:hm--html-two-element-tag t))
+    ("small" (:hm--html-two-element-tag t))
+    ("sub" (:hm--html-two-element-tag t))
+    ("sup" (:hm--html-two-element-tag t))
+    ("em" (:hm--html-two-element-tag t))
+    ("strong" (:hm--html-two-element-tag t))
+    ("dfn" (:hm--html-two-element-tag t))
+    ("code" (:hm--html-two-element-tag t))
+    ("samp" (:hm--html-two-element-tag t))
+    ("kbd" (:hm--html-two-element-tag t))
+    ("var" (:hm--html-two-element-tag t))
+    ("cite" (:hm--html-two-element-tag t))
+    ("a" (:hm--html-two-element-tag t)
+     (:hm--html-optional-attributes (name href rel rev title)))
+    ("applet" (:hm--html-two-element-tag t)
+     (:hm--html-required-attributes (code width height))
+     (:hm--html-optional-attributes (codebase alt name align hspace vspace)))
+    ("font" (:hm--html-two-element-tag t)
+     (:hm--html-optional-attributes (size color)))
+    ("map" (:hm--html-two-element-tag t)
+     (:hm--html-required-attributes (name)))
     )
   "An alist with tag names known by the `hm--html-mode'.
 CURRENTLY THIS LIST CONTAINS NOT ALL TAGS!!!!.
@@ -496,7 +623,9 @@ CURRENTLY THIS LIST CONTAINS NOT ALL TAGS!!!!.
 It is used to determine, if a tag is a one element tag or not.
 
 In the future it should also be used to get possible parameters of
-the tag.")
+the tag.
+
+Use lower case characters in this list!!!!")
 
 
 ;;; Announce the feature hm--html-configuration

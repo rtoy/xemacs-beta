@@ -2,7 +2,7 @@
 #
 # File:         Makefile
 # Release:      $efs release: 1.15 $
-# Version:      $Revision: 1.2 $
+# Version:      $Revision: 1.3 $
 # RCS:
 # Description:  Makefile for byte-compiling efs and dired.
 # Author:       Andy Norman, HPLabs, Bristol, UK.
@@ -83,7 +83,7 @@ SHELL=/bin/sh
 
 COREOBJS = efs-defun.elc efs-ovwrt.elc efs-fnh.elc efs-cu.elc efs-netrc.elc \
            efs.elc efs-dired.elc efs-report.elc \
-           efs-cp-p.elc auto-save.elc
+           efs-cp-p.elc
 DOBJS = default-dir.elc dired.elc dired-mob.elc dired-oas.elc \
         dired-rgxp.elc dired-shell.elc dired-vir.elc dired-xy.elc \
         dired-grep.elc dired-uu.elc \
@@ -96,11 +96,14 @@ EFSOBJS = $(COREOBJS) efs-auto.elc \
           efs-tops-20.elc efs-dl.elc efs-guardian.elc efs-coke.elc \
           efs-vms.elc efs-vos.elc efs-plan9.elc efs-ms-unix.elc
 VMOBJS = efs-vm.elc
-GEOBJS = dired-fsf.elc dired-mule.elc efs-dired-mule.elc
-XEOBJS = dired-xemacs.elc
+GEOBJS = dired-fsf.elc dired-mule.elc efs-dired-mule.elc \
+	 passwd.elc diff.elc auto-save.elc
+XEOBJS = dired-faces.elc dired-xemacs.elc
 OBJS = $(DOBJS) $(EFSOBJS) $(VMOBJS) $(GEOBJS) $(XEOBJS) \
+       efs-18.elc efs-19.elc efs-19.23.elc \
        efs-l19.11.elc efs-x19.15.elc \
-       emacs-19.elc fn-handler.elc
+       emacs-19.elc fn-handler.elc \
+       reporter.elc
 
 # fixup.el is never byte-compiled.  It would do no harm, but be a waste
 # of time.
@@ -142,7 +145,9 @@ dired-diff.elc: dired-diff.el
 dired-sex.elc: dired-sex.el
 dired-mule.elc: dired-mule.el
 dired-xemacs.elc: dired-xemacs.el
+dired-faces.elc: dired-faces.el
 default-dir.elc: default-dir.el
+diff.elc: diff.el
 # efs core files
 efs.elc: efs.el
 efs-defun.elc: efs-defun.el
@@ -180,6 +185,9 @@ efs-guardian.elc: efs-guardian.el
 efs-plan9.elc: efs-plan9.el
 efs-ms-unix.elc: efs-ms-unix.el
 # efs support for different Emacs versions
+efs-18.elc: efs-18.el
+efs-19.elc: efs-19.el
+efs-19.23.elc: efs-19.23.el
 efs-l19.11.elc: efs-l19.11.el
 efs-x19.15.elc: efs-x19.15.el
 # efs vm support
@@ -187,8 +195,6 @@ efs-vm.elc: efs-vm.el
 # backward compatibility files
 fn-handler.elc: fn-handler.el
 emacs-19.elc: emacs-19.el
-# auto-save package
-auto-save.elc: auto-save.el
 
 # Core targets
 core: $(COREOBJS)
@@ -225,6 +231,10 @@ dired: $(DOBJS)
 all: $(OBJS)
 
 # Making for a specific emacs version
+18: emacs-19.elc fn-handler.elc efs dired efs-18.elc dired-mule.elc \
+    efs-dired-mule.elc reporter.elc passwd.elc diff.elc auto-save.elc
+19: fn-handler.elc efs dired efs-19.elc $(GEOBJS)
+19.23: efs dired efs-19.23.elc $(GEOBJS)
 l19.11: efs dired efs-l19.11.elc $(XEOBJS)
 x19.15: efs dired efs-x19.15.elc $(XEOBJS)
 

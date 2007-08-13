@@ -1163,11 +1163,10 @@ VISIBLE-OK.
   return Fget_buffer_create (QSscratch);
 }
 
-/* XEmacs change: Make this argument required because this is a dangerous
-   function. */
-DEFUN ("buffer-disable-undo", Fbuffer_disable_undo, 1, 1, "", /*
+DEFUN ("buffer-disable-undo", Fbuffer_disable_undo, 0, 1, "", /*
 Make BUFFER stop keeping undo information.
 Any undo records it already has are discarded.
+No argument or nil as argument means do this for the current buffer.
 */
        (buffer))
 {

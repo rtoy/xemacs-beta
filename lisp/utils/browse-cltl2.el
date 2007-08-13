@@ -2,13 +2,13 @@
 ;;; browse-cltl2.el --- browse the hypertext-version of 
 ;;;                     "Common Lisp the Language, 2nd. Edition"
 
-;; Revision 1.1.1
-;; last edited on 29.1.1997
+;; Revision 1.1.2
+;; last edited on 18.2.1997
 
 ;; Copyright (C) 1997 Holger Schauer
 
 ;; Author: Holger Schauer <Holger.Schauer@gmd.de>
-;; Keywords: utils lisp ilisp
+;; Keywords: utils lisp ilisp www
 
 ;; This file is not part of Emacs.
 
@@ -93,7 +93,13 @@
 ;;         Suggested by Simon Marshall <Simon.Marshall@esrin.esa.it>.
 ;;         Included new variable *cltl2-use-url* with which one can
 ;;         specify if he has url.el or not. Introduced variable
-;;        *cltl2-old-find-file-noselect*.
+;;         *cltl2-old-find-file-noselect*.
+;;
+;; 05-02-97 HS: added two variables for the key-bindings,
+;;         *cltl2-vfd-key* *cltl2-vi-key*.
+;;
+;; 18-02-97 HS: use compatible keybindings that work on Gnu Emacs and XEmacs.
+;;         Made cltl2-lisp-mode-install an interactive function.
 (defvar *cltl2-use-url* 'nil
  "Enables or disables retrieval of the index-file via WWW (or more
  exactly by the use of the function url-retrieve from url.el).
@@ -167,6 +173,20 @@
  to 't if you have such an old version. It will cause fontification and
  other useless stuff on the buffer in which the index is fetched. If
  you don't use a local copy (of the index) this won't bother you.")
+
+(defvar *cltl2-vfd-key* 
+  (if (featurep 'ilisp)
+      '[(control z) h]
+     '[(control c) b])
+ "Shortcut for accessing cltl2-view-function-definition. Use meaningful
+ setting with Ilisp.")
+
+(defvar *cltl2-vi-key* 
+  (if (featurep 'ilisp)
+      '[(control z) H]
+     '[(control c) B])
+ "Shortcut for accessing cltl2-view-index. Use meaningful
+ setting with Ilisp.")
 
 (defvar *browse-cltl2-ht* (make-hash-table 0))
 (defconst *cltl2-search-regexpr* 
@@ -344,29 +364,32 @@ BEFORE, if provided, is the name of a menu before which this menu should
 ;;; Hooking into lisp mode and ilisp-mode
 ;;; ******************************
 (defun cltl2-lisp-mode-install ()
- "Not to be called by the user - just for lisp-mode-hook and ilisp-mode-hook.
-
- Adds browse-cltl2 to lisp-mode. If you use ilisp (installed via a hook
- on lisp-mode) add browse-cltl2 to ilisp. Under Ilisp we use C-zb and C-zB
- and without Ilisp we use C-cb and C-cB for calling the cltl2-view-functions.
- Under XEmacs we will add ourself to the corresponding menus if there exists
- one.."
+ "Adds browse-cltl2 to lisp-mode. If you use ilisp (installed via a hook
+ on lisp-mode) add browse-cltl2 to ilisp. Check the variables *cltl2-vfd-key*
+ and *cltl2-vi-key* for the keybindings. Under XEmacs we will add ourself to
+ the corresponding menus if there exists one."
+ (interactive)
  ; set key bindings
- (cond ((featurep 'ilisp)
-	(local-set-key "\C-zb" 'cltl2-view-function-definition)
-	(local-set-key "\C-zB" 'cltl2-view-index))
-       (t 
-	(local-set-key "\C-cb" 'cltl2-view-function-definition)
-	(local-set-key "\C-cB" 'cltl2-view-index)))
+ (local-set-key *cltl2-vfd-key* 'cltl2-view-function-definition)
+ (local-set-key *cltl2-vi-key* 'cltl2-view-index)
  ; under XEmacs hook ourself into the menu if there is one
  (when (string-match "XEmacs\\|Lucid" emacs-version)
-   ; this is for the menu as provided by ilisp-easy-menu
-   (cond ((not (null (car (find-menu-item current-menubar '("ILisp")))))
+   (cond ((and (featurep 'ilisp-easy-menu)
+	       ; this is for the menu as provided by ilisp-easy-menu
+	       (not (null (car (find-menu-item current-menubar '("ILisp"))))))
 	  (add-submenu
 	   '("ILisp" "Documentation")
 	   '("Browse CLtL2"
 	     [ "View entry" cltl2-view-function-definition t]
 	     [ "View index" cltl2-view-index t] )))
+	   ; perhaps an other Ilisp-Menu is there ?
+	 ((not (null (car (find-menu-item current-menubar '("ILisp")))))
+	  (add-submenu
+	   '("Lisp")
+	   '("Browse CLtL2"
+	     [ "View entry" cltl2-view-function-definition t]
+	     [ "View index" cltl2-view-index t] )))
+           ; or at least a Lisp-Menu ?
 	 ((not (null (car (find-menu-item current-menubar '("Lisp")))))
 	  (add-submenu
 	   '("Lisp")

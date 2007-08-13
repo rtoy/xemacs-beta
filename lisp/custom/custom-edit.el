@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.40
+;; Version: 1.44
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -911,8 +911,8 @@ Optional EVENT is the location for the menu."
 	(widget-put widget :custom-state 'unknown)
 	(custom-redraw widget))
     (let* ((completion-ignore-case t)
-	   (answer (widget-choose (capitalize
-				   (symbol-name (widget-get widget :value)))
+	   (answer (widget-choose (custom-unlispify-tag-name
+				   (widget-get widget :value))
 				  custom-variable-menu
 				  event)))
       (if answer
@@ -1075,7 +1075,8 @@ Optional EVENT is the location for the menu."
   :format-handler 'custom-face-format-handler
   :sample-face 'custom-face-tag-face
   :help-echo "Push me to set or reset this face."
-  :documentation-property 'face-documentation
+  :documentation-property '(lambda (face)
+			     (get-face-documentation face))
   :value-create 'custom-face-value-create
   :action 'custom-face-action
   :custom-set 'custom-face-set
@@ -1153,7 +1154,7 @@ Optional EVENT is the location for the menu."
 	(custom-redraw widget))
     (let* ((completion-ignore-case t)
 	   (symbol (widget-get widget :value))
-	   (answer (widget-choose (capitalize (symbol-name symbol))
+	   (answer (widget-choose (custom-unlispify-tag-name symbol)
 				  custom-face-menu event)))
       (if answer
 	  (funcall answer widget)))))
@@ -1376,8 +1377,8 @@ Optional EVENT is the location for the menu."
 	(widget-put widget :custom-state 'unknown)
 	(custom-redraw widget))
     (let* ((completion-ignore-case t)
-	   (answer (widget-choose (capitalize
-				   (symbol-name (widget-get widget :value)))
+	   (answer (widget-choose (custom-unlispify-tag-name
+				   (widget-get widget :value))
 				  custom-group-menu
 				  event)))
       (if answer

@@ -156,7 +156,7 @@
     (toggle-read-only 0)
 
     (let ((rest (if who-to-load (list who-to-load)
-		  '(steve mrb cthomp wing stig jwz mly vladimir baw piper bw wmperry)))
+		  '(steve mrb cthomp wing stig jwz mly vladimir baw piper bw wmperry kyle)))
 	  (got-error nil))
       (while rest
 	(let* ((who (car rest))
@@ -206,7 +206,7 @@
   (goto-char (point-max))
   (insert "\n   ")
 
-  (let ((rest '(steve mrb cthomp wing stig linebreak jwz mly vladimir linebreak baw piper bw linebreak wmperry))
+  (let ((rest '(steve mrb cthomp wing stig linebreak jwz mly vladimir linebreak baw piper bw linebreak wmperry kyle))
 	(got-error nil))
     (while rest
       (if (eq (car rest) 'linebreak)
@@ -289,6 +289,7 @@
 			       ((eq xref 'stig) "About Jonathan Stigelman")
 			       ((eq xref 'steve) "About Steve Baur")
 			       ((eq xref 'mrb) "About Martin Buchholz")
+			       ((eq xref 'kyle) "About Kyle Jones")
 			       ((eq xref 'others) "About Everyone")
 			       ((eq xref 'features) "New XEmacs Features")
 			       ((eq xref 'history) "XEmacs History")
@@ -675,7 +676,7 @@
 	framework for software engineers.  It runs atop XEmacs and is
 	available from his firm, InfoDock Associates, which offers custom
         development and support packages for corporate users of XEmacs,
-        GNU Emacs and InfoDock.  See \"http://www.infodock.com>\".
+        GNU Emacs and InfoDock.  See \"http://www.infodock.com\".
 	His interests include user interfaces, information management,
 	CASE tools, communications and enterprise integration.")
 
@@ -731,6 +732,23 @@
 	  (insert " to go back to the previous page.\n")
 	  )
 
+	 ((eq xref 'kyle)
+	  (about-face "Kyle Jones" 'bold)
+	  (insert " <kyle_jones@wonderworks.com>
+
+	Author of VM, a mail-reading package that is included in
+	the standard XEmacs distribution, and contributor of many
+	improvements and bug fixes.  Unlike RMAIL and MH-E, VM
+	uses the standard UNIX mailbox format for its folders;
+	thus, you can use VM concurrently with other UNIX mail
+	readers such as Berkeley Mail and ELM.
+	See \"http://www.wonderworks.com/kyle/\".")
+
+	  (insert "\n\n\tClick ")
+	  (about-xref "here" prev-page "Return to previous page")
+	  (insert " to go back to the previous page.\n")
+	  )
+
 	 ((eq xref 'others)
 	  (insert "Click ")
 	  (about-xref "here" 'about "Return to previous page")
@@ -773,7 +791,7 @@
 	  framework for software engineers.  It runs atop XEmacs and is
 	  available from his firm, InfoDock Associates, which offers custom
           development and support packages for corporate users of XEmacs,
-          GNU Emacs and InfoDock.  See \"http://www.infodock.com>\".
+          GNU Emacs and InfoDock.  See \"http://www.infodock.com\".
 	  His interests include user interfaces, information management,
  	  CASE tools, communications and enterprise integration.
 
@@ -783,13 +801,14 @@
 	  the PNG support, some of the GIF/JPEG support, the strikethru
 	  face attribute support).
 
-	Kyle Jones <kyle@crystal.wonderworks.com>
-	  Author of VM (View Mail), a mail-reading package that is
-	  included in the standard XEmacs distribution, and
-	  contributor of many improvements and bug fixes.  Unlike most
-	  other mail-reading packages, VM uses the standard Unix-mail
-	  format for its mailboxes; thus, you can use VM concurrently
-	  with standard mail readers such as Unix mail and ELM.
+	") (about-xref "Kyle Jones" 'kyle "Find out more about Kyle Jones") (insert " <kyle_jones@wonderworks.com>
+	Author of VM, a mail-reading package that is included in
+	the standard XEmacs distribution, and contributor of many
+	improvements and bug fixes.  Unlike RMAIL and MH-E, VM
+	uses the standard UNIX mailbox format for its folders;
+	thus, you can use VM concurrently with other UNIX mail
+	readers such as Berkeley Mail and ELM.
+	See \"http://www.wonderworks.com/kyle/\".
 
 	Darrell Kindred <Darrell.Kindred@cmu.edu>
 	  Unofficial maintainer of the xemacs-beta list of extant
@@ -833,6 +852,24 @@
 	Hans Muller <hmuller@eng.sun.com>
 	 Author of the code used to connect XEmacs with ToolTalk,
 	 and of an early client of the external Emacs widget.
+
+	David Moore <dmoore@UCSD.EDU>
+	  David has contributed greatly to the quest to speed up XEmacs.
+	  He is a student in the Computer Systems Laboratory at UCSD.
+	  When he manages to have free time, he usually spends it on 200
+	  mile bicycle rides, learning german or showing people the best
+	  mail & news environment he's found in 10 years.  (That'd be
+	  XEmacs, Gnus and bbdb, of course.)  He can be found at
+	  `druidmuck.egbt.org 4201' at various hours of the day.
+
+	Hrvoje Niksic <hniksic@srce.hr>
+	  Hrvoje is currently a student at the Faculty of Electrical
+	  Engineering and Computing in Zagreb, Croatia.  He works part-
+	  time at SRCE, where he helps run the network machines.
+	  In his free time he is helping develop free software (especially
+	  XEmacs, as well as GNU software) and is writing his own -- he has
+	  written a small network mirroring utility Wget, see
+	  \"ftp://gnjilux.cc.fer.hr/pub/unix/util/wget/\".
 
 	In addition to those just mentioned, the following people have
 	spent a great deal of effort providing feedback, testing beta
@@ -941,14 +978,13 @@
 	  Ketil Z Malde <ketil@ii.uib.no>
 	  Steve March <smarch@quaver.urbana.mcd.mot.com>
 	  Pekka Marjola <pema@iki.fi>
-	  Simon Marshall <Simon.Marshall@mail.esrin.esa.it>
+	  Simon Marshall <simon@gnu.ai.mit.edu>
 	  Dave Mason <dmason@plg.uwaterloo.ca>
 	  Jaye Mathisen <mrcpu@cdsnet.net>
 	  Michael Meissner <meissner@osf.org>
 	  David M. Meyer <meyer@ns.uoregon.edu>
 	  Brad Miller <bmiller@cs.umn.edu>
 	  Jeff Miller <jmiller@bay1.bayserve.net>
-	  David Moore <dmoore@UCSD.EDU>
 	  John Morey <jmorey@crl.com>
 	  Rob Mori <rob.mori@sun.com>
 	  Heiko Muenkel <muenkel@tnt.uni-hannover.de>

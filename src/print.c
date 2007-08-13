@@ -590,6 +590,84 @@ Output stream is STREAM, or value of `standard-output' (which see).
   return obj;
 }
 
+# include "emacsfns.h"
+/* Synched with Emacs 19.34 */
+DEFUN ("error-message-string", Ferror_message_string, 1, 1, 0, /*
+Convert an error value (ERROR-SYMBOL . DATA) to an error message.
+*/
+  (obj))
+{
+  struct buffer *old = XBUFFER(Fcurrent_buffer());
+  Lisp_Object original, printcharfun, value;
+  struct gcpro gcpro1;
+
+  print_error_message (obj, Vprin1_to_string_buffer, NULL);
+
+  set_buffer_internal (XBUFFER (Vprin1_to_string_buffer));
+  value = Fbuffer_substring (Fpoint_min(Fcurrent_buffer()),
+			     Fpoint_max(Fcurrent_buffer()),
+			     Fcurrent_buffer());
+
+  GCPRO1 (value);
+  Ferase_buffer (Fcurrent_buffer());
+  set_buffer_internal (old);
+  UNGCPRO;
+
+  return value;
+}
+
+/* Print an error message for the error DATA
+   onto Lisp output stream STREAM (suitable for the print functions).  */
+
+print_error_message (data, stream)
+     Lisp_Object data, stream;
+{
+  Lisp_Object errname, errmsg, file_error, tail;
+  struct gcpro gcpro1;
+  int i;
+
+  errname = Fcar (data);
+
+  if (EQ (errname, Qerror))
+    {
+      data = Fcdr (data);
+      if (!CONSP (data)) data = Qnil;
+      errmsg = Fcar (data);
+      file_error = Qnil;
+    }
+  else
+    {
+      errmsg = Fget (errname, Qerror_message, Qnil);
+      file_error = Fmemq (Qfile_error,
+			  Fget (errname, Qerror_conditions, Qnil));
+    }
+
+  /* Print an error message including the data items.  */
+
+  tail = Fcdr_safe (data);
+  GCPRO1 (tail);
+
+  /* For file-error, make error message by concatenating
+     all the data items.  They are all strings.  */
+  if (!NILP (file_error) && !NILP (tail))
+    errmsg = XCONS (tail)->car, tail = XCONS (tail)->cdr;
+
+  if (STRINGP (errmsg))
+    Fprinc (errmsg, stream);
+  else
+    write_string_1 ("Peculiar error", 14, stream);
+
+  for (i = 0; CONSP (tail); tail = Fcdr (tail), i++)
+    {
+      write_string_1 (i ? ", " : ": ", 2, stream);
+      if (!NILP (file_error))
+	Fprinc (Fcar (tail), stream);
+      else
+	Fprin1 (Fcar (tail), stream);
+    }
+  UNGCPRO;
+}
+
 #ifdef LISP_FLOAT_TYPE
 
 Lisp_Object Vfloat_output_format;
@@ -1397,6 +1475,7 @@ syms_of_print (void)
   DEFSUBR (Fprin1_to_string);
   DEFSUBR (Fprinc);
   DEFSUBR (Fprint);
+  DEFSUBR (Ferror_message_string);
   DEFSUBR (Fterpri);
   DEFSUBR (Fwrite_char);
   DEFSUBR (Falternate_debugging_output);

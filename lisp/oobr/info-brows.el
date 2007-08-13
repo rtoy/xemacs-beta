@@ -6,19 +6,19 @@
 ;; KEYWORDS:     docs, help, hypermedia
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Motorola Inc.
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:     7-Dec-89
-;; LAST-MOD:     20-Sep-95 at 14:33:33 by Bob Weiner
+;; LAST-MOD:     20-Feb-97 at 07:05:47 by Bob Weiner
 ;;
-;; Copyright (C) 1989-1995  Free Software Foundation, Inc.
+;; Copyright (C) 1989-1995, 1997  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.
 ;;
 ;; DESCRIPTION:  
 ;;
-;;    Use 'info-browse' to invoke the Info OO-Browser.  Prefix arg prompts for
+;;    Use `info-browse' to invoke the Info OO-Browser.  Prefix arg prompts for
 ;;    name of Environment file.
 ;;
 ;; DESCRIP-END.

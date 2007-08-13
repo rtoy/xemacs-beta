@@ -3,6 +3,50 @@
 ;;; See update-autoloads.sh and autoload.el for more details.
 
 
+;;;### (autoloads (BibTeX-auto-store) "latex" "auctex/latex.el")
+
+(autoload 'BibTeX-auto-store "latex" "\
+This function should be called from bibtex-mode-hook.
+It will setup BibTeX to store keys in an auto file." nil nil)
+
+;;;***
+
+;;;### (autoloads nil "tex-info" "auctex/tex-info.el")
+
+;;;***
+
+;;;### (autoloads (TeX-submit-bug-report TeX-insert-quote TeX-auto-generate-global TeX-auto-generate ams-tex-mode) "tex" "auctex/tex.el")
+
+(autoload 'ams-tex-mode "tex" "\
+Major mode for editing files of input for AmS TeX.
+See info under AUC TeX for documentation.
+
+Special commands:
+\\{TeX-mode-map}
+ 
+Entering AmS-tex-mode calls the value of text-mode-hook,
+then the value of TeX-mode-hook, and then the value
+of AmS-TeX-mode-hook." t nil)
+
+(autoload 'TeX-auto-generate "tex" "\
+Generate style file for TEX and store it in AUTO.  
+If TEX is a directory, generate style files for all files in the directory." t nil)
+
+(autoload 'TeX-auto-generate-global "tex" "\
+Create global auto directory for global TeX macro definitions." t nil)
+
+(autoload 'TeX-insert-quote "tex" "\
+Insert the appropriate quote marks for TeX.
+Inserts the value of `TeX-open-quote' (normally ``) or `TeX-close-quote'
+\(normally '') depending on the context.  If `TeX-quote-after-quote'
+is non-nil, this insertion works only after \". 
+With prefix argument, always inserts \" characters." t nil)
+
+(autoload 'TeX-submit-bug-report "tex" "\
+Submit via mail a bug report on AUC TeX" t nil)
+
+;;;***
+
 ;;;### (autoloads (batch-byte-recompile-directory batch-byte-recompile-directory-norecurse batch-byte-compile display-call-tree byte-compile-sexp byte-compile compile-defun byte-compile-file byte-recompile-file byte-recompile-directory byte-force-recompile) "bytecomp" "bytecomp/bytecomp.el")
 
 (autoload 'byte-force-recompile "bytecomp" "\
@@ -904,25 +948,6 @@ The optional ARGS are additional keyword arguments." nil nil)
 
 (autoload 'widget-delete "widget-edit" "\
 Delete WIDGET." nil nil)
-
-;;;***
-
-;;;### (autoloads (define-widget) "widget" "custom/widget.el")
-
-(autoload 'define-widget "widget" "\
-Define a new widget type named NAME from CLASS.
-
-NAME and CLASS should both be symbols, CLASS should be one of the
-existing widget types, or nil to create the widget from scratch.
-
-After the new widget has been defined, the following two calls will
-create identical widgets:
-
-* (widget-create NAME)
-
-* (apply 'widget-create CLASS ARGS)
-
-The third argument DOC is a documentation string for the widget." nil nil)
 
 ;;;***
 
@@ -2341,7 +2366,17 @@ cross-reference and returns t; otherwise returns nil." nil nil)
 
 ;;;***
 
-;;;### (autoloads (smart-tags-file smart-tags-file-path smart-objc-oobr smart-objc smart-fortran-at-tag-p smart-c++-oobr smart-c++ smart-c-at-tag-p smart-asm-at-tag-p) "hmouse-tag" "hyperbole/hmouse-tag.el")
+;;;### (autoloads (hkey-help-show) "hmouse-drv" "hyperbole/hmouse-drv.el")
+
+(autoload 'hkey-help-show "hmouse-drv" "\
+Saves prior frame configuration if BUFFER displays help.  Displays BUFFER.
+
+Optional second arg CURRENT-WINDOW non-nil forces display of buffer within
+the current window.  By default, it is displayed in another window." nil nil)
+
+;;;***
+
+;;;### (autoloads (smart-tags-file smart-tags-file-path smart-objc smart-lisp-mode-p smart-java-at-tag-p smart-java smart-fortran-at-tag-p smart-c++ smart-c-at-tag-p smart-asm-at-tag-p) "hmouse-tag" "hyperbole/hmouse-tag.el")
 
 (autoload 'smart-asm-at-tag-p "hmouse-tag" "\
 Return assembly tag name that point is within, else nil." nil nil)
@@ -2357,35 +2392,39 @@ It assumes that its caller has already checked that the key was pressed in an
 appropriate buffer and has moved the cursor to the selected buffer.
 
 If:
- (1) on a '#include' statement, the include file is displayed;
-     Look for include file in directory lists 'smart-c-cpp-include-dirs'
-     and 'smart-c-include-dirs'.
+ (1) on a `#include' statement, the include file is displayed;
+     Look for include file in directory lists `smart-c-cpp-include-dirs'
+     and `smart-c-include-dirs'.
  (2) on a C++ identifier, the identifier definition is displayed,
-     assuming the identifier is found within an 'etags' generated tag file
+     assuming the identifier is found within an `etags' generated tag file
      in the current directory or any of its ancestor directories.
- (3) if 'smart-c-use-lib-man' is non-nil, the C++ identifier is
+ (3) if `smart-c-use-lib-man' is non-nil, the C++ identifier is
      recognized as a library symbol, and a man page is found for the
      identifier, then the man page is displayed." t nil)
 
-(autoload 'smart-c++-oobr "hmouse-tag" "\
-Jumps to the definition of selected C++ construct via OO-Browser support.
-Optional JUNK is ignored.  Does nothing if the OO-Browser is not available.
+(autoload 'smart-fortran-at-tag-p "hmouse-tag" "\
+Return Fortran tag name that point is within, else nil." nil nil)
+
+(autoload 'smart-java "hmouse-tag" "\
+Jumps to the definition of optional Java IDENTIFIER or the one at point.
+Optional second arg NEXT means jump to next matching Java tag.
 
 It assumes that its caller has already checked that the key was pressed in an
 appropriate buffer and has moved the cursor to the selected buffer.
 
-If key is pressed:
- (1) on a '#include' statement, the include file is displayed;
-     Look for include file in directory lists 'smart-c-cpp-include-dirs'
-     and 'smart-c-include-dirs'.
- (2) within a method declaration, its definition is displayed;
- (3) on a class name, the class definition is shown.
+If:
+ (1) within a commented @see cross-reference, the referent is displayed;
+ (2) on a `package' or `import' statement, the referent is displayed;
+     Look for referent files in the directory list `smart-java-package-dirs'.
+ (3) on an Java identifier, the identifier definition is displayed,
+     assuming the identifier is found within an `etags' generated tag file
+     in the current directory or any of its ancestor directories." t nil)
 
- (2) and (3) require that an OO-Browser Environment has been loaded with
-     the {M-x br-env-load RTN} command." t nil)
+(autoload 'smart-java-at-tag-p "hmouse-tag" "\
+Return Java tag name that point is within, else nil." nil nil)
 
-(autoload 'smart-fortran-at-tag-p "hmouse-tag" "\
-Return Fortran tag name that point is within, else nil." nil nil)
+(autoload 'smart-lisp-mode-p "hmouse-tag" "\
+Return t if in a mode which uses Lisp symbols." nil nil)
 
 (autoload 'smart-objc "hmouse-tag" "\
 Jumps to the definition of optional Objective-C IDENTIFIER or the one at point.
@@ -2395,32 +2434,15 @@ It assumes that its caller has already checked that the key was pressed in an
 appropriate buffer and has moved the cursor to the selected buffer.
 
 If:
- (1) on a '#include' statement, the include file is displayed;
-     Look for include file in directory lists 'smart-c-cpp-include-dirs'
-     and 'smart-c-include-dirs'.
+ (1) on a `#include' statement, the include file is displayed;
+     Look for include file in directory lists `smart-c-cpp-include-dirs'
+     and `smart-c-include-dirs'.
  (2) on an Objective-C identifier, the identifier definition is displayed,
-     assuming the identifier is found within an 'etags' generated tag file
+     assuming the identifier is found within an `etags' generated tag file
      in the current directory or any of its ancestor directories.
- (3) if 'smart-c-use-lib-man' is non-nil, the Objective-C identifier is
+ (3) if `smart-c-use-lib-man' is non-nil, the Objective-C identifier is
      recognized as a library symbol, and a man page is found for the
      identifier, then the man page is displayed." t nil)
-
-(autoload 'smart-objc-oobr "hmouse-tag" "\
-Jumps to the definition of selected Objective-C construct via OO-Browser support.
-Optional JUNK is ignored.  Does nothing if the OO-Browser is not available.
-
-It assumes that its caller has already checked that the key was pressed in an
-appropriate buffer and has moved the cursor to the selected buffer.
-
-If key is pressed:
- (1) on a '#include' statement, the include file is displayed;
-     Look for include file in directory lists 'smart-c-cpp-include-dirs'
-     and 'smart-c-include-dirs'.
- (2) within a method declaration, its definition is displayed;
- (3) on a class name, the class definition is shown.
-
- (2) and (3) require that an OO-Browser Environment has been loaded with
-     the {M-x br-env-load RTN} command." t nil)
 
 (autoload 'smart-tags-file-path "hmouse-tag" "\
 Expand relative FILE name by looking it up in the nearest tags file.
@@ -2428,7 +2450,8 @@ Return FILE unchanged if it exists relative to the current directory or
 cannot be expanded via a tags file." nil nil)
 
 (autoload 'smart-tags-file "hmouse-tag" "\
-Return appropriate tags file name for CURR-FILENAME or 'tags-file-name'." nil nil)
+Return appropriate tags file name for CURR-FILENAME or `tags-file-name'.
+Optional NAME-OF-TAGS-FILE is the literal filename for which to look." nil nil)
 
 ;;;***
 
@@ -2441,10 +2464,14 @@ Often used to append to 'hook' variables." nil nil)
 
 ;;;***
 
-;;;### (autoloads (hypb:configuration) "hypb" "hyperbole/hypb.el")
+;;;### (autoloads (hypb:display-file-with-logo hypb:configuration) "hypb" "hyperbole/hypb.el")
 
 (autoload 'hypb:configuration "hypb" "\
 Insert Emacs configuration information at the end of optional OUT-BUF or the current buffer." nil nil)
+
+(autoload 'hypb:display-file-with-logo "hypb" "\
+Display an optional text FILE with the InfoDock Associates logo prepended.
+Without file, logo is prepended to the current buffer." nil nil)
 
 ;;;***
 
@@ -3610,7 +3637,7 @@ See `imenu-choose-buffer-index' for more information." t nil)
 ;;;### (autoloads (ksh-mode) "ksh-mode" "modes/ksh-mode.el")
 
 (autoload 'ksh-mode "ksh-mode" "\
-ksh-mode $Revision: 1.7 $ - Major mode for editing (Bourne, Korn or Bourne again)
+ksh-mode $Revision: 1.8 $ - Major mode for editing (Bourne, Korn or Bourne again)
 shell scripts.
 Special key bindings and commands:
 \\{ksh-mode-map}
@@ -4882,7 +4909,7 @@ Other useful functions are:
 
 (autoload 'vhdl-mode "vhdl-mode" "\
 Major mode for editing VHDL code.
-vhdl-mode $Revision: 1.7 $
+vhdl-mode $Revision: 1.8 $
 To submit a problem report, enter `\\[vhdl-submit-bug-report]' from a
 vhdl-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -5048,7 +5075,7 @@ Interactively or when optional CLASS-PATH is nil, CLASS-PATH defaults to the
 current buffer file pathname.  If optional LIB-TABLE-P is non-nil, add to
 Library Environment, otherwise add to System Environment.  If optional
 SAVE-FILE is t, the Environment is then stored to the filename given by
-'br-env-file'.  If SAVE-FILE is non-nil and not t, its string value is used
+`br-env-file'.  If SAVE-FILE is non-nil and not t, its string value is used
 as the file to which to save the Environment." t nil)
 
 (autoload 'br-to-from-viewer "br" "\
@@ -5572,17 +5599,6 @@ The Command History listing is recomputed each time this mode is invoked." t nil
 
 ;;;***
 
-;;;### (autoloads (display-column-mode) "column" "packages/column.el")
-
-(autoload 'display-column-mode "column" "\
-Toggle display column mode.
-With prefix arg, turn display column mode on iff arg is positive.
-
-When display column mode is on, the current column and line number are
-displayed in the mode line." t nil)
-
-;;;***
-
 ;;;### (autoloads (compare-windows) "compare-w" "packages/compare-w.el")
 
 (autoload 'compare-windows "compare-w" "\
@@ -5734,25 +5750,6 @@ The variable `dabbrev-backward-only' may be used to limit the
 direction of search to backward if set non-nil.
 
 See also `dabbrev-abbrev-char-regexp' and \\[dabbrev-completion]." t nil)
-
-;;;***
-
-;;;### (autoloads (diff-backup diff) "diff" "packages/diff.el")
-
-(defvar diff-switches (purecopy "-c") "\
-*A string or list of strings specifying switches to be passed to diff.")
-
-(autoload 'diff "diff" "\
-Find and display the differences between OLD and NEW files.
-Interactively the current buffer's file name is the default for NEW
-and a backup file for NEW is the default for OLD.
-With prefix arg, prompt for diff switches." t nil)
-
-(autoload 'diff-backup "diff" "\
-Diff this file with its backup file or vice versa.
-Uses the latest backup, if there are several numerical backups.
-If this file is a backup, diff it with its original.
-The backup file is the first file given to `diff'." t nil)
 
 ;;;***
 
@@ -5973,8 +5970,6 @@ Display list of all tags in tag table REGEXP matches." t nil)
 
 ;;;### (autoloads (turn-on-fast-lock fast-lock-mode) "fast-lock" "packages/fast-lock.el")
 
-(defvar fast-lock-mode nil)
-
 (autoload 'fast-lock-mode "fast-lock" "\
 Toggle Fast Lock mode.
 With arg, turn Fast Lock mode on if and only if arg is positive and the buffer
@@ -5987,9 +5982,9 @@ properties, any associated Font Lock cache is used if its timestamp matches the
 buffer's file, and its `font-lock-keywords' match those that you are using.
 
 Font Lock caches may be saved:
- - When you save the file's buffer.
- - When you kill an unmodified file's buffer.
- - When you exit Emacs, for all unmodified or saved buffers.
+- When you save the file's buffer.
+- When you kill an unmodified file's buffer.
+- When you exit Emacs, for all unmodified or saved buffers.
 Depending on the value of `fast-lock-save-events'.
 See also the commands `fast-lock-read-cache' and `fast-lock-save-cache'.
 
@@ -6003,7 +5998,7 @@ For saving, see variables `fast-lock-minimum-size', `fast-lock-save-events',
 (autoload 'turn-on-fast-lock "fast-lock" "\
 Unconditionally turn on Fast Lock mode." nil nil)
 
-(if (fboundp 'add-minor-mode) (add-minor-mode 'fast-lock-mode nil))
+(when (fboundp 'add-minor-mode) (defvar fast-lock-mode nil) (add-minor-mode 'fast-lock-mode nil))
 
 ;;;***
 
@@ -6458,6 +6453,65 @@ Usually run by inclusion in `minibuffer-setup-hook'." nil nil)
 
 ;;;***
 
+;;;### (autoloads (dired-do-igrep-find dired-do-igrep igrep-find-define igrep-find igrep-define igrep) "igrep" "packages/igrep.el")
+
+(autoload 'igrep "igrep" "\
+*Run `grep` PROGRAM to match EXPRESSION in FILES.
+The output is displayed in the *igrep* buffer, which \\[next-error] and
+\\[compile-goto-error] parse to find each line of matched text.
+
+PROGRAM may be nil, in which case it defaults to `igrep-program'.
+
+EXPRESSION is automatically delimited by `igrep-expression-quote-char'.
+
+FILES is either a file name pattern (expanded by the shell named by
+`shell-file-name') or a list of file name patterns.
+
+Optional OPTIONS is also passed to PROGRAM; it defaults to `igrep-options'.
+
+If a prefix argument (\\[universal-argument]) is given when called interactively,
+or if `igrep-read-options' is set, OPTIONS is read from the minibuffer.
+
+If two prefix arguments (\\[universal-argument] \\[universal-argument]) are given when called interactively,
+or if `igrep-read-multiple-files' is set, FILES is read from the minibuffer
+multiple times.
+
+If three prefix arguments (\\[universal-argument] \\[universal-argument] \\[universal-argument]) are given when called interactively,
+or if `igrep-read-options' and `igrep-read-multiple-files' are set,
+OPTIONS is read and FILES is read multiple times.
+
+If `igrep-find' is non-nil, the directory or directories
+containing FILES is recursively searched for files whose name matches
+the file name component of FILES (and whose contents match
+EXPRESSION)." t nil)
+
+(autoload 'igrep-define "igrep" "\
+Define ANALOGUE-COMMAND as an `igrep' analogue command.
+Optional (VARIABLE VALUE) arguments specify temporary bindings for the command." nil 'macro)
+
+(autoload 'igrep-find "igrep" "\
+*Run `grep` via `find`; see \\[igrep] and `igrep-find'.
+All arguments (including prefix arguments, when called interactively)
+are handled by `igrep'." t nil)
+
+(autoload 'igrep-find-define "igrep" "\
+Define ANALOGUE-COMMAND-find as an `igrep' analogue `find` command.
+Optional (VARIABLE VALUE) arguments specify temporary bindings for the command." nil 'macro)
+
+(autoload 'dired-do-igrep "igrep" "\
+*Run `grep` PROGRAM to match EXPRESSION (with optional OPTIONS)
+on the marked (or next prefix ARG) files." t nil)
+
+(defalias 'dired-do-grep 'dired-do-igrep)
+
+(autoload 'dired-do-igrep-find "igrep" "\
+*Run `grep` PROGRAM to match EXPRESSION (with optional OPTIONS)
+on the marked (or next prefix ARG) directories." t nil)
+
+(defalias 'dired-do-grep-find 'dired-do-igrep-find)
+
+;;;***
+
 ;;;### (autoloads (Info-elisp-ref Info-emacs-key Info-goto-emacs-key-command-node Info-goto-emacs-command-node Info-emacs-command Info-search Info-visit-file Info-goto-node Info-query info) "info" "packages/info.el")
 
 (autoload 'info "info" "\
@@ -6743,8 +6797,6 @@ and `inhibit-first-line-modes-suffixes'." nil nil)
 
 ;;;### (autoloads (turn-on-lazy-lock lazy-lock-mode) "lazy-lock" "packages/lazy-lock.el")
 
-(defvar lazy-lock-mode nil)
-
 (autoload 'lazy-lock-mode "lazy-lock" "\
 Toggle Lazy Lock mode.
 With arg, turn Lazy Lock mode on if and only if arg is positive and the buffer
@@ -6771,7 +6823,7 @@ Use \\[lazy-lock-submit-bug-report] to send bug reports or feedback." t nil)
 (autoload 'turn-on-lazy-lock "lazy-lock" "\
 Unconditionally turn on Lazy Lock mode." nil nil)
 
-(add-minor-mode 'lazy-lock-mode " Lazy")
+(when (fboundp 'add-minor-mode) (defvar lazy-lock-mode nil) (add-minor-mode 'lazy-lock-mode nil))
 
 ;;;***
 
@@ -6841,19 +6893,7 @@ Previous contents of that buffer are killed first." t nil)
 ;;;### (autoloads (manual-entry) "man" "packages/man.el")
 
 (autoload 'manual-entry "man" "\
-Display the Unix manual entry (or entries) for TOPIC.
-If prefix arg is given, modify the search according to the value:
-  2 = complement default exact matching of the TOPIC name;
-      exact matching default is specified by `Manual-match-topic-exactly'
-  3 = force a search of the unformatted man directories
-  4 = both 2 and 3
-The manual entries are searched according to the variable
-Manual-directory-list, which should be a list of directories.  If
-Manual-directory-list is nil, \\[Manual-directory-list-init] is
-invoked to create this list from the MANPATH environment variable.
-See the variable Manual-topic-buffer which controls how the buffer
-is named.  See also the variables Manual-match-topic-exactly,
-Manual-query-multiple-pages, and Manual-buffer-view-mode." t nil)
+Display the Unix manual entry (or entries) for TOPIC." t nil)
 
 ;;;***
 
@@ -8831,7 +8871,7 @@ this command sets the region to the requested face.
 
 Otherwise, this command specifies the face for the next character
 inserted.  Moving point or switching buffers before
-typing a character to insert cancels the specification." nil nil)
+typing a character to insert cancels the specification." t nil)
 
 (autoload 'facemenu-set-size-default "facemenu" nil t nil)
 
@@ -9306,6 +9346,16 @@ word, and if `skeleton-pair-filter' returns nil, pairing is performed.
 If a match is found in `skeleton-pair-alist', that is inserted, else
 the defaults are used.  These are (), [], {}, <> and `' for the
 symmetrical ones, and the same character twice for the others." t nil)
+
+;;;***
+
+;;;### (autoloads (speedbar-frame-mode) "speedbar" "utils/speedbar.el")
+
+(autoload 'speedbar-frame-mode "speedbar" "\
+Enable or disable use of a speedbar.  Positive number means turn
+on, negative turns speedbar off, and nil means toggle.  Once the
+speedbar frame is activated, a buffer in `speedbar-mode' will be
+displayed.  Currently, only one speedbar is supported at a time." t nil)
 
 ;;;***
 

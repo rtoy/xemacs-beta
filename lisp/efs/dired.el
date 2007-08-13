@@ -5,7 +5,7 @@
 ;;
 ;; File:          dired.el
 ;; RCS:           
-;; Dired Version: $Revision: 1.1 $
+;; Dired Version: $Revision: 7.9 $
 ;; Description:   The DIRectory EDitor is for manipulating, and running
 ;;                commands on files in a directory.
 ;; Authors:       FSF,
@@ -36,7 +36,7 @@
 
 ;;; Dired Version
 
-(defconst dired-version (substring "$Revision: 1.1 $" 11 -2)
+(defconst dired-version (substring "$Revision: 7.9 $" 11 -2)
   "The revision number of Tree Dired (as a string).
 
 Don't forget to mention this when reporting bugs to:
@@ -1254,8 +1254,6 @@ The order of elements is the reverse of the order in the buffer.")
   (define-key dired-mode-map "\M-v" 'dired-scroll-down)
   (define-key dired-mode-map "\M-<" 'dired-beginning-of-buffer)
   (define-key dired-mode-map "\M->" 'dired-end-of-buffer)
-  ;; This is silly, I'm changing it. -sb
-  ;; (define-key dired-mode-map "\C-m" 'dired-goto-file)
   (define-key dired-mode-map "\C-m" 'dired-advertised-find-file)
   ;; motion by subdirectories
   (define-key dired-mode-map "^" 'dired-up-directory)

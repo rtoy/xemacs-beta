@@ -313,12 +313,12 @@ See the command `outline-mode' for more information on this mode."
 	(run-hooks 'outline-minor-mode-hook))
     (setq selective-display nil))
   ;; When turning off outline mode, get rid of any ^M's.
-  (or outline-minor-mode
-      (outline-flag-region (point-min) (point-max) ?\n))
-  ;; XEmacs change
-  (set-buffer-modified-p (buffer-modified-p))
-  ;; #+XEmacs
-  (outline-install-menubar 'remove)
+  (unless outline-minor-mode
+    (outline-flag-region (point-min) (point-max) ?\n)
+    ;; XEmacs change
+    (set-buffer-modified-p (buffer-modified-p))
+    ;; #+XEmacs
+    (outline-install-menubar 'remove))
   ;; XEmacs change
   (redraw-modeline))
 

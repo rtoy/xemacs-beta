@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: extensions
-;; Version: 1.40
+;; Version: 1.44
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;;; Commentary:
@@ -47,15 +47,14 @@ and `end-open' if it should sticky to the front."
   (unless (and (featurep 'custom) (fboundp 'custom-declare-variable))
     ;; We have the old custom-library, hack around it!
     (defmacro defgroup (&rest args) nil)
-    (defmacro defcustom (&rest args) nil)
+    (defmacro defcustom (var value doc &rest args) 
+      `(defvar ,var ,value ,doc))
     (defmacro defface (&rest args) nil)
     (define-widget-keywords :prefix :tag :load :link :options :type :group)
     (when (fboundp 'copy-face)
       (copy-face 'default 'widget-documentation-face)
       (copy-face 'bold 'widget-button-face)
-      (copy-face 'italic 'widget-field-face))
-    (defvar widget-mouse-face 'highlight)
-    (defvar widget-menu-max-size 40)))
+      (copy-face 'italic 'widget-field-face))))
 
 ;;; Compatibility.
 
@@ -563,7 +562,6 @@ Recommended as a parent keymap for modes using widgets.")
   (define-key widget-keymap "\C-k" 'widget-kill-line)
   (define-key widget-keymap "\t" 'widget-forward)
   (define-key widget-keymap "\M-\t" 'widget-backward)
-  (define-key widget-keymap [(shift tab)] 'widget-backward)
   (define-key widget-keymap [(shift tab)] 'widget-backward)
   (define-key widget-keymap [backtab] 'widget-backward)
   (if (string-match "XEmacs" (emacs-version))

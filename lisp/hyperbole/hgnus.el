@@ -6,15 +6,15 @@
 ;; KEYWORDS:     hypermedia, news
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Brown U.
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    24-Dec-91 at 22:29:28 by Bob Weiner
-;; LAST-MOD:      8-Aug-95 at 10:53:53 by Bob Weiner
+;; LAST-MOD:     26-Jan-97 at 14:43:54 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
 ;;
-;; Copyright (C) 1991-1995, Free Software Foundation, Inc.
+;; Copyright (C) 1991-1996, Free Software Foundation, Inc.
 ;; Developed with support from Motorola Inc.
 ;;
 ;; DESCRIPTION:  
@@ -26,7 +26,7 @@
 ;;   Automatically configured for use in "hyperbole.el".
 ;;   If hsite loading fails prior to initializing Hyperbole Gnus support,
 ;;
-;;       {M-x Gnus-init RTN}
+;;       {M-x Gnus-init RET}
 ;;
 ;;   will do it.
 ;;
@@ -42,8 +42,10 @@
 
 (require 'hmail)
 (require 'hsmail)
-;; This is not in Gnus 5.x
-;(require 'gnuspost)
+(cond ((or (featurep 'gnus-msg)
+	   (featurep 'gnuspost)))
+      ((load "gnus-msg" t)) 
+      (t (load "gnuspost" t)))
 
 ;;; ************************************************************************
 ;;; Public variables

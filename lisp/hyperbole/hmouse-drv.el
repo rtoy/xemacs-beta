@@ -269,6 +269,7 @@ Point must be in the help buffer."
     (bury-buffer buf)
     (setq *hkey-wconfig* nil)))
 
+;;;###autoload
 (defun hkey-help-show (buffer &optional current-window)
   "Saves prior frame configuration if BUFFER displays help.  Displays BUFFER.
 

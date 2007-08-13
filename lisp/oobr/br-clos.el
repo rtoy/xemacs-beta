@@ -6,12 +6,12 @@
 ;; KEYWORDS:     lisp, oop, tools
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Motorola Inc.
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    29-Jul-90
-;; LAST-MOD:     21-Sep-95 at 12:29:40 by Bob Weiner
+;; LAST-MOD:     21-Feb-97 at 17:22:13 by Bob Weiner
 ;;
-;; Copyright (C) 1990-1995  Free Software Foundation, Inc.
+;; Copyright (C) 1990-1995, 1997  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.

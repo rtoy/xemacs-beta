@@ -306,6 +306,7 @@ on its presentation buffer, if any."
 				   'vm-virtual-mirror
 				   'vm-ml-sort-keys
 				   'vm-ml-labels
+				   'vm-spooled-mail-waiting
 				   'vm-message-list)
 	  (set-buffer vm-summary-buffer)
 	  (set-buffer-modified-p modified))))
@@ -330,6 +331,7 @@ on its presentation buffer, if any."
 				   'vm-virtual-folder-definition
 				   'vm-virtual-mirror
 				   'vm-ml-labels
+				   'vm-spooled-mail-waiting
 				   'vm-message-list)
 	  (set-buffer vm-presentation-buffer)
 	  (set-buffer-modified-p modified))))
@@ -506,7 +508,8 @@ like a From_ folder."
 		  (set-buffer temp-buffer)
 		  (if (file-readable-p file)
 		      (condition-case nil
-			  (insert-file-contents file nil 0 4096)
+			  (let ((overriding-file-coding-system 'binary))
+			    (insert-file-contents file nil 0 4096))
 			(wrong-number-of-arguments
 			 (call-process "sed" file temp-buffer nil
 				       "-n" "1,/^$/p")))))))
@@ -2142,7 +2145,8 @@ The folder is not altered and Emacs is still visiting it."
 
 (defun vm-start-itimers-if-needed ()
   (cond ((and (not (natnump vm-flush-interval))
-	      (not (natnump vm-auto-get-new-mail))))
+	      (not (natnump vm-auto-get-new-mail))
+	      (not (natnump vm-mail-check-interval))))
 	((condition-case data
 	     (progn (require 'itimer) t)
 	   (error nil))
@@ -2151,7 +2155,11 @@ The folder is not altered and Emacs is still visiting it."
 			    vm-flush-interval nil))
 	 (and (natnump vm-auto-get-new-mail) (not (get-itimer "vm-get-mail"))
 	      (start-itimer "vm-get-mail" 'vm-get-mail-itimer-function
-			    vm-auto-get-new-mail nil)))
+			    vm-auto-get-new-mail nil))
+	 (and (natnump vm-mail-check-interval)
+	      (not (get-itimer "vm-check-mail"))
+	      (start-itimer "vm-check-mail" 'vm-check-mail-itimer-function
+			    vm-mail-check-interval nil)))
 	((condition-case data
 	     (progn (require 'timer) t)
 	   (error nil))
@@ -2160,6 +2168,12 @@ The folder is not altered and Emacs is still visiting it."
 		(setq timer (run-at-time vm-flush-interval vm-flush-interval
 					 'vm-flush-itimer-function nil))
 		(timer-set-function timer 'vm-flush-itimer-function
+				    (list timer)))
+	   (and (natnump vm-mail-check-interval) 
+		(setq timer (run-at-time vm-mail-check-interval
+					 vm-mail-check-interval
+					 'vm-check-mail-itimer-function nil))
+		(timer-set-function timer 'vm-check-mail-itimer-function
 				    (list timer)))
 	   (and (natnump vm-auto-get-new-mail)
 		(setq timer (run-at-time vm-auto-get-new-mail
@@ -2171,10 +2185,40 @@ The folder is not altered and Emacs is still visiting it."
 	 (setq vm-flush-interval t
 	       vm-auto-get-new-mail t))))
 
+;; support for vm-mail-check-interval
+;; if timer argument is present, this means we're using the Emacs
+;; 'timer package rather than the 'itimer package.
+(defun vm-check-mail-itimer-function (&optional timer)
+  ;; FSF Emacs sets this non-nil, which means the user can't
+  ;; interrupt the check.  Bogus.
+  (setq inhibit-quit nil)
+  (if (integerp vm-mail-check-interval)
+      (if timer
+	  (timer-set-time timer (current-time) vm-mail-check-interval)
+	(set-itimer-restart current-itimer vm-mail-check-interval)))
+  (let ((b-list (buffer-list))
+	oldval)
+    (while (and (not (input-pending-p)) b-list)
+      (save-excursion
+	(set-buffer (car b-list))
+	(if (and (eq major-mode 'vm-mode)
+		 (not vm-block-new-mail))
+	    (progn
+	      (setq oldval vm-spooled-mail-waiting)
+	      (vm-check-for-spooled-mail nil)
+	      (if (not (eq oldval vm-spooled-mail-waiting))
+		  (progn
+		    (intern (buffer-name) vm-buffers-needing-display-update)
+		    (vm-update-summary-and-mode-line))))))
+      (setq b-list (cdr b-list)))))
+
 ;; support for numeric vm-auto-get-new-mail
 ;; if timer argument is present, this means we're using the Emacs
 ;; 'timer package rather than the 'itimer package.
 (defun vm-get-mail-itimer-function (&optional timer)
+  ;; FSF Emacs sets this non-nil, which means the user can't
+  ;; interrupt mail retrieval.  Bogus.
+  (setq inhibit-quit nil)
   (if (integerp vm-auto-get-new-mail)
       (if timer
 	  (timer-set-time timer (current-time) vm-auto-get-new-mail)
@@ -2191,7 +2235,7 @@ The folder is not altered and Emacs is still visiting it."
 			    buffer-file-name)))
 		 (not vm-block-new-mail)
 		 (not vm-folder-read-only)
-		 (vm-get-spooled-mail)
+		 (vm-get-spooled-mail nil)
 		 (vm-assimilate-new-messages t))
 	    (progn
 	      ;; don't move the message pointer unless the folder
@@ -2469,7 +2513,8 @@ run vm-expunge-folder followed by vm-save-folder."
 	     ;; force user notification of file variables for v18 Emacses
 	     ;; enable-local-variables == nil disables them for newer Emacses
 	     (let ((inhibit-local-variables t)
-		   (enable-local-variables nil))
+		   (enable-local-variables nil)
+		   (overriding-file-coding-system 'no-conversion))
 	       (find-file-noselect crash-box)))
        (save-excursion
 	 (set-buffer crash-buf)
@@ -2520,42 +2565,27 @@ run vm-expunge-folder followed by vm-save-folder."
 					(set-buffer crash-buf)
 					(widen)
 					(buffer-size))))
-       (write-region opoint-max (point-max) buffer-file-name t t)
-       (vm-increment vm-modification-counter)
        (setq got-mail (/= opoint-max (point-max)))
-       (set-buffer-modified-p old-buffer-modified-p)
-       (kill-buffer crash-buf)
-       (if (not (stringp vm-keep-crash-boxes))
-	   (vm-error-free-call 'delete-file crash-box)
-	 (rename-file crash-box
-		      (concat (expand-file-name vm-keep-crash-boxes)
-			      (if (not
-				   (= (aref vm-keep-crash-boxes
-					    (1- (length vm-keep-crash-boxes)))
-				      ?/))
-				  "/"
-				"")
-			      "Z"
-			      (substring
-			       (timezone-make-date-sortable
-				(current-time-string))
-			       4)))
-	 ;; guarantee that each new saved crashbox will have a
-	 ;; different name, assuming time doesn't reverse.
-	 (sleep-for 1))
+       (if (not got-mail)
+	   nil
+	 (write-region opoint-max (point-max) buffer-file-name t t)
+	 (vm-increment vm-modification-counter)
+	 (set-buffer-modified-p old-buffer-modified-p)
+	 (kill-buffer crash-buf)
+	 (if (not (stringp vm-keep-crash-boxes))
+	     (vm-error-free-call 'delete-file crash-box)
+	   (let (name)
+	     (setq name (expand-file-name (format "Z%d" (vm-abs (random)))
+					  vm-keep-crash-boxes))
+	     (while (file-exists-p name)
+	       (setq name (expand-file-name (format "Z%d" (vm-abs (random)))
+					    vm-keep-crash-boxes)))
+	     (rename-file crash-box name))))
        got-mail ))))
 
-(defun vm-get-spooled-mail ()
-  (if vm-block-new-mail
-      (error "Can't get new mail until you save this folder."))
-  (let ((triples nil)
-	;; since we could accept-process-output here (POP code),
-	;; a timer process might try to start retrieving mail
-	;; before we finish.  block these attempts.
-	(vm-block-new-mail t)
-	(fallback-triples nil)
-	crash in maildrop popdrop
-	(got-mail nil))
+(defun vm-compute-spool-files ()
+  (let ((fallback-triples nil)
+	triples)
     (cond ((and buffer-file-name
 		(consp vm-spool-file-suffixes)
 		(stringp vm-crash-box-suffix))
@@ -2570,7 +2600,7 @@ run vm-expunge-folder followed by vm-save-folder."
     (cond ((and buffer-file-name
 		vm-make-spool-file-name vm-make-crash-box-name)
 	   (setq fallback-triples
-		 (ncons fallback-triples
+		 (nconc fallback-triples
 			(list (list buffer-file-name
 				    (save-excursion
 				      (funcall vm-make-spool-file-name
@@ -2591,12 +2621,80 @@ run vm-expunge-folder followed by vm-save-folder."
 	  ((consp (car (vm-spool-files)))
 	   (setq triples (vm-spool-files))))
     (setq triples (append triples fallback-triples))
+    triples ))
+
+(defun vm-spool-check-mail (source)
+  (let ((handler (and (fboundp 'find-file-name-handler)
+		      (condition-case ()
+			  (find-file-name-handler source 'vm-spool-check-mail)
+			(wrong-number-of-arguments
+			 (find-file-name-handler source))))))
+    (if handler
+	(funcall handler 'vm-spool-check-mail source)
+      (and (not (equal 0 (nth 7 (file-attributes source))))
+	   (file-readable-p source)))))
+
+(defun vm-check-for-spooled-mail (&optional interactive)
+  (if vm-block-new-mail
+      nil
+    (let ((triples (vm-compute-spool-files))
+	  ;; since we could accept-process-output here (POP code),
+	  ;; a timer process might try to start retrieving mail
+	  ;; before we finish.  block these attempts.
+	  (vm-block-new-mail t)
+	  (vm-pop-ok-to-ask interactive)
+	  (done nil)
+	  crash in maildrop popdrop
+	  (mail-waiting nil))
+      (while (and triples (not done))
+	(setq in (expand-file-name (nth 0 (car triples)) vm-folder-directory)
+	      maildrop (nth 1 (car triples))
+	      crash (nth 2 (car triples)))
+	(if (eq (current-buffer) (vm-get-file-buffer in))
+	    (progn
+	      (if (file-exists-p crash)
+		  (progn
+		    (setq mail-waiting t
+			  done t))
+		(setq popdrop (and vm-recognize-pop-maildrops
+				   (string-match vm-recognize-pop-maildrops
+						 maildrop)))
+		(if (not interactive)
+		    ;; allow no error to be signaled
+		    (condition-case nil
+			(setq mail-waiting
+			      (or mail-waiting
+				  (if popdrop
+				      (vm-pop-check-mail maildrop)
+				    (vm-spool-check-mail maildrop))))
+		      (error nil))
+		  (setq mail-waiting (or mail-waiting
+					 (if popdrop
+					     (vm-pop-check-mail maildrop)
+					   (vm-spool-check-mail maildrop)))))
+		(if mail-waiting
+		    (setq done t)))))
+	(setq triples (cdr triples)))
+      (setq vm-spooled-mail-waiting mail-waiting)
+      mail-waiting )))
+
+(defun vm-get-spooled-mail (&optional interactive)
+  (if vm-block-new-mail
+      (error "Can't get new mail until you save this folder."))
+  (let ((triples (vm-compute-spool-files))
+	;; since we could accept-process-output here (POP code),
+	;; a timer process might try to start retrieving mail
+	;; before we finish.  block these attempts.
+	(vm-block-new-mail t)
+	(vm-pop-ok-to-ask interactive)
+	crash in maildrop popdrop
+	(got-mail nil))
     (while triples
       (setq in (expand-file-name (nth 0 (car triples)) vm-folder-directory)
 	    maildrop (nth 1 (car triples))
 	    crash (nth 2 (car triples)))
       (if (eq (current-buffer) (vm-get-file-buffer in))
-	  (progn
+	  (let (retrieval-function)
 	    (if (file-exists-p crash)
 		(progn
 		  (message "Recovering messages from %s..." crash)
@@ -2613,16 +2711,42 @@ run vm-expunge-folder followed by vm-save-folder."
 		(progn
 		  (setq crash (expand-file-name crash vm-folder-directory))
 		  (if (not popdrop)
-		      (setq maildrop (expand-file-name maildrop)))
-		  (if (if popdrop
-			  (vm-pop-move-mail maildrop crash)
-			(vm-spool-move-mail maildrop crash))
+		      (setq maildrop (expand-file-name maildrop)
+			    retrieval-function 'vm-spool-move-mail)
+		    (setq retrieval-function 'vm-pop-move-mail))
+		  (if (if got-mail
+			  ;; don't allow errors to be signaled unless no
+			  ;; mail has been appended to the incore
+			  ;; copy of the folder.  otherwise the
+			  ;; user will wonder where the mail is,
+			  ;; since it is not in the crash box or
+			  ;; the spool file and doesn't _appear_ to
+			  ;; be in the folder either.
+			  (condition-case error-data
+			      (funcall retrieval-function maildrop crash)
+			    (error (message "%s signaled: %s"
+					    (if popdrop
+						'vm-pop-move-mail
+					      'vm-spool-move-mail)
+					    error-data)
+				   (sleep-for 2)
+				   ;; we don't know if mail was
+				   ;; put into the crash box or
+				   ;; not, so return t just to be
+				   ;; safe.
+				   t ))
+			(funcall retrieval-function maildrop crash))
 		      (if (vm-gobble-crash-box crash)		      
 			  (progn
 			    (setq got-mail t)
 			    (message "Got mail from %s."
 				     (or popdrop maildrop)))))))))
       (setq triples (cdr triples)))
+    ;; not really correct, but it is what the user expects to see.
+    (if got-mail
+	(setq vm-spooled-mail-waiting nil))
+    (intern (buffer-name) vm-buffers-needing-display-update)
+    (vm-update-summary-and-mode-line)
     (if got-mail
 	(run-hooks 'vm-retrieved-spooled-mail-hook))
     got-mail ))
@@ -2662,7 +2786,7 @@ spool files."
 		      (or buffer-file-name (buffer-name)))
 	   (vm-unsaved-message "Checking for new mail..."))
 	 (let (totals-blurb)
-	   (if (and (vm-get-spooled-mail) (vm-assimilate-new-messages t))
+	   (if (and (vm-get-spooled-mail t) (vm-assimilate-new-messages t))
 	       (progn
 		 ;; say this NOW, before the non-previewers read
 		 ;; a message, alter the new message count and
@@ -2691,7 +2815,8 @@ spool files."
 	     (vm-save-restriction
 	      (widen)
 	      (goto-char (point-max))
-	      (insert-file-contents folder)))
+	      (let ((overriding-file-coding-system 'binary))
+		(insert-file-contents folder))))
 	   (setq mcount (length vm-message-list))
 	   (if (vm-assimilate-new-messages)
 	       (progn
@@ -2882,6 +3007,8 @@ spool files."
   (vm-display nil nil '(vm-toggle-read-only) '(vm-toggle-read-only))
   (vm-update-summary-and-mode-line))
 
+(defvar scroll-in-place)
+
 ;; this does the real major mode scutwork.
 (defun vm-mode-internal ()
   (widen)
@@ -2927,12 +3054,15 @@ spool files."
   (add-hook 'kill-buffer-hook 'vm-garbage-collect-folder)
   (add-hook 'kill-buffer-hook 'vm-garbage-collect-message)
   ;; avoid the XEmacs file dialog box.
-  (defvar should-use-dialog-box)
-  (make-local-variable 'should-use-dialog-box)
-  (setq should-use-dialog-box nil)
+  (defvar use-dialog-box)
+  (make-local-variable 'use-dialog-box)
+  (setq use-dialog-box nil)
   ;; mail folders are precious.  protect them by default.
   (make-local-variable 'file-precious-flag)
   (setq file-precious-flag t)
+  ;; scroll in place messes with scroll-up and this loses
+  (make-local-variable 'scroll-in-place)
+  (setq scroll-in-place nil)
   (run-hooks 'vm-mode-hook)
   ;; compatibility
   (run-hooks 'vm-mode-hooks))

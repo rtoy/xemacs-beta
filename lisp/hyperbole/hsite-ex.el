@@ -6,15 +6,15 @@
 ;; KEYWORDS:     hypermedia, local
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Brown U.
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    15-Apr-91 at 00:48:49
-;; LAST-MOD:      3-Nov-95 at 22:51:43 by Bob Weiner
+;; LAST-MOD:     17-Feb-97 at 18:34:17 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
 ;;
-;; Copyright (C) 1991-1995, Free Software Foundation, Inc.
+;; Copyright (C) 1991-1997, Free Software Foundation, Inc.
 ;; Developed with support from Motorola Inc.
 ;;
 ;; DESCRIPTION:  
@@ -36,6 +36,35 @@
 ;;; ************************************************************************
 
 (message "Initializing Hyperbole, please wait...")
+
+;;; ************************************************************************
+;;; TIMEZONE SETTING
+;;; ************************************************************************
+
+;; The following section applies only to MS-DOS and MS-Windows OSs.
+;; For such OSs, you must configure this section or you will receive
+;; an error when starting Hyperbole.  Users of other OSs may simply
+;; ignore this section.
+
+
+;; Microcruft OSs don't provide an automatically set timezone environment
+;; variable.  Nor do they include a UNIX-style date program.  So follow
+;; the commented instructions in the code below here.
+
+;; If you happened to have installed a UNIX-style date program (when you type
+;; `date' at a shell, it simply spits out the date and time and then quits),
+;; you may comment out the logic.
+;;
+(if (and hyperb:microcruft-os-p
+	 (not (or (getenv "TZ") (getenv "TIMEZONE"))))
+    (progn
+      ;; Comment out the following `error' line...
+      (error "(hsite.el): Configure the TIMEZONE SETTING section in this file.")
+      ;; ... and uncomment the following line, substituting an appropriate
+      ;;     timezone from the list in the variable, `htz:world-timezones'
+      ;;     in the file, "htz.el".
+      ;;   (setenv "TZ" "your-3char-timezone")
+      ))
 
 ;;; ************************************************************************
 ;;; SMART SETTINGS
@@ -63,8 +92,8 @@ down a windowful.")
 ;;; INTERNET SETTINGS
 ;;; ************************************************************************
 
-;; String to be used in the call: (hpath:rfc rfc-num) to create an ange-ftp
-;; path to the RFC document for 'rfc-num'.  Uncomment and alter this setting
+;; String to be used in the call: (hpath:rfc rfc-num) to create a remote
+;; path to the RFC document for `rfc-num'.  Uncomment and alter this setting
 ;; if another site is closer for you.
 ;; (setq hpath:rfc "/anonymous@ds.internic.net:rfc/rfc%s.txt")
 
@@ -77,7 +106,7 @@ down a windowful.")
 ;; properly.  If it is not, uncomment the following line and set it to the
 ;; proper value.
 
-;; (setenv "DOMAINNAME" "mot.com")
+;; (setenv "DOMAINNAME" "yourdomain.com")
 
 ;;; ************************************************************************
 ;;; XEMACS, GNU EMACS 19, AND EPOCH CONFIGURATION
@@ -176,19 +205,6 @@ down a windowful.")
       (list (function (lambda () (mapcar 'require '(hib-doc-id))))))
 
 ;;; ************************************************************************
-;;; HYPERBOLE INITIALIZATION
-;;; ************************************************************************
-
-;;; This call loads the whole Hyperbole system.
-;;; You may want to look at this file just to see what it does.
-;;;
-(require 'hinit)
-;;;
-;;; This call initializes the Hyperbole system for use.
-;;;
-(hyperb:init)
-
-;;; ************************************************************************
 ;;; FILE VIEWER COMMAND SETTINGS
 ;;; ************************************************************************
 
@@ -218,7 +234,68 @@ down a windowful.")
      ))
   "*Alist of (FILENAME-REGEXP . EDIT-FUNCTION) elements for calling special
 functions to display particular file types within Emacs.  See also
-'hpath:file-alist' for external display program settings.")
+`hpath:file-alist' for external display program settings.")
+
+(defvar hpath:display-buffer-alist
+  (list
+   (list 'this-window   'switch-to-buffer)
+   (list 'other-window  (function (lambda (b)
+				    (if (br-in-browser)
+					(progn (br-to-view-window)
+					       (switch-to-buffer b))
+				      (switch-to-buffer-other-window b)))))
+   (list 'one-window    (function (lambda (b)
+				    (if (br-in-browser) (br-quit))
+				    (delete-other-windows)
+				    (switch-to-buffer b))))
+   (list 'new-frame     (function (lambda (b)
+				    (select-frame (make-frame))
+				    (switch-to-buffer b))))
+   (list 'other-frame   'hpath:display-buffer-other-frame)
+   (list 'other-frame-one-window
+	 (function (lambda (b)
+		     (hpath:display-buffer-other-frame b)
+		     (delete-other-windows)))))
+  "*Alist of (DISPLAY-WHERE-SYMBOL  DISPLAY-BUFFER-FUNCTION) elements.
+This permits fine-grained control of where Hyperbole displays linked to buffers.
+The default value of DISPLAY-WHERE-SYMBOL is given by `hpath:display-where'.
+Valid DISPLAY-WHERE-SYMBOLs are:
+    this-window             - display in the current window
+    other-window            - display in another window in the current frame
+    one-window              - display in the current window, deleting other windows
+    new-frame               - display in a new frame
+    other-frame             - display in another, possibly existing, frame
+    other-frame-one-window  - display in another frame, deleting other windows.")
+
+(defvar hpath:display-where 'other-window
+  "Symbol specifying the default method to use to display Hyperbole link referents.
+See documentation of `hpath:display-where-alist' for valid values.")
+
+(defvar hpath:display-where-alist
+  (list
+   (list 'this-window 'find-file)
+   (list 'other-window (function (lambda (f)
+				   (if (br-in-browser)
+				       (progn (br-to-view-window)
+					      (find-file f))
+				     (find-file-other-window f)))))
+   (list 'one-window  (function (lambda (f)
+				  (if (br-in-browser) (br-quit))
+				  (delete-other-windows) (find-file f))))
+   (list 'new-frame   'find-file-new-frame)
+   (list 'other-frame 'hpath:find-other-frame)
+   (list 'other-frame-one-window
+	 (function (lambda (f) (hpath:find-other-frame f) (delete-other-windows)))))
+  "*Alist of (DISPLAY-WHERE-SYMBOL DISPLAY-FILE-FUNCTION) elements.
+This permits fine-grained control of where Hyperbole displays linked to files.
+The default value of DISPLAY-WHERE-SYMBOL is given by `hpath:display-where'.
+Valid DISPLAY-WHERE-SYMBOLs are:
+    this-window             - display in the current window
+    other-window            - display in another window in the current frame
+    one-window              - display in the current window, deleting other windows
+    new-frame               - display in a new frame
+    other-frame             - display in another, possibly existing, frame
+    other-frame-one-window  - display in another frame, deleting other windows.")
 
 ;;; `hyperb:window-system' variable from "hversion.el" must be defined
 ;;; prior to this variable definition.
@@ -231,7 +308,8 @@ functions to display particular file types within Emacs.  See also
 		      ("\\.xwd$" . "xwud -noclick -in")
 		      ("\\.ra?s$" . "snapshot -l")
 		      ("\\.xpm$" . "sxpm")
-		      ("\\.\\(fm\\|frame\\|mif\\)$" . "maker")
+		      ("\\.\\(fm\\|frame\\|mif\\)$" .
+		       "frame.pl -vn -preader -c -f%s") ;; was "msgfm_driver"
 		      ("\\.\\(doc\\|boo\\)$" . "ileaf")
 		      )))
     (if (memq window-system '(dps ns))
@@ -247,7 +325,7 @@ functions to display particular file types within Emacs.  See also
 			)))))
   "*Alist of (FILENAME-REGEXP . EDIT-PROGRAM) elements for using window system
 dependent external programs to edit/display particular file types.  See also
-'hpath:display-alist' for internal, window-system independent display
+`hpath:display-alist' for internal, window-system independent display
 settings.")
 
 ;;; ************************************************************************
@@ -267,6 +345,19 @@ settings.")
   '(hyperb:dir Info-directory Info-directory-list sm-directory load-path exec-path)
   "*List of Emacs Lisp variable symbols to substitute within matching link paths.
 Each variable value, if bound, must be either a pathname or a list of pathnames.")
+
+;;; ************************************************************************
+;;; HYPERBOLE INITIALIZATION
+;;; ************************************************************************
+
+;;; This call loads the whole Hyperbole system.
+;;; You may want to look at this file just to see what it does.
+;;;
+(require 'hinit)
+;;;
+;;; This call initializes the Hyperbole system for use.
+;;;
+(hyperb:init)
 
 ;;; ************************************************************************
 ;;; HYPERBOLE LOCAL VARIABLE SUPPORT

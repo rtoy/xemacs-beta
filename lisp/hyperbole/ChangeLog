@@ -1,12 +1,222 @@
-Sat Nov  4 04:41:49 1995  Bob Weiner  <weiner@gnu.ai.mit.edu>
+Fri Feb 21 17:49:01 1997  Bob Weiner  <weiner@infodock.com>
 
-* kotl/kfill.el (fill-paragraph): Fixed interface problem with Emacs 19
-    which expected justify-flag = 'full.
+* hmouse-reg.el (hmouse-get-bindings): 
+                (hmouse-setup): 
+* hmouse-sh.el  (hmouse-get-bindings): 
+                (hmouse-setup): 
+* hmouse-key.el (hmouse-set-bindings): 
+Modified to do nothing when running in batch mode (noninteractively).
 
-* hmail.el (hmail:region): Fixed bug with wrong current buffer that caused
-    outliner {C-c @} command to fail.
 
-Fri Nov  3 22:40:34 1995  Bob Weiner  <weiner@gnu.ai.mit.edu>
+==============================================================================
+V4.021 changes ^^^^:
+==============================================================================
+
+Tue Feb 18 18:57:27 1997  Bob Weiner  <weiner@infodock.com>
+
+* hui-mini.el (hui:menus): Added "Doc/About" menu item
+* hui-menu.el (infodock-hyperbole-menu): Added "About" menu item.
+* hypb.el (hypb:ida-logo-keymap): 
+          (hypb:ida-home-page): 
+	  (hypb:display-file-with-logo): Added to support About Hyperbole command.
+
+Mon Feb 17 15:27:21 1997  Bob Weiner  <weiner@infodock.com>
+
+* hversion.el (hyperb:microcruft-os-p): Added.
+
+Sat Feb 15 16:03:42 1997  Bob Weiner  <weiner@infodock.com>
+
+* hpath.el (hpath:find): Fixed bug that returned nil (now is 't) if file
+    was displayed using a specialized function.
+           (hpath:find-line): Added to handle displaying of all files at
+ 	     specific lines (hpath:find does not work for this use since it
+	     may call external display functions).
+* hactypes.el (link-to-file-line): Rewrote to call hpath:find-line.
+
+Fri Feb 14 11:39:09 1997  Bob Weiner  <weiner@infodock.com>
+
+* hrmail.el (rmail-forward): Updated to V19 compatibility.
+
+Sun Jan 26 14:32:28 1997  Bob Weiner  <weiner@infodock.com>
+
+* hmouse-sh.el (hmouse-get-bindings): 
+* hmouse-reg.el (hmouse-get-bindings): Rearranged order of initial
+    conditional so that lemacs or emacs19 always takes precedence over
+    hyperb:window-system setting, which may be "xterm".
+
+* hmouse-key.el (or hyperb:xemacs-p hyperb:emacs19-p): Prevent any attempt
+    to load pre-dumped mouse libraries when running under X terms on these
+    versions of emacs.
+
+* hyperbole.el (hbut:key-src): Added this autoload to avert error if the
+    rolodex is loaded before the Hyperbole system and then a rolo-edit, {e},
+    request is made within the match buffer.
+
+* hgnus.el: Updated to support new Gnus gnus-msg.el replacement for gnuspost.el.
+
+* hversion.el (sm-window-sys-term): 
+* hbmap.el (hbmap:dir-user): Patched to support GNU Emacs running 
+    natively under Windows NT.
+
+Tue Jan 14 15:45:14 1997  Bob Weiner  <weiner@infodock.com>
+
+* ../../etc/hypb-mouse.txt (Special Modes): Added Objective-C, Java and
+    Fortran support documentation.
+
+Mon Jan  6 18:59:13 1997  Bob Weiner  <weiner@infodock.com>
+
+* kotl/klink.el (klink:at-p): Eliminated matches to URLs for now.
+
+Wed Dec 25 22:01:05 1996  Bob Weiner  <weiner@infodock.com>
+
+* hmouse-tag.el: Changed all opening quotes in comments from ' to `.
+
+Tue Dec 10 16:40:09 1996  Bob Weiner  <weiner@infodock.com>
+
+* wrolo.el (wrolo-mode-syntax-table): Added to support syntactic selection
+    of delimited e-mail addresses.
+
+Fri Dec  6 12:34:31 1996  Bob Weiner  <weiner@infodock.com>
+
+* hmail.el (hmail:region): Fixed bug that extracted region from the wrong
+    buffer.
+
+Thu Dec  5 15:34:55 1996  Bob Weiner  <weiner@infodock.com>
+
+* hibtypes.el (annot-bib): Eliminated conflict with PPG-sw-process-id
+    ibtype.
+
+* hpath.el (hpath:is-p): Fixed error triggered when tried to format a path
+    with more than one %s.
+
+Wed Dec  4 13:39:09 1996  Bob Weiner  <weiner@infodock.com>
+
+* kotl/kmenu.el (id-menubar-kotl): Fixed so this mode menu is properly
+    installed under InfoDock.
+
+Tue Nov 26 21:21:50 1996  Bob Weiner  <weiner@infodock.com>
+
+* hui-menu.el (infodock-hyperbole-menu): Added Customization option that
+    sets the program used to display URLs.
+
+Thu Nov 14 18:11:36 1996  Bob Weiner  <weiner@infodock.com>
+
+* hmouse-tag.el (smart-*-at-tag-p): Modified to flash tag as a hyperbutton
+    when pressed, if Hyperbole has been loaded and flashing is supported
+    on the current device.
+
+* hbut.el (ibut:label-set): Made this return its LABEL argument.  Useful
+    when label has not yet been saved in a variable.
+
+* kotl/klink.el (klink:at-p): Ignore HTML and SGML tags when looking for Klinks.
+
+Sun Nov 10 01:47:01 1996  Bob Weiner  <weiner@infodock.com>
+
+* wrolo.el (rolo-sort-level): Made case-insensitive.
+           (rolo-add): Fixed bug caused by a call to widen that sometimes
+    failed to leave point at the newly added entry if the rolodex
+    buffer was already displayed when the rolo-add call was made.
+
+* hmouse-tag.el (smart-lisp): Display message and beep when tag is not found.
+
+* hibtypes.el (function-in-buffer): 
+* hactypes.el (function-in-buffer): Added to follow function references
+    that are defined in the same buffer as the reference.
+              (annot-bib): 
+	      (exec-shell-cmd): 
+              (man-show): 
+	      (rfc-toc): Updated all of these to use hpath:display-where
+    output display setting.
+	      (link-to-elisp-doc): Also modified to move point to the
+    documentation buffer.
+
+* hui.el (hui:hbut-current-act): Added.
+
+Fri Nov  8 21:37:34 1996  Bob Weiner  <weiner@infodock.com>
+
+* hbut.el (ebut:act): Added for use when activating an explicit button
+    from a menu.
+          (ebut:list): Fixed bug that returned (nil) when no explicit
+    buttons were found.
+* hui-menu.el (hui-menu-explicit-buttons): Added to display a list of
+    explicit buttons for activation via the Explicit-Button menu.
+* hui-menu.el (hyperbole-gbut-menu): Added to display a list of existing
+    global buttons for activation via the Global-Button menu.
+
+Tue Nov  5 19:26:17 1996  Bob Weiner  <weiner@infodock.com>
+
+* hibtypes.el (pathname): Modified to display Emacs Lisp libraries when
+   given as delimited filenames, without any path.
+
+Fri Nov  1 00:26:13 1996  Bob Weiner  <weiner@infodock.com>
+
+* hui-mouse.el (hkey-alist): Moved OO-Browser handler to near bottom so
+    that it does not override mode-specific handlers.
+
+Thu Oct 31 20:01:34 1996  Bob Weiner  <weiner@infodock.com>
+
+* hui-mouse.el (hkey-alist): Added Action and Assist key support for Java
+    identifiers.
+* hyperbole.el: Added Java autoloads.
+* hmouse-tag.el (smart-java-package-dirs): Added this variable as the
+    setting of where Java package source code can be found when the
+    OO-Browser is not in use.  Defaults to a single item list of
+    "${JAVA_HOME}/src/" if JAVA_HOME is set.
+                (smart-java-*): Added point and click identifier jumping for Java.
+                (smart-tags-file): Added optional argument NAME-OF-TAGS-FILE 
+    so can search for OO-Browser lookup tables.
+                (smart-java-cross-reference): Added to follow @see cross-references.
+
+Sat Oct 26 01:05:29 1996  Bob Weiner  <weiner@infodock.com>
+
+* hui-menu.el (infodock-hyperbole-menu): Added Customization submenu.
+* hui-mini.el (hui:menus): Added Cust/ submenu.
+
+* hbut.el (hbut:source): Fixed bug that neglected to account for double
+    quotes around the name within the printed representation of
+    a buffer object.
+
+Fri Oct 25 13:52:51 1996  Bob Weiner  <weiner@infodock.com>
+
+* hmouse-tag.el: Updated function to use with new buffer display protocol.
+* hactypes.el: Updated many definitions here to use hpath:find and
+    hpath:display-buffer.
+* hui-mouse.el (smart-dired): Changed call of hpath:find-other-window to
+    hpath:find to use new user-definable display location protocol.
+* hpath.el (hpath:find): Expanded optional values of 2nd arg and made
+    default location of an internally displayed file be given by the
+    value of the hpath:display-where variable.
+* hpath.el (hpath:display-buffer):   
+           (hpath:display-buffer-other-frame):   Added for linked to buffers.
+           (hpath:find-other-frame): Added for use in hpath:display-where-alist.
+* hsite-ex.el (hpath:display-where):
+              (hpath:display-where-alist):
+	      (hpath:display-buffer-alist): 
+    Added these new variables to control where Hyperbole displays link referents.
+    The first one documents the possibilities and the second two specify
+    the function to call for each possibility.
+
+Tue Oct 22 01:21:53 1996  Bob Weiner  <weiner@infodock.com>
+
+* kotl/kvspec.el (kvspec:update-modeline): Fixed to accomodate specialized
+    extents in the modeline introduced by XEmacs 19.14.
+
+* hui-mouse.el (hkey-alist): Added support for new id-edit-mode which
+    can be setup to activate whenever a region is highlighted with the
+    mouse.  When id-edit-mode is active the Action Key (or the Assist Key)
+    will paste the region that was highlighted at point.  The key {y} also
+    happens to do the same thing in this mode, but has the additional
+    property that it will cycle through previous entries in the kill-ring.
+
+Fri Sep 20 22:19:33 1996  Bob Weiner  <weiner@infodock.com>
+
+* Changed `cs.uiuc.edu' to `xemacs.org', the new Hyperbole distribution site.
+
+==============================================================================
+V4.02 changes ^^^^:
+==============================================================================
+
+Fri Nov  3 22:40:34 1995  Bob Weiner  <weiner@infodock.com>
 
 * hsys-w3.el: Renamed entries in this file and added
     action-key-url-function definition in "hyperbole.el", which can be
@@ -14,18 +224,18 @@ Fri Nov  3 22:40:34 1995  Bob Weiner  <weiner@gnu.ai.mit.edu>
     the Action Key.  Also, loaded this library by default instead of
     requiring that it be set up in "hsite.el".
 
-Fri Nov  3 19:25:24 1995  Bob Weiner  <weiner@gnu.ai.mit.edu>
+Fri Nov  3 19:25:24 1995  Bob Weiner  <weiner@infodock.com>
 
 * kotl/kotl-mode.el (kotl-mode): Fixed so re-narrows a formatted koutline
     to just its cells when invoked.
 
-Fri Nov  3 19:29:58 1995  Bob Weiner  <weiner@gnu.ai.mit.edu>
+Fri Nov  3 19:29:58 1995  Bob Weiner  <weiner@infodock.com>
 
 * kotl/kvspec.el (kvspec:blank-lines): Modified to allow toggling blank
     lines in a read-only outline and to not change the modification status
     of the buffer when kvspec:toggle-blank-lines is used.
 
-Fri Nov  3 01:28:44 1995  Bob Weiner  <weiner@gnu.ai.mit.edu>
+Fri Nov  3 01:28:44 1995  Bob Weiner  <weiner@infodock.com>
 
 * man/hypb-mouse.txt: Updated to reflect new smart-scroll-proportional
     default setting.
@@ -38,7 +248,7 @@ Fri Nov  3 01:28:44 1995  Bob Weiner  <weiner@gnu.ai.mit.edu>
 V4.01 changes ^^^^:
 ==============================================================================
 
-Thu Nov  2 00:52:26 1995  Bob Weiner  <weiner@mot.com>
+Thu Nov  2 00:52:26 1995  Bob Weiner  <weiner@infodock.com>
 
 * kotl/kotl-mode.el (kotl-mode:cell-help): Fixed this, the {C-c h} command
     to properly deal with a cell-ref = 0.  In this case, always display
@@ -47,7 +257,7 @@ Thu Nov  2 00:52:26 1995  Bob Weiner  <weiner@mot.com>
 * kotl/kview.el (kcell-view:previous): Fixed bug that moved to a hidden
     cell when visible-p flag was given.
 
-Wed Nov  1 02:05:36 1995  Bob Weiner  <weiner@mot.com>
+Wed Nov  1 02:05:36 1995  Bob Weiner  <weiner@infodock.com>
 
 * kotl/klink.el (klink:parse): Changed to require a common following any
     pathname in a link to prevent parsing, <3g |en>, as a pathname followed
@@ -61,7 +271,7 @@ Wed Nov  1 02:05:36 1995  Bob Weiner  <weiner@mot.com>
 * kotl/kotl-mode.el: Fixed improper modification of global
     minor-mode-alist and mode-line-format values.
 
-Tue Oct 31 00:45:44 1995  Bob Weiner  <weiner@mot.com>
+Tue Oct 31 00:45:44 1995  Bob Weiner  <weiner@infodock.com>
 
 * wrolo.el (rolo-mail-to): Added to compose mail to current or next e-mail
     address when in a rolodex or mail buffer.  Bound to {m} in rolodex
@@ -73,7 +283,7 @@ Tue Oct 31 00:45:44 1995  Bob Weiner  <weiner@mot.com>
 
 * kotl/kotl-mode.el (kotl-mode:to-valid-position): Optimized a bit further.
 
-Mon Oct 30 01:37:31 1995  Bob Weiner  <weiner@mot.com>
+Mon Oct 30 01:37:31 1995  Bob Weiner  <weiner@infodock.com>
 
 * kotl/kotl-mode.el (kotl-mode:copy-to-buffer): Made the default buffer to
     copy to the buffer in the other window of this frame, if any.  Also
@@ -102,7 +312,7 @@ Mon Oct 30 01:37:31 1995  Bob Weiner  <weiner@mot.com>
 * kotl/kimport.el: Rewrote all of these functions to handle importation
     at an arbitrary level in an existing koutline.
 
-Sun Oct 29 01:26:25 1995  Bob Weiner  <weiner@mot.com>
+Sun Oct 29 01:26:25 1995  Bob Weiner  <weiner@infodock.com>
 
 * kotl/kotl-mode.el (kotl-mode:demote-tree): 
    	            (kotl-mode:promote-tree): Fixed bug that could leave
@@ -135,7 +345,7 @@ Sun Oct 29 01:26:25 1995  Bob Weiner  <weiner@mot.com>
     foreign text buffer when kotl-mode calls this function within a
     foreign format buffer.
 
-Sat Oct 28 02:32:12 1995  Bob Weiner  <weiner@mot.com>
+Sat Oct 28 02:32:12 1995  Bob Weiner  <weiner@infodock.com>
 
 * kotl/klink.el (klink:create): 
  	        (link-to-kotl): 
@@ -148,7 +358,7 @@ Sat Oct 28 02:32:12 1995  Bob Weiner  <weiner@mot.com>
     character from : to |.  Augment viewspec characters preceded by a
     colon are ignored, for now.
 
-Fri Oct 27 15:16:11 1995  Bob Weiner  <weiner@mot.com>
+Fri Oct 27 15:16:11 1995  Bob Weiner  <weiner@infodock.com>
 
 * kotl/kview.el (kview:set-label-separator): Rewrote so properly changes
     the separator in the current view.  Made it interactive and removed
@@ -161,7 +371,7 @@ Fri Oct 27 15:16:11 1995  Bob Weiner  <weiner@mot.com>
 * kotl/kprop-xe.el (kproperty:properties): Changed definition since
     text-properties-at did not return the list of kproperties.
 
-Thu Oct 26 00:06:49 1995  Bob Weiner  <weiner@mot.com>
+Thu Oct 26 00:06:49 1995  Bob Weiner  <weiner@infodock.com>
 
 * hui-mini.el (hui:menus): Simplified a number of documentation display
     entries.
@@ -194,7 +404,7 @@ Thu Oct 26 00:06:49 1995  Bob Weiner  <weiner@mot.com>
                   (kimport:text-cells): Added to import text paragraph as
     cells all at the same level.
 
-Wed Oct 25 02:24:35 1995  Bob Weiner  <weiner@mot.com>
+Wed Oct 25 02:24:35 1995  Bob Weiner  <weiner@infodock.com>
 
 * kotl/kfile.el (kfile:update): Added kotl-mode setting to the first line
     of koutline files so they are read in with the right mode even if they
@@ -218,11 +428,11 @@ Wed Oct 25 02:24:35 1995  Bob Weiner  <weiner@mot.com>
     Hyperbole, installing it and filled out the whole Hyperbole Outliner
     chapter.
 
-Tue Oct 24 03:52:40 1995  Bob Weiner  <weiner@mot.com>
+Tue Oct 24 03:52:40 1995  Bob Weiner  <weiner@infodock.com>
 
 * man/hyperbole.texi (Configuration): Renamed from Initializing.
 
-Mon Oct 23 01:00:54 1995  Bob Weiner  <weiner@mot.com>
+Mon Oct 23 01:00:54 1995  Bob Weiner  <weiner@infodock.com>
 
 * kotl/kotl-mode.el (kotl-mode:top-cells): Simplified and fixed to utilize
     blank lines setting.
@@ -260,7 +470,7 @@ Mon Oct 23 01:00:54 1995  Bob Weiner  <weiner@mot.com>
 
 * kotl/EXAMPLE.kotl: Updated to explain view spec handling.
 
-Sun Oct 22 00:38:45 1995  Bob Weiner  <weiner@mot.com>
+Sun Oct 22 00:38:45 1995  Bob Weiner  <weiner@infodock.com>
 
 * hbut.el (ebut:key-src): Fixed bug that prevented match to
     hbut:source-prefix line when in a collapsed outline line.
@@ -281,7 +491,7 @@ Sun Oct 22 00:38:45 1995  Bob Weiner  <weiner@mot.com>
   wrolo-menu.el (wrolo-menubar-menu): Fixed bug when current-menubar was
     nil, would not display menubar entry under Emacs 19 even though it should.
 
-Sat Oct 21 01:07:32 1995  Bob Weiner  <weiner@mot.com>
+Sat Oct 21 01:07:32 1995  Bob Weiner  <weiner@infodock.com>
 
 * kotl/kview.el (kview:default-blank-lines): 
 		(kview:default-levels-to-show): 
@@ -307,23 +517,23 @@ Sat Oct 21 01:07:32 1995  Bob Weiner  <weiner@mot.com>
 
 * kotl/kfill.el (kfill:prefix-table): Generalized supercite citation prefix.
 
-Tue Oct 17 01:21:37 1995  Bob Weiner  <weiner@mot.com>
+Tue Oct 17 01:21:37 1995  Bob Weiner  <weiner@infodock.com>
 
 * hinit.el (hyperb:check-dir-user): Call make-directory function if
     available.
 
-Mon Oct 16 01:02:19 1995  Bob Weiner  <weiner@mot.com>
+Mon Oct 16 01:02:19 1995  Bob Weiner  <weiner@infodock.com>
 
 * wrolo.el (rolo-file-list): Set to c:/_rolodex.otl under MS-DOS and Windows.
 * hbmap.el (hbmap:dir-user): Set to c:/_hyperb/ under MS-DOS and Windows.
 * hbut.el (hattr:filename): Set to _hypb under MS-DOS and Windows.
 
-Sun Oct 15 17:32:46 1995  Bob Weiner  <weiner@mot.com>
+Sun Oct 15 17:32:46 1995  Bob Weiner  <weiner@infodock.com>
 
 * kotl/kotl-mode.el (kotl-mode:copy-region-as-kill): Don't trigger error
     when called in a read-only buffer.
 
-Fri Oct  6 12:56:57 1995  Bob Weiner  <weiner@mot.com>
+Fri Oct  6 12:56:57 1995  Bob Weiner  <weiner@infodock.com>
 
 * hui-mouse.el (hkey-alist): Moved Smart Menu display code closer to
     highest priority so that hkey-always-display-menu works as advertised.
@@ -332,18 +542,18 @@ Fri Oct  6 12:56:57 1995  Bob Weiner  <weiner@mot.com>
     Emacs 19 when depress in a minibuffer window.  This fixes the problem
     of the Action Key not properly selecting Hyperbole minibuffer menu items.
 
-Thu Oct  5 14:31:56 1995  Bob Weiner  <weiner@mot.com>
+Thu Oct  5 14:31:56 1995  Bob Weiner  <weiner@infodock.com>
 
 * hui-menu.el (hyperbole-menubar-menu): Added omitted (require 'lmenu) for
     Emacs 19 that prevented Hyperbole menubar from appearing under Emacs 19.
 
-Wed Oct  4 12:41:24 1995  Bob Weiner  <weiner@mot.com>
+Wed Oct  4 12:41:24 1995  Bob Weiner  <weiner@infodock.com>
 
 * hsite-ex.el (hkey-always-display-menu): Added this definition to prevent
     it from being unbound if smart-menu is invoked and the Smart Menu system
     is loaded under InfoDock.
 
-Wed Sep 27 01:56:53 1995  Bob Weiner  <weiner@mot.com>
+Wed Sep 27 01:56:53 1995  Bob Weiner  <weiner@infodock.com>
 
 * wrolo.el (rolo-edit): Modified to treat an empty string argument for
     NAME as a null argument, so one can just hit RET interactively.  Also,
@@ -354,7 +564,7 @@ Wed Sep 27 01:56:53 1995  Bob Weiner  <weiner@mot.com>
     within the rolodex match buffer.
 * man/hyperbole.texi (Rolo Keys): Documented {e} key.
 
-Mon Sep 25 11:15:49 1995  Bob Weiner  <weiner@mot.com>
+Mon Sep 25 11:15:49 1995  Bob Weiner  <weiner@infodock.com>
 
 * kotl/kotl-mode.el (kotl-mode:indent-line): 
                     (kotl-mode:indent-region): Added.  Each signals an
@@ -364,7 +574,7 @@ Mon Sep 25 11:15:49 1995  Bob Weiner  <weiner@mot.com>
 
 * hyperbole.el (hmail:msg-narrow): Added autoload.
 
-Fri Sep 22 17:14:05 1995  Bob Weiner  <weiner@mot.com>
+Fri Sep 22 17:14:05 1995  Bob Weiner  <weiner@infodock.com>
 
 * hsite-ex.el (hpath:display-alist): Fixed bug in handling info-suffix
     variable scoping that prevented Action Key from browsing info files in

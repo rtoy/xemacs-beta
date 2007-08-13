@@ -6,15 +6,15 @@
 ;; KEYWORDS:     hypermedia
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Brown U.
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    19-Sep-91 at 21:42:03
-;; LAST-MOD:     25-Aug-95 at 02:26:56 by Bob Weiner
+;; LAST-MOD:     10-Nov-96 at 01:51:13 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
 ;;
-;; Copyright (C) 1991-1995, Free Software Foundation, Inc.
+;; Copyright (C) 1991-1996, Free Software Foundation, Inc.
 ;; Developed with support from Motorola Inc.
 ;;
 ;; DESCRIPTION:  
@@ -287,7 +287,7 @@ Signals an error when no such button is found."
 			(find-file-noselect gbut:file) "gbut-modify")
 		       (hbut:label-to-key
 			(hargs:read-match "Global button to modify: "
-					  (mapcar 'list (gbut:lbl-list))
+					  (mapcar 'list (gbut:label-list))
 					  nil t nil 'ebut)))))
   (let ((lbl (hbut:key-to-label lbl-key))
 	(but-buf (find-file-noselect gbut:file))
@@ -341,6 +341,16 @@ Default is the current button."
 	 (hypb:error "(hbut-act): Button is invalid; it has no attributes."))
 	(t (or but (setq but 'hbut:current))
 	   (hui:but-flash) (hyperb:act but))))
+
+(defun hui:hbut-current-act ()
+  "Activate Hyperbole button at point or signal an error if there is no such button."
+  (interactive)
+  (let ((but (hbut:at-p)))
+    (cond ((null but)
+	   (hypb:error "(hbut-act): No current button to activate."))
+	  ((not (hbut:is-p but))
+	   (hypb:error "(hbut-act): Button is invalid; it has no attributes."))
+	  (t (hui:but-flash) (hyperb:act but)))))
 
 (defun hui:hbut-help (&optional but)
   "Checks for and explains an optional button given by symbol, BUT.
@@ -756,7 +766,7 @@ Optional NO-SORT means display in decreasing priority order (natural order)."
 	      (names (htype:names htype-sym))
 	      (term (hargs:read-match
 		     (concat (capitalize tstr)
-			     " to describe (RTN for all): ")
+			     " to describe (RET for all): ")
 		     (mapcar 'list (cons "" names))
 		     nil t nil htype-sym))
 	      nm-list

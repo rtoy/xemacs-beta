@@ -262,6 +262,8 @@ and the following faces:
 	  (setq mismatch
 		(and (/= (char-syntax (char-after beg)) ?\\)
 		     (/= (char-syntax (char-after beg)) ?\$)
+		     ;; XEmacs change
+		     (matching-paren (char-after beg))
 		     (/= (char-after (1- end))
 			 (logand (lsh (aref (syntax-table)
 					    (char-after beg))

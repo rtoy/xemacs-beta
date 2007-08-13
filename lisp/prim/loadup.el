@@ -106,9 +106,9 @@
      (load-gc "help")
      (load-gc "buff-menu")
      ;; (load-gc "w3-sysdp")
-     (load-gc "font") ; required by widget
      (load-gc "widget")
      (load-gc "custom") ; Before loaddefs so that defcustom exists.
+     (load-gc "custom-xmas")
      ;; If SparcWorks support is included some additional packages are
      ;; dumped which would normally have autoloads.  To avoid
      ;; duplicate doc string warnings, SparcWorks uses a separate
@@ -116,7 +116,7 @@
      ;;; After fixing, eos/loaddefs-eos and loaddefs appear identical?!!
      ;;; So just make loaddefs-eos go away...
      ;;;(load-gc (if (featurep 'sparcworks) "eos/loaddefs-eos" "loaddefs"))
-     (load-gc "loaddefs")
+     (load-gc "loaddefs") ; <=== autoloads get put here
      (load-gc "misc")
      (load-gc "profile")
      ;; (load-gc "hyper-apropos")  Soon...

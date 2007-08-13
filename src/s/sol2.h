@@ -1,5 +1,6 @@
 /* Synched up with: FSF 19.31. */
 
+#define __EXTENSIONS__
 #include "usg5-4-2.h"		/* XEmacs change from 5-4 to 5-4-2 */
 
 #define SOLARIS2
@@ -24,14 +25,11 @@
 
 /* Here is how to find X Windows.  The -R option says where
    to find X windows at run time.  */
+#define LD_SWITCH_SYSTEM_RPATH -R/usr/dt/lib:/opt/SUNWdt/lib:/usr/openwin/lib
 #ifdef __GNUC__
-#define LD_SWITCH_SYSTEM -Xlinker -R/usr/openwin/lib
-#elif defined (__SUNPRO_C) && (__SUNPRO_C >= 0x400)
-/* XEmacs: <Georg.Nikodym@canada.sun.com> says you need to turn off
-   the incremental linker with Sunpro C 4, or dynodump won't work. */
-#define LD_SWITCH_SYSTEM -xildoff -R/usr/openwin/lib  
-#else /* not GCC or Sunpro C 4.0 */
-#define LD_SWITCH_SYSTEM -R/usr/openwin/lib
+#define LD_SWITCH_SYSTEM -Xlinker LD_SWITCH_SYSTEM_RPATH
+#else 
+#define LD_SWITCH_SYSTEM  LD_SWITCH_SYSTEM_RPATH
 #endif
 
 /* XEmacs change -- Sun CC needs this to default to ANSI */
@@ -45,6 +43,16 @@
    there isn't a prototype for it other than in /usr/ucbinclude. */
 int gethostname (char *, size_t);
 
+/* Get non-ANSI functions from ANSI header files in cc -Xc mode.
+   Sun has promised to fix setjmp.h */
+#if __STDC__ == 1
+#ifndef __GNUC__
+#define _POSIX_C_SOURCE 1
+#include <setjmp.h>
+#undef _POSIX_C_SOURCE
+#endif /* __GNUC__ */
+#endif /* __STDC__ */
+
 /* XEmacs: Solaris include files miss this. */
 struct timeval;
 int utimes (char *file, struct timeval *tvp);
@@ -52,7 +60,7 @@ int utimes (char *file, struct timeval *tvp);
 /* XEmacs addition: to this to avoid having problems when we later
    define INT_MAX etc. */
 #include <limits.h>
-#endif
+#endif /* C_CODE */
 
 /* XEmacs change -- removed flags to force K & R compilation */
 

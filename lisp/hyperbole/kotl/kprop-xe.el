@@ -29,11 +29,11 @@
 ;;; Public functions
 ;;; ************************************************************************
 
-(defun kproperty:get (pos prop &optional object)
-  "Return the value of position POS's property PROP, in OBJECT.
-OBJECT is optional and defaults to the current buffer.
-If POSITION is at the end of OBJECT, the value is nil."
-   (extent-property (extent-at pos object) prop))
+;; (get-text-property (pos prop &optional object))
+;; Return the value of position POS's property PROP, in OBJECT.
+;; OBJECT is optional and defaults to the current buffer.
+;; If POSITION is at the end of OBJECT, the value is nil.
+(fset 'kproperty:get 'get-text-property)
 
 (if (and hyperb:xemacs-p (or (>= emacs-minor-version 12)
 			     (> emacs-major-version 19)))

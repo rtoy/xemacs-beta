@@ -2110,7 +2110,7 @@ lookup_keys (Lisp_Object keymap, int nkeys, Lisp_Object *keys,
   if (nkeys == 0)
     return Qnil;
 
-  if (nkeys > (countof (kkk)))
+  if (nkeys < (countof (kkk)))
     raw_keys = kkk;
   else
     raw_keys = (struct key_data *) alloca (sizeof (struct key_data) * nkeys);

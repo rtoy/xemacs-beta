@@ -1,3 +1,62 @@
+Thu Feb 20 11:55:45 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.44 released.
+
+Thu Feb 20 11:44:33 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* custom-edit.el (custom-variable-action): Pass symbol to
+	`custom-unlispify-tag-name'. 
+	(custom-group-action): Ditto.
+	(custom-face-action): Ditto.
+
+Wed Feb 19 19:41:38 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* custom.el (get-face-documentation): New function.
+	(set-face-documentation): Ditto.
+	(custom-declare-face): Use it.
+
+	* custom-edit.el (custom-face): Ditto.
+
+Tue Feb 18 21:42:38 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.43 released.
+
+Tue Feb 18 19:57:28 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* widget.el: Don't call autoloads when `load-gc' is fbound. 
+
+	* Version 1.42 released.
+
+Tue Feb 18 08:39:59 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* custom.el (custom-background-mode): Doc fix.
+	(custom-declare-variable): Ditto.
+	Patch by Simon Marshall <Simon.Marshall@esrin.esa.it>.
+	
+	* custom.el (custom-face-display-set): Pass frame parameter to
+	`copy-face'.
+	(custom-face-attribites-set): Pass frame parameter.
+
+	* custom-xmas.el: Cleanup.
+
+	* custom.el (XEmacs): Load "custom-xmas" instead of requiring.
+
+	* widget-edit.el (widget-keymap): Removed duplicate key binding. 
+
+Mon Feb 17 12:58:40 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* Version 1.41 released.
+
+Mon Feb 17 12:43:12 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
+
+	* custom-edit.el (custom-variable-action): Use
+	`custom-unlispify-tag-name' instead of `capitalize'.
+	(custom-face-action): Ditto.
+	(custom-group-action): Ditto.
+
+	* custom-xmas.el: New file.
+	* custom.el: Move XEmacs code there.
+
 Sat Feb 15 22:27:07 1997  Per Abrahamsen  <abraham@dina.kvl.dk>
 
 	* Version 1.40 released.

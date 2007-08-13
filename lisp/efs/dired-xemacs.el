@@ -10,10 +10,12 @@
 
 (provide 'dired-xemacs)
 (require 'dired)
+(require 'dired-faces)
 
 (require 'backquote)
 
-;;; Variables
+
+;;; Variables not meant for user editing
 
 ;; kludge
 (defun dired-demarkify-regexp (re)
@@ -23,12 +25,6 @@
 			     (length dired-re-maybe-mark)
 			     (length re)))
     re))
-
-(defvar dired-do-highlighting t
-  "Set if we should use highlighting according to filetype.")
-
-(defvar dired-do-interactive-permissions t
-  "Set if we should allow interactive chmod.")
 
 (defvar dired-re-raw-dir (dired-demarkify-regexp dired-re-dir))
 (defvar dired-re-raw-sym (dired-demarkify-regexp dired-re-sym))
@@ -46,90 +42,20 @@
 
 (defvar dired-re-raw-setgid 
   (concat "^" dired-re-inode-size
-	  "-[-r][-w][-x][-r][-w][Ss][-r][-w][xst]")
+	  "-[-r][-w][-x][-r][-w][sS][-r][-w][xst]")
   "setgid plain file (even if not executable)")
 
 (defvar dired-re-pre-permissions "^.? ?[0-9 	]*[-d]"
   "Regexp matching the preamble to file permissions part of a dired line.
 This shouldn't match socket or symbolic link lines (which aren't editable).")
 
-(defvar dired-re-permissions "[-r][-w][-Ssx][-r][-w][-sx][-r][-w][-xst]"
+(defvar dired-re-permissions "[-r][-w][-Ssx][-r][-w][-Ssx][-r][-w][-xst]"
   "Regexp matching the file permissions part of a dired line.")
 
 ;;; Setup
 
 (setq dired-modeline-tracking-cmds '(mouse-track))
 
-;;; Make needed faces if the user hasn't already done so.
-;;; Respect X resources (`make-face' uses them when they exist).
-
-(let ((change-it
-       (function (lambda (face)
-		   (or (if (fboundp 'facep)
-			   (facep face)
-			 (memq face (face-list)))
-		       (make-face face))
-		   (not (face-differs-from-default-p face))))))
-
-  (if (funcall change-it 'dired-face-marked)
-      (progn
-	(set-face-background 'dired-face-marked "PaleVioletRed"
-			     'global '(color) 'append)
-	(set-face-underline-p 'dired-face-marked t
-			      'global '(mono) 'append)
-	(set-face-underline-p 'dired-face-marked t
-			      'global '(grayscale) 'append)))
-  (if (funcall change-it 'dired-face-deleted)
-      (progn
-	(set-face-background 'dired-face-deleted "LightSlateGray"
-			     'global '(color) 'append)
-	(set-face-underline-p 'dired-face-deleted t
-			      'global '(mono) 'append)
-	(set-face-underline-p 'dired-face-deleted t
-			      'global '(grayscale) 'append)))
-  (if (funcall change-it 'dired-face-directory)
-      (make-face-bold 'dired-face-directory))
-  (if (funcall change-it 'dired-face-executable)
-      (progn
-	(set-face-foreground 'dired-face-executable "SeaGreen"
-			     'global '(color) 'append)
-	(make-face-bold 'dired-face-executable)))
-  (if (funcall change-it 'dired-face-setuid)
-      (progn
-	(set-face-foreground 'dired-face-setuid "Red"
-			     'global '(color) 'append)
-	(make-face-bold 'dired-face-setuid)))
-  (if (funcall change-it 'dired-face-socket)
-      (progn
-	(set-face-foreground 'dired-face-socket "Gold"
-			     'global '(color) 'append)
-	(make-face-italic 'dired-face-socket)))
-  (if (funcall change-it 'dired-face-symlink)
-      (progn
-	(set-face-foreground 'dired-face-symlink "MediumBlue"
-			     'global '(color) 'append)
-	(make-face-bold 'dired-face-symlink)))
-  
-  (if (funcall change-it 'dired-face-boring)
-      (progn
-	(set-face-foreground 'dired-face-boring "Grey"
-			     'global '(color) 'append)
-	(set-face-background-pixmap
-	 'dired-face-boring 
-	 [xbm :data (32 2 "\125\125\125\125\252\252\252\252")]
-	 'global '(mono) 'append)
-	(set-face-background-pixmap
-	 'dired-face-boring 
-	 [xbm :data (32 2 "\125\125\125\125\252\252\252\252")]
-	 'global '(grayscale) 'append)))
-  (if (funcall change-it 'dired-face-permissions)
-      (progn
-	(set-face-foreground 'dired-face-permissions "MediumOrchid"
-			     'global '(color) 'append)
-	(set-face-underline-p 'dired-face-deleted t
-			      'global '(mono) 'append)
-	(set-face-underline-p 'dired-face-deleted t
-			      'global '(grayscale) 'append))))
 
 ;;; Menus
 
@@ -569,7 +495,7 @@ If the file name is already flag, this unflags it."
 	      ((char-equal dired-default-marker mark)
 	       'dired-face-marked)
 	      ((char-equal dired-del-marker mark)
-	       'dired-face-deleted)
+	       'dired-face-flagged)
 	      (t 'default))))
 	(set-extent-face
 	 extent
@@ -658,7 +584,7 @@ If the file name is already flag, this unflags it."
 ;; This is probably overdoing it.
 ;; Someone give me lexical scoping here ...
 
-(defun dired-setup-chmod-keymap (domain id keys)
+(defun dired-setup-chmod-keymap (domain id keys &optional toggle-keys)
   (let* ((names
 	  (mapcar
 	   (function
@@ -692,7 +618,7 @@ If the file name is already flag, this unflags it."
 	(interactive)
 	(cond ((looking-at "-") (dired-do-interactive-chmod
 				 ,(concat (list domain ?+ (car keys)))))
-	      ,@(let ((l keys)
+	      ,@(let ((l (or toggle-keys keys))
 		      (c '()))
 		  (while l
 		    (setq c
@@ -704,7 +630,9 @@ If the file name is already flag, this unflags it."
 				 (concat (list domain ?+ (cadr l))))))
 			   c))
 		    (setq l (cdr l)))
-		  (reverse c)))))
+		  (reverse c))
+	      (t (dired-do-interactive-chmod
+		  ,(concat (list domain ?+ (car keys))))))))
 
     (eval
      `(defun ,mouse-toggle-name (event)
@@ -762,13 +690,13 @@ If the file name is already flag, this unflags it."
   (setq
    dired-u-r-keymap (dired-setup-chmod-keymap ?u ?r '(?r))
    dired-u-w-keymap (dired-setup-chmod-keymap ?u ?w '(?w))
-   dired-u-x-keymap (dired-setup-chmod-keymap ?u ?x '(?s ?S ?x))
+   dired-u-x-keymap (dired-setup-chmod-keymap ?u ?x '(?x ?s ?S) '(?x))
    dired-g-r-keymap (dired-setup-chmod-keymap ?g ?r '(?r))
    dired-g-w-keymap (dired-setup-chmod-keymap ?g ?w '(?w))
-   dired-g-x-keymap (dired-setup-chmod-keymap ?g ?x '(?s ?x))
+   dired-g-x-keymap (dired-setup-chmod-keymap ?g ?x '(?x ?s ?S) '(?x))
    dired-o-r-keymap (dired-setup-chmod-keymap ?o ?r '(?r))
    dired-o-w-keymap (dired-setup-chmod-keymap ?o ?w '(?w))
-   dired-o-x-keymap (dired-setup-chmod-keymap ?o ?x '(?s ?t ?x))))
+   dired-o-x-keymap (dired-setup-chmod-keymap ?o ?x '(?x ?s ?t) '(?x))))
 
 (defun dired-make-permissions-interactive (beg)
   (save-excursion

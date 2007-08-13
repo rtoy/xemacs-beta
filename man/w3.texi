@@ -2,7 +2,7 @@
 @c
 @c Please note that this file uses some constructs not supported by earlier 
 @c versions of TeXinfo.  You must be running one of the newer TeXinfo 
-@c releases (I currently use version 3.9 from ftp://prep.ai.mit.edu/pub/gnu
+@c releases (I currently use version 3.9 from ftp://prep.ai.mit.edu/pub/gnu/)
 @c
 @c Please do not send in bug reports about not being able to format the
 @c document with 'makeinfo' or 'tex', just upgrade your installation.
@@ -596,7 +596,7 @@ the keybindings used in other browsers.
 @findex w3-lynx-emulation-minor-mode
 @vindex w3-mode-hook
 :: WORK :: Document lynx emulation
-@table @key
+@table @bullet
 @item Down arrow
 Highlight next topic
 @item Up arrow
@@ -1200,15 +1200,75 @@ red. Although the specificity is the same for both declarations, the
 declaration in the 'STYLE' attribute will override the one in the
 'STYLE' element because of cascading rule number 5.
 
-The UA may choose to honor other stylistic HTML attributes, for example
-'ALIGN'. If so, these attributes are translated to the corresponding CSS
-rules with specificity equal to 1. The rules are assumed to be at the
-start of the author style sheet and may be overridden by subsequent
-style sheet rules. In a transition phase, this policy will make it
-easier for stylistic attributes to coexist with style sheets.
+The @sc{ua} may choose to honor other stylistic @sc{html} attributes,
+for example 'ALIGN'. If so, these attributes are translated to the
+corresponding @sc{css} rules with specificity equal to 1. The rules are
+assumed to be at the start of the author style sheet and may be
+overridden by subsequent style sheet rules. In a transition phase, this
+policy will make it easier for stylistic attributes to coexist with
+style sheets.
 
 @node Properties, Font Properties, The Cascade, Stylesheets
 @section Properties
+
+In the text below, the allowed values for each property are listed
+with a syntax like the following:
+
+@example
+      Value: N | NW | NE
+      Value: [ <length> | thick | thin ]@{1,4@}
+      Value: <uri>? <color> [ / <color> ]?
+      Value: <uri> || <color>
+@end example
+
+The words between < and > give a type of value. The most common types
+are <length>, <percentage>, <url>, <number>and <color> these are
+described in the section on [[units]]. The more specialized types
+(e.g. <font-family>and <border-style>) are described under the property
+where they appear.
+
+Other words are keywords that must appear literally, without quotes. The
+slash (/) and the comma (,) must also appear literally.
+
+Several things juxtaposed mean that all of them must occur, in the given
+order. A bar (|) separates alternatives: one of them must occur. A
+double bar (A || B) means that either A or B or both must occur, in any
+order. Brackets ([]) are for grouping. Juxtaposition is stronger than
+the double bar, and the double bar is stronger than the bar. Thus "a b |
+c || d e" is equivalent to "[ a b ] | [ c || [ d e ]]".
+
+Every type, keyword, or bracketed group may be followed by one of the
+following modifiers:
+
+@itemize @bullet
+@item
+An asterisk (*) indicates that the preceding type, word or group is
+repeated zero or more times.
+@item
+A plus (+) indicates that the preceding type, word or group is repeated
+one or more times.
+@item
+A question mark (?) indicates that the preceding type, word or group is
+optional.
+@item
+A pair of numbers in curly braces (@{A,B@}) indicates that the preceding
+type, word or group is repeated at least A and at most B times.
+@end itemize
+
+Other than the value the following information is also shown.
+
+@multitable @columnfractions .20 .8
+@item Supported Values: @tab If this is present, it lists the parts of
+the specification that Emacs-W3 currently supports.
+@item Unsupported Values: @tab If this is present, it represents the
+parts of the specifcation that Emacs-W3 does not support.
+@item Initial: @tab The default value for the property, unless
+explicitly set in a stylesheet.
+@item Applies to: @tab What type of elements this property can be attached to.
+@item Inherited: @tab Yes or no
+@item Percentage values: @tab What a percentage value applies to when given.
+@end multitable
+
 @ifinfo
 @menu
 * Font Properties::             Selecting fonts, styles, and sizes.
@@ -1216,8 +1276,8 @@ easier for stylistic attributes to coexist with style sheets.
 * Text Properties::             Alignment, decoration, and more!
 * Box Properties::              Borders, padding, and margins, oh my!
 * Classification::              Changing whitespace and display policies.
-* Media Selection::             
-* Speech Properties::           
+* Media Selection::             Conditionalize stylesheets on media-type.
+* Speech Properties::           Speech output controlled by stylesheets.
 @end menu
 @end ifinfo
 
@@ -1607,7 +1667,7 @@ used when the image is unavailable. When the image is available, it is
 overlaid on top of the background color.
 
 @example
-  BODY @{ background-image: url(marble.gif) @}
+  BODY @{ background-image: url(marble.png) @}
   P @{ background-image: none @}
 @end example
 
@@ -1671,64 +1731,751 @@ properties have been specified.
 @node word-spacing, letter-spacing, Text Properties, Text Properties
 @subsubsection word-spacing
 @multitable @columnfractions .2 .8
+@item Supported Values: @tab normal
+@item Unsupported Values: @tab <length>
+@item Initial: @tab normal
+@item Applies to: @tab all elements
+@item Inherited: @tab yes
+@item Percentage values: @tab N/A
 @end multitable
+
+The length unit indicates an addition to the default space between
+words. Values can be negative, but there may be implementation-specific
+limits. The UA is free to select the exact spacing algorithm. The word
+spacing may also be influenced by justification (which is a value of the
+'align' property).
+
+@example
+  H1 @{ word-spacing: 0.4em @}
+@end example
+
+Here, the word-spacing between each word in 'H1' elements would be
+increased by '1em'.
+
+NOTE: Emacs-W3 cannot currently support this, due to limitations in
+Emacs.  It may  be implemented in the future.
 
 @node letter-spacing, text-decoration, word-spacing, Text Properties
 @subsubsection letter-spacing
 @multitable @columnfractions .2 .8
+@item Supported Values: normal
+@item Unsupported Values: @tab <length>
+@item Initial: @tab normal
+@item Applies to: @tab all elements
+@item Inherited: @tab yes
+@item Percentage values: @tab N/A
 @end multitable
+
+The length unit indicates an addition to the default space between
+characters. Values can be negative, but there may be
+implementation-specific limits. The UA is free to select the exact
+spacing algorithm. The letter spacing may also be influenced by
+justification (which is a value of the 'align' property).
+
+@example
+  BLOCKQUOTE @{ letter-spacing: 0.1em @}
+@end example
+
+Here, the letter-spacing between each character in 'BLOCKQUOTE' elements
+would be increased by '0.1em'.
+
+NOTE: Emacs-W3 cannot currently support this, due to limitations in
+Emacs.  It may be implemented in the future.
 
 @node text-decoration, vertical-align, letter-spacing , Text Properties
 @subsubsection text-decoration
 @multitable @columnfractions .2 .8
+@item Supported Values: @tab none | underline | line-through | blink
+@item Unsupported Values: @tab overline 
+@item Initial: @tab none
+@item Applies to: @tab all elements
+@item Inherited: @tab no, but see clarification below
+@item Percentage values: @tab N/A
 @end multitable
+
+This property describes decorations that are added to the text of an
+element. If the element has no text (e.g. the 'IMG' element in HTML) or
+is an empty element (e.g. '<EM></EM>'), this property has no effect. A
+value of 'blink' causes the text to blink.
+
+The color(s) required for the text decoration should be derived from the
+'color' property value.
+
+This property is not inherited, but elements should match their
+parent. E.g., if an element is underlined, the line should span the
+child elements. The color of the underlining will remain the same even
+if descendant elements have different 'color' values.
+
+@example
+  A:link, A:visited, A:active @{ text-decoration: underline @}
+@end example
+
+The example above would underline the text of all links (i.e., all 'A'
+elements with a 'HREF' attribute).
+
+NOTE: The 'line-through' property is only supported under XEmacs
+currently.  A patch has been sent to the Emacs maintainers to add
+support for this, but it has not made it into the main distribution
+yet.
 
 @node vertical-align, text-transform, text-decoration, Text Properties
 @subsubsection vertical-align
-@multitable @columnfractions .2 .8
-@end multitable
+This is currently unsupported in Emacs-W3.
 
 @node text-transform, text-align, vertical-align, Text Properties
 @subsubsection text-transform
 @multitable @columnfractions .2 .8
+@item Supported Values: @tab none
+@item Unsupported Values: @tab capitalize | uppercase | lowercase
+@item Initial: @tab none
+@item Applies to: @tab all elements
+@item Inherited: @tab yes
+@item Percentage values: @tab N/A
 @end multitable
+
+@table @b
+@item 'capitalize'
+Uppercases the first character of each word.
+@item 'uppercase'
+Uppercases all letters of the element.
+@item 'lowercase'
+Lowercases all letters of the element.
+@item 'none'
+Neutralizes inherited value.
+@end table
+
+The actual transformation in each case is human language dependent.
+
+@example
+  H1 @{ text-transform: uppercase @}
+@end example
+
+The example above would put 'H1' elements in uppercase text.
+
+NOTE: This capability was in the previous version of Emacs-W3, but has
+not been reimplemented in the new display code yet.  Please feel free to
+send me patches.
 
 @node text-align, text-indent, text-transform, Text Properties
 @subsubsection text-align
 @multitable @columnfractions .2 .8
+@item Value: @tab left | right | center | justify
+@item Initial: @tab User specific
+@item Applies to: @tab block-level elements
+@item Inherited: @tab yes
+@item Percentage values: @tab N/A
 @end multitable
+
+This property describes how text is aligned within the element. The
+actual justification algorithm used is UA and human language dependent.
+
+Example:
+@example
+  DIV.center @{ text-align: center @}
+@end example
+
+Since 'text-align' inherits, all block-level elements inside the 'DIV'
+element with 'CLASS=center' will be centered. Note that alignments are
+relative to the width of the element, not the canvas.
 
 @node text-indent, line-height, text-align, Text Properties
-@subsubsection
-@multitable @columnfractions .2 .8
-@end multitable
+@subsubsection text-indent
+Not currently implemented in Emacs-W3.
 
 @node line-height, Box Properties, text-indent, Text Properties
-@subsubsection
-@multitable @columnfractions .2 .8
-@end multitable
+@subsubsection line-height
+Not currently implemented in Emacs-W3.
 
 @node Box Properties, Classification, line-height, Properties
 @subsection Box Properties
 @multitable @columnfractions .2 .8
 @end multitable
 
-@node Classification, Media Selection, Box Properties, Properties
+@node Classification, display, Box Properties, Properties
 @subsection Classification
+These properties classify elements into categories more than they set
+specific visual parameters.
+
+The list-style properties describe how list items (i.e. elements with a
+'display' value of 'list-item') are formatted. The list-style properties
+can be set on any element, and it will inherit normally down the
+tree. However, they will only be have effect on elements with a
+'display' value of 'list-item'. In HTML this is typically the case for
+the 'LI' element.
+
+@ifinfo 
+@menu
+* display::
+* white-space::
+* list-style-type::
+* list-style-image::
+* list-style-position::
+* list-style::
+@end menu
+@end ifinfo
+
+@node display, white-space, Classification, Classification
+@subsubsection display
 @multitable @columnfractions .2 .8
+@item Value: @tab block | inline | list-item | none
+@item Extensions: @tab line
+@item Initial: @tab inline
+@item Applies to: @tab all elements
+@item Inherited: @tab no
+@item Percentage values: @tab N/A
 @end multitable
 
-@node Media Selection, Speech Properties, Classification, Properties
+This property describes how/if an element is displayed on the canvas
+(which may be on a printed page, a computer display etc.).
+
+An element with a 'display' value of 'block' opens whitespace suitable
+for a paragraph break.  Typically, elements like 'H1' and 'P' are of
+type 'block'. A value of 'list-item' is similar to 'block' except that a
+list-item marker is added. In HTML, 'LI' will typically have this value.
+
+An element with a 'display' value of 'inline' results in a new inline
+box on the same line as the previous content.
+
+A value of 'none' turns off the display of the element, including
+children elements and the surrounding box.
+
+@example
+  P @{ display: block @}
+  EM @{ display: inline @}
+  LI @{ display: list-item @}
+  IMG @{ display: none @}
+@end example
+
+The last rule turns off the display of images.
+
+A value of 'line' results in a single line break.  Emacs-W3 needs this
+extension to be able to fully specify the behaviour of @sc{br} and
+@sc{hr} elements within a stylesheet.
+
+NOTE: Emacs-W3 defaults to using 'inline' for this property, which is a
+slight deviation from the specification.
+
+@node white-space, list-style-type, display, Classification
+@subsubsection white-space
+@multitable @columnfractions .2 .8
+@item Value: @tab normal | pre | nowrap
+@item Initial: @tab normal
+@item Applies to: @tab block-level elements
+@item Inherited: @tab yes
+@item Percentage values: @tab N/A
+@end multitable
+
+This property declares how whitespace inside the element is handled: the
+'normal' way (where whitespace is collapsed), as 'pre' (which behaves
+like the 'PRE' element in HTML) or as 'nowrap' (where wrapping is done
+only through BR elements):
+
+@example
+  PRE @{ white-space: pre @}
+  P   @{ white-space: normal @}
+@end example
+
+@node list-style-type, list-style-image, white-space, Classification
+@subsubsection list-style-type
+@multitable @columnfractions .2 .8
+@item Value: @tab disc | circle | square | decimal | lower-roman | upper-roman | lower-alpha | upper-alpha | none
+@item Initial: @tab disc
+@item Applies to: @tab elements with 'display' value 'list-item'
+@item Inherited: @tab yes
+@item Percentage values: @tab N/A
+@end multitable
+
+This property is used to determine the appearance of the list-item
+marker if 'list-style-image' is 'none' or if the image pointed to by the
+URL cannot be displayed.
+
+Fo example:
+@example
+  OL @{ list-style-type: decimal @}       /* 1 2 3 4 5 etc. */
+  OL @{ list-style-type: lower-alpha @}   /* a b c d e etc. */
+  OL @{ list-style-type: lower-roman @}   /* i ii iii iv v etc. */
+@end example
+
+@node list-style-image, list-style-position, list-style-type, Classification
+@subsubsection list-style-image
+@multitable @columnfractions .2 .8
+@item Value: @tab <url> | none
+@item Initial: @tab none
+@item Applies to: @tab elements with 'display' value 'list-item'
+@item Inherited: @tab yes
+@item Percentage values: @tab N/A
+@end multitable
+
+This property sets the image that will be used as the list-item
+marker. When the image is available it will replace the marker set with
+the 'list-style-type' marker.
+
+NOTE: This is currently unimplemented in Emacs-W3.
+
+@example
+  UL @{ list-style-image: url(http://png.com/ellipse.png) @}
+@end example
+
+@node list-style-position, list-style, list-style-image, Classification
+@subsubsection list-style-position
+@multitable @columnfractions .2 .8
+@item Supported Values: @tab outside
+@item Unsupported Values: @tab inside
+@item Initial: @tab outside
+@item Applies to: @tab elements with 'display' value 'list-item'
+@item Inherited: @tab yes
+@item Percentage values: @tab N/A
+@end multitable
+
+The value of 'list-style-position' determines how the list-item marker
+is drawn with regard to the content. For a formatting example see
+section 4.1.3.
+
+@node list-style, Media Selection, list-style-position, Classification
+@subsubsection list-style
+@multitable @columnfractions .2 .8
+@item Value: <keyword> || <position> || <url>
+@item Initial: @tab not defined for shorthand properties
+@item Applies to: @tab elements with 'display' value 'list-item'
+@item Inherited: @tab yes
+@item Percentage values: @tab N/A
+@end multitable
+
+The 'list-style' property is a shorthand notation for setting the three
+properties 'list-style-type', 'list-style-image' and
+'list-style-position' at the same place in the style sheet.
+
+@example
+  UL @{ list-style: upper-roman inside @}
+  UL UL @{ list-style: circle outside @}
+  LI.square @{ list-style: square @}
+@end example
+
+Setting 'list-style' directly on 'LI' elements can have unexpected
+results. Consider:
+
+@example
+  <STYLE TYPE="text/css">
+    OL.alpha LI  @{ list-style: lower-alpha @}
+    UL LI        @{ list-style: disc @}
+  </STYLE>
+  <BODY>
+    <OL CLASS=alpha>
+      <LI>level 1
+      <UL>
+         <LI>level 2
+      </UL>
+    </OL>
+  </BODY>
+@end example
+
+Since the specificity (as defined in the cascading order) is higher for
+the first rule in the style sheet in the example above, it will override
+the second rule on all 'LI' elements and only 'lower-alpha' list styles
+will be used. It is therefore recommended to set 'list-style' only on
+the list type elements:
+
+@example
+  OL.alpha  @{ list-style: lower-alpha @}
+  UL        @{ list-style: disc @}
+@end example
+
+In the above example, inheritance will transfer the 'list-style' values
+from 'OL' and 'UL' elements to 'LI' elements.
+
+A URL value can be combined with any other value:
+
+@example
+  UL @{ list-style: url(http://png.com/ellipse.png) disc @}
+@end example
+
+In the example above, the 'disc' will be used when the image is
+unavailable.
+
+@node Media Selection, Speech Properties, list-style, Properties
 @subsection Media Selection
-@multitable @columnfractions .2 .8
-@end multitable
+To specify that a stylesheet declaration should only apply when using a
+certain media type (ie: different font families preferred when printing
+versus on-screen presentation), the declarations should be wrapped in
+the proposed @b{@@media} directive.
 
-@node Speech Properties, Units, Media Selection, Properties
+The @@media directive takes two arguments, the media type, and a block
+of style declarations.
+
+@example
+  @@media print @{ 
+    BODY @{ font-size: 10pt @}
+    H1 @{ font-size: 14pt @}
+  @}
+@end example
+The '@@media' construct also allows to put include style sheet rules
+for various media in the same style sheet:
+
+@example
+  @@media print @{
+    BODY @{ font-size: 10pt @}
+  @}
+  @@media screen @{
+    BODY @{ font-size: 12pt @}
+  @}
+@end example
+
+Currently, the following media types are defined.
+@table @b
+@item Print
+Output for paged opaque material, and for documents viewed on screen in
+print preview mode.
+@item Screen
+A continuous presentation for computer screens.
+@item Projector
+Paged presentation for projected presentations.
+@item Braille
+For braille tactile feedback devices.
+@item Speech
+Aural presentation.
+@item Emacs
+The stylesheet will only be applied if the user is running in Emacs 19.
+@item XEmacs
+The stylesheet will only be applied if the user is running in XEmacs 19.
+@item All
+The default value, the style sheet applies to all output devices
+@end table
+
+@node Speech Properties, volume, Media Selection, Properties
 @subsection Speech Properties
+Those of us who are sighted are accustomed to visual presentation of
+@sc{html} documents, frequently on a bitmapped display. This is not the
+only possible presentation method, however. Aural presentation, using a
+combination of speech synthesis and 'audio icons', provides an
+alternative presentation. This form of presentation is in current use by
+the blind and print-impaired communities.
+
+Often such aural presentation occurs by converting the document to plain
+text and feeding this to a 'screen reader' -- software or hardware that
+simply reads all the characters on the screen. This results in less
+effective presentation than would be the case if the document structure
+were retained.
+
+There are other large markets for aural presentation, including in-car
+and home entertainment use; aurual or mixed aural/visual presentation is
+thus likely to increase in importance over the next few years. Realizing
+that that the aural rendering is essentially independent of the visual
+rendering:
+
+@itemize @bullet
+@item
+Allows orthogonal aural and visual views.
+@item
+Allows browsers to optionally implement both aural and visual views to
+produce truly multimodal documents.
+@end itemize
+
+@ifinfo
+@menu
+* volume::
+* pause-before::
+* pause-after::
+* pause::
+* cue-before::
+* cue-after::
+* cue::
+* play-during::
+* speed::
+* voice-family::
+* pitch::
+* pitch-range::
+* stress::
+* richness::
+* speak-punctuation::
+* speak-date::
+* speak-numeral::
+* speak-time::
+@end menu
+@end ifinfo
+
+@node volume, pause-before, Speech Properties, Speech Properties
+@subsubsection volume
+@multitable @columnfractions .2 .8
+@item Value: @tab <percentage> | mute | x-soft | soft | medium | loud | x-loud
+@item Initial: @tab medium
+@item Applies to: @tab all elements
+@item Inherited: @tab yes
+@item Percentage values: @tab relative to user-specified mapping
+@end multitable
+
+The legal range of percentage values is 0% to 100%. There is a fixed
+mapping between keyword values and percentages:
+
+@itemize @bullet
+@item
+'x-soft' = '0%'
+@item
+'soft' = '25%'
+@item
+'medium' = '50%'
+@item
+'loud' = '75%'
+@item
+'x-loud' = '100%'
+@end itemize
+
+Volume refers to the median volume of the waveform. In other words, a
+highly inflected voice at a volume of 50 might peak well above
+that. Note that '0%' does not mean the same as "mute". 0% represents the
+minimum audible volume level and 100% corresponds to the maximum
+comfortable level. The UA should allow the values corresponding to 0%
+and 100% to be set by the user. Suitable values depend on the equipment
+in use (speakers, headphones), the environment (in car, home theater,
+library) and personal preferences. Some examples:
+
+@itemize @bullet
+@item
+A browser for in-car use has a setting for when there is lots of
+background noise . 0% would map to a fairly high level and 100% to a
+quite high level. The overall values are likely to be human adjustable
+for comfort, for example with a physical volume control: what this
+proposal does is adjust the dynamic range.
+@item
+Another speech browser is being used in the home, late at night, (don't
+annoy the neighbors) or in a shared study room. 0% is set to very quiet
+and 100% to a fairly quiet level, too. As with the first example, there
+is a low slope; the dynamic range is reduced. The actual volumes are low
+here, wheras they were high in the first example.
+@item
+In a quiet and isolated house, an expensive hifi home theatre setup. 0%
+is set fairly low and 100% to quite high; there is wide dynamic range.
+@end itemize
+
+The same authors stylesheet could be used in all cases, simply by
+mapping the 0 and 100 points suitably at the client side.
+
+@node pause-before, pause-after, volume, Speech Properties
+@subsubsection pause-before
+@multitable @columnfractions .2 .8
+@item Value: @tab <time> | <percentage>
+@item Initial: @tab UA specific
+@item Applies to: @tab all elements
+@item Inherited: @tab no
+@item Percentage values: @tab speed
+@end multitable
+
+This property specifies the pause before elements. It may be given in an
+absolute units (seconds, milliseconds) or as a relative value in which
+case it is relative to the reciprocal of the 'speed' property: if speed
+is 120 words per minute (ie a word takes half a second -- 500
+milliseconds) then a pause-before of 100% means a pause of 500 ms and a
+pause-before of 20% means 100ms.
+
+Using relative units gives more robust stylesheets in the face of large
+changes in speed.
+
+@node pause-after, pause, pause-before, Speech Properties
+@subsubsection pause-after
+@multitable @columnfractions .2 .8
+@item Value: @tab <time> | <percentage>
+@item Applies to: @tab all elements
+@item Inherited: @tab no
+@item Percentage values: @tab speed
+@end multitable
+
+This property specifies the pause after elements. Values are specified
+the same way as 'pause-before'.
+
+@node pause, cue-before, pause-after, Speech Properties
+@subsubsection pause
+@multitable @columnfractions .2 .8
+@item Value: @tab [<time> | <percentage> ]@{1,2@};
+@item Applies to: @tab all elements
+@item Inherited: @tab no
+@item Percentage values: @tab speed
+@end multitable
+
+The 'pause' property is a shorthand for setting 'pause-before' and
+'pause-after'. The first value is pause-before and the second is
+pause-after. If only one value is given, it applies to both properties.
+
+Examples:
+
+@example
+  H1 @{ pause: 20ms @}       /* pause-before: 20ms; pause-after: 20ms */
+  H2 @{ pause: 30ms 40ms @}  /* pause-before: 30ms; pause-after: 40ms */
+  H3 @{ pause-after: 10ms @} /* pause-before: ?;    pause-after: 10ms */
+@end example
+
+@node cue-before, cue-after, pause, Speech Properties
+@subsubsection cue-before
+@multitable @columnfractions .2 .8
+@item Value: @tab <url> | none
+@item Initial: @tab none
+@item Applies to: @tab all elements
+@item Inherited: @tab no
+@end multitable
+Auditory icons are another way to distinguish semantic elements. Sounds
+may be played before, and/or after the element to delimit it. The same
+sound can be used both before and after, using the cue property.
+
+Examples:
+
+@example
+  A  @{ cue-before: url(bell.aiff); cue-after: url(dong.wav) @}
+  H1 @{ cue-before: url(pop.au); cue-after: url(pop.au) @}
+  H1 @{ cue: url(pop.au) @}  /* same as previous */
+@end example
+
+@node cue-after, cue, cue-before, Speech Properties
+@subsubsection cue-after
+@xref{cue-before}
+
+@node cue, play-during, cue-after, Speech Properties
+@subsubsection cue
+@xref{cue-before}
+
+@node play-during, speed, cue, Speech Properties
+@subsubsection cue-during
+@multitable @columnfractions .2 .8
+@item Value: @tab <url> | mix | none
+@item Initial: @tab mix
+@item Applies to: @tab all elements
+@item Inherited: @tab no
+@end multitable
+Similar to the cue-before and cue-after properties, this indicates sound
+to be played during an element as a background (ie the sound is mixed in
+with the speech).
+
+Examples:
+
+@example
+  BLOCKQUOTE.sad @{ cue-during: url(violins.aiff) @}
+@end example
+
+@node speed, voice-family, play-during, Speech Properties
+@subsubsection speed
+@multitable @columnfractions .2 .8
+@item Value: @tab <words-per-minute> | x-slow | slow | medium | fast | x-fast | faster | slower
+@item Initial: @tab medium
+@item Applies to: @tab all elements
+@item Inherited: @tab yes
+@end multitable
+
+Specifies the speaking rate. Note that both absolute and relative
+keyword values are allowed (compare with @ref{font-weight}).
+
+@node voice-family, pitch, speed, Speech Properties
+@subsubsection voice-family
+@multitable @columnfractions .2 .8
+@item Value: @tab [[<specific-voice> | <generic-voice>],]* [<specific-voice> | <generic-voice>]
+@item Initial: @tab device-specific
+@item Applies to: @tab all elements
+@item Inherited: @tab yes
+@end multitable
+
+The value is a prioritized list of voice family names. Generic families
+are male, female, and child.
+
+Examples of specific voice families are: comedian, paul, lisa
+
+Examples
+
+@example
+  H1 @{ voice-family: announcer, male @}
+  P.part.romeo @{ voice-family: romeo, male @}
+  P.part.juliet @{ voice-family: juliet, female @}
+@end example
+
+@node pitch, pitch-range, voice-family, Speech Properties
+@subsubsection pitch
 @multitable @columnfractions .2 .8
 @end multitable
 
-@node Units, Length Units, Speech Properties, Stylesheets
+@node pitch-range, stress, pitch, Speech Properties
+@subsubsection pitch-range
+@multitable @columnfractions .2 .8
+@end multitable
+
+@node stress, richness, pitch-range, Speech Properties
+@subsubsection stress
+@multitable @columnfractions .2 .8
+@item Value: @tab <percentage>
+@item Initial: @tab medium
+@item Applies to: @tab all elements
+@item Inherited: @tab yes
+@end multitable
+
+Specifies the level of stress (assertiveness or emphasis) of the
+speaking voice. English is a stressed language, and different parts of a
+sentence are assigned primary, secondary or tertiary stress. The value
+of property 'stress' controls the amount of inflection that results from
+these stress markers.
+
+Increasing the value of this property results in the speech being more
+strongly inflected. It is in a sense dual to property 'pitch-range' and
+is provided to allow developers to exploit higher-end auditory displays.
+
+@node richness, speak-punctuation, stress, Speech Properties
+@subsubsection richness
+@multitable @columnfractions .2 .8
+@item Value: @tab <percentage>
+@item Initial: @tab medium (50%)
+@item Applies to: @tab all elements
+@item Inherited: @tab yes
+@end multitable
+
+Specifies the richness (brightness) of the speaking voice. Different
+speech devices may require the setting of one or more device-specific
+parameters to achieve this effect.
+
+The effect of increasing richness is to produce a voice that carries --
+reducing richness produces a soft, mellifluous voice.
+
+@node speak-punctuation, speak-date, richness, Speech Properties
+@subsubsection speak-punctuation
+@multitable @columnfractions .2 .8
+@item Value: @tab code | none
+@item Initial: @tab none
+@item Applies to: @tab all elements
+@item Inherited: @tab yes
+@end multitable
+
+'code' indicates that punctuation such as semicolons, braces, and so on
+are to be spoken literally. The default value of 'none' means that
+punctuation is not spoken but instead is rendered naturally as various
+pauses.
+
+@node speak-date, speak-numeral, speak-punctuation, Speech Properties
+@subsubsection speak-date
+@multitable @columnfractions .2 .8
+@item Value: @tab myd | dmy | ymd | none
+@item Initial: @tab none
+@item Applies to: @tab all elements
+@item Inherited: @tab no
+@end multitable
+
+This is a hint that the element contains a date and also how that date
+should be spoken. month-day-year is common in the USA, while
+day-month-year is common in Europe and year-month-day is also used.
+
+This should really be an HTML tag not a stylesheet property, since it
+gives semantic information about the content.
+
+@node speak-numeral, speak-time, speak-date, Speech Properties
+@subsubsection speak-numeral
+@multitable @columnfractions .2 .8
+@item Value: @tab digits | continous
+@item Initial: @tab none
+@item Applies to: @tab all elements
+@item Inherited: @tab yes
+@end multitable
+
+@node speak-time, Units, speak-numeral, Speech Properties
+@subsubsection speak-time
+@multitable @columnfractions .2 .8
+@item Value: @tab 24 | 12 | none
+@item Initial: @tab none
+@item Applies to: @tab all elements
+@item Inherited: @tab yes
+@end multitable
+
+@node Units, Length Units, speak-time, Stylesheets
 @section Units
 
 @ifinfo
@@ -1756,14 +2503,36 @@ properties have been specified.
 
 @node Angle Units, Time Units, URLs, Units
 @subsection Angle Units
+These are the legal angle units:
+@itemize @bullet
+@item
+deg: degrees
+@item
+grad
+@item
+rad: radians
+@end itemize
 
 @node Time Units, Supported URLs, Angle Units, Units
 @subsection Time Units
+These are the legal time units:
+
+@itemize @bullet
+@item
+ms: milliseconds
+@item
+s: seconds
+@end itemize
 
 @node Supported URLs, MIME Support, Time Units, Top
 @chapter Supported URLs
 
 ::WORK:: List supported URL types, specific RFCs, etc.
+
+@ifinfo
+@menu
+@end menu
+@end ifinfo
 
 @node MIME Support, Adding MIME types based on file extensions, Supported URLs, Top
 @chapter MIME Support
@@ -1771,7 +2540,7 @@ properties have been specified.
 flexible typing mechanism.  The type of a file or message is specified
 in two parts, separated by a '/'.  The first part is the general
 category of the data (text, application, image, etc.).  The second part
-is the specific type of data (postscript, gif, jpeg, etc.).  So
+is the specific type of data (postscript, png, jpeg, etc.).  So
 @samp{text/html} specifies an @sc{html} document, whereas
 @samp{image/x-xwindowdump} specifies an image of an Xwindow taken with
 the @file{xwd} program.
@@ -1780,15 +2549,15 @@ the @file{xwd} program.
 This typing allows much more flexibility in naming files.  @sc{http}/1.0
 servers can now send back content-type headers in response to a request,
 and not have the client second-guess it based on file extensions.  @sc{html}
-files can now be named @file{something.gif} (not a great idea, but
+files can now be named @file{something.png} (not a great idea, but
 possible).
 
 @ifinfo
 @menu
 * Adding MIME types based on file extensions::  How to map file
                                                 extensions onto MIME
-                                                types (e.g., @samp{.gif ->
-                                                image/gif)}.
+                                                types (e.g., @samp{.png ->
+                                                image/png)}.
 * Specifying Viewers::  How to specify external and internal viewers
                         for files that Emacs-W3 cannot handle natively.
 @end menu
@@ -1857,7 +2626,7 @@ Not all files look as they should when parsed as an @sc{html} document
 changes that make the document look unrecognizable).  Files may be
 passed to external programs or Emacs Lisp functions to be viewed.
 
-Not all files can be viewed accurately from within an Emacs session (GIF
+Not all files can be viewed accurately from within an Emacs session (PNG
 files for example, or audio files).  For this reason, the user can
 specify file "viewers" based on MIME content-types.  This is done with
 a standard mailcap file.  @xref{Mailcap Files}
@@ -1865,7 +2634,7 @@ a standard mailcap file.  @xref{Mailcap Files}
 @findex mm-add-mailcap-entry
 As an alternative, the function @code{mm-add-mailcap-entry} can also be
 used from an appropriate hook.@xref{Hooks}  This functions takes three
-arguments, the major type ("@i{image}"), the minor type ("@i{gif}"), and
+arguments, the major type ("@i{image}"), the minor type ("@i{png}"), and
 an assoc list of information about the viewer.  Please see the @sc{url}
 documentation for more specific information on what this assoc list
 should look like.

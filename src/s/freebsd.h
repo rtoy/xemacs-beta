@@ -33,7 +33,15 @@
 #define PENDING_OUTPUT_COUNT(FILE) ((FILE)->_p - (FILE)->_bf._base)
 
 #define LIBS_DEBUG
+/* FreeBSD 2.2 or later */
+#ifndef __FreeBSD_version
+#include <osreldate.h>
+#endif
+#if __FreeBSD_version >= 199701
+#define LIBS_SYSTEM -lutil -lxpg4
+#else
 #define LIBS_SYSTEM -lutil
+#endif
 /* XEmacs change: */
 #ifdef HAVE_NCURSES
 #define LIBS_TERMCAP -lncurses -ltermcap

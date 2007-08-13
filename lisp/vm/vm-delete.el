@@ -147,7 +147,7 @@ don't move at all."
 	(t (setq arg 0)))
   (if vm-move-after-killing
       (let ((vm-circular-folders (and vm-circular-folders
-				      (eq vm-move-after-deleting t))))
+				      (eq vm-move-after-killing t))))
 	(vm-next-message arg t executing-kbd-macro))))
 
 (defun vm-expunge-folder (&optional shaddap)

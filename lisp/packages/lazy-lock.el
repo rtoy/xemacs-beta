@@ -1,17 +1,10 @@
 ;;; lazy-lock.el --- Lazy demand-driven fontification for fast Font Lock mode.
 
-;; Copyright (C) 1994, 1995 Free Software Foundation, Inc.
+;; Copyright (C) 1994, 1995, 1997 Free Software Foundation, Inc.
 
 ;; Author: Simon Marshall <simon@gnu.ai.mit.edu>
 ;; Keywords: faces files
-;; Version: 1.15
-
-;; LCD Archive Entry:
-;; lazy-lock|Simon Marshall|simon@gnu.ai.mit.edu|
-;; Lazy Font Lock mode (with fast demand-driven fontification).|
-;; 13-Nov-95|1.15|~/modes/lazy-lock.el.Z|
-
-;; The archive is archive.cis.ohio-state.edu in /pub/gnu/emacs/elisp-archive.
+;; Version: 1.16
 
 ;;; This file is part of GNU Emacs.
 
@@ -26,8 +19,9 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Commentary:
 
@@ -106,8 +100,107 @@
 ;; These kinds of things with `advice' aren't done automatically because they
 ;; cause large packages (advice.el plus bytecomp.el and friends) to be loaded.
 
-;; Caveats:
+;; Implementation differences with version 2:
 ;;
+;; - Version 1 of lazy-lock.el is a bit of a hack.  Version 1 demand-driven
+;; fontification, the core feature of lazy-lock.el, is implemented by placing a
+;; function on `post-command-hook'.  This function fontifies where necessary,
+;; i.e., where a window scroll has occurred.  However, there are a number of
+;; problems with using `post-command-hook':
+;;
+;; (a) As the name suggests, `post-command-hook' is run after every command,
+;;     i.e., frequently and regardless of whether scrolling has occurred.
+;; (b) Scrolling can occur during a command, when `post-command-hook' is not
+;;     run, i.e., it is not necessarily run after scrolling has occurred.
+;; (c) When `post-command-hook' is run, there is nothing to suggest where
+;;     scrolling might have occurred, i.e., which windows have scrolled.
+;;
+;; Thus lazy-lock.el's function is called almost as often as possible, usually
+;; when it need not be called, yet it is not always called when it is needed.
+;; Also, lazy-lock.el's function must check each window to see if a scroll has
+;; occurred there.  Worse still, lazy-lock.el's function must fontify a region
+;; twice as large as necessary to make sure the window is completely fontified.
+;; Basically, `post-command-hook' is completely inappropriate for lazy-lock.el.
+;;
+;; Ideally, we want to attach lazy-lock.el's function to a hook that is run
+;; only when scrolling occurs, e.g., `window-start' has changed, and tells us
+;; as much information as we need, i.e., the window and its new buffer region.
+;; Richard Stallman implemented a `window-scroll-functions' for Emacs 19.30.
+;; Functions on it are run when `window-start' has changed, and are supplied
+;; with the window and the window's new `window-start' position.  (It would be
+;; better if it also supplied the window's new `window-end' position, but that
+;; is calculated as part of the redisplay process, and the functions on
+;; `window-scroll-functions' are run before redisplay has finished.)  Thus, the
+;; hook deals with the above problems (a), (b) and (c).
+;;
+;; If only life was that easy.  Version 2 demand-driven fontification is mostly
+;; implemented by placing a function on `window-scroll-functions'.  However,
+;; not all scrolling occurs when `window-start' has changed.  A change in
+;; window size, e.g., via C-x 1, or a significant deletion, e.g., of a number
+;; of lines, causes text previously invisible (i.e., after `window-end') to
+;; become visible without changing `window-start'.  Arguably, these events are
+;; not scrolling events, but fontification must occur for lazy-lock.el to work.
+;; Hooks `window-size-change-functions' and `redisplay-end-trigger-functions'
+;; were added for these circumstances.
+;;
+;; (Ben Wing thinks these hooks are "horribly horribly kludgy", and implemented
+;; a `pre-idle-hook', a `mother-of-all-post-command-hooks', for XEmacs 19.14.
+;; He then hacked up a version 1 lazy-lock.el to use `pre-idle-hook' rather
+;; than `post-command-hook'.  Whereas functions on `post-command-hook' are
+;; called almost as often as possible, functions on `pre-idle-hook' really are
+;; called as often as possible, even when the mouse moves and, on some systems,
+;; while XEmacs is idle.  Thus, the hook deals with the above problem (b), but
+;; unfortunately it makes (a) worse and does not address (c) at all.
+;;
+;; I freely admit that `redisplay-end-trigger-functions' and, to a much lesser
+;; extent, `window-size-change-functions' are not pretty.  However, I feel that
+;; a `window-scroll-functions' feature is cleaner than a `pre-idle-hook', and
+;; the result is faster and smaller, less intrusive and more targeted, code.
+;; Since `pre-idle-hook' is pretty much like `post-command-hook', there is no
+;; point in making this version of lazy-lock.el work with it.  Anyway, that's
+;; Lit 30 of my humble opinion.
+;;
+;; Steve Baur reverted to a non-hacked version 1 lazy-lock.el for XEmacs 19.15
+;; and 20.0.  Obviously, the above `post-command-hook' problems still apply.)
+;;
+;; - Version 1 stealth fontification is also implemented by placing a function
+;; on `post-command-hook'.  This function waits for a given amount of time,
+;; and, if Emacs remains idle, fontifies where necessary.  Again, there are a
+;; number of problems with using `post-command-hook':
+;;
+;; (a) Functions on `post-command-hook' are run sequentially, so this function
+;;     can interfere with other functions on the hook, and vice versa.
+;; (b) This function waits for a given amount of time, so it can interfere with
+;;     various features that are dealt with by Emacs after a command, e.g.,
+;;     region highlighting, asynchronous updating and keystroke echoing.
+;; (c) Fontification may be required during a command, when `post-command-hook'
+;;     is not run.  (Version 2 deferred fontification only.)
+;;
+;; Again, `post-command-hook' is completely inappropriate for lazy-lock.el.
+;; Richard Stallman and Morten Welinder implemented internal Timers and Idle
+;; Timers for Emacs 19.31.  Functions can be run independently at given times
+;; or after given amounts of idle time.  Thus, the feature deals with the above
+;; problems (a), (b) and (c).  Version 2 deferral and stealth are implemented
+;; by functions on Idle Timers.  (A function on XEmacs' `pre-idle-hook' is
+;; similar to an Emacs Idle Timer function with a fixed zero second timeout.)
+;;
+;; - Version 1 has the following problems (relative to version 2):
+;;
+;; (a) It is slow when it does its job.
+;; (b) It does not always do its job when it should.
+;; (c) It slows all interaction (when it doesn't need to do its job).
+;; (d) It interferes with other package functions on `post-command-hook'.
+;; (e) It interferes with Emacs things within the read-eval loop.
+;;
+;; Ben's hacked-up lazy-lock.el 1.14 almost solved (b) but made (c) worse.
+;;
+;; - Version 2 has the following additional features (relative to version 1):
+;;
+;; (a) It can defer fontification (both on-the-fly and on-scrolling).
+;; (b) It can fontify contextually (syntactically true on-the-fly).
+
+;; Caveats:
+
 ;; Lazy Lock mode does not work efficiently with Outline mode.  This is because
 ;; when in Outline mode, although text may be hidden (not visible in the
 ;; window), the text is visible to Emacs Lisp code (not surprisingly) and Lazy
@@ -160,201 +253,179 @@
 ;;
 ;; For XEmacs 19.11 and Lucid Emacs 19.10 users, lazy-lock sort-of works.
 ;; There are bugs in text property and point/window primatives.  Upgrade!
-
-;; Feedback:
 ;;
-;; Feedback is welcome.
-;; To submit a bug report (or make comments) please use the mechanism provided:
-;;
-;; M-x lazy-lock-submit-bug-report RET
+;; Currently XEmacs does not have the features to support version 2 of
+;; lazy-lock.el.  Maybe it will one day.
 
 ;; History:
 ;;
 ;; 0.01--1.00:
 ;; - Changed name from fore-lock to lazy-lock.  Shame though.
 ;; - Dropped `advice'-wrapping completely.  Ask me if you're interested in it.
-;; - Made `lazy-lock-mode' ignore `post-command-hook' and `buffer-file-name'.
-;; - Made `lazy-lock-fontify-window' check `lazy-lock-mode' and `this-command'.
-;; - Made `lazy-lock-fontify-window' redisplay via `sit-for'.
-;; - Added `lazy-lock-minimum-size' to control `lazy-lock-mode'.
+;; - Made `lazy-lock-mode' ignore `post-command-hook' and `buffer-file-name'
+;; - Made `lazy-lock-fontify-window' check `lazy-lock-mode' and `this-command'
+;; - Made `lazy-lock-fontify-window' redisplay via `sit-for'
+;; - Added `lazy-lock-minimum-size' to control `lazy-lock-mode'
 ;; 1.00--1.01:
-;; - Added `lazy-lock-fontify-buffer'.
-;; - Made `lazy-lock-fontify-window' ignore `lazy-lock-mode'.
-;; - Made `lazy-lock-fontify-window' suspicious of `window-' favourites again.
-;; - Added `lazy-lock-delay-commands' (idea from William G. Dubuque).
-;; - Added `lazy-lock-ignore-commands' for completeness.
-;; - Added `lazy-lock-continuity-time' for normal input delay.
+;; - Added `lazy-lock-fontify-buffer'
+;; - Made `lazy-lock-fontify-window' ignore `lazy-lock-mode'
+;; - Made `lazy-lock-fontify-window' suspicious of `window-' favourites again
+;; - Added `lazy-lock-delay-commands' (idea from William G. Dubuque)
+;; - Added `lazy-lock-ignore-commands' for completeness
+;; - Added `lazy-lock-continuity-time' for normal input delay
 ;; 1.01--1.02:
-;; - Made `lazy-lock-fontify-window' cope with multiple unfontified regions.
-;; - Made `lazy-lock-mode' remove `fontified' properties if turned off.
-;; - Made `lazy-lock-fontify-window' fontify by lines.
-;; - Added `lazy-lock-cache-position' buffer local to detect visibility change.
-;; - Added `lazy-lock-post-command-hook' to do the waiting.
-;; - Made `lazy-lock-fontify-window' just do the fontification.
-;; - Made `lazy-lock-mode' append `lazy-lock-post-command-hook'.
-;; - Added `lazy-lock-walk-windows' to hack multi-window motion.
-;; - Made `lazy-lock-post-command-hook' `walk-windows' if variable is non-nil.
-;; - Removed `lazy-lock-ignore-commands' since insertion may change window.
-;; - Added `lazy-lock-fontify-stealthily' and `lazy-lock-stealth-time'.
-;; - Made `lazy-lock-post-command-hook' use them.
+;; - Made `lazy-lock-fontify-window' cope with multiple unfontified regions
+;; - Made `lazy-lock-mode' remove `fontified' properties if turned off
+;; - Made `lazy-lock-fontify-window' fontify by lines
+;; - Added `lazy-lock-cache-position' buffer local to detect visibility change
+;; - Added `lazy-lock-post-command-hook' to do the waiting
+;; - Made `lazy-lock-fontify-window' just do the fontification
+;; - Made `lazy-lock-mode' append `lazy-lock-post-command-hook'
+;; - Added `lazy-lock-walk-windows' to hack multi-window motion
+;; - Made `lazy-lock-post-command-hook' `walk-windows' if variable is non-nil
+;; - Removed `lazy-lock-ignore-commands' since insertion may change window
+;; - Added `lazy-lock-fontify-stealthily' and `lazy-lock-stealth-time'
+;; - Made `lazy-lock-post-command-hook' use them
 ;; 1.02--1.03:
-;; - Made `lazy-lock-fontify-stealthily' do `forward-line' not `previous-line'.
-;; - Made `lazy-lock-fontify-stealthily' `move-to-window-line' first.
-;; - Made `lazy-lock-fontify-stealthily' use `text-property-any' for region.
-;; - Made `lazy-lock-post-command-hook' loop on `lazy-lock-fontify-stealthily'.
+;; - Made `lazy-lock-fontify-stealthily' do `forward-line' not `previous-line'
+;; - Made `lazy-lock-fontify-stealthily' `move-to-window-line' first
+;; - Made `lazy-lock-fontify-stealthily' use `text-property-any' for region
+;; - Made `lazy-lock-post-command-hook' loop on `lazy-lock-fontify-stealthily'
 ;; 1.03--1.04:
-;; - Made `lazy-lock-mode' reset `lazy-lock-cache-position'.
-;; - Made `lazy-lock-post-command-hook' `widen' for `if' `text-property-any'.
-;; - Made `lazy-lock-fontify-stealthily' return `text-property-any'.
-;; - Added `lazy-lock-percent-fontified' for a/be-musement.
-;; - Made `lazy-lock-post-command-hook' use it.
-;; - Made `lazy-lock-mode' use `make-local-hook' etc. if available.
-;; - Made `lazy-lock-mode' use `before-revert-hook' and `after-revert-hook'.
-;; - Made `lazy-lock-post-command-hook' protect `deactivate-mark'.
-;; - Adds `lazy-lock-post-command-hook' globally to `post-command-hook'.
+;; - Made `lazy-lock-mode' reset `lazy-lock-cache-position'
+;; - Made `lazy-lock-post-command-hook' `widen' for `if' `text-property-any'
+;; - Made `lazy-lock-fontify-stealthily' return `text-property-any'
+;; - Added `lazy-lock-percent-fontified' for a/be-musement
+;; - Made `lazy-lock-post-command-hook' use it
+;; - Made `lazy-lock-mode' use `make-local-hook' etc. if available
+;; - Made `lazy-lock-mode' use `before-revert-hook' and `after-revert-hook'
+;; - Made `lazy-lock-post-command-hook' protect `deactivate-mark'
+;; - Adds `lazy-lock-post-command-hook' globally to `post-command-hook'
 ;; 1.04--1.05:
-;; - Made `lazy-lock-mode' test `make-local-hook' not `emacs-minor-version'.
+;; - Made `lazy-lock-mode' test `make-local-hook' not `emacs-minor-version'
 ;; 1.05--1.06:
-;; - Added `lazy-lock-ignore-commands' for commands that leave no event but do.
-;; - Made `lazy-lock-post-command-hook' check `lazy-lock-ignore-commands'.
+;; - Added `lazy-lock-ignore-commands' for commands that leave no event but do
+;; - Made `lazy-lock-post-command-hook' check `lazy-lock-ignore-commands'
 ;; 1.06--1.07:
-;; - Removed `before-revert-hook' and `after-revert-hook' use.
+;; - Removed `before-revert-hook' and `after-revert-hook' use
 ;; 1.07--1.08:
-;; - Added `lazy-lock-submit-bug-report'.
-;; - Made `lazy-lock-post-command-hook' check `executing-macro'.
-;; - Made it sort-of/almost work for XEmacs (help from Jonas Jarnestrom).
-;; - XEmacs: Fix `text-property-not-all' (fix based on fast-lock.el 3.05 fix).
-;; - XEmacs: Set `font-lock-no-comments' and alias `frame-parameters'.
-;; - Made `byte-compile-warnings' omit `unresolved' on compilation.
-;; - Made `lazy-lock-post-command-hook' protect `buffer-undo-list'.
-;; - Moved `deactivate-mark' and `buffer-undo-list' protection to functions.
-;; - Added `lazy-lock-invisible-foreground' (idea from Boris Goldowsky).
-;; - XEmacs: Fix to use `text-property-not-all' t, not `text-property-any' nil.
-;; - Made `lazy-lock-percent-fontified' return `round' to an integer.
-;; - XEmacs: Fix `text-property-any' (fix and work around for a bug elsewhere).
-;; - XEmacs: Fix `lazy-lock-submit-bug-report' for reporter.el & vm-window.el.
-;; - XEmacs: Made `lazy-lock-fontify-window' loop `while' `<' not `/='.
-;; - Use `font-lock-after-change-function' to do the fontification.
+;; - Added `lazy-lock-submit-bug-report'
+;; - Made `lazy-lock-post-command-hook' check `executing-macro'
+;; - Made it sort-of/almost work for XEmacs (help from Jonas Jarnestrom)
+;; - XEmacs: Fix `text-property-not-all' (fix based on fast-lock.el 3.05 fix)
+;; - XEmacs: Set `font-lock-no-comments' and alias `frame-parameters'
+;; - Made `byte-compile-warnings' omit `unresolved' on compilation
+;; - Made `lazy-lock-post-command-hook' protect `buffer-undo-list'
+;; - Moved `deactivate-mark' and `buffer-undo-list' protection to functions
+;; - Added `lazy-lock-invisible-foreground' (idea from Boris Goldowsky)
+;; - XEmacs: Fix to use `text-property-not-all' t, not `text-property-any' nil
+;; - Made `lazy-lock-percent-fontified' return `round' to an integer
+;; - XEmacs: Fix `text-property-any' (fix and work around for a bug elsewhere)
+;; - XEmacs: Fix `lazy-lock-submit-bug-report' for reporter.el & vm-window.el
+;; - XEmacs: Made `lazy-lock-fontify-window' loop `while' `<' not `/='
+;; - Use `font-lock-after-change-function' to do the fontification
 ;; 1.08--1.09:
-;; - Made `lazy-lock-post-command-hook' protect with `condition-case'.
-;; - Made `lazy-lock-cache-start' to cache `window-start'.
-;; - Made `lazy-lock-fontify-window' check and cache `lazy-lock-cache-start'.
-;; - Renamed `lazy-lock-cache-position' to `lazy-lock-cache-end'.
-;; - XEmacs: Fix for `font-lock-after-change-function'.
-;; - Adds `lazy-lock-post-command-hook' globally to `window-setup-hook'.
+;; - Made `lazy-lock-post-command-hook' protect with `condition-case'
+;; - Made `lazy-lock-cache-start' to cache `window-start'
+;; - Made `lazy-lock-fontify-window' check and cache `lazy-lock-cache-start'
+;; - Renamed `lazy-lock-cache-position' to `lazy-lock-cache-end'
+;; - XEmacs: Fix for `font-lock-after-change-function'
+;; - Adds `lazy-lock-post-command-hook' globally to `window-setup-hook'
 ;; 1.09--1.10:
-;; - Made `buffer-file-name' be `let' to prevent supersession (Kevin Broadey).
-;; - Made `lazy-lock-submit-bug-report' `require' reporter (Ilya Zakharevich).
-;; - Made `lazy-lock-mode' and `turn-on-lazy-lock' succeed `autoload' cookies.
-;; - Added `lazy-lock-fontify-walk-windows' for walking window fontification.
-;; - Added `lazy-lock-fontify-walk-stealthily' for walking stealth.
-;; - Removed `move-to-window-line' from `lazy-lock-fontify-stealthily'.
-;; - Made `lazy-lock-percent-fontified' use `truncate' rather than `round'.
-;; - Added other `*-argument' to `lazy-lock-ignore-commands' (Kevin Broadey).
-;; - Made `lazy-lock-fontify-stealthily' not assume buffer is part `fontified'.
-;; - Emacs: Fix for `font-lock-fontify-region'.
-;; - Made `lazy-lock-post-command-hook' check for minibuffer (Kevin Broadey).
-;; - Added `lazy-lock-stealth-nice' for niceness during stealth fontification.
-;; - Added `lazy-lock-stealth-lines' for chunks of stealth fontification.
+;; - Made `buffer-file-name' be `let' to prevent supersession (Kevin Broadey)
+;; - Made `lazy-lock-submit-bug-report' `require' reporter (Ilya Zakharevich)
+;; - Made `lazy-lock-mode' and `turn-on-lazy-lock' succeed `autoload' cookies
+;; - Added `lazy-lock-fontify-walk-windows' for walking window fontification
+;; - Added `lazy-lock-fontify-walk-stealthily' for walking stealth
+;; - Removed `move-to-window-line' from `lazy-lock-fontify-stealthily'
+;; - Made `lazy-lock-percent-fontified' use `truncate' rather than `round'
+;; - Added other `*-argument' to `lazy-lock-ignore-commands' (Kevin Broadey)
+;; - Made `lazy-lock-fontify-stealthily' not assume buffer is part `fontified'
+;; - Emacs: Fix for `font-lock-fontify-region'
+;; - Made `lazy-lock-post-command-hook' check for minibuffer (Kevin Broadey)
+;; - Added `lazy-lock-stealth-nice' for niceness during stealth fontification
+;; - Added `lazy-lock-stealth-lines' for chunks of stealth fontification
 ;; 1.10--1.11: incorporated hack by Ben Wing from William Dubuque's fontifly.el
-;; - Made `lazy-lock-fontify-stealthily' see a non `fontified' preceding line.
-;; - XEmacs: Fix `text-property-any' and `text-property-not-all' (Ben Wing).
-;; - XEmacs: Fix `lazy-lock-continuity-time' (Ben Wing).
-;; - Added awful `lazy-lock-running-xemacs-p' (Ben Wing).
-;; - Made loading set `emacs-minor-version' if it's not bound.
-;; - Added `lazy-lock-hide-invisible' to control redisplay.
-;; - Made `lazy-lock-post-command-hook' use it in `sit-for' (Ben Wing).
-;; - Made `lazy-lock-fontify-window' move relative to `end-of-line' if non-nil.
-;; - Added `lazy-lock-fontify-region' so packages can ensure fontification.
-;; - Made `lazy-lock-fontify-walk-stealthily' do stealth widening.
-;; - Made `lazy-lock-fontify-stealthily' always do adjacent preceding regions.
-;; - Added `lazy-lock-after-fontify-buffer'.
-;; - XEmacs: Removed `font-lock-no-comments' incompatibility code.
-;; - Removed `lazy-lock-delay-time' and `lazy-lock-delay-commands'.
-;; - Removed `lazy-lock-post-command' and split the functionality.
-;; - Adds `lazy-lock-post-command-fontify-windows' on first.
-;; - Adds `lazy-lock-post-command-fontify-stealthily' on last.
-;; - Made `lazy-lock-mode' ensure both first and last on `post-command-hook'.
-;; - Made `lazy-lock-mode' ensure `font-lock-mode' is on.
-;; - Wrap `lazy-lock-post-command-fontify-stealthily' for errors (David Karr).
-;; - Added `calcDigit-key' to `lazy-lock-ignore-commands' (Bob Glickstein).
-;; - Wrap `lazy-lock-running-xemacs-p' with `eval-and-compile' (Erik Naggum).
-;; - XEmacs: Fix use of `previous-single-property-change' (Jim Thompson).
-;; - XEmacs: Fix `next-single-property-change' fix for 19.11 (Jim Thompson).
-;; - Added `lazy-lock-post-resize-fontify-windows' to fontify on resizing.
-;; - Adds globally to `window-size-change-functions'.
-;; - Added `lazy-lock-post-setup-fontify-windows' to fontify after start up.
-;; - Adds globally to `window-setup-hook'.
-;; - Made `lazy-lock-post-command-fontify-windows' check for `input-pending-p'.
-;; - Made `save-selected-window' to restore the `selected-window'.
-;; - Use `save-selected-window' rather than `save-window-excursion'.
+;; - Made `lazy-lock-fontify-stealthily' see a non `fontified' preceding line
+;; - XEmacs: Fix `text-property-any' and `text-property-not-all' (Ben Wing)
+;; - XEmacs: Fix `lazy-lock-continuity-time' (Ben Wing)
+;; - Added awful `lazy-lock-running-xemacs-p' (Ben Wing)
+;; - Made loading set `emacs-minor-version' if it's not bound
+;; - Added `lazy-lock-hide-invisible' to control redisplay
+;; - Made `lazy-lock-post-command-hook' use it in `sit-for' (Ben Wing)
+;; - Made `lazy-lock-fontify-window' move relative to `end-of-line' if non-nil
+;; - Added `lazy-lock-fontify-region' so packages can ensure fontification
+;; - Made `lazy-lock-fontify-walk-stealthily' do stealth widening
+;; - Made `lazy-lock-fontify-stealthily' always do adjacent preceding regions
+;; - Added `lazy-lock-after-fontify-buffer'
+;; - XEmacs: Removed `font-lock-no-comments' incompatibility code
+;; - Removed `lazy-lock-delay-time' and `lazy-lock-delay-commands'
+;; - Removed `lazy-lock-post-command' and split the functionality
+;; - Adds `lazy-lock-post-command-fontify-windows' on first
+;; - Adds `lazy-lock-post-command-fontify-stealthily' on last
+;; - Made `lazy-lock-mode' ensure both first and last on `post-command-hook'
+;; - Made `lazy-lock-mode' ensure `font-lock-mode' is on
+;; - Wrap `lazy-lock-post-command-fontify-stealthily' for errors (David Karr)
+;; - Added `calcDigit-key' to `lazy-lock-ignore-commands' (Bob Glickstein)
+;; - Wrap `lazy-lock-running-xemacs-p' with `eval-and-compile' (Erik Naggum)
+;; - XEmacs: Fix use of `previous-single-property-change' (Jim Thompson)
+;; - XEmacs: Fix `next-single-property-change' fix for 19.11 (Jim Thompson)
+;; - Added `lazy-lock-post-resize-fontify-windows' to fontify on resizing
+;; - Adds globally to `window-size-change-functions'
+;; - Added `lazy-lock-post-setup-fontify-windows' to fontify after start up
+;; - Adds globally to `window-setup-hook'
+;; - Made `lazy-lock-post-command-fontify-windows' check for `input-pending-p'
+;; - Made `save-selected-window' to restore the `selected-window'
+;; - Use `save-selected-window' rather than `save-window-excursion'
 ;; 1.11--1.12:
-;; - Made `lazy-lock-post-command-fontify-windows' do `set-buffer' first.
-;; - Made `lazy-lock-fontify-stealthily' respect narrowing before point.
-;; - Added `lazy-lock-post-setup-ediff-control-frame' for Ediff control frame.
-;; - Adds globally to `ediff-after-setup-control-frame-hooks'.
-;; - Wrap `save-selected-window' with `save-excursion' for `current-buffer'.
+;; - Made `lazy-lock-post-command-fontify-windows' do `set-buffer' first
+;; - Made `lazy-lock-fontify-stealthily' respect narrowing before point
+;; - Added `lazy-lock-post-setup-ediff-control-frame' for Ediff control frame
+;; - Adds globally to `ediff-after-setup-control-frame-hooks'
+;; - Wrap `save-selected-window' with `save-excursion' for `current-buffer'
 ;; 1.12--1.13:
-;; - XEmacs: Add `lazy-lock-after-fontify-buffer' to the Font Lock hook.
-;; - Made `buffer-file-truename' also wrapped for supersession (Rick Sladkey).
-;; - Made `font-lock-beginning-of-syntax-function' wrapped for fontification.
-;; - Added `lazy-lock-stealth-verbose' (after harassment from Ben Wing).
-;; - XEmacs: Made `font-lock-verbose' wrapped for stealth fontification.
+;; - XEmacs: Add `lazy-lock-after-fontify-buffer' to the Font Lock hook
+;; - Made `buffer-file-truename' also wrapped for supersession (Rick Sladkey)
+;; - Made `font-lock-beginning-of-syntax-function' wrapped for fontification
+;; - Added `lazy-lock-stealth-verbose' (after harassment from Ben Wing)
+;; - XEmacs: Made `font-lock-verbose' wrapped for stealth fontification
 ;; 1.13--1.14:
-;; - Wrap `lazy-lock-colour-invisible' for `set-face-foreground' (Jari Aalto).
+;; - Wrap `lazy-lock-colour-invisible' for `set-face-foreground' (Jari Aalto)
 ;; 1.14--1.15:
-;; - Made `lazy-lock-post-command-setup'; may add to `post-command-idle-hook'.
+;; - Made `lazy-lock-post-command-setup'; may add to `post-command-idle-hook'
+;; 1.15--1.16:
+;; - Test `emacs-major-version' as well as `emacs-minor-version'
+;; - Barf if Emacs 19.30 or up is running
+;; - Adds globally to `ediff-after-setup-control-frame-hook' too
+;; - Renamed `lazy-lock-running-xemacs-p' to `lazy-lock-running-xemacs'
+;; - Removed `lazy-lock-submit-bug-report' and bade farewell
 
+;;; Code:
+
 (require 'font-lock)
 
+;; Make sure lazy-lock.el isn't depreciated.
+(if (if (save-match-data (string-match "Lucid\\|XEmacs" (emacs-version)))
+	nil
+      (or (> emacs-major-version 19) (> emacs-minor-version 29)))
+    (error "`lazy-lock' version 2 should be used for Emacs 19.30 or later"))
+
 (eval-when-compile
-  ;; Only `require' so `ediff-multiframe-setup-p' is expanded at compile time.
-  (condition-case nil (require 'ediff) (file-error))
+  ;;
+  ;; We don't do this at the top-level as we only use non-autoloaded macros.
+  (require 'cl)
+  ;;
   ;; Well, shouldn't Lazy Lock be as lazy as possible?
-  ;(setq byte-compile-dynamic t byte-compile-dynamic-docstrings t)
-  ;; Shut Emacs' byte-compiler up (cf. stop me getting mail from users).
-  (setq byte-compile-warnings '(free-vars callargs redefine)))
+  (setq byte-compile-dynamic t byte-compile-dynamic-docstrings t))
 
-(defun lazy-lock-submit-bug-report ()
-  "Submit via mail a bug report on lazy-lock.el."
-  (interactive)
-  (require 'reporter)
-  (let ((reporter-prompt-for-summary-p t))
-    (reporter-submit-bug-report "simon@gnu.ai.mit.edu" "lazy-lock 1.15"
-     '(lazy-lock-walk-windows lazy-lock-continuity-time
-       lazy-lock-stealth-time lazy-lock-stealth-nice
-       lazy-lock-stealth-lines lazy-lock-stealth-verbose
-       lazy-lock-hide-invisible lazy-lock-invisible-foreground
-       lazy-lock-minimum-size lazy-lock-ignore-commands)
-     nil nil
-     (concat "Hi Si.,
-
-I want to report a bug.  I've read the `Bugs' section of `Info' on Emacs, so I
-know how to make a clear and unambiguous report.  To reproduce the bug:
-
-Start a fresh Emacs via `" invocation-name " -no-init-file -no-site-file'.
-In the `*scratch*' buffer, evaluate:"))))
-
-;; Let's define `emacs-minor-version' if no-one else has.
-(if (not (boundp 'emacs-minor-version))
-    (eval-and-compile
-      (defconst emacs-minor-version
-	(save-match-data
-	  (string-match "^[0-9]+\\.\\([0-9]+\\)" emacs-version)
-	  (string-to-int
-	   (substring emacs-version (match-beginning 1) (match-end 1)))))))
-
-;; Yuck, but we make so much use of this variable it's probably worth it.
 (eval-and-compile
-  (defconst lazy-lock-running-xemacs-p
+  ;; Yuck, but we make so much use of this variable it's probably worth it.
+  (defconst lazy-lock-running-xemacs
     (not (null (save-match-data (string-match "Lucid" emacs-version))))))
 
 (defvar lazy-lock-cache-start nil)	; for window fontifiction
 (defvar lazy-lock-cache-end nil)	; for window fontifiction
 (defvar lazy-lock-cache-continue nil)	; for stealth fontifiction
-
-;; XEmacs change
-;;;###autoload
 (defvar lazy-lock-mode nil)		; for modeline
 
 ;; User Variables:
@@ -371,9 +442,12 @@ A non-nil value slows down redisplay.")
 
 ;; XEmacs 19.11 and below exercise a bug in the Xt event loop.
 (defvar lazy-lock-continuity-time
-  (if (or (not lazy-lock-running-xemacs-p) (> emacs-minor-version 11))
-      0
-    (if (featurep 'lisp-float-type) 0.001 1))
+  (cond ((not lazy-lock-running-xemacs)
+	 0)
+	((and (= emacs-major-version 19) (< emacs-minor-version 12))
+	 (if (featurep 'lisp-float-type) (/ (float 1) (float 1000)) 1))
+	(t
+	 0))
   "*Time in seconds to delay before normal window fontification.
 Window fontification occurs if there is no input within this time.")
 
@@ -381,25 +455,28 @@ Window fontification occurs if there is no input within this time.")
 ;; `text-property-any', `text-property-not-all' and
 ;; `next-single-property-change' up to XEmacs 19.11 are too broke.
 (defvar lazy-lock-stealth-time
-  (if (> emacs-minor-version (if lazy-lock-running-xemacs-p 11 25)) 30)
+  (when (or (> emacs-major-version 19)
+	    (and (not lazy-lock-running-xemacs) (> emacs-minor-version 25))
+	    (and lazy-lock-running-xemacs (> emacs-minor-version 11)))
+    30)
   "*Time in seconds to delay before beginning stealth fontification.
 Stealth fontification occurs if there is no input within this time.
 If nil, means no fontification by stealth.")
 
 (defvar lazy-lock-stealth-lines
-  (cond ((boundp 'font-lock-maximum-decoration)
-	 (if font-lock-maximum-decoration 75 150))
-	((boundp 'font-lock-use-maximal-decoration)
-	 (if font-lock-use-maximal-decoration 50 100))
-	(t
-	 50))
+  (if lazy-lock-running-xemacs
+      (if font-lock-maximum-decoration 50 100)
+    (if font-lock-maximum-decoration 100 250))
   "*If non-nil, the maximum size of a chunk of stealth fontification.
 Each iteration of stealth fontification can fontify this number of lines.
 To speed up input response during stealth fontification, at the cost of stealth
 taking longer to fontify, you could reduce the value of this variable.
 If nil, means use `window-height' for the maximum chunk size.")
 
-(defvar lazy-lock-stealth-nice (if (featurep 'lisp-float-type) 0.125 1)
+(defvar lazy-lock-stealth-nice
+  (if lazy-lock-running-xemacs
+      (if (featurep 'lisp-float-type) (/ (float 1) (float 4)) 1)
+    (if (featurep 'lisp-float-type) (/ (float 1) (float 8)) 1))
   "*Time in seconds to pause during chunks of stealth fontification.
 To reduce machine load during stealth fontification, at the cost of stealth
 taking longer to fontify, you could increase the value of this variable.")
@@ -418,7 +495,7 @@ taking longer to fontify, you could increase the value of this variable.")
 To speed up typing response, at the cost of Lazy Lock not fontifying when
 insertion causes scrolling, you could add `self-insert-command' to this list.")
 
-(defvar lazy-lock-hide-invisible lazy-lock-running-xemacs-p
+(defvar lazy-lock-hide-invisible lazy-lock-running-xemacs
   "*If non-nil, hide invisible text while it is fontified.
 If non-nil, redisplay is delayed until after fontification occurs.  If nil,
 text is shown (in `lazy-lock-invisible-foreground') while it is fontified.
@@ -484,12 +561,13 @@ Use \\[lazy-lock-submit-bug-report] to send bug reports or feedback."
   "Unconditionally turn on Lazy Lock mode."
   (lazy-lock-mode 1))
 
-(if (< emacs-minor-version (if lazy-lock-running-xemacs-p 12 29))
-    ;; We don't need this in Emacs 19.29 or XEmacs 19.12.
-    (defun lazy-lock-fontify-buffer ()
-      "Fontify the current buffer where necessary."
-      (interactive)
-      (lazy-lock-fontify-region (point-min) (point-max))))
+(when (and (= emacs-major-version 19)
+	   (< emacs-minor-version (if lazy-lock-running-xemacs 12 29)))
+  ;; We don't need this in Emacs 19.29 or XEmacs 19.12.
+  (defun lazy-lock-fontify-buffer ()
+    "Fontify the current buffer where necessary."
+    (interactive)
+    (lazy-lock-fontify-region (point-min) (point-max))))
 
 ;; API Functions:
 
@@ -513,14 +591,13 @@ Use \\[lazy-lock-submit-bug-report] to send bug reports or feedback."
 
 ;; Just a cleaner-looking way of coping with Emacs' and XEmacs' `sit-for'.
 (defmacro lazy-lock-sit-for (seconds &optional nodisp)
-  (if lazy-lock-running-xemacs-p
+  (if lazy-lock-running-xemacs
       (` (sit-for (, seconds) (, nodisp)))
     (` (sit-for (, seconds) 0 (, nodisp)))))
 
 ;; Using `save-window-excursion' provokes `window-size-change-functions'.
 ;; I prefer `save-walking-excursion', of course, because I have a warped mind.
-(if (fboundp 'save-selected-window)
-    nil
+(unless (fboundp 'save-selected-window)
   (eval-and-compile
     (defmacro save-selected-window (&rest body)
       "Execute the BODY forms, restoring the selected window.
@@ -536,7 +613,7 @@ Does not restore the value of point in the selected window, or anything else."
 (defun lazy-lock-post-command-fontify-windows ()
   ;; We might not be where we think we are, since `post-command-hook' is run
   ;; before `command_loop_1' makes sure we have the correct buffer selected.
-  (set-buffer (window-buffer))
+;  (set-buffer (window-buffer))
   ;; Do groovy things if (a) not in a macro, (b) no input pending, (c) got a
   ;; real command, (d) not in the minibuffer, and (e) no input after waiting
   ;; for `lazy-lock-continuity-time'.
@@ -596,14 +673,15 @@ Does not restore the value of point in the selected window, or anything else."
 
 (defun lazy-lock-fontify-window ()
   ;; Fontify the visible part of the buffer where necessary.
-  (let ((ws (if lazy-lock-hide-invisible
-		(save-excursion
-		  (end-of-line) (forward-line (- (window-height))) (point))
-	      (min (max (window-start) (point-min)) (point-max))))
-	(we (if lazy-lock-hide-invisible
-		(save-excursion
-		  (end-of-line) (forward-line (window-height)) (point))
-	      (min (max (1- (window-end)) (point-min)) (point-max)))))
+  (let (ws we wh)
+    ;; Find the bounds of the visible part exactly or conservatively.
+    (if (not lazy-lock-hide-invisible)
+	(setq ws (min (max (window-start) (point-min)) (point-max))
+	      we (min (max (1- (window-end)) (point-min)) (point-max)))
+      (setq wh (window-height)		; Buggy: (window-displayed-height)
+	    ws (save-excursion (forward-line (- wh)) (point))
+	    we (save-excursion (forward-line wh) (point))))
+    ;; Find whether bounds have changed since previous fontification.
     (if (or (/= ws lazy-lock-cache-start) (/= we lazy-lock-cache-end))
 	;; Find where we haven't `fontified' before.
 	(let* ((start (or (text-property-not-all ws we 'fontified t) ws))
@@ -732,8 +810,8 @@ Does not restore the value of point in the selected window, or anything else."
 	(setq end (or (text-property-not-all start max 'fontified t) max)
 	      size (+ size (- end start))
 	      start end))
-      ;; Saying "99% done" is probably better than "100% done" when it isn't.
-      (truncate (/ (* size 100.0) (buffer-size))))))
+      ;; Float because using integer multiplication will frequently overflow.
+      (truncate (* (/ (float size) (point-max)) 100)))))
 
 (defun lazy-lock-colour-invisible ()
   ;; Fontify the current buffer in `lazy-lock-invisible-face'.
@@ -758,177 +836,183 @@ Does not restore the value of point in the selected window, or anything else."
 ;; Functions for Emacs:
 
 ;; This fix is for a number of bugs in the function in Emacs 19.28.
-(if (and (not lazy-lock-running-xemacs-p) (< emacs-minor-version 29))
-    (defun font-lock-fontify-region (start end &optional loudly)
-      "Put proper face on each string and comment between START and END."
-      (save-excursion
-	(save-restriction
-	  (widen)
-	  (goto-char start)
-	  (beginning-of-line)
-	  (if loudly (message "Fontifying %s... (syntactically...)" (buffer-name)))
-	  (let ((inhibit-read-only t) (buffer-undo-list t)
-		buffer-file-name buffer-file-truename
-		(modified (buffer-modified-p))
-		(old-syntax (syntax-table))
-		(synstart (if comment-start-skip
-			      (concat "\\s\"\\|" comment-start-skip)
-			    "\\s\""))
-		(comstart (if comment-start-skip
-			      (concat "\\s<\\|" comment-start-skip)
-			    "\\s<"))
-		(startline (point))
-		state prev prevstate)
-	    (unwind-protect
-		(progn
-		  (if font-lock-syntax-table
-		      (set-syntax-table font-lock-syntax-table))
-		  ;; Find the state at the line-beginning before START.
-		  (if (eq startline font-lock-cache-position)
-		      (setq state font-lock-cache-state)
-		    ;; Find outermost containing sexp.
-		    (beginning-of-defun)
-		    ;; Find the state at STARTLINE.
-		    (while (< (point) startline)
-		      (setq state (parse-partial-sexp (point) startline 0)))
-		    (setq font-lock-cache-state state
-			  font-lock-cache-position (point)))
-		  ;; Now find the state precisely at START.
-		  (setq state (parse-partial-sexp (point) start nil nil state))
-		  ;; If the region starts inside a string, show the extent of it.
-		  (if (nth 3 state)
-		      (let ((beg (point)))
-			(while (and (re-search-forward "\\s\"" end 'move)
-				    (nth 3 (parse-partial-sexp beg (point) nil nil
-							       state))))
-			(put-text-property beg (point) 'face font-lock-string-face)
-			(setq state (parse-partial-sexp beg (point)
-							nil nil state))))
-		  ;; Likewise for a comment.
-		  (if (or (nth 4 state) (nth 7 state))
-		      (let ((beg (point)))
-			(save-restriction
-			  (narrow-to-region (point-min) end)
-			  (condition-case nil
-			      (progn
-				(re-search-backward comstart (point-min) 'move)
-				(forward-comment 1)
-				;; forward-comment skips all whitespace,
-				;; so go back to the real end of the comment.
-				(skip-chars-backward " \t"))
-			    (error (goto-char end))))
-			(put-text-property beg (point) 'face
-					   font-lock-comment-face)
-			(setq state (parse-partial-sexp beg (point)
-							nil nil state))))
-		  ;; Find each interesting place between here and END.
-		  (while (and (< (point) end)
-			      (setq prev (point) prevstate state)
-			      (re-search-forward synstart end t)
-			      (progn
-				;; Clear out the fonts of what we skip over.
-				(remove-text-properties prev (point) '(face nil))
-				;; Verify the state at that place
-				;; so we don't get fooled by \" or \;.
-				(setq state (parse-partial-sexp prev (point)
-								nil nil state))))
-		    (let ((here (point)))
-		      (if (or (nth 4 state) (nth 7 state))
-			  ;; We found a real comment start.
+(when (and (not lazy-lock-running-xemacs)
+	   (= emacs-major-version 19) (< emacs-minor-version 28))
+  (defun font-lock-fontify-region (start end &optional loudly)
+    "Put proper face on each string and comment between START and END."
+    (save-excursion
+      (save-restriction
+	(widen)
+	(goto-char start)
+	(beginning-of-line)
+	(if loudly (message "Fontifying %s... (syntactically...)" (buffer-name)))
+	(let ((inhibit-read-only t) (buffer-undo-list t)
+	      buffer-file-name buffer-file-truename
+	      (modified (buffer-modified-p))
+	      (old-syntax (syntax-table))
+	      (synstart (if comment-start-skip
+			    (concat "\\s\"\\|" comment-start-skip)
+			  "\\s\""))
+	      (comstart (if comment-start-skip
+			    (concat "\\s<\\|" comment-start-skip)
+			  "\\s<"))
+	      (startline (point))
+	      state prev prevstate)
+	  (unwind-protect
+	      (progn
+		(if font-lock-syntax-table
+		    (set-syntax-table font-lock-syntax-table))
+		;; Find the state at the line-beginning before START.
+		(if (eq startline font-lock-cache-position)
+		    (setq state font-lock-cache-state)
+		  ;; Find outermost containing sexp.
+		  (beginning-of-defun)
+		  ;; Find the state at STARTLINE.
+		  (while (< (point) startline)
+		    (setq state (parse-partial-sexp (point) startline 0)))
+		  (setq font-lock-cache-state state
+			font-lock-cache-position (point)))
+		;; Now find the state precisely at START.
+		(setq state (parse-partial-sexp (point) start nil nil state))
+		;; If the region starts inside a string, show the extent of it.
+		(if (nth 3 state)
+		    (let ((beg (point)))
+		      (while (and (re-search-forward "\\s\"" end 'move)
+				  (nth 3 (parse-partial-sexp beg (point) nil nil
+							     state))))
+		      (put-text-property beg (point) 'face font-lock-string-face)
+		      (setq state (parse-partial-sexp beg (point)
+						      nil nil state))))
+		;; Likewise for a comment.
+		(if (or (nth 4 state) (nth 7 state))
+		    (let ((beg (point)))
+		      (save-restriction
+			(narrow-to-region (point-min) end)
+			(condition-case nil
+			    (progn
+			      (re-search-backward comstart (point-min) 'move)
+			      (forward-comment 1)
+			      ;; forward-comment skips all whitespace,
+			      ;; so go back to the real end of the comment.
+			      (skip-chars-backward " \t"))
+			  (error (goto-char end))))
+		      (put-text-property beg (point) 'face
+					 font-lock-comment-face)
+		      (setq state (parse-partial-sexp beg (point)
+						      nil nil state))))
+		;; Find each interesting place between here and END.
+		(while (and (< (point) end)
+			    (setq prev (point) prevstate state)
+			    (re-search-forward synstart end t)
+			    (progn
+			      ;; Clear out the fonts of what we skip over.
+			      (remove-text-properties prev (point) '(face nil))
+			      ;; Verify the state at that place
+			      ;; so we don't get fooled by \" or \;.
+			      (setq state (parse-partial-sexp prev (point)
+							      nil nil state))))
+		  (let ((here (point)))
+		    (if (or (nth 4 state) (nth 7 state))
+			;; We found a real comment start.
+			(let ((beg (match-beginning 0)))
+			  (goto-char beg)
+			  (save-restriction
+			    (narrow-to-region (point-min) end)
+			    (condition-case nil
+				(progn
+				  (forward-comment 1)
+				  ;; forward-comment skips all whitespace,
+				  ;; so go back to the real end of the comment.
+				  (skip-chars-backward " \t"))
+			      (error (goto-char end))))
+			  (put-text-property beg (point) 'face
+					     font-lock-comment-face)
+			  (setq state (parse-partial-sexp here (point)
+							  nil nil state)))
+		      (if (nth 3 state)
 			  (let ((beg (match-beginning 0)))
-			    (goto-char beg)
-			    (save-restriction
-			      (narrow-to-region (point-min) end)
-			      (condition-case nil
-				  (progn
-				    (forward-comment 1)
-				    ;; forward-comment skips all whitespace,
-				    ;; so go back to the real end of the comment.
-				    (skip-chars-backward " \t"))
-				(error (goto-char end))))
+			    (while (and (re-search-forward "\\s\"" end 'move)
+					(nth 3 (parse-partial-sexp
+						here (point) nil nil state))))
 			    (put-text-property beg (point) 'face
-					       font-lock-comment-face)
+					       font-lock-string-face)
 			    (setq state (parse-partial-sexp here (point)
-							    nil nil state)))
-			(if (nth 3 state)
-			    (let ((beg (match-beginning 0)))
-			      (while (and (re-search-forward "\\s\"" end 'move)
-					  (nth 3 (parse-partial-sexp
-						  here (point) nil nil state))))
-			      (put-text-property beg (point) 'face
-						 font-lock-string-face)
-			      (setq state (parse-partial-sexp here (point)
-							      nil nil state))))))
-		    ;; Make sure PREV is non-nil after the loop
-		    ;; only if it was set on the very last iteration.
-		    (setq prev nil)))
-	      (set-syntax-table old-syntax)
-	      (and prev
-		   (remove-text-properties prev end '(face nil)))
-	      (and (buffer-modified-p)
-		   (not modified)
-		   (set-buffer-modified-p nil))))))))
+							    nil nil state))))))
+		  ;; Make sure PREV is non-nil after the loop
+		  ;; only if it was set on the very last iteration.
+		  (setq prev nil)))
+	    (set-syntax-table old-syntax)
+	    (and prev
+		 (remove-text-properties prev end '(face nil)))
+	    (and (buffer-modified-p)
+		 (not modified)
+		 (set-buffer-modified-p nil))))))))
 
 ;; Functions for XEmacs:
 
 ;; These fix bugs in `text-property-any' and `text-property-not-all'.  They may
 ;; not work perfectly in 19.11 and below because `next-single-property-change'
 ;; is also broke and not easily fixable in Lisp.
-(if (and lazy-lock-running-xemacs-p (< emacs-minor-version 12))
-    (progn
-      ;; Loop through property changes until found.  This fix includes a work
-      ;; around which prevents a bug in `window-start' causing a barf here.
-      (defun text-property-any (start end prop value &optional buffer)
-	"Check text from START to END to see if PROP is ever `eq' to VALUE.
+(when (and lazy-lock-running-xemacs
+	   (= emacs-major-version 19) (< emacs-minor-version 12))
+  ;; Loop through property changes until found.  This fix includes a work
+  ;; around which prevents a bug in `window-start' causing a barf here.
+  (defun text-property-any (start end prop value &optional buffer)
+    "Check text from START to END to see if PROP is ever `eq' to VALUE.
 If so, return the position of the first character whose PROP is `eq'
 to VALUE.  Otherwise return nil."
-	(let ((start (min start end)) (end (max start end)))
-	  (while (and start (not (eq (get-text-property start prop buffer) value)))
-	    (setq start (next-single-property-change start prop buffer end)))
-	  start))
-      ;; No need to loop here; if it's not at START it's at the next change.
-      ;; However, `next-single-property-change' sometimes returns LIMIT, or
-      ;; `point-max', if no change is found and sometimes returns nil.
-      (defun text-property-not-all (start end prop value &optional buffer)
-	"Check text from START to END to see if PROP is ever not `eq' to VALUE.
+    (let ((start (min start end)) (end (max start end)))
+      (while (and start (not (eq (get-text-property start prop buffer) value)))
+	(setq start (next-single-property-change start prop buffer end)))
+      start))
+  ;; No need to loop here; if it's not at START it's at the next change.
+  ;; However, `next-single-property-change' sometimes returns LIMIT, or
+  ;; `point-max', if no change is found and sometimes returns nil.
+  (defun text-property-not-all (start end prop value &optional buffer)
+    "Check text from START to END to see if PROP is ever not `eq' to VALUE.
 If so, return the position of the first character whose PROP is not
 `eq' to VALUE.  Otherwise, return nil."
-	(if (not (eq value (get-text-property start prop buffer)))
-	    start
-	  (let ((next (next-single-property-change start prop buffer end))
-		(end (or end (save-excursion (and buffer (set-buffer buffer))
-					     (point-max)))))
-	    (and next (< next end) next))))))
+    (if (not (eq value (get-text-property start prop buffer)))
+	start
+      (let ((next (next-single-property-change start prop buffer end))
+	    (end (or end (save-excursion (and buffer (set-buffer buffer))
+					 (point-max)))))
+	(and next (< next end) next)))))
 
 ;; XEmacs 19.11 function `font-lock-any-extents-p' looks for `text-prop' rather
 ;; than `face'.  Since `font-lock-unfontify-region' only removes `face', and we
 ;; have non-font-lock properties hanging about, `text-prop' never gets removed.
 ;; Unfortunately `font-lock-any-extents-p' is inlined so we can't redefine it.
-(if (and lazy-lock-running-xemacs-p (< emacs-minor-version 12))
-    (add-hook 'font-lock-mode-hook
-     (function (lambda ()
-	(remove-hook 'after-change-functions 'font-lock-after-change-function)
-	(add-hook 'after-change-functions
-	 (function (lambda (beg end old-len)
-	    (let ((a-c-beg beg) (a-c-end end))
-	      (save-excursion
-		;; First set `text-prop' to nil for `font-lock-any-extents-p'.
-		(goto-char end) (forward-line 1) (setq end (point))
-		(goto-char beg) (beginning-of-line) (setq beg (point))
-		(put-text-property beg end 'text-prop nil)
-		;; Then do the real `font-lock-after-change-function'.
-		(font-lock-after-change-function a-c-beg a-c-end old-len)
-		;; Now set `fontified' to t to stop `lazy-lock-fontify-window'.
-		(put-text-property beg end 'fontified t))))))))))
+(when (and lazy-lock-running-xemacs
+	   (= emacs-major-version 19) (< emacs-minor-version 12))
+  (add-hook 'font-lock-mode-hook
+   (function (lambda ()
+      (remove-hook 'after-change-functions 'font-lock-after-change-function)
+      (add-hook 'after-change-functions
+       (function (lambda (beg end old-len)
+	  (let ((a-c-beg beg) (a-c-end end))
+	    (save-excursion
+	      ;; First set `text-prop' to nil for `font-lock-any-extents-p'.
+	      (goto-char end) (forward-line 1) (setq end (point))
+	      (goto-char beg) (beginning-of-line) (setq beg (point))
+	      (put-text-property beg end 'text-prop nil)
+	      ;; Then do the real `font-lock-after-change-function'.
+	      (font-lock-after-change-function a-c-beg a-c-end old-len)
+	      ;; Now set `fontified' to t to stop `lazy-lock-fontify-window'.
+	      (put-text-property beg end 'fontified t))))))))))
 
-(if (and lazy-lock-running-xemacs-p (>= emacs-minor-version 12))
-    ;; XEmacs 19.12 font-lock.el's `font-lock-fontify-buffer' runs a hook.
-    (add-hook 'font-lock-after-fontify-buffer-hook
-	      'lazy-lock-after-fontify-buffer))
+;; XEmacs 19.12 font-lock.el's `font-lock-fontify-buffer' runs a hook.
+(when lazy-lock-running-xemacs
+  (add-hook 'font-lock-after-fontify-buffer-hook
+	    'lazy-lock-after-fontify-buffer))
 
-;; Cope with the differences between Emacs and [LX]Emacs.
-(or (fboundp 'frame-parameters)
-    (defalias 'frame-parameters 'screen-parameters))
+;; Cope with the differences between Emacs and earlier [LX]Emacs.
+(unless (fboundp 'frame-parameters)
+  (defalias 'frame-parameters 'screen-parameters))
+
+;; Cope with the differences between Emacs and earlier [LX]Emacs.  Buggy.
+;(unless (fboundp 'window-displayed-height)
+;  (defalias 'window-displayed-height 'window-height))
 
 ;; Install ourselves:
 
@@ -941,26 +1025,26 @@ If so, return the position of the first character whose PROP is not
 
 ;; After some relevant event.
 (add-hook 'window-setup-hook 'lazy-lock-post-setup-emacs-fontify-windows)
-;Not needed in XEmacs 19.15:
-;(add-hook 'window-size-change-functions 'lazy-lock-post-resize-fontify-windows)
+(add-hook 'window-size-change-functions 'lazy-lock-post-resize-fontify-windows)
 
 ;; Package-specific.
-(add-hook 'ediff-after-setup-control-frame-hooks
+(add-hook 'ediff-after-setup-control-frame-hooks ; Emacs 19.29, Ediff 2.26.
+	  'lazy-lock-post-setup-ediff-control-frame)
+(add-hook 'ediff-after-setup-control-frame-hook  ; Emacs 19.30, Ediff 2.47.
 	  'lazy-lock-post-setup-ediff-control-frame)
 
 ;; Might as well uninstall too.  Package-local symbols would be nice...
-(and (fboundp 'unintern) (unintern 'lazy-lock-running-xemacs-p))
-(and (fboundp 'unintern) (unintern 'lazy-lock-sit-for))
+(when (fboundp 'unintern)
+  (unintern 'lazy-lock-running-xemacs)
+  (unintern 'lazy-lock-sit-for))
 
-;; Maybe save on the modeline?
-;;(setcdr (assq 'font-lock-mode minor-mode-alist) '(" Lazy"))
-
-;(or (assq 'lazy-lock-mode minor-mode-alist)
-;    (setq minor-mode-alist (cons '(lazy-lock-mode " Lazy") minor-mode-alist)))
-
-;; XEmacs change: do it the right way.  This works with modeline mousing.
 ;;;###autoload
-(add-minor-mode 'lazy-lock-mode " Lazy")
+(when (fboundp 'add-minor-mode)
+  (defvar lazy-lock-mode nil)
+  (add-minor-mode 'lazy-lock-mode nil))
+;;;###dont-autoload
+(unless (assq 'lazy-lock-mode minor-mode-alist)
+  (setq minor-mode-alist (append minor-mode-alist '((lazy-lock-mode nil)))))
 
 ;; Provide ourselves:
 

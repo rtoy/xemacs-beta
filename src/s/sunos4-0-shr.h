@@ -1,4 +1,4 @@
-/* Synched up with: FSF 19.31. (Split off from sunos4shr.h.) */
+/* Synched up with: FSF 19.31. (Split off from sunos4-shr.h.) */
 
 /* This file permits building Emacs with a shared libc on Sunos 4.
    To make this work, you must completely replace your C shared library

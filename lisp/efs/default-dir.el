@@ -3,7 +3,7 @@
 ;;
 ;; File:         default-dir.el
 ;; RCS:
-;; Version:      $Revision: 1.5 $
+;; Version:      $Revision: 1.2 $
 ;; Description:  Defines the function default-directory, for fancy handling
 ;;               of the initial contents in the minibuffer when reading
 ;;               file names.
@@ -52,7 +52,7 @@ Buffer local.")
 Will use the variable default-directory-function if it non-nil."
   (if default-directory-function
       (funcall default-directory-function)
-    (if (eq default-dir-emacs-version 'xemacs)
+    (if (eq default-dir-emacs-variant 'xemacs)
 	(abbreviate-file-name default-directory t)
       (abbreviate-file-name default-directory))))
 
@@ -222,7 +222,9 @@ Will use the variable default-directory-function if it non-nil."
 
 (efs-overwrite-fn "default-dir" 'load-file 'default-dir-load-file)
 
-(require 'view)
+(condition-case nil
+    (require 'view-less)
+  (error (require 'view)))
 
 (defun default-dir-view-file (file)
   "Documented as original"

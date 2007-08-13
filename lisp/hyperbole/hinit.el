@@ -6,15 +6,15 @@
 ;; KEYWORDS:     hypermedia
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Brown U.
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:     1-Oct-91 at 02:32:51
-;; LAST-MOD:     22-Oct-95 at 00:27:13 by Bob Weiner
+;; LAST-MOD:     17-Feb-97 at 16:03:46 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
 ;;
-;; Copyright (C) 1991-1995, Free Software Foundation, Inc.
+;; Copyright (C) 1991-1997, Free Software Foundation, Inc.
 ;; Developed with support from Motorola Inc.
 ;;
 ;; DESCRIPTION:  
@@ -25,7 +25,7 @@
 ;;; ************************************************************************
 
 (defvar   hyperb:host-domain nil
-  "<@domain-name> for current host.  Set automatically by 'hyperb:init'.")
+  "<@domain-name> for current host.  Set automatically by `hyperb:init'.")
 
 ;;; ************************************************************************
 ;;; Other required Elisp libraries
@@ -56,7 +56,7 @@
   (hyperb:act-set)
   ;;
   ;; Save button attribute file whenever same dir file is saved and
-  ;; 'ebut:hattr-save' is non-nil.
+  ;; `ebut:hattr-save' is non-nil.
   ;;
   (var:append 'write-file-hooks '(hattr:save))
   ;;
@@ -76,7 +76,7 @@
 (defun hyperb:act-set ()
   "COORDINATION IS NOT YET OPERATIONAL.  hui-coord.el IS NOT INCLUDED.
 Sets Hyperbole action command to uncoordinated or coordinated operation.
-Coordinated is used when 'hcoord:hosts' is a non-nil list.
+Coordinated is used when `hcoord:hosts' is a non-nil list.
 See \"hui-coord.el\"."
   (interactive)
   (fset 'hyperb:act (if (and (boundp 'hcoord:hosts) hcoord:hosts)
@@ -88,14 +88,14 @@ See \"hui-coord.el\"."
 ;;; ************************************************************************
 
 (defun hyperb:check-dir-user ()
-  "Ensures 'hbmap:dir-user' exists and is writable or signals an error."
+  "Ensures `hbmap:dir-user' exists and is writable or signals an error."
   (if (or (null hbmap:dir-user) (not (stringp hbmap:dir-user))
 	  (and (setq hbmap:dir-user (file-name-as-directory
 				     (expand-file-name hbmap:dir-user)))
 	       (file-directory-p hbmap:dir-user)
 	       (not (file-writable-p (directory-file-name hbmap:dir-user)))))
       (error
-       "(hyperb:init): 'hbmap:dir-user' must be a writable directory name."))
+       "(hyperb:init): `hbmap:dir-user' must be a writable directory name."))
   (let ((hbmap:dir-user (directory-file-name hbmap:dir-user)))
     (or (file-directory-p hbmap:dir-user)   ;; Exists and is writable.
 	(let* ((parent-dir (file-name-directory
@@ -103,10 +103,10 @@ See \"hui-coord.el\"."
 	  (cond
 	   ((not (file-directory-p parent-dir))
 	    (error
-	     "(hyperb:init): 'hbmap:dir-user' parent dir does not exist."))
+	     "(hyperb:init): `hbmap:dir-user' parent dir does not exist."))
 	   ((not (file-writable-p parent-dir))
 	    (error
-	     "(hyperb:init): 'hbmap:dir-user' parent directory not writable."))
+	     "(hyperb:init): `hbmap:dir-user' parent directory not writable."))
 	   ((or (if (fboundp 'make-directory)
 		    (progn (make-directory hbmap:dir-user) t))
 		(hypb:call-process-p "mkdir" nil nil hbmap:dir-user))
@@ -115,7 +115,7 @@ See \"hui-coord.el\"."
 			   (file-writable-p hbmap:dir-user))
 		    (error "(hyperb:init): Can't write to 'hbmap:dir-user'.")
 		    )))
-	   (t (error "(hyperb:init): 'hbmap:dir-user' create failed."))))))
+	   (t (error "(hyperb:init): `hbmap:dir-user' create failed."))))))
   t)
 
 (provide 'hinit)

@@ -1,4 +1,19 @@
+Sat Feb 15 15:35:15 1997  William M. Perry  <wmperry@aventail.com>
+
+* w3-display.el (w3-display-node): use it.
+
+* w3-vars.el (w3-display-frames): New variable for whether to show 'frame'
+  documents as a list of the subelements.
+
+* w3.txi (Speech Properties): finished this chapter.
+(Media Selection): ditto
+(Time Units): ditto
+(Angle Units): ditto
+(Properties): Explanatory text at beginnign of section
+
 Fri Feb 14 09:34:35 1997  William M. Perry  <wmperry@aventail.com>
+
+* Emacs-W3 3.0.59 released
 
 * w3.txi: Lots of documentation about stylesheets, chapter layout
   changes.

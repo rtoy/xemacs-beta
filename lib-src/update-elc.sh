@@ -96,7 +96,6 @@ NUMTOCOMPILE=20			# compile up to 20 files with each invocation
 comm -23 $tmp1 $tmp2 | sed '
 \!/,!d
 \!/edebug/edebug-test.el$!d
-\!/emulators/edt.el$!d
 \!/energize/energize-load.el$!d
 \!/energize/write-file.el$!d
 \!/eos/!d
@@ -115,6 +114,7 @@ comm -23 $tmp1 $tmp2 | sed '
 \!/vm/!d
 \!/w3/!d
 \!/hyperbole/!d
+\!/auctex/!d
 \!/oobr/!d
 \!/egg/!d
 \!/its/!d
@@ -181,6 +181,11 @@ echo EOS done.
 echo Compiling Ilisp...
 ( cd lisp/ilisp ; make elc -f Makefile EMACS=$REAL )
 echo Ilisp done.
+
+# AUC TeX requires special treatment
+echo Compiling AUC TeX...
+( cd lisp/auctex ; make -f Makefile EMACS=$REAL )
+echo AUC TeX done.
 
 #
 # Now get the files whose .el is newer than .elc

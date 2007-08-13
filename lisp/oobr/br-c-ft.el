@@ -6,22 +6,18 @@
 ;; KEYWORDS:     c, tools
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Motorola, Inc.
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:     3-May-95 at 16:47:05
-;; LAST-MOD:     21-Oct-95 at 04:30:51 by Bob Weiner
+;; LAST-MOD:     21-Feb-97 at 17:31:44 by Bob Weiner
 ;;
-;; Copyright (C) 1995  Free Software Foundation, Inc.
+;; Copyright (C) 1995, 1996  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.
 ;;
 ;; DESCRIPTION:  
 ;; DESCRIP-END.
-
-;;; ************************************************************************
-;;; Other required Elisp libraries
-;;; ************************************************************************
 
 ;;; ************************************************************************
 ;;; Public variables
@@ -69,14 +65,24 @@ feature tags file."
 ;	     (mapcar 'expand-file-name
 ;		     (delq nil (append br-sys-search-dirs
 ;				       br-lib-search-dirs))))
-    (apply 'call-process (expand-file-name "br-c-tags" br-directory)
-	   nil nil nil
-	   ;; If no etags program in exec-directory, use one in user's $PATH.
-	   (let ((etags (expand-file-name "etags" exec-directory)))
-	     (if (file-executable-p etags) etags "etags"))
-	   br-tags-file
-	   (mapcar 'expand-file-name
-		   (delq nil (append br-sys-search-dirs br-lib-search-dirs))))
+    (if hyperb:microcruft-os-p
+	(apply 'call-process "bash"
+	       nil nil nil
+	       (expand-file-name "br-c-tags" br-directory)
+	       ;; If no etags program in exec-directory, use one in user's $PATH.
+	       (let ((etags (expand-file-name "etags" exec-directory)))
+		 (if (file-executable-p etags) etags "etags"))
+	       br-tags-file
+	       (mapcar 'expand-file-name
+		       (delq nil (append br-sys-search-dirs br-lib-search-dirs))))
+      (apply 'call-process (expand-file-name "br-c-tags" br-directory)
+	     nil nil nil
+	     ;; If no etags program in exec-directory, use one in user's $PATH.
+	     (let ((etags (expand-file-name "etags" exec-directory)))
+	       (if (file-executable-p etags) etags "etags"))
+	     br-tags-file
+	     (mapcar 'expand-file-name
+		     (delq nil (append br-sys-search-dirs br-lib-search-dirs)))))
     (goto-char (point-max))
     (let ((c-tags-start (point)))
       (insert-file-contents br-tags-file)
@@ -99,13 +105,5 @@ feature tags file."
   (save-excursion
     (and (re-search-backward "\\(^\\|[^/]\\)/\\*\\|\\*/" nil t)
 	 (not (looking-at "\\*/")))))
-
-;;; ************************************************************************
-;;; Private functions
-;;; ************************************************************************
-
-;;; ************************************************************************
-;;; Private variables
-;;; ************************************************************************
 
 (provide 'br-c-ft)

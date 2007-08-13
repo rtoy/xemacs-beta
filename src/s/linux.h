@@ -60,7 +60,7 @@ Boston, MA 02111-1307, USA.  */
    people are using newer mailers that have heard of flock.  Change this
    if you need to. */
 
-/* #define MAIL_USE_FLOCK */
+/*#define MAIL_USE_FLOCK*/
 
 /* Here, on a separate page, add any special hacks needed
    to make Emacs work on this system.  For example,

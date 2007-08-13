@@ -388,7 +388,7 @@
 				 (redraw-modeline)))))
 	:active font-lock-mode
 	:style toggle
-	:selected fast-lock-mode]
+	:selected (and (boundp 'fast-lock-mode) fast-lock-mode)]
        )
       ("Paren Highlighting"
        ["None" (paren-set-mode -1)

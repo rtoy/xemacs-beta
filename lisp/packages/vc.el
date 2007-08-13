@@ -114,8 +114,9 @@ value of this flag.")
   "Maximum number of saved comments in the comment ring.")
 
 ;;; XEmacs - This is dumped into loaddefs.el already.
-;; (defvar diff-switches "-c"
-;;   "*A string or list of strings specifying switches to be passed to diff.")
+;; Not any more! -sb
+(defvar diff-switches "-c"
+  "*A string or list of strings specifying switches to be passed to diff.")
 
 ;;;###autoload
 (defvar vc-checkin-hook nil
@@ -2020,7 +2021,7 @@ with RCS)."
     file
     (vc-do-command 0 "prs" file 'MASTER)
     (vc-do-command 0 "rlog" file 'MASTER)
-    (vc-do-command 0 "cvs" file 'WORKFILE "rlog")
+    (vc-do-command 0 "cvs" file 'WORKFILE "log")
     (vc-do-command 0 "cleartool" file 'WORKFILE "lshistory")))
 
 (defun vc-backend-assign-name (file name)

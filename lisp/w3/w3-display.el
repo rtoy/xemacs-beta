@@ -1,7 +1,7 @@
 ;;; w3-display.el --- display engine v99999
 ;; Author: wmperry
-;; Created: 1997/02/14 17:51:17
-;; Version: 1.127
+;; Created: 1997/02/15 23:38:28
+;; Version: 1.128
 ;; Keywords: faces, help, hypermedia
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -456,7 +456,7 @@ as the bullet character.")
      (progn
        (push (cons tag args) w3-display-open-element-stack)
        (push content content-stack)
-       (setq content (nth 2 node)))))
+       (setq content (nth 2 (, node))))))
 
   (defmacro w3-display-handle-list-type ()
     (`
@@ -559,6 +559,10 @@ as the bullet character.")
      )
     )
 
+  (defmacro w3-display-progress-meter ()
+    (`
+     (url-lazy-message "Drawing... %c" (aref "/|\\-" (random 4)))))
+    
   (defmacro w3-display-handle-end-break ()
     (`
      (case (pop break-style)
@@ -1216,7 +1220,7 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 	       (save-restriction
 		 (narrow-to-region (point) (point))
 		 (setq fill-column avgwidth
-		       ;; inhibit-read-only t
+		       inhibit-read-only t
 		       w3-last-fill-pos (point-min)
 		       i 0)
 		 ;; skip over columns that have leftover content
@@ -1492,7 +1496,7 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 	(content-stack (list (list node)))
 	(right-margin-stack (list fill-column))
 	(left-margin-stack (list 0))
-	;; (inhibit-read-only t)
+	(inhibit-read-only t)
 	node
 	insert-before
 	insert-after
@@ -1509,6 +1513,7 @@ Should be run before restoring w3-table-border-chars to ascii characters."
       (setq content (pop content-stack))
       (pop w3-active-faces)
       (pop w3-active-voices)
+      (w3-display-progress-meter)
       (case (car (pop w3-display-open-element-stack))
 	;; Any weird, post-display-of-content stuff for specific tags
 	;; goes here.   Couldn't think of any better way to do this when we
@@ -1541,6 +1546,7 @@ Should be run before restoring w3-table-border-chars to ascii characters."
       (w3-pop-all-face-info)
       ;; Handle the element's content
       (while content
+	(w3-display-progress-meter)
 	(if (stringp (car content))
 	    (w3-handle-string-content (pop content))
 	  (setq node (pop content)
@@ -1640,6 +1646,32 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 	    (img			; inlined image
 	     (w3-handle-image)
 	     (w3-handle-empty-tag))
+	    (frameset
+	     (if w3-display-frames
+		 (w3-handle-content node)
+	       (w3-handle-empty-tag)))
+	    (frame
+	     (let* ((href (or (w3-get-attribute 'src)
+			      (w3-get-attribute 'href)))
+		    (name (or (w3-get-attribute 'name)
+			      (w3-get-attribute 'title)
+			      (w3-get-attribute 'alt)
+			      "Unknown frame name")))
+	       (w3-handle-content
+		(list tag args
+		      (list
+		       (list 'p nil
+			     (list
+			      (list 'a
+				    (cons (cons 'href href)
+					  args)
+				    (list
+				     "Fetch frame: "
+				     name)))))))))
+	    (noframes
+	     (if w3-display-frames
+		 (w3-handle-empty-tag)
+	       (w3-handle-content node)))
 	    (script			; Scripts
 	     (w3-handle-empty-tag))
 	    ((embed object)		; Embedded images/content
@@ -1763,8 +1795,7 @@ Should be run before restoring w3-table-border-chars to ascii characters."
 				      (or w3-maximum-line-length
 					  (window-width)))
 		     fill-prefix "")
-	       ;; (set (make-local-variable 'inhibit-read-only) t)
-	       )
+	       (set (make-local-variable 'inhibit-read-only) t))
 	     (w3-handle-content node)
 	     )
 	    (*invisible

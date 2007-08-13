@@ -1,13 +1,15 @@
+		      The OO-Browser, Version <VERSION>
 
-			 The OO-Browser, Version <VERSION>
+		Bob Weiner designed and wrote the OO-Browser.
+      InfoDock Associates develops and maintains it for commercial use.
+       http://www.infodock.com   <info@infodock.com>   +1 408 243 3300
 
-	 Copyright (C) 1989-1995,  Free Software Foundation, Inc.
-	 Available for use and distribution under the terms of the GNU
-         Public License, version 2 or higher.
+     Copyright (C) 1989-1997,  Free Software Foundation, Inc.
+     Available for use and distribution under the terms of the GNU
+     Public License, version 2 or higher.
 
-		     Designed and written by Bob Weiner
-
-	 With thanks to Motorola, Inc. for funding and donating the work,
-         to Torgeir Veimo and Mark Stern for helping with the X OO-Browser
-         core, and to Don Yacktman for helping with the NEXTSTEP OO-Browser
-         core.
+     With thanks to Motorola, Inc. for helping fund initial development,
+     to Torgeir Veimo and Mark Stern for helping with the X OO-Browser
+     core, to Don Yacktman for helping with the NEXTSTEP OO-Browser
+     core, to Jeff Sparkes for help with Java language support and
+     to Harri Pasanen for help with Python language support.

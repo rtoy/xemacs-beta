@@ -330,13 +330,13 @@ See `set-frame-properties' for built-in property names."
 (defun keymap-parent (keymap)
   "Returns the first parent of the given keymap."
   (car (keymap-parents keymap)))
-(make-obsolete 'keymap-parent 'keymap-parents)
+(make-compatible 'keymap-parent 'keymap-parents)
 
 (defun set-keymap-parent (keymap parent)
   "Makes the given keymap have (only) the given parent."
   (set-keymap-parents keymap (if parent (list parent) '()))
   parent)
-(make-obsolete 'set-keymap-parent 'set-keymap-parents)
+(make-compatible 'set-keymap-parent 'set-keymap-parents)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; menu stuff
 
@@ -595,3 +595,16 @@ these objects are GCed, the underlying X data is deallocated as well."
 (define-obsolete-function-alias 'set-pixmap-contributes-to-line-height
   'set-glyph-contrib-p)
 
+;; the functionality of column.el has been moved into C
+(defalias 'display-column-mode 'column-number-mode)
+
+(defun x-color-values  (color &optional frame)
+  "Return a description of the color named COLOR on frame FRAME.
+The value is a list of integer RGB values--(RED GREEN BLUE).
+These values appear to range from 0 to 65280 or 65535, depending
+on the system; white is (65280 65280 65280) or (65535 65535 65535).
+If FRAME is omitted or nil, use the selected frame."
+  (color-instance-rgb-components (make-color-instance color)))
+(make-compatible 'x-color-values 'color-instance-rgb-components)
+
+;;; obsoloete.el ends here

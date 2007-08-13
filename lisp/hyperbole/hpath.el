@@ -6,19 +6,10 @@
 ;; KEYWORDS:     comm, hypermedia, unix
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Brown U.
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:     1-Nov-91 at 00:44:23
-;; LAST-MOD:     10-Oct-95 at 23:31:56 by Bob Weiner
-;;
-;; This file is part of Hyperbole.
-;; Available for use and distribution under the same terms as GNU Emacs.
-;;
-;; Copyright (C) 1991-1995, Free Software Foundation, Inc.
-;; Developed with support from Motorola Inc.
-;;
-;; DESCRIPTION:  
-;; DESCRIP-END.
+;; LAST-MOD:     16-Feb-97 at 02:34:35 by Bob Weiner
 
 ;;; ************************************************************************
 ;;; Public variables
@@ -26,7 +17,7 @@
 
 (defvar hpath:rfc "/anonymous@ds.internic.net:rfc/rfc%s.txt"
   "*String to be used in the call: (hpath:rfc rfc-num)
-to create an path to the RFC document for 'rfc-num'.")
+to create an path to the RFC document for `rfc-num'.")
 
 (defvar hpath:suffixes '(".gz" ".Z")
   "*List of filename suffixes to add or remove within (hpath:exists-p) calls.")
@@ -39,7 +30,7 @@ to create an path to the RFC document for 'rfc-num'.")
 ;;; ************************************************************************
 
 (defun hpath:absolute-to (path &optional default-dirs)
-  "Returns PATH as an absolute path relative to one directory from optional DEFAULT-DIRS or 'default-directory'.
+  "Returns PATH as an absolute path relative to one directory from optional DEFAULT-DIRS or `default-directory'.
 Returns PATH unchanged when it is not a valid path or when DEFAULT-DIRS
 is invalid.  DEFAULT-DIRS when non-nil may be a single directory or a list of
 directories.  The first one in which PATH is found is used."
@@ -63,7 +54,7 @@ directories.  The first one in which PATH is found is used."
 
 (defun hpath:ange-ftp-at-p ()
   "Returns an ange-ftp pathname that point is within or nil.
-See the 'ange-ftp' or 'efs' Elisp packages for pathname format details.
+See the `ange-ftp' or `efs' Elisp packages for pathname format details.
 Always returns nil if (hpath:ange-ftp-available-p) returns nil."
   (if (hpath:ange-ftp-available-p)
       (let ((user (hpath:ange-ftp-default-user))
@@ -74,23 +65,23 @@ Always returns nil if (hpath:ange-ftp-available-p) returns nil."
 		(cond
 		  ((hpath:url-at-p)
 		   (if (string-equal
-			 (buffer-substring (match-beginning 1) (match-end 1))
+			 (buffer-substring (match-beginning 2) (match-end 2))
 			 "ftp")
 		       (concat
 			"/"
 			;; user
-			(if (match-beginning 2)
+			(if (match-beginning 3)
 			    (buffer-substring
-			     (match-beginning 2) (match-end 2))
+			     (match-beginning 3) (match-end 3))
 			  (concat user "@"))
 			;; domain
 			(hpath:delete-trailer
-			 (buffer-substring (match-beginning 3) (match-end 3)))
+			 (buffer-substring (match-beginning 4) (match-end 4)))
 			":"
 			;; path
-			(if (match-beginning 5)
-			    (buffer-substring (match-beginning 5)
-					      (match-end 5))))
+			(if (match-beginning 6)
+			    (buffer-substring (match-beginning 6)
+					      (match-end 6))))
 		     ;; else ignore this other type of WWW path
 		     ))
 		  ;; user, domain and path
@@ -120,7 +111,7 @@ Always returns nil if (hpath:ange-ftp-available-p) returns nil."
 
 (defun hpath:ange-ftp-p (path)
   "Returns non-nil iff PATH is an ange-ftp pathname.
-See the 'ange-ftp' or 'efs' Elisp package for pathname format details.
+See the `ange-ftp' or `efs' Elisp package for pathname format details.
 Always returns nil if (hpath:ange-ftp-available-p) returns nil."
   (and (stringp path)
        (or (featurep 'ange-ftp) (featurep 'efs))
@@ -130,22 +121,22 @@ Always returns nil if (hpath:ange-ftp-available-p) returns nil."
 	       (cond
 		 ((hpath:url-p path)
 		  (if (string-equal
-			(substring path (match-beginning 1) (match-end 1))
+			(substring path (match-beginning 2) (match-end 2))
 			"ftp")
 		      (concat
 			"/"
 			;; user
-			(if (match-beginning 2)
-			    (substring path (match-beginning 2) (match-end 2))
+			(if (match-beginning 3)
+			    (substring path (match-beginning 3) (match-end 3))
 			  (concat user "@"))
 			;; domain
 			(hpath:delete-trailer
-			 (substring path (match-beginning 3) (match-end 3)))
+			 (substring path (match-beginning 4) (match-end 4)))
 			":"
 			;; path
-			(if (match-beginning 5)
-			    (substring path (match-beginning 5)
-				       (match-end 5))))
+			(if (match-beginning 6)
+			    (substring path (match-beginning 6)
+				       (match-end 6))))
 		    ;; else ignore this other type of WWW path
 		    ))
 		 ;; user, domain and path
@@ -186,8 +177,8 @@ Texinfo file references.
 If optional TYPE is the symbol 'file or 'directory, then only that path type is
 accepted as a match.  Only locally reachable paths are checked for existence.
 With optional NON-EXIST, nonexistent local paths are allowed.
-Absolute pathnames must begin with a '/' or '~'.  Relative pathnames
-must begin with a './' or '../' to be recognized."
+Absolute pathnames must begin with a `/' or `~'.  Relative pathnames
+must begin with a `./' or `../' to be recognized."
   (cond	(;; Local file URLs
 	 (hpath:is-p (hargs:delimited
 		      "file://localhost" "[ \t\n\^M\"\'\}]" nil t)))
@@ -200,10 +191,40 @@ must begin with a './' or '../' to be recognized."
 			 (hargs:delimited "@file{" "}"))
 		     type non-exist))))
 
-(defun hpath:find (filename &optional other-window-p)
-  "Edit file FILENAME using program from hpath:find-alist if available.
-Otherwise, switch to a buffer visiting file FILENAME, creating one if none
-already exists.
+(defun hpath:display-buffer (buffer &optional display-where)
+  "Displays BUFFER at optional DISPLAY-WHERE location or at hpath:display-where.
+BUFFER may be a buffer or a buffer name.
+
+See documentation of `hpath:display-buffer-alist' for valid values of DISPLAY-WHERE.
+Returns non-nil iff buffer is actually displayed."
+  (interactive "bDisplay buffer: ")
+  (if (stringp buffer) (setq buffer (get-buffer buffer)))
+  (if (null buffer)
+      nil
+    (if (null display-where)
+	(setq display-where hpath:display-where))
+    (funcall (car (cdr (or (assq display-where
+				 hpath:display-buffer-alist)
+			   (assq 'other-window
+				 hpath:display-buffer-alist))))
+	     buffer)
+    t))
+
+(defun hpath:display-buffer-other-frame (buffer)
+  "Displays BUFFER, in another frame.
+May create a new frame, or reuse an existing one.
+See documentation of `hpath:display-buffer' for details.
+Returns the dispalyed buffer."
+  (interactive "bDisplay buffer in other frame: ")
+  (if (= (length (frame-list)) 1)
+      (select-frame (make-frame))
+    (other-frame 1))
+  (if (br-in-browser)
+      (br-to-view-window))
+  (switch-to-buffer buffer))
+
+(defun hpath:find (filename &optional display-where)
+  "Edits file FILENAME using user customizable settings of display program and location.
 
 FILENAME may start with a special prefix character which is
 handled as follows:
@@ -211,7 +232,14 @@ handled as follows:
   &filename  - execute as a windowed program;
   -filename  - load as an Emacs Lisp program.
 
-Return non-nil iff file is displayed within a buffer (not with an external
+Otherwise, if FILENAME matches a regular expression in the variable
+`hpath:find-alist,' the associated external display program is invoked.
+If not, `hpath:display-alist' is consulted for a specialized internal
+display function to use.  If no matches are found there,
+`hpath:display-where-alist' is consulted using the optional argument,
+DISPLAY-WHERE (a symbol) or if that is nil, the value of
+`hpath:display-where', and the matching display function is used.
+Returns non-nil iff file is displayed within a buffer (not with an external
 program)."
   (interactive "FFind file: ")
   (let (modifier)
@@ -232,25 +260,62 @@ program)."
 		      nil)
 		     ((hypb:functionp find-program)
 		      (funcall find-program filename)
-		      nil)
+		      t)
 		     (t (setq filename (hpath:validate filename))
-			(funcall (if (and other-window-p
-					  (not (br-in-browser)))
-				     'switch-to-buffer-other-window
-				   'switch-to-buffer)
-				 (find-file-noselect filename))
+			(if (null display-where)
+			    (setq display-where hpath:display-where))
+			(funcall (car (cdr (or (assq display-where
+						     hpath:display-where-alist)
+					       (assq 'other-window
+						     hpath:display-where-alist))))
+				 filename)
 			t)))))))
 
+(defun hpath:find-line (filename line-num &optional display-where)
+  "Edits file FILENAME with point placed at LINE-NUM.
+
+`hpath:display-where-alist' is consulted using the optional argument,
+DISPLAY-WHERE (a symbol) or if that is nil, the value of
+`hpath:display-where', and the matching display function is used to determine
+where to display the file, e.g. in another frame.
+Always returns t."
+  (interactive "FFind file: ")
+  ;; Just delete any special characters preceding the filename, ignoring them.
+  (if (string-match hpath:prefix-regexp filename)
+      (setq filename (substring filename (match-end 0))))
+  (setq filename (hpath:substitute-value filename)
+	filename (hpath:validate filename))
+  (if (null display-where)
+      (setq display-where hpath:display-where))
+  (funcall (car (cdr (or (assq display-where
+			       hpath:display-where-alist)
+			 (assq 'other-window
+			       hpath:display-where-alist))))
+	   filename)
+  (if (integerp line-num)
+      (progn (widen) (goto-line line-num)))
+  t)
+
+(defun hpath:find-other-frame (filename)
+  "Edits file FILENAME, in another frame.
+May create a new frame, or reuse an existing one.
+See documentation of `hpath:find' for details.
+Returns the buffer of displayed file."
+  (interactive "FFind file in other frame: ")
+  (if (= (length (frame-list)) 1)
+      (select-frame (make-frame))
+    (other-frame 1))
+  (if (br-in-browser)
+      (br-to-view-window))
+  (find-file filename))
+
 (defun hpath:find-other-window (filename)
-  "Edit file FILENAME, in another window or using program from hpath:find-alist.
+  "Edits file FILENAME, in another window or using an external program.
 May create a new window, or reuse an existing one; see the function display-buffer.
-
-Alternatively, FILENAME may start with a prefix character to indicate special
-handling.  See documentation of `hpath:find' for details.
-
-Return non-nil iff file is displayed within a buffer."
+See documentation of `hpath:find' for details.
+Returns non-nil iff file is displayed within a buffer."
   (interactive "FFind file in other window: ")
-  (hpath:find filename t))
+  (hpath:find filename 'other-window))
 
 (defun hpath:is-p (path &optional type non-exist)
   "Returns PATH if PATH is a Unix path, else nil.
@@ -275,7 +340,7 @@ nonexistent local paths are allowed."
 	 (if (string-match hpath:prefix-regexp path)
 	     (setq path (substring path (match-end 0)))
 	   t)
-	 (not (or (string= path "")
+	 (not (or (string-equal path "")
 		  (string-match "\\`\\s \\|\\s \\'" path)))
 	 ;; Convert tabs and newlines to space.
 	 (setq path (hbut:key-to-label (hbut:label-to-key path)))
@@ -310,19 +375,23 @@ nonexistent local paths are allowed."
 			     (file-directory-p path))
 			    (t)))
 		     )
-	       ;; Return path if non-nil return value
-	       (if (stringp suffix) ;; suffix could = t, which we ignore
-		   (if (string-match
-			(concat (regexp-quote suffix) "%s") rtn-path)
-		       ;; remove suffix
-		       (concat (substring rtn-path 0 (match-beginning 0))
-			       (substring rtn-path (match-end 0)))
-		     ;; add suffix
-		     (format rtn-path suffix))
-		 (format rtn-path "")))))))
+	       (progn
+		 ;; Quote any but last %s within rtn-path.
+		 (setq rtn-path (hypb:replace-match-string "%s" rtn-path "%%s")
+		       rtn-path (hypb:replace-match-string "%%s\\'" rtn-path "%s"))
+		 ;; Return path if non-nil return value.
+		 (if (stringp suffix);; suffix could = t, which we ignore
+		     (if (string-match
+			  (concat (regexp-quote suffix) "%s") rtn-path)
+			 ;; remove suffix
+			 (concat (substring rtn-path 0 (match-beginning 0))
+				 (substring rtn-path (match-end 0)))
+		       ;; add suffix
+		       (format rtn-path suffix))
+		   (format rtn-path ""))))))))
 
 (defun hpath:relative-to (path &optional default-dir)
-  "Returns PATH relative to optional DEFAULT-DIR or 'default-directory'.
+  "Returns PATH relative to optional DEFAULT-DIR or `default-directory'.
 Returns PATH unchanged when it is not a valid path."
   (if (not (and (stringp path) (hpath:is-p path)))
       path
@@ -349,7 +418,7 @@ Returns PATH unchanged when it is not a valid path."
 
 (defun hpath:rfc (rfc-num)
   "Return pathname to textual rfc document indexed by RFC-NUM.
-See the documentation of the 'hpath:rfc' variable."
+See the documentation of the `hpath:rfc' variable."
   (format hpath:rfc rfc-num))
 
 (defun hpath:substitute-value (path)
@@ -374,7 +443,7 @@ Returns path with variable values substituted."
       t)))
 
 (defun hpath:substitute-var (path)
-  "Replaces up to one match in PATH with first matching variable from 'hpath:variables'."
+  "Replaces up to one match in PATH with first matching variable from `hpath:variables'."
   (if (not (and (stringp path) (string-match "/" path) (hpath:is-p path)))
       path
     (setq path (hpath:symlink-referent path))
@@ -396,7 +465,7 @@ Returns path with variable values substituted."
 				    (hpath:substitute-var-name var (car val) path))
 				(setq new-path result))
 			    (setq val (cdr val))))
-			 (t (error "(hpath:substitute-var): '%s' has invalid value for hpath:variables" var))))))
+			 (t (error "(hpath:substitute-var): `%s' has invalid value for hpath:variables" var))))))
       (or new-path path)
       )))
 
@@ -407,9 +476,9 @@ Returns path with variable values substituted."
 ;; /usr/local -> $(SERVER_LOCAL)/usr/local, /usr/bin ->
 ;; ../$(SYSTYPE)/usr/bin and /tmp -> `node_data/tmp.  It also handles
 ;; relative links properly as in /usr/local/emacs -> gnu/emacs which must
-;; be resolved relative to the '/usr/local' directory.
-;; It will fail on Apollos if the '../' notation is used to move just
-;; above the '/' directory level.  This is fairly uncommon and so the
+;; be resolved relative to the `/usr/local' directory.
+;; It will fail on Apollos if the `../' notation is used to move just
+;; above the `/' directory level.  This is fairly uncommon and so the
 ;; problem has not been fixed.
 ;;
 (defun hpath:symlink-referent (linkname)
@@ -478,35 +547,37 @@ directory when called, so that PATH is expanded relative to it."
   "Return world-wide-web universal resource locator (url) that point immediately precedes or nil.
 Use buffer-substring with match-beginning and match-end on the following
 groupings:
-  1 = access protocol
-  2 = optional username
-  3 = host and domain to connect to
-  4 = optional port number to use
-  5 = pathname to access."
-  ;; WWW URL format:  <protocol>:/[<user>@]<domain>[:<port>]/<path>
-  ;;             or   <protocol>://[<user>@]<domain>[:<port>]<path>
+  1 = optional `URL:' literal
+  2 = access protocol
+  4 = optional username
+  4 = host and domain to connect to
+  5 = optional port number to use
+  6 = pathname to access."
+  ;; WWW URL format:  [URL:]<protocol>:/[<user>@]<domain>[:<port>]/<path>
+  ;;             or   [URL:]<protocol>://[<user>@]<domain>[:<port>]<path>
   ;; Avoid [a-z]:/path patterns since these may be disk paths on OS/2, DOS or
   ;; Windows.
-  (if (looking-at "\\([a-zA-Z][a-zA-Z]+\\)://?\\([^@/: \t\n\^M]+@\\)?\\([^/:@ \t\n\^M\"`']+\\)\\(:[0-9]+\\)?\\([/~][^]@ \t\n\^M\"`'\)\}>]*\\)?")
+  (if (looking-at "\\(URL:\\)?\\([a-zA-Z][a-zA-Z]+\\)://?\\([^@/: \t\n\^M]+@\\)?\\([^/:@ \t\n\^M\"`']+\\)\\(:[0-9]+\\)?\\([/~][^]@ \t\n\^M\"`'\)\}>]*\\)?")
       (save-excursion
-	(goto-char (match-end 0))
+	(goto-char (match-end 6))
 	(skip-chars-backward ".?#!*()")
-	(buffer-substring (match-beginning 0) (point)))))
+	(buffer-substring (match-beginning 2) (point)))))
 
 (defun hpath:url-p (obj)
   "Return t if OBJ is a world-wide-web universal resource locator (url) string, else nil.
 Use string-match with match-beginning and match-end on the following groupings:
-  1 = access protocol
-  2 = optional username
-  3 = host and domain to connect to
-  4 = optional port number to use
-  5 = pathname to access."
-  ;; WWW URL format:  <protocol>:/[<user>@]<domain>[:<port>]/<path>
-  ;;             or   <protocol>://[<user>@]<domain>[:<port>]<path>
+  1 = optional `URL:' literal
+  2 = access protocol
+  3 = optional username
+  4 = host and domain to connect to
+  5 = optional port number to use
+  6 = pathname to access."
+  ;; WWW URL format:  [URL:]<protocol>:/[<user>@]<domain>[:<port>]/<path>
+  ;;             or   [URL:]<protocol>://[<user>@]<domain>[:<port>]<path>
   ;; Avoid [a-z]:/path patterns since these may be disk paths on OS/2, DOS or
   ;; Windows.
   (and (stringp obj)
-       (string-match "\\`<?\\([a-zA-Z][a-zA-Z]+\\)://?\\([^@/: \t\n\^M]+@\\)?\\([^/:@ \t\n\^M\"`']+\\)\\(:[0-9]+\\)?\\([/~][^]@ \t\n\^M\"`'\)\}>]*\\)?>?\\'"
+       (string-match "\\`<?\\(URL:\\)?\\([a-zA-Z][a-zA-Z]+\\)://?\\([^@/: \t\n\^M]+@\\)?\\([^/:@ \t\n\^M\"`']+\\)\\(:[0-9]+\\)?\\([/~][^]@ \t\n\^M\"`'\)\}>]*\\)?>?\\'"
 		     obj)
        t))
 
@@ -519,9 +590,9 @@ With optional INCLUDE-START-AND-END-P non-nil, returns list of:
     (cond ((not include-start-and-end-p)
 	   (hpath:url-at-p))
 	  ((hpath:url-at-p)
-	   (list (buffer-substring (match-beginning 0) (match-end 0))
-		 (match-beginning 0)
-		 (match-end 0))))))
+	   (list (buffer-substring (match-beginning 2) (match-end 6))
+		 (match-beginning 2)
+		 (match-end 6))))))
 
 (defun hpath:www-p (path)
   "Returns non-nil iff PATH is a world-wide-web link reference."
@@ -534,7 +605,7 @@ With optional INCLUDE-START-AND-END-P non-nil, returns list of:
 (defun hpath:ange-ftp-available-p ()
   "Return t if the ange-ftp or efs package is available, nil otherwise.
 Either the package must have been loaded already or under versions of Emacs
-19, it must be set for autoloading via 'file-name-handler-alist'."
+19, it must be set for autoloading via `file-name-handler-alist'."
   (or (featurep 'ange-ftp) (featurep 'efs)
       (and (boundp 'file-name-handler-alist) ; v19
 	   (or (rassq 'ange-ftp-hook-function file-name-handler-alist)
@@ -595,7 +666,7 @@ from path or t."
 (defun hpath:find-program (filename)
   "Return shell or Lisp command to execute to display FILENAME or nil.
 Return nil if FILENAME is a directory name.
-See also documentation for 'hpath:find-alist' and 'hpath:display-alist'."
+See also documentation for `hpath:find-alist' and `hpath:display-alist'."
   (let ((cmd))
     (cond ((and (stringp filename) (file-directory-p filename))
 	   nil)
@@ -639,7 +710,7 @@ list, the first directory prepended to REST-OF-PATH which produces a valid
 local pathname is returned."
   (let (sym val)
     (cond ((not (stringp var-name))
-	   (error "(hpath:substitute-dir): VAR-NAME arg, '%s', must be a string" var-name))
+	   (error "(hpath:substitute-dir): VAR-NAME arg, `%s', must be a string" var-name))
 	  ((not (and (setq sym (intern-soft var-name))
 		     (boundp sym)))
 	   (error "(hpath:substitute-dir): VAR-NAME arg, \"%s\", is not a bound variable"

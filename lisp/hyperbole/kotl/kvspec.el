@@ -8,7 +8,7 @@
 ;; AUTHOR:       Bob Weiner
 ;;
 ;; ORIG-DATE:    21-Oct-95 at 15:17:07
-;; LAST-MOD:      3-Nov-95 at 19:44:10 by Bob Weiner
+;; LAST-MOD:      4-Dec-96 at 15:36:12 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
@@ -297,8 +297,22 @@ VIEW-SPEC is a string or t, which means recompute the current view spec.  See
       nil
     (setq mode-line-format (copy-sequence mode-line-format))
     (let ((elt (or (memq 'mode-line-buffer-identification mode-line-format)
-		   (memq 'modeline-buffer-identification mode-line-format))))
-      (setcdr elt (cons 'kvspec:string (cdr elt))))))
+		   (memq 'modeline-buffer-identification
+			 mode-line-format))))
+      (if elt
+	  (setcdr elt (cons 'kvspec:string (cdr elt)))
+	;;
+	;; XEmacs 19.14 introduced extents into the modeline that we
+	;; must work around.
+	(if (and hyperb:xemacs-p (string-lessp "19.14" hyperb:xemacs-p))
+	    (let ((mf modeline-format)
+		  elt)
+	      (while mf
+		(setq elt (car mf))
+		(if (and (consp elt) (eq (cdr elt) 'modeline-buffer-identification))
+		    (progn (setcdr mf (cons 'kvspec:string (cdr mf)))
+			   (setq mf nil)))
+		(setq mf (cdr mf)))))))))
 
 (defun kvspec:update-view ()
   "Update view according to current setting of local 'kvspec:current' variable."

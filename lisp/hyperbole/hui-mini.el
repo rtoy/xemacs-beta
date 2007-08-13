@@ -6,15 +6,15 @@
 ;; KEYWORDS:     hypermedia, mouse
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Brown U.
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    15-Oct-91 at 20:13:17
-;; LAST-MOD:      3-Nov-95 at 04:02:02 by Bob Weiner
+;; LAST-MOD:     20-Feb-97 at 11:30:44 by Bob Weiner
 ;;
 ;; This file is part of Hyperbole.
 ;; Available for use and distribution under the same terms as GNU Emacs.
 ;;
-;; Copyright (C) 1991-1995, Free Software Foundation, Inc.
+;; Copyright (C) 1991-1997, Free Software Foundation, Inc.
 ;; Developed with support from Motorola Inc.
 ;;
 ;; DESCRIPTION:  
@@ -60,6 +60,8 @@
 		  "Activates button at point or prompts for explicit button.")
 		'("Butfile/"    (menu . butfile)
 		  "Quick access button files menus.")
+		'("Cust/"       (menu . cust)
+		  "Customizes Hyperbole by setting major options.")
 		'("Doc/"        (menu . doc)
 		  "Quick access to Hyperbole documentation.")
 		'("Ebut/"       (menu . ebut)
@@ -91,8 +93,49 @@
 			    (expand-file-name hbmap:filename hbmap:dir-user))
 	   "Edits user-specific button file.")
 	  ))
+       '(cust .
+         (("Customize>")
+	  ("Referent-Display/" (menu . cust-referents)
+	   "Sets where referents are displayed.")
+	  ("Smart-Key-at-Eol/" (menu . cust-eol)
+	   "Sets how scrolling via end of line presses works.")
+	  ("URL-Display/" (menu . cust-urls) "Sets where URLs are displayed.")))
+       '(cust-eol .
+         (("Smart Key press at eol scrolls>")
+	  ("Proportionally" (setq smart-scroll-proportional t))
+	  ("Windowful"      (setq smart-scroll-proportional nil))))
+       '(cust-referents .
+         (("Ref display>")
+	  ("Any-Frame" (setq hpath:display-where 'other-frame))
+	  ("Current-Win" (setq hpath:display-where 'this-window))
+	  ("Diff-Frame-One-Win"
+	   (setq hpath:display-where 'other-frame-one-window))
+	  ("New-Frame" (setq hpath:display-where 'new-frame))
+	  ("Other-Win" (setq hpath:display-where 'other-window))
+	  ("Single-Win" (setq hpath:display-where 'one-window))))
+       '(cust-urls .
+         (("URL display>")
+	  ("Any-Netscape-Window"
+	   (setq action-key-url-function 'highlight-headers-follow-url-netscape
+		 highlight-headers-follow-url-function action-key-url-function
+		 highlight-headers-follow-url-netscape-new-window nil))
+	  ("New-Netscape-Window"
+	   (setq action-key-url-function 'highlight-headers-follow-url-netscape
+		 highlight-headers-follow-url-function action-key-url-function
+		 highlight-headers-follow-url-netscape-new-window t))
+	  ("Mosaic" (setq action-key-url-function
+			  'highlight-headers-follow-url-mosaic
+			  highlight-headers-follow-url-function
+			  action-key-url-function))
+	  ("W3-Browser"
+	   (setq action-key-url-function 'w3-fetch
+		 highlight-headers-follow-url-function
+		 action-key-url-function))))
        '(doc .
 	 (("Doc>")
+	  ("About"        (hypb:display-file-with-logo
+			   (expand-file-name "ABOUT" hyperb:dir))
+	   "Overview of Hyperbole and InfoDock Associates.")
 	  ("Demo"         (find-file-read-only
 			    (expand-file-name "DEMO" hyperb:dir))
 	   "Demonstrates Hyperbole features.")
@@ -157,7 +200,7 @@
 	  ))
        '(ibut .
 	 (("IButton>")
-	  ("Act"    hui:hbut-act    "Activates implicit button at point.") 
+	  ("Act"    hui:hbut-current-act  "Activates implicit button at point.") 
 	  ("DeleteIButType"   (hui:htype-delete 'ibtypes)
 	   "Deletes specified button type.")
 	  ("Help"   hui:hbut-help   "Reports on button's attributes.")
@@ -169,14 +212,14 @@
        '(msg .
 	 (("Msg>")
 	  ("Compose-Hypb-Mail"
-	   (hmail:compose "hyperbole@hub.ucsb.edu" '(hact 'hyp-config))
+	   (hmail:compose "hyperbole@infodock.com" '(hact 'hyp-config))
 	   "Send a message to the Hyperbole discussion list.")
 	  ("Edit-Hypb-List-Entry"
-	   (hmail:compose "hyperbole-request@hub.ucsb.edu"
+	   (hmail:compose "hyperbole-request@infodock.com"
 			  '(hact 'hyp-request))
 	   "Add, remove or change your entry on a the Hyperbole mail list.")
 	  ("Modify-Hypb-Announce-Entry"
-	   (hmail:compose "hyperbole-announce-request@hub.ucsb.edu"
+	   (hmail:compose "hyperbole-announce-request@infodock.com"
 			  '(hact 'hyp-request))
 	   "Add, remove or change your entry on the Hyperbole Announce mail list.")
 	  ))

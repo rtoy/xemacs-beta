@@ -6,12 +6,12 @@
 ;; KEYWORDS:     matching, oop, tools
 ;;
 ;; AUTHOR:       Bob Weiner
-;; ORG:          Motorola Inc.
+;; ORG:          InfoDock Associates
 ;;
 ;; ORIG-DATE:    12-Dec-89
-;; LAST-MOD:     21-Sep-95 at 12:39:17 by Bob Weiner
+;; LAST-MOD:     21-Feb-97 at 16:45:11 by Bob Weiner
 ;;
-;; Copyright (C) 1989-1995  Free Software Foundation, Inc.
+;; Copyright (C) 1989-1996  Free Software Foundation, Inc.
 ;; See the file BR-COPY for license information.
 ;;
 ;; This file is part of the OO-Browser.
@@ -61,8 +61,8 @@ around.")
   "*Minimum width of a browser class list window.
 This together with the frame width determines the number of such windows.")
 
-;; -f treats upper and lower case the same in sorting, also makes 'a' sort
-;; list before '[a]', so default classes appear at the end of the list,
+;; -f treats upper and lower case the same in sorting, also makes `a' sort
+;; list before `[a]', so default classes appear at the end of the list,
 ;; typically.
 ;; -u leaves only unique elements in the sorted list
 (defvar br-sort-options "-fu"
@@ -114,10 +114,10 @@ Use \\[br-help] and \\[br-help-ms] for help on browser usage."
       (if br-inhibit-version
 	  (br-top-classes t)
 	(br-version)
-	(message "Press {h} for for help.")
+	(message "Press {h} for help; use {C-c #} to see version and credits again.")
 	;; Display all classes.
 	(br-top-classes t)
-	(message "Press {h} for for help.")
+	(message "Press {h} for help; use {C-c #} to see version and credits again.")
 	;; Wait for 60 seconds or until a single key sequence is given.
 	(sit-for 60)
 	(message ""))
@@ -132,7 +132,7 @@ Interactively or when optional CLASS-PATH is nil, CLASS-PATH defaults to the
 current buffer file pathname.  If optional LIB-TABLE-P is non-nil, add to
 Library Environment, otherwise add to System Environment.  If optional
 SAVE-FILE is t, the Environment is then stored to the filename given by
-'br-env-file'.  If SAVE-FILE is non-nil and not t, its string value is used
+`br-env-file'.  If SAVE-FILE is non-nil and not t, its string value is used
 as the file to which to save the Environment."
   (interactive
     (list (read-file-name (concat "Class file name to add"
@@ -191,10 +191,10 @@ as the file to which to save the Environment."
 (defun br-ancestors (&optional arg features-flag)
   "Display ancestor tree whose root is the current class.
 With optional prefix ARG, display all ancestor trees whose roots are in the
-current listing.  If ARG = -1 or 'br-invert-ancestors' is t, the current
+current listing.  If ARG = -1 or `br-invert-ancestors' is t, the current
 class ancestry tree is inverted.  That is, it shows branches going down
 towards the root class, so that parents appear above children.  If ARG < -1 or
-'br-invert-ancestors' is t and ARG > 1, then the ancestry trees of all
+`br-invert-ancestors' is t and ARG > 1, then the ancestry trees of all
 classes in the current listing are inverted.
 
 Optional second argument, FEATURES-FLAG non-nil means display features under
@@ -288,7 +288,7 @@ listing."
 			(cons class class-and-categories)))
 		     class-list)))
     (cond ((not class-list)
-	   (message "(OO-Browser):  Apply 'br-categories' to a class.") (beep))
+	   (message "(OO-Browser):  Apply `br-categories' to a class.") (beep))
 	  ((not has-categories)
 	   (message "No class categories.") (beep))
 	  (t
@@ -332,7 +332,7 @@ listing."
 				      (cons parent children)))
 				   class-list)))
     (cond ((not children-list)
-	   (message "(OO-Browser):  Apply 'br-children' to a class.")
+	   (message "(OO-Browser):  Apply `br-children' to a class.")
 	   (beep))
 	  ((not has-children)
 	   (message "No children.") (beep))
@@ -469,7 +469,8 @@ Optional prefix arg PROMPT means prompt for entry name."
 (defun br-edit (&optional prompt class)
   "Edit a class in the viewer window.
 Select viewer window.  With optional prefix arg PROMPT, prompt for class
-name.  Optional CLASS is the one to edit."
+name.  Optional CLASS is the one to edit.  Return t if class is displayed or
+sent to an external viewer, else nil."
   (interactive "P")
   (or br-editor-cmd
       (br-in-view-window-p)
@@ -478,7 +479,7 @@ name.  Optional CLASS is the one to edit."
 
 (defun br-edit-ext (editor-cmd file)
   "Invoke a non-standard EDITOR-CMD on FILE.
-See also 'br-editor-cmd'."
+See also `br-editor-cmd'."
   (interactive "fFile to edit: ")
   (or editor-cmd (setq editor-cmd br-editor-cmd))
   (if (not (stringp editor-cmd)) ;; must be a Lisp function that takes a
@@ -509,12 +510,12 @@ See also 'br-editor-cmd'."
       (let ((class-name (br-find-class-name)))
 	(if class-name
 	    (progn
-	      (message "Building '%s' class info..." class-name)
-	      ; (sit-for 2)   ; Why should we pause here?
+	      (message "Building `%s' class info..." class-name)
+	      (sit-for 2)
 	      (br-store-class-info class-name)
-	      (message "Building '%s' class info...Done" class-name)
+	      (message "Building `%s' class info...Done" class-name)
 	      (br-funcall-in-view-window
-	       (concat br-buffer-prefix-info "Info")
+	       (concat br-buffer-prefix-info "Info*")
 	       'br-insert-class-info))
 	  (error "Move point to a class name line.")))
     (beep)
@@ -568,10 +569,10 @@ Optional FTR-SIG is signature of feature to edit."
 (defun br-features (arg)
   "Display features/elements of the current class (prefix ARG = 1) or of the current listing if ARG is other than 0 or 1.
 
-With ARG = 0, the value of the variable, 'br-inherited-features-flag', is
+With ARG = 0, the value of the variable, `br-inherited-features-flag', is
 toggled and no other action is taken.
 
-If 'br-inherited-features-flag' is t, all features of each class are shown.
+If `br-inherited-features-flag' is t, all features of each class are shown.
 If nil, only lexically included features are shown and if the features of a
 single class are requested and none are defined, the class definition is
 displayed so that its feature declarations may be browsed."
@@ -596,7 +597,7 @@ Return ELEMENT or signal an error."
 		 (br-find-feature element)
 	       (br-find-class element))))
       element
-    (error "(OO-Browser): '%s' definition not found." element)))
+    (error "(OO-Browser): `%s' definition not found." element)))
 
 (defun br-help (&optional file)
   "Display browser operation help information in viewer window."
@@ -633,7 +634,7 @@ all elements in the current listing."
 			 (list (br-find-feature-entry)))))))
     (if (or (null ftr-list) (null (car ftr-list)))
 	(error
-	  "(OO-Browser):  'br-implementors' must be applied to a feature.")
+	  "(OO-Browser):  `br-implementors' must be applied to a feature.")
       (message "Computing implementors...")
       (br-add-level-hist)
       (br-next-listing-window -1)
@@ -706,7 +707,7 @@ declarations may be browsed."
 		     class-list)))
     (cond ((not class-list)
 	   (beep)
-	   (message "(OO-Browser):  Apply 'br-features' to a class."))
+	   (message "(OO-Browser):  Apply `br-features' to a class."))
 	  ((not has-features)
 	   (if (and (= (length class-list) 1)
 		    (br-class-path (car class-list)))
@@ -768,7 +769,7 @@ matches to all classes in the Environment."
 			       (if arg
 				   "Find Environment class string matches"
 				 "Find Environment class regular expression matches")
-			       (if again " (RTN to end): " ": ")))))
+			       (if again " (RET to end): " ": ")))))
   (if (and again (equal expr ""))
       nil
     (let* ((match-expr (if arg (regexp-quote expr) expr))
@@ -804,7 +805,7 @@ matches to all entries in the listing."
 				(if arg
 				    "Find string matches in listing"
 				  "Find regular expression matches in listing")
-				(if again " (RTN to end): " ": ")))))
+				(if again " (RET to end): " ": ")))))
   (if (and again (equal expr ""))
       nil
     (let* ((match-expr (if arg (regexp-quote expr) expr))
@@ -893,7 +894,7 @@ listing."
 			       (cons class parents)))
 			    class-list)))
     (cond ((not parents-list)
-	   (message "(OO-Browser):  Apply 'br-parents' to a class.") (beep))
+	   (message "(OO-Browser):  Apply `br-parents' to a class.") (beep))
 	  ((not has-parents)
 	   (message "No parents.") (beep))
 	  (t
@@ -955,7 +956,7 @@ listing."
 		       class-list)))
       (cond ((not class-list)
 	     (beep)
-	     (message "(OO-Browser):  Apply 'br-protocols' to a class."))
+	     (message "(OO-Browser):  Apply `br-protocols' to a class."))
 	    ((not has-protocols)
 	     (message "No class protocols.") (beep))
 	    (t
@@ -1005,7 +1006,7 @@ buffers associated with the browser."
   "Send a message to the OO-Browser discussion list."
   (interactive)
   (if (br-in-browser) (br-to-view-window))
-  (hmail:compose "oo-browser@hub.ucsb.edu" '(hypb:configuration)))
+  (hmail:compose "oo-browser@infodock.com" '(hypb:configuration)))
 
 (defun br-sys-rebuild ()
   "Rescan System components of the current Environment."
@@ -1042,14 +1043,14 @@ With prefix ARG, display all System classes."
     (br-to-view-window)))
 
 (defun br-toggle-c-tags ()
-  "Toggle the value of the 'br-c-tags-flag' flag."
+  "Toggle the value of the `br-c-tags-flag' flag."
   (interactive)
   (setq br-c-tags-flag (not br-c-tags-flag))
   (message "C constructs will %sbe added to C-based language Environments."
 	   (if br-c-tags-flag "" "not ")))
 
 (defun br-toggle-keep-viewed ()
-  "Toggle the value of the 'br-keep-viewed-classes' flag."
+  "Toggle the value of the `br-keep-viewed-classes' flag."
   (interactive)
   (setq br-keep-viewed-classes (not br-keep-viewed-classes))
   (message "Viewed classes will no%s be kept after use."
@@ -1094,15 +1095,15 @@ to different class elements."
 (defun br-version ()
   "Display browser version number and credits."
   (interactive)
-  (br-file-to-viewer "BR-VERSION")
   (br-funcall-in-view-window
-   (concat br-buffer-prefix-info "Help")
+   (concat br-buffer-prefix-info "Help*")
    (function (lambda ()
+	       (insert-file-contents (br-pathname "BR-VERSION"))
+	       (hypb:display-file-with-logo)
 	       (if (re-search-forward "<VERSION>" nil t)
 		   (replace-match br-version t t))
 	       (center-line)
-	       (set-buffer-modified-p nil)))
-   t))
+	       (set-buffer-modified-p nil)))))
 
 (defun br-view-entry (&optional prompt)
   "Displays source for any browser listing entry.
@@ -1129,9 +1130,7 @@ Optional prefix arg PROMPT means prompt for entry name."
   "Displays class file in viewer window.
 Optional prefix arg PROMPT means prompt for class name.  Non-nil WRITABLE means
 allow editing, otherwise display in read-only mode.  Non-nil CLASS is class to
-display.
-
-Return t if class is displayed or sent to an external viewer, else nil."
+display.  Return t if class is displayed or sent to an external viewer, else nil."
   (interactive "P")
   (or class (setq class (if prompt (br-complete-class-name)
 			  (br-find-class-name))))
@@ -1172,7 +1171,7 @@ Return t if class is displayed or sent to an external viewer, else nil."
 
 (defun br-view-ext (viewer-cmd file)
   "Invoke a non-standard VIEWER-CMD on FILE.
-See also 'br-viewer-cmd'."
+See also `br-viewer-cmd'."
   (interactive "fFile to view: ")
   (or viewer-cmd (setq viewer-cmd br-viewer-cmd))
   (if (not (stringp viewer-cmd)) ;; must be a Lisp function that takes a
@@ -1356,7 +1355,7 @@ than zero, default 2)."
   (equal 0 (string-match (concat br-buffer-prefix-inher
 				 "\\|" br-buffer-prefix-categ
 				 "\\|" br-buffer-prefix-blank
-				 "\\|" br-buffer-prefix-info)
+				 "\\|" (regexp-quote br-buffer-prefix-info))
 			 (buffer-name buffer))))
 
 (defun br-buffer-level ()
@@ -1502,7 +1501,7 @@ With optional NO-ERASE, buffer is not erased before function is called."
   "Display FILENAME from OO-Browser source directory in browser viewer window.
 FILENAME should not contain any path information."
   (br-funcall-in-view-window
-   (concat br-buffer-prefix-info "Help")
+   (concat br-buffer-prefix-info "Help*")
    (function (lambda ()
 	       (insert-file-contents (br-pathname filename))
 	       (set-buffer-modified-p nil)))))
@@ -1510,7 +1509,9 @@ FILENAME should not contain any path information."
 (defun br-in-browser ()
   "Return selected frame if the OO-Browser is active in it, else return nil."
   (cond ((not (eq br-in-browser (selected-frame))) nil)
-	((one-window-p 'nomini)
+	((or (one-window-p 'nomini)
+	     (and (fboundp 'window-list)
+		  (< (length (window-list)) 3)))
 	 (setq br-in-browser nil))
 	(t br-in-browser)))
 
@@ -1580,14 +1581,14 @@ It provides the following keys: \\{br-mode-map}"
 	((br-find-class-name)
 	 (narrow-to-region (match-beginning 0) (match-end 0)))
 	(t (error
-	    "(OO-Browser):  'br-narrow-to-class', current entry is not a class"))))
+	    "(OO-Browser):  `br-narrow-to-class', current entry is not a class"))))
 
 (defun br-narrow-to-feature ()
   "Narrow buffer to current feature entry."
   (if (br-feature-at-p)
       (narrow-to-region (match-beginning 0) (match-end 0))
     (error
-     "(OO-Browser):  'br-narrow-to-feature' no current feature.")))
+     "(OO-Browser):  `br-narrow-to-feature' no current feature.")))
 
 (defun br-feature-at-p ()
   "Returns t iff point is on a feature listing line."
@@ -1631,7 +1632,7 @@ Optional PREV means to previous window."
   "Return full pathname for FILENAME in browser Elisp directory."
   (if br-directory
       (expand-file-name filename br-directory)
-    (error "The 'br-directory' variable must be set to a string value.")))
+    (error "The `br-directory' variable must be set to a string value.")))
 
 (defun br-protocol-entry-p ()
   "Return non-nil if point is within a protocol listing entry line."
@@ -1888,13 +1889,13 @@ class.")
   "List of directories below which OO source files and other library
 directories are found.  A library is a stable group of OO classes.  Do not
 set this variable directly.  Each OO language library which invokes
-'br-browse' should set it.")
+`br-browse' should set it.")
 
 (defvar br-sys-search-dirs nil
   "List of directories below which OO source files and other system
 directories are found.  A system is a group of OO classes that are likely to
 change.  Do not set this variable directly.  Each OO language library which
-invokes 'br-browse' should set it.")
+invokes `br-browse' should set it.")
 
 (defvar *br-level-hist* nil
   "Internal history of visited listing windows and buffers.")
@@ -1912,7 +1913,7 @@ Allows return to previous listing window when done with the viewer.")
 (defconst br-buffer-prefix-categ "Categ-Lvl-")
 (defconst br-buffer-prefix-inher "Inher-Lvl-")
 (defconst br-buffer-prefix-blank "Blank-")
-(defconst br-buffer-prefix-info "OO-Browser ")
+(defconst br-buffer-prefix-info "*OO-Browser ")
 (defvar br-buffer-prefix br-buffer-prefix-inher
   "Browser buffer name prefix.")
 
@@ -1935,21 +1936,21 @@ Allows return to previous listing window when done with the viewer.")
   (define-key br-mode-map "\C-c\C-c" 'br-env-create)
   (define-key br-mode-map "d"        'br-descendants)
   (define-key br-mode-map "\C-c\C-d" 'br-delete)
-  ;; {M-d} is used down below for 'br-tree'
+  ;; {M-d} is used down below for `br-tree'
   (define-key br-mode-map "e"        'br-edit-entry)
   (define-key br-mode-map "\M-e"     'br-env-stats)
   (define-key br-mode-map "\C-c\C-e" 'br-env-rebuild)
   (define-key br-mode-map "f"        'br-features)
   (define-key br-mode-map "F"        'br-feature-signature)
-  ;; {M-f} is used down below for 'br-tree-features-toggle'
-  ;; {M-g} is used down below for 'br-tree-graph'
+  ;; {M-f} is used down below for `br-tree-features-toggle'
+  ;; {M-g} is used down below for `br-tree-graph'
   (define-key br-mode-map "?"        'br-help)
   (define-key br-mode-map "h"        'br-help)
   (define-key br-mode-map "H"        'br-help-ms) ;; mouse help
   (define-key br-mode-map "i"        'br-entry-info)
   (define-key br-mode-map "I"        'br-implementors)
   (define-key br-mode-map "\C-c\C-k" 'br-kill)
-  ;; {M-k} is used down below for 'br-tree-kill'
+  ;; {M-k} is used down below for `br-tree-kill'
   (define-key br-mode-map "l"        'br-lib-top-classes)
   (define-key br-mode-map "L"        'br-lib-rebuild)
   (define-key br-mode-map "\C-c\C-l" 'br-env-load)
@@ -1996,6 +1997,6 @@ Allows return to previous listing window when done with the viewer.")
 (defvar br-tmp-class-set nil
   "Set of classes created for temporary use by br-*-trees functions.")
 (defvar br-tmp-depth 0
-  "Temporary variable indicating inheritance depth of class in 'br-ancestor-trees'.")
+  "Temporary variable indicating inheritance depth of class in `br-ancestor-trees'.")
 
 (provide 'br)

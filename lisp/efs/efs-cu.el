@@ -3,7 +3,7 @@
 ;;
 ;; File:         efs-cu.el
 ;; Release:      $efs release: 1.15 $
-;; Version:      $Revision: 1.1 $
+;; Version:      $Revision: 1.12 $
 ;; RCS:          
 ;; Description:  Common utilities needed by efs files.
 ;; Author:       Sandy Rutherford <sandy@ibm550.sissa.it>
@@ -55,7 +55,7 @@ user's curent login name is used.")
 (defconst efs-cu-version
   (concat (substring "$efs release: 1.15 $" 14 -2)
 	  "/"
-	  (substring "$Revision: 1.1 $" 11 -2)))
+	  (substring "$Revision: 1.12 $" 11 -2)))
 
 (defconst efs-case-insensitive-host-types
   '(vms cms mts ti-twenex ti-explorer dos mvs tops-20 mpe ka9q dos-distinct

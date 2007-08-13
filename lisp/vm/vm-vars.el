@@ -172,6 +172,35 @@ the function will not be called.")
   "*Program that reads a message on its standard input and writes an
 MD5 digest on its output.")
 
+(defvar vm-pop-max-message-size nil
+  "*If VM is about to retrieve via POP a message larger than this size
+(in bytes) it will ask the you whether it should retrieve the message.
+
+If VM is retrieving mail automatically because vm-auto-get-new-mail is
+set to a numeric value then you will not be prompted about large messages.
+This is to avoid prompting you while you're typing in another buffer.
+In this case the large message will be skipped with a warning
+message.
+
+A nil value for vm-pop-max-message-size means no size limit.")
+
+(defvar vm-pop-messages-per-session nil
+  "*Non-nil value should be a integer specifying how many messages to
+retrieve per POP session.  When you type 'g' to get new mail, VM
+will only retrieve that many messages from any particular POP maildrop.
+To retrieve more messages, type 'g' again.
+
+A nil value means there's no limit.")
+
+(defvar vm-pop-bytes-per-session nil
+  "*Non-nil value should be a integer specifying how many bytes to
+retrieve per POP session.  When you type 'g' to get new mail, VM
+will only retrieve messages until the byte limit is reached on
+any particular POP maildrop.  To retrieve more messages, type 'g'
+again.
+
+A nil value means there's no limit.")
+
 (defvar vm-recognize-pop-maildrops "^[^:]+:[^:]+:[^:]+:[^:]+:[^:]+"
   "*Value if non-nil should be a regular expression that matches
 spool names found in vm-spool-files that should be considered POP
@@ -188,6 +217,18 @@ seconds) VM should check for new mail and try to retrieve it.
 This is done asynchronously and may occur while you are editing
 other files.  It should not disturb your editing, except perhaps
 for a pause while the check is being done.")
+
+(defvar vm-mail-check-interval 300
+  "*Numeric value specifies the number of seconds between checks
+for new mail.  The maildrops for all visited folders are checked.
+The buffer local variable vm-spooled-mail-waiting is set non-nil
+in the buffers of those folders that have mail waiting.")
+
+(defvar vm-spooled-mail-waiting nil
+  "Value is non-nil if there is mail waiting for the current folder.
+This variable's value is local in all buffers.
+VM maintains this variable, you should not set it.")
+(make-variable-buffer-local 'vm-spooled-mail-waiting)
 
 (defvar vm-default-folder-type
   (cond ((not (boundp 'system-configuration))
@@ -514,6 +555,40 @@ displayed internally, i.e. with the built-in capabilities of Emacs.
 If none of the parts can be displayed internally, behavior reverts to
 that of 'best.")
 
+(defvar vm-mime-default-face-charsets '("us-ascii" "iso-8859-1")
+  "*List of character sets that can use the `default' face.
+For other characters sets VM will have to create a new face and assign
+a font to it that can be used to display that character set.")
+
+(defvar vm-mime-charset-font-alist nil
+  "*Assoc list of character sets and fonts that can be used to display them.
+The format of the list is:
+
+  ( (CHARSET . FONT) ...)
+
+CHARSET is a string naming a MIME registered character set such
+as \"iso-8859-5\".  Character set names should be specified in
+lower case.
+
+FONT is a string naming a font that can be used to display CHARSET.
+
+An example setup might be:
+
+  (setq vm-mime-charset-font-alist
+   '(
+     (\"iso-8859-7\" . \"-*-*-medium-r-normal--16-160-72-72-c-80-iso8859-7\")
+    )
+  )
+
+This variable is only useful for character sets whose characters
+can all be encoded in single 8-bit bytes.  Also multiple fonts
+can only be displayed if you're running under a window system
+e.g. X windows.  So this variable will have no effect if you're
+running Emacs on a tty.
+
+Note that under FSF Emacs any fonts you use must be the same size
+as your default font.  XEmacs does not have this limitation.")
+
 (defvar vm-mime-button-face
     (cond ((fboundp 'find-face)
 	   (or (and (not (eq (device-type) 'tty)) (find-face 'gui-button-face)
@@ -529,7 +604,12 @@ that of 'best.")
 in a composition buffer.  Composition buffers are assumed to use
 US-ASCII unless the buffer contains a byte with the high bit set.
 This variable specifies what character set VM should assume if
-such a character is found.")
+such a character is found.
+
+This variable is unused in XEmacs/MULE.  Since multiple character
+sets can be displayed in a single buffer under MULE, VM will map
+the file coding system of the buffer to a single MIME character
+that can display all the buffer's characters.")
 
 (defvar vm-mime-8bit-text-transfer-encoding 'quoted-printable
   "*Symbol specifying what kind of transfer encoding to use on 8bit
@@ -537,8 +617,8 @@ text.  Characters with the high bit set cannot safely pass
 through all mail gateways and mail transport software.  MIME has
 two transfer encodings that convert 8-bit data to 7-bit for same
 transport. Quoted-printable leaves the text mostly readable even
-if the recipent does not have a MIME-capable mail reader.  BASE64
-is unreadable with a MIME-capable mail reader, unless your name
+if the recipient does not have a MIME-capable mail reader.  BASE64
+is unreadable without a MIME-capable mail reader, unless your name
 is U3BvY2s=.
 
 A value of 'quoted-printable, means to use quoted-printable encoding.
@@ -557,8 +637,8 @@ text will also trigger BASE64 encoding.")
     ("\\.jpe?g"		.	"image/jpeg")
     ("\\.gif"		.	"image/gif")
     ("\\.png"		.	"image/png")
-    ("\\.tiff"		.	"image/tiff")
-    ("\\.htm?l"		.	"text/html")
+    ("\\.tiff?"		.	"image/tiff")
+    ("\\.html?"		.	"text/html")
     ("\\.au"		.	"audio/basic")
     ("\\.mpe?g" 	.	"video/mpeg")
     ("\\.ps"		.	"application/postscript")
@@ -728,7 +808,7 @@ A value of t means always remove the folders.
 A value of nil means never remove empty folders.
 A value that's not t or nil means ask before removing empty folders.")
 
-(defvar vm-flush-interval t
+(defvar vm-flush-interval 90
   "*Non-nil value specifies how often VM flushes its cached internal
 data.  A numeric value gives the number of seconds between
 flushes.  A value of t means flush every time there is a change.
@@ -1663,18 +1743,23 @@ having vm-mutable-frames set to non-nil.")
 when looking for a window that is already displaying a buffer that
 VM wants to display or undisplay.")
 
+(defvar vm-image-directory
+  (expand-file-name (concat data-directory "vm/"))
+  "*Value specifies the directory VM should find its artwork.")
+
 (defvar vm-use-toolbar
   '(next previous delete/undelete autofile file
     reply compose print visit quit nil help)
   "*Non-nil value causes VM to provide a toolbar interface.
 Value should be a list of symbols that will determine which
-toolbar buttons will appears and in what order.  Valid symbol
+toolbar buttons will appear and in what order.  Valid symbol
 value within the list are:
 
     autofile
     compose
     delete/undelete
     file
+    getmail
     help
     mime
     next
@@ -1687,7 +1772,7 @@ value within the list are:
 
 If nil appears in the list, it should appear exactly once.  All
 buttons after nil in the list will be displayed flushright in
-top/bottom toolbars and flush bottom in left/right toolbars.
+top/bottom toolbars and flushbottom in left/right toolbars.
 
 This variable only has meaning under XEmacs 19.12 and beyond.
 See also vm-toolbar-orientation to control where the toolbar is placed.")
@@ -1699,8 +1784,7 @@ value will be interpreted as `top'.
 
 This variable only has meaning under XEmacs 19.12 and beyond.")
 
-(defvar vm-toolbar-pixmap-directory
-  (expand-file-name (concat data-directory "vm/"))
+(defvar vm-toolbar-pixmap-directory vm-image-directory
   "*Value specifies the directory VM should find its toolbar pixmaps.")
 
 (defvar vm-toolbar nil
@@ -2336,14 +2420,6 @@ mail is not sent.")
     (define-key map "\C-c\C-y" 'vm-yank-message)
     (define-key map "\C-c\C-s" 'vm-mail-send)
     (define-key map "\C-c\C-c" 'vm-mail-send-and-exit)
-    (define-key map "\C-c\C-w" 'mail-signature)
-    (define-key map "\C-c\C-t" 'mail-text)
-    (define-key map "\C-c\C-q" 'mail-fill-yanked-message)
-    (define-key map "\C-c\C-f\C-t" 'mail-to)
-    (define-key map "\C-c\C-f\C-b" 'mail-bcc)
-    (define-key map "\C-c\C-f\C-s" 'mail-subject)
-    (define-key map "\C-c\C-f\C-c" 'mail-cc)
-    (define-key map "\C-c\C-f\C-f" 'mail-fcc)
     map )
   "Keymap for VM Mail mode buffers.")
 
@@ -2436,7 +2512,11 @@ mail is not sent.")
 (make-variable-buffer-local 'vm-saved-buffer-modified-p)
 (defvar vm-kept-mail-buffers nil)
 (defvar vm-inhibit-write-file-hook nil)
-(defvar vm-chop-full-name-function 'vm-choose-chop-full-name-function)
+;; used to choose between the default and
+;; mail-extract-address-components but I don't see the utility of
+;; it anymore.  It tries to be too smart.
+;;(defvar vm-chop-full-name-function 'vm-choose-chop-full-name-function)
+(defvar vm-chop-full-name-function 'vm-default-chop-full-name)
 (defvar vm-session-beginning t)
 (defvar vm-init-file-loaded nil)
 (defvar vm-window-configurations nil)
@@ -2698,6 +2778,7 @@ append a space to words that complete unambiguously.")
       (vm-folder-type
        "   (unrecognized folder type)"
        "   (no messages)")))
+    (vm-spooled-mail-waiting " Mail")
     (vm-message-list
      ("  %[ " vm-ml-message-attributes-alist
       (vm-ml-labels ("; " vm-ml-labels)) " %]    ")
@@ -2753,6 +2834,7 @@ append a space to words that complete unambiguously.")
 (make-variable-buffer-local 'vm-ml-message-marked)
 ;; to make the tanjed compiler shut up
 (defvar vm-pop-read-point nil)
+(defvar vm-pop-ok-to-ask nil)
 (defvar vm-reply-list nil)
 (defvar vm-forward-list nil)
 (defvar vm-redistribute-list nil)
@@ -2854,7 +2936,7 @@ that has a match.")
 (defvar vm-folder-garbage-alist nil)
 (make-variable-buffer-local 'vm-folder-garbage-alist)
 (defconst vm-mime-header-list '("MIME-Version:" "Content-"))
-(defconst vm-mime-xemacs-mule-charset-alist
+(defconst vm-mime-mule-charset-to-coding-alist
   '(
     ("us-ascii"		no-conversion)
     ("iso-8859-1"	no-conversion)
@@ -2872,6 +2954,30 @@ that has a match.")
     ("iso-2022-int-1"	iso-2022-int-1)
     ("iso-2022-kr"	iso-2022-kr)
     ("euc-kr"		iso-2022-kr)
+   ))
+(defvar vm-mime-mule-charset-to-charset-alist
+  '(
+    (latin-iso8859-1	"iso-8859-1")
+    (latin-iso8859-2	"iso-8859-2")
+    (latin-iso8859-3	"iso-8859-3")
+    (latin-iso8859-4	"iso-8859-4")
+    (cyrillic-iso8859-5	"iso-8859-5")
+    (arabic-iso8859-6	"iso-8859-6")
+    (greek-iso8859-7	"iso-8859-7")
+    (hebrew-iso8859-8	"iso-8859-8")
+    (latin-iso8859-9	"iso-8859-9")
+    (japanese-jisx0208	"iso-2022-jp")
+    (korean-ksc5601	"iso-2022-kr")
+    (chinese-gb2312	"iso-2022-jp")
+    (sisheng		"iso-2022-jp")
+    (thai-tis620	"iso-2022-jp")
+   ))
+(defvar vm-mime-mule-coding-to-charset-alist
+  '(
+    (iso-2022-8		"iso-2022-jp")
+    (iso-2022-7-unix	"iso-2022-jp")
+    (iso-2022-7-dos	"iso-2022-jp")
+    (iso-2022-7-mac	"iso-2022-jp")
    ))
 (defconst vm-mime-charset-completion-alist
   '(

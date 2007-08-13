@@ -35,7 +35,8 @@
 	(let (header alist tuple-list)
 	  (setq alist auto-folder-alist)
 	  (while alist
-	    (setq header (vm-get-header-contents (car mp) (car (car alist))))
+	    (setq header (vm-get-header-contents (car mp) (car (car alist))
+						 ", "))
 	    (if (null header)
 		()
 	      (setq tuple-list (cdr (car alist)))
