@@ -1,3 +1,130 @@
+1999-07-13  XEmacs Build Bot <builds@cvs.xemacs.org>
+
+	* XEmacs 21.2.18 is released
+
+1999-07-13  SL Baur  <steve@miho>
+
+	* lib-complete.el (read-library-name): Revert previous change.
+	(read-library): Ditto.
+
+1999-06-24  Karl M. Hegbloom  <karlheg@debian.org>
+
+	* packages.el (packages-package-list): Capitalize docstring.
+
+	* packages.el (packages-find-package-library-path): Use #'nconc
+	rather than #'append to reduce consing -- #'mapcar uses Flist,
+	which returns a freshly consed list.  #'append would create yet
+	another fresh list, using Fmake_list in concat.
+
+	* packages.el (package-provide): Use setq with remassq like it
+	says in its docstring.
+
+1999-07-06  SL Baur  <steve@miho.m17n.org>
+
+	* lib-complete.el (progn-with-message): Fix typo.
+
+1999-07-06  SL Baur  <steve@miho.m17n.org>
+
+	* mule/mule-misc.el (char-octet): Make function match docstring.
+	From Katsumi Yamaoka <yamaoka@jpl.org>
+	
+1999-06-15  Karl M. Hegbloom  <karlheg@debian.org>
+
+	* wid-edit.el (widget-documentation): corrected spelling error.
+
+1999-06-23  Jonathan Marten <jonathan.marten@uk.sun.com>
+
+	* x-win-sun.el (x-win-init-sun): Don't rebind Find and Sh-find
+	keys if already bound
+
+1999-07-06  SL Baur  <steve@miho.m17n.org>
+
+	* lib-complete.el (progn-with-message): Revert previous changes.
+
+1999-06-24  Bob Weiner  <weiner@beopen.com>
+
+	* lib-complete.el (find-library): 
+	(find-library-other-window): 
+	(find-library-other-frame): Completely rewrote
+	so that these functions actually work when called non-interactively.  
+	Also made them handle LIBRARY arguments which end with .el or .elc.
+
+1999-06-24  Bob Weiner  <weiner@beopen.com>
+
+	* simple.el (indent-new-comment-line): Locally bound
+	`block-comment-start' to `comstart' or else when this is called
+	from do-auto-fill, e.g. in Lisp mode, it will insert any non-nil
+	`block-comment-start' value, ignoring any existing spacing after a
+	comment prefix in the previous line and producing ugly comments.
+
+1999-06-23  Bob Weiner  <weiner@beopen.com>
+
+	* list-mode.el (mouse-choose-completion): 
+	(choose-completion): 
+	(completion-switch-to-minibuffer): Added.
+	([Tab]): [Tab] previously switched to the minibuffer
+	but since [space] does that and since most applications in the
+	world use [Tab] to select the next item in a list, do that in the
+	*Completions* buffer too.  This will cause the least confusion
+	among the largest population of users.  -- Bob Weiner, BeOpen.com,
+	06/23/1999.
+
+1999-06-22  Bob Weiner  <weiner@beopen.com>
+
+	* help.el (help-buffer-name): Added support for a null value
+	of `help-buffer-prefix-string' since some buffers require no
+	prefix.
+
+1999-06-20  Bob Weiner  <weiner@beopen.com>
+
+	* list-mode.el (completion-list-mode-quit): Added and bound to {q} 
+	in the completion-list-mode-map to bury the completions buffer
+	even when the minibuffer is no longer active.
+
+1999-06-20  Bob Weiner  <weiner@beopen.com>
+
+	* list-mode.el (list-mode): It is visually disconcerting to have
+	the text cursor disappear within list buffers, especially when
+	moving from window to window, so leave it visible.
+
+1999-07-01  SL Baur  <steve@miho.m17n.org>
+
+	* menubar-items.el (default-menubar): Conditionalize the bug
+	report menu item (which may not be possible in this XEmacs).
+	Reported by: Ken'ichi Handa <handa@etl.go.jp>
+	
+1999-06-30  SL Baur  <steve@miho.m17n.org>
+
+	* subr.el (with-current-buffer): DOC string fix.
+	Suggested by Bob Weiner <weiner@altrasoft.com>
+
+1999-06-25  Charles G Waldman <cgw@fnal.gov>
+
+        * cus-face.el (custom-face-italic): insert missing args
+        
+1999-06-24  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* packages.el (package-locations): Changed default early package
+	hierarchies to ~/.xemacs/mule-packages and
+	~/.xemacs/xemacs-packages.
+
+1999-06-23  SL Baur  <steve@miho.m17n.org>
+
+	* mule/mule-category.el (Top Level): ASCII is also latin-1.
+
+1999-06-15  Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* packages.el (package-locations): Changed default early package
+	hierarchy to ~/.xemacs/packages.
+	(package-locations): Removed `packages' as a possible name for a
+	late package hierarchy.
+
+1999-06-20  MORIOKA Tomohiko  <tomo@etl.go.jp>
+
+	* mule/mule-category.el (word-combining-categories): Set up new
+	variable.
+	(word-separating-categories): Likewise.
+
 1999-06-22  XEmacs Build Bot <builds@cvs.xemacs.org>
 
 	* XEmacs 21.2.17 is released

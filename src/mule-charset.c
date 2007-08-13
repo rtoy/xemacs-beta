@@ -441,8 +441,13 @@ print_charset (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   write_c_string (buf, printcharfun);
 }
 
+static const struct lrecord_description charset_description[] = {
+  { XD_LISP_OBJECT, offsetof(struct Lisp_Charset, name), 7 },
+  { XD_END }
+};
+
 DEFINE_LRECORD_IMPLEMENTATION ("charset", charset,
-                               mark_charset, print_charset, 0, 0, 0,
+                               mark_charset, print_charset, 0, 0, 0, charset_description,
 			       struct Lisp_Charset);
 /* Make a new charset. */
 
