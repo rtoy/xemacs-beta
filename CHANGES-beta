@@ -1,5 +1,9 @@
 							-*- indented-text -*-
 to 20.1
+-- Commercial sound driver fix
+-- Wnn6 corrections
+-- Filling corrections
+-- Animated GIF boo boo.
 -- time.el-1.15
 -- itimer.el-1.06
 -- facemenu-keymap moved to `C-x F'

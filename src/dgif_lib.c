@@ -240,6 +240,15 @@ int DGifGetScreenDesc(GifFileType *GifFile)
 	    GifFile->SColorMap->Colors[i].Green = Buf[1];
 	    GifFile->SColorMap->Colors[i].Blue = Buf[2];
 	}
+    } else {
+	/* XEmacs assumes we always have a colormap */
+	GifFile->SColorMap = MakeMapObject(2, NULL);
+	GifFile->SColorMap->Colors[0].Red = 0;
+	GifFile->SColorMap->Colors[0].Green = 0;
+	GifFile->SColorMap->Colors[0].Blue = 0;
+	GifFile->SColorMap->Colors[1].Red = 0xff;
+	GifFile->SColorMap->Colors[1].Green = 0xff;
+	GifFile->SColorMap->Colors[1].Blue = 0xff;
     }
 
     return GIF_OK;

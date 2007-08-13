@@ -354,7 +354,7 @@ space does not end a sentence, so don't break a line there."
 	  ;; loses on split abbrevs ("Mr.\nSmith")
 	  (while (re-search-forward "[.?!][])}\"']*$" nil t)
 	    ;; XEmacs change (no insert-and-inherit)
-	    (or (eobp) (insert ?\ )))
+	    (or (eobp) (insert ?\  ?\ )))
 	  (goto-char from)
 	  (skip-chars-forward " \t")
 	  ;; Then change all newlines to spaces.
@@ -391,6 +391,7 @@ space does not end a sentence, so don't break a line there."
 	      (delete-char 1)		; delete newline
 	      (end-of-line)))
 	  ;; end patch
+	  (goto-char from)
  	  (if (and nosqueeze (not (eq justify 'full)))
 	      nil
 	    (canonically-space-region (or squeeze-after (point)) (point-max))

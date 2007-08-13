@@ -814,18 +814,15 @@ static int audio_init(int mixx_fd, int auddio_fd, int fmt, int speed,
 
   /* Initialize sound hardware with prefered parameters */
   
-  /* The PCSP driver does not support reading of the sampling rate via the
-     SOUND_PCM_READ_RATE ioctl; determine "the_speed" here */     
-  the_speed = speed; ioctl(audio_fd,SNDCTL_DSP_SPEED,&the_speed);
-  /* The PCSP driver does not support reading of the mono/stereo flag, thus
-     we assume, that failure to change this mode means we are in mono mode  */
-  if (((i = (the_stereo = tracks)-1),ioctl(audio_fd,SNDCTL_DSP_STEREO,&i)) < 0)
-    the_stereo = 1;
-  the_fmt = fmt;     ioctl(audio_fd,SNDCTL_DSP_SETFMT,&the_fmt);
-
   /* If the sound hardware cannot support 16 bit format or requires a
      different byte sex then try to drop to 8 bit format */
-  the_fmt = AFMT_QUERY; ioctl(audio_fd,SNDCTL_DSP_SETFMT,&the_fmt);
+
+  the_fmt = fmt;
+  if(ioctl(audio_fd,SNDCTL_DSP_SETFMT,&the_fmt) < 0) {
+  	perror("SNDCTL_DSP_SETFMT");
+  	return(0);
+  }
+
   if (fmt != the_fmt) {
     if (fmt == AFMT_S16_LE || fmt == AFMT_S16_BE) {
       *sndcnv = fmt == AFMT_S16_BE ? sndcnv2byteBE : sndcnv2byteLE;
@@ -844,6 +841,14 @@ static int audio_init(int mixx_fd, int auddio_fd, int fmt, int speed,
         fmt != the_fmt) {
       perror("SNDCTRL_DSP_SETFMT");
       return(0); } }
+
+  /* The PCSP driver does not support reading of the sampling rate via the
+     SOUND_PCM_READ_RATE ioctl; determine "the_speed" here */     
+  the_speed = speed; ioctl(audio_fd,SNDCTL_DSP_SPEED,&the_speed);
+  /* The PCSP driver does not support reading of the mono/stereo flag, thus
+     we assume, that failure to change this mode means we are in mono mode  */
+  if (((i = (the_stereo = tracks)-1),ioctl(audio_fd,SNDCTL_DSP_STEREO,&i)) < 0)
+    the_stereo = 1;
 
   /* Try to request stereo playback (if needed); if this cannot be supported
      by the hardware, then install conversion routines for mono playback */
