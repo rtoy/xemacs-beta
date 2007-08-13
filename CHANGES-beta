@@ -1,4 +1,15 @@
 							-*- indented-text -*-
+to 21.1.2 "20 Minutes to Nikko"
+-- repackage
+
+to 21.1.1 "20 Minutes to Nikko"
+-- miscellaneous bug fixes from Gunnar Evermann
+-- font fix from Colin Rafferty
+-- miscellaneous bug fixes from Hrvoje Niksic
+-- documentation fixes from Albert Chin-A-Young, Stephen Turnbull, and
+   Gunnar Evermann
+-- miscellaneous bug fixes from Gunnar Evermann, Jan Vroonhof and Robert Pluim
+
 to 21.0.67 "20 minutes to Nikko"
 -- last minute bug & doc fixes
 
