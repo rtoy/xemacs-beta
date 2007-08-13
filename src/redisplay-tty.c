@@ -1420,12 +1420,12 @@ term_get_fkeys_1 (Lisp_Object function_key_map)
 
   char **address = term_get_fkeys_arg;
 
-  for (i = 0; i < (sizeof (keys)/sizeof (keys[0])); i++)
+  for (i = 0; i < countof (keys); i++)
     {
       char *sequence = tgetstr (keys[i].cap, address);
       if (sequence)
 	Fdefine_key (function_key_map,
-		     build_string (sequence),
+		     build_ext_string (sequence, FORMAT_BINARY),
 		     vector1 (intern (keys[i].name)));
     }
 
@@ -1441,13 +1441,13 @@ term_get_fkeys_1 (Lisp_Object function_key_map)
 
     if (k_semi)
       {
-	Fdefine_key (function_key_map, build_string (k_semi),
+	Fdefine_key (function_key_map, build_ext_string (k_semi, FORMAT_BINARY),
 		     vector1 (intern ("f10")));
 	k0_name = "f0";
       }
 
     if (k0)
-      Fdefine_key (function_key_map, build_string (k0),
+      Fdefine_key (function_key_map, build_ext_string (k0, FORMAT_BINARY),
 		   vector1 (intern (k0_name)));
   }
 
@@ -1471,7 +1471,7 @@ term_get_fkeys_1 (Lisp_Object function_key_map)
 	    {
 	      sprintf (fkey, "f%d", i);
 	      Fdefine_key (function_key_map,
-			   build_string (sequence),
+			   build_ext_string (sequence, FORMAT_BINARY),
 			   vector1 (intern (fkey)));
 	    }
 	}
@@ -1488,7 +1488,7 @@ term_get_fkeys_1 (Lisp_Object function_key_map)
 	  char *sequence = tgetstr (cap2, address);			\
 	  if (sequence)							\
 	    Fdefine_key (function_key_map,				\
-			 build_string (sequence),			\
+			 build_ext_string (sequence, FORMAT_BINARY),	\
 			 vector1 (intern (sym)));			\
 	}
 

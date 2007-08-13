@@ -111,6 +111,7 @@ autoloads: auto-autoloads.el
 
 auto-autoloads.el: $(SOURCES)
 	$(EMACS) -batch -q -no-site-file \
+		-eval '(setq autoload-target-directory "'`pwd`'/")' \
 		-eval '(setq autoload-package-name "w3")' \
 		-l autoload \
-		-f batch-update-directory .
+		-f batch-update-autoloads $?

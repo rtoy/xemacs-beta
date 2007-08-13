@@ -438,17 +438,23 @@ static char * right[] = {
   "Add annotations and glyphs to all heading lines that don't have them."
   (interactive)
   (save-excursion
-    (and outline-scanning-message (message outline-scanning-message 0))
+    (and outline-scanning-message (display-message
+				   'progress
+				   (format outline-scanning-message 0)))
     (goto-char (point-min))
     (if (not (outline-on-heading-p)) (outline-next-visible-heading-safe))
     (while 
 	(progn
 	  (outline-heading-add-glyph-1)
 	  (and outline-scanning-message 
-	       (message outline-scanning-message (fume-relative-position)))
+	       (display-message
+		'progress
+		(format outline-scanning-message (fume-relative-position))))
 	  (outline-next-visible-heading-safe)))
     (and outline-scanning-message 
-	 (message "%s done" (format outline-scanning-message 100)))))
+	 (display-message
+	  'progress
+	  (format "%s done" (format outline-scanning-message 100))))))
 
 (defun outline-delete-glyphs ()
   "Remove annotations and glyphs from heading lines."

@@ -54,7 +54,7 @@ visible portions of the outline while menu items under "Hide" do the
 opposite.
 
 A special minor mode called "outl-mouse" has been automatically enabled.  In
-this minor mode, glyphs appear which, when clicked on, will alternately hide
+this minor mode, glyphs appear that, when clicked on, will alternately hide
 or show sections of the outline.
 
 You may at any time press `C-h m' to get a listing of the outline mode key
@@ -120,7 +120,7 @@ normally loaded after .emacs.
 
 ** Quail input method is now available.
 
-Quail is a simple key-translation system which allows users to input
+Quail is a simple key-translation system that allows users to input
 any multilingual text from normal ASCII keyboard.  This means that
 XEmacs with Mule now supports a number of European languages.
 
@@ -143,7 +143,7 @@ frame.  The behavior of window system frames is unchanged.
 The behavior of the zmacs region can now be controlled in the event of
 a signaled error.  The new variable `errors-deactivate-region' may be
 set to nil to revert to the old behaviour.  As before, typing C-g
-deactivate the region.
+deactivates the region.
 
 ** Info "dir" functionality merged from Emacs-19.34
 
@@ -161,7 +161,7 @@ directory-list', which you may customize through the Options menu.
 ** Abbreviations can now contain non-word characters.
 
 This means that it is finally possible to do such simple things as
-define `#if' to expand to `#include' in C mode, `s-c-b' to
+define `#in' to expand to `#include' in C mode, `s-c-b' to
 `save-current-buffer' in Lisp mode, `call/cc' to
 `call-with-current-continuation' in Scheme mode, etc.
 
@@ -182,8 +182,8 @@ quits archive mode in the same fashion dired-quit works.
  
 ** The feature to teach the key bindings of extended commands now
 prints the message after the command finishes.  After some time, the
-previous echo area contents is restored (in case the command prints
-something useful.)
+previous echo area contents are restored (in case the command prints
+something useful).
 
 ** Pending-delete changes.
 
@@ -247,7 +247,7 @@ flexibility and features.
 *** Many new options and variables are now customizable.  Try
 `M-x customize-group RET gnuserv RET'.
 
-*** The `gnuattact' and `gnudoit' programs have been abandoned in
+*** The `gnuattach' and `gnudoit' programs have been abandoned in
 favor of `gnuclient', which now accepts the standard `-nw',
 `-display', `-eval' and `-f' options.
 
@@ -256,7 +256,7 @@ favor of `gnuclient', which now accepts the standard `-nw',
 *** In C, C++, Objective C and Java, Etags tags global variables by
 default.  The resulting tags files are inflated by 30% on average.
 Use --no-globals to turn this feature off.  Etags can also tag
-ariables which are members of structure-like constructs, but it does
+variables that are members of structure-like constructs, but it does
 not by default.  Use --members to turn this feature on.
 
 *** C++ member functions are now recognized as tags.
@@ -299,7 +299,7 @@ The user options `ada-compiler-make', `ada-make-options',
 `ada-compile-options' are used within these commands. 
 
 *** Ada mode can now work with Outline minor mode.  The outline level
-is calculated from the indenting, not from syntactic contructs.
+is calculated from the indenting, not from syntactic constructs.
 Outlining does not work if your code is not correctly indented.
 
 *** The new function `ada-gnat-style' converts the buffer to the style of
@@ -316,13 +316,13 @@ space between a comma and the beginning of a word.
 conventions used by other free software.
 
 ** `tty-erase-char' is a new variable that reports which character
-was set up as the terminal's erase character at the tim Emacs was
+was set up as the terminal's erase character at the time Emacs was
 started.
 
 ** `insert-file-contents' can now read from a special file,
 as long as the arguments VISIT and REPLACE are nil.
 
-** `string-to-number' now accepts an optional BASE argument which
+** `string-to-number' now accepts an optional BASE argument that
 specifies which base to use.  The default base is 10.
 
 ** The TIME argument to `format-time-string' is now optional and

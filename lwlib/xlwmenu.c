@@ -390,7 +390,7 @@ Initialize_massaged_resource_char (void)
 static int
 string_width_u (XlwMenuWidget mw,
 #ifdef NEED_MOTIF
-	      XmString s
+	      XmString string
 #else
 	      char *string
 #endif
@@ -398,30 +398,56 @@ string_width_u (XlwMenuWidget mw,
 {
 #ifdef NEED_MOTIF
   Dimension width, height;
-  XmStringExtent (mw->menu.font_list, s, &width, &height);
-  return width;
+  XmString newstring;
 #else
 # ifdef USE_XFONTSET
   XRectangle ri, rl;
-  XmbTextExtents (mw->menu.font_set, string, strlen (string), &ri, &rl);
-  return rl.width;
 # else /* ! USE_XFONTSET */
   XCharStruct xcs;
-  int i,s=0,w=0;
   int drop;
-  for (i=0;string[i];++i) {
-    if (string[i]=='%'&&string[i+1]=='_') {
-      XTextExtents (mw->menu.font, &string[s], i-s, &drop, &drop, &drop, &xcs);
-      w += xcs.width;
+# endif
+#endif
+  char newchars[64];
+  char *chars;
+  int i, j;
+
+#ifdef NEED_MOTIF
+  XmStringGetLtoR (string, XmFONTLIST_DEFAULT_TAG, &chars);
+#else
+  chars = string;
+#endif
+
+  for (i = j = 0; chars[i]; i++)
+    if (chars[i]=='%'&&chars[i+1]=='_')
+	    i++;
+    else
+	    newchars[j++] = chars[i];
+  newchars[j] = '\0';
+
+#ifdef NEED_MOTIF
+  newstring = XmStringLtoRCreate (newchars, XmFONTLIST_DEFAULT_TAG);
+  XmStringExtent (mw->menu.font_list, newstring, &width, &height);
+  XmStringFree(newstring);
+  return width;
+#else
+# ifdef USE_XFONTSET
+  int i, s=0, w=0;
+  for (i=0; string[i]; ++i) {
+    if (string[i]=='%' && string[i+1]=='_') {
+      XmbTextExtents(mw->menu.font_set, &string[s], i-s, &ri, &rl);
+      w += rl.width;
       s = i + 2;
       ++i;
     }
   }
   if (string[s]) {
-	  XTextExtents (mw->menu.font, &string[s], i-s, &drop, &drop, &drop, &xcs);
-	  w += xcs.width;
+    XmbTextExtents(mw->menu.font_set, &string[s], i-s, &ri, &rl);
+    w += rl.width;
   }
   return w;
+# else /* ! USE_XFONTSET */
+  XTextExtents (mw->menu.font, newchars, j, &drop, &drop, &drop, &xcs);
+  return xcs.width;
 # endif /* USE_XFONTSET */
 #endif
 }
@@ -768,6 +794,72 @@ string_draw(XlwMenuWidget mw,
 #endif
 }
 
+static int
+string_draw_range (
+	XlwMenuWidget mw,
+	Window window,
+	int x, int y,
+	GC gc,
+	char *string,
+	int start,
+	int end
+)
+{
+#ifdef NEED_MOTIF
+	Dimension width, height;
+	XmString newstring;
+	int c;
+
+	if (end <= start)
+		return 0;
+	c = string[end];
+	string[end] = '\0';
+	newstring = XmStringLtoRCreate (&string[start], XmFONTLIST_DEFAULT_TAG);
+	XmStringDraw (
+		XtDisplay (mw), window,
+		mw->menu.font_list,
+		newstring, gc,
+		x, y,
+		1000,	/* ???? width */
+		XmALIGNMENT_BEGINNING,
+		0, /* ???? layout_direction */
+		0
+	);
+	XmStringExtent (mw->menu.font_list, newstring, &width, &height);
+	XmStringFree (newstring);
+	string[end] = c;
+	return width;
+#else
+# ifdef USE_XFONTSET
+	XRectangle ri, rl;
+
+	if (end <= start)
+		return 0;
+	XmbDrawString (
+		XtDisplay (mw), window, mw->menu.font_set, gc,
+		x, y + mw->menu.font_ascent, &string[start], i-s
+	);
+	XmbTextExtents (
+		mw->menu.font_set, &string[start], end - start, &ri, &rl
+	);
+	return rl.width;
+# else
+	XCharStruct xcs;
+	int drop;
+
+	if (end <= start)
+		return 0;
+	XDrawString (
+		XtDisplay (mw), window, gc,
+		x, y + mw->menu.font_ascent, &string[start], end - start);
+	XTextExtents (
+		mw->menu.font, &string[start], end - start,
+		&drop, &drop, &drop, &xcs);
+	return xcs.width;
+# endif
+#endif
+}
+
 static void
 string_draw_u (XlwMenuWidget mw,
 	       Window window,
@@ -780,67 +872,31 @@ string_draw_u (XlwMenuWidget mw,
 #endif
 )
 {
+int i,s=0;
+char *chars;
+
 #ifdef NEED_MOTIF
-  XmStringDraw (XtDisplay (mw), window,
-		mw->menu.font_list,
-		string, gc,
-		x, y,
-		1000,	/* ???? width */
-		XmALIGNMENT_BEGINNING,
-		0, /* ???? layout_direction */
-		0);
+  XmStringGetLtoR (string, XmFONTLIST_DEFAULT_TAG, &chars);
 #else
-  int i,s=0;
-  for (i=0;string[i];++i) {
-      if (string[i]=='%'&&string[i+1]=='_') {
-	  XCharStruct xcs;
-	  int drop;
+  chars = string;
+#endif
+  for (i=0;chars[i];++i) {
+      if (chars[i]=='%'&&chars[i+1]=='_') {
+	  int w;
+
+	  x += string_draw_range (mw, window, x, y, gc, chars, s, i);
+	  w = string_draw_range (mw, window, x, y, gc, chars, i+2, i+3);
+
 	  /* underline next character */
-	  if (i>s)
-# ifdef USE_XFONTSET
-	    XmbDrawString (XtDisplay (mw), window, mw->menu.font_set, gc,
-			   x, y + mw->menu.font_ascent, &string[s], i-s);
-# else
-	  XDrawString (XtDisplay (mw), window, gc,
-		       x, y + mw->menu.font_ascent, &string[s], i-s);
-# endif /* USE_XFONTSET */
-
-	  XTextExtents (mw->menu.font, &string[s], i-s, &drop, &drop, &drop,
-			&xcs);
-	  x += xcs.width;
-
-	  s=i+3;
-	  i+=2;
-
-# ifdef USE_XFONTSET
-	  XmbDrawString (XtDisplay (mw), window, mw->menu.font_set, gc,
-			 x, y + mw->menu.font_ascent, &string[i], 1);
-# else
-	  XDrawString (XtDisplay (mw), window, gc,
-		       x, y + mw->menu.font_ascent, &string[i], 1);
-# endif /* USE_XFONTSET */
-
-	  XTextExtents (mw->menu.font, &string[i], 1, &drop, &drop, &drop,
-			&xcs);
-
 	  XDrawLine (XtDisplay (mw), window, gc, x - 1,
 		     y + mw->menu.font_ascent + 1,
-		     x + xcs.width - 1, y + mw->menu.font_ascent + 1 );
-
-	  x += xcs.width;
+		     x + w - 1, y + mw->menu.font_ascent + 1 );
+	  x += w;
+	  s = i + 3;
+	  i += 2;
       }
   }
-  if (string[s])
-# ifdef USE_XFONTSET
-    XmbDrawString (XtDisplay (mw), window, mw->menu.font_set, gc,
-		   x, y + mw->menu.font_ascent, &string[s],
-		   strlen (&string[s]));
-# else
-  XDrawString (XtDisplay (mw), window, gc,
-	       x, y + mw->menu.font_ascent, &string[s],
-	       strlen (&string[s]));
-# endif /* USE_XFONTSET */
-#endif /* NEED_MOTIF */
+  x += string_draw_range (mw, window, x, y, gc, chars, s, i);
 }
 
 static void

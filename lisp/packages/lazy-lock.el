@@ -661,13 +661,13 @@ Does not restore the value of point in the selected window, or anything else."
   ;; (e) no input after waiting for `lazy-lock-continuity-time'.
   ;;
   ;; (a), (b), and (e) are automatically taken care of by `pre-idle-hook'.
-  ;; I removed (d) because there doesn't seem to be any reason for it.
   ;;
   ;; Also, we do not have to `set-buffer' and in fact it would be
   ;; incorrect to do so, since we may be being called from
   ;; `accept-process-output' or whatever.
   ;;
-  (if (memq this-command lazy-lock-ignore-commands)
+  (if (or (memq this-command lazy-lock-ignore-commands)
+	  (window-minibuffer-p (selected-window)))
       (setq lazy-lock-cache-continue nil)
     (setq lazy-lock-cache-continue t)
     ;; #### we don't yet handle frame-modified-tick on multiple frames.

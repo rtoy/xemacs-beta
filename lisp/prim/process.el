@@ -261,7 +261,8 @@ In either case, the output is inserted after point (leaving mark after it)."
 			 (count-lines (point-min) (point-max))))))
 	  (cond ((= lines 0)
 		 (if success
-		     (message
+		     (display-message
+		      'command
 		      "(Shell command completed with no output)"))
 		 (kill-buffer buffer))
 		((and success (= lines 1))

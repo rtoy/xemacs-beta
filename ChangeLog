@@ -1,3 +1,31 @@
+1997-09-20  SL Baur  <steve@altair.xemacs.org>
+
+	* XEmacs 20.3-beta23 is released.
+
+1997-09-19  SL Baur <steve@altair.xemacs.org>
+
+	* XEmacs 19.16-pre3 is released.
+
+1997-09-18  Colin Rafferty  <craffert@ml.com>
+
+	* etc/NEWS: Various spelling corrections and some grammar
+		  corrections (which/that).
+
+1997-09-19  Martin Buchholz  <mrb@eng.sun.com>
+
+	* src/redisplay-tty.c: Fix crashes with non-7bit tty escape
+	sequences (needs more testing).
+	* */Makefile*: 
+	- Cleanup man/*/Makefile for consistency.
+	- use $(MAKEFINFO), $(TEXI2DVI), etc...
+	- Make combination --with-srcdir + Sun make work properly.
+	- Change construct: test -d $${dir} || mkdir $${dir} 
+	   --> if test ! -d $${dir}; then mkdir $${dir}; fi
+	* lisp/x11/x-win-sun.el: Fix remaining glitches with
+	re-mappings of Sun function keys.
+	* configure.in: Detect libXaw AFTER libXpm to support libXawXpm.
+	* man/internals/internals.texi:  Fix makeinfo compilation error.
+
 1997-09-17  SL Baur  <steve@altair.xemacs.org>
 
 	* XEmacs 20.3-beta22 is released.

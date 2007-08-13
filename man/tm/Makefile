@@ -18,7 +18,7 @@
 # Boston, MA 02111-1307, USA.
 
 # The japanese texinfo files requires the very latest 20.0 xemacs
-EMACS = xemacs
+EMACS = ../../src/xemacs
 NAMES = tm tm-edit tm-view gnus-mime tm-mh-e
 NAMES_EN = $(NAMES:%=%-en) tm-vm-en
 NAMES_JA = $(NAMES:%=%-ja)
@@ -28,6 +28,7 @@ INFOS = $(NAMES_ALL:%=../../info/%.info)
 DVIS  = $(NAMES_EN:%=%.dvi)
 
 TEXI2DVI = texi2dvi
+MAKEINFO = makeinfo
 
 # List of all the texinfo files in the manual:
 

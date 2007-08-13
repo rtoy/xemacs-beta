@@ -1,9 +1,9 @@
 ;;; gnuserv.el --- Lisp interface code between Emacs and gnuserv
 ;; Copyright (C) 1989-1997 Free Software Foundation, Inc.
 
-;; Version: 3.9
+;; Version: 3.10
 ;; Author: Andy Norman (ange@hplb.hpl.hp.com), originally based on server.el
-;;         Hrvoje Niksic <hniksic@srce.hr>
+;;         Hrvoje Niksic <hniksic@srce.hr>, rewritten from scratch in May 1997
 ;; Maintainer: Jan Vroonhof <vroonhof@math.ethz.ch>,
 ;;             Hrvoje Niksic <hniksic@srce.hr>
 ;; Keywords: environment, processes, terminals
@@ -63,12 +63,6 @@
 ;; Mukherjee, Ben Wing and Jan Vroonhof.  It was completely rewritten
 ;; (labeled as version 3) by Hrvoje Niksic in May 1997.
 
-;; Jan Vroonhof <vroonhof@math.ethz.ch> July/1996
-;; ported the server-temp-file-regexp feature from server.el
-;; ported server hooks from server.el
-;; ported kill-*-query functions from server.el (and made it optional)
-;; synced other behaviour with server.el
-;;
 ;; Jan Vroonhof
 ;;     Customized.
 ;;
@@ -78,6 +72,9 @@
 ;;
 ;; Mike Scheidler <c23mts@eng.delcoelect.com> July, 1997
 ;;     Added 'Done' button to the menubar.
+;;
+;; Hrvoje Niksic <hniksic@srce.hr> Sep/1997
+;;     More pervasive changes.
 
 
 ;;; Code:
@@ -92,7 +89,8 @@
 ;; Provide the old variables as aliases, to avoid breaking .emacs
 ;; files.  However, they are obsolete and should be converted to the
 ;; new forms.  This ugly crock must be before the variable
-;; declaration, or the scheme fails.
+;; declaration, or the scheme fails.  I'd prefer if we could junk this
+;; sh*t, but I guess the users will appreciate compatibility.  Uh...
 
 (define-obsolete-variable-alias 'server-frame 'gnuserv-frame)
 (define-obsolete-variable-alias 'server-done-function
@@ -109,41 +107,53 @@
   'gnuserv-done-hook)
 (define-obsolete-variable-alias 'server-kill-quietly
   'gnuserv-kill-quietly)
-(define-obsolete-variable-alias 'server-temp-file-regexp
-  'gnuserv-temp-file-regexp)
-(define-obsolete-variable-alias 'server-make-temp-file-backup
-  'gnuserv-make-temp-file-backup)
 
 ;;;###autoload
-(defcustom gnuserv-frame nil
-  "*The frame to be used to display all edited files.
-If nil, then a new frame is created for each file edited.
-If t, then the currently selected frame will be used.
-If a function, then this will be called with a symbol `x' or `tty' as the
-only argument, and its return value will be interpreted as above."
+(defcustom gnuserv-frame 'new
+  "*Determines what frame will be used to display all edited files.
+Legal values are:
+ `new'     -- a new frame will be created for each file edited;
+ `current' -- the currently selected frame will be used;
+ `main'    -- \"main\" Emacs frame will be used;
+ `visible' -- a visible frame will be used, or a new one created;
+ `special' -- a special Gnuserv frame will be created, and used for
+              all gnuserv-edited files;
+ frame     -- that particular frame will be used.
+
+If gnuclient is called using the `-nw' method (from a TTY device), the
+ behaviour will be as if gnuserv-frame were `new'.
+This variable is read by `gnuserv-frame-default-function'.  If you
+ change `gnuserv-frame-function' to anything else, this variable will
+ have no effect."
   :tag "Gnuserv Frame"
-  :type '(radio (const :tag "Create new frame each time" nil)
-		(const :tag "Use selected frame" t)
-	        (function-item :tag "Use main Emacs frame"
-			       gnuserv-main-frame-function)
-		(function-item :tag "Use visible frame, otherwise create new"
-			       gnuserv-visible-frame-function)
-		(function-item :tag "Create special Gnuserv frame and use it"
-			       gnuserv-special-frame-function)
-		(function :tag "Other"))
-   :group 'gnuserv)
+  ;; Compatibility
+  :type '(radio (const :tag "Create new frame each time" new)
+		(const :tag "Use currently selected frame" current)
+		(const :tag "Use main Emacs frame" main)
+		(const :tag "Use visible frame, otherwise create new" visible)
+		(const :tag "Create special Gnuserv frame and use it" special))
+  :group 'gnuserv)
+
+(defcustom gnuserv-frame-properties nil
+  "*Properties of the frame in which gnuclient buffers are displayed.
+Note that this is in effect only for frames created by
+`gnuserv-frame-default-function'."
+  :type '(repeat (group :inline t
+			(symbol :tag "Property")
+			(sexp :tag "Value")))
+  :group 'gnuserv)
+
+(defcustom gnuserv-frame-function 'gnuserv-frame-default-function
+  "*Function to return the appropriate frame for use by gnuclient.
+The function will be called with two arguments: the first one as
+ described by `gnuserv-frame', and the second one as the device to
+ create the frame on.
+The function must return a valid frame object."
+  :type 'function
+  :group 'gnuserv)
 
 (defcustom gnuserv-done-function 'kill-buffer 
   "*Function used to remove a buffer after editing.
-It is called with one BUFFER argument.  Functions such as `kill-buffer' and
-`bury-buffer' are good values. See also `gnuserv-done-temp-file-function'."
-  :type '(radio (function-item kill-buffer)
-		(function-item bury-buffer)
-		(function :tag "Other"))
-  :group 'gnuserv)
-
-(defcustom gnuserv-done-temp-file-function 'kill-buffer
-  "*Function used to remove a temporary buffer after editing.
 It is called with one BUFFER argument.  Functions such as `kill-buffer' and
 `bury-buffer' are good values. See also `gnuserv-done-temp-file-function'."
   :type '(radio (function-item kill-buffer)
@@ -197,17 +207,6 @@ current buffer set to the visiting buffer."
   :type 'boolean
   :group 'gnuserv)
 
-(defcustom gnuserv-temp-file-regexp "^/tmp/Re\\|/draft$"
-  "*Regexp which should match filenames of temporary files deleted
-and reused by the programs that invoke the Emacs server."
-  :type 'regexp
-  :group 'gnuserv)
-
-(defcustom gnuserv-make-temp-file-backup nil
-  "*Non-nil makes the server backup temporary files also."
-  :type 'boolean
-  :group 'gnuserv)
-
 
 ;;; Internal variables:
 
@@ -230,7 +229,7 @@ All the slots default to nil."
   (device nil)
   (frame nil))
 
-(defvar gnuserv-process nil 
+(defvar gnuserv-process nil
   "The current gnuserv process.")
 
 (defvar gnuserv-string ""
@@ -246,43 +245,53 @@ Each element is a gnuclient structure that identifies a client.")
 (defvar gnuserv-devices nil
   "List of devices created by clients.")
 
+;; We want the client-infested buffers to have some modeline
+;; identification, so we'll make a "minor mode".  We don't use
+;; `add-minor-mode', as we don't want it to be togglable.
+(defvar gnuserv-minor-mode nil)
+
+(make-variable-buffer-local 'gnuserv-mode)
+(pushnew '(gnuserv-minor-mode " Server") minor-mode-alist :test 'equal)
+
 (defvar gnuserv-special-frame nil
   "Frame created specially for Server.")
 
-;; We want the client-infested buffers to have some modeline
-;; identification, so we'll make a "minor mode".
-(defvar gnuserv-minor-mode nil)
-(make-variable-buffer-local 'gnuserv-mode)
-(pushnew '(gnuserv-minor-mode " Server") minor-mode-alist
-	  :test 'equal)
-
 
-;; Sample gnuserv-frame functions
+;; Creating gnuserv frame.
 
-(defun gnuserv-main-frame-function (type)
-  "Returns a sensible value for the main Emacs frame."
-  (if (eq type 'x)
-      (car (frame-list))
-    nil))
-
-(defun gnuserv-visible-frame-function (type)
-  "Returns a frame if there is a frame that is truly visible, nil otherwise.
-This is meant in the X sense, so it will not return frames that are on another
-visual screen.  Totally visible frames are preferred.  If none found, return nil."
-  (if (eq type 'x)
-      (cond ((car (filtered-frame-list 'frame-totally-visible-p
-				       (selected-device))))
-	    ((car (filtered-frame-list (lambda (frame)
-					 ;; eq t as in not 'hidden
-					 (eq t (frame-visible-p frame)))
-				       (selected-device)))))
-    nil))
-
-(defun gnuserv-special-frame-function (type)
-  "Creates a special frame for Gnuserv and returns it on later invocations."
-  (unless (frame-live-p gnuserv-special-frame)
-    (setq gnuserv-special-frame (make-frame)))
-  gnuserv-special-frame)
+(defun gnuserv-frame-default-function (arg device)
+  "Default function to create Gnuserv frames.
+See the documentation of `gnuserv-frame' for instructions how to
+customize it."
+  ;; If we are on TTY, act as if `new' was given.
+  (if (not (device-on-window-system-p))
+      (gnuserv-frame-default-function 'new device)
+    (cond
+      ((or (eq arg 'new)
+	   ;; nil for back-compat
+	   (eq arg nil))
+       (make-frame gnuserv-frame-properties device))
+      ((or (eq arg 'current)
+	   ;; t for back-compat
+	   (eq arg t))
+       (selected-frame))
+      ((eq arg 'main)
+       (car (frame-list)))
+      ((eq arg 'visible)
+       (cond ((car (filtered-frame-list 'frame-totally-visible-p device)))
+	     ((car (filtered-frame-list (lambda (frame)
+					  ;; eq t as in not 'hidden
+					  (eq (frame-visible-p frame) t))
+					device)))
+	     (t (make-frame gnuserv-frame-properties device))))
+      ((eq arg 'special)
+       (unless (frame-live-p gnuserv-special-frame)
+	 (setq gnuserv-special-frame
+	       (make-frame gnuserv-frame-properties device))))
+      ((frame-live-p arg)
+       arg)
+      (t
+       (error "Invalid argument %s" arg)))))
 
 
 ;;; Communication functions
@@ -402,29 +411,17 @@ If a flag is `view', view the files read-only."
 	      (t     (error "Invalid flag %s" flag))))
 	  flags)
     (let* ((old-device-num (length (device-list)))
-	   (new-frame nil)
-	   (dest-frame (if (functionp gnuserv-frame)
-			   (funcall gnuserv-frame (car type))
-			 gnuserv-frame))
-	   ;; The gnuserv-frame dependencies are ugly.
-	   (device (cond ((frame-live-p dest-frame)
-			  (frame-device dest-frame))
-			 ((null dest-frame)
-			  (case (car type)
+	   (old-frame-num  (length (frame-list)))
+	   (device (case (car type)
 			    (tty (apply 'make-tty-device (cdr type)))
 			    (x   (make-x-device (cadr type)))
 			    (t   (error "Invalid device type"))))
-			 (t
-			  (selected-device))))
-	   (frame (cond ((frame-live-p dest-frame)
-			 dest-frame)
-			((null dest-frame)
-			 (setq new-frame (make-frame nil device))
-			 new-frame)
-			(t (selected-frame))))
+	   (frame (funcall gnuserv-frame-function gnuserv-frame device))
 	   (client (make-gnuclient :id gnuserv-current-client
 				   :device device
-				   :frame new-frame)))
+				   :frame (if (= (length (frame-list))
+						 old-frame-num)
+					      nil frame))))
       (setq gnuserv-current-client nil)
       ;; If the device was created by this client, push it to the list.
       (and (/= old-device-num (length (device-list)))
@@ -435,6 +432,7 @@ If a flag is `view', view the files read-only."
       (while list
 	(let ((line (caar list)) (path (cdar list)))
 	  (select-frame frame)
+	  (raise-frame frame)
 	  ;; Visit the file.
 	  (funcall (if view
 		       gnuserv-view-file-function
@@ -446,10 +444,9 @@ If a flag is `view', view the files read-only."
 	    (pushnew (current-buffer) (gnuclient-buffers client))
 	    (setq gnuserv-minor-mode t)
 	    ;; Add the "Done" button to the menubar, only in this buffer.
-	    (if (boundp 'current-menubar)
-	      (progn (set-buffer-menubar current-menubar)
-	      (add-menu-button nil ["Done" gnuserv-edit t]))
-	      ))
+	    (when (boundp 'current-menubar)
+	      (set-buffer-menubar current-menubar)
+	      (add-menu-button nil ["Done" gnuserv-edit t])))
 	  (run-hooks 'gnuserv-visit-hook)
 	  (pop list)))
       (cond
@@ -463,19 +460,19 @@ If a flag is `view', view the files read-only."
        (t
 	;; Else, the client gets a vote.
 	(push client gnuserv-clients)
-	;; Explain buffer exit options.  If dest-frame is nil, the
-	;; user can exit via `delete-frame'.  OTOH, if FLAGS are nil
-	;; and there are some buffers, the user can exit via
+	;; Explain buffer exit options.  If client-frame is non-nil,
+	;; the user can exit via `delete-frame'.  OTOH, if FLAGS are
+	;; nil and there are some buffers, the user can exit via
 	;; `gnuserv-edit'.
 	(if (and (not (or quick view))
 		 (gnuclient-buffers client))
 	    (message "%s"
 		     (substitute-command-keys
 		      "Type `\\[gnuserv-edit]' to finish editing"))
-	  (or dest-frame
-	      (message "%s"
-		       (substitute-command-keys
-			"Type `\\[delete-frame]' to finish editing")))))))))
+	  (and (gnuclient-frame client)
+	       (message "%s"
+			(substitute-command-keys
+			 "Type `\\[delete-frame]' to finish editing")))))))))
 
 
 ;;; Functions that hook into Emacs in various way to enable operation
@@ -489,10 +486,9 @@ If a flag is `view', view the files read-only."
 (defun gnuserv-buffer-clients (buffer)
   "Returns a list of clients to which BUFFER belongs."
   (let (res)
-    (dolist (client gnuserv-clients)
+    (dolist (client gnuserv-clients res)
       (when (memq buffer (gnuclient-buffers client))
-	(push client res)))
-    res))
+	(push client res)))))
 
 ;; Like `gnuserv-buffer-clients', but returns a boolean; doesn't
 ;; collect a list.
@@ -553,16 +549,6 @@ editing has ended."
 
 (add-hook 'delete-device-hook 'gnuserv-check-device)
 
-(defun gnuserv-temp-file-p (buffer)
-  "Return non-nil if BUFFER contains a file considered temporary.
-These are files whose names suggest they are repeatedly
-reused to pass information to another program.
-
-The variable `gnuserv-temp-file-regexp' controls which filenames
-are considered temporary."
-  (and (buffer-file-name buffer)
-       (string-match gnuserv-temp-file-regexp (buffer-file-name buffer))))
-
 (defun gnuserv-kill-client (client &optional leave-frame)
   "Kill the gnuclient CLIENT.
 This will do away with all the associated buffers.  If LEAVE-FRAME,
@@ -608,10 +594,7 @@ the function will not remove the frames associated with the client."
     ;; Delete the menu button.
     (if (boundp 'current-menubar)
       (delete-menu-item '("Done")))
-    (funcall (if (gnuserv-temp-file-p buffer)
-		 gnuserv-done-temp-file-function
-	       gnuserv-done-function)
-	     buffer)))
+    (funcall gnuserv-done-function buffer)))
 
 
 ;;; Higher-level functions
@@ -650,15 +633,9 @@ Does the save/backup queries first, and calls `gnuserv-done-function'."
   (unless (gnuserv-buffer-p buffer)
     (error "%s does not belong to a gnuserv client" buffer))
   ;; Backup/ask query.
-  (if (gnuserv-temp-file-p buffer)
-      ;; For a temp file, save, and do NOT make a non-numeric backup
-      ;; Why does server.el explicitly back up temporary files?
-      (let ((version-control nil)
-	    (buffer-backed-up (not gnuserv-make-temp-file-backup)))
-	(save-buffer))
-    (if (and (buffer-modified-p)
-	     (y-or-n-p (concat "Save file " buffer-file-name "? ")))
-	(save-buffer buffer)))
+  (if (and (buffer-modified-p)
+	   (y-or-n-p (concat "Save file " buffer-file-name "? ")))
+      (save-buffer buffer))
   (gnuserv-buffer-done-1 buffer))
 
 ;; Called by `gnuserv-start-1' to clean everything.  Hooked into
@@ -715,10 +692,9 @@ All the clients will be disposed of via the normal methods."
 ;;;###autoload
 (defun gnuserv-start (&optional leave-dead)
   "Allow this Emacs process to be a server for client processes.
-This starts a gnuserv communications subprocess through which
-client \"editors\" (gnuclient and gnudoit) can send editing commands to 
-this Emacs job.  See the gnuserv(1) manual page for more details.
-
+ This starts a gnuserv communications subprocess through which
+ client \"editors\" (gnuclient and gnudoit) can send editing commands to 
+ this Emacs job.  See the gnuserv(1) manual page for more details.
 Prefix arg means just kill any existing server communications subprocess."
   (interactive "P")
   (and gnuserv-process
@@ -727,21 +703,14 @@ Prefix arg means just kill any existing server communications subprocess."
   (gnuserv-start-1 leave-dead))
 
 (defun gnuserv-edit (&optional count)
-  "Mark the current gnuserv editing buffer as \"done\", and switch to next one.
-
+  "Mark the current gnuserv buffer as \"done\", and switch to next one.
 Run with a numeric prefix argument, repeat the operation that number
-of times.  If given a universal prefix argument, close all the buffers
-of this buffer's clients.
-
-The `gnuserv-done-function' (bound to `kill-buffer' by default) is
-called to dispose of the buffer after marking it as done.
-
-Files that match `gnuserv-temp-file-regexp' are considered temporary and
-are saved unconditionally and backed up if `gnuserv-make-temp-file-backup'
-is non-nil.  They are disposed of using `gnuserv-done-temp-file-function'
-(also bound to `kill-buffer' by default).
-
-When all of a client's buffers are marked as \"done\", the client is notified."
+ of times.  If given a universal prefix argument, close all the buffers
+ of this buffer's clients.
+The `gnuserv-done-function' (`kill-buffer' by default) is called to
+ dispose of the buffer after marking it as done.
+When all of a client's buffers are marked as \"done\", the client is
+ notified."
   (interactive "P")
   (when (null count)
     (setq count 1))

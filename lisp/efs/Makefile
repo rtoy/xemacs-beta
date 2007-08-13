@@ -2,7 +2,7 @@
 #
 # File:         Makefile
 # Release:      $efs release: 1.15 $
-# Version:      $Revision: 1.8 $
+# Version:      $Revision: 1.9 $
 # RCS:
 # Description:  Makefile for byte-compiling efs and dired.
 # Author:       Andy Norman, HPLabs, Bristol, UK.
@@ -307,6 +307,7 @@ autoloads: auto-autoloads.el
 auto-autoloads.el: $(EFSSRC) $(DSRC) efs-x19.15.el $(XESRC) $(MULESRC)
 	$(EMACS) -batch -q -no-site-file \
 		-eval '(setq autoload-target-directory "'`pwd`'/")' \
+		-eval '(setq autoload-package-name "efs")' \
 		-l autoload \
 		-f batch-update-autoloads $?
 

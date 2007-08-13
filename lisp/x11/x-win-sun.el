@@ -87,82 +87,82 @@
  ;; kp-enter is ok
 ;; Sun Function keys
 (loop for (x-name from-key to-key) in
-      `(("F21" f21 pause)
-	("F22" f22 print)
-	("F23" f23 scroll_lock)
+  `(("F21" f21 pause)
+    ("F22" f22 print)
+    ("F23" f23 scroll_lock)
 
-	;; X11 R6 mappings
-	("SunProps" SunProps props)
-	("SunFront" SunFront front)
-	("SunOpen"  SunOpen  open)
-	("SunFind"  SunFind  find)
-	("Cancel"   cancel   stop)
-	("Undo"     Undo     undo)
-	("SunCopy"  SunCopy  copy)
-	("SunPaste" SunPaste paste)
-	("SunCut"   SunCut   cut)
+    ;; X11 R6 mappings
+    ("SunProps" SunProps props)
+    ("SunFront" SunFront front)
+    ("SunOpen"  SunOpen  open)
+    ("SunFind"  SunFind  find)
+    ("Cancel"   cancel   stop)
+    ("Undo"     Undo     undo)
+    ("SunCopy"  SunCopy  copy)
+    ("SunPaste" SunPaste paste)
+    ("SunCut"   SunCut   cut)
 
-	("F13" f13 props)
-	("F14" f14 undo)
-	("F15" f15 front)
-	("F16" f16 copy)
-	("F17" f17 open)
-	("F18" f18 paste)
-	("F19" f19 find)
-	("F20" f20 cut)
+    ("F13" f13 props)
+    ("F14" f14 undo)
+    ("F15" f15 front)
+    ("F16" f16 copy)
+    ("F17" f17 open)
+    ("F18" f18 paste)
+    ("F19" f19 find)
+    ("F20" f20 cut)
 
-	("F25" f25 kp-divide)
-	("F26" f26 kp-multiply)
-	("F31" f31 kp-5)
+    ("F25" f25 kp-divide)
+    ("F26" f26 kp-multiply)
+    ("F31" f31 kp-5)
 
-	;; Map f33 and r13 to end or kp-end
-	,@(cond
-	   ((not (x-keysym-on-keyboard-sans-modifiers-p "End"))
-	    '(("F33" f33 end)
-	      ("R13" r13 end)))
-	   ((not (x-keysym-on-keyboard-sans-modifiers-p "KP_End"))
-	    '(("F33" f33 kp-end)
-	      ("R13" r13 kp-end))))
+    ;; Map f33 and r13 to end or kp-end
+    ,@(cond
+       ((not (x-keysym-on-keyboard-sans-modifiers-p "End"))
+	'(("F33" f33 end)
+	  ("R13" r13 end)))
+       ((not (x-keysym-on-keyboard-sans-modifiers-p "KP_End"))
+	'(("F33" f33 kp-end)
+	  ("R13" r13 kp-end))))
 
-	,@(if (x-keysym-on-keyboard-sans-modifiers-p "F36")
-	      '(("F36" f36 stop)
-		("F37" f37 again)))
+    ,@(if (x-keysym-on-keyboard-sans-modifiers-p "F36")
+	  '(("F36" f36 stop)
+	    ("F37" f37 again)))
 
-	;; Type 4 keyboards have a real kp-subtract  and a f24 labelled `='
-	;; Type 5 keyboards have no key labelled `=' and a f24 labelled `-'
-	,@(when (x-keysym-on-keyboard-sans-modifiers-p "F24")
-	    `(("F24" f24 ,(if (x-keysym-on-keyboard-sans-modifiers-p "KP_Subtract")
-			      'kp-equal
-			    'kp-subtract))))
+    ;; Type 4 keyboards have a real kp-subtract  and a f24 labelled `='
+    ;; Type 5 keyboards have no key labelled `=' and a f24 labelled `-'
+    ,@(when (x-keysym-on-keyboard-sans-modifiers-p "F24")
+	`(("F24" f24 ,(if (x-keysym-on-keyboard-sans-modifiers-p "KP_Subtract")
+			  'kp-equal
+			'kp-subtract))))
 
-	;; Map f27 to home or kp-home, as appropriate
-	,@(cond ((not (x-keysym-on-keyboard-sans-modifiers-p "Home"))
-		 '(("F27" f27 home)))
-		((not (x-keysym-on-keyboard-sans-modifiers-p "KP_Home"))
-		 '(("F27" f27 kp-home))))
+    ;; Map f27 to home or kp-home, as appropriate
+    ,@(cond ((not (x-keysym-on-keyboard-sans-modifiers-p "Home"))
+	     '(("F27" f27 home)))
+	    ((not (x-keysym-on-keyboard-sans-modifiers-p "KP_Home"))
+	     '(("F27" f27 kp-home))))
 
-	;; Map f29 to prior or kp-prior, as appropriate
-	,@(cond ((not (x-keysym-on-keyboard-sans-modifiers-p "Prior"))
-		 '(("F29" f29 prior)))
-		((not (x-keysym-on-keyboard-sans-modifiers-p "KP_Prior"))
-		 '(("F29" f29 kp-prior))))
+    ;; Map f29 to prior or kp-prior, as appropriate
+    ,@(cond ((not (x-keysym-on-keyboard-sans-modifiers-p "Prior"))
+	     '(("F29" f29 prior)))
+	    ((not (x-keysym-on-keyboard-sans-modifiers-p "KP_Prior"))
+	     '(("F29" f29 kp-prior))))
 
-	;; Map f35 to next or kp-next, as appropriate
-	,@(cond ((not (x-keysym-on-keyboard-sans-modifiers-p "Next"))
-		 '(("F35" f35 next)))
-		((not (x-keysym-on-keyboard-sans-modifiers-p "KP_Next"))
-		 '(("F35" f35 kp-next))))
+    ;; Map f35 to next or kp-next, as appropriate
+    ,@(cond ((not (x-keysym-on-keyboard-sans-modifiers-p "Next"))
+	     '(("F35" f35 next)))
+	    ((not (x-keysym-on-keyboard-sans-modifiers-p "KP_Next"))
+	     '(("F35" f35 kp-next))))
 
-	,@(cond ((x-keysym-on-keyboard-sans-modifiers-p "apRead") ; SunOS 4.1.1
-		 '(("apRead" apRead f11) ("apEdit" apEdit f12)))
-		((x-keysym-on-keyboard-sans-modifiers-p "SunF36") ; SunOS 5
-		 '(("SunF36" SunF36 f11)
-		   ("SunF37" SunF37 f12)
-		   ("F11"    f11    stop)
-		   ("F12"    f12    again))))
-	)
-      do (when (x-keysym-on-keyboard-sans-modifiers-p x-name)
-	   (x-remap-keysyms-using-function-key-map from-key to-key)))
+    ,@(cond ((x-keysym-on-keyboard-sans-modifiers-p "apRead") ; SunOS 4.1.1
+	     '(("apRead" apRead f11) ("apEdit" apEdit f12)))
+	    ((x-keysym-on-keyboard-sans-modifiers-p "SunF36") ; SunOS 5
+	     '(("SunF36" SunF36 f11)
+	       ("SunF37" SunF37 f12)
+	       ("F11"    f11    stop)
+	       ("F12"    f12    again))))
+    )
+  do (when (x-keysym-on-keyboard-sans-modifiers-p x-name)
+       (x-remap-keysyms-using-function-key-map from-key to-key)))
 
 (unintern 'x-remap-keysyms-using-function-key-map)
 

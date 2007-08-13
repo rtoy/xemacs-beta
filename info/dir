@@ -46,7 +46,7 @@ File: dir	Node: Top	This is the top of the INFO tree
 * send-pr::	Submitting Bug Reports
 * gnats::	GNU Problem Report Management System
 
-Packages:
+Local Packages:
 
 * CC-MODE::	Mode for editing C, C++, and Objective-C code.
 * CL::		A Common Lisp compatibility package for Emacs-Lisp.

@@ -856,6 +856,49 @@ A variable will be saved if it is bound and non-nil." t nil)
 
 ;;;***
 
+;;;### (autoloads (list-load-path-shadows) "shadow" "utils/shadow.el")
+
+(autoload 'list-load-path-shadows "shadow" "\
+Display a list of Emacs Lisp files that shadow other files.
+
+This function lists potential load-path problems.  Directories in the
+`load-path' variable are searched, in order, for Emacs Lisp
+files.  When a previously encountered file name is found again, a
+message is displayed indicating that the later file is \"hidden\" by
+the earlier.
+
+For example, suppose `load-path' is set to
+
+\(\"/usr/gnu/emacs/site-lisp\" \"/usr/gnu/emacs/share/emacs/19.30/lisp\")
+
+and that each of these directories contains a file called XXX.el.  Then
+XXX.el in the site-lisp directory is referred to by all of:
+\(require 'XXX), (autoload .... \"XXX\"), (load-library \"XXX\") etc.
+
+The first XXX.el file prevents emacs from seeing the second (unless
+the second is loaded explicitly via load-file).
+
+When not intended, such shadowings can be the source of subtle
+problems.  For example, the above situation may have arisen because the
+XXX package was not distributed with versions of emacs prior to
+19.30.  An emacs maintainer downloaded XXX from elsewhere and installed
+it.  Later, XXX was updated and included in the emacs distribution.
+Unless the emacs maintainer checks for this, the new version of XXX
+will be hidden behind the old (which may no longer work with the new
+emacs version).
+
+This function performs these checks and flags all possible
+shadowings.  Because a .el file may exist without a corresponding .elc
+\(or vice-versa), these suffixes are essentially ignored.  A file
+XXX.elc in an early directory (that does not contain XXX.el) is
+considered to shadow a later file XXX.el, and vice-versa.
+
+When run interactively, the shadowings (if any) are displayed in a
+buffer called `*Shadows*'.  Shadowings are located by calling the
+\(non-interactive) companion function, `find-emacs-lisp-shadows'." t nil)
+
+;;;***
+
 ;;;### (autoloads (skeleton-pair-insert-maybe skeleton-insert skeleton-proxy skeleton-proxy-new define-skeleton) "skeleton" "utils/skeleton.el")
 
 (defvar skeleton-filter 'identity "\

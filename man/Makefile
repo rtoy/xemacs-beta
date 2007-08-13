@@ -23,14 +23,18 @@
 # inherited from the environment.
 SHELL = /bin/sh
 
-EMACS = xemacs
+EMACS = ../src/xemacs
 EMACSFLAGS = -batch -q -no-site-file 
 
 # NOTE:  You *must* have makeinfo-1.68 or later to rebuild the
 # info tree.
 MAKEINFO = makeinfo
+TEXI2DVI = texi2dvi
 
+.SUFFIXES:
 .SUFFIXES: .info .texi .dvi
+
+RECURSIVE_MAKE = $(MAKE) $(MFLAGS) MAKEINFO='$(MAKEINFO)' TEXI2DVI='$(TEXI2DVI)'
 
 # Subdirectories to make recursively.
 SUBDIR = xemacs lispref new-users-guide internals tm gnats
@@ -51,21 +55,21 @@ special = # ../info/w3.info ../info/vm.info ../info/texinfo.info
 
 all  : info
 info : $(info) $(special)
-	-for d in $(SUBDIR) ; do (cd $${d} && $(MAKE) $(MFLAGS) $@) ; done
+	-for d in $(SUBDIR) ; do (cd $${d} && $(RECURSIVE_MAKE) $@) ; done
 
-xemacs: FORCE
-	-cd $@ && $(MAKE) $(MFLAGS)
-lispref: FORCE
-	-cd $@ && $(MAKE) $(MFLAGS)
-new-users-guide: FORCE
-	-cd $@ && $(MAKE) $(MFLAGS)
-internals: FORCE
-	-cd $@ && $(MAKE) $(MFLAGS)
-tm: FORCE
-	-cd $@ && $(MAKE) $(MFLAGS)
-auctex: FORCE
-	-cd $@ && $(MAKE) $(MFLAGS)
-FORCE :
+xemacs: FRC.xemacs
+	-cd $@ && $(RECURSIVE_MAKE)
+lispref: FRC.lispref
+	-cd $@ && $(RECURSIVE_MAKE)
+new-users-guide: FRC.new-users-guide
+	-cd $@ && $(RECURSIVE_MAKE)
+internals: FRC.internals
+	-cd $@ && $(RECURSIVE_MAKE)
+tm: FRC.tm
+	-cd $@ && $(RECURSIVE_MAKE)
+gnats: FRC.gnats
+	-cd $@ && $(RECURSIVE_MAKE)
+FRC.xemacs FRC.lispref FRC.new-users-guide FRC.internals FRC.tm FRC.gnats:
 
 ../info/w3.info : w3.texi
 	-$(MAKEINFO) w3.texi -o ../info/w3.info
@@ -79,29 +83,27 @@ FORCE :
 		-f texinfo-format-buffer -f save-buffer
 	-mv vm.info* ../info
 
-PERL = perl
-TEXI2DVI = texi2dvi
-
 texinfo.dvi: texinfo.texi
 	$(TEXI2DVI) $<
 .texi.dvi:
 	$(TEXI2DVI) $<
 
-dvi : $(dvi) FORCE
-	for d in $(SUBDIR) ; do (cd $${d} && $(MAKE) $(MFLAGS) $@) ; done
+.PHONY: dvi
+dvi : $(dvi)
+	for d in $(SUBDIR) ; do (cd $${d} && $(RECURSIVE_MAKE) $@) ; done
 
 .PHONY: mostlyclean clean distclean realclean extraclean
 mostlyclean:
-	for d in $(SUBDIR) ; do (cd $${d} && $(MAKE) $(MFLAGS) $@) ; done
+	for d in $(SUBDIR) ; do (cd $${d} && $(RECURSIVE_MAKE) $@) ; done
 	rm -f *.toc *.aux *.log \
 	      *.cp *.cps *.fn *.fns *.ky *.kys *.pg *.pgs *.vr *.vrs *.tp *.tps
 clean: mostlyclean
-	for d in $(SUBDIR) ; do (cd $${d} && $(MAKE) $(MFLAGS) $@) ; done
+	for d in $(SUBDIR) ; do (cd $${d} && $(RECURSIVE_MAKE) $@) ; done
 	rm -f *.o core *.dvi
 distclean: clean
-	for d in $(SUBDIR) ; do (cd $${d} && $(MAKE) $(MFLAGS) $@) ; done
+	for d in $(SUBDIR) ; do (cd $${d} && $(RECURSIVE_MAKE) $@) ; done
 realclean: distclean
-	for d in $(SUBDIR) ; do (cd $${d} && $(MAKE) $(MFLAGS) $@) ; done
+	for d in $(SUBDIR) ; do (cd $${d} && $(RECURSIVE_MAKE) $@) ; done
 extraclean: distclean
-	for d in $(SUBDIR) ; do (cd $${d} && $(MAKE) $(MFLAGS) $@) ; done
+	for d in $(SUBDIR) ; do (cd $${d} && $(RECURSIVE_MAKE) $@) ; done
 	-rm -f *~ \#*

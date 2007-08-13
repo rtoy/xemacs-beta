@@ -124,7 +124,7 @@
       (load site-file-list t t)
       (while site-load-packages
 	(let ((arg (car site-load-packages)))
-	  (if (not (member arg processed))
+	  (if (null (member arg processed))
 	      (progn
 		(if (and (null docfile-out-of-date)
 			 (file-newer-than-file-p arg docfile))

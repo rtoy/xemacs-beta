@@ -2039,8 +2039,9 @@ If `delete-old-versions' is nil, system will query user
 	(make-backup-files (or (and make-backup-files (not (eq args 0)))
 			       (memq args '(16 64)))))
     (and modp (memq args '(16 64)) (setq buffer-backed-up nil))
-    (if (and modp large) (message "Saving file %s..."
-				  (buffer-file-name)))
+    (if (and modp large) (display-message
+			  'progress (format "Saving file %s..."
+					    (buffer-file-name))))
     (basic-save-buffer)
     (and modp (memq args '(4 64)) (setq buffer-backed-up nil))))
 
@@ -2174,7 +2175,7 @@ After saving the buffer, run `after-save-hook'."
 	  ;; Support VC `implicit' locking.
 	  (vc-after-save)
 	  (run-hooks 'after-save-hook))
-      (message "(No changes need to be saved)"))))
+      (display-message 'no-log "(No changes need to be saved)"))))
 
 ;; This does the "real job" of writing a buffer into its visited file
 ;; and making a backup file.  This is what is normally done
@@ -2354,7 +2355,7 @@ Optional second argument EXITING means ask about certain non-file buffers
 		    (setq abbrevs-changed nil)
 		    t))))
 	(or (> files-done 0) abbrevs-done
-	    (message "(No files need saving)"))))))
+	    (display-message 'no-log "(No files need saving)"))))))
 
 
 (defun not-modified (&optional arg)
@@ -2365,8 +2366,8 @@ It is not a good idea to use this function in Lisp programs, because it
 prints a message in the minibuffer.  Instead, use `set-buffer-modified-p'."
   (interactive "_P")
   (if arg ;; rewritten for I18N3 snarfing
-      (message "Modification-flag set")
-    (message "Modification-flag cleared"))
+      (display-message 'command "Modification-flag set")
+    (display-message 'command "Modification-flag cleared"))
   (set-buffer-modified-p arg))
 
 (defun toggle-read-only (&optional arg)
@@ -2785,8 +2786,8 @@ With prefix argument ARG, turn auto-saving on if positive, else off."
        (setq buffer-saved-size 0))
   (if (interactive-p)
       (if buffer-auto-save-file-name ;; rewritten for I18N3 snarfing
-	  (message "Auto-save on (in this buffer)")
-	(message "Auto-save off (in this buffer)")))
+	  (display-message 'command "Auto-save on (in this buffer)")
+	(display-message 'command "Auto-save off (in this buffer)")))
   buffer-auto-save-file-name)
 
 (defun rename-auto-save-file ()

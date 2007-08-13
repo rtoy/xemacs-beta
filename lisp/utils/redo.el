@@ -90,7 +90,7 @@ then you cannot redo any undos before then."
 	   (eq (cdr buffer-undo-list) pending-undo-list))
        (error "No further undos to redo in this buffer"))
   (or (eq (selected-window) (minibuffer-window))
-      (message "Redo..."))
+      (display-message 'progress "Redo..."))
   (let ((modified (buffer-modified-p))
 	(recent-save (recent-auto-save-p))
 	(old-undo-list buffer-undo-list)
@@ -144,7 +144,7 @@ then you cannot redo any undos before then."
     (and modified (not (buffer-modified-p))
 	 (delete-auto-save-file-if-necessary recent-save))
     (or (eq (selected-window) (minibuffer-window))
-	(message "Redo!"))
+	(display-message 'progress "Redo!"))
     (setq last-buffer-undo-list buffer-undo-list)))
 
 (defun undo (&optional arg)
@@ -155,7 +155,7 @@ A numeric argument serves as a repeat count."
   (let ((modified (buffer-modified-p))
 	(recent-save (recent-auto-save-p)))
     (or (eq (selected-window) (minibuffer-window))
-	(message "Undo..."))
+	(display-message 'progress "Undo..."))
     (or (eq last-buffer-undo-list buffer-undo-list)
 	(and (null (car-safe buffer-undo-list))
 	     (eq last-buffer-undo-list (cdr-safe buffer-undo-list)))
@@ -183,7 +183,7 @@ A numeric argument serves as a repeat count."
     (and modified (not (buffer-modified-p))
 	 (delete-auto-save-file-if-necessary recent-save)))
   (or (eq (selected-window) (minibuffer-window))
-      (message "Undo!"))
+      (display-message 'progress "Undo!"))
   (setq last-buffer-undo-list buffer-undo-list))
 
 ;;; redo.el ends here

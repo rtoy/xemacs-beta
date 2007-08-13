@@ -1,4 +1,14 @@
 							-*- indented-text -*-
+to 20.3 beta23 "Sarajevo"
+-- Other new and older Hrvoje Niksic patches
+-- 20.1 synching by Hrvoje Niksic
+-- gnuserv.el-3.10 courtesy of Hrvoje Niksic
+-- custom-1.9960
+-- Build changes to info tree
+-- cperl-mode.el-1.35-1 (XEmacs conversion by Karl Hegbloom)
+-- shadow.el -- imported from Emacs 20.1
+-- Miscellaneous bug fixes
+
 to 20.3 beta22 "Minsk"
 -- Miscellaneous (small) bug fixes
 -- Autoloads regenerated from scratch

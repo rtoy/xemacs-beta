@@ -27,7 +27,7 @@ all: xemacs
 
 ## For performance and consistency, no built-in rules.
 .SUFFIXES:
-.SUFFIXES: .c .o .i .h
+.SUFFIXES: .c .o .i .h .dep
 
 @SET_MAKE@
 SHELL=/bin/sh
@@ -125,7 +125,11 @@ cppflags = $(CPPFLAGS) -Demacs -I. $(c_switch_all)
 cflags   = $(CFLAGS) $(cppflags)
 ldflags  = $(ld_switch_all)
 
+#ifdef SOLARIS2
+%.o : %.c
+#else
 .c.o:
+#endif
 	$(CC) -c $(cflags) $<
 
 ## Create preprocessor output (debugging purposes only)
@@ -288,7 +292,9 @@ release: temacs ${libsrc}DOC $(mo_file) ${other_files}
 xemacs: temacs ${libsrc}DOC $(mo_file) ${other_files} update-elc.stamp
 	@$(RM) $@ && touch SATISFIED
 	-$(DUMPENV) ./temacs -batch -l loadup.el dump
-	@if test -f $@;        then $(RM) SATISFIED; exit 0; fi; \
+	@if test -f $@;        then if test -f SATISFIED; then \
+		./xemacs -q -batch -f list-load-path-shadows; fi; \
+		$(RM) SATISFIED; exit 0; fi; \
 	 if test -f SATISFIED; then $(RM) SATISFIED; exit 1; fi; \
 	 $(RECURSIVE_MAKE) $@;
 
@@ -559,7 +565,7 @@ config.h puresize-adjust.h paths.h Emacs.ad.h :
 ## users of alloca in Emacs.  Check out ../lib-src/getopt.c.  */
 
 alloca.o : ${srcdir}/alloca.c
-	$(CC) -c -Dfree=xfree -Dmalloc=xmalloc $(cflags) $<
+	$(CC) -c -Dfree=xfree -Dmalloc=xmalloc $(cflags) ${srcdir}/alloca.c
 #else
 #ifndef HAVE_ALLOCA
 alloca.o : ${srcdir}/alloca.s config.h
@@ -593,14 +599,14 @@ cadillac-btl-asm.o:
 
 #ifdef ENERGIZE
 energize.o: ${srcdir}/energize.c
-	$(CC) -c $(cppflags) $(cflags) $(BTL_includes) $<
+	$(CC) -c $(cppflags) $(cflags) $(BTL_includes) ${srcdir}/energize.c
 #endif /* ENERGIZE */
 
 #ifdef HAVE_NATIVE_SOUND
 sunplay.o: ${srcdir}/sunplay.c
-	$(CC) -c  $(sound_cflags) $(cflags) $<
+	$(CC) -c  $(sound_cflags) $(cflags) ${srcdir}/sunplay.c
 hpplay.o: ${srcdir}/hpplay.c
-	$(CC) -c -Demacs $(sound_cflags) $(cflags) $<
+	$(CC) -c -Demacs $(sound_cflags) $(cflags) ${srcdir}/hpplay.c
 #endif /* HAVE_NATIVE_SOUND */
 
 ## System-specific programs to be made.
@@ -638,8 +644,6 @@ relock:
 
 .c.dep:
 	$(CC) -MM $(cflags) $< > $*.dep
-
-.SUFFIXES: .dep
 
 obj_dep = $(objs:.o=.dep)
 

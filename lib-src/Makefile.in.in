@@ -31,6 +31,7 @@
 @SET_MAKE@
 SHELL = /bin/sh
 RM = rm -f
+pwd = /bin/pwd
 
 CC=@CC@
 CPP=@CPP@
@@ -142,36 +143,14 @@ ldflags = $(LDFLAGS) $(ld_switch_all) $(ld_libs_general)
 .c.o:
 	${CC} -c $(cflags) $<
 
-all: ${UTILITIES} ${INSTALLABLES} ${SCRIPTS}
+all: ${UTILITIES} ${INSTALLABLES} srcdir-symlink.stamp
 
-## Make symlinks for shell scripts if using --srcdir */
-rcs2log:
-	${LN_S} ${srcdir}/$@ $@
-vcdiff:
-	${LN_S} ${srcdir}/$@ $@
-tm-au :
-	${LN_S} ${srcdir}/$@ $@
-tm-file :
-	${LN_S} ${srcdir}/$@ $@
-tm-html :
-	${LN_S} ${srcdir}/$@ $@
-tm-image :
-	${LN_S} ${srcdir}/$@ $@
-tm-mpeg :
-	${LN_S} ${srcdir}/$@ $@
-tm-plain :
-	${LN_S} ${srcdir}/$@ $@
-tm-ps :
-	${LN_S} ${srcdir}/$@ $@
-tmdecode :
-	${LN_S} ${srcdir}/$@ $@
-gzip-el.sh:
-	${LN_S} ${srcdir}/$@ $@
-install-sid:
-	${LN_S} ${srcdir}/$@ $@
-send-pr:
-	${LN_S} ${srcdir}/$@ $@
-
+## Make symlinks for shell scripts if using --srcdir
+srcdir-symlink.stamp:
+	for f in ${SCRIPTS}; do \
+		if test ! -r $$f; then ${LN_S} ${srcdir}/$$f $$f; fi; \
+	done; \
+	touch $@;
 
 #undef MOVEMAIL_NEEDS_BLESSING
 #if !defined (MAIL_USE_FLOCK) && ! defined (MAIL_USE_LOCKF)
@@ -208,15 +187,15 @@ do-blessmail: $(blessmail)
 ${archlibdir}: all
 	@echo; echo "Installing utilities run internally by XEmacs."
 	./make-path ${archlibdir}
-	if test `(cd ${archlibdir} && /bin/pwd)` != `/bin/pwd`; then \
-	  for file in ${UTILITIES}; do \
-	    (cd .. && $(INSTALL_PROGRAM) lib-src/$$file ${archlibdir}/$$file) ; \
+	if test `(cd ${archlibdir} && $(pwd))` != `$(pwd)`; then \
+	  for f in ${UTILITIES}; do \
+	    (cd .. && $(INSTALL_PROGRAM) lib-src/$$f ${archlibdir}/$$f) ; \
 	  done ; \
 	fi
-	if test `(cd ${archlibdir} && /bin/pwd)` \
-	     != `(cd ${srcdir} && /bin/pwd)`; then \
-	  for file in ${SCRIPTS}; do \
-	    (cd .. && $(INSTALL_PROGRAM) ${srcdir}/$$file ${archlibdir}/$$file); \
+	if test `(cd ${archlibdir} && $(pwd))` \
+	     != `(cd ${srcdir}     && $(pwd))`; then \
+	  for f in ${SCRIPTS}; do \
+	    (cd .. && $(INSTALL_PROGRAM) ${srcdir}/$$f ${archlibdir}/$$f); \
 	  done ; \
 	fi
 
@@ -272,22 +251,14 @@ getopt1.o: ${srcdir}/getopt1.c ${srcdir}/getopt.h
 alloca.o: ${srcdir}/../src/alloca.c
 	${CC} -c $(cflags) ${srcdir}/../src/alloca.c
 
-#ifdef REGEXP_IN_LIBC
-REGEXOBJ =
-REGEXDEPS =
-#else
-REGEXOBJ = regex.o
-REGEXDEPS = $(REGEXOBJ) ${srcdir}/../src/regex.h
-#endif
-
 regex.o: ${srcdir}/../src/regex.c ${srcdir}/../src/regex.h
 	$(CC) -c `echo ${cflags} | sed 's/-Demacs/ /'` \
 		-DINHIBIT_STRING_HEADER ${srcdir}/../src/regex.c
 
 etags_args = -I. ${cflags} -I${srcdir} -I${srcdir}/../src \
 	-DVERSION='"${version}"' ${srcdir}/etags.c \
-	$(GETOPTOBJS) $(REGEXOBJ) $(ldflags)
-etags_deps   = ${srcdir}/etags.c $(GETOPTDEPS) $(REGEXDEPS) ../src/config.h
+	$(GETOPTOBJS) regex.o $(ldflags)
+etags_deps   = ${srcdir}/etags.c $(GETOPTDEPS) regex.o ../src/config.h
 
 etags: ${etags_deps}
 	$(CC) ${etags_args} -o $@

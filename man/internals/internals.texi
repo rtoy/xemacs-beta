@@ -209,7 +209,7 @@ Symbols and Variables
 Buffers and Textual Representation
 
 * Introduction to Buffers::     A buffer holds a block of text such as a file.
-* A Buffer's Text::             Representation of the text in a buffer.
+* The Text in a Buffer::        Representation of the text in a buffer.
 * Buffer Lists::                Keeping track of all buffers.
 * Markers and Extents::         Tagging locations within a buffer.
 * Bufbytes and Emchars::        Representation of individual characters.
@@ -301,6 +301,7 @@ Lisp, a programming language developed at MIT that underlies Emacs.)
 * Through Version 18::          Unification prevails.
 * Lucid Emacs::                 One version 19 Emacs.
 * GNU Emacs 19::                The other version 19 Emacs.
+* GNU Emacs 20::                The other version 20 Emacs.
 * XEmacs::                      The continuation of Lucid Emacs.
 @end menu
 
@@ -575,6 +576,21 @@ worse.  Lucid soon began incorporating features from GNU Emacs 19 into
 Lucid Emacs; the work was mostly done by Richard Mlynarik, who had been
 working on and using GNU Emacs for a long time (back as far as version
 16 or 17).
+
+@node GNU Emacs 20
+@section GNU Emacs 20
+@cindex GNU Emacs 20
+@cindex FSF Emacs
+
+On February 2, 1997 work began on GNU Emacs to integrate Mule.  The first
+release was made in September of that year.
+
+A timeline for Emacs 20 is
+
+@itemize @bullet
+@item
+version 20.1 released September 17, 1997.
+@end itemize
 
 @node XEmacs
 @section XEmacs
@@ -5345,7 +5361,7 @@ well-documented in comments in @file{buffer.c}, @file{symbols.c}, and
 
 @menu
 * Introduction to Buffers::     A buffer holds a block of text such as a file.
-* A Buffer's Text::             Representation of the text in a buffer.
+* The Text in a Buffer::        Representation of the text in a buffer.
 * Buffer Lists::                Keeping track of all buffers.
 * Markers and Extents::         Tagging locations within a buffer.
 * Bufbytes and Emchars::        Representation of individual characters.
@@ -5405,8 +5421,8 @@ and @dfn{buffer of the selected window}, and the distinction between
 window. (This latter distinction is explained in detail in the section
 on windows.)
 
-@node A Buffer's Text
-@section A Buffer's Text
+@node The Text in a Buffer
+@section The Text in a Buffer
 
   The text in a buffer consists of a sequence of zero or more
 characters.  A @dfn{character} is an integer that logically represents

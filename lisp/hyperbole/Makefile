@@ -264,5 +264,6 @@ autoloads: auto-autoloads.el
 auto-autoloads.el: $(EL_SRC) $(EL_COMPILE) $(EL_KOTL)
 	$(EMACS) -batch -q -no-site-file \
 		-eval '(setq autoload-target-directory "'`pwd`'/")' \
+		-eval '(setq autoload-package-name "hyperbole")' \
 		-l autoload \
 		-f batch-update-autoloads $?

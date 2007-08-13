@@ -77,6 +77,12 @@ so that Manual-mode buffers will have their own submenu."
   :type 'boolean
   :group 'man)
 
+(defcustom Manual-buffers-have-prefix t
+  "*When non-nil, manual page buffers are named with a prefix of `man '.
+Otherwise, their titles do not have this prefix."
+  :type 'boolean
+  :group 'man)
+
 ;;Here is information on RosettaMan, from Neal.Becker@comsat.com (Neal Becker):
 
 ;;RosettaMan is a filter for UNIX manual pages.  It takes as input man
@@ -215,6 +221,8 @@ potentially taking a long time."
 		     (if apropos-mode
 			 (concat (maybe-star) "man apropos " topic (maybe-star))
 		       (concat (maybe-star)
+			       (if Manual-buffers-have-prefix
+				   "man ")
 			       topic
 			       (if section (concat "(" section ")") "")
 			       (maybe-star)))))

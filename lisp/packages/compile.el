@@ -649,14 +649,18 @@ Returns the compilation buffer created."
 	      (setq compilation-in-progress 
 		    (cons proc compilation-in-progress)))
 	  ;; No asynchronous processes available.
-	  (message "Executing `%s'..." command)
+	  (display-message
+	   'progress
+	   (format "Executing `%s'..." command))
 	  ; FSF
 	  ; (setq mode-line-process ":run")
 	  ; (force-mode-line-update)
 	  (sit-for 0)			;; Force redisplay
 	  (let ((status (call-process shell-file-name nil outbuf nil "-c"
 				      command))))
-	  (message "Executing `%s'...done" command)))
+	  (display-message
+	   'progress
+	   (format "Executing `%s'...done" command))))
        (set-buffer buffer-save)))
 
     ;; Make it so the next C-x ` will use this buffer.
@@ -955,9 +959,11 @@ See `compilation-mode'.
 			       (pos-visible-in-window-p (point-max) window))
 			  nil		; assume that the user will see it...
 			(ding t 'ready)
-			(message "Compilation process completed%s."
+			(display-message
+			 'progress
+			 (format "Compilation process completed%s."
 				 (or estatus " successfully")
-				 ))
+				 )))
 		      ;; Since the buffer and mode line will show that the
 		      ;; process is dead, we can delete it now.  Otherwise it
 		      ;; will stay around until M-x list-processes.
@@ -1637,7 +1643,7 @@ Selects a window with point at SOURCE, with another window displaying ERROR."
   "Parse the current buffer as grep, cc or lint error messages.
 See variable `compilation-parse-errors-function' for the interface it uses."
   (setq compilation-error-list nil)
-  (message "Parsing error messages...")
+  (display-message 'progress "Parsing error messages...")
   (let (;;text-buffer -- unused
 	orig orig-expanded parent-expanded
 	regexp enter-group leave-group error-group
@@ -1884,11 +1890,13 @@ See variable `compilation-parse-errors-function' for the interface it uses."
 	     (error "compilation-parse-errors: known groups didn't match!")))
 
       (when (= (% compilation-num-errors-found message-freq) 0)
-        (message "Parsing error messages...%d (%.0f%% of buffer)"
+        (display-message
+	 'progress
+	 (format "Parsing error messages...%d (%.0f%% of buffer)"
                  compilation-num-errors-found
                  ;; Use floating-point because (* 100 (point)) frequently
                  ;; exceeds the range of Emacs Lisp integers.
-                 (/ (* 100.0 (point)) (point-max))))
+                 (/ (* 100.0 (point)) (point-max)))))
 
 ;;; This is broken - it foils the logic above which is supposed to ensure
 ;;; that all errors for the current file are found before we quit. 
@@ -1901,7 +1909,7 @@ See variable `compilation-parse-errors-function' for the interface it uses."
 				    ;; We have searched the whole buffer.
 				    (point-max))))
   (setq compilation-error-list (nreverse compilation-error-list))
-  (message "Parsing error messages...done"))
+  (display-message 'progress "Parsing error messages...done"))
 
 ;; If directory DIR is a subdir of ORIG or of ORIG's parent,
 ;; return a relative name for it starting from ORIG or its parent.

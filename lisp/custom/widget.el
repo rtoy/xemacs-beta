@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, extensions, faces, hypermedia
-;; Version: 1.9958
+;; Version: 1.9960
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;; This file is part of GNU Emacs.
@@ -30,6 +30,11 @@
 ;;
 ;; This file only contain the code needed to define new widget types.
 ;; Everything else is autoloaded from `wid-edit.el'.
+;;
+;; IMPORTANT: This version of widget is for Emacs 19.34 and XEmacs
+;; 19.15 - 20.2 only.  If you use Emacs 20.1, XEmacs 20.3, or anything
+;; newer, please use the version of widget bundled with your emacs.
+;; If you use an older emacs, please upgrade.
 
 ;;; Code:
 

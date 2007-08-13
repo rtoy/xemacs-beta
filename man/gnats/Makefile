@@ -20,13 +20,16 @@
 VERSION=1.0
 NAME=gnats
 
+TEXI2DVI = texi2dvi
+MAKEINFO = makeinfo
+
 # Uncomment this line for permuted index.
 # permuted_index = 1 
 
 # List of all the texinfo files in the manual:
 
 srcs = categ.texi fields.texi flowchart.txt gnats.texi p-admin.texi \
-	p-inst.texi p-usage.texi s-usage.texi send-pr.texi states.text \
+	p-inst.texi p-usage.texi s-usage.texi send-pr.texi states.texi \
 	version.texi
 
 gnats_srcs = flowchart.txt gnats.texi p-admin.texi p-inst.texi \
@@ -39,16 +42,17 @@ all : info
 info : ../../info/$(NAME).info ../../info/send-pr.info
 
 ../../info/$(NAME).info: ${gnats_srcs}
-	${MAKEINFO} $(NAME).texi -o ../../info/${NAME}.info
+	$(MAKEINFO) $(NAME).texi -o ../../info/${NAME}.info
 
 ../../info/send-pr.info: ${seend_pr_srcs}
-	${MAKEINFO} send-pr.texi -o ../../info/send-pr.info
+	$(MAKEINFO) send-pr.texi -o ../../info/send-pr.info
 
 dvi : $(NAME).dvi send-pr.dvi
 
-$(NAME).dvi: $(srcs) index.texi
-	texi2dvi gnats.texi
-	texi2dvi send-pr.texi
+#$(NAME).dvi: $(srcs) index.texi
+$(NAME).dvi: $(srcs)
+	$(TEXI2DVI) gnats.texi
+	$(TEXI2DVI) send-pr.texi
 
 .PHONY: mostlyclean clean distclean realclean extraclean
 mostlyclean:

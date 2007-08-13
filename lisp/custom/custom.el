@@ -4,7 +4,7 @@
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: help, faces
-;; Version: 1.9958
+;; Version: 1.9960
 ;; X-URL: http://www.dina.kvl.dk/~abraham/custom/
 
 ;; This file is part of GNU Emacs.
@@ -31,8 +31,13 @@
 ;; This file only contain the code needed to declare and initialize
 ;; user options.  The code to customize options is autoloaded from
 ;; `cus-edit.el'. 
-
+;;
 ;; The code implementing face declarations is in `cus-face.el'
+;;
+;; IMPORTANT: This version of custom is for Emacs 19.34 and XEmacs
+;; 19.15 - 20.2 only.  If you use Emacs 20.1, XEmacs 20.3, or anything
+;; newer, please use the version of custom bundled with your emacs.
+;; If you use an older emacs, please upgrade.
 
 ;;; Code:
 

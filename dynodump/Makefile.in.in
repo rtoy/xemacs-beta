@@ -60,7 +60,7 @@ INCLUDES = -I${srcdir} -I${srcdir}/$(ARCH)
 ALL_CFLAGS = ${CFLAGS} ${pic_arg} ${INCLUDES}
 OBJS = _relocate.o dynodump.o syms.o uninit.o
 
-.c.o:
+%.o : %.c
 	$(CC) -c $(ALL_CFLAGS) $<
 
 all:: dynodump.so

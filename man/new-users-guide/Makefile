@@ -21,6 +21,7 @@ NAME=new-users-guide
 
 SHELL = /bin/sh
 TEXI2DVI = texi2dvi
+MAKEINFO = makeinfo
 
 # List of all the texinfo files in the manual:
 
@@ -32,7 +33,7 @@ all : info
 info : ../../info/$(NAME).info
 
 ../../info/$(NAME).info: $(srcs)
-	makeinfo -o $@ $(NAME).texi
+	$(MAKEINFO) -o $@ $(NAME).texi
 
 dvi : $(NAME).dvi
 .texi.dvi :

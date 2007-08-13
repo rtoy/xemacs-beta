@@ -1,4 +1,81 @@
+1997-09-20  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* packages/etags.el: Lots of changes.
+
+1997-09-20  SL Baur  <steve@altair.xemacs.org>
+
+	* prim/faces.el (Top Level): Back out use of the loop macro.  It now
+	isn't defined until loaddefs gets loaded.
+
+1997-09-20  Tomasz Cholewo  <tjchol01@mecca.spd.louisville.edu>
+
+	* prim/help.el (help-for-help): Make menu items style more uniform.
+
+1997-09-20  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* modes/sendmail.el: Don't define keys to mail etc.
+
+	* prim/keydefs.el: Add bindings to `compose-mail'.
+
+	* prim/simple.el: Synch mail stuff with Emacs 20.
+
+	* utils/reporter.el: Removed mail-user-agent stuff.
+
+	* x11/x-menubar.el (default-menubar): Use new semantics for
+ 	`gnuserv-frame'.
+
+	* prim/obsolete.el (string-to-sequence): Wouldn't work with TYPE
+ 	`vector'.
+
+1997-09-19  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* cl/cl.el: Don't load cl-defs.
+
+	* cl/cl-macs.el: Added autoload cookies.
+
+1997-09-19  SL Baur  <steve@altair.xemacs.org>
+
+	* packages/man.el (Manual-buffers-have-prefix): New function.
+	(manual-entry): Use it.
+	From Remek Trzaska <remek@postoffice.npac.syr.edu>
+
+1997-09-18  Colin Rafferty  <craffert@ml.com>
+
+	* prim/novice.el (disable-command): Made it modify `custom-file'
+		  instead of `user-init-file'.
+
+		  Stop multiple disable/enable-command calls from adding
+			  extra newlines.
+
+1997-09-19  Tomasz Cholewo  <tjchol01@mecca.spd.louisville.edu>
+
+	* prim/make-docfile.el: Use null, not not.
+
+1997-09-18  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* prim/isearch-mode.el (isearch-message): Display-message as
+	progress (this way isearch message won't appear in the message 
+	log).
+
+1997-09-18  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* packages/info.el (Info-elisp-ref): Use `find-function-function'.
+
+1997-09-18  Jens-Ulrik Holger Petersen  <petersen@kurims.kyoto-u.ac.jp>
+
+	* packages/lazy-lock.el (lazy-lock-pre-idle-fontify-windows):
+	Don't do lazy-lock'ing if we're in the minibuffer.
+
 1997-09-17  SL Baur  <steve@altair.xemacs.org>
+
+	* oobr/Makefile (autoloads): Fix target.
+
+	* hyperbole/Makefile (autoloads): Fix target.
+
+	* utils/autoload.el (batch-update-autoloads): Obey
+	`autoload-package-name' setting.
+
+	* efs/Makefile: Correct autoloads target.
 
 	* prim/packages.el (locate-library): Simplify regexp for
 	compression suffixes.

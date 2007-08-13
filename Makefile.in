@@ -392,7 +392,9 @@ install-arch-indep: mkdir
 	   shift ; \
 	 done
 	-set ${COPYDESTS} ; \
-	 for dir in ${COPYDESTS} ; do test -d $${dir} || mkdir $${dir} ; done ; \
+	 for dir in ${COPYDESTS} ; do \
+	   if test ! -d $${dir} ; then mkdir $${dir} ; fi ; \
+	 done ; \
 	 for dir in ${COPYDIR} ; do \
 	   dest=$$1 ; shift ; \
 	   test -d $${dir} \
@@ -517,7 +519,6 @@ top_distclean=\
 	$(RM) core .sbinit Makefile lock/*
 
 distclean: FRC.distclean
-	for d in lock site-lisp; do test -d $$d || mkdir $$d; done
 	for d in $(SUBDIR); do (cd $$d && $(RECURSIVE_MAKE) $@); done
 	-${top_distclean}
 

@@ -1133,12 +1133,12 @@ The returned value will be one of the symbols `static-gray', `gray-scale',
   switch (DefaultVisualOfScreen
 	  (DefaultScreenOfDisplay (get_x_display (device)))->class)
     {
-    case StaticGray:  return (intern ("static-gray"));
-    case GrayScale:   return (intern ("gray-scale"));
-    case StaticColor: return (intern ("static-color"));
-    case PseudoColor: return (intern ("pseudo-color"));
-    case TrueColor:   return (intern ("true-color"));
-    case DirectColor: return (intern ("direct-color"));
+    case StaticGray:  return intern ("static-gray");
+    case GrayScale:   return intern ("gray-scale");
+    case StaticColor: return intern ("static-color");
+    case PseudoColor: return intern ("pseudo-color");
+    case TrueColor:   return intern ("true-color");
+    case DirectColor: return intern ("direct-color");
     default:
       error ("display has an unknown visual class");
     }
@@ -1328,8 +1328,10 @@ Returns t if the grab is successful, nil otherwise.
      and doesn't free it until it exits? */
   result = XGrabPointer (DEVICE_X_DISPLAY (d), w,
 			 False,
-			 ButtonMotionMask | ButtonPressMask
-			 | ButtonReleaseMask | PointerMotionHintMask,
+			 ButtonMotionMask  |
+			 ButtonPressMask   |
+			 ButtonReleaseMask |
+			 PointerMotionHintMask,
 			 GrabModeAsync,	      /* Keep pointer events flowing */
 			 pointer_mode,	      /* Stall keyboard events */
 			 w,		      /* Stay in this window */

@@ -580,8 +580,11 @@ be the first parameter on the command line."
 	(update-file-autoloads arg))
        (t (error "No such file or directory: %s" arg))))
     (when autoload-do-custom-save
-      (autoload-save-customization))
-    (fixup-autoload-buffer (concat (file-name-nondirectory defdir)
+      (autoload-save-customization)
+      (clrhash customized-symbols))
+    (fixup-autoload-buffer (concat (if autoload-package-name
+				       autoload-package-name
+				     (file-name-nondirectory defdir))
 				   "-autoloads"))
     (save-some-buffers t)
     ;; (message "Done")

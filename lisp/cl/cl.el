@@ -653,7 +653,7 @@ FUNC is not added if it already appears on the list stored in HOOK."
 (or (fboundp 'add-hook) (defalias 'add-hook 'cl-add-hook))
 
 ;; XEmacs change
-(load "cl-defs")
+;(load "cl-defs")
 
 ;;; Define data for indentation and edebug.
 (mapcar (function

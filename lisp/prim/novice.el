@@ -138,13 +138,14 @@ to future sessions."
    ;; Explicitly enable, in case this command is disabled by default
    ;; or in case the code we deleted was actually a comment.
    (goto-char (point-max))
-   (insert "\n(put '" (symbol-name command) " 'disabled nil)\n")
+   (or (bolp) (insert "\n"))
+   (insert "(put '" (symbol-name command) " 'disabled nil)\n")
    (save-buffer)))
 
 ;;;###autoload
 (defun disable-command (command)
   "Require special confirmation to execute COMMAND from now on.
-The user's .emacs file is altered so that this will apply
+The user's `custom-file' is altered so that this will apply
 to future sessions."
   (interactive "CDisable command: ")
   (if (not (commandp command))
@@ -152,14 +153,15 @@ to future sessions."
   (put command 'disabled t)
   (save-excursion
    (set-buffer (find-file-noselect
-		(substitute-in-file-name user-init-file)))
+		(substitute-in-file-name custom-file)))
    (goto-char (point-min))
    (if (search-forward (concat "(put '" (symbol-name command) " ") nil t)
        (delete-region
 	(progn (beginning-of-line) (point))
 	(progn (forward-line 1) (point))))
    (goto-char (point-max))
-   (insert "\n(put '" (symbol-name command) " 'disabled t)\n")
+   (or (bolp) (insert "\n"))
+   (insert "(put '" (symbol-name command) " 'disabled t)\n")
    (save-buffer)))
 
 ;;; novice.el ends here

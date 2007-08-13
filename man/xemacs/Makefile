@@ -21,6 +21,7 @@
 
 NAME=xemacs
 
+MAKEINFO = makeinfo
 TEXI2DVI = texi2dvi
 
 # List of all the texinfo files in the manual:
@@ -41,7 +42,7 @@ dvi: $(NAME).dvi
 	$(TEXI2DVI) $<
 
 ../../info/$(NAME).info: $(srcs)
-	makeinfo -o $@ $(NAME).texi
+	$(MAKEINFO) -o $@ $(NAME).texi
 
 .PHONY: mostlyclean clean distclean realclean extraclean
 mostlyclean:

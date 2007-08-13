@@ -390,13 +390,13 @@ the window."
               (if help-selects-help-window
                   (select-window helpwin))
               (cond ((eq helpwin (selected-window))
-                     (message
+                     (display-message 'command
                       (substitute-command-keys "Type \\[help-mode-quit] to remove help window, \\[scroll-up] to scroll the help.")))
                     (was-one-window
-                     (message
+                     (display-message 'command
                       (substitute-command-keys "Type \\[delete-other-windows] to remove help window, \\[scroll-other-window] to scroll the help.")))
                     (t
-                     (message
+                     (display-message 'command
                       (substitute-command-keys "Type \\[switch-to-buffer-other-window] to restore the other window, \\[scroll-other-window] to scroll the help."))))))))))
 
 (defun describe-key (key)
@@ -660,42 +660,37 @@ The number of messages shown is controlled by `view-lossage-message-count'."
   "You have typed \\[help-for-help], the help character.  Type a Help option:
 \(Use SPC or DEL to scroll through this text.  Type \\<help-map>\\[help-quit] to exit the Help command.)
 
-\\[hyper-apropos]	Give a substring, and see a hypertext list of
+\\[hyper-apropos]	Type a substring; it shows a hypertext list of
         functions and variables that contain that substring.
-	See also the `apropos'  command.
-\\[command-apropos]	Give a substring, and see a list of commands
-        (functions interactively callable) that contain that substring.
-\\[describe-bindings]	Display table of all key bindings.
+	See also the `apropos' command.
+\\[command-apropos]	Type a substring; it shows a list of commands
+        (interactively callable functions) that contain that substring.
+\\[describe-bindings]	Table of all key bindings.
 \\[describe-key-briefly]	Type a command key sequence;
-        it prints the function name that sequence runs.
-\\[Info-goto-emacs-command-node]	Type a function name;
- 	it takes you to the Info node for that command.
-\\[describe-function]	Type a function name and get documentation of it.
-\\[Info-elisp-ref]	Type a function name and jump to the full documentation
+        it displays the function name that sequence runs.
+\\[Info-goto-emacs-command-node]	Type a function name; it displays the Info node for that command.
+\\[describe-function]	Type a function name; it shows its documentation.
+\\[Info-elisp-ref]	Type a function name; it jumps to the full documentation
 	in the XEmacs Lisp Programmer's Manual.
-\\[xemacs-local-faq]	To view a local copy of the XEmacs FAQ.
-\\[info]	The  info  documentation reader.
-\\[Info-query]	Info reader, prompt for topic name.
+\\[xemacs-local-faq]	Local copy of the XEmacs FAQ.
+\\[info]	Info documentation reader.
+\\[Info-query]	Type an Info file name; it displays it in Info reader.
 \\[describe-key]	Type a command key sequence;
-        it displays the full documentation.
+        it displays the documentation for the command bound to that key.
 \\[Info-goto-emacs-key-command-node]	Type a command key sequence;
-        it takes you to the Info node for the command bound to that key.
-\\[view-lossage]	Shows last 100 characters you typed.
-\\[describe-mode]	Print documentation of current major mode,
-        which describes the commands peculiar to it.
-\\[view-emacs-news]	Shows emacs news file.
-\\[finder-by-keyword]	Find packages matching a given topic keyword.
-\\[describe-pointer]	Display table of all mouse-button bindings.
-\\[describe-syntax]	Display contents of syntax table, plus explanations
-\\[help-with-tutorial]	Select the XEmacs learn-by-doing tutorial.
-\\[describe-variable]	Type name of a variable;
-        it displays the variable's documentation and value.
-\\[where-is]	Type command name;
-        it prints which keystrokes invoke that command.
+        it displays the Info node for the command bound to that key.
+\\[view-lossage]	Recent input keystrokes and minibuffer messages.
+\\[describe-mode]	Documentation of current major and minor modes.
+\\[view-emacs-news]	News of recent XEmacs changes.
+\\[finder-by-keyword]	Type a topic keyword; it finds matching packages.
+\\[describe-pointer]	Table of all mouse-button bindings.
+\\[describe-syntax]	Contents of syntax table with explanations.
+\\[help-with-tutorial]	XEmacs learn-by-doing tutorial.
+\\[describe-variable]	Type a variable name; it displays its documentation and value.
+\\[where-is]	Type a command name; it displays which keystrokes invoke that command.
 \\[describe-distribution]	XEmacs ordering information.
-\\[describe-copying]	print XEmacs copying permission (General Public License).
-\\[view-emacs-news]	print news of recent XEmacs changes.
-\\[describe-no-warranty]	print information on absence of warranty for XEmacs."
+\\[describe-no-warranty]	Information on absence of warranty for XEmacs.
+\\[describe-copying]      XEmacs copying permission (General Public License)."
   (interactive)
   (let ((help-key (copy-event last-command-event))
 	event char)

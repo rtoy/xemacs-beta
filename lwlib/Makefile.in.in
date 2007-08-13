@@ -77,7 +77,11 @@ cppflags = $(CPPFLAGS) -I. $(c_switch_all) $(ENERGIZEP)
 cflags = $(CFLAGS) $(cppflags)
 
 ALL_CFLAGS= $(CFLAGS) $(CPPFLAGS) -I. $(c_switch_all) $(ENERGIZEP)
+#ifdef SOLARIS2
+%.o : %.c
+#else
 .c.o:
+#endif
 	$(CC) -c $(cflags) $<
 
 ## Create preprocessor output (debugging purposes only)

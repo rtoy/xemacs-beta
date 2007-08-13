@@ -583,7 +583,9 @@ See the variable `font-lock-keywords' for customization."
 		 ((or (null maximum-size) (<= (buffer-size) maximum-size))
 		  (font-lock-fontify-buffer))
 		 (font-lock-verbose
-		  (message "Fontifying %s... buffer too big." (buffer-name)))))
+		  (display-message
+		   'command
+		   (format "Fontifying %s... buffer too big." (buffer-name))))))
 	  (font-lock-fontified
 	   (setq font-lock-fontified nil)
 	   (remove-hook 'before-revert-hook 'font-lock-revert-setup t)
@@ -645,7 +647,8 @@ This can take a while for large buffers."
 	  (font-lock-mode 0)))
     (set (make-local-variable 'font-lock-fontified) t)
     (if (and aborted font-lock-verbose)
-	(message "Fontifying %s... aborted." (buffer-name)))
+	(display-message 'command
+			 (format "Fontifying %s... aborted." (buffer-name))))
     )
   (run-hooks 'font-lock-after-fontify-buffer-hook))
 
@@ -725,7 +728,9 @@ This can take a while for large buffers."
 (defun font-lock-unfontify-region (beg end &optional maybe-loudly)
   (if (and maybe-loudly font-lock-verbose
 	   (>= (- end beg) font-lock-message-threshold))
-      (message "Fontifying %s..." (buffer-name)))
+      (display-message
+       'progress
+       (format "Fontifying %s..." (buffer-name))))
   (let ((modified (buffer-modified-p))
 	(buffer-undo-list t) (inhibit-read-only t)
 	buffer-file-name buffer-file-truename)
@@ -976,7 +981,9 @@ START should be at the beginning of a line."
       nil
     (if (and font-lock-verbose
 	     (>= (- end start) font-lock-message-threshold))
-	(message "Fontifying %s... (syntactically...)" (buffer-name)))
+	(display-message
+	 'progress
+	 (format "Fontifying %s... (syntactically...)" (buffer-name))))
     (font-lock-unfontify-region start end loudly)
     (goto-char start)
     (if (> end (point-max)) (setq end (point-max)))
@@ -1162,8 +1169,10 @@ START should be at the beginning of a line."
       ;;
       ;; Fontify each item in `font-lock-keywords' from `start' to `end'.
       (while keywords
-	(if loudly (message "Fontifying %s... (regexps..%s)" bufname
-			    (make-string (setq count (1+ count)) ?.)))
+	(if loudly (display-message
+		    'progress
+		    (format "Fontifying %s... (regexps..%s)" bufname
+			    (make-string (setq count (1+ count)) ?.))))
 	;;
 	;; Find an occurrence of `matcher' from `start' to `end'.
 	(setq keyword (car keywords) matcher (car keyword))
@@ -1181,7 +1190,9 @@ START should be at the beginning of a line."
 	    (font-lock-fontify-anchored-keywords (car highlights) end))
 	  (setq highlights (cdr highlights))))
 	(setq keywords (cdr keywords))))
-    (if loudly (message "Fontifying %s... done." (buffer-name)))))
+    (if loudly (display-message
+		'progress
+		(format "Fontifying %s... done." (buffer-name))))))
 
 
 ;; Various functions.

@@ -1446,9 +1446,19 @@ in that frame; otherwise change each frame."
 (make-face 'primary-selection)
 (make-face 'secondary-selection)
 
-(loop for color in '("red" "green" "blue" "yellow") do
-      (make-face (intern color) (concat color " text"))
-      (set-face-foreground (intern color) color nil 'color))
+;; The loop macro isn't defined until loaddefs.el is read
+;;(loop for color in '("red" "green" "blue" "yellow") do
+;;      (make-face (intern color) (concat color " text"))
+;;      (set-face-foreground (intern color) color nil 'color))
+(make-face 'red "red text")
+(set-face-foreground 'red "red" nil 'color)
+(make-face 'green "green text")
+(set-face-foreground 'green "green" nil 'color)
+(make-face 'blue "blue text")
+(set-face-foreground 'blue "blue" nil 'color)
+(make-face 'yellow "yellow text")
+(set-face-foreground 'yellow "yellow" nil 'color)
+
 
 ;; Make some useful faces.  This happens very early, before creating
 ;; the first non-stream device.  We initialize the tty global values here.

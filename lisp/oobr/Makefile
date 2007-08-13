@@ -298,5 +298,6 @@ autoloads: auto-autoloads.el
 auto-autoloads.el: $(EL_COMPILE)
 	$(EMACS) -batch -q -no-site-file \
 		-eval '(setq autoload-target-directory "'`pwd`'/")' \
+		-eval '(setq autoload-package-name "oobr")' \
 		-l autoload \
 		-f batch-update-autoloads $?

@@ -560,7 +560,7 @@ is treated as a regexp.  See \\[isearch-forward] for more info."
 	  (progn
 	    (push-mark isearch-opoint t nil isearch-buffer)
 	    (or executing-kbd-macro (> (minibuffer-depth) 0)
-		(message "Mark saved where search started"))))
+		(display-message 'command "Mark saved where search started"))))
 	)
     (setq isearch-buffer nil)
     ) ; inhibit-quit is t before here
@@ -670,7 +670,7 @@ The following additional command keys are active while editing.
 	      ;; word-search mode.  Otherwise unread that character and
 	      ;; read a string the normal way.
 	      (let ((cursor-in-echo-area t))
-		(message "%s" prompt)
+		(display-message 'prompt prompt)
 		(setq event (next-command-event))
 		(if (eq 'isearch-yank-word
 			(lookup-key isearch-mode-map (vector event)))
@@ -1184,7 +1184,7 @@ If there is no completion possible, say so and continue searching."
 	    isearch-message
 	    (isearch-message-suffix c-q-hack)
 	    )))
-    (if c-q-hack m (message "%s" m))))
+    (if c-q-hack m (display-message 'progress (format "%s" m)))))
 
 (defun isearch-message-prefix (&optional c-q-hack nonincremental)
   ;; If about to search, and previous search regexp was invalid,

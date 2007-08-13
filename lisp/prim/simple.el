@@ -758,7 +758,7 @@ A numeric argument serves as a repeat count."
   (let ((modified (buffer-modified-p))
 	(recent-save (recent-auto-save-p)))
     (or (eq (selected-window) (minibuffer-window))
-	(message "Undo!"))
+	(display-message 'command "Undo!"))
     (or (and (eq last-command 'undo)
 	     (eq (current-buffer) last-undo-buffer)) ; XEmacs
 	(progn (undo-start)
@@ -1155,10 +1155,14 @@ to make one entry in the kill ring."
 			(error "The region is not active now")
 		      (error "The mark is not set now")))
   (if verbose (if buffer-read-only
-		  (message "Copying %d characters"
-			   (- (max beg end) (min beg end)))
-		(message "Killing %d characters"
-			 (- (max beg end) (min beg end)))))
+		  (display-message
+		   'command
+		   (format "Copying %d characters"
+			   (- (max beg end) (min beg end))))
+		(display-message
+		 'command
+		 (format "Killing %d characters"
+			 (- (max beg end) (min beg end))))))
   (cond
 
    ;; I don't like this large change in behavior -- jwz
@@ -1267,7 +1271,8 @@ visual feedback indicating the extent of the region being copied."
   (if (interactive-p)
       (progn
 	(setq this-command 'kill-region)
-	(message "If the next command is a kill, it will append"))
+	(display-message 'command
+			 "If the next command is a kill, it will append"))
     (setq last-command 'kill-region)))
 
 (defun yank-pop (arg)
@@ -1548,7 +1553,7 @@ purposes.  See the documentation of `set-mark' for more information."
                            nil buffer)
               (setcdr (nthcdr (1- global-mark-ring-max) global-mark-ring) nil)))))
   (or nomsg executing-kbd-macro (> (minibuffer-depth) 0)
-      (message "Mark set"))
+      (display-message 'command "Mark set"))
   (if activate-region
       (progn
 	(setq zmacs-region-stays t)
@@ -1825,7 +1830,7 @@ The goal column is stored in the variable `goal-column'."
   (if arg
       (progn
         (setq goal-column nil)
-        (message "No goal column"))
+        (display-message 'command "No goal column"))
     (setq goal-column (current-column))
     (message (substitute-command-keys
 	      "Goal column %d (use \\[set-goal-column] with an arg to unset it)")
@@ -2130,10 +2135,14 @@ With any other arg, set comment column to indentation of the previous comment
 	    (re-search-forward comment-start-skip)
 	    (goto-char (match-beginning 0))
 	    (setq comment-column (current-column))
-	    (message "Comment column set to %d" comment-column))
+	    (display-message
+	     'command
+	     (format "Comment column set to %d" comment-column)))
 	  (indent-for-comment))
       (setq comment-column (current-column))
-      (message "Comment column set to %d" comment-column))))
+      (display-message
+       'command
+       (format "Comment column set to %d" comment-column)))))
 
 (defun kill-comment (arg)
   "Kill the comment on this line, if any.
@@ -2584,7 +2593,7 @@ The variable `fill-column' has a separate value for each buffer."
 	;; Disallow missing argument; it's probably a typo for C-x C-f.
 	(t
 	 (error "set-fill-column requires an explicit argument")))
-  (message "fill-column set to %d" fill-column))
+  (display-message 'command "fill-column set to %d" fill-column))
 
 (defcustom comment-multi-line t ; XEmacs - this works well with adaptive fill
   "*Non-nil means \\[indent-new-comment-line] should continue same comment
@@ -2870,43 +2879,45 @@ when it is off screen."
 			   (auto-show-make-point-visible)
 			   (sit-for blink-matching-delay)))
 		  (goto-char blinkpos)
-		  (message
-		   "Matches %s"
-		   ;; Show what precedes the open in its line, if anything.
-		   (if (save-excursion
-			 (skip-chars-backward " \t")
-			 (not (bolp)))
-		       (buffer-substring (progn (beginning-of-line) (point))
-					 (1+ blinkpos))
-		     ;; Show what follows the open in its line, if anything.
-		     (if (save-excursion
-			   (forward-char 1)
-			   (skip-chars-forward " \t")
-			   (not (eolp)))
-			 (buffer-substring blinkpos
-					   (progn (end-of-line) (point)))
-		       ;; Otherwise show the previous nonblank line,
-		       ;; if there is one.
-		       (if (save-excursion
-			     (skip-chars-backward "\n \t")
-			     (not (bobp)))
-			   (concat
-			    (buffer-substring (progn
-					       (skip-chars-backward "\n \t")
-					       (beginning-of-line)
-					       (point))
-					      (progn (end-of-line)
-						     (skip-chars-backward " \t")
-						     (point)))
-			    ;; Replace the newline and other whitespace with `...'.
-			    "..."
-			    (buffer-substring blinkpos (1+ blinkpos)))
-			 ;; There is nothing to show except the char itself.
-			 (buffer-substring blinkpos (1+ blinkpos))))))))
+		  (display-message
+		   'command
+		   (format
+		    "Matches %s"
+		    ;; Show what precedes the open in its line, if anything.
+		    (if (save-excursion
+			  (skip-chars-backward " \t")
+			  (not (bolp)))
+			(buffer-substring (progn (beginning-of-line) (point))
+					  (1+ blinkpos))
+		      ;; Show what follows the open in its line, if anything.
+		      (if (save-excursion
+			    (forward-char 1)
+			    (skip-chars-forward " \t")
+			    (not (eolp)))
+			  (buffer-substring blinkpos
+					    (progn (end-of-line) (point)))
+			;; Otherwise show the previous nonblank line,
+			;; if there is one.
+			(if (save-excursion
+			      (skip-chars-backward "\n \t")
+			      (not (bobp)))
+			    (concat
+			     (buffer-substring (progn
+						 (skip-chars-backward "\n \t")
+						 (beginning-of-line)
+						 (point))
+					       (progn (end-of-line)
+						      (skip-chars-backward " \t")
+						      (point)))
+			     ;; Replace the newline and other whitespace with `...'.
+			     "..."
+			     (buffer-substring blinkpos (1+ blinkpos)))
+			  ;; There is nothing to show except the char itself.
+			  (buffer-substring blinkpos (1+ blinkpos)))))))))
 	     (cond (mismatch
-		    (message "Mismatched parentheses"))
+		    (display-message 'no-log "Mismatched parentheses"))
 		   ((not blink-matching-paren-distance)
-		    (message "Unmatched parenthesis"))))))))
+		    (display-message 'no-log "Unmatched parenthesis"))))))))
 
 ;Turned off because it makes dbx bomb out.
 (setq blink-paren-function 'blink-matching-open)
@@ -3236,55 +3247,28 @@ as the second argument.")
 ;;
 ;;                                            --hniksic
 (defvar log-message-ignore-regexps
-  '(;; Often-seen messages
+  '(;; Note: adding entries to this list slows down messaging
+    ;; significantly.  Wherever possible, use message lables.
+
+    ;; Often-seen messages
     "\\`\\'"				; empty message
-    ;;"^Mark set$"
-    ;;"^\\(Beginning\\|End\\) of buffer$"
+    "\\`\\(Beginning\\|End\\) of buffer\\'"
     ;;"^Quit$"
-    ;;"^Killing [0-9]+ characters$"
-    ;; saving
-    ;;"^Saving file .*\\.\\.\\.$"		; note: cannot ignore ^Wrote, because
-					; it would kill off too much stuff.
-    ;;"^(No changes need to be saved)$"
-    ;;"^(No files need saving)$"
-    ;; undo, with the output of redo.el
-    "\\`Undo[!.]+\\'"
-    "\\`Redo[!.]+\\'"
-    ;; M-x compile
-    ;;"^Parsing error messages\\.\\.\\."
-    ;; M-!
-    ;;"^(Shell command completed with no output)"
-    ;; font-lock
-    "\\`Fontifying"
-    ;; isearch
-    ;;"^\\(Failing \\)?\\([Ww]rapped \\)?\\([Rr]egexp \\)?I-search\\( backward\\)?:"
-    ;;"^Mark saved where search started$"
-    ;; menus
-    ;;"^Selecting menu item"
     ;; completions
+    ;; Many packages print this -- impossible to categorize
     ;;"^Making completion list"
-    ;;"^Matches "				; paren-matching message
-    ;; help
-    ;;"^Type .* to \\(remove help\\|restore the other\\) window."
-    ;; VM
-    ;;"^\\(Parsing messages\\|Reading attributes\\|Generating summary\\|Building threads\\|Converting\\)\\.\\.\\. [0-9]+$"
-    ;;"^End of message"			; + Gnus
     ;; Gnus
-    ;;"^No news is no news$"
-    ;;"^No more\\( unread\\)? newsgroups$"
-    ;;"^Opening [^ ]+ server\\.\\.\\."
-    ;;"^[^:]+: Reading incoming mail"
-    ;;"^Getting mail from "
-    ;;"^\\(Generating Summary\\|Sorting threads\\|Making sparse threads\\|Scoring\\|Checking new news\\|Expiring articles\\|Sending\\)\\.\\.\\."
-    ;;"^\\(Fetching headers for\\|Retrieving newsgroup\\|Reading active file\\)"
-    ;;"^No more\\( unread\\)? articles"
-    ;;"^Deleting article "
+    ;; "^No news is no news$"
+    ;; "^No more\\( unread\\)? newsgroups$"
+    ;; "^Opening [^ ]+ server\\.\\.\\."
+    ;; "^[^:]+: Reading incoming mail"
+    ;; "^Getting mail from "
+    ;; "^\\(Generating Summary\\|Sorting threads\\|Making sparse threads\\|Scoring\\|Checking new news\\|Expiring articles\\|Sending\\)\\.\\.\\."
+    ;; "^\\(Fetching headers for\\|Retrieving newsgroup\\|Reading active file\\)"
+    ;; "^No more\\( unread\\)? articles"
+    ;; "^Deleting article "
     ;; W3
-    ;;"^Parsed [0-9]+ of [0-9]+ ([0-9]+%)"
-    ;; outl-mouse
-    ;;"^Adding glyphs\\.\\.\\."
-    ;; bbdb
-    ;;"^->"
+    ;; "^Parsed [0-9]+ of [0-9]+ ([0-9]+%)"
     )
   "List of regular expressions matching messages which shouldn't be logged.
 See `log-message'.  

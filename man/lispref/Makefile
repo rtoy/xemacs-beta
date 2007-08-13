@@ -22,6 +22,7 @@ NAME=lispref
 manual = elisp-manual-19-$(VERSION)
 
 TEXI2DVI = texi2dvi
+MAKEINFO = makeinfo
 
 # Uncomment this line for permuted index.
 # permuted_index = 1 
@@ -46,7 +47,7 @@ all : info
 info : ../../info/$(NAME).info
 
 ../../info/$(NAME).info: $(srcs) index.texi
-	makeinfo -o $@ $(NAME).texi
+	$(MAKEINFO) -o $@ $(NAME).texi
 
 dvi: $(NAME).dvi
 

@@ -21,6 +21,9 @@ VERSION=1.0
 NAME=internals
 manual = xemacs-internals-manual-19-$(VERSION)
 
+TEXI2DVI = texi2dvi
+MAKEINFO = makeinfo
+
 # Uncomment this line for permuted index.
 # permuted_index = 1 
 
@@ -32,7 +35,9 @@ all : info
 info : ../../info/$(NAME).info
 
 ../../info/$(NAME).info: $(srcs) index.texi
+	@echo "Expect a coredump if you are not using makeinfo 1.68 (or later)"
 	$(MAKEINFO) $(NAME).texi
+	@rm -f core
 
 dvi : $(NAME).dvi
 

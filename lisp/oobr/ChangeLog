@@ -1,3 +1,7 @@
+1997-09-17  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile (autoloads): Fix target.
+
 1997-07-08  Steven L Baur  <steve@altair.xemacs.org>
 
 	* br-clos-ft.el (clos-scan-routine-arglist): Don't reference

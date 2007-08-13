@@ -2387,14 +2387,6 @@ EOF
   dnl #### Someone, please add a better function than main
   AC_CHECK_LIB(Xbsd, main, XE_PREPEND(-lXbsd, libs_x))
 
-  dnl Autodetect -lXaw
-  AC_CHECK_LIB(Xaw, XawScrollbarSetThumb, have_xaw=yes, have_xaw=no)
-  if test "$have_xaw" = "yes"; then
-    AC_CHECK_HEADER(X11/Xaw/Reports.h, [
-     XE_APPEND(pkg-src/tree-x, MAKE_SUBDIR)
-     XE_APPEND(pkg-src/tree-x, INSTALL_ARCH_DEP_SUBDIR)])
-  fi
-
 fi dnl $with_x11 = yes
 
 test -z "$window_system" && window_system="none"
@@ -2491,7 +2483,7 @@ if test "$with_cde" = "yes" ; then
   need_motif=yes    # CDE requires Motif
 fi
 
-dnl if Energize specified, make sure we can find its need libraries/headers
+dnl if Energize specified, make sure we can find its libraries/headers
 if test "$with_energize" = "yes" ; then
   AC_DEFINE(ENERGIZE)
   AC_CHECK_LIB(energize, main, [
@@ -2512,91 +2504,103 @@ if test "$with_energize" = "yes" ; then
   test "$energize_version" = "3.X" && AC_DEFINE(ENERGIZE_3)
 fi
 
-dnl ------------------
-dnl Graphics libraries
-dnl ------------------
+dnl ----------------------
+dnl X11 Graphics libraries
+dnl ----------------------
 
-AC_CHECKING(for graphics libraries)
-dnl Built-in GIF support defaults to yes
-test -z "$with_gif" && with_gif=yes;
-if test "$with_gif" = "yes"; then
-  AC_DEFINE(HAVE_GIF)
-  XE_ADD_OBJS(dgif_lib.o gif_err.o gifalloc.o)
-fi
+if test "$with_x11" = "yes"; then
 
-dnl Autodetect Xpm
-AC_MSG_CHECKING(for Xpm - no older than 3.4f)
-xe_check_libs=-lXpm
-test -z "$with_xpm" && { AC_TRY_RUN([#include <X11/xpm.h>
-int main(int c, char **v) {
-return c == 1 ? 0 :
-  XpmIncludeVersion != XpmLibraryVersion() ? 1 :
-        XpmIncludeVersion < 30406 ? 2 :
-		0 ;
-}], [./conftest foobar; xpm_status=$?;
-  if test "$xpm_status" = "0"; then with_xpm=yes; else with_xpm=no; fi;],
-with_xpm=no, with_xpm=no)
-}
-xe_check_libs=
-AC_MSG_RESULT($with_xpm)
-if test "$xpm_status" = "1" -o "$xpm_status" = "2"; then
-  test "$xpm_status" = "1" && problem="Xpm library version and header file version don't match!"
-  test "$xpm_status" = "2" && problem="Xpm library version is too old!"
-  echo "
-*** WARNING *** $problem
-                I'm not touching that with a 10-foot pole!
-                If you really want to use the installed version of Xpm, rerun
-                configure --with-xpm=yes, but don't blame me if XEmacs crashes!
-"
-fi
-if test "$with_xpm" = "yes"; then
-  AC_DEFINE(HAVE_XPM)
-  XE_PREPEND(-lXpm, libs_x)
-fi
+  AC_CHECKING(for X11 graphics libraries)
+  dnl Built-in GIF support defaults to yes
+  test -z "$with_gif" && with_gif=yes;
+  if test "$with_gif" = "yes"; then
+    AC_DEFINE(HAVE_GIF)
+    XE_ADD_OBJS(dgif_lib.o gif_err.o gifalloc.o)
+  fi
 
-dnl Autodetect XFACE
-test -z "$with_xface" && { AC_CHECK_HEADER(compface.h,          ,with_xface=no) }
-test -z "$with_xface" && { AC_CHECK_LIB(compface, UnGenFace,[:] ,with_xface=no) }
-test -z "$with_xface" && with_xface=yes
-if test "$with_xface" = "yes"; then
-  AC_DEFINE(HAVE_XFACE)
-  XE_PREPEND(-lcompface, libs_x)
-fi
+  dnl Autodetect Xpm
+  AC_MSG_CHECKING(for Xpm - no older than 3.4f)
+  xe_check_libs=-lXpm
+  test -z "$with_xpm" && { AC_TRY_RUN([#include <X11/xpm.h>
+  int main(int c, char **v) {
+  return c == 1 ? 0 :
+    XpmIncludeVersion != XpmLibraryVersion() ? 1 :
+	  XpmIncludeVersion < 30406 ? 2 :
+		  0 ;
+  }], [./conftest foobar; xpm_status=$?;
+    if test "$xpm_status" = "0"; then with_xpm=yes; else with_xpm=no; fi;],
+  with_xpm=no, with_xpm=no)
+  }
+  xe_check_libs=
+  AC_MSG_RESULT($with_xpm)
+  if test "$xpm_status" = "1" -o "$xpm_status" = "2"; then
+    test "$xpm_status" = "1" && problem="Xpm library version and header file version don't match!"
+    test "$xpm_status" = "2" && problem="Xpm library version is too old!"
+    echo "
+  *** WARNING *** $problem
+		  I'm not touching that with a 10-foot pole!
+		  If you really want to use the installed version of Xpm, rerun
+		  configure --with-xpm=yes, but don't blame me if XEmacs crashes!
+  "
+  fi
+  if test "$with_xpm" = "yes"; then
+    AC_DEFINE(HAVE_XPM)
+    XE_PREPEND(-lXpm, libs_x)
+  fi
 
-dnl autodetect JPEG
-test -z "$with_jpeg" && { AC_CHECK_HEADER(jpeglib.h,                    ,with_jpeg=no) }
-test -z "$with_jpeg" && { AC_CHECK_LIB(jpeg, jpeg_destroy_decompress,[:],with_jpeg=no) }
-test -z "$with_jpeg" && with_jpeg=yes
-if test "$with_jpeg" = "yes"; then
-  AC_DEFINE(HAVE_JPEG)
-  XE_PREPEND(-ljpeg, libs_x)
-fi
+  dnl Autodetect XFACE
+  test -z "$with_xface" && { AC_CHECK_HEADER(compface.h,          ,with_xface=no) }
+  test -z "$with_xface" && { AC_CHECK_LIB(compface, UnGenFace,[:] ,with_xface=no) }
+  test -z "$with_xface" && with_xface=yes
+  if test "$with_xface" = "yes"; then
+    AC_DEFINE(HAVE_XFACE)
+    XE_PREPEND(-lcompface, libs_x)
+  fi
 
-dnl autodetect PNG
-test -z "$with_png" && { AC_CHECK_HEADER(png.h, , with_png=no) }
-test -z "$with_png" && { AC_CHECK_FUNC(pow,     , with_png=no) }
-if test "$with_png" != "no"; then
-  for extra_libs in "" "-lz" "-lgz"; do
-    AC_CHECK_LIB(png, png_read_image,
-      png_libs="-lpng $extra_libs" with_png=yes; break,[:],$extra_libs)
-  done
-fi
-test -z "$with_png" && with_png=no
-if test "$with_png" = "yes"; then
-  AC_DEFINE(HAVE_PNG)
-  XE_PREPEND($png_libs, libs_x)
-fi
+  dnl autodetect JPEG
+  test -z "$with_jpeg" && { AC_CHECK_HEADER(jpeglib.h,                    ,with_jpeg=no) }
+  test -z "$with_jpeg" && { AC_CHECK_LIB(jpeg, jpeg_destroy_decompress,[:],with_jpeg=no) }
+  test -z "$with_jpeg" && with_jpeg=yes
+  if test "$with_jpeg" = "yes"; then
+    AC_DEFINE(HAVE_JPEG)
+    XE_PREPEND(-ljpeg, libs_x)
+  fi
 
-dnl autodetect TIFF (not yet implemented)
-if test "$with_tiff" = "yes"; then
-  AC_DEFINE(HAVE_TIFF)
-  XE_PREPEND(-ltiff, libs_x)
-fi
+  dnl autodetect PNG
+  test -z "$with_png" && { AC_CHECK_HEADER(png.h, , with_png=no) }
+  test -z "$with_png" && { AC_CHECK_FUNC(pow,     , with_png=no) }
+  if test "$with_png" != "no"; then
+    for extra_libs in "" "-lz" "-lgz"; do
+      AC_CHECK_LIB(png, png_read_image,
+	png_libs="-lpng $extra_libs" with_png=yes; break,[:],$extra_libs)
+    done
+  fi
+  test -z "$with_png" && with_png=no
+  if test "$with_png" = "yes"; then
+    AC_DEFINE(HAVE_PNG)
+    XE_PREPEND($png_libs, libs_x)
+  fi
 
-dnl autodetect Motif - but only add to libs_x later (if necessary)
+  dnl autodetect TIFF (not yet implemented)
+  if test "$with_tiff" = "yes"; then
+    AC_DEFINE(HAVE_TIFF)
+    XE_PREPEND(-ltiff, libs_x)
+  fi
+
+  dnl Autodetect -lXaw
+  AC_CHECK_LIB(Xaw, XawScrollbarSetThumb, have_xaw=yes, have_xaw=no)
+  if test "$have_xaw" = "yes"; then
+    AC_CHECK_HEADER(X11/Xaw/Reports.h, [
+      XE_APPEND(pkg-src/tree-x, MAKE_SUBDIR)
+      XE_APPEND(pkg-src/tree-x, INSTALL_ARCH_DEP_SUBDIR)])
+  fi
+
+  dnl autodetect Motif - but only add to libs_x later (if necessary)
   AC_CHECK_HEADER(Xm/Xm.h,
    [AC_CHECK_LIB(Xm, XmStringFree, have_motif=yes, have_motif=no)],
    have_motif=no)
+
+fi dnl "$with_x11" = "yes"
 
 dnl Finish ensuring that we have values for the various toolkit items.
 dnl Not all toolkits support all widgets

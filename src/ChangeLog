@@ -1,3 +1,13 @@
+1997-09-20  SL Baur  <steve@altair.xemacs.org>
+
+	* Makefile.in.in (xemacs): Adoption of shadow.el to print
+	load-path shadowings after successful dump.
+
+1997-09-20  Hrvoje Niksic  <hniksic@srce.hr>
+
+	* redisplay.c (scroll_conservatively): New variable.
+	(redisplay_window): Use it.
+
 1997-09-16  SL Baur  <steve@altair.xemacs.org>
 
 	* events.c (Fmake_event): Add default case, remove unused variables.

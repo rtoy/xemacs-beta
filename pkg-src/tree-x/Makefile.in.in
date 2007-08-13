@@ -56,7 +56,11 @@ all : xoobr
 xoobr: $(objs)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(objs) $(ldflags) -o $@
 
-.c.o :
+#ifdef SOLARIS2
+%.o : %.c
+#else
+.c.o:
+#endif
 	$(CC) $(CFLAGS) $(cflags) -c $<
 
 install: $(progs)

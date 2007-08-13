@@ -320,7 +320,7 @@
        ["Make current frame gnuserv target"
 	(setq gnuserv-frame
 	      (if (equal gnuserv-frame (selected-frame))
-		  nil
+		  'new
 		(selected-frame)))
 	:style radio
 	:selected (equal gnuserv-frame (selected-frame))]

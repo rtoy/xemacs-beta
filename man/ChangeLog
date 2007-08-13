@@ -1,3 +1,11 @@
+1997-09-18  SL Baur  <steve@altair.xemacs.org>
+
+	* internals/Makefile (../../info/$(NAME).info): Warn and clean up
+	if someone hasn't upgraded makeinfo.
+
+	* Makefile (EMACS): Refer to xemacs binary in source tree.
+	* tm/Makefile (EMACS): Ditto.
+
 1997-08-15  Karl M. Hegbloom <karlheg@inetarena.com>
 
 	* cl.texi (Type Predicates): Update for corrected handling of
