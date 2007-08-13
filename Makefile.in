@@ -386,7 +386,7 @@ install-arch-dep: mkdir
 	   if test -f ../Installation; then \
 		${INSTALL_DATA} ../Installation ${archlibdir}/Installation; \
 	   fi; \
-	   ${INSTALL_DATA} lib-src/config.values ${archlibdir}/config.values; \
+	   ${INSTALL_DATA} lib-src/config.values ${docdir}/config.values; \
 	   ${INSTALL_DATA} lib-src/DOC ${docdir}/DOC; \
 	   for subdir in `find ${archlibdir} -type d ! -name RCS ! -name SCCS ! -name CVS -print` ; \
 	     do (cd $${subdir} && $(RM) -r RCS CVS SCCS \#* *~) ; done ; \

@@ -7,7 +7,7 @@
 @finalout
 @titlepage
 @title XEmacs FAQ
-@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 1999/05/13 12:19:40 $
+@subtitle Frequently asked questions about XEmacs @* Last Modified: $Date: 1999/08/15 01:29:53 $
 @sp 1
 @author Tony Rossini <arossini@@stat.sc.edu>
 @author Ben Wing <wing@@666.com>
@@ -305,6 +305,7 @@ Other Mail & News:
 
 Sparcworks, EOS, and WorkShop:
 * Q4.4.1::      What is SPARCworks, EOS, and WorkShop
+* Q4.4.2::      How do I start the Sun Workshop support in XEmacs 21?
 
 Energize:
 * Q4.5.1::      What is/was Energize?
@@ -4086,6 +4087,7 @@ Other Mail & News:
 
 Sparcworks, EOS, and WorkShop:
 * Q4.4.1::      What is SPARCworks, EOS, and WorkShop
+* Q4.4.2::      How do I start the Sun Workshop support in XEmacs 21?
 
 Energize:
 * Q4.5.1::      What is/was Energize?
@@ -4539,7 +4541,7 @@ There is a good mirror at ftp.cdrom.com;
 @end iftex
 @uref{ftp://ftp.cdrom.com/pub/tex/ctan/support/latex2html/}.
 
-@node Q4.4.1, Q4.5.1, Q4.3.5, Subsystems
+@node Q4.4.1, Q4.4.2, Q4.3.5, Subsystems
 @unnumberedsec 4.4: Sparcworks, EOS, and WorkShop
 @unnumberedsubsec Q4.4.1: What is SPARCworks, EOS, and WorkShop?
 
@@ -4583,7 +4585,45 @@ details, check out
 @uref{http://www.sun.com/software/Products/Developer-products/programs.html}.
 @end quotation
 
-@node Q4.5.1, Q4.6.1, Q4.4.1, Subsystems
+@node Q4.4.2, Q4.5.1, Q4.4.1, Subsystems
+@unnumberedsubsec Q4.4.2: How do I start the Sun Workshop support in XEmacs 21?
+
+Add the switch ---with-workshop to the configure command when building
+XEmacs and put the following in one of your startup files
+(e.g. site-start.el or .emacs):
+
+@lisp
+(when (featurep 'tooltalk)
+  (load "tooltalk-macros")
+  (load "tooltalk-util")
+  (load "tooltalk-init"))
+(when (featurep 'sparcworks)
+  (load "sunpro-init")
+  (load "ring")
+  (load "comint")
+  (load "annotations")
+  (sunpro-startup))
+@end lisp
+
+If you are not using the latest Workshop (5.0) you have to apply the
+following patch:
+
+@format
+--- /opt/SUNWspro/lib/eserve.el.ORIG    Fri May 14 15:23:26 1999
++++ /opt/SUNWspro/lib/eserve.el Fri May 14 15:24:54 1999
+@@@@ -42,7 +42,7 @@@@
+ (defvar running-xemacs nil "t if we're running XEmacs")
+ (defvar running-emacs  nil "t if we're running GNU Emacs 19")
+ 
+-(if (string-match "^\\(19\\|20\\)\..*\\(XEmacs\\|Lucid\\)" emacs-version)
++(if (string-match "\\(XEmacs\\|Lucid\\)" emacs-version)
+     (setq running-xemacs t)
+     (setq running-emacs  t))
+@end format 
+
+
+
+@node Q4.5.1, Q4.6.1, Q4.4.2, Subsystems
 @unnumberedsec 4.5: Energize
 @unnumberedsubsec Q4.5.1: What is/was Energize?
 
@@ -5111,6 +5151,10 @@ This will then start a second shell.  The key is that no buffer named
 @samp{*shell*} can exist.  It might be preferable to use @kbd{M-x
 rename-uniquely} to rename the @code{*shell*} buffer instead of @kbd{M-x
 rename-buffer}.
+
+Alternately, you can set the variable @code{shell-multiple-shells}.
+If the value of this variable is non-nil, each time shell mode is invoked, 
+a new shell is made
 
 @node Q5.0.7, Q5.0.8, Q5.0.6, Miscellaneous
 @unnumberedsubsec Q5.0.7: Telnet from shell filters too much

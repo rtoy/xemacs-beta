@@ -77,7 +77,10 @@
   (make-local-variable 'next-line-add-newlines)
   (setq next-line-add-newlines nil)
   (setq list-mode-extent nil)
-  (set-specifier text-cursor-visible-p nil (current-buffer))
+;; It is visually disconcerting to have the text cursor disappear within list 
+;; buffers, especially when moving from window to window, so leave it
+;; visible.  -- Bob Weiner, 06/20/1999
+; (set-specifier text-cursor-visible-p nil (current-buffer))
   (setq buffer-read-only t)
   (goto-char (point-min))
   (run-hooks 'list-mode-hook))

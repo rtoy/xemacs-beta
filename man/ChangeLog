@@ -1,5 +1,18 @@
 1999-08-14  XEmacs Build Bot <builds@cvs.xemacs.org>
 
+	* XEmacs 21.1.6 is released
+
+1999-08-12     Gunnar Evermann  <ge204@eng.cam.ac.uk>
+
+	* xemacs-faq.texi (Q4.4.2): added FAQ about Sun Workshop on
+ 	XEmacs 21
+
+1999-08-12    Charles G Waldman  <cgw@fnal.gov>
+
+	* xemacs-faq.texi (Q5.0.6): Describe `shell-multiple-shells'
+
+1999-08-14  XEmacs Build Bot <builds@cvs.xemacs.org>
+
 	* XEmacs 21.1.5 is released
 
 1999-07-08  XEmacs Build Bot <builds@cvs.xemacs.org>

@@ -1,5 +1,50 @@
 1999-08-14  XEmacs Build Bot <builds@cvs.xemacs.org>
 
+	* XEmacs 21.1.6 is released
+
+1999-08-14    Jan Vroonhof <vroonhof@math.ethz.ch>
+
+	* package-get.el: Don't require package signing by default.
+
+1999-08-12    SL Baur  <steve@xemacs.org>
+
+	* code-files.el (insert-file-contents): Fix docstring.
+
+1999-08-12    Steve Baur <steve@xemacs.org>
+
+	* dumped-lisp.el Fix thai and ethiopic.
+
+1999-08-12    Bob Weiner  <weiner@beopen.com>
+
+	* fill.el (fill-context-prefix): Fixed bug that prevented the
+	setting of an adaptive fill prefix when the `dont-skip-first'
+	was t.
+
+1999-08-12    Karl M. Hegbloom  <karlheg@debian.org>
+
+	* config.el (config-value-file): look for "config.values" in
+ 	`doc-directory', rather than in `exec-directory', since it varies
+ 	with the configuration like DOC does, and `--docdir' is
+ 	configurable now.  The docstring for `doc-directory' says its
+ 	value is usually the same as `exec-directory' anyway, so this
+ 	should NOT affect XEmacs when configured without the `--docdir'
+ 	switch.
+
+1999-08-12    Bob Weiner  <weiner@beopen.com>
+
+	* list-mode.el (list-mode): It is visually disconcerting to have
+	the text cursor disappear within list buffers, especially when
+	moving from window to window, so leave it visible.
+
+1999-08-12    Karl M. Hegbloom  <karlheg@debian.org>
+
+	* files.el (interpreter-mode-alist): add `make', `guile', and 
+	`emacs' entries. (#!/usr/bin/make -f ought to send a file into
+	makefile-mode, guile is a scheme, and someday XEmacs will be
+	modular enough to use as an efficient scripting tool.)
+
+1999-08-14  XEmacs Build Bot <builds@cvs.xemacs.org>
+
 	* XEmacs 21.1.5 is released
 
 1999-07-08  XEmacs Build Bot <builds@cvs.xemacs.org>

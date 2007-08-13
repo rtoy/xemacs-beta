@@ -1,5 +1,31 @@
 1999-08-14  XEmacs Build Bot <builds@cvs.xemacs.org>
 
+	* XEmacs 21.1.6 is released
+
+1999-08-13     Alexandre Oliva <oliva@dcc.unicamp.br>, Vin Shelton <acs@xemacs.org>
+
+	* unexelf.c: Enable GNU/Linux/alpha to build with gcc 2.95 by
+	adding support for an sbss section.  Get IRIX 5.2 to build using
+	unexelf.c.
+
+	* m/iris4d.h: Use unexelf.o for unexec.
+
+	* m/iris5d.h: Use unexelf.o for unexec.
+
+1999-08-13    Jan Vroonhof  <vroonhof@math.ethz.ch>
+
+	* eval.c (run_hook_with_args_in_buffer): GCPRO globals.
+
+1999-08-12    Jeff Miller <jmiller@smart.net>
+
+	* gui.c: Put menubar guard around menubar keybindings.
+
+1999-08-12    Bob Weiner <weiner@beopen.com>
+
+	* s/sco7.h: Added from rr@sco.com.
+
+1999-08-14  XEmacs Build Bot <builds@cvs.xemacs.org>
+
 	* XEmacs 21.1.5 is released
 
 1999-07-08  XEmacs Build Bot <builds@cvs.xemacs.org>

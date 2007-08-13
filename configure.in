@@ -1487,6 +1487,7 @@ case "$canonical" in
 	else
 		NON_GNU_CPP="/lib/cpp -D_XOPEN_SOURCE"  ;
 	fi ;;
+      *-sysv5* )		opsys=sco7 ;;
       *-386bsd* )	        opsys=386bsd ;;
       *-freebsd* )		opsys=freebsd ;;
       *-nextstep* )		opsys=nextstep ;;
@@ -3258,7 +3259,6 @@ int main (int argc, char *argv[])
 esac
 AC_MSG_RESULT($have_mmap)
 test "$have_mmap" = "yes" && AC_DEFINE(HAVE_MMAP)
-AC_FUNC_MMAP
 
 dnl rel_alloc requires either GNU malloc or system malloc with mmap
 dnl We only turn rel_alloc on by default if mmap is available.

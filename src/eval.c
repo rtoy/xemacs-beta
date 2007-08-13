@@ -3691,7 +3691,6 @@ run_hook_with_args_in_buffer (struct buffer *buf, int nargs, Lisp_Object *args,
 			      enum run_hooks_condition cond)
 {
   Lisp_Object sym, val, ret;
-  struct gcpro gcpro1, gcpro2;
 
   if (!initialized || preparing_for_armageddon)
     /* We need to bail out of here pronto. */
@@ -3714,7 +3713,9 @@ run_hook_with_args_in_buffer (struct buffer *buf, int nargs, Lisp_Object *args,
     }
   else
     {
-      GCPRO2 (sym, val);
+     struct gcpro gcpro1, gcpro2, gcpro3;
+     Lisp_Object globals = Qnil;
+     GCPRO3 (sym, val, globals);
 
       for (;
 	   CONSP (val) && ((cond == RUN_HOOKS_TO_COMPLETION)
@@ -3726,7 +3727,7 @@ run_hook_with_args_in_buffer (struct buffer *buf, int nargs, Lisp_Object *args,
 	    {
 	      /* t indicates this hook has a local binding;
 		 it means to run the global binding too.  */
-	      Lisp_Object globals = Fdefault_value (sym);
+	      globals = Fdefault_value (sym);
 
 	      if ((! CONSP (globals) || EQ (XCAR (globals), Qlambda)) &&
 		  ! NILP (globals))

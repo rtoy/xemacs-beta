@@ -299,9 +299,11 @@ gui_item_display_flush_right (CONST struct gui_item *pgui_item,
 {
   *buf = 0;
 
+#ifdef HAVE_MENUBARS
   /* Have keys? */
   if (!menubar_show_keybindings)
     return 0;
+#endif
 
   /* Try :keys first */
   if (!NILP (pgui_item->keys))

@@ -128,14 +128,14 @@
 	(when-feature mule "chinese")
 	(when-feature mule "mule/cyrillic") ; overloaded in leim/quail
 	(when-feature mule "english")
-;;	(when-feature mule "ethiopic")
+	(when-feature mule "ethiopic")
 	(when-feature mule "european")
 	(when-feature mule "mule/greek") ; overloaded in leim/quail
 	(when-feature mule "hebrew")
 	(when-feature mule "japanese")
 	(when-feature mule "korean")
 	(when-feature mule "misc-lang")
-;;	(when-feature mule "thai")
+	(when-feature mule "thai-xtis-chars")
 	(when-feature mule "viet-chars")
 ;;	(when-feature mule "vietnamese")
 

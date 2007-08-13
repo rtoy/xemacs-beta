@@ -45,10 +45,10 @@ PROGRAM_DEFINES=-DINFODOCK 					\
 	-DINFODOCK_MINOR_VERSION=$(infodock_minor_version)	\
 	-DINFODOCK_BUILD_VERSION=$(infodock_build_version)
 !else
-!if "$(emacs_beta_version)" != ""
+!if "$(emacs_is_beta)" != ""
 XEMACS_VERSION_STRING=$(emacs_major_version).$(emacs_minor_version)-b$(emacs_beta_version)
 !else
-XEMACS_VERSION_STRING=$(emacs_major_version).$(emacs_minor_version)
+XEMACS_VERSION_STRING=$(emacs_major_version).$(emacs_minor_version).$(emacs_beta_version)
 !endif
 PROGRAM_DEFINES=						\
 	-DPATH_VERSION=\"$(XEMACS_VERSION_STRING)\"		\
@@ -748,8 +748,10 @@ DOC_SRC9=\
 # TEMACS Executable
 
 # This may not exist
-!if "$(emacs_beta_version)" != ""
+!if "$(emacs_is_beta)" != ""
 EMACS_BETA_VERSION=-DEMACS_BETA_VERSION=$(emacs_beta_version)
+!else
+EMACS_BETA_VERSION=-DEMACS_PATCH_LEVEL=$(emacs_beta_version)
 !ENDIF
 
 TEMACS_DIR=$(XEMACS)\src
@@ -929,7 +931,7 @@ TEMACS_OBJS= \
 # Rules
 
 .SUFFIXES:
-.SUFFIXES:	.c
+.SUFFIXES:	.c .texi
 
 # nmake rule
 {$(TEMACS_SRC)}.c{$(OUTDIR)}.obj:
@@ -956,6 +958,173 @@ $(TEMACS): $(TEMACS_INCLUDES) $(TEMACS_OBJS)
 
 $(NT)\xemacs.res: xemacs.rc
 	rc xemacs.rc
+
+# Section handling info starts here
+MAKEINFO=$(PROGNAME) -no-site-file -no-init-file -batch -l texinfmt -f batch-texinfo-format
+
+MANDIR = $(XEMACS)\man
+INFODIR = $(XEMACS)\info
+INFO_FILES= \
+	$(INFODIR)\cl.info \
+	$(INFODIR)\custom.info \
+	$(INFODIR)\external-widget.info \
+	$(INFODIR)\info.info \
+	$(INFODIR)\standards.info \
+	$(INFODIR)\term.info \
+	$(INFODIR)\termcap.info \
+	$(INFODIR)\texinfo.info \
+	$(INFODIR)\widget.info \
+	$(INFODIR)\xemacs-faq.info \
+	$(INFODIR)\xemacs.info \
+	$(INFODIR)\lispref.info \
+	$(INFODIR)\new-users-guide.info \
+	$(INFODIR)\internals.info
+
+{$(MANDIR)}.texi{$(INFODIR)}.info:
+	$(MAKEINFO) $**
+
+$(INFODIR)\xemacs.info:	$(MANDIR)\xemacs\xemacs.texi
+	$(MAKEINFO) $**
+
+$(MANDIR)\xemacs\xemacs.texi: \
+	$(MANDIR)\xemacs\abbrevs.texi \
+	$(MANDIR)\xemacs\basic.texi \
+	$(MANDIR)\xemacs\buffers.texi \
+	$(MANDIR)\xemacs\building.texi \
+	$(MANDIR)\xemacs\calendar.texi \
+	$(MANDIR)\xemacs\cmdargs.texi \
+	$(MANDIR)\xemacs\custom.texi \
+	$(MANDIR)\xemacs\display.texi \
+	$(MANDIR)\xemacs\entering.texi \
+	$(MANDIR)\xemacs\files.texi \
+	$(MANDIR)\xemacs\fixit.texi \
+	$(MANDIR)\xemacs\glossary.texi \
+	$(MANDIR)\xemacs\gnu.texi \
+	$(MANDIR)\xemacs\help.texi \
+	$(MANDIR)\xemacs\indent.texi \
+	$(MANDIR)\xemacs\keystrokes.texi \
+	$(MANDIR)\xemacs\killing.texi \
+	$(MANDIR)\xemacs\\xemacs.texi \
+	$(MANDIR)\xemacs\m-x.texi \
+	$(MANDIR)\xemacs\major.texi \
+	$(MANDIR)\xemacs\mark.texi \
+	$(MANDIR)\xemacs\menus.texi \
+	$(MANDIR)\xemacs\mini.texi \
+	$(MANDIR)\xemacs\misc.texi \
+	$(MANDIR)\xemacs\mouse.texi \
+	$(MANDIR)\xemacs\new.texi \
+	$(MANDIR)\xemacs\picture.texi \
+	$(MANDIR)\xemacs\programs.texi \
+	$(MANDIR)\xemacs\reading.texi \
+	$(MANDIR)\xemacs\regs.texi \
+	$(MANDIR)\xemacs\frame.texi \
+	$(MANDIR)\xemacs\search.texi \
+	$(MANDIR)\xemacs\sending.texi \
+	$(MANDIR)\xemacs\text.texi \
+	$(MANDIR)\xemacs\trouble.texi \
+	$(MANDIR)\xemacs\undo.texi \
+	$(MANDIR)\xemacs\windows.texi \
+
+
+$(INFODIR)\lispref.info:	$(MANDIR)\lispref\lispref.texi
+	$(MAKEINFO) $**
+
+$(MANDIR)\lispref\lispref.texi:	$(MANDIR)\lispref\abbrevs.texi \
+	$(MANDIR)\lispref\annotations.texi \
+	$(MANDIR)\lispref\back.texi \
+	$(MANDIR)\lispref\backups.texi \
+	$(MANDIR)\lispref\buffers.texi \
+	$(MANDIR)\lispref\building.texi \
+	$(MANDIR)\lispref\commands.texi \
+	$(MANDIR)\lispref\compile.texi \
+	$(MANDIR)\lispref\consoles-devices.texi \
+	$(MANDIR)\lispref\control.texi \
+	$(MANDIR)\lispref\databases.texi \
+	$(MANDIR)\lispref\debugging.texi \
+	$(MANDIR)\lispref\dialog.texi \
+	$(MANDIR)\lispref\display.texi \
+	$(MANDIR)\lispref\edebug-inc.texi \
+	$(MANDIR)\lispref\edebug.texi \
+	$(MANDIR)\lispref\errors.texi \
+	$(MANDIR)\lispref\eval.texi \
+	$(MANDIR)\lispref\extents.texi \
+	$(MANDIR)\lispref\faces.texi \
+	$(MANDIR)\lispref\files.texi \
+	$(MANDIR)\lispref\frames.texi \
+	$(MANDIR)\lispref\functions.texi \
+	$(MANDIR)\lispref\glyphs.texi \
+	$(MANDIR)\lispref\hash-tables.texi \
+	$(MANDIR)\lispref\help.texi \
+	$(MANDIR)\lispref\hooks.texi \
+	$(MANDIR)\lispref\index.texi \
+	$(MANDIR)\lispref\internationalization.texi \
+	$(MANDIR)\lispref\intro.texi \
+	$(MANDIR)\lispref\keymaps.texi \
+	$(MANDIR)\lispref\ldap.texi \
+	$(MANDIR)\lispref\lists.texi \
+	$(MANDIR)\lispref\loading.texi \
+	$(MANDIR)\lispref\locals.texi \
+	$(MANDIR)\lispref\macros.texi \
+	$(MANDIR)\lispref\maps.texi \
+	$(MANDIR)\lispref\markers.texi \
+	$(MANDIR)\lispref\menus.texi \
+	$(MANDIR)\lispref\minibuf.texi \
+	$(MANDIR)\lispref\modes.texi \
+	$(MANDIR)\lispref\mouse.texi \
+	$(MANDIR)\lispref\mule.texi \
+	$(MANDIR)\lispref\numbers.texi \
+	$(MANDIR)\lispref\objects.texi \
+	$(MANDIR)\lispref\os.texi \
+	$(MANDIR)\lispref\positions.texi \
+	$(MANDIR)\lispref\processes.texi \
+	$(MANDIR)\lispref\range-tables.texi \
+	$(MANDIR)\lispref\scrollbars.texi \
+	$(MANDIR)\lispref\searching.texi \
+	$(MANDIR)\lispref\sequences.texi \
+	$(MANDIR)\lispref\specifiers.texi \
+	$(MANDIR)\lispref\streams.texi \
+	$(MANDIR)\lispref\strings.texi \
+	$(MANDIR)\lispref\symbols.texi \
+	$(MANDIR)\lispref\syntax.texi \
+	$(MANDIR)\lispref\text.texi \
+	$(MANDIR)\lispref\tips.texi \
+	$(MANDIR)\lispref\toolbar.texi \
+	$(MANDIR)\lispref\tooltalk.texi \
+	$(MANDIR)\lispref\variables.texi \
+	$(MANDIR)\lispref\windows.texi \
+	$(MANDIR)\lispref\x-windows.texi
+
+$(MANDIR)\lispref\index.texi:	$(MANDIR)\lispref\index.perm
+	copy $(MANDIR)\lispref\index.perm $(MANDIR)\lispref\index.texi
+
+$(INFODIR)\new-users-guide.info:	$(MANDIR)\new-users-guide\new-users-guide.texi
+	$(MAKEINFO) $**
+
+$(MANDIR)\new-users-guide\new-users-guide.texi: \
+	$(MANDIR)\new-users-guide\custom1.texi \
+	$(MANDIR)\new-users-guide\files.texi \
+	$(MANDIR)\new-users-guide\region.texi \
+	$(MANDIR)\new-users-guide\custom2.texi \
+	$(MANDIR)\new-users-guide\help.texi \
+	$(MANDIR)\new-users-guide\search.texi \
+	$(MANDIR)\new-users-guide\edit.texi \
+	$(MANDIR)\new-users-guide\modes.texi \
+	$(MANDIR)\new-users-guide\xmenu.texi \
+	$(MANDIR)\new-users-guide\enter.texi
+
+
+$(INFODIR)\internals.info:	$(MANDIR)\internals\internals.texi
+	copy $(MANDIR)\internals\index.perm $(MANDIR)\internals\index.texi
+	$(MAKEINFO) $**
+
+$(MANDIR)\internals\internals.texi: \
+	$(MANDIR)\internals\index.unperm \
+	$(MANDIR)\internals\index.perm \
+
+
+info:	$(INFO_FILES)
+
+# Section handling info ends here
 
 # MSDEV Source Broswer file. "*.sbr" is too inclusive but this is harmless
 $(TEMACS_BROWSE): $(TEMACS_OBJS)
@@ -1003,7 +1172,7 @@ dump-xemacs: $(TEMACS)
 
 # use this rule to build the complete system
 all:	$(OUTDIR)\nul $(LASTFILE) $(LWLIB) $(LIB_SRC_TOOLS) $(RUNEMACS) \
-	$(TEMACS) $(TEMACS_BROWSE) update-elc $(DOC) dump-xemacs
+	$(TEMACS) $(TEMACS_BROWSE) update-elc $(DOC) dump-xemacs info
 
 temacs: $(TEMACS)
 
@@ -1062,6 +1231,8 @@ distclean:
 	del $(CONFIG_VALUES)
 	cd $(LISP)
 	-del /s /q *.bak *.elc *.orig *.rej
+	cd $(INFODIR)
+	del *.info* $(MANDIR)\internals\index.texi $(MANDIR)\lispref\index.texi
 
 depend:
 	mkdepend -f xemacs.mak -p$(OUTDIR)\ -o.obj -w9999 -- $(TEMACS_CPP_FLAGS) --  $(DOC_SRC1) $(DOC_SRC2) $(DOC_SRC3) $(DOC_SRC4) $(DOC_SRC5) $(DOC_SRC6) $(DOC_SRC7) $(DOC_SRC8) $(DOC_SRC9) $(LASTFILE_SRC)\lastfile.c $(LIB_SRC)\make-docfile.c .\runemacs.c

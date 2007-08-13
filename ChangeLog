@@ -1,5 +1,23 @@
 1999-08-14  XEmacs Build Bot <builds@cvs.xemacs.org>
 
+	* XEmacs 21.1.6 is released
+
+1999-08-12    Michael Sperber [Mr. Preprocessor]  <sperber@informatik.uni-tuebingen.de>
+
+	* configure.in: Removed superfluous call to AC_FUNC_MMAP.
+
+1999-08-12    SL Baur  <steve@beopen.com>
+
+	* configure.in: add sco7 support
+	From Bob Weiner  <weiner@beopen.com>
+
+1999-08-12    Karl M. Hegbloom  <karlheg@debian.org>
+
+	* Makefile.in (install-arch-dep): Install "config.values" in
+	`docdir' rather than in `archlibdir'.
+
+1999-08-14  XEmacs Build Bot <builds@cvs.xemacs.org>
+
 	* XEmacs 21.1.5 is released
 
 1999-07-08  XEmacs Build Bot <builds@cvs.xemacs.org>
